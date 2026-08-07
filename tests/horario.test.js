@@ -158,7 +158,7 @@ test('calendário marca o período do dia', async () => {
     const per = cel.querySelector('.per');
     return per ? per.textContent + ':' + per.className.replace('per ', '') : null;
   };
-  assert.strictEqual(marca(2), '\u{1F305}:manha');
+  assert.strictEqual(marca(2), '\u{2600}\u{FE0F}:manha');
   assert.strictEqual(marca(3), '\u{1F324}\u{FE0F}:tarde');
   assert.strictEqual(marca(4), '\u{1F319}:noite');
   assert.ok(a.texto('.callegenda').includes('manhã'), 'legenda explica os três');
