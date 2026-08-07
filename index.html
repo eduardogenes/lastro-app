@@ -51,7 +51,7 @@ html, body {
 }
 
 /* ---------- header ---------- */
-.hdr { padding: calc(22px + env(safe-area-inset-top)) 18px 0; }
+.hdr { padding: calc(14px + env(safe-area-inset-top)) 18px 0; }
 .hdr.curto { padding-bottom: 2px; }
 .eyebrow {
   font-family: var(--f-m);
@@ -64,19 +64,19 @@ html, body {
   align-items: center;
 }
 .eyebrow span:last-child { color: var(--mist); }
-.dayline { display: flex; align-items: baseline; gap: 12px; margin-top: 6px; }
+.dayline { display: flex; align-items: baseline; gap: 11px; margin-top: 4px; }
 .dayletter {
-  font-size: 54px; font-weight: 800; line-height: .85;
+  font-size: 40px; font-weight: 800; line-height: .85;
   letter-spacing: -.03em; color: var(--paper);
 }
-.dayname { font-size: 17px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em; }
-.daymeta { font-family: var(--f-m); font-size: 11px; color: var(--mist); margin-top: 3px; }
+.dayname { font-size: 16px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em; }
+.daymeta { font-family: var(--f-m); font-size: 10.5px; color: var(--mist); margin-top: 2px; }
 
 /* ---------- faixa da semana ---------- */
-.semana { display: flex; gap: 5px; margin: 18px 0 0; }
+.semana { display: flex; gap: 5px; margin: 12px 0 0; }
 .wd {
   flex: 1; min-width: 0; text-align: center; border-radius: 9px;
-  border: 1px solid var(--line); padding: 8px 0 9px; background: transparent;
+  border: 1px solid var(--line); padding: 5px 0 6px; background: transparent;
 }
 .wd-d {
   display: block; font-family: var(--f-m); font-size: 8.5px;
@@ -84,7 +84,7 @@ html, body {
 }
 .wd-v {
   display: block; font-family: var(--f-d); font-weight: 700; font-size: 14px;
-  color: var(--dim); margin-top: 4px; line-height: 1.1;
+  color: var(--dim); margin-top: 1px; line-height: 1.1;
 }
 .wd.feito { border-color: var(--dawn); cursor: pointer; }
 .wd.feito .wd-v { color: var(--dawn); }
@@ -167,12 +167,12 @@ html, body {
 }
 
 /* ---------- rotation strip ---------- */
-.rot { display: flex; gap: 6px; padding: 18px 18px 0; }
+.rot { display: flex; gap: 6px; padding: 10px 18px 0; }
 .rot button {
   flex: 1; appearance: none; border: 1px solid var(--line);
   background: transparent; color: var(--mist);
-  font-family: var(--f-d); font-weight: 700; font-size: 15px;
-  padding: 11px 0; border-radius: 9px; cursor: pointer;
+  font-family: var(--f-d); font-weight: 700; font-size: 14px;
+  padding: 8px 0; border-radius: 9px; cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
 }
 .rot button:hover { border-color: var(--dawn); color: var(--paper); }
@@ -185,14 +185,14 @@ html, body {
 
 /* ---------- tabs ---------- */
 .tabs {
-  display: flex; gap: 18px; padding: 20px 18px 0;
+  display: flex; gap: 18px; padding: 13px 18px 0;
   border-bottom: 1px solid var(--line); margin: 0 0 4px;
   overflow-x: auto; scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
 .tabs button { white-space: nowrap; }
 .tabs button {
-  appearance: none; background: none; border: 0; padding: 0 0 10px;
+  appearance: none; background: none; border: 0; padding: 0 0 8px;
   font-family: var(--f-m); font-size: 11px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--mist); cursor: pointer;
   border-bottom: 2px solid transparent; margin-bottom: -1px;
@@ -202,7 +202,7 @@ html, body {
 /* ---------- exercise ---------- */
 .ex {
   border-bottom: 1px solid var(--line);
-  padding: 16px 18px;
+  padding: 11px 18px;
 }
 .ex-top { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
 .ord {
@@ -231,18 +231,18 @@ html, body {
 }
 
 /* ---------- sets ---------- */
-.sets { display: none; padding: 14px 0 2px 32px; }
+.sets { display: none; padding: 10px 0 2px 30px; }
 .ex.open .sets { display: block; }
 .cue {
-  font-size: 12.5px; color: var(--mist); line-height: 1.5;
-  border-left: 2px solid var(--line); padding-left: 10px; margin: 0 0 14px;
+  font-size: 12px; color: var(--mist); line-height: 1.45;
+  border-left: 2px solid var(--line); padding-left: 10px; margin: 0 0 10px;
 }
-.setrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.setrow { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
 .setno { font-family: var(--f-m); font-size: 11px; color: var(--mist); width: 16px; }
 .setrow input {
   font-family: var(--f-m); font-size: 15px; font-weight: 500;
   background: var(--dusk); border: 1px solid var(--line); color: var(--paper);
-  border-radius: 8px; padding: 9px 8px; width: 100%; min-width: 0;
+  border-radius: 8px; padding: 8px 8px; width: 100%; min-width: 0;
   text-align: center; appearance: none; -moz-appearance: textfield;
 }
 .setrow input::-webkit-outer-spin-button,
@@ -264,15 +264,15 @@ html, body {
 .rest:hover { border-color: var(--dawn); color: var(--dawn); }
 .lastline {
   font-family: var(--f-m); font-size: 11px; color: var(--mist);
-  margin-top: 10px; padding-left: 24px;
+  margin-top: 7px; padding-left: 22px;
 }
 .lastline b { color: var(--paper); font-weight: 500; }
 
 .histbtn {
   appearance: none; background: transparent; border: 1px solid var(--line);
   color: var(--mist); font-family: var(--f-m); font-size: 11px;
-  padding: 12px 14px; border-radius: 9px; cursor: pointer;
-  margin: 12px 0 2px; width: 100%; text-align: center;
+  padding: 10px 8px; border-radius: 9px; cursor: pointer;
+  margin: 0; flex: 1; min-width: 0; text-align: center;
 }
 .histbtn:hover { border-color: var(--dawn); color: var(--dawn); }
 
@@ -297,7 +297,7 @@ html, body {
 /* ---------- tipo de carga ---------- */
 .anilhas {
   font-family: var(--f-m); font-size: 10.5px; color: var(--dim);
-  margin: 2px 0 6px; line-height: 1.5;
+  margin: 0 0 4px; line-height: 1.45;
 }
 .anilhas b { color: var(--mist); font-weight: 500; }
 
@@ -305,11 +305,10 @@ html, body {
 .notabtn {
   appearance: none; cursor: pointer; background: transparent; border: 0;
   color: var(--dim); font-family: var(--f-m); font-size: 10.5px;
-  padding: 14px 0 6px; margin-top: 6px; text-align: left;
-  border-top: 1px solid var(--line); width: 100%;
+  padding: 9px 0 2px; text-align: left; width: auto; flex: 1; min-width: 0;
 }
 .notabtn:hover { color: var(--mist); }
-.obs { margin: 16px 0 2px; padding-top: 14px; border-top: 1px solid var(--line); }
+.obs { margin: 10px 0 2px; padding-top: 10px; border-top: 1px solid var(--line); width: 100%; }
 .obs-h {
   font-family: var(--f-m); font-size: 10px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--dim); margin-bottom: 9px;
@@ -437,7 +436,7 @@ html, body {
 
 .segnote {
   font-family: var(--f-m); font-size: 10.5px; color: var(--dim);
-  margin: -2px 0 4px; line-height: 1.4;
+  margin: -3px 0 3px; line-height: 1.35;
 }
 
 /* ---------- cardio ---------- */
@@ -505,19 +504,26 @@ html, body {
 
 /* ---------- aquecimento ---------- */
 .aquec {
-  margin: 14px 0 2px; padding: 12px 14px; border-radius: 9px;
+  display: flex; align-items: center; gap: 10px;
+  margin: 10px 0 0; padding: 8px 10px; border-radius: 9px;
   border: 1px solid var(--line); background: var(--dusk);
-  font-size: 12.5px; color: var(--mist); line-height: 1.5;
+  font-size: 11.5px; color: var(--mist); line-height: 1.35;
 }
-.aquec b { display: block; color: var(--paper); font-weight: 600; margin-bottom: 3px; }
+.aquec span { flex: 1; min-width: 0; }
+.aquec b { color: var(--paper); font-weight: 600; }
 .aquec.on { border-color: #2F5C46; }
 .aqbtn {
-  appearance: none; cursor: pointer; display: block; width: 100%;
-  margin-top: 10px; padding: 11px 12px; border-radius: 8px;
+  appearance: none; cursor: pointer; flex: 0 0 auto;
+  padding: 9px 12px; border-radius: 8px;
   background: transparent; border: 1px solid var(--line); color: var(--mist);
-  font-family: var(--f-m); font-size: 11px;
+  font-family: var(--f-m); font-size: 10.5px;
 }
 .aquec.on .aqbtn { border-color: #2F5C46; color: #7FBF9C; }
+
+/* ações do exercício lado a lado, para o painel não virar uma coluna de botões */
+.exacoes { display: flex; gap: 7px; margin: 9px 0 0; }
+.exlinks { display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline;
+  border-top: 1px solid var(--line); margin-top: 8px; }
 
 /* ---------- marcos ---------- */
 .marco { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
@@ -1741,20 +1747,23 @@ function render() {
           <p class="cue">${ex.cue}</p>
           ${rows}
           ${l?`<div class="lastline">última vez: <b>${fmtLast(l,seg)}</b> · ${seg?`tempo <b>${fmtInt(tutOf(l))} s</b>`:`volume <b>${fmtInt(volOf(l))}</b>`}</div>`:'<div class="lastline">primeira vez neste exercício</div>'}
-          ${lista.length?`<button class="histbtn" onclick="toggleSwap(${i})">${view.swapOpen===i?'fechar substituições':'trocar exercício'}</button>`:''}
-          ${swap}
           ${i===0?`<div class="aquec ${dr&&dr.aq?'on':''}">
-            <b>Aproximação antes da primeira série valendo.</b>
-            2 a 3 séries subindo carga. Treinando às 6h15 você entra frio.
-            <button class="aqbtn" onclick="toggleAq(0)">${dr&&dr.aq?'aquecimento feito':'marcar como feito'}</button>
+            <span><b>Aproximação:</b> 2 a 3 séries subindo carga antes da primeira valendo.</span>
+            <button class="aqbtn" onclick="toggleAq(0)">${dr&&dr.aq?'feito':'marcar'}</button>
           </div>`:''}
+          <div class="exacoes">
+            ${lista.length?`<button class="histbtn" onclick="toggleSwap(${i})">${view.swapOpen===i?'fechar':'trocar exercício'}</button>`:''}
+            <button class="histbtn" onclick="openHist(${i})">histórico</button>
+          </div>
+          ${swap}
+          <div class="exlinks">
           ${view.carga === i ? `<div class="obs">
             <div class="obs-h">como esse peso é carregado</div>
             <div class="chips">${Object.keys(CARGAS).map(function (t) {
               return `<button class="chip ${tipo===t?'sel':''}" onclick="setCarga(${i},'${t}')">${CARGAS[t].nome}</button>`;
             }).join('')}</div>
             <p class="cue" style="margin:12px 0 0">${CARGAS[tipo].ajuda}</p>
-          </div>` : `<button class="notabtn" onclick="abrirCarga(${i})">carga: ${CARGAS[tipo].nome}${CARGAS[tipo].dobra?' · o app soma os dois':''}</button>`}
+          </div>` : `<button class="notabtn" onclick="abrirCarga(${i})">carga: ${CARGAS[tipo].nome}</button>`}
           ${(dr && (dr.obs || dr.dor.length)) || view.nota === i
             ? `<div class="obs">
                  <div class="obs-h">anotação desta sessão</div>
@@ -1764,7 +1773,7 @@ function render() {
                  <div class="chips">${DORES.map(x => `<button class="chip ${dr&&dr.dor.indexOf(x.k)>=0?'on':''}" onclick="toggleDor(${i},'${x.k}')">${x.t}</button>`).join('')}</div>
                </div>`
             : `<button class="notabtn" onclick="abrirNota(${i})">anotar algo</button>`}
-          <button class="histbtn" onclick="openHist(${i})">ver histórico e progresso</button>
+          </div>
         </div>
       </div>`;
     }).join('');
