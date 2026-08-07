@@ -1124,6 +1124,8 @@ async function load() {
   if (!Array.isArray(S.done)) S.done = [];
   if (typeof S.deload !== 'boolean') S.deload = false;   // campos novos: ausentes nos dados antigos
   if (!S.draft || typeof S.draft !== 'object') S.draft = null;
+  // sessão precisa de forma válida: sem sid, fechaSessao() não acha a marca
+  if (!S.sessao || typeof S.sessao !== 'object' || !S.sessao.day || !S.sessao.sid) S.sessao = null;
   if (!Array.isArray(S.cardio)) S.cardio = [];
   if (typeof S.export !== 'number') S.export = 0;
   if (!S.carga || typeof S.carga !== 'object') S.carga = {};
@@ -1133,7 +1135,7 @@ async function load() {
 
   // Rascunho do modelo antigo, sem sessão: vira sessão aberta para não
   // perder um treino que estava em andamento na hora da atualização.
-  if (S.draft && !S.sessao && PLAN[S.draft.day]) {
+  if (S.draft && !S.sessao && PLAN[S.draft.day] && Object.keys(S.draft.ex || {}).length) {
     S.sessao = { day: S.draft.day, inicio: S.draft.t || Date.now(), ultima: S.draft.t || Date.now(), sid: S.draft.t || Date.now() };
     projetaTudo();
   }
@@ -1297,9 +1299,11 @@ function draftOf(i) {
 // campos em branco — e digitar por cima apagaria as séries que já existiam,
 // porque projeta() reescreve o conjunto inteiro a partir do rascunho.
 function hidrataDraft(dia) {
-  if (!S.draft || S.draft.day !== dia) S.draft = { day: dia, t: Date.now(), ex: {} };
   const s = S.sessao;
   if (!s || s.day !== dia || !PLAN[dia]) return;
+  // criar rascunho vazio aqui contaminaria o estado: na abertura seguinte a
+  // migração de rascunho antigo o leria como treino em andamento
+  if (!S.draft || S.draft.day !== dia) S.draft = { day: dia, t: Date.now(), ex: {} };
 
   PLAN[dia].ex.forEach(function (ex, i) {
     if (S.draft.ex[i]) return;

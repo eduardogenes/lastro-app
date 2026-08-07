@@ -1,0 +1,13 @@
+{
+  "name": "treino-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Registro de treino, cardio e acompanhamento corporal. Arquivo único, sem build.",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "serve": "npx serve ."
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}

@@ -202,6 +202,35 @@ Para testar o service worker é preciso `https` ou `localhost`:
 npx serve .
 ```
 
+## Testes
+
+```
+npm install     # uma vez; instala só o jsdom, e só para os testes
+npm test
+```
+
+80 testes em `tests/`, com o runner nativo do Node. **O app continua sem
+dependência nenhuma** — o jsdom vive fora dele.
+
+`tests/harness.js` sobe o `index.html` num DOM de mentira e expõe `E()` para
+avaliar expressões dentro do escopo do app, que é como se chega em `S`, `view` e
+nas funções internas. Áudio, wake lock e vibração entram como dublês, e o que
+eles registram é observável.
+
+| Arquivo | Cobre |
+|---|---|
+| `sessao.test.js` | Registro contínuo, abertura e encerramento automático, duração, hidratação do rascunho, deload |
+| `retro.test.js` | Lançamento em data passada, do plano e avulso, e o encerramento do treino de hoje |
+| `carga.test.js` | Os seis tipos, total exibido, peso do corpo, correção persistida |
+| `corpo.test.js` | As três regras de ajuste nos limites exatos, médias semanais, cardio |
+| `dados.test.js` | Migração de formatos antigos, exportar e reimportar, histórico não truncado |
+| `cronometro.test.js` | Instante-alvo, tela apagada, aviso único, wake lock, bi-set |
+| `telas.test.js` | Regras inegociáveis, as quatro abas, avisos de dor e pausa, correção de sessão |
+
+Os testes existem porque três bugs sérios apareceram por acidente, testando
+outra coisa — entre eles um que apagava séries já registradas. Cada regressão
+encontrada virou um teste com o nome do que ela quebrava.
+
 ## Publicar
 
 Ver [COMO-PUBLICAR.md](COMO-PUBLICAR.md). Resumo: arrastar a pasta em qualquer
