@@ -7,14 +7,17 @@ const { app, DIA } = require('./harness');
 
 test('iniciar marca o tempo antes da primeira série', async () => {
   const a = await app();
-  assert.ok(a.texto('.ctrl-b.ini').includes('iniciar treino'));
+  assert.strictEqual(a.texto('.day-ini'), 'iniciar', 'o botão fica ao lado da letra do dia');
+  assert.strictEqual(a.$('#relogio'), null, 'sem sessão não há relógio');
 
   await a.E('iniciarSessao()');
   await a.esperar();
   assert.ok(a.E('S.sessao !== null'));
   assert.strictEqual(a.E('S.sessao.manual'), 1);
   assert.strictEqual(a.E('S.done[0].ini'), 'manual');
-  assert.ok(a.texto('#daymeta').includes('em andamento'));
+  assert.ok(a.$('#relogio'), 'o relógio toma o lugar do botão');
+  assert.match(a.texto('#relogio'), /^\d{2}:\d{2}$/, a.texto('#relogio'));
+  assert.strictEqual(a.texto('.day-rel em'), 'em treino');
   a.fechar();
 });
 
@@ -36,7 +39,8 @@ test('pausar para o relógio e retomar continua', async () => {
   await a.E('pausarSessao()');
   await a.esperar();
   assert.ok(a.E('S.sessao.pausadoEm > 0'));
-  assert.ok(a.texto('#daymeta').includes('pausado'));
+  assert.ok(a.$('.day-rel.pausado'), 'o relógio muda de cor e rótulo');
+  assert.strictEqual(a.texto('.day-rel em'), 'pausado');
 
   a.E('S.sessao.pausadoEm = Date.now() - 10*60000');
   const congelado = a.E('duracaoAtual(S.sessao)');
@@ -254,5 +258,43 @@ test('acompanhamento mostra média de duração e marca o aproximado', async () 
   const rotulo = a.$$('.stats span')[1].textContent;
   assert.ok(/méd/.test(rotulo), rotulo);
   assert.strictEqual(a.$$('.aprox').length, 1, 'só a que o app fechou sozinho');
+  a.fechar();
+});
+
+test('o relógio anda sozinho, sem re-render', async () => {
+  const a = await app();
+  await a.E('iniciarSessao()');
+  a.E('S.sessao.inicio = Date.now() - 65*1000');
+  a.E('tickRelogio()');
+  assert.strictEqual(a.texto('#relogio'), '01:05');
+
+  a.E('S.sessao.inicio = Date.now() - 3725*1000');
+  a.E('tickRelogio()');
+  assert.strictEqual(a.texto('#relogio'), '1:02:05', 'passa a mostrar a hora depois de 60 min');
+  a.fechar();
+});
+
+test('relógio congela na pausa e não anda para trás', async () => {
+  const a = await app();
+  await a.E('iniciarSessao()');
+  a.E('S.sessao.inicio = Date.now() - 30*60000');
+  await a.E('pausarSessao()');
+  a.E('S.sessao.pausadoEm = Date.now() - 10*60000');
+  a.E('tickRelogio()');
+  const antes = a.texto('#relogio');
+  a.E('tickRelogio()');
+  assert.strictEqual(a.texto('#relogio'), antes, 'congelado é congelado');
+  assert.strictEqual(antes, '20:00');
+  a.fechar();
+});
+
+test('o relógio para de ticar fora da aba de hoje', async () => {
+  const a = await app();
+  await a.E('iniciarSessao()');
+  assert.ok(a.E('relogioT !== null'));
+  a.E('tab("acomp")');
+  assert.strictEqual(a.E('relogioT'), null, 'sem intervalo rodando à toa');
+  a.E('tab("treino")');
+  assert.ok(a.E('relogioT !== null'));
   a.fechar();
 });

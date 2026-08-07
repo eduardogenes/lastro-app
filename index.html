@@ -64,7 +64,25 @@ html, body {
   align-items: center;
 }
 .eyebrow span:last-child { color: var(--mist); }
-.dayline { display: flex; align-items: baseline; gap: 11px; margin-top: 4px; }
+.dayline { display: flex; align-items: center; gap: 11px; margin-top: 4px; }
+.day-txt { flex: 1; min-width: 0; }
+.day-ini {
+  flex: 0 0 auto; appearance: none; cursor: pointer;
+  background: var(--dawn); border: 0; color: var(--night);
+  font-family: var(--f-d); font-weight: 700; font-size: 13px;
+  padding: 11px 16px; border-radius: 9px; letter-spacing: -.01em;
+}
+.day-rel { flex: 0 0 auto; text-align: right; }
+.day-rel span {
+  display: block; font-family: var(--f-m); font-size: 21px; font-weight: 600;
+  color: var(--dawn); letter-spacing: -.02em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.day-rel em {
+  display: block; font-style: normal; font-family: var(--f-m); font-size: 8.5px;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-top: 4px;
+}
+.day-rel.pausado span { color: var(--mist); }
 .dayletter {
   font-size: 40px; font-weight: 800; line-height: .85;
   letter-spacing: -.03em; color: var(--paper);
@@ -1825,8 +1843,7 @@ function estadoDoDia(P) {
   }
   if (aberta) {
     const r = resumoDaSessao(aberta);
-    const rotulo = aberta.pausadoEm ? 'pausado' : 'em andamento';
-    return `<b>${rotulo}</b> · ${fmtDur(duracaoAtual(aberta))} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtInt(r.vol)+' kg×reps':''}`;
+    return `${r.series} ${r.series===1?'série registrada':'séries registradas'}${r.vol?' · '+fmtInt(r.vol)+' kg×reps':''}`;
   }
   const hoje = sessoesDoDia(Date.now());
   if (hoje.length) {
@@ -1877,12 +1894,40 @@ function abrirCardioRapido(){ view.cardioRapido = !view.cardioRapido; render(); 
 
 // Controles do ciclo. Ficam no cabeçalho porque ação de sessão não pode
 // exigir rolar sete exercícios até o fim.
+// O relógio vive ao lado da letra do dia, que é onde o olho já está.
+// Anda de segundo em segundo sem re-render, para não roubar o foco do campo.
+function relogioTexto(s) {
+  const tot = Math.floor(duracaoAtual(s) / 1000);
+  const h = Math.floor(tot / 3600), m = Math.floor(tot / 60) % 60, seg = tot % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : String(m).padStart(2, '0'))
+    + ':' + String(seg).padStart(2, '0');
+}
+
+function relogioDaSessao() {
+  const s = S.sessao;
+  if (!s) return `<button class="day-ini" onclick="iniciarSessao()">iniciar</button>`;
+  if (s.retro) return '';
+  return `<div class="day-rel ${s.pausadoEm ? 'pausado' : ''}">
+    <span id="relogio">${relogioTexto(s)}</span>
+    <em>${s.pausadoEm ? 'pausado' : 'em treino'}</em>
+  </div>`;
+}
+
+let relogioT = null;
+function tickRelogio() {
+  const el = document.getElementById('relogio');
+  if (!el || !S.sessao) return;
+  el.textContent = relogioTexto(S.sessao);
+}
+function ajustaRelogio() {
+  const ativo = !!(S.sessao && !S.sessao.pausadoEm && !S.sessao.retro && view.tab === 'treino');
+  if (ativo && !relogioT) relogioT = setInterval(tickRelogio, 1000);
+  else if (!ativo && relogioT) { clearInterval(relogioT); relogioT = null; }
+}
+
 function controlesSessao() {
   const s = S.sessao;
-  if (!s) return `<div class="ctrl">
-    <button class="ctrl-b ini" onclick="iniciarSessao()">iniciar treino ${view.day}</button>
-  </div>`;
-  if (s.retro) return '';
+  if (!s || s.retro) return '';
   if (s.pausadoEm) return `<div class="ctrl pausado">
     <button class="ctrl-b ini" onclick="retomarSessao()">retomar</button>
     <button class="ctrl-b" onclick="finalizarSessao()">finalizar</button>
@@ -1940,11 +1985,12 @@ function render() {
     <div class="eyebrow"><span>${diaExtenso(Date.now())}</span><span>ciclo ${cycle} · ${S.done.length} sessões</span></div>
     ${naTreino ? `<div class="dayline">
       <div class="dayletter">${d}</div>
-      <div><div class="dayname">${P.name}</div><div class="daymeta" id="daymeta">${estadoDoDia(P)}</div></div>
+      <div class="day-txt"><div class="dayname">${P.name}</div><div class="daymeta" id="daymeta">${estadoDoDia(P)}</div></div>
+      ${relogioDaSessao()}
     </div>
+    ${controlesSessao()}
     ${faixaSemana()}
-    ${linhaCardio()}
-    ${controlesSessao()}` : ''}
+    ${linhaCardio()}` : ''}
   </div>
   ${view.tab==='treino' ? '<div class="rot">' +
     ROT.map(x => `<button class="${x===view.day?'on':''} ${x===nextDay()?'next':''}" onclick="go('${x}')">${x}</button>`).join('') +
@@ -2116,6 +2162,7 @@ function render() {
   }
 
   app.innerHTML = h;
+  ajustaRelogio();
 }
 
 // ---------- histórico do exercício ----------

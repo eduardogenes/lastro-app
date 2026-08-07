@@ -140,14 +140,13 @@ test('hidratação recupera observação, dor e substituto', async () => {
   a.fechar();
 });
 
-test('cabeçalho mostra o andamento sem re-render', async () => {
+test('cabeçalho conta as séries sem re-render', async () => {
   const a = await app();
   assert.ok(a.texto('#daymeta').includes('séries prescritas'));
 
   a.E('toggle(0)');
   a.preencher(0, 0, 40, 10);
-  assert.ok(a.texto('#daymeta').includes('em andamento'));
-  assert.ok(a.texto('#daymeta').includes('1 série'));
+  assert.ok(a.texto('#daymeta').includes('1 série registrada'), a.texto('#daymeta'));
 
   a.preencher(0, 1, 40, 10);
   assert.ok(a.texto('#daymeta').includes('2 séries'), 'contador acompanha a digitação');
