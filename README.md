@@ -125,6 +125,12 @@ salvar fazia.
 aberta**. É o que impede a sessão em andamento de virar referência de si mesma
 no placeholder, no selo de subir carga e na linha de última vez.
 
+`hidrataDraft(dia)` reconstrói o rascunho a partir do que a sessão aberta já
+registrou. É obrigatório: o rascunho é zerado ao trocar de dia na rotação, e sem
+a reidratação os campos ficariam em branco com as séries já gravadas — e digitar
+por cima apagaria o resto, porque `projeta()` reescreve o conjunto inteiro a
+partir do rascunho.
+
 ### Registro retroativo
 
 "Treinei ontem e não abri o app." Dois casos, e eles são diferentes de propósito:
@@ -149,13 +155,14 @@ fecha o de hoje antes, gravando a duração dele.
 **equipamento**, não da série, então se declara uma vez por exercício em `car`
 e o app lembra para sempre. `S.carga` guarda a correção quando o padrão erra.
 
-| Tipo | O número significa |
-|---|---|
-| `pino` | a carga do pino ou stack |
-| `lado` | o que tem de um lado, sem a barra. O app mostra o total em anilhas |
-| `halter` | o peso de um halter |
-| `corpo` | o que foi acrescentado ao peso do corpo; pode ficar vazio |
-| `assist` | o contrapeso que ajuda |
+| Tipo | O número significa | Mostra o total |
+|---|---|---|
+| `pino` | a carga do pino ou stack | não |
+| `lado` | o que tem de um lado, sem a barra | sim, em anilhas |
+| `halter` | o peso de um halter, com um em cada mão | sim, nas duas mãos |
+| `halter1` | o peso do halter, quando é um só | não |
+| `corpo` | o que foi acrescentado ao peso do corpo; pode ficar vazio | não |
+| `assist` | o contrapeso que ajuda | não |
 
 **O app nunca converte: guarda exatamente o que foi digitado.** Converter seria
 mentira — barra olímpica tem 20 kg, a W tem 10, e articulada tem alavanca

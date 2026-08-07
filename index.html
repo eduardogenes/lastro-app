@@ -745,7 +745,7 @@ const PLAN = {
   B: { name:'Costas largura + Bíceps', tag:'construção do V', ex:[
     {n:'Puxada aberta pronada', car:'pino', g:'dorsal', s:4, r:'8–12', c:1, cue:'Peito para cima, puxe com os cotovelos. Estique os braços por completo em cima.'},
     {n:'Puxada neutra unilateral', car:'pino', g:'dorsal', s:3, r:'10–12', c:1, cue:'Um lado por vez ganha amplitude e corrige assimetria.'},
-    {n:'Remada serrote com halter', car:'halter', g:'costas espessura', s:3, r:'8–12', c:1, cue:'Puxe na direção do quadril, não da axila. Deixe o ombro descer no alongamento.'},
+    {n:'Remada serrote com halter', car:'halter1', g:'costas espessura', s:3, r:'8–12', c:1, cue:'Puxe na direção do quadril, não da axila. Deixe o ombro descer no alongamento.'},
     {n:'Pullover na polia alta', car:'pino', g:'dorsal', s:3, r:'12–15', c:0, cue:'O único que isola dorsal sem bíceps. Braço quase reto.'},
     {n:'Rosca direta na barra W', car:'lado', g:'bíceps', s:3, r:'8–12', c:0, cue:'Sem balanço de tronco. Excêntrica de 3 s.'},
     {n:'Rosca martelo', car:'halter', g:'bíceps', s:3, r:'10–15', c:0, cue:'Braquial e braquiorradial — é o que dá espessura ao braço de lado.'},
@@ -988,11 +988,18 @@ const PRIO = ['delt lateral','delt posterior','dorsal','costas espessura','peito
 // O app NUNCA converte: guarda o que foi digitado. Converter seria mentira —
 // barra olímpica tem 20 kg, a W tem 10, e articulada tem alavanca própria.
 const CARGAS = {
-  pino:   { rot:'kg',    nome:'pino ou stack',   ajuda:'O número é a carga, e pronto.' },
-  lado:   { rot:'kg/lado', nome:'anilha por lado', ajuda:'Só um lado, sem contar a barra. O app mostra o total em anilhas.' },
-  halter: { rot:'kg',    nome:'halter',          ajuda:'O peso de um halter.' },
-  corpo:  { rot:'+kg',   nome:'peso do corpo',   ajuda:'Só o que você acrescentou. Pode ficar vazio.' },
-  assist: { rot:'ajuda', nome:'assistida',       ajuda:'O contrapeso que ajuda. Menos ajuda é mais força.' }
+  pino:    { rot:'kg',      nome:'pino ou stack',
+             ajuda:'O número é a carga, e pronto.' },
+  lado:    { rot:'kg/lado', nome:'anilha por lado', dobra:1, cada:'de cada lado', total:'em anilhas', obs:', fora a barra',
+             ajuda:'Só um lado, sem contar a barra. O app mostra o total em anilhas.' },
+  halter:  { rot:'kg',      nome:'halter em cada mão', dobra:1, cada:'em cada mão', total:'nas duas mãos', obs:'',
+             ajuda:'Um halter por mão. O app mostra o total das duas.' },
+  halter1: { rot:'kg',      nome:'um halter só',
+             ajuda:'Um halter só, segurado com uma ou duas mãos. O número é o peso dele.' },
+  corpo:   { rot:'+kg',     nome:'peso do corpo',
+             ajuda:'Só o que você acrescentou. Pode ficar vazio.' },
+  assist:  { rot:'ajuda',   nome:'assistida',
+             ajuda:'O contrapeso que ajuda. Menos ajuda é mais força.' }
 };
 
 const DORES = [
@@ -1285,6 +1292,34 @@ function draftOf(i) {
   if (!Array.isArray(e.dor)) e.dor = [];
   return e;
 }
+// Reconstrói o rascunho a partir do que a sessão aberta já registrou.
+// Sem isso, navegar entre os dias da rotação no meio do treino deixava os
+// campos em branco — e digitar por cima apagaria as séries que já existiam,
+// porque projeta() reescreve o conjunto inteiro a partir do rascunho.
+function hidrataDraft(dia) {
+  if (!S.draft || S.draft.day !== dia) S.draft = { day: dia, t: Date.now(), ex: {} };
+  const s = S.sessao;
+  if (!s || s.day !== dia || !PLAN[dia]) return;
+
+  PLAN[dia].ex.forEach(function (ex, i) {
+    if (S.draft.ex[i]) return;
+    const base = id(dia, i);
+    const chave = Object.keys(S.logs).filter(function (k) {
+      return (k === base || k.indexOf(base + '~') === 0) &&
+             S.logs[k].some(function (e) { return e.sid === s.sid; });
+    })[0];
+    if (!chave) return;
+    const e = S.logs[chave].filter(function (x) { return x.sid === s.sid; })[0];
+    S.draft.ex[i] = {
+      s: e.sets.map(function (x) { return x ? [x[0], x[1]] : [null, null]; }),
+      obs: e.obs || '',
+      dor: (e.dor || []).slice(),
+      alt: chave === base ? null : chave.slice(base.length + 1),
+      aq: !!e.aq
+    };
+  });
+}
+
 function draftPeek(i) {
   return (S.draft && S.draft.day === view.day && S.draft.ex && S.draft.ex[i]) || null;
 }
@@ -1486,23 +1521,25 @@ function chartSVG(H, modo, rot) {
   return g + '</svg>';
 }
 
-// ---------- total em anilhas ----------
-// Vale para o tipo "por lado": mostra o que vai na barra somando os dois lados,
-// sem incluir o peso da barra, que varia demais para ser chutado.
-function textoAnilhas(i, key, ex) {
+// ---------- total do que está montado ----------
+// Só para os tipos que se dobram: anilha por lado e halter em cada mão.
+// Nunca soma o peso da barra, que varia demais para ser chutado.
+function textoTotal(i, key, ex) {
+  const c = CARGAS[cargaTipo(key, ex)];
+  if (!c || !c.dobra) return '';
   const dr = draftPeek(i);
   let v = null;
   if (dr) for (let k = setsFor(ex)-1; k >= 0; k--) if (dr.s[k] && dr.s[k][0] != null) { v = dr.s[k][0]; break; }
   if (v == null) { const p = lastSet(key, 0); if (p) v = p[0]; }
   if (!v) return '';
-  return `${fmtNum(v)} de cada lado · <b>${fmtNum(totalAnilhas(v))} kg em anilhas</b>, fora a barra`;
+  return `${fmtNum(v)} ${c.cada} · <b>${fmtNum(totalAnilhas(v))} kg ${c.total}</b>${c.obs}`;
 }
 
 function atualizaAnilhas(i) {
   const el = document.getElementById('tot' + i);
   if (!el) return;
   const ex = PLAN[view.day].ex[i];
-  el.innerHTML = textoAnilhas(i, logKey(view.day, i), ex);
+  el.innerHTML = textoTotal(i, logKey(view.day, i), ex);
 }
 
 // ---------- estado do dia ----------
@@ -1569,6 +1606,7 @@ function render() {
   const toDeload = 48 - (trabalho % 48);
 
   const naTreino = view.tab === 'treino';
+  if (naTreino) hidrataDraft(d);
   let h = `<div class="hdr ${naTreino?'':'curto'}">
     <div class="eyebrow"><span>${diaExtenso(Date.now())}</span><span>ciclo ${cycle} · ${S.done.length} sessões</span></div>
     ${naTreino ? `<div class="dayline">
@@ -1656,7 +1694,7 @@ function render() {
         </div>`;
       }
       if (seg || corpo) rows += `<div class="segnote">Carga opcional: deixe o campo vazio para só o peso do corpo.</div>`;
-      if (tipo === 'lado') rows += `<div class="anilhas" id="tot${i}">${textoAnilhas(i, key, ex)}</div>`;
+      if (CARGAS[tipo].dobra) rows += `<div class="anilhas" id="tot${i}">${textoTotal(i, key, ex)}</div>`;
 
       let swap = '';
       if (view.swapOpen === i) {
@@ -1712,7 +1750,7 @@ function render() {
               return `<button class="chip ${tipo===t?'sel':''}" onclick="setCarga(${i},'${t}')">${CARGAS[t].nome}</button>`;
             }).join('')}</div>
             <p class="cue" style="margin:12px 0 0">${CARGAS[tipo].ajuda}</p>
-          </div>` : `<button class="notabtn" onclick="abrirCarga(${i})">carga: ${CARGAS[tipo].nome}${tipo==='lado'?' · o app soma os dois lados':''}</button>`}
+          </div>` : `<button class="notabtn" onclick="abrirCarga(${i})">carga: ${CARGAS[tipo].nome}${CARGAS[tipo].dobra?' · o app soma os dois':''}</button>`}
           ${(dr && (dr.obs || dr.dor.length)) || view.nota === i
             ? `<div class="obs">
                  <div class="obs-h">anotação desta sessão</div>
@@ -1820,7 +1858,7 @@ function renderHist() {
                       : (corpo && !x[0] ? x[1]+' reps' : fmtNum(x[0])+'×'+x[1])}</span>`
         : '<span class="nul">–</span>').join('')}
         ${(seg||corpo)?'':`<span class="nul">${repsOf(s)} reps</span>`}
-        ${!seg && tipo==='lado' && maxLoad(s)?`<span class="nul">${fmtNum(totalAnilhas(maxLoad(s)))} kg em anilhas</span>`:''}
+        ${!seg && CARGAS[tipo].dobra && maxLoad(s)?`<span class="nul">${fmtNum(totalAnilhas(maxLoad(s)))} kg ${CARGAS[tipo].total}</span>`:''}
       </div>
       ${s.dor&&s.dor.length?`<div class="pain">dor em ${s.dor.map(dorName).join(' e ')}</div>`:''}
       ${s.obs?`<div class="hs-obs">${escapeHTML(s.obs)}</div>`:''}
