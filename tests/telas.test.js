@@ -13,7 +13,11 @@ test('um arquivo só, sem dependência externa', async () => {
 test('paleta e tom preservados', async () => {
   ['#0D1520', '#15202E', '#1C2A3B', '#26374C', '#E9EFF6', '#8DA0B8', '#48607C', '#F5A83C', '#E8734A']
     .forEach(function (cor) { assert.ok(HTML.includes(cor), 'sumiu da paleta: ' + cor); });
-  assert.ok(!/[\uD800-\uDBFF][\uDC00-\uDFFF]/.test(HTML), 'interface não usa emoji');
+  // Regra 5: sem emoji. A única exceção autorizada são os marcadores de
+  // período do calendário, declarados em PERIODOS.
+  const semPeriodos = HTML.replace(/const PERIODOS = \[[\s\S]*?\];/, '');
+  assert.ok(!/[\uD800-\uDBFF][\uDC00-\uDFFF]/.test(semPeriodos),
+    'emoji fora do bloco PERIODOS');
 });
 
 test('as quatro abas renderizam', async () => {

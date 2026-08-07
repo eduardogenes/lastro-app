@@ -358,16 +358,14 @@ html, body {
 
 /* ---------- período do dia ---------- */
 .per {
-  text-decoration: none; font-family: var(--f-m); font-size: 7.5px;
-  font-weight: 400; color: var(--dim); margin-left: 2px; vertical-align: super;
-  line-height: 1;
+  text-decoration: none; font-size: 8.5px; line-height: 1;
+  margin-left: 2px; vertical-align: 1px; opacity: .9;
 }
-.cal-d.feito .per { color: rgba(245,168,60,.65); }
 .callegenda {
   display: flex; gap: 14px; margin-top: 10px;
   font-family: var(--f-m); font-size: 9.5px; color: var(--dim);
 }
-.callegenda .per { vertical-align: baseline; margin: 0 4px 0 0; color: var(--mist); }
+.callegenda .per { vertical-align: baseline; margin: 0 4px 0 0; font-size: 10px; }
 
 /* ---------- horário ---------- */
 .horario {
@@ -1742,13 +1740,13 @@ const DIAS_CURTOS = ['seg','ter','qua','qui','sex','sáb','dom'];
 const DIAS_LONGOS = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 
-// Marcador de período no calendário. Letra em vez de emoji porque a regra 5
-// do projeto proíbe emoji, e porque um glifo colorido seria a única coisa
-// colorida fora da paleta no app inteiro. Trocar os rótulos aqui muda tudo.
+// Marcador de período no calendário. É a ÚNICA exceção à regra 5 do projeto,
+// que proíbe emoji na interface — decisão consciente do Eduardo, registrada no
+// README. Não estender para outros lugares sem ele pedir.
 const PERIODOS = [
-  { k:'manha', de:5,  ate:12, rot:'m', nome:'manhã' },
-  { k:'tarde', de:12, ate:18, rot:'t', nome:'tarde' },
-  { k:'noite', de:18, ate:5,  rot:'n', nome:'noite' }
+  { k:'manha', de:5,  ate:12, rot:'\u{1F305}', nome:'manhã' },
+  { k:'tarde', de:12, ate:18, rot:'\u{1F324}\u{FE0F}', nome:'tarde' },
+  { k:'noite', de:18, ate:5,  rot:'\u{1F319}', nome:'noite' }
 ];
 function periodoDe(t) {
   const h = new Date(t).getHours();

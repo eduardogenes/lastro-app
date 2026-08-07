@@ -30,6 +30,9 @@ Elas são load-bearing. Quebrar qualquer uma delas exige decisão consciente.
 3. **Mobile-first de verdade.** Ver contexto de uso acima.
 4. **Identidade visual fixa.** Paleta e tipografia abaixo.
 5. **Interface toda em português**, tom direto, sem emoji, sentence case.
+   Exceção única e deliberada: os três marcadores de período do dia no
+   calendário (`PERIODOS`). Foi decisão do dono do app, não descuido — não
+   estender emoji para outros lugares sem ele pedir.
 6. **Não inventar prescrição de treino.** A ferramenta mede e freia; ela não
    reescreve o programa.
 
