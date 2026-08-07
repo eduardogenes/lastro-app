@@ -294,6 +294,50 @@ html, body {
 .swapopt.cancel, .swapopt.back-orig { background: transparent; }
 .swapopt.cancel b { color: var(--mist); font-family: var(--f-m); font-size: 11px; font-weight: 500; }
 
+/* ---------- cardio ---------- */
+.cardl {
+  display: flex; align-items: center; gap: 10px; margin: 10px 0 0;
+  padding: 8px 11px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--dusk);
+}
+.cardl-t {
+  font-family: var(--f-m); font-size: 9px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--dim);
+}
+.cardl-n { flex: 1; min-width: 0; font-family: var(--f-m); font-size: 11.5px; color: var(--mist); }
+.cardl.feito .cardl-n { color: #7FBF9C; }
+.cardl.feito { border-color: #2F5C46; }
+.cardl-b {
+  appearance: none; cursor: pointer; flex: 0 0 auto;
+  padding: 8px 12px; border-radius: 8px;
+  background: transparent; border: 1px solid var(--line); color: var(--mist);
+  font-family: var(--f-m); font-size: 10.5px;
+}
+.cardq {
+  margin: 7px 0 0; padding: 11px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--dusk);
+}
+
+/* marca de cardio: uma barra discreta, para não competir com a letra do treino */
+.barra-cardio {
+  display: block; height: 2px; border-radius: 1px;
+  background: var(--mist); opacity: .75;
+  margin: 3px auto 0; width: 60%;
+}
+.cal-d .barra-cardio { width: 52%; margin-top: 2px; }
+.cal-d.com-cardio:not(.feito) { border-color: rgba(141,160,184,.35); }
+.tag.card-t { border-color: rgba(141,160,184,.5); color: var(--mist); }
+
+.cardio-dia {
+  display: flex; gap: 12px; align-items: baseline; margin-top: 18px;
+  border-top: 1px solid var(--line); padding-top: 14px;
+}
+.cardio-dia b {
+  font-family: var(--f-m); font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--dim); flex: 0 0 96px; font-weight: 500;
+}
+.cardio-dia span { font-size: 13px; color: var(--mist); line-height: 1.5; }
+
 /* ---------- pendências da sessão ---------- */
 .pend { margin-top: 18px; }
 .pend > div {
@@ -1056,7 +1100,7 @@ const DORES = [
 const MODAIS = ['bike', 'esteira inclinada', 'elíptico', 'remo'];
 
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0 };
-let view = { day:'A', tab:'treino', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null };
+let view = { day:'A', tab:'treino', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false;
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -1795,6 +1839,42 @@ function estadoDoDia(P) {
   return `${P.tag} · ${P.ex.reduce(function (a,e) { return a+e.s; }, 0)} séries prescritas`;
 }
 
+// O cardio vivia enterrado na terceira seção de outra aba. Como é obrigação
+// semanal e fácil de esquecer, o placar passa a ficar onde ele olha todo dia.
+function linhaCardio() {
+  const n = cardioSemana().length;
+  const hoje = cardioDoDia(Date.now());
+  const f = Object.assign({ m:'bike', min:20, i:'leve' }, view.cardioForm);
+  const perna = pernaHoje();
+
+  const resumo = hoje.length
+    ? hoje.map(function (c) { return c.min + ' min de ' + c.m; }).join(' · ')
+    : `${n} de 3 nesta semana`;
+
+  let h = `<div class="cardl ${hoje.length?'feito':''}">
+    <span class="cardl-t">cardio</span>
+    <span class="cardl-n">${resumo}</span>
+    <button class="cardl-b" onclick="abrirCardioRapido()">${view.cardioRapido?'fechar':'registrar'}</button>
+  </div>`;
+
+  if (view.cardioRapido) {
+    h += `<div class="cardq">
+      <div class="chips">${MODAIS.map(function (m) {
+        return `<button class="chip ${f.m===m?'sel':''}" onclick="cardioSet('m','${m}')">${m}</button>`;
+      }).join('')}</div>
+      <div class="chips" style="margin-top:7px">${[15,20,25,30].map(function (v) {
+        return `<button class="chip ${f.min===v?'sel':''}" onclick="cardioSet('min',${v})">${v} min</button>`;
+      }).join('')}${['leve','moderado'].map(function (v) {
+        return `<button class="chip ${f.i===v?'sel':''}" onclick="cardioSet('i','${v}')">${v}</button>`;
+      }).join('')}</div>
+      ${perna.length?`<div class="cwarn" style="margin-top:10px">Você treinou ${perna.join(' e ')} hoje. A regra é não pôr cardio no mesmo período de treino de perna.</div>`:''}
+      <button class="dbtn" style="margin-top:10px" onclick="addCardio()">Registrar ${f.min} min de ${f.m}</button>
+    </div>`;
+  }
+  return h;
+}
+function abrirCardioRapido(){ view.cardioRapido = !view.cardioRapido; render(); }
+
 // Controles do ciclo. Ficam no cabeçalho porque ação de sessão não pode
 // exigir rolar sete exercícios até o fim.
 function controlesSessao() {
@@ -1831,10 +1911,12 @@ function faixaSemana() {
     const futuro = dia > Date.now() && !hoje;
     const livre = marcas.length && marcas.every(function (m) { return m.livre; });
     const acao = marcas.length ? `abrirSessao(${marcas[marcas.length-1].t})` : (futuro ? '' : `abrirAdicionar(${dia})`);
+    const card = cardioDoDia(dia).length;
     cel += `<div class="wd ${hoje?'hoje':''} ${marcas.length?'feito':''} ${livre?'livre':''} ${futuro?'futuro':''}"
       ${acao?`onclick="${acao}"`:''}>
       <span class="wd-d">${DIAS_CURTOS[i]}</span>
       <span class="wd-v">${marcas.length ? marcas.map(marcaDe).join('') : '+'}</span>
+      ${card?'<span class="barra-cardio"></span>':''}
     </div>`;
   }
   return '<div class="semana">' + cel + '</div>';
@@ -1861,6 +1943,7 @@ function render() {
       <div><div class="dayname">${P.name}</div><div class="daymeta" id="daymeta">${estadoDoDia(P)}</div></div>
     </div>
     ${faixaSemana()}
+    ${linhaCardio()}
     ${controlesSessao()}` : ''}
   </div>
   ${view.tab==='treino' ? '<div class="rot">' +
@@ -2236,6 +2319,7 @@ function sameDay(a,b) {
   const x = new Date(a), y = new Date(b);
   return x.getFullYear()===y.getFullYear() && x.getMonth()===y.getMonth() && x.getDate()===y.getDate();
 }
+function cardioDoDia(t) { return S.cardio.filter(function (c) { return sameDay(c.t, t); }); }
 function cardioSemana() {
   const w = weekStart(Date.now());
   return S.cardio.filter(c => c.t >= w).sort((a,b) => b.t - a.t);
@@ -2298,6 +2382,7 @@ async function addCardio() {
   S.cardio.push({ t: Date.now(), m: f.m, min: f.min, i: f.i });
   if (S.cardio.length > 200) S.cardio = S.cardio.slice(-200);
   await save();
+  view.cardioRapido = false;
   render();
   const n = cardioSemana().length;
   toast(`${f.min} min de ${f.m} registrados · ${n} de 3 nesta semana`);
@@ -2365,13 +2450,20 @@ function renderAcomp() {
     const futuro = t > Date.now() && !hoje;
     const livre = marcas.length && marcas.every(function (m) { return m.livre; });
     const acao = marcas.length ? `abrirSessao(${marcas[marcas.length-1].t})` : (futuro ? '' : `abrirAdicionar(${t})`);
-    cel += `<span class="cal-d ${marcas.length?'feito':''} ${livre?'livre':''} ${hoje?'hoje':''} ${futuro?'futuro':''}"
+    const card = cardioDoDia(t).length;
+    cel += `<span class="cal-d ${marcas.length?'feito':''} ${livre?'livre':''} ${hoje?'hoje':''} ${futuro?'futuro':''} ${card?'com-cardio':''}"
       ${acao?`onclick="${acao}"`:''}>
       <em>${dia}</em>${marcas.length?'<i>'+marcas.map(marcaDe).join('')+'</i>':''}
+      ${card?'<span class="barra-cardio"></span>':''}
     </span>`;
   }
 
   const lista = S.done.slice().filter(function (x) { return x.t >= de && x.t < ate; }).sort(function (a,b) { return b.t - a.t; });
+  const cardMes = S.cardio.filter(function (c) { return c.t >= de && c.t < ate; });
+  const soCardio = Object.keys(cardMes.reduce(function (acc, c) {
+    if (!sessoesDoDia(c.t).length) acc[new Date(c.t).toDateString()] = 1;
+    return acc;
+  }, {})).length;
 
   return `<div class="data">
     <div class="mesnav">
@@ -2389,6 +2481,7 @@ function renderAcomp() {
     <div class="cal">${cel}</div>
 
     ${med!==null?`<p class="mediasem"><b>${fmtDec(med)}</b> treinos por semana<br><span>média das últimas 4 semanas</span></p>`:''}
+    ${cardMes.length?`<p class="mediasem" style="margin-top:14px"><b>${cardMes.length}</b> ${cardMes.length===1?'sessão de cardio':'sessões de cardio'}<br><span>${fmtInt(cardMes.reduce(function(a,c){return a+c.min;},0))} minutos no mês${soCardio?' · '+soCardio+' em '+(soCardio===1?'dia sem musculação':'dias sem musculação'):''}</span></p>`:''}
 
     <button class="dbtn" style="margin-top:22px" onclick="abrirAdicionar()">Registrar um treino passado</button>
     <p class="cue" style="margin:9px 0 0">Ou toque num dia vazio do calendário.</p>
@@ -2406,6 +2499,7 @@ function renderAcomp() {
         <span class="sess-l ${m.livre?'livre':''}">${marcaDe(m)}</span>
         <span class="sess-n">${desc}${!m.livre && m.dur && m.fim !== 'manual' ? ' <em class="aprox">aprox</em>' : ''}</span>
         ${aberta?'<span class="sess-o">em andamento</span>':''}
+        ${cardioDoDia(m.t).length?'<span class="tag card-t">cardio</span>':''}
         ${m.retro?'<span class="tag">retroativo</span>':''}
         ${m.dl?'<span class="tag dl-t">deload</span>':''}
       </div>`;
@@ -2970,7 +3064,7 @@ function toast(msg) {
 
 // ---------- actions ----------
 function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); window.scrollTo(0,0); }
-function tab(t){ view.tab=t; view.hist=null; view.json=null; view.paste=false; view.retro=false; view.sessao=null; view.add=null; view.mes=0; render(); window.scrollTo(0,0); }
+function tab(t){ view.tab=t; view.hist=null; view.json=null; view.paste=false; view.retro=false; view.sessao=null; view.add=null; view.mes=0; view.cardioRapido=false; render(); window.scrollTo(0,0); }
 function toggle(i){ view.open = view.open===i ? null : i; view.swapOpen = null; view.nota = null; view.carga = null; render(); }
 function escAttr(s){ return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 function dorName(k){ const x = DORES.filter(y=>y.k===k)[0]; return x ? x.t : k; }
@@ -3146,6 +3240,14 @@ function renderSessao() {
       ${p.pulado.length?`<div><b>${p.pulado.length} ${p.pulado.length===1?'pulado':'pulados'}</b><span>${p.pulado.map(function(x){return x.nome;}).join(', ')}</span></div>`:''}
       ${p.parcial.length?`<div><b>${p.parcial.length} ${p.parcial.length===1?'parcial':'parciais'}</b><span>${p.parcial.map(function(x){return x.nome;}).join(', ')}</span></div>`:''}
       ${p.nada.length?`<div><b>${p.nada.length} não ${p.nada.length===1?'feito':'feitos'}</b><span>${p.nada.map(function(x){return x.nome;}).join(', ')}</span></div>`:''}
+    </div>`;
+  }
+
+  const card = cardioDoDia(marca.t);
+  if (card.length) {
+    h += `<div class="cardio-dia">
+      <b>cardio no mesmo dia</b>
+      <span>${card.map(function (c) { return c.min + ' min de ' + c.m + ' · ' + c.i; }).join('<br>')}</span>
     </div>`;
   }
 

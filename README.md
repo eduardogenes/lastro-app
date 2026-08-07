@@ -166,6 +166,22 @@ histórico daquele exercício — ele aparece na sessão, não na linha do tempo
 supino. Ao finalizar, a confirmação avisa sobre parcial e não feito; **pulado não
 gera aviso**, porque perguntar de novo seria o app duvidando de você.
 
+### Cardio
+
+Ele está em superávit: o cardio existe por saúde cardiovascular, capacidade de
+trabalho e apetite. **Nada na interface fala em caloria, gasto ou queima, e não
+há opção de HIIT** — a justificativa do HIIT é eficiência de queima, que não é
+objetivo aqui, e o custo é fadiga competindo com os treinos de perna.
+
+Como é obrigação semanal e fácil de esquecer, o placar fica na tela de hoje, com
+registro rápido no lugar. O aviso de treino de perna no mesmo dia aparece na hora
+de registrar — sinaliza, nunca bloqueia.
+
+No histórico, cardio é marcado por uma **barra fina** embaixo da célula, na faixa
+da semana e no calendário. Barra em vez de letra ou cor de fundo porque a letra do
+treino manda na célula; o cardio é informação secundária e não pode competir com
+ela. Dia só de cardio fica marcado sem virar dia treinado.
+
 ### Registro retroativo
 
 "Treinei ontem e não abri o app." Dois casos, e eles são diferentes de propósito:
