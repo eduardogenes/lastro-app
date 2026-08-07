@@ -84,14 +84,19 @@ S = {
   },
   done: [{ day: 'A', t: 0, sid: 0, dur: 0, dl: 1, retro: 1 }],
   //   sid     liga a marca às entradas de logs da mesma sessão
-  //   dur     duração em ms, ausente em sessões anteriores ao registro contínuo
+  //   dur     duração líquida em ms, já sem as pausas
+  //   ini     'manual' se você tocou em iniciar, 'auto' se nasceu na 1ª série
+  //   fim     'manual' se você encerrou, 'auto' se o app fechou sozinho
+  //   pausado ms de pausa, quando houve
+  //   pulados exercícios que você decidiu pular
   //   dl      exclui da conta das 48 sessões
   //   retro   registrado depois, em data passada
   // Sessão avulsa (fora do plano) não tem `day` e traz:
   //   livre: 1, grupos: ['peito','tríceps'], nome: 'treino no hotel'
   deload: false,
   draft: null,                          // buffer de digitação da sessão aberta
-  sessao: null,                         // { day, inicio, ultima, sid } ou null
+  sessao: null,                         // sessão aberta, ou null:
+  //   { day, inicio, ultima, sid, manual, pausadoEm, pausas: [{de,ate}], pulados: ['A2'] }
   cardio: [{ t: 0, m: 'bike', min: 20, i: 'leve' }],
   body: { peso: [{ t: 0, v: 73.4 }], cintura: [{ t: 0, v: 80.5 }] },
   carga: { 'A1': 'lado' },              // correção do tipo de carga por exercício
@@ -130,6 +135,36 @@ registrou. É obrigatório: o rascunho é zerado ao trocar de dia na rotação, 
 a reidratação os campos ficariam em branco com as séries já gravadas — e digitar
 por cima apagaria o resto, porque `projeta()` reescreve o conjunto inteiro a
 partir do rascunho.
+
+### Ciclo da sessão
+
+Salvar e encerrar são coisas diferentes, e a distinção é o que sustenta o
+desenho. **Salvar era pré-condição**: sem clicar, o dado não existia. **Encerrar
+não é pré-condição de nada** — as séries já estão gravadas desde a digitação. O
+botão só acrescenta precisão à duração. Esquecer custa precisão, nunca dado.
+
+- **Iniciar** é opcional e marca o tempo antes do aquecimento. Sem ele, a
+  primeira série completa abre a sessão como sempre.
+- **Pausar** para o relógio, não a sessão. Digitar uma série retoma sozinho —
+  digitar é prova de que voltou. Sessão pausada não morre por inatividade, só na
+  virada do dia.
+- **Finalizar** grava o tempo até o toque (`fim: 'manual'`). Sem ele, o app fecha
+  por inatividade e o tempo vai até a última série (`fim: 'auto'`), que é o melhor
+  palpite quando ninguém disse "acabei". O detalhe da sessão diz qual dos dois foi.
+
+### Os quatro estados de um exercício
+
+| Estado | O que é | Como o app sabe |
+|---|---|---|
+| **feito** | Todas as séries prescritas | entrada com séries completas |
+| **parcial** | Começou e não terminou | entrada com menos séries |
+| **pulado** | Você disse não. É decisão | está em `sessao.pulados` |
+| **não feito** | Zero séries, nenhuma decisão. É omissão | derivado da ausência |
+
+**Só a decisão é gravada; a omissão é derivada.** Pular não cria entrada no
+histórico daquele exercício — ele aparece na sessão, não na linha do tempo do
+supino. Ao finalizar, a confirmação avisa sobre parcial e não feito; **pulado não
+gera aviso**, porque perguntar de novo seria o app duvidando de você.
 
 ### Registro retroativo
 

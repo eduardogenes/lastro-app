@@ -294,6 +294,45 @@ html, body {
 .swapopt.cancel, .swapopt.back-orig { background: transparent; }
 .swapopt.cancel b { color: var(--mist); font-family: var(--f-m); font-size: 11px; font-weight: 500; }
 
+/* ---------- pendências da sessão ---------- */
+.pend { margin-top: 18px; }
+.pend > div {
+  display: flex; gap: 10px; align-items: baseline;
+  border-top: 1px solid var(--line); padding: 11px 0;
+}
+.pend b {
+  font-family: var(--f-m); font-size: 11px; font-weight: 500;
+  color: var(--mist); flex: 0 0 96px;
+}
+.pend span { font-size: 12.5px; color: var(--dim); line-height: 1.4; }
+.aprox {
+  font-style: normal; font-size: 9px; letter-spacing: .08em;
+  color: var(--dim); border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px;
+}
+
+/* ---------- ciclo da sessão ---------- */
+.ctrl { display: flex; gap: 7px; margin: 12px 0 0; }
+.ctrl-b {
+  flex: 1; appearance: none; cursor: pointer; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--dusk); color: var(--paper);
+  font-family: var(--f-d); font-weight: 600; font-size: 13.5px; padding: 11px 0;
+}
+.ctrl-b.ini { background: var(--dawn); border-color: var(--dawn); color: var(--night); }
+.ctrl-b.fim { color: var(--dawn); border-color: rgba(245,168,60,.5); }
+.ctrl.pausado .ctrl-b { border-color: rgba(245,168,60,.45); }
+
+.tag.ok-t { border-color: #2F5C46; color: #7FBF9C; }
+.tag.parcial-t { border-color: #6B5230; color: var(--dawn); }
+.tag.pulado-t { border-color: var(--line); color: var(--dim); }
+.ex.pulado .ex-name { color: var(--dim); }
+.ex.pulado .sets { display: none; }
+.ex.pulado .chev { opacity: .3; }
+.puladobox {
+  display: flex; align-items: center; gap: 10px; margin: 8px 0 2px;
+  font-family: var(--f-m); font-size: 11px; color: var(--dim);
+}
+.puladobox span { flex: 1; }
+
 /* ---------- tipo de carga ---------- */
 .anilhas {
   font-family: var(--f-m); font-size: 10.5px; color: var(--dim);
@@ -1157,6 +1196,63 @@ async function load() {
 const SESSAO_LIMITE = 4*3600*1000;
 
 function sessaoAberta() { return S.sessao || null; }
+function estaPausado() { return !!(S.sessao && S.sessao.pausadoEm); }
+
+// Duração líquida: tempo total menos o que foi pausado. O botão nunca é
+// pré-condição para gravar série — ele só acrescenta precisão ao tempo.
+// Só conta pausa que já aconteceu até o instante medido. Sem esse recorte, a
+// pausa em aberto era descontada de um intervalo que terminava antes dela, e o
+// relógio congelado andava para trás enquanto o treino estava pausado.
+function somaPausas(s, ate) {
+  const lim = ate != null ? ate : Date.now();
+  let ms = (s.pausas || []).reduce(function (a, p) {
+    return a + Math.max(0, Math.min(p.ate != null ? p.ate : lim, lim) - p.de);
+  }, 0);
+  if (s.pausadoEm && s.pausadoEm < lim) ms += lim - s.pausadoEm;
+  return ms;
+}
+function duracaoSessao(s, fim) {
+  if (!s) return 0;
+  const ate = fim != null ? fim : Date.now();
+  return Math.max(0, ate - s.inicio - somaPausas(s, ate));
+}
+// Pausado, o relógio para no instante da pausa. Correndo, anda sozinho.
+function duracaoAtual(s) {
+  return duracaoSessao(s, s.pausadoEm || Date.now());
+}
+
+async function iniciarSessao() {
+  if (S.sessao) return;
+  const agora = Date.now();
+  S.sessao = { day: view.day, inicio: agora, ultima: agora, sid: agora, manual: 1, pausas: [], pulados: [] };
+  const marca = { day: view.day, t: agora, sid: agora, ini: 'manual' };
+  if (S.deload) marca.dl = 1;
+  S.done.push(marca);
+  S.done.sort(function (x, y) { return x.t - y.t; });
+  segurarTela();
+  await save();
+  render(); window.scrollTo(0, 0);
+  toast('Treino ' + view.day + ' iniciado. O tempo começa agora.');
+}
+
+async function pausarSessao() {
+  if (!S.sessao || S.sessao.pausadoEm) return;
+  S.sessao.pausadoEm = Date.now();
+  soltarTela();
+  await save(); render();
+  toast('Treino pausado. O relógio parou.');
+}
+
+async function retomarSessao(silencioso) {
+  const s = S.sessao;
+  if (!s || !s.pausadoEm) return;
+  if (!s.pausas) s.pausas = [];
+  s.pausas.push({ de: s.pausadoEm, ate: Date.now() });
+  s.pausadoEm = null;
+  segurarTela();
+  await save();
+  if (!silencioso) { render(); toast('Treino retomado.'); }
+}
 
 function encerraSePreciso() {
   const s = S.sessao;
@@ -1165,21 +1261,34 @@ function encerraSePreciso() {
     // sessão retroativa fecha por inatividade real ou na virada do dia de uso
     const ref = s.tocado || s.inicio;
     if (Date.now() - ref < SESSAO_LIMITE && sameDay(ref, Date.now())) return false;
-    fechaSessao();
+    fechaSessao('auto');
+    return true;
+  }
+  // pausar é intenção declarada: só a virada do dia encerra
+  if (s.pausadoEm) {
+    if (sameDay(s.inicio, Date.now())) return false;
+    fechaSessao('auto');
     return true;
   }
   const parada = Date.now() - (s.ultima || s.inicio);
   if (parada < SESSAO_LIMITE && sameDay(s.inicio, Date.now())) return false;
-  fechaSessao();
+  fechaSessao('auto');
   return true;
 }
 
-function fechaSessao() {
+function fechaSessao(comoFim) {
   const s = S.sessao;
   if (!s) return;
   const marca = S.done.filter(function (x) { return x.sid === s.sid; })[0];
-  // retroativo já veio com a duração informada no formulário, se houve
-  if (marca && !s.retro) marca.dur = Math.max(0, (s.ultima || s.inicio) - s.inicio);
+  if (marca && !s.retro) {
+    // sem "acabei", o melhor palpite é a última série; com, é o instante do toque
+    const fim = comoFim === 'manual' ? Date.now() : (s.ultima || s.inicio);
+    marca.dur = duracaoSessao(s, fim);
+    marca.fim = comoFim === 'manual' ? 'manual' : 'auto';
+    const pausado = somaPausas(s);
+    if (pausado > 60000) marca.pausado = pausado;
+    if (s.pulados && s.pulados.length) marca.pulados = s.pulados.slice();
+  }
   S.sessao = null;
   S.draft = null;
   view.fired = {};
@@ -1192,8 +1301,8 @@ function fechaSessao() {
 function abreSessao(dia) {
   if (S.sessao) return S.sessao;
   const agora = Date.now();
-  S.sessao = { day: dia, inicio: agora, ultima: agora, sid: agora };
-  const marca = { day: dia, t: agora, sid: agora };
+  S.sessao = { day: dia, inicio: agora, ultima: agora, sid: agora, pausas: [], pulados: [] };
+  const marca = { day: dia, t: agora, sid: agora, ini: 'auto' };
   if (S.deload) marca.dl = 1;
   S.done.push(marca);
   if (S.done.length > 3000) S.done = S.done.slice(-3000);
@@ -1228,6 +1337,12 @@ function projeta(i) {
   if (!sets) { removeProjecao(key); return; }
 
   const s = abreSessao(dia);
+  // digitar é prova de que voltou: retoma sozinho em vez de exigir dois toques
+  if (s.pausadoEm) {
+    if (!s.pausas) s.pausas = [];
+    s.pausas.push({ de: s.pausadoEm, ate: Date.now() });
+    s.pausadoEm = null;
+  }
   if (s.retro) { s.tocado = Date.now(); }
   else { s.ultima = Date.now(); s.day = dia; }
 
@@ -1260,6 +1375,109 @@ function projetaTudo() {
   const dia = S.sessao ? S.sessao.day : view.day;
   if (!PLAN[dia] || !S.draft || S.draft.day !== dia) return;
   PLAN[dia].ex.forEach(function (ex, i) { projeta(i); });
+}
+
+// ---------- os quatro estados de um exercício numa sessão ----------
+// "Pulei" e "não fiz" são coisas diferentes: uma é decisão, a outra é omissão.
+// Só a decisão é gravada; a omissão é derivada da ausência de registro.
+function entradaDaSessao(dia, i, sid) {
+  const base = id(dia, i);
+  const chaves = Object.keys(S.logs).filter(function (k) {
+    return k === base || k.indexOf(base + '~') === 0;
+  });
+  for (let j = 0; j < chaves.length; j++) {
+    const e = S.logs[chaves[j]].filter(function (x) { return x.sid === sid; })[0];
+    if (e) return e;
+  }
+  return null;
+}
+
+function estadoEx(dia, i, sid, pulados) {
+  const ex = PLAN[dia] && PLAN[dia].ex[i];
+  if (!ex) return 'nada';
+  const e = entradaDaSessao(dia, i, sid);
+  if (e) {
+    const feitas = e.sets.filter(Boolean).length;
+    const previstas = e.dl ? Math.ceil(ex.s / 2) : ex.s;
+    return feitas >= previstas ? 'feito' : 'parcial';
+  }
+  if ((pulados || []).indexOf(id(dia, i)) >= 0) return 'pulado';
+  return 'nada';
+}
+
+// resumo de pendências de uma sessão, para a confirmação e para o detalhe
+function pendencias(dia, sid, pulados) {
+  const r = { feito: [], parcial: [], pulado: [], nada: [] };
+  if (!PLAN[dia]) return r;
+  PLAN[dia].ex.forEach(function (ex, i) {
+    r[estadoEx(dia, i, sid, pulados)].push({ i: i, nome: ex.n });
+  });
+  return r;
+}
+
+function ehPulado(i) {
+  const s = S.sessao;
+  return !!(s && (s.pulados || []).indexOf(id(view.day, i)) >= 0);
+}
+
+async function pularEx(i) {
+  const s = S.sessao || abreSessaoVazia();
+  if (!s.pulados) s.pulados = [];
+  const chave = id(view.day, i);
+  const j = s.pulados.indexOf(chave);
+  if (j >= 0) s.pulados.splice(j, 1);
+  else {
+    s.pulados.push(chave);
+    if (view.open === i) view.open = null;
+  }
+  await save(); render();
+  toast(j >= 0 ? 'Exercício de volta.' : 'Exercício pulado nesta sessão.');
+}
+
+// pular antes de qualquer série também abre a sessão: é uma decisão do treino
+function abreSessaoVazia() {
+  const agora = Date.now();
+  S.sessao = { day: view.day, inicio: agora, ultima: agora, sid: agora, pausas: [], pulados: [] };
+  const marca = { day: view.day, t: agora, sid: agora, ini: 'auto' };
+  if (S.deload) marca.dl = 1;
+  S.done.push(marca);
+  S.done.sort(function (x, y) { return x.t - y.t; });
+  return S.sessao;
+}
+
+// ---------- finalizar ----------
+async function finalizarSessao() {
+  const s = S.sessao;
+  if (!s) return;
+  const p = pendencias(s.day, s.sid, s.pulados);
+  const feitas = p.feito.length;
+
+  if (!feitas && !p.parcial.length) {
+    if (!confirm('Nenhuma série registrada neste treino. Descartar a sessão?')) return;
+    S.done = S.done.filter(function (x) { return x.sid !== s.sid; });
+    S.sessao = null; S.draft = null; view.open = null; view.fired = {};
+    view.day = nextDay();
+    soltarTela();
+    await save(); render(); window.scrollTo(0, 0);
+    toast('Sessão descartada.');
+    return;
+  }
+
+  const pend = p.parcial.concat(p.nada);
+  if (pend.length) {
+    const lista = pend.slice(0, 4).map(function (x) { return '· ' + x.nome; }).join('\n');
+    const resto = pend.length > 4 ? '\ne mais ' + (pend.length - 4) : '';
+    if (!confirm('Finalizar com ' + pend.length + (pend.length === 1 ? ' exercício pendente?' : ' exercícios pendentes?')
+      + '\n\n' + lista + resto + '\n\nEles ficam marcados como não feitos no histórico.')) return;
+  }
+
+  const dia = s.day;
+  const dur = duracaoSessao(s, Date.now());
+  fechaSessao('manual');
+  view.open = null;
+  soltarTela();
+  await save(); render(); window.scrollTo(0, 0);
+  toast('Treino ' + dia + ' encerrado · ' + fmtDur(dur) + ' · ' + feitas + (feitas === 1 ? ' exercício' : ' exercícios'));
 }
 
 // entradas da sessão aberta não servem de referência para elas mesmas
@@ -1563,7 +1781,8 @@ function estadoDoDia(P) {
   }
   if (aberta) {
     const r = resumoDaSessao(aberta);
-    return `<b>em andamento</b> · ${fmtDur(aberta.ultima - aberta.inicio)} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtInt(r.vol)+' kg×reps':''}`;
+    const rotulo = aberta.pausadoEm ? 'pausado' : 'em andamento';
+    return `<b>${rotulo}</b> · ${fmtDur(duracaoAtual(aberta))} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtInt(r.vol)+' kg×reps':''}`;
   }
   const hoje = sessoesDoDia(Date.now());
   if (hoje.length) {
@@ -1574,6 +1793,24 @@ function estadoDoDia(P) {
       : `<b>treino ${m.day} encerrado hoje</b> · ${fmtDur(m.dur)} · ${r.series} ${r.series===1?'série':'séries'}`;
   }
   return `${P.tag} · ${P.ex.reduce(function (a,e) { return a+e.s; }, 0)} séries prescritas`;
+}
+
+// Controles do ciclo. Ficam no cabeçalho porque ação de sessão não pode
+// exigir rolar sete exercícios até o fim.
+function controlesSessao() {
+  const s = S.sessao;
+  if (!s) return `<div class="ctrl">
+    <button class="ctrl-b ini" onclick="iniciarSessao()">iniciar treino ${view.day}</button>
+  </div>`;
+  if (s.retro) return '';
+  if (s.pausadoEm) return `<div class="ctrl pausado">
+    <button class="ctrl-b ini" onclick="retomarSessao()">retomar</button>
+    <button class="ctrl-b" onclick="finalizarSessao()">finalizar</button>
+  </div>`;
+  return `<div class="ctrl">
+    <button class="ctrl-b" onclick="pausarSessao()">pausar</button>
+    <button class="ctrl-b fim" onclick="finalizarSessao()">finalizar</button>
+  </div>`;
 }
 
 function atualizaEstado() {
@@ -1623,7 +1860,8 @@ function render() {
       <div class="dayletter">${d}</div>
       <div><div class="dayname">${P.name}</div><div class="daymeta" id="daymeta">${estadoDoDia(P)}</div></div>
     </div>
-    ${faixaSemana()}` : ''}
+    ${faixaSemana()}
+    ${controlesSessao()}` : ''}
   </div>
   ${view.tab==='treino' ? '<div class="rot">' +
     ROT.map(x => `<button class="${x===view.day?'on':''} ${x===nextDay()?'next':''}" onclick="go('${x}')">${x}</button>`).join('') +
@@ -1717,7 +1955,9 @@ function render() {
         </div>`;
       }
 
-      return `<div class="ex ${o?'open':''}">
+      const pulado = ehPulado(i);
+      const estado = S.sessao ? estadoEx(d, i, S.sessao.sid, S.sessao.pulados) : null;
+      return `<div class="ex ${o?'open':''} ${pulado?'pulado':''}">
         <div class="ex-top" onclick="toggle(${i})">
           <div class="ord">${String(i+1).padStart(2,'0')}</div>
           <div class="ex-body">
@@ -1730,7 +1970,10 @@ function render() {
               ${ex.bi===2?'<span class="tag bi-t">bi-set · o descanso é aqui</span>':''}
               ${alt?'<span class="tag swap-t">substituído</span>':''}
               ${S.deload?'<span class="tag dl-t">deload</span>':''}
-              ${up?'<span class="up">↑ subir carga</span>':''}
+              ${estado==='feito'?'<span class="tag ok-t">feito</span>':''}
+              ${estado==='parcial'?'<span class="tag parcial-t">parcial</span>':''}
+              ${pulado?'<span class="tag pulado-t">pulado</span>':''}
+              ${up&&!pulado?'<span class="up">↑ subir carga</span>':''}
             </div>
             ${dorRep
               ? `<div class="painbox">
@@ -1743,6 +1986,10 @@ function render() {
           </div>
           <div class="chev">›</div>
         </div>
+        ${pulado?`<div class="puladobox">
+          <span>Pulado nesta sessão.</span>
+          <button class="aqbtn" onclick="pularEx(${i})">desfazer</button>
+        </div>`:''}
         <div class="sets">
           <p class="cue">${ex.cue}</p>
           ${rows}
@@ -1752,7 +1999,8 @@ function render() {
             <button class="aqbtn" onclick="toggleAq(0)">${dr&&dr.aq?'feito':'marcar'}</button>
           </div>`:''}
           <div class="exacoes">
-            ${lista.length?`<button class="histbtn" onclick="toggleSwap(${i})">${view.swapOpen===i?'fechar':'trocar exercício'}</button>`:''}
+            ${lista.length?`<button class="histbtn" onclick="toggleSwap(${i})">${view.swapOpen===i?'fechar':'trocar'}</button>`:''}
+            <button class="histbtn" onclick="pularEx(${i})">pular</button>
             <button class="histbtn" onclick="openHist(${i})">histórico</button>
           </div>
           ${swap}
@@ -2081,7 +2329,8 @@ function totaisDoPeriodo(de, ate) {
   });
   const dias = {};
   marcas.forEach(function (m) { dias[new Date(m.t).toDateString()] = 1; });
-  return { marcas: marcas, vol: vol, tempo: tempo, series: series, dias: Object.keys(dias).length };
+  const comTempo = marcas.filter(function (m) { return m.dur; }).length;
+  return { marcas: marcas, vol: vol, tempo: tempo, series: series, comTempo: comTempo, dias: Object.keys(dias).length };
 }
 
 // média móvel de treinos por semana nas últimas 4 semanas fechadas.
@@ -2133,7 +2382,7 @@ function renderAcomp() {
 
     <div class="stats" style="margin-top:16px">
       <div><b>${T.dias}</b><span>${T.dias===1?'dia treinado':'dias treinados'}</span></div>
-      <div><b>${T.tempo?fmtDur(T.tempo):'–'}</b><span>tempo total</span></div>
+      <div><b>${T.tempo?fmtDur(T.tempo):'–'}</b><span>tempo total${T.comTempo>1?' · méd '+fmtDur(Math.round(T.tempo/T.comTempo)):''}</span></div>
       <div><b>${T.vol?fmtK(T.vol):'–'}</b><span>volume · kg×reps</span></div>
     </div>
 
@@ -2155,7 +2404,7 @@ function renderAcomp() {
       return `<div class="sessrow" onclick="abrirSessao(${m.t})">
         <span class="sess-d">${fmtDate(m.t)}</span>
         <span class="sess-l ${m.livre?'livre':''}">${marcaDe(m)}</span>
-        <span class="sess-n">${desc}</span>
+        <span class="sess-n">${desc}${!m.livre && m.dur && m.fim !== 'manual' ? ' <em class="aprox">aprox</em>' : ''}</span>
         ${aberta?'<span class="sess-o">em andamento</span>':''}
         ${m.retro?'<span class="tag">retroativo</span>':''}
         ${m.dl?'<span class="tag dl-t">deload</span>':''}
@@ -2196,7 +2445,7 @@ function fecharAdicionar(){ view.add = null; render(); window.scrollTo(0,0); }
 
 async function concluirRetro() {
   const t = S.sessao ? S.sessao.inicio : null;
-  fechaSessao();
+  fechaSessao('manual');
   view.open = null;
   await save();
   render(); window.scrollTo(0,0);
@@ -2297,7 +2546,7 @@ async function gravarRetro(detalhar) {
     // Só pode existir uma sessão aberta. Fechar a de hoje antes grava a
     // duração dela; sem isso ela ficaria órfã, com o tempo perdido.
     let fechou = null;
-    if (S.sessao) { fechou = S.sessao.day; fechaSessao(); }
+    if (S.sessao) { fechou = S.sessao.day; fechaSessao('manual'); }
     S.sessao = { day: a.tipo, inicio: a.t, ultima: a.t, sid: sid, retro: 1, tocado: Date.now() };
     S.draft = null;
     view.tab = 'treino'; view.day = a.tipo; view.open = 0;
@@ -2870,6 +3119,9 @@ function renderSessao() {
   const recordes = R.itens.filter(function (x) { return x.recCarga || x.recMet; }).length;
   const app = document.getElementById('app');
 
+  const exato = marca.fim === 'manual';
+  const p = pendencias(marca.day, marca.sid, marca.pulados);
+
   let h = `<div class="hhdr">
     <button class="back" onclick="fecharSessao()">‹ voltar</button>
     <div class="eyebrow"><span>treino ${marca.day}${aberta?' · em andamento':''}</span><span>${diaExtenso(marca.t)}</span></div>
@@ -2877,10 +3129,25 @@ function renderSessao() {
   </div>
   <div class="hwrap">
     <div class="stats">
-      <div><b>${dur!=null?fmtDur(dur):'–'}</b><span>tempo de treino</span></div>
+      <div><b>${dur!=null?fmtDur(dur):'–'}</b><span>${aberta?'em andamento':(dur==null?'tempo não medido':(exato?'tempo exato':'tempo aproximado'))}</span></div>
       <div><b>${R.vol?fmtInt(R.vol):'–'}</b><span>volume · kg×reps</span></div>
       <div><b class="${recordes?'up':''}">${recordes}</b><span>${recordes===1?'recorde':'recordes'}</span></div>
     </div>`;
+
+  const notas = [];
+  if (!aberta && dur != null && !exato)
+    notas.push('Você não encerrou este treino; o app fechou sozinho e o tempo vai até a última série registrada.');
+  if (marca.pausado) notas.push(fmtDur(marca.pausado) + ' de pausa, fora da conta.');
+  if (marca.ini === 'manual') notas.push('Início marcado por você, antes do aquecimento.');
+  if (notas.length) h += `<p class="cue" style="margin:16px 0 0">${notas.join(' ')}</p>`;
+
+  if (p.pulado.length || p.parcial.length || p.nada.length) {
+    h += `<div class="pend">
+      ${p.pulado.length?`<div><b>${p.pulado.length} ${p.pulado.length===1?'pulado':'pulados'}</b><span>${p.pulado.map(function(x){return x.nome;}).join(', ')}</span></div>`:''}
+      ${p.parcial.length?`<div><b>${p.parcial.length} ${p.parcial.length===1?'parcial':'parciais'}</b><span>${p.parcial.map(function(x){return x.nome;}).join(', ')}</span></div>`:''}
+      ${p.nada.length?`<div><b>${p.nada.length} não ${p.nada.length===1?'feito':'feitos'}</b><span>${p.nada.map(function(x){return x.nome;}).join(', ')}</span></div>`:''}
+    </div>`;
+  }
 
   if (R.tempo) h += `<p class="cue" style="margin:16px 0 0">Mais ${fmtInt(R.tempo)} segundos de prancha, contados à parte do volume.</p>`;
   if (R.dores.length)
