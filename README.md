@@ -157,7 +157,7 @@ e o app lembra para sempre. `S.carga` guarda a correção quando o padrão erra.
 
 | Tipo | O número significa | Mostra o total |
 |---|---|---|
-| `pino` | a carga do pino ou stack | não |
+| `pino` | a carga selecionada na placa. Aparece como "placa" na interface | não |
 | `lado` | o que tem de um lado, sem a barra | sim, em anilhas |
 | `halter` | o peso de um halter, com um em cada mão. Campo rotulado `kg/lado` | sim, nas duas mãos |
 | `halter1` | o peso do halter, quando é um só. Campo rotulado `kg` | não |
