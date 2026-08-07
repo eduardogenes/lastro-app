@@ -73,6 +73,7 @@ S = {
     // Carga de substituto nunca entra no histórico do original.
     'A0': [{
       t: 1712345678901,       // timestamp
+      sid: 1712345678901,     // sessão a que pertence, ausente em dado antigo
       sets: [[peso, reps]],   // em exercício por tempo, [carga, segundos]
       u: 'seg',               // opcional, marca exercício por tempo
       obs: 'texto',           // opcional
@@ -81,9 +82,13 @@ S = {
       aq: 1                   // opcional, aquecimento marcado
     }]
   },
-  done: [{ day: 'A', t: 0, dl: 1 }],   // dl exclui da conta das 48 sessões
+  done: [{ day: 'A', t: 0, sid: 0, dur: 0, dl: 1 }],
+  //   sid  liga a marca às entradas de logs da mesma sessão
+  //   dur  duração em ms, ausente em sessões anteriores ao registro contínuo
+  //   dl   exclui da conta das 48 sessões
   deload: false,
-  draft: null,                          // treino em andamento, expira em 14h
+  draft: null,                          // buffer de digitação da sessão aberta
+  sessao: null,                         // { day, inicio, ultima, sid } ou null
   cardio: [{ t: 0, m: 'bike', min: 20, i: 'leve' }],
   body: { peso: [{ t: 0, v: 73.4 }], cintura: [{ t: 0, v: 80.5 }] },
   export: 0                             // timestamp do último backup
@@ -100,6 +105,22 @@ migração destrutiva foi necessária até hoje.
 `localStorage`, e se o host vier vazio mas houver espelho, o histórico é
 resgatado dele. Trocar de ambiente não zera nada.
 
+### Registro contínuo
+
+**Não existe botão de salvar e não existe estado "não salvo".** O rascunho
+(`S.draft`) continua sendo o buffer de digitação, e cada série com carga e
+repetição preenchidas é projetada imediatamente para `S.logs` pela função
+`projeta()`. Apagar o campo remove a série do histórico.
+
+A sessão nasce na primeira série completa (`abreSessao`) e se encerra sozinha
+(`encerraSePreciso`) após 4 horas de inatividade ou na virada do dia. O
+encerramento grava a duração e avança a rotação — as duas coisas que o botão de
+salvar fazia.
+
+`historico(key)` devolve as entradas de um exercício **excluindo a sessão
+aberta**. É o que impede a sessão em andamento de virar referência de si mesma
+no placeholder, no selo de subir carga e na linha de última vez.
+
 ### Detalhes que parecem bugs mas são propositais
 
 - O cronômetro guarda o **instante** em que o descanso acaba, não um contador.
@@ -111,6 +132,12 @@ resgatado dele. Trocar de ambiente não zera nada.
 - Séries por músculo comparam a semana corrente com o **mesmo ponto** das
   semanas anteriores. Contra semanas cheias, toda terça-feira o painel inteiro
   apareceria despencando.
+- O acompanhamento mostra **média móvel de treinos por semana**, não sequência
+  de dias. Quem treina 5 a 6 vezes por semana quebra sequência todo domingo, e o
+  número viraria cobrança em vez de informação.
+- Peso e cintura mantêm um toque para registrar. Uma série tem dois campos que
+  se validam mutuamente; um campo numérico solto não tem isso, e sair do campo
+  com "7" digitado por engano viraria 7 kg no histórico corporal.
 
 ## Rodar
 

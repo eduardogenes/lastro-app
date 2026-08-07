@@ -52,6 +52,7 @@ html, body {
 
 /* ---------- header ---------- */
 .hdr { padding: calc(22px + env(safe-area-inset-top)) 18px 0; }
+.hdr.curto { padding-bottom: 2px; }
 .eyebrow {
   font-family: var(--f-m);
   font-size: 10.5px;
@@ -70,6 +71,90 @@ html, body {
 }
 .dayname { font-size: 17px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em; }
 .daymeta { font-family: var(--f-m); font-size: 11px; color: var(--mist); margin-top: 3px; }
+
+/* ---------- faixa da semana ---------- */
+.semana { display: flex; gap: 5px; margin: 18px 0 0; }
+.wd {
+  flex: 1; min-width: 0; text-align: center; border-radius: 9px;
+  border: 1px solid var(--line); padding: 8px 0 9px; background: transparent;
+}
+.wd-d {
+  display: block; font-family: var(--f-m); font-size: 8.5px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--dim);
+}
+.wd-v {
+  display: block; font-family: var(--f-d); font-weight: 700; font-size: 14px;
+  color: var(--dim); margin-top: 4px; line-height: 1.1;
+}
+.wd.feito { border-color: var(--dawn); cursor: pointer; }
+.wd.feito .wd-v { color: var(--dawn); }
+.wd.hoje { background: var(--dusk); }
+.wd.hoje .wd-d { color: var(--mist); }
+.wd.futuro { opacity: .45; }
+
+.daymeta b { color: var(--dawn); font-weight: 600; }
+.autonota {
+  font-family: var(--f-m); font-size: 10.5px; color: var(--dim);
+  line-height: 1.6; padding: 22px 18px 8px;
+}
+
+/* ---------- acompanhamento ---------- */
+.mesnav { display: flex; align-items: center; gap: 12px; margin: 16px 0 0; }
+.mesnav span {
+  flex: 1; text-align: center; font-size: 15px; font-weight: 600;
+  letter-spacing: -.01em; text-transform: capitalize;
+}
+.mesnav button {
+  appearance: none; cursor: pointer; background: transparent;
+  border: 1px solid var(--line); color: var(--mist);
+  font-size: 16px; line-height: 1; padding: 10px 15px; border-radius: 9px;
+}
+.mesnav button:disabled { opacity: .3; cursor: default; }
+
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 18px; }
+.cal-h {
+  font-family: var(--f-m); font-size: 8.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--dim); text-align: center; padding-bottom: 4px;
+}
+.cal-x { aspect-ratio: 1; }
+.cal-d {
+  aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; min-width: 0;
+}
+.cal-d em {
+  font-style: normal; font-family: var(--f-m); font-size: 10px; color: var(--dim);
+}
+.cal-d i {
+  font-style: normal; font-family: var(--f-d); font-weight: 700;
+  font-size: 12px; color: var(--dawn); line-height: 1;
+}
+.cal-d.feito { border-color: rgba(245,168,60,.5); background: rgba(245,168,60,.08); cursor: pointer; }
+.cal-d.feito em { color: var(--mist); }
+.cal-d.hoje { border-color: var(--paper); }
+
+.mediasem {
+  font-family: var(--f-m); font-size: 13px; color: var(--mist);
+  margin: 20px 0 0; line-height: 1.5;
+}
+.mediasem b { font-size: 22px; color: var(--paper); font-weight: 600; letter-spacing: -.02em; }
+.mediasem span { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+
+.sessrow {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  border-bottom: 1px solid var(--line); padding: 14px 0;
+}
+.sessrow:last-child { border: 0; }
+.sess-d { font-family: var(--f-m); font-size: 11px; color: var(--mist); min-width: 44px; }
+.sess-l {
+  font-family: var(--f-d); font-weight: 700; font-size: 15px; color: var(--dawn);
+  min-width: 16px;
+}
+.sess-n { font-family: var(--f-m); font-size: 11.5px; color: var(--mist); flex: 1; min-width: 0; }
+.sess-o {
+  font-family: var(--f-m); font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--night); background: var(--dawn); border-radius: 4px; padding: 3px 6px;
+}
 
 /* ---------- rotation strip ---------- */
 .rot { display: flex; gap: 6px; padding: 18px 18px 0; }
@@ -888,8 +973,8 @@ const DORES = [
 
 const MODAIS = ['bike', 'esteira inclinada', 'elíptico', 'remo'];
 
-let S = { logs:{}, done:[], deload:false, draft:null, cardio:[], body:{ peso:[], cintura:[] }, export:0 };
-let view = { day:'A', tab:'treino', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, resumo:null, edit:null, retro:false, nota:null };
+let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, export:0 };
+let view = { day:'A', tab:'treino', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, mes:0 };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false;
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -1008,15 +1093,123 @@ async function load() {
   if (!Array.isArray(S.body.peso)) S.body.peso = [];
   if (!Array.isArray(S.body.cintura)) S.body.cintura = [];
 
-  view.day = nextDay();
-
-  // treino em andamento: volta para o dia certo com os números já digitados
-  if (S.draft && PLAN[S.draft.day] && Date.now() - (S.draft.t||0) < 14*3600*1000) {
-    view.day = S.draft.day;
-  } else if (S.draft) {
-    S.draft = null;
+  // Rascunho do modelo antigo, sem sessão: vira sessão aberta para não
+  // perder um treino que estava em andamento na hora da atualização.
+  if (S.draft && !S.sessao && PLAN[S.draft.day]) {
+    S.sessao = { day: S.draft.day, inicio: S.draft.t || Date.now(), ultima: S.draft.t || Date.now(), sid: S.draft.t || Date.now() };
+    projetaTudo();
   }
+
+  encerraSePreciso();
+  view.day = S.sessao ? S.sessao.day : nextDay();
   render();
+}
+
+// ---------- ciclo de vida da sessão ----------
+// Não existe botão de salvar. A sessão nasce na primeira série completa e
+// se encerra sozinha por inatividade ou na virada do dia.
+const SESSAO_LIMITE = 4*3600*1000;
+
+function sessaoAberta() { return S.sessao || null; }
+
+function encerraSePreciso() {
+  const s = S.sessao;
+  if (!s) return false;
+  const parada = Date.now() - (s.ultima || s.inicio);
+  if (parada < SESSAO_LIMITE && sameDay(s.inicio, Date.now())) return false;
+  fechaSessao();
+  return true;
+}
+
+function fechaSessao() {
+  const s = S.sessao;
+  if (!s) return;
+  const marca = S.done.filter(function (x) { return x.sid === s.sid; })[0];
+  if (marca) marca.dur = Math.max(0, (s.ultima || s.inicio) - s.inicio);
+  S.sessao = null;
+  S.draft = null;
+  view.fired = {};
+  view.day = nextDay();
+}
+
+// ---------- projeção: rascunho vira histórico na hora ----------
+// O rascunho continua sendo o buffer de digitação, mas cada série completa
+// é escrita no histórico imediatamente. Não existe estado "não salvo".
+function abreSessao(dia) {
+  if (S.sessao) return S.sessao;
+  const agora = Date.now();
+  S.sessao = { day: dia, inicio: agora, ultima: agora, sid: agora };
+  const marca = { day: dia, t: agora, sid: agora };
+  if (S.deload) marca.dl = 1;
+  S.done.push(marca);
+  if (S.done.length > 3000) S.done = S.done.slice(-3000);
+  return S.sessao;
+}
+
+function setsDoRascunho(ex, e) {
+  const seg = isTime(ex);
+  const sets = [];
+  let any = false;
+  for (let k = 0; k < setsFor(ex); k++) {
+    const x = e.s[k];
+    // no exercício por tempo o segundo campo basta: carga vazia vira 0
+    const ok = x && x[1] != null && (seg || x[0] != null);
+    if (ok) { sets.push([x[0] != null ? x[0] : 0, x[1]]); any = true; }
+    else sets.push(null);
+  }
+  return any ? sets : null;
+}
+
+function projeta(i) {
+  const dia = view.day;
+  const ex = PLAN[dia].ex[i];
+  const e = draftPeek(i);
+  if (!ex || !e) return;
+
+  const key = e.alt ? id(dia,i) + '~' + e.alt : id(dia,i);
+  const sets = setsDoRascunho(ex, e);
+
+  // sem nenhuma série completa: apaga o que já tiver sido escrito nesta sessão
+  if (!sets) { removeProjecao(key); return; }
+
+  const s = abreSessao(dia);
+  s.ultima = Date.now();
+  s.day = dia;
+
+  if (!S.logs[key]) S.logs[key] = [];
+  let entry = S.logs[key].filter(function (x) { return x.sid === s.sid; })[0];
+  if (!entry) { entry = { t: Date.now(), sid: s.sid }; S.logs[key].push(entry); }
+
+  entry.sets = sets;
+  if (isTime(ex)) entry.u = 'seg'; else delete entry.u;
+  if (e.aq) entry.aq = 1; else delete entry.aq;
+  const obs = (e.obs||'').trim();
+  if (obs) entry.obs = obs; else delete entry.obs;
+  if (e.dor && e.dor.length) entry.dor = e.dor.slice(); else delete entry.dor;
+  if (S.deload) entry.dl = 1; else delete entry.dl;
+
+  if (S.logs[key].length > 500) S.logs[key] = S.logs[key].slice(-500);
+}
+
+function removeProjecao(key) {
+  const s = S.sessao;
+  if (!s || !S.logs[key]) return;
+  S.logs[key] = S.logs[key].filter(function (x) { return x.sid !== s.sid; });
+  if (!S.logs[key].length) delete S.logs[key];
+}
+
+// reprojeta o dia inteiro: usado ao migrar rascunho antigo e ao trocar exercício
+function projetaTudo() {
+  const dia = S.sessao ? S.sessao.day : view.day;
+  if (!PLAN[dia] || !S.draft || S.draft.day !== dia) return;
+  PLAN[dia].ex.forEach(function (ex, i) { projeta(i); });
+}
+
+// entradas da sessão aberta não servem de referência para elas mesmas
+function historico(key) {
+  const h = S.logs[key] || [];
+  const s = S.sessao;
+  return s ? h.filter(function (x) { return x.sid !== s.sid; }) : h;
 }
 
 async function save() {
@@ -1097,11 +1290,11 @@ function marcos() {
   if (seq >= 3) out.push(`${seq} semanas seguidas com 4 ou mais treinos.`);
   return out;
 }
-function pausaEx(key) { const h = S.logs[key] || []; return h.length ? diasDesde(h[h.length-1].t) : 0; }
+function pausaEx(key) { const h = historico(key); return h.length ? diasDesde(h[h.length-1].t) : 0; }
 
 // dor marcada nas duas últimas sessões do mesmo exercício
 function dorSeguida(key) {
-  const h = S.logs[key] || [];
+  const h = historico(key);
   if (h.length < 2) return null;
   const a = h[h.length-1], b = h[h.length-2];
   if (!a.dor || !a.dor.length || !b.dor || !b.dor.length) return null;
@@ -1110,13 +1303,13 @@ function dorSeguida(key) {
 }
 // placeholder: procura o valor mais recente daquela série, pulando semanas de deload
 function lastSet(key, k) {
-  const h = S.logs[key] || [];
+  const h = historico(key);
   for (let j = h.length-1; j >= 0; j--) if (h[j].sets && h[j].sets[k]) return h[j].sets[k];
   return null;
 }
 // não pode se chamar top(): window.top é read-only no escopo global de um documento
 function topReps(r){ return parseInt(r.split(/[–-]/)[1], 10); }
-function lastOf(d,i){ const h = S.logs[id(d,i)]; return h && h.length ? h[h.length-1] : null; }
+function lastOf(d,i){ const h = historico(id(d,i)); return h.length ? h[h.length-1] : null; }
 // Exercício por tempo: a série continua sendo [a,b], mas b são segundos
 // em vez de repetições e a carga é opcional (0 = peso do corpo).
 function isTime(ex) { return !!(ex && ex.u === 'seg'); }
@@ -1140,6 +1333,22 @@ function fmtLast(l, seg) {
 // ---------- números e volume ----------
 function fmtNum(n) { return n % 1 === 0 ? String(n) : String(Math.round(n*10)/10); }
 function fmtInt(n) { return Math.round(n).toLocaleString('pt-BR'); }
+const DIAS_CURTOS = ['seg','ter','qua','qui','sex','sáb','dom'];
+const DIAS_LONGOS = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+function fmtDur(ms) {
+  if (ms == null) return '–';
+  const m = Math.round(ms/60000);
+  if (m < 60) return m + ' min';
+  return Math.floor(m/60) + 'h' + String(m%60).padStart(2,'0');
+}
+function diaExtenso(t) {
+  const d = new Date(t);
+  return DIAS_LONGOS[d.getDay()] + ', ' + String(d.getDate()).padStart(2,'0') + ' de ' + MESES[d.getMonth()];
+}
+function sessoesDoDia(t) { return S.done.filter(function (x) { return sameDay(x.t, t); }); }
+
 function fmtDate(t) {
   const d = new Date(t);
   return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
@@ -1214,10 +1423,30 @@ function chartSVG(H, seg) {
   return g + '</svg>';
 }
 
+// ---------- faixa da semana ----------
+// Sete colunas de segunda a domingo. A letra do treino no dia em que houve
+// treino, um ponto apagado no dia em que não houve. Sem julgamento, só o fato.
+function faixaSemana() {
+  const ini = weekStart(Date.now());
+  let cel = '';
+  for (let i = 0; i < 7; i++) {
+    const dia = ini + i*86400000;
+    const marcas = sessoesDoDia(dia);
+    const hoje = sameDay(dia, Date.now());
+    const futuro = dia > Date.now() && !hoje;
+    cel += `<div class="wd ${hoje?'hoje':''} ${marcas.length?'feito':''} ${futuro?'futuro':''}"
+      ${marcas.length?`onclick="abrirSessao(${marcas[marcas.length-1].t})"`:''}>
+      <span class="wd-d">${DIAS_CURTOS[i]}</span>
+      <span class="wd-v">${marcas.length ? marcas.map(function (m) { return m.day; }).join('') : '·'}</span>
+    </div>`;
+  }
+  return '<div class="semana">' + cel + '</div>';
+}
+
 // ---------- render ----------
 function render() {
   if (view.retro) return renderRetro();
-  if (view.resumo) return renderResumo();
+  if (view.sessao) return renderSessao();
   if (view.hist) return renderHist();
   const app = document.getElementById('app');
   const d = view.day, P = PLAN[d];
@@ -1225,56 +1454,71 @@ function render() {
   const trabalho = sessoesDeTrabalho();
   const toDeload = 48 - (trabalho % 48);
 
-  let h = `<div class="hdr">
-    <div class="eyebrow"><span>06:15 · treino ${d}</span><span>ciclo ${cycle} · ${S.done.length} sessões</span></div>
-    <div class="dayline">
+  const hoje = sessoesDoDia(Date.now());
+  const aberta = S.sessao;
+  let estado;
+  if (aberta) {
+    const r = resumoDaSessao(aberta);
+    estado = `<b>em andamento</b> · ${fmtDur(aberta.ultima - aberta.inicio)} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtInt(r.vol)+' kg×reps':''}`;
+  } else if (hoje.length) {
+    const r = resumoDaSessao(hoje[hoje.length-1]);
+    estado = `<b>treino ${hoje[hoje.length-1].day} encerrado hoje</b> · ${fmtDur(hoje[hoje.length-1].dur)} · ${r.series} ${r.series===1?'série':'séries'}`;
+  } else {
+    estado = `${P.tag} · ${P.ex.reduce((a,e)=>a+e.s,0)} séries prescritas`;
+  }
+
+  const naTreino = view.tab === 'treino';
+  let h = `<div class="hdr ${naTreino?'':'curto'}">
+    <div class="eyebrow"><span>${diaExtenso(Date.now())}</span><span>ciclo ${cycle} · ${S.done.length} sessões</span></div>
+    ${naTreino ? `<div class="dayline">
       <div class="dayletter">${d}</div>
-      <div><div class="dayname">${P.name}</div><div class="daymeta">${P.tag} · ${P.ex.reduce((a,e)=>a+e.s,0)} séries</div></div>
+      <div><div class="dayname">${P.name}</div><div class="daymeta">${estado}</div></div>
     </div>
+    ${faixaSemana()}` : ''}
   </div>
-  <div class="rot">` +
+  ${view.tab==='treino' ? '<div class="rot">' +
     ROT.map(x => `<button class="${x===view.day?'on':''} ${x===nextDay()?'next':''}" onclick="go('${x}')">${x}</button>`).join('') +
-  `</div>
+  '</div>' : ''}
   <div class="tabs">
-    <button class="${view.tab==='treino'?'on':''}" onclick="tab('treino')">treino de hoje</button>
-    <button class="${view.tab==='regras'?'on':''}" onclick="tab('regras')">como executar</button>
+    <button class="${view.tab==='treino'?'on':''}" onclick="tab('treino')">hoje</button>
+    <button class="${view.tab==='acomp'?'on':''}" onclick="tab('acomp')">acompanhamento</button>
     <button class="${view.tab==='corpo'?'on':''}" onclick="tab('corpo')">corpo</button>
-    <button class="${view.tab==='dados'?'on':''}" onclick="tab('dados')">dados</button>
+    <button class="${view.tab==='ajustes'?'on':''}" onclick="tab('ajustes')">ajustes</button>
   </div>`;
 
-  if (trabalho > 0 && trabalho % 48 === 0)
+  if (naTreino && trabalho > 0 && trabalho % 48 === 0)
     h += `<div class="deload on"><b>Bloco de 48 sessões concluído.</b>
       Semana de deload e uma olhada no que evoluiu.
       <button class="dlbtn" onclick="abrirRetro()">ver retrospectiva</button></div>`;
 
   const parado = pausaGeral();
-  if (parado >= PAUSA_DIAS)
+  if (naTreino && parado >= PAUSA_DIAS)
     h += `<div class="deload on"><b>${Math.round(parado)} dias desde o último treino salvo.</b>
       O selo de subir carga fica suspenso nesta volta. Os placeholders continuam mostrando a última carga registrada, só para você ter a referência.</div>`;
 
-  if (S.deload)
+  if (naTreino && S.deload)
     h += `<div class="deload on"><b>Modo deload ativo.</b> Metade das séries, mesmas cargas. Os placeholders continuam mostrando a carga da última semana normal.
       <button class="dlbtn" onclick="setDeload(false)">sair do deload</button></div>`;
-  else if (toDeload <= 6 && S.done.length > 0)
+  else if (naTreino && toDeload <= 6 && S.done.length > 0)
     h += `<div class="deload"><b>Deload chegando.</b> Faltam ${toDeload} sessões para a semana de metade das séries.
       <button class="dlbtn" onclick="setDeload(true)">ativar agora</button></div>`;
 
-  if (view.tab === 'regras') {
+  if (view.tab === 'ajustes') {
     h += '<div class="rules">' + RULES.map(r => `
       <div class="rule ${r.warn?'warn':''}">
         <h3><em>${r.k}</em>${r.t}</h3>
         ${r.p.map(x=>`<p>${x}</p>`).join('')}
-      </div>`).join('') + '</div>';
+      </div>`).join('') + '</div>' + renderData();
+  } else if (view.tab === 'acomp') {
+    h += renderAcomp();
   } else if (view.tab === 'corpo') {
     h += renderBody();
-  } else if (view.tab === 'dados') {
-    h += renderData();
   } else {
     h += P.ex.map((ex,i) => {
       const alt = altOf(i);
       const key = logKey(d,i);
       const dr = draftPeek(i);
-      const l = (S.logs[key]||[]).slice(-1)[0] || null;
+      const l = historico(key).slice(-1)[0] || null;
       const up = !alt && !S.deload && shouldUp(d,i,ex);
       const o = view.open===i;
       const ns = setsFor(ex);
@@ -1366,9 +1610,9 @@ function render() {
       </div>`;
     }).join('');
 
-    h += `<div class="finish">
-      <button onclick="finish()">Salvar treino ${d}</button>
-      <p>salva o que você digitou e avança para o treino ${ROT[(ROT.indexOf(d)+1)%6]}</p>
+    h += `<div class="autonota">
+      Cada série entra no histórico assim que você preenche carga e repetição.
+      Não há nada para salvar. O treino se encerra sozinho e a rotação avança para ${ROT[(ROT.indexOf(d)+1)%6]}.
     </div>`;
   }
 
@@ -1638,6 +1882,106 @@ async function delCardio(t) {
   await save();
   render();
   toast('Sessão removida.');
+}
+
+// ---------- acompanhamento ----------
+// A tela que faltava: o app sabia tudo sobre cada exercício e nada sobre o mês.
+function mesRef() {
+  const b = view.mes || 0;
+  const d = new Date();
+  d.setDate(1); d.setHours(0,0,0,0);
+  d.setMonth(d.getMonth() + b);
+  return d;
+}
+
+function totaisDoPeriodo(de, ate) {
+  const marcas = S.done.filter(function (x) { return x.t >= de && x.t < ate; });
+  let vol = 0, tempo = 0, series = 0;
+  marcas.forEach(function (m) {
+    const r = resumoDaSessao(m);
+    vol += r.vol; series += r.series;
+    tempo += m.dur || (S.sessao && S.sessao.sid === m.sid ? S.sessao.ultima - S.sessao.inicio : 0);
+  });
+  const dias = {};
+  marcas.forEach(function (m) { dias[new Date(m.t).toDateString()] = 1; });
+  return { marcas: marcas, vol: vol, tempo: tempo, series: series, dias: Object.keys(dias).length };
+}
+
+// média móvel de treinos por semana nas últimas 4 semanas fechadas.
+// Deliberadamente não é sequência: você treina 5 a 6 vezes por semana, então
+// sequência quebraria todo domingo e viraria cobrança em vez de informação.
+function mediaSemanal() {
+  const fim = weekStart(Date.now());
+  const de = fim - 4*7*86400000;
+  const n = S.done.filter(function (x) { return x.t >= de && x.t < fim; }).length;
+  const temSemanas = S.done.some(function (x) { return x.t < fim; });
+  return temSemanas ? n/4 : null;
+}
+
+function renderAcomp() {
+  const base = mesRef();
+  const de = base.getTime();
+  const fimD = new Date(base); fimD.setMonth(fimD.getMonth()+1);
+  const ate = fimD.getTime();
+  const T = totaisDoPeriodo(de, ate);
+  const med = mediaSemanal();
+
+  // grade do mês, começando na segunda
+  const primeiro = new Date(de);
+  const offset = (primeiro.getDay() + 6) % 7;
+  const diasNoMes = new Date(base.getFullYear(), base.getMonth()+1, 0).getDate();
+  let cel = DIAS_CURTOS.map(function (x) { return '<span class="cal-h">'+x+'</span>'; }).join('');
+  for (let i = 0; i < offset; i++) cel += '<span class="cal-x"></span>';
+  for (let dia = 1; dia <= diasNoMes; dia++) {
+    const t = new Date(base.getFullYear(), base.getMonth(), dia).getTime();
+    const marcas = sessoesDoDia(t);
+    const hoje = sameDay(t, Date.now());
+    cel += `<span class="cal-d ${marcas.length?'feito':''} ${hoje?'hoje':''}"
+      ${marcas.length?`onclick="abrirSessao(${marcas[marcas.length-1].t})"`:''}>
+      <em>${dia}</em>${marcas.length?'<i>'+marcas.map(function(m){return m.day;}).join('')+'</i>':''}
+    </span>`;
+  }
+
+  const lista = S.done.slice().filter(function (x) { return x.t >= de && x.t < ate; }).sort(function (a,b) { return b.t - a.t; });
+
+  return `<div class="data">
+    <div class="mesnav">
+      <button onclick="mudaMes(-1)">‹</button>
+      <span>${MESES[base.getMonth()]} ${base.getFullYear()}</span>
+      <button onclick="mudaMes(1)" ${view.mes>=0?'disabled':''}>›</button>
+    </div>
+
+    <div class="stats" style="margin-top:16px">
+      <div><b>${T.dias}</b><span>${T.dias===1?'dia treinado':'dias treinados'}</span></div>
+      <div><b>${T.tempo?fmtDur(T.tempo):'–'}</b><span>tempo total</span></div>
+      <div><b>${T.vol?fmtK(T.vol):'–'}</b><span>volume · kg×reps</span></div>
+    </div>
+
+    <div class="cal">${cel}</div>
+
+    ${med!==null?`<p class="mediasem"><b>${fmtDec(med)}</b> treinos por semana<br><span>média das últimas 4 semanas</span></p>`:''}
+
+    <div class="hsec" style="margin-top:26px">sessões do mês</div>
+    ${lista.length ? lista.map(function (m) {
+      const r = resumoDaSessao(m);
+      const dur = m.dur != null ? m.dur : (S.sessao && S.sessao.sid === m.sid ? S.sessao.ultima - S.sessao.inicio : null);
+      const aberta = S.sessao && S.sessao.sid === m.sid;
+      return `<div class="sessrow" onclick="abrirSessao(${m.t})">
+        <span class="sess-d">${fmtDate(m.t)}</span>
+        <span class="sess-l">${m.day}</span>
+        <span class="sess-n">${fmtDur(dur)} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtK(r.vol):''}</span>
+        ${aberta?'<span class="sess-o">em andamento</span>':''}
+        ${m.dl?'<span class="tag dl-t">deload</span>':''}
+      </div>`;
+    }).join('') : '<p class="cue" style="margin:0">Nenhum treino registrado neste mês.</p>'}
+  </div>`;
+}
+
+function mudaMes(n) {
+  const novo = (view.mes || 0) + n;
+  if (novo > 0) return;
+  view.mes = novo;
+  render(); window.scrollTo(0,0);
 }
 
 // ---------- corpo ----------
@@ -2021,6 +2365,7 @@ async function importText(txt) {
         cardio: Array.isArray(d.cardio) ? d.cardio : [],
         body: { peso: (d.body && Array.isArray(d.body.peso)) ? d.body.peso : [],
                 cintura: (d.body && Array.isArray(d.body.cintura)) ? d.body.cintura : [] },
+        sessao: d.sessao || null,
         export: typeof d.export === 'number' ? d.export : 0 };
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;
@@ -2040,7 +2385,7 @@ function toast(msg) {
 
 // ---------- actions ----------
 function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); window.scrollTo(0,0); }
-function tab(t){ view.tab=t; view.hist=null; view.json=null; view.paste=false; view.retro=false; render(); window.scrollTo(0,0); }
+function tab(t){ view.tab=t; view.hist=null; view.json=null; view.paste=false; view.retro=false; view.sessao=null; view.mes=0; render(); window.scrollTo(0,0); }
 function toggle(i){ view.open = view.open===i ? null : i; view.swapOpen = null; view.nota = null; render(); }
 function escAttr(s){ return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 function dorName(k){ const x = DORES.filter(y=>y.k===k)[0]; return x ? x.t : k; }
@@ -2064,6 +2409,7 @@ function inp(el, i, k, pos) {
   e.s[k][pos] = (raw === '' || isNaN(num)) ? null : num;
   el.classList.toggle('done', el.value !== '');
   segurarTela();
+  projeta(i);
   queueSave();
   autoTimer(i, k, e);
 }
@@ -2091,8 +2437,8 @@ function proximoDoBiset(i) {
   toast('Sem pausa: vá direto para ' + prox.n.replace(' (bi-set)','') + '.');
 }
 
-function obsIn(el, i) { draftOf(i).obs = el.value; queueSave(); }
-function toggleAq(i) { const e = draftOf(i); e.aq = !e.aq; queueSave(); render(); }
+function obsIn(el, i) { draftOf(i).obs = el.value; projeta(i); queueSave(); }
+function toggleAq(i) { const e = draftOf(i); e.aq = !e.aq; projeta(i); queueSave(); render(); }
 // A anotação e os marcadores de dor ficam atrás de um link: na maioria das
 // sessões não há nada a registrar, e ocupavam espaço em todo exercício aberto.
 // Uma vez que exista conteúdo no rascunho, o bloco reabre sozinho.
@@ -2101,12 +2447,16 @@ function toggleDor(i, k) {
   const e = draftOf(i);
   const j = e.dor.indexOf(k);
   if (j >= 0) e.dor.splice(j,1); else e.dor.push(k);
-  queueSave(); render();
+  projeta(i); queueSave(); render();
 }
 function toggleSwap(i){ view.swapOpen = view.swapOpen===i ? null : i; render(); }
 function abrirSubstituicao(i){ view.open = i; view.swapOpen = i; render(); }
 function setAlt(i, nome) {
+  // a chave de histórico muda junto: tira a projeção da chave antiga primeiro
+  const antes = logKey(view.day, i);
+  removeProjecao(antes);
   draftOf(i).alt = nome;
+  projeta(i);
   view.swapOpen = null;
   queueSave(); render();
   toast(nome ? 'Trocado por ' + nome + '. A carga entra num histórico separado.' : 'De volta ao exercício original.');
@@ -2118,138 +2468,99 @@ async function setDeload(on) {
   toast(on ? 'Deload ativo: metade das séries, mesmas cargas.' : 'Deload desligado. Séries completas de volta.');
 }
 
-async function finish() {
-  const d = view.day;
-  let volDia = 0, tempoDia = 0, exSalvos = 0, comDor = [], itens = [];
-  clearTimeout(saveT);
-
-  PLAN[d].ex.forEach((ex,i) => {
-    const e = draftPeek(i);
-    if (!e) return;
-    const seg = isTime(ex);
-    const sets = [];
-    let any = false;
-    for (let k=0;k<setsFor(ex);k++) {
-      const s = e.s[k];
-      // no exercício por tempo o segundo campo basta: carga vazia vira 0
-      const ok = s && s[1] != null && (seg || s[0] != null);
-      if (ok) { sets.push([s[0] != null ? s[0] : 0, s[1]]); any = true; }
-      else sets.push(null);
-    }
-    const obs = (e.obs||'').trim();
-    const dor = e.dor || [];
-    if (!any && !obs && !dor.length) return;
-    if (!any) return;   // observação sozinha não vira sessão
-
-    const key = e.alt ? id(d,i) + '~' + e.alt : id(d,i);
-    if (!S.logs[key]) S.logs[key] = [];
-    const antes = S.logs[key].slice();
-    const entry = { t: Date.now(), sets };
-    if (seg) entry.u = 'seg';        // a entrada se explica sozinha no backup
-    if (e.aq) entry.aq = 1;
-    if (obs) entry.obs = obs;
-    if (dor.length) { entry.dor = dor.slice(); comDor.push(exName(d,i)); }
-    if (S.deload) entry.dl = 1;      // marca a sessão para o volume não parecer regressão
-    S.logs[key].push(entry);
-    // Teto alto só como trava de sanidade. O teto antigo de 12 apagava em
-    // silêncio o histórico de longo prazo, e o backup exportava o que sobrou.
-    if (S.logs[key].length > 500) S.logs[key] = S.logs[key].slice(-500);
-    if (seg) tempoDia += tutOf(entry); else volDia += volOf(entry);   // segundos não somam com kg×reps
-    exSalvos++;
-
-    // material do resumo: comparação com a própria história daquele exercício
-    const met = seg ? tutOf : volOf;
-    const antVol = antes.length ? met(antes[antes.length-1]) : null;
-    const recCarga = !seg && antes.length && maxLoad(entry) > Math.max.apply(null, antes.map(maxLoad));
-    const recMet = antes.length && met(entry) > Math.max.apply(null, antes.map(met));
-    itens.push({
-      nome: exName(d,i), seg: seg, sets: sets,
-      met: met(entry),
-      delta: antVol ? Math.round((met(entry)-antVol)/antVol*100) : null,
-      recCarga: !!recCarga, recMet: !!recMet, novo: !antes.length,
-      dor: dor.slice()
+// ---------- detalhe de uma sessão ----------
+// Não existe mais resumo pós-treino: a sessão nunca é "enviada". Este é o
+// detalhe de um dia, aberto a partir do acompanhamento.
+function itensDaSessao(marca) {
+  const out = [];
+  ROT.forEach(function (d) {
+    PLAN[d].ex.forEach(function (ex, i) {
+      const base = id(d,i);
+      Object.keys(S.logs).forEach(function (k) {
+        if (k !== base && k.indexOf(base + '~') !== 0) return;
+        S.logs[k].forEach(function (e) {
+          const bate = marca.sid != null
+            ? e.sid === marca.sid
+            : (d === marca.day && sameDay(e.t, marca.t) && e.sid == null);
+          if (!bate) return;
+          const seg = isTime(ex);
+          const met = seg ? tutOf : volOf;
+          const antes = S.logs[k].filter(function (x) { return x.t < e.t; });
+          out.push({
+            nome: k === base ? ex.n : k.slice(base.length+1),
+            seg: seg, sets: e.sets, met: met(e), dor: e.dor || [],
+            novo: !antes.length,
+            delta: antes.length && met(antes[antes.length-1]) > 0
+              ? Math.round((met(e) - met(antes[antes.length-1])) / met(antes[antes.length-1]) * 100) : null,
+            recCarga: !seg && antes.length > 0 && maxLoad(e) > Math.max.apply(null, antes.map(maxLoad)),
+            recMet: antes.length > 0 && met(e) > Math.max.apply(null, antes.map(met))
+          });
+        });
+      });
     });
   });
-
-  if (!exSalvos) { toast('Nenhuma série preenchida. Nada foi salvo.'); return; }
-
-  const marca = { day:d, t:Date.now() };
-  // sessão de deload não conta para as 48: senão o contador deixa de
-  // representar 48 sessões de trabalho de verdade
-  if (S.deload) marca.dl = 1;
-  S.done.push(marca);
-  if (S.done.length > 3000) S.done = S.done.slice(-3000);
-  S.draft = null;
-  soltarTela();
-  const ok = await save();
-  view.day = nextDay(); view.open = null; view.hist = null; view.swapOpen = null; view.fired = {}; view.nota = null;
-
-  if (!ok) {
-    render(); window.scrollTo(0,0);
-    toast(`Treino ${d} registrado, mas o armazenamento falhou. Exporte o JSON agora.`);
-    return;
-  }
-
-  view.resumo = { dia: d, t: Date.now(), itens: itens, vol: volDia, tempo: tempoDia, dores: comDor,
-                  marcos: marcos(), backup: diasSemBackup(), export: S.export };
-  render(); window.scrollTo(0,0);
+  return out;
 }
 
-// ---------- resumo pós-treino ----------
-// O momento de maior atenção é logo depois de salvar. Antes disso o app
-// despejava direto no treino seguinte, que só acontece daqui a 24 horas.
-function renderResumo() {
-  const R = view.resumo;
-  const recordes = R.itens.filter(x => x.recCarga || x.recMet).length;
-  const subiram = R.itens.filter(x => x.delta !== null && x.delta > 0).length;
+function resumoDaSessao(marca) {
+  const itens = itensDaSessao(marca);
+  let vol = 0, tempo = 0;
+  const dores = [];
+  itens.forEach(function (x) {
+    if (x.seg) tempo += x.met; else vol += x.met;
+    if (x.dor.length) dores.push(x.nome);
+  });
+  const series = itens.reduce(function (a,x) { return a + x.sets.filter(Boolean).length; }, 0);
+  return { itens: itens, vol: vol, tempo: tempo, dores: dores, series: series };
+}
+
+function renderSessao() {
+  const marca = view.sessao;
+  const R = resumoDaSessao(marca);
+  const aberta = S.sessao && S.sessao.sid === marca.sid;
+  const dur = aberta ? (S.sessao.ultima - S.sessao.inicio) : marca.dur;
+  const recordes = R.itens.filter(function (x) { return x.recCarga || x.recMet; }).length;
   const app = document.getElementById('app');
 
   let h = `<div class="hhdr">
-    <div class="eyebrow"><span>treino ${R.dia} salvo</span><span>${fmtDate(R.t)}</span></div>
-    <h2 class="htitle">${R.itens.length} ${R.itens.length===1?'exercício registrado':'exercícios registrados'}</h2>
+    <button class="back" onclick="fecharSessao()">‹ voltar</button>
+    <div class="eyebrow"><span>treino ${marca.day}${aberta?' · em andamento':''}</span><span>${diaExtenso(marca.t)}</span></div>
+    <h2 class="htitle">${R.series} ${R.series===1?'série registrada':'séries registradas'}</h2>
   </div>
   <div class="hwrap">
     <div class="stats">
+      <div><b>${dur!=null?fmtDur(dur):'–'}</b><span>tempo de treino</span></div>
       <div><b>${R.vol?fmtInt(R.vol):'–'}</b><span>volume · kg×reps</span></div>
-      <div><b class="${subiram?'up':''}">${subiram}</b><span>subiram vs. última vez</span></div>
       <div><b class="${recordes?'up':''}">${recordes}</b><span>${recordes===1?'recorde':'recordes'}</span></div>
     </div>`;
 
   if (R.tempo) h += `<p class="cue" style="margin:16px 0 0">Mais ${fmtInt(R.tempo)} segundos de prancha, contados à parte do volume.</p>`;
-
-  if (R.marcos.length)
-    h += `<div class="marco">${R.marcos.map(m => `<span>${m}</span>`).join('')}</div>`;
-
   if (R.dores.length)
     h += `<div class="painsum" style="margin-top:18px"><b>Dor marcada em ${R.dores.join(', ')}.</b>
-      Se repetir na próxima sessão, o app vai sugerir a troca de ângulo.</div>`;
+      Se repetir na próxima sessão, o app sugere a troca de ângulo.</div>`;
 
-  if (R.backup >= 30)
-    h += `<div class="deload" style="margin:18px 0 0"><b>${R.export ? Math.round(R.backup) + ' dias desde o último backup.' : 'Você nunca exportou o histórico.'}</b>
-      Aba dados, baixar o JSON. Leva dez segundos.</div>`;
-
-  h += `<div class="hsec">exercício a exercício</div>` + R.itens.map(x => `<div class="hs">
+  h += `<div class="hsec">exercício a exercício</div>` + (R.itens.length ? R.itens.map(function (x) {
+    return `<div class="hs">
       <div class="hs-top">
         <span class="hs-vol" style="min-width:0">${x.nome}</span>
         ${x.delta===null?'':`<span class="hs-d ${x.delta>0?'up':''}">${x.delta>0?'+':''}${x.delta}%</span>`}
       </div>
       <div class="hs-sets" style="padding-left:0">
-        ${x.sets.map(y => y ? `<span>${x.seg?(y[0]?fmtNum(y[0])+'kg × '+y[1]+'s':y[1]+'s'):fmtNum(y[0])+'×'+y[1]}</span>` : '<span class="nul">–</span>').join('')}
+        ${x.sets.map(function (y) { return y ? `<span>${x.seg?(y[0]?fmtNum(y[0])+'kg × '+y[1]+'s':y[1]+'s'):fmtNum(y[0])+'×'+y[1]}</span>` : '<span class="nul">–</span>'; }).join('')}
         <span class="nul">${fmtInt(x.met)} ${x.seg?'seg':'vol'}</span>
         ${x.recCarga?'<span class="rec">recorde de carga</span>':''}
         ${!x.recCarga&&x.recMet?`<span class="rec">recorde de ${x.seg?'tempo':'volume'}</span>`:''}
         ${x.novo?'<span class="nul">primeira vez</span>':''}
       </div>
       ${x.dor.length?`<div class="pain" style="padding-left:0">dor em ${x.dor.map(dorName).join(' e ')}</div>`:''}
-    </div>`).join('');
+    </div>`;
+  }).join('') : '<p class="cue" style="margin:0">Nenhuma série registrada neste dia.</p>');
 
-  h += `<div class="finish" style="padding-left:0;padding-right:0">
-      <button onclick="fecharResumo()">Fechar · próximo é o treino ${view.day}</button>
-    </div></div>`;
-
+  h += '</div>';
   app.innerHTML = h;
 }
-function fecharResumo(){ view.resumo = null; render(); window.scrollTo(0,0); }
+function abrirSessao(t){ view.sessao = S.done.filter(function (x) { return x.t === t; })[0]; if (view.sessao) { render(); window.scrollTo(0,0); } }
+function fecharSessao(){ view.sessao = null; render(); window.scrollTo(0,0); }
 
 // ---------- retrospectiva de bloco ----------
 // 48 sessões de trabalho é o ciclo do programa. Até aqui, completá-lo não
@@ -2360,12 +2671,12 @@ function renderRetro() {
     </div></div>`;
   app.innerHTML = h;
 }
-function abrirRetro(){ view.retro = true; view.resumo = null; render(); window.scrollTo(0,0); }
+function abrirRetro(){ view.retro = true; view.sessao = null; render(); window.scrollTo(0,0); }
 function fecharRetro(){ view.retro = false; render(); window.scrollTo(0,0); }
 
 async function wipe() {
   if (!confirm('Apagar todo o histórico? Isso não tem volta.')) return;
-  S = { logs:{}, done:[], deload:false, draft:null, cardio:[], body:{ peso:[], cintura:[] }, export:0 };
+  S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, export:0 };
   try { await DB.delete(KEY); } catch(e){}
   view.day='A'; view.tab='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
   view.swapOpen=null; view.fired={};
