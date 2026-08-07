@@ -94,6 +94,7 @@ S = {
   sessao: null,                         // { day, inicio, ultima, sid } ou null
   cardio: [{ t: 0, m: 'bike', min: 20, i: 'leve' }],
   body: { peso: [{ t: 0, v: 73.4 }], cintura: [{ t: 0, v: 80.5 }] },
+  carga: { 'A1': 'lado' },              // correção do tipo de carga por exercício
   export: 0                             // timestamp do último backup
 }
 ```
@@ -141,6 +142,30 @@ no placeholder, no selo de subir carga e na linha de última vez.
 Entradas: tocar num dia vazio do calendário ou da faixa da semana, ou o botão no
 acompanhamento. Abrir o preenchimento retroativo com um treino em andamento
 fecha o de hoje antes, gravando a duração dele.
+
+### Tipo de carga
+
+"Esse peso que anotei é de um lado ou dos dois?" A ambiguidade é propriedade do
+**equipamento**, não da série, então se declara uma vez por exercício em `car`
+e o app lembra para sempre. `S.carga` guarda a correção quando o padrão erra.
+
+| Tipo | O número significa |
+|---|---|
+| `pino` | a carga do pino ou stack |
+| `lado` | o que tem de um lado, sem a barra. O app mostra o total em anilhas |
+| `halter` | o peso de um halter |
+| `corpo` | o que foi acrescentado ao peso do corpo; pode ficar vazio |
+| `assist` | o contrapeso que ajuda |
+
+**O app nunca converte: guarda exatamente o que foi digitado.** Converter seria
+mentira — barra olímpica tem 20 kg, a W tem 10, e articulada tem alavanca
+própria. O total em anilhas é só exibição, sempre `2 ×` o lado e nunca somando a
+barra. Volume só é comparado dentro do mesmo exercício, então a unidade não
+precisa ser homogênea entre exercícios.
+
+Em `corpo`, quem progride é a repetição: o gráfico plota repetições como série
+principal e a carga adicionada como secundária, do mesmo jeito que o exercício
+por tempo faz com segundos.
 
 ### Detalhes que parecem bugs mas são propositais
 
