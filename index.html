@@ -143,7 +143,7 @@ html, body {
 .cal-d {
   aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--line);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 1px; min-width: 0;
+  gap: 1px; min-width: 0; position: relative;
 }
 .cal-d em {
   font-style: normal; font-family: var(--f-m); font-size: 10px; color: var(--dim);
@@ -358,14 +358,14 @@ html, body {
 
 /* ---------- período do dia ---------- */
 .per {
-  text-decoration: none; font-size: 8.5px; line-height: 1;
-  margin-left: 2px; vertical-align: 1px; opacity: .9;
+  position: absolute; top: 3px; right: 3px;
+  text-decoration: none; font-size: 8px; line-height: 1; opacity: .9;
 }
 .callegenda {
   display: flex; gap: 14px; margin-top: 10px;
   font-family: var(--f-m); font-size: 9.5px; color: var(--dim);
 }
-.callegenda .per { vertical-align: baseline; margin: 0 4px 0 0; font-size: 10px; }
+.callegenda .per { position: static; margin-right: 4px; font-size: 10px; }
 
 /* ---------- horário ---------- */
 .horario {
@@ -2558,7 +2558,7 @@ function renderAcomp() {
     const card = cardioDoDia(t).length;
     cel += `<span class="cal-d ${marcas.length?'feito':''} ${livre?'livre':''} ${hoje?'hoje':''} ${futuro?'futuro':''} ${card?'com-cardio':''}"
       ${acao?`onclick="${acao}"`:''}>
-      <em>${dia}</em>${marcas.length?'<i>'+marcas.map(marcaDe).join('')+periodoNaCelula(marcas)+'</i>':''}
+      <em>${dia}</em>${marcas.length?'<i>'+marcas.map(marcaDe).join('')+'</i>':''}${periodoNaCelula(marcas)}
       ${card?'<span class="barra-cardio"></span>':''}
     </span>`;
   }
