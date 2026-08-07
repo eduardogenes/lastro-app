@@ -89,6 +89,7 @@ S = {
   //   fim     'manual' se você encerrou, 'auto' se o app fechou sozinho
   //   pausado ms de pausa, quando houve
   //   pulados exercícios que você decidiu pular
+  //   hora    1 quando o horário foi informado num lançamento retroativo
   //   dl      exclui da conta das 48 sessões
   //   retro   registrado depois, em data passada
   // Sessão avulsa (fora do plano) não tem `day` e traz:
@@ -151,6 +152,20 @@ botão só acrescenta precisão à duração. Esquecer custa precisão, nunca da
 - **Finalizar** grava o tempo até o toque (`fim: 'manual'`). Sem ele, o app fecha
   por inatividade e o tempo vai até a última série (`fim: 'auto'`), que é o melhor
   palpite quando ninguém disse "acabei". O detalhe da sessão diz qual dos dois foi.
+
+### Horário
+
+`done[].t` é o instante em que a sessão abriu, então o horário do treino sai de
+graça — do toque em iniciar, ou da primeira série quando não houve toque. O fim
+é derivado somando a duração e as pausas.
+
+**O app não inventa horário.** Lançamento retroativo tem um campo opcional de
+hora; em branco, `t` guarda um valor neutro só para ordenar e `temHora()` devolve
+falso, então nada de horário aparece na interface. Sem isso, um 07:00 chutado
+apareceria como se tivesse sido medido, e contaminaria a média do mês.
+
+O acompanhamento mostra o horário típico do mês com o mais cedo e o mais tarde —
+o número que responde "normalmente é 6h15, mas não é exato".
 
 ### Os quatro estados de um exercício
 

@@ -17,7 +17,7 @@ test('iniciar marca o tempo antes da primeira série', async () => {
   assert.strictEqual(a.E('S.done[0].ini'), 'manual');
   assert.ok(a.$('#relogio'), 'o relógio toma o lugar do botão');
   assert.match(a.texto('#relogio'), /^\d{2}:\d{2}$/, a.texto('#relogio'));
-  assert.strictEqual(a.texto('.day-rel em'), 'em treino');
+  assert.match(a.texto('.day-rel em'), /^desde \d{2}:\d{2}$/, 'o rótulo diz desde que horas');
   a.fechar();
 });
 

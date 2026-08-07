@@ -356,6 +356,17 @@ html, body {
 }
 .cardio-dia span { font-size: 13px; color: var(--mist); line-height: 1.5; }
 
+/* ---------- horário ---------- */
+.horario {
+  font-family: var(--f-m); font-size: 12px; color: var(--dim);
+  margin: 16px 0 0; letter-spacing: .02em;
+}
+.horario b { color: var(--mist); font-weight: 500; }
+.sess-d em {
+  display: block; font-style: normal; font-size: 10px;
+  color: var(--dim); margin-top: 2px;
+}
+
 /* ---------- pendências da sessão ---------- */
 .pend { margin-top: 18px; }
 .pend > div {
@@ -1718,6 +1729,16 @@ const DIAS_CURTOS = ['seg','ter','qua','qui','sex','sáb','dom'];
 const DIAS_LONGOS = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 
+function fmtHora(t) {
+  const d = new Date(t);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+// Sessão retroativa sem hora informada não tem horário de verdade: o app
+// guarda um valor neutro só para ordenar, e não finge que mediu.
+function temHora(m) { return !!m && (!m.retro || m.hora === 1) && !m.livre; }
+function horaDaSessao(m) { return temHora(m) ? fmtHora(m.t) : null; }
+function fimDaSessao(m) { return temHora(m) && m.dur ? fmtHora(m.t + m.dur + (m.pausado||0)) : null; }
+
 function fmtDur(ms) {
   if (ms == null) return '–';
   const m = Math.round(ms/60000);
@@ -1909,7 +1930,7 @@ function relogioDaSessao() {
   if (s.retro) return '';
   return `<div class="day-rel ${s.pausadoEm ? 'pausado' : ''}">
     <span id="relogio">${relogioTexto(s)}</span>
-    <em>${s.pausadoEm ? 'pausado' : 'em treino'}</em>
+    <em>${s.pausadoEm ? 'pausado' : 'desde ' + fmtHora(s.inicio)}</em>
   </div>`;
 }
 
@@ -2506,6 +2527,17 @@ function renderAcomp() {
   }
 
   const lista = S.done.slice().filter(function (x) { return x.t >= de && x.t < ate; }).sort(function (a,b) { return b.t - a.t; });
+  const comHora = lista.filter(temHora);
+  const horarios = { n: comHora.length };
+  if (comHora.length) {
+    const mins = comHora.map(function (m) { const d = new Date(m.t); return d.getHours()*60 + d.getMinutes(); });
+    const med = Math.round(mins.reduce(function (a,b) { return a+b; }, 0) / mins.length);
+    const fmt = function (v) { return String(Math.floor(v/60)).padStart(2,'0') + ':' + String(v%60).padStart(2,'0'); };
+    horarios.media = fmt(med);
+    horarios.min = fmt(Math.min.apply(null, mins));
+    horarios.max = fmt(Math.max.apply(null, mins));
+  }
+
   const cardMes = S.cardio.filter(function (c) { return c.t >= de && c.t < ate; });
   const soCardio = Object.keys(cardMes.reduce(function (acc, c) {
     if (!sessoesDoDia(c.t).length) acc[new Date(c.t).toDateString()] = 1;
@@ -2528,6 +2560,7 @@ function renderAcomp() {
     <div class="cal">${cel}</div>
 
     ${med!==null?`<p class="mediasem"><b>${fmtDec(med)}</b> treinos por semana<br><span>média das últimas 4 semanas</span></p>`:''}
+    ${horarios.n?`<p class="mediasem" style="margin-top:14px"><b>${horarios.media}</b> em média<br><span>horário de início · mais cedo ${horarios.min} · mais tarde ${horarios.max}</span></p>`:''}
     ${cardMes.length?`<p class="mediasem" style="margin-top:14px"><b>${cardMes.length}</b> ${cardMes.length===1?'sessão de cardio':'sessões de cardio'}<br><span>${fmtInt(cardMes.reduce(function(a,c){return a+c.min;},0))} minutos no mês${soCardio?' · '+soCardio+' em '+(soCardio===1?'dia sem musculação':'dias sem musculação'):''}</span></p>`:''}
 
     <button class="dbtn" style="margin-top:22px" onclick="abrirAdicionar()">Registrar um treino passado</button>
@@ -2542,7 +2575,7 @@ function renderAcomp() {
         ? (m.nome ? m.nome + ' · ' : '') + (m.grupos||[]).join(', ')
         : `${fmtDur(dur)} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtK(r.vol):''}`;
       return `<div class="sessrow" onclick="abrirSessao(${m.t})">
-        <span class="sess-d">${fmtDate(m.t)}</span>
+        <span class="sess-d">${fmtDate(m.t)}${horaDaSessao(m)?'<em>'+horaDaSessao(m)+'</em>':''}</span>
         <span class="sess-l ${m.livre?'livre':''}">${marcaDe(m)}</span>
         <span class="sess-n">${desc}${!m.livre && m.dur && m.fim !== 'manual' ? ' <em class="aprox">aprox</em>' : ''}</span>
         ${aberta?'<span class="sess-o">em andamento</span>':''}
@@ -2578,7 +2611,7 @@ function gruposDoPlano() {
 function abrirAdicionar(t) {
   const base = t != null ? t : Date.now() - 86400000;
   const d = new Date(base); d.setHours(7,0,0,0);
-  view.add = { t: d.getTime(), tipo: null, grupos: [], dur: null, nome: '' };
+  view.add = { t: d.getTime(), tipo: null, grupos: [], dur: null, nome: '', hora: '' };
   view.sessao = null;
   render(); window.scrollTo(0,0);
 }
@@ -2608,6 +2641,22 @@ function addSet(campo, valor) {
   render();
 }
 function addNome(el){ view.add.nome = el.value; }
+function addHora(el) {
+  let v = el.value.replace(/[^0-9:]/g, '');
+  if (v.length === 2 && el.value.length === 2 && v.indexOf(':') < 0) v += ':';
+  if (v !== el.value) el.value = v;
+  view.add.hora = v;
+}
+// 'HH:MM' válido vira o instante do dia escolhido
+function aplicaHora(base, txt) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec((txt||'').trim());
+  if (!m) return null;
+  const hh = +m[1], mm = +m[2];
+  if (hh > 23 || mm > 59) return null;
+  const d = new Date(base);
+  d.setHours(hh, mm, 0, 0);
+  return d.getTime();
+}
 
 function renderAdicionar() {
   const a = view.add;
@@ -2647,6 +2696,13 @@ function renderAdicionar() {
       <p class="cue" style="margin:12px 0 0">Treino avulso conta como dia treinado no calendário e na média semanal, mas não move a rotação nem entra na conta das 48 sessões do bloco.</p>
     ` : ''}
 
+    <div class="obs-h" style="margin-top:22px">horário, se lembrar</div>
+    <div class="addrow">
+      <div class="f"><input type="text" inputmode="numeric" id="ahora"
+        value="${escapeHTML(a.hora||'')}" placeholder="06:15" oninput="addHora(this)"></div>
+    </div>
+    <p class="crule" style="margin:8px 0 0">Em branco, o app não inventa horário.</p>
+
     <div class="obs-h" style="margin-top:22px">duração, se lembrar</div>
     <div class="chips">
       ${[30,45,60,75].map(function (v) { return `<button class="chip ${a.dur===v?'sel':''}" onclick="addSet('dur',${v})">${v} min</button>`; }).join('')}
@@ -2666,8 +2722,11 @@ async function gravarRetro(detalhar) {
   if (!a.tipo) { toast('Escolha qual treino foi.'); return; }
   if (a.tipo === 'livre' && !a.grupos.length) { toast('Marque pelo menos um grupo muscular.'); return; }
 
-  const sid = a.t;
-  const marca = { t: a.t, sid: sid, retro: 1 };
+  const comHora = aplicaHora(a.t, a.hora);
+  const quando = comHora != null ? comHora : a.t;
+  const sid = quando;
+  const marca = { t: quando, sid: sid, retro: 1 };
+  if (comHora != null) marca.hora = 1;
   if (a.tipo === 'livre') {
     marca.livre = 1;
     marca.grupos = a.grupos.slice();
@@ -2688,7 +2747,7 @@ async function gravarRetro(detalhar) {
     // duração dela; sem isso ela ficaria órfã, com o tempo perdido.
     let fechou = null;
     if (S.sessao) { fechou = S.sessao.day; fechaSessao('manual'); }
-    S.sessao = { day: a.tipo, inicio: a.t, ultima: a.t, sid: sid, retro: 1, tocado: Date.now() };
+    S.sessao = { day: a.tipo, inicio: quando, ultima: quando, sid: sid, retro: 1, tocado: Date.now(), pausas: [], pulados: [] };
     S.draft = null;
     view.tab = 'treino'; view.day = a.tipo; view.open = 0;
     await save();
@@ -3274,6 +3333,9 @@ function renderSessao() {
       <div><b>${R.vol?fmtInt(R.vol):'–'}</b><span>volume · kg×reps</span></div>
       <div><b class="${recordes?'up':''}">${recordes}</b><span>${recordes===1?'recorde':'recordes'}</span></div>
     </div>`;
+
+  const hIni = horaDaSessao(marca), hFim = aberta ? null : fimDaSessao(marca);
+  if (hIni) h += `<p class="horario">${hFim ? 'das <b>'+hIni+'</b> às <b>'+hFim+'</b>' : 'começou às <b>'+hIni+'</b>'}</p>`;
 
   const notas = [];
   if (!aberta && dur != null && !exato)
