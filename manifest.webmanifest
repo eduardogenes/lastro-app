@@ -1,0 +1,18 @@
+{
+  "name": "Treino Eduardo",
+  "short_name": "Treino",
+  "description": "Registro de treino, cardio e acompanhamento corporal",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0D1520",
+  "theme_color": "#0D1520",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "icons": [
+    { "src": "icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icone-512-mascara.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
