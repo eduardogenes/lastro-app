@@ -3,7 +3,7 @@
 // (academia às 6h15, sinal ruim no subsolo) e atualiza por baixo quando há rede.
 // Para publicar uma versão nova do app, suba o número do CACHE abaixo.
 
-const CACHE = 'treino-v9';
+const CACHE = 'treino-v10';
 
 const LOCAIS = [
   './',

@@ -159,8 +159,8 @@ e o app lembra para sempre. `S.carga` guarda a correção quando o padrão erra.
 |---|---|---|
 | `pino` | a carga do pino ou stack | não |
 | `lado` | o que tem de um lado, sem a barra | sim, em anilhas |
-| `halter` | o peso de um halter, com um em cada mão | sim, nas duas mãos |
-| `halter1` | o peso do halter, quando é um só | não |
+| `halter` | o peso de um halter, com um em cada mão. Campo rotulado `kg/lado` | sim, nas duas mãos |
+| `halter1` | o peso do halter, quando é um só. Campo rotulado `kg` | não |
 | `corpo` | o que foi acrescentado ao peso do corpo; pode ficar vazio | não |
 | `assist` | o contrapeso que ajuda | não |
 
