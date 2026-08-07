@@ -98,6 +98,11 @@ html, body {
   line-height: 1.6; padding: 22px 18px 8px;
 }
 
+.wd.livre { border-color: var(--mist); }
+.wd.livre .wd-v { color: var(--mist); }
+.wd:not(.feito):not(.futuro) { cursor: pointer; }
+.wd:not(.feito):not(.futuro) .wd-v { color: var(--dim); }
+
 /* ---------- acompanhamento ---------- */
 .mesnav { display: flex; align-items: center; gap: 12px; margin: 16px 0 0; }
 .mesnav span {
@@ -132,6 +137,11 @@ html, body {
 .cal-d.feito { border-color: rgba(245,168,60,.5); background: rgba(245,168,60,.08); cursor: pointer; }
 .cal-d.feito em { color: var(--mist); }
 .cal-d.hoje { border-color: var(--paper); }
+.cal-d.livre { border-color: rgba(141,160,184,.5); background: rgba(141,160,184,.07); }
+.cal-d.livre i { color: var(--mist); }
+.cal-d.futuro { opacity: .35; }
+.cal-d:not(.feito):not(.futuro) { cursor: pointer; }
+.sess-l.livre { color: var(--mist); }
 
 .mediasem {
   font-family: var(--f-m); font-size: 13px; color: var(--mist);
@@ -974,7 +984,7 @@ const DORES = [
 const MODAIS = ['bike', 'esteira inclinada', 'elíptico', 'remo'];
 
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, export:0 };
-let view = { day:'A', tab:'treino', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, mes:0 };
+let view = { day:'A', tab:'treino', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, mes:0, add:null };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false;
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -1115,6 +1125,13 @@ function sessaoAberta() { return S.sessao || null; }
 function encerraSePreciso() {
   const s = S.sessao;
   if (!s) return false;
+  if (s.retro) {
+    // sessão retroativa fecha por inatividade real ou na virada do dia de uso
+    const ref = s.tocado || s.inicio;
+    if (Date.now() - ref < SESSAO_LIMITE && sameDay(ref, Date.now())) return false;
+    fechaSessao();
+    return true;
+  }
   const parada = Date.now() - (s.ultima || s.inicio);
   if (parada < SESSAO_LIMITE && sameDay(s.inicio, Date.now())) return false;
   fechaSessao();
@@ -1125,7 +1142,8 @@ function fechaSessao() {
   const s = S.sessao;
   if (!s) return;
   const marca = S.done.filter(function (x) { return x.sid === s.sid; })[0];
-  if (marca) marca.dur = Math.max(0, (s.ultima || s.inicio) - s.inicio);
+  // retroativo já veio com a duração informada no formulário, se houve
+  if (marca && !s.retro) marca.dur = Math.max(0, (s.ultima || s.inicio) - s.inicio);
   S.sessao = null;
   S.draft = null;
   view.fired = {};
@@ -1173,12 +1191,14 @@ function projeta(i) {
   if (!sets) { removeProjecao(key); return; }
 
   const s = abreSessao(dia);
-  s.ultima = Date.now();
-  s.day = dia;
+  if (s.retro) { s.tocado = Date.now(); }
+  else { s.ultima = Date.now(); s.day = dia; }
 
   if (!S.logs[key]) S.logs[key] = [];
   let entry = S.logs[key].filter(function (x) { return x.sid === s.sid; })[0];
-  if (!entry) { entry = { t: Date.now(), sid: s.sid }; S.logs[key].push(entry); }
+  // a entrada leva a data da sessão: num registro retroativo, o treino
+  // aconteceu ontem, não agora
+  if (!entry) { entry = { t: s.inicio, sid: s.sid }; S.logs[key].push(entry); }
 
   entry.sets = sets;
   if (isTime(ex)) entry.u = 'seg'; else delete entry.u;
@@ -1218,9 +1238,16 @@ async function save() {
 }
 
 // ---------- helpers ----------
+// Sessão avulsa (fora do plano) não move a rotação nem entra na conta das 48:
+// ela é presença, não é o programa.
+function ultimaDoPlano() {
+  for (let i = S.done.length-1; i >= 0; i--) if (S.done[i].day && !S.done[i].livre) return S.done[i];
+  return null;
+}
 function nextDay() {
-  if (!S.done.length) return 'A';
-  const i = ROT.indexOf(S.done[S.done.length-1].day);
+  const u = ultimaDoPlano();
+  if (!u) return 'A';
+  const i = ROT.indexOf(u.day);
   return ROT[(i+1) % 6];
 }
 function id(d,i){ return d + i; }
@@ -1268,7 +1295,7 @@ function setsFor(ex) { return S.deload ? Math.ceil(ex.s/2) : ex.s; }
 const PAUSA_DIAS = 14;
 function diasDesde(t) { return (Date.now() - t) / 86400000; }
 function pausaGeral() { return S.done.length ? diasDesde(S.done[S.done.length-1].t) : 0; }
-function sessoesDeTrabalho() { return S.done.filter(function (x) { return !x.dl; }).length; }
+function sessoesDeTrabalho() { return S.done.filter(function (x) { return !x.dl && !x.livre; }).length; }
 function diasSemBackup() {
   if (S.export) return diasDesde(S.export);
   return S.done.length ? diasDesde(S.done[0].t) : 0;
@@ -1348,6 +1375,7 @@ function diaExtenso(t) {
   return DIAS_LONGOS[d.getDay()] + ', ' + String(d.getDate()).padStart(2,'0') + ' de ' + MESES[d.getMonth()];
 }
 function sessoesDoDia(t) { return S.done.filter(function (x) { return sameDay(x.t, t); }); }
+function marcaDe(m) { return m.livre ? '•' : m.day; }
 
 function fmtDate(t) {
   const d = new Date(t);
@@ -1423,6 +1451,35 @@ function chartSVG(H, seg) {
   return g + '</svg>';
 }
 
+// ---------- estado do dia ----------
+// Vive num elemento próprio para poder ser atualizado sem re-render: inp()
+// evita render() de propósito, senão o campo perde o foco a cada tecla.
+function estadoDoDia(P) {
+  const aberta = S.sessao;
+  if (aberta && aberta.retro) {
+    const r = resumoDaSessao(aberta);
+    return `<b>preenchendo ${fmtDate(aberta.inicio)}</b> · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtInt(r.vol)+' kg×reps':''}`;
+  }
+  if (aberta) {
+    const r = resumoDaSessao(aberta);
+    return `<b>em andamento</b> · ${fmtDur(aberta.ultima - aberta.inicio)} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtInt(r.vol)+' kg×reps':''}`;
+  }
+  const hoje = sessoesDoDia(Date.now());
+  if (hoje.length) {
+    const m = hoje[hoje.length-1];
+    const r = resumoDaSessao(m);
+    return m.livre
+      ? `<b>treino avulso hoje</b> · ${(m.grupos||[]).join(', ')}`
+      : `<b>treino ${m.day} encerrado hoje</b> · ${fmtDur(m.dur)} · ${r.series} ${r.series===1?'série':'séries'}`;
+  }
+  return `${P.tag} · ${P.ex.reduce(function (a,e) { return a+e.s; }, 0)} séries prescritas`;
+}
+
+function atualizaEstado() {
+  const el = document.getElementById('daymeta');
+  if (el && PLAN[view.day]) el.innerHTML = estadoDoDia(PLAN[view.day]);
+}
+
 // ---------- faixa da semana ----------
 // Sete colunas de segunda a domingo. A letra do treino no dia em que houve
 // treino, um ponto apagado no dia em que não houve. Sem julgamento, só o fato.
@@ -1434,10 +1491,12 @@ function faixaSemana() {
     const marcas = sessoesDoDia(dia);
     const hoje = sameDay(dia, Date.now());
     const futuro = dia > Date.now() && !hoje;
-    cel += `<div class="wd ${hoje?'hoje':''} ${marcas.length?'feito':''} ${futuro?'futuro':''}"
-      ${marcas.length?`onclick="abrirSessao(${marcas[marcas.length-1].t})"`:''}>
+    const livre = marcas.length && marcas.every(function (m) { return m.livre; });
+    const acao = marcas.length ? `abrirSessao(${marcas[marcas.length-1].t})` : (futuro ? '' : `abrirAdicionar(${dia})`);
+    cel += `<div class="wd ${hoje?'hoje':''} ${marcas.length?'feito':''} ${livre?'livre':''} ${futuro?'futuro':''}"
+      ${acao?`onclick="${acao}"`:''}>
       <span class="wd-d">${DIAS_CURTOS[i]}</span>
-      <span class="wd-v">${marcas.length ? marcas.map(function (m) { return m.day; }).join('') : '·'}</span>
+      <span class="wd-v">${marcas.length ? marcas.map(marcaDe).join('') : '+'}</span>
     </div>`;
   }
   return '<div class="semana">' + cel + '</div>';
@@ -1446,6 +1505,7 @@ function faixaSemana() {
 // ---------- render ----------
 function render() {
   if (view.retro) return renderRetro();
+  if (view.add) return renderAdicionar();
   if (view.sessao) return renderSessao();
   if (view.hist) return renderHist();
   const app = document.getElementById('app');
@@ -1454,25 +1514,12 @@ function render() {
   const trabalho = sessoesDeTrabalho();
   const toDeload = 48 - (trabalho % 48);
 
-  const hoje = sessoesDoDia(Date.now());
-  const aberta = S.sessao;
-  let estado;
-  if (aberta) {
-    const r = resumoDaSessao(aberta);
-    estado = `<b>em andamento</b> · ${fmtDur(aberta.ultima - aberta.inicio)} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtInt(r.vol)+' kg×reps':''}`;
-  } else if (hoje.length) {
-    const r = resumoDaSessao(hoje[hoje.length-1]);
-    estado = `<b>treino ${hoje[hoje.length-1].day} encerrado hoje</b> · ${fmtDur(hoje[hoje.length-1].dur)} · ${r.series} ${r.series===1?'série':'séries'}`;
-  } else {
-    estado = `${P.tag} · ${P.ex.reduce((a,e)=>a+e.s,0)} séries prescritas`;
-  }
-
   const naTreino = view.tab === 'treino';
   let h = `<div class="hdr ${naTreino?'':'curto'}">
     <div class="eyebrow"><span>${diaExtenso(Date.now())}</span><span>ciclo ${cycle} · ${S.done.length} sessões</span></div>
     ${naTreino ? `<div class="dayline">
       <div class="dayletter">${d}</div>
-      <div><div class="dayname">${P.name}</div><div class="daymeta">${estado}</div></div>
+      <div><div class="dayname">${P.name}</div><div class="daymeta" id="daymeta">${estadoDoDia(P)}</div></div>
     </div>
     ${faixaSemana()}` : ''}
   </div>
@@ -1485,6 +1532,11 @@ function render() {
     <button class="${view.tab==='corpo'?'on':''}" onclick="tab('corpo')">corpo</button>
     <button class="${view.tab==='ajustes'?'on':''}" onclick="tab('ajustes')">ajustes</button>
   </div>`;
+
+  if (naTreino && S.sessao && S.sessao.retro)
+    h += `<div class="deload on"><b>Preenchendo o treino de ${diaExtenso(S.sessao.inicio)}.</b>
+      As séries que você digitar entram nessa data, não em hoje.
+      <button class="dlbtn" onclick="concluirRetro()">concluir</button></div>`;
 
   if (naTreino && trabalho > 0 && trabalho % 48 === 0)
     h += `<div class="deload on"><b>Bloco de 48 sessões concluído.</b>
@@ -1936,9 +1988,12 @@ function renderAcomp() {
     const t = new Date(base.getFullYear(), base.getMonth(), dia).getTime();
     const marcas = sessoesDoDia(t);
     const hoje = sameDay(t, Date.now());
-    cel += `<span class="cal-d ${marcas.length?'feito':''} ${hoje?'hoje':''}"
-      ${marcas.length?`onclick="abrirSessao(${marcas[marcas.length-1].t})"`:''}>
-      <em>${dia}</em>${marcas.length?'<i>'+marcas.map(function(m){return m.day;}).join('')+'</i>':''}
+    const futuro = t > Date.now() && !hoje;
+    const livre = marcas.length && marcas.every(function (m) { return m.livre; });
+    const acao = marcas.length ? `abrirSessao(${marcas[marcas.length-1].t})` : (futuro ? '' : `abrirAdicionar(${t})`);
+    cel += `<span class="cal-d ${marcas.length?'feito':''} ${livre?'livre':''} ${hoje?'hoje':''} ${futuro?'futuro':''}"
+      ${acao?`onclick="${acao}"`:''}>
+      <em>${dia}</em>${marcas.length?'<i>'+marcas.map(marcaDe).join('')+'</i>':''}
     </span>`;
   }
 
@@ -1961,16 +2016,23 @@ function renderAcomp() {
 
     ${med!==null?`<p class="mediasem"><b>${fmtDec(med)}</b> treinos por semana<br><span>média das últimas 4 semanas</span></p>`:''}
 
+    <button class="dbtn" style="margin-top:22px" onclick="abrirAdicionar()">Registrar um treino passado</button>
+    <p class="cue" style="margin:9px 0 0">Ou toque num dia vazio do calendário.</p>
+
     <div class="hsec" style="margin-top:26px">sessões do mês</div>
     ${lista.length ? lista.map(function (m) {
       const r = resumoDaSessao(m);
       const dur = m.dur != null ? m.dur : (S.sessao && S.sessao.sid === m.sid ? S.sessao.ultima - S.sessao.inicio : null);
       const aberta = S.sessao && S.sessao.sid === m.sid;
+      const desc = m.livre
+        ? (m.nome ? m.nome + ' · ' : '') + (m.grupos||[]).join(', ')
+        : `${fmtDur(dur)} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtK(r.vol):''}`;
       return `<div class="sessrow" onclick="abrirSessao(${m.t})">
         <span class="sess-d">${fmtDate(m.t)}</span>
-        <span class="sess-l">${m.day}</span>
-        <span class="sess-n">${fmtDur(dur)} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtK(r.vol):''}</span>
+        <span class="sess-l ${m.livre?'livre':''}">${marcaDe(m)}</span>
+        <span class="sess-n">${desc}</span>
         ${aberta?'<span class="sess-o">em andamento</span>':''}
+        ${m.retro?'<span class="tag">retroativo</span>':''}
         ${m.dl?'<span class="tag dl-t">deload</span>':''}
       </div>`;
     }).join('') : '<p class="cue" style="margin:0">Nenhum treino registrado neste mês.</p>'}
@@ -1982,6 +2044,148 @@ function mudaMes(n) {
   if (novo > 0) return;
   view.mes = novo;
   render(); window.scrollTo(0,0);
+}
+
+// ---------- registro retroativo ----------
+// "Treinei ontem e não abri o app." Dois casos: foi um treino do plano, ou foi
+// outra coisa. O segundo registra presença e grupo muscular, sem fingir que
+// tem carga e repetição que ninguém anotou.
+function gruposDoPlano() {
+  const set = {};
+  ROT.forEach(function (d) { PLAN[d].ex.forEach(function (ex) { set[ex.g] = 1; }); });
+  return Object.keys(set).sort(function (a,b) {
+    const pa = PRIO.indexOf(a), pb = PRIO.indexOf(b);
+    if (pa !== pb) return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);
+    return a.localeCompare(b, 'pt-BR');
+  });
+}
+
+function abrirAdicionar(t) {
+  const base = t != null ? t : Date.now() - 86400000;
+  const d = new Date(base); d.setHours(7,0,0,0);
+  view.add = { t: d.getTime(), tipo: null, grupos: [], dur: null, nome: '' };
+  view.sessao = null;
+  render(); window.scrollTo(0,0);
+}
+function fecharAdicionar(){ view.add = null; render(); window.scrollTo(0,0); }
+
+async function concluirRetro() {
+  const t = S.sessao ? S.sessao.inicio : null;
+  fechaSessao();
+  view.open = null;
+  await save();
+  render(); window.scrollTo(0,0);
+  if (t) toast('Treino de ' + fmtDate(t) + ' concluído.');
+}
+
+function addSet(campo, valor) {
+  const a = view.add;
+  if (campo === 'grupo') {
+    const i = a.grupos.indexOf(valor);
+    if (i >= 0) a.grupos.splice(i,1); else a.grupos.push(valor);
+  } else if (campo === 'dia') {
+    const d = new Date(a.t); d.setDate(d.getDate() + valor);
+    if (d.getTime() > Date.now()) return;
+    a.t = d.getTime();
+  } else {
+    a[campo] = a[campo] === valor ? null : valor;
+  }
+  render();
+}
+function addNome(el){ view.add.nome = el.value; }
+
+function renderAdicionar() {
+  const a = view.add;
+  const jaTem = sessoesDoDia(a.t);
+  const grupos = gruposDoPlano();
+  const app = document.getElementById('app');
+  const futuro = a.t + 86400000 > Date.now() + 86400000;
+
+  let h = `<div class="hhdr">
+    <button class="back" onclick="fecharAdicionar()">‹ voltar</button>
+    <div class="eyebrow"><span>registrar treino passado</span></div>
+    <h2 class="htitle">${diaExtenso(a.t)}</h2>
+  </div>
+  <div class="hwrap">
+    <div class="mesnav" style="margin-top:4px">
+      <button onclick="addSet('dia',-1)">‹</button>
+      <span style="text-transform:none">${fmtDate(a.t)}</span>
+      <button onclick="addSet('dia',1)" ${sameDay(a.t, Date.now())?'disabled':''}>›</button>
+    </div>
+    ${jaTem.length?`<div class="deload" style="margin-top:14px"><b>Já existe treino registrado neste dia.</b>
+      ${jaTem.map(function(m){return m.livre?'avulso':'treino '+m.day;}).join(', ')}. Adicionar de novo cria uma segunda sessão.</div>`:''}
+
+    <div class="obs-h" style="margin-top:22px">o que foi</div>
+    <div class="chips">
+      ${ROT.map(function (x) { return `<button class="chip ${a.tipo===x?'sel':''}" onclick="addSet('tipo','${x}')">${x}</button>`; }).join('')}
+      <button class="chip ${a.tipo==='livre'?'sel':''}" onclick="addSet('tipo','livre')">outro treino</button>
+    </div>
+    ${a.tipo && a.tipo !== 'livre' ? `<p class="cue" style="margin:12px 0 0">${PLAN[a.tipo].name} · ${PLAN[a.tipo].tag}</p>` : ''}
+
+    ${a.tipo === 'livre' ? `
+      <div class="obs-h" style="margin-top:22px">grupos musculares</div>
+      <div class="chips">${grupos.map(function (g) {
+        return `<button class="chip ${a.grupos.indexOf(g)>=0?'sel':''}" onclick="addSet('grupo','${g}')">${g}</button>`;
+      }).join('')}</div>
+      <input class="note" style="margin-top:14px" placeholder="o que foi, se quiser dizer (opcional)"
+        value="${escapeHTML(a.nome)}" oninput="addNome(this)">
+      <p class="cue" style="margin:12px 0 0">Treino avulso conta como dia treinado no calendário e na média semanal, mas não move a rotação nem entra na conta das 48 sessões do bloco.</p>
+    ` : ''}
+
+    <div class="obs-h" style="margin-top:22px">duração, se lembrar</div>
+    <div class="chips">
+      ${[30,45,60,75].map(function (v) { return `<button class="chip ${a.dur===v?'sel':''}" onclick="addSet('dur',${v})">${v} min</button>`; }).join('')}
+    </div>
+
+    <div class="edrow" style="margin-top:26px">
+      <button class="dbtn" onclick="gravarRetro(false)" ${a.tipo?'':'disabled'}>Adicionar</button>
+    </div>
+    ${a.tipo && a.tipo !== 'livre' ? `<button class="dbtn ghost" style="margin-top:9px" onclick="gravarRetro(true)">Adicionar e preencher os exercícios</button>` : ''}
+  </div>`;
+
+  app.innerHTML = h;
+}
+
+async function gravarRetro(detalhar) {
+  const a = view.add;
+  if (!a.tipo) { toast('Escolha qual treino foi.'); return; }
+  if (a.tipo === 'livre' && !a.grupos.length) { toast('Marque pelo menos um grupo muscular.'); return; }
+
+  const sid = a.t;
+  const marca = { t: a.t, sid: sid, retro: 1 };
+  if (a.tipo === 'livre') {
+    marca.livre = 1;
+    marca.grupos = a.grupos.slice();
+    if (a.nome.trim()) marca.nome = a.nome.trim();
+  } else {
+    marca.day = a.tipo;
+    if (S.deload) marca.dl = 1;
+  }
+  if (a.dur) marca.dur = a.dur*60000;
+
+  S.done.push(marca);
+  S.done.sort(function (x,y) { return x.t - y.t; });
+  view.add = null;
+  await save();
+
+  if (detalhar && a.tipo !== 'livre') {
+    // Só pode existir uma sessão aberta. Fechar a de hoje antes grava a
+    // duração dela; sem isso ela ficaria órfã, com o tempo perdido.
+    let fechou = null;
+    if (S.sessao) { fechou = S.sessao.day; fechaSessao(); }
+    S.sessao = { day: a.tipo, inicio: a.t, ultima: a.t, sid: sid, retro: 1, tocado: Date.now() };
+    S.draft = null;
+    view.tab = 'treino'; view.day = a.tipo; view.open = 0;
+    await save();
+    render(); window.scrollTo(0,0);
+    toast(fechou
+      ? 'Treino ' + fechou + ' de hoje encerrado. Agora preenchendo ' + fmtDate(a.t) + '.'
+      : 'Preenchendo o treino de ' + fmtDate(a.t) + '. Some sozinho quando você sair.');
+    return;
+  }
+  view.tab = 'acomp';
+  render(); window.scrollTo(0,0);
+  toast(a.tipo === 'livre' ? 'Treino avulso registrado.' : 'Treino ' + a.tipo + ' registrado em ' + fmtDate(a.t) + '.');
 }
 
 // ---------- corpo ----------
@@ -2109,6 +2313,11 @@ function painelMusculos() {
   const antes = seriesPorMusculo(semana - janela*7*86400000, semana, decorrido);
   const diaDaSemana = Math.min(7, Math.floor(decorrido/86400000) + 1);
 
+  const avulsos = S.done.filter(function (x) { return x.livre && x.t >= semana; });
+  const avulsosGrupos = Object.keys(avulsos.reduce(function (a,x) {
+    (x.grupos||[]).forEach(function (g) { a[g] = 1; }); return a;
+  }, {}));
+
   const nomes = {};
   ROT.forEach(d => PLAN[d].ex.forEach(ex => { nomes[ex.g] = 1; }));
   const lista = Object.keys(nomes).sort(function (a,b) {
@@ -2124,6 +2333,7 @@ function painelMusculos() {
     <h3>Séries por músculo nesta semana</h3>
     <p>Séries registradas desde segunda-feira, comparadas com o <b>mesmo ponto</b> das últimas ${janela} semanas — dia ${diaDaSemana} de 7. Os seis pontos fracos do programa vêm primeiro e estão marcados.</p>
     ${temHistorico ? '' : '<p style="color:var(--dim)">Ainda sem semanas anteriores para comparar. A coluna de média aparece a partir da segunda semana de registro.</p>'}
+    ${avulsos.length ? `<p style="color:var(--dim)">${avulsos.length} ${avulsos.length===1?'treino avulso nesta semana não entra':'treinos avulsos nesta semana não entram'} nesta contagem, porque não ${avulsos.length===1?'tem':'têm'} série registrada: ${avulsosGrupos.join(', ')}.</p>` : ''}
     <div class="mus">
       ${lista.map(function (g) {
         const n = atual[g] || 0;
@@ -2385,7 +2595,7 @@ function toast(msg) {
 
 // ---------- actions ----------
 function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); window.scrollTo(0,0); }
-function tab(t){ view.tab=t; view.hist=null; view.json=null; view.paste=false; view.retro=false; view.sessao=null; view.mes=0; render(); window.scrollTo(0,0); }
+function tab(t){ view.tab=t; view.hist=null; view.json=null; view.paste=false; view.retro=false; view.sessao=null; view.add=null; view.mes=0; render(); window.scrollTo(0,0); }
 function toggle(i){ view.open = view.open===i ? null : i; view.swapOpen = null; view.nota = null; render(); }
 function escAttr(s){ return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 function dorName(k){ const x = DORES.filter(y=>y.k===k)[0]; return x ? x.t : k; }
@@ -2410,6 +2620,7 @@ function inp(el, i, k, pos) {
   el.classList.toggle('done', el.value !== '');
   segurarTela();
   projeta(i);
+  atualizaEstado();
   queueSave();
   autoTimer(i, k, e);
 }
@@ -2516,6 +2727,7 @@ function resumoDaSessao(marca) {
 
 function renderSessao() {
   const marca = view.sessao;
+  if (marca.livre) return renderSessaoLivre(marca);
   const R = resumoDaSessao(marca);
   const aberta = S.sessao && S.sessao.sid === marca.sid;
   const dur = aberta ? (S.sessao.ultima - S.sessao.inicio) : marca.dur;
@@ -2559,6 +2771,34 @@ function renderSessao() {
   h += '</div>';
   app.innerHTML = h;
 }
+function renderSessaoLivre(m) {
+  const app = document.getElementById('app');
+  app.innerHTML = `<div class="hhdr">
+    <button class="back" onclick="fecharSessao()">‹ voltar</button>
+    <div class="eyebrow"><span>treino avulso</span><span>${diaExtenso(m.t)}</span></div>
+    <h2 class="htitle">${m.nome ? escapeHTML(m.nome) : (m.grupos||[]).join(', ')}</h2>
+  </div>
+  <div class="hwrap">
+    <div class="stats">
+      <div><b>${m.dur?fmtDur(m.dur):'–'}</b><span>tempo de treino</span></div>
+      <div><b>${(m.grupos||[]).length}</b><span>${(m.grupos||[]).length===1?'grupo muscular':'grupos musculares'}</span></div>
+    </div>
+    ${(m.grupos||[]).length?`<div class="chips" style="margin-top:18px">${m.grupos.map(function (g) {
+      return '<span class="chip sel" style="cursor:default">'+g+'</span>';
+    }).join('')}</div>`:''}
+    <p class="cue" style="margin:20px 0 0">Fora do plano. Conta como dia treinado no calendário e na média semanal, mas não tem carga nem série registrada e não move a rotação.</p>
+    <button class="danger" style="width:100%;margin-top:22px" onclick="apagarMarca(${m.t})">apagar este registro</button>
+  </div>`;
+}
+
+async function apagarMarca(t) {
+  if (!confirm('Apagar este registro de treino? Isso não tem volta.')) return;
+  S.done = S.done.filter(function (x) { return x.t !== t; });
+  view.sessao = null;
+  await save(); render();
+  toast('Registro apagado.');
+}
+
 function abrirSessao(t){ view.sessao = S.done.filter(function (x) { return x.t === t; })[0]; if (view.sessao) { render(); window.scrollTo(0,0); } }
 function fecharSessao(){ view.sessao = null; render(); window.scrollTo(0,0); }
 

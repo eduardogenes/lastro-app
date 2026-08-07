@@ -82,10 +82,13 @@ S = {
       aq: 1                   // opcional, aquecimento marcado
     }]
   },
-  done: [{ day: 'A', t: 0, sid: 0, dur: 0, dl: 1 }],
-  //   sid  liga a marca às entradas de logs da mesma sessão
-  //   dur  duração em ms, ausente em sessões anteriores ao registro contínuo
-  //   dl   exclui da conta das 48 sessões
+  done: [{ day: 'A', t: 0, sid: 0, dur: 0, dl: 1, retro: 1 }],
+  //   sid     liga a marca às entradas de logs da mesma sessão
+  //   dur     duração em ms, ausente em sessões anteriores ao registro contínuo
+  //   dl      exclui da conta das 48 sessões
+  //   retro   registrado depois, em data passada
+  // Sessão avulsa (fora do plano) não tem `day` e traz:
+  //   livre: 1, grupos: ['peito','tríceps'], nome: 'treino no hotel'
   deload: false,
   draft: null,                          // buffer de digitação da sessão aberta
   sessao: null,                         // { day, inicio, ultima, sid } ou null
@@ -120,6 +123,24 @@ salvar fazia.
 `historico(key)` devolve as entradas de um exercício **excluindo a sessão
 aberta**. É o que impede a sessão em andamento de virar referência de si mesma
 no placeholder, no selo de subir carga e na linha de última vez.
+
+### Registro retroativo
+
+"Treinei ontem e não abri o app." Dois casos, e eles são diferentes de propósito:
+
+- **Treino do plano.** Escolhe a data e a letra. Pode parar aí, ou abrir a
+  sessão retroativa e preencher os exercícios — as entradas levam a data do
+  treino, não a hora do toque. A sessão retroativa fecha por inatividade real ou
+  na virada do dia de uso, nunca pela data do treino.
+- **Treino avulso** (`livre: 1`). Só grupos musculares, nome opcional e duração.
+  Conta como dia treinado no calendário e na média semanal, mas **não move a
+  rotação nem entra na conta das 48 sessões** — é presença, não é o programa. O
+  painel de séries por músculo avisa quando existem avulsos no período, para o
+  número não parecer completo quando não é.
+
+Entradas: tocar num dia vazio do calendário ou da faixa da semana, ou o botão no
+acompanhamento. Abrir o preenchimento retroativo com um treino em andamento
+fecha o de hoje antes, gravando a duração dele.
 
 ### Detalhes que parecem bugs mas são propositais
 
