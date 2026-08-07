@@ -137,3 +137,54 @@ test('treino avulso não entra na conta de horário', async () => {
   assert.strictEqual(a.E('temHora(S.done[0])'), false);
   a.fechar();
 });
+
+test('calendário marca o período do dia', async () => {
+  const hoje = new Date();
+  const dia = function (d, h) {
+    return new Date(hoje.getFullYear(), hoje.getMonth(), d, h, 15).getTime();
+  };
+  const done = [
+    { day: 'A', t: dia(2, 6), sid: 1, dur: 50 * 60000 },    // manhã
+    { day: 'B', t: dia(3, 14), sid: 2, dur: 50 * 60000 },   // tarde
+    { day: 'C', t: dia(4, 20), sid: 3, dur: 50 * 60000 }    // noite
+  ];
+  const a = await app({ estado: { logs: {}, done: done } });
+  a.E('tab("acomp")');
+
+  const marca = function (n) {
+    const cel = a.$$('.cal-d').find(function (c) {
+      return c.querySelector('em') && c.querySelector('em').textContent === String(n);
+    });
+    const per = cel.querySelector('.per');
+    return per ? per.textContent + ':' + per.className.replace('per ', '') : null;
+  };
+  assert.strictEqual(marca(2), 'm:manha');
+  assert.strictEqual(marca(3), 't:tarde');
+  assert.strictEqual(marca(4), 'n:noite');
+  assert.ok(a.texto('.callegenda').includes('manhã'), 'legenda explica os três');
+  a.fechar();
+});
+
+test('limites das faixas de período', async () => {
+  const a = await app();
+  const emH = function (h) { const d = new Date(); d.setHours(h, 0, 0, 0); return d.getTime(); };
+  assert.strictEqual(a.E('periodoDe(' + emH(5) + ').k'), 'manha');
+  assert.strictEqual(a.E('periodoDe(' + emH(11) + ').k'), 'manha');
+  assert.strictEqual(a.E('periodoDe(' + emH(12) + ').k'), 'tarde');
+  assert.strictEqual(a.E('periodoDe(' + emH(17) + ').k'), 'tarde');
+  assert.strictEqual(a.E('periodoDe(' + emH(18) + ').k'), 'noite');
+  assert.strictEqual(a.E('periodoDe(' + emH(4) + ').k'), 'noite', 'madrugada é noite');
+  a.fechar();
+});
+
+test('sem horário medido não há marcador de período', async () => {
+  const a = await app();
+  a.E('abrirAdicionar(' + (Date.now() - DIA) + ')');
+  a.E('addSet("tipo","B")');
+  await a.E('gravarRetro(false)');
+  await a.esperar();
+
+  a.E('tab("acomp")');
+  assert.strictEqual(a.$('.cal-d .per'), null, 'não marca período de hora que ninguém mediu');
+  a.fechar();
+});

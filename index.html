@@ -356,6 +356,19 @@ html, body {
 }
 .cardio-dia span { font-size: 13px; color: var(--mist); line-height: 1.5; }
 
+/* ---------- período do dia ---------- */
+.per {
+  text-decoration: none; font-family: var(--f-m); font-size: 7.5px;
+  font-weight: 400; color: var(--dim); margin-left: 2px; vertical-align: super;
+  line-height: 1;
+}
+.cal-d.feito .per { color: rgba(245,168,60,.65); }
+.callegenda {
+  display: flex; gap: 14px; margin-top: 10px;
+  font-family: var(--f-m); font-size: 9.5px; color: var(--dim);
+}
+.callegenda .per { vertical-align: baseline; margin: 0 4px 0 0; color: var(--mist); }
+
 /* ---------- horário ---------- */
 .horario {
   font-family: var(--f-m); font-size: 12px; color: var(--dim);
@@ -1729,6 +1742,23 @@ const DIAS_CURTOS = ['seg','ter','qua','qui','sex','sáb','dom'];
 const DIAS_LONGOS = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 
+// Marcador de período no calendário. Letra em vez de emoji porque a regra 5
+// do projeto proíbe emoji, e porque um glifo colorido seria a única coisa
+// colorida fora da paleta no app inteiro. Trocar os rótulos aqui muda tudo.
+const PERIODOS = [
+  { k:'manha', de:5,  ate:12, rot:'m', nome:'manhã' },
+  { k:'tarde', de:12, ate:18, rot:'t', nome:'tarde' },
+  { k:'noite', de:18, ate:5,  rot:'n', nome:'noite' }
+];
+function periodoDe(t) {
+  const h = new Date(t).getHours();
+  if (h >= 5 && h < 12) return PERIODOS[0];
+  if (h >= 12 && h < 18) return PERIODOS[1];
+  return PERIODOS[2];
+}
+// só marca o que foi medido de verdade
+function periodoDaSessao(m) { return temHora(m) ? periodoDe(m.t) : null; }
+
 function fmtHora(t) {
   const d = new Date(t);
   return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
@@ -2497,6 +2527,15 @@ function mediaSemanal() {
   return temSemanas ? n/4 : null;
 }
 
+// um só marcador por dia: se houve mais de um treino, vale o primeiro medido
+function periodoNaCelula(marcas) {
+  for (let i = 0; i < marcas.length; i++) {
+    const p = periodoDaSessao(marcas[i]);
+    if (p) return '<u class="per ' + p.k + '">' + p.rot + '</u>';
+  }
+  return '';
+}
+
 function renderAcomp() {
   const base = mesRef();
   const de = base.getTime();
@@ -2521,7 +2560,7 @@ function renderAcomp() {
     const card = cardioDoDia(t).length;
     cel += `<span class="cal-d ${marcas.length?'feito':''} ${livre?'livre':''} ${hoje?'hoje':''} ${futuro?'futuro':''} ${card?'com-cardio':''}"
       ${acao?`onclick="${acao}"`:''}>
-      <em>${dia}</em>${marcas.length?'<i>'+marcas.map(marcaDe).join('')+'</i>':''}
+      <em>${dia}</em>${marcas.length?'<i>'+marcas.map(marcaDe).join('')+periodoNaCelula(marcas)+'</i>':''}
       ${card?'<span class="barra-cardio"></span>':''}
     </span>`;
   }
@@ -2558,6 +2597,9 @@ function renderAcomp() {
     </div>
 
     <div class="cal">${cel}</div>
+    <div class="callegenda">${PERIODOS.map(function (p) {
+      return '<span><u class="per ' + p.k + '">' + p.rot + '</u>' + p.nome + '</span>';
+    }).join('')}</div>
 
     ${med!==null?`<p class="mediasem"><b>${fmtDec(med)}</b> treinos por semana<br><span>média das últimas 4 semanas</span></p>`:''}
     ${horarios.n?`<p class="mediasem" style="margin-top:14px"><b>${horarios.media}</b> em média<br><span>horário de início · mais cedo ${horarios.min} · mais tarde ${horarios.max}</span></p>`:''}

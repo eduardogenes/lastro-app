@@ -73,7 +73,8 @@ test('calendário marca cardio sem competir com a letra do treino', async () => 
     return c.querySelector('em') && c.querySelector('em').textContent === '2';
   });
   assert.ok(cel.className.includes('feito'), 'ainda é dia de treino');
-  assert.strictEqual(cel.querySelector('i').textContent, 'A', 'a letra continua mandando');
+  // a letra vem primeiro; o marcador de período é um sobrescrito dentro do mesmo <i>
+  assert.strictEqual(cel.querySelector('i').childNodes[0].textContent, 'A', 'a letra continua mandando');
   assert.ok(cel.querySelector('.barra-cardio'), 'e a barra diz que teve cardio');
   a.fechar();
 });
