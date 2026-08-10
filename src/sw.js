@@ -1,19 +1,17 @@
-// Service worker do Treino Eduardo.
+// Service worker do Treino Eduardo. MOLDE: o build gera o dist/sw.js a partir
+// daqui, preenchendo o nome do cache e a lista de arquivos com o que acabou de
+// ser emitido (ver o plugin sw-versionado em vite.config.js).
+//
 // Estratégia: stale-while-revalidate. Abre instantâneo a partir do cache
 // (academia às 6h15, sinal ruim no subsolo) e atualiza por baixo quando há rede.
-// Para publicar uma versão nova do app, suba o número do CACHE abaixo.
+//
+// O número da versão saiu da mão. Antes era um `const CACHE = 'treino-v28'`
+// que precisava ser incrementado a cada publicação — e esquecer significava
+// publicar e o aparelho continuar servindo a versão velha, sem aviso nenhum.
+// Agora ele vem do hash dos assets: mudou o código, mudou o cache.
+const CACHE = '__CACHE__';
 
-const CACHE = 'treino-v28';
-
-const LOCAIS = [
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './icone-180.png',
-  './icone-192.png',
-  './icone-512.png',
-  './icone-512-mascara.png'
-];
+const LOCAIS = __LOCAIS__;
 
 self.addEventListener('install', function (e) {
   e.waitUntil(

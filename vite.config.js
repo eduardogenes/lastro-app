@@ -1,4 +1,45 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
+
+// Gera o dist/sw.js a partir do molde em src/sw.js, com a lista de arquivos que
+// o build acabou de emitir e um CACHE derivado do hash deles.
+//
+// Isso existe para matar um ritual de publicação: o CACHE era um número
+// incrementado à mão, e esquecer de subir significava publicar e o iPhone
+// continuar servindo a versão velha — sem erro, sem aviso, só o app parado no
+// tempo. Agora mudou um byte, muda o cache.
+//
+// Não usa Workbox de propósito: o service worker do projeto já resolve o que
+// precisa em 70 linhas legíveis (stale-while-revalidate, navegação sempre
+// resolvendo para o index em cache, fonte do Google inclusa). Trocar isso por
+// um gerador seria adicionar dependência para perder controle.
+function servicWorkerVersionado() {
+  return {
+    name: 'sw-versionado',
+    apply: 'build',
+    generateBundle(_opcoes, bundle) {
+      const emitidos = Object.keys(bundle).map(f => './' + f);
+      const conteudo = Object.values(bundle)
+        .map(a => (a.type === 'chunk' ? a.code : a.source))
+        .join('');
+
+      const locais = ['./', './index.html', './manifest.webmanifest',
+        './icone-180.png', './icone-192.png', './icone-512.png', './icone-512-mascara.png']
+        .concat(emitidos.filter(f => !f.endsWith('.map') && !f.endsWith('.html')));
+
+      const hash = createHash('sha256').update(conteudo).digest('hex').slice(0, 12);
+
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sw.js',
+        source: readFileSync('src/sw.js', 'utf8')
+          .replace("const CACHE = '__CACHE__';", "const CACHE = 'treino-" + hash + "';")
+          .replace('const LOCAIS = __LOCAIS__;', 'const LOCAIS = ' + JSON.stringify(locais, null, 2) + ';')
+      });
+    }
+  };
+}
 
 // Build do Treino. A saída continua sendo um punhado de arquivos estáticos que
 // qualquer hospedagem serve — o que mudou é que o fonte deixou de ser um HTML
@@ -38,6 +79,8 @@ export default defineConfig({
       }
     }
   },
+
+  plugins: [servicWorkerVersionado()],
 
   server: { port: 5173 }
 });
