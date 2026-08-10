@@ -22,16 +22,61 @@ O [README](../README.md) cobre o uso; aqui está o porquê das decisões.
 
 ## Forma do projeto
 
-Um arquivo HTML com CSS e JS inline. Sem build, sem dependência externa fora da
-fonte do Google. O render é baseado em string: `render()` reescreve o
-`innerHTML` de `#app` e despacha para a tela certa conforme `view`.
+Fonte em módulos, build com Vite, saída em `dist/`: um HTML, um JS, um CSS e os
+ícones. Preact para a interface — 4 kB de runtime.
 
-Isso é uma escolha, não uma limitação aceita. O app tem um usuário, roda offline
-por obrigação e precisa abrir em menos de um segundo às 6h15 no subsolo de uma
-academia. Framework, bundler e servidor adicionariam dependência de rede e de
-toolchain a um fluxo que hoje não tem nenhuma.
+Foi um HTML único de 5.279 linhas com CSS e JS inline, e a escolha tinha razões
+boas: um usuário, offline obrigatório, e o app precisa abrir em menos de um
+segundo às 6h15 no subsolo de uma academia. **Essas razões continuam valendo, e
+nenhuma delas exigia arquivo único.** O que elas exigem é *um artefato estático
+sem dependência de rede em runtime*, e isso o build entrega igual.
 
-**Constantes principais:**
+O que o arquivo único cobrava em troca:
+
+- 452 funções num escopo só, alcançáveis só por `grep`.
+- Nada importável: todo teste subia um jsdom sobre o app inteiro. Checar um
+  limite de dieta custava o mesmo que checar uma tela.
+- O formato do estado — com cadeia de migrações e vinte campos opcionais — só
+  existia escrito neste documento.
+- `render()` reescrevendo `innerHTML` a cada mudança, com o valor dos campos
+  vivendo só no DOM. Foi daí que saíram dois bugs que apagaram série registrada.
+
+### As três camadas de hoje
+
+| | |
+|---|---|
+| `src/dominio/` | As regras. Não leem estado global, não tocam em DOM, são tipadas. Recebem dado e devolvem decisão. |
+| `src/main.jsx` | O casco: estado `S`, roteamento por `view`, e os adaptadores finos que entregam o estado ao domínio. Encolhe a cada tela convertida. |
+| `src/ui/` | Componentes Preact. |
+
+Os adaptadores no casco existem de propósito: `seriesPorMusculo(de, ate)` no
+casco chama `seriesPorMusculo(S.logs, grupoDe, de, ate)` no domínio. Mantêm o
+nome e a aridade que o resto do app já usava, o que permitiu extrair o domínio
+inteiro sem reescrever chamada nenhuma.
+
+### A migração do render, em curso
+
+A conversão para componente é tela por tela. O que ainda produz string entra
+por `<Bruto html={...}>`, que monta o HTML e deixa os `onclick=` inline
+funcionando. **Toda ocorrência de `<Bruto>` é dívida declarada.**
+
+O cartão de exercício foi convertido primeiro, de propósito: é a única parte da
+tela com campo de digitação, e era ali que o `innerHTML` inteiro era reescrito.
+Hoje o Preact toca só no atributo que mudou — abrir outro exercício ou marcar
+dor não reconstrói mais os campos, e não há foco para devolver.
+
+Enquanto sobrar `<Bruto>`, sobram três muletas, todas marcadas no código:
+
+- `HANDLERS_INLINE` em `main.jsx`, que republica 90 funções em `window` porque
+  atributo `onclick` só enxerga o escopo global. Um teste varre o fonte e cobra
+  que nenhum nome citado fique de fora — esquecer um dá botão morto.
+- `window.__escopo`, que dá aos testes de fluxo o alcance ao escopo do módulo
+  que `window.eval` dava de graça quando tudo era global.
+- `minify` e `treeshake` desligados no build, porque as duas coisas acima são
+  alcançadas por string e o bundler não as enxerga. Religar as duas é o sinal
+  de que a fase acabou.
+
+**Constantes principais** (em `src/dominio/programa.ts`):
 
 | | |
 |---|---|
@@ -96,6 +141,9 @@ S = {
   plano: 3                              // versão do formato
 }
 ```
+
+O formato acima é o tipo `Estado` em [src/dominio/tipos.ts](../src/dominio/tipos.ts),
+verificado pelo compilador. Antes ele só existia escrito aqui.
 
 Campos novos entram sempre como opcionais e recebem padrão em
 `normalizaEstado()`, que roda no boot **e na importação de um backup** — um JSON
@@ -228,7 +276,17 @@ botão de restaurar é o caminho para adotar a prescrição nova.
 `DB` expõe `get`, `set` e `delete` assíncronos com cascata
 `window.storage` → `localStorage` → memória. Toda escrita é espelhada no
 `localStorage`, e se o host vier vazio mas houver espelho, o histórico é
-recuperado dele. O app funciona abrindo o arquivo direto no navegador.
+recuperado dele.
+
+O modo `mem` não é decoração: Safari em navegação privada e `file://` travado
+recusam `localStorage`, e nesses casos o app tem que continuar funcionando até
+o fim da sessão em vez de morrer no boot.
+
+**Abrir o `index.html` direto por `file://` deixou de funcionar** com a
+mudança para módulos ES — o navegador recusa módulo por `file://`. Era uma
+propriedade real do arquivo único e foi perdida de propósito, porque o caminho
+de uso é o ícone na tela de início do iPhone. Para conferir localmente,
+`npm run preview`.
 
 ---
 
@@ -306,8 +364,9 @@ treinador apontou.
   O iOS suspende o JavaScript com a tela apagada; com contador, congelava.
 - Os campos numéricos são `type="text"` com `inputmode`. `type="number"`
   descarta vírgula, e no teclado pt-BR "22,5" chegava como string vazia.
-- `topReps()` não pode se chamar `top()`: `window.top` é read-only no escopo
-  global de um documento, e o script inteiro morria antes de rodar.
+- `topReps()` se chama assim porque não podia se chamar `top()`: `window.top` é
+  read-only no escopo global de um documento, e o script inteiro morria antes de
+  rodar. Em módulo a restrição não existe mais; o nome ficou, e o histórico também.
 - O aviso do cronômetro é um beep de Web Audio, não `navigator.vibrate`. Safari
   no iOS não vibra, e o `AudioContext` precisa nascer dentro do gesto do usuário.
 - Séries por músculo comparam a semana corrente com o **mesmo ponto** das

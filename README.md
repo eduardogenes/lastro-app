@@ -1,7 +1,7 @@
 # Treino
 
 App pessoal de registro de treino, cardio e acompanhamento corporal.
-Um arquivo HTML, sem build, sem dependência, sem servidor. Funciona offline.
+Um artefato estático, sem dependência de runtime, sem servidor. Funciona offline.
 
 Existe por um motivo específico: músculo fica forte mais rápido do que tendão
 consegue se adaptar. O app registra, mas boa parte do que ele faz é **frear** a
@@ -26,11 +26,14 @@ programa seja consciente em vez de automática.
 
 ## Começar
 
-Abrir `index.html` no navegador. É isso — não há passo de build nem instalação.
+```
+npm install
+npm run dev
+```
 
 Para valer, no iPhone:
 
-1. Publique a pasta em qualquer hospedagem estática (ver [Publicar](#publicar)).
+1. Publique (ver [Publicar](#publicar)).
 2. Abra o endereço **no Safari** — precisa ser o Safari.
 3. Compartilhar → **Adicionar à Tela de Início**.
 4. Abra sempre pelo ícone.
@@ -122,8 +125,9 @@ conta das 48 sessões** até o deload.
 
 ## O programa
 
-O programa do treinador está congelado no código como `PROGRAMA`: 6 treinos,
-48 exercícios, 125 séries diretas, rotação A → B → C → E → D → F.
+O programa do treinador está congelado no código como `PROGRAMA`, em
+[src/dominio/programa.ts](src/dominio/programa.ts): 6 treinos, 48 exercícios,
+125 séries diretas, rotação A → B → C → E → D → F.
 
 Ele é a semente do seu programa, o alvo de comparação e o que o botão de
 restaurar devolve. O que abre na tela é o **seu** programa, que vai divergindo
@@ -159,21 +163,37 @@ migrações que o estado em disco.
 ## Desenvolver
 
 ```
-npx serve .        # necessário para testar o service worker (precisa de https ou localhost)
+npm install
+npm run dev        # servidor de desenvolvimento
+npm run build      # gera dist/
+npm run preview    # serve o dist/, para conferir o service worker
+npm run tipos      # tsc --noEmit
 ```
 
 Estrutura:
 
 ```
-index.html               o app inteiro — CSS e JS inline
-sw.js                    service worker; suba CACHE ao publicar versão nova
-manifest.webmanifest     PWA
-icone-*.png              ícones de instalação
-vercel.json              headers de cache
+index.html               a casca; o resto é montado
+src/main.jsx             o casco: estado, roteamento por `view`, telas ainda em string
+src/dominio/             as regras, sem DOM e sem estado global
+  tipos.ts                 o formato do estado inteiro
+  programa.ts              PROGRAMA, ALT, catálogo base, semeadura
+  formato.ts               números, datas, semana
+  carga.ts                 os seis tipos e as agregações de série
+  volume.ts                alvo por músculo, impacto, séries registradas
+  progressao.ts            histórico, dupla progressão, freio de pausa longa
+  corpo.ts                 médias semanais e as três regras de ajuste
+  migracoes.ts             1→2 e 2→3
+src/infra/db.ts          storage: host → localStorage → memória
+src/ui/                  componentes Preact
+src/tokens.css           a paleta — o único lugar com cor escrita
+src/app.css              o resto do estilo
+src/sw.js                molde do service worker; o build preenche versão e lista
+public/                  ícones e manifesto
+vite.config.js           build e o plugin que versiona o service worker
 docs/ARQUITETURA.md      como o app funciona por dentro
-docs/TREINO.md           gerado
-docs/ANALISE-VOLUME.md   gerado
-tests/                   suíte + geradores dos documentos
+tests/dominio/           testes rápidos, importando os módulos
+tests/fluxo/             testes que sobem o app num jsdom
 ```
 
 **[docs/ARQUITETURA.md](docs/ARQUITETURA.md)** explica as decisões: as três
@@ -185,34 +205,50 @@ o formato do estado, as migrações e os detalhes que parecem bugs mas não são
 ## Testes
 
 ```
-npm install     # uma vez; instala só o jsdom, e só para os testes
-npm test
+npm test              # tudo
+npm run test:dominio  # só as regras — roda em menos de meio segundo
 ```
 
-**190 testes**, runner nativo do Node. O app continua sem dependência nenhuma —
-o jsdom vive fora dele.
+**258 testes**, em dois níveis:
 
-`tests/harness.js` sobe o `index.html` num DOM de mentira e expõe `E()` para
-avaliar expressões dentro do escopo do app, que é como se chega em `S`, `view` e
-nas funções internas. Áudio, wake lock, vibração, `confirm` e `prompt` entram
-como dublês, e o que eles registram é observável.
+**`tests/dominio/`** importa os módulos direto e roda em milissegundos. É onde
+moram as regras: limites exatos da dieta, atribuição de série por músculo, corte
+de semana, dupla progressão, freio de pausa, as duas migrações contra fixture.
+Custa tão pouco que não há desculpa para não cobrir caso de borda.
+
+**`tests/fluxo/`** sobe o app inteiro num jsdom **a partir do build** e aperta
+botão. É caro e existe pelo motivo certo: os bugs que apagavam série viviam na
+fronteira entre rascunho, DOM e log, e essa fronteira só existe montada. Testar
+o build, e não o fonte, é deliberado — o que vai para o iPhone é o build.
+
+`tests/fluxo/harness.js` costura de volta o CSS e o JS que o Vite separou, expõe
+`E()` para alcançar o escopo do módulo, e entra com dublês para áudio, wake
+lock, vibração, `confirm` e `prompt`.
 
 | Arquivo | Cobre |
 |---|---|
-| `sessao.test.js` | Registro contínuo, abertura e encerramento automático, hidratação do rascunho, deload |
-| `ciclo.test.js` | Iniciar, pausar, finalizar, os quatro estados do exercício, pendências |
-| `programa.test.js` | Catálogo, id estável, slots, rotação vinda do estado, migrações em cadeia |
-| `edicao.test.js` | Mods da sessão, o oficial intocado, decisão no fim, freio de volume, regra das 6 a 8 semanas |
-| `telaprograma.test.js` | Edição direta do programa, diferença para o treinador, restaurar, rotação, treino novo |
-| `fluxo.test.js` | Ponta a ponta: uma semana com tudo junto, e a importação de um backup antigo |
-| `retro.test.js` | Lançamento em data passada, do plano e avulso |
-| `carga.test.js` | Os seis tipos, total exibido, peso do corpo, correção persistida |
-| `corpo.test.js` | As três regras de ajuste nos limites exatos, médias semanais, cardio |
-| `cardio.test.js` | Registro, contagem semanal, aviso de dia de perna |
-| `horario.test.js` | Horário do treino, período do dia, retroativo sem hora |
-| `dados.test.js` | Migração de formatos antigos, exportar e reimportar, histórico não truncado |
-| `cronometro.test.js` | Instante-alvo, tela apagada, aviso único, wake lock, descanso por categoria |
-| `telas.test.js` | Regras do projeto, as quatro abas, avisos de dor e pausa, correção de sessão |
+| `dominio/corpo` | As três regras de ajuste nos limites exatos, médias semanais |
+| `dominio/volume` | Alvo calculado do programa, atribuição por exercício, corte de semana |
+| `dominio/progressao` | Dupla progressão, freio de pausa longa, placeholder, dor seguida |
+| `dominio/migracoes` | 1→2 e 2→3, chave por chave, e a cadeia inteira |
+| `dominio/carga` | Os seis tipos, total em anilhas, topo da faixa |
+| `dominio/formato` | Datas, semana, período do dia, escapamento |
+| `dominio/estilo` | Paleta intacta, nenhum `var()` órfão, tela cheia em `svh` |
+| `fluxo/sessao` | Registro contínuo, encerramento automático, hidratação, deload |
+| `fluxo/ciclo` | Iniciar, pausar, finalizar, os quatro estados, pendências |
+| `fluxo/programa` | Catálogo, id estável, slots, rotação, migrações no app |
+| `fluxo/edicao` | Mods da sessão, o oficial intocado, decisão no fim, regra das 6 a 8 semanas |
+| `fluxo/telaprograma` | Edição direta, diferença para o treinador, restaurar, treino novo |
+| `fluxo/fluxo` | Ponta a ponta: uma semana com tudo junto, e importação de backup antigo |
+| `fluxo/retro` | Lançamento em data passada, do plano e avulso |
+| `fluxo/carga` | Rótulo do campo, total exibido, correção persistida |
+| `fluxo/corpo` | A ligação entre a regra e a tela, registro de peso, cardio |
+| `fluxo/cardio` | Registro, contagem semanal, aviso de dia de perna |
+| `fluxo/horario` | Horário do treino, período do dia, retroativo sem hora |
+| `fluxo/dados` | Migração de formatos antigos, exportar e reimportar |
+| `fluxo/cronometro` | Instante-alvo, tela apagada, aviso único, wake lock |
+| `fluxo/telas` | Regras do projeto, as quatro abas, avisos de dor e pausa |
+| `fluxo/publicacao` | Service worker versionado, precache, cabeçalhos de cache |
 
 Os testes existem porque três bugs sérios apareceram por acidente, testando
 outra coisa — entre eles um que apagava séries já registradas. **Cada regressão
@@ -222,13 +258,21 @@ encontrada virou um teste com o nome do que ela quebrava.**
 
 ## Publicar
 
-Qualquer hospedagem estática serve. Arraste a pasta em
-[app.netlify.com/drop](https://app.netlify.com/drop) ou use o Vercel — o
-`vercel.json` já traz os headers de cache certos.
+```
+npm run build      # gera dist/
+```
 
-**Ao publicar versão nova, suba o número de `CACHE` em `sw.js`.** Sem isso, o
-aparelho continua servindo a versão antiga. Seus dados não correm risco nesse
-processo: eles não estão no cache do app, estão no armazenamento do navegador.
+Qualquer hospedagem estática serve o `dist/`. No Vercel, o `vercel.json` já traz
+o `buildCommand`, o `outputDirectory` e os cabeçalhos certos.
+
+**Não há mais número de versão para subir à mão.** O service worker é gerado no
+build com um cache nomeado pelo hash do conteúdo: mudou um byte, muda o cache.
+Antes isso era um `const CACHE = 'treino-v28'` incrementado manualmente, e
+esquecer significava publicar sem que o aparelho pegasse a versão nova — sem
+erro nenhum, só o app parado no tempo.
+
+Seus dados não correm risco nesse processo: eles não estão no cache do app,
+estão no armazenamento do navegador.
 
 No iPhone, feche o app e abra de novo duas vezes para pegar a versão nova.
 
@@ -238,7 +282,9 @@ No iPhone, feche o app e abra de novo duas vezes para pegar a versão nova.
 
 Não negociáveis, e a suíte verifica as que dá para verificar:
 
-1. **Um arquivo só.** Sem build, sem dependência externa além da fonte do Google.
+1. **Um artefato só, sem dependência de runtime.** O app tem build, mas o que
+   chega no aparelho não busca nada na rede além da fonte do Google. Preact
+   entra no bundle e pesa 4 kB — o orçamento é tempo de abertura às 6h15.
 2. **Não quebrar dados salvos.** Mudança de formato exige migração que leia a
    versão antiga.
 3. **Mobile-first de verdade.** Usado de pé, com uma mão, suado, às 6h15. Alvos
@@ -247,6 +293,8 @@ Não negociáveis, e a suíte verifica as que dá para verificar:
    `#1C2A3B`, borda `#26374C`, texto `#E9EFF6`, secundário `#8DA0B8`, apagado
    `#48607C`, âmbar `#F5A83C` (acento), laranja `#E8734A` (só alertas).
    Archivo para texto, IBM Plex Mono para números. Números sempre monoespaçados.
+   **Cor só em [src/tokens.css](src/tokens.css)** — hexadecimal solto em
+   `app.css` reprova no teste.
 5. **Tudo em português**, tom direto, sem emoji, sentence case. Única exceção
    autorizada: os marcadores de período no calendário, isolados em `PERIODOS`.
 6. **Não inventar conselho de treino.** A prescrição está definida; isto aqui é
