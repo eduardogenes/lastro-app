@@ -41,7 +41,7 @@ function abrirApp(opcoes) {
   const o = opcoes || {};
   const erros = [];
   const vibrou = [];
-  const registro = { bipes: 0, wakeLock: 0, confirmou: [] };
+  const registro = { bipes: 0, wakeLock: 0, confirmou: [], respostas: [], aceita: true };
 
   const console_ = new VirtualConsole();
   console_.on('jsdomError', function (e) { erros.push(e.message); });
@@ -52,7 +52,15 @@ function abrirApp(opcoes) {
     virtualConsole: console_,
     beforeParse: function (w) {
       w.scrollTo = function () {};
-      w.confirm = function (msg) { registro.confirmou.push(msg); return o.confirmar !== false; };
+      w.confirm = function (msg) {
+        registro.confirmou.push(msg);
+        return o.confirmar !== false && registro.aceita;
+      };
+      // prompt devolve, em ordem, o que o teste enfileirou com responder()
+      w.prompt = function (msg, padrao) {
+        registro.confirmou.push(msg);
+        return registro.respostas.length ? registro.respostas.shift() : padrao;
+      };
       w.navigator.vibrate = function (p) { vibrou.push(p); return true; };
 
       // jsdom reporta 'prerender'; o app testa !document.hidden
@@ -150,6 +158,14 @@ function abrirApp(opcoes) {
     relogioNormal: function () { w.Date.now = relogioReal; },
 
     toast: function () { const t = d.getElementById('toast'); return t ? t.textContent : null; },
+
+    /** tudo que o app perguntou por confirm ou prompt */
+    perguntas: function () { return registro.confirmou.slice(); },
+    /** o próximo confirm passa a ser recusado */
+    recusar: function () { registro.aceita = false; },
+    aceitar: function () { registro.aceita = true; },
+    /** enfileira a resposta de um prompt */
+    responder: function (v) { registro.respostas.push(v); },
 
     /** o que ficou gravado no armazenamento */
     gravado: function () {

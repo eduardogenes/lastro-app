@@ -173,6 +173,22 @@ sessão: encerramento automático não promove nada.
 Editar só está disponível no dia da sessão aberta (ou no próximo da rotação, se
 não houver sessão). Outro dia é edição de programa.
 
+### Tela de programa
+
+`view.prog` abre a edição do programa oficial: reordenar, adicionar, remover,
+trocar, mudar faixa de repetições e descanso, reordenar a rotação, criar treino
+novo. Entra pelo botão **programa** na tela de hoje e por ajustes.
+
+Aqui a mudança é **direta** — mexeu, mudou o oficial. É o oposto da edição do
+dia, e a tela repete isso. Toda alteração entra em `S.progLog`, que é o
+histórico de decisões do programa.
+
+`difDoDia(d)` compara `S.prog[d]` com `PROGRAMA[d]` e devolve as diferenças em
+português. Um exercício que sai e outro que entra na mesma posição é lido como
+uma troca, não como duas mudanças. `restaurarDia(d)` e `restaurarTudo()`
+voltam ao programa do treinador sem tocar no histórico nem nos exercícios que
+ele cadastrou. Restaurar um treino que ele criou apaga o treino.
+
 ### A chave do histórico é o exercício
 
 Era dia + posição (`A0`, `B3`). Isso significa que inserir um exercício na
@@ -411,6 +427,7 @@ eles registram é observável.
 | `sessao.test.js` | Registro contínuo, abertura e encerramento automático, duração, hidratação do rascunho, deload |
 | `programa.test.js` | Catálogo, id estável, slots, rotação vinda do estado e as duas migrações em cadeia |
 | `edicao.test.js` | Mods da sessão, o oficial intocado, decisão no fim, freio de volume e regra das 6 a 8 semanas |
+| `telaprograma.test.js` | Edição direta do programa, diferença para o treinador, restaurar, rotação e treino novo |
 | `retro.test.js` | Lançamento em data passada, do plano e avulso, e o encerramento do treino de hoje |
 | `carga.test.js` | Os seis tipos, total exibido, peso do corpo, correção persistida |
 | `corpo.test.js` | As três regras de ajuste nos limites exatos, médias semanais, cardio |
