@@ -1832,9 +1832,6 @@ async function load() {
 // se encerra sozinha por inatividade ou na virada do dia.
 const SESSAO_LIMITE = 4*3600*1000;
 
-function sessaoAberta() { return S.sessao || null; }
-function estaPausado() { return !!(S.sessao && S.sessao.pausadoEm); }
-
 // Duração líquida: tempo total menos o que foi pausado. O botão nunca é
 // pré-condição para gravar série — ele só acrescenta precisão ao tempo.
 // Só conta pausa que já aconteceu até o instante medido. Sem esse recorte, a
@@ -2239,7 +2236,6 @@ function altOf(i) {
   const ex = t && t.ex[i];
   return (ex && ex.orig && ex.orig !== ex.id) ? ex.id : null;
 }
-function exName(d,i) { return treino(d).ex[i].n; }
 function logKey(d,i) { return id(d,i); }
 
 // Opções de troca, em três camadas: quem o treinador indicou (com o que muda),
@@ -2345,8 +2341,6 @@ function isCorpo(key, ex) { return cargaTipo(key, ex) === 'corpo'; }
 // total em anilhas: sempre 2x o lado, nunca somando a barra
 function totalAnilhas(v) { return v > 0 ? v*2 : 0; }
 function tutOf(l) { return l.sets.reduce((a,s) => a + (s ? s[1] : 0), 0); }
-function entryTime(l, ex) { return l && (l.u === 'seg' || isTime(ex)); }
-
 function shouldUp(d,i,ex) {
   if (isTime(ex)) return false;   // prancha não ganha selo de subir carga
   if (pausaEx(id(d,i)) >= PAUSA_DIAS) return false;   // voltando de pausa longa
@@ -2417,8 +2411,6 @@ function fmtDate(t) {
 function volOf(l)  { return l.sets.reduce((a,s) => a + (s ? s[0]*s[1] : 0), 0); }
 function maxLoad(l){ return l.sets.reduce((a,s) => (s && s[0] > a ? s[0] : a), 0); }
 function repsOf(l) { return l.sets.reduce((a,s) => a + (s ? s[1] : 0), 0); }
-function histOf(d,i,n) { const h = S.logs[id(d,i)] || []; return n ? h.slice(-n) : h.slice(); }
-
 // ---------- gráfico (SVG puro) ----------
 // Duas faixas empilhadas: carga em cima (âmbar, protagonista) e volume embaixo
 // (cinza, secundário). Cada faixa tem escala própria com mínimo e máximo escritos
@@ -3089,8 +3081,8 @@ function abrirAddEx() { view.addEx = true; view.addQ = ''; render(); }
 function fecharAddEx() { view.addEx = false; view.addQ = ''; view.novoEx = false; render(); }
 function buscaEx(q) {
   view.addQ = q;
-  const el = document.getElementById('app');
-  // re-render pontual: o campo de busca precisa manter o foco
+  // render() reescreve o innerHTML: sem devolver o foco, o teclado fecha a
+  // cada letra digitada
   const foco = document.activeElement && document.activeElement.id;
   render();
   if (foco) { const n = document.getElementById(foco); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }

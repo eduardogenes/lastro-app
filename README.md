@@ -441,6 +441,7 @@ eles registram é observável.
 | `programa.test.js` | Catálogo, id estável, slots, rotação vinda do estado e as duas migrações em cadeia |
 | `edicao.test.js` | Mods da sessão, o oficial intocado, decisão no fim, freio de volume e regra das 6 a 8 semanas |
 | `telaprograma.test.js` | Edição direta do programa, diferença para o treinador, restaurar, rotação e treino novo |
+| `fluxo.test.js` | Ponta a ponta: uma semana com edição, promoção, equipamento novo, cardio, corpo e retroativo, e a importação de um backup antigo |
 | `retro.test.js` | Lançamento em data passada, do plano e avulso, e o encerramento do treino de hoje |
 | `carga.test.js` | Os seis tipos, total exibido, peso do corpo, correção persistida |
 | `corpo.test.js` | As três regras de ajuste nos limites exatos, médias semanais, cardio |
