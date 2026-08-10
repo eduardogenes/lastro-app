@@ -1,424 +1,186 @@
 # Treino
 
-Aplicativo pessoal de registro de treino, cardio e acompanhamento corporal.
-Arquivo único, sem build, sem dependências, funciona offline, instalável na tela
-de início do iPhone.
+App pessoal de registro de treino, cardio e acompanhamento corporal.
+Um arquivo HTML, sem build, sem dependência, sem servidor. Funciona offline.
 
-Não é um produto. É uma ferramenta feita para um programa de treino específico,
-e várias decisões de interface só fazem sentido dentro dele.
+Existe por um motivo específico: músculo fica forte mais rápido do que tendão
+consegue se adaptar. O app registra, mas boa parte do que ele faz é **frear** a
+progressão de carga — avisar quando o volume passou do prescrito, cobrar a regra
+de manter o exercício por 6 a 8 semanas, e fazer com que a decisão de mudar o
+programa seja consciente em vez de automática.
 
-## Contexto de uso
+---
 
-Usado de pé, com uma mão, suado, às 6h15 da manhã, em academia com sinal ruim.
-Isso governa quase tudo: alvos de toque grandes, nada que exija precisão,
-nenhuma tela que dependa de rede, e o rascunho do treino salvo a cada tecla para
-que fechar o app no meio não custe nada.
+## Sumário
 
-O app existe em parte para **frear** a progressão de carga, não só registrar:
-tendão adapta mais devagar que músculo, então o selo de subir carga só aparece
-quando todas as séries batem o topo da faixa, e fica suspenso depois de pausa
-longa.
+- [Começar](#começar)
+- [Como se usa](#como-se-usa)
+- [O programa](#o-programa)
+- [Dados e backup](#dados-e-backup)
+- [Desenvolver](#desenvolver)
+- [Testes](#testes)
+- [Publicar](#publicar)
+- [Regras do projeto](#regras-do-projeto)
 
-## Regras inegociáveis
+---
 
-Elas são load-bearing. Quebrar qualquer uma delas exige decisão consciente.
+## Começar
 
-1. **Um arquivo só**, sem build e sem dependência externa — exceto a fonte do
-   Google Fonts, que tem fallback de sistema.
-2. **Não quebrar dados salvos.** Mudança de formato exige migração que leia a
-   versão antiga. `load()` preenche campos novos com padrão.
-3. **Mobile-first de verdade.** Ver contexto de uso acima.
-4. **Identidade visual fixa.** Paleta e tipografia abaixo.
-5. **Interface toda em português**, tom direto, sem emoji, sentence case.
-   Exceção única e deliberada: os três marcadores de período do dia no
-   calendário (`PERIODOS`). Foi decisão do dono do app, não descuido — não
-   estender emoji para outros lugares sem ele pedir.
-6. **Não inventar prescrição de treino.** A ferramenta mede e freia; ela não
-   reescreve o programa.
+Abrir `index.html` no navegador. É isso — não há passo de build nem instalação.
 
-## Identidade visual
+Para valer, no iPhone:
 
-| Papel | Cor |
+1. Publique a pasta em qualquer hospedagem estática (ver [Publicar](#publicar)).
+2. Abra o endereço **no Safari** — precisa ser o Safari.
+3. Compartilhar → **Adicionar à Tela de Início**.
+4. Abra sempre pelo ícone.
+
+Aberto pelo ícone, o app roda em tela cheia e o histórico fica fora da regra da
+Apple que apaga dados de sites depois de 7 dias sem uso. Na primeira abertura
+com internet ele se guarda inteiro no aparelho; depois disso abre e salva sem
+rede nenhuma.
+
+---
+
+## Como se usa
+
+### Registrar
+
+**Não existe botão de salvar.** Cada série entra no histórico assim que você
+preenche carga e repetição. A sessão nasce sozinha na primeira série completa e
+se encerra sozinha por inatividade ou na virada do dia.
+
+O campo mostra a carga da última vez como placeholder. Quando todas as séries
+batem o topo da faixa, aparece o selo **↑ subir carga** — dupla progressão:
+primeiro repetição, depois carga.
+
+O cronômetro de descanso vem do próprio exercício (3 min nos grandes compostos,
+2:30 nas máquinas multiarticulares, 1:45 nos isoladores, 1:30 em lateral,
+abdômen e panturrilha) e dispara sozinho ao completar a última série.
+
+### Editar o treino de hoje
+
+Botão **editar treino de hoje** no cabeçalho. Dá para mudar séries, trocar
+exercício, reordenar, remover e adicionar — inclusive cadastrar um equipamento
+que o app ainda não conhece, que passa a ter histórico próprio.
+
+**Nada disso mexe no programa.** Ao finalizar, o app lista as mudanças uma a uma
+e pergunta o que fica:
+
+```
+O que fica no programa?
+
+  Elevação lateral na máquina: 3 → 4 séries
+  delt lateral: 13 → 14 na rotação · o treinador prescreveu 13
+  [só hoje]  [levar para o oficial]
+
+  Chest press inclinado convergente → Supino inclinado no Smith
+  [só hoje]  [levar para o oficial]
+
+motivo (opcional): máquina ocupada · outra academia · decisão de programa
+```
+
+O padrão é **só hoje**. As séries que você registrou já estão no histórico de
+qualquer forma — a tela decide apenas o programa de amanhã.
+
+### Mudar o programa de verdade
+
+Botão **programa**, ou ajustes → programa. Aqui a mudança é direta e vale a
+partir do próximo treino: reordenar exercícios e a rotação, mudar faixa de
+repetições e descanso, criar um treino novo.
+
+A tela mostra quantas diferenças existem em relação ao que o treinador
+prescreveu, permite ver cada uma em português e restaurar por treino ou o
+programa inteiro. Restaurar não toca no histórico nem nos exercícios que você
+cadastrou.
+
+### Acompanhar
+
+**Acompanhamento** tem o calendário do mês, dias treinados, tempo e volume, e a
+média móvel de treinos por semana.
+
+**Corpo** tem peso (3 a 4× por semana), cintura (1× por semana) e cardio. O
+veredito usa **média semanal**, nunca o valor do dia:
+
+| Situação | O que o app diz |
 |---|---|
-| Fundo | `#0D1520` |
-| Cartão | `#15202E` |
-| Elevado | `#1C2A3B` |
-| Borda | `#26374C` |
-| Texto | `#E9EFF6` |
-| Secundário | `#8DA0B8` |
-| Apagado | `#48607C` |
-| Âmbar (acento) | `#F5A83C` |
-| Laranja (só alertas) | `#E8734A` |
-
-Archivo para títulos e corpo, IBM Plex Mono para números e rótulos. Número é
-sempre monoespaçado.
-
-## Arquitetura
-
-CSS e JS inline em `index.html`. Render é baseado em string: `render()` reescreve
-o `innerHTML` de `#app` e despacha para a tela certa conforme o estado de `view`.
-
-- `PROGRAMA` — o programa do treinador, congelado: 6 treinos, 48 exercícios,
-  rotação A → B → C → E → D → F (E antes de D de propósito: o grande treino de
-  torso não cai logo depois de um dia inteiro de ombros e braços). Não é o que
-  abre na tela — é a semente de `S.prog`, o alvo de comparação e o que o botão
-  de restaurar devolve
-- `D_COMPOSTO`, `D_MAQUINA`, `D_ISOLADOR`, `D_CURTO` — descanso por categoria,
-  declarado exercício a exercício no campo `d`
-- `EX_BASE` / `CAT` — catálogo de exercícios. `EX_BASE` vem do código
-  (`PROGRAMA` mais todos os substitutos de `ALT`); `CAT` é ele mais o que ele
-  cadastrou, em `S.ex`
-- `treino(d)` — o treino como aparece na tela: slot resolvido contra o
-  catálogo. **Todo o app lê o programa por aqui**, nunca do `PROGRAMA`
-- `rot()` — a rotação, que vem do estado
-- `ALT` — substitutos indicados pelo treinador, com o que muda em cada troca
-- `RULES` — conteúdo da aba de execução
-- `DORES`, `PRIO`, `MODAIS` — vocabulários fixos
-- `S` — estado persistido
-- `view` — estado de interface, não persistido
-
-### Estado persistido
-
-Chave única `treino-eduardo-v1`.
-
-```js
-S = {
-  logs: {
-    // 'A0' = treino A, exercício 0. 'A0~Nome' = substituto daquele exercício.
-    // Carga de substituto nunca entra no histórico do original.
-    'A0': [{
-      t: 1712345678901,       // timestamp
-      sid: 1712345678901,     // sessão a que pertence, ausente em dado antigo
-      sets: [[peso, reps]],   // em exercício por tempo, [carga, segundos]
-      u: 'seg',               // opcional, marca exercício por tempo
-      obs: 'texto',           // opcional
-      dor: ['cotovelo'],      // opcional: cotovelo | ombro | patelar
-      dl: 1,                  // opcional, sessão feita em modo deload
-      aq: 1                   // opcional, aquecimento marcado
-    }]
-  },
-  done: [{ day: 'A', t: 0, sid: 0, dur: 0, dl: 1, retro: 1 }],
-  //   sid     liga a marca às entradas de logs da mesma sessão
-  //   dur     duração líquida em ms, já sem as pausas
-  //   ini     'manual' se você tocou em iniciar, 'auto' se nasceu na 1ª série
-  //   fim     'manual' se você encerrou, 'auto' se o app fechou sozinho
-  //   pausado ms de pausa, quando houve
-  //   pulados exercícios que você decidiu pular
-  //   hora    1 quando o horário foi informado num lançamento retroativo
-  //   dl      exclui da conta das 48 sessões
-  //   retro   registrado depois, em data passada
-  // Sessão avulsa (fora do plano) não tem `day` e traz:
-  //   livre: 1, grupos: ['peito','tríceps'], nome: 'treino no hotel'
-  deload: false,
-  draft: null,                          // buffer de digitação da sessão aberta
-  sessao: null,                         // sessão aberta, ou null:
-  //   { day, inicio, ultima, sid, manual, pausadoEm, pausas: [{de,ate}], pulados: ['A2'] }
-  cardio: [{ t: 0, m: 'bike', min: 20, i: 'leve' }],
-  body: { peso: [{ t: 0, v: 73.4 }], cintura: [{ t: 0, v: 80.5 }] },
-  carga: { 'A1': 'lado' },              // correção do tipo de carga por exercício
-  export: 0,                            // timestamp do último backup
-  plano: 2                              // versão do programa (ver migração abaixo)
-}
-```
-
-Campos novos entram sempre como opcionais e recebem padrão em `load()`. Nenhuma
-migração destrutiva foi necessária até hoje.
-
-### O programa é dado, não código
-
-Três camadas. `PROGRAMA` é a prescrição do treinador, imutável. `S.prog` é o
-programa dele, semeado do `PROGRAMA` e editável. A terceira é `S.mods`: as
-mudanças do dia, que valem só para a sessão e não encostam no oficial.
-`treino(d)` devolve `S.prog[d]` com os mods aplicados por cima.
-
-Cada posição de treino é um **slot**:
-
-```js
-{ id:'chest-press-inclinado-convergente', s:3, r:'6–10', d:180, desde:0 }
-```
-
-O slot diz como o exercício está prescrito hoje; o catálogo diz o que ele é.
-`desde` é quando aquele exercício entrou naquela posição — é o que sustenta a
-regra de manter o exercício por 6 a 8 semanas.
-
-### Editar sem mexer no programa
-
-Máquina quebrada, outra academia, uma série a mais que fez sentido: nem toda
-mudança deve virar permanente. As edições do dia entram em `S.mods` como uma
-lista de **intenções**, não como uma cópia do dia:
-
-```js
-S.mods = { day:'C', t:0, list:[
-  { k:'troca', slot:'pendulum-squat', por:'agachamento-hack' },
-  { k:'sets',  slot:'elevacao-lateral-na-maquina', de:4, para:5 },
-  { k:'add',   id:'remada-cavalinho', s:3, r:'8–12', d:150, pos:3, n:0 },
-  { k:'rm',    slot:'tibial-anterior' }
-]};
-```
+| Média subindo menos de 0,15 kg/semana por 2 semanas | Comer mais |
+| Média subindo mais de 0,4 kg/semana por 2 semanas | Comer menos |
+| Cintura +1,5 cm no mês | Comer menos |
 
-`slot` é sempre o id **original** da posição, mesmo depois de uma troca — é o
-que mantém os mods encadeáveis. `aplicaMods()` resolve, e o slot resultante
-carrega `orig` para o caminho de volta.
-
-Guardar intenção e não uma cópia é o que permite a tela de decisão dizer "você
-trocou pendulum por hack squat e subiu lateral de 4 para 5", em vez de mostrar
-dois blocos de treino. Mods do mesmo tipo no mesmo slot se colapsam, e voltar
-ao valor original apaga o mod.
-
-Ao finalizar, se houver mods, `renderPromo()` pede a decisão **uma a uma**,
-com o impacto no volume ao lado e o padrão em "só hoje". O que for promovido
-vai para `S.prog` e para `S.progLog`, com o motivo. `S.mods` morre com a
-sessão: encerramento automático não promove nada.
-
-Editar só está disponível no dia da sessão aberta (ou no próximo da rotação, se
-não houver sessão). Outro dia é edição de programa.
-
-### Tela de programa
-
-`view.prog` abre a edição do programa oficial: reordenar, adicionar, remover,
-trocar, mudar faixa de repetições e descanso, reordenar a rotação, criar treino
-novo. Entra pelo botão **programa** na tela de hoje e por ajustes.
-
-Aqui a mudança é **direta** — mexeu, mudou o oficial. É o oposto da edição do
-dia, e a tela repete isso. Toda alteração entra em `S.progLog`, que é o
-histórico de decisões do programa.
-
-`difDoDia(d)` compara `S.prog[d]` com `PROGRAMA[d]` e devolve as diferenças em
-português. Um exercício que sai e outro que entra na mesma posição é lido como
-uma troca, não como duas mudanças. `restaurarDia(d)` e `restaurarTudo()`
-voltam ao programa do treinador sem tocar no histórico nem nos exercícios que
-ele cadastrou. Restaurar um treino que ele criou apaga o treino.
-
-### Séries por músculo
-
-`seriesPorMusculo()` atribui a série ao **exercício registrado**, não à posição
-onde ele estava prescrito. Trocar elevação lateral por um aparelho de peito
-conta em peito, que é onde o trabalho aconteceu. Substituto, exercício
-adicionado no dia e equipamento cadastrado por ele entram na conta pelo mesmo
-caminho.
-
-`ALVO` e `ALVO_TOTAL` são calculados do `PROGRAMA` no boot, nunca transcritos.
-`impactoSeries()` mostra o número do dia durante a edição; `impactoOficial()`
-mostra o do programa, e aparece no painel da aba corpo quando algum músculo
-saiu do alvo.
-
-### A chave do histórico é o exercício
-
-Era dia + posição (`A0`, `B3`). Isso significa que inserir um exercício na
-segunda posição do A empurra todos os seguintes, e sete históricos passam a
-apontar para o exercício errado. Com o programa editável, isso aconteceria toda
-semana.
-
-`S.logs` é indexado pelo **id do exercício**, derivado do nome uma vez só
-(`slugEx`). Reordenar, inserir e remover viram operações inofensivas.
-
-Dois efeitos:
-
-- Substituto deixa de ser chave de segunda classe. O crucifixo inclinado no cabo
-  tem id e histórico próprios; usá-lo como substituto hoje e promovê-lo a
-  titular no mês que vem não perde nada.
-- Uma entrada é identificada por **sessão + posição**, não por sessão + chave.
-  O campo `sl` guarda a posição de origem quando ela difere da chave. Sem isso,
-  o mesmo aparelho usado em duas posições do mesmo dia colidiria numa entrada.
-
-### Migração de plano
-
-As chaves do histórico são dia + posição (`A0`, `B3`). Trocar o programa faria o
-exercício novo herdar a carga do antigo que ocupava aquela posição: o placeholder
-mentiria e o selo de subir carga dispararia errado.
-
-`migraPlano()` roda em `load()` quando `S.plano` está atrás de `PLANO_ATUAL`.
-Cada chave antiga vira `antigo~<nome do exercício>`, usando a tabela `PLANO_1`.
-Nada é apagado: `S.done` fica intacto (o calendário não perde um dia), o detalhe
-das sessões antigas continua abrindo com a etiqueta "plano antigo", e tudo
-continua no JSON exportado. `S.carga` é limpo porque apontava para posições que
-não existem mais, e uma sessão aberta no plano velho é fechada.
-
-`migraPlano3()` faz a reindexação por exercício. Posição vira id; `A1~Nome`
-vira o id daquele exercício, guardando a posição em `sl`; `antigo~Nome` volta
-para o histórico ativo quando o exercício continua no catálogo, e vira entrada
-arquivada em `S.ex` quando não. `S.carga` e os `pulados` acompanham.
-
-As migrações rodam em cadeia no `load()`, e também na importação de um backup:
-um JSON de qualquer versão anterior chega ao app pelo mesmo caminho que o disco.
-
-Para trocar o programa de novo: agora é edição, não migração. Mudar o
-`PROGRAMA` só muda a semente e o alvo de comparação; quem já tem `S.prog` não é
-afetado, e o botão de restaurar é o caminho para adotar a prescrição nova.
-
-### Camada de storage
-
-`DB` expõe `get`, `set` e `delete` assíncronos com cascata
-`window.storage` → `localStorage` → memória. Toda escrita é espelhada no
-`localStorage`, e se o host vier vazio mas houver espelho, o histórico é
-resgatado dele. Trocar de ambiente não zera nada.
-
-### Registro contínuo
-
-**Não existe botão de salvar e não existe estado "não salvo".** O rascunho
-(`S.draft`) continua sendo o buffer de digitação, e cada série com carga e
-repetição preenchidas é projetada imediatamente para `S.logs` pela função
-`projeta()`. Apagar o campo remove a série do histórico.
-
-A sessão nasce na primeira série completa (`abreSessao`) e se encerra sozinha
-(`encerraSePreciso`) após 4 horas de inatividade ou na virada do dia. O
-encerramento grava a duração e avança a rotação — as duas coisas que o botão de
-salvar fazia.
-
-`historico(key)` devolve as entradas de um exercício **excluindo a sessão
-aberta**. É o que impede a sessão em andamento de virar referência de si mesma
-no placeholder, no selo de subir carga e na linha de última vez.
-
-`hidrataDraft(dia)` reconstrói o rascunho a partir do que a sessão aberta já
-registrou. É obrigatório: o rascunho é zerado ao trocar de dia na rotação, e sem
-a reidratação os campos ficariam em branco com as séries já gravadas — e digitar
-por cima apagaria o resto, porque `projeta()` reescreve o conjunto inteiro a
-partir do rascunho.
-
-### Ciclo da sessão
-
-Salvar e encerrar são coisas diferentes, e a distinção é o que sustenta o
-desenho. **Salvar era pré-condição**: sem clicar, o dado não existia. **Encerrar
-não é pré-condição de nada** — as séries já estão gravadas desde a digitação. O
-botão só acrescenta precisão à duração. Esquecer custa precisão, nunca dado.
-
-- **Iniciar** é opcional e marca o tempo antes do aquecimento. Sem ele, a
-  primeira série completa abre a sessão como sempre.
-- **Pausar** para o relógio, não a sessão. Digitar uma série retoma sozinho —
-  digitar é prova de que voltou. Sessão pausada não morre por inatividade, só na
-  virada do dia.
-- **Finalizar** grava o tempo até o toque (`fim: 'manual'`). Sem ele, o app fecha
-  por inatividade e o tempo vai até a última série (`fim: 'auto'`), que é o melhor
-  palpite quando ninguém disse "acabei". O detalhe da sessão diz qual dos dois foi.
-
-### Horário
-
-`done[].t` é o instante em que a sessão abriu, então o horário do treino sai de
-graça — do toque em iniciar, ou da primeira série quando não houve toque. O fim
-é derivado somando a duração e as pausas.
-
-**O app não inventa horário.** Lançamento retroativo tem um campo opcional de
-hora; em branco, `t` guarda um valor neutro só para ordenar e `temHora()` devolve
-falso, então nada de horário aparece na interface. Sem isso, um 07:00 chutado
-apareceria como se tivesse sido medido, e contaminaria a média do mês.
-
-O acompanhamento mostra o horário típico do mês com o mais cedo e o mais tarde —
-o número que responde "normalmente é 6h15, mas não é exato".
-
-### Os quatro estados de um exercício
-
-| Estado | O que é | Como o app sabe |
-|---|---|---|
-| **feito** | Todas as séries prescritas | entrada com séries completas |
-| **parcial** | Começou e não terminou | entrada com menos séries |
-| **pulado** | Você disse não. É decisão | está em `sessao.pulados` |
-| **não feito** | Zero séries, nenhuma decisão. É omissão | derivado da ausência |
-
-**Só a decisão é gravada; a omissão é derivada.** Pular não cria entrada no
-histórico daquele exercício — ele aparece na sessão, não na linha do tempo do
-supino. Ao finalizar, a confirmação avisa sobre parcial e não feito; **pulado não
-gera aviso**, porque perguntar de novo seria o app duvidando de você.
-
-### Cardio
-
-Ele está em superávit: o cardio existe por saúde cardiovascular, capacidade de
-trabalho e apetite. **Nada na interface fala em caloria, gasto ou queima, e não
-há opção de HIIT** — a justificativa do HIIT é eficiência de queima, que não é
-objetivo aqui, e o custo é fadiga competindo com os treinos de perna.
-
-Como é obrigação semanal e fácil de esquecer, o placar fica na tela de hoje, com
-registro rápido no lugar. O aviso de treino de perna no mesmo dia aparece na hora
-de registrar — sinaliza, nunca bloqueia.
-
-No histórico, cardio é marcado por uma **barra fina** embaixo da célula, na faixa
-da semana e no calendário. Barra em vez de letra ou cor de fundo porque a letra do
-treino manda na célula; o cardio é informação secundária e não pode competir com
-ela. Dia só de cardio fica marcado sem virar dia treinado.
-
-### Registro retroativo
-
-"Treinei ontem e não abri o app." Dois casos, e eles são diferentes de propósito:
-
-- **Treino do plano.** Escolhe a data e a letra. Pode parar aí, ou abrir a
-  sessão retroativa e preencher os exercícios — as entradas levam a data do
-  treino, não a hora do toque. A sessão retroativa fecha por inatividade real ou
-  na virada do dia de uso, nunca pela data do treino.
-- **Treino avulso** (`livre: 1`). Só grupos musculares, nome opcional e duração.
-  Conta como dia treinado no calendário e na média semanal, mas **não move a
-  rotação nem entra na conta das 48 sessões** — é presença, não é o programa. O
-  painel de séries por músculo avisa quando existem avulsos no período, para o
-  número não parecer completo quando não é.
-
-Entradas: tocar num dia vazio do calendário ou da faixa da semana, ou o botão no
-acompanhamento. Abrir o preenchimento retroativo com um treino em andamento
-fecha o de hoje antes, gravando a duração dele.
-
-### Tipo de carga
-
-"Esse peso que anotei é de um lado ou dos dois?" A ambiguidade é propriedade do
-**equipamento**, não da série, então se declara uma vez por exercício em `car`
-e o app lembra para sempre. `S.carga` guarda a correção quando o padrão erra.
-
-| Tipo | O número significa | Mostra o total |
-|---|---|---|
-| `pino` | a carga selecionada na placa. Aparece como "placa" na interface | não |
-| `lado` | o que tem de um lado, sem a barra | sim, em anilhas |
-| `halter` | o peso de um halter, com um em cada mão. Campo rotulado `kg/lado` | sim, nas duas mãos |
-| `halter1` | o peso do halter, quando é um só. Campo rotulado `kg` | não |
-| `corpo` | o que foi acrescentado ao peso do corpo; pode ficar vazio | não |
-| `assist` | o contrapeso que ajuda | não |
-
-**O app nunca converte: guarda exatamente o que foi digitado.** Converter seria
-mentira — barra olímpica tem 20 kg, a W tem 10, e articulada tem alavanca
-própria. O total em anilhas é só exibição, sempre `2 ×` o lado e nunca somando a
-barra. Volume só é comparado dentro do mesmo exercício, então a unidade não
-precisa ser homogênea entre exercícios.
-
-Em `corpo`, quem progride é a repetição: o gráfico plota repetições como série
-principal e a carga adicionada como secundária, do mesmo jeito que o exercício
-por tempo faz com segundos.
-
-### Detalhes que parecem bugs mas são propositais
-
-- O cronômetro guarda o **instante** em que o descanso acaba, não um contador.
-  O iOS suspende o JavaScript com a tela apagada; com contador, congelava.
-- Os campos numéricos são `type="text"` com `inputmode`. `type="number"`
-  descarta vírgula, e no teclado pt-BR "22,5" chegava como string vazia.
-- `topReps()` não pode se chamar `top()`: `window.top` é read-only no escopo
-  global de um documento e o script inteiro morria antes de rodar.
-- Séries por músculo comparam a semana corrente com o **mesmo ponto** das
-  semanas anteriores. Contra semanas cheias, toda terça-feira o painel inteiro
-  apareceria despencando.
-- O acompanhamento mostra **média móvel de treinos por semana**, não sequência
-  de dias. Quem treina 5 a 6 vezes por semana quebra sequência todo domingo, e o
-  número viraria cobrança em vez de informação.
-- Peso e cintura mantêm um toque para registrar. Uma série tem dois campos que
-  se validam mutuamente; um campo numérico solto não tem isso, e sair do campo
-  com "7" digitado por engano viraria 7 kg no histórico corporal.
-
-## Rodar
-
-Abrir `index.html` no navegador. Não há passo de build.
-
-Para testar o service worker é preciso `https` ou `localhost`:
+Na mesma aba, séries por músculo na semana, comparadas com o **mesmo ponto** das
+semanas anteriores, e um aviso quando o programa saiu do alvo do treinador.
+
+### Esqueceu de registrar
+
+Toque num dia vazio do calendário. Dá para lançar um treino do plano, com ou sem
+detalhar os exercícios, ou um treino avulso — fora do programa, informando só o
+grupo muscular. Treino avulso é presença: **não move a rotação nem entra na
+conta das 48 sessões** até o deload.
+
+---
+
+## O programa
+
+O programa do treinador está congelado no código como `PROGRAMA`: 6 treinos,
+48 exercícios, 125 séries diretas, rotação A → B → C → E → D → F.
+
+Ele é a semente do seu programa, o alvo de comparação e o que o botão de
+restaurar devolve. O que abre na tela é o **seu** programa, que vai divergindo
+conforme você decide.
+
+Dois documentos gerados a partir do código, que por isso não têm como divergir:
+
+- **[docs/TREINO.md](docs/TREINO.md)** — o programa inteiro por escrito: séries,
+  faixa de repetição, tipo de carga, descanso, dica de execução e substituições
+  de cada exercício, mais as regras de execução, o cardio e a dieta.
+  Refaz com `npm run treino`.
+- **[docs/ANALISE-VOLUME.md](docs/ANALISE-VOLUME.md)** — não *quantas* séries,
+  mas **quais**: a composição de cada músculo por treino e exercício, agrupada
+  pela hierarquia de prioridade. Refaz com `npm run volume`.
+
+---
+
+## Dados e backup
+
+O histórico mora no navegador do aparelho, sob a chave `treino-eduardo-v1`.
+Não há servidor e não há sincronização — decisão consciente: um usuário, um
+escritor, dados minúsculos, offline obrigatório.
+
+**Ajustes → Exportar** baixa tudo em JSON. O app cobra um backup a cada 30 dias.
+Faça um antes de trocar de celular. É a única cópia que não depende deste
+navegador.
+
+A importação aceita backup de qualquer versão anterior: ele passa pelas mesmas
+migrações que o estado em disco.
+
+---
+
+## Desenvolver
 
 ```
-npx serve .
+npx serve .        # necessário para testar o service worker (precisa de https ou localhost)
 ```
 
-## O programa por escrito
+Estrutura:
 
-[TREINO.md](TREINO.md) tem o programa inteiro: os seis treinos com séries, faixa
-de repetição, tipo de carga, dica de execução e substituições de cada exercício,
-mais as regras de execução, o cardio e as regras de ajuste da dieta.
+```
+index.html               o app inteiro — CSS e JS inline
+sw.js                    service worker; suba CACHE ao publicar versão nova
+manifest.webmanifest     PWA
+icone-*.png              ícones de instalação
+vercel.json              headers de cache
+docs/ARQUITETURA.md      como o app funciona por dentro
+docs/TREINO.md           gerado
+docs/ANALISE-VOLUME.md   gerado
+tests/                   suíte + geradores dos documentos
+```
 
-**É gerado a partir do `PLAN` do próprio app**, então não tem como divergir. Ao
-mexer no plano, rode `npm run treino` para refazer.
+**[docs/ARQUITETURA.md](docs/ARQUITETURA.md)** explica as decisões: as três
+camadas do programa, por que a chave do histórico é o exercício e não a posição,
+o formato do estado, as migrações e os detalhes que parecem bugs mas não são.
 
-[ANALISE-VOLUME.md](ANALISE-VOLUME.md) responde a outra pergunta: não *quantas*
-séries, mas **quais**. Composição de cada músculo por treino e exercício,
-agrupada pela hierarquia de prioridade, com aviso de exercício repetido em mais
-de um treino. `npm run volume` refaz.
+---
 
 ## Testes
 
@@ -427,52 +189,65 @@ npm install     # uma vez; instala só o jsdom, e só para os testes
 npm test
 ```
 
-80 testes em `tests/`, com o runner nativo do Node. **O app continua sem
-dependência nenhuma** — o jsdom vive fora dele.
+**190 testes**, runner nativo do Node. O app continua sem dependência nenhuma —
+o jsdom vive fora dele.
 
 `tests/harness.js` sobe o `index.html` num DOM de mentira e expõe `E()` para
 avaliar expressões dentro do escopo do app, que é como se chega em `S`, `view` e
-nas funções internas. Áudio, wake lock e vibração entram como dublês, e o que
-eles registram é observável.
+nas funções internas. Áudio, wake lock, vibração, `confirm` e `prompt` entram
+como dublês, e o que eles registram é observável.
 
 | Arquivo | Cobre |
 |---|---|
-| `sessao.test.js` | Registro contínuo, abertura e encerramento automático, duração, hidratação do rascunho, deload |
-| `programa.test.js` | Catálogo, id estável, slots, rotação vinda do estado e as duas migrações em cadeia |
-| `edicao.test.js` | Mods da sessão, o oficial intocado, decisão no fim, freio de volume e regra das 6 a 8 semanas |
-| `telaprograma.test.js` | Edição direta do programa, diferença para o treinador, restaurar, rotação e treino novo |
-| `fluxo.test.js` | Ponta a ponta: uma semana com edição, promoção, equipamento novo, cardio, corpo e retroativo, e a importação de um backup antigo |
-| `retro.test.js` | Lançamento em data passada, do plano e avulso, e o encerramento do treino de hoje |
+| `sessao.test.js` | Registro contínuo, abertura e encerramento automático, hidratação do rascunho, deload |
+| `ciclo.test.js` | Iniciar, pausar, finalizar, os quatro estados do exercício, pendências |
+| `programa.test.js` | Catálogo, id estável, slots, rotação vinda do estado, migrações em cadeia |
+| `edicao.test.js` | Mods da sessão, o oficial intocado, decisão no fim, freio de volume, regra das 6 a 8 semanas |
+| `telaprograma.test.js` | Edição direta do programa, diferença para o treinador, restaurar, rotação, treino novo |
+| `fluxo.test.js` | Ponta a ponta: uma semana com tudo junto, e a importação de um backup antigo |
+| `retro.test.js` | Lançamento em data passada, do plano e avulso |
 | `carga.test.js` | Os seis tipos, total exibido, peso do corpo, correção persistida |
 | `corpo.test.js` | As três regras de ajuste nos limites exatos, médias semanais, cardio |
+| `cardio.test.js` | Registro, contagem semanal, aviso de dia de perna |
+| `horario.test.js` | Horário do treino, período do dia, retroativo sem hora |
 | `dados.test.js` | Migração de formatos antigos, exportar e reimportar, histórico não truncado |
-| `cronometro.test.js` | Instante-alvo, tela apagada, aviso único, wake lock, descanso por categoria, bi-set |
-| `telas.test.js` | Regras inegociáveis, as quatro abas, avisos de dor e pausa, correção de sessão |
+| `cronometro.test.js` | Instante-alvo, tela apagada, aviso único, wake lock, descanso por categoria |
+| `telas.test.js` | Regras do projeto, as quatro abas, avisos de dor e pausa, correção de sessão |
 
 Os testes existem porque três bugs sérios apareceram por acidente, testando
-outra coisa — entre eles um que apagava séries já registradas. Cada regressão
-encontrada virou um teste com o nome do que ela quebrava.
+outra coisa — entre eles um que apagava séries já registradas. **Cada regressão
+encontrada virou um teste com o nome do que ela quebrava.**
+
+---
 
 ## Publicar
 
-Ver [COMO-PUBLICAR.md](COMO-PUBLICAR.md). Resumo: arrastar a pasta em qualquer
-hospedagem estática, abrir no Safari, Adicionar à Tela de Início.
+Qualquer hospedagem estática serve. Arraste a pasta em
+[app.netlify.com/drop](https://app.netlify.com/drop) ou use o Vercel — o
+`vercel.json` já traz os headers de cache certos.
 
-Ao publicar versão nova, subir o número de `CACHE` em `sw.js`. Isso importa
-menos do que parece: o service worker já busca o `index.html` da rede primeiro e
-só cai no cache sem sinal, então o app se atualiza sozinho. O número do cache
-governa ícones e manifest.
+**Ao publicar versão nova, suba o número de `CACHE` em `sw.js`.** Sem isso, o
+aparelho continua servindo a versão antiga. Seus dados não correm risco nesse
+processo: eles não estão no cache do app, estão no armazenamento do navegador.
 
-## Dados e backup
+No iPhone, feche o app e abra de novo duas vezes para pegar a versão nova.
 
-O histórico mora no navegador do aparelho. A aba **dados** exporta e importa
-tudo em JSON, e o app cobra um backup a cada 30 dias.
+---
 
-Não há servidor e não há sincronização. Foi decisão consciente: um usuário, um
-escritor, dados minúsculos, offline obrigatório. Nesse perfil, um banco remoto
-adiciona dependência de rede a um fluxo que hoje não tem nenhuma.
+## Regras do projeto
 
-## Estado do roadmap
+Não negociáveis, e a suíte verifica as que dá para verificar:
 
-[DIAGNOSTICO-fluxo-ponta-a-ponta.md](DIAGNOSTICO-fluxo-ponta-a-ponta.md) tem o
-fluxo mapeado ponta a ponta e o roadmap priorizado. P0, P1 e P2 concluídos.
+1. **Um arquivo só.** Sem build, sem dependência externa além da fonte do Google.
+2. **Não quebrar dados salvos.** Mudança de formato exige migração que leia a
+   versão antiga.
+3. **Mobile-first de verdade.** Usado de pé, com uma mão, suado, às 6h15. Alvos
+   de toque grandes, nada que exija precisão.
+4. **Identidade visual fixa.** Fundo `#0D1520`, cartão `#15202E`, elevado
+   `#1C2A3B`, borda `#26374C`, texto `#E9EFF6`, secundário `#8DA0B8`, apagado
+   `#48607C`, âmbar `#F5A83C` (acento), laranja `#E8734A` (só alertas).
+   Archivo para texto, IBM Plex Mono para números. Números sempre monoespaçados.
+5. **Tudo em português**, tom direto, sem emoji, sentence case. Única exceção
+   autorizada: os marcadores de período no calendário, isolados em `PERIODOS`.
+6. **Não inventar conselho de treino.** A prescrição está definida; isto aqui é
+   a ferramenta, não o programa.

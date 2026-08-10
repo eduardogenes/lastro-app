@@ -1,5 +1,5 @@
-// Gera TREINO.md a partir do próprio app, para o documento nunca divergir do
-// que está no PLAN. Rodar com: node tests/gerar-treino.js
+// Gera docs/TREINO.md a partir do próprio app, para o documento nunca divergir do
+// que está no PROGRAMA. Rodar com: node tests/gerar-treino.js
 const fs = require('fs');
 const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -15,7 +15,7 @@ const dom = new JSDOM(fs.readFileSync(path.join(raiz, 'index.html'), 'utf8'), {
 const E = function (c) { return JSON.parse(dom.window.eval('JSON.stringify(' + c + ')')); };
 
 setTimeout(function () {
-  const PLAN = E('PROGRAMA'), ALT = E('ALT'), RULES = E('RULES'), ROT = E('ROT_BASE');
+  const PROGRAMA = E("PROGRAMA"), ALT = E('ALT'), RULES = E('RULES'), ROT = E('ROT_BASE');
   const CARGAS = E('CARGAS'), PRIO = E('PRIO'), MODAIS = E('MODAIS');
 
   const L = [];
@@ -45,7 +45,7 @@ setTimeout(function () {
   p('| Treino | Foco | Exercícios | Séries |');
   p('|---|---|---|---|');
   ROT.forEach(function (d) {
-    const P = PLAN[d];
+    const P = PROGRAMA[d];
     const series = P.ex.reduce(function (a, e) { return a + e.s; }, 0);
     p('| **' + d + '** | ' + P.name + ' | ' + P.ex.length + ' | ' + series + ' |');
   });
@@ -54,7 +54,7 @@ setTimeout(function () {
   // ---------- séries por músculo na rotação ----------
   const porMusculo = {};
   ROT.forEach(function (d) {
-    PLAN[d].ex.forEach(function (ex) {
+    PROGRAMA[d].ex.forEach(function (ex) {
       porMusculo[ex.g] = (porMusculo[ex.g] || 0) + ex.s;
     });
   });
@@ -78,7 +78,7 @@ setTimeout(function () {
 
   // ---------- os treinos ----------
   ROT.forEach(function (d) {
-    const P = PLAN[d];
+    const P = PROGRAMA[d];
     p('## Treino ' + d + ' — ' + P.name);
     p('');
     p('*' + P.tag + '*');
@@ -159,8 +159,8 @@ setTimeout(function () {
   p('gordura mesmo que a balança esteja na faixa.');
   p('');
 
-  const saida = path.join(raiz, 'TREINO.md');
+  const saida = path.join(raiz, 'docs', 'TREINO.md');
   fs.writeFileSync(saida, L.join('\n'));
-  console.log('TREINO.md gerado: ' + L.length + ' linhas');
+  console.log('docs/TREINO.md gerado: ' + L.length + ' linhas');
   process.exit(0);
 }, 500);

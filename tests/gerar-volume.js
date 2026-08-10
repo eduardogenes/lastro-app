@@ -1,5 +1,5 @@
-// Gera ANALISE-VOLUME.md a partir do PLAN: a composição de cada músculo, para
-// o treinador avaliar seleção e redundância antes de mexer em número.
+// Gera docs/ANALISE-VOLUME.md a partir do PROGRAMA: a composição de cada músculo,
+// para o treinador avaliar seleção e redundância antes de mexer em número.
 const fs = require('fs');
 const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -13,7 +13,7 @@ const dom = new JSDOM(fs.readFileSync(path.join(raiz, 'index.html'), 'utf8'), {
 const E = function (c) { return JSON.parse(dom.window.eval('JSON.stringify(' + c + ')')); };
 
 setTimeout(function () {
-  const PLAN = E('PROGRAMA'), ROT = E('ROT_BASE'), PRIORIDADES = E('PRIORIDADES'), NIVEIS = E('NIVEIS');
+  const PROGRAMA = E("PROGRAMA"), ROT = E('ROT_BASE'), PRIORIDADES = E('PRIORIDADES'), NIVEIS = E('NIVEIS');
   const nivelDe = function (g) {
     for (let i = 0; i < NIVEIS.length; i++) if (PRIORIDADES[NIVEIS[i]].mus.indexOf(g) >= 0) return NIVEIS[i];
     return 'normal';
@@ -22,7 +22,7 @@ setTimeout(function () {
   const porMusculo = {};
   let total = 0;
   ROT.forEach(function (d) {
-    PLAN[d].ex.forEach(function (ex, i) {
+    PROGRAMA[d].ex.forEach(function (ex, i) {
       (porMusculo[ex.g] = porMusculo[ex.g] || []).push({ d: d, i: i, n: ex.n, s: ex.s, r: ex.r, c: ex.c });
       total += ex.s;
     });
@@ -94,14 +94,14 @@ setTimeout(function () {
   p('| Treino | Foco | Séries |');
   p('|---|---|---|');
   ROT.forEach(function (d) {
-    p('| ' + d + ' | ' + PLAN[d].name + ' | ' + PLAN[d].ex.reduce(function (a, e) { return a + e.s; }, 0) + ' |');
+    p('| ' + d + ' | ' + PROGRAMA[d].name + ' | ' + PROGRAMA[d].ex.reduce(function (a, e) { return a + e.s; }, 0) + ' |');
   });
   p('');
   p('Total: **' + total + ' séries** em 6 sessões, média de ' +
     (Math.round(total / 6 * 10) / 10).toString().replace('.', ',') + ' por sessão.');
   p('');
 
-  fs.writeFileSync(path.join(raiz, 'ANALISE-VOLUME.md'), L.join('\n'));
-  console.log('ANALISE-VOLUME.md gerado: ' + L.length + ' linhas');
+  fs.writeFileSync(path.join(raiz, 'docs', 'ANALISE-VOLUME.md'), L.join('\n'));
+  console.log('docs/ANALISE-VOLUME.md gerado: ' + L.length + ' linhas');
   process.exit(0);
 }, 500);
