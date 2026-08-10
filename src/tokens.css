@@ -1,0 +1,43 @@
+/* A identidade visual, em um lugar só.
+ *
+ * Regra 4 do projeto: a paleta é fixa. Ela estava fixa de verdade — mas
+ * espalhada: nove tokens no :root e mais nove cores escritas em hexadecimal no
+ * meio das regras, além de SEIS nomes de variável usados e nunca definidos
+ * (--sec, --amber, --txt, --card, --orange, --f). Trinta e uma regras caíam
+ * silenciosamente no valor herdado, porque CSS não reclama de var() sem dono.
+ *
+ * Agora toda cor tem nome e todo nome tem dono, e um teste cobra as duas coisas.
+ */
+
+:root {
+  /* ---------- a paleta do projeto ---------- */
+  --night:  #0D1520;   /* fundo */
+  --dusk:   #15202E;   /* cartão */
+  --raise:  #1C2A3B;   /* elevado */
+  --line:   #26374C;   /* borda */
+  --paper:  #E9EFF6;   /* texto */
+  --mist:   #8DA0B8;   /* secundário */
+  --dim:    #48607C;   /* apagado */
+  --dawn:   #F5A83C;   /* âmbar — o acento */
+  --ember:  #E8734A;   /* laranja — só alertas */
+
+  /* ---------- acentos derivados ----------
+   * Não são cores novas: são as bordas e os textos de baixo contraste que
+   * acompanham cada estado. Estavam em hexadecimal solto no meio das regras.
+   */
+  --ok:         #7FBF9C;   /* feito */
+  --ok-line:    #2F5C46;
+  --info:       #7FB0DC;   /* composto, bi-set */
+  --info-line:  #3C5A7A;
+  --dawn-soft:  #F3CB92;   /* deload ativo */
+  --dawn-line:  #6B5230;
+  --ember-soft: #F0A98D;   /* aviso que não é erro */
+  --ember-line: #4A3227;
+  --on-dawn:    #10161F;   /* texto sobre âmbar */
+
+  /* ---------- tipografia ----------
+   * Números sempre monoespaçados: é o que deixa comparar carga de relance.
+   */
+  --f-d: 'Archivo', system-ui, sans-serif;
+  --f-m: 'IBM Plex Mono', ui-monospace, monospace;
+}
