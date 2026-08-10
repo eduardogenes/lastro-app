@@ -1,9 +1,10 @@
 # O que são as 125 séries
 
-Gerado do `PLAN` do app. Serve para responder a pergunta do treinador:
+Gerado do `PROGRAMA` do app. Serve para responder a pergunta do treinador:
 não *quantas* séries, mas **quais**.
 
-`npm run volume` refaz depois de qualquer mudança no plano.
+`npm run volume` refaz depois de qualquer mudança no plano. É a prescrição
+**do treinador**: o programa que abre no app pode ter divergido.
 
 > A contagem é de **séries diretas**, atribuídas a um músculo principal.
 > Tríceps também trabalha nos supinos, bíceps nas puxadas, glúteo no terra

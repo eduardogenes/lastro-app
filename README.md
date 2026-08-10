@@ -189,6 +189,19 @@ uma troca, não como duas mudanças. `restaurarDia(d)` e `restaurarTudo()`
 voltam ao programa do treinador sem tocar no histórico nem nos exercícios que
 ele cadastrou. Restaurar um treino que ele criou apaga o treino.
 
+### Séries por músculo
+
+`seriesPorMusculo()` atribui a série ao **exercício registrado**, não à posição
+onde ele estava prescrito. Trocar elevação lateral por um aparelho de peito
+conta em peito, que é onde o trabalho aconteceu. Substituto, exercício
+adicionado no dia e equipamento cadastrado por ele entram na conta pelo mesmo
+caminho.
+
+`ALVO` e `ALVO_TOTAL` são calculados do `PROGRAMA` no boot, nunca transcritos.
+`impactoSeries()` mostra o número do dia durante a edição; `impactoOficial()`
+mostra o do programa, e aparece no painel da aba corpo quando algum músculo
+saiu do alvo.
+
 ### A chave do histórico é o exercício
 
 Era dia + posição (`A0`, `B3`). Isso significa que inserir um exercício na

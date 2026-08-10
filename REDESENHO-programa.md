@@ -58,19 +58,23 @@ dois treinos com prescrições diferentes, e trocar um pelo outro sem perder nad
 a regra 5 do treinador: a tela mostra "está no programa há 3 semanas" e avisa
 quando você quer trocar antes das 6 a 8.
 
-### Camada 3 — a sessão de hoje (`S.sessao.mods`, efêmera por padrão)
+### Camada 3 — a sessão de hoje (`S.mods`, efêmera por padrão)
 
 Aqui está o ponto que você levantou. Editar durante o treino **não** mexe no
 oficial. As mudanças entram como uma lista de intenções sobre o dia:
 
 ```js
-S.sessao.mods = [
+S.mods = { day:'C', t:0, list:[
   { k:'troca', slot:'pendulum-squat', por:'agachamento-hack' },
   { k:'sets',  slot:'elevacao-lateral-na-maquina', de:4, para:5 },
-  { k:'add',   id:'remada-cavalinho', pos:3 },
+  { k:'add',   id:'remada-cavalinho', s:3, r:'8–12', d:150, pos:3, n:0 },
   { k:'rm',    slot:'tibial-anterior' }
-]
+]};
 ```
+
+`slot` é sempre o id **original** da posição, mesmo depois de uma troca — é o
+que mantém os mods encadeáveis. Vive fora de `S.sessao` para sobreviver a
+navegar entre os dias no meio do treino, e morre quando a sessão fecha.
 
 O treino que aparece na tela é o oficial com os mods aplicados por cima.
 
@@ -207,13 +211,21 @@ migração anterior tinha arquivado.
 
 ## 8. Fases
 
-| | O quê | Visível? |
+| | O quê | Estado |
 |---|---|---|
-| **A** | Catálogo, ids estáveis, `S.prog`, migração. Todo o app passa a ler o programa do estado. | Não. É a fundação. |
-| **B** | Modo de edição no dia, mods de sessão, tela de promoção ao finalizar. | Sim, é o miolo. |
-| **C** | Tela de programa: reordenar, adicionar, remover, criar exercício, diferença e restaurar. | Sim. |
-| **D** | Freio de volume ao vivo, tempo de casa, testes e documentos. | Sim. |
+| **A** | Catálogo, ids estáveis, `S.prog`, migração. Todo o app passa a ler o programa do estado. | feita |
+| **B** | Modo de edição no dia, mods de sessão, tela de promoção ao finalizar. | feita |
+| **C** | Tela de programa: reordenar, adicionar, remover, criar exercício e treino, diferença e restaurar. | feita |
+| **D** | Freio de volume no painel de músculos, tempo de casa, testes e documentos. | feita |
 
-A fase A não muda nada na tela e é onde mora todo o risco de dados. Vai com a
-suíte inteira verde e com testes novos de migração antes de qualquer coisa nova
+A fase A não mudou nada na tela e é onde morava todo o risco de dados. Foi com
+a suíte inteira verde e com testes de migração antes de qualquer coisa nova
 aparecer.
+
+Duas coisas apareceram no caminho e não estavam previstas aqui. A primeira é um
+bug antigo: uma entrada era identificada por sessão + chave, então usar o mesmo
+aparelho como substituto em duas posições do mesmo dia fazia a segunda
+sobrescrever a primeira. A identidade passou a ser sessão + posição. A segunda
+é que o painel de séries por músculo atribuía a série ao músculo do exercício
+**prescrito**, não ao do que foi de fato executado — o que ficaria errado toda
+vez que ele trocasse por um aparelho de outro grupo.

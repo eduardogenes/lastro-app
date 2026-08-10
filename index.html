@@ -4415,19 +4415,18 @@ function bodySVG(W) {
 // `corte` limita as semanas passadas ao mesmo ponto da semana em que estamos.
 // Sem isso, numa terça-feira o painel inteiro apareceria despencando contra
 // semanas cheias, e o número não significaria nada.
+// O músculo vem do exercício registrado, não da posição onde ele estava no
+// programa. É o que faz substituto, exercício adicionado no dia e equipamento
+// cadastrado por ele contarem no lugar certo.
 function seriesPorMusculo(de, ate, corte) {
   const acc = {};
-  rot().forEach(function (d) {
-    treino(d).ex.forEach(function (ex, i) {
-      const base = id(d,i);
-      Object.keys(S.logs).forEach(function (k) {
-        if (k !== base && k.indexOf(base + '~') !== 0) return;
-        S.logs[k].forEach(function (e) {
-          if (e.t < de || e.t >= ate) return;
-          if (corte != null && (e.t - weekStart(e.t)) > corte) return;
-          acc[ex.g] = (acc[ex.g] || 0) + e.sets.filter(Boolean).length;
-        });
-      });
+  Object.keys(S.logs).forEach(function (k) {
+    const g = exDe(k).g;
+    if (!g) return;
+    (S.logs[k] || []).forEach(function (e) {
+      if (e.t < de || e.t >= ate) return;
+      if (corte != null && (e.t - weekStart(e.t)) > corte) return;
+      acc[g] = (acc[g] || 0) + e.sets.filter(Boolean).length;
     });
   });
   return acc;
@@ -4447,7 +4446,9 @@ function painelMusculos() {
   }, {}));
 
   const nomes = {};
-  rot().forEach(d => treino(d).ex.forEach(ex => { nomes[ex.g] = 1; }));
+  rot().forEach(d => treino(d).ex.forEach(ex => { if (ex.g) nomes[ex.g] = 1; }));
+  // um músculo que saiu do programa mas foi treinado na semana ainda aparece
+  Object.keys(atual).forEach(function (g) { if (g) nomes[g] = 1; });
   const lista = Object.keys(nomes).sort(function (a,b) {
     const na = NIVEIS.indexOf(nivelDe(a)), nb = NIVEIS.indexOf(nivelDe(b));
     if (na !== nb) return na - nb;
@@ -4459,7 +4460,17 @@ function painelMusculos() {
   const temHistorico = Object.keys(antes).length > 0;
   const max = Math.max(1, Math.max.apply(null, lista.map(g => Math.max(atual[g]||0, (antes[g]||0)/janela))));
 
+  // O que ele PRESCREVEU para si contra o que o treinador prescreveu. É
+  // diferente do que ele registrou: aqui o assunto é o programa, não a semana.
+  const fora = lista.map(function (g) { return impactoOficial(g); })
+                    .filter(function (x) { return x; });
+
   return `<div class="dgroup">
+    ${fora.length ? `<div class="progdif" style="margin-bottom:16px">
+      <b>Seu programa está diferente do que o treinador prescreveu</b>
+      ${fora.map(function (x) { return `<span>${x.txt}</span>`; }).join('')}
+      <button class="dlbtn" onclick="abrirPrograma(null)">abrir o programa</button>
+    </div>` : ''}
     <h3>Séries por músculo nesta semana</h3>
     <p>Séries registradas desde segunda-feira, comparadas com o <b>mesmo ponto</b> das últimas ${janela} semanas — dia ${diaDaSemana} de 7. A ordem segue a hierarquia do programa.</p>
     <p style="color:var(--dim)"><b>São séries diretas.</b> Tríceps também trabalha nos supinos, bíceps nas puxadas, glúteo no terra e no leg press, e deltoide anterior no peito. O estímulo real desses é maior que o número aqui.</p>

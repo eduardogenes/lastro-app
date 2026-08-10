@@ -7,7 +7,10 @@ registra. Cinco a seis sessões por semana.
 
 **Pontos fracos priorizados:** delt lateral, dorsal, peito superior, costas espessura, delt posterior, posterior, panturrilha, abdômen.
 
-Gerado a partir do app. Para atualizar depois de mexer no `PLAN`:
+Este é o programa **do treinador**, como ele prescreveu. O programa que
+abre no app pode ter divergido: veja a diferença em ajustes → programa.
+
+Gerado a partir do app. Para atualizar depois de mexer no `PROGRAMA`:
 `node tests/gerar-treino.js`
 
 ---

@@ -249,3 +249,72 @@ test('todas as telas do programa renderizam', async () => {
   assert.ok(a.$('.dayline'), 'e volta para a tela de hoje');
   a.fechar();
 });
+
+// ---------- o freio no painel de músculos ----------
+
+test('o painel atribui a série ao exercício registrado, não à posição', async () => {
+  // Substituto de outro grupo: antes a série ia para o músculo do titular.
+  const a = await app();
+  a.E('toggle(2)');                             // elevação lateral na máquina
+  a.E('setAlt(2, "pec-deck")');                 // peito
+  a.preencher(2, 0, 40, 12);
+  a.preencher(2, 1, 40, 12);
+
+  const m = a.J('seriesPorMusculo(0, Date.now() + 1)');
+  assert.strictEqual(m['peito'], 2, 'contou onde o trabalho aconteceu');
+  assert.strictEqual(m['delt lateral'], undefined, 'e não onde ele estava prescrito');
+  a.fechar();
+});
+
+test('exercício cadastrado por ele conta no painel', async () => {
+  const a = await app();
+  a.E(`S.ex["maquina-nova"] = { n:"Máquina nova", car:"pino", g:"dorsal", c:0, cue:"", meu:1 };
+       montaCatalogo()`);
+  a.E('modoEdicao(true)');
+  await a.E('addExercicio("maquina-nova")');
+  await a.esperar();
+  a.E('modoEdicao(false)');
+  const i = a.E('treino("A").ex.length') - 1;
+  a.E('toggle(' + i + ')');
+  a.preencher(i, 0, 50, 10);
+
+  assert.strictEqual(a.J('seriesPorMusculo(0, Date.now() + 1)')['dorsal'], 1);
+  a.E('tab("corpo")');
+  assert.ok(a.doc.getElementById('app').textContent.includes('dorsal'));
+  a.fechar();
+});
+
+test('o painel de corpo avisa quando o programa saiu do alvo do treinador', async () => {
+  const a = await app();
+  a.E('tab("corpo")');
+  assert.strictEqual(a.$('.progdif'), null, 'programa igual ao dele: nada a dizer');
+
+  a.E('abrirPrograma("A")');
+  await a.E('progSeries("A",2,1)');
+  await a.esperar();
+  a.E('fecharPrograma()');
+  a.E('tab("corpo")');
+
+  const aviso = a.texto('.progdif');
+  assert.ok(aviso, 'programa fora do alvo aparece onde ele acompanha o volume');
+  assert.match(aviso, /delt lateral: 14 na rotação · o treinador prescreveu 13/);
+  a.fechar();
+});
+
+test('músculo que saiu do programa mas foi treinado continua aparecendo', async () => {
+  const a = await app();
+  a.E('go("C")');
+  const t = a.E('treino("C").ex.findIndex(function (x) { return x.id === "tibial-anterior"; })');
+  a.E('toggle(' + t + ')');
+  a.preencher(t, 0, 20, 15);
+  a.E('abrirPrograma("C")');
+  const i = a.E('S.prog.C.ex.findIndex(function (x) { return x.id === "tibial-anterior"; })');
+  await a.E('progRemove("C",' + i + ')');
+  await a.esperar();
+  a.E('fecharPrograma()');
+  a.E('tab("corpo")');
+  const musculos = a.$$('.musn').map(function (x) { return x.textContent; });
+  assert.ok(musculos.some(function (x) { return /tibial/.test(x); }),
+    'sumir da tabela esconderia trabalho que existiu');
+  a.fechar();
+});

@@ -30,7 +30,10 @@ setTimeout(function () {
   p('');
   p('**Pontos fracos priorizados:** ' + PRIO.join(', ') + '.');
   p('');
-  p('Gerado a partir do app. Para atualizar depois de mexer no `PLAN`:');
+  p('Este é o programa **do treinador**, como ele prescreveu. O programa que');
+  p('abre no app pode ter divergido: veja a diferença em ajustes → programa.');
+  p('');
+  p('Gerado a partir do app. Para atualizar depois de mexer no `PROGRAMA`:');
   p('`node tests/gerar-treino.js`');
   p('');
   p('---');

@@ -33,10 +33,11 @@ setTimeout(function () {
 
   p('# O que são as ' + total + ' séries');
   p('');
-  p('Gerado do `PLAN` do app. Serve para responder a pergunta do treinador:');
+  p('Gerado do `PROGRAMA` do app. Serve para responder a pergunta do treinador:');
   p('não *quantas* séries, mas **quais**.');
   p('');
-  p('`npm run volume` refaz depois de qualquer mudança no plano.');
+  p('`npm run volume` refaz depois de qualquer mudança no plano. É a prescrição');
+  p('**do treinador**: o programa que abre no app pode ter divergido.');
   p('');
   p('> A contagem é de **séries diretas**, atribuídas a um músculo principal.');
   p('> Tríceps também trabalha nos supinos, bíceps nas puxadas, glúteo no terra');
