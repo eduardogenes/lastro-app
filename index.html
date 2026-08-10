@@ -1248,7 +1248,7 @@ function treino(d) {
   return { name: p.name, tag: p.tag, ex: aplicaMods(d, p.ex).map(function (sl) {
     const e = exDe(sl.id);
     return { id:sl.id, n:e.n, car:e.car, g:e.g, c:e.c, cue:e.cue, u:e.u,
-             s:sl.s, r:sl.r, d:sl.d, desde:sl.desde, mod:sl.mod || 0 };
+             s:sl.s, r:sl.r, d:sl.d, desde:sl.desde, bi:sl.bi || 0, mod:sl.mod || 0 };
   }) };
 }
 
@@ -1527,6 +1527,25 @@ const STORE_LABEL = {
 };
 
 // ---------- estado ----------
+// Padrões de campos novos e formas inválidas. Roda no boot e na importação:
+// um backup antigo tem que chegar às migrações no mesmo estado que o disco.
+function normalizaEstado() {
+  if (!S.logs || typeof S.logs !== 'object') S.logs = {};
+  if (!Array.isArray(S.done)) S.done = [];
+  if (typeof S.deload !== 'boolean') S.deload = false;
+  if (!S.draft || typeof S.draft !== 'object') S.draft = null;
+  // sessão precisa de forma válida: sem sid, fechaSessao() não acha a marca
+  if (!S.sessao || typeof S.sessao !== 'object' || !S.sessao.day || !S.sessao.sid) S.sessao = null;
+  if (!Array.isArray(S.cardio)) S.cardio = [];
+  if (typeof S.export !== 'number') S.export = 0;
+  if (!S.carga || typeof S.carga !== 'object') S.carga = {};
+  if (!S.body || typeof S.body !== 'object') S.body = { peso:[], cintura:[] };
+  if (!Array.isArray(S.body.peso)) S.body.peso = [];
+  if (!Array.isArray(S.body.cintura)) S.body.cintura = [];
+  if (typeof S.plano !== 'number') S.plano = 1;   // estado anterior à troca de programa
+  if (!S.ex || typeof S.ex !== 'object') S.ex = {};
+}
+
 async function load() {
   let raw = null;
   try {
@@ -1542,20 +1561,7 @@ async function load() {
       console.error('histórico ilegível, mantido intacto no storage', e);
     }
   }
-  if (!S.logs || typeof S.logs !== 'object') S.logs = {};
-  if (!Array.isArray(S.done)) S.done = [];
-  if (typeof S.deload !== 'boolean') S.deload = false;   // campos novos: ausentes nos dados antigos
-  if (!S.draft || typeof S.draft !== 'object') S.draft = null;
-  // sessão precisa de forma válida: sem sid, fechaSessao() não acha a marca
-  if (!S.sessao || typeof S.sessao !== 'object' || !S.sessao.day || !S.sessao.sid) S.sessao = null;
-  if (!Array.isArray(S.cardio)) S.cardio = [];
-  if (typeof S.export !== 'number') S.export = 0;
-  if (!S.carga || typeof S.carga !== 'object') S.carga = {};
-  if (!S.body || typeof S.body !== 'object') S.body = { peso:[], cintura:[] };
-  if (!Array.isArray(S.body.peso)) S.body.peso = [];
-  if (!Array.isArray(S.body.cintura)) S.body.cintura = [];
-  if (typeof S.plano !== 'number') S.plano = 1;   // estado anterior à troca de programa
-  if (!S.ex || typeof S.ex !== 'object') S.ex = {};
+  normalizaEstado();
   montaCatalogo();
 
   // as migrações rodam em cadeia: quem está no plano 1 passa pelas duas
@@ -1723,11 +1729,12 @@ function projeta(i) {
   const e = draftPeek(i);
   if (!ex || !e) return;
 
-  const key = e.alt || id(dia,i);
+  const slot = id(dia,i);
+  const key = e.alt || slot;
   const sets = setsDoRascunho(ex, e, key);
 
   // sem nenhuma série completa: apaga o que já tiver sido escrito nesta sessão
-  if (!sets) { removeProjecao(key); return; }
+  if (!sets) { removeProjecao(key, slot); return; }
 
   const s = abreSessao(dia);
   // digitar é prova de que voltou: retoma sozinho em vez de exigir dois toques
@@ -1740,7 +1747,7 @@ function projeta(i) {
   else { s.ultima = Date.now(); s.day = dia; }
 
   if (!S.logs[key]) S.logs[key] = [];
-  let entry = S.logs[key].filter(function (x) { return x.sid === s.sid; })[0];
+  let entry = daSessao(key, slot, s.sid);
   // a entrada leva a data da sessão: num registro retroativo, o treino
   // aconteceu ontem, não agora
   if (!entry) { entry = { t: s.inicio, sid: s.sid }; S.logs[key].push(entry); }
@@ -1748,7 +1755,7 @@ function projeta(i) {
   entry.sets = sets;
   // slot de origem: o registro vive no histórico do exercício, mas ainda
   // precisamos saber em que posição do treino ele foi feito
-  if (key !== id(dia,i)) entry.sl = id(dia,i); else delete entry.sl;
+  if (key !== slot) entry.sl = slot; else delete entry.sl;
   if (isTime(ex)) entry.u = 'seg'; else delete entry.u;
   if (e.aq) entry.aq = 1; else delete entry.aq;
   const obs = (e.obs||'').trim();
@@ -1759,10 +1766,21 @@ function projeta(i) {
   if (S.logs[key].length > 500) S.logs[key] = S.logs[key].slice(-500);
 }
 
-function removeProjecao(key) {
+// Uma entrada é identificada por sessão + posição do treino, não por sessão +
+// chave: o mesmo aparelho pode ser substituto em duas posições do mesmo dia, e
+// aí as duas séries vivem no mesmo histórico sem se sobrescrever.
+function daSessao(key, slot, sid) {
+  return (S.logs[key] || []).filter(function (x) {
+    return x.sid === sid && (x.sl || key) === slot;
+  })[0] || null;
+}
+
+function removeProjecao(key, slot) {
   const s = S.sessao;
   if (!s || !S.logs[key]) return;
-  S.logs[key] = S.logs[key].filter(function (x) { return x.sid !== s.sid; });
+  S.logs[key] = S.logs[key].filter(function (x) {
+    return !(x.sid === s.sid && (slot == null || (x.sl || key) === slot));
+  });
   if (!S.logs[key].length) delete S.logs[key];
 }
 
@@ -1780,9 +1798,7 @@ function entradaDaSessao(dia, i, sid) {
   const base = id(dia, i);
   const chaves = Object.keys(S.logs);
   for (let j = 0; j < chaves.length; j++) {
-    const e = S.logs[chaves[j]].filter(function (x) {
-      return x.sid === sid && (chaves[j] === base ? !x.sl : x.sl === base);
-    })[0];
+    const e = daSessao(chaves[j], base, sid);
     if (e) return e;
   }
   return null;
@@ -1931,12 +1947,10 @@ function hidrataDraft(dia) {
     if (S.draft.ex[i]) return;
     const base = id(dia, i);
     const chave = Object.keys(S.logs).filter(function (k) {
-      return S.logs[k].some(function (e) {
-        return e.sid === s.sid && (k === base ? !e.sl : e.sl === base);
-      });
+      return !!daSessao(k, base, s.sid);
     })[0];
     if (!chave) return;
-    const e = S.logs[chave].filter(function (x) { return x.sid === s.sid; })[0];
+    const e = daSessao(chave, base, s.sid);
     S.draft.ex[i] = {
       s: e.sets.map(function (x) { return x ? [x[0], x[1]] : [null, null]; }),
       obs: e.obs || '',
@@ -3552,7 +3566,16 @@ async function importText(txt) {
                 cintura: (d.body && Array.isArray(d.body.cintura)) ? d.body.cintura : [] },
         sessao: d.sessao || null,
         carga: (d.carga && typeof d.carga === 'object') ? d.carga : {},
-        export: typeof d.export === 'number' ? d.export : 0 };
+        export: typeof d.export === 'number' ? d.export : 0,
+        plano: typeof d.plano === 'number' ? d.plano : 1,
+        prog: d.prog || null, rot: d.rot || null,
+        ex: (d.ex && typeof d.ex === 'object') ? d.ex : {} };
+  // um backup de qualquer versão anterior passa pelas mesmas migrações que o
+  // estado do disco: sem isso o app abre com o programa nulo
+  normalizaEstado();
+  migraPlano();
+  migraPlano3();
+  montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;
   render();
@@ -3651,7 +3674,7 @@ function abrirSubstituicao(i){ view.open = i; view.swapOpen = i; render(); }
 function setAlt(i, idEx) {
   // a chave de histórico muda junto: tira a projeção da chave antiga primeiro
   const antes = logKey(view.day, i);
-  removeProjecao(antes);
+  removeProjecao(antes, id(view.day, i));
   draftOf(i).alt = idEx || null;
   projeta(i);
   view.swapOpen = null;
@@ -3941,7 +3964,12 @@ function fecharRetro(){ view.retro = false; render(); window.scrollTo(0,0); }
 
 async function wipe() {
   if (!confirm('Apagar todo o histórico? Isso não tem volta.')) return;
-  S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0 };
+  // apagar o histórico não apaga o programa: os exercícios que ele cadastrou
+  // e as mudanças que promoveu ao oficial sobrevivem
+  S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
+        body:{ peso:[], cintura:[] }, carga:{}, export:0,
+        plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex };
+  montaCatalogo();
   try { await DB.delete(KEY); } catch(e){}
   view.day='A'; view.tab='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
   view.swapOpen=null; view.fired={};

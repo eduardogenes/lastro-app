@@ -82,7 +82,8 @@ test('correção do tipo persiste e some ao voltar ao padrão', async () => {
   a.E('toggle(1)');
   await a.E('setCarga(1,"lado")');
   await a.esperar();
-  assert.strictEqual(a.J('S.carga').A1, 'lado');
+  assert.strictEqual(a.J('S.carga')[a.k('A',1)], 'lado',
+    'a correção acompanha o exercício, não a posição no treino');
   assert.strictEqual(a.texto('.ex.open .unit'), 'kg/lado');
 
   await a.E('setCarga(1,"pino")');
@@ -92,9 +93,12 @@ test('correção do tipo persiste e some ao voltar ao padrão', async () => {
 });
 
 test('chave interna continua pino para não quebrar correção antiga', async () => {
-  const a = await app({ estado: { logs: {}, done: [], carga: { A0: 'pino' } } });
-  assert.strictEqual(a.E('cargaTipo("A0", treino("A").ex[0])'), 'pino');
-  assert.strictEqual(a.E('CARGAS[cargaTipo("A0", treino("A").ex[0])].nome'), 'placa');
+  // correção gravada quando a chave ainda era posicional: a migração leva junto
+  const a = await app({ estado: { plano: 2, logs: {}, done: [], carga: { A0: 'pino' } } });
+  await a.esperar();
+  assert.strictEqual(a.E('cargaTipo(id("A",0), treino("A").ex[0])'), 'pino');
+  assert.strictEqual(a.E('CARGAS[cargaTipo(id("A",0), treino("A").ex[0])].nome'), 'placa');
+  assert.strictEqual(a.J('S.carga')[a.k('A',0)], 'pino', 'reindexada para o exercício');
   a.fechar();
 });
 

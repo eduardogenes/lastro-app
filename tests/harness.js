@@ -90,8 +90,10 @@ function abrirApp(opcoes) {
 
       if (o.estado) {
         let e = o.estado;
-        // Sem 'plano', o app arquivaria o histórico como se fosse do programa
-        // anterior. Só o teste de migração omite de propósito.
+        // Fixtures são escritas na forma posicional antiga ({ A0: [...] }),
+        // porque é o que se lê. Entrar como plano 2 faz a migração reindexá-las
+        // por exercício — e de quebra exercita a migração em toda suíte.
+        // Teste que precisa de outro ponto de partida declara 'plano'.
         if (typeof e !== 'string' && e.plano === undefined) e = Object.assign({ plano: 2 }, e);
         w.localStorage.setItem(CHAVE, typeof e === 'string' ? e : JSON.stringify(e));
       }

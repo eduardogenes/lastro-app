@@ -13,7 +13,7 @@ const dom = new JSDOM(fs.readFileSync(path.join(raiz, 'index.html'), 'utf8'), {
 const E = function (c) { return JSON.parse(dom.window.eval('JSON.stringify(' + c + ')')); };
 
 setTimeout(function () {
-  const PLAN = E('PLAN'), ROT = E('ROT'), PRIORIDADES = E('PRIORIDADES'), NIVEIS = E('NIVEIS');
+  const PLAN = E('PROGRAMA'), ROT = E('ROT_BASE'), PRIORIDADES = E('PRIORIDADES'), NIVEIS = E('NIVEIS');
   const nivelDe = function (g) {
     for (let i = 0; i < NIVEIS.length; i++) if (PRIORIDADES[NIVEIS[i]].mus.indexOf(g) >= 0) return NIVEIS[i];
     return 'normal';

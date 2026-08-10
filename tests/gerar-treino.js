@@ -15,7 +15,7 @@ const dom = new JSDOM(fs.readFileSync(path.join(raiz, 'index.html'), 'utf8'), {
 const E = function (c) { return JSON.parse(dom.window.eval('JSON.stringify(' + c + ')')); };
 
 setTimeout(function () {
-  const PLAN = E('PLAN'), ALT = E('ALT'), RULES = E('RULES'), ROT = E('ROT');
+  const PLAN = E('PROGRAMA'), ALT = E('ALT'), RULES = E('RULES'), ROT = E('ROT_BASE');
   const CARGAS = E('CARGAS'), PRIO = E('PRIO'), MODAIS = E('MODAIS');
 
   const L = [];

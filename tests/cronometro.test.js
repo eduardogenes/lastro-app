@@ -117,7 +117,7 @@ test('bi-set encadeia em vez de descansar', async () => {
   // é o par declarado no programa que decide, não o dia.
   const a = await app();
   a.E('go("D")');
-  a.E('treino("D").ex[4].bi = 1; treino("D").ex[5].bi = 2; render()');
+  a.E('S.prog.D.ex[4].bi = 1; S.prog.D.ex[5].bi = 2; render()');
 
   a.E('toggle(4)');
   for (let k = 0; k < 2; k++) a.preencher(4, k, 15, 12);

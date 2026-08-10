@@ -179,7 +179,7 @@ test('correção de sessão passada altera e apaga', async () => {
   a.E('editarSessao(0)');
   await a.E('apagarSessao()');
   await a.esperar();
-  assert.strictEqual(a.log('A',0), undefined);
+  assert.strictEqual(a.log('A',0), null);
   a.fechar();
 });
 

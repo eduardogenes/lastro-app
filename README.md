@@ -58,12 +58,20 @@ sempre monoespaçado.
 CSS e JS inline em `index.html`. Render é baseado em string: `render()` reescreve
 o `innerHTML` de `#app` e despacha para a tela certa conforme o estado de `view`.
 
-- `PLAN` — os 6 treinos e seus 48 exercícios, na rotação A → B → C → E → D → F
-  (E antes de D de propósito: o grande treino de torso não cai logo depois de
-  um dia inteiro de ombros e braços)
+- `PROGRAMA` — o programa do treinador, congelado: 6 treinos, 48 exercícios,
+  rotação A → B → C → E → D → F (E antes de D de propósito: o grande treino de
+  torso não cai logo depois de um dia inteiro de ombros e braços). Não é o que
+  abre na tela — é a semente de `S.prog`, o alvo de comparação e o que o botão
+  de restaurar devolve
 - `D_COMPOSTO`, `D_MAQUINA`, `D_ISOLADOR`, `D_CURTO` — descanso por categoria,
   declarado exercício a exercício no campo `d`
-- `ALT` — substitutos por padrão de movimento, indexados por nome do exercício
+- `EX_BASE` / `CAT` — catálogo de exercícios. `EX_BASE` vem do código
+  (`PROGRAMA` mais todos os substitutos de `ALT`); `CAT` é ele mais o que ele
+  cadastrou, em `S.ex`
+- `treino(d)` — o treino como aparece na tela: slot resolvido contra o
+  catálogo. **Todo o app lê o programa por aqui**, nunca do `PROGRAMA`
+- `rot()` — a rotação, que vem do estado
+- `ALT` — substitutos indicados pelo treinador, com o que muda em cada troca
 - `RULES` — conteúdo da aba de execução
 - `DORES`, `PRIO`, `MODAIS` — vocabulários fixos
 - `S` — estado persistido
@@ -116,6 +124,42 @@ S = {
 Campos novos entram sempre como opcionais e recebem padrão em `load()`. Nenhuma
 migração destrutiva foi necessária até hoje.
 
+### O programa é dado, não código
+
+Três camadas. `PROGRAMA` é a prescrição do treinador, imutável. `S.prog` é o
+programa dele, semeado do `PROGRAMA` e editável — é o que `treino(d)` devolve.
+A terceira camada são os mods da sessão, que valem só para o dia e não encostam
+no oficial (fase B).
+
+Cada posição de treino é um **slot**:
+
+```js
+{ id:'chest-press-inclinado-convergente', s:3, r:'6–10', d:180, desde:0 }
+```
+
+O slot diz como o exercício está prescrito hoje; o catálogo diz o que ele é.
+`desde` é quando aquele exercício entrou naquela posição — é o que sustenta a
+regra de manter o exercício por 6 a 8 semanas.
+
+### A chave do histórico é o exercício
+
+Era dia + posição (`A0`, `B3`). Isso significa que inserir um exercício na
+segunda posição do A empurra todos os seguintes, e sete históricos passam a
+apontar para o exercício errado. Com o programa editável, isso aconteceria toda
+semana.
+
+`S.logs` é indexado pelo **id do exercício**, derivado do nome uma vez só
+(`slugEx`). Reordenar, inserir e remover viram operações inofensivas.
+
+Dois efeitos:
+
+- Substituto deixa de ser chave de segunda classe. O crucifixo inclinado no cabo
+  tem id e histórico próprios; usá-lo como substituto hoje e promovê-lo a
+  titular no mês que vem não perde nada.
+- Uma entrada é identificada por **sessão + posição**, não por sessão + chave.
+  O campo `sl` guarda a posição de origem quando ela difere da chave. Sem isso,
+  o mesmo aparelho usado em duas posições do mesmo dia colidiria numa entrada.
+
 ### Migração de plano
 
 As chaves do histórico são dia + posição (`A0`, `B3`). Trocar o programa faria o
@@ -129,8 +173,17 @@ das sessões antigas continua abrindo com a etiqueta "plano antigo", e tudo
 continua no JSON exportado. `S.carga` é limpo porque apontava para posições que
 não existem mais, e uma sessão aberta no plano velho é fechada.
 
-Para trocar o programa de novo: suba `PLANO_ATUAL`, guarde o mapa de nomes do
-plano que está saindo e reaproveite a mesma função.
+`migraPlano3()` faz a reindexação por exercício. Posição vira id; `A1~Nome`
+vira o id daquele exercício, guardando a posição em `sl`; `antigo~Nome` volta
+para o histórico ativo quando o exercício continua no catálogo, e vira entrada
+arquivada em `S.ex` quando não. `S.carga` e os `pulados` acompanham.
+
+As migrações rodam em cadeia no `load()`, e também na importação de um backup:
+um JSON de qualquer versão anterior chega ao app pelo mesmo caminho que o disco.
+
+Para trocar o programa de novo: agora é edição, não migração. Mudar o
+`PROGRAMA` só muda a semente e o alvo de comparação; quem já tem `S.prog` não é
+afetado, e o botão de restaurar é o caminho para adotar a prescrição nova.
 
 ### Camada de storage
 
@@ -324,6 +377,7 @@ eles registram é observável.
 | Arquivo | Cobre |
 |---|---|
 | `sessao.test.js` | Registro contínuo, abertura e encerramento automático, duração, hidratação do rascunho, deload |
+| `programa.test.js` | Catálogo, id estável, slots, rotação vinda do estado e as duas migrações em cadeia |
 | `retro.test.js` | Lançamento em data passada, do plano e avulso, e o encerramento do treino de hoje |
 | `carga.test.js` | Os seis tipos, total exibido, peso do corpo, correção persistida |
 | `corpo.test.js` | As três regras de ajuste nos limites exatos, médias semanais, cardio |
