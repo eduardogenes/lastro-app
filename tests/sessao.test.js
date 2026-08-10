@@ -30,7 +30,7 @@ test('série completa abre a sessão e grava na hora', async () => {
   assert.strictEqual(a.E('S.done.length'), 1);
   assert.strictEqual(a.E('S.done[0].sid'), a.E('S.sessao.sid'));
 
-  const log = a.J('S.logs.A0[0]');
+  const log = a.log('A',0)[0];
   assert.deepStrictEqual(log.sets[0], [40, 10]);
   assert.strictEqual(log.sid, a.E('S.sessao.sid'));
   a.fechar();
@@ -41,10 +41,10 @@ test('apagar o campo remove a série do histórico', async () => {
   a.E('toggle(0)');
   a.preencher(0, 0, 40, 10);
   a.preencher(0, 1, 40, 9);
-  assert.strictEqual(a.E('S.logs.A0[0].sets.filter(Boolean).length'), 2);
+  assert.strictEqual(a.log('A',0)[0].sets.filter(Boolean).length, 2);
 
   a.preencher(0, 1, '', '');
-  assert.strictEqual(a.E('S.logs.A0[0].sets.filter(Boolean).length'), 1);
+  assert.strictEqual(a.log('A',0)[0].sets.filter(Boolean).length, 1);
   a.fechar();
 });
 
@@ -79,7 +79,7 @@ test('sessão encerra por inatividade, grava duração e avança a rotação', a
   assert.strictEqual(b.E('S.done[0].dur'), 3600 * 1000, 'uma hora de treino');
   assert.strictEqual(b.E('S.draft'), null);
   assert.strictEqual(b.texto('.dayletter'), 'B', 'rotação deveria ter avançado');
-  assert.strictEqual(b.E('S.logs.A0[0].sets.filter(Boolean).length'), 1, 'histórico preservado');
+  assert.strictEqual(b.log('A',0)[0].sets.filter(Boolean).length, 1, 'histórico preservado');
   b.fechar();
 });
 
@@ -114,15 +114,15 @@ test('trocar de dia no meio do treino não perde nem sobrescreve série', async 
   assert.strictEqual(a.doc.getElementById('r0_2').value, '9');
 
   a.preencher(0, 0, 45, 10);
-  assert.strictEqual(a.E('S.logs.A0[0].sets.filter(Boolean).length'), 3, 'as outras séries continuam');
-  assert.deepStrictEqual(a.J('S.logs.A0[0].sets[1]'), [40, 10]);
+  assert.strictEqual(a.log('A',0)[0].sets.filter(Boolean).length, 3, 'as outras séries continuam');
+  assert.deepStrictEqual(a.log('A',0)[0].sets[1], [40, 10]);
   a.fechar();
 });
 
 test('hidratação recupera observação, dor e substituto', async () => {
   const a = await app();
   a.E('toggle(1)');
-  a.E('setAlt(1,"Crucifixo inclinado no cabo")');
+  a.E('setAlt(1,"crucifixo-inclinado-no-cabo")');
   a.E('abrirNota(1)');
   a.digitar('o1', 'ombro ok hoje');
   a.E('toggleDor(1,"ombro")');
@@ -132,8 +132,9 @@ test('hidratação recupera observação, dor e substituto', async () => {
   a.E('go("A")');
   a.E('toggle(1)');
 
-  assert.strictEqual(a.E('altOf(1)'), 'Crucifixo inclinado no cabo');
-  assert.strictEqual(a.E('logKey("A",1)'), 'A1~Crucifixo inclinado no cabo');
+  assert.strictEqual(a.E('altOf(1)'), 'crucifixo-inclinado-no-cabo');
+  assert.strictEqual(a.E('logKey("A",1)'), 'crucifixo-inclinado-no-cabo',
+    'o registro vai para o histórico do substituto, não para uma chave derivada');
   assert.strictEqual(a.doc.getElementById('o1').value, 'ombro ok hoje');
   assert.strictEqual(a.texto('.ex.open .chip.on'), 'ombro anterior');
   a.fechar();
@@ -152,15 +153,36 @@ test('cabeçalho conta as séries sem re-render', async () => {
   a.fechar();
 });
 
-test('troca de exercício move a projeção de chave', async () => {
+test('troca de exercício move a projeção para o histórico do substituto', async () => {
   const a = await app();
   a.E('toggle(1)');
   a.preencher(1, 0, 60, 12);
-  assert.ok(a.E('S.logs.A1 !== undefined'));
+  assert.ok(a.log('A',1), 'gravou no exercício original');
 
-  a.E('setAlt(1,"Máquina convergente horizontal")');
-  assert.strictEqual(a.E('S.logs.A1'), undefined, 'chave antiga deveria sumir');
-  assert.ok(a.E('S.logs["A1~Máquina convergente horizontal"] !== undefined'));
+  a.E('setAlt(1,"crossover-na-polia-baixa")');
+  assert.strictEqual(a.log('A',1), null, 'sai do histórico do original');
+  const sub = a.J('S.logs["crossover-na-polia-baixa"]');
+  assert.strictEqual(sub.length, 1, 'e entra no histórico do substituto');
+  assert.strictEqual(sub[0].sl, a.k('A',1), 'guardando de que posição do treino veio');
+  a.fechar();
+});
+
+test('substituto acumula histórico próprio entre treinos', async () => {
+  // O ganho de indexar por exercício: usar o mesmo aparelho como substituto em
+  // dias diferentes vira uma série histórica só, não duas chaves órfãs.
+  const a = await app();
+  a.E('toggle(1)');
+  a.E('setAlt(1,"crossover-na-polia-baixa")');
+  a.preencher(1, 0, 20, 12);
+  assert.strictEqual(a.J('S.logs["crossover-na-polia-baixa"]').length, 1);
+
+  a.E('go("E")');
+  a.E('toggle(6)');
+  a.E('setAlt(6,"crossover-na-polia-baixa")');
+  a.preencher(6, 0, 22, 12);
+  const h = a.J('S.logs["crossover-na-polia-baixa"]');
+  assert.strictEqual(h.length, 2, 'mesma chave, dois dias diferentes');
+  assert.notStrictEqual(h[0].sl, h[1].sl, 'cada um sabe de que posição veio');
   a.fechar();
 });
 
@@ -174,7 +196,7 @@ test('deload corta as séries pela metade e marca a sessão', async () => {
   assert.strictEqual(a.$('.up'), null, 'selo de subir carga fica suspenso');
 
   a.preencher(0, 0, 40, 10);
-  assert.strictEqual(a.E('S.logs.A0[0].dl'), 1);
+  assert.strictEqual(a.log('A',0)[0].dl, 1);
   assert.strictEqual(a.E('S.done[0].dl'), 1);
   assert.strictEqual(a.E('sessoesDeTrabalho()'), 0, 'deload não conta para as 48');
   a.fechar();

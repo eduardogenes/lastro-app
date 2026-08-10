@@ -130,8 +130,8 @@ test('histórico longo não é truncado', async () => {
     done.push({ day: 'A', t: t, sid: t, dur: 50 * 60000 });
   }
   const a = await app({ estado: { logs: logs, done: done } });
-  assert.strictEqual(a.E('S.logs.A0.length'), 40);
-  assert.strictEqual(a.E('S.logs.A0[0].sets[0][0]'), 30, 'a primeira sessão continua lá');
+  assert.strictEqual(a.log('A',0).length, 40);
+  assert.strictEqual(a.log('A',0)[0].sets[0][0], 30, 'a primeira sessão continua lá');
   a.fechar();
 });
 
@@ -159,7 +159,7 @@ test('dados sobrevivem a fechar e reabrir o app', async () => {
   a.fechar();
 
   const b = await app({ estado: gravado });
-  assert.deepStrictEqual(b.J('S.logs.A0[0].sets[0]'), [42.5, 10]);
+  assert.deepStrictEqual(b.log('A',0)[0].sets[0], [42.5, 10]);
   b.fechar();
 });
 

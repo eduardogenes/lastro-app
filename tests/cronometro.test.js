@@ -99,8 +99,8 @@ test('descanso automático na última série usa o tempo do exercício', async (
 test('cada categoria de exercício declara seu descanso', async () => {
   const a = await app();
   const faltando = a.J(`
-    ROT.reduce(function (acc, d) {
-      PLAN[d].ex.forEach(function (ex) {
+    rot().reduce(function (acc, d) {
+      treino(d).ex.forEach(function (ex) {
         if (![180,150,105,90].includes(descOf(ex))) acc.push(d + ' ' + ex.n + ' ' + descOf(ex));
       });
       return acc;
@@ -114,10 +114,10 @@ test('cada categoria de exercício declara seu descanso', async () => {
 
 test('bi-set encadeia em vez de descansar', async () => {
   // O programa atual não usa bi-set, mas o encadeamento continua sustentado:
-  // é o par declarado no PLAN que decide, não o dia.
+  // é o par declarado no programa que decide, não o dia.
   const a = await app();
   a.E('go("D")');
-  a.E('PLAN.D.ex[4].bi = 1; PLAN.D.ex[5].bi = 2; render()');
+  a.E('treino("D").ex[4].bi = 1; treino("D").ex[5].bi = 2; render()');
 
   a.E('toggle(4)');
   for (let k = 0; k < 2; k++) a.preencher(4, k, 15, 12);

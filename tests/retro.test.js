@@ -81,7 +81,7 @@ test('preencher os exercícios grava na data do treino, não na de hoje', async 
   assert.strictEqual(a.E('view.day'), 'B');
 
   a.preencher(0, 0, 60, 12);
-  const entrada = a.J('S.logs.B0[0]');
+  const entrada = a.log('B',0)[0];
   assert.strictEqual(new Date(entrada.t).toDateString(), new Date(ontem).toDateString());
 
   await a.E('concluirRetro()');
@@ -107,7 +107,7 @@ test('abrir retroativo com treino em andamento encerra o de hoje', async () => {
   const hoje = a.J('S.done.filter(function (x) { return x.day === "A"; })[0]');
   assert.ok(hoje.dur >= 49 * 60000 && hoje.dur <= 51 * 60000, 'duração de hoje foi gravada');
   assert.strictEqual(a.E('S.sessao.day'), 'C');
-  assert.strictEqual(a.E('S.logs.A0[0].sets.filter(Boolean).length'), 1, 'séries de hoje preservadas');
+  assert.strictEqual(a.log('A',0)[0].sets.filter(Boolean).length, 1, 'séries de hoje preservadas');
   a.fechar();
 });
 
@@ -126,7 +126,7 @@ test('sessão retroativa esquecida encerra na virada do dia de uso', async () =>
 
   const b = await app({ estado });
   assert.strictEqual(b.E('S.sessao'), null);
-  assert.strictEqual(b.E('S.logs.C0[0].sets.filter(Boolean).length'), 1, 'o que foi preenchido fica');
+  assert.strictEqual(b.log('C',0)[0].sets.filter(Boolean).length, 1, 'o que foi preenchido fica');
   b.fechar();
 });
 

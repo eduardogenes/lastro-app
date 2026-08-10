@@ -7,8 +7,8 @@ const { app, DIA } = require('./harness');
 test('todos os exercícios do plano declaram tipo de carga', async () => {
   const a = await app();
   const faltando = a.J(`
-    ROT.reduce(function (acc, d) {
-      PLAN[d].ex.forEach(function (ex) { if (!ex.car || !CARGAS[ex.car]) acc.push(d + ' ' + ex.n); });
+    rot().reduce(function (acc, d) {
+      treino(d).ex.forEach(function (ex) { if (!ex.car || !CARGAS[ex.car]) acc.push(d + ' ' + ex.n); });
       return acc;
     }, [])`);
   assert.deepStrictEqual(faltando, []);
@@ -72,8 +72,8 @@ test('peso do corpo aceita carga vazia', async () => {
 
   a.preencher(8, 0, null, 12);
   a.preencher(8, 1, null, 12);
-  assert.deepStrictEqual(a.J('S.logs.D8[0].sets[0]'), [0, 12]);
-  assert.strictEqual(a.E('S.logs.D8[0].sets.filter(Boolean).length'), 2);
+  assert.deepStrictEqual(a.log('D',8)[0].sets[0], [0, 12]);
+  assert.strictEqual(a.log('D',8)[0].sets.filter(Boolean).length, 2);
   a.fechar();
 });
 
@@ -93,8 +93,8 @@ test('correção do tipo persiste e some ao voltar ao padrão', async () => {
 
 test('chave interna continua pino para não quebrar correção antiga', async () => {
   const a = await app({ estado: { logs: {}, done: [], carga: { A0: 'pino' } } });
-  assert.strictEqual(a.E('cargaTipo("A0", PLAN.A.ex[0])'), 'pino');
-  assert.strictEqual(a.E('CARGAS[cargaTipo("A0", PLAN.A.ex[0])].nome'), 'placa');
+  assert.strictEqual(a.E('cargaTipo("A0", treino("A").ex[0])'), 'pino');
+  assert.strictEqual(a.E('CARGAS[cargaTipo("A0", treino("A").ex[0])].nome'), 'placa');
   a.fechar();
 });
 

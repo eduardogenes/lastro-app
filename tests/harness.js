@@ -110,6 +110,13 @@ function abrirApp(opcoes) {
     /** avalia e devolve já desserializado, para atravessar realms com segurança */
     J: function (codigo) { return JSON.parse(w.eval('JSON.stringify(' + codigo + ')')); },
 
+    /** id do exercício que ocupa a posição i do treino d — a chave do histórico */
+    k: function (dia, i) { return w.eval('id(' + JSON.stringify(dia) + ',' + i + ')'); },
+    /** histórico daquela posição, já desserializado */
+    log: function (dia, i) {
+      return JSON.parse(w.eval('JSON.stringify(S.logs[id(' + JSON.stringify(dia) + ',' + i + ')] || null)'));
+    },
+
     $: function (sel) { return d.querySelector(sel); },
     $$: function (sel) { return Array.from(d.querySelectorAll(sel)); },
     texto: function (sel) { const e = d.querySelector(sel); return e ? e.textContent.replace(/\s+/g, ' ').trim() : null; },

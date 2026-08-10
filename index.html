@@ -864,7 +864,8 @@ html, body {
 const KEY = 'treino-eduardo-v1';
 // E vem antes de D de propósito: o grande treino de torso não deve cair logo
 // depois de um dia inteiro de ombros e braços.
-const ROT = ['A','B','C','E','D','F'];
+const ROT_BASE = ['A','B','C','E','D','F'];
+function rot() { return (S.rot && S.rot.length) ? S.rot : ROT_BASE; }
 
 // Descanso em segundos, pelas categorias do treinador: grande composto 3 min,
 // máquina multiarticular 2,5 min, isolador e demais 1,5 min. O critério real
@@ -872,7 +873,10 @@ const ROT = ['A','B','C','E','D','F'];
 // alta qualidade.
 const D_COMPOSTO = 180, D_MAQUINA = 150, D_ISOLADOR = 105, D_CURTO = 90;
 
-const PLAN = {
+// O programa do treinador, congelado. Não é o que abre na tela: é a semente do
+// seu programa (S.prog), o alvo de comparação do volume e o que o botão de
+// restaurar devolve. Editar aqui é mudar a prescrição, não a sua execução.
+const PROGRAMA = {
   A: { name:'Peito superior + lateral + tríceps', tag:'clavicular e ombro', ex:[
     {n:'Chest press inclinado convergente', car:'pino', g:'peito superior', s:3, r:'6–10', c:1, d:D_COMPOSTO, cue:'Sua principal pressão para peito superior. Máquina estável para o esforço muscular ser o limitante, não o equilíbrio. 1 a 2 repetições na reserva.'},
     {n:'Crossover de baixo para cima', car:'pino', g:'peito superior', s:2, r:'10–15', c:0, d:D_ISOLADOR, cue:'Direcione de verdade à porção clavicular, sem transformar o movimento em elevação frontal.'},
@@ -1172,6 +1176,86 @@ const ALT = {
     {n:'Abdominal na polia alta ajoelhado', w:'Flexão de tronco em vez de antiextensão.'}],
 };
 
+// ---------- catálogo de exercícios ----------
+// O histórico é indexado pelo EXERCÍCIO, não pela posição dele no treino.
+// Antes a chave era dia+posição (A0, B3): inserir um exercício no meio
+// deslocava o histórico de todos os seguintes. Com id estável, reordenar,
+// inserir e remover são operações inofensivas, e um substituto deixa de ser
+// chave de segunda classe — tem histórico próprio como qualquer outro.
+function slugEx(n) {
+  return String(n).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+// Catálogo que vem do código: os exercícios do programa mais todos os
+// substitutos da tabela ALT, que assim viram exercícios de verdade.
+const EX_BASE = (function () {
+  const c = {};
+  ROT_BASE.forEach(function (d) {
+    PROGRAMA[d].ex.forEach(function (ex) {
+      c[slugEx(ex.n)] = { n:ex.n, car:ex.car, g:ex.g, c:ex.c, cue:ex.cue, u:ex.u };
+    });
+  });
+  Object.keys(ALT).forEach(function (nome) {
+    const base = c[slugEx(nome)] || {};
+    ALT[nome].forEach(function (a) {
+      const k = slugEx(a.n);
+      // herda grupo e tipo de carga de quem ele substitui: é o palpite certo
+      // na maioria das vezes, e ele corrige o tipo dentro do app.
+      if (!c[k]) c[k] = { n:a.n, car:base.car || 'pino', g:base.g || '', c:base.c || 0, cue:a.w, sub:1 };
+    });
+  });
+  return c;
+})();
+
+// Catálogo efetivo: o do código mais o que ele cadastrou e o que foi arquivado.
+let CAT = {};
+function montaCatalogo() {
+  CAT = {};
+  Object.keys(EX_BASE).forEach(function (k) { CAT[k] = EX_BASE[k]; });
+  Object.keys(S.ex || {}).forEach(function (k) {
+    CAT[k] = Object.assign({}, EX_BASE[k] || {}, S.ex[k]);
+  });
+}
+// Um id sem entrada no catálogo não pode derrubar a tela: vira exercício
+// fantasma, com o próprio id como nome, e o histórico continua visível.
+function exDe(x) { return CAT[x] || { n:x, car:'pino', g:'', c:0, cue:'', sumido:1 }; }
+function nomeEx(x) { return exDe(x).n; }
+
+// ---------- o programa dele ----------
+// S.prog nasce como cópia do programa do treinador e vai divergindo conforme
+// ele decide. Cada posição é um slot: o exercício (id) mais como está
+// prescrito hoje (séries, faixa, descanso). 'desde' é quando aquele exercício
+// entrou naquela posição — é o que sustenta a regra de 6 a 8 semanas.
+function semeiaProg() {
+  const p = {};
+  ROT_BASE.forEach(function (d) {
+    p[d] = { name: PROGRAMA[d].name, tag: PROGRAMA[d].tag,
+      ex: PROGRAMA[d].ex.map(function (ex) {
+        return { id: slugEx(ex.n), s: ex.s, r: ex.r, d: ex.d, desde: 0 };
+      }) };
+  });
+  return p;
+}
+
+// O treino como ele aparece na tela: slot resolvido contra o catálogo, com os
+// mods da sessão de hoje aplicados por cima. Mesma forma dos exercícios de
+// antes, para o resto do app não precisar saber de nada disso.
+function treino(d) {
+  const p = S.prog && S.prog[d];
+  if (!p) return null;
+  return { name: p.name, tag: p.tag, ex: aplicaMods(d, p.ex).map(function (sl) {
+    const e = exDe(sl.id);
+    return { id:sl.id, n:e.n, car:e.car, g:e.g, c:e.c, cue:e.cue, u:e.u,
+             s:sl.s, r:sl.r, d:sl.d, desde:sl.desde, mod:sl.mod || 0 };
+  }) };
+}
+
+// Ponto de entrada dos mods da sessão. Fase A não tem edição ainda: o gancho
+// existe para o resto do app já ler o treino pelo caminho definitivo.
+function aplicaMods(d, slots) { return slots; }
+
 const PRIORIDADES = {
   maxima:      { rot:'prioridade máxima', mus:['delt lateral','dorsal','peito superior'] },
   secundaria:  { rot:'prioridade secundária', mus:['costas espessura','delt posterior','posterior','panturrilha','abdômen'] },
@@ -1213,7 +1297,7 @@ const CARGAS = {
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-const PLANO_ATUAL = 2;
+const PLANO_ATUAL = 3;
 const ARQUIVO = 'antigo~';
 
 const PLANO_1 = {
@@ -1234,7 +1318,7 @@ const PLANO_1 = {
 };
 
 function migraPlano() {
-  if (S.plano === PLANO_ATUAL) return 0;
+  if (S.plano >= 2) return 0;
   let n = 0;
   const novo = {};
   Object.keys(S.logs).forEach(function (k) {
@@ -1255,8 +1339,89 @@ function migraPlano() {
   // um treino em andamento no plano velho não faz sentido no plano novo
   S.sessao = null;
   S.draft = null;
-  S.plano = PLANO_ATUAL;
+  S.plano = 2;
   return n;
+}
+
+// ---------- plano 2 -> 3: a chave passa a ser o exercício ----------
+// Até aqui a chave era dia+posição. Editar o programa quebraria isso a cada
+// inserção. Esta migração reescreve o histórico pelo id do exercício e, de
+// quebra, devolve ao histórico ativo os exercícios do plano 1 que continuam
+// no programa — eles tinham sido arquivados por não ter para onde ir.
+function migraPlano3() {
+  if (S.plano >= 3) return null;
+  const r = { chaves:0, recuperados:[], arquivados:0 };
+
+  // posição antiga -> id do exercício que ocupava aquela posição
+  const porPosicao = {};
+  ROT_BASE.forEach(function (d) {
+    PROGRAMA[d].ex.forEach(function (ex, i) { porPosicao[d+i] = slugEx(ex.n); });
+  });
+
+  if (!S.ex || typeof S.ex !== 'object') S.ex = {};
+
+  function destino(k) {
+    if (porPosicao[k]) return { id: porPosicao[k] };
+    const til = k.indexOf('~');
+    if (til < 0) return null;
+    const base = k.slice(0, til), nome = k.slice(til + 1);
+    const idEx = slugEx(nome);
+    if (base === 'antigo') {
+      // do plano 1: se o exercício ainda existe hoje, o histórico volta a ser
+      // o dele; se não, vira exercício arquivado no catálogo
+      if (!EX_BASE[idEx] && !S.ex[idEx]) {
+        S.ex[idEx] = { n: nome, car:'pino', g:'', c:0, cue:'', arq:1 };
+        r.arquivados++;
+      } else if (EX_BASE[idEx]) { r.recuperados.push(nome); }
+      return { id: idEx };
+    }
+    // substituto registrado numa posição: vira o exercício dele, guardando
+    // de que posição do treino veio
+    if (!EX_BASE[idEx] && !S.ex[idEx]) S.ex[idEx] = { n: nome, car:'pino', g:'', c:0, cue:'', meu:1 };
+    return { id: idEx, sl: porPosicao[base] || null };
+  }
+
+  const novo = {};
+  Object.keys(S.logs).forEach(function (k) {
+    const dst = destino(k);
+    if (!dst) { novo[k] = S.logs[k]; return; }   // chave que não sabemos ler: fica como está
+    r.chaves++;
+    const alvo = dst.id;
+    if (!novo[alvo]) novo[alvo] = [];
+    S.logs[k].forEach(function (e) {
+      if (dst.sl && dst.sl !== alvo) e.sl = dst.sl; else delete e.sl;
+      novo[alvo].push(e);
+    });
+  });
+  Object.keys(novo).forEach(function (k) {
+    novo[k].sort(function (a, b) { return a.t - b.t; });
+  });
+  S.logs = novo;
+
+  // a correção de tipo de carga acompanha o exercício, não a posição
+  const carga = {};
+  Object.keys(S.carga || {}).forEach(function (k) {
+    if (porPosicao[k]) carga[porPosicao[k]] = S.carga[k];
+  });
+  S.carga = carga;
+
+  // 'pulados' guardava dia+posição nos dois lugares onde aparece
+  function repulados(a) {
+    return (a || []).map(function (x) { return porPosicao[x] || x; });
+  }
+  if (S.sessao && S.sessao.pulados) S.sessao.pulados = repulados(S.sessao.pulados);
+  S.done.forEach(function (m) { if (m.pulados) m.pulados = repulados(m.pulados); });
+  if (S.draft && S.draft.ex) {
+    Object.keys(S.draft.ex).forEach(function (i) {
+      const e = S.draft.ex[i];
+      if (e && e.alt) e.alt = slugEx(e.alt);
+    });
+  }
+
+  S.prog = semeiaProg();
+  S.rot = ROT_BASE.slice();
+  S.plano = 3;
+  return r;
 }
 
 const DORES = [
@@ -1267,7 +1432,7 @@ const DORES = [
 
 const MODAIS = ['bike', 'esteira inclinada', 'elíptico', 'remo'];
 
-let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0 };
+let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{} };
 let view = { day:'A', tab:'treino', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false;
 let audioCtx = null, wakeLock = null, querSegurar = false;
@@ -1390,12 +1555,19 @@ async function load() {
   if (!Array.isArray(S.body.peso)) S.body.peso = [];
   if (!Array.isArray(S.body.cintura)) S.body.cintura = [];
   if (typeof S.plano !== 'number') S.plano = 1;   // estado anterior à troca de programa
+  if (!S.ex || typeof S.ex !== 'object') S.ex = {};
+  montaCatalogo();
 
+  // as migrações rodam em cadeia: quem está no plano 1 passa pelas duas
   const arquivados = migraPlano();
+  const m3 = migraPlano3();
+  if (!S.prog || typeof S.prog !== 'object') S.prog = semeiaProg();
+  if (!Array.isArray(S.rot) || !S.rot.length) S.rot = ROT_BASE.slice();
+  montaCatalogo();
 
   // Rascunho do modelo antigo, sem sessão: vira sessão aberta para não
   // perder um treino que estava em andamento na hora da atualização.
-  if (S.draft && !S.sessao && PLAN[S.draft.day] && Object.keys(S.draft.ex || {}).length) {
+  if (S.draft && !S.sessao && treino(S.draft.day) && Object.keys(S.draft.ex || {}).length) {
     S.sessao = { day: S.draft.day, inicio: S.draft.t || Date.now(), ultima: S.draft.t || Date.now(), sid: S.draft.t || Date.now() };
     projetaTudo();
   }
@@ -1403,9 +1575,11 @@ async function load() {
   encerraSePreciso();
   view.day = S.sessao ? S.sessao.day : nextDay();
   render();
-  if (arquivados) {
+  if (m3) {
     await save();
-    toast(arquivados + ' exercícios do plano antigo foram arquivados. Os dias treinados continuam no calendário.');
+    const rec = m3.recuperados.length
+      ? ' ' + m3.recuperados.length + ' voltaram para o histórico ativo.' : '';
+    if (m3.chaves) toast('Histórico reindexado por exercício.' + rec);
   }
 }
 
@@ -1545,11 +1719,11 @@ function setsDoRascunho(ex, e, key) {
 
 function projeta(i) {
   const dia = view.day;
-  const ex = PLAN[dia].ex[i];
+  const ex = treino(dia).ex[i];
   const e = draftPeek(i);
   if (!ex || !e) return;
 
-  const key = e.alt ? id(dia,i) + '~' + e.alt : id(dia,i);
+  const key = e.alt || id(dia,i);
   const sets = setsDoRascunho(ex, e, key);
 
   // sem nenhuma série completa: apaga o que já tiver sido escrito nesta sessão
@@ -1572,6 +1746,9 @@ function projeta(i) {
   if (!entry) { entry = { t: s.inicio, sid: s.sid }; S.logs[key].push(entry); }
 
   entry.sets = sets;
+  // slot de origem: o registro vive no histórico do exercício, mas ainda
+  // precisamos saber em que posição do treino ele foi feito
+  if (key !== id(dia,i)) entry.sl = id(dia,i); else delete entry.sl;
   if (isTime(ex)) entry.u = 'seg'; else delete entry.u;
   if (e.aq) entry.aq = 1; else delete entry.aq;
   const obs = (e.obs||'').trim();
@@ -1592,8 +1769,8 @@ function removeProjecao(key) {
 // reprojeta o dia inteiro: usado ao migrar rascunho antigo e ao trocar exercício
 function projetaTudo() {
   const dia = S.sessao ? S.sessao.day : view.day;
-  if (!PLAN[dia] || !S.draft || S.draft.day !== dia) return;
-  PLAN[dia].ex.forEach(function (ex, i) { projeta(i); });
+  if (!treino(dia) || !S.draft || S.draft.day !== dia) return;
+  treino(dia).ex.forEach(function (ex, i) { projeta(i); });
 }
 
 // ---------- os quatro estados de um exercício numa sessão ----------
@@ -1601,18 +1778,18 @@ function projetaTudo() {
 // Só a decisão é gravada; a omissão é derivada da ausência de registro.
 function entradaDaSessao(dia, i, sid) {
   const base = id(dia, i);
-  const chaves = Object.keys(S.logs).filter(function (k) {
-    return k === base || k.indexOf(base + '~') === 0;
-  });
+  const chaves = Object.keys(S.logs);
   for (let j = 0; j < chaves.length; j++) {
-    const e = S.logs[chaves[j]].filter(function (x) { return x.sid === sid; })[0];
+    const e = S.logs[chaves[j]].filter(function (x) {
+      return x.sid === sid && (chaves[j] === base ? !x.sl : x.sl === base);
+    })[0];
     if (e) return e;
   }
   return null;
 }
 
 function estadoEx(dia, i, sid, pulados) {
-  const ex = PLAN[dia] && PLAN[dia].ex[i];
+  const ex = treino(dia) && treino(dia).ex[i];
   if (!ex) return 'nada';
   const e = entradaDaSessao(dia, i, sid);
   if (e) {
@@ -1627,8 +1804,8 @@ function estadoEx(dia, i, sid, pulados) {
 // resumo de pendências de uma sessão, para a confirmação e para o detalhe
 function pendencias(dia, sid, pulados) {
   const r = { feito: [], parcial: [], pulado: [], nada: [] };
-  if (!PLAN[dia]) return r;
-  PLAN[dia].ex.forEach(function (ex, i) {
+  if (!treino(dia)) return r;
+  treino(dia).ex.forEach(function (ex, i) {
     r[estadoEx(dia, i, sid, pulados)].push({ i: i, nome: ex.n });
   });
   return r;
@@ -1721,10 +1898,12 @@ function ultimaDoPlano() {
 function nextDay() {
   const u = ultimaDoPlano();
   if (!u) return 'A';
-  const i = ROT.indexOf(u.day);
-  return ROT[(i+1) % 6];
+  const i = rot().indexOf(u.day);
+  return rot()[(i+1) % rot().length];
 }
-function id(d,i){ return d + i; }
+// Identidade de um exercício numa posição do treino. Devolve o id do
+// exercício, não a posição: é essa linha que desprende o histórico do lugar.
+function id(d,i){ const t = treino(d); return (t && t.ex[i]) ? t.ex[i].id : d + i; }
 
 // ---------- rascunho do treino em andamento ----------
 // Antes disso, abrir outro exercício apagava o que já tinha sido digitado:
@@ -1743,17 +1922,18 @@ function draftOf(i) {
 // porque projeta() reescreve o conjunto inteiro a partir do rascunho.
 function hidrataDraft(dia) {
   const s = S.sessao;
-  if (!s || s.day !== dia || !PLAN[dia]) return;
+  if (!s || s.day !== dia || !treino(dia)) return;
   // criar rascunho vazio aqui contaminaria o estado: na abertura seguinte a
   // migração de rascunho antigo o leria como treino em andamento
   if (!S.draft || S.draft.day !== dia) S.draft = { day: dia, t: Date.now(), ex: {} };
 
-  PLAN[dia].ex.forEach(function (ex, i) {
+  treino(dia).ex.forEach(function (ex, i) {
     if (S.draft.ex[i]) return;
     const base = id(dia, i);
     const chave = Object.keys(S.logs).filter(function (k) {
-      return (k === base || k.indexOf(base + '~') === 0) &&
-             S.logs[k].some(function (e) { return e.sid === s.sid; });
+      return S.logs[k].some(function (e) {
+        return e.sid === s.sid && (k === base ? !e.sl : e.sl === base);
+      });
     })[0];
     if (!chave) return;
     const e = S.logs[chave].filter(function (x) { return x.sid === s.sid; })[0];
@@ -1761,7 +1941,7 @@ function hidrataDraft(dia) {
       s: e.sets.map(function (x) { return x ? [x[0], x[1]] : [null, null]; }),
       obs: e.obs || '',
       dor: (e.dor || []).slice(),
-      alt: chave === base ? null : chave.slice(base.length + 1),
+      alt: chave === base ? null : chave,
       aq: !!e.aq
     };
   });
@@ -1778,16 +1958,49 @@ function queueSave() {
 }
 
 // ---------- substituição ----------
+// O substituto é um exercício do catálogo, com id próprio. Trocar não cria
+// mais uma chave derivada: manda o registro para o histórico DAQUELE
+// exercício, que é onde ele sempre deveria ter ido.
 function altOf(i) { const e = draftPeek(i); return e && e.alt ? e.alt : null; }
-function exName(d,i) { return altOf(i) || PLAN[d].ex[i].n; }
-// carga de substituto nunca entra no histórico do original
-function logKey(d,i) { const a = altOf(i); return a ? id(d,i) + '~' + a : id(d,i); }
-function altList(d,i) { return ALT[PLAN[d].ex[i].n] || []; }
-// chaves de substitutos já registrados neste exercício
+function exName(d,i) { const a = altOf(i); return a ? nomeEx(a) : treino(d).ex[i].n; }
+function logKey(d,i) { return altOf(i) || id(d,i); }
+
+// Opções de troca, em três camadas: quem o treinador indicou (com o que muda),
+// depois o resto do catálogo do mesmo grupo, depois o catálogo inteiro. Sem a
+// segunda camada, todo exercício que ele cadastrar nasceria invisível aqui.
+function altList(d,i) {
+  const ex = treino(d).ex[i];
+  const vistos = { }; vistos[ex.id] = 1;
+  const out = [];
+  (ALT[ex.n] || []).forEach(function (a) {
+    const k = slugEx(a.n);
+    if (vistos[k]) return; vistos[k] = 1;
+    out.push({ id:k, n:a.n, w:a.w, ind:1 });
+  });
+  Object.keys(CAT).forEach(function (k) {
+    if (vistos[k] || CAT[k].arq) return;
+    if (CAT[k].g !== ex.g || !ex.g) return;
+    vistos[k] = 1;
+    out.push({ id:k, n:CAT[k].n, w:'mesmo grupo muscular', ind:0 });
+  });
+  return out;
+}
+
+// Substitutos já registrados nesta posição do treino. Agora que a chave é o
+// exercício, quem sabe disso é o campo 'sl' de cada entrada.
 function variantsOf(d,i) {
-  const base = id(d,i) + '~';
-  return Object.keys(S.logs).filter(k => k.indexOf(base) === 0 && S.logs[k] && S.logs[k].length)
-    .map(k => ({ key:k, name:k.slice(base.length) }));
+  const base = id(d,i);
+  return Object.keys(S.logs).filter(function (k) {
+    return k !== base && S.logs[k].some(function (e) { return e.sl === base; });
+  }).map(function (k) { return { key:k, name:nomeEx(k) }; });
+}
+
+// Último registro de um exercício, para a lista de troca dizer se ele já foi
+// usado e com quanto. Sem isso a troca é escolha às cegas.
+function ultimoDe(idEx) {
+  const l = S.logs[idEx];
+  if (!l || !l.length) return null;
+  return l[l.length - 1];
 }
 
 // ---------- séries: deload corta pela metade, sem tocar na carga ----------
@@ -2012,7 +2225,7 @@ function textoTotal(i, key, ex) {
 function atualizaAnilhas(i) {
   const el = document.getElementById('tot' + i);
   if (!el) return;
-  const ex = PLAN[view.day].ex[i];
+  const ex = treino(view.day).ex[i];
   el.innerHTML = textoTotal(i, logKey(view.day, i), ex);
 }
 
@@ -2124,7 +2337,7 @@ function controlesSessao() {
 
 function atualizaEstado() {
   const el = document.getElementById('daymeta');
-  if (el && PLAN[view.day]) el.innerHTML = estadoDoDia(PLAN[view.day]);
+  if (el && treino(view.day)) el.innerHTML = estadoDoDia(treino(view.day));
 }
 
 // ---------- faixa da semana ----------
@@ -2158,7 +2371,7 @@ function render() {
   if (view.sessao) return renderSessao();
   if (view.hist) return renderHist();
   const app = document.getElementById('app');
-  const d = view.day, P = PLAN[d];
+  const d = view.day, P = treino(d);
   const cycle = Math.floor(S.done.length/6) + 1;
   const trabalho = sessoesDeTrabalho();
   const toDeload = 48 - (trabalho % 48);
@@ -2177,7 +2390,7 @@ function render() {
     ${linhaCardio()}` : ''}
   </div>
   ${view.tab==='treino' ? '<div class="rot">' +
-    ROT.map(x => `<button class="${x===view.day?'on':''} ${x===nextDay()?'next':''}" onclick="go('${x}')">${x}</button>`).join('') +
+    rot().map(x => `<button class="${x===view.day?'on':''} ${x===nextDay()?'next':''}" onclick="go('${x}')">${x}</button>`).join('') +
   '</div>' : ''}
   <div class="tabs">
     <button class="${view.tab==='treino'?'on':''}" onclick="tab('treino')">hoje</button>
@@ -2259,10 +2472,19 @@ function render() {
 
       let swap = '';
       if (view.swapOpen === i) {
+        const ind = lista.filter(function (a) { return a.ind; });
+        const outros = lista.filter(function (a) { return !a.ind; });
+        const opt = function (a) {
+          const u = ultimoDe(a.id);
+          const antes = u && u.sets && u.sets[0]
+            ? 'última vez: ' + fmtNum(u.sets[0][0]) + ' × ' + u.sets[0][1] : a.w;
+          return `<button class="swapopt ${alt===a.id?'on':''}" onclick="setAlt(${i},'${escAttr(a.id)}')">
+            <b>${a.n}</b><span>${antes}</span></button>`;
+        };
         swap = `<div class="swap">
           <div class="swap-h">Máquina ocupada? Mesmo padrão de movimento:</div>
-          ${lista.map(a => `<button class="swapopt ${alt===a.n?'on':''}" onclick="setAlt(${i},'${escAttr(a.n)}')">
-            <b>${a.n}</b><span>${a.w}</span></button>`).join('')}
+          ${ind.map(opt).join('')}
+          ${outros.length?`<div class="swap-h" style="margin-top:12px">Outros de ${ex.g}:</div>${outros.map(opt).join('')}`:''}
           ${alt?`<button class="swapopt back-orig" onclick="setAlt(${i},null)"><b>Voltar para ${ex.n}</b><span>Cancela a substituição.</span></button>`:''}
           <button class="swapopt cancel" onclick="toggleSwap(${i})"><b>Fechar</b></button>
         </div>`;
@@ -2341,7 +2563,7 @@ function render() {
 
     h += `<div class="autonota">
       Cada série entra no histórico assim que você preenche carga e repetição.
-      Não há nada para salvar. O treino se encerra sozinho e a rotação avança para ${ROT[(ROT.indexOf(d)+1)%6]}.
+      Não há nada para salvar. O treino se encerra sozinho e a rotação avança para ${rot()[(rot().indexOf(d)+1)%rot().length]}.
     </div>`;
   }
 
@@ -2352,11 +2574,11 @@ function render() {
 // ---------- histórico do exercício ----------
 function renderHist() {
   const d = view.hist.day, i = view.hist.i;
-  const ex = PLAN[d].ex[i];
+  const ex = treino(d).ex[i];
   const vars = variantsOf(d,i);
   const sel = view.hist.key || id(d,i);
   const tipo = cargaTipo(sel, ex);
-  const nome = sel === id(d,i) ? ex.n : sel.slice(id(d,i).length+1);
+  const nome = nomeEx(sel);
   const H = (S.logs[sel] || []).slice(-6);
   const app = document.getElementById('app');
 
@@ -2775,7 +2997,7 @@ function mudaMes(n) {
 // tem carga e repetição que ninguém anotou.
 function gruposDoPlano() {
   const set = {};
-  ROT.forEach(function (d) { PLAN[d].ex.forEach(function (ex) { set[ex.g] = 1; }); });
+  rot().forEach(function (d) { treino(d).ex.forEach(function (ex) { set[ex.g] = 1; }); });
   return Object.keys(set).sort(function (a,b) {
     const pa = PRIO.indexOf(a), pb = PRIO.indexOf(b);
     if (pa !== pb) return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);
@@ -2856,10 +3078,10 @@ function renderAdicionar() {
 
     <div class="obs-h" style="margin-top:22px">o que foi</div>
     <div class="chips">
-      ${ROT.map(function (x) { return `<button class="chip ${a.tipo===x?'sel':''}" onclick="addSet('tipo','${x}')">${x}</button>`; }).join('')}
+      ${rot().map(function (x) { return `<button class="chip ${a.tipo===x?'sel':''}" onclick="addSet('tipo','${x}')">${x}</button>`; }).join('')}
       <button class="chip ${a.tipo==='livre'?'sel':''}" onclick="addSet('tipo','livre')">outro treino</button>
     </div>
-    ${a.tipo && a.tipo !== 'livre' ? `<p class="cue" style="margin:12px 0 0">${PLAN[a.tipo].name} · ${PLAN[a.tipo].tag}</p>` : ''}
+    ${a.tipo && a.tipo !== 'livre' ? `<p class="cue" style="margin:12px 0 0">${treino(a.tipo).name} · ${treino(a.tipo).tag}</p>` : ''}
 
     ${a.tipo === 'livre' ? `
       <div class="obs-h" style="margin-top:22px">grupos musculares</div>
@@ -3038,8 +3260,8 @@ function bodySVG(W) {
 // semanas cheias, e o número não significaria nada.
 function seriesPorMusculo(de, ate, corte) {
   const acc = {};
-  ROT.forEach(function (d) {
-    PLAN[d].ex.forEach(function (ex, i) {
+  rot().forEach(function (d) {
+    treino(d).ex.forEach(function (ex, i) {
       const base = id(d,i);
       Object.keys(S.logs).forEach(function (k) {
         if (k !== base && k.indexOf(base + '~') !== 0) return;
@@ -3068,7 +3290,7 @@ function painelMusculos() {
   }, {}));
 
   const nomes = {};
-  ROT.forEach(d => PLAN[d].ex.forEach(ex => { nomes[ex.g] = 1; }));
+  rot().forEach(d => treino(d).ex.forEach(ex => { nomes[ex.g] = 1; }));
   const lista = Object.keys(nomes).sort(function (a,b) {
     const na = NIVEIS.indexOf(nivelDe(a)), nb = NIVEIS.indexOf(nivelDe(b));
     if (na !== nb) return na - nb;
@@ -3382,7 +3604,7 @@ function inp(el, i, k, pos) {
 
 // cronômetro começa sozinho quando a última série do exercício fica completa
 function autoTimer(i, k, e) {
-  const ex = PLAN[view.day].ex[i];
+  const ex = treino(view.day).ex[i];
   const ult = setsFor(ex) - 1;
   const tag = view.day + i;
   const cheia = k === ult && e.s[ult] && e.s[ult][0] != null && e.s[ult][1] != null;
@@ -3396,7 +3618,7 @@ function autoTimer(i, k, e) {
 }
 
 function proximoDoBiset(i) {
-  const prox = PLAN[view.day].ex[i+1];
+  const prox = treino(view.day).ex[i+1];
   if (!prox) return;
   view.open = i+1; view.swapOpen = null;
   render();
@@ -3412,7 +3634,7 @@ function abrirNota(i) { view.nota = i; render(); }
 function abrirCarga(i) { view.carga = view.carga === i ? null : i; render(); }
 async function setCarga(i, t) {
   const key = logKey(view.day, i);
-  const ex = PLAN[view.day].ex[i];
+  const ex = treino(view.day).ex[i];
   if ((ex.car || 'pino') === t) delete S.carga[key]; else S.carga[key] = t;
   view.carga = null;
   await save(); render();
@@ -3426,15 +3648,16 @@ function toggleDor(i, k) {
 }
 function toggleSwap(i){ view.swapOpen = view.swapOpen===i ? null : i; render(); }
 function abrirSubstituicao(i){ view.open = i; view.swapOpen = i; render(); }
-function setAlt(i, nome) {
+function setAlt(i, idEx) {
   // a chave de histórico muda junto: tira a projeção da chave antiga primeiro
   const antes = logKey(view.day, i);
   removeProjecao(antes);
-  draftOf(i).alt = nome;
+  draftOf(i).alt = idEx || null;
   projeta(i);
   view.swapOpen = null;
   queueSave(); render();
-  toast(nome ? 'Trocado por ' + nome + '. A carga entra num histórico separado.' : 'De volta ao exercício original.');
+  toast(idEx ? 'Trocado por ' + nomeEx(idEx) + '. A carga entra no histórico dele.'
+             : 'De volta ao exercício original.');
 }
 async function setDeload(on) {
   S.deload = !!on;
@@ -3446,46 +3669,42 @@ async function setDeload(on) {
 // ---------- detalhe de uma sessão ----------
 // Não existe mais resumo pós-treino: a sessão nunca é "enviada". Este é o
 // detalhe de um dia, aberto a partir do acompanhamento.
+// Agora que a chave é o exercício, o detalhe de uma sessão não precisa mais
+// varrer o programa posição por posição: basta pegar tudo que foi registrado
+// naquela sessão. Isso cobre de graça os substitutos, os exercícios que
+// saíram do programa e os que vieram do plano antigo.
 function itensDaSessao(marca) {
+  const doDia = {};
+  const t = marca.day ? treino(marca.day) : null;
+  if (t) t.ex.forEach(function (ex) { doDia[ex.id] = 1; });
+
   const out = [];
-  // sessões anteriores à troca de programa: as chaves foram arquivadas e não
-  // correspondem mais a nenhuma posição do PLAN, mas o detalhe tem que abrir.
   Object.keys(S.logs).forEach(function (k) {
-    if (k.indexOf(ARQUIVO) !== 0) return;
-    S.logs[k].forEach(function (e) {
-      const bate = marca.sid != null ? e.sid === marca.sid : sameDay(e.t, marca.t);
+    (S.logs[k] || []).forEach(function (e) {
+      const bate = marca.sid != null
+        ? e.sid === marca.sid
+        // registro antigo, sem sid: só entra se for do dia e do treino certos
+        : (sameDay(e.t, marca.t) && e.sid == null && (doDia[k] || doDia[e.sl]));
       if (!bate) return;
-      out.push({ nome: k.slice(ARQUIVO.length), seg: false, sets: e.sets,
-                 met: volOf(e), dor: e.dor || [], novo: false, delta: null,
-                 recCarga: false, recMet: false, antigo: 1 });
-    });
-  });
-  ROT.forEach(function (d) {
-    PLAN[d].ex.forEach(function (ex, i) {
-      const base = id(d,i);
-      Object.keys(S.logs).forEach(function (k) {
-        if (k !== base && k.indexOf(base + '~') !== 0) return;
-        S.logs[k].forEach(function (e) {
-          const bate = marca.sid != null
-            ? e.sid === marca.sid
-            : (d === marca.day && sameDay(e.t, marca.t) && e.sid == null);
-          if (!bate) return;
-          const seg = isTime(ex);
-          const met = seg ? tutOf : volOf;
-          const antes = S.logs[k].filter(function (x) { return x.t < e.t; });
-          out.push({
-            nome: k === base ? ex.n : k.slice(base.length+1),
-            seg: seg, sets: e.sets, met: met(e), dor: e.dor || [],
-            novo: !antes.length,
-            delta: antes.length && met(antes[antes.length-1]) > 0
-              ? Math.round((met(e) - met(antes[antes.length-1])) / met(antes[antes.length-1]) * 100) : null,
-            recCarga: !seg && antes.length > 0 && maxLoad(e) > Math.max.apply(null, antes.map(maxLoad)),
-            recMet: antes.length > 0 && met(e) > Math.max.apply(null, antes.map(met))
-          });
-        });
+      const ex = exDe(k);
+      const seg = e.u === 'seg';
+      const met = seg ? tutOf : volOf;
+      const antes = S.logs[k].filter(function (x) { return x.t < e.t; });
+      out.push({
+        t: e.t, nome: ex.n,
+        seg: seg, sets: e.sets, met: met(e), dor: e.dor || [],
+        novo: !antes.length,
+        delta: antes.length && met(antes[antes.length-1]) > 0
+          ? Math.round((met(e) - met(antes[antes.length-1])) / met(antes[antes.length-1]) * 100) : null,
+        recCarga: !seg && antes.length > 0 && maxLoad(e) > Math.max.apply(null, antes.map(maxLoad)),
+        recMet: antes.length > 0 && met(e) > Math.max.apply(null, antes.map(met)),
+        // exercício que não está mais neste treino: substituto de hoje, ou
+        // sobra de um programa anterior
+        fora: t && !doDia[k] ? 1 : 0
       });
     });
   });
+  out.sort(function (a, b) { return a.t - b.t; });
   return out;
 }
 
@@ -3568,7 +3787,7 @@ function renderSessao() {
         ${x.recCarga?'<span class="rec">recorde de carga</span>':''}
         ${!x.recCarga&&x.recMet?`<span class="rec">recorde de ${x.seg?'tempo':'volume'}</span>`:''}
         ${x.novo?'<span class="nul">primeira vez</span>':''}
-        ${x.antigo?'<span class="nul">plano antigo</span>':''}
+        ${x.fora?'<span class="nul">fora do treino</span>':''}
       </div>
       ${x.dor.length?`<div class="pain" style="padding-left:0">dor em ${x.dor.map(dorName).join(' e ')}</div>`:''}
     </div>`;
@@ -3624,8 +3843,8 @@ function retro() {
   const evol = [], parados = [], dores = {};
   let sessoes = 0, volTotal = 0;
 
-  ROT.forEach(function (d) {
-    PLAN[d].ex.forEach(function (ex, i) {
+  rot().forEach(function (d) {
+    treino(d).ex.forEach(function (ex, i) {
       const base = id(d,i);
       Object.keys(S.logs).forEach(function (k) {
         if (k !== base && k.indexOf(base + '~') !== 0) return;

@@ -102,8 +102,8 @@ test('média semanal, não sequência de dias', async () => {
 test('substituição oferece alternativas para todos os exercícios', async () => {
   const a = await app();
   const semAlt = a.J(`
-    ROT.reduce(function (acc, d) {
-      PLAN[d].ex.forEach(function (ex) {
+    rot().reduce(function (acc, d) {
+      treino(d).ex.forEach(function (ex) {
         if (!ALT[ex.n] || ALT[ex.n].length < 2) acc.push(d + ' ' + ex.n);
       });
       return acc;
@@ -174,12 +174,12 @@ test('correção de sessão passada altera e apaga', async () => {
   a.digitar('ed0_0', '40');
   await a.E('salvarEdicao()');
   await a.esperar();
-  assert.strictEqual(a.E('S.logs.A0[0].sets[0][0]'), 40, 'digitou 400 no lugar de 40');
+  assert.strictEqual(a.log('A',0)[0].sets[0][0], 40, 'digitou 400 no lugar de 40');
 
   a.E('editarSessao(0)');
   await a.E('apagarSessao()');
   await a.esperar();
-  assert.strictEqual(a.E('S.logs.A0'), undefined);
+  assert.strictEqual(a.log('A',0), undefined);
   a.fechar();
 });
 
