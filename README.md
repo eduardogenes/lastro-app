@@ -280,6 +280,11 @@ mais as regras de execução, o cardio e as regras de ajuste da dieta.
 **É gerado a partir do `PLAN` do próprio app**, então não tem como divergir. Ao
 mexer no plano, rode `npm run treino` para refazer.
 
+[ANALISE-VOLUME.md](ANALISE-VOLUME.md) responde a outra pergunta: não *quantas*
+séries, mas **quais**. Composição de cada músculo por treino e exercício,
+agrupada pela hierarquia de prioridade, com aviso de exercício repetido em mais
+de um treino. `npm run volume` refaz.
+
 ## Testes
 
 ```

@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --test \"tests/*.test.js\"",
     "serve": "npx serve .",
-    "treino": "node tests/gerar-treino.js"
+    "treino": "node tests/gerar-treino.js",
+    "volume": "node tests/gerar-volume.js"
   },
   "devDependencies": {
     "jsdom": "^24.0.0"

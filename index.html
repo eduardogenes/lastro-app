@@ -690,9 +690,12 @@ html, body {
 .musrow.prio .musn { color: var(--paper); font-weight: 600; }
 .musn i {
   display: block; font-style: normal; font-family: var(--f-m);
-  font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--dawn); margin-top: 3px;
+  font-size: 8px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--dawn); margin-top: 3px; line-height: 1.25;
 }
+.musn i.n-secundaria { color: var(--mist); }
+.musn i.n-indireto { color: var(--dim); }
+.musrow.prio .musn { color: var(--paper); font-weight: 600; }
 .musbar { flex: 1; height: 6px; background: var(--raise); border-radius: 3px; overflow: hidden; min-width: 0; }
 .musbar em { display: block; height: 100%; background: var(--line); border-radius: 3px; }
 .musrow.prio .musbar em { background: var(--dawn); }
@@ -939,9 +942,10 @@ const RULES = [
   {k:'deload', t:'A cada 48 sessões, uma semana leve', warn:0, p:[
     'Mantenha as mesmas cargas e faça <b>metade das séries</b> por uma semana.',
     'O deload existe para o tecido conjuntivo se recuperar — por isso corta volume e não intensidade. O app avisa quando chegar a hora.']},
-  {k:'bike', t:'20 min, 2 a 3x por semana', warn:0, p:[
-    'Sempre <b>depois</b> da musculação, ou em dia separado. Nunca antes de perna.',
-    'Ritmo leve a moderado: é saúde cardiovascular e apetite, não queima de caloria.']},
+  {k:'bike', t:'25 a 30 min, 2 a 3x por semana', warn:0, p:[
+    'São 50 a 90 minutos na semana. Depois de recuperar bem, pode ir para 30 a 40 min.',
+    'Melhor lugar: <b>depois de A, depois de D, ou em dia de descanso</b>. Depois de B ou E também serve. Evite antes de C ou F, e nunca antes do treino.',
+    'Ritmo leve a moderado: é saúde cardiovascular e apetite, não queima de caloria. Você tem que sair pensando que aguentaria continuar, não com o quadríceps destruído para o treino seguinte.']},
 ];
 
 // Substitutos por padrão de movimento. Mesma articulação, mesmo padrão,
@@ -1107,9 +1111,22 @@ const ALT = {
     {n:'Extensão de quadril na polia', w:'Um lado por vez, mesma pausa.'}]
 };
 
-// Os seis pontos fracos priorizados no programa. Marcar aqui não muda
-// prescrição: serve para o painel semanal mostrar primeiro o que importa.
-const PRIO = ['delt lateral','delt posterior','dorsal','costas espessura','peito superior','panturrilha'];
+// Hierarquia definida pelo treinador. Não é lista plana: espessura de costas
+// saiu do topo porque quem muda o V-taper é a largura dorsal, e o deltoide
+// anterior fica de fora porque já recebe bastante estímulo do treino de peito.
+const PRIORIDADES = {
+  maxima:      { rot:'prioridade máxima', mus:['delt lateral','dorsal','peito superior'] },
+  secundaria:  { rot:'prioridade secundária', mus:['costas espessura','delt posterior','posterior','panturrilha','abdômen'] },
+  normal:      { rot:'', mus:['quadríceps','bíceps','tríceps','peito','glúteo'] },
+  indireto:    { rot:'estímulo indireto basta', mus:['delt anterior'] }
+};
+const NIVEIS = ['maxima','secundaria','normal','indireto'];
+function nivelDe(g) {
+  for (let i = 0; i < NIVEIS.length; i++) if (PRIORIDADES[NIVEIS[i]].mus.indexOf(g) >= 0) return NIVEIS[i];
+  return 'normal';
+}
+// mantido para ordenação e para o formulário de treino avulso
+const PRIO = PRIORIDADES.maxima.mus.concat(PRIORIDADES.secundaria.mus);
 
 // ---------- tipo de carregamento ----------
 // A ambiguidade "esse peso é de um lado ou dos dois?" é propriedade do
@@ -1910,7 +1927,7 @@ function estadoDoDia(P) {
 function linhaCardio() {
   const n = cardioSemana().length;
   const hoje = cardioDoDia(Date.now());
-  const f = Object.assign({ m:'bike', min:20, i:'leve' }, view.cardioForm);
+  const f = Object.assign({ m:'bike', min:25, i:'moderado' }, view.cardioForm);
   const perna = pernaHoje();
 
   const resumo = hoje.length
@@ -1928,7 +1945,7 @@ function linhaCardio() {
       <div class="chips">${MODAIS.map(function (m) {
         return `<button class="chip ${f.m===m?'sel':''}" onclick="cardioSet('m','${m}')">${m}</button>`;
       }).join('')}</div>
-      <div class="chips" style="margin-top:7px">${[15,20,25,30].map(function (v) {
+      <div class="chips" style="margin-top:7px">${[20,25,30,40].map(function (v) {
         return `<button class="chip ${f.min===v?'sel':''}" onclick="cardioSet('min',${v})">${v} min</button>`;
       }).join('')}${['leve','moderado'].map(function (v) {
         return `<button class="chip ${f.i===v?'sel':''}" onclick="cardioSet('i','${v}')">${v}</button>`;
@@ -2429,7 +2446,7 @@ function renderCardio() {
   const sem = cardioSemana();
   const n = sem.length;
   const perna = pernaHoje();
-  const f = view.cardioForm || { m:'bike', min:20, i:'leve' };
+  const f = view.cardioForm || { m:'bike', min:25, i:'moderado' };
 
   let estado, cls;
   if (n < 2) { estado = n === 0 ? 'Nenhuma sessão nesta semana ainda.' : 'Falta 1 sessão para a dose mínima da semana.'; cls = ''; }
@@ -2442,18 +2459,18 @@ function renderCardio() {
       <div class="week-n">${n} <em>de 3</em></div>
       <div class="week-s ${cls}">sessões nesta semana<br><b>${estado}</b></div>
     </div>
-    <p class="week-p">20 minutos, 2 a 3 vezes por semana, intensidade leve a moderada — dá para conversar, sem ofegar. O cardio está aqui por saúde cardiovascular, capacidade de trabalho e regulação do apetite.</p>
+    <p class="week-p">25 a 30 minutos, 2 a 3 vezes por semana, intensidade leve a moderada — dá para conversar, sem ofegar. São 50 a 90 minutos na semana. O cardio está aqui por saúde cardiovascular, capacidade de trabalho e regulação do apetite.</p>
 
     <div class="dgroup">
       <h3>Registrar sessão</h3>
       <div class="obs-h">modalidade</div>
       <div class="chips">${MODAIS.map(m => `<button class="chip ${f.m===m?'sel':''}" onclick="cardioSet('m','${m}')">${m}</button>`).join('')}</div>
       <div class="obs-h" style="margin-top:16px">duração</div>
-      <div class="chips">${[15,20,25,30].map(v => `<button class="chip ${f.min===v?'sel':''}" onclick="cardioSet('min',${v})">${v} min</button>`).join('')}</div>
+      <div class="chips">${[20,25,30,40].map(v => `<button class="chip ${f.min===v?'sel':''}" onclick="cardioSet('min',${v})">${v} min</button>`).join('')}</div>
       <div class="obs-h" style="margin-top:16px">intensidade</div>
       <div class="chips">${['leve','moderado'].map(v => `<button class="chip ${f.i===v?'sel':''}" onclick="cardioSet('i','${v}')">${v}</button>`).join('')}</div>
       ${perna.length?`<div class="cwarn">Você salvou o treino ${perna.join(' e ')} hoje. A regra é não pôr cardio no mesmo período de treino de perna — se ainda der, deixe para outro dia.</div>`:''}
-      <p class="crule">Depois da musculação ou em dia separado. Nunca antes do treino.</p>
+      <p class="crule">Melhor lugar: depois de A, depois de D, ou em dia de descanso. Depois de B ou E também serve. Evite antes de C ou F, e nunca antes do treino. Você tem que sair pensando que aguentaria continuar.</p>
       <button class="dbtn" onclick="addCardio()">Registrar ${f.min} min de ${f.m}</button>
     </div>
 
@@ -2469,12 +2486,12 @@ function renderCardio() {
 }
 
 function cardioSet(k, v) {
-  view.cardioForm = Object.assign({ m:'bike', min:20, i:'leve' }, view.cardioForm);
+  view.cardioForm = Object.assign({ m:'bike', min:25, i:'moderado' }, view.cardioForm);
   view.cardioForm[k] = v;
   render();
 }
 async function addCardio() {
-  const f = Object.assign({ m:'bike', min:20, i:'leve' }, view.cardioForm);
+  const f = Object.assign({ m:'bike', min:25, i:'moderado' }, view.cardioForm);
   S.cardio.push({ t: Date.now(), m: f.m, min: f.min, i: f.i });
   if (S.cardio.length > 200) S.cardio = S.cardio.slice(-200);
   await save();
@@ -2935,6 +2952,8 @@ function painelMusculos() {
   const nomes = {};
   ROT.forEach(d => PLAN[d].ex.forEach(ex => { nomes[ex.g] = 1; }));
   const lista = Object.keys(nomes).sort(function (a,b) {
+    const na = NIVEIS.indexOf(nivelDe(a)), nb = NIVEIS.indexOf(nivelDe(b));
+    if (na !== nb) return na - nb;
     const pa = PRIO.indexOf(a), pb = PRIO.indexOf(b);
     if (pa !== pb) return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);
     return a.localeCompare(b, 'pt-BR');
@@ -2945,17 +2964,19 @@ function painelMusculos() {
 
   return `<div class="dgroup">
     <h3>Séries por músculo nesta semana</h3>
-    <p>Séries registradas desde segunda-feira, comparadas com o <b>mesmo ponto</b> das últimas ${janela} semanas — dia ${diaDaSemana} de 7. Os seis pontos fracos do programa vêm primeiro e estão marcados.</p>
+    <p>Séries registradas desde segunda-feira, comparadas com o <b>mesmo ponto</b> das últimas ${janela} semanas — dia ${diaDaSemana} de 7. A ordem segue a hierarquia do programa.</p>
+    <p style="color:var(--dim)"><b>São séries diretas.</b> Tríceps também trabalha nos supinos, bíceps nas puxadas, glúteo no terra e no leg press, e deltoide anterior no peito. O estímulo real desses é maior que o número aqui.</p>
     ${temHistorico ? '' : '<p style="color:var(--dim)">Ainda sem semanas anteriores para comparar. A coluna de média aparece a partir da segunda semana de registro.</p>'}
     ${avulsos.length ? `<p style="color:var(--dim)">${avulsos.length} ${avulsos.length===1?'treino avulso nesta semana não entra':'treinos avulsos nesta semana não entram'} nesta contagem, porque não ${avulsos.length===1?'tem':'têm'} série registrada: ${avulsosGrupos.join(', ')}.</p>` : ''}
     <div class="mus">
       ${lista.map(function (g) {
         const n = atual[g] || 0;
         const m = temHistorico ? (antes[g]||0)/janela : null;
-        const prio = PRIO.indexOf(g) >= 0;
+        const nivel = nivelDe(g);
+        const prio = nivel === 'maxima';
         const dif = m !== null && m >= 1 ? Math.round((n-m)/m*100) : null;
         return `<div class="musrow ${prio?'prio':''}">
-          <span class="musn">${g}${prio?'<i>prioridade</i>':''}</span>
+          <span class="musn">${g}${PRIORIDADES[nivel].rot?`<i class="n-${nivel}">${PRIORIDADES[nivel].rot}</i>`:''}</span>
           <span class="musbar"><em style="width:${Math.min(100, n/max*100)}%"></em></span>
           <span class="musv">${n}${m!==null?`<small>méd ${fmtDec(m)}</small>`:''}</span>
           ${dif===null?'':`<span class="musd ${dif>0?'up':(dif<-25?'down':'')}">${dif>0?'+':''}${dif}%</span>`}

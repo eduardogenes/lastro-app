@@ -5,7 +5,7 @@ registra. Cinco a seis sessões por semana.
 
 **Objetivo:** hipertrofia com ganho de gordura controlado.
 
-**Pontos fracos priorizados:** delt lateral, delt posterior, dorsal, costas espessura, peito superior, panturrilha.
+**Pontos fracos priorizados:** delt lateral, dorsal, peito superior, costas espessura, delt posterior, posterior, panturrilha, abdômen.
 
 Gerado a partir do app. Para atualizar depois de mexer no `PLAN`:
 `node tests/gerar-treino.js`
@@ -30,16 +30,16 @@ Uma rotação são seis sessões, o que dá aproximadamente uma semana.
 | Músculo | Séries | |
 |---|---|---|
 | delt lateral | 13 | prioridade |
-| delt posterior | 10 | prioridade |
 | dorsal | 13 | prioridade |
-| costas espessura | 13 | prioridade |
 | peito superior | 10 | prioridade |
+| costas espessura | 13 | prioridade |
+| delt posterior | 10 | prioridade |
+| posterior | 13 | prioridade |
 | panturrilha | 10 | prioridade |
-| posterior | 13 |  |
+| abdômen | 9 | prioridade |
 | quadríceps | 10 |  |
 | tríceps | 9 |  |
 | bíceps | 9 |  |
-| abdômen | 9 |  |
 | peito | 6 |  |
 | delt anterior | 3 |  |
 | glúteo | 3 |  |
@@ -718,13 +718,15 @@ Mantenha as mesmas cargas e faça **metade das séries** por uma semana.
 
 O deload existe para o tecido conjuntivo se recuperar — por isso corta volume e não intensidade. O app avisa quando chegar a hora.
 
-### 20 min, 2 a 3x por semana
+### 25 a 30 min, 2 a 3x por semana
 
 *bike*
 
-Sempre **depois** da musculação, ou em dia separado. Nunca antes de perna.
+São 50 a 90 minutos na semana. Depois de recuperar bem, pode ir para 30 a 40 min.
 
-Ritmo leve a moderado: é saúde cardiovascular e apetite, não queima de caloria.
+Melhor lugar: **depois de A, depois de D, ou em dia de descanso**. Depois de B ou E também serve. Evite antes de C ou F, e nunca antes do treino.
+
+Ritmo leve a moderado: é saúde cardiovascular e apetite, não queima de caloria. Você tem que sair pensando que aguentaria continuar, não com o quadríceps destruído para o treino seguinte.
 
 ---
 

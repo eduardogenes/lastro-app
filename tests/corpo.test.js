@@ -5,16 +5,16 @@ const assert = require('node:assert');
 const { app, inicioDaSemana, DIA } = require('./harness');
 
 // Gera pesagens dentro de cada semana alvo, com ruído que se anula na média.
+// Âncora na última semana FECHADA, nunca na semana em curso: rodando numa
+// segunda-feira, a semana atual teria uma pesagem só e a média viraria ruído.
 function pesagens(medias) {
-  const seg = inicioDaSemana(Date.now());
-  const agora = Date.now();
+  const ultima = inicioDaSemana(Date.now()) - 7 * DIA;
   const ruido = [0.4, -0.3, 0.2, -0.3];
   const out = [];
   medias.forEach(function (m, idx) {
-    const semana = seg - (medias.length - 1 - idx) * 7 * DIA;
+    const semana = ultima - (medias.length - 1 - idx) * 7 * DIA;
     for (let j = 0; j < 4; j++) {
-      const t = semana + j * DIA + 10 * 3600000;
-      if (t <= agora) out.push({ t: t, v: Math.round((m + ruido[j]) * 100) / 100 });
+      out.push({ t: semana + j * DIA + 10 * 3600000, v: Math.round((m + ruido[j]) * 100) / 100 });
     }
   });
   return out;

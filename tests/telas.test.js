@@ -50,7 +50,14 @@ test('faixa da semana marca os dias e abre atalho nos vazios', async () => {
   const cels = a.$$('.wd');
   assert.strictEqual(cels.length, 7);
   assert.strictEqual(cels[0].querySelector('.wd-v').textContent, 'A');
-  const vazio = cels.find(function (c) { return !c.className.includes('feito') && !c.className.includes('futuro'); });
+
+  // Numa segunda-feira não existe dia passado e vazio na semana; o calendário
+  // do mês sempre tem, então o atalho é verificado lá.
+  a.E('tab("acomp")');
+  const vazio = a.$$('.cal-d').find(function (c) {
+    return !c.className.includes('feito') && !c.className.includes('futuro');
+  });
+  assert.ok(vazio, 'o mês sempre tem algum dia passado sem treino');
   assert.match(vazio.getAttribute('onclick') || '', /abrirAdicionar/);
   a.fechar();
 });
