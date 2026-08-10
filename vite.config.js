@@ -17,6 +17,11 @@ export default defineConfig({
     minify: false,
     sourcemap: true,
     rollupOptions: {
+      // Desligado durante a transição. O app tem um ponto de entrada só e não
+      // carrega código morto, então shaking não economiza nada aqui — mas
+      // apagou funções que os testes alcançam por `window.__escopo` (string,
+      // não referência estática). Some junto com o `__escopo`, na fase 2.
+      treeshake: false,
       output: {
         // Hash no nome: é o que permite o service worker versionar sozinho, sem
         // o bump manual de CACHE que hoje é ritual de publicação.

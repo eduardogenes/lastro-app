@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+
+    // O casco (src/main.js) ainda é JavaScript e migra por último, na fase 3.
+    // Até lá ele entra no projeto sem checagem — o que é verificado é o
+    // domínio, que é onde erro de formato custa histórico.
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["src", "vite.config.js"]
+}

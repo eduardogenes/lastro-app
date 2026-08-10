@@ -28,10 +28,11 @@ test('todo handler inline está publicado na ponte global', async () => {
   // `onclick="foo()"` só enxerga o global. Um nome citado em atributo e ausente
   // de HANDLERS_INLINE vira botão morto — quebra silenciosa que nenhum outro
   // teste pega, porque no jsdom o bundle roda como script clássico.
-  const bridge = FONTE.match(/const HANDLERS_INLINE = \[([\s\S]*?)\];/);
+  const bridge = FONTE.match(/const HANDLERS_INLINE = \{([\s\S]*?)\n\};/);
   assert.ok(bridge, 'a ponte HANDLERS_INLINE sumiu do fonte');
-  const publicados = new Set((bridge[1].match(/'([^']+)'/g) || [])
-    .map(function (s) { return s.slice(1, -1); }));
+  const publicados = new Set(bridge[1].split(',')
+    .map(function (s) { return s.trim(); })
+    .filter(Boolean));
 
   const citados = new Set();
   const re = /\son(?:click|input|change|blur|focus|submit|keydown)=(["'])([\s\S]*?)\1/g;

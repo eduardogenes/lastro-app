@@ -272,8 +272,10 @@ test('a migração roda uma vez só', async () => {
     plano: 1, logs: { A0: [{ t: t, sid: t, sets: [[30, 10]] }] }, done: []
   } });
   await a.esperar();
-  assert.strictEqual(a.E('migraPlano()'), 0, 'segunda passada não mexe em nada');
-  assert.strictEqual(a.E('migraPlano3()'), null);
+  // As migrações recebem o estado desde que viraram módulo: dá para testá-las
+  // contra uma fixture sem subir o app (ver tests/dominio/migracoes.test.js).
+  assert.strictEqual(a.E('migraPlano(S)'), 0, 'segunda passada não mexe em nada');
+  assert.strictEqual(a.E('migraPlano3(S)'), null);
   assert.deepStrictEqual(a.J('Object.keys(S.logs)'), ['supino-inclinado-com-halteres']);
   a.fechar();
 });

@@ -1,0 +1,208 @@
+// Os tipos do domínio.
+//
+// Até aqui o formato do estado só existia escrito em docs/ARQUITETURA.md e na
+// cabeça de quem escreveu. Isso é um problema específico deste app: há uma
+// cadeia de migrações, os campos entram sempre como opcionais, e um backup de
+// qualquer versão anterior chega pelo mesmo caminho que o disco. É exatamente o
+// lugar onde um contrato só documentado se solta do código sem ninguém ver.
+
+/** Os seis tipos de carregamento. O app rotula, nunca converte. */
+export type TipoCarga = 'pino' | 'lado' | 'halter' | 'halter1' | 'corpo' | 'assist';
+
+/** Letra do treino na rotação. */
+export type Dia = string;
+
+/** id derivado do nome do exercício por slugEx. É a chave do histórico. */
+export type IdEx = string;
+
+/** O que um exercício É — vem do catálogo, não da prescrição. */
+export interface Exercicio {
+  /** nome como aparece na tela */
+  n: string;
+  /** tipo de carregamento do equipamento */
+  car: TipoCarga;
+  /** grupo muscular ao qual a série é atribuída */
+  g: string;
+  /** 1 se é composto grande (governa o descanso padrão) */
+  c: 0 | 1;
+  /** dica de execução */
+  cue?: string;
+  /** 'seg' quando o exercício é medido por tempo, não por repetição */
+  u?: 'seg';
+  /** verdadeiro quando o exercício saiu do catálogo mas tem histórico */
+  sumido?: 1;
+  /** cadastrado por ele, não veio do código */
+  meu?: 1;
+  /** entrou no catálogo por ser substituto de outro, não por prescrição direta */
+  sub?: 1;
+  /** arquivado pela migração 2→3: saiu do programa mas tem histórico */
+  arq?: 1;
+}
+
+/** Como um exercício está PRESCRITO hoje, naquela posição do treino. */
+export interface Slot {
+  id: IdEx;
+  /** séries */
+  s: number;
+  /** faixa de repetições, como '6–10' */
+  r: string;
+  /** descanso em segundos */
+  d: number;
+  /** quando entrou nesta posição; 0 = veio do treinador e não conta na regra das 6 a 8 semanas */
+  desde: number;
+  /** 1 quando é bi-set com o exercício seguinte */
+  bi?: 0 | 1;
+  /** 1 quando o slot é resultado de um mod do dia */
+  mod?: 0 | 1;
+  /** id original da posição, mesmo depois de uma troca */
+  orig?: IdEx;
+}
+
+/** Slot resolvido contra o catálogo: o que a tela consome. */
+export type SlotResolvido = Slot & Exercicio;
+
+/** Um treino da rotação. */
+export interface Treino<E = Slot> {
+  name: string;
+  tag: string;
+  ex: E[];
+}
+
+/** Uma série registrada: [carga, repetições]. null = série não feita. */
+export type Serie = [number, number] | null;
+
+/** Uma entrada de histórico, indexada pelo id do exercício. */
+export interface Log {
+  /** instante */
+  t: number;
+  /** id da sessão */
+  sid: number;
+  sets: Serie[];
+  /** posição de origem, quando difere da chave (houve troca) */
+  sl?: IdEx;
+  /** exercício por tempo */
+  u?: 'seg';
+  obs?: string;
+  dor?: string[];
+  /** feito em deload */
+  dl?: 0 | 1;
+  /** feito com aproximação */
+  aq?: 0 | 1;
+}
+
+/** Presença: uma entrada por sessão. */
+export interface Sessao {
+  day: Dia;
+  t: number;
+  sid: number;
+  /** duração líquida, sem as pausas */
+  dur: number;
+  /** como começou */
+  ini?: 'manual' | 'auto';
+  /** como terminou */
+  fim?: 'manual' | 'auto';
+  pausado?: number;
+  pulados?: number[];
+  /** 1 quando o horário é confiável */
+  hora?: 0 | 1;
+  dl?: 0 | 1;
+  retro?: 0 | 1;
+  /** o que mudou no dia, tenha virado permanente ou não */
+  mods?: string[];
+  /** sessão avulsa, fora do plano */
+  livre?: 0 | 1;
+  grupos?: string[];
+  nome?: string;
+  obs?: string;
+}
+
+/** Mudança do dia, guardada como intenção e não como cópia do treino. */
+export type Mod =
+  | { k: 'troca'; slot: IdEx; por: IdEx }
+  | { k: 'sets'; slot: IdEx; de: number; para: number }
+  | { k: 'reps'; slot: IdEx; de: string; para: string }
+  | { k: 'desc'; slot: IdEx; de: number; para: number }
+  | { k: 'rm'; slot: IdEx }
+  | { k: 'mover'; slot: IdEx; de: number; para: number }
+  | { k: 'add'; id: IdEx; s: number; r: string; d: number; pos: number; n?: 0 | 1 };
+
+export interface Mods {
+  day: Dia;
+  t: number;
+  list: Mod[];
+}
+
+/** Sessão em andamento. */
+export interface SessaoAberta {
+  day: Dia;
+  inicio: number;
+  ultima: number;
+  sid: number;
+  manual?: boolean;
+  retro?: boolean;
+  pausadoEm?: number | null;
+  pausas?: Array<{ de: number; ate?: number }>;
+  pulados?: number[];
+}
+
+/** Uma decisão registrada sobre o programa. */
+export interface EntradaProgLog {
+  t: number;
+  day: Dia;
+  txt: string;
+  motivo?: string;
+}
+
+/** Uma marca corporal. */
+export interface Marca { t: number; v: number; }
+
+/** Uma sessão de cardio. */
+export interface Cardio {
+  t: number;
+  /** modal */
+  m: string;
+  min: number;
+  /** intensidade */
+  i: string;
+}
+
+/** O que está sendo digitado numa posição da sessão aberta. */
+export interface RascunhoEx {
+  s: Serie[];
+  obs?: string;
+  dor?: string[];
+  /** substituto escolhido para hoje */
+  alt?: IdEx;
+  /** feito com aproximação */
+  aq?: 0 | 1;
+}
+
+/** Buffer de digitação da sessão aberta, por posição do treino. */
+export interface Rascunho { ex: Record<string, RascunhoEx>; }
+
+/** O estado persistido inteiro, sob a chave `treino-eduardo-v1`. */
+export interface Estado {
+  /** histórico por ID DE EXERCÍCIO, nunca por posição */
+  logs: Record<IdEx, Log[]>;
+  done: Sessao[];
+  deload: boolean;
+  /** buffer de digitação da sessão aberta */
+  draft: Rascunho | null;
+  sessao: SessaoAberta | null;
+  cardio: Cardio[];
+  body: { peso: Marca[]; cintura: Marca[] };
+  /** correção do tipo de carga, por exercício */
+  carga: Record<IdEx, TipoCarga>;
+  /** timestamp do último backup */
+  export: number;
+  /** versão do formato */
+  plano: number;
+  /** o programa dele, semeado do PROGRAMA e editável */
+  prog: Record<Dia, Treino> | null;
+  rot: Dia[] | null;
+  /** o catálogo dele */
+  ex: Record<IdEx, Partial<Exercicio>>;
+  /** as mudanças de hoje */
+  mods: Mods | null;
+  progLog: EntradaProgLog[];
+}
