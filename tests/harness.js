@@ -1,9 +1,14 @@
 // Sobe o app num DOM de mentira para os testes.
 //
-// O app não tem build nem módulos: é um HTML único com tudo inline. Então o
-// harness carrega o arquivo, deixa o script rodar, e expõe `E()` para avaliar
-// expressões dentro do escopo do app — é como se chega em S, view, PLAN e nas
-// funções internas, que não são exportadas.
+// O harness testa o BUILD, não o fonte: lê `dist/index.html` e costura de volta
+// o CSS e o JS que o Vite separou. Isso é de propósito — o que vai para o
+// iPhone é o build, e um erro que só aparece depois de empacotar não pode
+// passar batido. `npm test` roda `vite build` antes (script `pretest`).
+//
+// jsdom não executa `type="module"`, então o bundle entra como script clássico.
+// O app expõe `window.__escopo` para avaliar expressões dentro do escopo do
+// módulo — é como se chega em S, view e nas funções internas, que não são
+// exportadas. Some quando os testes de domínio passarem a importar os módulos.
 //
 // Tudo que o iOS oferece e o jsdom não tem (áudio, wake lock, vibração) entra
 // como dublê. O que eles registram é observável nos testes.
@@ -12,7 +17,32 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
-const HTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const DIST = path.join(__dirname, '..', 'dist');
+
+function montarHTML() {
+  const idx = path.join(DIST, 'index.html');
+  if (!fs.existsSync(idx)) {
+    throw new Error('dist/index.html não existe. Rode `npm run build` antes dos testes.');
+  }
+  const ler = function (rel) { return fs.readFileSync(path.join(DIST, rel), 'utf8'); };
+
+  return fs.readFileSync(idx, 'utf8')
+    .replace(/<script type="module"[^>]*src="\.?\/?(assets\/[^"]+\.js)"[^>]*><\/script>/,
+      function (_, p) { return '<script>' + ler(p) + '<\/script>'; })
+    .replace(/<link rel="stylesheet"[^>]*href="\.?\/?(assets\/[^"]+\.css)"[^>]*>/,
+      function (_, p) { return '<style>' + ler(p) + '<\/style>'; });
+}
+
+const HTML = montarHTML();
+
+// O fonte, para as regras que são sobre COMO o código é escrito (regra 5, sem
+// emoji) e não sobre o que o build produz. O bundler reescreve `const` em `var`
+// e reindenta, então casar padrão de fonte contra o build dá falso negativo.
+const SRC = path.join(__dirname, '..', 'src');
+const FONTE = fs.readdirSync(SRC, { recursive: true })
+  .filter(function (f) { return /\.(js|ts|jsx|tsx|css)$/.test(f); })
+  .map(function (f) { return fs.readFileSync(path.join(SRC, f), 'utf8'); })
+  .join('\n');
 
 const DIA = 86400000;
 const CHAVE = 'treino-eduardo-v1';
@@ -116,15 +146,15 @@ function abrirApp(opcoes) {
     dom: dom, window: w, doc: d, erros: erros, vibrou: vibrou, registro: registro,
 
     /** avalia uma expressão dentro do escopo do app */
-    E: function (codigo) { return w.eval(codigo); },
+    E: function (codigo) { return w.__escopo(codigo); },
     /** avalia e devolve já desserializado, para atravessar realms com segurança */
-    J: function (codigo) { return JSON.parse(w.eval('JSON.stringify(' + codigo + ')')); },
+    J: function (codigo) { return JSON.parse(w.__escopo('JSON.stringify(' + codigo + ')')); },
 
     /** id do exercício que ocupa a posição i do treino d — a chave do histórico */
-    k: function (dia, i) { return w.eval('id(' + JSON.stringify(dia) + ',' + i + ')'); },
+    k: function (dia, i) { return w.__escopo('id(' + JSON.stringify(dia) + ',' + i + ')'); },
     /** histórico daquela posição, já desserializado */
     log: function (dia, i) {
-      return JSON.parse(w.eval('JSON.stringify(S.logs[id(' + JSON.stringify(dia) + ',' + i + ')] || null)'));
+      return JSON.parse(w.__escopo('JSON.stringify(S.logs[id(' + JSON.stringify(dia) + ',' + i + ')] || null)'));
     },
 
     $: function (sel) { return d.querySelector(sel); },
@@ -174,7 +204,7 @@ function abrirApp(opcoes) {
     },
 
     fechar: function () {
-      try { w.eval('stopTimer()'); } catch (e) {}
+      try { w.__escopo('stopTimer()'); } catch (e) {}
       try { w.close(); } catch (e) {}
     }
   };
@@ -189,4 +219,4 @@ async function app(opcoes) {
   return a;
 }
 
-module.exports = { app, abrirApp, estadoVazio, inicioDaSemana, DIA, CHAVE, HTML };
+module.exports = { app, abrirApp, estadoVazio, inicioDaSemana, DIA, CHAVE, HTML, FONTE };

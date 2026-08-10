@@ -1,23 +1,52 @@
 // Regressão das telas e das regras inegociáveis do projeto.
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { app, HTML, DIA, inicioDaSemana } = require('./harness');
+const { app, HTML, FONTE, DIA, inicioDaSemana } = require('./harness');
 
-test('um arquivo só, sem dependência externa', async () => {
-  assert.strictEqual((HTML.match(/<script[^>]*src=/g) || []).length, 0, 'nenhum script externo');
+test('um artefato só, sem dependência de runtime', async () => {
+  // O app agora tem build, mas a propriedade que importa continua: o que chega
+  // no aparelho não busca nada na rede fora a fonte do Google.
   const urls = (HTML.match(/https?:\/\/[^"']+/g) || [])
     .filter(function (u) { return !/fonts\.(googleapis|gstatic)/.test(u); });
   assert.deepStrictEqual(urls, [], 'só a fonte do Google é permitida');
+  assert.ok(!/<script[^>]*\ssrc=/.test(HTML), 'nenhum script buscado à parte');
 });
 
 test('paleta e tom preservados', async () => {
   ['#0D1520', '#15202E', '#1C2A3B', '#26374C', '#E9EFF6', '#8DA0B8', '#48607C', '#F5A83C', '#E8734A']
     .forEach(function (cor) { assert.ok(HTML.includes(cor), 'sumiu da paleta: ' + cor); });
   // Regra 5: sem emoji. A única exceção autorizada são os marcadores de
-  // período do calendário, declarados em PERIODOS.
-  const semPeriodos = HTML.replace(/const PERIODOS = \[[\s\S]*?\];/, '');
+  // período do calendário, declarados em PERIODOS. Verificado no FONTE, não no
+  // build: o bundler troca `const` por `var` e reindenta.
+  const semPeriodos = FONTE.replace(/(const|var|let) PERIODOS = \[[\s\S]*?\n\];/, '');
   assert.ok(!/[\uD800-\uDBFF][\uDC00-\uDFFF]/.test(semPeriodos),
     'emoji fora do bloco PERIODOS');
+});
+
+test('todo handler inline está publicado na ponte global', async () => {
+  // O app é módulo ES: `function foo(){}` não é mais `window.foo`, mas
+  // `onclick="foo()"` só enxerga o global. Um nome citado em atributo e ausente
+  // de HANDLERS_INLINE vira botão morto — quebra silenciosa que nenhum outro
+  // teste pega, porque no jsdom o bundle roda como script clássico.
+  const bridge = FONTE.match(/const HANDLERS_INLINE = \[([\s\S]*?)\];/);
+  assert.ok(bridge, 'a ponte HANDLERS_INLINE sumiu do fonte');
+  const publicados = new Set((bridge[1].match(/'([^']+)'/g) || [])
+    .map(function (s) { return s.slice(1, -1); }));
+
+  const citados = new Set();
+  const re = /\son(?:click|input|change|blur|focus|submit|keydown)=(["'])([\s\S]*?)\1/g;
+  let m;
+  while ((m = re.exec(FONTE + HTML))) {
+    let f; const rf = /([A-Za-z_$][A-Za-z0-9_$]*)\s*\(/g;
+    while ((f = rf.exec(m[2]))) citados.add(f[1]);
+  }
+  // métodos e globais legítimos do próprio DOM, que não passam pela ponte
+  ['this', 'JSON', 'Number', 'String', 'Math', 'select', 'focus', 'blur',
+   'getElementById', 'parseInt', 'parseFloat', 'stopPropagation', 'preventDefault']
+    .forEach(function (n) { citados.delete(n); });
+
+  const faltando = [...citados].filter(function (n) { return !publicados.has(n); });
+  assert.deepStrictEqual(faltando, [], 'handler inline sem ponte global');
 });
 
 test('as quatro abas renderizam', async () => {

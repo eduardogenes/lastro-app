@@ -1,15 +1,19 @@
 {
   "name": "treino-app",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Registro de treino, cardio e acompanhamento corporal. Arquivo único, sem build, offline.",
+  "description": "Registro de treino, cardio e acompanhamento corporal. Um artefato estático, offline, sem dependência de runtime.",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "pretest": "npm run build",
     "test": "node --test \"tests/*.test.js\"",
-    "serve": "npx serve .",
-    "treino": "node tests/gerar-treino.js",
-    "volume": "node tests/gerar-volume.js"
+    "treino": "npm run build && node tests/gerar-treino.js",
+    "volume": "npm run build && node tests/gerar-volume.js"
   },
   "devDependencies": {
-    "jsdom": "^24.0.0"
+    "jsdom": "^24.0.0",
+    "vite": "^7.1.12"
   }
 }

@@ -5,14 +5,15 @@ const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
 const raiz = path.join(__dirname, '..');
-const dom = new JSDOM(fs.readFileSync(path.join(raiz, 'index.html'), 'utf8'), {
+const { HTML } = require('./harness');
+const dom = new JSDOM(HTML, {
   runScripts: 'dangerously',
   url: 'https://treino.test/',
   virtualConsole: new VirtualConsole(),
   beforeParse: function (w) { w.scrollTo = function () {}; }
 });
 
-const E = function (c) { return JSON.parse(dom.window.eval('JSON.stringify(' + c + ')')); };
+const E = function (c) { return JSON.parse(dom.window.__escopo('JSON.stringify(' + c + ')')); };
 
 setTimeout(function () {
   const PROGRAMA = E("PROGRAMA"), ALT = E('ALT'), RULES = E('RULES'), ROT = E('ROT_BASE');
