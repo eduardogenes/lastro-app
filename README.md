@@ -271,6 +271,15 @@ Para testar o service worker é preciso `https` ou `localhost`:
 npx serve .
 ```
 
+## O programa por escrito
+
+[TREINO.md](TREINO.md) tem o programa inteiro: os seis treinos com séries, faixa
+de repetição, tipo de carga, dica de execução e substituições de cada exercício,
+mais as regras de execução, o cardio e as regras de ajuste da dieta.
+
+**É gerado a partir do `PLAN` do próprio app**, então não tem como divergir. Ao
+mexer no plano, rode `npm run treino` para refazer.
+
 ## Testes
 
 ```

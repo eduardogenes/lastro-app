@@ -5,7 +5,8 @@
   "description": "Registro de treino, cardio e acompanhamento corporal. Arquivo único, sem build.",
   "scripts": {
     "test": "node --test \"tests/*.test.js\"",
-    "serve": "npx serve ."
+    "serve": "npx serve .",
+    "treino": "node tests/gerar-treino.js"
   },
   "devDependencies": {
     "jsdom": "^24.0.0"
