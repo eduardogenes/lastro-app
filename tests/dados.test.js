@@ -60,7 +60,7 @@ test('exportar carrega todos os campos do estado', async () => {
   assert.deepStrictEqual(
     Object.keys(bkp.data).sort(),
     ['body', 'cardio', 'carga', 'deload', 'done', 'draft', 'ex', 'export', 'logs',
-     'plano', 'prog', 'rot', 'sessao'].sort()
+     'mods', 'plano', 'prog', 'progLog', 'rot', 'sessao'].sort()
   );
   a.fechar();
 });

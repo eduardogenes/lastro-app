@@ -127,9 +127,9 @@ migração destrutiva foi necessária até hoje.
 ### O programa é dado, não código
 
 Três camadas. `PROGRAMA` é a prescrição do treinador, imutável. `S.prog` é o
-programa dele, semeado do `PROGRAMA` e editável — é o que `treino(d)` devolve.
-A terceira camada são os mods da sessão, que valem só para o dia e não encostam
-no oficial (fase B).
+programa dele, semeado do `PROGRAMA` e editável. A terceira é `S.mods`: as
+mudanças do dia, que valem só para a sessão e não encostam no oficial.
+`treino(d)` devolve `S.prog[d]` com os mods aplicados por cima.
 
 Cada posição de treino é um **slot**:
 
@@ -140,6 +140,38 @@ Cada posição de treino é um **slot**:
 O slot diz como o exercício está prescrito hoje; o catálogo diz o que ele é.
 `desde` é quando aquele exercício entrou naquela posição — é o que sustenta a
 regra de manter o exercício por 6 a 8 semanas.
+
+### Editar sem mexer no programa
+
+Máquina quebrada, outra academia, uma série a mais que fez sentido: nem toda
+mudança deve virar permanente. As edições do dia entram em `S.mods` como uma
+lista de **intenções**, não como uma cópia do dia:
+
+```js
+S.mods = { day:'C', t:0, list:[
+  { k:'troca', slot:'pendulum-squat', por:'agachamento-hack' },
+  { k:'sets',  slot:'elevacao-lateral-na-maquina', de:4, para:5 },
+  { k:'add',   id:'remada-cavalinho', s:3, r:'8–12', d:150, pos:3, n:0 },
+  { k:'rm',    slot:'tibial-anterior' }
+]};
+```
+
+`slot` é sempre o id **original** da posição, mesmo depois de uma troca — é o
+que mantém os mods encadeáveis. `aplicaMods()` resolve, e o slot resultante
+carrega `orig` para o caminho de volta.
+
+Guardar intenção e não uma cópia é o que permite a tela de decisão dizer "você
+trocou pendulum por hack squat e subiu lateral de 4 para 5", em vez de mostrar
+dois blocos de treino. Mods do mesmo tipo no mesmo slot se colapsam, e voltar
+ao valor original apaga o mod.
+
+Ao finalizar, se houver mods, `renderPromo()` pede a decisão **uma a uma**,
+com o impacto no volume ao lado e o padrão em "só hoje". O que for promovido
+vai para `S.prog` e para `S.progLog`, com o motivo. `S.mods` morre com a
+sessão: encerramento automático não promove nada.
+
+Editar só está disponível no dia da sessão aberta (ou no próximo da rotação, se
+não houver sessão). Outro dia é edição de programa.
 
 ### A chave do histórico é o exercício
 
@@ -378,6 +410,7 @@ eles registram é observável.
 |---|---|
 | `sessao.test.js` | Registro contínuo, abertura e encerramento automático, duração, hidratação do rascunho, deload |
 | `programa.test.js` | Catálogo, id estável, slots, rotação vinda do estado e as duas migrações em cadeia |
+| `edicao.test.js` | Mods da sessão, o oficial intocado, decisão no fim, freio de volume e regra das 6 a 8 semanas |
 | `retro.test.js` | Lançamento em data passada, do plano e avulso, e o encerramento do treino de hoje |
 | `carga.test.js` | Os seis tipos, total exibido, peso do corpo, correção persistida |
 | `corpo.test.js` | As três regras de ajuste nos limites exatos, médias semanais, cardio |

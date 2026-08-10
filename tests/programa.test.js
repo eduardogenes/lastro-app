@@ -81,11 +81,13 @@ test('exercício cadastrado por ele aparece na troca e tem histórico próprio',
   const achou = lista.filter(function (x) { return x.id === 'maquina-nova-da-academia'; })[0];
   assert.ok(achou, 'sem isso, todo equipamento novo nasceria invisível');
 
+  const original = a.k('A', 2);
   a.E('toggle(2)');
   a.E('setAlt(2,"maquina-nova-da-academia")');
   a.preencher(2, 0, 25, 15);
   assert.strictEqual(a.J('S.logs["maquina-nova-da-academia"]').length, 1);
-  assert.strictEqual(a.log('A', 2), null, 'não contamina o exercício original');
+  assert.strictEqual(a.E('S.logs[' + JSON.stringify(original) + ']'), undefined,
+    'não contamina o exercício original');
   a.fechar();
 });
 

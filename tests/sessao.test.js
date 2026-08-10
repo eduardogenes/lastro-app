@@ -159,11 +159,14 @@ test('troca de exercício move a projeção para o histórico do substituto', as
   a.preencher(1, 0, 60, 12);
   assert.ok(a.log('A',1), 'gravou no exercício original');
 
+  const original = a.k('A',1);
   a.E('setAlt(1,"crossover-na-polia-baixa")');
-  assert.strictEqual(a.log('A',1), null, 'sai do histórico do original');
-  const sub = a.J('S.logs["crossover-na-polia-baixa"]');
+  assert.strictEqual(a.E('S.logs[' + JSON.stringify(original) + ']'), undefined,
+    'sai do histórico do original');
+  assert.strictEqual(a.k('A',1), 'crossover-na-polia-baixa', 'a posição passa a ser do substituto');
+  const sub = a.log('A',1);
   assert.strictEqual(sub.length, 1, 'e entra no histórico do substituto');
-  assert.strictEqual(sub[0].sl, a.k('A',1), 'guardando de que posição do treino veio');
+  assert.strictEqual(sub[0].sl, original, 'guardando de que posição do treino veio');
   a.fechar();
 });
 
