@@ -12,6 +12,9 @@ import {
 import {
   totalAnilhas, isTime, tutOf, volOf, maxLoad, repsOf, topReps
 } from './dominio/carga';
+import { montaHTML, montaNoApp } from './ui/raiz.jsx';
+import { Bruto } from './ui/bruto.jsx';
+import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto,
          seriesPorMusculo as _seriesPorMusculo } from './dominio/volume';
 import { mediasSemanais, pesoRitmo as _pesoRitmo,
@@ -951,6 +954,137 @@ function faixaSemana() {
 }
 
 // ---------- render ----------
+// ---------- view-model do cartão de exercício ----------
+// O componente não lê estado: recebe isto aqui pronto. Concentrar a leitura num
+// lugar só é o que permite testar a tela com dado de mentira, e o que torna
+// visível quanto do cartão é decisão de domínio (dor, pausa, subir carga) e
+// quanto é apresentação.
+function vmExercicio(d, i, ex) {
+  const alt = altOf(i);
+  const key = logKey(d, i);
+  const dr = draftPeek(i);
+  const l = historico(key).slice(-1)[0] || null;
+  const ns = setsFor(ex);
+  const seg = isTime(ex);
+  const tipo = cargaTipo(key, ex);
+  const corpo = tipo === 'corpo';
+  const lista = altList(d, i);
+  const dorLast = l && l.dor && l.dor.length ? l.dor : null;
+  const dorRep = dorSeguida(key);
+  const parado = pausaEx(key);
+  const pulado = ehPulado(i);
+
+  const linhas = [];
+  for (let k = 0; k < ns; k++) {
+    const p = lastSet(key, k);
+    const v = dr && dr.s[k] ? dr.s[k] : [null, null];
+    linhas.push({
+      valor: v,
+      place: [
+        p && p[0] ? fmtNum(p[0]) : ((seg || corpo) ? '0' : 'kg'),
+        p ? String(p[1]) : (seg ? 'seg' : 'reps')
+      ]
+    });
+  }
+
+  return {
+    i: i,
+    nome: ex.n,
+    nomeOriginal: alt ? nomeEx(ex.orig) : null,
+    alt: alt,
+    grupo: ex.g,
+    cue: ex.cue,
+    faixa: ex.r,
+    series: ns,
+    composto: !!ex.c,
+    bi: ex.bi || 0,
+    seg: seg,
+    unidade: seg ? 'kg' : CARGAS[tipo].rot,
+    descanso: descOf(ex),
+    descansoTxt: fmtDesc(descOf(ex)),
+    cargaOpcional: seg || corpo,
+
+    aberto: view.open === i,
+    pulado: pulado,
+    deload: S.deload,
+    estado: S.sessao ? estadoEx(d, i, S.sessao.sid, S.sessao.pulados) : null,
+    up: !alt && !S.deload && shouldUp(d, i, ex),
+
+    linhas: linhas,
+    // O total em anilhas continua vindo de textoTotal como HTML porque
+    // atualizaAnilhas() escreve nele durante a digitação, sem re-render — é o
+    // único ponto do cartão em que o DOM ainda é tocado por fora do Preact.
+    totalHTML: CARGAS[tipo].dobra ? textoTotal(i, key, ex) : null,
+
+    ultima: l ? {
+      txt: fmtLast(l, seg),
+      rotulo: seg ? 'tempo' : 'volume',
+      valor: seg ? fmtInt(tutOf(l)) + ' s' : fmtInt(volOf(l))
+    } : null,
+
+    dorRep: dorRep ? dorRep.map(dorName).join(' e ') : null,
+    dorLast: dorLast ? dorLast.map(dorName).join(' e ') : null,
+    pausaTxt: (!dorRep && parado >= PAUSA_DIAS && !alt)
+      ? Math.round(parado) + ' dias sem este exercício' : null,
+
+    temTroca: lista.length > 0,
+    trocaAberta: view.swapOpen === i,
+    troca: {
+      indicados: lista.filter(function (a) { return a.ind; }).map(opcaoDeTroca),
+      outros: lista.filter(function (a) { return !a.ind; }).map(opcaoDeTroca)
+    },
+
+    cargaAberta: view.carga === i,
+    tipoNome: CARGAS[tipo].nome,
+    tipoAjuda: CARGAS[tipo].ajuda,
+    cargas: Object.keys(CARGAS).map(function (t) {
+      return { k: t, nome: CARGAS[t].nome, sel: tipo === t };
+    }),
+
+    mostraAquecimento: i === 0,
+    aq: !!(dr && dr.aq),
+    notaAberta: !!((dr && (dr.obs || dr.dor.length)) || view.nota === i),
+    obs: dr ? (dr.obs || '') : '',
+    dores: DORES.map(function (x) {
+      return { k: x.k, t: x.t, on: !!(dr && dr.dor.indexOf(x.k) >= 0) };
+    })
+  };
+}
+
+// "última vez: 60 × 8" vale mais que a descrição do substituto, quando existe:
+// ele já usou aquele aparelho e o número é a referência real.
+function opcaoDeTroca(a) {
+  const u = ultimoDe(a.id);
+  return {
+    id: a.id, n: a.n,
+    antes: (u && u.sets && u.sets[0])
+      ? 'última vez: ' + fmtNum(u.sets[0][0]) + ' × ' + u.sets[0][1]
+      : a.w
+  };
+}
+
+// As ações do cartão. Objeto único e estável: passar as funções por props é o
+// que substitui o `onclick="fn()"` como atributo, e o que vai permitir apagar a
+// ponte global quando a última tela virar componente.
+const ACOES = {
+  toggle: function (i) { toggle(i); },
+  inp: function (el, i, k, pos) { inp(el, i, k, pos); },
+  startTimer: function (s) { startTimer(s); },
+  proximoDoBiset: function (i) { proximoDoBiset(i); },
+  setAlt: function (i, id) { setAlt(i, id); },
+  toggleSwap: function (i) { toggleSwap(i); },
+  abrirSubstituicao: function (i) { abrirSubstituicao(i); },
+  pularEx: function (i) { pularEx(i); },
+  openHist: function (i) { openHist(i); },
+  toggleAq: function (i) { toggleAq(i); },
+  abrirCarga: function (i) { abrirCarga(i); },
+  setCarga: function (i, t) { setCarga(i, t); },
+  abrirNota: function (i) { abrirNota(i); },
+  obsIn: function (el, i) { obsIn(el, i); },
+  toggleDor: function (i, k) { toggleDor(i, k); }
+};
+
+
 function render() {
   if (view.promo) return renderPromo();
   if (view.prog) return renderPrograma();
@@ -965,6 +1099,9 @@ function render() {
   const toDeload = 48 - (trabalho % 48);
 
   const naTreino = view.tab === 'treino';
+  // A tela de hoje é meio string, meio componente durante a migração: o
+  // cabeçalho ainda é template, a lista de exercícios já é componente.
+  let corpoDoDia = null, rodape = '';
   if (naTreino) hidrataDraft(d);
   let h = `<div class="hdr ${naTreino?'':'curto'}">
     <div class="eyebrow"><span>${diaExtenso(Date.now())}</span><span>ciclo ${cycle} · ${S.done.length} sessões</span></div>
@@ -1027,142 +1164,24 @@ function render() {
   } else if (view.editProg && podeEditar(d)) {
     h += renderEdicao(d, P);
   } else {
-    h += P.ex.map((ex,i) => {
-      const alt = altOf(i);
-      const key = logKey(d,i);
-      const dr = draftPeek(i);
-      const l = historico(key).slice(-1)[0] || null;
-      const up = !alt && !S.deload && shouldUp(d,i,ex);
-      const o = view.open===i;
-      const ns = setsFor(ex);
-      const seg = isTime(ex);
-      const tipo = cargaTipo(key, ex);
-      const corpo = tipo === 'corpo';
-      const rot = seg ? 'kg' : CARGAS[tipo].rot;
-      const dorLast = l && l.dor && l.dor.length ? l.dor : null;
-      const dorRep = dorSeguida(key);
-      const paradoEx = pausaEx(key);
+    // A lista de exercícios é componente, não string: é a única parte da tela
+    // com campo de digitação, e reescrever o innerHTML dela a cada tecla era a
+    // origem das gambiarras de foco e dos dois bugs que perdiam série.
+    corpoDoDia = P.ex.map(function (ex, i) {
+      return <Exercicio key={id(d, i)} vm={vmExercicio(d, i, ex)} acoes={ACOES} />;
+    });
 
-      const lista = altList(d,i);
-      let rows = '';
-      for (let k=0;k<ns;k++) {
-        const p = lastSet(key,k);
-        const v = dr && dr.s[k] ? dr.s[k] : [null,null];
-        rows += `<div class="setrow">
-          <div class="setno">${k+1}</div>
-          <div class="f"><input type="text" inputmode="decimal" id="w${i}_${k}"
-            value="${v[0]!=null?v[0]:''}" placeholder="${p&&p[0]?fmtNum(p[0]):((seg||corpo)?'0':'kg')}"
-            oninput="inp(this,${i},${k},0)"><span class="unit">${rot}</span></div>
-          <div class="x">×</div>
-          <div class="f"><input type="text" inputmode="numeric" id="r${i}_${k}"
-            value="${v[1]!=null?v[1]:''}" placeholder="${p?p[1]:(seg?'seg':'reps')}"
-            oninput="inp(this,${i},${k},1)">${seg?'<span class="unit">seg</span>':''}</div>
-          ${ex.bi===1
-            ? `<button class="rest bi" onclick="proximoDoBiset(${i})">próximo</button>`
-            : `<button class="rest" onclick="startTimer(${descOf(ex)})">${fmtDesc(descOf(ex))}</button>`}
-        </div>`;
-      }
-      if (seg || corpo) rows += `<div class="segnote">Carga opcional: deixe o campo vazio para só o peso do corpo.</div>`;
-      if (CARGAS[tipo].dobra) rows += `<div class="anilhas" id="tot${i}">${textoTotal(i, key, ex)}</div>`;
-
-      let swap = '';
-      if (view.swapOpen === i) {
-        const ind = lista.filter(function (a) { return a.ind; });
-        const outros = lista.filter(function (a) { return !a.ind; });
-        const opt = function (a) {
-          const u = ultimoDe(a.id);
-          const antes = u && u.sets && u.sets[0]
-            ? 'última vez: ' + fmtNum(u.sets[0][0]) + ' × ' + u.sets[0][1] : a.w;
-          return `<button class="swapopt ${alt===a.id?'on':''}" onclick="setAlt(${i},'${escAttr(a.id)}')">
-            <b>${a.n}</b><span>${antes}</span></button>`;
-        };
-        swap = `<div class="swap">
-          <div class="swap-h">Máquina ocupada? Mesmo padrão de movimento:</div>
-          ${ind.map(opt).join('')}
-          ${outros.length?`<div class="swap-h" style="margin-top:12px">Outros de ${ex.g}:</div>${outros.map(opt).join('')}`:''}
-          ${alt?`<button class="swapopt back-orig" onclick="setAlt(${i},null)"><b>Voltar para ${nomeEx(ex.orig)}</b><span>Cancela a substituição.</span></button>`:''}
-          <button class="swapopt cancel" onclick="toggleSwap(${i})"><b>Fechar</b></button>
-        </div>`;
-      }
-
-      const pulado = ehPulado(i);
-      const estado = S.sessao ? estadoEx(d, i, S.sessao.sid, S.sessao.pulados) : null;
-      return `<div class="ex ${o?'open':''} ${pulado?'pulado':''}">
-        <div class="ex-top" onclick="toggle(${i})">
-          <div class="ord">${String(i+1).padStart(2,'0')}</div>
-          <div class="ex-body">
-            <div class="ex-name">${ex.n}</div>
-            ${alt?`<div class="swapped">no lugar de ${nomeEx(ex.orig)}</div>`:''}
-            <div class="ex-sub">
-              <span>${ns} × ${ex.r}</span>
-              <span class="tag ${ex.c?'comp':''}">${ex.c?'composto · 1–2 na reserva':'isolador · última pode ir a 0–1'}</span>
-              ${ex.bi===1?'<span class="tag bi-t">bi-set · sem pausa até o próximo</span>':''}
-              ${ex.bi===2?'<span class="tag bi-t">bi-set · o descanso é aqui</span>':''}
-              ${alt?'<span class="tag swap-t">substituído</span>':''}
-              ${S.deload?'<span class="tag dl-t">deload</span>':''}
-              ${estado==='feito'?'<span class="tag ok-t">feito</span>':''}
-              ${estado==='parcial'?'<span class="tag parcial-t">parcial</span>':''}
-              ${pulado?'<span class="tag pulado-t">pulado</span>':''}
-              ${up&&!pulado?'<span class="up">↑ subir carga</span>':''}
-            </div>
-            ${dorRep
-              ? `<div class="painbox">
-                   <b>Dor em ${dorRep.map(dorName).join(' e ')} nas duas últimas sessões deste exercício.</b>
-                   A regra do programa é tirar o exercício por 2 semanas e trocar o ângulo, não empurrar por cima.
-                   ${lista.length?`<button class="painbtn" onclick="event.stopPropagation(); abrirSubstituicao(${i})">ver alternativas</button>`:''}
-                 </div>`
-              : (dorLast?`<div class="painflag">dor em ${dorLast.map(dorName).join(' e ')} na última sessão deste exercício</div>`:'')}
-            ${!dorRep && paradoEx >= PAUSA_DIAS && !alt?`<div class="pausaflag">${Math.round(paradoEx)} dias sem este exercício</div>`:''}
-          </div>
-          <div class="chev">›</div>
-        </div>
-        ${pulado?`<div class="puladobox">
-          <span>Pulado nesta sessão.</span>
-          <button class="aqbtn" onclick="pularEx(${i})">desfazer</button>
-        </div>`:''}
-        <div class="sets">
-          <p class="cue">${ex.cue}</p>
-          ${rows}
-          ${l?`<div class="lastline">última vez: <b>${fmtLast(l,seg)}</b> · ${seg?`tempo <b>${fmtInt(tutOf(l))} s</b>`:`volume <b>${fmtInt(volOf(l))}</b>`}</div>`:'<div class="lastline">primeira vez neste exercício</div>'}
-          ${i===0?`<div class="aquec ${dr&&dr.aq?'on':''}">
-            <span><b>Aproximação:</b> 2 a 3 séries subindo carga antes da primeira valendo.</span>
-            <button class="aqbtn" onclick="toggleAq(0)">${dr&&dr.aq?'feito':'marcar'}</button>
-          </div>`:''}
-          <div class="exacoes">
-            ${lista.length?`<button class="histbtn" onclick="toggleSwap(${i})">${view.swapOpen===i?'fechar':'trocar'}</button>`:''}
-            <button class="histbtn" onclick="pularEx(${i})">pular</button>
-            <button class="histbtn" onclick="openHist(${i})">histórico</button>
-          </div>
-          ${swap}
-          <div class="exlinks">
-          ${view.carga === i ? `<div class="obs">
-            <div class="obs-h">como esse peso é carregado</div>
-            <div class="chips">${Object.keys(CARGAS).map(function (t) {
-              return `<button class="chip ${tipo===t?'sel':''}" onclick="setCarga(${i},'${t}')">${CARGAS[t].nome}</button>`;
-            }).join('')}</div>
-            <p class="cue" style="margin:12px 0 0">${CARGAS[tipo].ajuda}</p>
-          </div>` : `<button class="notabtn" onclick="abrirCarga(${i})">carga: ${CARGAS[tipo].nome}</button>`}
-          ${(dr && (dr.obs || dr.dor.length)) || view.nota === i
-            ? `<div class="obs">
-                 <div class="obs-h">anotação desta sessão</div>
-                 <textarea class="note" id="o${i}" placeholder="o que aconteceu neste exercício (opcional)"
-                   oninput="obsIn(this,${i})">${dr?escapeHTML(dr.obs||''):''}</textarea>
-                 <div class="obs-h" style="margin-top:14px">dor de tendão</div>
-                 <div class="chips">${DORES.map(x => `<button class="chip ${dr&&dr.dor.indexOf(x.k)>=0?'on':''}" onclick="toggleDor(${i},'${x.k}')">${x.t}</button>`).join('')}</div>
-               </div>`
-            : `<button class="notabtn" onclick="abrirNota(${i})">anotar algo</button>`}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-
-    h += `<div class="autonota">
+    rodape = `<div class="autonota">
       Cada série entra no histórico assim que você preenche carga e repetição.
       Não há nada para salvar. O treino se encerra sozinho e a rotação avança para ${rot()[(rot().indexOf(d)+1)%rot().length]}.
     </div>`;
   }
 
-  app.innerHTML = h;
+  montaNoApp(<>
+    <Bruto html={h} />
+    {corpoDoDia}
+    {rodape ? <Bruto html={rodape} /> : null}
+  </>);
   ajustaRelogio();
 }
 
@@ -1490,7 +1509,7 @@ function renderPromo() {
   </button>`;
   h += `<button class="notabtn" style="width:100%;margin-top:10px" onclick="voltarDoPromo()">voltar para o treino</button>`;
   h += '</div>';
-  app.innerHTML = h;
+  montaHTML(h);
   window.scrollTo(0,0);
 }
 
@@ -1684,7 +1703,7 @@ function renderPrograma() {
   else if (V.modo === 'historico') h += renderProgramaHist();
   else h += renderProgramaLista();
 
-  app.innerHTML = h;
+  montaHTML(h);
   window.scrollTo(0,0);
 }
 
@@ -2040,7 +2059,7 @@ function renderHist() {
 
   if (!H.length) {
     h += `<div class="msg">Nenhuma sessão registrada neste exercício ainda.<br>O gráfico aparece depois do primeiro treino salvo.</div>`;
-    app.innerHTML = h;
+    montaHTML(h);
     window.scrollTo(0,0);
     return;
   }
@@ -2110,7 +2129,7 @@ function renderHist() {
 
   h += `<p class="cue" style="margin:22px 0 0">${ex.cue}</p></div>`;
 
-  app.innerHTML = h;
+  montaHTML(h);
   window.scrollTo(0,0);
 }
 
@@ -2537,7 +2556,7 @@ function renderAdicionar() {
     ${a.tipo && a.tipo !== 'livre' ? `<button class="dbtn ghost" style="margin-top:9px" onclick="gravarRetro(true)">Adicionar e preencher os exercícios</button>` : ''}
   </div>`;
 
-  app.innerHTML = h;
+  montaHTML(h);
 }
 
 async function gravarRetro(detalhar) {
@@ -3178,11 +3197,11 @@ function renderSessao() {
   }).join('') : '<p class="cue" style="margin:0">Nenhuma série registrada neste dia.</p>');
 
   h += '</div>';
-  app.innerHTML = h;
+  montaHTML(h);
 }
 function renderSessaoLivre(m) {
   const app = document.getElementById('app');
-  app.innerHTML = `<div class="hhdr">
+  montaHTML(`<div class="hhdr">
     <button class="back" onclick="fecharSessao()">‹ voltar</button>
     <div class="eyebrow"><span>treino avulso</span><span>${diaExtenso(m.t)}</span></div>
     <h2 class="htitle">${m.nome ? escapeHTML(m.nome) : (m.grupos||[]).join(', ')}</h2>
@@ -3197,7 +3216,7 @@ function renderSessaoLivre(m) {
     }).join('')}</div>`:''}
     <p class="cue" style="margin:20px 0 0">Fora do plano. Conta como dia treinado no calendário e na média semanal, mas não tem carga nem série registrada e não move a rotação.</p>
     <button class="danger" style="width:100%;margin-top:22px" onclick="apagarMarca(${m.t})">apagar este registro</button>
-  </div>`;
+  </div>`);
 }
 
 async function apagarMarca(t) {
@@ -3318,7 +3337,7 @@ function renderRetro() {
   h += `<div class="finish" style="padding-left:0;padding-right:0">
       <button onclick="fecharRetro()">Fechar</button>
     </div></div>`;
-  app.innerHTML = h;
+  montaHTML(h);
 }
 function abrirRetro(){ view.retro = true; view.sessao = null; render(); window.scrollTo(0,0); }
 function fecharRetro(){ view.retro = false; render(); window.scrollTo(0,0); }

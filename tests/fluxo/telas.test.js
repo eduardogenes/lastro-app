@@ -7,7 +7,10 @@ test('um artefato só, sem dependência de runtime', async () => {
   // O app agora tem build, mas a propriedade que importa continua: o que chega
   // no aparelho não busca nada na rede fora a fonte do Google.
   const urls = (HTML.match(/https?:\/\/[^"']+/g) || [])
-    .filter(function (u) { return !/fonts\.(googleapis|gstatic)/.test(u); });
+    .filter(function (u) { return !/fonts\.(googleapis|gstatic)/.test(u); })
+    // Namespaces XML (SVG, MathML, XHTML) são identificadores, não endereços:
+    // o Preact usa createElementNS e o navegador nunca busca nada neles.
+    .filter(function (u) { return !/^https?:\/\/www\.w3\.org\//.test(u); });
   assert.deepStrictEqual(urls, [], 'só a fonte do Google é permitida');
   assert.ok(!/<script[^>]*\ssrc=/.test(HTML), 'nenhum script buscado à parte');
 });

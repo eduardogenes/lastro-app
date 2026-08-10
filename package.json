@@ -21,5 +21,8 @@
     "vite": "^7.1.12",
     "vite-node": "^6.0.0",
     "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "preact": "^10.29.8"
   }
 }

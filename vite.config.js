@@ -8,6 +8,13 @@ export default defineConfig({
   // um preview de deploy servido de subpasta.
   base: './',
 
+  // Preact, não React: 4 kB gzip contra 45. O app abre às 6h15 no subsolo de
+  // uma academia, e o peso do runtime é orçamento de tempo de abertura.
+  esbuild: {
+    jsx: 'automatic',
+    jsxImportSource: 'preact'
+  },
+
   build: {
     target: 'es2020',
     // Desligado de propósito enquanto os testes alcançam o escopo do módulo por
