@@ -19,7 +19,7 @@ test('treino do plano lançado sem detalhar', async () => {
   assert.strictEqual(m.retro, 1);
   assert.strictEqual(m.dur, 60 * 60000);
   assert.ok(a.toast().includes('Treino D registrado'));
-  assert.strictEqual(a.E('nextDay()'), 'E', 'a rotação segue o treino lançado');
+  assert.strictEqual(a.E('nextDay()'), 'F', 'a rotação segue o treino lançado');
   a.fechar();
 });
 

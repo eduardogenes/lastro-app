@@ -83,12 +83,14 @@ setTimeout(function () {
 
     P.ex.forEach(function (ex, i) {
       const car = CARGAS[ex.car] || CARGAS.pino;
-      const tipo = ex.c ? 'composto, deixe 1–2 repetições na reserva'
-                        : 'isolador, pode ir até a falha';
+      const tipo = ex.c ? 'composto, 1–2 na reserva'
+                        : 'isolador, última série pode ir a 0–1 na reserva';
+      const desc = (ex.d || (ex.c ? 180 : 90));
+      const descTxt = desc % 60 === 0 ? (desc / 60) + ' min' : desc + ' s';
       p('### ' + String(i + 1).padStart(2, '0') + '. ' + ex.n);
       p('');
       p('**' + ex.s + ' × ' + ex.r + '**' + (ex.u === 'seg' ? ' (por tempo)' : '')
-        + ' · ' + ex.g + ' · ' + tipo);
+        + ' · ' + ex.g + ' · ' + tipo + ' · descanso ' + descTxt);
       p('');
       p('Carga: ' + car.nome + '. ' + car.ajuda);
       p('');

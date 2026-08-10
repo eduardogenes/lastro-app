@@ -85,7 +85,7 @@ test('finalizar grava tempo exato e marca como manual', async () => {
   const a = await app();
   await a.E('iniciarSessao()');
   a.E('toggle(0)');
-  for (let k = 0; k < 4; k++) a.preencher(0, k, 40, 10);
+  for (let k = 0; k < a.E("setsFor(PLAN.A.ex[0])"); k++) a.preencher(0, k, 40, 10);
   a.E('S.sessao.inicio = Date.now() - 62*60000');
 
   await a.E('finalizarSessao()');
@@ -123,7 +123,7 @@ test('pular é decisão registrada; não feito é ausência derivada', async () 
   const a = await app();
   await a.E('iniciarSessao()');
   a.E('toggle(0)');
-  for (let k = 0; k < 4; k++) a.preencher(0, k, 40, 10);
+  for (let k = 0; k < a.E("setsFor(PLAN.A.ex[0])"); k++) a.preencher(0, k, 40, 10);
   a.E('toggle(1)');
   a.preencher(1, 0, 60, 12);                 // parcial: 1 de 3
   await a.E('pularEx(2)');
@@ -158,7 +158,7 @@ test('finalizar com pendência pede confirmação', async () => {
   const a = await app();
   await a.E('iniciarSessao()');
   a.E('toggle(0)');
-  for (let k = 0; k < 4; k++) a.preencher(0, k, 40, 10);
+  for (let k = 0; k < a.E("setsFor(PLAN.A.ex[0])"); k++) a.preencher(0, k, 40, 10);
 
   await a.E('finalizarSessao()');
   await a.esperar();
@@ -173,7 +173,7 @@ test('pulado não entra na contagem de pendências da confirmação', async () =
   const a = await app();
   await a.E('iniciarSessao()');
   a.E('toggle(0)');
-  for (let k = 0; k < 4; k++) a.preencher(0, k, 40, 10);
+  for (let k = 0; k < a.E("setsFor(PLAN.A.ex[0])"); k++) a.preencher(0, k, 40, 10);
   const total = a.E('PLAN.A.ex.length');
   for (let i = 1; i < total; i++) await a.E('pularEx(' + i + ')');
   await a.esperar();
@@ -204,7 +204,7 @@ test('detalhe da sessão mostra pendências e pausa', async () => {
   const a = await app();
   await a.E('iniciarSessao()');
   a.E('toggle(0)');
-  for (let k = 0; k < 4; k++) a.preencher(0, k, 40, 10);
+  for (let k = 0; k < a.E("setsFor(PLAN.A.ex[0])"); k++) a.preencher(0, k, 40, 10);
   a.E('toggle(1)');
   a.preencher(1, 0, 60, 12);
   await a.E('pularEx(2)');

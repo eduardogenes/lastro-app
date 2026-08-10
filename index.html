@@ -862,262 +862,320 @@ html, body {
 
 <script>
 const KEY = 'treino-eduardo-v1';
-const ROT = ['A','B','C','D','E','F'];
+// E vem antes de D de propósito: o grande treino de torso não deve cair logo
+// depois de um dia inteiro de ombros e braços.
+const ROT = ['A','B','C','E','D','F'];
+
+// Descanso em segundos, pelas categorias do treinador: grande composto 3 min,
+// máquina multiarticular 2,5 min, isolador e demais 1,5 min. O critério real
+// não é o cronômetro: a próxima série começa quando dá para fazer outra de
+// alta qualidade.
+const D_COMPOSTO = 180, D_MAQUINA = 150, D_ISOLADOR = 105, D_CURTO = 90;
 
 const PLAN = {
-  A: { name:'Peito superior + Tríceps', tag:'força de empurrar', ex:[
-    {n:'Supino inclinado com halteres', car:'halter', g:'peito superior', s:4, r:'6–10', c:1, cue:'Banco em 30°. Desça em 3 s até sentir o peitoral esticar; não bata os halteres em cima.'},
-    {n:'Supino reto na máquina', car:'pino', g:'peito', s:3, r:'8–12', c:1, cue:'Máquina aqui é proposital: permite chegar perto da falha sem risco de ombro.'},
-    {n:'Crucifixo inclinado no cabo', car:'pino', g:'peito superior', s:3, r:'12–15', c:0, cue:'Pausa de 1 s lá embaixo, com o peito aberto. É o alongado que faz crescer.'},
-    {n:'Crossover na polia média', car:'pino', g:'peito', s:3, r:'12–15', c:0, cue:'Cruze as mãos no fim do movimento. Sem jogar o corpo.'},
-    {n:'Tríceps testa com barra W', car:'lado', g:'tríceps', s:3, r:'10–15', c:0, cue:'Cotovelo levemente para trás alonga a cabeça longa. Se o cotovelo doer, troque por polia.'},
-    {n:'Tríceps corda na polia', car:'pino', g:'tríceps', s:3, r:'12–15', c:0, cue:'Abra a corda no fim. Aqui pode ir até a falha sem medo.'},
-    {n:'Elevação lateral', car:'halter', g:'delt lateral', s:3, r:'15–20', c:0, cue:'Dose extra de deltoide lateral — seu ponto de maior ganho estético.'},
+  A: { name:'Peito superior + lateral + tríceps', tag:'clavicular e ombro', ex:[
+    {n:'Chest press inclinado convergente', car:'pino', g:'peito superior', s:3, r:'6–10', c:1, d:D_COMPOSTO, cue:'Sua principal pressão para peito superior. Máquina estável para o esforço muscular ser o limitante, não o equilíbrio. 1 a 2 repetições na reserva.'},
+    {n:'Crossover de baixo para cima', car:'pino', g:'peito superior', s:2, r:'10–15', c:0, d:D_ISOLADOR, cue:'Direcione de verdade à porção clavicular, sem transformar o movimento em elevação frontal.'},
+    {n:'Elevação lateral na máquina', car:'pino', g:'delt lateral', s:3, r:'8–15', c:0, d:D_CURTO, cue:'Aqui cabe progressão relativamente pesada, desde que o movimento continue lateral e controlado.'},
+    {n:'Elevação lateral unilateral no cabo', car:'pino', g:'delt lateral', s:3, r:'12–20', c:0, d:D_CURTO, cue:'Complemento com tensão previsível e ajuste fino. Um lado por vez.'},
+    {n:'Extensão de tríceps acima da cabeça no cabo', car:'pino', g:'tríceps', s:3, r:'8–15', c:0, d:D_ISOLADOR, cue:'Cabeça longa alongada. Se o cotovelo reclamar, reduza a amplitude final.'},
+    {n:'Pushdown', car:'pino', g:'tríceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, cue:'Tríceps não é prioridade: já está bom e ainda trabalha nos presses.'},
+    {n:'Crunch no cabo ou máquina', car:'pino', g:'abdômen', s:3, r:'8–15', c:0, d:D_CURTO, cue:'Com carga progressiva. Abdômen é treinado como qualquer outro músculo.'},
   ]},
-  B: { name:'Costas largura + Bíceps', tag:'construção do V', ex:[
-    {n:'Puxada aberta pronada', car:'pino', g:'dorsal', s:4, r:'8–12', c:1, cue:'Peito para cima, puxe com os cotovelos. Estique os braços por completo em cima.'},
-    {n:'Puxada neutra unilateral', car:'pino', g:'dorsal', s:3, r:'10–12', c:1, cue:'Um lado por vez ganha amplitude e corrige assimetria.'},
-    {n:'Remada serrote com halter', car:'halter1', g:'costas espessura', s:3, r:'8–12', c:1, cue:'Puxe na direção do quadril, não da axila. Deixe o ombro descer no alongamento.'},
-    {n:'Pullover na polia alta', car:'pino', g:'dorsal', s:3, r:'12–15', c:0, cue:'O único que isola dorsal sem bíceps. Braço quase reto.'},
-    {n:'Rosca direta na barra W', car:'lado', g:'bíceps', s:3, r:'8–12', c:0, cue:'Sem balanço de tronco. Excêntrica de 3 s.'},
-    {n:'Rosca martelo', car:'halter', g:'bíceps', s:3, r:'10–15', c:0, cue:'Braquial e braquiorradial — é o que dá espessura ao braço de lado.'},
-    {n:'Face pull', car:'pino', g:'delt posterior', s:3, r:'15–20', c:0, cue:'Deltoide posterior e saúde de ombro na mesma série. Não pule.'},
+  B: { name:'Dorsais + posterior de ombro + bíceps', tag:'um dos dois treinos mais importantes', ex:[
+    {n:'Pulldown convergente', car:'pino', g:'dorsal', s:3, r:'6–10', c:1, d:D_MAQUINA, cue:'Pegada neutra ou semipronada, a que permitir maior amplitude confortável.'},
+    {n:'Pulldown unilateral', car:'pino', g:'dorsal', s:3, r:'8–12', c:1, d:D_MAQUINA, cue:'Bastante controle escapular, com o cotovelo viajando em direção ao quadril.'},
+    {n:'Remada para dorsal com apoio de peito', car:'lado', g:'dorsal', s:2, r:'8–12', c:1, d:D_MAQUINA, cue:'Cotovelo mais próximo do tronco, para não virar remada de upper back.'},
+    {n:'Pullover em máquina ou cabo', car:'pino', g:'dorsal', s:2, r:'10–15', c:0, d:D_ISOLADOR, cue:'Estímulo na dorsal sem adicionar fadiga de bíceps.'},
+    {n:'Reverse pec deck', car:'pino', g:'delt posterior', s:3, r:'10–20', c:0, d:D_ISOLADOR, cue:'Deltoide posterior com o tronco apoiado.'},
+    {n:'Crucifixo inverso no cabo', car:'pino', g:'delt posterior', s:2, r:'12–20', c:0, d:D_ISOLADOR, cue:'Amplitude maior, um lado por vez se preferir.'},
+    {n:'Rosca Scott na máquina', car:'pino', g:'bíceps', s:3, r:'8–12', c:0, d:D_ISOLADOR, cue:'Sem balanço de tronco.'},
+    {n:'Rosca no cabo', car:'pino', g:'bíceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, cue:'Tensão constante ao longo da amplitude.'},
   ]},
-  C: { name:'Quadríceps + Panturrilha', tag:'manutenção inteligente', ex:[
-    {n:'Agachamento hack', car:'lado', g:'quadríceps', s:4, r:'6–10', c:1, cue:'Hack em vez de livre: mesma carga no quadríceps, muito menos risco na coluna.'},
-    {n:'Leg press 45°', car:'lado', g:'quadríceps', s:3, r:'10–15', c:1, cue:'Amplitude completa sem soltar o lombar do banco. Não trave o joelho em cima.'},
-    {n:'Cadeira extensora', car:'pino', g:'quadríceps', s:3, r:'12–15', c:0, cue:'Pausa de 1 s no topo. Se o joelho reclamar, reduza a amplitude final.'},
-    {n:'Mesa flexora', car:'pino', g:'posterior', s:3, r:'10–15', c:0, cue:'Posterior também entra aqui, com volume maior no treino F.'},
-    {n:'Panturrilha em pé', car:'pino', g:'panturrilha', s:4, r:'8–12', c:0, cue:'Pausa de 2 s embaixo, alongado. Panturrilha só responde a tempo sob tensão.'},
-    {n:'Elevação de pernas suspenso', car:'corpo', g:'abdômen', s:3, r:'10–15', c:0, cue:'Suba com o quadril, não com o balanço. Desça em 3 s, sem deixar a lombar arquear.'},
+  C: { name:'Quadríceps + adutores + panturrilha', tag:'qualidade e progressão, não volume', ex:[
+    {n:'Pendulum squat', car:'lado', g:'quadríceps', s:3, r:'6–10', c:1, d:D_COMPOSTO, cue:'Preferido ao agachamento livre nesta fase. Hack squat bom serve igual. 1 a 2 na reserva.'},
+    {n:'Leg press', car:'lado', g:'quadríceps', s:3, r:'8–15', c:1, d:D_MAQUINA, cue:'Amplitude completa sem soltar a lombar do banco.'},
+    {n:'Cadeira extensora', car:'pino', g:'quadríceps', s:3, r:'10–15', c:0, d:D_ISOLADOR, cue:'A última série pode ir bem perto da falha.'},
+    {n:'Adutora', car:'pino', g:'adutores', s:3, r:'10–15', c:0, d:D_ISOLADOR, cue:'Adutores contribuem muito para uma coxa completa.'},
+    {n:'Panturrilha em pé', car:'pino', g:'panturrilha', s:3, r:'6–12', c:0, d:D_CURTO, cue:'Joelho estendido, para o gastrocnêmio.'},
+    {n:'Panturrilha sentada', car:'lado', g:'panturrilha', s:2, r:'10–15', c:0, d:D_CURTO, cue:'Pause no alongamento. Nada de quicar.'},
+    {n:'Tibial anterior', car:'pino', g:'tibial', s:2, r:'12–20', c:0, d:D_CURTO, cue:'Não é obrigatório para estética, entra por completude do programa.'},
   ]},
-  D: { name:'Ombros + Braços', tag:'seu dia mais importante', ex:[
-    {n:'Desenvolvimento com halteres', car:'halter', g:'delt anterior', s:3, r:'8–12', c:1, cue:'Só 3 séries: o volume do dia mora nas laterais, não aqui.'},
-    {n:'Elevação lateral com halteres', car:'halter', g:'delt lateral', s:4, r:'12–20', c:0, cue:'Suba até a linha do ombro, desça em 3 s. Carga leve e forma limpa vence peso alto.'},
-    {n:'Elevação lateral no cabo', car:'pino', g:'delt lateral', s:3, r:'12–20', c:0, cue:'O cabo mantém tensão na parte de baixo, onde o halter perde. Um braço por vez.'},
-    {n:'Peck deck inverso', car:'pino', g:'delt posterior', s:4, r:'12–20', c:0, cue:'Deltoide posterior: o que mais falta no seu físico visto de trás.'},
-    {n:'Face pull', car:'pino', g:'delt posterior', s:3, r:'15–20', c:0, cue:'Segunda dose de posterior, com rotação externa.'},
-    {n:'Rosca inclinada (bi-set)', car:'halter', g:'bíceps', bi:1, s:3, r:'10–15', c:0, cue:'Encadeie direto no tríceps abaixo, sem descanso entre os dois.'},
-    {n:'Tríceps corda (bi-set)', car:'pino', g:'tríceps', bi:2, s:3, r:'10–15', c:0, cue:'Descanse 90 s só depois do par completo.'},
-    {n:'Abdominal na polia alta ajoelhado', car:'pino', g:'abdômen', s:3, r:'12–15', c:0, cue:'É o único que permite carga progressiva de verdade. Trate como qualquer outro exercício: aumente o peso ao longo das semanas.'},
+  E: { name:'Espessura de costas + peito', tag:'o grande treino de torso', ex:[
+    {n:'Remada convergente com apoio de peito', car:'lado', g:'costas espessura', s:3, r:'6–10', c:1, d:D_MAQUINA, cue:'Tronco apoiado tira a lombar da conta.'},
+    {n:'Remada horizontal na máquina', car:'pino', g:'costas espessura', s:3, r:'8–12', c:1, d:D_MAQUINA, cue:'Escolha o equipamento onde dá para deixar a escápula protrair e depois retrair confortável.'},
+    {n:'High row com apoio de peito', car:'lado', g:'costas espessura', s:2, r:'8–12', c:1, d:D_MAQUINA, cue:'Aqui os cotovelos podem ficar um pouco mais afastados.'},
+    {n:'Encolhimento na máquina', car:'pino', g:'trapézio', s:2, r:'8–15', c:0, d:D_ISOLADOR, cue:'Trapézio não é prioridade, mas também não fica ignorado.'},
+    {n:'Straight-arm pulldown', car:'pino', g:'dorsal', s:2, r:'10–15', c:0, d:D_ISOLADOR, cue:'Leva a dorsal a 12 séries na semana sem criar outro treino de largura.'},
+    {n:'Supino inclinado no Smith', car:'lado', g:'peito superior', s:3, r:'6–10', c:1, d:D_COMPOSTO, cue:'Com as cinco séries do A, chega a 10 séries direcionadas ao peito superior.'},
+    {n:'Crucifixo inclinado no cabo', car:'pino', g:'peito superior', s:2, r:'10–15', c:0, d:D_ISOLADOR, cue:'Pausa de 1 s no alongado, com o peito aberto.'},
+    {n:'Chest press horizontal convergente', car:'pino', g:'peito', s:3, r:'8–12', c:1, d:D_MAQUINA, cue:'Preserva e desenvolve o peito médio sem tirar o foco da região clavicular.'},
+    {n:'Pec deck', car:'pino', g:'peito', s:2, r:'10–15', c:0, d:D_ISOLADOR, cue:'Trajetória guiada; dá para chegar perto da falha.'},
   ]},
-  E: { name:'Espessura de costas + Peito', tag:'densidade', ex:[
-    {n:'Remada cavalinho', car:'lado', g:'costas espessura', s:4, r:'8–12', c:1, cue:'Tronco apoiado tira a lombar da conta. Aperte as escápulas no fim.'},
-    {n:'Remada sentada pegada neutra', car:'pino', g:'costas espessura', s:3, r:'10–12', c:1, cue:'Deixe o peso puxar as escápulas à frente no alongamento, sem soltar a lombar.'},
-    {n:'Encolhimento com halteres', car:'halter', g:'costas espessura', s:3, r:'10–15', c:0, cue:'Suba reto e pause 1 s. Trapézio dá a moldura do ombro.'},
-    {n:'Puxada neutra', car:'pino', g:'dorsal', s:3, r:'10–12', c:1, cue:'Segunda dose de largura, num ângulo diferente do treino B.'},
-    {n:'Supino inclinado na máquina', car:'pino', g:'peito superior', s:3, r:'10–15', c:1, cue:'Peito superior de novo, com fadiga baixa por ser máquina.'},
-    {n:'Elevação lateral', car:'halter', g:'delt lateral', s:3, r:'15–20', c:0, cue:'Terceira dose semanal de lateral. É acúmulo, não excesso.'},
+  D: { name:'Deltoides + braços + abdômen', tag:'lateral antes dos braços, de propósito', ex:[
+    {n:'Elevação lateral na máquina', car:'pino', g:'delt lateral', s:4, r:'8–15', c:0, d:D_CURTO, cue:'Somadas às seis do A, dão 13 séries diretas de lateral por semana. É onde você tem que estar.'},
+    {n:'Elevação lateral no cabo', car:'pino', g:'delt lateral', s:3, r:'12–20', c:0, d:D_CURTO, cue:'Tensão constante na parte de baixo, onde o halter perde.'},
+    {n:'Remada para deltoide posterior com apoio de peito', car:'lado', g:'delt posterior', s:2, r:'8–15', c:1, d:D_ISOLADOR, cue:'Cotovelo afastado do tronco, puxando para trás.'},
+    {n:'Reverse fly no cabo', car:'pino', g:'delt posterior', s:2, r:'12–20', c:0, d:D_ISOLADOR, cue:'Somado ao B, o posterior recebe 9 séries diretas.'},
+    {n:'Rosca Bayesian no cabo', car:'pino', g:'bíceps', s:2, r:'8–15', c:0, d:D_ISOLADOR, cue:'Braço atrás do corpo, alongando a cabeça longa.'},
+    {n:'Rosca martelo', car:'halter', g:'bíceps', s:2, r:'8–15', c:0, d:D_ISOLADOR, cue:'Braquial e braquiorradial, que dão espessura ao braço de lado.'},
+    {n:'Extensão unilateral de tríceps no cabo', car:'pino', g:'tríceps', s:2, r:'8–15', c:0, d:D_ISOLADOR, cue:'Corrige diferença entre os lados.'},
+    {n:'Extensão acima da cabeça ou máquina de tríceps', car:'pino', g:'tríceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, cue:'Fecha o tríceps em 9 séries diretas na semana.'},
+    {n:'Elevação de pernas ou reverse crunch', car:'corpo', g:'abdômen', s:3, r:'8–15', c:0, d:D_CURTO, cue:'Suba com o quadril, não com o balanço. Desça em 3 s, sem deixar a lombar arquear.'},
   ]},
-  F: { name:'Posterior + Glúteo + Panturrilha', tag:'a metade esquecida', ex:[
-    {n:'Terra romeno', car:'lado', g:'posterior', s:4, r:'8–12', c:1, cue:'Quadril para trás, joelho quase fixo, barra rente à perna. Pare quando a lombar quiser arredondar.'},
-    {n:'Mesa flexora deitada', car:'pino', g:'posterior', s:3, r:'10–15', c:0, cue:'Excêntrica de 3 s. Posterior responde muito bem a excêntrica lenta.'},
-    {n:'Cadeira flexora sentada', car:'pino', g:'posterior', s:3, r:'12–15', c:0, cue:'Posição sentada alonga mais a cabeça longa — estímulo diferente da deitada.'},
-    {n:'Elevação pélvica', car:'lado', g:'glúteo', s:3, r:'10–15', c:0, cue:'Pausa de 2 s no topo com o queixo para dentro.'},
-    {n:'Panturrilha sentada', car:'lado', g:'panturrilha', s:4, r:'12–20', c:0, cue:'Sentada pega o sóleo; em pé pega o gastrocnêmio. Precisa das duas.'},
-    {n:'Panturrilha em pé', car:'pino', g:'panturrilha', s:2, r:'10–15', c:0, cue:'Fechamento. Pausa embaixo em todas as repetições.'},
-    {n:'Prancha com peso ou rollout na roda', car:'corpo', g:'abdômen', s:3, r:'30–45 s', c:0, u:'seg', cue:'Rollout começa de joelhos e com amplitude parcial. É o abdominal que mais estressa lombar e ombro — só aumente quando estiver fácil.'},
+  F: { name:'Posteriores + glúteos + panturrilha', tag:'equilíbrio com a coxa anterior', ex:[
+    {n:'Cadeira flexora sentada', car:'pino', g:'posterior', s:4, r:'8–12', c:0, d:D_ISOLADOR, cue:'Primeiro movimento de propósito: ataca o posterior enquanto está fresco.'},
+    {n:'Terra romeno no Smith', car:'lado', g:'posterior', s:3, r:'6–10', c:1, d:D_COMPOSTO, cue:'Smith em vez de barra livre para não virar teste de equilíbrio. Amplitude até onde a mecânica de quadril e coluna se mantém.'},
+    {n:'Mesa flexora deitada', car:'pino', g:'posterior', s:3, r:'10–15', c:0, d:D_ISOLADOR, cue:'Excêntrica de 3 s. Fecha o posterior em 10 séries.'},
+    {n:'Elevação pélvica na máquina', car:'lado', g:'glúteo', s:3, r:'8–12', c:1, d:D_MAQUINA, cue:'Pausa no topo com o queixo para dentro.'},
+    {n:'Abdutora', car:'pino', g:'glúteo médio', s:2, r:'12–20', c:0, d:D_ISOLADOR, cue:'Para o glúteo médio não desaparecer do programa.'},
+    {n:'Panturrilha sentada', car:'lado', g:'panturrilha', s:3, r:'8–15', c:0, d:D_CURTO, cue:'Joelho flexionado, para o sóleo.'},
+    {n:'Panturrilha no leg press', car:'lado', g:'panturrilha', s:2, r:'10–15', c:0, d:D_CURTO, cue:'Com o treino C, fecha 10 séries de panturrilha na semana.'},
+    {n:'Ab wheel', car:'corpo', g:'abdômen', s:3, r:'6–12', c:0, d:D_CURTO, cue:'De joelhos e com amplitude parcial. Só aumente quando estiver fácil.'},
   ]},
 };
 
 const RULES = [
-  {k:'regra 1', t:'Excêntrica de 2–3 segundos em tudo', warn:0, p:[
-    'Seu músculo está ficando forte mais rápido que o tendão consegue se adaptar. Tendão responde a <b>tensão ao longo do tempo</b>, não a peso jogado.',
-    'Descer devagar é o principal escudo contra lesão no seu contexto — e ainda aumenta o estímulo de crescimento. Custa nada e resolve duas coisas.']},
-  {k:'regra 2', t:'Suba a carga no máximo 2,5–5% por vez', warn:0, p:[
-    'Quando você completar o <b>topo da faixa em todas as séries</b> com 1–2 repetições ainda na reserva, aí sim aumente. O app avisa quando isso acontece.',
-    'Segurar a progressão aqui é decisão técnica, não medo. A força vai subir mais rápido que a estrutura aguenta.']},
-  {k:'regra 3', t:'Falha só em isolador e máquina', warn:0, p:[
-    'Nos compostos livres, pare com <b>1–2 repetições na reserva</b>. É onde tendão rompe e onde a forma quebra primeiro.',
-    'Em cabo, peck deck e máquina o custo de errar é baixo: pode ir até a falha real.']},
-  {k:'regra 4', t:'Nada de máximas nem de rebote', warn:0, p:[
-    'Você não é powerlifter. Não existe motivo para testar 1RM, nem para usar impulso de tronco para subir mais peso.',
-    'Amplitude completa com carga controlada constrói mais músculo do que carga alta com meia amplitude.']},
+  {k:'regra 1', t:'Deixe 1 a 2 repetições na reserva na maior parte do tempo', warn:0, p:[
+    'Nos compostos — pendulum, presses, terra romeno, remadas pesadas — <b>1 a 2 na reserva</b>. Não é para falhar nesses toda sessão.',
+    'Nas máquinas e isoladores, a maioria também com 1 a 2 na reserva. A <b>última série</b> de alguns pode ir a 0 ou 1, quando a técnica continuar boa.',
+    'Levar tudo à falha não é necessário para crescer, e cobra caro na recuperação de um programa de seis sessões.']},
+  {k:'regra 2', t:'Dupla progressão: primeiro repetição, depois carga', warn:0, p:[
+    'Numa faixa de 6 a 10, você sobe as repetições mantendo a carga até bater o topo em todas as séries: 90 kg em 9/8/7, depois 10/9/8, depois 10/10/10.',
+    'Aí sim aumenta a carga e recomeça mais perto da parte baixa da faixa. <b>O app avisa quando todas as séries batem o topo.</b>',
+    'Isso permite saber objetivamente se você está progredindo, em vez de julgar por dor muscular ou pump.']},
+  {k:'regra 3', t:'Excêntrica controlada em tudo', warn:0, p:[
+    'Seu músculo fica forte mais rápido do que o tendão consegue se adaptar. Tendão responde a <b>tensão ao longo do tempo</b>, não a peso jogado.',
+    'Descer devagar é o principal escudo contra lesão no seu contexto, e ainda aumenta o estímulo de crescimento.']},
+  {k:'regra 4', t:'Descanso pelo desempenho, não pelo cronômetro', warn:0, p:[
+    'Referência: <b>grandes compostos 2,5 a 4 min</b>, máquinas multiarticulares 2 a 3 min, isoladores 1,5 a 2 min, lateral, abdômen e panturrilha 1 a 2 min.',
+    'O critério real é outro: a próxima série começa quando você consegue de novo fazer uma série de <b>alta qualidade</b>. O cronômetro do app é lembrete, não ordem.']},
+  {k:'regra 5', t:'Não troque exercício toda semana', warn:0, p:[
+    'Mantenha os principais por <b>6 a 8 semanas</b>, desde que não provoquem dor articular, você consiga sentir e progredir no músculo alvo, a máquina siga disponível e a técnica esteja melhorando.',
+    'Seu corpo não precisa ser confundido. O que se quer é acumular meses de dados comparáveis.']},
+  {k:'calibração', t:'As duas primeiras rotações são para calibrar', warn:0, p:[
+    'Você acabou de mudar de treino. <b>Não acrescente séries só porque um dia pareceu fácil.</b>',
+    'Se terminar essas rotações recuperando bem, aumentando repetições, sem dor articular, sem queda de rendimento e sem grupo permanecendo dolorido até o próximo estímulo: não mexa em nada.',
+    'Se houver fadiga excessiva, o corte começa por <b>1 a 2 séries de braços, deltoide posterior ou espessura</b> — nunca por lateral, dorsal ou peito superior.']},
   {k:'atenção', t:'Dor de tendão não se treina por cima', warn:1, p:[
     'Dor muscular difusa no dia seguinte é normal. <b>Dor pontual em cotovelo, ombro da frente ou joelho abaixo da patela é outra coisa.</b>',
     'Apareceu: tire aquele exercício por 2 semanas e substitua por outro ângulo. Nunca empurre porque "está fraquinha".']},
   {k:'aquecimento', t:'5 minutos que valem o treino inteiro', warn:0, p:[
-    '5 min de bike leve + 2 a 3 séries de aproximação subindo carga no primeiro exercício do dia.',
+    '5 min de bike leve mais 2 a 3 séries de aproximação subindo carga no primeiro exercício do dia.',
     'Treinando às 6h15 você entra frio de verdade. Aquecer não é opcional aqui.']},
   {k:'deload', t:'A cada 48 sessões, uma semana leve', warn:0, p:[
     'Mantenha as mesmas cargas e faça <b>metade das séries</b> por uma semana.',
     'O deload existe para o tecido conjuntivo se recuperar — por isso corta volume e não intensidade. O app avisa quando chegar a hora.']},
-  {k:'bike', t:'25 a 30 min, 2 a 3x por semana', warn:0, p:[
-    'São 50 a 90 minutos na semana. Depois de recuperar bem, pode ir para 30 a 40 min.',
-    'Melhor lugar: <b>depois de A, depois de D, ou em dia de descanso</b>. Depois de B ou E também serve. Evite antes de C ou F, e nunca antes do treino.',
-    'Ritmo leve a moderado: é saúde cardiovascular e apetite, não queima de caloria. Você tem que sair pensando que aguentaria continuar, não com o quadríceps destruído para o treino seguinte.']},
+  {k:'bike', t:'25 a 40 min, 2 a 3x por semana', warn:0, p:[
+    'Colocação: <b>depois do A, 25 a 30 min</b>; <b>no dia de descanso, 30 a 40 min</b>; <b>depois do F, 20 a 30 min</b>, esta terceira opcional conforme a recuperação.',
+    'Intensidade RPE 4 a 6 de 10: respiração claramente acelerada, mas ainda dá para conversar.',
+    'Evite antes de C ou F, e nunca antes do treino. Musculação é o motor da mudança corporal; a bike é condicionamento e saúde, não outro treino de perna.']},
+  {k:'sucesso', t:'O que conta como dar certo em 2 a 3 meses', warn:0, p:[
+    'Não é simplesmente sair de 73 para 77 kg. São quatro coisas ao mesmo tempo: <b>peso subindo bem devagar</b>, <b>cintura estável</b>, <b>progressão clara em dorsal, lateral, peito superior e posteriores</b>, e <b>fotos com mais V-taper</b>.',
+    'O alvo visual: ombros mais largos, dorsais mais abertas, clavicular mais cheia, costas mais densas, abdômen mais espesso, panturrilha acompanhando a coxa, pernas mantidas fortes e cintura preservada.']},
 ];
 
-// Substitutos por padrão de movimento. Mesma articulação, mesmo padrão,
-// mesma prescrição de séries e reps — só muda o equipamento.
-// A carga de um substituto nunca se mistura com a do original no histórico.
+// Substitutos do mesmo padrão de movimento, para quando a máquina está ocupada.
+// Não são equivalentes: mantêm o alvo e a função, com a mecânica mais próxima
+// disponível numa academia grande. O 'w' diz o que muda ao trocar — sem isso a
+// substituição vira sorteio.
 const ALT = {
-  'Supino inclinado com halteres': [
-    {n:'Supino inclinado na barra guiada', w:'Mesma inclinação, trajetória travada.'},
-    {n:'Supino inclinado na máquina convergente', w:'Fadiga menor, custo de ombro menor.'},
-    {n:'Supino inclinado com barra', w:'Mesmo ângulo, menos amplitude embaixo.'}],
-  'Supino reto na máquina': [
-    {n:'Supino reto na barra guiada', w:'Mantém a trajetória fixa da máquina.'},
-    {n:'Máquina convergente horizontal', w:'Mesma proposta, pegada convergente.'},
-    {n:'Supino reto com halteres', w:'Mais amplitude, exige mais do ombro.'}],
-  'Crucifixo inclinado no cabo': [
-    {n:'Crucifixo inclinado com halteres', w:'Perde tensão no topo, mantém o alongado.'},
-    {n:'Peck deck', w:'Trajetória guiada, dá para chegar perto da falha.'},
-    {n:'Crossover na polia baixa subindo', w:'Mesmo vetor de baixo para cima.'}],
-  'Crossover na polia média': [
-    {n:'Peck deck', w:'Mesma adução, com apoio de tronco.'},
-    {n:'Crossover na polia alta descendo', w:'Puxa mais a porção inferior do peito.'},
-    {n:'Crucifixo com halteres no banco reto', w:'Sem tensão no fim do movimento.'}],
-  'Tríceps testa com barra W': [
-    {n:'Tríceps testa com halteres, pegada neutra', w:'Pegada neutra alivia o cotovelo.'},
-    {n:'Extensão acima da cabeça na polia', w:'Cabeça longa alongada, sem carga direta no cotovelo.'},
-    {n:'Tríceps na máquina', w:'Opção mais segura se o cotovelo estiver sensível.'}],
-  'Tríceps corda na polia': [
-    {n:'Tríceps na polia com barra reta', w:'Mesma extensão, pegada pronada.'},
-    {n:'Tríceps na máquina', w:'Trajetória guiada até a falha.'},
-    {n:'Tríceps unilateral na polia', w:'Corrige diferença entre os lados.'}],
-  'Elevação lateral': [
-    {n:'Elevação lateral no cabo', w:'Tensão constante na parte de baixo.'},
-    {n:'Máquina de elevação lateral', w:'Zero estabilização, só o deltoide.'},
-    {n:'Elevação lateral inclinado no banco', w:'Aumenta a tensão no início do movimento.'}],
-  'Elevação lateral com halteres': [
-    {n:'Máquina de elevação lateral', w:'Zero estabilização, só o deltoide.'},
-    {n:'Elevação lateral no cabo', w:'Tensão constante na parte de baixo.'},
-    {n:'Elevação lateral inclinado no banco', w:'Aumenta a tensão no início do movimento.'}],
-  'Elevação lateral no cabo': [
-    {n:'Elevação lateral com halteres', w:'Mais carga no topo, menos embaixo.'},
-    {n:'Máquina de elevação lateral', w:'Zero estabilização, só o deltoide.'},
-    {n:'Elevação lateral unilateral inclinado na polia', w:'Amplitude maior por lado.'}],
-
-  'Puxada aberta pronada': [
-    {n:'Puxada na máquina articulada', w:'Um lado por vez se quiser.'},
-    {n:'Barra fixa assistida no graviton', w:'Mesmo padrão vertical, corpo livre.'},
-    {n:'Puxada com pegada supinada', w:'Mais bíceps, dorsal em ângulo diferente.'}],
-  'Puxada neutra unilateral': [
-    {n:'Puxada neutra bilateral', w:'Mesma pegada, os dois lados juntos.'},
-    {n:'Puxada unilateral na máquina articulada', w:'Trajetória guiada, mesma amplitude.'},
-    {n:'Barra fixa neutra assistida', w:'Peso do corpo com contrapeso.'}],
-  'Remada serrote com halter': [
-    {n:'Remada unilateral na polia baixa', w:'Tensão constante no alongamento.'},
-    {n:'Remada unilateral na máquina articulada', w:'Tronco apoiado, lombar fora da conta.'},
-    {n:'Remada com halter no banco a 45°', w:'Apoio de peito, menos balanço.'}],
-  'Pullover na polia alta': [
-    {n:'Pullover na máquina', w:'Mesma extensão de ombro, guiada.'},
-    {n:'Pullover com halter no banco', w:'Alongado maior, tensão some no topo.'},
-    {n:'Puxada com braços estendidos na barra reta', w:'Mesmo movimento, pegada pronada.'}],
-  'Rosca direta na barra W': [
-    {n:'Rosca direta na polia baixa', w:'Tensão constante, pulso mais livre.'},
-    {n:'Rosca scott na máquina', w:'Elimina o balanço de tronco.'},
-    {n:'Rosca com halteres em pé', w:'Cada lado no seu ângulo de pulso.'}],
-  'Rosca martelo': [
-    {n:'Rosca martelo na polia com corda', w:'Tensão constante na mesma pegada.'},
-    {n:'Rosca inversa na barra W', w:'Mais braquiorradial, menos bíceps.'},
-    {n:'Rosca martelo cruzada', w:'Braço cruza o tronco, mesma pegada neutra.'}],
-  'Face pull': [
-    {n:'Peck deck inverso', w:'Mesma abdução horizontal, sem rotação externa.'},
-    {n:'Crucifixo inverso no cabo cruzado', w:'Amplitude maior, um lado por vez.'},
-    {n:'Crucifixo inverso com halteres no banco inclinado', w:'Peito apoiado, sem balanço.'}],
-  'Peck deck inverso': [
-    {n:'Crucifixo inverso no cabo cruzado', w:'Amplitude maior, um lado por vez.'},
-    {n:'Crucifixo inverso com halteres no banco inclinado', w:'Peito apoiado, sem balanço.'},
-    {n:'Face pull na polia alta', w:'Acrescenta rotação externa.'}],
-
-  'Agachamento hack': [
-    {n:'Agachamento pendular', w:'Mesmo trabalho de quadríceps, curva mais suave.'},
-    {n:'Agachamento no Smith com pés à frente', w:'Tronco vertical, coluna descarregada.'},
-    {n:'Leg press 45° com pés baixos', w:'Mais quadríceps, menos glúteo.'}],
-  'Leg press 45°': [
-    {n:'Leg press horizontal sentado', w:'Mesma extensão, ângulo de quadril diferente.'},
-    {n:'Agachamento hack', w:'Mesma família, mais amplitude de joelho.'},
-    {n:'Agachamento pendular', w:'Curva de resistência mais constante.'}],
+  // A
+  'Chest press inclinado convergente': [
+    {n:'Supino inclinado no Smith', w:'Mesmo ângulo, trajetória travada.'},
+    {n:'Supino inclinado com halteres', w:'Mais amplitude, mais exigência de estabilidade.'},
+    {n:'Máquina de supino inclinado', w:'Convergência menor, resto igual.'}],
+  'Crossover de baixo para cima': [
+    {n:'Crucifixo inclinado no cabo', w:'Mesma região, menos vetor ascendente.'},
+    {n:'Crossover na polia baixa', w:'Praticamente o mesmo movimento.'},
+    {n:'Peck deck com banco inclinado', w:'Trajetória guiada, alongamento menor.'}],
+  'Elevação lateral na máquina': [
+    {n:'Elevação lateral no cabo', w:'Tensão constante, carga menor.'},
+    {n:'Elevação lateral com halteres', w:'Perde tensão embaixo, ganha no topo.'},
+    {n:'Elevação lateral no Smith unilateral', w:'Um lado por vez, trajetória fixa.'}],
+  'Elevação lateral unilateral no cabo': [
+    {n:'Elevação lateral com halteres', w:'Dois lados de uma vez, mais rápido.'},
+    {n:'Elevação lateral na máquina', w:'Mais carga, menos ajuste fino.'},
+    {n:'Elevação lateral deitado no banco inclinado', w:'Pico de tensão mais cedo na amplitude.'}],
+  'Extensão de tríceps acima da cabeça no cabo': [
+    {n:'Tríceps testa com barra W', w:'Mesma cabeça longa, mais cobrança no cotovelo.'},
+    {n:'Tríceps francês com halter', w:'Um braço por vez, corrige assimetria.'},
+    {n:'Máquina de tríceps sentado', w:'Menos alongamento, mais segurança.'}],
+  'Pushdown': [
+    {n:'Tríceps corda na polia', w:'Mesma coisa com rotação no fim.'},
+    {n:'Tríceps barra reta na polia', w:'Pega fixa, dá para carregar mais.'},
+    {n:'Mergulho na máquina assistida', w:'Entra peito e ombro junto.'}],
+  'Crunch no cabo ou máquina': [
+    {n:'Abdominal na polia alta ajoelhado', w:'Mesmo padrão, é a versão no cabo.'},
+    {n:'Máquina de abdominal', w:'Trajetória guiada, mais fácil de carregar.'},
+    {n:'Crunch com anilha no colo', w:'Sem equipamento, carga limitada.'}],
+  // B
+  'Pulldown convergente': [
+    {n:'Puxada neutra na máquina', w:'Sem convergência, resto igual.'},
+    {n:'Puxada aberta pronada', w:'Mais largura, menos amplitude embaixo.'},
+    {n:'Barra fixa assistida pegada neutra', w:'Peso do corpo, escápula mais livre.'}],
+  'Pulldown unilateral': [
+    {n:'Puxada neutra unilateral', w:'Praticamente o mesmo movimento.'},
+    {n:'Puxada unilateral na polia alta', w:'Tensão constante, carga menor.'},
+    {n:'Remada unilateral na polia alta ajoelhado', w:'Ângulo mais horizontal.'}],
+  'Remada para dorsal com apoio de peito': [
+    {n:'Remada sentada pegada neutra fechada', w:'Sem apoio: lombar entra na conta.'},
+    {n:'Remada baixa na polia com triângulo', w:'Mesmo ângulo de cotovelo, cabo em vez de placa.'},
+    {n:'Remada na máquina pegada neutra', w:'Trajetória fixa, mais carga.'}],
+  'Pullover em máquina ou cabo': [
+    {n:'Pullover na polia alta', w:'É a versão no cabo do mesmo movimento.'},
+    {n:'Straight-arm pulldown', w:'Braço mais estendido, mesma função.'},
+    {n:'Pullover com halter no banco', w:'Mais alongamento, resistência só no meio.'}],
+  'Reverse pec deck': [
+    {n:'Crucifixo inverso no cabo', w:'Amplitude maior, carga menor.'},
+    {n:'Crucifixo inverso com halteres no banco inclinado', w:'Sem tensão no fim da amplitude.'},
+    {n:'Face pull na polia alta', w:'Mais rotação externa junto.'}],
+  'Crucifixo inverso no cabo': [
+    {n:'Reverse pec deck', w:'Mais carga, tronco apoiado.'},
+    {n:'Crucifixo inverso com halteres', w:'Perde tensão na parte baixa.'},
+    {n:'Face pull na polia alta', w:'Mais rotação externa junto.'}],
+  'Rosca Scott na máquina': [
+    {n:'Rosca Scott com barra W', w:'Mesma posição, pulso mais confortável.'},
+    {n:'Rosca concentrada', w:'Um braço por vez, mais lenta.'},
+    {n:'Rosca no banco inclinado', w:'Alonga a cabeça longa em vez de encurtar.'}],
+  'Rosca no cabo': [
+    {n:'Rosca direta na barra W', w:'Mais carga, tensão irregular.'},
+    {n:'Rosca Bayesian no cabo', w:'Braço atrás do corpo, mais alongamento.'},
+    {n:'Rosca alternada com halteres', w:'Um lado por vez, com supinação.'}],
+  // C
+  'Pendulum squat': [
+    {n:'Agachamento hack', w:'Mesma ideia, curva de resistência diferente.'},
+    {n:'Belt squat', w:'Tira a carga da coluna.'},
+    {n:'Leg press vertical', w:'Mais quadril, menos joelho.'}],
+  'Leg press': [
+    {n:'Leg press 45°', w:'É a mesma máquina em outro ângulo.'},
+    {n:'Leg press horizontal', w:'Amplitude menor, lombar mais protegida.'},
+    {n:'Agachamento hack', w:'Mais quadríceps, mais exigente de mobilidade.'}],
   'Cadeira extensora': [
-    {n:'Cadeira extensora unilateral', w:'Um lado por vez, mesma isolação.'},
-    {n:'Leg press com pés baixos e juntos', w:'Não é isolador, mas puxa o quadríceps.'},
-    {n:'Agachamento sissy na máquina', w:'Alonga o reto femoral, exige controle.'}],
-  'Mesa flexora': [
-    {n:'Cadeira flexora sentada', w:'Alonga mais a cabeça longa.'},
-    {n:'Mesa flexora unilateral', w:'Corrige diferença entre as pernas.'},
-    {n:'Flexora em pé unilateral', w:'Mesma flexão de joelho, em pé.'}],
-  'Mesa flexora deitada': [
-    {n:'Cadeira flexora sentada', w:'Alonga mais a cabeça longa.'},
-    {n:'Mesa flexora unilateral', w:'Corrige diferença entre as pernas.'},
-    {n:'Flexora em pé unilateral', w:'Mesma flexão de joelho, em pé.'}],
-  'Cadeira flexora sentada': [
-    {n:'Mesa flexora deitada', w:'Quadril estendido, estímulo diferente.'},
-    {n:'Flexora em pé unilateral', w:'Um lado por vez, mesma flexão.'},
-    {n:'Cadeira flexora unilateral', w:'Mesma máquina, uma perna por vez.'}],
+    {n:'Extensora unilateral', w:'Um lado por vez, corrige diferença.'},
+    {n:'Sissy squat na máquina', w:'Alonga o reto femoral, mais duro no joelho.'},
+    {n:'Leg press com pé baixo', w:'Composto: cansa mais para o mesmo alvo.'}],
+  'Adutora': [
+    {n:'Adutora em pé na polia', w:'Um lado por vez, amplitude maior.'},
+    {n:'Agachamento sumô no Smith', w:'Composto, entra quadríceps e glúteo.'},
+    {n:'Leg press com pé afastado', w:'Adutor como coadjuvante, não como alvo.'}],
   'Panturrilha em pé': [
-    {n:'Panturrilha no leg press', w:'Joelho estendido, mesmo gastrocnêmio.'},
-    {n:'Panturrilha na barra guiada com step', w:'Mesma amplitude, carga travada.'},
-    {n:'Panturrilha unilateral com halter no step', w:'Uma perna por vez, mesma pausa embaixo.'}],
+    {n:'Panturrilha na máquina em pé', w:'É a mesma coisa em outro equipamento.'},
+    {n:'Panturrilha no Smith', w:'Precisa de degrau, amplitude igual.'},
+    {n:'Panturrilha unilateral com halter', w:'Metade da carga, um pé por vez.'}],
   'Panturrilha sentada': [
-    {n:'Panturrilha no leg press com joelho semiflexionado', w:'Aproxima o sóleo com joelho dobrado.'},
-    {n:'Panturrilha sentada com anilha sobre o joelho', w:'Mesma posição, carga livre.'},
-    {n:'Panturrilha em pé', w:'Pega o gastrocnêmio, não o sóleo.'}],
-
-  'Desenvolvimento com halteres': [
-    {n:'Desenvolvimento na máquina articulada', w:'Trajetória guiada, ombro protegido.'},
-    {n:'Desenvolvimento na barra guiada sentado', w:'Carga travada, mesma linha.'},
-    {n:'Desenvolvimento com halteres em pegada neutra', w:'Pegada neutra alivia o ombro.'}],
-  'Rosca inclinada (bi-set)': [
-    {n:'Rosca na polia baixa com o corpo à frente', w:'Mesmo alongamento do bíceps.'},
-    {n:'Rosca scott na máquina', w:'Sem balanço, foco na contração.'},
-    {n:'Rosca com halteres em pé', w:'Menos alongado, mais simples de achar livre.'}],
-  'Tríceps corda (bi-set)': [
-    {n:'Tríceps na polia com barra reta', w:'Mesma extensão, pegada pronada.'},
-    {n:'Tríceps na máquina', w:'Trajetória guiada até a falha.'},
-    {n:'Tríceps unilateral na polia', w:'Corrige diferença entre os lados.'}],
-
-  'Remada cavalinho': [
-    {n:'Remada na máquina com apoio no peito', w:'Mesma remada, lombar fora da conta.'},
-    {n:'Remada deitado no banco (seal row)', w:'Zero balanço, só a escápula trabalha.'},
-    {n:'Remada na máquina articulada', w:'Um lado por vez, mesma puxada horizontal.'}],
-  'Remada sentada pegada neutra': [
-    {n:'Remada na máquina articulada', w:'Mesma linha horizontal, com apoio.'},
-    {n:'Remada baixa unilateral na polia', w:'Amplitude maior por lado.'},
-    {n:'Remada na máquina com apoio no peito', w:'Tronco fixo, mesma puxada.'}],
-  'Encolhimento com halteres': [
-    {n:'Encolhimento na barra guiada', w:'Mesma subida, carga travada.'},
-    {n:'Encolhimento na polia baixa', w:'Tensão constante no topo.'},
-    {n:'Encolhimento na máquina', w:'Mesma elevação de escápula.'}],
-  'Puxada neutra': [
-    {n:'Puxada aberta pronada', w:'Mais largura, menos bíceps.'},
-    {n:'Puxada na máquina articulada', w:'Um lado por vez, mesma direção.'},
-    {n:'Barra fixa neutra assistida', w:'Peso do corpo com contrapeso.'}],
-  'Supino inclinado na máquina': [
-    {n:'Supino inclinado na barra guiada', w:'Mesma inclinação, carga travada.'},
+    {n:'Panturrilha sentada na máquina', w:'Mesmo movimento, outro equipamento.'},
+    {n:'Panturrilha no leg press com joelho flexionado', w:'Menos sóleo isolado.'},
+    {n:'Panturrilha sentada com anilha no joelho', w:'Carga limitada.'}],
+  'Tibial anterior': [
+    {n:'Tibial na máquina', w:'Mesmo alvo, carga mais fácil de ajustar.'},
+    {n:'Tibial com anilha sentado', w:'Sem equipamento, carga limitada.'},
+    {n:'Flexão de tornozelo na polia baixa', w:'Tensão constante.'}],
+  // E
+  'Remada convergente com apoio de peito': [
+    {n:'Remada cavalinho', w:'Sem apoio: lombar e quadril entram.'},
+    {n:'Remada na máquina com apoio de peito', w:'Sem convergência, resto igual.'},
+    {n:'Remada curvada com barra', w:'Muito mais custo sistêmico.'}],
+  'Remada horizontal na máquina': [
+    {n:'Remada sentada na polia', w:'Cabo em vez de placa, mesma trajetória.'},
+    {n:'Remada baixa pegada pronada', w:'Cotovelo mais aberto, mais upper back.'},
+    {n:'Remada na máquina pegada larga', w:'Desloca para a parte alta das costas.'}],
+  'High row com apoio de peito': [
+    {n:'Remada alta na máquina', w:'Mesmo ângulo sem o apoio de peito.'},
+    {n:'Remada na polia alta sentado', w:'Tensão constante, carga menor.'},
+    {n:'Remada cavalinho pegada larga', w:'Sem apoio, lombar entra.'}],
+  'Encolhimento na máquina': [
+    {n:'Encolhimento com halteres', w:'Pega mais exigente, mesma função.'},
+    {n:'Encolhimento no Smith', w:'Trajetória fixa, dá para carregar mais.'},
+    {n:'Encolhimento na polia baixa', w:'Tensão constante no topo.'}],
+  'Straight-arm pulldown': [
+    {n:'Pullover na polia alta', w:'Praticamente o mesmo movimento.'},
+    {n:'Pullover em máquina', w:'Trajetória guiada, mais estável.'},
+    {n:'Pullover com halter no banco', w:'Mais alongamento, resistência só no meio.'}],
+  'Supino inclinado no Smith': [
+    {n:'Chest press inclinado convergente', w:'É o mesmo alvo do A, em máquina.'},
     {n:'Supino inclinado com halteres', w:'Mais amplitude, mais estabilização.'},
-    {n:'Máquina convergente inclinada', w:'Mesma proposta, pegada convergente.'}],
-
-  'Terra romeno': [
-    {n:'Terra romeno com halteres', w:'Mesma dobradiça, mais fácil de parar na hora.'},
-    {n:'Terra romeno na barra guiada', w:'Trajetória fixa, lombar mais previsível.'},
-    {n:'Extensão de quadril a 45° no banco romano', w:'Mesma extensão, coluna sem carga axial.'}],
-  'Elevação de pernas suspenso': [
-    {n:'Elevação de pernas na paralela', w:'Apoio de cotovelos, sem exigir pegada.'},
-    {n:'Elevação de joelhos suspenso', w:'Mesmo movimento com braço de alavanca menor.'},
-    {n:'Abdominal invertido no banco declinado', w:'Mesma flexão de quadril, deitado.'}],
-  'Abdominal na polia alta ajoelhado': [
-    {n:'Abdominal na máquina', w:'Mesma carga progressiva, trajetória guiada.'},
-    {n:'Abdominal na polia sentado no banco', w:'Tronco apoiado, sem equilíbrio para gerenciar.'},
-    {n:'Crunch com anilha no banco declinado', w:'Carga livre, progressão em degraus maiores.'}],
-  'Prancha com peso ou rollout na roda': [
-    {n:'Rollout na roda de joelhos', w:'Amplitude parcial, mesma resistência à extensão.'},
-    {n:'Fallout na polia alta ajoelhado', w:'Carga regulável no pino, mais fácil de dosar.'},
-    {n:'Prancha com anilha nas costas', w:'Mesma isometria, só peso adicionado.'}],
-  'Elevação pélvica': [
-    {n:'Elevação pélvica na máquina', w:'Mesma extensão de quadril, sem montar barra.'},
-    {n:'Elevação pélvica na barra guiada', w:'Carga travada, mesma pausa no topo.'},
-    {n:'Extensão de quadril na polia', w:'Um lado por vez, mesma pausa.'}]
+    {n:'Supino inclinado com barra', w:'Menos amplitude embaixo, mais carga.'}],
+  'Crucifixo inclinado no cabo': [
+    {n:'Crossover de baixo para cima', w:'Mesmo alvo com vetor ascendente.'},
+    {n:'Crucifixo inclinado com halteres', w:'Perde tensão no topo.'},
+    {n:'Peck deck com banco inclinado', w:'Trajetória guiada, alongamento menor.'}],
+  'Chest press horizontal convergente': [
+    {n:'Supino reto na máquina', w:'Sem convergência, resto igual.'},
+    {n:'Supino reto com halteres', w:'Mais amplitude, mais custo de ombro.'},
+    {n:'Supino no Smith', w:'Trajetória travada, mais carga.'}],
+  'Pec deck': [
+    {n:'Crossover na polia média', w:'Amplitude maior, carga menor.'},
+    {n:'Crucifixo com halteres', w:'Sem tensão no topo.'},
+    {n:'Peck deck unilateral', w:'Um lado por vez, corrige diferença.'}],
+  // D
+  'Elevação lateral no cabo': [
+    {n:'Elevação lateral na máquina', w:'Mais carga, menos ajuste fino.'},
+    {n:'Elevação lateral com halteres', w:'Perde tensão embaixo.'},
+    {n:'Elevação lateral no Smith unilateral', w:'Trajetória fixa, um lado por vez.'}],
+  'Remada para deltoide posterior com apoio de peito': [
+    {n:'Face pull na polia alta', w:'Mesmo alvo, mais rotação externa.'},
+    {n:'Remada alta com corda', w:'Cotovelo mais alto, entra trapézio.'},
+    {n:'Remada aberta na máquina', w:'Sem apoio de peito.'}],
+  'Reverse fly no cabo': [
+    {n:'Reverse pec deck', w:'Mais carga, tronco apoiado.'},
+    {n:'Crucifixo inverso com halteres', w:'Perde tensão no fim da amplitude.'},
+    {n:'Face pull na polia alta', w:'Mais rotação externa junto.'}],
+  'Rosca Bayesian no cabo': [
+    {n:'Rosca inclinada com halteres', w:'Mesmo alongamento sem tensão constante.'},
+    {n:'Rosca no cabo', w:'Braço ao lado do corpo, menos alongamento.'},
+    {n:'Rosca Scott na máquina', w:'Encurta em vez de alongar a cabeça longa.'}],
+  'Rosca martelo': [
+    {n:'Rosca martelo na corda', w:'Tensão constante, pulso mais livre.'},
+    {n:'Rosca inversa na barra W', w:'Mais braquiorradial, menos carga.'},
+    {n:'Rosca martelo cruzada', w:'Um braço por vez, cruzando o corpo.'}],
+  'Extensão unilateral de tríceps no cabo': [
+    {n:'Pushdown unilateral', w:'Mesma coisa com pegada diferente.'},
+    {n:'Tríceps coice com halter', w:'Pico no encurtamento, carga baixa.'},
+    {n:'Extensão unilateral acima da cabeça', w:'Alonga a cabeça longa.'}],
+  'Extensão acima da cabeça ou máquina de tríceps': [
+    {n:'Tríceps testa com barra W', w:'Mais carga, mais cobrança no cotovelo.'},
+    {n:'Máquina de tríceps sentado', w:'Trajetória guiada, mais segura.'},
+    {n:'Tríceps francês com halter', w:'Um braço por vez.'}],
+  'Elevação de pernas ou reverse crunch': [
+    {n:'Elevação de pernas suspenso', w:'Mais difícil, exige pegada firme.'},
+    {n:'Reverse crunch no banco declinado', w:'Amplitude menor, mais controle.'},
+    {n:'Elevação de pernas no banco', w:'Versão mais fácil do mesmo padrão.'}],
+  // F
+  'Cadeira flexora sentada': [
+    {n:'Mesa flexora deitada', w:'Quadril estendido: menos alongamento no posterior.'},
+    {n:'Flexora unilateral em pé', w:'Um lado por vez, corrige diferença.'},
+    {n:'Flexora na polia baixa', w:'Tensão constante, carga menor.'}],
+  'Terra romeno no Smith': [
+    {n:'Terra romeno com halteres', w:'Mais estabilização, menos carga.'},
+    {n:'Terra romeno com barra', w:'Mais custo de lombar e de pegada.'},
+    {n:'Good morning no Smith', w:'Mais lombar, menos posterior.'}],
+  'Mesa flexora deitada': [
+    {n:'Cadeira flexora sentada', w:'Quadril fletido: mais alongamento.'},
+    {n:'Flexora unilateral deitada', w:'Um lado por vez.'},
+    {n:'Flexora nórdica assistida', w:'Excêntrica pesada, difícil de progredir.'}],
+  'Elevação pélvica na máquina': [
+    {n:'Elevação pélvica com barra', w:'Mesma coisa, montagem mais chata.'},
+    {n:'Hip thrust no Smith', w:'Trajetória fixa, fácil de carregar.'},
+    {n:'Coice na máquina', w:'Um lado por vez, carga bem menor.'}],
+  'Abdutora': [
+    {n:'Abdutora em pé na polia', w:'Um lado por vez, amplitude maior.'},
+    {n:'Abdução deitado com caneleira', w:'Carga limitada.'},
+    {n:'Passada lateral com elástico', w:'Resistência crescente, difícil de medir.'}],
+  'Panturrilha no leg press': [
+    {n:'Panturrilha em pé na máquina', w:'Joelho estendido: mais gastrocnêmio.'},
+    {n:'Panturrilha no Smith', w:'Precisa de degrau, amplitude igual.'},
+    {n:'Panturrilha unilateral com halter', w:'Metade da carga, um pé por vez.'}],
+  'Ab wheel': [
+    {n:'Prancha com peso', w:'Isométrico: sem amplitude, mais fácil de dosar.'},
+    {n:'Rollout na barra', w:'Mesmo padrão com barra carregada.'},
+    {n:'Abdominal na polia alta ajoelhado', w:'Flexão de tronco em vez de antiextensão.'}],
 };
 
-// Hierarquia definida pelo treinador. Não é lista plana: espessura de costas
-// saiu do topo porque quem muda o V-taper é a largura dorsal, e o deltoide
-// anterior fica de fora porque já recebe bastante estímulo do treino de peito.
 const PRIORIDADES = {
   maxima:      { rot:'prioridade máxima', mus:['delt lateral','dorsal','peito superior'] },
   secundaria:  { rot:'prioridade secundária', mus:['costas espessura','delt posterior','posterior','panturrilha','abdômen'] },
-  normal:      { rot:'', mus:['quadríceps','bíceps','tríceps','peito','glúteo'] },
+  normal:      { rot:'', mus:['quadríceps','bíceps','tríceps','peito','glúteo','glúteo médio','adutores','trapézio','tibial'] },
   indireto:    { rot:'estímulo indireto basta', mus:['delt anterior'] }
 };
 const NIVEIS = ['maxima','secundaria','normal','indireto'];
@@ -1147,6 +1205,59 @@ const CARGAS = {
   assist:  { rot:'ajuda',   nome:'assistida',
              ajuda:'O contrapeso que ajuda. Menos ajuda é mais força.' }
 };
+
+// ---------- migração de plano ----------
+// As chaves do histórico são dia+posição (A0, B3...). Trocar o programa faria
+// o exercício novo herdar a carga do antigo que ocupava aquela posição — o
+// placeholder mentiria e o selo de subir carga dispararia errado. Em vez de
+// apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
+// Os dias treinados (S.done) não são tocados, o calendário fica intacto e
+// tudo continua no JSON exportado.
+const PLANO_ATUAL = 2;
+const ARQUIVO = 'antigo~';
+
+const PLANO_1 = {
+  A0:'Supino inclinado com halteres', A1:'Supino reto na máquina', A2:'Crucifixo inclinado no cabo',
+  A3:'Crossover na polia média', A4:'Tríceps testa com barra W', A5:'Tríceps corda na polia',
+  A6:'Elevação lateral',
+  B0:'Puxada aberta pronada', B1:'Puxada neutra unilateral', B2:'Remada serrote com halter',
+  B3:'Pullover na polia alta', B4:'Rosca direta na barra W', B5:'Rosca martelo', B6:'Face pull',
+  C0:'Agachamento hack', C1:'Leg press 45°', C2:'Cadeira extensora', C3:'Mesa flexora',
+  C4:'Panturrilha em pé', C5:'Elevação de pernas suspenso',
+  D0:'Desenvolvimento com halteres', D1:'Elevação lateral com halteres', D2:'Elevação lateral no cabo',
+  D3:'Peck deck inverso', D4:'Face pull', D5:'Rosca inclinada (bi-set)', D6:'Tríceps corda (bi-set)',
+  D7:'Abdominal na polia alta ajoelhado',
+  E0:'Remada cavalinho', E1:'Remada sentada pegada neutra', E2:'Encolhimento com halteres',
+  E3:'Puxada neutra', E4:'Supino inclinado na máquina', E5:'Elevação lateral',
+  F0:'Terra romeno', F1:'Mesa flexora deitada', F2:'Cadeira flexora sentada', F3:'Elevação pélvica',
+  F4:'Panturrilha sentada', F5:'Panturrilha em pé', F6:'Prancha com peso ou rollout na roda'
+};
+
+function migraPlano() {
+  if (S.plano === PLANO_ATUAL) return 0;
+  let n = 0;
+  const novo = {};
+  Object.keys(S.logs).forEach(function (k) {
+    if (k.indexOf(ARQUIVO) === 0) { novo[k] = S.logs[k]; return; }
+    // chave pode ser 'A3' ou 'A3~Nome do substituto'
+    const til = k.indexOf('~');
+    const base = til < 0 ? k : k.slice(0, til);
+    const nome = til < 0 ? PLANO_1[base] : k.slice(til + 1);
+    if (!PLANO_1[base]) { novo[k] = S.logs[k]; return; }  // chave que não é do plano 1
+    const alvo = ARQUIVO + nome;
+    novo[alvo] = (novo[alvo] || []).concat(S.logs[k]);
+    novo[alvo].sort(function (a, b) { return a.t - b.t; });
+    n++;
+  });
+  S.logs = novo;
+  // correções de tipo de carga apontavam para as posições antigas
+  S.carga = {};
+  // um treino em andamento no plano velho não faz sentido no plano novo
+  S.sessao = null;
+  S.draft = null;
+  S.plano = PLANO_ATUAL;
+  return n;
+}
 
 const DORES = [
   {k:'cotovelo', t:'cotovelo'},
@@ -1278,6 +1389,9 @@ async function load() {
   if (!S.body || typeof S.body !== 'object') S.body = { peso:[], cintura:[] };
   if (!Array.isArray(S.body.peso)) S.body.peso = [];
   if (!Array.isArray(S.body.cintura)) S.body.cintura = [];
+  if (typeof S.plano !== 'number') S.plano = 1;   // estado anterior à troca de programa
+
+  const arquivados = migraPlano();
 
   // Rascunho do modelo antigo, sem sessão: vira sessão aberta para não
   // perder um treino que estava em andamento na hora da atualização.
@@ -1289,6 +1403,10 @@ async function load() {
   encerraSePreciso();
   view.day = S.sessao ? S.sessao.day : nextDay();
   render();
+  if (arquivados) {
+    await save();
+    toast(arquivados + ' exercícios do plano antigo foram arquivados. Os dias treinados continuam no calendário.');
+  }
 }
 
 // ---------- ciclo de vida da sessão ----------
@@ -2133,7 +2251,7 @@ function render() {
             oninput="inp(this,${i},${k},1)">${seg?'<span class="unit">seg</span>':''}</div>
           ${ex.bi===1
             ? `<button class="rest bi" onclick="proximoDoBiset(${i})">próximo</button>`
-            : `<button class="rest" onclick="startTimer(${ex.c?180:90})">${ex.c?'3min':'90s'}</button>`}
+            : `<button class="rest" onclick="startTimer(${descOf(ex)})">${fmtDesc(descOf(ex))}</button>`}
         </div>`;
       }
       if (seg || corpo) rows += `<div class="segnote">Carga opcional: deixe o campo vazio para só o peso do corpo.</div>`;
@@ -2160,7 +2278,7 @@ function render() {
             ${alt?`<div class="swapped">no lugar de ${ex.n}</div>`:''}
             <div class="ex-sub">
               <span>${ns} × ${ex.r}</span>
-              <span class="tag ${ex.c?'comp':''}">${ex.c?'composto · deixe 1–2 na reserva':'isolador · pode ir à falha'}</span>
+              <span class="tag ${ex.c?'comp':''}">${ex.c?'composto · 1–2 na reserva':'isolador · última pode ir a 0–1'}</span>
               ${ex.bi===1?'<span class="tag bi-t">bi-set · sem pausa até o próximo</span>':''}
               ${ex.bi===2?'<span class="tag bi-t">bi-set · o descanso é aqui</span>':''}
               ${alt?'<span class="tag swap-t">substituído</span>':''}
@@ -2459,7 +2577,7 @@ function renderCardio() {
       <div class="week-n">${n} <em>de 3</em></div>
       <div class="week-s ${cls}">sessões nesta semana<br><b>${estado}</b></div>
     </div>
-    <p class="week-p">25 a 30 minutos, 2 a 3 vezes por semana, intensidade leve a moderada — dá para conversar, sem ofegar. São 50 a 90 minutos na semana. O cardio está aqui por saúde cardiovascular, capacidade de trabalho e regulação do apetite.</p>
+    <p class="week-p">25 a 40 minutos, 2 a 3 vezes por semana, RPE 4 a 6: respiração acelerada, mas dá para conversar. São 50 a 110 minutos na semana. O cardio está aqui por saúde cardiovascular, capacidade de trabalho e regulação do apetite.</p>
 
     <div class="dgroup">
       <h3>Registrar sessão</h3>
@@ -2470,7 +2588,7 @@ function renderCardio() {
       <div class="obs-h" style="margin-top:16px">intensidade</div>
       <div class="chips">${['leve','moderado'].map(v => `<button class="chip ${f.i===v?'sel':''}" onclick="cardioSet('i','${v}')">${v}</button>`).join('')}</div>
       ${perna.length?`<div class="cwarn">Você salvou o treino ${perna.join(' e ')} hoje. A regra é não pôr cardio no mesmo período de treino de perna — se ainda der, deixe para outro dia.</div>`:''}
-      <p class="crule">Melhor lugar: depois de A, depois de D, ou em dia de descanso. Depois de B ou E também serve. Evite antes de C ou F, e nunca antes do treino. Você tem que sair pensando que aguentaria continuar.</p>
+      <p class="crule">Depois do A: 25 a 30 min. No dia de descanso: 30 a 40 min. Depois do F: 20 a 30 min, opcional. Evite antes de C ou F, e nunca antes do treino.</p>
       <button class="dbtn" onclick="addCardio()">Registrar ${f.min} min de ${f.m}</button>
     </div>
 
@@ -3273,7 +3391,7 @@ function autoTimer(i, k, e) {
     view.fired[tag] = true;
     // primeiro do bi-set não descansa: encadeia direto no segundo
     if (ex.bi === 1) proximoDoBiset(i);
-    else startTimer(ex.c ? 180 : 90);
+    else startTimer(descOf(ex));
   } else if (!cheia) view.fired[tag] = false;
 }
 
@@ -3330,6 +3448,18 @@ async function setDeload(on) {
 // detalhe de um dia, aberto a partir do acompanhamento.
 function itensDaSessao(marca) {
   const out = [];
+  // sessões anteriores à troca de programa: as chaves foram arquivadas e não
+  // correspondem mais a nenhuma posição do PLAN, mas o detalhe tem que abrir.
+  Object.keys(S.logs).forEach(function (k) {
+    if (k.indexOf(ARQUIVO) !== 0) return;
+    S.logs[k].forEach(function (e) {
+      const bate = marca.sid != null ? e.sid === marca.sid : sameDay(e.t, marca.t);
+      if (!bate) return;
+      out.push({ nome: k.slice(ARQUIVO.length), seg: false, sets: e.sets,
+                 met: volOf(e), dor: e.dor || [], novo: false, delta: null,
+                 recCarga: false, recMet: false, antigo: 1 });
+    });
+  });
   ROT.forEach(function (d) {
     PLAN[d].ex.forEach(function (ex, i) {
       const base = id(d,i);
@@ -3438,6 +3568,7 @@ function renderSessao() {
         ${x.recCarga?'<span class="rec">recorde de carga</span>':''}
         ${!x.recCarga&&x.recMet?`<span class="rec">recorde de ${x.seg?'tempo':'volume'}</span>`:''}
         ${x.novo?'<span class="nul">primeira vez</span>':''}
+        ${x.antigo?'<span class="nul">plano antigo</span>':''}
       </div>
       ${x.dor.length?`<div class="pain" style="padding-left:0">dor em ${x.dor.map(dorName).join(' e ')}</div>`:''}
     </div>`;
@@ -3603,6 +3734,15 @@ async function wipe() {
 // Guarda o INSTANTE em que o descanso acaba, não um contador que decrementa.
 // O iOS suspende o JavaScript quando a tela apaga; com contador, o cronômetro
 // congelava no ponto em que a tela apagou.
+// Descanso do exercício. Sem 'd' declarado (dados antigos, substituto), cai na
+// regra genérica: composto 3 min, isolador 90 s.
+function descOf(ex) { return ex && ex.d ? ex.d : (ex && ex.c ? D_COMPOSTO : D_CURTO); }
+
+function fmtDesc(sec) {
+  if (sec % 60 === 0) return (sec / 60) + 'min';
+  return sec >= 60 ? Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2) : sec + 's';
+}
+
 function startTimer(sec) {
   stopTimer();
   timerTotal = sec;

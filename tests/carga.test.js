@@ -29,7 +29,7 @@ test('rótulo do campo muda com o tipo', async () => {
 test('anilha por lado mostra o total sem contar a barra', async () => {
   const a = await app();
   a.E('go("C")');
-  a.E('toggle(0)');                       // agachamento hack
+  a.E('toggle(0)');                       // pendulum squat
   assert.strictEqual(a.texto('.ex.open .unit'), 'kg/lado');
 
   a.preencher(0, 0, 60, 10);
@@ -44,16 +44,21 @@ test('anilha por lado mostra o total sem contar a barra', async () => {
 
 test('halter em cada mão soma as duas', async () => {
   const a = await app();
-  a.E('toggle(0)');                       // supino inclinado com halteres
-  a.preencher(0, 0, 30, 10);
-  assert.ok(a.texto('#tot0').includes('60 kg nas duas mãos'));
+  a.E('go("D")');
+  a.E('toggle(5)');                       // rosca martelo
+  a.preencher(5, 0, 30, 10);
+  assert.ok(a.texto('#tot5').includes('60 kg nas duas mãos'));
   a.fechar();
 });
 
 test('um halter só não mostra total', async () => {
+  // Nenhum exercício do plano nasce como halter único; é uma correção que ele
+  // faz na hora, quando pega um halter só em vez de um par.
   const a = await app();
-  a.E('go("B")');
-  a.E('toggle(2)');                       // remada serrote
+  a.E('go("D")');
+  a.E('toggle(5)');
+  await a.E('setCarga(5,"halter1")');
+  await a.esperar();
   assert.strictEqual(a.texto('.ex.open .unit'), 'kg');
   assert.strictEqual(a.$('.ex.open .anilhas'), null);
   a.fechar();
@@ -61,14 +66,14 @@ test('um halter só não mostra total', async () => {
 
 test('peso do corpo aceita carga vazia', async () => {
   const a = await app();
-  a.E('go("C")');
-  a.E('toggle(5)');                       // elevação de pernas suspenso
+  a.E('go("D")');
+  a.E('toggle(8)');                       // elevação de pernas ou reverse crunch
   assert.strictEqual(a.texto('.ex.open .unit'), '+kg');
 
-  a.preencher(5, 0, null, 12);
-  a.preencher(5, 1, null, 12);
-  assert.deepStrictEqual(a.J('S.logs.C5[0].sets[0]'), [0, 12]);
-  assert.strictEqual(a.E('S.logs.C5[0].sets.filter(Boolean).length'), 2);
+  a.preencher(8, 0, null, 12);
+  a.preencher(8, 1, null, 12);
+  assert.deepStrictEqual(a.J('S.logs.D8[0].sets[0]'), [0, 12]);
+  assert.strictEqual(a.E('S.logs.D8[0].sets.filter(Boolean).length'), 2);
   a.fechar();
 });
 
@@ -95,17 +100,17 @@ test('chave interna continua pino para não quebrar correção antiga', async ()
 
 test('histórico de peso do corpo plota repetições, não carga', async () => {
   const agora = Date.now();
-  const logs = { C5: [] }, done = [];
+  const logs = { D8: [] }, done = [];
   [0, 1, 2, 3].forEach(function (k) {
     const t = agora - (8 - k * 2) * DIA;
-    done.push({ day: 'C', t: t, sid: t, dur: 50 * 60000 });
-    logs.C5.push({ t: t, sid: t, sets: [[0, 10 + k], [0, 10 + k], [0, 9 + k]] });
+    done.push({ day: 'D', t: t, sid: t, dur: 50 * 60000 });
+    logs.D8.push({ t: t, sid: t, sets: [[0, 10 + k], [0, 10 + k], [0, 9 + k]] });
   });
 
-  const a = await app({ estado: { logs: logs, done: done } });
-  a.E('go("C")');
-  a.E('toggle(5)');
-  a.E('openHist(5)');
+  const a = await app({ estado: { logs: logs, done: done, plano: 2 } });
+  a.E('go("D")');
+  a.E('toggle(8)');
+  a.E('openHist(8)');
 
   const eixos = a.$$('.chart .axu').map(function (x) { return x.textContent; });
   assert.deepStrictEqual(eixos, ['reps'], 'sem carga, só a faixa de repetições');
@@ -120,7 +125,7 @@ test('histórico por lado carrega a unidade no eixo e no resumo da série', asyn
   const t = agora - 2 * DIA;
   const a = await app({ estado: {
     logs: { C0: [{ t: t, sid: t, sets: [[90, 10], [90, 10], [90, 9], [90, 9]] }] },
-    done: [{ day: 'C', t: t, sid: t, dur: 50 * 60000 }]
+    done: [{ day: 'C', t: t, sid: t, dur: 50 * 60000 }], plano: 2
   } });
   a.E('go("C")');
   a.E('toggle(0)');

@@ -58,7 +58,11 @@ sempre monoespaçado.
 CSS e JS inline em `index.html`. Render é baseado em string: `render()` reescreve
 o `innerHTML` de `#app` e despacha para a tela certa conforme o estado de `view`.
 
-- `PLAN` — os 6 treinos (A–F) e seus 41 exercícios
+- `PLAN` — os 6 treinos e seus 48 exercícios, na rotação A → B → C → E → D → F
+  (E antes de D de propósito: o grande treino de torso não cai logo depois de
+  um dia inteiro de ombros e braços)
+- `D_COMPOSTO`, `D_MAQUINA`, `D_ISOLADOR`, `D_CURTO` — descanso por categoria,
+  declarado exercício a exercício no campo `d`
 - `ALT` — substitutos por padrão de movimento, indexados por nome do exercício
 - `RULES` — conteúdo da aba de execução
 - `DORES`, `PRIO`, `MODAIS` — vocabulários fixos
@@ -104,12 +108,29 @@ S = {
   cardio: [{ t: 0, m: 'bike', min: 20, i: 'leve' }],
   body: { peso: [{ t: 0, v: 73.4 }], cintura: [{ t: 0, v: 80.5 }] },
   carga: { 'A1': 'lado' },              // correção do tipo de carga por exercício
-  export: 0                             // timestamp do último backup
+  export: 0,                            // timestamp do último backup
+  plano: 2                              // versão do programa (ver migração abaixo)
 }
 ```
 
 Campos novos entram sempre como opcionais e recebem padrão em `load()`. Nenhuma
 migração destrutiva foi necessária até hoje.
+
+### Migração de plano
+
+As chaves do histórico são dia + posição (`A0`, `B3`). Trocar o programa faria o
+exercício novo herdar a carga do antigo que ocupava aquela posição: o placeholder
+mentiria e o selo de subir carga dispararia errado.
+
+`migraPlano()` roda em `load()` quando `S.plano` está atrás de `PLANO_ATUAL`.
+Cada chave antiga vira `antigo~<nome do exercício>`, usando a tabela `PLANO_1`.
+Nada é apagado: `S.done` fica intacto (o calendário não perde um dia), o detalhe
+das sessões antigas continua abrindo com a etiqueta "plano antigo", e tudo
+continua no JSON exportado. `S.carga` é limpo porque apontava para posições que
+não existem mais, e uma sessão aberta no plano velho é fechada.
+
+Para trocar o programa de novo: suba `PLANO_ATUAL`, guarde o mapa de nomes do
+plano que está saindo e reaproveite a mesma função.
 
 ### Camada de storage
 
@@ -307,7 +328,7 @@ eles registram é observável.
 | `carga.test.js` | Os seis tipos, total exibido, peso do corpo, correção persistida |
 | `corpo.test.js` | As três regras de ajuste nos limites exatos, médias semanais, cardio |
 | `dados.test.js` | Migração de formatos antigos, exportar e reimportar, histórico não truncado |
-| `cronometro.test.js` | Instante-alvo, tela apagada, aviso único, wake lock, bi-set |
+| `cronometro.test.js` | Instante-alvo, tela apagada, aviso único, wake lock, descanso por categoria, bi-set |
 | `telas.test.js` | Regras inegociáveis, as quatro abas, avisos de dor e pausa, correção de sessão |
 
 Os testes existem porque três bugs sérios apareceram por acidente, testando

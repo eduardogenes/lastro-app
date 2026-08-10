@@ -28,7 +28,7 @@ function inicioDaSemana(t) {
 function estadoVazio(extra) {
   return Object.assign({
     logs: {}, done: [], deload: false, draft: null, sessao: null,
-    cardio: [], body: { peso: [], cintura: [] }, carga: {}, export: 0
+    cardio: [], body: { peso: [], cintura: [] }, carga: {}, export: 0, plano: 2
   }, extra || {});
 }
 
@@ -89,7 +89,11 @@ function abrirApp(opcoes) {
       });
 
       if (o.estado) {
-        w.localStorage.setItem(CHAVE, typeof o.estado === 'string' ? o.estado : JSON.stringify(o.estado));
+        let e = o.estado;
+        // Sem 'plano', o app arquivaria o histórico como se fosse do programa
+        // anterior. Só o teste de migração omite de propósito.
+        if (typeof e !== 'string' && e.plano === undefined) e = Object.assign({ plano: 2 }, e);
+        w.localStorage.setItem(CHAVE, typeof e === 'string' ? e : JSON.stringify(e));
       }
     }
   });

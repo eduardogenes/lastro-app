@@ -105,17 +105,16 @@ test('trocar de dia no meio do treino não perde nem sobrescreve série', async 
   a.preencher(0, 0, 40, 10);
   a.preencher(0, 1, 40, 10);
   a.preencher(0, 2, 40, 9);
-  a.preencher(0, 3, 40, 9);
 
   a.E('go("D")');
   a.E('go("A")');
   a.E('toggle(0)');
 
   assert.strictEqual(a.doc.getElementById('w0_0').value, '40', 'campo deveria voltar preenchido');
-  assert.strictEqual(a.doc.getElementById('r0_3').value, '9');
+  assert.strictEqual(a.doc.getElementById('r0_2').value, '9');
 
   a.preencher(0, 0, 45, 10);
-  assert.strictEqual(a.E('S.logs.A0[0].sets.filter(Boolean).length'), 4, 'as outras séries continuam');
+  assert.strictEqual(a.E('S.logs.A0[0].sets.filter(Boolean).length'), 3, 'as outras séries continuam');
   assert.deepStrictEqual(a.J('S.logs.A0[0].sets[1]'), [40, 10]);
   a.fechar();
 });
@@ -123,7 +122,7 @@ test('trocar de dia no meio do treino não perde nem sobrescreve série', async 
 test('hidratação recupera observação, dor e substituto', async () => {
   const a = await app();
   a.E('toggle(1)');
-  a.E('setAlt(1,"Supino reto com halteres")');
+  a.E('setAlt(1,"Crucifixo inclinado no cabo")');
   a.E('abrirNota(1)');
   a.digitar('o1', 'ombro ok hoje');
   a.E('toggleDor(1,"ombro")');
@@ -133,8 +132,8 @@ test('hidratação recupera observação, dor e substituto', async () => {
   a.E('go("A")');
   a.E('toggle(1)');
 
-  assert.strictEqual(a.E('altOf(1)'), 'Supino reto com halteres');
-  assert.strictEqual(a.E('logKey("A",1)'), 'A1~Supino reto com halteres');
+  assert.strictEqual(a.E('altOf(1)'), 'Crucifixo inclinado no cabo');
+  assert.strictEqual(a.E('logKey("A",1)'), 'A1~Crucifixo inclinado no cabo');
   assert.strictEqual(a.doc.getElementById('o1').value, 'ombro ok hoje');
   assert.strictEqual(a.texto('.ex.open .chip.on'), 'ombro anterior');
   a.fechar();
