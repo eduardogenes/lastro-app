@@ -1,7 +1,7 @@
 // Regressão das telas e das regras inegociáveis do projeto.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, HTML, FONTE, DIA, inicioDaSemana } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, HTML, FONTE, DIA, inicioDaSemana } from './harness.js';
 
 test('um artefato só, sem dependência de runtime', async () => {
   // O app agora tem build, mas a propriedade que importa continua: o que chega

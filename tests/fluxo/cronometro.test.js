@@ -1,9 +1,9 @@
 // Cronômetro de descanso e o que o iOS faz com ele.
 // O iOS suspende o JavaScript quando a tela apaga: por isso o cronômetro
 // guarda o instante em que o descanso acaba, e não um contador que decrementa.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app } from './harness.js';
 
 test('conta a partir do instante-alvo', async () => {
   const a = await app();

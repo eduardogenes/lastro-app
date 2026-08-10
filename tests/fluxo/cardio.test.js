@@ -1,8 +1,8 @@
 // Cardio: obrigação semanal, fácil de esquecer, e que vivia enterrada na
 // terceira seção de outra aba. Placar na tela de hoje e marca no histórico.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, inicioDaSemana, DIA } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, inicioDaSemana, DIA } from './harness.js';
 
 test('placar da semana aparece na tela de hoje', async () => {
   const a = await app();

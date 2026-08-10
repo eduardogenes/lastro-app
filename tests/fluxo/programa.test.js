@@ -1,9 +1,9 @@
 // O programa como dado: catálogo de exercícios, id estável e S.prog.
 // A regra que sustenta tudo: a chave do histórico é o EXERCÍCIO, nunca a
 // posição dele no treino. Sem isso, editar o programa desloca o histórico.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, DIA } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, DIA } from './harness.js';
 
 test('a chave do histórico é o exercício, não a posição', async () => {
   const a = await app();

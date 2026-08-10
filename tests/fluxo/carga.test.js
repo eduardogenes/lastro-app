@@ -1,20 +1,10 @@
 // Tipo de carga: resolve "esse peso é de um lado ou dos dois?".
 // O app nunca converte o que foi digitado; o total é só exibição.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, DIA } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, DIA } from './harness.js';
 
-test('todos os exercícios do plano declaram tipo de carga', async () => {
-  const a = await app();
-  const faltando = a.J(`
-    rot().reduce(function (acc, d) {
-      treino(d).ex.forEach(function (ex) { if (!ex.car || !CARGAS[ex.car]) acc.push(d + ' ' + ex.n); });
-      return acc;
-    }, [])`);
-  assert.deepStrictEqual(faltando, []);
-  a.fechar();
-});
-
+// (a integridade do catálogo virou tests/dominio/carga.test.ts)
 test('rótulo do campo muda com o tipo', async () => {
   const a = await app();
   const rot = a.J('Object.keys(CARGAS).reduce(function (o,k) { o[k] = CARGAS[k].rot; return o; }, {})');

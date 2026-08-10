@@ -1,8 +1,8 @@
 // Tela de programa: a edição sentado em casa. Aqui é o oposto da edição do
 // dia — mexeu, mudou o oficial, e vale a partir do próximo treino.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app } from './harness.js';
 
 async function noPrograma(d) {
   const a = await app();

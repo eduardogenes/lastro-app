@@ -1,9 +1,9 @@
 // Edição no meio do treino. A regra central: mexer no treino de hoje NÃO
 // mexe no programa oficial. A decisão vem no fim da sessão, uma a uma, e o
 // padrão é sempre o conservador.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, DIA } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, DIA } from './harness.js';
 
 // abre a edição no dia da rotação
 async function editando(o) {

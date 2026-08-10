@@ -1,8 +1,8 @@
 // Registro contínuo: a mudança estrutural do app. Não existe botão de salvar,
 // a sessão nasce na primeira série completa e morre sozinha.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, DIA } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, DIA } from './harness.js';
 
 test('não existe mais função de salvar', async () => {
   const a = await app();

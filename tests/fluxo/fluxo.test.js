@@ -1,9 +1,9 @@
 // Ponta a ponta: uma semana de uso real, com tudo acontecendo junto.
 // Os outros arquivos testam cada peça isolada; este existe para pegar o que
 // só quebra quando elas se encontram.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, DIA, inicioDaSemana } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, DIA, inicioDaSemana } from './harness.js';
 
 test('uma semana de treino, com edição, promoção, cardio e corpo', async () => {
   const a = await app();

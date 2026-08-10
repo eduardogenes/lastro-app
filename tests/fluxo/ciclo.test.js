@@ -1,9 +1,9 @@
 // Ciclo explícito da sessão: iniciar, pausar, finalizar, pular.
 // O botão nunca é pré-condição para gravar série — ele acrescenta precisão
 // à duração. Esquecer custa precisão, nunca dado.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, DIA } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, DIA } from './harness.js';
 
 test('iniciar marca o tempo antes da primeira série', async () => {
   const a = await app();

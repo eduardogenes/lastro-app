@@ -7,14 +7,19 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "tipos": "tsc --noEmit",
     "pretest": "npm run build",
-    "test": "node --test \"tests/*.test.js\"",
-    "treino": "npm run build && node tests/gerar-treino.js",
-    "volume": "npm run build && node tests/gerar-volume.js"
+    "test": "vitest run",
+    "test:dominio": "vitest run --project dominio",
+    "test:fluxo": "npm run build && vitest run --project fluxo",
+    "treino": "vite-node tests/gerar-treino.js",
+    "volume": "vite-node tests/gerar-volume.js"
   },
   "devDependencies": {
     "jsdom": "^24.0.0",
     "typescript": "^7.0.2",
-    "vite": "^7.1.12"
+    "vite": "^7.1.12",
+    "vite-node": "^6.0.0",
+    "vitest": "^4.1.10"
   }
 }

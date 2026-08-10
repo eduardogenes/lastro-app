@@ -1,8 +1,8 @@
 // Acompanhamento corporal: média semanal e as três regras de ajuste.
 // O peso do dia não decide nada; quem decide é a média e o ritmo entre semanas.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, inicioDaSemana, DIA } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, inicioDaSemana, DIA } from './harness.js';
 
 // Gera pesagens dentro de cada semana alvo, com ruído que se anula na média.
 // Âncora na última semana FECHADA, nunca na semana em curso: rodando numa
@@ -33,81 +33,27 @@ async function veredito(peso, cintura) {
   return r;
 }
 
-test('ganho travado manda comer mais', async () => {
-  const v = await veredito(pesagens([73.0, 73.05, 73.10]));
-  assert.strictEqual(v.titulo, 'Comer mais');
-  assert.ok(v.texto.includes('0,05'), v.texto);
-  assert.ok(v.texto.includes('abaixo de 0,15'));
+// As REGRAS estão em tests/dominio/corpo.test.ts, onde custam microssegundos e
+// dá para varrer os limites exatos. O que sobra aqui é a ligação: o veredito
+// calculado precisa chegar na tela, e chegar no lugar certo.
+test('o veredito da regra é o que aparece na aba corpo', async () => {
+  const a = await app({ estado: { logs: [], done: [],
+    body: { peso: pesagens([73.0, 73.05, 73.10]), cintura: [] } } });
+  a.E('tab("corpo")');
+  assert.strictEqual(a.texto('.verdict-t'), 'Comer mais');
+  assert.strictEqual(a.texto('.verdict p'), a.E('veredito().p'), 'a tela não reescreve o texto');
+  assert.ok(a.$('.verdict').className.includes('mais'), 'a classe acompanha a decisão');
+  a.fechar();
 });
 
-test('ganho rápido manda comer menos', async () => {
-  const v = await veredito(pesagens([73.0, 73.6, 74.2]));
-  assert.strictEqual(v.titulo, 'Comer menos');
-  assert.ok(v.texto.includes('0,60'));
-  assert.ok(v.texto.includes('acima de 0,4'));
-});
-
-test('ganho na faixa manda manter', async () => {
-  const v = await veredito(pesagens([73.0, 73.25, 73.5]));
-  assert.strictEqual(v.titulo, 'Manter como está');
-  assert.ok(v.texto.includes('0,25'));
-});
-
-test('limite exato de 0,15 ainda é comer mais', async () => {
-  const v = await veredito(pesagens([73.0, 73.15, 73.30]));
-  assert.strictEqual(v.titulo, 'Comer mais');
-});
-
-test('limite exato de 0,40 ainda é manter', async () => {
-  const v = await veredito(pesagens([73.0, 73.40, 73.80]));
-  assert.strictEqual(v.titulo, 'Manter como está');
-});
-
-test('perdendo peso: o texto não diz que subiu', async () => {
-  const v = await veredito(pesagens([73.5, 73.2, 73.0]));
-  assert.strictEqual(v.titulo, 'Comer mais');
-  assert.ok(v.texto.includes('caiu'), 'não pode dizer "subiu −0,25": ' + v.texto);
-});
-
-test('cintura estourando manda comer menos mesmo com peso na faixa', async () => {
-  const v = await veredito(
-    pesagens([73.0, 73.25, 73.5]),
-    medidas([{ d: 28, v: 80.0 }, { d: 21, v: 80.6 }, { d: 7, v: 81.4 }, { d: 0, v: 82.0 }])
-  );
-  assert.strictEqual(v.titulo, 'Comer menos');
-  assert.ok(v.texto.includes('cintura'));
-});
-
-test('cintura dentro do limite não sobrepõe o peso', async () => {
-  const v = await veredito(
-    pesagens([73.0, 73.25, 73.5]),
-    medidas([{ d: 28, v: 80.0 }, { d: 21, v: 80.2 }, { d: 7, v: 80.5 }, { d: 0, v: 80.7 }])
-  );
-  assert.strictEqual(v.titulo, 'Manter como está');
-});
-
-test('uma semana só não aplica a regra', async () => {
-  const v = await veredito(pesagens([73.0]));
-  assert.strictEqual(v.titulo, 'Faltam dados');
-});
-
-test('duas semanas avisam que falta uma', async () => {
-  const v = await veredito(pesagens([73.0, 73.25]));
-  assert.strictEqual(v.titulo, 'Falta uma semana');
-  assert.ok(v.texto.includes('2 semanas'));
-});
-
-test('sem nada registrado pede registro', async () => {
-  const v = await veredito([]);
-  assert.strictEqual(v.titulo, 'Faltam dados');
-});
-
-test('cintura usa média semanal, não medida solta', async () => {
-  const a = await app({ estado: { logs: {}, done: [], body: { peso: [],
-    cintura: medidas([{ d: 28, v: 80.0 }, { d: 26, v: 80.4 }, { d: 2, v: 82.2 }, { d: 0, v: 81.8 }]) } } });
-  const medias = a.J('mediasSemanais(S.body.cintura).map(function (x) { return Math.round(x.v*100)/100; })');
-  assert.ok(medias.length >= 2);
-  assert.strictEqual(medias[0], 80.2, 'as duas medidas da mesma semana viram média');
+test('cintura tem precedência sobre o peso, e a tela diz por quê', async () => {
+  const a = await app({ estado: { logs: [], done: [], body: {
+    peso: pesagens([73.0, 73.25, 73.5]),
+    cintura: medidas([{ d: 28, v: 80.0 }, { d: 21, v: 80.6 }, { d: 7, v: 81.4 }, { d: 0, v: 82.0 }])
+  } } });
+  a.E('tab("corpo")');
+  assert.strictEqual(a.texto('.verdict-t'), 'Comer menos');
+  assert.ok(a.texto('.verdict p').includes('cintura'));
   a.fechar();
 });
 

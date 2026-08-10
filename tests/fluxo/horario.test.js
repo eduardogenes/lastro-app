@@ -1,8 +1,8 @@
 // Horário do treino. "Normalmente é 6h15, mas não é exato" — então o app
 // registra o que aconteceu e nunca inventa o que não mediu.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, DIA } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, DIA } from './harness.js';
 
 function emHoje(h, m) {
   const d = new Date();

@@ -1,8 +1,8 @@
 // Registro retroativo: treino do plano lançado em data passada, e treino
 // avulso, que é presença sem ser o programa.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, DIA } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, DIA } from './harness.js';
 
 const ONTEM = () => Date.now() - DIA;
 

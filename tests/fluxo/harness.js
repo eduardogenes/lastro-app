@@ -13,11 +13,14 @@
 // Tudo que o iOS oferece e o jsdom não tem (áudio, wake lock, vibração) entra
 // como dublê. O que eles registram é observável nos testes.
 
-const fs = require('fs');
-const path = require('path');
-const { JSDOM, VirtualConsole } = require('jsdom');
+import fs from 'node:fs';
+import path from 'node:path';
+import { JSDOM, VirtualConsole } from 'jsdom';
+import { fileURLToPath } from 'node:url';
 
-const DIST = path.join(__dirname, '..', 'dist');
+const RAIZ = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+const DIST = path.join(RAIZ, 'dist');
 
 function montarHTML() {
   const idx = path.join(DIST, 'index.html');
@@ -38,7 +41,7 @@ const HTML = montarHTML();
 // O fonte, para as regras que são sobre COMO o código é escrito (regra 5, sem
 // emoji) e não sobre o que o build produz. O bundler reescreve `const` em `var`
 // e reindenta, então casar padrão de fonte contra o build dá falso negativo.
-const SRC = path.join(__dirname, '..', 'src');
+const SRC = path.join(RAIZ, 'src');
 const FONTE = fs.readdirSync(SRC, { recursive: true })
   .filter(function (f) { return /\.(js|ts|jsx|tsx|css)$/.test(f); })
   .map(function (f) { return fs.readFileSync(path.join(SRC, f), 'utf8'); })
@@ -219,4 +222,4 @@ async function app(opcoes) {
   return a;
 }
 
-module.exports = { app, abrirApp, estadoVazio, inicioDaSemana, DIA, CHAVE, HTML, FONTE };
+export { app, abrirApp, estadoVazio, inicioDaSemana, DIA, CHAVE, HTML, FONTE };

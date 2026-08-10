@@ -1,8 +1,8 @@
 // Custódia dos dados: migração de formatos antigos, backup e reimportação.
 // Regra 2 do projeto: nenhuma mudança pode quebrar o que já está salvo.
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { app, DIA } = require('./harness');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { app, DIA } from './harness.js';
 
 // Formato original: só logs e done, sem sid, dur, deload, cardio, body ou carga.
 const ANTIGO = {
