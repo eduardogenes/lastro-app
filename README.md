@@ -263,7 +263,17 @@ npm run build      # gera dist/
 ```
 
 Qualquer hospedagem estática serve o `dist/`. No Vercel, o `vercel.json` já traz
-o `buildCommand`, o `outputDirectory` e os cabeçalhos certos.
+o `buildCommand`, o `outputDirectory` e os cabeçalhos de cache.
+
+Os cabeçalhos fazem uma distinção que importa: `/assets/*` tem hash no nome, então
+aquele conteúdo naquele nome nunca muda e pode ser guardado por um ano
+(`immutable`) — é o que faz a segunda abertura ser instantânea. Já `index.html`,
+`sw.js` e o manifesto **apontam** para os assets e são sempre revalidados; se
+ficassem em cache, o aparelho continuaria pedindo arquivos que já mudaram de nome.
+
+O `vercel.json` é validado em modo estrito e uma chave desconhecida **recusa o
+build** — inclusive um campo de comentário. Por isso a explicação está aqui e não
+lá, e há um teste que confere as chaves antes de você descobrir no deploy.
 
 **Não há mais número de versão para subir à mão.** O service worker é gerado no
 build com um cache nomeado pelo hash do conteúdo: mudou um byte, muda o cache.

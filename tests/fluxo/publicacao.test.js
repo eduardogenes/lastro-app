@@ -62,6 +62,32 @@ test('os ícones e o manifesto chegam ao dist', () => {
   });
 });
 
+test('o vercel.json só usa chaves que o schema aceita', () => {
+  // A Vercel valida o schema em modo estrito e RECUSA O BUILD com chave
+  // desconhecida. Aconteceu com um "comment" que eu tinha posto para explicar
+  // as regras: erro que só aparece no deploy, quando já é tarde. A explicação
+  // mora no README; aqui só entra o que o schema conhece.
+  const v = JSON.parse(fs.readFileSync(path.join(RAIZ, 'vercel.json'), 'utf8'));
+
+  const raiz = ['$schema', 'cleanUrls', 'outputDirectory', 'buildCommand',
+                'headers', 'redirects', 'rewrites', 'trailingSlash', 'framework',
+                'installCommand', 'devCommand', 'regions'];
+  Object.keys(v).forEach(function (k) {
+    assert.ok(raiz.includes(k), 'chave desconhecida na raiz do vercel.json: ' + k);
+  });
+
+  v.headers.forEach(function (regra) {
+    Object.keys(regra).forEach(function (k) {
+      assert.ok(['source', 'headers', 'has', 'missing'].includes(k),
+        'chave desconhecida numa regra de header: ' + k);
+    });
+    regra.headers.forEach(function (h) {
+      assert.deepStrictEqual(Object.keys(h).sort(), ['key', 'value'],
+        'um header só tem key e value');
+    });
+  });
+});
+
 test('os cabeçalhos de cache distinguem o que tem hash do que não tem', () => {
   const v = JSON.parse(fs.readFileSync(path.join(RAIZ, 'vercel.json'), 'utf8'));
   const regra = s => v.headers.find(h => h.source === s);
