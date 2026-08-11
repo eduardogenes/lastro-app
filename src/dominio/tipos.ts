@@ -6,6 +6,10 @@
 // qualquer versão anterior chega pelo mesmo caminho que o disco. É exatamente o
 // lugar onde um contrato só documentado se solta do código sem ninguém ver.
 
+import type { Cadencia } from './dia';
+import type { Ajuste } from './corpo';
+import type { Alimento, DiaComida, Refeicao } from './nutricao/tipos';
+
 /** Os seis tipos de carregamento. O app rotula, nunca converte. */
 export type TipoCarga = 'pino' | 'lado' | 'halter' | 'halter1' | 'corpo' | 'assist';
 
@@ -180,6 +184,28 @@ export interface RascunhoEx {
 /** Buffer de digitação da sessão aberta, por posição do treino. */
 export interface Rascunho { ex: Record<string, RascunhoEx>; }
 
+/** Estado das compras. Derivado no cálculo, mas o que foi MARCADO persiste. */
+export interface EstadoCompras {
+  /** itens já no carrinho */
+  comprado: Record<string, 1>;
+  /** linhas escritas à mão, fora do plano */
+  extras: string[];
+  /** linhas do plano que ele tirou da lista desta vez */
+  removidas: Record<string, 1>;
+  /** horizonte em dias: 7, 14 ou 30 */
+  dias: number;
+}
+
+/** A metade de comida do estado. Espelha a de treino: biblioteca + plano. */
+export interface EstadoComida {
+  /** o plano dele, semeado do PLANO_BASE e editável */
+  plano: Refeicao[] | null;
+  /** o catálogo dele, sobrepondo o que vem do código */
+  alimentos: Record<string, Partial<Alimento>>;
+  /** alimentos do código que ele escondeu */
+  ocultos: Record<string, 1>;
+}
+
 /** O estado persistido inteiro, sob a chave `treino-eduardo-v1`. */
 export interface Estado {
   /** histórico por ID DE EXERCÍCIO, nunca por posição */
@@ -205,4 +231,25 @@ export interface Estado {
   /** as mudanças de hoje */
   mods: Mods | null;
   progLog: EntradaProgLog[];
+
+  // ---- o que a fusão com a nutrição trouxe ----
+
+  /**
+   * Cadência da semana: 7 posições, domingo primeiro, 'treino' | 'descanso'.
+   * NÃO guarda letra de treino — qual sessão vem é sempre da rotação. Isto
+   * responde só "hoje é dia de treinar", e sustenta a previsão de compras.
+   */
+  cadencia: Cadencia[] | null;
+  /** a metade de comida */
+  comida: EstadoComida;
+  /** o dia de comida, carimbado com a data; zera sozinho */
+  dia: DiaComida | null;
+  /** o ±150 kcal em vigor */
+  ajuste: Ajuste;
+  /**
+   * Override do sinal de força. `null` = o app calcula a partir das cargas.
+   * Existe porque o cálculo não sabe que ele voltou de duas semanas doente.
+   */
+  perfManual: boolean | null;
+  compras: EstadoCompras;
 }

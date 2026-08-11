@@ -8,6 +8,8 @@
 // As duas migrações recebem o estado em vez de mexer num global: é o que
 // permite testar cada uma contra uma fixture, sem subir o app inteiro.
 
+import { CADENCIA_PADRAO } from './dia';
+import { PLANO_BASE } from './nutricao/alimentos';
 import { EX_BASE, PROGRAMA, ROT_BASE, semeiaProg, slugEx } from './programa';
 import type { Estado, IdEx, Log } from './tipos';
 
@@ -18,7 +20,7 @@ import type { Estado, IdEx, Log } from './tipos';
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-export const PLANO_ATUAL = 3;
+export const PLANO_ATUAL = 4;
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -154,5 +156,57 @@ export function migraPlano3(S: Estado): Resultado3 | null {
   S.prog = semeiaProg();
   S.rot = ROT_BASE.slice();
   S.plano = 3;
+  return r;
+}
+
+// ---------- plano 3 -> 4: a fusão com a nutrição ----------
+// Puramente ADITIVA. Nada do treino é reescrito, nenhuma chave de histórico é
+// tocada, nenhuma sessão muda de forma. É a migração mais barata das três, e
+// tem que continuar sendo: o histórico dele tem meses, e um redesign não é
+// motivo para arriscar a regra 2 do projeto.
+//
+// A única decisão de conteúdo é a cadência inicial: descansa domingo, treina os
+// outros seis. É a semana típica dele, e ele muda no GUIA em dois toques.
+
+/** O que a 3→4 semeou, para o app poder contar. */
+export interface Resultado4 {
+  /** refeições semeadas no plano dele */
+  refeicoes: number;
+  /** true quando a cadência precisou nascer */
+  cadencia: boolean;
+}
+
+export function migraPlano4(S: Estado): Resultado4 | null {
+  if (S.plano >= 4) return null;
+
+  const r: Resultado4 = { refeicoes: 0, cadencia: false };
+
+  if (!S.cadencia || S.cadencia.length !== 7) {
+    S.cadencia = CADENCIA_PADRAO.slice();
+    r.cadencia = true;
+  }
+
+  if (!S.comida || typeof S.comida !== 'object') {
+    S.comida = { plano: null, alimentos: {}, ocultos: {} };
+  }
+  if (!S.comida.plano) {
+    // Cópia profunda: o plano dele diverge do congelado, e compartilhar
+    // referência faria editar uma refeição mudar a prescrição de origem —
+    // exatamente o bug que S.prog evita do lado do treino.
+    S.comida.plano = JSON.parse(JSON.stringify(PLANO_BASE));
+    r.refeicoes = S.comida.plano!.length;
+  }
+  if (!S.comida.alimentos) S.comida.alimentos = {};
+  if (!S.comida.ocultos) S.comida.ocultos = {};
+
+  if (!S.compras || typeof S.compras !== 'object') {
+    S.compras = { comprado: {}, extras: [], removidas: {}, dias: 7 };
+  }
+
+  if (S.ajuste !== -1 && S.ajuste !== 1) S.ajuste = 0;
+  if (S.perfManual !== true && S.perfManual !== false) S.perfManual = null;
+  if (!S.dia || typeof S.dia !== 'object') S.dia = null;
+
+  S.plano = 4;
   return r;
 }

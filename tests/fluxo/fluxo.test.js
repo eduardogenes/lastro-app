@@ -218,7 +218,7 @@ test('importar um backup do formato antigo reconstrói tudo', async () => {
   await a.E('importText(' + JSON.stringify(antigo) + ')');
   await a.esperar(60);
 
-  assert.strictEqual(a.E('S.plano'), 3, 'passou pelas duas migrações');
+  assert.strictEqual(a.E('S.plano'), 4, 'passou pelas três migrações');
   assert.ok(a.J('S.logs["supino-inclinado-com-halteres"]'), 'reindexado por exercício');
   assert.ok(a.J('S.logs["remada-unilateral-na-polia-baixa"]'));
   assert.ok(a.E('!!S.prog'), 'e ganhou um programa');

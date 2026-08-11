@@ -1,0 +1,235 @@
+/* ============================================================
+   Base e blindagem para o Safari do iPhone.
+
+   O app é usado de pé, com uma mão, suado, às 6h15, e instalado
+   na tela de início. Cada regra deste arquivo existe por um modo
+   de falha real desse contexto — o porquê está escrito em cada
+   uma, porque nenhuma delas é óbvia seis meses depois.
+   ============================================================ */
+
+@import './tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  /* Safari infla texto ao girar para paisagem. Isto desliga. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--ins-canvas);
+  color: var(--ins-text);
+  font-family: var(--ins-font-display);
+  /* Mata o rubber-band: puxar além do fim revelava uma faixa do fundo
+     do body que não devia existir. */
+  overscroll-behavior: none;
+}
+
+body {
+  /* A JANELA é quem rola. Nenhum ancestral pode virar scroll container,
+     senão `position: sticky` passa a se ancorar nele e o cabeçalho some
+     sob a barra do Safari ao rolar. */
+  min-height: 100vh;
+  min-height: 100svh;
+  /* clip e não hidden: hidden vira `auto` no outro eixo e quebra o sticky. */
+  overflow-x: clip;
+}
+
+/* Corpo travado enquanto uma folha está aberta. `position: fixed` é o único
+   jeito confiável no iOS — `overflow: hidden` sozinho não segura o scroll de
+   toque. A posição é devolvida ao fechar (ver travaScroll em ui/folha.jsx). */
+body.ins-travado {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+a { color: var(--ins-acid); text-decoration: none; }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  border-radius: var(--ins-radius);
+  /* Sem o flash cinza do iOS ao tocar; o estado ativo é desenhado por nós. */
+  -webkit-tap-highlight-color: transparent;
+  /* Elimina o atraso de 300 ms e o zoom por toque duplo. */
+  touch-action: manipulation;
+  /* Segurar um botão não seleciona texto nem abre o menu de copiar. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button:disabled { opacity: .4; }
+
+input, textarea, select {
+  font-family: inherit;
+  color: var(--ins-text);
+  background: var(--ins-surface);
+  border: 1px solid var(--ins-border);
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  /* NUNCA abaixo de 16px: com fonte menor o Safari dá zoom ao focar o campo
+     e a tela fica torta no meio de uma série. É a regra que mais se quebra
+     sozinha, porque no desktop nada acontece. */
+  font-size: 16px;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--ins-acid);
+}
+
+input::placeholder, textarea::placeholder { color: var(--ins-text-5); }
+
+/* Campo numérico do treino: type="text" com inputmode, porque type="number"
+   descarta vírgula e no teclado pt-BR "22,5" chegava como string vazia. */
+input[inputmode] { font-family: var(--ins-font-mono); }
+
+::-webkit-scrollbar { display: none; }
+
+/* Prosa pode ser selecionada; o resto da interface não. */
+p, .ins-prosa { -webkit-user-select: text; user-select: text; }
+
+/* ---- Papel da página --------------------------------------------------- */
+
+#app {
+  max-width: 460px;
+  margin: 0 auto;
+  /* Goteira de 20px + área segura lateral (iPhone deitado, notch). */
+  padding-left: max(var(--ins-8), var(--sa-left));
+  padding-right: max(var(--ins-8), var(--sa-right));
+  /* Espaço para a tab bar fixa não cobrir o fim do conteúdo. */
+  padding-bottom: calc(var(--ins-tabbar) + var(--ins-9));
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Tipografia: os papéis do sistema ---------------------------------- */
+
+.ins-metric-xl { font: 600 52px/.9  var(--ins-font-mono); letter-spacing: -.05em; }
+.ins-metric-l  { font: 500 34px/1   var(--ins-font-mono); letter-spacing: -.04em; }
+.ins-metric-m  { font: 600 22px/1.1 var(--ins-font-mono); letter-spacing: -.03em; }
+.ins-metric-s  { font: 600 19px/1.1 var(--ins-font-mono); letter-spacing: -.03em; }
+
+.ins-headline  { font: 700 34px/1.02 var(--ins-font-display); letter-spacing: -.035em; }
+.ins-display   { font: 700 30px/1.02 var(--ins-font-display); letter-spacing: -.03em; }
+.ins-title     { font: 700 24px/1.05 var(--ins-font-display); letter-spacing: -.03em; }
+.ins-subtitle  { font: 500 17px/1.35 var(--ins-font-display); letter-spacing: -.01em; }
+
+.ins-body      { font: 400 15px/1.4 var(--ins-font-display); }
+.ins-body-sm   { font: 400 14px/1.5 var(--ins-font-display); text-wrap: pretty; }
+.ins-body-xs   { font: 400 13px/1.5 var(--ins-font-display); text-wrap: pretty; }
+
+.ins-label {
+  font: 400 10px/1 var(--ins-font-mono);
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--ins-text-4);
+}
+.ins-label-sm {
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ins-text-4);
+}
+.ins-data { font: 400 13px/1.2 var(--ins-font-mono); }
+.ins-provenance {
+  font: 400 10px/1.4 var(--ins-font-mono);
+  letter-spacing: .06em; color: var(--ins-text-5);
+}
+
+.ins-acid  { color: var(--ins-acid); }
+.ins-amber { color: var(--ins-amber); }
+.ins-coral { color: var(--ins-coral); }
+.ins-t3    { color: var(--ins-text-3); }
+.ins-t4    { color: var(--ins-text-4); }
+.ins-t5    { color: var(--ins-text-5); }
+
+/* ---- Grade de fios: o vão de 1px É a régua ---------------------------- */
+
+.ins-hairgrid { display: grid; gap: 1px; background: var(--ins-rule); }
+.ins-hairgrid > * { background: var(--ins-canvas); }
+
+/* ---- Botões ----------------------------------------------------------- */
+
+.ins-btn-primary {
+  display: block; width: 100%; min-height: var(--ins-tap); padding: 16px 0;
+  background: var(--ins-acid); color: var(--ins-on-acid);
+  font: 400 11px/1 var(--ins-font-mono);
+  letter-spacing: .16em; text-transform: uppercase;
+}
+.ins-btn-primary:active { background: var(--ins-acid-hover); }
+
+.ins-btn-secondary {
+  display: block; width: 100%; min-height: var(--ins-tap); padding: 13px 0;
+  background: transparent; color: var(--ins-text-2);
+  border: 1px solid var(--ins-border-strong);
+  font: 400 11px/1 var(--ins-font-mono);
+  letter-spacing: .16em; text-transform: uppercase;
+}
+.ins-btn-secondary:active { background: var(--ins-surface); }
+
+/* Tracejado quer dizer: isto CRIA alguma coisa. */
+.ins-btn-add {
+  display: block; width: 100%; min-height: var(--ins-tap); padding: 14px 0;
+  background: transparent; color: var(--ins-acid);
+  border: 1px dashed var(--ins-border-strong);
+  font: 400 11px/1 var(--ins-font-mono);
+  letter-spacing: .16em; text-transform: uppercase;
+}
+.ins-btn-add:active { background: var(--ins-surface-acid); }
+
+.ins-btn-destructive { color: var(--ins-coral); }
+
+.ins-chip-cta {
+  display: inline-block; padding: 9px 12px;
+  background: var(--ins-acid); color: var(--ins-on-acid);
+  font: 400 10px/1 var(--ins-font-mono);
+  letter-spacing: .14em; text-transform: uppercase;
+}
+
+.ins-chip {
+  padding: 10px 12px; min-height: var(--ins-tap-dense);
+  border: 1px solid var(--ins-border);
+  font: 400 11px/1 var(--ins-font-mono);
+  letter-spacing: .09em; text-transform: uppercase;
+  color: var(--ins-text-3);
+}
+.ins-chip.on { background: var(--ins-acid); color: var(--ins-on-acid); border-color: var(--ins-acid); }
+.ins-chips { display: flex; flex-wrap: wrap; gap: var(--ins-2); }
+
+/* ---- Formulário ------------------------------------------------------- */
+
+.ins-input { width: 100%; padding: 12px; }
+
+.ins-stepper { display: flex; align-items: center; gap: var(--ins-2); }
+.ins-stepper-btn {
+  width: var(--ins-tap); height: var(--ins-tap); flex: 0 0 auto;
+  border: 1px solid var(--ins-border-strong);
+  color: var(--ins-text); font: 400 22px/1 var(--ins-font-mono);
+}
+.ins-stepper-btn:active { background: var(--ins-surface); }
+.ins-stepper-val {
+  flex: 1; text-align: center;
+  font: 600 19px/1 var(--ins-font-mono); letter-spacing: -.03em;
+}
+
+/* ---- Movimento: existem exatamente dois ------------------------------- */
+
+@keyframes ins-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
+
+.ins-live-dot {
+  width: 7px; height: 7px; flex: 0 0 auto;
+  border-radius: 50%; background: var(--ins-acid);
+  animation: ins-pulse 2.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ins-live-dot { animation: none; }
+  * { transition: none !important; }
+}

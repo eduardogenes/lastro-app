@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#0C0E0C"><title>Plano · Eduardo</title><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"><style>*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;padding:0;background:#0C0E0C;color:#F2F4EF;font-family:'Space Grotesk',system-ui,sans-serif;overscroll-behavior-y:none}a{color:#CBF35E;text-decoration:none}a:hover{color:#E4FF9B}button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}input,select,textarea{font:inherit;color:#F2F4EF;background:#111411;border:1px solid #2B302A;border-radius:0;padding:12px;width:100%;-webkit-appearance:none;appearance:none}input:focus,textarea:focus{outline:none;border-color:#CBF35E}input[type=range]{background:transparent;border:0;padding:0}input[type=range]::-webkit-slider-runnable-track{height:2px;background:#2B302A}input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-12px;border-radius:50%;background:#CBF35E}input[type=time]{font-family:'IBM Plex Mono',monospace}::placeholder{color:#5E655A}::-webkit-scrollbar{display:none}@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.25}}</style></helmet>
+<div style="min-height:100dvh;background:#0C0E0C;display:flex;justify-content:center">
+<div style="width:100%;max-width:440px;position:relative;padding-bottom:96px">
+
+<sc-if value="{{ isHoje }}" hint-placeholder-val="{{ true }}">
+<div style="padding:calc(14px + env(safe-area-inset-top)) 20px 0">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">{{ dataTxt }}</div>
+      <div style="font-size:30px;line-height:1.02;font-weight:700;letter-spacing:-.03em;margin-top:6px">Hoje</div>
+    </div>
+    <button onClick="{{ openTipo }}" style="border:1px solid #2B302A;border-radius:2px;padding:8px 10px;text-align:right;background:#111411">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478">TIPO DE DIA</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:#CBF35E;margin-top:3px">{{ diaBadge }}</div>
+    </button>
+  </div>
+
+  <div style="margin-top:22px;border-top:1px solid #22271F;padding-top:16px;display:flex;align-items:baseline;gap:10px">
+    <div style="width:7px;height:7px;border-radius:50%;background:#CBF35E;animation:pulseDot 2.4s infinite;flex:none;transform:translateY(-3px)"></div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">AGORA · {{ relogio }}</div>
+  </div>
+
+  <button onClick="{{ abrirProxima }}" style="display:block;width:100%;text-align:left;margin-top:10px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px">
+      <div style="min-width:0">
+        <div style="font-size:13px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;color:#CBF35E">{{ proxTag }}</div>
+        <div style="font-size:34px;line-height:1.02;font-weight:700;letter-spacing:-.035em;margin-top:8px">{{ proxNome }}</div>
+      </div>
+      <div style="text-align:right;flex:none">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:34px;line-height:1;font-weight:500;letter-spacing:-.04em;color:#F2F4EF">{{ contagem }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478;margin-top:4px">{{ contagemLabel }}</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;font-size:14px;line-height:1.5;color:#A8AFA1;text-wrap:pretty">{{ proxResumo }}</div>
+    <div style="margin-top:12px;display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#0C0E0C;background:#CBF35E;padding:7px 11px">ABRIR E EDITAR →</div>
+  </button>
+
+  <div style="margin-top:26px;border-top:1px solid #22271F;padding-top:14px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">ENERGIA</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7C8478">meta {{ metaKcal }}</div>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:8px;margin-top:8px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:52px;line-height:.9;font-weight:600;letter-spacing:-.05em">{{ feitoKcal }}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#7C8478;padding-bottom:6px">kcal registradas</div>
+    </div>
+    <div style="margin-top:14px;height:3px;background:#22271F;position:relative">
+      <div style="position:absolute;left:0;top:0;bottom:0;background:#CBF35E;width: {{ pctKcal }}"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:16px;background:#22271F">
+      <div style="background:#0C0E0C;padding:12px 2px 10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478">PROTEÍNA</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.03em;margin-top:5px">{{ pTxt }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7C8478;margin-top:2px">{{ pKgTxt }}</div>
+      </div>
+      <div style="background:#0C0E0C;padding:12px 2px 10px 12px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478">CARBO</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.03em;margin-top:5px">{{ cTxt }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7C8478;margin-top:2px">gramas</div>
+      </div>
+      <div style="background:#0C0E0C;padding:12px 2px 10px 12px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478">GORDURA</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.03em;margin-top:5px">{{ gTxt }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7C8478;margin-top:2px">gramas</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:#7C8478">{{ ajusteTxt }}</div>
+  </div>
+
+  <div style="margin-top:26px;border-top:1px solid #22271F;padding-top:14px;display:flex;justify-content:space-between;align-items:baseline">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">SEQUÊNCIA DO DIA</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A">toque em ··· para editar</div>
+  </div>
+  <sc-for list="{{ refeicoes }}" as="m" hint-placeholder-count="6">
+    <div style="display:flex;gap:14px;align-items:stretch">
+      <div style="width:46px;flex:none;padding-top:16px;text-align:right">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#A8AFA1">{{ m.t }}</div>
+      </div>
+      <div style="width:1px;background:#22271F;flex:none;position:relative">
+        <div style="position:absolute;left:-4px;top:20px;width:9px;height:9px;border-radius:50%;background: {{ m.dot }}"></div>
+      </div>
+      <div style="flex:1;min-width:0;padding:14px 0 16px;border-bottom:1px solid #161A15">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <button onClick="{{ m.toggle }}" style="width:26px;height:26px;flex:none;border:1px solid #3A4137;display:flex;align-items:center;justify-content:center;background: {{ m.boxBg }};margin-top:1px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#0C0E0C">{{ m.check }}</span>
+          </button>
+          <button onClick="{{ m.open }}" style="flex:1;min-width:0;text-align:left">
+            <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline">
+              <div style="font-size:17px;font-weight:500;letter-spacing:-.01em;color: {{ m.nomeCor }}">{{ m.n }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#7C8478;flex:none">{{ m.kcal }}</div>
+            </div>
+            <div style="font-size:13px;line-height:1.45;color:#7C8478;margin-top:5px;text-wrap:pretty">{{ m.resumo }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:#5E655A;margin-top:7px">{{ m.macros }}</div>
+          </button>
+          <button onClick="{{ m.editar }}" style="width:30px;height:30px;flex:none;border:1px solid #22271F;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#7C8478;line-height:1">···</button>
+        </div>
+      </div>
+    </div>
+  </sc-for>
+
+  <button onClick="{{ novaRefeicao }}" style="display:block;width:100%;margin-top:16px;padding:15px 0;border:1px dashed #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#CBF35E">+ ADICIONAR REFEIÇÃO</button>
+
+  <div style="margin-top:22px;border:1px solid #22271F;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">ÁGUA</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#F2F4EF">{{ aguaTxt }}</div>
+    </div>
+    <div style="display:flex;gap:4px;margin-top:14px">
+      <sc-for list="{{ aguaTicks }}" as="a" hint-placeholder-count="14">
+        <button onClick="{{ a.set }}" style="flex:1;height:34px;background: {{ a.bg }};border:1px solid #2B302A"></button>
+      </sc-for>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:9px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A">
+      <span>250 ml por toque</span><span>meta {{ aguaMeta }}</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAlimentos }}">
+<div style="padding:calc(14px + env(safe-area-inset-top)) 20px 0">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">TUDO QUE O PLANO PODE USAR</div>
+  <div style="font-size:30px;line-height:1.02;font-weight:700;letter-spacing:-.03em;margin-top:6px">Alimentos</div>
+  <div style="font-size:14px;line-height:1.5;color:#7C8478;margin-top:10px;text-wrap:pretty">Cadastre, edite ou apague. Tudo que você mudar aqui recalcula as refeições, as calorias e a lista de compras.</div>
+
+  <input type="text" value="{{ buscaAlim }}" onChange="{{ mudarBusca }}" placeholder="Buscar alimento" style="margin-top:16px">
+  <button onClick="{{ novoAlimento }}" style="display:block;width:100%;margin-top:8px;padding:14px 0;background:#CBF35E;color:#0C0E0C;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em">+ CADASTRAR ALIMENTO</button>
+
+  <sc-for list="{{ listaAlimentos }}" as="g" hint-placeholder-count="5">
+    <div style="margin-top:24px;border-top:1px solid #22271F;padding-top:13px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">{{ g.n }}</div>
+      <sc-for list="{{ g.itens }}" as="f" hint-placeholder-count="4">
+        <button onClick="{{ f.editar }}" style="display:block;width:100%;text-align:left;padding:13px 0;border-bottom:1px solid #161A15">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+            <div style="font-size:15px;color: {{ f.cor }};min-width:0">{{ f.n }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#CBF35E;flex:none">{{ f.kcal }}</div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:#5E655A;margin-top:5px">{{ f.macros }}</div>
+        </button>
+      </sc-for>
+    </div>
+  </sc-for>
+
+  <div style="margin-top:26px;border-top:1px solid #22271F;padding-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">CRU → COZIDO</div>
+  <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+    <sc-for list="{{ convChips }}" as="c" hint-placeholder-count="4">
+      <button onClick="{{ c.set }}" style="padding:9px 12px;border:1px solid #2B302A;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;background: {{ c.bg }};color: {{ c.fg }}">{{ c.n }}</button>
+    </sc-for>
+  </div>
+  <div style="margin-top:16px;border:1px solid #22271F;padding:18px 16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">QUANTIDADE COZIDA</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+      <button onClick="{{ convMenos }}" style="width:44px;height:44px;border:1px solid #3A4137;font-size:22px;line-height:1">−</button>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:600;letter-spacing:-.04em">{{ convQtdTxt }}</div>
+      <button onClick="{{ convMais }}" style="width:44px;height:44px;border:1px solid #3A4137;font-size:22px;line-height:1">+</button>
+    </div>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid #22271F;display:flex;align-items:baseline;justify-content:space-between">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">{{ convLabelCru }}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#CBF35E;letter-spacing:-.03em">{{ convResultado }}</div>
+    </div>
+  </div>
+
+  <div style="margin-top:26px;border-top:1px solid #22271F;padding-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">REFEIÇÕES ALTERNATIVAS DO PLANO ORIGINAL</div>
+  <div style="margin-top:12px;display:flex;flex-direction:column;gap:1px;background:#22271F">
+    <div style="background:#0C0E0C;padding:16px 0">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:#CBF35E">CAFÉ B · PÃO</div>
+      <div style="font-size:14px;line-height:1.5;color:#D6DAD0;margin-top:8px">100 g pão Artesano + 70 g frango + 30 g requeijão light + 250 ml leite + 120 g uva.</div>
+    </div>
+    <div style="background:#0C0E0C;padding:16px 0">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:#CBF35E">LANCHE B · CEREAL</div>
+      <div style="font-size:14px;line-height:1.5;color:#D6DAD0;margin-top:8px">75 g cereal de milho simples + 250 ml leite + 120 g banana + 30 g whey + 10 g leite em pó + 10 g pasta de amendoim. Produto simples, sem recheio.</div>
+    </div>
+    <div style="background:#0C0E0C;padding:16px 0">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:#CBF35E">ALMOÇO / JANTAR B</div>
+      <div style="font-size:14px;line-height:1.5;color:#D6DAD0;margin-top:8px">220 g macarrão cozido no lugar dos 250 g de arroz; mantenha proteína, feijão, vegetais e azeite.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:22px;border:1px solid #2B302A;padding:16px;background:#111411">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:#FFC46B">FORA DE CASA</div>
+    <div style="font-size:14px;line-height:1.5;color:#D6DAD0;margin-top:8px">A refeição externa substitui uma refeição do plano. Priorize arroz/massa + proteína + feijão/legume. Não trate como refeição livre.</div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isCompras }}">
+<div style="padding:calc(14px + env(safe-area-inset-top)) 20px 0">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">GERADA A PARTIR DO SEU PLANO ATUAL</div>
+  <div style="font-size:30px;line-height:1.02;font-weight:700;letter-spacing:-.03em;margin-top:6px">Compras</div>
+  <div style="display:flex;gap:6px;margin-top:16px">
+    <sc-for list="{{ diasChips }}" as="d" hint-placeholder-count="3">
+      <button onClick="{{ d.set }}" style="flex:1;padding:12px 0;border:1px solid #2B302A;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;background: {{ d.bg }};color: {{ d.fg }}">{{ d.n }}</button>
+    </sc-for>
+  </div>
+  <div style="margin-top:10px;font-size:12px;line-height:1.45;color:#7C8478">{{ diasNota }}</div>
+
+  <sc-for list="{{ grupos }}" as="grp" hint-placeholder-count="6">
+    <div style="margin-top:24px;border-top:1px solid #22271F;padding-top:13px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">{{ grp.n }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A">{{ grp.contagem }}</div>
+      </div>
+      <sc-for list="{{ grp.itens }}" as="it" hint-placeholder-count="4">
+        <div style="display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #161A15">
+          <button onClick="{{ it.toggle }}" style="width:22px;height:22px;flex:none;border:1px solid #3A4137;background: {{ it.bg }};display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#0C0E0C">{{ it.check }}</button>
+          <button onClick="{{ it.toggle }}" style="flex:1;min-width:0;text-align:left">
+            <div style="font-size:15px;color: {{ it.cor }};text-decoration: {{ it.risco }}">{{ it.n }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:3px">{{ it.origem }}</div>
+          </button>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#A8AFA1;flex:none">{{ it.q }}</div>
+          <sc-if value="{{ it.removivel }}">
+            <button onClick="{{ it.remover }}" style="width:26px;height:26px;flex:none;border:1px solid #22271F;font-size:14px;line-height:1;color:#7C8478">×</button>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </sc-for>
+
+  <div style="margin-top:24px;border-top:1px solid #22271F;padding-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">ITEM AVULSO</div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <input type="text" value="{{ extraNome }}" onChange="{{ mudarExtraNome }}" placeholder="Ex.: papel toalha" style="flex:1">
+    <input type="text" value="{{ extraQtd }}" onChange="{{ mudarExtraQtd }}" placeholder="qtd" style="width:88px;font-family:'IBM Plex Mono',monospace">
+  </div>
+  <button onClick="{{ addExtra }}" style="display:block;width:100%;margin-top:8px;padding:13px 0;border:1px dashed #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#CBF35E">+ ADICIONAR À LISTA</button>
+
+  <div style="margin-top:26px;border-top:1px solid #22271F;padding-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">PREPARO ANTECIPADO</div>
+  <sc-for list="{{ preparo }}" as="p" hint-placeholder-count="5">
+    <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #161A15">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#CBF35E;flex:none;width:18px">{{ p.i }}</div>
+      <div style="font-size:14px;line-height:1.5;color:#D6DAD0;text-wrap:pretty">{{ p.txt }}</div>
+    </div>
+  </sc-for>
+
+  <div style="margin-top:22px;border:1px solid #22271F;padding:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">NO TRABALHO</div>
+    <div style="font-size:14px;line-height:1.5;color:#D6DAD0;margin-top:9px">Geladeira + micro-ondas + airfryer são suficientes. Tudo que passar de 3–4 dias de geladeira vai congelado, já porcionado.</div>
+  </div>
+
+  <button onClick="{{ limparCompras }}" style="display:block;width:100%;margin-top:18px;padding:13px 0;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C8478">DESMARCAR TUDO</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDados }}">
+<div style="padding:calc(14px + env(safe-area-inset-top)) 20px 0">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">MÉDIA SEMANAL MANDA · NUNCA UMA PESAGEM</div>
+  <div style="font-size:30px;line-height:1.02;font-weight:700;letter-spacing:-.03em;margin-top:6px">Dados</div>
+
+  <div style="margin-top:20px;border:1px solid #22271F;padding:18px 16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">PESO DA MANHÃ</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+      <button onClick="{{ pesoMenos }}" style="width:44px;height:44px;border:1px solid #3A4137;font-size:22px;line-height:1">−</button>
+      <div style="text-align:center">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:38px;font-weight:600;letter-spacing:-.045em;line-height:1">{{ pesoRascunho }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#7C8478;margin-top:4px">KG</div>
+      </div>
+      <button onClick="{{ pesoMais }}" style="width:44px;height:44px;border:1px solid #3A4137;font-size:22px;line-height:1">+</button>
+    </div>
+    <button onClick="{{ registrarPeso }}" style="display:block;width:100%;margin-top:16px;padding:14px 0;background:#CBF35E;color:#0C0E0C;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em">REGISTRAR HOJE</button>
+    <div style="margin-top:14px;display:flex;gap:3px;align-items:flex-end;height:56px">
+      <sc-for list="{{ pesoBarras }}" as="b" hint-placeholder-count="10">
+        <div style="flex:1;background:#22271F;position:relative;height:100%">
+          <div style="position:absolute;left:0;right:0;bottom:0;background: {{ b.bg }};height: {{ b.h }}"></div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A">
+      <span>{{ pesoPrimeiro }}</span><span>{{ pesoUltimo }}</span>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#22271F;border:1px solid #22271F">
+    <div style="background:#0C0E0C;padding:14px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478">MÉDIA DA SEMANA</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:-.03em;margin-top:6px">{{ mediaSemana }}</div>
+    </div>
+    <div style="background:#0C0E0C;padding:14px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478">TENDÊNCIA</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:-.03em;margin-top:6px;color: {{ tendCor }}">{{ tendencia }}</div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;border:1px solid #22271F;padding:18px 16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">SINAIS DA SEMANA</div>
+    <button onClick="{{ togglePerf }}" style="display:flex;width:100%;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #161A15;text-align:left">
+      <span style="font-size:15px;color:#D6DAD0">Cargas / repetições subindo</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;padding:6px 10px;border:1px solid #3A4137;background: {{ perfBg }};color: {{ perfFg }};flex:none">{{ perfTxt }}</span>
+    </button>
+    <button onClick="{{ toggleGordura }}" style="display:flex;width:100%;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;text-align:left">
+      <span style="font-size:15px;color:#D6DAD0">Gordura visual subindo</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;padding:6px 10px;border:1px solid #3A4137;background: {{ gordBg }};color: {{ gordFg }};flex:none">{{ gordTxt }}</span>
+    </button>
+  </div>
+
+  <div style="margin-top:16px;border:1px solid #CBF35E;padding:18px 16px;background:#101408">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">VEREDITO DA REGRA</div>
+    <div style="font-size:28px;font-weight:700;letter-spacing:-.03em;margin-top:8px;color: {{ vereditoCor }}">{{ veredito }}</div>
+    <div style="font-size:14px;line-height:1.5;color:#D6DAD0;margin-top:8px;text-wrap:pretty">{{ vereditoTxt }}</div>
+    <sc-if value="{{ mostrarAplicar }}">
+      <button onClick="{{ aplicarAjuste }}" style="display:block;width:100%;margin-top:14px;padding:14px 0;background:#CBF35E;color:#0C0E0C;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em">{{ aplicarLabel }}</button>
+    </sc-if>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:#7C8478;margin-top:12px">{{ ajusteAtual }}</div>
+  </div>
+
+  <div style="margin-top:16px;border:1px solid #22271F;padding:18px 16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">CINTURA · 1×/SEMANA</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5E655A">umbigo, relaxado</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+      <button onClick="{{ cintMenos }}" style="width:44px;height:44px;border:1px solid #3A4137;font-size:22px;line-height:1">−</button>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:600;letter-spacing:-.04em">{{ cintRascunho }}</div>
+      <button onClick="{{ cintMais }}" style="width:44px;height:44px;border:1px solid #3A4137;font-size:22px;line-height:1">+</button>
+    </div>
+    <button onClick="{{ registrarCintura }}" style="display:block;width:100%;margin-top:14px;padding:13px 0;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#D6DAD0">REGISTRAR MEDIDA</button>
+    <div style="font-size:13px;line-height:1.5;color:#7C8478;margin-top:12px">{{ cinturaHistorico }}</div>
+  </div>
+
+  <div style="margin-top:16px;border:1px solid #22271F;padding:18px 16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">FOTOS · A CADA 4 SEMANAS</div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-top:10px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:600;letter-spacing:-.04em">{{ fotoDias }}</div>
+      <div style="font-size:13px;color:#7C8478">{{ fotoLabel }}</div>
+    </div>
+    <button onClick="{{ registrarFoto }}" style="display:block;width:100%;margin-top:14px;padding:13px 0;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#D6DAD0">MARQUEI AS FOTOS HOJE</button>
+    <div style="font-size:12px;line-height:1.5;color:#5E655A;margin-top:10px">Mesma luz, local, distância e poses.</div>
+  </div>
+
+  <div style="margin-top:16px;border:1px solid #22271F;padding:18px 16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">REGRAS · A PARTIR DA 3ª SEMANA</div>
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
+      <div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#CBF35E">SUBIR +150</div><div style="font-size:13px;line-height:1.5;color:#A8AFA1;margin-top:4px">Média sobe &lt; 0,10 kg/sem por 2 semanas e performance não avança → +60 g de arroz cozido no almoço e no jantar.</div></div>
+      <div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#CBF35E">MANTER</div><div style="font-size:13px;line-height:1.5;color:#A8AFA1;margin-top:4px">Média +0,15 a +0,30 kg/sem com cargas progredindo → não mexa, mesmo que a cintura suba discretamente.</div></div>
+      <div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#FFC46B">REDUZIR −150</div><div style="font-size:13px;line-height:1.5;color:#A8AFA1;margin-top:4px">Média &gt; 0,40 kg/sem por 2 semanas com aumento visual claro de gordura → −60 g de arroz em cada refeição principal.</div></div>
+      <div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#FFC46B">OBSERVAR</div><div style="font-size:13px;line-height:1.5;color:#A8AFA1;margin-top:4px">Peso sobe pouco, treino melhora e fotos mostram mais volume → mantenha 1–2 semanas antes de subir comida.</div></div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isGuia }}">
+<div style="padding:calc(14px + env(safe-area-inset-top)) 20px 0">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">FASE DE CONSTRUÇÃO MUSCULAR</div>
+  <div style="font-size:30px;line-height:1.02;font-weight:700;letter-spacing:-.03em;margin-top:6px">Guia</div>
+
+  <div style="margin-top:18px;border:1px solid #22271F;padding:18px 16px">
+    <div style="font-size:17px;line-height:1.35;font-weight:500">Crescer de forma deliberada, com performance em alta.</div>
+    <div style="font-size:14px;line-height:1.5;color:#A8AFA1;margin-top:10px;text-wrap:pretty">Alvo: +0,15 a +0,25 kg/semana na média. Cintura é indicador secundário, não gatilho isolado de corte. Sem semana de adaptação: o primeiro ciclo já é de construção.</div>
+    <div style="display:flex;gap:18px;margin-top:16px;padding-top:14px;border-top:1px solid #22271F">
+      <div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:#7C8478">PESO</div><div style="font-family:'IBM Plex Mono',monospace;font-size:17px;margin-top:3px">{{ perfilPeso }}</div></div>
+      <div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:#7C8478">ALTURA</div><div style="font-family:'IBM Plex Mono',monospace;font-size:17px;margin-top:3px">{{ perfilAltura }}</div></div>
+      <div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:#7C8478">PROTEÍNA HOJE</div><div style="font-family:'IBM Plex Mono',monospace;font-size:17px;margin-top:3px">{{ perfilProt }}</div></div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;border-top:1px solid #22271F;padding-top:13px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">SEU PLANO, POR TIPO DE DIA</div>
+  <sc-for list="{{ tiposDia }}" as="d" hint-placeholder-count="3">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-bottom:1px solid #161A15">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;color: {{ d.cor }}">{{ d.n }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5E655A;margin-top:5px">{{ d.macros }}</div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.03em">{{ d.kcal }}</div>
+    </div>
+  </sc-for>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:10px;line-height:1.6">Calculado ao vivo a partir dos seus alimentos. Original do PDF: 3.060 / 2.960 / 2.680 kcal.</div>
+
+  <div style="margin-top:24px;border-top:1px solid #22271F;padding-top:13px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">CALENDÁRIO DE TREINO</div>
+  <div style="font-size:13px;line-height:1.5;color:#7C8478;margin-top:10px">Toque em um dia para mudar o que ele é.</div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px">
+    <sc-for list="{{ semana }}" as="w" hint-placeholder-count="7">
+      <button onClick="{{ w.ciclar }}" style="border:1px solid #22271F;padding:11px 0;text-align:center;background: {{ w.bg }}">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7C8478">{{ w.dia }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;margin-top:4px;color: {{ w.fg }}">{{ w.code }}</div>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="margin-top:24px;border-top:1px solid #22271F;padding-top:13px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">AO REDOR DO TREINO</div>
+  <sc-for list="{{ performance }}" as="p" hint-placeholder-count="5">
+    <div style="padding:14px 0;border-bottom:1px solid #161A15">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:#CBF35E">{{ p.n }}</div>
+      <div style="font-size:14px;line-height:1.5;color:#D6DAD0;margin-top:6px;text-wrap:pretty">{{ p.txt }}</div>
+    </div>
+  </sc-for>
+
+  <div style="margin-top:24px;border-top:1px solid #22271F;padding-top:13px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">SUPLEMENTOS E ROTINA</div>
+  <sc-for list="{{ suplementos }}" as="s" hint-placeholder-count="4">
+    <div style="padding:14px 0;border-bottom:1px solid #161A15">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:#CBF35E">{{ s.n }}</div>
+      <div style="font-size:14px;line-height:1.5;color:#D6DAD0;margin-top:6px;text-wrap:pretty">{{ s.txt }}</div>
+    </div>
+  </sc-for>
+
+  <div style="margin-top:24px;border-top:1px solid #22271F;padding-top:13px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">BASE CIENTÍFICA</div>
+  <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:10px;text-wrap:pretty">ISSN: proteína e exercício (2017); nutrient timing (2017); creatina (2017). Carboidrato e treino resistido: Henselmans et al. 2022; King et al. 2022. Superávit: Helms et al. 2023.</div>
+  <div style="font-size:12px;line-height:1.5;color:#5E655A;margin-top:14px">Plano nutricional personalizado · Eduardo Genes · pesos de alimentos prontos/cozidos, salvo indicação contrária. Reavaliar em 6 semanas.</div>
+
+  <div style="margin-top:22px;display:flex;flex-direction:column;gap:8px">
+    <button onClick="{{ resetarDia }}" style="display:block;width:100%;padding:13px 0;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C8478">ZERAR REGISTROS DE HOJE</button>
+    <button onClick="{{ restaurarPlano }}" style="display:block;width:100%;padding:13px 0;border:1px solid #FFC46B;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#FFC46B">{{ restaurarLabel }}</button>
+  </div>
+</div>
+</sc-if>
+
+<div style="position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;pointer-events:none;z-index:40">
+  <div style="width:100%;max-width:440px;background:#0C0E0C;border-top:1px solid #22271F;pointer-events:auto;padding-bottom:env(safe-area-inset-bottom);position:relative">
+    <div style="position:absolute;top:-1px;height:2px;background:#CBF35E;width:20%;left: {{ navX }};transition:left .22s cubic-bezier(.2,.8,.2,1)"></div>
+    <div style="display:flex">
+      <button onClick="{{ navHoje }}" style="flex:1;padding:14px 0 13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color: {{ corHoje }}">HOJE</button>
+      <button onClick="{{ navAlimentos }}" style="flex:1;padding:14px 0 13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color: {{ corAlimentos }}">ALIMENTOS</button>
+      <button onClick="{{ navCompras }}" style="flex:1;padding:14px 0 13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color: {{ corCompras }}">COMPRAS</button>
+      <button onClick="{{ navDados }}" style="flex:1;padding:14px 0 13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color: {{ corDados }}">DADOS</button>
+      <button onClick="{{ navGuia }}" style="flex:1;padding:14px 0 13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color: {{ corGuia }}">GUIA</button>
+    </div>
+  </div>
+</div>
+
+<sc-if value="{{ temSheet }}">
+<div style="position:fixed;inset:0;background:rgba(6,8,6,.72);z-index:50;display:flex;align-items:flex-end;justify-content:center">
+  <button onClick="{{ fecharSheet }}" style="position:absolute;inset:0"></button>
+  <div style="position:relative;width:100%;max-width:440px;background:#0C0E0C;border-top:1px solid #CBF35E;max-height:92dvh;overflow-y:auto;padding:0 20px calc(24px + env(safe-area-inset-bottom))">
+    <div style="position:sticky;top:0;background:#0C0E0C;padding:16px 0 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid #22271F;z-index:2">
+      <div style="min-width:0">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#CBF35E">{{ sheetTag }}</div>
+        <div style="font-size:24px;font-weight:700;letter-spacing:-.03em;margin-top:5px">{{ sheetNome }}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7C8478;margin-top:4px">{{ sheetHora }}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex:none">
+        <button onClick="{{ editarRefeicaoAtual }}" style="width:40px;height:40px;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#7C8478;line-height:1">···</button>
+        <button onClick="{{ fecharSheet }}" style="width:40px;height:40px;border:1px solid #3A4137;font-size:18px;line-height:1">×</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#22271F;margin-top:16px">
+      <div style="background:#0C0E0C;padding:11px 4px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:#7C8478">KCAL</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;margin-top:4px;color:#CBF35E">{{ sheetKcal }}</div>
+      </div>
+      <div style="background:#0C0E0C;padding:11px 4px 11px 10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:#7C8478">P</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;margin-top:4px">{{ sheetP }}</div>
+      </div>
+      <div style="background:#0C0E0C;padding:11px 4px 11px 10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:#7C8478">C</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;margin-top:4px">{{ sheetC }}</div>
+      </div>
+      <div style="background:#0C0E0C;padding:11px 4px 11px 10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:#7C8478">G</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;margin-top:4px">{{ sheetG }}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:baseline">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">PORÇÃO SÓ DE HOJE</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;color:#CBF35E">{{ sheetEscalaTxt }}</div>
+    </div>
+    <input type="range" min="50" max="150" step="5" value="{{ sheetEscala }}" onChange="{{ mudarEscala }}" onInput="{{ mudarEscala }}" style="width:100%;margin:14px 0 0;height:26px;accentColor:#CBF35E">
+    <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A">
+      <span>50%</span><span>100%</span><span>150%</span>
+    </div>
+
+    <div style="margin-top:22px;border-top:1px solid #22271F;padding-top:13px;display:flex;justify-content:space-between;align-items:baseline">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">ITENS</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A">toque para editar</div>
+    </div>
+    <sc-for list="{{ sheetItens }}" as="it" hint-placeholder-count="5">
+      <div style="padding:13px 0;border-bottom:1px solid #161A15">
+        <button onClick="{{ it.abrir }}" style="display:flex;width:100%;justify-content:space-between;align-items:baseline;gap:12px;text-align:left">
+          <div style="min-width:0">
+            <div style="font-size:15px;line-height:1.35;color: {{ it.cor }}">{{ it.n }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:#5E655A;margin-top:4px">{{ it.info }}</div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;color:#F2F4EF;flex:none">{{ it.q }}</div>
+        </button>
+        <sc-if value="{{ it.aberto }}">
+          <div style="margin-top:12px;border:1px solid #22271F;padding:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <button onClick="{{ it.menos }}" style="width:46px;height:46px;border:1px solid #3A4137;font-size:22px;line-height:1">−</button>
+              <div style="text-align:center">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;letter-spacing:-.03em">{{ it.qBase }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:#7C8478;margin-top:3px">NO PLANO</div>
+              </div>
+              <button onClick="{{ it.mais }}" style="width:46px;height:46px;border:1px solid #3A4137;font-size:22px;line-height:1">+</button>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:12px">
+              <button onClick="{{ it.trocar }}" style="flex:1;padding:12px 0;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:#CBF35E">TROCAR</button>
+              <button onClick="{{ it.remover }}" style="flex:1;padding:12px 0;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:#FF8A6B">REMOVER</button>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <button onClick="{{ it.toggleArroz }}" style="flex:1;padding:11px 4px;border:1px solid #22271F;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;background: {{ it.arrozBg }};color: {{ it.arrozFg }}">VARIA COM O DIA</button>
+              <button onClick="{{ it.toggleAlta }}" style="flex:1;padding:11px 4px;border:1px solid #22271F;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;background: {{ it.altaBg }};color: {{ it.altaFg }}">SÓ DIA DE ALTA</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+
+    <button onClick="{{ addAlimento }}" style="display:block;width:100%;margin-top:14px;padding:14px 0;border:1px dashed #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#CBF35E">+ ADICIONAR ALIMENTO</button>
+
+    <div style="margin-top:18px;font-size:13px;line-height:1.55;color:#7C8478;text-wrap:pretty">{{ sheetNota }}</div>
+    <button onClick="{{ sheetToggle }}" style="display:block;width:100%;margin-top:18px;padding:16px 0;background: {{ sheetBtnBg }};color: {{ sheetBtnFg }};border:1px solid #CBF35E;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em">{{ sheetBtnTxt }}</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ pickerAberto }}">
+<div style="position:fixed;inset:0;background:rgba(6,8,6,.82);z-index:70;display:flex;align-items:flex-end;justify-content:center">
+  <button onClick="{{ fecharPicker }}" style="position:absolute;inset:0"></button>
+  <div style="position:relative;width:100%;max-width:440px;background:#0C0E0C;border-top:1px solid #CBF35E;max-height:88dvh;overflow-y:auto;padding:0 20px calc(24px + env(safe-area-inset-bottom))">
+    <div style="position:sticky;top:0;background:#0C0E0C;padding:16px 0 12px;border-bottom:1px solid #22271F;z-index:2">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#CBF35E">{{ pickerTag }}</div>
+          <div style="font-size:22px;font-weight:700;letter-spacing:-.03em;margin-top:4px">{{ pickerTitulo }}</div>
+        </div>
+        <button onClick="{{ fecharPicker }}" style="width:40px;height:40px;border:1px solid #3A4137;font-size:18px;line-height:1;flex:none">×</button>
+      </div>
+      <input type="text" value="{{ pickerBusca }}" onChange="{{ mudarPickerBusca }}" placeholder="Buscar alimento" style="margin-top:12px">
+    </div>
+    <sc-for list="{{ pickerLista }}" as="g" hint-placeholder-count="4">
+      <div style="margin-top:18px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">{{ g.n }}</div>
+        <sc-for list="{{ g.itens }}" as="f" hint-placeholder-count="4">
+          <button onClick="{{ f.escolher }}" style="display:block;width:100%;text-align:left;padding:14px 0;border-bottom:1px solid #161A15">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+              <div style="font-size:15px;color:#F2F4EF">{{ f.n }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#CBF35E;flex:none">{{ f.kcal }}</div>
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:4px">{{ f.macros }}</div>
+          </button>
+        </sc-for>
+      </div>
+    </sc-for>
+    <button onClick="{{ criarDoPicker }}" style="display:block;width:100%;margin-top:18px;padding:14px 0;border:1px dashed #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#CBF35E">+ CADASTRAR NOVO ALIMENTO</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ fEditorAberto }}">
+<div style="position:fixed;inset:0;background:rgba(6,8,6,.82);z-index:80;display:flex;align-items:flex-end;justify-content:center">
+  <button onClick="{{ fecharFEditor }}" style="position:absolute;inset:0"></button>
+  <div style="position:relative;width:100%;max-width:440px;background:#0C0E0C;border-top:1px solid #CBF35E;max-height:92dvh;overflow-y:auto;padding:20px 20px calc(24px + env(safe-area-inset-bottom))">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#CBF35E">{{ fEditorTag }}</div>
+        <div style="font-size:22px;font-weight:700;letter-spacing:-.03em;margin-top:4px">Alimento</div>
+      </div>
+      <button onClick="{{ fecharFEditor }}" style="width:40px;height:40px;border:1px solid #3A4137;font-size:18px;line-height:1;flex:none">×</button>
+    </div>
+
+    <div style="margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">NOME</div>
+    <input type="text" value="{{ fNome }}" onChange="{{ setFNome }}" placeholder="Ex.: Patinho moído cozido" style="margin-top:8px">
+
+    <div style="margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">ONDE COMPRA</div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <sc-for list="{{ fCats }}" as="c" hint-placeholder-count="6">
+        <button onClick="{{ c.set }}" style="padding:10px 11px;border:1px solid #2B302A;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;background: {{ c.bg }};color: {{ c.fg }}">{{ c.n }}</button>
+      </sc-for>
+    </div>
+
+    <div style="margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">MEDIDA</div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <sc-for list="{{ fUnits }}" as="u" hint-placeholder-count="2">
+        <button onClick="{{ u.set }}" style="flex:1;padding:12px 0;border:1px solid #2B302A;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;background: {{ u.bg }};color: {{ u.fg }}">{{ u.n }}</button>
+      </sc-for>
+    </div>
+
+    <div style="margin-top:18px;display:flex;justify-content:space-between;align-items:baseline">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">POR 100 {{ fUnitTxt }}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5E655A">olhe o rótulo</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:#5E655A;margin-bottom:5px">KCAL</div>
+        <input type="number" inputMode="decimal" value="{{ fKcal }}" onChange="{{ setFKcal }}" style="font-family:'IBM Plex Mono',monospace">
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:#5E655A;margin-bottom:5px">PROTEÍNA G</div>
+        <input type="number" inputMode="decimal" value="{{ fP }}" onChange="{{ setFP }}" style="font-family:'IBM Plex Mono',monospace">
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:#5E655A;margin-bottom:5px">CARBO G</div>
+        <input type="number" inputMode="decimal" value="{{ fC }}" onChange="{{ setFC }}" style="font-family:'IBM Plex Mono',monospace">
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:#5E655A;margin-bottom:5px">GORDURA G</div>
+        <input type="number" inputMode="decimal" value="{{ fG }}" onChange="{{ setFG }}" style="font-family:'IBM Plex Mono',monospace">
+      </div>
+    </div>
+
+    <div style="margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">FATOR CRU (OPCIONAL)</div>
+    <input type="number" inputMode="decimal" value="{{ fCru }}" onChange="{{ setFCru }}" placeholder="Ex.: 0,36 para arroz" style="margin-top:8px;font-family:'IBM Plex Mono',monospace">
+    <div style="font-size:12px;line-height:1.5;color:#5E655A;margin-top:7px">Quanto rende em cru cada 1 g cozido. Usado na lista de compras.</div>
+
+    <button onClick="{{ salvarAlimento }}" style="display:block;width:100%;margin-top:20px;padding:16px 0;background:#CBF35E;color:#0C0E0C;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em">SALVAR ALIMENTO</button>
+    <sc-if value="{{ podeApagarF }}">
+      <button onClick="{{ apagarAlimento }}" style="display:block;width:100%;margin-top:8px;padding:14px 0;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#FF8A6B">{{ apagarFLabel }}</button>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ mEditorAberto }}">
+<div style="position:fixed;inset:0;background:rgba(6,8,6,.82);z-index:80;display:flex;align-items:flex-end;justify-content:center">
+  <button onClick="{{ fecharMEditor }}" style="position:absolute;inset:0"></button>
+  <div style="position:relative;width:100%;max-width:440px;background:#0C0E0C;border-top:1px solid #CBF35E;max-height:92dvh;overflow-y:auto;padding:20px 20px calc(24px + env(safe-area-inset-bottom))">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#CBF35E">{{ mEditorTag }}</div>
+        <div style="font-size:22px;font-weight:700;letter-spacing:-.03em;margin-top:4px">Refeição</div>
+      </div>
+      <button onClick="{{ fecharMEditor }}" style="width:40px;height:40px;border:1px solid #3A4137;font-size:18px;line-height:1;flex:none">×</button>
+    </div>
+
+    <div style="margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">NOME</div>
+    <input type="text" value="{{ mNome }}" onChange="{{ setMNome }}" placeholder="Ex.: Ceia" style="margin-top:8px">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478;margin-bottom:8px">HORÁRIO</div>
+        <input type="time" value="{{ mHora }}" onChange="{{ setMHora }}">
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478;margin-bottom:8px">ETIQUETA</div>
+        <input type="text" value="{{ mTag }}" onChange="{{ setMTag }}" placeholder="PRATO PRINCIPAL">
+      </div>
+    </div>
+
+    <div style="margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">APARECE EM</div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <sc-for list="{{ mQuando }}" as="q" hint-placeholder-count="3">
+        <button onClick="{{ q.set }}" style="flex:1;padding:12px 2px;border:1px solid #2B302A;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;background: {{ q.bg }};color: {{ q.fg }}">{{ q.n }}</button>
+      </sc-for>
+    </div>
+
+    <div style="margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">NOTA</div>
+    <textarea rows="3" value="{{ mNota }}" onChange="{{ setMNota }}" placeholder="Por que essa refeição existe" style="margin-top:8px;resize:none;line-height:1.5"></textarea>
+
+    <button onClick="{{ salvarRefeicao }}" style="display:block;width:100%;margin-top:20px;padding:16px 0;background:#CBF35E;color:#0C0E0C;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em">SALVAR REFEIÇÃO</button>
+    <button onClick="{{ duplicarRefeicao }}" style="display:block;width:100%;margin-top:8px;padding:14px 0;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#D6DAD0">DUPLICAR</button>
+    <button onClick="{{ removerRefeicao }}" style="display:block;width:100%;margin-top:8px;padding:14px 0;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#FF8A6B">REMOVER DO PLANO</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ tipoAberto }}">
+<div style="position:fixed;inset:0;background:rgba(6,8,6,.72);z-index:60;display:flex;align-items:flex-end;justify-content:center">
+  <button onClick="{{ fecharTipo }}" style="position:absolute;inset:0"></button>
+  <div style="position:relative;width:100%;max-width:440px;background:#0C0E0C;border-top:1px solid #CBF35E;padding:20px 20px calc(24px + env(safe-area-inset-bottom))">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">HOJE É</div>
+    <div style="font-size:22px;font-weight:700;letter-spacing:-.03em;margin-top:5px">Corrigir o tipo de dia</div>
+    <div style="font-size:13px;line-height:1.5;color:#7C8478;margin-top:8px">C, E e F são alta demanda. A, B e D são base. No descanso saem as refeições de treino e o arroz cai 50 g.</div>
+    <div style="display:flex;flex-direction:column;gap:1px;background:#22271F;margin-top:16px">
+      <sc-for list="{{ opcoesTipo }}" as="o" hint-placeholder-count="7">
+        <button onClick="{{ o.escolher }}" style="display:flex;justify-content:space-between;align-items:center;background: {{ o.bg }};padding:15px 14px;text-align:left">
+          <span style="font-size:16px;color: {{ o.fg }}">{{ o.n }}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;color:#7C8478">{{ o.tag }}</span>
+        </button>
+      </sc-for>
+    </div>
+    <button onClick="{{ voltarAuto }}" style="display:block;width:100%;margin-top:14px;padding:13px 0;border:1px solid #3A4137;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C8478">VOLTAR À DETECÇÃO AUTOMÁTICA</button>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:932},&quot;peso&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:72.4,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:45,&quot;max&quot;:140,&quot;step&quot;:0.1,&quot;unit&quot;:&quot;kg&quot;,&quot;section&quot;:&quot;Perfil&quot;},&quot;altura&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:1.74,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:1.4,&quot;max&quot;:2.1,&quot;step&quot;:0.01,&quot;unit&quot;:&quot;m&quot;,&quot;section&quot;:&quot;Perfil&quot;},&quot;alvoAgua&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:3.5,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:2,&quot;max&quot;:5,&quot;step&quot;:0.1,&quot;unit&quot;:&quot;L&quot;,&quot;section&quot;:&quot;Metas&quot;},&quot;mapaTreino&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;descanso,A,B,C,D,E,F&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Plano&quot;}}">
+const KEY = 'pnEduardo_v2';
+const DIAS_SEM = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const CATS = [['mercearia', 'MERCEARIA'], ['acougue', 'AÇOUGUE'], ['laticinios', 'LATICÍNIOS'], ['padaria', 'PADARIA'], ['hortifruti', 'HORTIFRUTI'], ['suplementos', 'SUPLEMENTOS'], ['livre', 'LIVRE']];
+
+const FOODS_BASE = [
+  ['arroz', 'Arroz branco cozido', 'mercearia', 'g', 128, 2.5, 28, 0.2, 0.36],
+  ['macarrao', 'Macarrão cozido', 'mercearia', 'g', 158, 5.8, 30, 1.3, 0.42],
+  ['cuscuz', 'Cuscuz cozido', 'mercearia', 'g', 113, 2.2, 24.5, 0.3, 0.3625],
+  ['feijao', 'Feijão cozido', 'mercearia', 'g', 76, 4.8, 13.6, 0.5, 0.43],
+  ['aveia', 'Aveia', 'mercearia', 'g', 394, 13.9, 66.6, 8.5, 0],
+  ['cereal', 'Cereal de milho simples', 'mercearia', 'g', 375, 7, 84, 1, 0],
+  ['atum', 'Atum drenado', 'mercearia', 'g', 116, 26, 0, 1, 0],
+  ['pasta', 'Pasta de amendoim', 'mercearia', 'g', 588, 25, 20, 50, 0],
+  ['azeite', 'Azeite de oliva', 'mercearia', 'g', 884, 0, 0, 100, 0],
+  ['mel', 'Mel', 'mercearia', 'g', 309, 0.3, 82, 0, 0],
+  ['geleia', 'Geleia light', 'mercearia', 'g', 150, 0.3, 36, 0, 0],
+  ['frango', 'Frango cozido', 'acougue', 'g', 165, 31, 0, 3.6, 1.3125],
+  ['suino', 'Filé/lombo suíno magro cozido', 'acougue', 'g', 190, 32, 0, 6.4, 1.34],
+  ['tilapia', 'Tilápia/merluza cozida', 'acougue', 'g', 128, 26, 0, 2.7, 1.25],
+  ['leite', 'Leite integral', 'laticinios', 'ml', 61, 3.2, 4.7, 3.3, 0],
+  ['iogurte', 'Iogurte natural integral', 'laticinios', 'g', 61, 3.5, 4.7, 3.3, 0],
+  ['requeijao', 'Requeijão light', 'laticinios', 'g', 175, 5, 5, 14, 0],
+  ['leitepo', 'Leite em pó integral', 'laticinios', 'g', 496, 26, 38, 26, 0],
+  ['ovo', 'Ovo cozido', 'laticinios', 'g', 143, 13, 1, 9.5, 0],
+  ['pao', 'Pão Artesano', 'padaria', 'g', 280, 8.5, 50, 4, 0],
+  ['banana', 'Banana', 'hortifruti', 'g', 90, 1.3, 23, 0.1, 0],
+  ['uva', 'Uva', 'hortifruti', 'g', 69, 0.7, 18, 0.2, 0],
+  ['maca', 'Maçã', 'hortifruti', 'g', 52, 0.3, 14, 0.2, 0],
+  ['laranja', 'Laranja', 'hortifruti', 'g', 47, 0.9, 12, 0.1, 0],
+  ['kiwi', 'Kiwi', 'hortifruti', 'g', 61, 1.1, 15, 0.5, 0],
+  ['macaxeira', 'Macaxeira cozida', 'hortifruti', 'g', 125, 0.6, 30, 0.3, 0],
+  ['batata', 'Batata cozida', 'hortifruti', 'g', 86, 1.8, 20, 0.1, 0],
+  ['legumes', 'Legumes / verduras', 'hortifruti', 'g', 35, 2, 6, 0.3, 0],
+  ['whey', 'Whey DUX concentrado', 'suplementos', 'g', 407, 66.7, 20, 5, 0],
+  ['malto', 'Maltodextrina / dextrose', 'suplementos', 'g', 380, 0, 95, 0, 0],
+  ['creatina', 'Creatina monohidratada', 'suplementos', 'g', 0, 0, 0, 0, 0],
+  ['cafe', 'Café preto sem açúcar', 'livre', 'ml', 1, 0, 0, 0, 0],
+  ['agua', 'Água', 'livre', 'ml', 0, 0, 0, 0, 0],
+  ['cocazero', 'Coca Zero', 'livre', 'ml', 0, 0, 0, 0, 0]
+];
+
+const PLANO_BASE = [
+  { id: 'pre', t: '05:45', n: 'Pré-treino', tag: 'RÁPIDO E FUNCIONAL', quando: 'treino', nota: 'Carboidrato rápido antes de um treino após o jejum noturno. Volume baixo, digestão rápida.', itens: [{ f: 'banana', q: 120 }, { f: 'mel', q: 15 }, { f: 'cafe', q: 200 }] },
+  { id: 'treino', t: '06:15', n: 'Treino', tag: 'INTRA-TREINO', quando: 'treino', nota: 'Musculação 6h15–7h30. Nos dias de alta demanda entram 25 g de carboidrato na água.', itens: [{ f: 'agua', q: 600 }, { f: 'malto', q: 25, alta: true }] },
+  { id: 'pos', t: '08:00', n: 'Café da manhã / pós-treino', tag: 'REFEIÇÃO FORTE', quando: 'sempre', nota: 'Quatro fontes de energia e proteína sem depender de fogão no trabalho.', itens: [{ f: 'cuscuz', q: 200 }, { f: 'frango', q: 70 }, { f: 'requeijao', q: 30 }, { f: 'leite', q: 250 }, { f: 'uva', q: 120 }] },
+  { id: 'almoco', t: '12:30', n: 'Almoço', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'O kiwi entra diariamente junto de feijão, aveia e vegetais para elevar fibra e ajudar a regularidade intestinal.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'frango', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }, { f: 'kiwi', q: 100 }] },
+  { id: 'lanche', t: '16:00', n: 'Lanche da tarde', tag: 'GRANDE REFEIÇÃO', quando: 'sempre', nota: 'Bata leite + banana + aveia + pasta + leite em pó + whey. Pão e geleia ficam separados.', itens: [{ f: 'leite', q: 250 }, { f: 'banana', q: 120 }, { f: 'aveia', q: 40 }, { f: 'pasta', q: 10 }, { f: 'leitepo', q: 10 }, { f: 'whey', q: 30 }, { f: 'pao', q: 50 }, { f: 'geleia', q: 20 }] },
+  { id: 'jantar', t: '19:30', n: 'Jantar', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'Sem ceia obrigatória: o dia já fecha proteína e energia com quatro refeições proteicas completas.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'suino', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }] }
+];
+
+class Component extends DCLogic {
+  state = {
+    screen: 'hoje', now: new Date(),
+    plano: null, foodsCustom: {}, foodsHidden: {}, mapa: null,
+    dia: null, done: {}, agua: 0, escala: {},
+    ajuste: 0, perf: true, gord: false,
+    pesos: [], cinturas: [], fotoData: null, pesoRasc: null, cintRasc: 84,
+    sheet: null, itemAberto: null, tipoAberto: false,
+    picker: null, pickerBusca: '', buscaAlim: '',
+    fEditor: null, mEditor: null,
+    dias: 7, comprado: {}, extras: [], compraRemovida: {},
+    extraNome: '', extraQtd: '', conv: 'frango', convQ: 80
+  };
+
+  componentDidMount() {
+    let s = {};
+    try { s = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+    const patch = {};
+    const keep = ['plano', 'foodsCustom', 'foodsHidden', 'mapa', 'ajuste', 'perf', 'gord', 'pesos', 'cinturas', 'fotoData', 'comprado', 'extras', 'compraRemovida', 'dias'];
+    for (const k of keep) if (s[k] !== undefined && s[k] !== null) patch[k] = s[k];
+    if (s.dia && s.dia.data === this.hojeISO()) { patch.dia = s.dia.code; patch.done = s.dia.done || {}; patch.agua = s.dia.agua || 0; patch.escala = s.dia.escala || {}; }
+    if (!patch.plano) patch.plano = JSON.parse(JSON.stringify(PLANO_BASE));
+    this.setState(patch);
+    this.timer = setInterval(() => this.setState({ now: new Date() }), 1000);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+
+  save(extra) {
+    const st = Object.assign({}, this.state, extra || {});
+    try {
+      localStorage.setItem(KEY, JSON.stringify({
+        plano: st.plano, foodsCustom: st.foodsCustom, foodsHidden: st.foodsHidden, mapa: st.mapa,
+        dia: { data: this.hojeISO(), code: st.dia, done: st.done, agua: st.agua, escala: st.escala },
+        ajuste: st.ajuste, perf: st.perf, gord: st.gord, pesos: st.pesos, cinturas: st.cinturas,
+        fotoData: st.fotoData, comprado: st.comprado, extras: st.extras, compraRemovida: st.compraRemovida, dias: st.dias
+      }));
+    } catch (e) {}
+  }
+  set(patch) { this.setState(patch); this.save(patch); }
+  setPlano(meals, extra) { this.set(Object.assign({ plano: meals }, extra || {})); }
+
+  hojeISO() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  nfmt(v, d) { return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+  parseNum(v) { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? 0 : n; }
+  hDe(t) { const p = String(t || '12:00').split(':'); return parseInt(p[0], 10) + (parseInt(p[1], 10) || 0) / 60; }
+
+  foods() {
+    const out = {};
+    for (const f of FOODS_BASE) out[f[0]] = { id: f[0], n: f[1], cat: f[2], u: f[3], kcal: f[4], p: f[5], c: f[6], g: f[7], cru: f[8], base: true };
+    for (const k of Object.keys(this.state.foodsCustom || {})) out[k] = Object.assign({}, out[k], this.state.foodsCustom[k], { id: k });
+    for (const k of Object.keys(this.state.foodsHidden || {})) delete out[k];
+    return out;
+  }
+  food(id) { return this.foods()[id] || { id: id, n: 'Alimento removido', cat: 'mercearia', u: 'g', kcal: 0, p: 0, c: 0, g: 0, cru: 0 }; }
+  planoMeals() { return this.state.plano || PLANO_BASE; }
+  mapaTreino() { if (this.state.mapa && this.state.mapa.length === 7) return this.state.mapa; const raw = (this.props.mapaTreino || 'descanso,A,B,C,D,E,F').split(',').map(x => x.trim()); return raw.length === 7 ? raw : ['descanso', 'A', 'B', 'C', 'D', 'E', 'F']; }
+  codeHoje() { return this.state.dia || this.mapaTreino()[this.state.now.getDay()]; }
+  tipoDe(code) { if (code === 'descanso') return 'descanso'; return ('CEF'.indexOf(code) >= 0) ? 'alta' : 'base'; }
+
+  montarDia(tipo, escalas) {
+    const aj = this.state.ajuste * 60;
+    const arroz = (tipo === 'descanso' ? 200 : 250) + aj;
+    const meals = [];
+    for (const m0 of this.planoMeals()) {
+      if (tipo === 'descanso' && m0.quando !== 'sempre') continue;
+      if (tipo === 'base' && m0.quando === 'alta') continue;
+      const esc = ((escalas || {})[m0.id] || 100) / 100;
+      const itens = [];
+      let k = 0, p = 0, c = 0, g = 0;
+      m0.itens.forEach((it, i) => {
+        if (it.alta && tipo !== 'alta') return;
+        const f = this.food(it.f);
+        let q = it.q;
+        if (it.arroz) q = Math.max(0, q + (arroz - 250));
+        const qs = Math.round(q * esc);
+        k += f.kcal * qs / 100; p += f.p * qs / 100; c += f.c * qs / 100; g += f.g * qs / 100;
+        itens.push({ i: i, f: f, q: qs, qBase: q, arroz: !!it.arroz, alta: !!it.alta });
+      });
+      meals.push({ id: m0.id, src: m0, t: m0.t, h: this.hDe(m0.t), n: m0.n, tag: m0.tag, nota: m0.nota, esc: esc, itens: itens, k: Math.round(k), p: Math.round(p), c: Math.round(c), g: Math.round(g) });
+    }
+    meals.sort((a, b) => a.h - b.h);
+    return { meals: meals, arroz: arroz };
+  }
+
+  totaisTipo(tipo) {
+    const d = this.montarDia(tipo, {});
+    return d.meals.reduce((a, m) => ({ k: a.k + m.k, p: a.p + m.p, c: a.c + m.c, g: a.g + m.g }), { k: 0, p: 0, c: 0, g: 0 });
+  }
+
+  semanas() {
+    const byWeek = {};
+    for (const p of this.state.pesos) {
+      const d = new Date(p.d + 'T12:00:00');
+      const monday = new Date(d); monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      const k = monday.toISOString().slice(0, 10);
+      (byWeek[k] = byWeek[k] || []).push(p.kg);
+    }
+    return Object.keys(byWeek).sort().map(k => ({ k: k, avg: byWeek[k].reduce((a, b) => a + b, 0) / byWeek[k].length }));
+  }
+
+  verdict() {
+    const w = this.semanas();
+    if (w.length < 3) return { t: 'COLETANDO', c: '#FFC46B', txt: 'As regras valem a partir da 3ª semana de dados. Registre 4–7 manhãs por semana: ' + w.length + ' de 3 semanas prontas.', aplicar: 0 };
+    const d = w[w.length - 1].avg - w[w.length - 2].avg;
+    if (d > 0.40 && this.state.gord) return { t: 'REDUZIR −150', c: '#FFC46B', txt: 'Média subindo ' + this.nfmt(d, 2) + ' kg/sem com gordura visual clara. Retire 60 g de arroz do almoço e do jantar.', aplicar: -1 };
+    if (d < 0.10 && !this.state.perf) return { t: 'SUBIR +150', c: '#CBF35E', txt: 'Média em ' + this.nfmt(d, 2) + ' kg/sem e performance parada. Some 60 g de arroz no almoço e no jantar.', aplicar: 1 };
+    if (d < 0.10 && this.state.perf) return { t: 'OBSERVAR', c: '#FFC46B', txt: 'Peso quase parado (' + this.nfmt(d, 2) + ' kg/sem), mas o treino melhora. Mantenha 1–2 semanas antes de subir comida.', aplicar: 0 };
+    return { t: 'MANTER', c: '#CBF35E', txt: 'Média em ' + this.nfmt(d, 2) + ' kg/sem dentro do alvo. Não mexa — mesmo que a cintura suba discretamente.', aplicar: 0 };
+  }
+
+  qtdStep(f) { return f.kcal > 300 || f.u === 'g' && f.kcal > 300 ? 5 : (f.u === 'ml' ? 50 : 10); }
+
+  mutarItem(mealId, idx, fn) {
+    const meals = this.planoMeals().map(m => {
+      if (m.id !== mealId) return m;
+      const itens = m.itens.map((it, i) => i === idx ? fn(Object.assign({}, it)) : it).filter(Boolean);
+      return Object.assign({}, m, { itens: itens });
+    });
+    this.setPlano(meals);
+  }
+
+  grupoPicker(foods, busca, prefCat) {
+    const q = (busca || '').toLowerCase().trim();
+    const lista = Object.keys(foods).map(k => foods[k]).filter(f => !q || f.n.toLowerCase().indexOf(q) >= 0);
+    const cats = prefCat ? [prefCat].concat(CATS.map(c => c[0]).filter(c => c !== prefCat)) : CATS.map(c => c[0]);
+    const out = [];
+    for (const cid of cats) {
+      const itens = lista.filter(f => f.cat === cid);
+      if (itens.length) out.push({ cid: cid, n: (CATS.find(c => c[0] === cid) || [, cid])[1], itens: itens });
+    }
+    return out;
+  }
+
+  renderVals() {
+    const st = this.state, now = st.now, on = '#CBF35E', dim = '#5E655A';
+    const code = this.codeHoje(), tipo = this.tipoDe(code);
+    const dia = this.montarDia(tipo, st.escala);
+    const foods = this.foods();
+    const nav = ['hoje', 'alimentos', 'compras', 'dados', 'guia'];
+    const navI = Math.max(0, nav.indexOf(st.screen));
+
+    const metaK = dia.meals.reduce((a, m) => a + m.k, 0), metaP = dia.meals.reduce((a, m) => a + m.p, 0);
+    const metaC = dia.meals.reduce((a, m) => a + m.c, 0), metaG = dia.meals.reduce((a, m) => a + m.g, 0);
+    const feitas = dia.meals.filter(m => st.done[m.id]);
+    const fK = feitas.reduce((a, m) => a + m.k, 0), fP = feitas.reduce((a, m) => a + m.p, 0);
+    const fC = feitas.reduce((a, m) => a + m.c, 0), fG = feitas.reduce((a, m) => a + m.g, 0);
+
+    const horaAgora = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+    const vazio = { id: null, n: 'Nenhuma refeição no plano', t: '--:--', h: 0, tag: '', nota: '', itens: [], k: 0, p: 0, c: 0, g: 0, esc: 1 };
+    const prox = dia.meals.find(m => m.h > horaAgora && !st.done[m.id]) || dia.meals.find(m => !st.done[m.id]) || dia.meals[0] || vazio;
+    const diffH = prox.h - horaAgora;
+    let contagem, contagemLabel;
+    if (!prox.id) { contagem = '—'; contagemLabel = 'ADICIONE UMA'; }
+    else if (diffH > 0) { const tm = Math.round(diffH * 60); contagem = tm >= 60 ? Math.floor(tm / 60) + 'h' + String(tm % 60).padStart(2, '0') : tm + 'min'; contagemLabel = 'ATÉ ' + prox.t; }
+    else { contagem = prox.t; contagemLabel = st.done[prox.id] ? 'AMANHÃ' : 'ATRASADA'; }
+
+    const resumoDe = (m) => m.itens.filter(i => i.f.cat !== 'livre' || i.q > 0).map(i => (i.q ? i.q + ' ' + i.f.u + ' ' : '') + i.f.n.toLowerCase()).join(' · ');
+
+    const refeicoes = dia.meals.map(m => {
+      const done = !!st.done[m.id];
+      return {
+        t: m.t, n: m.n, kcal: this.nfmt(m.k) + ' kcal', resumo: resumoDe(m),
+        macros: m.p + ' P · ' + m.c + ' C · ' + m.g + ' G' + (m.esc !== 1 ? '  ·  ' + Math.round(m.esc * 100) + '%' : ''),
+        check: done ? '✓' : '', boxBg: done ? on : 'transparent', nomeCor: done ? dim : '#F2F4EF', dot: done ? on : '#2B302A',
+        toggle: () => { const nd = Object.assign({}, st.done); if (nd[m.id]) delete nd[m.id]; else nd[m.id] = 1; this.set({ done: nd }); },
+        open: () => this.setState({ sheet: m.id, itemAberto: null }),
+        editar: () => this.setState({ mEditor: { id: m.id, n: m.n, t: m.t, tag: m.tag || '', quando: m.src.quando, nota: m.nota || '' } })
+      };
+    });
+
+    const ticks = [];
+    for (let i = 0; i < 14; i++) ticks.push({ bg: st.agua > i * 250 ? on : 'transparent', set: () => this.set({ agua: st.agua === (i + 1) * 250 ? i * 250 : (i + 1) * 250 }) });
+
+    const sheetM = st.sheet ? dia.meals.find(m => m.id === st.sheet) : null;
+    const sheetItens = sheetM ? sheetM.itens.map(it => {
+      const step = it.f.u === 'ml' ? 25 : (it.f.kcal > 350 ? 5 : 10);
+      const info = [it.f.kcal + ' kcal/100' + it.f.u, it.arroz ? 'varia com o dia' : '', it.alta ? 'só alta' : ''].filter(Boolean).join(' · ');
+      return {
+        n: it.f.n, q: it.q + ' ' + it.f.u, qBase: it.qBase + ' ' + it.f.u, info: info,
+        cor: it.alta ? '#CBF35E' : '#D6DAD0', aberto: st.itemAberto === it.i,
+        abrir: () => this.setState({ itemAberto: st.itemAberto === it.i ? null : it.i }),
+        menos: () => this.mutarItem(sheetM.id, it.i, x => { x.q = Math.max(0, x.q - step); return x; }),
+        mais: () => this.mutarItem(sheetM.id, it.i, x => { x.q = x.q + step; return x; }),
+        remover: () => { this.setState({ itemAberto: null }); this.mutarItem(sheetM.id, it.i, () => null); },
+        trocar: () => this.setState({ picker: { modo: 'trocar', meal: sheetM.id, idx: it.i, cat: it.f.cat }, pickerBusca: '' }),
+        toggleArroz: () => this.mutarItem(sheetM.id, it.i, x => { x.arroz = !x.arroz; return x; }),
+        toggleAlta: () => this.mutarItem(sheetM.id, it.i, x => { x.alta = !x.alta; return x; }),
+        arrozBg: it.arroz ? '#1C2416' : 'transparent', arrozFg: it.arroz ? on : dim,
+        altaBg: it.alta ? '#1C2416' : 'transparent', altaFg: it.alta ? on : dim
+      };
+    }) : [];
+
+    // ── alimentos
+    const listaAlimentos = this.grupoPicker(foods, st.buscaAlim).map(g => ({
+      n: g.n, itens: g.itens.map(f => ({
+        n: f.n, cor: f.base ? '#F2F4EF' : on,
+        kcal: f.kcal + ' kcal', macros: 'por 100 ' + f.u + '  ·  ' + this.nfmt(f.p, 1) + ' P · ' + this.nfmt(f.c, 1) + ' C · ' + this.nfmt(f.g, 1) + ' G',
+        editar: () => this.setState({ fEditor: { id: f.id, n: f.n, cat: f.cat, u: f.u, kcal: String(f.kcal), p: String(f.p), c: String(f.c), g: String(f.g), cru: f.cru ? String(f.cru) : '', novo: false, base: !!f.base } })
+      }))
+    }));
+
+    const convFoods = Object.keys(foods).map(k => foods[k]).filter(f => f.cru > 0);
+    const cv = foods[st.conv] && foods[st.conv].cru > 0 ? foods[st.conv] : (convFoods[0] || { n: '—', cru: 1, u: 'g' });
+
+    // ── compras derivadas do plano
+    const mapa = this.mapaTreino();
+    const uso = {};
+    for (let d = 0; d < 7; d++) {
+      const t = this.tipoDe(mapa[d]);
+      const dd = this.montarDia(t, {});
+      for (const m of dd.meals) for (const it of m.itens) {
+        if (it.f.cat === 'livre') continue;
+        uso[it.f.id] = (uso[it.f.id] || 0) + it.q;
+      }
+    }
+    const mult = st.dias / 7;
+    const fmtQ = (v, u) => v >= 1000 ? this.nfmt(v / 1000, 2).replace(',00', '') + ' ' + (u === 'ml' ? 'L' : 'kg') : this.nfmt(Math.round(v)) + ' ' + u;
+    const gruposCompra = [];
+    for (const cat of CATS) {
+      if (cat[0] === 'livre') continue;
+      const itens = [];
+      for (const fid of Object.keys(uso)) {
+        if (st.compraRemovida[fid]) continue;
+        const f = foods[fid]; if (!f || f.cat !== cat[0]) continue;
+        const total = uso[fid] * mult;
+        const cru = f.cru > 0 ? total * f.cru : null;
+        const ck = !!st.comprado[fid];
+        itens.push({
+          n: f.n.replace(' cozido', '').replace(' cozida', ''), q: fmtQ(cru !== null ? cru : total, f.u),
+          origem: cru !== null ? 'cru · ' + fmtQ(total, f.u) + ' prontos' : (st.dias + ' dias'),
+          check: ck ? '✓' : '', bg: ck ? on : 'transparent', cor: ck ? dim : '#F2F4EF', risco: ck ? 'line-through' : 'none', removivel: true,
+          toggle: () => { const c = Object.assign({}, st.comprado); if (c[fid]) delete c[fid]; else c[fid] = 1; this.set({ comprado: c }); },
+          remover: () => { const r = Object.assign({}, st.compraRemovida); r[fid] = 1; this.set({ compraRemovida: r }); }
+        });
+      }
+      if (itens.length) gruposCompra.push({ n: cat[1], contagem: itens.filter(i => i.check).length + '/' + itens.length, itens: itens });
+    }
+    if (st.extras.length) {
+      const itens = st.extras.map(e => {
+        const ck = !!st.comprado['x' + e.id];
+        return { n: e.n, q: e.q || '', origem: 'avulso', check: ck ? '✓' : '', bg: ck ? on : 'transparent', cor: ck ? dim : '#F2F4EF', risco: ck ? 'line-through' : 'none', removivel: true,
+          toggle: () => { const c = Object.assign({}, st.comprado); if (c['x' + e.id]) delete c['x' + e.id]; else c['x' + e.id] = 1; this.set({ comprado: c }); },
+          remover: () => this.set({ extras: st.extras.filter(x => x.id !== e.id) }) };
+      });
+      gruposCompra.push({ n: 'AVULSOS', contagem: itens.filter(i => i.check).length + '/' + itens.length, itens: itens });
+    }
+    const escondidos = Object.keys(st.compraRemovida).length;
+
+    // ── dados
+    const pesos = st.pesos.slice(-14), kgs = pesos.map(p => p.kg);
+    const lo = kgs.length ? Math.min.apply(null, kgs) - 0.4 : 70, hi = kgs.length ? Math.max.apply(null, kgs) + 0.4 : 74;
+    const barras = [];
+    for (let i = 0; i < 14; i++) { const p = pesos[i]; barras.push({ bg: p ? on : 'transparent', h: p ? Math.max(6, Math.round(((p.kg - lo) / (hi - lo)) * 100)) + '%' : '0%' }); }
+    const sem = this.semanas(), vd = this.verdict();
+    const ultPeso = st.pesos.length ? st.pesos[st.pesos.length - 1].kg : (this.props.peso || 72.4);
+    const rasc = st.pesoRasc === null ? ultPeso : st.pesoRasc;
+    const trend = sem.length >= 2 ? sem[sem.length - 1].avg - sem[sem.length - 2].avg : null;
+    const fotoDias = st.fotoData ? 28 - Math.floor((new Date() - new Date(st.fotoData + 'T12:00:00')) / 86400000) : null;
+
+    const tot = { alta: this.totaisTipo('alta'), base: this.totaisTipo('base'), descanso: this.totaisTipo('descanso') };
+    const CICLO = ['A', 'B', 'C', 'D', 'E', 'F', 'descanso'];
+    const semanaGrid = DIAS_SEM.map((dd, i) => {
+      const c = mapa[i];
+      return { dia: dd, code: c === 'descanso' ? 'OFF' : c, bg: i === now.getDay() ? '#161B12' : 'transparent', fg: i === now.getDay() ? on : (c === 'descanso' ? dim : '#D6DAD0'),
+        ciclar: () => { const m = mapa.slice(); m[i] = CICLO[(CICLO.indexOf(c) + 1) % CICLO.length]; this.set({ mapa: m }); } };
+    });
+
+    const fe = st.fEditor, me = st.mEditor;
+    const setFE = (k, v) => this.setState({ fEditor: Object.assign({}, fe, { [k]: v }) });
+    const setME = (k, v) => this.setState({ mEditor: Object.assign({}, me, { [k]: v }) });
+
+    const pickerFoods = st.picker ? this.grupoPicker(foods, st.pickerBusca, st.picker.cat).map(g => ({
+      n: g.n, itens: g.itens.map(f => ({
+        n: f.n, kcal: f.kcal + ' kcal', macros: 'por 100 ' + f.u + '  ·  ' + this.nfmt(f.p, 1) + ' P · ' + this.nfmt(f.c, 1) + ' C · ' + this.nfmt(f.g, 1) + ' G',
+        escolher: () => {
+          const pk = st.picker;
+          if (pk.modo === 'trocar') { this.mutarItem(pk.meal, pk.idx, x => { x.f = f.id; return x; }); }
+          else {
+            const meals = this.planoMeals().map(m => m.id !== pk.meal ? m : Object.assign({}, m, { itens: m.itens.concat([{ f: f.id, q: f.u === 'ml' ? 200 : 100 }]) }));
+            this.setPlano(meals);
+          }
+          this.setState({ picker: null, pickerBusca: '' });
+        }
+      }))
+    })) : [];
+
+    return {
+      isHoje: st.screen === 'hoje', isAlimentos: st.screen === 'alimentos', isCompras: st.screen === 'compras', isDados: st.screen === 'dados', isGuia: st.screen === 'guia',
+      navX: (navI * 20) + '%',
+      corHoje: st.screen === 'hoje' ? on : dim, corAlimentos: st.screen === 'alimentos' ? on : dim, corCompras: st.screen === 'compras' ? on : dim, corDados: st.screen === 'dados' ? on : dim, corGuia: st.screen === 'guia' ? on : dim,
+      navHoje: () => this.setState({ screen: 'hoje' }), navAlimentos: () => this.setState({ screen: 'alimentos' }), navCompras: () => this.setState({ screen: 'compras' }), navDados: () => this.setState({ screen: 'dados' }), navGuia: () => this.setState({ screen: 'guia' }),
+
+      dataTxt: now.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }).toUpperCase(),
+      relogio: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      diaBadge: code === 'descanso' ? 'DESCANSO' : code + ' · ' + (tipo === 'alta' ? 'ALTA' : 'BASE'),
+      openTipo: () => this.setState({ tipoAberto: true }),
+      proxTag: !prox.id ? 'PLANO VAZIO' : (st.done[prox.id] ? 'PRÓXIMA · AMANHÃ' : (diffH > 0 ? 'PRÓXIMA REFEIÇÃO' : 'REFEIÇÃO EM ABERTO')),
+      proxNome: prox.n, proxResumo: prox.id ? resumoDe(prox) : 'Toque em adicionar refeição para começar.',
+      contagem: contagem, contagemLabel: contagemLabel,
+      abrirProxima: () => { if (prox.id) this.setState({ sheet: prox.id, itemAberto: null }); },
+
+      metaKcal: this.nfmt(metaK) + ' kcal', feitoKcal: this.nfmt(fK),
+      pctKcal: metaK ? Math.min(100, Math.round((fK / metaK) * 100)) + '%' : '0%',
+      pTxt: fP + '/' + metaP, cTxt: fC + '/' + metaC, gTxt: fG + '/' + metaG,
+      pKgTxt: this.nfmt(metaP / (this.props.peso || 72.4), 1) + ' g/kg',
+      ajusteTxt: (st.ajuste === 0 ? 'PLANO ATUAL' : (st.ajuste > 0 ? 'AJUSTE +150 KCAL' : 'AJUSTE −150 KCAL')) + ' · ARROZ ' + dia.arroz + ' G NAS PRINCIPAIS',
+      refeicoes: refeicoes,
+      novaRefeicao: () => {
+        const id = 'm' + Date.now();
+        this.setPlano(this.planoMeals().concat([{ id: id, t: '21:30', n: 'Nova refeição', tag: '', quando: 'sempre', nota: '', itens: [] }]));
+        this.setState({ mEditor: { id: id, n: 'Nova refeição', t: '21:30', tag: '', quando: 'sempre', nota: '' } });
+      },
+      aguaTxt: this.nfmt(st.agua / 1000, 2).replace(',00', '') + ' L', aguaMeta: this.nfmt(this.props.alvoAgua || 3.5, 1) + ' L', aguaTicks: ticks,
+
+      buscaAlim: st.buscaAlim, mudarBusca: (e) => this.setState({ buscaAlim: e.target.value }),
+      listaAlimentos: listaAlimentos,
+      novoAlimento: () => this.setState({ fEditor: { id: null, n: '', cat: 'mercearia', u: 'g', kcal: '', p: '', c: '', g: '', cru: '', novo: true, base: false } }),
+      convChips: convFoods.map(f => ({ n: f.n.split(' ')[0].toUpperCase(), bg: st.conv === f.id ? on : 'transparent', fg: st.conv === f.id ? '#0C0E0C' : '#D6DAD0', set: () => this.setState({ conv: f.id }) })),
+      convQtdTxt: st.convQ + ' g', convMenos: () => this.setState({ convQ: Math.max(10, st.convQ - 10) }), convMais: () => this.setState({ convQ: st.convQ + 10 }),
+      convLabelCru: cv.n.toUpperCase() + ' CRU', convResultado: '≈ ' + Math.round(st.convQ * cv.cru) + ' g',
+
+      diasChips: [7, 14, 30].map(n => ({ n: n + ' DIAS', bg: st.dias === n ? on : 'transparent', fg: st.dias === n ? '#0C0E0C' : '#D6DAD0', set: () => this.set({ dias: n }) })),
+      diasNota: 'Somado dia a dia pelo calendário de treino e convertido para cru onde faz sentido.' + (escondidos ? ' ' + escondidos + ' item(ns) escondido(s).' : ''),
+      grupos: gruposCompra,
+      extraNome: st.extraNome, extraQtd: st.extraQtd,
+      mudarExtraNome: (e) => this.setState({ extraNome: e.target.value }), mudarExtraQtd: (e) => this.setState({ extraQtd: e.target.value }),
+      addExtra: () => { if (!st.extraNome.trim()) return; this.set({ extras: st.extras.concat([{ id: Date.now(), n: st.extraNome.trim(), q: st.extraQtd.trim() }]), extraNome: '', extraQtd: '' }); },
+      limparCompras: () => this.set({ comprado: {}, compraRemovida: {} }),
+      preparo: [
+        { i: '1', txt: 'Cozinhe arroz, feijão e cuscuz em lote e pese as porções já prontas.' },
+        { i: '2', txt: 'Prepare as proteínas da semana e porcione nas gramagens do plano.' },
+        { i: '3', txt: 'Monte almoço e jantar em marmitas: ' + dia.arroz + ' g arroz + 50 g feijão + proteína + 100 g vegetais.' },
+        { i: '4', txt: 'Deixe leite, requeijão, fruta e whey no trabalho; aveia, mel, leite em pó e pasta ficam no armário.' },
+        { i: '5', txt: 'Tudo que passar de 3–4 dias de geladeira deve ser congelado, já porcionado.' }
+      ],
+
+      pesoRascunho: this.nfmt(rasc, 1),
+      pesoMenos: () => this.setState({ pesoRasc: Math.round((rasc - 0.1) * 10) / 10 }), pesoMais: () => this.setState({ pesoRasc: Math.round((rasc + 0.1) * 10) / 10 }),
+      registrarPeso: () => this.set({ pesos: st.pesos.filter(x => x.d !== this.hojeISO()).concat([{ d: this.hojeISO(), kg: rasc }]), pesoRasc: null }),
+      pesoBarras: barras,
+      pesoPrimeiro: pesos.length ? new Date(pesos[0].d + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '—',
+      pesoUltimo: pesos.length ? new Date(pesos[pesos.length - 1].d + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '—',
+      mediaSemana: sem.length ? this.nfmt(sem[sem.length - 1].avg, 2) + ' kg' : '—',
+      tendencia: trend === null ? '—' : (trend > 0 ? '+' : '') + this.nfmt(trend, 2),
+      tendCor: trend === null ? '#F2F4EF' : (trend >= 0.15 && trend <= 0.30 ? on : '#FFC46B'),
+      togglePerf: () => this.set({ perf: !st.perf }), toggleGordura: () => this.set({ gord: !st.gord }),
+      perfTxt: st.perf ? 'SIM' : 'NÃO', perfBg: st.perf ? on : 'transparent', perfFg: st.perf ? '#0C0E0C' : '#7C8478',
+      gordTxt: st.gord ? 'SIM' : 'NÃO', gordBg: st.gord ? '#FFC46B' : 'transparent', gordFg: st.gord ? '#0C0E0C' : '#7C8478',
+      veredito: vd.t, vereditoCor: vd.c, vereditoTxt: vd.txt,
+      mostrarAplicar: vd.aplicar !== 0 && st.ajuste !== vd.aplicar,
+      aplicarLabel: vd.aplicar > 0 ? 'APLICAR +60 G DE ARROZ' : 'RETIRAR 60 G DE ARROZ',
+      aplicarAjuste: () => this.set({ ajuste: vd.aplicar }),
+      ajusteAtual: st.ajuste === 0 ? 'NENHUM AJUSTE APLICADO' : (st.ajuste > 0 ? 'ARROZ +60 G NO ALMOÇO E NO JANTAR' : 'ARROZ −60 G NO ALMOÇO E NO JANTAR'),
+      cintRascunho: this.nfmt(st.cintRasc, 0) + ' cm',
+      cintMenos: () => this.setState({ cintRasc: st.cintRasc - 1 }), cintMais: () => this.setState({ cintRasc: st.cintRasc + 1 }),
+      registrarCintura: () => this.set({ cinturas: st.cinturas.concat([{ d: this.hojeISO(), cm: st.cintRasc }]).slice(-12) }),
+      cinturaHistorico: st.cinturas.length ? st.cinturas.slice(-6).map(c => new Date(c.d + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ': ' + c.cm + ' cm').join('   ·   ') : 'Nenhuma medida registrada ainda.',
+      fotoDias: fotoDias === null ? '—' : (fotoDias > 0 ? fotoDias : 'HOJE'),
+      fotoLabel: fotoDias === null ? 'registre a primeira sessão' : (fotoDias > 0 ? 'dias até a próxima sessão' : 'está na hora de fotografar'),
+      registrarFoto: () => this.set({ fotoData: this.hojeISO() }),
+
+      perfilPeso: this.nfmt(ultPeso, 1) + ' kg', perfilAltura: this.nfmt(this.props.altura || 1.74, 2) + ' m', perfilProt: metaP + ' g',
+      tiposDia: [
+        { n: 'ALTA · C / E / F', kcal: this.nfmt(tot.alta.k), macros: tot.alta.p + ' P · ' + tot.alta.c + ' C · ' + tot.alta.g + ' G', cor: on },
+        { n: 'BASE · A / B / D', kcal: this.nfmt(tot.base.k), macros: tot.base.p + ' P · ' + tot.base.c + ' C · ' + tot.base.g + ' G', cor: '#D6DAD0' },
+        { n: 'DESCANSO', kcal: this.nfmt(tot.descanso.k), macros: tot.descanso.p + ' P · ' + tot.descanso.c + ' C · ' + tot.descanso.g + ' G', cor: '#FFC46B' }
+      ],
+      semana: semanaGrid,
+      performance: [
+        { n: 'PRÉ-TREINO', txt: '120 g banana + 15 g mel + café preto. ~40 g de carboidrato, baixo volume e digestão rápida.' },
+        { n: 'INTRA · C / E / F', txt: '25 g de maltodextrina ou dextrose em 500–750 ml de água. Em A/B/D, apenas água.' },
+        { n: 'HIDRATAÇÃO', txt: 'Meta diária 3,0–3,5 L. Durante a musculação, 500–750 ml.' },
+        { n: 'FIBRA / INTESTINO', txt: 'O plano entrega ~37–42 g de fibra/dia com feijão, aveia, frutas, kiwi e vegetais. Mantenha o kiwi diariamente.' },
+        { n: 'CARDIO', txt: 'Bike moderada 20–40 min, 2–3×/semana. Não “coma de volta” essas calorias.' }
+      ],
+      suplementos: [
+        { n: 'WHEY DUX', txt: '30 g/dia no lanche. Rótulo oficial: 122 kcal e 20 g de proteína por 30 g.' },
+        { n: 'CREATINA', txt: 'Ao retomar: 5 g/dia de monohidratada, em qualquer horário.' },
+        { n: 'CAFEÍNA', txt: 'O café preto da manhã é suficiente. Sem necessidade de pré-treino estimulante.' },
+        { n: 'NÃO ESQUECER', txt: 'Água 3,0–3,5 L/dia · kiwi diário · whey 30 g no lanche · bike 20–40 min 2–3×/semana · fotos a cada 4 semanas.' }
+      ],
+      resetarDia: () => this.set({ done: {}, agua: 0, escala: {} }),
+      restaurarLabel: 'RESTAURAR PLANO ORIGINAL DO PDF',
+      restaurarPlano: () => this.set({ plano: JSON.parse(JSON.stringify(PLANO_BASE)), foodsCustom: {}, foodsHidden: {}, ajuste: 0, escala: {}, compraRemovida: {} }),
+
+      temSheet: !!sheetM, sheetTag: sheetM ? sheetM.tag : '', sheetNome: sheetM ? sheetM.n : '', sheetHora: sheetM ? sheetM.t : '',
+      sheetKcal: sheetM ? this.nfmt(sheetM.k) : '', sheetP: sheetM ? sheetM.p + ' g' : '', sheetC: sheetM ? sheetM.c + ' g' : '', sheetG: sheetM ? sheetM.g + ' g' : '',
+      sheetEscala: sheetM ? Math.round(sheetM.esc * 100) : 100, sheetEscalaTxt: sheetM ? Math.round(sheetM.esc * 100) + '%' : '',
+      mudarEscala: (e) => { const v = parseInt(e.target.value, 10); const es = Object.assign({}, st.escala); es[st.sheet] = v; this.set({ escala: es }); },
+      sheetItens: sheetItens, sheetNota: sheetM ? sheetM.nota : '',
+      fecharSheet: () => this.setState({ sheet: null, itemAberto: null }),
+      editarRefeicaoAtual: () => { if (sheetM) this.setState({ mEditor: { id: sheetM.id, n: sheetM.n, t: sheetM.t, tag: sheetM.tag || '', quando: sheetM.src.quando, nota: sheetM.nota || '' } }); },
+      addAlimento: () => { if (sheetM) this.setState({ picker: { modo: 'add', meal: sheetM.id, cat: null }, pickerBusca: '' }); },
+      sheetToggle: () => { if (!sheetM) return; const nd = Object.assign({}, st.done); if (nd[sheetM.id]) delete nd[sheetM.id]; else nd[sheetM.id] = 1; this.setState({ sheet: null }); this.set({ done: nd }); },
+      sheetBtnTxt: sheetM && st.done[sheetM.id] ? 'DESMARCAR REFEIÇÃO' : 'MARCAR COMO FEITA',
+      sheetBtnBg: sheetM && st.done[sheetM.id] ? 'transparent' : on, sheetBtnFg: sheetM && st.done[sheetM.id] ? on : '#0C0E0C',
+
+      pickerAberto: !!st.picker, pickerLista: pickerFoods, pickerBusca: st.pickerBusca,
+      pickerTag: st.picker && st.picker.modo === 'trocar' ? 'SUBSTITUIR ITEM' : 'ADICIONAR AO PLANO',
+      pickerTitulo: st.picker && st.picker.modo === 'trocar' ? 'Trocar por' : 'Escolher alimento',
+      mudarPickerBusca: (e) => this.setState({ pickerBusca: e.target.value }),
+      fecharPicker: () => this.setState({ picker: null, pickerBusca: '' }),
+      criarDoPicker: () => this.setState({ fEditor: { id: null, n: st.pickerBusca, cat: 'mercearia', u: 'g', kcal: '', p: '', c: '', g: '', cru: '', novo: true, base: false, voltarPicker: st.picker }, picker: null }),
+
+      fEditorAberto: !!fe, fEditorTag: fe && fe.novo ? 'NOVO CADASTRO' : 'EDITANDO',
+      fNome: fe ? fe.n : '', setFNome: (e) => setFE('n', e.target.value),
+      fCats: CATS.map(c => ({ n: c[1], bg: fe && fe.cat === c[0] ? on : 'transparent', fg: fe && fe.cat === c[0] ? '#0C0E0C' : '#D6DAD0', set: () => setFE('cat', c[0]) })),
+      fUnits: [['g', 'GRAMAS'], ['ml', 'MILILITROS']].map(u => ({ n: u[1], bg: fe && fe.u === u[0] ? on : 'transparent', fg: fe && fe.u === u[0] ? '#0C0E0C' : '#D6DAD0', set: () => setFE('u', u[0]) })),
+      fUnitTxt: fe ? fe.u : 'g',
+      fKcal: fe ? fe.kcal : '', setFKcal: (e) => setFE('kcal', e.target.value),
+      fP: fe ? fe.p : '', setFP: (e) => setFE('p', e.target.value),
+      fC: fe ? fe.c : '', setFC: (e) => setFE('c', e.target.value),
+      fG: fe ? fe.g : '', setFG: (e) => setFE('g', e.target.value),
+      fCru: fe ? fe.cru : '', setFCru: (e) => setFE('cru', e.target.value),
+      fecharFEditor: () => this.setState({ fEditor: null }),
+      podeApagarF: !!fe && !fe.novo, apagarFLabel: fe && fe.base ? 'ESCONDER DO APP' : 'APAGAR ALIMENTO',
+      salvarAlimento: () => {
+        if (!fe || !fe.n.trim()) { this.setState({ fEditor: null }); return; }
+        const id = fe.id || ('u' + Date.now());
+        const custom = Object.assign({}, st.foodsCustom);
+        custom[id] = { n: fe.n.trim(), cat: fe.cat, u: fe.u, kcal: this.parseNum(fe.kcal), p: this.parseNum(fe.p), c: this.parseNum(fe.c), g: this.parseNum(fe.g), cru: this.parseNum(fe.cru) };
+        const hidden = Object.assign({}, st.foodsHidden); delete hidden[id];
+        const patch = { foodsCustom: custom, foodsHidden: hidden, fEditor: null };
+        if (fe.voltarPicker) { const pk = fe.voltarPicker; if (pk.modo === 'trocar') { this.mutarItem(pk.meal, pk.idx, x => { x.f = id; return x; }); } else { this.setPlano(this.planoMeals().map(m => m.id !== pk.meal ? m : Object.assign({}, m, { itens: m.itens.concat([{ f: id, q: fe.u === 'ml' ? 200 : 100 }]) }))); } }
+        this.set(patch);
+      },
+      apagarAlimento: () => {
+        if (!fe) return;
+        const hidden = Object.assign({}, st.foodsHidden); hidden[fe.id] = 1;
+        const custom = Object.assign({}, st.foodsCustom); delete custom[fe.id];
+        const meals = this.planoMeals().map(m => Object.assign({}, m, { itens: m.itens.filter(it => it.f !== fe.id) }));
+        this.set({ foodsHidden: hidden, foodsCustom: custom, plano: meals, fEditor: null });
+      },
+
+      mEditorAberto: !!me, mEditorTag: 'EDITANDO',
+      mNome: me ? me.n : '', setMNome: (e) => setME('n', e.target.value),
+      mHora: me ? me.t : '12:00', setMHora: (e) => setME('t', e.target.value),
+      mTag: me ? me.tag : '', setMTag: (e) => setME('tag', e.target.value),
+      mNota: me ? me.nota : '', setMNota: (e) => setME('nota', e.target.value),
+      mQuando: [['sempre', 'TODO DIA'], ['treino', 'SÓ TREINO'], ['alta', 'SÓ ALTA']].map(q => ({ n: q[1], bg: me && me.quando === q[0] ? on : 'transparent', fg: me && me.quando === q[0] ? '#0C0E0C' : '#D6DAD0', set: () => setME('quando', q[0]) })),
+      fecharMEditor: () => this.setState({ mEditor: null }),
+      salvarRefeicao: () => {
+        if (!me) return;
+        this.setPlano(this.planoMeals().map(m => m.id !== me.id ? m : Object.assign({}, m, { n: me.n.trim() || m.n, t: me.t, tag: me.tag.trim().toUpperCase(), quando: me.quando, nota: me.nota })), { mEditor: null });
+      },
+      duplicarRefeicao: () => {
+        if (!me) return;
+        const src = this.planoMeals().find(m => m.id === me.id); if (!src) return;
+        const copia = JSON.parse(JSON.stringify(src)); copia.id = 'm' + Date.now(); copia.n = src.n + ' (cópia)';
+        this.setPlano(this.planoMeals().concat([copia]), { mEditor: null });
+      },
+      removerRefeicao: () => {
+        if (!me) return;
+        this.setPlano(this.planoMeals().filter(m => m.id !== me.id), { mEditor: null, sheet: null });
+      },
+
+      tipoAberto: st.tipoAberto, fecharTipo: () => this.setState({ tipoAberto: false }),
+      voltarAuto: () => { this.setState({ tipoAberto: false }); this.set({ dia: null }); },
+      opcoesTipo: CICLO.map(c => {
+        const t = this.tipoDe(c);
+        return { n: c === 'descanso' ? 'Descanso' : 'Treino ' + c, tag: this.nfmt(tot[t].k) + ' kcal',
+          bg: c === code ? '#161B12' : '#0F120F', fg: c === code ? on : '#F2F4EF',
+          escolher: () => { this.setState({ tipoAberto: false }); this.set({ dia: c }); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

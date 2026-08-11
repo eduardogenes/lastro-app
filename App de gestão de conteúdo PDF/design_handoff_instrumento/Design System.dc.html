@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><meta name="viewport" content="width=device-width, initial-scale=1"><title>Instrumento — Design System</title><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"><style>*{box-sizing:border-box}html,body{margin:0;padding:0;background:#0C0E0C;color:#F2F4EF;font-family:'Space Grotesk',system-ui,sans-serif}a{color:#CBF35E;text-decoration:none}a:hover{color:#E4FF9B}@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.25}}</style></helmet>
+<div style="min-height:100dvh;background:#0C0E0C;display:flex;justify-content:center">
+<div style="width:100%;max-width:960px;padding:56px 32px 100px">
+
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">DESIGN SYSTEM · V1.0 · PLANO NUTRICIONAL + APP DE TREINOS</div>
+  <div style="font-size:66px;line-height:.96;font-weight:700;letter-spacing:-.045em;margin-top:14px">Instrumento</div>
+  <div style="font-size:17px;line-height:1.5;color:#A8AFA1;margin-top:18px;max-width:620px;text-wrap:pretty">Um painel de instrumentos, não um app de bem-estar. Superfície escura de leitura, dados em monoespaçada, estrutura desenhada com fios de 1px em vez de cartões, e um único verde ácido que diz o que está vivo, o que está feito e o que se aperta. Preciso, nunca motivacional.</div>
+
+  <div style="margin-top:56px;border-top:1px solid #22271F;padding-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">01 · INEGOCIÁVEIS</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#22271F;margin-top:18px">
+    <div style="background:#0C0E0C;padding:22px 18px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#CBF35E;letter-spacing:-.03em">00</div>
+      <div style="font-size:15px;font-weight:500;margin-top:10px">Raio zero</div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:7px">Tudo é quadrado. Os únicos círculos do produto são os pontos de status e o thumb do slider.</div>
+    </div>
+    <div style="background:#0C0E0C;padding:22px 18px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#CBF35E;letter-spacing:-.03em">1px</div>
+      <div style="font-size:15px;font-weight:500;margin-top:10px">Fio, não cartão</div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:7px">Estrutura vem de réguas de 1px e de gaps de grade. Caixa com borda é só para objeto destacado. Sombra, nunca.</div>
+    </div>
+    <div style="background:#0C0E0C;padding:22px 18px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#CBF35E;letter-spacing:-.03em">01</div>
+      <div style="font-size:15px;font-weight:500;margin-top:10px">Um acento</div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:7px">Ácido = agora / feito / seu / aperte. Âmbar = atenção. Coral = destrói. O resto é cinza.</div>
+    </div>
+    <div style="background:#0C0E0C;padding:22px 18px">
+      <div style="font-size:15px;font-weight:500">Número é mono, prosa é display</div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:7px">IBM Plex Mono carrega toda quantidade, hora, peso e contagem. Space Grotesk carrega todo nome e frase. Nunca misture dentro da mesma string.</div>
+    </div>
+    <div style="background:#0C0E0C;padding:22px 18px">
+      <div style="font-size:15px;font-weight:500">Rótulo mono é estrutura</div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:7px">O rótulo de 10px com tracking sempre apresenta uma seção ou nomeia um valor. Nunca serve de ênfase ou tempero.</div>
+    </div>
+    <div style="background:#0C0E0C;padding:22px 18px">
+      <div style="font-size:15px;font-weight:500">Quase nenhum movimento</div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:7px">Duas animações no produto inteiro: o pulso do ponto vivo (2,4 s) e a barra da tab (220 ms). Sem entrada, sem fade, sem skeleton.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:56px;border-top:1px solid #22271F;padding-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">02 · PALETA</div>
+
+  <div style="margin-top:20px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">SINAL — COR É SIGNIFICADO</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">
+    <div><div style="height:88px;background:#CBF35E"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:8px;color:#F2F4EF">#CBF35E</div><div style="font-size:12px;color:#7C8478;margin-top:3px">agora · feito · aperte</div></div>
+    <div><div style="height:88px;background:#FFC46B"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:8px;color:#F2F4EF">#FFC46B</div><div style="font-size:12px;color:#7C8478;margin-top:3px">atenção</div></div>
+    <div><div style="height:88px;background:#FF8A6B"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:8px;color:#F2F4EF">#FF8A6B</div><div style="font-size:12px;color:#7C8478;margin-top:3px">destrutivo</div></div>
+    <div><div style="height:88px;background:#E4FF9B"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:8px;color:#F2F4EF">#E4FF9B</div><div style="font-size:12px;color:#7C8478;margin-top:3px">hover de link</div></div>
+  </div>
+
+  <div style="margin-top:26px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">SUPERFÍCIES</div>
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px">
+    <div><div style="height:64px;background:#0C0E0C;border:1px solid #22271F"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;margin-top:7px">#0C0E0C</div><div style="font-size:11px;color:#5E655A;margin-top:2px">canvas</div></div>
+    <div><div style="height:64px;background:#0F120F;border:1px solid #22271F"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;margin-top:7px">#0F120F</div><div style="font-size:11px;color:#5E655A;margin-top:2px">opção</div></div>
+    <div><div style="height:64px;background:#111411;border:1px solid #22271F"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;margin-top:7px">#111411</div><div style="font-size:11px;color:#5E655A;margin-top:2px">campo</div></div>
+    <div><div style="height:64px;background:#161B12;border:1px solid #22271F"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;margin-top:7px">#161B12</div><div style="font-size:11px;color:#5E655A;margin-top:2px">selecionado</div></div>
+    <div><div style="height:64px;background:#1C2416;border:1px solid #22271F"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;margin-top:7px">#1C2416</div><div style="font-size:11px;color:#5E655A;margin-top:2px">toggle ativo</div></div>
+    <div><div style="height:64px;background:#101408;border:1px solid #CBF35E"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;margin-top:7px">#101408</div><div style="font-size:11px;color:#5E655A;margin-top:2px">veredito</div></div>
+  </div>
+
+  <div style="margin-top:26px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">FIOS — SÃO QUATRO, E A ESCOLHA É SEMÂNTICA</div>
+  <div style="margin-top:12px;display:flex;flex-direction:column;gap:0">
+    <div style="display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid #161A15"><div style="width:120px;flex:none;height:1px;background:#161A15"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;width:80px;flex:none">#161A15</div><div style="font-size:13px;color:#7C8478">entre linhas dentro de uma mesma lista</div></div>
+    <div style="display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid #161A15"><div style="width:120px;flex:none;height:1px;background:#22271F"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;width:80px;flex:none">#22271F</div><div style="font-size:13px;color:#7C8478">entre seções · e o gap de 1px da grade de fios</div></div>
+    <div style="display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid #161A15"><div style="width:120px;flex:none;height:1px;background:#2B302A"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;width:80px;flex:none">#2B302A</div><div style="font-size:13px;color:#7C8478">borda em repouso — campo, chip inativo</div></div>
+    <div style="display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid #161A15"><div style="width:120px;flex:none;height:1px;background:#3A4137"></div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;width:80px;flex:none">#3A4137</div><div style="font-size:13px;color:#7C8478">borda interativa — stepper, botão secundário</div></div>
+  </div>
+
+  <div style="margin-top:26px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">TEXTO — CINCO NÍVEIS, NUNCA MAIS</div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px">
+    <div><div style="font-size:19px;color:#F2F4EF">Primário</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:5px">#F2F4EF</div></div>
+    <div><div style="font-size:19px;color:#D6DAD0">Corpo</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:5px">#D6DAD0</div></div>
+    <div><div style="font-size:19px;color:#A8AFA1">Apoio</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:5px">#A8AFA1</div></div>
+    <div><div style="font-size:19px;color:#7C8478">Rótulo</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:5px">#7C8478</div></div>
+    <div><div style="font-size:19px;color:#5E655A">Fraco</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:5px">#5E655A</div></div>
+  </div>
+
+  <div style="margin-top:56px;border-top:1px solid #22271F;padding-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">03 · TIPOGRAFIA</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:22px">
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">SPACE GROTESK — NOMES E FRASES</div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
+        <div><div style="font-size:34px;font-weight:700;letter-spacing:-.035em;line-height:1.02">Próxima refeição</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:6px">headline · 34 / 700 / −.035em</div></div>
+        <div><div style="font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.02">Compras</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:6px">display · 30 / 700 / −.03em · título de tela</div></div>
+        <div><div style="font-size:17px;font-weight:500;letter-spacing:-.01em">Lanche da tarde</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:6px">subtitle · 17 / 500</div></div>
+        <div><div style="font-size:14px;line-height:1.5;color:#A8AFA1">O kiwi entra diariamente junto de feijão, aveia e vegetais para elevar fibra.</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:6px">body-sm · 14 / 1.5 / text-wrap: pretty</div></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">IBM PLEX MONO — TODO NÚMERO</div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
+        <div><div style="font-family:'IBM Plex Mono',monospace;font-size:52px;font-weight:600;letter-spacing:-.05em;line-height:.9">2.997</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:6px">metric-xl · 52 / 600 / −.05em</div></div>
+        <div><div style="font-family:'IBM Plex Mono',monospace;font-size:34px;font-weight:500;letter-spacing:-.04em;line-height:1">3h47</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:6px">metric-l · 34 / 500 / −.04em · contagem</div></div>
+        <div><div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.03em">155/155</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:6px">metric-m · 22 / 600 · célula de grade</div></div>
+        <div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">SEQUÊNCIA DO DIA</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E655A;margin-top:6px">label · 10 / .18em / caixa alta</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:56px;border-top:1px solid #22271F;padding-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">04 · COMPONENTES</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:24px">
+
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">CARTÃO-FOCO — O COMPONENTE-ASSINATURA</div>
+      <div style="margin-top:12px;border-top:1px solid #22271F;padding-top:16px">
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div style="width:7px;height:7px;border-radius:50%;background:#CBF35E;animation:pulseDot 2.4s infinite;flex:none;transform:translateY(-3px)"></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">AGORA · 12:13</div>
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:flex-end;justify-content:space-between;gap:14px">
+          <div><div style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.1em;color:#CBF35E">PRÓXIMA REFEIÇÃO</div><div style="font-size:34px;line-height:1.02;font-weight:700;letter-spacing:-.035em;margin-top:8px">Almoço</div></div>
+          <div style="text-align:right;flex:none"><div style="font-family:'IBM Plex Mono',monospace;font-size:34px;line-height:1;font-weight:500;letter-spacing:-.04em">17min</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478;margin-top:4px">ATÉ 12:30</div></div>
+        </div>
+        <div style="margin-top:14px;font-size:14px;line-height:1.5;color:#A8AFA1">250 g arroz · 50 g feijão · 80 g frango · 100 g legumes · 15 g azeite · 100 g kiwi</div>
+        <div style="margin-top:12px;display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#0C0E0C;background:#CBF35E;padding:7px 11px">ABRIR E EDITAR →</div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:16px;text-wrap:pretty">Sem borda e sem preenchimento: flutua na tela, separado só pelas réguas. O bloco inteiro é um alvo de toque.</div>
+    </div>
+
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">MÉTRICA-HERÓI + GRADE DE FIOS</div>
+      <div style="margin-top:12px;border-top:1px solid #22271F;padding-top:14px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">ENERGIA</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7C8478">meta 2.997 kcal</div></div>
+        <div style="display:flex;align-items:flex-end;gap:8px;margin-top:8px"><div style="font-family:'IBM Plex Mono',monospace;font-size:52px;line-height:.9;font-weight:600;letter-spacing:-.05em">1.501</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#7C8478;padding-bottom:6px">kcal registradas</div></div>
+        <div style="margin-top:14px;height:3px;background:#22271F;position:relative"><div style="position:absolute;left:0;top:0;bottom:0;background:#CBF35E;width:50%"></div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:16px;background:#22271F">
+          <div style="background:#0C0E0C;padding:12px 2px 10px"><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478">PROTEÍNA</div><div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.03em;margin-top:5px">76/155</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7C8478;margin-top:2px">2,1 g/kg</div></div>
+          <div style="background:#0C0E0C;padding:12px 2px 10px 12px"><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478">CARBO</div><div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.03em;margin-top:5px">218/423</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7C8478;margin-top:2px">gramas</div></div>
+          <div style="background:#0C0E0C;padding:12px 2px 10px 12px"><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#7C8478">GORDURA</div><div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.03em;margin-top:5px">35/79</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7C8478;margin-top:2px">gramas</div></div>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:16px;text-wrap:pretty">A grade de fios: <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#D6DAD0">gap: 1px</span> sobre fundo <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#D6DAD0">#22271F</span>, células no canvas. Os gaps <em>são</em> as réguas — as células não têm borda.</div>
+    </div>
+
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">LINHA DE TIMELINE — REUSAR PARA EXERCÍCIOS</div>
+      <div style="margin-top:12px">
+        <div style="display:flex;gap:14px;align-items:stretch">
+          <div style="width:46px;flex:none;padding-top:16px;text-align:right"><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#A8AFA1">12:30</div></div>
+          <div style="width:1px;background:#22271F;flex:none;position:relative"><div style="position:absolute;left:-4px;top:20px;width:9px;height:9px;border-radius:50%;background:#2B302A"></div></div>
+          <div style="flex:1;min-width:0;padding:14px 0 16px;border-bottom:1px solid #161A15">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div style="width:26px;height:26px;flex:none;border:1px solid #3A4137;margin-top:1px"></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><div style="font-size:17px;font-weight:500;letter-spacing:-.01em">Almoço</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#7C8478">719 kcal</div></div>
+                <div style="font-size:13px;line-height:1.45;color:#7C8478;margin-top:5px">250 g arroz · 50 g feijão · 80 g frango</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:#5E655A;margin-top:7px">37 P · 98 C · 19 G</div>
+              </div>
+              <div style="width:30px;height:30px;flex:none;border:1px solid #22271F;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#7C8478;display:flex;align-items:center;justify-content:center">···</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:stretch">
+          <div style="width:46px;flex:none;padding-top:16px;text-align:right"><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#A8AFA1">16:00</div></div>
+          <div style="width:1px;background:#22271F;flex:none;position:relative"><div style="position:absolute;left:-4px;top:20px;width:9px;height:9px;border-radius:50%;background:#CBF35E"></div></div>
+          <div style="flex:1;min-width:0;padding:14px 0 16px;border-bottom:1px solid #161A15">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div style="width:26px;height:26px;flex:none;border:1px solid #3A4137;background:#CBF35E;display:flex;align-items:center;justify-content:center;margin-top:1px"><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#0C0E0C">✓</span></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><div style="font-size:17px;font-weight:500;letter-spacing:-.01em;color:#5E655A">Lanche da tarde</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#7C8478">819 kcal</div></div>
+                <div style="font-size:13px;line-height:1.45;color:#7C8478;margin-top:5px">250 ml leite · 120 g banana · 40 g aveia</div>
+              </div>
+              <div style="width:30px;height:30px;flex:none;border:1px solid #22271F;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#7C8478;display:flex;align-items:center;justify-content:center">···</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:16px;text-wrap:pretty">Calha de hora 46px · espinha de 1px · ponto de 9px deslocado −4px · caixa 26px · <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#D6DAD0">···</span> de 30px. Feito: nome e ponto caem para o cinza fraco.</div>
+    </div>
+
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">CARTÃO-VEREDITO — REUSAR PARA PROGRESSÃO DE CARGA</div>
+      <div style="margin-top:12px;border:1px solid #CBF35E;padding:18px 16px;background:#101408">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">VEREDITO DA REGRA</div>
+        <div style="font-size:28px;font-weight:700;letter-spacing:-.03em;margin-top:8px;color:#CBF35E">SUBIR +150</div>
+        <div style="font-size:14px;line-height:1.5;color:#D6DAD0;margin-top:8px">Média em 0,04 kg/sem e performance parada. Some 60 g de arroz no almoço e no jantar.</div>
+        <div style="margin-top:14px;padding:14px 0;background:#CBF35E;color:#0C0E0C;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-align:center">APLICAR +60 G DE ARROZ</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:#7C8478;margin-top:12px">NENHUM AJUSTE APLICADO</div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:16px;text-wrap:pretty">Regra computada → cor de sinal → uma ação de um toque → estado atual. O app de treinos usa a mesma carcaça para subir carga, manter ou deload.</div>
+    </div>
+
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">CONTROLES</div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+        <div style="padding:16px 0;background:#CBF35E;color:#0C0E0C;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-align:center">PRIMÁRIO · AÇÃO ÚNICA</div>
+        <div style="padding:13px 0;border:1px solid #3A4137;color:#D6DAD0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-align:center">SECUNDÁRIO</div>
+        <div style="padding:14px 0;border:1px dashed #3A4137;color:#CBF35E;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-align:center">+ TRACEJADO CRIA ALGO</div>
+        <div style="padding:13px 0;border:1px solid #3A4137;color:#FF8A6B;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-align:center">DESTRUTIVO</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:14px;flex-wrap:wrap">
+        <div style="padding:9px 12px;border:1px solid #2B302A;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;background:#CBF35E;color:#0C0E0C">7 DIAS</div>
+        <div style="padding:9px 12px;border:1px solid #2B302A;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:#D6DAD0">14 DIAS</div>
+        <div style="padding:9px 12px;border:1px solid #2B302A;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:#D6DAD0">30 DIAS</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;border:1px solid #22271F;padding:14px">
+        <div style="width:46px;height:46px;border:1px solid #3A4137;display:flex;align-items:center;justify-content:center;font-size:22px">−</div>
+        <div style="text-align:center"><div style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;letter-spacing:-.03em">250 g</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:#7C8478;margin-top:3px">NO PLANO</div></div>
+        <div style="width:46px;height:46px;border:1px solid #3A4137;display:flex;align-items:center;justify-content:center;font-size:22px">+</div>
+      </div>
+      <div style="display:flex;gap:4px;margin-top:14px">
+        <div style="flex:1;height:34px;background:#CBF35E;border:1px solid #2B302A"></div>
+        <div style="flex:1;height:34px;background:#CBF35E;border:1px solid #2B302A"></div>
+        <div style="flex:1;height:34px;background:#CBF35E;border:1px solid #2B302A"></div>
+        <div style="flex:1;height:34px;border:1px solid #2B302A"></div>
+        <div style="flex:1;height:34px;border:1px solid #2B302A"></div>
+        <div style="flex:1;height:34px;border:1px solid #2B302A"></div>
+        <div style="flex:1;height:34px;border:1px solid #2B302A"></div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:14px;text-wrap:pretty">44–46px para qualquer controle numérico repetido. 26–30px só para toggle de um toque dentro de linha densa.</div>
+    </div>
+
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:#5E655A">TAB BAR E CABEÇALHO DE SHEET</div>
+      <div style="margin-top:12px;background:#0C0E0C;border-top:1px solid #22271F;position:relative">
+        <div style="position:absolute;top:-1px;height:2px;background:#CBF35E;width:20%;left:0"></div>
+        <div style="display:flex">
+          <div style="flex:1;padding:14px 0 13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:#CBF35E;text-align:center">HOJE</div>
+          <div style="flex:1;padding:14px 0 13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:#5E655A;text-align:center">TREINO</div>
+          <div style="flex:1;padding:14px 0 13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:#5E655A;text-align:center">COMIDA</div>
+          <div style="flex:1;padding:14px 0 13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:#5E655A;text-align:center">DADOS</div>
+          <div style="flex:1;padding:14px 0 13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:#5E655A;text-align:center">GUIA</div>
+        </div>
+      </div>
+      <div style="margin-top:22px;border-top:1px solid #CBF35E;background:#0C0E0C;padding:16px 16px 18px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid #22271F;padding-bottom:12px">
+          <div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#CBF35E">PRATO PRINCIPAL</div><div style="font-size:24px;font-weight:700;letter-spacing:-.03em;margin-top:5px">Almoço</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7C8478;margin-top:4px">12:30</div></div>
+          <div style="display:flex;gap:8px;flex:none">
+            <div style="width:40px;height:40px;border:1px solid #3A4137;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#7C8478">···</div>
+            <div style="width:40px;height:40px;border:1px solid #3A4137;display:flex;align-items:center;justify-content:center;font-size:18px">×</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:16px;text-wrap:pretty">O que diz “modal” é a borda superior ácida de 1px — nunca uma sombra. Sheets empilham no máximo três: objeto → seletor → editor.</div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:56px;border-top:1px solid #22271F;padding-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">05 · LEIS DE UX</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 40px;margin-top:14px">
+    <div style="padding:16px 0;border-bottom:1px solid #161A15"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#CBF35E">01</div><div style="font-size:15px;font-weight:500;margin-top:6px">Responda “e agora?” antes de “o que é”</div><div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:5px">O topo de toda tela primária é a próxima ação com contagem viva. Resumo vem depois.</div></div>
+    <div style="padding:16px 0;border-bottom:1px solid #161A15"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#CBF35E">02</div><div style="font-size:15px;font-weight:500;margin-top:6px">Sem modo de edição</div><div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:5px">Cada objeto carrega seu próprio jeito de editar. Nada é somente-leitura até você destravar.</div></div>
+    <div style="padding:16px 0;border-bottom:1px solid #161A15"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#CBF35E">03</div><div style="font-size:15px;font-weight:500;margin-top:6px">Destrutivo um nível para dentro</div><div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:5px">Remover nunca aparece na lista: mora na linha expandida ou no editor, em coral, abaixo do construtivo.</div></div>
+    <div style="padding:16px 0;border-bottom:1px solid #161A15"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#CBF35E">04</div><div style="font-size:15px;font-weight:500;margin-top:6px">Nunca digite o mesmo fato duas vezes</div><div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:5px">Tudo derivável é derivado, e a linha de procedência de 10px conta de onde veio.</div></div>
+    <div style="padding:16px 0;border-bottom:1px solid #161A15"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#CBF35E">05</div><div style="font-size:15px;font-weight:500;margin-top:6px">Edição é permanente, ajuste é de hoje — e a UI diz qual</div><div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:5px">O rótulo carrega a diferença. Ninguém deveria descobrir isso errando.</div></div>
+    <div style="padding:16px 0;border-bottom:1px solid #161A15"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#CBF35E">06</div><div style="font-size:15px;font-weight:500;margin-top:6px">Toda mudança global é reversível</div><div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:5px">Sempre existe um restaurar documentado.</div></div>
+    <div style="padding:16px 0;border-bottom:1px solid #161A15"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#CBF35E">07</div><div style="font-size:15px;font-weight:500;margin-top:6px">Escopo por regra, não por duplicação</div><div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:5px">Um plano com condições por objeto (“aparece em: todo dia / só treino / só alta”) em vez de sete telas de dia.</div></div>
+    <div style="padding:16px 0;border-bottom:1px solid #161A15"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#CBF35E">08</div><div style="font-size:15px;font-weight:500;margin-top:6px">Português, segunda pessoa, sem hype</div><div style="font-size:13px;line-height:1.55;color:#7C8478;margin-top:5px">Imperativos curtos. Sem exclamação, sem “parabéns”, sem emoji. Estado vazio é uma frase.</div></div>
+  </div>
+
+  <div style="margin-top:56px;border-top:1px solid #22271F;padding-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">06 · ACOPLAMENTO COM O APP DE TREINOS</div>
+  <div style="font-size:15px;line-height:1.5;color:#A8AFA1;margin-top:14px;max-width:640px;text-wrap:pretty">Uma única shell, uma única tab bar. O argumento mais forte para juntar os dois: o pré-treino das 5h45 e a sessão das 6h15 são a <em>mesma sequência</em> — a tela HOJE deveria mostrar as duas metades na mesma timeline.</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#22271F;margin-top:20px">
+    <div style="background:#0C0E0C;padding:18px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C8478">REUSO DIRETO DE COMPONENTE</div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:9px;font-size:14px;color:#D6DAD0">
+        <div>Linha de timeline → linha de exercício na sessão</div>
+        <div>Grade de fios → carga / reps / RIR / volume</div>
+        <div>Linha expansível + stepper → registrar série (±2,5 kg, ±1 rep)</div>
+        <div>Cartão-veredito → regra de progressão de carga</div>
+        <div>Sparkline → volume ou e1RM por semana</div>
+        <div>Ticks → séries concluídas no exercício</div>
+        <div>Pilha de sheets → exercício → seletor → editor</div>
+      </div>
+    </div>
+    <div style="background:#0C0E0C;padding:18px"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#CBF35E">ESTADO COMPARTILHADO — A INTEGRAÇÃO DE VERDADE</div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:11px">
+        <div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#F2F4EF">dayType</div><div style="font-size:13px;line-height:1.5;color:#7C8478;margin-top:3px">A–F ou descanso. A nutrição tira as calorias dele; o treino tira a sessão. Um valor, um editor, um calendário.</div></div>
+        <div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#F2F4EF">performance</div><div style="font-size:13px;line-height:1.5;color:#7C8478;margin-top:3px">Hoje é um toggle manual que alimenta a regra calórica. Com o treino registrando cargas, passa a ser <em>calculado</em> — e o toggle vira override.</div></div>
+        <div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#F2F4EF">pesos[]</div><div style="font-size:13px;line-height:1.5;color:#7C8478;margin-top:3px">Move o veredito calórico e qualquer métrica relativa de força.</div></div>
+        <div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#F2F4EF">ajuste</div><div style="font-size:13px;line-height:1.5;color:#7C8478;margin-top:3px">−1 / 0 / +1. O treino precisa ler: semana de corte não é semana de buscar PR.</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:20px;border:1px solid #2B302A;padding:18px;background:#111411">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:#FFC46B">O QUE NÃO TRAZER</div>
+    <div style="font-size:14px;line-height:1.55;color:#D6DAD0;margin-top:9px">Gráficos com eixo e legenda — a sparkline é o gráfico. Cartões com sombra. Sistema de cor por categoria (um segundo acento quebra a lei 4). Ofensivas, medalhas e telas de parabéns.</div>
+  </div>
+
+  <div style="margin-top:56px;border-top:1px solid #22271F;padding-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7C8478">ARQUIVOS</div>
+  <div style="font-size:14px;line-height:1.9;color:#7C8478;margin-top:12px"><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#D6DAD0">DESIGN_SYSTEM.md</span> — a especificação completa · <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#D6DAD0">tokens.css</span> — variáveis e classes base · <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#D6DAD0">README.md</span> — handoff para o Claude Code · <a href="Plano Eduardo.dc.html">o app funcionando</a></div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:960,&quot;height&quot;:1400}}"></script>
+</body>
+</html>

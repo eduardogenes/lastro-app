@@ -1,43 +1,132 @@
-/* A identidade visual, em um lugar só.
- *
- * Regra 4 do projeto: a paleta é fixa. Ela estava fixa de verdade — mas
- * espalhada: nove tokens no :root e mais nove cores escritas em hexadecimal no
- * meio das regras, além de SEIS nomes de variável usados e nunca definidos
- * (--sec, --amber, --txt, --card, --orange, --f). Trinta e uma regras caíam
- * silenciosamente no valor herdado, porque CSS não reclama de var() sem dono.
- *
- * Agora toda cor tem nome e todo nome tem dono, e um teste cobra as duas coisas.
- */
+/* ============================================================
+   INSTRUMENTO — o design system do produto inteiro.
+   Painel de instrumento, não app de bem-estar.
+
+   Não invente cor. Se precisar de uma nova, ela nasce aqui.
+
+   Os seis inegociáveis, para quem for mexer:
+     1. Raio zero. Só ponto de status, thumb do slider e o
+        indicador de home são redondos.
+     2. Número em mono, prosa em display. Nunca misturar dentro
+        de uma mesma string.
+     3. Fio de 1px, não cartão. Caixa com borda é só para objeto
+        destacado de verdade (veredito, formulário, resumo).
+        Nunca sombra. Nunca preenchimento para "agrupar".
+     4. Um acento, e ele significa. Ácido = agora / feito / seu /
+        aperte aqui. Âmbar = preste atenção. Coral = destrói dado.
+        No máximo um elemento ácido por região da tela.
+     5. Rótulo mono em caixa alta é estrutura, nunca ênfase.
+     6. Quase nenhum movimento. Existem dois: o pulso do ponto ao
+        vivo (2,4 s) e o indicador de aba (220 ms).
+   ============================================================ */
 
 :root {
-  /* ---------- a paleta do projeto ---------- */
-  --night:  #0D1520;   /* fundo */
-  --dusk:   #15202E;   /* cartão */
-  --raise:  #1C2A3B;   /* elevado */
-  --line:   #26374C;   /* borda */
-  --paper:  #E9EFF6;   /* texto */
-  --mist:   #8DA0B8;   /* secundário */
-  --dim:    #48607C;   /* apagado */
-  --dawn:   #F5A83C;   /* âmbar — o acento */
-  --ember:  #E8734A;   /* laranja — só alertas */
+  /* ---- Superfícies (mais escura → mais clara) ---- */
+  --ins-canvas:        #0C0E0C;  /* fundo da página e da folha */
+  --ins-surface-low:   #0F120F;  /* linha de opção dentro de folha */
+  --ins-surface:       #111411;  /* elevado: input, selo, opção */
+  --ins-surface-acid:  #161B12;  /* linha selecionada / dia atual */
+  --ins-surface-acid2: #1C2416;  /* micro-toggle ativo */
+  --ins-surface-warn:  #101408;  /* fundo do cartão de veredito */
 
-  /* ---------- acentos derivados ----------
-   * Não são cores novas: são as bordas e os textos de baixo contraste que
-   * acompanham cada estado. Estavam em hexadecimal solto no meio das regras.
-   */
-  --ok:         #7FBF9C;   /* feito */
+  /* ---- Linhas: são quatro, e a escolha é semântica ---- */
+  --ins-hairline:      #161A15;  /* entre linhas DENTRO de uma lista */
+  --ins-rule:          #22271F;  /* entre seções; o vão de 1px da grade */
+  --ins-border:        #2B302A;  /* borda em repouso: input, chip inativo */
+  --ins-border-strong: #3A4137;  /* borda interativa: stepper, botão secundário */
+
+  /* ---- Texto: cinco níveis, nunca mais ---- */
+  --ins-text:          #F2F4EF;  /* nome, valor, título */
+  --ins-text-2:        #D6DAD0;  /* prosa dentro de cartão */
+  --ins-text-3:        #A8AFA1;  /* frase de apoio sob um título */
+  --ins-text-4:        #7C8478;  /* rótulo, sobrancelha, meta em mono */
+  --ins-text-5:        #5E655A;  /* dica, procedência, aba inativa */
+
+  /* ---- Sinal: cor é significado, nunca decoração ---- */
+  --ins-acid:          #CBF35E;  /* você / agora / feito / a única ação */
+  --ins-acid-hover:    #E4FF9B;
+  --ins-amber:         #FFC46B;  /* atenção, cautela, "observar" */
+  --ins-coral:         #FF8A6B;  /* destrutivo */
+  --ins-on-acid:       #0C0E0C;  /* texto sobre qualquer preenchimento ácido */
+
+  /* ---- Tipografia ---- */
+  --ins-font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --ins-font-mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* ---- Espaço: base 4; só estes degraus aparecem ---- */
+  --ins-1:  4px;
+  --ins-2:  6px;
+  --ins-3:  8px;
+  --ins-4:  10px;
+  --ins-5:  12px;
+  --ins-6:  14px;
+  --ins-7:  16px;
+  --ins-8:  20px;   /* goteira da página */
+  --ins-9:  24px;   /* entre seções */
+  --ins-10: 26px;   /* entre seções maiores */
+  --ins-11: 34px;
+
+  /* ---- Geometria ---- */
+  --ins-radius: 0;
+  --ins-border-width: 1px;
+  --ins-rail: 3px;
+  --ins-indicator: 2px;
+
+  /* ---- Toque ---- */
+  --ins-tap: 46px;        /* controle numérico repetido; 46 e não 44 de propósito:
+                             ele usa de pé, suado, com uma mão */
+  --ins-tap-dense: 28px;  /* toggle de um toque dentro de linha densa */
+
+  /* ---- Movimento: existem exatamente dois ---- */
+  --ins-ease: cubic-bezier(.2, .8, .2, 1);
+  --ins-dur: 220ms;
+
+  /* ---- Áreas seguras do iPhone, com piso ----
+     Em Safari fora de tela cheia o inset vem 0; o piso garante que o conteúdo
+     nunca encoste na borda física nem suma sob a barra de gestos. */
+  --sa-top:    max(env(safe-area-inset-top), 0px);
+  --sa-bottom: max(env(safe-area-inset-bottom), 0px);
+  --sa-left:   max(env(safe-area-inset-left), 0px);
+  --sa-right:  max(env(safe-area-inset-right), 0px);
+
+  /* Altura da tab bar, para quem precisa reservar espaço embaixo. */
+  --ins-tabbar: calc(52px + var(--sa-bottom));
+}
+
+/* ============================================================
+   LEGADO — a paleta antiga do treino, ainda viva.
+   ============================================================
+   A regra 4 antiga ("identidade visual fixa" em azul-marinho e âmbar) foi
+   revogada: o Instrumento passa a valer para o produto inteiro. Mas a
+   repintura é tela por tela, e enquanto sobrar uma tela no sistema antigo
+   estes nomes precisam existir — senão 91 regras de app.css caem no valor
+   herdado, que é exatamente o bug que a tokenização acabou de consertar.
+
+   Este bloco morre junto com a última tela antiga. O teste de estilo cobra
+   que ele encolha: nenhum nome aqui pode ser usado por arquivo novo.
+*/
+
+:root {
+  --night:  #0D1520;
+  --dusk:   #15202E;
+  --raise:  #1C2A3B;
+  --line:   #26374C;
+  --paper:  #E9EFF6;
+  --mist:   #8DA0B8;
+  --dim:    #48607C;
+  --dawn:   #F5A83C;
+  --ember:  #E8734A;
+
+  --ok:         #7FBF9C;
   --ok-line:    #2F5C46;
-  --info:       #7FB0DC;   /* composto, bi-set */
+  --info:       #7FB0DC;
   --info-line:  #3C5A7A;
-  --dawn-soft:  #F3CB92;   /* deload ativo */
+  --dawn-soft:  #F3CB92;
   --dawn-line:  #6B5230;
-  --ember-soft: #F0A98D;   /* aviso que não é erro */
+  --ember-soft: #F0A98D;
   --ember-line: #4A3227;
-  --on-dawn:    #10161F;   /* texto sobre âmbar */
+  --on-dawn:    #10161F;
 
-  /* ---------- tipografia ----------
-   * Números sempre monoespaçados: é o que deixa comparar carga de relance.
-   */
   --f-d: 'Archivo', system-ui, sans-serif;
   --f-m: 'IBM Plex Mono', ui-monospace, monospace;
 }

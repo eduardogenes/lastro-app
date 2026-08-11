@@ -46,9 +46,32 @@ export interface Cintura {
 }
 
 export interface Veredito {
-  k: 'mais' | 'menos' | 'manter' | 'faltam';
+  k: 'mais' | 'menos' | 'manter' | 'observar' | 'faltam';
   t: string;
   p: string;
+}
+
+/** O estado do ±150 kcal que a comida executa. */
+export type Ajuste = -1 | 0 | 1;
+
+/**
+ * A ponte entre as duas metades do produto.
+ *
+ * Os dois apps tinham motor de veredito próprio sobre o MESMO peso, com
+ * limiares diferentes — 0,15/0,40 aqui, 0,10/0,40 com dois interruptores
+ * manuais lá. Ter dois seria ter duas verdades sobre a mesma balança.
+ *
+ * Agora há um só, e a divisão de trabalho é: aqui se DECIDE, na comida se
+ * EXECUTA. `veredito()` diz comer mais, manter ou comer menos; `ajuste`
+ * converte isso no ±150 kcal que reescreve as quantidades do plano.
+ *
+ * "observar" e "faltam" viram 0 de propósito: nenhum dos dois é uma decisão,
+ * e mexer na comida sem decisão é o oposto do que o app existe para fazer.
+ */
+export function ajusteDoVeredito(v: Veredito): Ajuste {
+  if (v.k === 'mais') return 1;
+  if (v.k === 'menos') return -1;
+  return 0;
 }
 
 /** Agrupa marcas por semana e devolve a média de cada uma, em ordem. */
@@ -89,10 +112,18 @@ export function cinturaMes(cintura: Marca[]): Cintura | null {
 }
 
 /**
- * As três situações do programa. Cintura tem prioridade: subir cintura é o
- * sinal de que o superávit virou gordura, mesmo com o peso comportado.
+ * As situações do programa. Cintura tem prioridade: subir cintura é o sinal de
+ * que o superávit virou gordura, mesmo com o peso comportado.
+ *
+ * `forcaSubindo` entrou com a fusão e muda UM ramo: peso parado com força
+ * subindo não é sinal de comer mais, é recomposição acontecendo. Mandar comer
+ * mais nessa hora atropelaria justamente o que estava dando certo. Sem o
+ * sinal — que é o padrão — a regra é exatamente a de antes.
  */
-export function veredito(body: { peso: Marca[]; cintura: Marca[] }): Veredito {
+export function veredito(
+  body: { peso: Marca[]; cintura: Marca[] },
+  forcaSubindo: boolean = false
+): Veredito {
   const c = cinturaMes(body.cintura);
   if (c && c.mes > 1.5)
     return { k: 'menos', t: 'Comer menos', p: `A média semanal da cintura subiu ${fmtDec(c.delta)} cm em ${Math.round(c.dias)} dias — acima do limite de 1,5 cm no mês.` };
@@ -106,6 +137,8 @@ export function veredito(body: { peso: Marca[]; cintura: Marca[] }): Veredito {
     const mov = r.kgSem! < 0
       ? `A média caiu ${fmtDec2(r.kgSem!)} kg por semana`
       : `A média subiu ${fmtDec2(r.kgSem!)} kg por semana`;
+    if (forcaSubindo)
+      return { k: 'observar', t: 'Observar', p: `${mov}, mas a força estimada está subindo. Peso parado com carga subindo é recomposição — não mexa na comida ainda.` };
     return { k: 'mais', t: 'Comer mais', p: `${mov} nas últimas 2 semanas — abaixo de 0,15.` };
   }
   if (r.kgSem! > 0.4)

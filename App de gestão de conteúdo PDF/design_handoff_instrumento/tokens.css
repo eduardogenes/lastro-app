@@ -1,0 +1,156 @@
+/* ============================================================
+   INSTRUMENTO — Design System
+   Plano Nutricional Eduardo · v1.0
+   Dark-first, hairline-grid, zero-radius, mono-for-numbers.
+   Drop this file in and use the variables. Do not invent new
+   colors: if you need a new one, it belongs in this file first.
+   ============================================================ */
+
+:root {
+  /* ---- Surfaces (darkest → lightest) ---- */
+  --ins-canvas:        #0C0E0C;  /* page background, also sheet background */
+  --ins-surface-low:   #0F120F;  /* option rows inside sheets */
+  --ins-surface:       #111411;  /* raised: inputs, day-type badge, swap options */
+  --ins-surface-acid:  #161B12;  /* selected row (acid-tinted) */
+  --ins-surface-acid2: #1C2416;  /* active micro-toggle */
+  --ins-surface-warn:  #101408;  /* verdict card background */
+
+  /* ---- Lines (there are four, use exactly these) ---- */
+  --ins-hairline:      #161A15;  /* inside a list: row separators */
+  --ins-rule:          #22271F;  /* between sections; also the 1px gap in metric grids */
+  --ins-border:        #2B302A;  /* resting border: inputs, inactive chips */
+  --ins-border-strong: #3A4137;  /* interactive border: steppers, secondary buttons */
+
+  /* ---- Text (5 levels, never more) ---- */
+  --ins-text:          #F2F4EF;  /* primary: names, values, headlines */
+  --ins-text-2:        #D6DAD0;  /* secondary: body prose inside cards */
+  --ins-text-3:        #A8AFA1;  /* tertiary: supporting sentence under a headline */
+  --ins-text-4:        #7C8478;  /* labels, eyebrows, mono meta */
+  --ins-text-5:        #5E655A;  /* faint: hints, inactive tab, provenance lines */
+
+  /* ---- Signal (color is meaning, never decoration) ---- */
+  --ins-acid:          #CBF35E;  /* you / now / done / the one action */
+  --ins-acid-hover:    #E4FF9B;  /* link hover only */
+  --ins-amber:         #FFC46B;  /* attention, caution, "observar" */
+  --ins-coral:         #FF8A6B;  /* destructive */
+  --ins-on-acid:       #0C0E0C;  /* text on any acid fill — always the canvas color */
+
+  /* ---- Type ---- */
+  --ins-font-display: 'Space Grotesk', system-ui, sans-serif;
+  --ins-font-mono:    'IBM Plex Mono', ui-monospace, monospace;
+
+  /* ---- Spacing (4-based; these are the only steps used) ---- */
+  --ins-1:  4px;
+  --ins-2:  6px;
+  --ins-3:  8px;
+  --ins-4:  10px;
+  --ins-5:  12px;
+  --ins-6:  14px;
+  --ins-7:  16px;
+  --ins-8:  20px;   /* page gutter */
+  --ins-9:  24px;   /* between sections */
+  --ins-10: 26px;   /* between major sections */
+  --ins-11: 34px;
+
+  /* ---- Geometry ---- */
+  --ins-radius: 0;            /* everything is square. dots are the only circles */
+  --ins-border-width: 1px;
+  --ins-rail: 3px;            /* progress rail height */
+  --ins-indicator: 2px;       /* tab indicator height */
+
+  /* ---- Touch ---- */
+  --ins-tap: 44px;            /* minimum for any repeated numeric control */
+  --ins-tap-dense: 26px;      /* single-tap toggle inside a dense row */
+
+  /* ---- Motion (there are exactly two in the whole app) ---- */
+  --ins-ease: cubic-bezier(.2, .8, .2, 1);
+  --ins-dur: 220ms;
+}
+
+/* ---- Type roles ---------------------------------------------------
+   Numbers are ALWAYS mono. Prose is ALWAYS display. Never mix within
+   one string. Uppercase mono labels are structural, not decorative.
+------------------------------------------------------------------- */
+
+.ins-metric-xl { font: 600 52px/.9 var(--ins-font-mono); letter-spacing: -.05em; }
+.ins-metric-l  { font: 500 34px/1  var(--ins-font-mono); letter-spacing: -.04em; }
+.ins-metric-m  { font: 600 22px/1.1 var(--ins-font-mono); letter-spacing: -.03em; }
+.ins-metric-s  { font: 600 19px/1.1 var(--ins-font-mono); letter-spacing: -.03em; }
+
+.ins-display   { font: 700 30px/1.02 var(--ins-font-display); letter-spacing: -.03em; }
+.ins-headline  { font: 700 34px/1.02 var(--ins-font-display); letter-spacing: -.035em; }
+.ins-title     { font: 700 24px/1.05 var(--ins-font-display); letter-spacing: -.03em; }
+.ins-subtitle  { font: 500 17px/1.35 var(--ins-font-display); letter-spacing: -.01em; }
+
+.ins-body      { font: 400 15px/1.4 var(--ins-font-display); }
+.ins-body-sm   { font: 400 14px/1.5 var(--ins-font-display); text-wrap: pretty; }
+.ins-body-xs   { font: 400 13px/1.5 var(--ins-font-display); text-wrap: pretty; }
+
+.ins-label     { font: 400 10px/1 var(--ins-font-mono); letter-spacing: .18em; text-transform: uppercase; color: var(--ins-text-4); }
+.ins-label-sm  { font: 400 9px/1  var(--ins-font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--ins-text-4); }
+.ins-data      { font: 400 13px/1.2 var(--ins-font-mono); }
+.ins-provenance{ font: 400 10px/1.4 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-5); }
+
+/* ---- Signature pattern: the hairline grid --------------------------
+   A grid whose 1px gaps ARE the rules. No borders on the cells.
+------------------------------------------------------------------- */
+.ins-hairgrid {
+  display: grid;
+  gap: 1px;
+  background: var(--ins-rule);
+}
+.ins-hairgrid > * { background: var(--ins-canvas); }
+
+/* ---- Buttons ---- */
+.ins-btn-primary {
+  display: block; width: 100%; padding: 16px 0;
+  background: var(--ins-acid); color: var(--ins-on-acid);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .16em; text-transform: uppercase;
+  border: 0; border-radius: var(--ins-radius);
+}
+.ins-btn-secondary {
+  display: block; width: 100%; padding: 13px 0;
+  background: transparent; color: var(--ins-text-2);
+  border: 1px solid var(--ins-border-strong); border-radius: var(--ins-radius);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .16em; text-transform: uppercase;
+}
+.ins-btn-add {           /* "+ ADICIONAR ..." — dashed means: creates something */
+  display: block; width: 100%; padding: 14px 0;
+  background: transparent; color: var(--ins-acid);
+  border: 1px dashed var(--ins-border-strong);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .16em; text-transform: uppercase;
+}
+.ins-btn-destructive { color: var(--ins-coral); }
+.ins-chip {              /* inline CTA chip, e.g. "ABRIR E EDITAR →" */
+  display: inline-block; padding: 7px 11px;
+  background: var(--ins-acid); color: var(--ins-on-acid);
+  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
+}
+
+/* ---- Form controls ---- */
+.ins-input {
+  width: 100%; padding: 12px;
+  background: var(--ins-surface); color: var(--ins-text);
+  border: 1px solid var(--ins-border); border-radius: 0;
+  -webkit-appearance: none; appearance: none;
+}
+.ins-input:focus { outline: none; border-color: var(--ins-acid); }
+.ins-input::placeholder { color: var(--ins-text-5); }
+
+.ins-stepper-btn {
+  width: var(--ins-tap); height: var(--ins-tap);
+  border: 1px solid var(--ins-border-strong); background: transparent;
+  color: var(--ins-text); font-size: 22px; line-height: 1;
+}
+
+.ins-range { -webkit-appearance: none; appearance: none; background: transparent; width: 100%; }
+.ins-range::-webkit-slider-runnable-track { height: 2px; background: var(--ins-border); }
+.ins-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 26px; height: 26px; margin-top: -12px;
+  border-radius: 50%; background: var(--ins-acid);
+}
+
+/* ---- Motion: only these two exist ---- */
+@keyframes ins-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
+.ins-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ins-acid); animation: ins-pulse 2.4s infinite; }
+.ins-tab-indicator { height: var(--ins-indicator); background: var(--ins-acid); transition: left var(--ins-dur) var(--ins-ease); }
