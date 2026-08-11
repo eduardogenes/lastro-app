@@ -31,7 +31,13 @@ function montarHTML() {
 
   return fs.readFileSync(idx, 'utf8')
     .replace(/<script type="module"[^>]*src="\.?\/?(assets\/[^"]+\.js)"[^>]*><\/script>/,
-      function (_, p) { return '<script>' + ler(p) + '<\/script>'; })
+      function (_, p) {
+        // Tira a referência de sourcemap: dentro do jsdom ela não resolve, e o
+        // Vitest tenta lê-la como caminho de disco ao formatar um stack —
+        // batendo num diretório e derrubando o relatório inteiro do arquivo.
+        const js = ler(p).replace(/\/\/# sourceMappingURL=.*$/m, '');
+        return '<script>' + js + '<\/script>';
+      })
     .replace(/<link rel="stylesheet"[^>]*href="\.?\/?(assets\/[^"]+\.css)"[^>]*>/,
       function (_, p) { return '<style>' + ler(p) + '<\/style>'; });
 }

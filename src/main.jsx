@@ -23,6 +23,8 @@ import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
 import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4 } from './dominio/migracoes';
+import { CADENCIA_PADRAO } from './dominio/dia';
+import { PLANO_BASE } from './dominio/nutricao/alimentos';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 
@@ -171,6 +173,21 @@ const STORE_LABEL = {
 // Padrões de campos novos e formas inválidas. Roda no boot e na importação:
 // um backup antigo tem que chegar às migrações no mesmo estado que o disco.
 function normalizaEstado() {
+  // A metade de comida entra AQUI e não só na migração 3→4: estado novo já
+  // nasce com plano = PLANO_ATUAL, então a migração devolve null sem semear
+  // nada, e a nutrição ficaria vazia para sempre em aparelho novo. Campo novo
+  // recebe padrão neste ponto — é o contrato da regra 2, e é por onde passam
+  // tanto o boot quanto a importação de backup.
+  if (!S.cadencia || S.cadencia.length !== 7) S.cadencia = CADENCIA_PADRAO.slice();
+  if (!S.comida || typeof S.comida !== 'object') S.comida = { plano: null, alimentos: {}, ocultos: {} };
+  if (!S.comida.plano) S.comida.plano = JSON.parse(JSON.stringify(PLANO_BASE));
+  if (!S.comida.alimentos || typeof S.comida.alimentos !== 'object') S.comida.alimentos = {};
+  if (!S.comida.ocultos || typeof S.comida.ocultos !== 'object') S.comida.ocultos = {};
+  if (!S.compras || typeof S.compras !== 'object') S.compras = { comprado:{}, extras:[], removidas:{}, dias:7 };
+  if (S.ajuste !== -1 && S.ajuste !== 1) S.ajuste = 0;
+  if (S.perfManual !== true && S.perfManual !== false) S.perfManual = null;
+  if (!S.dia || typeof S.dia !== 'object') S.dia = null;
+
   if (!S.logs || typeof S.logs !== 'object') S.logs = {};
   if (!Array.isArray(S.done)) S.done = [];
   if (typeof S.deload !== 'boolean') S.deload = false;
@@ -2940,7 +2957,17 @@ async function importText(txt) {
         plano: typeof d.plano === 'number' ? d.plano : 1,
         prog: d.prog || null, rot: d.rot || null,
         ex: (d.ex && typeof d.ex === 'object') ? d.ex : {},
-        mods: d.mods || null, progLog: Array.isArray(d.progLog) ? d.progLog : [] };
+        mods: d.mods || null, progLog: Array.isArray(d.progLog) ? d.progLog : [],
+        // A metade de comida entra pelo mesmo caminho. Whitelist e não spread
+        // de propósito: um backup adulterado não pode injetar campo que o app
+        // não conhece. O preço é este — campo novo tem que ser listado aqui,
+        // e um teste cobra que a lista bata com o que é exportado.
+        cadencia: Array.isArray(d.cadencia) && d.cadencia.length === 7 ? d.cadencia : null,
+        comida: (d.comida && typeof d.comida === 'object') ? d.comida : null,
+        dia: (d.dia && typeof d.dia === 'object') ? d.dia : null,
+        ajuste: (d.ajuste === -1 || d.ajuste === 1) ? d.ajuste : 0,
+        perfManual: (d.perfManual === true || d.perfManual === false) ? d.perfManual : null,
+        compras: (d.compras && typeof d.compras === 'object') ? d.compras : null };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();

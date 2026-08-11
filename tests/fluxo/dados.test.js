@@ -60,7 +60,10 @@ test('exportar carrega todos os campos do estado', async () => {
   assert.deepStrictEqual(
     Object.keys(bkp.data).sort(),
     ['body', 'cardio', 'carga', 'deload', 'done', 'draft', 'ex', 'export', 'logs',
-     'mods', 'plano', 'prog', 'progLog', 'rot', 'sessao'].sort()
+     'mods', 'plano', 'prog', 'progLog', 'rot', 'sessao',
+     // a fusão: sem estes no backup, trocar de celular perderia o plano
+     // nutricional, a cadência e o ajuste calórico em vigor
+     'ajuste', 'cadencia', 'comida', 'compras', 'dia', 'perfManual'].sort()
   );
   a.fechar();
 });

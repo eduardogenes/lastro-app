@@ -63,7 +63,10 @@ export default defineConfig({
     // quebraria isso em silêncio. Volta a ligar quando os testes importarem os
     // módulos direto — fase 2.
     minify: false,
-    sourcemap: true,
+    // Desligado: o .map de 435 kB não é usado em produção, e o harness inlina o
+    // bundle no jsdom — onde frames viram "https://treino.test/:757" e o Vitest
+    // tenta ler isso como caminho de disco ao formatar um stack.
+    sourcemap: false,
     rollupOptions: {
       // Desligado durante a transição. O app tem um ponto de entrada só e não
       // carrega código morto, então shaking não economiza nada aqui — mas
