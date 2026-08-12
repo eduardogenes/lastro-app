@@ -222,3 +222,21 @@ test('a unidade é rótulo fixo; o placeholder é a carga da última vez', () =>
     a.fechar();
   });
 });
+
+test('o placeholder de carregamento some quando o app monta', async () => {
+  // O Preact não remove filhos pré-existentes do container no primeiro render:
+  // ele não tem árvore antiga para comparar e só insere a dele. O "Carregando
+  // seu histórico…" ficava no topo da tela para sempre, e resíduo de troca de
+  // módulo pelo HMR ficava junto.
+  const a = await app({ aba: 'hoje' });
+  const app_ = a.doc.getElementById('app');
+  assert.strictEqual(app_.querySelector('.msg'), null, 'placeholder ficou na tela');
+  assert.ok(!app_.textContent.includes('Carregando'), app_.textContent.slice(0, 80));
+  assert.ok(!/undefined/.test(app_.textContent), 'texto "undefined" vazou para a tela');
+
+  // e sobrevive a re-render: limpar só pode acontecer no primeiro mount
+  a.E('render()');
+  assert.ok(a.$('.ins-cab'), 'o cabeçalho continua depois de re-renderizar');
+  assert.ok(a.$$('.ins-tab').length === 5);
+  a.fechar();
+});

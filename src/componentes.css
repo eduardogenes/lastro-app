@@ -183,9 +183,14 @@
   font: 400 10px/1.35 var(--ins-font-mono); letter-spacing: .06em;
   color: var(--ins-text-5); margin-top: var(--ins-1);
 }
+/* Alinhado ao topo, na altura do nome: com align-self esticado ele centrava
+   verticalmente e ficava flutuando ao lado do resumo, longe do objeto que
+   edita. */
 .ins-tl-mais {
   flex: 0 0 30px; align-self: stretch;
-  color: var(--ins-text-4); font-size: 17px; letter-spacing: .08em;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: var(--ins-6);
+  color: var(--ins-text-4); font-size: 17px; line-height: 1; letter-spacing: .08em;
   border-bottom: 1px solid var(--ins-hairline);
 }
 .ins-tl.ultima .ins-tl-mais { border-bottom: 0; }

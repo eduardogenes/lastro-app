@@ -21,8 +21,17 @@ let raiz = null;
  * @param {import('preact').ComponentChild} arvore
  */
 export function montaNoApp(arvore) {
-  if (!raiz) raiz = document.getElementById('app');
-  if (!raiz) return;
+  if (!raiz) {
+    raiz = document.getElementById('app');
+    if (!raiz) return;
+    // O Preact NÃO remove o que já estava no container: no primeiro render ele
+    // não tem árvore antiga para comparar, então cria os nós dele e deixa o
+    // resto onde estava. O placeholder "Carregando seu histórico…" do
+    // index.html ficava para sempre no topo da tela, e qualquer resíduo de uma
+    // troca de módulo pelo HMR ficava junto. Limpar uma vez, aqui, resolve os
+    // dois — e tem que ser antes do primeiro montar(), nunca depois.
+    raiz.textContent = '';
+  }
   montar(arvore, raiz);
 }
 
