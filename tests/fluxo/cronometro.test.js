@@ -116,8 +116,8 @@ test('bi-set encadeia em vez de descansar', async () => {
   // O programa atual não usa bi-set, mas o encadeamento continua sustentado:
   // é o par declarado no programa que decide, não o dia.
   const a = await app();
-  a.E('go("D")');
-  a.E('S.prog.D.ex[4].bi = 1; S.prog.D.ex[5].bi = 2; render()');
+  a.E('go("E")');   // ombros e braços: era D até o plano 5
+  a.E('S.prog.E.ex[4].bi = 1; S.prog.E.ex[5].bi = 2; render()');
 
   a.E('toggle(4)');
   for (let k = 0; k < 2; k++) a.preencher(4, k, 15, 12);

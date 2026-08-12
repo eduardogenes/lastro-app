@@ -34,7 +34,7 @@ test('anilha por lado mostra o total sem contar a barra', async () => {
 
 test('halter em cada mão soma as duas', async () => {
   const a = await app();
-  a.E('go("D")');
+  a.E('go("E")');   // ombros e braços: era D até o plano 5
   a.E('toggle(5)');                       // rosca martelo
   a.preencher(5, 0, 30, 10);
   assert.ok(a.texto('#tot5').includes('60 kg nas duas mãos'));
@@ -45,7 +45,7 @@ test('um halter só não mostra total', async () => {
   // Nenhum exercício do plano nasce como halter único; é uma correção que ele
   // faz na hora, quando pega um halter só em vez de um par.
   const a = await app();
-  a.E('go("D")');
+  a.E('go("E")');   // ombros e braços: era D até o plano 5
   a.E('toggle(5)');
   await a.E('setCarga(5,"halter1")');
   await a.esperar();
@@ -56,14 +56,14 @@ test('um halter só não mostra total', async () => {
 
 test('peso do corpo aceita carga vazia', async () => {
   const a = await app();
-  a.E('go("D")');
+  a.E('go("E")');   // ombros e braços: era D até o plano 5
   a.E('toggle(8)');                       // elevação de pernas ou reverse crunch
   assert.strictEqual(a.texto('.ex.open .unit'), '+kg');
 
   a.preencher(8, 0, null, 12);
   a.preencher(8, 1, null, 12);
-  assert.deepStrictEqual(a.log('D',8)[0].sets[0], [0, 12]);
-  assert.strictEqual(a.log('D',8)[0].sets.filter(Boolean).length, 2);
+  assert.deepStrictEqual(a.log('E',8)[0].sets[0], [0, 12]);
+  assert.strictEqual(a.log('E',8)[0].sets.filter(Boolean).length, 2);
   a.fechar();
 });
 
@@ -102,7 +102,7 @@ test('histórico de peso do corpo plota repetições, não carga', async () => {
   });
 
   const a = await app({ estado: { logs: logs, done: done, plano: 2 } });
-  a.E('go("D")');
+  a.E('go("E")');   // ombros e braços: era D até o plano 5
   a.E('toggle(8)');
   a.E('openHist(8)');
 

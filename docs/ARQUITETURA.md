@@ -265,6 +265,32 @@ Cada chave virou `antigo~<nome>`.
 catálogo, e vira entrada arquivada em `S.ex` quando não. `S.carga` e os
 `pulados` acompanham.
 
+**4 → 5** (`migraPlano5`) — as letras D e E trocam de lugar.
+
+A SEQUÊNCIA dos treinos não mudou e não pode mudar: o grande treino de torso
+vem antes do dia de ombros e braços, porque puxar e empurrar pesado no dia
+seguinte a um treino de deltoide e bíceps é puxar com o músculo já queimado.
+O que mudou foi o RÓTULO — até aqui a sequência era escrita como A B C E D F,
+com o E fora de ordem, e isso parecia erro toda vez que a tela abria.
+
+Trocar rótulo é migração de dado, não cosmética: toda sessão registrada guarda
+a letra em `done[].day`. Sem a migração, cada treino de ombros do histórico
+passaria a se chamar "espessura de costas", e o app estaria mentindo sobre
+meses de registro. A troca alcança `done`, `prog`, `rot`, `sessao`, `draft`,
+`mods` e `progLog` — tudo que guarda letra. `logs` e `carga` não entram: são
+indexados por exercício, e essa é justamente a vantagem de indexar assim.
+
+A troca é **involução**: aplicá-la duas vezes desfaz. O guarda de versão é a
+única coisa entre isso e um histórico embaralhado.
+
+Pelo mesmo motivo, a 2 → 3 semeia `S.prog` e `S.rot` com a rotulagem **da
+época**, não com a de hoje. Se semeasse com as letras atuais, a 4 → 5 rodaria
+em seguida e trocaria de novo. A regra que sai daqui vale para toda migração
+futura: **cada uma devolve o estado como ele era naquela versão**, nunca como
+ele é hoje. `semeiaProg()` e `ROT_BASE` são código de hoje, e usá-los dentro
+de uma migração antiga é a armadilha que apareceu duas vezes nesta — no
+`porPosicao` e na semeadura.
+
 Trocar o programa de novo agora é edição, não migração. Mudar o `PROGRAMA` só
 muda a semente e o alvo de comparação; quem já tem `S.prog` não é afetado, e o
 botão de restaurar é o caminho para adotar a prescrição nova.

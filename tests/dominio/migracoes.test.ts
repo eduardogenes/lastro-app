@@ -7,8 +7,10 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { ARQUIVO, PLANO_1, migraPlano, migraPlano3 } from '../../src/dominio/migracoes';
-import { EX_BASE, slugEx } from '../../src/dominio/programa';
+import {
+  ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5
+} from '../../src/dominio/migracoes';
+import { EX_BASE, PROGRAMA, slugEx } from '../../src/dominio/programa';
 import type { Estado, Log } from '../../src/dominio/tipos';
 import { DIA, log } from './ajuda';
 
@@ -126,12 +128,28 @@ test('2→3 faz a correção de carga e os pulados acompanharem o exercício', (
   assert.deepStrictEqual(S.done[0].pulados, ['chest-press-inclinado-convergente']);
 });
 
-test('2→3 semeia o programa dele a partir do do treinador', () => {
+test('2→3 semeia com a rotulagem DA ÉPOCA, não com a de hoje', () => {
+  // Toda migração devolve o estado como ele era naquela versão. Se a 2→3
+  // semeasse com as letras de hoje, a 4→5 rodaria em seguida e trocaria de
+  // novo — aplicando a troca duas vezes e embaralhando o programa.
   const S = estado({ plano: 2 });
   migraPlano3(S);
   assert.ok(S.prog && S.prog.A, 'nasce com o programa do treinador');
-  assert.deepStrictEqual(S.rot, ['A', 'B', 'C', 'E', 'D', 'F']);
+  assert.deepStrictEqual(S.rot, ['A', 'B', 'C', 'E', 'D', 'F'], 'a rotação do plano 3');
+  assert.strictEqual(S.prog!.E.name, 'Espessura de costas + peito', 'o torso ainda se chama E aqui');
   assert.strictEqual(S.prog!.A.ex[0].desde, 0, 'veio do treinador: não conta na regra de 6 a 8 semanas');
+});
+
+test('a cadeia inteira termina com a rotação alfabética e o torso em D', () => {
+  const S = estado({ plano: 1 });
+  migraPlano(S);
+  migraPlano3(S);
+  migraPlano4(S);
+  migraPlano5(S);
+  assert.strictEqual(S.plano, 5);
+  assert.deepStrictEqual(S.rot, ['A', 'B', 'C', 'D', 'E', 'F']);
+  assert.strictEqual(S.prog!.D.name, 'Espessura de costas + peito');
+  assert.strictEqual(S.prog!.E.name, 'Deltoides + braços + abdômen');
 });
 
 test('2→3 não roda duas vezes', () => {
@@ -159,4 +177,61 @@ test('um estado do plano 1 atravessa as duas migrações sem perder série', () 
   Object.keys(S.logs).forEach(k => {
     assert.ok(/^[a-z0-9-]+$/.test(k), 'toda chave virou id de exercício: ' + k);
   });
+});
+
+// ---------- 4 -> 5: as letras D e E trocam de lugar ----------
+
+test('4→5 renomeia a sessão no histórico, não a reordena', () => {
+  // Sem isto, todo treino de ombros já registrado passaria a se chamar
+  // "espessura de costas" — o app mentindo sobre meses de registro.
+  const S = estado({ plano: 4, done: [
+    { day: 'A', t: 1, sid: 1, dur: 0 },
+    { day: 'E', t: 2, sid: 2, dur: 0 },   // era o torso
+    { day: 'D', t: 3, sid: 3, dur: 0 },   // era ombros e braços
+    { day: 'F', t: 4, sid: 4, dur: 0 }
+  ] });
+  const r = migraPlano5(S)!;
+  assert.strictEqual(r.sessoes, 2, 'só as duas que mudaram de nome');
+  assert.deepStrictEqual(S.done.map(m => m.day), ['A', 'D', 'E', 'F']);
+  assert.deepStrictEqual(S.done.map(m => m.t), [1, 2, 3, 4], 'a ordem cronológica não se toca');
+});
+
+test('4→5 leva junto a rotação, o programa e a sessão aberta', () => {
+  const S = estado({
+    plano: 4,
+    rot: ['A', 'B', 'C', 'E', 'D', 'F'],
+    prog: { A: { name: 'a', tag: '', ex: [] }, E: { name: 'torso', tag: '', ex: [] },
+            D: { name: 'ombros', tag: '', ex: [] } },
+    sessao: { day: 'E', inicio: 1, ultima: 1, sid: 1 },
+    draft: { day: 'E', ex: {} },
+    mods: { day: 'D', t: 1, list: [] },
+    progLog: [{ t: 1, day: 'E', txt: 'x' }]
+  });
+  migraPlano5(S);
+  assert.deepStrictEqual(S.rot, ['A', 'B', 'C', 'D', 'E', 'F'], 'a rotação vira alfabética');
+  assert.strictEqual(S.prog!.D.name, 'torso', 'o torso passou a se chamar D');
+  assert.strictEqual(S.prog!.E.name, 'ombros');
+  assert.strictEqual(S.sessao!.day, 'D');
+  assert.strictEqual(S.draft!.day, 'D');
+  assert.strictEqual(S.mods!.day, 'E');
+  assert.strictEqual(S.progLog[0].day, 'D');
+});
+
+test('4→5 não roda duas vezes — a troca é involução', () => {
+  // Aplicar de novo desfaria tudo em silêncio. O guarda de versão é a única
+  // coisa entre isto e um histórico embaralhado.
+  const S = estado({ plano: 5, done: [{ day: 'D', t: 1, sid: 1, dur: 0 }] });
+  assert.strictEqual(migraPlano5(S), null);
+  assert.strictEqual(S.done[0].day, 'D');
+});
+
+test('2→3 lê as posições antigas com a rotulagem da época', () => {
+  // 'D3' foi escrito quando D era o treino de ombros. Ler com a rotulagem de
+  // hoje apontaria para o quarto exercício do torso — histórico no lugar errado.
+  const S = estado({ plano: 2, logs: { D3: [log([[20, 12]], { t })] } });
+  migraPlano3(S);
+  const chave = Object.keys(S.logs)[0];
+  // o treino de ombros e braços hoje se chama E; D3 era a quarta posição dele
+  assert.strictEqual(chave, slugEx(PROGRAMA.E.ex[3].n),
+    'D3 era o quarto exercício de ombros; veio ' + chave);
 });

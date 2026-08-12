@@ -29,7 +29,7 @@ import { mediasSemanais, pesoRitmo as _pesoRitmo,
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
-import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4 } from './dominio/migracoes';
+import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 
@@ -233,6 +233,7 @@ async function load() {
   const arquivados = migraPlano(S);
   const m3 = migraPlano3(S);
   migraPlano4(S);
+  migraPlano5(S);
   if (!S.prog || typeof S.prog !== 'object') S.prog = semeiaProg();
   if (!Array.isArray(S.rot) || !S.rot.length) S.rot = ROT_BASE.slice();
   montaCatalogo();
@@ -3203,6 +3204,7 @@ async function importText(txt) {
   migraPlano(S);
   migraPlano3(S);
   migraPlano4(S);
+  migraPlano5(S);
   montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;

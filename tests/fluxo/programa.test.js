@@ -142,7 +142,7 @@ test('o mesmo aparelho em duas posições da mesma sessão não se sobrescreve',
 test('estado sem programa nasce com o do treinador', async () => {
   const a = await app({ estado: { logs: {}, done: [], prog: null, rot: null } });
   await a.esperar();
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'E', 'D', 'F']);
+  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'D', 'E', 'F']);
   assert.strictEqual(a.E('treino("A").ex.length'), 7);
   assert.strictEqual(a.E('treino("A").ex[0].s'), 3);
   assert.strictEqual(a.E('treino("A").ex[0].d'), 180, 'o descanso vem do slot');
@@ -182,7 +182,7 @@ test('estado do plano 1 atravessa as duas migrações sem perder nada', async ()
   } });
   await a.esperar();
 
-  assert.strictEqual(a.E('S.plano'), 4, 'a 3→4 da fusão roda na mesma cadeia');
+  assert.strictEqual(a.E('S.plano'), 5, 'a 3→4 da fusão roda na mesma cadeia');
   assert.strictEqual(a.E('S.done.length'), 2, 'o calendário atravessa intacto');
 
   const logs = a.J('S.logs');

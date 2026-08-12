@@ -37,9 +37,15 @@ export interface Carga {
   obs?: string;
 }
 
-// E vem antes de D de propósito: o grande treino de torso não deve cair logo
-// depois de um dia inteiro de ombros e braços.
-export const ROT_BASE: string[] = ['A','B','C','E','D','F'];
+// A sequência é o que importa, e ela não mudou: o grande treino de torso vem
+// ANTES do dia de ombros e braços, porque puxar e empurrar pesado no dia
+// seguinte a um treino de deltoide e bíceps é puxar com o músculo já queimado.
+//
+// Até a versão 4 do formato isso era expresso invertendo a rotação —
+// A B C E D F, com E fora de ordem. Lia mal: parecia erro toda vez que alguém
+// abria a tela. As letras foram trocadas de lugar para a rotação ficar
+// alfabética; os treinos, esses, continuam na mesma ordem de sempre.
+export const ROT_BASE: string[] = ['A','B','C','D','E','F'];
 
 // Descanso em segundos, pelas categorias do treinador: grande composto 3 min,
 // máquina multiarticular 2,5 min, isolador e demais 1,5 min. O critério real
@@ -79,7 +85,7 @@ export const PROGRAMA: Record<string, Treino<ExercicioPrescrito>> = {
     {n:'Panturrilha sentada', car:'lado', g:'panturrilha', s:2, r:'10–15', c:0, d:D_CURTO, cue:'Pause no alongamento. Nada de quicar.'},
     {n:'Tibial anterior', car:'pino', g:'tibial', s:2, r:'12–20', c:0, d:D_CURTO, cue:'Não é obrigatório para estética, entra por completude do programa.'},
   ]},
-  E: { name:'Espessura de costas + peito', tag:'o grande treino de torso', ex:[
+  D: { name:'Espessura de costas + peito', tag:'o grande treino de torso', ex:[
     {n:'Remada convergente com apoio de peito', car:'lado', g:'costas espessura', s:3, r:'6–10', c:1, d:D_MAQUINA, cue:'Tronco apoiado tira a lombar da conta.'},
     {n:'Remada horizontal na máquina', car:'pino', g:'costas espessura', s:3, r:'8–12', c:1, d:D_MAQUINA, cue:'Escolha o equipamento onde dá para deixar a escápula protrair e depois retrair confortável.'},
     {n:'High row com apoio de peito', car:'lado', g:'costas espessura', s:2, r:'8–12', c:1, d:D_MAQUINA, cue:'Aqui os cotovelos podem ficar um pouco mais afastados.'},
@@ -90,7 +96,7 @@ export const PROGRAMA: Record<string, Treino<ExercicioPrescrito>> = {
     {n:'Chest press horizontal convergente', car:'pino', g:'peito', s:3, r:'8–12', c:1, d:D_MAQUINA, cue:'Preserva e desenvolve o peito médio sem tirar o foco da região clavicular.'},
     {n:'Pec deck', car:'pino', g:'peito', s:2, r:'10–15', c:0, d:D_ISOLADOR, cue:'Trajetória guiada; dá para chegar perto da falha.'},
   ]},
-  D: { name:'Deltoides + braços + abdômen', tag:'lateral antes dos braços, de propósito', ex:[
+  E: { name:'Deltoides + braços + abdômen', tag:'lateral antes dos braços, de propósito', ex:[
     {n:'Elevação lateral na máquina', car:'pino', g:'delt lateral', s:4, r:'8–15', c:0, d:D_CURTO, cue:'Somadas às seis do A, dão 13 séries diretas de lateral por semana. É onde você tem que estar.'},
     {n:'Elevação lateral no cabo', car:'pino', g:'delt lateral', s:3, r:'12–20', c:0, d:D_CURTO, cue:'Tensão constante na parte de baixo, onde o halter perde.'},
     {n:'Remada para deltoide posterior com apoio de peito', car:'lado', g:'delt posterior', s:2, r:'8–15', c:1, d:D_ISOLADOR, cue:'Cotovelo afastado do tronco, puxando para trás.'},

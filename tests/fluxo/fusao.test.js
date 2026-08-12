@@ -6,7 +6,7 @@ import { app, DIA } from './harness.js';
 test('estado migra para o plano 4 e a nutrição nasce semeada', async () => {
   const a = await app();
   assert.deepStrictEqual(a.erros, []);
-  assert.strictEqual(a.E('S.plano'), 4);
+  assert.strictEqual(a.E('S.plano'), 5);
   assert.strictEqual(a.E('S.comida.plano.length'), 6, 'plano nutricional semeado');
   assert.strictEqual(a.J('S.cadencia').length, 7, 'cadência da semana nasce com 7 posições');
   assert.strictEqual(a.E('S.ajuste'), 0);

@@ -36,12 +36,12 @@ const agora = Date.now();
 
 test('a rotação decide qual treino vem, e o dia da semana nunca opina', () => {
   const S = estado({ done: [{ day: 'C', t: agora - DIA, sid: 1, dur: 0 }] });
-  assert.strictEqual(proximoTreino(S, ROT_BASE), 'E',
-    'a rotação é A→B→C→E→D→F: depois de C vem E, não D');
+  assert.strictEqual(proximoTreino(S, ROT_BASE), 'D',
+    'a rotação é alfabética desde o plano 5; depois de C vem D');
 
   // a cadência não muda isso, seja qual for o dia da semana
   const h = diaDeHoje(S, ROT_BASE, CADENCIA_PADRAO, null, agora);
-  if (h.cadencia === 'treino') assert.strictEqual(h.treino, 'E');
+  if (h.cadencia === 'treino') assert.strictEqual(h.treino, 'D');
 });
 
 test('treino avulso não move a fila', () => {
@@ -49,7 +49,7 @@ test('treino avulso não move a fila', () => {
     { day: 'C', t: agora - 2 * DIA, sid: 1, dur: 0 },
     { day: 'X', t: agora - DIA, sid: 2, dur: 0, livre: 1 }
   ] });
-  assert.strictEqual(proximoTreino(S, ROT_BASE), 'E', 'a avulsa é presença, não sessão');
+  assert.strictEqual(proximoTreino(S, ROT_BASE), 'D', 'a avulsa é presença, não sessão');
 });
 
 // ---------- hoje é dia de treinar: fato > override > previsão ----------

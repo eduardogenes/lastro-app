@@ -16,7 +16,7 @@ test('a lista mostra os seis treinos e a conta contra o treinador', async () => 
   assert.deepStrictEqual(stats, ['125', '125', '0'], 'começa idêntico ao programa dele');
   assert.strictEqual(a.$$('.progd').length, 6);
   assert.strictEqual(a.$$('.progd-l')[0].textContent, 'A');
-  assert.strictEqual(a.$$('.progd-l')[3].textContent, 'E', 'a ordem é a da rotação, não o alfabeto');
+  assert.strictEqual(a.$$('.progd-l')[3].textContent, 'D', 'a ordem da lista é a da rotação');
   a.fechar();
 });
 
@@ -147,16 +147,18 @@ test('restaurar tudo volta programa e rotação, sem tocar no histórico nem no 
   await a.E('restaurarTudo()');
   await a.esperar();
   assert.strictEqual(a.E('difTotal()'), 0);
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'E', 'D', 'F']);
+  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'D', 'E', 'F']);
   assert.strictEqual(a.E('CAT["meu-aparelho"].n'), 'Meu aparelho', 'o que ele cadastrou continua lá');
   a.fechar();
 });
 
 test('reordenar a rotação muda a sequência dos treinos', async () => {
   const a = await noPrograma();
-  await a.E('moverDia(4,-1)');   // D sobe: A B C D E F
+  // a rotação já nasce alfabética desde o plano 5; subir o quinto dia a
+  // desalinha, que é justamente o que se quer testar
+  await a.E('moverDia(4,-1)');
   await a.esperar();
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'D', 'E', 'F']);
+  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'E', 'D', 'F']);
   assert.strictEqual(a.E('difTotal()'), 1, 'a rotação conta como diferença');
   a.fechar();
 });
@@ -211,7 +213,7 @@ test('o programa sobrevive a fechar e reabrir', async () => {
   const b = await app({ estado: bruto });
   await b.esperar();
   assert.strictEqual(b.E('S.prog.C.ex[0].s'), 4);
-  assert.deepStrictEqual(b.J('rot()'), ['B', 'A', 'C', 'E', 'D', 'F']);
+  assert.deepStrictEqual(b.J('rot()'), ['B', 'A', 'C', 'D', 'E', 'F']);
   assert.strictEqual(b.E('S.progLog.length'), 2);
   b.fechar();
 });

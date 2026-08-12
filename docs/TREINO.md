@@ -22,8 +22,8 @@ Gerado a partir do app. Para atualizar depois de mexer no `PROGRAMA`:
 | **A** | Peito superior + lateral + tríceps | 7 | 19 |
 | **B** | Dorsais + posterior de ombro + bíceps | 8 | 20 |
 | **C** | Quadríceps + adutores + panturrilha | 7 | 19 |
-| **E** | Espessura de costas + peito | 9 | 22 |
-| **D** | Deltoides + braços + abdômen | 9 | 22 |
+| **D** | Espessura de costas + peito | 9 | 22 |
+| **E** | Deltoides + braços + abdômen | 9 | 22 |
 | **F** | Posteriores + glúteos + panturrilha | 8 | 23 |
 
 ### Séries por músculo na rotação completa
@@ -378,7 +378,7 @@ Se a máquina estiver ocupada:
 
 ---
 
-## Treino E — Espessura de costas + peito
+## Treino D — Espessura de costas + peito
 
 *o grande treino de torso*
 
@@ -510,7 +510,7 @@ Se a máquina estiver ocupada:
 
 ---
 
-## Treino D — Deltoides + braços + abdômen
+## Treino E — Deltoides + braços + abdômen
 
 *lateral antes dos braços, de propósito*
 

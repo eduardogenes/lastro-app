@@ -127,7 +127,7 @@ conta das 48 sessões** até o deload.
 
 O programa do treinador está congelado no código como `PROGRAMA`, em
 [src/dominio/programa.ts](src/dominio/programa.ts): 6 treinos, 48 exercícios,
-125 séries diretas, rotação A → B → C → E → D → F.
+125 séries diretas, rotação A → B → C → D → E → F.
 
 Ele é a semente do seu programa, o alvo de comparação e o que o botão de
 restaurar devolve. O que abre na tela é o **seu** programa, que vai divergindo

@@ -19,7 +19,8 @@ test('treino do plano lançado sem detalhar', async () => {
   assert.strictEqual(m.retro, 1);
   assert.strictEqual(m.dur, 60 * 60000);
   assert.ok(a.toast().includes('Treino D registrado'));
-  assert.strictEqual(a.E('nextDay()'), 'F', 'a rotação segue o treino lançado');
+  // depois de D vem E desde o plano 5, quando as letras foram alfabetizadas
+  assert.strictEqual(a.E('nextDay()'), 'E', 'a rotação segue o treino lançado');
   a.fechar();
 });
 

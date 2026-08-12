@@ -182,7 +182,12 @@ export interface RascunhoEx {
 }
 
 /** Buffer de digitação da sessão aberta, por posição do treino. */
-export interface Rascunho { ex: Record<string, RascunhoEx>; }
+export interface Rascunho {
+  /** o dia a que o rascunho pertence: zerado ao trocar de treino */
+  day?: Dia;
+  t?: number;
+  ex: Record<string, RascunhoEx>;
+}
 
 /** Estado das compras. Derivado no cálculo, mas o que foi MARCADO persiste. */
 export interface EstadoCompras {

@@ -20,7 +20,18 @@ import type { Estado, IdEx, Log } from './tipos';
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-export const PLANO_ATUAL = 4;
+export const PLANO_ATUAL = 5;
+
+/**
+ * Reetiqueta um mapa por dia com a rotulagem anterior ao plano 5. Usado pelas
+ * migrações antigas, que precisam devolver o estado como ele era na época
+ * delas — a 4→5 corrige depois, na ordem certa.
+ */
+function letrasDaEpoca<T>(porDia: Record<string, T>): Record<string, T> {
+  const saida: Record<string, T> = {};
+  Object.keys(porDia).forEach(function (k) { saida[trocaLetra(k)] = porDia[k]; });
+  return saida;
+}
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -87,9 +98,14 @@ export function migraPlano3(S: Estado): Resultado3 | null {
   const r: Resultado3 = { chaves:0, recuperados:[], arquivados:0 };
 
   // posição antiga -> id do exercício que ocupava aquela posição
+  // As chaves do plano 2 foram escritas com a rotulagem da ÉPOCA, quando o
+  // treino de torso se chamava E e o de ombros se chamava D. Ler 'D3' com a
+  // rotulagem de hoje apontaria para o exercício errado — a migração precisa
+  // falar a língua do dado que ela lê, não a do código que a executa.
   const porPosicao: Record<string, IdEx> = {};
   ROT_BASE.forEach(function (d) {
-    PROGRAMA[d].ex.forEach(function (ex, i) { porPosicao[d+i] = slugEx(ex.n); });
+    const naEpoca = trocaLetra(d);
+    PROGRAMA[d].ex.forEach(function (ex, i) { porPosicao[naEpoca+i] = slugEx(ex.n); });
   });
 
   if (!S.ex || typeof S.ex !== 'object') S.ex = {};
@@ -153,8 +169,15 @@ export function migraPlano3(S: Estado): Resultado3 | null {
     });
   }
 
-  S.prog = semeiaProg();
-  S.rot = ROT_BASE.slice();
+  // Semeia com a rotulagem DA ÉPOCA, não com a de hoje.
+  //
+  // Toda migração tem que produzir o estado como ele era NAQUELA versão — se a
+  // 2→3 semeasse com as letras de hoje, a 4→5 rodaria em seguida e trocaria de
+  // novo, aplicando a troca duas vezes. `semeiaProg` e `ROT_BASE` são código
+  // de hoje; usar os dois dentro de uma migração antiga é a mesma armadilha que
+  // já apareceu no `porPosicao` aqui em cima.
+  S.prog = letrasDaEpoca(semeiaProg());
+  S.rot = ROT_BASE.map(trocaLetra);
   S.plano = 3;
   return r;
 }
@@ -208,5 +231,62 @@ export function migraPlano4(S: Estado): Resultado4 | null {
   if (!S.dia || typeof S.dia !== 'object') S.dia = null;
 
   S.plano = 4;
+  return r;
+}
+
+// ---------- plano 4 -> 5: as letras D e E trocam de lugar ----------
+//
+// A SEQUÊNCIA dos treinos não mudou e não pode mudar: o grande treino de torso
+// vem antes do dia de ombros e braços, e o motivo é fisiológico. O que mudou
+// foram os rótulos — até o plano 4 a sequência era escrita como A B C E D F,
+// com o E fora de ordem, e isso parecia erro toda vez que a tela abria.
+//
+// Trocar rótulo é migração de dado, não cosmética: TODA sessão registrada
+// guarda a letra em `done[].day`. Sem esta migração, cada treino de ombros do
+// histórico passaria a se chamar "espessura de costas", e o app estaria
+// mentindo sobre meses de registro.
+//
+// A troca é involução — aplicá-la duas vezes desfaz. O guarda de versão é o que
+// impede isso, e por isso ele vem antes de qualquer coisa.
+
+/** O que mudou de nome. Só D e E; o resto ficou onde estava. */
+export const TROCA_4_5: Record<string, string> = { D: 'E', E: 'D' };
+
+/** A letra de hoje para a letra de antes do plano 5, e vice-versa. */
+export function trocaLetra(l: string): string {
+  return TROCA_4_5[l] || l;
+}
+
+export interface Resultado5 {
+  /** sessões do histórico que foram renomeadas */
+  sessoes: number;
+  /** dias do programa dele que trocaram de chave */
+  dias: number;
+}
+
+export function migraPlano5(S: Estado): Resultado5 | null {
+  if (S.plano >= 5) return null;
+  const r: Resultado5 = { sessoes: 0, dias: 0 };
+
+  S.done.forEach(function (m) {
+    if (TROCA_4_5[m.day]) { m.day = trocaLetra(m.day); r.sessoes++; }
+  });
+  if (S.sessao) S.sessao.day = trocaLetra(S.sessao.day);
+  if (S.draft && S.draft.day) S.draft.day = trocaLetra(S.draft.day);
+  if (S.mods) S.mods.day = trocaLetra(S.mods.day);
+  (S.progLog || []).forEach(function (e) { e.day = trocaLetra(e.day); });
+
+  if (Array.isArray(S.rot)) S.rot = S.rot.map(trocaLetra);
+
+  if (S.prog) {
+    const novo: Record<string, (typeof S.prog)[string]> = {};
+    Object.keys(S.prog).forEach(function (k) {
+      novo[trocaLetra(k)] = S.prog![k];
+      r.dias++;
+    });
+    S.prog = novo;
+  }
+
+  S.plano = 5;
   return r;
 }
