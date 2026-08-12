@@ -379,3 +379,53 @@
 .gu-acoes { display: flex; flex-direction: column; gap: var(--ins-2); }
 .gu-acoes .ins-btn-destructive { border-color: var(--ins-ember-line, var(--ins-border-strong)); }
 .gu-legado { margin-top: var(--ins-9); }
+
+/* ---- DADOS: medidas e músculos ----------------------------------------- */
+
+.dd-registro { display: flex; gap: var(--ins-2); align-items: center; }
+.dd-registro .ins-stepper { flex: 1; }
+.dd-registro .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+
+.dd-fora {
+  margin-bottom: var(--ins-6); padding: var(--ins-5);
+  border: 1px solid var(--ins-amber);
+}
+.dd-fora-l { margin-top: var(--ins-3); }
+.dd-fora .ins-btn-secondary { margin-top: var(--ins-5); }
+
+/* Uma barra por músculo. Sem eixo e sem legenda: a barra É o gráfico. */
+.dd-mus { display: flex; flex-direction: column; }
+.dd-mus-l {
+  display: flex; align-items: center; gap: var(--ins-3);
+  padding: var(--ins-3) 0;
+  border-bottom: 1px solid var(--ins-hairline);
+}
+.dd-mus-l:last-child { border-bottom: 0; }
+.dd-mus-n {
+  flex: 0 0 104px; min-width: 0;
+  font: 400 12px/1.25 var(--ins-font-display); color: var(--ins-text-3);
+}
+.dd-mus-l.prio .dd-mus-n { color: var(--ins-text); }
+.dd-mus-n em {
+  display: block; font-style: normal; margin-top: 2px;
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ins-text-5);
+}
+.dd-mus-b { flex: 1; height: 6px; background: var(--ins-rule); }
+.dd-mus-b i { display: block; height: 100%; background: var(--ins-text-3); }
+.dd-mus-l.prio .dd-mus-b i { background: var(--ins-acid); }
+.dd-mus-v {
+  flex: 0 0 52px; text-align: right;
+  font: 600 15px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text);
+}
+.dd-mus-v small {
+  display: block; margin-top: 2px; font-weight: 400;
+  font-size: 9px; letter-spacing: .04em; color: var(--ins-text-5);
+}
+.dd-mus-d {
+  flex: 0 0 44px; text-align: right;
+  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .04em; color: var(--ins-text-4);
+}
+/* Prosa longa não cabe em mono de 10px: procedência é uma linha, o resto é
+   prosa na display. */
+.dd-nota { margin: var(--ins-3) 0 0; }

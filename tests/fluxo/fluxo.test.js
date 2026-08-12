@@ -39,7 +39,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   assert.strictEqual(a.E('cardioSemana().length'), 1);
 
   // pesagem
-  a.digitar('bpeso', '73,4');
+  a.E('view.bodyForm = { peso: "73,4" }');
   await a.E('addBody("peso")');
   await a.esperar();
   assert.strictEqual(a.E('S.body.peso.length'), 1);

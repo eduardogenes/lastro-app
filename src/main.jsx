@@ -4033,7 +4033,7 @@ CTX.dados = function () {
         { k: 'nao', t: 'não está', v: false, on: S.perfManual === false }
       ]
     },
-    htmlLegado: renderBody(true) + renderAcomp()
+    htmlLegado: renderAcomp()
   };
 };
 
@@ -4084,3 +4084,127 @@ CTX.restauraPlano = function () {
   queueSave(); render();
   toast('Plano nutricional restaurado.');
 };
+
+// ---------- DADOS: o que ainda vinha em string ----------
+// Peso, cintura, cardio e músculos passam a componente. O calendário do mês
+// continua por <Bruto> — é grade de fios e sobrevive bem à repintura de token;
+// converter a estrutura dele é a última pendência desta tela.
+
+/** Série da média semanal, para a sparkline. */
+function serieSemanal(marcas, semanas) {
+  const base = weekStart(Date.now());
+  const W = mediasSemanais(marcas);
+  const saida = [];
+  for (let i = semanas - 1; i >= 0; i--) {
+    const w = base - i * 7 * 86400000;
+    const achou = W.filter(function (x) { return x.w === w; })[0];
+    saida.push(achou ? Math.round(achou.v * 10) / 10 : null);
+  }
+  return saida;
+}
+
+CTX.corpo = function () {
+  const r = pesoRitmo();
+  const c = cinturaMes();
+  const f = view.bodyForm || {};
+  const ultimoPeso = S.body.peso.length ? S.body.peso[S.body.peso.length - 1].v : 75;
+  const ultimaCint = S.body.cintura.length ? S.body.cintura[S.body.cintura.length - 1].v : 85;
+  const semana = weekStart(Date.now());
+  const naSemana = S.body.peso.filter(function (x) { return x.t >= semana; }).length;
+
+  return {
+    peso: {
+      valor: f.peso == null ? ultimoPeso : f.peso,
+      serie: serieSemanal(S.body.peso, 14),
+      media: r.ok ? fmtDec(r.last.v) + ' kg' : '—',
+      ritmo: (r.ok && r.duasSemanas) ? fmtSig2(r.kgSem) : '—',
+      ritmoCor: (r.ok && r.duasSemanas)
+        ? (r.kgSem >= 0.15 && r.kgSem <= 0.4 ? 'ins-acid' : 'ins-amber') : '',
+      nota: naSemana + (naSemana === 1 ? ' pesagem nesta semana' : ' pesagens nesta semana'),
+      alvo: 'registre 3 a 4 por semana'
+    },
+    cintura: {
+      valor: f.cintura == null ? ultimaCint : f.cintura,
+      serie: serieSemanal(S.body.cintura, 14),
+      atual: S.body.cintura.length ? fmtDec(ultimaCint) + ' cm' : '—',
+      mes: c ? fmtSig2(c.mes) + ' cm no mês' : 'faltam 3 semanas de medida para concluir'
+    },
+    cardio: {
+      semana: cardioSemana().length,
+      alvo: 3,
+      perna: pernaHoje(),
+      regra: 'depois do A: 25 a 30 min · no dia de descanso: 30 a 40 · depois do F: 20 a 30, opcional. Evite antes de C ou F, e nunca antes do treino.'
+    },
+    musculos: CTX.musculos()
+  };
+};
+
+CTX.musculos = function () {
+  const semana = weekStart(Date.now());
+  const janela = 4;
+  const decorrido = Date.now() - semana;
+  const atual = seriesPorMusculo(semana, Date.now() + 1);
+  const antes = seriesPorMusculo(semana - janela * 7 * 86400000, semana, decorrido);
+  const temHistorico = Object.keys(antes).length > 0;
+
+  const nomes = {};
+  rot().forEach(function (d) {
+    treino(d).ex.forEach(function (ex) { if (ex.g) nomes[ex.g] = 1; });
+  });
+  Object.keys(atual).forEach(function (g) { if (g) nomes[g] = 1; });
+
+  const lista = Object.keys(nomes).sort(function (a, b) {
+    const na = NIVEIS.indexOf(nivelDe(a)), nb = NIVEIS.indexOf(nivelDe(b));
+    if (na !== nb) return na - nb;
+    const pa = PRIO.indexOf(a), pb = PRIO.indexOf(b);
+    if (pa !== pb) return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);
+    return a.localeCompare(b, 'pt-BR');
+  });
+  const max = Math.max(1, Math.max.apply(null, lista.map(function (g) {
+    return Math.max(atual[g] || 0, (antes[g] || 0) / janela);
+  })));
+
+  // Treino avulso é presença sem série registrada: sem este aviso, o número
+  // da semana pareceria completo quando não é.
+  const avulsos = S.done.filter(function (x) { return x.livre && x.t >= semana; });
+  const grupos = Object.keys(avulsos.reduce(function (a, x) {
+    (x.grupos || []).forEach(function (g) { a[g] = 1; });
+    return a;
+  }, {}));
+
+  return {
+    dia: Math.min(7, Math.floor(decorrido / 86400000) + 1),
+    janela: janela,
+    avulsos: avulsos.length,
+    avulsosTxt: avulsos.length
+      ? avulsos.length + (avulsos.length === 1
+          ? ' treino avulso nesta semana não entra' : ' treinos avulsos nesta semana não entram') +
+        ' nesta contagem, porque não ' + (avulsos.length === 1 ? 'tem' : 'têm') +
+        ' série registrada: ' + grupos.join(', ') + '.'
+      : null,
+    temHistorico: temHistorico,
+    fora: lista.map(impactoOficial).filter(Boolean),
+    linhas: lista.map(function (g) {
+      const n = atual[g] || 0;
+      const m = temHistorico ? (antes[g] || 0) / janela : null;
+      const nivel = nivelDe(g);
+      const dif = (m !== null && m >= 1) ? Math.round((n - m) / m * 100) : null;
+      return {
+        g: g, n: n, pct: Math.min(100, n / max * 100),
+        prio: nivel === 'maxima',
+        // sem o prefixo 'prioridade': a 9px na coluna de 104px ele quebrava em
+        // duas linhas e engordava toda linha de músculo secundário. A string
+        // completa continua em PRIORIDADES, que é o que os documentos geram.
+        rot: (PRIORIDADES[nivel].rot || '').replace(/^prioridade /, '') || null,
+        media: m !== null ? fmtDec(m) : null,
+        dif: dif, difCor: dif === null ? '' : dif > 0 ? 'ins-acid' : dif < -25 ? 'ins-amber' : ''
+      };
+    })
+  };
+};
+
+CTX.setPeso = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { peso: v }); render(); };
+CTX.setCintura = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { cintura: v }); render(); };
+CTX.registraPeso = function () { addBody('peso'); };
+CTX.registraCintura = function () { addBody('cintura'); };
+CTX.abreCardio = function () { abrirCardioRapido(); };

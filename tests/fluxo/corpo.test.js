@@ -61,13 +61,13 @@ test('cintura tem precedência sobre o peso, e a tela diz por quê', async () =>
 
 test('registro aceita vírgula e substitui a medida do mesmo dia', async () => {
   const a = await app();
-  a.E('tab("corpo")');
-  a.digitar('bpeso', '73,4');
+  a.aba('dados');
+  a.E('view.bodyForm = { peso: "73,4" }');
   await a.E('addBody("peso")');
   await a.esperar();
   assert.strictEqual(a.E('S.body.peso[0].v'), 73.4, 'vírgula do teclado pt-BR');
 
-  a.digitar('bpeso', '73,8');
+  a.E('view.bodyForm = { peso: "73,8" }');
   await a.E('addBody("peso")');
   await a.esperar();
   assert.strictEqual(a.E('S.body.peso.length'), 1, 'uma medida por dia');
@@ -77,8 +77,8 @@ test('registro aceita vírgula e substitui a medida do mesmo dia', async () => {
 
 test('entrada inválida não grava', async () => {
   const a = await app();
-  a.E('tab("corpo")');
-  a.digitar('bpeso', 'abc');
+  a.aba('dados');
+  a.E('view.bodyForm = { peso: "abc" }');
   await a.E('addBody("peso")');
   await a.esperar();
   assert.strictEqual(a.E('S.body.peso.length'), 0);
@@ -92,25 +92,26 @@ test('cardio conta a semana e reseta na segunda', async () => {
     { t: seg - 3 * DIA, m: 'bike', min: 20, i: 'leve' },      // semana passada
     { t: seg + 3600000, m: 'bike', min: 20, i: 'leve' }       // esta semana
   ] } });
-  a.E('tab("corpo")');
+  a.aba('dados');
   assert.strictEqual(a.E('cardioSemana().length'), 1, 'a da semana passada não conta');
-  // três cartões .week na aba corpo, nesta ordem: peso, cintura, cardio
-  const cardio = a.$$('.week-n')[2];
-  assert.ok(cardio.textContent.trim().startsWith('1'), cardio.textContent);
+  assert.strictEqual(a.E('CTX.corpo().cardio.semana'), 1, 'e a tela conta o mesmo');
+  const nota = a.$$('.ins-secao-nota').map(function (x) { return x.textContent; }).join(' | ');
+  assert.ok(/1 de 3 nesta semana/.test(nota), nota);
   a.fechar();
 });
 
 test('cardio avisa quando houve treino de perna no mesmo dia', async () => {
   const a = await app({ estado: { logs: {}, done: [{ day: 'C', t: Date.now(), sid: Date.now() }] } });
-  a.E('tab("corpo")');
-  assert.ok(a.texto('.cwarn').includes('treino C'), 'deve sinalizar sem bloquear');
-  assert.strictEqual(a.$('.cwarn ~ .dbtn[disabled]'), null);
+  a.aba('dados');
+  const aviso = a.$$('.ins-provenance').map(function (x) { return x.textContent; }).join(' | ');
+  assert.ok(/treino C/.test(aviso), 'deve sinalizar sem bloquear: ' + aviso);
+  assert.strictEqual(a.$('.ins-btn-add[disabled]'), null, 'sinaliza, não bloqueia');
   a.fechar();
 });
 
 test('nada na interface de cardio fala em caloria', async () => {
   const a = await app();
-  a.E('tab("corpo")');
+  a.aba('dados');
   const txt = a.doc.getElementById('app').textContent.toLowerCase();
   assert.ok(!/calor|gasto energ|queima|hiit/.test(txt), 'ele está em superávit; cardio não é queima');
   a.fechar();

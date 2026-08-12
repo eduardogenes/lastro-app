@@ -134,8 +134,10 @@ test('detalhe da sessão mostra o cardio do mesmo dia', async () => {
 
 test('a aba corpo continua com o bloco completo', async () => {
   const a = await app();
-  a.E('tab("corpo")');
-  assert.ok(a.$('.crule'), 'regra de posicionamento');
-  assert.ok(a.$$('.hsec').some(function (x) { return x.textContent === 'cardio'; }));
+  a.aba('dados');
+  const proc = a.$$('.ins-provenance').map(function (x) { return x.textContent; }).join(' | ');
+  assert.ok(/mesmo ponto, em jejum/.test(proc), 'regra de posicionamento da cintura');
+  assert.ok(/nunca antes do treino/.test(proc), 'regra de quando fazer cardio');
+  assert.ok(a.$$('.ins-label').some(function (x) { return x.textContent === 'cardio'; }));
   a.fechar();
 });

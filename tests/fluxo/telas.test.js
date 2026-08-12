@@ -247,8 +247,8 @@ test('painel de músculos avisa quando há treino avulso no período', async () 
   const a = await app({ estado: { logs: {}, done: [
     { t: seg + 3600000, sid: seg, livre: 1, grupos: ['peito', 'tríceps'] }
   ] } });
-  a.E('tab("corpo")');
-  const nota = a.$$('.dgroup p').find(function (x) { return /avuls/.test(x.textContent); });
+  a.aba('dados');
+  const nota = a.$$('.ins-provenance').find(function (x) { return /avuls/.test(x.textContent); });
   assert.ok(nota, 'sem o aviso o número pareceria completo quando não é');
   assert.ok(nota.textContent.includes('peito'));
   a.fechar();
