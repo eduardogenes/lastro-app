@@ -18,13 +18,15 @@
 
 .ex {
   border-bottom: 1px solid var(--ins-hairline);
-  padding: var(--ins-5) 0;
+  padding: var(--ins-4) 0;
 }
 .ex:last-child { border-bottom: 0; }
 
+/* Sem min-height: nome de 22px + subtítulo de 11px + respiro já passam de
+   46, e a linha inteira é o alvo. Forçar de novo era só altura. */
 .ex-top {
   display: flex; gap: var(--ins-5); align-items: flex-start;
-  cursor: pointer; min-height: var(--ins-tap);
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -44,14 +46,14 @@
 
 .ex-sub {
   display: flex; flex-wrap: wrap; gap: var(--ins-2);
-  align-items: center; margin-top: var(--ins-3);
+  align-items: center; margin-top: var(--ins-2);
   font: 400 11px/1 var(--ins-font-mono);
   color: var(--ins-text-4); letter-spacing: -.01em;
 }
 
 /* Selo. Sem preenchimento: fio de 1px e a cor conta a história. */
 .tag {
-  padding: 5px 7px; border: 1px solid var(--ins-border);
+  padding: var(--ins-1) var(--ins-3); border: 1px solid var(--ins-border);
   font: 400 9px/1 var(--ins-font-mono);
   letter-spacing: .12em; text-transform: uppercase;
   color: var(--ins-text-4);
@@ -67,7 +69,7 @@
 
 /* O único ácido do cartão: "suba a carga". Se competir com outro, some. */
 .up {
-  padding: 5px 7px; background: var(--ins-acid); color: var(--ins-on-acid);
+  padding: var(--ins-1) var(--ins-3); background: var(--ins-acid); color: var(--ins-on-acid);
   font: 400 9px/1 var(--ins-font-mono);
   letter-spacing: .12em; text-transform: uppercase;
 }
@@ -82,7 +84,7 @@
 
 /* ---- O corpo, quando aberto ------------------------------------------- */
 
-.sets { display: none; padding: var(--ins-6) 0 var(--ins-1) 46px; }
+.sets { display: none; padding: var(--ins-5) 0 var(--ins-1) var(--ins-tap); }
 .ex.open .sets { display: block; }
 .ex.pulado .sets { display: none; }
 .ex.pulado .ex-name { color: var(--ins-text-5); }
@@ -90,7 +92,7 @@
 
 .cue {
   font: 400 13px/1.5 var(--ins-font-display);
-  color: var(--ins-text-3); margin: 0 0 var(--ins-6);
+  color: var(--ins-text-3); margin: 0 0 var(--ins-5);
   text-wrap: pretty;
 }
 
@@ -98,7 +100,7 @@
 
 .setrow {
   display: flex; align-items: center; gap: var(--ins-2);
-  margin-bottom: var(--ins-2);
+  margin-bottom: var(--ins-1);
 }
 .setno {
   flex: 0 0 16px;
@@ -107,7 +109,7 @@
 .f { flex: 1; position: relative; }
 
 .setrow input {
-  width: 100%; padding: 13px var(--ins-4);
+  width: 100%; padding: var(--ins-5) var(--ins-4);
   background: var(--ins-surface); color: var(--ins-text);
   border: 1px solid var(--ins-border); border-radius: 0;
   /* 19px e mono: é dado, e é o tamanho que o Safari não tenta ampliar ao
@@ -146,16 +148,16 @@
 .anilhas b { color: var(--ins-text-3); font-weight: 500; }
 
 .lastline {
-  font: 400 11px/1.5 var(--ins-font-mono);
+  font: 400 11px/1.45 var(--ins-font-mono);
   letter-spacing: .04em; color: var(--ins-text-5);
-  margin-top: var(--ins-5); padding-top: var(--ins-5);
+  margin-top: var(--ins-4); padding-top: var(--ins-4);
   border-top: 1px solid var(--ins-hairline);
 }
 .lastline b { color: var(--ins-text-2); font-weight: 500; }
 
 /* ---- Ações do exercício ----------------------------------------------- */
 
-.exacoes { display: flex; gap: var(--ins-2); margin-top: var(--ins-6); }
+.exacoes { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
 .histbtn {
   flex: 1; min-height: var(--ins-tap);
   border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
@@ -164,17 +166,20 @@
 }
 .histbtn:active { background: var(--ins-surface); }
 
-.exlinks { display: flex; flex-direction: column; gap: var(--ins-2); margin-top: var(--ins-6); }
+/* Lado a lado, não empilhados: são dois rótulos curtos, e empilhar custava
+   108px por exercício aberto contra 58. */
+.exlinks { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
+.exlinks > * { flex: 1; }
 .notabtn {
-  width: 100%; text-align: left; min-height: var(--ins-tap-dense); padding: var(--ins-3) 0;
+  width: 100%; text-align: left; min-height: var(--ins-tap); padding: var(--ins-3) 0;
   font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-5);
 }
 .notabtn:active { color: var(--ins-text-3); }
 
 .aquec {
   display: flex; align-items: center; gap: var(--ins-4);
-  margin-top: var(--ins-6); padding: var(--ins-5);
+  margin-top: var(--ins-5); padding: var(--ins-4);
   border: 1px solid var(--ins-border);
   font: 400 13px/1.45 var(--ins-font-display); color: var(--ins-text-3);
 }
@@ -189,7 +194,7 @@
 
 .puladobox {
   display: flex; align-items: center; gap: var(--ins-4);
-  margin: var(--ins-5) 0 0 46px; padding: var(--ins-5);
+  margin: var(--ins-4) 0 0 var(--ins-tap); padding: var(--ins-4);
   border: 1px solid var(--ins-border);
   font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4);
 }
@@ -205,7 +210,7 @@
 }
 .swapopt {
   display: block; width: 100%; text-align: left;
-  padding: var(--ins-5); margin-bottom: var(--ins-2);
+  padding: var(--ins-4) var(--ins-5); margin-bottom: var(--ins-1);
   border: 1px solid var(--ins-border); background: var(--ins-surface-low);
   min-height: var(--ins-tap);
 }
@@ -227,8 +232,9 @@
 
 /* ---- Anotação e dor ---------------------------------------------------- */
 
+.exlinks .obs { flex: 1 0 100%; }
 .obs {
-  margin-top: var(--ins-5); padding-top: var(--ins-5);
+  margin-top: var(--ins-4); padding-top: var(--ins-4);
   border-top: 1px solid var(--ins-hairline); width: 100%;
 }
 .obs-h {
@@ -279,15 +285,15 @@
 
 .tr-relogio {
   display: flex; align-items: center; gap: var(--ins-3);
-  margin-top: var(--ins-7);
+  margin-top: var(--ins-5);
 }
 .tr-relogio .ins-label-sm { color: var(--ins-text-5); }
 
-.tr-acoes { display: flex; gap: var(--ins-2); margin-top: var(--ins-7); }
+.tr-acoes { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
 .tr-acoes > * { flex: 1; }
 
 /* A rotação: ácido no atual, fio no próximo. A fila é sequência, não semana. */
-.tr-rot { display: flex; gap: var(--ins-2); margin-top: var(--ins-6); }
+.tr-rot { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
 .tr-dia {
   flex: 1; min-height: var(--ins-tap);
   border: 1px solid var(--ins-border); color: var(--ins-text-4);
@@ -297,13 +303,13 @@
 .tr-dia.on { background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid); }
 
 .tr-aviso {
-  margin-top: var(--ins-9); padding: var(--ins-6);
+  margin-top: var(--ins-7); padding: var(--ins-5);
   border: 1px solid var(--ins-border);
 }
 .tr-aviso.amber { border-color: var(--ins-amber); }
 .tr-aviso.amber .ins-label { color: var(--ins-amber); }
-.tr-aviso p { margin: var(--ins-4) 0 0; }
-.tr-aviso .ins-btn-secondary { margin-top: var(--ins-6); }
+.tr-aviso p { margin: var(--ins-3) 0 0; }
+.tr-aviso .ins-btn-secondary { margin-top: var(--ins-5); }
 
-.tr-nota { margin: 0 0 var(--ins-6); }
+.tr-nota { margin: 0 0 var(--ins-5); }
 .tr-links { display: flex; flex-direction: column; gap: var(--ins-2); }

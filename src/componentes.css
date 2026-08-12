@@ -10,7 +10,9 @@
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: var(--ins-5); margin-top: var(--ins-2);
 }
-.ins-cab h1 { margin: 0; }
+/* balance: o nome do treino é longo ("Espessura de costas + peito") e divide
+   em duas linhas tortas do lado do botão de estado. */
+.ins-cab h1 { margin: 0; text-wrap: balance; }
 
 .ins-estado {
   flex: 0 0 auto; text-align: right;
@@ -27,11 +29,13 @@
 
 /* ---- Seção ------------------------------------------------------------ */
 
-.ins-secao { border-top: 1px solid var(--ins-rule); padding-top: var(--ins-6); margin-top: var(--ins-10); }
-.ins-secao.primeira { border-top: 0; margin-top: var(--ins-9); padding-top: 0; }
+/* 12 de margem + 12 de padding = 24 no limite, que é o que o sistema pede.
+   Estava 26 + 14 = 40, repetido cinco vezes por tela. */
+.ins-secao { border-top: 1px solid var(--ins-rule); padding-top: var(--ins-5); margin-top: var(--ins-5); }
+.ins-secao.primeira { border-top: 0; margin-top: var(--ins-7); padding-top: 0; }
 .ins-secao-h {
   display: flex; align-items: baseline; justify-content: space-between;
-  gap: var(--ins-3); margin-bottom: var(--ins-6);
+  gap: var(--ins-3); margin-bottom: var(--ins-4);
 }
 .ins-secao-nota {
   font: 400 10px/1.3 var(--ins-font-mono);
@@ -46,17 +50,17 @@
 .ins-hero-meta { font: 400 10px/1 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-5); }
 .ins-hero-n { display: flex; align-items: baseline; gap: var(--ins-2); margin-top: var(--ins-5); }
 .ins-hero-u { font: 400 12px/1 var(--ins-font-mono); color: var(--ins-text-4); }
-.ins-rail { height: var(--ins-rail); background: var(--ins-rule); margin-top: var(--ins-6); }
+.ins-rail { height: var(--ins-rail); background: var(--ins-rule); margin-top: var(--ins-5); }
 .ins-rail-fill { height: 100%; background: var(--ins-acid); }
-.ins-grade { margin-top: var(--ins-7); }
-.ins-grade-c { padding: var(--ins-5) 0; }
+.ins-grade { margin-top: var(--ins-5); }
+.ins-grade-c { padding: var(--ins-4) 0; }
 .ins-grade-c.recuo { padding-left: var(--ins-5); }
 .ins-grade-c .ins-metric-m { margin-top: 5px; }
 .ins-grade-nota { font: 400 10px/1.3 var(--ins-font-mono); color: var(--ins-text-5); margin-top: 4px; }
 
 /* ---- Sparkline -------------------------------------------------------- */
 
-.ins-spark { display: flex; gap: 3px; height: 56px; align-items: flex-end; }
+.ins-spark { display: flex; gap: 3px; height: 48px; align-items: flex-end; }
 .ins-spark-s { flex: 1; height: 100%; background: var(--ins-rule); display: flex; align-items: flex-end; }
 .ins-spark-b { width: 100%; background: var(--ins-acid); }
 
@@ -64,7 +68,7 @@
 
 .ins-ticks { display: flex; gap: var(--ins-1); }
 .ins-tick {
-  flex: 1; height: 34px;
+  flex: 1; height: 30px;
   border: 1px solid var(--ins-border); background: transparent;
 }
 .ins-tick.on { background: var(--ins-acid); border-color: var(--ins-acid); }
@@ -87,40 +91,40 @@
 
 .ins-foco {
   display: block; width: 100%; text-align: left;
-  padding: var(--ins-8) 0 var(--ins-9);
+  padding: var(--ins-7) 0 var(--ins-8);
 }
 .ins-foco-agora { display: flex; align-items: center; gap: var(--ins-3); }
 .ins-foco-linha {
   display: flex; align-items: flex-start; justify-content: space-between;
-  gap: var(--ins-5); margin-top: var(--ins-6);
+  gap: var(--ins-5); margin-top: var(--ins-5);
 }
 .ins-foco-esq { min-width: 0; }
 .ins-foco-esq .ins-headline { margin-top: var(--ins-2); }
 .ins-foco-dir { flex: 0 0 auto; text-align: right; }
 .ins-foco-dir .ins-label-sm { margin-top: var(--ins-2); }
-.ins-foco-res { margin: var(--ins-6) 0 0; }
-.ins-foco .ins-chip-cta { margin-top: var(--ins-5); }
+.ins-foco-res { margin: var(--ins-5) 0 0; }
+.ins-foco .ins-chip-cta { margin-top: var(--ins-4); }
 
 /* ---- Veredito --------------------------------------------------------- */
 
 .ins-veredito {
   border: 1px solid var(--ins-acid);
   background: var(--ins-surface-warn);
-  padding: 18px 16px;
+  padding: var(--ins-6) var(--ins-6);
 }
 .ins-veredito-t {
   font: 700 28px/1.05 var(--ins-font-display);
   letter-spacing: -.03em; margin-top: var(--ins-4);
 }
-.ins-veredito-p { margin: var(--ins-6) 0 0; }
-.ins-veredito .ins-btn-primary { margin-top: var(--ins-7); }
-.ins-veredito-e { margin-top: var(--ins-5); }
+.ins-veredito-p { margin: var(--ins-5) 0 0; }
+.ins-veredito .ins-btn-primary { margin-top: var(--ins-6); }
+.ins-veredito-e { margin-top: var(--ins-4); }
 
 /* ---- Linha de timeline ------------------------------------------------ */
 
 .ins-tl { display: flex; align-items: stretch; gap: 0; }
 .ins-tl-hora {
-  flex: 0 0 46px; text-align: right; padding: 16px var(--ins-4) 0 0;
+  flex: 0 0 var(--ins-tap); text-align: right; padding: var(--ins-5) var(--ins-4) 0 0;
   font: 400 12px/1 var(--ins-font-mono); color: var(--ins-text-4);
   letter-spacing: -.02em;
 }
@@ -131,7 +135,8 @@
 }
 .ins-tl.ultima .ins-tl-espinha::before { bottom: auto; height: 24px; }
 .ins-tl-ponto {
-  position: absolute; left: 0; top: 20px;
+  /* alinhado com o centro da primeira linha do corpo */
+  position: absolute; left: 0; top: 17px;
   width: 9px; height: 9px; border-radius: 50%;
   background: var(--ins-text-4); border: 2px solid var(--ins-canvas);
   box-sizing: content-box; margin-left: -2px;
@@ -142,7 +147,7 @@
 
 .ins-tl-corpo {
   flex: 1; min-width: 0;
-  padding: var(--ins-5) 0 var(--ins-6) var(--ins-5);
+  padding: var(--ins-4) 0 var(--ins-5) var(--ins-5);
   border-bottom: 1px solid var(--ins-hairline);
 }
 .ins-tl.ultima .ins-tl-corpo { border-bottom: 0; }
@@ -152,8 +157,10 @@
 .ins-tl-toque {
   flex: 1; min-width: 0; text-align: left;
   display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3);
-  /* 46px de alvo mesmo com o texto ocupando menos — ele toca de pé, andando. */
-  min-height: var(--ins-tap); padding: 4px 0;
+  /* SEM min-height de propósito. A linha inteira já mede 80px e é ela o alvo —
+     forçar 46 aqui dentro empilhava 16px de ar em cima de um conteúdo de 30.
+     Alvo pequeno é problema real; alvo grande duas vezes é só altura perdida. */
+  padding: var(--ins-1) 0;
 }
 .ins-tl-nome {
   font: 500 17px/1.3 var(--ins-font-display); letter-spacing: -.01em;
@@ -164,10 +171,17 @@
   flex: 0 0 auto;
   font: 500 14px/1 var(--ins-font-mono); color: var(--ins-text-3); letter-spacing: -.02em;
 }
-.ins-tl-resumo { font: 400 13px/1.45 var(--ins-font-display); color: var(--ins-text-4); margin-top: 3px; }
+/* Uma linha, com reticências. A linha da timeline responde "o que é isto e já
+   foi feito"; o que TEM dentro é assunto da folha. Sem o corte, o almoço com
+   seis itens quebrava em três linhas e a mesma lista variava de 88 a 130px de
+   altura — altura imprevisível é pior que informação cortada. */
+.ins-tl-resumo {
+  font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4); margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .ins-tl-meta {
-  font: 400 10px/1.4 var(--ins-font-mono); letter-spacing: .06em;
-  color: var(--ins-text-5); margin-top: var(--ins-2);
+  font: 400 10px/1.35 var(--ins-font-mono); letter-spacing: .06em;
+  color: var(--ins-text-5); margin-top: var(--ins-1);
 }
 .ins-tl-mais {
   flex: 0 0 30px; align-self: stretch;
@@ -273,7 +287,7 @@
 
 .ins-linha {
   display: flex; align-items: center; justify-content: space-between;
-  gap: var(--ins-5); padding: var(--ins-6) 0; min-height: var(--ins-tap);
+  gap: var(--ins-5); padding: var(--ins-5) 0; min-height: var(--ins-tap);
   width: 100%; text-align: left;
 }
 .ins-linha-n { flex: 1; min-width: 0; }
@@ -288,8 +302,8 @@
 /* ---- Folha de refeição ------------------------------------------------- */
 
 .fr-nota { margin: var(--ins-7) 0 0; }
-.fr-porcao { margin-top: var(--ins-9); display: flex; flex-direction: column; gap: var(--ins-4); }
-.fr-h { margin: var(--ins-10) 0 var(--ins-2); }
+.fr-porcao { margin-top: var(--ins-7); display: flex; flex-direction: column; gap: var(--ins-4); }
+.fr-h { margin: var(--ins-9) 0 var(--ins-2); }
 
 /* ---- Folha do dia ------------------------------------------------------ */
 
@@ -327,13 +341,13 @@
   display: flex; flex-direction: column; gap: var(--ins-5);
 }
 .dd-override p { margin: 0; }
-.dd-legado { margin-top: var(--ins-10); }
+.dd-legado { margin-top: var(--ins-9); }
 
 /* ---- Tela GUIA --------------------------------------------------------- */
 
 .gu-semana { display: flex; gap: var(--ins-1); }
 .gu-dia {
-  flex: 1; min-height: 62px; padding: var(--ins-4) 2px;
+  flex: 1; min-height: 54px; padding: var(--ins-3) 2px;
   border: 1px solid var(--ins-border);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: var(--ins-2);
@@ -348,4 +362,4 @@
 
 .gu-acoes { display: flex; flex-direction: column; gap: var(--ins-2); }
 .gu-acoes .ins-btn-destructive { border-color: var(--ins-ember-line, var(--ins-border-strong)); }
-.gu-legado { margin-top: var(--ins-10); }
+.gu-legado { margin-top: var(--ins-9); }

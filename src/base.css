@@ -166,7 +166,7 @@ p, .ins-prosa { -webkit-user-select: text; user-select: text; }
 .ins-btn-primary:active { background: var(--ins-acid-hover); }
 
 .ins-btn-secondary {
-  display: block; width: 100%; min-height: var(--ins-tap); padding: 13px 0;
+  display: block; width: 100%; min-height: var(--ins-tap); padding: var(--ins-5) 0;
   background: transparent; color: var(--ins-text-2);
   border: 1px solid var(--ins-border-strong);
   font: 400 11px/1 var(--ins-font-mono);

@@ -57,3 +57,58 @@ test('tela cheia usa svh, não vh', () => {
     assert.ok(/100svh/.test(depois), '100vh sem 100svh logo abaixo como correção');
   });
 });
+
+test('espaço vertical fica na escala de 4', () => {
+  // O sistema tem UMA escala — 4, 6, 8, 10, 12, 14, 16, 20, 24, 26, 34 — e ela
+  // é o que faz telas diferentes parecerem o mesmo produto. Valor solto no meio
+  // não quebra nada visivelmente; só vai afrouxando o ritmo até a tela ficar
+  // 20% mais alta sem ninguém saber por quê. Foi o que aconteceu.
+  // Só ESPAÇO: padding, margin e gap. Altura de componente (ponto de 7px,
+  // sparkline de 48, tick de 30) é anatomia, e a anatomia vem do §3.
+  const ESCALA = [1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 26, 34, 46];
+
+  // Exceções, cada uma citada no DESIGN_SYSTEM:
+  //   5px  §3.5  label-sm -> 5px -> metric-m, dentro da célula de métrica
+  //   3px  §3.14 vão das barras da sparkline
+  //   9px  §3.10 padding do chip de CTA (a faixa é 9–12)
+  //   17px      alinhamento óptico do ponto da timeline com a primeira linha
+  const EXCECOES = [3, 5, 9, 17];
+
+  const arquivos = ['base.css', 'componentes.css', 'treino.css'];
+  const fora: string[] = [];
+
+  arquivos.forEach(f => {
+    // sem comentários: eles citam medidas em prosa e virariam falso positivo
+    const s = fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const re = /(padding|margin|gap)(-top|-bottom)?:\s*([^;]+);/g;
+    let m;
+    while ((m = re.exec(s))) {
+      (m[3].match(/(?<![\w-])(\d+)px/g) || []).forEach(px => {
+        const n = Number(px.replace('px', ''));
+        if (!ESCALA.includes(n) && !EXCECOES.includes(n)) {
+          fora.push(`${f}: ${m![0].trim()}`);
+        }
+      });
+    }
+  });
+
+  assert.deepStrictEqual([...new Set(fora)], [],
+    'medida fora da escala; se for deliberada, cite a fonte e some às exceções');
+});
+
+test('alvo de toque não é forçado duas vezes', () => {
+  // min-height numa linha que JÁ é alta empilha ar em cima de conteúdo que não
+  // precisava. Foi o que engordou a timeline em 16px por linha e a lista de
+  // exercícios em 7. Alvo pequeno é problema; alvo grande duas vezes é altura
+  // perdida — e some no desktop, onde ninguém toca em nada.
+  const css = ['componentes.css', 'treino.css']
+    .map(f => fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8'))
+    .join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  ['.ins-tl-toque', '.ex-top'].forEach(sel => {
+    const bloco = css.match(new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}'));
+    assert.ok(bloco, 'sumiu do CSS: ' + sel);
+    assert.ok(!/min-height/.test(bloco![1]),
+      sel + ' voltou a forçar altura dentro de uma linha que já é o alvo');
+  });
+});
