@@ -87,7 +87,11 @@ function abrirApp(opcoes) {
 
   const dom = new JSDOM(HTML, {
     runScripts: 'dangerously',
-    url: 'https://treino.test/',
+    // Com barra no fim, o parser de stack do Vitest resolve os frames do jsdom
+    // para o diretório do projeto e estoura EISDIR ao formatar QUALQUER falha —
+    // o relatório do arquivo inteiro some junto. Um nome de arquivo no fim
+    // resolve para um caminho inexistente, que ele trata em silêncio.
+    url: 'https://treino.test/app.html',
     virtualConsole: console_,
     beforeParse: function (w) {
       w.scrollTo = function () {};

@@ -1,0 +1,309 @@
+/* ============================================================
+   O cartão de exercício, no Instrumento.
+
+   Repintura, não reescrita: os nomes de classe são os mesmos de
+   antes de propósito. Eles são o contrato que os testes de fluxo
+   têm com o DOM há meses, e renomear não compraria nada —
+   compraria churn em 114 asserções e a chance de perder alguma
+   regressão no caminho.
+
+   O que muda é a língua: raio zero, fio de 1px no lugar de
+   cartão, número em mono, ácido só onde significa alguma coisa.
+
+   Esta é a tela usada DENTRO da academia: de pé, com uma mão,
+   suado, às 6h15. Cada medida daqui é dimensionada por isso.
+   ============================================================ */
+
+/* ---- A linha do exercício --------------------------------------------- */
+
+.ex {
+  border-bottom: 1px solid var(--ins-hairline);
+  padding: var(--ins-5) 0;
+}
+.ex:last-child { border-bottom: 0; }
+
+.ex-top {
+  display: flex; gap: var(--ins-5); align-items: flex-start;
+  cursor: pointer; min-height: var(--ins-tap);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* A calha de 46px que na comida carrega a hora aqui carrega a posição. */
+.ord {
+  flex: 0 0 34px; text-align: right;
+  font: 400 12px/1.6 var(--ins-font-mono);
+  color: var(--ins-text-5); letter-spacing: -.02em;
+}
+
+.ex-body { flex: 1; min-width: 0; }
+
+.ex-name {
+  font: 500 17px/1.3 var(--ins-font-display);
+  letter-spacing: -.01em; color: var(--ins-text);
+}
+
+.ex-sub {
+  display: flex; flex-wrap: wrap; gap: var(--ins-2);
+  align-items: center; margin-top: var(--ins-3);
+  font: 400 11px/1 var(--ins-font-mono);
+  color: var(--ins-text-4); letter-spacing: -.01em;
+}
+
+/* Selo. Sem preenchimento: fio de 1px e a cor conta a história. */
+.tag {
+  padding: 5px 7px; border: 1px solid var(--ins-border);
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ins-text-4);
+}
+.tag.comp     { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
+.tag.bi-t     { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
+.tag.swap-t   { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
+.tag.dl-t     { border-color: var(--ins-amber); color: var(--ins-amber); }
+.tag.ok-t     { border-color: var(--ins-acid); color: var(--ins-acid); }
+.tag.parcial-t{ border-color: var(--ins-amber); color: var(--ins-amber); }
+.tag.pulado-t { border-color: var(--ins-border); color: var(--ins-text-5); }
+.tag.card-t   { border-color: var(--ins-border); color: var(--ins-text-4); }
+
+/* O único ácido do cartão: "suba a carga". Se competir com outro, some. */
+.up {
+  padding: 5px 7px; background: var(--ins-acid); color: var(--ins-on-acid);
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .12em; text-transform: uppercase;
+}
+
+.chev { color: var(--ins-text-5); font-size: 15px; padding-top: 2px; }
+.ex.open .chev { color: var(--ins-acid); }
+
+.swapped {
+  font: 400 10px/1.4 var(--ins-font-mono);
+  letter-spacing: .06em; color: var(--ins-text-5); margin-top: var(--ins-2);
+}
+
+/* ---- O corpo, quando aberto ------------------------------------------- */
+
+.sets { display: none; padding: var(--ins-6) 0 var(--ins-1) 46px; }
+.ex.open .sets { display: block; }
+.ex.pulado .sets { display: none; }
+.ex.pulado .ex-name { color: var(--ins-text-5); }
+.ex.pulado .chev { opacity: .3; }
+
+.cue {
+  font: 400 13px/1.5 var(--ins-font-display);
+  color: var(--ins-text-3); margin: 0 0 var(--ins-6);
+  text-wrap: pretty;
+}
+
+/* ---- A série: a linha mais importante do app -------------------------- */
+
+.setrow {
+  display: flex; align-items: center; gap: var(--ins-2);
+  margin-bottom: var(--ins-2);
+}
+.setno {
+  flex: 0 0 16px;
+  font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-5);
+}
+.f { flex: 1; position: relative; }
+
+.setrow input {
+  width: 100%; padding: 13px var(--ins-4);
+  background: var(--ins-surface); color: var(--ins-text);
+  border: 1px solid var(--ins-border); border-radius: 0;
+  /* 19px e mono: é dado, e é o tamanho que o Safari não tenta ampliar ao
+     focar. Campo abaixo de 16px faz a tela inteira dar zoom no meio da série. */
+  font: 600 19px/1 var(--ins-font-mono); letter-spacing: -.03em;
+  min-height: var(--ins-tap);
+}
+.setrow input::-webkit-outer-spin-button,
+.setrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.setrow input::placeholder { color: var(--ins-text-5); font-weight: 400; }
+.setrow input:focus { outline: none; border-color: var(--ins-acid); }
+/* Preenchido: fio ácido à esquerda. Diz "isto entrou" sem gritar. */
+.setrow input.done { border-color: var(--ins-border-strong); border-left: 2px solid var(--ins-acid); }
+
+.unit {
+  position: absolute; right: var(--ins-4); top: 50%; transform: translateY(-50%);
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ins-text-5); pointer-events: none;
+}
+.x { font: 400 12px/1 var(--ins-font-mono); color: var(--ins-text-5); }
+
+.rest {
+  flex: 0 0 auto; min-width: 56px; min-height: var(--ins-tap); padding: 0 var(--ins-4);
+  border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .04em;
+}
+.rest:active { background: var(--ins-surface); }
+.rest.bi { border-color: var(--ins-acid); color: var(--ins-acid); }
+
+.segnote, .anilhas {
+  font: 400 10px/1.4 var(--ins-font-mono);
+  letter-spacing: .06em; color: var(--ins-text-5);
+  margin-top: var(--ins-4);
+}
+.anilhas b { color: var(--ins-text-3); font-weight: 500; }
+
+.lastline {
+  font: 400 11px/1.5 var(--ins-font-mono);
+  letter-spacing: .04em; color: var(--ins-text-5);
+  margin-top: var(--ins-5); padding-top: var(--ins-5);
+  border-top: 1px solid var(--ins-hairline);
+}
+.lastline b { color: var(--ins-text-2); font-weight: 500; }
+
+/* ---- Ações do exercício ----------------------------------------------- */
+
+.exacoes { display: flex; gap: var(--ins-2); margin-top: var(--ins-6); }
+.histbtn {
+  flex: 1; min-height: var(--ins-tap);
+  border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
+  font: 400 10px/1 var(--ins-font-mono);
+  letter-spacing: .14em; text-transform: uppercase;
+}
+.histbtn:active { background: var(--ins-surface); }
+
+.exlinks { display: flex; flex-direction: column; gap: var(--ins-2); margin-top: var(--ins-6); }
+.notabtn {
+  width: 100%; text-align: left; min-height: var(--ins-tap-dense); padding: var(--ins-3) 0;
+  font: 400 10px/1.4 var(--ins-font-mono);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+}
+.notabtn:active { color: var(--ins-text-3); }
+
+.aquec {
+  display: flex; align-items: center; gap: var(--ins-4);
+  margin-top: var(--ins-6); padding: var(--ins-5);
+  border: 1px solid var(--ins-border);
+  font: 400 13px/1.45 var(--ins-font-display); color: var(--ins-text-3);
+}
+.aquec.on { border-color: var(--ins-acid); }
+.aquec b { color: var(--ins-text); font-weight: 500; }
+.aqbtn {
+  flex: 0 0 auto; min-height: var(--ins-tap-dense); padding: 0 var(--ins-4);
+  border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
+  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
+}
+.aquec.on .aqbtn { border-color: var(--ins-acid); color: var(--ins-acid); }
+
+.puladobox {
+  display: flex; align-items: center; gap: var(--ins-4);
+  margin: var(--ins-5) 0 0 46px; padding: var(--ins-5);
+  border: 1px solid var(--ins-border);
+  font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4);
+}
+.puladobox span { flex: 1; }
+
+/* ---- Substituição ------------------------------------------------------ */
+
+.swap { margin-top: var(--ins-6); }
+.swap-h {
+  font: 400 10px/1.4 var(--ins-font-mono);
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--ins-text-4); margin: 0 0 var(--ins-4);
+}
+.swapopt {
+  display: block; width: 100%; text-align: left;
+  padding: var(--ins-5); margin-bottom: var(--ins-2);
+  border: 1px solid var(--ins-border); background: var(--ins-surface-low);
+  min-height: var(--ins-tap);
+}
+.swapopt b {
+  display: block;
+  font: 500 15px/1.3 var(--ins-font-display); letter-spacing: -.01em;
+  color: var(--ins-text);
+}
+.swapopt span {
+  display: block; margin-top: var(--ins-2);
+  font: 400 11px/1.45 var(--ins-font-mono); color: var(--ins-text-5);
+}
+.swapopt.on { border-color: var(--ins-acid); background: var(--ins-surface-acid); }
+.swapopt.cancel, .swapopt.back-orig { background: transparent; }
+.swapopt.cancel b {
+  font: 400 10px/1 var(--ins-font-mono);
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-text-4);
+}
+
+/* ---- Anotação e dor ---------------------------------------------------- */
+
+.obs {
+  margin-top: var(--ins-5); padding-top: var(--ins-5);
+  border-top: 1px solid var(--ins-hairline); width: 100%;
+}
+.obs-h {
+  font: 400 10px/1 var(--ins-font-mono);
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--ins-text-4); margin-bottom: var(--ins-4);
+}
+.chips { display: flex; gap: var(--ins-2); flex-wrap: wrap; }
+.chip {
+  padding: var(--ins-4) var(--ins-5); min-height: var(--ins-tap-dense);
+  border: 1px solid var(--ins-border); background: transparent;
+  font: 400 11px/1 var(--ins-font-mono);
+  letter-spacing: .06em; color: var(--ins-text-3);
+}
+.chip.on, .chip.sel {
+  background: var(--ins-acid); color: var(--ins-on-acid); border-color: var(--ins-acid);
+}
+.note {
+  width: 100%; min-height: 76px; padding: var(--ins-5); resize: vertical;
+  background: var(--ins-surface); border: 1px solid var(--ins-border);
+  font: 400 15px/1.5 var(--ins-font-display); color: var(--ins-text);
+}
+
+/* ---- Os freios: dor e pausa -------------------------------------------- */
+/* Âmbar, não coral: é aviso, não destruição. Coral aqui gastaria o único
+   sinal que o sistema reserva para "isto apaga dado". */
+
+.painbox {
+  margin-top: var(--ins-5); padding: var(--ins-5);
+  border: 1px solid var(--ins-amber);
+  font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-2);
+  text-wrap: pretty;
+}
+.painbox b { display: block; color: var(--ins-amber); font-weight: 500; margin-bottom: var(--ins-2); }
+.painbtn {
+  display: block; width: 100%; margin-top: var(--ins-5); min-height: var(--ins-tap);
+  border: 1px solid var(--ins-amber); color: var(--ins-amber);
+  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
+}
+.painflag, .pausaflag {
+  margin-top: var(--ins-3);
+  font: 400 10px/1.4 var(--ins-font-mono);
+  letter-spacing: .06em; color: var(--ins-amber);
+}
+.pausaflag { color: var(--ins-text-5); }
+
+/* ---- A tela de treino -------------------------------------------------- */
+
+.tr-relogio {
+  display: flex; align-items: center; gap: var(--ins-3);
+  margin-top: var(--ins-7);
+}
+.tr-relogio .ins-label-sm { color: var(--ins-text-5); }
+
+.tr-acoes { display: flex; gap: var(--ins-2); margin-top: var(--ins-7); }
+.tr-acoes > * { flex: 1; }
+
+/* A rotação: ácido no atual, fio no próximo. A fila é sequência, não semana. */
+.tr-rot { display: flex; gap: var(--ins-2); margin-top: var(--ins-6); }
+.tr-dia {
+  flex: 1; min-height: var(--ins-tap);
+  border: 1px solid var(--ins-border); color: var(--ins-text-4);
+  font: 500 15px/1 var(--ins-font-mono); letter-spacing: -.02em;
+}
+.tr-dia.next { border-color: var(--ins-border-strong); color: var(--ins-text-2); }
+.tr-dia.on { background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid); }
+
+.tr-aviso {
+  margin-top: var(--ins-9); padding: var(--ins-6);
+  border: 1px solid var(--ins-border);
+}
+.tr-aviso.amber { border-color: var(--ins-amber); }
+.tr-aviso.amber .ins-label { color: var(--ins-amber); }
+.tr-aviso p { margin: var(--ins-4) 0 0; }
+.tr-aviso .ins-btn-secondary { margin-top: var(--ins-6); }
+
+.tr-nota { margin: 0 0 var(--ins-6); }
+.tr-links { display: flex; flex-direction: column; gap: var(--ins-2); }

@@ -246,7 +246,7 @@ test('todas as telas do programa renderizam', async () => {
   assert.ok(a.$$('.edx').length, 'o treino abre com os exercícios');
   a.E('fecharPrograma()');
   assert.strictEqual(a.E('view.prog'), null);
-  assert.ok(a.$('.dayline'), 'e volta para a tela de hoje');
+  assert.ok(a.$('.ins-estado-v'), 'e volta para a tela de treino');
   a.fechar();
 });
 

@@ -77,12 +77,14 @@ test('o app abre em HOJE, não no treino', async () => {
   a.fechar();
 });
 
-test('cabeçalho grande só na aba de hoje', async () => {
+test('o contexto do treino só aparece na aba de treino', async () => {
+  // Rotação, faixa da semana e o botão do dia são contexto de sessão. Fora do
+  // TREINO eles competiriam com o assunto da tela sem servir para nada.
   const a = await app();
-  assert.ok(a.$('.dayline') && a.$('.semana') && a.$('.rot'));
-  ['acomp', 'corpo', 'ajustes'].forEach(function (t) {
-    a.E('tab("' + t + '")');
-    assert.strictEqual(a.$('.dayline'), null, 'letra do dia competindo na aba ' + t);
+  assert.ok(a.$('.rot') && a.$('.semana') && a.$('.ins-estado-v'));
+  ['dados', 'guia'].forEach(function (t) {
+    a.aba(t);
+    assert.strictEqual(a.$('.rot'), null, 'rotação competindo na aba ' + t);
     assert.strictEqual(a.$('.semana'), null);
   });
   a.fechar();

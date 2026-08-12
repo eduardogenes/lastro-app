@@ -16,7 +16,7 @@ import { montaHTML, montaNoApp } from './ui/raiz.jsx';
 import { Bruto } from './ui/bruto.jsx';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
-import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte } from './dominio/dia';
+import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { ALIMENTOS_BASE, PLANO_BASE } from './dominio/nutricao/alimentos';
 import { listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
@@ -945,9 +945,21 @@ function controlesSessao() {
   </div>`;
 }
 
+/**
+ * O contador de séries, atualizado no toque sem re-render.
+ *
+ * Existe porque `inp()` NÃO chama render() de propósito: o campo é controlado
+ * pelo valor já parseado, e redesenhar a cada tecla reescreveria "22," como
+ * "22" — deixando impossível digitar decimal no teclado pt-BR. O preço é este
+ * ponteiro no DOM, e ele é o último lugar do treino tocado por fora do Preact.
+ */
 function atualizaEstado() {
   const el = document.getElementById('daymeta');
-  if (el && treino(view.day)) el.innerHTML = estadoDoDia(treino(view.day));
+  if (!el) return;
+  const P = treino(view.day);
+  if (!P) return;
+  const prescritas = P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0);
+  el.textContent = seriesFeitasHoje(view.day) + '/' + prescritas;
 }
 
 // ---------- faixa da semana ----------
@@ -3165,7 +3177,12 @@ function toast(msg) {
 
 // ---------- actions ----------
 function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); window.scrollTo(0,0); }
-function tab(t){ view.tab=t; view.prog=null; view.hist=null; view.json=null; view.paste=false; view.retro=false; view.sessao=null; view.add=null; view.mes=0; view.cardioRapido=false; render(); window.scrollTo(0,0); }
+// As abas do sistema antigo. Continuam existindo porque as telas que ainda não
+// foram convertidas se roteiam por `view.tab` — mas agora precisam levar a
+// shell junto, senão mudam o conteúdo do legado sem mudar a aba que está
+// aparecendo. Some quando a última tela virar componente.
+const ABA_DA_TAB = { treino: 'treino', acomp: 'dados', corpo: 'dados', ajustes: 'guia' };
+function tab(t){ view.tab=t; view.aba=ABA_DA_TAB[t]||'hoje'; view.prog=null; view.hist=null; view.json=null; view.paste=false; view.retro=false; view.sessao=null; view.add=null; view.mes=0; view.cardioRapido=false; render(); window.scrollTo(0,0); }
 function toggle(i){ view.open = view.open===i ? null : i; view.swapOpen = null; view.nota = null; view.carga = null; render(); }
 function dorName(k){ const x = DORES.filter(y=>y.k===k)[0]; return x ? x.t : k; }
 
@@ -3815,3 +3832,96 @@ CTX.marcaCompra = function (f) {
 };
 CTX.novoAlimento = function () { toast('Cadastro de alimento chega junto com o editor.'); };
 CTX.editaAlimento = function () { toast('Editor de alimento chega na próxima tela convertida.'); };
+
+// ---------- TREINO ----------
+// A tela usada dentro da academia. O número que importa — séries feitas de
+// prescritas — fica no topo e não exige rolar.
+
+/** Volume levantado hoje naquele treino. */
+function volumeDoDia(d) {
+  const P = treino(d);
+  if (!P) return 0;
+  let v = 0;
+  P.ex.forEach(function (ex, i) {
+    (S.logs[id(d, i)] || []).forEach(function (e) {
+      if (sameDay(e.t, Date.now())) v += volOf(e);
+    });
+  });
+  return v;
+}
+
+CTX.treino = function () {
+  const h = diaResolvido();
+  const d = view.day || h.treino || proximoTreino(S, ROT_BASE);
+  // OBRIGATÓRIO antes de montar: o rascunho é zerado ao trocar de dia, e sem
+  // hidratar os campos voltam em branco com as séries já gravadas — digitar por
+  // cima apagaria o resto. Era chamado pelo render antigo; a conta veio junto.
+  hidrataDraft(d);
+  const P = treino(d);
+  const s = S.sessao;
+  const prescritas = P ? P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0) : 0;
+  const feitas = seriesFeitasHoje(d);
+
+  const avisos = [];
+  const trabalho = sessoesDeTrabalho();
+  const faltam = 48 - (trabalho % 48);
+  if (S.deload) {
+    avisos.push({ k: 'dl', rotulo: 'deload ativo', cor: 'amber',
+      txt: 'Metade das séries, mesmas cargas. Os placeholders continuam mostrando a carga da última semana normal.',
+      acao: { t: 'sair do deload', onClick: function () { setDeload(false); } } });
+  } else if (trabalho > 0 && faltam <= 6) {
+    avisos.push({ k: 'dl2', rotulo: 'deload chegando', cor: '',
+      txt: 'Faltam ' + faltam + ' sessões para a semana de metade das séries.',
+      acao: { t: 'ativar agora', onClick: function () { setDeload(true); } } });
+  }
+  const parado = pausaGeral();
+  if (parado >= PAUSA_DIAS) {
+    avisos.push({ k: 'p', rotulo: 'volta de pausa', cor: 'amber',
+      txt: Math.round(parado) + ' dias desde o último treino salvo. O selo de subir carga fica suspenso nesta volta; os placeholders continuam mostrando a última carga registrada.' });
+  }
+
+  const dif = difTotal();
+  return {
+    dia: d,
+    nome: P ? P.name : '—',
+    olho: P ? P.tag.toUpperCase() : '',
+    feitas: feitas,
+    prescritas: prescritas,
+    volume: fmtK(volumeDoDia(d)),
+    ciclo: String(Math.floor(S.done.length / rot().length) + 1),
+    sessoes: S.done.length,
+    sessaoAberta: !!s,
+    pausada: !!(s && s.pausadoEm),
+    podeEditar: podeEditar(d),
+    proximo: proximoTreino(S, ROT_BASE),
+    rotacao: rot().map(function (x) {
+      return { k: x, t: x, on: x === d, proximo: x === proximoTreino(S, ROT_BASE) };
+    }),
+    diffTxt: dif ? dif + (dif === 1 ? ' diferença do treinador' : ' diferenças do treinador') : 'igual ao treinador',
+    // ainda em string: markup com teste em cima que só falta repintar
+    htmlSessao: relogioDaSessao() + controlesSessao(),
+    htmlSemana: faixaSemana() + linhaCardio(),
+    // O modo de edição do dia ainda é a tela antiga inteira. É a próxima a cair.
+    editando: !!(view.editProg && podeEditar(d)),
+    htmlEdicao: (view.editProg && podeEditar(d)) ? renderEdicao(d, P) : '',
+    avisos: avisos,
+    exercicios: P ? P.ex.map(function (ex, i) {
+      return Object.assign(vmExercicio(d, i, ex), { id: id(d, i) });
+    }) : []
+  };
+};
+
+CTX.sessaoAberta = function () {
+  const s = S.sessao;
+  if (!s) return null;
+  return { duracao: fmtDur(duracaoAtual(s)), pausada: !!s.pausadoEm };
+};
+CTX.acoesEx = ACOES;
+CTX.vaiParaDia = function (d) { go(d); };
+CTX.iniciarSessao = function () { iniciarSessao(); };
+CTX.pausarSessao = function () { pausarSessao(); };
+CTX.retomarSessao = function () { retomarSessao(); };
+CTX.finalizarSessao = function () { finalizarSessao(); };
+CTX.modoEdicao = function () { modoEdicao(true); };
+CTX.abrePrograma = function () { abrirPrograma(null); };
+CTX.abreHistorico = function () { openHist(0); };

@@ -101,7 +101,7 @@ export function GradeMetricas({ colunas = 3, celulas }) {
       {celulas.map((c, i) => (
         <div key={c.k || i} class={'ins-grade-c' + (i % colunas ? ' recuo' : '')}>
           <div class="ins-label-sm">{c.rotulo}</div>
-          <div class={'ins-metric-m' + (c.cor ? ' ' + c.cor : '')}>{c.valor}</div>
+          <div id={c.id} class={'ins-metric-m' + (c.cor ? ' ' + c.cor : '')}>{c.valor}</div>
           {c.nota && <div class="ins-grade-nota">{c.nota}</div>}
         </div>
       ))}

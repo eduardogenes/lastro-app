@@ -4,24 +4,14 @@
 // aqui é dimensionado por isso — alvo grande, nada que exija precisão, e o
 // número que importa (séries feitas de prescritas) sempre visível no topo sem
 // precisar rolar.
+//
+// O cartão de exercício continua com os nomes de classe de antes. É repintura,
+// não reescrita: aqueles nomes são o contrato que os testes de fluxo têm com o
+// DOM há meses, e renomear compraria churn sem comprar nada.
 
 import { Cabecalho, GradeMetricas, Secao, Vazio, useAgora } from '../instrumento/primitivos.jsx';
 import { Exercicio } from '../exercicio.jsx';
-import { fmtDur } from '../../dominio/formato';
-
-/** Relógio da sessão: quanto tempo já faz que começou, tirando as pausas. */
-function Relogio({ ctx }) {
-  useAgora();   // faz esta parte redesenhar de segundo em segundo
-  const s = ctx.sessaoAberta();
-  if (!s) return null;
-  return (
-    <div class="tr-relogio">
-      <span class={'ins-live-dot' + (s.pausada ? ' parado' : '')} />
-      <span class="ins-metric-m">{s.duracao}</span>
-      <span class="ins-label-sm">{s.pausada ? 'pausado' : 'em treino'}</span>
-    </div>
-  );
-}
+import { Bruto } from '../bruto.jsx';
 
 export function Treino({ ctx }) {
   const t = ctx.treino();
@@ -43,48 +33,56 @@ export function Treino({ ctx }) {
         <GradeMetricas
           colunas={3}
           celulas={[
-            { k: 's', rotulo: 'séries', valor: `${t.feitas}/${t.prescritas}` },
+            // id=daymeta: atualizaEstado() escreve aqui a cada tecla, sem
+            // re-render — o porquê está em main.jsx.
+            { k: 's', id: 'daymeta', rotulo: 'séries', valor: `${t.feitas}/${t.prescritas}`,
+              cor: t.feitas >= t.prescritas && t.prescritas > 0 ? 'ins-acid' : '' },
             { k: 'v', rotulo: 'volume', valor: t.volume },
             { k: 'c', rotulo: 'ciclo', valor: t.ciclo, nota: `${t.sessoes} sessões` }
           ]}
         />
-        {t.sessaoAberta && <Relogio ctx={ctx} />}
 
-        <div class="tr-acoes">
-          {!t.sessaoAberta && (
-            <button class="ins-btn-secondary" onClick={ctx.iniciarSessao}>iniciar treino</button>
-          )}
-          {t.sessaoAberta && !t.pausada && (
-            <button class="ins-btn-secondary" onClick={ctx.pausarSessao}>pausar</button>
-          )}
-          {t.sessaoAberta && t.pausada && (
-            <button class="ins-btn-secondary" onClick={ctx.retomarSessao}>retomar</button>
-          )}
-          {t.sessaoAberta && (
-            <button class="ins-btn-primary" onClick={ctx.finalizarSessao}>finalizar</button>
-          )}
+        {/* Relógio, controles de sessão, faixa da semana e linha de cardio
+            ainda vêm em string do casco. Foi decisão de risco: esse markup
+            carrega o relógio que anda sem re-render, o horário da sessão e o
+            atalho de cardio, tudo com teste em cima. Repintar isso é o próximo
+            passo, e é repintura de CSS — a marcação já está certa. */}
+        <Bruto class="tr-sessao" html={t.htmlSessao} />
+
+        {/* A rotação. Ácido no atual, fio no próximo — a fila é sequência, não
+            dia da semana, e a tela mostra isso de relance. */}
+        <div class="tr-rot rot">
+          {t.rotacao.map(x => (
+            <button
+              key={x.k}
+              class={'tr-dia' + (x.on ? ' on' : '') + (x.proximo ? ' next' : '')}
+              onClick={() => ctx.vaiParaDia(x.k)}
+            >{x.t}</button>
+          ))}
         </div>
       </Secao>
 
+      <Bruto class="tr-semana" html={t.htmlSemana} />
+
       {t.avisos.map(a => (
-        <div key={a.k} class={'tr-aviso ' + (a.cor || '')}>
+        <div key={a.k} class={'tr-aviso deload ' + (a.cor || '')}>
           <div class="ins-label">{a.rotulo}</div>
           <p class="ins-body-sm ins-t2">{a.txt}</p>
-          {a.acao && <button class="ins-btn-secondary" onClick={a.acao.onClick}>{a.acao.t}</button>}
+          {a.acao && (
+            <button class="ins-btn-secondary dlbtn" onClick={a.acao.onClick}>{a.acao.t}</button>
+          )}
         </div>
       ))}
 
-      <Secao rotulo="exercícios" nota={t.podeEditar ? 'toque em ··· para mudar só hoje' : null}>
-        {t.exercicios.length === 0
-          ? <Vazio>Este treino ainda não tem exercício nenhum.</Vazio>
-          : t.exercicios.map((vm, i) => (
-              <Exercicio
-                key={vm.id}
-                vm={vm}
-                acoes={ctx.acoesEx}
-                ultima={i === t.exercicios.length - 1}
-              />
-            ))}
+<Secao rotulo={t.editando ? 'editando hoje' : 'exercícios'}
+             nota={t.editando ? 'nada aqui mexe no programa' : `${t.feitas} de ${t.prescritas} séries`}>
+        {t.editando
+          ? <Bruto html={t.htmlEdicao} />
+          : t.exercicios.length === 0
+            ? <Vazio>Este treino ainda não tem exercício nenhum.</Vazio>
+            : t.exercicios.map(vm => (
+                <Exercicio key={vm.id} vm={vm} acoes={ctx.acoesEx} />
+              ))}
       </Secao>
 
       <Secao rotulo="o programa" nota={t.diffTxt}>
@@ -93,9 +91,13 @@ export function Treino({ ctx }) {
           Não há nada para salvar. O treino se encerra sozinho e a rotação avança
           para {t.proximo}.
         </p>
-        <div class="tr-links">
+{/* .edlink só existe quando dá para editar HOJE: em outro dia a mudança é
+            edição de programa, e o app repete essa distinção em toda tela. */}
+        <div class={'tr-links' + (t.podeEditar ? ' edlink' : '')}>
+          {t.podeEditar && (
+            <button class="ins-btn-secondary" onClick={ctx.modoEdicao}>editar treino de hoje</button>
+          )}
           <button class="ins-btn-secondary" onClick={ctx.abrePrograma}>abrir o programa</button>
-          <button class="ins-btn-secondary" onClick={ctx.abreHistorico}>histórico de carga</button>
         </div>
       </Secao>
     </>

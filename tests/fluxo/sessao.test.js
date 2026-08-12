@@ -7,7 +7,7 @@ import { app, DIA } from './harness.js';
 test('não existe mais função de salvar', async () => {
   const a = await app();
   assert.strictEqual(a.E('typeof finish'), 'undefined');
-  assert.ok(a.texto('.autonota').includes('Não há nada para salvar'));
+  assert.ok(a.texto('.tr-nota').includes('Não há nada para salvar'));
   a.fechar();
 });
 
@@ -78,7 +78,7 @@ test('sessão encerra por inatividade, grava duração e avança a rotação', a
   assert.strictEqual(b.E('S.sessao'), null, 'sessão deveria ter encerrado sozinha');
   assert.strictEqual(b.E('S.done[0].dur'), 3600 * 1000, 'uma hora de treino');
   assert.strictEqual(b.E('S.draft'), null);
-  assert.strictEqual(b.texto('.dayletter'), 'B', 'rotação deveria ter avançado');
+  assert.strictEqual(b.texto('.ins-estado-v'), 'B', 'rotação deveria ter avançado');
   assert.strictEqual(b.log('A',0)[0].sets.filter(Boolean).length, 1, 'histórico preservado');
   b.fechar();
 });
@@ -93,7 +93,7 @@ test('sessão do mesmo dia com pouca pausa continua aberta', async () => {
 
   const b = await app({ estado });
   assert.ok(b.E('S.sessao !== null'), 'não deveria encerrar por 30 minutos');
-  assert.strictEqual(b.texto('.dayletter'), 'A');
+  assert.strictEqual(b.texto('.ins-estado-v'), 'A');
   b.fechar();
 });
 
@@ -140,16 +140,20 @@ test('hidratação recupera observação, dor e substituto', async () => {
   a.fechar();
 });
 
-test('cabeçalho conta as séries sem re-render', async () => {
+test('o contador de séries acompanha a digitação sem re-render', async () => {
+  // inp() não chama render() de propósito: o campo é controlado pelo valor já
+  // parseado, e redesenhar a cada tecla reescreveria "22," como "22" — deixando
+  // impossível digitar decimal. O contador é escrito no DOM à mão, e este teste
+  // é o que garante que ele não vire texto morto.
   const a = await app();
-  assert.ok(a.texto('#daymeta').includes('séries prescritas'));
+  assert.match(a.texto('#daymeta'), /^0\/\d+$/, a.texto('#daymeta'));
 
   a.E('toggle(0)');
   a.preencher(0, 0, 40, 10);
-  assert.ok(a.texto('#daymeta').includes('1 série registrada'), a.texto('#daymeta'));
+  assert.match(a.texto('#daymeta'), /^1\//, a.texto('#daymeta'));
 
   a.preencher(0, 1, 40, 10);
-  assert.ok(a.texto('#daymeta').includes('2 séries'), 'contador acompanha a digitação');
+  assert.match(a.texto('#daymeta'), /^2\//, 'contador acompanha a digitação');
   a.fechar();
 });
 

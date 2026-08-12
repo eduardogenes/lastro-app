@@ -95,7 +95,7 @@ test('finalizar grava tempo exato e marca como manual', async () => {
   assert.strictEqual(m.fim, 'manual');
   assert.ok(Math.abs(m.dur - 62 * 60000) < 3000, 'tempo até o toque, não até a última série');
   assert.strictEqual(a.E('S.sessao'), null);
-  assert.strictEqual(a.texto('.dayletter'), 'B', 'rotação avançou');
+  assert.strictEqual(a.texto('.ins-estado-v'), 'B', 'rotação avançou');
   assert.ok(a.toast().includes('encerrado'));
   a.fechar();
 });
@@ -231,7 +231,7 @@ test('dois treinos no mesmo dia agora são possíveis', async () => {
   a.preencher(0, 0, 40, 10);
   await a.E('finalizarSessao()');
   await a.esperar();
-  assert.strictEqual(a.texto('.dayletter'), 'B');
+  assert.strictEqual(a.texto('.ins-estado-v'), 'B');
 
   await a.E('iniciarSessao()');
   a.E('toggle(0)');
