@@ -317,3 +317,14 @@
 /* Comprado recua, mas continua legível: a lista é conferida no mercado. */
 .ins-linha.comprado .ins-linha-t { color: var(--ins-text-5); text-decoration: line-through; }
 .ins-linha.comprado .ins-linha-v { color: var(--ins-text-5); }
+
+/* ---- Tela DADOS -------------------------------------------------------- */
+
+.dd-spark { margin-bottom: var(--ins-2); }
+.dd-override {
+  margin-top: var(--ins-7); padding-top: var(--ins-6);
+  border-top: 1px solid var(--ins-hairline);
+  display: flex; flex-direction: column; gap: var(--ins-5);
+}
+.dd-override p { margin: 0; }
+.dd-legado { margin-top: var(--ins-10); }

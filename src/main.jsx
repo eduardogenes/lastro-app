@@ -13,12 +13,14 @@ import {
   totalAnilhas, isTime, tutOf, volOf, maxLoad, repsOf, topReps
 } from './dominio/carga';
 import { montaHTML, montaNoApp } from './ui/raiz.jsx';
+import { ajusteDoVeredito } from './dominio/corpo';
+import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { Bruto } from './ui/bruto.jsx';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { ALIMENTOS_BASE, PLANO_BASE } from './dominio/nutricao/alimentos';
-import { listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
+import { arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto,
          seriesPorMusculo as _seriesPorMusculo } from './dominio/volume';
@@ -2812,7 +2814,46 @@ function pesoRitmo() { return _pesoRitmo(S.body.peso); }
 
 function cinturaMes() { return _cinturaMes(S.body.cintura); }
 
-function veredito() { return _veredito(S.body); }
+/**
+ * O veredito, agora com o sinal de força que o TREINO produz.
+ *
+ * É onde a fusão vira comportamento em vez de arquitetura: peso parado com
+ * carga subindo é recomposição, e mandar comer mais nessa hora atropelaria
+ * justamente o que estava dando certo. Antes esse sinal era um interruptor que
+ * ele ligava na mão; agora sai do e1RM das cargas registradas.
+ */
+function forcaSubindo() {
+  const t = tendenciaDeForca(S.logs, function (k) { return exDe(k).u === 'seg'; });
+  return sinalDeForca(t, S.perfManual);
+}
+function veredito() { return _veredito(S.body, forcaSubindo()); }
+
+/** Quanto de arroz o plano manda hoje, com o ajuste em vigor aplicado. */
+function arrozAtual() {
+  const plano = planoDeComida();
+  let base = 0;
+  plano.forEach(function (r) {
+    r.itens.forEach(function (i) { if (i.arroz) base += i.q; });
+  });
+  return arrozDoAjuste(base, S.ajuste);
+}
+
+/**
+ * Aplica o ajuste calórico onde o plano manda aplicar: no arroz.
+ * O veredito DECIDE, isto EXECUTA — é a divisão de trabalho entre as duas
+ * metades do produto.
+ */
+function aplicaArroz(ajusteAntes) {
+  const plano = planoDeComida();
+  plano.forEach(function (r) {
+    r.itens.forEach(function (i) {
+      if (!i.arroz) return;
+      // desfaz o ajuste anterior antes de aplicar o novo, senão eles somam
+      const base = arrozDoAjuste(i.q, -ajusteAntes);
+      i.q = arrozDoAjuste(base, S.ajuste);
+    });
+  });
+}
 
 function bodySVG(W) {
   if (!W.length) return '';
@@ -3925,3 +3966,64 @@ CTX.finalizarSessao = function () { finalizarSessao(); };
 CTX.modoEdicao = function () { modoEdicao(true); };
 CTX.abrePrograma = function () { abrirPrograma(null); };
 CTX.abreHistorico = function () { openHist(0); };
+
+// ---------- DADOS ----------
+CTX.dados = function () {
+  const t = tendenciaDeForca(S.logs, function (k) { return exDe(k).u === 'seg'; });
+  const v = veredito();
+  const alvo = ajusteDoVeredito(v);
+
+  // e1RM da semana, somando o melhor de cada exercício: é a curva que responde
+  // "estou ficando mais forte", e não a de um exercício só — que oscila com
+  // troca de aparelho e com o dia.
+  const porSemana = [];
+  for (let i = 13; i >= 0; i--) {
+    const fim = weekStart(Date.now()) - (i - 1) * 7 * 86400000;
+    const ini = fim - 7 * 86400000;
+    let soma = 0;
+    Object.keys(S.logs).forEach(function (k) {
+      if (exDe(k).u === 'seg') return;
+      const janela = (S.logs[k] || []).filter(function (e) { return e.t >= ini && e.t < fim; });
+      if (!janela.length) return;
+      soma += Math.max.apply(null, janela.map(function (e) {
+        return e.sets.reduce(function (m, s) {
+          return s && s[0] > 0 && s[1] > 0 ? Math.max(m, s[0] * (1 + s[1] / 30)) : m;
+        }, 0);
+      }));
+    });
+    porSemana.push(soma > 0 ? Math.round(soma) : null);
+  }
+
+  return {
+    veredito: {
+      t: v.t, p: v.p,
+      cor: (v.k === 'menos' || v.k === 'observar') ? 'amber' : v.k === 'faltam' ? 't4' : 'acid',
+      podeAplicar: alvo !== S.ajuste && v.k !== 'faltam',
+      acaoTxt: alvo > 0 ? 'aplicar +150 kcal' : alvo < 0 ? 'aplicar −150 kcal' : 'voltar ao plano base',
+      estado: (S.ajuste === 0 ? 'plano atual' : S.ajuste > 0 ? 'ajuste +150 kcal' : 'ajuste −150 kcal') +
+              ' · arroz ' + arrozAtual() + ' g'
+    },
+    forca: {
+      serie: porSemana,
+      agora: t.ok ? Math.round(t.agora) + ' kg' : '—',
+      delta: t.ok ? (t.delta >= 0 ? '+' : '−') + (Math.abs(t.delta) * 100).toFixed(1).replace('.', ',') + '%' : '—',
+      cor: t.ok ? (t.subindo ? 'ins-acid' : 'ins-amber') : '',
+      txt: textoDaTendencia(t, S.perfManual),
+      opcoes: [
+        { k: 'auto', t: 'o app decide', v: null, on: S.perfManual == null },
+        { k: 'sim', t: 'está subindo', v: true, on: S.perfManual === true },
+        { k: 'nao', t: 'não está', v: false, on: S.perfManual === false }
+      ]
+    },
+    htmlLegado: renderBody() + renderAcomp()
+  };
+};
+
+CTX.setPerfManual = function (v) { S.perfManual = v; queueSave(); render(); };
+CTX.aplicaAjuste = function () {
+  const antes = S.ajuste;
+  S.ajuste = ajusteDoVeredito(veredito());
+  aplicaArroz(antes);
+  queueSave(); render();
+  toast('Ajuste aplicado. O arroz do plano foi para ' + arrozAtual() + ' g.');
+};

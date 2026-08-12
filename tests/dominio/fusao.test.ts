@@ -13,7 +13,8 @@ import {
   CADENCIA_PADRAO, cadenciaPrevista, diaDeHoje, previsaoDoHorizonte, proximoTreino
 } from '../../src/dominio/dia';
 import { ajusteDoVeredito, veredito } from '../../src/dominio/corpo';
-import { e1rmDaSerie, performance, tendenciaDeForca } from '../../src/dominio/forca';
+import { e1rmDaSerie, sinalDeForca, tendenciaDeForca } from '../../src/dominio/forca';
+import * as forca from '../../src/dominio/forca';
 import { ROT_BASE } from '../../src/dominio/programa';
 import type { Estado, IdEx, Log } from '../../src/dominio/tipos';
 import { DIA, log, pesagens } from './ajuda';
@@ -178,9 +179,9 @@ test('variação abaixo de 1% é ruído de anilha, não sinal', () => {
 
 test('o override manual vence o cálculo', () => {
   const t = tendenciaDeForca({}, () => false, agora);
-  assert.strictEqual(performance(t, null), false, 'sem override, vale o cálculo');
-  assert.strictEqual(performance(t, true), true, 'o app não sabe que ele voltou de duas semanas doente');
-  assert.strictEqual(performance(t, false), false);
+  assert.strictEqual(sinalDeForca(t, null), false, 'sem override, vale o cálculo');
+  assert.strictEqual(sinalDeForca(t, true), true, 'o app não sabe que ele voltou de duas semanas doente');
+  assert.strictEqual(sinalDeForca(t, false), false);
 });
 
 // ---------- um motor de veredito, não dois ----------
@@ -208,4 +209,17 @@ test('observar e faltam não mexem na comida', () => {
   assert.strictEqual(ajusteDoVeredito({ k: 'observar', t: '', p: '' }), 0,
     'observar não é decisão, e mexer sem decisão é o oposto do que o app faz');
   assert.strictEqual(ajusteDoVeredito({ k: 'faltam', t: '', p: '' }), 0);
+});
+
+test('o sinal de força não se chama performance, e nada volta a chamar', () => {
+  // `window.performance` existe em todo navegador e sombreava a importação em
+  // silêncio: a chamada virava "performance is not a function" só em runtime,
+  // dentro do jsdom, com stack de bundle. Mesma armadilha que já obrigou
+  // topReps() a não se chamar top(). O teste é barato; o bug foi caro.
+  const nomes = ['performance', 'top', 'name', 'status', 'length', 'origin', 'closed'];
+  const exportados = Object.keys(forca);
+  const colidem = exportados.filter(n => nomes.includes(n));
+  assert.deepStrictEqual(colidem, [],
+    'nome de export que existe como global do navegador é sombreado em silêncio');
+  assert.ok(typeof forca.sinalDeForca === 'function');
 });

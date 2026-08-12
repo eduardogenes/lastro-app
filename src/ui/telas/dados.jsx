@@ -1,14 +1,19 @@
-// DADOS — o motor de regra, e onde o treino ALIMENTA a comida.
+// DADOS — o motor de regra, e o lugar onde o TREINO alimenta a COMIDA.
 //
-// A mudança que a fusão trouxe está aqui: `performance` era um interruptor que
-// ele ligava na mão dizendo "estou ficando mais forte". Agora o app calcula
-// isso das cargas que ele já registrou, mostra a conta, e o interruptor vira
-// override — porque o cálculo não sabe que ele voltou de duas semanas doente.
+// É a tela que mais muda de significado com a fusão. Antes, `performance` era
+// um interruptor que ele ligava na mão dizendo "estou ficando mais forte", e a
+// regra calórica lia esse interruptor. Perguntar isso sempre foi estranho: o
+// app tem todas as cargas registradas. Agora ele calcula, mostra a conta, e o
+// interruptor vira override — porque o cálculo pode estar cego (volta de pausa,
+// troca de exercício, semana de deload) e nessas horas quem sabe é ele.
+//
+// O resto da tela — peso, cintura, cardio, músculos, calendário — ainda vem em
+// string do casco. É dívida declarada, e é a próxima a cair.
 
+import { Bruto } from '../bruto.jsx';
 import {
-  Cabecalho, GradeMetricas, Procedencia, Secao, Sparkline, Stepper, Vazio, Veredito
+  Cabecalho, GradeMetricas, Procedencia, Secao, Sparkline, Vazio, Veredito
 } from '../instrumento/primitivos.jsx';
-import { fmtDec, fmtSig2 } from '../../dominio/formato';
 
 export function Dados({ ctx }) {
   const d = ctx.dados();
@@ -17,20 +22,7 @@ export function Dados({ ctx }) {
     <>
       <Cabecalho olho="acompanhamento" titulo="Dados" />
 
-      <Secao primeira rotulo="peso" nota={d.peso.nota}>
-        <div class="dd-registro">
-          <Stepper valor={d.peso.valor} passo={0.1} min={30} max={200}
-                   fmt={v => fmtDec(v) + ' kg'} onMuda={ctx.setPesoRascunho} />
-          <button class="ins-btn-primary" onClick={ctx.registraPeso}>registrar hoje</button>
-        </div>
-        <div class="dd-spark"><Sparkline valores={d.peso.serie} /></div>
-        <GradeMetricas colunas={2} celulas={[
-          { k: 'm', rotulo: 'média da semana', valor: d.peso.media },
-          { k: 'r', rotulo: 'ritmo', valor: d.peso.ritmo, cor: d.peso.ritmoCor }
-        ]} />
-      </Secao>
-
-      <Secao rotulo="veredito">
+      <Secao primeira rotulo="o que fazer com a comida">
         <Veredito
           rotulo="a regra do plano"
           veredito={d.veredito.t}
@@ -45,61 +37,41 @@ export function Dados({ ctx }) {
         />
       </Secao>
 
-      <Secao rotulo="força estimada" nota="e1rm · epley">
+      <Secao rotulo="força estimada" nota="e1rm · fórmula de epley">
         {d.forca.serie.some(x => x != null)
           ? <div class="dd-spark"><Sparkline valores={d.forca.serie} /></div>
           : <Vazio>Ainda não há carga registrada suficiente para estimar.</Vazio>}
-        <GradeMetricas colunas={2} celulas={[
-          { k: 'a', rotulo: '2 semanas', valor: d.forca.agora },
-          { k: 'd', rotulo: 'variação', valor: d.forca.delta, cor: d.forca.cor }
-        ]} />
+
+        <GradeMetricas
+          colunas={2}
+          celulas={[
+            { k: 'a', rotulo: 'soma das 2 semanas', valor: d.forca.agora },
+            { k: 'd', rotulo: 'variação', valor: d.forca.delta, cor: d.forca.cor }
+          ]}
+        />
         <Procedencia>{d.forca.txt}</Procedencia>
+
         <div class="dd-override">
-          <span class="ins-body-sm ins-t3">
-            O app decide isso sozinho. Assuma na mão só quando ele estiver cego —
-            volta de pausa, troca de exercício, semana de deload.
-          </span>
+          <p class="ins-body-sm ins-t3">
+            O app decide isso das cargas que você registrou. Assuma na mão só
+            quando ele estiver cego — volta de pausa, troca de exercício,
+            semana de deload.
+          </p>
           <div class="ins-chips">
             {d.forca.opcoes.map(o => (
-              <button key={o.k} class={'ins-chip' + (o.on ? ' on' : '')}
-                      onClick={() => ctx.setPerfManual(o.v)}>{o.t}</button>
+              <button
+                key={o.k}
+                class={'ins-chip' + (o.on ? ' on' : '')}
+                onClick={() => ctx.setPerfManual(o.v)}
+              >{o.t}</button>
             ))}
           </div>
         </div>
       </Secao>
 
-      <Secao rotulo="cintura" nota={d.cintura.nota}>
-        <div class="dd-registro">
-          <Stepper valor={d.cintura.valor} passo={0.5} min={40} max={200}
-                   fmt={v => fmtDec(v) + ' cm'} onMuda={ctx.setCinturaRascunho} />
-          <button class="ins-btn-secondary" onClick={ctx.registraCintura}>registrar</button>
-        </div>
-        {d.cintura.mes && <Procedencia>{d.cintura.mes}</Procedencia>}
-      </Secao>
-
-      <Secao rotulo="séries por músculo" nota="direta · na semana">
-        {d.musculos.length === 0
-          ? <Vazio>Nenhuma série registrada nesta semana ainda.</Vazio>
-          : <div class="ins-lista">
-              {d.musculos.map(m => (
-                <div key={m.g} class="ins-linha">
-                  <span class="ins-linha-n">
-                    <span class="ins-linha-t">{m.g}</span>
-                    <span class="ins-linha-s">{m.nota}</span>
-                  </span>
-                  <span class={'ins-linha-v' + (m.cor ? ' ' + m.cor : '')}>{m.valor}</span>
-                </div>
-              ))}
-            </div>}
-        <Procedencia>
-          série direta, não estímulo total: tríceps também trabalha nos supinos e
-          bíceps nas puxadas.
-        </Procedencia>
-      </Secao>
-
-      <Secao rotulo="o mês">
-        <GradeMetricas colunas={3} celulas={d.mes} />
-      </Secao>
+      {/* Peso, cintura, cardio, músculos e o calendário do mês. Ainda em
+          string: markup com teste em cima que só falta repintar. */}
+      <Bruto class="dd-legado" html={d.htmlLegado} />
     </>
   );
 }

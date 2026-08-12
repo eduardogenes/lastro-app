@@ -92,8 +92,13 @@ export function tendenciaDeForca(
 /**
  * O sinal que a regra calórica consome. `manual` vence quando existe — o
  * cálculo não sabe que ele voltou de duas semanas doente.
+ *
+ * NÃO se chama `performance`, que seria o nome óbvio: `window.performance` é
+ * global em todo navegador, e a importação era silenciosamente sombreada pelo
+ * objeto do DOM — a chamada virava `performance is not a function` só em
+ * runtime. Mesma armadilha que já obrigou `topReps()` a não se chamar `top()`.
  */
-export function performance(t: Tendencia, manual: boolean | null): boolean {
+export function sinalDeForca(t: Tendencia, manual: boolean | null): boolean {
   return manual == null ? t.subindo : manual;
 }
 
