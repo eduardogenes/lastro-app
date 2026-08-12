@@ -328,3 +328,24 @@
 }
 .dd-override p { margin: 0; }
 .dd-legado { margin-top: var(--ins-10); }
+
+/* ---- Tela GUIA --------------------------------------------------------- */
+
+.gu-semana { display: flex; gap: var(--ins-1); }
+.gu-dia {
+  flex: 1; min-height: 62px; padding: var(--ins-4) 2px;
+  border: 1px solid var(--ins-border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--ins-2);
+}
+.gu-dia.on { background: var(--ins-surface-acid); border-color: var(--ins-acid); }
+.gu-dia-v {
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-5);
+}
+.gu-dia.on .gu-dia-v { color: var(--ins-acid); }
+.gu-dia.on .ins-label-sm { color: var(--ins-text-2); }
+
+.gu-acoes { display: flex; flex-direction: column; gap: var(--ins-2); }
+.gu-acoes .ins-btn-destructive { border-color: var(--ins-ember-line, var(--ins-border-strong)); }
+.gu-legado { margin-top: var(--ins-10); }

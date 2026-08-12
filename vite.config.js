@@ -85,5 +85,13 @@ export default defineConfig({
 
   plugins: [servicWorkerVersionado()],
 
-  server: { port: 5173 }
+  server: {
+    port: 5173,
+    // Escuta em todas as interfaces para dar para abrir do iPhone, e aceita o
+    // Host do túnel — sem isto o Vite recusa a requisição com "Blocked request".
+    // Só o sufixo do ngrok, não `true`: liberar host arbitrário num servidor de
+    // desenvolvimento é convite para DNS rebinding.
+    host: true,
+    allowedHosts: ['.ngrok-free.dev', '.ngrok-free.app', '.ngrok.io']
+  }
 });

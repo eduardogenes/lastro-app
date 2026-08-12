@@ -1,11 +1,21 @@
 // GUIA — a camada de referência das duas metades, e os dois restaurares.
 //
-// Lei 7: toda mudança global tem um restaurar documentado. São dois, e eles
-// dizem exatamente o que preservam — porque a pergunta que trava a mão de
-// alguém antes de tocar num botão desses é sempre "e o meu histórico?".
+// A parte nova é a cadência da semana. Ela é o que sobrou do `mapa[7]` da
+// nutrição depois que a fusão separou duas perguntas que estavam grudadas
+// numa só: QUAL treino vem é sempre a rotação, que avança quando ele registra
+// uma sessão; HOJE É DIA DE TREINAR é o que esta tela responde. Sem essa
+// separação, o mapa e a rotação discordariam toda semana que ele pulasse um dia.
 
+import { Bruto } from '../bruto.jsx';
 import { Cabecalho, Procedencia, Secao } from '../instrumento/primitivos.jsx';
-import { DIAS_CURTOS } from '../../dominio/formato';
+
+// Segunda primeiro, como se lê uma semana. O índice da cadência é getDay(),
+// que começa no domingo — a conversão fica aqui e não no domínio.
+const SEMANA = [
+  { rot: 'seg', i: 1 }, { rot: 'ter', i: 2 }, { rot: 'qua', i: 3 },
+  { rot: 'qui', i: 4 }, { rot: 'sex', i: 5 }, { rot: 'sáb', i: 6 },
+  { rot: 'dom', i: 0 }
+];
 
 export function Guia({ ctx }) {
   const g = ctx.guia();
@@ -14,31 +24,29 @@ export function Guia({ ctx }) {
     <>
       <Cabecalho olho="referência" titulo="Guia" />
 
-      <Secao primeira rotulo="a semana" nota="qual treino vem é da rotação">
+      <Secao primeira rotulo="a semana" nota="toque para alternar">
         <div class="gu-semana">
-          {DIAS_CURTOS.map((_, i) => {
-            // DIAS_CURTOS começa na segunda; a cadência é indexada por getDay()
-            const idx = (i + 1) % 7;
-            const treina = g.cadencia[idx] === 'treino';
+          {SEMANA.map(d => {
+            const treina = g.cadencia[d.i] === 'treino';
             return (
               <button
-                key={idx}
+                key={d.i}
                 class={'gu-dia' + (treina ? ' on' : '')}
-                onClick={() => ctx.alternaCadencia(idx)}
+                onClick={() => ctx.alternaCadencia(d.i)}
               >
-                <span class="ins-label-sm">{DIAS_CURTOS[i]}</span>
+                <span class="ins-label-sm">{d.rot}</span>
                 <span class="gu-dia-v">{treina ? 'treino' : 'folga'}</span>
               </button>
             );
           })}
         </div>
         <Procedencia>
-          isto só diz em que dias você costuma treinar, e serve para prever
+          isto diz só em que dias você costuma treinar, e serve para prever as
           compras. Qual sessão vem é sempre a rotação: {g.rotacao}.
         </Procedencia>
       </Secao>
 
-      <Secao rotulo="alvo por dia">
+      <Secao rotulo="alvo por tipo de dia" nota="calculado do plano">
         <div class="ins-lista">
           {g.alvos.map(a => (
             <div key={a.k} class="ins-linha">
@@ -50,23 +58,10 @@ export function Guia({ ctx }) {
             </div>
           ))}
         </div>
-      </Secao>
-
-      {g.regras.map(r => (
-        <Secao key={r.k} rotulo={r.k} nota={r.warn ? 'atenção' : null}>
-          <h3 class="ins-subtitle gu-t">{r.t}</h3>
-          {r.p.map((x, i) => (
-            <p key={i} class="ins-body-sm ins-t2 gu-p" dangerouslySetInnerHTML={{ __html: x }} />
-          ))}
-        </Secao>
-      ))}
-
-      <Secao rotulo="dados">
-        <div class="gu-acoes">
-          <button class="ins-btn-secondary" onClick={ctx.exportar}>exportar backup</button>
-          <button class="ins-btn-secondary" onClick={ctx.importar}>importar backup</button>
-        </div>
-        <Procedencia>{g.backup}</Procedencia>
+        <Procedencia>
+          somado dos alimentos do plano, não escrito à parte: mudar uma
+          quantidade recalcula isto na hora.
+        </Procedencia>
       </Secao>
 
       <Secao rotulo="restaurar" nota="os dois preservam o histórico">
@@ -75,14 +70,17 @@ export function Guia({ ctx }) {
             restaurar o programa do treinador
           </button>
           <button class="ins-btn-secondary ins-btn-destructive" onClick={ctx.restauraPlano}>
-            restaurar o plano nutricional
+            restaurar o plano do nutricionista
           </button>
         </div>
         <Procedencia>
-          nenhum dos dois toca no que você já registrou, nem no que cadastrou:
+          nenhum dos dois toca no que você registrou nem no que cadastrou:
           voltam só a prescrição.
         </Procedencia>
       </Secao>
+
+      {/* Regras de execução e a área de dados, ainda em string. */}
+      <Bruto class="gu-legado" html={g.htmlLegado} />
     </>
   );
 }

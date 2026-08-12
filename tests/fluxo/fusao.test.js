@@ -159,3 +159,46 @@ test('o dia de comida zera sozinho na virada da data', async () => {
   assert.strictEqual(a.E('S.dia.agua'), 0);
   a.fechar();
 });
+
+test('apagar o histórico não apaga o plano nutricional', async () => {
+  // Simetria com o programa de treino: apagar o que foi REGISTRADO nunca apaga
+  // o que foi PRESCRITO. Já quebrou uma vez, deixando a nutrição sem catálogo.
+  const a = await app({ aba: 'guia' });
+  a.E('S.comida.plano[0].itens[0].q = 777');
+  a.E('S.cadencia = ["treino","treino","treino","treino","treino","treino","treino"]');
+  a.aceitar();
+  await a.E('wipe()');
+  await a.esperar();
+
+  assert.strictEqual(a.E('S.done.length'), 0, 'o histórico foi');
+  assert.strictEqual(a.E('S.comida.plano[0].itens[0].q'), 777, 'o plano editado ficou');
+  assert.strictEqual(a.J('S.cadencia')[0], 'treino', 'a cadência ficou');
+  assert.ok(a.E('S.comida.plano.length') === 6);
+  a.fechar();
+});
+
+test('a cadência da semana é editável e só fala de cadência', async () => {
+  const a = await app({ aba: 'guia' });
+  const dias = a.$$('.gu-dia');
+  assert.strictEqual(dias.length, 7);
+
+  const antes = a.J('S.cadencia').slice();
+  a.clicar(dias[0]);            // segunda, que é o índice 1 da cadência
+  await a.esperar();
+  assert.notStrictEqual(a.J('S.cadencia')[1], antes[1], 'alternou');
+
+  // e não guarda letra de treino: qual sessão vem é sempre da rotação
+  a.J('S.cadencia').forEach(function (c) {
+    assert.ok(c === 'treino' || c === 'descanso', 'cadência guardou letra: ' + c);
+  });
+  a.fechar();
+});
+
+test('o alvo calórico sai do plano, não de um número escrito à parte', async () => {
+  const a = await app({ aba: 'guia' });
+  const antes = a.texto('.ins-linha-v');
+  a.E('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens[0].q += 500');
+  a.E('render()');
+  assert.notStrictEqual(a.texto('.ins-linha-v'), antes, 'mexer no plano recalcula o alvo na hora');
+  a.fechar();
+});

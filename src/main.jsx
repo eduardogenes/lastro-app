@@ -3607,7 +3607,15 @@ async function wipe() {
   // e as mudanças que promoveu ao oficial sobrevivem
   S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
         body:{ peso:[], cintura:[] }, carga:{}, export:0,
-        plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [] };
+        plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
+        // A metade de comida também sobrevive: apagar histórico de TREINO não
+        // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
+        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste,
+        perfManual:S.perfManual, compras:S.compras };
+  // Passa pela mesma normalização do boot: é o único lugar que sabe o padrão de
+  // cada campo, e reconstruir o estado à mão aqui já deixou a nutrição sem
+  // catálogo uma vez.
+  normalizaEstado();
   montaCatalogo();
   try { await DB.delete(KEY); } catch(e){}
   view.day='A'; view.tab='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
@@ -4026,4 +4034,43 @@ CTX.aplicaAjuste = function () {
   aplicaArroz(antes);
   queueSave(); render();
   toast('Ajuste aplicado. O arroz do plano foi para ' + arrozAtual() + ' g.');
+};
+
+// ---------- GUIA ----------
+CTX.guia = function () {
+  const cat = catalogoAlimentos();
+  const plano = planoDeComida();
+  const dTreino = totalDoDia(plano, cat, true, false);
+  const dFolga = totalDoDia(plano, cat, false, false);
+  return {
+    cadencia: cadenciaDaSemana(),
+    rotacao: rot().join(' → '),
+    alvos: [
+      { k: 't', t: 'Dia de treino', s: 'com pré-treino e intra-treino',
+        v: Math.round(dTreino.kcal) + ' kcal' },
+      { k: 'd', t: 'Dia de descanso', s: 'sem as refeições de treino',
+        v: Math.round(dFolga.kcal) + ' kcal' }
+    ],
+    htmlLegado: '<div class="rules">' + RULES.map(function (r) {
+      return '<div class="rule ' + (r.warn ? 'warn' : '') + '">' +
+        '<h3><em>' + r.k + '</em>' + r.t + '</h3>' +
+        r.p.map(function (x) { return '<p>' + x + '</p>'; }).join('') + '</div>';
+    }).join('') + '</div>' + renderData()
+  };
+};
+
+CTX.alternaCadencia = function (i) {
+  const c = cadenciaDaSemana().slice();
+  c[i] = c[i] === 'treino' ? 'descanso' : 'treino';
+  S.cadencia = c;
+  queueSave(); render();
+};
+
+CTX.restauraPrograma = function () { restaurarTudo(); };
+CTX.restauraPlano = function () {
+  if (!confirm('Restaurar o plano do nutricionista?\n\nSeus alimentos cadastrados e todo o histórico ficam. Volta só a prescrição.')) return;
+  S.comida.plano = JSON.parse(JSON.stringify(PLANO_BASE));
+  S.ajuste = 0;
+  queueSave(); render();
+  toast('Plano nutricional restaurado.');
 };

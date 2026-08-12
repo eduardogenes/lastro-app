@@ -20,7 +20,7 @@ import { Cabecalho } from './instrumento/primitivos.jsx';
 // Só as abas convertidas apontam para componente. As outras caem em
 // `telaLegado()` — dívida declarada, igual ao <Bruto>: some conforme cada uma
 // vira componente, e quando não sobrar nenhuma o app.css inteiro morre junto.
-const TELAS = { hoje: Hoje, treino: Treino, comida: Comida, dados: Dados };
+const TELAS = { hoje: Hoje, treino: Treino, comida: Comida, dados: Dados, guia: Guia };
 
 export function App({ ctx }) {
   // Tela cheia do sistema antigo toma o lugar de tudo, tab bar inclusive. É o
