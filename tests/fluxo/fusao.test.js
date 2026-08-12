@@ -1,7 +1,7 @@
 // A fusão, de ponta a ponta: um estado antigo abre migrado e íntegro.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app } from './harness.js';
+import { app, DIA } from './harness.js';
 
 test('estado migra para o plano 4 e a nutrição nasce semeada', async () => {
   const a = await app();
@@ -52,5 +52,110 @@ test('backup antigo, sem a metade de comida, abre semeado em vez de vazio', asyn
   assert.strictEqual(a.E('S.comida.plano.length'), 6, 'a nutrição nasce da prescrição');
   assert.strictEqual(a.J('S.cadencia').length, 7);
   assert.strictEqual(a.E('S.ajuste'), 0, 'sem ajuste herdado de lugar nenhum');
+  a.fechar();
+});
+
+test('HOJE mostra comida e treino na MESMA timeline, em ordem de relógio', async () => {
+  // É o argumento inteiro da fusão: o pré-treino das 5h45 e a sessão das 6h15
+  // são uma sequência só. Em eixos separados, pareciam dois apps.
+  const a = await app({ aba: 'hoje' });
+  const linhas = a.$$('.ins-tl');
+  assert.ok(linhas.length >= 5, 'as refeições do dia estão na tela: ' + linhas.length);
+
+  const horas = linhas.map(l => l.querySelector('.ins-tl-hora').textContent);
+  assert.deepStrictEqual(horas, horas.slice().sort(), 'ordenadas por relógio');
+
+  const nomes = linhas.map(l => l.querySelector('.ins-tl-nome').textContent);
+  assert.ok(nomes.some(n => /pré-treino/i.test(n)), 'a refeição está lá: ' + nomes.join(' · '));
+  assert.ok(nomes.some(n => /peito|dorsais|quadríceps|espessura|deltoides|posterior/i.test(n)),
+    'e o treino está na mesma lista, pelo nome da sessão: ' + nomes.join(' · '));
+  a.fechar();
+});
+
+test('o cartão-foco responde "e agora?" antes de qualquer resumo', async () => {
+  const a = await app({ aba: 'hoje' });
+  const foco = a.$('.ins-foco');
+  assert.ok(foco, 'o foco é a primeira coisa da tela');
+  assert.ok(a.$('.ins-live-dot'), 'com o ponto ao vivo');
+  assert.ok(/agora · \d\d:\d\d/.test(a.texto('.ins-foco .ins-label')), a.texto('.ins-foco .ins-label'));
+
+  // o bloco de energia vem DEPOIS do foco, nunca antes
+  const html = a.doc.getElementById('app').innerHTML;
+  assert.ok(html.indexOf('ins-foco') < html.indexOf('ins-hero'), 'resumo não pode vir antes da próxima ação');
+  a.fechar();
+});
+
+test('marcar uma refeição soma no registrado e persiste', async () => {
+  const a = await app({ aba: 'hoje' });
+  const antes = a.texto('.ins-metric-xl');
+  a.clicar('.ins-tl .ins-caixa');
+  await a.esperar();
+  assert.notStrictEqual(a.texto('.ins-metric-xl'), antes, 'o kcal registrado subiu');
+  assert.ok(Object.keys(a.J('S.dia.done')).length === 1, 'ficou gravado no dia');
+  // o salvamento é debounced em 700 ms: sem esperar, o disco ainda está vazio
+  await a.esperar(800);
+  assert.strictEqual(a.gravado().dia.data, a.E('S.dia.data'), 'e foi para o disco carimbado com a data');
+  a.fechar();
+});
+
+test('a água sobe e desce no toque', async () => {
+  const a = await app({ aba: 'hoje' });
+  const ticks = a.$$('.ins-tick');
+  assert.strictEqual(ticks.length, 14, '14 copos de 250 ml');
+  a.clicar(ticks[2]);
+  await a.esperar();
+  assert.strictEqual(a.E('S.dia.agua'), 3);
+  // tocar na última cheia remove ela: é o desfazer sem botão de desfazer
+  a.clicar(a.$$('.ins-tick')[2]);
+  await a.esperar();
+  assert.strictEqual(a.E('S.dia.agua'), 2);
+  a.fechar();
+});
+
+test('abrir uma refeição mostra o que tem dentro e o ajuste só de hoje', async () => {
+  const a = await app({ aba: 'hoje' });
+  a.clicar('.ins-tl .ins-tl-toque');
+  // efeito do Preact roda depois do paint; 20 ms não bastam no jsdom
+  await a.esperar(150);
+  const folha = a.$('.ins-folha');
+  assert.ok(folha, 'a folha abriu');
+  assert.ok(a.texto('.ins-folha').toLowerCase().includes('só de hoje'),
+    'o rótulo diz que ajustar porção não muda o plano');
+  assert.ok(a.$$('.ins-folha .ins-linha').length > 0, 'lista os itens');
+
+  // e o corpo fica travado enquanto ela está aberta
+  assert.ok(a.doc.body.className.includes('ins-travado'), 'no iOS é a única trava que segura');
+  a.E('CTX.fechaFolha()');
+  await a.esperar(150);
+  assert.ok(!a.doc.body.className.includes('ins-travado'), 'e destrava ao fechar');
+  a.fechar();
+});
+
+test('o dia previsto se identifica como previsão, e confirmar muda o alvo', async () => {
+  const a = await app({ aba: 'hoje' });
+  const previsto = a.E('CTX.hoje().diaHoje.previsto');
+  if (previsto) {
+    assert.ok(a.texto('.ins-secao-nota') || a.texto('.ins-provenance'),
+      'a tela avisa que o dia é palpite');
+  }
+  const alvoAntes = a.E('Math.round(CTX.hoje().alvo.kcal)');
+  a.E('CTX.setCadenciaDeHoje("descanso")');
+  await a.esperar();
+  const alvoDepois = a.E('Math.round(CTX.hoje().alvo.kcal)');
+  assert.ok(alvoDepois < alvoAntes, 'sem treino saem o pré e o intra: ' + alvoAntes + ' → ' + alvoDepois);
+  assert.strictEqual(a.E('CTX.hoje().diaHoje.previsto'), false, 'ele disse, então não é mais palpite');
+  a.fechar();
+});
+
+test('o dia de comida zera sozinho na virada da data', async () => {
+  const ontem = new Date(Date.now() - DIA);
+  const iso = ontem.getFullYear() + '-' + String(ontem.getMonth() + 1).padStart(2, '0') + '-' +
+              String(ontem.getDate()).padStart(2, '0');
+  const a = await app({ aba: 'hoje', estado: {
+    logs: {}, done: [],
+    dia: { data: iso, done: { almoco: 1 }, agua: 9, escala: {} }
+  } });
+  assert.deepStrictEqual(a.J('S.dia.done'), {}, 'marcação de ontem não conta hoje');
+  assert.strictEqual(a.E('S.dia.agua'), 0);
   a.fechar();
 });

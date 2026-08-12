@@ -2,30 +2,9 @@
    Instrumento (base.css + componentes.css). Este arquivo encolhe até sumir. */
 @import './tokens.css';
 
-*, *::before, *::after { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  padding: 0;
-  background: var(--night);
-  -webkit-text-size-adjust: 100%;
-  /* mata o rubber-band do iOS, que revela faixa de fundo ao puxar */
-  overscroll-behavior: none;
-}
-
-#app {
-  font-family: var(--f-d);
-  background: var(--night);
-  color: var(--paper);
-  margin: 0 auto;
-  max-width: 460px;
-  /* svh, não vh: 100vh no iOS é a viewport GRANDE (barra recolhida) e sobra
-     um trecho rolável do tamanho da barra, mostrando o fundo do body. */
-  min-height: 100vh;
-  min-height: 100svh;
-  padding: 0 0 110px;
-  -webkit-font-smoothing: antialiased;
-}
+/* O container agora é do Instrumento (base.css). O que sobra aqui é só o
+   necessário para as telas ainda não convertidas continuarem legíveis. */
+#app .hdr, #app .hwrap { font-family: var(--f-d); }
 
 /* ---------- header ---------- */
 .hdr { padding: calc(14px + env(safe-area-inset-top)) 18px 0; }

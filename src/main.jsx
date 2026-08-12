@@ -14,6 +14,11 @@ import {
 } from './dominio/carga';
 import { montaHTML, montaNoApp } from './ui/raiz.jsx';
 import { Bruto } from './ui/bruto.jsx';
+import { App } from './ui/app.jsx';
+import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
+import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte } from './dominio/dia';
+import { ALIMENTOS_BASE, PLANO_BASE } from './dominio/nutricao/alimentos';
+import { listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto,
          seriesPorMusculo as _seriesPorMusculo } from './dominio/volume';
@@ -23,8 +28,6 @@ import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
 import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4 } from './dominio/migracoes';
-import { CADENCIA_PADRAO } from './dominio/dia';
-import { PLANO_BASE } from './dominio/nutricao/alimentos';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 
@@ -1103,13 +1106,186 @@ const ACOES = {
 };
 
 
-function render() {
-  if (view.promo) return renderPromo();
-  if (view.prog) return renderPrograma();
-  if (view.retro) return renderRetro();
-  if (view.add) return renderAdicionar();
-  if (view.sessao) return renderSessao();
-  if (view.hist) return renderHist();
+
+// =============================================================================
+// O CONTEXTO — a ponte entre o casco e a shell do Instrumento.
+//
+// As telas novas não leem `S` nem `view`: recebem view-model pronto e ações.
+// Foi o que permitiu repintar sem tocar na lógica de sessão, projeção e
+// migração — a parte onde errar custa histórico, e que os testes de fluxo
+// protegem há meses.
+//
+// Cada método aqui é ou LEITURA (monta view-model) ou AÇÃO (muda estado e
+// chama render). Nada no meio.
+// =============================================================================
+
+/** 'AAAA-MM-DD' local — o carimbo que faz o dia de comida zerar sozinho. */
+function hojeISO(t) {
+  const d = new Date(t == null ? Date.now() : t);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+
+/**
+ * O dia de comida de hoje. Carimbado com a data: virou o dia, zera sozinho —
+ * marcações, água e ajuste de porção são do dia, não do plano.
+ */
+function diaDeComida() {
+  const hoje = hojeISO();
+  if (!S.dia || S.dia.data !== hoje) {
+    S.dia = { data: hoje, done: {}, agua: 0, escala: {}, cadencia: null, alta: 0 };
+  }
+  if (!S.dia.done) S.dia.done = {};
+  if (!S.dia.escala) S.dia.escala = {};
+  return S.dia;
+}
+
+/** O catálogo de alimentos efetivo: o do código mais o que ele cadastrou. */
+function catalogoAlimentos() {
+  const cat = {};
+  Object.keys(ALIMENTOS_BASE).forEach(function (k) {
+    if (!S.comida.ocultos[k]) cat[k] = ALIMENTOS_BASE[k];
+  });
+  Object.keys(S.comida.alimentos || {}).forEach(function (k) {
+    cat[k] = Object.assign({ id: k }, ALIMENTOS_BASE[k] || {}, S.comida.alimentos[k]);
+  });
+  return cat;
+}
+
+function planoDeComida() {
+  if (!S.comida.plano) S.comida.plano = JSON.parse(JSON.stringify(PLANO_BASE));
+  return S.comida.plano;
+}
+
+function cadenciaDaSemana() {
+  return (S.cadencia && S.cadencia.length === 7) ? S.cadencia : CADENCIA_PADRAO;
+}
+
+function diaResolvido() {
+  return diaDeHoje(S, ROT_BASE, cadenciaDaSemana(), diaDeComida().cadencia, Date.now());
+}
+
+/** A refeição que É o treino: o plano marca isso pelo id. */
+function ehLinhaDeTreino(r) { return r.id === 'treino'; }
+
+/** Séries registradas hoje naquele treino. */
+function seriesFeitasHoje(d) {
+  const P = treino(d);
+  if (!P) return 0;
+  let n = 0;
+  P.ex.forEach(function (ex, i) {
+    const h = (S.logs[id(d, i)] || []).filter(function (e) { return sameDay(e.t, Date.now()); });
+    h.forEach(function (e) { n += e.sets.filter(Boolean).length; });
+  });
+  return n;
+}
+
+const CTX = {
+  // ---------- rota ----------
+  abaAtual: function () { return view.aba || 'hoje'; },
+  vaiPara: function (a) {
+    view.aba = a;
+    // As abas novas mapeiam para as telas antigas que ainda não foram
+    // convertidas. Some conforme cada uma vira componente.
+    if (a === 'treino') view.tab = 'treino';
+    else if (a === 'dados') view.tab = 'corpo';
+    else if (a === 'guia') view.tab = 'ajustes';
+    render();
+    window.scrollTo(0, 0);
+  },
+  telaLegado: telaLegado,
+  /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
+  emTelaCheia: function () {
+    return !!(view.promo || view.prog || view.retro || view.add || view.sessao || view.hist);
+  },
+
+  // ---------- cabeçalho de HOJE ----------
+  cabecalhoDeHoje: function () {
+    const h = diaResolvido();
+    const d = new Date();
+    return {
+      olho: (DIAS_LONGOS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()]).toUpperCase(),
+      rotulo: h.previsto ? 'previsto' : 'hoje',
+      valor: h.cadencia === 'descanso' ? 'folga' : (h.treino || '—')
+    };
+  },
+
+  // ---------- HOJE ----------
+  hoje: function () {
+    const h = diaResolvido();
+    const dia = diaDeComida();
+    const cat = catalogoAlimentos();
+    const plano = planoDeComida();
+    const alta = !!dia.alta;
+    const treinando = h.cadencia === 'treino';
+
+    const P = h.treino ? treino(h.treino) : null;
+    const prescritas = P ? P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0) : 0;
+    const feitas = h.treino ? seriesFeitasHoje(h.treino) : 0;
+
+    return {
+      diaHoje: h,
+      plano: plano,
+      catalogo: cat,
+      comidaDoDia: dia,
+      alta: alta,
+      alvo: totalDoDia(plano, cat, treinando, alta, {}),
+      cadenciaTxt:
+        (S.ajuste === 0 ? 'plano atual' : S.ajuste > 0 ? 'ajuste +150 kcal' : 'ajuste −150 kcal') +
+        ' · ' + (h.previsto ? 'dia previsto pela cadência da semana' : 'dia confirmado'),
+      sessao: {
+        nome: P ? P.name : null,
+        feita: prescritas > 0 && feitas >= prescritas,
+        valor: P ? feitas + '/' + prescritas + ' séries' : null,
+        resumo: P ? P.ex.slice(0, 3).map(function (e) { return e.n; }).join(' · ') : 'Dia de descanso.',
+        meta: S.sessao ? 'sessão aberta' : (feitas ? 'registrado' : 'não começou')
+      }
+    };
+  },
+  ehLinhaDeTreino: ehLinhaDeTreino,
+
+  // ---------- ações do dia ----------
+  marcaRefeicao: function (id) {
+    const d = diaDeComida();
+    if (d.done[id]) delete d.done[id]; else d.done[id] = 1;
+    queueSave(); render();
+  },
+  setAgua: function (n) { diaDeComida().agua = Math.max(0, n); queueSave(); render(); },
+  abreRefeicao: function (id) { view.folha = { k: 'refeicao', id: id }; render(); },
+  editaRefeicao: function (id) { view.folha = { k: 'editaRefeicao', id: id }; render(); },
+  novaRefeicao: function () { toast('Editor de refeição chega na próxima tela convertida.'); },
+  fechaFolha: function () { view.folha = null; render(); },
+
+  /** Ajuste de porção: SÓ DE HOJE. O rótulo diz isso, e o estado zera com a data. */
+  setEscala: function (id, v) {
+    const d = diaDeComida();
+    if (v === 1) delete d.escala[id]; else d.escala[id] = v;
+    queueSave(); render();
+  },
+
+  /** O seletor de dia: confirma ou corrige a previsão da cadência. */
+  abreSeletorDeDia: function () { view.folha = { k: 'dia' }; render(); },
+  setCadenciaDeHoje: function (c) {
+    diaDeComida().cadencia = c;
+    view.folha = null;
+    queueSave(); render();
+  },
+  setAlta: function (v) { diaDeComida().alta = v ? 1 : 0; queueSave(); render(); },
+
+  // ---------- folhas ----------
+  folhas: function () { return folhaAberta(); }
+};
+
+// A tela do sistema antigo, ainda em string. Devolve a árvore em vez de
+// montar: quem monta é a shell nova. Cada aba convertida some daqui, e quando
+// a última sair este bloco inteiro morre junto com app.css.
+function telaLegado() {
+  if (view.promo) return <Bruto html={renderPromo()} />;
+  if (view.prog) return <Bruto html={renderPrograma()} />;
+  if (view.retro) return <Bruto html={renderRetro()} />;
+  if (view.add) return <Bruto html={renderAdicionar()} />;
+  if (view.sessao) return <Bruto html={renderSessao()} />;
+  if (view.hist) return <Bruto html={renderHist()} />;
   const app = document.getElementById('app');
   const d = view.day, P = treino(d);
   const cycle = Math.floor(S.done.length / rot().length) + 1;
@@ -1140,12 +1316,7 @@ function render() {
   ${view.tab==='treino' ? '<div class="rot">' +
     rot().map(x => `<button class="${x===view.day?'on':''} ${x===nextDay()?'next':''}" onclick="go('${x}')">${x}</button>`).join('') +
   '</div>' : ''}
-  <div class="tabs">
-    <button class="${view.tab==='treino'?'on':''}" onclick="tab('treino')">hoje</button>
-    <button class="${view.tab==='acomp'?'on':''}" onclick="tab('acomp')">acompanhamento</button>
-    <button class="${view.tab==='corpo'?'on':''}" onclick="tab('corpo')">corpo</button>
-    <button class="${view.tab==='ajustes'?'on':''}" onclick="tab('ajustes')">ajustes</button>
-  </div>`;
+  `;
 
   if (naTreino && S.sessao && S.sessao.retro)
     h += `<div class="deload on"><b>Preenchendo o treino de ${diaExtenso(S.sessao.inicio)}.</b>
@@ -1195,12 +1366,13 @@ function render() {
     </div>`;
   }
 
-  montaNoApp(<>
-    <Bruto html={h} />
-    {corpoDoDia}
-    {rodape ? <Bruto html={rodape} /> : null}
-  </>);
-  ajustaRelogio();
+  return (
+    <>
+      <Bruto html={h} />
+      {corpoDoDia}
+      {rodape ? <Bruto html={rodape} /> : null}
+    </>
+  );
 }
 
 
@@ -3554,3 +3726,92 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').catch(function () {});
   });
 }
+
+
+// ---------- as folhas ----------
+// Só HOJE tem folha convertida por enquanto. As telas cheias do sistema antigo
+// (programa, histórico, retrospectiva) continuam tomando a tela inteira até
+// serem convertidas — é o que `emTelaCheia()` sinaliza para a shell.
+function folhaAberta() {
+  const f = view.folha;
+  if (!f) return null;
+  if (f.k === 'refeicao') return <FolhaRefeicao ctx={CTX} id={f.id} />;
+  if (f.k === 'dia') return <FolhaDia ctx={CTX} />;
+  return null;
+}
+
+// leituras que as folhas precisam
+CTX.refeicao = function (id) {
+  const r = planoDeComida().filter(function (x) { return x.id === id; })[0];
+  if (!r) return null;
+  const dia = diaDeComida();
+  return {
+    r: r,
+    catalogo: catalogoAlimentos(),
+    alta: !!dia.alta,
+    escala: dia.escala[id] == null ? 1 : dia.escala[id],
+    feita: !!dia.done[id]
+  };
+};
+
+CTX.seletorDeDia = function () {
+  const h = diaResolvido();
+  const dia = diaDeComida();
+  return {
+    titulo: h.cadencia === 'descanso' ? 'Descanso' : 'Dia de treino',
+    treino: h.treino,
+    cadencia: h.cadencia,
+    alta: !!dia.alta,
+    procedencia: h.origem === 'registrado' ? 'você já registrou uma sessão hoje'
+      : h.origem === 'aberta' ? 'há uma sessão aberta agora'
+      : h.origem === 'manual' ? 'definido por você para hoje'
+      : 'previsto pela cadência da semana · confirme se for diferente'
+  };
+};
+
+
+// ---------- render ----------
+// Monta a shell do Instrumento. As abas ainda não convertidas entram por
+// `telaLegado()`, e as telas cheias do sistema antigo tomam o lugar da shell
+// inteira — inclusive da tab bar, que é o comportamento que elas já tinham.
+function render() {
+  montaNoApp(<App ctx={CTX} />);
+  ajustaRelogio();
+}
+
+// ---------- COMIDA ----------
+// A biblioteca e o plano. Compras é derivada: some do estado, aparece na tela.
+CTX.planoCompleto = function () {
+  const cat = catalogoAlimentos();
+  return planoDeComida().slice()
+    .sort(function (a, b) { return a.t.localeCompare(b.t); })
+    .map(function (r) {
+      return Object.assign({}, r, { kcal: Math.round(totalDaRefeicao(r, cat, true).kcal) });
+    });
+};
+
+CTX.alimentosFiltrados = function (q) {
+  const cat = catalogoAlimentos();
+  const termo = String(q || '').toLowerCase().trim();
+  return Object.keys(cat).map(function (k) { return cat[k]; })
+    .filter(function (a) { return !termo || a.n.toLowerCase().indexOf(termo) >= 0; })
+    .sort(function (a, b) { return a.n.localeCompare(b.n, 'pt-BR'); });
+};
+
+CTX.compras = function () {
+  const prev = previsaoDoHorizonte(cadenciaDaSemana(), S.compras.dias);
+  return {
+    linhas: listaDeCompras(planoDeComida(), catalogoAlimentos(), prev, 0)
+      .filter(function (l) { return !S.compras.removidas[l.f]; }),
+    previsao: prev,
+    dias: S.compras.dias,
+    comprado: S.compras.comprado
+  };
+};
+CTX.setHorizonteCompras = function (d) { S.compras.dias = d; queueSave(); render(); };
+CTX.marcaCompra = function (f) {
+  if (S.compras.comprado[f]) delete S.compras.comprado[f]; else S.compras.comprado[f] = 1;
+  queueSave(); render();
+};
+CTX.novoAlimento = function () { toast('Cadastro de alimento chega junto com o editor.'); };
+CTX.editaAlimento = function () { toast('Editor de alimento chega na próxima tela convertida.'); };

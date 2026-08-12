@@ -53,16 +53,27 @@ test('todo handler inline está publicado na ponte global', async () => {
   assert.deepStrictEqual(faltando, [], 'handler inline sem ponte global');
 });
 
-test('as quatro abas renderizam', async () => {
+test('as cinco abas da shell renderizam', async () => {
+  // A fusão trocou quatro abas por cinco: treino e comida são metades do mesmo
+  // dia, e HOJE é a tela que junta as duas numa timeline só.
   const a = await app();
   assert.deepStrictEqual(
-    a.$$('.tabs button').map(function (b) { return b.textContent; }),
-    ['hoje', 'acompanhamento', 'corpo', 'ajustes']
+    a.$$('.ins-tab').map(function (b) { return b.textContent; }),
+    ['hoje', 'treino', 'comida', 'dados', 'guia']
   );
-  ['treino', 'acomp', 'corpo', 'ajustes'].forEach(function (t) {
-    a.E('tab("' + t + '")');
+  ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (t) {
+    a.aba(t);
     assert.ok(a.doc.getElementById('app').innerHTML.length > 600, 'aba vazia: ' + t);
   });
+  a.fechar();
+});
+
+test('o app abre em HOJE, não no treino', async () => {
+  // O harness abre no treino porque quase todo teste desta pasta é sobre ele.
+  // O padrão de verdade é HOJE: é o que responde "e agora?" ao acordar.
+  const a = await app({ aba: 'hoje' });
+  assert.ok(a.$('.ins-foco') || a.$('.ins-tl'), 'HOJE mostra o foco ou a timeline');
+  assert.strictEqual(a.E('view.aba'), 'hoje');
   a.fechar();
 });
 

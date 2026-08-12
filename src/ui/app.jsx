@@ -17,11 +17,19 @@ import { Dados } from './telas/dados.jsx';
 import { Guia } from './telas/guia.jsx';
 import { Cabecalho } from './instrumento/primitivos.jsx';
 
-const TELAS = { hoje: Hoje, treino: Treino, comida: Comida, dados: Dados, guia: Guia };
+// Só as abas convertidas apontam para componente. As outras caem em
+// `telaLegado()` — dívida declarada, igual ao <Bruto>: some conforme cada uma
+// vira componente, e quando não sobrar nenhuma o app.css inteiro morre junto.
+const TELAS = { hoje: Hoje, comida: Comida };
 
 export function App({ ctx }) {
+  // Tela cheia do sistema antigo toma o lugar de tudo, tab bar inclusive. É o
+  // comportamento que essas telas já tinham, e mantê-lo evita que a fusão mude
+  // navegação e pintura na mesma mexida.
+  if (ctx.emTelaCheia()) return ctx.telaLegado();
+
   const aba = ctx.abaAtual();
-  const Tela = TELAS[aba] || Hoje;
+  const Tela = TELAS[aba];
   const h = ctx.cabecalhoDeHoje();
 
   return (
@@ -40,7 +48,7 @@ export function App({ ctx }) {
       )}
 
       <main>
-        <Tela ctx={ctx} />
+        {Tela ? <Tela ctx={ctx} /> : ctx.telaLegado()}
       </main>
 
       {ctx.folhas()}

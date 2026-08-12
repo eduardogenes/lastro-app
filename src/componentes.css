@@ -280,3 +280,40 @@
 .ins-linha-t { font: 400 15px/1.35 var(--ins-font-display); color: var(--ins-text); }
 .ins-linha-s { font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4); margin-top: 2px; }
 .ins-linha-v { flex: 0 0 auto; font: 500 14px/1 var(--ins-font-mono); color: var(--ins-text-3); letter-spacing: -.02em; }
+
+/* ---- Telas: HOJE ------------------------------------------------------- */
+
+.ins-tabbar + * { margin-bottom: 0; }
+
+/* ---- Folha de refeição ------------------------------------------------- */
+
+.fr-nota { margin: var(--ins-7) 0 0; }
+.fr-porcao { margin-top: var(--ins-9); display: flex; flex-direction: column; gap: var(--ins-4); }
+.fr-h { margin: var(--ins-10) 0 var(--ins-2); }
+
+/* ---- Folha do dia ------------------------------------------------------ */
+
+.fd-ops { display: flex; flex-direction: column; gap: var(--ins-2); }
+.fd-op {
+  display: flex; flex-direction: column; gap: var(--ins-2);
+  align-items: flex-start; text-align: left;
+  padding: var(--ins-6); background: var(--ins-surface-low);
+  border: 1px solid var(--ins-border);
+}
+.fd-op.on { background: var(--ins-surface-acid); border-color: var(--ins-acid); }
+.fd-alta {
+  margin-top: var(--ins-9); padding-top: var(--ins-6);
+  border-top: 1px solid var(--ins-rule);
+  display: flex; flex-direction: column; gap: var(--ins-4); align-items: flex-start;
+}
+.fd-alta p { margin: 0; }
+
+/* ---- Tela COMIDA ------------------------------------------------------- */
+
+.cm-cat { margin-top: var(--ins-7); }
+.cm-cat-h { margin-bottom: var(--ins-2); }
+.cm-espaco { height: var(--ins-5); }
+
+/* Comprado recua, mas continua legível: a lista é conferida no mercado. */
+.ins-linha.comprado .ins-linha-t { color: var(--ins-text-5); text-decoration: line-through; }
+.ins-linha.comprado .ins-linha-v { color: var(--ins-text-5); }

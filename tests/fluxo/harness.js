@@ -172,6 +172,13 @@ function abrirApp(opcoes) {
 
     /** espera o boot assíncrono do app (load() é async) */
     pronto: function () { return app.esperar(60); },
+    /**
+     * Abre uma aba da shell. Depois da fusão o app cai em HOJE, que é a tela
+     * certa para quem acorda e olha o telefone — mas quase todo teste desta
+     * pasta é sobre o TREINO, e por isso o harness abre lá por padrão. Quem
+     * testa a fusão passa `aba` explicitamente.
+     */
+    aba: function (nome) { w.__escopo('CTX.vaiPara(' + JSON.stringify(nome) + ')'); },
     esperar: function (ms) { return new Promise(function (r) { setTimeout(r, ms == null ? 20 : ms); }); },
 
     /** preenche uma série; null em qualquer campo deixa o campo intocado */
@@ -225,6 +232,7 @@ function abrirApp(opcoes) {
 async function app(opcoes) {
   const a = abrirApp(opcoes);
   await a.pronto();
+  a.aba((opcoes && opcoes.aba) || 'treino');
   return a;
 }
 
