@@ -94,39 +94,43 @@
 }
 
 /* ============================================================
-   LEGADO — a paleta antiga do treino, ainda viva.
+   LEGADO — a paleta antiga, agora apontando para o Instrumento.
    ============================================================
-   A regra 4 antiga ("identidade visual fixa" em azul-marinho e âmbar) foi
-   revogada: o Instrumento passa a valer para o produto inteiro. Mas a
-   repintura é tela por tela, e enquanto sobrar uma tela no sistema antigo
-   estes nomes precisam existir — senão 91 regras de app.css caem no valor
-   herdado, que é exatamente o bug que a tokenização acabou de consertar.
+   As telas ainda não repintadas (programa, histórico, retrospectiva, decisão,
+   e os blocos de peso, cardio e calendário) usam estes nomes. Em vez de
+   mantê-las em azul-marinho e âmbar até a última ser convertida — o que deixa
+   o produto parecendo dois sistemas colados —, cada nome antigo passa a
+   APONTAR para o token equivalente do Instrumento.
 
-   Este bloco morre junto com a última tela antiga. O teste de estilo cobra
-   que ele encolha: nenhum nome aqui pode ser usado por arquivo novo.
+   O ganho é desproporcional ao tamanho da mudança: a superfície legada inteira
+   fala a língua nova de imediato, e a conversão de cada tela vira só estrutura,
+   não cor. O acento antigo (--dawn, âmbar) vira ácido, porque no sistema antigo
+   ele significava "aperte isto" — que é o papel do ácido aqui.
+
+   Este bloco morre junto com a última tela antiga.
 */
 
 :root {
-  --night:  #0D1520;
-  --dusk:   #15202E;
-  --raise:  #1C2A3B;
-  --line:   #26374C;
-  --paper:  #E9EFF6;
-  --mist:   #8DA0B8;
-  --dim:    #48607C;
-  --dawn:   #F5A83C;
-  --ember:  #E8734A;
+  --night:  var(--ins-canvas);
+  --dusk:   var(--ins-surface-low);
+  --raise:  var(--ins-surface);
+  --line:   var(--ins-border);
+  --paper:  var(--ins-text);
+  --mist:   var(--ins-text-3);
+  --dim:    var(--ins-text-4);
+  --dawn:   var(--ins-acid);
+  --ember:  var(--ins-amber);
 
-  --ok:         #7FBF9C;
-  --ok-line:    #2F5C46;
-  --info:       #7FB0DC;
-  --info-line:  #3C5A7A;
-  --dawn-soft:  #F3CB92;
-  --dawn-line:  #6B5230;
-  --ember-soft: #F0A98D;
-  --ember-line: #4A3227;
-  --on-dawn:    #10161F;
+  --ok:         var(--ins-acid);
+  --ok-line:    var(--ins-acid);
+  --info:       var(--ins-text-3);
+  --info-line:  var(--ins-border-strong);
+  --dawn-soft:  var(--ins-acid);
+  --dawn-line:  var(--ins-border-strong);
+  --ember-soft: var(--ins-amber);
+  --ember-line: var(--ins-border-strong);
+  --on-dawn:    var(--ins-on-acid);
 
-  --f-d: 'Archivo', system-ui, sans-serif;
-  --f-m: 'IBM Plex Mono', ui-monospace, monospace;
+  --f-d: var(--ins-font-display);
+  --f-m: var(--ins-font-mono);
 }

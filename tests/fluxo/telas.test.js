@@ -16,7 +16,10 @@ test('um artefato só, sem dependência de runtime', async () => {
 });
 
 test('paleta e tom preservados', async () => {
-  ['#0D1520', '#15202E', '#1C2A3B', '#26374C', '#E9EFF6', '#8DA0B8', '#48607C', '#F5A83C', '#E8734A']
+  // A paleta é a do Instrumento desde a fusão; a antiga foi aposentada e os
+  // nomes dela agora só apontam para estes valores.
+  ['#0C0E0C', '#111411', '#22271F', '#2B302A', '#3A4137',
+   '#F2F4EF', '#D6DAD0', '#A8AFA1', '#7C8478', '#CBF35E', '#FFC46B', '#FF8A6B']
     .forEach(function (cor) { assert.ok(HTML.includes(cor), 'sumiu da paleta: ' + cor); });
   // Regra 5: sem emoji. A única exceção autorizada são os marcadores de
   // período do calendário, declarados em PERIODOS. Verificado no FONTE, não no
@@ -81,10 +84,10 @@ test('o contexto do treino só aparece na aba de treino', async () => {
   // Rotação, faixa da semana e o botão do dia são contexto de sessão. Fora do
   // TREINO eles competiriam com o assunto da tela sem servir para nada.
   const a = await app();
-  assert.ok(a.$('.rot') && a.$('.semana') && a.$('.ins-estado-v'));
+  assert.ok(a.$('.tr-rot') && a.$('.semana') && a.$('.ins-estado-v'));
   ['dados', 'guia'].forEach(function (t) {
     a.aba(t);
-    assert.strictEqual(a.$('.rot'), null, 'rotação competindo na aba ' + t);
+    assert.strictEqual(a.$('.tr-rot'), null, 'rotação competindo na aba ' + t);
     assert.strictEqual(a.$('.semana'), null);
   });
   a.fechar();

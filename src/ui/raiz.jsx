@@ -10,8 +10,6 @@
 
 import { render as montar } from 'preact';
 
-import { Bruto } from './bruto.jsx';
-
 let raiz = null;
 
 /**
@@ -35,12 +33,3 @@ export function montaNoApp(arvore) {
   montar(arvore, raiz);
 }
 
-/**
- * Monta uma tela que ainda produz string de HTML. Ponte da migração: some
- * quando a última tela virar componente.
- *
- * @param {string} html
- */
-export function montaHTML(html) {
-  montaNoApp(<Bruto html={html} />);
-}

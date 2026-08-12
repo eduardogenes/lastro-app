@@ -39,10 +39,12 @@ async function veredito(peso, cintura) {
 test('o veredito da regra é o que aparece na aba corpo', async () => {
   const a = await app({ estado: { logs: [], done: [],
     body: { peso: pesagens([73.0, 73.05, 73.10]), cintura: [] } } });
-  a.E('tab("corpo")');
-  assert.strictEqual(a.texto('.verdict-t'), 'Comer mais');
-  assert.strictEqual(a.texto('.verdict p'), a.E('veredito().p'), 'a tela não reescreve o texto');
-  assert.ok(a.$('.verdict').className.includes('mais'), 'a classe acompanha a decisão');
+  a.aba('dados');
+  // o veredito é o cartão do Instrumento; o legado saiu de DADOS para não
+  // aparecer duas vezes na mesma tela
+  assert.strictEqual(a.texto('.ins-veredito-t'), 'Comer mais');
+  assert.strictEqual(a.texto('.ins-veredito-p'), a.E('veredito().p'), 'a tela não reescreve o texto');
+  assert.ok(a.$('.ins-veredito'), 'e é um objeto destacado, com borda');
   a.fechar();
 });
 
@@ -51,9 +53,9 @@ test('cintura tem precedência sobre o peso, e a tela diz por quê', async () =>
     peso: pesagens([73.0, 73.25, 73.5]),
     cintura: medidas([{ d: 28, v: 80.0 }, { d: 21, v: 80.6 }, { d: 7, v: 81.4 }, { d: 0, v: 82.0 }])
   } } });
-  a.E('tab("corpo")');
-  assert.strictEqual(a.texto('.verdict-t'), 'Comer menos');
-  assert.ok(a.texto('.verdict p').includes('cintura'));
+  a.aba('dados');
+  assert.strictEqual(a.texto('.ins-veredito-t'), 'Comer menos');
+  assert.ok(a.texto('.ins-veredito-p').includes('cintura'));
   a.fechar();
 });
 

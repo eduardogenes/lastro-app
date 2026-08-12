@@ -27,12 +27,16 @@ test('toda custom property usada tem dono', () => {
   assert.deepStrictEqual(orfas, [], 'var() sem definição cai no valor herdado, em silêncio');
 });
 
-test('a paleta do projeto está inteira e mora nos tokens', () => {
+test('a paleta do Instrumento está inteira e mora nos tokens', () => {
   const tokens = fs.readFileSync(path.join(RAIZ, 'src', 'tokens.css'), 'utf8');
   const paleta = {
-    '--night': '#0D1520', '--dusk': '#15202E', '--raise': '#1C2A3B',
-    '--line': '#26374C', '--paper': '#E9EFF6', '--mist': '#8DA0B8',
-    '--dim': '#48607C', '--dawn': '#F5A83C', '--ember': '#E8734A'
+    '--ins-canvas': '#0C0E0C', '--ins-surface-low': '#0F120F',
+    '--ins-surface': '#111411', '--ins-hairline': '#161A15',
+    '--ins-rule': '#22271F', '--ins-border': '#2B302A',
+    '--ins-border-strong': '#3A4137', '--ins-text': '#F2F4EF',
+    '--ins-text-2': '#D6DAD0', '--ins-text-3': '#A8AFA1',
+    '--ins-text-4': '#7C8478', '--ins-text-5': '#5E655A',
+    '--ins-acid': '#CBF35E', '--ins-amber': '#FFC46B', '--ins-coral': '#FF8A6B'
   };
   Object.entries(paleta).forEach(([nome, hex]) => {
     assert.ok(new RegExp(nome + ':\\s*' + hex, 'i').test(tokens),
@@ -111,4 +115,17 @@ test('alvo de toque não é forçado duas vezes', () => {
     assert.ok(!/min-height/.test(bloco![1]),
       sel + ' voltou a forçar altura dentro de uma linha que já é o alvo');
   });
+});
+
+test('a paleta antiga só existe apontando para a nova', () => {
+  // O bloco legado sobrevive porque as telas ainda não convertidas usam os
+  // nomes dele. Mas nenhum deles pode carregar VALOR próprio: se carregasse, o
+  // produto voltaria a ter duas paletas, e foi assim que ele parecia dois
+  // sistemas colados. Cada nome antigo aponta para um token do Instrumento.
+  const tokens = fs.readFileSync(path.join(RAIZ, 'src', 'tokens.css'), 'utf8');
+  const legado = tokens.slice(tokens.indexOf('LEGADO'));
+  const comValor = [...legado.matchAll(/(--[a-z0-9-]+):\s*(#[0-9A-Fa-f]{3,8})/g)];
+  assert.deepStrictEqual(comValor.map(m => m[1] + ':' + m[2]), [],
+    'token legado com cor própria: aponte para o Instrumento');
+  assert.ok(/--dawn:\s*var\(--ins-acid\)/.test(legado), 'o acento antigo vira ácido');
 });

@@ -91,7 +91,8 @@ input::placeholder, textarea::placeholder { color: var(--ins-text-5); }
 
 /* Campo numérico do treino: type="text" com inputmode, porque type="number"
    descarta vírgula e no teclado pt-BR "22,5" chegava como string vazia. */
-input[inputmode] { font-family: var(--ins-font-mono); }
+/* Campo numérico em mono; busca é prosa e fica na display. */
+input[inputmode="decimal"], input[inputmode="numeric"] { font-family: var(--ins-font-mono); }
 
 ::-webkit-scrollbar { display: none; }
 
@@ -140,7 +141,10 @@ p, .ins-prosa { -webkit-user-select: text; user-select: text; }
 .ins-data { font: 400 13px/1.2 var(--ins-font-mono); }
 .ins-provenance {
   font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .06em; color: var(--ins-text-5);
+  /* text-4, não text-5: procedência CARREGA informação ("cru · 3,4 kg
+     prontos") e a 10px o nível 5 dá 3,2:1, que reprova em AA. O nível 5 fica
+     para o redundante — aba inativa, dica que repete o que já está na tela. */
+  letter-spacing: .06em; color: var(--ins-text-4);
 }
 
 .ins-acid  { color: var(--ins-acid); }

@@ -12,7 +12,7 @@ import {
 import {
   totalAnilhas, isTime, tutOf, volOf, maxLoad, repsOf, topReps
 } from './dominio/carga';
-import { montaHTML, montaNoApp } from './ui/raiz.jsx';
+import { montaNoApp } from './ui/raiz.jsx';
 import { ajusteDoVeredito } from './dominio/corpo';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { Bruto } from './ui/bruto.jsx';
@@ -1718,7 +1718,7 @@ function renderPromo() {
   </button>`;
   h += `<button class="notabtn" style="width:100%;margin-top:10px" onclick="voltarDoPromo()">voltar para o treino</button>`;
   h += '</div>';
-  montaHTML(h);
+  return h;
   window.scrollTo(0,0);
 }
 
@@ -1912,7 +1912,7 @@ function renderPrograma() {
   else if (V.modo === 'historico') h += renderProgramaHist();
   else h += renderProgramaLista();
 
-  montaHTML(h);
+  return h;
   window.scrollTo(0,0);
 }
 
@@ -2268,7 +2268,7 @@ function renderHist() {
 
   if (!H.length) {
     h += `<div class="msg">Nenhuma sessão registrada neste exercício ainda.<br>O gráfico aparece depois do primeiro treino salvo.</div>`;
-    montaHTML(h);
+  return h;
     window.scrollTo(0,0);
     return;
   }
@@ -2338,7 +2338,7 @@ function renderHist() {
 
   h += `<p class="cue" style="margin:22px 0 0">${ex.cue}</p></div>`;
 
-  montaHTML(h);
+  return h;
   window.scrollTo(0,0);
 }
 
@@ -2765,7 +2765,7 @@ function renderAdicionar() {
     ${a.tipo && a.tipo !== 'livre' ? `<button class="dbtn ghost" style="margin-top:9px" onclick="gravarRetro(true)">Adicionar e preencher os exercícios</button>` : ''}
   </div>`;
 
-  montaHTML(h);
+  return h;
 }
 
 async function gravarRetro(detalhar) {
@@ -2952,7 +2952,11 @@ function painelMusculos() {
   </div>`;
 }
 
-function renderBody() {
+/**
+ * @param {boolean} [semVeredito] omite o cartão de veredito, que a tela DADOS já
+ *   desenha no Instrumento logo acima — sem isso ele aparece duas vezes.
+ */
+function renderBody(semVeredito) {
   const v = veredito();
   const r = pesoRitmo();
   const W = r.W.slice(-8);
@@ -2966,11 +2970,11 @@ function renderBody() {
   const f = view.bodyForm || {};
 
   return `<div class="data">
-    <div class="verdict ${v.k}">
+    ${semVeredito ? '' : `<div class="verdict ${v.k}">
       <div class="verdict-k">o que fazer com a comida</div>
       <div class="verdict-t">${v.t}</div>
       <p>${v.p}</p>
-    </div>
+    </div>`}
 
     <div class="dgroup">
       <h3>Peso</h3>
@@ -3462,11 +3466,11 @@ function renderSessao() {
   }).join('') : '<p class="cue" style="margin:0">Nenhuma série registrada neste dia.</p>');
 
   h += '</div>';
-  montaHTML(h);
+  return h;
 }
 function renderSessaoLivre(m) {
   const app = document.getElementById('app');
-  montaHTML(`<div class="hhdr">
+  return `<div class="hhdr">
     <button class="back" onclick="fecharSessao()">‹ voltar</button>
     <div class="eyebrow"><span>treino avulso</span><span>${diaExtenso(m.t)}</span></div>
     <h2 class="htitle">${m.nome ? escapeHTML(m.nome) : (m.grupos||[]).join(', ')}</h2>
@@ -3481,7 +3485,7 @@ function renderSessaoLivre(m) {
     }).join('')}</div>`:''}
     <p class="cue" style="margin:20px 0 0">Fora do plano. Conta como dia treinado no calendário e na média semanal, mas não tem carga nem série registrada e não move a rotação.</p>
     <button class="danger" style="width:100%;margin-top:22px" onclick="apagarMarca(${m.t})">apagar este registro</button>
-  </div>`);
+  </div>`;
 }
 
 async function apagarMarca(t) {
@@ -3602,7 +3606,7 @@ function renderRetro() {
   h += `<div class="finish" style="padding-left:0;padding-right:0">
       <button onclick="fecharRetro()">Fechar</button>
     </div></div>`;
-  montaHTML(h);
+  return h;
 }
 function abrirRetro(){ view.retro = true; view.sessao = null; render(); window.scrollTo(0,0); }
 function fecharRetro(){ view.retro = false; render(); window.scrollTo(0,0); }
@@ -4029,7 +4033,7 @@ CTX.dados = function () {
         { k: 'nao', t: 'não está', v: false, on: S.perfManual === false }
       ]
     },
-    htmlLegado: renderBody() + renderAcomp()
+    htmlLegado: renderBody(true) + renderAcomp()
   };
 };
 

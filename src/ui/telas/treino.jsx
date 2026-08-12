@@ -51,7 +51,7 @@ export function Treino({ ctx }) {
 
         {/* A rotação. Ácido no atual, fio no próximo — a fila é sequência, não
             dia da semana, e a tela mostra isso de relance. */}
-        <div class="tr-rot rot">
+        <div class="tr-rot">
           {t.rotacao.map(x => (
             <button
               key={x.k}

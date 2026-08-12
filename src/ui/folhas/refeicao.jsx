@@ -83,8 +83,8 @@ export function FolhaRefeicao({ ctx, id }) {
         })}
       </div>
       <Procedencia>
-        os macros vêm da biblioteca de alimentos, por 100 {'{'}g|ml{'}'}. Mudar um
-        alimento lá recalcula tudo que o usa.
+        os macros vêm da biblioteca, por 100 g ou 100 ml. Mudar um alimento lá
+        recalcula tudo que o usa.
       </Procedencia>
     </Folha>
   );

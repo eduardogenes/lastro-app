@@ -305,7 +305,10 @@
   font: 500 15px/1 var(--ins-font-mono); letter-spacing: -.02em;
 }
 .tr-dia.next { border-color: var(--ins-border-strong); color: var(--ins-text-2); }
-.tr-dia.on { background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid); }
+/* O dia atual é ESTADO (onde você está), não ação. Preenchimento ácido cheio
+   aqui competia com o INICIAR, que é o único "aperte isto" da região — e a
+   regra 4 admite um elemento ácido por região, não quatro. */
+.tr-dia.on { background: var(--ins-surface-acid); border-color: var(--ins-acid); color: var(--ins-acid); }
 
 .tr-aviso {
   margin-top: var(--ins-7); padding: var(--ins-5);
@@ -318,3 +321,104 @@
 
 .tr-nota { margin: 0 0 var(--ins-5); }
 .tr-links { display: flex; flex-direction: column; gap: var(--ins-2); }
+
+/* ---- Repintura do que ainda vem em string ------------------------------
+   Estes blocos são markup do sistema antigo entrando por <Bruto>: relógio e
+   controles de sessão, faixa da semana, linha de cardio. A marcação está certa
+   e tem teste em cima; o que faltava era a língua. Vinham em azul-marinho com
+   âmbar e raio — quebrando dois inegociáveis de uma vez, e no meio da tela que
+   mais se usa. Some junto com o <Bruto>. */
+
+.day-ini, .ctrl, .ctrl-b, .semana, .wd, .cardl, .cardl-b, .day-rel { border-radius: 0; }
+
+/* Começar o treino: ação primária da tela, e o único ácido do bloco. */
+.day-ini {
+  display: block; width: 100%; min-height: var(--ins-tap); margin-top: var(--ins-5);
+  background: var(--ins-acid); color: var(--ins-on-acid); border: 0;
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .16em; text-transform: uppercase;
+}
+.day-ini:active { background: var(--ins-acid-hover); }
+
+/* Controles de sessão aberta */
+.ctrl { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
+.ctrl-b {
+  flex: 1; min-height: var(--ins-tap); padding: 0 var(--ins-5);
+  background: transparent; border: 1px solid var(--ins-border-strong);
+  color: var(--ins-text-2);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .16em; text-transform: uppercase;
+}
+.ctrl-b:active { background: var(--ins-surface); }
+.ctrl-b.fim, .ctrl-b.ini {
+  background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid);
+}
+.day-rel { display: flex; align-items: center; gap: var(--ins-3); margin-top: var(--ins-5); }
+.day-rel.pausado { opacity: .6; }
+
+#relogio, .relogio {
+  font: 500 22px/1 var(--ins-font-mono); letter-spacing: -.03em; color: var(--ins-text);
+}
+.horario {
+  font: 400 10px/1.4 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-4);
+}
+
+/* Faixa da semana */
+.semana { display: flex; gap: var(--ins-1); margin-top: var(--ins-5); }
+.wd {
+  flex: 1; min-height: 52px; padding: var(--ins-3) 2px;
+  border: 1px solid var(--ins-border); background: transparent;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--ins-2);
+}
+.wd-d {
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .16em; text-transform: uppercase; color: var(--ins-text-4);
+}
+.wd-v { font: 500 15px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text-5); }
+.wd.feito { border-color: var(--ins-acid); }
+.wd.feito .wd-v { color: var(--ins-acid); }
+.wd.hoje { background: var(--ins-surface-acid); }
+.wd.hoje .wd-d { color: var(--ins-text-2); }
+.wd.futuro { opacity: .4; }
+.wd.livre { border-color: var(--ins-border-strong); }
+.wd.livre .wd-v { color: var(--ins-text-3); }
+.wd:not(.feito):not(.futuro) .wd-v { color: var(--ins-text-5); }
+
+/* Linha de cardio */
+.cardl {
+  display: flex; align-items: center; gap: var(--ins-4);
+  margin-top: var(--ins-5); padding: var(--ins-5);
+  border: 1px solid var(--ins-border); background: transparent;
+}
+.cardl-t {
+  flex: 0 0 auto;
+  font: 400 10px/1 var(--ins-font-mono);
+  letter-spacing: .18em; text-transform: uppercase; color: var(--ins-text-4);
+}
+.cardl-n { flex: 1; font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-2); }
+.cardl.feito .cardl-n { color: var(--ins-acid); }
+.cardl-b {
+  flex: 0 0 auto; min-height: var(--ins-tap-dense); padding: 0 var(--ins-4);
+  border: 1px solid var(--ins-border-strong); background: transparent; color: var(--ins-text-3);
+  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
+}
+
+/* O ponto de cardio dentro da célula da semana: 4px, não um quadrado vazio. */
+.wd .barra-cardio {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--ins-text-3); border: 0; padding: 0;
+}
+.cwarn {
+  font: 400 10px/1.4 var(--ins-font-mono);
+  letter-spacing: .06em; color: var(--ins-amber); margin-top: var(--ins-3);
+}
+
+/* ---- Onde o remapeamento deixou ácido demais ---------------------------
+   Apontar --dawn para o ácido acertou o acento em quase tudo, mas em lista
+   longa o resultado é uma parede acesa: nove letras de sessão passada em
+   ácido dizem "agora" nove vezes, e o sistema reserva ácido para agora, feito,
+   seu e aperte isto. Numa lista de histórico, a letra é só identidade. */
+
+.sess-d em { color: var(--ins-text-4); }
+.sessrow .sess-d b, .sessrow .sess-d strong { color: var(--ins-text-2); }
+/* A média da semana é dado de leitura, não ação. */
+.week-n { color: var(--ins-text); }
+.week-n em { color: var(--ins-text-4); }

@@ -1,3 +1,5 @@
+/* As cores cravadas em rgba() não alcançáveis pelo remapeamento de token
+   foram convertidas para os valores do Instrumento. */
 /* O sistema antigo, em retirada. Tela repintada sai daqui e vai para o
    Instrumento (base.css + componentes.css). Este arquivo encolhe até sumir. */
 @import './tokens.css';
@@ -108,10 +110,10 @@
   font-style: normal; font-family: var(--f-d); font-weight: 700;
   font-size: 12px; color: var(--dawn); line-height: 1;
 }
-.cal-d.feito { border-color: rgba(245,168,60,.5); background: rgba(245,168,60,.08); cursor: pointer; }
+.cal-d.feito { border-color: rgba(203,243,94,.5); background: rgba(203,243,94,.08); cursor: pointer; }
 .cal-d.feito em { color: var(--mist); }
 .cal-d.hoje { border-color: var(--paper); }
-.cal-d.livre { border-color: rgba(141,160,184,.5); background: rgba(141,160,184,.07); }
+.cal-d.livre { border-color: rgba(168,175,161,.5); background: rgba(168,175,161,.07); }
 .cal-d.livre i { color: var(--mist); }
 .cal-d.futuro { opacity: .35; }
 .cal-d:not(.feito):not(.futuro) { cursor: pointer; }
@@ -214,7 +216,7 @@
   margin: 3px auto 0; width: 60%;
 }
 .cal-d .barra-cardio { width: 52%; margin-top: 2px; }
-.cal-d.com-cardio:not(.feito) { border-color: rgba(141,160,184,.35); }
+.cal-d.com-cardio:not(.feito) { border-color: rgba(168,175,161,.35); }
 
 .cardio-dia {
   display: flex; gap: 12px; align-items: baseline; margin-top: 18px;
@@ -272,8 +274,8 @@
   font-family: var(--f-d); font-weight: 600; font-size: 13.5px; padding: 11px 0;
 }
 .ctrl-b.ini { background: var(--dawn); border-color: var(--dawn); color: var(--night); }
-.ctrl-b.fim { color: var(--dawn); border-color: rgba(245,168,60,.5); }
-.ctrl.pausado .ctrl-b { border-color: rgba(245,168,60,.45); }
+.ctrl-b.fim { color: var(--dawn); border-color: rgba(203,243,94,.5); }
+.ctrl.pausado .ctrl-b { border-color: rgba(203,243,94,.45); }
 
 
 /* ---------- tipo de carga ---------- */
@@ -291,7 +293,7 @@
 }
 .painsum {
   margin: 20px 0 0; padding: 13px 15px; border-radius: 10px;
-  background: rgba(232,115,74,.11); border: 1px solid rgba(232,115,74,.4);
+  background: rgba(255,196,107,.11); border: 1px solid rgba(255,196,107,.4);
   font-size: 12.5px; color: var(--ember-soft); line-height: 1.5;
 }
 .painsum b { color: var(--ember); }
@@ -307,12 +309,12 @@
 
 .dlbtn {
   appearance: none; display: block; margin-top: 11px; cursor: pointer;
-  background: transparent; border: 1px solid rgba(232,115,74,.5); color: var(--ember);
+  background: transparent; border: 1px solid rgba(255,196,107,.5); color: var(--ember);
   font-family: var(--f-m); font-size: 11px; padding: 11px 14px; border-radius: 9px;
 }
-.deload.on { background: rgba(245,168,60,.1); border-color: rgba(245,168,60,.45); color: var(--dawn-soft); }
+.deload.on { background: rgba(203,243,94,.1); border-color: rgba(203,243,94,.45); color: var(--dawn-soft); }
 .deload.on b { color: var(--dawn); }
-.deload.on .dlbtn { border-color: rgba(245,168,60,.5); color: var(--dawn); }
+.deload.on .dlbtn { border-color: rgba(203,243,94,.5); color: var(--dawn); }
 
 /* ---------- histórico do exercício ---------- */
 .hhdr { padding: calc(18px + env(safe-area-inset-top)) 18px 0; }
@@ -409,7 +411,7 @@
 .crule { font-family: var(--f-m); font-size: 10.5px; color: var(--dim); line-height: 1.5; margin: 16px 0 12px; }
 .cwarn {
   margin: 16px 0 0; padding: 12px 14px; border-radius: 10px;
-  background: rgba(232,115,74,.11); border: 1px solid rgba(232,115,74,.4);
+  background: rgba(255,196,107,.11); border: 1px solid rgba(255,196,107,.4);
   font-size: 12.5px; color: var(--ember-soft); line-height: 1.5;
 }
 .crow {
@@ -443,7 +445,7 @@
 .edbar {
   display: flex; align-items: flex-start; gap: 12px;
   margin: 0 0 14px; padding: 12px 14px; border-radius: 11px;
-  border: 1px solid var(--dawn); background: rgba(245,168,60,.07);
+  border: 1px solid var(--dawn); background: rgba(203,243,94,.07);
   font-size: 13px; line-height: 1.5; color: var(--mist);
 }
 .edbar b { color: var(--paper); display: block; }
@@ -574,7 +576,7 @@
   flex: 1; min-height: 48px; border-radius: 9px; font-size: 13px;
   border: 1px solid var(--line); background: var(--dusk); color: var(--mist);
 }
-.pmod-b button.on { border-color: var(--dawn); background: rgba(245,168,60,.12); color: var(--paper); font-weight: 600; }
+.pmod-b button.on { border-color: var(--dawn); background: rgba(203,243,94,.12); color: var(--paper); font-weight: 600; }
 .pmot { margin: 18px 0 20px; }
 .pmot .obs-h { margin-bottom: 8px; }
 
@@ -592,7 +594,7 @@
 .marco { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 .marco span {
   font-family: var(--f-m); font-size: 11px; color: var(--dawn);
-  border: 1px solid rgba(245,168,60,.45); background: rgba(245,168,60,.09);
+  border: 1px solid rgba(203,243,94,.45); background: rgba(203,243,94,.09);
   border-radius: 8px; padding: 9px 12px; line-height: 1.35;
 }
 
@@ -662,9 +664,9 @@
   line-height: 1.1; margin: 7px 0 8px; color: var(--paper);
 }
 .verdict p { font-size: 13px; color: var(--mist); line-height: 1.55; margin: 0; }
-.verdict.mais   { border-color: rgba(245,168,60,.45); background: rgba(245,168,60,.09); }
+.verdict.mais   { border-color: rgba(203,243,94,.45); background: rgba(203,243,94,.09); }
 .verdict.mais .verdict-t { color: var(--dawn); }
-.verdict.menos  { border-color: rgba(232,115,74,.45); background: rgba(232,115,74,.09); }
+.verdict.menos  { border-color: rgba(255,196,107,.45); background: rgba(255,196,107,.09); }
 .verdict.menos .verdict-t { color: var(--ember); }
 .verdict.faltam .verdict-t { color: var(--mist); }
 
@@ -781,8 +783,17 @@
 .msg { padding: 40px 18px; text-align: center; color: var(--mist); font-family: var(--f-m); font-size: 12px; }
 .deload {
   margin: 16px 18px 0; padding: 13px 15px; border-radius: 10px;
-  background: rgba(232,115,74,.11); border: 1px solid rgba(232,115,74,.4);
+  background: rgba(255,196,107,.11); border: 1px solid rgba(255,196,107,.4);
   font-size: 12.5px; color: var(--ember-soft); line-height: 1.5;
 }
 .deload b { color: var(--ember); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---- Retirada: raio zero em tudo que sobrou -----------------------------
+   Inegociável 1 do Instrumento. As telas ainda em string nasceram com raio de
+   2 a 12px; zerar aqui é uma linha e alinha a superfície inteira enquanto a
+   conversão de estrutura acontece tela a tela. */
+#app *, .ins-folha * { border-radius: 0; }
+/* As três exceções do sistema: ponto de status, thumb do slider, ponto ao vivo. */
+#app .ins-live-dot, #app .ins-tl-ponto, #app .wd .barra-cardio,
+#app input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
