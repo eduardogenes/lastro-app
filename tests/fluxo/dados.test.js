@@ -247,7 +247,9 @@ test('exercício novo não herda a carga do que ocupava a posição', async () =
   await a.esperar();
   a.E('go("A")');
   a.E('toggle(0)');
-  assert.strictEqual(a.doc.getElementById('w0_0').placeholder, 'kg', 'sem referência: é outro exercício');
+  // vazio, não 'kg': a unidade fica no rótulo ao lado, e o placeholder é
+  // reservado para o dado — a carga da última vez. Sem histórico, sem número.
+  assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '', 'sem referência: é outro exercício');
   assert.strictEqual(a.log('A', 0), null, 'o chest press não herdou nada do supino');
   assert.strictEqual(a.$('.up'), null, 'e sem selo de subir carga herdado');
   a.fechar();

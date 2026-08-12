@@ -1015,9 +1015,13 @@ function vmExercicio(d, i, ex) {
     const v = dr && dr.s[k] ? dr.s[k] : [null, null];
     linhas.push({
       valor: v,
+      // O placeholder é DADO — a carga da última vez. A unidade é ESTRUTURA e
+      // fica sempre visível ao lado. Antes os dois diziam a mesma coisa quando
+      // não havia histórico: o campo mostrava "kg" com um "KG" grudado na
+      // direita. Sem histórico, o campo fica vazio e só a unidade fala.
       place: [
-        p && p[0] ? fmtNum(p[0]) : ((seg || corpo) ? '0' : 'kg'),
-        p ? String(p[1]) : (seg ? 'seg' : 'reps')
+        p && p[0] ? fmtNum(p[0]) : '',
+        p ? String(p[1]) : ''
       ]
     });
   }

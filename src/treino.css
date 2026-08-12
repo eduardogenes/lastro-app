@@ -84,15 +84,17 @@
 
 /* ---- O corpo, quando aberto ------------------------------------------- */
 
-.sets { display: none; padding: var(--ins-5) 0 var(--ins-1) var(--ins-tap); }
+/* 34 e não 46: alinha com a calha do número sem carregar o vão junto, e os
+   12px devolvidos tiram uma linha de quebra da dica de execução. */
+.sets { display: none; padding: var(--ins-4) 0 var(--ins-1) 34px; }
 .ex.open .sets { display: block; }
 .ex.pulado .sets { display: none; }
 .ex.pulado .ex-name { color: var(--ins-text-5); }
 .ex.pulado .chev { opacity: .3; }
 
 .cue {
-  font: 400 13px/1.5 var(--ins-font-display);
-  color: var(--ins-text-3); margin: 0 0 var(--ins-5);
+  font: 400 13px/1.4 var(--ins-font-display);
+  color: var(--ins-text-3); margin: 0 0 var(--ins-4);
   text-wrap: pretty;
 }
 
@@ -115,7 +117,10 @@
   /* 19px e mono: é dado, e é o tamanho que o Safari não tenta ampliar ao
      focar. Campo abaixo de 16px faz a tela inteira dar zoom no meio da série. */
   font: 600 19px/1 var(--ins-font-mono); letter-spacing: -.03em;
-  min-height: var(--ins-tap);
+  /* 40 e não 46: os 46 do sistema são para controle que se aperta repetido
+     (stepper, botão primário). Este é campo de digitar uma vez, com 19px de
+     conteúdo — 40 já é alvo confortável e devolve 18px nas três séries. */
+  min-height: 40px;
 }
 .setrow input::-webkit-outer-spin-button,
 .setrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -133,9 +138,10 @@
 .x { font: 400 12px/1 var(--ins-font-mono); color: var(--ins-text-5); }
 
 .rest {
-  flex: 0 0 auto; min-width: 56px; min-height: var(--ins-tap); padding: 0 var(--ins-4);
+  flex: 0 0 auto; min-width: 52px; padding: 0 var(--ins-3);
   border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
   font: 400 11px/1 var(--ins-font-mono); letter-spacing: .04em;
+  min-height: 40px;
 }
 .rest:active { background: var(--ins-surface); }
 .rest.bi { border-color: var(--ins-acid); color: var(--ins-acid); }
@@ -148,18 +154,17 @@
 .anilhas b { color: var(--ins-text-3); font-weight: 500; }
 
 .lastline {
-  font: 400 11px/1.45 var(--ins-font-mono);
-  letter-spacing: .04em; color: var(--ins-text-5);
-  margin-top: var(--ins-4); padding-top: var(--ins-4);
-  border-top: 1px solid var(--ins-hairline);
+  font: 400 10px/1.4 var(--ins-font-mono);
+  letter-spacing: .06em; color: var(--ins-text-5);
+  margin-top: var(--ins-3);
 }
 .lastline b { color: var(--ins-text-2); font-weight: 500; }
 
 /* ---- Ações do exercício ----------------------------------------------- */
 
-.exacoes { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
+.exacoes { display: flex; gap: var(--ins-2); margin-top: var(--ins-4); }
 .histbtn {
-  flex: 1; min-height: var(--ins-tap);
+  flex: 1; min-height: 42px;
   border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
   font: 400 10px/1 var(--ins-font-mono);
   letter-spacing: .14em; text-transform: uppercase;
@@ -168,10 +173,10 @@
 
 /* Lado a lado, não empilhados: são dois rótulos curtos, e empilhar custava
    108px por exercício aberto contra 58. */
-.exlinks { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
+.exlinks { display: flex; gap: var(--ins-2); margin-top: var(--ins-4); }
 .exlinks > * { flex: 1; }
 .notabtn {
-  width: 100%; text-align: left; min-height: var(--ins-tap); padding: var(--ins-3) 0;
+  width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
   font: 400 10px/1.4 var(--ins-font-mono);
   letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-5);
 }
@@ -179,14 +184,14 @@
 
 .aquec {
   display: flex; align-items: center; gap: var(--ins-4);
-  margin-top: var(--ins-5); padding: var(--ins-4);
-  border: 1px solid var(--ins-border);
-  font: 400 13px/1.45 var(--ins-font-display); color: var(--ins-text-3);
+  margin-top: var(--ins-4); padding-top: var(--ins-4);
+  border-top: 1px solid var(--ins-hairline);
+  font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4);
 }
-.aquec.on { border-color: var(--ins-acid); }
-.aquec b { color: var(--ins-text); font-weight: 500; }
+.aquec.on { color: var(--ins-text-3); }
+.aquec b { color: var(--ins-text-3); font-weight: 500; }
 .aqbtn {
-  flex: 0 0 auto; min-height: var(--ins-tap-dense); padding: 0 var(--ins-4);
+  flex: 0 0 auto; min-height: 34px; padding: 0 var(--ins-4);
   border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
   font: 400 10px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
 }
@@ -194,7 +199,7 @@
 
 .puladobox {
   display: flex; align-items: center; gap: var(--ins-4);
-  margin: var(--ins-4) 0 0 var(--ins-tap); padding: var(--ins-4);
+  margin: var(--ins-4) 0 0 34px; padding: var(--ins-4);
   border: 1px solid var(--ins-border);
   font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4);
 }

@@ -202,3 +202,23 @@ test('o alvo calórico sai do plano, não de um número escrito à parte', async
   assert.notStrictEqual(a.texto('.ins-linha-v'), antes, 'mexer no plano recalcula o alvo na hora');
   a.fechar();
 });
+
+test('a unidade é rótulo fixo; o placeholder é a carga da última vez', () => {
+  // Antes os dois diziam a mesma coisa quando não havia histórico: o campo
+  // mostrava "kg" com um "KG" grudado à direita. Unidade é estrutura e fica
+  // sempre; placeholder é dado e só aparece quando existe dado.
+  return app().then(async a => {
+    a.E('toggle(0)');
+    const unidades = a.$$('.ex.open .setrow .unit').map(u => u.textContent);
+    assert.ok(unidades.includes('kg'), 'a carga declara a unidade: ' + unidades.join(','));
+    assert.ok(unidades.includes('reps'), 'a repetição também: ' + unidades.join(','));
+    assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '', 'sem histórico, sem placeholder');
+
+    a.preencher(0, 0, 55, 8);
+    a.E('S.sessao = null');
+    a.E('render()');
+    assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '55',
+      'com histórico, o placeholder é a carga da última vez');
+    a.fechar();
+  });
+});

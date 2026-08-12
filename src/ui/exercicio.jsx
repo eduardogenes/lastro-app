@@ -37,7 +37,7 @@ function Linha({ i, k, linha, vm, acoes }) {
           placeholder={linha.place[1]}
           onInput={e => acoes.inp(e.currentTarget, i, k, 1)}
         />
-        {vm.seg ? <span class="unit">seg</span> : null}
+        <span class="unit">{vm.seg ? 'seg' : 'reps'}</span>
       </div>
       {vm.bi === 1
         ? <button class="rest bi" onClick={() => acoes.proximoDoBiset(i)}>próximo</button>

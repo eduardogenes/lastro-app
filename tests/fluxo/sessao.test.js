@@ -54,8 +54,9 @@ test('a sessão aberta não vira referência de si mesma', async () => {
   a.preencher(0, 0, 40, 10);
   a.E('render()');
 
-  // placeholder da série 2 não pode repetir o que acabou de ser digitado
-  assert.strictEqual(a.doc.getElementById('w0_1').placeholder, 'kg');
+  // placeholder da série 2 não pode repetir o que acabou de ser digitado.
+  // Vazio é o estado de 'sem referência': a unidade mora no rótulo ao lado.
+  assert.strictEqual(a.doc.getElementById('w0_1').placeholder, '');
   assert.ok(a.texto('.ex.open .lastline').includes('primeira vez'));
   assert.deepStrictEqual(a.J('historico("A0")'), []);
   a.fechar();
