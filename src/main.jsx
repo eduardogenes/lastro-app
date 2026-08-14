@@ -18,6 +18,7 @@ import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from 
 import { Bruto } from './ui/bruto.jsx';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
+import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { ALIMENTOS_BASE, PLANO_BASE } from './dominio/nutricao/alimentos';
 import { arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
@@ -1270,10 +1271,10 @@ const CTX = {
     queueSave(); render();
   },
   setAgua: function (n) { diaDeComida().agua = Math.max(0, n); queueSave(); render(); },
-  abreRefeicao: function (id) { view.folha = { k: 'refeicao', id: id }; render(); },
-  editaRefeicao: function (id) { view.folha = { k: 'editaRefeicao', id: id }; render(); },
-  novaRefeicao: function () { toast('Editor de refeição chega na próxima tela convertida.'); },
-  fechaFolha: function () { view.folha = null; render(); },
+  abreRefeicao: function (id) { CTX.abreFolha({ k: 'refeicao', id: id }); },
+  editaRefeicao: function (id) { CTX.abreFolha({ k: 'editaRefeicao', id: id }); },
+  novaRefeicao: function () { CTX.abreFolha({ k: 'editaRefeicao', id: null }); },
+
 
   /** Ajuste de porção: SÓ DE HOJE. O rótulo diz isso, e o estado zera com a data. */
   setEscala: function (id, v) {
@@ -1283,10 +1284,10 @@ const CTX = {
   },
 
   /** O seletor de dia: confirma ou corrige a previsão da cadência. */
-  abreSeletorDeDia: function () { view.folha = { k: 'dia' }; render(); },
+  abreSeletorDeDia: function () { CTX.abreFolha({ k: 'dia' }); },
   setCadenciaDeHoje: function (c) {
     diaDeComida().cadencia = c;
-    view.folha = null;
+    pilha().pop();
     queueSave(); render();
   },
   setAlta: function (v) { diaDeComida().alta = v ? 1 : 0; queueSave(); render(); },
@@ -3809,11 +3810,14 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 // (programa, histórico, retrospectiva) continuam tomando a tela inteira até
 // serem convertidas — é o que `emTelaCheia()` sinaliza para a shell.
 function folhaAberta() {
-  const f = view.folha;
-  if (!f) return null;
-  if (f.k === 'refeicao') return <FolhaRefeicao ctx={CTX} id={f.id} />;
-  if (f.k === 'dia') return <FolhaDia ctx={CTX} />;
-  return null;
+  return (view.pilha || []).map(function (f, i) {
+    if (f.k === 'refeicao') return <FolhaRefeicao key={i} ctx={CTX} id={f.id} />;
+    if (f.k === 'dia') return <FolhaDia key={i} ctx={CTX} />;
+    if (f.k === 'editaRefeicao') return <FolhaEditaRefeicao key={i} ctx={CTX} id={f.id} />;
+    if (f.k === 'seletor') return <FolhaSeletor key={i} ctx={CTX} ref={f.ref} idx={f.idx} />;
+    if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
+    return null;
+  });
 }
 
 // leituras que as folhas precisam
@@ -3889,8 +3893,8 @@ CTX.marcaCompra = function (f) {
   if (S.compras.comprado[f]) delete S.compras.comprado[f]; else S.compras.comprado[f] = 1;
   queueSave(); render();
 };
-CTX.novoAlimento = function () { toast('Cadastro de alimento chega junto com o editor.'); };
-CTX.editaAlimento = function () { toast('Editor de alimento chega na próxima tela convertida.'); };
+CTX.novoAlimento = function () { CTX.abreFolha({ k: 'editaAlimento', id: null }); };
+CTX.editaAlimento = function (id) { CTX.abreFolha({ k: 'editaAlimento', id: id }); };
 
 // ---------- TREINO ----------
 // A tela usada dentro da academia. O número que importa — séries feitas de
@@ -4208,3 +4212,196 @@ CTX.setCintura = function (v) { view.bodyForm = Object.assign({}, view.bodyForm,
 CTX.registraPeso = function () { addBody('peso'); };
 CTX.registraCintura = function () { addBody('cintura'); };
 CTX.abreCardio = function () { abrirCardioRapido(); };
+
+// ---------- edição de COMIDA ----------
+// Lei 3 do sistema: não existe modo de edição. Toda refeição carrega o próprio
+// `···`, e todo item dentro dela expande no lugar. Lei 4: o destrutivo vive um
+// nível para dentro — dentro do editor, em coral, nunca na lista.
+//
+// A distinção que mais importa aqui é a lei 6, e ela é a diferença entre um app
+// de dieta que se entende e um que não: mexer na QUANTIDADE de um item muda o
+// plano para todo dia; o controle de porção da folha de refeição é "só de hoje"
+// e zera com a data. As duas coisas moram em telas diferentes de propósito, e
+// cada uma diz na tela qual é.
+
+/** A pilha de folhas. Três níveis, nunca mais. */
+function pilha() { return view.pilha || (view.pilha = []); }
+
+CTX.abreFolha = function (f) { pilha().push(f); render(); };
+CTX.fechaFolha = function () { pilha().pop(); render(); };
+CTX.fechaTudo = function () { view.pilha = []; render(); };
+
+/** Um id de alimento a partir do nome, igual ao dos exercícios. */
+function idAlimento(nome) {
+  const base = slugEx(nome) || 'alimento';
+  let id = base, n = 2;
+  const cat = catalogoAlimentos();
+  while (cat[id]) id = base + '-' + n++;
+  return id;
+}
+
+function achaRefeicao(id) {
+  return planoDeComida().filter(function (r) { return r.id === id; })[0] || null;
+}
+
+// ---- refeição ----
+
+CTX.refeicaoParaEditar = function (id) {
+  const r = id ? achaRefeicao(id) : null;
+  const cat = catalogoAlimentos();
+  return {
+    novo: !r,
+    id: r ? r.id : null,
+    n: r ? r.n : '',
+    t: r ? r.t : '12:00',
+    tag: r ? r.tag : '',
+    quando: r ? r.quando : 'sempre',
+    nota: r ? (r.nota || '') : '',
+    itens: r ? r.itens.map(function (i, idx) {
+      const a = cat[i.f];
+      return {
+        idx: idx, f: i.f, q: i.q, alta: !!i.alta, arroz: !!i.arroz,
+        n: a ? a.n : i.f, u: a ? a.u : 'g', sumido: !a
+      };
+    }) : []
+  };
+};
+
+CTX.salvaRefeicao = function (id, campos) {
+  const plano = planoDeComida();
+  let r = id ? achaRefeicao(id) : null;
+  if (!r) {
+    r = { id: 'r' + Date.now(), t: '12:00', n: '', tag: '', quando: 'sempre', nota: '', itens: [] };
+    plano.push(r);
+  }
+  Object.assign(r, campos);
+  if (!r.n) r.n = 'Refeição';
+  queueSave(); render();
+};
+
+CTX.duplicaRefeicao = function (id) {
+  const r = achaRefeicao(id);
+  if (!r) return;
+  const copia = JSON.parse(JSON.stringify(r));
+  copia.id = 'r' + Date.now();
+  copia.n = r.n + ' (cópia)';
+  planoDeComida().push(copia);
+  CTX.fechaFolha();
+  queueSave(); render();
+  toast('Refeição duplicada.');
+};
+
+CTX.removeRefeicao = function (id) {
+  const r = achaRefeicao(id);
+  if (!r) return;
+  if (!confirm('Remover "' + r.n + '" do plano?\n\nIsso vale para todo dia. O histórico do que você já marcou não muda.')) return;
+  const plano = planoDeComida();
+  plano.splice(plano.indexOf(r), 1);
+  const dia = diaDeComida();
+  delete dia.done[id];
+  delete dia.escala[id];
+  CTX.fechaTudo();
+  queueSave(); render();
+  toast('Refeição removida do plano.');
+};
+
+// ---- item dentro da refeição ----
+
+CTX.setQuantidade = function (refId, idx, q) {
+  const r = achaRefeicao(refId);
+  if (!r || !r.itens[idx]) return;
+  r.itens[idx].q = Math.max(0, Math.round(q));
+  queueSave(); render();
+};
+
+CTX.removeItem = function (refId, idx) {
+  const r = achaRefeicao(refId);
+  if (!r || !r.itens[idx]) return;
+  r.itens.splice(idx, 1);
+  queueSave(); render();
+};
+
+CTX.alternaAlta = function (refId, idx) {
+  const r = achaRefeicao(refId);
+  if (!r || !r.itens[idx]) return;
+  if (r.itens[idx].alta) delete r.itens[idx].alta; else r.itens[idx].alta = true;
+  queueSave(); render();
+};
+
+CTX.adicionaItem = function (refId, foodId) {
+  const r = achaRefeicao(refId);
+  if (!r) return;
+  r.itens.push({ f: foodId, q: 100 });
+  CTX.fechaFolha();
+  queueSave(); render();
+};
+
+CTX.trocaItem = function (refId, idx, foodId) {
+  const r = achaRefeicao(refId);
+  if (!r || !r.itens[idx]) return;
+  r.itens[idx].f = foodId;
+  CTX.fechaFolha();
+  queueSave(); render();
+};
+
+// ---- alimento ----
+
+CTX.alimentoParaEditar = function (id) {
+  const cat = catalogoAlimentos();
+  const a = id ? cat[id] : null;
+  return {
+    novo: !a,
+    id: a ? id : null,
+    n: a ? a.n : '',
+    cat: a ? a.cat : 'mercearia',
+    u: a ? a.u : 'g',
+    kcal: a ? a.kcal : 0, p: a ? a.p : 0, c: a ? a.c : 0, g: a ? a.g : 0,
+    cru: a ? a.cru : 0,
+    meu: !!(a && a.meu),
+    /** true quando o alimento veio da prescrição: dá para editar, não apagar */
+    daPrescricao: !!(a && ALIMENTOS_BASE[id])
+  };
+};
+
+CTX.salvaAlimento = function (id, campos) {
+  const alvo = id || idAlimento(campos.n);
+  const base = ALIMENTOS_BASE[alvo];
+  S.comida.alimentos[alvo] = Object.assign(
+    {}, S.comida.alimentos[alvo] || {}, campos,
+    base ? {} : { meu: 1 }
+  );
+  delete S.comida.ocultos[alvo];
+  CTX.fechaFolha();
+  queueSave(); render();
+  toast(id ? 'Alimento atualizado.' : 'Alimento cadastrado.');
+  return alvo;
+};
+
+CTX.removeAlimento = function (id) {
+  const cat = catalogoAlimentos();
+  const a = cat[id];
+  if (!a) return;
+  // Um alimento em uso não pode sumir sem aviso: o plano ficaria apontando
+  // para um id órfão, e o total do dia mudaria sem explicação.
+  const usos = planoDeComida().filter(function (r) {
+    return r.itens.some(function (i) { return i.f === id; });
+  });
+  const aviso = usos.length
+    ? '\n\nEle está em ' + usos.length + (usos.length === 1 ? ' refeição' : ' refeições') +
+      ': ' + usos.map(function (r) { return r.n; }).join(', ') + '. Vai sair de lá também.'
+    : '';
+  if (!confirm('Remover "' + a.n + '" da biblioteca?' + aviso)) return;
+
+  planoDeComida().forEach(function (r) {
+    r.itens = r.itens.filter(function (i) { return i.f !== id; });
+  });
+  if (ALIMENTOS_BASE[id]) S.comida.ocultos[id] = 1;   // da prescrição: esconde
+  delete S.comida.alimentos[id];                       // dele: apaga
+  CTX.fechaTudo();
+  queueSave(); render();
+  toast('Alimento removido.');
+};
+
+CTX.alimentosParaSeletor = function (q) {
+  return CTX.alimentosFiltrados(q);
+};

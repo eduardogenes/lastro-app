@@ -240,3 +240,116 @@ test('o placeholder de carregamento some quando o app monta', async () => {
   assert.ok(a.$$('.ins-tab').length === 5);
   a.fechar();
 });
+
+// ---------- os editores de COMIDA ----------
+
+test('editar a quantidade de um item muda o plano para todo dia', async () => {
+  // A distinção que separa este app de um rastreador genérico: aqui é o PLANO,
+  // e vale amanhã também. O controle de porção da folha de refeição é o outro
+  // lado — "só de hoje" — e os dois dizem qual é na tela.
+  const a = await app({ aba: 'comida' });
+  a.E('CTX.editaRefeicao("almoco")');
+  await a.esperar(150);
+  assert.ok(a.$('.ins-folha'), 'a folha de edição abriu');
+
+  const antes = a.E('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens[0].q');
+  a.E('CTX.setQuantidade("almoco", 0, ' + (antes + 50) + ')');
+  await a.esperar();
+  assert.strictEqual(
+    a.E('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens[0].q'),
+    antes + 50, 'a quantidade do plano mudou');
+  assert.deepStrictEqual(a.J('S.dia.escala'), {}, 'e não virou ajuste de hoje');
+  a.fechar();
+});
+
+test('as folhas empilham em três níveis e voltam uma a uma', async () => {
+  const a = await app({ aba: 'comida' });
+  a.E('CTX.editaRefeicao("almoco")');
+  a.E('CTX.abreFolha({ k: "seletor", ref: "almoco", idx: null })');
+  a.E('CTX.abreFolha({ k: "editaAlimento", id: null })');
+  await a.esperar(150);
+  assert.strictEqual(a.$$('.ins-folha').length, 3, 'três folhas na pilha');
+
+  a.E('CTX.fechaFolha()');
+  await a.esperar(150);
+  assert.strictEqual(a.$$('.ins-folha').length, 2, 'fecha uma, volta para a de baixo');
+  assert.ok(a.doc.body.className.includes('ins-travado'), 'o corpo segue travado com folha aberta');
+
+  a.E('CTX.fechaTudo()');
+  await a.esperar(150);
+  assert.strictEqual(a.$$('.ins-folha').length, 0);
+  assert.ok(!a.doc.body.className.includes('ins-travado'), 'e destrava quando a última fecha');
+  a.fechar();
+});
+
+test('adicionar alimento a uma refeição entra no plano e no total do dia', async () => {
+  const a = await app({ aba: 'comida' });
+  const antes = a.E('Math.round(CTX.hoje().alvo.kcal)');
+  a.E('CTX.editaRefeicao("almoco")');
+  a.E('CTX.adicionaItem("almoco", "aveia")');
+  await a.esperar();
+
+  const itens = a.J('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens');
+  assert.ok(itens.some(function (i) { return i.f === 'aveia'; }), 'entrou na refeição');
+  assert.ok(a.E('Math.round(CTX.hoje().alvo.kcal)') > antes, 'e o alvo do dia recalculou sozinho');
+  a.fechar();
+});
+
+test('cadastrar alimento cria id próprio e aparece na biblioteca', async () => {
+  const a = await app({ aba: 'comida' });
+  a.E('CTX.novoAlimento()');
+  const id = a.E(`CTX.salvaAlimento(null, { n: "Pasta de castanha", cat: "mercearia",
+                    u: "g", kcal: 600, p: 18, c: 12, g: 55, cru: 0 })`);
+  await a.esperar();
+  assert.strictEqual(id, 'pasta-de-castanha', 'id derivado do nome, como nos exercícios');
+  assert.strictEqual(a.E('S.comida.alimentos["pasta-de-castanha"].meu'), 1, 'marcado como dele');
+  assert.ok(a.J('CTX.alimentosFiltrados("castanha")').length === 1);
+  a.fechar();
+});
+
+test('remover alimento em uso tira ele das refeições que o citam', async () => {
+  // Sem isto o plano ficaria apontando para um id órfão e o total do dia
+  // mudaria sem explicação.
+  const a = await app({ aba: 'comida' });
+  a.aceitar();
+  const usava = a.E('S.comida.plano.filter(function(r){return r.itens.some(function(i){return i.f==="arroz";});}).length');
+  assert.ok(usava > 0, 'o arroz está no plano');
+
+  a.E('CTX.removeAlimento("arroz")');
+  await a.esperar();
+  assert.ok(a.perguntas().some(function (p) { return /refeições|refeição/.test(p); }),
+    'avisa em quantas refeições ele estava');
+  assert.strictEqual(
+    a.E('S.comida.plano.filter(function(r){return r.itens.some(function(i){return i.f==="arroz";});}).length'),
+    0, 'saiu de todas');
+  assert.strictEqual(a.E('S.comida.ocultos["arroz"]'), 1, 'da prescrição: escondido, não apagado');
+  a.fechar();
+});
+
+test('alimento da prescrição é editável mas não some do código', async () => {
+  const a = await app({ aba: 'comida' });
+  a.E('CTX.salvaAlimento("arroz", { n: "Arroz integral cozido", cat: "mercearia", u: "g", kcal: 111, p: 2.6, c: 23, g: 0.9, cru: 0.36 })');
+  await a.esperar();
+  assert.strictEqual(a.E('CTX.alimentoParaEditar("arroz").n'), 'Arroz integral cozido');
+  assert.strictEqual(a.E('CTX.alimentoParaEditar("arroz").daPrescricao'), true,
+    'continua sabendo que veio da prescrição');
+  assert.strictEqual(a.E('ALIMENTOS_BASE["arroz"].n'), 'Arroz branco cozido',
+    'o do código não é tocado — restaurar o plano devolve o original');
+  a.fechar();
+});
+
+test('remover uma refeição limpa o que era do dia junto', async () => {
+  const a = await app({ aba: 'hoje' });
+  a.E('CTX.marcaRefeicao("lanche")');
+  a.E('CTX.setEscala("lanche", 0.5)');
+  await a.esperar();
+  assert.strictEqual(a.E('S.dia.done.lanche'), 1);
+
+  a.aceitar();
+  a.E('CTX.removeRefeicao("lanche")');
+  await a.esperar();
+  assert.strictEqual(a.E('S.comida.plano.filter(function(r){return r.id==="lanche";}).length'), 0);
+  assert.strictEqual(a.E('S.dia.done.lanche'), undefined, 'a marcação de hoje foi junto');
+  assert.strictEqual(a.E('S.dia.escala.lanche'), undefined, 'o ajuste de porção também');
+  a.fechar();
+});

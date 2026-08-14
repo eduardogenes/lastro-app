@@ -429,3 +429,24 @@
 /* Prosa longa não cabe em mono de 10px: procedência é uma linha, o resto é
    prosa na display. */
 .dd-nota { margin: var(--ins-3) 0 0; }
+
+/* ---- Editores ---------------------------------------------------------- */
+
+.ed-campo { display: block; margin-bottom: var(--ins-6); }
+.ed-campo > .ins-label { display: block; margin-bottom: var(--ins-3); }
+.ed-campo .ins-input { margin-bottom: var(--ins-2); }
+.ed-campo .ins-chips { margin-bottom: var(--ins-2); }
+/* 96 e não 72: as notas do plano têm três linhas e o campo cortava a última.
+   Campo que esconde o próprio conteúdo é pior que campo grande. */
+.ed-nota { min-height: 96px; resize: vertical; font-family: var(--ins-font-display); }
+.ed-h { margin: var(--ins-9) 0 var(--ins-4); }
+.ed-add { margin-top: var(--ins-5); }
+.ed-dup { margin-top: var(--ins-9); }
+.ed-rm { margin-top: var(--ins-9); }
+
+.ed-item { display: flex; align-items: center; justify-content: space-between; gap: var(--ins-5); width: 100%; }
+.ed-item-n { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+/* Quatro campos numéricos lado a lado: é grade, não lista. */
+.ed-macros { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-5); }
+.ed-macros .ed-campo { margin-bottom: 0; }
