@@ -21,6 +21,8 @@ import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
+import { Decisao } from './ui/telas/decisao.jsx';
+import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { ALIMENTOS_BASE, PLANO_BASE } from './dominio/nutricao/alimentos';
 import { arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
@@ -1302,9 +1304,9 @@ const CTX = {
 // montar: quem monta é a shell nova. Cada aba convertida some daqui, e quando
 // a última sair este bloco inteiro morre junto com app.css.
 function telaLegado() {
-  if (view.promo) return <Bruto html={renderPromo()} />;
+  if (view.promo) return <Decisao ctx={CTX} />;
   if (view.prog) return <Bruto html={renderPrograma()} />;
-  if (view.retro) return <Bruto html={renderRetro()} />;
+  if (view.retro) return <Retrospectiva ctx={CTX} />;
   if (view.add) return <Bruto html={renderAdicionar()} />;
   if (view.sessao) return <Sessao ctx={CTX} />;
   if (view.hist) return <Historico ctx={CTX} />;
@@ -1684,46 +1686,6 @@ const MOTIVOS = [
   { k:'fora',    t:'outra academia' },
   { k:'decisao', t:'decisão de programa' }
 ];
-
-function renderPromo() {
-  const P = view.promo;
-  const app = document.getElementById('app');
-  let h = `<div class="promo">
-    <div class="promo-h">
-      <div class="eyebrow"><span>treino ${P.day}</span><span>${P.mods.length} ${P.mods.length===1?'mudança':'mudanças'}</span></div>
-      <h2>O que fica no programa?</h2>
-      <p>As séries que você registrou já estão no histórico. Isto decide só o
-      treino ${P.day} de amanhã.</p>
-    </div>`;
-
-  h += P.mods.map(function (m, j) {
-    const imp = impactoDoMod(P.day, m);
-    return `<div class="pmod">
-      <div class="pmod-t">${textoMod(P.day, m)}</div>
-      ${imp?`<div class="pmod-i ${imp.acima?'acima':''}">${imp.txt}</div>`:''}
-      <div class="pmod-b">
-        <button class="${P.dec[j]!=='oficial'?'on':''}" onclick="decidePromo(${j},'hoje')">só hoje</button>
-        <button class="${P.dec[j]==='oficial'?'on':''}" onclick="decidePromo(${j},'oficial')">levar para o oficial</button>
-      </div>
-    </div>`;
-  }).join('');
-
-  h += `<div class="pmot">
-    <div class="obs-h">motivo (opcional)</div>
-    <div class="chips">${MOTIVOS.map(function (x) {
-      return `<button class="chip ${P.motivo===x.k?'on':''}" onclick="motivoPromo('${x.k}')">${x.t}</button>`;
-    }).join('')}</div>
-  </div>`;
-
-  const n = P.dec.filter(function (x) { return x === 'oficial'; }).length;
-  h += `<button class="dbtn" style="width:100%" onclick="concluirPromo()">
-    ${n ? 'Encerrar e levar ' + n + (n===1?' mudança':' mudanças') + ' para o oficial' : 'Encerrar mantendo o programa como está'}
-  </button>`;
-  h += `<button class="notabtn" style="width:100%;margin-top:10px" onclick="voltarDoPromo()">voltar para o treino</button>`;
-  h += '</div>';
-  return h;
-  window.scrollTo(0,0);
-}
 
 // O impacto que importa é o do programa DEPOIS da promoção, não o de hoje.
 function impactoDoMod(d, m) {
@@ -3422,64 +3384,6 @@ function retro() {
            deloads: S.done.filter(function (x) { return x.dl && x.t >= de; }).length };
 }
 
-function renderRetro() {
-  const R = retro();
-  const app = document.getElementById('app');
-  const dores = Object.keys(R.dores);
-
-  let h = `<div class="hhdr">
-    <button class="back" onclick="fecharRetro()">‹ voltar</button>
-    <div class="eyebrow"><span>retrospectiva de bloco</span><span>${fmtDate(R.de)} a ${fmtDate(R.ate)}</span></div>
-    <h2 class="htitle">${R.sessoes} sessões em ${fmtDec(R.semanas)} semanas</h2>
-  </div>
-  <div class="hwrap">
-    <div class="stats">
-      <div><b>${fmtDec(R.sessoes/R.semanas)}</b><span>treinos por semana</span></div>
-      <div><b>${fmtInt(R.volTotal)}</b><span>volume acumulado</span></div>
-      <div><b class="${R.evol.length?'up':''}">${R.evol.length}</b><span>exercícios que subiram</span></div>
-    </div>`;
-
-  if (R.evol.length) {
-    h += `<div class="hsec">o que evoluiu</div>` + R.evol.slice(0,8).map(function (x) {
-      return `<div class="hs"><div class="hs-top">
-        <span class="hs-vol" style="min-width:0">${x.nome}</span>
-        ${x.dc===null?'':`<span class="hs-d up">+${x.dc}%</span>`}
-      </div>
-      <div class="hs-sets" style="padding-left:0">
-        <span>${fmtNum(x.ci)}${x.seg?'s':'kg'} → ${fmtNum(x.cf)}${x.seg?'s':'kg'}</span>
-        <span class="nul">${x.n} sessões</span>
-        ${x.dv===null?'':`<span class="nul">volume ${x.dv>0?'+':''}${x.dv}%</span>`}
-      </div></div>`;
-    }).join('');
-  }
-
-  if (R.parados.length) {
-    h += `<div class="hsec">parados no bloco</div>
-      <p class="cue" style="margin:0 0 8px">Mesma carga do começo ao fim, com 3 ou mais sessões. Não quer dizer que esteja errado — quer dizer que você olhou.</p>` +
-      R.parados.map(function (x) {
-        return `<div class="hs"><div class="hs-top">
-          <span class="hs-vol" style="min-width:0">${x.nome}</span>
-          ${x.dv===null?'':`<span class="hs-d ${x.dv>0?'up':''}">${x.dv>0?'+':''}${x.dv}%</span>`}
-        </div>
-        <div class="hs-sets" style="padding-left:0">
-          <span>${fmtNum(x.cf)}${x.seg?'s':'kg'} o bloco inteiro</span>
-          <span class="nul">${x.n} sessões</span>
-        </div></div>`;
-      }).join('');
-  }
-
-  if (dores.length)
-    h += `<div class="painsum" style="margin-top:20px"><b>Dor marcada ${dores.map(function(k){return R.dores[k]+'x em '+dorName(k);}).join(', ')} no bloco.</b>
-      Vale olhar se está concentrada em algum exercício antes de começar o próximo.</div>`;
-
-  if (R.deloads)
-    h += `<p class="cue" style="margin:18px 0 0">${R.deloads} ${R.deloads===1?'sessão foi':'sessões foram'} em modo deload e não ${R.deloads===1?'entrou':'entraram'} na conta das 48.</p>`;
-
-  h += `<div class="finish" style="padding-left:0;padding-right:0">
-      <button onclick="fecharRetro()">Fechar</button>
-    </div></div>`;
-  return h;
-}
 function abrirRetro(){ view.retro = true; view.sessao = null; render(); window.scrollTo(0,0); }
 function fecharRetro(){ view.retro = false; render(); window.scrollTo(0,0); }
 
@@ -4691,3 +4595,82 @@ CTX.salvaEdicao = function () { salvarEdicao(); };
 CTX.apagaLinha = function () { apagarSessao(); };
 CTX.editDor = function (k) { editDor(k); };
 CTX.limpaNum = function (el, dec) { limpaNum(el, dec); };
+
+// ---------- tela cheia: decisão de fim de sessão ----------
+CTX.decisao = function () {
+  const P = view.promo;
+  if (!P) return null;
+  const n = P.dec.filter(function (x) { return x === 'oficial'; }).length;
+  return {
+    dia: P.day,
+    olho: 'treino ' + P.day,
+    meta: P.mods.length + (P.mods.length === 1 ? ' mudança' : ' mudanças'),
+    mods: P.mods.map(function (m, j) {
+      const imp = impactoDoMod(P.day, m);
+      return {
+        j: j,
+        txt: textoMod(P.day, m),
+        impacto: imp ? imp.txt : null,
+        acima: !!(imp && imp.acima),
+        oficial: P.dec[j] === 'oficial'
+      };
+    }),
+    motivos: MOTIVOS.map(function (x) {
+      return { k: x.k, t: x.t, on: P.motivo === x.k };
+    }),
+    acao: n
+      ? 'Encerrar e levar ' + n + (n === 1 ? ' mudança' : ' mudanças') + ' para o oficial'
+      : 'Encerrar mantendo o programa como está'
+  };
+};
+CTX.decidePromo = function (j, v) { decidePromo(j, v); };
+CTX.motivoPromo = function (k) { motivoPromo(k); };
+CTX.concluiPromo = function () { concluirPromo(); };
+CTX.voltaDoPromo = function () { voltarDoPromo(); };
+
+// ---------- tela cheia: retrospectiva de bloco ----------
+CTX.retrospectiva = function () {
+  const R = retro();
+  const dores = Object.keys(R.dores);
+  const un = function (x) { return x.seg ? 's' : 'kg'; };
+  return {
+    olho: 'retrospectiva de bloco',
+    meta: fmtDate(R.de) + ' a ' + fmtDate(R.ate),
+    titulo: R.sessoes + ' sessões em ' + fmtDec(R.semanas) + ' semanas',
+    stats: [
+      { k: 'a', rotulo: 'treinos por semana', valor: fmtDec(R.sessoes / R.semanas) },
+      { k: 'b', rotulo: 'volume acumulado', valor: fmtInt(R.volTotal) },
+      { k: 'c', rotulo: 'exercícios que subiram', valor: String(R.evol.length),
+        cor: R.evol.length ? 'ins-acid' : '' }
+    ],
+    evol: R.evol.slice(0, 8).map(function (x) {
+      return {
+        nome: x.nome,
+        delta: x.dc === null ? null : '+' + x.dc + '%',
+        deltaCor: 'ins-acid',
+        series: [fmtNum(x.ci) + un(x) + ' → ' + fmtNum(x.cf) + un(x)],
+        meta: [x.n + ' sessões'].concat(
+          x.dv === null ? [] : ['volume ' + (x.dv > 0 ? '+' : '') + x.dv + '%']),
+        marcas: []
+      };
+    }),
+    parados: R.parados.map(function (x) {
+      return {
+        nome: x.nome,
+        delta: x.dv === null ? null : (x.dv > 0 ? '+' : '') + x.dv + '%',
+        deltaCor: x.dv > 0 ? 'ins-acid' : '',
+        series: [fmtNum(x.cf) + un(x) + ' o bloco inteiro'],
+        meta: x.n + ' sessões',
+        marcas: []
+      };
+    }),
+    dores: dores.length
+      ? dores.map(function (k) { return R.dores[k] + 'x em ' + dorName(k); }).join(', ')
+      : null,
+    deloads: R.deloads
+      ? R.deloads + (R.deloads === 1 ? ' sessão foi' : ' sessões foram') +
+        ' em modo deload e não ' + (R.deloads === 1 ? 'entrou' : 'entraram') + ' na conta das 48.'
+      : null
+  };
+};
+CTX.fechaRetro = function () { fecharRetro(); };

@@ -641,3 +641,37 @@
   letter-spacing: .16em; text-transform: uppercase; color: var(--ins-text-4);
 }
 .horario b { color: var(--ins-text-3); font-weight: 500; }
+
+/* ---------- decisão de fim de sessão ---------- */
+/* Cada mudança é um bloco fechado por fio, com o par de botões dentro: a
+   decisão pertence àquela linha e a nenhuma outra. Sem canto arredondado e
+   sem sombra — o que separa é o fio, como em todo o resto do sistema. */
+.pmod { border: 1px solid var(--ins-hairline); padding: var(--ins-4); margin-bottom: var(--ins-3); }
+.pmod-t { line-height: 1.35; }
+.pmod-i { margin-top: var(--ins-2); }
+
+/* Controle segmentado: dois caminhos exclusivos, mesma largura, sem espaço
+   entre eles — encostados, leem-se como UMA escolha e não como dois botões
+   independentes que poderiam ser os dois. */
+.pmod-b { display: flex; margin-top: var(--ins-4); }
+.pmod-b button {
+  flex: 1; min-height: 48px;
+  border: 1px solid var(--ins-hairline); background: transparent; color: var(--ins-text-3);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .1em; text-transform: uppercase;
+}
+.pmod-b button + button { border-left: 0; }
+.pmod-b button.on {
+  border-color: var(--ins-acid); color: var(--ins-acid);
+  background: var(--ins-surface-acid);
+}
+/* o `on` precisa do fio à esquerda de volta, senão a seleção fica vazada */
+.pmod-b button.on + button { border-left: 0; }
+.pmod-b button + button.on { border-left: 1px solid var(--ins-acid); }
+
+.pmot { margin: var(--ins-6) 0 var(--ins-6); }
+.pmot .obs-h { margin-bottom: var(--ins-3); }
+.promo-ok { width: 100%; }
+
+/* ---------- retrospectiva ---------- */
+.retro-nota { margin: 0 0 var(--ins-3); }
+.retro-fim { width: 100%; margin-top: var(--ins-7); }

@@ -76,7 +76,10 @@ export function LinhaResumo({ nome, delta, deltaCor, series, meta, marcas, nota 
         {series.map((s, i) => (
           <span key={i} class={s ? '' : 'nul'}>{s || '–'}</span>
         ))}
-        {meta && <span class="nul">{meta}</span>}
+        {/* `meta` aceita lista: contagem de sessões, variação de volume e o
+            que mais for CONTEXTO da linha, sempre em cinza. O que é conquista
+            vai em `marcas`, que é o único ácido daqui. */}
+        {[].concat(meta || []).map(m => <span key={m} class="nul">{m}</span>)}
         {(marcas || []).map(m => <span key={m} class="rec">{m}</span>)}
       </div>
       {nota && <div class="tc-res-nota">{nota}</div>}

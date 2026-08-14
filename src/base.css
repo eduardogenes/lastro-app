@@ -147,12 +147,17 @@ p, .ins-prosa { -webkit-user-select: text; user-select: text; }
   letter-spacing: .06em; color: var(--ins-text-4);
 }
 
-.ins-acid  { color: var(--ins-acid); }
-.ins-amber { color: var(--ins-amber); }
-.ins-coral { color: var(--ins-coral); }
-.ins-t3    { color: var(--ins-text-3); }
-.ins-t4    { color: var(--ins-text-4); }
-.ins-t5    { color: var(--ins-text-5); }
+/* Classe dobrada de propósito. Estas seis existem para SOBREPOR a cor que o
+   componente já definiu — `.stats b`, `.tc-res-d`, `.ins-tl-n` e afins trazem
+   `color` na própria anatomia, e um seletor de classe simples perde para
+   classe+elemento. Sem isto o número que deveria estar ácido sai cinza e a
+   regra "ácido é o que você fez" quebra em silêncio, sem erro nenhum. */
+.ins-acid.ins-acid   { color: var(--ins-acid); }
+.ins-amber.ins-amber { color: var(--ins-amber); }
+.ins-coral.ins-coral { color: var(--ins-coral); }
+.ins-t3.ins-t3       { color: var(--ins-text-3); }
+.ins-t4.ins-t4       { color: var(--ins-text-4); }
+.ins-t5.ins-t5       { color: var(--ins-text-5); }
 
 /* ---- Grade de fios: o vão de 1px É a régua ---------------------------- */
 
