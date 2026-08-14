@@ -4035,7 +4035,7 @@ CTX.dados = function () {
         { k: 'nao', t: 'não está', v: false, on: S.perfManual === false }
       ]
     },
-    htmlLegado: renderAcomp()
+
   };
 };
 
@@ -4498,3 +4498,113 @@ CTX.abreSessaoDoDia = function (a) {
 };
 CTX.cardioSet = function (k, v) { cardioSet(k, v); };
 CTX.addCardio = function () { addCardio(); };
+
+// ---------- DADOS: o calendário do mês ----------
+// Grade de fios por natureza: sete colunas, uma célula por dia. O marcador de
+// período é a ÚNICA exceção autorizada à regra de não usar emoji, e por isso
+// vive isolado em PERIODOS — inclusive fora deste comentário, que citá-lo
+// aqui já bastou para reprovar o teste que guarda a regra.
+
+CTX.mes = function () {
+  const ref = mesRef();
+  const ini = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const fim = new Date(ref.getFullYear(), ref.getMonth() + 1, 1);
+  const offset = (ini.getDay() + 6) % 7;              // segunda como primeira coluna
+  const dias = Math.round((fim - ini) / 86400000);
+  const t = totaisDoPeriodo(ini.getTime(), fim.getTime());
+  const med = mediaSemanal();
+  const cardMes = S.cardio.filter(function (c) { return c.t >= ini.getTime() && c.t < fim.getTime(); });
+
+  const celulas = [];
+  for (let i = 0; i < dias; i++) {
+    const dia = ini.getTime() + i * 86400000;
+    const marcas = sessoesDoDia(dia);
+    const hoje = sameDay(dia, Date.now());
+    const futuro = dia > Date.now() && !hoje;
+    const livre = marcas.length > 0 && marcas.every(function (m) { return m.livre; });
+    // periodoNaCelula devolve HTML para o render antigo; aqui o componente
+    // precisa do objeto, então a busca é feita direto.
+    let per = null;
+    for (let j = 0; j < marcas.length && !per; j++) per = periodoDaSessao(marcas[j]);
+    celulas.push({
+      n: i + 1,
+      // a letra do treino manda na célula; o número do dia é contexto
+      marca: marcas.length ? marcas.map(marcaDe).join('') : null,
+      feito: marcas.length > 0, livre: livre, hoje: hoje, futuro: futuro,
+      cardio: cardioDoDia(dia).length > 0,
+      periodo: per ? { k: per.k, rot: per.rot } : null,
+      abre: marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
+           : futuro ? null : { k: 'lancar', t: dia }
+    });
+  }
+
+  const sessoes = S.done
+    .filter(function (m) { return m.t >= ini.getTime() && m.t < fim.getTime(); })
+    .slice().reverse()
+    .map(function (m) {
+      const nSets = m.livre ? 0 : Object.keys(S.logs).reduce(function (n, k) {
+        return n + (S.logs[k] || []).filter(function (e) { return e.sid === m.sid; })
+                    .reduce(function (x, e) { return x + e.sets.filter(Boolean).length; }, 0);
+      }, 0);
+      return {
+        t: m.t,
+        data: fmtDate(m.t),
+        hora: horaDaSessao(m),
+        marca: marcaDe(m),
+        livre: !!m.livre,
+        desc: m.livre
+          ? ((m.grupos || []).join(', ') || 'treino avulso')
+          : [m.dur ? fmtDur(m.dur) : null, nSets ? nSets + ' séries' : null].filter(Boolean).join(' · '),
+        aprox: !m.livre && !!m.dur && m.fim !== 'manual',
+        aberta: !!(S.sessao && S.sessao.sid === m.sid),
+        cardio: cardioDoDia(m.t).length > 0
+      };
+    });
+
+  return {
+    titulo: MESES[ref.getMonth()] + ' ' + ref.getFullYear(),
+    podeAvancar: view.mes < 0,
+    offset: offset,
+    dias: DIAS_CURTOS,
+    celulas: celulas,
+    periodos: PERIODOS.map(function (p) { return { k: p.k, rot: p.rot, nome: p.nome }; }),
+    stats: [
+      { k: 'd', rotulo: 'dias', valor: String(t.dias) },
+      // a média de duração vinha no rótulo do total; sem ela, 7h48 não diz se
+      // foram sessões longas ou muitas sessões
+      { k: 't', rotulo: 'tempo total', valor: t.tempo ? fmtDur(t.tempo) : '–',
+        nota: t.comTempo ? 'méd ' + fmtDur(t.tempo / t.comTempo) : null },
+      { k: 'v', rotulo: 'volume', valor: fmtK(t.vol) }
+    ],
+    media: med !== null ? fmtDec(med) : null,
+    cardio: cardMes.length ? (function () {
+      // Cardio em dia sem musculação conta separado: é o que o plano pede
+      // (não competir com a recuperação), e some se for só um número total.
+      const so = cardMes.filter(function (c) { return sessoesDoDia(c.t).length === 0; }).length;
+      return {
+        n: cardMes.length,
+        min: fmtInt(cardMes.reduce(function (a, c) { return a + c.min; }, 0)),
+        soCardio: so
+      };
+    })() : null,
+    // Horário típico: só conta sessão com hora medida — retroativo sem hora
+    // informada não inventa horário, e entrar na média seria inventar.
+    horarios: (function () {
+      const h = S.done.filter(function (x) {
+        return x.t >= ini.getTime() && x.t < fim.getTime() && temHora(x);
+      }).map(function (x) { return new Date(x.t).getHours() * 60 + new Date(x.t).getMinutes(); });
+      if (!h.length) return null;
+      const fmt = function (min) {
+        return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(Math.round(min % 60)).padStart(2, '0');
+      };
+      return {
+        n: h.length,
+        media: fmt(h.reduce(function (a, b) { return a + b; }, 0) / h.length),
+        min: fmt(Math.min.apply(null, h)),
+        max: fmt(Math.max.apply(null, h))
+      };
+    })(),
+    sessoes: sessoes
+  };
+};
+CTX.mudaMes = function (n) { mudaMes(n); };

@@ -107,7 +107,8 @@ test('faixa da semana marca os dias e abre atalho nos vazios', async () => {
     return !c.className.includes('feito') && !c.className.includes('futuro');
   });
   assert.ok(vazio, 'o mês sempre tem algum dia passado sem treino');
-  assert.match(vazio.getAttribute('onclick') || '', /abrirAdicionar/);
+  a.clicar(vazio);
+  assert.ok(a.E('view.add'), 'tocar num dia vazio abre o lançamento retroativo');
   a.fechar();
 });
 
@@ -121,9 +122,9 @@ test('acompanhamento soma dias, tempo e volume do mês', async () => {
   const a = await app({ estado: { logs: logs, done: done } });
   a.E('tab("acomp")');
 
-  const stats = a.$$('.stats b').map(function (x) { return x.textContent; });
-  assert.strictEqual(stats[0], '3', 'três dias treinados');
-  assert.strictEqual(stats[1], '2h30', 'três sessões de 50 min');
+  const stats = a.$$('.ins-grade-c .ins-metric-m').map(function (x) { return x.textContent; });
+  assert.ok(stats.includes('3'), 'três dias treinados: ' + stats.join(','));
+  assert.ok(stats.includes('2h30'), 'três sessões de 50 min: ' + stats.join(','));
   assert.strictEqual(a.$$('.sessrow').length, 3);
   assert.ok(a.$$('.cal-d.feito').length >= 1);
   a.fechar();

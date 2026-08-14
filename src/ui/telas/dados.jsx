@@ -10,7 +10,6 @@
 // Sobra em string só o calendário do mês. Ele é grade de fios por natureza e
 // sobreviveu bem à repintura; converter a estrutura dele é a última pendência.
 
-import { Bruto } from '../bruto.jsx';
 import {
   Cabecalho, GradeMetricas, Procedencia, Secao, Sparkline, Stepper, Vazio, Veredito
 } from '../instrumento/primitivos.jsx';
@@ -35,6 +34,94 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, onMuda, o
 
       <GradeMetricas colunas={2} celulas={celulas} />
       {children}
+    </Secao>
+  );
+}
+
+/**
+ * O calendário do mês e a lista de sessões.
+ *
+ * A média é MÓVEL, de treinos por semana — nunca sequência de dias. Quem treina
+ * 5 a 6 vezes por semana quebra sequência todo domingo, e transformar isso em
+ * número faria o app cobrar o descanso que o próprio programa manda tirar.
+ */
+function Mes({ m, ctx }) {
+  return (
+    <Secao rotulo="o mês" nota={m.titulo}>
+      <div class="mes-nav">
+        <button class="mes-b" aria-label="mês anterior" onClick={() => ctx.mudaMes(-1)}>‹</button>
+        <span class="ins-subtitle">{m.titulo}</span>
+        <button class="mes-b" aria-label="próximo mês" disabled={!m.podeAvancar}
+                onClick={() => ctx.mudaMes(1)}>›</button>
+      </div>
+
+      <GradeMetricas colunas={3} celulas={m.stats} />
+
+      <div class="cal">
+        {m.dias.map(d => <span key={d} class="cal-h">{d}</span>)}
+        {Array.from({ length: m.offset }).map((_, i) => <span key={'x' + i} class="cal-x" />)}
+        {m.celulas.map(c => (
+          <button
+            key={c.n}
+            class={'cal-d' + (c.feito ? ' feito' : '') + (c.livre ? ' livre' : '') +
+                   (c.hoje ? ' hoje' : '') + (c.futuro ? ' futuro' : '') +
+                   (c.cardio ? ' com-cardio' : '')}
+            disabled={!c.abre}
+            onClick={() => ctx.abreSessaoDoDia(c.abre)}
+          >
+            <em>{c.n}</em>
+            {c.marca && <i>{c.marca}</i>}
+            {c.periodo && <u class={'per ' + c.periodo.k}>{c.periodo.rot}</u>}
+            {c.cardio && <span class="barra-cardio" />}
+          </button>
+        ))}
+      </div>
+
+      <div class="cal-legenda callegenda">
+        {m.periodos.map(p => (
+          <span key={p.k}><u class={'per ' + p.k}>{p.rot}</u>{p.nome}</span>
+        ))}
+      </div>
+
+      {m.media && (
+        <p class="mediasem">
+          <b>{m.media}</b> treinos por semana
+          <span>média móvel das últimas 4 semanas, não sequência de dias</span>
+        </p>
+      )}
+      {m.cardio && (
+        <p class="mediasem">
+          <b>{m.cardio.n}</b> {m.cardio.n === 1 ? 'sessão de cardio' : 'sessões de cardio'}
+          <span>
+            {m.cardio.min} minutos no mês
+            {m.cardio.soCardio > 0 &&
+              ` · ${m.cardio.soCardio} em ${m.cardio.soCardio === 1 ? 'dia sem musculação' : 'dias sem musculação'}`}
+          </span>
+        </p>
+      )}
+      {m.horarios && (
+        <p class="mediasem">
+          <b>{m.horarios.media}</b> em média
+          <span>horário de início · mais cedo {m.horarios.min} · mais tarde {m.horarios.max}</span>
+        </p>
+      )}
+
+      {m.sessoes.length > 0 && (
+        <div class="ins-lista mes-sessoes">
+          {m.sessoes.map(x => (
+            <button key={x.t} class="ins-linha sessrow" onClick={() => ctx.abreSessaoDoDia({ k: 'sessao', t: x.t })}>
+              <span class="sess-d">{x.data}{x.hora && <em>{x.hora}</em>}</span>
+              <span class={'sess-l' + (x.livre ? ' livre' : '')}>{x.marca}</span>
+              <span class="sess-n">
+                {x.desc}
+                {x.aprox && <em class="aprox">aprox</em>}
+                {x.cardio && <span class="tag card-t">cardio</span>}
+              </span>
+              {x.aberta && <span class="sess-o">em andamento</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </Secao>
   );
 }
@@ -190,8 +277,7 @@ export function Dados({ ctx }) {
 
       <Musculos m={c.musculos} ctx={ctx} />
 
-      {/* O calendário do mês, ainda em string. */}
-      <Bruto class="dd-legado" html={d.htmlLegado} />
+      <Mes m={ctx.mes()} ctx={ctx} />
     </>
   );
 }

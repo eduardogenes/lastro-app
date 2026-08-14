@@ -487,3 +487,82 @@
 }
 .gu-apagar { margin-top: var(--ins-5); }
 .gu-apagar + .ins-provenance { margin-top: var(--ins-3); }
+
+/* ---- Calendário do mês ------------------------------------------------- */
+
+.mes-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--ins-3); margin-bottom: var(--ins-5);
+}
+.mes-b {
+  flex: 0 0 var(--ins-tap); height: var(--ins-tap);
+  border: 1px solid var(--ins-border-strong); color: var(--ins-text-3); font-size: 17px;
+}
+.mes-b:disabled { opacity: .25; }
+
+/* Sete colunas, o vão de 1px é a régua — igual à grade de métricas. */
+.cal {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px;
+  background: var(--ins-rule); margin-top: var(--ins-7);
+}
+.cal > * { background: var(--ins-canvas); }
+.cal-h {
+  padding: var(--ins-2) 0; text-align: center;
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+}
+.cal-x { min-height: 40px; }
+.cal-d {
+  min-height: 40px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+  font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-4);
+}
+.cal-d em { font-style: normal; }
+.cal-d.futuro { opacity: .3; }
+.cal-d.hoje { background: var(--ins-surface-acid); }
+.cal-d.feito { color: var(--ins-acid); }
+.cal-d.livre { color: var(--ins-text-3); }
+/* Barra, não cor de fundo nem letra: a letra do treino já manda na célula. */
+.cal-d .barra-cardio { width: 10px; height: 2px; background: var(--ins-text-4); border-radius: 0; }
+.cal-d i { font-style: normal; font-weight: 500; color: var(--ins-text-2); }
+.cal-d.feito i { color: var(--ins-acid); }
+.cal-d em { font-style: normal; font-size: 9px; color: var(--ins-text-5); }
+.cal-d .per { font-size: 8px; text-decoration: none; line-height: 1; }
+
+.cal-legenda {
+  display: flex; gap: var(--ins-5); margin-top: var(--ins-4);
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+}
+.cal-legenda span { display: flex; align-items: center; gap: var(--ins-1); }
+.cal-legenda .per { text-decoration: none; font-size: 10px; }
+
+.mes-sessoes { margin-top: var(--ins-7); }
+.sessrow { gap: var(--ins-4); }
+.sess-d {
+  flex: 0 0 46px;
+  font: 400 11px/1.3 var(--ins-font-mono); color: var(--ins-text-4);
+}
+.sess-d em { display: block; font-style: normal; font-size: 9px; color: var(--ins-text-5); margin-top: 2px; }
+.sess-l {
+  flex: 0 0 18px; text-align: center;
+  font: 500 15px/1 var(--ins-font-mono); color: var(--ins-text-2);
+}
+.sess-l.livre { color: var(--ins-text-5); }
+.sess-n { flex: 1; font: 400 13px/1.35 var(--ins-font-display); color: var(--ins-text-3); }
+.sess-n .aprox {
+  font-style: normal; margin-left: var(--ins-2);
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+}
+.sess-o {
+  flex: 0 0 auto;
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-acid);
+}
+.mediasem {
+  margin: var(--ins-4) 0 0;
+  font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4);
+}
+.mediasem b { color: var(--ins-text); font-weight: 500; font-family: var(--ins-font-mono); }
+.mediasem span { display: block; margin-top: 2px; font-size: 11px; color: var(--ins-text-5); }

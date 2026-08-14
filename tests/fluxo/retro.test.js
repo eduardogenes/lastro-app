@@ -136,7 +136,8 @@ test('dia vazio do calendário é atalho para lançar', async () => {
   a.E('tab("acomp")');
   const vazios = a.$$('.cal-d:not(.feito):not(.futuro)');
   assert.ok(vazios.length > 0);
-  assert.match(vazios[0].getAttribute('onclick') || '', /abrirAdicionar/);
+  a.clicar(vazios[0]);
+  assert.ok(a.E('view.add'), 'tocar num dia vazio abre o lançamento retroativo');
   a.fechar();
 });
 

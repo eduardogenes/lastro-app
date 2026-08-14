@@ -255,7 +255,7 @@ test('acompanhamento mostra média de duração e marca o aproximado', async () 
   const a = await app({ estado: { logs: logs, done: done } });
   a.E('tab("acomp")');
 
-  const rotulo = a.$$('.stats span')[1].textContent;
+  const rotulo = a.$$('.ins-grade-c').map(function (x) { return x.textContent; }).join(' ');
   assert.ok(/méd/.test(rotulo), rotulo);
   assert.strictEqual(a.$$('.aprox').length, 1, 'só a que o app fechou sozinho');
   a.fechar();
