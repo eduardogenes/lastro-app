@@ -68,6 +68,8 @@ const TELAS = [
       a.E('[0,1,2].forEach(function(k){ ["w0_"+k,"r0_"+k].forEach(function(id,n){ var e=document.getElementById(id); if(!e) return; e.value = n?"10":"40"; e.dispatchEvent(new Event("input",{bubbles:true})); }); })');
       a.E('toggle(0)'); a.E('modoEdicao(true)'); a.E('mudaSeries(2, 1)'); a.E('modoEdicao(false)'); a.E('finalizarSessao()'); } },
   { n: '20-retro', vai: a => { a.aba('dados'); a.E('abrirRetro()'); } },
+  { n: '21-retroativo', vai: a => { a.aba('dados'); a.E('abrirAdicionar(Date.now()-86400000)'); } },
+  { n: '22-retroativo-livre', vai: a => { a.aba('dados'); a.E('abrirAdicionar(Date.now()-86400000)'); a.E('addSet("tipo","livre")'); } },
   { n: '17-hoje-vazio', vazio: true, vai: a => a.aba('hoje') },
   { n: '18-treino-vazio', vazio: true, vai: a => a.aba('treino') }
 ];

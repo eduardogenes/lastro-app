@@ -651,20 +651,6 @@
 .verdict.menos .verdict-t { color: var(--ember); }
 .verdict.faltam .verdict-t { color: var(--mist); }
 
-.addrow { display: flex; gap: 9px; align-items: stretch; margin-top: 9px; }
-.addrow .f { flex: 1; position: relative; min-width: 0; }
-.addrow input {
-  font-family: var(--f-m); font-size: 17px; font-weight: 500;
-  background: var(--dusk); border: 1px solid var(--line); color: var(--paper);
-  border-radius: 10px; padding: 15px 34px 15px 14px; width: 100%; height: 100%;
-  appearance: none; -moz-appearance: textfield;
-}
-.addrow input::-webkit-outer-spin-button,
-.addrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.addrow input::placeholder { color: var(--dim); }
-.addrow input:focus { outline: none; border-color: var(--dawn); background: var(--raise); }
-.addrow .unit { right: 14px; }
-.addrow .dbtn { width: auto; flex: 0 0 auto; padding: 15px 20px; }
 .blist { margin-top: 14px; }
 
 /* ---------- dados ---------- */

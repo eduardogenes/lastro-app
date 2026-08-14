@@ -23,6 +23,7 @@ import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
 import { Decisao } from './ui/telas/decisao.jsx';
 import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
+import { Retroativo } from './ui/telas/retroativo.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { ALIMENTOS_BASE, PLANO_BASE } from './dominio/nutricao/alimentos';
 import { arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
@@ -1307,7 +1308,7 @@ function telaLegado() {
   if (view.promo) return <Decisao ctx={CTX} />;
   if (view.prog) return <Bruto html={renderPrograma()} />;
   if (view.retro) return <Retrospectiva ctx={CTX} />;
-  if (view.add) return <Bruto html={renderAdicionar()} />;
+  if (view.add) return <Retroativo ctx={CTX} />;
   if (view.sessao) return <Sessao ctx={CTX} />;
   if (view.hist) return <Historico ctx={CTX} />;
   const app = document.getElementById('app');
@@ -2541,65 +2542,6 @@ function aplicaHora(base, txt) {
   const d = new Date(base);
   d.setHours(hh, mm, 0, 0);
   return d.getTime();
-}
-
-function renderAdicionar() {
-  const a = view.add;
-  const jaTem = sessoesDoDia(a.t);
-  const grupos = gruposDoPlano();
-  const app = document.getElementById('app');
-  const futuro = a.t + 86400000 > Date.now() + 86400000;
-
-  let h = `<div class="hhdr">
-    <button class="back" onclick="fecharAdicionar()">‹ voltar</button>
-    <div class="eyebrow"><span>registrar treino passado</span></div>
-    <h2 class="htitle">${diaExtenso(a.t)}</h2>
-  </div>
-  <div class="hwrap">
-    <div class="mesnav" style="margin-top:4px">
-      <button onclick="addSet('dia',-1)">‹</button>
-      <span style="text-transform:none">${fmtDate(a.t)}</span>
-      <button onclick="addSet('dia',1)" ${sameDay(a.t, Date.now())?'disabled':''}>›</button>
-    </div>
-    ${jaTem.length?`<div class="deload" style="margin-top:14px"><b>Já existe treino registrado neste dia.</b>
-      ${jaTem.map(function(m){return m.livre?'avulso':'treino '+m.day;}).join(', ')}. Adicionar de novo cria uma segunda sessão.</div>`:''}
-
-    <div class="obs-h" style="margin-top:22px">o que foi</div>
-    <div class="chips">
-      ${rot().map(function (x) { return `<button class="chip ${a.tipo===x?'sel':''}" onclick="addSet('tipo','${x}')">${x}</button>`; }).join('')}
-      <button class="chip ${a.tipo==='livre'?'sel':''}" onclick="addSet('tipo','livre')">outro treino</button>
-    </div>
-    ${a.tipo && a.tipo !== 'livre' ? `<p class="cue" style="margin:12px 0 0">${treino(a.tipo).name} · ${treino(a.tipo).tag}</p>` : ''}
-
-    ${a.tipo === 'livre' ? `
-      <div class="obs-h" style="margin-top:22px">grupos musculares</div>
-      <div class="chips">${grupos.map(function (g) {
-        return `<button class="chip ${a.grupos.indexOf(g)>=0?'sel':''}" onclick="addSet('grupo','${g}')">${g}</button>`;
-      }).join('')}</div>
-      <input class="note" style="margin-top:14px" placeholder="o que foi, se quiser dizer (opcional)"
-        value="${escapeHTML(a.nome)}" oninput="addNome(this)">
-      <p class="cue" style="margin:12px 0 0">Treino avulso conta como dia treinado no calendário e na média semanal, mas não move a rotação nem entra na conta das 48 sessões do bloco.</p>
-    ` : ''}
-
-    <div class="obs-h" style="margin-top:22px">horário, se lembrar</div>
-    <div class="addrow">
-      <div class="f"><input type="text" inputmode="numeric" id="ahora"
-        value="${escapeHTML(a.hora||'')}" placeholder="06:15" oninput="addHora(this)"></div>
-    </div>
-    <p class="crule" style="margin:8px 0 0">Em branco, o app não inventa horário.</p>
-
-    <div class="obs-h" style="margin-top:22px">duração, se lembrar</div>
-    <div class="chips">
-      ${[30,45,60,75].map(function (v) { return `<button class="chip ${a.dur===v?'sel':''}" onclick="addSet('dur',${v})">${v} min</button>`; }).join('')}
-    </div>
-
-    <div class="edrow" style="margin-top:26px">
-      <button class="dbtn" onclick="gravarRetro(false)" ${a.tipo?'':'disabled'}>Adicionar</button>
-    </div>
-    ${a.tipo && a.tipo !== 'livre' ? `<button class="dbtn ghost" style="margin-top:9px" onclick="gravarRetro(true)">Adicionar e preencher os exercícios</button>` : ''}
-  </div>`;
-
-  return h;
 }
 
 async function gravarRetro(detalhar) {
@@ -4674,3 +4616,37 @@ CTX.retrospectiva = function () {
   };
 };
 CTX.fechaRetro = function () { fecharRetro(); };
+
+// ---------- tela cheia: registro retroativo ----------
+CTX.retroativo = function () {
+  const a = view.add;
+  if (!a) return null;
+  const jaTem = sessoesDoDia(a.t);
+  return {
+    titulo: diaExtenso(a.t),
+    data: fmtDate(a.t),
+    hoje: sameDay(a.t, Date.now()),
+    jaTem: jaTem.length
+      ? jaTem.map(function (m) { return m.livre ? 'avulso' : 'treino ' + m.day; }).join(', ')
+      : null,
+    tipos: rot().map(function (x) { return { k: x, t: x, on: a.tipo === x }; })
+      .concat([{ k: 'livre', t: 'outro treino', on: a.tipo === 'livre' }]),
+    doPlano: a.tipo && a.tipo !== 'livre'
+      ? treino(a.tipo).name + ' · ' + treino(a.tipo).tag : null,
+    livre: a.tipo === 'livre',
+    grupos: gruposDoPlano().map(function (g) {
+      return { k: g, t: g, on: a.grupos.indexOf(g) >= 0 };
+    }),
+    nome: a.nome,
+    hora: a.hora || '',
+    duracoes: [30, 45, 60, 75].map(function (v) {
+      return { k: v, t: v + ' min', on: a.dur === v };
+    }),
+    pode: !!a.tipo
+  };
+};
+CTX.fechaAdicionar = function () { fecharAdicionar(); };
+CTX.addSet = function (campo, valor) { addSet(campo, valor); };
+CTX.addNome = function (el) { addNome(el); };
+CTX.addHora = function (el) { addHora(el); };
+CTX.gravaRetro = function (detalhar) { gravarRetro(detalhar); };

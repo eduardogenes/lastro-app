@@ -675,3 +675,38 @@
 /* ---------- retrospectiva ---------- */
 .retro-nota { margin: 0 0 var(--ins-3); }
 .retro-fim { width: 100%; margin-top: var(--ins-7); }
+
+/* ---------- registro retroativo ---------- */
+.add-dia { margin-top: var(--ins-1); }
+.add-data { text-transform: none; }
+.add-h { margin-top: var(--ins-7); }
+.add-nota { margin: var(--ins-3) 0 0; }
+.add-regra { margin: var(--ins-2) 0 0; }
+.add-nome { margin-top: var(--ins-4); }
+.add-acoes { margin-top: var(--ins-8); }
+.add-detalhe { width: 100%; margin-top: var(--ins-2); }
+.edrow .dbtn { flex: 1; }
+
+/* Campo solto de formulário (horário no registro retroativo). Mesmo desenho
+   dos campos de carga: mono, fio, canto reto. */
+.addrow { display: flex; gap: var(--ins-3); align-items: stretch; margin-top: var(--ins-3); }
+.addrow .f { flex: 1; position: relative; min-width: 0; }
+.addrow input {
+  width: 100%; padding: 14px;
+  font: 500 17px/1 var(--ins-font-mono);
+  background: var(--ins-surface); border: 1px solid var(--ins-border); color: var(--ins-text-1);
+  appearance: none; -moz-appearance: textfield;
+}
+.addrow input::placeholder { color: var(--ins-text-5); }
+.addrow input:focus { outline: none; border-color: var(--ins-acid); }
+.addrow input::-webkit-outer-spin-button,
+.addrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Ação principal desativada não usa o ácido. Ácido é "a única coisa a fazer
+   agora"; num botão que não responde ao toque, ele promete e não cumpre.
+   Vira fio, como qualquer coisa inerte no sistema. */
+.ins-btn-primary:disabled {
+  opacity: 1;
+  background: transparent; color: var(--ins-text-5);
+  border: 1px solid var(--ins-hairline);
+}
