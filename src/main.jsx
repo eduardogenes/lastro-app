@@ -4065,11 +4065,7 @@ CTX.guia = function () {
       { k: 'd', t: 'Dia de descanso', s: 'sem as refeições de treino',
         v: Math.round(dFolga.kcal) + ' kcal' }
     ],
-    htmlLegado: '<div class="rules">' + RULES.map(function (r) {
-      return '<div class="rule ' + (r.warn ? 'warn' : '') + '">' +
-        '<h3><em>' + r.k + '</em>' + r.t + '</h3>' +
-        r.p.map(function (x) { return '<p>' + x + '</p>'; }).join('') + '</div>';
-    }).join('') + '</div>' + renderData()
+    regras: RULES
   };
 };
 
@@ -4405,3 +4401,39 @@ CTX.removeAlimento = function (id) {
 CTX.alimentosParaSeletor = function (q) {
   return CTX.alimentosFiltrados(q);
 };
+
+// ---------- GUIA: a área de dados ----------
+CTX.dadosDoApp = function () {
+  const nEx = Object.keys(S.logs).length;
+  const sb = diasSemBackup();
+  const dif = difTotal();
+  const plural = function (n, um, muitos) { return n + ' ' + (n === 1 ? um : muitos); };
+  return {
+    cobraBackup: sb >= 30 && S.done.length > 0,
+    backupTxt: S.export
+      ? Math.round(sb) + ' dias desde o último backup.'
+      : 'Você nunca exportou o histórico.',
+    difTxt: dif ? dif + ' ' + (dif === 1 ? 'diferença' : 'diferenças') + ' do treinador' : null,
+    treinos: rot().length,
+    json: view.json,
+    colando: !!view.paste,
+    deload: S.deload,
+    onde: STORE_LABEL[DB.mode] || 'verificando',
+    resumo: [
+      plural(S.done.length, 'sessão registrada', 'sessões registradas'),
+      plural(nEx, 'exercício com histórico', 'exercícios com histórico'),
+      plural(S.cardio.length, 'sessão de cardio', 'sessões de cardio'),
+      plural(S.body.peso.length, 'pesagem', 'pesagens'),
+      plural(S.body.cintura.length, 'medida de cintura', 'medidas de cintura')
+    ].join(' · ')
+  };
+};
+CTX.exportar = function () { exportData(); };
+CTX.mostraJSON = function () { showJSON(); };
+CTX.copiaJSON = function () { copyJSON(); };
+CTX.alternaColar = function () { pasteJSON(); };
+CTX.importaTexto = function (txt) { importText(txt); };
+CTX.importaArquivo = function (input) { importFile(input); };
+CTX.abreRetro = function () { abrirRetro(); };
+CTX.setDeload = function (v) { setDeload(v); };
+CTX.apagaTudo = function () { wipe(); };

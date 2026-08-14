@@ -450,3 +450,40 @@
 /* Quatro campos numéricos lado a lado: é grade, não lista. */
 .ed-macros { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-5); }
 .ed-macros .ed-campo { margin-bottom: 0; }
+
+/* ---- GUIA: regras e área de dados -------------------------------------- */
+
+.gu-cobra {
+  margin-top: var(--ins-7); padding: var(--ins-5);
+  border: 1px solid var(--ins-amber);
+}
+.gu-cobra p { margin: var(--ins-3) 0 var(--ins-5); }
+.gu-cobra b { color: var(--ins-amber); font-weight: 500; }
+
+.gu-regra { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-hairline); }
+.gu-regra:last-child { border-bottom: 0; }
+.gu-regra.atencao .ins-label { color: var(--ins-amber); }
+.gu-regra-t { margin: var(--ins-3) 0 0; }
+.gu-regra-p { margin: var(--ins-3) 0 0; }
+.gu-regra-p b { color: var(--ins-text); font-weight: 500; }
+
+.gu-bloco { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-hairline); }
+.gu-bloco:last-child { border-bottom: 0; }
+.gu-bloco-t { margin: 0; }
+.gu-bloco-p { margin: var(--ins-3) 0 var(--ins-5); }
+.gu-b2 { margin-top: var(--ins-2); }
+
+/* O input de arquivo do navegador é feio e não estilizável; o label vira o
+   botão e o input fica escondido dentro dele. */
+.gu-arquivo {
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative; overflow: hidden;
+}
+.gu-arquivo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.gu-json {
+  width: 100%; min-height: 120px; margin-top: var(--ins-2);
+  font: 400 11px/1.5 var(--ins-font-mono); resize: vertical;
+}
+.gu-apagar { margin-top: var(--ins-5); }
+.gu-apagar + .ins-provenance { margin-top: var(--ins-3); }

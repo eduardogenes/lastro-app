@@ -142,14 +142,15 @@ test('histórico longo não é truncado', async () => {
 test('abrir o JSON conta como backup', async () => {
   const a = await app({ estado: { logs: {}, done: [{ day: 'A', t: Date.now() - 60 * DIA }] } });
   assert.ok(a.E('diasSemBackup()') > 30);
-  a.E('tab("ajustes")');
-  assert.ok(a.$$('.deload').some(function (x) { return /backup|exportou/.test(x.textContent); }));
+  a.aba('guia');
+  assert.ok(a.$('.gu-cobra'), 'o GUIA cobra o backup quando passou de 30 dias');
+  assert.match(a.texto('.gu-cobra'), /backup|exportou/);
 
   a.E('showJSON()');
   await a.esperar();
   assert.ok(a.E('S.export') > 0, 'quem copia o texto na mão também fez backup');
-  a.E('tab("ajustes")');
-  assert.ok(!a.$$('.deload').some(function (x) { return /backup|exportou/.test(x.textContent); }));
+  a.aba('guia');
+  assert.strictEqual(a.$('.gu-cobra'), null, 'e para de cobrar depois que ele exporta');
   a.fechar();
 });
 
