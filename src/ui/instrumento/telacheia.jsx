@@ -48,6 +48,20 @@ export function Stats({ celulas }) {
 }
 
 /**
+ * O gráfico do histórico.
+ *
+ * Entra como markup pronto porque é DESENHO: `chartSVG()` calcula escala,
+ * caminho e eixo em coordenadas, e transcrever isso para JSX renderizaria o
+ * mesmo SVG com mais linhas e mais chance de erro. A condição para isso ser
+ * aceitável é que o desenho não tenha comportamento — nenhum handler, nenhum
+ * id que outra função procure. Um teste garante que continua assim.
+ */
+export function Grafico({ svg }) {
+  if (!svg) return null;
+  return <div class="ins-grafico" dangerouslySetInnerHTML={{ __html: svg }} />;
+}
+
+/**
  * Uma linha de exercício num resumo (sessão, retrospectiva, histórico).
  * Nome à esquerda, variação à direita, séries embaixo em mono.
  */

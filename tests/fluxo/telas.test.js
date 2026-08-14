@@ -254,3 +254,28 @@ test('painel de músculos avisa quando há treino avulso no período', async () 
   assert.ok(nota.textContent.includes('peito'));
   a.fechar();
 });
+
+// O gráfico é a única coisa que ainda entra por markup gerado, e a licença
+// para isso é ele não ter comportamento: desenho puro, nenhum handler, nenhum
+// id que outra função procure. Se alguém colar um `onclick` ali dentro, o
+// desenho vira código alcançável só por string — exatamente a dívida que o
+// resto da migração serviu para pagar.
+test('o gráfico do histórico é desenho, não comportamento', async () => {
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { A0: [{ t: t - DIA, sid: t - DIA, sets: [[40, 10]] },
+                 { t: t, sid: t, sets: [[45, 10]] }] },
+    done: [{ day: 'A', t: t, sid: t }]
+  } });
+  a.E('go("A")');
+  a.E('openHist(0)');
+
+  const g = a.$('.ins-grafico');
+  assert.ok(g, 'o gráfico foi desenhado');
+  assert.ok(g.querySelector('svg'), 'e é SVG');
+  const sujos = [...g.querySelectorAll('*')].filter(function (el) {
+    return [...el.attributes].some(function (at) { return /^on/i.test(at.name); });
+  });
+  assert.strictEqual(sujos.length, 0, 'nenhum handler inline dentro do gráfico');
+  a.fechar();
+});

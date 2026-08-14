@@ -67,8 +67,12 @@
 .tag.pulado-t { border-color: var(--ins-border); color: var(--ins-text-5); }
 .tag.card-t   { border-color: var(--ins-border); color: var(--ins-text-4); }
 
-/* O único ácido do cartão: "suba a carga". Se competir com outro, some. */
-.up {
+/* O único ácido do cartão: "suba a carga". Se competir com outro, some.
+   Escopado no `.ex-sub` de propósito: solto, o seletor pegava também o `.up`
+   que o sistema antigo usa como MODIFICADOR DE COR em números (`.stats b.up`,
+   `.hs-d.up`) e pintava o número de fundo ácido sobre texto ácido — bloco
+   sólido, ilegível. Distintivo e cor são coisas diferentes. */
+.ex-sub .up {
   padding: var(--ins-1) var(--ins-3); background: var(--ins-acid); color: var(--ins-on-acid);
   font: 400 9px/1 var(--ins-font-mono);
   letter-spacing: .12em; text-transform: uppercase;

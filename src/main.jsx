@@ -20,6 +20,7 @@ import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
+import { Historico } from './ui/telas/historico.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { ALIMENTOS_BASE, PLANO_BASE } from './dominio/nutricao/alimentos';
 import { arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
@@ -1306,7 +1307,7 @@ function telaLegado() {
   if (view.retro) return <Bruto html={renderRetro()} />;
   if (view.add) return <Bruto html={renderAdicionar()} />;
   if (view.sessao) return <Sessao ctx={CTX} />;
-  if (view.hist) return <Bruto html={renderHist()} />;
+  if (view.hist) return <Historico ctx={CTX} />;
   const app = document.getElementById('app');
   const d = view.day, P = treino(d);
   const cycle = Math.floor(S.done.length / rot().length) + 1;
@@ -2240,142 +2241,11 @@ async function restaurarTudo() {
   toast('Programa de volta ao do treinador.');
 }
 
-// ---------- histórico do exercício ----------
-function renderHist() {
-  const d = view.hist.day, i = view.hist.i;
-  const ex = treino(d).ex[i];
-  const vars = variantsOf(d,i);
-  const sel = view.hist.key || id(d,i);
-  const tipo = cargaTipo(sel, ex);
-  const nome = nomeEx(sel);
-  const H = (S.logs[sel] || []).slice(-6);
-  const app = document.getElementById('app');
-
-  let h = `<div class="hhdr">
-    <button class="back" onclick="closeHist()">‹ voltar para o treino ${d}</button>
-    <div class="eyebrow"><span>treino ${d} · exercício ${String(i+1).padStart(2,'0')}</span><span>${H.length} de 6 sessões</span></div>
-    <h2 class="htitle">${nome}</h2>
-    <div class="ex-sub">
-      <span>${ex.s} × ${ex.r}</span>
-      <span class="tag ${ex.c?'comp':''}">${ex.c?'composto':'isolador'}</span>
-      <span class="tag">${CARGAS[tipo].nome}</span>
-      ${sel!==id(d,i)?'<span class="tag swap-t">substituto</span>':''}
-      ${sel===id(d,i)&&shouldUp(d,i,ex)?'<span class="up">↑ subir carga</span>':''}
-    </div>
-    ${vars.length?`<div class="vars">
-      <button class="vchip ${sel===id(d,i)?'on':''}" onclick="histKey('${escAttr(id(d,i))}')">${ex.n}</button>
-      ${vars.map(v=>`<button class="vchip ${sel===v.key?'on':''}" onclick="histKey('${escAttr(v.key)}')">${v.name}</button>`).join('')}
-    </div>`:''}
-  </div>`;
-
-  if (!H.length) {
-    h += `<div class="msg">Nenhuma sessão registrada neste exercício ainda.<br>O gráfico aparece depois do primeiro treino salvo.</div>`;
-  return h;
-    window.scrollTo(0,0);
-    return;
-  }
-
-  const seg = isTime(ex) || (H[0] && H[0].u === 'seg');
-  const corpo = !seg && tipo === 'corpo';
-  const rotCarga = seg ? 'kg' : CARGAS[tipo].rot;
-  const met = seg ? tutOf : (corpo ? repsOf : volOf);
-  const last = H[H.length-1];
-  const first = H[0];
-  const dv = H.length > 1 && met(first) > 0
-    ? Math.round((met(last) - met(first)) / met(first) * 100)
-    : null;
-  const comCarga = seg && H.some(x => maxLoad(x) > 0);
-
-  h += `<div class="hwrap">
-    <div class="stats">
-      ${seg
-        ? `<div><b>${fmtInt(tutOf(last))}</b><span>tempo da última · seg</span></div>
-           <div><b>${fmtInt(Math.round(tutOf(last)/Math.max(last.sets.filter(Boolean).length,1)))}</b><span>média por série · seg</span></div>`
-        : corpo
-        ? `<div><b>${fmtInt(repsOf(last))}</b><span>repetições na última</span></div>
-           <div><b>${maxLoad(last)?fmtNum(maxLoad(last)):'–'}</b><span>carga somada · kg</span></div>`
-        : `<div><b>${fmtNum(maxLoad(last))}</b><span>carga atual · ${rotCarga}</span></div>
-           <div><b>${fmtInt(volOf(last))}</b><span>volume da última</span></div>`}
-      <div><b class="${dv!==null&&dv>0?'up':''}">${dv===null?'–':(dv>0?'+':'')+dv+'%'}</b><span>${seg?'tempo':(corpo?'repetições':'volume')} no período</span></div>
-    </div>
-    ${chartSVG(H, seg ? 'seg' : (corpo ? 'corpo' : null), rotCarga)}
-    <div class="legend">
-      <span class="c"><i></i>${seg?'tempo total sob tensão':(corpo?'repetições da sessão':'carga máxima da sessão')}</span>
-      ${(seg||corpo) ? (H.some(function(x){return maxLoad(x)>0;})?'<span class="v"><i></i>carga adicionada</span>':'') : '<span class="v"><i></i>volume total</span>'}
-    </div>
-    <div class="hsec">sessão a sessão</div>`;
-
-  const base = S.logs[sel].length - H.length;   // índice real dentro do log completo
-  h += H.map((s, k) => {
-    const v = met(s);
-    const pv = k > 0 ? met(H[k-1]) : null;
-    const delta = pv ? Math.round((v-pv)/pv*100) : null;
-    const real = base + k;
-    if (view.edit === real) return linhaEdicao(sel, real, s, seg);
-    return `<div class="hs">
-      <div class="hs-top">
-        <span class="hs-date">${fmtDate(s.t)}</span>
-        <span class="hs-vol">${fmtInt(v)}<em>${seg?'seg no total':'kg×reps'}</em></span>
-        ${s.dl?'<span class="tag dl-t">deload</span>':''}
-        ${delta===null?'':`<span class="hs-d ${delta>0?'up':''}">${delta>0?'+':''}${delta}%</span>`}
-      </div>
-      <div class="hs-sets">${s.sets.map(x => x
-        ? `<span>${seg ? (x[0]?fmtNum(x[0])+'kg × '+x[1]+'s':x[1]+'s')
-                      : (corpo && !x[0] ? x[1]+' reps' : fmtNum(x[0])+'×'+x[1])}</span>`
-        : '<span class="nul">–</span>').join('')}
-        ${(seg||corpo)?'':`<span class="nul">${repsOf(s)} reps</span>`}
-        ${!seg && CARGAS[tipo].dobra && maxLoad(s)?`<span class="nul">${fmtNum(totalAnilhas(maxLoad(s)))} kg ${CARGAS[tipo].total}</span>`:''}
-      </div>
-      ${s.dor&&s.dor.length?`<div class="pain">dor em ${s.dor.map(dorName).join(' e ')}</div>`:''}
-      ${s.obs?`<div class="hs-obs">${escapeHTML(s.obs)}</div>`:''}
-      <button class="edbtn" onclick="editarSessao(${real})">corrigir esta sessão</button>
-    </div>`;
-  }).reverse().join('');
-
-  const dores = H.filter(x => x.dor && x.dor.length);
-  if (dores.length) {
-    h += `<div class="painsum"><b>${dores.length} ${dores.length===1?'sessão marcada':'sessões marcadas'} com dor de tendão</b>${H.length>1?` nas últimas ${H.length} sessões`:''}.
-      A regra do programa é tirar o exercício por 2 semanas e trocar o ângulo, não empurrar por cima.</div>`;
-  }
-
-  h += `<p class="cue" style="margin:22px 0 0">${ex.cue}</p></div>`;
-
-  return h;
-  window.scrollTo(0,0);
-}
-
 function openHist(i){ view.hist = { day:view.day, i, key:logKey(view.day,i) }; view.edit = null; render(); }
 
 // ---------- correção de sessão passada ----------
 // Digitou 400 no lugar de 40 e só percebeu na semana seguinte: até aqui não
 // havia saída a não ser exportar o JSON e editar na mão.
-function linhaEdicao(key, real, s, seg) {
-  const e = S.logs[key][real];
-  let rows = '';
-  e.sets.forEach(function (x, k) {
-    rows += `<div class="setrow">
-      <div class="setno">${k+1}</div>
-      <div class="f"><input type="text" inputmode="decimal" id="ed${k}_0"
-        value="${x?fmtNum(x[0]):''}" placeholder="${seg?'0':'kg'}" oninput="limpaNum(this,true)"><span class="unit">kg</span></div>
-      <div class="x">×</div>
-      <div class="f"><input type="text" inputmode="numeric" id="ed${k}_1"
-        value="${x?x[1]:''}" placeholder="${seg?'seg':'reps'}" oninput="limpaNum(this,false)">${seg?'<span class="unit">seg</span>':''}</div>
-    </div>`;
-  });
-  return `<div class="hs editando">
-    <div class="hs-top"><span class="hs-date">${fmtDate(e.t)}</span><span class="hs-vol" style="font-size:11px">corrigindo</span></div>
-    <div style="margin-top:10px">${rows}</div>
-    <div class="obs-h" style="margin-top:14px">dor de tendão</div>
-    <div class="chips">${DORES.map(x => `<button class="chip ${(e.dor||[]).indexOf(x.k)>=0?'on':''}" onclick="editDor('${x.k}')">${x.t}</button>`).join('')}</div>
-    <textarea class="note" id="edobs" placeholder="observação da sessão">${escapeHTML(e.obs||'')}</textarea>
-    <div class="edrow">
-      <button class="dbtn" onclick="salvarEdicao()">Salvar correção</button>
-      <button class="dbtn ghost" onclick="cancelarEdicao()">cancelar</button>
-    </div>
-    <button class="danger" style="width:100%;margin-top:10px" onclick="apagarSessao()">apagar esta sessão</button>
-  </div>`;
-}
-
 function editarSessao(real){ view.edit = real; render(); }
 function cancelarEdicao(){ view.edit = null; render(); }
 
@@ -4703,3 +4573,121 @@ CTX.detalheDaSessao = function () {
 };
 CTX.fechaSessao = function () { fecharSessao(); };
 CTX.editaSessao = function (t) { apagarMarca(t); };
+
+// ---------- tela cheia: histórico do exercício ----------
+CTX.historico = function () {
+  const d = view.hist.day, i = view.hist.i;
+  const P = treino(d);
+  const ex = P.ex[i];
+  const vars = variantsOf(d, i);
+  const sel = view.hist.key || id(d, i);
+  const tipo = cargaTipo(sel, ex);
+  const H = (S.logs[sel] || []).slice(-6);
+  const base = (S.logs[sel] || []).length - H.length;
+
+  const seg = isTime(ex) || (H[0] && H[0].u === 'seg');
+  const corpo = !seg && tipo === 'corpo';
+  const rotCarga = seg ? 'kg' : CARGAS[tipo].rot;
+  const met = seg ? tutOf : (corpo ? repsOf : volOf);
+
+  const marcas = [];
+  marcas.push({ k: 'c', t: ex.c ? 'composto' : 'isolador', cls: ex.c ? 'comp' : '' });
+  marcas.push({ k: 'car', t: CARGAS[tipo].nome, cls: '' });
+  if (sel !== id(d, i)) marcas.push({ k: 'sub', t: 'substituto', cls: 'swap-t' });
+
+  const cab = {
+    dia: d,
+    olho: 'treino ' + d + ' · exercício ' + String(i + 1).padStart(2, '0'),
+    meta: H.length + ' de 6 sessões',
+    titulo: nomeEx(sel),
+    alvo: ex.s + ' × ' + ex.r,
+    marcas: marcas,
+    up: sel === id(d, i) && shouldUp(d, i, ex),
+    cue: ex.cue,
+    variantes: vars.length
+      ? [{ k: id(d, i), t: ex.n, on: sel === id(d, i) }].concat(
+          vars.map(function (v) { return { k: v.key, t: v.name, on: sel === v.key }; }))
+      : null
+  };
+
+  if (!H.length) return Object.assign(cab, { vazio: true });
+
+  const last = H[H.length - 1], first = H[0];
+  const dv = H.length > 1 && met(first) > 0
+    ? Math.round((met(last) - met(first)) / met(first) * 100) : null;
+
+  return Object.assign(cab, {
+    vazio: false,
+    stats: (seg
+      ? [{ k: 'a', rotulo: 'tempo da última · seg', valor: fmtInt(tutOf(last)) },
+         { k: 'b', rotulo: 'média por série · seg',
+           valor: fmtInt(Math.round(tutOf(last) / Math.max(last.sets.filter(Boolean).length, 1))) }]
+      : corpo
+      ? [{ k: 'a', rotulo: 'repetições na última', valor: fmtInt(repsOf(last)) },
+         { k: 'b', rotulo: 'carga somada · kg', valor: maxLoad(last) ? fmtNum(maxLoad(last)) : '–' }]
+      : [{ k: 'a', rotulo: 'carga atual · ' + rotCarga, valor: fmtNum(maxLoad(last)) },
+         { k: 'b', rotulo: 'volume da última', valor: fmtInt(volOf(last)) }]
+    ).concat([{
+      k: 'd',
+      rotulo: (seg ? 'tempo' : corpo ? 'repetições' : 'volume') + ' no período',
+      valor: dv === null ? '–' : (dv > 0 ? '+' : '') + dv + '%',
+      cor: dv !== null && dv > 0 ? 'ins-acid' : ''
+    }]),
+    // O gráfico continua sendo SVG gerado: é desenho, não estrutura, e não
+    // carrega nenhum handler. Entra por markup e sai daqui inteiro.
+    svg: chartSVG(H, seg ? 'seg' : (corpo ? 'corpo' : null), rotCarga),
+    legenda: [
+      { k: 'c', t: seg ? 'tempo total sob tensão' : corpo ? 'repetições da sessão' : 'carga máxima da sessão' },
+      (seg || corpo)
+        ? (H.some(function (x) { return maxLoad(x) > 0; }) ? { k: 'v', t: 'carga adicionada' } : null)
+        : { k: 'v', t: 'volume total' }
+    ].filter(Boolean),
+    sessoes: H.map(function (s, k) {
+      const v = met(s);
+      const pv = k > 0 ? met(H[k - 1]) : null;
+      const delta = pv ? Math.round((v - pv) / pv * 100) : null;
+      return {
+        real: base + k,
+        data: fmtDate(s.t),
+        valor: fmtInt(v),
+        unidade: seg ? 'seg no total' : 'kg×reps',
+        deload: !!s.dl,
+        delta: delta === null ? null : (delta > 0 ? '+' : '') + delta + '%',
+        deltaCor: delta > 0 ? 'ins-acid' : '',
+        series: s.sets.map(function (x) {
+          if (!x) return null;
+          return seg ? (x[0] ? fmtNum(x[0]) + 'kg × ' + x[1] + 's' : x[1] + 's')
+                     : (corpo && !x[0] ? x[1] + ' reps' : fmtNum(x[0]) + '×' + x[1]);
+        }),
+        reps: (seg || corpo) ? null : repsOf(s) + ' reps',
+        anilhas: (!seg && CARGAS[tipo].dobra && maxLoad(s))
+          ? fmtNum(totalAnilhas(maxLoad(s))) + ' kg ' + CARGAS[tipo].total : null,
+        dor: s.dor && s.dor.length ? 'dor em ' + s.dor.map(dorName).join(' e ') : null,
+        obs: s.obs || null,
+        editando: view.edit === base + k,
+        edicao: view.edit === base + k ? {
+          sets: s.sets.map(function (x) {
+            return { carga: x ? fmtNum(x[0]) : '', reps: x ? String(x[1]) : '' };
+          }),
+          seg: seg,
+          dores: DORES.map(function (x) {
+            return { k: x.k, t: x.t, on: (s.dor || []).indexOf(x.k) >= 0 };
+          }),
+          obs: s.obs || ''
+        } : null
+      };
+    }).reverse(),
+    dores: (function () {
+      const n = H.filter(function (x) { return x.dor && x.dor.length; }).length;
+      return n ? { n: n, de: H.length } : null;
+    })()
+  });
+};
+CTX.fechaHist = function () { closeHist(); };
+CTX.histKey = function (k) { histKey(k); };
+CTX.editaLinha = function (real) { editarSessao(real); };
+CTX.cancelaEdicao = function () { cancelarEdicao(); };
+CTX.salvaEdicao = function () { salvarEdicao(); };
+CTX.apagaLinha = function () { apagarSessao(); };
+CTX.editDor = function (k) { editDor(k); };
+CTX.limpaNum = function (el, dec) { limpaNum(el, dec); };
