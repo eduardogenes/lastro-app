@@ -19,6 +19,7 @@ import { Bruto } from './ui/bruto.jsx';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
+import { Sessao } from './ui/telas/sessao.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { ALIMENTOS_BASE, PLANO_BASE } from './dominio/nutricao/alimentos';
 import { arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
@@ -1304,7 +1305,7 @@ function telaLegado() {
   if (view.prog) return <Bruto html={renderPrograma()} />;
   if (view.retro) return <Bruto html={renderRetro()} />;
   if (view.add) return <Bruto html={renderAdicionar()} />;
-  if (view.sessao) return <Bruto html={renderSessao()} />;
+  if (view.sessao) return <Sessao ctx={CTX} />;
   if (view.hist) return <Bruto html={renderHist()} />;
   const app = document.getElementById('app');
   const d = view.day, P = treino(d);
@@ -4608,3 +4609,97 @@ CTX.mes = function () {
   };
 };
 CTX.mudaMes = function (n) { mudaMes(n); };
+
+// ---------- tela cheia: detalhe da sessão ----------
+CTX.detalheDaSessao = function () {
+  const m = view.sessao;
+  if (!m) return null;
+
+  if (m.livre) {
+    return {
+      livre: true,
+      olho: 'treino avulso',
+      meta: diaExtenso(m.t),
+      titulo: m.nome || (m.grupos || []).join(', ') || 'treino avulso',
+      stats: [
+        { k: 'd', rotulo: 'tempo de treino', valor: m.dur ? fmtDur(m.dur) : '–' },
+        { k: 'g', rotulo: (m.grupos || []).length === 1 ? 'grupo muscular' : 'grupos musculares',
+          valor: String((m.grupos || []).length) }
+      ],
+      grupos: m.grupos || [],
+      t: m.t
+    };
+  }
+
+  const R = resumoDaSessao(m);
+  const aberta = !!(S.sessao && S.sessao.sid === m.sid);
+  const dur = aberta ? (S.sessao.ultima - S.sessao.inicio) : m.dur;
+  const exato = m.fim === 'manual';
+  const recordes = R.itens.filter(function (x) { return x.recCarga || x.recMet; }).length;
+  const p = pendencias(m.day, m.sid, m.pulados);
+  const card = cardioDoDia(m.t);
+
+  const notas = [];
+  if (!aberta && dur != null && !exato) {
+    notas.push('Você não encerrou este treino; o app fechou sozinho e o tempo vai até a última série registrada.');
+  }
+  if (m.pausado) notas.push(fmtDur(m.pausado) + ' de pausa, fora da conta.');
+  if (m.ini === 'manual') notas.push('Início marcado por você, antes do aquecimento.');
+
+  const hIni = horaDaSessao(m), hFim = aberta ? null : fimDaSessao(m);
+
+  return {
+    livre: false,
+    t: m.t,
+    olho: 'treino ' + m.day + (aberta ? ' · em andamento' : ''),
+    meta: diaExtenso(m.t),
+    titulo: R.series + (R.series === 1 ? ' série registrada' : ' séries registradas'),
+    stats: [
+      { k: 'd', rotulo: aberta ? 'em andamento'
+          : dur == null ? 'tempo não medido' : exato ? 'tempo exato' : 'tempo aproximado',
+        valor: dur != null ? fmtDur(dur) : '–' },
+      { k: 'v', rotulo: 'volume · kg×reps', valor: R.vol ? fmtInt(R.vol) : '–' },
+      { k: 'r', rotulo: recordes === 1 ? 'recorde' : 'recordes', valor: String(recordes),
+        cor: recordes ? 'ins-acid' : '' }
+    ],
+    horario: hIni ? (hFim ? { de: hIni, ate: hFim } : { de: hIni, ate: null }) : null,
+    notas: notas,
+    mods: Array.isArray(m.mods) && m.mods.length ? m.mods : null,
+    pendencias: [
+      { k: 'pulado', n: p.pulado.length, rotulo: p.pulado.length === 1 ? 'pulado' : 'pulados',
+        nomes: p.pulado.map(function (x) { return x.nome; }).join(', ') },
+      { k: 'parcial', n: p.parcial.length, rotulo: p.parcial.length === 1 ? 'parcial' : 'parciais',
+        nomes: p.parcial.map(function (x) { return x.nome; }).join(', ') },
+      { k: 'nada', n: p.nada.length, rotulo: 'não ' + (p.nada.length === 1 ? 'feito' : 'feitos'),
+        nomes: p.nada.map(function (x) { return x.nome; }).join(', ') }
+    ].filter(function (x) { return x.n > 0; }),
+    cardio: card.length
+      ? card.map(function (c) { return c.min + ' min de ' + c.m + ' · ' + c.i; })
+      : null,
+    tempo: R.tempo ? fmtInt(R.tempo) : null,
+    dores: R.dores.length ? R.dores.join(', ') : null,
+    itens: R.itens.map(function (x) {
+      const marcas = [];
+      if (x.recCarga) marcas.push('recorde de carga');
+      else if (x.recMet) marcas.push('recorde de ' + (x.seg ? 'tempo' : 'volume'));
+      if (x.novo) marcas.push('primeira vez');
+      if (x.fora) marcas.push('fora do treino');
+      return {
+        nome: x.nome,
+        delta: x.delta === null ? null : (x.delta > 0 ? '+' : '') + x.delta + '%',
+        deltaCor: x.delta > 0 ? 'ins-acid' : '',
+        series: x.sets.map(function (y) {
+          if (!y) return null;
+          return x.seg
+            ? (y[0] ? fmtNum(y[0]) + 'kg × ' + y[1] + 's' : y[1] + 's')
+            : fmtNum(y[0]) + '×' + y[1];
+        }),
+        meta: fmtInt(x.met) + ' ' + (x.seg ? 'seg' : 'vol'),
+        marcas: marcas,
+        nota: x.dor.length ? 'dor em ' + x.dor.map(dorName).join(' e ') : null
+      };
+    })
+  };
+};
+CTX.fechaSessao = function () { fecharSessao(); };
+CTX.editaSessao = function (t) { apagarMarca(t); };
