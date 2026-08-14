@@ -422,3 +422,9 @@
 /* A média da semana é dado de leitura, não ação. */
 .week-n { color: var(--ins-text); }
 .week-n em { color: var(--ins-text-4); }
+
+/* Registro rápido de cardio, expandido no lugar. */
+.cardq { margin-top: var(--ins-2); padding: var(--ins-5); border: 1px solid var(--ins-border); }
+.cardq-2 { margin-top: var(--ins-2); }
+.cardq-b { margin-top: var(--ins-5); }
+.cwarn { margin-top: var(--ins-4); }

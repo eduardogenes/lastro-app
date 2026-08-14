@@ -3961,9 +3961,7 @@ CTX.treino = function () {
       return { k: x, t: x, on: x === d, proximo: x === proximoTreino(S, ROT_BASE) };
     }),
     diffTxt: dif ? dif + (dif === 1 ? ' diferença do treinador' : ' diferenças do treinador') : 'igual ao treinador',
-    // ainda em string: markup com teste em cima que só falta repintar
-    htmlSessao: relogioDaSessao() + controlesSessao(),
-    htmlSemana: faixaSemana() + linhaCardio(),
+
     // O modo de edição do dia ainda é a tela antiga inteira. É a próxima a cair.
     editando: !!(view.editProg && podeEditar(d)),
     htmlEdicao: (view.editProg && podeEditar(d)) ? renderEdicao(d, P) : '',
@@ -4437,3 +4435,66 @@ CTX.importaArquivo = function (input) { importFile(input); };
 CTX.abreRetro = function () { abrirRetro(); };
 CTX.setDeload = function (v) { setDeload(v); };
 CTX.apagaTudo = function () { wipe(); };
+
+// ---------- TREINO: o cromo da sessão ----------
+
+CTX.cromoDoTreino = function () {
+  const s = S.sessao;
+  const ini = weekStart(Date.now());
+  const semana = [];
+  for (let i = 0; i < 7; i++) {
+    const dia = ini + i * 86400000;
+    const marcas = sessoesDoDia(dia);
+    const hoje = sameDay(dia, Date.now());
+    const futuro = dia > Date.now() && !hoje;
+    semana.push({
+      d: DIAS_CURTOS[i],
+      v: marcas.length ? marcas.map(marcaDe).join('') : '+',
+      feito: marcas.length > 0,
+      livre: marcas.length > 0 && marcas.every(function (m) { return m.livre; }),
+      hoje: hoje,
+      futuro: futuro,
+      cardio: cardioDoDia(dia).length > 0,
+      // sem ação no futuro: lançar treino que ainda não aconteceu não faz sentido
+      abre: marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
+           : futuro ? null : { k: 'lancar', t: dia }
+    });
+  }
+
+  const hojeCardio = cardioDoDia(Date.now());
+  return {
+    sessao: s && !s.retro ? {
+      relogio: relogioTexto(s),
+      pausada: !!s.pausadoEm,
+      desde: s.pausadoEm ? 'pausado' : 'desde ' + fmtHora(s.inicio)
+    } : null,
+    semana: semana,
+    cardio: (function () {
+      const f = Object.assign({ m: 'bike', min: 25, i: 'moderado' }, view.cardioForm);
+      const perna = pernaHoje();
+      return {
+        feito: hojeCardio.length > 0,
+        resumo: hojeCardio.length
+          ? hojeCardio.map(function (c) { return c.min + ' min de ' + c.m; }).join(' · ')
+          : cardioSemana().length + ' de 3 nesta semana',
+        aberto: !!view.cardioRapido,
+        modais: MODAIS.map(function (m) { return { k: m, t: m, on: f.m === m }; }),
+        minutos: [20, 25, 30, 40].map(function (v) { return { k: v, t: v + ' min', on: f.min === v }; }),
+        intensidades: ['leve', 'moderado'].map(function (v) { return { k: v, t: v, on: f.i === v }; }),
+        // O aviso não bloqueia: sinaliza. A regra é do treinador, e quem decide
+        // se hoje ainda dá é ele, não o app.
+        aviso: perna.length
+          ? 'Você treinou ' + perna.join(' e ') + ' hoje. A regra é não pôr cardio no mesmo período de treino de perna.'
+          : null,
+        acao: 'registrar ' + f.min + ' min de ' + f.m
+      };
+    })()
+  };
+};
+
+CTX.abreSessaoDoDia = function (a) {
+  if (!a) return;
+  if (a.k === 'sessao') abrirSessao(a.t); else abrirAdicionar(a.t);
+};
+CTX.cardioSet = function (k, v) { cardioSet(k, v); };
+CTX.addCardio = function () { addCardio(); };

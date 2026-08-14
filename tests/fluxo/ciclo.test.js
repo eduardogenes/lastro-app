@@ -7,7 +7,7 @@ import { app, DIA } from './harness.js';
 
 test('iniciar marca o tempo antes da primeira série', async () => {
   const a = await app();
-  assert.strictEqual(a.texto('.day-ini'), 'iniciar', 'o botão fica ao lado da letra do dia');
+  assert.strictEqual(a.texto('.day-ini'), 'iniciar treino', 'o botão fica ao lado da letra do dia');
   assert.strictEqual(a.$('#relogio'), null, 'sem sessão não há relógio');
 
   await a.E('iniciarSessao()');

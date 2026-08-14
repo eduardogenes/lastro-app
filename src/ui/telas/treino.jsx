@@ -15,6 +15,7 @@ import { Bruto } from '../bruto.jsx';
 
 export function Treino({ ctx }) {
   const t = ctx.treino();
+  const c = ctx.cromoDoTreino();
 
   return (
     <>
@@ -42,12 +43,26 @@ export function Treino({ ctx }) {
           ]}
         />
 
-        {/* Relógio, controles de sessão, faixa da semana e linha de cardio
-            ainda vêm em string do casco. Foi decisão de risco: esse markup
-            carrega o relógio que anda sem re-render, o horário da sessão e o
-            atalho de cardio, tudo com teste em cima. Repintar isso é o próximo
-            passo, e é repintura de CSS — a marcação já está certa. */}
-        <Bruto class="tr-sessao" html={t.htmlSessao} />
+        {/* O relógio anda por fora do Preact de propósito: tickRelogio()
+            escreve em #relogio de segundo em segundo sem re-render, porque
+            redesenhar a tela inteira a cada segundo roubaria o foco do campo
+            que ele está preenchendo no meio da série. */}
+        {c.sessao
+          ? <div class={'day-rel' + (c.sessao.pausada ? ' pausado' : '')}>
+              {!c.sessao.pausada && <span class="ins-live-dot" />}
+              <span id="relogio" class="ins-metric-m">{c.sessao.relogio}</span>
+              <em class="ins-label-sm">{c.sessao.desde}</em>
+            </div>
+          : <button class="day-ini" onClick={ctx.iniciarSessao}>iniciar treino</button>}
+
+        {t.sessaoAberta && (
+          <div class="ctrl">
+            {t.pausada
+              ? <button class="ctrl-b ini" onClick={ctx.retomarSessao}>retomar</button>
+              : <button class="ctrl-b" onClick={ctx.pausarSessao}>pausar</button>}
+            <button class="ctrl-b fim" onClick={ctx.finalizarSessao}>finalizar</button>
+          </div>
+        )}
 
         {/* A rotação. Ácido no atual, fio no próximo — a fila é sequência, não
             dia da semana, e a tela mostra isso de relance. */}
@@ -62,7 +77,57 @@ export function Treino({ ctx }) {
         </div>
       </Secao>
 
-      <Bruto class="tr-semana" html={t.htmlSemana} />
+      {/* A semana e o cardio: contexto de adesão, não da sessão. */}
+      <div class="semana">
+        {c.semana.map(d => (
+          <button
+            key={d.d}
+            class={'wd' + (d.hoje ? ' hoje' : '') + (d.feito ? ' feito' : '') +
+                   (d.livre ? ' livre' : '') + (d.futuro ? ' futuro' : '')}
+            disabled={!d.abre}
+            onClick={() => ctx.abreSessaoDoDia(d.abre)}
+          >
+            <span class="wd-d">{d.d}</span>
+            <span class="wd-v">{d.v}</span>
+            {d.cardio && <span class="barra-cardio" />}
+          </button>
+        ))}
+      </div>
+
+      <div class={'cardl' + (c.cardio.feito ? ' feito' : '')}>
+        <span class="cardl-t">cardio</span>
+        <span class="cardl-n">{c.cardio.resumo}</span>
+        <button class="cardl-b" onClick={ctx.abreCardio}>
+          {c.cardio.aberto ? 'fechar' : 'registrar'}
+        </button>
+      </div>
+
+      {/* Registro rápido no lugar: sair da tela para anotar 25 min de bike
+          seria mais atrito que a própria bike. */}
+      {c.cardio.aberto && (
+        <div class="cardq">
+          <div class="chips">
+            {c.cardio.modais.map(m => (
+              <button key={m.k} class={'chip' + (m.on ? ' sel' : '')}
+                      onClick={() => ctx.cardioSet('m', m.k)}>{m.t}</button>
+            ))}
+          </div>
+          <div class="chips cardq-2">
+            {c.cardio.minutos.map(v => (
+              <button key={v.k} class={'chip' + (v.on ? ' sel' : '')}
+                      onClick={() => ctx.cardioSet('min', v.k)}>{v.t}</button>
+            ))}
+            {c.cardio.intensidades.map(v => (
+              <button key={v.k} class={'chip' + (v.on ? ' sel' : '')}
+                      onClick={() => ctx.cardioSet('i', v.k)}>{v.t}</button>
+            ))}
+          </div>
+          {c.cardio.aviso && <div class="cwarn">{c.cardio.aviso}</div>}
+          <button class="ins-btn-primary dbtn cardq-b" onClick={ctx.addCardio}>
+            {c.cardio.acao}
+          </button>
+        </div>
+      )}
 
       {t.avisos.map(a => (
         <div key={a.k} class={'tr-aviso deload ' + (a.cor || '')}>
