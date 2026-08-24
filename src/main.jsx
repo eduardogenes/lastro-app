@@ -2043,9 +2043,12 @@ const CORPO_PADRAO = { peso: 75, cintura: 85 };
 // duas médias, e é esse número que decide comer mais ou comer menos.
 //
 // O padrão continua sendo hoje, num toque só — a data fica atrás de um link,
-// porque registrar no dia é o caso de todo dia e retroativo é exceção. Cinco
-// dias bastam: quem esquece, esquece ontem ou anteontem.
-const DIAS_RETRO_CORPO = 5;
+// porque registrar no dia é o caso de todo dia e retroativo é exceção.
+//
+// O seletor é o NATIVO do aparelho, e não uma lista de dias recentes: a medida
+// esquecida pode ser de semanas atrás, e uma lista curta não alcança. No iPhone
+// ele abre a roda de dia, mês e ano, que é o caminho mais rápido para uma data
+// distante — e impede data no futuro pelo `max`, sem o app ter que validar.
 
 /** Um dia normalizado às 7h, que é quando ele pesa. */
 function diaNormalizado(t) {
@@ -2068,15 +2071,10 @@ function rotuloDoDia(t) {
   const d = new Date(t);
   return DIAS_CURTOS[(d.getDay() + 6) % 7] + ' ' + d.getDate();
 }
-/** Os dias oferecidos, cada um já dizendo o que tem registrado — é o que mostra o buraco. */
-function diasParaMedida(k) {
-  const out = [];
-  for (let i = 0; i < DIAS_RETRO_CORPO; i++) {
-    const t = diaNormalizado(Date.now() - i * 86400000);
-    const j = (S.body[k] || []).filter(function (x) { return sameDay(x.t, t); })[0];
-    out.push({ k: t, t: rotuloDoDia(t) + (j ? ' · ' + fmtDec(j.v) : '') });
-  }
-  return out;
+/** O que o dia escolhido já tem — é o que diz se ele vai criar ou corrigir. */
+function medidaDoDia(k) {
+  const d = diaDaMedida(k);
+  return (S.body[k] || []).filter(function (x) { return sameDay(x.t, d); })[0] || null;
 }
 /** "registrar hoje", "registrar ontem", "registrar em ter 14". */
 function acaoDaMedida(k) {
@@ -2087,12 +2085,18 @@ function acaoDaMedida(k) {
 /** O que a tela precisa saber sobre a data escolhida. */
 function diaDaMedidaVM(k) {
   const d = diaDaMedida(k);
+  const j = medidaDoDia(k);
+  const un = k === 'peso' ? 'kg' : 'cm';
   return {
     aberto: view.bodyDiaAberto === k,
-    valor: d,
+    iso: hojeISO(d),
+    max: hojeISO(),
     hoje: sameDay(d, Date.now()),
     txt: rotuloDoDia(d),
-    opcoes: diasParaMedida(k)
+    // dizer o que o dia já tem evita o registro cego: ou ele está preenchendo
+    // um buraco, ou está corrigindo um valor — e são gestos diferentes
+    jaTem: j ? 'neste dia: ' + fmtDec(j.v) + ' ' + un + ' · registrar substitui'
+             : 'nenhuma medida neste dia'
   };
 }
 
@@ -3119,15 +3123,18 @@ CTX.musculos = function () {
 CTX.setPeso = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { peso: v }); render(); };
 CTX.setCintura = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { cintura: v }); render(); };
 CTX.abreDiaCorpo = function (k) { view.bodyDiaAberto = view.bodyDiaAberto === k ? null : k; render(); };
-CTX.setDiaCorpo = function (k, t) {
-  view.bodyDia = Object.assign({}, view.bodyDia, { [k]: t });
+CTX.setDiaCorpo = function (k, iso) {
+  // 'YYYY-MM-DD' parseado como data LOCAL: `new Date(iso)` leria como UTC e no
+  // Brasil cairia no dia anterior.
+  const p = String(iso).split('-').map(Number);
+  if (p.length !== 3 || !p[0]) return;
+  const d = new Date(p[0], p[1] - 1, p[2], 7, 0, 0, 0);
+  if (isNaN(d.getTime()) || d.getTime() > Date.now()) return;
+  view.bodyDia = Object.assign({}, view.bodyDia, { [k]: d.getTime() });
   // trocar de dia troca a referência do stepper: o valor a corrigir é o
   // daquele dia, não o da última pesagem
   view.bodyForm = Object.assign({}, view.bodyForm);
   delete view.bodyForm[k];
-  // escolheu, fecha: a linha de chips já cumpriu o papel, e o dia escolhido
-  // continua dito no botão e no rótulo — que é por onde ele reabre para trocar
-  view.bodyDiaAberto = null;
   render();
 };
 CTX.registraPeso = function () { addBody('peso'); };

@@ -394,6 +394,14 @@
 }
 .dd-diabtn:active { color: var(--ins-text-3); }
 .dd-dia { margin-top: var(--ins-3); }
+/* O seletor nativo herda a tipografia do sistema para não destoar do resto da
+   tela; o desenho do calendário quem faz é o aparelho. */
+.dd-data {
+  font: 400 13px/1 var(--ins-font-mono);
+  color: var(--ins-text-2); background: transparent;
+  border: 1px solid var(--ins-border-strong); min-height: var(--ins-tap);
+}
+.dd-dia-nota { margin-top: var(--ins-2); }
 
 .dd-fora {
   margin-bottom: var(--ins-6); padding: var(--ins-5);

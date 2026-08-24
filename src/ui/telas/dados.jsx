@@ -11,7 +11,7 @@
 // sobreviveu bem à repintura; converter a estrutura dele é a última pendência.
 
 import {
-  Cabecalho, Chips, GradeMetricas, Procedencia, Secao, Sparkline, Stepper, Vazio, Veredito
+  Cabecalho, GradeMetricas, Procedencia, Secao, Sparkline, Stepper, Vazio, Veredito
 } from '../instrumento/primitivos.jsx';
 import { fmtDec } from '../../dominio/formato';
 
@@ -29,10 +29,18 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
       </div>
 
       {/* A data fica atrás de um link porque registrar no dia é o caso de todo
-          dia; retroativo é exceção. Cada chip já diz o que aquele dia tem, que
-          é o que mostra onde está o buraco. */}
+          dia; retroativo é exceção. O seletor é o nativo do aparelho: a medida
+          esquecida pode ser de semanas atrás, e ele alcança qualquer data sem
+          o app ter que desenhar um calendário. */}
       {dia && (dia.aberto
-        ? <div class="dd-dia"><Chips opcoes={dia.opcoes} valor={dia.valor} onMuda={onDia} /></div>
+        ? <div class="dd-dia">
+            <input
+              class="ins-input dd-data" type="date" id={'ddia-' + rotulo}
+              value={dia.iso} max={dia.max}
+              onInput={e => onDia(e.currentTarget.value)}
+            />
+            <p class="ins-body-sm ins-t3 dd-dia-nota">{dia.jaTem}</p>
+          </div>
         : <button class="dd-diabtn" onClick={onAbrirDia}>
             {dia.hoje ? 'outro dia' : 'registrando em ' + dia.txt + ' · trocar'}
           </button>)}
