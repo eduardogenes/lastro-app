@@ -867,53 +867,13 @@
    existir: nenhum nome da paleta antiga sobrevive no projeto.
    =========================================================================== */
 
-/* ---- Faixa da semana --------------------------------------------------- */
-.semana { display: flex; gap: 1px; margin-top: var(--ins-5); background: var(--ins-rule); }
-.wd {
-  flex: 1; min-width: 0; text-align: center;
-  padding: var(--ins-2) 0 var(--ins-3); background: var(--ins-canvas); border: 0;
-}
-.wd-d {
-  display: block;
-  font: 400 8.5px/1 var(--ins-font-mono); letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-text-4);
-}
-.wd-v {
-  display: block; margin-top: var(--ins-1);
-  font: 500 14px/1.1 var(--ins-font-display); color: var(--ins-text-5);
-}
-.wd.feito .wd-v { color: var(--ins-acid); }
-.wd.hoje { background: var(--ins-surface-acid); }
-.wd.hoje .wd-d { color: var(--ins-text-3); }
-.wd.futuro { opacity: .45; }
-.wd.livre .wd-v { color: var(--ins-text-3); }
-
-/* ---- Cardio: a linha e o registro rápido -------------------------------- */
-.cardl {
-  display: flex; align-items: center; gap: var(--ins-4);
-  margin-top: var(--ins-4); padding: var(--ins-3) var(--ins-4);
-  border: 1px solid var(--ins-hairline);
-}
-.cardl-t {
-  font: 400 9px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
-  color: var(--ins-text-4);
-}
-.cardl-n { flex: 1; min-width: 0; font: 400 11.5px/1.3 var(--ins-font-mono); color: var(--ins-text-3); }
-.cardl.feito { border-color: var(--ins-acid); }
-.cardl.feito .cardl-n { color: var(--ins-acid); }
-.cardl-b {
-  flex: 0 0 auto; padding: 0 var(--ins-4); min-height: 34px;
-  background: transparent; border: 1px solid var(--ins-border); color: var(--ins-text-3);
-  font: 400 10.5px/1 var(--ins-font-mono);
-}
-.cardq { margin-top: var(--ins-2); padding: var(--ins-4); border: 1px solid var(--ins-hairline); }
-
-/* Marca de cardio: barra discreta, para não competir com a letra do treino. */
-.barra-cardio {
-  display: block; height: 2px; width: 60%; margin: var(--ins-1) auto 0;
+/* Marca de cardio no calendário: barra discreta, para não competir com a
+   letra do treino. Na faixa da semana ela é um ponto — quem manda lá é
+   `treino.css`, que é dono da tela onde a faixa mora. */
+.cal-d .barra-cardio {
+  display: block; height: 2px; width: 52%; margin: var(--ins-1) auto 0;
   background: var(--ins-text-4);
 }
-.cal-d .barra-cardio { width: 52%; }
 
 .cardio-dia {
   display: flex; gap: var(--ins-5); align-items: baseline;
@@ -927,7 +887,6 @@
 .cardio-dia span { font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-3); }
 
 .crule { margin: var(--ins-7) 0 var(--ins-5); }
-.cwarn { margin-top: var(--ins-7); padding: var(--ins-5); border: 1px solid var(--ins-amber); }
 
 /* ---- Calendário do mês -------------------------------------------------- */
 .mesnav { display: flex; align-items: center; gap: var(--ins-5); margin-top: var(--ins-7); }
@@ -994,8 +953,7 @@
   font: 400 9px/1 var(--ins-font-mono); letter-spacing: .08em; text-transform: uppercase;
 }
 
-/* ---- Horário e pendências da sessão ------------------------------------- */
-.horario { margin-top: var(--ins-7); }
+/* ---- Pendências da sessão ----------------------------------------------- */
 .horario b { color: var(--ins-text-3); font-weight: 500; }
 
 .pend { margin-top: var(--ins-7); }
@@ -1008,33 +966,6 @@
   border: 1px solid var(--ins-hairline);
   font: 400 9px/1 var(--ins-font-mono); letter-spacing: .08em; color: var(--ins-text-4);
 }
-
-/* ---- Controles da sessão ------------------------------------------------ */
-.ctrl { display: flex; margin-top: var(--ins-5); }
-.ctrl-b {
-  flex: 1; min-height: var(--ins-tap);
-  border: 1px solid var(--ins-border-strong); background: transparent; color: var(--ins-text-2);
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
-}
-.ctrl-b + .ctrl-b { border-left: 0; }
-/* Ácido em UM só: finalizar é a ação da barra; pausar é a alternativa. */
-.ctrl-b.fim { background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid); }
-.ctrl-b.ini { background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid); }
-
-.day-ini {
-  flex: 0 0 auto; width: 100%; min-height: var(--ins-tap); margin-top: var(--ins-5);
-  background: var(--ins-acid); border: 0; color: var(--ins-on-acid);
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .16em; text-transform: uppercase;
-}
-.day-rel { display: flex; align-items: baseline; gap: var(--ins-3); margin-top: var(--ins-5); }
-.day-rel em {
-  font-style: normal;
-  font: 400 8.5px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
-  color: var(--ins-text-4);
-}
-.day-rel.pausado .ins-metric-m { color: var(--ins-text-3); }
-.daymeta { margin-top: 2px; font: 400 10.5px/1.3 var(--ins-font-mono); color: var(--ins-text-3); }
-.daymeta b { color: var(--ins-acid); font-weight: 500; }
 
 /* ---- Avisos: âmbar é "preste atenção", ácido é "isto está ativo" -------- */
 .deload {

@@ -326,14 +326,10 @@
 .tr-nota { margin: 0 0 var(--ins-5); }
 .tr-links { display: flex; flex-direction: column; gap: var(--ins-2); }
 
-/* ---- Repintura do que ainda vem em string ------------------------------
-   Estes blocos são markup do sistema antigo entrando por <Bruto>: relógio e
-   controles de sessão, faixa da semana, linha de cardio. A marcação está certa
-   e tem teste em cima; o que faltava era a língua. Vinham em azul-marinho com
-   âmbar e raio — quebrando dois inegociáveis de uma vez, e no meio da tela que
-   mais se usa. Some junto com o <Bruto>. */
-
-.day-ini, .ctrl, .ctrl-b, .semana, .wd, .cardl, .cardl-b, .day-rel { border-radius: 0; }
+/* ---- O bloco de sessão da tela de treino -------------------------------
+   Relógio, controles, faixa da semana e linha de cardio. Nomes de classe
+   herdados — são o contrato dos testes com o DOM — em desenho do Instrumento.
+   Moram aqui, e não em componentes.css, porque só existem nesta tela. */
 
 /* Começar o treino: ação primária da tela, e o único ácido do bloco. */
 .day-ini {
@@ -415,11 +411,11 @@
   letter-spacing: .06em; color: var(--ins-amber); margin-top: var(--ins-3);
 }
 
-/* ---- Onde o remapeamento deixou ácido demais ---------------------------
-   Apontar --dawn para o ácido acertou o acento em quase tudo, mas em lista
-   longa o resultado é uma parede acesa: nove letras de sessão passada em
-   ácido dizem "agora" nove vezes, e o sistema reserva ácido para agora, feito,
-   seu e aperte isto. Numa lista de histórico, a letra é só identidade. */
+/* ---- Onde o acento ficaria demais --------------------------------------
+   Em lista longa, acento repetido vira parede acesa: nove letras de sessão
+   passada em ácido dizem "agora" nove vezes, e o sistema reserva o ácido para
+   agora, feito, seu e aperte isto. Em lista de histórico a letra é identidade,
+   e identidade não é acento. */
 
 .sess-d em { color: var(--ins-text-4); }
 .sessrow .sess-d b, .sessrow .sess-d strong { color: var(--ins-text-2); }
