@@ -17,8 +17,8 @@ const p = function (s) { L.push(s == null ? '' : s); };
 
 p('# Treino');
 p('');
-p('Rotação de seis treinos, não semana fixa: avança sozinho conforme você');
-p('registra. Cinco a seis sessões por semana.');
+p('Rotação de ' + ROT.length + ' dias, não semana fixa: avança sozinho conforme você');
+p('registra. Cinco sessões de musculação mais o HYROX de sábado; domingo descansa.');
 p('');
 p('**Objetivo:** hipertrofia com ganho de gordura controlado.');
 p('');
@@ -46,9 +46,12 @@ ROT.forEach(function (d) {
 p('');
 
 // ---------- séries por músculo na rotação ----------
+// Exercício sem grupo declarado — as estações do HYROX — fica de fora: não há
+// músculo a que atribuir, e contá-lo aqui faria a tabela mentir.
 const porMusculo = {};
 ROT.forEach(function (d) {
   PROGRAMA[d].ex.forEach(function (ex) {
+    if (!ex.g) return;
     porMusculo[ex.g] = (porMusculo[ex.g] || 0) + ex.s;
   });
 });
@@ -59,7 +62,7 @@ const musculos = Object.keys(porMusculo).sort(function (a, b) {
 });
 p('### Séries por músculo na rotação completa');
 p('');
-p('Uma rotação são seis sessões, o que dá aproximadamente uma semana.');
+p('Uma rotação são ' + ROT.length + ' sessões, o que dá uma semana.');
 p('');
 p('| Músculo | Séries | |');
 p('|---|---|---|');
@@ -80,14 +83,14 @@ ROT.forEach(function (d) {
 
   P.ex.forEach(function (ex, i) {
     const car = CARGAS[ex.car] || CARGAS.pino;
-    const tipo = ex.c ? 'composto, 1–2 na reserva'
-                      : 'isolador, última série pode ir a 0–1 na reserva';
+    const tipo = !ex.g ? 'condicionamento'
+               : (ex.c ? 'composto' : 'isolador') + (ex.rir ? ', RIR ' + ex.rir : '');
     const desc = (ex.d || (ex.c ? 180 : 90));
     const descTxt = desc % 60 === 0 ? (desc / 60) + ' min' : desc + ' s';
     p('### ' + String(i + 1).padStart(2, '0') + '. ' + ex.n);
     p('');
     p('**' + ex.s + ' × ' + ex.r + '**' + (ex.u === 'seg' ? ' (por tempo)' : '')
-      + ' · ' + ex.g + ' · ' + tipo + ' · descanso ' + descTxt);
+      + (ex.g ? ' · ' + ex.g : '') + ' · ' + tipo + ' · descanso ' + descTxt);
     p('');
     p('Carga: ' + car.nome + '. ' + car.ajuda);
     p('');
@@ -127,8 +130,10 @@ p('');
 // ---------- cardio e dieta ----------
 p('## Cardio');
 p('');
-p('20 minutos, 2 a 3 vezes por semana, intensidade leve a moderada — dá para');
-p('conversar, sem ofegar. Modalidades: ' + MODAIS.join(', ') + '.');
+p('Duas vezes por semana: **segunda, depois do treino A, 20 a 25 min**, e');
+p('**quinta, no dia de recuperação, 25 a 30 min**. Intensidade leve a moderada —');
+p('respirando mais forte, mas ainda dá para conversar. Modalidades: '
+  + MODAIS.join(', ') + '.');
 p('');
 p('Existe por saúde cardiovascular, capacidade de trabalho e regulação do');
 p('apetite. **Não é queima de caloria** — o objetivo é ganhar massa, e por isso');
@@ -136,7 +141,7 @@ p('também não há HIIT: a justificativa dele é eficiência de queima, e o cus
 p('fadiga competindo com os treinos de perna.');
 p('');
 p('Sempre depois da musculação ou em dia separado. Nunca antes do treino, e');
-p('nunca no mesmo período dos treinos C ou F.');
+p('nunca no mesmo período dos treinos B ou E, que são os dias de perna.');
 p('');
 p('## Ajuste da dieta');
 p('');

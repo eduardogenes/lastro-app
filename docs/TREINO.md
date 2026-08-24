@@ -1,11 +1,11 @@
 # Treino
 
-Rotação de seis treinos, não semana fixa: avança sozinho conforme você
-registra. Cinco a seis sessões por semana.
+Rotação de 6 dias, não semana fixa: avança sozinho conforme você
+registra. Cinco sessões de musculação mais o HYROX de sábado; domingo descansa.
 
 **Objetivo:** hipertrofia com ganho de gordura controlado.
 
-**Pontos fracos priorizados:** delt lateral, dorsal, peito superior, costas espessura, delt posterior, posterior, panturrilha, abdômen.
+**Pontos fracos priorizados:** peito superior, delt lateral, dorsal, panturrilha, delt anterior.
 
 Este é o programa **do treinador**, como ele prescreveu. O programa que
 abre no app pode ter divergido: veja a diferença em ajustes → programa.
@@ -19,102 +19,128 @@ Gerado a partir do app. Para atualizar depois de mexer no `PROGRAMA`:
 
 | Treino | Foco | Exercícios | Séries |
 |---|---|---|---|
-| **A** | Peito superior + lateral + tríceps | 7 | 19 |
-| **B** | Dorsais + posterior de ombro + bíceps | 8 | 20 |
-| **C** | Quadríceps + adutores + panturrilha | 7 | 19 |
-| **D** | Espessura de costas + peito | 9 | 22 |
-| **E** | Deltoides + braços + abdômen | 9 | 22 |
-| **F** | Posteriores + glúteos + panturrilha | 8 | 23 |
+| **A** | Peito superior + dorsais + lateral + tríceps | 8 | 20 |
+| **B** | Pernas completas + panturrilhas | 9 | 22 |
+| **C** | Costas + deltoides + bíceps | 7 | 17 |
+| **D** | Especialização: lateral + panturrilha + abdômen | 6 | 17 |
+| **E** | Peito superior + costas + braços | 6 | 14 |
+| **HX** | HYROX | 9 | 16 |
 
 ### Séries por músculo na rotação completa
 
-Uma rotação são seis sessões, o que dá aproximadamente uma semana.
+Uma rotação são 6 sessões, o que dá uma semana.
 
 | Músculo | Séries | |
 |---|---|---|
-| delt lateral | 13 | prioridade |
-| dorsal | 12 | prioridade |
 | peito superior | 10 | prioridade |
-| costas espessura | 8 | prioridade |
-| delt posterior | 9 | prioridade |
-| posterior | 10 | prioridade |
+| delt lateral | 12 | prioridade |
+| dorsal | 10 | prioridade |
 | panturrilha | 10 | prioridade |
-| abdômen | 9 | prioridade |
-| tríceps | 9 |  |
-| bíceps | 9 |  |
-| quadríceps | 9 |  |
-| peito | 5 |  |
-| adutores | 3 |  |
-| glúteo | 3 |  |
-| tibial | 2 |  |
-| trapézio | 2 |  |
-| glúteo médio | 2 |  |
+| delt anterior | 2 | prioridade |
+| quadríceps | 7 |  |
+| tríceps | 6 |  |
+| posterior | 6 |  |
+| costas espessura | 6 |  |
+| bíceps | 6 |  |
+| abdômen | 6 |  |
+| delt posterior | 3 |  |
+| glúteo | 2 |  |
+| adutores | 2 |  |
+| peito | 2 |  |
 
 ---
 
-## Treino A — Peito superior + lateral + tríceps
+## Treino A — Peito superior + dorsais + lateral + tríceps
 
-*clavicular e ombro*
+*os três alvos com você inteiro*
 
 ### 01. Chest press inclinado convergente
 
-**3 × 6–10** · peito superior · composto, 1–2 na reserva · descanso 3 min
+**3 × 6–10** · peito superior · composto, RIR 1–2 · descanso 3 min
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Sua principal pressão para peito superior. Máquina estável para o esforço muscular ser o limitante, não o equilíbrio. 1 a 2 repetições na reserva.
+> Primeiro exercício da semana, no melhor momento de desempenho que existe. Banco a 20 ou 30° se a máquina permitir: mais que isso vira desenvolvimento de ombro.
 
 Se a máquina estiver ocupada:
 
-- **Supino inclinado no Smith** — Mesmo ângulo, trajetória travada.
+- **Supino inclinado no Smith** — Indicado pelo treinador. Mesmo ângulo, trajetória travada.
+- **Máquina de supino inclinado** — Indicada pelo treinador, se for plate-loaded. Convergência menor, resto igual.
 - **Supino inclinado com halteres** — Mais amplitude, mais exigência de estabilidade.
-- **Máquina de supino inclinado** — Convergência menor, resto igual.
 
-### 02. Crossover de baixo para cima
+### 02. Pulldown convergente
 
-**2 × 10–15** · peito superior · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Direcione de verdade à porção clavicular, sem transformar o movimento em elevação frontal.
-
-Se a máquina estiver ocupada:
-
-- **Crucifixo inclinado no cabo** — Mesma região, menos vetor ascendente.
-- **Crossover na polia baixa** — Praticamente o mesmo movimento.
-- **Peck deck com banco inclinado** — Trajetória guiada, alongamento menor.
-
-### 03. Elevação lateral na máquina
-
-**3 × 8–15** · delt lateral · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
+**3 × 6–10** · dorsal · composto, RIR 1–2 · descanso 150 s
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Aqui cabe progressão relativamente pesada, desde que o movimento continue lateral e controlado.
+> Pegada neutra, a que permitir maior amplitude confortável. Largura de dorsal se constrói aqui.
 
 Se a máquina estiver ocupada:
 
+- **Puxada neutra no cabo** — Indicada pelo treinador. Mesma pegada, tensão do cabo em vez da placa.
+- **Puxada neutra na máquina** — Sem convergência, resto igual.
+- **Barra fixa assistida pegada neutra** — Peso do corpo, escápula mais livre.
+
+### 03. Crucifixo inclinado no cabo
+
+**2 × 10–15** · peito superior · isolador, RIR 1 · descanso 2 min
+
+Carga: placa. O número é a carga selecionada, e pronto.
+
+> Amplitude grande e confortável. Não sacrifique a posição do ombro para tentar alongar mais.
+
+Se a máquina estiver ocupada:
+
+- **Pec deck** — Indicado pelo treinador, com a trajetória ajustada para o ombro ficar confortável.
+- **Crossover de baixo para cima** — Mesmo alvo com vetor ascendente.
+- **Crucifixo inclinado com halteres** — Perde tensão no topo.
+
+### 04. Pulldown unilateral
+
+**2 × 8–12** · dorsal · composto, RIR 1 · descanso 2 min
+
+Carga: placa. O número é a carga selecionada, e pronto.
+
+> Cotovelo descendo em direção ao quadril, sem transformar em rotação de tronco.
+
+Se a máquina estiver ocupada:
+
+- **Puxada neutra unilateral** — Indicada pelo treinador: é a máquina unilateral de dorsal.
+- **Puxada unilateral na polia alta** — Tensão constante, carga menor.
+- **Remada unilateral na polia alta ajoelhado** — Ângulo mais horizontal.
+
+### 05. Elevação lateral na máquina
+
+**3 × 10–15** · delt lateral · isolador, RIR 1 · descanso 105 s
+
+Carga: placa. O número é a carga selecionada, e pronto.
+
+> Sem impulso de perna ou tronco. Não precisa ultrapassar muito a linha do ombro.
+
+Se a máquina estiver ocupada:
+
+- **Elevação lateral unilateral no cabo** — Indicada pelo treinador. Um lado por vez, tensão previsível.
 - **Elevação lateral no cabo** — Tensão constante, carga menor.
 - **Elevação lateral com halteres** — Perde tensão embaixo, ganha no topo.
-- **Elevação lateral no Smith unilateral** — Um lado por vez, trajetória fixa.
 
-### 04. Elevação lateral unilateral no cabo
+### 06. Elevação lateral unilateral no cabo
 
-**3 × 12–20** · delt lateral · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
+**3 × 12–20** · delt lateral · isolador, RIR 0–1 · descanso 90 s
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Complemento com tensão previsível e ajuste fino. Um lado por vez.
+> Tensão previsível e ajuste fino, um lado por vez. A última série pode ir a 0 na reserva.
 
 Se a máquina estiver ocupada:
 
+- **Elevação lateral na máquina** — Indicada pelo treinador. Mais carga, menos ajuste fino.
 - **Elevação lateral com halteres** — Dois lados de uma vez, mais rápido.
-- **Elevação lateral na máquina** — Mais carga, menos ajuste fino.
 - **Elevação lateral deitado no banco inclinado** — Pico de tensão mais cedo na amplitude.
 
-### 05. Extensão de tríceps acima da cabeça no cabo
+### 07. Extensão de tríceps acima da cabeça no cabo
 
-**3 × 8–15** · tríceps · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**2 × 8–12** · tríceps · isolador, RIR 1 · descanso 2 min
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
@@ -122,17 +148,17 @@ Carga: placa. O número é a carga selecionada, e pronto.
 
 Se a máquina estiver ocupada:
 
-- **Tríceps testa com barra W** — Mesma cabeça longa, mais cobrança no cotovelo.
+- **Extensão acima da cabeça ou máquina de tríceps** — Indicada pelo treinador. Trajetória guiada, mesmo alongamento da cabeça longa.
 - **Tríceps francês com halter** — Um braço por vez, corrige assimetria.
-- **Máquina de tríceps sentado** — Menos alongamento, mais segurança.
+- **Tríceps testa com barra W** — Mesma cabeça longa, mais cobrança no cotovelo.
 
-### 06. Pushdown
+### 08. Pushdown
 
-**2 × 10–15** · tríceps · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**2 × 10–15** · tríceps · isolador, RIR 0–1 · descanso 105 s
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Tríceps não é prioridade: já está bom e ainda trabalha nos presses.
+> Tríceps não é prioridade: já recebe bastante dos presses. Duas séries bem feitas bastam.
 
 Se a máquina estiver ocupada:
 
@@ -140,151 +166,19 @@ Se a máquina estiver ocupada:
 - **Tríceps barra reta na polia** — Pega fixa, dá para carregar mais.
 - **Mergulho na máquina assistida** — Entra peito e ombro junto.
 
-### 07. Crunch no cabo ou máquina
-
-**3 × 8–15** · abdômen · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Com carga progressiva. Abdômen é treinado como qualquer outro músculo.
-
-Se a máquina estiver ocupada:
-
-- **Abdominal na polia alta ajoelhado** — Mesmo padrão, é a versão no cabo.
-- **Máquina de abdominal** — Trajetória guiada, mais fácil de carregar.
-- **Crunch com anilha no colo** — Sem equipamento, carga limitada.
-
 ---
 
-## Treino B — Dorsais + posterior de ombro + bíceps
+## Treino B — Pernas completas + panturrilhas
 
-*um dos dois treinos mais importantes*
-
-### 01. Pulldown convergente
-
-**3 × 6–10** · dorsal · composto, 1–2 na reserva · descanso 150 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Pegada neutra ou semipronada, a que permitir maior amplitude confortável.
-
-Se a máquina estiver ocupada:
-
-- **Puxada neutra na máquina** — Sem convergência, resto igual.
-- **Puxada aberta pronada** — Mais largura, menos amplitude embaixo.
-- **Barra fixa assistida pegada neutra** — Peso do corpo, escápula mais livre.
-
-### 02. Pulldown unilateral
-
-**3 × 8–12** · dorsal · composto, 1–2 na reserva · descanso 150 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Bastante controle escapular, com o cotovelo viajando em direção ao quadril.
-
-Se a máquina estiver ocupada:
-
-- **Puxada neutra unilateral** — Praticamente o mesmo movimento.
-- **Puxada unilateral na polia alta** — Tensão constante, carga menor.
-- **Remada unilateral na polia alta ajoelhado** — Ângulo mais horizontal.
-
-### 03. Remada para dorsal com apoio de peito
-
-**2 × 8–12** · dorsal · composto, 1–2 na reserva · descanso 150 s
-
-Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
-
-> Cotovelo mais próximo do tronco, para não virar remada de upper back.
-
-Se a máquina estiver ocupada:
-
-- **Remada sentada pegada neutra fechada** — Sem apoio: lombar entra na conta.
-- **Remada baixa na polia com triângulo** — Mesmo ângulo de cotovelo, cabo em vez de placa.
-- **Remada na máquina pegada neutra** — Trajetória fixa, mais carga.
-
-### 04. Pullover em máquina ou cabo
-
-**2 × 10–15** · dorsal · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Estímulo na dorsal sem adicionar fadiga de bíceps.
-
-Se a máquina estiver ocupada:
-
-- **Pullover na polia alta** — É a versão no cabo do mesmo movimento.
-- **Straight-arm pulldown** — Braço mais estendido, mesma função.
-- **Pullover com halter no banco** — Mais alongamento, resistência só no meio.
-
-### 05. Reverse pec deck
-
-**3 × 10–20** · delt posterior · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Deltoide posterior com o tronco apoiado.
-
-Se a máquina estiver ocupada:
-
-- **Crucifixo inverso no cabo** — Amplitude maior, carga menor.
-- **Crucifixo inverso com halteres no banco inclinado** — Sem tensão no fim da amplitude.
-- **Face pull na polia alta** — Mais rotação externa junto.
-
-### 06. Crucifixo inverso no cabo
-
-**2 × 12–20** · delt posterior · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Amplitude maior, um lado por vez se preferir.
-
-Se a máquina estiver ocupada:
-
-- **Reverse pec deck** — Mais carga, tronco apoiado.
-- **Crucifixo inverso com halteres** — Perde tensão na parte baixa.
-- **Face pull na polia alta** — Mais rotação externa junto.
-
-### 07. Rosca Scott na máquina
-
-**3 × 8–12** · bíceps · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Sem balanço de tronco.
-
-Se a máquina estiver ocupada:
-
-- **Rosca Scott com barra W** — Mesma posição, pulso mais confortável.
-- **Rosca concentrada** — Um braço por vez, mais lenta.
-- **Rosca no banco inclinado** — Alonga a cabeça longa em vez de encurtar.
-
-### 08. Rosca no cabo
-
-**2 × 10–15** · bíceps · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Tensão constante ao longo da amplitude.
-
-Se a máquina estiver ocupada:
-
-- **Rosca direta na barra W** — Mais carga, tensão irregular.
-- **Rosca Bayesian no cabo** — Braço atrás do corpo, mais alongamento.
-- **Rosca alternada com halteres** — Um lado por vez, com supinação.
-
----
-
-## Treino C — Quadríceps + adutores + panturrilha
-
-*qualidade e progressão, não volume*
+*a perna inteira num dia só*
 
 ### 01. Pendulum squat
 
-**3 × 6–10** · quadríceps · composto, 1–2 na reserva · descanso 3 min
+**3 × 6–10** · quadríceps · composto, RIR 1–2 · descanso 3 min
 
 Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
 
-> Preferido ao agachamento livre nesta fase. Hack squat bom serve igual. 1 a 2 na reserva.
+> Quadríceps é seu ponto forte: o volume é baixo de propósito, a intenção não. Hack squat serve igual.
 
 Se a máquina estiver ocupada:
 
@@ -292,9 +186,37 @@ Se a máquina estiver ocupada:
 - **Belt squat** — Tira a carga da coluna.
 - **Leg press vertical** — Mais quadril, menos joelho.
 
-### 02. Leg press
+### 02. Cadeira flexora sentada
 
-**3 × 8–15** · quadríceps · composto, 1–2 na reserva · descanso 150 s
+**3 × 8–12** · posterior · isolador, RIR 1 · descanso 2 min
+
+Carga: placa. O número é a carga selecionada, e pronto.
+
+> Antes do terra: o isquiotibial começa a repetição mais alongado aqui do que em qualquer flexora deitada.
+
+Se a máquina estiver ocupada:
+
+- **Cadeira flexora sentada de outro modelo** — Indicada pelo treinador: outra máquina SENTADA. É a posição de quadril que dá o alongamento — trocar por deitada perde justamente isso.
+- **Mesa flexora deitada** — Quadril estendido: menos alongamento no posterior.
+- **Flexora unilateral em pé** — Um lado por vez, corrige diferença.
+
+### 03. Terra romeno no Smith
+
+**3 × 6–10** · posterior · composto, RIR 1–2 · descanso 3 min
+
+Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
+
+> Smith porque, para o seu objetivo, estabilidade é vantagem e não defeito. Quadril para trás, coluna neutra.
+
+Se a máquina estiver ocupada:
+
+- **Terra romeno com barra** — Indicado pelo treinador. Mais custo de lombar e de pegada.
+- **Terra romeno com halteres** — Indicado pelo treinador. Mais estabilização, menos carga.
+- **Good morning no Smith** — Mais lombar, menos posterior.
+
+### 04. Leg press
+
+**2 × 10–15** · quadríceps · composto, RIR 1–2 · descanso 150 s
 
 Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
 
@@ -302,13 +224,13 @@ Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em
 
 Se a máquina estiver ocupada:
 
+- **Agachamento hack** — Indicado pelo treinador — como o pendulum, ajustando o volume para não somar duas vezes o mesmo estímulo.
 - **Leg press 45°** — É a mesma máquina em outro ângulo.
 - **Leg press horizontal** — Amplitude menor, lombar mais protegida.
-- **Agachamento hack** — Mais quadríceps, mais exigente de mobilidade.
 
-### 03. Cadeira extensora
+### 05. Cadeira extensora
 
-**3 × 10–15** · quadríceps · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**2 × 10–15** · quadríceps · isolador, RIR 0–1 · descanso 2 min
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
@@ -320,13 +242,27 @@ Se a máquina estiver ocupada:
 - **Sissy squat na máquina** — Alonga o reto femoral, mais duro no joelho.
 - **Leg press com pé baixo** — Composto: cansa mais para o mesmo alvo.
 
-### 04. Adutora
+### 06. Elevação pélvica na máquina
 
-**3 × 10–15** · adutores · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**2 × 8–12** · glúteo · composto, RIR 1 · descanso 150 s
+
+Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
+
+> Pausa no topo com o queixo para dentro.
+
+Se a máquina estiver ocupada:
+
+- **Hip thrust no Smith** — Indicado pelo treinador. Trajetória fixa, fácil de carregar.
+- **Elevação pélvica com barra** — Mesma coisa, montagem mais chata.
+- **Coice na máquina** — Um lado por vez, carga bem menor.
+
+### 07. Adutora
+
+**2 × 10–15** · adutores · isolador, RIR 1 · descanso 105 s
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Adutores contribuem muito para uma coxa completa.
+> Manutenção e progressão. Adutores contribuem para uma coxa completa.
 
 Se a máquina estiver ocupada:
 
@@ -334,259 +270,127 @@ Se a máquina estiver ocupada:
 - **Agachamento sumô no Smith** — Composto, entra quadríceps e glúteo.
 - **Leg press com pé afastado** — Adutor como coadjuvante, não como alvo.
 
-### 05. Panturrilha em pé
+### 08. Panturrilha em pé
 
-**3 × 6–12** · panturrilha · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
+**3 × 6–10** · panturrilha · isolador, RIR 1 · descanso 2 min
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Joelho estendido, para o gastrocnêmio.
+> Joelho estendido, para o gastrocnêmio. Execução rígida: descida completa, pausa alongado, subida completa. Nada de virar 10 repetições em 20 meios movimentos de tornozelo.
 
 Se a máquina estiver ocupada:
 
+- **Panturrilha no Smith** — Indicada pelo treinador. Precisa de degrau, amplitude igual.
+- **Panturrilha no hack** — Indicada pelo treinador. Ombro apoiado, fácil de carregar.
 - **Panturrilha na máquina em pé** — É a mesma coisa em outro equipamento.
-- **Panturrilha no Smith** — Precisa de degrau, amplitude igual.
-- **Panturrilha unilateral com halter** — Metade da carga, um pé por vez.
 
-### 06. Panturrilha sentada
+### 09. Panturrilha sentada
 
-**2 × 10–15** · panturrilha · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
+**2 × 10–15** · panturrilha · isolador, RIR 1 · descanso 105 s
 
 Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
 
-> Pause no alongamento. Nada de quicar.
+> Joelho flexionado, para o sóleo. Pause no alongamento. Nada de quicar.
 
 Se a máquina estiver ocupada:
 
-- **Panturrilha sentada na máquina** — Mesmo movimento, outro equipamento.
+- **Panturrilha sentada na máquina** — Indicada pelo treinador: a máquina específica de sóleo.
+- **Panturrilha sentada no Smith** — Indicada pelo treinador. Barra sobre o joelho, amplitude igual.
 - **Panturrilha no leg press com joelho flexionado** — Menos sóleo isolado.
-- **Panturrilha sentada com anilha no joelho** — Carga limitada.
-
-### 07. Tibial anterior
-
-**2 × 12–20** · tibial · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Não é obrigatório para estética, entra por completude do programa.
-
-Se a máquina estiver ocupada:
-
-- **Tibial na máquina** — Mesmo alvo, carga mais fácil de ajustar.
-- **Tibial com anilha sentado** — Sem equipamento, carga limitada.
-- **Flexão de tornozelo na polia baixa** — Tensão constante.
 
 ---
 
-## Treino D — Espessura de costas + peito
+## Treino C — Costas + deltoides + bíceps
 
-*o grande treino de torso*
+*aqui entra o deltoide anterior*
 
-### 01. Remada convergente com apoio de peito
+### 01. Remada para dorsal com apoio de peito
 
-**3 × 6–10** · costas espessura · composto, 1–2 na reserva · descanso 150 s
-
-Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
-
-> Tronco apoiado tira a lombar da conta.
-
-Se a máquina estiver ocupada:
-
-- **Remada cavalinho** — Sem apoio: lombar e quadril entram.
-- **Remada na máquina com apoio de peito** — Sem convergência, resto igual.
-- **Remada curvada com barra** — Muito mais custo sistêmico.
-
-### 02. Remada horizontal na máquina
-
-**3 × 8–12** · costas espessura · composto, 1–2 na reserva · descanso 150 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Escolha o equipamento onde dá para deixar a escápula protrair e depois retrair confortável.
-
-Se a máquina estiver ocupada:
-
-- **Remada sentada na polia** — Cabo em vez de placa, mesma trajetória.
-- **Remada baixa pegada pronada** — Cotovelo mais aberto, mais upper back.
-- **Remada na máquina pegada larga** — Desloca para a parte alta das costas.
-
-### 03. High row com apoio de peito
-
-**2 × 8–12** · costas espessura · composto, 1–2 na reserva · descanso 150 s
+**3 × 6–10** · dorsal · composto, RIR 1–2 · descanso 150 s
 
 Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
 
-> Aqui os cotovelos podem ficar um pouco mais afastados.
+> Cotovelo mais junto do tronco, trajetória em direção ao quadril. Esta é a remada de DORSAL.
 
 Se a máquina estiver ocupada:
 
-- **Remada alta na máquina** — Mesmo ângulo sem o apoio de peito.
+- **Remada unilateral apoiada** — Indicada pelo treinador. Um lado por vez, com o tronco apoiado.
+- **Remada baixa na polia com triângulo** — Mesmo ângulo de cotovelo, cabo em vez de placa.
+- **Remada sentada pegada neutra fechada** — Sem apoio: lombar entra na conta.
+
+### 02. High row com apoio de peito
+
+**3 × 8–12** · costas espessura · composto, RIR 1–2 · descanso 150 s
+
+Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
+
+> Cotovelo relativamente mais aberto, puxando para a região superior e média das costas. Função diferente da anterior — não são duas máquinas fazendo a mesma coisa.
+
+Se a máquina estiver ocupada:
+
+- **Remada alta na máquina** — Indicada pelo treinador: a máquina de upper back row. Mesmo ângulo sem o apoio de peito.
 - **Remada na polia alta sentado** — Tensão constante, carga menor.
 - **Remada cavalinho pegada larga** — Sem apoio, lombar entra.
 
-### 04. Encolhimento na máquina
+### 03. Pullover em máquina ou cabo
 
-**2 × 8–15** · trapézio · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Trapézio não é prioridade, mas também não fica ignorado.
-
-Se a máquina estiver ocupada:
-
-- **Encolhimento com halteres** — Pega mais exigente, mesma função.
-- **Encolhimento no Smith** — Trajetória fixa, dá para carregar mais.
-- **Encolhimento na polia baixa** — Tensão constante no topo.
-
-### 05. Straight-arm pulldown
-
-**2 × 10–15** · dorsal · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**2 × 10–15** · dorsal · isolador, RIR 1 · descanso 2 min
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Leva a dorsal a 12 séries na semana sem criar outro treino de largura.
+> Estímulo na dorsal sem adicionar fadiga de bíceps.
 
 Se a máquina estiver ocupada:
 
-- **Pullover na polia alta** — Praticamente o mesmo movimento.
-- **Pullover em máquina** — Trajetória guiada, mais estável.
+- **Straight-arm pulldown** — Indicado pelo treinador. Braço mais estendido, mesma função.
+- **Pullover na polia alta** — É a versão no cabo do mesmo movimento.
 - **Pullover com halter no banco** — Mais alongamento, resistência só no meio.
 
-### 06. Supino inclinado no Smith
+### 04. Reverse pec deck
 
-**3 × 6–10** · peito superior · composto, 1–2 na reserva · descanso 3 min
-
-Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
-
-> Com as cinco séries do A, chega a 10 séries direcionadas ao peito superior.
-
-Se a máquina estiver ocupada:
-
-- **Chest press inclinado convergente** — É o mesmo alvo do A, em máquina.
-- **Supino inclinado com halteres** — Mais amplitude, mais estabilização.
-- **Supino inclinado com barra** — Menos amplitude embaixo, mais carga.
-
-### 07. Crucifixo inclinado no cabo
-
-**2 × 10–15** · peito superior · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**3 × 12–20** · delt posterior · isolador, RIR 0–1 · descanso 105 s
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Pausa de 1 s no alongado, com o peito aberto.
+> Posterior está proporcional: progressão normal, com o tronco apoiado.
 
 Se a máquina estiver ocupada:
 
-- **Crossover de baixo para cima** — Mesmo alvo com vetor ascendente.
-- **Crucifixo inclinado com halteres** — Perde tensão no topo.
-- **Peck deck com banco inclinado** — Trajetória guiada, alongamento menor.
-
-### 08. Chest press horizontal convergente
-
-**3 × 8–12** · peito · composto, 1–2 na reserva · descanso 150 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Preserva e desenvolve o peito médio sem tirar o foco da região clavicular.
-
-Se a máquina estiver ocupada:
-
-- **Supino reto na máquina** — Sem convergência, resto igual.
-- **Supino reto com halteres** — Mais amplitude, mais custo de ombro.
-- **Supino no Smith** — Trajetória travada, mais carga.
-
-### 09. Pec deck
-
-**2 × 10–15** · peito · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Trajetória guiada; dá para chegar perto da falha.
-
-Se a máquina estiver ocupada:
-
-- **Crossover na polia média** — Amplitude maior, carga menor.
-- **Crucifixo com halteres** — Sem tensão no topo.
-- **Peck deck unilateral** — Um lado por vez, corrige diferença.
-
----
-
-## Treino E — Deltoides + braços + abdômen
-
-*lateral antes dos braços, de propósito*
-
-### 01. Elevação lateral na máquina
-
-**4 × 8–15** · delt lateral · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Somadas às seis do A, dão 13 séries diretas de lateral por semana. É onde você tem que estar.
-
-Se a máquina estiver ocupada:
-
-- **Elevação lateral no cabo** — Tensão constante, carga menor.
-- **Elevação lateral com halteres** — Perde tensão embaixo, ganha no topo.
-- **Elevação lateral no Smith unilateral** — Um lado por vez, trajetória fixa.
-
-### 02. Elevação lateral no cabo
-
-**3 × 12–20** · delt lateral · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Tensão constante na parte de baixo, onde o halter perde.
-
-Se a máquina estiver ocupada:
-
-- **Elevação lateral na máquina** — Mais carga, menos ajuste fino.
-- **Elevação lateral com halteres** — Perde tensão embaixo.
-- **Elevação lateral no Smith unilateral** — Trajetória fixa, um lado por vez.
-
-### 03. Remada para deltoide posterior com apoio de peito
-
-**2 × 8–15** · delt posterior · composto, 1–2 na reserva · descanso 105 s
-
-Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
-
-> Cotovelo afastado do tronco, puxando para trás.
-
-Se a máquina estiver ocupada:
-
-- **Face pull na polia alta** — Mesmo alvo, mais rotação externa.
-- **Remada alta com corda** — Cotovelo mais alto, entra trapézio.
-- **Remada aberta na máquina** — Sem apoio de peito.
-
-### 04. Reverse fly no cabo
-
-**2 × 12–20** · delt posterior · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
-
-Carga: placa. O número é a carga selecionada, e pronto.
-
-> Somado ao B, o posterior recebe 9 séries diretas.
-
-Se a máquina estiver ocupada:
-
-- **Reverse pec deck** — Mais carga, tronco apoiado.
-- **Crucifixo inverso com halteres** — Perde tensão no fim da amplitude.
+- **Crucifixo inverso no cabo** — Amplitude maior, carga menor.
+- **Crucifixo inverso com halteres no banco inclinado** — Sem tensão no fim da amplitude.
 - **Face pull na polia alta** — Mais rotação externa junto.
 
-### 05. Rosca Bayesian no cabo
+### 05. Elevação frontal unilateral no cabo
 
-**2 × 8–15** · bíceps · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**2 × 10–15** · delt anterior · isolador, RIR 1 · descanso 90 s
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Braço atrás do corpo, alongando a cabeça longa.
+> As duas únicas séries diretas de deltoide anterior da semana. São poucas de propósito: os presses inclinados e o horizontal já entregam bastante. Suba até a linha dos olhos, sem balanço de tronco.
 
 Se a máquina estiver ocupada:
 
-- **Rosca inclinada com halteres** — Mesmo alongamento sem tensão constante.
-- **Rosca no cabo** — Braço ao lado do corpo, menos alongamento.
-- **Rosca Scott na máquina** — Encurta em vez de alongar a cabeça longa.
+- **Elevação frontal na máquina** — Indicada pelo treinador. Trajetória guiada, dá para carregar mais.
+- **Elevação frontal bilateral no cabo** — Indicada pelo treinador. Os dois lados de uma vez, mais rápido.
+- **Elevação frontal com halteres** — Perde tensão embaixo, ganha simplicidade.
 
-### 06. Rosca martelo
+### 06. Rosca Scott na máquina
 
-**2 × 8–15** · bíceps · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**2 × 8–12** · bíceps · isolador, RIR 1 · descanso 105 s
+
+Carga: placa. O número é a carga selecionada, e pronto.
+
+> Sem balanço de tronco.
+
+Se a máquina estiver ocupada:
+
+- **Rosca Scott no cabo** — Indicada pelo treinador. Mesma posição, tensão constante.
+- **Rosca Scott com barra W** — Mesma posição, pulso mais confortável.
+- **Rosca concentrada** — Um braço por vez, mais lenta.
+
+### 07. Rosca martelo
+
+**2 × 10–15** · bíceps · isolador, RIR 1 · descanso 105 s
 
 Carga: halter em cada mão. Um halter por mão. O app mostra o total das duas.
 
@@ -598,41 +402,89 @@ Se a máquina estiver ocupada:
 - **Rosca inversa na barra W** — Mais braquiorradial, menos carga.
 - **Rosca martelo cruzada** — Um braço por vez, cruzando o corpo.
 
-### 07. Extensão unilateral de tríceps no cabo
+---
 
-**2 × 8–15** · tríceps · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+## Treino D — Especialização: lateral + panturrilha + abdômen
 
-Carga: placa. O número é a carga selecionada, e pronto.
+*treino de verdade, fadiga sistêmica baixa*
 
-> Corrige diferença entre os lados.
+### 01. Elevação lateral na máquina
 
-Se a máquina estiver ocupada:
-
-- **Pushdown unilateral** — Mesma coisa com pegada diferente.
-- **Tríceps coice com halter** — Pico no encurtamento, carga baixa.
-- **Extensão unilateral acima da cabeça** — Alonga a cabeça longa.
-
-### 08. Extensão acima da cabeça ou máquina de tríceps
-
-**2 × 10–15** · tríceps · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**3 × 10–15** · delt lateral · isolador, RIR 1 · descanso 105 s
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Fecha o tríceps em 9 séries diretas na semana.
+> Segunda exposição semanal de lateral, com três dias de recuperação desde a segunda. Aqui cabe progressão pesada.
 
 Se a máquina estiver ocupada:
 
-- **Tríceps testa com barra W** — Mais carga, mais cobrança no cotovelo.
-- **Máquina de tríceps sentado** — Trajetória guiada, mais segura.
-- **Tríceps francês com halter** — Um braço por vez.
+- **Elevação lateral unilateral no cabo** — Indicada pelo treinador. Um lado por vez, tensão previsível.
+- **Elevação lateral no cabo** — Tensão constante, carga menor.
+- **Elevação lateral com halteres** — Perde tensão embaixo, ganha no topo.
 
-### 09. Elevação de pernas ou reverse crunch
+### 02. Elevação lateral unilateral no cabo
 
-**3 × 8–15** · abdômen · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
+**3 × 12–20** · delt lateral · isolador, RIR 0–1 · descanso 90 s
+
+Carga: placa. O número é a carga selecionada, e pronto.
+
+> Fecha as 12 séries semanais de lateral. Pode chegar perto da falha mantendo o movimento lateral.
+
+Se a máquina estiver ocupada:
+
+- **Elevação lateral na máquina** — Indicada pelo treinador. Mais carga, menos ajuste fino.
+- **Elevação lateral com halteres** — Dois lados de uma vez, mais rápido.
+- **Elevação lateral deitado no banco inclinado** — Pico de tensão mais cedo na amplitude.
+
+### 03. Panturrilha sentada
+
+**3 × 8–15** · panturrilha · isolador, RIR 1 · descanso 105 s
+
+Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
+
+> Sóleo em dose maior hoje: na terça foram 2, aqui são 3. As duas posições recebem trabalho na semana.
+
+Se a máquina estiver ocupada:
+
+- **Panturrilha sentada na máquina** — Indicada pelo treinador: a máquina específica de sóleo.
+- **Panturrilha sentada no Smith** — Indicada pelo treinador. Barra sobre o joelho, amplitude igual.
+- **Panturrilha no leg press com joelho flexionado** — Menos sóleo isolado.
+
+### 04. Panturrilha em pé
+
+**2 × 8–12** · panturrilha · isolador, RIR 1 · descanso 105 s
+
+Carga: placa. O número é a carga selecionada, e pronto.
+
+> Gastrocnêmio, dose menor hoje. Panturrilha é progredida e registrada como peito ou bíceps, não como finalização.
+
+Se a máquina estiver ocupada:
+
+- **Panturrilha no Smith** — Indicada pelo treinador. Precisa de degrau, amplitude igual.
+- **Panturrilha no hack** — Indicada pelo treinador. Ombro apoiado, fácil de carregar.
+- **Panturrilha na máquina em pé** — É a mesma coisa em outro equipamento.
+
+### 05. Crunch no cabo ou máquina
+
+**3 × 8–15** · abdômen · isolador, RIR 1 · descanso 105 s
+
+Carga: placa. O número é a carga selecionada, e pronto.
+
+> Flexão de tronco com carga progressiva. Abdômen é treinado como qualquer outro músculo.
+
+Se a máquina estiver ocupada:
+
+- **Máquina de abdominal** — Indicada pelo treinador. Trajetória guiada, mais fácil de carregar.
+- **Abdominal na polia alta ajoelhado** — Mesmo padrão, é a versão no cabo.
+- **Crunch com anilha no colo** — Sem equipamento, carga limitada.
+
+### 06. Elevação de pernas ou reverse crunch
+
+**3 × 10–15** · abdômen · isolador, RIR 1 · descanso 90 s
 
 Carga: peso do corpo. Só o que você acrescentou. Pode ficar vazio.
 
-> Suba com o quadril, não com o balanço. Desça em 3 s, sem deixar a lombar arquear.
+> Complementa com o movimento pélvico. Suba com o quadril, não com o balanço. Chegou nas 15 fáceis dentro do RIR, aumenta a dificuldade.
 
 Se a máquina estiver ocupada:
 
@@ -642,145 +494,197 @@ Se a máquina estiver ocupada:
 
 ---
 
-## Treino F — Posteriores + glúteos + panturrilha
+## Treino E — Peito superior + costas + braços
 
-*equilíbrio com a coxa anterior*
+*compacto: amanhã tem HYROX*
 
-### 01. Cadeira flexora sentada
+### 01. Supino inclinado no Smith
 
-**4 × 8–12** · posterior · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**3 × 6–10** · peito superior · composto, RIR 1–2 · descanso 3 min
+
+Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
+
+> Segunda exposição pesada de peito superior. Alta estabilidade e ótima capacidade de progressão: é aqui que a carga sobe ao longo dos meses.
+
+Se a máquina estiver ocupada:
+
+- **Chest press inclinado convergente** — Indicado pelo treinador. É o mesmo alvo do A, em máquina.
+- **Supino inclinado com halteres** — Mais amplitude, mais estabilização.
+- **Supino inclinado com barra** — Menos amplitude embaixo, mais carga.
+
+### 02. Remada convergente com apoio de peito
+
+**3 × 8–12** · costas espessura · composto, RIR 1–2 · descanso 150 s
+
+Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
+
+> Tronco apoiado tira a lombar da conta.
+
+Se a máquina estiver ocupada:
+
+- **Remada cavalinho** — Sem apoio: lombar e quadril entram.
+- **Remada na máquina com apoio de peito** — Sem convergência, resto igual.
+- **Remada curvada com barra** — Muito mais custo sistêmico.
+
+### 03. Chest press horizontal convergente
+
+**2 × 8–12** · peito · composto, RIR 1 · descanso 150 s
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Primeiro movimento de propósito: ataca o posterior enquanto está fresco.
+> Preserva o peito médio sem tirar o foco da região clavicular.
 
 Se a máquina estiver ocupada:
 
-- **Mesa flexora deitada** — Quadril estendido: menos alongamento no posterior.
-- **Flexora unilateral em pé** — Um lado por vez, corrige diferença.
-- **Flexora na polia baixa** — Tensão constante, carga menor.
+- **Supino reto na máquina** — Sem convergência, resto igual.
+- **Supino reto com halteres** — Mais amplitude, mais custo de ombro.
+- **Supino no Smith** — Trajetória travada, mais carga.
 
-### 02. Terra romeno no Smith
+### 04. Crossover de baixo para cima
 
-**3 × 6–10** · posterior · composto, 1–2 na reserva · descanso 3 min
-
-Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
-
-> Smith em vez de barra livre para não virar teste de equilíbrio. Amplitude até onde a mecânica de quadril e coluna se mantém.
-
-Se a máquina estiver ocupada:
-
-- **Terra romeno com halteres** — Mais estabilização, menos carga.
-- **Terra romeno com barra** — Mais custo de lombar e de pegada.
-- **Good morning no Smith** — Mais lombar, menos posterior.
-
-### 03. Mesa flexora deitada
-
-**3 × 10–15** · posterior · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**2 × 10–15** · peito superior · isolador, RIR 1 · descanso 105 s
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Excêntrica de 3 s. Fecha o posterior em 10 séries.
+> Fecha as 10 séries semanais de clavicular, estável e pouco fatigante. Sem virar elevação frontal.
 
 Se a máquina estiver ocupada:
 
-- **Cadeira flexora sentada** — Quadril fletido: mais alongamento.
-- **Flexora unilateral deitada** — Um lado por vez.
-- **Flexora nórdica assistida** — Excêntrica pesada, difícil de progredir.
+- **Crucifixo inclinado no cabo** — Indicado pelo treinador. Mesma região, menos vetor ascendente.
+- **Crossover na polia baixa** — Praticamente o mesmo movimento.
+- **Peck deck com banco inclinado** — Trajetória guiada, alongamento menor.
 
-### 04. Elevação pélvica na máquina
+### 05. Rosca Bayesian no cabo
 
-**3 × 8–12** · glúteo · composto, 1–2 na reserva · descanso 150 s
-
-Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
-
-> Pausa no topo com o queixo para dentro.
-
-Se a máquina estiver ocupada:
-
-- **Elevação pélvica com barra** — Mesma coisa, montagem mais chata.
-- **Hip thrust no Smith** — Trajetória fixa, fácil de carregar.
-- **Coice na máquina** — Um lado por vez, carga bem menor.
-
-### 05. Abdutora
-
-**2 × 12–20** · glúteo médio · isolador, última série pode ir a 0–1 na reserva · descanso 105 s
+**2 × 10–15** · bíceps · isolador, RIR 1 · descanso 105 s
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
-> Para o glúteo médio não desaparecer do programa.
+> Braço atrás do corpo, alongando a cabeça longa.
 
 Se a máquina estiver ocupada:
 
-- **Abdutora em pé na polia** — Um lado por vez, amplitude maior.
-- **Abdução deitado com caneleira** — Carga limitada.
-- **Passada lateral com elástico** — Resistência crescente, difícil de medir.
+- **Rosca no cabo** — Indicada pelo treinador, com o braço atrás do corpo para manter o alongamento.
+- **Rosca inclinada com halteres** — Mesmo alongamento sem tensão constante.
+- **Rosca Scott na máquina** — Encurta em vez de alongar a cabeça longa.
 
-### 06. Panturrilha sentada
+### 06. Extensão de tríceps acima da cabeça no cabo
 
-**3 × 8–15** · panturrilha · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
+**2 × 10–15** · tríceps · isolador, RIR 1 · descanso 105 s
 
-Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
+Carga: placa. O número é a carga selecionada, e pronto.
 
-> Joelho flexionado, para o sóleo.
-
-Se a máquina estiver ocupada:
-
-- **Panturrilha sentada na máquina** — Mesmo movimento, outro equipamento.
-- **Panturrilha no leg press com joelho flexionado** — Menos sóleo isolado.
-- **Panturrilha sentada com anilha no joelho** — Carga limitada.
-
-### 07. Panturrilha no leg press
-
-**2 × 10–15** · panturrilha · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
-
-Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
-
-> Com o treino C, fecha 10 séries de panturrilha na semana.
+> Última coisa da semana de musculação. Não precisa ser heroico: amanhã tem HYROX.
 
 Se a máquina estiver ocupada:
 
-- **Panturrilha em pé na máquina** — Joelho estendido: mais gastrocnêmio.
-- **Panturrilha no Smith** — Precisa de degrau, amplitude igual.
-- **Panturrilha unilateral com halter** — Metade da carga, um pé por vez.
+- **Extensão acima da cabeça ou máquina de tríceps** — Indicada pelo treinador. Trajetória guiada, mesmo alongamento da cabeça longa.
+- **Tríceps francês com halter** — Um braço por vez, corrige assimetria.
+- **Tríceps testa com barra W** — Mesma cabeça longa, mais cobrança no cotovelo.
 
-### 08. Ab wheel
+---
 
-**3 × 6–12** · abdômen · isolador, última série pode ir a 0–1 na reserva · descanso 90 s
+## Treino HX — HYROX
+
+*condicionamento, não hipertrofia*
+
+### 01. Corrida
+
+**8 × 1 km** (por tempo) · condicionamento · descanso 90 s
 
 Carga: peso do corpo. Só o que você acrescentou. Pode ficar vazio.
 
-> De joelhos e com amplitude parcial. Só aumente quando estiver fácil.
+> Os 8 km da prova, um a cada estação. Registre o tempo de cada quilômetro em segundos: 4:12 são 252.
 
-Se a máquina estiver ocupada:
+### 02. Ski erg
 
-- **Prancha com peso** — Isométrico: sem amplitude, mais fácil de dosar.
-- **Rollout na barra** — Mesmo padrão com barra carregada.
-- **Abdominal na polia alta ajoelhado** — Flexão de tronco em vez de antiextensão.
+**1 × 1000 m** (por tempo) · condicionamento · descanso 90 s
+
+Carga: peso do corpo. Só o que você acrescentou. Pode ficar vazio.
+
+> Puxada com o tronco, não só com o braço. Tempo em segundos.
+
+### 03. Sled push
+
+**1 × 50 m** (por tempo) · condicionamento · descanso 90 s
+
+Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
+
+> Carga por lado no campo de carga, tempo em segundos. Passos curtos e contínuos: parar custa mais do que ir devagar.
+
+### 04. Sled pull
+
+**1 × 50 m** (por tempo) · condicionamento · descanso 90 s
+
+Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
+
+> Puxada com o quadril para trás, não só com o braço.
+
+### 05. Burpee broad jump
+
+**1 × 80 m** (por tempo) · condicionamento · descanso 90 s
+
+Carga: peso do corpo. Só o que você acrescentou. Pode ficar vazio.
+
+> A estação que mais custa em fôlego. Salto curto e cadência constante.
+
+### 06. Remo ergômetro
+
+**1 × 1000 m** (por tempo) · condicionamento · descanso 90 s
+
+Carga: peso do corpo. Só o que você acrescentou. Pode ficar vazio.
+
+> Perna, tronco, braço — nessa ordem. Tempo em segundos.
+
+### 07. Farmers carry
+
+**1 × 200 m** (por tempo) · condicionamento · descanso 90 s
+
+Carga: halter em cada mão. Um halter por mão. O app mostra o total das duas.
+
+> Um peso em cada mão. Escápula encaixada, sem deixar o ombro subir.
+
+### 08. Lunges com sandbag
+
+**1 × 100 m** (por tempo) · condicionamento · descanso 90 s
+
+Carga: um halter só. Um halter só, segurado com uma ou duas mãos. O número é o peso dele.
+
+> Joelho tocando o chão a cada passo, como a prova exige. O peso é o do saco.
+
+### 09. Wall balls
+
+**1 × 100 reps** (por tempo) · condicionamento · descanso 90 s
+
+Carga: um halter só. Um halter só, segurado com uma ou duas mãos. O número é o peso dele.
+
+> A última estação, com a perna já destruída. O peso é o da bola; o tempo é o que conta.
 
 ---
 
 ## Como executar
 
-### Deixe 1 a 2 repetições na reserva na maior parte do tempo
+### O RIR alvo está escrito em cada exercício
 
 *regra 1*
 
 Nos compostos — pendulum, presses, terra romeno, remadas pesadas — **1 a 2 na reserva**. Não é para falhar nesses toda sessão.
 
-Nas máquinas e isoladores, a maioria também com 1 a 2 na reserva. A **última série** de alguns pode ir a 0 ou 1, quando a técnica continuar boa.
+Nos isoladores, **0 a 1 nas últimas séries** é aceitável: lateral, extensora, flexora, pec deck, roscas, pushdown, panturrilha.
 
-Levar tudo à falha não é necessário para crescer, e cobra caro na recuperação de um programa de seis sessões.
+Falha é ferramenta, não definição de série eficiente. Treinar PERTO dela é o que se quer; transformar toda série em falha absoluta cobra caro na recuperação.
+
+Registre o **RIR da última série** de cada exercício. É o que diz se você está mesmo produzindo mais trabalho de qualidade com o tempo — "55 kg × 10" sozinho não diz.
 
 ### Dupla progressão: primeiro repetição, depois carga
 
 *regra 2*
 
-Numa faixa de 6 a 10, você sobe as repetições mantendo a carga até bater o topo em todas as séries: 90 kg em 9/8/7, depois 10/9/8, depois 10/10/10.
+Numa faixa de 6 a 10, você sobe as repetições mantendo a carga até bater o topo em todas as séries: 55 kg em 9/8/7, depois 10/9/8, depois 10/10/10.
 
-Aí sim aumenta a carga e recomeça mais perto da parte baixa da faixa. **O app avisa quando todas as séries batem o topo.**
+Aí sim aumenta a carga, **no menor incremento prático da máquina**, e recomeça mais perto da parte baixa da faixa — algo como 8/7/6. **O app avisa quando todas as séries batem o topo.**
 
-Isso permite saber objetivamente se você está progredindo, em vez de julgar por dor muscular ou pump.
+Não aumente peso porque conseguiu uma repetição feia no limite. A progressão precisa acontecer mantendo **amplitude, técnica, alvo muscular e o RIR planejado**.
 
 ### Excêntrica controlada em tudo
 
@@ -794,7 +698,7 @@ Descer devagar é o principal escudo contra lesão no seu contexto, e ainda aume
 
 *regra 4*
 
-Referência: **grandes compostos 2,5 a 4 min**, máquinas multiarticulares 2 a 3 min, isoladores 1,5 a 2 min, lateral, abdômen e panturrilha 1 a 2 min.
+Cada exercício já traz o descanso prescrito: **3 min** nos grandes compostos, 2,5 min nas máquinas multiarticulares, 2 min nos intermediários, 1:30 a 1:45 nos isoladores.
 
 O critério real é outro: a próxima série começa quando você consegue de novo fazer uma série de **alta qualidade**. O cronômetro do app é lembrete, não ordem.
 
@@ -806,15 +710,35 @@ Mantenha os principais por **6 a 8 semanas**, desde que não provoquem dor artic
 
 Seu corpo não precisa ser confundido. O que se quer é acumular meses de dados comparáveis.
 
-### As duas primeiras rotações são para calibrar
+### Não acrescente séries agora
 
-*calibração*
+*volume*
 
-Você acabou de mudar de treino. **Não acrescente séries só porque um dia pareceu fácil.**
+São **90 séries de musculação por semana** em cinco sessões, mais o HYROX. O corte em relação às 125 antigas saiu de onde o retorno era baixo — costas, posterior de ombro, quadríceps, braços —, não uniformemente.
 
-Se terminar essas rotações recuperando bem, aumentando repetições, sem dor articular, sem queda de rendimento e sem grupo permanecendo dolorido até o próximo estímulo: não mexa em nada.
+Sua primeira tarefa é **extrair progresso deste volume**. Só considere acrescentar quando, depois de várias exposições: recuperação boa, sem dor articular, desempenho não caindo, execução sólida **e** uma prioridade estagnada apesar de esforço e progressão adequados.
 
-Se houver fadiga excessiva, o corte começa por **1 a 2 séries de braços, deltoide posterior ou espessura** — nunca por lateral, dorsal ou peito superior.
+Nesse caso são **1 a 2 séries no músculo específico** — não 10 séries espalhadas pelo programa.
+
+### O HYROX é o sexto treino, não um extra
+
+*hyrox*
+
+Sábado é sessão de verdade: condicionamento, quadríceps, glúteo, posterior, panturrilha, core e ombro, tudo em regime de resistência. Por isso o HX ocupa um lugar na rotação, como qualquer outro dia.
+
+Mas as estações **não são séries de hipertrofia** — o app não as conta no volume por músculo, de propósito. Corrida, sled e wall balls são estímulo de outra natureza.
+
+**Não faça musculação pesada depois do HYROX.** Ele encerra o sábado. E é por causa dele que a sexta é o treino mais curto da semana.
+
+### Quando reduzir em vez de insistir
+
+*fadiga*
+
+Sinais que aparecem juntos: queda de repetições ou carga por 2 a 3 sessões, o mesmo exercício ficando progressivamente pior, musculatura dolorida por mais de 72 h, queda clara de disposição, cotovelo, ombro ou joelho reclamando, dificuldade de manter o RIR habitual.
+
+Dois sinais específicos desta versão: **o HYROX começando a comprometer a terça**, e sessões passando consistentemente de **90 min**.
+
+Aí a hipótese certa é **fadiga acumulada**, não falta de estímulo. Investigue antes de presumir que precisa de mais — e a primeira mexida é na dose, não trocar oito exercícios porque uma semana foi ruim.
 
 ### Dor de tendão não se treina por cima
 
@@ -824,46 +748,63 @@ Dor muscular difusa no dia seguinte é normal. **Dor pontual em cotovelo, ombro 
 
 Apareceu: tire aquele exercício por 2 semanas e substitua por outro ângulo. Nunca empurre porque "está fraquinha".
 
-### 5 minutos que valem o treino inteiro
+### Aproximação, não 20 min de aquecimento genérico
 
 *aquecimento*
 
-5 min de bike leve mais 2 a 3 séries de aproximação subindo carga no primeiro exercício do dia.
+Antes do primeiro exercício pesado: **3 a 4 séries de aproximação** — carga bem leve × 8 a 10, depois 50 a 60% da carga de trabalho × 5, depois 70 a 80% × 2 a 4. Sem chegar perto da falha.
 
-Treinando às 6h15 você entra frio de verdade. Aquecer não é opcional aqui.
+No segundo exercício grande, **1 a 2 aproximações** bastam. Isoladores no fim do treino normalmente não precisam de nenhuma.
 
-### A cada 48 sessões, uma semana leve
+Séries de aproximação **não entram no volume** — o app não as conta e você não as registra.
+
+### Deload por evidência, não por calendário
 
 *deload*
 
-Mantenha as mesmas cargas e faça **metade das séries** por uma semana.
+Não existe "semana 6 é deload obrigatório". **Se você continua progredindo, continue treinando.**
 
-O deload existe para o tecido conjuntivo se recuperar — por isso corta volume e não intensidade. O app avisa quando chegar a hora.
+Quando houver evidência clara de fadiga acumulada — os sinais da regra de fadiga —, faça **5 a 7 dias** com 50 a 60% das séries habituais, as mesmas técnicas, **3 a 4 na reserva** e sem falha. Depois volte.
 
-### 25 a 40 min, 2 a 3x por semana
+Cortar volume e manter a intensidade é o que permite o tecido conjuntivo se recuperar sem perder a adaptação.
+
+### 2x por semana, leve a moderado
 
 *bike*
 
-Colocação: **depois do A, 25 a 30 min**; **no dia de descanso, 30 a 40 min**; **depois do F, 20 a 30 min**, esta terceira opcional conforme a recuperação.
+Colocação: **segunda, depois do treino A, 20 a 25 min**; **quinta, depois do D, 25 a 30 min** — o D é curto e de fadiga sistêmica baixa, é ele que abre espaço para a segunda sessão.
 
-Intensidade RPE 4 a 6 de 10: respiração claramente acelerada, mas ainda dá para conversar.
+Intensidade: respirando mais forte, mas ainda conseguindo conversar. **Sem transformar em HIIT.**
 
-Evite antes de C ou F, e nunca antes do treino. Musculação é o motor da mudança corporal; a bike é condicionamento e saúde, não outro treino de perna.
+Cardio moderado nessa dose não atrapalha hipertrofia. Evite antes de B ou do HYROX, e nunca antes do treino — a bike é condicionamento e saúde, não outro treino de perna.
 
-### O que conta como dar certo em 2 a 3 meses
+### Onde a recuperação está sendo gasta
+
+*prioridades*
+
+Prioridade 1: **peitoral superior** e **deltoide lateral**. Prioridade 2: **dorsais em largura** e **panturrilhas**. Eles recebem os melhores momentos da semana, não as sobras.
+
+**Deltoide anterior** ganhou 2 séries diretas na quarta — poucas de propósito, porque os presses inclinados e o horizontal já entregam bastante. Se as fotos mostrarem que ele continua atrás, aumentamos; não por antecipação.
+
+Continua sem desenvolvimento militar e sem encolhimento direto: trapézio não é limitação visual, e remadas e terra romeno já dão estímulo. Quadríceps, seu ponto forte, cedeu volume — não foi abandonado, e ainda recebe o HYROX.
+
+Prioridade não é cargo vitalício: quando uma dessas regiões deixar de ser deficiência, a programação muda.
+
+### O que conta como dar certo nos próximos meses
 
 *sucesso*
 
-Não é simplesmente sair de 73 para 77 kg. São quatro coisas ao mesmo tempo: **peso subindo bem devagar**, **cintura estável**, **progressão clara em dorsal, lateral, peito superior e posteriores**, e **fotos com mais V-taper**.
+Não é só o peso na balança. São quatro coisas ao mesmo tempo: **peso subindo bem devagar**, **cintura estável**, **progressão clara em peito superior, lateral, dorsal e panturrilha**, e a mudança aparecendo relaxado, não só em pose.
 
-O alvo visual: ombros mais largos, dorsais mais abertas, clavicular mais cheia, costas mais densas, abdômen mais espesso, panturrilha acompanhando a coxa, pernas mantidas fortes e cintura preservada.
+O alvo visual: mais preenchimento clavicular, maior distância visual de ombro a ombro, o V aparecendo mesmo relaxado, e a panturrilha acompanhando a coxa.
 
 ---
 
 ## Cardio
 
-20 minutos, 2 a 3 vezes por semana, intensidade leve a moderada — dá para
-conversar, sem ofegar. Modalidades: bike, esteira inclinada, elíptico, remo.
+Duas vezes por semana: **segunda, depois do treino A, 20 a 25 min**, e
+**quinta, no dia de recuperação, 25 a 30 min**. Intensidade leve a moderada —
+respirando mais forte, mas ainda dá para conversar. Modalidades: bike, esteira inclinada, elíptico, remo.
 
 Existe por saúde cardiovascular, capacidade de trabalho e regulação do
 apetite. **Não é queima de caloria** — o objetivo é ganhar massa, e por isso
@@ -871,7 +812,7 @@ também não há HIIT: a justificativa dele é eficiência de queima, e o custo 
 fadiga competindo com os treinos de perna.
 
 Sempre depois da musculação ou em dia separado. Nunca antes do treino, e
-nunca no mesmo período dos treinos C ou F.
+nunca no mesmo período dos treinos B ou E, que são os dias de perna.
 
 ## Ajuste da dieta
 

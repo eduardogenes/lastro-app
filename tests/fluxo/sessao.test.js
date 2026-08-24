@@ -185,9 +185,9 @@ test('substituto acumula histórico próprio entre treinos', async () => {
   assert.strictEqual(a.J('S.logs["crossover-na-polia-baixa"]').length, 1);
 
   a.E('go("E")');
-  a.E('toggle(6)');
-  a.E('setAlt(6,"crossover-na-polia-baixa")');
-  a.preencher(6, 0, 22, 12);
+  a.E('toggle(3)');
+  a.E('setAlt(3,"crossover-na-polia-baixa")');
+  a.preencher(3, 0, 22, 12);
   const h = a.J('S.logs["crossover-na-polia-baixa"]');
   assert.strictEqual(h.length, 2, 'mesma chave, dois dias diferentes');
   assert.notStrictEqual(h[0].sl, h[1].sl, 'cada um sabe de que posição veio');

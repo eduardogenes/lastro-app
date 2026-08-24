@@ -1,5 +1,5 @@
 import {
-  ROT_BASE, D_COMPOSTO, D_MAQUINA, D_ISOLADOR, D_CURTO,
+  ROT_BASE, D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO,
   PROGRAMA, RULES, ALT, slugEx, EX_BASE,
   PRIORIDADES, NIVEIS, nivelDe, PRIO, CARGAS, DORES, MODAIS
 } from './dominio/programa';
@@ -41,6 +41,16 @@ import { DB } from './infra/db';
 
 const KEY = 'treino-eduardo-v1';
 function rot() { return (S.rot && S.rot.length) ? S.rot : ROT_BASE; }
+
+// Sessões de cardio por semana que o treinador pede: segunda depois do A e
+// quinta depois do D, que é o treino curto.
+const CARDIO_ALVO = 2;
+// Os dias de perna do programa: cardio pesado antes deles compete pela mesma
+// recuperação. O HYROX entra aqui porque corrida, sled e lunges cobram da
+// perna tanto quanto o dia de perna. Sinaliza, não bloqueia.
+const DIAS_PERNA = ['B', 'HX'];
+// RIR da última série, nas faixas que a prescrição usa.
+const RIR_OPCOES = ['0', '0–1', '1', '1–2', '2+'];
 
 
 
@@ -153,7 +163,7 @@ function treino(d) {
   return { name: p.name, tag: p.tag, ex: aplicaMods(d, p.ex).map(function (sl) {
     const e = exDe(sl.id);
     return { id:sl.id, n:e.n, car:e.car, g:e.g, c:e.c, cue:e.cue, u:e.u,
-             s:sl.s, r:sl.r, d:sl.d, desde:sl.desde, bi:sl.bi || 0,
+             s:sl.s, r:sl.r, d:sl.d, rir:sl.rir || '', desde:sl.desde, bi:sl.bi || 0,
              mod:sl.mod || 0, orig:sl.orig || sl.id };
   }) };
 }
@@ -429,6 +439,7 @@ function projeta(i) {
   if (e.aq) entry.aq = 1; else delete entry.aq;
   const obs = (e.obs||'').trim();
   if (obs) entry.obs = obs; else delete entry.obs;
+  if (e.rir) entry.rir = e.rir; else delete entry.rir;
   if (e.dor && e.dor.length) entry.dor = e.dor.slice(); else delete entry.dor;
   if (S.deload) entry.dl = 1; else delete entry.dl;
 
@@ -612,7 +623,7 @@ function id(d,i){ const t = treino(d); return (t && t.ex[i]) ? t.ex[i].id : d + 
 // render() reescreve o innerHTML e os valores viviam só no DOM.
 function draftOf(i) {
   if (!S.draft || S.draft.day !== view.day) S.draft = { day: view.day, t: Date.now(), ex: {} };
-  if (!S.draft.ex[i]) S.draft.ex[i] = { s: [], obs: '', dor: [], alt: null };
+  if (!S.draft.ex[i]) S.draft.ex[i] = { s: [], obs: '', dor: [], rir: '', alt: null };
   const e = S.draft.ex[i];
   if (!Array.isArray(e.s)) e.s = [];
   if (!Array.isArray(e.dor)) e.dor = [];
@@ -641,6 +652,7 @@ function hidrataDraft(dia) {
       s: e.sets.map(function (x) { return x ? [x[0], x[1]] : [null, null]; }),
       obs: e.obs || '',
       dor: (e.dor || []).slice(),
+      rir: e.rir || '',
       aq: !!e.aq
     };
   });
@@ -934,6 +946,7 @@ function vmExercicio(d, i, ex) {
     grupo: ex.g,
     cue: ex.cue,
     faixa: ex.r,
+    rir: ex.rir || '',
     series: ns,
     composto: !!ex.c,
     bi: ex.bi || 0,
@@ -982,8 +995,13 @@ function vmExercicio(d, i, ex) {
 
     mostraAquecimento: i === 0,
     aq: !!(dr && dr.aq),
-    notaAberta: !!((dr && (dr.obs || dr.dor.length)) || view.nota === i),
+    notaAberta: !!((dr && (dr.obs || dr.dor.length || dr.rir)) || view.nota === i),
     obs: dr ? (dr.obs || '') : '',
+    // o RIR registrado é o da ÚLTIMA série: uma marca por exercício, não por série
+    rirFeito: dr ? (dr.rir || '') : '',
+    rirOpcoes: RIR_OPCOES.map(function (v) {
+      return { v: v, on: !!(dr && dr.rir === v) };
+    }),
     dores: DORES.map(function (x) {
       return { k: x.k, t: x.t, on: !!(dr && dr.dor.indexOf(x.k) >= 0) };
     })
@@ -1020,6 +1038,7 @@ const ACOES = {
   setCarga: function (i, t) { setCarga(i, t); },
   abrirNota: function (i) { abrirNota(i); },
   obsIn: function (el, i) { obsIn(el, i); },
+  setRir: function (i, v) { setRir(i, v); },
   toggleDor: function (i, k) { toggleDor(i, k); }
 };
 
@@ -1531,9 +1550,24 @@ function difTotal() {
   return n;
 }
 
+// Só o que tem músculo declarado. As estações do HYROX são exercício de
+// verdade no dia, mas contá-las aqui compararia 106 contra o alvo de 90 do
+// treinador — dois números medindo coisas diferentes lado a lado.
 function seriesDoDia(d) {
   const p = S.prog[d];
-  return p ? p.ex.reduce(function (n, x) { return n + x.s; }, 0) : 0;
+  return p ? p.ex.reduce(function (n, x) { return n + (exDe(x.id).g ? x.s : 0); }, 0) : 0;
+}
+/** Quantos itens do dia não são série de hipertrofia — as estações do HYROX. */
+function estacoesDoDia(d) {
+  const p = S.prog[d];
+  return p ? p.ex.filter(function (x) { return !exDe(x.id).g; }).length : 0;
+}
+/** "9 exercícios · 20 séries" na musculação; "9 estações" num dia de condicionamento. */
+function metaDoDia(d) {
+  const est = estacoesDoDia(d);
+  const s = seriesDoDia(d);
+  if (est && !s) return est + (est === 1 ? ' estação' : ' estações');
+  return s + ' séries';
 }
 
 function totalSeries() {
@@ -1627,7 +1661,7 @@ async function progReps(d, i) {
 
 async function progDesc(d, i) {
   const sl = S.prog[d].ex[i];
-  const opcoes = [D_COMPOSTO, D_MAQUINA, D_ISOLADOR, D_CURTO];
+  const opcoes = [D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO];
   const j = (opcoes.indexOf(sl.d) + 1) % opcoes.length;
   const de = sl.d;
   sl.d = opcoes[j];
@@ -1665,7 +1699,7 @@ async function criarTreino() {
 
 async function restaurarDia(d) {
   if (!PROGRAMA[d]) {
-    if (!confirm('O treino ' + d + ' foi criado por você e não existe no programa do treinador. Apagar o treino?')) return;
+    if (!confirm('O treino ' + d + ' não existe no programa atual do treinador. Apagar o treino?')) return;
     delete S.prog[d];
     S.rot = rot().filter(function (x) { return x !== d; });
     logProg(d, 'treino ' + d + ' apagado');
@@ -1759,7 +1793,7 @@ function cardioSemana() {
 }
 // treino de perna salvo hoje: sinaliza, não bloqueia
 function pernaHoje() {
-  return S.done.filter(x => (x.day==='C' || x.day==='F') && sameDay(x.t, Date.now())).map(x => x.day);
+  return S.done.filter(x => DIAS_PERNA.indexOf(x.day) >= 0 && sameDay(x.t, Date.now())).map(x => x.day);
 }
 
 function cardioSet(k, v) {
@@ -1775,7 +1809,7 @@ async function addCardio() {
   view.cardioRapido = false;
   render();
   const n = cardioSemana().length;
-  toast(`${f.min} min de ${f.m} registrados · ${n} de 3 nesta semana`);
+  toast(`${f.min} min de ${f.m} registrados · ${n} de ${CARDIO_ALVO} nesta semana`);
 }
 async function delCardio(t) {
   S.cardio = S.cardio.filter(c => c.t !== t);
@@ -2000,26 +2034,134 @@ function seriesPorMusculo(de, ate, corte) {
  * @param {boolean} [semVeredito] omite o cartão de veredito, que a tela DADOS já
  *   desenha no Instrumento logo acima — sem isso ele aparece duas vezes.
  */
+/** Onde o stepper começa quando ainda não há nenhuma medida registrada. */
+const CORPO_PADRAO = { peso: 75, cintura: 85 };
+
+// ---------- a data da medida ----------
+// Pesagem esquecida ontem não pode entrar como hoje. O veredito da dieta lê
+// MÉDIA SEMANAL e o ritmo entre semanas: uma medida no dia errado desloca as
+// duas médias, e é esse número que decide comer mais ou comer menos.
+//
+// O padrão continua sendo hoje, num toque só — a data fica atrás de um link,
+// porque registrar no dia é o caso de todo dia e retroativo é exceção.
+//
+// O seletor é o NATIVO do aparelho, e não uma lista de dias recentes: a medida
+// esquecida pode ser de semanas atrás, e uma lista curta não alcança. No iPhone
+// ele abre a roda de dia, mês e ano, que é o caminho mais rápido para uma data
+// distante — e impede data no futuro pelo `max`, sem o app ter que validar.
+
+/** Um dia normalizado às 7h, que é quando ele pesa. */
+function diaNormalizado(t) {
+  const d = new Date(t); d.setHours(7, 0, 0, 0); return d.getTime();
+}
+function diaDaMedida(k) {
+  return (view.bodyDia && view.bodyDia[k]) || diaNormalizado(Date.now());
+}
+/**
+ * O instante que vai para o histórico. Hoje leva a hora real, para as medidas
+ * do dia manterem ordem entre si; um dia passado leva 7h, o horário de pesagem.
+ */
+function instanteDaMedida(k) {
+  const d = diaDaMedida(k);
+  return sameDay(d, Date.now()) ? Date.now() : d;
+}
+function rotuloDoDia(t) {
+  if (sameDay(t, Date.now())) return 'hoje';
+  if (sameDay(t, Date.now() - 86400000)) return 'ontem';
+  const d = new Date(t);
+  return DIAS_CURTOS[(d.getDay() + 6) % 7] + ' ' + d.getDate();
+}
+/** O que o dia escolhido já tem — é o que diz se ele vai criar ou corrigir. */
+function medidaDoDia(k) {
+  const d = diaDaMedida(k);
+  return (S.body[k] || []).filter(function (x) { return sameDay(x.t, d); })[0] || null;
+}
+/** "registrar hoje", "registrar ontem", "registrar em ter 14". */
+function acaoDaMedida(k) {
+  const r = rotuloDoDia(diaDaMedida(k));
+  return 'registrar ' + (r === 'hoje' || r === 'ontem' ? r : 'em ' + r);
+}
+
+/** O que a tela precisa saber sobre a data escolhida. */
+function diaDaMedidaVM(k) {
+  const d = diaDaMedida(k);
+  const j = medidaDoDia(k);
+  const un = k === 'peso' ? 'kg' : 'cm';
+  return {
+    aberto: view.bodyDiaAberto === k,
+    iso: hojeISO(d),
+    max: hojeISO(),
+    hoje: sameDay(d, Date.now()),
+    txt: rotuloDoDia(d),
+    // dizer o que o dia já tem evita o registro cego: ou ele está preenchendo
+    // um buraco, ou está corrigindo um valor — e são gestos diferentes
+    jaTem: j ? 'neste dia: ' + fmtDec(j.v) + ' ' + un + ' · registrar substitui'
+             : 'nenhuma medida neste dia'
+  };
+}
+
+/**
+ * Onde o stepper parte quando não há rascunho.
+ *
+ * Se o dia escolhido JÁ tem medida, é ela — o gesto ali é corrigir aquele dia,
+ * e partir do último peso faria ele digitar por cima do que já estava certo.
+ * Sem medida no dia, parte da última registrada.
+ */
+function baseDoCorpo(k) {
+  const arr = S.body[k] || [];
+  const d = diaDaMedida(k);
+  const noDia = arr.filter(function (x) { return sameDay(x.t, d); })[0];
+  if (noDia) return noDia.v;
+  return arr.length ? arr[arr.length - 1].v : CORPO_PADRAO[k];
+}
+
+/**
+ * O valor que o stepper de corpo está mostrando AGORA — a MESMA leitura para a
+ * tela e para o botão de registrar.
+ *
+ * Quando o campo de texto virou stepper, esta função não existia: a tela passou
+ * a desenhar um número vindo de `view.bodyForm`, e o registro continuou lendo um
+ * `<input>` por id que o redesenho já tinha apagado. Sem tocar no stepper o
+ * botão não gravava nada; tocando, chegava número onde o código esperava string.
+ *
+ * Devolve NaN quando há rascunho e ele não é número — o registro precisa
+ * RECUSAR nesse caso, e não gravar a referência no lugar do que foi digitado.
+ */
+function valorDoCorpo(k) {
+  const f = view.bodyForm || {};
+  if (f[k] == null || f[k] === '') return baseDoCorpo(k);
+  return typeof f[k] === 'number' ? f[k] : parseFloat(String(f[k]).replace(',', '.'));
+}
+
 async function addBody(k) {
-  const el = document.getElementById(k === 'peso' ? 'bpeso' : 'bcint');
-  const raw = ((view.bodyForm && view.bodyForm[k]) || (el && el.value) || '').replace(',', '.');
-  const v = parseFloat(raw);
+  const v = valorDoCorpo(k);
   if (isNaN(v) || v <= 0) { toast('Digite um número válido.'); return; }
 
+  const quando = instanteDaMedida(k);
+  const rotulo = rotuloDoDia(quando);
   const arr = S.body[k];
-  const hoje = arr.filter(x => sameDay(x.t, Date.now()));
-  hoje.forEach(x => arr.splice(arr.indexOf(x), 1));   // uma medida por dia
-  arr.push({ t: Date.now(), v });
+  const noDia = arr.filter(x => sameDay(x.t, quando));
+  noDia.forEach(x => arr.splice(arr.indexOf(x), 1));   // uma medida por dia
+  arr.push({ t: quando, v });
   arr.sort((a,b) => a.t - b.t);
   if (arr.length > 400) S.body[k] = arr.slice(-400);
 
+  // Solta o rascunho: o stepper volta a se derivar da última medida, que é
+  // justamente a que acabou de ser gravada. E a data volta para hoje — deixar
+  // uma data passada armada seria a próxima pesagem caindo no dia errado sem
+  // ele perceber.
   view.bodyForm = Object.assign({}, view.bodyForm);
-  view.bodyForm[k] = '';
+  delete view.bodyForm[k];
+  view.bodyDia = Object.assign({}, view.bodyDia);
+  delete view.bodyDia[k];
+  if (view.bodyDiaAberto === k) view.bodyDiaAberto = null;
   await save();
   render();
-  toast(hoje.length
-    ? `${k === 'peso' ? 'Peso' : 'Cintura'} de hoje atualizado para ${fmtDec(v)} ${k==='peso'?'kg':'cm'}.`
-    : `${fmtDec(v)} ${k==='peso'?'kg':'cm'} registrado.`);
+  const nome = k === 'peso' ? 'Peso' : 'Cintura';
+  const un = k === 'peso' ? 'kg' : 'cm';
+  toast(noDia.length
+    ? `${nome} de ${rotulo} atualizado para ${fmtDec(v)} ${un}.`
+    : `${fmtDec(v)} ${un} registrado ${rotulo === 'hoje' ? 'hoje' : 'em ' + rotulo}.`);
 }
 async function delBody(k, t) {
   S.body[k] = S.body[k].filter(x => x.t !== t);
@@ -2218,6 +2360,13 @@ function toggleDor(i, k) {
   const e = draftOf(i);
   const j = e.dor.indexOf(k);
   if (j >= 0) e.dor.splice(j,1); else e.dor.push(k);
+  projeta(i); queueSave(); render();
+}
+// Tocar de novo no valor já marcado desmarca: registrar RIR é opcional, e sem
+// isso um toque errado não teria como ser desfeito.
+function setRir(i, v) {
+  const e = draftOf(i);
+  e.rir = e.rir === v ? '' : v;
   projeta(i); queueSave(); render();
 }
 function toggleSwap(i){ view.swapOpen = view.swapOpen===i ? null : i; render(); }
@@ -2669,9 +2818,12 @@ CTX.treino = function () {
       txt: 'Metade das séries, mesmas cargas. Os placeholders continuam mostrando a carga da última semana normal.',
       acao: { t: 'sair do deload', onClick: function () { setDeload(false); } } });
   } else if (trabalho > 0 && faltam <= 6) {
-    avisos.push({ k: 'dl2', rotulo: 'deload chegando', cor: '',
-      txt: 'Faltam ' + faltam + ' sessões para a semana de metade das séries.',
-      acao: { t: 'ativar agora', onClick: function () { setDeload(true); } } });
+    // Não é contagem regressiva para um deload obrigatório: o treinador tirou a
+    // semana fixa do programa. O bloco de 48 sessões continua sendo o momento de
+    // OLHAR, e quem decide é a evidência de fadiga, não o calendário.
+    avisos.push({ k: 'dl2', rotulo: 'fim de bloco chegando', cor: '',
+      txt: 'Faltam ' + faltam + ' sessões para fechar o bloco. Deload só se houver evidência de fadiga: força caindo por 2 a 3 sessões, dor que não passa em 72 h, RIR difícil de manter. Progredindo bem, siga treinando.',
+      acao: { t: 'entrar em deload', onClick: function () { setDeload(true); } } });
   }
   // Preenchendo um treino de outra data: o aviso é o único lugar que diz para
   // onde as séries digitadas estão indo, e carrega a porta de saída. Sem ele o
@@ -2854,15 +3006,15 @@ function medidasRecentes(k, un) {
 CTX.corpo = function () {
   const r = pesoRitmo();
   const c = cinturaMes();
-  const f = view.bodyForm || {};
-  const ultimoPeso = S.body.peso.length ? S.body.peso[S.body.peso.length - 1].v : 75;
-  const ultimaCint = S.body.cintura.length ? S.body.cintura[S.body.cintura.length - 1].v : 85;
+  const ultimaCint = baseDoCorpo('cintura');
+  // a tela precisa de um número para desenhar: rascunho ilegível cai na referência
+  const vPeso = valorDoCorpo('peso'), vCint = valorDoCorpo('cintura');
   const semana = weekStart(Date.now());
   const naSemana = S.body.peso.filter(function (x) { return x.t >= semana; }).length;
 
   return {
     peso: {
-      valor: f.peso == null ? ultimoPeso : f.peso,
+      valor: isNaN(vPeso) ? baseDoCorpo('peso') : vPeso,
       serie: serieSemanal(S.body.peso, 14),
       media: r.ok ? fmtDec(r.last.v) + ' kg' : '—',
       ritmo: (r.ok && r.duasSemanas) ? fmtSig2(r.kgSem) : '—',
@@ -2870,10 +3022,12 @@ CTX.corpo = function () {
         ? (r.kgSem >= 0.15 && r.kgSem <= 0.4 ? 'ins-acid' : 'ins-amber') : '',
       nota: naSemana + (naSemana === 1 ? ' pesagem nesta semana' : ' pesagens nesta semana'),
       alvo: 'registre 3 a 4 por semana',
+      acao: acaoDaMedida('peso'),
+      dia: diaDaMedidaVM('peso'),
       medidas: medidasRecentes('peso', 'kg')
     },
     cintura: {
-      valor: f.cintura == null ? ultimaCint : f.cintura,
+      valor: isNaN(vCint) ? ultimaCint : vCint,
       serie: serieSemanal(S.body.cintura, 14),
       atual: S.body.cintura.length ? fmtDec(ultimaCint) + ' cm' : '–',
       // Duas coisas separadas, e antes eram uma só: a célula de métrica quer
@@ -2882,11 +3036,13 @@ CTX.corpo = function () {
       // devia estar a variação em centímetros.
       mesValor: c ? fmtSig2(c.mes) : '–',
       mes: c ? fmtSig2(c.mes) + ' cm no mês' : 'faltam 3 semanas de medida para concluir',
+      acao: acaoDaMedida('cintura'),
+      dia: diaDaMedidaVM('cintura'),
       medidas: medidasRecentes('cintura', 'cm')
     },
     cardio: {
       semana: cardioSemana().length,
-      alvo: 3,
+      alvo: CARDIO_ALVO,
       perna: pernaHoje(),
       // A lista da semana existe para uma coisa só: desfazer. Registrou 25 min
       // de bike duas vezes por engano, e sem isso o número da semana fica
@@ -2894,7 +3050,7 @@ CTX.corpo = function () {
       sessoes: cardioSemana().map(function (x) {
         return { t: x.t, data: fmtDate(x.t), modal: x.m, resumo: x.min + ' min · ' + x.i };
       }),
-      regra: 'depois do A: 25 a 30 min · no dia de descanso: 30 a 40 · depois do F: 20 a 30, opcional. Evite antes de C ou F, e nunca antes do treino.'
+      regra: 'segunda, depois do A: 20 a 25 min · quinta, depois do D: 25 a 30 min. Leve a moderado: respirando mais forte, mas ainda dando para conversar. Evite antes de B ou do HYROX, e nunca antes do treino.'
     },
     musculos: CTX.musculos()
   };
@@ -2966,6 +3122,21 @@ CTX.musculos = function () {
 
 CTX.setPeso = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { peso: v }); render(); };
 CTX.setCintura = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { cintura: v }); render(); };
+CTX.abreDiaCorpo = function (k) { view.bodyDiaAberto = view.bodyDiaAberto === k ? null : k; render(); };
+CTX.setDiaCorpo = function (k, iso) {
+  // 'YYYY-MM-DD' parseado como data LOCAL: `new Date(iso)` leria como UTC e no
+  // Brasil cairia no dia anterior.
+  const p = String(iso).split('-').map(Number);
+  if (p.length !== 3 || !p[0]) return;
+  const d = new Date(p[0], p[1] - 1, p[2], 7, 0, 0, 0);
+  if (isNaN(d.getTime()) || d.getTime() > Date.now()) return;
+  view.bodyDia = Object.assign({}, view.bodyDia, { [k]: d.getTime() });
+  // trocar de dia troca a referência do stepper: o valor a corrigir é o
+  // daquele dia, não o da última pesagem
+  view.bodyForm = Object.assign({}, view.bodyForm);
+  delete view.bodyForm[k];
+  render();
+};
 CTX.registraPeso = function () { addBody('peso'); };
 CTX.registraCintura = function () { addBody('cintura'); };
 CTX.apagaMedida = function (k, t) { delBody(k, t); };
@@ -3241,7 +3412,7 @@ CTX.cromoDoTreino = function () {
         feito: hojeCardio.length > 0,
         resumo: hojeCardio.length
           ? hojeCardio.map(function (c) { return c.min + ' min de ' + c.m; }).join(' · ')
-          : cardioSemana().length + ' de 3 nesta semana',
+          : cardioSemana().length + ' de ' + CARDIO_ALVO + ' nesta semana',
         aberto: !!view.cardioRapido,
         modais: MODAIS.map(function (m) { return { k: m, t: m, on: f.m === m }; }),
         minutos: [20, 25, 30, 40].map(function (v) { return { k: v, t: v + ' min', on: f.min === v }; }),
@@ -3494,7 +3665,7 @@ CTX.historico = function () {
     olho: 'treino ' + d + ' · exercício ' + String(i + 1).padStart(2, '0'),
     meta: H.length + ' de 6 sessões',
     titulo: nomeEx(sel),
-    alvo: ex.s + ' × ' + ex.r,
+    alvo: ex.s + ' × ' + ex.r + (ex.rir ? ' · RIR ' + ex.rir : ''),
     marcas: marcas,
     up: sel === id(d, i) && shouldUp(d, i, ex),
     cue: ex.cue,
@@ -3557,6 +3728,7 @@ CTX.historico = function () {
         anilhas: (!seg && CARGAS[tipo].dobra && maxLoad(s))
           ? fmtNum(totalAnilhas(maxLoad(s))) + ' kg ' + CARGAS[tipo].total : null,
         dor: s.dor && s.dor.length ? 'dor em ' + s.dor.map(dorName).join(' e ') : null,
+        rir: s.rir ? 'última série a ' + s.rir + ' da falha' : null,
         obs: s.obs || null,
         editando: view.edit === base + k,
         edicao: view.edit === base + k ? {
@@ -3836,7 +4008,7 @@ function programaLista() {
       return {
         d: d, i: i,
         nome: p ? p.name : 'treino ' + d,
-        meta: (p ? p.ex.length : 0) + ' exercícios · ' + seriesDoDia(d) + ' séries' +
+        meta: (p ? p.ex.length : 0) + ' exercícios · ' + metaDoDia(d) +
               (n ? ' · ' + n + (n === 1 ? ' diferença' : ' diferenças') : ''),
         primeiro: i === 0,
         ultimo: i === rot().length - 1
@@ -3853,7 +4025,7 @@ function programaDia(d) {
     modo: 'dia',
     dia: d,
     olho: 'treino ' + d,
-    meta: seriesDoDia(d) + ' séries',
+    meta: metaDoDia(d),
     titulo: p.name,
     dif: difDoDia(d).map(function (x) { return x.txt; }),
     linhas: p.ex.map(function (sl, i) {

@@ -10,7 +10,7 @@ import assert from 'node:assert';
 import {
   ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5
 } from '../../src/dominio/migracoes';
-import { EX_BASE, PROGRAMA, slugEx } from '../../src/dominio/programa';
+import { EX_BASE, slugEx } from '../../src/dominio/programa';
 import type { Estado, Log } from '../../src/dominio/tipos';
 import { DIA, log } from './ajuda';
 
@@ -231,7 +231,10 @@ test('2→3 lê as posições antigas com a rotulagem da época', () => {
   const S = estado({ plano: 2, logs: { D3: [log([[20, 12]], { t })] } });
   migraPlano3(S);
   const chave = Object.keys(S.logs)[0];
-  // o treino de ombros e braços hoje se chama E; D3 era a quarta posição dele
-  assert.strictEqual(chave, slugEx(PROGRAMA.E.ex[3].n),
+  // Literal de propósito: o alvo é o exercício que estava naquela posição NA
+  // ÉPOCA. Escrever isso como PROGRAMA.E.ex[3] amarrava a migração ao programa
+  // vivo — e foi exatamente o que quebrou quando o treinador trocou a
+  // prescrição em 2026. A migração lê dado congelado; o teste também.
+  assert.strictEqual(chave, 'reverse-fly-no-cabo',
     'D3 era o quarto exercício de ombros; veio ' + chave);
 });

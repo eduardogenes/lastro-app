@@ -16,7 +16,7 @@ import {
 import { fmtDec } from '../../dominio/formato';
 
 /** Uma medida corporal: stepper, botão e a curva das últimas 14 semanas. */
-function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, children }) {
+function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children }) {
   return (
     <Secao rotulo={rotulo} nota={nota}>
       <div class="dd-registro">
@@ -27,6 +27,23 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
         />
         <button class="ins-btn-secondary" onClick={onRegistrar}>{acao}</button>
       </div>
+
+      {/* A data fica atrás de um link porque registrar no dia é o caso de todo
+          dia; retroativo é exceção. O seletor é o nativo do aparelho: a medida
+          esquecida pode ser de semanas atrás, e ele alcança qualquer data sem
+          o app ter que desenhar um calendário. */}
+      {dia && (dia.aberto
+        ? <div class="dd-dia">
+            <input
+              class="ins-input dd-data" type="date" id={'ddia-' + rotulo}
+              value={dia.iso} max={dia.max}
+              onInput={e => onDia(e.currentTarget.value)}
+            />
+            <p class="ins-body-sm ins-t3 dd-dia-nota">{dia.jaTem}</p>
+          </div>
+        : <button class="dd-diabtn" onClick={onAbrirDia}>
+            {dia.hoje ? 'outro dia' : 'registrando em ' + dia.txt + ' · trocar'}
+          </button>)}
 
       {serie.some(x => x != null)
         ? <div class="dd-spark"><Sparkline valores={serie} /></div>
@@ -219,7 +236,9 @@ export function Dados({ ctx }) {
       <Medida
         rotulo="peso" nota={c.peso.nota}
         valor={c.peso.valor} passo={0.1} unidade="kg" serie={c.peso.serie}
-        onMuda={ctx.setPeso} onRegistrar={ctx.registraPeso} acao="registrar hoje"
+        onMuda={ctx.setPeso} onRegistrar={ctx.registraPeso} acao={c.peso.acao}
+        dia={c.peso.dia} onAbrirDia={() => ctx.abreDiaCorpo('peso')}
+        onDia={t => ctx.setDiaCorpo('peso', t)}
         medidas={c.peso.medidas} aoApagar={t => ctx.apagaMedida('peso', t)}
         celulas={[
           { k: 'm', rotulo: 'média da semana', valor: c.peso.media },
@@ -234,7 +253,9 @@ export function Dados({ ctx }) {
       <Medida
         rotulo="cintura" nota="1× por semana, em jejum"
         valor={c.cintura.valor} passo={0.5} unidade="cm" serie={c.cintura.serie}
-        onMuda={ctx.setCintura} onRegistrar={ctx.registraCintura} acao="registrar"
+        onMuda={ctx.setCintura} onRegistrar={ctx.registraCintura} acao={c.cintura.acao}
+        dia={c.cintura.dia} onAbrirDia={() => ctx.abreDiaCorpo('cintura')}
+        onDia={t => ctx.setDiaCorpo('cintura', t)}
         medidas={c.cintura.medidas} aoApagar={t => ctx.apagaMedida('cintura', t)}
         celulas={[
           { k: 'a', rotulo: 'última medida', valor: c.cintura.atual },

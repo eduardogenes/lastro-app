@@ -35,6 +35,7 @@ const CRU: Array<[string, string, string, 'g' | 'ml', number, number, number, nu
   ['azeite', 'Azeite de oliva', 'mercearia', 'g', 884, 0, 0, 100, 0],
   ['mel', 'Mel', 'mercearia', 'g', 309, 0.3, 82, 0, 0],
   ['geleia', 'Geleia light', 'mercearia', 'g', 150, 0.3, 36, 0, 0],
+  ['docedeleite', 'Doce de leite', 'mercearia', 'g', 315, 6.9, 55, 7.4, 0],
   ['frango', 'Frango cozido', 'acougue', 'g', 165, 31, 0, 3.6, 1.3125],
   ['suino', 'Filé/lombo suíno magro cozido', 'acougue', 'g', 190, 32, 0, 6.4, 1.34],
   ['tilapia', 'Tilápia/merluza cozida', 'acougue', 'g', 128, 26, 0, 2.7, 1.25],
@@ -56,6 +57,9 @@ const CRU: Array<[string, string, string, 'g' | 'ml', number, number, number, nu
   ['malto', 'Maltodextrina / dextrose', 'suplementos', 'g', 380, 0, 95, 0, 0],
   ['creatina', 'Creatina monohidratada', 'suplementos', 'g', 0, 0, 0, 0, 0],
   ['cafe', 'Café preto sem açúcar', 'livre', 'ml', 1, 0, 0, 0, 0],
+  // Livre como o café: na quantidade de uma pitada não move a conta, e existir
+  // na lista é o que faz a refeição na tela ser a refeição de verdade.
+  ['canela', 'Canela em pó', 'livre', 'g', 0, 0, 0, 0, 0],
   ['agua', 'Água', 'livre', 'ml', 0, 0, 0, 0, 0],
   ['cocazero', 'Coca Zero', 'livre', 'ml', 0, 0, 0, 0, 0]
 ];
@@ -76,7 +80,7 @@ CRU.forEach(function ([id, n, cat, u, kcal, p, c, g, cru]) {
  *   alta    — só em dia de alta demanda
  */
 export const PLANO_BASE: Refeicao[] =[
-  { id: 'pre', t: '05:45', n: 'Pré-treino', tag: 'RÁPIDO E FUNCIONAL', quando: 'treino', nota: 'Carboidrato rápido antes de um treino após o jejum noturno. Volume baixo, digestão rápida.', itens: [{ f: 'banana', q: 120 }, { f: 'mel', q: 15 }, { f: 'cafe', q: 200 }] },
+  { id: 'pre', t: '05:45', n: 'Pré-treino', tag: 'RÁPIDO E FUNCIONAL', quando: 'treino', nota: 'Carboidrato rápido antes de um treino após o jejum noturno. Volume baixo, digestão rápida. Uma fatia de pão, doce de leite e canela.', itens: [{ f: 'pao', q: 35 }, { f: 'docedeleite', q: 20 }, { f: 'canela', q: 1 }, { f: 'cafe', q: 200 }] },
   { id: 'treino', t: '06:15', n: 'Treino', tag: 'INTRA-TREINO', quando: 'treino', nota: 'Musculação 6h15–7h30. Nos dias de alta demanda entram 25 g de carboidrato na água.', itens: [{ f: 'agua', q: 600 }, { f: 'malto', q: 25, alta: true }] },
   { id: 'pos', t: '08:00', n: 'Café da manhã / pós-treino', tag: 'REFEIÇÃO FORTE', quando: 'sempre', nota: 'Quatro fontes de energia e proteína sem depender de fogão no trabalho.', itens: [{ f: 'cuscuz', q: 200 }, { f: 'frango', q: 70 }, { f: 'requeijao', q: 30 }, { f: 'leite', q: 250 }, { f: 'uva', q: 120 }] },
   { id: 'almoco', t: '12:30', n: 'Almoço', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'O kiwi entra diariamente junto de feijão, aveia e vegetais para elevar fibra e ajudar a regularidade intestinal.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'frango', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }, { f: 'kiwi', q: 100 }] },

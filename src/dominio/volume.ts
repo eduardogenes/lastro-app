@@ -20,6 +20,11 @@ interface ComGrupoESeries { g: string; s: number; }
  * Alvo por músculo, calculado do programa — nunca transcrito. Transcrever
  * seria criar uma segunda fonte de verdade que sai de sincronia na primeira
  * vez que o programa mudar.
+ *
+ * Exercício sem grupo declarado fica de fora, pela mesma razão que ele fica de
+ * fora de `seriesPorMusculo`: não há músculo a que atribuir. É o que mantém as
+ * estações do HYROX — corrida, sled, wall balls — sendo sessão de verdade na
+ * rotação sem virar "séries de quadríceps" no painel de volume.
  */
 export function alvoDoPrograma(
   programa: Record<Dia, Treino<ComGrupoESeries>>,
@@ -27,7 +32,10 @@ export function alvoDoPrograma(
 ): Record<string, number> {
   const a: Record<string, number> = {};
   rotacao.forEach(function (d) {
-    programa[d].ex.forEach(function (ex) { a[ex.g] = (a[ex.g] || 0) + ex.s; });
+    programa[d].ex.forEach(function (ex) {
+      if (!ex.g) return;
+      a[ex.g] = (a[ex.g] || 0) + ex.s;
+    });
   });
   return a;
 }

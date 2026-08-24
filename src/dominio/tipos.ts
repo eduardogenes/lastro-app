@@ -52,6 +52,8 @@ export interface Slot {
   r: string;
   /** descanso em segundos */
   d: number;
+  /** repetições na reserva alvo, como '1–2'; ausente nos slots anteriores à revisão de 2026 */
+  rir?: string;
   /** quando entrou nesta posição; 0 = veio do treinador e não conta na regra das 6 a 8 semanas */
   desde: number;
   /** 1 quando é bi-set com o exercício seguinte */
@@ -88,6 +90,12 @@ export interface Log {
   u?: 'seg';
   obs?: string;
   dor?: string[];
+  /**
+   * Repetições na reserva da ÚLTIMA série, como '1' ou '0–1'. Uma por exercício
+   * por sessão, não por série: é o que o treinador pede para ler o registro, e
+   * o que cabe digitar entre uma série e outra.
+   */
+  rir?: string;
   /** feito em deload */
   dl?: 0 | 1;
   /** feito com aproximação */
@@ -175,6 +183,8 @@ export interface RascunhoEx {
   s: Serie[];
   obs?: string;
   dor?: string[];
+  /** RIR da última série, como digitado hoje */
+  rir?: string;
   /** substituto escolhido para hoje */
   alt?: IdEx;
   /** feito com aproximação */

@@ -27,7 +27,11 @@ import type { Dia, Estado, Sessao } from './tipos';
 /** O que um dia da semana é, na cadência dele. */
 export type Cadencia = 'treino' | 'descanso';
 
-/** Cadência padrão: descansa domingo. Índice 0 = domingo, como Date#getDay. */
+/**
+ * Cadência padrão: descansa domingo. Índice 0 = domingo, como Date#getDay.
+ * Seis dias ativos — cinco de musculação e o HYROX de sábado —, e um domingo
+ * inteiro livre, que na prescrição é ferramenta e não tempo perdido.
+ */
 export const CADENCIA_PADRAO: Cadencia[] =
   ['descanso', 'treino', 'treino', 'treino', 'treino', 'treino', 'treino'];
 

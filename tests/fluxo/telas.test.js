@@ -147,7 +147,7 @@ test('substituição oferece alternativas para todos os exercícios', async () =
   const semAlt = a.J(`
     rot().reduce(function (acc, d) {
       treino(d).ex.forEach(function (ex) {
-        if (!ALT[ex.n] || ALT[ex.n].length < 2) acc.push(d + ' ' + ex.n);
+        if (ex.g && (!ALT[ex.n] || ALT[ex.n].length < 2)) acc.push(d + ' ' + ex.n);
       });
       return acc;
     }, [])`);
@@ -193,7 +193,11 @@ test('anotação e dor ficam atrás de um link', async () => {
   assert.ok(links.includes('anotar algo'), links.join(' | '));
 
   a.E('abrirNota(0)');
-  assert.strictEqual(a.$$('.ex.open .chip').length, 3);
+  // 5 opções de RIR da última série + as 3 dores de tendão
+  assert.strictEqual(a.$$('.ex.open .chip').length, 8);
+  const chips = a.$$('.ex.open .chip').map(function (x) { return x.textContent.trim(); });
+  assert.ok(chips.includes('1–2'), chips.join(' | '));
+  assert.ok(chips.includes('cotovelo'), chips.join(' | '));
 
   a.digitar('o0', 'algo');
   a.E('toggle(0)');
