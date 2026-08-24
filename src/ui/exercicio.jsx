@@ -79,11 +79,26 @@ function Troca({ i, vm, acoes }) {
 /** O bloco de anotação e dor da sessão. */
 function Anotacao({ i, vm, acoes }) {
   if (!vm.notaAberta) {
-    return <button class="notabtn" onClick={() => acoes.abrirNota(i)}>anotar algo</button>;
+    return (
+      <button class="notabtn" onClick={() => acoes.abrirNota(i)}>
+        {vm.rirFeito ? 'RIR ' + vm.rirFeito : 'anotar algo'}
+      </button>
+    );
   }
   return (
     <div class="obs">
-      <div class="obs-h">anotação desta sessão</div>
+      <div class="obs-h">
+        RIR da última série{vm.rir ? ' · alvo ' + vm.rir : ''}
+      </div>
+      <div class="chips">
+        {vm.rirOpcoes.map(x => (
+          <button
+            key={x.v} class={'chip' + (x.on ? ' on' : '')}
+            onClick={() => acoes.setRir(i, x.v)}
+          >{x.v}</button>
+        ))}
+      </div>
+      <div class="obs-h" style="margin-top:14px">anotação desta sessão</div>
       <textarea
         class="note" id={`o${i}`}
         placeholder="o que aconteceu neste exercício (opcional)"
@@ -163,7 +178,9 @@ export function Exercicio({ vm, acoes }) {
           <div class="ex-sub">
             <span>{vm.series} × {vm.faixa}</span>
             <span class={'tag' + (vm.composto ? ' comp' : '')}>
-              {vm.composto ? 'composto · 1–2 na reserva' : 'isolador · última pode ir a 0–1'}
+              {vm.rir
+                ? (vm.composto ? 'composto · RIR ' : 'isolador · RIR ') + vm.rir
+                : (vm.composto ? 'composto · 1–2 na reserva' : 'isolador · última pode ir a 0–1')}
             </span>
             {vm.bi === 1 && <span class="tag bi-t">bi-set · sem pausa até o próximo</span>}
             {vm.bi === 2 && <span class="tag bi-t">bi-set · o descanso é aqui</span>}

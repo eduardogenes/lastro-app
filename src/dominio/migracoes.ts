@@ -10,8 +10,8 @@
 
 import { CADENCIA_PADRAO } from './dia';
 import { PLANO_BASE } from './nutricao/alimentos';
-import { EX_BASE, PROGRAMA, ROT_BASE, semeiaProg, slugEx } from './programa';
-import type { Estado, IdEx, Log } from './tipos';
+import { EX_BASE, slugEx } from './programa';
+import type { Estado, IdEx, Log, Treino } from './tipos';
 
 // ---------- migração de plano ----------
 // As chaves do histórico são dia+posição (A0, B3...). Trocar o programa faria
@@ -21,17 +21,6 @@ import type { Estado, IdEx, Log } from './tipos';
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
 export const PLANO_ATUAL = 5;
-
-/**
- * Reetiqueta um mapa por dia com a rotulagem anterior ao plano 5. Usado pelas
- * migrações antigas, que precisam devolver o estado como ele era na época
- * delas — a 4→5 corrige depois, na ordem certa.
- */
-function letrasDaEpoca<T>(porDia: Record<string, T>): Record<string, T> {
-  const saida: Record<string, T> = {};
-  Object.keys(porDia).forEach(function (k) { saida[trocaLetra(k)] = porDia[k]; });
-  return saida;
-}
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -88,6 +77,78 @@ export function migraPlano(S: Estado): number {
   return n;
 }
 
+// O programa que estava vivo na era do plano 3, congelado com a ROTULAGEM DA
+// ÉPOCA (o treino de torso se chamava E e o de ombros se chamava D). A 2→3
+// lia o PROGRAMA importado do código — funcionava porque os dois eram o mesmo
+// programa. Quando o treinador trocou a prescrição, o PROGRAMA vivo deixou de
+// falar a língua dos backups antigos: um plano 2 lido contra ele mapearia o
+// histórico para os exercícios errados. Migração lê dado congelado, nunca o
+// código de hoje — o mesmo motivo pelo qual PLANO_1 existe aqui em cima.
+export const ROT_PLANO_3: string[] = ['A','B','C','E','D','F'];
+
+export const PROGRAMA_PLANO_3: Record<string, Treino<{ id: IdEx; s: number; r: string; d: number }>> = {
+  A: { name:'Peito superior + lateral + tríceps', tag:'clavicular e ombro', ex:[
+    {id:'chest-press-inclinado-convergente', s:3, r:'6–10', d:180},
+    {id:'crossover-de-baixo-para-cima', s:2, r:'10–15', d:105},
+    {id:'elevacao-lateral-na-maquina', s:3, r:'8–15', d:90},
+    {id:'elevacao-lateral-unilateral-no-cabo', s:3, r:'12–20', d:90},
+    {id:'extensao-de-triceps-acima-da-cabeca-no-cabo', s:3, r:'8–15', d:105},
+    {id:'pushdown', s:2, r:'10–15', d:105},
+    {id:'crunch-no-cabo-ou-maquina', s:3, r:'8–15', d:90},
+  ]},
+  B: { name:'Dorsais + posterior de ombro + bíceps', tag:'um dos dois treinos mais importantes', ex:[
+    {id:'pulldown-convergente', s:3, r:'6–10', d:150},
+    {id:'pulldown-unilateral', s:3, r:'8–12', d:150},
+    {id:'remada-para-dorsal-com-apoio-de-peito', s:2, r:'8–12', d:150},
+    {id:'pullover-em-maquina-ou-cabo', s:2, r:'10–15', d:105},
+    {id:'reverse-pec-deck', s:3, r:'10–20', d:105},
+    {id:'crucifixo-inverso-no-cabo', s:2, r:'12–20', d:105},
+    {id:'rosca-scott-na-maquina', s:3, r:'8–12', d:105},
+    {id:'rosca-no-cabo', s:2, r:'10–15', d:105},
+  ]},
+  C: { name:'Quadríceps + adutores + panturrilha', tag:'qualidade e progressão, não volume', ex:[
+    {id:'pendulum-squat', s:3, r:'6–10', d:180},
+    {id:'leg-press', s:3, r:'8–15', d:150},
+    {id:'cadeira-extensora', s:3, r:'10–15', d:105},
+    {id:'adutora', s:3, r:'10–15', d:105},
+    {id:'panturrilha-em-pe', s:3, r:'6–12', d:90},
+    {id:'panturrilha-sentada', s:2, r:'10–15', d:90},
+    {id:'tibial-anterior', s:2, r:'12–20', d:90},
+  ]},
+  E: { name:'Espessura de costas + peito', tag:'o grande treino de torso', ex:[
+    {id:'remada-convergente-com-apoio-de-peito', s:3, r:'6–10', d:150},
+    {id:'remada-horizontal-na-maquina', s:3, r:'8–12', d:150},
+    {id:'high-row-com-apoio-de-peito', s:2, r:'8–12', d:150},
+    {id:'encolhimento-na-maquina', s:2, r:'8–15', d:105},
+    {id:'straight-arm-pulldown', s:2, r:'10–15', d:105},
+    {id:'supino-inclinado-no-smith', s:3, r:'6–10', d:180},
+    {id:'crucifixo-inclinado-no-cabo', s:2, r:'10–15', d:105},
+    {id:'chest-press-horizontal-convergente', s:3, r:'8–12', d:150},
+    {id:'pec-deck', s:2, r:'10–15', d:105},
+  ]},
+  D: { name:'Deltoides + braços + abdômen', tag:'lateral antes dos braços, de propósito', ex:[
+    {id:'elevacao-lateral-na-maquina', s:4, r:'8–15', d:90},
+    {id:'elevacao-lateral-no-cabo', s:3, r:'12–20', d:90},
+    {id:'remada-para-deltoide-posterior-com-apoio-de-peito', s:2, r:'8–15', d:105},
+    {id:'reverse-fly-no-cabo', s:2, r:'12–20', d:105},
+    {id:'rosca-bayesian-no-cabo', s:2, r:'8–15', d:105},
+    {id:'rosca-martelo', s:2, r:'8–15', d:105},
+    {id:'extensao-unilateral-de-triceps-no-cabo', s:2, r:'8–15', d:105},
+    {id:'extensao-acima-da-cabeca-ou-maquina-de-triceps', s:2, r:'10–15', d:105},
+    {id:'elevacao-de-pernas-ou-reverse-crunch', s:3, r:'8–15', d:90},
+  ]},
+  F: { name:'Posteriores + glúteos + panturrilha', tag:'equilíbrio com a coxa anterior', ex:[
+    {id:'cadeira-flexora-sentada', s:4, r:'8–12', d:105},
+    {id:'terra-romeno-no-smith', s:3, r:'6–10', d:180},
+    {id:'mesa-flexora-deitada', s:3, r:'10–15', d:105},
+    {id:'elevacao-pelvica-na-maquina', s:3, r:'8–12', d:150},
+    {id:'abdutora', s:2, r:'12–20', d:105},
+    {id:'panturrilha-sentada', s:3, r:'8–15', d:90},
+    {id:'panturrilha-no-leg-press', s:2, r:'10–15', d:90},
+    {id:'ab-wheel', s:3, r:'6–12', d:90},
+  ]},
+};
+
 // ---------- plano 2 -> 3: a chave passa a ser o exercício ----------
 // Até aqui a chave era dia+posição. Editar o programa quebraria isso a cada
 // inserção. Esta migração reescreve o histórico pelo id do exercício e, de
@@ -103,9 +164,8 @@ export function migraPlano3(S: Estado): Resultado3 | null {
   // rotulagem de hoje apontaria para o exercício errado — a migração precisa
   // falar a língua do dado que ela lê, não a do código que a executa.
   const porPosicao: Record<string, IdEx> = {};
-  ROT_BASE.forEach(function (d) {
-    const naEpoca = trocaLetra(d);
-    PROGRAMA[d].ex.forEach(function (ex, i) { porPosicao[naEpoca+i] = slugEx(ex.n); });
+  ROT_PLANO_3.forEach(function (d) {
+    PROGRAMA_PLANO_3[d].ex.forEach(function (ex, i) { porPosicao[d+i] = ex.id; });
   });
 
   if (!S.ex || typeof S.ex !== 'object') S.ex = {};
@@ -169,15 +229,23 @@ export function migraPlano3(S: Estado): Resultado3 | null {
     });
   }
 
-  // Semeia com a rotulagem DA ÉPOCA, não com a de hoje.
+  // Semeia com o programa DA ÉPOCA, não com o de hoje.
   //
-  // Toda migração tem que produzir o estado como ele era NAQUELA versão — se a
-  // 2→3 semeasse com as letras de hoje, a 4→5 rodaria em seguida e trocaria de
-  // novo, aplicando a troca duas vezes. `semeiaProg` e `ROT_BASE` são código
-  // de hoje; usar os dois dentro de uma migração antiga é a mesma armadilha que
-  // já apareceu no `porPosicao` aqui em cima.
-  S.prog = letrasDaEpoca(semeiaProg());
-  S.rot = ROT_BASE.map(trocaLetra);
+  // Toda migração tem que produzir o estado como ele era NAQUELA versão: as
+  // letras daquela rotulagem (a 4→5 corrige depois, na ordem certa) e os
+  // exercícios daquela prescrição. Semear com o programa de hoje daria a quem
+  // importa um backup antigo um S.prog que ele nunca teve — e sem as
+  // diferenças que ele mesmo tinha feito. O programa novo entra pelo botão de
+  // restaurar, que é decisão dele, não efeito colateral de uma importação.
+  const prog: Record<string, Treino> = {};
+  ROT_PLANO_3.forEach(function (d) {
+    prog[d] = { name: PROGRAMA_PLANO_3[d].name, tag: PROGRAMA_PLANO_3[d].tag,
+      ex: PROGRAMA_PLANO_3[d].ex.map(function (ex) {
+        return { id: ex.id, s: ex.s, r: ex.r, d: ex.d, desde: 0 };
+      }) };
+  });
+  S.prog = prog;
+  S.rot = ROT_PLANO_3.slice();
   S.plano = 3;
   return r;
 }

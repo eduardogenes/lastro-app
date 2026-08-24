@@ -98,6 +98,7 @@ function Sessao({ s, ctx }) {
         {s.series.map((x, i) => <span key={i} class={x ? '' : 'nul'}>{x || '–'}</span>)}
         {s.reps && <span class="nul">{s.reps}</span>}
         {s.anilhas && <span class="nul">{s.anilhas}</span>}
+        {s.rir && <span class="nul">{s.rir}</span>}
       </div>
       {s.dor && <div class="pain ins-amber">{s.dor}</div>}
       {s.obs && <div class="hs-obs">{s.obs}</div>}

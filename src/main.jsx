@@ -1,5 +1,5 @@
 import {
-  ROT_BASE, D_COMPOSTO, D_MAQUINA, D_ISOLADOR, D_CURTO,
+  ROT_BASE, D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO,
   PROGRAMA, RULES, ALT, slugEx, EX_BASE,
   PRIORIDADES, NIVEIS, nivelDe, PRIO, CARGAS, DORES, MODAIS
 } from './dominio/programa';
@@ -41,6 +41,15 @@ import { DB } from './infra/db';
 
 const KEY = 'treino-eduardo-v1';
 function rot() { return (S.rot && S.rot.length) ? S.rot : ROT_BASE; }
+
+// Sessões de cardio por semana que o treinador pede: segunda depois do A e
+// quinta no dia de recuperação.
+const CARDIO_ALVO = 2;
+// Os dias de perna do programa: cardio pesado antes deles compete pela mesma
+// recuperação. Sinaliza, não bloqueia.
+const DIAS_PERNA = ['B', 'E'];
+// RIR da última série, nas faixas que a prescrição usa.
+const RIR_OPCOES = ['0', '0–1', '1', '1–2', '2+'];
 
 
 
@@ -153,7 +162,7 @@ function treino(d) {
   return { name: p.name, tag: p.tag, ex: aplicaMods(d, p.ex).map(function (sl) {
     const e = exDe(sl.id);
     return { id:sl.id, n:e.n, car:e.car, g:e.g, c:e.c, cue:e.cue, u:e.u,
-             s:sl.s, r:sl.r, d:sl.d, desde:sl.desde, bi:sl.bi || 0,
+             s:sl.s, r:sl.r, d:sl.d, rir:sl.rir || '', desde:sl.desde, bi:sl.bi || 0,
              mod:sl.mod || 0, orig:sl.orig || sl.id };
   }) };
 }
@@ -429,6 +438,7 @@ function projeta(i) {
   if (e.aq) entry.aq = 1; else delete entry.aq;
   const obs = (e.obs||'').trim();
   if (obs) entry.obs = obs; else delete entry.obs;
+  if (e.rir) entry.rir = e.rir; else delete entry.rir;
   if (e.dor && e.dor.length) entry.dor = e.dor.slice(); else delete entry.dor;
   if (S.deload) entry.dl = 1; else delete entry.dl;
 
@@ -612,7 +622,7 @@ function id(d,i){ const t = treino(d); return (t && t.ex[i]) ? t.ex[i].id : d + 
 // render() reescreve o innerHTML e os valores viviam só no DOM.
 function draftOf(i) {
   if (!S.draft || S.draft.day !== view.day) S.draft = { day: view.day, t: Date.now(), ex: {} };
-  if (!S.draft.ex[i]) S.draft.ex[i] = { s: [], obs: '', dor: [], alt: null };
+  if (!S.draft.ex[i]) S.draft.ex[i] = { s: [], obs: '', dor: [], rir: '', alt: null };
   const e = S.draft.ex[i];
   if (!Array.isArray(e.s)) e.s = [];
   if (!Array.isArray(e.dor)) e.dor = [];
@@ -641,6 +651,7 @@ function hidrataDraft(dia) {
       s: e.sets.map(function (x) { return x ? [x[0], x[1]] : [null, null]; }),
       obs: e.obs || '',
       dor: (e.dor || []).slice(),
+      rir: e.rir || '',
       aq: !!e.aq
     };
   });
@@ -934,6 +945,7 @@ function vmExercicio(d, i, ex) {
     grupo: ex.g,
     cue: ex.cue,
     faixa: ex.r,
+    rir: ex.rir || '',
     series: ns,
     composto: !!ex.c,
     bi: ex.bi || 0,
@@ -982,8 +994,13 @@ function vmExercicio(d, i, ex) {
 
     mostraAquecimento: i === 0,
     aq: !!(dr && dr.aq),
-    notaAberta: !!((dr && (dr.obs || dr.dor.length)) || view.nota === i),
+    notaAberta: !!((dr && (dr.obs || dr.dor.length || dr.rir)) || view.nota === i),
     obs: dr ? (dr.obs || '') : '',
+    // o RIR registrado é o da ÚLTIMA série: uma marca por exercício, não por série
+    rirFeito: dr ? (dr.rir || '') : '',
+    rirOpcoes: RIR_OPCOES.map(function (v) {
+      return { v: v, on: !!(dr && dr.rir === v) };
+    }),
     dores: DORES.map(function (x) {
       return { k: x.k, t: x.t, on: !!(dr && dr.dor.indexOf(x.k) >= 0) };
     })
@@ -1020,6 +1037,7 @@ const ACOES = {
   setCarga: function (i, t) { setCarga(i, t); },
   abrirNota: function (i) { abrirNota(i); },
   obsIn: function (el, i) { obsIn(el, i); },
+  setRir: function (i, v) { setRir(i, v); },
   toggleDor: function (i, k) { toggleDor(i, k); }
 };
 
@@ -1627,7 +1645,7 @@ async function progReps(d, i) {
 
 async function progDesc(d, i) {
   const sl = S.prog[d].ex[i];
-  const opcoes = [D_COMPOSTO, D_MAQUINA, D_ISOLADOR, D_CURTO];
+  const opcoes = [D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO];
   const j = (opcoes.indexOf(sl.d) + 1) % opcoes.length;
   const de = sl.d;
   sl.d = opcoes[j];
@@ -1665,7 +1683,7 @@ async function criarTreino() {
 
 async function restaurarDia(d) {
   if (!PROGRAMA[d]) {
-    if (!confirm('O treino ' + d + ' foi criado por você e não existe no programa do treinador. Apagar o treino?')) return;
+    if (!confirm('O treino ' + d + ' não existe no programa atual do treinador. Apagar o treino?')) return;
     delete S.prog[d];
     S.rot = rot().filter(function (x) { return x !== d; });
     logProg(d, 'treino ' + d + ' apagado');
@@ -1759,7 +1777,7 @@ function cardioSemana() {
 }
 // treino de perna salvo hoje: sinaliza, não bloqueia
 function pernaHoje() {
-  return S.done.filter(x => (x.day==='C' || x.day==='F') && sameDay(x.t, Date.now())).map(x => x.day);
+  return S.done.filter(x => DIAS_PERNA.indexOf(x.day) >= 0 && sameDay(x.t, Date.now())).map(x => x.day);
 }
 
 function cardioSet(k, v) {
@@ -1775,7 +1793,7 @@ async function addCardio() {
   view.cardioRapido = false;
   render();
   const n = cardioSemana().length;
-  toast(`${f.min} min de ${f.m} registrados · ${n} de 3 nesta semana`);
+  toast(`${f.min} min de ${f.m} registrados · ${n} de ${CARDIO_ALVO} nesta semana`);
 }
 async function delCardio(t) {
   S.cardio = S.cardio.filter(c => c.t !== t);
@@ -2218,6 +2236,13 @@ function toggleDor(i, k) {
   const e = draftOf(i);
   const j = e.dor.indexOf(k);
   if (j >= 0) e.dor.splice(j,1); else e.dor.push(k);
+  projeta(i); queueSave(); render();
+}
+// Tocar de novo no valor já marcado desmarca: registrar RIR é opcional, e sem
+// isso um toque errado não teria como ser desfeito.
+function setRir(i, v) {
+  const e = draftOf(i);
+  e.rir = e.rir === v ? '' : v;
   projeta(i); queueSave(); render();
 }
 function toggleSwap(i){ view.swapOpen = view.swapOpen===i ? null : i; render(); }
@@ -2669,9 +2694,12 @@ CTX.treino = function () {
       txt: 'Metade das séries, mesmas cargas. Os placeholders continuam mostrando a carga da última semana normal.',
       acao: { t: 'sair do deload', onClick: function () { setDeload(false); } } });
   } else if (trabalho > 0 && faltam <= 6) {
-    avisos.push({ k: 'dl2', rotulo: 'deload chegando', cor: '',
-      txt: 'Faltam ' + faltam + ' sessões para a semana de metade das séries.',
-      acao: { t: 'ativar agora', onClick: function () { setDeload(true); } } });
+    // Não é contagem regressiva para um deload obrigatório: o treinador tirou a
+    // semana fixa do programa. O bloco de 48 sessões continua sendo o momento de
+    // OLHAR, e quem decide é a evidência de fadiga, não o calendário.
+    avisos.push({ k: 'dl2', rotulo: 'fim de bloco chegando', cor: '',
+      txt: 'Faltam ' + faltam + ' sessões para fechar o bloco. Deload só se houver evidência de fadiga: força caindo por 2 a 3 sessões, dor que não passa em 72 h, RIR difícil de manter. Progredindo bem, siga treinando.',
+      acao: { t: 'entrar em deload', onClick: function () { setDeload(true); } } });
   }
   // Preenchendo um treino de outra data: o aviso é o único lugar que diz para
   // onde as séries digitadas estão indo, e carrega a porta de saída. Sem ele o
@@ -2886,7 +2914,7 @@ CTX.corpo = function () {
     },
     cardio: {
       semana: cardioSemana().length,
-      alvo: 3,
+      alvo: CARDIO_ALVO,
       perna: pernaHoje(),
       // A lista da semana existe para uma coisa só: desfazer. Registrou 25 min
       // de bike duas vezes por engano, e sem isso o número da semana fica
@@ -2894,7 +2922,7 @@ CTX.corpo = function () {
       sessoes: cardioSemana().map(function (x) {
         return { t: x.t, data: fmtDate(x.t), modal: x.m, resumo: x.min + ' min · ' + x.i };
       }),
-      regra: 'depois do A: 25 a 30 min · no dia de descanso: 30 a 40 · depois do F: 20 a 30, opcional. Evite antes de C ou F, e nunca antes do treino.'
+      regra: 'segunda, depois do A: 20 a 25 min · quinta, no dia de recuperação: 25 a 30 min. Leve a moderado: respirando mais forte, mas ainda dando para conversar. Evite antes de B ou E, e nunca antes do treino.'
     },
     musculos: CTX.musculos()
   };
@@ -3241,7 +3269,7 @@ CTX.cromoDoTreino = function () {
         feito: hojeCardio.length > 0,
         resumo: hojeCardio.length
           ? hojeCardio.map(function (c) { return c.min + ' min de ' + c.m; }).join(' · ')
-          : cardioSemana().length + ' de 3 nesta semana',
+          : cardioSemana().length + ' de ' + CARDIO_ALVO + ' nesta semana',
         aberto: !!view.cardioRapido,
         modais: MODAIS.map(function (m) { return { k: m, t: m, on: f.m === m }; }),
         minutos: [20, 25, 30, 40].map(function (v) { return { k: v, t: v + ' min', on: f.min === v }; }),
@@ -3494,7 +3522,7 @@ CTX.historico = function () {
     olho: 'treino ' + d + ' · exercício ' + String(i + 1).padStart(2, '0'),
     meta: H.length + ' de 6 sessões',
     titulo: nomeEx(sel),
-    alvo: ex.s + ' × ' + ex.r,
+    alvo: ex.s + ' × ' + ex.r + (ex.rir ? ' · RIR ' + ex.rir : ''),
     marcas: marcas,
     up: sel === id(d, i) && shouldUp(d, i, ex),
     cue: ex.cue,
@@ -3557,6 +3585,7 @@ CTX.historico = function () {
         anilhas: (!seg && CARGAS[tipo].dobra && maxLoad(s))
           ? fmtNum(totalAnilhas(maxLoad(s))) + ' kg ' + CARGAS[tipo].total : null,
         dor: s.dor && s.dor.length ? 'dor em ' + s.dor.map(dorName).join(' e ') : null,
+        rir: s.rir ? 'última série a ' + s.rir + ' da falha' : null,
         obs: s.obs || null,
         editando: view.edit === base + k,
         edicao: view.edit === base + k ? {

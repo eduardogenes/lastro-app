@@ -11,10 +11,10 @@ test('a chave do histórico é o exercício, não a posição', async () => {
   assert.notStrictEqual(a.k('A', 0), 'A0');
 
   // o mesmo exercício em dois treinos diferentes tem a mesma chave
-  const iC = a.E('treino("C").ex.findIndex(function (x) { return x.n === "Panturrilha sentada"; })');
-  const iF = a.E('treino("F").ex.findIndex(function (x) { return x.n === "Panturrilha sentada"; })');
-  assert.ok(iC >= 0 && iF >= 0);
-  assert.strictEqual(a.k('C', iC), a.k('F', iF), 'é o mesmo exercício, é o mesmo histórico');
+  const iA = a.E('treino("A").ex.findIndex(function (x) { return x.n === "Elevação lateral na máquina"; })');
+  const iD = a.E('treino("D").ex.findIndex(function (x) { return x.n === "Elevação lateral na máquina"; })');
+  assert.ok(iA >= 0 && iD >= 0);
+  assert.strictEqual(a.k('A', iA), a.k('D', iD), 'é o mesmo exercício, é o mesmo histórico');
   a.fechar();
 });
 
@@ -63,11 +63,11 @@ test('o catálogo conhece o programa e os substitutos', async () => {
 
 test('a lista de troca traz o indicado do treinador e o resto do grupo', async () => {
   const a = await app();
-  const lista = a.J('altList("A", 2)');   // elevação lateral na máquina
+  const lista = a.J('altList("A", 4)');   // elevação lateral na máquina
   assert.ok(lista.length >= 3);
   assert.ok(lista[0].ind, 'o que o treinador indicou vem primeiro');
   assert.ok(lista.some(function (x) { return !x.ind; }), 'e depois o resto do grupo');
-  assert.ok(lista.every(function (x) { return x.id !== a.k('A', 2); }),
+  assert.ok(lista.every(function (x) { return x.id !== a.k('A', 4); }),
     'o próprio exercício não aparece como substituto dele mesmo');
   a.fechar();
 });
@@ -77,14 +77,14 @@ test('exercício cadastrado por ele aparece na troca e tem histórico próprio',
   a.E(`S.ex["maquina-nova-da-academia"] = { n:"Máquina nova da academia",
         car:"pino", g:"delt lateral", c:0, cue:"", meu:1 }; montaCatalogo(); render()`);
 
-  const lista = a.J('altList("A", 2)');
+  const lista = a.J('altList("A", 4)');
   const achou = lista.filter(function (x) { return x.id === 'maquina-nova-da-academia'; })[0];
   assert.ok(achou, 'sem isso, todo equipamento novo nasceria invisível');
 
-  const original = a.k('A', 2);
-  a.E('toggle(2)');
-  a.E('setAlt(2,"maquina-nova-da-academia")');
-  a.preencher(2, 0, 25, 15);
+  const original = a.k('A', 4);
+  a.E('toggle(4)');
+  a.E('setAlt(4,"maquina-nova-da-academia")');
+  a.preencher(4, 0, 25, 15);
   assert.strictEqual(a.J('S.logs["maquina-nova-da-academia"]').length, 1);
   assert.strictEqual(a.E('S.logs[' + JSON.stringify(original) + ']'), undefined,
     'não contamina o exercício original');
@@ -102,7 +102,7 @@ test('o programa do treinador continua congelado e comparável', async () => {
       PROGRAMA[d].ex.forEach(function (ex) { acc[ex.g] = (acc[ex.g] || 0) + ex.s; });
       return acc;
     }, {})`);
-  assert.strictEqual(Object.values(alvo).reduce(function (x, y) { return x + y; }, 0), 125);
+  assert.strictEqual(Object.values(alvo).reduce(function (x, y) { return x + y; }, 0), 93);
   a.fechar();
 });
 

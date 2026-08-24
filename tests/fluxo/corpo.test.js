@@ -96,15 +96,15 @@ test('cardio conta a semana e reseta na segunda', async () => {
   assert.strictEqual(a.E('cardioSemana().length'), 1, 'a da semana passada não conta');
   assert.strictEqual(a.E('CTX.corpo().cardio.semana'), 1, 'e a tela conta o mesmo');
   const nota = a.$$('.ins-secao-nota').map(function (x) { return x.textContent; }).join(' | ');
-  assert.ok(/1 de 3 nesta semana/.test(nota), nota);
+  assert.ok(/1 de 2 nesta semana/.test(nota), nota);
   a.fechar();
 });
 
 test('cardio avisa quando houve treino de perna no mesmo dia', async () => {
-  const a = await app({ estado: { logs: {}, done: [{ day: 'C', t: Date.now(), sid: Date.now() }] } });
+  const a = await app({ estado: { logs: {}, done: [{ day: 'B', t: Date.now(), sid: Date.now() }] } });
   a.aba('dados');
   const aviso = a.$$('.ins-provenance').map(function (x) { return x.textContent; }).join(' | ');
-  assert.ok(/treino C/.test(aviso), 'deve sinalizar sem bloquear: ' + aviso);
+  assert.ok(/treino B/.test(aviso), 'deve sinalizar sem bloquear: ' + aviso);
   assert.strictEqual(a.$('.ins-btn-add[disabled]'), null, 'sinaliza, não bloqueia');
   a.fechar();
 });

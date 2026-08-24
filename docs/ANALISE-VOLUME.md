@@ -1,4 +1,4 @@
-# O que são as 125 séries
+# O que são as 93 séries
 
 Gerado do `PROGRAMA` do app. Serve para responder a pergunta do treinador:
 não *quantas* séries, mas **quais**.
@@ -13,30 +13,17 @@ não *quantas* séries, mas **quais**.
 
 ## Prioridade máxima
 
-### delt lateral — 13 séries
+### delt lateral — 12 séries
 
-Distribuição: A (6), E (7)
+Distribuição: A (4), C (4), D (4)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| A | Elevação lateral na máquina | 3 × 8–15 | isolador |
-| A | Elevação lateral unilateral no cabo | 3 × 12–20 | isolador |
-| E | Elevação lateral na máquina | 4 × 8–15 | isolador |
-| E | Elevação lateral no cabo | 3 × 12–20 | isolador |
+| A | Elevação lateral na máquina | 4 × 10–15 | isolador |
+| C | Elevação lateral unilateral no cabo | 4 × 12–20 | isolador |
+| D | Elevação lateral na máquina | 4 × 10–20 | isolador |
 
 Aparece em mais de um treino: **Elevação lateral na máquina**.
-
-### dorsal — 12 séries
-
-Distribuição: B (10), D (2)
-
-| Treino | Exercício | Séries × reps | |
-|---|---|---|---|
-| B | Pulldown convergente | 3 × 6–10 | composto |
-| B | Pulldown unilateral | 3 × 8–12 | composto |
-| B | Remada para dorsal com apoio de peito | 2 × 8–12 | composto |
-| B | Pullover em máquina ou cabo | 2 × 10–15 | isolador |
-| D | Straight-arm pulldown | 2 × 10–15 | isolador |
 
 ### peito superior — 10 séries
 
@@ -45,148 +32,129 @@ Distribuição: A (5), D (5)
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
 | A | Chest press inclinado convergente | 3 × 6–10 | composto |
-| A | Crossover de baixo para cima | 2 × 10–15 | isolador |
+| A | Crucifixo inclinado no cabo | 2 × 10–15 | isolador |
 | D | Supino inclinado no Smith | 3 × 6–10 | composto |
-| D | Crucifixo inclinado no cabo | 2 × 10–15 | isolador |
+| D | Crossover de baixo para cima | 2 × 10–15 | isolador |
 
 ## Prioridade secundária
 
-### panturrilha — 10 séries
+### dorsal — 10 séries
 
-Distribuição: C (5), F (5)
+Distribuição: A (5), C (5)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| C | Panturrilha em pé | 3 × 6–12 | isolador |
-| C | Panturrilha sentada | 2 × 10–15 | isolador |
-| F | Panturrilha sentada | 3 × 8–15 | isolador |
-| F | Panturrilha no leg press | 2 × 10–15 | isolador |
-
-Aparece em mais de um treino: **Panturrilha sentada**.
+| A | Pulldown convergente | 3 × 6–10 | composto |
+| A | Pulldown unilateral | 2 × 8–12 | composto |
+| C | Remada para dorsal com apoio de peito | 3 × 6–10 | composto |
+| C | Pullover em máquina ou cabo | 2 × 10–15 | isolador |
 
 ### posterior — 10 séries
 
-Distribuição: F (10)
+Distribuição: B (2), E (8)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| F | Cadeira flexora sentada | 4 × 8–12 | isolador |
-| F | Terra romeno no Smith | 3 × 6–10 | composto |
-| F | Mesa flexora deitada | 3 × 10–15 | isolador |
+| B | Cadeira flexora sentada | 2 × 8–12 | isolador |
+| E | Cadeira flexora sentada | 3 × 8–12 | isolador |
+| E | Terra romeno no Smith | 3 × 6–10 | composto |
+| E | Mesa flexora deitada | 2 × 10–15 | isolador |
 
-### abdômen — 9 séries
+Aparece em mais de um treino: **Cadeira flexora sentada**.
 
-Distribuição: A (3), E (3), F (3)
+### panturrilha — 10 séries
 
-| Treino | Exercício | Séries × reps | |
-|---|---|---|---|
-| A | Crunch no cabo ou máquina | 3 × 8–15 | isolador |
-| E | Elevação de pernas ou reverse crunch | 3 × 8–15 | isolador |
-| F | Ab wheel | 3 × 6–12 | isolador |
-
-### delt posterior — 9 séries
-
-Distribuição: B (5), E (4)
+Distribuição: B (4), E (6)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| B | Reverse pec deck | 3 × 10–20 | isolador |
-| B | Crucifixo inverso no cabo | 2 × 12–20 | isolador |
-| E | Remada para deltoide posterior com apoio de peito | 2 × 8–15 | composto |
-| E | Reverse fly no cabo | 2 × 12–20 | isolador |
+| B | Panturrilha em pé | 4 × 6–10 | isolador |
+| E | Panturrilha sentada | 4 × 10–15 | isolador |
+| E | Panturrilha no leg press | 2 × 10–15 | isolador |
 
-### costas espessura — 8 séries
+### abdômen — 6 séries
 
-Distribuição: D (8)
+Distribuição: B (3), E (3)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| D | Remada convergente com apoio de peito | 3 × 6–10 | composto |
-| D | Remada horizontal na máquina | 3 × 8–12 | composto |
-| D | High row com apoio de peito | 2 × 8–12 | composto |
+| B | Crunch no cabo ou máquina | 3 × 8–15 | isolador |
+| E | Ab wheel | 3 × 6–12 | isolador |
 
 ## Desenvolvimento normal
 
-### tríceps — 9 séries
+### quadríceps — 7 séries
 
-Distribuição: A (5), E (4)
+Distribuição: B (7)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| A | Extensão de tríceps acima da cabeça no cabo | 3 × 8–15 | isolador |
+| B | Pendulum squat | 3 × 6–10 | composto |
+| B | Leg press | 2 × 10–15 | composto |
+| B | Cadeira extensora | 2 × 10–15 | isolador |
+
+### tríceps — 6 séries
+
+Distribuição: A (4), D (2)
+
+| Treino | Exercício | Séries × reps | |
+|---|---|---|---|
+| A | Extensão de tríceps acima da cabeça no cabo | 2 × 8–12 | isolador |
 | A | Pushdown | 2 × 10–15 | isolador |
-| E | Extensão unilateral de tríceps no cabo | 2 × 8–15 | isolador |
-| E | Extensão acima da cabeça ou máquina de tríceps | 2 × 10–15 | isolador |
+| D | Extensão de tríceps acima da cabeça no cabo | 2 × 10–15 | isolador |
 
-### bíceps — 9 séries
+Aparece em mais de um treino: **Extensão de tríceps acima da cabeça no cabo**.
 
-Distribuição: B (5), E (4)
+### costas espessura — 6 séries
 
-| Treino | Exercício | Séries × reps | |
-|---|---|---|---|
-| B | Rosca Scott na máquina | 3 × 8–12 | isolador |
-| B | Rosca no cabo | 2 × 10–15 | isolador |
-| E | Rosca Bayesian no cabo | 2 × 8–15 | isolador |
-| E | Rosca martelo | 2 × 8–15 | isolador |
-
-### quadríceps — 9 séries
-
-Distribuição: C (9)
+Distribuição: C (3), D (3)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| C | Pendulum squat | 3 × 6–10 | composto |
-| C | Leg press | 3 × 8–15 | composto |
-| C | Cadeira extensora | 3 × 10–15 | isolador |
+| C | High row com apoio de peito | 3 × 8–12 | composto |
+| D | Remada convergente com apoio de peito | 3 × 8–12 | composto |
 
-### peito — 5 séries
+### bíceps — 6 séries
 
-Distribuição: D (5)
+Distribuição: C (4), D (2)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| D | Chest press horizontal convergente | 3 × 8–12 | composto |
-| D | Pec deck | 2 × 10–15 | isolador |
+| C | Rosca Scott na máquina | 2 × 8–12 | isolador |
+| C | Rosca martelo | 2 × 10–15 | isolador |
+| D | Rosca Bayesian no cabo | 2 × 10–15 | isolador |
 
-### adutores — 3 séries
+### delt posterior — 3 séries
 
 Distribuição: C (3)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| C | Adutora | 3 × 10–15 | isolador |
+| C | Reverse pec deck | 3 × 12–20 | isolador |
 
 ### glúteo — 3 séries
 
-Distribuição: F (3)
+Distribuição: E (3)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| F | Elevação pélvica na máquina | 3 × 8–12 | composto |
+| E | Elevação pélvica na máquina | 3 × 8–12 | composto |
 
-### tibial — 2 séries
+### adutores — 2 séries
 
-Distribuição: C (2)
+Distribuição: B (2)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| C | Tibial anterior | 2 × 12–20 | isolador |
+| B | Adutora | 2 × 10–15 | isolador |
 
-### trapézio — 2 séries
+### peito — 2 séries
 
 Distribuição: D (2)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| D | Encolhimento na máquina | 2 × 8–15 | isolador |
-
-### glúteo médio — 2 séries
-
-Distribuição: F (2)
-
-| Treino | Exercício | Séries × reps | |
-|---|---|---|---|
-| F | Abdutora | 2 × 12–20 | isolador |
+| D | Chest press horizontal convergente | 2 × 8–12 | composto |
 
 ---
 
@@ -194,11 +162,10 @@ Distribuição: F (2)
 
 | Treino | Foco | Séries |
 |---|---|---|
-| A | Peito superior + lateral + tríceps | 19 |
-| B | Dorsais + posterior de ombro + bíceps | 20 |
-| C | Quadríceps + adutores + panturrilha | 19 |
-| D | Espessura de costas + peito | 22 |
-| E | Deltoides + braços + abdômen | 22 |
-| F | Posteriores + glúteos + panturrilha | 23 |
+| A | Peito superior + dorsais + lateral + tríceps | 18 |
+| B | Quadríceps + panturrilha + abdômen | 18 |
+| C | Costas + posterior de ombro + lateral + bíceps | 19 |
+| D | Especialização de upper | 18 |
+| E | Posteriores + glúteos + panturrilha + abdômen | 20 |
 
-Total: **125 séries** em 6 sessões, média de 20,8 por sessão.
+Total: **93 séries** em 5 sessões, média de 18,6 por sessão.

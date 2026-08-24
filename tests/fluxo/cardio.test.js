@@ -8,7 +8,7 @@ test('placar da semana aparece na tela de hoje', async () => {
   const a = await app();
   const linha = a.texto('.cardl');
   assert.ok(/cardio/.test(linha), linha);
-  assert.ok(/0 de 3 nesta semana/.test(linha), linha);
+  assert.ok(/0 de 2 nesta semana/.test(linha), linha);
   a.fechar();
 });
 
@@ -42,9 +42,9 @@ test('feito hoje muda o estado da linha', async () => {
 });
 
 test('aviso de dia de perna aparece no momento em que importa', async () => {
-  const a = await app({ estado: { logs: {}, done: [{ day: 'C', t: Date.now(), sid: Date.now() }] } });
+  const a = await app({ estado: { logs: {}, done: [{ day: 'B', t: Date.now(), sid: Date.now() }] } });
   a.E('abrirCardioRapido()');
-  assert.ok(a.texto('.cardq .cwarn').includes('treinou C'), 'sinaliza sem bloquear');
+  assert.ok(a.texto('.cardq .cwarn').includes('treinou B'), 'sinaliza sem bloquear');
   assert.strictEqual(a.$('.cardq .dbtn[disabled]'), null);
   a.fechar();
 });

@@ -27,9 +27,13 @@ import type { Dia, Estado, Sessao } from './tipos';
 /** O que um dia da semana é, na cadência dele. */
 export type Cadencia = 'treino' | 'descanso';
 
-/** Cadência padrão: descansa domingo. Índice 0 = domingo, como Date#getDay. */
+/**
+ * Cadência padrão: descansa domingo e quinta. Índice 0 = domingo, como
+ * Date#getDay. A quinta no meio da semana é deliberada na prescrição — é o dia
+ * de recuperação e cardio entre C e o treino de especialização.
+ */
 export const CADENCIA_PADRAO: Cadencia[] =
-  ['descanso', 'treino', 'treino', 'treino', 'treino', 'treino', 'treino'];
+  ['descanso', 'treino', 'treino', 'treino', 'descanso', 'treino', 'treino'];
 
 /** De onde veio a resposta. A interface mostra isso — número derivado diz a origem. */
 export type Origem = 'registrado' | 'aberta' | 'manual' | 'previsto';

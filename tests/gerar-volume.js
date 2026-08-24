@@ -86,8 +86,8 @@ ROT.forEach(function (d) {
   p('| ' + d + ' | ' + PROGRAMA[d].name + ' | ' + PROGRAMA[d].ex.reduce(function (a, e) { return a + e.s; }, 0) + ' |');
 });
 p('');
-p('Total: **' + total + ' séries** em 6 sessões, média de ' +
-  (Math.round(total / 6 * 10) / 10).toString().replace('.', ',') + ' por sessão.');
+p('Total: **' + total + ' séries** em ' + ROT.length + ' sessões, média de ' +
+  (Math.round(total / ROT.length * 10) / 10).toString().replace('.', ',') + ' por sessão.');
 p('');
 
 fs.writeFileSync(path.join(raiz, 'docs', 'ANALISE-VOLUME.md'), L.join('\n'));

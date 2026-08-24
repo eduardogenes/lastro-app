@@ -80,7 +80,7 @@ test('tela acesa é pedida ao começar a digitar e solta ao encerrar', async () 
 
 test('descanso automático na última série usa o tempo do exercício', async () => {
   const a = await app();
-  a.E('go("C")');
+  a.E('go("B")');
 
   // pendulum squat: grande composto, 3 min
   a.E('toggle(0)');
@@ -88,11 +88,11 @@ test('descanso automático na última série usa o tempo do exercício', async (
   assert.ok(a.doc.getElementById('timer').className.includes('on'));
   assert.strictEqual(a.texto('#tval'), '3:00');
 
-  // panturrilha em pé: 90 s, e não os 3 min genéricos de antes
+  // cadeira extensora: isolador, 1:45, e não os 3 min genéricos de antes
   a.E('stopTimer()');
-  a.E('toggle(4)');
-  for (let k = 0; k < 3; k++) a.preencher(4, k, 60, 10);
-  assert.strictEqual(a.texto('#tval'), '1:30');
+  a.E('toggle(3)');
+  for (let k = 0; k < 2; k++) a.preencher(3, k, 60, 12);
+  assert.strictEqual(a.texto('#tval'), '1:45');
   a.fechar();
 });
 
@@ -101,7 +101,7 @@ test('cada categoria de exercício declara seu descanso', async () => {
   const faltando = a.J(`
     rot().reduce(function (acc, d) {
       treino(d).ex.forEach(function (ex) {
-        if (![180,150,105,90].includes(descOf(ex))) acc.push(d + ' ' + ex.n + ' ' + descOf(ex));
+        if (![180,150,120,105,90].includes(descOf(ex))) acc.push(d + ' ' + ex.n + ' ' + descOf(ex));
       });
       return acc;
     }, [])`);
@@ -116,15 +116,15 @@ test('bi-set encadeia em vez de descansar', async () => {
   // O programa atual não usa bi-set, mas o encadeamento continua sustentado:
   // é o par declarado no programa que decide, não o dia.
   const a = await app();
-  a.E('go("E")');   // ombros e braços: era D até o plano 5
-  a.E('S.prog.E.ex[4].bi = 1; S.prog.E.ex[5].bi = 2; render()');
+  a.E('go("E")');
+  a.E('S.prog.E.ex[5].bi = 1; S.prog.E.ex[6].bi = 2; render()');
 
-  a.E('toggle(4)');
-  for (let k = 0; k < 2; k++) a.preencher(4, k, 15, 12);
-  assert.strictEqual(a.E('view.open'), 5, 'vai direto para o próximo do par');
+  a.E('toggle(5)');
+  for (let k = 0; k < 2; k++) a.preencher(5, k, 15, 12);
+  assert.strictEqual(a.E('view.open'), 6, 'vai direto para o próximo do par');
   assert.ok(!a.doc.getElementById('timer').className.includes('on'), 'sem pausa no meio do par');
 
-  for (let k = 0; k < 2; k++) a.preencher(5, k, 20, 12);
+  for (let k = 0; k < 3; k++) a.preencher(6, k, 20, 12);
   assert.ok(a.doc.getElementById('timer').className.includes('on'), 'o descanso é no segundo');
   a.fechar();
 });

@@ -291,9 +291,22 @@ ele é hoje. `semeiaProg()` e `ROT_BASE` são código de hoje, e usá-los dentro
 de uma migração antiga é a armadilha que apareceu duas vezes nesta — no
 `porPosicao` e na semeadura.
 
-Trocar o programa de novo agora é edição, não migração. Mudar o `PROGRAMA` só
-muda a semente e o alvo de comparação; quem já tem `S.prog` não é afetado, e o
-botão de restaurar é o caminho para adotar a prescrição nova.
+A revisão de agosto de 2026 cobrou essa regra pela terceira vez. A 2 → 3 lia o
+`PROGRAMA` importado para saber que exercício ocupava cada posição antiga;
+funcionava só enquanto o programa vivo fosse o mesmo daquela era. Quando o
+treinador trocou a prescrição, ler um backup plano ≤ 2 contra o programa novo
+mapearia meses de histórico para os exercícios errados. O programa daquela era
+está congelado em `PROGRAMA_PLANO_3` e `ROT_PLANO_3`, dentro de
+`migracoes.ts`, ao lado de `PLANO_1` — **migração lê dado congelado, nunca o
+código de hoje**.
+
+Trocar o programa é edição, não migração. Mudar o `PROGRAMA` só muda a semente,
+o alvo de comparação do volume e o que o botão de restaurar devolve; quem já
+tem `S.prog` não é afetado até tocar em restaurar. O que a troca de 2026 exigiu
+além disso foi o `LEGADO`: exercício que sai do programa some do catálogo e o
+histórico dele vira exercício fantasma, com o slug cru no lugar do nome. O
+`LEGADO` os mantém nomeados, com o grupo muscular certo, e `sub:1` em vez de
+`arq:1` para continuarem disponíveis nas listas de troca.
 
 ---
 

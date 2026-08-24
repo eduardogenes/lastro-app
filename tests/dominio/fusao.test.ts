@@ -105,11 +105,11 @@ test('a cadência é indexada por dia da semana, domingo primeiro', () => {
 test('o horizonte conta treinos e descansos para a lista de compras', () => {
   const p = previsaoDoHorizonte(CADENCIA_PADRAO, 7, new Date(2026, 7, 10).getTime());
   assert.strictEqual(p.treino + p.descanso, 7);
-  assert.strictEqual(p.descanso, 1, 'um domingo em sete dias');
+  assert.strictEqual(p.descanso, 2, 'domingo e quinta em sete dias');
 
   const duas = previsaoDoHorizonte(CADENCIA_PADRAO, 14, new Date(2026, 7, 10).getTime());
-  assert.strictEqual(duas.descanso, 2);
-  assert.strictEqual(duas.treino, 12);
+  assert.strictEqual(duas.descanso, 4);
+  assert.strictEqual(duas.treino, 10);
 });
 
 // ---------- força estimada ----------

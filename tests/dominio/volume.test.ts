@@ -3,7 +3,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { alvoDoPrograma, impacto, seriesDeGrupo, seriesPorMusculo } from '../../src/dominio/volume';
-import { PROGRAMA, ROT_BASE, slugEx } from '../../src/dominio/programa';
+import { ALT, EX_BASE, LEGADO, PROGRAMA, ROT_BASE, slugEx } from '../../src/dominio/programa';
 import type { IdEx, Log } from '../../src/dominio/tipos';
 import { DIA, inicioDaSemana, log } from './ajuda';
 
@@ -18,13 +18,16 @@ test('o alvo é calculado do programa, nunca transcrito', () => {
   assert.deepStrictEqual(ALVO, somaNaMao);
 
   const total = Object.keys(ALVO).reduce((n, k) => n + ALVO[k], 0);
-  assert.strictEqual(total, 125, 'o treinador prescreveu 125 séries diretas');
+  assert.strictEqual(total, 93, 'o treinador prescreveu 93 séries diretas');
 });
 
 test('as prioridades do treinador aparecem no alvo', () => {
-  assert.ok(ALVO['delt lateral'] >= 12, 'prioridade máxima: ' + ALVO['delt lateral']);
-  assert.ok(ALVO['dorsal'] >= 12, 'prioridade máxima: ' + ALVO['dorsal']);
-  assert.ok(ALVO['peito superior'] >= 10, 'prioridade máxima: ' + ALVO['peito superior']);
+  assert.ok(ALVO['peito superior'] >= 10, 'prioridade 1: ' + ALVO['peito superior']);
+  assert.ok(ALVO['delt lateral'] >= 12, 'prioridade 1: ' + ALVO['delt lateral']);
+  assert.ok(ALVO['dorsal'] >= 10, 'prioridade 2: ' + ALVO['dorsal']);
+  assert.ok(ALVO['panturrilha'] >= 10, 'prioridade 2: ' + ALVO['panturrilha']);
+  // quadríceps é ponto forte: cedeu volume para quem precisa crescer
+  assert.ok(ALVO['quadríceps'] <= 8, 'ponto forte não rouba recuperação: ' + ALVO['quadríceps']);
   assert.ok(ALVO['delt anterior'] == null || ALVO['delt anterior'] <= 2,
     'delt anterior recebe estímulo indireto; série direta seria desperdício');
 });
@@ -100,5 +103,33 @@ test('todo exercício do programa tem id estável derivado do nome', () => {
     assert.ok(/^[a-z0-9-]+$/.test(id), 'id fora do formato: ' + id + ' (' + ex.n + ')');
     vistos.add(id);
   }));
-  assert.ok(vistos.size >= 40, 'o programa tem 48 exercícios em 6 treinos');
+  assert.ok(vistos.size >= 30, 'o programa tem 32 exercícios distintos em 5 treinos');
+});
+
+// ---------- a prescrição de 2026: RIR e o que saiu do programa ----------
+
+test('todo exercício prescrito declara o RIR alvo', () => {
+  ROT_BASE.forEach(d => PROGRAMA[d].ex.forEach(ex => {
+    assert.ok(ex.rir, 'sem RIR: ' + ex.n + ' (treino ' + d + ')');
+    assert.match(ex.rir!, /^\d(–\d)?$/, 'RIR fora do formato: ' + ex.rir + ' (' + ex.n + ')');
+  }));
+});
+
+test('o exercício que saiu do programa continua nomeado no catálogo', () => {
+  // Sem isto o histórico dele vira exercício fantasma: a tela mostra o slug
+  // cru no lugar do nome, e meses de carga ficam ilegíveis.
+  Object.keys(LEGADO).forEach(nome => {
+    const e = EX_BASE[slugEx(nome)];
+    assert.ok(e, 'saiu do catálogo: ' + nome);
+    assert.strictEqual(e.n, nome);
+    assert.strictEqual(e.g, LEGADO[nome].g, 'grupo do legado sobrescrito por quem ele substitui');
+    assert.ok(!e.arq, 'arquivado sumiria das listas de troca; o legado precisa continuar trocável');
+  });
+});
+
+test('cada exercício do programa tem pelo menos dois substitutos', () => {
+  ROT_BASE.forEach(d => PROGRAMA[d].ex.forEach(ex => {
+    assert.ok(ALT[ex.n] && ALT[ex.n].length >= 2,
+      'sem alternativa suficiente: ' + ex.n);
+  }));
 });
