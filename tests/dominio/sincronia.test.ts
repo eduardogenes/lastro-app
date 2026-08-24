@@ -237,3 +237,16 @@ test('as chaves de lápide e de fusão são a mesma string', () => {
   assert.strictEqual(chaveDeMarca('peso', { t: 5 }), 'peso:5');
   assert.strictEqual(chaveDeCardio({ t: 7 }), 'cardio:7');
 });
+
+// ---------- o RIR desce para a série ----------
+
+test('a série carrega o próprio RIR sem atrapalhar quem lê carga e repetição', () => {
+  const com: Log = { t: T0, sid: T0, sets: [[60, 8, 2], [60, 8, 0]] };
+  assert.strictEqual(com.sets[0]![0], 60, 'carga continua em [0]');
+  assert.strictEqual(com.sets[0]![1], 8, 'repetição continua em [1]');
+  assert.strictEqual(com.sets[1]![2], 0, 'e o RIR mora em [2]');
+
+  // série antiga, de dois números, continua válida
+  const sem: Log = { t: T0, sid: T0, sets: [[60, 8]] };
+  assert.strictEqual(sem.sets[0]![2], undefined);
+});

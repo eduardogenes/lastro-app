@@ -47,14 +47,14 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
   assert.strictEqual(a.E('CAT["tibial-anterior"].n'), 'Tibial anterior');
   assert.ok(!a.E('CAT["tibial-anterior"].sumido'), 'não é fantasma');
 
-  // RIR alvo aparece no cartão, e o registrado entra no log
+  // RIR alvo aparece no cartão, e o registrado entra na própria série
   a.E('go("A")');
   a.E('toggle(0)');
   assert.ok(a.texto('.ex.open .tag').includes('RIR 1–2'), a.texto('.ex.open .tag'));
-  a.E('abrirNota(0)');
-  a.E('setRir(0, "1")');
   a.preencher(0, 0, 57.5, 9);
-  assert.strictEqual(a.log('A', 0).slice(-1)[0].rir, '1', 'o RIR da última série ficou gravado');
+  a.digitar('q0_0', '1');
+  assert.deepStrictEqual(a.log('A', 0).slice(-1)[0].sets[0], [57.5, 9, 1],
+    'carga, repetição e RIR na mesma série');
 
   // sessão antiga do F continua abrindo sem quebrar
   a.aba('dados');
@@ -62,13 +62,12 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
   a.fechar();
 });
 
-test('backup exportado e reimportado preserva rir de slot e de log', async () => {
+test('backup exportado e reimportado preserva o RIR do plano e o da série', async () => {
   const a = await app();
   await a.E('restaurarTudo()');
   a.E('toggle(0)');
-  a.E('abrirNota(0)');
-  a.E('setRir(0, "0–1")');
   a.preencher(0, 0, 60, 8);
+  a.digitar('q0_0', '1');            // o RIR daquela série
   await a.esperar();
   const json = a.E('payload()');
   a.fechar();
@@ -77,8 +76,8 @@ test('backup exportado e reimportado preserva rir de slot e de log', async () =>
   await b.E('importText(' + JSON.stringify(json) + ')');
   await b.esperar();
   assert.strictEqual(b.E('S.prog.A.ex[0].rir'), '1–2', 'o RIR prescrito sobreviveu ao backup');
-  assert.strictEqual(b.E('S.logs["chest-press-inclinado-convergente"][0].rir'), '0–1',
-    'o RIR registrado sobreviveu ao backup');
+  assert.strictEqual(b.E('S.logs["chest-press-inclinado-convergente"][0].sets[0][2]'), 1,
+    'o RIR da série sobreviveu ao backup, na terceira posição');
   b.fechar();
 });
 
@@ -92,7 +91,7 @@ test('backup antigo (plano 2) cai nos ids da época, não no programa de hoje', 
   await a.E('importText(' + JSON.stringify(antigo) + ')');
   await a.esperar();
   assert.ok(a.E('S.logs["pendulum-squat"]'), 'histórico foi para o exercício certo da época');
-  assert.strictEqual(a.E('S.plano'), 5);
+  assert.strictEqual(a.E('S.plano'), 6);
   a.fechar();
 });
 

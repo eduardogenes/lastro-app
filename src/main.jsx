@@ -35,7 +35,7 @@ import { mediasSemanais, pesoRitmo as _pesoRitmo,
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
-import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5 } from './dominio/migracoes';
+import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
@@ -65,8 +65,6 @@ const CARDIO_ALVO = 2;
 // recuperação. O HYROX entra aqui porque corrida, sled e lunges cobram da
 // perna tanto quanto o dia de perna. Sinaliza, não bloqueia.
 const DIAS_PERNA = ['B', 'HX'];
-// RIR da última série, nas faixas que a prescrição usa.
-const RIR_OPCOES = ['0', '0–1', '1', '1–2', '2+'];
 
 
 
@@ -267,6 +265,7 @@ async function load() {
   const m3 = migraPlano3(S);
   migraPlano4(S);
   migraPlano5(S);
+  migraPlano6(S);
   garanteProgramaERotacao();
   montaCatalogo();
 
@@ -421,7 +420,13 @@ function setsDoRascunho(ex, e, key) {
     const x = e.s[k];
     // em exercício por tempo ou de peso do corpo o segundo campo basta
     const ok = x && x[1] != null && (seg || corpo || x[0] != null);
-    if (ok) { sets.push([x[0] != null ? x[0] : 0, x[1]]); any = true; }
+    if (ok) {
+      const s = [x[0] != null ? x[0] : 0, x[1]];
+      // a terceira posição só existe quando foi preenchida: série sem RIR
+      // continua sendo um par, como sempre foi
+      if (x[2] != null) s.push(x[2]);
+      sets.push(s); any = true;
+    }
     else sets.push(null);
   }
   return any ? sets : null;
@@ -465,7 +470,6 @@ function projeta(i) {
   if (e.aq) entry.aq = 1; else delete entry.aq;
   const obs = (e.obs||'').trim();
   if (obs) entry.obs = obs; else delete entry.obs;
-  if (e.rir) entry.rir = e.rir; else delete entry.rir;
   if (e.dor && e.dor.length) entry.dor = e.dor.slice(); else delete entry.dor;
   if (S.deload) entry.dl = 1; else delete entry.dl;
 
@@ -782,7 +786,7 @@ function id(d,i){ const t = treino(d); return (t && t.ex[i]) ? t.ex[i].id : d + 
 // render() reescreve o innerHTML e os valores viviam só no DOM.
 function draftOf(i) {
   if (!S.draft || S.draft.day !== view.day) S.draft = { day: view.day, t: Date.now(), ex: {} };
-  if (!S.draft.ex[i]) S.draft.ex[i] = { s: [], obs: '', dor: [], rir: '', alt: null };
+  if (!S.draft.ex[i]) S.draft.ex[i] = { s: [], obs: '', dor: [], alt: null };
   const e = S.draft.ex[i];
   if (!Array.isArray(e.s)) e.s = [];
   if (!Array.isArray(e.dor)) e.dor = [];
@@ -808,10 +812,9 @@ function hidrataDraft(dia) {
     if (!chave) return;
     const e = daSessao(chave, base, s.sid);
     S.draft.ex[i] = {
-      s: e.sets.map(function (x) { return x ? [x[0], x[1]] : [null, null]; }),
+      s: e.sets.map(function (x) { return x ? [x[0], x[1], x[2] != null ? x[2] : null] : [null, null, null]; }),
       obs: e.obs || '',
       dor: (e.dor || []).slice(),
-      rir: e.rir || '',
       aq: !!e.aq
     };
   });
@@ -1125,13 +1128,26 @@ function vmExercicio(d, i, ex) {
     const v = dr && dr.s[k] ? dr.s[k] : [null, null];
     linhas.push({
       valor: v,
+      // A coluna ANTERIOR: o que ele fez nesta MESMA série da última vez.
+      // Antes isso era só o placeholder do campo de carga e uma linha de
+      // resumo embaixo — para saber a repetição da série 3 era preciso contar
+      // na cabeça. Aqui cada linha carrega a própria referência.
+      antes: p
+        ? (p[0] ? fmtNum(p[0]) + (seg ? 'kg × ' : ' × ') : '') + p[1] + (seg ? 's' : '') +
+          (p[2] != null ? ' @ ' + p[2] : '')
+        : null,
       // O placeholder é DADO — a carga da última vez. A unidade é ESTRUTURA e
       // fica sempre visível ao lado. Antes os dois diziam a mesma coisa quando
       // não havia histórico: o campo mostrava "kg" com um "KG" grudado na
       // direita. Sem histórico, o campo fica vazio e só a unidade fala.
       place: [
         p && p[0] ? fmtNum(p[0]) : '',
-        p ? String(p[1]) : ''
+        p ? String(p[1]) : '',
+        // dado, como os dois anteriores: o RIR daquela mesma série da última
+        // vez. O ALVO da prescrição não entra aqui — ele é estrutura, e já vive
+        // na tag do cartão. Misturar os dois faria a mesma linha ter dois
+        // placeholders querendo dizer coisas diferentes.
+        p && p[2] != null ? String(p[2]) : ''
       ]
     });
   }
@@ -1193,13 +1209,8 @@ function vmExercicio(d, i, ex) {
 
     mostraAquecimento: i === 0,
     aq: !!(dr && dr.aq),
-    notaAberta: !!((dr && (dr.obs || dr.dor.length || dr.rir)) || view.nota === i),
+    notaAberta: !!((dr && (dr.obs || dr.dor.length)) || view.nota === i),
     obs: dr ? (dr.obs || '') : '',
-    // o RIR registrado é o da ÚLTIMA série: uma marca por exercício, não por série
-    rirFeito: dr ? (dr.rir || '') : '',
-    rirOpcoes: RIR_OPCOES.map(function (v) {
-      return { v: v, on: !!(dr && dr.rir === v) };
-    }),
     dores: DORES.map(function (x) {
       return { k: x.k, t: x.t, on: !!(dr && dr.dor.indexOf(x.k) >= 0) };
     })
@@ -1236,7 +1247,6 @@ const ACOES = {
   setCarga: function (i, t) { setCarga(i, t); },
   abrirNota: function (i) { abrirNota(i); },
   obsIn: function (el, i) { obsIn(el, i); },
-  setRir: function (i, v) { setRir(i, v); },
   toggleDor: function (i, k) { toggleDor(i, k); }
 };
 
@@ -2483,6 +2493,7 @@ async function importText(txt) {
   migraPlano3(S);
   migraPlano4(S);
   migraPlano5(S);
+  migraPlano6(S);
   montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;
@@ -2521,7 +2532,10 @@ function inp(el, i, k, pos) {
   if (!e.s[k]) e.s[k] = [null,null];
   const raw = limpaNum(el, pos === 0);
   const num = pos === 0 ? parseFloat(raw) : parseInt(raw,10);
-  e.s[k][pos] = (raw === '' || isNaN(num)) ? null : num;
+  const v = (raw === '' || isNaN(num)) ? null : num;
+  // RIR não é grandeza aberta: acima de 5 a pessoa não está treinando perto o
+  // suficiente para o número significar algo, e negativo não existe
+  e.s[k][pos] = (pos === 2 && v != null) ? Math.max(0, Math.min(5, v)) : v;
   el.classList.toggle('done', el.value !== '');
   segurarTela();
   projeta(i);
@@ -2573,13 +2587,6 @@ function toggleDor(i, k) {
   const e = draftOf(i);
   const j = e.dor.indexOf(k);
   if (j >= 0) e.dor.splice(j,1); else e.dor.push(k);
-  projeta(i); queueSave(); render();
-}
-// Tocar de novo no valor já marcado desmarca: registrar RIR é opcional, e sem
-// isso um toque errado não teria como ser desfeito.
-function setRir(i, v) {
-  const e = draftOf(i);
-  e.rir = e.rir === v ? '' : v;
   projeta(i); queueSave(); render();
 }
 function toggleSwap(i){ view.swapOpen = view.swapOpen===i ? null : i; render(); }

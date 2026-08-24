@@ -6,7 +6,7 @@ import { app, DIA } from './harness.js';
 test('estado migra para o plano 4 e a nutrição nasce semeada', async () => {
   const a = await app();
   assert.deepStrictEqual(a.erros, []);
-  assert.strictEqual(a.E('S.plano'), 5);
+  assert.strictEqual(a.E('S.plano'), 6);
   assert.strictEqual(a.E('S.comida.plano.length'), 6, 'plano nutricional semeado');
   assert.strictEqual(a.J('S.cadencia').length, 7, 'cadência da semana nasce com 7 posições');
   assert.strictEqual(a.E('S.ajuste'), 0);
@@ -209,7 +209,8 @@ test('a unidade é rótulo fixo; o placeholder é a carga da última vez', () =>
   // sempre; placeholder é dado e só aparece quando existe dado.
   return app().then(async a => {
     a.E('toggle(0)');
-    const unidades = a.$$('.ex.open .setrow .unit').map(u => u.textContent);
+    // a unidade virou rótulo de COLUNA no cabeçalho da tabela de séries
+    const unidades = a.$$('.ex.open .sethead .unit').map(u => u.textContent);
     assert.ok(unidades.includes('kg'), 'a carga declara a unidade: ' + unidades.join(','));
     assert.ok(unidades.includes('reps'), 'a repetição também: ' + unidades.join(','));
     assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '', 'sem histórico, sem placeholder');

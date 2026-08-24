@@ -184,7 +184,7 @@ test('estado do plano 1 atravessa as duas migrações sem perder nada', async ()
   } });
   await a.esperar();
 
-  assert.strictEqual(a.E('S.plano'), 5, 'a 3→4 da fusão roda na mesma cadeia');
+  assert.strictEqual(a.E('S.plano'), 6, 'a cadeia inteira roda, até a 5→6');
   assert.strictEqual(a.E('S.done.length'), 2, 'o calendário atravessa intacto');
 
   const logs = a.J('S.logs');

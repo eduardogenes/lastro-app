@@ -15,11 +15,32 @@
 // é marcado como HTML, então `Supino 45"` ou `Rosca <b>` não têm como quebrar
 // a tela nem virar marcação.
 
-/** Uma linha de série: número, carga, repetições e o botão de descanso. */
+/**
+ * O cabeçalho da tabela de séries.
+ *
+ * Existe porque a linha passou a ter quatro colunas, e sem rótulo o terceiro
+ * número seria adivinhação. A coluna ANTERIOR é o que ele fez nesta mesma série
+ * da última vez — a referência que antes só existia como placeholder do
+ * primeiro campo e obrigava a contar de cabeça para saber a série 3.
+ */
+function Cabecalho({ vm }) {
+  return (
+    <div class="sethead">
+      <div class="setno">série</div>
+      <div class="setant">anterior</div>
+      <div class="f"><span class="unit">{vm.unidade}</span></div>
+      <div class="f"><span class="unit">{vm.seg ? 'seg' : 'reps'}</span></div>
+      <div class="f"><span class="unit">rir</span></div>
+    </div>
+  );
+}
+
+/** Uma linha de série: número, o que foi feito da última vez, e os três campos. */
 function Linha({ i, k, linha, vm, acoes }) {
   return (
     <div class="setrow">
       <div class="setno">{k + 1}</div>
+      <div class="setant">{linha.antes || '–'}</div>
       <div class="f">
         <input
           type="text" inputmode="decimal" id={`w${i}_${k}`}
@@ -27,9 +48,7 @@ function Linha({ i, k, linha, vm, acoes }) {
           placeholder={linha.place[0]}
           onInput={e => acoes.inp(e.currentTarget, i, k, 0)}
         />
-        <span class="unit">{vm.unidade}</span>
       </div>
-      <div class="x">×</div>
       <div class="f">
         <input
           type="text" inputmode="numeric" id={`r${i}_${k}`}
@@ -37,11 +56,16 @@ function Linha({ i, k, linha, vm, acoes }) {
           placeholder={linha.place[1]}
           onInput={e => acoes.inp(e.currentTarget, i, k, 1)}
         />
-        <span class="unit">{vm.seg ? 'seg' : 'reps'}</span>
       </div>
-      {vm.bi === 1
-        ? <button class="rest bi" onClick={() => acoes.proximoDoBiset(i)}>próximo</button>
-        : <button class="rest" onClick={() => acoes.startTimer(vm.descanso)}>{vm.descansoTxt}</button>}
+      <div class="f">
+        <input
+          class="rircampo"
+          type="text" inputmode="numeric" id={`q${i}_${k}`}
+          value={linha.valor[2] != null ? linha.valor[2] : ''}
+          placeholder={linha.place[2]}
+          onInput={e => acoes.inp(e.currentTarget, i, k, 2)}
+        />
+      </div>
     </div>
   );
 }
@@ -80,25 +104,12 @@ function Troca({ i, vm, acoes }) {
 function Anotacao({ i, vm, acoes }) {
   if (!vm.notaAberta) {
     return (
-      <button class="notabtn" onClick={() => acoes.abrirNota(i)}>
-        {vm.rirFeito ? 'RIR ' + vm.rirFeito : 'anotar algo'}
-      </button>
+      <button class="notabtn" onClick={() => acoes.abrirNota(i)}>anotar algo</button>
     );
   }
   return (
     <div class="obs">
-      <div class="obs-h">
-        RIR da última série{vm.rir ? ' · alvo ' + vm.rir : ''}
-      </div>
-      <div class="chips">
-        {vm.rirOpcoes.map(x => (
-          <button
-            key={x.v} class={'chip' + (x.on ? ' on' : '')}
-            onClick={() => acoes.setRir(i, x.v)}
-          >{x.v}</button>
-        ))}
-      </div>
-      <div class="obs-h" style="margin-top:14px">anotação desta sessão</div>
+      <div class="obs-h">anotação desta sessão</div>
       <textarea
         class="note" id={`o${i}`}
         placeholder="o que aconteceu neste exercício (opcional)"
@@ -207,6 +218,17 @@ export function Exercicio({ vm, acoes }) {
       <div class="sets">
         <p class="cue">{vm.cue}</p>
 
+        {/* Um descanso por exercício, não um por linha: o valor era o mesmo em
+            todas as séries, e repeti-lo tirava a coluna que faltava. */}
+        {vm.bi === 1
+          ? <button class="restlinha bi" onClick={() => acoes.proximoDoBiset(i)}>
+              bi-set · ir para o próximo
+            </button>
+          : <button class="restlinha" onClick={() => acoes.startTimer(vm.descanso)}>
+              descanso {vm.descansoTxt}
+            </button>}
+
+        <Cabecalho vm={vm} />
         {vm.linhas.map((linha, k) => (
           <Linha key={k} i={i} k={k} linha={linha} vm={vm} acoes={acoes} />
         ))}

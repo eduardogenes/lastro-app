@@ -211,10 +211,9 @@ test('anotação e dor ficam atrás de um link', async () => {
   assert.ok(links.includes('anotar algo'), links.join(' | '));
 
   a.E('abrirNota(0)');
-  // 5 opções de RIR da última série + as 3 dores de tendão
-  assert.strictEqual(a.$$('.ex.open .chip').length, 8);
+  // o RIR saiu daqui: virou coluna por série. Sobraram as dores de tendão.
+  assert.strictEqual(a.$$('.ex.open .chip').length, 3);
   const chips = a.$$('.ex.open .chip').map(function (x) { return x.textContent.trim(); });
-  assert.ok(chips.includes('1–2'), chips.join(' | '));
   assert.ok(chips.includes('cotovelo'), chips.join(' | '));
 
   a.digitar('o0', 'algo');
@@ -312,5 +311,63 @@ test('o gráfico do histórico é desenho, não comportamento', async () => {
     return [...el.attributes].some(function (at) { return /^on/i.test(at.name); });
   });
   assert.strictEqual(sujos.length, 0, 'nenhum handler inline dentro do gráfico');
+  a.fechar();
+});
+
+// ---------- a tabela de séries ----------
+
+test('cada série tem carga, repetição e RIR, com o anterior ao lado', async () => {
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { 'chest-press-inclinado-convergente': [
+      { t: t, sid: t, sets: [[55, 10, 2], [55, 9, 1], [55, 8, 0]] }
+    ] },
+    done: [{ day: 'A', t: t, sid: t, dur: 0 }]
+  } });
+  a.E('go("A")');
+  a.E('toggle(0)');
+
+  const head = a.$('.ex.open .sethead');
+  assert.ok(head, 'a tabela tem cabeçalho');
+  assert.match(head.textContent, /série.*anterior.*kg.*reps.*rir/i, head.textContent);
+
+  // a coluna ANTERIOR é por série: a linha 3 mostra a linha 3 da última vez
+  const antes = a.$$('.ex.open .setrow .setant').map(x => x.textContent.trim());
+  assert.deepStrictEqual(antes, ['55 × 10 @ 2', '55 × 9 @ 1', '55 × 8 @ 0']);
+
+  // e o placeholder do RIR é dado, como os outros dois
+  assert.strictEqual(a.doc.getElementById('q0_2').placeholder, '0');
+  a.fechar();
+});
+
+test('o RIR digitado entra na própria série', async () => {
+  const a = await app();
+  a.E('toggle(0)');
+  a.preencher(0, 0, 60, 8);
+  a.digitar('q0_0', '2');
+  assert.deepStrictEqual(a.log('A', 0)[0].sets[0], [60, 8, 2]);
+
+  // série sem RIR continua sendo um par: o campo é opcional
+  a.preencher(0, 1, 60, 7);
+  assert.deepStrictEqual(a.log('A', 0)[0].sets[1], [60, 7]);
+  a.fechar();
+});
+
+test('RIR fora da faixa é contido em vez de aceito', async () => {
+  // acima de 5 o número não diz mais nada sobre proximidade da falha
+  const a = await app();
+  a.E('toggle(0)');
+  a.preencher(0, 0, 60, 8);
+  a.digitar('q0_0', '9');
+  assert.strictEqual(a.log('A', 0)[0].sets[0][2], 5);
+  a.fechar();
+});
+
+test('o descanso é um por exercício, não um por série', async () => {
+  const a = await app();
+  a.E('toggle(0)');
+  assert.strictEqual(a.$$('.ex.open .restlinha').length, 1,
+    'o valor era o mesmo em todas as linhas: repeti-lo ocupava a coluna do RIR');
+  assert.match(a.$('.ex.open .restlinha').textContent, /descanso/i);
   a.fechar();
 });

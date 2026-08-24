@@ -20,7 +20,7 @@ import type { Estado, IdEx, Log, Treino } from './tipos';
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-export const PLANO_ATUAL = 5;
+export const PLANO_ATUAL = 6;
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -356,5 +356,53 @@ export function migraPlano5(S: Estado): Resultado5 | null {
   }
 
   S.plano = 5;
+  return r;
+}
+
+// ---------- plano 5 -> 6: o RIR desce da sessão para a série ----------
+//
+// No plano 5 o RIR era UM por exercício por sessão — o da última série —, e
+// vinha como texto de faixa ('0–1', '1–2'), porque foi assim que o treinador
+// pediu para registrar.
+//
+// Passou a ser por série, porque é por série que a informação existe: a
+// primeira a 2 da falha e a última a 0 é uma sessão diferente de três séries a
+// 1, e as duas somariam exatamente o mesmo volume. Sem isso o app também não
+// tem como conferir a regra de subir carga, que é "topo da faixa E o RIR
+// planejado".
+//
+// A faixa vira número pelo LIMITE INFERIOR: '0–1' registra que chegou a zero em
+// algum momento, e para leitura de fadiga o pior caso é o que importa.
+
+/** Como cada faixa do plano 5 se lê em número. */
+const RIR_DO_TEXTO: Record<string, number> = {
+  '0': 0, '0–1': 0, '0-1': 0, '1': 1, '1–2': 1, '1-2': 1, '2+': 2, '2': 2
+};
+
+export interface Resultado6 {
+  /** entradas cujo RIR desceu para a série */
+  movidos: number;
+}
+
+export function migraPlano6(S: Estado): Resultado6 | null {
+  if (S.plano >= 6) return null;
+  const r: Resultado6 = { movidos: 0 };
+
+  Object.keys(S.logs || {}).forEach(function (k) {
+    (S.logs[k] || []).forEach(function (e) {
+      const texto = (e as Log & { rir?: string }).rir;
+      if (texto == null) return;
+      const n = RIR_DO_TEXTO[String(texto)];
+      delete (e as Log & { rir?: string }).rir;
+      if (n == null || !Array.isArray(e.sets)) return;
+      // o valor era o da ÚLTIMA série feita, e é lá que ele tem que pousar
+      for (let i = e.sets.length - 1; i >= 0; i--) {
+        const s = e.sets[i];
+        if (s) { s[2] = n; r.movidos++; return; }
+      }
+    });
+  });
+
+  S.plano = 6;
   return r;
 }

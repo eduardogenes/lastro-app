@@ -74,8 +74,18 @@ export interface Treino<E = Slot> {
   ex: E[];
 }
 
-/** Uma série registrada: [carga, repetições]. null = série não feita. */
-export type Serie = [number, number] | null;
+/**
+ * Uma série registrada: [carga, repetições, RIR].
+ *
+ * O RIR é a terceira posição e é opcional — série antiga tem só dois números, e
+ * continua válida. Quem lê carga e repetição indexa [0] e [1] e não precisa
+ * saber que existe um terceiro.
+ *
+ * Ele mora AQUI, e não numa marca por exercício, porque é por série que a
+ * informação existe: a primeira a 2 da falha e a última a 0 é uma sessão
+ * diferente de três séries a 1, e as duas somariam o mesmo volume.
+ */
+export type Serie = [number, number, number?] | null;
 
 /** Uma entrada de histórico, indexada pelo id do exercício. */
 export interface Log {
@@ -93,9 +103,9 @@ export interface Log {
   obs?: string;
   dor?: string[];
   /**
-   * Repetições na reserva da ÚLTIMA série, como '1' ou '0–1'. Uma por exercício
-   * por sessão, não por série: é o que o treinador pede para ler o registro, e
-   * o que cabe digitar entre uma série e outra.
+   * LEGADO do plano 5: o RIR da última série, como '1' ou '0–1', um por
+   * exercício. A migração 5→6 o move para a terceira posição da série. Fica
+   * declarado porque a migração precisa lê-lo.
    */
   rir?: string;
   /** feito em deload */
@@ -191,8 +201,7 @@ export interface RascunhoEx {
   s: Serie[];
   obs?: string;
   dor?: string[];
-  /** RIR da última série, como digitado hoje */
-  rir?: string;
+
   /** substituto escolhido para hoje */
   alt?: IdEx;
   /** feito com aproximação */

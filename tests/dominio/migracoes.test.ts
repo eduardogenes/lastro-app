@@ -8,7 +8,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import {
-  ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5
+  ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6
 } from '../../src/dominio/migracoes';
 import { EX_BASE, slugEx } from '../../src/dominio/programa';
 import type { Estado, Log } from '../../src/dominio/tipos';
@@ -146,7 +146,7 @@ test('a cadeia inteira termina com a rotação alfabética e o torso em D', () =
   migraPlano3(S);
   migraPlano4(S);
   migraPlano5(S);
-  assert.strictEqual(S.plano, 5);
+  assert.strictEqual(S.plano, 5, 'a 4→5 para no 5; a 5→6 é outra');
   assert.deepStrictEqual(S.rot, ['A', 'B', 'C', 'D', 'E', 'F']);
   assert.strictEqual(S.prog!.D.name, 'Espessura de costas + peito');
   assert.strictEqual(S.prog!.E.name, 'Deltoides + braços + abdômen');
@@ -237,4 +237,50 @@ test('2→3 lê as posições antigas com a rotulagem da época', () => {
   // prescrição em 2026. A migração lê dado congelado; o teste também.
   assert.strictEqual(chave, 'reverse-fly-no-cabo',
     'D3 era o quarto exercício de ombros; veio ' + chave);
+});
+
+// ---------- plano 5 -> 6: o RIR desce da sessão para a série ----------
+
+test('5→6 move o RIR da sessão para a última série feita', () => {
+  const S = estado({ plano: 5, logs: { supino: [
+    { t: 1, sid: 1, sets: [[60, 10], [60, 9], [60, 8]], rir: '1' } as never
+  ] } });
+  const r = migraPlano6(S);
+  assert.strictEqual(r!.movidos, 1);
+  const e = S.logs.supino[0];
+  assert.strictEqual(e.sets[2]![2], 1, 'pousou na última série, que é de onde o valor era');
+  assert.strictEqual(e.sets[0]![2], undefined, 'e não nas outras');
+  assert.strictEqual((e as { rir?: string }).rir, undefined, 'o campo antigo sai');
+  assert.strictEqual(S.plano, 6);
+});
+
+test('5→6 lê a faixa pelo limite inferior', () => {
+  // '0–1' registra que chegou a zero em algum momento, e para leitura de
+  // fadiga o pior caso é o que importa
+  const S = estado({ plano: 5, logs: {
+    a: [{ t: 1, sid: 1, sets: [[10, 10]], rir: '0–1' } as never],
+    b: [{ t: 1, sid: 1, sets: [[10, 10]], rir: '1–2' } as never],
+    c: [{ t: 1, sid: 1, sets: [[10, 10]], rir: '2+' } as never]
+  } });
+  migraPlano6(S);
+  assert.strictEqual(S.logs.a[0].sets[0]![2], 0);
+  assert.strictEqual(S.logs.b[0].sets[0]![2], 1);
+  assert.strictEqual(S.logs.c[0].sets[0]![2], 2);
+});
+
+test('5→6 não inventa RIR onde não havia', () => {
+  const S = estado({ plano: 5, logs: { supino: [{ t: 1, sid: 1, sets: [[60, 10]] }] } });
+  const r = migraPlano6(S);
+  assert.strictEqual(r!.movidos, 0);
+  assert.strictEqual(S.logs.supino[0].sets[0]!.length, 2, 'a série continua sendo um par');
+});
+
+test('5→6 é involução: rodar de novo não mexe em nada', () => {
+  const S = estado({ plano: 5, logs: { supino: [
+    { t: 1, sid: 1, sets: [[60, 10]], rir: '1' } as never
+  ] } });
+  migraPlano6(S);
+  const depois = JSON.parse(JSON.stringify(S));
+  assert.strictEqual(migraPlano6(S), null, 'o guarda de versão segura');
+  assert.deepStrictEqual(S, depois);
 });
