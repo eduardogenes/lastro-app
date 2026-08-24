@@ -26,7 +26,7 @@ test('o backup leva a metade de comida e devolve ela igual', async () => {
   a.E('S.comida.plano[0].itens[0].q = 321');
   a.E('S.compras.dias = 30');
 
-  a.E('tab("ajustes")');
+  a.aba('guia');
   a.E('showJSON()');
   const json = a.doc.getElementById('jout').value;
   const bkp = JSON.parse(json);

@@ -202,11 +202,11 @@ test('estado do plano 1 atravessa as duas migrações sem perder nada', async ()
   assert.deepStrictEqual(a.J('S.carga'), {}, 'correção posicional do plano 1 não sobrevive');
 
   // e as telas continuam de pé
-  ['treino', 'acomp', 'corpo', 'ajustes'].forEach(function (x) {
-    a.E('tab("' + x + '")');
+  ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (x) {
+    a.aba(x);
     assert.ok(a.doc.getElementById('app').innerHTML.length > 600, 'aba vazia: ' + x);
   });
-  a.E('tab("acomp")');
+  a.aba('dados');
   a.E('abrirSessao(' + t1 + ')');
   const txt = a.doc.getElementById('app').textContent;
   assert.ok(txt.includes('Supino inclinado com halteres'), 'o detalhe da sessão antiga abre');

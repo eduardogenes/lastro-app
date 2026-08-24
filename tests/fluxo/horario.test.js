@@ -50,7 +50,7 @@ test('lista do mês mostra a hora embaixo da data', async () => {
   const a = await app({ estado: {
     logs: {}, done: [{ day: 'A', t: t, sid: t, dur: 50 * 60000, fim: 'manual' }]
   } });
-  a.E('tab("acomp")');
+  a.aba('dados');
   assert.ok(a.texto('.sess-d').includes('06:40'), a.texto('.sess-d'));
   a.fechar();
 });
@@ -66,7 +66,7 @@ test('horário típico do mês, com o mais cedo e o mais tarde', async () => {
     { day: 'C', t: dia(4, 7, 0), sid: 3, dur: 50 * 60000 }
   ];
   const a = await app({ estado: { logs: {}, done: done } });
-  a.E('tab("acomp")');
+  a.aba('dados');
 
   const linha = a.$$('.mediasem').map(function (x) { return x.textContent.replace(/\s+/g, ' '); })
     .find(function (x) { return /em média/.test(x); });
@@ -88,7 +88,7 @@ test('retroativo sem horário não inventa hora', async () => {
   assert.strictEqual(m.hora, undefined);
   assert.strictEqual(a.E('temHora(S.done[0])'), false);
 
-  a.E('tab("acomp")');
+  a.aba('dados');
   assert.ok(!/\d{2}:\d{2}/.test(a.texto('.sess-d')), 'nada de 07:00 fantasma: ' + a.texto('.sess-d'));
   a.E('abrirSessao(' + m.t + ')');
   assert.strictEqual(a.$('.horario'), null);
@@ -111,7 +111,7 @@ test('retroativo com horário informado registra a hora', async () => {
   assert.strictEqual(d.getMinutes(), 50);
   assert.strictEqual(new Date(m.t).toDateString(), new Date(ontem).toDateString(), 'continua ontem');
 
-  a.E('tab("acomp")');
+  a.aba('dados');
   assert.ok(a.texto('.sess-d').includes('05:50'));
   a.fechar();
 });
@@ -149,7 +149,7 @@ test('calendário marca o período do dia', async () => {
     { day: 'C', t: dia(4, 20), sid: 3, dur: 50 * 60000 }    // noite
   ];
   const a = await app({ estado: { logs: {}, done: done } });
-  a.E('tab("acomp")');
+  a.aba('dados');
 
   const marca = function (n) {
     const cel = a.$$('.cal-d').find(function (c) {
@@ -184,7 +184,7 @@ test('sem horário medido não há marcador de período', async () => {
   await a.E('gravarRetro(false)');
   await a.esperar();
 
-  a.E('tab("acomp")');
+  a.aba('dados');
   assert.strictEqual(a.$('.cal-d .per'), null, 'não marca período de hora que ninguém mediu');
   a.fechar();
 });

@@ -67,7 +67,7 @@ test('calendário marca cardio sem competir com a letra do treino', async () => 
     logs: {}, done: [{ day: 'A', t: dia, sid: dia, dur: 50 * 60000 }],
     cardio: [{ t: dia + 3600000, m: 'bike', min: 20, i: 'leve' }]
   } });
-  a.E('tab("acomp")');
+  a.aba('dados');
 
   const cel = a.$$('.cal-d').find(function (c) {
     return c.querySelector('em') && c.querySelector('em').textContent === '2';
@@ -84,7 +84,7 @@ test('dia só de cardio fica marcado mesmo sem treino', async () => {
   const dia = new Date(hoje.getFullYear(), hoje.getMonth(), 3, 8).getTime();
   const a = await app({ estado: { logs: {}, done: [],
     cardio: [{ t: dia, m: 'esteira inclinada', min: 25, i: 'moderado' }] } });
-  a.E('tab("acomp")');
+  a.aba('dados');
 
   const cel = a.$$('.cal-d').find(function (c) {
     return c.querySelector('em') && c.querySelector('em').textContent === '3';
@@ -106,7 +106,7 @@ test('lista do mês e total de cardio', async () => {
       { t: d2, m: 'remo', min: 30, i: 'leve' }
     ]
   } });
-  a.E('tab("acomp")');
+  a.aba('dados');
 
   assert.strictEqual(a.$$('.sessrow .tag.card-t').length, 1, 'a sessão do dia 4 teve cardio junto');
   const totais = a.$$('.mediasem').map(function (x) { return x.textContent.replace(/\s+/g, ' '); });

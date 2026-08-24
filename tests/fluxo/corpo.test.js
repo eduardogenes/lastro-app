@@ -27,7 +27,7 @@ function medidas(pares) {   // [{diasAtras, valor}]
 
 async function veredito(peso, cintura) {
   const a = await app({ estado: { logs: {}, done: [], body: { peso: peso || [], cintura: cintura || [] } } });
-  a.E('tab("corpo")');
+  a.aba('dados');
   const r = { titulo: a.texto('.verdict-t'), texto: a.texto('.verdict p'), classe: a.$('.verdict').className };
   a.fechar();
   return r;
@@ -114,5 +114,58 @@ test('nada na interface de cardio fala em caloria', async () => {
   a.aba('dados');
   const txt = a.doc.getElementById('app').textContent.toLowerCase();
   assert.ok(!/calor|gasto energ|queima|hiit/.test(txt), 'ele está em superávit; cardio não é queima');
+  a.fechar();
+});
+
+// Estes três caminhos existiam no sistema antigo e sumiram quando as telas
+// viraram componente — não por decisão, por descuido: a função continuava no
+// fonte, viva só porque a ponte de handlers globais a republicava em `window`.
+// Voltaram junto com a ponte morrendo, e ficam cobertos daqui para frente.
+test('pesagem errada pode ser apagada', async () => {
+  const a = await app();
+  await a.E('S.body.peso.push({ t: Date.now(), v: 743 }); save()');
+  await a.esperar();
+  a.aba('dados');
+
+  const linha = a.$$('.crow').find(function (x) { return /743/.test(x.textContent); });
+  assert.ok(linha, 'a medida aparece na lista de correção');
+  linha.querySelector('.crow-x').click();
+  await a.esperar();
+
+  assert.ok(!a.J('S.body.peso').some(function (x) { return x.v === 743; }), 'e sai do histórico');
+  a.fechar();
+});
+
+test('sessão de cardio registrada por engano pode ser apagada', async () => {
+  const a = await app();
+  await a.E('S.cardio.push({ t: Date.now(), m: "bike", min: 25, i: "moderado" }); save()');
+  await a.esperar();
+  a.aba('dados');
+
+  const linha = a.$$('.crow').find(function (x) { return /bike/.test(x.textContent); });
+  assert.ok(linha, 'a sessão da semana aparece com a porta de saída');
+  linha.querySelector('.crow-x').click();
+  await a.esperar();
+
+  assert.strictEqual(a.E('S.cardio.length'), 0);
+  a.fechar();
+});
+
+test('preencher treino passado avisa para onde as séries estão indo', async () => {
+  const a = await app();
+  const t = Date.now() - 2 * 86400000;
+  a.E('abrirAdicionar(' + t + ')');
+  a.E('addSet("tipo","A")');
+  await a.E('gravarRetro(true)');
+  await a.esperar();
+
+  const aviso = a.texto('.tr-aviso');
+  assert.ok(/não em hoje/.test(aviso), 'sem isso, a sessão retroativa fica invisível: ' + aviso);
+
+  const botao = a.$$('.tr-aviso button').find(function (x) { return /concluir/.test(x.textContent); });
+  assert.ok(botao, 'e a porta de saída fica no próprio aviso');
+  await botao.click();
+  await a.esperar();
+  assert.strictEqual(a.E('S.sessao'), null, 'concluir encerra a sessão retroativa');
   a.fechar();
 });

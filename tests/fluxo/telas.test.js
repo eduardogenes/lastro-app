@@ -29,31 +29,24 @@ test('paleta e tom preservados', async () => {
     'emoji fora do bloco PERIODOS');
 });
 
-test('todo handler inline está publicado na ponte global', async () => {
-  // O app é módulo ES: `function foo(){}` não é mais `window.foo`, mas
-  // `onclick="foo()"` só enxerga o global. Um nome citado em atributo e ausente
-  // de HANDLERS_INLINE vira botão morto — quebra silenciosa que nenhum outro
-  // teste pega, porque no jsdom o bundle roda como script clássico.
-  const bridge = FONTE.match(/const HANDLERS_INLINE = \{([\s\S]*?)\n\};/);
-  assert.ok(bridge, 'a ponte HANDLERS_INLINE sumiu do fonte');
-  const publicados = new Set(bridge[1].split(',')
-    .map(function (s) { return s.trim(); })
-    .filter(Boolean));
-
-  const citados = new Set();
-  const re = /\son(?:click|input|change|blur|focus|submit|keydown)=(["'])([\s\S]*?)\1/g;
+test('nenhum handler inline sobrou no fonte', async () => {
+  // Este teste começou ao contrário: cobrava que todo nome citado num
+  // `onclick=` estivesse republicado em `window`, porque o app virou módulo ES
+  // e atributo só enxerga o escopo global. A ponte que ele guardava tinha 91
+  // nomes e obrigava o build a rodar sem minify e sem tree-shaking — o
+  // minificador renomeia binding de módulo, e o shaking apaga função que só é
+  // alcançada por string.
+  //
+  // Com a última tela virando componente a ponte morreu, e o teste inverteu:
+  // agora ele cobra a AUSÊNCIA. Um `onclick=` novo no fonte não seria um botão
+  // morto — seria a dívida voltando, e junto com ela o build sem minify.
+  const re = /\son(?:click|input|change|blur|focus|submit|keydown)=(["'])/g;
+  const achados = [];
   let m;
   while ((m = re.exec(FONTE + HTML))) {
-    let f; const rf = /([A-Za-z_$][A-Za-z0-9_$]*)\s*\(/g;
-    while ((f = rf.exec(m[2]))) citados.add(f[1]);
+    achados.push((FONTE + HTML).slice(m.index, m.index + 60).replace(/\s+/g, ' '));
   }
-  // métodos e globais legítimos do próprio DOM, que não passam pela ponte
-  ['this', 'JSON', 'Number', 'String', 'Math', 'select', 'focus', 'blur',
-   'getElementById', 'parseInt', 'parseFloat', 'stopPropagation', 'preventDefault']
-    .forEach(function (n) { citados.delete(n); });
-
-  const faltando = [...citados].filter(function (n) { return !publicados.has(n); });
-  assert.deepStrictEqual(faltando, [], 'handler inline sem ponte global');
+  assert.deepStrictEqual(achados, [], 'handler inline de volta no fonte');
 });
 
 test('as cinco abas da shell renderizam', async () => {
@@ -102,7 +95,7 @@ test('faixa da semana marca os dias e abre atalho nos vazios', async () => {
 
   // Numa segunda-feira não existe dia passado e vazio na semana; o calendário
   // do mês sempre tem, então o atalho é verificado lá.
-  a.E('tab("acomp")');
+  a.aba('dados');
   const vazio = a.$$('.cal-d').find(function (c) {
     return !c.className.includes('feito') && !c.className.includes('futuro');
   });
@@ -120,7 +113,7 @@ test('acompanhamento soma dias, tempo e volume do mês', async () => {
     logs.A0.push({ t: t, sid: t, sets: [[40, 10], [40, 10]] });
   }
   const a = await app({ estado: { logs: logs, done: done } });
-  a.E('tab("acomp")');
+  a.aba('dados');
 
   const stats = a.$$('.ins-grade-c .ins-metric-m').map(function (x) { return x.textContent; });
   assert.ok(stats.includes('3'), 'três dias treinados: ' + stats.join(','));
@@ -132,7 +125,7 @@ test('acompanhamento soma dias, tempo e volume do mês', async () => {
 
 test('acompanhamento não avança para o futuro', async () => {
   const a = await app();
-  a.E('tab("acomp")');
+  a.aba('dados');
   a.E('mudaMes(1)');
   assert.strictEqual(a.E('view.mes'), 0);
   a.E('mudaMes(-1)');
@@ -142,7 +135,7 @@ test('acompanhamento não avança para o futuro', async () => {
 
 test('média semanal, não sequência de dias', async () => {
   const a = await app();
-  a.E('tab("acomp")');
+  a.aba('dados');
   const txt = a.doc.getElementById('app').textContent.toLowerCase();
   assert.ok(!/sequ[eê]ncia|streak|dias seguidos/.test(txt),
     'sequência puniria a quebra: quem treina 5 a 6 vezes quebra todo domingo');
@@ -234,11 +227,31 @@ test('correção de sessão passada altera e apaga', async () => {
 });
 
 test('séries por músculo compara com o mesmo ponto das semanas anteriores', async () => {
-  // Contra semanas cheias, toda terça o painel inteiro apareceria despencando.
-  const a = await app();
-  const src = a.E('seriesPorMusculo.toString()');
-  assert.ok(/corte/.test(src), 'a função precisa aceitar o corte da semana em andamento');
-  a.E('tab("corpo")');
+  // Contra semanas CHEIAS, toda terça o painel inteiro apareceria despencando:
+  // dois dias de treino contra sete. A comparação tem que cortar as semanas
+  // passadas no mesmo ponto em que a atual está.
+  //
+  // Este teste já leu o `toString()` da função atrás do nome do parâmetro. Não
+  // lê mais: o build minifica, e o nome do parâmetro deixou de existir. O que
+  // importa nunca foi o nome — é a série da semana passada encolher quando o
+  // corte encolhe.
+  const seg = inicioDaSemana(Date.now());
+  const a = await app({ estado: { logs: {}, done: [] } });
+
+  const semanaPassada = seg - 7 * 86400000;
+  // chave real do catálogo: sem grupo muscular a série não entra na conta
+  const ex = a.E('treino("A").ex[0].id');
+  const g = a.E('exDe(' + JSON.stringify(ex) + ').g');
+  a.E('S.logs[' + JSON.stringify(ex) + '] = [' +
+      '{ t: ' + (semanaPassada + 3600000) + ', sid: 1, sets: [[40,10],[40,10]] },' +
+      '{ t: ' + (semanaPassada + 5 * 86400000) + ', sid: 2, sets: [[40,10],[40,10]] }]');
+
+  const cedo = a.J('seriesPorMusculo(' + semanaPassada + ', ' + seg + ', 86400000)');
+  const tudo = a.J('seriesPorMusculo(' + semanaPassada + ', ' + seg + ')');
+  assert.strictEqual(tudo[g], 4, 'a semana inteira conta as duas sessões');
+  assert.strictEqual(cedo[g], 2, 'cortada no primeiro dia, conta só a primeira');
+
+  a.aba('dados');
   assert.ok(a.doc.getElementById('app').textContent.includes('mesmo ponto'));
   a.fechar();
 });

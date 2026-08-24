@@ -253,7 +253,7 @@ test('acompanhamento mostra média de duração e marca o aproximado', async () 
     logs.A0.push({ t: t, sid: t, sets: [[40, 10]] });
   });
   const a = await app({ estado: { logs: logs, done: done } });
-  a.E('tab("acomp")');
+  a.aba('dados');
 
   const rotulo = a.$$('.ins-grade-c').map(function (x) { return x.textContent; }).join(' ');
   assert.ok(/méd/.test(rotulo), rotulo);
@@ -292,9 +292,9 @@ test('o relógio para de ticar fora da aba de hoje', async () => {
   const a = await app();
   await a.E('iniciarSessao()');
   assert.ok(a.E('relogioT !== null'));
-  a.E('tab("acomp")');
+  a.aba('dados');
   assert.strictEqual(a.E('relogioT'), null, 'sem intervalo rodando à toa');
-  a.E('tab("treino")');
+  a.aba('treino');
   assert.ok(a.E('relogioT !== null'));
   a.fechar();
 });

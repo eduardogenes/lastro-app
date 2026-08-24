@@ -16,7 +16,7 @@ import {
 import { fmtDec } from '../../dominio/formato';
 
 /** Uma medida corporal: stepper, botão e a curva das últimas 14 semanas. */
-function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, onMuda, onRegistrar, acao, children }) {
+function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, children }) {
   return (
     <Secao rotulo={rotulo} nota={nota}>
       <div class="dd-registro">
@@ -34,6 +34,21 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, onMuda, o
 
       <GradeMetricas colunas={2} celulas={celulas} />
       {children}
+
+      {/* As últimas medidas, com a porta de saída ao lado. É o único caminho
+          para desfazer um 743 digitado no lugar de 74,3 — e sem ele o erro
+          entra na média da semana e não sai mais. */}
+      {medidas && medidas.length > 0 && (
+        <div class="dd-medidas">
+          {medidas.map(x => (
+            <div class="crow" key={x.t}>
+              <span class="crow-d ins-label">{x.data}</span>
+              <span class="crow-m ins-data">{x.valor}</span>
+              <button class="crow-x" onClick={() => aoApagar(x.t)}>remover</button>
+            </div>
+          ))}
+        </div>
+      )}
     </Secao>
   );
 }
@@ -205,6 +220,7 @@ export function Dados({ ctx }) {
         rotulo="peso" nota={c.peso.nota}
         valor={c.peso.valor} passo={0.1} unidade="kg" serie={c.peso.serie}
         onMuda={ctx.setPeso} onRegistrar={ctx.registraPeso} acao="registrar hoje"
+        medidas={c.peso.medidas} aoApagar={t => ctx.apagaMedida('peso', t)}
         celulas={[
           { k: 'm', rotulo: 'média da semana', valor: c.peso.media },
           { k: 'r', rotulo: 'ritmo por semana', valor: c.peso.ritmo, cor: c.peso.ritmoCor }
@@ -219,6 +235,7 @@ export function Dados({ ctx }) {
         rotulo="cintura" nota="1× por semana, em jejum"
         valor={c.cintura.valor} passo={0.5} unidade="cm" serie={c.cintura.serie}
         onMuda={ctx.setCintura} onRegistrar={ctx.registraCintura} acao="registrar"
+        medidas={c.cintura.medidas} aoApagar={t => ctx.apagaMedida('cintura', t)}
         celulas={[
           { k: 'a', rotulo: 'última medida', valor: c.cintura.atual },
           { k: 'm', rotulo: 'no mês', valor: c.cintura.mes.split(' ')[0] }
@@ -272,6 +289,19 @@ export function Dados({ ctx }) {
             para outro dia.
           </Procedencia>
         )}
+        {c.cardio.sessoes.length > 0 && (
+          <div class="dd-medidas">
+            {c.cardio.sessoes.map(x => (
+              <div class="crow" key={x.t}>
+                <span class="crow-d ins-label">{x.data}</span>
+                <span class="crow-m">{x.modal}</span>
+                <span class="crow-n ins-data">{x.resumo}</span>
+                <button class="crow-x" onClick={() => ctx.apagaCardio(x.t)}>remover</button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <Procedencia>{c.cardio.regra}</Procedencia>
       </Secao>
 

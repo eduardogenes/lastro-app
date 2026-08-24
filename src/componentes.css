@@ -710,3 +710,147 @@
   background: transparent; color: var(--ins-text-5);
   border: 1px solid var(--ins-hairline);
 }
+
+/* ---------- superfície de edição de exercício ---------- */
+/* Vale para os dois lugares que mexem numa lista: o treino de hoje e o
+   programa. Sem cartão e sem canto arredondado — o que separa uma linha da
+   outra é o fio, como em todo o resto. */
+
+/* A barra do contrato: nada aqui mexe no programa. Ácido porque é o estado
+   ativo da tela, e o "pronto" ao lado é a saída. */
+.edbar {
+  display: flex; align-items: flex-start; gap: var(--ins-4);
+  margin: 0 0 var(--ins-4); padding: var(--ins-4);
+  border: 1px solid var(--ins-acid); background: var(--ins-surface-acid);
+  font: 400 13px/1.5 var(--ins-font-sans); color: var(--ins-text-3);
+}
+.edbar b { color: var(--ins-text-1); display: block; }
+.edbar-b {
+  flex: 0 0 auto; min-height: var(--ins-tap); padding: 0 var(--ins-5);
+  background: var(--ins-acid); color: var(--ins-on-acid); border: 0;
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
+}
+
+.edx { border-bottom: 1px solid var(--ins-hairline); padding: var(--ins-4) 0; }
+.edx:last-of-type { border-bottom: 0; }
+/* Mexido hoje: fio ácido à esquerda, não borda inteira. A linha continua
+   sendo uma linha; só ganha uma marca de margem. */
+.edx.mexido { border-left: 2px solid var(--ins-acid); padding-left: var(--ins-3); }
+
+.edx-h { display: flex; align-items: flex-start; gap: var(--ins-3); }
+.ord { font: 400 11px/1.4 var(--ins-font-mono); color: var(--ins-text-5); padding-top: 2px; }
+.edx-n { flex: 1; min-width: 0; font: 500 14.5px/1.3 var(--ins-font-sans); color: var(--ins-text-1); }
+.edx-n em { display: block; font-style: normal; font-size: 11.5px; color: var(--ins-acid); margin-top: 2px; }
+.edx-n span {
+  display: block; margin-top: var(--ins-1);
+  font: 400 10.5px/1.4 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-4);
+}
+
+.edx-mv { display: flex; flex: 0 0 auto; }
+.edx-mv button {
+  width: 38px; height: 38px; font-size: 15px;
+  border: 1px solid var(--ins-hairline); background: transparent; color: var(--ins-text-3);
+}
+.edx-mv button + button { border-left: 0; }
+.edx-mv button:disabled { color: var(--ins-text-5); }
+
+.edx-c { display: flex; align-items: center; gap: var(--ins-2); margin-top: var(--ins-3); }
+
+/* Stepper compacto: os três controles do exercício têm de caber numa linha só
+   num iPhone de 390px. Quebrar em duas dobra a altura de cada exercício, e a
+   lista inteira deixa de caber numa tela. */
+.stepper {
+  display: flex; align-items: center; flex: 0 0 auto;
+  border: 1px solid var(--ins-hairline);
+}
+.stepper button {
+  width: 38px; height: 38px; border: 0; background: none;
+  color: var(--ins-acid); font-size: 18px; line-height: 1;
+}
+.stepper button:disabled { color: var(--ins-text-5); }
+.stepper b { font: 500 15px/1 var(--ins-font-mono); min-width: 16px; text-align: center; }
+.stepper span {
+  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .06em;
+  color: var(--ins-text-4); padding: 0 var(--ins-2) 0 var(--ins-1);
+}
+
+.edx-b {
+  min-height: 38px; padding: 0 var(--ins-3); flex: 0 0 auto;
+  border: 1px solid var(--ins-hairline); background: transparent; color: var(--ins-text-3);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .06em;
+}
+/* Coral: remover destrói o exercício da lista. */
+.edx-b.rm { color: var(--ins-coral); }
+.edx-imp { margin-top: var(--ins-3); }
+
+.edadd {
+  width: 100%; min-height: var(--ins-tap); margin-top: var(--ins-4);
+  border: 1px dashed var(--ins-border); background: none; color: var(--ins-text-3);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .1em; text-transform: uppercase;
+}
+
+.edmods { margin-top: var(--ins-6); border-top: 1px solid var(--ins-rule); padding-top: var(--ins-4); }
+.edmods-h { margin-bottom: var(--ins-3); }
+.edmod {
+  display: flex; align-items: center; gap: var(--ins-3); padding: var(--ins-3) 0;
+  border-bottom: 1px solid var(--ins-hairline);
+  font: 400 13px/1.4 var(--ins-font-sans); color: var(--ins-text-2);
+}
+.edmod span { flex: 1; }
+.edmod button {
+  flex: 0 0 auto; min-height: 34px; padding: 0 var(--ins-3);
+  background: none; border: 1px solid var(--ins-hairline); color: var(--ins-text-3);
+  font: 400 10.5px/1 var(--ins-font-mono);
+}
+
+/* ---------- catálogo e troca ---------- */
+.addex { margin-top: var(--ins-4); }
+.addq {
+  width: 100%; margin-bottom: var(--ins-2); padding: var(--ins-3); min-height: 46px;
+  border: 1px solid var(--ins-border); background: var(--ins-surface); color: var(--ins-text-1);
+  /* 16px é o piso: abaixo disso o Safari do iPhone dá zoom ao focar o campo,
+     e sair do zoom depois é gesto que ninguém faz no meio do treino. */
+  font: 400 16px/1.2 var(--ins-font-sans);
+}
+.addq:focus { outline: none; border-color: var(--ins-acid); }
+/* Quarenta resultados: encostados, leem-se como LISTA. Soltos com respiro
+   entre si, cada um vira um cartão e a busca parece um catálogo de produtos.
+   A altura é travada para as ações do rodapé não irem parar embaixo de tudo. */
+.addlist { max-height: 340px; overflow-y: auto; }
+.addlist .swapopt { margin-bottom: 0; padding: var(--ins-3) var(--ins-4); }
+.addlist .swapopt + .swapopt { border-top: 0; }
+.addlist .swapopt b { font-size: 14px; }
+.addlist .swapopt span { margin-top: var(--ins-1); }
+.swapopt.novo { border-style: dashed; }
+.novoex { border: 1px solid var(--ins-hairline); padding: var(--ins-4); margin-top: var(--ins-2); }
+.nxk {
+  display: flex; align-items: center; gap: var(--ins-2); margin: var(--ins-1) 0 var(--ins-4);
+  font: 400 13px/1.3 var(--ins-font-sans); color: var(--ins-text-3);
+}
+.nxk input { width: 20px; height: 20px; }
+.swap-g + .swap-g { margin-top: var(--ins-4); }
+
+/* O voltar da tela cheia já é desenhado por `.tc-back`. A classe `.back` fica
+   só como contrato de teste — zera o que o sistema antigo pintava nela. */
+.tc-back.back { border: 0; padding: 0; margin: 0; }
+
+/* ---------- linhas de registro removíveis ---------- */
+/* Pesagem, medida de cintura, sessão de cardio. São CORREÇÃO, não conteúdo:
+   existem para desfazer um número errado, e por isso a linha é densa — deixá-la
+   com a altura de um item de lista faria seis pesagens ocuparem mais tela que o
+   veredito do plano. */
+.dd-medidas { margin-top: var(--ins-4); }
+.crow {
+  display: flex; align-items: center; gap: var(--ins-3);
+  border-bottom: 1px solid var(--ins-hairline); padding: var(--ins-2) 0;
+  min-height: 40px;
+}
+.crow:last-child { border-bottom: 0; }
+.crow-d { font: 400 10.5px/1 var(--ins-font-mono); color: var(--ins-text-4); min-width: 44px; }
+.crow-m { font: 500 13px/1 var(--ins-font-mono); color: var(--ins-text-1); }
+.crow-n { font: 400 10.5px/1 var(--ins-font-mono); color: var(--ins-text-4); }
+.crow-x {
+  margin-left: auto; flex: 0 0 auto; background: transparent;
+  border: 1px solid var(--ins-hairline); color: var(--ins-text-5);
+  font: 400 10px/1 var(--ins-font-mono); padding: 0 var(--ins-3); min-height: 32px;
+}

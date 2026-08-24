@@ -58,21 +58,20 @@ export default defineConfig({
 
   build: {
     target: 'es2020',
-    // Desligado de propósito enquanto os testes alcançam o escopo do módulo por
-    // `window.__escopo` (eval). Minificador que renomeia binding de módulo
-    // quebraria isso em silêncio. Volta a ligar quando os testes importarem os
-    // módulos direto — fase 2.
-    minify: false,
+    // Ligado desde que o último `onclick=` saiu do fonte. Enquanto existia a
+    // ponte de handlers globais, minificar renomeava os bindings do módulo e
+    // matava os botões em silêncio.
+    minify: 'esbuild',
     // Desligado: o .map de 435 kB não é usado em produção, e o harness inlina o
     // bundle no jsdom — onde frames viram "https://treino.test/:757" e o Vitest
     // tenta ler isso como caminho de disco ao formatar um stack.
     sourcemap: false,
     rollupOptions: {
-      // Desligado durante a transição. O app tem um ponto de entrada só e não
-      // carrega código morto, então shaking não economiza nada aqui — mas
-      // apagou funções que os testes alcançam por `window.__escopo` (string,
-      // não referência estática). Some junto com o `__escopo`, na fase 2.
-      treeshake: false,
+      // Ligado junto com o minify. Com ele, uma função que só é alcançada por
+      // string — pelos testes, via `__escopo` — simplesmente some do bundle e
+      // o teste quebra na hora. Foi assim que `tab()` apareceu: rota paralela
+      // a `view.aba`, viva só porque a ponte a republicava em `window`.
+      treeshake: true,
       output: {
         // Hash no nome: é o que permite o service worker versionar sozinho, sem
         // o bump manual de CACHE que hoje é ritual de publicação.

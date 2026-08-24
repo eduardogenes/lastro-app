@@ -281,21 +281,21 @@ test('exercício cadastrado por ele conta no painel', async () => {
   a.preencher(i, 0, 50, 10);
 
   assert.strictEqual(a.J('seriesPorMusculo(0, Date.now() + 1)')['dorsal'], 1);
-  a.E('tab("corpo")');
+  a.aba('dados');
   assert.ok(a.doc.getElementById('app').textContent.includes('dorsal'));
   a.fechar();
 });
 
 test('o painel de corpo avisa quando o programa saiu do alvo do treinador', async () => {
   const a = await app();
-  a.E('tab("corpo")');
+  a.aba('dados');
   assert.strictEqual(a.$('.dd-fora'), null, 'programa igual ao dele: nada a dizer');
 
   a.E('abrirPrograma("A")');
   await a.E('progSeries("A",2,1)');
   await a.esperar();
   a.E('fecharPrograma()');
-  a.E('tab("corpo")');
+  a.aba('dados');
 
   const aviso = a.texto('.dd-fora');
   assert.ok(aviso, 'programa fora do alvo aparece onde ele acompanha o volume');
@@ -314,7 +314,7 @@ test('músculo que saiu do programa mas foi treinado continua aparecendo', async
   await a.E('progRemove("C",' + i + ')');
   await a.esperar();
   a.E('fecharPrograma()');
-  a.E('tab("corpo")');
+  a.aba('dados');
   const musculos = a.$$('.dd-mus-n').map(function (x) { return x.textContent; });
   assert.ok(musculos.some(function (x) { return /tibial/.test(x); }),
     'sumir da tabela esconderia trabalho que existiu');

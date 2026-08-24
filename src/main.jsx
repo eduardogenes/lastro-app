@@ -15,7 +15,6 @@ import {
 import { montaNoApp } from './ui/raiz.jsx';
 import { ajusteDoVeredito } from './dominio/corpo';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
-import { Bruto } from './ui/bruto.jsx';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
@@ -24,6 +23,7 @@ import { Historico } from './ui/telas/historico.jsx';
 import { Decisao } from './ui/telas/decisao.jsx';
 import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { Retroativo } from './ui/telas/retroativo.jsx';
+import { Programa } from './ui/telas/programa.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { ALIMENTOS_BASE, PLANO_BASE } from './dominio/nutricao/alimentos';
 import { arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
@@ -126,8 +126,6 @@ function tiraMod(d, k, slot) {
   b.list = b.list.filter(function (x) { return !(x.k === k && x.slot === slot); });
 }
 
-function temMods(d) { return modsDoDia(d).length > 0; }
-
 // Slot de origem de uma posição: é o que identifica o registro dentro da
 // sessão, mesmo depois de trocar o exercício.
 function slotDe(d, i) {
@@ -168,7 +166,7 @@ function treino(d) {
 
 
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[] };
-let view = { day:'A', tab:'treino', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
+let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false;
 let audioCtx = null, wakeLock = null, querSegurar = false;
@@ -848,64 +846,6 @@ function atualizaAnilhas(i) {
   el.innerHTML = textoTotal(i, logKey(view.day, i), ex);
 }
 
-// ---------- estado do dia ----------
-// Vive num elemento próprio para poder ser atualizado sem re-render: inp()
-// evita render() de propósito, senão o campo perde o foco a cada tecla.
-function estadoDoDia(P) {
-  const aberta = S.sessao;
-  if (aberta && aberta.retro) {
-    const r = resumoDaSessao(aberta);
-    return `<b>preenchendo ${fmtDate(aberta.inicio)}</b> · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtInt(r.vol)+' kg×reps':''}`;
-  }
-  if (aberta) {
-    const r = resumoDaSessao(aberta);
-    return `${r.series} ${r.series===1?'série registrada':'séries registradas'}${r.vol?' · '+fmtInt(r.vol)+' kg×reps':''}`;
-  }
-  const hoje = sessoesDoDia(Date.now());
-  if (hoje.length) {
-    const m = hoje[hoje.length-1];
-    const r = resumoDaSessao(m);
-    return m.livre
-      ? `<b>treino avulso hoje</b> · ${(m.grupos||[]).join(', ')}`
-      : `<b>treino ${m.day} encerrado hoje</b> · ${fmtDur(m.dur)} · ${r.series} ${r.series===1?'série':'séries'}`;
-  }
-  return `${P.tag} · ${P.ex.reduce(function (a,e) { return a+e.s; }, 0)} séries prescritas`;
-}
-
-// O cardio vivia enterrado na terceira seção de outra aba. Como é obrigação
-// semanal e fácil de esquecer, o placar passa a ficar onde ele olha todo dia.
-function linhaCardio() {
-  const n = cardioSemana().length;
-  const hoje = cardioDoDia(Date.now());
-  const f = Object.assign({ m:'bike', min:25, i:'moderado' }, view.cardioForm);
-  const perna = pernaHoje();
-
-  const resumo = hoje.length
-    ? hoje.map(function (c) { return c.min + ' min de ' + c.m; }).join(' · ')
-    : `${n} de 3 nesta semana`;
-
-  let h = `<div class="cardl ${hoje.length?'feito':''}">
-    <span class="cardl-t">cardio</span>
-    <span class="cardl-n">${resumo}</span>
-    <button class="cardl-b" onclick="abrirCardioRapido()">${view.cardioRapido?'fechar':'registrar'}</button>
-  </div>`;
-
-  if (view.cardioRapido) {
-    h += `<div class="cardq">
-      <div class="chips">${MODAIS.map(function (m) {
-        return `<button class="chip ${f.m===m?'sel':''}" onclick="cardioSet('m','${m}')">${m}</button>`;
-      }).join('')}</div>
-      <div class="chips" style="margin-top:7px">${[20,25,30,40].map(function (v) {
-        return `<button class="chip ${f.min===v?'sel':''}" onclick="cardioSet('min',${v})">${v} min</button>`;
-      }).join('')}${['leve','moderado'].map(function (v) {
-        return `<button class="chip ${f.i===v?'sel':''}" onclick="cardioSet('i','${v}')">${v}</button>`;
-      }).join('')}</div>
-      ${perna.length?`<div class="cwarn" style="margin-top:10px">Você treinou ${perna.join(' e ')} hoje. A regra é não pôr cardio no mesmo período de treino de perna.</div>`:''}
-      <button class="dbtn" style="margin-top:10px" onclick="addCardio()">Registrar ${f.min} min de ${f.m}</button>
-    </div>`;
-  }
-  return h;
-}
 function abrirCardioRapido(){ view.cardioRapido = !view.cardioRapido; render(); }
 
 // Controles do ciclo. Ficam no cabeçalho porque ação de sessão não pode
@@ -919,16 +859,6 @@ function relogioTexto(s) {
     + ':' + String(seg).padStart(2, '0');
 }
 
-function relogioDaSessao() {
-  const s = S.sessao;
-  if (!s) return `<button class="day-ini" onclick="iniciarSessao()">iniciar</button>`;
-  if (s.retro) return '';
-  return `<div class="day-rel ${s.pausadoEm ? 'pausado' : ''}">
-    <span id="relogio">${relogioTexto(s)}</span>
-    <em>${s.pausadoEm ? 'pausado' : 'desde ' + fmtHora(s.inicio)}</em>
-  </div>`;
-}
-
 let relogioT = null;
 function tickRelogio() {
   const el = document.getElementById('relogio');
@@ -936,22 +866,9 @@ function tickRelogio() {
   el.textContent = relogioTexto(S.sessao);
 }
 function ajustaRelogio() {
-  const ativo = !!(S.sessao && !S.sessao.pausadoEm && !S.sessao.retro && view.tab === 'treino');
+  const ativo = !!(S.sessao && !S.sessao.pausadoEm && !S.sessao.retro && view.aba === 'treino');
   if (ativo && !relogioT) relogioT = setInterval(tickRelogio, 1000);
   else if (!ativo && relogioT) { clearInterval(relogioT); relogioT = null; }
-}
-
-function controlesSessao() {
-  const s = S.sessao;
-  if (!s || s.retro) return '';
-  if (s.pausadoEm) return `<div class="ctrl pausado">
-    <button class="ctrl-b ini" onclick="retomarSessao()">retomar</button>
-    <button class="ctrl-b" onclick="finalizarSessao()">finalizar</button>
-  </div>`;
-  return `<div class="ctrl">
-    <button class="ctrl-b" onclick="pausarSessao()">pausar</button>
-    <button class="ctrl-b fim" onclick="finalizarSessao()">finalizar</button>
-  </div>`;
 }
 
 /**
@@ -969,30 +886,6 @@ function atualizaEstado() {
   if (!P) return;
   const prescritas = P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0);
   el.textContent = seriesFeitasHoje(view.day) + '/' + prescritas;
-}
-
-// ---------- faixa da semana ----------
-// Sete colunas de segunda a domingo. A letra do treino no dia em que houve
-// treino, um ponto apagado no dia em que não houve. Sem julgamento, só o fato.
-function faixaSemana() {
-  const ini = weekStart(Date.now());
-  let cel = '';
-  for (let i = 0; i < 7; i++) {
-    const dia = ini + i*86400000;
-    const marcas = sessoesDoDia(dia);
-    const hoje = sameDay(dia, Date.now());
-    const futuro = dia > Date.now() && !hoje;
-    const livre = marcas.length && marcas.every(function (m) { return m.livre; });
-    const acao = marcas.length ? `abrirSessao(${marcas[marcas.length-1].t})` : (futuro ? '' : `abrirAdicionar(${dia})`);
-    const card = cardioDoDia(dia).length;
-    cel += `<div class="wd ${hoje?'hoje':''} ${marcas.length?'feito':''} ${livre?'livre':''} ${futuro?'futuro':''}"
-      ${acao?`onclick="${acao}"`:''}>
-      <span class="wd-d">${DIAS_CURTOS[i]}</span>
-      <span class="wd-v">${marcas.length ? marcas.map(marcaDe).join('') : '+'}</span>
-      ${card?'<span class="barra-cardio"></span>':''}
-    </div>`;
-  }
-  return '<div class="semana">' + cel + '</div>';
 }
 
 // ---------- render ----------
@@ -1208,17 +1101,17 @@ function seriesFeitasHoje(d) {
 const CTX = {
   // ---------- rota ----------
   abaAtual: function () { return view.aba || 'hoje'; },
+  // Uma rota só. `view.tab` existia em paralelo a `view.aba` durante a
+  // migração — duas fontes de verdade para a mesma pergunta, e o app já
+  // trocava de conteúdo sem trocar a aba acesa por causa disso.
   vaiPara: function (a) {
     view.aba = a;
-    // As abas novas mapeiam para as telas antigas que ainda não foram
-    // convertidas. Some conforme cada uma vira componente.
-    if (a === 'treino') view.tab = 'treino';
-    else if (a === 'dados') view.tab = 'corpo';
-    else if (a === 'guia') view.tab = 'ajustes';
+    view.prog = null; view.hist = null; view.retro = false;
+    view.sessao = null; view.add = null; view.mes = 0;
     render();
     window.scrollTo(0, 0);
   },
-  telaLegado: telaLegado,
+  telaCheia: telaCheia,
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
     return !!(view.promo || view.prog || view.retro || view.add || view.sessao || view.hist);
@@ -1304,229 +1197,17 @@ const CTX = {
 // A tela do sistema antigo, ainda em string. Devolve a árvore em vez de
 // montar: quem monta é a shell nova. Cada aba convertida some daqui, e quando
 // a última sair este bloco inteiro morre junto com app.css.
-function telaLegado() {
+// As telas cheias: as que substituem a shell inteira, tab bar inclusive.
+// Não são abas — em cada uma o assunto é uma coisa só, e a tab bar convidaria
+// a sair no meio. O voltar é o único caminho de saída.
+function telaCheia() {
   if (view.promo) return <Decisao ctx={CTX} />;
-  if (view.prog) return <Bruto html={renderPrograma()} />;
+  if (view.prog) return <Programa ctx={CTX} />;
   if (view.retro) return <Retrospectiva ctx={CTX} />;
   if (view.add) return <Retroativo ctx={CTX} />;
   if (view.sessao) return <Sessao ctx={CTX} />;
   if (view.hist) return <Historico ctx={CTX} />;
-  const app = document.getElementById('app');
-  const d = view.day, P = treino(d);
-  const cycle = Math.floor(S.done.length / rot().length) + 1;
-  const trabalho = sessoesDeTrabalho();
-  const toDeload = 48 - (trabalho % 48);
-
-  const naTreino = view.tab === 'treino';
-  // A tela de hoje é meio string, meio componente durante a migração: o
-  // cabeçalho ainda é template, a lista de exercícios já é componente.
-  let corpoDoDia = null, rodape = '';
-  if (naTreino) hidrataDraft(d);
-  let h = `<div class="hdr ${naTreino?'':'curto'}">
-    <div class="eyebrow"><span>${diaExtenso(Date.now())}</span><span>ciclo ${cycle} · ${S.done.length} sessões</span></div>
-    ${naTreino ? `<div class="dayline">
-      <div class="dayletter">${d}</div>
-      <div class="day-txt"><div class="dayname">${P.name}</div><div class="daymeta" id="daymeta">${estadoDoDia(P)}</div></div>
-      ${relogioDaSessao()}
-    </div>
-    ${controlesSessao()}
-    ${podeEditar(d) ? `<div class="edlink">
-      <button onclick="modoEdicao(${view.editProg?'false':'true'})">${view.editProg?'sair da edição':'editar treino de hoje'}</button>
-      <button onclick="abrirPrograma(null)">programa</button>
-      ${temMods(d)?`<span class="edcount">${modsDoDia(d).length} ${modsDoDia(d).length===1?'mudança':'mudanças'} só para hoje</span>`:''}
-    </div>` : ''}
-    ${faixaSemana()}
-    ${linhaCardio()}` : ''}
-  </div>
-  ${view.tab==='treino' ? '<div class="rot">' +
-    rot().map(x => `<button class="${x===view.day?'on':''} ${x===nextDay()?'next':''}" onclick="go('${x}')">${x}</button>`).join('') +
-  '</div>' : ''}
-  `;
-
-  if (naTreino && S.sessao && S.sessao.retro)
-    h += `<div class="deload on"><b>Preenchendo o treino de ${diaExtenso(S.sessao.inicio)}.</b>
-      As séries que você digitar entram nessa data, não em hoje.
-      <button class="dlbtn" onclick="concluirRetro()">concluir</button></div>`;
-
-  if (naTreino && trabalho > 0 && trabalho % 48 === 0)
-    h += `<div class="deload on"><b>Bloco de 48 sessões concluído.</b>
-      Semana de deload e uma olhada no que evoluiu.
-      <button class="dlbtn" onclick="abrirRetro()">ver retrospectiva</button></div>`;
-
-  const parado = pausaGeral();
-  if (naTreino && parado >= PAUSA_DIAS)
-    h += `<div class="deload on"><b>${Math.round(parado)} dias desde o último treino salvo.</b>
-      O selo de subir carga fica suspenso nesta volta. Os placeholders continuam mostrando a última carga registrada, só para você ter a referência.</div>`;
-
-  if (naTreino && S.deload)
-    h += `<div class="deload on"><b>Modo deload ativo.</b> Metade das séries, mesmas cargas. Os placeholders continuam mostrando a carga da última semana normal.
-      <button class="dlbtn" onclick="setDeload(false)">sair do deload</button></div>`;
-  else if (naTreino && toDeload <= 6 && S.done.length > 0)
-    h += `<div class="deload"><b>Deload chegando.</b> Faltam ${toDeload} sessões para a semana de metade das séries.
-      <button class="dlbtn" onclick="setDeload(true)">ativar agora</button></div>`;
-
-  if (view.tab === 'ajustes') {
-    h += '<div class="rules">' + RULES.map(r => `
-      <div class="rule ${r.warn?'warn':''}">
-        <h3><em>${r.k}</em>${r.t}</h3>
-        ${r.p.map(x=>`<p>${x}</p>`).join('')}
-      </div>`).join('') + '</div>' + renderData();
-  } else if (view.tab === 'acomp') {
-    h += renderAcomp();
-  } else if (view.tab === 'corpo') {
-    h += renderBody();
-  } else if (view.editProg && podeEditar(d)) {
-    h += renderEdicao(d, P);
-  } else {
-    // A lista de exercícios é componente, não string: é a única parte da tela
-    // com campo de digitação, e reescrever o innerHTML dela a cada tecla era a
-    // origem das gambiarras de foco e dos dois bugs que perdiam série.
-    corpoDoDia = P.ex.map(function (ex, i) {
-      return <Exercicio key={id(d, i)} vm={vmExercicio(d, i, ex)} acoes={ACOES} />;
-    });
-
-    rodape = `<div class="autonota">
-      Cada série entra no histórico assim que você preenche carga e repetição.
-      Não há nada para salvar. O treino se encerra sozinho e a rotação avança para ${rot()[(rot().indexOf(d)+1)%rot().length]}.
-    </div>`;
-  }
-
-  return (
-    <>
-      <Bruto html={h} />
-      {corpoDoDia}
-      {rodape ? <Bruto html={rodape} /> : null}
-    </>
-  );
-}
-
-
-// ---------- modo de edição do dia ----------
-// Ele edita de pé, com uma mão, no meio do treino. Os alvos são grandes e as
-// mudanças valem só para hoje: a decisão de tornar permanente vem no fim.
-function renderEdicao(d, P) {
-  const mods = modsDoDia(d);
-  let h = `<div class="edbar">
-    <div>
-      <b>Editando o treino ${d} de hoje.</b>
-      ${mods.length
-        ? mods.length + (mods.length === 1 ? ' mudança pendente. No fim do treino você decide se ela fica.'
-                                           : ' mudanças pendentes. No fim do treino você decide o que fica.')
-        : 'O programa oficial só muda se você quiser, no fim do treino.'}
-    </div>
-    <button class="edbar-b" onclick="modoEdicao(false)">pronto</button>
-  </div>`;
-
-  h += P.ex.map(function (ex, i) {
-    const slot = ex.orig || ex.id;
-    const trocado = ex.orig && ex.orig !== ex.id;
-    // o impacto só aparece onde ele mexeu ou onde o número saiu do alvo:
-    // uma linha por exercício seria ruído em toda a tela
-    const imp = impactoSeries(d, ex.g);
-    const mostraImp = imp && (ex.mod || imp.acima);
-    return `<div class="edx ${ex.mod?'mexido':''}">
-      <div class="edx-h">
-        <div class="ord">${String(i+1).padStart(2,'0')}</div>
-        <div class="edx-n">
-          ${ex.n}
-          ${trocado?`<em>no lugar de ${nomeEx(ex.orig)}</em>`:''}
-          <span>${ex.g}${ex.desde?' · no programa há ' + semanasDe(ex.desde):''}</span>
-        </div>
-        <div class="edx-mv">
-          <button onclick="moverEx(${i},-1)" ${i===0?'disabled':''} aria-label="subir">↑</button>
-          <button onclick="moverEx(${i},1)" ${i===P.ex.length-1?'disabled':''} aria-label="descer">↓</button>
-        </div>
-      </div>
-      <div class="edx-c">
-        <div class="stepper">
-          <button onclick="mudaSeries(${i},-1)" ${ex.s<=1?'disabled':''}>−</button>
-          <b>${ex.s}</b><span>séries</span>
-          <button onclick="mudaSeries(${i},1)" ${ex.s>=8?'disabled':''}>+</button>
-        </div>
-        <button class="edx-b" onclick="abrirSubstituicao(${i})">trocar</button>
-        <button class="edx-b rm" onclick="removerEx(${i})">remover</button>
-      </div>
-      ${mostraImp ? `<div class="edx-imp ${imp.acima?'acima':''}">${imp.txt}</div>` : ''}
-      ${view.swapOpen === i ? listaDeTroca(d, i) : ''}
-    </div>`;
-  }).join('');
-
-  h += `<button class="edadd" onclick="abrirAddEx()">adicionar exercício</button>`;
-  if (mods.length) {
-    h += `<div class="edmods">
-      <div class="edmods-h">mudanças de hoje</div>
-      ${mods.map(function (m, j) {
-        return `<div class="edmod"><span>${textoMod(d, m)}</span>
-          <button onclick="desfazMod(${j})">desfazer</button></div>`;
-      }).join('')}
-    </div>`;
-  }
-  if (view.addEx) h += painelAddEx(d);
-  return h;
-}
-
-// A lista de troca é a mesma do registro; aqui ela abre dentro da linha.
-function listaDeTroca(d, i) {
-  const ex = treino(d).ex[i];
-  const lista = altList(d, i);
-  const trocado = ex.orig && ex.orig !== ex.id;
-  const opt = function (a) {
-    const u = ultimoDe(a.id);
-    const antes = u && u.sets && u.sets[0]
-      ? 'última vez: ' + fmtNum(u.sets[0][0]) + ' × ' + u.sets[0][1] : a.w;
-    return `<button class="swapopt" onclick="setAlt(${i},'${escAttr(a.id)}')">
-      <b>${a.n}</b><span>${antes}</span></button>`;
-  };
-  const ind = lista.filter(function (a) { return a.ind; });
-  const outros = lista.filter(function (a) { return !a.ind; });
-  return `<div class="swap">
-    <div class="swap-h">Mesmo padrão de movimento:</div>
-    ${ind.map(opt).join('')}
-    ${outros.length?`<div class="swap-h" style="margin-top:12px">Outros de ${exDe(ex.orig||ex.id).g}:</div>${outros.map(opt).join('')}`:''}
-    ${trocado?`<button class="swapopt back-orig" onclick="setAlt(${i},null)"><b>Voltar para ${nomeEx(ex.orig)}</b><span>Cancela a troca.</span></button>`:''}
-    <button class="swapopt cancel" onclick="toggleSwap(${i})"><b>Fechar</b></button>
-  </div>`;
-}
-
-// Adicionar exercício: catálogo inteiro, com busca, e a porta para cadastrar
-// equipamento que o app ainda não conhece.
-function painelAddEx(d) {
-  const q = (view.addQ || '').toLowerCase().trim();
-  const nodia = {};
-  const t = treino(d);
-  if (t) t.ex.forEach(function (x) { nodia[x.id] = 1; });
-  const achados = Object.keys(CAT)
-    .filter(function (k) { return !CAT[k].arq; })
-    .filter(function (k) { return !q || CAT[k].n.toLowerCase().indexOf(q) >= 0 || (CAT[k].g||'').indexOf(q) >= 0; })
-    .sort(function (a, b) { return CAT[a].n.localeCompare(CAT[b].n); })
-    .slice(0, 40);
-
-  return `<div class="addex">
-    <div class="swap-h">Adicionar ao treino ${d} de hoje</div>
-    <input type="text" class="addq" id="addq" placeholder="buscar exercício ou grupo"
-      value="${escAttr(view.addQ || '')}" oninput="buscaEx(this.value)">
-    <div class="addlist">
-      ${achados.length ? achados.map(function (k) {
-        return `<button class="swapopt" onclick="addExercicio('${escAttr(k)}')">
-          <b>${CAT[k].n}</b><span>${CAT[k].g || 'sem grupo'}${nodia[k]?' · já está neste treino':''}</span></button>`;
-      }).join('') : '<p class="cue">Nada com esse nome no catálogo.</p>'}
-    </div>
-    ${view.novoEx ? `<div class="novoex">
-      <div class="swap-h">Exercício novo</div>
-      <input type="text" id="nxn" class="addq" placeholder="nome do exercício">
-      <select id="nxg" class="addq">
-        <option value="">grupo muscular</option>
-        ${gruposDoPlano().map(function (g) { return `<option value="${escAttr(g)}">${g}</option>`; }).join('')}
-      </select>
-      <select id="nxc" class="addq">
-        ${Object.keys(CARGAS).map(function (t) { return `<option value="${t}">${CARGAS[t].nome}</option>`; }).join('')}
-      </select>
-      <label class="nxk"><input type="checkbox" id="nxk"> é um composto (descanso mais longo)</label>
-      <button class="dbtn" onclick="criarExercicio()">Criar e adicionar</button>
-    </div>` : `<button class="swapopt novo" onclick="abrirNovoEx()"><b>Cadastrar exercício novo</b>
-      <span>Equipamento que o app ainda não conhece. Ele passa a ter histórico próprio.</span></button>`}
-    <button class="swapopt cancel" onclick="fecharAddEx()"><b>Fechar</b></button>
-  </div>`;
+  return null;
 }
 
 function semanasDe(t) {
@@ -1867,196 +1548,6 @@ function abrirPrograma(d) {
 function fecharPrograma() { view.prog = null; render(); window.scrollTo(0,0); }
 function modoPrograma(m) { view.prog.modo = m; view.prog.day = null; render(); window.scrollTo(0,0); }
 
-function renderPrograma() {
-  const app = document.getElementById('app');
-  const V = view.prog;
-  let h = `<div class="hhdr">
-    <button class="back" onclick="${V.day||V.modo!=='lista'?'abrirPrograma(null)':'fecharPrograma()'}">‹ ${V.day||V.modo!=='lista'?'programa':'voltar'}</button>`;
-
-  if (V.day) h += renderProgramaDia(V.day);
-  else if (V.modo === 'diff') h += renderProgramaDiff();
-  else if (V.modo === 'historico') h += renderProgramaHist();
-  else h += renderProgramaLista();
-
-  return h;
-  window.scrollTo(0,0);
-}
-
-function renderProgramaLista() {
-  const dif = difTotal();
-  const tot = totalSeries();
-  let h = `<div class="eyebrow"><span>seu programa</span><span>${rot().length} treinos</span></div>
-    <h2 class="htitle">Programa</h2>
-  </div>
-  <div class="hwrap">
-    <div class="stats">
-      <div><b>${tot}</b><span>séries diretas</span></div>
-      <div><b>${ALVO_TOTAL}</b><span>do treinador</span></div>
-      <div><b>${dif}</b><span>${dif===1?'diferença':'diferenças'}</span></div>
-    </div>
-    <p class="cue">Aqui a mudança é direta: vale a partir do próximo treino.
-    Para mudar só o treino de hoje, use a edição na tela de hoje.</p>
-
-    <div class="progdias">`;
-
-  h += rot().map(function (d, i) {
-    const p = S.prog[d];
-    const n = difDoDia(d).length;
-    return `<div class="progd">
-      <button class="progd-b" onclick="abrirPrograma('${d}')">
-        <div class="progd-l">${d}</div>
-        <div class="progd-t">
-          <b>${p ? p.name : 'treino ' + d}</b>
-          <span>${p ? p.ex.length : 0} exercícios · ${seriesDoDia(d)} séries${n?' · ' + n + (n===1?' diferença':' diferenças'):''}</span>
-        </div>
-        <div class="chev">›</div>
-      </button>
-      <div class="progd-mv">
-        <button onclick="moverDia(${i},-1)" ${i===0?'disabled':''}>↑</button>
-        <button onclick="moverDia(${i},1)" ${i===rot().length-1?'disabled':''}>↓</button>
-      </div>
-    </div>`;
-  }).join('');
-
-  h += `</div>
-    <button class="edadd" onclick="criarTreino()">criar treino novo</button>
-    <div class="dgroup" style="margin-top:20px">
-      <h3>Comparar com o treinador</h3>
-      <p>${dif ? dif + (dif===1?' diferença em relação':' diferenças em relação') + ' ao que ele prescreveu.'
-               : 'Seu programa está igual ao que o treinador prescreveu.'}</p>
-      <button class="dbtn ghost" onclick="modoPrograma('diff')">ver a diferença</button>
-      <button class="dbtn ghost" onclick="modoPrograma('historico')">histórico de mudanças</button>
-      <button class="dbtn ghost" onclick="restaurarTudo()">restaurar o programa do treinador</button>
-    </div>
-  </div>`;
-  return h;
-}
-
-function renderProgramaDia(d) {
-  const p = S.prog[d];
-  if (!p) return '</div><div class="msg">Treino não encontrado.</div>';
-  const dif = difDoDia(d);
-  let h = `<div class="eyebrow"><span>treino ${d}</span><span>${seriesDoDia(d)} séries</span></div>
-    <h2 class="htitle">${p.name}</h2>
-  </div>
-  <div class="hwrap">
-    ${dif.length?`<div class="progdif">
-      <b>${dif.length} ${dif.length===1?'diferença':'diferenças'} do treinador</b>
-      ${dif.map(function (x) { return `<span>${x.txt}</span>`; }).join('')}
-      <button class="dlbtn" onclick="restaurarDia('${d}')">restaurar este treino</button>
-    </div>`:''}`;
-
-  h += p.ex.map(function (sl, i) {
-    const e = exDe(sl.id);
-    const imp = impactoOficial(e.g);
-    return `<div class="edx">
-      <div class="edx-h">
-        <div class="ord">${String(i+1).padStart(2,'0')}</div>
-        <div class="edx-n">${e.n}
-          <span>${e.g || 'sem grupo'}${sl.desde?' · há ' + semanasDe(sl.desde):''}</span>
-        </div>
-        <div class="edx-mv">
-          <button onclick="moverProg('${d}',${i},-1)" ${i===0?'disabled':''}>↑</button>
-          <button onclick="moverProg('${d}',${i},1)" ${i===p.ex.length-1?'disabled':''}>↓</button>
-        </div>
-      </div>
-      <div class="edx-c">
-        <div class="stepper">
-          <button onclick="progSeries('${d}',${i},-1)" ${sl.s<=1?'disabled':''}>−</button>
-          <b>${sl.s}</b><span>séries</span>
-          <button onclick="progSeries('${d}',${i},1)" ${sl.s>=8?'disabled':''}>+</button>
-        </div>
-        <button class="edx-b" onclick="progTroca('${d}',${i})">trocar</button>
-        <button class="edx-b rm" onclick="progRemove('${d}',${i})">remover</button>
-      </div>
-      <div class="edx-c">
-        <button class="edx-b" onclick="progReps('${d}',${i})">${sl.r} reps</button>
-        <button class="edx-b" onclick="progDesc('${d}',${i})">descanso ${fmtDesc(sl.d)}</button>
-      </div>
-      ${imp ? `<div class="edx-imp ${imp.acima?'acima':''}">${imp.txt}</div>` : ''}
-      ${view.swapOpen === i ? listaDeTrocaProg(d, i) : ''}
-    </div>`;
-  }).join('');
-
-  h += `<button class="edadd" onclick="abrirAddEx()">adicionar exercício</button>`;
-  if (view.addEx) h += painelAddEx(d);
-  h += '</div>';
-  return h;
-}
-
-function renderProgramaDiff() {
-  let h = `<div class="eyebrow"><span>seu programa</span><span>vs. treinador</span></div>
-    <h2 class="htitle">O que está diferente</h2>
-  </div>
-  <div class="hwrap">`;
-  if (rot().join('|') !== ROT_BASE.join('|')) {
-    h += `<div class="progdif"><b>rotação</b><span>${ROT_BASE.join(' → ')} virou ${rot().join(' → ')}</span></div>`;
-  }
-  let algo = false;
-  rot().forEach(function (d) {
-    const dif = difDoDia(d);
-    if (!dif.length) return;
-    algo = true;
-    h += `<div class="progdif"><b>treino ${d}</b>
-      ${dif.map(function (x) { return `<span>${x.txt}</span>`; }).join('')}
-      <button class="dlbtn" onclick="restaurarDia('${d}')">restaurar</button></div>`;
-  });
-  if (!algo && rot().join('|') === ROT_BASE.join('|')) {
-    h += '<div class="msg">Seu programa está igual ao que o treinador prescreveu.</div>';
-  }
-  h += '</div>';
-  return h;
-}
-
-function renderProgramaHist() {
-  const log = (S.progLog || []).slice().reverse();
-  let h = `<div class="eyebrow"><span>seu programa</span><span>${log.length} ${log.length===1?'mudança':'mudanças'}</span></div>
-    <h2 class="htitle">Histórico de mudanças</h2>
-  </div>
-  <div class="hwrap">`;
-  if (!log.length) {
-    h += '<div class="msg">Nenhuma mudança no programa até agora.</div></div>';
-    return h;
-  }
-  const MOT = {}; MOTIVOS.forEach(function (x) { MOT[x.k] = x.t; });
-  h += log.map(function (x) {
-    return `<div class="phist">
-      <div class="phist-t">${x.txt}</div>
-      <div class="phist-m">treino ${x.day} · ${diaExtenso(x.t)}${x.motivo?' · ' + (MOT[x.motivo] || x.motivo):''}</div>
-    </div>`;
-  }).join('');
-  h += '</div>';
-  return h;
-}
-
-function listaDeTrocaProg(d, i) {
-  const sl = S.prog[d].ex[i];
-  const e = exDe(sl.id);
-  const vistos = {}; vistos[sl.id] = 1;
-  const out = [];
-  (ALT[e.n] || []).forEach(function (a) {
-    const k = slugEx(a.n);
-    if (vistos[k]) return; vistos[k] = 1;
-    out.push({ id:k, n:a.n, w:a.w });
-  });
-  Object.keys(CAT).forEach(function (k) {
-    if (vistos[k] || CAT[k].arq || CAT[k].g !== e.g || !e.g) return;
-    vistos[k] = 1;
-    out.push({ id:k, n:CAT[k].n, w:'mesmo grupo muscular' });
-  });
-  return `<div class="swap">
-    <div class="swap-h">Trocar no programa, a partir do próximo treino ${d}:</div>
-    ${out.map(function (a) {
-      const u = ultimoDe(a.id);
-      const antes = u && u.sets && u.sets[0]
-        ? 'última vez: ' + fmtNum(u.sets[0][0]) + ' × ' + u.sets[0][1] : a.w;
-      return `<button class="swapopt" onclick="progSetTroca('${d}',${i},'${escAttr(a.id)}')">
-        <b>${a.n}</b><span>${antes}</span></button>`;
-    }).join('')}
-    <button class="swapopt cancel" onclick="toggleSwap(${i})"><b>Fechar</b></button>
-  </div>`;
-}
-
 // Impacto do programa OFICIAL contra o alvo. Só aparece quando saiu do alvo.
 function impactoOficial(g) {
   if (!g) return null;
@@ -2271,49 +1762,6 @@ function pernaHoje() {
   return S.done.filter(x => (x.day==='C' || x.day==='F') && sameDay(x.t, Date.now())).map(x => x.day);
 }
 
-function renderCardio() {
-  const sem = cardioSemana();
-  const n = sem.length;
-  const perna = pernaHoje();
-  const f = view.cardioForm || { m:'bike', min:25, i:'moderado' };
-
-  let estado, cls;
-  if (n < 2) { estado = n === 0 ? 'Nenhuma sessão nesta semana ainda.' : 'Falta 1 sessão para a dose mínima da semana.'; cls = ''; }
-  else if (n <= 3) { estado = 'Dose da semana cumprida.'; cls = 'ok'; }
-  else { estado = 'Acima da dose prescrita de 2 a 3 sessões.'; cls = 'over'; }
-
-  return `
-    <div class="hsec" style="margin:30px 0 0">cardio</div>
-    <div class="week">
-      <div class="week-n">${n} <em>de 3</em></div>
-      <div class="week-s ${cls}">sessões nesta semana<br><b>${estado}</b></div>
-    </div>
-    <p class="week-p">25 a 40 minutos, 2 a 3 vezes por semana, RPE 4 a 6: respiração acelerada, mas dá para conversar. São 50 a 110 minutos na semana. O cardio está aqui por saúde cardiovascular, capacidade de trabalho e regulação do apetite.</p>
-
-    <div class="dgroup">
-      <h3>Registrar sessão</h3>
-      <div class="obs-h">modalidade</div>
-      <div class="chips">${MODAIS.map(m => `<button class="chip ${f.m===m?'sel':''}" onclick="cardioSet('m','${m}')">${m}</button>`).join('')}</div>
-      <div class="obs-h" style="margin-top:16px">duração</div>
-      <div class="chips">${[20,25,30,40].map(v => `<button class="chip ${f.min===v?'sel':''}" onclick="cardioSet('min',${v})">${v} min</button>`).join('')}</div>
-      <div class="obs-h" style="margin-top:16px">intensidade</div>
-      <div class="chips">${['leve','moderado'].map(v => `<button class="chip ${f.i===v?'sel':''}" onclick="cardioSet('i','${v}')">${v}</button>`).join('')}</div>
-      ${perna.length?`<div class="cwarn">Você salvou o treino ${perna.join(' e ')} hoje. A regra é não pôr cardio no mesmo período de treino de perna — se ainda der, deixe para outro dia.</div>`:''}
-      <p class="crule">Depois do A: 25 a 30 min. No dia de descanso: 30 a 40 min. Depois do F: 20 a 30 min, opcional. Evite antes de C ou F, e nunca antes do treino.</p>
-      <button class="dbtn" onclick="addCardio()">Registrar ${f.min} min de ${f.m}</button>
-    </div>
-
-    <div class="dgroup">
-      <h3>Esta semana</h3>
-      ${n ? sem.map(c => `<div class="crow">
-        <span class="crow-d">${fmtDate(c.t)}</span>
-        <span class="crow-m">${c.m}</span>
-        <span class="crow-n">${c.min} min · ${c.i}</span>
-        <button class="crow-x" onclick="delCardio(${c.t})">remover</button>
-      </div>`).join('') : '<p style="margin:0">Nada registrado desde segunda-feira.</p>'}
-    </div>`;
-}
-
 function cardioSet(k, v) {
   view.cardioForm = Object.assign({ m:'bike', min:25, i:'moderado' }, view.cardioForm);
   view.cardioForm[k] = v;
@@ -2378,99 +1826,6 @@ function periodoNaCelula(marcas) {
     if (p) return '<u class="per ' + p.k + '">' + p.rot + '</u>';
   }
   return '';
-}
-
-function renderAcomp() {
-  const base = mesRef();
-  const de = base.getTime();
-  const fimD = new Date(base); fimD.setMonth(fimD.getMonth()+1);
-  const ate = fimD.getTime();
-  const T = totaisDoPeriodo(de, ate);
-  const med = mediaSemanal();
-
-  // grade do mês, começando na segunda
-  const primeiro = new Date(de);
-  const offset = (primeiro.getDay() + 6) % 7;
-  const diasNoMes = new Date(base.getFullYear(), base.getMonth()+1, 0).getDate();
-  let cel = DIAS_CURTOS.map(function (x) { return '<span class="cal-h">'+x+'</span>'; }).join('');
-  for (let i = 0; i < offset; i++) cel += '<span class="cal-x"></span>';
-  for (let dia = 1; dia <= diasNoMes; dia++) {
-    const t = new Date(base.getFullYear(), base.getMonth(), dia).getTime();
-    const marcas = sessoesDoDia(t);
-    const hoje = sameDay(t, Date.now());
-    const futuro = t > Date.now() && !hoje;
-    const livre = marcas.length && marcas.every(function (m) { return m.livre; });
-    const acao = marcas.length ? `abrirSessao(${marcas[marcas.length-1].t})` : (futuro ? '' : `abrirAdicionar(${t})`);
-    const card = cardioDoDia(t).length;
-    cel += `<span class="cal-d ${marcas.length?'feito':''} ${livre?'livre':''} ${hoje?'hoje':''} ${futuro?'futuro':''} ${card?'com-cardio':''}"
-      ${acao?`onclick="${acao}"`:''}>
-      <em>${dia}</em>${marcas.length?'<i>'+marcas.map(marcaDe).join('')+'</i>':''}${periodoNaCelula(marcas)}
-      ${card?'<span class="barra-cardio"></span>':''}
-    </span>`;
-  }
-
-  const lista = S.done.slice().filter(function (x) { return x.t >= de && x.t < ate; }).sort(function (a,b) { return b.t - a.t; });
-  const comHora = lista.filter(temHora);
-  const horarios = { n: comHora.length };
-  if (comHora.length) {
-    const mins = comHora.map(function (m) { const d = new Date(m.t); return d.getHours()*60 + d.getMinutes(); });
-    const med = Math.round(mins.reduce(function (a,b) { return a+b; }, 0) / mins.length);
-    const fmt = function (v) { return String(Math.floor(v/60)).padStart(2,'0') + ':' + String(v%60).padStart(2,'0'); };
-    horarios.media = fmt(med);
-    horarios.min = fmt(Math.min.apply(null, mins));
-    horarios.max = fmt(Math.max.apply(null, mins));
-  }
-
-  const cardMes = S.cardio.filter(function (c) { return c.t >= de && c.t < ate; });
-  const soCardio = Object.keys(cardMes.reduce(function (acc, c) {
-    if (!sessoesDoDia(c.t).length) acc[new Date(c.t).toDateString()] = 1;
-    return acc;
-  }, {})).length;
-
-  return `<div class="data">
-    <div class="mesnav">
-      <button onclick="mudaMes(-1)">‹</button>
-      <span>${MESES[base.getMonth()]} ${base.getFullYear()}</span>
-      <button onclick="mudaMes(1)" ${view.mes>=0?'disabled':''}>›</button>
-    </div>
-
-    <div class="stats" style="margin-top:16px">
-      <div><b>${T.dias}</b><span>${T.dias===1?'dia treinado':'dias treinados'}</span></div>
-      <div><b>${T.tempo?fmtDur(T.tempo):'–'}</b><span>tempo total${T.comTempo>1?' · méd '+fmtDur(Math.round(T.tempo/T.comTempo)):''}</span></div>
-      <div><b>${T.vol?fmtK(T.vol):'–'}</b><span>volume · kg×reps</span></div>
-    </div>
-
-    <div class="cal">${cel}</div>
-    <div class="callegenda">${PERIODOS.map(function (p) {
-      return '<span><u class="per ' + p.k + '">' + p.rot + '</u>' + p.nome + '</span>';
-    }).join('')}</div>
-
-    ${med!==null?`<p class="mediasem"><b>${fmtDec(med)}</b> treinos por semana<br><span>média das últimas 4 semanas</span></p>`:''}
-    ${horarios.n?`<p class="mediasem" style="margin-top:14px"><b>${horarios.media}</b> em média<br><span>horário de início · mais cedo ${horarios.min} · mais tarde ${horarios.max}</span></p>`:''}
-    ${cardMes.length?`<p class="mediasem" style="margin-top:14px"><b>${cardMes.length}</b> ${cardMes.length===1?'sessão de cardio':'sessões de cardio'}<br><span>${fmtInt(cardMes.reduce(function(a,c){return a+c.min;},0))} minutos no mês${soCardio?' · '+soCardio+' em '+(soCardio===1?'dia sem musculação':'dias sem musculação'):''}</span></p>`:''}
-
-    <button class="dbtn" style="margin-top:22px" onclick="abrirAdicionar()">Registrar um treino passado</button>
-    <p class="cue" style="margin:9px 0 0">Ou toque num dia vazio do calendário.</p>
-
-    <div class="hsec" style="margin-top:26px">sessões do mês</div>
-    ${lista.length ? lista.map(function (m) {
-      const r = resumoDaSessao(m);
-      const dur = m.dur != null ? m.dur : (S.sessao && S.sessao.sid === m.sid ? S.sessao.ultima - S.sessao.inicio : null);
-      const aberta = S.sessao && S.sessao.sid === m.sid;
-      const desc = m.livre
-        ? (m.nome ? m.nome + ' · ' : '') + (m.grupos||[]).join(', ')
-        : `${fmtDur(dur)} · ${r.series} ${r.series===1?'série':'séries'}${r.vol?' · '+fmtK(r.vol):''}`;
-      return `<div class="sessrow" onclick="abrirSessao(${m.t})">
-        <span class="sess-d">${fmtDate(m.t)}${horaDaSessao(m)?'<em>'+horaDaSessao(m)+'</em>':''}</span>
-        <span class="sess-l ${m.livre?'livre':''}">${marcaDe(m)}</span>
-        <span class="sess-n">${desc}${!m.livre && m.dur && m.fim !== 'manual' ? ' <em class="aprox">aprox</em>' : ''}</span>
-        ${aberta?'<span class="sess-o">em andamento</span>':''}
-        ${cardioDoDia(m.t).length?'<span class="tag card-t">cardio</span>':''}
-        ${m.retro?'<span class="tag">retroativo</span>':''}
-        ${m.dl?'<span class="tag dl-t">deload</span>':''}
-      </div>`;
-    }).join('') : '<p class="cue" style="margin:0">Nenhum treino registrado neste mês.</p>'}
-  </div>`;
 }
 
 function mudaMes(n) {
@@ -2576,7 +1931,7 @@ async function gravarRetro(detalhar) {
     if (S.sessao) { fechou = S.sessao.day; fechaSessao('manual'); }
     S.sessao = { day: a.tipo, inicio: quando, ultima: quando, sid: sid, retro: 1, tocado: Date.now(), pausas: [], pulados: [] };
     S.draft = null;
-    view.tab = 'treino'; view.day = a.tipo; view.open = 0;
+    view.aba = 'treino'; view.day = a.tipo; view.open = 0;
     await save();
     render(); window.scrollTo(0,0);
     toast(fechou
@@ -2584,7 +1939,7 @@ async function gravarRetro(detalhar) {
       : 'Preenchendo o treino de ' + fmtDate(a.t) + '. Some sozinho quando você sair.');
     return;
   }
-  view.tab = 'acomp';
+  view.aba = 'dados';
   render(); window.scrollTo(0,0);
   toast(a.tipo === 'livre' ? 'Treino avulso registrado.' : 'Treino ' + a.tipo + ' registrado em ' + fmtDate(a.t) + '.');
 }
@@ -2636,178 +1991,15 @@ function aplicaArroz(ajusteAntes) {
   });
 }
 
-function bodySVG(W) {
-  if (!W.length) return '';
-  const n = W.length;
-  const x0 = 46, x1 = 292, aT = 24, aB = 88, dy = 108;
-  const hi = Math.max.apply(null, W.map(x=>x.v)), lo = Math.min.apply(null, W.map(x=>x.v));
-  const px = i => n === 1 ? (x0+x1)/2 : x0 + (x1-x0) * i/(n-1);
-  const py = v => hi === lo ? (aT+aB)/2 : aB - (v-lo)/(hi-lo) * (aB-aT);
-  const anchor = i => i === 0 && n > 1 ? 'start' : (i === n-1 && n > 1 ? 'end' : 'middle');
-
-  let g = `<svg viewBox="0 0 320 116" class="chart" role="img" aria-label="média semanal de peso nas últimas ${n} semanas">`;
-  g += `<line x1="${x0}" y1="${aT}" x2="${x1}" y2="${aT}" class="gl"/>`
-     + `<line x1="${x0}" y1="${aB}" x2="${x1}" y2="${aB}" class="gl"/>`
-     + `<text x="${x0-8}" y="${py(hi)+3}" class="ax" text-anchor="end">${fmtDec(hi)}</text>`
-     + (hi === lo ? '' : `<text x="${x0-8}" y="${aB+3}" class="ax" text-anchor="end">${fmtDec(lo)}</text>`)
-     + `<text x="${x0-8}" y="${aT-9}" class="axu" text-anchor="end">kg</text>`;
-  if (n > 1) g += `<polyline class="cl" points="${W.map((x,i)=> px(i)+','+py(x.v)).join(' ')}"/>`;
-  W.forEach((x,i) => {
-    const last = i === n-1;
-    g += `<circle cx="${px(i)}" cy="${py(x.v)}" r="${last?4.5:3.5}" class="cp${last?' last':''}"/>`
-       + `<text x="${px(i)}" y="${py(x.v)-11}" class="vl${last?' last':''}" text-anchor="${anchor(i)}">${fmtDec(x.v)}</text>`
-       + `<text x="${px(i)}" y="${dy}" class="ax" text-anchor="${anchor(i)}">${fmtDate(x.w)}</text>`;
-  });
-  return g + '</svg>';
-}
-
 // Adaptador: a regra vive em dominio/volume.ts; aqui só entram os dados.
 function seriesPorMusculo(de, ate, corte) {
   return _seriesPorMusculo(S.logs, function (k) { return exDe(k).g; }, de, ate, corte);
-}
-
-function painelMusculos() {
-  const semana = weekStart(Date.now());
-  const atual = seriesPorMusculo(semana, Date.now() + 1);
-  const janela = 4;
-  const decorrido = Date.now() - semana;
-  const antes = seriesPorMusculo(semana - janela*7*86400000, semana, decorrido);
-  const diaDaSemana = Math.min(7, Math.floor(decorrido/86400000) + 1);
-
-  const avulsos = S.done.filter(function (x) { return x.livre && x.t >= semana; });
-  const avulsosGrupos = Object.keys(avulsos.reduce(function (a,x) {
-    (x.grupos||[]).forEach(function (g) { a[g] = 1; }); return a;
-  }, {}));
-
-  const nomes = {};
-  rot().forEach(d => treino(d).ex.forEach(ex => { if (ex.g) nomes[ex.g] = 1; }));
-  // um músculo que saiu do programa mas foi treinado na semana ainda aparece
-  Object.keys(atual).forEach(function (g) { if (g) nomes[g] = 1; });
-  const lista = Object.keys(nomes).sort(function (a,b) {
-    const na = NIVEIS.indexOf(nivelDe(a)), nb = NIVEIS.indexOf(nivelDe(b));
-    if (na !== nb) return na - nb;
-    const pa = PRIO.indexOf(a), pb = PRIO.indexOf(b);
-    if (pa !== pb) return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);
-    return a.localeCompare(b, 'pt-BR');
-  });
-
-  const temHistorico = Object.keys(antes).length > 0;
-  const max = Math.max(1, Math.max.apply(null, lista.map(g => Math.max(atual[g]||0, (antes[g]||0)/janela))));
-
-  // O que ele PRESCREVEU para si contra o que o treinador prescreveu. É
-  // diferente do que ele registrou: aqui o assunto é o programa, não a semana.
-  const fora = lista.map(function (g) { return impactoOficial(g); })
-                    .filter(function (x) { return x; });
-
-  return `<div class="dgroup">
-    ${fora.length ? `<div class="progdif" style="margin-bottom:16px">
-      <b>Seu programa está diferente do que o treinador prescreveu</b>
-      ${fora.map(function (x) { return `<span>${x.txt}</span>`; }).join('')}
-      <button class="dlbtn" onclick="abrirPrograma(null)">abrir o programa</button>
-    </div>` : ''}
-    <h3>Séries por músculo nesta semana</h3>
-    <p>Séries registradas desde segunda-feira, comparadas com o <b>mesmo ponto</b> das últimas ${janela} semanas — dia ${diaDaSemana} de 7. A ordem segue a hierarquia do programa.</p>
-    <p style="color:var(--dim)"><b>São séries diretas.</b> Tríceps também trabalha nos supinos, bíceps nas puxadas, glúteo no terra e no leg press, e deltoide anterior no peito. O estímulo real desses é maior que o número aqui.</p>
-    ${temHistorico ? '' : '<p style="color:var(--dim)">Ainda sem semanas anteriores para comparar. A coluna de média aparece a partir da segunda semana de registro.</p>'}
-    ${avulsos.length ? `<p style="color:var(--dim)">${avulsos.length} ${avulsos.length===1?'treino avulso nesta semana não entra':'treinos avulsos nesta semana não entram'} nesta contagem, porque não ${avulsos.length===1?'tem':'têm'} série registrada: ${avulsosGrupos.join(', ')}.</p>` : ''}
-    <div class="mus">
-      ${lista.map(function (g) {
-        const n = atual[g] || 0;
-        const m = temHistorico ? (antes[g]||0)/janela : null;
-        const nivel = nivelDe(g);
-        const prio = nivel === 'maxima';
-        const dif = m !== null && m >= 1 ? Math.round((n-m)/m*100) : null;
-        return `<div class="musrow ${prio?'prio':''}">
-          <span class="musn">${g}${PRIORIDADES[nivel].rot?`<i class="n-${nivel}">${PRIORIDADES[nivel].rot}</i>`:''}</span>
-          <span class="musbar"><em style="width:${Math.min(100, n/max*100)}%"></em></span>
-          <span class="musv">${n}${m!==null?`<small>méd ${fmtDec(m)}</small>`:''}</span>
-          ${dif===null?'':`<span class="musd ${dif>0?'up':(dif<-25?'down':'')}">${dif>0?'+':''}${dif}%</span>`}
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`;
 }
 
 /**
  * @param {boolean} [semVeredito] omite o cartão de veredito, que a tela DADOS já
  *   desenha no Instrumento logo acima — sem isso ele aparece duas vezes.
  */
-function renderBody(semVeredito) {
-  const v = veredito();
-  const r = pesoRitmo();
-  const W = r.W.slice(-8);
-  const c = cinturaMes();
-  const semana = weekStart(Date.now());
-  const pesagens = S.body.peso.filter(x => x.t >= semana);
-  const cinturaSem = S.body.cintura.filter(x => x.t >= semana);
-  const cW = mediasSemanais(S.body.cintura);
-  const cAtual = cW.length ? cW[cW.length-1] : null;
-  const atual = W.length ? W[W.length-1] : null;
-  const f = view.bodyForm || {};
-
-  return `<div class="data">
-    ${semVeredito ? '' : `<div class="verdict ${v.k}">
-      <div class="verdict-k">o que fazer com a comida</div>
-      <div class="verdict-t">${v.t}</div>
-      <p>${v.p}</p>
-    </div>`}
-
-    <div class="dgroup">
-      <h3>Peso</h3>
-      <p>A média da semana é o número que conta. O peso de um dia isolado oscila com água, sal e intestino, e não serve para decidir nada.</p>
-      <div class="week">
-        <div class="week-n">${atual?fmtDec(atual.v):'–'} <em>kg</em></div>
-        <div class="week-s">média desta semana<br><b>${atual?`${atual.n} ${atual.n===1?'pesagem':'pesagens'} · ritmo ${r.ok?fmtSig2(r.kgSem)+' kg/semana':'ainda sem ritmo'}`:'sem pesagem nesta semana'}</b></div>
-      </div>
-      ${W.length>1?bodySVG(W)+'<div class="legend"><span class="c"><i></i>média por semana, não o peso do dia</span></div>':''}
-      <div class="obs-h" style="margin-top:18px">registrar peso de hoje · ${pesagens.length} de 4 nesta semana</div>
-      <div class="addrow">
-        <div class="f"><input type="text" inputmode="decimal" id="bpeso"
-          value="${f.peso!=null?f.peso:''}" placeholder="${S.body.peso.length?fmtDec(S.body.peso[S.body.peso.length-1].v):'73,0'}"
-          oninput="bodyIn('peso',this)"><span class="unit">kg</span></div>
-        <button class="dbtn" onclick="addBody('peso')">Registrar</button>
-      </div>
-      ${pesagens.length?`<div class="blist">${pesagens.slice().sort((a,b)=>b.t-a.t).map(x=>`<div class="crow">
-        <span class="crow-d">${fmtDate(x.t)}</span><span class="crow-m">${fmtDec(x.v)} kg</span>
-        <button class="crow-x" onclick="delBody('peso',${x.t})">remover</button></div>`).join('')}</div>`:''}
-    </div>
-
-    <div class="dgroup">
-      <h3>Cintura</h3>
-      <p>Uma medida por semana, sempre no mesmo ponto e no mesmo horário. É o que separa ganho de massa de ganho de gordura quando a balança sobe.</p>
-      <div class="week">
-        <div class="week-n">${cAtual?fmtDec(cAtual.v):'–'} <em>cm</em></div>
-        <div class="week-s ${c&&c.mes>1.5?'over':''}">média desta semana<br><b>${c?`${fmtSig(c.delta)} cm em ${Math.round(c.dias)} dias`:'sem comparação de um mês ainda'}</b></div>
-      </div>
-      <div class="obs-h" style="margin-top:18px">registrar cintura · ${cinturaSem.length} de 1 nesta semana</div>
-      <div class="addrow">
-        <div class="f"><input type="text" inputmode="decimal" id="bcint"
-          value="${f.cintura!=null?f.cintura:''}" placeholder="${S.body.cintura.length?fmtDec(S.body.cintura[S.body.cintura.length-1].v):'80,0'}"
-          oninput="bodyIn('cintura',this)"><span class="unit">cm</span></div>
-        <button class="dbtn" onclick="addBody('cintura')">Registrar</button>
-      </div>
-      ${S.body.cintura.length?`<div class="blist">${S.body.cintura.slice(-6).sort((a,b)=>b.t-a.t).map(x=>`<div class="crow">
-        <span class="crow-d">${fmtDate(x.t)}</span><span class="crow-m">${fmtDec(x.v)} cm</span>
-        <button class="crow-x" onclick="delBody('cintura',${x.t})">remover</button></div>`).join('')}</div>`:''}
-    </div>
-
-    ${renderCardio()}
-
-    ${painelMusculos()}
-
-    <div class="dgroup">
-      <h3>As regras que estão sendo aplicadas</h3>
-      <p style="margin:0">Média subindo <b>menos de 0,15 kg por semana</b> por 2 semanas: comer mais.<br>
-      Média subindo <b>mais de 0,4 kg por semana</b> por 2 semanas: comer menos.<br>
-      Cintura <b>+1,5 cm no mês</b>: comer menos, mesmo que o peso esteja na faixa.</p>
-    </div>
-  </div>`;
-}
-
-function bodyIn(k, el) {
-  view.bodyForm = Object.assign({}, view.bodyForm);
-  view.bodyForm[k] = limpaNum(el, true);
-}
 async function addBody(k) {
   const el = document.getElementById(k === 'peso' ? 'bpeso' : 'bcint');
   const raw = ((view.bodyForm && view.bodyForm[k]) || (el && el.value) || '').replace(',', '.');
@@ -2834,60 +2026,6 @@ async function delBody(k, t) {
   await save(); render();
   toast('Medida removida.');
 }
-
-// ---------- aba de dados ----------
-function renderData() {
-  const nEx = Object.keys(S.logs).length;
-  const sb = diasSemBackup();
-  return `<div class="data">
-    ${sb >= 30 && S.done.length ? `<div class="deload" style="margin:14px 0 0">
-      <b>${S.export ? Math.round(sb) + ' dias desde o último backup.' : 'Você nunca exportou o histórico.'}</b>
-      Baixe o JSON agora. É a única cópia que não depende deste navegador.</div>` : ''}
-    <div class="dgroup">
-      <h3>Programa</h3>
-      <p>Os ${rot().length} treinos, a ordem da rotação e os exercícios. Mudança aqui vale a partir do próximo treino;
-      para mudar só o treino de hoje, use a edição na tela de hoje.</p>
-      <button class="dbtn ghost" onclick="abrirPrograma(null)">abrir o programa${difTotal()?' · ' + difTotal() + ' ' + (difTotal()===1?'diferença':'diferenças') + ' do treinador':''}</button>
-    </div>
-    <div class="dgroup">
-      <h3>Exportar</h3>
-      <p>Baixa todo o histórico em um arquivo JSON. Guarde antes de trocar de celular, limpar o navegador ou mexer no app.</p>
-      <button class="dbtn" onclick="exportData()">Baixar arquivo JSON</button>
-      <button class="dbtn ghost" onclick="showJSON()">${view.json?'esconder o texto':'mostrar o JSON para copiar'}</button>
-      ${view.json?`<textarea class="jtext" id="jout" readonly onclick="this.select()">${escapeHTML(view.json)}</textarea>
-      <button class="dbtn ghost" onclick="copyJSON()">copiar para a área de transferência</button>`:''}
-    </div>
-
-    <div class="dgroup">
-      <h3>Importar</h3>
-      <p>Restaura um backup. Substitui o que estiver salvo agora, com confirmação antes.</p>
-      <label class="dbtn">Escolher arquivo JSON<input type="file" accept="application/json,.json,.txt" onchange="importFile(this)"></label>
-      <button class="dbtn ghost" onclick="pasteJSON()">colar o texto do backup</button>
-      ${view.paste?`<textarea class="jtext" id="jin" placeholder="cole aqui o conteúdo do arquivo"></textarea>
-      <button class="dbtn" onclick="importText(document.getElementById('jin').value)">Importar do texto</button>`:''}
-    </div>
-
-    <div class="dgroup">
-      <h3>Retrospectiva do bloco</h3>
-      <p>O que evoluiu, o que ficou parado e onde a dor apareceu desde o começo deste bloco de 48 sessões.</p>
-      <button class="dbtn" onclick="abrirRetro()">Abrir retrospectiva</button>
-    </div>
-
-    <div class="dgroup">
-      <h3>Modo deload</h3>
-      <p>Mostra metade das séries de cada exercício mantendo as mesmas cargas. As sessões salvas nesse modo ficam marcadas no histórico, para a queda de volume não parecer regressão.</p>
-      <button class="dbtn" onclick="setDeload(${S.deload?'false':'true'})">${S.deload?'Desativar o modo deload':'Ativar o modo deload'}</button>
-    </div>
-
-    <div class="dgroup">
-      <h3>Onde ficam seus dados</h3>
-      <p class="store" style="margin:0">Salvos em: <b>${STORE_LABEL[DB.mode] || 'verificando'}</b>.<br>
-      ${S.done.length} ${S.done.length===1?'sessão registrada':'sessões registradas'} · ${nEx} ${nEx===1?'exercício com histórico':'exercícios com histórico'} · ${S.cardio.length} ${S.cardio.length===1?'sessão de cardio':'sessões de cardio'} · ${S.body.peso.length} ${S.body.peso.length===1?'pesagem':'pesagens'} · ${S.body.cintura.length} ${S.body.cintura.length===1?'medida de cintura':'medidas de cintura'}.</p>
-      <button class="danger" onclick="wipe()">apagar todo o histórico</button>
-    </div>
-  </div>`;
-}
-
 
 function payload() {
   return JSON.stringify({ app:'treino-eduardo', v:1, exportedAt:new Date().toISOString(), data:S }, null, 2);
@@ -3004,12 +2142,6 @@ function toast(msg) {
 
 // ---------- actions ----------
 function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); window.scrollTo(0,0); }
-// As abas do sistema antigo. Continuam existindo porque as telas que ainda não
-// foram convertidas se roteiam por `view.tab` — mas agora precisam levar a
-// shell junto, senão mudam o conteúdo do legado sem mudar a aba que está
-// aparecendo. Some quando a última tela virar componente.
-const ABA_DA_TAB = { treino: 'treino', acomp: 'dados', corpo: 'dados', ajustes: 'guia' };
-function tab(t){ view.tab=t; view.aba=ABA_DA_TAB[t]||'hoje'; view.prog=null; view.hist=null; view.json=null; view.paste=false; view.retro=false; view.sessao=null; view.add=null; view.mes=0; view.cardioRapido=false; render(); window.scrollTo(0,0); }
 function toggle(i){ view.open = view.open===i ? null : i; view.swapOpen = null; view.nota = null; view.carga = null; render(); }
 function dorName(k){ const x = DORES.filter(y=>y.k===k)[0]; return x ? x.t : k; }
 
@@ -3160,110 +2292,6 @@ function resumoDaSessao(marca) {
   return { itens: itens, vol: vol, tempo: tempo, dores: dores, series: series };
 }
 
-function renderSessao() {
-  const marca = view.sessao;
-  if (marca.livre) return renderSessaoLivre(marca);
-  const R = resumoDaSessao(marca);
-  const aberta = S.sessao && S.sessao.sid === marca.sid;
-  const dur = aberta ? (S.sessao.ultima - S.sessao.inicio) : marca.dur;
-  const recordes = R.itens.filter(function (x) { return x.recCarga || x.recMet; }).length;
-  const app = document.getElementById('app');
-
-  const exato = marca.fim === 'manual';
-  const p = pendencias(marca.day, marca.sid, marca.pulados);
-
-  let h = `<div class="hhdr">
-    <button class="back" onclick="fecharSessao()">‹ voltar</button>
-    <div class="eyebrow"><span>treino ${marca.day}${aberta?' · em andamento':''}</span><span>${diaExtenso(marca.t)}</span></div>
-    <h2 class="htitle">${R.series} ${R.series===1?'série registrada':'séries registradas'}</h2>
-  </div>
-  <div class="hwrap">
-    <div class="stats">
-      <div><b>${dur!=null?fmtDur(dur):'–'}</b><span>${aberta?'em andamento':(dur==null?'tempo não medido':(exato?'tempo exato':'tempo aproximado'))}</span></div>
-      <div><b>${R.vol?fmtInt(R.vol):'–'}</b><span>volume · kg×reps</span></div>
-      <div><b class="${recordes?'up':''}">${recordes}</b><span>${recordes===1?'recorde':'recordes'}</span></div>
-    </div>`;
-
-  const hIni = horaDaSessao(marca), hFim = aberta ? null : fimDaSessao(marca);
-  if (hIni) h += `<p class="horario">${hFim ? 'das <b>'+hIni+'</b> às <b>'+hFim+'</b>' : 'começou às <b>'+hIni+'</b>'}</p>`;
-
-  const notas = [];
-  if (!aberta && dur != null && !exato)
-    notas.push('Você não encerrou este treino; o app fechou sozinho e o tempo vai até a última série registrada.');
-  if (marca.pausado) notas.push(fmtDur(marca.pausado) + ' de pausa, fora da conta.');
-  if (marca.ini === 'manual') notas.push('Início marcado por você, antes do aquecimento.');
-  if (notas.length) h += `<p class="cue" style="margin:16px 0 0">${notas.join(' ')}</p>`;
-
-  // o que foi mudado naquele dia, tenha virado permanente ou não
-  if (Array.isArray(marca.mods) && marca.mods.length) {
-    h += `<div class="pend">
-      <div><b>${marca.mods.length===1?'1 mudança no dia':marca.mods.length + ' mudanças no dia'}</b>
-      <span>${marca.mods.join(' · ')}</span></div>
-    </div>`;
-  }
-
-  if (p.pulado.length || p.parcial.length || p.nada.length) {
-    h += `<div class="pend">
-      ${p.pulado.length?`<div><b>${p.pulado.length} ${p.pulado.length===1?'pulado':'pulados'}</b><span>${p.pulado.map(function(x){return x.nome;}).join(', ')}</span></div>`:''}
-      ${p.parcial.length?`<div><b>${p.parcial.length} ${p.parcial.length===1?'parcial':'parciais'}</b><span>${p.parcial.map(function(x){return x.nome;}).join(', ')}</span></div>`:''}
-      ${p.nada.length?`<div><b>${p.nada.length} não ${p.nada.length===1?'feito':'feitos'}</b><span>${p.nada.map(function(x){return x.nome;}).join(', ')}</span></div>`:''}
-    </div>`;
-  }
-
-  const card = cardioDoDia(marca.t);
-  if (card.length) {
-    h += `<div class="cardio-dia">
-      <b>cardio no mesmo dia</b>
-      <span>${card.map(function (c) { return c.min + ' min de ' + c.m + ' · ' + c.i; }).join('<br>')}</span>
-    </div>`;
-  }
-
-  if (R.tempo) h += `<p class="cue" style="margin:16px 0 0">Mais ${fmtInt(R.tempo)} segundos de prancha, contados à parte do volume.</p>`;
-  if (R.dores.length)
-    h += `<div class="painsum" style="margin-top:18px"><b>Dor marcada em ${R.dores.join(', ')}.</b>
-      Se repetir na próxima sessão, o app sugere a troca de ângulo.</div>`;
-
-  h += `<div class="hsec">exercício a exercício</div>` + (R.itens.length ? R.itens.map(function (x) {
-    return `<div class="hs">
-      <div class="hs-top">
-        <span class="hs-vol" style="min-width:0">${x.nome}</span>
-        ${x.delta===null?'':`<span class="hs-d ${x.delta>0?'up':''}">${x.delta>0?'+':''}${x.delta}%</span>`}
-      </div>
-      <div class="hs-sets" style="padding-left:0">
-        ${x.sets.map(function (y) { return y ? `<span>${x.seg?(y[0]?fmtNum(y[0])+'kg × '+y[1]+'s':y[1]+'s'):fmtNum(y[0])+'×'+y[1]}</span>` : '<span class="nul">–</span>'; }).join('')}
-        <span class="nul">${fmtInt(x.met)} ${x.seg?'seg':'vol'}</span>
-        ${x.recCarga?'<span class="rec">recorde de carga</span>':''}
-        ${!x.recCarga&&x.recMet?`<span class="rec">recorde de ${x.seg?'tempo':'volume'}</span>`:''}
-        ${x.novo?'<span class="nul">primeira vez</span>':''}
-        ${x.fora?'<span class="nul">fora do treino</span>':''}
-      </div>
-      ${x.dor.length?`<div class="pain" style="padding-left:0">dor em ${x.dor.map(dorName).join(' e ')}</div>`:''}
-    </div>`;
-  }).join('') : '<p class="cue" style="margin:0">Nenhuma série registrada neste dia.</p>');
-
-  h += '</div>';
-  return h;
-}
-function renderSessaoLivre(m) {
-  const app = document.getElementById('app');
-  return `<div class="hhdr">
-    <button class="back" onclick="fecharSessao()">‹ voltar</button>
-    <div class="eyebrow"><span>treino avulso</span><span>${diaExtenso(m.t)}</span></div>
-    <h2 class="htitle">${m.nome ? escapeHTML(m.nome) : (m.grupos||[]).join(', ')}</h2>
-  </div>
-  <div class="hwrap">
-    <div class="stats">
-      <div><b>${m.dur?fmtDur(m.dur):'–'}</b><span>tempo de treino</span></div>
-      <div><b>${(m.grupos||[]).length}</b><span>${(m.grupos||[]).length===1?'grupo muscular':'grupos musculares'}</span></div>
-    </div>
-    ${(m.grupos||[]).length?`<div class="chips" style="margin-top:18px">${m.grupos.map(function (g) {
-      return '<span class="chip sel" style="cursor:default">'+g+'</span>';
-    }).join('')}</div>`:''}
-    <p class="cue" style="margin:20px 0 0">Fora do plano. Conta como dia treinado no calendário e na média semanal, mas não tem carga nem série registrada e não move a rotação.</p>
-    <button class="danger" style="width:100%;margin-top:22px" onclick="apagarMarca(${m.t})">apagar este registro</button>
-  </div>`;
-}
-
 async function apagarMarca(t) {
   if (!confirm('Apagar este registro de treino? Isso não tem volta.')) return;
   S.done = S.done.filter(function (x) { return x.t !== t; });
@@ -3346,7 +2374,7 @@ async function wipe() {
   normalizaEstado();
   montaCatalogo();
   try { await DB.delete(KEY); } catch(e){}
-  view.day='A'; view.tab='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
+  view.day='A'; view.aba='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
   view.swapOpen=null; view.fired={};
   render();
   toast('Histórico apagado.');
@@ -3396,6 +2424,20 @@ function pintaTimer() {
   const left = Math.ceil(restante/1000);
   val.textContent = Math.floor(left/60) + ':' + String(left%60).padStart(2,'0');
   val.classList.remove('zero');
+}
+
+// O cronômetro de descanso vive FORA da árvore do Preact, em `index.html`:
+// ele repinta 4× por segundo e redesenhar a tela nesse ritmo roubaria o foco
+// do campo que ele está preenchendo no meio da série. O botão de parar era o
+// último `onclick=` do projeto; agora é `addEventListener`, como todo o resto.
+function ligaBotaoDoTimer() {
+  const b = document.getElementById('tstop');
+  if (b) b.addEventListener('click', function () { stopTimer(); });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', ligaBotaoDoTimer);
+} else {
+  ligaBotaoDoTimer();
 }
 
 function stopTimer() {
@@ -3467,42 +2509,15 @@ document.addEventListener('visibilitychange', function () {
 });
 
 // ---------------------------------------------------------------------------
-// Ponte global — TEMPORÁRIA, morre na fase 3.
+// A única porta que o app abre para fora de si.
 //
-// O app virou módulo ES, e módulo tem escopo próprio: `function foo(){}` aqui
-// dentro não é mais `window.foo`. Como o render ainda emite `onclick="foo()"`
-// como atributo, e atributo só enxerga o escopo global, cada função usada em
-// handler inline precisa ser republicada em `window`.
+// `eval` direto neste escopo enxerga tudo o que está declarado aqui, e é o que
+// os testes de fluxo usam para chegar em `S`, `view` e nas funções internas.
+// Eles rodam sobre o BUILD, não sobre o fonte; sem isto o app teria de exportar
+// o próprio miolo, e seria o teste desenhando a interface do módulo.
 //
-// Quando o render virar componente e os handlers virarem funções de verdade,
-// esta lista inteira deixa de existir. Até lá, `telas.test.js` varre o fonte
-// atrás de handler inline e cobra que todo nome citado esteja aqui — esquecer
-// um dá botão morto, que é exatamente o tipo de quebra silenciosa que o
-// atributo esconde até alguém apertar.
-const HANDLERS_INLINE = {
-  abrirAddEx, abrirAdicionar, abrirCardioRapido, abrirCarga, abrirNota,
-  abrirNovoEx, abrirPrograma, abrirRetro, abrirSessao, abrirSubstituicao,
-  addBody, addCardio, addExercicio, addHora, addNome, addSet, apagarMarca,
-  apagarSessao, bodyIn, buscaEx, cancelarEdicao, cardioSet, closeHist,
-  concluirPromo, concluirRetro, copyJSON, criarExercicio, criarTreino,
-  decidePromo, delBody, delCardio, descOf, desfazMod, editDor, editarSessao,
-  escAttr, exportData, fecharAddEx, fecharAdicionar, fecharPrograma,
-  fecharRetro, fecharSessao, finalizarSessao, go, gravarRetro, histKey, id,
-  importFile, importText, iniciarSessao, inp, limpaNum, modoEdicao,
-  modoPrograma, motivoPromo, moverDia, moverEx, moverProg, mudaMes,
-  mudaSeries, obsIn, openHist, pasteJSON, pausarSessao, progDesc, progRemove,
-  progReps, progSeries, progSetTroca, progTroca, proximoDoBiset, pularEx,
-  removerEx, restaurarDia, restaurarTudo, retomarSessao, salvarEdicao,
-  setAlt, setCarga, setDeload, showJSON, startTimer, stopTimer, tab, toggle,
-  toggleAq, toggleDor, toggleSwap, voltarDoPromo, wipe
-};
-Object.assign(window, HANDLERS_INLINE);
-
-// Janela para os testes alcançarem o escopo do módulo. `eval` direto aqui dentro
-// enxerga tudo que é declarado neste arquivo — é o que `window.eval` dava de
-// graça quando o script era global, e o que o harness usa para chegar em `S`,
-// `view` e nas funções internas sem que o app precise exportar nada.
-// Some junto com a ponte, quando os testes passarem a importar os módulos.
+// A ponte de 91 handlers globais que morava aqui ao lado morreu junto com o
+// último `onclick=` do fonte: todo evento hoje é função passada por prop.
 window.__escopo = function (codigo) { return eval(codigo); };
 
 // Arranca quando o DOM existir, tanto embutido no Claude.ai
@@ -3568,9 +2583,8 @@ CTX.seletorDeDia = function () {
 
 
 // ---------- render ----------
-// Monta a shell do Instrumento. As abas ainda não convertidas entram por
-// `telaLegado()`, e as telas cheias do sistema antigo tomam o lugar da shell
-// inteira — inclusive da tab bar, que é o comportamento que elas já tinham.
+// Monta a shell do Instrumento. As cinco abas são componentes; as telas cheias
+// tomam o lugar da shell inteira, tab bar inclusive.
 function render() {
   montaNoApp(<App ctx={CTX} />);
   ajustaRelogio();
@@ -3654,6 +2668,15 @@ CTX.treino = function () {
       txt: 'Faltam ' + faltam + ' sessões para a semana de metade das séries.',
       acao: { t: 'ativar agora', onClick: function () { setDeload(true); } } });
   }
+  // Preenchendo um treino de outra data: o aviso é o único lugar que diz para
+  // onde as séries digitadas estão indo, e carrega a porta de saída. Sem ele o
+  // app fica preso numa sessão retroativa sem nada na tela explicando por quê.
+  if (s && s.retro) {
+    avisos.push({ k: 'r', rotulo: 'preenchendo treino passado', cor: 'amber',
+      txt: 'As séries que você digitar entram em ' + diaExtenso(s.inicio) + ', não em hoje.',
+      acao: { t: 'concluir', onClick: function () { concluirRetro(); } } });
+  }
+
   const parado = pausaGeral();
   if (parado >= PAUSA_DIAS) {
     avisos.push({ k: 'p', rotulo: 'volta de pausa', cor: 'amber',
@@ -3679,9 +2702,7 @@ CTX.treino = function () {
     }),
     diffTxt: dif ? dif + (dif === 1 ? ' diferença do treinador' : ' diferenças do treinador') : 'igual ao treinador',
 
-    // O modo de edição do dia ainda é a tela antiga inteira. É a próxima a cair.
     editando: !!(view.editProg && podeEditar(d)),
-    htmlEdicao: (view.editProg && podeEditar(d)) ? renderEdicao(d, P) : '',
     avisos: avisos,
     exercicios: P ? P.ex.map(function (ex, i) {
       return Object.assign(vmExercicio(d, i, ex), { id: id(d, i) });
@@ -3800,10 +2821,7 @@ CTX.restauraPlano = function () {
   toast('Plano nutricional restaurado.');
 };
 
-// ---------- DADOS: o que ainda vinha em string ----------
-// Peso, cintura, cardio e músculos passam a componente. O calendário do mês
-// continua por <Bruto> — é grade de fios e sobrevive bem à repintura de token;
-// converter a estrutura dele é a última pendência desta tela.
+// ---------- DADOS ----------
 
 /** Série da média semanal, para a sparkline. */
 function serieSemanal(marcas, semanas) {
@@ -3816,6 +2834,16 @@ function serieSemanal(marcas, semanas) {
     saida.push(achou ? Math.round(achou.v * 10) / 10 : null);
   }
   return saida;
+}
+
+// As últimas medidas, com a data — a lista existe para corrigir: digitou 743
+// no lugar de 74,3 e só percebeu depois. Sem ela, o erro entra na média da
+// semana e não sai mais.
+function medidasRecentes(k, un) {
+  return S.body[k].slice(-4).slice().sort(function (a, b) { return b.t - a.t; })
+    .map(function (x) {
+      return { t: x.t, data: fmtDate(x.t), valor: fmtDec(x.v) + ' ' + un };
+    });
 }
 
 CTX.corpo = function () {
@@ -3836,18 +2864,26 @@ CTX.corpo = function () {
       ritmoCor: (r.ok && r.duasSemanas)
         ? (r.kgSem >= 0.15 && r.kgSem <= 0.4 ? 'ins-acid' : 'ins-amber') : '',
       nota: naSemana + (naSemana === 1 ? ' pesagem nesta semana' : ' pesagens nesta semana'),
-      alvo: 'registre 3 a 4 por semana'
+      alvo: 'registre 3 a 4 por semana',
+      medidas: medidasRecentes('peso', 'kg')
     },
     cintura: {
       valor: f.cintura == null ? ultimaCint : f.cintura,
       serie: serieSemanal(S.body.cintura, 14),
       atual: S.body.cintura.length ? fmtDec(ultimaCint) + ' cm' : '—',
-      mes: c ? fmtSig2(c.mes) + ' cm no mês' : 'faltam 3 semanas de medida para concluir'
+      mes: c ? fmtSig2(c.mes) + ' cm no mês' : 'faltam 3 semanas de medida para concluir',
+      medidas: medidasRecentes('cintura', 'cm')
     },
     cardio: {
       semana: cardioSemana().length,
       alvo: 3,
       perna: pernaHoje(),
+      // A lista da semana existe para uma coisa só: desfazer. Registrou 25 min
+      // de bike duas vezes por engano, e sem isso o número da semana fica
+      // errado para sempre — não há outra porta para apagar um registro.
+      sessoes: cardioSemana().map(function (x) {
+        return { t: x.t, data: fmtDate(x.t), modal: x.m, resumo: x.min + ' min · ' + x.i };
+      }),
       regra: 'depois do A: 25 a 30 min · no dia de descanso: 30 a 40 · depois do F: 20 a 30, opcional. Evite antes de C ou F, e nunca antes do treino.'
     },
     musculos: CTX.musculos()
@@ -3922,6 +2958,8 @@ CTX.setPeso = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { 
 CTX.setCintura = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { cintura: v }); render(); };
 CTX.registraPeso = function () { addBody('peso'); };
 CTX.registraCintura = function () { addBody('cintura'); };
+CTX.apagaMedida = function (k, t) { delBody(k, t); };
+CTX.apagaCardio = function (t) { delCardio(t); };
 CTX.abreCardio = function () { abrirCardioRapido(); };
 
 // ---------- edição de COMIDA ----------
@@ -4650,3 +3688,267 @@ CTX.addSet = function (campo, valor) { addSet(campo, valor); };
 CTX.addNome = function (el) { addNome(el); };
 CTX.addHora = function (el) { addHora(el); };
 CTX.gravaRetro = function (detalhar) { gravarRetro(detalhar); };
+
+// ---------- edição do treino de HOJE ----------
+// O gesto é o mesmo do editor de programa — subir, descer, mais série, menos
+// série, trocar, remover — e por isso a linha é um componente só. O que muda
+// é quem executa, e isso entra por `acoes`.
+CTX.edicaoDoDia = function () {
+  const d = view.day;
+  const P = treino(d);
+  const mods = modsDoDia(d);
+  return {
+    dia: d,
+    aviso: mods.length
+      ? mods.length + (mods.length === 1
+          ? ' mudança pendente. No fim do treino você decide se ela fica.'
+          : ' mudanças pendentes. No fim do treino você decide o que fica.')
+      : 'O programa oficial só muda se você quiser, no fim do treino.',
+    linhas: P.ex.map(function (ex, i) {
+      const trocado = ex.orig && ex.orig !== ex.id;
+      const imp = impactoSeries(d, ex.g);
+      return {
+        i: i,
+        ord: String(i + 1).padStart(2, '0'),
+        nome: ex.n,
+        noLugarDe: trocado ? 'no lugar de ' + nomeEx(ex.orig) : null,
+        meta: ex.g + (ex.desde ? ' · no programa há ' + semanasDe(ex.desde) : ''),
+        mexido: !!ex.mod,
+        primeira: i === 0,
+        ultima: i === P.ex.length - 1,
+        series: ex.s,
+        // o impacto só aparece onde ele mexeu ou onde o número saiu do alvo:
+        // uma linha por exercício seria ruído em toda a tela
+        impacto: imp && (ex.mod || imp.acima) ? { txt: imp.txt, acima: !!imp.acima } : null,
+        troca: view.swapOpen === i ? trocaDoDia(d, i) : null
+      };
+    }),
+    mods: mods.map(function (m, j) { return { j: j, txt: textoMod(d, m) }; }),
+    addEx: view.addEx ? catalogoDeAdicao(d) : null
+  };
+};
+
+function trocaDoDia(d, i) {
+  const ex = treino(d).ex[i];
+  const lista = altList(d, i);
+  const ind = lista.filter(function (a) { return a.ind; });
+  const outros = lista.filter(function (a) { return !a.ind; });
+  const grupos = [{ rotulo: 'Mesmo padrão de movimento:', opcoes: ind.map(opcaoDeTroca) }];
+  if (outros.length) {
+    grupos.push({ rotulo: 'Outros de ' + exDe(ex.orig || ex.id).g + ':',
+                  opcoes: outros.map(opcaoDeTroca) });
+  }
+  return {
+    grupos: grupos,
+    voltar: ex.orig && ex.orig !== ex.id
+      ? { t: 'Voltar para ' + nomeEx(ex.orig), sub: 'Cancela a troca.' } : null
+  };
+}
+
+// O catálogo inteiro, com busca, e a porta para cadastrar equipamento que o
+// app ainda não conhece.
+function catalogoDeAdicao(d) {
+  const q = (view.addQ || '').toLowerCase().trim();
+  const nodia = {};
+  const t = treino(d);
+  if (t) t.ex.forEach(function (x) { nodia[x.id] = 1; });
+  return {
+    dia: d,
+    busca: view.addQ || '',
+    achados: Object.keys(CAT)
+      .filter(function (k) { return !CAT[k].arq; })
+      .filter(function (k) {
+        return !q || CAT[k].n.toLowerCase().indexOf(q) >= 0 || (CAT[k].g || '').indexOf(q) >= 0;
+      })
+      .sort(function (a, b) { return CAT[a].n.localeCompare(CAT[b].n); })
+      .slice(0, 40)
+      .map(function (k) {
+        return { id: k, n: CAT[k].n,
+                 sub: (CAT[k].g || 'sem grupo') + (nodia[k] ? ' · já está neste treino' : '') };
+      }),
+    novo: view.novoEx
+      ? { grupos: gruposDoPlano(),
+          cargas: Object.keys(CARGAS).map(function (c) { return { k: c, t: CARGAS[c].nome }; }) }
+      : null
+  };
+}
+
+CTX.acoesDia = {
+  subir: function (i) { moverEx(i, -1); },
+  descer: function (i) { moverEx(i, 1); },
+  menos: function (i) { mudaSeries(i, -1); },
+  mais: function (i) { mudaSeries(i, 1); },
+  trocar: function (i) { abrirSubstituicao(i); },
+  remover: function (i) { removerEx(i); },
+  escolheTroca: function (i, id) { setAlt(i, id); },
+  fechaTroca: function (i) { toggleSwap(i); },
+  desfaz: function (j) { desfazMod(j); },
+  pronto: function () { modoEdicao(false); }
+};
+
+CTX.acoesAdd = {
+  abre: function () { abrirAddEx(); },
+  fecha: function () { fecharAddEx(); },
+  busca: function (v) { buscaEx(v); },
+  adiciona: function (k) { addExercicio(k); },
+  abreNovo: function () { abrirNovoEx(); },
+  cria: function () { criarExercicio(); }
+};
+
+// ---------- tela cheia: o programa ----------
+// Quatro modos numa tela só — a lista dos treinos, um treino aberto, a
+// diferença para o que o treinador prescreveu, e o histórico de mudanças —
+// porque são quatro ângulos do MESMO objeto.
+CTX.programa = function () {
+  const V = view.prog;
+  if (V.day) return programaDia(V.day);
+  if (V.modo === 'diff') return programaDiff();
+  if (V.modo === 'historico') return programaHist();
+  return programaLista();
+};
+
+function programaLista() {
+  const dif = difTotal();
+  return {
+    modo: 'lista',
+    olho: 'seu programa',
+    meta: rot().length + ' treinos',
+    titulo: 'Programa',
+    stats: [
+      { k: 'a', rotulo: 'séries diretas', valor: String(totalSeries()) },
+      { k: 'b', rotulo: 'do treinador', valor: String(ALVO_TOTAL) },
+      { k: 'c', rotulo: dif === 1 ? 'diferença' : 'diferenças', valor: String(dif),
+        cor: dif ? 'ins-amber' : '' }
+    ],
+    dias: rot().map(function (d, i) {
+      const p = S.prog[d];
+      const n = difDoDia(d).length;
+      return {
+        d: d, i: i,
+        nome: p ? p.name : 'treino ' + d,
+        meta: (p ? p.ex.length : 0) + ' exercícios · ' + seriesDoDia(d) + ' séries' +
+              (n ? ' · ' + n + (n === 1 ? ' diferença' : ' diferenças') : ''),
+        primeiro: i === 0,
+        ultimo: i === rot().length - 1
+      };
+    }),
+    dif: dif
+  };
+}
+
+function programaDia(d) {
+  const p = S.prog[d];
+  if (!p) return { modo: 'dia', vazio: true, olho: 'treino ' + d, titulo: 'Treino não encontrado' };
+  return {
+    modo: 'dia',
+    dia: d,
+    olho: 'treino ' + d,
+    meta: seriesDoDia(d) + ' séries',
+    titulo: p.name,
+    dif: difDoDia(d).map(function (x) { return x.txt; }),
+    linhas: p.ex.map(function (sl, i) {
+      const e = exDe(sl.id);
+      const imp = impactoOficial(e.g);
+      return {
+        i: i,
+        ord: String(i + 1).padStart(2, '0'),
+        nome: e.n,
+        noLugarDe: null,
+        meta: (e.g || 'sem grupo') + (sl.desde ? ' · há ' + semanasDe(sl.desde) : ''),
+        mexido: false,
+        primeira: i === 0,
+        ultima: i === p.ex.length - 1,
+        series: sl.s,
+        reps: sl.r + ' reps',
+        descanso: 'descanso ' + fmtDesc(sl.d),
+        impacto: imp ? { txt: imp.txt, acima: !!imp.acima } : null,
+        troca: view.swapOpen === i ? trocaDoPrograma(d, i) : null
+      };
+    }),
+    addEx: view.addEx ? catalogoDeAdicao(d) : null
+  };
+}
+
+function trocaDoPrograma(d, i) {
+  const sl = S.prog[d].ex[i];
+  const e = exDe(sl.id);
+  const vistos = {}; vistos[sl.id] = 1;
+  const out = [];
+  (ALT[e.n] || []).forEach(function (a) {
+    const k = slugEx(a.n);
+    if (vistos[k]) return; vistos[k] = 1;
+    out.push({ id: k, n: a.n, w: a.w });
+  });
+  Object.keys(CAT).forEach(function (k) {
+    if (vistos[k] || CAT[k].arq || CAT[k].g !== e.g || !e.g) return;
+    vistos[k] = 1;
+    out.push({ id: k, n: CAT[k].n, w: 'mesmo grupo muscular' });
+  });
+  return {
+    grupos: [{ rotulo: 'Trocar no programa, a partir do próximo treino ' + d + ':',
+               opcoes: out.map(opcaoDeTroca) }],
+    voltar: null
+  };
+}
+
+function programaDiff() {
+  const blocos = [];
+  if (rot().join('|') !== ROT_BASE.join('|')) {
+    blocos.push({ k: 'rot', titulo: 'rotação',
+                  itens: [ROT_BASE.join(' → ') + ' virou ' + rot().join(' → ')], dia: null });
+  }
+  rot().forEach(function (d) {
+    const dif = difDoDia(d);
+    if (!dif.length) return;
+    blocos.push({ k: d, titulo: 'treino ' + d,
+                  itens: dif.map(function (x) { return x.txt; }), dia: d });
+  });
+  return { modo: 'diff', olho: 'seu programa', meta: 'vs. treinador',
+           titulo: 'O que está diferente', blocos: blocos };
+}
+
+function programaHist() {
+  const log = (S.progLog || []).slice().reverse();
+  const MOT = {}; MOTIVOS.forEach(function (x) { MOT[x.k] = x.t; });
+  return {
+    modo: 'historico',
+    olho: 'seu programa',
+    meta: log.length + (log.length === 1 ? ' mudança' : ' mudanças'),
+    titulo: 'Histórico de mudanças',
+    log: log.map(function (x, i) {
+      return {
+        i: i,
+        txt: x.txt,
+        meta: 'treino ' + x.day + ' · ' + diaExtenso(x.t) +
+              (x.motivo ? ' · ' + (MOT[x.motivo] || x.motivo) : '')
+      };
+    })
+  };
+}
+
+CTX.acoesPrograma = {
+  volta: function () {
+    if (view.prog.day || view.prog.modo !== 'lista') abrirPrograma(null);
+    else fecharPrograma();
+  },
+  abreDia: function (d) { abrirPrograma(d); },
+  modo: function (m) { modoPrograma(m); },
+  moveDia: function (i, n) { moverDia(i, n); },
+  criaTreino: function () { criarTreino(); },
+  restauraDia: function (d) { restaurarDia(d); },
+  restauraTudo: function () { restaurarTudo(); }
+};
+
+// As mesmas ações da linha editável, executadas no programa oficial.
+CTX.acoesProg = {
+  subir: function (i) { moverProg(view.prog.day, i, -1); },
+  descer: function (i) { moverProg(view.prog.day, i, 1); },
+  menos: function (i) { progSeries(view.prog.day, i, -1); },
+  mais: function (i) { progSeries(view.prog.day, i, 1); },
+  trocar: function (i) { progTroca(view.prog.day, i); },
+  remover: function (i) { progRemove(view.prog.day, i); },
+  escolheTroca: function (i, id) { progSetTroca(view.prog.day, i, id); },
+  fechaTroca: function (i) { toggleSwap(i); },
+  reps: function (i) { progReps(view.prog.day, i); },
+  descanso: function (i) { progDesc(view.prog.day, i); }
+};

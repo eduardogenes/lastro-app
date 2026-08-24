@@ -12,7 +12,7 @@ export function TelaCheia({ olho, meta, titulo, aoVoltar, acao, corpo, children 
   return (
     <div class="tc">
       <div class="tc-topo">
-        <button class="tc-back" onClick={aoVoltar}>‹ voltar</button>
+        <button class="tc-back back" onClick={aoVoltar}>‹ voltar</button>
         {acao}
       </div>
       <div class="tc-cab">

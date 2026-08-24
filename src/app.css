@@ -9,21 +9,6 @@
 #app .hdr, #app .hwrap { font-family: var(--f-d); }
 
 /* ---------- header ---------- */
-.hdr { padding: calc(14px + env(safe-area-inset-top)) 18px 0; }
-.hdr.curto { padding-bottom: 2px; }
-.eyebrow {
-  font-family: var(--f-m);
-  font-size: 10.5px;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--dawn);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.eyebrow span:last-child { color: var(--mist); }
-.dayline { display: flex; align-items: center; gap: 11px; margin-top: 4px; }
-.day-txt { flex: 1; min-width: 0; }
 .day-ini {
   flex: 0 0 auto; appearance: none; cursor: pointer;
   background: var(--dawn); border: 0; color: var(--night);
@@ -41,11 +26,6 @@
   letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-top: 4px;
 }
 .day-rel.pausado span { color: var(--mist); }
-.dayletter {
-  font-size: 40px; font-weight: 800; line-height: .85;
-  letter-spacing: -.03em; color: var(--paper);
-}
-.dayname { font-size: 16px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em; }
 .daymeta { font-family: var(--f-m); font-size: 10.5px; color: var(--mist); margin-top: 2px; }
 
 /* ---------- faixa da semana ---------- */
@@ -69,10 +49,6 @@
 .wd.futuro { opacity: .45; }
 
 .daymeta b { color: var(--dawn); font-weight: 600; }
-.autonota {
-  font-family: var(--f-m); font-size: 10.5px; color: var(--dim);
-  line-height: 1.6; padding: 22px 18px 8px;
-}
 
 .wd.livre { border-color: var(--mist); }
 .wd.livre .wd-v { color: var(--mist); }
@@ -160,20 +136,6 @@
 .rot button.on.next::after { background: var(--night); }
 
 /* ---------- tabs ---------- */
-.tabs {
-  display: flex; gap: 18px; padding: 13px 18px 0;
-  border-bottom: 1px solid var(--line); margin: 0 0 4px;
-  overflow-x: auto; scrollbar-width: none;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tabs button { white-space: nowrap; }
-.tabs button {
-  appearance: none; background: none; border: 0; padding: 0 0 8px;
-  font-family: var(--f-m); font-size: 11px; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--mist); cursor: pointer;
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
-}
-.tabs button.on { color: var(--paper); border-bottom-color: var(--dawn); }
 
 /* ---------- exercise ---------- */
 
@@ -317,7 +279,6 @@
 .deload.on .dlbtn { border-color: rgba(203,243,94,.5); color: var(--dawn); }
 
 /* ---------- histórico do exercício ---------- */
-.hhdr { padding: calc(18px + env(safe-area-inset-top)) 18px 0; }
 .back {
   appearance: none; background: transparent; border: 1px solid var(--line);
   color: var(--mist); font-family: var(--f-m); font-size: 11px;
@@ -387,47 +348,12 @@
 
 
 /* ---------- cardio ---------- */
-.week {
-  display: flex; align-items: center; gap: 16px;
-  background: var(--dusk); border: 1px solid var(--line);
-  border-radius: 12px; padding: 17px 18px; margin: 14px 0 0;
-}
-.week-n {
-  font-family: var(--f-m); font-size: 34px; font-weight: 600;
-  color: var(--dawn); letter-spacing: -.03em; line-height: 1; white-space: nowrap;
-}
-.week-n em { font-style: normal; font-size: 15px; color: var(--dim); }
-.week-s {
-  font-family: var(--f-m); font-size: 10px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--dim); line-height: 1.7;
-}
-.week-s b {
-  display: block; font-size: 12px; letter-spacing: 0; text-transform: none;
-  color: var(--mist); font-weight: 500; margin-top: 2px;
-}
-.week-s.ok b { color: var(--paper); }
-.week-s.over b { color: var(--ember); }
-.week-p { font-size: 12.5px; color: var(--mist); line-height: 1.55; margin: 13px 0 2px; }
 .crule { font-family: var(--f-m); font-size: 10.5px; color: var(--dim); line-height: 1.5; margin: 16px 0 12px; }
 .cwarn {
   margin: 16px 0 0; padding: 12px 14px; border-radius: 10px;
   background: rgba(255,196,107,.11); border: 1px solid rgba(255,196,107,.4);
   font-size: 12.5px; color: var(--ember-soft); line-height: 1.5;
 }
-.crow {
-  display: flex; align-items: baseline; gap: 10px;
-  border-bottom: 1px solid var(--line); padding: 13px 0;
-}
-.crow:last-child { border: 0; padding-bottom: 0; }
-.crow-d { font-family: var(--f-m); font-size: 11px; color: var(--mist); min-width: 46px; }
-.crow-m { font-size: 13.5px; font-weight: 600; color: var(--paper); }
-.crow-n { font-family: var(--f-m); font-size: 11px; color: var(--mist); }
-.crow-x {
-  margin-left: auto; appearance: none; background: transparent; cursor: pointer;
-  border: 1px solid var(--line); color: var(--dim);
-  font-family: var(--f-m); font-size: 10px; padding: 8px 10px; border-radius: 7px;
-}
-.crow-x:hover { border-color: var(--ember); color: var(--ember); }
 
 /* ---------- avisos no cartão do exercício ---------- */
 .painbox b { display: block; color: var(--ember); font-weight: 600; margin-bottom: 3px; }
@@ -440,91 +366,7 @@
   border-radius: 8px; padding: 8px 12px; font-family: var(--f-m);
   font-size: 11px; letter-spacing: .04em; min-height: 36px;
 }
-.edcount { font-family: var(--f-m); font-size: 10.5px; color: var(--dawn); }
 
-.edbar {
-  display: flex; align-items: flex-start; gap: 12px;
-  margin: 0 0 14px; padding: 12px 14px; border-radius: 11px;
-  border: 1px solid var(--dawn); background: rgba(203,243,94,.07);
-  font-size: 13px; line-height: 1.5; color: var(--mist);
-}
-.edbar b { color: var(--paper); display: block; }
-.edbar-b {
-  flex: 0 0 auto; background: var(--dawn); color: var(--on-dawn); border: 0;
-  border-radius: 8px; padding: 10px 16px; font-weight: 700; min-height: 44px;
-}
-
-.edx {
-  border: 1px solid var(--line); border-radius: 12px;
-  background: var(--dusk); margin-bottom: 10px; padding: 12px 12px 10px;
-}
-.edx.mexido { border-color: var(--dawn); }
-.edx-h { display: flex; align-items: flex-start; gap: 10px; }
-.edx-n { flex: 1; font-size: 14.5px; font-weight: 600; line-height: 1.3; }
-.edx-n em { display: block; font-style: normal; font-size: 11.5px; color: var(--dawn); margin-top: 2px; }
-.edx-n span { display: block; font-family: var(--f-m); font-size: 10.5px; color: var(--dim); margin-top: 3px; }
-.edx-mv { display: flex; gap: 6px; }
-.edx-mv button {
-  width: 40px; height: 40px; border-radius: 9px; font-size: 16px;
-  border: 1px solid var(--line); background: var(--dusk); color: var(--mist);
-}
-.edx-mv button:disabled { opacity: .3; }
-
-.edx-c { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.stepper {
-  display: flex; align-items: center; gap: 4px;
-  border: 1px solid var(--line); border-radius: 9px; background: var(--dusk); padding: 2px;
-}
-.stepper button {
-  width: 42px; height: 40px; border: 0; background: none;
-  color: var(--dawn); font-size: 20px; line-height: 1;
-}
-.stepper button:disabled { color: var(--dim); }
-.stepper b { font-family: var(--f-m); font-size: 16px; min-width: 20px; text-align: center; }
-.stepper span { font-family: var(--f-m); font-size: 10.5px; color: var(--dim); padding-right: 8px; }
-.edx-b {
-  min-height: 40px; padding: 0 14px; border-radius: 9px;
-  border: 1px solid var(--line); background: var(--dusk); color: var(--mist);
-  font-family: var(--f-m); font-size: 11px;
-}
-.edx-b.rm { color: var(--ember); border-color: var(--ember-line); }
-.edx-imp {
-  margin-top: 9px; font-family: var(--f-m); font-size: 10.5px;
-  color: var(--dim); line-height: 1.5;
-}
-.edx-imp.acima { color: var(--ember); }
-
-.edadd {
-  width: 100%; min-height: 48px; border-radius: 11px; margin-top: 4px;
-  border: 1px dashed var(--line); background: none; color: var(--mist);
-  font-family: var(--f-m); font-size: 12px;
-}
-.edmods { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
-.edmods-h {
-  font-family: var(--f-m); font-size: 10.5px; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--dim); margin-bottom: 8px;
-}
-.edmod {
-  display: flex; align-items: center; gap: 10px; padding: 9px 0;
-  border-bottom: 1px solid var(--line); font-size: 13px;
-}
-.edmod span { flex: 1; }
-.edmod button {
-  background: none; border: 1px solid var(--line); color: var(--mist);
-  border-radius: 7px; padding: 7px 11px; font-family: var(--f-m); font-size: 10.5px; min-height: 34px;
-}
-
-.addex { margin-top: 12px; }
-.addq {
-  width: 100%; margin-bottom: 8px; padding: 12px; min-height: 46px;
-  border: 1px solid var(--line); border-radius: 9px;
-  background: var(--dusk); color: var(--paper); font-size: 15px; font-family: var(--f-d);
-}
-.addlist { max-height: 340px; overflow-y: auto; }
-.swapopt.novo { border-style: dashed; }
-.novoex { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 8px; }
-.nxk { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--mist); margin: 4px 0 12px; }
-.nxk input { width: 20px; height: 20px; }
 
 /* ---------- tela de programa ---------- */
 .progdias { margin: 6px 0 12px; }
@@ -572,12 +414,6 @@
 /* ações do exercício lado a lado, para o painel não virar uma coluna de botões */
 
 /* ---------- marcos ---------- */
-.marco { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-.marco span {
-  font-family: var(--f-m); font-size: 11px; color: var(--dawn);
-  border: 1px solid rgba(203,243,94,.45); background: rgba(203,243,94,.09);
-  border-radius: 8px; padding: 9px 12px; line-height: 1.35;
-}
 
 /* ---------- resumo pós-treino ---------- */
 .rec {
@@ -604,54 +440,9 @@
 
 /* ---------- séries por músculo ---------- */
 .mus { margin-top: 4px; }
-.musrow {
-  display: flex; align-items: center; gap: 10px;
-  padding: 11px 0; border-bottom: 1px solid var(--line);
-}
-.musrow:last-child { border: 0; }
-.musn { flex: 0 0 108px; font-size: 12.5px; color: var(--mist); line-height: 1.25; }
-.musrow.prio .musn { color: var(--paper); font-weight: 600; }
-.musn i {
-  display: block; font-style: normal; font-family: var(--f-m);
-  font-size: 8px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--dawn); margin-top: 3px; line-height: 1.25;
-}
-.musn i.n-secundaria { color: var(--mist); }
-.musn i.n-indireto { color: var(--dim); }
-.musrow.prio .musn { color: var(--paper); font-weight: 600; }
-.musbar { flex: 1; height: 6px; background: var(--raise); border-radius: 3px; overflow: hidden; min-width: 0; }
-.musbar em { display: block; height: 100%; background: var(--line); border-radius: 3px; }
-.musrow.prio .musbar em { background: var(--dawn); }
-.musv {
-  flex: 0 0 auto; font-family: var(--f-m); font-size: 14px; color: var(--paper);
-  font-weight: 500; text-align: right; min-width: 22px;
-}
-.musv small { display: block; font-size: 8.5px; color: var(--dim); font-weight: 400; margin-top: 2px; }
-.musd { flex: 0 0 42px; font-family: var(--f-m); font-size: 10px; color: var(--mist); text-align: right; }
-.musd.up { color: var(--dawn); }
-.musd.down { color: var(--ember); }
 
 /* ---------- corpo ---------- */
-.verdict {
-  border: 1px solid var(--line); background: var(--dusk);
-  border-radius: 12px; padding: 18px; margin: 14px 0 4px;
-}
-.verdict-k {
-  font-family: var(--f-m); font-size: 9.5px; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--dim);
-}
-.verdict-t {
-  font-size: 26px; font-weight: 800; letter-spacing: -.025em;
-  line-height: 1.1; margin: 7px 0 8px; color: var(--paper);
-}
-.verdict p { font-size: 13px; color: var(--mist); line-height: 1.55; margin: 0; }
-.verdict.mais   { border-color: rgba(203,243,94,.45); background: rgba(203,243,94,.09); }
-.verdict.mais .verdict-t { color: var(--dawn); }
-.verdict.menos  { border-color: rgba(255,196,107,.45); background: rgba(255,196,107,.09); }
-.verdict.menos .verdict-t { color: var(--ember); }
-.verdict.faltam .verdict-t { color: var(--mist); }
 
-.blist { margin-top: 14px; }
 
 /* ---------- dados ---------- */
 .data { padding: 6px 18px 0; }
@@ -668,13 +459,6 @@
 .dbtn:hover { border-color: var(--dawn); }
 .dbtn.ghost { background: transparent; color: var(--mist); font-weight: 500; font-family: var(--f-m); font-size: 11.5px; padding: 13px; }
 .dbtn input[type=file] { display: none; }
-.jtext {
-  width: 100%; min-height: 130px; margin-top: 10px; resize: vertical;
-  background: var(--night); border: 1px solid var(--line); color: var(--mist);
-  font-family: var(--f-m); font-size: 10.5px; line-height: 1.5;
-  border-radius: 9px; padding: 11px; -webkit-text-size-adjust: 100%;
-}
-.jtext:focus { outline: none; border-color: var(--dawn); }
 
 #toast {
   position: fixed; left: 50%; transform: translateX(-50%);
@@ -688,31 +472,8 @@
 #toast.on { display: block; }
 
 /* ---------- finish ---------- */
-.finish { padding: 22px 18px 8px; }
-.finish button {
-  width: 100%; appearance: none; border: 0; border-radius: 11px;
-  background: var(--dawn); color: var(--night);
-  font-family: var(--f-d); font-weight: 700; font-size: 15px;
-  padding: 15px; cursor: pointer; letter-spacing: -.01em;
-}
-.finish button:disabled { background: var(--raise); color: var(--mist); cursor: default; }
-.finish p { font-family: var(--f-m); font-size: 10.5px; color: var(--mist); text-align: center; margin: 10px 0 0; }
 
 /* ---------- rules ---------- */
-.rules { padding: 6px 18px 0; }
-.rule { border-bottom: 1px solid var(--line); padding: 16px 0; }
-.rule:last-child { border: 0; }
-.rule h3 {
-  font-size: 14.5px; font-weight: 700; margin: 0 0 6px; letter-spacing: -.01em;
-  display: flex; align-items: baseline; gap: 9px;
-}
-.rule h3 em {
-  font-family: var(--f-m); font-style: normal; font-size: 10px;
-  color: var(--dawn); letter-spacing: .1em;
-}
-.rule p { font-size: 13px; color: var(--mist); line-height: 1.55; margin: 0; }
-.rule p + p { margin-top: 7px; }
-.rule b { color: var(--paper); font-weight: 600; }
 .warn { border-left: 2px solid var(--ember); padding-left: 11px; }
 .warn h3 em { color: var(--ember); }
 
@@ -723,11 +484,6 @@
 }
 .danger:hover { border-color: var(--ember); color: var(--ember); }
 
-.store {
-  font-family: var(--f-m); font-size: 10.5px; color: var(--dim);
-  line-height: 1.6; margin: 22px 0 0;
-}
-.store b { color: var(--mist); font-weight: 500; }
 
 /* ---------- timer ---------- */
 #timer {

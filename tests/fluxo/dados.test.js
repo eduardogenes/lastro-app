@@ -25,8 +25,8 @@ test('estado do formato original carrega com padrões', async () => {
 
 test('todas as telas renderizam com estado antigo', async () => {
   const a = await app({ estado: ANTIGO });
-  ['treino', 'acomp', 'corpo', 'ajustes'].forEach(function (t) {
-    a.E('tab("' + t + '")');
+  ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (t) {
+    a.aba(t);
     assert.ok(a.doc.getElementById('app').innerHTML.length > 600, 'aba ' + t + ' vazia');
   });
   a.fechar();
@@ -52,7 +52,7 @@ test('exportar carrega todos os campos do estado', async () => {
   const a = await app();
   a.E('toggle(0)');
   a.preencher(0, 0, 40, 10);
-  a.E('tab("ajustes")');
+  a.aba('guia');
   a.E('showJSON()');
 
   const bkp = JSON.parse(a.doc.getElementById('jout').value);
@@ -79,7 +79,7 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
   await a.E('gravarRetro(false)');
   await a.esperar();
 
-  a.E('tab("ajustes")');
+  a.aba('guia');
   a.E('showJSON()');
   const bkp = a.doc.getElementById('jout').value;
   const antes = JSON.parse(bkp).data;
@@ -88,7 +88,7 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
   await a.esperar();
   assert.strictEqual(a.E('S.done.length'), 0);
 
-  a.E('tab("ajustes")');
+  a.aba('guia');
   await a.E('importText(' + JSON.stringify(bkp) + ')');
   await a.esperar(60);
 
@@ -104,7 +104,7 @@ test('importar lixo não toca no estado', async () => {
   a.preencher(0, 0, 40, 10);
   const antes = a.J('S.logs');
 
-  a.E('tab("ajustes")');
+  a.aba('guia');
   await a.E('importText("{ isso nao e json")');
   assert.ok(a.toast().includes('JSON inválido'));
 
@@ -118,7 +118,7 @@ test('importar lixo não toca no estado', async () => {
 test('importar aceita o objeto cru, sem envelope', async () => {
   const a = await app();
   const cru = JSON.stringify({ logs: ANTIGO.logs, done: ANTIGO.done });
-  a.E('tab("ajustes")');
+  a.aba('guia');
   await a.E('importText(' + JSON.stringify(cru) + ')');
   await a.esperar(60);
   assert.strictEqual(a.E('S.done.length'), 1);
@@ -264,7 +264,7 @@ test('sessão anterior à troca continua abrindo no calendário', async () => {
     done: [{ day: 'A', t: t, sid: t, dur: 50 * 60000 }]
   } });
   await a.esperar();
-  a.E('tab("acomp")');
+  a.aba('dados');
   a.E('abrirSessao(' + t + ')');
   const txt = a.doc.getElementById('app').textContent;
   assert.ok(txt.includes('Supino inclinado com halteres'), txt.slice(0, 300));

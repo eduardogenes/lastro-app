@@ -32,7 +32,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   assert.strictEqual(a.E('view.day'), 'B', 'a rotação avançou');
 
   // cardio depois do A, como o treinador pediu
-  a.E('tab("corpo")');
+  a.aba('dados');
   a.E('cardioSet("min",30)');
   await a.E('addCardio()');
   await a.esperar();
@@ -45,7 +45,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   assert.strictEqual(a.E('S.body.peso.length'), 1);
 
   // ---- terça: treino B, e ele decide que lateral merece mais uma série ----
-  a.E('tab("treino")');
+  a.aba('treino');
   assert.strictEqual(a.E('view.day'), 'B');
   a.E('toggle(0)');
   for (let k = 0; k < 3; k++) a.preencher(0, k, 70, 9);
@@ -94,7 +94,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
     'e entrou no programa porque ele quis');
 
   // ---- quinta: esqueceu de registrar, lança retroativo ----
-  a.E('tab("acomp")');
+  a.aba('dados');
   a.E('abrirAdicionar(' + (Date.now() - 1 * DIA) + ')');
   a.E('addSet("tipo","E")');
   a.E('addSet("dur",55)');
@@ -126,8 +126,8 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   assert.strictEqual(mus['quadríceps'], 3, 'o pendulum novo contou em quadríceps');
 
   // e todas as telas continuam de pé
-  ['treino', 'acomp', 'corpo', 'ajustes'].forEach(function (t) {
-    b.E('tab("' + t + '")');
+  ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (t) {
+    b.aba(t);
     assert.ok(b.doc.getElementById('app').innerHTML.length > 600, 'aba vazia: ' + t);
   });
   b.E('abrirPrograma(null)');
@@ -168,7 +168,7 @@ test('exercício removido do programa continua abrindo no histórico antigo', as
   await a.esperar();
   a.E('fecharPrograma()');
 
-  a.E('tab("acomp")');
+  a.aba('dados');
   a.E('abrirSessao(' + t + ')');
   const txt = a.doc.getElementById('app').textContent;
   assert.ok(txt.includes('Chest press inclinado convergente'), 'a sessão de cinco dias atrás abre igual');
@@ -214,7 +214,7 @@ test('importar um backup do formato antigo reconstrói tudo', async () => {
   });
 
   const a = await app();
-  a.E('tab("ajustes")');
+  a.aba('guia');
   await a.E('importText(' + JSON.stringify(antigo) + ')');
   await a.esperar(60);
 
@@ -226,7 +226,7 @@ test('importar um backup do formato antigo reconstrói tudo', async () => {
   assert.strictEqual(a.E('S.done.length'), 1);
   assert.strictEqual(a.E('S.body.peso.length'), 1);
 
-  a.E('tab("treino")');
+  a.aba('treino');
   assert.ok(a.doc.getElementById('app').innerHTML.length > 600);
   a.fechar();
 });

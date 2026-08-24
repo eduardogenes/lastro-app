@@ -11,7 +11,7 @@
 
 import { Cabecalho, GradeMetricas, Secao, Vazio, useAgora } from '../instrumento/primitivos.jsx';
 import { Exercicio } from '../exercicio.jsx';
-import { Bruto } from '../bruto.jsx';
+import { EdicaoDoDia } from './edicaodia.jsx';
 
 export function Treino({ ctx }) {
   const t = ctx.treino();
@@ -142,7 +142,7 @@ export function Treino({ ctx }) {
 <Secao rotulo={t.editando ? 'editando hoje' : 'exercícios'}
              nota={t.editando ? 'nada aqui mexe no programa' : `${t.feitas} de ${t.prescritas} séries`}>
         {t.editando
-          ? <Bruto html={t.htmlEdicao} />
+          ? <EdicaoDoDia ctx={ctx} />
           : t.exercicios.length === 0
             ? <Vazio>Este treino ainda não tem exercício nenhum.</Vazio>
             : t.exercicios.map(vm => (
@@ -159,7 +159,10 @@ export function Treino({ ctx }) {
 {/* .edlink só existe quando dá para editar HOJE: em outro dia a mudança é
             edição de programa, e o app repete essa distinção em toda tela. */}
         <div class={'tr-links' + (t.podeEditar ? ' edlink' : '')}>
-          {t.podeEditar && (
+          {/* Já editando, a porta de entrada some: quem está dentro tem o
+              "pronto" da barra, e oferecer "editar" de novo é oferecer o
+              lugar onde ele já está. */}
+          {t.podeEditar && !t.editando && (
             <button class="ins-btn-secondary" onClick={ctx.modoEdicao}>editar treino de hoje</button>
           )}
           <button class="ins-btn-secondary" onClick={ctx.abrePrograma}>abrir o programa</button>
