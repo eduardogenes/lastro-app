@@ -285,6 +285,15 @@ export interface Estado {
    */
   mtime: number;
   /**
+   * Dias marcados como descanso, por data ('AAAA-MM-DD' → quando foi marcado).
+   *
+   * Não entra em `done` de propósito: lá dentro ele viraria treino em toda
+   * contagem que percorre sessões — o bloco de 48, a média semanal, a rotação.
+   * Aqui ele responde só à pergunta que o calendário não sabia responder: o dia
+   * está vazio porque você descansou ou porque esqueceu de registrar?
+   */
+  descanso: Record<string, number>;
+  /**
    * Lápides: chave do registro → quando foi apagado.
    *
    * Sem isto, unir dois estados RESSUSCITA o que você apagou num aparelho: o

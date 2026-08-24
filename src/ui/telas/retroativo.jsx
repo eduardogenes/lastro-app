@@ -42,6 +42,14 @@ export function Retroativo({ ctx }) {
       </div>
       {d.doPlano && <p class="ins-body-sm ins-t3 cue add-nota">{d.doPlano}</p>}
 
+      {d.descanso && (
+        <p class="ins-body-sm ins-t3 cue add-nota">
+          {d.jaEraDescanso
+            ? 'Este dia já está marcado como descanso. Confirmar remove a marca.'
+            : 'Marca o dia como descanso, para o calendário não confundir folga com esquecimento. Não conta como treino em lugar nenhum.'}
+        </p>
+      )}
+
       {d.livre && (
         <>
           <div class="ins-label obs-h add-h">grupos musculares</div>
@@ -63,6 +71,8 @@ export function Retroativo({ ctx }) {
         </>
       )}
 
+      {!d.descanso && (
+        <>
       <div class="ins-label obs-h add-h">horário, se lembrar</div>
       <div class="addrow">
         <div class="f">
@@ -79,10 +89,14 @@ export function Retroativo({ ctx }) {
                   onClick={() => ctx.addSet('dur', v.k)}>{v.t}</button>
         ))}
       </div>
+        </>
+      )}
 
       <div class="edrow add-acoes">
         <button class="ins-btn-primary dbtn" disabled={!d.pode}
-                onClick={() => ctx.gravaRetro(false)}>Adicionar</button>
+                onClick={() => ctx.gravaRetro(false)}>
+          {d.descanso ? (d.jaEraDescanso ? 'Remover a marca' : 'Marcar descanso') : 'Adicionar'}
+        </button>
       </div>
       {d.doPlano && (
         <button class="ins-btn-secondary dbtn ghost add-detalhe"

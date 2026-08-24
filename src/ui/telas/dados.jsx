@@ -97,6 +97,7 @@ function Mes({ m, ctx }) {
             key={c.n}
             class={'cal-d' + (c.feito ? ' feito' : '') + (c.livre ? ' livre' : '') +
                    (c.hoje ? ' hoje' : '') + (c.futuro ? ' futuro' : '') +
+                   (c.descanso ? ' descanso' : '') +
                    (c.cardio ? ' com-cardio' : '')}
             disabled={!c.abre}
             onClick={() => ctx.abreSessaoDoDia(c.abre)}

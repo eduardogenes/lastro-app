@@ -77,6 +77,7 @@ export function chaveDeMarca(qual: 'peso' | 'cintura', x: Pick<Marca, 't'>): str
   return qual + ':' + x.t;
 }
 export function chaveDeCardio(c: Pick<Cardio, 't'>): string { return 'cardio:' + c.t; }
+export function chaveDeDescanso(dataISO: string): string { return 'descanso:' + dataISO; }
 
 // ---------- as peças ----------
 
@@ -239,6 +240,21 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   );
   pl.itens.sort(porTempo);
   base.progLog = pl.itens.slice(-TETO.progLog);
+
+  // ---- dias de descanso: mapa de data, com lápide ----
+  // União simples não bastaria: desmarcar num aparelho seria desfeito pelo
+  // outro, que ainda tem a marca. A lápide resolve, igual às coleções.
+  const descanso: Record<string, number> = {};
+  [local.descanso || {}, remoto.descanso || {}].forEach(function (m) {
+    Object.keys(m).forEach(function (k) {
+      const quando = m[k];
+      if (typeof quando !== 'number') return;
+      const morto = mortos[chaveDeDescanso(k)];
+      if (morto != null && quando <= morto) return;
+      if (descanso[k] == null || quando > descanso[k]) descanso[k] = quando;
+    });
+  });
+  base.descanso = descanso;
 
   // ---- mapas por exercício ----
   base.ex = uneMapa(local.ex || {}, remoto.ex || {}, remotoManda);

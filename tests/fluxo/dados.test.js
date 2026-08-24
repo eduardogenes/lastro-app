@@ -65,7 +65,9 @@ test('exportar carrega todos os campos do estado', async () => {
      // nutricional, a cadência e o ajuste calórico em vigor
      'ajuste', 'cadencia', 'comida', 'compras', 'dia', 'perfManual',
      // a sincronização: o carimbo do estado e as lápides do que foi apagado
-     'mtime', 'apagados'].sort()
+     'mtime', 'apagados',
+     // os dias que ele marcou como descanso
+     'descanso'].sort()
   );
   a.fechar();
 });

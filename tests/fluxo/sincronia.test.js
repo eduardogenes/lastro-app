@@ -169,3 +169,57 @@ test('apagar aqui não é desfeito pelo que a nuvem ainda tem', async () => {
   assert.ok(Object.keys(a.J('S.apagados')).length > 0, 'a lápide viajou junto');
   a.fechar();
 });
+
+test('dia marcado como descanso viaja e some quando desmarcado', async () => {
+  const ontem = Date.now() - 86400000;
+  const a = await app({ estado: { logs: {}, done: [] } });
+  nuvemFalsa(a, null);
+
+  await a.E('alternaDescanso(' + ontem + ')');
+  await a.esperar();
+  await a.E('sincroniza()');
+  assert.strictEqual(Object.keys(nuvem(a).linha.data.descanso).length, 1, 'subiu a marca');
+
+  await a.E('alternaDescanso(' + ontem + ')');   // desmarcou
+  await a.esperar();
+  await a.E('sincroniza()');
+  assert.strictEqual(Object.keys(nuvem(a).linha.data.descanso).length, 0,
+    'desmarcar não é desfeito pela nuvem que ainda tinha a marca');
+  a.fechar();
+});
+
+test('descanso não conta como treino em lugar nenhum', async () => {
+  const ontem = Date.now() - 86400000;
+  const a = await app({ estado: { logs: {}, done: [] } });
+  await a.E('alternaDescanso(' + ontem + ')');
+  await a.esperar();
+  assert.strictEqual(a.E('S.done.length'), 0, 'não entra em done');
+  assert.strictEqual(a.E('sessoesDeTrabalho()'), 0, 'nem na conta do bloco');
+  assert.strictEqual(a.E('ehDescanso(' + ontem + ')'), true, 'mas o calendário sabe');
+  a.fechar();
+});
+
+test('dia com treino registrado recusa a marca de descanso', async () => {
+  const t = Date.now() - 86400000;
+  const a = await app({ estado: { logs: {}, done: [{ day: 'A', t: t, sid: t, dur: 0 }] } });
+  await a.E('alternaDescanso(' + t + ')');
+  await a.esperar();
+  assert.strictEqual(a.E('ehDescanso(' + t + ')'), false,
+    'o fato já respondeu: o app não pode afirmar as duas coisas');
+  a.fechar();
+});
+
+test('a tela de lançamento aguenta a opção de descanso', async () => {
+  // regressão: 'descanso' não é letra da rotação, e descrever o treino dela
+  // derrubava a tela inteira antes de qualquer mensagem
+  const a = await app({ estado: { logs: {}, done: [] } });
+  a.E('abrirAdicionar(' + (Date.now() - 86400000) + ')');
+  const rotulos = a.$$('.chips .ins-chip').map(x => x.textContent);
+  assert.ok(rotulos.includes('foi descanso'), rotulos.join(' | '));
+
+  a.E("addSet('tipo','descanso')");
+  assert.ok(a.$('.add-acoes .ins-btn-primary'), 'a tela continua de pé');
+  assert.match(a.$('.add-acoes .ins-btn-primary').textContent, /descanso/i);
+  assert.strictEqual(a.$('#ahora'), null, 'descanso não tem horário nem duração');
+  a.fechar();
+});

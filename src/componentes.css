@@ -543,6 +543,10 @@
 .cal-d.hoje { background: var(--ins-surface-acid); }
 .cal-d.feito { color: var(--ins-acid); }
 .cal-d.livre { color: var(--ins-text-3); }
+/* Descanso registrado: presença discreta, para o dia não parecer buraco — mas
+   nunca com o peso visual de um dia treinado. */
+.cal-d.descanso { color: var(--ins-text-5); }
+.cal-d.descanso i { color: var(--ins-text-5); font-weight: 400; }
 /* Barra, não cor de fundo nem letra: a letra do treino já manda na célula. */
 .cal-d .barra-cardio { width: 10px; height: 2px; background: var(--ins-text-4); border-radius: 0; }
 .cal-d i { font-style: normal; font-weight: 500; color: var(--ins-text-2); }

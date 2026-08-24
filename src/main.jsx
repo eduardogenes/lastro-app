@@ -39,7 +39,7 @@ import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5 } from '
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
-  chaveDeCardio, chaveDeLog, chaveDeMarca, chaveDeSessao, funde
+  chaveDeCardio, chaveDeDescanso, chaveDeLog, chaveDeMarca, chaveDeSessao, funde
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 
@@ -241,6 +241,7 @@ function normalizaEstado() {
   if (!Array.isArray(S.progLog)) S.progLog = [];
   if (typeof S.mtime !== 'number') S.mtime = 0;
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
+  if (!S.descanso || typeof S.descanso !== 'object') S.descanso = {};
 }
 
 async function load() {
@@ -946,6 +947,32 @@ function fimDaSessao(m) { return temHora(m) && m.dur ? fmtHora(m.t + m.dur + (m.
 
 function sessoesDoDia(t) { return S.done.filter(function (x) { return sameDay(x.t, t); }); }
 function marcaDe(m) { return m.livre ? '•' : m.day; }
+
+/** Aquele dia foi descanso? */
+function ehDescanso(t) { return !!(S.descanso && S.descanso[hojeISO(t)]); }
+
+/**
+ * Marca ou desmarca um dia como descanso.
+ *
+ * Só faz sentido em dia SEM sessão: se há treino registrado, o fato já
+ * respondeu a pergunta, e deixar as duas marcas conviverem seria o app
+ * afirmando duas coisas contrárias sobre o mesmo dia.
+ */
+async function alternaDescanso(t) {
+  const iso = hojeISO(t);
+  if (sessoesDoDia(t).length) { toast('Este dia tem treino registrado.'); return; }
+  if (S.descanso[iso]) {
+    delete S.descanso[iso];
+    lapide(chaveDeDescanso(iso));
+    await save(); render();
+    toast('Marca de descanso removida.');
+  } else {
+    S.descanso[iso] = Date.now();
+    await save(); render();
+    toast('Dia marcado como descanso.');
+  }
+  fecharAdicionar();
+}
 
 function chartSVG(H, modo, rot) {
   if (!H.length) return '';
@@ -2110,7 +2137,10 @@ function aplicaHora(base, txt) {
 
 async function gravarRetro(detalhar) {
   const a = view.add;
-  if (!a.tipo) { toast('Escolha qual treino foi.'); return; }
+  if (!a.tipo) { toast('Escolha o que foi aquele dia.'); return; }
+  // descanso não é sessão: não tem hora, nem duração, nem exercício para
+  // detalhar. Sai por outra porta, antes de qualquer coisa virar marca.
+  if (a.tipo === 'descanso') { await alternaDescanso(a.t); return; }
   if (a.tipo === 'livre' && !a.grupos.length) { toast('Marque pelo menos um grupo muscular.'); return; }
 
   const comHora = aplicaHora(a.t, a.hora);
@@ -2444,7 +2474,8 @@ async function importText(txt) {
         // a sincronização: sem estes, importar um backup zeraria o carimbo do
         // estado e as lápides — e um aparelho ressuscitaria o que o outro apagou
         mtime: typeof d.mtime === 'number' ? d.mtime : 0,
-        apagados: (d.apagados && typeof d.apagados === 'object') ? d.apagados : {} };
+        apagados: (d.apagados && typeof d.apagados === 'object') ? d.apagados : {},
+        descanso: (d.descanso && typeof d.descanso === 'object') ? d.descanso : {} };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();
@@ -3711,8 +3742,9 @@ CTX.mes = function () {
     celulas.push({
       n: i + 1,
       // a letra do treino manda na célula; o número do dia é contexto
-      marca: marcas.length ? marcas.map(marcaDe).join('') : null,
+      marca: marcas.length ? marcas.map(marcaDe).join('') : (ehDescanso(dia) ? '–' : null),
       feito: marcas.length > 0, livre: livre, hoje: hoje, futuro: futuro,
+      descanso: !marcas.length && ehDescanso(dia),
       cardio: cardioDoDia(dia).length > 0,
       periodo: per ? { k: per.k, rot: per.rot } : null,
       abre: marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
@@ -4096,8 +4128,12 @@ CTX.retroativo = function () {
       ? jaTem.map(function (m) { return m.livre ? 'avulso' : 'treino ' + m.day; }).join(', ')
       : null,
     tipos: rot().map(function (x) { return { k: x, t: x, on: a.tipo === x }; })
-      .concat([{ k: 'livre', t: 'outro treino', on: a.tipo === 'livre' }]),
-    doPlano: a.tipo && a.tipo !== 'livre'
+      .concat([{ k: 'livre', t: 'outro treino', on: a.tipo === 'livre' },
+               { k: 'descanso', t: 'foi descanso', on: a.tipo === 'descanso' }]),
+    descanso: a.tipo === 'descanso',
+    jaEraDescanso: ehDescanso(a.t),
+    // só letra da rotação tem treino para descrever: 'livre' e 'descanso' não
+    doPlano: a.tipo && treino(a.tipo)
       ? treino(a.tipo).name + ' · ' + treino(a.tipo).tag : null,
     livre: a.tipo === 'livre',
     grupos: gruposDoPlano().map(function (g) {
