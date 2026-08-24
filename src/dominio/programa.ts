@@ -41,14 +41,20 @@ export interface Carga {
 }
 
 // Seis dias ativos, domingo de descanso. Cinco de musculação mais o HYROX de
-// sábado, que é sessão de verdade e não cardio complementar — por isso ocupa
-// uma letra da rotação em vez de virar registro avulso.
+// sábado, que é sessão de verdade e não cardio complementar — por isso ocupa um
+// lugar na rotação em vez de virar registro avulso.
+//
+// O sábado se chama HX, não F. Duas razões: o dia não é "mais um treino na
+// sequência", e F já significou outra coisa no histórico dele — era o treino de
+// posteriores e glúteos até a revisão de 2026. Reaproveitar a letra faria o
+// calendário misturar duas coisas diferentes sob a mesma marca. A rotulagem do
+// dia é `Dia = string`, nunca um caractere.
 //
 // A ordem carrega a prioridade: deltoide lateral aparece em A e D, segunda e
 // quinta, nunca em dias seguidos. E E é curto de propósito, porque no dia
 // seguinte tem HYROX — sair de 25 séries na sexta e tentar sled e wall balls no
 // sábado é como as duas sessões se estragam.
-export const ROT_BASE: string[] = ['A','B','C','D','E','F'];
+export const ROT_BASE: string[] = ['A','B','C','D','E','HX'];
 
 // Descanso em segundos, pelas categorias do treinador: grande composto 3 min,
 // máquina multiarticular 2,5 min, o intervalo de 2 min que a prescrição nova
@@ -108,7 +114,7 @@ export const PROGRAMA: Record<string, Treino<ExercicioPrescrito>> = {
     {n:'Extensão de tríceps acima da cabeça no cabo', car:'pino', g:'tríceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Última coisa da semana de musculação. Não precisa ser heroico: amanhã tem HYROX.'},
   ]},
   // O HYROX é sessão de verdade, não cardio complementar — e é por isso que
-  // ocupa uma letra. Mas as estações NÃO são séries de hipertrofia: corrida,
+  // ocupa a rotação. Mas as estações NÃO são séries de hipertrofia: corrida,
   // sled e wall balls são estímulo de outra natureza, e transformá-los em
   // "séries de quadríceps" faria o painel de volume mentir. Por isso todas
   // entram com grupo muscular VAZIO — o que as mantém fora do alvo por
@@ -118,7 +124,7 @@ export const PROGRAMA: Record<string, Treino<ExercicioPrescrito>> = {
   // repetições são fixas, o que melhora é o relógio. O app já sabe disso —
   // exercício por tempo não recebe selo de subir carga, e o histórico vira
   // tempo total em vez de volume.
-  F: { name:'HYROX', tag:'condicionamento, não hipertrofia', ex:[
+  HX: { name:'HYROX', tag:'condicionamento, não hipertrofia', ex:[
     {n:'Corrida', car:'corpo', g:'', s:8, r:'1 km', c:1, d:D_CURTO, u:'seg', cue:'Os 8 km da prova, um a cada estação. Registre o tempo de cada quilômetro em segundos: 4:12 são 252.'},
     {n:'Ski erg', car:'corpo', g:'', s:1, r:'1000 m', c:0, d:D_CURTO, u:'seg', cue:'Puxada com o tronco, não só com o braço. Tempo em segundos.'},
     {n:'Sled push', car:'lado', g:'', s:1, r:'50 m', c:1, d:D_CURTO, u:'seg', cue:'Carga por lado no campo de carga, tempo em segundos. Passos curtos e contínuos: parar custa mais do que ir devagar.'},
@@ -155,7 +161,7 @@ export const RULES: Regra[] = [
     'Sua primeira tarefa é <b>extrair progresso deste volume</b>. Só considere acrescentar quando, depois de várias exposições: recuperação boa, sem dor articular, desempenho não caindo, execução sólida <b>e</b> uma prioridade estagnada apesar de esforço e progressão adequados.',
     'Nesse caso são <b>1 a 2 séries no músculo específico</b> — não 10 séries espalhadas pelo programa.']},
   {k:'hyrox', t:'O HYROX é o sexto treino, não um extra', warn:0, p:[
-    'Sábado é sessão de verdade: condicionamento, quadríceps, glúteo, posterior, panturrilha, core e ombro, tudo em regime de resistência. Por isso ele ocupa uma letra da rotação.',
+    'Sábado é sessão de verdade: condicionamento, quadríceps, glúteo, posterior, panturrilha, core e ombro, tudo em regime de resistência. Por isso o HX ocupa um lugar na rotação, como qualquer outro dia.',
     'Mas as estações <b>não são séries de hipertrofia</b> — o app não as conta no volume por músculo, de propósito. Corrida, sled e wall balls são estímulo de outra natureza.',
     '<b>Não faça musculação pesada depois do HYROX.</b> Ele encerra o sábado. E é por causa dele que a sexta é o treino mais curto da semana.']},
   {k:'fadiga', t:'Quando reduzir em vez de insistir', warn:0, p:[

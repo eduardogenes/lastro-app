@@ -25,9 +25,9 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
   await a.E('restaurarTudo()');
   await a.esperar();
 
-  assert.deepStrictEqual(a.J('rot()'), ['A','B','C','D','E','F'],
+  assert.deepStrictEqual(a.J('rot()'), ['A','B','C','D','E','HX'],
     'cinco dias de musculação mais o HYROX');
-  assert.strictEqual(a.E('S.prog.F.name'), 'HYROX');
+  assert.strictEqual(a.E('S.prog.HX.name'), 'HYROX');
   assert.strictEqual(a.E('difTotal()'), 0, 'igual ao treinador');
 
   // o histórico seguiu o exercício para a nova posição
@@ -102,9 +102,9 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   await a.esperar();
 
   // é o sexto dia, chega pela rotação como qualquer outro
-  a.E('go("F")');
-  assert.strictEqual(a.E('treino("F").name'), 'HYROX');
-  assert.strictEqual(a.E('treino("F").ex[0].n'), 'Corrida');
+  a.E('go("HX")');
+  assert.strictEqual(a.E('treino("HX").name'), 'HYROX');
+  assert.strictEqual(a.E('treino("HX").ex[0].n'), 'Corrida');
 
   // registra por TEMPO: o segundo campo é segundo, e a carga é opcional
   a.E('toggle(0)');
@@ -112,7 +112,7 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   assert.strictEqual(a.$$('.ex.open .unit')[1].textContent, 'seg');
   a.preencher(0, 0, null, 252);
   a.preencher(0, 1, null, 258);
-  const h = a.log('F', 0);
+  const h = a.log('HX', 0);
   assert.strictEqual(h.length, 1);
   assert.strictEqual(h[0].u, 'seg', 'a entrada se declara por tempo');
   assert.deepStrictEqual(h[0].sets[0], [0, 252]);
@@ -126,14 +126,14 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   // sem selo de subir carga e sem lista de troca: sled não tem substituto
   assert.ok(!a.$('.ex.open .up'), 'tempo melhor não é carga maior');
   a.E('toggle(2)');
-  assert.strictEqual(a.E('treino("F").ex[2].n'), 'Sled push');
-  assert.deepStrictEqual(a.J('altList("F", 2)'), [],
+  assert.strictEqual(a.E('treino("HX").ex[2].n'), 'Sled push');
+  assert.deepStrictEqual(a.J('altList("HX", 2)'), [],
     'exercício sem grupo não puxa "mesmo grupo muscular" nem oferece troca');
 
   // a tela de programa chama o dia de estações, não de séries
-  a.E('abrirPrograma("F")');
+  a.E('abrirPrograma("HX")');
   assert.ok(a.texto('.htitle').includes('HYROX'));
-  assert.ok(a.E('programaDia("F").meta').includes('estações'),
-    a.E('programaDia("F").meta'));
+  assert.ok(a.E('programaDia("HX").meta').includes('estações'),
+    a.E('programaDia("HX").meta'));
   a.fechar();
 });

@@ -24,7 +24,7 @@ Gerado a partir do app. Para atualizar depois de mexer no `PROGRAMA`:
 | **C** | Costas + deltoides + bíceps | 7 | 17 |
 | **D** | Especialização: lateral + panturrilha + abdômen | 6 | 17 |
 | **E** | Peito superior + costas + braços | 6 | 14 |
-| **F** | HYROX | 9 | 16 |
+| **HX** | HYROX | 9 | 16 |
 
 ### Séries por músculo na rotação completa
 
@@ -584,7 +584,7 @@ Se a máquina estiver ocupada:
 
 ---
 
-## Treino F — HYROX
+## Treino HX — HYROX
 
 *condicionamento, não hipertrofia*
 
@@ -724,7 +724,7 @@ Nesse caso são **1 a 2 séries no músculo específico** — não 10 séries es
 
 *hyrox*
 
-Sábado é sessão de verdade: condicionamento, quadríceps, glúteo, posterior, panturrilha, core e ombro, tudo em regime de resistência. Por isso ele ocupa uma letra da rotação.
+Sábado é sessão de verdade: condicionamento, quadríceps, glúteo, posterior, panturrilha, core e ombro, tudo em regime de resistência. Por isso o HX ocupa um lugar na rotação, como qualquer outro dia.
 
 Mas as estações **não são séries de hipertrofia** — o app não as conta no volume por músculo, de propósito. Corrida, sled e wall balls são estímulo de outra natureza.
 

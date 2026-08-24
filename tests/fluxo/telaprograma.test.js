@@ -147,7 +147,7 @@ test('restaurar tudo volta programa e rotação, sem tocar no histórico nem no 
   await a.E('restaurarTudo()');
   await a.esperar();
   assert.strictEqual(a.E('difTotal()'), 0);
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'D', 'E', 'F']);
+  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'D', 'E', 'HX']);
   assert.strictEqual(a.E('CAT["meu-aparelho"].n'), 'Meu aparelho', 'o que ele cadastrou continua lá');
   a.fechar();
 });
@@ -158,7 +158,7 @@ test('reordenar a rotação muda a sequência dos treinos', async () => {
   // desalinha, que é justamente o que se quer testar
   await a.E('moverDia(4,-1)');
   await a.esperar();
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'E', 'D', 'F']);
+  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'E', 'D', 'HX']);
   assert.strictEqual(a.E('difTotal()'), 1, 'a rotação conta como diferença');
   a.fechar();
 });
@@ -168,14 +168,14 @@ test('criar treino novo entra na rotação e começa vazio', async () => {
   a.responder('Braço extra');
   await a.E('criarTreino()');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.G.name'), 'Braço extra');
-  assert.deepStrictEqual(a.J('S.prog.G.ex'), []);
-  assert.strictEqual(a.J('rot()').indexOf('G'), 6);
+  assert.strictEqual(a.E('S.prog.F.name'), 'Braço extra');
+  assert.deepStrictEqual(a.J('S.prog.F.ex'), []);
+  assert.strictEqual(a.J('rot()').indexOf('F'), 6);
 
   await a.E('addExercicio("rosca-martelo")');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.G.ex.length'), 1);
-  assert.strictEqual(a.E('treino("G").ex[0].n'), 'Rosca martelo');
+  assert.strictEqual(a.E('S.prog.F.ex.length'), 1);
+  assert.strictEqual(a.E('treino("F").ex[0].n'), 'Rosca martelo');
   a.fechar();
 });
 
@@ -184,10 +184,10 @@ test('apagar um treino que ele criou tira da rotação', async () => {
   a.responder('Braço extra');
   await a.E('criarTreino()');
   await a.esperar();
-  await a.E('restaurarDia("G")');
+  await a.E('restaurarDia("F")');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.G'), undefined);
-  assert.strictEqual(a.J('rot()').indexOf('G'), -1);
+  assert.strictEqual(a.E('S.prog.F'), undefined);
+  assert.strictEqual(a.J('rot()').indexOf('F'), -1);
   a.fechar();
 });
 
@@ -213,7 +213,7 @@ test('o programa sobrevive a fechar e reabrir', async () => {
   const b = await app({ estado: bruto });
   await b.esperar();
   assert.strictEqual(b.E('S.prog.C.ex[0].s'), 4);
-  assert.deepStrictEqual(b.J('rot()'), ['B', 'A', 'C', 'D', 'E', 'F']);
+  assert.deepStrictEqual(b.J('rot()'), ['B', 'A', 'C', 'D', 'E', 'HX']);
   assert.strictEqual(b.E('S.progLog.length'), 2);
   b.fechar();
 });

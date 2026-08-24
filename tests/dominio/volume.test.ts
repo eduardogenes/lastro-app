@@ -142,9 +142,11 @@ test('cada exercício do programa tem pelo menos dois substitutos', () => {
 });
 
 test('o HYROX é sessão da rotação, mas não série de hipertrofia', () => {
-  const f = PROGRAMA.F;
-  assert.ok(f, 'o HYROX ocupa uma letra da rotação');
-  assert.ok(ROT_BASE.indexOf('F') >= 0);
+  const f = PROGRAMA.HX;
+  assert.ok(f, 'o HYROX ocupa um lugar na rotação');
+  assert.ok(ROT_BASE.indexOf('HX') >= 0, 'o dia se chama HX, não F');
+  assert.strictEqual(ROT_BASE.indexOf('F'), -1,
+    'F significou o treino de posteriores no histórico dele; não se reaproveita');
   f.ex.forEach(ex => {
     assert.strictEqual(ex.g, '', 'estação com grupo entraria no alvo por músculo: ' + ex.n);
     assert.strictEqual(ex.u, 'seg', 'o HYROX se mede por tempo: ' + ex.n);

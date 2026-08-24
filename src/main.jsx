@@ -48,7 +48,7 @@ const CARDIO_ALVO = 2;
 // Os dias de perna do programa: cardio pesado antes deles compete pela mesma
 // recuperação. O HYROX entra aqui porque corrida, sled e lunges cobram da
 // perna tanto quanto o dia de perna. Sinaliza, não bloqueia.
-const DIAS_PERNA = ['B', 'F'];
+const DIAS_PERNA = ['B', 'HX'];
 // RIR da última série, nas faixas que a prescrição usa.
 const RIR_OPCOES = ['0', '0–1', '1', '1–2', '2+'];
 
