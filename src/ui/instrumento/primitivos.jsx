@@ -113,10 +113,29 @@ export function GradeMetricas({ colunas = 3, celulas }) {
  * Sparkline de barras: 14 fatias. As fatias vazias continuam como trilho —
  * os buracos no registro são visíveis de propósito.
  */
-export function Sparkline({ valores, fatias = 14 }) {
+/**
+ * A escala é ANCORADA NO INTERVALO DOS DADOS, não no zero.
+ *
+ * Peso corporal varia ~1% em torno de 71 kg. Contra o zero, 70,0 e 71,5 viram
+ * 97,9% e 100% de altura — num gráfico de 48px isso é 1 pixel de diferença, e
+ * o gráfico passa a dizer só em que semanas houve registro. O gráfico de
+ * exercício já normalizava entre mínimo e máximo; este não tinha ganhado o
+ * mesmo tratamento.
+ *
+ * `piso` é a amplitude mínima da escala, e existe para o erro oposto: sem ele,
+ * uma oscilação de 100 g ocuparia o gráfico inteiro e retenção de água pareceria
+ * tendência. Abaixo do piso a variação aparece pequena, que é o que ela é.
+ */
+export function Sparkline({ valores, fatias = 14, piso = 2 }) {
   const v = valores.slice(-fatias);
   const vazias = Math.max(0, fatias - v.length);
-  const max = Math.max(1, ...v.filter(x => x != null));
+  const cheios = v.filter(x => x != null);
+  const hi = cheios.length ? Math.max(...cheios) : 1;
+  const lo = cheios.length ? Math.min(...cheios) : 0;
+  // o intervalo cresce simetricamente até o piso, para o dado ficar centrado
+  const folga = Math.max(0, piso - (hi - lo)) / 2;
+  const topo = hi + folga, base = lo - folga;
+  const alt = x => topo === base ? 60 : 12 + ((x - base) / (topo - base)) * 88;
   return (
     <div class="ins-spark">
       {Array.from({ length: vazias }).map((_, i) => (
@@ -125,7 +144,7 @@ export function Sparkline({ valores, fatias = 14 }) {
       {v.map((x, i) => (
         <div key={i} class="ins-spark-s">
           {x != null && (
-            <div class="ins-spark-b" style={`height:${Math.max(6, (x / max) * 100)}%`} />
+            <div class="ins-spark-b" style={`height:${alt(x)}%`} />
           )}
         </div>
       ))}
