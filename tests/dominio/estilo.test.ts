@@ -16,7 +16,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const RAIZ = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const css = ['tokens.css', 'app.css']
+// Todas as folhas, não uma amostra. Enquanto o sistema antigo existia, o teste
+// lia `tokens.css` e `app.css`; com `app.css` aposentado, ler uma lista curta
+// deixaria o teste cego justamente onde as regras passaram a morar.
+const FOLHAS = ['tokens.css', 'base.css', 'componentes.css', 'treino.css'];
+const css = FOLHAS
   .map(f => fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8'))
   .join('\n');
 
@@ -45,19 +49,32 @@ test('a paleta do Instrumento está inteira e mora nos tokens', () => {
 });
 
 test('cor nova não entra solta no meio das regras', () => {
-  const app = fs.readFileSync(path.join(RAIZ, 'src', 'app.css'), 'utf8');
-  const soltas = [...new Set((app.match(/#[0-9A-Fa-f]{6}\b/g) || []))];
+  const regras = FOLHAS.filter(f => f !== 'tokens.css')
+    .map(f => fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8'))
+    .join('\n');
+  const soltas = [...new Set((regras.match(/#[0-9A-Fa-f]{3,8}\b/g) || []))];
   assert.deepStrictEqual(soltas, [],
     'hexadecimal fora de tokens.css: dê um nome a ele antes de usar');
+});
+
+test('a paleta antiga não existe mais, nem por apelido', () => {
+  // Enquanto havia tela em string, cada nome antigo apontava para um token do
+  // Instrumento — remapear era o que fazia a superfície legada inteira falar a
+  // língua nova de imediato. Com a última convertida, o atalho sai: dois nomes
+  // para a mesma cor é a porta pela qual uma segunda paleta volta a entrar.
+  const antigos = ['night', 'dusk', 'raise', 'line', 'paper', 'mist', 'dim',
+    'dawn', 'dawn-soft', 'on-dawn', 'ember', 'ember-soft', 'ember-line',
+    'ok', 'ok-line', 'info', 'info-line', 'f-m', 'f-d'];
+  const vivos = antigos.filter(n => new RegExp('var\\(--' + n + '\\)').test(css));
+  assert.deepStrictEqual(vivos, [], 'nome da paleta antiga ainda em uso');
 });
 
 test('tela cheia usa svh, não vh', () => {
   // 100vh no iOS é a viewport GRANDE, com a barra do navegador recolhida:
   // sobra um trecho rolável do tamanho da barra e o fundo do body aparece.
-  const app = fs.readFileSync(path.join(RAIZ, 'src', 'app.css'), 'utf8');
-  const alturas = [...app.matchAll(/(?:min-)?height:\s*100vh/g)];
+  const alturas = [...css.matchAll(/(?:min-)?height:\s*100vh/g)];
   alturas.forEach(m => {
-    const depois = app.slice(m.index!, m.index! + 200);
+    const depois = css.slice(m.index!, m.index! + 200);
     assert.ok(/100svh/.test(depois), '100vh sem 100svh logo abaixo como correção');
   });
 });
@@ -117,15 +134,3 @@ test('alvo de toque não é forçado duas vezes', () => {
   });
 });
 
-test('a paleta antiga só existe apontando para a nova', () => {
-  // O bloco legado sobrevive porque as telas ainda não convertidas usam os
-  // nomes dele. Mas nenhum deles pode carregar VALOR próprio: se carregasse, o
-  // produto voltaria a ter duas paletas, e foi assim que ele parecia dois
-  // sistemas colados. Cada nome antigo aponta para um token do Instrumento.
-  const tokens = fs.readFileSync(path.join(RAIZ, 'src', 'tokens.css'), 'utf8');
-  const legado = tokens.slice(tokens.indexOf('LEGADO'));
-  const comValor = [...legado.matchAll(/(--[a-z0-9-]+):\s*(#[0-9A-Fa-f]{3,8})/g)];
-  assert.deepStrictEqual(comValor.map(m => m[1] + ':' + m[2]), [],
-    'token legado com cor própria: aponte para o Instrumento');
-  assert.ok(/--dawn:\s*var\(--ins-acid\)/.test(legado), 'o acento antigo vira ácido');
-});

@@ -72,6 +72,11 @@
   --ins-rail: 3px;
   --ins-indicator: 2px;
 
+  /* Recuo da coluna de valores no histórico: a data ocupa 46px e o vão é 10.
+     As séries alinham SOB o número, não sob a data, porque é a coluna de
+     números que o olho desce para comparar. Derivado, não arbitrário. */
+  --ins-recuo-valor: 56px;
+
   /* ---- Toque ---- */
   --ins-tap: 46px;        /* controle numérico repetido; 46 e não 44 de propósito:
                              ele usa de pé, suado, com uma mão */
@@ -91,46 +96,4 @@
 
   /* Altura da tab bar, para quem precisa reservar espaço embaixo. */
   --ins-tabbar: calc(52px + var(--sa-bottom));
-}
-
-/* ============================================================
-   LEGADO — a paleta antiga, agora apontando para o Instrumento.
-   ============================================================
-   As telas ainda não repintadas (programa, histórico, retrospectiva, decisão,
-   e os blocos de peso, cardio e calendário) usam estes nomes. Em vez de
-   mantê-las em azul-marinho e âmbar até a última ser convertida — o que deixa
-   o produto parecendo dois sistemas colados —, cada nome antigo passa a
-   APONTAR para o token equivalente do Instrumento.
-
-   O ganho é desproporcional ao tamanho da mudança: a superfície legada inteira
-   fala a língua nova de imediato, e a conversão de cada tela vira só estrutura,
-   não cor. O acento antigo (--dawn, âmbar) vira ácido, porque no sistema antigo
-   ele significava "aperte isto" — que é o papel do ácido aqui.
-
-   Este bloco morre junto com a última tela antiga.
-*/
-
-:root {
-  --night:  var(--ins-canvas);
-  --dusk:   var(--ins-surface-low);
-  --raise:  var(--ins-surface);
-  --line:   var(--ins-border);
-  --paper:  var(--ins-text);
-  --mist:   var(--ins-text-3);
-  --dim:    var(--ins-text-4);
-  --dawn:   var(--ins-acid);
-  --ember:  var(--ins-amber);
-
-  --ok:         var(--ins-acid);
-  --ok-line:    var(--ins-acid);
-  --info:       var(--ins-text-3);
-  --info-line:  var(--ins-border-strong);
-  --dawn-soft:  var(--ins-acid);
-  --dawn-line:  var(--ins-border-strong);
-  --ember-soft: var(--ins-amber);
-  --ember-line: var(--ins-border-strong);
-  --on-dawn:    var(--ins-on-acid);
-
-  --f-d: var(--ins-font-display);
-  --f-m: var(--ins-font-mono);
 }

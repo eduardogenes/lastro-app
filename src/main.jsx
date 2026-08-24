@@ -1196,7 +1196,7 @@ const CTX = {
 
 // A tela do sistema antigo, ainda em string. Devolve a árvore em vez de
 // montar: quem monta é a shell nova. Cada aba convertida some daqui, e quando
-// a última sair este bloco inteiro morre junto com app.css.
+
 // As telas cheias: as que substituem a shell inteira, tab bar inclusive.
 // Não são abas — em cada uma o assunto é uma coisa só, e a tab bar convidaria
 // a sair no meio. O voltar é o único caminho de saída.

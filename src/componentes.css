@@ -377,7 +377,7 @@
 .gu-dia.on .ins-label-sm { color: var(--ins-text-2); }
 
 .gu-acoes { display: flex; flex-direction: column; gap: var(--ins-2); }
-.gu-acoes .ins-btn-destructive { border-color: var(--ins-ember-line, var(--ins-border-strong)); }
+.gu-acoes .ins-btn-destructive { border-color: var(--ins-coral); }
 .gu-legado { margin-top: var(--ins-9); }
 
 /* ---- DADOS: medidas e músculos ----------------------------------------- */
@@ -694,7 +694,7 @@
 .addrow input {
   width: 100%; padding: 14px;
   font: 500 17px/1 var(--ins-font-mono);
-  background: var(--ins-surface); border: 1px solid var(--ins-border); color: var(--ins-text-1);
+  background: var(--ins-surface); border: 1px solid var(--ins-border); color: var(--ins-text);
   appearance: none; -moz-appearance: textfield;
 }
 .addrow input::placeholder { color: var(--ins-text-5); }
@@ -722,9 +722,9 @@
   display: flex; align-items: flex-start; gap: var(--ins-4);
   margin: 0 0 var(--ins-4); padding: var(--ins-4);
   border: 1px solid var(--ins-acid); background: var(--ins-surface-acid);
-  font: 400 13px/1.5 var(--ins-font-sans); color: var(--ins-text-3);
+  font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-3);
 }
-.edbar b { color: var(--ins-text-1); display: block; }
+.edbar b { color: var(--ins-text); display: block; }
 .edbar-b {
   flex: 0 0 auto; min-height: var(--ins-tap); padding: 0 var(--ins-5);
   background: var(--ins-acid); color: var(--ins-on-acid); border: 0;
@@ -739,7 +739,7 @@
 
 .edx-h { display: flex; align-items: flex-start; gap: var(--ins-3); }
 .ord { font: 400 11px/1.4 var(--ins-font-mono); color: var(--ins-text-5); padding-top: 2px; }
-.edx-n { flex: 1; min-width: 0; font: 500 14.5px/1.3 var(--ins-font-sans); color: var(--ins-text-1); }
+.edx-n { flex: 1; min-width: 0; font: 500 14.5px/1.3 var(--ins-font-display); color: var(--ins-text); }
 .edx-n em { display: block; font-style: normal; font-size: 11.5px; color: var(--ins-acid); margin-top: 2px; }
 .edx-n span {
   display: block; margin-top: var(--ins-1);
@@ -794,7 +794,7 @@
 .edmod {
   display: flex; align-items: center; gap: var(--ins-3); padding: var(--ins-3) 0;
   border-bottom: 1px solid var(--ins-hairline);
-  font: 400 13px/1.4 var(--ins-font-sans); color: var(--ins-text-2);
+  font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-2);
 }
 .edmod span { flex: 1; }
 .edmod button {
@@ -807,10 +807,10 @@
 .addex { margin-top: var(--ins-4); }
 .addq {
   width: 100%; margin-bottom: var(--ins-2); padding: var(--ins-3); min-height: 46px;
-  border: 1px solid var(--ins-border); background: var(--ins-surface); color: var(--ins-text-1);
+  border: 1px solid var(--ins-border); background: var(--ins-surface); color: var(--ins-text);
   /* 16px é o piso: abaixo disso o Safari do iPhone dá zoom ao focar o campo,
      e sair do zoom depois é gesto que ninguém faz no meio do treino. */
-  font: 400 16px/1.2 var(--ins-font-sans);
+  font: 400 16px/1.2 var(--ins-font-display);
 }
 .addq:focus { outline: none; border-color: var(--ins-acid); }
 /* Quarenta resultados: encostados, leem-se como LISTA. Soltos com respiro
@@ -825,7 +825,7 @@
 .novoex { border: 1px solid var(--ins-hairline); padding: var(--ins-4); margin-top: var(--ins-2); }
 .nxk {
   display: flex; align-items: center; gap: var(--ins-2); margin: var(--ins-1) 0 var(--ins-4);
-  font: 400 13px/1.3 var(--ins-font-sans); color: var(--ins-text-3);
+  font: 400 13px/1.3 var(--ins-font-display); color: var(--ins-text-3);
 }
 .nxk input { width: 20px; height: 20px; }
 .swap-g + .swap-g { margin-top: var(--ins-4); }
@@ -847,10 +847,409 @@
 }
 .crow:last-child { border-bottom: 0; }
 .crow-d { font: 400 10.5px/1 var(--ins-font-mono); color: var(--ins-text-4); min-width: 44px; }
-.crow-m { font: 500 13px/1 var(--ins-font-mono); color: var(--ins-text-1); }
+.crow-m { font: 500 13px/1 var(--ins-font-mono); color: var(--ins-text); }
 .crow-n { font: 400 10.5px/1 var(--ins-font-mono); color: var(--ins-text-4); }
 .crow-x {
   margin-left: auto; flex: 0 0 auto; background: transparent;
   border: 1px solid var(--ins-hairline); color: var(--ins-text-5);
   font: 400 10px/1 var(--ins-font-mono); padding: 0 var(--ins-3); min-height: 32px;
 }
+
+/* ===========================================================================
+   O QUE VEIO DO SISTEMA ANTIGO
+   ===========================================================================
+   Última leva. Estas classes nasceram na paleta antiga e sobreviveram à fusão
+   porque são o contrato que os testes de fluxo têm com o DOM — renomeá-las
+   compraria churn sem comprar nada. O que muda aqui é só a língua: token do
+   Instrumento, fio no lugar de cartão, raio zero.
+
+   Com este bloco, `app.css` e o remapeamento de tokens legados deixam de
+   existir: nenhum nome da paleta antiga sobrevive no projeto.
+   =========================================================================== */
+
+/* ---- Faixa da semana --------------------------------------------------- */
+.semana { display: flex; gap: 1px; margin-top: var(--ins-5); background: var(--ins-rule); }
+.wd {
+  flex: 1; min-width: 0; text-align: center;
+  padding: var(--ins-2) 0 var(--ins-3); background: var(--ins-canvas); border: 0;
+}
+.wd-d {
+  display: block;
+  font: 400 8.5px/1 var(--ins-font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ins-text-4);
+}
+.wd-v {
+  display: block; margin-top: var(--ins-1);
+  font: 500 14px/1.1 var(--ins-font-display); color: var(--ins-text-5);
+}
+.wd.feito .wd-v { color: var(--ins-acid); }
+.wd.hoje { background: var(--ins-surface-acid); }
+.wd.hoje .wd-d { color: var(--ins-text-3); }
+.wd.futuro { opacity: .45; }
+.wd.livre .wd-v { color: var(--ins-text-3); }
+
+/* ---- Cardio: a linha e o registro rápido -------------------------------- */
+.cardl {
+  display: flex; align-items: center; gap: var(--ins-4);
+  margin-top: var(--ins-4); padding: var(--ins-3) var(--ins-4);
+  border: 1px solid var(--ins-hairline);
+}
+.cardl-t {
+  font: 400 9px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ins-text-4);
+}
+.cardl-n { flex: 1; min-width: 0; font: 400 11.5px/1.3 var(--ins-font-mono); color: var(--ins-text-3); }
+.cardl.feito { border-color: var(--ins-acid); }
+.cardl.feito .cardl-n { color: var(--ins-acid); }
+.cardl-b {
+  flex: 0 0 auto; padding: 0 var(--ins-4); min-height: 34px;
+  background: transparent; border: 1px solid var(--ins-border); color: var(--ins-text-3);
+  font: 400 10.5px/1 var(--ins-font-mono);
+}
+.cardq { margin-top: var(--ins-2); padding: var(--ins-4); border: 1px solid var(--ins-hairline); }
+
+/* Marca de cardio: barra discreta, para não competir com a letra do treino. */
+.barra-cardio {
+  display: block; height: 2px; width: 60%; margin: var(--ins-1) auto 0;
+  background: var(--ins-text-4);
+}
+.cal-d .barra-cardio { width: 52%; }
+
+.cardio-dia {
+  display: flex; gap: var(--ins-5); align-items: baseline;
+  margin-top: var(--ins-7); border-top: 1px solid var(--ins-rule); padding-top: var(--ins-6);
+}
+.cardio-dia b {
+  flex: 0 0 96px;
+  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ins-text-4);
+}
+.cardio-dia span { font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-3); }
+
+.crule { margin: var(--ins-7) 0 var(--ins-5); }
+.cwarn { margin-top: var(--ins-7); padding: var(--ins-5); border: 1px solid var(--ins-amber); }
+
+/* ---- Calendário do mês -------------------------------------------------- */
+.mesnav { display: flex; align-items: center; gap: var(--ins-5); margin-top: var(--ins-7); }
+.mesnav span {
+  flex: 1; text-align: center; text-transform: capitalize;
+  font: 500 15px/1 var(--ins-font-display); letter-spacing: -.01em; color: var(--ins-text);
+}
+.mesnav button {
+  background: transparent; border: 1px solid var(--ins-hairline); color: var(--ins-text-3);
+  font-size: 16px; line-height: 1; padding: var(--ins-4) var(--ins-6); min-height: 40px;
+}
+.mesnav button:disabled { color: var(--ins-text-5); }
+
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-top: var(--ins-7); background: var(--ins-rule); }
+.cal-h {
+  padding: var(--ins-2) 0; text-align: center; background: var(--ins-canvas);
+  font: 400 8.5px/1 var(--ins-font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ins-text-4);
+}
+.cal-x { aspect-ratio: 1; background: var(--ins-canvas); }
+.cal-d {
+  aspect-ratio: 1; min-width: 0; position: relative; background: var(--ins-canvas); border: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+}
+.cal-d em { font: 400 10px/1 var(--ins-font-mono); font-style: normal; color: var(--ins-text-5); }
+/* A LETRA é quem manda na célula: o número do dia é referência, o treino é o
+   dado. Trocar a hierarquia aqui já quebrou a leitura do mês uma vez. */
+.cal-d i { font: 500 12px/1 var(--ins-font-display); font-style: normal; color: var(--ins-acid); }
+.cal-d.feito { background: var(--ins-surface-acid); }
+.cal-d.feito em { color: var(--ins-text-3); }
+.cal-d.hoje { box-shadow: inset 0 0 0 1px var(--ins-text); }
+.cal-d.livre { background: var(--ins-surface); }
+.cal-d.livre i { color: var(--ins-text-3); }
+.cal-d.futuro { opacity: .35; }
+
+.per { position: absolute; top: 2px; right: 3px; font-size: 11px; line-height: 1; text-decoration: none; }
+.callegenda { display: flex; gap: var(--ins-6); margin-top: var(--ins-4); }
+.callegenda .per { position: static; margin-right: var(--ins-1); font-size: 12px; }
+
+.mediasem { margin-top: var(--ins-8); font: 400 13px/1.5 var(--ins-font-mono); color: var(--ins-text-3); }
+.mediasem b { font: 600 22px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text); }
+.mediasem span {
+  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-4);
+}
+
+.sessrow {
+  display: flex; align-items: center; gap: var(--ins-4);
+  border-bottom: 1px solid var(--ins-hairline); padding: var(--ins-6) 0; background: none; border-left: 0; border-right: 0; border-top: 0;
+  width: 100%; text-align: left;
+}
+.sessrow:last-child { border-bottom: 0; }
+.sess-d { min-width: 44px; font: 400 11px/1.3 var(--ins-font-mono); color: var(--ins-text-3); }
+.sess-d em { display: block; font-style: normal; font-size: 10px; color: var(--ins-text-5); margin-top: 2px; }
+/* A letra NÃO é ácida aqui. Toda linha desta lista é uma sessão feita, então
+   a cor não distingue nada — vira decoração, e catorze ácidos numa tela é
+   exatamente o que o §4 proíbe. No calendário ela continua ácida, porque lá
+   ela separa o dia treinado do dia vazio. */
+.sess-l { min-width: 16px; font: 500 15px/1 var(--ins-font-display); color: var(--ins-text); }
+.sess-l.livre { color: var(--ins-text-3); }
+.sess-n { flex: 1; min-width: 0; font: 400 11.5px/1.4 var(--ins-font-mono); color: var(--ins-text-3); }
+.sess-o {
+  flex: 0 0 auto; padding: 3px var(--ins-2);
+  background: var(--ins-acid); color: var(--ins-on-acid);
+  font: 400 9px/1 var(--ins-font-mono); letter-spacing: .08em; text-transform: uppercase;
+}
+
+/* ---- Horário e pendências da sessão ------------------------------------- */
+.horario { margin-top: var(--ins-7); }
+.horario b { color: var(--ins-text-3); font-weight: 500; }
+
+.pend { margin-top: var(--ins-7); }
+.pend > div {
+  display: flex; gap: var(--ins-4); align-items: baseline;
+  border-top: 1px solid var(--ins-hairline); padding: var(--ins-4) 0;
+}
+.aprox {
+  font-style: normal; padding: 2px var(--ins-2); margin-left: var(--ins-2);
+  border: 1px solid var(--ins-hairline);
+  font: 400 9px/1 var(--ins-font-mono); letter-spacing: .08em; color: var(--ins-text-4);
+}
+
+/* ---- Controles da sessão ------------------------------------------------ */
+.ctrl { display: flex; margin-top: var(--ins-5); }
+.ctrl-b {
+  flex: 1; min-height: var(--ins-tap);
+  border: 1px solid var(--ins-border-strong); background: transparent; color: var(--ins-text-2);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
+}
+.ctrl-b + .ctrl-b { border-left: 0; }
+/* Ácido em UM só: finalizar é a ação da barra; pausar é a alternativa. */
+.ctrl-b.fim { background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid); }
+.ctrl-b.ini { background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid); }
+
+.day-ini {
+  flex: 0 0 auto; width: 100%; min-height: var(--ins-tap); margin-top: var(--ins-5);
+  background: var(--ins-acid); border: 0; color: var(--ins-on-acid);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .16em; text-transform: uppercase;
+}
+.day-rel { display: flex; align-items: baseline; gap: var(--ins-3); margin-top: var(--ins-5); }
+.day-rel em {
+  font-style: normal;
+  font: 400 8.5px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ins-text-4);
+}
+.day-rel.pausado .ins-metric-m { color: var(--ins-text-3); }
+.daymeta { margin-top: 2px; font: 400 10.5px/1.3 var(--ins-font-mono); color: var(--ins-text-3); }
+.daymeta b { color: var(--ins-acid); font-weight: 500; }
+
+/* ---- Avisos: âmbar é "preste atenção", ácido é "isto está ativo" -------- */
+.deload {
+  margin-top: var(--ins-7); padding: var(--ins-5);
+  border: 1px solid var(--ins-amber); color: var(--ins-text-2);
+  font: 400 12.5px/1.5 var(--ins-font-display);
+}
+.deload b { color: var(--ins-amber); }
+.deload.on { border-color: var(--ins-acid); }
+.deload.on b { color: var(--ins-acid); }
+.dlbtn {
+  display: block; margin-top: var(--ins-4); padding: 0 var(--ins-6); min-height: 40px;
+  background: transparent; border: 1px solid var(--ins-amber); color: var(--ins-amber);
+  font: 400 11px/1 var(--ins-font-mono);
+}
+.deload.on .dlbtn { border-color: var(--ins-acid); color: var(--ins-acid); }
+
+/* ---- Histórico do exercício -------------------------------------------- */
+.hwrap { padding: 0; }
+.htitle { margin: var(--ins-2) 0 var(--ins-3); }
+
+.stats { display: grid; gap: 1px; background: var(--ins-rule); margin-top: var(--ins-2); }
+.stats > div { background: var(--ins-canvas); padding: var(--ins-4) 0; }
+.stats > div:not(:first-child) { padding-left: var(--ins-5); }
+.stats b {
+  display: block; font: 500 17px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text);
+}
+.stats span {
+  display: block; margin-top: var(--ins-2);
+  font: 400 9px/1.35 var(--ins-font-mono); letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ins-text-4);
+}
+
+.ins-grafico { margin-top: var(--ins-7); }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .gl { stroke: var(--ins-hairline); stroke-width: 1; }
+.chart .cl { fill: none; stroke: var(--ins-acid); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .cp { fill: var(--ins-canvas); stroke: var(--ins-acid); stroke-width: 2; }
+.chart .cp.last { fill: var(--ins-acid); }
+.chart .vlline { fill: none; stroke: var(--ins-text-4); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart .vp { fill: var(--ins-canvas); stroke: var(--ins-text-4); stroke-width: 1.5; }
+.chart .vp.last { fill: var(--ins-text-4); }
+.chart .ax { font-family: var(--ins-font-mono); font-size: 9px; fill: var(--ins-text-4); }
+.chart .axu {
+  font-family: var(--ins-font-mono); font-size: 7.5px; fill: var(--ins-text-5);
+  letter-spacing: .1em; text-transform: uppercase;
+}
+.chart .vl { font-family: var(--ins-font-mono); font-size: 9.5px; fill: var(--ins-text-3); }
+.chart .vl.last { fill: var(--ins-text); font-weight: 500; }
+
+.legend {
+  display: flex; gap: var(--ins-7); margin: var(--ins-3) 0 0;
+  font: 400 9.5px/1 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-4);
+}
+.legend i { display: inline-block; width: 8px; height: 8px; margin-right: var(--ins-2); font-style: normal; }
+.legend .c i { background: var(--ins-acid); }
+.legend .v i { background: var(--ins-text-4); }
+
+.hs { border-bottom: 1px solid var(--ins-hairline); padding: var(--ins-5) 0; }
+.hs:last-child { border-bottom: 0; }
+.hs-top { display: flex; align-items: baseline; gap: var(--ins-4); }
+.hs-date { min-width: 46px; font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-4); }
+.hs-vol { font: 500 13.5px/1 var(--ins-font-mono); color: var(--ins-text); }
+.hs-vol em { font-style: normal; font-size: 9px; letter-spacing: .06em; color: var(--ins-text-4); margin-left: 3px; }
+.hs-d { margin-left: auto; font: 400 10.5px/1 var(--ins-font-mono); color: var(--ins-text-4); }
+/* O recuo alinha as séries sob o valor, não sob a data: o olho desce pela
+   coluna de números, que é o que ele veio comparar. */
+.hs-sets { display: flex; flex-wrap: wrap; gap: var(--ins-2); margin-top: var(--ins-3); padding-left: var(--ins-recuo-valor); }
+.hs-sets span {
+  padding: var(--ins-1) var(--ins-3); border: 1px solid var(--ins-hairline);
+  font: 400 11.5px/1 var(--ins-font-mono); color: var(--ins-text-3);
+}
+.hs-sets span.nul { color: var(--ins-text-5); }
+.hsec { margin: var(--ins-10) 0 var(--ins-1); }
+.pain { margin-top: var(--ins-3); padding-left: var(--ins-recuo-valor); font: 400 11px/1.4 var(--ins-font-mono); }
+.hs-obs { margin-top: var(--ins-2); padding-left: var(--ins-recuo-valor); font: 400 12.5px/1.5 var(--ins-font-display); color: var(--ins-text-3); }
+
+.vars { display: flex; gap: var(--ins-2); flex-wrap: wrap; margin-top: var(--ins-6); }
+.vchip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vchip.on { border-color: var(--ins-acid); color: var(--ins-acid); background: transparent; }
+
+/* ---- Correção de sessão passada ---------------------------------------- */
+.edbtn {
+  margin: var(--ins-4) 0 0 var(--ins-recuo-valor); padding: 0 var(--ins-4); min-height: 34px;
+  background: transparent; border: 1px solid var(--ins-hairline); color: var(--ins-text-4);
+  font: 400 10px/1 var(--ins-font-mono);
+}
+.hs.editando { border: 1px solid var(--ins-acid); padding: var(--ins-6); margin: var(--ins-2) 0; }
+.ed-sets { margin-top: var(--ins-4); }
+.ed-sets .setrow { margin-bottom: var(--ins-3); }
+.edrow { display: flex; gap: var(--ins-3); margin-top: var(--ins-6); }
+.edrow .dbtn { flex: 1; }
+.ed-rm { width: 100%; margin-top: var(--ins-4); }
+.setrow input::-webkit-outer-spin-button,
+.setrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.note::placeholder { color: var(--ins-text-5); }
+.note:focus { outline: none; border-color: var(--ins-acid); }
+
+.painsum { margin-top: var(--ins-8); }
+
+/* ---- Rotação e atalhos de edição na tela de treino ---------------------- */
+.rot { display: flex; gap: 1px; background: var(--ins-rule); }
+.rot button {
+  flex: 1; padding: var(--ins-3) 0; border: 0; background: var(--ins-canvas); color: var(--ins-text-3);
+  font: 500 14px/1 var(--ins-font-display);
+}
+.rot button.on { background: var(--ins-acid); color: var(--ins-on-acid); }
+.rot button.next::after {
+  content: ''; display: block; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--ins-acid); margin: var(--ins-1) auto -4px;
+}
+.rot button.on.next::after { background: var(--ins-on-acid); }
+
+.edlink { display: flex; align-items: center; gap: var(--ins-4); margin-top: var(--ins-4); flex-wrap: wrap; }
+
+/* ---- Tela de programa --------------------------------------------------- */
+.progdias { margin: var(--ins-2) 0 var(--ins-5); }
+.progd { display: flex; align-items: stretch; border-bottom: 1px solid var(--ins-hairline); }
+.progd:last-of-type { border-bottom: 0; }
+.progd-b {
+  flex: 1; display: flex; align-items: center; gap: var(--ins-5); text-align: left;
+  border: 0; background: transparent; padding: var(--ins-5) 0; min-height: 62px; color: var(--ins-text);
+}
+.progd-l { flex: 0 0 auto; width: 26px; text-align: center; font: 400 20px/1 var(--ins-font-mono); color: var(--ins-acid); }
+.progd-t { flex: 1; min-width: 0; }
+.progd-t b { display: block; font: 500 14px/1.3 var(--ins-font-display); }
+.progd-t span { display: block; margin-top: 3px; font: 400 10.5px/1.3 var(--ins-font-mono); color: var(--ins-text-4); }
+.progd-mv { display: flex; flex: 0 0 auto; align-items: center; }
+.progd-mv button {
+  width: 38px; height: 38px; font-size: 14px;
+  border: 1px solid var(--ins-hairline); background: transparent; color: var(--ins-text-3);
+}
+.progd-mv button + button { border-left: 0; }
+.progd-mv button:disabled { color: var(--ins-text-5); }
+
+/* Fio ácido à esquerda: a diferença é uma marca de margem no que já existe,
+   não um cartão de alerta. */
+.progdif {
+  border-left: 2px solid var(--ins-acid); padding: var(--ins-3) 0 var(--ins-3) var(--ins-5);
+  margin-bottom: var(--ins-5);
+}
+.progdif b { display: block; margin-bottom: var(--ins-2); font: 500 13px/1.3 var(--ins-font-display); color: var(--ins-text); }
+.progdif span { display: block; font: 400 11px/1.7 var(--ins-font-mono); color: var(--ins-text-3); }
+.prog-nota { margin: var(--ins-5) 0 var(--ins-7); }
+.prog-comparar { margin-top: var(--ins-8); }
+
+.phist { border-bottom: 1px solid var(--ins-hairline); padding: var(--ins-5) 0; }
+.phist:last-child { border-bottom: 0; }
+.phist-t { font: 400 14px/1.35 var(--ins-font-display); color: var(--ins-text-2); }
+.phist-m { margin-top: var(--ins-1); }
+
+/* ---- Blocos de dados e botões de arquivo -------------------------------- */
+.dgroup { border-bottom: 1px solid var(--ins-rule); padding: var(--ins-8) 0; }
+.dgroup:last-of-type { border-bottom: 0; }
+.dgroup h3 { margin: 0 0 var(--ins-2); font: 500 14.5px/1.2 var(--ins-font-display); letter-spacing: -.01em; color: var(--ins-text); }
+.dgroup p { margin: 0 0 var(--ins-5); font: 400 12.5px/1.55 var(--ins-font-display); color: var(--ins-text-3); }
+.dbtn {
+  display: block; width: 100%; text-align: center; min-height: var(--ins-tap); padding: var(--ins-6);
+  border: 1px solid var(--ins-border-strong); background: transparent; color: var(--ins-text-2);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
+}
+.dbtn + .dbtn, .dbtn + label.dbtn { margin-top: var(--ins-2); }
+.dbtn.ghost { border-color: var(--ins-hairline); color: var(--ins-text-3); }
+.dbtn input[type=file] { display: none; }
+.danger { color: var(--ins-coral); border-color: var(--ins-coral); }
+
+/* ---- Regras do guia e sinalizações menores ------------------------------ */
+.warn { border-left: 2px solid var(--ins-amber); padding-left: var(--ins-4); }
+.warn h3 em { color: var(--ins-amber); }
+.painbox b { display: block; margin-bottom: 3px; color: var(--ins-amber); font-weight: 500; }
+.tag.bi-t { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
+.rest.bi { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
+.aquec span { flex: 1; min-width: 0; }
+.aquec.on .aqbtn { border-color: var(--ins-acid); color: var(--ins-acid); }
+.mus { margin-top: var(--ins-1); }
+.rec {
+  padding: var(--ins-1) var(--ins-3);
+  background: var(--ins-acid); color: var(--ins-on-acid);
+  font: 500 10px/1 var(--ins-font-mono); letter-spacing: .06em;
+}
+.msg { padding: var(--ins-11) var(--ins-8); text-align: center; font: 400 12px/1.5 var(--ins-font-mono); color: var(--ins-text-3); }
+
+/* ---- Toast e cronômetro: ambos fixos, ambos fora da árvore do Preact ---- */
+#toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(84px + var(--sa-bottom));
+  width: calc(100% - 36px); max-width: 424px; z-index: 30;
+  background: var(--ins-surface); border: 1px solid var(--ins-border); color: var(--ins-text);
+  font: 400 11.5px/1.45 var(--ins-font-mono);
+  padding: var(--ins-5) var(--ins-6); text-align: center; display: none;
+}
+#toast.on { display: block; }
+
+#timer {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 460px; z-index: 20;
+  background: var(--ins-surface-low); border-top: 1px solid var(--ins-rule);
+  padding: var(--ins-5) var(--ins-8) calc(var(--ins-5) + var(--sa-bottom));
+  display: none; align-items: center; gap: var(--ins-6);
+}
+#timer.on { display: flex; }
+#tval { font: 600 27px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text); }
+#tval.zero { color: var(--ins-acid); }
+#tbar { flex: 1; height: var(--ins-rail); background: var(--ins-surface); overflow: hidden; }
+#tfill { height: 100%; background: var(--ins-acid); width: 100%; transition: width .25s linear; }
+#timer button {
+  background: none; border: 1px solid var(--ins-hairline); color: var(--ins-text-3);
+  font: 400 10px/1 var(--ins-font-mono); padding: 0 var(--ins-4); min-height: 32px;
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* As três exceções ao raio zero: ponto de status, ponto ao vivo, thumb do
+   slider. Antes havia uma regra que zerava o raio de TUDO dentro de #app —
+   muleta enquanto as telas em string nasciam com 2 a 12px. Não é mais
+   necessária: nenhuma regra do projeto declara raio. */
+.ins-live-dot, .ins-tl-ponto,
+input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
