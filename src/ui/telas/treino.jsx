@@ -83,7 +83,8 @@ export function Treino({ ctx }) {
           <button
             key={d.d}
             class={'wd' + (d.hoje ? ' hoje' : '') + (d.feito ? ' feito' : '') +
-                   (d.livre ? ' livre' : '') + (d.futuro ? ' futuro' : '')}
+                   (d.livre ? ' livre' : '') + (d.futuro ? ' futuro' : '') +
+                   (d.descanso ? ' descanso' : '')}
             disabled={!d.abre}
             onClick={() => ctx.abreSessaoDoDia(d.abre)}
           >

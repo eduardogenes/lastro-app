@@ -381,6 +381,10 @@
 .wd.livre { border-color: var(--ins-border-strong); }
 .wd.livre .wd-v { color: var(--ins-text-3); }
 .wd:not(.feito):not(.futuro) .wd-v { color: var(--ins-text-5); }
+/* Descanso registrado: presença, não convite. Fica abaixo do dia não treinado
+   na hierarquia visual — é informação, não coisa a fazer. */
+.wd.descanso .wd-v { color: var(--ins-text-4); }
+.wd.descanso .wd-d { color: var(--ins-text-5); }
 
 /* Linha de cardio */
 .cardl {

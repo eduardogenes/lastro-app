@@ -3660,9 +3660,13 @@ CTX.cromoDoTreino = function () {
     const marcas = sessoesDoDia(dia);
     const hoje = sameDay(dia, Date.now());
     const futuro = dia > Date.now() && !hoje;
+    const folga = !marcas.length && ehDescanso(dia);
     semana.push({
       d: DIAS_CURTOS[i],
-      v: marcas.length ? marcas.map(marcaDe).join('') : '+',
+      // '+' é convite: "registre aqui". Em dia de descanso ele mentiria, porque
+      // não há o que registrar — o traço diz vazio DE PROPÓSITO.
+      v: marcas.length ? marcas.map(marcaDe).join('') : (folga ? '–' : '+'),
+      descanso: folga,
       feito: marcas.length > 0,
       livre: marcas.length > 0 && marcas.every(function (m) { return m.livre; }),
       hoje: hoje,

@@ -223,3 +223,25 @@ test('a tela de lançamento aguenta a opção de descanso', async () => {
   assert.strictEqual(a.$('#ahora'), null, 'descanso não tem horário nem duração');
   a.fechar();
 });
+
+test('o descanso aparece nas duas telas, e do mesmo jeito', async () => {
+  // a tira da semana e o calendário do mês mostram a MESMA semana: divergir
+  // seria o app contando duas histórias sobre o mesmo domingo
+  const a = await app({ estado: { logs: {}, done: [] } });
+  const dom = a.E('weekStart(Date.now())');
+
+  const antes = a.$$('.wd .wd-v').map(x => x.textContent);
+  assert.strictEqual(antes[0], '+', 'sem marca, o domingo convida a registrar');
+
+  await a.E('alternaDescanso(' + dom + ')');
+  await a.esperar();
+
+  const cel = a.$$('.wd')[0];
+  assert.strictEqual(cel.querySelector('.wd-v').textContent, '–', 'vira traço');
+  assert.ok(cel.className.includes('descanso'));
+  assert.ok(!cel.className.includes('feito'), 'e nunca com o peso de dia treinado');
+
+  a.aba('dados');
+  assert.strictEqual(a.$$('.cal-d.descanso').length, 1, 'o mês diz a mesma coisa');
+  a.fechar();
+});
