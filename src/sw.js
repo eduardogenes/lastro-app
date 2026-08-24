@@ -37,6 +37,10 @@ self.addEventListener('fetch', function (e) {
   const url = new URL(req.url);
   const mesmaOrigem = url.origin === self.location.origin;
   const fonte = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
+  // NÃO alargue isto para "cachear tudo". A sincronização é uma chamada de
+  // outra origem, e servi-la do cache devolveria um estado velho como se fosse
+  // o da nuvem — o app fundiria contra o passado e reescreveria por cima do
+  // presente. O que é dado vivo passa direto; o que é asset é que se cacheia.
   if (!mesmaOrigem && !fonte) return;
 
   // Navegação sempre resolve para o index em cache: garante abrir offline
