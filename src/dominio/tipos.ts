@@ -88,6 +88,8 @@ export interface Log {
   sl?: IdEx;
   /** exercício por tempo */
   u?: 'seg';
+  /** quando este registro foi alterado pela última vez; a fusão o usa para decidir */
+  m?: number;
   obs?: string;
   dor?: string[];
   /**
@@ -126,6 +128,8 @@ export interface Sessao {
   grupos?: string[];
   nome?: string;
   obs?: string;
+  /** quando foi alterada pela última vez */
+  m?: number;
 }
 
 /** Mudança do dia, guardada como intenção e não como cópia do treino. */
@@ -163,10 +167,12 @@ export interface EntradaProgLog {
   day: Dia;
   txt: string;
   motivo?: string;
+  /** quando foi alterada pela última vez */
+  m?: number;
 }
 
 /** Uma marca corporal. */
-export interface Marca { t: number; v: number; }
+export interface Marca { t: number; v: number; /** alterada em */ m?: number; }
 
 /** Uma sessão de cardio. */
 export interface Cardio {
@@ -176,6 +182,8 @@ export interface Cardio {
   min: number;
   /** intensidade */
   i: string;
+  /** quando foi alterada pela última vez. `m` já era o modal, então aqui é `alt` */
+  alt?: number;
 }
 
 /** O que está sendo digitado numa posição da sessão aberta. */
@@ -267,4 +275,20 @@ export interface Estado {
    */
   perfManual: boolean | null;
   compras: EstadoCompras;
+
+  // ---- o que a sincronização trouxe ----
+
+  /**
+   * Quando o estado foi tocado pela última vez. É o que decide, na fusão, de
+   * que lado vêm os DOCUMENTOS — programa, plano de comida, cadência —, que
+   * são os únicos pedaços sem fusão possível.
+   */
+  mtime: number;
+  /**
+   * Lápides: chave do registro → quando foi apagado.
+   *
+   * Sem isto, unir dois estados RESSUSCITA o que você apagou num aparelho: o
+   * registro ainda existe no outro, e a união o traz de volta.
+   */
+  apagados: Record<string, number>;
 }
