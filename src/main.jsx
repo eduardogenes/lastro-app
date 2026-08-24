@@ -38,8 +38,23 @@ import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
 import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
+import {
+  chaveDeCardio, chaveDeLog, chaveDeMarca, chaveDeSessao
+} from './dominio/sincronia';
 
 const KEY = 'treino-eduardo-v1';
+
+/**
+ * Marca um registro como apagado.
+ *
+ * Sem isto, apagar num aparelho é DESFEITO pelo outro: o registro ainda existe
+ * lá, e a fusão o traz de volta. A lápide viaja junto com o estado e diz "isto
+ * morreu em T".
+ */
+function lapide(chave) {
+  if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
+  S.apagados[chave] = Date.now();
+}
 function rot() { return (S.rot && S.rot.length) ? S.rot : ROT_BASE; }
 
 // Sessões de cardio por semana que o treinador pede: segunda depois do A e
@@ -223,6 +238,8 @@ function normalizaEstado() {
   if (!S.ex || typeof S.ex !== 'object') S.ex = {};
   if (!S.mods || typeof S.mods !== 'object' || !S.mods.day || !Array.isArray(S.mods.list)) S.mods = null;
   if (!Array.isArray(S.progLog)) S.progLog = [];
+  if (typeof S.mtime !== 'number') S.mtime = 0;
+  if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
 }
 
 async function load() {
@@ -365,6 +382,7 @@ function fechaSessao(comoFim) {
     const pausado = somaPausas(s);
     if (pausado > 60000) marca.pausado = pausado;
     if (s.pulados && s.pulados.length) marca.pulados = s.pulados.slice();
+    marca.m = Date.now();
   }
   S.sessao = null;
   S.draft = null;
@@ -432,6 +450,7 @@ function projeta(i) {
   if (!entry) { entry = { t: s.inicio, sid: s.sid }; S.logs[key].push(entry); }
 
   entry.sets = sets;
+  entry.m = Date.now();
   // slot de origem: o registro vive no histórico do exercício, mas ainda
   // precisamos saber em que posição do treino ele foi feito
   if (key !== slot) entry.sl = slot; else delete entry.sl;
@@ -459,7 +478,9 @@ function removeProjecao(key, slot) {
   const s = S.sessao;
   if (!s || !S.logs[key]) return;
   S.logs[key] = S.logs[key].filter(function (x) {
-    return !(x.sid === s.sid && (slot == null || (x.sl || key) === slot));
+    const sai = x.sid === s.sid && (slot == null || (x.sl || key) === slot);
+    if (sai) lapide(chaveDeLog(key, x));
+    return !sai;
   });
   if (!S.logs[key].length) delete S.logs[key];
 }
@@ -546,6 +567,7 @@ async function finalizarSessao() {
 
   if (!feitas && !p.parcial.length) {
     if (!confirm('Nenhuma série registrada neste treino. Descartar a sessão?')) return;
+    lapide(chaveDeSessao({ sid: s.sid }));
     S.done = S.done.filter(function (x) { return x.sid !== s.sid; });
     S.sessao = null; S.draft = null; S.mods = null;
     view.open = null; view.fired = {}; view.editProg = false;
@@ -597,6 +619,11 @@ async function encerraDeVerdade(dia, feitas, resumoMods) {
 function historico(key) { return _historico(S.logs, key, S.sessao); }
 
 async function save() {
+  // O carimbo do estado inteiro. É o que decide, na fusão, de que lado vêm os
+  // DOCUMENTOS — programa, plano de comida, cadência —, que são os únicos
+  // pedaços sem fusão possível. As coleções não dependem dele: elas se unem
+  // pela chave natural de cada registro.
+  S.mtime = Date.now();
   try { await DB.set(KEY, JSON.stringify(S)); return true; }
   catch (e) { console.error('não salvou', e); return false; }
 }
@@ -1596,7 +1623,7 @@ function impactoOficial(g) {
 // dois meses, "por que o pendulum virou hack squat?".
 function logProg(d, txt, motivo) {
   if (!Array.isArray(S.progLog)) S.progLog = [];
-  S.progLog.push({ t: Date.now(), day: d, txt: txt, motivo: motivo || null });
+  S.progLog.push({ t: Date.now(), day: d, txt: txt, motivo: motivo || null, m: Date.now() });
   if (S.progLog.length > 300) S.progLog = S.progLog.slice(-300);
 }
 
@@ -1762,6 +1789,7 @@ function guardaCamposEdicao() {
 async function salvarEdicao() {
   const e = S.logs[view.hist.key][view.edit];
   guardaCamposEdicao();
+  e.m = Date.now();
   if (!e.dor || !e.dor.length) delete e.dor;
   if (!e.sets.filter(Boolean).length) {
     toast('Uma sessão sem nenhuma série. Use apagar se foi engano.');
@@ -1775,6 +1803,7 @@ async function salvarEdicao() {
 async function apagarSessao() {
   if (!confirm('Apagar esta sessão do histórico? Isso não tem volta.')) return;
   const key = view.hist.key;
+  lapide(chaveDeLog(key, S.logs[key][view.edit]));
   S.logs[key].splice(view.edit, 1);
   if (!S.logs[key].length) delete S.logs[key];
   view.edit = null;
@@ -1803,7 +1832,8 @@ function cardioSet(k, v) {
 }
 async function addCardio() {
   const f = Object.assign({ m:'bike', min:25, i:'moderado' }, view.cardioForm);
-  S.cardio.push({ t: Date.now(), m: f.m, min: f.min, i: f.i });
+  // `alt` e não `m`: em cardio o `m` já é o modal
+  S.cardio.push({ t: Date.now(), m: f.m, min: f.min, i: f.i, alt: Date.now() });
   if (S.cardio.length > 200) S.cardio = S.cardio.slice(-200);
   await save();
   view.cardioRapido = false;
@@ -1812,6 +1842,7 @@ async function addCardio() {
   toast(`${f.min} min de ${f.m} registrados · ${n} de ${CARDIO_ALVO} nesta semana`);
 }
 async function delCardio(t) {
+  lapide(chaveDeCardio({ t: t }));
   S.cardio = S.cardio.filter(c => c.t !== t);
   await save();
   render();
@@ -1941,7 +1972,7 @@ async function gravarRetro(detalhar) {
   const comHora = aplicaHora(a.t, a.hora);
   const quando = comHora != null ? comHora : a.t;
   const sid = quando;
-  const marca = { t: quando, sid: sid, retro: 1 };
+  const marca = { t: quando, sid: sid, retro: 1, m: Date.now() };
   if (comHora != null) marca.hora = 1;
   if (a.tipo === 'livre') {
     marca.livre = 1;
@@ -2141,8 +2172,10 @@ async function addBody(k) {
   const rotulo = rotuloDoDia(quando);
   const arr = S.body[k];
   const noDia = arr.filter(x => sameDay(x.t, quando));
-  noDia.forEach(x => arr.splice(arr.indexOf(x), 1));   // uma medida por dia
-  arr.push({ t: quando, v });
+  // a substituída ganha lápide: o registro novo tem outro instante, e sem isso
+  // a fusão traria os dois de volta e o dia teria duas medidas
+  noDia.forEach(x => { lapide(chaveDeMarca(k, x)); arr.splice(arr.indexOf(x), 1); });
+  arr.push({ t: quando, v, m: Date.now() });
   arr.sort((a,b) => a.t - b.t);
   if (arr.length > 400) S.body[k] = arr.slice(-400);
 
@@ -2164,6 +2197,7 @@ async function addBody(k) {
     : `${fmtDec(v)} ${un} registrado ${rotulo === 'hoje' ? 'hoje' : 'em ' + rotulo}.`);
 }
 async function delBody(k, t) {
+  lapide(chaveDeMarca(k, { t: t }));
   S.body[k] = S.body[k].filter(x => x.t !== t);
   await save(); render();
   toast('Medida removida.');
@@ -2262,7 +2296,11 @@ async function importText(txt) {
         dia: (d.dia && typeof d.dia === 'object') ? d.dia : null,
         ajuste: (d.ajuste === -1 || d.ajuste === 1) ? d.ajuste : 0,
         perfManual: (d.perfManual === true || d.perfManual === false) ? d.perfManual : null,
-        compras: (d.compras && typeof d.compras === 'object') ? d.compras : null };
+        compras: (d.compras && typeof d.compras === 'object') ? d.compras : null,
+        // a sincronização: sem estes, importar um backup zeraria o carimbo do
+        // estado e as lápides — e um aparelho ressuscitaria o que o outro apagou
+        mtime: typeof d.mtime === 'number' ? d.mtime : 0,
+        apagados: (d.apagados && typeof d.apagados === 'object') ? d.apagados : {} };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();
@@ -2448,6 +2486,8 @@ function resumoDaSessao(marca) {
 
 async function apagarMarca(t) {
   if (!confirm('Apagar este registro de treino? Isso não tem volta.')) return;
+  (S.done.filter(function (x) { return x.t === t; }))
+    .forEach(function (x) { lapide(chaveDeSessao(x)); });
   S.done = S.done.filter(function (x) { return x.t !== t; });
   view.sessao = null;
   await save(); render();

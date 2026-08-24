@@ -63,7 +63,9 @@ test('exportar carrega todos os campos do estado', async () => {
      'mods', 'plano', 'prog', 'progLog', 'rot', 'sessao',
      // a fusão: sem estes no backup, trocar de celular perderia o plano
      // nutricional, a cadência e o ajuste calórico em vigor
-     'ajuste', 'cadencia', 'comida', 'compras', 'dia', 'perfManual'].sort()
+     'ajuste', 'cadencia', 'comida', 'compras', 'dia', 'perfManual',
+     // a sincronização: o carimbo do estado e as lápides do que foi apagado
+     'mtime', 'apagados'].sort()
   );
   a.fechar();
 });
