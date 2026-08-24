@@ -2037,9 +2037,77 @@ function seriesPorMusculo(de, ate, corte) {
 /** Onde o stepper começa quando ainda não há nenhuma medida registrada. */
 const CORPO_PADRAO = { peso: 75, cintura: 85 };
 
-/** Onde o stepper parte quando não há rascunho: a última medida registrada. */
+// ---------- a data da medida ----------
+// Pesagem esquecida ontem não pode entrar como hoje. O veredito da dieta lê
+// MÉDIA SEMANAL e o ritmo entre semanas: uma medida no dia errado desloca as
+// duas médias, e é esse número que decide comer mais ou comer menos.
+//
+// O padrão continua sendo hoje, num toque só — a data fica atrás de um link,
+// porque registrar no dia é o caso de todo dia e retroativo é exceção. Cinco
+// dias bastam: quem esquece, esquece ontem ou anteontem.
+const DIAS_RETRO_CORPO = 5;
+
+/** Um dia normalizado às 7h, que é quando ele pesa. */
+function diaNormalizado(t) {
+  const d = new Date(t); d.setHours(7, 0, 0, 0); return d.getTime();
+}
+function diaDaMedida(k) {
+  return (view.bodyDia && view.bodyDia[k]) || diaNormalizado(Date.now());
+}
+/**
+ * O instante que vai para o histórico. Hoje leva a hora real, para as medidas
+ * do dia manterem ordem entre si; um dia passado leva 7h, o horário de pesagem.
+ */
+function instanteDaMedida(k) {
+  const d = diaDaMedida(k);
+  return sameDay(d, Date.now()) ? Date.now() : d;
+}
+function rotuloDoDia(t) {
+  if (sameDay(t, Date.now())) return 'hoje';
+  if (sameDay(t, Date.now() - 86400000)) return 'ontem';
+  const d = new Date(t);
+  return DIAS_CURTOS[(d.getDay() + 6) % 7] + ' ' + d.getDate();
+}
+/** Os dias oferecidos, cada um já dizendo o que tem registrado — é o que mostra o buraco. */
+function diasParaMedida(k) {
+  const out = [];
+  for (let i = 0; i < DIAS_RETRO_CORPO; i++) {
+    const t = diaNormalizado(Date.now() - i * 86400000);
+    const j = (S.body[k] || []).filter(function (x) { return sameDay(x.t, t); })[0];
+    out.push({ k: t, t: rotuloDoDia(t) + (j ? ' · ' + fmtDec(j.v) : '') });
+  }
+  return out;
+}
+/** "registrar hoje", "registrar ontem", "registrar em ter 14". */
+function acaoDaMedida(k) {
+  const r = rotuloDoDia(diaDaMedida(k));
+  return 'registrar ' + (r === 'hoje' || r === 'ontem' ? r : 'em ' + r);
+}
+
+/** O que a tela precisa saber sobre a data escolhida. */
+function diaDaMedidaVM(k) {
+  const d = diaDaMedida(k);
+  return {
+    aberto: view.bodyDiaAberto === k,
+    valor: d,
+    hoje: sameDay(d, Date.now()),
+    txt: rotuloDoDia(d),
+    opcoes: diasParaMedida(k)
+  };
+}
+
+/**
+ * Onde o stepper parte quando não há rascunho.
+ *
+ * Se o dia escolhido JÁ tem medida, é ela — o gesto ali é corrigir aquele dia,
+ * e partir do último peso faria ele digitar por cima do que já estava certo.
+ * Sem medida no dia, parte da última registrada.
+ */
 function baseDoCorpo(k) {
   const arr = S.body[k] || [];
+  const d = diaDaMedida(k);
+  const noDia = arr.filter(function (x) { return sameDay(x.t, d); })[0];
+  if (noDia) return noDia.v;
   return arr.length ? arr[arr.length - 1].v : CORPO_PADRAO[k];
 }
 
@@ -2065,22 +2133,31 @@ async function addBody(k) {
   const v = valorDoCorpo(k);
   if (isNaN(v) || v <= 0) { toast('Digite um número válido.'); return; }
 
+  const quando = instanteDaMedida(k);
+  const rotulo = rotuloDoDia(quando);
   const arr = S.body[k];
-  const hoje = arr.filter(x => sameDay(x.t, Date.now()));
-  hoje.forEach(x => arr.splice(arr.indexOf(x), 1));   // uma medida por dia
-  arr.push({ t: Date.now(), v });
+  const noDia = arr.filter(x => sameDay(x.t, quando));
+  noDia.forEach(x => arr.splice(arr.indexOf(x), 1));   // uma medida por dia
+  arr.push({ t: quando, v });
   arr.sort((a,b) => a.t - b.t);
   if (arr.length > 400) S.body[k] = arr.slice(-400);
 
   // Solta o rascunho: o stepper volta a se derivar da última medida, que é
-  // justamente a que acabou de ser gravada.
+  // justamente a que acabou de ser gravada. E a data volta para hoje — deixar
+  // uma data passada armada seria a próxima pesagem caindo no dia errado sem
+  // ele perceber.
   view.bodyForm = Object.assign({}, view.bodyForm);
   delete view.bodyForm[k];
+  view.bodyDia = Object.assign({}, view.bodyDia);
+  delete view.bodyDia[k];
+  if (view.bodyDiaAberto === k) view.bodyDiaAberto = null;
   await save();
   render();
-  toast(hoje.length
-    ? `${k === 'peso' ? 'Peso' : 'Cintura'} de hoje atualizado para ${fmtDec(v)} ${k==='peso'?'kg':'cm'}.`
-    : `${fmtDec(v)} ${k==='peso'?'kg':'cm'} registrado.`);
+  const nome = k === 'peso' ? 'Peso' : 'Cintura';
+  const un = k === 'peso' ? 'kg' : 'cm';
+  toast(noDia.length
+    ? `${nome} de ${rotulo} atualizado para ${fmtDec(v)} ${un}.`
+    : `${fmtDec(v)} ${un} registrado ${rotulo === 'hoje' ? 'hoje' : 'em ' + rotulo}.`);
 }
 async function delBody(k, t) {
   S.body[k] = S.body[k].filter(x => x.t !== t);
@@ -2941,6 +3018,8 @@ CTX.corpo = function () {
         ? (r.kgSem >= 0.15 && r.kgSem <= 0.4 ? 'ins-acid' : 'ins-amber') : '',
       nota: naSemana + (naSemana === 1 ? ' pesagem nesta semana' : ' pesagens nesta semana'),
       alvo: 'registre 3 a 4 por semana',
+      acao: acaoDaMedida('peso'),
+      dia: diaDaMedidaVM('peso'),
       medidas: medidasRecentes('peso', 'kg')
     },
     cintura: {
@@ -2953,6 +3032,8 @@ CTX.corpo = function () {
       // devia estar a variação em centímetros.
       mesValor: c ? fmtSig2(c.mes) : '–',
       mes: c ? fmtSig2(c.mes) + ' cm no mês' : 'faltam 3 semanas de medida para concluir',
+      acao: acaoDaMedida('cintura'),
+      dia: diaDaMedidaVM('cintura'),
       medidas: medidasRecentes('cintura', 'cm')
     },
     cardio: {
@@ -3037,6 +3118,18 @@ CTX.musculos = function () {
 
 CTX.setPeso = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { peso: v }); render(); };
 CTX.setCintura = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { cintura: v }); render(); };
+CTX.abreDiaCorpo = function (k) { view.bodyDiaAberto = view.bodyDiaAberto === k ? null : k; render(); };
+CTX.setDiaCorpo = function (k, t) {
+  view.bodyDia = Object.assign({}, view.bodyDia, { [k]: t });
+  // trocar de dia troca a referência do stepper: o valor a corrigir é o
+  // daquele dia, não o da última pesagem
+  view.bodyForm = Object.assign({}, view.bodyForm);
+  delete view.bodyForm[k];
+  // escolheu, fecha: a linha de chips já cumpriu o papel, e o dia escolhido
+  // continua dito no botão e no rótulo — que é por onde ele reabre para trocar
+  view.bodyDiaAberto = null;
+  render();
+};
 CTX.registraPeso = function () { addBody('peso'); };
 CTX.registraCintura = function () { addBody('cintura'); };
 CTX.apagaMedida = function (k, t) { delBody(k, t); };

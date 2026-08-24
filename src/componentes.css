@@ -385,6 +385,15 @@
 .dd-registro { display: flex; gap: var(--ins-2); align-items: center; }
 .dd-registro .ins-stepper { flex: 1; }
 .dd-registro .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+/* A data da medida: link discreto no estado normal, chips quando aberto. Não
+   compete com o botão de registrar, que é a ação de todo dia. */
+.dd-diabtn {
+  width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
+  font: 400 10px/1.4 var(--ins-font-mono);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-5);
+}
+.dd-diabtn:active { color: var(--ins-text-3); }
+.dd-dia { margin-top: var(--ins-3); }
 
 .dd-fora {
   margin-bottom: var(--ins-6); padding: var(--ins-5);

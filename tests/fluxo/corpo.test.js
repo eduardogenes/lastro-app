@@ -251,3 +251,105 @@ test('cintura usa o stepper dela, não o do peso', async () => {
   assert.strictEqual(a.J('S.body.peso').length, 1, 'o peso não foi tocado');
   a.fechar();
 });
+
+// ---------- data retroativa da medida ----------
+// Pesou ontem e esqueceu de registrar: lançar como hoje deslocaria a média de
+// duas semanas, e é a média que decide comer mais ou comer menos.
+
+test('o padrão continua sendo hoje, num toque', async () => {
+  const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.aba('dados');
+  const d = a.J('CTX.corpo().peso.dia');
+  assert.strictEqual(d.hoje, true, 'abre em hoje, sem pedir data');
+  assert.strictEqual(d.aberto, false, 'e o seletor fica fechado');
+  assert.strictEqual(a.E("CTX.corpo().peso.acao"), 'registrar hoje');
+  a.fechar();
+});
+
+test('escolher ontem grava no dia certo, não em hoje', async () => {
+  const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.aba('dados');
+
+  const ontem = a.J('CTX.corpo().peso.dia').opcoes[1].k;
+  a.E('CTX.setDiaCorpo("peso", ' + ontem + ')');
+  assert.strictEqual(a.E("CTX.corpo().peso.acao"), 'registrar ontem',
+    'o botão passa a dizer em que dia vai gravar');
+
+  a.E('CTX.setPeso(73.4)');
+  await a.E('addBody("peso")');
+  await a.esperar();
+
+  const m = a.J('S.body.peso');
+  assert.strictEqual(m.length, 1);
+  assert.strictEqual(m[0].v, 73.4);
+  assert.strictEqual(a.E('sameDay(S.body.peso[0].t, Date.now())'), false, 'não caiu em hoje');
+  assert.strictEqual(a.E('sameDay(S.body.peso[0].t, ' + ontem + ')'), true);
+  a.fechar();
+});
+
+test('depois de gravar, a data volta para hoje sozinha', async () => {
+  // deixar uma data passada armada faria a próxima pesagem cair no dia errado
+  const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.aba('dados');
+  const ontem = a.J('CTX.corpo().peso.dia').opcoes[1].k;
+  a.E('CTX.setDiaCorpo("peso", ' + ontem + ')');
+  await a.E('addBody("peso")');
+  await a.esperar();
+  assert.strictEqual(a.J('CTX.corpo().peso.dia').hoje, true);
+  assert.strictEqual(a.E("CTX.corpo().peso.acao"), 'registrar hoje');
+  a.fechar();
+});
+
+test('cada dia oferecido diz o que já tem registrado', async () => {
+  const ontem = Date.now() - 86400000;
+  const a = await app({ estado: { logs: {}, done: [],
+    body: { peso: [{ t: ontem, v: 73.4 }], cintura: [] } } });
+  a.aba('dados');
+  const op = a.J('CTX.corpo().peso.dia').opcoes;
+  assert.strictEqual(op.length, 5, 'cinco dias bastam para quem esquece ontem');
+  assert.strictEqual(op[0].t, 'hoje', 'hoje ainda está vazio');
+  assert.ok(/^ontem · 73/.test(op[1].t), 'o dia preenchido mostra o valor: ' + op[1].t);
+  a.fechar();
+});
+
+test('escolher um dia já medido parte do valor daquele dia', async () => {
+  // o gesto ali é corrigir aquele dia; partir do último peso faria digitar por
+  // cima do que já estava certo
+  const ontem = Date.now() - 86400000;
+  const a = await app({ estado: { logs: {}, done: [],
+    body: { peso: [{ t: ontem, v: 73.4 }, { t: Date.now(), v: 75 }], cintura: [] } } });
+  a.aba('dados');
+  assert.strictEqual(a.E('CTX.corpo().peso.valor'), 75, 'em hoje, mostra o de hoje');
+
+  const dOntem = a.J('CTX.corpo().peso.dia').opcoes[1].k;
+  a.E('CTX.setDiaCorpo("peso", ' + dOntem + ')');
+  assert.strictEqual(a.E('CTX.corpo().peso.valor'), 73.4, 'em ontem, mostra o de ontem');
+
+  a.E('CTX.setPeso(73.9)');
+  await a.E('addBody("peso")');
+  await a.esperar();
+  assert.strictEqual(a.J('S.body.peso').length, 2, 'corrigiu, não duplicou');
+  assert.strictEqual(a.J('S.body.peso')[0].v, 73.9);
+  a.fechar();
+});
+
+test('a data é por medida: peso e cintura não se misturam', async () => {
+  const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.aba('dados');
+  const ontem = a.J('CTX.corpo().peso.dia').opcoes[1].k;
+  a.E('CTX.setDiaCorpo("peso", ' + ontem + ')');
+  assert.strictEqual(a.J('CTX.corpo().peso.dia').hoje, false);
+  assert.strictEqual(a.J('CTX.corpo().cintura.dia').hoje, true, 'a cintura continua em hoje');
+  a.fechar();
+});
+
+test('o seletor de data abre e fecha pelo link', async () => {
+  const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.aba('dados');
+  assert.strictEqual(a.$$('.dd-dia').length, 0, 'fechado por padrão: não custa espaço');
+  assert.ok(a.$('.dd-diabtn'), 'mas existe o caminho');
+
+  a.clicar(a.$('.dd-diabtn'));
+  assert.strictEqual(a.$$('.dd-dia .ins-chip').length, 5, 'abre com os cinco dias');
+  a.fechar();
+});
