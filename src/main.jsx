@@ -2034,10 +2034,35 @@ function seriesPorMusculo(de, ate, corte) {
  * @param {boolean} [semVeredito] omite o cartão de veredito, que a tela DADOS já
  *   desenha no Instrumento logo acima — sem isso ele aparece duas vezes.
  */
+/** Onde o stepper começa quando ainda não há nenhuma medida registrada. */
+const CORPO_PADRAO = { peso: 75, cintura: 85 };
+
+/** Onde o stepper parte quando não há rascunho: a última medida registrada. */
+function baseDoCorpo(k) {
+  const arr = S.body[k] || [];
+  return arr.length ? arr[arr.length - 1].v : CORPO_PADRAO[k];
+}
+
+/**
+ * O valor que o stepper de corpo está mostrando AGORA — a MESMA leitura para a
+ * tela e para o botão de registrar.
+ *
+ * Quando o campo de texto virou stepper, esta função não existia: a tela passou
+ * a desenhar um número vindo de `view.bodyForm`, e o registro continuou lendo um
+ * `<input>` por id que o redesenho já tinha apagado. Sem tocar no stepper o
+ * botão não gravava nada; tocando, chegava número onde o código esperava string.
+ *
+ * Devolve NaN quando há rascunho e ele não é número — o registro precisa
+ * RECUSAR nesse caso, e não gravar a referência no lugar do que foi digitado.
+ */
+function valorDoCorpo(k) {
+  const f = view.bodyForm || {};
+  if (f[k] == null || f[k] === '') return baseDoCorpo(k);
+  return typeof f[k] === 'number' ? f[k] : parseFloat(String(f[k]).replace(',', '.'));
+}
+
 async function addBody(k) {
-  const el = document.getElementById(k === 'peso' ? 'bpeso' : 'bcint');
-  const raw = ((view.bodyForm && view.bodyForm[k]) || (el && el.value) || '').replace(',', '.');
-  const v = parseFloat(raw);
+  const v = valorDoCorpo(k);
   if (isNaN(v) || v <= 0) { toast('Digite um número válido.'); return; }
 
   const arr = S.body[k];
@@ -2047,8 +2072,10 @@ async function addBody(k) {
   arr.sort((a,b) => a.t - b.t);
   if (arr.length > 400) S.body[k] = arr.slice(-400);
 
+  // Solta o rascunho: o stepper volta a se derivar da última medida, que é
+  // justamente a que acabou de ser gravada.
   view.bodyForm = Object.assign({}, view.bodyForm);
-  view.bodyForm[k] = '';
+  delete view.bodyForm[k];
   await save();
   render();
   toast(hoje.length
@@ -2898,15 +2925,15 @@ function medidasRecentes(k, un) {
 CTX.corpo = function () {
   const r = pesoRitmo();
   const c = cinturaMes();
-  const f = view.bodyForm || {};
-  const ultimoPeso = S.body.peso.length ? S.body.peso[S.body.peso.length - 1].v : 75;
-  const ultimaCint = S.body.cintura.length ? S.body.cintura[S.body.cintura.length - 1].v : 85;
+  const ultimaCint = baseDoCorpo('cintura');
+  // a tela precisa de um número para desenhar: rascunho ilegível cai na referência
+  const vPeso = valorDoCorpo('peso'), vCint = valorDoCorpo('cintura');
   const semana = weekStart(Date.now());
   const naSemana = S.body.peso.filter(function (x) { return x.t >= semana; }).length;
 
   return {
     peso: {
-      valor: f.peso == null ? ultimoPeso : f.peso,
+      valor: isNaN(vPeso) ? baseDoCorpo('peso') : vPeso,
       serie: serieSemanal(S.body.peso, 14),
       media: r.ok ? fmtDec(r.last.v) + ' kg' : '—',
       ritmo: (r.ok && r.duasSemanas) ? fmtSig2(r.kgSem) : '—',
@@ -2917,7 +2944,7 @@ CTX.corpo = function () {
       medidas: medidasRecentes('peso', 'kg')
     },
     cintura: {
-      valor: f.cintura == null ? ultimaCint : f.cintura,
+      valor: isNaN(vCint) ? ultimaCint : vCint,
       serie: serieSemanal(S.body.cintura, 14),
       atual: S.body.cintura.length ? fmtDec(ultimaCint) + ' cm' : '–',
       // Duas coisas separadas, e antes eram uma só: a célula de métrica quer

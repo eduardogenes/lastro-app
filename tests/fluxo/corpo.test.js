@@ -186,3 +186,68 @@ test('célula de métrica sem medida mostra traço, não a primeira palavra da f
   assert.ok(/faltam 3 semanas de medida/.test(txt), 'a frase continua, na procedência');
   a.fechar();
 });
+
+// ---------- o stepper e o botão têm que ler o mesmo lugar ----------
+// Regressão: quando o campo de texto virou stepper, `addBody` continuou lendo
+// um `<input>` por id que o redesenho já tinha apagado. Sem tocar no stepper o
+// botão não gravava nada; tocando, chegava um número onde o código fazia
+// `.replace` de string e a tela quebrava com TypeError.
+
+test('registrar peso grava o número que o stepper mostra', async () => {
+  const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.aba('dados');
+
+  // sem nenhuma medida, o stepper parte do padrão e o botão grava ELE
+  assert.strictEqual(a.E("CTX.corpo().peso.valor"), 75);
+  await a.E('addBody("peso")');
+  await a.esperar();
+  assert.strictEqual(a.J('S.body.peso').length, 1, 'o botão sozinho já registra');
+  assert.strictEqual(a.J('S.body.peso')[0].v, 75);
+  a.fechar();
+});
+
+test('mexer no stepper antes de registrar não quebra a tela', async () => {
+  const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.aba('dados');
+
+  // o stepper entrega NÚMERO, não string: é o que fazia o .replace estourar
+  a.E('CTX.setPeso(73.4)');
+  assert.strictEqual(a.E("CTX.corpo().peso.valor"), 73.4, 'a tela mostra o que ele escolheu');
+  await a.E('addBody("peso")');
+  await a.esperar();
+  assert.strictEqual(a.J('S.body.peso')[0].v, 73.4, 'e é isso que vai para o histórico');
+
+  // depois de gravar, o stepper se deriva da última medida em vez de zerar
+  assert.strictEqual(a.E("CTX.corpo().peso.valor"), 73.4);
+  a.fechar();
+});
+
+test('o botão de registrar na tela chega até o histórico', async () => {
+  // pelo caminho real: o clique no botão, não a função por dentro
+  const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.aba('dados');
+  const botoes = a.$$('.dd-registro .ins-btn-secondary');
+  assert.ok(botoes.length >= 2, 'peso e cintura têm botão de registrar');
+
+  a.clicar(botoes[0]);
+  await a.esperar();
+  assert.strictEqual(a.J('S.body.peso').length, 1, 'clicar em "registrar hoje" registra');
+
+  a.clicar(botoes[1]);
+  await a.esperar();
+  assert.strictEqual(a.J('S.body.cintura').length, 1, 'e a cintura também');
+  assert.strictEqual(a.J('S.body.cintura')[0].v, 85);
+  a.fechar();
+});
+
+test('cintura usa o stepper dela, não o do peso', async () => {
+  const a = await app({ estado: { logs: {}, done: [],
+    body: { peso: [{ t: Date.now(), v: 73 }], cintura: [] } } });
+  a.aba('dados');
+  a.E('CTX.setCintura(84.5)');
+  await a.E('addBody("cintura")');
+  await a.esperar();
+  assert.strictEqual(a.J('S.body.cintura')[0].v, 84.5);
+  assert.strictEqual(a.J('S.body.peso').length, 1, 'o peso não foi tocado');
+  a.fechar();
+});
