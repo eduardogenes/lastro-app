@@ -8,7 +8,7 @@ export const DIA = 86400000;
 export function inicioDaSemana(t: number): number {
   const d = new Date(t);
   d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  d.setDate(d.getDate() - d.getDay());   // domingo, como weekStart
   return d.getTime();
 }
 

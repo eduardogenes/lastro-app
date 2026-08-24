@@ -2244,7 +2244,7 @@ function rotuloDoDia(t) {
   if (sameDay(t, Date.now())) return 'hoje';
   if (sameDay(t, Date.now() - 86400000)) return 'ontem';
   const d = new Date(t);
-  return DIAS_CURTOS[(d.getDay() + 6) % 7] + ' ' + d.getDate();
+  return DIAS_CURTOS[d.getDay()] + ' ' + d.getDate();
 }
 /** O que o dia escolhido já tem — é o que diz se ele vai criar ou corrigir. */
 function medidaDoDia(k) {
@@ -3691,7 +3691,7 @@ CTX.mes = function () {
   const ref = mesRef();
   const ini = new Date(ref.getFullYear(), ref.getMonth(), 1);
   const fim = new Date(ref.getFullYear(), ref.getMonth() + 1, 1);
-  const offset = (ini.getDay() + 6) % 7;              // segunda como primeira coluna
+  const offset = ini.getDay();                        // domingo como primeira coluna
   const dias = Math.round((fim - ini) / 86400000);
   const t = totaisDoPeriodo(ini.getTime(), fim.getTime());
   const med = mediaSemanal();

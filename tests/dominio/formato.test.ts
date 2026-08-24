@@ -53,15 +53,25 @@ test('descanso redondo vira minuto; quebrado vira relógio', () => {
   assert.strictEqual(fmtDesc(45), '45s');
 });
 
-test('a semana começa na segunda-feira', () => {
+test('a semana começa no domingo', () => {
   const qua = new Date(2026, 7, 12, 15, 0, 0).getTime();   // quarta
-  const seg = weekStart(qua);
-  assert.strictEqual(new Date(seg).getDay(), 1, 'segunda');
-  assert.strictEqual(new Date(seg).getHours(), 0);
-  const dom = new Date(2026, 7, 16, 23, 0, 0).getTime();   // domingo
-  assert.strictEqual(weekStart(dom), seg, 'domingo ainda é a mesma semana');
-  const segSeguinte = new Date(2026, 7, 17, 0, 30, 0).getTime();
-  assert.notStrictEqual(weekStart(segSeguinte), seg);
+  const dom = weekStart(qua);
+  assert.strictEqual(new Date(dom).getDay(), 0, 'domingo');
+  assert.strictEqual(new Date(dom).getHours(), 0);
+
+  const sab = new Date(2026, 7, 15, 23, 0, 0).getTime();   // sábado
+  assert.strictEqual(weekStart(sab), dom, 'sábado fecha a mesma semana');
+
+  const domSeguinte = new Date(2026, 7, 16, 0, 30, 0).getTime();
+  assert.notStrictEqual(weekStart(domSeguinte), dom, 'e o domingo seguinte abre outra');
+});
+
+test('a semana de treino inteira cai num balde só', () => {
+  // é o que torna a virada inofensiva: ele treina de segunda a sábado, e esses
+  // seis dias continuam juntos na mesma semana
+  const semana = [10, 11, 12, 13, 14, 15]        // seg 10 a sáb 15 de agosto/2026
+    .map(d => weekStart(new Date(2026, 7, d, 7, 0).getTime()));
+  assert.strictEqual(new Set(semana).size, 1, 'os seis dias na mesma semana');
 });
 
 test('mesmo dia ignora a hora', () => {

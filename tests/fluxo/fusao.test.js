@@ -183,7 +183,7 @@ test('a cadência da semana é editável e só fala de cadência', async () => {
   assert.strictEqual(dias.length, 7);
 
   const antes = a.J('S.cadencia').slice();
-  a.clicar(dias[0]);            // segunda, que é o índice 1 da cadência
+  a.clicar(dias[1]);            // segunda: o índice 1, agora a SEGUNDA coluna
   await a.esperar();
   assert.notStrictEqual(a.J('S.cadencia')[1], antes[1], 'alternou');
 

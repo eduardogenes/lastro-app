@@ -34,7 +34,9 @@ export function fmtK(n: number): string {
   return n >= 1000 ? String(Math.round(n/100)/10).replace('.', ',') + 'k' : String(n);
 }
 
-export const DIAS_CURTOS: string[] = ['seg','ter','qua','qui','sex','sáb','dom'];
+// Domingo primeiro, igual a `Date#getDay` e à cadência — assim o índice do dia
+// da semana é o índice do rótulo, sem conversão no meio.
+export const DIAS_CURTOS: string[] = ['dom','seg','ter','qua','qui','sex','sáb'];
 
 export const DIAS_LONGOS: string[] = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 
@@ -81,10 +83,22 @@ export function fmtDate(t: number): string {
 // ---------- cardio ----------
 // Ele está em superávit. O cardio aqui é saúde cardiovascular, capacidade de
 // trabalho e apetite. Nada de caloria, gasto energético, gráfico ou HIIT.
+/**
+ * O domingo que abre a semana daquele instante.
+ *
+ * Domingo e não segunda porque é assim que o calendário se lê no Brasil, e o
+ * app precisa que a grade da tela e a conta da média digam a mesma coisa — uma
+ * semana que COMEÇA no domingo na tela e TERMINA nele no cálculo seria duas
+ * semanas diferentes com o mesmo nome.
+ *
+ * A troca é inofensiva para o histórico dele: os seis dias de treino vão de
+ * segunda a sábado, então continuam caindo todos no mesmo balde. O que mudou de
+ * lugar foi o domingo de descanso, que não carrega série nenhuma.
+ */
 export function weekStart(ts: number): number {
   const d = new Date(ts);
   d.setHours(0,0,0,0);
-  d.setDate(d.getDate() - ((d.getDay()+6) % 7));   // segunda-feira
+  d.setDate(d.getDate() - d.getDay());   // domingo
   return d.getTime();
 }
 

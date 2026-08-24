@@ -60,7 +60,7 @@ const CHAVE = 'treino-eduardo-v1';
 function inicioDaSemana(t) {
   const d = new Date(t);
   d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  d.setDate(d.getDate() - d.getDay());   // domingo, como weekStart
   return d.getTime();
 }
 

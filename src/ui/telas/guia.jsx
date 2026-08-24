@@ -13,10 +13,11 @@ import { Cabecalho, Procedencia, Secao } from '../instrumento/primitivos.jsx';
 
 // Segunda primeiro, como se lê uma semana. O índice da cadência é getDay(),
 // que começa no domingo — a conversão fica aqui e não no domínio.
+// Domingo primeiro, como no calendário e no `Date#getDay` que indexa a cadência.
 const SEMANA = [
-  { rot: 'seg', i: 1 }, { rot: 'ter', i: 2 }, { rot: 'qua', i: 3 },
-  { rot: 'qui', i: 4 }, { rot: 'sex', i: 5 }, { rot: 'sáb', i: 6 },
-  { rot: 'dom', i: 0 }
+  { rot: 'dom', i: 0 }, { rot: 'seg', i: 1 }, { rot: 'ter', i: 2 },
+  { rot: 'qua', i: 3 }, { rot: 'qui', i: 4 }, { rot: 'sex', i: 5 },
+  { rot: 'sáb', i: 6 }
 ];
 
 /** Uma regra de execução do treinador. */
