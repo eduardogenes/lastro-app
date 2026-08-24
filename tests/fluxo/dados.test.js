@@ -40,11 +40,11 @@ test('sessão sem sid abre no detalhe e mostra traço na duração', async () =>
   a.fechar();
 });
 
-test('placeholder do exercício vem do histórico antigo', async () => {
+test('a referência do exercício vem do histórico antigo', async () => {
   const a = await app({ estado: ANTIGO });
   a.E('go("A")');
   a.E('toggle(0)');
-  assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '30');
+  assert.match(a.texto('.ex.open .setrow .setant'), /^30 × /);
   a.fechar();
 });
 

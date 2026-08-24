@@ -104,55 +104,134 @@
 
 /* ---- A série: a linha mais importante do app -------------------------- */
 
+/* A linha de série, na sua forma geral. O formulário de corrigir sessão
+   passada (tela de histórico) também a usa, com outra estrutura: número,
+   carga, ×, repetições. Por isso a base continua sendo flex. */
 .setrow {
   display: flex; align-items: center; gap: var(--ins-2);
   margin-bottom: var(--ins-1);
 }
-.setno {
-  flex: 0 0 16px;
-  font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-5);
+.setrow .f { flex: 1; }
+
+/* Dentro do cartão de exercício ela vira TABELA, e aí cabeçalho e linhas
+   dividem A MESMA definição de colunas — é por isso que são grade e não flex:
+   com duas listas de larguras, uma em cada regra, elas divergem no primeiro
+   ajuste e ninguém percebe até a tela ficar torta.
+   O escopo em `.sets` é o que impede esta grade de alcançar o formulário de
+   correção, que tem quatro células e não cinco. */
+.sets .sethead, .sets .setrow {
+  display: grid;
+  /* A primeira coluna é dimensionada pelo RÓTULO, não pelo dígito: "série" em
+     mono 9px com tracking não cabe nos 14px que um "1" ocupa, e transbordava
+     por cima de "anterior". */
+  grid-template-columns: 34px 96px 1fr 1fr 46px;
+  align-items: center; gap: var(--ins-2);
 }
+/* Sem faixa de fundo e sem contorno: quem sustenta a leitura em linha é o fio
+   de 1px sob cada campo, três deles na mesma altura. Preenchimento para
+   agrupar é o que o inegociável 3 do sistema proíbe, e um fundo alternado
+   seria exatamente isso. */
+.sets .setrow .f { min-width: 0; flex: initial; }
+.setno { font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-5); }
 /* O que ele fez nesta mesma série da última vez. Largura fixa para as colunas
    alinharem entre as linhas, e texto pequeno porque é referência, não campo. */
 .setant {
-  flex: 0 0 86px; min-width: 0;
-  font: 400 11px/1.3 var(--ins-font-mono); color: var(--ins-text-5);
+  min-width: 0;
+  /* text-4 e não text-5: o sistema reserva os dois níveis mais apagados para
+     rótulo e procedência, e isto é número que ele LÊ no meio da série, de pé e
+     suado. Continua bem abaixo do valor digitado, que é 19px em branco. */
+  font: 400 11px/1.3 var(--ins-font-mono); color: var(--ins-text-4);
   letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.f { flex: 1; position: relative; }
-/* RIR é um dígito: não precisa da mesma largura de uma carga de três casas. */
-.setrow .f:last-child { flex: 0 0 52px; }
+.f { position: relative; }
 
 /* O cabeçalho existe porque a linha tem quatro colunas — sem rótulo, o
    terceiro número seria adivinhação. */
-.sethead {
-  display: flex; align-items: center; gap: var(--ins-2);
-  margin-bottom: var(--ins-3);
+.sethead { margin-bottom: var(--ins-3); }
+.sethead > * {
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+  /* sem overflow escondido aqui: rótulo que não cabe tem que APARECER cortando,
+     senão o erro de largura passa despercebido como passou */
+  white-space: nowrap;
 }
-.sethead .setno, .sethead .setant, .sethead .f {
+/* Os três rótulos de campo centram sobre a própria coluna. Não reusam `.unit`,
+   que é posicionada em absoluto para viver DENTRO de um campo — reusá-la aqui
+   fazia o rótulo colar na direita da célula em vez de centrar. */
+.sethead .f { text-align: center; }
+/* No cabeçalho a unidade é rótulo de COLUNA: sai da posição flutuante que ela
+   tinha quando morava dentro do campo. */
+/* O RIR: botão com a mesma cara dos campos vizinhos — mesmo fio embaixo, mesma
+   tipografia — porque é a mesma natureza de dado. Só o gesto é outro. */
+.rirbtn {
+  width: 100%; min-height: 40px; padding: var(--ins-5) var(--ins-2) var(--ins-3);
+  background: transparent; color: var(--ins-text); border: none;
+  font: 600 19px/1 var(--ins-font-mono); letter-spacing: -.03em; text-align: center;
+}
+/* Sem fio embaixo, ao contrário dos campos vizinhos: eles precisam da linha de
+   escrita porque vazios não mostram nada. Este mostra — o ponto já ocupa o
+   lugar e já diz que há o que tocar. */
+.rirbtn.vazio { color: var(--ins-text-5); }
+/* Aberto: só enquanto a escala está na tela, para ele saber qual série está
+   ajustando. */
+.rirbtn.on { color: var(--ins-acid); box-shadow: inset 0 -1px 0 var(--ins-acid); }
+
+/* A escala, aberta embaixo da própria série. */
+.rirscale {
+  display: flex; align-items: center; gap: var(--ins-3);
+  margin: 0 0 var(--ins-3);
+}
+.rirscale-r {
+  flex: 0 0 auto;
   font: 400 9px/1 var(--ins-font-mono);
   letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
 }
-/* No cabeçalho a unidade é rótulo de COLUNA: sai da posição flutuante que ela
-   tinha quando morava dentro do campo. */
-.sethead .unit { position: static; transform: none; text-align: center; display: block; }
+.rirscale-v { display: flex; gap: var(--ins-2); flex: 1; }
+.rirop {
+  flex: 1; min-height: var(--ins-tap-dense);
+  background: transparent; color: var(--ins-text-3);
+  border: 1px solid var(--ins-border);
+  font: 500 15px/1 var(--ins-font-mono);
+}
+.rirop:active { background: var(--ins-surface); }
+.rirop.on { background: var(--ins-acid); color: var(--ins-on-acid); border-color: var(--ins-acid); }
+
+/* A unidade DENTRO de um campo: flutua na direita, sem capturar toque. Ainda
+   é usada no formulário de corrigir sessão passada. O cabeçalho da tabela de
+   séries NÃO a reusa — lá o rótulo é da coluna, não do campo. */
+.unit {
+  position: absolute; right: var(--ins-4); top: 50%; transform: translateY(-50%);
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ins-text-5); pointer-events: none;
+}
 
 /* Descanso: um por exercício, acima da tabela. Era um botão por linha com o
    mesmo valor repetido — a coluna que ele ocupava é a do RIR agora. */
 .restlinha {
-  width: 100%; min-height: 34px; margin-bottom: var(--ins-4);
-  text-align: left; background: transparent; color: var(--ins-text-4);
-  border: 1px solid var(--ins-border);
+  width: 100%; min-height: 34px; margin-bottom: var(--ins-3);
+  /* Sem caixa, como o resto: é rótulo tocável, não objeto destacado. O
+     cronômetro dispara sozinho na última série — este botão é a exceção, e
+     exceção não se anuncia com contorno. */
+  text-align: left; background: transparent; color: var(--ins-text-5);
+  border: none; padding: 0;
   font: 400 10px/1 var(--ins-font-mono);
-  letter-spacing: .1em; text-transform: uppercase; padding: 0 var(--ins-4);
+  letter-spacing: .1em; text-transform: uppercase;
 }
-.restlinha:active { background: var(--ins-surface); }
-.restlinha.bi { color: var(--ins-acid); border-color: var(--ins-border-strong); }
+.restlinha b { color: var(--ins-text-3); font-weight: 400; margin-left: var(--ins-2); }
+.restlinha:active b { color: var(--ins-acid); }
+.restlinha.bi { color: var(--ins-acid); }
 
 .setrow input {
-  width: 100%; padding: var(--ins-5) var(--ins-4); text-align: center;
-  background: var(--ins-surface); color: var(--ins-text);
-  border: 1px solid var(--ins-border); border-radius: 0;
+  width: 100%; padding: var(--ins-5) var(--ins-2) var(--ins-3); text-align: center;
+  /* Fio, não caixa. Um retângulo por campo desenhava doze contornos para três
+     séries; um fio embaixo diz "escreve aqui" com a mesma clareza e é a
+     estrutura que o sistema inteiro usa. `--ins-border` é a borda em repouso.
+     Por sombra e não por borda: borda mudaria a altura, e as três linhas
+     pulariam ao focar. */
+  background: transparent; color: var(--ins-text);
+  border: none; border-radius: 0;
+  box-shadow: inset 0 -1px 0 var(--ins-border);
   /* 19px e mono: é dado, e é o tamanho que o Safari não tenta ampliar ao
      focar. Campo abaixo de 16px faz a tela inteira dar zoom no meio da série. */
   font: 600 19px/1 var(--ins-font-mono); letter-spacing: -.03em;
@@ -164,9 +243,15 @@
 .setrow input::-webkit-outer-spin-button,
 .setrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .setrow input::placeholder { color: var(--ins-text-5); font-weight: 400; }
-.setrow input:focus { outline: none; border-color: var(--ins-acid); }
-/* Preenchido: fio ácido à esquerda. Diz "isto entrou" sem gritar. */
-.setrow input.done { border-color: var(--ins-border-strong); border-left: 2px solid var(--ins-acid); }
+/* Foco: o mesmo fio, em ácido. É o único elemento ácido da região enquanto
+   dura, e é transitório — o acento continua significando "é aqui". */
+.setrow input:focus {
+  outline: none;
+  background: var(--ins-surface);
+  box-shadow: inset 0 -1px 0 var(--ins-acid);
+}
+/* Preenchido não precisa mais de marca própria: o valor digitado sai em texto
+   cheio e o vazio fica no cinza de dica. A diferença já está no número. */
 
 .unit {
   position: absolute; right: var(--ins-4); top: 50%; transform: translateY(-50%);

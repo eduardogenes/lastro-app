@@ -1,3 +1,5 @@
+import { Fragment } from 'preact';
+
 // O cartão de exercício da tela de treino.
 //
 // É a parte do app que mais merecia sair do render por string. Aqui moram os
@@ -28,9 +30,9 @@ function Cabecalho({ vm }) {
     <div class="sethead">
       <div class="setno">série</div>
       <div class="setant">anterior</div>
-      <div class="f"><span class="unit">{vm.unidade}</span></div>
-      <div class="f"><span class="unit">{vm.seg ? 'seg' : 'reps'}</span></div>
-      <div class="f"><span class="unit">rir</span></div>
+      <div class="f">{vm.unidade}</div>
+      <div class="f">{vm.seg ? 'seg' : 'reps'}</div>
+      <div class="f">rir</div>
     </div>
   );
 }
@@ -45,7 +47,6 @@ function Linha({ i, k, linha, vm, acoes }) {
         <input
           type="text" inputmode="decimal" id={`w${i}_${k}`}
           value={linha.valor[0] != null ? linha.valor[0] : ''}
-          placeholder={linha.place[0]}
           onInput={e => acoes.inp(e.currentTarget, i, k, 0)}
         />
       </div>
@@ -53,18 +54,39 @@ function Linha({ i, k, linha, vm, acoes }) {
         <input
           type="text" inputmode="numeric" id={`r${i}_${k}`}
           value={linha.valor[1] != null ? linha.valor[1] : ''}
-          placeholder={linha.place[1]}
           onInput={e => acoes.inp(e.currentTarget, i, k, 1)}
         />
       </div>
-      <div class="f">
-        <input
-          class="rircampo"
-          type="text" inputmode="numeric" id={`q${i}_${k}`}
-          value={linha.valor[2] != null ? linha.valor[2] : ''}
-          placeholder={linha.place[2]}
-          onInput={e => acoes.inp(e.currentTarget, i, k, 2)}
-        />
+      {/* Botão e não campo: um dígito não vale abrir o teclado numérico, que
+          cobre metade da tela no meio da série. */}
+      <button
+        class={'rirbtn' + (linha.rirAberto ? ' on' : '') +
+               (linha.valor[2] == null ? ' vazio' : '')}
+        id={`q${i}_${k}`}
+        onClick={() => acoes.abreRir(i, k)}
+      >{linha.valor[2] != null ? linha.valor[2] : '·'}</button>
+    </div>
+  );
+}
+
+/**
+ * A escala de RIR da linha, aberta.
+ *
+ * Aparece embaixo da própria série, com tudo à vista — o segundo toque grava e
+ * fecha. Não é lista suspensa: suspensa esconde as opções até abrir, e custa o
+ * mesmo número de toques.
+ */
+function EscalaRir({ i, k, linha, acoes }) {
+  return (
+    <div class="rirscale">
+      <span class="rirscale-r">rir da série {k + 1}</span>
+      <div class="rirscale-v">
+        {linha.rirEscala.map(x => (
+          <button
+            key={x.v} class={'rirop' + (x.on ? ' on' : '')}
+            onClick={() => acoes.poeRir(i, k, x.v)}
+          >{x.v}</button>
+        ))}
       </div>
     </div>
   );
@@ -225,12 +247,18 @@ export function Exercicio({ vm, acoes }) {
               bi-set · ir para o próximo
             </button>
           : <button class="restlinha" onClick={() => acoes.startTimer(vm.descanso)}>
-              descanso {vm.descansoTxt}
+              descanso <b>{vm.descansoTxt}</b>
             </button>}
 
         <Cabecalho vm={vm} />
+        {/* A chave vai no Fragment, não nos filhos: sem ela o Preact reconcilia
+            a lista pela posição, e abrir a escala de uma série remonta os
+            campos das outras — no meio da digitação, com foco dentro. */}
         {vm.linhas.map((linha, k) => (
-          <Linha key={k} i={i} k={k} linha={linha} vm={vm} acoes={acoes} />
+          <Fragment key={k}>
+            <Linha i={i} k={k} linha={linha} vm={vm} acoes={acoes} />
+            {linha.rirAberto && <EscalaRir i={i} k={k} linha={linha} acoes={acoes} />}
+          </Fragment>
         ))}
 
         {vm.cargaOpcional && (
@@ -240,10 +268,10 @@ export function Exercicio({ vm, acoes }) {
           <div class="anilhas" id={`tot${i}`} dangerouslySetInnerHTML={{ __html: vm.totalHTML }} />
         )}
 
+        {/* A coluna ANTERIOR já diz série a série o que ele fez. O que sobra
+            aqui é só o agregado, que a coluna não tem como mostrar. */}
         {vm.ultima
-          ? <div class="lastline">
-              última vez: <b>{vm.ultima.txt}</b> · {vm.ultima.rotulo} <b>{vm.ultima.valor}</b>
-            </div>
+          ? <div class="lastline">{vm.ultima.rotulo} da última vez: <b>{vm.ultima.valor}</b></div>
           : <div class="lastline">primeira vez neste exercício</div>}
 
         {vm.mostraAquecimento && (

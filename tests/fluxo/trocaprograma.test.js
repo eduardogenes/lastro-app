@@ -36,11 +36,11 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
   assert.strictEqual(a.E('S.logs["pendulum-squat"].length'), 1);
   assert.strictEqual(a.J('S.carga')['pendulum-squat'], 'lado', 'a correção de carga acompanhou');
 
-  // o placeholder mostra a carga da última vez, agora no dia B
+  // a coluna ANTERIOR mostra o que ele fez, agora no dia B
   a.E('go("B")');
   a.E('toggle(0)');
-  assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '120',
-    'a evolução continua: o app sugere a carga do treino antigo');
+  assert.match(a.texto('.ex.open .setrow .setant'), /^120 × /,
+    'a evolução continua: o app mostra a carga do treino antigo');
 
   // exercício que saiu do programa continua nomeado, não vira slug cru
   assert.strictEqual(a.E('CAT["remada-horizontal-na-maquina"].n'), 'Remada horizontal na máquina');
@@ -52,7 +52,8 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
   a.E('toggle(0)');
   assert.ok(a.texto('.ex.open .tag').includes('RIR 1–2'), a.texto('.ex.open .tag'));
   a.preencher(0, 0, 57.5, 9);
-  a.digitar('q0_0', '1');
+  a.clicar(a.doc.getElementById('q0_0'));
+  a.clicar(a.$$('.ex.open .rirscale .rirop')[1]);
   assert.deepStrictEqual(a.log('A', 0).slice(-1)[0].sets[0], [57.5, 9, 1],
     'carga, repetição e RIR na mesma série');
 
@@ -67,7 +68,8 @@ test('backup exportado e reimportado preserva o RIR do plano e o da série', asy
   await a.E('restaurarTudo()');
   a.E('toggle(0)');
   a.preencher(0, 0, 60, 8);
-  a.digitar('q0_0', '1');            // o RIR daquela série
+  a.clicar(a.doc.getElementById('q0_0'));
+  a.clicar(a.$$('.ex.open .rirscale .rirop')[1]);   // o RIR daquela série
   await a.esperar();
   const json = a.E('payload()');
   a.fechar();
@@ -108,7 +110,7 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   // registra por TEMPO: o segundo campo é segundo, e a carga é opcional
   a.E('toggle(0)');
   // o primeiro .unit é o da carga; o segundo é o que diz reps ou segundos
-  assert.strictEqual(a.$$('.ex.open .unit')[1].textContent, 'seg');
+  assert.strictEqual(a.$$('.ex.open .sethead .f')[1].textContent, 'seg');
   a.preencher(0, 0, null, 252);
   a.preencher(0, 1, null, 258);
   const h = a.log('HX', 0);

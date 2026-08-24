@@ -20,7 +20,7 @@ test('anilha por lado mostra o total sem contar a barra', async () => {
   const a = await app();
   a.E('go("C")');
   a.E('toggle(0)');                       // pendulum squat
-  assert.strictEqual(a.texto('.ex.open .unit'), 'kg/lado');
+  assert.strictEqual(a.texto('.ex.open .sethead .f'), 'kg/lado');
 
   a.preencher(0, 0, 60, 10);
   const t = a.texto('#tot0');
@@ -49,7 +49,7 @@ test('um halter só não mostra total', async () => {
   a.E('toggle(6)');                       // rosca martelo
   await a.E('setCarga(6,"halter1")');
   await a.esperar();
-  assert.strictEqual(a.texto('.ex.open .unit'), 'kg');
+  assert.strictEqual(a.texto('.ex.open .sethead .f'), 'kg');
   assert.strictEqual(a.$('.ex.open .anilhas'), null);
   a.fechar();
 });
@@ -58,7 +58,7 @@ test('peso do corpo aceita carga vazia', async () => {
   const a = await app();
   a.E('go("D")');
   a.E('toggle(5)');                       // elevação de pernas ou reverse crunch
-  assert.strictEqual(a.texto('.ex.open .unit'), '+kg');
+  assert.strictEqual(a.texto('.ex.open .sethead .f'), '+kg');
 
   a.preencher(5, 0, null, 12);
   a.preencher(5, 1, null, 12);
@@ -74,7 +74,7 @@ test('correção do tipo persiste e some ao voltar ao padrão', async () => {
   await a.esperar();
   assert.strictEqual(a.J('S.carga')[a.k('A',1)], 'lado',
     'a correção acompanha o exercício, não a posição no treino');
-  assert.strictEqual(a.texto('.ex.open .unit'), 'kg/lado');
+  assert.strictEqual(a.texto('.ex.open .sethead .f'), 'kg/lado');
 
   await a.E('setCarga(1,"pino")');
   await a.esperar();

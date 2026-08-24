@@ -203,23 +203,25 @@ test('o alvo calórico sai do plano, não de um número escrito à parte', async
   a.fechar();
 });
 
-test('a unidade é rótulo fixo; o placeholder é a carga da última vez', () => {
-  // Antes os dois diziam a mesma coisa quando não havia histórico: o campo
-  // mostrava "kg" com um "KG" grudado à direita. Unidade é estrutura e fica
-  // sempre; placeholder é dado e só aparece quando existe dado.
+test('a unidade é rótulo de coluna; a referência é a coluna ANTERIOR', () => {
+  // A unidade sempre foi ESTRUTURA e por isso fica sempre — mudou de lugar,
+  // de dentro do campo para o cabeçalho da tabela.
+  //
+  // A referência do que foi feito na última vez saiu do placeholder e virou
+  // coluna. O placeholder sumia no instante em que ele começava a digitar:
+  // escrever a carga apagava a referência das repetições justamente na hora
+  // de escrevê-las. A coluna diz as três coisas e não sai da tela.
   return app().then(async a => {
     a.E('toggle(0)');
-    // a unidade virou rótulo de COLUNA no cabeçalho da tabela de séries
-    const unidades = a.$$('.ex.open .sethead .unit').map(u => u.textContent);
+    const unidades = a.$$('.ex.open .sethead .f').map(u => u.textContent);
     assert.ok(unidades.includes('kg'), 'a carga declara a unidade: ' + unidades.join(','));
     assert.ok(unidades.includes('reps'), 'a repetição também: ' + unidades.join(','));
-    assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '', 'sem histórico, sem placeholder');
+    assert.strictEqual(a.texto('.ex.open .setrow .setant'), '–', 'sem histórico, nada a referenciar');
 
     a.preencher(0, 0, 55, 8);
     a.E('S.sessao = null');
     a.E('render()');
-    assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '55',
-      'com histórico, o placeholder é a carga da última vez');
+    assert.strictEqual(a.texto('.ex.open .setrow .setant'), '55 × 8', 'com histórico, o que ele fez');
     a.fechar();
   });
 });

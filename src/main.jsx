@@ -1140,15 +1140,14 @@ function vmExercicio(d, i, ex) {
       // fica sempre visível ao lado. Antes os dois diziam a mesma coisa quando
       // não havia histórico: o campo mostrava "kg" com um "KG" grudado na
       // direita. Sem histórico, o campo fica vazio e só a unidade fala.
-      place: [
-        p && p[0] ? fmtNum(p[0]) : '',
-        p ? String(p[1]) : '',
-        // dado, como os dois anteriores: o RIR daquela mesma série da última
-        // vez. O ALVO da prescrição não entra aqui — ele é estrutura, e já vive
-        // na tag do cartão. Misturar os dois faria a mesma linha ter dois
-        // placeholders querendo dizer coisas diferentes.
-        p && p[2] != null ? String(p[2]) : ''
-      ]
+      rirAberto: !!(view.rir && view.rir.i === i && view.rir.k === k),
+      rirEscala: RIR_ESCALA.map(function (v) { return { v: v, on: (dr && dr.s[k]) ? dr.s[k][2] === v : false }; }),
+      // Não há placeholder nos campos: a referência tem UMA casa, e é a coluna
+      // ANTERIOR. Ela diz as três coisas numa linha só e, ao contrário do
+      // placeholder, NÃO some quando ele começa a digitar — antes, escrever a
+      // carga apagava a referência das repetições justamente na hora de
+      // escrevê-las.
+      temAnterior: !!p
     });
   }
 
@@ -1247,7 +1246,9 @@ const ACOES = {
   setCarga: function (i, t) { setCarga(i, t); },
   abrirNota: function (i) { abrirNota(i); },
   obsIn: function (el, i) { obsIn(el, i); },
-  toggleDor: function (i, k) { toggleDor(i, k); }
+  toggleDor: function (i, k) { toggleDor(i, k); },
+  abreRir: function (i, k) { abreRir(i, k); },
+  poeRir: function (i, k, v) { poeRir(i, k, v); }
 };
 
 
@@ -2583,6 +2584,29 @@ async function setCarga(i, t) {
   await save(); render();
   toast('Carga deste exercício: ' + CARGAS[t].nome + '.');
 }
+// ---------- o RIR em dois toques ----------
+// Teclado numérico para um dígito custa caro: cobre metade da tela no meio da
+// série, e ele está de pé com uma mão. Lista suspensa custa o mesmo e ainda
+// esconde as opções até abrir. Aqui a faixa aparece embaixo da própria linha,
+// mostra tudo de uma vez, e o segundo toque grava e fecha.
+const RIR_ESCALA = [0, 1, 2, 3, 4];
+
+function abreRir(i, k) {
+  const aberto = view.rir && view.rir.i === i && view.rir.k === k;
+  view.rir = aberto ? null : { i: i, k: k };
+  render();
+}
+
+function poeRir(i, k, v) {
+  const e = draftOf(i);
+  if (!e.s[k]) e.s[k] = [null, null];
+  // tocar de novo no valor que já está lá limpa: registrar RIR é opcional, e
+  // sem isso um toque errado não teria volta
+  e.s[k][2] = e.s[k][2] === v ? null : v;
+  view.rir = null;
+  projeta(i); queueSave(); render();
+}
+
 function toggleDor(i, k) {
   const e = draftOf(i);
   const j = e.dor.indexOf(k);

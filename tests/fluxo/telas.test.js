@@ -198,7 +198,7 @@ test('pausa longa suspende o selo de subir carga', async () => {
   assert.strictEqual(a.$('.up'), null, 'não manda subir carga voltando de 30 dias parado');
   assert.ok(a.$$('.deload').some(function (x) { return /dias desde o último treino/.test(x.textContent); }));
   a.E('toggle(0)');
-  assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '40', 'a referência continua visível');
+  assert.match(a.texto('.ex.open .setrow .setant'), /^40 × /, 'a referência continua visível');
   a.fechar();
 });
 
@@ -335,31 +335,52 @@ test('cada série tem carga, repetição e RIR, com o anterior ao lado', async (
   const antes = a.$$('.ex.open .setrow .setant').map(x => x.textContent.trim());
   assert.deepStrictEqual(antes, ['55 × 10 @ 2', '55 × 9 @ 1', '55 × 8 @ 0']);
 
-  // e o placeholder do RIR é dado, como os outros dois
-  assert.strictEqual(a.doc.getElementById('q0_2').placeholder, '0');
+  // e os campos ficam limpos: a referência tem uma casa só, e é a coluna
+  assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '');
   a.fechar();
 });
 
-test('o RIR digitado entra na própria série', async () => {
+test('o RIR entra na própria série, em dois toques', async () => {
   const a = await app();
   a.E('toggle(0)');
   a.preencher(0, 0, 60, 8);
-  a.digitar('q0_0', '2');
-  assert.deepStrictEqual(a.log('A', 0)[0].sets[0], [60, 8, 2]);
 
-  // série sem RIR continua sendo um par: o campo é opcional
+  assert.strictEqual(a.$$('.ex.open .rirscale').length, 0, 'fechado, não custa espaço');
+  a.clicar(a.doc.getElementById('q0_0'));
+  const opcoes = a.$$('.ex.open .rirscale .rirop').map(x => x.textContent);
+  assert.deepStrictEqual(opcoes, ['0', '1', '2', '3', '4'], 'tudo à vista, sem lista suspensa');
+
+  a.clicar(a.$$('.ex.open .rirscale .rirop')[2]);      // o 2
+  assert.deepStrictEqual(a.log('A', 0)[0].sets[0], [60, 8, 2]);
+  assert.strictEqual(a.$$('.ex.open .rirscale').length, 0, 'grava e fecha no mesmo toque');
+
+  // série sem RIR continua sendo um par: registrar é opcional
   a.preencher(0, 1, 60, 7);
   assert.deepStrictEqual(a.log('A', 0)[0].sets[1], [60, 7]);
   a.fechar();
 });
 
-test('RIR fora da faixa é contido em vez de aceito', async () => {
-  // acima de 5 o número não diz mais nada sobre proximidade da falha
+test('tocar de novo no valor escolhido limpa o RIR', async () => {
+  // sem isto, um toque errado não teria volta: não há teclado para apagar
   const a = await app();
   a.E('toggle(0)');
   a.preencher(0, 0, 60, 8);
-  a.digitar('q0_0', '9');
-  assert.strictEqual(a.log('A', 0)[0].sets[0][2], 5);
+  a.clicar(a.doc.getElementById('q0_0'));
+  a.clicar(a.$$('.ex.open .rirscale .rirop')[1]);
+  assert.strictEqual(a.log('A', 0)[0].sets[0][2], 1);
+
+  a.clicar(a.doc.getElementById('q0_0'));
+  a.clicar(a.$$('.ex.open .rirscale .rirop')[1]);
+  assert.deepStrictEqual(a.log('A', 0)[0].sets[0], [60, 8], 'voltou a ser um par');
+  a.fechar();
+});
+
+test('a escala abre só na série tocada', async () => {
+  const a = await app();
+  a.E('toggle(0)');
+  a.clicar(a.doc.getElementById('q0_1'));
+  assert.strictEqual(a.$$('.ex.open .rirscale').length, 1, 'uma linha por vez');
+  assert.match(a.texto('.ex.open .rirscale-r'), /série 2/);
   a.fechar();
 });
 
@@ -369,5 +390,59 @@ test('o descanso é um por exercício, não um por série', async () => {
   assert.strictEqual(a.$$('.ex.open .restlinha').length, 1,
     'o valor era o mesmo em todas as linhas: repeti-lo ocupava a coluna do RIR');
   assert.match(a.$('.ex.open .restlinha').textContent, /descanso/i);
+  a.fechar();
+});
+
+test('a tabela do cartão não alcança o formulário de corrigir sessão', async () => {
+  // Regressão real: a tabela de séries virou grade de cinco colunas reusando
+  // `.setrow`, e o formulário de correção usa a MESMA classe com quatro células
+  // — número, carga, ×, repetições. Sem escopo, a grade do cartão aplicava lá e
+  // espremia a carga em 96px. Duas estruturas, uma classe: o escopo é o que
+  // separa.
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { 'chest-press-inclinado-convergente': [{ t: t, sid: t, sets: [[55, 10], [55, 9]] }] },
+    done: [{ day: 'A', t: t, sid: t, dur: 0 }]
+  } });
+  const st = el => a.doc.defaultView.getComputedStyle(el);
+
+  a.E('go("A")');
+  a.E('toggle(0)');
+  assert.strictEqual(st(a.$('.ex.open .setrow')).display, 'grid', 'no cartão é tabela');
+
+  a.E('openHist(0)');
+  a.clicar(a.$('.edbtn'));
+  const linha = a.$('.ed-sets .setrow');
+  assert.strictEqual(linha.children.length, 4, 'o formulário tem quatro células');
+  assert.strictEqual(st(linha).display, 'flex', 'e continua em flex');
+  assert.strictEqual(st(linha.querySelector('.unit')).position, 'absolute',
+    'a unidade ali vive DENTRO do campo, flutuando na direita');
+  a.fechar();
+});
+
+test('o RIR vazio não desenha fio: o ponto já ocupa o lugar', async () => {
+  const a = await app();
+  a.E('toggle(0)');
+  const st = el => a.doc.defaultView.getComputedStyle(el);
+  const rir = a.doc.getElementById('q0_0');
+  assert.ok(rir.className.includes('vazio'));
+  assert.strictEqual(st(rir).boxShadow, '', 'sem linha de escrita: não é campo de texto');
+  assert.strictEqual(a.doc.getElementById('w0_0').tagName, 'INPUT',
+    'os vizinhos continuam campos, e esses sim precisam da linha');
+  a.fechar();
+});
+
+test('o cabeçalho da tabela cabe nas próprias colunas', async () => {
+  // "série" em mono 9px com tracking não cabe na largura de um dígito, e
+  // transbordava por cima de "anterior"
+  const a = await app();
+  a.E('toggle(0)');
+  const st = el => a.doc.defaultView.getComputedStyle(el);
+  const cols = st(a.$('.ex.open .sethead')).gridTemplateColumns;
+  assert.strictEqual(cols, st(a.$('.ex.open .setrow')).gridTemplateColumns,
+    'cabeçalho e linha compartilham a definição, e por isso não divergem');
+  assert.match(cols, /^34px 96px/, 'a primeira coluna é dimensionada pelo rótulo');
+  const rotulos = Array.from(a.$('.ex.open .sethead').children).map(x => x.textContent);
+  assert.deepStrictEqual(rotulos, ['série', 'anterior', 'kg', 'reps', 'rir']);
   a.fechar();
 });
