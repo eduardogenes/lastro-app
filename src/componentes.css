@@ -394,6 +394,10 @@
 }
 .dd-diabtn:active { color: var(--ins-text-3); }
 .dd-dia { margin-top: var(--ins-3); }
+
+/* Sincronização, na aba guia */
+.gu-campo { margin-bottom: var(--ins-3); font: 400 13px/1 var(--ins-font-mono); }
+.gu-sync { margin-bottom: var(--ins-4); }
 /* O seletor nativo herda a tipografia do sistema para não destoar do resto da
    tela; o desenho do calendário quem faz é o aparelho. */
 .dd-data {

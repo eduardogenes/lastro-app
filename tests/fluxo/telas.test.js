@@ -4,15 +4,33 @@ import assert from 'node:assert';
 import { app, HTML, FONTE, DIA, inicioDaSemana } from './harness.js';
 
 test('um artefato só, sem dependência de runtime', async () => {
-  // O app agora tem build, mas a propriedade que importa continua: o que chega
-  // no aparelho não busca nada na rede fora a fonte do Google.
+  // O app ganhou sincronização, e com ela um endereço de DADO — o projeto do
+  // Supabase. A propriedade que este teste guarda não era "nenhuma URL": era
+  // que o artefato não BUSCA CÓDIGO nem asset na rede para funcionar. Isso
+  // continua valendo, e é o que as duas asserções abaixo cobram.
   const urls = (HTML.match(/https?:\/\/[^"']+/g) || [])
     .filter(function (u) { return !/fonts\.(googleapis|gstatic)/.test(u); })
     // Namespaces XML (SVG, MathML, XHTML) são identificadores, não endereços:
     // o Preact usa createElementNS e o navegador nunca busca nada neles.
-    .filter(function (u) { return !/^https?:\/\/www\.w3\.org\//.test(u); });
-  assert.deepStrictEqual(urls, [], 'só a fonte do Google é permitida');
+    .filter(function (u) { return !/^https?:\/\/www\.w3\.org\//.test(u); })
+    // O endpoint da nuvem: chamado por fetch, sob login, e só quando há o que
+    // sincronizar. O app abre e funciona inteiro sem ele.
+    .filter(function (u) { return !/\.supabase\.co/.test(u); });
+  assert.deepStrictEqual(urls, [], 'nenhum endereço além da fonte e da nuvem');
   assert.ok(!/<script[^>]*\ssrc=/.test(HTML), 'nenhum script buscado à parte');
+  assert.ok(!/<link[^>]*rel=["']?stylesheet[^>]*supabase/.test(HTML), 'nem folha de estilo');
+});
+
+test('a nuvem não é pré-condição para o app abrir', async () => {
+  // Sem sessão e sem rede, tudo tem que funcionar: é a regra que separa
+  // "sincroniza" de "depende de servidor".
+  const a = await app();
+  assert.strictEqual(a.E('NUVEM.sessao()'), null, 'abre sem login nenhum');
+  a.E('toggle(0)');
+  a.preencher(0, 0, 60, 8);
+  assert.strictEqual(a.log('A', 0).length, 1, 'e registra série do mesmo jeito');
+  assert.strictEqual(a.E('sync.sujo'), false, 'sem sessão, nem marca sujeira');
+  a.fechar();
 });
 
 test('paleta e tom preservados', async () => {

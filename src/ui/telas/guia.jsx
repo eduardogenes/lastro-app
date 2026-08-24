@@ -48,6 +48,7 @@ function Bloco({ titulo, children, texto }) {
 export function Guia({ ctx }) {
   const g = ctx.guia();
   const d = ctx.dadosDoApp();
+  const n = ctx.nuvem();
 
   return (
     <>
@@ -133,6 +134,44 @@ export function Guia({ ctx }) {
             {d.deload ? 'desativar o deload' : 'ativar o deload'}
           </button>
         </Bloco>
+      </Secao>
+
+      {/* A sincronização vem ANTES do backup de propósito: as duas respondem
+          "e se eu perder o aparelho?", e a nuvem é a resposta que não depende
+          de você lembrar. O backup continua sendo a cópia que não depende de
+          ninguém — nem do Supabase. */}
+      <Secao rotulo="sincronizar">
+        {n.dentro ? (
+          <Bloco titulo={n.conta} texto={n.explica}>
+            <div class="gu-sync">
+              <span class={'ins-label ' + n.cor}>{n.estado}</span>
+            </div>
+            <button class="ins-btn-primary" disabled={n.rodando} onClick={ctx.sincronizaAgora}>
+              {n.rodando ? 'sincronizando...' : 'sincronizar agora'}
+            </button>
+            <button class="ins-btn-secondary gu-b2" onClick={ctx.sairDaNuvem}>sair desta conta</button>
+          </Bloco>
+        ) : (
+          <Bloco
+            titulo="Entrar"
+            texto="Entre com a mesma conta no celular e no computador e o registro passa a ser o mesmo nos dois. O app continua funcionando sem isto, e sem rede: a nuvem é cópia, não é a fonte."
+          >
+            <input
+              class="ins-input gu-campo" type="email" id="nvemail" autocomplete="username"
+              placeholder="e-mail" value={n.email}
+              onInput={e => ctx.nuvemCampo('email', e.currentTarget.value)}
+            />
+            <input
+              class="ins-input gu-campo" type="password" id="nvsenha" autocomplete="current-password"
+              placeholder="senha" value={n.senha}
+              onInput={e => ctx.nuvemCampo('senha', e.currentTarget.value)}
+            />
+            {n.erro && <p class="ins-body-sm ins-amber gu-bloco-p">{n.erro}</p>}
+            <button class="ins-btn-primary" disabled={n.rodando} onClick={ctx.entrarNaNuvem}>
+              {n.rodando ? 'entrando...' : 'entrar'}
+            </button>
+          </Bloco>
+        )}
       </Secao>
 
       <Secao rotulo="backup">

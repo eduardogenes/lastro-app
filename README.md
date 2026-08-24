@@ -150,9 +150,24 @@ Dois documentos gerados a partir do código, que por isso não têm como divergi
 
 ## Dados e backup
 
-O histórico mora no navegador do aparelho, sob a chave `treino-eduardo-v1`.
-Não há servidor e não há sincronização — decisão consciente: um usuário, um
-escritor, dados minúsculos, offline obrigatório.
+O histórico mora no navegador do aparelho, sob a chave `treino-eduardo-v1`, e é
+de lá que o app lê e escreve. Isso não mudou com a sincronização: o aparelho
+continua sendo a verdade, e o app funciona inteiro sem rede e sem conta.
+
+**Sincronizar** (aba guia) replica esse estado num Postgres do Supabase, para o
+mesmo registro existir no celular e no computador. O app fala HTTP direto com a
+API REST — sem SDK e sem backend próprio, então continua sendo um artefato
+estático. A `anon key` vai no bundle porque é pública por design; quem protege é
+o RLS, que só devolve a linha do usuário autenticado.
+
+O que faz isso ser seguro não é onde o dado mora, é a **fusão**
+([src/dominio/sincronia.ts](src/dominio/sincronia.ts)): coleções com chave
+natural — séries, sessões, medidas, cardio — são unidas pela chave, e apagar
+deixa lápide para que um aparelho não ressuscite o que o outro apagou.
+Sincronizar documento inteiro com "o último a escrever vence" comeria a sessão
+que você acabou de registrar na academia.
+
+O esquema do banco está em [supabase/schema.sql](supabase/schema.sql).
 
 **Ajustes → Exportar** baixa tudo em JSON. O app cobra um backup a cada 30 dias.
 Faça um antes de trocar de celular. É a única cópia que não depende deste

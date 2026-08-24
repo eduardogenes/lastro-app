@@ -39,8 +39,9 @@ import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5 } from '
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
-  chaveDeCardio, chaveDeLog, chaveDeMarca, chaveDeSessao
+  chaveDeCardio, chaveDeLog, chaveDeMarca, chaveDeSessao, funde
 } from './dominio/sincronia';
+import { NUVEM } from './infra/nuvem';
 
 const KEY = 'treino-eduardo-v1';
 
@@ -265,8 +266,7 @@ async function load() {
   const m3 = migraPlano3(S);
   migraPlano4(S);
   migraPlano5(S);
-  if (!S.prog || typeof S.prog !== 'object') S.prog = semeiaProg();
-  if (!Array.isArray(S.rot) || !S.rot.length) S.rot = ROT_BASE.slice();
+  garanteProgramaERotacao();
   montaCatalogo();
 
   // Rascunho do modelo antigo, sem sessão: vira sessão aberta para não
@@ -279,6 +279,12 @@ async function load() {
   encerraSePreciso();
   view.day = S.sessao ? S.sessao.day : nextDay();
   render();
+
+  // A nuvem entra DEPOIS de a tela já estar de pé: o app não espera rede para
+  // funcionar, e quem chegou primeiro é o dado do aparelho.
+  await carregaSync();
+  await NUVEM.pronta();
+  if (NUVEM.sessao()) { render(); sincroniza(); }
   if (m3) {
     await save();
     const rec = m3.recuperados.length
@@ -618,14 +624,139 @@ async function encerraDeVerdade(dia, feitas, resumoMods) {
 // entradas da sessão aberta não servem de referência para elas mesmas
 function historico(key) { return _historico(S.logs, key, S.sessao); }
 
+// ---------- sincronização ----------
+// A verdade continua sendo o aparelho. Isto é RÉPLICA: tudo funciona sem rede,
+// e sincronizar é uma coisa que acontece por cima, quando dá.
+//
+// O controle é DO APARELHO e mora numa chave própria — se entrasse no estado,
+// viajaria para a nuvem e cada aparelho sobrescreveria a contabilidade do
+// outro sobre o que já tinha visto.
+const CHAVE_SYNC = 'treino-sync-v1';
+let sync = { v: null, em: 0, sujo: false, rodando: false, erro: null, forcar: false };
+
+async function carregaSync() {
+  try {
+    const r = await DB.get(CHAVE_SYNC);
+    if (r && r.value) Object.assign(sync, JSON.parse(r.value), { rodando: false });
+  } catch (e) {}
+}
+function gravaSync() {
+  DB.set(CHAVE_SYNC, JSON.stringify({ v: sync.v, em: sync.em, sujo: sync.sujo, forcar: sync.forcar }));
+}
+
+let syncT = null;
+/** Toda alteração local marca sujeira e agenda um envio. */
+function sujou() {
+  if (!NUVEM.sessao()) return;
+  sync.sujo = true;
+  gravaSync();
+  clearTimeout(syncT);
+  // 4 s: tempo de terminar de digitar uma série sem mandar a cada tecla
+  syncT = setTimeout(function () { sincroniza(); }, 4000);
+}
+
+/**
+ * Um ciclo de sincronização.
+ *
+ * Lê a nuvem, decide, escreve. A escrita declara de que versão partiu, e o
+ * banco recusa se outro aparelho tiver gravado nesse meio-tempo — aí o ciclo
+ * recomeça com o dado novo em mãos. Três tentativas bastam: para haver uma
+ * quarta, dois aparelhos teriam que estar gravando ao mesmo tempo, três vezes
+ * seguidas.
+ */
+/**
+ * O app não funciona sem programa e sem rotação. Estado vindo de fora — backup
+ * antigo, aparelho novo, fusão com quem ainda não tinha nada — pode chegar sem
+ * eles, e aí a tela quebra antes de qualquer mensagem de erro.
+ */
+function garanteProgramaERotacao() {
+  if (!S.prog || typeof S.prog !== 'object') S.prog = semeiaProg();
+  if (!Array.isArray(S.rot) || !S.rot.length) S.rot = ROT_BASE.slice();
+}
+
+async function sincroniza(opcoes) {
+  const manual = !!(opcoes && opcoes.manual);
+  if (!NUVEM.sessao() || sync.rodando) return;
+  // o que estiver represado sobe neste ciclo, não no próximo
+  await liberaSave();
+  sync.rodando = true; sync.erro = null; render();
+  try {
+    for (let tentativa = 0; tentativa < 3; tentativa++) {
+      const lida = await NUVEM.puxa();
+      if (!lida.ok) { sync.erro = lida.msg; if (manual) toast(lida.msg); return; }
+
+      const linha = lida.v;
+      let deV = linha ? linha.v : null;
+
+      if (linha && !sync.forcar) {
+        const jaVisto = linha.v === sync.v;
+        if (jaVisto && !sync.sujo) {        // nada mudou de nenhum lado
+          sync.em = Date.now(); gravaSync(); return;
+        }
+        if (!jaVisto) {
+          const { estado, resumo } = funde(S, linha.data, Date.now());
+          S = estado;
+          normalizaEstado();
+          garanteProgramaERotacao();
+          montaCatalogo();
+          await grava();                     // grava a fusão SEM recarimbar
+          contaFusao(resumo, manual);
+          if (!sync.sujo && !temQueEmpurrar(resumo)) {
+            sync.v = linha.v; sync.em = Date.now(); gravaSync(); render(); return;
+          }
+        }
+      }
+
+      const escrita = await NUVEM.empurra(deV, S);
+      if (escrita.ok) {
+        sync.v = escrita.v; sync.sujo = false; sync.forcar = false; sync.em = Date.now();
+        gravaSync(); render();
+        if (manual) toast('Sincronizado.');
+        return;
+      }
+      if (escrita.erro === 'conflito') continue;   // outro gravou: relê e refaz
+      sync.erro = escrita.msg;
+      if (manual) toast(escrita.msg);
+      return;
+    }
+    sync.erro = 'outro aparelho está gravando ao mesmo tempo';
+    if (manual) toast('Tente de novo em alguns segundos.');
+  } finally {
+    sync.rodando = false; gravaSync(); render();
+  }
+}
+
+/** A fusão trouxe algo do outro lado? Então o nosso documento precisa subir. */
+function temQueEmpurrar(r) {
+  return r.series > 0 || r.sessoes > 0 || r.medidas > 0 || r.cardio > 0 ||
+         r.apagados > 0 || r.documentos === 'local';
+}
+
+/** Mudar o histórico dele em silêncio seria pior que não sincronizar. */
+function contaFusao(r, manual) {
+  const p = [];
+  if (r.series) p.push(r.series + (r.series === 1 ? ' série' : ' séries'));
+  if (r.sessoes) p.push(r.sessoes + (r.sessoes === 1 ? ' sessão' : ' sessões'));
+  if (r.medidas) p.push(r.medidas + (r.medidas === 1 ? ' medida' : ' medidas'));
+  if (r.cardio) p.push(r.cardio + ' de cardio');
+  if (p.length) toast('Do outro aparelho: ' + p.join(' · ') + '.');
+  else if (manual && r.documentos === 'remoto') toast('Programa e plano vieram do outro aparelho.');
+}
+
+/** Escreve o estado como ele está. Não carimba: quem carimba é `save`. */
+async function grava() {
+  try { await DB.set(KEY, JSON.stringify(S)); return true; }
+  catch (e) { console.error('não salvou', e); return false; }
+}
+
 async function save() {
   // O carimbo do estado inteiro. É o que decide, na fusão, de que lado vêm os
   // DOCUMENTOS — programa, plano de comida, cadência —, que são os únicos
   // pedaços sem fusão possível. As coleções não dependem dele: elas se unem
   // pela chave natural de cada registro.
   S.mtime = Date.now();
-  try { await DB.set(KEY, JSON.stringify(S)); return true; }
-  catch (e) { console.error('não salvou', e); return false; }
+  sujou();
+  return grava();
 }
 
 // ---------- helpers ----------
@@ -692,7 +823,20 @@ let saveT = null;
 function queueSave() {
   if (S.draft) S.draft.t = Date.now();
   clearTimeout(saveT);
-  saveT = setTimeout(save, 700);
+  saveT = setTimeout(function () { saveT = null; save(); }, 700);
+}
+
+/**
+ * Faz acontecer agora a gravação represada pelo debounce.
+ *
+ * Sincronizar sem isto lia um estado que ainda não tinha sido carimbado e com a
+ * sujeira ainda não marcada — e o ciclo concluía "nada mudou", deixando a
+ * alteração para trás até algum gatilho seguinte.
+ */
+async function liberaSave() {
+  if (saveT == null) return;
+  clearTimeout(saveT); saveT = null;
+  await save();
 }
 
 // ---------- substituição ----------
@@ -2700,7 +2844,12 @@ document.addEventListener('visibilitychange', function () {
     pintaTimer();
   }
   if (querSegurar) segurarTela();
+  // Voltar ao app é o momento mais provável de o outro aparelho ter gravado.
+  sincroniza();
 });
+
+// Reconectou: o que ficou represado sobe agora.
+window.addEventListener('online', function () { sincroniza(); });
 
 // ---------------------------------------------------------------------------
 // A única porta que o app abre para fora de si.
@@ -3377,6 +3526,63 @@ CTX.alimentosParaSeletor = function (q) {
 };
 
 // ---------- GUIA: a área de dados ----------
+CTX.nuvem = function () {
+  const ses = NUVEM.sessao();
+  const f = view.nuvemForm || {};
+  if (!ses) {
+    return {
+      dentro: false, email: f.email || '', senha: f.senha || '',
+      erro: view.nuvemErro || null, rodando: !!view.nuvemEntrando
+    };
+  }
+  const quando = sync.em ? fmtDate(sync.em) + ' às ' + fmtHora(sync.em) : null;
+  return {
+    dentro: true,
+    conta: ses.email,
+    explica: 'O mesmo registro em todo aparelho onde você entrar. Sincroniza ao abrir, ao voltar para o app e alguns segundos depois de cada mudança.',
+    rodando: sync.rodando,
+    estado: sync.rodando ? 'sincronizando...'
+          : sync.erro ? sync.erro
+          : sync.sujo ? 'há mudanças para enviar'
+          : quando ? 'em dia · ' + quando
+          : 'ainda não sincronizou',
+    cor: sync.erro ? 'ins-amber' : (sync.sujo || !quando) ? '' : 'ins-acid'
+  };
+};
+
+CTX.nuvemCampo = function (k, v) {
+  view.nuvemForm = Object.assign({}, view.nuvemForm, { [k]: v });
+  view.nuvemErro = null;
+  render();
+};
+
+CTX.entrarNaNuvem = async function () {
+  const f = view.nuvemForm || {};
+  const email = String(f.email || '').trim();
+  if (!email || !f.senha) { view.nuvemErro = 'preencha e-mail e senha'; render(); return; }
+  view.nuvemEntrando = true; view.nuvemErro = null; render();
+  const r = await NUVEM.entrar(email, f.senha);
+  view.nuvemEntrando = false;
+  if (!r.ok) { view.nuvemErro = r.msg; render(); return; }
+  // a senha não fica pendurada na memória da tela depois de usada
+  view.nuvemForm = null;
+  // primeiro login neste aparelho: nada foi visto ainda, então tudo se funde
+  sync.v = null; sync.sujo = true;
+  gravaSync(); render();
+  toast('Conectado como ' + r.v.email + '.');
+  sincroniza({ manual: true });
+};
+
+CTX.sairDaNuvem = async function () {
+  if (!confirm('Sair da conta neste aparelho?\n\nO histórico continua aqui. Só para de sincronizar.')) return;
+  await NUVEM.sair();
+  sync.v = null; sync.em = 0; sync.sujo = false; sync.erro = null;
+  gravaSync(); render();
+  toast('Desconectado. O histórico continua neste aparelho.');
+};
+
+CTX.sincronizaAgora = function () { sincroniza({ manual: true }); };
+
 CTX.dadosDoApp = function () {
   const nEx = Object.keys(S.logs).length;
   const sb = diasSemBackup();

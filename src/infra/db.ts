@@ -5,8 +5,9 @@
 // memória (última rede). Toda escrita é espelhada no localStorage, então
 // trocar de ambiente não perde histórico.
 //
-// Não há servidor e não há sincronização: um usuário, um escritor, dados
-// minúsculos, offline obrigatório.
+// Este módulo continua sendo a VERDADE do app: tudo grava e lê aqui primeiro,
+// e nada nesta camada sabe da rede. A sincronização (src/infra/nuvem.ts) é
+// réplica por cima — se a nuvem sumir, o app não perde uma série.
 
 /** O que o app precisa de um armazenamento, seja ele qual for. */
 export interface Armazenamento {
