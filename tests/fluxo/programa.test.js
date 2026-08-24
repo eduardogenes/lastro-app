@@ -99,10 +99,12 @@ test('o programa do treinador continua congelado e comparável', async () => {
 
   const alvo = a.J(`
     ROT_BASE.reduce(function (acc, d) {
-      PROGRAMA[d].ex.forEach(function (ex) { acc[ex.g] = (acc[ex.g] || 0) + ex.s; });
+      PROGRAMA[d].ex.forEach(function (ex) {
+        if (ex.g) acc[ex.g] = (acc[ex.g] || 0) + ex.s;
+      });
       return acc;
     }, {})`);
-  assert.strictEqual(Object.values(alvo).reduce(function (x, y) { return x + y; }, 0), 93);
+  assert.strictEqual(Object.values(alvo).reduce(function (x, y) { return x + y; }, 0), 90);
   a.fechar();
 });
 

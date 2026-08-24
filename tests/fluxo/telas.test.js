@@ -147,7 +147,7 @@ test('substituição oferece alternativas para todos os exercícios', async () =
   const semAlt = a.J(`
     rot().reduce(function (acc, d) {
       treino(d).ex.forEach(function (ex) {
-        if (!ALT[ex.n] || ALT[ex.n].length < 2) acc.push(d + ' ' + ex.n);
+        if (ex.g && (!ALT[ex.n] || ALT[ex.n].length < 2)) acc.push(d + ' ' + ex.n);
       });
       return acc;
     }, [])`);

@@ -304,14 +304,14 @@ test('o impacto no volume aparece na hora de mexer', async () => {
 
 test('o alvo do treinador é calculado do programa, nunca transcrito', async () => {
   const a = await app();
-  assert.strictEqual(a.E('ALVO_TOTAL'), 93);
+  assert.strictEqual(a.E('ALVO_TOTAL'), 90);
   assert.strictEqual(a.E('ALVO["delt lateral"]'), 12);
   assert.strictEqual(a.E('ALVO["dorsal"]'), 10);
 
   // mexer no programa dele não move o alvo
-  a.E('S.prog.A.ex[4].s = 9');   // eram 4
+  a.E('S.prog.A.ex[4].s = 9');   // eram 3
   assert.strictEqual(a.E('ALVO["delt lateral"]'), 12, 'o alvo é do treinador e não se move');
-  assert.strictEqual(a.E('seriesDe("delt lateral")'), 17, 'o número dele acompanha a edição');
+  assert.strictEqual(a.E('seriesDe("delt lateral")'), 18, 'o número dele acompanha a edição');
   a.fechar();
 });
 

@@ -126,8 +126,10 @@ conta das 48 sessões** até o deload.
 ## O programa
 
 O programa do treinador está congelado no código como `PROGRAMA`, em
-[src/dominio/programa.ts](src/dominio/programa.ts): 5 treinos, 32 exercícios,
-93 séries diretas, rotação A → B → C → D → E, cada exercício com o RIR alvo.
+[src/dominio/programa.ts](src/dominio/programa.ts): 5 treinos de musculação com
+90 séries diretas e o HYROX de sábado, rotação A → B → C → D → E → F, cada
+exercício com o RIR alvo. As estações do HYROX entram sem grupo muscular: são
+sessão de verdade na rotação, mas não contam como série de hipertrofia.
 
 Ele é a semente do seu programa, o alvo de comparação e o que o botão de
 restaurar devolve. O que abre na tela é o **seu** programa, que vai divergindo

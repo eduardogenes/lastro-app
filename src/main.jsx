@@ -43,11 +43,12 @@ const KEY = 'treino-eduardo-v1';
 function rot() { return (S.rot && S.rot.length) ? S.rot : ROT_BASE; }
 
 // Sessões de cardio por semana que o treinador pede: segunda depois do A e
-// quinta no dia de recuperação.
+// quinta depois do D, que é o treino curto.
 const CARDIO_ALVO = 2;
 // Os dias de perna do programa: cardio pesado antes deles compete pela mesma
-// recuperação. Sinaliza, não bloqueia.
-const DIAS_PERNA = ['B', 'E'];
+// recuperação. O HYROX entra aqui porque corrida, sled e lunges cobram da
+// perna tanto quanto o dia de perna. Sinaliza, não bloqueia.
+const DIAS_PERNA = ['B', 'F'];
 // RIR da última série, nas faixas que a prescrição usa.
 const RIR_OPCOES = ['0', '0–1', '1', '1–2', '2+'];
 
@@ -1549,9 +1550,24 @@ function difTotal() {
   return n;
 }
 
+// Só o que tem músculo declarado. As estações do HYROX são exercício de
+// verdade no dia, mas contá-las aqui compararia 106 contra o alvo de 90 do
+// treinador — dois números medindo coisas diferentes lado a lado.
 function seriesDoDia(d) {
   const p = S.prog[d];
-  return p ? p.ex.reduce(function (n, x) { return n + x.s; }, 0) : 0;
+  return p ? p.ex.reduce(function (n, x) { return n + (exDe(x.id).g ? x.s : 0); }, 0) : 0;
+}
+/** Quantos itens do dia não são série de hipertrofia — as estações do HYROX. */
+function estacoesDoDia(d) {
+  const p = S.prog[d];
+  return p ? p.ex.filter(function (x) { return !exDe(x.id).g; }).length : 0;
+}
+/** "9 exercícios · 20 séries" na musculação; "9 estações" num dia de condicionamento. */
+function metaDoDia(d) {
+  const est = estacoesDoDia(d);
+  const s = seriesDoDia(d);
+  if (est && !s) return est + (est === 1 ? ' estação' : ' estações');
+  return s + ' séries';
 }
 
 function totalSeries() {
@@ -2922,7 +2938,7 @@ CTX.corpo = function () {
       sessoes: cardioSemana().map(function (x) {
         return { t: x.t, data: fmtDate(x.t), modal: x.m, resumo: x.min + ' min · ' + x.i };
       }),
-      regra: 'segunda, depois do A: 20 a 25 min · quinta, no dia de recuperação: 25 a 30 min. Leve a moderado: respirando mais forte, mas ainda dando para conversar. Evite antes de B ou E, e nunca antes do treino.'
+      regra: 'segunda, depois do A: 20 a 25 min · quinta, depois do D: 25 a 30 min. Leve a moderado: respirando mais forte, mas ainda dando para conversar. Evite antes de B ou do HYROX, e nunca antes do treino.'
     },
     musculos: CTX.musculos()
   };
@@ -3865,7 +3881,7 @@ function programaLista() {
       return {
         d: d, i: i,
         nome: p ? p.name : 'treino ' + d,
-        meta: (p ? p.ex.length : 0) + ' exercícios · ' + seriesDoDia(d) + ' séries' +
+        meta: (p ? p.ex.length : 0) + ' exercícios · ' + metaDoDia(d) +
               (n ? ' · ' + n + (n === 1 ? ' diferença' : ' diferenças') : ''),
         primeiro: i === 0,
         ultimo: i === rot().length - 1
@@ -3882,7 +3898,7 @@ function programaDia(d) {
     modo: 'dia',
     dia: d,
     olho: 'treino ' + d,
-    meta: seriesDoDia(d) + ' séries',
+    meta: metaDoDia(d),
     titulo: p.name,
     dif: difDoDia(d).map(function (x) { return x.txt; }),
     linhas: p.ex.map(function (sl, i) {

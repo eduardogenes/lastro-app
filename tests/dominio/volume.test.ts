@@ -13,12 +13,14 @@ test('o alvo é calculado do programa, nunca transcrito', () => {
   // conferência independente: soma na mão, sem passar pela função sob teste
   const somaNaMao: Record<string, number> = {};
   ROT_BASE.forEach(d => PROGRAMA[d].ex.forEach(ex => {
+    if (!ex.g) return;   // estação de HYROX não tem músculo a que atribuir
     somaNaMao[ex.g] = (somaNaMao[ex.g] || 0) + ex.s;
   }));
   assert.deepStrictEqual(ALVO, somaNaMao);
 
   const total = Object.keys(ALVO).reduce((n, k) => n + ALVO[k], 0);
-  assert.strictEqual(total, 93, 'o treinador prescreveu 93 séries diretas');
+  assert.strictEqual(total, 90, 'o treinador prescreveu 90 séries de musculação');
+  assert.ok(!('' in ALVO), 'grupo vazio viraria um músculo sem nome no painel');
 });
 
 test('as prioridades do treinador aparecem no alvo', () => {
@@ -109,7 +111,9 @@ test('todo exercício do programa tem id estável derivado do nome', () => {
 // ---------- a prescrição de 2026: RIR e o que saiu do programa ----------
 
 test('todo exercício prescrito declara o RIR alvo', () => {
+  // as estações do HYROX não têm RIR: não são séries de hipertrofia
   ROT_BASE.forEach(d => PROGRAMA[d].ex.forEach(ex => {
+    if (!ex.g) return;
     assert.ok(ex.rir, 'sem RIR: ' + ex.n + ' (treino ' + d + ')');
     assert.match(ex.rir!, /^\d(–\d)?$/, 'RIR fora do formato: ' + ex.rir + ' (' + ex.n + ')');
   }));
@@ -128,8 +132,21 @@ test('o exercício que saiu do programa continua nomeado no catálogo', () => {
 });
 
 test('cada exercício do programa tem pelo menos dois substitutos', () => {
+  // Só os de musculação: sled push não tem equivalente, e por isso o app nem
+  // oferece o botão de trocar num exercício sem grupo muscular.
   ROT_BASE.forEach(d => PROGRAMA[d].ex.forEach(ex => {
+    if (!ex.g) return;
     assert.ok(ALT[ex.n] && ALT[ex.n].length >= 2,
       'sem alternativa suficiente: ' + ex.n);
   }));
+});
+
+test('o HYROX é sessão da rotação, mas não série de hipertrofia', () => {
+  const f = PROGRAMA.F;
+  assert.ok(f, 'o HYROX ocupa uma letra da rotação');
+  assert.ok(ROT_BASE.indexOf('F') >= 0);
+  f.ex.forEach(ex => {
+    assert.strictEqual(ex.g, '', 'estação com grupo entraria no alvo por músculo: ' + ex.n);
+    assert.strictEqual(ex.u, 'seg', 'o HYROX se mede por tempo: ' + ex.n);
+  });
 });

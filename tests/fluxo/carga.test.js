@@ -56,14 +56,14 @@ test('um halter só não mostra total', async () => {
 
 test('peso do corpo aceita carga vazia', async () => {
   const a = await app();
-  a.E('go("E")');
-  a.E('toggle(6)');                       // ab wheel
+  a.E('go("D")');
+  a.E('toggle(5)');                       // elevação de pernas ou reverse crunch
   assert.strictEqual(a.texto('.ex.open .unit'), '+kg');
 
-  a.preencher(6, 0, null, 12);
-  a.preencher(6, 1, null, 12);
-  assert.deepStrictEqual(a.log('E',6)[0].sets[0], [0, 12]);
-  assert.strictEqual(a.log('E',6)[0].sets.filter(Boolean).length, 2);
+  a.preencher(5, 0, null, 12);
+  a.preencher(5, 1, null, 12);
+  assert.deepStrictEqual(a.log('D',5)[0].sets[0], [0, 12]);
+  assert.strictEqual(a.log('D',5)[0].sets.filter(Boolean).length, 2);
   a.fechar();
 });
 

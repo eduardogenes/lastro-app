@@ -17,8 +17,8 @@ const p = function (s) { L.push(s == null ? '' : s); };
 
 p('# Treino');
 p('');
-p('Rotação de ' + ROT.length + ' treinos, não semana fixa: avança sozinho conforme');
-p('você registra. Cinco sessões por semana, com quinta e domingo de descanso.');
+p('Rotação de ' + ROT.length + ' dias, não semana fixa: avança sozinho conforme você');
+p('registra. Cinco sessões de musculação mais o HYROX de sábado; domingo descansa.');
 p('');
 p('**Objetivo:** hipertrofia com ganho de gordura controlado.');
 p('');
@@ -46,9 +46,12 @@ ROT.forEach(function (d) {
 p('');
 
 // ---------- séries por músculo na rotação ----------
+// Exercício sem grupo declarado — as estações do HYROX — fica de fora: não há
+// músculo a que atribuir, e contá-lo aqui faria a tabela mentir.
 const porMusculo = {};
 ROT.forEach(function (d) {
   PROGRAMA[d].ex.forEach(function (ex) {
+    if (!ex.g) return;
     porMusculo[ex.g] = (porMusculo[ex.g] || 0) + ex.s;
   });
 });
@@ -80,14 +83,14 @@ ROT.forEach(function (d) {
 
   P.ex.forEach(function (ex, i) {
     const car = CARGAS[ex.car] || CARGAS.pino;
-    const tipo = (ex.c ? 'composto' : 'isolador')
-               + (ex.rir ? ', RIR ' + ex.rir : '');
+    const tipo = !ex.g ? 'condicionamento'
+               : (ex.c ? 'composto' : 'isolador') + (ex.rir ? ', RIR ' + ex.rir : '');
     const desc = (ex.d || (ex.c ? 180 : 90));
     const descTxt = desc % 60 === 0 ? (desc / 60) + ' min' : desc + ' s';
     p('### ' + String(i + 1).padStart(2, '0') + '. ' + ex.n);
     p('');
     p('**' + ex.s + ' × ' + ex.r + '**' + (ex.u === 'seg' ? ' (por tempo)' : '')
-      + ' · ' + ex.g + ' · ' + tipo + ' · descanso ' + descTxt);
+      + (ex.g ? ' · ' + ex.g : '') + ' · ' + tipo + ' · descanso ' + descTxt);
     p('');
     p('Carga: ' + car.nome + '. ' + car.ajuda);
     p('');

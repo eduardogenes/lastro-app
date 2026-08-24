@@ -10,11 +10,11 @@ async function noPrograma(d) {
   return a;
 }
 
-test('a lista mostra os cinco treinos e a conta contra o treinador', async () => {
+test('a lista mostra os seis dias e a conta contra o treinador', async () => {
   const a = await noPrograma();
   const stats = a.$$('.stats b').map(function (x) { return x.textContent; });
-  assert.deepStrictEqual(stats, ['93', '93', '0'], 'começa idêntico ao programa dele');
-  assert.strictEqual(a.$$('.progd').length, 5);
+  assert.deepStrictEqual(stats, ['90', '90', '0'], 'começa idêntico ao programa dele');
+  assert.strictEqual(a.$$('.progd').length, 6, 'cinco de musculação e o HYROX');
   assert.strictEqual(a.$$('.progd-l')[0].textContent, 'A');
   assert.strictEqual(a.$$('.progd-l')[3].textContent, 'D', 'a ordem da lista é a da rotação');
   a.fechar();
@@ -92,7 +92,7 @@ test('adicionar exercício pela tela de programa é permanente', async () => {
 
 test('a diferença lê uma troca como troca, não como duas mudanças', async () => {
   const a = await noPrograma('B');
-  await a.E('progSetTroca("B",3,"extensora-unilateral")');
+  await a.E('progSetTroca("B",4,"extensora-unilateral")');
   await a.esperar();
   const dif = a.J('difDoDia("B")');
   assert.strictEqual(dif.length, 1, 'saiu um e entrou outro na mesma posição: é uma troca');
@@ -147,7 +147,7 @@ test('restaurar tudo volta programa e rotação, sem tocar no histórico nem no 
   await a.E('restaurarTudo()');
   await a.esperar();
   assert.strictEqual(a.E('difTotal()'), 0);
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'D', 'E']);
+  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'D', 'E', 'F']);
   assert.strictEqual(a.E('CAT["meu-aparelho"].n'), 'Meu aparelho', 'o que ele cadastrou continua lá');
   a.fechar();
 });
@@ -158,7 +158,7 @@ test('reordenar a rotação muda a sequência dos treinos', async () => {
   // desalinha, que é justamente o que se quer testar
   await a.E('moverDia(4,-1)');
   await a.esperar();
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'E', 'D']);
+  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'E', 'D', 'F']);
   assert.strictEqual(a.E('difTotal()'), 1, 'a rotação conta como diferença');
   a.fechar();
 });
@@ -168,14 +168,14 @@ test('criar treino novo entra na rotação e começa vazio', async () => {
   a.responder('Braço extra');
   await a.E('criarTreino()');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.F.name'), 'Braço extra');
-  assert.deepStrictEqual(a.J('S.prog.F.ex'), []);
-  assert.strictEqual(a.J('rot()').indexOf('F'), 5);
+  assert.strictEqual(a.E('S.prog.G.name'), 'Braço extra');
+  assert.deepStrictEqual(a.J('S.prog.G.ex'), []);
+  assert.strictEqual(a.J('rot()').indexOf('G'), 6);
 
   await a.E('addExercicio("rosca-martelo")');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.F.ex.length'), 1);
-  assert.strictEqual(a.E('treino("F").ex[0].n'), 'Rosca martelo');
+  assert.strictEqual(a.E('S.prog.G.ex.length'), 1);
+  assert.strictEqual(a.E('treino("G").ex[0].n'), 'Rosca martelo');
   a.fechar();
 });
 
@@ -184,10 +184,10 @@ test('apagar um treino que ele criou tira da rotação', async () => {
   a.responder('Braço extra');
   await a.E('criarTreino()');
   await a.esperar();
-  await a.E('restaurarDia("F")');
+  await a.E('restaurarDia("G")');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.F'), undefined);
-  assert.strictEqual(a.J('rot()').indexOf('F'), -1);
+  assert.strictEqual(a.E('S.prog.G'), undefined);
+  assert.strictEqual(a.J('rot()').indexOf('G'), -1);
   a.fechar();
 });
 
@@ -213,7 +213,7 @@ test('o programa sobrevive a fechar e reabrir', async () => {
   const b = await app({ estado: bruto });
   await b.esperar();
   assert.strictEqual(b.E('S.prog.C.ex[0].s'), 4);
-  assert.deepStrictEqual(b.J('rot()'), ['B', 'A', 'C', 'D', 'E']);
+  assert.deepStrictEqual(b.J('rot()'), ['B', 'A', 'C', 'D', 'E', 'F']);
   assert.strictEqual(b.E('S.progLog.length'), 2);
   b.fechar();
 });

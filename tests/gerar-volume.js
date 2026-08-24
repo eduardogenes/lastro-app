@@ -8,13 +8,21 @@ import { NIVEIS, PRIORIDADES, PROGRAMA, ROT_BASE as ROT, nivelDe } from '../src/
 
 const raiz = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+// O HYROX ocupa uma letra da rotação, mas as estações não são séries de
+// hipertrofia: entram sem grupo muscular e ficam fora desta conta, igual ao
+// que `alvoDoPrograma` faz.
 const porMusculo = {};
 let total = 0;
+const musculacao = [];
 ROT.forEach(function (d) {
+  let temGrupo = false;
   PROGRAMA[d].ex.forEach(function (ex, i) {
+    if (!ex.g) return;
+    temGrupo = true;
     (porMusculo[ex.g] = porMusculo[ex.g] || []).push({ d: d, i: i, n: ex.n, s: ex.s, r: ex.r, c: ex.c });
     total += ex.s;
   });
+  if (temGrupo) musculacao.push(d);
 });
 
 const L = [];
@@ -82,12 +90,13 @@ p('## Distribuição por sessão');
 p('');
 p('| Treino | Foco | Séries |');
 p('|---|---|---|');
-ROT.forEach(function (d) {
-  p('| ' + d + ' | ' + PROGRAMA[d].name + ' | ' + PROGRAMA[d].ex.reduce(function (a, e) { return a + e.s; }, 0) + ' |');
+musculacao.forEach(function (d) {
+  p('| ' + d + ' | ' + PROGRAMA[d].name + ' | ' +
+    PROGRAMA[d].ex.reduce(function (a, e) { return a + (e.g ? e.s : 0); }, 0) + ' |');
 });
 p('');
-p('Total: **' + total + ' séries** em ' + ROT.length + ' sessões, média de ' +
-  (Math.round(total / ROT.length * 10) / 10).toString().replace('.', ',') + ' por sessão.');
+p('Total: **' + total + ' séries** em ' + musculacao.length + ' sessões de musculação, média de ' +
+  (Math.round(total / musculacao.length * 10) / 10).toString().replace('.', ',') + ' por sessão.');
 p('');
 
 fs.writeFileSync(path.join(raiz, 'docs', 'ANALISE-VOLUME.md'), L.join('\n'));

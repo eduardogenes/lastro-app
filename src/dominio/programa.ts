@@ -40,14 +40,15 @@ export interface Carga {
   obs?: string;
 }
 
-// Cinco treinos, não seis. O sexto dia disponível não vira automaticamente
-// mais um treino: a quinta-feira entre C e D é descanso com cardio, e é
-// deliberada — é ela que permite chegar em D, o treino de especialização, com
-// desempenho para gastar onde o retorno estético é maior.
+// Seis dias ativos, domingo de descanso. Cinco de musculação mais o HYROX de
+// sábado, que é sessão de verdade e não cardio complementar — por isso ocupa
+// uma letra da rotação em vez de virar registro avulso.
 //
-// A ordem carrega a prioridade: peito superior e deltoide lateral aparecem nos
-// primeiros exercícios de A e D, os dois melhores momentos da semana.
-export const ROT_BASE: string[] = ['A','B','C','D','E'];
+// A ordem carrega a prioridade: deltoide lateral aparece em A e D, segunda e
+// quinta, nunca em dias seguidos. E E é curto de propósito, porque no dia
+// seguinte tem HYROX — sair de 25 séries na sexta e tentar sled e wall balls no
+// sábado é como as duas sessões se estragam.
+export const ROT_BASE: string[] = ['A','B','C','D','E','F'];
 
 // Descanso em segundos, pelas categorias do treinador: grande composto 3 min,
 // máquina multiarticular 2,5 min, o intervalo de 2 min que a prescrição nova
@@ -65,45 +66,68 @@ export const PROGRAMA: Record<string, Treino<ExercicioPrescrito>> = {
     {n:'Pulldown convergente', car:'pino', g:'dorsal', s:3, r:'6–10', c:1, d:D_MAQUINA, rir:'1–2', cue:'Pegada neutra, a que permitir maior amplitude confortável. Largura de dorsal se constrói aqui.'},
     {n:'Crucifixo inclinado no cabo', car:'pino', g:'peito superior', s:2, r:'10–15', c:0, d:D_MEDIO, rir:'1', cue:'Amplitude grande e confortável. Não sacrifique a posição do ombro para tentar alongar mais.'},
     {n:'Pulldown unilateral', car:'pino', g:'dorsal', s:2, r:'8–12', c:1, d:D_MEDIO, rir:'1', cue:'Cotovelo descendo em direção ao quadril, sem transformar em rotação de tronco.'},
-    {n:'Elevação lateral na máquina', car:'pino', g:'delt lateral', s:4, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Sem impulso de perna ou tronco. Não precisa ultrapassar muito a linha do ombro. A última série pode ir a 0 ou 1 na reserva.'},
+    {n:'Elevação lateral na máquina', car:'pino', g:'delt lateral', s:3, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Sem impulso de perna ou tronco. Não precisa ultrapassar muito a linha do ombro.'},
+    {n:'Elevação lateral unilateral no cabo', car:'pino', g:'delt lateral', s:3, r:'12–20', c:0, d:D_CURTO, rir:'0–1', cue:'Tensão previsível e ajuste fino, um lado por vez. A última série pode ir a 0 na reserva.'},
     {n:'Extensão de tríceps acima da cabeça no cabo', car:'pino', g:'tríceps', s:2, r:'8–12', c:0, d:D_MEDIO, rir:'1', cue:'Cabeça longa alongada. Se o cotovelo reclamar, reduza a amplitude final.'},
     {n:'Pushdown', car:'pino', g:'tríceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'0–1', cue:'Tríceps não é prioridade: já recebe bastante dos presses. Duas séries bem feitas bastam.'},
   ]},
-  B: { name:'Quadríceps + panturrilha + abdômen', tag:'ponto forte com volume eficiente', ex:[
-    {n:'Pendulum squat', car:'lado', g:'quadríceps', s:3, r:'6–10', c:1, d:D_COMPOSTO, rir:'1–2', cue:'Quadríceps é seu ponto forte: o volume caiu de propósito, a intenção não. Hack squat serve igual.'},
-    {n:'Cadeira flexora sentada', car:'pino', g:'posterior', s:2, r:'8–12', c:0, d:D_MEDIO, rir:'1', cue:'Entra aqui em dose baixa para o posterior receber estímulo duas vezes na semana.'},
+  B: { name:'Pernas completas + panturrilhas', tag:'a perna inteira num dia só', ex:[
+    {n:'Pendulum squat', car:'lado', g:'quadríceps', s:3, r:'6–10', c:1, d:D_COMPOSTO, rir:'1–2', cue:'Quadríceps é seu ponto forte: o volume é baixo de propósito, a intenção não. Hack squat serve igual.'},
+    {n:'Cadeira flexora sentada', car:'pino', g:'posterior', s:3, r:'8–12', c:0, d:D_MEDIO, rir:'1', cue:'Antes do terra: o isquiotibial começa a repetição mais alongado aqui do que em qualquer flexora deitada.'},
+    {n:'Terra romeno no Smith', car:'lado', g:'posterior', s:3, r:'6–10', c:1, d:D_COMPOSTO, rir:'1–2', cue:'Smith porque, para o seu objetivo, estabilidade é vantagem e não defeito. Quadril para trás, coluna neutra.'},
     {n:'Leg press', car:'lado', g:'quadríceps', s:2, r:'10–15', c:1, d:D_MAQUINA, rir:'1–2', cue:'Amplitude completa sem soltar a lombar do banco.'},
-    {n:'Cadeira extensora', car:'pino', g:'quadríceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'0–1', cue:'A última série pode ir bem perto da falha.'},
+    {n:'Cadeira extensora', car:'pino', g:'quadríceps', s:2, r:'10–15', c:0, d:D_MEDIO, rir:'0–1', cue:'A última série pode ir bem perto da falha.'},
+    {n:'Elevação pélvica na máquina', car:'lado', g:'glúteo', s:2, r:'8–12', c:1, d:D_MAQUINA, rir:'1', cue:'Pausa no topo com o queixo para dentro.'},
     {n:'Adutora', car:'pino', g:'adutores', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Manutenção e progressão. Adutores contribuem para uma coxa completa.'},
-    {n:'Panturrilha em pé', car:'pino', g:'panturrilha', s:4, r:'6–10', c:0, d:D_MEDIO, rir:'1', cue:'Na máquina, joelho estendido. Execução rígida: descida completa, pequena pausa alongado, subida completa. Nada de virar 10 repetições em 20 meios movimentos de tornozelo.'},
-    {n:'Crunch no cabo ou máquina', car:'pino', g:'abdômen', s:3, r:'8–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Com carga progressiva. Abdômen é treinado como qualquer outro músculo.'},
+    {n:'Panturrilha em pé', car:'pino', g:'panturrilha', s:3, r:'6–10', c:0, d:D_MEDIO, rir:'1', cue:'Joelho estendido, para o gastrocnêmio. Execução rígida: descida completa, pausa alongado, subida completa. Nada de virar 10 repetições em 20 meios movimentos de tornozelo.'},
+    {n:'Panturrilha sentada', car:'lado', g:'panturrilha', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Joelho flexionado, para o sóleo. Pause no alongamento. Nada de quicar.'},
   ]},
-  C: { name:'Costas + posterior de ombro + lateral + bíceps', tag:'largura e espessura separadas', ex:[
+  C: { name:'Costas + deltoides + bíceps', tag:'aqui entra o deltoide anterior', ex:[
     {n:'Remada para dorsal com apoio de peito', car:'lado', g:'dorsal', s:3, r:'6–10', c:1, d:D_MAQUINA, rir:'1–2', cue:'Cotovelo mais junto do tronco, trajetória em direção ao quadril. Esta é a remada de DORSAL.'},
     {n:'High row com apoio de peito', car:'lado', g:'costas espessura', s:3, r:'8–12', c:1, d:D_MAQUINA, rir:'1–2', cue:'Cotovelo relativamente mais aberto, puxando para a região superior e média das costas. Função diferente da anterior — não são duas máquinas fazendo a mesma coisa.'},
     {n:'Pullover em máquina ou cabo', car:'pino', g:'dorsal', s:2, r:'10–15', c:0, d:D_MEDIO, rir:'1', cue:'Estímulo na dorsal sem adicionar fadiga de bíceps.'},
     {n:'Reverse pec deck', car:'pino', g:'delt posterior', s:3, r:'12–20', c:0, d:D_ISOLADOR, rir:'0–1', cue:'Posterior está proporcional: progressão normal, com o tronco apoiado.'},
-    {n:'Elevação lateral unilateral no cabo', car:'pino', g:'delt lateral', s:4, r:'12–20', c:0, d:D_CURTO, rir:'0–1', cue:'Tensão previsível e ajuste fino, um lado por vez. Sem balanço.'},
+    {n:'Elevação frontal unilateral no cabo', car:'pino', g:'delt anterior', s:2, r:'10–15', c:0, d:D_CURTO, rir:'1', cue:'As duas únicas séries diretas de deltoide anterior da semana. São poucas de propósito: os presses inclinados e o horizontal já entregam bastante. Suba até a linha dos olhos, sem balanço de tronco.'},
     {n:'Rosca Scott na máquina', car:'pino', g:'bíceps', s:2, r:'8–12', c:0, d:D_ISOLADOR, rir:'1', cue:'Sem balanço de tronco.'},
     {n:'Rosca martelo', car:'halter', g:'bíceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Braquial e braquiorradial, que dão espessura ao braço de lado.'},
   ]},
-  D: { name:'Especialização de upper', tag:'o treino mais importante da semana', ex:[
-    {n:'Supino inclinado no Smith', car:'lado', g:'peito superior', s:3, r:'6–10', c:1, d:D_COMPOSTO, rir:'1–2', cue:'Peito superior volta a ser o exercício número 1. Alta estabilidade e ótima capacidade de progressão: é aqui que a carga sobe ao longo dos meses.'},
+  D: { name:'Especialização: lateral + panturrilha + abdômen', tag:'treino de verdade, fadiga sistêmica baixa', ex:[
+    {n:'Elevação lateral na máquina', car:'pino', g:'delt lateral', s:3, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Segunda exposição semanal de lateral, com três dias de recuperação desde a segunda. Aqui cabe progressão pesada.'},
+    {n:'Elevação lateral unilateral no cabo', car:'pino', g:'delt lateral', s:3, r:'12–20', c:0, d:D_CURTO, rir:'0–1', cue:'Fecha as 12 séries semanais de lateral. Pode chegar perto da falha mantendo o movimento lateral.'},
+    {n:'Panturrilha sentada', car:'lado', g:'panturrilha', s:3, r:'8–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Sóleo em dose maior hoje: na terça foram 2, aqui são 3. As duas posições recebem trabalho na semana.'},
+    {n:'Panturrilha em pé', car:'pino', g:'panturrilha', s:2, r:'8–12', c:0, d:D_ISOLADOR, rir:'1', cue:'Gastrocnêmio, dose menor hoje. Panturrilha é progredida e registrada como peito ou bíceps, não como finalização.'},
+    {n:'Crunch no cabo ou máquina', car:'pino', g:'abdômen', s:3, r:'8–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Flexão de tronco com carga progressiva. Abdômen é treinado como qualquer outro músculo.'},
+    {n:'Elevação de pernas ou reverse crunch', car:'corpo', g:'abdômen', s:3, r:'10–15', c:0, d:D_CURTO, rir:'1', cue:'Complementa com o movimento pélvico. Suba com o quadril, não com o balanço. Chegou nas 15 fáceis dentro do RIR, aumenta a dificuldade.'},
+  ]},
+  E: { name:'Peito superior + costas + braços', tag:'compacto: amanhã tem HYROX', ex:[
+    {n:'Supino inclinado no Smith', car:'lado', g:'peito superior', s:3, r:'6–10', c:1, d:D_COMPOSTO, rir:'1–2', cue:'Segunda exposição pesada de peito superior. Alta estabilidade e ótima capacidade de progressão: é aqui que a carga sobe ao longo dos meses.'},
     {n:'Remada convergente com apoio de peito', car:'lado', g:'costas espessura', s:3, r:'8–12', c:1, d:D_MAQUINA, rir:'1–2', cue:'Tronco apoiado tira a lombar da conta.'},
     {n:'Chest press horizontal convergente', car:'pino', g:'peito', s:2, r:'8–12', c:1, d:D_MAQUINA, rir:'1', cue:'Preserva o peito médio sem tirar o foco da região clavicular.'},
-    {n:'Crossover de baixo para cima', car:'pino', g:'peito superior', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Segundo estímulo clavicular do dia, estável e pouco fatigante. Direcione à porção clavicular, sem virar elevação frontal.'},
-    {n:'Elevação lateral na máquina', car:'pino', g:'delt lateral', s:4, r:'10–20', c:0, d:D_ISOLADOR, rir:'0–1', cue:'Segunda exposição semanal pesada de lateral. Pode chegar perto da falha mantendo o movimento lateral.'},
+    {n:'Crossover de baixo para cima', car:'pino', g:'peito superior', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Fecha as 10 séries semanais de clavicular, estável e pouco fatigante. Sem virar elevação frontal.'},
     {n:'Rosca Bayesian no cabo', car:'pino', g:'bíceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Braço atrás do corpo, alongando a cabeça longa.'},
-    {n:'Extensão de tríceps acima da cabeça no cabo', car:'pino', g:'tríceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Fecha o tríceps em 6 séries diretas na semana, somado ao A.'},
+    {n:'Extensão de tríceps acima da cabeça no cabo', car:'pino', g:'tríceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Última coisa da semana de musculação. Não precisa ser heroico: amanhã tem HYROX.'},
   ]},
-  E: { name:'Posteriores + glúteos + panturrilha + abdômen', tag:'equilíbrio com a coxa anterior', ex:[
-    {n:'Cadeira flexora sentada', car:'pino', g:'posterior', s:3, r:'8–12', c:0, d:D_MEDIO, rir:'1', cue:'Primeiro de propósito: o isquiotibial começa a repetição mais alongado aqui do que em muitas flexoras deitadas.'},
-    {n:'Terra romeno no Smith', car:'lado', g:'posterior', s:3, r:'6–10', c:1, d:D_COMPOSTO, rir:'1–2', cue:'Smith porque, para o seu objetivo, estabilidade é vantagem e não defeito. Quadril para trás, coluna neutra, amplitude até onde a mecânica se mantém.'},
-    {n:'Mesa flexora deitada', car:'pino', g:'posterior', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'0–1', cue:'Excêntrica de 3 s. Fecha o posterior em 10 séries na semana.'},
-    {n:'Elevação pélvica na máquina', car:'lado', g:'glúteo', s:3, r:'8–12', c:1, d:D_MAQUINA, rir:'1', cue:'Pausa no topo com o queixo para dentro.'},
-    {n:'Panturrilha sentada', car:'lado', g:'panturrilha', s:4, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Joelho flexionado, para o sóleo. Pause no alongamento. Nada de quicar.'},
-    {n:'Panturrilha no leg press', car:'lado', g:'panturrilha', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'0–1', cue:'Joelho estendido. Com o treino B, fecha 10 séries de panturrilha na semana.'},
-    {n:'Ab wheel', car:'corpo', g:'abdômen', s:3, r:'6–12', c:0, d:D_ISOLADOR, rir:'1', cue:'De joelhos e com amplitude parcial. Só aumente quando estiver fácil.'},
+  // O HYROX é sessão de verdade, não cardio complementar — e é por isso que
+  // ocupa uma letra. Mas as estações NÃO são séries de hipertrofia: corrida,
+  // sled e wall balls são estímulo de outra natureza, e transformá-los em
+  // "séries de quadríceps" faria o painel de volume mentir. Por isso todas
+  // entram com grupo muscular VAZIO — o que as mantém fora do alvo por
+  // músculo, exatamente como uma série registrada sem grupo conhecido.
+  //
+  // Todas são medidas por TEMPO, que é como o HYROX pontua: a distância e as
+  // repetições são fixas, o que melhora é o relógio. O app já sabe disso —
+  // exercício por tempo não recebe selo de subir carga, e o histórico vira
+  // tempo total em vez de volume.
+  F: { name:'HYROX', tag:'condicionamento, não hipertrofia', ex:[
+    {n:'Corrida', car:'corpo', g:'', s:8, r:'1 km', c:1, d:D_CURTO, u:'seg', cue:'Os 8 km da prova, um a cada estação. Registre o tempo de cada quilômetro em segundos: 4:12 são 252.'},
+    {n:'Ski erg', car:'corpo', g:'', s:1, r:'1000 m', c:0, d:D_CURTO, u:'seg', cue:'Puxada com o tronco, não só com o braço. Tempo em segundos.'},
+    {n:'Sled push', car:'lado', g:'', s:1, r:'50 m', c:1, d:D_CURTO, u:'seg', cue:'Carga por lado no campo de carga, tempo em segundos. Passos curtos e contínuos: parar custa mais do que ir devagar.'},
+    {n:'Sled pull', car:'lado', g:'', s:1, r:'50 m', c:1, d:D_CURTO, u:'seg', cue:'Puxada com o quadril para trás, não só com o braço.'},
+    {n:'Burpee broad jump', car:'corpo', g:'', s:1, r:'80 m', c:1, d:D_CURTO, u:'seg', cue:'A estação que mais custa em fôlego. Salto curto e cadência constante.'},
+    {n:'Remo ergômetro', car:'corpo', g:'', s:1, r:'1000 m', c:0, d:D_CURTO, u:'seg', cue:'Perna, tronco, braço — nessa ordem. Tempo em segundos.'},
+    {n:'Farmers carry', car:'halter', g:'', s:1, r:'200 m', c:0, d:D_CURTO, u:'seg', cue:'Um peso em cada mão. Escápula encaixada, sem deixar o ombro subir.'},
+    {n:'Lunges com sandbag', car:'halter1', g:'', s:1, r:'100 m', c:1, d:D_CURTO, u:'seg', cue:'Joelho tocando o chão a cada passo, como a prova exige. O peso é o do saco.'},
+    {n:'Wall balls', car:'halter1', g:'', s:1, r:'100 reps', c:1, d:D_CURTO, u:'seg', cue:'A última estação, com a perna já destruída. O peso é o da bola; o tempo é o que conta.'},
   ]},
 };
 
@@ -127,12 +151,17 @@ export const RULES: Regra[] = [
     'Mantenha os principais por <b>6 a 8 semanas</b>, desde que não provoquem dor articular, você consiga sentir e progredir no músculo alvo, a máquina siga disponível e a técnica esteja melhorando.',
     'Seu corpo não precisa ser confundido. O que se quer é acumular meses de dados comparáveis.']},
   {k:'volume', t:'Não acrescente séries agora', warn:0, p:[
-    'O programa caiu de 125 para <b>93 séries por semana</b>, de propósito. A redução saiu de onde o retorno era baixo — costas, posterior de ombro, quadríceps, braços —, não uniformemente.',
+    'São <b>90 séries de musculação por semana</b> em cinco sessões, mais o HYROX. O corte em relação às 125 antigas saiu de onde o retorno era baixo — costas, posterior de ombro, quadríceps, braços —, não uniformemente.',
     'Sua primeira tarefa é <b>extrair progresso deste volume</b>. Só considere acrescentar quando, depois de várias exposições: recuperação boa, sem dor articular, desempenho não caindo, execução sólida <b>e</b> uma prioridade estagnada apesar de esforço e progressão adequados.',
     'Nesse caso são <b>1 a 2 séries no músculo específico</b> — não 10 séries espalhadas pelo programa.']},
+  {k:'hyrox', t:'O HYROX é o sexto treino, não um extra', warn:0, p:[
+    'Sábado é sessão de verdade: condicionamento, quadríceps, glúteo, posterior, panturrilha, core e ombro, tudo em regime de resistência. Por isso ele ocupa uma letra da rotação.',
+    'Mas as estações <b>não são séries de hipertrofia</b> — o app não as conta no volume por músculo, de propósito. Corrida, sled e wall balls são estímulo de outra natureza.',
+    '<b>Não faça musculação pesada depois do HYROX.</b> Ele encerra o sábado. E é por causa dele que a sexta é o treino mais curto da semana.']},
   {k:'fadiga', t:'Quando reduzir em vez de insistir', warn:0, p:[
     'Sinais que aparecem juntos: queda de repetições ou carga por 2 a 3 sessões, o mesmo exercício ficando progressivamente pior, musculatura dolorida por mais de 72 h, queda clara de disposição, cotovelo, ombro ou joelho reclamando, dificuldade de manter o RIR habitual.',
-    'Aí a hipótese certa é <b>fadiga acumulada</b>, não falta de estímulo. Investigue antes de presumir que precisa de mais.']},
+    'Dois sinais específicos desta versão: <b>o HYROX começando a comprometer a terça</b>, e sessões passando consistentemente de <b>90 min</b>.',
+    'Aí a hipótese certa é <b>fadiga acumulada</b>, não falta de estímulo. Investigue antes de presumir que precisa de mais — e a primeira mexida é na dose, não trocar oito exercícios porque uma semana foi ruim.']},
   {k:'atenção', t:'Dor de tendão não se treina por cima', warn:1, p:[
     'Dor muscular difusa no dia seguinte é normal. <b>Dor pontual em cotovelo, ombro da frente ou joelho abaixo da patela é outra coisa.</b>',
     'Apareceu: tire aquele exercício por 2 semanas e substitua por outro ângulo. Nunca empurre porque "está fraquinha".']},
@@ -145,12 +174,13 @@ export const RULES: Regra[] = [
     'Quando houver evidência clara de fadiga acumulada — os sinais da regra de fadiga —, faça <b>5 a 7 dias</b> com 50 a 60% das séries habituais, as mesmas técnicas, <b>3 a 4 na reserva</b> e sem falha. Depois volte.',
     'Cortar volume e manter a intensidade é o que permite o tecido conjuntivo se recuperar sem perder a adaptação.']},
   {k:'bike', t:'2x por semana, leve a moderado', warn:0, p:[
-    'Colocação: <b>segunda, depois do treino A, 20 a 25 min</b>; <b>quinta, no dia de recuperação, 25 a 30 min</b>.',
+    'Colocação: <b>segunda, depois do treino A, 20 a 25 min</b>; <b>quinta, depois do D, 25 a 30 min</b> — o D é curto e de fadiga sistêmica baixa, é ele que abre espaço para a segunda sessão.',
     'Intensidade: respirando mais forte, mas ainda conseguindo conversar. <b>Sem transformar em HIIT.</b>',
-    'Cardio moderado nessa dose não atrapalha hipertrofia. Evite antes de B ou E, e nunca antes do treino — a bike é condicionamento e saúde, não outro treino de perna.']},
+    'Cardio moderado nessa dose não atrapalha hipertrofia. Evite antes de B ou do HYROX, e nunca antes do treino — a bike é condicionamento e saúde, não outro treino de perna.']},
   {k:'prioridades', t:'Onde a recuperação está sendo gasta', warn:0, p:[
     'Prioridade 1: <b>peitoral superior</b> e <b>deltoide lateral</b>. Prioridade 2: <b>dorsais em largura</b> e <b>panturrilhas</b>. Eles recebem os melhores momentos da semana, não as sobras.',
-    'Por isso não há desenvolvimento militar (deltoide anterior já recebe bastante dos presses) nem encolhimento direto (trapézio não é limitação visual, e remadas e RDL já dão estímulo). Quadríceps, seu ponto forte, cedeu volume — não foi abandonado.',
+    '<b>Deltoide anterior</b> ganhou 2 séries diretas na quarta — poucas de propósito, porque os presses inclinados e o horizontal já entregam bastante. Se as fotos mostrarem que ele continua atrás, aumentamos; não por antecipação.',
+    'Continua sem desenvolvimento militar e sem encolhimento direto: trapézio não é limitação visual, e remadas e terra romeno já dão estímulo. Quadríceps, seu ponto forte, cedeu volume — não foi abandonado, e ainda recebe o HYROX.',
     'Prioridade não é cargo vitalício: quando uma dessas regiões deixar de ser deficiência, a programação muda.']},
   {k:'sucesso', t:'O que conta como dar certo nos próximos meses', warn:0, p:[
     'Não é só o peso na balança. São quatro coisas ao mesmo tempo: <b>peso subindo bem devagar</b>, <b>cintura estável</b>, <b>progressão clara em peito superior, lateral, dorsal e panturrilha</b>, e a mudança aparecendo relaxado, não só em pose.',
@@ -216,6 +246,10 @@ export const ALT: Record<string, Substituto[]> = {
     {n:'Reverse pec deck', w:'Mais carga, tronco apoiado.'},
     {n:'Crucifixo inverso com halteres', w:'Perde tensão na parte baixa.'},
     {n:'Face pull na polia alta', w:'Mais rotação externa junto.'}],
+  'Elevação frontal unilateral no cabo': [
+    {n:'Elevação frontal na máquina', w:'Indicada pelo treinador. Trajetória guiada, dá para carregar mais.'},
+    {n:'Elevação frontal bilateral no cabo', w:'Indicada pelo treinador. Os dois lados de uma vez, mais rápido.'},
+    {n:'Elevação frontal com halteres', w:'Perde tensão embaixo, ganha simplicidade.'}],
   'Rosca Scott na máquina': [
     {n:'Rosca Scott no cabo', w:'Indicada pelo treinador. Mesma posição, tensão constante.'},
     {n:'Rosca Scott com barra W', w:'Mesma posição, pulso mais confortável.'},
@@ -378,7 +412,11 @@ export const LEGADO: Record<string, { car: TipoCarga; g: string; c: 0 | 1; cue: 
   'Crucifixo inverso no cabo': {car:'pino', g:'delt posterior', c:0, cue:'Amplitude maior, carga menor que o reverse pec deck.'},
   'Rosca no cabo': {car:'pino', g:'bíceps', c:0, cue:'Tensão constante ao longo da amplitude.'},
   'Extensão acima da cabeça ou máquina de tríceps': {car:'pino', g:'tríceps', c:0, cue:'Hoje é o substituto indicado da extensão acima da cabeça no cabo.'},
-  'Elevação de pernas ou reverse crunch': {car:'corpo', g:'abdômen', c:0, cue:'Suba com o quadril, não com o balanço. Carregado, é o substituto do ab wheel.'},
+  // saíram na revisão de dezembro, quando a perna virou um dia só e o abdômen
+  // migrou para a quinta
+  'Mesa flexora deitada': {car:'pino', g:'posterior', c:0, cue:'Excêntrica de 3 s. Quadril estendido: menos alongamento que a flexora sentada, que é a que ficou.'},
+  'Panturrilha no leg press': {car:'lado', g:'panturrilha', c:0, cue:'Joelho estendido. Saiu quando a panturrilha passou a ser treinada em dois dias.'},
+  'Ab wheel': {car:'corpo', g:'abdômen', c:0, cue:'De joelhos e com amplitude parcial. Saiu quando o abdômen concentrou na quinta.'},
 };
 
 // ---------- catálogo de exercícios ----------
@@ -424,14 +462,16 @@ export const EX_BASE: Record<IdEx, Exercicio> = (function () {
   return c;
 })();
 
-// A hierarquia da revisão de agosto de 2026: peito superior e delt lateral são
-// prioridade 1; dorsal em largura e panturrilha, prioridade 2. Quadríceps saiu
-// da fila — é ponto forte, e cedeu volume para quem precisa crescer.
+// A hierarquia estética: peito superior e delt lateral são prioridade 1;
+// dorsal em largura e panturrilha, prioridade 2. O deltoide anterior entrou na
+// segunda faixa quando ganhou trabalho direto — são só 2 séries, mas
+// direcionadas, e não mais "o que sobra dos presses". Quadríceps saiu da fila:
+// é ponto forte, e cedeu volume para quem precisa crescer.
 export const PRIORIDADES: Record<Nivel, { rot: string; mus: string[] }> = {
   maxima:      { rot:'prioridade máxima', mus:['peito superior','delt lateral'] },
-  secundaria:  { rot:'prioridade secundária', mus:['dorsal','panturrilha','posterior','abdômen'] },
-  normal:      { rot:'', mus:['costas espessura','delt posterior','bíceps','tríceps','peito','quadríceps','glúteo','glúteo médio','adutores','trapézio','tibial'] },
-  indireto:    { rot:'estímulo indireto basta', mus:['delt anterior'] }
+  secundaria:  { rot:'prioridade secundária', mus:['dorsal','panturrilha','delt anterior'] },
+  normal:      { rot:'', mus:['posterior','abdômen','costas espessura','delt posterior','bíceps','tríceps','peito','quadríceps','glúteo','glúteo médio','adutores'] },
+  indireto:    { rot:'estímulo indireto basta', mus:['trapézio','tibial'] }
 };
 
 export const NIVEIS: Nivel[] = ['maxima','secundaria','normal','indireto'];
