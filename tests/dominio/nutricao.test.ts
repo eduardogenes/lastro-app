@@ -17,7 +17,7 @@ import type { Estado } from '../../src/dominio/tipos';
 const cat = ALIMENTOS_BASE;
 
 test('a prescrição chegou inteira do plano original', () => {
-  assert.strictEqual(Object.keys(cat).length, 34, '34 alimentos na biblioteca');
+  assert.strictEqual(Object.keys(cat).length, 36, '36 alimentos na biblioteca');
   assert.strictEqual(PLANO_BASE.length, 6, 'seis refeições');
   assert.deepStrictEqual(PLANO_BASE.map(r => r.id),
     ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar']);
@@ -90,7 +90,8 @@ test('a timeline sai em ordem de relógio', () => {
 test('o resumo lista o que tem dentro, na unidade certa', () => {
   const pre = PLANO_BASE.find(r => r.id === 'pre')!;
   const txt = resumoDaRefeicao(pre, cat, false);
-  assert.ok(txt.includes('120 g banana'), txt);
+  assert.ok(txt.includes('35 g pão artesano'), txt);
+  assert.ok(txt.includes('20 g doce de leite'), txt);
   assert.ok(txt.includes('200 ml café'), 'café é ml, não g: ' + txt);
 });
 
@@ -108,15 +109,15 @@ test('o ajuste move o arroz em passos mensuráveis', () => {
 test('a lista soma o plano pelas vezes que cada refeição acontece', () => {
   const linhas = listaDeCompras(PLANO_BASE, cat, { treino: 6, descanso: 1 });
   const arroz = linhas.find(l => l.f === 'arroz');
-  const banana = linhas.find(l => l.f === 'banana');
   assert.ok(arroz && arroz.comprar > 0);
-  // banana está no pré-treino, que só acontece em dia de treino
+  // o doce de leite só existe no pré-treino, que só acontece em dia de treino:
+  // é o item que prova o escopo por regra em vez de sete planos de dia
   const soTreino = listaDeCompras(PLANO_BASE, cat, { treino: 6, descanso: 1 })
-    .find(l => l.f === 'banana')!;
+    .find(l => l.f === 'docedeleite')!;
   const menos = listaDeCompras(PLANO_BASE, cat, { treino: 3, descanso: 4 })
-    .find(l => l.f === 'banana')!;
-  assert.ok(soTreino.pronto > menos.pronto, 'menos treinos, menos pré-treino, menos banana');
-  assert.ok(banana);
+    .find(l => l.f === 'docedeleite')!;
+  assert.ok(soTreino.pronto > menos.pronto,
+    'menos treinos, menos pré-treino, menos doce de leite');
 });
 
 test('converte pronto para cru onde há fator, e diz de onde veio', () => {
