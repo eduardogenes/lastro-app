@@ -238,7 +238,7 @@ export function Dados({ ctx }) {
         medidas={c.cintura.medidas} aoApagar={t => ctx.apagaMedida('cintura', t)}
         celulas={[
           { k: 'a', rotulo: 'última medida', valor: c.cintura.atual },
-          { k: 'm', rotulo: 'no mês', valor: c.cintura.mes.split(' ')[0] }
+          { k: 'm', rotulo: 'no mês · cm', valor: c.cintura.mesValor }
         ]}
       >
         <Procedencia>{c.cintura.mes}</Procedencia>

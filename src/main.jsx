@@ -2035,7 +2035,12 @@ function exportData() {
   const txt = payload();
   const name = 'treino-eduardo-' + new Date().toISOString().slice(0,10) + '.json';
   try {
-    const url = URL.createObjectURL(new Blob([txt], {type:'application/json'}));
+    // `charset=utf-8` explícito. O Blob sempre grava a string em UTF-8, e
+    // JSON é UTF-8 por definição (RFC 8259) — mas quem lê o arquivo depois
+    // nem sempre sabe disso, e um leitor que assume Latin-1 transforma
+    // "tríceps" em "trÃ­ceps" e "6–10" em "6â10". A corrupção é silenciosa:
+    // o JSON continua válido, só o texto fica ilegível.
+    const url = URL.createObjectURL(new Blob([txt], {type:'application/json;charset=utf-8'}));
     const a = document.createElement('a');
     a.href = url; a.download = name;
     document.body.appendChild(a); a.click();
@@ -2870,7 +2875,12 @@ CTX.corpo = function () {
     cintura: {
       valor: f.cintura == null ? ultimaCint : f.cintura,
       serie: serieSemanal(S.body.cintura, 14),
-      atual: S.body.cintura.length ? fmtDec(ultimaCint) + ' cm' : '—',
+      atual: S.body.cintura.length ? fmtDec(ultimaCint) + ' cm' : '–',
+      // Duas coisas separadas, e antes eram uma só: a célula de métrica quer
+      // um NÚMERO, a procedência quer a FRASE. A tela cortava a frase no
+      // primeiro espaço para preencher a célula e escrevia "faltam" onde
+      // devia estar a variação em centímetros.
+      mesValor: c ? fmtSig2(c.mes) : '–',
       mes: c ? fmtSig2(c.mes) + ' cm no mês' : 'faltam 3 semanas de medida para concluir',
       medidas: medidasRecentes('cintura', 'cm')
     },

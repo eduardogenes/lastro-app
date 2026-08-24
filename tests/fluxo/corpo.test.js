@@ -169,3 +169,20 @@ test('preencher treino passado avisa para onde as séries estão indo', async ()
   assert.strictEqual(a.E('S.sessao'), null, 'concluir encerra a sessão retroativa');
   a.fechar();
 });
+
+test('célula de métrica sem medida mostra traço, não a primeira palavra da frase', async () => {
+  // A tela cortava a frase de procedência no primeiro espaço para preencher a
+  // célula. Sem três semanas de medida, a frase é "faltam 3 semanas..." — e o
+  // painel exibia a palavra `faltam` no lugar do número, em mono, como se
+  // fosse um valor medido.
+  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+  a.aba('dados');
+
+  const celulas = a.$$('.ins-metrica-v, .ins-celula b, .stats b')
+    .map(function (x) { return x.textContent.trim(); });
+  assert.ok(!celulas.includes('faltam'), 'palavra vazando para célula de número: ' + celulas.join(' | '));
+
+  const txt = a.doc.getElementById('app').textContent;
+  assert.ok(/faltam 3 semanas de medida/.test(txt), 'a frase continua, na procedência');
+  a.fechar();
+});

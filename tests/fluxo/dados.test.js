@@ -2,7 +2,7 @@
 // Regra 2 do projeto: nenhuma mudança pode quebrar o que já está salvo.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app, DIA } from './harness.js';
+import { app, DIA, FONTE } from './harness.js';
 
 // Formato original: só logs e done, sem sid, dur, deload, cardio, body ou carga.
 const ANTIGO = {
@@ -283,5 +283,29 @@ test('a migração roda uma vez só', async () => {
   assert.strictEqual(a.E('migraPlano(S)'), 0, 'segunda passada não mexe em nada');
   assert.strictEqual(a.E('migraPlano3(S)'), null);
   assert.deepStrictEqual(a.J('Object.keys(S.logs)'), ['supino-inclinado-com-halteres']);
+  a.fechar();
+});
+
+test('o backup sai em UTF-8, e o acento sobrevive à volta', async () => {
+  // Um backup real voltou de fora com "Peito superior + lateral + trÃ­ceps" e
+  // "6â10": é o texto UTF-8 lido como Latin-1. O app grava certo — o Blob
+  // sempre serializa a string em UTF-8 —, mas sem `charset` no tipo MIME o
+  // leitor do outro lado adivinha, e adivinha errado.
+  const a = await app();
+
+  const txt = a.E('payload()');
+  const o = JSON.parse(txt);
+  assert.ok(o.data.prog.A.name.includes('tríceps'), 'acento cru no export: ' + o.data.prog.A.name);
+  assert.ok(/6–10/.test(o.data.prog.A.ex[0].r), 'travessão cru no export: ' + o.data.prog.A.ex[0].r);
+
+  // a marca da corrupção, para o teste saber reconhecê-la
+  const comoLatin1 = Buffer.from(o.data.prog.A.name, 'utf8').toString('latin1');
+  assert.notStrictEqual(o.data.prog.A.name, comoLatin1);
+  assert.ok(/Ã|â/.test(comoLatin1), 'é esta a forma que o texto assume quando lido errado');
+
+  // e o tipo declarado no download diz qual é a codificação
+  assert.ok(/application\/json;charset=utf-8/.test(FONTE),
+    'o Blob do export precisa declarar charset=utf-8');
+
   a.fechar();
 });
