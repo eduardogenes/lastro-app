@@ -31,16 +31,25 @@ export const CACHE_FOTOS = 'treino-fotos';
  * Limitar só a largura deixava a altura solta: um print de tela em pé virava
  * uma tira de 400 por 1200, que pesa como uma imagem grande e aparece minúscula.
  *
- * 700 e não 400 por duas razões que apareceram juntas. A folha desenha a
- * imagem com uns 350 de largura, e num aparelho de 3x um arquivo de 400 sobe
- * borrado. E aqui não entra só foto de máquina: um print de diagrama ou de
- * mensagem tem TEXTO, que a 400 fica ilegível. A 700 um WebP ainda sai com uns
- * 15 KB, e nada disso entra na instalação do app.
+ * 1080, e o número saiu de uma conta, não de gosto: a folha desenha a imagem
+ * com uns 350 de largura CSS, e num telefone de 3x isso são 1050 pixels reais.
+ * Guardar menos que isso é entregar uma imagem para ser ESTICADA na hora de
+ * mostrar — que é exatamente a aparência borrada.
+ *
+ * Os 400 e depois 700 anteriores vieram de um orçamento que não era deste
+ * problema: o de INSTALAÇÃO do app, onde cada byte desce toda vez. Foto não
+ * entra na instalação. Ela desce uma vez por aparelho, do bucket, e fica. A
+ * 1080 um WebP dá uns 70 KB — oitenta aparelhos são 6 MB no bucket, e zero na
+ * abertura do app.
  */
-const LADO_MAIOR = 700;
+const LADO_MAIOR = 1080;
 
-/** WebP a 0,75 dá uns 15 KB neste tamanho; JPEG é a saída de quem não codifica WebP. */
-const QUALIDADE = 0.75;
+/**
+ * 0,82 e não 0,75. A diferença são uns 20 KB por foto e some no ruído do
+ * bucket; abaixo disso o WebP começa a borrar justamente onde a foto precisa
+ * ser lida — a etiqueta do aparelho, o número do pino.
+ */
+const QUALIDADE = 0.82;
 
 /** `--ins-canvas`. Só entra quando o JPEG precisa achatar transparência. */
 const FUNDO = '#0C0E0C';
@@ -111,6 +120,49 @@ function temCache(): boolean {
  * qualquer coisa ser guardada ou enviada — não existe servidor para fazer isso
  * depois, e subir 3 MB pelo sinal da academia não é uma opção.
  */
+/**
+ * Reduz em PASSOS, cada um cortando no máximo a metade.
+ *
+ * Uma foto de telefone chega com uns 4000 pixels de lado. Encolher isso para
+ * 1080 de uma vez faz o navegador amostrar um pixel a cada quatro e descartar o
+ * resto — é daí que vem boa parte do embaçado, e nenhum aumento de qualidade
+ * de compressão conserta, porque a informação já se perdeu antes de comprimir.
+ *
+ * Encolhendo pela metade de cada vez, cada passo faz média de quatro pixels
+ * vizinhos, e o resultado é nítido. `imageSmoothingQuality` alto é o que pede
+ * ao navegador a interpolação boa em vez da barata.
+ */
+function desenha(
+  tela: HTMLCanvasElement, origem: CanvasImageSource,
+  lFim: number, aFim: number, fundo?: string
+): CanvasRenderingContext2D {
+  let l = (origem as ImageBitmap).width;
+  let a = (origem as ImageBitmap).height;
+  let atual: CanvasImageSource = origem;
+
+  while (l > lFim * 2) {
+    l = Math.max(lFim, Math.round(l / 2));
+    a = Math.max(aFim, Math.round(a / 2));
+    const meio = document.createElement('canvas');
+    meio.width = l; meio.height = a;
+    const c = meio.getContext('2d');
+    if (!c) break;
+    c.imageSmoothingEnabled = true;
+    c.imageSmoothingQuality = 'high';
+    c.drawImage(atual, 0, 0, l, a);
+    atual = meio;
+  }
+
+  tela.width = lFim; tela.height = aFim;
+  const ctx = tela.getContext('2d');
+  if (!ctx) throw new Error('sem canvas');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  if (fundo) { ctx.fillStyle = fundo; ctx.fillRect(0, 0, lFim, aFim); }
+  ctx.drawImage(atual, 0, 0, lFim, aFim);
+  return ctx;
+}
+
 export async function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }> {
   const bitmap = await createImageBitmap(arquivo);
   const escala = Math.min(1, LADO_MAIOR / Math.max(bitmap.width, bitmap.height));
@@ -118,10 +170,7 @@ export async function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }>
   const a = Math.round(bitmap.height * escala);
 
   const tela = document.createElement('canvas');
-  tela.width = l; tela.height = a;
-  const ctx = tela.getContext('2d');
-  if (!ctx) throw new Error('sem canvas');
-  ctx.drawImage(bitmap, 0, 0, l, a);
+  const ctx = desenha(tela, bitmap, l, a);
 
   const saida = await new Promise<{ blob: Blob; ext: string } | null>(function (ok) {
     tela.toBlob(function (b) {
@@ -138,9 +187,7 @@ export async function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }>
   // Sem WebP, sobra JPEG — que não tem transparência, e pinta de PRETO o que
   // era transparente. Redesenha sobre o fundo do app para o recorte se apoiar
   // na cor certa em vez de num retângulo preto no meio da folha.
-  ctx.fillStyle = FUNDO;
-  ctx.fillRect(0, 0, l, a);
-  ctx.drawImage(bitmap, 0, 0, l, a);
+  desenha(tela, bitmap, l, a, FUNDO);
   if (typeof bitmap.close === 'function') bitmap.close();
 
   const jpeg = await new Promise<Blob | null>(function (ok) {

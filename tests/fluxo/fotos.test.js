@@ -32,15 +32,26 @@ function cacheFalso(a) {
       }
     };
     // createImageBitmap e canvas.toBlob não existem no jsdom
+    globalThis.__passos = [];
+    // 4000x3000: o que uma foto de telefone realmente entrega
     globalThis.createImageBitmap = async function () {
-      return { width: 1200, height: 900, close: function () {} };
+      return { width: 4000, height: 3000, close: function () {} };
     };
     const criar = document.createElement.bind(document);
     document.createElement = function (tag) {
       const el = criar(tag);
       if (tag === 'canvas') {
-        el.getContext = function () { return { drawImage: function () {} }; };
+        el.getContext = function () {
+          return {
+            drawImage: function () { globalThis.__passos.push(el.width + 'x' + el.height); },
+            fillRect: function () {},
+            set fillStyle(v) {},
+            set imageSmoothingEnabled(v) { globalThis.__suave = v; },
+            set imageSmoothingQuality(v) { globalThis.__qual = v; }
+          };
+        };
         el.toBlob = function (cb, tipo) {
+          globalThis.__medida = { l: el.width, a: el.height };
           cb(tipo === 'image/webp' ? new Blob(['x'.repeat(6000)], { type: 'image/webp' }) : null);
         };
       }
@@ -247,19 +258,46 @@ test('a miniatura aparece na troca só quando há foto', async () => {
   a.fechar();
 });
 
+test('a redução acontece em passos, não de uma vez', async () => {
+  // Encolher 4000 para 1080 num passo só faz o navegador amostrar um pixel a
+  // cada quatro e jogar o resto fora — é daí que vem o embaçado, e nenhum
+  // aumento de qualidade de compressão conserta, porque a informação já se
+  // perdeu antes de comprimir.
+  const a = await app();
+  cacheFalso(a);
+  a.E('toggle(0)');
+  a.E('abreFoto(0)');
+  await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
+  await a.esperar(60);
+
+  const passos = a.J('globalThis.__passos');
+  assert.ok(passos.length > 1, 'mais de um passo: ' + passos.join(' → '));
+  assert.strictEqual(passos[passos.length - 1], '1080x810', 'e termina no tamanho de gravação');
+  assert.strictEqual(a.E('globalThis.__qual'), 'high', 'pedindo a interpolação boa');
+  assert.strictEqual(a.E('globalThis.__suave'), true);
+  a.fechar();
+});
+
 test('print em pé não vira tira: o teto é do lado maior', async () => {
   // Limitar só a largura deixava a altura solta — um print de tela em pé
-  // virava 400 por 1200: pesado de guardar e minúsculo de ver.
+  // virava uma tira: pesada de guardar e minúscula de ver.
   const a = await app();
   cacheFalso(a);
   a.E(`
     globalThis.__medida = null;
+    globalThis.__passos = [];
+    // retrato: é o formato de um print de tela, e o caso que motivou a mudança
     globalThis.createImageBitmap = async () => ({ width: 900, height: 2000, close(){} });
     const criar = document.createElement.bind(document);
     document.createElement = function (t) {
       const el = criar(t);
       if (t === 'canvas') {
-        el.getContext = () => ({ drawImage(){}, fillRect(){}, set fillStyle(v){} });
+        el.getContext = () => ({
+          drawImage(){ globalThis.__passos.push(el.width + 'x' + el.height); },
+          fillRect(){}, set fillStyle(v){},
+          set imageSmoothingEnabled(v){ globalThis.__suave = v; },
+          set imageSmoothingQuality(v){ globalThis.__qual = v; }
+        });
         el.toBlob = function (cb, tipo) {
           globalThis.__medida = { l: el.width, a: el.height };
           cb(tipo === 'image/webp' ? new Blob(['x'], { type: 'image/webp' }) : null);
@@ -274,8 +312,8 @@ test('print em pé não vira tira: o teto é do lado maior', async () => {
   await a.esperar(60);
 
   const m = a.J('globalThis.__medida');
-  assert.strictEqual(Math.max(m.l, m.a), 700, 'o lado maior é que fica em 700: ' + JSON.stringify(m));
-  assert.strictEqual(m.l, 315, 'e a proporção se mantém');
+  assert.strictEqual(Math.max(m.l, m.a), 1080, 'o lado maior é que manda: ' + JSON.stringify(m));
+  assert.strictEqual(m.l, 486, 'e a proporção se mantém: 900x2000 vira 486x1080');
   a.fechar();
 });
 
