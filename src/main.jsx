@@ -244,6 +244,7 @@ function normalizaEstado() {
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
   if (!S.descanso || typeof S.descanso !== 'object') S.descanso = {};
   if (!S.fotos || typeof S.fotos !== 'object') S.fotos = {};
+  if (!S.promoPendente || typeof S.promoPendente !== 'object') S.promoPendente = null;
 }
 
 async function load() {
@@ -283,6 +284,7 @@ async function load() {
   encerraSePreciso();
   view.day = S.sessao ? S.sessao.day : nextDay();
   render();
+  abrePromoGuardada();
 
   // A nuvem entra DEPOIS de a tela já estar de pé: o app não espera rede para
   // funcionar, e quem chegou primeiro é o dado do aparelho.
@@ -394,6 +396,23 @@ function fechaSessao(comoFim) {
     if (s.pulados && s.pulados.length) marca.pulados = s.pulados.slice();
     marca.m = Date.now();
   }
+  // A pergunta "isto fica no programa?" não pode depender de ele ter tocado em
+  // FINALIZAR. A sessão nasce e morre sozinha por decisão do produto — então
+  // quando morre sozinha com mudança pendente, a pergunta fica guardada e
+  // aparece na abertura seguinte. Descartar em silêncio era decidir por ele,
+  // sempre para o mesmo lado.
+  // Só no fecho AUTOMÁTICO. Pela porta da frente quem pergunta é
+  // `finalizarSessao`, e reagendar aqui faria a mesma pergunta voltar logo
+  // depois de respondida.
+  const pendentes = comoFim === 'auto' ? modsDoDia(s.day) : [];
+  if (pendentes.length) {
+    S.promoPendente = {
+      day: s.day, t: Date.now(),
+      mods: JSON.parse(JSON.stringify(pendentes)),
+      resumoMods: pendentes.map(function (m) { return textoMod(s.day, m); })
+    };
+  }
+
   S.sessao = null;
   S.draft = null;
   S.mods = null;   // as mudanças do dia não sobrevivem ao fim da sessão
@@ -603,6 +622,8 @@ async function finalizarSessao() {
 
   const mods = modsDoDia(s.day);
   if (mods.length) {
+    // fechando pela porta da frente: a pergunta é agora, e não fica guardada
+    S.promoPendente = null;
     // a sessão continua aberta até ele decidir: sair sem responder mantém o
     // padrão conservador, que é não mexer no oficial
     view.promo = { day: s.day, mods: mods.slice(), dec: mods.map(function () { return 'hoje'; }),
@@ -1720,7 +1741,13 @@ function semanasNoPrograma(sl) {
 
 function decidePromo(j, v) { view.promo.dec[j] = v; render(); }
 function motivoPromo(k) { view.promo.motivo = view.promo.motivo === k ? null : k; render(); }
-function voltarDoPromo() { view.promo = null; render(); }
+function voltarDoPromo() {
+  // sair sem responder mantém o padrão conservador — e não deixa a pergunta
+  // reaparecendo para sempre
+  if (view.promo && view.promo.guardada) { S.promoPendente = null; queueSave(); }
+  view.promo = null;
+  render();
+}
 
 // Aplica ao programa oficial as mudanças escolhidas, na ordem em que foram
 // feitas, e registra a decisão para dar resposta a "por que isso mudou?".
@@ -1762,8 +1789,33 @@ async function concluirPromo() {
   const escolhidos = P.mods.filter(function (m, j) { return P.dec[j] === 'oficial'; });
   const n = escolhidos.length ? aplicaAoOficial(P.day, escolhidos, P.motivo) : 0;
   view.promo = null;
-  await encerraDeVerdade(P.day, P.feitas, P.resumoMods);
+  S.promoPendente = null;
+
+  if (P.guardada) {
+    // a sessão já tinha fechado sozinha: só a decisão faltava
+    await save(); render(); window.scrollTo(0, 0);
+  } else {
+    await encerraDeVerdade(P.day, P.feitas, P.resumoMods);
+  }
   if (n) toast(n + (n === 1 ? ' mudança levada' : ' mudanças levadas') + ' para o programa oficial.');
+}
+
+/**
+ * A pergunta que ficou de uma sessão encerrada sozinha.
+ *
+ * Aparece na abertura seguinte, e nunca no meio de um treino novo: perguntar
+ * sobre o programa enquanto ele registra série é interromper a única coisa que
+ * o app existe para não atrapalhar.
+ */
+function abrePromoGuardada() {
+  const g = S.promoPendente;
+  if (!g || !Array.isArray(g.mods) || !g.mods.length || S.sessao) return false;
+  view.promo = {
+    day: g.day, mods: g.mods.slice(), dec: g.mods.map(function () { return 'hoje'; }),
+    motivo: null, feitas: 0, resumoMods: g.resumoMods || [], guardada: true, quando: g.t
+  };
+  render();
+  return true;
 }
 
 
@@ -2549,7 +2601,8 @@ async function importText(txt) {
         mtime: typeof d.mtime === 'number' ? d.mtime : 0,
         apagados: (d.apagados && typeof d.apagados === 'object') ? d.apagados : {},
         descanso: (d.descanso && typeof d.descanso === 'object') ? d.descanso : {},
-        fotos: (d.fotos && typeof d.fotos === 'object') ? d.fotos : {} };
+        fotos: (d.fotos && typeof d.fotos === 'object') ? d.fotos : {},
+        promoPendente: (d.promoPendente && typeof d.promoPendente === 'object') ? d.promoPendente : null };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();

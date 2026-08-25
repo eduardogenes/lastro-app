@@ -181,6 +181,16 @@ export interface EntradaProgLog {
   m?: number;
 }
 
+/** Uma decisão de programa que ficou para a próxima abertura. */
+export interface PromoPendente {
+  day: Dia;
+  /** quando a sessão fechou, para a tela poder dizer de que treino se trata */
+  t: number;
+  mods: Mod[];
+  /** cada mudança já em português, como a tela mostra */
+  resumoMods: string[];
+}
+
 /** A referência de uma foto: quando foi tirada e em que formato ela ficou. */
 export interface FotoRef {
   /** instante da captura; serve de versão na fusão e de quebra-cache na tela */
@@ -301,6 +311,15 @@ export interface Estado {
    * são os únicos pedaços sem fusão possível.
    */
   mtime: number;
+  /**
+   * A decisão de fim de treino que ficou pendente.
+   *
+   * Existe porque a sessão pode morrer sozinha — por inatividade ou na virada
+   * do dia — e nesse caminho ninguém perguntou se as mudanças do dia entram no
+   * programa. Guardada aqui, a pergunta aparece na abertura seguinte em vez de
+   * a resposta ser decidida em silêncio, sempre para o mesmo lado.
+   */
+  promoPendente: PromoPendente | null;
   /**
    * A foto do aparelho, por exercício — só a REFERÊNCIA, nunca os bytes.
    *
