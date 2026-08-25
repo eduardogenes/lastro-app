@@ -285,6 +285,7 @@ async function load() {
   view.day = S.sessao ? S.sessao.day : nextDay();
   render();
   abrePromoGuardada();
+  carregaFotosDoDia();
 
   // A nuvem entra DEPOIS de a tela já estar de pé: o app não espera rede para
   // funcionar, e quem chegou primeiro é o dado do aparelho.
@@ -1269,8 +1270,9 @@ function vmExercicio(d, i, ex) {
       ? Math.round(parado) + ' dias sem este exercício' : null,
 
     temTroca: lista.length > 0,
-    // só diz SE existe: os bytes moram no cache, e quem os busca é a <img>
     temFoto: !!S.fotos[ex.id],
+    // o endereço já lido para a memória, ou null enquanto não foi
+    foto: FOTO.urlDaFoto(ex.id, S.fotos[ex.id]),
     trocaAberta: view.swapOpen === i,
     troca: {
       indicados: lista.filter(function (a) { return a.ind; }).map(opcaoDeTroca),
@@ -2629,7 +2631,7 @@ function toast(msg) {
 }
 
 // ---------- actions ----------
-function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); window.scrollTo(0,0); }
+function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); window.scrollTo(0,0); carregaFotosDoDia(); }
 function toggle(i){ view.open = view.open===i ? null : i; view.swapOpen = null; view.nota = null; view.carga = null; render(); }
 function dorName(k){ const x = DORES.filter(y=>y.k===k)[0]; return x ? x.t : k; }
 
@@ -2725,6 +2727,13 @@ function abreFoto(i) {
  * imagem e o segundo sai com ela. É rápido o bastante para não piscar, e é o
  * preço de não depender do service worker para servir a foto.
  */
+/** As miniaturas do treino que está na tela. Chamada ao abrir e ao trocar de dia. */
+function carregaFotosDoDia() {
+  const t = treino(view.day);
+  if (!t) return;
+  carregaFotos(t.ex.map(function (x) { return x.id; }));
+}
+
 async function carregaFotos(ids) {
   let mudou = false;
   for (let i = 0; i < ids.length; i++) {

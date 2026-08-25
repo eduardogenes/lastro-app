@@ -13,8 +13,14 @@ como motivacional, e nunca comemora.
 
 ## Os seis inegociáveis
 
-1. **Raio zero.** Tudo é quadrado. As únicas coisas redondas no produto inteiro
-   são o ponto de status e o thumb do slider.
+1. **Raio zero.** Tudo é quadrado. As exceções são três, e cada uma tem
+   motivo: o ponto de status, o thumb do slider e a **miniatura do aparelho**
+   (`--ins-raio-foto`, 10px).
+
+   A terceira entrou quando o app ganhou foto. Fotografia com canto reto no
+   meio de uma lista construída com fios lê como recorte colado por cima;
+   com canto suave ela se assenta. O raio é de FOTO, não de cartão — 10px em
+   44px —, e não abre precedente para arredondar caixa, botão ou campo.
 2. **Número em mono, prosa em display.** IBM Plex Mono carrega toda quantidade,
    hora, carga, macro e contagem. Space Grotesk carrega todo nome, frase e
    título. Nunca misturar dentro de uma mesma string.
@@ -29,6 +35,16 @@ como motivacional, e nunca comemora.
    o indicador de aba (220 ms).
 
 ## Paleta
+
+### A ausência de imagem
+
+Um exercício sem foto **não desenha moldura vazia**: a calha mostra uma
+superfície elevada com um ponto ao centro, e ela é TOCÁVEL — é por ali que a
+foto entra. Isso é o que a separa de decoração. Um retângulo que não faz nada e
+não diz nada seria preenchimento para agrupar, que o inegociável 3 proíbe.
+
+O ponto ao centro é o mesmo elemento redondo do ponto de status. Repetir a forma
+que o sistema já tem custa menos que inventar um símbolo novo para dizer "vazio".
 
 ### Superfícies
 | Token | Hex | Uso |

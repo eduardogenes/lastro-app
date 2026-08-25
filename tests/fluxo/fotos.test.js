@@ -328,3 +328,50 @@ test('PNG entra e sai como WebP: nada de PNG chega ao bucket', async () => {
   assert.strictEqual(a.J('S.fotos["chest-press-inclinado-convergente"]').ext, 'webp');
   a.fechar();
 });
+
+// ---------- a miniatura no cartão ----------
+
+test('sem foto, o lugar dela é o caminho para tirar uma', async () => {
+  // é o que separa "espaço reservado" de decoração: ele faz alguma coisa
+  const a = await app();
+  const alvo = a.$('.exfoto');
+  assert.ok(alvo.className.includes('vazia'));
+  assert.strictEqual(alvo.getAttribute('aria-label'), 'Adicionar foto do aparelho');
+  assert.strictEqual(a.$('.exfoto img'), null, 'e não desenha imagem quebrada');
+
+  a.clicar(alvo);
+  assert.ok(a.$('.ins-folha'), 'tocar nele abre a folha da foto');
+  a.fechar();
+});
+
+test('tocar na miniatura não abre o exercício junto', async () => {
+  // abrir o exercício e abrir a câmera são intenções diferentes; sem parar a
+  // propagação, um toque faria as duas
+  const a = await app();
+  assert.strictEqual(a.E('view.open'), null);
+  a.clicar(a.$('.exfoto'));
+  assert.strictEqual(a.E('view.open'), null, 'o cartão continua fechado');
+  a.fechar();
+});
+
+test('o número do exercício continua visível, embaixo da miniatura', async () => {
+  // a calha era só dele; a miniatura entrou sem tomar largura do nome
+  const a = await app();
+  assert.strictEqual(a.texto('.exfoto .ord'), '01');
+  a.fechar();
+});
+
+test('a miniatura mostra a foto quando os bytes estão em memória', async () => {
+  const a = await app();
+  cacheFalso(a);
+  a.E('toggle(0)');
+  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
+  await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
+  await a.esperar(80);
+
+  const img = a.$('.exfoto img');
+  assert.ok(img, 'a miniatura passou a mostrar a foto');
+  assert.match(img.getAttribute('src'), /^blob:/);
+  assert.ok(!a.$('.exfoto').className.includes('vazia'));
+  a.fechar();
+});

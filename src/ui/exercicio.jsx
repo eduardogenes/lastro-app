@@ -207,7 +207,20 @@ export function Exercicio({ vm, acoes }) {
   return (
     <div class={'ex' + (vm.aberto ? ' open' : '') + (vm.pulado ? ' pulado' : '')}>
       <div class="ex-top" onClick={() => acoes.toggle(i)}>
-        <div class="ord">{String(i + 1).padStart(2, '0')}</div>
+        {/* A miniatura ocupa a calha que era só do número. Sem foto ela não
+            some: vira o próprio caminho de tirar uma, e por isso para o toque
+            antes de chegar no cartão — abrir o exercício e abrir a câmera são
+            intenções diferentes. */}
+        <button
+          class={'exfoto' + (vm.foto ? '' : ' vazia')}
+          onClick={e => { e.stopPropagation(); acoes.abreFoto(i); }}
+          aria-label={vm.foto ? 'Ver o aparelho' : 'Adicionar foto do aparelho'}
+        >
+          {vm.foto
+            ? <img src={vm.foto} alt="" />
+            : <span class="exfoto-p" />}
+          <span class="ord">{String(i + 1).padStart(2, '0')}</span>
+        </button>
         <div class="ex-body">
           <div class="ex-name">{vm.nome}</div>
           {vm.alt && <div class="swapped">no lugar de {vm.nomeOriginal}</div>}

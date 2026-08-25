@@ -68,6 +68,12 @@
 
   /* ---- Geometria ---- */
   --ins-radius: 0;
+  /* A miniatura do aparelho é a terceira exceção ao raio zero, ao lado do
+     ponto de status e do thumb do slider. Fotografia com canto reto no meio de
+     uma lista de fios lê como recorte colado; com canto suave ela se assenta.
+     10px em 44 é raio de foto, não de cartão — não é convite a arredondar
+     mais nada. */
+  --ins-raio-foto: 10px;
   --ins-border-width: 1px;
   --ins-rail: 3px;
   --ins-indicator: 2px;

@@ -583,3 +583,44 @@
    tiraria o foco de teclado junto, então ele fica de tamanho zero. */
 .foto-b input { position: absolute; width: 0; height: 0; opacity: 0; }
 .foto-b2 { margin-top: var(--ins-3); }
+
+/* ---------- a miniatura do aparelho, na calha do cartão ---------- */
+/* Ela ocupa o lugar que era só do número, e leva o número junto: acrescentar
+   uma coluna custaria largura ao nome do exercício, que é o que ele lê. */
+.exfoto {
+  flex: 0 0 44px; width: 44px;
+  display: flex; flex-direction: column; align-items: center; gap: var(--ins-1);
+  background: none; border: none; padding: 0;
+}
+.exfoto img,
+.exfoto-p {
+  display: block; width: 44px; height: 44px;
+  border-radius: var(--ins-raio-foto);
+  /* Sem borda: o recorte é a própria forma. Uma moldura de 1px em volta de uma
+     foto de 44px vira contorno competindo com o conteúdo. */
+  border: none;
+}
+.exfoto img { object-fit: cover; }
+
+/* Sem foto: superfície elevada, o degrau mais suave que a paleta tem sobre o
+   fundo — presença sem peso. O ponto no centro é o único elemento redondo do
+   sistema, e repeti-lo aqui faz o vazio rimar com o resto em vez de inventar
+   um símbolo novo. */
+.exfoto-p {
+  background: var(--ins-surface);
+  position: relative;
+}
+.exfoto-p::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 4px; height: 4px; margin: -2px 0 0 -2px;
+  border-radius: 50%; background: var(--ins-text-5);
+}
+.exfoto.vazia:active .exfoto-p { background: var(--ins-surface-acid); }
+.exfoto.vazia:active .exfoto-p::after { background: var(--ins-acid); }
+
+/* O número desce para debaixo da miniatura e encolhe: ali ele é referência de
+   posição, não dado. */
+.exfoto .ord {
+  flex: none; width: 100%; text-align: center;
+  font: 400 9px/1 var(--ins-font-mono); letter-spacing: .06em;
+}
