@@ -88,9 +88,12 @@
 
 /* ---- O corpo, quando aberto ------------------------------------------- */
 
-/* 34 e não 46: alinha com a calha do número sem carregar o vão junto, e os
-   12px devolvidos tiram uma linha de quebra da dica de execução. */
-.sets { display: none; padding: var(--ins-4) 0 var(--ins-1) 34px; }
+/* Sem recuo à esquerda. Ele existia para alinhar as séries com o nome do
+   exercício, passando a calha do número — fazia sentido quando isto era uma
+   lista indentada. Virou tabela, e a tabela tem a PRÓPRIA coluna de número:
+   manter o recuo era empilhar recuo em cima de coluna e cobrar 34px de
+   largura por isso, justo onde o número precisa caber. */
+.sets { display: none; padding: var(--ins-4) 0 var(--ins-1); }
 .ex.open .sets { display: block; }
 .ex.pulado .sets { display: none; }
 .ex.pulado .ex-name { color: var(--ins-text-5); }
@@ -124,7 +127,10 @@
   /* A primeira coluna é dimensionada pelo RÓTULO, não pelo dígito: "série" em
      mono 9px com tracking não cabe nos 14px que um "1" ocupa, e transbordava
      por cima de "anterior". */
-  grid-template-columns: 34px 96px 1fr 1fr 46px;
+  /* 96 no "anterior" porque o pior caso real cabe: "127,5 × 12 @ 2" são 14
+     caracteres em mono 11px, ~92px. Os 40 do RIR seguram um dígito de 19px com
+     folga — é de lá que sai a diferença, não do campo. */
+  grid-template-columns: 34px 96px 1fr 1fr 40px;
   align-items: center; gap: var(--ins-2);
 }
 /* Sem faixa de fundo e sem contorno: quem sustenta a leitura em linha é o fio

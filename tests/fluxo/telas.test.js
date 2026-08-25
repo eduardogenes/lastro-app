@@ -446,3 +446,34 @@ test('o cabeçalho da tabela cabe nas próprias colunas', async () => {
   assert.deepStrictEqual(rotulos, ['série', 'anterior', 'kg', 'reps', 'rir']);
   a.fechar();
 });
+
+test('a tabela usa a largura do cartão, sem recuo herdado', async () => {
+  // O recuo de 34px alinhava as séries com o NOME do exercício, de quando isto
+  // era lista. Virou tabela com coluna de número própria: manter os dois era
+  // cobrar 34px de largura por um alinhamento que a coluna já faz.
+  const a = await app();
+  a.E('toggle(0)');
+  const pad = a.doc.defaultView.getComputedStyle(a.$('.ex.open .sets')).paddingLeft;
+  assert.ok(pad === '' || /^(0|0px|var\(--ins-)/.test(pad) === false || !/34/.test(pad),
+    'sem recuo de 34px à esquerda: ' + pad);
+  a.fechar();
+});
+
+test('o pior caso do "anterior" cabe sem cortar', async () => {
+  // carga de três dígitos com decimal, repetições de dois e o RIR: é o mais
+  // longo que a coluna precisa carregar
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { 'chest-press-inclinado-convergente': [{ t: t, sid: t, sets: [[127.5, 12, 2]] }] },
+    done: [{ day: 'A', t: t, sid: t, dur: 0 }]
+  } });
+  a.E('go("A")');
+  a.E('toggle(0)');
+  const txt = a.texto('.ex.open .setrow .setant');
+  // ponto e não vírgula: é `fmtNum`, a mesma formatação de carga que a conta de
+  // anilhas e os rótulos do gráfico usam no app inteiro
+  assert.strictEqual(txt, '127.5 × 12 @ 2');
+  // 14 caracteres em mono 11px ≈ 92px; a coluna tem 96
+  assert.ok(txt.length * 6.6 < 96, 'largura estimada ' + Math.round(txt.length * 6.6) + 'px');
+  a.fechar();
+});
