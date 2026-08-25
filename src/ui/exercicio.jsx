@@ -99,7 +99,10 @@ function Troca({ i, vm, acoes }) {
       key={a.id} class={'swapopt' + (vm.alt === a.id ? ' on' : '')}
       onClick={() => acoes.setAlt(i, a.id)}
     >
-      <b>{a.n}</b><span>{a.antes}</span>
+      {/* Sem foto não entra nada: nem moldura, nem espaço reservado. Uma fila
+          de quadros vazios diria menos que a fila de nomes que já existe. */}
+      {a.foto && <img class="swapfoto" src={a.foto} alt="" />}
+      <span class="swaptxt"><b>{a.n}</b><span>{a.antes}</span></span>
     </button>
   );
   return (

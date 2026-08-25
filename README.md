@@ -167,7 +167,17 @@ deixa lápide para que um aparelho não ressuscite o que o outro apagou.
 Sincronizar documento inteiro com "o último a escrever vence" comeria a sessão
 que você acabou de registrar na academia.
 
-O esquema do banco está em [supabase/schema.sql](supabase/schema.sql).
+**A foto do aparelho** segue a mesma lógica com uma diferença que importa: os
+bytes nunca entram no estado. Eles vivem no Cache Storage do aparelho, sob URL
+de mesma origem — é o que faz a imagem funcionar offline sem endereço externo no
+bundle — e replicam por um bucket privado do Supabase Storage. No estado fica
+uma referência de uns 25 bytes por exercício.
+
+Ela existe para responder "qual das três puxadas desta academia é a que o
+treinador quis dizer", e por isso é foto dele: o exercício é definido pela
+máquina, e ilustração de acervo é outra máquina.
+
+O esquema do banco e do bucket está em [supabase/schema.sql](supabase/schema.sql).
 
 **Ajustes → Exportar** baixa tudo em JSON. O app cobra um backup a cada 30 dias.
 Faça um antes de trocar de celular. É a única cópia que não depende deste

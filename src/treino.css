@@ -344,17 +344,28 @@
   color: var(--ins-text-4); margin: 0 0 var(--ins-4);
 }
 .swapopt {
-  display: block; width: 100%; text-align: left;
+  /* Vira linha com foto quando há foto, e continua bloco quando não há: o
+     `gap` some junto com a imagem, então uma opção sem foto não fica com um
+     recuo órfão do lado esquerdo. */
+  display: flex; align-items: center; gap: var(--ins-4);
+  width: 100%; text-align: left;
   padding: var(--ins-4) var(--ins-5); margin-bottom: var(--ins-1);
   border: 1px solid var(--ins-border); background: var(--ins-surface-low);
   min-height: var(--ins-tap);
 }
-.swapopt b {
+.swaptxt { flex: 1; min-width: 0; }
+/* 56px: acima do piso em que uma silhueta de aparelho ainda se distingue, e
+   pequena o bastante para a linha não crescer além do alvo de toque. */
+.swapfoto {
+  flex: 0 0 56px; width: 56px; height: 56px; object-fit: cover;
+  border: 1px solid var(--ins-border);
+}
+.swaptxt b {
   display: block;
   font: 500 15px/1.3 var(--ins-font-display); letter-spacing: -.01em;
   color: var(--ins-text);
 }
-.swapopt span {
+.swaptxt > span {
   display: block; margin-top: var(--ins-2);
   font: 400 11px/1.45 var(--ins-font-mono); color: var(--ins-text-5);
 }

@@ -66,3 +66,44 @@ create policy "dono atualiza o próprio estado"
 
 -- Sem policy de DELETE: apagar a linha inteira não é operação do app. O que o
 -- app apaga são registros DENTRO do documento, e isso é uma atualização.
+
+-- ---------------------------------------------------------------------------
+-- As fotos dos aparelhos.
+--
+-- Bucket PRIVADO. As fotos são de dentro da academia dele e o app está numa URL
+-- pública — bucket público serviria qualquer arquivo a quem adivinhasse o
+-- caminho, e o caminho é o id do exercício, que é adivinhável.
+--
+-- Os bytes vivem aqui só para REPLICAR entre os aparelhos dele. A cópia que o
+-- app usa é a do Cache Storage do próprio aparelho: sem rede, a tela continua
+-- desenhando a foto. Isto é a réplica, não a fonte.
+insert into storage.buckets (id, name, public)
+values ('aparelhos', 'aparelhos', false)
+on conflict (id) do nothing;
+
+-- O primeiro segmento do caminho é o uid do dono: 'a1b2.../pendulum-squat.webp'.
+-- É o que faz a política abaixo ser suficiente — cada um só alcança a própria
+-- pasta, e o nome do arquivo não precisa ser secreto.
+drop policy if exists "dono lê as próprias fotos"      on storage.objects;
+drop policy if exists "dono envia as próprias fotos"   on storage.objects;
+drop policy if exists "dono troca as próprias fotos"   on storage.objects;
+drop policy if exists "dono apaga as próprias fotos"   on storage.objects;
+
+create policy "dono lê as próprias fotos"
+  on storage.objects for select
+  using (bucket_id = 'aparelhos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "dono envia as próprias fotos"
+  on storage.objects for insert
+  with check (bucket_id = 'aparelhos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "dono troca as próprias fotos"
+  on storage.objects for update
+  using (bucket_id = 'aparelhos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Aqui existe DELETE, ao contrário da tabela de estado: apagar a foto de um
+-- aparelho é operação do app, e sem isto o byte ficaria órfão no bucket para
+-- sempre depois que a referência saísse do estado.
+create policy "dono apaga as próprias fotos"
+  on storage.objects for delete
+  using (bucket_id = 'aparelhos' and (storage.foldername(name))[1] = auth.uid()::text);

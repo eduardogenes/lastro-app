@@ -100,6 +100,15 @@ export interface LinhaDoEstado {
   data: unknown;
 }
 
+/**
+ * O bucket das fotos de aparelho.
+ *
+ * Elas atravessam a rede como DADO, não como asset: a cópia que a tela usa é a
+ * do Cache Storage do aparelho, e sem rede tudo continua desenhando. Isto aqui
+ * é só o que leva a foto de um aparelho para o outro.
+ */
+const BUCKET = 'aparelhos';
+
 export const NUVEM = {
   /** A sessão atual, ou null. Síncrono depois do primeiro `pronta()`. */
   sessao(): SessaoNuvem | null { return sessao; },
@@ -155,6 +164,62 @@ export const NUVEM = {
    * a versão mudou, nenhuma linha casa e a escrita não acontece. O app relê,
    * funde e tenta de novo. Sem isso, o último a escrever apagaria o primeiro.
    */
+  /** Manda os bytes de uma foto. `upsert` porque trocar a foto reescreve. */
+  async subirFoto(idEx: string, blob: Blob, ext: string): Promise<Resultado<true>> {
+    const t = await token();
+    if (!t.ok) return t;
+    let r: Response;
+    try {
+      r = await fetch(URL_BASE + '/storage/v1/object/' + BUCKET + '/' +
+                      encodeURIComponent(t.v.uid) + '/' + encodeURIComponent(idEx) + '.' + ext, {
+        method: 'POST',
+        headers: {
+          apikey: ANON,
+          Authorization: 'Bearer ' + t.v.token,
+          'Content-Type': blob.type || 'image/webp',
+          'x-upsert': 'true'
+        },
+        body: blob
+      });
+    } catch (e) { return falha('rede', 'sem conexão'); }
+    if (r.status === 401) { await gravaSessao(null); return falha('auth', 'a sessão expirou, entre de novo'); }
+    if (!r.ok) return falha('servidor', 'o servidor recusou a foto (' + r.status + ')');
+    return { ok: true, v: true };
+  },
+
+  /** Busca os bytes de uma foto que este aparelho ainda não tem. */
+  async baixaFoto(idEx: string, ext: string): Promise<Resultado<Blob | null>> {
+    const t = await token();
+    if (!t.ok) return t;
+    let r: Response;
+    try {
+      r = await fetch(URL_BASE + '/storage/v1/object/' + BUCKET + '/' +
+                      encodeURIComponent(t.v.uid) + '/' + encodeURIComponent(idEx) + '.' + ext, {
+        method: 'GET',
+        headers: { apikey: ANON, Authorization: 'Bearer ' + t.v.token }
+      });
+    } catch (e) { return falha('rede', 'sem conexão'); }
+    if (r.status === 401) { await gravaSessao(null); return falha('auth', 'a sessão expirou, entre de novo'); }
+    // 404 não é erro: é uma referência cuja foto ainda não subiu do outro lado
+    if (r.status === 404) return { ok: true, v: null };
+    if (!r.ok) return falha('servidor', 'não deu para buscar a foto (' + r.status + ')');
+    return { ok: true, v: await r.blob() };
+  },
+
+  /** Tira os bytes de lá. Sem isto o arquivo ficaria órfão no bucket. */
+  async apagaFoto(idEx: string, ext: string): Promise<Resultado<true>> {
+    const t = await token();
+    if (!t.ok) return t;
+    try {
+      await fetch(URL_BASE + '/storage/v1/object/' + BUCKET + '/' +
+                  encodeURIComponent(t.v.uid) + '/' + encodeURIComponent(idEx) + '.' + ext, {
+        method: 'DELETE',
+        headers: { apikey: ANON, Authorization: 'Bearer ' + t.v.token }
+      });
+    } catch (e) { return falha('rede', 'sem conexão'); }
+    return { ok: true, v: true };
+  },
+
   async empurra(deV: number | null, data: unknown): Promise<Resultado<number>> {
     const t = await token();
     if (!t.ok) return t;

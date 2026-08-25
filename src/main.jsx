@@ -641,16 +641,22 @@ function historico(key) { return _historico(S.logs, key, S.sessao); }
 // viajaria para a nuvem e cada aparelho sobrescreveria a contabilidade do
 // outro sobre o que já tinha visto.
 const CHAVE_SYNC = 'treino-sync-v1';
-let sync = { v: null, em: 0, sujo: false, rodando: false, erro: null, forcar: false };
+// `fotos` guarda a versão de cada foto que ESTE aparelho já confirmou no
+// servidor. É contabilidade local: se viajasse no estado, um aparelho diria ao
+// outro que já subiu o que só ele tem.
+let sync = { v: null, em: 0, sujo: false, rodando: false, erro: null, forcar: false, fotos: {} };
 
 async function carregaSync() {
   try {
     const r = await DB.get(CHAVE_SYNC);
     if (r && r.value) Object.assign(sync, JSON.parse(r.value), { rodando: false });
+    if (!sync.fotos || typeof sync.fotos !== 'object') sync.fotos = {};
   } catch (e) {}
 }
 function gravaSync() {
-  DB.set(CHAVE_SYNC, JSON.stringify({ v: sync.v, em: sync.em, sujo: sync.sujo, forcar: sync.forcar }));
+  DB.set(CHAVE_SYNC, JSON.stringify({
+    v: sync.v, em: sync.em, sujo: sync.sujo, forcar: sync.forcar, fotos: sync.fotos || {}
+  }));
 }
 
 let syncT = null;
@@ -700,7 +706,9 @@ async function sincroniza(opcoes) {
       if (linha && !sync.forcar) {
         const jaVisto = linha.v === sync.v;
         if (jaVisto && !sync.sujo) {        // nada mudou de nenhum lado
-          sync.em = Date.now(); gravaSync(); return;
+          sync.em = Date.now(); gravaSync();
+          reconciliaFotos();                  // pode faltar byte mesmo sem estado novo
+          return;
         }
         if (!jaVisto) {
           const { estado, resumo } = funde(S, linha.data, Date.now());
@@ -721,6 +729,7 @@ async function sincroniza(opcoes) {
         sync.v = escrita.v; sync.sujo = false; sync.forcar = false; sync.em = Date.now();
         gravaSync(); render();
         if (manual) toast('Sincronizado.');
+        reconciliaFotos();                     // sem await: os bytes vão por fora
         return;
       }
       if (escrita.erro === 'conflito') continue;   // outro gravou: relê e refaz
@@ -732,6 +741,48 @@ async function sincroniza(opcoes) {
     if (manual) toast('Tente de novo em alguns segundos.');
   } finally {
     sync.rodando = false; gravaSync(); render();
+  }
+}
+
+/**
+ * Leva e traz os BYTES das fotos.
+ *
+ * Roda depois do ciclo de estado, e separada dele de propósito: o estado é
+ * pequeno e precisa fechar rápido entre duas séries; foto é grande e pode
+ * demorar. Se ela falhar, o histórico já subiu — e a próxima sincronização
+ * tenta de novo, porque a comparação é sempre entre a referência e o que este
+ * aparelho confirmou ter enviado.
+ *
+ * Uma de cada vez, e não em paralelo: é o sinal da academia, e um lote
+ * simultâneo derruba todas em vez de entregar algumas.
+ */
+async function reconciliaFotos() {
+  if (!NUVEM.sessao() || !S.fotos) return;
+  const ids = Object.keys(S.fotos);
+
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
+    const ref = S.fotos[id];
+    if (!ref || !ref.v) continue;
+
+    const aqui = await FOTO.tem(id, ref.ext);
+
+    if (aqui && sync.fotos[id] !== ref.v) {
+      const bytes = await FOTO.le(id, ref.ext);
+      if (bytes) {
+        const r = await NUVEM.subirFoto(id, bytes, ref.ext);
+        if (!r.ok) return;                    // sem rede: para e tenta depois
+        sync.fotos[id] = ref.v; gravaSync();
+      }
+    } else if (!aqui) {
+      const r = await NUVEM.baixaFoto(id, ref.ext);
+      if (!r.ok) return;
+      if (r.v) {
+        await FOTO.guarda(id, r.v, ref.ext);
+        sync.fotos[id] = ref.v; gravaSync();
+        render();                              // a <img> estava vazia até agora
+      }
+    }
   }
 }
 
@@ -1228,6 +1279,10 @@ function opcaoDeTroca(a) {
   const u = ultimoDe(a.id);
   return {
     id: a.id, n: a.n,
+    // Aqui a foto paga mais que em qualquer outro lugar: são substitutos que
+    // ele quase nunca executou, escolhidos sob pressão com a máquina ocupada.
+    // Reconhecer o aparelho pela imagem é mais rápido que ler o nome.
+    foto: FOTO.urlDaFoto(a.id, S.fotos[a.id]),
     antes: (u && u.sets && u.sets[0])
       ? 'última vez: ' + fmtNum(u.sets[0][0]) + ' × ' + u.sets[0][1]
       : a.w
@@ -2628,6 +2683,7 @@ async function tiraFoto(el) {
     await save();
     render();
     toast('Foto guardada neste aparelho.');
+    reconciliaFotos();
   } catch (e) {
     console.error('foto', e);
     toast('Não deu para usar essa imagem.');
@@ -2640,6 +2696,8 @@ async function apagaFoto() {
   if (!confirm('Apagar a foto deste aparelho?')) return;
   const ref = S.fotos[id];
   await FOTO.esquece(id, ref ? ref.ext : 'webp');
+  if (ref && NUVEM.sessao()) NUVEM.apagaFoto(id, ref.ext);
+  delete sync.fotos[id]; gravaSync();
   S.fotos = Object.assign({}, S.fotos);
   delete S.fotos[id];
   lapide(chaveDeFoto(id));
