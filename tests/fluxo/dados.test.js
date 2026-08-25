@@ -67,7 +67,7 @@ test('exportar carrega todos os campos do estado', async () => {
      // a sincronização: o carimbo do estado e as lápides do que foi apagado
      'mtime', 'apagados',
      // os dias que ele marcou como descanso
-     'descanso'].sort()
+     'descanso', 'fotos'].sort()
   );
   a.fechar();
 });

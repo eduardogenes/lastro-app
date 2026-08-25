@@ -75,6 +75,19 @@ self.addEventListener('fetch', function (e) {
   // presente. O que é dado vivo passa direto; o que é asset é que se cacheia.
   if (!mesmaOrigem && !fonte) return;
 
+  // Foto de aparelho: existe SÓ no cache, sob URL sintética de mesma origem.
+  // Não há nada com esse endereço no servidor, então cair na rede seria um 404
+  // garantido a cada abertura de tela. Sem foto, responde 404 na hora e a tela
+  // não desenha nada — que é o comportamento certo: quadro vazio não informa.
+  if (mesmaOrigem && url.pathname.indexOf('/foto/') >= 0) {
+    e.respondWith(
+      caches.open(FOTOS)
+        .then(c => c.match(req.url.split('?')[0]))
+        .then(r => r || new Response('', { status: 404 }))
+    );
+    return;
+  }
+
   // Navegação sempre resolve para o index em cache: garante abrir offline
   if (req.mode === 'navigate') {
     e.respondWith(

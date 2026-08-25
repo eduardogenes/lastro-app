@@ -558,3 +558,17 @@
 .cardq-2 { margin-top: var(--ins-2); }
 .cardq-b { margin-top: var(--ins-5); }
 .cwarn { margin-top: var(--ins-4); }
+
+/* A foto do aparelho, dentro da folha. Ela é a maior superfície preenchida do
+   produto — por isso vive aqui, no único objeto elevado que o sistema
+   sanciona, e não solta no cartão. */
+.fotoex {
+  display: block; width: 100%; height: auto;
+  border: 1px solid var(--ins-border);
+}
+.foto-vazio, .foto-cue { margin-top: var(--ins-5); }
+.foto-b { display: block; margin-top: var(--ins-7); text-align: center; }
+/* O input é o alvo real; o rótulo é o botão. Escondê-lo com `display:none`
+   tiraria o foco de teclado junto, então ele fica de tamanho zero. */
+.foto-b input { position: absolute; width: 0; height: 0; opacity: 0; }
+.foto-b2 { margin-top: var(--ins-3); }

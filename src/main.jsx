@@ -18,6 +18,7 @@ import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from 
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
+import { FolhaFoto } from './ui/folhas/foto.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
 import { Decisao } from './ui/telas/decisao.jsx';
@@ -39,9 +40,11 @@ import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPl
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
-  chaveDeCardio, chaveDeDescanso, chaveDeLog, chaveDeMarca, chaveDeSessao, funde
+  chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeLog, chaveDeMarca,
+  chaveDeSessao, funde
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
+import * as FOTO from './infra/fotos';
 
 const KEY = 'treino-eduardo-v1';
 
@@ -240,6 +243,7 @@ function normalizaEstado() {
   if (typeof S.mtime !== 'number') S.mtime = 0;
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
   if (!S.descanso || typeof S.descanso !== 'object') S.descanso = {};
+  if (!S.fotos || typeof S.fotos !== 'object') S.fotos = {};
 }
 
 async function load() {
@@ -1193,6 +1197,8 @@ function vmExercicio(d, i, ex) {
       ? Math.round(parado) + ' dias sem este exercício' : null,
 
     temTroca: lista.length > 0,
+    // só diz SE existe: os bytes moram no cache, e quem os busca é a <img>
+    temFoto: !!S.fotos[ex.id],
     trocaAberta: view.swapOpen === i,
     troca: {
       indicados: lista.filter(function (a) { return a.ind; }).map(opcaoDeTroca),
@@ -1248,6 +1254,7 @@ const ACOES = {
   obsIn: function (el, i) { obsIn(el, i); },
   toggleDor: function (i, k) { toggleDor(i, k); },
   abreRir: function (i, k) { abreRir(i, k); },
+  abreFoto: function (i) { abreFoto(i); },
   poeRir: function (i, k, v) { poeRir(i, k, v); }
 };
 
@@ -2486,7 +2493,8 @@ async function importText(txt) {
         // estado e as lápides — e um aparelho ressuscitaria o que o outro apagou
         mtime: typeof d.mtime === 'number' ? d.mtime : 0,
         apagados: (d.apagados && typeof d.apagados === 'object') ? d.apagados : {},
-        descanso: (d.descanso && typeof d.descanso === 'object') ? d.descanso : {} };
+        descanso: (d.descanso && typeof d.descanso === 'object') ? d.descanso : {},
+        fotos: (d.fotos && typeof d.fotos === 'object') ? d.fotos : {} };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();
@@ -2584,6 +2592,62 @@ async function setCarga(i, t) {
   await save(); render();
   toast('Carga deste exercício: ' + CARGAS[t].nome + '.');
 }
+// ---------- a foto do aparelho ----------
+// Ela responde "qual das três puxadas desta academia é a que o treinador quis
+// dizer" — e por isso é foto DELE, não ilustração. Fica atrás de um botão: no
+// cartão aberto ela empurraria a tabela de séries, que é o motivo de o cartão
+// abrir, e a partir da segunda semana do bloco ele já não precisa dela.
+
+// Entra pela pilha de folhas, como as outras: é ela que trava a rolagem do
+// corpo, empilha e devolve o Escape. Inventar um caminho próprio seria ter
+// duas mecânicas de modal no mesmo app.
+function abreFoto(i) {
+  const t = treino(view.day);
+  const ex = t && t.ex[i];
+  if (!ex) return;
+  pilha().push({ k: 'foto', id: ex.id });
+  render();
+}
+
+/** O exercício da folha de foto no topo da pilha. */
+function fotoAberta() {
+  const f = (view.pilha || []).filter(function (x) { return x.k === 'foto'; }).pop();
+  return f ? f.id : null;
+}
+
+async function tiraFoto(el) {
+  const arquivo = el && el.files && el.files[0];
+  const id = fotoAberta();
+  if (!arquivo || !id) return;
+  el.value = '';                       // permite repetir a mesma foto
+  try {
+    const { blob, ext } = await FOTO.reduz(arquivo);
+    await FOTO.guarda(id, blob, ext);
+    S.fotos = Object.assign({}, S.fotos);
+    S.fotos[id] = { v: Date.now(), ext: ext };
+    await save();
+    render();
+    toast('Foto guardada neste aparelho.');
+  } catch (e) {
+    console.error('foto', e);
+    toast('Não deu para usar essa imagem.');
+  }
+}
+
+async function apagaFoto() {
+  const id = fotoAberta();
+  if (!id) return;
+  if (!confirm('Apagar a foto deste aparelho?')) return;
+  const ref = S.fotos[id];
+  await FOTO.esquece(id, ref ? ref.ext : 'webp');
+  S.fotos = Object.assign({}, S.fotos);
+  delete S.fotos[id];
+  lapide(chaveDeFoto(id));
+  await save();
+  render();
+  toast('Foto apagada.');
+}
+
 // ---------- o RIR em dois toques ----------
 // Teclado numérico para um dígito custa caro: cobre metade da tela no meio da
 // série, e ele está de pé com uma mão. Lista suspensa custa o mesmo e ainda
@@ -2953,6 +3017,7 @@ function folhaAberta() {
     if (f.k === 'editaRefeicao') return <FolhaEditaRefeicao key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'seletor') return <FolhaSeletor key={i} ctx={CTX} ref={f.ref} idx={f.idx} />;
     if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
+    if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
     return null;
   });
 }
@@ -3588,6 +3653,21 @@ CTX.alimentosParaSeletor = function (q) {
 };
 
 // ---------- GUIA: a área de dados ----------
+CTX.foto = function (id) {
+  if (!id) return null;
+  const ref = S.fotos[id] || null;
+  return {
+    nome: exDe(id).n,
+    url: FOTO.urlDaFoto(id, ref),
+    tem: !!ref,
+    // o cue do treinador desce junto: quem abre a foto está com dúvida de
+    // execução, e a frase dele é mais precisa que a imagem no que varia
+    cue: exDe(id).cue || null
+  };
+};
+CTX.tiraFoto = function (el) { tiraFoto(el); };
+CTX.apagaFoto = function () { apagaFoto(); };
+
 CTX.nuvem = function () {
   const ses = NUVEM.sessao();
   const f = view.nuvemForm || {};

@@ -181,6 +181,14 @@ export interface EntradaProgLog {
   m?: number;
 }
 
+/** A referência de uma foto: quando foi tirada e em que formato ela ficou. */
+export interface FotoRef {
+  /** instante da captura; serve de versão na fusão e de quebra-cache na tela */
+  v: number;
+  /** 'webp' ou 'jpeg' — o Safari antigo não codifica webp no canvas */
+  ext: string;
+}
+
 /** Uma marca corporal. */
 export interface Marca { t: number; v: number; /** alterada em */ m?: number; }
 
@@ -293,6 +301,16 @@ export interface Estado {
    * são os únicos pedaços sem fusão possível.
    */
   mtime: number;
+  /**
+   * A foto do aparelho, por exercício — só a REFERÊNCIA, nunca os bytes.
+   *
+   * Os bytes moram no Cache Storage do aparelho e replicam pelo Supabase
+   * Storage. Aqui ficam uns 25 bytes por exercício, porque o estado inteiro é
+   * reserializado a cada série registrada e enviado inteiro a cada
+   * sincronização: 40 fotos embutidas em base64 seriam megabytes atravessando
+   * as duas coisas, e o teto do Safari para este armazenamento é de 5 MiB.
+   */
+  fotos: Record<IdEx, FotoRef>;
   /**
    * Dias marcados como descanso, por data ('AAAA-MM-DD' → quando foi marcado).
    *

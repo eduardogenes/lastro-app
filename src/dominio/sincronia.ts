@@ -26,7 +26,7 @@
 //   antiga que T.
 
 import type {
-  Cardio, Estado, EntradaProgLog, IdEx, Log, Marca, Sessao
+  Cardio, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, Sessao
 } from './tipos';
 
 /** Limites por coleção, iguais aos que o app aplica ao gravar. */
@@ -78,6 +78,7 @@ export function chaveDeMarca(qual: 'peso' | 'cintura', x: Pick<Marca, 't'>): str
 }
 export function chaveDeCardio(c: Pick<Cardio, 't'>): string { return 'cardio:' + c.t; }
 export function chaveDeDescanso(dataISO: string): string { return 'descanso:' + dataISO; }
+export function chaveDeFoto(idEx: IdEx): string { return 'foto:' + idEx; }
 
 // ---------- as peças ----------
 
@@ -255,6 +256,22 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
     });
   });
   base.descanso = descanso;
+
+  // ---- fotos: mapa de referência, vence a mais recente ----
+  // Só a referência funde aqui. Os bytes vivem no Cache Storage de cada
+  // aparelho, e cada um busca os que não tem — trocar a referência é o que
+  // avisa o outro lado de que há algo novo para buscar.
+  const fotos: Record<IdEx, FotoRef> = {};
+  [local.fotos || {}, remoto.fotos || {}].forEach(function (m) {
+    Object.keys(m).forEach(function (k) {
+      const f = m[k];
+      if (!f || typeof f.v !== 'number') return;
+      const morto = mortos[chaveDeFoto(k)];
+      if (morto != null && f.v <= morto) return;
+      if (!fotos[k] || f.v > fotos[k].v) fotos[k] = f;
+    });
+  });
+  base.fotos = fotos;
 
   // ---- mapas por exercício ----
   base.ex = uneMapa(local.ex || {}, remoto.ex || {}, remotoManda);

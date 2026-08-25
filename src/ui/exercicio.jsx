@@ -289,6 +289,11 @@ export function Exercicio({ vm, acoes }) {
           )}
           <button class="histbtn" onClick={() => acoes.pularEx(i)}>pular</button>
           <button class="histbtn" onClick={() => acoes.openHist(i)}>histórico</button>
+          {/* O rótulo muda com o estado: sem foto ele CONVIDA, com foto ele
+              MOSTRA. Um botão só, e nenhuma linha nova no cartão. */}
+          <button class="histbtn" onClick={() => acoes.abreFoto(i)}>
+            {vm.temFoto ? 'aparelho' : 'foto'}
+          </button>
         </div>
 
         {vm.trocaAberta && <Troca i={i} vm={vm} acoes={acoes} />}
