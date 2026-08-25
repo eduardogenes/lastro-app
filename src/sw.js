@@ -13,7 +13,13 @@ const CACHE = '__CACHE__';
 
 const LOCAIS = __LOCAIS__;
 
-/** Cache das fotos que ELE tirou. Sem versão no nome: não é asset, é dado. */
+/**
+ * Cache das fotos que ELE tirou. Sem versão no nome: não é asset, é dado.
+ *
+ * O worker não SERVE estas fotos — quem as lê é a página, que transforma os
+ * bytes num endereço de objeto. O nome vive aqui por uma razão só: poupar este
+ * cache da limpeza de ativação, logo abaixo.
+ */
 const FOTOS = 'treino-fotos';
 
 /**
@@ -74,19 +80,6 @@ self.addEventListener('fetch', function (e) {
   // o da nuvem — o app fundiria contra o passado e reescreveria por cima do
   // presente. O que é dado vivo passa direto; o que é asset é que se cacheia.
   if (!mesmaOrigem && !fonte) return;
-
-  // Foto de aparelho: existe SÓ no cache, sob URL sintética de mesma origem.
-  // Não há nada com esse endereço no servidor, então cair na rede seria um 404
-  // garantido a cada abertura de tela. Sem foto, responde 404 na hora e a tela
-  // não desenha nada — que é o comportamento certo: quadro vazio não informa.
-  if (mesmaOrigem && url.pathname.indexOf('/foto/') >= 0) {
-    e.respondWith(
-      caches.open(FOTOS)
-        .then(c => c.match(req.url.split('?')[0]))
-        .then(r => r || new Response('', { status: 404 }))
-    );
-    return;
-  }
 
   // Navegação sempre resolve para o index em cache: garante abrir offline
   if (req.mode === 'navigate') {

@@ -168,9 +168,10 @@ Sincronizar documento inteiro com "o último a escrever vence" comeria a sessão
 que você acabou de registrar na academia.
 
 **A foto do aparelho** segue a mesma lógica com uma diferença que importa: os
-bytes nunca entram no estado. Eles vivem no Cache Storage do aparelho, sob URL
-de mesma origem — é o que faz a imagem funcionar offline sem endereço externo no
-bundle — e replicam por um bucket privado do Supabase Storage. No estado fica
+bytes nunca entram no estado. Eles vivem no Cache Storage do aparelho e chegam à
+tela como endereço de objeto, sem passar pela rede — é o que faz a imagem
+funcionar offline sem endereço externo no bundle — e replicam por um bucket
+privado do Supabase Storage. No estado fica
 uma referência de uns 25 bytes por exercício.
 
 Ela existe para responder "qual das três puxadas desta academia é a que o

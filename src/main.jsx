@@ -780,7 +780,7 @@ async function reconciliaFotos() {
       if (r.v) {
         await FOTO.guarda(id, r.v, ref.ext);
         sync.fotos[id] = ref.v; gravaSync();
-        render();                              // a <img> estava vazia até agora
+        await carregaFotos([id]);              // a <img> estava vazia até agora
       }
     }
   }
@@ -2662,6 +2662,24 @@ function abreFoto(i) {
   if (!ex) return;
   pilha().push({ k: 'foto', id: ex.id });
   render();
+  carregaFotos([ex.id]);
+}
+
+/**
+ * Lê do cache as fotos que a tela vai precisar e redesenha se alguma chegou.
+ *
+ * A leitura é assíncrona e a tela é síncrona, então o primeiro desenho sai sem
+ * imagem e o segundo sai com ela. É rápido o bastante para não piscar, e é o
+ * preço de não depender do service worker para servir a foto.
+ */
+async function carregaFotos(ids) {
+  let mudou = false;
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
+    if (!id || !S.fotos[id]) continue;
+    if (await FOTO.carrega(id, S.fotos[id])) mudou = true;
+  }
+  if (mudou) render();
 }
 
 /** O exercício da folha de foto no topo da pilha. */
@@ -2680,7 +2698,9 @@ async function tiraFoto(el) {
     await FOTO.guarda(id, blob, ext);
     S.fotos = Object.assign({}, S.fotos);
     S.fotos[id] = { v: Date.now(), ext: ext };
+    FOTO.solta(id);                    // a versão anterior sai da memória
     await save();
+    await carregaFotos([id]);
     render();
     toast('Foto guardada neste aparelho.');
     reconciliaFotos();
@@ -2695,6 +2715,7 @@ async function apagaFoto() {
   if (!id) return;
   if (!confirm('Apagar a foto deste aparelho?')) return;
   const ref = S.fotos[id];
+  FOTO.solta(id);
   await FOTO.esquece(id, ref ? ref.ext : 'webp');
   if (ref && NUVEM.sessao()) NUVEM.apagaFoto(id, ref.ext);
   delete sync.fotos[id]; gravaSync();
@@ -2735,7 +2756,19 @@ function toggleDor(i, k) {
   if (j >= 0) e.dor.splice(j,1); else e.dor.push(k);
   projeta(i); queueSave(); render();
 }
-function toggleSwap(i){ view.swapOpen = view.swapOpen===i ? null : i; render(); }
+function toggleSwap(i){
+  view.swapOpen = view.swapOpen===i ? null : i;
+  render();
+  // as miniaturas das opções: lidas do cache depois que o painel já está de pé
+  if (view.swapOpen === i) {
+    const t = trocaDoDia(view.day, i);
+    const ids = [];
+    (t ? t.grupos : []).forEach(function (g) {
+      g.opcoes.forEach(function (o) { ids.push(o.id); });
+    });
+    carregaFotos(ids);
+  }
+}
 function abrirSubstituicao(i){ view.open = i; view.swapOpen = i; render(); }
 function setAlt(i, idEx) {
   const d = view.day;

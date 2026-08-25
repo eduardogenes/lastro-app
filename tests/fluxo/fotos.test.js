@@ -15,6 +15,11 @@ function cacheFalso(a) {
       globalThis.Response = function (corpo) { this._c = corpo; };
       globalThis.Response.prototype.blob = async function () { return this._c; };
     }
+    if (typeof URL.createObjectURL !== 'function') {
+      let n = 0;
+      URL.createObjectURL = () => 'blob:teste/' + (++n);
+      URL.revokeObjectURL = () => {};
+    }
     globalThis.__caches = {};
     globalThis.caches = {
       open: async function (nome) {
@@ -97,13 +102,29 @@ test('apagar tira a referência e deixa lápide', async () => {
   a.fechar();
 });
 
-test('a URL da foto é de mesma origem', async () => {
-  // é o que a faz funcionar offline sem endereço externo no bundle
+test('a foto chega à tela como endereço de objeto, sem passar pela rede', async () => {
+  // A primeira versão servia uma URL sintética e deixava o service worker
+  // respondê-la. O worker só é registrado em HTTPS: em desenvolvimento não
+  // havia quem respondesse, e a imagem quebrava.
   const a = await app();
+  cacheFalso(a);
+  a.E('toggle(0)');
+  a.E('abreFoto(0)');
+  await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
+  await a.esperar(60);
+
+  const url = a.E('CTX.foto("chest-press-inclinado-convergente").url');
+  assert.match(url, /^blob:/, 'endereço de objeto, não caminho de rede: ' + url);
+  assert.ok(!/^https?:/.test(url), 'e nada de endereço externo');
+  a.fechar();
+});
+
+test('sem os bytes lidos, a tela simplesmente não desenha a imagem', async () => {
+  // referência existe, bytes ainda não desceram: nada de quadro quebrado
+  const a = await app();
+  cacheFalso(a);
   a.E('S.fotos["pendulum-squat"] = { v: 123, ext: "webp" }');
-  const url = a.E('CTX.foto("pendulum-squat").url');
-  assert.strictEqual(url, './foto/pendulum-squat.webp?v=123');
-  assert.ok(!/^https?:/.test(url), 'nada de endereço externo');
+  assert.strictEqual(a.E('CTX.foto("pendulum-squat").url'), null);
   a.fechar();
 });
 
@@ -205,14 +226,67 @@ test('apagar tira do bucket também, para o byte não ficar órfão', async () =
 
 test('a miniatura aparece na troca só quando há foto', async () => {
   const a = await app();
+  cacheFalso(a);
+  // atalho para pôr bytes no cache sem passar pela captura
+  a.E(`globalThis.FOTO_GUARDA = async id => {
+    const c = await caches.open('treino-fotos');
+    await c.put('./foto/' + id + '.webp', new Response(new Blob(['x'], { type: 'image/webp' })));
+  }`);
   a.E('toggle(0)');
   a.E('toggleSwap(0)');
   assert.strictEqual(a.$$('.swapfoto').length, 0, 'sem foto, nem moldura');
 
+  // com referência E bytes no cache, a miniatura aparece
   const primeiro = a.E('trocaDoDia(view.day, 0).grupos[0].opcoes[0].id');
   a.E('S.fotos[' + JSON.stringify(primeiro) + '] = { v: 5, ext: "webp" }');
-  a.E('render()');
+  await a.E('FOTO_GUARDA(' + JSON.stringify(primeiro) + ')');
+  a.E('toggleSwap(0)'); a.E('toggleSwap(0)');
+  await a.esperar(60);
   assert.strictEqual(a.$$('.swapfoto').length, 1, 'com foto, uma miniatura');
-  assert.match(a.$('.swapfoto').getAttribute('src'), /^\.\/foto\//, 'de mesma origem');
+  assert.match(a.$('.swapfoto').getAttribute('src'), /^blob:/, 'endereço de objeto');
+  a.fechar();
+});
+
+test('print em pé não vira tira: o teto é do lado maior', async () => {
+  // Limitar só a largura deixava a altura solta — um print de tela em pé
+  // virava 400 por 1200: pesado de guardar e minúsculo de ver.
+  const a = await app();
+  cacheFalso(a);
+  a.E(`
+    globalThis.__medida = null;
+    globalThis.createImageBitmap = async () => ({ width: 900, height: 2000, close(){} });
+    const criar = document.createElement.bind(document);
+    document.createElement = function (t) {
+      const el = criar(t);
+      if (t === 'canvas') {
+        el.getContext = () => ({ drawImage(){}, fillRect(){}, set fillStyle(v){} });
+        el.toBlob = function (cb, tipo) {
+          globalThis.__medida = { l: el.width, a: el.height };
+          cb(tipo === 'image/webp' ? new Blob(['x'], { type: 'image/webp' }) : null);
+        };
+      }
+      return el;
+    };
+  `);
+  a.E('toggle(0)');
+  a.E('abreFoto(0)');
+  await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/png' })], value: '' })`);
+  await a.esperar(60);
+
+  const m = a.J('globalThis.__medida');
+  assert.strictEqual(Math.max(m.l, m.a), 700, 'o lado maior é que fica em 700: ' + JSON.stringify(m));
+  assert.strictEqual(m.l, 315, 'e a proporção se mantém');
+  a.fechar();
+});
+
+test('PNG entra e sai como WebP: nada de PNG chega ao bucket', async () => {
+  // PNG de foto é enorme, e o bucket aceita só os dois formatos que o app grava
+  const a = await app();
+  cacheFalso(a);
+  a.E('toggle(0)');
+  a.E('abreFoto(0)');
+  await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/png' })], value: '' })`);
+  await a.esperar(60);
+  assert.strictEqual(a.J('S.fotos["chest-press-inclinado-convergente"]').ext, 'webp');
   a.fechar();
 });

@@ -10,26 +10,82 @@
 // em base64 seriam megabytes atravessando as duas coisas, e o teto do Safari
 // para esse armazenamento é de 5 MiB. No estado fica só a referência.
 //
-// Os bytes moram no Cache Storage, sob uma URL sintética de MESMA ORIGEM. É o
-// que faz `<img src="./foto/...">` funcionar offline sem tocar no manipulador
-// de rede do service worker, e sem colocar endereço externo no bundle.
+// Os bytes moram no Cache Storage. A tela os alcança por `blob:` — a imagem é
+// LIDA do cache e vira um endereço de objeto em memória.
+//
+// A primeira versão servia uma URL sintética de mesma origem e deixava o
+// service worker respondê-la. Parecia elegante e era frágil: o service worker
+// só é registrado em HTTPS, então em desenvolvimento não havia quem
+// respondesse e a imagem quebrava — e mesmo publicado ela ficava refém de o
+// worker novo já ter assumido. `blob:` não depende de nada disso, não passa
+// pela rede e não coloca endereço externo no bundle.
 
 import type { FotoRef, IdEx } from '../dominio/tipos';
 
 /** O cache não leva versão no nome: é dado do usuário, não asset do build. */
 export const CACHE_FOTOS = 'treino-fotos';
 
-/** Largura de gravação. Acima disto não se enxerga mais nada de novo num aparelho. */
-const LARGURA = 400;
+/**
+ * Teto do lado MAIOR, não da largura.
+ *
+ * Limitar só a largura deixava a altura solta: um print de tela em pé virava
+ * uma tira de 400 por 1200, que pesa como uma imagem grande e aparece minúscula.
+ *
+ * 700 e não 400 por duas razões que apareceram juntas. A folha desenha a
+ * imagem com uns 350 de largura, e num aparelho de 3x um arquivo de 400 sobe
+ * borrado. E aqui não entra só foto de máquina: um print de diagrama ou de
+ * mensagem tem TEXTO, que a 400 fica ilegível. A 700 um WebP ainda sai com uns
+ * 15 KB, e nada disso entra na instalação do app.
+ */
+const LADO_MAIOR = 700;
 
-/** WebP a 0,75 dá ~6 KB nesta largura; JPEG é a saída de quem não codifica WebP. */
+/** WebP a 0,75 dá uns 15 KB neste tamanho; JPEG é a saída de quem não codifica WebP. */
 const QUALIDADE = 0.75;
 
-/** A URL sintética daquela foto. Mesma origem, e é isso que a torna offline. */
+/** `--ins-canvas`. Só entra quando o JPEG precisa achatar transparência. */
+const FUNDO = '#0C0E0C';
+
+/**
+ * Endereços de objeto já abertos, por exercício e VERSÃO.
+ *
+ * A versão entra na chave porque trocar a foto do aparelho tem que trocar a
+ * imagem na tela — com chave só de exercício, o endereço antigo continuaria
+ * válido e a tela mostraria a foto velha.
+ */
+const abertos: Record<string, string> = {};
+
+function chaveViva(idEx: IdEx, ref: FotoRef): string { return idEx + ':' + ref.v; }
+
+/** O endereço da foto, se ela já foi lida para a memória. Síncrono de propósito. */
 export function urlDaFoto(idEx: IdEx, ref: FotoRef | null | undefined): string | null {
   if (!ref || !ref.v) return null;
-  // `v` na query quebra o cache do <img> quando ele troca a foto do aparelho
-  return './foto/' + idEx + '.' + (ref.ext || 'webp') + '?v=' + ref.v;
+  return abertos[chaveViva(idEx, ref)] || null;
+}
+
+/**
+ * Lê os bytes do cache e abre o endereço.
+ *
+ * Devolve `true` quando algo mudou — é o sinal de que a tela precisa ser
+ * redesenhada. Chamar de novo para a mesma versão não relê nada.
+ */
+export async function carrega(idEx: IdEx, ref: FotoRef | null | undefined): Promise<boolean> {
+  if (!ref || !ref.v || typeof URL === 'undefined' || !URL.createObjectURL) return false;
+  const k = chaveViva(idEx, ref);
+  if (abertos[k]) return false;
+  const b = await le(idEx, ref.ext);
+  if (!b) return false;
+  solta(idEx);                    // versão anterior do mesmo exercício sai da memória
+  abertos[k] = URL.createObjectURL(b);
+  return true;
+}
+
+/** Devolve a memória dos endereços daquele exercício. */
+export function solta(idEx: IdEx): void {
+  Object.keys(abertos).forEach(function (k) {
+    if (k.indexOf(idEx + ':') !== 0) return;
+    try { URL.revokeObjectURL(abertos[k]); } catch (e) {}
+    delete abertos[k];
+  });
 }
 
 /** A chave no cache, sem a query: é por ela que se guarda e se procura. */
@@ -57,7 +113,7 @@ function temCache(): boolean {
  */
 export async function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }> {
   const bitmap = await createImageBitmap(arquivo);
-  const escala = Math.min(1, LARGURA / bitmap.width);
+  const escala = Math.min(1, LADO_MAIOR / Math.max(bitmap.width, bitmap.height));
   const l = Math.round(bitmap.width * escala);
   const a = Math.round(bitmap.height * escala);
 
@@ -66,18 +122,26 @@ export async function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }>
   const ctx = tela.getContext('2d');
   if (!ctx) throw new Error('sem canvas');
   ctx.drawImage(bitmap, 0, 0, l, a);
-  if (typeof bitmap.close === 'function') bitmap.close();
 
   const saida = await new Promise<{ blob: Blob; ext: string } | null>(function (ok) {
     tela.toBlob(function (b) {
       // `toBlob` devolve PNG quando não sabe o tipo pedido, e PNG de foto é
       // enorme: conferir o tipo do que voltou é o que evita guardar 200 KB
-      // achando que são 6.
+      // achando que são 6. WebP também é o que preserva transparência, que é
+      // comum em print recortado.
       if (b && b.type === 'image/webp') ok({ blob: b, ext: 'webp' });
       else ok(null);
     }, 'image/webp', QUALIDADE);
   });
-  if (saida) return saida;
+  if (saida) { if (typeof bitmap.close === 'function') bitmap.close(); return saida; }
+
+  // Sem WebP, sobra JPEG — que não tem transparência, e pinta de PRETO o que
+  // era transparente. Redesenha sobre o fundo do app para o recorte se apoiar
+  // na cor certa em vez de num retângulo preto no meio da folha.
+  ctx.fillStyle = FUNDO;
+  ctx.fillRect(0, 0, l, a);
+  ctx.drawImage(bitmap, 0, 0, l, a);
+  if (typeof bitmap.close === 'function') bitmap.close();
 
   const jpeg = await new Promise<Blob | null>(function (ok) {
     tela.toBlob(function (b) { ok(b); }, 'image/jpeg', QUALIDADE);
