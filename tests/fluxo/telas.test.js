@@ -3,6 +3,21 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { app, HTML, FONTE, DIA, inicioDaSemana } from './harness.js';
 
+/**
+ * O endereço da nuvem — a origem do projeto e os caminhos que carregam DADO.
+ *
+ * O recorte é estreito de propósito. Antes bastava ser `.supabase.co` para
+ * passar, o que deixaria entrar uma imagem servida do Storage: asset, buscado
+ * na rede para a tela funcionar, exatamente o que a regra proíbe. O teste
+ * ficaria verde numa regra quebrada, que é pior do que falhar.
+ *
+ * Foto que ELE tira é dado, e mora no Cache Storage sob URL de mesma origem —
+ * não passa por aqui.
+ */
+const nuvemDeDados = u =>
+  !/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(u) &&
+  !/\.supabase\.co\/(rest|auth)\//.test(u);
+
 test('um artefato só, sem dependência de runtime', async () => {
   // O app ganhou sincronização, e com ela um endereço de DADO — o projeto do
   // Supabase. A propriedade que este teste guarda não era "nenhuma URL": era
@@ -13,9 +28,7 @@ test('um artefato só, sem dependência de runtime', async () => {
     // Namespaces XML (SVG, MathML, XHTML) são identificadores, não endereços:
     // o Preact usa createElementNS e o navegador nunca busca nada neles.
     .filter(function (u) { return !/^https?:\/\/www\.w3\.org\//.test(u); })
-    // O endpoint da nuvem: chamado por fetch, sob login, e só quando há o que
-    // sincronizar. O app abre e funciona inteiro sem ele.
-    .filter(function (u) { return !/\.supabase\.co/.test(u); });
+    .filter(nuvemDeDados);
   assert.deepStrictEqual(urls, [], 'nenhum endereço além da fonte e da nuvem');
   assert.ok(!/<script[^>]*\ssrc=/.test(HTML), 'nenhum script buscado à parte');
   assert.ok(!/<link[^>]*rel=["']?stylesheet[^>]*supabase/.test(HTML), 'nem folha de estilo');
@@ -476,4 +489,16 @@ test('o pior caso do "anterior" cabe sem cortar', async () => {
   // 14 caracteres em mono 11px ≈ 92px; a coluna tem 96
   assert.ok(txt.length * 6.6 < 96, 'largura estimada ' + Math.round(txt.length * 6.6) + 'px');
   a.fechar();
+});
+
+test('um asset servido do Storage não passa despercebido', () => {
+  // O recorte da regra acima só vale se ele REJEITAR o que deve rejeitar.
+  const passa = u => !nuvemDeDados(u);
+
+  assert.ok(passa('https://x.supabase.co'), 'a origem do projeto passa');
+  assert.ok(passa('https://x.supabase.co/rest/v1/estado'), 'o endpoint de dado passa');
+  assert.ok(passa('https://x.supabase.co/auth/v1/token'), 'o de login também');
+  assert.ok(!passa('https://x.supabase.co/storage/v1/object/public/ex/pulldown.avif'),
+    'um asset do Storage tem que falhar: é asset buscado na rede, não dado');
+  assert.ok(!passa('https://cdn.jsdelivr.net/qualquer.js'), 'e qualquer CDN também');
 });

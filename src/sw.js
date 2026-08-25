@@ -13,11 +13,39 @@ const CACHE = '__CACHE__';
 
 const LOCAIS = __LOCAIS__;
 
+/** Cache das fotos que ELE tirou. Sem versão no nome: não é asset, é dado. */
+const FOTOS = 'treino-fotos';
+
+/**
+ * Busca em fila, não todas de uma vez.
+ *
+ * `Promise.all` sobre a lista inteira dispara uma requisição por arquivo no
+ * mesmo instante. Com os poucos arquivos de hoje isso é inofensivo; a partir de
+ * algumas dezenas, o navegador enfileira, o sinal ruim do subsolo derruba as
+ * do fim da fila, e o `.catch` abaixo engole cada falha em silêncio — o app
+ * instala, se declara pronto, e só descobre o buraco quando abre offline.
+ *
+ * Seis por vez é o que um navegador abre por origem de qualquer forma.
+ */
+async function guardaEmFila(cache, urls, largura) {
+  const fila = urls.slice();
+  const trabalhadores = [];
+  for (let i = 0; i < largura; i++) {
+    trabalhadores.push((async function () {
+      while (fila.length) {
+        const u = fila.shift();
+        // um ícone faltando não pode impedir a instalação
+        try { await cache.add(u); } catch (e) {}
+      }
+    })());
+  }
+  await Promise.all(trabalhadores);
+}
+
 self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(CACHE)
-      // um ícone faltando não pode impedir a instalação
-      .then(c => Promise.all(LOCAIS.map(u => c.add(u).catch(() => null))))
+      .then(c => guardaEmFila(c, LOCAIS, 6))
       .then(() => self.skipWaiting())
   );
 });
@@ -25,7 +53,11 @@ self.addEventListener('install', function (e) {
 self.addEventListener('activate', function (e) {
   e.waitUntil(
     caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      // FOTOS sobrevive à limpeza de propósito: é dado do usuário, não asset do
+      // build. O nome do cache do build muda a cada publicação, e apagar tudo
+      // que não é o atual levaria junto fotos que não têm como ser refeitas.
+      .then(ks => Promise.all(
+        ks.filter(k => k !== CACHE && k !== FOTOS).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });

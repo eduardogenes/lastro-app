@@ -20,15 +20,21 @@ function servicWorkerVersionado() {
     apply: 'build',
     generateBundle(_opcoes, bundle) {
       const emitidos = Object.keys(bundle).map(f => './' + f);
-      const conteudo = Object.values(bundle)
-        .map(a => (a.type === 'chunk' ? a.code : a.source))
-        .join('');
 
       const locais = ['./', './index.html', './manifest.webmanifest',
         './icone-180.png', './icone-192.png', './icone-512.png', './icone-512-mascara.png']
         .concat(emitidos.filter(f => !f.endsWith('.map') && !f.endsWith('.html')));
 
-      const hash = createHash('sha256').update(conteudo).digest('hex').slice(0, 12);
+      // Alimenta o hash asset a asset, em vez de concatenar tudo numa string.
+      // `source` de um asset binário é um Uint8Array, e juntar isso com
+      // `join('')` o transforma em texto decimal separado por vírgula —
+      // quatro vezes o tamanho, para produzir o mesmo hash. Com um arquivo
+      // binário no bundle isso vira megabytes de string por publicação.
+      const soma = createHash('sha256');
+      Object.values(bundle).forEach(function (a) {
+        soma.update(a.type === 'chunk' ? a.code : a.source);
+      });
+      const hash = soma.digest('hex').slice(0, 12);
 
       this.emitFile({
         type: 'asset',

@@ -51,8 +51,25 @@ test('o app abre offline: navegação resolve para o index em cache', () => {
 
 test('o cache velho é apagado ao ativar a versão nova', () => {
   const sw = dist('sw.js');
-  assert.ok(/ks\.filter\(k => k !== CACHE\)\.map\(k => caches\.delete\(k\)\)/.test(sw),
+  assert.ok(/k !== CACHE/.test(sw) && /caches\.delete\(k\)/.test(sw),
     'sem limpeza, cada publicação deixaria um cache órfão no aparelho');
+});
+
+test('o cache de fotos sobrevive à publicação', () => {
+  // O nome do cache do build muda a cada publicação. Apagar tudo que não é o
+  // atual levaria junto as fotos que ele tirou dos aparelhos da academia — e
+  // essas não têm como ser refeitas por um build.
+  const sw = dist('sw.js');
+  assert.ok(/k !== FOTOS/.test(sw), 'a limpeza precisa poupar o cache de fotos');
+});
+
+test('o precache não dispara tudo de uma vez', () => {
+  // Requisição por arquivo no mesmo instante, com sinal ruim, derruba as do fim
+  // da fila — e o catch de tolerância engole cada falha em silêncio. O app
+  // instala, se declara pronto, e o buraco só aparece offline.
+  const sw = dist('sw.js');
+  assert.ok(!/Promise\.all\(LOCAIS\.map/.test(sw), 'o precache não pode ser em paralelo total');
+  assert.ok(/guardaEmFila/.test(sw), 'busca em fila, com largura limitada');
 });
 
 test('os ícones e o manifesto chegam ao dist', () => {
