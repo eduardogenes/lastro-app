@@ -17,8 +17,25 @@ import { DB } from './db';
 const URL_BASE = 'https://wetwqqrrgormwyktewlm.supabase.co';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldHdxcXJyZ29ybXd5a3Rld2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1OTQzMDIsImV4cCI6MjEwMzE3MDMwMn0.5Tdn3OW4khACuUvOdbcSWyK_UC3v8pm46mwB3MliAj0';
 
-/** A sessão é DO APARELHO: não entra no estado sincronizado, e por isso tem chave própria. */
-const CHAVE_SESSAO = 'treino-nuvem-v1';
+/**
+ * A sessão é DO APARELHO: não entra no estado sincronizado, e por isso tem
+ * chave própria.
+ *
+ * A chave já se chamou `treino-nuvem-v1`, de quando o produto se chamava
+ * "Treino". Aqui NÃO cabe a fusão que a chave do histórico faz: não há o que
+ * fundir entre dois pares de tokens, e o pior que uma escolha errada custa é
+ * um login — o estado do aparelho continua sendo a verdade, e nada nesta
+ * camada grava série. Então a regra é a mais simples que funciona: a chave
+ * nova manda quando existe, a velha é promovida quando é a única, e some das
+ * duas formas. A pergunta é "a velha existe?", nunca "já migrei?" — se o build
+ * antigo rodar de novo entre duas aberturas, a migração roda de novo.
+ *
+ * O que não pode acontecer é deslogar em silêncio: renomear sem promover
+ * apagaria a sessão sem dizer nada, e a lei 7 é persistência silenciosa, não
+ * perda silenciosa.
+ */
+const CHAVE_SESSAO = 'lastro-nuvem-v1';
+const CHAVE_SESSAO_LEGADO = 'treino-nuvem-v1';
 
 export interface SessaoNuvem {
   token: string;
@@ -46,7 +63,14 @@ async function leSessao(): Promise<SessaoNuvem | null> {
   if (carregada) return sessao;
   carregada = true;
   try {
-    const r = await DB.get(CHAVE_SESSAO);
+    let r = await DB.get(CHAVE_SESSAO);
+    const velho = await DB.get(CHAVE_SESSAO_LEGADO);
+    if (velho && velho.value) {
+      // Promove antes de apagar. Falhar no meio custa migrar de novo na
+      // próxima abertura, nunca a sessão.
+      if (!r || !r.value) { await DB.set(CHAVE_SESSAO, velho.value); r = velho; }
+      await DB.delete(CHAVE_SESSAO_LEGADO);
+    }
     if (r && r.value) sessao = JSON.parse(r.value);
   } catch (e) { sessao = null; }
   return sessao;
@@ -56,7 +80,9 @@ async function gravaSessao(s: SessaoNuvem | null): Promise<void> {
   sessao = s;
   carregada = true;
   if (s) await DB.set(CHAVE_SESSAO, JSON.stringify(s));
-  else await DB.delete(CHAVE_SESSAO);
+  // Sair apaga as duas: a velha pode ter sobrado de uma migração interrompida,
+  // e sessão órfã com token vivo é pior do que uma chave a mais.
+  else { await DB.delete(CHAVE_SESSAO); await DB.delete(CHAVE_SESSAO_LEGADO); }
 }
 
 function deTokens(j: Record<string, unknown>, emailPadrao: string): SessaoNuvem {
