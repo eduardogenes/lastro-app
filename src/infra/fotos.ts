@@ -23,7 +23,49 @@
 import type { FotoRef, IdEx } from '../dominio/tipos';
 
 /** O cache não leva versão no nome: é dado do usuário, não asset do build. */
-export const CACHE_FOTOS = 'treino-fotos';
+export const CACHE_FOTOS = 'lastro-fotos';
+
+/**
+ * Como o cache se chamava antes de o app virar Lastro.
+ *
+ * Continua reconhecido por uma versão, e o service worker é obrigado a POUPÁ-LO
+ * na limpeza de ativação: se o worker apagasse primeiro, a migração abaixo não
+ * teria o que migrar. Quando não houver mais aparelho com o nome antigo, esta
+ * constante sai daqui e de `src/sw.js` no mesmo commit.
+ */
+export const CACHE_FOTOS_LEGADO = 'treino-fotos';
+
+/**
+ * Leva os bytes do cache antigo para o novo. Devolve quantas fotos passaram.
+ *
+ * Copia e só então apaga — nunca move. Se a cópia falhar no meio, o cache
+ * antigo continua inteiro e a migração refaz tudo na próxima abertura;
+ * reescrever uma entrada que já passou é inofensivo. É o mesmo desenho da
+ * migração da chave de storage, pelo mesmo motivo.
+ *
+ * `caches.has` e não `caches.open`: abrir um cache que não existe o CRIA, e aí
+ * toda abertura do app deixaria para trás um `treino-fotos` vazio que o
+ * service worker teria que poupar para sempre.
+ */
+export async function migraCache(): Promise<number> {
+  if (!temCache() || typeof caches.has !== 'function') return 0;
+  if (!(await caches.has(CACHE_FOTOS_LEGADO))) return 0;
+
+  const velho = await caches.open(CACHE_FOTOS_LEGADO);
+  const novo = await caches.open(CACHE_FOTOS);
+  const chaves = await velho.keys();
+
+  let levadas = 0;
+  for (const req of chaves) {
+    const r = await velho.match(req);
+    if (!r) continue;
+    await novo.put(req, r);
+    levadas++;
+  }
+
+  await caches.delete(CACHE_FOTOS_LEGADO);
+  return levadas;
+}
 
 /**
  * Teto do lado MAIOR, não da largura.

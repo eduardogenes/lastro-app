@@ -247,7 +247,7 @@ npm test              # tudo
 npm run test:dominio  # só as regras — roda em menos de meio segundo
 ```
 
-**443 testes**, em dois níveis:
+**445 testes**, em dois níveis:
 
 **`tests/dominio/`** importa os módulos direto e roda em milissegundos. É onde
 moram as regras: limites exatos da dieta, atribuição de série por músculo, corte

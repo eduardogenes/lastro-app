@@ -60,7 +60,9 @@ test('o cache de fotos sobrevive à publicação', () => {
   // atual levaria junto as fotos que ele tirou dos aparelhos da academia — e
   // essas não têm como ser refeitas por um build.
   const sw = dist('sw.js');
-  assert.ok(/k !== FOTOS/.test(sw), 'a limpeza precisa poupar o cache de fotos');
+  assert.ok(/FOTOS\.indexOf\(k\) < 0/.test(sw), 'a limpeza precisa poupar os caches de fotos');
+  assert.ok(/const FOTOS = \['lastro-fotos', 'treino-fotos'\];/.test(sw),
+    'o nome antigo tem que sobreviver até a página migrar os bytes');
 });
 
 test('o precache não dispara tudo de uma vez', () => {

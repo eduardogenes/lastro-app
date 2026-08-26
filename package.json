@@ -1,5 +1,5 @@
 {
-  "name": "lastro",
+  "name": "lastro-app",
   "version": "2.0.0",
   "private": true,
   "description": "Registro de treino, cardio, nutrição e acompanhamento corporal. Um artefato estático, offline, sem dependência de runtime.",

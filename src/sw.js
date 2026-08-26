@@ -14,13 +14,18 @@ const CACHE = '__CACHE__';
 const LOCAIS = __LOCAIS__;
 
 /**
- * Cache das fotos que ELE tirou. Sem versão no nome: não é asset, é dado.
+ * Caches das fotos que ELE tirou. Sem versão no nome: não é asset, é dado.
  *
  * O worker não SERVE estas fotos — quem as lê é a página, que transforma os
- * bytes num endereço de objeto. O nome vive aqui por uma razão só: poupar este
- * cache da limpeza de ativação, logo abaixo.
+ * bytes num endereço de objeto. Os nomes vivem aqui por uma razão só: poupar
+ * estes caches da limpeza de ativação, logo abaixo.
+ *
+ * São DOIS durante uma versão. `treino-fotos` é como o cache se chamava antes
+ * de o app virar Lastro, e ele precisa sobreviver à limpeza até a página ter
+ * copiado os bytes para `lastro-fotos` — a ativação do worker não espera a
+ * página, então apagar aqui primeiro apagaria as fotos antes da migração.
  */
-const FOTOS = 'treino-fotos';
+const FOTOS = ['lastro-fotos', 'treino-fotos'];
 
 /**
  * Busca em fila, não todas de uma vez.
@@ -63,7 +68,7 @@ self.addEventListener('activate', function (e) {
       // build. O nome do cache do build muda a cada publicação, e apagar tudo
       // que não é o atual levaria junto fotos que não têm como ser refeitas.
       .then(ks => Promise.all(
-        ks.filter(k => k !== CACHE && k !== FOTOS).map(k => caches.delete(k))))
+        ks.filter(k => k !== CACHE && FOTOS.indexOf(k) < 0).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });

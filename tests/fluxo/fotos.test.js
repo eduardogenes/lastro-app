@@ -22,13 +22,22 @@ function cacheFalso(a) {
     }
     globalThis.__caches = {};
     globalThis.caches = {
+      // abrir um cache que não existe o CRIA, igual à API de verdade — é por
+      // isso que a migração pergunta com has() antes de abrir
       open: async function (nome) {
         const c = globalThis.__caches[nome] || (globalThis.__caches[nome] = {});
         return {
           put: async function (k, resp) { c[k] = resp; },
           match: async function (k) { return c[k] || undefined; },
+          keys: async function () { return Object.keys(c); },
           delete: async function (k) { const t = k in c; delete c[k]; return t; }
         };
+      },
+      has: async function (nome) { return nome in globalThis.__caches; },
+      delete: async function (nome) {
+        const t = nome in globalThis.__caches;
+        delete globalThis.__caches[nome];
+        return t;
       }
     };
     // createImageBitmap e canvas.toBlob não existem no jsdom
@@ -59,7 +68,7 @@ function cacheFalso(a) {
     };
   `);
 }
-const guardadas = a => Object.keys(a.J('globalThis.__caches["treino-fotos"] || {}'));
+const guardadas = a => Object.keys(a.J('globalThis.__caches["lastro-fotos"] || {}'));
 
 test('o botão convida quando não há foto e mostra quando há', async () => {
   const a = await app();
@@ -240,7 +249,7 @@ test('a miniatura aparece na troca só quando há foto', async () => {
   cacheFalso(a);
   // atalho para pôr bytes no cache sem passar pela captura
   a.E(`globalThis.FOTO_GUARDA = async id => {
-    const c = await caches.open('treino-fotos');
+    const c = await caches.open('lastro-fotos');
     await c.put('./foto/' + id + '.webp', new Response(new Blob(['x'], { type: 'image/webp' })));
   }`);
   a.E('toggle(0)');
@@ -374,4 +383,36 @@ test('a miniatura mostra a foto quando os bytes estão em memória', async () =>
   assert.match(img.getAttribute('src'), /^blob:/);
   assert.ok(!a.$('.exfoto').className.includes('vazia'));
   a.fechar();
+});
+
+test('as fotos mudam de cache junto com o nome do app', async () => {
+  // O cache se chamava treino-fotos. Renomear sem migrar apagaria as fotos dos
+  // aparelhos na primeira ativação do service worker, porque o activate limpa
+  // todo cache que ele não reconhece.
+  const a = await app();
+  cacheFalso(a);
+  a.E(`globalThis.__caches['treino-fotos'] = {
+    './foto/pendulum-squat.webp': new Response(new Blob(['x'], { type: 'image/webp' })),
+    './foto/leg-press.webp': new Response(new Blob(['y'], { type: 'image/webp' }))
+  }`);
+
+  const levadas = await a.E('migraCache()');
+  assert.strictEqual(levadas, 2, 'as duas fotos passaram para o cache novo');
+  assert.deepStrictEqual(guardadas(a).sort(),
+    ['./foto/leg-press.webp', './foto/pendulum-squat.webp']);
+  assert.strictEqual(a.E('"treino-fotos" in globalThis.__caches'), false,
+    'o cache antigo só some depois de os bytes estarem no novo');
+});
+
+test('sem cache antigo, a migração não cria um vazio', async () => {
+  // caches.open() CRIA o cache que não existe. Se a migração abrisse antes de
+  // perguntar, toda abertura do app deixaria um treino-fotos vazio para trás —
+  // e o service worker teria que poupá-lo para sempre.
+  const a = await app();
+  cacheFalso(a);
+
+  const levadas = await a.E('migraCache()');
+  assert.strictEqual(levadas, 0);
+  assert.strictEqual(a.E('"treino-fotos" in globalThis.__caches'), false,
+    'perguntou com has() em vez de abrir');
 });

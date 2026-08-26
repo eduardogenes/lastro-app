@@ -325,6 +325,9 @@ async function load() {
   view.day = S.sessao ? S.sessao.day : nextDay();
   render();
   abrePromoGuardada();
+  // Antes da primeira leitura de foto, e depois do render: a tela já está de pé
+  // e não pode procurar os bytes no cache com o nome antigo.
+  await FOTO.migraCache();
   carregaFotosDoDia();
 
   // A nuvem entra DEPOIS de a tela já estar de pé: o app não espera rede para
