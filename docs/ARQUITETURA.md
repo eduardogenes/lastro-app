@@ -101,7 +101,21 @@ Enquanto sobrar `<Bruto>`, sobram três muletas, todas marcadas no código:
 
 ## Estado persistido
 
-Chave única `treino-eduardo-v1` no storage.
+Chave única `lastro-v1` no storage.
+
+Ela já se chamou `treino-eduardo-v1`, de quando o produto se chamava "Treino".
+A troca não é um replace: no boot, se a chave velha ainda estiver no aparelho,
+o estado dela é **fundido** com o da nova por `funde()` — a mesma da
+sincronização, com as mesmas lápides e a mesma chave natural por registro — e a
+velha só é apagada depois de a gravação da nova dar certo.
+
+Fundir em vez de copiar existe por uma janela concreta: publicada a versão
+nova, o iPhone ainda serve o build antigo por uma ou duas aberturas, e uma
+série registrada nessa janela cai na chave VELHA depois de a nova já existir.
+Por isso a pergunta no boot é *"a chave velha existe?"*, e nunca *"eu já
+migrei?"* — se o build antigo rodar de novo, a migração roda de novo. E por
+isso `wipe()` apaga as duas: deixar a velha para trás faria o boot do dia
+seguinte ressuscitar o histórico que ele acabou de mandar apagar.
 
 ```js
 S = {

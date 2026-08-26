@@ -256,7 +256,7 @@ export interface EstadoComida {
   ocultos: Record<string, 1>;
 }
 
-/** O estado persistido inteiro, sob a chave `treino-eduardo-v1`. */
+/** O estado persistido inteiro, sob a chave `lastro-v1`. */
 export interface Estado {
   /** histórico por ID DE EXERCÍCIO, nunca por posição */
   logs: Record<IdEx, Log[]>;

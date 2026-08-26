@@ -40,14 +40,14 @@ function servicWorkerVersionado() {
         type: 'asset',
         fileName: 'sw.js',
         source: readFileSync('src/sw.js', 'utf8')
-          .replace("const CACHE = '__CACHE__';", "const CACHE = 'treino-" + hash + "';")
+          .replace("const CACHE = '__CACHE__';", "const CACHE = 'lastro-" + hash + "';")
           .replace('const LOCAIS = __LOCAIS__;', 'const LOCAIS = ' + JSON.stringify(locais, null, 2) + ';')
       });
     }
   };
 }
 
-// Build do Treino. A saída continua sendo um punhado de arquivos estáticos que
+// Build do Lastro. A saída continua sendo um punhado de arquivos estáticos que
 // qualquer hospedagem serve — o que mudou é que o fonte deixou de ser um HTML
 // de 5.279 linhas.
 export default defineConfig({

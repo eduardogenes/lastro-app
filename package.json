@@ -1,8 +1,8 @@
 {
-  "name": "treino-app",
+  "name": "lastro",
   "version": "2.0.0",
   "private": true,
-  "description": "Registro de treino, cardio e acompanhamento corporal. Um artefato estático, offline, sem dependência de runtime.",
+  "description": "Registro de treino, cardio, nutrição e acompanhamento corporal. Um artefato estático, offline, sem dependência de runtime.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

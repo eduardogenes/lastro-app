@@ -54,7 +54,10 @@ const FONTE = fs.readdirSync(SRC, { recursive: true })
   .join('\n');
 
 const DIA = 86400000;
-const CHAVE = 'treino-eduardo-v1';
+const CHAVE = 'lastro-v1';
+// A chave de antes do rename. Existe aqui para os testes da migração poderem
+// semear o estado do jeito que ele está hoje no iPhone dele.
+const CHAVE_LEGADO = 'treino-eduardo-v1';
 
 // segunda-feira 00:00 da semana de `t`, igual ao weekStart() do app
 function inicioDaSemana(t) {
@@ -148,6 +151,15 @@ function abrirApp(opcoes) {
         if (typeof e !== 'string' && e.plano === undefined) e = Object.assign({ plano: 2 }, e);
         w.localStorage.setItem(CHAVE, typeof e === 'string' ? e : JSON.stringify(e));
       }
+
+      // Estado na chave ANTIGA, para exercitar a migração do boot. Pode vir
+      // junto com `estado`: é assim que se reproduz a janela em que o build
+      // antigo escreveu depois de a chave nova já existir.
+      if (o.legado) {
+        let e = o.legado;
+        if (typeof e !== 'string' && e.plano === undefined) e = Object.assign({ plano: 2 }, e);
+        w.localStorage.setItem(CHAVE_LEGADO, typeof e === 'string' ? e : JSON.stringify(e));
+      }
     }
   });
 
@@ -223,6 +235,9 @@ function abrirApp(opcoes) {
       return raw ? JSON.parse(raw) : null;
     },
 
+    /** o texto cru que sobrou na chave antiga; null quando a migração a apagou */
+    legado: function () { return w.localStorage.getItem(CHAVE_LEGADO); },
+
     fechar: function () {
       try { w.__escopo('stopTimer()'); } catch (e) {}
       try { w.close(); } catch (e) {}
@@ -240,4 +255,4 @@ async function app(opcoes) {
   return a;
 }
 
-export { app, abrirApp, estadoVazio, inicioDaSemana, DIA, CHAVE, HTML, FONTE };
+export { app, abrirApp, estadoVazio, inicioDaSemana, DIA, CHAVE, CHAVE_LEGADO, HTML, FONTE };

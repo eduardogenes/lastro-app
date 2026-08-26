@@ -46,7 +46,22 @@ import {
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
 
-const KEY = 'treino-eduardo-v1';
+// A chave de hoje e a de ontem.
+//
+// O produto se chamava "Treino" e a chave carregava o nome. Renomear storage é
+// justamente a operação que a regra 2 existe para vigiar, então isto não é um
+// replace: no boot, se a chave velha ainda estiver lá, o estado dela é FUNDIDO
+// com o da nova pela mesma `funde()` da sincronização — mesma máquina, mesmas
+// lápides, mesma chave natural por registro — e só então a velha é apagada.
+//
+// Fundir, e não "copiar se a nova não existir", cobre a janela real desta
+// migração: publicada a versão nova, o iPhone ainda serve o build antigo por
+// uma ou duas aberturas, e uma série registrada nessa janela cai na chave
+// VELHA depois de a nova já existir. Copiar perderia essa série; fundir não.
+// Por isso a pergunta é "a velha existe?", e nunca "já migrei?" — se o build
+// antigo rodar de novo, a migração roda de novo.
+const KEY = 'lastro-v1';
+const KEY_LEGADO = 'treino-eduardo-v1';
 
 /**
  * Marca um registro como apagado.
@@ -247,21 +262,39 @@ function normalizaEstado() {
   if (!S.promoPendente || typeof S.promoPendente !== 'object') S.promoPendente = null;
 }
 
-async function load() {
-  let raw = null;
+/** Lê uma chave crua do storage. null quando não há nada lá. */
+async function leBruto(k) {
   try {
-    const r = await DB.get(KEY);
-    if (r && r.value) raw = r.value;
-  } catch (e) { /* primeira vez: começa vazio */ }
+    const r = await DB.get(k);
+    return (r && r.value) ? r.value : null;
+  } catch (e) { return null; }        // primeira vez: começa vazio
+}
 
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') S = parsed;
-    } catch (e) {
-      console.error('histórico ilegível, mantido intacto no storage', e);
-    }
+/** Interpreta um estado guardado. null quando o texto não é um objeto. */
+function interpreta(raw) {
+  if (!raw) return null;
+  try {
+    const p = JSON.parse(raw);
+    return (p && typeof p === 'object') ? p : null;
+  } catch (e) {
+    console.error('histórico ilegível, mantido intacto no storage', e);
+    return null;
   }
+}
+
+async function load() {
+  const legado = await leBruto(KEY_LEGADO);
+  const atual = interpreta(await leBruto(KEY));
+  const antigo = interpreta(legado);
+
+  // Os dois lados existem quando o build antigo escreveu depois de a chave
+  // nova já ter nascido. A ordem é (novo, velho) pelo mesmo motivo da
+  // sincronização: em empate de documento, manda quem tem mtime maior, e os
+  // registros se unem pela chave natural de qualquer forma.
+  if (atual && antigo) S = funde(atual, antigo, Date.now()).estado;
+  else if (atual) S = atual;
+  else if (antigo) S = antigo;
+
   normalizaEstado();
   montaCatalogo();
 
@@ -273,6 +306,13 @@ async function load() {
   migraPlano6(S);
   garanteProgramaERotacao();
   montaCatalogo();
+
+  // A chave velha só sai depois de a nova estar gravada E a gravação ter dado
+  // certo. Se a escrita falhar, ela fica onde está e a migração tenta de novo
+  // na próxima abertura. `grava` e não `save`: fundir não é tocar no estado.
+  if (legado && await grava()) {
+    try { await DB.delete(KEY_LEGADO); } catch (e) {}
+  }
 
   // Rascunho do modelo antigo, sem sessão: vira sessão aberta para não
   // perder um treino que estava em andamento na hora da atualização.
@@ -2505,12 +2545,12 @@ async function delBody(k, t) {
 }
 
 function payload() {
-  return JSON.stringify({ app:'treino-eduardo', v:1, exportedAt:new Date().toISOString(), data:S }, null, 2);
+  return JSON.stringify({ app:'lastro', v:1, exportedAt:new Date().toISOString(), data:S }, null, 2);
 }
 
 function exportData() {
   const txt = payload();
-  const name = 'treino-eduardo-' + new Date().toISOString().slice(0,10) + '.json';
+  const name = 'lastro-' + new Date().toISOString().slice(0,10) + '.json';
   try {
     // `charset=utf-8` explícito. O Blob sempre grava a string em UTF-8, e
     // JSON é UTF-8 por definição (RFC 8259) — mas quem lê o arquivo depois
@@ -2991,6 +3031,9 @@ async function wipe() {
   normalizaEstado();
   montaCatalogo();
   try { await DB.delete(KEY); } catch(e){}
+  // A velha vai junto. Deixá-la seria a migração do boot ressuscitar amanhã
+  // exatamente o histórico que ele acabou de mandar apagar.
+  try { await DB.delete(KEY_LEGADO); } catch(e){}
   view.day='A'; view.aba='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
   view.swapOpen=null; view.fired={};
   render();

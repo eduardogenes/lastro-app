@@ -1,4 +1,4 @@
-// Service worker do Treino Eduardo. MOLDE: o build gera o dist/sw.js a partir
+// Service worker do Lastro. MOLDE: o build gera o dist/sw.js a partir
 // daqui, preenchendo o nome do cache e a lista de arquivos com o que acabou de
 // ser emitido (ver o plugin sw-versionado em vite.config.js).
 //

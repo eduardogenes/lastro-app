@@ -1,6 +1,11 @@
-# Treino
+# Lastro
 
-App pessoal de registro de treino, cardio e acompanhamento corporal.
+App pessoal de registro de treino, cardio, nutrição e acompanhamento corporal.
+
+O nome é náutico e financeiro ao mesmo tempo: lastro é o peso que se carrega
+para o casco não emborcar, e é a garantia que dá respaldo a um valor. As duas
+acepções são o que este app faz — segurar a progressão, e responder de onde
+veio cada número derivado.
 Um artefato estático, sem dependência de runtime, sem servidor. Funciona offline.
 
 Existe por um motivo específico: músculo fica forte mais rápido do que tendão
@@ -150,8 +155,12 @@ Dois documentos gerados a partir do código, que por isso não têm como divergi
 
 ## Dados e backup
 
-O histórico mora no navegador do aparelho, sob a chave `treino-eduardo-v1`, e é
-de lá que o app lê e escreve. Isso não mudou com a sincronização: o aparelho
+O histórico mora no navegador do aparelho, sob a chave `lastro-v1`, e é
+de lá que o app lê e escreve. Quem vem da época em que o app se chamava "Treino"
+tem `treino-eduardo-v1` no aparelho: no primeiro boot o app **funde** as duas
+chaves com a mesma máquina da sincronização e só então apaga a velha — nunca
+copia, porque copiar perderia uma série registrada no build antigo depois de a
+chave nova já existir. `tests/fluxo/migracaochave.test.js` cobra os três casos. Isso não mudou com a sincronização: o aparelho
 continua sendo a verdade, e o app funciona inteiro sem rede e sem conta.
 
 **Sincronizar** (aba guia) replica esse estado num Postgres do Supabase, para o
@@ -238,7 +247,7 @@ npm test              # tudo
 npm run test:dominio  # só as regras — roda em menos de meio segundo
 ```
 
-**258 testes**, em dois níveis:
+**443 testes**, em dois níveis:
 
 **`tests/dominio/`** importa os módulos direto e roda em milissegundos. É onde
 moram as regras: limites exatos da dieta, atribuição de série por músculo, corte

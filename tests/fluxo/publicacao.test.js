@@ -19,7 +19,7 @@ test('o service worker sai do build com versão e lista preenchidas', () => {
   const sw = dist('sw.js');
   assert.ok(!sw.includes('__CACHE__'), 'molde não substituído');
   assert.ok(!sw.includes('__LOCAIS__'), 'molde não substituído');
-  assert.ok(/const CACHE = 'treino-[0-9a-f]{12}';/.test(sw), 'a versão vem do hash do build');
+  assert.ok(/const CACHE = 'lastro-[0-9a-f]{12}';/.test(sw), 'a versão vem do hash do build');
 });
 
 test('o precache lista exatamente os assets que o build emitiu', () => {

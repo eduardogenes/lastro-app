@@ -56,7 +56,7 @@ test('exportar carrega todos os campos do estado', async () => {
   a.E('showJSON()');
 
   const bkp = JSON.parse(a.doc.getElementById('jout').value);
-  assert.strictEqual(bkp.app, 'treino-eduardo');
+  assert.strictEqual(bkp.app, 'lastro');
   assert.deepStrictEqual(
     Object.keys(bkp.data).sort(),
     ['body', 'cardio', 'carga', 'deload', 'done', 'draft', 'ex', 'export', 'logs',
