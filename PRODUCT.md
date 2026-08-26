@@ -6,6 +6,13 @@
 onboarding, não existe usuário além de um. Toda tela serve a uma tarefa que
 acontece num momento específico do dia.
 
+**O nome.** Náutico primeiro: lastro é o peso que impede de tombar, não o que
+faz andar. Financeiro em segundo, e só onde o assunto já é número derivado —
+moeda com lastro responde de onde vem o que ela vale. Nunca as duas acepções na
+mesma frase. O nome aparece onde é endereço (chave, cache, backup, ícone) e
+nunca onde é assinatura: dentro do app o produto se chama "o app". As decisões
+inteiras, com o voto vencido, estão em [MARCA.md](MARCA.md).
+
 ## Usuários e propósito
 
 **Um usuário.** Eduardo. O app não tem conta, servidor nem sincronização — os

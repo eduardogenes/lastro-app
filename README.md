@@ -1,18 +1,24 @@
 # Lastro
 
-App pessoal de registro de treino, cardio, nutrição e acompanhamento corporal.
-
-O nome é náutico e financeiro ao mesmo tempo: lastro é o peso que se carrega
-para o casco não emborcar, e é a garantia que dá respaldo a um valor. As duas
-acepções são o que este app faz — segurar a progressão, e responder de onde
-veio cada número derivado.
+Registro de treino e comida que freia a carga no ritmo que o tendão aguenta.
 Um artefato estático, sem dependência de runtime, sem servidor. Funciona offline.
 
+Lastro é o peso que se carrega no fundo do casco para o navio não emborcar. Não
+é o que faz andar: é o que impede de tombar, e deixa lento de propósito. É o que
+este app faz com a carga — o selo de subir só aparece quando todas as séries
+bateram o topo da faixa, e não aparece quando você voltou de duas semanas
+parado. A segunda acepção é financeira, e vale onde o app fala de número: moeda
+com lastro responde de onde vem o que ela vale, e aqui nada derivável é
+digitado. O e1RM sai das cargas, o alvo calórico sai dos alimentos, a lista de
+compras sai do plano × a semana.
+
 Existe por um motivo específico: músculo fica forte mais rápido do que tendão
-consegue se adaptar. O app registra, mas boa parte do que ele faz é **frear** a
-progressão de carga — avisar quando o volume passou do prescrito, cobrar a regra
-de manter o exercício por 6 a 8 semanas, e fazer com que a decisão de mudar o
-programa seja consciente em vez de automática.
+consegue se adaptar. Frear é metade do trabalho — avisar quando o volume passou
+do prescrito, cobrar a regra de manter o exercício por 6 a 8 semanas, e fazer
+com que a decisão de mudar o programa seja consciente em vez de automática.
+
+A hierarquia entre as duas acepções, a voz e a identidade estão em
+[MARCA.md](MARCA.md).
 
 ---
 
@@ -164,7 +170,9 @@ chave nova já existir. `tests/fluxo/migracaochave.test.js` cobra os três casos
 continua sendo a verdade, e o app funciona inteiro sem rede e sem conta.
 
 **Sincronizar** (aba guia) replica esse estado num Postgres do Supabase, para o
-mesmo registro existir no celular e no computador. O app fala HTTP direto com a
+mesmo registro existir no celular e no computador. A sessão da nuvem não entra
+no estado — ela é do aparelho, mora sob `lastro-nuvem-v1`, e quem vinha de
+`treino-nuvem-v1` é promovido no primeiro boot em vez de deslogado. O app fala HTTP direto com a
 API REST — sem SDK e sem backend próprio, então continua sendo um artefato
 estático. A `anon key` vai no bundle porque é pública por design; quem protege é
 o RLS, que só devolve a linha do usuário autenticado.
@@ -225,7 +233,9 @@ src/dominio/             as regras, sem DOM e sem estado global
 src/infra/db.ts          storage: host → localStorage → memória
 src/ui/                  componentes Preact
 src/tokens.css           a paleta — o único lugar com cor escrita
-src/app.css              o resto do estilo
+src/base.css             reset, tipografia e a casca da tela
+src/componentes.css      anatomia das primitivas do Instrumento
+src/treino.css           o que é só da tela de treino
 src/sw.js                molde do service worker; o build preenche versão e lista
 public/                  ícones e manifesto
 vite.config.js           build e o plugin que versiona o service worker
@@ -247,7 +257,7 @@ npm test              # tudo
 npm run test:dominio  # só as regras — roda em menos de meio segundo
 ```
 
-**445 testes**, em dois níveis:
+**449 testes**, em dois níveis:
 
 **`tests/dominio/`** importa os módulos direto e roda em milissegundos. É onde
 moram as regras: limites exatos da dieta, atribuição de série por músculo, corte
@@ -284,6 +294,7 @@ lock, vibração, `confirm` e `prompt`.
 | `fluxo/cardio` | Registro, contagem semanal, aviso de dia de perna |
 | `fluxo/horario` | Horário do treino, período do dia, retroativo sem hora |
 | `fluxo/dados` | Migração de formatos antigos, exportar e reimportar |
+| `fluxo/migracaochave` | As duas chaves renomeadas: o histórico funde, a sessão da nuvem promove |
 | `fluxo/cronometro` | Instante-alvo, tela apagada, aviso único, wake lock |
 | `fluxo/telas` | Regras do projeto, as quatro abas, avisos de dor e pausa |
 | `fluxo/publicacao` | Service worker versionado, precache, cabeçalhos de cache |
@@ -337,12 +348,15 @@ Não negociáveis, e a suíte verifica as que dá para verificar:
    versão antiga.
 3. **Mobile-first de verdade.** Usado de pé, com uma mão, suado, às 6h15. Alvos
    de toque grandes, nada que exija precisão.
-4. **Identidade visual fixa.** Fundo `#0D1520`, cartão `#15202E`, elevado
-   `#1C2A3B`, borda `#26374C`, texto `#E9EFF6`, secundário `#8DA0B8`, apagado
-   `#48607C`, âmbar `#F5A83C` (acento), laranja `#E8734A` (só alertas).
-   Archivo para texto, IBM Plex Mono para números. Números sempre monoespaçados.
-   **Cor só em [src/tokens.css](src/tokens.css)** — hexadecimal solto em
-   `app.css` reprova no teste.
+4. **Identidade visual fixa.** O sistema se chama **Instrumento** e a fonte
+   canônica dos valores é [src/tokens.css](src/tokens.css): fundo `#0C0E0C`,
+   elevado `#111411`, fio `#161A15`, régua `#22271F`, borda `#2B302A`, texto
+   `#F2F4EF`, apoio `#A8AFA1`, rótulo `#7C8478`, ácido `#CBF35E` (acento),
+   âmbar `#FFC46B` (atenção), coral `#FF8A6B` (só destrutivo). Raio zero. Space
+   Grotesk para prosa e nome, IBM Plex Mono para todo número. **Cor só em
+   [src/tokens.css](src/tokens.css)** — hexadecimal solto nas outras folhas
+   reprova em `tests/dominio/estilo.test.ts`. O porquê está em
+   [DESIGN.md](DESIGN.md).
 5. **Tudo em português**, tom direto, sem emoji, sentence case. Única exceção
    autorizada: os marcadores de período no calendário, isolados em `PERIODOS`.
 6. **Não inventar conselho de treino.** A prescrição está definida; isto aqui é
