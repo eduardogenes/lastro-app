@@ -145,7 +145,9 @@ os dois.
 
 ## Estado de retirada
 
-O sistema antigo (azul-marinho + âmbar, Archivo, cartões com raio) ainda vive
-em [`src/app.css`](src/app.css) e nos blocos marcados `<Bruto>`. É dívida
-declarada: some conforme cada tela é repintada, e com ele saem a ponte global
-de handlers e o `minify`/`treeshake` desligados no build.
+Concluída. O sistema antigo (azul-marinho + âmbar, Archivo, cartões com raio)
+saiu do projeto: `src/app.css` foi apagado em `6f4dd12`, a ponte global de
+handlers morreu em `3283495`, e `minify` e `treeshake` estão ligados no build.
+A última sobra era a própria Archivo, ainda baixada pelo `index.html` sem ser
+usada por regra nenhuma. `tests/dominio/estilo.test.ts` cobra que a paleta
+antiga não volte, nem por apelido.

@@ -58,6 +58,10 @@ const CHAVE = 'lastro-v1';
 // A chave de antes do rename. Existe aqui para os testes da migração poderem
 // semear o estado do jeito que ele está hoje no iPhone dele.
 const CHAVE_LEGADO = 'treino-eduardo-v1';
+// A sessão da nuvem tem chave própria: ela é DO APARELHO e não entra no estado
+// sincronizado. Também foi renomeada, e também tem legado para promover.
+const CHAVE_NUVEM = 'lastro-nuvem-v1';
+const CHAVE_NUVEM_LEGADO = 'treino-nuvem-v1';
 
 // segunda-feira 00:00 da semana de `t`, igual ao weekStart() do app
 function inicioDaSemana(t) {
@@ -94,7 +98,7 @@ function abrirApp(opcoes) {
     // para o diretório do projeto e estoura EISDIR ao formatar QUALQUER falha —
     // o relatório do arquivo inteiro some junto. Um nome de arquivo no fim
     // resolve para um caminho inexistente, que ele trata em silêncio.
-    url: 'https://treino.test/app.html',
+    url: 'https://lastro.test/app.html',
     virtualConsole: console_,
     beforeParse: function (w) {
       w.scrollTo = function () {};
@@ -159,6 +163,16 @@ function abrirApp(opcoes) {
         let e = o.legado;
         if (typeof e !== 'string' && e.plano === undefined) e = Object.assign({ plano: 2 }, e);
         w.localStorage.setItem(CHAVE_LEGADO, typeof e === 'string' ? e : JSON.stringify(e));
+      }
+
+      // Qualquer outra chave do aparelho, crua. É por aqui que se semeia a
+      // sessão da nuvem, que não faz parte do estado e por isso não cabe em
+      // `estado` nem em `legado`.
+      if (o.chaves) {
+        Object.keys(o.chaves).forEach(function (k) {
+          const v = o.chaves[k];
+          w.localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+        });
       }
     }
   });
@@ -255,4 +269,7 @@ async function app(opcoes) {
   return a;
 }
 
-export { app, abrirApp, estadoVazio, inicioDaSemana, DIA, CHAVE, CHAVE_LEGADO, HTML, FONTE };
+export {
+  app, abrirApp, estadoVazio, inicioDaSemana, DIA,
+  CHAVE, CHAVE_LEGADO, CHAVE_NUVEM, CHAVE_NUVEM_LEGADO, HTML, FONTE
+};
