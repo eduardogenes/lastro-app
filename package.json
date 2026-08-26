@@ -2,7 +2,7 @@
   "name": "lastro-app",
   "version": "2.0.0",
   "private": true,
-  "description": "Registro de treino, cardio, nutrição e acompanhamento corporal. Um artefato estático, offline, sem dependência de runtime.",
+  "description": "Registro de treino e comida que freia a carga no ritmo que o tendão aguenta. Um artefato estático, offline, sem dependência de runtime.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

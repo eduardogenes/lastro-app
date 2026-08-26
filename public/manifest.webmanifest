@@ -1,7 +1,7 @@
 {
   "name": "Lastro",
   "short_name": "Lastro",
-  "description": "Registro de treino, cardio, nutrição e acompanhamento corporal",
+  "description": "Registro de treino e comida que freia a carga no ritmo que o tendão aguenta.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
