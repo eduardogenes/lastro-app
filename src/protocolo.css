@@ -1,0 +1,113 @@
+/* ============================================================
+   O PROTOCOLO DE FOTOS
+   Segue os seis inegociáveis do tokens.css. Duas notas:
+
+   - A foto é a segunda superfície preenchida grande do produto,
+     depois da do aparelho, e usa a MESMA moldura de 1px que ela.
+     Sem raio: `--ins-raio-foto` é o raio da MINIATURA de 44px na
+     calha da lista, e existe porque ali a foto compete com fios.
+     Em tela cheia não há com o que competir.
+   - Nenhum degrau de espaço novo: só os do tokens.css.
+   ============================================================ */
+
+/* ---------- a régua de poses ---------- */
+/* Nove pontos que dizem onde ele está e o que falta. É lista de alvo, então
+   cada um tem 28px — o degrau de toggle denso —, e o pinta o estado, não a
+   posição. */
+.pr-pontos {
+  display: flex; gap: var(--ins-2);
+  margin-bottom: var(--ins-7);
+}
+.pr-ponto {
+  flex: 1 1 0; height: var(--ins-tap-dense);
+  background: none; border: 0; padding: 0;
+  position: relative; cursor: pointer;
+}
+.pr-ponto::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  height: var(--ins-indicator); transform: translateY(-50%);
+  background: var(--ins-border);
+}
+.pr-ponto.feita::after { background: var(--ins-text-4); }
+.pr-ponto.atual::after { background: var(--ins-acid); height: var(--ins-rail); }
+
+/* ---------- as fotos ---------- */
+.pr-fotos { display: grid; gap: var(--ins-3); }
+.pr-fotos.dupla { grid-template-columns: 1fr 1fr; }
+.pr-fig { margin: 0; display: flex; flex-direction: column; gap: var(--ins-2); }
+.pr-img {
+  display: block; width: 100%; height: auto;
+  border: 1px solid var(--ins-border);
+}
+/* A ausência de referência não desenha moldura vazia decorativa: ela DIZ o que
+   está acontecendo, que é a primeira vez naquela pose. */
+.pr-sem {
+  aspect-ratio: 3 / 4;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ins-surface); text-align: center; padding: var(--ins-7);
+}
+
+/* ---------- execução ---------- */
+.pr-como { margin-top: var(--ins-9); }
+.pr-lista { margin: var(--ins-4) 0 0; padding-left: var(--ins-8); }
+.pr-lista li { margin-bottom: var(--ins-2); }
+
+/* ---------- o disparo ---------- */
+/* Mesmo desenho do botão de foto do aparelho: o input é o alvo real e o rótulo
+   é o botão. Escondê-lo com `display:none` tiraria o foco de teclado junto. */
+.pr-disparo { display: block; margin-top: var(--ins-9); text-align: center; }
+.pr-disparo input { position: absolute; width: 0; height: 0; opacity: 0; }
+
+.pr-nav { display: flex; gap: var(--ins-3); margin-top: var(--ins-5); }
+.pr-nav button { flex: 1 1 0; }
+.pr-obs { width: 100%; }
+.pr-apagar { margin-top: var(--ins-7); }
+
+/* ---------- a montagem ---------- */
+.pr-setup { display: grid; gap: 1px; background: var(--ins-rule); }
+.pr-setup-l {
+  background: var(--ins-canvas); padding: var(--ins-5) 0;
+  display: flex; flex-direction: column; gap: var(--ins-1);
+}
+.pr-setup-v { color: var(--ins-text); }
+.pr-setup-p { margin: 0; }
+.pr-comecar { display: block; width: 100%; margin-top: var(--ins-9); }
+
+/* ---------- comparar ---------- */
+.cp-datas {
+  display: flex; align-items: center; gap: var(--ins-3);
+  margin-top: var(--ins-7);
+}
+.cp-sel { flex: 1 1 0; }
+.cp-ate { flex: 0 0 auto; }
+.cp-modo { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
+
+.cp-par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-3); margin-top: var(--ins-7); }
+.cp-lado { margin: 0; display: flex; flex-direction: column; gap: var(--ins-2); }
+.cp-lado figcaption { display: flex; flex-direction: column; gap: var(--ins-1); }
+.cp-img { display: block; width: 100%; height: auto; border: 1px solid var(--ins-border); }
+.cp-sem {
+  aspect-ratio: 3 / 4; display: flex; align-items: center; justify-content: center;
+  background: var(--ins-surface); text-align: center; padding: var(--ins-7);
+}
+.cp-num { color: var(--ins-text-3); }
+.cp-num2 { color: var(--ins-text-4); }
+
+/* Sobrepor: as duas na mesma caixa, a de cima com opacidade variável. É o que
+   revela desvio de ENQUADRAMENTO — se os pés andaram, as silhuetas não se
+   encaixam, e a diferença que se vê no corpo é da câmera. */
+.cp-onion { position: relative; margin-top: var(--ins-7); }
+.cp-onion .cp-cima { position: absolute; inset: 0; }
+.cp-slider { display: flex; align-items: center; gap: var(--ins-3); margin-top: var(--ins-5); }
+.cp-slider input { flex: 1 1 0; }
+
+/* ---------- o resumo na aba dados ---------- */
+.dd-fotos { display: flex; flex-direction: column; gap: var(--ins-5); }
+.dd-fotos-pontos { display: flex; gap: var(--ins-2); }
+.dd-fotos-p {
+  flex: 1 1 0; height: var(--ins-rail);
+  background: var(--ins-border);
+}
+.dd-fotos-p.feita { background: var(--ins-acid); }
+.dd-fotos-b { display: flex; gap: var(--ins-3); }
+.dd-fotos-b button { flex: 1 1 0; }

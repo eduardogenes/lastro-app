@@ -19,6 +19,8 @@ import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { FolhaFoto } from './ui/folhas/foto.jsx';
+import { Protocolo } from './ui/telas/protocolo.jsx';
+import { Comparar } from './ui/telas/comparar.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
 import { Decisao } from './ui/telas/decisao.jsx';
@@ -40,11 +42,17 @@ import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPl
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
-  chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeLog, chaveDeMarca,
+  chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog, chaveDeMarca, chaveDeSessaoFoto,
   chaveDeSessao, funde
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
+import * as CORPO from './infra/corpo';
+import {
+  CADENCIA_DIAS, MONTAGEM, comAPose, completude,
+  diasDesde as diasDesdeAFoto, instanteDaData, mediaDaSemana, parPadrao,
+  poses as posesDo, proximaPose, referencia, sessaoDe, ultima as ultimaSessaoFoto
+} from './dominio/protocolo';
 
 // A chave de hoje e a de ontem.
 //
@@ -207,9 +215,10 @@ function treino(d) {
 
 
 
-let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[] };
+let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], protocolo:{ poses:null, sessoes:[] } };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
-  editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null };
+  editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null,
+  protocolo:null, comparar:null };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false;
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -259,6 +268,13 @@ function normalizaEstado() {
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
   if (!S.descanso || typeof S.descanso !== 'object') S.descanso = {};
   if (!S.fotos || typeof S.fotos !== 'object') S.fotos = {};
+  // O protocolo de fotos entra como campo novo e opcional — sem migração, que
+  // é para reformatar dado existente, e aqui não há dado existente. Um backup
+  // de qualquer versão anterior chega aqui pelo mesmo caminho que o disco.
+  if (!S.protocolo || typeof S.protocolo !== 'object') S.protocolo = { poses: null, sessoes: [] };
+  if (!Array.isArray(S.protocolo.sessoes)) S.protocolo.sessoes = [];
+  if (!Array.isArray(S.protocolo.poses) || !S.protocolo.poses.length) S.protocolo.poses = null;
+  S.protocolo.sessoes.forEach(function (x) { if (!x.fotos || typeof x.fotos !== 'object') x.fotos = {}; });
   if (!S.promoPendente || typeof S.promoPendente !== 'object') S.promoPendente = null;
 }
 
@@ -773,6 +789,7 @@ async function sincroniza(opcoes) {
         if (jaVisto && !sync.sujo) {        // nada mudou de nenhum lado
           sync.em = Date.now(); gravaSync();
           reconciliaFotos();                  // pode faltar byte mesmo sem estado novo
+          reconciliaCorpo();
           return;
         }
         if (!jaVisto) {
@@ -795,6 +812,7 @@ async function sincroniza(opcoes) {
         gravaSync(); render();
         if (manual) toast('Sincronizado.');
         reconciliaFotos();                     // sem await: os bytes vão por fora
+        reconciliaCorpo();
         return;
       }
       if (escrita.erro === 'conflito') continue;   // outro gravou: relê e refaz
@@ -851,10 +869,83 @@ async function reconciliaFotos() {
   }
 }
 
+/**
+ * Leva e traz os bytes das fotos de ACOMPANHAMENTO.
+ *
+ * Separada da de aparelhos porque a política é outra. Aparelho são umas 40
+ * fotos que ficam no aparelho para sempre; corpo são nove por sessão, e o
+ * aparelho guarda só as recentes.
+ *
+ * Duas assimetrias, e as duas são deliberadas:
+ *
+ * SUBIR é obrigação — enquanto um byte só existe aqui, ele está a um despejo de
+ * cache de sumir. BAIXAR é sob demanda: puxar o histórico inteiro na primeira
+ * sincronização de um aparelho novo seriam dezenas de megabytes pelo sinal da
+ * academia, e ninguém pediu para ver 2026 inteiro.
+ *
+ * A PODA só alcança sessão cuja foto já foi confirmada no bucket. Apagar byte
+ * que ainda não subiu é o erro mais caro que este arquivo pode cometer.
+ */
+async function reconciliaCorpo() {
+  if (!NUVEM.sessao() || !S.protocolo) return;
+  const sessoes = S.protocolo.sessoes || [];
+
+  let todasNoBucket = true;
+  for (let i = sessoes.length - 1; i >= 0; i--) {
+    const ses = sessoes[i];
+    const poses = Object.keys(ses.fotos || {});
+    for (let j = 0; j < poses.length; j++) {
+      const pose = poses[j], ref = ses.fotos[pose];
+      if (!ref || !ref.v) continue;
+      const k = 'corpo:' + ses.d + ':' + pose;
+      if (sync.fotos[k] === ref.v) continue;
+
+      const bytes = await CORPO.le(ses.d, pose, ref.ext);
+      if (!bytes) { todasNoBucket = false; continue; }   // não está aqui: nada a subir
+      const r = await NUVEM.subirCorpo(ses.d, pose, bytes, ref.ext);
+      if (!r.ok) return;                                  // sem rede: para e tenta depois
+      sync.fotos[k] = ref.v; gravaSync();
+    }
+  }
+
+  // A poda espera todo mundo confirmado. Uma foto que não subiu segura o cache
+  // inteiro por um ciclo, e é exatamente isso que se quer.
+  if (!todasNoBucket) return;
+  const recentes = sessoes.slice(-CORPO.SESSOES_NO_APARELHO).map(function (x) { return x.d; });
+  if (recentes.length === sessoes.length) return;
+  await CORPO.poda(recentes);
+}
+
+/**
+ * Garante que os bytes daquelas sessões estejam AQUI, buscando no bucket o que
+ * faltar. É o caminho de volta da poda: abrir uma sessão antiga a traz.
+ */
+async function garanteBytesDoCorpo(datas) {
+  let mudou = false;
+  for (const d of datas || []) {
+    const ses = sessaoDe(S.protocolo.sessoes, d);
+    if (!ses) continue;
+    for (const pose of Object.keys(ses.fotos || {})) {
+      const ref = ses.fotos[pose];
+      if (!ref || !ref.v) continue;
+      if (await CORPO.tem(d, pose, ref.ext)) {
+        if (await CORPO.carrega(d, pose, ref)) mudou = true;
+        continue;
+      }
+      if (!NUVEM.sessao()) continue;
+      const r = await NUVEM.baixaCorpo(d, pose, ref.ext);
+      if (!r.ok || !r.v) continue;
+      await CORPO.guarda(d, pose, r.v, ref.ext);
+      if (await CORPO.carrega(d, pose, ref)) mudou = true;
+    }
+  }
+  if (mudou) render();
+}
+
 /** A fusão trouxe algo do outro lado? Então o nosso documento precisa subir. */
 function temQueEmpurrar(r) {
   return r.series > 0 || r.sessoes > 0 || r.medidas > 0 || r.cardio > 0 ||
-         r.apagados > 0 || r.documentos === 'local';
+         r.fotosCorpo > 0 || r.apagados > 0 || r.documentos === 'local';
 }
 
 /** Mudar o histórico dele em silêncio seria pior que não sincronizar. */
@@ -864,6 +955,7 @@ function contaFusao(r, manual) {
   if (r.sessoes) p.push(r.sessoes + (r.sessoes === 1 ? ' sessão' : ' sessões'));
   if (r.medidas) p.push(r.medidas + (r.medidas === 1 ? ' medida' : ' medidas'));
   if (r.cardio) p.push(r.cardio + ' de cardio');
+  if (r.fotosCorpo) p.push(r.fotosCorpo + (r.fotosCorpo === 1 ? ' foto' : ' fotos'));
   if (p.length) toast('Do outro aparelho: ' + p.join(' · ') + '.');
   else if (manual && r.documentos === 'remoto') toast('Programa e plano vieram do outro aparelho.');
 }
@@ -1470,7 +1562,8 @@ const CTX = {
   telaCheia: telaCheia,
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
-    return !!(view.promo || view.prog || view.retro || view.add || view.sessao || view.hist);
+    return !!(view.promo || view.prog || view.retro || view.add || view.sessao || view.hist ||
+              view.protocolo || view.comparar);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -1557,6 +1650,8 @@ const CTX = {
 // Não são abas — em cada uma o assunto é uma coisa só, e a tab bar convidaria
 // a sair no meio. O voltar é o único caminho de saída.
 function telaCheia() {
+  if (view.protocolo) return <Protocolo ctx={CTX} />;
+  if (view.comparar) return <Comparar ctx={CTX} />;
   if (view.promo) return <Decisao ctx={CTX} />;
   if (view.prog) return <Programa ctx={CTX} />;
   if (view.retro) return <Retrospectiva ctx={CTX} />;
@@ -4729,4 +4824,290 @@ CTX.acoesProg = {
   fechaTroca: function (i) { toggleSwap(i); },
   reps: function (i) { progReps(view.prog.day, i); },
   descanso: function (i) { progDesc(view.prog.day, i); }
+};
+
+// ---------- o protocolo de fotos ----------
+// A terceira série do mesmo assunto que peso e cintura já respondem: está
+// funcionando? A diferença é que esta não vira número, e por isso o que ela
+// exige do app não é uma média — é COMPARABILIDADE.
+//
+// Duas fotos só se comparam quando a pose e a geometria da câmera são as
+// mesmas. A geometria mora nas marcas de fita no chão, fora do alcance do app;
+// a pose ele alcança, e é o que estas funções garantem.
+
+/** A ordem de poses em vigor: a dele, ou a do código. */
+function ordemDePoses() { return posesDo(S.protocolo.poses).map(function (p) { return p.id; }); }
+
+/** A sessão daquela data, criando-a se ainda não existir. */
+function sessaoFotoOuCria(d) {
+  let ses = sessaoDe(S.protocolo.sessoes, d);
+  if (ses) return ses;
+  ses = { d: d, t: Date.now(), fotos: {}, m: Date.now() };
+  S.protocolo.sessoes = S.protocolo.sessoes.concat([ses]).sort(function (a, b) {
+    return a.d < b.d ? -1 : a.d > b.d ? 1 : 0;
+  });
+  return sessaoDe(S.protocolo.sessoes, d);
+}
+
+/** As datas cujas fotos a tela vai precisar — incluindo as de referência. */
+function datasNecessarias(d) {
+  const set = {};
+  set[d] = 1;
+  ordemDePoses().forEach(function (pose) {
+    const r = referencia(S.protocolo.sessoes, pose, d);
+    if (r) set[r.d] = 1;
+  });
+  return Object.keys(set);
+}
+
+CTX.abreProtocolo = function () {
+  const d = hojeISO();
+  const ses = sessaoDe(S.protocolo.sessoes, d);
+  const prox = proximaPose(ses, S.protocolo.poses);
+  view.protocolo = {
+    d: d,
+    pose: prox || ordemDePoses()[0],
+    // a montagem só na primeira foto do dia: o que é fixo por definição não se
+    // pergunta de novo
+    montagem: !ses || !Object.keys(ses.fotos).length
+  };
+  render(); window.scrollTo(0, 0);
+  garanteBytesDoCorpo(datasNecessarias(d));
+};
+
+CTX.fechaProtocolo = function () { view.protocolo = null; render(); window.scrollTo(0, 0); };
+CTX.comecaSessaoDeFotos = function () { view.protocolo.montagem = false; render(); window.scrollTo(0, 0); };
+CTX.vaiParaPose = function (id) { view.protocolo.pose = id; render(); window.scrollTo(0, 0); };
+
+function andaPose(delta) {
+  const ordem = ordemDePoses();
+  const i = ordem.indexOf(view.protocolo.pose) + delta;
+  if (i < 0 || i >= ordem.length) return;
+  view.protocolo.pose = ordem[i];
+  render(); window.scrollTo(0, 0);
+}
+CTX.posAnterior = function () { andaPose(-1); };
+CTX.posProxima = function () { andaPose(1); };
+
+/**
+ * Guarda a foto e avança.
+ *
+ * A sessão nasce AQUI, na primeira foto — igual à sessão de treino, que nasce
+ * na primeira série. Não há botão de salvar e não há o que confirmar.
+ */
+async function tiraFotoDoCorpo(el) {
+  const arquivo = el.files && el.files[0];
+  const v = view.protocolo;
+  if (!arquivo || !v) return;
+  el.value = '';                       // permite repetir a mesma foto
+  try {
+    const { blob, ext } = await CORPO.reduz(arquivo);
+    await CORPO.guarda(v.d, v.pose, blob, ext);
+
+    const ses = sessaoFotoOuCria(v.d);
+    const antiga = ses.fotos[v.pose];
+    // refazer apaga a anterior: sem lápide, a fusão traria a versão velha de
+    // volta do outro aparelho, e as duas disputariam a mesma pose
+    if (antiga) lapide(chaveDeFotoDoCorpo(v.d, v.pose));
+    ses.fotos = Object.assign({}, ses.fotos);
+    ses.fotos[v.pose] = { v: Date.now(), ext: ext };
+    ses.m = Date.now();
+    CORPO.solta(v.d, v.pose);          // a versão anterior sai da memória
+    await CORPO.carrega(v.d, v.pose, ses.fotos[v.pose]);
+
+    await save();
+    // avança sozinho para a próxima que falta: a sessão é uma sequência, e
+    // pedir um toque a mais entre duas poses é pedir um toque a mais nove vezes
+    const prox = proximaPose(sessaoDe(S.protocolo.sessoes, v.d), S.protocolo.poses);
+    if (prox) view.protocolo.pose = prox;
+    render(); window.scrollTo(0, 0);
+  } catch (e) {
+    toast('Não deu para guardar a foto.');
+  }
+}
+CTX.tiraFotoDoCorpo = function (el) { tiraFotoDoCorpo(el); };
+
+CTX.apagaFotoDoCorpo = async function (pose) {
+  const v = view.protocolo;
+  const ses = sessaoDe(S.protocolo.sessoes, v.d);
+  if (!ses || !ses.fotos[pose]) return;
+  const ext = ses.fotos[pose].ext;
+  lapide(chaveDeFotoDoCorpo(v.d, pose));
+  ses.fotos = Object.assign({}, ses.fotos);
+  delete ses.fotos[pose];
+  ses.m = Date.now();
+  CORPO.solta(v.d, pose);
+  await CORPO.esquece(v.d, pose, ext);
+  // sessão sem foto nenhuma não sobrevive à última: ela nasce na primeira
+  if (!Object.keys(ses.fotos).length) {
+    lapide(chaveDeSessaoFoto(v.d));
+    S.protocolo.sessoes = S.protocolo.sessoes.filter(function (x) { return x.d !== v.d; });
+  }
+  await save(); render();
+  toast('Foto apagada.');
+};
+
+let notaT = null;
+CTX.setNotaDaSessao = function (txt) {
+  const v = view.protocolo;
+  const ses = sessaoDe(S.protocolo.sessoes, v.d);
+  if (!ses) return;                    // sem foto ainda não há sessão para anotar
+  ses.obs = txt;
+  ses.m = Date.now();
+  render();
+  clearTimeout(notaT);
+  notaT = setTimeout(function () { save(); }, 700);   // mesmo debounce do rascunho
+};
+
+/** O que a tela de captura consome. */
+CTX.sessaoDeFotos = function () {
+  const v = view.protocolo;
+  if (!v) return null;
+  const lista = posesDo(S.protocolo.poses);
+  const ses = sessaoDe(S.protocolo.sessoes, v.d);
+  const c = completude(ses, S.protocolo.poses);
+
+  if (v.montagem) {
+    return { passo: 'montagem', meta: fmtDate(instanteDaData(v.d)), montagem: { itens: MONTAGEM } };
+  }
+
+  const i = Math.max(0, lista.findIndex(function (p) { return p.id === v.pose; }));
+  const pose = lista[i];
+  const minha = ses && ses.fotos[pose.id];
+  const ref = referencia(S.protocolo.sessoes, pose.id, v.d);
+
+  return {
+    passo: 'pose',
+    indice: i + 1,
+    total: lista.length,
+    faltando: c.faltando.length,
+    obs: (ses && ses.obs) || '',
+    anterior: i > 0,
+    proxima: i < lista.length - 1,
+    pontos: lista.map(function (p) {
+      return { id: p.id, n: p.n, feita: !!(ses && ses.fotos[p.id]), atual: p.id === v.pose };
+    }),
+    pose: {
+      id: pose.id, n: pose.n, bloco: pose.bloco, giro: pose.giro, bracos: pose.bracos,
+      como: pose.como, revela: pose.revela, erro: pose.erro,
+      url: CORPO.urlDaFoto(v.d, pose.id, minha),
+      ref: ref
+        ? {
+            txt: fmtDate(instanteDaData(ref.d)),
+            url: CORPO.urlDaFoto(ref.d, pose.id, sessaoDe(S.protocolo.sessoes, ref.d).fotos[pose.id])
+          }
+        : null
+    }
+  };
+};
+
+// ---------- comparar ----------
+
+CTX.abreComparar = function () {
+  const ordem = ordemDePoses();
+  // abre na primeira pose que tem pelo menos duas sessões: abrir numa pose sem
+  // par mostraria um vazio como primeira tela
+  let pose = ordem.filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0] || ordem[0];
+  view.comparar = { pose: pose, de: null, ate: null, sobrepor: false, opacidade: 50 };
+  aplicaParPadrao();
+  render(); window.scrollTo(0, 0);
+};
+CTX.fechaComparar = function () { view.comparar = null; render(); window.scrollTo(0, 0); };
+
+function aplicaParPadrao() {
+  const c = view.comparar;
+  const par = parPadrao(S.protocolo.sessoes, c.pose);
+  c.de = par ? par.de.d : null;
+  c.ate = par ? par.ate.d : null;
+  if (par) garanteBytesDoCorpo([c.de, c.ate]);
+}
+
+CTX.setPoseComparada = function (id) { view.comparar.pose = id; aplicaParPadrao(); render(); };
+CTX.setDataComparada = function (qual, d) {
+  view.comparar[qual] = d;
+  garanteBytesDoCorpo([d]);
+  render();
+};
+CTX.setSobrepor = function (on) { view.comparar.sobrepor = !!on; render(); };
+CTX.setOpacidade = function (n) { view.comparar.opacidade = n; render(); };
+
+/** Um lado da comparação, com os números da semana daquela sessão. */
+function ladoDaComparacao(d, pose) {
+  const ses = d && sessaoDe(S.protocolo.sessoes, d);
+  const ref = ses && ses.fotos[pose];
+  const peso = ses && mediaDaSemana(S.body.peso, d);
+  const cint = ses && mediaDaSemana(S.body.cintura, d);
+  return {
+    d: d,
+    pose: pose,
+    data: ses ? fmtDate(instanteDaData(d)) : '–',
+    url: ref ? CORPO.urlDaFoto(d, pose, ref) : null,
+    aviso: ref ? 'buscando a foto…' : 'sem foto nesta pose',
+    peso: peso == null ? 'peso –' : fmtDec(peso) + ' kg',
+    cintura: cint == null ? 'cintura –' : fmtDec(cint) + ' cm'
+  };
+}
+
+CTX.comparacao = function () {
+  const c = view.comparar;
+  const lista = posesDo(S.protocolo.poses);
+  const comFoto = comAPose(S.protocolo.sessoes, c.pose);
+  const par = comFoto.length >= 2 && c.de && c.ate;
+
+  const de = ladoDaComparacao(c.de, c.pose);
+  const ate = ladoDaComparacao(c.ate, c.pose);
+  const notas = [];
+  [c.de, c.ate].forEach(function (d) {
+    const s = d && sessaoDe(S.protocolo.sessoes, d);
+    if (s && s.obs) notas.push(fmtDate(instanteDaData(d)) + ' · ' + s.obs);
+  });
+
+  let intervalo = '';
+  if (par) {
+    const dias = Math.round((instanteDaData(c.ate) - instanteDaData(c.de)) / 86400000);
+    intervalo = Math.abs(dias) + (Math.abs(dias) === 1 ? ' dia' : ' dias') + ' entre as duas · ' +
+                comFoto.length + ' sessões nesta pose';
+  }
+
+  return {
+    meta: S.protocolo.sessoes.length + (S.protocolo.sessoes.length === 1 ? ' sessão' : ' sessões'),
+    poses: lista.map(function (p) { return { k: p.id, t: p.n }; }),
+    pose: c.pose,
+    par: par,
+    vazio: comFoto.length === 0
+      ? 'Nenhuma foto nesta pose ainda.'
+      : 'Só uma sessão nesta pose. A comparação começa na segunda.',
+    datas: comFoto.map(function (s) { return { d: s.d, txt: fmtDate(instanteDaData(s.d)) }; }),
+    de: de, ate: ate,
+    sobrepor: c.sobrepor,
+    opacidade: c.opacidade,
+    intervalo: intervalo,
+    notas: notas
+  };
+};
+
+/** O resumo que aparece na aba DADOS, ao lado de peso e cintura. */
+CTX.protocoloFotos = function () {
+  const lista = posesDo(S.protocolo.poses);
+  const u = ultimaSessaoFoto(S.protocolo.sessoes);
+  const dias = diasDesdeAFoto(S.protocolo.sessoes, Date.now());
+  const hoje = sessaoDe(S.protocolo.sessoes, hojeISO());
+  const cHoje = completude(hoje, S.protocolo.poses);
+  const cU = completude(u, S.protocolo.poses);
+
+  return {
+    tem: !!u,
+    nota: u ? fmtDate(instanteDaData(u.d)) + ' · ' + cU.feitas + ' de ' + cU.total : 'nenhuma sessão ainda',
+    // atraso é informação, não cobrança: o app não tem streak nem medalha
+    dias: dias == null ? '–' : String(dias),
+    diasCor: dias != null && dias > CADENCIA_DIAS ? 'ins-amber' : '',
+    cadencia: 'a cada ' + CADENCIA_DIAS + ' dias',
+    pontos: lista.map(function (p) {
+      return { id: p.id, n: p.n, feita: !!(u && u.fotos[p.id]) };
+    }),
+    cta: hoje && !cHoje.cheia
+      ? 'continuar · ' + cHoje.feitas + ' de ' + cHoje.total
+      : (hoje ? 'refazer alguma pose' : 'nova sessão'),
+    podeComparar: lista.some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; })
+  };
 };

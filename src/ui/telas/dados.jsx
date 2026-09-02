@@ -71,6 +71,57 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
 }
 
 /**
+ * As fotos de acompanhamento.
+ *
+ * Fica entre cintura e força de propósito: é a terceira série do mesmo assunto
+ * — está funcionando? —, e a única que não vira número. Separá-la numa aba
+ * própria a transformaria em álbum.
+ *
+ * Os dias desde a última sessão são INFORMAÇÃO, não cobrança. Passar de 14 põe
+ * o número em âmbar e para por aí: não há sequência, não há medalha e não há
+ * tela de parabéns em lugar nenhum deste produto.
+ */
+function Fotos({ f, ctx }) {
+  return (
+    <Secao rotulo="fotos" nota={f.nota}>
+      <div class="dd-fotos">
+        <GradeMetricas
+          colunas={2}
+          celulas={[
+            { k: 'd', rotulo: 'dias desde a última', valor: f.dias, cor: f.diasCor },
+            { k: 'c', rotulo: 'cadência', valor: f.cadencia }
+          ]}
+        />
+
+        {f.tem && (
+          <div class="dd-fotos-pontos" aria-label="poses da última sessão">
+            {f.pontos.map(p => (
+              <span key={p.id} class={'dd-fotos-p' + (p.feita ? ' feita' : '')} title={p.n} />
+            ))}
+          </div>
+        )}
+
+        <div class="dd-fotos-b">
+          <button class="ins-btn-primary" onClick={ctx.abreProtocolo}>{f.cta}</button>
+          {f.podeComparar && (
+            <button class="ins-btn-secondary" onClick={ctx.abreComparar}>comparar</button>
+          )}
+        </div>
+      </div>
+
+      <Procedencia>
+        de manhã, em jejum, junto com a pesagem · as marcas de fita no chão são
+        o que faz duas sessões serem comparáveis
+      </Procedencia>
+      <Procedencia>
+        as fotos ficam neste aparelho e no seu bucket privado · não entram no
+        backup em JSON
+      </Procedencia>
+    </Secao>
+  );
+}
+
+/**
  * O calendário do mês e a lista de sessões.
  *
  * A média é MÓVEL, de treinos por semana — nunca sequência de dias. Quem treina
@@ -269,6 +320,8 @@ export function Dados({ ctx }) {
           mal posicionada erra mais do que a balança varia de água.
         </Procedencia>
       </Medida>
+
+      <Fotos f={ctx.protocoloFotos()} ctx={ctx} />
 
       <Secao rotulo="força estimada" nota="e1rm · fórmula de epley">
         {d.forca.serie.some(x => x != null)

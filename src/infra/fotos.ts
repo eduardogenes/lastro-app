@@ -205,9 +205,18 @@ function desenha(
   return ctx;
 }
 
-export async function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }> {
+/**
+ * Reduz para um teto de lado maior escolhido por quem chama.
+ *
+ * O teto virou parâmetro quando a foto de CORPO entrou: o 1080 acima foi
+ * calculado para a miniatura do aparelho, e a foto de acompanhamento é olhada
+ * lado a lado com outra de dois meses atrás — ela precisa de mais pixel. O
+ * caminho de redução, a escolha WebP/JPEG e o achatamento da transparência são
+ * os mesmos, e continuar tendo UM só é o que impede as duas de divergirem.
+ */
+export async function reduzPara(arquivo: Blob, ladoMaior: number): Promise<{ blob: Blob; ext: string }> {
   const bitmap = await createImageBitmap(arquivo);
-  const escala = Math.min(1, LADO_MAIOR / Math.max(bitmap.width, bitmap.height));
+  const escala = Math.min(1, ladoMaior / Math.max(bitmap.width, bitmap.height));
   const l = Math.round(bitmap.width * escala);
   const a = Math.round(bitmap.height * escala);
 
@@ -237,6 +246,11 @@ export async function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }>
   });
   if (!jpeg) throw new Error('não deu para codificar a imagem');
   return { blob: jpeg, ext: 'jpeg' };
+}
+
+/** A foto do aparelho: teto de 1080, que é o que a miniatura precisa. */
+export function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }> {
+  return reduzPara(arquivo, LADO_MAIOR);
 }
 
 /** Guarda os bytes no aparelho. */

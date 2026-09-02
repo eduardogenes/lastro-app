@@ -26,11 +26,11 @@
 //   antiga que T.
 
 import type {
-  Cardio, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, Sessao
+  Cardio, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, PoseId, Sessao, SessaoFoto
 } from './tipos';
 
 /** Limites por coleção, iguais aos que o app aplica ao gravar. */
-const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200 };
+const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200 };
 
 /** Lápides mais velhas que isto são podadas: o que sumiu há meses já sumiu dos dois lados. */
 export const LAPIDE_DIAS = 90;
@@ -49,6 +49,8 @@ export interface ResumoDaFusao {
   sessoes: number;
   medidas: number;
   cardio: number;
+  /** fotos de acompanhamento que vieram do outro lado */
+  fotosCorpo: number;
   /** registros que uma lápide removeu */
   apagados: number;
   /** de que lado vieram os documentos (programa, plano de comida, cadência) */
@@ -79,6 +81,19 @@ export function chaveDeMarca(qual: 'peso' | 'cintura', x: Pick<Marca, 't'>): str
 export function chaveDeCardio(c: Pick<Cardio, 't'>): string { return 'cardio:' + c.t; }
 export function chaveDeDescanso(dataISO: string): string { return 'descanso:' + dataISO; }
 export function chaveDeFoto(idEx: IdEx): string { return 'foto:' + idEx; }
+
+/**
+ * A sessão de fotos do corpo. A chave é a DATA — é a chave natural do
+ * protocolo, e duas sessões no mesmo dia não existem.
+ */
+export function chaveDeSessaoFoto(d: string): string { return 'corpo:' + d; }
+
+/**
+ * Uma foto dentro da sessão. Precisa de lápide PRÓPRIA: refazer uma pose apaga
+ * a anterior, e sem esta chave o outro aparelho a traria de volta na fusão —
+ * a sessão continuaria existindo, então a lápide da sessão não a alcançaria.
+ */
+export function chaveDeFotoDoCorpo(d: string, pose: PoseId): string { return 'corpo:' + d + ':' + pose; }
 
 // ---------- as peças ----------
 
@@ -123,6 +138,75 @@ function uneLista<T>(
     itens.push(por[k]);
   });
   return { itens: itens, vindos: Math.max(0, vindos), apagados: apagados };
+}
+
+/**
+ * Une as sessões de fotos do corpo.
+ *
+ * Não dá para reusar `uneLista`: quando os dois lados têm a MESMA data, vencer
+ * pelo carimbo descartaria as poses que só existem do outro lado. E esse caso é
+ * real — a sessão é longa, e nada impede que quatro poses saiam num aparelho e
+ * as outras cinco no outro depois de o primeiro ficar sem bateria.
+ *
+ * Então a data une a sessão, e DENTRO dela cada pose une pela própria versão,
+ * exatamente como `S.fotos` já faz com a foto do aparelho.
+ */
+function uneSessoesDeFoto(
+  local: SessaoFoto[], remoto: SessaoFoto[], mortos: Record<string, number>
+): { itens: SessaoFoto[]; fotosVindas: number; apagados: number } {
+  const por: Record<string, SessaoFoto> = {};
+  const fotosDaqui: Record<string, 1> = {};
+  let apagados = 0;
+
+  function carimbo(s: SessaoFoto): number { return typeof s.m === 'number' ? s.m : 0; }
+
+  function absorve(lista: SessaoFoto[], daqui: boolean): void {
+    (Array.isArray(lista) ? lista : []).forEach(function (s) {
+      if (!s || !s.d) return;
+      const meu = por[s.d];
+      if (!meu) {
+        por[s.d] = { d: s.d, t: s.t, fotos: {}, obs: s.obs, m: s.m };
+      } else {
+        // o instante é o da PRIMEIRA foto: o menor dos dois é o verdadeiro
+        if (typeof s.t === 'number' && (typeof meu.t !== 'number' || s.t < meu.t)) meu.t = s.t;
+        if (carimbo(s) > carimbo(meu)) { meu.obs = s.obs; meu.m = s.m; }
+      }
+      const alvo = por[s.d];
+      Object.keys(s.fotos || {}).forEach(function (pose) {
+        const ref = s.fotos[pose];
+        if (!ref || typeof ref.v !== 'number') return;
+        if (daqui) fotosDaqui[s.d + ':' + pose] = 1;
+        const atual = alvo.fotos[pose];
+        if (!atual || ref.v > atual.v) alvo.fotos[pose] = ref;
+      });
+    });
+  }
+
+  absorve(local, true);
+  absorve(remoto, false);
+
+  let fotosVindas = 0;
+  const itens: SessaoFoto[] = [];
+  Object.keys(por).forEach(function (d) {
+    const s = por[d];
+    const mortaSessao = mortos[chaveDeSessaoFoto(d)];
+    if (mortaSessao != null && carimbo(s) <= mortaSessao) {
+      apagados += Object.keys(s.fotos).length || 1;
+      return;
+    }
+    Object.keys(s.fotos).forEach(function (pose) {
+      const morta = mortos[chaveDeFotoDoCorpo(d, pose)];
+      if (morta != null && s.fotos[pose].v <= morta) { delete s.fotos[pose]; apagados++; return; }
+      if (!fotosDaqui[d + ':' + pose]) fotosVindas++;
+    });
+    // sessão que ficou sem foto nenhuma sai — ela nasce na primeira foto e não
+    // tem por que sobreviver à última
+    if (!Object.keys(s.fotos).length) return;
+    itens.push(s);
+  });
+
+  itens.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  return { itens: itens, fotosVindas: fotosVindas, apagados: apagados };
 }
 
 /** Une dois mapas simples. Em conflito de chave, vence o lado mais recente. */
@@ -184,7 +268,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   );
 
   const resumo: ResumoDaFusao = {
-    series: 0, sessoes: 0, medidas: 0, cardio: 0, apagados: 0,
+    series: 0, sessoes: 0, medidas: 0, cardio: 0, fotosCorpo: 0, apagados: 0,
     documentos: mtimeDe(remoto) === mtimeDe(local) ? 'iguais' : (remotoManda ? 'remoto' : 'local'),
     identicos: false
   };
@@ -273,6 +357,22 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   });
   base.fotos = fotos;
 
+  // ---- as sessões de foto do corpo ----
+  // Coleção com chave natural, igual às séries: os dois lados só acrescentam, e
+  // por isso nada se perde. `poses` não entra aqui — é documento, e já veio no
+  // clone do lado que manda.
+  const cf = uneSessoesDeFoto(
+    (local.protocolo && local.protocolo.sessoes) || [],
+    (remoto.protocolo && remoto.protocolo.sessoes) || [],
+    mortos
+  );
+  const poses = (remotoManda ? remoto : local).protocolo
+    ? (remotoManda ? remoto : local).protocolo.poses
+    : null;
+  base.protocolo = { poses: poses || null, sessoes: cf.itens.slice(-TETO.protocolo) };
+  resumo.fotosCorpo = cf.fotosVindas;
+  resumo.apagados += cf.apagados;
+
   // ---- mapas por exercício ----
   base.ex = uneMapa(local.ex || {}, remoto.ex || {}, remotoManda);
   base.carga = uneMapa(local.carga || {}, remoto.carga || {}, remotoManda);
@@ -285,7 +385,8 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   (base as Estado & { mtime: number }).mtime = Math.max(mtimeDe(local), mtimeDe(remoto));
 
   resumo.identicos = resumo.series === 0 && resumo.sessoes === 0 && resumo.medidas === 0 &&
-                     resumo.cardio === 0 && resumo.apagados === 0 && resumo.documentos !== 'remoto';
+                     resumo.cardio === 0 && resumo.fotosCorpo === 0 && resumo.apagados === 0 &&
+                     resumo.documentos !== 'remoto';
 
   return { estado: base, resumo: resumo };
 }

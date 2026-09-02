@@ -135,6 +135,80 @@ export interface LinhaDoEstado {
  */
 const BUCKET = 'aparelhos';
 
+/**
+ * As fotos do corpo. Bucket SEPARADO do de aparelhos, e não uma pasta dentro
+ * dele: são dois assuntos com sensibilidade diferente, e um bucket próprio é o
+ * que permite apagar tudo de uma vez sem varrer nome de arquivo.
+ */
+const BUCKET_CORPO = 'corpo';
+
+/**
+ * O endereço de um objeto no Storage.
+ *
+ * O primeiro segmento é SEMPRE o uid — é sobre ele que a política RLS decide,
+ * e é o que faz o nome do arquivo não precisar ser secreto.
+ */
+function endereco(uid: string, bucket: string, partes: string[]): string {
+  return URL_BASE + '/storage/v1/object/' + bucket + '/' + encodeURIComponent(uid) + '/' +
+         partes.map(encodeURIComponent).join('/');
+}
+
+/**
+ * Os três verbos do Storage, parametrizados pelo bucket e pelo caminho.
+ *
+ * Existem separados das funções de foto de aparelho porque o corpo entrou
+ * depois e precisava exatamente do mesmo tratamento de erro — 401 derruba a
+ * sessão, 404 na leitura não é erro, rede é falha silenciosa. Duplicar isso
+ * seria ter dois lugares para consertar quando o Supabase mudar um código.
+ */
+async function subir(bucket: string, partes: string[], blob: Blob): Promise<Resultado<true>> {
+  const t = await token();
+  if (!t.ok) return t;
+  let r: Response;
+  try {
+    r = await fetch(endereco(t.v.uid, bucket, partes), {
+      method: 'POST',
+      headers: {
+        apikey: ANON,
+        Authorization: 'Bearer ' + t.v.token,
+        'Content-Type': blob.type || 'image/webp',
+        'x-upsert': 'true'
+      },
+      body: blob
+    });
+  } catch (e) { return falha('rede', 'sem conexão'); }
+  if (r.status === 401) { await gravaSessao(null); return falha('auth', 'a sessão expirou, entre de novo'); }
+  if (!r.ok) return falha('servidor', 'o servidor recusou a foto (' + r.status + ')');
+  return { ok: true, v: true };
+}
+
+async function baixa(bucket: string, partes: string[]): Promise<Resultado<Blob | null>> {
+  const t = await token();
+  if (!t.ok) return t;
+  let r: Response;
+  try {
+    r = await fetch(endereco(t.v.uid, bucket, partes), {
+      method: 'GET', headers: { apikey: ANON, Authorization: 'Bearer ' + t.v.token }
+    });
+  } catch (e) { return falha('rede', 'sem conexão'); }
+  if (r.status === 401) { await gravaSessao(null); return falha('auth', 'a sessão expirou, entre de novo'); }
+  // 404 não é erro: é uma referência cuja foto ainda não subiu do outro lado
+  if (r.status === 404) return { ok: true, v: null };
+  if (!r.ok) return falha('servidor', 'não deu para buscar a foto (' + r.status + ')');
+  return { ok: true, v: await r.blob() };
+}
+
+async function apaga(bucket: string, partes: string[]): Promise<Resultado<true>> {
+  const t = await token();
+  if (!t.ok) return t;
+  try {
+    await fetch(endereco(t.v.uid, bucket, partes), {
+      method: 'DELETE', headers: { apikey: ANON, Authorization: 'Bearer ' + t.v.token }
+    });
+  } catch (e) { return falha('rede', 'sem conexão'); }
+  return { ok: true, v: true };
+}
+
 export const NUVEM = {
   /** A sessão atual, ou null. Síncrono depois do primeiro `pronta()`. */
   sessao(): SessaoNuvem | null { return sessao; },
@@ -190,60 +264,35 @@ export const NUVEM = {
    * a versão mudou, nenhuma linha casa e a escrita não acontece. O app relê,
    * funde e tenta de novo. Sem isso, o último a escrever apagaria o primeiro.
    */
-  /** Manda os bytes de uma foto. `upsert` porque trocar a foto reescreve. */
-  async subirFoto(idEx: string, blob: Blob, ext: string): Promise<Resultado<true>> {
-    const t = await token();
-    if (!t.ok) return t;
-    let r: Response;
-    try {
-      r = await fetch(URL_BASE + '/storage/v1/object/' + BUCKET + '/' +
-                      encodeURIComponent(t.v.uid) + '/' + encodeURIComponent(idEx) + '.' + ext, {
-        method: 'POST',
-        headers: {
-          apikey: ANON,
-          Authorization: 'Bearer ' + t.v.token,
-          'Content-Type': blob.type || 'image/webp',
-          'x-upsert': 'true'
-        },
-        body: blob
-      });
-    } catch (e) { return falha('rede', 'sem conexão'); }
-    if (r.status === 401) { await gravaSessao(null); return falha('auth', 'a sessão expirou, entre de novo'); }
-    if (!r.ok) return falha('servidor', 'o servidor recusou a foto (' + r.status + ')');
-    return { ok: true, v: true };
+  /** Manda os bytes de uma foto de aparelho. `upsert` porque trocar a foto reescreve. */
+  subirFoto(idEx: string, blob: Blob, ext: string): Promise<Resultado<true>> {
+    return subir(BUCKET, [idEx + '.' + ext], blob);
   },
 
-  /** Busca os bytes de uma foto que este aparelho ainda não tem. */
-  async baixaFoto(idEx: string, ext: string): Promise<Resultado<Blob | null>> {
-    const t = await token();
-    if (!t.ok) return t;
-    let r: Response;
-    try {
-      r = await fetch(URL_BASE + '/storage/v1/object/' + BUCKET + '/' +
-                      encodeURIComponent(t.v.uid) + '/' + encodeURIComponent(idEx) + '.' + ext, {
-        method: 'GET',
-        headers: { apikey: ANON, Authorization: 'Bearer ' + t.v.token }
-      });
-    } catch (e) { return falha('rede', 'sem conexão'); }
-    if (r.status === 401) { await gravaSessao(null); return falha('auth', 'a sessão expirou, entre de novo'); }
-    // 404 não é erro: é uma referência cuja foto ainda não subiu do outro lado
-    if (r.status === 404) return { ok: true, v: null };
-    if (!r.ok) return falha('servidor', 'não deu para buscar a foto (' + r.status + ')');
-    return { ok: true, v: await r.blob() };
+  baixaFoto(idEx: string, ext: string): Promise<Resultado<Blob | null>> {
+    return baixa(BUCKET, [idEx + '.' + ext]);
   },
 
   /** Tira os bytes de lá. Sem isto o arquivo ficaria órfão no bucket. */
-  async apagaFoto(idEx: string, ext: string): Promise<Resultado<true>> {
-    const t = await token();
-    if (!t.ok) return t;
-    try {
-      await fetch(URL_BASE + '/storage/v1/object/' + BUCKET + '/' +
-                  encodeURIComponent(t.v.uid) + '/' + encodeURIComponent(idEx) + '.' + ext, {
-        method: 'DELETE',
-        headers: { apikey: ANON, Authorization: 'Bearer ' + t.v.token }
-      });
-    } catch (e) { return falha('rede', 'sem conexão'); }
-    return { ok: true, v: true };
+  apagaFoto(idEx: string, ext: string): Promise<Resultado<true>> {
+    return apaga(BUCKET, [idEx + '.' + ext]);
+  },
+
+  // ---------- as fotos do corpo ----------
+  // Uma pasta por sessão: 'uid/2026-09-01/frente-relaxado.webp'. Ver a sessão
+  // inteira no painel do Supabase é o que torna possível conferir, um dia, se
+  // um byte se perdeu — com tudo numa pasta só isso seria um grep.
+
+  subirCorpo(d: string, pose: string, blob: Blob, ext: string): Promise<Resultado<true>> {
+    return subir(BUCKET_CORPO, [d, pose + '.' + ext], blob);
+  },
+
+  baixaCorpo(d: string, pose: string, ext: string): Promise<Resultado<Blob | null>> {
+    return baixa(BUCKET_CORPO, [d, pose + '.' + ext]);
+  },
+
+  apagaCorpo(d: string, pose: string, ext: string): Promise<Resultado<true>> {
+    return apaga(BUCKET_CORPO, [d, pose + '.' + ext]);
   },
 
   async empurra(deV: number | null, data: unknown): Promise<Resultado<number>> {

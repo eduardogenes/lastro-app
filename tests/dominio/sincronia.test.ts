@@ -6,8 +6,8 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { funde, chaveDeLog, chaveDeSessao, chaveDeMarca, chaveDeCardio, LAPIDE_DIAS } from '../../src/dominio/sincronia';
-import type { Estado, Log } from '../../src/dominio/tipos';
+import { funde, chaveDeLog, chaveDeSessao, chaveDeMarca, chaveDeCardio, chaveDeSessaoFoto, chaveDeFotoDoCorpo, LAPIDE_DIAS } from '../../src/dominio/sincronia';
+import type { Estado, Log, SessaoFoto } from '../../src/dominio/tipos';
 
 const DIA = 86400000;
 const T0 = new Date(2026, 7, 24, 9, 0).getTime();
@@ -249,4 +249,113 @@ test('a série carrega o próprio RIR sem atrapalhar quem lê carga e repetiçã
   // série antiga, de dois números, continua válida
   const sem: Log = { t: T0, sid: T0, sets: [[60, 8]] };
   assert.strictEqual(sem.sets[0]![2], undefined);
+});
+
+// ---------- as sessões de foto do corpo ----------
+// A sessão de fotos é longa e nada garante que ela saia inteira de um aparelho
+// só. Estes testes são sobre o caso em que ela NÃO sai.
+
+function sfoto(d: string, poses: Record<string, number>, extra: Partial<SessaoFoto> = {}): SessaoFoto {
+  const fotos: SessaoFoto['fotos'] = {};
+  Object.keys(poses).forEach(p => { fotos[p] = { v: poses[p], ext: 'webp' }; });
+  return Object.assign({ d, t: poses[Object.keys(poses)[0]] || 0, fotos }, extra) as SessaoFoto;
+}
+
+test('poses tiradas em aparelhos diferentes no MESMO dia se somam', () => {
+  const celular = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-24', { 'frente-relaxado': T0, 'perfil-direito': T0 + 1 })
+  ] } });
+  const notebook = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-24', { 'costas-relaxado': T0 + 2 })
+  ] } });
+
+  const { estado: r, resumo } = funde(notebook, celular, T0);
+  assert.strictEqual(r.protocolo.sessoes.length, 1, 'continua sendo uma sessão só');
+  assert.deepStrictEqual(
+    Object.keys(r.protocolo.sessoes[0].fotos).sort(),
+    ['costas-relaxado', 'frente-relaxado', 'perfil-direito']
+  );
+  assert.strictEqual(resumo.fotosCorpo, 2, 'duas fotos vieram do outro lado');
+});
+
+test('refazer uma pose vence a versão antiga do outro aparelho', () => {
+  const novo = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-24', { 'frente-relaxado': T0 + 5000 })
+  ] } });
+  const velho = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-24', { 'frente-relaxado': T0 })
+  ] } });
+
+  const { estado: r } = funde(velho, novo, T0);
+  assert.strictEqual(r.protocolo.sessoes[0].fotos['frente-relaxado'].v, T0 + 5000);
+});
+
+test('apagar UMA pose não a ressuscita pelo outro aparelho', () => {
+  const apagou = estado({
+    mtime: T0,
+    protocolo: { poses: null, sessoes: [sfoto('2026-08-24', { 'costas-relaxado': T0 })] },
+    apagados: { [chaveDeFotoDoCorpo('2026-08-24', 'frente-relaxado')]: T0 + 10 }
+  });
+  const aindaTem = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-24', { 'frente-relaxado': T0, 'costas-relaxado': T0 })
+  ] } });
+
+  const { estado: r } = funde(apagou, aindaTem, T0);
+  assert.deepStrictEqual(Object.keys(r.protocolo.sessoes[0].fotos), ['costas-relaxado']);
+});
+
+test('apagar a sessão inteira não a ressuscita, e ela some da lista', () => {
+  const apagou = estado({
+    mtime: T0,
+    protocolo: { poses: null, sessoes: [] },
+    apagados: { [chaveDeSessaoFoto('2026-08-24')]: T0 + 10 }
+  });
+  const aindaTem = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    Object.assign(sfoto('2026-08-24', { 'frente-relaxado': T0 }), { m: T0 })
+  ] } });
+
+  const { estado: r } = funde(apagou, aindaTem, T0);
+  assert.strictEqual(r.protocolo.sessoes.length, 0);
+});
+
+test('sessão que ficou sem foto nenhuma não sobra na lista', () => {
+  const a = estado({ mtime: T0, protocolo: { poses: null, sessoes: [sfoto('2026-08-24', {})] } });
+  const b = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [] } });
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.protocolo.sessoes.length, 0);
+});
+
+test('a nota da sessão vem do lado alterado por último', () => {
+  const novo = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    Object.assign(sfoto('2026-08-24', { 'frente-relaxado': T0 }), { obs: 'voltando de gripe', m: T0 + 100 })
+  ] } });
+  const velho = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    Object.assign(sfoto('2026-08-24', { 'frente-relaxado': T0 }), { obs: 'nada', m: T0 })
+  ] } });
+  const { estado: r } = funde(velho, novo, T0);
+  assert.strictEqual(r.protocolo.sessoes[0].obs, 'voltando de gripe');
+});
+
+test('a fusão é estável: repetir não muda mais nada', () => {
+  const a = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-24', { 'frente-relaxado': T0 })
+  ] } });
+  const b = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-10', { 'costas-relaxado': T0 - DIA })
+  ] } });
+  const um = funde(a, b, T0).estado;
+  const dois = funde(um, um, T0);
+  assert.deepStrictEqual(dois.estado.protocolo, um.protocolo);
+  assert.strictEqual(dois.resumo.fotosCorpo, 0);
+  assert.strictEqual(dois.resumo.identicos, true);
+});
+
+test('estado sem protocolo nenhum não quebra a fusão', () => {
+  const semNada = estado({ mtime: T0 });
+  delete (semNada as Partial<Estado>).protocolo;
+  const com = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-24', { 'frente-relaxado': T0 })
+  ] } });
+  const { estado: r } = funde(semNada, com, T0);
+  assert.strictEqual(r.protocolo.sessoes.length, 1);
 });

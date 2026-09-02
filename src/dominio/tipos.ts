@@ -199,6 +199,46 @@ export interface FotoRef {
   ext: string;
 }
 
+/** id de uma pose do protocolo, derivado do nome uma vez só. */
+export type PoseId = string;
+
+/** Uma pose do protocolo de fotos: o que ela é e como se executa. */
+export interface Pose {
+  id: PoseId;
+  /** nome como aparece na tela */
+  n: string;
+  /** a que pergunta a foto responde */
+  bloco: 'referência' | 'músculo' | 'postura';
+  /** rotação do corpo em relação à câmera */
+  giro: 0 | 90 | 180 | 270;
+  /** resumo curto da posição dos braços, para o cabeçalho */
+  bracos: string;
+  /** execução, uma instrução por linha */
+  como: string[];
+  revela: string;
+  erro: string;
+}
+
+/**
+ * Uma sessão de fotos. A chave natural é a DATA — duas sessões no mesmo dia não
+ * existem no protocolo, e usar a data faz a fusão convergir sem sorteio.
+ *
+ * `fotos` guarda só a REFERÊNCIA de cada pose, nunca os bytes: eles moram no
+ * Cache Storage e replicam pelo bucket, pela mesma razão que já vale para a
+ * foto do aparelho.
+ */
+export interface SessaoFoto {
+  /** 'AAAA-MM-DD' local */
+  d: string;
+  /** instante da primeira foto */
+  t: number;
+  fotos: Record<PoseId, FotoRef>;
+  /** a nota que explica, três meses depois, o mês fora da curva */
+  obs?: string;
+  /** quando foi alterada pela última vez; a fusão a usa para decidir */
+  m?: number;
+}
+
 /** Uma marca corporal. */
 export interface Marca { t: number; v: number; /** alterada em */ m?: number; }
 
@@ -338,6 +378,20 @@ export interface Estado {
    * Aqui ele responde só à pergunta que o calendário não sabia responder: o dia
    * está vazio porque você descansou ou porque esqueceu de registrar?
    */
+  /**
+   * O protocolo de fotos de acompanhamento.
+   *
+   * `poses` é a ordem/seleção dele, semeada do PROTOCOLO do código — mesmo par
+   * que `PROGRAMA`/`S.prog`. `null` significa "a do código".
+   *
+   * `sessoes` é coleção com chave natural (a data), e por isso funde sem perda.
+   * Só a referência de cada foto entra aqui: 26 sessões por ano custam uns 7 kB
+   * no estado, e o estado inteiro é reserializado a cada série registrada.
+   */
+  protocolo: {
+    poses: PoseId[] | null;
+    sessoes: SessaoFoto[];
+  };
   descanso: Record<string, number>;
   /**
    * Lápides: chave do registro → quando foi apagado.
