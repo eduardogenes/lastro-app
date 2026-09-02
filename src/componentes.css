@@ -594,9 +594,30 @@
 
 /* ---- Telas cheias ------------------------------------------------------ */
 
+/* GRUDADO NO TOPO, e isto não é enfeite.
+   Não há voltar do sistema: o app não usa `history`, então em PWA instalado não
+   existe botão do navegador nem gesto de borda. Este botão é a ÚNICA saída de
+   uma tela cheia — e ele rolava para fora em quatro dos cinco destinos, o que
+   obrigava a rolar tudo de volta para conseguir sair.
+
+   Sticky funciona aqui porque nenhum ancestral cria scroll container: o `body`
+   usa `overflow-x: clip`, que corta sem rolar. Trocar por `hidden` reintroduz
+   `auto` no outro eixo e derruba isto em silêncio. */
 .tc-topo {
+  position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center; justify-content: space-between;
-  gap: var(--ins-3); padding-top: calc(var(--ins-6) + var(--sa-top));
+  gap: var(--ins-3);
+  padding-top: calc(var(--ins-6) + var(--sa-top));
+  padding-bottom: var(--ins-4);
+  /* opaco: o conteúdo passa POR BAIXO e precisa sumir, não borrar. Sem
+     backdrop-filter, que pisca no Blink ao rolar. */
+  background: var(--ins-canvas);
+  border-bottom: 1px solid var(--ins-hairline);
+  /* a goteira lateral do #app é vazada para a faixa tocar as bordas */
+  margin-left: calc(-1 * max(var(--ins-8), var(--sa-left)));
+  margin-right: calc(-1 * max(var(--ins-8), var(--sa-right)));
+  padding-left: max(var(--ins-8), var(--sa-left));
+  padding-right: max(var(--ins-8), var(--sa-right));
 }
 .tc-back {
   min-height: var(--ins-tap); padding: 0 var(--ins-4) 0 0;

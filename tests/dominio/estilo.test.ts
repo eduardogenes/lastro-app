@@ -141,6 +141,13 @@ test('alvo de toque não é forçado duas vezes', () => {
 // cada regra abaixo tira um gesto que só faz sentido numa página.
 
 const base = fs.readFileSync(path.join(RAIZ, 'src', 'base.css'), 'utf8');
+
+/** Todas as declarações de um seletor, juntas — ele aparece em mais de um bloco. */
+function regras(css: string, seletor: string): string {
+  const re = new RegExp('(?:^|[,{}\\n])\\s*' + seletor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
+                        '\\s*(?:,[^{]*)?\\{([^}]*)\\}', 'g');
+  return [...css.matchAll(re)].map(m => m[1]).join('\n');
+}
 const indexHtml = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
 const mainJsx = fs.readFileSync(path.join(RAIZ, 'src', 'main.jsx'), 'utf8');
 
@@ -170,11 +177,11 @@ test('a pinça do WebKit é recusada, que o touch-action não alcança', () => {
 });
 
 test('segurar o dedo na interface não abre menu nem seleciona', () => {
-  const corpo = base.match(/\nbody\s*\{([^}]*)\}/);
+  const corpo = regras(base, 'body');
   assert.ok(corpo, 'a regra de body existe');
-  assert.match(corpo![1], /-webkit-touch-callout:\s*none/);
-  assert.match(corpo![1], /user-select:\s*none/);
-  assert.match(corpo![1], /-webkit-tap-highlight-color:\s*transparent/);
+  assert.match(corpo, /-webkit-touch-callout:\s*none/);
+  assert.match(corpo, /user-select:\s*none/);
+  assert.match(corpo, /-webkit-tap-highlight-color:\s*transparent/);
 });
 
 test('mas campo e prosa continuam selecionáveis', () => {
@@ -193,4 +200,27 @@ test('o campo nunca fica abaixo de 16px, que é o que faz o Safari dar zoom', ()
   const m = base.match(/\ninput,\s*textarea,\s*select\s*\{([^}]*)\}/);
   assert.ok(m, 'a regra dos campos existe');
   assert.match(m![1], /font-size:\s*16px/);
+});
+
+// ---------- a saída de uma tela cheia ----------
+
+test('o voltar fica grudado no topo, porque é a única saída', () => {
+  // O app não usa `history`: em PWA instalado não há botão do navegador nem
+  // gesto de borda. Se este botão rolar para fora, sair exige rolar tudo de
+  // volta — e ele rolava, em quatro dos cinco destinos.
+  const comp = fs.readFileSync(path.join(RAIZ, 'src', 'componentes.css'), 'utf8');
+  const topo = comp.match(/\.tc-topo\s*\{([^}]*)\}/);
+  assert.ok(topo, 'a regra existe');
+  assert.match(topo![1], /position:\s*sticky/);
+  assert.match(topo![1], /top:\s*0/);
+  assert.match(topo![1], /background:/, 'opaco: o conteúdo passa por baixo e precisa sumir');
+});
+
+test('nenhum ancestral do sticky vira scroll container', () => {
+  // Um `overflow: hidden` no body derrubaria o sticky em silêncio — hidden
+  // vira `auto` no outro eixo e cria o container. `clip` corta sem rolar.
+  const corpo = regras(base, 'body');
+  assert.match(corpo, /overflow-x:\s*clip/);
+  assert.ok(!/overflow(-x)?:\s*(hidden|auto|scroll)/.test(corpo),
+    'overflow que cria scroll container mata o voltar grudado');
 });

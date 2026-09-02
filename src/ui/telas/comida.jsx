@@ -6,7 +6,7 @@
 // que ninguém confere no açougue.
 
 import { useState } from 'preact/hooks';
-import { Cabecalho, Chips, Procedencia, Secao, Vazio } from '../instrumento/primitivos.jsx';
+import { Cabecalho, Chips, GradeMetricas, Procedencia, Secao, Vazio } from '../instrumento/primitivos.jsx';
 import { CATEGORIAS } from '../../dominio/nutricao/alimentos';
 import { fmtKg } from '../../dominio/nutricao/calculo';
 
@@ -94,6 +94,7 @@ export function Comida({ ctx }) {
   const [aba, setAba] = useState('plano');
   const [busca, setBusca] = useState('');
   const plano = ctx.planoCompleto();
+  const resumo = ctx.resumoDoPlano();
 
   return (
     <>
@@ -129,6 +130,28 @@ export function Comida({ ctx }) {
             ))}
           </div>
           <button class="ins-btn-add" onClick={ctx.novaRefeicao}>+ adicionar refeição</button>
+        </Secao>
+      )}
+
+      {/* O que o plano soma. DOIS totais e não um: pré-treino e treino só
+          entram em dia de treino, então um número só estaria errado metade da
+          semana — e a lista acima já promete essa distinção em cada linha.
+
+          Fecha a tela também no sentido literal: sem isto o plano acabava no
+          botão tracejado e sobravam 220px de vazio até a tab bar, enquanto toda
+          outra tela do app termina a 29px dela. */}
+      {aba === 'plano' && (
+        <Secao rotulo="o dia fecha em" nota={resumo.refeicoes + ' refeições no plano'}>
+          <GradeMetricas
+            colunas={2}
+            celulas={[
+              { k: 't', rotulo: 'dia de treino', valor: resumo.treino.kcal, nota: resumo.treino.macros },
+              { k: 'd', rotulo: 'dia sem treino', valor: resumo.descanso.kcal, nota: resumo.descanso.macros }
+            ]}
+          />
+          <Procedencia>
+            somado do plano, não do que foi comido — o registrado do dia fica em HOJE
+          </Procedencia>
         </Secao>
       )}
 

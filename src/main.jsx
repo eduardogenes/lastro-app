@@ -3391,6 +3391,37 @@ CTX.planoCompleto = function () {
     });
 };
 
+/**
+ * O que o plano soma, por tipo de dia.
+ *
+ * Dois totais e não um: refeições são condicionais — pré-treino e treino só
+ * entram em dia de treino —, então um número só estaria errado metade da
+ * semana. A lista já diz "só em dia de treino" em cada linha; isto fecha a
+ * conta que aquelas linhas abrem.
+ *
+ * Fica no fim da tela porque é onde se olha depois de editar: a pergunta que
+ * sobra ao mexer numa refeição é se o dia ainda fecha.
+ */
+CTX.resumoDoPlano = function () {
+  const cat = catalogoAlimentos();
+  const plano = planoDeComida();
+  const comTreino = totalDoDia(plano, cat, true, false, {});
+  const semTreino = totalDoDia(plano, cat, false, false, {});
+  return {
+    treino: {
+      kcal: fmtInt(comTreino.kcal),
+      macros: Math.round(comTreino.p) + ' P · ' + Math.round(comTreino.c) + ' C · ' +
+              Math.round(comTreino.g) + ' G'
+    },
+    descanso: {
+      kcal: fmtInt(semTreino.kcal),
+      macros: Math.round(semTreino.p) + ' P · ' + Math.round(semTreino.c) + ' C · ' +
+              Math.round(semTreino.g) + ' G'
+    },
+    refeicoes: plano.length
+  };
+};
+
 CTX.alimentosFiltrados = function (q) {
   const cat = catalogoAlimentos();
   const termo = String(q || '').toLowerCase().trim();
