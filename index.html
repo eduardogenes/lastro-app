@@ -35,6 +35,16 @@
      toast informa, nunca interrompe. -->
 <div id="toast" role="status" aria-live="polite"></div>
 
+<!-- O aviso de telefone deitado. Fica no HTML e não no Preact porque não
+     depende de estado nenhum: quem o liga e desliga é a media query, e assim
+     ele aparece mesmo antes de o app terminar de carregar. -->
+<div id="deitado" role="alert">
+  <span class="ins-label">retrato</span>
+  <b>Gire o telefone</b>
+  <p>O app foi desenhado para uma mão, de pé, no meio de uma série. Deitado, a
+     lista de carga e repetição não cabe na altura da tela.</p>
+</div>
+
 <div id="timer">
   <div id="tval">0:00</div>
   <div id="tbar"><div id="tfill"></div></div>

@@ -303,3 +303,39 @@ p, .ins-prosa, input, textarea {
   .ins-live-dot { animation: none; }
   * { transition: none !important; }
 }
+
+
+/* ============================================================
+   SÓ RETRATO
+   O manifesto já pede `"orientation": "portrait"`, e o Android
+   honra em PWA instalado. O iOS não: lá o app gira junto com o
+   telefone, e é isto que segura.
+
+   A condição tem DUAS partes de propósito. `orientation:
+   landscape` sozinho pegaria qualquer janela de computador, que
+   é deitada por natureza — e o app roda no navegador de mesa em
+   desenvolvimento e no `npm run preview`. A altura é o que
+   separa um telefone virado (uns 400px) de uma janela de
+   verdade: abaixo de 520px de altura e deitado é telefone.
+   ============================================================ */
+#deitado { display: none; }
+
+@media (orientation: landscape) and (max-height: 520px) {
+  #deitado {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: var(--ins-4);
+    padding: var(--ins-8) max(var(--ins-9), var(--sa-left)) var(--ins-8) max(var(--ins-9), var(--sa-right));
+    background: var(--ins-canvas);
+    text-align: center;
+  }
+  #deitado b {
+    font: 500 27px/1.1 var(--ins-font-display);
+    letter-spacing: -.02em; color: var(--ins-text);
+  }
+  #deitado p {
+    margin: 0; max-width: 46ch;
+    font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-4);
+  }
+}

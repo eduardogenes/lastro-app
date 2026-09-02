@@ -300,3 +300,28 @@ test('o cronômetro de descanso não divide o rodapé com a tab bar', () => {
     'empilhado ACIMA da tab bar; --ins-tabbar já traz a área segura');
   assert.ok(!/bottom:\s*0/.test(t), 'bottom: 0 é onde a tab bar mora');
 });
+
+// ---------- só retrato ----------
+
+test('o app avisa quando o telefone está deitado', () => {
+  const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
+  assert.match(html, /id="deitado"/, 'o aviso vive no HTML, não no Preact');
+  assert.match(html, /role="alert"/);
+
+  const manifesto = fs.readFileSync(path.join(RAIZ, 'public', 'manifest.webmanifest'), 'utf8');
+  assert.match(manifesto, /"orientation":\s*"portrait"/,
+    'o manifesto pede retrato; o Android honra em PWA instalado');
+});
+
+test('a trava de retrato não pega janela de computador', () => {
+  // `orientation: landscape` sozinho pegaria qualquer janela de mesa, que é
+  // deitada por natureza — e o app roda no navegador em desenvolvimento.
+  // A ALTURA é o que separa telefone virado de janela de verdade.
+  const m = base.match(/@media\s*\(orientation:\s*landscape\)([^{]*)\{/);
+  assert.ok(m, 'a media query de deitado existe');
+  assert.match(m![1], /max-height/,
+    'sem teto de altura, o aviso cobriria o app no computador');
+  const teto = Number((m![1].match(/max-height:\s*(\d+)px/) || [])[1]);
+  assert.ok(teto > 0 && teto <= 560,
+    'o teto tem que ficar abaixo de uma janela de mesa: ' + teto);
+});
