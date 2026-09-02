@@ -248,9 +248,14 @@ p, .ins-prosa, input, textarea {
   font: 400 11px/1 var(--ins-font-mono);
   letter-spacing: .09em; text-transform: uppercase;
   color: var(--ins-text-3);
+  position: relative;
 }
+/* 33 -> 41, e não 44: chips QUEBRAM linha, e o vão entre duas fileiras é o
+   limite. Crescer além dele faria a fileira de baixo roubar o toque da de
+   cima — pior que o alvo pequeno. */
+.ins-chip::after { content: ""; position: absolute; inset: -4px 0; }
 .ins-chip.on { background: var(--ins-acid); color: var(--ins-on-acid); border-color: var(--ins-acid); }
-.ins-chips { display: flex; flex-wrap: wrap; gap: var(--ins-2); }
+.ins-chips { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
 
 /* ---- Formulário ------------------------------------------------------- */
 

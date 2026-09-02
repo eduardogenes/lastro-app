@@ -8,7 +8,21 @@
 // O botão de voltar é o único caminho de saída, e por isso vem primeiro, com
 // alvo cheio de 46px e área segura contada no topo.
 
+import { useEffect, useRef } from 'preact/hooks';
+
 export function TelaCheia({ olho, meta, titulo, aoVoltar, acao, corpo, children }) {
+  const alvo = useRef(null);
+
+  // O foco vai para o título ao ENTRAR no destino.
+  //
+  // Sem isto o scroll ia para o topo e o foco ficava para trás, na lista de
+  // onde se veio: para teclado e VoiceOver a tela tinha mudado e o cursor não.
+  // Roda uma vez por montagem — enquanto o destino continua o mesmo, o Preact
+  // mantém a instância e o foco não é roubado de quem está digitando.
+  useEffect(function () {
+    if (alvo.current) alvo.current.focus({ preventScroll: true });
+  }, []);
+
   return (
     <div class="tc">
       <div class="tc-topo">
@@ -20,7 +34,10 @@ export function TelaCheia({ olho, meta, titulo, aoVoltar, acao, corpo, children 
           <span class="ins-label">{olho}</span>
           {meta && <span class="ins-label tc-meta">{meta}</span>}
         </div>
-        <h2 class="ins-display tc-titulo htitle">{titulo}</h2>
+        {/* h1 e não h2: aqui não existe o cabeçalho das abas, e sem isto o
+            destino fica sem título de primeiro nível. `tabindex=-1` o torna
+            alvo de foco sem entrar na ordem de tabulação. */}
+        <h1 ref={alvo} tabindex="-1" class="ins-display tc-titulo htitle">{titulo}</h1>
       </div>
       <div class={'tc-corpo ' + (corpo || '')}>{children}</div>
     </div>

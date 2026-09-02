@@ -46,6 +46,13 @@ function Bloco({ titulo, children, texto }) {
   );
 }
 
+const SECOES = [
+  { id: 'gu-semana', t: 'a semana' }, { id: 'gu-alvo', t: 'alvo do dia' },
+  { id: 'gu-exec', t: 'execução' },   { id: 'gu-prog', t: 'o programa' },
+  { id: 'gu-sinc', t: 'sincronizar' },{ id: 'gu-bkp', t: 'backup' },
+  { id: 'gu-rest', t: 'restaurar' },  { id: 'gu-dados', t: 'seus dados' }
+];
+
 export function Guia({ ctx }) {
   const g = ctx.guia();
   const d = ctx.dadosDoApp();
@@ -66,7 +73,18 @@ export function Guia({ ctx }) {
         </div>
       )}
 
-      <Secao primeira rotulo="a semana" nota="toque para alternar">
+      {/* O guia é a tela mais longa do app — quase sete telas de rolagem — e é de
+          CONSULTA: entra-se nele com uma pergunta ("como restauro?"), não para
+          ler do começo. Sem índice, achar era rolar. */}
+      <Secao primeira rotulo="ir para" nota="a tela mais longa do app">
+        <div class="ins-chips">
+          {SECOES.map(x => (
+            <button key={x.id} class="ins-chip" onClick={() => ctx.vaiParaSecao(x.id)}>{x.t}</button>
+          ))}
+        </div>
+      </Secao>
+
+      <Secao id="gu-semana" rotulo="a semana" nota="toque para alternar">
         <div class="gu-semana">
           {SEMANA.map(d2 => {
             const treina = g.cadencia[d2.i] === 'treino';
@@ -88,7 +106,7 @@ export function Guia({ ctx }) {
         </Procedencia>
       </Secao>
 
-      <Secao rotulo="alvo por tipo de dia" nota="calculado do plano">
+      <Secao id="gu-alvo" rotulo="alvo por tipo de dia" nota="calculado do plano">
         <div class="ins-lista">
           {g.alvos.map(a => (
             <div key={a.k} class="ins-linha">
@@ -106,11 +124,11 @@ export function Guia({ ctx }) {
         </Procedencia>
       </Secao>
 
-      <Secao rotulo="execução" nota="as regras do treinador">
+      <Secao id="gu-exec" rotulo="execução" nota="as regras do treinador">
         {g.regras.map(r => <Regra key={r.k} r={r} />)}
       </Secao>
 
-      <Secao rotulo="o programa">
+      <Secao id="gu-prog" rotulo="o programa">
         <Bloco
           titulo="Seus treinos"
           texto={`Os ${d.treinos} treinos, a ordem da rotação e os exercícios. Mudança aqui vale a partir do próximo treino; para mudar só o treino de hoje, use a edição na tela de treino.`}
@@ -141,7 +159,7 @@ export function Guia({ ctx }) {
           "e se eu perder o aparelho?", e a nuvem é a resposta que não depende
           de você lembrar. O backup continua sendo a cópia que não depende de
           ninguém — nem do Supabase. */}
-      <Secao rotulo="sincronizar">
+      <Secao id="gu-sinc" rotulo="sincronizar">
         {n.dentro ? (
           <Bloco titulo={n.conta} texto={n.explica}>
             <div class="gu-sync">
@@ -175,7 +193,7 @@ export function Guia({ ctx }) {
         )}
       </Secao>
 
-      <Secao rotulo="backup">
+      <Secao id="gu-bkp" rotulo="backup">
         <Bloco
           titulo="Exportar"
           texto="Baixa todo o histórico num arquivo JSON. Guarde antes de trocar de celular, limpar o navegador ou mexer no app."
@@ -223,7 +241,7 @@ export function Guia({ ctx }) {
         </Bloco>
       </Secao>
 
-      <Secao rotulo="restaurar" nota="os dois preservam o histórico">
+      <Secao id="gu-rest" rotulo="restaurar" nota="os dois preservam o histórico">
         <div class="gu-acoes">
           <button class="ins-btn-secondary ins-btn-destructive" onClick={ctx.restauraPrograma}>
             restaurar o programa do treinador
@@ -238,7 +256,7 @@ export function Guia({ ctx }) {
         </Procedencia>
       </Secao>
 
-      <Secao rotulo="onde ficam seus dados">
+      <Secao id="gu-dados" rotulo="onde ficam seus dados">
         <div class="ins-lista">
           <div class="ins-linha">
             <span class="ins-linha-n"><span class="ins-linha-t">salvos em</span></span>

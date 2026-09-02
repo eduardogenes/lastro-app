@@ -41,9 +41,9 @@ export function BotaoEstado({ rotulo, valor, onClick }) {
  * Toda seção começa assim: fio de 1px, respiro, rótulo. A `nota` à direita
  * carrega contagem ou dica ("toque em ··· para editar").
  */
-export function Secao({ rotulo, nota, children, primeira }) {
+export function Secao({ rotulo, nota, children, primeira, id }) {
   return (
-    <section class={'ins-secao' + (primeira ? ' primeira' : '')}>
+    <section id={id} class={'ins-secao' + (primeira ? ' primeira' : '')}>
       {(rotulo || nota) && (
         <div class="ins-secao-h">
           <span class="ins-label">{rotulo}</span>

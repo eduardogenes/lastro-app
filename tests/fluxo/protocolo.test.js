@@ -999,3 +999,44 @@ test('refazer pela câmera deixa lápide, como pelo sistema', async () => {
     'a versão anterior tem lápide');
   a.fechar();
 });
+
+test('apagar a foto pergunta antes, e recusar cancela', async () => {
+  // é a única ação destrutiva que passava direto; e a lápide viaja na
+  // sincronização, então não apaga só deste aparelho
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
+  a.E('CTX.abreProtocolo()');
+  a.E(`view.protocolo.montagem = false; view.protocolo.pose = 'frente-relaxado'`);
+
+  a.recusar();
+  await a.E(`CTX.apagaFotoDoCorpo('frente-relaxado')`);
+  await a.esperar(60);
+  assert.strictEqual(a.J('S.protocolo.sessoes').length, 1, 'recusou: a foto ficou');
+  const perguntas = a.perguntas().join(' ');
+  assert.ok(/Apagar a foto/.test(perguntas), perguntas);
+  assert.ok(/outros na próxima sincronização/.test(perguntas), 'o aviso é honesto');
+
+  a.aceitar();
+  await a.E(`CTX.apagaFotoDoCorpo('frente-relaxado')`);
+  await a.esperar(60);
+  assert.deepStrictEqual(a.J('S.protocolo.sessoes'), [], 'aceitou: apagou');
+  a.fechar();
+});
+
+test('sair de uma tela cheia devolve a posição de leitura', async () => {
+  // as folhas já faziam isso; as telas cheias jogavam para o topo e você
+  // perdia a linha de onde veio
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
+  a.E('render()');
+
+  a.E('window.scrollY = 640');          // jsdom não rola sozinho
+  a.E('CTX.abreComparar()');
+  assert.strictEqual(a.E("scrollDoDestino['comparar']"), 640, 'guardou antes de trocar a tela');
+
+  a.E('CTX.fechaComparar()');
+  assert.strictEqual(a.E("scrollDoDestino['comparar']"), undefined, 'e devolveu, sem deixar lixo');
+  a.fechar();
+});

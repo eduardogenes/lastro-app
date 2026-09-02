@@ -64,13 +64,23 @@
 .ins-spark-s { flex: 1; height: 100%; background: var(--ins-rule); display: flex; align-items: flex-end; }
 .ins-spark-b { width: 100%; background: var(--ins-acid); }
 
+/* ---- Área de toque maior que o desenho --------------------------------- */
+/* O sistema é denso de propósito, e vários controles são menores que os 44px
+   que um dedo pede. Aumentá-los engordaria telas inteiras; o `::after` estende
+   só o ALVO, sem mexer em um pixel do desenho.
+   A regra é uma: a expansão nunca passa do vão até o vizinho, senão dois
+   controles disputam o mesmo pixel e o toque vira sorteio. É por isso que os
+   ticks crescem só na vertical — na horizontal o vizinho é OUTRO valor. */
 /* ---- Ticks ------------------------------------------------------------ */
 
 .ins-ticks { display: flex; gap: var(--ins-1); }
 .ins-tick {
   flex: 1; height: 30px;
   border: 1px solid var(--ins-border); background: transparent;
+  /* 30 -> 44 de alvo. Só vertical: o vizinho é a repetição seguinte. */
+  position: relative;
 }
+.ins-tick::after { content: ""; position: absolute; inset: -7px 0; }
 .ins-tick.on { background: var(--ins-acid); border-color: var(--ins-acid); }
 .ins-ticks-l {
   display: flex; justify-content: space-between; margin-top: var(--ins-3);
@@ -84,7 +94,10 @@
   border: 1px solid var(--ins-border-strong); background: transparent;
   font: 400 13px/1 var(--ins-font-mono); color: transparent;
   display: flex; align-items: center; justify-content: center;
+  /* 28 -> 44 nos dois eixos: ela fica sozinha na ponta da linha */
+  position: relative;
 }
+.ins-caixa::after { content: ""; position: absolute; inset: -8px; }
 .ins-caixa.on { background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid); }
 
 /* ---- Cartão-foco ------------------------------------------------------ */
@@ -164,8 +177,11 @@
 .ins-tl-toque {
   flex: 1; min-width: 0; text-align: left;
   display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3);
+  position: relative;
   /* SEM min-height de propósito. A linha inteira já mede 80px e é ela o alvo —
      forçar 46 aqui dentro empilhava 16px de ar em cima de um conteúdo de 30.
+     O ::after abaixo resolve o alvo sem repetir aquele erro: estende a área,
+     não a altura.
      Alvo pequeno é problema real; alvo grande duas vezes é só altura perdida. */
   padding: var(--ins-1) 0;
 }
@@ -193,8 +209,13 @@
 /* Alinhado ao topo, na altura do nome: com align-self esticado ele centrava
    verticalmente e ficava flutuando ao lado do resumo, longe do objeto que
    edita. */
+/* 30 -> 44 de alvo, crescendo para os lados. Os 7px da esquerda saem do
+   `.ins-tl-toque`, que tem 227 — 3% dele por 47% deste é troca boa. */
+.ins-tl-toque::after { content: ""; position: absolute; inset: -7px 0; }   /* 30 -> 44 */
+.ins-tl-mais::after { content: ""; position: absolute; inset: 0 -7px; }
 .ins-tl-mais {
   flex: 0 0 30px; align-self: stretch;
+  position: relative;
   display: flex; align-items: flex-start; justify-content: center;
   padding-top: var(--ins-6);
   color: var(--ins-text-4); font-size: 17px; line-height: 1; letter-spacing: .08em;
@@ -265,6 +286,10 @@
   padding: var(--ins-7) var(--ins-8) calc(var(--ins-9) + var(--sa-bottom));
 }
 .ins-folha-acao { margin-top: var(--ins-9); }
+
+/* Seção que é alvo de salto: encosta no topo com um respiro, senão o rótulo
+   fica colado na borda e parece cortado. */
+.ins-secao[id] { scroll-margin-top: var(--ins-9); }
 
 /* ---- Tab bar ---------------------------------------------------------- */
 
@@ -389,9 +414,11 @@
    compete com o botão de registrar, que é a ação de todo dia. */
 .dd-diabtn {
   width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
+  position: relative;
   font: 400 10px/1.4 var(--ins-font-mono);
   letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-5);
 }
+.dd-diabtn::after { content: ""; position: absolute; inset: -5px 0; }   /* 34 -> 44 */
 .dd-diabtn:active { color: var(--ins-text-3); }
 .dd-dia { margin-top: var(--ins-3); }
 
@@ -630,6 +657,11 @@
 .tc-olho { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3); }
 .tc-meta { color: var(--ins-text-5); text-align: right; }
 .tc-titulo { margin: var(--ins-3) 0 0; text-wrap: balance; }
+/* Ele recebe foco ao entrar no destino, para o leitor de tela anunciar onde
+   se está. `:focus-visible` e não `:focus`: no toque o anel apareceria em
+   toda abertura, sem nada a dizer para quem está vendo a tela. */
+.tc-titulo:focus { outline: none; }
+.tc-titulo:focus-visible { outline: var(--ins-indicator) solid var(--ins-acid); outline-offset: var(--ins-1); }
 .tc-corpo { margin-top: var(--ins-9); }
 
 .tc-nota { margin: var(--ins-6) 0 0; }
@@ -899,7 +931,9 @@
   margin-left: auto; flex: 0 0 auto; background: transparent;
   border: 1px solid var(--ins-hairline); color: var(--ins-text-5);
   font: 400 10px/1 var(--ins-font-mono); padding: 0 var(--ins-3); min-height: 32px;
+  position: relative;
 }
+.crow-x::after { content: ""; position: absolute; inset: -6px 0; }      /* 32 -> 44 */
 
 /* ===========================================================================
    O QUE VEIO DO SISTEMA ANTIGO

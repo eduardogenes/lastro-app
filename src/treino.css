@@ -540,7 +540,9 @@
   flex: 0 0 auto; min-height: var(--ins-tap-dense); padding: 0 var(--ins-4);
   border: 1px solid var(--ins-border-strong); background: transparent; color: var(--ins-text-3);
   font: 400 10px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
+  position: relative;
 }
+.cardl-b::after { content: ""; position: absolute; inset: -8px 0; }     /* 28 -> 44 */
 
 /* O ponto de cardio dentro da célula da semana: 4px, não um quadrado vazio. */
 .wd .barra-cardio {

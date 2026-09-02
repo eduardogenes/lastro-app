@@ -4928,11 +4928,11 @@ CTX.abreProtocolo = function () {
     // pergunta de novo
     montagem: !ses || !Object.keys(ses.fotos).length
   };
-  render(); window.scrollTo(0, 0);
+  entraNoDestino('protocolo'); render();
   garanteBytesDoCorpo(datasNecessarias(d));
 };
 
-CTX.fechaProtocolo = function () { view.protocolo = null; render(); window.scrollTo(0, 0); };
+CTX.fechaProtocolo = function () { view.protocolo = null; render(); saiDoDestino('protocolo'); };
 CTX.comecaSessaoDeFotos = function () { view.protocolo.montagem = false; render(); window.scrollTo(0, 0); };
 CTX.vaiParaPose = function (id) { view.protocolo.pose = id; render(); window.scrollTo(0, 0); };
 
@@ -5002,6 +5002,11 @@ CTX.apagaFotoDoCorpo = async function (pose) {
   const v = view.protocolo;
   const ses = sessaoDe(S.protocolo.sessoes, v.d);
   if (!ses || !ses.fotos[pose]) return;
+  // Confirma como toda outra ação destrutiva do app. E o aviso é honesto: a
+  // lápide viaja na sincronização, então isto não apaga só daqui.
+  const p = poseDe(pose);
+  if (!confirm('Apagar a foto de ' + (p ? p.n.toLowerCase() : pose) + '?\n\n' +
+               'Some deste aparelho e dos outros na próxima sincronização. Não tem volta.')) return;
   const ext = ses.fotos[pose].ext;
   lapide(chaveDeFotoDoCorpo(v.d, pose));
   ses.fotos = Object.assign({}, ses.fotos);
@@ -5091,9 +5096,9 @@ CTX.abreComparar = function () {
   let pose = ordem.filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0] || ordem[0];
   view.comparar = { pose: pose, de: null, ate: null, sobrepor: false, opacidade: 50 };
   aplicaParPadrao();
-  render(); window.scrollTo(0, 0);
+  entraNoDestino('comparar'); render();
 };
-CTX.fechaComparar = function () { view.comparar = null; render(); window.scrollTo(0, 0); };
+CTX.fechaComparar = function () { view.comparar = null; render(); saiDoDestino('comparar'); };
 
 function aplicaParPadrao() {
   const c = view.comparar;
@@ -5194,6 +5199,50 @@ CTX.protocoloFotos = function () {
   };
 };
 
+/**
+ * Salta para uma seção do guia.
+ *
+ * `smooth` diz de onde para onde se foi, que num salto longo é o que evita a
+ * sensação de ter trocado de tela. Menos quando o sistema pede movimento
+ * reduzido — aí o salto é seco, como o resto do app já faz com as transições.
+ */
+CTX.vaiParaSecao = function (id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const parado = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  el.scrollIntoView({ behavior: parado ? 'auto' : 'smooth', block: 'start' });
+};
+
+// ---------- a posição de leitura ----------
+// Entrar num destino leva ao topo dele; SAIR devolve onde se estava.
+//
+// As folhas já faziam isso (ver travaScroll em ui/instrumento/folha.jsx) e as
+// telas cheias não: voltar do comparar caía no topo de DADOS, não na linha de
+// onde se veio. Numa lista longa isso é perder o lugar toda vez.
+//
+// Guardado por CHAVE do destino, e não numa pilha: destino que abre outro por
+// cima (protocolo -> ajuste) tem que devolver os dois, e uma pilha
+// desbalanceada por uma saída que não passou pelo fechar iria escorregando.
+const scrollDoDestino = {};
+
+/**
+ * Chamada ANTES do `render()`, e a ordem é o ponto: depois dele a página já é a
+ * do destino — curta — e o `scrollY` do navegador já veio grampeado nela. A
+ * posição que se queria guardar teria sumido meio quadro antes.
+ */
+function entraNoDestino(chave) {
+  scrollDoDestino[chave] = window.scrollY;
+  window.scrollTo(0, 0);
+}
+
+function saiDoDestino(chave) {
+  const y = scrollDoDestino[chave] || 0;
+  delete scrollDoDestino[chave];
+  // 'instant': suave faz a página deslizar sozinha depois que o destino já
+  // sumiu, e parece bug — o mesmo motivo de folha.jsx
+  window.scrollTo({ top: y, behavior: 'instant' });
+}
+
 // ---------- ajustar uma foto ----------
 // Endireitar e reenquadrar depois de tirada. Não destrutivo: o que se grava é
 // o AJUSTE, e os bytes no cache e no bucket continuam sendo os da câmera.
@@ -5237,7 +5286,7 @@ CTX.abreAjuste = function (d, pose) {
     fantasma: true,
     fantasmaD: viz ? viz.d : null
   };
-  render(); window.scrollTo(0, 0);
+  entraNoDestino('ajuste'); render();
   garanteBytesDoCorpo(viz ? [d, viz.d] : [d]);
 };
 
@@ -5247,7 +5296,7 @@ CTX.setDataDoFantasma = function (d) {
   render();
 };
 
-CTX.fechaAjuste = function () { view.ajuste = null; render(); window.scrollTo(0, 0); };
+CTX.fechaAjuste = function () { view.ajuste = null; render(); saiDoDestino('ajuste'); };
 CTX.setGradeDoAjuste = function (on) { view.ajuste.grade = !!on; render(); };
 CTX.setFantasmaDoAjuste = function (on) { view.ajuste.fantasma = !!on; render(); };
 
@@ -5290,7 +5339,7 @@ CTX.salvaAjuste = async function () {
   ses.m = Date.now();
   view.ajuste = null;
   await save();
-  render(); window.scrollTo(0, 0);
+  render(); saiDoDestino('ajuste');
   toast(novo.enq ? 'Ajuste salvo.' : 'Ajuste desfeito.');
 };
 
@@ -5346,7 +5395,7 @@ CTX.abreCamera = async function () {
     // 10s por padrão: é quanto leva para andar três metros e parar de balançar
     timer: 10, contagem: null
   };
-  render(); window.scrollTo(0, 0);
+  entraNoDestino('camera'); render();
   garanteBytesDoCorpo(viz ? [v.d, viz.d] : [v.d]);
 
   const r = await CAM.abre();
@@ -5360,7 +5409,7 @@ CTX.abreCamera = async function () {
 CTX.fechaCamera = function () {
   encerraCamera();
   view.camera = null;
-  render(); window.scrollTo(0, 0);
+  render(); saiDoDestino('camera');
 };
 
 CTX.setGradeDaCamera = function (on) { view.camera.grade = !!on; render(); };

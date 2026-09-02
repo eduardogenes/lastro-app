@@ -29,7 +29,11 @@
 
 <div id="app"><div class="msg">Carregando seu histórico…</div></div>
 
-<div id="toast"></div>
+<!-- role=status implica aria-live=polite: todo retorno do app passa por aqui
+     ("Sincronizado", "Ajuste salvo", "Não deu para guardar a foto") e sem isto
+     nada disso chega a quem usa leitor de tela. Polite e não assertive: o
+     toast informa, nunca interrompe. -->
+<div id="toast" role="status" aria-live="polite"></div>
 
 <div id="timer">
   <div id="tval">0:00</div>

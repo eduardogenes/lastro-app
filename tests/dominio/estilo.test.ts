@@ -224,3 +224,43 @@ test('nenhum ancestral do sticky vira scroll container', () => {
   assert.ok(!/overflow(-x)?:\s*(hidden|auto|scroll)/.test(corpo),
     'overflow que cria scroll container mata o voltar grudado');
 });
+
+// ---------- alvo de toque ----------
+
+test('controle pequeno estende o ALVO sem crescer o desenho', () => {
+  // O sistema é denso de propósito. Aumentar os controles engordaria telas
+  // inteiras; o ::after estende só a área que o dedo alcança.
+  const css = ['base.css', 'componentes.css', 'treino.css']
+    .map(f => fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8')).join('\n');
+  ['.ins-caixa', '.ins-tick', '.ins-chip', '.crow-x', '.cardl-b', '.dd-diabtn'].forEach(sel => {
+    const re = new RegExp('\\' + sel + '::after\\s*\\{([^}]*)\\}');
+    const m = css.match(re);
+    assert.ok(m, sel + ' perdeu a área de toque estendida');
+    assert.match(m![1], /position:\s*absolute/);
+    assert.match(m![1], /inset:\s*-/, sel + ': a área tem que ser MAIOR que o desenho');
+  });
+});
+
+test('o alvo do tick cresce só na vertical', () => {
+  // Na horizontal o vizinho é a repetição seguinte: crescer para o lado faria
+  // um toque na borda registrar o número errado.
+  const css = fs.readFileSync(path.join(RAIZ, 'src', 'componentes.css'), 'utf8');
+  const m = css.match(/\.ins-tick::after\s*\{([^}]*)\}/);
+  assert.match(m![1], /inset:\s*-\d+px\s+0/, 'o segundo valor tem que ser 0');
+});
+
+test('o toast é anunciado por leitor de tela', () => {
+  const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
+  const m = html.match(/<div id="toast"[^>]*>/);
+  assert.ok(m, 'o toast existe');
+  assert.match(m![0], /role="status"/);
+  assert.match(m![0], /aria-live="polite"/, 'polite: o toast informa, nunca interrompe');
+});
+
+test('a tela cheia tem título de primeiro nível, e ele recebe foco', () => {
+  const tc = fs.readFileSync(path.join(RAIZ, 'src', 'ui', 'instrumento', 'telacheia.jsx'), 'utf8');
+  assert.match(tc, /<h1[^>]*class="ins-display tc-titulo/, 'o destino precisa de h1');
+  assert.match(tc, /tabindex="-1"/, 'alvo de foco sem entrar na tabulação');
+  assert.match(tc, /\.focus\(\{ preventScroll: true \}\)/,
+    'foco sem mexer no scroll, que já foi para o topo');
+});
