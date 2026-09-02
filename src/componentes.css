@@ -1244,11 +1244,19 @@
 }
 #toast.on { display: block; }
 
+/* ACIMA da tab bar, não em cima dela.
+   Estava em `bottom: 0` com z-index 20, e a tab bar mora no mesmo lugar com
+   z-index 40: dos 57px do cronômetro, 47 ficavam cobertos e os 10 que sobravam
+   eram padding. Ele começava e não aparecia em canto nenhum.
+   Empilhar em vez de disputar mantém os dois usáveis — durante o descanso ainda
+   se troca de aba. `--ins-tabbar` já traz a área segura dentro dele, e por isso
+   o padding de baixo daqui volta a ser só o degrau. */
 #timer {
-  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 100%; max-width: 460px; z-index: 20;
-  background: var(--ins-surface-low); border-top: 1px solid var(--ins-rule);
-  padding: var(--ins-5) var(--ins-8) calc(var(--ins-5) + var(--sa-bottom));
+  position: fixed; bottom: var(--ins-tabbar); left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 460px; z-index: 35;
+  background: var(--ins-surface-low);
+  border-top: 1px solid var(--ins-rule); border-bottom: 1px solid var(--ins-rule);
+  padding: var(--ins-5) var(--ins-8);
   display: none; align-items: center; gap: var(--ins-6);
 }
 #timer.on { display: flex; }

@@ -287,3 +287,16 @@ test('a barra de status tem fundo, senão o conteúdo rola por baixo dela', () =
   assert.match(faixa![1], /background:/);
   assert.match(faixa![1], /pointer-events:\s*none/, 'pintar não pode roubar toque');
 });
+
+test('o cronômetro de descanso não divide o rodapé com a tab bar', () => {
+  // Ficava em `bottom: 0` com z-index 20; a tab bar mora no mesmo lugar com 40.
+  // Dos 57px do cronômetro, 47 ficavam cobertos e os 10 restantes eram padding:
+  // ele começava, contava certo, e não aparecia em canto nenhum. Os testes de
+  // fluxo não pegam isto — jsdom não faz layout, e a classe `on` estava certa.
+  const comp = fs.readFileSync(path.join(RAIZ, 'src', 'componentes.css'), 'utf8');
+  const t = regras(comp, '#timer');
+  assert.ok(t, 'a regra do cronômetro existe');
+  assert.match(t, /bottom:\s*var\(--ins-tabbar\)/,
+    'empilhado ACIMA da tab bar; --ins-tabbar já traz a área segura');
+  assert.ok(!/bottom:\s*0/.test(t), 'bottom: 0 é onde a tab bar mora');
+});
