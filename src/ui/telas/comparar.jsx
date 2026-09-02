@@ -15,20 +15,23 @@
 // fotografar de manhã em jejum, que é o mesmo momento da pesagem: perguntar de
 // novo seria perguntar o que o app já sabe.
 
+import { FotoAjustada } from '../instrumento/fotoajustada.jsx';
 import { Chips, Procedencia, Vazio } from '../instrumento/primitivos.jsx';
 import { TelaCheia } from '../instrumento/telacheia.jsx';
 
 /** Um lado da comparação: a foto, a data e os números daquela semana. */
-function Lado({ l }) {
+function Lado({ l, aoAjustar }) {
   return (
     <figure class="cp-lado">
-      {l.url
-        ? <img class="cp-img" src={l.url} alt={l.pose + ' em ' + l.data} />
-        : <div class="cp-img cp-sem"><span class="ins-body-sm ins-t5">{l.aviso}</span></div>}
+      <FotoAjustada url={l.url} enq={l.enq} alt={l.pose + ' em ' + l.data} vazio={l.aviso} />
       <figcaption>
         <span class="ins-label">{l.data}</span>
         <span class="ins-data cp-num">{l.peso}</span>
         <span class="ins-data cp-num cp-num2">{l.cintura}</span>
+        {/* É aqui que o desalinhamento se percebe, então é daqui que se conserta:
+            mandar procurar a foto na sessão dela seria mandar sair da tela que
+            mostra o problema. */}
+        {l.url && <button class="cp-ajustar" onClick={() => aoAjustar(l.d)}>ajustar</button>}
       </figcaption>
     </figure>
   );
@@ -74,10 +77,12 @@ export function Comparar({ ctx }) {
               ? (
                 <>
                   <div class="cp-onion">
-                    {c.de.url && <img class="cp-img" src={c.de.url} alt={'Antes: ' + c.de.data} />}
+                    <FotoAjustada url={c.de.url} enq={c.de.enq} alt={'Antes: ' + c.de.data} vazio={c.de.aviso} />
                     {c.ate.url && (
-                      <img class="cp-img cp-cima" src={c.ate.url} alt={'Depois: ' + c.ate.data}
-                           style={'opacity:' + (c.opacidade / 100)} />
+                      <FotoAjustada
+                        url={c.ate.url} enq={c.ate.enq} alt={'Depois: ' + c.ate.data}
+                        classe="cp-cima" estilo={'opacity:' + (c.opacidade / 100)}
+                      />
                     )}
                   </div>
                   <div class="cp-slider">
@@ -89,7 +94,12 @@ export function Comparar({ ctx }) {
                   </div>
                 </>
               )
-              : <div class="cp-par"><Lado l={c.de} /><Lado l={c.ate} /></div>}
+              : (
+                <div class="cp-par">
+                  <Lado l={c.de} aoAjustar={d => ctx.abreAjuste(d, c.pose)} />
+                  <Lado l={c.ate} aoAjustar={d => ctx.abreAjuste(d, c.pose)} />
+                </div>
+              )}
 
             <Procedencia>{c.intervalo}</Procedencia>
             <Procedencia>

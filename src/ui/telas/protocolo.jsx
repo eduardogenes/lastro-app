@@ -12,6 +12,7 @@
 // Não há botão de salvar, como não há na sessão de treino: a sessão nasce na
 // primeira foto e continua de onde parou se ele sair no meio.
 
+import { FotoAjustada } from '../instrumento/fotoajustada.jsx';
 import { Procedencia, Secao, Vazio } from '../instrumento/primitivos.jsx';
 import { TelaCheia } from '../instrumento/telacheia.jsx';
 
@@ -88,24 +89,20 @@ export function Protocolo({ ctx }) {
       <div class={'pr-fotos' + (p.url ? ' dupla' : '')}>
         {/* Ter a referência e ter os BYTES dela são duas coisas: a sessão pode
             estar podada do cache, ou ter descido do outro aparelho com os bytes
-            ainda a caminho. Desenhar a <img> nesse intervalo dá um quadro
-            quebrado — o mesmo motivo pelo qual a foto do aparelho não desenha
-            nada enquanto o cache não respondeu. */}
+            ainda a caminho. `FotoAjustada` desenha o aviso em vez da <img>
+            nesse intervalo — o mesmo motivo pelo qual a foto do aparelho não
+            desenha nada enquanto o cache não respondeu. */}
         <figure class="pr-fig">
-          {p.ref && p.ref.url
-            ? <img class="pr-img" src={p.ref.url} alt={'Referência: ' + p.n + ' em ' + p.ref.txt} />
-            : (
-              <div class="pr-img pr-sem">
-                <span class="ins-body-sm ins-t5">
-                  {p.ref ? 'buscando a foto…' : 'primeira vez nesta pose'}
-                </span>
-              </div>
-            )}
+          <FotoAjustada
+            url={p.ref && p.ref.url} enq={p.ref && p.ref.enq}
+            alt={p.ref ? 'Referência: ' + p.n + ' em ' + p.ref.txt : ''}
+            vazio={p.ref ? 'buscando a foto…' : 'primeira vez nesta pose'}
+          />
           <figcaption class="ins-label">{p.ref ? 'referência · ' + p.ref.txt : 'sem referência'}</figcaption>
         </figure>
         {p.url && (
           <figure class="pr-fig">
-            <img class="pr-img" src={p.url} alt={'Hoje: ' + p.n} />
+            <FotoAjustada url={p.url} enq={p.enq} alt={'Hoje: ' + p.n} />
             <figcaption class="ins-label ins-acid">hoje</figcaption>
           </figure>
         )}
@@ -147,8 +144,15 @@ export function Protocolo({ ctx }) {
       </Secao>
 
       {p.url && (
-        <button class="ins-btn-secondary ins-btn-destructive pr-apagar"
-                onClick={() => ctx.apagaFotoDoCorpo(p.id)}>apagar esta foto</button>
+        <div class="pr-sobre">
+          {/* Ajustar vem antes de apagar, e não é ordem alfabética: quase todo
+              motivo para apagar uma foto — saiu torta, saiu mais longe — é um
+              motivo para ajustá-la primeiro. */}
+          <button class="ins-btn-secondary"
+                  onClick={() => ctx.abreAjuste(d.d, p.id)}>ajustar</button>
+          <button class="ins-btn-secondary ins-btn-destructive"
+                  onClick={() => ctx.apagaFotoDoCorpo(p.id)}>apagar</button>
+        </div>
       )}
 
       {d.faltando > 0

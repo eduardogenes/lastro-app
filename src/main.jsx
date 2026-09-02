@@ -21,6 +21,7 @@ import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folha
 import { FolhaFoto } from './ui/folhas/foto.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
+import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
 import { Decisao } from './ui/telas/decisao.jsx';
@@ -51,8 +52,12 @@ import * as CORPO from './infra/corpo';
 import {
   CADENCIA_DIAS, MONTAGEM, comAPose, completude,
   diasDesde as diasDesdeAFoto, instanteDaData, mediaDaSemana, parPadrao,
-  poses as posesDo, proximaPose, referencia, sessaoDe, ultima as ultimaSessaoFoto
+  poseDe, poses as posesDo, proximaPose, referencia, sessaoDe, ultima as ultimaSessaoFoto
 } from './dominio/protocolo';
+import {
+  IDENTIDADE, arrasta as arrastaRecorte, ehIdentidade,
+  normaliza as normalizaEnq, zoomMinimo
+} from './dominio/enquadramento';
 
 // A chave de hoje e a de ontem.
 //
@@ -218,7 +223,7 @@ function treino(d) {
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], protocolo:{ poses:null, sessoes:[] } };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null,
-  protocolo:null, comparar:null };
+  protocolo:null, comparar:null, ajuste:null };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false;
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -945,7 +950,7 @@ async function garanteBytesDoCorpo(datas) {
 /** A fusão trouxe algo do outro lado? Então o nosso documento precisa subir. */
 function temQueEmpurrar(r) {
   return r.series > 0 || r.sessoes > 0 || r.medidas > 0 || r.cardio > 0 ||
-         r.fotosCorpo > 0 || r.apagados > 0 || r.documentos === 'local';
+         r.fotosCorpo > 0 || r.ajustesCorpo > 0 || r.apagados > 0 || r.documentos === 'local';
 }
 
 /** Mudar o histórico dele em silêncio seria pior que não sincronizar. */
@@ -1563,7 +1568,7 @@ const CTX = {
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
     return !!(view.promo || view.prog || view.retro || view.add || view.sessao || view.hist ||
-              view.protocolo || view.comparar);
+              view.protocolo || view.comparar || view.ajuste);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -1654,6 +1659,7 @@ const CTX = {
 // Não são abas — em cada uma o assunto é uma coisa só, e a tab bar convidaria
 // a sair no meio. O voltar é o único caminho de saída.
 function telaCheia() {
+  if (view.ajuste) return <AjusteFoto ctx={CTX} />;
   if (view.protocolo) return <Protocolo ctx={CTX} />;
   if (view.comparar) return <Comparar ctx={CTX} />;
   if (view.promo) return <Decisao ctx={CTX} />;
@@ -4982,6 +4988,7 @@ CTX.sessaoDeFotos = function () {
 
   return {
     passo: 'pose',
+    d: v.d,
     indice: i + 1,
     total: lista.length,
     faltando: c.faltando.length,
@@ -4995,11 +5002,17 @@ CTX.sessaoDeFotos = function () {
       id: pose.id, n: pose.n, bloco: pose.bloco, giro: pose.giro, bracos: pose.bracos,
       como: pose.como, revela: pose.revela, erro: pose.erro,
       url: CORPO.urlDaFoto(v.d, pose.id, minha),
+      // o enquadramento anda colado na url: quem desenha não vai buscá-lo
+      enq: (minha && minha.enq) || null,
       ref: ref
-        ? {
-            txt: fmtDate(instanteDaData(ref.d)),
-            url: CORPO.urlDaFoto(ref.d, pose.id, sessaoDe(S.protocolo.sessoes, ref.d).fotos[pose.id])
-          }
+        ? (function () {
+            const r = sessaoDe(S.protocolo.sessoes, ref.d).fotos[pose.id];
+            return {
+              txt: fmtDate(instanteDaData(ref.d)),
+              url: CORPO.urlDaFoto(ref.d, pose.id, r),
+              enq: (r && r.enq) || null
+            };
+          })()
         : null
     }
   };
@@ -5046,6 +5059,7 @@ function ladoDaComparacao(d, pose) {
     pose: pose,
     data: ses ? fmtDate(instanteDaData(d)) : '–',
     url: ref ? CORPO.urlDaFoto(d, pose, ref) : null,
+    enq: (ref && ref.enq) || null,
     aviso: ref ? 'buscando a foto…' : 'sem foto nesta pose',
     peso: peso == null ? 'peso –' : fmtDec(peso) + ' kg',
     cintura: cint == null ? 'cintura –' : fmtDec(cint) + ' cm'
@@ -5113,5 +5127,110 @@ CTX.protocoloFotos = function () {
       ? 'continuar · ' + cHoje.feitas + ' de ' + cHoje.total
       : (hoje ? 'refazer alguma pose' : 'nova sessão'),
     podeComparar: lista.some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; })
+  };
+};
+
+// ---------- ajustar uma foto ----------
+// Endireitar e reenquadrar depois de tirada. Não destrutivo: o que se grava é
+// o AJUSTE, e os bytes no cache e no bucket continuam sendo os da câmera.
+//
+// A edição acontece numa cópia em `view.ajuste.aj` e só entra em `S` no salvar.
+// Sair pelo voltar descarta — sem diálogo de confirmação, porque não há nada a
+// perder: o original nunca foi tocado.
+
+/** A foto que está sendo ajustada, e a da sessão anterior na mesma pose. */
+function fotosDoAjuste() {
+  const v = view.ajuste;
+  if (!v) return null;
+  const ses = sessaoDe(S.protocolo.sessoes, v.d);
+  const ref = ses && ses.fotos[v.pose];
+  if (!ref) return null;
+  const ant = referencia(S.protocolo.sessoes, v.pose, v.d);
+  const sesAnt = ant && sessaoDe(S.protocolo.sessoes, ant.d);
+  return { ref: ref, ant: ant, refAnt: sesAnt ? sesAnt.fotos[v.pose] : null };
+}
+
+CTX.abreAjuste = function (d, pose) {
+  const ses = sessaoDe(S.protocolo.sessoes, d);
+  const ref = ses && ses.fotos[pose];
+  if (!ref) return;
+  view.ajuste = {
+    d: d, pose: pose,
+    enq: normalizaEnq(ref.enq || IDENTIDADE),
+    grade: false,
+    // o fantasma já vem ligado quando há referência: alinhar contra a foto
+    // anterior é o motivo de esta tela existir
+    fantasma: true
+  };
+  render(); window.scrollTo(0, 0);
+  const ant = referencia(S.protocolo.sessoes, pose, d);
+  garanteBytesDoCorpo(ant ? [d, ant.d] : [d]);
+};
+
+CTX.fechaAjuste = function () { view.ajuste = null; render(); window.scrollTo(0, 0); };
+CTX.setGradeDoAjuste = function (on) { view.ajuste.grade = !!on; render(); };
+CTX.setFantasmaDoAjuste = function (on) { view.ajuste.fantasma = !!on; render(); };
+
+CTX.setGiroDoAjuste = function (n) {
+  const a = view.ajuste.enq;
+  // o zoom sobe junto quando o giro passa a exigir mais: normaliza() já faz o
+  // piso, e deixar o usuário ver a borda vazia por um quadro seria pior
+  view.ajuste.enq = normalizaEnq({ r: n, z: Math.max(a.z, zoomMinimo(n)), cx: a.cx, cy: a.cy, m: a.m });
+  render();
+};
+CTX.setZoomDoAjuste = function (n) {
+  const a = view.ajuste.enq;
+  view.ajuste.enq = normalizaEnq({ r: a.r, z: n, cx: a.cx, cy: a.cy, m: a.m });
+  render();
+};
+CTX.arrastaAjuste = function (dx, dy) {
+  view.ajuste.enq = arrastaRecorte(view.ajuste.enq, dx, dy);
+  render();
+};
+
+CTX.zeraAjuste = function () {
+  view.ajuste.enq = normalizaEnq(IDENTIDADE);
+  render();
+};
+
+CTX.salvaAjuste = async function () {
+  const v = view.ajuste;
+  const ses = sessaoDe(S.protocolo.sessoes, v.d);
+  const ref = ses && ses.fotos[v.pose];
+  if (!ref) { view.ajuste = null; render(); return; }
+
+  // Ajuste que é a identidade SAI do estado em vez de virar um objeto de zeros.
+  // O estado é reserializado a cada série registrada, e "sem ajuste" e "ajuste
+  // que não faz nada" são a mesma coisa para quem desenha.
+  const novo = Object.assign({}, ref, { enq: ehIdentidade(v.enq) ? undefined : Object.assign({}, v.enq, { m: Date.now() }) });
+  if (novo.enq === undefined) delete novo.enq;
+
+  ses.fotos = Object.assign({}, ses.fotos);
+  ses.fotos[v.pose] = novo;
+  ses.m = Date.now();
+  view.ajuste = null;
+  await save();
+  render(); window.scrollTo(0, 0);
+  toast(novo.enq ? 'Ajuste salvo.' : 'Ajuste desfeito.');
+};
+
+/** O que a tela de ajuste consome. */
+CTX.ajusteEmEdicao = function () {
+  const v = view.ajuste;
+  const f = fotosDoAjuste();
+  if (!v || !f) return null;
+  const p = poseDe(v.pose);
+  return {
+    d: v.d,
+    pose: p ? p.n : v.pose,
+    data: fmtDate(instanteDaData(v.d)),
+    url: CORPO.urlDaFoto(v.d, v.pose, f.ref),
+    enq: v.enq,
+    refUrl: f.ant && f.refAnt ? CORPO.urlDaFoto(f.ant.d, v.pose, f.refAnt) : null,
+    refEnq: f.refAnt ? f.refAnt.enq : null,
+    refTxt: f.ant ? fmtDate(instanteDaData(f.ant.d)) : '',
+    grade: v.grade,
+    fantasma: v.fantasma,
+    sujo: !ehIdentidade(v.enq)
   };
 };

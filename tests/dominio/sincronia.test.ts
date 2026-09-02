@@ -7,7 +7,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { funde, chaveDeLog, chaveDeSessao, chaveDeMarca, chaveDeCardio, chaveDeSessaoFoto, chaveDeFotoDoCorpo, LAPIDE_DIAS } from '../../src/dominio/sincronia';
-import type { Estado, Log, SessaoFoto } from '../../src/dominio/tipos';
+import type { Enquadramento, Estado, Log, SessaoFoto } from '../../src/dominio/tipos';
 
 const DIA = 86400000;
 const T0 = new Date(2026, 7, 24, 9, 0).getTime();
@@ -358,4 +358,97 @@ test('estado sem protocolo nenhum não quebra a fusão', () => {
   ] } });
   const { estado: r } = funde(semNada, com, T0);
   assert.strictEqual(r.protocolo.sessoes.length, 1);
+});
+
+// ---------- o enquadramento ajustado ----------
+// Recortar não gera bytes novos, então `v` não muda. Sem desempate próprio, o
+// lado que não foi recortado empataria e o recorte sumiria na volta.
+
+/** Uma sessão com uma foto que tem enquadramento ajustado. */
+function comEnq(d: string, pose: string, v: number, enq: Partial<Enquadramento>): SessaoFoto {
+  const s = sfoto(d, { [pose]: v });
+  s.fotos[pose].enq = Object.assign({ r: 0, z: 1, cx: 0.5, cy: 0.5, m: 0 }, enq) as Enquadramento;
+  return s;
+}
+
+test('o recorte feito num aparelho não some na volta do outro', () => {
+  const recortado = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    comEnq('2026-08-24', 'frente-relaxado', T0, { r: 2, m: T0 + 100 })
+  ] } });
+  const intacto = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-24', { 'frente-relaxado': T0 })
+  ] } });
+
+  // dos dois lados, em qualquer ordem, o ajuste sobrevive
+  [[recortado, intacto], [intacto, recortado]].forEach(([a, b]) => {
+    const { estado: r } = funde(a, b, T0);
+    const f = r.protocolo.sessoes[0].fotos['frente-relaxado'];
+    assert.ok(f.enq, 'o ajuste ficou');
+    assert.strictEqual(f.enq!.r, 2);
+  });
+});
+
+test('entre dois recortes da mesma foto, vence o mais recente', () => {
+  const velho = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    comEnq('2026-08-24', 'frente-relaxado', T0, { r: 1, m: T0 + 10 })
+  ] } });
+  const novo = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    comEnq('2026-08-24', 'frente-relaxado', T0, { r: 5, m: T0 + 999 })
+  ] } });
+  const { estado: r } = funde(velho, novo, T0);
+  assert.strictEqual(r.protocolo.sessoes[0].fotos['frente-relaxado'].enq!.r, 5);
+});
+
+test('refazer a foto descarta o recorte da versão antiga', () => {
+  // `v` maior manda: são bytes novos, e o recorte era do enquadramento velho
+  const antiga = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    comEnq('2026-08-24', 'frente-relaxado', T0, { r: 4, m: T0 + 500 })
+  ] } });
+  const refeita = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-24', { 'frente-relaxado': T0 + 1000 })
+  ] } });
+  const { estado: r } = funde(antiga, refeita, T0);
+  const f = r.protocolo.sessoes[0].fotos['frente-relaxado'];
+  assert.strictEqual(f.v, T0 + 1000);
+  assert.strictEqual(f.enq, undefined, 'o recorte velho não segue a foto nova');
+});
+
+test('recorte que só existe aqui obriga a empurrar', () => {
+  // é o que impede uma fusão que "não trouxe nada" de deixar o outro aparelho
+  // sem o recorte para sempre
+  const aqui = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    comEnq('2026-08-24', 'frente-relaxado', T0, { r: 3, m: T0 + 100 })
+  ] } });
+  const la = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-24', { 'frente-relaxado': T0 })
+  ] } });
+  const { resumo } = funde(aqui, la, T0);
+  assert.strictEqual(resumo.fotosCorpo, 0, 'foto nova nenhuma veio');
+  assert.strictEqual(resumo.ajustesCorpo, 1, 'mas o recorte precisa ir');
+  assert.strictEqual(resumo.identicos, false);
+});
+
+test('quando o recorte é o mesmo dos dois lados, não há o que empurrar', () => {
+  const um = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    comEnq('2026-08-24', 'frente-relaxado', T0, { r: 3, m: T0 + 100 })
+  ] } });
+  const dois = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    comEnq('2026-08-24', 'frente-relaxado', T0, { r: 3, m: T0 + 100 })
+  ] } });
+  const { resumo } = funde(um, dois, T0);
+  assert.strictEqual(resumo.ajustesCorpo, 0);
+  assert.strictEqual(resumo.identicos, true);
+});
+
+test('a fusão com ajuste também é estável ao repetir', () => {
+  const a = estado({ mtime: T0, protocolo: { poses: null, sessoes: [
+    comEnq('2026-08-24', 'frente-relaxado', T0, { r: 2, z: 1.2, m: T0 + 5 })
+  ] } });
+  const b = estado({ mtime: T0 - DIA, protocolo: { poses: null, sessoes: [
+    sfoto('2026-08-10', { 'costas-relaxado': T0 - DIA })
+  ] } });
+  const um = funde(a, b, T0).estado;
+  const dois = funde(um, um, T0);
+  assert.deepStrictEqual(dois.estado.protocolo, um.protocolo);
+  assert.strictEqual(dois.resumo.identicos, true);
 });

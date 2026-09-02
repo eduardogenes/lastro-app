@@ -35,18 +35,26 @@
 .pr-fotos { display: grid; gap: var(--ins-3); }
 .pr-fotos.dupla { grid-template-columns: 1fr 1fr; }
 .pr-fig { margin: 0; display: flex; flex-direction: column; gap: var(--ins-2); }
-.pr-img {
-  display: block; width: 100%; height: auto;
+/* ---------- o quadro da foto ---------- */
+/* Toda foto do protocolo é desenhada aqui dentro. O quadro é 3:4 fixo e recorta
+   o que sobra: é ele que dá ao ajuste um lado de referência estável, e é o que
+   faz duas sessões terem a MESMA forma na comparação mesmo com fontes de
+   tamanhos diferentes. */
+.fa {
+  position: relative; overflow: hidden;
+  aspect-ratio: 3 / 4;
+  background: var(--ins-surface);
   border: 1px solid var(--ins-border);
 }
-/* A ausência de referência não desenha moldura vazia decorativa: ela DIZ o que
-   está acontecendo, que é a primeira vez naquela pose. */
-.pr-sem {
-  aspect-ratio: 3 / 4;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--ins-surface); text-align: center; padding: var(--ins-7);
+.fa-img {
+  position: absolute; left: 50%; top: 50%;
+  width: 100%; height: 100%; object-fit: cover;
+  transform-origin: center;
 }
-
+.fa-vazio {
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: var(--ins-7);
+}
 /* ---------- execução ---------- */
 .pr-como { margin-top: var(--ins-9); }
 .pr-lista { margin: var(--ins-4) 0 0; padding-left: var(--ins-8); }
@@ -62,6 +70,8 @@
 .pr-nav button { flex: 1 1 0; }
 .pr-obs { width: 100%; }
 .pr-apagar { margin-top: var(--ins-7); }
+.pr-sobre { display: flex; gap: var(--ins-3); margin-top: var(--ins-7); }
+.pr-sobre button { flex: 1 1 0; }
 
 /* ---------- a montagem ---------- */
 .pr-setup { display: grid; gap: 1px; background: var(--ins-rule); }
@@ -85,11 +95,6 @@
 .cp-par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-3); margin-top: var(--ins-7); }
 .cp-lado { margin: 0; display: flex; flex-direction: column; gap: var(--ins-2); }
 .cp-lado figcaption { display: flex; flex-direction: column; gap: var(--ins-1); }
-.cp-img { display: block; width: 100%; height: auto; border: 1px solid var(--ins-border); }
-.cp-sem {
-  aspect-ratio: 3 / 4; display: flex; align-items: center; justify-content: center;
-  background: var(--ins-surface); text-align: center; padding: var(--ins-7);
-}
 .cp-num { color: var(--ins-text-3); }
 .cp-num2 { color: var(--ins-text-4); }
 
@@ -111,3 +116,63 @@
 .dd-fotos-p.feita { background: var(--ins-acid); }
 .dd-fotos-b { display: flex; gap: var(--ins-3); }
 .dd-fotos-b button { flex: 1 1 0; }
+
+
+/* ============================================================
+   AJUSTAR UMA FOTO
+   Giro fino e recorte, sobre a foto já tirada. O quadro é o
+   instrumento: tudo o mais na tela serve a ele.
+   ============================================================ */
+
+.aj-salvar {
+  min-height: var(--ins-tap); padding: 0 0 0 var(--ins-4);
+  font: 400 11px/1 var(--ins-font-mono);
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ins-acid); background: none; border: 0;
+}
+.aj-salvar:active { opacity: .6; }
+
+/* O quadro é o alvo do arrasto, então ele recusa o gesto de rolar: sem isto o
+   primeiro movimento vertical do dedo rola a página em vez de mover a foto. */
+.aj-quadro { position: relative; touch-action: none; cursor: grab; }
+.aj-quadro:active { cursor: grabbing; }
+.aj-quadro .aj-fa { position: relative; }
+.aj-quadro .aj-ghost { position: absolute; inset: 0; pointer-events: none; }
+
+/* A grade é de conferência, não de composição: os terços dizem se o corpo
+   subiu ou desceu entre duas sessões, e o eixo central é contra o que se
+   endireita um ombro. Fica em cima da foto e não recebe toque. */
+.aj-grade { position: absolute; inset: 0; pointer-events: none; }
+.aj-grade i { position: absolute; background: var(--ins-acid); opacity: .35; }
+.aj-grade .aj-v1, .aj-grade .aj-v2 { top: 0; bottom: 0; width: var(--ins-indicator); }
+.aj-grade .aj-h1, .aj-grade .aj-h2 { left: 0; right: 0; height: var(--ins-indicator); }
+.aj-grade .aj-v1 { left: 33.333%; }
+.aj-grade .aj-v2 { left: 66.666%; }
+.aj-grade .aj-h1 { top: 33.333%; }
+.aj-grade .aj-h2 { top: 66.666%; }
+/* O eixo é mais forte que os terços porque é o que se usa de verdade. */
+.aj-grade .aj-eixo {
+  left: 50%; top: 0; bottom: 0; width: var(--ins-indicator);
+  opacity: .75;
+}
+
+.aj-modos { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); flex-wrap: wrap; }
+
+.aj-ctrl { display: flex; flex-direction: column; gap: var(--ins-2); }
+.aj-ctrl + .aj-ctrl { margin-top: var(--ins-5); }
+.aj-ctrl-t { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3); }
+.aj-ctrl-v { color: var(--ins-text); }
+.aj-ctrl input { width: 100%; }
+
+.aj-zerar { display: block; width: 100%; margin-top: var(--ins-7); }
+
+/* O caminho para ajustar, na comparação. Discreto: a tela é para LER as duas
+   fotos, e consertar o enquadramento é a exceção, não o convite. */
+.cp-ajustar {
+  align-self: flex-start; margin-top: var(--ins-2);
+  padding: 0; background: none; border: 0;
+  font: 400 11px/1 var(--ins-font-mono);
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ins-text-4); text-decoration: underline;
+}
+.cp-ajustar:active { color: var(--ins-text); }

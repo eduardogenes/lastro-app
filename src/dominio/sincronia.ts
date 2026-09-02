@@ -51,6 +51,14 @@ export interface ResumoDaFusao {
   cardio: number;
   /** fotos de acompanhamento que vieram do outro lado */
   fotosCorpo: number;
+  /**
+   * ajustes de foto que só existem DESTE lado.
+   *
+   * Conta separado de `fotosCorpo` porque não é foto nova: é recorte que o
+   * outro aparelho ainda não viu, e é o que obriga a empurrar depois de uma
+   * fusão que, no resto, não trouxe nada.
+   */
+  ajustesCorpo: number;
   /** registros que uma lápide removeu */
   apagados: number;
   /** de que lado vieram os documentos (programa, plano de comida, cadência) */
@@ -150,15 +158,26 @@ function uneLista<T>(
  *
  * Então a data une a sessão, e DENTRO dela cada pose une pela própria versão,
  * exatamente como `S.fotos` já faz com a foto do aparelho.
+ *
+ * Com uma exceção, que é o AJUSTE. Recortar não gera bytes novos e por isso não
+ * muda `v`: os dois lados continuam com a mesma foto. Sem desempate, o lado que
+ * não foi recortado empataria e o recorte sumiria na volta. Quando `v` empata,
+ * quem ganha é o ajuste mais recente.
  */
 function uneSessoesDeFoto(
   local: SessaoFoto[], remoto: SessaoFoto[], mortos: Record<string, number>
-): { itens: SessaoFoto[]; fotosVindas: number; apagados: number } {
+): { itens: SessaoFoto[]; fotosVindas: number; ajustesDaqui: number; apagados: number } {
   const por: Record<string, SessaoFoto> = {};
   const fotosDaqui: Record<string, 1> = {};
+  const ajusteRemoto: Record<string, number> = {};
   let apagados = 0;
 
   function carimbo(s: SessaoFoto): number { return typeof s.m === 'number' ? s.m : 0; }
+
+  /** Quando o ajuste daquela foto mudou. Foto sem ajuste é o marco zero. */
+  function carimboDoAjuste(f: FotoRef): number {
+    return f && f.enq && typeof f.enq.m === 'number' ? f.enq.m : 0;
+  }
 
   function absorve(lista: SessaoFoto[], daqui: boolean): void {
     (Array.isArray(lista) ? lista : []).forEach(function (s) {
@@ -175,9 +194,15 @@ function uneSessoesDeFoto(
       Object.keys(s.fotos || {}).forEach(function (pose) {
         const ref = s.fotos[pose];
         if (!ref || typeof ref.v !== 'number') return;
-        if (daqui) fotosDaqui[s.d + ':' + pose] = 1;
+        const k = s.d + ':' + pose;
+        if (daqui) fotosDaqui[k] = 1;
+        else ajusteRemoto[k] = carimboDoAjuste(ref);
         const atual = alvo.fotos[pose];
-        if (!atual || ref.v > atual.v) alvo.fotos[pose] = ref;
+        if (!atual || ref.v > atual.v) { alvo.fotos[pose] = ref; return; }
+        // mesma foto dos dois lados: desempata o ajuste
+        if (ref.v === atual.v && carimboDoAjuste(ref) > carimboDoAjuste(atual)) {
+          alvo.fotos[pose] = ref;
+        }
       });
     });
   }
@@ -186,6 +211,7 @@ function uneSessoesDeFoto(
   absorve(remoto, false);
 
   let fotosVindas = 0;
+  let ajustesDaqui = 0;
   const itens: SessaoFoto[] = [];
   Object.keys(por).forEach(function (d) {
     const s = por[d];
@@ -197,7 +223,11 @@ function uneSessoesDeFoto(
     Object.keys(s.fotos).forEach(function (pose) {
       const morta = mortos[chaveDeFotoDoCorpo(d, pose)];
       if (morta != null && s.fotos[pose].v <= morta) { delete s.fotos[pose]; apagados++; return; }
-      if (!fotosDaqui[d + ':' + pose]) fotosVindas++;
+      const k = d + ':' + pose;
+      if (!fotosDaqui[k]) { fotosVindas++; return; }
+      // a foto já era nossa, mas o ajuste que venceu é mais novo que o do outro
+      // lado: ele está desatualizado e precisa receber a volta
+      if (carimboDoAjuste(s.fotos[pose]) > (ajusteRemoto[k] || 0)) ajustesDaqui++;
     });
     // sessão que ficou sem foto nenhuma sai — ela nasce na primeira foto e não
     // tem por que sobreviver à última
@@ -206,7 +236,7 @@ function uneSessoesDeFoto(
   });
 
   itens.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
-  return { itens: itens, fotosVindas: fotosVindas, apagados: apagados };
+  return { itens: itens, fotosVindas: fotosVindas, ajustesDaqui: ajustesDaqui, apagados: apagados };
 }
 
 /** Une dois mapas simples. Em conflito de chave, vence o lado mais recente. */
@@ -268,7 +298,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   );
 
   const resumo: ResumoDaFusao = {
-    series: 0, sessoes: 0, medidas: 0, cardio: 0, fotosCorpo: 0, apagados: 0,
+    series: 0, sessoes: 0, medidas: 0, cardio: 0, fotosCorpo: 0, ajustesCorpo: 0, apagados: 0,
     documentos: mtimeDe(remoto) === mtimeDe(local) ? 'iguais' : (remotoManda ? 'remoto' : 'local'),
     identicos: false
   };
@@ -371,6 +401,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
     : null;
   base.protocolo = { poses: poses || null, sessoes: cf.itens.slice(-TETO.protocolo) };
   resumo.fotosCorpo = cf.fotosVindas;
+  resumo.ajustesCorpo = cf.ajustesDaqui;
   resumo.apagados += cf.apagados;
 
   // ---- mapas por exercício ----
@@ -385,8 +416,8 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   (base as Estado & { mtime: number }).mtime = Math.max(mtimeDe(local), mtimeDe(remoto));
 
   resumo.identicos = resumo.series === 0 && resumo.sessoes === 0 && resumo.medidas === 0 &&
-                     resumo.cardio === 0 && resumo.fotosCorpo === 0 && resumo.apagados === 0 &&
-                     resumo.documentos !== 'remoto';
+                     resumo.cardio === 0 && resumo.fotosCorpo === 0 && resumo.ajustesCorpo === 0 &&
+                     resumo.apagados === 0 && resumo.documentos !== 'remoto';
 
   return { estado: base, resumo: resumo };
 }

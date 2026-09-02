@@ -191,12 +191,38 @@ export interface PromoPendente {
   resumoMods: string[];
 }
 
+/**
+ * O ajuste fino de uma foto: um giro pequeno e um recorte.
+ *
+ * NÃO DESTRUTIVO por decisão: isto é dado, não pixel. Os bytes no cache e no
+ * bucket nunca são reescritos — o ajuste é aplicado na hora de desenhar.
+ *
+ * Três coisas caem dessa escolha, e as três importam:
+ * editar é de graça e funciona sem rede, porque não há byte para subir;
+ * reeditar não acumula perda de recompressão, e uma foto de acompanhamento é
+ * reeditada justamente quando a série cresce e o enquadramento antigo passa a
+ * destoar; e desfazer é voltar para a identidade, sempre.
+ */
+export interface Enquadramento {
+  /** giro em graus, positivo horário. Pequeno: endireitar, não recompor. */
+  r: number;
+  /** zoom; 1 = a foto inteira. Nunca abaixo do que o giro exige. */
+  z: number;
+  /** centro do recorte, em fração da foto. 0,5/0,5 é o centro dela. */
+  cx: number;
+  cy: number;
+  /** quando o ajuste mudou. É o que a fusão compara quando `v` empata. */
+  m: number;
+}
+
 /** A referência de uma foto: quando foi tirada e em que formato ela ficou. */
 export interface FotoRef {
   /** instante da captura; serve de versão na fusão e de quebra-cache na tela */
   v: number;
   /** 'webp' ou 'jpeg' — o Safari antigo não codifica webp no canvas */
   ext: string;
+  /** o enquadramento ajustado, quando existe. Ausente = "a foto como saiu". */
+  enq?: Enquadramento;
 }
 
 /** id de uma pose do protocolo, derivado do nome uma vez só. */

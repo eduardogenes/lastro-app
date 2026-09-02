@@ -190,7 +190,7 @@ test('na primeira vez a tela diz que não há referência, sem quadro quebrado',
 
   assert.strictEqual(a.E('CTX.sessaoDeFotos().pose.ref'), null);
   assert.strictEqual(a.$('.pr-fig img'), null, 'nenhuma <img> sem bytes');
-  assert.ok(a.texto('.pr-sem').includes('primeira vez'));
+  assert.ok(a.texto('.fa-vazio').includes('primeira vez'));
   a.fechar();
 });
 
@@ -527,5 +527,173 @@ test('ordem de poses vazia cai na do código, sem sumir com a tela', async () =>
   const a = await app({ estado: { logs: {}, done: [], protocolo: { poses: [], sessoes: [] } }, aba: 'dados' });
   assert.strictEqual(a.E('S.protocolo.poses'), null, 'normalizada para "a do código"');
   assert.strictEqual(a.J('CTX.protocoloFotos()').pontos.length, 9);
+  a.fechar();
+});
+
+// ---------- ajustar o enquadramento ----------
+// Não destrutivo: o que se grava é o ajuste, e os bytes ficam como saíram da
+// câmera. É o que permite reeditar sem acumular perda e desfazer sempre.
+
+test('ajustar grava o recorte no estado e não toca nos bytes', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await tirar(a);
+  await a.esperar(60);
+  const antes = guardadas(a);
+
+  a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
+  assert.ok(a.$('.aj-quadro'), 'a tela de ajuste abriu');
+  a.E('CTX.setGiroDoAjuste(2)');
+  await a.E('CTX.salvaAjuste()');
+  await a.esperar(60);
+
+  const ref = a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"]');
+  assert.ok(ref.enq, 'o ajuste ficou na referência');
+  assert.strictEqual(ref.enq.r, 2);
+  assert.ok(ref.enq.m > 0, 'com carimbo, que é o que a fusão compara');
+  assert.deepStrictEqual(guardadas(a), antes, 'os bytes são exatamente os mesmos');
+  a.fechar();
+});
+
+test('girar sobe o zoom sozinho, para não abrir borda vazia', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
+  a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
+  assert.strictEqual(a.J('CTX.ajusteEmEdicao()').enq.z, 1);
+
+  a.E('CTX.setGiroDoAjuste(6)');
+  const enq = a.J('CTX.ajusteEmEdicao()').enq;
+  assert.ok(enq.z > 1.12, 'a 6° o mínimo é ~1,13: ' + enq.z);
+  a.fechar();
+});
+
+test('o ajuste que não faz nada sai do estado em vez de virar zeros', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
+
+  a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
+  a.E('CTX.setGiroDoAjuste(3)');
+  await a.E('CTX.salvaAjuste()');
+  await a.esperar(60);
+  assert.ok(a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"]').enq);
+
+  a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
+  a.E('CTX.zeraAjuste()');
+  await a.E('CTX.salvaAjuste()');
+  await a.esperar(60);
+  assert.strictEqual(a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"]').enq, undefined,
+    'voltou a ser a foto como saiu, sem objeto de zeros no estado');
+  a.fechar();
+});
+
+test('sair sem salvar descarta: o original nunca foi tocado', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
+
+  a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
+  a.E('CTX.setGiroDoAjuste(5)');
+  a.E('CTX.fechaAjuste()');
+  assert.strictEqual(a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"]').enq, undefined);
+  assert.strictEqual(a.E('view.ajuste'), null);
+  a.fechar();
+});
+
+test('o mesmo recorte é aplicado na captura e na comparação', async () => {
+  // duas contas do mesmo ajuste divergiriam, e a divergência apareceria como
+  // uma diferença no corpo que não existe
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  const velha = diasAtras(28), nova = diasAtras(14);
+  comSessoes(a, [velha, nova], 'frente-relaxado');
+  for (const d of [velha, nova]) await semear(a, d, 'frente-relaxado');
+
+  a.E(`CTX.abreAjuste(${JSON.stringify(velha)}, 'frente-relaxado')`);
+  a.E('CTX.setGiroDoAjuste(3)');
+  await a.E('CTX.salvaAjuste()');
+  await a.esperar(60);
+
+  a.E('CTX.abreComparar()');
+  await a.esperar(60);
+  assert.strictEqual(a.J('CTX.comparacao()').de.enq.r, 3, 'a comparação leva o ajuste');
+
+  a.E('CTX.fechaComparar()');
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.esperar(60);
+  const ref = a.J('CTX.sessaoDeFotos().pose.ref');
+  assert.strictEqual(ref.enq, null, 'a referência aqui é a de 14 dias, que não foi ajustada');
+
+  // e a de 28 dias, quando é ela a referência, chega ajustada
+  const daVelha = a.J(`(function () {
+    const s = S.protocolo.sessoes.filter(function (x) { return x.d === ${JSON.stringify(velha)}; })[0];
+    return s.fotos['frente-relaxado'].enq;
+  })()`);
+  assert.strictEqual(daVelha.r, 3);
+  a.fechar();
+});
+
+test('a tela de ajuste abre com o fantasma da sessão anterior', async () => {
+  // alinhar contra a foto anterior é o motivo desta tela existir
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const velha = diasAtras(28), nova = diasAtras(14);
+  comSessoes(a, [velha, nova], 'frente-relaxado');
+  for (const d of [velha, nova]) await semear(a, d, 'frente-relaxado');
+
+  a.E(`CTX.abreAjuste(${JSON.stringify(nova)}, 'frente-relaxado')`);
+  await a.esperar(60);
+  const d = a.J('CTX.ajusteEmEdicao()');
+  assert.strictEqual(d.fantasma, true, 'já vem ligado');
+  assert.ok(d.refUrl, 'e a foto anterior está carregada');
+  assert.strictEqual(a.$$('.aj-quadro .fa').length, 2, 'duas camadas no quadro');
+  a.fechar();
+});
+
+test('na primeira sessão não há fantasma, e a tela não quebra', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const so = diasAtras(14);
+  comSessoes(a, [so], 'frente-relaxado');
+  await semear(a, so, 'frente-relaxado');
+
+  a.E(`CTX.abreAjuste(${JSON.stringify(so)}, 'frente-relaxado')`);
+  await a.esperar(60);
+  assert.strictEqual(a.J('CTX.ajusteEmEdicao()').refUrl, null);
+  assert.strictEqual(a.$$('.aj-quadro .fa').length, 1);
+  a.fechar();
+});
+
+test('ajustar não é oferecido onde não há foto', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  assert.strictEqual(a.$('.pr-sobre'), null, 'sem foto, nem ajustar nem apagar');
+
+  await tirar(a);
+  await a.esperar(60);
+  a.E(`CTX.vaiParaPose('frente-relaxado')`);
+  assert.ok(a.$('.pr-sobre'), 'com foto, os dois aparecem');
+  assert.deepStrictEqual(
+    a.$$('.pr-sobre button').map(b => b.textContent.trim()), ['ajustar', 'apagar']);
+  a.fechar();
+});
+
+test('ajuste guardado sobrevive à ida e volta pelo estado', async () => {
+  const a = await app({ estado: {
+    logs: {}, done: [],
+    protocolo: { poses: null, sessoes: [{
+      d: '2026-08-24', t: 1, m: 1,
+      fotos: { 'frente-relaxado': { v: 1, ext: 'webp', enq: { r: 2.5, z: 1.3, cx: 0.4, cy: 0.6, m: 9 } } }
+    }] }
+  }, aba: 'dados' });
+  const enq = a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"].enq');
+  assert.deepStrictEqual(enq, { r: 2.5, z: 1.3, cx: 0.4, cy: 0.6, m: 9 });
   a.fechar();
 });

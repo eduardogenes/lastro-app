@@ -172,7 +172,9 @@ S = {
   protocolo: {                          // as fotos de acompanhamento
     poses: null,                        // a ordem dele; null = a do código
     sessoes: [{ d: '2026-09-01', t: 0, m: 0, obs: '',
-                fotos: { 'frente-relaxado': { v: 0, ext: 'webp' } } }]
+                // `enq` é o ajuste NÃO DESTRUTIVO; ausente = a foto como saiu
+                fotos: { 'frente-relaxado': { v: 0, ext: 'webp',
+                                              enq: { r: 0, z: 1, cx: .5, cy: .5, m: 0 } } } }]
   },
 
   export: 0,                            // timestamp do último backup
@@ -461,6 +463,48 @@ Peso e cintura ao lado da foto são **média da semana** e saem de `S.body`: a
 sessão de fotos não pede número nenhum. O protocolo manda fotografar de manhã em
 jejum, que é o mesmo momento da pesagem.
 
+### O enquadramento ajustado
+
+`src/dominio/enquadramento.ts`. Endireitar e reenquadrar uma foto depois de
+tirada — **giro pequeno e recorte, e mais nada**. Não há brilho, contraste nem
+filtro: qualquer um dos três mudaria a aparência do corpo, e a foto passaria a
+medir a edição em vez do corpo. Giro e recorte movem o enquadramento sem tocar
+no que está dentro dele.
+
+**Não destrutivo, e isso é a decisão que importa.** O ajuste é DADO
+(`FotoRef.enq`), não pixel: os bytes no cache e no bucket continuam sendo os que
+saíram da câmera, e o `transform` é aplicado na hora de desenhar. Três coisas
+caem daí — editar é de graça e funciona sem rede, porque não há byte para subir;
+reeditar não acumula perda de recompressão, e uma foto é reeditada justamente
+quando a série cresce e o enquadramento antigo passa a destoar; e desfazer é
+voltar para a identidade, sempre. Ajuste que é a identidade **sai** do estado em
+vez de virar um objeto de zeros.
+
+O giro é limitado a **6°**, e o limite baixo é deliberado. Endireitar um celular
+torto custa menos de 3°; além disso não se está corrigindo a câmera e sim
+recompondo a foto, que é o que destrói a comparabilidade. O limite também segura
+o preço: girar sem abrir borda vazia obriga a aproximar, e o mínimo é
+
+```
+z = cos θ + max(a, 1/a) · sen θ
+```
+
+que a 6° num quadro 3:4 dá 1,13 — treze por cento do lado somem. `normaliza()`
+sobe o zoom sozinho quando o giro passa a exigir mais, e prende o centro do
+recorte dentro da foto. Tudo que entra passa por lá: o editor, o que veio do
+outro aparelho e o de um backup antigo. **Ajuste impossível não vira erro, vira o
+ajuste possível mais próximo** — e por isso não há passe de saneamento no boot.
+
+Quem desenha é `<FotoAjustada>`, e **todas** as fotos passam por ele: a de hoje,
+a referência da captura, os dois lados da comparação e as duas camadas da
+sobreposição. Não é arrumação, é requisito — duas implementações da mesma conta
+divergiriam, e a divergência apareceria na tela como uma diferença no corpo que
+não existe.
+
+A tela de ajuste abre com o **fantasma** da sessão anterior por cima, já ligado.
+Endireitar contra a borda do quadro conserta o horizonte; alinhar contra a foto
+anterior conserta a COMPARAÇÃO, que é o que se quer.
+
 ### Fundir sessões de foto
 
 `uneSessoesDeFoto()`, em `src/dominio/sincronia.ts`, não reusa `uneLista()`. Com
@@ -473,6 +517,14 @@ Por isso há duas lápides, e não uma: `corpo:<data>` para a sessão e
 `corpo:<data>:<pose>` para a foto. Refazer uma pose apaga a anterior, e sem a
 lápide da foto o outro aparelho a traria de volta na fusão — a sessão continuaria
 existindo, então a lápide da sessão não a alcançaria.
+
+O **ajuste** precisa de um desempate próprio dentro disso. Recortar não gera
+bytes novos e por isso não muda `v`: os dois lados continuam com a mesma foto, e
+sem desempate o lado que não foi recortado empataria e o recorte sumiria na
+volta. Quando `v` empata, vence o `enq.m` maior. E `resumo.ajustesCorpo` conta os
+recortes que só existem deste lado — é o que obriga a empurrar depois de uma
+fusão que, no resto, não trouxe nada. Refazer a foto (um `v` maior) descarta o
+recorte junto, que é o certo: ele era do enquadramento velho.
 
 ---
 
