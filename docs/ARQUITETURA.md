@@ -501,9 +501,17 @@ sobreposição. Não é arrumação, é requisito — duas implementações da m
 divergiriam, e a divergência apareceria na tela como uma diferença no corpo que
 não existe.
 
-A tela de ajuste abre com o **fantasma** da sessão anterior por cima, já ligado.
-Endireitar contra a borda do quadro conserta o horizonte; alinhar contra a foto
-anterior conserta a COMPARAÇÃO, que é o que se quer.
+A tela de ajuste abre com o **fantasma** de outra sessão por cima, já ligado.
+Endireitar contra a borda do quadro conserta o horizonte; alinhar contra outra
+foto conserta a COMPARAÇÃO, que é o que se quer.
+
+Contra QUAL sessão alinhar é escolha dele: o seletor oferece todas as outras que
+têm aquela pose. O padrão é `vizinhaComAPose()` — a anterior, porque alinhar
+contra o passado é o que mantém a série coerente; e a SEGUINTE quando não há
+anterior, senão a sessão mais antiga, justamente a que ancora o resto, seria a
+única sem nada contra o que se alinhar. O padrão acerta quase sempre, mas quando
+uma sessão antiga tem a geometria boa é contra ela que se quer alinhar as
+outras, e isso o app não tem como saber.
 
 ### Fundir sessões de foto
 

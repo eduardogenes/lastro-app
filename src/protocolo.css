@@ -158,6 +158,14 @@
 
 .aj-modos { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); flex-wrap: wrap; }
 
+/* Contra qual sessão alinhar. Mesma forma dos seletores de data da comparação:
+   é a mesma pergunta, feita no outro lugar onde ela cabe. */
+.aj-fantasma {
+  display: flex; align-items: center; gap: var(--ins-3);
+  margin-top: var(--ins-3);
+}
+.aj-sel { flex: 1 1 0; }
+
 .aj-ctrl { display: flex; flex-direction: column; gap: var(--ins-2); }
 .aj-ctrl + .aj-ctrl { margin-top: var(--ins-5); }
 .aj-ctrl-t { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3); }

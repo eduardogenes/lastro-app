@@ -299,6 +299,26 @@ export function comAPose(sessoes: SessaoFoto[] | null | undefined, pose: PoseId)
 }
 
 /**
+ * A sessão VIZINHA naquela pose: a que serve de fantasma ao ajustar.
+ *
+ * A anterior primeiro, porque alinhar contra o passado é o que mantém a série
+ * coerente — mexer numa foto para casar com uma futura reescreveria a história
+ * ao contrário. Mas quando não há anterior, e é o caso da sessão mais antiga de
+ * todas, a seguinte serve: sem isso a primeira foto da série seria a única que
+ * nunca teria contra o que se alinhar, justamente a que ancora o resto.
+ *
+ * `null` só quando aquela pose existe numa sessão só.
+ */
+export function vizinhaComAPose(
+  sessoes: SessaoFoto[] | null | undefined, pose: PoseId, d: string
+): SessaoFoto | null {
+  const c = comAPose(sessoes, pose).filter(function (s) { return s.d !== d; });
+  if (!c.length) return null;
+  const antes = c.filter(function (s) { return s.d < d; });
+  return antes.length ? antes[antes.length - 1] : c[0];
+}
+
+/**
  * O par que a tela de comparação abre por padrão: a mais nova e a MAIS ANTIGA
  * que tenha a mesma pose.
  *

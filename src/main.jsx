@@ -52,7 +52,8 @@ import * as CORPO from './infra/corpo';
 import {
   CADENCIA_DIAS, MONTAGEM, comAPose, completude,
   diasDesde as diasDesdeAFoto, instanteDaData, mediaDaSemana, parPadrao,
-  poseDe, poses as posesDo, proximaPose, referencia, sessaoDe, ultima as ultimaSessaoFoto
+  poseDe, poses as posesDo, proximaPose, referencia, sessaoDe,
+  ultima as ultimaSessaoFoto, vizinhaComAPose
 } from './dominio/protocolo';
 import {
   IDENTIDADE, arrasta as arrastaRecorte, ehIdentidade,
@@ -5138,33 +5139,49 @@ CTX.protocoloFotos = function () {
 // Sair pelo voltar descarta — sem diálogo de confirmação, porque não há nada a
 // perder: o original nunca foi tocado.
 
-/** A foto que está sendo ajustada, e a da sessão anterior na mesma pose. */
+/** A foto que está sendo ajustada, e a que está sobreposta a ela. */
 function fotosDoAjuste() {
   const v = view.ajuste;
   if (!v) return null;
   const ses = sessaoDe(S.protocolo.sessoes, v.d);
   const ref = ses && ses.fotos[v.pose];
   if (!ref) return null;
-  const ant = referencia(S.protocolo.sessoes, v.pose, v.d);
-  const sesAnt = ant && sessaoDe(S.protocolo.sessoes, ant.d);
-  return { ref: ref, ant: ant, refAnt: sesAnt ? sesAnt.fotos[v.pose] : null };
+  const outra = v.fantasmaD ? sessaoDe(S.protocolo.sessoes, v.fantasmaD) : null;
+  return { ref: ref, outra: outra, refOutra: outra ? outra.fotos[v.pose] : null };
+}
+
+/** As datas contra as quais dá para alinhar: as outras sessões naquela pose. */
+function datasDoFantasma(d, pose) {
+  return comAPose(S.protocolo.sessoes, pose)
+    .filter(function (s) { return s.d !== d; })
+    .map(function (s) { return { d: s.d, txt: fmtDate(instanteDaData(s.d)) }; });
 }
 
 CTX.abreAjuste = function (d, pose) {
   const ses = sessaoDe(S.protocolo.sessoes, d);
   const ref = ses && ses.fotos[pose];
   if (!ref) return;
+  // A vizinha: a anterior naquela pose, ou a seguinte quando esta é a mais
+  // antiga. Sem o segundo caso, a primeira foto da série — justamente a que
+  // ancora o resto — seria a única sem nada contra o que alinhar.
+  const viz = vizinhaComAPose(S.protocolo.sessoes, pose, d);
   view.ajuste = {
     d: d, pose: pose,
     enq: normalizaEnq(ref.enq || IDENTIDADE),
     grade: false,
-    // o fantasma já vem ligado quando há referência: alinhar contra a foto
-    // anterior é o motivo de esta tela existir
-    fantasma: true
+    // o fantasma já vem ligado: alinhar contra outra sessão é o motivo de esta
+    // tela existir. Qual data é escolha dele — o padrão é só o palpite.
+    fantasma: true,
+    fantasmaD: viz ? viz.d : null
   };
   render(); window.scrollTo(0, 0);
-  const ant = referencia(S.protocolo.sessoes, pose, d);
-  garanteBytesDoCorpo(ant ? [d, ant.d] : [d]);
+  garanteBytesDoCorpo(viz ? [d, viz.d] : [d]);
+};
+
+CTX.setDataDoFantasma = function (d) {
+  view.ajuste.fantasmaD = d;
+  garanteBytesDoCorpo([d]);
+  render();
 };
 
 CTX.fechaAjuste = function () { view.ajuste = null; render(); window.scrollTo(0, 0); };
@@ -5226,11 +5243,13 @@ CTX.ajusteEmEdicao = function () {
     data: fmtDate(instanteDaData(v.d)),
     url: CORPO.urlDaFoto(v.d, v.pose, f.ref),
     enq: v.enq,
-    refUrl: f.ant && f.refAnt ? CORPO.urlDaFoto(f.ant.d, v.pose, f.refAnt) : null,
-    refEnq: f.refAnt ? f.refAnt.enq : null,
-    refTxt: f.ant ? fmtDate(instanteDaData(f.ant.d)) : '',
+    refUrl: f.outra && f.refOutra ? CORPO.urlDaFoto(f.outra.d, v.pose, f.refOutra) : null,
+    refEnq: f.refOutra ? f.refOutra.enq : null,
+    refTxt: f.outra ? fmtDate(instanteDaData(f.outra.d)) : '',
     grade: v.grade,
     fantasma: v.fantasma,
+    fantasmaD: v.fantasmaD,
+    datas: datasDoFantasma(v.d, v.pose),
     sujo: !ehIdentidade(v.enq)
   };
 };

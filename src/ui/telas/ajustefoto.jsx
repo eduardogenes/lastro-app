@@ -76,7 +76,7 @@ export function AjusteFoto({ ctx }) {
         <FotoAjustada url={d.url} enq={d.enq} alt={'Ajustando ' + d.pose} classe="aj-fa" />
         {d.fantasma && d.refUrl && (
           <FotoAjustada
-            url={d.refUrl} enq={d.refEnq} alt={'Referência de ' + d.refTxt}
+            url={d.refUrl} enq={d.refEnq} alt={'Sobreposta: ' + d.refTxt}
             classe="aj-fa aj-ghost" estilo="opacity:.45"
           />
         )}
@@ -93,13 +93,29 @@ export function AjusteFoto({ ctx }) {
           class={'ins-chip' + (d.grade ? ' on' : '')}
           onClick={() => ctx.setGradeDoAjuste(!d.grade)}
         >grade</button>
-        {d.refUrl && (
+        {d.datas.length > 0 && (
           <button
             class={'ins-chip' + (d.fantasma ? ' on' : '')}
             onClick={() => ctx.setFantasmaDoAjuste(!d.fantasma)}
-          >sobrepor {d.refTxt}</button>
+          >sobrepor</button>
         )}
       </div>
+
+      {/* Contra QUAL sessão alinhar é escolha dele, não do app. O padrão é a
+          vizinha, que acerta quase sempre; mas quando uma sessão antiga tem a
+          geometria boa, é contra ela que se quer alinhar as seguintes — e o
+          app não tem como saber qual é essa. */}
+      {d.fantasma && d.datas.length > 0 && (
+        <div class="aj-fantasma">
+          <span class="ins-label">alinhar contra</span>
+          <select
+            class="ins-input aj-sel" value={d.fantasmaD || ''}
+            onChange={e => ctx.setDataDoFantasma(e.currentTarget.value)}
+          >
+            {d.datas.map(o => <option key={o.d} value={o.d}>{o.txt}</option>)}
+          </select>
+        </div>
+      )}
 
       <Secao rotulo="ajuste" nota="arraste a foto para reenquadrar">
         <Controle

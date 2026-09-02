@@ -638,6 +638,62 @@ test('o mesmo recorte é aplicado na captura e na comparação', async () => {
   a.fechar();
 });
 
+test('a foto sobreposta pode ser trocada para qualquer outra data', async () => {
+  // o padrão é a vizinha, mas quando uma sessão antiga tem a geometria boa é
+  // contra ELA que se quer alinhar as seguintes — e o app não sabe qual é
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const datas = [56, 28, 14].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  for (const d of datas) await semear(a, d, 'frente-relaxado');
+
+  a.E(`CTX.abreAjuste(${JSON.stringify(datas[2])}, 'frente-relaxado')`);
+  await a.esperar(60);
+  assert.strictEqual(a.E('view.ajuste.fantasmaD'), datas[1], 'abre na vizinha');
+
+  // as opções são as OUTRAS sessões naquela pose, nunca a própria
+  assert.deepStrictEqual(a.J('CTX.ajusteEmEdicao().datas').map(o => o.d), [datas[0], datas[1]]);
+  assert.strictEqual(a.$$('.aj-fantasma option').length, 2);
+
+  a.E(`CTX.setDataDoFantasma(${JSON.stringify(datas[0])})`);
+  await a.esperar(60);
+  const d = a.J('CTX.ajusteEmEdicao()');
+  assert.strictEqual(d.fantasmaD, datas[0]);
+  assert.ok(d.refUrl, 'e os bytes da escolhida chegaram');
+  assert.ok(d.refTxt, 'com a data escrita ao lado');
+  a.fechar();
+});
+
+test('a sessão mais antiga alinha contra a SEGUINTE, e não fica sem fantasma', async () => {
+  // ela é a que ancora a série: deixá-la sem nada contra o que alinhar seria
+  // deixar justamente a mais importante de fora
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const datas = [28, 14].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  for (const d of datas) await semear(a, d, 'frente-relaxado');
+
+  a.E(`CTX.abreAjuste(${JSON.stringify(datas[0])}, 'frente-relaxado')`);
+  await a.esperar(60);
+  assert.strictEqual(a.E('view.ajuste.fantasmaD'), datas[1]);
+  assert.ok(a.J('CTX.ajusteEmEdicao()').refUrl);
+  a.fechar();
+});
+
+test('pose que só existe numa sessão não oferece contra o que alinhar', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const so = diasAtras(14);
+  comSessoes(a, [so], 'frente-relaxado');
+  await semear(a, so, 'frente-relaxado');
+
+  a.E(`CTX.abreAjuste(${JSON.stringify(so)}, 'frente-relaxado')`);
+  await a.esperar(60);
+  assert.deepStrictEqual(a.J('CTX.ajusteEmEdicao()').datas, []);
+  assert.strictEqual(a.$('.aj-fantasma'), null, 'sem seletor quando não há escolha');
+  a.fechar();
+});
+
 test('a tela de ajuste abre com o fantasma da sessão anterior', async () => {
   // alinhar contra a foto anterior é o motivo desta tela existir
   const a = await app({ aba: 'dados' });
@@ -665,7 +721,7 @@ test('na primeira sessão não há fantasma, e a tela não quebra', async () => 
   a.E(`CTX.abreAjuste(${JSON.stringify(so)}, 'frente-relaxado')`);
   await a.esperar(60);
   assert.strictEqual(a.J('CTX.ajusteEmEdicao()').refUrl, null);
-  assert.strictEqual(a.$$('.aj-quadro .fa').length, 1);
+  assert.strictEqual(a.$$('.aj-quadro .fa').length, 1, 'uma camada só');
   a.fechar();
 });
 

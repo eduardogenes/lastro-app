@@ -9,7 +9,7 @@ import assert from 'node:assert';
 import {
   CADENCIA_DIAS, PROTOCOLO, comAPose, completude, dataLocal, diasDesde,
   instanteDaData, mediaDaSemana, ordemPadrao, parPadrao, poseDe, poses,
-  proximaPose, referencia, sessaoDe, ultima
+  proximaPose, referencia, sessaoDe, ultima, vizinhaComAPose
 } from '../../src/dominio/protocolo';
 import type { Marca, SessaoFoto } from '../../src/dominio/tipos';
 
@@ -194,4 +194,31 @@ test('a média da semana da sessão sai de S.body, não da sessão', () => {
 test('semana sem pesagem devolve null em vez de zero', () => {
   assert.strictEqual(mediaDaSemana([], '2026-09-02'), null);
   assert.strictEqual(mediaDaSemana(null, '2026-09-02'), null);
+});
+
+// ---------- a vizinha, que vira fantasma ao ajustar ----------
+
+test('a vizinha padrão é a sessão ANTERIOR naquela pose', () => {
+  const ss = [sessao('2026-07-06', ['a']), sessao('2026-07-20', ['a']), sessao('2026-08-03', ['a'])];
+  assert.strictEqual(vizinhaComAPose(ss, 'a', '2026-08-03')!.d, '2026-07-20');
+});
+
+test('pose pulada no meio não cega a vizinha: pula para trás até achar', () => {
+  const ss = [sessao('2026-07-06', ['a']), sessao('2026-07-20', ['b']), sessao('2026-08-03', ['a'])];
+  assert.strictEqual(vizinhaComAPose(ss, 'a', '2026-08-03')!.d, '2026-07-06');
+});
+
+test('sem anterior, a SEGUINTE serve — senão a mais antiga nunca teria fantasma', () => {
+  const ss = [sessao('2026-07-06', ['a']), sessao('2026-07-20', ['a'])];
+  assert.strictEqual(vizinhaComAPose(ss, 'a', '2026-07-06')!.d, '2026-07-20');
+});
+
+test('pose que só existe numa sessão não tem vizinha', () => {
+  const ss = [sessao('2026-07-06', ['a']), sessao('2026-07-20', ['b'])];
+  assert.strictEqual(vizinhaComAPose(ss, 'a', '2026-07-06'), null);
+});
+
+test('a própria sessão nunca é vizinha de si mesma', () => {
+  const ss = [sessao('2026-07-06', ['a'])];
+  assert.strictEqual(vizinhaComAPose(ss, 'a', '2026-07-06'), null);
 });
