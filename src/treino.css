@@ -495,7 +495,14 @@
    Funciona porque este elemento é filho direto do <main>: sticky se prende ao
    bloco que o contém, e dentro da seção ele descolaria junto com ela. */
 .day-rel {
-  position: sticky; top: 0; z-index: 25;
+  /* `top: var(--sa-top)` e não `top: 0`: o app declara
+     `apple-mobile-web-app-status-bar-style: black-translucent`, então o
+     conteúdo passa POR BAIXO da barra de status de propósito. Grudar em 0
+     encostava o relógio da sessão no relógio do iPhone — dois números em cima
+     um do outro. Aqui ele para logo abaixo dela.
+     A faixa acima continua deixando o conteúdo passar, que é o comportamento
+     do app inteiro; o que não pode é o número parar ali. */
+  position: sticky; top: var(--sa-top); z-index: 25;
   display: flex; align-items: center; gap: var(--ins-3);
   margin-top: var(--ins-5);
   /* opaco e vazando a goteira, como a faixa de voltar da tela cheia: o

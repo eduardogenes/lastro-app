@@ -59,6 +59,22 @@ body {
 
 img { -webkit-user-drag: none; user-drag: none; }
 
+/* A faixa da barra de status ganha fundo.
+   O app declara `black-translucent`, então o conteúdo passa POR BAIXO dela —
+   bonito com a página parada, ilegível rolando: o relógio, o sinal e a bateria
+   do sistema ficam sobrepostos a texto do app. Esta faixa devolve o fundo ali.
+   `fixed` e não padding: não custa um pixel de layout, e some sozinha onde não
+   há área segura (computador, iPhone sem entalhe), porque a altura vira zero.
+   z-index acima de tudo, folhas inclusive — nada do app deve ser desenhado
+   onde o sistema desenha o dele. */
+body::before {
+  content: "";
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--sa-top); z-index: 90;
+  background: var(--ins-canvas);
+  pointer-events: none;
+}
+
 body {
   /* A JANELA é quem rola. Nenhum ancestral pode virar scroll container,
      senão `position: sticky` passa a se ancorar nele e o cabeçalho some
