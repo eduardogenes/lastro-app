@@ -3421,6 +3421,25 @@ document.addEventListener('visibilitychange', function () {
 // Reconectou: o que ficou represado sobe agora.
 window.addEventListener('online', function () { sincroniza(); });
 
+// ---------- travar em retrato, onde a plataforma deixa ----------
+// `screen.orientation.lock` é a ÚNICA trava de verdade que existe na web. O
+// Chrome a implementa; o Safari expõe `screen.orientation` só para leitura e
+// não tem `lock`, então no iPhone isto não faz nada — lá quem age é a media
+// query de `#deitado`, no base.css.
+//
+// Fica assim mesmo: custa nada, acerta onde dá, e passa a valer sozinho no dia
+// em que a Apple implementar. Só em aparelho de toque, para não mexer com a
+// janela de um computador.
+(function travaEmRetrato() {
+  try {
+    if (!window.matchMedia || !window.matchMedia('(pointer: coarse)').matches) return;
+    const o = window.screen && window.screen.orientation;
+    if (!o || typeof o.lock !== 'function') return;
+    const p = o.lock('portrait');
+    if (p && p.catch) p.catch(function () {});   // recusa é o caso normal, não erro
+  } catch (e) {}
+})();
+
 // ---------- o zoom do navegador não existe aqui ----------
 // O CSS (`touch-action: pan-x pan-y` na raiz) já tira o toque duplo e a pinça
 // em quase todo lugar. Estes três eventos são a parte que só o WebKit tem: o
