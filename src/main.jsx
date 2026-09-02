@@ -3285,6 +3285,18 @@ document.addEventListener('visibilitychange', function () {
 // Reconectou: o que ficou represado sobe agora.
 window.addEventListener('online', function () { sincroniza(); });
 
+// ---------- o zoom do navegador não existe aqui ----------
+// O CSS (`touch-action: pan-x pan-y` na raiz) já tira o toque duplo e a pinça
+// em quase todo lugar. Estes três eventos são a parte que só o WebKit tem: o
+// Safari implementa a pinça como gesto PRÓPRIO, acima do touch-action, e sem
+// recusá-la aqui ela ainda passa em algumas versões.
+//
+// `passive: false` é obrigatório — sem isso o navegador ignora o
+// preventDefault e o listener vira decoração.
+['gesturestart', 'gesturechange', 'gestureend'].forEach(function (nome) {
+  document.addEventListener(nome, function (e) { e.preventDefault(); }, { passive: false });
+});
+
 // ---------------------------------------------------------------------------
 // A única porta que o app abre para fora de si.
 //

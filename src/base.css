@@ -15,6 +15,22 @@ html {
   /* Safari infla texto ao girar para paisagem. Isto desliga. */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+
+  /* ---- ZOOM: nenhum, e é deliberado ----
+     `pan-x pan-y` diz ao navegador que os únicos gestos dele nesta página são
+     rolar. Some o zoom por toque duplo e some o de pinça.
+
+     Na RAIZ, e não só nos botões, porque o toque duplo que incomoda não é o
+     dado num botão — é o dado num texto, num cartão, numa foto. O efetivo de um
+     elemento é a interseção com o dos ancestrais, então declarar aqui alcança a
+     árvore inteira, e quem precisa de menos (o quadro de ajuste, que arrasta)
+     continua podendo pedir `none`.
+
+     O que se perde é a pinça para enxergar melhor. É aceitável aqui porque
+     nenhum texto do app é menor que 16px e a leitura não depende dela — e
+     porque zoom acidental no meio de uma série, com a mão suada, custa mais que
+     zoom deliberado ganha. */
+  touch-action: pan-x pan-y;
 }
 
 html, body {
@@ -24,9 +40,24 @@ html, body {
   color: var(--ins-text);
   font-family: var(--ins-font-display);
   /* Mata o rubber-band: puxar além do fim revelava uma faixa do fundo
-     do body que não devia existir. */
+     do body que não devia existir. Mata junto o puxar-para-recarregar, que
+     num app instalado é só uma forma de perder o que estava na tela. */
   overscroll-behavior: none;
 }
+
+/* ---- O resto do comportamento de aplicativo ----
+   Cada uma destas some com um gesto que só faz sentido numa PÁGINA. Segurar o
+   dedo num rótulo não deve oferecer "copiar"; tocar não deve piscar cinza; e
+   arrastar uma foto não deve começar a arrastá-la para outro app. Nada disso
+   existe num aplicativo, e a soma delas é o que faz o app parecer um. */
+body {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+img { -webkit-user-drag: none; user-drag: none; }
 
 body {
   /* A JANELA é quem rola. Nenhum ancestral pode virar scroll container,
@@ -94,10 +125,19 @@ input::placeholder, textarea::placeholder { color: var(--ins-text-5); }
 /* Campo numérico em mono; busca é prosa e fica na display. */
 input[inputmode="decimal"], input[inputmode="numeric"] { font-family: var(--ins-font-mono); }
 
+/* A barra deslizante toma o gesto inteiro: arrastá-la é arrastá-la, e não
+   rolar a página por baixo. Sem isto o dedo escorrega entre as duas coisas. */
+input[type="range"] { touch-action: none; }
+
 ::-webkit-scrollbar { display: none; }
 
-/* Prosa pode ser selecionada; o resto da interface não. */
-p, .ins-prosa { -webkit-user-select: text; user-select: text; }
+/* Prosa pode ser selecionada; o resto da interface não. Os CAMPOS também
+   voltam: sem isto não se seleciona o que se digitou para corrigir, que é o
+   oposto de comportamento de aplicativo. */
+p, .ins-prosa, input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
 
 /* ---- Papel da página --------------------------------------------------- */
 

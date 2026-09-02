@@ -19,7 +19,7 @@ const RAIZ = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 // Todas as folhas, não uma amostra. Enquanto o sistema antigo existia, o teste
 // lia `tokens.css` e `app.css`; com `app.css` aposentado, ler uma lista curta
 // deixaria o teste cego justamente onde as regras passaram a morar.
-const FOLHAS = ['tokens.css', 'base.css', 'componentes.css', 'treino.css'];
+const FOLHAS = ['tokens.css', 'base.css', 'componentes.css', 'treino.css', 'protocolo.css'];
 const css = FOLHAS
   .map(f => fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8'))
   .join('\n');
@@ -134,3 +134,63 @@ test('alvo de toque não é forçado duas vezes', () => {
   });
 });
 
+
+// ---------- comportamento de aplicativo, não de navegador ----------
+// O app é instalado na tela de início e usado de pé, com uma mão, suado. Zoom
+// acidental no meio de uma série custa mais do que zoom deliberado ganha, e
+// cada regra abaixo tira um gesto que só faz sentido numa página.
+
+const base = fs.readFileSync(path.join(RAIZ, 'src', 'base.css'), 'utf8');
+const indexHtml = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
+const mainJsx = fs.readFileSync(path.join(RAIZ, 'src', 'main.jsx'), 'utf8');
+
+test('a raiz recusa os gestos de zoom, e não só os botões', () => {
+  // Estava só no `button`, e o toque duplo que incomoda é o dado num texto,
+  // num cartão ou numa foto. O efetivo é a interseção com os ancestrais, então
+  // declarar na raiz alcança a árvore inteira.
+  const html = base.match(/\bhtml\s*\{([^}]*)\}/);
+  assert.ok(html, 'a regra de html existe');
+  assert.match(html![1], /touch-action:\s*pan-x\s+pan-y/,
+    'pan-x pan-y: rolar sim, pinça e toque duplo não');
+});
+
+test('o viewport não deixa o navegador escalar a página', () => {
+  assert.match(indexHtml, /user-scalable=no/);
+  assert.match(indexHtml, /maximum-scale=1/);
+  assert.match(indexHtml, /viewport-fit=cover/, 'a área segura continua contada');
+});
+
+test('a pinça do WebKit é recusada, que o touch-action não alcança', () => {
+  // O Safari implementa a pinça como gesto próprio, acima do touch-action.
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(n => {
+    assert.ok(mainJsx.includes(n), 'falta recusar ' + n);
+  });
+  assert.match(mainJsx, /passive:\s*false/,
+    'sem passive:false o preventDefault é ignorado e o listener vira decoração');
+});
+
+test('segurar o dedo na interface não abre menu nem seleciona', () => {
+  const corpo = base.match(/\nbody\s*\{([^}]*)\}/);
+  assert.ok(corpo, 'a regra de body existe');
+  assert.match(corpo![1], /-webkit-touch-callout:\s*none/);
+  assert.match(corpo![1], /user-select:\s*none/);
+  assert.match(corpo![1], /-webkit-tap-highlight-color:\s*transparent/);
+});
+
+test('mas campo e prosa continuam selecionáveis', () => {
+  // sem isto não se seleciona o que se digitou para corrigir, que é o oposto
+  // de comportamento de aplicativo
+  const m = base.match(/p,\s*\.ins-prosa,\s*input,\s*textarea\s*\{([^}]*)\}/);
+  assert.ok(m, 'a exceção existe e alcança os campos');
+  assert.match(m![1], /user-select:\s*text/);
+});
+
+test('a barra deslizante toma o gesto, em vez de disputá-lo com a rolagem', () => {
+  assert.match(base, /input\[type="range"\]\s*\{[^}]*touch-action:\s*none/);
+});
+
+test('o campo nunca fica abaixo de 16px, que é o que faz o Safari dar zoom', () => {
+  const m = base.match(/\ninput,\s*textarea,\s*select\s*\{([^}]*)\}/);
+  assert.ok(m, 'a regra dos campos existe');
+  assert.match(m![1], /font-size:\s*16px/);
+});
