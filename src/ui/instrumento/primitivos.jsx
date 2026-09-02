@@ -41,9 +41,20 @@ export function BotaoEstado({ rotulo, valor, onClick }) {
  * Toda seção começa assim: fio de 1px, respiro, rótulo. A `nota` à direita
  * carrega contagem ou dica ("toque em ··· para editar").
  */
-export function Secao({ rotulo, nota, children, primeira, id }) {
+/**
+ * `continua` = a seção anterior não terminou; é a MESMA, partida ao meio.
+ *
+ * Existe para um caso só: um filho que precisa ser `sticky` não pode morar
+ * dentro da seção, porque sticky se prende ao bloco que o contém e descolaria
+ * junto com ela. Partir a seção e não desenhar o fio deixa o elemento subir
+ * para o `<main>` sem que a tela mude de aparência.
+ */
+export function Secao({ rotulo, nota, children, primeira, continua, id }) {
   return (
-    <section id={id} class={'ins-secao' + (primeira ? ' primeira' : '')}>
+    <section
+      id={id}
+      class={'ins-secao' + (primeira ? ' primeira' : '') + (continua ? ' continua' : '')}
+    >
       {(rotulo || nota) && (
         <div class="ins-secao-h">
           <span class="ins-label">{rotulo}</span>

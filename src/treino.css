@@ -488,7 +488,24 @@
 .ctrl-b.fim, .ctrl-b.ini {
   background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid);
 }
-.day-rel { display: flex; align-items: center; gap: var(--ins-3); margin-top: var(--ins-5); }
+/* GRUDADO NO TOPO enquanto a sessão está aberta.
+   Quanto tempo faz que começou é a pergunta que se refaz o treino inteiro, e a
+   resposta ficava no alto da tela — a uns dois exercícios de rolagem de onde o
+   dedo estava. Agora ela acompanha.
+   Funciona porque este elemento é filho direto do <main>: sticky se prende ao
+   bloco que o contém, e dentro da seção ele descolaria junto com ela. */
+.day-rel {
+  position: sticky; top: 0; z-index: 25;
+  display: flex; align-items: center; gap: var(--ins-3);
+  margin-top: var(--ins-5);
+  /* opaco e vazando a goteira, como a faixa de voltar da tela cheia: o
+     conteúdo passa POR BAIXO e precisa sumir, não borrar. */
+  padding: var(--ins-3) max(var(--ins-8), var(--sa-left)) var(--ins-3) max(var(--ins-8), var(--sa-left));
+  margin-left: calc(-1 * max(var(--ins-8), var(--sa-left)));
+  margin-right: calc(-1 * max(var(--ins-8), var(--sa-right)));
+  background: var(--ins-canvas);
+  border-bottom: 1px solid var(--ins-hairline);
+}
 .day-rel.pausado { opacity: .6; }
 
 #relogio, .relogio {

@@ -345,8 +345,14 @@ async function load() {
     projetaTudo();
   }
 
-  encerraSePreciso();
-  view.day = S.sessao ? S.sessao.day : nextDay();
+  encerraSePreciso();                  // sessão vencida fecha ANTES de decidir a rota
+  // Abrir o app com treino em andamento cai no treino, não em HOJE. Sair e
+  // voltar no meio de uma série é o caso mais comum de reabertura que existe
+  // neste app, e devolvê-lo a HOJE cobrava dois toques com o celular na mão
+  // suada. Se a sessão venceu, `encerraSePreciso` já a fechou e nada disto vale.
+  const diaAberto = diaDaSessaoAberta();
+  view.day = diaAberto || nextDay();
+  if (diaAberto) view.aba = 'treino';
   render();
   abrePromoGuardada();
   // Antes da primeira leitura de foto, e depois do render: a tela já está de pé
@@ -1561,11 +1567,21 @@ const CTX = {
   // migração — duas fontes de verdade para a mesma pergunta, e o app já
   // trocava de conteúdo sem trocar a aba acesa por causa disso.
   vaiPara: function (a) {
+    const vindoDeFora = view.aba !== a;
     view.aba = a;
     view.prog = null; view.hist = null; view.retro = false;
     view.sessao = null; view.add = null; view.mes = 0;
+
+    // Chegar em TREINO com sessão aberta cai no dia DELA. Era aqui que o app
+    // abria "um treino qualquer": `view.day` ficava no último dia visitado, que
+    // depois de um `finalizarSessao` já é o PRÓXIMO da rotação.
+    const diaAberto = a === 'treino' && vindoDeFora ? diaDaSessaoAberta() : null;
+    const trocou = diaAberto && diaAberto !== view.day;
+    if (trocou) { view.day = diaAberto; view.open = null; view.nota = null; }
+
     render();
     window.scrollTo(0, 0);
+    if (trocou) carregaFotosDoDia();
   },
   telaCheia: telaCheia,
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
@@ -2783,6 +2799,21 @@ function toast(msg) {
 }
 
 // ---------- actions ----------
+/**
+ * O dia da sessão aberta, quando ela existe e ainda tem treino no programa.
+ *
+ * A sessão manda na CHEGADA, nunca na permanência. Chegar é abrir o app e é
+ * tocar na aba TREINO vindo de fora dela; permanecer é já estar lá. A diferença
+ * é o que separa "prioridade" de "prisão": quem chega cai onde estava treinando,
+ * e quem quer olhar outro dia troca no seletor e fica nele enquanto não sair.
+ *
+ * `treino(day)` na condição porque o dia da sessão pode ter saído do programa
+ * entre uma abertura e outra — aí não há para onde levar ninguém.
+ */
+function diaDaSessaoAberta() {
+  return S.sessao && treino(S.sessao.day) ? S.sessao.day : null;
+}
+
 function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); window.scrollTo(0,0); carregaFotosDoDia(); }
 function toggle(i){ view.open = view.open===i ? null : i; view.swapOpen = null; view.nota = null; view.carga = null; render(); }
 function dorName(k){ const x = DORES.filter(y=>y.k===k)[0]; return x ? x.t : k; }

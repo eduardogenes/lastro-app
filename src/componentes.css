@@ -33,6 +33,9 @@
    Estava 26 + 14 = 40, repetido cinco vezes por tela. */
 .ins-secao { border-top: 1px solid var(--ins-rule); padding-top: var(--ins-5); margin-top: var(--ins-5); }
 .ins-secao.primeira { border-top: 0; margin-top: var(--ins-7); padding-top: 0; }
+/* Continuação da seção de cima, partida ao meio para deixar um `sticky` subir
+   ao <main>. Não desenha nada: o corte é estrutural, não visual. */
+.ins-secao.continua { border-top: 0; margin-top: 0; padding-top: 0; }
 .ins-secao-h {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: var(--ins-3); margin-bottom: var(--ins-4);

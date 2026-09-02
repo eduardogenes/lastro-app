@@ -43,18 +43,26 @@ export function Treino({ ctx }) {
           ]}
         />
 
-        {/* O relógio anda por fora do Preact de propósito: tickRelogio()
-            escreve em #relogio de segundo em segundo sem re-render, porque
-            redesenhar a tela inteira a cada segundo roubaria o foco do campo
-            que ele está preenchendo no meio da série. */}
-        {c.sessao
-          ? <div class={'day-rel' + (c.sessao.pausada ? ' pausado' : '')}>
-              {!c.sessao.pausada && <span class="ins-live-dot" />}
-              <span id="relogio" class="ins-metric-m">{c.sessao.relogio}</span>
-              <em class="ins-label-sm">{c.sessao.desde}</em>
-            </div>
-          : <button class="day-ini" onClick={ctx.iniciarSessao}>iniciar treino</button>}
+      </Secao>
 
+      {/* O relógio anda por fora do Preact de propósito: tickRelogio() escreve
+          em #relogio de segundo em segundo sem re-render, porque redesenhar a
+          tela inteira a cada segundo roubaria o foco do campo que ele está
+          preenchendo no meio da série.
+
+          E ele é FILHO DIRETO do <main>, não da seção acima: sticky se prende
+          ao bloco que o contém, e lá dentro ele descolaria assim que a seção
+          saísse — que é uns dois exercícios de rolagem. A seção seguinte vem
+          com `continua` para o corte não desenhar fio nenhum. */}
+      {c.sessao
+        ? <div class={'day-rel' + (c.sessao.pausada ? ' pausado' : '')}>
+            {!c.sessao.pausada && <span class="ins-live-dot" />}
+            <span id="relogio" class="ins-metric-m">{c.sessao.relogio}</span>
+            <em class="ins-label-sm">{c.sessao.desde}</em>
+          </div>
+        : <button class="day-ini" onClick={ctx.iniciarSessao}>iniciar treino</button>}
+
+      <Secao continua>
         {t.sessaoAberta && (
           <div class="ctrl">
             {t.pausada

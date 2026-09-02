@@ -2,7 +2,7 @@
 // a sessão nasce na primeira série completa e morre sozinha.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app, DIA } from './harness.js';
+import { app, abrirApp, agoraEstavel, DIA } from './harness.js';
 
 test('não existe mais função de salvar', async () => {
   const a = await app();
@@ -207,5 +207,94 @@ test('deload corta as séries pela metade e marca a sessão', async () => {
   assert.strictEqual(a.log('A',0)[0].dl, 1);
   assert.strictEqual(a.E('S.done[0].dl'), 1);
   assert.strictEqual(a.E('sessoesDeTrabalho()'), 0, 'deload não conta para as 48');
+  a.fechar();
+});
+
+// ---------- a sessão aberta manda na CHEGADA ----------
+// Chegar é abrir o app e é tocar na aba TREINO vindo de fora dela. Permanecer é
+// já estar lá. A diferença é o que separa prioridade de prisão.
+
+/** Um estado com treino em andamento no dia pedido, dentro do dia de hoje. */
+function emTreino(dia, agora) {
+  return {
+    logs: {}, done: [],
+    sessao: { day: dia, inicio: agora - 2 * 60000, ultima: agora - 30000,
+              sid: agora - 2 * 60000, manual: 1, pausas: [], pulados: [] }
+  };
+}
+
+test('abrir o app com treino em andamento cai no treino, não em HOJE', async () => {
+  // sair e voltar no meio de uma série é a reabertura mais comum que existe
+  // neste app, e devolvê-lo a HOJE cobrava dois toques com a mão suada
+  const agora = agoraEstavel();
+  const a = abrirApp({ agora: agora, estado: emTreino('B', agora) });
+  await a.pronto();                    // sem a.aba(): é o boot que tem que decidir
+
+  assert.strictEqual(a.E('CTX.abaAtual()'), 'treino');
+  assert.strictEqual(a.E('view.day'), 'B', 'e no dia da sessão');
+  assert.strictEqual(a.E('S.sessao && S.sessao.day'), 'B', 'a sessão sobreviveu ao boot');
+  a.fechar();
+});
+
+test('sem sessão, o app continua abrindo em HOJE', async () => {
+  const a = abrirApp({ agora: agoraEstavel(), estado: { logs: {}, done: [] } });
+  await a.pronto();
+  assert.strictEqual(a.E('CTX.abaAtual()'), 'hoje');
+  a.fechar();
+});
+
+test('sessão vencida não sequestra a abertura', async () => {
+  // encerraSePreciso() roda ANTES de decidir a rota: se a sessão morreu de
+  // ontem, ela não tem por que puxar ninguém para o treino
+  const agora = agoraEstavel();
+  const a = abrirApp({ agora: agora, estado: emTreino('B', agora - 2 * DIA) });
+  await a.pronto();
+  assert.strictEqual(a.E('S.sessao'), null, 'foi encerrada no boot');
+  assert.strictEqual(a.E('CTX.abaAtual()'), 'hoje');
+  a.fechar();
+});
+
+test('chegar na aba TREINO cai no dia da sessão, venha de onde vier', async () => {
+  const agora = agoraEstavel();
+  const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
+
+  a.E(`go('C')`);
+  assert.strictEqual(a.E('view.day'), 'C', 'dentro da aba, o dia é livre');
+
+  a.aba('comida');
+  a.aba('treino');
+  assert.strictEqual(a.E('view.day'), 'B', 'voltando de fora, cai na sessão de novo');
+  a.fechar();
+});
+
+test('mas não congela: dentro da aba o dia continua livre', async () => {
+  const agora = agoraEstavel();
+  const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
+  a.E(`go('D')`);
+  assert.strictEqual(a.E('view.day'), 'D');
+  a.E('render()');
+  assert.strictEqual(a.E('view.day'), 'D', 'redesenhar não puxa de volta');
+  a.fechar();
+});
+
+test('sem sessão, trocar de aba não mexe no dia escolhido', async () => {
+  const a = await app({ agora: agoraEstavel(), estado: { logs: {}, done: [] }, aba: 'treino' });
+  a.E(`go('C')`);
+  a.aba('comida');
+  a.aba('treino');
+  assert.strictEqual(a.E('view.day'), 'C', 'nada a priorizar, nada muda');
+  a.fechar();
+});
+
+test('o relógio da sessão é filho direto do main, senão o sticky descola', async () => {
+  // sticky se prende ao bloco que o contém: dentro da seção ele sairia da tela
+  // junto com ela, a uns dois exercícios de rolagem
+  const agora = agoraEstavel();
+  const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
+  const rel = a.$('.day-rel');
+  assert.ok(rel, 'o relógio está na tela');
+  assert.strictEqual(rel.parentElement.tagName, 'MAIN',
+    'saiu para o <main>: dentro da <section> o sticky se prenderia a ela');
+  assert.ok(a.$('.ins-secao.continua'), 'e a seção partida não desenha fio');
   a.fechar();
 });

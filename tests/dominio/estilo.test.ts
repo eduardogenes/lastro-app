@@ -264,3 +264,11 @@ test('a tela cheia tem título de primeiro nível, e ele recebe foco', () => {
   assert.match(tc, /\.focus\(\{ preventScroll: true \}\)/,
     'foco sem mexer no scroll, que já foi para o topo');
 });
+
+test('o relógio da sessão gruda no topo enquanto o treino corre', () => {
+  const treino = fs.readFileSync(path.join(RAIZ, 'src', 'treino.css'), 'utf8');
+  const rel = regras(treino, '.day-rel');
+  assert.match(rel, /position:\s*sticky/);
+  assert.match(rel, /top:\s*0/);
+  assert.match(rel, /background:/, 'opaco: o conteúdo passa por baixo e precisa sumir');
+});
