@@ -4225,7 +4225,12 @@ CTX.cromoDoTreino = function () {
       futuro: futuro,
       cardio: cardioDoDia(dia).length > 0,
       // sem ação no futuro: lançar treino que ainda não aconteceu não faz sentido
-      abre: marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
+      // Um dia pode ter DUAS sessões — registrar o treino errado e depois o
+      // certo é o jeito mais comum de chegar nisso, e a célula já mostra as
+      // duas letras. Abrir a última em silêncio deixava a outra inalcançável:
+      // com mais de uma, a célula leva à LISTA, onde elas estão lado a lado.
+      abre: marcas.length > 1 ? { k: 'dia', t: dia }
+           : marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
            : futuro ? null : { k: 'lancar', t: dia }
     });
   }
@@ -4261,10 +4266,43 @@ CTX.cromoDoTreino = function () {
   };
 };
 
+let destaqueT = null;
+
 CTX.abreSessaoDoDia = function (a) {
   if (!a) return;
-  if (a.k === 'sessao') abrirSessao(a.t); else abrirAdicionar(a.t);
+  if (a.k === 'sessao') { abrirSessao(a.t); return; }
+  if (a.k === 'dia') { levaAsSessoesDoDia(a.t); return; }
+  abrirAdicionar(a.t);
 };
+
+/**
+ * Leva às sessões daquele dia, na lista do mês.
+ *
+ * NÃO abre nenhuma: com duas no mesmo dia, escolher por ele seria escolher
+ * errado metade das vezes. A lista já traz as duas com data, horário e letra —
+ * o que faltava era chegar nela sabendo quais linhas olhar.
+ *
+ * Vai para DADOS porque é lá que existe lista de dia; a tira da semana do
+ * treino mostra o dia, mas não o desdobra. E leva o mês junto, senão a lista
+ * mostraria outro mês que não o do dia tocado.
+ *
+ * O destaque se apaga sozinho: é empurrão de atenção, não estado.
+ */
+function levaAsSessoesDoDia(t) {
+  const d = new Date(t), agora = new Date(Date.now());
+  view.aba = 'dados';
+  view.mes = (d.getFullYear() - agora.getFullYear()) * 12 + (d.getMonth() - agora.getMonth());
+  view.destacaDia = t;
+  render();
+
+  const alvo = document.querySelector('.sessrow.destacada');
+  if (alvo) {
+    const parado = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    alvo.scrollIntoView({ behavior: parado ? 'auto' : 'smooth', block: 'center' });
+  }
+  clearTimeout(destaqueT);
+  destaqueT = setTimeout(function () { view.destacaDia = null; render(); }, 2600);
+}
 CTX.cardioSet = function (k, v) { cardioSet(k, v); };
 CTX.addCardio = function () { addCardio(); };
 
@@ -4303,7 +4341,12 @@ CTX.mes = function () {
       descanso: !marcas.length && ehDescanso(dia),
       cardio: cardioDoDia(dia).length > 0,
       periodo: per ? { k: per.k, rot: per.rot } : null,
-      abre: marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
+      // Um dia pode ter DUAS sessões — registrar o treino errado e depois o
+      // certo é o jeito mais comum de chegar nisso, e a célula já mostra as
+      // duas letras. Abrir a última em silêncio deixava a outra inalcançável:
+      // com mais de uma, a célula leva à LISTA, onde elas estão lado a lado.
+      abre: marcas.length > 1 ? { k: 'dia', t: dia }
+           : marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
            : futuro ? null : { k: 'lancar', t: dia }
     });
   }
@@ -4318,6 +4361,7 @@ CTX.mes = function () {
       }, 0);
       return {
         t: m.t,
+        destacada: view.destacaDia != null && sameDay(m.t, view.destacaDia),
         data: fmtDate(m.t),
         hora: horaDaSessao(m),
         marca: marcaDe(m),

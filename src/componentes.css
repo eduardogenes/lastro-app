@@ -1021,6 +1021,17 @@
   width: 100%; text-align: left;
 }
 .sessrow:last-child { border-bottom: 0; }
+/* Empurrão de atenção ao chegar de uma célula com mais de uma sessão: diz
+   QUAIS linhas são daquele dia, e se apaga sozinho. Fio à esquerda, não fundo:
+   o sistema marca com fio.
+   O fio vai para a GOTEIRA, fora da caixa: desenhado por dentro ele cobria o
+   primeiro dígito da data. */
+.sessrow { position: relative; }
+.sessrow.destacada::before {
+  content: ""; position: absolute;
+  left: calc(-1 * var(--ins-4)); top: 0; bottom: 0;
+  width: var(--ins-rail); background: var(--ins-acid);
+}
 .sess-d { min-width: 44px; font: 400 11px/1.3 var(--ins-font-mono); color: var(--ins-text-3); }
 .sess-d em { display: block; font-style: normal; font-size: 10px; color: var(--ins-text-5); margin-top: 2px; }
 /* A letra NÃO é ácida aqui. Toda linha desta lista é uma sessão feita, então

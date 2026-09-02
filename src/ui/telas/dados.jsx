@@ -193,7 +193,8 @@ function Mes({ m, ctx }) {
       {m.sessoes.length > 0 && (
         <div class="ins-lista mes-sessoes">
           {m.sessoes.map(x => (
-            <button key={x.t} class="ins-linha sessrow" onClick={() => ctx.abreSessaoDoDia({ k: 'sessao', t: x.t })}>
+            <button key={x.t} class={'ins-linha sessrow' + (x.destacada ? ' destacada' : '')}
+                    onClick={() => ctx.abreSessaoDoDia({ k: 'sessao', t: x.t })}>
               <span class="sess-d">{x.data}{x.hora && <em>{x.hora}</em>}</span>
               <span class={'sess-l' + (x.livre ? ' livre' : '')}>{x.marca}</span>
               <span class="sess-n">

@@ -505,3 +505,48 @@ test('um asset servido do Storage não passa despercebido', () => {
     'um asset do Storage tem que falhar: é asset buscado na rede, não dado');
   assert.ok(!passa('https://cdn.jsdelivr.net/qualquer.js'), 'e qualquer CDN também');
 });
+
+test('dia com dois treinos leva à lista, em vez de abrir um deles em silêncio', async () => {
+  // Registrar o treino errado e depois o certo põe dois no mesmo dia. A célula
+  // mostra as duas letras e abria só a última: a outra ficava inalcançável.
+  const agora = agoraEstavel();
+  const d = new Date(agora); d.setHours(8, 0, 0, 0);
+  const tB = d.getTime(), tD = tB + 3 * 60 * 60000;
+  // `plano` declarado: sem ele o harness entra como plano 2 e a migração
+  // reindexa as fixtures, trocando a letra do treino que este teste lê
+  const a = await app({ agora: agora, estado: {
+    plano: 6, logs: {}, done: [
+      { day: 'B', t: tB, sid: tB, dur: 40 * 60000, fim: 'manual' },
+      { day: 'D', t: tD, sid: tD, dur: 90 * 60000, fim: 'manual' }
+    ]
+  }, aba: 'dados' });
+
+  const cel = a.$('.cal-d.hoje');
+  assert.ok(cel.textContent.includes('B') && cel.textContent.includes('D'),
+    'a célula anuncia os dois: ' + cel.textContent.trim());
+
+  a.clicar(cel);
+  await a.esperar(60);
+  assert.strictEqual(a.E('view.sessao'), null, 'não escolheu por ele');
+  assert.strictEqual(a.$$('.sessrow.destacada').length, 2, 'apontou as duas linhas');
+
+  // e cada linha abre a SUA
+  a.clicar(a.$$('.sessrow.destacada')[1]);
+  await a.esperar(60);
+  assert.strictEqual(a.J('view.sessao.day'), 'B', 'a de baixo é o B, o mais cedo');
+  a.fechar();
+});
+
+test('dia com um treino só continua abrindo direto', async () => {
+  const agora = agoraEstavel();
+  const d = new Date(agora); d.setHours(8, 0, 0, 0);
+  const a = await app({ agora: agora, estado: {
+    plano: 6, logs: {},
+    done: [{ day: 'B', t: d.getTime(), sid: d.getTime(), dur: 40 * 60000, fim: 'manual' }]
+  }, aba: 'dados' });
+
+  a.clicar(a.$('.cal-d.hoje'));
+  await a.esperar(60);
+  assert.strictEqual(a.J('view.sessao.day'), 'B', 'sem escolha a fazer, abre logo');
+  a.fechar();
+});
