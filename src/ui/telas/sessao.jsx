@@ -1,15 +1,21 @@
 // O detalhe de uma sessão passada.
 //
-// É tela de leitura: responde "o que aconteceu naquele dia" com o número que
-// importa no topo e o exercício a exercício embaixo. Nada aqui edita nada —
-// corrigir uma sessão passada é outro caminho, pelo histórico do exercício.
+// É tela de LEITURA primeiro: responde "o que aconteceu naquele dia" com o
+// número que importa no topo e o exercício a exercício embaixo.
+//
+// As duas edições que existem ficam no fim, depois disso, porque são o que se
+// faz DEPOIS de olhar e ver que está errado: corrigir o tempo e apagar o
+// treino. Antes elas não existiam aqui — apagar só era oferecido no treino
+// avulso, e um treino do plano registrado por engano não tinha saída nenhuma.
+// Corrigir carga ou repetição continua sendo outro caminho, pelo histórico do
+// exercício: ali a unidade é a série, aqui é o dia.
 //
 // A distinção entre tempo EXATO e APROXIMADO aparece no rótulo e não é
 // decoração: sessão que o app fechou sozinho tem o tempo indo até a última
 // série, não até quando ele saiu da academia. Apresentar os dois como iguais
 // seria inventar precisão.
 
-import { Procedencia, Vazio } from '../instrumento/primitivos.jsx';
+import { Procedencia, Secao, Vazio } from '../instrumento/primitivos.jsx';
 import { LinhaResumo, Stats, TelaCheia } from '../instrumento/telacheia.jsx';
 
 export function Sessao({ ctx }) {
@@ -99,6 +105,31 @@ export function Sessao({ ctx }) {
       {d.itens.length === 0
         ? <Vazio>Nenhuma série registrada neste dia.</Vazio>
         : d.itens.map((x, i) => <LinhaResumo key={i} {...x} />)}
+
+      {/* Corrigir e apagar ficam no FIM, depois do que aconteceu no dia.
+          São as duas coisas que se faz aqui depois de olhar e ver que está
+          errado — e nenhuma delas deve estar no caminho de quem só veio ler. */}
+      {d.corrigivel && (
+        <Secao rotulo="corrigir o tempo"
+               nota={d.exato ? 'declarado por você' : 'o app fechou sozinho'}>
+          <div class="ins-chips">
+            {d.duracoes.map(v => (
+              <button key={v.k} class={'ins-chip' + (v.on ? ' on' : '')}
+                      onClick={() => ctx.corrigeDuracao(d.t, v.k)}>{v.t}</button>
+            ))}
+          </div>
+          <Procedencia>
+            hoje marcado como {d.duracaoTxt}. Esquecer de finalizar deixa o tempo
+            correndo até a última série — corrigir aqui o torna declarado, e o
+            "aproximado" some.
+          </Procedencia>
+        </Secao>
+      )}
+
+      <button class="ins-btn-secondary ins-btn-destructive tc-rm"
+              onClick={() => ctx.editaSessao(d.t)}>
+        apagar este treino
+      </button>
     </TelaCheia>
   );
 }

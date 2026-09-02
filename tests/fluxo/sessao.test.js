@@ -298,3 +298,122 @@ test('o relógio da sessão é filho direto do main, senão o sticky descola', a
   assert.ok(a.$('.ins-secao.continua'), 'e a seção partida não desenha fio');
   a.fechar();
 });
+
+// ---------- corrigir e apagar um treino registrado ----------
+// Registrar o treino errado e esquecer de finalizar são os dois enganos que
+// este app deixa acontecer sem atrito — e até aqui nenhum dos dois tinha saída:
+// apagar só era oferecido no treino AVULSO, e o tempo não se editava.
+
+/** Um dia com treino registrado e séries nele. */
+function comTreinoRegistrado(agora) {
+  const t = agora - 3 * 60 * 60000;
+  return {
+    logs: { A0: [{ t: t, sid: t, sets: [[40, 10], [40, 10], [40, 8]] }],
+            A1: [{ t: t, sid: t, sets: [[20, 12], [20, 12]] }] },
+    done: [{ day: 'A', t: t, sid: t, dur: 3 * 60 * 60000, fim: 'auto' }],
+    t: t
+  };
+}
+
+test('o detalhe de um treino do plano oferece corrigir e apagar', async () => {
+  const agora = agoraEstavel();
+  const f = comTreinoRegistrado(agora);
+  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  a.E('abrirSessao(' + f.t + ')');
+
+  const d = a.J('CTX.detalheDaSessao()');
+  assert.strictEqual(d.livre, false, 'é treino do plano, não avulso');
+  assert.strictEqual(d.corrigivel, true);
+  assert.ok(d.duracoes.length >= 4, 'os degraus de duração estão lá');
+  const botoes = a.$$('.tc button').map(x => x.textContent.trim());
+  assert.ok(botoes.includes('apagar este treino'), botoes.join(' | '));
+  a.fechar();
+});
+
+test('corrigir o tempo torna a duração declarada, e o aproximado some', async () => {
+  // esquecer de finalizar deixa o tempo correndo até a última série
+  const agora = agoraEstavel();
+  const f = comTreinoRegistrado(agora);
+  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  a.E('abrirSessao(' + f.t + ')');
+  assert.strictEqual(a.J('CTX.detalheDaSessao()').exato, false, 'nasce aproximado');
+
+  await a.E('CTX.corrigeDuracao(' + f.t + ', 45)');
+  await a.esperar(60);
+
+  const m = a.J('S.done[0]');
+  assert.strictEqual(m.dur, 45 * 60000);
+  assert.strictEqual(m.fim, 'manual', 'passa a ser declarado, não estimado');
+  assert.ok(m.m > 0, 'com carimbo, senão a fusão devolve o valor velho');
+  assert.strictEqual(a.J('CTX.detalheDaSessao()').exato, true);
+  a.fechar();
+});
+
+test('a correção é presa a limites, e não aceita lixo', async () => {
+  const agora = agoraEstavel();
+  const f = comTreinoRegistrado(agora);
+  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+
+  await a.E('CTX.corrigeDuracao(' + f.t + ', 0)');
+  await a.esperar(40);
+  assert.strictEqual(a.J('S.done[0]').dur, 60000, 'piso de um minuto');
+
+  await a.E('CTX.corrigeDuracao(' + f.t + ', 9999)');
+  await a.esperar(40);
+  assert.strictEqual(a.J('S.done[0]').dur, 600 * 60000, 'teto de dez horas');
+  a.fechar();
+});
+
+test('apagar o treino leva as séries dele junto, com lápide nas duas coisas', async () => {
+  // sem isso as séries ficariam órfãs no histórico de cada exercício: ainda
+  // contando volume, ainda puxando progressão, sem dia a que pertencer
+  const agora = agoraEstavel();
+  const f = comTreinoRegistrado(agora);
+  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  assert.strictEqual(a.J('S.done').length, 1);
+  const comHistorico = () => a.J('Object.keys(S.logs)').length;
+  assert.strictEqual(comHistorico(), 2, 'dois exercícios com histórico');
+
+  a.E('abrirSessao(' + f.t + ')');
+  await a.E('CTX.editaSessao(' + f.t + ')');
+  await a.esperar(80);
+
+  assert.deepStrictEqual(a.J('S.done'), [], 'a marca do dia saiu');
+  assert.strictEqual(comHistorico(), 0, 'e os exercícios ficaram sem histórico nenhum');
+  const mortos = a.J('S.apagados');
+  assert.ok(mortos['done:' + f.t], 'lápide da sessão');
+  assert.ok(Object.keys(mortos).some(k => k.indexOf('log:') === 0), 'e das séries');
+  assert.strictEqual(a.E('view.sessao'), null, 'a tela fechou sozinha');
+  a.fechar();
+});
+
+test('o aviso diz quantas séries vão junto antes de apagar', async () => {
+  const agora = agoraEstavel();
+  const f = comTreinoRegistrado(agora);
+  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  a.E('abrirSessao(' + f.t + ')');
+
+  a.recusar();
+  await a.E('CTX.editaSessao(' + f.t + ')');
+  await a.esperar(60);
+  assert.strictEqual(a.J('S.done').length, 1, 'recusou: nada foi apagado');
+  const p = a.perguntas().join(' ');
+  assert.ok(/5 séries/.test(p), 'a conta das séries aparece: ' + p);
+  assert.ok(/outros aparelhos/.test(p), 'e que vale para os outros: ' + p);
+  a.fechar();
+});
+
+test('o treino EM ANDAMENTO não se apaga por aqui', async () => {
+  // o tempo dele ainda está correndo; apagar por baixo deixaria a sessão viva
+  // apontando para um dia que não existe mais
+  const agora = agoraEstavel();
+  const f = comTreinoRegistrado(agora);
+  f.sessao = { day: 'A', inicio: f.t, ultima: agora, sid: f.t, manual: 1, pausas: [], pulados: [] };
+  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+
+  await a.E('CTX.editaSessao(' + f.t + ')');
+  await a.esperar(60);
+  assert.strictEqual(a.J('S.done').length, 1, 'continua lá');
+  assert.ok(/em andamento/.test(a.toast()), a.toast());
+  a.fechar();
+});

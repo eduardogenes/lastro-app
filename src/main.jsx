@@ -3090,14 +3090,73 @@ function resumoDaSessao(marca) {
   return { itens: itens, vol: vol, tempo: tempo, dores: dores, series: series };
 }
 
-async function apagarMarca(t) {
-  if (!confirm('Apagar este registro de treino? Isso não tem volta.')) return;
-  (S.done.filter(function (x) { return x.t === t; }))
-    .forEach(function (x) { lapide(chaveDeSessao(x)); });
+/**
+ * Apaga um registro de treino INTEIRO: a marca do dia e as séries dela.
+ *
+ * A versão anterior tirava só a marca, e por isso só era oferecida para o
+ * treino AVULSO, que não tem série nenhuma. Num treino do plano isso deixaria
+ * as séries órfãs no histórico de cada exercício — ainda contando volume, ainda
+ * puxando progressão, sem nenhum dia a que pertencer. Registrar o treino errado
+ * é exatamente o caso em que se quer as duas coisas fora.
+ *
+ * Lápide nos dois: sem elas a próxima sincronização traz tudo de volta do outro
+ * aparelho.
+ */
+async function apagaRegistroDeTreino(t) {
+  const m = S.done.filter(function (x) { return x.t === t; })[0];
+  if (!m) return;
+  if (S.sessao && S.sessao.sid === m.sid) {
+    toast('Este treino está em andamento. Finalize ou descarte primeiro.');
+    return;
+  }
+
+  // as séries daquela sessão, exercício por exercício
+  const linhas = [];
+  Object.keys(S.logs).forEach(function (idEx) {
+    (S.logs[idEx] || []).forEach(function (l) { if (l.sid === m.sid) linhas.push({ idEx: idEx, l: l }); });
+  });
+  const series = linhas.reduce(function (a, x) {
+    return a + x.l.sets.filter(Boolean).length;
+  }, 0);
+
+  // o aviso diz o que vai junto: apagar o dia e apagar as séries é uma
+  // decisão só, e ela não pode ser tomada sem o número na frente
+  const oQue = series
+    ? 'Apagar este treino e as ' + series + (series === 1 ? ' série registrada' : ' séries registradas') + ' nele?'
+    : 'Apagar este registro de treino?';
+  if (!confirm(oQue + '\n\nIsso não tem volta, e vale para os outros aparelhos.')) return;
+
+  lapide(chaveDeSessao(m));
+  linhas.forEach(function (x) { lapide(chaveDeLog(x.idEx, x.l)); });
+
   S.done = S.done.filter(function (x) { return x.t !== t; });
+  Object.keys(S.logs).forEach(function (idEx) {
+    S.logs[idEx] = S.logs[idEx].filter(function (l) { return l.sid !== m.sid; });
+    if (!S.logs[idEx].length) delete S.logs[idEx];   // exercício sem histórico sai do mapa
+  });
+
   view.sessao = null;
+  await save(); render(); window.scrollTo(0, 0);
+  toast(series ? 'Treino e séries apagados.' : 'Registro apagado.');
+}
+
+/**
+ * Corrige o tempo de um treino já registrado.
+ *
+ * O caso é esquecer de finalizar: o app fecha sozinho e o tempo vai até a
+ * última série, que pode ser horas depois do que se treinou de fato. Corrigir
+ * marca `fim: 'manual'` — o tempo passa a ser declarado, e some o "aproximado"
+ * que a tela vinha mostrando, porque agora ele não é mais estimativa.
+ */
+async function corrigeDuracao(t, minutos) {
+  const m = S.done.filter(function (x) { return x.t === t; })[0];
+  if (!m) return;
+  m.dur = Math.max(1, Math.min(600, Math.round(minutos))) * 60000;
+  m.fim = 'manual';
+  m.m = Date.now();                    // carimbo: é ele que a fusão compara
+  view.sessao = m;
   await save(); render();
-  toast('Registro apagado.');
+  toast('Tempo corrigido.');
 }
 
 function abrirSessao(t){ view.sessao = S.done.filter(function (x) { return x.t === t; })[0]; if (view.sessao) { render(); window.scrollTo(0,0); } }
@@ -4358,9 +4417,20 @@ CTX.detalheDaSessao = function () {
 
   const hIni = horaDaSessao(m), hFim = aberta ? null : fimDaSessao(m);
 
+  // A correção não é oferecida no treino em andamento: o tempo dele ainda está
+  // correndo, e escrever por cima seria discutir com o relógio.
+  const corrigivel = !aberta;
   return {
     livre: false,
     t: m.t,
+    corrigivel: corrigivel,
+    exato: exato,
+    duracoes: corrigivel
+      ? [30, 45, 60, 75, 90].map(function (v) {
+          return { k: v, t: v + ' min', on: Math.round((dur || 0) / 60000) === v };
+        })
+      : [],
+    duracaoTxt: dur == null ? 'não medido' : fmtDur(dur),
     olho: 'treino ' + m.day + (aberta ? ' · em andamento' : ''),
     meta: diaExtenso(m.t),
     titulo: R.series + (R.series === 1 ? ' série registrada' : ' séries registradas'),
@@ -4412,7 +4482,8 @@ CTX.detalheDaSessao = function () {
   };
 };
 CTX.fechaSessao = function () { fecharSessao(); };
-CTX.editaSessao = function (t) { apagarMarca(t); };
+CTX.editaSessao = function (t) { apagaRegistroDeTreino(t); };
+CTX.corrigeDuracao = function (t, min) { corrigeDuracao(t, min); };
 
 // ---------- tela cheia: histórico do exercício ----------
 CTX.historico = function () {
