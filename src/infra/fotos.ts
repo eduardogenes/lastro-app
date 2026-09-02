@@ -214,8 +214,13 @@ function desenha(
  * caminho de redução, a escolha WebP/JPEG e o achatamento da transparência são
  * os mesmos, e continuar tendo UM só é o que impede as duas de divergirem.
  */
-export async function reduzPara(arquivo: Blob, ladoMaior: number): Promise<{ blob: Blob; ext: string }> {
-  const bitmap = await createImageBitmap(arquivo);
+export async function reduzPara(
+  fonte: ImageBitmapSource, ladoMaior: number
+): Promise<{ blob: Blob; ext: string }> {
+  // `ImageBitmapSource` e não `Blob`: a câmera interna entrega um <video>, e
+  // deixá-la passar direto evita uma codificação a mais só para virar arquivo.
+  // O resto do caminho — passos de redução, WebP/JPEG, achatamento — é o mesmo.
+  const bitmap = await createImageBitmap(fonte);
   const escala = Math.min(1, ladoMaior / Math.max(bitmap.width, bitmap.height));
   const l = Math.round(bitmap.width * escala);
   const a = Math.round(bitmap.height * escala);

@@ -58,9 +58,14 @@ function temCache(): boolean {
   return typeof caches !== 'undefined' && !!caches && typeof Response !== 'undefined';
 }
 
-/** Reduz o que veio da câmera, no teto do corpo. */
+/** Reduz o que veio da câmera do sistema, no teto do corpo. */
 export function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }> {
   return reduzPara(arquivo, LADO_MAIOR);
+}
+
+/** O mesmo, a partir do quadro vivo da câmera interna. */
+export function reduzDoVideo(v: CanvasImageSource): Promise<{ blob: Blob; ext: string }> {
+  return reduzPara(v as ImageBitmapSource, LADO_MAIOR);
 }
 
 /** O endereço da foto, se ela já foi lida para a memória. Síncrono de propósito. */

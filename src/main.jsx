@@ -22,6 +22,7 @@ import { FolhaFoto } from './ui/folhas/foto.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
 import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
+import { Camera } from './ui/telas/camera.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
 import { Decisao } from './ui/telas/decisao.jsx';
@@ -49,6 +50,7 @@ import {
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
 import * as CORPO from './infra/corpo';
+import * as CAM from './infra/camera';
 import {
   CADENCIA_DIAS, MONTAGEM, comAPose, completude,
   diasDesde as diasDesdeAFoto, instanteDaData, mediaDaSemana, parPadrao,
@@ -224,7 +226,7 @@ function treino(d) {
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], protocolo:{ poses:null, sessoes:[] } };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null,
-  protocolo:null, comparar:null, ajuste:null };
+  protocolo:null, comparar:null, ajuste:null, camera:null };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false;
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -1569,7 +1571,7 @@ const CTX = {
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
     return !!(view.promo || view.prog || view.retro || view.add || view.sessao || view.hist ||
-              view.protocolo || view.comparar || view.ajuste);
+              view.protocolo || view.comparar || view.ajuste || view.camera);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -1660,6 +1662,7 @@ const CTX = {
 // Não são abas — em cada uma o assunto é uma coisa só, e a tab bar convidaria
 // a sair no meio. O voltar é o único caminho de saída.
 function telaCheia() {
+  if (view.camera) return <Camera ctx={CTX} />;
   if (view.ajuste) return <AjusteFoto ctx={CTX} />;
   if (view.protocolo) return <Protocolo ctx={CTX} />;
   if (view.comparar) return <Comparar ctx={CTX} />;
@@ -4906,31 +4909,45 @@ CTX.posProxima = function () { andaPose(1); };
  * A sessão nasce AQUI, na primeira foto — igual à sessão de treino, que nasce
  * na primeira série. Não há botão de salvar e não há o que confirmar.
  */
+/**
+ * Grava a foto daquela pose e avança a sessão.
+ *
+ * Compartilhada pelos dois caminhos de captura — a câmera do sistema, que
+ * entrega um arquivo, e a de dentro do app, que entrega um quadro de vídeo. O
+ * que muda entre elas é só a fonte dos pixels; tudo o que vem depois (reduzir,
+ * guardar, lapidar a anterior, avançar) é o mesmo, e ter um lugar só é o que
+ * impede as duas de divergirem no que gravam.
+ */
+async function guardaFotoDaPose(d, pose, reduzida) {
+  const { blob, ext } = reduzida;
+  await CORPO.guarda(d, pose, blob, ext);
+
+  const ses = sessaoFotoOuCria(d);
+  const antiga = ses.fotos[pose];
+  // refazer apaga a anterior: sem lápide, a fusão traria a versão velha de
+  // volta do outro aparelho, e as duas disputariam a mesma pose
+  if (antiga) lapide(chaveDeFotoDoCorpo(d, pose));
+  ses.fotos = Object.assign({}, ses.fotos);
+  ses.fotos[pose] = { v: Date.now(), ext: ext };
+  ses.m = Date.now();
+  CORPO.solta(d, pose);                // a versão anterior sai da memória
+  await CORPO.carrega(d, pose, ses.fotos[pose]);
+
+  await save();
+  // avança sozinho para a próxima que falta: a sessão é uma sequência, e
+  // pedir um toque a mais entre duas poses é pedir um toque a mais nove vezes
+  const prox = proximaPose(sessaoDe(S.protocolo.sessoes, d), S.protocolo.poses);
+  if (prox && view.protocolo) view.protocolo.pose = prox;
+  return prox;
+}
+
 async function tiraFotoDoCorpo(el) {
   const arquivo = el.files && el.files[0];
   const v = view.protocolo;
   if (!arquivo || !v) return;
   el.value = '';                       // permite repetir a mesma foto
   try {
-    const { blob, ext } = await CORPO.reduz(arquivo);
-    await CORPO.guarda(v.d, v.pose, blob, ext);
-
-    const ses = sessaoFotoOuCria(v.d);
-    const antiga = ses.fotos[v.pose];
-    // refazer apaga a anterior: sem lápide, a fusão traria a versão velha de
-    // volta do outro aparelho, e as duas disputariam a mesma pose
-    if (antiga) lapide(chaveDeFotoDoCorpo(v.d, v.pose));
-    ses.fotos = Object.assign({}, ses.fotos);
-    ses.fotos[v.pose] = { v: Date.now(), ext: ext };
-    ses.m = Date.now();
-    CORPO.solta(v.d, v.pose);          // a versão anterior sai da memória
-    await CORPO.carrega(v.d, v.pose, ses.fotos[v.pose]);
-
-    await save();
-    // avança sozinho para a próxima que falta: a sessão é uma sequência, e
-    // pedir um toque a mais entre duas poses é pedir um toque a mais nove vezes
-    const prox = proximaPose(sessaoDe(S.protocolo.sessoes, v.d), S.protocolo.poses);
-    if (prox) view.protocolo.pose = prox;
+    await guardaFotoDaPose(v.d, v.pose, await CORPO.reduz(arquivo));
     render(); window.scrollTo(0, 0);
   } catch (e) {
     toast('Não deu para guardar a foto.');
@@ -4990,6 +5007,9 @@ CTX.sessaoDeFotos = function () {
   return {
     passo: 'pose',
     d: v.d,
+    // sem `getUserMedia` não há o que oferecer: o botão da câmera do sistema
+    // volta a ser o principal, em vez de sobrar um caminho que não abre
+    temCamera: CAM.temCamera(),
     indice: i + 1,
     total: lista.length,
     faltando: c.faltando.length,
@@ -5251,5 +5271,163 @@ CTX.ajusteEmEdicao = function () {
     fantasmaD: v.fantasmaD,
     datas: datasDoFantasma(v.d, v.pose),
     sujo: !ehIdentidade(v.enq)
+  };
+};
+
+// ---------- a câmera de dentro do app ----------
+// Alinhar ANTES do disparo, e não corrigir depois: nenhum recorte devolve o pé
+// que saiu do quadro. O `<input capture>` continua ali como alternativa — ele
+// dá a melhor qualidade que o aparelho sabe produzir, e é quem atende quando a
+// câmera interna não estiver disponível.
+
+let streamCamera = null;
+let contagemT = null;
+
+CTX.streamDaCamera = function () { return streamCamera; };
+
+/** Desliga a câmera e cancela a contagem. Toda saída passa por aqui. */
+function encerraCamera() {
+  clearTimeout(contagemT); contagemT = null;
+  CAM.fecha(streamCamera);
+  streamCamera = null;
+}
+
+CTX.abreCamera = async function () {
+  const v = view.protocolo;
+  if (!v) return;
+  const viz = vizinhaComAPose(S.protocolo.sessoes, v.pose, v.d);
+  view.camera = {
+    erro: null, pronta: false,
+    fantasma: true, fantasmaD: viz ? viz.d : null,
+    opacidade: 45, grade: false,
+    // 10s por padrão: é quanto leva para andar três metros e parar de balançar
+    timer: 10, contagem: null
+  };
+  render(); window.scrollTo(0, 0);
+  garanteBytesDoCorpo(viz ? [v.d, viz.d] : [v.d]);
+
+  const r = await CAM.abre();
+  if (!view.camera) { if (r.ok) CAM.fecha(r.stream); return; }   // saiu enquanto abria
+  if (!r.ok) { view.camera.erro = r.msg; render(); return; }
+  streamCamera = r.stream;
+  view.camera.pronta = true;
+  render();
+};
+
+CTX.fechaCamera = function () {
+  encerraCamera();
+  view.camera = null;
+  render(); window.scrollTo(0, 0);
+};
+
+CTX.setGradeDaCamera = function (on) { view.camera.grade = !!on; render(); };
+CTX.setFantasmaDaCamera = function (on) { view.camera.fantasma = !!on; render(); };
+CTX.setOpacidadeDaCamera = function (n) { view.camera.opacidade = n; render(); };
+CTX.setTimerDaCamera = function (n) { view.camera.timer = n; render(); };
+CTX.setDataDoFantasmaDaCamera = function (d) {
+  view.camera.fantasmaD = d;
+  garanteBytesDoCorpo([d]);
+  render();
+};
+
+CTX.cancelaDisparo = function () {
+  clearTimeout(contagemT); contagemT = null;
+  if (view.camera) view.camera.contagem = null;
+  render();
+};
+
+/**
+ * A contagem. Um bipe por segundo e dois no disparo — a três metros o ouvido é
+ * o único canal que chega, porque a tela daqui não se lê.
+ */
+function contaEDispara(n) {
+  if (!view.camera) return;
+  view.camera.contagem = n;
+  render();
+  if (n <= 0) { contagemT = null; capturaAgora(); return; }
+  bipeDaContagem(n);
+  contagemT = setTimeout(function () { contaEDispara(n - 1); }, 1000);
+}
+
+function bipeDaContagem(n) {
+  try {
+    if (!audioCtx) preparaAudio();
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+    osc.type = 'sine';
+    // o último segundo sobe de tom: é o aviso de "agora pare de mexer"
+    osc.frequency.setValueAtTime(n <= 1 ? 1320 : 660, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(t0); osc.stop(t0 + 0.14);
+  } catch (e) {}
+}
+
+CTX.disparaCamera = function () {
+  const c = view.camera;
+  if (!c || !c.pronta || c.contagem != null) return;
+  preparaAudio();                      // o gesto de toque é o que libera o áudio
+  if (!c.timer) { capturaAgora(); return; }
+  contaEDispara(c.timer);
+};
+
+async function capturaAgora() {
+  const c = view.camera, v = view.protocolo;
+  if (!c || !v) return;
+  const el = document.querySelector('.cam-video');
+  if (!CAM.pronto(el)) { c.contagem = null; toast('A câmera ainda não está pronta.'); render(); return; }
+  try {
+    const reduzida = await CORPO.reduzDoVideo(el);
+    const prox = await guardaFotoDaPose(v.d, v.pose, reduzida);
+    c.contagem = null;
+    // a sessão continua AQUI: são nove poses, e sair e voltar nove vezes seria
+    // pior que o problema que esta tela resolve
+    const viz = prox ? vizinhaComAPose(S.protocolo.sessoes, prox, v.d) : null;
+    if (prox) {
+      c.fantasmaD = viz ? viz.d : null;
+      garanteBytesDoCorpo(viz ? [viz.d] : []);
+    }
+    aviso();
+    render();
+    if (!prox) toast('Sessão completa. As nove poses estão registradas.');
+  } catch (e) {
+    c.contagem = null;
+    toast('Não deu para guardar a foto.');
+    render();
+  }
+}
+
+/** O que a tela da câmera consome. */
+CTX.cameraViva = function () {
+  const c = view.camera, v = view.protocolo;
+  if (!c || !v) return null;
+  const lista = posesDo(S.protocolo.poses);
+  const i = Math.max(0, lista.findIndex(function (p) { return p.id === v.pose; }));
+  const ses = sessaoDe(S.protocolo.sessoes, v.d);
+  const outra = c.fantasmaD ? sessaoDe(S.protocolo.sessoes, c.fantasmaD) : null;
+  const refOutra = outra ? outra.fotos[v.pose] : null;
+
+  return {
+    pose: lista[i].n,
+    indice: i + 1,
+    total: lista.length,
+    data: fmtDate(instanteDaData(v.d)),
+    erro: c.erro,
+    pronta: c.pronta,
+    feita: !!(ses && ses.fotos[v.pose]),
+    grade: c.grade,
+    fantasma: c.fantasma,
+    fantasmaD: c.fantasmaD,
+    datas: datasDoFantasma(v.d, v.pose),
+    refUrl: outra && refOutra ? CORPO.urlDaFoto(outra.d, v.pose, refOutra) : null,
+    refEnq: refOutra ? refOutra.enq : null,
+    refTxt: outra ? fmtDate(instanteDaData(outra.d)) : '',
+    opacidade: c.opacidade,
+    timer: c.timer,
+    contagem: c.contagem
   };
 };

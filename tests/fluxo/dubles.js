@@ -134,3 +134,40 @@ export function nuvemComBucket(a, comFoto, comCorpo) {
     };
   `);
 }
+
+/**
+ * Câmera de mentira: `getUserMedia`, o stream e um <video> que já tem quadro.
+ *
+ * O jsdom não tem nenhuma das três peças. O que fica observável é
+ * `__faixasVivas` — a conta de faixas que ainda não foram paradas, que é como
+ * se prova que sair da tela DESLIGA a câmera. Deixar uma viva mantém o
+ * indicador do iOS aceso e a câmera consumindo com o app fora da frente.
+ */
+export function cameraFalsa(a, opcoes) {
+  const o = opcoes || {};
+  a.E(`
+    globalThis.__faixasVivas = 0;
+    globalThis.__gumPedidos = [];
+    const erro = ${JSON.stringify(o.erro || null)};
+    navigator.mediaDevices = {
+      getUserMedia: async function (c) {
+        globalThis.__gumPedidos.push(c);
+        if (erro) { const e = new Error(erro); e.name = erro; throw e; }
+        globalThis.__faixasVivas++;
+        return {
+          getTracks: function () {
+            return [{ stop: function () { globalThis.__faixasVivas--; } }];
+          }
+        };
+      }
+    };
+    // o <video> do jsdom não tem quadro; o app pergunta antes de capturar
+    Object.defineProperty(globalThis.HTMLVideoElement.prototype, 'readyState',
+      { configurable: true, get: function () { return ${o.semQuadro ? 0 : 4}; } });
+    Object.defineProperty(globalThis.HTMLVideoElement.prototype, 'videoWidth',
+      { configurable: true, get: function () { return ${o.semQuadro ? 0 : 1080}; } });
+    Object.defineProperty(globalThis.HTMLVideoElement.prototype, 'videoHeight',
+      { configurable: true, get: function () { return ${o.semQuadro ? 0 : 1440}; } });
+    globalThis.HTMLVideoElement.prototype.play = function () { return Promise.resolve(); };
+  `);
+}

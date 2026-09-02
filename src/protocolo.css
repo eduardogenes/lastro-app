@@ -63,7 +63,8 @@
 /* ---------- o disparo ---------- */
 /* Mesmo desenho do botão de foto do aparelho: o input é o alvo real e o rótulo
    é o botão. Escondê-lo com `display:none` tiraria o foco de teclado junto. */
-.pr-disparo { display: block; margin-top: var(--ins-9); text-align: center; }
+.pr-disparo { display: block; width: 100%; margin-top: var(--ins-5); text-align: center; }
+.pr-disparo:first-of-type { margin-top: var(--ins-9); }
 .pr-disparo input { position: absolute; width: 0; height: 0; opacity: 0; }
 
 .pr-nav { display: flex; gap: var(--ins-3); margin-top: var(--ins-5); }
@@ -184,3 +185,44 @@
   color: var(--ins-text-4); text-decoration: underline;
 }
 .cp-ajustar:active { color: var(--ins-text); }
+
+
+/* ============================================================
+   A CÂMERA DE DENTRO DO APP
+   O quadro vivo com a foto anterior por cima. Mesmo quadro 3:4
+   das fotos guardadas, para o que se enquadra ser o que se
+   grava — o vídeo é cortado igual na exibição e na captura.
+   ============================================================ */
+
+.cam-quadro {
+  position: relative; overflow: hidden;
+  aspect-ratio: 3 / 4;
+  background: var(--ins-bg);
+  border: 1px solid var(--ins-border);
+}
+.cam-video {
+  display: block; width: 100%; height: 100%;
+  object-fit: cover; background: var(--ins-bg);
+}
+.cam-ghost { position: absolute; inset: 0; border: 0; pointer-events: none; }
+
+/* A contagem toma o quadro porque a três metros ela é a única coisa legível
+   daqui — e mesmo assim quem informa de verdade é o bipe. */
+.cam-contagem {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(12, 14, 12, .35);
+}
+.cam-contagem span {
+  font: 400 96px/1 var(--ins-font-mono);
+  color: var(--ins-acid);
+}
+
+.cam-op { display: flex; align-items: center; gap: var(--ins-3); margin-top: var(--ins-3); }
+.cam-op input { flex: 1 1 0; }
+
+.cam-tempos { display: flex; gap: var(--ins-2); }
+.cam-tempos button { flex: 1 1 0; }
+
+.cam-disparo { display: block; width: 100%; margin-top: var(--ins-9); }
+.cam-sair { display: block; width: 100%; margin-top: var(--ins-7); }

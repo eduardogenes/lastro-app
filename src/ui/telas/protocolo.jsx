@@ -118,10 +118,22 @@ export function Protocolo({ ctx }) {
       <Procedencia>revela {p.revela}</Procedencia>
       <Procedencia>erro comum · {p.erro}</Procedencia>
 
-      {/* `capture` abre a câmera direto no celular e é ignorado no computador,
-          onde vira seletor de arquivo — os dois caminhos servem. */}
-      <label class="ins-btn-primary pr-disparo">
-        {p.url ? 'refazer esta foto' : 'tirar a foto'}
+      {/* Dois caminhos de captura, e a ordem diz qual é o padrão.
+          A câmera de dentro do app mostra a foto anterior por cima do quadro
+          vivo: alinhar ANTES do disparo é o que nenhum recorte depois conserta.
+          A do sistema fica embaixo porque continua valendo — ela dá a melhor
+          qualidade que o aparelho sabe produzir, e é quem atende quando a
+          interna não está disponível. `capture` a abre direto no celular e é
+          ignorado no computador, onde vira seletor de arquivo. */}
+      {d.temCamera && (
+        <button class="ins-btn-primary pr-disparo" onClick={ctx.abreCamera}>
+          {p.url ? 'refazer com sobreposição' : 'tirar com sobreposição'}
+        </button>
+      )}
+      <label class={(d.temCamera ? 'ins-btn-secondary' : 'ins-btn-primary') + ' pr-disparo'}>
+        {d.temCamera
+          ? 'usar a câmera do sistema'
+          : (p.url ? 'refazer esta foto' : 'tirar a foto')}
         <input type="file" accept="image/*" capture="environment"
                onChange={e => ctx.tiraFotoDoCorpo(e.currentTarget)} />
       </label>

@@ -2,7 +2,7 @@
 // terceira seção de outra aba. Placar na tela de hoje e marca no histórico.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app, inicioDaSemana, DIA } from './harness.js';
+import { app, agoraEstavel, inicioDaSemana, DIA } from './harness.js';
 
 test('placar da semana aparece na tela de hoje', async () => {
   const a = await app();
@@ -119,8 +119,12 @@ test('lista do mês e total de cardio', async () => {
 });
 
 test('detalhe da sessão mostra o cardio do mesmo dia', async () => {
-  const t = Date.now() - 2 * DIA;
-  const a = await app({ estado: {
+  // relógio fixo às 8h: o cardio entra uma hora DEPOIS da sessão, e rodando
+  // perto da meia-noite essa hora atravessa o dia — os dois cairiam em datas
+  // diferentes e o bloco do "mesmo dia" ficaria vazio, corretamente
+  const agora = agoraEstavel();
+  const t = agora - 2 * DIA;
+  const a = await app({ agora: agora, estado: {
     logs: { A0: [{ t: t, sid: t, sets: [[40, 10]] }] },
     done: [{ day: 'A', t: t, sid: t, dur: 50 * 60000, fim: 'manual' }],
     cardio: [{ t: t + 3600000, m: 'bike', min: 20, i: 'leve' }]

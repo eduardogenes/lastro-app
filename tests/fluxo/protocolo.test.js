@@ -12,7 +12,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { app } from './harness.js';
-import { cacheFalso, guardadasEm, nuvemComBucket } from './dubles.js';
+import { cacheFalso, cameraFalsa, guardadasEm, nuvemComBucket } from './dubles.js';
 
 const DIA = 86400000;
 
@@ -751,5 +751,251 @@ test('ajuste guardado sobrevive à ida e volta pelo estado', async () => {
   }, aba: 'dados' });
   const enq = a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"].enq');
   assert.deepStrictEqual(enq, { r: 2.5, z: 1.3, cx: 0.4, cy: 0.6, m: 9 });
+  a.fechar();
+});
+
+// ---------- a câmera de dentro do app ----------
+// Alinhar ANTES do disparo: nenhum recorte depois devolve o pé que saiu do
+// quadro. O que estes testes cercam é o ciclo de vida — a câmera não pode
+// ficar ligada depois que a tela some.
+
+test('a tela da pose oferece os dois caminhos de captura', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  a.E('render()');
+
+  const rotulos = a.$$('.pr-disparo').map(x => x.textContent.trim());
+  assert.deepStrictEqual(rotulos, ['tirar com sobreposição', 'usar a câmera do sistema']);
+  a.fechar();
+});
+
+test('sem getUserMedia, a câmera do sistema volta a ser a principal', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  a.E('delete navigator.mediaDevices');
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  a.E('render()');
+
+  assert.strictEqual(a.J('CTX.sessaoDeFotos().temCamera'), false);
+  const b = a.$$('.pr-disparo');
+  assert.strictEqual(b.length, 1, 'um caminho só, e não um botão que não abre');
+  assert.strictEqual(b[0].textContent.trim(), 'tirar a foto');
+  a.fechar();
+});
+
+test('abrir a câmera pede a traseira, e em retrato', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.E('CTX.abreCamera()');
+  await a.esperar(60);
+
+  const pedido = a.J('globalThis.__gumPedidos[0]');
+  assert.strictEqual(pedido.audio, false);
+  assert.strictEqual(pedido.video.facingMode.ideal, 'environment');
+  // ideal, nunca exact: exigência faria o aparelho recusar a câmera inteira
+  assert.ok(pedido.video.width.ideal && pedido.video.height.ideal);
+  assert.ok(pedido.video.height.ideal > pedido.video.width.ideal, 'retrato');
+  assert.strictEqual(a.J('CTX.cameraViva()').pronta, true);
+  assert.ok(a.$('.cam-video'), 'o quadro vivo está na tela');
+  a.fechar();
+});
+
+test('sair da tela DESLIGA a câmera', async () => {
+  // faixa viva mantém o indicador do iOS aceso e a câmera consumindo
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.E('CTX.abreCamera()');
+  await a.esperar(60);
+  assert.strictEqual(a.E('globalThis.__faixasVivas'), 1);
+
+  a.E('CTX.fechaCamera()');
+  assert.strictEqual(a.E('globalThis.__faixasVivas'), 0, 'nenhuma faixa sobrou viva');
+  assert.strictEqual(a.E('view.camera'), null);
+  a.fechar();
+});
+
+test('permissão negada não vira tela quebrada, vira o que fazer a respeito', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a, { erro: 'NotAllowedError' });
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.E('CTX.abreCamera()');
+  await a.esperar(60);
+
+  const erro = a.J('CTX.cameraViva()').erro;
+  assert.ok(/negado/.test(erro), erro);
+  assert.ok(/ajustes/.test(erro), 'e diz onde resolver: ' + erro);
+  assert.strictEqual(a.E('globalThis.__faixasVivas'), 0);
+  a.fechar();
+});
+
+test('disparo sem temporizador guarda a foto e avança a pose', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.E('CTX.abreCamera()');
+  await a.esperar(60);
+
+  a.E('CTX.setTimerDaCamera(0)');
+  a.E('CTX.disparaCamera()');
+  await a.esperar(120);
+
+  const s = a.J('S.protocolo.sessoes');
+  assert.strictEqual(s.length, 1);
+  assert.ok(s[0].fotos['frente-relaxado'], 'a foto foi gravada');
+  assert.deepStrictEqual(guardadas(a), ['./corpo/' + hoje() + '/frente-relaxado.webp']);
+  assert.strictEqual(a.E('view.protocolo.pose'), 'frente-duplo-biceps', 'avançou sem sair');
+  assert.ok(a.E('view.camera'), 'e a câmera continua aberta: são nove poses');
+  a.fechar();
+});
+
+test('a contagem pode ser cancelada antes de disparar', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.E('CTX.abreCamera()');
+  await a.esperar(60);
+
+  a.E('CTX.setTimerDaCamera(10)');
+  a.E('CTX.disparaCamera()');
+  assert.strictEqual(a.J('CTX.cameraViva()').contagem, 10);
+  assert.ok(a.$('.cam-contagem'), 'a contagem cobre o quadro');
+
+  a.E('CTX.cancelaDisparo()');
+  await a.esperar(120);
+  assert.strictEqual(a.J('CTX.cameraViva()').contagem, null);
+  assert.deepStrictEqual(a.J('S.protocolo.sessoes'), [], 'nada foi gravado');
+  a.fechar();
+});
+
+test('o temporizador padrão dá tempo de andar os três metros', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.E('CTX.abreCamera()');
+  await a.esperar(60);
+  assert.strictEqual(a.J('CTX.cameraViva()').timer, 10);
+  a.fechar();
+});
+
+test('sem quadro ainda, a captura recusa em vez de gravar preto', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a, { semQuadro: true });
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.E('CTX.abreCamera()');
+  await a.esperar(60);
+
+  a.E('CTX.setTimerDaCamera(0)');
+  a.E('CTX.disparaCamera()');
+  await a.esperar(120);
+  assert.deepStrictEqual(a.J('S.protocolo.sessoes'), [], 'nada gravado');
+  assert.ok(/não está pronta/.test(a.toast()), a.toast());
+  a.fechar();
+});
+
+test('a câmera abre com a sobreposta da sessão vizinha', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  const velha = diasAtras(28), nova = diasAtras(14);
+  comSessoes(a, [velha, nova], 'frente-relaxado');
+  for (const d of [velha, nova]) await semear(a, d, 'frente-relaxado');
+
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.E('CTX.abreCamera()');
+  await a.esperar(80);
+
+  const c = a.J('CTX.cameraViva()');
+  assert.strictEqual(c.fantasmaD, nova, 'a mais recente antes de hoje');
+  assert.ok(c.refUrl, 'com os bytes já carregados');
+  assert.deepStrictEqual(c.datas.map(o => o.d), [velha, nova]);
+  assert.ok(a.$('.cam-ghost'), 'desenhada por cima do quadro vivo');
+  a.fechar();
+});
+
+test('depois do disparo a sobreposta acompanha a nova pose', async () => {
+  // são nove poses seguidas: a referência tem que trocar sozinha, senão a
+  // segunda foto seria enquadrada contra a pose errada
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  const velha = diasAtras(14);
+  a.E(`S.protocolo.sessoes = [{ d: ${JSON.stringify(velha)}, t: 1, m: 1, fotos: {
+    'frente-relaxado': { v: 1, ext: 'webp' },
+    'frente-duplo-biceps': { v: 2, ext: 'webp' }
+  } }]`);
+
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.E('CTX.abreCamera()');
+  await a.esperar(60);
+  assert.strictEqual(a.J('CTX.cameraViva()').pose, 'Frente relaxado');
+
+  a.E('CTX.setTimerDaCamera(0)');
+  a.E('CTX.disparaCamera()');
+  await a.esperar(150);
+
+  const c = a.J('CTX.cameraViva()');
+  assert.strictEqual(c.pose, 'Frente duplo bíceps', 'a tela seguiu a pose');
+  assert.strictEqual(c.fantasmaD, velha, 'e a sobreposta é a mesma sessão, na pose nova');
+  a.fechar();
+});
+
+test('a foto da câmera interna entra pelo mesmo caminho da do sistema', async () => {
+  // reduzida no mesmo teto, guardada no mesmo cache, com referência igual
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.E('CTX.abreProtocolo()');
+  a.E('CTX.comecaSessaoDeFotos()');
+  await a.E('CTX.abreCamera()');
+  await a.esperar(60);
+  a.E('CTX.setTimerDaCamera(0)');
+  a.E('CTX.disparaCamera()');
+  await a.esperar(150);
+
+  const ref = a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"]');
+  assert.strictEqual(ref.ext, 'webp');
+  assert.ok(ref.v > 0);
+  const m = a.J('globalThis.__medida');
+  assert.strictEqual(Math.max(m.l, m.a), 1440, 'mesmo teto do corpo: ' + JSON.stringify(m));
+  a.fechar();
+});
+
+test('refazer pela câmera deixa lápide, como pelo sistema', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
+  a.E('CTX.abreProtocolo()');
+  a.E(`view.protocolo.montagem = false; view.protocolo.pose = 'frente-relaxado'`);
+  await a.E('CTX.abreCamera()');
+  await a.esperar(60);
+
+  a.E('CTX.setTimerDaCamera(0)');
+  a.E('CTX.disparaCamera()');
+  await a.esperar(150);
+  assert.ok(a.J('S.apagados')['corpo:' + hoje() + ':frente-relaxado'],
+    'a versão anterior tem lápide');
   a.fechar();
 });

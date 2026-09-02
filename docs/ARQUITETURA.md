@@ -513,6 +513,48 @@ anterior, senão a sessão mais antiga, justamente a que ancora o resto, seria a
 uma sessão antiga tem a geometria boa é contra ela que se quer alinhar as
 outras, e isso o app não tem como saber.
 
+### A câmera de dentro do app
+
+`src/infra/camera.ts` e a tela `ui/telas/camera.jsx`. Dois caminhos de captura
+convivem, e a diferença entre eles é **corrigir contra prevenir**:
+
+| | `<input capture>` | `getUserMedia` |
+|---|---|---|
+| qualidade | a melhor que o aparelho sabe — HDR, fusão de exposições | quadro de vídeo, menos resolução |
+| durante a captura | o app **não existe** | o app desenha por cima |
+| alinhar antes | impossível | é o motivo de existir |
+
+O `<input capture>` é cego: entre apertar e receber o arquivo o app sai do ar, e
+por isso não há como pôr a foto anterior por cima na hora de enquadrar. A câmera
+interna compra isso pagando resolução. **Para foto de acompanhamento a troca
+vale**, porque o que ela mede é a silhueta e não a textura da pele — e nenhum
+recorte posterior devolve o pé que saiu do quadro. Os dois ficam na tela; o do
+sistema também é o que atende quando `getUserMedia` não está disponível, e
+`temCamera()` decide qual é o principal.
+
+Duas coisas fazem a tela funcionar, e as duas vêm de ele estar sozinho a três
+metros do celular. O **temporizador** não é conveniência: a três metros ninguém
+alcança o botão, e sem contagem a tela seria bonita e inútil. Ele conta com um
+bipe por segundo, agudo no último — a três metros o ouvido é o único canal que
+chega, porque a tela não se lê. E a sessão **continua dentro da câmera**: depois
+do disparo ela avança para a próxima pose e troca a sobreposta sozinha, porque
+sair e voltar nove vezes seria pior que o problema que a tela resolve.
+
+O quadro do preview é 3:4 com `object-fit: cover`, o **mesmo** das fotos
+guardadas. É o que faz o que se enquadra ser o que se grava: o vídeo é cortado
+igual na exibição e na captura.
+
+`CAM.fecha()` em toda saída não é higiene, é obrigação — faixa viva mantém o
+indicador do iOS aceso e a câmera consumindo com o app fora da frente. O teste
+de fluxo conta as faixas para provar que nenhuma sobra.
+
+A captura vai direto do `<video>` para `reduzPara()`, que passou a aceitar
+`ImageBitmapSource` em vez de só `Blob`: evita uma codificação a mais só para
+virar arquivo, e mantém **um** caminho de redução para as duas câmeras.
+`guardaFotoDaPose()` é o resto compartilhado — reduzir, guardar, lapidar a
+anterior, avançar —, e ter um lugar só é o que impede as duas de divergirem no
+que gravam.
+
 ### Fundir sessões de foto
 
 `uneSessoesDeFoto()`, em `src/dominio/sincronia.ts`, não reusa `uneLista()`. Com
