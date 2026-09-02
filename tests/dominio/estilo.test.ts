@@ -269,6 +269,21 @@ test('o relógio da sessão gruda no topo enquanto o treino corre', () => {
   const treino = fs.readFileSync(path.join(RAIZ, 'src', 'treino.css'), 'utf8');
   const rel = regras(treino, '.day-rel');
   assert.match(rel, /position:\s*sticky/);
-  assert.match(rel, /top:\s*0/);
   assert.match(rel, /background:/, 'opaco: o conteúdo passa por baixo e precisa sumir');
+  // `top: 0` encostaria no relógio do iPhone: com `black-translucent` o
+  // conteúdo passa por baixo da barra de status, e zero é o topo REAL da tela
+  assert.match(rel, /top:\s*var\(--sa-top\)/,
+    'tem que parar abaixo da barra de status, não em cima dela');
+  assert.ok(!/top:\s*0\s*;/.test(rel), 'top: 0 põe o número embaixo do relógio do sistema');
+});
+
+test('a barra de status tem fundo, senão o conteúdo rola por baixo dela', () => {
+  // `black-translucent` deixa a página passar sob o relógio e a bateria do
+  // sistema — bonito parado, ilegível rolando.
+  const faixa = base.match(/body::before\s*\{([^}]*)\}/);
+  assert.ok(faixa, 'a faixa da barra de status sumiu');
+  assert.match(faixa![1], /position:\s*fixed/);
+  assert.match(faixa![1], /height:\s*var\(--sa-top\)/, 'zero onde não há entalhe');
+  assert.match(faixa![1], /background:/);
+  assert.match(faixa![1], /pointer-events:\s*none/, 'pintar não pode roubar toque');
 });
