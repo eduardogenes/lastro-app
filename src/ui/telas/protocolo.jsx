@@ -86,10 +86,21 @@ export function Protocolo({ ctx }) {
       {/* A referência primeiro, e maior: é contra ela que o enquadramento é
           feito. A foto de hoje entra ao lado quando existe. */}
       <div class={'pr-fotos' + (p.url ? ' dupla' : '')}>
+        {/* Ter a referência e ter os BYTES dela são duas coisas: a sessão pode
+            estar podada do cache, ou ter descido do outro aparelho com os bytes
+            ainda a caminho. Desenhar a <img> nesse intervalo dá um quadro
+            quebrado — o mesmo motivo pelo qual a foto do aparelho não desenha
+            nada enquanto o cache não respondeu. */}
         <figure class="pr-fig">
-          {p.ref
+          {p.ref && p.ref.url
             ? <img class="pr-img" src={p.ref.url} alt={'Referência: ' + p.n + ' em ' + p.ref.txt} />
-            : <div class="pr-img pr-sem"><span class="ins-body-sm ins-t5">primeira vez nesta pose</span></div>}
+            : (
+              <div class="pr-img pr-sem">
+                <span class="ins-body-sm ins-t5">
+                  {p.ref ? 'buscando a foto…' : 'primeira vez nesta pose'}
+                </span>
+              </div>
+            )}
           <figcaption class="ins-label">{p.ref ? 'referência · ' + p.ref.txt : 'sem referência'}</figcaption>
         </figure>
         {p.url && (

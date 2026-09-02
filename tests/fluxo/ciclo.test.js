@@ -3,7 +3,7 @@
 // à duração. Esquecer custa precisão, nunca dado.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app, DIA } from './harness.js';
+import { app, agoraEstavel, DIA } from './harness.js';
 
 test('iniciar marca o tempo antes da primeira série', async () => {
   const a = await app();
@@ -245,14 +245,15 @@ test('dois treinos no mesmo dia agora são possíveis', async () => {
 });
 
 test('acompanhamento mostra média de duração e marca o aproximado', async () => {
-  const agora = Date.now();
+  // relógio fixo pelo mesmo motivo do teste do mês em telas.test.js
+  const agora = agoraEstavel();
   const done = [], logs = { A0: [] };
   [0, 1].forEach(function (k) {
     const t = agora - k * DIA;
     done.push({ day: 'A', t: t, sid: t, dur: (50 + k * 10) * 60000, fim: k ? 'auto' : 'manual' });
     logs.A0.push({ t: t, sid: t, sets: [[40, 10]] });
   });
-  const a = await app({ estado: { logs: logs, done: done } });
+  const a = await app({ agora: agora, estado: { logs: logs, done: done } });
   a.aba('dados');
 
   const rotulo = a.$$('.ins-grade-c').map(function (x) { return x.textContent; }).join(' ');

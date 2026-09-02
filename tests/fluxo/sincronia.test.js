@@ -5,7 +5,7 @@
 // outro aparelho grava no meio do caminho.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app } from './harness.js';
+import { app, agoraEstavel } from './harness.js';
 
 /** Instala uma nuvem de mentira no escopo do app. */
 function nuvemFalsa(a, inicial) {
@@ -227,7 +227,9 @@ test('a tela de lançamento aguenta a opção de descanso', async () => {
 test('o descanso aparece nas duas telas, e do mesmo jeito', async () => {
   // a tira da semana e o calendário do mês mostram a MESMA semana: divergir
   // seria o app contando duas histórias sobre o mesmo domingo
-  const a = await app({ estado: { logs: {}, done: [] } });
+  // relógio fixo: o domingo da semana corrente precisa cair no MÊS corrente,
+  // senão o calendário do mês — corretamente — não tem onde mostrá-lo
+  const a = await app({ agora: agoraEstavel(), estado: { logs: {}, done: [] } });
   const dom = a.E('weekStart(Date.now())');
 
   const antes = a.$$('.wd .wd-v').map(x => x.textContent);

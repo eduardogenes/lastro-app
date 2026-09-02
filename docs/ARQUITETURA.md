@@ -12,6 +12,7 @@ O [README](../README.md) cobre o uso; aqui está o porquê das decisões.
 - [Editar sem mexer no programa](#editar-sem-mexer-no-programa)
 - [Migrações](#migrações)
 - [Camada de storage](#camada-de-storage)
+- [Fotos: as do aparelho e as do corpo](#fotos-as-do-aparelho-e-as-do-corpo)
 - [Registro contínuo](#registro-contínuo)
 - [Ciclo da sessão](#ciclo-da-sessão)
 - [Tipo de carga](#tipo-de-carga)
@@ -54,27 +55,42 @@ casco chama `seriesPorMusculo(S.logs, grupoDe, de, ate)` no domínio. Mantêm o
 nome e a aridade que o resto do app já usava, o que permitiu extrair o domínio
 inteiro sem reescrever chamada nenhuma.
 
-### A migração do render, em curso
+### A migração do render, concluída
 
-A conversão para componente é tela por tela. O que ainda produz string entra
-por `<Bruto html={...}>`, que monta o HTML e deixa os `onclick=` inline
-funcionando. **Toda ocorrência de `<Bruto>` é dívida declarada.**
+A conversão para componente foi tela por tela. Durante a travessia, o que ainda
+produzia string entrava por um `<Bruto html={...}>`, que montava o HTML e
+deixava os `onclick=` inline funcionando. **Não sobrou nenhuma ocorrência** — e
+com a última saíram as muletas que ela sustentava:
+
+- `HANDLERS_INLINE`, que republicava 90 funções em `window` porque atributo
+  `onclick` só enxerga o escopo global.
+- `minify` e `treeshake`, que ficaram desligados enquanto essas funções eram
+  alcançadas por string e o bundler não as enxergava. **Religar as duas era o
+  sinal combinado de que a fase tinha acabado**, e é o estado de hoje em
+  `vite.config.js`.
+
+Religar o `treeshake` cobrou o preço na hora, e de graça: função só alcançada
+por string some do bundle e o teste quebra na mesma rodada. Foi assim que
+`tab()` apareceu — rota paralela a `view.aba`, viva só porque a ponte de
+handlers a republicava em `window`.
 
 O cartão de exercício foi convertido primeiro, de propósito: é a única parte da
 tela com campo de digitação, e era ali que o `innerHTML` inteiro era reescrito.
 Hoje o Preact toca só no atributo que mudou — abrir outro exercício ou marcar
 dor não reconstrói mais os campos, e não há foco para devolver.
 
-Enquanto sobrar `<Bruto>`, sobram três muletas, todas marcadas no código:
+**A muleta que ficou** é uma só: `window.__escopo`, um `eval` que dá aos testes
+de fluxo o alcance ao escopo do módulo que `window.eval` dava de graça quando
+tudo era global. Ela também é o que segura os nomes de pé sob o minificador —
+esbuild vê o `eval` direto e desiste de renomear o escopo inteiro. Duas
+consequências para quem for mexer:
 
-- `HANDLERS_INLINE` em `main.jsx`, que republica 90 funções em `window` porque
-  atributo `onclick` só enxerga o escopo global. Um teste varre o fonte e cobra
-  que nenhum nome citado fique de fora — esquecer um dá botão morto.
-- `window.__escopo`, que dá aos testes de fluxo o alcance ao escopo do módulo
-  que `window.eval` dava de graça quando tudo era global.
-- `minify` e `treeshake` desligados no build, porque as duas coisas acima são
-  alcançadas por string e o bundler não as enxerga. Religar as duas é o sinal
-  de que a fase acabou.
+- O que os testes alcançam por nome (`S`, `view`, `render()`, `reconciliaCorpo()`)
+  são as declarações de topo de `main.jsx`. Um `import * as X` **não** vira
+  binding de topo no bundle: `CORPO.poda(...)` não existe para o `__escopo`, e o
+  teste que precisa disso vai pelo caminho que o app usa.
+- Enquanto ela existir, o build não é minificável de verdade em nomes. Tirá-la
+  exige dar aos testes de fluxo outra porta para o escopo do módulo.
 
 **Constantes principais** (em `src/dominio/programa.ts`):
 
@@ -151,6 +167,14 @@ S = {
   cardio: [{ t, m: 'bike', min: 25, i: 'moderado' }],
   body: { peso: [{ t, v }], cintura: [{ t, v }] },
   carga: { 'pendulum-squat': 'lado' },  // correção do tipo, por exercício
+
+  fotos: { 'pendulum-squat': { v: 0, ext: 'webp' } },   // REFERÊNCIA, nunca bytes
+  protocolo: {                          // as fotos de acompanhamento
+    poses: null,                        // a ordem dele; null = a do código
+    sessoes: [{ d: '2026-09-01', t: 0, m: 0, obs: '',
+                fotos: { 'frente-relaxado': { v: 0, ext: 'webp' } } }]
+  },
+
   export: 0,                            // timestamp do último backup
   plano: 3                              // versão do formato
 }
@@ -340,6 +364,115 @@ mudança para módulos ES — o navegador recusa módulo por `file://`. Era uma
 propriedade real do arquivo único e foi perdida de propósito, porque o caminho
 de uso é o ícone na tela de início do iPhone. Para conferir localmente,
 `npm run preview`.
+
+---
+
+## Fotos: as do aparelho e as do corpo
+
+São dois sistemas, e a única coisa que eles compartilham é a regra que os
+define: **o byte nunca entra no estado.**
+
+O estado é reserializado inteiro a cada série registrada e enviado inteiro a
+cada sincronização, e o teto do Safari para esse armazenamento é de 5 MiB. No
+estado fica a **referência** — `{ v, ext }`, onde `v` é o instante da captura e
+serve de versão. Os bytes ficam no Cache Storage, e replicam por um bucket
+privado do Supabase.
+
+`v` na chave não é enfeite: refazer uma foto tem que trocar a imagem na tela, e
+com chave sem versão o endereço de objeto antigo continuaria válido.
+
+| | aparelho | corpo |
+|---|---|---|
+| responde | qual das três puxadas desta academia o treinador quis dizer | está funcionando? |
+| onde | `src/infra/fotos.ts`, `S.fotos` | `src/infra/corpo.ts`, `S.protocolo` |
+| quantas | umas 40, para sempre | 9 por sessão, a cada 14 dias |
+| lado maior | 1080 px — é uma miniatura de 350 px | 1440 px — é olhada em tela cheia ao lado de outra |
+| cache | `lastro-fotos` | `lastro-corpo` |
+| bucket | `aparelhos` | `corpo` |
+| quem é a fonte | **o aparelho**; o bucket é seguro contra troca de celular | **o bucket**; o aparelho é cache de verdade |
+
+A última linha é a diferença que importa. Foto de aparelho cabe no aparelho e
+fica lá. Foto de corpo são uns 35 MB no primeiro ano, num Cache Storage que o
+iOS despeja sob pressão de disco — então o aparelho guarda só as
+`SESSOES_NO_APARELHO` sessões mais recentes e **poda** o resto; abrir uma sessão
+antiga busca os bytes de volta (`garanteBytesDoCorpo`).
+
+**A poda é a parte perigosa do app.** É o único lugar que apaga byte de foto por
+conta própria, e o erro que ela pode cometer não tem desfazer: apagar daqui o
+que ainda não subiu para lá. Duas travas, e as duas são deliberadas:
+
+- `CORPO.poda(manter)` recebe a lista do que **fica**, em vez de calculá-la.
+  Quem sabe o que já subiu é o casco. A poda é burra de propósito.
+- `reconciliaCorpo()` só a chama depois de **todas** as fotos estarem
+  confirmadas no bucket. Uma foto que não subiu segura o cache inteiro por um
+  ciclo, e é exatamente isso que se quer.
+
+Subir é obrigação — enquanto um byte só existe aqui, ele está a um despejo de
+cache de sumir. Baixar é sob demanda: puxar o histórico inteiro na primeira
+sincronização de um aparelho novo seriam dezenas de megabytes pelo sinal da
+academia.
+
+Os dois buckets são **privados**, e as políticas estão em
+[supabase/schema.sql](../supabase/schema.sql). A chave anônima é pública por
+design e vai no bundle; quem protege é o RLS. O primeiro segmento do caminho é
+sempre o uid do dono — `uid/pendulum-squat.webp` e
+`uid/2026-09-01/frente-relaxado.webp` — e é isso que torna a política suficiente
+e o nome do arquivo dispensável de ser secreto. Bucket público serviria qualquer
+arquivo a quem adivinhasse o caminho, e o caminho é adivinhável: um id de
+exercício, ou uma data mais um nome de pose vindo de um conjunto fechado que
+está no bundle.
+
+São dois buckets e não duas pastas porque um bucket é a unidade que o painel do
+Supabase apaga, exporta e mede de uma vez. Foto de aparelho é a placa de uma
+máquina; foto de corpo é o corpo dele em roupa justa.
+
+### O protocolo
+
+`src/dominio/protocolo.ts`. Mesmo desenho do programa de treino, pelo mesmo
+motivo: **`PROTOCOLO` é a prescrição congelada no código e `S.protocolo.poses` é
+a versão dele.** Trocar o conjunto é edição, nunca migração. `poses: null`
+significa "a do código".
+
+O que a foto exige do app não é uma média — é **comparabilidade**. Duas fotos só
+se comparam quando a pose e a geometria da câmera são as mesmas. A geometria o
+app não alcança: ela mora nas marcas de fita no chão, e é o que a tela de
+montagem manda congelar. A pose ele alcança, e é o que o módulo garante — nove
+poses, sempre na mesma ordem, e a foto anterior à vista na hora de disparar a
+próxima. Enquadrar contra a anterior evita o desvio; alinhar depois só o
+conserta, e mal.
+
+A ordem das nove **não é agrupada por assunto** — é uma rotação contínua
+0° → 90° → 180° → 270°. Ele gira sempre para o mesmo lado sem sair da marca, e a
+sessão sai em menos de cinco minutos. Agrupar por bloco seria mais bonito de ler
+e o faria girar seis vezes.
+
+Três decisões que valem registrar:
+
+- **A chave da sessão é a DATA**, não um id sorteado. É a chave natural do
+  protocolo — duas sessões no mesmo dia não existem — e é o que faz a fusão
+  convergir sem sorteio.
+- **A sessão nasce na primeira foto** e não sobrevive à última, igual à sessão
+  de treino. Não há botão de salvar e não há o que confirmar.
+- **O par padrão da comparação é a mais nova contra a MAIS ANTIGA**, nunca
+  contra a anterior. Entre duas sessões seguidas a diferença é quase toda água,
+  sono e horário — e é assim que se desiste de um plano que estava funcionando.
+
+Peso e cintura ao lado da foto são **média da semana** e saem de `S.body`: a
+sessão de fotos não pede número nenhum. O protocolo manda fotografar de manhã em
+jejum, que é o mesmo momento da pesagem.
+
+### Fundir sessões de foto
+
+`uneSessoesDeFoto()`, em `src/dominio/sincronia.ts`, não reusa `uneLista()`. Com
+a mesma data nos dois lados, vencer pelo carimbo descartaria as poses que só
+existem do outro — e o caso é real: a sessão é longa, e nada impede que quatro
+poses saiam num aparelho e as outras cinco no outro. Então **a data une a sessão
+e, dentro dela, cada pose une pela própria versão.**
+
+Por isso há duas lápides, e não uma: `corpo:<data>` para a sessão e
+`corpo:<data>:<pose>` para a foto. Refazer uma pose apaga a anterior, e sem a
+lápide da foto o outro aparelho a traria de volta na fusão — a sessão continuaria
+existindo, então a lápide da sessão não a alcançaria.
 
 ---
 

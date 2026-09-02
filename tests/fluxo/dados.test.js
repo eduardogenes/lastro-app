@@ -67,7 +67,11 @@ test('exportar carrega todos os campos do estado', async () => {
      // a sincronização: o carimbo do estado e as lápides do que foi apagado
      'mtime', 'apagados',
      // os dias que ele marcou como descanso
-     'descanso', 'fotos', 'promoPendente'].sort()
+     'descanso', 'fotos', 'promoPendente',
+     // o protocolo de fotos: a ORDEM de poses e as sessões. Só as referências
+     // entram — os bytes moram no Cache Storage e replicam pelo bucket, e é
+     // por isso que um backup em JSON continua cabendo num e-mail
+     'protocolo'].sort()
   );
   a.fechar();
 });

@@ -1569,7 +1569,11 @@ const CTX = {
   // ---------- cabeçalho de HOJE ----------
   cabecalhoDeHoje: function () {
     const h = diaResolvido();
-    const d = new Date();
+    // `new Date(Date.now())` e não `new Date()`: TODO o relógio do app passa
+    // por `Date.now`, e é o que permite ao teste fixar o dia. Um `new Date()`
+    // solto escapa dessa porta e lê o relógio de verdade — a tela passaria a
+    // discordar do resto do app no meio de um teste que viajou no tempo.
+    const d = new Date(Date.now());
     return {
       olho: (DIAS_LONGOS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()]).toUpperCase(),
       rotulo: h.previsto ? 'previsto' : 'hoje',
@@ -2289,7 +2293,7 @@ async function delCardio(t) {
 // A tela que faltava: o app sabia tudo sobre cada exercício e nada sobre o mês.
 function mesRef() {
   const b = view.mes || 0;
-  const d = new Date();
+  const d = new Date(Date.now());          // pela mesma porta que o resto — ver cabecalhoDeHoje
   d.setDate(1); d.setHours(0,0,0,0);
   d.setMonth(d.getMonth() + b);
   return d;

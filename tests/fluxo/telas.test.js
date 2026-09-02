@@ -1,7 +1,7 @@
 // Regressão das telas e das regras inegociáveis do projeto.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app, HTML, FONTE, DIA, inicioDaSemana } from './harness.js';
+import { app, agoraEstavel, HTML, FONTE, DIA, inicioDaSemana } from './harness.js';
 
 /**
  * O endereço da nuvem — a origem do projeto e os caminhos que carregam DADO.
@@ -137,13 +137,16 @@ test('faixa da semana marca os dias e abre atalho nos vazios', async () => {
 });
 
 test('acompanhamento soma dias, tempo e volume do mês', async () => {
+  // relógio fixo: a tela lê o MÊS, e três dias para trás a partir do dia 1º
+  // caem no mês anterior — a asserção falharia sem nada ter quebrado
+  const agora = agoraEstavel();
   const done = [], logs = { A0: [] };
   for (let k = 0; k < 3; k++) {
-    const t = Date.now() - k * DIA;
+    const t = agora - k * DIA;
     done.push({ day: 'A', t: t, sid: t, dur: 50 * 60000 });
     logs.A0.push({ t: t, sid: t, sets: [[40, 10], [40, 10]] });
   }
-  const a = await app({ estado: { logs: logs, done: done } });
+  const a = await app({ agora: agora, estado: { logs: logs, done: done } });
   a.aba('dados');
 
   const stats = a.$$('.ins-grade-c .ins-metric-m').map(function (x) { return x.textContent; });

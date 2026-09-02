@@ -71,6 +71,21 @@ function inicioDaSemana(t) {
   return d.getTime();
 }
 
+/**
+ * Um "agora" estável: dia 15 do mês corrente, no horário pedido (8h por padrão).
+ *
+ * Dia 15 e não uma data fixa no código: mantém o app no mês de verdade — nada
+ * de sessão semeada em 2019 esbarrando em regra de recência — e dá catorze dias
+ * de folga para trás. É o bastante para dois ou três dias anteriores E para o
+ * domingo da semana caírem todos no mesmo mês, que é o que essas telas leem.
+ */
+function agoraEstavel(h, m) {
+  const d = new Date();
+  d.setDate(15);
+  d.setHours(h == null ? 8 : h, m || 0, 0, 0);
+  return d.getTime();
+}
+
 function estadoVazio(extra) {
   return Object.assign({
     logs: {}, done: [], deload: false, draft: null, sessao: null,
@@ -81,6 +96,7 @@ function estadoVazio(extra) {
 /**
  * @param {object} [opcoes]
  * @param {object|string} [opcoes.estado] estado inicial gravado no localStorage
+ * @param {number} [opcoes.agora] fixa `Date.now` do app, antes do boot
  * @returns {object} app
  */
 function abrirApp(opcoes) {
@@ -145,6 +161,17 @@ function abrirApp(opcoes) {
         configurable: true,
         value: { register: function () { return Promise.reject(new Error('sem sw no teste')); } }
       });
+
+      // O relógio do app, fixado ANTES do boot.
+      //
+      // Sem isto, teste que semeia sessões em `Date.now() - k * DIA` e depois
+      // lê a tela do MÊS só passa na segunda metade do mês: rodando no dia 1º,
+      // as sessões caem no mês anterior e a tela, corretamente, não as mostra.
+      // A suíte ficava vermelha três dias por mês, sem nada ter quebrado.
+      if (o.agora != null) {
+        const fixo = Number(o.agora);
+        w.Date.now = function () { return fixo; };
+      }
 
       if (o.estado) {
         let e = o.estado;
@@ -270,6 +297,6 @@ async function app(opcoes) {
 }
 
 export {
-  app, abrirApp, estadoVazio, inicioDaSemana, DIA,
+  app, abrirApp, estadoVazio, agoraEstavel, inicioDaSemana, DIA,
   CHAVE, CHAVE_LEGADO, CHAVE_NUVEM, CHAVE_NUVEM_LEGADO, HTML, FONTE
 };

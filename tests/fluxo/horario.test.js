@@ -2,7 +2,7 @@
 // registra o que aconteceu e nunca inventa o que não mediu.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app, DIA } from './harness.js';
+import { app, agoraEstavel, DIA } from './harness.js';
 
 function emHoje(h, m) {
   const d = new Date();
@@ -46,8 +46,11 @@ test('sessão em andamento mostra só o começo', async () => {
 });
 
 test('lista do mês mostra a hora embaixo da data', async () => {
-  const t = emHoje(6, 40) - 2 * DIA;
-  const a = await app({ estado: {
+  // relógio fixo: a lista é a do MÊS, e dois dias para trás a partir do dia 1º
+  // caem no mês anterior — não haveria linha nenhuma para ler
+  const agora = agoraEstavel(6, 40);
+  const t = agora - 2 * DIA;
+  const a = await app({ agora: agora, estado: {
     logs: {}, done: [{ day: 'A', t: t, sid: t, dur: 50 * 60000, fim: 'manual' }]
   } });
   a.aba('dados');
@@ -96,8 +99,10 @@ test('retroativo sem horário não inventa hora', async () => {
 });
 
 test('retroativo com horário informado registra a hora', async () => {
-  const a = await app();
-  const ontem = Date.now() - DIA;
+  // relógio fixo: no dia 1º, "ontem" é do mês passado e a lista do mês não o mostra
+  const agora = agoraEstavel();
+  const a = await app({ agora: agora });
+  const ontem = agora - DIA;
   a.E('abrirAdicionar(' + ontem + ')');
   a.E('addSet("tipo","B")');
   a.digitar('ahora', '05:50');
