@@ -650,3 +650,9 @@
   flex: none; width: 100%; text-align: center;
   font: 400 9px/1 var(--ins-font-mono); letter-spacing: .06em;
 }
+
+
+/* ---------- trocar o nome do exercício ---------- */
+.hx-nome { width: 100%; }
+.hx-acoes { display: flex; gap: var(--ins-3); margin-top: var(--ins-3); flex-wrap: wrap; }
+.hx-acoes button { flex: 1 1 auto; }

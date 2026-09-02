@@ -14,7 +14,42 @@
 // uma decisão de carga faz sentido.
 
 import { Grafico, Stats, TelaCheia } from '../instrumento/telacheia.jsx';
-import { Vazio } from '../instrumento/primitivos.jsx';
+import { Procedencia, Secao, Vazio } from '../instrumento/primitivos.jsx';
+
+/**
+ * Trocar o nome do exercício.
+ *
+ * O que se troca é o RÓTULO. A identidade dele é o id, que nasceu do nome uma
+ * vez só e não se mexe mais — por isso o histórico desta tela, a prescrição no
+ * programa e a foto do aparelho continuam onde estão.
+ *
+ * Campo não controlado, lido no salvar: controlado, cada tecla passaria por um
+ * render e o cursor sairia do lugar.
+ */
+function Renome({ r, ctx }) {
+  return (
+    <Secao rotulo="nome do exercício" nota="o histórico não se move">
+      <input class="ins-input hx-nome" type="text" id="exnome"
+             defaultValue={r.nome} maxLength={60} aria-label="nome do exercício" />
+      <div class="hx-acoes">
+        <button class="ins-btn-secondary"
+                onClick={() => ctx.renomeiaExercicio(r.id, document.getElementById('exnome').value)}>
+          salvar
+        </button>
+        {r.doCodigo && (
+          <button class="ins-btn-secondary"
+                  onClick={() => ctx.renomeiaExercicio(r.id, r.doCodigo)}>
+            voltar a "{r.doCodigo}"
+          </button>
+        )}
+      </div>
+      <Procedencia>
+        troca só como ele aparece na tela · séries registradas, prescrição e foto
+        continuam neste mesmo exercício
+      </Procedencia>
+    </Secao>
+  );
+}
 
 export function Historico({ ctx }) {
   const d = ctx.historico();
@@ -81,6 +116,12 @@ export function Historico({ ctx }) {
           <p class="ins-body-sm ins-t3 cue tc-nota">{d.cue}</p>
         </>
       )}
+
+      {/* No fim, depois do que interessa ler. Aparece mesmo sem histórico:
+          renomear um exercício recém-cadastrado é justamente quando se erra o
+          nome. A chave `id` remonta o campo ao trocar de variante — senão ele
+          guardaria o texto do exercício anterior. */}
+      {d.renome && <Renome key={d.renome.id} r={d.renome} ctx={ctx} />}
     </TelaCheia>
   );
 }

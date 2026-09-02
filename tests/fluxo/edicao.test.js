@@ -336,3 +336,105 @@ test('promover uma troca reinicia o relógio do exercício no programa', async (
   assert.ok(a.E('S.prog.B.ex[0].desde') > Date.now() - 5000, 'entrou agora, conta a partir de agora');
   a.fechar();
 });
+
+// ---------- trocar o nome de um exercício ----------
+// A chave do histórico é o ID, e o id nasce do nome UMA vez. Depois disso ele é
+// identidade, não rótulo — e é isso que permite renomear sem mover nada.
+
+/** Abre o histórico do primeiro exercício do dia e devolve o id dele. */
+function abreHistorico(a) {
+  a.E('toggle(0); openHist(0)');
+  return a.E('view.hist.key || id(view.hist.day, view.hist.i)');
+}
+
+test('renomear não move o histórico, porque não mexe no id', async () => {
+  const a = await app();
+  const alvo = abreHistorico(a);
+  const series = a.E(`(S.logs[${JSON.stringify(alvo)}] || []).length`);
+  a.E(`S.fotos[${JSON.stringify(alvo)}] = { v: 7, ext: 'webp' }`);
+
+  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Máquina nova do canto')`);
+  await a.esperar(60);
+
+  assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), 'Máquina nova do canto');
+  assert.ok(a.E(`!!CAT[${JSON.stringify(alvo)}]`), 'o id continua existindo no catálogo');
+  assert.strictEqual(a.E(`(S.logs[${JSON.stringify(alvo)}] || []).length`), series,
+    'as séries continuam sob a MESMA chave');
+  assert.ok(a.E(`!!S.fotos[${JSON.stringify(alvo)}]`), 'a foto do aparelho também');
+  assert.ok(a.E(`S.prog[view.hist.day].ex.some(function(x){return x.id === ${JSON.stringify(alvo)};})`),
+    'e a prescrição no programa');
+  a.fechar();
+});
+
+test('o nome novo aparece no título e no cartão', async () => {
+  const a = await app();
+  const alvo = abreHistorico(a);
+  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Cadeira do fundo')`);
+  await a.esperar(60);
+  assert.strictEqual(a.texto('.htitle'), 'Cadeira do fundo');
+
+  a.E('CTX.fechaHist()');
+  assert.ok(a.$$('.ex').map(x => x.textContent).join(' ').includes('Cadeira do fundo'),
+    'o cartão do treino segue o nome');
+  a.fechar();
+});
+
+test('renomear um exercício do código grava só o nome, sobre o mesmo id', async () => {
+  const a = await app();
+  const alvo = abreHistorico(a);
+  assert.strictEqual(a.E(`!!S.ex[${JSON.stringify(alvo)}]`), false, 'vem do código, não de S.ex');
+
+  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Apelido dele')`);
+  await a.esperar(60);
+  const marca = a.J(`S.ex[${JSON.stringify(alvo)}]`);
+  assert.deepStrictEqual(Object.keys(marca), ['n'], 'só o nome vira override');
+  assert.strictEqual(marca.n, 'Apelido dele');
+  a.fechar();
+});
+
+test('voltar ao nome do treinador apaga o override em vez de copiá-lo', async () => {
+  const a = await app();
+  const alvo = abreHistorico(a);
+  const original = a.E(`nomeEx(${JSON.stringify(alvo)})`);
+
+  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Outro nome qualquer')`);
+  await a.esperar(60);
+  assert.strictEqual(a.J('CTX.historico().renome').doCodigo, original,
+    'a tela oferece a volta, com o nome do código');
+
+  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, ${JSON.stringify(original)})`);
+  await a.esperar(60);
+  assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), original);
+  assert.strictEqual(a.E(`!!(S.ex[${JSON.stringify(alvo)}] && S.ex[${JSON.stringify(alvo)}].n)`), false,
+    'o estado não guarda cópia do que já está no código');
+  a.fechar();
+});
+
+test('nome curto demais e nome repetido são recusados', async () => {
+  const a = await app();
+  const alvo = abreHistorico(a);
+  const original = a.E(`nomeEx(${JSON.stringify(alvo)})`);
+
+  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'ab')`);
+  await a.esperar(40);
+  assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), original);
+  assert.ok(/três letras/.test(a.toast()), a.toast());
+
+  // o nome de OUTRO exercício do catálogo
+  const outro = a.E(`Object.keys(CAT).filter(function(k){return k !== ${JSON.stringify(alvo)} && !CAT[k].arq;})[0]`);
+  const nomeDoOutro = a.E(`CAT[${JSON.stringify(outro)}].n`);
+  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, ${JSON.stringify(nomeDoOutro)})`);
+  await a.esperar(40);
+  assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), original, 'não trocou');
+  assert.ok(/Já existe/.test(a.toast()), a.toast());
+  a.fechar();
+});
+
+test('espaço em excesso não vira nome diferente', async () => {
+  const a = await app();
+  const alvo = abreHistorico(a);
+  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, '   Leg    press   45   ')`);
+  await a.esperar(60);
+  assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), 'Leg press 45');
+  a.fechar();
+});

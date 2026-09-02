@@ -242,6 +242,25 @@ Dois efeitos que vieram de graça:
 
 ---
 
+### Renomear sem perder o histórico
+
+O id nasce do nome por `slugEx`, mas **só uma vez**. Depois disso ele é
+identidade, não rótulo — e é isso que torna o rename trivial: gravar `n` em
+`S.ex[id]` sobrepõe o nome pelo `montaCatalogo()`, que mescla o catálogo do
+usuário por cima do `EX_BASE` na mesma chave. Histórico, prescrição no programa,
+foto do aparelho e correção de tipo de carga apontam todos para o id: **nada se
+move.**
+
+Recalcular o id a partir do nome novo seria o oposto: criaria um exercício vazio
+e deixaria o passado órfão sob uma chave sem dono. É o mesmo erro que a migração
+2→3 existiu para consertar, quando a chave era dia+posição.
+
+O id fica com o slug do nome ANTIGO para sempre, e isso está certo: ninguém o lê.
+Voltar ao nome do código **apaga** o override em vez de gravar uma cópia — o
+estado não guarda o que já está no código.
+
+---
+
 ## Editar sem mexer no programa
 
 Máquina quebrada, outra academia, uma série a mais que fez sentido: nem toda

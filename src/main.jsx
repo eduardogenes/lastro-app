@@ -201,6 +201,52 @@ function montaCatalogo() { CAT = _montaCatalogo(S.ex); }
 function exDe(x) { return CAT[x] || exercicioFantasma(x); }
 function nomeEx(x) { return exDe(x).n; }
 
+/** O nome que o exercício tem no CÓDIGO, quando ele vem de lá. */
+function nomeDoCodigo(idEx) { return (EX_BASE[idEx] && EX_BASE[idEx].n) || null; }
+
+/**
+ * Troca o nome de um exercício sem mexer na identidade dele.
+ *
+ * A chave do histórico é o ID, e o id nasce do nome uma vez só — depois disso
+ * ele é IDENTIDADE, não rótulo. Renomear grava `n` no mesmo id, e por isso
+ * histórico, prescrição no programa, foto do aparelho e correção de tipo de
+ * carga continuam apontando para o mesmo lugar: nada se move.
+ *
+ * Recalcular o id a partir do nome novo seria o oposto — criaria um exercício
+ * vazio e deixaria todo o passado órfão sob uma chave sem dono. É exatamente o
+ * erro que a migração 2→3 deste app existiu para consertar.
+ *
+ * O id fica com o slug do nome ANTIGO para sempre, e isso está certo: ele é um
+ * identificador, e ninguém o lê.
+ */
+async function renomeiaExercicio(idEx, bruto) {
+  if (!CAT[idEx]) return;
+  const nome = String(bruto || '').trim().replace(/\s+/g, ' ');
+  if (nome.length < 3) { toast('O nome precisa de três letras ou mais.'); return; }
+
+  // Nome repetido não quebra nada — os ids são diferentes —, mas deixa duas
+  // linhas iguais na troca e no histórico, e aí ninguém sabe qual é qual.
+  const repetido = Object.keys(CAT).some(function (k) {
+    return k !== idEx && !CAT[k].arq && CAT[k].n.toLowerCase() === nome.toLowerCase();
+  });
+  if (repetido) { toast('Já existe um exercício com esse nome.'); return; }
+
+  const doCodigo = nomeDoCodigo(idEx);
+  const marca = Object.assign({}, S.ex[idEx] || {});
+  if (doCodigo && doCodigo === nome) {
+    // voltou ao nome do treinador: o override some em vez de virar cópia
+    delete marca.n;
+    if (Object.keys(marca).length) S.ex[idEx] = marca; else delete S.ex[idEx];
+  } else {
+    marca.n = nome;
+    S.ex[idEx] = marca;
+  }
+
+  montaCatalogo();
+  await save(); render();
+  toast(doCodigo && doCodigo === nome ? 'Nome do treinador de volta.' : 'Nome trocado.');
+}
+
 
 // O treino como ele aparece na tela: slot resolvido contra o catálogo, com os
 // mods da sessão de hoje aplicados por cima. Mesma forma dos exercícios de
@@ -4530,6 +4576,8 @@ CTX.editaSessao = function (t) { apagaRegistroDeTreino(t); };
 CTX.corrigeDuracao = function (t, min) { corrigeDuracao(t, min); };
 
 // ---------- tela cheia: histórico do exercício ----------
+CTX.renomeiaExercicio = function (idEx, nome) { renomeiaExercicio(idEx, nome); };
+
 CTX.historico = function () {
   const d = view.hist.day, i = view.hist.i;
   const P = treino(d);
@@ -4555,6 +4603,16 @@ CTX.historico = function () {
     olho: 'treino ' + d + ' · exercício ' + String(i + 1).padStart(2, '0'),
     meta: H.length + ' de 6 sessões',
     titulo: nomeEx(sel),
+    // Renomear vive AQUI porque esta tela é sobre um exercício só, e o título
+    // dela é o próprio nome. No cartão do treino seria uma quinta ação no meio
+    // da série; aqui é o que se faz olhando para o histórico dele.
+    renome: {
+      id: sel,
+      nome: nomeEx(sel),
+      // o nome do código, quando existe e está sobrescrito: é a volta possível
+      doCodigo: (S.ex[sel] && S.ex[sel].n && nomeDoCodigo(sel) !== nomeEx(sel))
+        ? nomeDoCodigo(sel) : null
+    },
     alvo: ex.s + ' × ' + ex.r + (ex.rir ? ' · RIR ' + ex.rir : ''),
     marcas: marcas,
     up: sel === id(d, i) && shouldUp(d, i, ex),
