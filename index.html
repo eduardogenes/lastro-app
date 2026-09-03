@@ -24,6 +24,9 @@
 <link rel="stylesheet" href="/src/componentes.css">
 <link rel="stylesheet" href="/src/treino.css">
 <link rel="stylesheet" href="/src/protocolo.css">
+<!-- A bancada: o modo de mesa. Inerte fora dela — toda regra está
+     trancada atrás de [data-palco="bancada"]. Ver src/palco.js. -->
+<link rel="stylesheet" href="/src/palco.css">
 </head>
 <body>
 
@@ -51,6 +54,9 @@
   <button id="tstop">parar</button>
 </div>
 
+<!-- Uma entrada só. Quem decide se esta janela é o aparelho ou a BANCADA onde
+     ele está pousado é o src/palco.js, e o main.jsx o importa justamente para
+     que ele seja avaliado primeiro — sem depender da ordem de duas tags. -->
 <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

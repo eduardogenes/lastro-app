@@ -13,6 +13,7 @@ import {
   totalAnilhas, isTime, tutOf, volOf, maxLoad, repsOf, topReps
 } from './dominio/carga';
 import { montaNoApp } from './ui/raiz.jsx';
+import { ehBancada } from './palco.js';
 import { ajusteDoVeredito } from './dominio/corpo';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
@@ -3466,7 +3467,14 @@ window.__escopo = function (codigo) { return eval(codigo); };
 
 // Arranca quando o DOM existir, tanto embutido no Claude.ai
 // quanto abrindo o arquivo direto no navegador.
-if (document.readyState === 'loading') {
+//
+// A exceção é a BANCADA (src/palco.js, que roda antes deste arquivo): ali esta
+// janela é a mesa, e quem roda o app é o iframe em cima dela. Montar aqui
+// TAMBÉM daria dois apps vivos sobre o mesmo estado — duas sincronizações
+// disputando a nuvem, dois wake locks, dois cronômetros. Um app por documento.
+if (ehBancada()) {
+  // nada: quem monta é o aparelho
+} else if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', load);
 } else {
   load();

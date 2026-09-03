@@ -216,6 +216,15 @@ npm run preview    # serve o dist/, para conferir o service worker
 npm run tipos      # tsc --noEmit
 ```
 
+**No computador o app abre dentro de um iPhone.** É a *bancada*: `npm run dev`
+numa janela de mesa mostra o app rodando num iframe de 402 × 874, com moldura,
+barra de status, área segura simulada e réguas medindo o aparelho. Troca de
+aparelho com `alt 1`…`alt 4`, gira com `alt r`. Não é enfeite: dentro do iframe
+`100svh`, `@media (orientation)`, `position: fixed`, `sticky` e `env(safe-area)`
+valem o que valeriam no telefone — que é justamente o que uma janela de 1900px
+não consegue provar. Para ver o app cru na janela, `?palco=0` na URL. O porquê
+inteiro está no cabeçalho de [src/palco.js](src/palco.js).
+
 Estrutura:
 
 ```
@@ -232,6 +241,8 @@ src/dominio/             as regras, sem DOM e sem estado global
   migracoes.ts             1→2 e 2→3
 src/infra/db.ts          storage: host → localStorage → memória
 src/ui/                  componentes Preact
+src/palco.js             a bancada: no computador, o app roda dentro de um iPhone
+src/palco.css            o palco, a moldura e a camada do sistema
 src/tokens.css           a paleta — o único lugar com cor escrita
 src/base.css             reset, tipografia e a casca da tela
 src/componentes.css      anatomia das primitivas do Instrumento

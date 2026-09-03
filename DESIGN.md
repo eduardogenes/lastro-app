@@ -137,6 +137,47 @@ Anatomia exata em [`src/componentes.css`](src/componentes.css) e
 - **Tab bar** — 5 abas, indicador de 2px deslizando em 220ms. Some quando há
   campo em foco, senão flutua sobre o teclado do iOS.
 
+## A bancada (só no computador)
+
+Numa janela de mesa o app não é o app: é a **bancada**, e o app está pousado
+nela dentro de um iPhone. Anatomia em [`src/palco.css`](src/palco.css), o
+porquê inteiro no cabeçalho de [`src/palco.js`](src/palco.js).
+
+**Por que existe.** Toda decisão deste sistema pressupõe 402 × 874 na mão: a
+goteira de 20px, a área segura, o sticky que para abaixo do relógio do sistema,
+o aviso de telefone deitado. Numa janela de 1900px a coluna de 460px flutuava
+no vazio e a tab bar esticava de ponta a ponta — não era o app quebrado, era o
+app certo na tela errada, e nenhuma das decisões acima tinha o que provar.
+
+**Como.** Um iframe do mesmo documento, com viewport de verdade: `100svh`,
+`@media (orientation)`, `position: fixed` e `sticky` se resolvem sozinhos lá
+dentro, sem uma linha de CSS condicional no app. A única coisa que o iframe
+não dá é `env(safe-area-inset-*)`, que pertence ao sistema — a bancada escreve
+`--sa-top` e companhia na raiz do documento de dentro, e o app segue lendo os
+mesmos tokens de sempre.
+
+**As quatro licenças.** A bancada rompe três dos seis inegociáveis, e nenhuma
+das licenças atravessa o vidro:
+
+| Inegociável | O que a bancada faz | Por quê |
+|---|---|---|
+| 1. Raio zero | O aparelho tem 62px de canto contínuo (`corner-shape: squircle` onde existe). | Mesma licença da miniatura de foto: forma que o mundo já tem, não caixa arredondada por gosto. |
+| 3. Nunca sombra | O aparelho projeta uma. | É ela que separa *objeto pousado numa superfície* de *desenho colado na página*, e é a coisa toda que a bancada tem a dizer. Pertence ao objeto; a tela continua sendo a única região plana da composição. |
+| 6. Quase nenhum movimento | Dois: o pouso (520ms, uma vez) e a virada ao girar (300ms). | Ambos são estado — "chegou", "virou" —, e ambos morrem em `prefers-reduced-motion`. |
+| — | Relógio, sinal e bateria vão na fonte do **sistema**. | São do iOS. Escrevê-los em Space Grotesk seria o app assinando o que não é dele — a mesma regra que faz `body::before` devolver o fundo sob a barra de status. |
+
+**O prefixo é `pl-`, não `ins-`.** `ins-` é a língua do que se vê dentro do
+app; a bancada está do lado de fora do vidro. O titânio dela é uma segunda
+paleta e mora no bloco de tokens de `palco.css`, nunca em `tokens.css`.
+
+**O que ela não faz.** Não amplia — a escala só reduz, e quando reduz o painel
+diz de quanto, porque aqui também todo número responde de onde veio. Não
+aparece em telefone, em PWA instalado, em ponteiro grosso nem embutida em outro
+documento. `?palco=0` devolve o app cru na janela.
+
+`tests/dominio/estilo.test.ts` cobra as recusas, a paleta presa nos tokens e
+que nenhum seletor do palco alcance o app.
+
 ## Movimento
 
 Dois, e só dois: `ins-pulse` no ponto ao vivo (2,4s) e o deslize do indicador

@@ -39,6 +39,7 @@ a ganhar.
 | `lastro-nuvem-v1` | sessão da nuvem, [src/infra/nuvem.ts](src/infra/nuvem.ts) |
 | `lastro-<hash>` | cache do service worker, [vite.config.js](vite.config.js) |
 | `lastro-fotos` | cache das fotos, [src/infra/fotos.ts](src/infra/fotos.ts) |
+| `lastro-bancada-v1` | aparelho escolhido no modo de mesa, [src/palco.js](src/palco.js) |
 | `app: 'lastro'` · `lastro-AAAA-MM-DD.json` | backup exportado |
 | monograma **L** | ícone da tela de início |
 

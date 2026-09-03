@@ -325,3 +325,126 @@ test('a trava de retrato não pega janela de computador', () => {
   assert.ok(teto > 0 && teto <= 560,
     'o teto tem que ficar abaixo de uma janela de mesa: ' + teto);
 });
+
+
+// ============================================================
+// A BANCADA
+//
+// Ela rompe três dos seis inegociáveis de propósito (raio, sombra,
+// movimento) e mora fora do `ins-`. O que estes testes seguram é que a licença
+// seja SÓ dela: que o palco não vaze uma regra para dentro do app, que a
+// segunda paleta que ele traz — o titânio — fique presa no bloco de tokens
+// dele, e que as recusas que impedem a moldura de aparecer no telefone de
+// alguém continuem escritas.
+// ============================================================
+
+const palcoCss = fs.readFileSync(path.join(RAIZ, 'src', 'palco.css'), 'utf8');
+const palcoJs = fs.readFileSync(path.join(RAIZ, 'src', 'palco.js'), 'utf8');
+
+/** Os seletores de uma folha — os de dentro de @media e @supports também. */
+function seletores(css: string): string[] {
+  const limpo = css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    // keyframes fora inteiros: 0%/100% não são seletor de nada
+    .replace(/@keyframes[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '')
+    // de @media e @supports some só o PRELÚDIO, para que o que eles embrulham
+    // seja cobrado como qualquer outra regra
+    .replace(/@[a-z-]+[^{]*\{/g, '');
+  return [...limpo.matchAll(/([^{}]+)\{/g)]
+    .flatMap(m => m[1].split(','))
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+test('nenhuma regra da bancada alcança o app', () => {
+  // O palco desenha por FORA do vidro. Um seletor solto aqui — `body`, `h2`,
+  // `iframe` — pintaria também dentro do telefone, onde estas regras não têm
+  // nada a dizer, e o estrago apareceria só no aparelho de verdade.
+  const soltos = seletores(palcoCss).filter(
+    s => s !== ':root' && !s.includes('.pl') && !s.includes('[data-palco='));
+  assert.deepStrictEqual(soltos, [],
+    'seletor da bancada sem `.pl` nem `[data-palco=]`: isto pinta dentro do app');
+});
+
+test('o titânio da bancada não vira uma segunda paleta solta', () => {
+  // Mesma regra de tokens.css, e pelo mesmo motivo: cor nova nasce nomeada.
+  // O bloco `:root` do palco é o tokens.css DELE.
+  const corpo = palcoCss.replace(/:root\s*\{[^}]*\}/, '');
+  const soltas = [...new Set((corpo.match(/#[0-9A-Fa-f]{3,8}\b/g) || []))];
+  assert.deepStrictEqual(soltas, [],
+    'hexadecimal fora do bloco de tokens do palco: dê um nome antes de usar');
+});
+
+test('toda variável da bancada tem dono, e ela não redefine as do app', () => {
+  const definidas = new Set([...palcoCss.matchAll(/^\s*(--pl-[a-z0-9-]+)\s*:/gm)].map(m => m[1]));
+  // As geométricas nascem em JS, porque dependem do aparelho escolhido: umas
+  // por `setProperty` na cena, outras escritas no atributo `style` de cada
+  // botão e de cada traço de régua. As demais têm de estar no bloco de tokens.
+  [...palcoJs.matchAll(/setProperty\('(--pl-[a-z0-9-]+)'/g)].forEach(m => definidas.add(m[1]));
+  [...palcoJs.matchAll(/(--pl-[a-z0-9-]+)\s*:/g)].forEach(m => definidas.add(m[1]));
+  const usadas = new Set([...palcoCss.matchAll(/var\((--pl-[a-z0-9-]+)/g)].map(m => m[1]));
+  assert.deepStrictEqual([...usadas].filter(v => !definidas.has(v)), [],
+    'var() do palco sem definição cai no valor herdado, em silêncio');
+
+  assert.ok(!/^\s*--ins-[a-z0-9-]+\s*:/m.test(palcoCss),
+    'a bancada redefiniu um token do Instrumento; a paleta do app mora em tokens.css');
+});
+
+test('a bancada recusa telefone, PWA instalado e embutido', () => {
+  // Sem qualquer uma destas, a moldura de iPhone apareceria DENTRO do iPhone.
+  ['display-mode: standalone', 'navigator.standalone', 'pointer: fine',
+   'window.top !== window.self'].forEach(r => {
+    assert.ok(palcoJs.includes(r), 'sumiu a recusa: ' + r);
+  });
+  assert.match(palcoJs, /innerWidth >= \d+/, 'falta o piso de largura de janela');
+});
+
+test('o app não monta duas vezes quando a bancada está de pé', () => {
+  // Dois documentos sobre o mesmo estado seriam duas sincronizações
+  // disputando a nuvem e dois wake locks. O `import` é o que garante a ordem:
+  // com um global, a ordem seria detalhe de emissão do bundler.
+  assert.match(mainJsx, /import \{ ehBancada \} from '\.\/palco\.js'/,
+    'o guarda tem que vir por import, não por window');
+  assert.match(mainJsx, /if \(ehBancada\(\)\) \{/);
+  assert.ok(!/window\.__PALCO/.test(mainJsx + palcoJs), 'voltou a ponte global');
+});
+
+test('o aparelho simulado recebe as permissões que o app usa', () => {
+  // Dentro de um iframe, câmera e wake lock precisam de `allow`. Sem isto o
+  // protocolo de fotos e o cronômetro de descanso falham em SILÊNCIO — que é
+  // exatamente o modo de falha que a bancada existe para não ter.
+  const allow = palcoJs.match(/allow="([^"]+)"/);
+  assert.ok(allow, 'o iframe perdeu o atributo allow');
+  ['camera', 'screen-wake-lock'].forEach(p => {
+    assert.ok(allow![1].includes(p), 'falta permissão no iframe: ' + p);
+  });
+});
+
+test('a área segura simulada é escrita, e o app continua lendo --sa-*', () => {
+  // É a ÚNICA coisa que o iframe não dá de graça: `env(safe-area-inset-*)` é
+  // do sistema e num computador vem zero. Se isto sumir, a bancada mostra um
+  // app sem faixa de status e sem folga para a barra de gestos — bonito e
+  // mentiroso.
+  ['--sa-top', '--sa-bottom', '--sa-left', '--sa-right'].forEach(v => {
+    assert.ok(palcoJs.includes("'" + v + "'"), 'a bancada parou de escrever ' + v);
+  });
+  assert.match(palcoJs, /aplicaSeguranca\(document,/, 'o aparelho escreve na abertura');
+  assert.match(palcoJs, /aplicaSeguranca\(el\.tela\.contentDocument/,
+    'e a bancada reescreve ao trocar de aparelho, sem recarregar o iframe');
+});
+
+test('os aparelhos da prateleira são medidas de retrato, e plausíveis', () => {
+  const tabela = [...palcoJs.matchAll(
+    /w: (\d+), h: (\d+), dpr: (\d), raio: (\d+), rc: (\d+), mx: (\d+), my: (\d+), sat: (\d+), sab: (\d+)/g)]
+    .map(m => m.slice(1).map(Number));
+  assert.ok(tabela.length >= 3, 'a prateleira encolheu demais');
+  tabela.forEach(([w, h, dpr, , , , my, sat, sab]) => {
+    assert.ok(w < h, 'medida deitada na tabela: a coluna é retrato');
+    assert.ok(dpr === 2 || dpr === 3);
+    // Área segura maior que a moldura seria entalhe fora do vidro.
+    assert.ok(sat >= 20 && sat <= 62, 'área segura de topo implausível: ' + sat);
+    assert.ok(sab === 0 || sab === 34, 'a barra de gestos é 34, ou não existe');
+    // Queixo grande só existe em aparelho sem entalhe.
+    assert.ok(my > 40 ? sat === 20 : sat >= 20, 'queixo e entalhe no mesmo aparelho');
+  });
+});

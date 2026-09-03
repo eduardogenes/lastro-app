@@ -1,0 +1,477 @@
+/* ============================================================
+   A BANCADA — o palco de mesa. Ver src/palco.js para o porquê.
+
+   Tudo aqui está trancado atrás de `[data-palco="bancada"]`, que só
+   o computador recebe. No telefone estas regras existem no arquivo
+   e não casam com nada.
+
+   ---- As quatro licenças, e de quem elas são ----
+
+   O DESIGN.md tem seis inegociáveis, e a bancada rompe três. Não
+   por descuido: porque ela não é o app. É a MESA onde o app está
+   pousado, e mesa e instrumento não seguem a mesma regra.
+
+   1. RAIO ZERO -> o aparelho tem 62px de canto contínuo.
+      É a mesma licença da miniatura de foto (`--ins-raio-foto`):
+      forma que o mundo já tem, não caixa arredondada por gosto.
+      Um iPhone de canto reto não seria mais fiel ao sistema; seria
+      só um retângulo com um app dentro.
+
+   2. NUNCA SOMBRA -> o aparelho projeta uma.
+      A sombra é o que separa "objeto pousado numa superfície" de
+      "desenho colado numa página", e é a coisa toda que a bancada
+      tem a dizer. Ela pertence ao OBJETO. Nada dentro da tela
+      ganhou sombra, e é por isso que a tela continua lendo como
+      tela: ela é a única região plana da composição.
+
+   3. QUASE NENHUM MOVIMENTO -> existem dois na bancada.
+      O pouso, uma vez, na abertura; e a virada, quando se gira o
+      aparelho. Ambos são estado — "chegou", "virou" —, ambos abaixo
+      de 520ms, ambos mortos por `prefers-reduced-motion`. O app
+      dentro do vidro continua com os dois dele e mais nenhum.
+
+   4. A CAMADA DO SISTEMA NÃO USA AS FONTES DO APP.
+      Relógio, sinal e bateria são do iOS, e escrevê-los em Space
+      Grotesk seria o app assinando o que não é dele. Vão na fonte
+      do sistema, como no aparelho de verdade.
+
+   O prefixo é `pl-`, e não `ins-`, pelo mesmo motivo: `ins-` é a
+   língua do que se vê DENTRO do app, e a bancada está do lado de
+   fora do vidro.
+   ============================================================ */
+
+:root {
+  /* ---- Titânio: a mesma família de cinza esverdeado do canvas,
+     em sete paradas, porque metal escovado é o que acontece quando
+     uma superfície devolve duas luzes em ângulos diferentes. Uma
+     parada só daria plástico. ---- */
+  --pl-metal-1: #363B34;
+  --pl-metal-2: #7B8177;
+  --pl-metal-3: #31362F;
+  --pl-metal-4: #585F53;
+  --pl-metal-5: #20241E;
+  --pl-metal-6: #454B42;
+
+  /* O vidro é mais preto que o canvas do app, e essa diferença de
+     três pontos é o que faz a tela parecer ACESA dentro da moldura.
+     Igualar os dois apaga o aparelho. */
+  --pl-vidro:   #000000;
+
+  /* A luz que corre pela BORDA. O degradê linear sozinho resolve o queixo
+     largo do iPhone com botão e não resolve o trilho de 11px do resto: ao
+     longo de 11 pixels ele quase não muda, e o metal sai chapado. Estas duas
+     entram por cima num degradê CÔNICO, que dá a cada aresta um tom diferente
+     — que é literalmente o que uma peça usinada faz com uma luz de estúdio. */
+  --pl-luz:     rgba(236, 240, 230, .26);
+  --pl-escuro:  rgba(6, 8, 6, .42);
+
+  --pl-chanfro: rgba(242, 244, 239, .17);   /* o fio de luz na quina usinada */
+  --pl-fenda:   rgba(4, 5, 4, .92);         /* a junta entre metal e vidro */
+  --pl-sombra:  rgba(0, 0, 0, .92);
+  --pl-bloom:   rgba(214, 218, 208, .075);  /* a tela é emissiva; isto é o halo */
+
+  --pl-sistema:      #FFFFFF;               /* tinta do relógio e dos ícones */
+  --pl-sistema-meia: rgba(255, 255, 255, .38);
+
+  /* O piso da bancada. O canvas do app é chapado; aqui há um
+     levante no centro, e é ele que dá à sombra do aparelho algo
+     mais claro que ela para escurecer. Sombra preta sobre preto
+     chapado não existe. */
+  --pl-piso-1:  #12160F;
+  --pl-piso-2:  #0C0E0C;
+  --pl-piso-3:  #070806;
+
+  --pl-font-sistema: -apple-system, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ---- O app cru sai de cena --------------------------------------------
+   Especificidade por atributo + id, sem `!important`: `#toast.on` e
+   `#timer.on` acendem com (0,1,1,0) e estas ganham com (0,1,1,1). */
+html[data-palco="bancada"] body { overflow: hidden; }
+html[data-palco="bancada"] #app,
+html[data-palco="bancada"] #toast,
+html[data-palco="bancada"] #timer,
+html[data-palco="bancada"] #deitado { display: none; }
+
+/* ---- O palco ---------------------------------------------------------- */
+
+.pl {
+  --pl-lado: 236px;
+  position: fixed; inset: 0; z-index: 1;
+  /* Três colunas com a do meio livre: a coluna vazia da esquerda tem a
+     largura do painel, e é ela que põe o APARELHO no centro da janela em vez
+     de centrar o conjunto. O objeto é o assunto; o painel é a legenda dele. */
+  display: grid; grid-template-columns: var(--pl-lado) auto var(--pl-lado);
+  align-items: center; justify-content: center;
+  gap: 24px; padding: 40px;
+  background: radial-gradient(88% 68% at 50% 36%,
+              var(--pl-piso-1) 0%, var(--pl-piso-2) 56%, var(--pl-piso-3) 100%);
+  /* clip e não hidden: o horizonte transborda de propósito para os
+     dois lados, e `hidden` viraria `auto` no outro eixo — barra de
+     rolagem transitória num palco que não rola. */
+  overflow: clip;
+}
+
+.pl-cena { grid-column: 2; position: relative; padding: 26px 34px 0; }
+
+/* A superfície. Um fio, de ponta a ponta da janela, na base do
+   aparelho: sem ele o objeto flutua, e flutuar é o que a versão
+   antiga desta tela já fazia. */
+.pl-horizonte {
+  position: absolute; bottom: 0; left: -100vw; right: -100vw; height: 1px;
+  background: linear-gradient(90deg,
+              transparent, var(--ins-rule) 22%, var(--ins-rule) 78%, transparent);
+}
+
+/* ---- O aparelho ------------------------------------------------------- */
+
+.pl-aparelho {
+  position: relative;
+  width:  calc((var(--pl-w) + 2 * var(--pl-mx)) * var(--pl-k));
+  height: calc((var(--pl-h) + 2 * var(--pl-my)) * var(--pl-k));
+  padding: calc(var(--pl-my) * var(--pl-k)) calc(var(--pl-mx) * var(--pl-k));
+  border-radius: calc(var(--pl-rc) * var(--pl-k));
+  background:
+    conic-gradient(from 208deg,
+      transparent      0deg,  var(--pl-luz)     38deg, var(--pl-escuro)  94deg,
+      var(--pl-luz)  148deg,  var(--pl-escuro) 198deg, var(--pl-luz)    248deg,
+      var(--pl-escuro) 308deg, transparent      360deg),
+    linear-gradient(152deg,
+      var(--pl-metal-6)  0%, var(--pl-metal-2)  9%, var(--pl-metal-3) 26%,
+      var(--pl-metal-4) 46%, var(--pl-metal-5) 62%, var(--pl-metal-2) 84%,
+      var(--pl-metal-1) 100%);
+  box-shadow:
+    inset 0 0 0 1px var(--pl-chanfro),
+    0 calc(38px * var(--pl-k)) calc(84px * var(--pl-k)) calc(-42px * var(--pl-k)) var(--pl-sombra),
+    0 calc(6px * var(--pl-k))  calc(18px * var(--pl-k)) calc(-8px * var(--pl-k))  var(--pl-sombra);
+}
+
+/* O halo da tela acesa. Fica ATRÁS do aparelho (z-index negativo
+   dentro do contexto de empilhamento do palco) e é quase invisível
+   de propósito: perceber o halo é o defeito, perceber que a tela
+   está ligada é o efeito. */
+.pl-aparelho::before {
+  content: ""; position: absolute; inset: -18%; z-index: -1;
+  background: radial-gradient(closest-side, var(--pl-bloom), transparent 74%);
+  pointer-events: none;
+}
+
+/* Canto contínuo, e não circular: é o que a Apple desenha e o que
+   separa "iPhone" de "retângulo com raio". Chegou ao Chrome em 139;
+   onde não existe, o `border-radius` acima já entrega a silhueta. */
+@supports (corner-shape: squircle) {
+  .pl-aparelho, .pl-vidro { corner-shape: squircle; }
+}
+
+.pl-vidro {
+  position: relative; overflow: hidden;
+  width:  calc(var(--pl-w) * var(--pl-k));
+  height: calc(var(--pl-h) * var(--pl-k));
+  border-radius: calc(var(--pl-raio) * var(--pl-k));
+  background: var(--pl-vidro);
+  box-shadow: inset 0 0 0 1px var(--pl-fenda);
+}
+
+/* A tela roda em tamanho REAL e é escalada por transform. A viewport
+   de dentro continua sendo 402 × 874 — é isso que faz media query,
+   svh, fixed e sticky se resolverem sozinhos lá dentro. Escalar a
+   largura em vez do transform daria uma janela estreita, não um
+   telefone. */
+.pl-tela, .pl-sistema {
+  position: absolute; top: 0; left: 0;
+  width: var(--pl-w); height: var(--pl-h);
+  transform: scale(var(--pl-k));
+  transform-origin: top left;
+}
+.pl-tela { border: 0; display: block; background: var(--ins-canvas); }
+
+/* ---- A camada do sistema ---------------------------------------------
+   Ilha, relógio e barra de gestos são desenhados por cima do app,
+   como no aparelho: lá o app também passa por baixo deles. Não
+   recebem ponteiro — clicar na ilha é clicar no app que está atrás. */
+.pl-sistema { pointer-events: none; color: var(--pl-sistema); }
+
+.pl-ilha {
+  position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+  width: 125px; height: 36px; border-radius: 18px;
+  background: var(--pl-vidro);
+}
+.pl-ilha-lente {
+  position: absolute; top: 50%; right: 13px; transform: translateY(-50%);
+  width: 9px; height: 9px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, var(--pl-metal-3), var(--pl-vidro) 72%);
+  box-shadow: 0 0 0 1px var(--pl-fenda);
+}
+[data-familia="botao"] .pl-ilha { display: none; }
+
+/* Deitado, a ilha vai para a borda ESQUERDA e vira em pé junto com
+   o aparelho: ela é peça física, gira com o metal. */
+[data-orientacao="paisagem"][data-familia="ilha"] .pl-ilha {
+  top: 50%; left: 11px; transform: translateY(-50%);
+  width: 36px; height: 125px;
+}
+[data-orientacao="paisagem"] .pl-ilha-lente {
+  top: 13px; right: 50%; transform: translateX(50%);
+}
+
+.pl-status {
+  position: absolute; top: 11px; left: 0; right: 0; height: 36px;
+  display: grid; grid-template-columns: 1fr 125px 1fr; align-items: center;
+  font: 600 15px/1 var(--pl-font-sistema);
+  letter-spacing: .01em; font-variant-numeric: tabular-nums;
+}
+.pl-hora   { grid-column: 1; justify-self: center; }
+.pl-icones { grid-column: 3; justify-self: center; display: flex; align-items: center; gap: 5px; }
+
+.pl-bateria {
+  position: relative; display: block; width: 25px; height: 12px;
+  border: 1px solid var(--pl-sistema-meia); border-radius: 3.5px;
+}
+.pl-bateria::after {
+  content: ""; position: absolute; top: 50%; right: -3.5px; transform: translateY(-50%);
+  width: 1.6px; height: 4px; border-radius: 0 1px 1px 0;
+  background: var(--pl-sistema-meia);
+}
+.pl-bateria > i {
+  position: absolute; inset: 1.5px; width: auto; right: auto;
+  display: block; border-radius: 1.5px;
+  background: var(--pl-sistema);
+  /* 68%: bateria de quem já usou o telefone hoje. Cheia lê como
+     enfeite; vazia lê como aviso. */
+  width: calc((100% - 3px) * .68);
+}
+
+/* Sem entalhe a faixa é a barra inteira, e o relógio volta para a
+   esquerda — é o iPhone antes do Face ID. */
+[data-familia="botao"] .pl-status {
+  top: 0; height: var(--pl-sat);
+  display: flex; justify-content: space-between; padding: 0 16px;
+  font-size: 13px;
+}
+
+/* Deitado, o iPhone com Face ID esconde a barra de status. */
+[data-orientacao="paisagem"][data-familia="ilha"] .pl-status { display: none; }
+
+/* A barra de gestos é SOFTWARE: fica sempre embaixo da tela como
+   ela está, e não gira com o metal. É a diferença dela para a ilha,
+   e a bancada respeita as duas. */
+.pl-gestos {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  width: 140px; height: 5px; border-radius: 3px;
+  background: var(--pl-sistema); opacity: .92;
+}
+[data-familia="botao"] .pl-gestos { display: none; }
+
+/* ---- Os botões físicos -----------------------------------------------
+   A silhueta é o que faz o objeto ser lido como telefone antes de
+   qualquer detalhe: sem eles, uma barra de metal com tela dentro. */
+.pl-botao {
+  position: absolute;
+  background: linear-gradient(180deg, var(--pl-metal-3), var(--pl-metal-4), var(--pl-metal-5));
+  box-shadow: inset 0 0 0 1px var(--pl-fenda);
+}
+.pl-botao[data-borda="esq"], .pl-botao[data-borda="dir"] {
+  top: calc(var(--pl-b-y) * var(--pl-k));
+  width: calc(3px * var(--pl-k));
+  height: calc(var(--pl-b-h) * var(--pl-k));
+  border-radius: calc(2px * var(--pl-k));
+}
+.pl-botao[data-borda="esq"] { left: calc(-2px * var(--pl-k)); }
+.pl-botao[data-borda="dir"] { right: calc(-2px * var(--pl-k)); }
+
+.pl-botao[data-borda="cima"], .pl-botao[data-borda="baixo"] {
+  left: calc(var(--pl-b-y) * var(--pl-k));
+  height: calc(3px * var(--pl-k));
+  width: calc(var(--pl-b-h) * var(--pl-k));
+  border-radius: calc(2px * var(--pl-k));
+  background: linear-gradient(90deg, var(--pl-metal-3), var(--pl-metal-4), var(--pl-metal-5));
+}
+.pl-botao[data-borda="cima"]  { top: calc(-2px * var(--pl-k)); }
+.pl-botao[data-borda="baixo"] { bottom: calc(-2px * var(--pl-k)); }
+
+/* ---- Os queixos do aparelho com botão --------------------------------- */
+
+.pl-queixo { display: none; position: absolute; align-items: center; justify-content: center; gap: 14px; }
+[data-familia="botao"] .pl-queixo { display: flex; }
+
+.pl-queixo-topo { top: 0; left: 0; right: 0; height: calc(var(--pl-my) * var(--pl-k)); }
+.pl-queixo-base { bottom: 0; left: 0; right: 0; height: calc(var(--pl-my) * var(--pl-k)); }
+
+/* Girando no sentido anti-horário, o topo do aparelho encosta na
+   esquerda e a base vai para a direita. */
+[data-orientacao="paisagem"] .pl-queixo-topo {
+  top: 0; bottom: 0; right: auto; height: auto; width: calc(var(--pl-mx) * var(--pl-k));
+  flex-direction: column;
+}
+[data-orientacao="paisagem"] .pl-queixo-base {
+  top: 0; bottom: 0; left: auto; height: auto; width: calc(var(--pl-mx) * var(--pl-k));
+  flex-direction: column;
+}
+
+.pl-alto-falante {
+  width: calc(46px * var(--pl-k)); height: calc(5px * var(--pl-k));
+  border-radius: calc(3px * var(--pl-k)); background: var(--pl-fenda);
+}
+.pl-lente {
+  width: calc(8px * var(--pl-k)); height: calc(8px * var(--pl-k)); border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, var(--pl-metal-3), var(--pl-vidro) 70%);
+}
+.pl-home {
+  width: calc(46px * var(--pl-k)); height: calc(46px * var(--pl-k)); border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--pl-chanfro), inset 0 0 0 2px var(--pl-fenda);
+}
+[data-orientacao="paisagem"] .pl-alto-falante {
+  width: calc(5px * var(--pl-k)); height: calc(46px * var(--pl-k));
+}
+
+/* ---- As réguas -------------------------------------------------------
+   Não são grade de blueprint. São a resposta escrita para "de que
+   tamanho é isto", que é a pergunta que a bancada existe para
+   responder — e o projeto inteiro é feito de número que diz de onde
+   veio. Traço a cada 50, número a cada 100 (200 na vertical), e a
+   medida final sempre, mesmo fora do passo. */
+.pl-regua { position: absolute; color: var(--ins-text-4); }
+.pl-regua-x { top: 0; left: 34px; right: 0; height: 26px; }
+.pl-regua-y { top: 26px; left: 0; bottom: 0; width: 34px; }
+
+.pl-tick { position: absolute; display: block; background: var(--ins-border); }
+
+.pl-regua-x .pl-tick {
+  bottom: 0; left: calc(var(--pl-t) * var(--pl-k));
+  width: 1px; height: 5px;
+}
+.pl-regua-x .pl-tick[data-r="1"] { height: 9px; background: var(--ins-border-strong); }
+.pl-regua-x .pl-tick > b {
+  position: absolute; bottom: 12px; left: 0; transform: translateX(-50%);
+}
+
+.pl-regua-y .pl-tick {
+  right: 0; top: calc(var(--pl-t) * var(--pl-k));
+  height: 1px; width: 5px;
+}
+.pl-regua-y .pl-tick[data-r="1"] { width: 9px; background: var(--ins-border-strong); }
+.pl-regua-y .pl-tick > b {
+  position: absolute; right: 12px; top: 0; transform: translateY(-50%);
+  text-align: right; white-space: nowrap;
+}
+
+.pl-tick > b {
+  display: block;
+  font: 400 10px/1 var(--ins-font-mono);
+  letter-spacing: .04em; color: var(--ins-text-4);
+}
+.pl-tick[data-fim="1"] { background: var(--ins-text-5); }
+.pl-tick[data-fim="1"] > b { color: var(--ins-text-3); }
+
+/* ---- O painel --------------------------------------------------------- */
+
+.pl-painel {
+  grid-column: 3;
+  width: var(--pl-lado); display: flex; flex-direction: column; gap: 24px;
+}
+
+.pl-id { display: flex; flex-direction: column; gap: 8px; }
+.pl-nome {
+  margin: 0;
+  font: 700 24px/1.05 var(--ins-font-display); letter-spacing: -.03em;
+  color: var(--ins-text);
+}
+
+.pl-leitura { grid-template-columns: 1fr 1fr; }
+.pl-cel { display: flex; flex-direction: column; gap: 6px; padding: 10px 0 12px; }
+.pl-val {
+  font: 600 16px/1 var(--ins-font-mono); letter-spacing: -.03em;
+  color: var(--ins-text-2);
+}
+
+.pl-secao { display: flex; flex-direction: column; gap: 10px; }
+.pl-lista { display: flex; flex-direction: column; }
+
+.pl-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+.pl-item {
+  display: grid; grid-template-columns: 8px 1fr auto;
+  align-items: center; gap: 10px;
+  width: 100%; min-height: 34px; padding: 6px 0;
+  border-bottom: 1px solid var(--ins-hairline);
+  text-align: left; cursor: pointer;
+}
+.pl-item:first-child { border-top: 1px solid var(--ins-hairline); }
+
+/* O ponto de status do sistema, reusado: a bancada não inventa um
+   símbolo novo para dizer "este é o de agora". */
+.pl-marca { width: 7px; height: 7px; border-radius: 50%; background: var(--ins-rule); }
+.pl-item.on .pl-marca { background: var(--ins-acid); }
+
+.pl-item-n { font: 500 14px/1.2 var(--ins-font-display); color: var(--ins-text-4); }
+/* text-4, não text-5: a medida ao lado do nome é o que se ESCOLHE nesta lista,
+   e a 11px o nível 5 dá 3,2:1 — reprova em AA. O nível 5 fica para o
+   redundante, que aqui não é o caso. */
+.pl-item-d { font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-4); letter-spacing: -.02em; }
+.pl-item.on .pl-item-n { color: var(--ins-text); }
+.pl-item.on .pl-item-d { color: var(--ins-text-3); }
+.pl-item:hover .pl-item-n { color: var(--ins-text-2); }
+
+.pl-tecla {
+  font: 400 9px/1 var(--ins-font-mono); letter-spacing: .04em;
+  /* minúscula sempre: dentro do .pl-acao herdaria o caixa-alta do botão, e o
+     mesmo atalho apareceria escrito de dois jeitos em duas linhas vizinhas */
+  text-transform: none;
+  color: var(--ins-text-5); border: 1px solid var(--ins-hairline);
+  padding: 3px 4px; min-width: 16px; text-align: center;
+}
+
+.pl-acao {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; min-height: 40px; padding: 0 12px;
+  border: 1px solid var(--ins-border);
+  font: 400 11px/1 var(--ins-font-mono);
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-text-3);
+  cursor: pointer;
+}
+.pl-acao:hover { border-color: var(--ins-border-strong); color: var(--ins-text); }
+.pl-acao[aria-pressed="true"] { border-color: var(--ins-border-strong); color: var(--ins-text); }
+
+.pl-nota {
+  margin: 0; max-width: 34ch;
+  font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-4);
+  text-wrap: pretty;
+}
+
+/* Teclado tem que ver onde está. O app desliga o outline nos campos
+   porque lá o foco é desenhado pela borda ácida; aqui não há esse
+   desenho, então o anel volta. */
+.pl :focus-visible {
+  outline: 1px solid var(--ins-acid); outline-offset: 3px;
+}
+
+/* ---- Janela estreita: cai a legenda, fica o objeto -------------------- */
+
+.pl[data-compacta="1"] { --pl-lado: 0px; gap: 0; }
+.pl[data-compacta="1"] .pl-painel,
+.pl[data-compacta="1"] .pl-regua { display: none; }
+.pl[data-compacta="1"] .pl-cena { padding: 0; }
+
+/* ---- Movimento: dois, e ambos são estado ------------------------------ */
+
+@keyframes pl-pousa {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* A virada não anima largura nem altura — ver `assenta` em palco.js:
+   animar layout aqui faria o iframe refluir a cada quadro. As medidas
+   trocam de uma vez e o que vira é só transform. */
+@keyframes pl-vira {
+  from { opacity: .35; transform: rotate(calc(var(--pl-sentido, 1) * -5deg)) scale(.955); }
+  to   { opacity: 1; transform: none; }
+}
+
+.pl-pousa { animation: pl-pousa 520ms cubic-bezier(.16, 1, .3, 1) both; }
+.pl-vira  { animation: pl-vira  300ms cubic-bezier(.16, 1, .3, 1) both; }
+
+.pl-painel, .pl-regua { animation: pl-pousa 420ms cubic-bezier(.16, 1, .3, 1) 140ms both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-pousa, .pl-vira, .pl-painel, .pl-regua { animation: none; }
+}

@@ -17,6 +17,7 @@ O [README](../README.md) cobre o uso; aqui está o porquê das decisões.
 - [Ciclo da sessão](#ciclo-da-sessão)
 - [Tipo de carga](#tipo-de-carga)
 - [Séries por músculo](#séries-por-músculo)
+- [A bancada: dois documentos, um app](#a-bancada-dois-documentos-um-app)
 - [Detalhes que parecem bugs](#detalhes-que-parecem-bugs)
 
 ---
@@ -41,6 +42,22 @@ O que o arquivo único cobrava em troca:
   existia escrito neste documento.
 - `render()` reescrevendo `innerHTML` a cada mudança, com o valor dos campos
   vivendo só no DOM. Foi daí que saíram dois bugs que apagaram série registrada.
+
+### O computador roda o mesmo arquivo duas vezes
+
+Em janela de mesa, `index.html` é carregado **duas vezes**: uma como bancada e
+outra, dentro de um iframe dela, como o aparelho. Quem decide qual dos dois este
+documento é são as primeiras linhas de `src/palco.js`, e o `main.jsx` importa
+esse arquivo justamente para que ele seja avaliado antes — com um global em
+`window`, a ordem seria detalhe de emissão do bundler.
+
+Só um dos dois monta o app. Se os dois montassem, seriam duas sincronizações
+disputando a nuvem sobre o mesmo `localStorage`, dois wake locks e dois
+cronômetros. É o mesmo motivo pelo qual a ponte de handlers globais morreu:
+uma coisa, um dono.
+
+O telefone nunca entra por aqui — `palco.js` recusa toque, PWA instalado,
+documento embutido e janela pequena, e sai em quatro linhas.
 
 ### As três camadas de hoje
 
