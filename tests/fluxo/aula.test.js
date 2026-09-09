@@ -173,3 +173,65 @@ test('as portas rápidas só existem no dia aberto', async () => {
     'pôr uma aula inteira num dia de prescrição seria emendar o programa por atalho');
   a.fechar();
 });
+
+test('a lista rápida registra a aula inteira sem abrir cartão', async () => {
+  const a = await noSabado(comSabadoAnterior());
+  a.E('repetirUltimaAula()');
+  await a.esperar(60);
+  a.E('abrirRapido()');
+  await a.esperar();
+
+  const linhas = a.$$('.rapl');
+  assert.strictEqual(linhas.length, 4, 'a aula inteira cabe numa tela');
+  assert.strictEqual(a.$$('.ex').length, 0, 'e os cartões saem do caminho');
+
+  // 4 movimentos × 2 campos: oito toques de teclado e nada mais
+  a.digitar('fr0', 104);   // corrida 400 m
+  a.digitar('fr1', 108);   // remo 500 m
+  a.digitar('fw2', 9);     // wall balls 9 kg
+  a.digitar('fr2', 20);
+  a.digitar('fr3', 60);    // bike 15 cal
+  await a.esperar();
+
+  assert.strictEqual(a.E('seriesFeitasHoje("HX")'), 7,
+    'as passadas de cada movimento entram no histórico na hora, sem salvar');
+  const corrida = a.log('HX', 0);
+  assert.deepStrictEqual(corrida[corrida.length - 1].sets, [[0, 104], [0, 104]],
+    'o valor vale para as duas passadas, e a linha diz isso na tela');
+  a.fechar();
+});
+
+test('a lista rápida diz que o valor vale para todas as passadas', async () => {
+  const a = await noSabado(comSabadoAnterior());
+  a.E('repetirUltimaAula()');
+  await a.esperar(60);
+  const c = a.J('CTX.treino().rapido');
+  assert.strictEqual(c.linhas[0].nota, '2 passadas · o mesmo em todas',
+    'escrever o mesmo número em silêncio seria o app inventando dado');
+  assert.strictEqual(c.linhas[3].nota, null, 'com uma passada só não há o que avisar');
+  assert.strictEqual(c.linhas[3].medida, 'seg', 'bike é caloria: o resultado é o relógio');
+  assert.strictEqual(c.linhas[2].medida, 'reps', 'wall ball é repetição: o resultado é quanto saiu');
+  a.fechar();
+});
+
+test('a lista rápida não existe sem movimento no dia', async () => {
+  const a = await noSabado({});
+  assert.strictEqual(a.J('CTX.treino().rapido'), null,
+    'uma lista vazia não registra nada');
+  a.fechar();
+});
+
+test('digitar num dia aberto não troca a métrica do topo por uma meta', async () => {
+  const a = await noSabado(comSabadoAnterior());
+  a.E('repetirUltimaAula()');
+  await a.esperar(60);
+  assert.strictEqual(a.texto('#daymeta'), '4', 'o dia aberto conta movimentos');
+
+  a.E('abrirRapido()');
+  await a.esperar();
+  a.digitar('fr0', 104);
+  await a.esperar();
+  assert.strictEqual(a.texto('#daymeta'), '4',
+    'atualizaEstado escrevia "feitas/prescritas" por cima — meta que o box nunca prometeu');
+  a.fechar();
+});

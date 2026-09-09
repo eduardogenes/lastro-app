@@ -81,6 +81,58 @@ export function Troca({ i, t, acoes }) {
 }
 
 /**
+ * A lista rápida: a aula inteira numa tela, um campo por movimento.
+ *
+ * O ritmo de registro de uma aula de box não é o da musculação. Entre duas
+ * séries há 60 a 180 segundos parado, e é aí que se registra; entre dois
+ * rounds de um circuito não há nada — o coach já chamou o próximo e o celular
+ * está na mochila. A janela real é DEPOIS da aula, ofegante e curta, e nela
+ * abrir cartão por cartão é o que não acontece.
+ *
+ * Continua sem botão de salvar, e aqui isso não é dogma: cada campo projeta no
+ * histórico como qualquer outro do app. O que muda é a densidade, não a regra.
+ */
+export function RegistroRapido({ c, acoes }) {
+  if (!c.ativo) {
+    return (
+      <button class="ins-btn-add tr-rapido" onClick={acoes.abre}>
+        registrar a aula toda de uma vez
+      </button>
+    );
+  }
+  return (
+    <div class="rapido">
+      <div class="swap-h ins-label">A aula inteira · toque em fechar quando terminar</div>
+      {c.linhas.map(l => (
+        <div class={'rapl' + (l.feito ? ' feito' : '')} key={l.i}>
+          <div class="rapl-n">
+            <b>{l.nome}</b>
+            <span>{l.prescricao}{l.nota ? ' · ' + l.nota : ''}</span>
+          </div>
+          <div class="rapl-c">
+            <label class="rapl-f">
+              <span>{l.unidade}</span>
+              <input type="text" inputmode="decimal" id={`fw${l.i}`}
+                     aria-label={`carga de ${l.nome}, ${l.unidade}`}
+                     value={l.carga}
+                     onInput={e => acoes.inp(e.currentTarget, l.i, 0)} />
+            </label>
+            <label class="rapl-f">
+              <span>{l.medida}</span>
+              <input type="text" inputmode="numeric" id={`fr${l.i}`}
+                     aria-label={`${l.medida} de ${l.nome}`}
+                     value={l.valor}
+                     onInput={e => acoes.inp(e.currentTarget, l.i, 1)} />
+            </label>
+          </div>
+        </div>
+      ))}
+      <button class="swapopt cancel" onClick={acoes.abre}><b>Fechar</b></button>
+    </div>
+  );
+}
+
+/**
  * As portas rápidas do dia aberto: repetir o sábado passado e os modelos.
  *
  * Existe porque montar uma aula de cinco movimentos em cinco rounds custava 66

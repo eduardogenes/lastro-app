@@ -751,6 +751,50 @@
    adicionar um a um continua sendo a porta principal, e estas são o atalho de
    quem já tem sábado anterior ou modelo salvo. */
 .tr-aulas { margin-top: var(--ins-5); color: var(--ins-text-4); border-style: dashed; }
+.tr-rapido { margin-top: var(--ins-5); color: var(--ins-text-4); border-style: dashed; }
+
+/* ---- A aula inteira numa tela ------------------------------------------ */
+/* Fio e não cartão, como o resto do sistema: cada movimento é uma linha
+   separada da seguinte por 1px, e o que destaca a linha PREENCHIDA é o ácido
+   na régua, não um fundo. */
+.rapido { margin-top: var(--ins-5); }
+.rapl {
+  display: flex; align-items: center; gap: var(--ins-4);
+  padding: var(--ins-4) 0;
+  border-bottom: 1px solid var(--ins-hairline);
+}
+.rapl.feito { border-bottom-color: var(--ins-acid); }
+.rapl-n { flex: 1; min-width: 0; }
+.rapl-n b {
+  display: block;
+  font: 500 15px/1.3 var(--ins-font-display); letter-spacing: -.01em;
+  color: var(--ins-text);
+}
+.rapl-n span {
+  display: block; margin-top: var(--ins-2);
+  font: 400 10px/1.4 var(--ins-font-mono); color: var(--ins-text-5);
+}
+.rapl-c { display: flex; gap: var(--ins-2); flex: 0 0 auto; }
+/* 68px por campo: cabe "127,5" no mono de 16px, e os dois somam 142 — sobra
+   para o nome do movimento respirar num aparelho de 320px. */
+.rapl-f { display: block; width: 68px; }
+.rapl-f > span {
+  display: block; margin-bottom: var(--ins-2);
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ins-text-5); text-align: center;
+}
+/* 16px: abaixo disso o Safari dá zoom ao focar, e a tela fica torta no meio
+   do preenchimento. */
+.rapl-f input {
+  width: 100%; min-height: var(--ins-tap); padding: 0 var(--ins-2);
+  background: transparent; border: 0;
+  border-bottom: 1px solid var(--ins-border);
+  font: 500 16px/1 var(--ins-font-mono); color: var(--ins-text);
+  text-align: center;
+}
+.rapl-f input:focus { outline: none; border-bottom-color: var(--ins-acid); }
+.rapl-f input.done { color: var(--ins-acid); }
 
 /* Uma linha de modelo: o modelo inteiro é o alvo, e o destrutivo fica na ponta,
    em coral, com alvo próprio — nunca competindo com o toque que aplica. */

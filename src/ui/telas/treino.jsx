@@ -11,7 +11,7 @@
 
 import { Cabecalho, GradeMetricas, Secao, Vazio, useAgora } from '../instrumento/primitivos.jsx';
 import { Exercicio } from '../exercicio.jsx';
-import { AddEx, Aulas } from '../instrumento/edicao.jsx';
+import { AddEx, Aulas, RegistroRapido } from '../instrumento/edicao.jsx';
 import { EdicaoDoDia } from './edicaodia.jsx';
 
 export function Treino({ ctx }) {
@@ -163,8 +163,16 @@ export function Treino({ ctx }) {
               ? `${t.movimentos} ${t.movimentos === 1 ? 'movimento' : 'movimentos'}`
               : 'nada prescrito')
           : `${t.feitas} de ${t.prescritas} séries`}>
+        {/* A lista rápida vem ANTES dos cartões: quem a abre está no fim da
+            aula e não quer rolar cinco cartões para chegar nela. */}
+        {t.rapido && !t.editando && !t.addEx && (
+          <RegistroRapido c={t.rapido} acoes={ctx.acoesRapido} />
+        )}
+
         {t.editando
           ? <EdicaoDoDia ctx={ctx} />
+          : t.rapido && t.rapido.ativo
+            ? null
           : t.exercicios.length === 0
             ? (t.aberto
                 /* O vazio de um dia aberto não é falta: é o estado normal dele

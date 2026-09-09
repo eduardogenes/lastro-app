@@ -286,7 +286,7 @@ function treino(d) {
 
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] } };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
-  editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null, aulas:false,
+  editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null, aulas:false, rapido:false,
   protocolo:null, comparar:null, ajuste:null, camera:null };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
@@ -1451,6 +1451,12 @@ function atualizaEstado() {
   if (!el) return;
   const P = treino(view.day);
   if (!P) return;
+  // Num dia aberto a métrica é MOVIMENTOS, não séries feitas de prescritas —
+  // é o que a tela desenha. Escrever `4/9` aqui desfazia isso na primeira
+  // tecla digitada, e o topo passava a contar contra um número que o box nunca
+  // prometeu. O bug era antigo e ficava escondido porque só aparecia depois de
+  // digitar; a lista rápida o disparava a cada campo.
+  if (diaAberto(view.day)) { el.textContent = P.ex.length ? String(P.ex.length) : '–'; return; }
   const prescritas = P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0);
   el.textContent = seriesFeitasHoje(view.day) + '/' + prescritas;
 }
@@ -3212,6 +3218,44 @@ function inp(el, i, k, pos) {
   autoTimer(i, k, e);
 }
 
+/**
+ * A digitação da lista rápida: um campo por MOVIMENTO, não por passada.
+ *
+ * Existe porque o ritmo real de uma aula de box não é o da musculação. Entre
+ * uma série e outra há 60 a 180 segundos parado, e é aí que se registra; entre
+ * dois rounds de um circuito não há nada — o coach já chamou o próximo, o
+ * celular está na mochila. A janela que existe de verdade é DEPOIS da aula,
+ * ofegante, sentado, e ela é curta.
+ *
+ * O valor entra em TODAS as passadas do movimento, e a tela diz isso com todas
+ * as letras na própria linha ("5 passadas · o mesmo em todas"). Escrever cinco
+ * vezes o mesmo número em silêncio seria o app inventando dado; escrever com o
+ * rótulo à vista é ele oferecendo uma aproximação que o usuário aceitou — e o
+ * cartão continua aberto ao lado para quem quiser diferenciar round a round.
+ *
+ * Não dispara o cronômetro de descanso: quem preenche isto está com a aula
+ * terminada, e um contador de descanso começando aí não serve a ninguém.
+ */
+function inpRapido(el, i, pos) {
+  const ex = treino(view.day).ex[i];
+  if (!ex) return;
+  const e = draftOf(i);
+  const raw = limpaNum(el, pos === 0);
+  const num = pos === 0 ? parseFloat(raw) : parseInt(raw, 10);
+  const v = (raw === '' || isNaN(num)) ? null : num;
+  for (let k = 0; k < setsFor(ex); k++) {
+    if (!e.s[k]) e.s[k] = [null, null];
+    e.s[k][pos] = v;
+  }
+  el.classList.toggle('done', el.value !== '');
+  segurarTela();
+  projeta(i);
+  atualizaEstado();
+  queueSave();
+}
+
+function abrirRapido() { view.rapido = !view.rapido; view.open = null; render(); }
+
 // O cronômetro começa sozinho quando QUALQUER série fica completa.
 //
 // Começava só na última do exercício, e isso deixava sem cronômetro justamente
@@ -4296,6 +4340,36 @@ CTX.treino = function () {
     // uma emenda ao programa. Fica preso ao dia aberto fora do modo de edição
     // para as duas superfícies nunca desenharem o mesmo painel ao mesmo tempo.
     addEx: (diaAberto(d) && !view.editProg && view.addEx) ? catalogoDeAdicao(d) : null,
+    // A lista rápida: um campo por movimento, para o fim da aula. Só no dia
+    // aberto e só com movimento dentro — uma lista vazia não registra nada.
+    rapido: (diaAberto(d) && !view.editProg && P && P.ex.length) ? (function () {
+      return {
+        ativo: !!view.rapido,
+        linhas: P.ex.map(function (ex, i) {
+          const un = unidadeDe(ex);
+          const dr = draftPeek(i);
+          const v = (dr && dr.s && dr.s[0]) ? dr.s[0] : [null, null];
+          const ns = setsFor(ex);
+          const tipo = cargaTipo(logKey(d, i), ex);
+          return {
+            i: i,
+            nome: ex.n,
+            // o que foi prescrito, para ele saber em cima de que está digitando
+            prescricao: un && ex.q > 0
+              ? ns + ' × ' + fmtInt(ex.q) + ' ' + ROTULO_UNIDADE[un]
+              : ns + (ex.r ? ' × ' + ex.r : ''),
+            // dito por extenso: escrever o mesmo número em cinco passadas em
+            // silêncio seria o app inventando dado
+            nota: ns > 1 ? ns + ' passadas · o mesmo em todas' : null,
+            unidade: un ? 'kg' : CARGAS[tipo].rot,
+            medida: un ? (cronometrado(un) ? 'seg' : ROTULO_UNIDADE[un]) : 'reps',
+            carga: v[0] != null ? String(v[0]) : '',
+            valor: v[1] != null ? String(v[1]) : '',
+            feito: v[1] != null
+          };
+        })
+      };
+    })() : null,
     // As portas rápidas do dia aberto. Só existem no dia aberto: pôr uma aula
     // inteira num dia de prescrição seria emendar o programa do treinador por
     // atalho, que é exatamente o que o app existe para frear.
@@ -5613,6 +5687,11 @@ CTX.acoesDia = {
   fechaTroca: function (i) { toggleSwap(i); },
   desfaz: function (j) { desfazMod(j); },
   pronto: function () { modoEdicao(false); }
+};
+
+CTX.acoesRapido = {
+  abre: function () { abrirRapido(); },
+  inp: function (el, i, pos) { inpRapido(el, i, pos); }
 };
 
 CTX.acoesAulas = {
