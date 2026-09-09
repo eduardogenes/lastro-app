@@ -197,3 +197,29 @@ test('sem horário medido não há marcador de período', async () => {
   assert.strictEqual(a.$('.cal-d .per'), null, 'não marca período de hora que ninguém mediu');
   a.fechar();
 });
+
+test('trocar de mês não mexe na posição de leitura', async () => {
+  // As setas do mês ficam no MEIO da página. Subir ao topo a cada toque obrigava
+  // a rolar de volta até elas para dar o toque seguinte — comparar três meses
+  // custava três rolagens. Trocar de mês é atualizar o dado da mesma tela, não
+  // entrar em lugar nenhum (§3 do contrato de UX).
+  const a = await app();
+  a.aba('dados');
+  await a.modo('treino');
+
+  const pedidos = [];
+  a.window.scrollTo = function (x, top) {
+    pedidos.push(x && typeof x === 'object' ? x.top : top);
+  };
+
+  a.E('mudaMes(-1)');
+  await a.esperar();
+  assert.strictEqual(a.E('view.mes'), -1, 'andou um mês para trás');
+  assert.deepStrictEqual(pedidos, [], 'e não pediu rolagem nenhuma');
+
+  a.E('mudaMes(1)');
+  await a.esperar();
+  assert.strictEqual(a.E('view.mes'), 0, 'e volta sem rolar também');
+  assert.deepStrictEqual(pedidos, []);
+  a.fechar();
+});

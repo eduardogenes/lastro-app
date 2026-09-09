@@ -2415,11 +2415,24 @@ function periodoNaCelula(marcas) {
   return '';
 }
 
+/**
+ * Anda um mês no calendário do acompanhamento.
+ *
+ * **Não mexe na rolagem**, e isso é o ponto: trocar de mês é ATUALIZAR O DADO
+ * DA MESMA TELA, não entrar em lugar nenhum. Ela subia ao topo a cada toque, e
+ * como as setas ficam no meio da página, quem quisesse comparar três meses
+ * tinha que rolar de volta até elas três vezes. O `scrollTo(0,0)` era o idioma
+ * repetido de "algo mudou, redesenha" — certo para destino, errado aqui.
+ *
+ * Mês mais curto que a posição atual não precisa de tratamento: o navegador
+ * grampeia o `scrollY` no novo fim da página sozinho, e parar no fim de um mês
+ * vazio ainda diz mais do que voltar ao topo.
+ */
 function mudaMes(n) {
   const novo = (view.mes || 0) + n;
   if (novo > 0) return;
   view.mes = novo;
-  render(); window.scrollTo(0,0);
+  render();
 }
 
 // ---------- registro retroativo ----------

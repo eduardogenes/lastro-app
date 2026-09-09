@@ -60,7 +60,13 @@ Não misturar. Uma folha nunca diz "voltar"; um destino nunca diz "fechar".
 | **Voltar de um destino** | **restaura a posição exata** |
 | Fechar folha | mantém a posição, sem exceção |
 | Trocar de aba | topo |
-| Atualizar dado na mesma tela | não mexe |
+| Atualizar dado na mesma tela | **não mexe** |
+
+O último caso é o mais fácil de errar, porque `render(); window.scrollTo(0,0)`
+vira idioma: certo ao entrar num destino, errado ao repintar a tela em que já se
+está. O sinal é o controle — se ele fica no meio da página e é feito para ser
+tocado mais de uma vez (andar mês, trocar filtro, paginar), a rolagem não pode
+sair de baixo do polegar.
 
 Entrar guarda (`entraNoDestino`), sair devolve (`saiDoDestino`), por chave de
 destino — nunca por pilha, porque destino que abre outro por cima precisa
