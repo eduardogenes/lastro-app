@@ -111,3 +111,49 @@ test('a fusão soma o que dois aparelhos marcaram no mesmo dia', async () => {
   assert.strictEqual(r[0].agua, 9, 'a água fica no maior: é contador que só cresce');
   a.fechar();
 });
+
+test('a folha da refeição mostra o padrão dela antes de ele marcar', async () => {
+  const a = await noHoje();
+  // 8 dias fechados: o lanche falha na maioria
+  // datas relativas a HOJE: a janela do padrão é de 20 dias, e um histórico
+  // ancorado numa data fixa cairia fora dela
+  a.E(`(function(){
+    S.comidaHist = [];
+    for (var i = 8; i >= 1; i--) {
+      var done = { pos: 1, almoco: 1, jantar: 1 };
+      if (i >= 6) done.lanche = 1;
+      S.comidaHist.push({ d: hojeISO(Date.now() - i * 86400000), done: done, agua: 8,
+                          escala: {}, cadencia: 'treino',
+                          tot: {kcal:0,p:0,c:0,g:0}, pv: 1, m: 9 - i });
+    }
+  })()`);
+  const c = a.J(`(function(){
+    var f = CTX.refeicao('lanche');
+    return f && f.padrao;
+  })()`);
+  assert.ok(c, 'com histórico suficiente o padrão aparece');
+  assert.ok(/3 dos últimos 8 dias/.test(c.txt), c.txt);
+  assert.ok(!/%/.test(c.txt), 'contagem crua, nunca percentual');
+  a.fechar();
+});
+
+test('sem histórico suficiente a folha não inventa padrão', async () => {
+  const a = await noHoje();
+  assert.strictEqual(a.J('CTX.refeicao("lanche").padrao'), null,
+    'mostrar um número que ainda não quer dizer nada é pior que calar');
+  a.fechar();
+});
+
+test('a fusão do dia ABERTO também soma os dois aparelhos', async () => {
+  const a = await noHoje();
+  const r = a.J(`(function(){
+    var base = JSON.parse(JSON.stringify(S));
+    var l = Object.assign({}, base, { dia: { data:'2026-01-14', done:{pos:1}, agua:4, escala:{}, cadencia:'treino' } });
+    var m = Object.assign({}, base, { dia: { data:'2026-01-14', done:{almoco:1}, agua:9, escala:{}, cadencia:'treino' } });
+    return funde(l, m).estado.dia;
+  })()`);
+  assert.deepStrictEqual(Object.keys(r.done).sort(), ['almoco', 'pos'],
+    'era o único que ainda vinha inteiro do lado que gravou por último');
+  assert.strictEqual(r.agua, 9);
+  a.fechar();
+});

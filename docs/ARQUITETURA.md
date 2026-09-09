@@ -20,6 +20,7 @@ O [README](../README.md) cobre o uso; aqui está o porquê das decisões.
 - [Tipo de carga](#tipo-de-carga)
 - [A grandeza de um movimento](#a-grandeza-de-um-movimento)
 - [O turno do treino](#o-turno-do-treino)
+- [O diário alimentar](#o-diário-alimentar)
 - [Aula de box: repetir e reaproveitar](#aula-de-box-repetir-e-reaproveitar)
 - [Séries por músculo](#séries-por-músculo)
 - [A bancada: dois documentos, um app](#a-bancada-dois-documentos-um-app)
@@ -189,6 +190,7 @@ S = {
   deload: false,
   cardio: [{ t, m: 'bike', min: 25, i: 'moderado' }],
   dia: { data, done, agua, escala, cadencia, alta, turno },   // o dia de comida
+  comidaHist: [{ d, done, agua, escala, tot, pv, aj, m }],    // os dias que já fecharam
   body: { peso: [{ t, v }], cintura: [{ t, v }] },
   carga: { 'pendulum-squat': 'lado' },  // correção do tipo, por exercício
 
@@ -986,6 +988,97 @@ depois, e está certo.
 Não cria refeição, não apaga, não funde, não mexe em quantidade porque o horário
 mudou, e não escreve conselho de timing. O número de refeições é o mesmo nos
 três turnos.
+
+---
+
+## O diário alimentar
+
+O dia de comida era **sobrescrito** na virada da data: nada do que ele comeu
+sobrevivia à meia-noite. Sem histórico, o laço de autorregulação —
+monitorar → comparar → ajustar — fica travado no primeiro terço, e o app não
+respondia nem "qual refeição eu mais falho".
+
+`S.comidaHist` é coleção com chave natural pela data, como `protocolo.sessoes`.
+Fecha no MESMO ponto que já detectava a virada (`diaDeComida()`), sem job e sem
+cron — esta arquitetura não tem nenhum dos dois.
+
+### Por que os totais são congelados
+
+A lei "nada derivável é guardado duas vezes" pressupõe **uma única leitura
+possível do insumo**. Como o plano é editável, "o total deriva do plano" quer
+dizer na verdade "deriva do plano **no instante T**" — e T é um valor que nada
+mais no sistema lembra.
+
+Medido: cortar o arroz do almoço de 250 g para 150 g fazia um dia já vivido cair
+de 1.348 para 1.220 kcal, e corrigir a tabela do arroz mexia de novo. Não é
+omitir duplicata, é mentir sobre o passado.
+
+`pv` guarda **quando** o plano era aquele, não o que ele era. Um snapshot por dia
+custaria 6,6 MiB em dez anos — acima do teto do Safari. O carimbo custa 8 bytes
+e basta para a tela dizer que um dia foi calculado contra outro plano, que é a
+regra de todo número derivado dizer de onde veio. `planoMudou()` é monotônico:
+o relógio não garante avanço, o `+1` garante.
+
+### A fusão é campo a campo
+
+Marcar o almoço no iPhone e a água no iPad, no mesmo dia, com os dois offline.
+Vencedor-leva-tudo por carimbo descartaria o dia **inteiro** de um dos lados — o
+mesmo modo de falha que fez `uneSessoesDeFoto` existir.
+
+| campo | funde | por quê |
+|---|---|---|
+| `done` | união com lápide | é presença; a forma é a de `S.descanso` |
+| `agua` | o maior | contador que só cresce ao longo do dia |
+| `escala`, `tot`, `pv`, enquadramento | carimbo mais novo | decisões tomadas uma vez |
+
+**O dia ABERTO funde pela mesma função.** Ele era o único que ainda vinha
+inteiro do lado que gravou por último — e é justamente o que mais colide.
+
+### As três regras de medição
+
+Elas vieram da revisão com especialistas e cada uma corrige um erro fácil:
+
+- **Aderência é ponderada pela escala.** "Marcou feito com metade" não é igual a
+  "comeu tudo", e o app já tinha esse dado.
+- **Ausência de registro NÃO é aderência zero.** `aderenciaDoDia` devolve `null`
+  quando nada foi marcado, e o dia mudo fica fora do denominador. Ele pode ter
+  comido perfeitamente e só não ter aberto o app; tratar silêncio como falha é
+  erro de medição.
+- **Contagem, nunca percentual.** "14 de 20 dias" e "70%" são iguais na
+  matemática e opostos na cabeça: um número contra 100% implícito funciona como
+  nota, e feedback que dirige a atenção para a autoavaliação piora o desempenho
+  em cerca de um terço dos casos. Vale também no aviso da régua, que fala em
+  "menos da metade das refeições" e não em "abaixo de 55%".
+
+### O que a tela devolve, e o que ela recusa
+
+O histórico aparece como **contexto antes da decisão**, não como prestação de
+contas: ao abrir uma refeição, "feita em 14 dos últimos 20 dias com registro".
+É a aplicação mais fiel do "o app freia".
+
+Em DADOS, o modo `comida` mostra padrão por refeição, por dia da semana, por
+turno e por treino/descanso — tudo em contagem, sem cor avaliativa. As duas
+curvas (aderência e peso) ficam **lado a lado e sem coeficiente**: o ganho que
+se quer enxergar é de 200 a 400 g por semana, a flutuação de água passa de 1 kg,
+e duas séries com tendência sobem juntas mesmo sem relação nenhuma. Um número ali
+seria confiança fabricada.
+
+E há uma devolutiva que **não julga o usuário**: a auditoria da régua calórica.
+O sinal que move o ajuste sai das cargas; se ele mudou em semanas de aderência
+baixa, pode estar lendo adesão ruim como resposta metabólica. É o app conferindo
+a própria regra.
+
+Abaixo de 14 dias com registro a tela **cala**: mostrar um número que ainda não
+quer dizer nada é pior do que não mostrar.
+
+### A janela de 90 dias
+
+Os agregados leem 90 dias, não o histórico inteiro. Percorrer dez anos a cada
+render custaria milhares de iterações numa tela aberta com o polegar — e "qual
+refeição eu mais falho" respondido sobre uma década responde menos que sobre o
+trimestre. Storage não é gargalo (dez anos custam 510 KiB de 5 MiB, e o
+`stringify` do estado inteiro leva 3 ms); **render é**, e ele mora em outro
+andar.
 
 ---
 

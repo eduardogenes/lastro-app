@@ -28,7 +28,7 @@
 import type {
   Cardio, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId, Sessao, SessaoFoto
 } from './tipos';
-import type { DiaComidaHist } from './nutricao/tipos';
+import type { DiaComida, DiaComidaHist } from './nutricao/tipos';
 
 /** Limites por coleção, iguais aos que o app aplica ao gravar. */
 const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200, aulas: 60, comida: 4000 };
@@ -419,6 +419,30 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   const cm = uneDiasDeComida(local.comidaHist || [], remoto.comidaHist || [], mortos);
   base.comidaHist = cm.itens.slice(-TETO.comida);
   resumo.apagados += cm.apagados;
+
+  // ---- o dia ABERTO ----
+  // Ele é o que mais colide, e era o único que ainda vinha inteiro do lado que
+  // gravou por último: marcar o almoço no iPhone e a água no iPad, hoje, fazia
+  // um dos dois sumir. É o mesmo dado dos dias fechados, então funde pela
+  // mesma função — só volta à forma de `DiaComida` no fim.
+  if (local.dia && remoto.dia && local.dia.data === remoto.dia.data) {
+    const comoHist = function (d: DiaComida): DiaComidaHist {
+      const done: Record<string, number> = {};
+      Object.keys(d.done || {}).forEach(function (k) { done[k] = 1; });
+      return { d: d.data, done: done, agua: d.agua || 0,
+               escala: Object.assign({}, d.escala || {}),
+               cadencia: d.cadencia, alta: d.alta, turno: d.turno,
+               tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 0,
+               m: (d as DiaComida & { m?: number }).m || 0 };
+    };
+    const j = uneDiasDeComida([comoHist(local.dia)], [comoHist(remoto.dia)], mortos).itens[0];
+    if (j) {
+      const done: Record<string, 1> = {};
+      Object.keys(j.done).forEach(function (k) { done[k] = 1; });
+      base.dia = { data: j.d, done: done, agua: j.agua, escala: j.escala,
+                   cadencia: j.cadencia, alta: j.alta, turno: j.turno };
+    }
+  }
 
   // ---- modelos de aula ----
   // Coleção e não documento: um modelo salvo no iPhone não pode sumir porque o

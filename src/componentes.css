@@ -402,6 +402,18 @@
    destrutivo, e o app não vai resolver sozinho. */
 .hj-conflito { margin-bottom: var(--ins-4); }
 
+/* Um rótulo de recorte dentro da seção de comida: separa listas que respondem
+   perguntas diferentes sem gastar uma seção inteira em cada uma. */
+.dd-rec { margin: var(--ins-6) 0 var(--ins-3); }
+.dd-rec:first-child { margin-top: 0; }
+/* A auditoria da régua: caixa com borda porque é objeto destacado — o app
+   conferindo a própria regra —, e sem cor de alerta, porque não é falha de
+   ninguém. */
+.dd-auditoria {
+  padding: var(--ins-5); border: 1px solid var(--ins-border);
+  background: var(--ins-surface-low);
+}
+
 .fd-alta {
   margin-top: var(--ins-9); padding-top: var(--ins-6);
   border-top: 1px solid var(--ins-rule);

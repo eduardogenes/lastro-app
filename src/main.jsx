@@ -38,7 +38,8 @@ import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos
 import {
   arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia,
   refeicoesDeHoje, posTreinoDe, conflitosDeTurno,
-  fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico
+  fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico,
+  aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto,
@@ -4235,12 +4236,20 @@ CTX.refeicao = function (id) {
   const r = planoDeComida().filter(function (x) { return x.id === id; })[0];
   if (!r) return null;
   const dia = diaDeComida();
+  // O padrão desta refeição, ANTES de ele decidir. É a devolutiva do histórico
+  // que a literatura sustenta: informar antes da decisão, em vez de cobrar
+  // depois. Contagem crua, nunca percentual — "14 de 20" e "70%" são iguais na
+  // matemática e opostos na cabeça.
+  const c = contagemDaRefeicao(S.comidaHist || [], planoDeComida(), id, 20, hojeISO());
   return {
     r: r,
     catalogo: catalogoAlimentos(),
     alta: !!dia.alta,
     escala: dia.escala[id] == null ? 1 : dia.escala[id],
-    feita: !!dia.done[id]
+    feita: !!dia.done[id],
+    padrao: c.possiveis >= 5
+      ? { txt: 'feita em ' + c.feitas + ' dos últimos ' + c.possiveis + ' dias com registro' }
+      : null
   };
 };
 
@@ -4551,6 +4560,97 @@ CTX.abrePrograma = function () { abrirPrograma(null); };
 CTX.abreHistorico = function () { openHist(0); };
 
 // ---------- DADOS ----------
+/**
+ * A metade de comida do DADOS.
+ *
+ * Tudo aqui é PADRÃO, nunca nota. A regra que governa esta leitura inteira:
+ * contagem crua em vez de percentual, nenhuma cor avaliativa, nenhum
+ * coeficiente de correlação e nenhuma frase causal. O que o app faz é pôr o
+ * dado à vista; a interpretação é dele.
+ */
+function dadosDeComida() {
+  // Janela de 90 dias, e não o histórico inteiro. Dois motivos, e o segundo é
+  // o que manda: percorrer dez anos a cada render custaria milhares de
+  // iterações numa tela que se abre com o polegar; e "qual refeição eu mais
+  // falho" respondido sobre uma década responde menos que sobre o trimestre —
+  // o padrão de hoje é o que dá para mexer.
+  const JANELA = 90;
+  const plano = planoDeComida();
+  const hist = janelaDoHistorico(S.comidaHist || [], JANELA, hojeISO());
+  const DIAS_SEM = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+  const comRegistro = hist.filter(function (h) { return Object.keys(h.done || {}).length; });
+  const nome = function (id) {
+    const r = plano.filter(function (x) { return x.id === id; })[0];
+    return r ? r.n : id;
+  };
+
+  const padrao = padraoPorRefeicao(hist, plano)
+    .filter(function (p) { return p.possiveis > 0; })
+    .map(function (p) {
+      return { k: p.id, nome: nome(p.id), feitas: p.feitas, possiveis: p.possiveis,
+               txt: p.feitas + ' de ' + p.possiveis };
+    });
+  // a que mais falha, para a tela poder dizer QUAL sem pedir que ele compare
+  const pior = padrao.slice().sort(function (a, b) {
+    return (a.feitas / a.possiveis) - (b.feitas / b.possiveis);
+  })[0];
+
+  const recorte = function (chave) {
+    return recorteDoHistorico(hist, plano, chave).map(function (r) {
+      return { k: r.k, rotulo: r.k, txt: r.feitos + ' de ' + r.dias };
+    });
+  };
+
+  const trocas = trocasDeAjuste(hist, plano).slice(-6);
+  const comAderencia = trocas.filter(function (x) { return x.aderencia != null; });
+  const baixas = comAderencia.filter(function (x) { return x.aderencia < 0.55; });
+
+  return {
+    janela: JANELA,
+    dias: comRegistro.length,
+    // o piso de 14 dias não é estético: abaixo disso qualquer padrão é ruído,
+    // e mostrar um número que ainda não quer dizer nada é pior que calar
+    pronto: comRegistro.length >= 14,
+    faltam: Math.max(0, 14 - comRegistro.length),
+    padrao: padrao,
+    pior: pior && pior.possiveis >= 5 && pior.feitas < pior.possiveis
+      ? { nome: pior.nome, txt: pior.txt } : null,
+    // Em ordem de CALENDÁRIO, não de primeira aparição: uma lista que começa
+    // na sexta porque foi o primeiro dia registrado não se lê.
+    porSemana: recorte(function (h) {
+      return DIAS_SEM[new Date(h.d + 'T12:00:00').getDay()];
+    }).sort(function (a, b) { return DIAS_SEM.indexOf(a.k) - DIAS_SEM.indexOf(b.k); }),
+    porTurno: recorte(function (h) {
+      return h.cadencia === 'descanso' ? null : (h.turno || 'manhã');
+    }),
+    porCadencia: recorte(function (h) {
+      return h.cadencia === 'descanso' ? 'descanso' : 'treino';
+    }),
+    // As duas curvas, suavizadas por semana. Sem coeficiente e sem frase
+    // causal: o ganho que se quer enxergar é de 200 a 400 g por semana, a
+    // flutuação de água passa de 1 kg, e duas séries com tendência
+    // correlacionam por definição — um número aqui seria confiança fabricada.
+    curvas: {
+      aderencia: aderenciaPorSemana(S.comidaHist || [], plano, 14),
+      peso: serieSemanal(S.body.peso, 14)
+    },
+    // Uma troca já basta para valer o aviso: se a régua mudou em cima de uma
+    // semana mal executada, isso é fato sobre o sistema, não estatística.
+    auditoria: baixas.length
+      ? { n: baixas.length, de: comAderencia.length,
+          // "abaixo de 55%" seria a aderência DELE em percentual, que é a
+          // forma que esta tela evita em toda parte. O limiar continua sendo
+          // 55%; o que se diz é o fato, na mesma moeda do resto: contagem.
+          txt: comAderencia.length === 1
+            ? 'O ajuste calórico mudou uma vez, e foi sobre uma semana em que menos da metade das refeições foi cumprida.'
+            : 'Das últimas ' + comAderencia.length + ' vezes em que o ajuste calórico mudou, ' +
+              (baixas.length === 1 ? '1 foi' : baixas.length + ' foram') +
+              ' sobre uma semana em que menos da metade das refeições foi cumprida.' }
+      : null
+  };
+}
+
 CTX.dados = function () {
   const t = tendenciaDeForca(S.logs, function (k) { return temUnidade(exDe(k)); });
   const v = veredito();
@@ -4586,6 +4686,7 @@ CTX.dados = function () {
       estado: (S.ajuste === 0 ? 'plano atual' : S.ajuste > 0 ? 'ajuste +150 kcal' : 'ajuste −150 kcal') +
               ' · arroz ' + arrozAtual() + ' g'
     },
+    comida: dadosDeComida(),
     forca: {
       serie: porSemana,
       agora: t.ok ? Math.round(t.agora) + ' kg' : '—',

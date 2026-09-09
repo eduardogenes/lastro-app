@@ -18,7 +18,7 @@ const PORCOES = [
 export function FolhaRefeicao({ ctx, id }) {
   const d = ctx.refeicao(id);
   if (!d) return null;
-  const { r, catalogo, alta, escala, feita } = d;
+  const { r, catalogo, alta, escala, feita, padrao } = d;
   const t = totalDaRefeicao(r, catalogo, alta, escala);
 
   return (
@@ -43,6 +43,12 @@ export function FolhaRefeicao({ ctx, id }) {
           { k: 'g', rotulo: 'gord', valor: Math.round(t.g) }
         ]}
       />
+
+      {/* O padrão desta refeição, antes de ele decidir. Contagem crua e sem
+          cor: percentual contra 100% implícito funciona como nota, e feedback
+          que dirige a atenção para a autoavaliação piora o desempenho em cerca
+          de um terço dos casos. Aqui o app informa e para. */}
+      {padrao && <Procedencia>{padrao.txt}</Procedencia>}
 
       {r.nota && <p class="ins-body-sm ins-t3 fr-nota">{r.nota}</p>}
 

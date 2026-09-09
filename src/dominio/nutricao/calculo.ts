@@ -381,3 +381,125 @@ export function janelaDoHistorico(
              .slice()
              .sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
 }
+
+/**
+ * Aderência por semana, no mesmo formato de `serieSemanal` do corpo.
+ *
+ * SUAVIZADA de propósito, e só assim ela pode aparecer ao lado do peso: o
+ * ganho que se quer enxergar é de 200 a 400 g por semana, e a flutuação de
+ * água de um dia para o outro passa de 1 kg. Comparar dia com dia seria
+ * comparar ruído com ruído.
+ *
+ * `null` na semana sem registro nenhum — buraco é buraco, não é zero.
+ */
+export function aderenciaPorSemana(
+  hist: DiaComidaHist[],
+  plano: Refeicao[],
+  semanas: number,
+  agora: number = Date.now()
+): Array<number | null> {
+  const DIA = 86400000;
+  const out: Array<number | null> = [];
+  const dom = new Date(agora);
+  dom.setHours(0, 0, 0, 0);
+  dom.setDate(dom.getDate() - dom.getDay());
+  const base = dom.getTime();
+
+  for (let i = semanas - 1; i >= 0; i--) {
+    const ini = base - i * 7 * DIA, fim = ini + 7 * DIA;
+    const dias = hist.filter(function (h) {
+      const t = new Date(h.d + 'T12:00:00').getTime();
+      return t >= ini && t < fim;
+    });
+    const vals: number[] = [];
+    dias.forEach(function (h) {
+      const refs = refeicoesDeHoje(plano, h.cadencia === 'treino', !!h.alta, h.turno);
+      const a = aderenciaDoDia(h, refs);
+      if (a != null) vals.push(a);
+    });
+    out.push(vals.length ? Math.round(vals.reduce(function (x, y) { return x + y; }, 0) / vals.length * 100) : null);
+  }
+  return out;
+}
+
+/** Quantos dias daquela refeição foram cumpridos numa janela. */
+export function contagemDaRefeicao(
+  hist: DiaComidaHist[],
+  plano: Refeicao[],
+  refId: string,
+  dias: number,
+  hojeISO: string
+): { feitas: number; possiveis: number } {
+  const janela = janelaDoHistorico(hist, dias, hojeISO);
+  let feitas = 0, possiveis = 0;
+  janela.forEach(function (h) {
+    if (!Object.keys(h.done || {}).length) return;      // silêncio não é falha
+    const refs = refeicoesDeHoje(plano, h.cadencia === 'treino', !!h.alta, h.turno);
+    if (!refs.some(function (r) { return r.id === refId; })) return;
+    possiveis++;
+    if (h.done[refId]) feitas++;
+  });
+  return { feitas: feitas, possiveis: possiveis };
+}
+
+/** Aderência agrupada por um recorte do dia (semana, turno, treino/descanso). */
+export interface Recorte { k: string; feitos: number; dias: number }
+
+export function recorteDoHistorico(
+  hist: DiaComidaHist[],
+  plano: Refeicao[],
+  chave: (h: DiaComidaHist) => string | null
+): Recorte[] {
+  const por: Record<string, Recorte> = {};
+  const ordem: string[] = [];
+  hist.forEach(function (h) {
+    const refs = refeicoesDeHoje(plano, h.cadencia === 'treino', !!h.alta, h.turno);
+    const a = aderenciaDoDia(h, refs);
+    if (a == null) return;                              // dia mudo fica fora
+    const k = chave(h);
+    if (k == null) return;
+    if (!por[k]) { por[k] = { k: k, feitos: 0, dias: 0 }; ordem.push(k); }
+    por[k].dias++;
+    // "dia cumprido" é o dia em que TODAS as refeições foram marcadas. É um
+    // limiar cru de propósito: contagem de dias inteiros se lê sem esforço, e
+    // uma média de fração viraria a nota que a devolutiva não pode ser.
+    if (a >= 0.999) por[k].feitos++;
+  });
+  return ordem.map(function (k) { return por[k]; });
+}
+
+/**
+ * A auditoria da régua calórica: ela disparou sobre semanas bem executadas?
+ *
+ * É a única devolutiva que os três especialistas consideraram inequivocamente
+ * segura, e o motivo é que ela **não julga o usuário** — aponta um limite do
+ * próprio sistema. O sinal de força que move o ajuste sai das cargas; se as
+ * semanas em que ele mudou foram semanas de aderência baixa, o sinal pode
+ * estar lendo adesão ruim como resposta metabólica.
+ */
+export interface TrocaDeAjuste { d: string; de: number; para: number; aderencia: number | null }
+
+export function trocasDeAjuste(
+  hist: DiaComidaHist[],
+  plano: Refeicao[]
+): TrocaDeAjuste[] {
+  const dias = hist.slice().sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+  const out: TrocaDeAjuste[] = [];
+  for (let i = 1; i < dias.length; i++) {
+    const de = dias[i - 1].aj || 0, para = dias[i].aj || 0;
+    if (de === para) continue;
+    // a aderência da semana ANTERIOR à troca: é sobre ela que a régua decidiu
+    const ini = Math.max(0, i - 7);
+    const vals: number[] = [];
+    for (let j = ini; j < i; j++) {
+      const refs = refeicoesDeHoje(plano, dias[j].cadencia === 'treino', !!dias[j].alta, dias[j].turno);
+      const a = aderenciaDoDia(dias[j], refs);
+      if (a != null) vals.push(a);
+    }
+    out.push({
+      d: dias[i].d, de: de, para: para,
+      aderencia: vals.length ? vals.reduce(function (x, y) { return x + y; }, 0) / vals.length : null
+    });
+  }
+  return out;
+}

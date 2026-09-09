@@ -99,3 +99,64 @@ test('um dia inteiramente mudo não vira linha nenhuma', () => {
   assert.deepStrictEqual(h.done, {});
   assert.strictEqual(h.tot.kcal, 0);
 });
+
+// ---------- os agregados que a tela mostra ----------
+
+import {
+  aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
+} from '../../src/dominio/nutricao/calculo';
+
+const cheio = { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 };
+const hist = (dias: Array<[string, Record<string, 1>, Partial<DiaComida>?]>) =>
+  dias.map(([d, done, extra]) =>
+    fechaDia(dia(Object.assign({ data: d, done }, extra || {})), PLANO_BASE, cat, 1, 0, 1));
+
+test('a contagem da refeição ignora dias sem registro nenhum', () => {
+  const h = hist([
+    ['2026-01-10', { pos: 1, almoco: 1 }],
+    ['2026-01-11', { pos: 1 }],
+    ['2026-01-12', {} as Record<string, 1>],
+    ['2026-01-13', { pos: 1, almoco: 1 }]
+  ]);
+  const c = contagemDaRefeicao(h, PLANO_BASE, 'almoco', 20, '2026-01-14');
+  assert.strictEqual(c.possiveis, 3, 'o dia mudo não entra no denominador');
+  assert.strictEqual(c.feitas, 2);
+});
+
+test('o recorte conta DIAS INTEIROS cumpridos, e o dia mudo fica de fora', () => {
+  const h = hist([
+    ['2026-01-10', cheio],
+    ['2026-01-11', { pos: 1 }],
+    ['2026-01-12', {} as Record<string, 1>]
+  ]);
+  const r = recorteDoHistorico(h, PLANO_BASE, () => 'tudo');
+  assert.strictEqual(r[0].dias, 2, 'dois dias com registro');
+  assert.strictEqual(r[0].feitos, 1, 'um deles inteiro');
+});
+
+test('a aderência por semana é null onde não houve registro', () => {
+  const agora = new Date('2026-01-14T12:00:00').getTime();
+  const s = aderenciaPorSemana([], PLANO_BASE, 4, agora);
+  assert.strictEqual(s.length, 4);
+  assert.ok(s.every(x => x === null), 'buraco é buraco, não é zero');
+});
+
+test('a auditoria acha a troca de ajuste e a aderência da semana anterior', () => {
+  const dias: DiaComidaHist[] = [];
+  // 7 dias de aderência baixa, depois a régua muda para +150
+  for (let i = 1; i <= 7; i++) {
+    dias.push(fechaDia(dia({ data: '2026-01-0' + i, done: { pos: 1 } }), PLANO_BASE, cat, 1, 0, i));
+  }
+  dias.push(fechaDia(dia({ data: '2026-01-08', done: { pos: 1 } }), PLANO_BASE, cat, 1, 1, 8));
+  const t = trocasDeAjuste(dias, PLANO_BASE);
+  assert.strictEqual(t.length, 1);
+  assert.strictEqual(t[0].de, 0);
+  assert.strictEqual(t[0].para, 1);
+  assert.ok(t[0].aderencia! < 0.55,
+    'a régua disparou sobre uma semana mal executada — é isso que o app aponta');
+});
+
+test('sem troca de ajuste não há auditoria a fazer', () => {
+  const h = hist([['2026-01-10', cheio], ['2026-01-11', cheio]]);
+  assert.deepStrictEqual(trocasDeAjuste(h, PLANO_BASE), []);
+});

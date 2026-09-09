@@ -277,8 +277,27 @@ function Musculos({ m, ctx }) {
 // pede uma AÇÃO, e a que responde "e agora?" antes de "como está?".
 const MODOS = [
   { k: 'corpo', t: 'corpo' },
-  { k: 'treino', t: 'treino' }
+  { k: 'treino', t: 'treino' },
+  { k: 'comida', t: 'comida' }
 ];
+
+/**
+ * Uma linha de padrão: o recorte à esquerda, a contagem à direita.
+ *
+ * Contagem, e nunca percentual. Os dois são a mesma matemática e o oposto na
+ * cabeça: um número contra 100% implícito funciona como nota, e feedback que
+ * dirige a atenção para a autoavaliação piora o desempenho em cerca de um
+ * terço dos casos. Nenhuma cor avaliativa, pelo mesmo motivo — vermelho de
+ * "falhou" num diário alimentar é o caminho conhecido para culpa.
+ */
+function LinhaPadrao({ rotulo, txt }) {
+  return (
+    <div class="ins-linha">
+      <span class="ins-linha-n"><span class="ins-linha-t">{rotulo}</span></span>
+      <span class="ins-linha-v">{txt}</span>
+    </div>
+  );
+}
 
 export function Dados({ ctx }) {
   // Local, como na COMIDA: trocar de aba desmonta a tela e o modo volta ao
@@ -349,6 +368,102 @@ export function Dados({ ctx }) {
 
       <Fotos f={ctx.protocoloFotos()} ctx={ctx} />
       </>}
+
+      {modo === 'comida' && (
+        d.comida.dias === 0
+          ? <Secao rotulo="o dia a dia" primeira>
+              <Vazio>
+                Ainda não há dia fechado. O dia entra aqui depois da virada da
+                data — o de hoje ainda está aberto.
+              </Vazio>
+            </Secao>
+          : !d.comida.pronto
+          ? <Secao rotulo="o dia a dia" primeira nota={`${d.comida.dias} com registro`}>
+              <Vazio>
+                Faltam {d.comida.faltam} dias com registro para o padrão querer
+                dizer alguma coisa. Abaixo disso é ruído, e mostrar um número
+                que ainda não significa nada é pior que calar.
+              </Vazio>
+            </Secao>
+          : <>
+        <Secao rotulo="por refeição"
+               nota={`${d.comida.dias} dias com registro · ${d.comida.janela} dias`}>
+          <div class="ins-lista">
+            {d.comida.padrao.map(p => (
+              <LinhaPadrao key={p.k} rotulo={p.nome} txt={p.txt} />
+            ))}
+          </div>
+          {d.comida.pior && (
+            <Procedencia>
+              {d.comida.pior.nome} é a que menos aparece: {d.comida.pior.txt}
+            </Procedencia>
+          )}
+        </Secao>
+
+        <Secao rotulo="dias inteiros" nota="todas as refeições">
+          <div class="ins-label dd-rec">por dia da semana</div>
+          <div class="ins-lista">
+            {d.comida.porSemana.map(r => (
+              <LinhaPadrao key={r.k} rotulo={r.rotulo} txt={r.txt} />
+            ))}
+          </div>
+
+          {d.comida.porCadencia.length > 0 && <>
+            <div class="ins-label dd-rec">treino e descanso</div>
+            <div class="ins-lista">
+              {d.comida.porCadencia.map(r => (
+                <LinhaPadrao key={r.k} rotulo={r.rotulo} txt={r.txt} />
+              ))}
+            </div>
+          </>}
+
+          {d.comida.porTurno.length > 1 && <>
+            <div class="ins-label dd-rec">por turno do treino</div>
+            <div class="ins-lista">
+              {d.comida.porTurno.map(r => (
+                <LinhaPadrao key={r.k} rotulo={r.rotulo} txt={r.txt} />
+              ))}
+            </div>
+          </>}
+        </Secao>
+
+        {/* As duas curvas lado a lado, suavizadas por semana — e nenhum
+            coeficiente entre elas. O ganho que se quer enxergar é de 200 a
+            400 g por semana; a flutuação de água de um dia para o outro passa
+            de 1 kg, e duas séries com tendência correlacionam por definição.
+            Pôr um número aqui seria fabricar confiança que o dado não sustenta. */}
+        <Secao rotulo="ao longo das semanas" nota="14 semanas">
+          <div class="ins-label dd-rec">aderência · dias cumpridos por semana</div>
+          {d.comida.curvas.aderencia.some(x => x != null)
+            ? <div class="dd-spark"><Sparkline valores={d.comida.curvas.aderencia} /></div>
+            : <Vazio>Sem semanas fechadas o bastante.</Vazio>}
+
+          <div class="ins-label dd-rec">peso · média semanal</div>
+          {d.comida.curvas.peso.some(x => x != null)
+            ? <div class="dd-spark"><Sparkline valores={d.comida.curvas.peso} /></div>
+            : <Vazio>Registre o peso 3 a 4 vezes por semana.</Vazio>}
+
+          <Procedencia>
+            as duas curvas ficam lado a lado para você olhar. O app não calcula
+            correlação entre elas: o sinal que se procura é menor que o ruído de
+            uma pesagem, e duas séries com tendência sobem juntas mesmo sem
+            relação nenhuma.
+          </Procedencia>
+        </Secao>
+
+        {/* A única devolutiva que não julga o usuário: ela aponta um limite do
+            PRÓPRIO app. O sinal que move o ajuste sai das cargas; se ele mudou
+            em semanas de aderência baixa, pode estar lendo adesão ruim como
+            resposta metabólica. */}
+        {d.comida.auditoria && (
+          <Secao rotulo="a régua calórica">
+            <div class="dd-auditoria ins-body-sm ins-t2">{d.comida.auditoria.txt}</div>
+            <Procedencia>
+              isto é o app conferindo a própria regra, não a sua semana.
+            </Procedencia>
+          </Secao>
+        )}
+      </>)}
 
       {modo === 'treino' && <>
       <Secao rotulo="força estimada" nota="e1rm · fórmula de epley">
