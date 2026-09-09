@@ -134,7 +134,10 @@ input:focus, textarea:focus, select:focus {
   border-color: var(--ins-acid);
 }
 
-input::placeholder, textarea::placeholder { color: var(--ins-text-5); }
+/* Nível 4 e não 5: no campo de busca da biblioteca o placeholder é o ÚNICO
+   rótulo que existe — não há label acima dele —, e a 16px o nível 5 dá 3,2:1.
+   Continua muito abaixo do valor digitado, que é branco. */
+input::placeholder, textarea::placeholder { color: var(--ins-text-4); }
 
 /* Campo numérico do treino: type="text" com inputmode, porque type="number"
    descarta vírgula e no teclado pt-BR "22,5" chegava como string vazia. */

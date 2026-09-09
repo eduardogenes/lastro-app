@@ -158,9 +158,12 @@
 /* O cabeçalho existe porque a linha tem quatro colunas — sem rótulo, o
    terceiro número seria adivinhação. */
 .sethead { margin-bottom: var(--ins-3); }
+/* Nível 4 e não 5, pelo mesmo motivo de `.setant` logo abaixo: isto é lido no
+   meio da série, de pé e suado, e é o que separa a coluna de kg da de reps.
+   A 9px o nível 5 dá 3,2:1. */
 .sethead > * {
   font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-4);
   /* sem overflow escondido aqui: rótulo que não cabe tem que APARECER cortando,
      senão o erro de largura passa despercebido como passou */
   white-space: nowrap;
@@ -177,7 +180,12 @@
   width: 100%; min-height: 40px; padding: var(--ins-5) var(--ins-2) var(--ins-3);
   background: transparent; color: var(--ins-text); border: none;
   font: 600 19px/1 var(--ins-font-mono); letter-spacing: -.03em; text-align: center;
+  position: relative;
 }
+/* Só na vertical, como o tick: na horizontal o vizinho é o campo de repetição
+   da mesma linha, e crescer para o lado faria um toque na borda abrir a escala
+   em vez de pôr o cursor no número. */
+.rirbtn::after { content: ""; position: absolute; inset: -3px 0; }     /* 40 -> 46 */
 /* Sem fio embaixo, ao contrário dos campos vizinhos: eles precisam da linha de
    escrita porque vazios não mostram nada. Este mostra — o ponto já ocupa o
    lugar e já diz que há o que tocar. */
@@ -194,7 +202,7 @@
 .rirscale-r {
   flex: 0 0 auto;
   font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-4);
 }
 .rirscale-v { display: flex; gap: var(--ins-2); flex: 1; }
 .rirop {
@@ -223,11 +231,15 @@
   /* Sem caixa, como o resto: é rótulo tocável, não objeto destacado. O
      cronômetro dispara sozinho na última série — este botão é a exceção, e
      exceção não se anuncia com contorno. */
-  text-align: left; background: transparent; color: var(--ins-text-5);
-  border: none; padding: 0;
+  text-align: left; background: transparent; color: var(--ins-text-4);
+  border: none; padding: 0; position: relative;
   font: 400 10px/1 var(--ins-font-mono);
   letter-spacing: .1em; text-transform: uppercase;
 }
+/* O alvo, não o desenho: o cronômetro é apertado com o polegar entre uma série
+   e outra, e 34px é menos do que o dedo acerta. Só na vertical — a linha já
+   ocupa a largura toda, e o vizinho de cima é prosa, o de baixo é rótulo. */
+.restlinha::after { content: ""; position: absolute; inset: -6px 0; }   /* 34 -> 46 */
 .restlinha b { color: var(--ins-text-3); font-weight: 400; margin-left: var(--ins-2); }
 .restlinha:active b { color: var(--ins-acid); }
 .restlinha.bi { color: var(--ins-acid); }
@@ -302,18 +314,27 @@
   border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
   font: 400 10px/1 var(--ins-font-mono);
   letter-spacing: .14em; text-transform: uppercase;
+  position: relative;
 }
+.histbtn::after { content: ""; position: absolute; inset: -2px 0; }     /* 42 -> 46 */
 .histbtn:active { background: var(--ins-surface); }
 
 /* Lado a lado, não empilhados: são dois rótulos curtos, e empilhar custava
    108px por exercício aberto contra 58. */
 .exlinks { display: flex; gap: var(--ins-2); margin-top: var(--ins-4); }
 .exlinks > * { flex: 1; }
+/* Nível 4 e não 5 em tudo que se TOCA.
+   O nível 5 dá 3,2:1 sobre o papel e o próprio sistema o reserva para o
+   redundante — aba inativa, dica que repete o que já está na tela. Um controle
+   não é redundante: se não dá para ler, não dá para achar. O nível 4 dá 5,0:1
+   e continua bem abaixo do valor digitado, que é 19px em branco. */
 .notabtn {
   width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
   font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-5);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-4);
+  position: relative;
 }
+.notabtn::after { content: ""; position: absolute; inset: -6px 0; }    /* 34 -> 46 */
 .notabtn:active { color: var(--ins-text-3); }
 
 .aquec {
@@ -328,7 +349,9 @@
   flex: 0 0 auto; min-height: 34px; padding: 0 var(--ins-4);
   border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
   font: 400 10px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
+  position: relative;
 }
+.aqbtn::after { content: ""; position: absolute; inset: -6px 0; }      /* 34 -> 46 */
 .aquec.on .aqbtn { border-color: var(--ins-acid); color: var(--ins-acid); }
 
 .puladobox {

@@ -205,9 +205,12 @@
   font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4); margin-top: 2px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+/* Nível 4: esta linha carrega os macros da refeição — P, C e G —, e sobre a
+   superfície ácida da linha de agora o nível 5 dava 2,9:1, o pior contraste do
+   app. Número não é dica. */
 .ins-tl-meta {
   font: 400 10px/1.35 var(--ins-font-mono); letter-spacing: .06em;
-  color: var(--ins-text-5); margin-top: var(--ins-1);
+  color: var(--ins-text-4); margin-top: var(--ins-1);
 }
 /* Alinhado ao topo, na altura do nome: com align-self esticado ele centrava
    verticalmente e ficava flutuando ao lado do resumo, longe do objeto que
@@ -419,7 +422,7 @@
   width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
   position: relative;
   font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-5);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-4);
 }
 .dd-diabtn::after { content: ""; position: absolute; inset: -5px 0; }   /* 34 -> 44 */
 .dd-diabtn:active { color: var(--ins-text-3); }
@@ -699,6 +702,12 @@
   padding: var(--ins-1) var(--ins-3); border: 1px solid var(--ins-border);
 }
 .tc-res-sets .nul { color: var(--ins-text-5); border-color: var(--ins-hairline); }
+/* A marca de recorde: chip VAZADO, como todo chip do sistema — borda ácida,
+   texto ácido, fundo nenhum. Existia uma segunda regra `.rec` com
+   `background: var(--ins-acid)` sobrando do sistema antigo, e como ela era
+   menos específica que esta o resultado era ácido sobre ácido: a única coisa
+   que o app marca como conquista saía como um bloco sólido, com o texto
+   "recorde de carga" invisível dentro. Fundo é o que esta regra NÃO põe. */
 .tc-res-sets .rec {
   border-color: var(--ins-acid); color: var(--ins-acid);
   letter-spacing: .08em; text-transform: uppercase; font-size: 9px;
@@ -932,7 +941,7 @@
 .crow-n { font: 400 10.5px/1 var(--ins-font-mono); color: var(--ins-text-4); }
 .crow-x {
   margin-left: auto; flex: 0 0 auto; background: transparent;
-  border: 1px solid var(--ins-hairline); color: var(--ins-text-5);
+  border: 1px solid var(--ins-hairline); color: var(--ins-text-4);
   font: 400 10px/1 var(--ins-font-mono); padding: 0 var(--ins-3); min-height: 32px;
   position: relative;
 }
@@ -1229,19 +1238,12 @@
 .danger { color: var(--ins-coral); border-color: var(--ins-coral); }
 
 /* ---- Regras do guia e sinalizações menores ------------------------------ */
-.warn { border-left: 2px solid var(--ins-amber); padding-left: var(--ins-4); }
-.warn h3 em { color: var(--ins-amber); }
 .painbox b { display: block; margin-bottom: 3px; color: var(--ins-amber); font-weight: 500; }
 .tag.bi-t { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
 .rest.bi { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
 .aquec span { flex: 1; min-width: 0; }
 .aquec.on .aqbtn { border-color: var(--ins-acid); color: var(--ins-acid); }
 .mus { margin-top: var(--ins-1); }
-.rec {
-  padding: var(--ins-1) var(--ins-3);
-  background: var(--ins-acid); color: var(--ins-on-acid);
-  font: 500 10px/1 var(--ins-font-mono); letter-spacing: .06em;
-}
 .msg { padding: var(--ins-11) var(--ins-8); text-align: center; font: 400 12px/1.5 var(--ins-font-mono); color: var(--ins-text-3); }
 
 /* ---- Toast e cronômetro: ambos fixos, ambos fora da árvore do Preact ---- */
@@ -1274,7 +1276,13 @@
 #tval { font: 600 27px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text); }
 #tval.zero { color: var(--ins-acid); }
 #tbar { flex: 1; height: var(--ins-rail); background: var(--ins-surface); overflow: hidden; }
-#tfill { height: 100%; background: var(--ins-acid); width: 100%; transition: width .25s linear; }
+/* `transform: scaleX`, não `width`: a barra é repintada 4× por segundo por até
+   três minutos de descanso, e animar largura refaz o layout a cada quadro.
+   A escala roda no compositor e desenha exatamente a mesma barra. */
+#tfill {
+  height: 100%; width: 100%; background: var(--ins-acid);
+  transform-origin: left center; transition: transform .25s linear;
+}
 #timer button {
   background: none; border: 1px solid var(--ins-hairline); color: var(--ins-text-3);
   font: 400 10px/1 var(--ins-font-mono); padding: 0 var(--ins-4); min-height: 32px;

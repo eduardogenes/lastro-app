@@ -3339,7 +3339,7 @@ function pintaTimer() {
   if (!val || !fill || !timerFim) return;
 
   const restante = Math.max(0, timerFim - Date.now());
-  fill.style.width = (restante / (timerTotal*1000) * 100) + '%';
+  fill.style.transform = 'scaleX(' + (restante / (timerTotal * 1000)) + ')';
 
   if (restante <= 0) {
     val.textContent = 'vai';
@@ -3807,9 +3807,9 @@ CTX.guia = function () {
     rotacao: rot().join(' → '),
     alvos: [
       { k: 't', t: 'Dia de treino', s: 'com pré-treino e intra-treino',
-        v: Math.round(dTreino.kcal) + ' kcal' },
+        v: fmtInt(dTreino.kcal) + ' kcal' },
       { k: 'd', t: 'Dia de descanso', s: 'sem as refeições de treino',
-        v: Math.round(dFolga.kcal) + ' kcal' }
+        v: fmtInt(dFolga.kcal) + ' kcal' }
     ],
     regras: RULES
   };

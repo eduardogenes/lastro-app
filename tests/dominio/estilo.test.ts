@@ -232,7 +232,11 @@ test('controle pequeno estende o ALVO sem crescer o desenho', () => {
   // inteiras; o ::after estende só a área que o dedo alcança.
   const css = ['base.css', 'componentes.css', 'treino.css']
     .map(f => fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8')).join('\n');
-  ['.ins-caixa', '.ins-tick', '.ins-chip', '.crow-x', '.cardl-b', '.dd-diabtn'].forEach(sel => {
+  // Os quatro últimos entraram depois de medir o cartão de exercício aberto:
+  // o descanso, a anotação, o aquecimento e o RIR ficavam entre 34 e 40px —
+  // todos apertados de pé, com uma mão, entre uma série e outra.
+  ['.ins-caixa', '.ins-tick', '.ins-chip', '.crow-x', '.cardl-b', '.dd-diabtn',
+   '.restlinha', '.notabtn', '.aqbtn', '.rirbtn', '.histbtn'].forEach(sel => {
     const re = new RegExp('\\' + sel + '::after\\s*\\{([^}]*)\\}');
     const m = css.match(re);
     assert.ok(m, sel + ' perdeu a área de toque estendida');
@@ -327,6 +331,36 @@ test('a trava de retrato não pega janela de computador', () => {
 });
 
 
+test('a marca de recorde não pinta ácido sobre ácido', () => {
+  // Ela saía como um bloco sólido e mudo. Uma regra `.rec` sobrando do sistema
+  // antigo punha `background: var(--ins-acid)`, e a regra específica punha a
+  // MESMA cor no texto: "recorde de carga" ficava invisível dentro do próprio
+  // selo — 1:1 de contraste, na única coisa que o app marca como conquista.
+  const m = css.match(/\.tc-res-sets \.rec\s*\{([^}]*)\}/);
+  assert.ok(m, 'a regra do recorde existe');
+  assert.match(m![1], /color:\s*var\(--ins-acid\)/);
+  assert.ok(!/background/.test(m![1]), 'o chip é VAZADO: fundo é o que ele não põe');
+  assert.ok(!/(^|\n)\.rec\s*\{/.test(css), 'a regra solta `.rec` voltou, e com ela o fundo ácido');
+});
+
+test('o texto que se toca não usa o nível mais apagado', () => {
+  // O nível 5 dá 3,2:1 sobre o papel, e o próprio sistema o reserva para o
+  // redundante — aba inativa, dica que repete o que já está na tela. Um
+  // controle não é redundante: se não dá para ler, não dá para achar. Vale
+  // também para o cabeçalho da tabela de série, que é o que separa a coluna
+  // de kg da de repetição no meio do treino.
+  const bloco = (nome: string) => {
+    const m = css.match(new RegExp('(?:^|\\n)' +
+      nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]*)\\}'));
+    return m ? m[1] : null;
+  };
+  ['.restlinha', '.notabtn', '.dd-diabtn', '.crow-x', '.sethead > *'].forEach(sel => {
+    const b = bloco(sel);
+    assert.ok(b, 'sumiu do CSS: ' + sel);
+    assert.ok(!/--ins-text-5/.test(b!), sel + ' voltou ao nível 5, que é 3,2:1');
+  });
+});
+
 test('abrir um exercício sabe onde parar de rolar', () => {
   // Abrir passou a ROLAR até o cartão. Sem recuo, o nome do exercício para
   // embaixo do relógio grudado da sessão — e o recuo tem que sair do MESMO
@@ -337,6 +371,18 @@ test('abrir um exercício sabe onde parar de rolar', () => {
   assert.match(ex![1], /scroll-margin-top:\s*calc\(var\(--sa-top\) \+ var\(--ins-relogio\)\)/);
   assert.match(regras(treino, '.day-rel'), /min-height:\s*var\(--ins-relogio\)/,
     'a altura do relógio e o recuo do scroll não podem divergir');
+});
+
+test('o cronômetro de descanso não anima largura', () => {
+  // Ele repinta 4× por segundo por até três minutos. Animar `width` refaz o
+  // layout a cada quadro; a escala roda no compositor e desenha a mesma barra.
+  const comp = fs.readFileSync(path.join(RAIZ, 'src', 'componentes.css'), 'utf8');
+  const m = comp.match(/#tfill\s*\{([^}]*)\}/);
+  assert.ok(m, 'a barra do cronômetro existe');
+  assert.ok(!/transition:[^;]*width/.test(m![1]), 'largura animada custa layout por quadro');
+  assert.match(m![1], /transition:\s*transform/);
+  assert.match(mainJsx, /fill\.style\.transform = 'scaleX\(/);
+  assert.ok(!/fill\.style\.width/.test(mainJsx), 'o JS voltou a escrever largura');
 });
 
 
