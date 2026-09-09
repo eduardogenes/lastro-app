@@ -129,8 +129,7 @@ export const PROGRAMA: Record<string, Treino<ExercicioPrescrito>> = {
   // O sábado é ABERTO: quem programa é o box, e ele nunca sabe de véspera.
   // Nasce sem exercício, e o que entra nele é o próprio dia, não uma emenda à
   // prescrição. As nove estações da prova continuam no catálogo, em
-  // SIMULACAO_HYROX, a um toque de distância para o dia em que ele fizer a
-  // prova inteira.
+  // SIMULACAO_HYROX, alcançáveis pela busca como qualquer outro exercício.
   HX: { name:'HYROX', tag:'o que o box programar', aberto:1, ex:[] },
 };
 
@@ -544,13 +543,17 @@ const PEGADA_POR_NOME: Record<string, { t: string; pe?: 1 }> = {
 
 
 /**
- * As nove estações da prova de HYROX, na ordem dela.
+ * As nove estações da prova de HYROX.
  *
- * Elas SAÍRAM da prescrição do sábado e continuam aqui por dois motivos. O
- * primeiro é histórico: quem já registrou um sled push precisa que o exercício
- * continue existindo no catálogo, senão o registro fica órfão. O segundo é que
- * a prova inteira é um treino legítimo de vez em quando — e aí ela entra de uma
- * vez, pelo atalho, em vez de nove adições à mão.
+ * Elas SAÍRAM da prescrição do sábado e continuam aqui por um motivo só, e ele
+ * é de dados: quem já registrou um sled push precisa que o exercício continue
+ * existindo no catálogo, senão o registro fica órfão sob uma chave sem dono —
+ * o mesmo erro que a migração 2→3 existiu para consertar. Daqui elas entram em
+ * `EX_BASE` e ficam alcançáveis pela busca, como qualquer outro exercício.
+ *
+ * Houve um atalho que punha as nove no dia de uma vez, para o caso de ele fazer
+ * a prova inteira. Saiu: supunha um uso que não acontece, e atalho que ninguém
+ * toma é peso na tela mais usada do app.
  *
  * Isto é a PROVA, não o treino de sábado. Era essa a confusão: 8 km de corrida
  * intercalados com 8 estações é o evento, e o app o mostrava como se fosse a

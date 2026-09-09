@@ -181,12 +181,9 @@ export function Treino({ ctx }) {
         {t.addEx && <AddEx c={t.addEx} acoes={ctx.acoesAdd} />}
 
         {t.aberto && !t.editando && !t.addEx && (
-          <div class="tr-aberto">
-            <button class="ins-btn-add" onClick={ctx.acoesAdd.abre}>+ adicionar movimento</button>
-            <button class="ins-btn-secondary tr-sim" onClick={ctx.poeSimulacao}>
-              simulação completa · 9 estações
-            </button>
-          </div>
+          <button class="ins-btn-add tr-aberto" onClick={ctx.acoesAdd.abre}>
+            + adicionar movimento
+          </button>
         )}
       </Secao>
 

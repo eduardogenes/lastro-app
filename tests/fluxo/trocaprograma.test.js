@@ -107,19 +107,24 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   assert.strictEqual(a.E('treino("HX").name'), 'HYROX');
 
   // ...mas nasce VAZIO: quem programa o sábado é o box, e nada é prescrito de
-  // véspera. A prova inteira entra pelo atalho, quando é dia de simulação.
+  // véspera. As estações da prova continuam no catálogo e entram pela busca,
+  // como qualquer outro exercício.
   assert.strictEqual(a.E('treino("HX").ex.length'), 0, 'o dia aberto começa sem nada');
-  await a.E('poeSimulacao()');
+  await a.E("addExercicio('corrida')");
   await a.esperar();
-  assert.strictEqual(a.E('treino("HX").ex.length'), 9, 'as nove estações entram de uma vez');
+  assert.strictEqual(a.E('treino("HX").ex.length'), 1, 'o que ele adiciona é o dia');
   assert.strictEqual(a.E('treino("HX").ex[0].n'), 'Corrida');
+
+  // Entra com UMA série: um exercício medido por tempo é uma passada, e o alvo
+  // dele é o relógio, não uma faixa de repetição.
+  assert.strictEqual(a.E('treino("HX").ex[0].s'), 1);
+  assert.strictEqual(a.E('treino("HX").ex[0].r'), '');
 
   // registra por TEMPO: o segundo campo é segundo, e a carga é opcional
   a.E('toggle(0)');
   // o primeiro .unit é o da carga; o segundo é o que diz reps ou segundos
   assert.strictEqual(a.$$('.ex.open .sethead .f')[1].textContent, 'seg');
   a.preencher(0, 0, null, 252);
-  a.preencher(0, 1, null, 258);
   const h = a.log('HX', 0);
   assert.strictEqual(h.length, 1);
   assert.strictEqual(h[0].u, 'seg', 'a entrada se declara por tempo');
@@ -133,9 +138,11 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
 
   // sem selo de subir carga e sem lista de troca: sled não tem substituto
   assert.ok(!a.$('.ex.open .up'), 'tempo melhor não é carga maior');
-  a.E('toggle(2)');
-  assert.strictEqual(a.E('treino("HX").ex[2].n'), 'Sled push');
-  assert.deepStrictEqual(a.J('altList("HX", 2)'), [],
+  await a.E("addExercicio('sled-push')");
+  await a.esperar();
+  a.E('toggle(1)');
+  assert.strictEqual(a.E('treino("HX").ex[1].n'), 'Sled push');
+  assert.deepStrictEqual(a.J('altList("HX", 1)'), [],
     'exercício sem grupo não puxa "mesmo grupo muscular" nem oferece troca');
 
   // a tela de programa chama o dia de estações, não de séries
@@ -162,9 +169,11 @@ test('o dia aberto não pede promoção nem cobra pendência', async () => {
   const p = a.J("pendencias('HX', 0, [])");
   assert.deepStrictEqual(p.nada, [], 'nada prescrito, nada pendente');
 
-  await a.E('poeSimulacao()');
+  await a.E("addExercicio('corrida')");
+  await a.E("addExercicio('sled-push')");
+  await a.E("addExercicio('wall-balls')");
   await a.esperar();
-  assert.strictEqual(a.J("modsDoDia('HX').length"), 9, 'as estações entraram como mods do dia');
+  assert.strictEqual(a.J("modsDoDia('HX').length"), 3, 'o que ele adicionou virou mod do dia');
 
   a.E('toggle(0)');
   a.preencher(0, 0, null, 252);
@@ -225,7 +234,7 @@ test('exercício por tempo não recebe linguagem de hipertrofia', async () => {
   // que o sábado estava modelado como o que não é.
   const a = await app();
   a.E('go("HX")');
-  await a.E('poeSimulacao()');
+  await a.E("addExercicio('corrida')");
   await a.esperar();
   a.E('toggle(0)');
   await a.esperar();

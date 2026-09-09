@@ -1,6 +1,6 @@
 import {
   ROT_BASE, D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO,
-  PROGRAMA, RULES, ALT, slugEx, EX_BASE, SIMULACAO_HYROX,
+  PROGRAMA, RULES, ALT, slugEx, EX_BASE,
   PRIORIDADES, NIVEIS, nivelDe, PRIO, CARGAS, DORES, MODAIS
 } from './dominio/programa';
 import {
@@ -1876,31 +1876,6 @@ async function addExercicio(idEx) {
   view.addEx = false; view.addQ = ''; view.novoEx = false;
   await save(); render();
   toast(e.n + ' entrou no treino de hoje.');
-}
-
-/**
- * Põe a prova inteira no dia, de uma vez.
- *
- * Nove adições à mão para o dia de simulação seria o tipo de trabalho
- * administrativo que este app existe para não pedir. Entram como mods do dia,
- * como qualquer adição — e como o sábado é aberto, nenhuma delas vai pedir
- * promoção no fim.
- */
-async function poeSimulacao() {
-  const d = view.day;
-  if (!diaAberto(d)) return;
-  const jaTem = {};
-  treino(d).ex.forEach(function (e) { jaTem[e.id] = 1; });
-  let n = 0;
-  SIMULACAO_HYROX.forEach(function (ex) {
-    const idEx = slugEx(ex.n);
-    if (jaTem[idEx]) return;
-    poeMod(d, { k:'add', id:idEx, s:ex.s, r:ex.r, d:ex.d, pos: treino(d).ex.length, n: Date.now() + n });
-    n++;
-  });
-  if (!n) { toast('A simulação já está no dia.'); return; }
-  await save(); render();
-  toast('As nove estações entraram no dia.');
 }
 
 function abrirNovoEx() { view.novoEx = true; view.addEx = true; render(); }
@@ -5082,7 +5057,6 @@ CTX.decidePromo = function (j, v) { decidePromo(j, v); };
 CTX.motivoPromo = function (k) { motivoPromo(k); };
 CTX.concluiPromo = function () { concluirPromo(); };
 CTX.voltaDoPromo = function () { voltarDoPromo(); };
-CTX.poeSimulacao = function () { poeSimulacao(); };
 
 // ---------- tela cheia: retrospectiva de bloco ----------
 CTX.retrospectiva = function () {

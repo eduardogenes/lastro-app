@@ -722,11 +722,15 @@ cadência da semana.
 ### As nove estações não sumiram
 
 Elas saíram da prescrição e ficaram em `SIMULACAO_HYROX`, dentro do catálogo,
-por dois motivos. Histórico: quem já registrou um sled push precisa que o
+por um motivo só, e ele é de dados: quem já registrou um sled push precisa que o
 exercício continue existindo, senão o registro fica órfão sob uma chave sem
-dono — é o mesmo erro que a migração 2→3 existiu para consertar. E porque a
-prova inteira é um treino legítimo de vez em quando: aí ela entra pelo atalho,
-de uma vez, em vez de nove adições à mão.
+dono — é o mesmo erro que a migração 2→3 existiu para consertar. Dali elas
+entram em `EX_BASE` e ficam alcançáveis pela busca, como qualquer outro
+exercício.
+
+Houve um botão que punha as nove no dia de uma vez, para o caso de ele fazer a
+prova inteira. **Saiu**: supunha um uso que não acontece, e atalho que ninguém
+toma é peso na tela mais usada do app. O dia aberto tem uma porta só.
 
 **Nada disso mexeu no alvo por músculo.** As estações sempre tiveram `g: ''`, e
 por isso nunca entraram em `ALVO`. O sábado continua sendo presença e tempo.
