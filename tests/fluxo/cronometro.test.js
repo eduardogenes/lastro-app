@@ -176,3 +176,25 @@ test('o cronômetro diz de onde veio o descanso', async () => {
   a.relogioNormal();
   a.fechar();
 });
+
+test('o cronômetro publica a própria altura para quem se empilha nele', async () => {
+  // Duas coisas do rodapé dependem disso, e as duas quebravam sem ele: o toast
+  // nascia INTEIRO atrás do cronômetro (e some, porque o cronômetro tem z-index
+  // maior), e o último elemento da página ficava 52px atrás dele — no fim da
+  // rolagem, sem como trazer à vista.
+  //
+  // Geometria não dá para cobrar no jsdom, que não faz layout. O que se cobra
+  // aqui é o CONTRATO de que os dois lados dependem: a medida publicada na raiz.
+  const a = await app();
+  const medida = () => a.doc.documentElement.style.getPropertyValue('--ins-timer-h');
+
+  a.E("startTimer(180, 'descanso · série 2 · Pulldown')");
+  assert.notStrictEqual(medida(), '', 'entrou em descanso: a altura foi publicada');
+  assert.match(medida(), /^\d+px$/, 'e é uma medida em px: ' + medida());
+
+  a.E('stopTimer()');
+  assert.strictEqual(medida(), '0px', 'saiu do descanso: volta a zero, sem espaço morto');
+
+  a.relogioNormal();
+  a.fechar();
+});

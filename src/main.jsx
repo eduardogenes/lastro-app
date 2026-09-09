@@ -3401,6 +3401,20 @@ function descOf(ex) { return ex && ex.d ? ex.d : (ex && ex.c ? D_COMPOSTO : D_CU
 // lido de outro lugar.
 const KEY_DESCANSO = 'lastro-descanso-v1';
 
+/**
+ * Publica a altura do cronômetro para quem se empilha acima dele.
+ *
+ * Medida em vez de constante porque ela muda: com a linha de procedência o
+ * cronômetro tem uma altura, sem ela tem outra, e o toast precisa da de agora.
+ * Chamada quando ele entra e quando sai — não a cada quadro, que é o ritmo em
+ * que ele repinta.
+ */
+function alturaDoTimer() {
+  const box = document.getElementById('timer');
+  const h = box && box.classList.contains('on') ? box.offsetHeight : 0;
+  try { document.documentElement.style.setProperty('--ins-timer-h', h + 'px'); } catch (e) {}
+}
+
 function gravaDescanso() {
   try {
     DB.set(KEY_DESCANSO, JSON.stringify({ fim: timerFim, total: timerTotal, ctx: timerCtx }));
@@ -3433,6 +3447,7 @@ async function retomaDescanso() {
   const box = document.getElementById('timer');
   if (box) box.classList.add('on');
   pintaTimer();
+  alturaDoTimer();
   if (timer) clearInterval(timer);
   timer = setInterval(pintaTimer, 250);
 }
@@ -3453,6 +3468,7 @@ function startTimer(sec, ctx) {
   preparaAudio();          // precisa nascer dentro do gesto do usuário
   segurarTela();
   pintaTimer();
+  alturaDoTimer();
   timer = setInterval(pintaTimer, 250);
   gravaDescanso();
 }
@@ -3542,6 +3558,7 @@ function stopTimer() {
   try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {}
   const box = document.getElementById('timer');
   if (box) box.classList.remove('on');
+  alturaDoTimer();
 }
 
 // ---------- aviso sonoro ----------

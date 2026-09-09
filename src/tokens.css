@@ -102,6 +102,10 @@
 
   /* Altura da tab bar, para quem precisa reservar espaço embaixo. */
   --ins-tabbar: calc(52px + var(--sa-bottom));
+  /* Altura do cronômetro de descanso quando ele está na tela; 0 quando não
+     está. Escrito pelo casco em `alturaDoTimer()`, e lido pelo toast, que se
+     empilha acima dele em vez de nascer atrás. */
+  --ins-timer-h: 0px;
 
   /* Altura do relógio da sessão, que gruda no topo enquanto o treino corre.
      Existe como token porque quem ROLA precisa parar abaixo dele: sem isto o

@@ -143,6 +143,13 @@ continua inteiro visível, `safe-area-inset-bottom` é respeitada, e ela **não
 coexiste com a tab bar**. Se as duas forem necessárias ao mesmo tempo, a tela
 está errada.
 
+**O rodapé é uma pilha, não um lugar disputado.** Hoje moram lá, de baixo para
+cima: tab bar → cronômetro de descanso → toast. Cada camada nova **mede** a de
+baixo em vez de chutar um `bottom`, e o `padding-bottom` da página soma todas —
+senão o fim do conteúdo fica atrás delas, e como já é o fim da rolagem não há
+como trazê-lo à vista. Quem tem altura variável publica a medida na raiz
+(`--ins-timer-h`); quem se empilha lê de lá.
+
 ## 8 · Treino ativo
 
 O contexto é: de pé, uma mão, cansado, olhando por segundos.

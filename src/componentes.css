@@ -1253,9 +1253,18 @@
 .msg { padding: var(--ins-11) var(--ins-8); text-align: center; font: 400 12px/1.5 var(--ins-font-mono); color: var(--ins-text-3); }
 
 /* ---- Toast e cronômetro: ambos fixos, ambos fora da árvore do Preact ---- */
+/* O toast se apoia no que estiver embaixo dele, não numa altura chutada.
+   Estava em `bottom: 84px` com o cronômetro ocupando de 52px a 128px: durante
+   um descanso o toast nascia INTEIRO atrás dele — e o cronômetro tem z-index
+   maior, então a mensagem simplesmente não aparecia. Quem trocasse o tipo de
+   carga ou duplicasse uma refeição no meio da pausa não via retorno nenhum.
+   `--ins-timer-h` é escrito pelo casco quando o cronômetro entra e sai (é a
+   única medida aqui que depende de o rótulo de procedência existir ou não).
+   Sem fallback no `var()`: o token nasce 0px no tokens.css, e um `0px` literal
+   aqui entraria como medida de espaço fora da escala de 4. */
 #toast {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(84px + var(--sa-bottom));
+  bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-6));
   width: calc(100% - 36px); max-width: 424px; z-index: 30;
   background: var(--ins-surface); border: 1px solid var(--ins-border); color: var(--ins-text);
   font: 400 11.5px/1.45 var(--ins-font-mono);

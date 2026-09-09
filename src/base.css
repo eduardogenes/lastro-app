@@ -166,8 +166,14 @@ p, .ins-prosa, input, textarea {
   /* Goteira de 20px + área segura lateral (iPhone deitado, notch). */
   padding-left: max(var(--ins-8), var(--sa-left));
   padding-right: max(var(--ins-8), var(--sa-right));
-  /* Espaço para a tab bar fixa não cobrir o fim do conteúdo. */
-  padding-bottom: calc(var(--ins-tabbar) + var(--ins-9));
+  /* Espaço para o que é fixo no rodapé não cobrir o fim do conteúdo: a tab bar
+     sempre, e o cronômetro de descanso quando ele está na tela.
+     Sem a segunda parcela, o último elemento da página ficava atrás do
+     cronômetro durante o descanso — e como já era o fim da rolagem, não havia
+     como trazê-lo à vista. Na tela de treino o que sumia era "abrir o
+     programa", 52px dele.
+     O token nasce 0px no tokens.css, então o `var()` dispensa fallback. */
+  padding-bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-9));
   -webkit-font-smoothing: antialiased;
 }
 
