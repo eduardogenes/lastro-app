@@ -1,5 +1,12 @@
 import { Fragment } from 'preact';
 
+// O nome por extenso de cada medida, para o `aria-label` do campo. Os campos
+// não têm rótulo visível — quem rotula é o cabeçalho, que é desenho e não
+// semântica —, então é aqui que o VoiceOver descobre a grandeza.
+const NOME_DA_MEDIDA = {
+  seg: 'segundos', reps: 'repetições', m: 'metros', cal: 'calorias'
+};
+
 // O cartão de exercício da tela de treino.
 //
 // É a parte do app que mais merecia sair do render por string. Aqui moram os
@@ -27,12 +34,15 @@ import { Fragment } from 'preact';
  */
 function Cabecalho({ vm }) {
   return (
-    <div class="sethead">
-      <div class="setno">série</div>
+    <div class={'sethead' + (vm.temRir ? '' : ' sem-rir')}>
+      <div class="setno">{vm.seg ? 'passada' : 'série'}</div>
       <div class="setant">anterior</div>
       <div class="f">{vm.unidade}</div>
-      <div class="f">{vm.seg ? 'seg' : 'reps'}</div>
-      <div class="f">rir</div>
+      <div class="f">{vm.medida}</div>
+      {/* RIR é linguagem de hipertrofia. Numa aula de box era uma coluna
+          inteira de botões que não queriam dizer nada — 25 deles numa aula de
+          cinco movimentos em cinco rounds. */}
+      {vm.temRir && <div class="f">rir</div>}
     </div>
   );
 }
@@ -57,9 +67,9 @@ function Cabecalho({ vm }) {
  * não há o que copiar.
  */
 function Linha({ i, k, linha, vm, acoes }) {
-  const unidade = vm.seg ? 'segundos' : 'repetições';
+  const unidade = vm.seg ? NOME_DA_MEDIDA[vm.medida] || vm.medida : 'repetições';
   return (
-    <div class="setrow">
+    <div class={'setrow' + (vm.temRir ? '' : ' sem-rir')}>
       <div class="setno">{k + 1}</div>
       {linha.temAnterior ? (
         <button
@@ -88,15 +98,17 @@ function Linha({ i, k, linha, vm, acoes }) {
       </div>
       {/* Botão e não campo: um dígito não vale abrir o teclado numérico, que
           cobre metade da tela no meio da série. */}
-      <button
-        class={'rirbtn' + (linha.rirAberto ? ' on' : '') +
-               (linha.valor[2] == null ? ' vazio' : '')}
-        id={`q${i}_${k}`}
-        aria-label={linha.valor[2] != null
-          ? `repetições na reserva da série ${k + 1}: ${linha.valor[2]}`
-          : `definir repetições na reserva da série ${k + 1}`}
-        onClick={() => acoes.abreRir(i, k)}
-      >{linha.valor[2] != null ? linha.valor[2] : '·'}</button>
+      {vm.temRir && (
+        <button
+          class={'rirbtn' + (linha.rirAberto ? ' on' : '') +
+                 (linha.valor[2] == null ? ' vazio' : '')}
+          id={`q${i}_${k}`}
+          aria-label={linha.valor[2] != null
+            ? `repetições na reserva da série ${k + 1}: ${linha.valor[2]}`
+            : `definir repetições na reserva da série ${k + 1}`}
+          onClick={() => acoes.abreRir(i, k)}
+        >{linha.valor[2] != null ? linha.valor[2] : '·'}</button>
+      )}
     </div>
   );
 }
@@ -186,6 +198,50 @@ function Anotacao({ i, vm, acoes }) {
   );
 }
 
+/**
+ * A medida do dia: a grandeza e quanto dela o box passou.
+ *
+ * Mora atrás de um link e não em cima da tabela, pelo mesmo motivo que a
+ * carga: é decisão de uma vez por movimento, e quem precisa do espaço é a
+ * linha de série. O resumo fechado já responde sozinho ("500 m"), que é a
+ * condição do contrato para poder recolher alguma coisa.
+ */
+function Medida({ i, vm, acoes }) {
+  if (!vm.medidaAberta) {
+    return (
+      <button class="notabtn" onClick={() => acoes.abrirMedida(i)}>
+        medida: {vm.medidaResumo}
+      </button>
+    );
+  }
+  return (
+    <div class="obs">
+      <div class="obs-h">o que o box passou neste movimento</div>
+      <div class="chips">
+        {vm.unidades.map(u => (
+          <button
+            key={u.k} class={'chip' + (u.sel ? ' sel' : '')}
+            onClick={() => acoes.setUnidade(i, u.k)}
+          >{u.t}</button>
+        ))}
+      </div>
+      <label class="medq">
+        <span class="obs-h">quanto, em cada passada</span>
+        <input
+          type="text" inputmode="decimal" id={`q${i}`}
+          aria-label="quantidade prescrita em cada passada"
+          value={vm.q}
+          onInput={e => acoes.setQ(e.currentTarget, i)}
+        />
+      </label>
+      <p class="cue" style="margin:12px 0 0">
+        Em metro e caloria a série guarda o tempo, e o que se compara ao longo
+        dos meses é o ritmo. Em repetição e segundo a série guarda quanto saiu.
+      </p>
+    </div>
+  );
+}
+
 /** Como esse peso é carregado. */
 function Carga({ i, vm, acoes }) {
   if (!vm.cargaAberta) {
@@ -259,7 +315,11 @@ export function Exercicio({ vm, acoes }) {
           <div class="ex-name">{vm.nome}</div>
           {vm.alt && <div class="swapped">no lugar de {vm.nomeOriginal}</div>}
           <div class="ex-sub">
-            <span>{vm.series}{vm.faixa ? ' × ' + vm.faixa : ''}</span>
+            {/* Num movimento com grandeza, o que o box passou É a prescrição:
+                "5 × 500 m". Sem ela o cartão dizia só "5", que não é nada — nem
+                se sabia de que 5 se tratava. */}
+            <span>{vm.series}{vm.prescricao ? ' × ' + vm.prescricao
+                              : vm.faixa ? ' × ' + vm.faixa : ''}</span>
             {/* RIR não se aplica a exercício medido por tempo: "isolador ·
                 última pode ir a 0–1" num remo de 1000 m é linguagem de
                 hipertrofia aplicada a condicionamento, e era um dos sinais de
@@ -368,6 +428,7 @@ export function Exercicio({ vm, acoes }) {
         {vm.trocaAberta && <Troca i={i} vm={vm} acoes={acoes} />}
 
         <div class="exlinks">
+          {vm.seg && <Medida i={i} vm={vm} acoes={acoes} />}
           <Carga i={i} vm={vm} acoes={acoes} />
           <Anotacao i={i} vm={vm} acoes={acoes} />
         </div>

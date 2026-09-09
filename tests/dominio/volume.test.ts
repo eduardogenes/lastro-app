@@ -154,10 +154,21 @@ test('o HYROX é sessão da rotação, mas não série de hipertrofia', () => {
 
   // As nove estações saíram da prescrição e continuam no catálogo. A regra que
   // este teste sempre guardou vale para elas, onde quer que morem: estação com
-  // grupo muscular entraria no alvo por músculo, e o HYROX se mede por tempo.
+  // grupo muscular entraria no alvo por músculo, e nenhuma delas é série de
+  // musculação.
+  //
+  // A GRANDEZA delas deixou de ser `seg` para todas. Oito são distância — a
+  // prova as pontua pelo relógio, mas o que é fixo é a distância, e é dela que
+  // sai o ritmo; wall balls é repetição. Enquanto todas se declaravam por
+  // tempo, 500 m e 1000 m de remo caíam no mesmo histórico como se fossem a
+  // mesma coisa.
   assert.strictEqual(SIMULACAO_HYROX.length, 9, 'a prova tem nove estações');
   SIMULACAO_HYROX.forEach(ex => {
     assert.strictEqual(ex.g, '', 'estação com grupo entraria no alvo por músculo: ' + ex.n);
-    assert.strictEqual(ex.u, 'seg', 'o HYROX se mede por tempo: ' + ex.n);
+    assert.ok(ex.u, 'estação sem grandeza viraria série de musculação: ' + ex.n);
+    assert.ok(ex.q! > 0, 'sem quantidade não há ritmo a comparar: ' + ex.n);
   });
+  const porUnidade = SIMULACAO_HYROX.filter(ex => ex.u === 'm').length;
+  assert.strictEqual(porUnidade, 8, 'oito estações são distância');
+  assert.strictEqual(SIMULACAO_HYROX.filter(ex => ex.u === 'rep').length, 1, 'wall balls é repetição');
 });

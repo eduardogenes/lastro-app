@@ -560,26 +560,26 @@ const PEGADA_POR_NOME: Record<string, { t: string; pe?: 1 }> = {
  * sessão da semana, com meta de 16 séries que nunca se cumpria.
  */
 export const SIMULACAO_HYROX: ExercicioPrescrito[] = [
-  {n:'Corrida', car:'corpo', g:'', s:8, r:'1 km', c:1, d:D_CURTO, u:'seg', cue:'Os 8 km da prova, um a cada estação. Registre o tempo de cada quilômetro em segundos: 4:12 são 252.'},
-  {n:'Ski erg', car:'corpo', g:'', s:1, r:'1000 m', c:0, d:D_CURTO, u:'seg', cue:'Puxada com o tronco, não só com o braço. Tempo em segundos.'},
-  {n:'Sled push', car:'lado', g:'', s:1, r:'50 m', c:1, d:D_CURTO, u:'seg', cue:'Carga por lado no campo de carga, tempo em segundos. Passos curtos e contínuos: parar custa mais do que ir devagar.'},
-  {n:'Sled pull', car:'lado', g:'', s:1, r:'50 m', c:1, d:D_CURTO, u:'seg', cue:'Puxada com o quadril para trás, não só com o braço.'},
-  {n:'Burpee broad jump', car:'corpo', g:'', s:1, r:'80 m', c:1, d:D_CURTO, u:'seg', cue:'A estação que mais custa em fôlego. Salto curto e cadência constante.'},
-  {n:'Remo ergômetro', car:'corpo', g:'', s:1, r:'1000 m', c:0, d:D_CURTO, u:'seg', cue:'Perna, tronco, braço — nessa ordem. Tempo em segundos.'},
-  {n:'Farmers carry', car:'halter', g:'', s:1, r:'200 m', c:0, d:D_CURTO, u:'seg', cue:'Um peso em cada mão. Escápula encaixada, sem deixar o ombro subir.'},
-  {n:'Lunges com sandbag', car:'halter1', g:'', s:1, r:'100 m', c:1, d:D_CURTO, u:'seg', cue:'Joelho tocando o chão a cada passo, como a prova exige. O peso é o do saco.'},
-  {n:'Wall balls', car:'halter1', g:'', s:1, r:'100 reps', c:1, d:D_CURTO, u:'seg', cue:'A última estação, com a perna já destruída. O peso é o da bola; o tempo é o que conta.'},
+  {n:'Corrida', car:'corpo', g:'', s:8, r:'', c:1, d:D_CURTO, u:'m', q:1000, cue:'Os 8 km da prova, um a cada estação. Registre o tempo de cada quilômetro em segundos: 4:12 são 252.'},
+  {n:'Ski erg', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'m', q:1000, cue:'Puxada com o tronco, não só com o braço. Tempo em segundos.'},
+  {n:'Sled push', car:'lado', g:'', s:1, r:'', c:1, d:D_CURTO, u:'m', q:50, cue:'Carga por lado no campo de carga, tempo em segundos. Passos curtos e contínuos: parar custa mais do que ir devagar.'},
+  {n:'Sled pull', car:'lado', g:'', s:1, r:'', c:1, d:D_CURTO, u:'m', q:50, cue:'Puxada com o quadril para trás, não só com o braço.'},
+  {n:'Burpee broad jump', car:'corpo', g:'', s:1, r:'', c:1, d:D_CURTO, u:'m', q:80, cue:'A estação que mais custa em fôlego. Salto curto e cadência constante.'},
+  {n:'Remo ergômetro', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'m', q:1000, cue:'Perna, tronco, braço — nessa ordem. Tempo em segundos.'},
+  {n:'Farmers carry', car:'halter', g:'', s:1, r:'', c:0, d:D_CURTO, u:'m', q:200, cue:'Um peso em cada mão. Escápula encaixada, sem deixar o ombro subir.'},
+  {n:'Lunges com sandbag', car:'halter1', g:'', s:1, r:'', c:1, d:D_CURTO, u:'m', q:100, cue:'Joelho tocando o chão a cada passo, como a prova exige. O peso é o do saco.'},
+  {n:'Wall balls', car:'halter1', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:100, cue:'A última estação, com a perna já destruída. O peso é o da bola; o tempo é o que conta.'},
 ];
 
 export const EX_BASE: Record<IdEx, Exercicio> = (function () {
   const c: Record<IdEx, Exercicio> = {};
   ROT_BASE.forEach(function (d) {
     PROGRAMA[d].ex.forEach(function (ex) {
-      c[slugEx(ex.n)] = { n:ex.n, car:ex.car, g:ex.g, c:ex.c, cue:ex.cue, u:ex.u };
+      c[slugEx(ex.n)] = { n:ex.n, car:ex.car, g:ex.g, c:ex.c, cue:ex.cue, u:ex.u, q:ex.q };
     });
   });
   SIMULACAO_HYROX.forEach(function (ex) {
-    c[slugEx(ex.n)] = { n:ex.n, car:ex.car, g:ex.g, c:ex.c, cue:ex.cue, u:ex.u };
+    c[slugEx(ex.n)] = { n:ex.n, car:ex.car, g:ex.g, c:ex.c, cue:ex.cue, u:ex.u, q:ex.q };
   });
   Object.keys(LEGADO).forEach(function (nome) {
     const k = slugEx(nome), l = LEGADO[nome];
@@ -675,7 +675,8 @@ export function semeiaProg(): Record<string, Treino> {
   ROT_BASE.forEach(function (d) {
     p[d] = { name: PROGRAMA[d].name, tag: PROGRAMA[d].tag, aberto: PROGRAMA[d].aberto,
       ex: PROGRAMA[d].ex.map(function (ex) {
-        return { id: slugEx(ex.n), s: ex.s, r: ex.r, d: ex.d, rir: ex.rir, desde: 0 };
+        return { id: slugEx(ex.n), s: ex.s, r: ex.r, d: ex.d, rir: ex.rir,
+                 u: ex.u, q: ex.q, desde: 0 };
       }) };
   });
   return p;

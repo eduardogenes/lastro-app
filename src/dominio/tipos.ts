@@ -63,6 +63,8 @@ export interface Exercicio {
    * sua própria — esta aqui só diz com o que o campo nasce preenchido.
    */
   u?: Unidade;
+  /** quanto de `u` o movimento costuma pedir; é o valor com que o campo nasce */
+  q?: number;
   /** verdadeiro quando o exercício saiu do catálogo mas tem histórico */
   sumido?: 1;
   /** cadastrado por ele, não veio do código */

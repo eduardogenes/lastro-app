@@ -115,3 +115,50 @@ test('o volume acumulado continua sem contar movimento com grandeza', async () =
     'metro não vira kg×reps — é a mesma razão que mantém o sábado fora do alvo por músculo');
   a.fechar();
 });
+
+test('trocar a medida do dia alcança o que já foi digitado', async () => {
+  const a = await app({});
+  a.aba('treino');
+  a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
+  a.E('view.day="HX"');
+  a.E('addExercicio("remo-ergometro")');
+  await a.esperar(50);
+
+  // o box passou 500 m, não os 1000 da prova
+  a.E('poeMedida(0, undefined, "500")');
+  await a.esperar();
+  assert.strictEqual(a.E('treino("HX").ex[0].q'), 500, 'a quantidade do dia entra no slot');
+
+  a.E('view.open=0'); a.E('render()');
+  await a.esperar();
+  a.preencher(0, 0, null, 110);
+  let h = a.log('HX', 0);
+  assert.strictEqual(h[0].q, 500, 'o registro carimba o trabalho do dia');
+  assert.strictEqual(h[0].u, 'm');
+
+  // e se ele corrigir a grandeza depois de já ter digitado, o registro segue
+  a.E('poeMedida(0, "cal", undefined)');
+  await a.esperar();
+  h = a.log('HX', 0);
+  assert.strictEqual(h[0].u, 'cal',
+    'a unidade é carimbada na projeção — mudá-la tem que reprojetar');
+  a.fechar();
+});
+
+test('o cartão de um movimento com grandeza não pede RIR nem aproximação', async () => {
+  const a = await app({});
+  a.aba('treino');
+  a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
+  a.E('view.day="HX"');
+  a.E('addExercicio("remo-ergometro")');
+  await a.esperar(50);
+  a.E('view.open=0'); a.E('render()');
+  await a.esperar();
+
+  assert.strictEqual(a.$$('.ex.open .rirbtn').length, 0, 'nenhum botão de RIR na tabela');
+  assert.ok(!a.$('.ex.open .aquec'),
+    '"2 a 3 séries subindo carga" não quer dizer nada num remo');
+  assert.strictEqual(a.texto('.ex.open .ex-sub span'), '1 × 1.000 m',
+    'o cartão diz o que foi passado, não só um número solto');
+  a.fechar();
+});

@@ -137,6 +137,17 @@
   grid-template-columns: 34px 96px 1fr 1fr 40px;
   align-items: center; gap: var(--ins-2);
 }
+/* Movimento com grandeza própria não tem RIR: a coluna some inteira, e os
+   40px dela voltam para os dois campos em vez de virarem vão morto. "Repetições
+   na reserva" é linguagem de hipertrofia — num remo de 500 m era uma coluna de
+   botões que não queriam dizer nada. */
+.sets .sethead.sem-rir, .sets .setrow.sem-rir {
+  /* 56 e não 44 na primeira coluna: aqui o rótulo é "passada", não "série" —
+     medido em 45px no mono de 9px com tracking, e encostava no vizinho. Os
+     12px saem dos 46 que a coluna de RIR devolveu, e ainda sobra para os
+     campos. */
+  grid-template-columns: 56px 96px 1fr 1fr;
+}
 /* Sem faixa de fundo e sem contorno: quem sustenta a leitura em linha é o fio
    de 1px sob cada campo, três deles na mesma altura. Preenchimento para
    agrupar é o que o inegociável 3 do sistema proíbe, e um fundo alternado
@@ -460,6 +471,17 @@
 .chip.on, .chip.sel {
   background: var(--ins-acid); color: var(--ins-on-acid); border-color: var(--ins-acid);
 }
+/* O campo de quantidade da medida do dia. 16px e não menos: abaixo disso o
+   Safari dá zoom ao focar, e a tela fica torta no meio da aula. */
+.medq { display: block; margin-top: var(--ins-5); }
+.medq .obs-h { margin-bottom: var(--ins-3); }
+.medq input {
+  width: 100%; min-height: var(--ins-tap); padding: 0 var(--ins-4);
+  background: var(--ins-surface); border: 1px solid var(--ins-border);
+  font: 500 16px/1 var(--ins-font-mono); color: var(--ins-text);
+}
+.medq input:focus { outline: none; border-color: var(--ins-acid); }
+
 .note {
   width: 100%; min-height: 76px; padding: var(--ins-5); resize: vertical;
   background: var(--ins-surface); border: 1px solid var(--ins-border);

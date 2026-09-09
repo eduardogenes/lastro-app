@@ -115,19 +115,26 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   assert.strictEqual(a.E('treino("HX").ex.length'), 1, 'o que ele adiciona é o dia');
   assert.strictEqual(a.E('treino("HX").ex[0].n'), 'Corrida');
 
-  // Entra com UMA série: um exercício medido por tempo é uma passada, e o alvo
-  // dele é o relógio, não uma faixa de repetição.
+  // Entra com UMA série: um movimento com grandeza própria é uma passada, e o
+  // alvo dele é o relógio, não uma faixa de repetição.
   assert.strictEqual(a.E('treino("HX").ex[0].s'), 1);
   assert.strictEqual(a.E('treino("HX").ex[0].r'), '');
+  // e traz a medida do catálogo junto: 1 km, que é o que a prova pede
+  assert.strictEqual(a.E('treino("HX").ex[0].u'), 'm');
+  assert.strictEqual(a.E('treino("HX").ex[0].q'), 1000);
 
-  // registra por TEMPO: o segundo campo é segundo, e a carga é opcional
+  // registra o TEMPO daquela distância: o segundo campo é segundo, a carga é
+  // opcional e a coluna de RIR não existe
   a.E('toggle(0)');
-  // o primeiro .unit é o da carga; o segundo é o que diz reps ou segundos
+  // o primeiro .f é o da carga; o segundo é o que diz a medida
   assert.strictEqual(a.$$('.ex.open .sethead .f')[1].textContent, 'seg');
+  assert.strictEqual(a.$$('.ex.open .sethead .f').length, 2,
+    'RIR é linguagem de hipertrofia e não entra numa corrida');
   a.preencher(0, 0, null, 252);
   const h = a.log('HX', 0);
   assert.strictEqual(h.length, 1);
-  assert.strictEqual(h[0].u, 'seg', 'a entrada se declara por tempo');
+  assert.strictEqual(h[0].u, 'm', 'a entrada se declara por distância');
+  assert.strictEqual(h[0].q, 1000, 'e carrega o trabalho, senão não há ritmo');
   assert.deepStrictEqual(h[0].sets[0], [0, 252]);
 
   // e não conta como série de nenhum músculo

@@ -286,7 +286,7 @@ function treino(d) {
 
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], protocolo:{ poses:null, sessoes:[] } };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
-  editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null,
+  editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null,
   protocolo:null, comparar:null, ajuste:null, camera:null };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
@@ -1463,7 +1463,9 @@ function vmExercicio(d, i, ex) {
   const dr = draftPeek(i);
   const l = historico(key).slice(-1)[0] || null;
   const ns = setsFor(ex);
-  const seg = isTime(ex);
+  const un = unidadeDe(ex);
+  const seg = !!un;
+  const relogio = cronometrado(un);
   const tipo = cargaTipo(key, ex);
   const corpo = tipo === 'corpo';
   const lista = altList(d, i);
@@ -1483,8 +1485,12 @@ function vmExercicio(d, i, ex) {
       // resumo embaixo — para saber a repetição da série 3 era preciso contar
       // na cabeça. Aqui cada linha carrega a própria referência.
       antes: p
-        ? (p[0] ? fmtNum(p[0]) + (seg ? 'kg × ' : ' × ') : '') + p[1] + (seg ? 's' : '') +
-          (p[2] != null ? ' @ ' + p[2] : '')
+        ? (seg
+            // no cartão a prescrição já está no cabeçalho: repeti-la na coluna
+            // ANTERIOR gastaria a calha mais estreita da linha para dizer duas
+            // vezes a mesma coisa
+            ? (p[0] ? fmtNum(p[0]) + 'kg · ' : '') + p[1] + (relogio ? 's' : '')
+            : (p[0] ? fmtNum(p[0]) + ' × ' : '') + p[1] + (p[2] != null ? ' @ ' + p[2] : ''))
         : null,
       // O placeholder é DADO — a carga da última vez. A unidade é ESTRUTURA e
       // fica sempre visível ao lado. Antes os dois diziam a mesma coisa quando
@@ -1519,6 +1525,18 @@ function vmExercicio(d, i, ex) {
     bi: ex.bi || 0,
     seg: seg,
     unidade: seg ? 'kg' : CARGAS[tipo].rot,
+    // O rótulo da segunda coluna: o que o número dela É. Em metro e caloria a
+    // prescrição é o trabalho e a série guarda o relógio; em repetição e
+    // segundo a série já é o trabalho.
+    medida: seg ? (relogio ? 'seg' : ROTULO_UNIDADE[un]) : 'reps',
+    // A prescrição do dia, escrita como se lê na lousa.
+    prescricao: seg && ex.q > 0 ? fmtInt(ex.q) + ' ' + ROTULO_UNIDADE[un] : '',
+    // RIR é linguagem de hipertrofia. Numa aula de box eram 25 botões sem
+    // sentido na tela, um por linha de série.
+    temRir: !seg,
+    // Aproximação é preparo para carga pesada. Num remo ou numa corrida a
+    // frase "2 a 3 séries subindo carga antes da primeira valendo" é ruído.
+    unidadeRotulo: un ? ROTULO_UNIDADE[un] : '',
     // A pegada, quando existe. Vazio é estado de primeira classe: ver a nota em
     // PEGADA_POR_NOME sobre por que vários exercícios ficam de fora.
     pegada: ex.peg || null,
@@ -1541,8 +1559,14 @@ function vmExercicio(d, i, ex) {
 
     ultima: l ? {
       txt: fmtLast(l, seg),
-      rotulo: seg ? 'tempo' : 'volume',
-      valor: seg ? fmtInt(tutOf(l)) + ' s' : fmtInt(volOf(l))
+      // O agregado que a coluna ANTERIOR não mostra. Em movimento
+      // cronometrado, somar os segundos seria comparar sessões de tamanhos
+      // diferentes — o que vale é o ritmo.
+      rotulo: relogio ? 'ritmo' : seg ? 'tempo' : 'volume',
+      valor: relogio && ritmoDe(l) != null
+        ? fmtDec(ritmoDe(l) * (ESCALA_RITMO[un] || { fator: 1 }).fator) + ' ' +
+          (ESCALA_RITMO[un] || { rot: 's' }).rot
+        : seg ? fmtInt(tutOf(l)) + ' s' : fmtInt(volOf(l))
     } : null,
 
     dorRep: dorRep ? dorRep.map(dorName).join(' e ') : null,
@@ -1560,6 +1584,18 @@ function vmExercicio(d, i, ex) {
       outros: lista.filter(function (a) { return !a.ind; }).map(opcaoDeTroca)
     },
 
+    // A medida do dia: o que o box escreveu na lousa. Mora atrás de um link,
+    // como a carga, porque é decisão de uma vez por movimento e a linha de
+    // série é que precisa do espaço.
+    medidaAberta: view.medida === i,
+    medidaResumo: seg
+      ? (ex.q > 0 ? fmtInt(ex.q) + ' ' + ROTULO_UNIDADE[un] : 'sem quantidade')
+      : 'repetições com carga',
+    q: ex.q != null ? String(ex.q) : '',
+    unidades: [{ k:'m', t:'metros' }, { k:'cal', t:'calorias' },
+               { k:'rep', t:'repetições' }, { k:'seg', t:'segundos' }]
+      .map(function (x) { return { k:x.k, t:x.t, sel: un === x.k }; }),
+
     cargaAberta: view.carga === i,
     tipoNome: CARGAS[tipo].nome,
     tipoAjuda: CARGAS[tipo].ajuda,
@@ -1567,7 +1603,9 @@ function vmExercicio(d, i, ex) {
       return { k: t, nome: CARGAS[t].nome, sel: tipo === t };
     }),
 
-    mostraAquecimento: i === 0,
+    // Aproximação é preparo para série pesada: "2 a 3 séries subindo carga
+    // antes da primeira valendo" não quer dizer nada num remo de 500 m.
+    mostraAquecimento: i === 0 && !seg,
     aq: !!(dr && dr.aq),
     notaAberta: !!((dr && (dr.obs || dr.dor.length)) || view.nota === i),
     obs: dr ? (dr.obs || '') : '',
@@ -1609,6 +1647,9 @@ const ACOES = {
   toggleAq: function (i) { toggleAq(i); },
   abrirCarga: function (i) { abrirCarga(i); },
   setCarga: function (i, t) { setCarga(i, t); },
+  abrirMedida: function (i) { abrirMedida(i); },
+  setUnidade: function (i, u) { poeMedida(i, u, undefined); },
+  setQ: function (el, i) { poeMedida(i, undefined, el.value); },
   abrirNota: function (i) { abrirNota(i); },
   obsIn: function (el, i) { obsIn(el, i); },
   toggleDor: function (i, k) { toggleDor(i, k); },
@@ -1915,22 +1956,25 @@ async function addExercicio(idEx) {
   // corrida ou um sled entram como uma passada, e o alvo é o relógio. Dar-lhe
   // `3 × 10–15` era a mesma linguagem de hipertrofia que fazia o sábado inteiro
   // parecer o que não é.
-  const seg = isTime(e);
+  const un = unidadeDe(e);
+  const seg = !!un;
   const s = seg ? 1 : 3;
   const r = seg ? '' : (e.c ? '6–10' : '10–15');
   const desc = seg ? D_CURTO : (e.c ? D_COMPOSTO : D_ISOLADOR);
   // na tela de programa a adição é permanente; na tela de hoje é só do dia
   if (view.prog && view.prog.day) {
     const d = view.prog.day;
-    S.prog[d].ex.push({ id:idEx, s:s, r:r, d:desc, desde: Date.now() });
-    logProg(d, e.n + ' entrou no treino · ' + s + ' × ' + r);
+    S.prog[d].ex.push({ id:idEx, s:s, r:r, d:desc, u:un, q:e.q, desde: Date.now() });
+    logProg(d, e.n + ' entrou no treino · ' + s + ' × ' +
+             (seg && e.q > 0 ? fmtInt(e.q) + ' ' + ROTULO_UNIDADE[un] : r));
     view.addEx = false; view.addQ = ''; view.novoEx = false;
     await save(); render();
     toast(e.n + ' entrou no treino ' + d + '.');
     return;
   }
   const d = view.day;
-  poeMod(d, { k:'add', id:idEx, s:s, r:r, d:desc, pos: treino(d).ex.length, n: Date.now() });
+  poeMod(d, { k:'add', id:idEx, s:s, r:r, d:desc, u:un, q:e.q,
+              pos: treino(d).ex.length, n: Date.now() });
   view.addEx = false; view.addQ = ''; view.novoEx = false;
   await save(); render();
   toast(e.n + ' entrou no treino de hoje.');
@@ -2991,7 +3035,7 @@ function mostraExercicio(i) {
 function toggle(i){
   const abrindo = view.open !== i;
   view.open = abrindo ? i : null;
-  view.swapOpen = null; view.nota = null; view.carga = null;
+  view.swapOpen = null; view.nota = null; view.carga = null; view.medida = null;
   render();
   if (abrindo) mostraExercicio(i);
 }
@@ -3104,6 +3148,59 @@ function toggleAq(i) { const e = draftOf(i); e.aq = !e.aq; projeta(i); queueSave
 // Uma vez que exista conteúdo no rascunho, o bloco reabre sozinho.
 function abrirNota(i) { view.nota = i; render(); }
 function abrirCarga(i) { view.carga = view.carga === i ? null : i; render(); }
+
+function abrirMedida(i) { view.medida = view.medida === i ? null : i; render(); }
+
+/**
+ * A medida daquele movimento HOJE — a grandeza e quanto dela.
+ *
+ * Escreve no MOD, não no programa: num dia aberto tudo é mod, e mudar a
+ * prescrição do sábado é a natureza do dia, não uma emenda a ele. Quando o
+ * movimento veio de um `add` (o caminho normal do dia aberto) a mudança entra
+ * no próprio `add`, senão o dia acumularia dois mods dizendo respeito à mesma
+ * coisa e o resumo do fim listaria a mesma decisão duas vezes.
+ *
+ * Não passa por `render()` a cada tecla no campo de quantidade: reescrever a
+ * tela no meio da digitação é o que fechava o teclado do iPhone, e é a mesma
+ * razão que existe na projeção da série.
+ */
+function poeMedida(i, u, qTexto) {
+  const d = view.day;
+  const t = treino(d);
+  if (!t || !t.ex[i]) return;
+  const ex = t.ex[i];
+  const slot = ex.orig || ex.id;
+  const q = qTexto === undefined ? undefined : numeroDoCampo(qTexto);
+
+  const b = bufferMods(d);
+  const add = b.list.filter(function (x) { return x.k === 'add' && (x.id + '#' + x.n) === slot; })[0];
+  const alvo = add || null;
+  if (alvo) {
+    if (u !== undefined) alvo.u = u;
+    if (q !== undefined) alvo.q = q;
+  } else {
+    const atual = b.list.filter(function (x) { return x.k === 'med' && x.slot === slot; })[0];
+    const nova = { k:'med', slot: slot,
+                   u: u !== undefined ? u : (atual ? atual.u : unidadeDe(ex)),
+                   q: q !== undefined ? q : (atual ? atual.q : ex.q) };
+    if (atual) Object.assign(atual, nova); else b.list.push(nova);
+  }
+
+  // a grandeza é carimbada no registro: mudá-la tem que alcançar o que já foi
+  // digitado nesta sessão, senão o log fica com a unidade de antes
+  projeta(i);
+  queueSave();
+  if (u !== undefined) { view.medida = null; render(); }
+  else atualizaEstado();
+}
+
+/** Número de um campo livre: vírgula vale ponto, e vazio é ausência. */
+function numeroDoCampo(v) {
+  const t = String(v == null ? '' : v).replace(',', '.').trim();
+  if (!t) return undefined;
+  const n = parseFloat(t);
+  return isFinite(n) && n > 0 ? n : undefined;
+}
 async function setCarga(i, t) {
   const key = logKey(view.day, i);
   const ex = treino(view.day).ex[i];
