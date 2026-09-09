@@ -53,6 +53,7 @@ test('exportar carrega todos os campos do estado', async () => {
   a.E('toggle(0)');
   a.preencher(0, 0, 40, 10);
   a.aba('guia');
+  await a.modo('o app');
   a.E('showJSON()');
 
   const bkp = JSON.parse(a.doc.getElementById('jout').value);
@@ -88,6 +89,7 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
   await a.esperar();
 
   a.aba('guia');
+  await a.modo('o app');
   a.E('showJSON()');
   const bkp = a.doc.getElementById('jout').value;
   const antes = JSON.parse(bkp).data;

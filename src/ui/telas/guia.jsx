@@ -1,4 +1,15 @@
-// GUIA — a camada de referência das duas metades, e a área de dados.
+// GUIA — a prescrição das duas metades, e a máquina do app.
+//
+// A tela juntava três naturezas debaixo de um nome só: o que o treinador e o
+// nutricionista prescreveram (que se LÊ), a máquina do app — nuvem, backup,
+// restaurar, apagar — (que se OPERA), e atalhos para outros destinos. Somava
+// 4,3 telas de rolagem e precisava de um índice interno para se navegar, que é
+// o sintoma clássico de uma tela que é mais de uma.
+//
+// Agora são dois modos, com o mesmo componente que a COMIDA e o DADOS usam:
+// `prescrição` abre direto no que foi prescrito, e `o app` guarda a máquina —
+// inclusive o único botão que destrói histórico, que assim deixa de ficar no
+// caminho de quem só queria conferir a regra do RIR.
 //
 // A parte nova é a cadência da semana. Ela é o que sobrou do `mapa[7]` da
 // nutrição depois que a fusão separou duas perguntas que estavam grudadas
@@ -6,10 +17,8 @@
 // uma sessão; HOJE É DIA DE TREINAR é o que esta tela responde. Sem essa
 // separação, o mapa e a rotação discordariam toda semana que ele pulasse um dia.
 //
-// A área de dados vem por último de propósito: é onde mora o único botão que
-// destrói histórico, e ele fica no fim da última aba, atrás de confirmação.
 
-import { Cabecalho, Procedencia, Secao } from '../instrumento/primitivos.jsx';
+import { Cabecalho, Chips, Procedencia, Secao } from '../instrumento/primitivos.jsx';
 import { LinhaExpansivel } from '../instrumento/folha.jsx';
 import { useState } from 'preact/hooks';
 
@@ -68,17 +77,18 @@ function Bloco({ titulo, children, texto }) {
   );
 }
 
-const SECOES = [
-  { id: 'gu-semana', t: 'a semana' }, { id: 'gu-alvo', t: 'alvo do dia' },
-  { id: 'gu-exec', t: 'execução' },   { id: 'gu-prog', t: 'o programa' },
-  { id: 'gu-sinc', t: 'sincronizar' },{ id: 'gu-bkp', t: 'backup' },
-  { id: 'gu-rest', t: 'restaurar' },  { id: 'gu-dados', t: 'seus dados' }
+// Os dois assuntos. `prescrição` é o padrão: é o que a tela promete pelo nome,
+// e é o único dos dois que se lê sem ter ido lá com uma tarefa em mente.
+const MODOS = [
+  { k: 'prescricao', t: 'prescrição' },
+  { k: 'app', t: 'o app' }
 ];
 
 export function Guia({ ctx }) {
   // Uma aberta por vez: duas regras abertas já devolvem a rolagem que a lista
   // existe para tirar, e nenhuma delas se lê em comparação com a outra.
   const [regraAberta, setRegraAberta] = useState(null);
+  const [modo, setModo] = useState('prescricao');
   const g = ctx.guia();
   const d = ctx.dadosDoApp();
   const n = ctx.nuvem();
@@ -98,18 +108,50 @@ export function Guia({ ctx }) {
         </div>
       )}
 
-      {/* O guia é a tela mais longa do app — quase sete telas de rolagem — e é de
-          CONSULTA: entra-se nele com uma pergunta ("como restauro?"), não para
-          ler do começo. Sem índice, achar era rolar. */}
-      <Secao primeira rotulo="ir para" nota="a tela mais longa do app">
-        <div class="ins-chips">
-          {SECOES.map(x => (
-            <button key={x.id} class="ins-chip" onClick={() => ctx.vaiParaSecao(x.id)}>{x.t}</button>
-          ))}
-        </div>
+      {/* Os modos tomaram o lugar do índice "ir para": um sumário interno resolvia
+          um problema que a própria altura da tela criava, e com dois modos de
+          duas telas cada não há mais o que sumariar. */}
+      <Secao primeira>
+        <Chips opcoes={MODOS} valor={modo} onMuda={setModo} />
       </Secao>
 
-      <Secao id="gu-semana" rotulo="a semana" nota="toque para alternar">
+      {modo === 'prescricao' && <>
+
+      <Secao rotulo="alvo por tipo de dia" nota="calculado do plano">
+        <div class="ins-lista">
+          {g.alvos.map(a => (
+            <div key={a.k} class="ins-linha">
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">{a.t}</span>
+                <span class="ins-linha-s">{a.s}</span>
+              </span>
+              <span class="ins-linha-v">{a.v}</span>
+            </div>
+          ))}
+        </div>
+        <Procedencia>
+          somado dos alimentos do plano, não escrito à parte: mudar uma
+          quantidade recalcula isto na hora.
+        </Procedencia>
+      </Secao>
+
+      <Secao rotulo="execução" nota="toque para abrir">
+        {g.regras.map(r => (
+          <Regra
+            key={r.k} r={r}
+            aberta={regraAberta === r.k}
+            aoAbrir={() => setRegraAberta(regraAberta === r.k ? null : r.k)}
+          />
+        ))}
+      </Secao>
+
+      </>}
+
+      {modo === 'app' && <>
+
+      {/* A cadência é AJUSTE, não referência: você toca nela para dizer em que
+          dias costuma treinar. Vinha primeiro na tela por acidente de ordem. */}
+      <Secao rotulo="a semana" nota="toque para alternar">
         <div class="gu-semana">
           {SEMANA.map(d2 => {
             const treina = g.cadencia[d2.i] === 'treino';
@@ -131,51 +173,17 @@ export function Guia({ ctx }) {
         </Procedencia>
       </Secao>
 
-      <Secao id="gu-alvo" rotulo="alvo por tipo de dia" nota="calculado do plano">
-        <div class="ins-lista">
-          {g.alvos.map(a => (
-            <div key={a.k} class="ins-linha">
-              <span class="ins-linha-n">
-                <span class="ins-linha-t">{a.t}</span>
-                <span class="ins-linha-s">{a.s}</span>
-              </span>
-              <span class="ins-linha-v">{a.v}</span>
-            </div>
-          ))}
-        </div>
-        <Procedencia>
-          somado dos alimentos do plano, não escrito à parte: mudar uma
-          quantidade recalcula isto na hora.
-        </Procedencia>
-      </Secao>
+      {/* O deload ganhou seção própria porque a antiga, "o programa", virou uma
+          seção com um item só: "Seus treinos" saiu — `abrir o programa` já
+          existe no TREINO e no DADOS, e esta era a terceira porta para o mesmo
+          destino, a única embrulhada num parágrafo — e a retrospectiva foi para
+          o DADOS, onde mora o resto do que é olhar para trás.
 
-      <Secao id="gu-exec" rotulo="execução" nota="toque para abrir">
-        {g.regras.map(r => (
-          <Regra
-            key={r.k} r={r}
-            aberta={regraAberta === r.k}
-            aoAbrir={() => setRegraAberta(regraAberta === r.k ? null : r.k)}
-          />
-        ))}
-      </Secao>
-
-      <Secao id="gu-prog" rotulo="o programa">
-        <Bloco
-          titulo="Seus treinos"
-          texto={`Os ${d.treinos} treinos, a ordem da rotação e os exercícios. Mudança aqui vale a partir do próximo treino; para mudar só o treino de hoje, use a edição na tela de treino.`}
-        >
-          <button class="ins-btn-secondary" onClick={ctx.abrePrograma}>
-            abrir o programa{d.difTxt ? ' · ' + d.difTxt : ''}
-          </button>
-        </Bloco>
-
-        <Bloco
-          titulo="Retrospectiva do bloco"
-          texto="O que evoluiu, o que ficou parado e onde a dor apareceu desde o começo deste bloco de 48 sessões."
-        >
-          <button class="ins-btn-secondary" onClick={ctx.abreRetro}>abrir retrospectiva</button>
-        </Bloco>
-
+          Fica AQUI, e não no TREINO, de propósito: um interruptor que corta
+          metade das séries não deve estar a um toque no meio de uma sessão. O
+          app existe em parte para frear, e o caminho de menor esforço tem que
+          ser o conservador. O estado dele já aparece no TREINO quando ligado. */}
+      <Secao rotulo="deload">
         <Bloco
           titulo="Modo deload"
           texto="Mostra metade das séries de cada exercício mantendo as mesmas cargas. As sessões salvas nesse modo ficam marcadas no histórico, para a queda de volume não parecer regressão."
@@ -190,7 +198,7 @@ export function Guia({ ctx }) {
           "e se eu perder o aparelho?", e a nuvem é a resposta que não depende
           de você lembrar. O backup continua sendo a cópia que não depende de
           ninguém — nem do Supabase. */}
-      <Secao id="gu-sinc" rotulo="sincronizar">
+      <Secao rotulo="sincronizar">
         {n.dentro ? (
           <Bloco titulo={n.conta} texto={n.explica}>
             <div class="gu-sync">
@@ -224,10 +232,10 @@ export function Guia({ ctx }) {
         )}
       </Secao>
 
-      <Secao id="gu-bkp" rotulo="backup">
+      <Secao rotulo="backup">
         <Bloco
           titulo="Exportar"
-          texto="Baixa todo o histórico num arquivo JSON. Guarde antes de trocar de celular, limpar o navegador ou mexer no app."
+          texto="Guarde antes de trocar de celular, limpar o navegador ou mexer no app."
         >
           <button class="ins-btn-primary" onClick={ctx.exportar}>baixar arquivo json</button>
           <button class="ins-btn-secondary gu-b2" onClick={ctx.mostraJSON}>
@@ -272,7 +280,7 @@ export function Guia({ ctx }) {
         </Bloco>
       </Secao>
 
-      <Secao id="gu-rest" rotulo="restaurar" nota="os dois preservam o histórico">
+      <Secao rotulo="restaurar" nota="os dois preservam o histórico">
         <div class="gu-acoes">
           <button class="ins-btn-secondary ins-btn-destructive" onClick={ctx.restauraPrograma}>
             restaurar o programa do treinador
@@ -287,7 +295,7 @@ export function Guia({ ctx }) {
         </Procedencia>
       </Secao>
 
-      <Secao id="gu-dados" rotulo="onde ficam seus dados">
+      <Secao rotulo="onde ficam seus dados">
         <div class="ins-lista">
           <div class="ins-linha">
             <span class="ins-linha-n"><span class="ins-linha-t">salvos em</span></span>
@@ -303,6 +311,8 @@ export function Guia({ ctx }) {
           registrou.
         </Procedencia>
       </Secao>
+
+      </>}
     </>
   );
 }

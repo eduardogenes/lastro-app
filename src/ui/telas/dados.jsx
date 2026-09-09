@@ -411,6 +411,18 @@ export function Dados({ ctx }) {
       <Musculos m={c.musculos} ctx={ctx} />
 
       <Mes m={ctx.mes()} ctx={ctx} />
+
+      {/* Veio do GUIA. Lá era um botão órfão numa tela de referência; aqui fica
+          junto do resto do que é olhar para trás — força estimada, séries por
+          músculo e o mês —, que é onde se vem quando a pergunta é "e desde que
+          isso começou?". */}
+      <Secao rotulo="retrospectiva" nota="o bloco de 48 sessões">
+        <p class="ins-body-sm ins-t3 dd-retro-p">
+          O que evoluiu, o que ficou parado e onde a dor apareceu desde o começo
+          deste bloco.
+        </p>
+        <button class="ins-btn-secondary" onClick={ctx.abreRetro}>abrir retrospectiva</button>
+      </Secao>
       </>}
     </>
   );

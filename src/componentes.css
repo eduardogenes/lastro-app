@@ -295,7 +295,6 @@
 
 /* Seção que é alvo de salto: encosta no topo com um respiro, senão o rótulo
    fica colado na borda e parece cortado. */
-.ins-secao[id] { scroll-margin-top: var(--ins-9); }
 
 /* ---- Tab bar ---------------------------------------------------------- */
 
@@ -530,6 +529,8 @@
 .gu-bloco:last-child { border-bottom: 0; }
 .gu-bloco-t { margin: 0; }
 .gu-bloco-p { margin: var(--ins-3) 0 var(--ins-5); }
+/* Mesma anatomia do parágrafo de bloco do guia, de onde a retrospectiva veio. */
+.dd-retro-p { margin: 0 0 var(--ins-5); }
 .gu-b2 { margin-top: var(--ins-2); }
 
 /* O input de arquivo do navegador é feio e não estilizável; o label vira o

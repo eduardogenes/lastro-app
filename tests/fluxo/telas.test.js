@@ -622,3 +622,70 @@ test('as regras de execução nascem fechadas e abrem uma por vez', async () => 
   assert.strictEqual(a.$$('.gu-regra .ins-lx-c').length, 0, 'e tocar de novo fecha');
   a.fechar();
 });
+
+test('o GUIA separa a prescrição da máquina do app', async () => {
+  // A tela juntava três naturezas sob um nome só — o que foi prescrito, a
+  // máquina do app e atalhos para outros destinos — e somava 4,3 telas de
+  // rolagem, com um índice interno para se navegar dentro dela mesma.
+  const a = await app();
+  a.aba('guia');
+  await a.esperar();
+
+  assert.strictEqual(a.modo(), 'prescrição', 'abre no que a tela promete pelo nome');
+  assert.ok(a.$$('.gu-regra').length >= 10, 'as regras do treinador estão aqui');
+  assert.ok(a.$$('.ins-label').some(function (x) { return x.textContent === 'alvo por tipo de dia'; }));
+
+  // A máquina não fica no caminho de quem só queria conferir uma regra.
+  assert.strictEqual(a.$('.gu-apagar'), null, 'apagar histórico não mora na prescrição');
+  assert.strictEqual(a.$('#nvemail'), null, 'nem o login da nuvem');
+  assert.strictEqual(a.$$('.gu-dia').length, 0, 'nem a cadência, que é ajuste');
+
+  await a.modo('o app');
+  assert.ok(a.$('.gu-apagar'), 'e no outro modo está tudo lá');
+  assert.ok(a.$('#nvemail'));
+  assert.strictEqual(a.$$('.gu-dia').length, 7, 'a semana inteira');
+  assert.strictEqual(a.$$('.gu-regra').length, 0, 'e a prescrição não vaza para cá');
+  a.fechar();
+});
+
+test('a porta do programa some do guia, e as outras duas ficam', async () => {
+  // `abrir o programa` existia em TREINO, DADOS e GUIA. A do guia era a
+  // terceira, e a única embrulhada num parágrafo explicando o que ela faz.
+  const abre = a => a.$$('button').filter(function (b) {
+    return /abrir o programa/.test(b.textContent);
+  }).length;
+
+  const a = await app();
+  a.aba('guia');
+  await a.esperar();
+  assert.strictEqual(abre(a), 0, 'não há mais porta para o programa no guia');
+  await a.modo('o app');
+  assert.strictEqual(abre(a), 0, 'em nenhum dos dois modos');
+
+  a.aba('treino');
+  await a.esperar();
+  assert.strictEqual(abre(a), 1, 'a do treino continua');
+  a.fechar();
+});
+
+test('a retrospectiva mudou de casa e continua abrindo', async () => {
+  // Era um botão órfão numa tela de referência; agora mora junto do resto do
+  // que é olhar para trás.
+  const a = await app();
+  a.aba('guia');
+  await a.modo('o app');
+  assert.ok(!a.$$('button').some(function (b) { return /retrospectiva/.test(b.textContent); }),
+    'saiu do guia');
+
+  a.aba('dados');
+  await a.modo('treino');
+  const botao = a.$$('button').filter(function (b) {
+    return /abrir retrospectiva/.test(b.textContent);
+  })[0];
+  assert.ok(botao, 'e está no dados, junto do que é olhar para trás');
+
+  a.clicar(botao);
+  await a.esperar();
+  assert.ok(a.J('view.retro'), 'e abre de verdade');
+  a.fechar();
+});

@@ -5654,19 +5654,6 @@ CTX.protocoloFotos = function () {
   };
 };
 
-/**
- * Salta para uma seção do guia.
- *
- * `smooth` diz de onde para onde se foi, que num salto longo é o que evita a
- * sensação de ter trocado de tela. Menos quando o sistema pede movimento
- * reduzido — aí o salto é seco, como o resto do app já faz com as transições.
- */
-CTX.vaiParaSecao = function (id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const parado = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  el.scrollIntoView({ behavior: parado ? 'auto' : 'smooth', block: 'start' });
-};
 
 // ---------- a posição de leitura ----------
 // Entrar num destino leva ao topo dele; SAIR devolve onde se estava.

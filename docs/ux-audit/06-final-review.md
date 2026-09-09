@@ -35,7 +35,7 @@ pesagens, nos perfis 320×640 · 360×800 · 375×667 · 390×844 · 412×915 ·
 | Série digitada + app oculto em 250 ms | perdida | em disco |
 | Registrar 3 séries iguais | ~9 interações | **3 toques** |
 
-Suíte: **626 → 646 testes**, todos verdes. `tsc --noEmit` limpo. Build limpo.
+Suíte: **626 → 649 testes**, todos verdes. `tsc --noEmit` limpo. Build limpo.
 
 ## Segunda rodada: a altura das telas
 
@@ -46,8 +46,8 @@ estava certa.
 
 | Aba | Antes | Depois |
 |---|---|---|
-| Guia | 6.945px · **8,2 telas** | 3.623px · **4,3** |
-| Dados | 3.955px · **4,7 telas** | corpo **1,9** · treino **3,1** |
+| Guia | 6.945px · **8,2 telas** | prescrição **1,8** · o app **2,1** |
+| Dados | 3.955px · **4,7 telas** | corpo **1,9** · treino **3,2** |
 
 **Guia.** Uma seção era 64% da tela inteira: as catorze regras de execução do
 treinador, ~6.800 caracteres de prosa, sempre abertas. São referência — lê-se
@@ -61,7 +61,31 @@ legítimas. Dividida por assunto em `corpo` e `treino` com o mesmo `Chips` que a
 COMIDA já usava para caber em uma tela. `corpo` é o padrão porque é onde mora o
 veredito, a única coisa da tela que pede uma ação.
 
-Nenhum componente novo: `LinhaExpansivel` e `Chips` já existiam no sistema.
+**Terceira passada no guia, e aí veio o diagnóstico de verdade.** Encolher as
+regras resolveu o sintoma; o problema era que a tela juntava **três naturezas**
+sob um nome só: o que foi prescrito (que se lê), a máquina do app — nuvem,
+backup, restaurar, apagar — (que se opera) e atalhos para outros destinos. O
+índice interno "ir para" era a prova: uma tela que precisa de sumário está
+dizendo que é mais de uma.
+
+O que saiu, e por quê:
+
+| Removido | px | Motivo |
+|---|---|---|
+| índice "ir para" | 138 | sintoma, não recurso — com dois modos de duas telas não há o que sumariar |
+| bloco "Seus treinos" | 198 | `abrir o programa` já existia em TREINO e em DADOS; esta era a terceira porta, e a única embrulhada num parágrafo |
+| bloco "Retrospectiva" | 177 | mudou de casa: foi para DADOS · treino, junto do resto do que é olhar para trás |
+| primeira frase de "Exportar" | ~20 | repetia o rótulo do botão logo abaixo |
+| `CTX.vaiParaSecao` e `.ins-secao[id]` | — | código morto assim que o índice saiu |
+
+O que **não** saiu, e por quê: o modo deload continua escondido no guia em vez
+de ir para o TREINO. Um interruptor que corta metade das séries não deve estar a
+um toque no meio de uma sessão — o app existe em parte para frear, e o caminho
+de menor esforço tem que ser o conservador. O estado dele já aparece no TREINO
+quando ligado.
+
+Nenhum componente novo em nenhuma das passadas: `LinhaExpansivel` e `Chips` já
+existiam no sistema.
 
 **22 testes quebraram, e estavam certos em quebrar** — liam conteúdo que agora
 mora num modo. O harness ganhou `a.modo()`, que toca no chip como o usuário

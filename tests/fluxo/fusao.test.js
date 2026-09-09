@@ -27,6 +27,7 @@ test('o backup leva a metade de comida e devolve ela igual', async () => {
   a.E('S.compras.dias = 30');
 
   a.aba('guia');
+  await a.modo('o app');
   a.E('showJSON()');
   const json = a.doc.getElementById('jout').value;
   const bkp = JSON.parse(json);
@@ -179,6 +180,8 @@ test('apagar o histórico não apaga o plano nutricional', async () => {
 
 test('a cadência da semana é editável e só fala de cadência', async () => {
   const a = await app({ aba: 'guia' });
+  // a cadência é ajuste, não prescrição: mora no modo "o app"
+  await a.modo('o app');
   const dias = a.$$('.gu-dia');
   assert.strictEqual(dias.length, 7);
 
