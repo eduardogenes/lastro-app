@@ -161,11 +161,16 @@ oculto.
 **Evidência.** `#timer` contém `3:00` e `parar`. Nada mais.
 
 **Impacto.** Com o app reaberto ou depois de rolar, o número flutua sem
-referência. Não há +30 s / −30 s / pular, que é o ajuste que a academia real
+referência. Não há ajuste de tempo nem pular, que é o que a academia real
 cobra (máquina ocupada, série pesada demais).
 
-**Recomendação.** Nomear a origem do descanso e oferecer ±30 s. Fora do escopo
-deste ciclo se implicar redesenhar a barra; documentado no plano.
+**Recomendação.** Nomear a origem do descanso e oferecer ajuste de tempo.
+
+**Resolvido.** A barra ganhou uma linha de procedência ("descanso · série 2 ·
+Chest press inclinado convergente"), que sobrevive ao reload, e dois botões de
+40 px, `−15` e `+15`. O ajuste mexe no instante-alvo, nunca num contador — senão
+a tela apagada comeria o ajuste junto. Encurtar abaixo de zero encerra o
+descanso em vez de contar para trás.
 
 ## COMIDA · DADOS · GUIA
 
@@ -214,7 +219,7 @@ correta para iOS. Nenhum achado próprio.
 | T-03 | Campos de carga/reps sem nome | P1 |
 | T-04 | Cronômetro não sobrevive ao reload | P1 |
 | T-05 | Gravação pendente perdida ao sair | P2 |
-| T-06 | Cronômetro sem contexto nem ±30 s | P2 |
+| T-06 | Cronômetro sem contexto nem ajuste de tempo | P2 · resolvido |
 | G-01 | Dois campos sem rótulo no Guia | P2 |
 | D-01 | Alvos abaixo do padrão interno | P3 |
 

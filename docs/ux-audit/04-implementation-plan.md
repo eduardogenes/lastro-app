@@ -67,7 +67,20 @@ o caminho que o projeto já usa).
 
 `aria-label` em `#nvemail` e `#nvsenha`. Um arquivo, duas linhas.
 
-## Lote 5 — Testes de comportamento
+## Lote 5 — Cronômetro · resolve T-06
+
+Feito depois, com o aval do produto. A barra `#timer` continua fora da árvore do
+Preact — ela repinta 4×/s e redesenhar a árvore nesse ritmo roubaria o foco do
+campo em preenchimento.
+
+1. Linha de procedência: de qual série e de qual exercício veio o descanso,
+   persistida junto com o instante-alvo.
+2. `−15` / `+15`, alvo de 40 px, mexendo no instante-alvo. Quinze e não
+   trinta: o ajuste é fino, e meio minuto já é outro descanso.
+3. Ao esticar, `timerTotal` sobe junto — a barra é `restante / total`, e sem
+   isso a escala passaria de 1 e o preenchimento vazaria da calha.
+
+## Lote 6 — Testes de comportamento
 
 Testes de fluxo para o que a auditoria mediu, para que não volte:
 Voltar fecha folha · Voltar sai de destino restaurando scroll · foco entra e
@@ -78,7 +91,6 @@ cronômetro sobrevive ao reload.
 
 | Item | Motivo |
 |---|---|
-| **T-06** cronômetro com contexto e ±30 s | Redesenha a barra `#timer`, que vive fora do Preact e repinta 4×/s. Mudança de forma, não correção de defeito — merece decisão de produto própria. |
 | **D-01** alvos abaixo de 46 px | Não viola norma; são controles de um toque, dentro da exceção do DESIGN.md. |
 | `visualViewport` | O app não tem CTA fixo competindo com o teclado; esconder a tab bar no foco já resolve. Complexidade sem problema medido. |
 | Fila de sincronização offline | Os dados são locais; só a sincronização depende de rede, e ela já represa e tenta de novo. |

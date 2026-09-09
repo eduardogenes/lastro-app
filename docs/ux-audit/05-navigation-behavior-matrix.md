@@ -76,3 +76,4 @@ Três níveis é o teto. Uma quarta folha é redesenho.
 | Registrar 3 séries iguais de um exercício | ~9 interações | **3 toques** (medido) |
 | Sair de uma folha | `×` | `×` **ou** Voltar do sistema |
 | Voltar de uma lista longa e continuar de onde parou | reencontrar o lugar à mão | **0** — restaura |
+| Esticar o descanso quando a máquina está ocupada | parar e recomeçar na mão | **1 toque** em `+15` |

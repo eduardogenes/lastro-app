@@ -128,3 +128,51 @@ test('bi-set encadeia em vez de descansar', async () => {
   assert.ok(a.doc.getElementById('timer').className.includes('on'), 'o descanso é no segundo');
   a.fechar();
 });
+
+test('esticar e encurtar o descanso mexe no instante-alvo', async () => {
+  // A academia cobra os dois: máquina ocupada e o descanso estica; série leve e
+  // não vale esperar os três minutos. Sem isto a única saída era parar o
+  // cronômetro e perder a conta.
+  const a = await app();
+  a.E('startTimer(180)');
+  assert.strictEqual(a.texto('#tval'), '3:00');
+
+  a.E('ajustaTimer(15)');
+  assert.strictEqual(a.texto('#tval'), '3:15', '+15 estica');
+
+  a.E('ajustaTimer(-30)');
+  assert.strictEqual(a.texto('#tval'), '2:45', '−15 encurta');
+
+  // A barra é `restante / total`. Sem subir o total junto ao esticar, a escala
+  // passaria de 1 e o preenchimento vazaria da calha.
+  a.E('startTimer(60)');
+  a.E('ajustaTimer(120)');
+  const escala = parseFloat(a.E("document.getElementById('tfill').style.transform.match(/[\\d.]+/)[0]"));
+  assert.ok(escala <= 1.001, 'a barra não vaza da calha ao esticar: ' + escala);
+
+  a.relogioNormal();
+  a.fechar();
+});
+
+test('encurtar abaixo de zero para o descanso em vez de deixá-lo negativo', async () => {
+  const a = await app();
+  a.E('startTimer(10)');
+  a.E('ajustaTimer(-15)');
+  assert.ok(!a.E("document.getElementById('timer').classList.contains('on')"),
+    'o cronômetro some em vez de contar para trás');
+  a.relogioNormal();
+  a.fechar();
+});
+
+test('o cronômetro diz de onde veio o descanso', async () => {
+  // Sem procedência o número flutua sem assunto depois de rolar a tela ou
+  // reabrir o app.
+  const a = await app();
+  a.E("startTimer(180, 'descanso · série 2 · Pulldown')");
+  assert.strictEqual(a.texto('#tctx'), 'descanso · série 2 · Pulldown');
+
+  a.E('stopTimer()');
+  assert.strictEqual(a.texto('#tctx'), '', 'e o rótulo sai junto com o descanso');
+  a.relogioNormal();
+  a.fechar();
+});

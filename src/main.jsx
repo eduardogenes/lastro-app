@@ -275,7 +275,7 @@ let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], bo
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null,
   protocolo:null, comparar:null, ajuste:null, camera:null };
-let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false;
+let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
 
@@ -1522,7 +1522,7 @@ function opcaoDeTroca(a) {
 const ACOES = {
   toggle: function (i) { toggle(i); },
   inp: function (el, i, k, pos) { inp(el, i, k, pos); },
-  startTimer: function (s) { startTimer(s); },
+  startTimer: function (s, ctx) { startTimer(s, ctx); },
   proximoDoBiset: function (i) { proximoDoBiset(i); },
   setAlt: function (i, id) { setAlt(i, id); },
   toggleSwap: function (i) { toggleSwap(i); },
@@ -2954,7 +2954,7 @@ function autoTimer(i, k, e) {
     if (k === ult) proximoDoBiset(i);
     return;
   }
-  startTimer(descOf(ex));
+  startTimer(descOf(ex), 'descanso · série ' + (k + 1) + ' · ' + ex.n);
 }
 
 function proximoDoBiset(i) {
@@ -3389,7 +3389,9 @@ function descOf(ex) { return ex && ex.d ? ex.d : (ex && ex.c ? D_COMPOSTO : D_CU
 const KEY_DESCANSO = 'lastro-descanso-v1';
 
 function gravaDescanso() {
-  try { DB.set(KEY_DESCANSO, JSON.stringify({ fim: timerFim, total: timerTotal })); } catch (e) {}
+  try {
+    DB.set(KEY_DESCANSO, JSON.stringify({ fim: timerFim, total: timerTotal, ctx: timerCtx }));
+  } catch (e) {}
 }
 function apagaDescanso() {
   try { DB.delete(KEY_DESCANSO); } catch (e) {}
@@ -3414,6 +3416,7 @@ async function retomaDescanso() {
   timerTotal = g.total || Math.ceil((g.fim - Date.now()) / 1000);
   timerFim = g.fim;
   timerAvisado = false;
+  timerCtx = g.ctx || '';
   const box = document.getElementById('timer');
   if (box) box.classList.add('on');
   pintaTimer();
@@ -3421,11 +3424,18 @@ async function retomaDescanso() {
   timer = setInterval(pintaTimer, 250);
 }
 
-function startTimer(sec) {
+/**
+ * @param {number} sec
+ * @param {string} [ctx] de onde veio este descanso — "série 2 · pulldown".
+ *   Sem isto o número flutua sem referência depois de rolar a tela ou reabrir
+ *   o app, e o cronômetro passa a ser um relógio sem assunto.
+ */
+function startTimer(sec, ctx) {
   stopTimer();
   timerTotal = sec;
   timerFim = Date.now() + sec*1000;
   timerAvisado = false;
+  timerCtx = ctx || '';
   document.getElementById('timer').classList.add('on');
   preparaAudio();          // precisa nascer dentro do gesto do usuário
   segurarTela();
@@ -3434,10 +3444,42 @@ function startTimer(sec) {
   gravaDescanso();
 }
 
+/**
+ * Tira ou põe tempo no descanso em curso.
+ *
+ * A academia real cobra os dois: a máquina está ocupada e o descanso precisa
+ * esticar, ou a série saiu leve e não vale esperar os três minutos. Sem isto a
+ * única saída era parar o cronômetro e perder a conta.
+ *
+ * Mexe no INSTANTE-ALVO, que é como o cronômetro é escrito — nunca num contador
+ * que decrementa, senão a tela apagada comeria o ajuste junto.
+ */
+function ajustaTimer(delta) {
+  if (!timerFim) return;
+  const agora = Date.now();
+  // Somar a partir de `agora` quando já zerou: o alvo ficou no passado, e
+  // esticar a partir dele daria um descanso que nasce vencido.
+  const base = Math.max(agora, timerFim);
+  const novo = Math.max(agora, base + delta * 1000);
+  if (novo <= agora && delta < 0) { stopTimer(); return; }
+  timerFim = novo;
+  // A barra é `restante / total`: sem subir o total junto, esticar o descanso
+  // daria uma escala acima de 1 e a barra vazaria da calha.
+  timerTotal = Math.max(timerTotal, Math.ceil((timerFim - agora) / 1000));
+  timerAvisado = false;
+  const val = document.getElementById('tval');
+  if (val) val.classList.remove('zero');
+  if (!timer) timer = setInterval(pintaTimer, 250);
+  pintaTimer();
+  gravaDescanso();
+}
+
 function pintaTimer() {
   const val = document.getElementById('tval');
   const fill = document.getElementById('tfill');
   if (!val || !fill || !timerFim) return;
+  const ctx = document.getElementById('tctx');
+  if (ctx && ctx.textContent !== timerCtx) ctx.textContent = timerCtx;
 
   const restante = Math.max(0, timerFim - Date.now());
   fill.style.transform = 'scaleX(' + (restante / (timerTotal * 1000)) + ')';
@@ -3466,6 +3508,10 @@ function pintaTimer() {
 function ligaBotaoDoTimer() {
   const b = document.getElementById('tstop');
   if (b) b.addEventListener('click', function () { stopTimer(); });
+  const menos = document.getElementById('tmenos');
+  if (menos) menos.addEventListener('click', function () { ajustaTimer(-15); });
+  const mais = document.getElementById('tmais');
+  if (mais) mais.addEventListener('click', function () { ajustaTimer(15); });
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', ligaBotaoDoTimer);
@@ -3476,6 +3522,9 @@ if (document.readyState === 'loading') {
 function stopTimer() {
   if (timer) { clearInterval(timer); timer = null; }
   timerFim = 0; timerAvisado = false;
+  timerCtx = '';
+  const ctx = document.getElementById('tctx');
+  if (ctx) ctx.textContent = '';
   apagaDescanso();
   try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {}
   const box = document.getElementById('timer');

@@ -296,7 +296,7 @@ export function Exercicio({ vm, acoes }) {
           ? <button class="restlinha bi" onClick={() => acoes.proximoDoBiset(i)}>
               bi-set · ir para o próximo
             </button>
-          : <button class="restlinha" onClick={() => acoes.startTimer(vm.descanso)}>
+          : <button class="restlinha" onClick={() => acoes.startTimer(vm.descanso, 'descanso · ' + vm.nome)}>
               descanso <b>{vm.descansoTxt}</b>
             </button>}
 

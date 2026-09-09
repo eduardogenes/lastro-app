@@ -29,11 +29,13 @@ pesagens, nos perfis 320×640 · 360×800 · 375×667 · 390×844 · 412×915 ·
 | Coluna ANTERIOR | `div` inerte | botão de 44 px que registra a série |
 | Controles sem nome no cartão | 6 de 18 | **0** |
 | Controles sem nome no app inteiro | 8 | **0** |
-| Descanso após reload | perdido | religa com o tempo restante |
+| Descanso após reload | perdido | religa com o tempo restante e a procedência |
+| Saber de qual série é o descanso | não dizia | "descanso · série 2 · Chest press…" |
+| Esticar ou encurtar o descanso | só "parar" | `−15` e `+15`, alvo de 40 px |
 | Série digitada + app oculto em 250 ms | perdida | em disco |
 | Registrar 3 séries iguais | ~9 interações | **3 toques** |
 
-Suíte: **626 → 642 testes**, todos verdes. `tsc --noEmit` limpo. Build limpo.
+Suíte: **626 → 645 testes**, todos verdes. `tsc --noEmit` limpo. Build limpo.
 
 ## O que quebrei e consertei no caminho
 
@@ -80,7 +82,6 @@ pernas e os campos `w0_0` eram de outro exercício. A presença passou para HX.
 
 | Item | Severidade | Por que não mexi |
 |---|---|---|
-| **T-06** cronômetro sem contexto e sem ±30 s | P2 | Redesenha a barra `#timer`, que vive fora do Preact e repinta 4×/s. É mudança de forma, não correção de defeito: merece decisão de produto, não decisão de auditoria. |
 | **D-01** alvos abaixo de 46 px | P3 | **Nenhum viola a WCAG 2.5.8** — a varredura nos sete perfis não achou violação de norma. O que se viola é o padrão interno, e todos são controles de um toque, dentro da exceção que o DESIGN.md já prevê. |
 | `visualViewport` | — | Não há CTA fixo competindo com o teclado; esconder a tab bar no foco resolve. Complexidade sem problema medido. |
 | Fila de sincronização offline | — | Os dados são locais. Só a sincronização depende de rede, e ela já represa e tenta de novo. |

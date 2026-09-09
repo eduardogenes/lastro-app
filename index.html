@@ -54,10 +54,20 @@
      lista de carga e repetição não cabe na altura da tela.</p>
 </div>
 
+<!-- O cronômetro de descanso. Fica fora do #app de propósito: ele repinta 4×
+     por segundo, e redesenhar a árvore nesse ritmo roubaria o foco do campo
+     que está sendo preenchido no meio da série.
+     A linha de cima diz de ONDE veio este descanso — sem ela, o número flutua
+     sem referência depois de rolar a tela ou reabrir o app. -->
 <div id="timer">
-  <div id="tval">0:00</div>
-  <div id="tbar"><div id="tfill"></div></div>
-  <button id="tstop">parar</button>
+  <div id="tctx" class="ins-label"></div>
+  <div id="tlinha">
+    <div id="tval">0:00</div>
+    <div id="tbar"><div id="tfill"></div></div>
+    <button id="tmenos" aria-label="tirar 15 segundos do descanso">−15</button>
+    <button id="tmais" aria-label="somar 15 segundos ao descanso">+15</button>
+    <button id="tstop">parar</button>
+  </div>
 </div>
 
 <!-- Uma entrada só. Quem decide se esta janela é o aparelho ou a BANCADA onde
