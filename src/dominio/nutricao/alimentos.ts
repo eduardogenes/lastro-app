@@ -93,7 +93,7 @@ export const TURNOS: Array<{ k: Turno; n: string; t: string | null }> = [
 ];
 
 export const PLANO_BASE: Refeicao[] =[
-  { id: 'pre', t: '05:45', n: 'Pré-treino', tag: 'RÁPIDO E FUNCIONAL', quando: 'treino', nota: 'Carboidrato rápido antes de um treino após o jejum noturno. Volume baixo, digestão rápida. Uma fatia de pão, doce de leite e canela.', itens: [{ f: 'pao', q: 35 }, { f: 'docedeleite', q: 20 }, { f: 'canela', q: 1 }, { f: 'cafe', q: 200 }] },
+  { id: 'pre', t: '05:45', n: 'Pré-treino', tag: 'RÁPIDO E FUNCIONAL', quando: 'treino', nota: 'Carboidrato rápido antes de um treino após o jejum noturno. Volume baixo, digestão rápida. Uma fatia de pão, doce de leite e canela.', itens: [{ f: 'pao', q: 35 }, { f: 'docedeleite', q: 20 }, { f: 'canela', q: 1 }, { f: 'cafe', q: 200, caf: 1 }] },
   { id: 'treino', t: '06:15', n: 'Treino', tag: 'INTRA-TREINO', quando: 'treino', nota: 'Musculação 6h15–7h30. Nos dias de alta demanda entram 25 g de carboidrato na água.', itens: [{ f: 'agua', q: 600 }, { f: 'malto', q: 25, alta: true }] },
   { id: 'pos', t: '08:00', n: 'Café da manhã', tag: 'REFEIÇÃO FORTE', quando: 'sempre', nota: 'Quatro fontes de energia e proteína sem depender de fogão no trabalho.', itens: [{ f: 'cuscuz', q: 200 }, { f: 'frango', q: 70 }, { f: 'requeijao', q: 30 }, { f: 'leite', q: 250 }, { f: 'uva', q: 120 }] },
   { id: 'almoco', t: '12:30', n: 'Almoço', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'O kiwi entra diariamente junto de feijão, aveia e vegetais para elevar fibra e ajudar a regularidade intestinal.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'frango', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }, { f: 'kiwi', q: 100 }] },

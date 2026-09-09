@@ -36,7 +36,7 @@ export function Hoje({ ctx }) {
   const agora = useAgora();
   const {
     dia, plano, catalogo, diaHoje, comidaDoDia, alta, alvo, sessao, cadenciaTxt,
-    refs, posTreino, conflitos
+    refs, posTreino, movidas
   } = ctx.hoje();
   const registrado = totalRegistrado(plano, catalogo, comidaDoDia, diaHoje.cadencia === 'treino', alta);
 
@@ -90,11 +90,11 @@ export function Hoje({ ctx }) {
       </Secao>
 
       <Secao rotulo="o dia" nota="toque em ··· para editar">
-        {/* O app aponta o conflito e para por aí: mover a refeição para um
-            horário que ninguém prescreveu seria prescrever, e fundir duas
-            refeições seria pior. Quem decide é ele. */}
-        {conflitos.map(c => (
-          <div key={c.id} class="hj-conflito ins-provenance ins-amber">{c.txt}</div>
+        {/* Não é aviso: é a procedência de um horário que não bate com o
+            plano. A refeição que não cabia dentro do treino foi para depois
+            dele, e a tela diz isso em vez de deixar o número sem explicação. */}
+        {movidas.map(c => (
+          <div key={c.id} class="hj-conflito ins-provenance">{c.txt}</div>
         ))}
         <div>
           {refs.map((r, i) => {

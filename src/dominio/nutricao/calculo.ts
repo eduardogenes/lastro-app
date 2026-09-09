@@ -105,29 +105,96 @@ export function deslocamentoDoTurno(plano: Refeicao[], turno?: Turno | null): nu
   return alvo - minutosDe(treino.t);
 }
 
+/** Duração da sessão quando não há histórico para estimar. */
+export const DURACAO_PADRAO = 75;
+
+/**
+ * Quanto dura uma sessão, em minutos.
+ *
+ * Sai do histórico e não de uma constante: o app já sabe, e nada derivável é
+ * digitado. É a MEDIANA — uma sessão de 3 h que ele esqueceu de finalizar não
+ * pode arrastar a estimativa.
+ *
+ * A duração é a líquida, sem as pausas, então ela subestima o relógio de
+ * parede. Subestimar aqui é o lado seguro: empurra a refeição de menos, nunca
+ * de mais.
+ */
+export function duracaoDaSessao(durs: number[]): number {
+  const v = durs.filter(x => typeof x === 'number' && x > 0)
+                .map(x => Math.round(x / 60000))
+                .filter(x => x >= 20 && x <= 180)
+                .sort((a, b) => a - b);
+  if (!v.length) return DURACAO_PADRAO;
+  const meio = Math.floor(v.length / 2);
+  return v.length % 2 ? v[meio] : Math.round((v[meio - 1] + v[meio]) / 2);
+}
+
+/** A folga entre o fim da sessão e a refeição que foi empurrada para depois. */
+export const FOLGA_POS = 15;
+
+/** A partir daqui a cafeína não acompanha mais a refeição. Ele dorme às 23h. */
+export const CORTE_CAFEINA = 16 * 60;
+
 /**
  * As refeições de hoje, em ordem de relógio, já no turno escolhido.
  *
- * **Só o que é do treino anda.** `quando: 'treino'` já marcava exatamente as
- * duas refeições que existem por causa da sessão — o pré e o intra —, e são
- * elas que deslizam junto, mantendo o intervalo que o plano lhes deu. Café,
- * almoço, lanche e jantar são âncoras do RELÓGIO e ficam onde estão: deslocar
- * o dia inteiro em bloco poria o café da manhã às 14h.
+ * Três regras, e elas vieram da prescrição — não do app:
  *
- * O plano nunca é tocado — sai uma cópia. Editar é permanente, ajustar é de
- * hoje.
+ * 1. **O pré e o intra andam com a sessão**, mantendo o intervalo que o plano
+ *    lhes deu. `quando: 'treino'` já marcava exatamente essas duas.
+ * 2. **A refeição principal que cair DENTRO do treino é empurrada para logo
+ *    depois** — não antecipada, não fundida, não duplicada. Com treino às
+ *    12h15 o almoço não cabe às 12h30: ele passa a ser o pós-treino e vai para
+ *    depois da sessão. O mesmo vale para o jantar num treino de 18h15, que
+ *    termina por volta das 19h30.
+ * 3. **O resto fica onde está.** Deslocar o dia em bloco poria o café às 14h.
+ *
+ * Até a revisão com o nutricionista, o app só APONTAVA o choque e parava —
+ * mover seria escolher um horário que ninguém prescreveu. Com a regra
+ * prescrita, mover virou executar.
+ *
+ * O plano nunca é tocado: sai uma cópia. Editar é permanente, ajustar é de hoje.
  */
 export function refeicoesDeHoje(
   plano: Refeicao[],
   treino: boolean,
   alta: boolean,
-  turno?: Turno | null
+  turno?: Turno | null,
+  duracao: number = DURACAO_PADRAO
 ): Refeicao[] {
   const d = deslocamentoDoTurno(plano, turno);
-  return plano
+  const refs = plano
     .filter(r => refeicaoEntra(r, treino, alta))
-    .map(r => (d && r.quando === 'treino') ? { ...r, t: horaDe(minutosDe(r.t) + d) } : r)
-    .sort((a, b) => minutosDe(a.t) - minutosDe(b.t));
+    .map(r => (d && r.quando === 'treino')
+      ? { ...r, t: horaDe(minutosDe(r.t) + d), itens: r.itens.slice() }
+      : { ...r, itens: r.itens.slice() });
+
+  const sessao = refs.filter(r => r.id === 'treino')[0];
+  if (sessao) {
+    const ini = minutosDe(sessao.t);
+    const fim = ini + duracao;
+    refs.forEach(r => {
+      if (r.quando === 'treino') return;
+      const t = minutosDe(r.t);
+      // começa depois do treino começar e antes de a sessão ter acabado com
+      // folga: não dá para comer no meio do treino
+      if (t > ini && t < fim + FOLGA_POS) {
+        r.t = horaDe(fim + FOLGA_POS);
+        r.movida = 1;
+      }
+    });
+  }
+
+  // A cafeína não acompanha o pré para a tarde nem para a noite. Ela não some
+  // do plano — deixa de entrar NESTE dia, do mesmo jeito que um item de alta
+  // demanda não entra num dia comum.
+  refs.forEach(r => {
+    if (minutosDe(r.t) >= CORTE_CAFEINA) {
+      r.itens = r.itens.filter(i => !i.caf);
+    }
+  });
+
+  return refs.sort((a, b) => minutosDe(a.t) - minutosDe(b.t));
 }
 
 /**
@@ -151,27 +218,15 @@ export function posTreinoDe(refs: Refeicao[], treinando: boolean): string | null
 }
 
 /**
- * Refeição de relógio que caiu DENTRO da sessão.
+ * As refeições que foram empurradas para depois do treino de hoje.
  *
- * Com treino às 12h15 e almoço às 12h30 no plano, o almoço acontece durante o
- * treino. O app aponta e para por aí: mover a refeição para um horário que
- * ninguém prescreveu seria prescrever, e fundir duas seria pior. Quem decide é
- * ele, editando o plano ou ignorando.
- *
- * 60 minutos é piso de detecção, não duração prescrita: é o mínimo que uma
- * sessão de musculação ocupa, e usar mais acusaria conflito onde não há.
+ * Isto substituiu a detecção de conflito. Antes o app apontava o choque e
+ * parava — mover seria escolher um horário que ninguém prescreveu. Agora a
+ * regra está prescrita, o horário sai dela, e o que a tela diz não é mais um
+ * aviso: é a procedência de um número que não bate com o plano.
  */
-export const PISO_DA_SESSAO = 60;
-
-export function conflitosDeTurno(refs: Refeicao[], treinando: boolean): string[] {
-  if (!treinando) return [];
-  const t = refs.filter(r => r.id === 'treino')[0];
-  if (!t) return [];
-  const ini = minutosDe(t.t);
-  return refs
-    .filter(r => r.quando !== 'treino')
-    .filter(r => minutosDe(r.t) > ini && minutosDe(r.t) < ini + PISO_DA_SESSAO)
-    .map(r => r.id);
+export function refeicoesMovidas(refs: Refeicao[]): Refeicao[] {
+  return refs.filter(r => r.movida === 1);
 }
 
 /** Resumo de uma linha: "120 g banana · 15 g mel · 200 ml café". */

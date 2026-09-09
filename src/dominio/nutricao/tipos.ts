@@ -45,6 +45,15 @@ export type Turno = 'manha' | 'tarde' | 'noite';
 
 /** Um item dentro de uma refeição. */
 export interface Item {
+  /**
+   * 1 quando o item é fonte de CAFEÍNA.
+   *
+   * Existe porque o café viajava junto com o pré-treino: num treino às 18h15
+   * ele iria para as 17h45, e ele dorme por volta das 23h. A prescrição é
+   * manter a cafeína de manhã — então o item não acompanha o pré quando o pré
+   * cai na tarde ou na noite.
+   */
+  caf?: 1;
   /** id do alimento */
   f: string;
   /** quantidade na unidade do alimento */
@@ -65,6 +74,13 @@ export interface Refeicao {
   quando: Quando;
   nota?: string;
   itens: Item[];
+  /**
+   * 1 quando esta refeição foi EMPURRADA para depois do treino de hoje.
+   *
+   * Marca de runtime — sai de `refeicoesDeHoje`, nunca do plano gravado. A
+   * tela a usa para dizer por que o horário não é o prescrito.
+   */
+  movida?: 1;
 }
 
 /** O que uma refeição soma. */

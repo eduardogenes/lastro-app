@@ -950,7 +950,8 @@ dizendo 05:45 e 06:15, e zera sozinho na virada da data.
 | | |
 |---|---|
 | **Âncora do treino** | pré-treino e intra — deslizam junto, mantendo o intervalo que o plano lhes deu |
-| **Âncora do relógio** | café, almoço, lanche, jantar — ficam onde estão |
+| **Âncora do relógio** | café, almoço, lanche, jantar — ficam onde estão… |
+| **…exceto a que não cabe** | a refeição principal que cair DENTRO da sessão é empurrada para logo depois |
 
 A distinção já existia no dado: `quando: 'treino'` marca exatamente as duas
 refeições que existem por causa da sessão. Não foi preciso inventar campo.
@@ -971,17 +972,38 @@ nome corta com reticências e o papel é justamente o que não pode ser cortado.
 A migração 7 → 8 tirou a metade calculada do nome salvo, comparando com a string
 exata da época e deixando em paz um nome que ele já tivesse trocado.
 
-### Conflito se aponta, não se resolve
+### A refeição que não cabe dentro do treino
 
-Com treino às 12h15, o almoço das 12h30 acontece **dentro** da sessão. O app
-escreve isso em âmbar e para por aí. Mover a refeição para um horário que
-ninguém prescreveu seria prescrever; fundir duas seria pior; criar uma sétima
-seria pior ainda. Quem decide é ele, editando o plano ou ignorando.
+Com treino às 12h15, o almoço das 12h30 acontece **dentro** da sessão. A
+primeira versão do app apenas APONTAVA o choque e parava: mover a refeição para
+um horário que ninguém prescreveu seria prescrever.
 
-`PISO_DA_SESSAO` são 60 minutos, e é **piso de detecção, não duração
-prescrita**: é o mínimo que uma sessão ocupa, e um número maior acusaria
-conflito onde não há — o jantar das 19h30 com treino às 18h15 está 75 min
-depois, e está certo.
+A revisão com o nutricionista mudou isso, e é a diferença entre prescrever e
+executar — **a regra passou a ser prescrita**:
+
+> pré: sessão − 30 min · intra: durante a sessão · **refeição principal que
+> cair dentro do treino: mover para logo depois** · demais refeições: manter.
+
+Então o almoço vai para depois da sessão e vira o pós-treino. Não se antecipa,
+não se funde, não se cria uma sétima refeição.
+
+O horário sai de `fim da sessão + FOLGA_POS` (15 min), e o fim da sessão precisa
+de uma **duração**. Ela não é constante: sai da mediana das últimas 30 sessões
+registradas — o app já sabe, e nada derivável é digitado. Mediana e não média,
+porque uma sessão de dez horas que ele esqueceu de finalizar não pode arrastar a
+estimativa; e é a duração LÍQUIDA, sem pausas, o que a faz subestimar o relógio
+de parede — subestimar aqui é o lado seguro, empurra de menos e nunca de mais.
+
+Com 75 min: almoço às 13h45 num treino de 12h15, jantar às 19h45 num de 18h15.
+O café das 8h nunca é empurrado, porque a sessão da manhã acaba antes.
+
+### A cafeína não viaja para a noite
+
+O café mora dentro do pré-treino, e o pré anda com a sessão — então num treino
+de 18h15 ele iria para as 17h45, e ele dorme por volta das 23h. O item leva
+`caf: 1` e não entra em refeição que caia depois das 16h. Não some do plano:
+deixa de entrar NAQUELE dia, do mesmo jeito que um item de alta demanda não
+entra num dia comum.
 
 ### O que o app deliberadamente não faz
 

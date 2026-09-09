@@ -52,8 +52,8 @@ test('escolher o turno reordena o diário', async () => {
   const linhas = a.$$('.ins-tl-hora, .tl-hora').map(e => e.textContent.trim());
   const ordem = a.J('CTX.hoje().refs.map(function(r){return r.t+" "+r.id})');
   assert.deepStrictEqual(ordem, [
-    '08:00 pos', '12:30 almoco', '16:00 lanche', '17:45 pre', '18:15 treino', '19:30 jantar'
-  ], 'o pré e o treino andam; o café continua às 8h');
+    '08:00 pos', '12:30 almoco', '16:00 lanche', '17:45 pre', '18:15 treino', '19:45 jantar'
+  ], 'o pré e o treino andam, o café fica às 8h, e o jantar sai de dentro da sessão');
   assert.ok(linhas.length === 0 || linhas.length === 6);
   a.fechar();
 });
@@ -86,15 +86,18 @@ test('o turno é ajuste de HOJE: o plano não se move', async () => {
   a.fechar();
 });
 
-test('o almoço caindo dentro do treino é apontado, não movido', async () => {
+test('o almoço que não cabe no treino vai para depois dele', async () => {
   const a = await noHoje();
   await abreFolha(a);
-  a.clicar(a.$$('.fd-turno-op')[1]);          // tarde: treino 12:15, almoço 12:30
+  a.clicar(a.$$('.fd-turno-op')[1]);          // tarde: treino 12:15
   await a.esperar();
-  const aviso = a.texto('.hj-conflito');
-  assert.ok(aviso && /Almoço/.test(aviso) && /dentro do treino/.test(aviso), aviso);
   assert.strictEqual(a.J('CTX.hoje().refs.filter(function(r){return r.id==="almoco"})[0].t'),
-    '12:30', 'o app não escolhe um horário que ninguém prescreveu');
+    '13:45', 'não se antecipa o almoço nem se come no meio do treino');
+  const nota = a.texto('.hj-conflito');
+  assert.ok(nota && /Almoço foi para as 13:45/.test(nota),
+    'não é aviso: é a procedência de um horário que não bate com o plano — ' + nota);
+  assert.strictEqual(a.J('CTX.hoje().posTreino'), 'almoco',
+    'e é ele que carrega o papel de pós-treino');
   a.fechar();
 });
 

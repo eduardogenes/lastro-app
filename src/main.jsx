@@ -37,7 +37,7 @@ import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from '
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
 import {
   arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia,
-  refeicoesDeHoje, posTreinoDe, conflitosDeTurno,
+  refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao,
   fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico,
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
 } from './dominio/nutricao/calculo';
@@ -1742,6 +1742,17 @@ function fechaDiaDeComida(dia) {
 }
 
 /**
+ * Quanto dura uma sessão dele, em minutos.
+ *
+ * Derivado das últimas sessões registradas — o app já sabe, e nada derivável é
+ * digitado. É o que decide se uma refeição cai dentro do treino: com 75 min, o
+ * jantar das 19h30 não cabe num treino que começa às 18h15.
+ */
+function duracaoDoTreino() {
+  return duracaoDaSessao(S.done.slice(-30).map(function (x) { return x.dur; }));
+}
+
+/**
  * O carimbo da versão do plano.
  *
  * Nasce na primeira leitura e é reescrito toda vez que o plano ou a tabela de
@@ -1863,8 +1874,8 @@ const CTX = {
     const prescritas = P ? P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0) : 0;
     const feitas = h.treino ? seriesFeitasHoje(h.treino) : 0;
 
-    const refs = refeicoesDeHoje(plano, treinando, alta, dia.turno);
-    const conflitos = conflitosDeTurno(refs, treinando);
+    const refs = refeicoesDeHoje(plano, treinando, alta, dia.turno, duracaoDoTreino());
+    const movidas = refeicoesMovidas(refs);
 
     return {
       diaHoje: h,
@@ -1878,11 +1889,10 @@ const CTX = {
       // Quem carrega o papel de pós-treino hoje — calculado, nunca gravado.
       posTreino: posTreinoDe(refs, treinando),
       turno: dia.turno || 'manha',
-      // Refeição de relógio que caiu dentro da sessão. O app aponta e para:
-      // mover para um horário que ninguém prescreveu seria prescrever.
-      conflitos: conflitos.map(function (id) {
-        const r = refs.filter(function (x) { return x.id === id; })[0];
-        return { id: id, txt: (r ? r.n + ' às ' + r.t : id) + ' cai dentro do treino' };
+      // A refeição que não cabia dentro do treino e foi para depois dele. Não é
+      // aviso: é a procedência de um horário que não bate com o plano.
+      movidas: movidas.map(function (r) {
+        return { id: r.id, txt: r.n + ' foi para as ' + r.t + ', depois do treino' };
       }),
       alvo: totalDoDia(plano, cat, treinando, alta, {}),
       cadenciaTxt:
@@ -4258,7 +4268,7 @@ CTX.seletorDeDia = function () {
   const dia = diaDeComida();
   const plano = planoDeComida();
   const doPlano = plano.filter(function (r) { return r.id === 'treino'; })[0];
-  const refs = refeicoesDeHoje(plano, h.cadencia === 'treino', !!dia.alta, dia.turno);
+  const refs = refeicoesDeHoje(plano, h.cadencia === 'treino', !!dia.alta, dia.turno, duracaoDoTreino());
   const pos = posTreinoDe(refs, h.cadencia === 'treino');
   const nomeDe = function (id) {
     const r = refs.filter(function (x) { return x.id === id; })[0];
@@ -4273,7 +4283,7 @@ CTX.seletorDeDia = function () {
     turnos: TURNOS.map(function (x) {
       // `manha` não tem hora própria: a hora é a do plano, seja qual for.
       const hora = x.t || (doPlano ? doPlano.t : '06:15');
-      const sim = refeicoesDeHoje(plano, true, !!dia.alta, x.k);
+      const sim = refeicoesDeHoje(plano, true, !!dia.alta, x.k, duracaoDoTreino());
       const idPos = posTreinoDe(sim, true);
       const ref = idPos ? sim.filter(function (r) { return r.id === idPos; })[0] : null;
       return { k: x.k, n: x.n, hora: hora, on: (dia.turno || 'manha') === x.k,

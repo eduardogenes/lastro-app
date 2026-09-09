@@ -9,7 +9,8 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { PLANO_BASE, TURNOS } from '../../src/dominio/nutricao/alimentos';
 import {
-  conflitosDeTurno, deslocamentoDoTurno, horaDe, posTreinoDe, refeicoesDeHoje
+  DURACAO_PADRAO, deslocamentoDoTurno, duracaoDaSessao, horaDe, posTreinoDe,
+  refeicoesDeHoje, refeicoesMovidas
 } from '../../src/dominio/nutricao/calculo';
 
 const emTurno = (t?: 'manha' | 'tarde' | 'noite') =>
@@ -34,14 +35,65 @@ test('manhã é o plano como está escrito', () => {
   ]);
 });
 
-test('só o pré e o intra andam; o resto fica no relógio', () => {
-  assert.deepStrictEqual(horas('tarde'), [
-    '08:00 pos', '11:45 pre', '12:15 treino', '12:30 almoco', '16:00 lanche', '19:30 jantar'
-  ], 'o café continua às 8h — deslocar o dia em bloco o poria às 14h');
+test('o pré e o intra andam; o resto fica no relógio', () => {
+  assert.deepStrictEqual(horas('tarde').slice(0, 3), ['08:00 pos', '11:45 pre', '12:15 treino'],
+    'o café continua às 8h — deslocar o dia em bloco o poria às 14h');
+  assert.deepStrictEqual(horas('noite').slice(0, 3), ['08:00 pos', '12:30 almoco', '16:00 lanche']);
+});
 
+// ---------- a refeição que não cabe dentro do treino ----------
+// Regra prescrita depois da revisão: a principal que cair DENTRO da sessão é
+// empurrada para logo depois — não antecipada, não fundida, não duplicada.
+
+test('o almoço não cabe num treino de 12h15 e vai para depois dele', () => {
+  assert.deepStrictEqual(horas('tarde'), [
+    '08:00 pos', '11:45 pre', '12:15 treino', '13:45 almoco', '16:00 lanche', '19:30 jantar'
+  ], 'o almoço passa a ser o pós-treino, e não se antecipa');
+  const movidas = refeicoesMovidas(emTurno('tarde'));
+  assert.deepStrictEqual(movidas.map(r => r.id), ['almoco']);
+});
+
+test('o jantar também não cabe num treino de 18h15, que termina lá pelas 19h30', () => {
   assert.deepStrictEqual(horas('noite'), [
-    '08:00 pos', '12:30 almoco', '16:00 lanche', '17:45 pre', '18:15 treino', '19:30 jantar'
+    '08:00 pos', '12:30 almoco', '16:00 lanche', '17:45 pre', '18:15 treino', '19:45 jantar'
   ]);
+  assert.deepStrictEqual(refeicoesMovidas(emTurno('noite')).map(r => r.id), ['jantar']);
+});
+
+test('de manhã nada é empurrado: o café das 8h já está fora da sessão', () => {
+  assert.deepStrictEqual(refeicoesMovidas(emTurno('manha')), []);
+});
+
+test('a sessão mais longa empurra mais', () => {
+  const curto = refeicoesDeHoje(PLANO_BASE, true, false, 'tarde', 45);
+  const longo = refeicoesDeHoje(PLANO_BASE, true, false, 'tarde', 105);
+  assert.strictEqual(curto.find(r => r.id === 'almoco')!.t, '13:15');
+  assert.strictEqual(longo.find(r => r.id === 'almoco')!.t, '14:15');
+});
+
+test('a duração sai do histórico, e a mediana protege do esquecido', () => {
+  assert.strictEqual(duracaoDaSessao([]), DURACAO_PADRAO, 'sem histórico, o padrão');
+  const M = 60000;
+  assert.strictEqual(duracaoDaSessao([60 * M, 70 * M, 80 * M]), 70);
+  assert.strictEqual(duracaoDaSessao([60 * M, 70 * M, 80 * M, 600 * M]), 70,
+    'a sessão de 10 h que ele esqueceu de finalizar não arrasta a estimativa');
+});
+
+// ---------- a cafeína ----------
+
+test('o café não acompanha o pré para a noite', () => {
+  const temCafe = (t: 'manha' | 'tarde' | 'noite') =>
+    emTurno(t).find(r => r.id === 'pre')!.itens.some(i => i.f === 'cafe');
+  assert.strictEqual(temCafe('manha'), true, 'às 5h45 ele toma café');
+  assert.strictEqual(temCafe('tarde'), true, 'às 11h45 ainda não atrapalha o sono das 23h');
+  assert.strictEqual(temCafe('noite'), false,
+    'às 17h45 sim: a prescrição é manter a cafeína de manhã no treino noturno');
+});
+
+test('tirar a cafeína não toca no plano', () => {
+  emTurno('noite');
+  const pre = PLANO_BASE.find(r => r.id === 'pre')!;
+  assert.ok(pre.itens.some(i => i.f === 'cafe'), 'o item continua no plano');
 });
 
 test('o pré mantém o intervalo que o plano lhe deu', () => {
@@ -66,7 +118,8 @@ test('o plano nunca é tocado — sai uma cópia', () => {
 
 test('o papel de pós-treino migra com o turno', () => {
   assert.strictEqual(posTreinoDe(emTurno('manha'), true), 'pos', 'de manhã é o café');
-  assert.strictEqual(posTreinoDe(emTurno('tarde'), true), 'almoco', 'à tarde é o almoço');
+  assert.strictEqual(posTreinoDe(emTurno('tarde'), true), 'almoco',
+    'à tarde é o almoço, agora empurrado para depois da sessão');
   assert.strictEqual(posTreinoDe(emTurno('noite'), true), 'jantar', 'à noite é o jantar');
 });
 
@@ -84,17 +137,7 @@ test('o número de refeições não muda com o turno', () => {
     'nada é criado e nada é apagado — fundir ou inventar refeição seria prescrever');
 });
 
-test('refeição que cai dentro da sessão é apontada, não movida', () => {
-  // almoço 12:30 com treino 12:15: acontece durante o treino
-  const tarde = emTurno('tarde');
-  assert.deepStrictEqual(conflitosDeTurno(tarde, true), ['almoco']);
-  assert.strictEqual(tarde.find(r => r.id === 'almoco')!.t, '12:30',
-    'o app aponta e para: mover para um horário que ninguém prescreveu seria prescrever');
 
-  assert.deepStrictEqual(conflitosDeTurno(emTurno('manha'), true), []);
-  assert.deepStrictEqual(conflitosDeTurno(emTurno('noite'), true), [],
-    'jantar 19:30 é 75 min depois do treino das 18:15 — não é conflito');
-});
 
 test('a hora dá a volta no dia sem estourar', () => {
   assert.strictEqual(horaDe(0), '00:00');
