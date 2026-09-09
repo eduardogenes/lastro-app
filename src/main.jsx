@@ -3377,7 +3377,28 @@ function poeMedida(i, u, qTexto) {
   projeta(i);
   queueSave();
   if (u !== undefined) { view.medida = null; render(); }
-  else atualizaEstado();
+  else { atualizaEstado(); atualizaPrescricao(i); }
+}
+
+/**
+ * Reescreve a prescrição no cabeçalho do cartão, sem re-render.
+ *
+ * Mesma escapatória de `atualizaEstado()`, e pelo mesmo motivo: um `render()`
+ * a cada tecla reescreveria `value` a partir do estado, e "5," viraria "5" no
+ * meio da digitação — o campo é controlado e o número ainda não terminou de
+ * ser escrito. Sem isto o cabeçalho dizia `1 × 20 reps` enquanto o campo já
+ * mostrava 30, e as duas coisas ficavam na tela ao mesmo tempo.
+ */
+function atualizaPrescricao(i) {
+  const el = document.getElementById('presc' + i);
+  if (!el) return;
+  const ex = treino(view.day).ex[i];
+  if (!ex) return;
+  const un = unidadeDe(ex);
+  const ns = setsFor(ex);
+  el.textContent = un && ex.q > 0
+    ? ns + ' × ' + fmtInt(ex.q) + ' ' + ROTULO_UNIDADE[un]
+    : ns + (ex.r ? ' × ' + ex.r : '');
 }
 
 /** Número de um campo livre: vírgula vale ponto, e vazio é ausência. */

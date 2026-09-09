@@ -318,7 +318,9 @@ export function Exercicio({ vm, acoes }) {
             {/* Num movimento com grandeza, o que o box passou É a prescrição:
                 "5 × 500 m". Sem ela o cartão dizia só "5", que não é nada — nem
                 se sabia de que 5 se tratava. */}
-            <span>{vm.series}{vm.prescricao ? ' × ' + vm.prescricao
+            {/* id: atualizaPrescricao() escreve aqui enquanto ele digita a
+                quantidade, sem re-render — o porquê está em main.jsx. */}
+            <span id={`presc${i}`}>{vm.series}{vm.prescricao ? ' × ' + vm.prescricao
                               : vm.faixa ? ' × ' + vm.faixa : ''}</span>
             {/* RIR não se aplica a exercício medido por tempo: "isolador ·
                 última pode ir a 0–1" num remo de 1000 m é linguagem de

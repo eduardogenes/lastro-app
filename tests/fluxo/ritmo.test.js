@@ -212,3 +212,23 @@ test('exercício cadastrado por ele pode declarar grandeza', async () => {
   assert.strictEqual(a.E('treino("HX").ex[0].u'), 'rep', 'e entra no dia já medido certo');
   a.fechar();
 });
+
+test('o cabeçalho acompanha a quantidade enquanto ele digita', async () => {
+  const a = await app({});
+  a.aba('treino');
+  a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
+  a.E('view.day="HX"');
+  a.E('addExercicio("remo-ergometro")');
+  await a.esperar(50);
+  a.E('view.open=0'); a.E('abrirMedida(0)');
+  await a.esperar();
+  assert.strictEqual(a.texto('#presc0'), '1 × 1.000 m');
+
+  // digitar não re-renderiza — o campo é controlado e "5," viraria "5" no meio
+  // da digitação. Quem mantém o cabeçalho honesto é a escrita direta.
+  a.digitar('q0', '500');
+  await a.esperar();
+  assert.strictEqual(a.texto('#presc0'), '1 × 500 m',
+    'o cabeçalho dizia 1.000 enquanto o campo já mostrava 500');
+  a.fechar();
+});
