@@ -37,15 +37,43 @@ function Cabecalho({ vm }) {
   );
 }
 
-/** Uma linha de série: número, o que foi feito da última vez, e os três campos. */
+/**
+ * Uma linha de série: número, o que foi feito da última vez, e os três campos.
+ *
+ * ---- Os nomes acessíveis ----
+ *
+ * Os campos não têm rótulo visível: quem rotula é o cabeçalho da tabela, que é
+ * desenho (`div`), não semântica. Para o VoiceOver isto era o cartão mais usado
+ * do produto virando seis campos de texto idênticos, sem dizer nem a grandeza
+ * nem a série. Cada um leva o `aria-label` inteiro — "carga da série 2, kg" —
+ * porque é ele que é lido no lugar do rótulo que não existe.
+ *
+ * ---- A coluna ANTERIOR é tocável ----
+ *
+ * Era um `div` inerte, e mostrava exatamente o que ia ser digitado. Virou botão
+ * que preenche a série. Continua parecendo texto de propósito: ela é referência
+ * primeiro e atalho depois, e um botão desenhado como botão pediria atenção que
+ * a linha não tem para dar. Sem histórico ela volta a ser um traço inerte —
+ * não há o que copiar.
+ */
 function Linha({ i, k, linha, vm, acoes }) {
+  const unidade = vm.seg ? 'segundos' : 'repetições';
   return (
     <div class="setrow">
       <div class="setno">{k + 1}</div>
-      <div class="setant">{linha.antes || '–'}</div>
+      {linha.temAnterior ? (
+        <button
+          class="setant setant-b"
+          aria-label={`repetir a série ${k + 1} anterior: ${linha.antes}`}
+          onClick={() => acoes.usaAnterior(i, k)}
+        >{linha.antes}</button>
+      ) : (
+        <div class="setant">–</div>
+      )}
       <div class="f">
         <input
           type="text" inputmode="decimal" id={`w${i}_${k}`}
+          aria-label={`carga da série ${k + 1}, ${vm.unidade}`}
           value={linha.valor[0] != null ? linha.valor[0] : ''}
           onInput={e => acoes.inp(e.currentTarget, i, k, 0)}
         />
@@ -53,6 +81,7 @@ function Linha({ i, k, linha, vm, acoes }) {
       <div class="f">
         <input
           type="text" inputmode="numeric" id={`r${i}_${k}`}
+          aria-label={`${unidade} da série ${k + 1}`}
           value={linha.valor[1] != null ? linha.valor[1] : ''}
           onInput={e => acoes.inp(e.currentTarget, i, k, 1)}
         />
@@ -63,6 +92,9 @@ function Linha({ i, k, linha, vm, acoes }) {
         class={'rirbtn' + (linha.rirAberto ? ' on' : '') +
                (linha.valor[2] == null ? ' vazio' : '')}
         id={`q${i}_${k}`}
+        aria-label={linha.valor[2] != null
+          ? `repetições na reserva da série ${k + 1}: ${linha.valor[2]}`
+          : `definir repetições na reserva da série ${k + 1}`}
         onClick={() => acoes.abreRir(i, k)}
       >{linha.valor[2] != null ? linha.valor[2] : '·'}</button>
     </div>

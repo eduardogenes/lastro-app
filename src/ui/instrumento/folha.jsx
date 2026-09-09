@@ -41,6 +41,37 @@ function destrava() {
 }
 
 /**
+ * Torna inerte tudo que não é a folha, e devolve a função que desfaz.
+ *
+ * `aria-modal="true"` DESCREVE a intenção; quem impede o foco de vazar é o
+ * `inert`. Sem ele, medido: 39 elementos continuavam tabuláveis atrás da folha
+ * e três Tabs saíam dela para a página de baixo.
+ *
+ * Recebe o INVÓLUCRO da folha e marca os irmãos dele — cabeçalho, `main` e tab
+ * bar, todos filhos de `#app`, porque a folha não usa portal e mora na mesma
+ * árvore. O véu fica de fora, dentro do invólucro, senão tocar nele para fechar
+ * pararia de funcionar.
+ *
+ * O que já estiver inerte é deixado como está: com duas folhas empilhadas, a de
+ * cima não pode desmarcar, ao fechar, o que a de baixo marcou.
+ */
+function isolaOResto(folha) {
+  if (!folha || !folha.parentElement) return function () {};
+  const marcados = [];
+  [].slice.call(folha.parentElement.children).forEach(function (el) {
+    if (el === folha || el.hasAttribute('inert')) return;
+    // O ATRIBUTO, e não a propriedade: os dois ligam o mesmo comportamento no
+    // navegador, mas só o atributo é consultável por seletor — e é assim que o
+    // teste cobra que o fundo ficou isolado de verdade.
+    el.setAttribute('inert', '');
+    marcados.push(el);
+  });
+  return function () {
+    marcados.forEach(function (el) { el.removeAttribute('inert'); });
+  };
+}
+
+/**
  * @param {object} p
  * @param {string} p.olho        sobrancelha do cabeçalho fixo
  * @param {string} p.titulo      título de 24px
@@ -52,10 +83,36 @@ function destrava() {
  */
 export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao, children }) {
   const corpo = useRef(null);
+  const caixa = useRef(null);
 
   useEffect(() => {
     trava();
     return destrava;
+  }, []);
+
+  /**
+   * Foco: entra ao abrir, volta ao fechar.
+   *
+   * A folha recebe o foco ela mesma (`tabindex="-1"`), e não o primeiro botão
+   * de dentro: o primeiro botão costuma ser o `×`, e mandar o leitor de tela
+   * anunciar "fechar" antes do título diria a coisa errada sobre o que acabou
+   * de abrir. É o mesmo que `TelaCheia` já faz com o `h1`.
+   *
+   * Devolver o foco ao acionador é o que impede o cursor de ficar perdido no
+   * começo da página depois de fechar — WCAG 2.2 SC 2.4.3.
+   */
+  useEffect(() => {
+    const acionador = document.activeElement;
+    if (caixa.current) caixa.current.focus({ preventScroll: true });
+    const solta = isolaOResto(caixa.current && caixa.current.parentElement);
+    return () => {
+      solta();
+      // Só devolve se o acionador ainda estiver na página: uma folha que fecha
+      // porque o que a abriu sumiu não tem para onde voltar.
+      if (acionador && acionador.isConnected && acionador.focus) {
+        acionador.focus({ preventScroll: true });
+      }
+    };
   }, []);
 
   // Escape fecha — vale no Safari de desktop e para teclado externo no iPad.
@@ -75,7 +132,8 @@ export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao
       {/* Tocar no véu fecha. O véu é irmão da folha, não pai: pai capturaria
           o toque que sobe de dentro dela. */}
       <div class="ins-veu" onClick={aoFechar} />
-      <div class="ins-folha" role="dialog" aria-modal="true" aria-label={titulo}>
+      <div class="ins-folha" role="dialog" aria-modal="true" aria-label={titulo}
+           ref={caixa} tabindex="-1">
         <div class="ins-folha-h">
           <div class="ins-folha-h-txt">
             {olho && <div class="ins-label">{olho}</div>}

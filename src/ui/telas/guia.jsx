@@ -177,12 +177,12 @@ export function Guia({ ctx }) {
           >
             <input
               class="ins-input gu-campo" type="email" id="nvemail" autocomplete="username"
-              placeholder="e-mail" value={n.email}
+              aria-label="e-mail da conta" placeholder="e-mail" value={n.email}
               onInput={e => ctx.nuvemCampo('email', e.currentTarget.value)}
             />
             <input
               class="ins-input gu-campo" type="password" id="nvsenha" autocomplete="current-password"
-              placeholder="senha" value={n.senha}
+              aria-label="senha da conta" placeholder="senha" value={n.senha}
               onInput={e => ctx.nuvemCampo('senha', e.currentTarget.value)}
             />
             {n.erro && <p class="ins-body-sm ins-amber gu-bloco-p">{n.erro}</p>}

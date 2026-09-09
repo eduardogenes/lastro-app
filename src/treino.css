@@ -153,6 +153,23 @@
   font: 400 11px/1.3 var(--ins-font-mono); color: var(--ins-text-4);
   letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+/* A coluna ANTERIOR virou botão: tocá-la copia a série para os campos.
+   Continua parecendo texto — ela é REFERÊNCIA primeiro e atalho depois, e um
+   botão desenhado como botão pediria uma atenção que a linha não tem para dar.
+   O que denuncia o toque é o estado apertado, que é onde a afordância cabe sem
+   custar peso visual.
+   Alvo: a linha inteira já tem 44px de altura (`.setrow` alinha com o campo),
+   e o botão a ocupa toda — o alvo é a célula, não o texto dentro dela. */
+.setant-b {
+  display: block; width: 100%; min-height: 44px;
+  text-align: left; background: none; border: 0; padding: 0;
+  /* NÃO redeclara `font` nem `color`: o elemento também é `.setant`, e é de lá
+     que vêm os 11px em mono no nível 4. Um `font: inherit` aqui ganharia do
+     `.setant` por vir depois na cascata com a mesma especificidade, e a coluna
+     saltava para o tamanho do texto da linha. */
+}
+.setant-b:active { color: var(--ins-acid); }
+
 .f { position: relative; }
 
 /* O cabeçalho existe porque a linha tem quatro colunas — sem rótulo, o

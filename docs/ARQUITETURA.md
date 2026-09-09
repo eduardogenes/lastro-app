@@ -13,6 +13,7 @@ O [README](../README.md) cobre o uso; aqui está o porquê das decisões.
 - [Migrações](#migrações)
 - [Camada de storage](#camada-de-storage)
 - [Fotos: as do aparelho e as do corpo](#fotos-as-do-aparelho-e-as-do-corpo)
+- [O Voltar do sistema](#o-voltar-do-sistema)
 - [Registro contínuo](#registro-contínuo)
 - [Ciclo da sessão](#ciclo-da-sessão)
 - [Tipo de carga](#tipo-de-carga)
@@ -397,6 +398,22 @@ O modo `mem` não é decoração: Safari em navegação privada e `file://` trav
 recusam `localStorage`, e nesses casos o app tem que continuar funcionando até
 o fim da sessão em vez de morrer no boot.
 
+**As chaves, e por que nem tudo mora em `S`:**
+
+| Chave | O que guarda |
+|---|---|
+| `lastro-v1` | o estado, e é o que sincroniza |
+| `treino-eduardo-v1` | o legado, fundido e apagado no boot |
+| `lastro-nuvem-v1` | a sessão da nuvem — é DO APARELHO |
+| `lastro-descanso-v1` | o descanso em curso — também do aparelho |
+
+O descanso ficou de fora de `S` de propósito: um cronômetro correndo é do
+aparelho e do momento, não do histórico. Dentro de `S` ele iria junto na
+sincronização, e o outro aparelho herdaria uma contagem que ninguém ligou lá.
+O que se grava é o instante-alvo — o mesmo número com que o cronômetro já era
+escrito para sobreviver à tela apagada; sobreviver ao processo passou a ser
+lê-lo de outro lugar no boot.
+
 **Abrir o `index.html` direto por `file://` deixou de funcionar** com a
 mudança para módulos ES — o navegador recusa módulo por `file://`. Era uma
 propriedade real do arquivo único e foi perdida de propósito, porque o caminho
@@ -611,6 +628,52 @@ volta. Quando `v` empata, vence o `enq.m` maior. E `resumo.ajustesCorpo` conta o
 recortes que só existem deste lado — é o que obriga a empurrar depois de uma
 fusão que, no resto, não trouxe nada. Refazer a foto (um `v` maior) descarta o
 recorte junto, que é o certo: ele era do enquadramento velho.
+
+---
+
+## O Voltar do sistema
+
+Não entrou router, e continua não fazendo falta: são cinco destinos e nenhuma
+URL para compartilhar. O que fazia falta era **histórico**.
+
+O app nunca chamava `pushState`, então `history.length` ficava em 2 para sempre.
+No Android — onde o Voltar é botão e é gesto — e no gesto de borda do Safari, o
+primeiro Voltar em qualquer ponto FECHAVA O APP: com folha aberta, no meio de
+uma série, dentro do editor de programa. Medido, não suposto.
+
+`src/ui/navegacao.js` resolve isso sem inventar rota. A regra é uma só:
+
+> o histórico tem a mesma PROFUNDIDADE que a pilha de camadas abertas.
+
+**A pilha é derivada, não escrita.** `camadasAbertas(view)` lê `view` na mesma
+ordem de prioridade de `telaCheia()`, mais as folhas por cima. Quem abre uma
+camada continua só ligando a flag; quem fecha, só desligando. Nenhum caminho de
+abertura ou fechamento foi reescrito, e não existe um segundo estado capaz de
+divergir do primeiro — que é o defeito clássico desta classe de solução.
+
+`render()` chama `sincronizaHistorico(n)` depois de montar: empurra uma entrada
+por camada nova, e consome as que sobraram quando o fechamento veio pelo botão
+do app.
+
+**Não há contador de eventos.** A tentação é contar quantos `popstate` foram
+provocados por nós para ignorá-los, e isso quebra: `history.go(-n)` não promete
+um evento por passo. Em vez de contar, cada entrada carrega a própria
+profundidade (`{ lastro: k }`), e o `popstate` pergunta *"em que profundidade o
+histórico está agora?"* contra *"quantas camadas o app tem abertas?"*. A
+diferença é quantas fechar; quando fomos nós que provocamos, os dois números já
+batem. O mecanismo se corrige sozinho depois de qualquer divergência.
+
+`voltarUmaCamada()`, no casco, fecha a do topo chamando a função de fechar **que
+já existia** para ela. É isso que garante que voltar pelo gesto e voltar pelo
+botão deixem o app no mesmo estado.
+
+**`history.scrollRestoration = 'manual'`** é parte da correção, não detalhe: com
+o padrão `'auto'` o navegador restaura, depois do `popstate`, a posição que ele
+associou à entrada — e desfazia o `saiDoDestino()` meio quadro depois. Quem
+manda na posição de leitura é o app.
+
+Efeito colateral bem-vindo: na bancada, o Voltar da janela do computador passou
+a fechar a folha dentro do aparelho, em vez de navegar a bancada para fora.
 
 ---
 

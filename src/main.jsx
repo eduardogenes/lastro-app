@@ -13,6 +13,7 @@ import {
   totalAnilhas, isTime, tutOf, volOf, maxLoad, repsOf, topReps
 } from './dominio/carga';
 import { montaNoApp } from './ui/raiz.jsx';
+import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
 import { ajusteDoVeredito } from './dominio/corpo';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
@@ -402,6 +403,9 @@ async function load() {
   if (diaAberto) view.aba = 'treino';
   render();
   abrePromoGuardada();
+  // O descanso que estava correndo. Depois do render, porque ele pinta na barra
+  // que vive fora da árvore do Preact e precisa dela já montada.
+  await retomaDescanso();
   // Antes da primeira leitura de foto, e depois do render: a tela já está de pé
   // e não pode procurar os bytes no cache com o nome antigo.
   await FOTO.migraCache();
@@ -1420,7 +1424,11 @@ function vmExercicio(d, i, ex) {
       // placeholder, NÃO some quando ele começa a digitar — antes, escrever a
       // carga apagava a referência das repetições justamente na hora de
       // escrevê-las.
-      temAnterior: !!p
+      temAnterior: !!p,
+      // Os números crus da série anterior, para o toque que preenche. O texto
+      // acima é para LER; isto é para AGIR, e são coisas diferentes o bastante
+      // para não se derivar uma da outra na hora do toque.
+      anteriorValor: p ? [p[0], p[1]] : null
     });
   }
 
@@ -1529,7 +1537,8 @@ const ACOES = {
   toggleDor: function (i, k) { toggleDor(i, k); },
   abreRir: function (i, k) { abreRir(i, k); },
   abreFoto: function (i) { abreFoto(i); },
-  poeRir: function (i, k, v) { poeRir(i, k, v); }
+  poeRir: function (i, k, v) { poeRir(i, k, v); },
+  usaAnterior: function (i, k) { usaAnterior(i, k); }
 };
 
 
@@ -2117,9 +2126,9 @@ function totalSeries() {
 function abrirPrograma(d) {
   view.prog = { day: d || null, modo: 'lista' };
   view.editProg = false; view.addEx = false; view.addQ = ''; view.novoEx = false;
-  render(); window.scrollTo(0,0);
+  entraNoDestino('prog'); render();
 }
-function fecharPrograma() { view.prog = null; render(); window.scrollTo(0,0); }
+function fecharPrograma() { view.prog = null; render(); saiDoDestino('prog'); }
 function modoPrograma(m) { view.prog.modo = m; view.prog.day = null; render(); window.scrollTo(0,0); }
 
 // Impacto do programa OFICIAL contra o alvo. Só aparece quando saiu do alvo.
@@ -2269,7 +2278,7 @@ async function restaurarTudo() {
   toast('Programa de volta ao do treinador.');
 }
 
-function openHist(i){ view.hist = { day:view.day, i, key:logKey(view.day,i) }; view.edit = null; render(); }
+function openHist(i){ view.hist = { day:view.day, i, key:logKey(view.day,i) }; view.edit = null; entraNoDestino('hist'); render(); }
 
 // ---------- correção de sessão passada ----------
 // Digitou 400 no lugar de 40 e só percebeu na semana seguinte: até aqui não
@@ -2326,7 +2335,7 @@ async function apagarSessao() {
   toast('Sessão apagada.');
 }
 function histKey(k){ view.hist.key = k; view.edit = null; render(); }
-function closeHist(){ const i = view.hist.i; view.hist = null; view.edit = null; view.open = i; render(); }
+function closeHist(){ const i = view.hist.i; view.hist = null; view.edit = null; view.open = i; render(); saiDoDestino('hist'); }
 
 function cardioDoDia(t) { return S.cardio.filter(function (c) { return sameDay(c.t, t); }); }
 function cardioSemana() {
@@ -2432,9 +2441,9 @@ function abrirAdicionar(t) {
   const d = new Date(base); d.setHours(7,0,0,0);
   view.add = { t: d.getTime(), tipo: null, grupos: [], dur: null, nome: '', hora: '' };
   view.sessao = null;
-  render(); window.scrollTo(0,0);
+  entraNoDestino('add'); render();
 }
-function fecharAdicionar(){ view.add = null; render(); window.scrollTo(0,0); }
+function fecharAdicionar(){ view.add = null; render(); saiDoDestino('add'); }
 
 async function concluirRetro() {
   const t = S.sessao ? S.sessao.inicio : null;
@@ -2917,19 +2926,35 @@ function inp(el, i, k, pos) {
   autoTimer(i, k, e);
 }
 
-// cronômetro começa sozinho quando a última série do exercício fica completa
+// O cronômetro começa sozinho quando QUALQUER série fica completa.
+//
+// Começava só na última do exercício, e isso deixava sem cronômetro justamente
+// a espera mais frequente da sessão: a que separa a série 1 da 2. Entre elas o
+// usuário tinha que achar e tocar "DESCANSO 3MIN" no topo do cartão — um toque
+// a mais por série, de pé, com uma mão, que é o contexto que este app existe
+// para respeitar.
+//
+// A marca de "já disparou" passou a ser POR SÉRIE (`dia + exercício : série`).
+// Com uma marca por exercício, a série 2 não dispararia depois da 1. Apagar o
+// campo rearma aquela série e só ela.
 function autoTimer(i, k, e) {
   const ex = treino(view.day).ex[i];
   const ult = setsFor(ex) - 1;
-  const tag = view.day + i;
-  const cheia = k === ult && e.s[ult] && e.s[ult][0] != null && e.s[ult][1] != null;
-  if (k !== ult) return;
-  if (cheia && !view.fired[tag]) {
-    view.fired[tag] = true;
-    // primeiro do bi-set não descansa: encadeia direto no segundo
-    if (ex.bi === 1) proximoDoBiset(i);
-    else startTimer(descOf(ex));
-  } else if (!cheia) view.fired[tag] = false;
+  const tag = view.day + i + ':' + k;
+  const cheia = e.s[k] && e.s[k][0] != null && e.s[k][1] != null;
+
+  if (!cheia) { view.fired[tag] = false; return; }
+  if (view.fired[tag]) return;
+  view.fired[tag] = true;
+
+  // O bi-set não descansa entre as suas séries — é essa a definição. O primeiro
+  // encadeia direto no segundo, e só quando o exercício acabou; nas séries do
+  // meio não há pausa a cronometrar.
+  if (ex.bi === 1) {
+    if (k === ult) proximoDoBiset(i);
+    return;
+  }
+  startTimer(descOf(ex));
 }
 
 function proximoDoBiset(i) {
@@ -2938,6 +2963,38 @@ function proximoDoBiset(i) {
   view.open = i+1; view.swapOpen = null;
   render();
   toast('Sem pausa: vá direto para ' + prox.n.replace(' (bi-set)','') + '.');
+}
+
+/**
+ * Copia para a série a carga e a repetição da MESMA série da última vez.
+ *
+ * A coluna ANTERIOR já respondia "o que eu fiz aqui na semana passada", e na
+ * maioria das séries ela é exatamente o que vai ser digitado — repetir a carga
+ * é o caso comum, subir é a exceção. Mesmo assim os dois números eram digitados
+ * no teclado virtual, de pé, com uma mão: duas aberturas de teclado por série,
+ * umas quarenta por sessão.
+ *
+ * Tocar preenche e pronto. Não confirma nada e não fecha nada — os campos
+ * continuam campos, e corrigir a carga para cima é editar um número que já
+ * está lá. Como a série entra no histórico assim que carga e repetição existem
+ * (§8 do contrato de UX), o toque também dispara o cronômetro pelo caminho
+ * normal, sem atalho próprio.
+ */
+function usaAnterior(i, k) {
+  const key = logKey(view.day, i);
+  const p = lastSet(key, k);
+  if (!p) return;
+  const e = draftOf(i);
+  if (!e.s[k]) e.s[k] = [null, null];
+  e.s[k][0] = p[0];
+  e.s[k][1] = p[1];
+  segurarTela();
+  projeta(i);
+  atualizaEstado();
+  atualizaAnilhas(i);
+  queueSave();
+  render();
+  autoTimer(i, k, e);
 }
 
 function obsIn(el, i) { draftOf(i).obs = el.value; projeta(i); queueSave(); }
@@ -3229,8 +3286,8 @@ async function corrigeDuracao(t, minutos) {
   toast('Tempo corrigido.');
 }
 
-function abrirSessao(t){ view.sessao = S.done.filter(function (x) { return x.t === t; })[0]; if (view.sessao) { render(); window.scrollTo(0,0); } }
-function fecharSessao(){ view.sessao = null; render(); window.scrollTo(0,0); }
+function abrirSessao(t){ view.sessao = S.done.filter(function (x) { return x.t === t; })[0]; if (view.sessao) { entraNoDestino('sessao'); render(); } }
+function fecharSessao(){ view.sessao = null; render(); saiDoDestino('sessao'); }
 
 // ---------- retrospectiva de bloco ----------
 // 48 sessões de trabalho é o ciclo do programa. Até aqui, completá-lo não
@@ -3283,8 +3340,8 @@ function retro() {
            deloads: S.done.filter(function (x) { return x.dl && x.t >= de; }).length };
 }
 
-function abrirRetro(){ view.retro = true; view.sessao = null; render(); window.scrollTo(0,0); }
-function fecharRetro(){ view.retro = false; render(); window.scrollTo(0,0); }
+function abrirRetro(){ view.retro = true; view.sessao = null; entraNoDestino('retro'); render(); }
+function fecharRetro(){ view.retro = false; render(); saiDoDestino('retro'); }
 
 async function wipe() {
   if (!confirm('Apagar todo o histórico? Isso não tem volta.')) return;
@@ -3321,6 +3378,49 @@ async function wipe() {
 function descOf(ex) { return ex && ex.d ? ex.d : (ex && ex.c ? D_COMPOSTO : D_CURTO); }
 
 
+// ---------- o descanso sobrevive a fechar o app ----------
+// Chave PRÓPRIA, fora de `S`: um descanso é do APARELHO e do momento, não do
+// histórico. Em `S` ele iria junto na sincronização, e o outro aparelho herdaria
+// um cronômetro correndo que ninguém ligou lá.
+//
+// O que se grava é o instante-alvo, que é como o cronômetro já era escrito para
+// sobreviver à tela apagada. Sobreviver ao reload passa a ser o mesmo número
+// lido de outro lugar.
+const KEY_DESCANSO = 'lastro-descanso-v1';
+
+function gravaDescanso() {
+  try { DB.set(KEY_DESCANSO, JSON.stringify({ fim: timerFim, total: timerTotal })); } catch (e) {}
+}
+function apagaDescanso() {
+  try { DB.delete(KEY_DESCANSO); } catch (e) {}
+}
+
+/**
+ * Religa o descanso que estava correndo quando o app fechou.
+ *
+ * Não é `startTimer`: aquele nasce dentro do gesto do usuário e por isso pode
+ * preparar o áudio e pedir o wake lock. Aqui não houve gesto nenhum — o app
+ * apenas abriu —, então o cronômetro volta mudo. Se zerar com a tela à vista,
+ * `pintaTimer` avisa pelo caminho de sempre.
+ */
+async function retomaDescanso() {
+  let g = null;
+  try {
+    const r = await DB.get(KEY_DESCANSO);
+    g = r && r.value ? JSON.parse(r.value) : null;
+  } catch (e) { g = null; }
+  if (!g || !g.fim || Date.now() >= g.fim) { apagaDescanso(); return; }
+
+  timerTotal = g.total || Math.ceil((g.fim - Date.now()) / 1000);
+  timerFim = g.fim;
+  timerAvisado = false;
+  const box = document.getElementById('timer');
+  if (box) box.classList.add('on');
+  pintaTimer();
+  if (timer) clearInterval(timer);
+  timer = setInterval(pintaTimer, 250);
+}
+
 function startTimer(sec) {
   stopTimer();
   timerTotal = sec;
@@ -3331,6 +3431,7 @@ function startTimer(sec) {
   segurarTela();
   pintaTimer();
   timer = setInterval(pintaTimer, 250);
+  gravaDescanso();
 }
 
 function pintaTimer() {
@@ -3375,6 +3476,7 @@ if (document.readyState === 'loading') {
 function stopTimer() {
   if (timer) { clearInterval(timer); timer = null; }
   timerFim = 0; timerAvisado = false;
+  apagaDescanso();
   try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {}
   const box = document.getElementById('timer');
   if (box) box.classList.remove('on');
@@ -3430,9 +3532,22 @@ function soltarTela() {
   wakeLock = null;
 }
 
+// Sair do app não pode levar embora a última série.
+//
+// `queueSave()` represa a gravação por 700 ms para não escrever a cada tecla. A
+// janela é curta, mas o que cabe nela é exatamente o que o produto existe para
+// não perder: fechar o app, trocar de aplicativo ou bloquear a tela dentro
+// desses 700 ms perdia a série recém-digitada.
+//
+// `pagehide` é o evento que o iOS realmente entrega quando o PWA sai de cena —
+// `beforeunload` não é confiável lá. `visibilitychange` cobre o ir para segundo
+// plano, que é o caminho mais comum de todos.
+function descarregaAoSair() { liberaSave(); }
+window.addEventListener('pagehide', descarregaAoSair);
+
 // Voltar do bloqueio de tela: o iOS solta o wake lock e congela os intervalos.
 document.addEventListener('visibilitychange', function () {
-  if (document.hidden) return;
+  if (document.hidden) { descarregaAoSair(); return; }
   if (timerFim) {
     if (!timer && Date.now() < timerFim) timer = setInterval(pintaTimer, 250);
     pintaTimer();
@@ -3564,7 +3679,44 @@ CTX.seletorDeDia = function () {
 function render() {
   montaNoApp(<App ctx={CTX} />);
   ajustaRelogio();
+  // Depois de montar, e não antes: aqui `view` já é o que está na tela, e a
+  // profundidade do histórico passa a ser a mesma da pilha de camadas.
+  sincronizaHistorico(camadasAbertas(view).length);
 }
+
+// ---------- o Voltar do sistema ----------
+// Fecha UMA camada — a do topo — pelo mesmo caminho que o botão do app usaria.
+// Nenhum fechamento novo foi inventado aqui: cada entrada aponta para a função
+// que já existia, e é isso que garante que voltar pelo gesto e voltar pelo
+// botão deixem o app no mesmo estado.
+const FECHA_CAMADA = {
+  camera:    function () { CTX.fechaCamera(); },
+  ajuste:    function () { CTX.fechaAjuste(); },
+  protocolo: function () { CTX.fechaProtocolo(); },
+  comparar:  function () { CTX.fechaComparar(); },
+  promo:     function () { voltarDoPromo(); },
+  prog:      function () { fecharPrograma(); },
+  retro:     function () { fecharRetro(); },
+  add:       function () { fecharAdicionar(); },
+  sessao:    function () { fecharSessao(); },
+  hist:      function () { closeHist(); }
+};
+
+function voltarUmaCamada() {
+  const camadas = camadasAbertas(view);
+  if (!camadas.length) return;
+  const topo = camadas[camadas.length - 1];
+  // A folha é a única camada cuja chave carrega índice: são várias do mesmo
+  // tipo, e o que fecha é sempre a de cima.
+  if (topo.indexOf('folha:') === 0) { CTX.fechaFolha(); return; }
+  const fecha = FECHA_CAMADA[topo];
+  if (fecha) fecha();
+}
+
+ligaNavegacao({
+  camadas: function () { return camadasAbertas(view).length; },
+  aoVoltar: voltarUmaCamada
+});
 
 // ---------- COMIDA ----------
 // A biblioteca e o plano. Compras é derivada: some do estado, aparece na tela.
