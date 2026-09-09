@@ -115,3 +115,49 @@ export function fmtDesc(sec: number): string {
 export function escapeHTML(s: unknown): string { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 export function escAttr(s: unknown): string { return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+// ---------- busca ----------
+//
+// Digitar acento no teclado do iPhone custa segurar a tecla e escolher — de pé,
+// com uma mão, suado, ninguém faz isso. Antes disto, procurar `macarrao` não
+// achava *Macarrão*, `feijao` não achava *Feijão* e `triceps` não achava o
+// grupo *tríceps*: o filtro comparava as strings cruas.
+
+/**
+ * Texto pronto para comparar numa busca.
+ *
+ * Três dobras, e cada uma resolve um jeito de errar:
+ *
+ * 1. **Acento.** `NFD` separa a letra do sinal — 'ã' vira 'a' + `~` — e o sinal
+ *    cai no bloco de diacríticos combinantes, que é o que a faixa apaga. Vale
+ *    de graça para o `ç`, que em NFD é 'c' + cedilha; não é caso especial.
+ * 2. **Caixa.** Depois de tirar o acento, e não antes: `toLowerCase` de 'Ã' é
+ *    'ã', que continua com o sinal.
+ * 3. **Pontuação.** Vira espaço, não vazio. Assim `Sit-up` e `sit up` casam nos
+ *    dois sentidos, e `Filé/lombo` se separa em duas palavras procuráveis.
+ *
+ * O que ela deliberadamente NÃO faz é aproximar palavra errada: `remmo` não
+ * acha *Remo*. Busca que adivinha devolve o exercício errado no meio da série,
+ * e um registro sob a chave errada é pior que uma busca sem resultado.
+ */
+export function normalizaBusca(t: unknown): string {
+  return String(t == null ? '' : t)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/**
+ * O alvo casa com a consulta?
+ *
+ * Cada palavra da consulta precisa aparecer em algum lugar do alvo, e a ORDEM
+ * não importa: `push sled` acha *Sled push*, e `carry farmers` acha *Farmers
+ * carry*. Consulta vazia casa com tudo — é a lista inteira, não o vazio.
+ */
+export function casaBusca(alvo: unknown, consulta: unknown): boolean {
+  const q = normalizaBusca(consulta);
+  if (!q) return true;
+  const a = normalizaBusca(alvo);
+  return q.split(' ').every(function (palavra) { return a.indexOf(palavra) >= 0; });
+}

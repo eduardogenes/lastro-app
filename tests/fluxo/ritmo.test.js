@@ -301,3 +301,33 @@ test('todo nome da lista de frequentes existe no catálogo', async () => {
     'um nome com erro de digitação sumiria da prioridade em silêncio');
   a.fechar();
 });
+
+test('a busca do catálogo ignora acento e ordem de palavra', async () => {
+  const a = await app({});
+  a.aba('treino');
+  const acha = q => a.J(`(function(){ view.addQ=${JSON.stringify(q)};
+    return catalogoDeAdicao('HX').achados.map(function(x){return x.n}); })()`);
+
+  assert.ok(acha('ergometro').indexOf('Remo ergômetro') >= 0,
+    'digitar acento no iPhone custa segurar a tecla e escolher');
+  assert.ok(acha('ergômetro').indexOf('Remo ergômetro') >= 0, 'e com acento continua achando');
+  assert.ok(acha('push sled').indexOf('Sled push') >= 0, 'a ordem das palavras não importa');
+  assert.ok(acha('sit up').indexOf('Sit-up') >= 0, 'o hífen casa nos dois sentidos');
+  assert.ok(acha('pula corda').indexOf('Pula-corda') >= 0);
+
+  // o grupo muscular também tem acento, e era o mesmo defeito
+  const tri = acha('triceps');
+  assert.ok(tri.length > 0, 'buscar por grupo sem acento não achava nada');
+  assert.ok(acha('abdomen').length > 0);
+  a.fechar();
+});
+
+test('a busca de alimentos ganhou a mesma flexibilidade', async () => {
+  const a = await app({});
+  const acha = q => a.J(`CTX.alimentosFiltrados(${JSON.stringify(q)}).map(function(x){return x.n})`);
+  assert.ok(acha('macarrao').indexOf('Macarrão cozido') >= 0);
+  assert.ok(acha('feijao').indexOf('Feijão cozido') >= 0);
+  assert.ok(acha('requeijao').length > 0);
+  assert.ok(acha('tilapia').length > 0);
+  a.fechar();
+});

@@ -4,7 +4,7 @@ import {
   PRIORIDADES, NIVEIS, nivelDe, PRIO, CARGAS, DORES, MODAIS
 } from './dominio/programa';
 import {
-  fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK,
+  fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca,
   DIAS_CURTOS, DIAS_LONGOS, MESES, PERIODOS, periodoDe,
   fmtHora, fmtDur, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
   escapeHTML, escAttr
@@ -4261,9 +4261,8 @@ CTX.resumoDoPlano = function () {
 
 CTX.alimentosFiltrados = function (q) {
   const cat = catalogoAlimentos();
-  const termo = String(q || '').toLowerCase().trim();
   return Object.keys(cat).map(function (k) { return cat[k]; })
-    .filter(function (a) { return !termo || a.n.toLowerCase().indexOf(termo) >= 0; })
+    .filter(function (a) { return casaBusca(a.n, q); })
     .sort(function (a, b) { return a.n.localeCompare(b.n, 'pt-BR'); });
 };
 
@@ -5669,7 +5668,7 @@ function trocaDoDia(d, i) {
 // O catálogo inteiro, com busca, e a porta para cadastrar equipamento que o
 // app ainda não conhece.
 function catalogoDeAdicao(d) {
-  const q = (view.addQ || '').toLowerCase().trim();
+  const q = view.addQ || '';
   const nodia = {};
   const t = treino(d);
   if (t) t.ex.forEach(function (x) { nodia[x.id] = 1; });
@@ -5688,8 +5687,12 @@ function catalogoDeAdicao(d) {
     busca: view.addQ || '',
     achados: Object.keys(CAT)
       .filter(function (k) { return !CAT[k].arq; })
+      // Nome e grupo no mesmo alvo: cada palavra da consulta precisa aparecer
+      // em algum dos dois, e a ordem não importa. É o que faz `sled push`,
+      // `push sled` e `remo` chegarem onde ele espera — e `triceps` achar o
+      // grupo `tríceps`, que antes exigia o acento.
       .filter(function (k) {
-        return !q || CAT[k].n.toLowerCase().indexOf(q) >= 0 || (CAT[k].g || '').indexOf(q) >= 0;
+        return casaBusca(CAT[k].n + ' ' + (CAT[k].g || ''), q);
       })
       .sort(function (a, b) {
         const pa = posicao(a), pb = posicao(b);
