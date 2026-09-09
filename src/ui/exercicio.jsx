@@ -290,6 +290,19 @@ export function Exercicio({ vm, acoes }) {
       <div class="sets">
         <p class="cue">{vm.cue}</p>
 
+        {/* A pegada fica ACIMA do descanso e abaixo da dica: ela é sobre fazer a
+            série, o descanso é sobre o que vem depois, e a ordem de leitura
+            segue a ordem dos fatos.
+
+            Não é botão e não parece a `cue`: a dica é prosa, na voz do
+            treinador; isto é rótulo mono + valor, na voz do app. A distinção
+            visual é a única coisa que impede as duas de se confundirem, e a
+            procedência está dita por extenso no GUIA, uma vez, em vez de por
+            exercício. */}
+        {vm.pegada && (
+          <div class="peglinha">{vm.pegadaRotulo} <b>{vm.pegada}</b></div>
+        )}
+
         {/* Um descanso por exercício, não um por linha: o valor era o mesmo em
             todas as séries, e repeti-lo tirava a coluna que faltava. */}
         {vm.bi === 1

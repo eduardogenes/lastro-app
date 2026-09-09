@@ -29,8 +29,13 @@ export interface Exercicio {
   g: string;
   /** 1 se é composto grande (governa o descanso padrão) */
   c: 0 | 1;
-  /** dica de execução */
+  /** dica de execução, na voz do treinador */
   cue?: string;
+  /** como segurar — ou onde pôr o pé, quando a decisão é do pé.
+   *  Ausente de propósito onde resumir seria pior que calar. */
+  peg?: string;
+  /** 1 quando `peg` fala de posição do pé, não da mão */
+  pegPe?: 1;
   /** 'seg' quando o exercício é medido por tempo, não por repetição */
   u?: 'seg';
   /** verdadeiro quando o exercício saiu do catálogo mas tem histórico */

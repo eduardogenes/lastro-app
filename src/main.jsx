@@ -259,6 +259,7 @@ function treino(d) {
   return { name: p.name, tag: p.tag, ex: aplicaMods(d, p.ex).map(function (sl) {
     const e = exDe(sl.id);
     return { id:sl.id, n:e.n, car:e.car, g:e.g, c:e.c, cue:e.cue, u:e.u,
+             peg:e.peg, pegPe:e.pegPe,
              s:sl.s, r:sl.r, d:sl.d, rir:sl.rir || '', desde:sl.desde, bi:sl.bi || 0,
              mod:sl.mod || 0, orig:sl.orig || sl.id };
   }) };
@@ -1446,6 +1447,10 @@ function vmExercicio(d, i, ex) {
     bi: ex.bi || 0,
     seg: seg,
     unidade: seg ? 'kg' : CARGAS[tipo].rot,
+    // A pegada, quando existe. Vazio é estado de primeira classe: ver a nota em
+    // PEGADA_POR_NOME sobre por que vários exercícios ficam de fora.
+    pegada: ex.peg || null,
+    pegadaRotulo: ex.pegPe ? 'pés' : 'pegada',
     descanso: descOf(ex),
     descansoTxt: fmtDesc(descOf(ex)),
     cargaOpcional: seg || corpo,

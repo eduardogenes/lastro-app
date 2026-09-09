@@ -243,6 +243,24 @@
 
 /* Descanso: um por exercício, acima da tabela. Era um botão por linha com o
    mesmo valor repetido — a coluna que ele ocupava é a do RIR agora. */
+/* A pegada. Mesma anatomia da linha de descanso — rótulo mono, valor em `b` —
+   porque é a mesma natureza de informação: um dado curto do exercício, lido de
+   relance. O que muda é não ser tocável: pegada não é ação.
+   O valor herda a cor do texto primário pelo `b`, e o rótulo fica no nível 4:
+   é o valor que ele lê no meio da série, não a palavra "pegada". */
+.peglinha {
+  min-height: 34px; margin-bottom: var(--ins-3);
+  display: flex; align-items: center; gap: var(--ins-4);
+  color: var(--ins-text-4);
+  font: 400 10px/1.3 var(--ins-font-mono);
+  letter-spacing: .1em; text-transform: uppercase;
+}
+.peglinha b {
+  color: var(--ins-text-2); font-weight: 500;
+  letter-spacing: .02em; text-transform: none;
+  font-size: 11.5px;
+}
+
 .restlinha {
   width: 100%; min-height: 34px; margin-bottom: var(--ins-3);
   /* Sem caixa, como o resto: é rótulo tocável, não objeto destacado. O

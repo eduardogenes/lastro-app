@@ -689,3 +689,31 @@ test('a retrospectiva mudou de casa e continua abrindo', async () => {
   assert.ok(a.J('view.retro'), 'e abre de verdade');
   a.fechar();
 });
+
+test('a pegada aparece onde há decisão, e cala onde resumir seria pior', async () => {
+  // O campo nasceu de duas revisões independentes cruzadas em
+  // docs/pegada/00-parecer-cruzado.md. Vazio é estado de primeira classe: em
+  // ~8 exercícios uma frase curta é verdadeira e inútil, e nesses o app cala.
+  const a = await app();
+  const linha = i => { const e = a.$(`[data-ex="${i}"] .peglinha`); return e ? e.textContent.replace(/\s+/g, ' ').trim() : null; };
+
+  a.E("view.day='A'; render(); toggle(2)");   // crucifixo inclinado no cabo
+  await a.esperar();
+  assert.match(linha(2), /^pegada /, 'onde a decisão é da mão, o rótulo é pegada');
+
+  a.E("view.day='A'; view.open=null; render(); toggle(6)");  // extensão de tríceps acima da cabeça
+  await a.esperar();
+  assert.strictEqual(linha(6), null,
+    'onde resumir seria pior que calar, não há linha nenhuma');
+
+  a.E("view.day='A'; view.open=null; render(); toggle(1)");  // pulldown convergente
+  await a.esperar();
+  assert.strictEqual(linha(1), null,
+    'e onde o treinador já falou de pegada na dica, a palavra dele vence');
+
+  a.E("view.day='B'; view.open=null; render(); toggle(3)");  // leg press
+  await a.esperar();
+  assert.match(linha(3), /^pés /,
+    'na perna a decisão é do pé, e o rótulo diz isso em vez de "pegada"');
+  a.fechar();
+});

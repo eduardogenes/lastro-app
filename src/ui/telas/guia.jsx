@@ -143,6 +143,15 @@ export function Guia({ ctx }) {
             aoAbrir={() => setRegraAberta(regraAberta === r.k ? null : r.k)}
           />
         ))}
+        {/* A procedência da pegada é dita UMA vez, aqui, e não em cada
+            exercício: repeti-la em 48 cartões seria ruído, e este é o lugar
+            onde as regras do treinador moram — o contraste fica visível. */}
+        <Procedencia>
+          a linha de <b>pegada</b> no treino não vem do seu treinador: é
+          referência de execução. Onde ela não aparece, é porque resumir seria
+          pior que calar — no terra romeno o que protege a lombar é o quadril,
+          não a mão. Pegada que ele prescreveu está na dica do exercício.
+        </Procedencia>
       </Secao>
 
       </>}

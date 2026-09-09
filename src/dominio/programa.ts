@@ -447,6 +447,106 @@ export function slugEx(n: string): IdEx {
 // programa carregue o grupo muscular que o treinador atribuía a ele, em vez de
 // herdar o de quem ele passou a substituir. Pec deck é peito, mesmo entrando
 // hoje como alternativa de um exercício de peito superior.
+
+/**
+ * A pegada — ou a posição do pé, onde a decisão é do pé e não da mão.
+ *
+ * ---- De onde isto veio, e de onde NÃO veio ----
+ *
+ * Não veio do treinador. É referência de execução, levantada de duas revisões
+ * independentes (musculação e educação física) e cruzada em
+ * `docs/pegada/00-parecer-cruzado.md`. Por isso mora em campo próprio e é
+ * mostrada com rótulo próprio: a `cue` é a voz dele, isto não é, e em seis
+ * meses tem que continuar dando para saber quem disse o quê.
+ *
+ * Onde o treinador JÁ falou de pegada na `cue`, aqui fica vazio — a palavra
+ * dele vence. É o caso do pulldown convergente, que ele prescreve em neutra.
+ *
+ * ---- Por que tantos exercícios ficam de fora ----
+ *
+ * Vazio é um estado de primeira classe, não um buraco a preencher depois. Três
+ * motivos para calar:
+ *
+ * 1. **Resumir seria pior.** No terra romeno, "pegada pronada na largura dos
+ *    ombros" está correto e é inútil: o que protege a lombar é o quadril indo
+ *    para trás, e quem lê a frase cumpre a frase e ainda arredonda a coluna. No
+ *    supino inclinado no Smith o crítico é a posição do banco em relação ao
+ *    trilho. Na rosca Scott é QUANTO estender no fim — e errar isso tem
+ *    mecanismo de ruptura de tendão documentado.
+ * 2. **O nome não determina a execução.** "Pullover em máquina ou cabo" são
+ *    dois exercícios com amplitudes e riscos de ombro diferentes.
+ * 3. **Não há decisão.** Rosca martelo é neutra por definição; triângulo é
+ *    neutro. Dizer o óbvio é ruído na tela de quem está no meio de uma série.
+ */
+const PEGADA_POR_NOME: Record<string, { t: string; pe?: 1 }> = {
+  // --- peito e ombro: o controle é não passar da linha do tronco ---
+  'Chest press inclinado convergente':      { t: 'neutra nos pegadores verticais, pronada nos horizontais' },
+  'Chest press horizontal convergente':     { t: 'neutra nos pegadores verticais, pronada nos horizontais' },
+  'Máquina de supino inclinado':            { t: 'neutra nos pegadores verticais, pronada nos horizontais' },
+  'Supino reto na máquina':                 { t: 'neutra nos pegadores verticais, pronada nos horizontais' },
+  'Crucifixo inclinado no cabo':            { t: 'neutra, cotovelo semi-fletido e fixo' },
+  'Crucifixo com halteres':                 { t: 'neutra, cotovelo semi-fletido e fixo' },
+  'Crucifixo inclinado com halteres':       { t: 'neutra, cotovelo semi-fletido e fixo' },
+  'Crossover de baixo para cima':           { t: 'neutra, cotovelo semi-fletido e fixo' },
+  'Crossover na polia baixa':               { t: 'neutra, cotovelo semi-fletido e fixo' },
+  'Crossover na polia média':               { t: 'neutra, cotovelo semi-fletido e fixo' },
+  'Supino inclinado com barra':             { t: 'pronada, pouco além da largura dos ombros' },
+  'Supino inclinado com halteres':          { t: 'pronada, ou semi-neutra a 45°' },
+  'Supino reto com halteres':               { t: 'pronada, ou semi-neutra a 45°' },
+
+  // --- o segundo mecanismo de ombro: não fechar o espaço subacromial ---
+  'Elevação lateral na máquina':            { t: 'empurre com o cotovelo, não com a mão' },
+  'Elevação lateral unilateral no cabo':    { t: 'punho neutro; pare na altura do ombro' },
+  'Elevação lateral com halteres':          { t: 'punho neutro; pare na altura do ombro' },
+  'Elevação lateral no cabo':               { t: 'punho neutro; pare na altura do ombro' },
+  'Elevação frontal unilateral no cabo':    { t: 'punho neutro; pare na altura do ombro' },
+  'Elevação frontal com halteres':          { t: 'punho neutro; pare na altura do ombro' },
+  'Elevação frontal bilateral no cabo':     { t: 'punho neutro; pare na altura do ombro' },
+  // O item de maior risco de ombro da lista, e só uma das duas revisões o viu.
+  'Remada alta com corda':                  { t: 'pare o cotovelo abaixo da altura do ombro' },
+  'Remada alta na máquina':                 { t: 'pare o cotovelo abaixo da altura do ombro' },
+
+  // --- costas: largura muda carga e conforto, não o alvo (Andersen 2014) ---
+  'Pulldown unilateral':                    { t: 'neutra ou supinada; ombro desce antes do cotovelo' },
+  'Puxada unilateral na polia alta':        { t: 'neutra ou supinada; ombro desce antes do cotovelo' },
+  'Remada para dorsal com apoio de peito':  { t: 'neutra e fechada, cotovelo rente ao corpo' },
+  'Remada convergente com apoio de peito':  { t: 'neutra e fechada, cotovelo rente ao corpo' },
+  'Remada na máquina com apoio de peito':   { t: 'neutra e fechada, cotovelo rente ao corpo' },
+  'High row com apoio de peito':            { t: 'cotovelo alto, na linha dos ombros' },
+  'Reverse pec deck':                       { t: 'pronada, cotovelo na altura do ombro' },
+  'Face pull na polia alta':                { t: 'corda na altura do rosto, cotovelo alto' },
+
+  // --- braço: onde a escolha de acessório poupa punho e cotovelo ---
+  'Pushdown':                               { t: 'corda em neutra se o punho incomodar' },
+  'Pushdown unilateral':                    { t: 'supinada ou neutra na manopla' },
+  'Tríceps corda na polia':                 { t: 'neutra; abra as pontas no fim' },
+
+  // --- perna: aqui a decisão é do PÉ, e é ela que cruza com o tendão patelar ---
+  'Pendulum squat':                         { t: 'largura dos ombros, no meio da plataforma', pe: 1 },
+  'Leg press':                              { t: 'largura dos ombros, no meio da plataforma', pe: 1 },
+  'Leg press 45°':                          { t: 'largura dos ombros, no meio da plataforma', pe: 1 },
+  'Leg press horizontal':                   { t: 'largura dos ombros, no meio da plataforma', pe: 1 },
+  'Agachamento hack':                       { t: 'largura dos ombros, no meio da plataforma', pe: 1 },
+  'Cadeira extensora':                      { t: 'alinhe o joelho ao eixo da máquina', pe: 1 },
+  'Extensora unilateral':                   { t: 'alinhe o joelho ao eixo da máquina', pe: 1 },
+  'Cadeira flexora sentada':                { t: 'alinhe o joelho ao eixo; coxa presa', pe: 1 },
+  'Mesa flexora deitada':                   { t: 'alinhe o joelho ao eixo da máquina', pe: 1 },
+  'Elevação pélvica na máquina':            { t: 'apoio na dobra do quadril, não na barriga', pe: 1 },
+  'Elevação pélvica com barra':             { t: 'apoio na dobra do quadril, não na barriga', pe: 1 },
+  'Hip thrust no Smith':                    { t: 'apoio na dobra do quadril, não na barriga', pe: 1 },
+  'Panturrilha em pé':                      { t: 'antepé na borda, pés paralelos', pe: 1 },
+  'Panturrilha sentada':                    { t: 'antepé na borda, pés paralelos', pe: 1 },
+
+  // --- HYROX ---
+  'Ski erg':                                { t: 'pegue alto nas alças, punho neutro' },
+  // A técnica do sled pull não cabe numa linha, mas ESTA metade cabe e é
+  // proibição, não resumo: enrolar a corda no braço é o erro que machuca.
+  'Sled pull':                              { t: 'mão sobre mão; nunca enrole a corda no braço' },
+  'Farmers carry':                          { t: 'alça no meio da mão, ombro encaixado' },
+  'Lunges com sandbag':                     { t: 'no ombro, ou abraçado no peito' },
+  'Wall balls':                             { t: 'mãos sob a bola, cotovelo por dentro' }
+};
+
 export const EX_BASE: Record<IdEx, Exercicio> = (function () {
   const c: Record<IdEx, Exercicio> = {};
   ROT_BASE.forEach(function (d) {
@@ -466,6 +566,15 @@ export const EX_BASE: Record<IdEx, Exercicio> = (function () {
       // na maioria das vezes, e ele corrige o tipo dentro do app.
       if (!c[k]) c[k] = { n:a.n, car:base.car || 'pino', g:base.g || '', c:base.c || 0, cue:a.w, sub:1 };
     });
+  });
+  // A pegada entra por último e por NOME, e não inline em cada exercício: são
+  // 171 objetos, e a informação é de uma natureza só — fica legível junta, e o
+  // que está vazio se vê de relance.
+  Object.keys(PEGADA_POR_NOME).forEach(function (nome) {
+    const k = slugEx(nome), p = PEGADA_POR_NOME[nome];
+    if (!c[k]) return;
+    c[k].peg = p.t;
+    if (p.pe) c[k].pegPe = 1;
   });
   return c;
 })();
