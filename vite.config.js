@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { defineConfig } from 'vite';
 
 // Gera o dist/sw.js a partir do molde em src/sw.js, com a lista de arquivos que
@@ -21,8 +22,13 @@ function servicWorkerVersionado() {
     generateBundle(_opcoes, bundle) {
       const emitidos = Object.keys(bundle).map(f => './' + f);
 
+      // Escrita à mão porque `public/` não passa pelo rollup: o que está aqui é
+      // o que o aparelho terá offline. Os ícones inteiros vão junto — são 46 kB
+      // somados, e um ícone que falta só aparece como quadrado cinza na tela de
+      // início, depois de instalado, sem erro nenhum.
       const locais = ['./', './index.html', './manifest.webmanifest',
-        './icone-180.png', './icone-192.png', './icone-512.png', './icone-512-mascara.png']
+        './icone.svg', './icone-32.png', './icone-180.png', './icone-192.png',
+        './icone-512.png', './icone-192-mascara.png', './icone-512-mascara.png']
         .concat(emitidos.filter(f => !f.endsWith('.map') && !f.endsWith('.html')));
 
       // Alimenta o hash asset a asset, em vez de concatenar tudo numa string.
@@ -34,6 +40,23 @@ function servicWorkerVersionado() {
       Object.values(bundle).forEach(function (a) {
         soma.update(a.type === 'chunk' ? a.code : a.source);
       });
+
+      // O `bundle` do rollup tem SÓ o js e o css. O index.html é emitido depois
+      // deste gancho e `public/` é copiado por fora dele — que é onde moram o
+      // manifesto, os ícones e as metatags. Enquanto o hash ignorava esses
+      // bytes, publicar uma troca de ícone deixava o sw.js idêntico ao anterior:
+      // o navegador compara byte a byte, não vê versão nova, e o aparelho fica
+      // no passado — o mesmo silêncio que o hash existe para acabar.
+      soma.update(readFileSync('index.html'));
+      readdirSync('public', { recursive: true, withFileTypes: true })
+        .filter(d => d.isFile())
+        .map(d => join(d.parentPath, d.name))
+        .sort()
+        .forEach(function (f) {
+          soma.update(f);            // renomear é mudança, mesmo com bytes iguais
+          soma.update(readFileSync(f));
+        });
+
       const hash = soma.digest('hex').slice(0, 12);
 
       this.emitFile({

@@ -22,6 +22,18 @@ test('o service worker sai do build com versão e lista preenchidas', () => {
   assert.ok(/const CACHE = 'lastro-[0-9a-f]{12}';/.test(sw), 'a versão vem do hash do build');
 });
 
+test('o hash do cache cobre o que não passa pelo rollup', () => {
+  // O `bundle` do rollup tem só o js e o css: o index.html e o `public/` — onde
+  // vivem manifesto, ícones e metatags — ficam de fora. Enquanto o hash os
+  // ignorava, publicar uma troca de ícone deixava o sw.js byte a byte igual ao
+  // anterior, o navegador não via versão nova nenhuma, e o aparelho continuava
+  // servindo o passado. É o mesmo silêncio que este arquivo existe para pegar.
+  const cfg = fs.readFileSync(path.join(RAIZ, 'vite.config.js'), 'utf8');
+  assert.match(cfg, /soma\.update\(readFileSync\('index\.html'\)\)/,
+    'o index.html saiu do hash do cache');
+  assert.match(cfg, /readdirSync\('public'/, 'o public/ saiu do hash do cache');
+});
+
 test('o precache lista exatamente os assets que o build emitiu', () => {
   const sw = dist('sw.js');
   const emitidos = fs.readdirSync(path.join(RAIZ, 'dist', 'assets'))
@@ -75,10 +87,51 @@ test('o precache não dispara tudo de uma vez', () => {
 });
 
 test('os ícones e o manifesto chegam ao dist', () => {
-  ['manifest.webmanifest', 'icone-180.png', 'icone-192.png', 'icone-512.png',
+  ['manifest.webmanifest', 'icone.svg', 'icone-32.png', 'icone-180.png',
+   'icone-192.png', 'icone-512.png', 'icone-192-mascara.png',
    'icone-512-mascara.png'].forEach(function (f) {
     assert.ok(fs.existsSync(path.join(RAIZ, 'dist', f)), 'faltou no build: ' + f);
   });
+});
+
+test('todo ícone declarado existe e está no precache', () => {
+  // `public/` não passa pelo rollup, então a lista do precache é escrita à mão
+  // em vite.config.js. Declarar um ícone no index ou no manifesto e esquecer
+  // dessa lista não quebra nada online — deixa o buraco para o dia em que o
+  // aparelho abrir sem rede, que é o dia para o qual este app foi feito.
+  const sw = dist('sw.js');
+  const html = dist('index.html');
+
+  const doHtml = (html.match(/<link[^>]*>/g) || [])
+    .filter(t => /rel="(icon|apple-touch-icon)"/.test(t))
+    .map(t => (t.match(/href="\.?\/([^"]+)"/) || [])[1]);
+  const doManifesto = JSON.parse(dist('manifest.webmanifest')).icons.map(i => i.src);
+
+  const declarados = [...new Set(doHtml.concat(doManifesto))];
+  assert.ok(declarados.length >= 7, 'o conjunto de ícones encolheu: ' + declarados.length);
+  declarados.forEach(function (f) {
+    assert.ok(f, 'link de ícone sem href legível');
+    assert.ok(fs.existsSync(path.join(RAIZ, 'dist', f)), 'declarado e inexistente: ' + f);
+    assert.ok(sw.includes('./' + f), 'fora do precache: ' + f);
+  });
+});
+
+test('o manifesto separa o ícone comum do mascarável', () => {
+  // O mesmo arquivo nos dois `purpose` é o erro clássico. A arte cheia chega a
+  // 94% do raio da zona segura, e o recorte do sistema é uma forma qualquer —
+  // não o círculo de referência: o símbolo encosta na borda. O mascarável recua
+  // 18% e para em 77%, com folga. São dois arquivos porque são duas artes.
+  const icons = JSON.parse(dist('manifest.webmanifest')).icons;
+  ['any', 'maskable'].forEach(function (p) {
+    ['192x192', '512x512'].forEach(function (t) {
+      assert.ok(icons.some(i => i.purpose === p && i.sizes === t),
+        'faltou ícone ' + p + ' de ' + t);
+    });
+  });
+  const comuns = icons.filter(i => i.purpose === 'any').map(i => i.src);
+  const mascaras = icons.filter(i => i.purpose === 'maskable').map(i => i.src);
+  assert.deepStrictEqual(comuns.filter(s => mascaras.includes(s)), [],
+    'o mesmo arquivo em any e maskable: um dos dois vai sair errado');
 });
 
 test('o vercel.json só usa chaves que o schema aceita', () => {

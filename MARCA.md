@@ -41,7 +41,7 @@ a ganhar.
 | `lastro-fotos` | cache das fotos, [src/infra/fotos.ts](src/infra/fotos.ts) |
 | `lastro-bancada-v1` | aparelho escolhido no modo de mesa, [src/palco.js](src/palco.js) |
 | `app: 'lastro'` · `lastro-AAAA-MM-DD.json` | backup exportado |
-| monograma **L** | ícone da tela de início |
+| símbolo da raiz | ícone da tela de início, favicon e aba do navegador |
 
 Dentro do app o produto se chama **"o app"** — *"O app decide isso das cargas
 que você registrou"*. Quem está lá dentro já entrou pela porta que tem o nome
@@ -78,21 +78,53 @@ altura do L, que na escala do sistema cai em 24 para o wordmark de 34px. Nada de
 estrutura no Instrumento, e a palavra escrita assim seria lida como cabeçalho de
 seção.
 
+**A caixa alta da prancha não é exceção: é outro lugar.** A arte aprovada
+(`Lastro_Identity_Approved_v2/00_APPROVED_REFERENCE_BOARD.png`) escreve
+`L A S T R O` em caixa alta com tracking largo, e isso não contradiz o
+parágrafo acima — a regra dele vale onde o Instrumento governa, e lá dentro
+caixa alta com tracking já significa rótulo de estrutura. Fora do app não
+existe Instrumento para confundir, e a prancha manda. Como o nome não aparece
+em tela nenhuma, hoje a regra de dentro não tem onde se aplicar.
+
 **O wordmark não é ácido.** `#CBF35E` significa agora / feito / seu / aperte
-aqui, e um wordmark não é nenhum dos quatro. A exceção é o ícone da tela de
-início, e ela é coerente: ali o monograma **é** o alvo de toque.
+aqui, e um wordmark não é nenhum dos quatro.
 
-**Monograma ou palavra.** Monograma só onde a moldura é um quadrado que o
-sistema não controla: ícone, favicon, aba do navegador, avatar do repositório.
-Palavra em tudo que é texto. Nunca os dois juntos — lockup é assinatura, e este
-produto não assina nada.
+**Símbolo ou palavra.** Símbolo só onde a moldura é um quadrado que o sistema
+não controla: ícone, favicon, aba do navegador, avatar do repositório. Palavra
+em tudo que é texto. Nunca os dois juntos — lockup é assinatura, e este produto
+não assina nada.
 
-**O L.** Desenhado, não composto: duas hastes em ângulo reto, terminais retos,
-raio zero — o mesmo canto que a régua de 1px do Instrumento faz em toda tela. É
-por isso que ele **não** volta como elemento gráfico dentro do app: o ângulo já
-está lá como estrutura, e repeti-lo como ornamento vira ênfase. Na máscara do
-Android o monograma recua para caber no círculo seguro de 409,6px em 512, e o
-fundo sangra até a borda.
+**O símbolo.** Uma parte visível acima de uma linha de superfície e uma
+estrutura de raízes maior abaixo dela: 30% aparece, 70% sustenta. É a tese do
+produto desenhada — resultado ← histórico, decisão ← dados — e não é árvore
+ecológica, âncora, halter, seta de performance nem símbolo financeiro.
+
+**A geometria não se redesenha.** Ela vem da arte aprovada e está em
+[public/icone.svg](public/icone.svg), byte a byte igual a
+`Lastro_Identity_Approved_v2/assets/svg/lastro-app-icon-approved.svg`, que é a
+origem. Qualquer arquivo, descrição ou implementação que divirja dela está
+errado — inclusive este parágrafo.
+
+**O ícone não usa a paleta do Instrumento**, e isso é deliberado: lima
+`#D9FF16` sobre preto `#0E1112`, que são as cores da marca, enquanto dentro do
+app valem `--ins-acid` `#CBF35E` sobre `--ins-canvas` `#0C0E0C`. O Instrumento
+governa o que se vê **dentro**; o ícone mora na tela de início, que é do
+sistema operacional. Trocar um pelo outro em qualquer direção quebra o que
+[tests/dominio/estilo.test.ts](tests/dominio/estilo.test.ts) tranca.
+
+**Máscara é arquivo próprio.** `icone-512-mascara.png` e `icone-192-mascara.png`
+trazem o símbolo recuado 18% para caber no círculo seguro do Android, com o
+fundo sangrando até a borda; `icone-512.png` e `icone-192.png` são full bleed e
+entram como `purpose: any`. O mesmo arquivo servindo aos dois papéis é o erro
+clássico: a arte cheia chega a 94% do raio da zona segura e encosta na borda
+sob qualquer recorte real, enquanto o mascarável para em 77%. **O squircle não
+é queimado no arquivo**: quem arredonda é o sistema.
+
+**O L saiu.** O monograma foi o ícone até esta versão: duas hastes em ângulo
+reto, raio zero, o mesmo canto da régua de 1px do Instrumento. O argumento a
+favor dele continua de pé — o ângulo reto já está em toda tela como estrutura —
+e é por isso que o símbolo, como o L antes dele, **não** volta como elemento
+gráfico dentro do app.
 
 ## Lastro × Instrumento
 
@@ -123,10 +155,10 @@ A versão de marca das anti-referências do [PRODUCT.md](PRODUCT.md).
 | Tagline | Não há onde pendurar: sem página de venda, sem loja, sem onboarding, sem plateia. |
 | Tela "sobre" | Tela nova para contar história. |
 | O nome em alguma tela | Assinatura dentro do prédio em que você já entrou. |
-| Splash com o L | Um frame a mais entre o toque e a próxima série. |
-| Wordmark em ácido | Ácido significa "aperte aqui". Um nome não é alvo de toque — exceto no ícone, e lá ele é. |
-| Lockup monograma + palavra | Lockup é assinatura. |
-| O L como elemento gráfico | O ângulo reto já está em toda tela como régua. |
+| Splash com o símbolo | Um frame a mais entre o toque e a próxima série. |
+| Wordmark em ácido | Ácido significa "aperte aqui". Um nome não é alvo de toque. |
+| Lockup símbolo + palavra | Lockup é assinatura. |
+| O símbolo como elemento gráfico dentro do app | Ele é a moldura do lado de fora. Dentro, a estrutura já é a régua de 1px. |
 | Renomear Instrumento | Custo alto, ganho zero para o usuário, e perde a postura que só aquela palavra nomeia. |
 | Renomear os escopos de commit | Treino é o **domínio**. Todo escopo dizendo a mesma palavra é o mesmo que não ter escopo. |
 | As duas acepções na mesma frase | Duas leituras é força; duas leituras ao mesmo tempo é diluição. |

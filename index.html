@@ -15,6 +15,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icone-180.png">
+<!-- Três declarações de favicon porque cada motor pega uma: o SVG onde ele é
+     aceito (nítido em qualquer densidade), o PNG de 32 como recuo, e o de 192
+     para quem monta atalho a partir da aba. Declarados aqui, nenhum navegador
+     vai pedir /favicon.ico. -->
+<link rel="icon" type="image/svg+xml" href="/icone.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/icone-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icone-192.png">
 <title>Lastro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
