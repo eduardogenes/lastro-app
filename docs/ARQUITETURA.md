@@ -19,6 +19,7 @@ O [README](../README.md) cobre o uso; aqui está o porquê das decisões.
 - [Ciclo da sessão](#ciclo-da-sessão)
 - [Tipo de carga](#tipo-de-carga)
 - [A grandeza de um movimento](#a-grandeza-de-um-movimento)
+- [O turno do treino](#o-turno-do-treino)
 - [Aula de box: repetir e reaproveitar](#aula-de-box-repetir-e-reaproveitar)
 - [Séries por músculo](#séries-por-músculo)
 - [A bancada: dois documentos, um app](#a-bancada-dois-documentos-um-app)
@@ -187,6 +188,7 @@ S = {
   draft: null,                          // buffer de digitação da sessão aberta
   deload: false,
   cardio: [{ t, m: 'bike', min: 25, i: 'moderado' }],
+  dia: { data, done, agua, escala, cadencia, alta, turno },   // o dia de comida
   body: { peso: [{ t, v }], cintura: [{ t, v }] },
   carga: { 'pendulum-squat': 'lado' },  // correção do tipo, por exercício
 
@@ -926,6 +928,64 @@ fica de fora do export some na primeira troca de aparelho.
 O histórico das nove estações já tinha sido apagado pela 6 → 7, então nenhum
 registro carregava a ambiguidade de "segundos para uma distância fixa" sob a
 marca de "segundos como resultado".
+
+---
+
+## O turno do treino
+
+O plano de comida foi desenhado em cima de treino às 6h15, e o nome que o
+nutricionista deu à refeição das 8h carregava isso: **"Café da manhã /
+pós-treino"**. Esse nome composto é a pista inteira — *pós-treino* nunca foi uma
+refeição, é um **papel** que uma refeição de relógio acumula. Ele nem sempre
+treina de manhã.
+
+### O que anda e o que fica
+
+`S.dia.turno` é `manha` | `tarde` | `noite`, e mora no DIA, ao lado de `escala`
+e `alta`: **editar é permanente, ajustar é de hoje**. O plano em COMIDA continua
+dizendo 05:45 e 06:15, e zera sozinho na virada da data.
+
+| | |
+|---|---|
+| **Âncora do treino** | pré-treino e intra — deslizam junto, mantendo o intervalo que o plano lhes deu |
+| **Âncora do relógio** | café, almoço, lanche, jantar — ficam onde estão |
+
+A distinção já existia no dado: `quando: 'treino'` marca exatamente as duas
+refeições que existem por causa da sessão. Não foi preciso inventar campo.
+
+Deslocar o dia em bloco é o erro clássico, e poria o café da manhã às 14h.
+
+`manha` significa **deslocamento zero**, não "06:15". Fixar a hora faria o app
+desfazer a edição dele no dia em que mudasse o horário do treino no plano — e o
+plano é a prescrição, não a opinião do app.
+
+### O pós-treino é calculado, nunca gravado
+
+`posTreinoDe()` devolve a primeira refeição de relógio depois da sessão: de
+manhã o café, à tarde o almoço, à noite o jantar. A tela o mostra como **selo**,
+em elemento próprio — colado no nome ele virava `Almoço · pós-tr…`, porque o
+nome corta com reticências e o papel é justamente o que não pode ser cortado.
+
+A migração 7 → 8 tirou a metade calculada do nome salvo, comparando com a string
+exata da época e deixando em paz um nome que ele já tivesse trocado.
+
+### Conflito se aponta, não se resolve
+
+Com treino às 12h15, o almoço das 12h30 acontece **dentro** da sessão. O app
+escreve isso em âmbar e para por aí. Mover a refeição para um horário que
+ninguém prescreveu seria prescrever; fundir duas seria pior; criar uma sétima
+seria pior ainda. Quem decide é ele, editando o plano ou ignorando.
+
+`PISO_DA_SESSAO` são 60 minutos, e é **piso de detecção, não duração
+prescrita**: é o mínimo que uma sessão ocupa, e um número maior acusaria
+conflito onde não há — o jantar das 19h30 com treino às 18h15 está 75 min
+depois, e está certo.
+
+### O que o app deliberadamente não faz
+
+Não cria refeição, não apaga, não funde, não mexe em quantidade porque o horário
+mudou, e não escreve conselho de timing. O número de refeições é o mesmo nos
+três turnos.
 
 ---
 

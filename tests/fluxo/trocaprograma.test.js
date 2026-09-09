@@ -93,7 +93,7 @@ test('backup antigo (plano 2) cai nos ids da época, não no programa de hoje', 
   await a.E('importText(' + JSON.stringify(antigo) + ')');
   await a.esperar();
   assert.ok(a.E('S.logs["pendulum-squat"]'), 'histórico foi para o exercício certo da época');
-  assert.strictEqual(a.E('S.plano'), 6);
+  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'));
   a.fechar();
 });
 

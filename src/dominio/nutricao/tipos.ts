@@ -29,6 +29,20 @@ export interface Alimento {
 /** Quando uma refeição ou um item aparece. Escopo por regra, não por duplicação. */
 export type Quando = 'sempre' | 'treino' | 'alta';
 
+/**
+ * O turno em que o treino de hoje acontece.
+ *
+ * O plano foi desenhado em cima de treino às 6h15, e os nomes das refeições
+ * carregavam isso — "Café da manhã / pós-treino" só faz sentido quando o
+ * treino é de manhã. Nem sempre é.
+ *
+ * `manha` significa **sem deslocamento**: o dia sai exatamente como o plano o
+ * escreve. Não é um horário fixo de 6h15 porque o horário do treino é dele
+ * para editar, e um turno que "corrigisse" essa edição de volta seria o app
+ * discordando do plano.
+ */
+export type Turno = 'manha' | 'tarde' | 'noite';
+
 /** Um item dentro de uma refeição. */
 export interface Item {
   /** id do alimento */
@@ -75,6 +89,15 @@ export interface DiaComida {
   cadencia?: 'treino' | 'descanso' | null;
   /** hoje é dia de alta demanda */
   alta?: 1;
+  /**
+   * O turno do treino de hoje. Ausente = `manha`, o plano como está escrito.
+   *
+   * Mora aqui, junto de `escala` e `alta`, e não no plano: **editar é
+   * permanente, ajustar é de hoje**. O plano em COMIDA continua dizendo 05:45
+   * e 06:15, porque lá a edição vale para todo dia; aqui é só a terça em que
+   * ele treinou à noite, e some sozinho na virada da data.
+   */
+  turno?: Turno;
 }
 
 /** Uma linha da lista de compras, derivada — nunca guardada. */

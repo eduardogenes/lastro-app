@@ -193,6 +193,16 @@
   color: var(--ins-text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+/* O papel que a linha acumula hoje — "pós-treino" na refeição que o recebeu.
+   Mono e apagado: é rótulo de estrutura, não parte do nome. `flex: 0 0 auto`
+   para o nome ceder primeiro, porque o selo é a informação mais curta e a que
+   não sobrevive a um corte. */
+.ins-tl-selo {
+  flex: 0 0 auto;
+  font: 400 9px/1 var(--ins-font-mono);
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ins-text-5); white-space: nowrap;
+}
 .ins-tl-valor {
   flex: 0 0 auto;
   font: 500 14px/1 var(--ins-font-mono); color: var(--ins-text-3); letter-spacing: -.02em;
@@ -361,6 +371,37 @@
   border: 1px solid var(--ins-border);
 }
 .fd-op.on { background: var(--ins-surface-acid); border-color: var(--ins-acid); }
+/* O turno do treino: três opções lado a lado, porque são mutuamente
+   exclusivas e curtas — a coluna de `fd-op` é para escolhas com explicação. */
+.fd-turno {
+  margin-top: var(--ins-9); padding-top: var(--ins-6);
+  border-top: 1px solid var(--ins-rule);
+  display: flex; flex-direction: column; gap: var(--ins-4);
+}
+.fd-turno p { margin: 0; }
+.fd-turnos { display: flex; gap: var(--ins-2); }
+.fd-turno-op {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: var(--ins-1);
+  align-items: flex-start; text-align: left;
+  padding: var(--ins-4); min-height: var(--ins-tap);
+  background: var(--ins-surface-low); border: 1px solid var(--ins-border);
+}
+.fd-turno-op.on { background: var(--ins-surface-acid); border-color: var(--ins-acid); }
+.fd-turno-n { font: 500 15px/1.2 var(--ins-font-display); color: var(--ins-text); }
+.fd-turno-h { font: 500 13px/1 var(--ins-font-mono); color: var(--ins-text-3); }
+/* Qual refeição vira o pós-treino naquele turno: é a consequência da escolha,
+   e vê-la antes de tocar é o que a torna uma decisão em vez de um palpite. */
+.fd-turno-p {
+  font: 400 9px/1.3 var(--ins-font-mono);
+  letter-spacing: .08em; color: var(--ins-text-5);
+}
+.fd-turno-op.on .fd-turno-p { color: var(--ins-text-4); }
+
+/* O aviso de refeição caindo dentro da sessão. Âmbar: preste atenção — não é
+   destrutivo, e o app não vai resolver sozinho. */
+.hj-conflito { margin-bottom: var(--ins-4); }
+
 .fd-alta {
   margin-top: var(--ins-9); padding-top: var(--ins-6);
   border-top: 1px solid var(--ins-rule);

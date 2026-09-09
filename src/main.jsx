@@ -34,8 +34,11 @@ import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { Retroativo } from './ui/telas/retroativo.jsx';
 import { Programa } from './ui/telas/programa.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
-import { ALIMENTOS_BASE, PLANO_BASE } from './dominio/nutricao/alimentos';
-import { arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia } from './dominio/nutricao/calculo';
+import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
+import {
+  arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia,
+  refeicoesDeHoje, posTreinoDe, conflitosDeTurno
+} from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto,
          seriesPorMusculo as _seriesPorMusculo } from './dominio/volume';
@@ -44,7 +47,7 @@ import { mediasSemanais, pesoRitmo as _pesoRitmo,
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
-import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7 } from './dominio/migracoes';
+import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
@@ -394,6 +397,7 @@ async function load() {
   migraPlano5(S);
   migraPlano6(S);
   const m7 = migraPlano7(S);
+  migraPlano8(S);
   garanteProgramaERotacao();
   montaCatalogo();
 
@@ -1802,12 +1806,27 @@ const CTX = {
     const prescritas = P ? P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0) : 0;
     const feitas = h.treino ? seriesFeitasHoje(h.treino) : 0;
 
+    const refs = refeicoesDeHoje(plano, treinando, alta, dia.turno);
+    const conflitos = conflitosDeTurno(refs, treinando);
+
     return {
       diaHoje: h,
       plano: plano,
       catalogo: cat,
       comidaDoDia: dia,
       alta: alta,
+      // As refeições JÁ no turno de hoje. Vêm prontas daqui para a tela não
+      // precisar saber o que desloca e o que não desloca.
+      refs: refs,
+      // Quem carrega o papel de pós-treino hoje — calculado, nunca gravado.
+      posTreino: posTreinoDe(refs, treinando),
+      turno: dia.turno || 'manha',
+      // Refeição de relógio que caiu dentro da sessão. O app aponta e para:
+      // mover para um horário que ninguém prescreveu seria prescrever.
+      conflitos: conflitos.map(function (id) {
+        const r = refs.filter(function (x) { return x.id === id; })[0];
+        return { id: id, txt: (r ? r.n + ' às ' + r.t : id) + ' cai dentro do treino' };
+      }),
       alvo: totalDoDia(plano, cat, treinando, alta, {}),
       cadenciaTxt:
         (S.ajuste === 0 ? 'plano atual' : S.ajuste > 0 ? 'ajuste +150 kcal' : 'ajuste −150 kcal') +
@@ -1850,6 +1869,13 @@ const CTX = {
     queueSave(); render();
   },
   setAlta: function (v) { diaDeComida().alta = v ? 1 : 0; queueSave(); render(); },
+  /** O turno do treino de hoje. Ajuste de hoje: zera com a data, como a escala. */
+  setTurno: function (t) {
+    const d = diaDeComida();
+    if (!t || t === 'manha') delete d.turno; else d.turno = t;
+    pilha().pop();
+    queueSave(); render();
+  },
 
   // ---------- folhas ----------
   folhas: function () { return folhaAberta(); }
@@ -3129,6 +3155,11 @@ async function importText(txt) {
   migraPlano4(S);
   migraPlano5(S);
   migraPlano6(S);
+  // A 7 e a 8 faltavam aqui. `ARQUITETURA` diz que toda migração roda no boot
+  // E na importação, pelo mesmo caminho — um backup do plano 6 entrava com o
+  // histórico das estações de HYROX que a 6→7 existe para apagar.
+  migraPlano7(S);
+  migraPlano8(S);
   montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;
@@ -4159,11 +4190,31 @@ CTX.refeicao = function (id) {
 CTX.seletorDeDia = function () {
   const h = diaResolvido();
   const dia = diaDeComida();
+  const plano = planoDeComida();
+  const doPlano = plano.filter(function (r) { return r.id === 'treino'; })[0];
+  const refs = refeicoesDeHoje(plano, h.cadencia === 'treino', !!dia.alta, dia.turno);
+  const pos = posTreinoDe(refs, h.cadencia === 'treino');
+  const nomeDe = function (id) {
+    const r = refs.filter(function (x) { return x.id === id; })[0];
+    return r ? r.n : null;
+  };
   return {
     titulo: h.cadencia === 'descanso' ? 'Descanso' : 'Dia de treino',
     treino: h.treino,
     cadencia: h.cadencia,
     alta: !!dia.alta,
+    turno: dia.turno || 'manha',
+    turnos: TURNOS.map(function (x) {
+      // `manha` não tem hora própria: a hora é a do plano, seja qual for.
+      const hora = x.t || (doPlano ? doPlano.t : '06:15');
+      const sim = refeicoesDeHoje(plano, true, !!dia.alta, x.k);
+      const idPos = posTreinoDe(sim, true);
+      const ref = idPos ? sim.filter(function (r) { return r.id === idPos; })[0] : null;
+      return { k: x.k, n: x.n, hora: hora, on: (dia.turno || 'manha') === x.k,
+               // o que muda de fato: quem vira o pós-treino naquele turno
+               pos: ref ? ref.n : null };
+    }),
+    posNome: pos ? nomeDe(pos) : null,
     procedencia: h.origem === 'registrado' ? 'você já registrou uma sessão hoje'
       : h.origem === 'aberta' ? 'há uma sessão aberta agora'
       : h.origem === 'manual' ? 'definido por você para hoje'

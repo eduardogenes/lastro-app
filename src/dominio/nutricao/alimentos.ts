@@ -8,7 +8,7 @@
 // Regra 6 do projeto continua valendo dos dois lados: isto é a ferramenta, não
 // o programa.
 
-import type { Alimento, Refeicao } from './tipos';
+import type { Alimento, Refeicao, Turno } from './tipos';
 
 /** Categorias, na ordem em que a lista de compras percorre o mercado. */
 export const CATEGORIAS: Array<[string, string]> = [
@@ -79,10 +79,23 @@ CRU.forEach(function ([id, n, cat, u, kcal, p, c, g, cru]) {
  *   treino  — só em dia de treino
  *   alta    — só em dia de alta demanda
  */
+/**
+ * Os três turnos e a que horas o treino começa em cada um.
+ *
+ * `manha` não tem horário: ele é o do PLANO, seja lá qual for. Fixar 06:15
+ * aqui faria o app desfazer a edição dele no dia em que mudasse o horário do
+ * treino — e o plano é a prescrição, não a opinião do app.
+ */
+export const TURNOS: Array<{ k: Turno; n: string; t: string | null }> = [
+  { k: 'manha', n: 'manhã', t: null },
+  { k: 'tarde', n: 'tarde', t: '12:15' },
+  { k: 'noite', n: 'noite', t: '18:15' }
+];
+
 export const PLANO_BASE: Refeicao[] =[
   { id: 'pre', t: '05:45', n: 'Pré-treino', tag: 'RÁPIDO E FUNCIONAL', quando: 'treino', nota: 'Carboidrato rápido antes de um treino após o jejum noturno. Volume baixo, digestão rápida. Uma fatia de pão, doce de leite e canela.', itens: [{ f: 'pao', q: 35 }, { f: 'docedeleite', q: 20 }, { f: 'canela', q: 1 }, { f: 'cafe', q: 200 }] },
   { id: 'treino', t: '06:15', n: 'Treino', tag: 'INTRA-TREINO', quando: 'treino', nota: 'Musculação 6h15–7h30. Nos dias de alta demanda entram 25 g de carboidrato na água.', itens: [{ f: 'agua', q: 600 }, { f: 'malto', q: 25, alta: true }] },
-  { id: 'pos', t: '08:00', n: 'Café da manhã / pós-treino', tag: 'REFEIÇÃO FORTE', quando: 'sempre', nota: 'Quatro fontes de energia e proteína sem depender de fogão no trabalho.', itens: [{ f: 'cuscuz', q: 200 }, { f: 'frango', q: 70 }, { f: 'requeijao', q: 30 }, { f: 'leite', q: 250 }, { f: 'uva', q: 120 }] },
+  { id: 'pos', t: '08:00', n: 'Café da manhã', tag: 'REFEIÇÃO FORTE', quando: 'sempre', nota: 'Quatro fontes de energia e proteína sem depender de fogão no trabalho.', itens: [{ f: 'cuscuz', q: 200 }, { f: 'frango', q: 70 }, { f: 'requeijao', q: 30 }, { f: 'leite', q: 250 }, { f: 'uva', q: 120 }] },
   { id: 'almoco', t: '12:30', n: 'Almoço', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'O kiwi entra diariamente junto de feijão, aveia e vegetais para elevar fibra e ajudar a regularidade intestinal.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'frango', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }, { f: 'kiwi', q: 100 }] },
   { id: 'lanche', t: '16:00', n: 'Lanche da tarde', tag: 'GRANDE REFEIÇÃO', quando: 'sempre', nota: 'Bata leite + banana + aveia + pasta + leite em pó + whey. Pão e geleia ficam separados.', itens: [{ f: 'leite', q: 250 }, { f: 'banana', q: 120 }, { f: 'aveia', q: 40 }, { f: 'pasta', q: 10 }, { f: 'leitepo', q: 10 }, { f: 'whey', q: 30 }, { f: 'pao', q: 50 }, { f: 'geleia', q: 20 }] },
   { id: 'jantar', t: '19:30', n: 'Jantar', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'Sem ceia obrigatória: o dia já fecha proteína e energia com quatro refeições proteicas completas.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'suino', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }] }

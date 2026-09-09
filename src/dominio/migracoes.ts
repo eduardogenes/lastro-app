@@ -21,7 +21,7 @@ import type { Estado, IdEx, Log, Treino } from './tipos';
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-export const PLANO_ATUAL = 7;
+export const PLANO_ATUAL = 8;
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -450,5 +450,40 @@ export function migraPlano7(S: Estado): Resultado7 | null {
   });
 
   S.plano = 7;
+  return r;
+}
+
+// ---------- 7 -> 8: o nome que era do horário ----------
+// "Café da manhã / pós-treino" foi escrito quando o treino era SEMPRE às 6h15.
+// O nome composto colava duas coisas: o horário (café da manhã) e o papel
+// (pós-treino). Com o turno da tarde e o da noite, o papel migra para o almoço
+// ou para o jantar, e o nome passa a mentir na refeição das 8h.
+//
+// A migração tira só a metade que virou calculada. `posTreinoDe` devolve o
+// papel, e a tela o mostra como selo na refeição que o recebeu.
+//
+// Compara com a string EXATA da época — congelada aqui, como manda a regra:
+// migração lê dado congelado, nunca o código de hoje. Se ele já tinha
+// renomeado a refeição, o nome dele fica.
+
+/** O nome que a refeição das 8h tinha até o plano 7. */
+export const NOME_POS_PLANO_7 = 'Café da manhã / pós-treino';
+
+/** O que a migração 7→8 renomeou. */
+export interface Resultado8 { renomeou: 0 | 1; }
+
+export function migraPlano8(S: Estado): Resultado8 | null {
+  if (S.plano >= 8) return null;
+  const r: Resultado8 = { renomeou: 0 };
+  const plano = S.comida && S.comida.plano;
+  if (Array.isArray(plano)) {
+    plano.forEach(function (ref) {
+      if (ref && ref.id === 'pos' && ref.n === NOME_POS_PLANO_7) {
+        ref.n = 'Café da manhã';
+        r.renomeou = 1;
+      }
+    });
+  }
+  S.plano = 8;
   return r;
 }

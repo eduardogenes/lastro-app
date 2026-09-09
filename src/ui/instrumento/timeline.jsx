@@ -16,6 +16,7 @@ import { Caixa } from './primitivos.jsx';
  * @param {object} p
  * @param {string} p.hora      "05:45" — ou o número da série, quando é treino
  * @param {string} p.nome
+ * @param {string} [p.selo]    papel que a linha acumula hoje, em mono curto
  * @param {string} [p.valor]   número à direita do nome (kcal, carga…)
  * @param {string} [p.resumo]  uma linha do que tem dentro
  * @param {string} [p.meta]    linha de 10px em mono: macros, volume, RIR
@@ -28,7 +29,7 @@ import { Caixa } from './primitivos.jsx';
  * @param {boolean} [p.ultima]  a última não desenha o fio de baixo
  */
 export function LinhaTimeline({
-  hora, nome, valor, resumo, meta, feito, agora, cor,
+  hora, nome, selo, valor, resumo, meta, feito, agora, cor,
   aoMarcar, aoAbrir, aoEditar, ultima, filhos
 }) {
   return (
@@ -44,6 +45,10 @@ export function LinhaTimeline({
           {aoMarcar && <Caixa marcada={feito} onClick={aoMarcar} rotulo={`marcar ${nome}`} />}
           <button class="ins-tl-toque" onClick={aoAbrir} disabled={!aoAbrir}>
             <span class="ins-tl-nome">{nome}</span>
+            {/* Elemento próprio, e não texto colado no nome: o nome corta com
+                reticências, e "Almoço · pós-treino" virava "Almoço · pós-tr…".
+                O selo é o que NÃO pode ser cortado — é ele que diz o papel. */}
+            {selo && <span class="ins-tl-selo">{selo}</span>}
             {valor && <span class="ins-tl-valor">{valor}</span>}
           </button>
         </div>

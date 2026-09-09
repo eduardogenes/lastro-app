@@ -15,7 +15,7 @@ import {
 import { LinhaTimeline } from '../instrumento/timeline.jsx';
 import { fmtInt, fmtLitros } from '../../dominio/formato';
 import {
-  minutosDe, refeicoesDeHoje, resumoDaRefeicao, totalDaRefeicao, totalDoDia, totalRegistrado
+  minutosDe, resumoDaRefeicao, totalDaRefeicao, totalDoDia, totalRegistrado
 } from '../../dominio/nutricao/calculo';
 
 const COPO = 250;
@@ -35,10 +35,9 @@ function contagem(alvoMin, agoraMs) {
 export function Hoje({ ctx }) {
   const agora = useAgora();
   const {
-    dia, plano, catalogo, diaHoje, comidaDoDia, alta, alvo, sessao, cadenciaTxt
+    dia, plano, catalogo, diaHoje, comidaDoDia, alta, alvo, sessao, cadenciaTxt,
+    refs, posTreino, conflitos
   } = ctx.hoje();
-
-  const refs = refeicoesDeHoje(plano, diaHoje.cadencia === 'treino', alta);
   const registrado = totalRegistrado(plano, catalogo, comidaDoDia, diaHoje.cadencia === 'treino', alta);
 
   const agoraMin = new Date(agora).getHours() * 60 + new Date(agora).getMinutes();
@@ -60,7 +59,7 @@ export function Hoje({ ctx }) {
       {proxima && (
         <CartaoFoco
           agora={hhmm}
-          rotulo={proxima.t}
+          rotulo={proxima.id === posTreino ? proxima.t + ' · pós-treino' : proxima.t}
           nome={ehTreino ? (sessao.nome || 'Treino ' + diaHoje.treino) : proxima.n}
           contagem={c.txt}
           contagemRotulo={c.rotulo}
@@ -91,6 +90,12 @@ export function Hoje({ ctx }) {
       </Secao>
 
       <Secao rotulo="o dia" nota="toque em ··· para editar">
+        {/* O app aponta o conflito e para por aí: mover a refeição para um
+            horário que ninguém prescreveu seria prescrever, e fundir duas
+            refeições seria pior. Quem decide é ele. */}
+        {conflitos.map(c => (
+          <div key={c.id} class="hj-conflito ins-provenance ins-amber">{c.txt}</div>
+        ))}
         <div>
           {refs.map((r, i) => {
             const treino = ctx.ehLinhaDeTreino(r);
@@ -101,6 +106,10 @@ export function Hoje({ ctx }) {
                 key={r.id}
                 hora={r.t}
                 nome={treino ? (sessao.nome || 'Treino ' + diaHoje.treino) : r.n}
+                /* "pós-treino" não é uma refeição, é um PAPEL que uma refeição
+                   de relógio acumula — de manhã o café, à tarde o almoço, à
+                   noite o jantar. Por isso é selo, e não nome. */
+                selo={r.id === posTreino ? 'pós-treino' : null}
                 valor={treino ? sessao.valor : fmtInt(t.kcal) + ' kcal'}
                 resumo={treino ? sessao.resumo : resumoDaRefeicao(r, catalogo, alta, comidaDoDia.escala[r.id] ?? 1)}
                 meta={treino ? sessao.meta

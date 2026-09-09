@@ -122,6 +122,35 @@ export function FolhaDia({ ctx }) {
         </button>
       </div>
 
+      {/* O turno do treino. Existe porque o plano foi desenhado em cima de
+          treino às 6h15 e ele nem sempre treina de manhã — e a refeição que
+          carrega o papel de pós-treino muda junto.
+
+          Só o pré e o intra deslizam: café, almoço, lanche e jantar são
+          âncoras do relógio. Deslocar o dia em bloco poria o café às 14h. */}
+      {d.cadencia === 'treino' && (
+        <div class="fd-turno">
+          <div class="ins-label">turno do treino</div>
+          <div class="fd-turnos">
+            {d.turnos.map(t => (
+              <button
+                key={t.k}
+                class={'fd-turno-op' + (t.on ? ' on' : '')}
+                onClick={() => ctx.setTurno(t.k)}
+              >
+                <span class="fd-turno-n">{t.n}</span>
+                <span class="fd-turno-h">{t.hora}</span>
+                {t.pos && <span class="fd-turno-p">pós · {t.pos}</span>}
+              </button>
+            ))}
+          </div>
+          <p class="ins-body-sm ins-t3">
+            Anda o pré-treino e o intra. As refeições de relógio ficam onde
+            estão, e o pós-treino passa a ser a primeira depois da sessão.
+          </p>
+        </div>
+      )}
+
       <div class="fd-alta">
         <div class="ins-label">demanda alta</div>
         <p class="ins-body-sm ins-t3">

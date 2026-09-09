@@ -6,7 +6,7 @@
 // um número é derivado, quem mostra tem que dizer de onde veio.
 
 import type {
-  Alimento, DiaComida, Item, LinhaCompra, Quando, Refeicao, Totais
+  Alimento, DiaComida, Item, LinhaCompra, Quando, Refeicao, Totais, Turno
 } from './tipos';
 
 export const VAZIO: Totais = { kcal: 0, p: 0, c: 0, g: 0 };
@@ -84,16 +84,94 @@ export function minutosDe(hhmm: string): number {
   return (h || 0) * 60 + (m || 0);
 }
 
-/** As refeições de hoje, em ordem de relógio. */
+/** 'HH:MM' a partir de minutos desde a meia-noite, dando a volta no dia. */
+export function horaDe(min: number): string {
+  const m = ((Math.round(min) % 1440) + 1440) % 1440;
+  return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+}
+
+/**
+ * O deslocamento do turno, em minutos.
+ *
+ * É a diferença entre a hora do turno escolhido e a hora que o PLANO dá ao
+ * treino — não uma constante. Assim, mexer no horário do treino dentro do
+ * plano continua valendo, e `manha` é sempre zero: o dia como está escrito.
+ */
+export function deslocamentoDoTurno(plano: Refeicao[], turno?: Turno | null): number {
+  if (!turno || turno === 'manha') return 0;
+  const alvo = turno === 'tarde' ? 12 * 60 + 15 : 18 * 60 + 15;
+  const treino = plano.filter(r => r.id === 'treino')[0];
+  if (!treino) return 0;
+  return alvo - minutosDe(treino.t);
+}
+
+/**
+ * As refeições de hoje, em ordem de relógio, já no turno escolhido.
+ *
+ * **Só o que é do treino anda.** `quando: 'treino'` já marcava exatamente as
+ * duas refeições que existem por causa da sessão — o pré e o intra —, e são
+ * elas que deslizam junto, mantendo o intervalo que o plano lhes deu. Café,
+ * almoço, lanche e jantar são âncoras do RELÓGIO e ficam onde estão: deslocar
+ * o dia inteiro em bloco poria o café da manhã às 14h.
+ *
+ * O plano nunca é tocado — sai uma cópia. Editar é permanente, ajustar é de
+ * hoje.
+ */
 export function refeicoesDeHoje(
   plano: Refeicao[],
   treino: boolean,
-  alta: boolean
+  alta: boolean,
+  turno?: Turno | null
 ): Refeicao[] {
+  const d = deslocamentoDoTurno(plano, turno);
   return plano
     .filter(r => refeicaoEntra(r, treino, alta))
-    .slice()
+    .map(r => (d && r.quando === 'treino') ? { ...r, t: horaDe(minutosDe(r.t) + d) } : r)
     .sort((a, b) => minutosDe(a.t) - minutosDe(b.t));
+}
+
+/**
+ * Qual refeição carrega o papel de PÓS-TREINO hoje.
+ *
+ * "Pós-treino" nunca foi uma refeição neste plano — é um papel que uma
+ * refeição de relógio acumula, e o nome composto que o nutricionista deu
+ * ("Café da manhã / pós-treino") era a prova disso. O papel gruda na primeira
+ * refeição de relógio depois da sessão: de manhã é o café, à tarde o almoço, à
+ * noite o jantar.
+ *
+ * Calculado, nunca gravado. Fundir ou criar refeição para acomodar o papel
+ * seria inventar uma sétima refeição, e o app executa a prescrição.
+ */
+export function posTreinoDe(refs: Refeicao[], treinando: boolean): string | null {
+  if (!treinando) return null;
+  const t = refs.filter(r => r.id === 'treino')[0];
+  if (!t) return null;
+  const dep = refs.filter(r => r.quando !== 'treino' && minutosDe(r.t) > minutosDe(t.t));
+  return dep.length ? dep[0].id : null;
+}
+
+/**
+ * Refeição de relógio que caiu DENTRO da sessão.
+ *
+ * Com treino às 12h15 e almoço às 12h30 no plano, o almoço acontece durante o
+ * treino. O app aponta e para por aí: mover a refeição para um horário que
+ * ninguém prescreveu seria prescrever, e fundir duas seria pior. Quem decide é
+ * ele, editando o plano ou ignorando.
+ *
+ * 60 minutos é piso de detecção, não duração prescrita: é o mínimo que uma
+ * sessão de musculação ocupa, e usar mais acusaria conflito onde não há.
+ */
+export const PISO_DA_SESSAO = 60;
+
+export function conflitosDeTurno(refs: Refeicao[], treinando: boolean): string[] {
+  if (!treinando) return [];
+  const t = refs.filter(r => r.id === 'treino')[0];
+  if (!t) return [];
+  const ini = minutosDe(t.t);
+  return refs
+    .filter(r => r.quando !== 'treino')
+    .filter(r => minutosDe(r.t) > ini && minutosDe(r.t) < ini + PISO_DA_SESSAO)
+    .map(r => r.id);
 }
 
 /** Resumo de uma linha: "120 g banana · 15 g mel · 200 ml café". */

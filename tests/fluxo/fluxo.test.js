@@ -220,7 +220,11 @@ test('importar um backup do formato antigo reconstrói tudo', async () => {
   await a.E('importText(' + JSON.stringify(antigo) + ')');
   await a.esperar(60);
 
-  assert.strictEqual(a.E('S.plano'), 6, 'passou pela cadeia inteira de migrações');
+  // Ancorado em PLANO_ATUAL e não num número escrito à mão: a asserção é
+  // "passou pela cadeia INTEIRA", e fixar 6 a fazia envelhecer em silêncio —
+  // foi assim que a importação ficou parando na 6 sem ninguém ver.
+  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'),
+    'a importação passa pela mesma cadeia que o boot');
   assert.ok(a.J('S.logs["supino-inclinado-com-halteres"]'), 'reindexado por exercício');
   assert.ok(a.J('S.logs["remada-unilateral-na-polia-baixa"]'));
   assert.ok(a.E('!!S.prog'), 'e ganhou um programa');
