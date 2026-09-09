@@ -36,8 +36,15 @@ export function Treino({ ctx }) {
           celulas={[
             // id=daymeta: atualizaEstado() escreve aqui a cada tecla, sem
             // re-render — o porquê está em main.jsx.
-            { k: 's', id: 'daymeta', rotulo: 'séries', valor: `${t.feitas}/${t.prescritas}`,
-              cor: t.feitas >= t.prescritas && t.prescritas > 0 ? 'ins-acid' : '' },
+            // Num dia aberto não há meta a cumprir: `0/16` era uma conta contra
+            // um número que o box nunca ia respeitar. O que se conta é o que
+            // entrou — e antes da aula é um traço, não um zero.
+            t.aberto
+              ? { k: 's', id: 'daymeta', rotulo: 'movimentos',
+                  valor: t.movimentos ? String(t.movimentos) : '–',
+                  cor: t.feitas > 0 ? 'ins-acid' : '' }
+              : { k: 's', id: 'daymeta', rotulo: 'séries', valor: `${t.feitas}/${t.prescritas}`,
+                  cor: t.feitas >= t.prescritas && t.prescritas > 0 ? 'ins-acid' : '' },
             { k: 'v', rotulo: 'volume', valor: t.volume },
             { k: 'c', rotulo: 'ciclo', valor: t.ciclo, nota: `${t.sessoes} sessões` }
           ]}
@@ -148,15 +155,36 @@ export function Treino({ ctx }) {
         </div>
       ))}
 
-<Secao rotulo={t.editando ? 'editando hoje' : 'exercícios'}
-             nota={t.editando ? 'nada aqui mexe no programa' : `${t.feitas} de ${t.prescritas} séries`}>
+<Secao
+        rotulo={t.editando ? 'editando hoje' : t.aberto ? 'o que o box passou hoje' : 'exercícios'}
+        nota={t.editando ? 'nada aqui mexe no programa'
+          : t.aberto ? (t.movimentos
+              ? `${t.movimentos} ${t.movimentos === 1 ? 'movimento' : 'movimentos'}`
+              : 'nada prescrito')
+          : `${t.feitas} de ${t.prescritas} séries`}>
         {t.editando
           ? <EdicaoDoDia ctx={ctx} />
           : t.exercicios.length === 0
-            ? <Vazio>Este treino ainda não tem exercício nenhum.</Vazio>
+            ? (t.aberto
+                /* O vazio de um dia aberto não é falta: é o estado normal dele
+                   antes da aula. O texto diz isso, senão lê como erro. */
+                ? <Vazio>
+                    Sábado é o que o box programar. Adicione o que entrou na aula —
+                    ou a prova inteira, se for dia de simulação.
+                  </Vazio>
+                : <Vazio>Este treino ainda não tem exercício nenhum.</Vazio>)
             : t.exercicios.map(vm => (
                 <Exercicio key={vm.id} vm={vm} acoes={ctx.acoesEx} />
               ))}
+
+        {t.aberto && !t.editando && (
+          <div class="tr-aberto">
+            <button class="ins-btn-add" onClick={ctx.abrirAddEx}>+ adicionar movimento</button>
+            <button class="ins-btn-secondary tr-sim" onClick={ctx.poeSimulacao}>
+              simulação completa · 9 estações
+            </button>
+          </div>
+        )}
       </Secao>
 
       <Secao rotulo="o programa" nota={t.diffTxt}>

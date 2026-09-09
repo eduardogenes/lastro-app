@@ -721,3 +721,9 @@
 .hx-nome { width: 100%; }
 .hx-acoes { display: flex; gap: var(--ins-3); margin-top: var(--ins-3); flex-wrap: wrap; }
 .hx-acoes button { flex: 1 1 auto; }
+
+/* O rodapé do dia aberto: as duas portas de entrada do sábado. A adição avulsa
+   é a de todo dia; a simulação é o atalho para quando ele faz a prova inteira,
+   e vem em segundo porque é a exceção. */
+.tr-aberto { display: flex; flex-direction: column; gap: var(--ins-4); margin-top: var(--ins-6); }
+.tr-sim { width: 100%; }

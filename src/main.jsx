@@ -1,6 +1,6 @@
 import {
   ROT_BASE, D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO,
-  PROGRAMA, RULES, ALT, slugEx, EX_BASE,
+  PROGRAMA, RULES, ALT, slugEx, EX_BASE, SIMULACAO_HYROX,
   PRIORIDADES, NIVEIS, nivelDe, PRIO, CARGAS, DORES, MODAIS
 } from './dominio/programa';
 import {
@@ -158,6 +158,9 @@ function aplicaMods(d, slots) {
 
 // Onde o mod é gravado. Só existe para o dia que ele está treinando: editar
 // outro dia da rotação é edição de programa, e passa pela tela de programa.
+/** O dia se decide NO dia: sábado é o que o box programar. */
+function diaAberto(d) { const t = treino(d); return !!(t && t.aberto); }
+
 function podeEditar(d) {
   return S.sessao ? S.sessao.day === d : d === nextDay();
 }
@@ -256,7 +259,7 @@ async function renomeiaExercicio(idEx, bruto) {
 function treino(d) {
   const p = S.prog && S.prog[d];
   if (!p) return null;
-  return { name: p.name, tag: p.tag, ex: aplicaMods(d, p.ex).map(function (sl) {
+  return { name: p.name, tag: p.tag, aberto: p.aberto, ex: aplicaMods(d, p.ex).map(function (sl) {
     const e = exDe(sl.id);
     return { id:sl.id, n:e.n, car:e.car, g:e.g, c:e.c, cue:e.cue, u:e.u,
              peg:e.peg, pegPe:e.pegPe,
@@ -747,7 +750,10 @@ async function finalizarSessao() {
   }
 
   const mods = modsDoDia(s.day);
-  if (mods.length) {
+  // Num dia ABERTO o que foi adicionado É o dia, não uma emenda a ele: não há
+  // conteúdo permanente para aquilo virar, e perguntar "isto fica no programa?"
+  // a cada movimento do box seria uma pergunta por semana sem resposta certa.
+  if (mods.length && !diaAberto(s.day)) {
     // fechando pela porta da frente: a pergunta é agora, e não fica guardada
     S.promoPendente = null;
     // a sessão continua aberta até ele decidir: sair sem responder mantém o
@@ -1857,6 +1863,31 @@ async function addExercicio(idEx) {
   toast(e.n + ' entrou no treino de hoje.');
 }
 
+/**
+ * Põe a prova inteira no dia, de uma vez.
+ *
+ * Nove adições à mão para o dia de simulação seria o tipo de trabalho
+ * administrativo que este app existe para não pedir. Entram como mods do dia,
+ * como qualquer adição — e como o sábado é aberto, nenhuma delas vai pedir
+ * promoção no fim.
+ */
+async function poeSimulacao() {
+  const d = view.day;
+  if (!diaAberto(d)) return;
+  const jaTem = {};
+  treino(d).ex.forEach(function (e) { jaTem[e.id] = 1; });
+  let n = 0;
+  SIMULACAO_HYROX.forEach(function (ex) {
+    const idEx = slugEx(ex.n);
+    if (jaTem[idEx]) return;
+    poeMod(d, { k:'add', id:idEx, s:ex.s, r:ex.r, d:ex.d, pos: treino(d).ex.length, n: Date.now() + n });
+    n++;
+  });
+  if (!n) { toast('A simulação já está no dia.'); return; }
+  await save(); render();
+  toast('As nove estações entraram no dia.');
+}
+
 function abrirNovoEx() { view.novoEx = true; view.addEx = true; render(); }
 
 async function criarExercicio() {
@@ -2118,6 +2149,9 @@ function estacoesDoDia(d) {
 }
 /** "9 exercícios · 20 séries" na musculação; "9 estações" num dia de condicionamento. */
 function metaDoDia(d) {
+  // Dia aberto não tem meta: dizer "0 séries" seria prometer uma conta que não
+  // existe. O que ele tem é uma regra — quem programa é o box.
+  if (diaAberto(d)) return 'o que o box programar';
   const est = estacoesDoDia(d);
   const s = seriesDoDia(d);
   if (est && !s) return est + (est === 1 ? ' estação' : ' estações');
@@ -3936,6 +3970,11 @@ CTX.treino = function () {
     olho: P ? P.tag.toUpperCase() : '',
     feitas: feitas,
     prescritas: prescritas,
+    // Num dia aberto não existe "prescritas": a meta 0/16 do sábado era uma
+    // conta contra um número que o box nunca ia cumprir. O que conta é quantos
+    // movimentos entraram.
+    aberto: diaAberto(d),
+    movimentos: P ? P.ex.length : 0,
     volume: fmtK(volumeDoDia(d)),
     ciclo: String(Math.floor(S.done.length / rot().length) + 1),
     sessoes: S.done.length,
@@ -5023,6 +5062,7 @@ CTX.decidePromo = function (j, v) { decidePromo(j, v); };
 CTX.motivoPromo = function (k) { motivoPromo(k); };
 CTX.concluiPromo = function () { concluirPromo(); };
 CTX.voltaDoPromo = function () { voltarDoPromo(); };
+CTX.poeSimulacao = function () { poeSimulacao(); };
 
 // ---------- tela cheia: retrospectiva de bloco ----------
 CTX.retrospectiva = function () {

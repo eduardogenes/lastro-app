@@ -105,6 +105,13 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   // é o sexto dia, chega pela rotação como qualquer outro
   a.E('go("HX")');
   assert.strictEqual(a.E('treino("HX").name'), 'HYROX');
+
+  // ...mas nasce VAZIO: quem programa o sábado é o box, e nada é prescrito de
+  // véspera. A prova inteira entra pelo atalho, quando é dia de simulação.
+  assert.strictEqual(a.E('treino("HX").ex.length'), 0, 'o dia aberto começa sem nada');
+  await a.E('poeSimulacao()');
+  await a.esperar();
+  assert.strictEqual(a.E('treino("HX").ex.length'), 9, 'as nove estações entram de uma vez');
   assert.strictEqual(a.E('treino("HX").ex[0].n'), 'Corrida');
 
   // registra por TEMPO: o segundo campo é segundo, e a carga é opcional
@@ -134,7 +141,49 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   // a tela de programa chama o dia de estações, não de séries
   a.E('abrirPrograma("HX")');
   assert.ok(a.texto('.htitle').includes('HYROX'));
-  assert.ok(a.E('programaDia("HX").meta').includes('estações'),
-    a.E('programaDia("HX").meta'));
+  // A meta do sábado não é uma conta: dizer "0 séries" prometeria um número
+  // que o box nunca vai respeitar.
+  assert.strictEqual(a.E('programaDia("HX").meta'), 'o que o box programar');
+  a.fechar();
+});
+
+test('o dia aberto não pede promoção nem cobra pendência', async () => {
+  // O app existe em parte para FREAR mudança de programa, e isso está certo de
+  // segunda a sexta. No sábado vira obstáculo: o que entra no dia É o dia, não
+  // uma emenda a ele, e não há conteúdo permanente para aquilo virar.
+  const a = await app();
+  a.E('go("HX")');
+  await a.esperar();
+
+  assert.ok(a.E('diaAberto("HX")'), 'sábado é dia aberto');
+  assert.ok(!a.E('diaAberto("A")'), 'e segunda não');
+
+  // nada prescrito, nada pendente — não há o que cobrar no fim
+  const p = a.J("pendencias('HX', 0, [])");
+  assert.deepStrictEqual(p.nada, [], 'nada prescrito, nada pendente');
+
+  await a.E('poeSimulacao()');
+  await a.esperar();
+  assert.strictEqual(a.J("modsDoDia('HX').length"), 9, 'as estações entraram como mods do dia');
+
+  a.E('toggle(0)');
+  a.preencher(0, 0, null, 252);
+  await a.esperar();
+  await a.E('finalizarSessao()');
+  await a.esperar(60);
+
+  assert.ok(!a.J('!!view.promo'),
+    'e mesmo com nove mods no dia, nenhuma pergunta de promoção');
+  assert.ok(!a.J('!!S.sessao'), 'a sessão encerrou direto');
+  a.fechar();
+});
+
+test('as estações da prova continuam no catálogo depois de sair da prescrição', async () => {
+  // Quem já registrou um sled push precisa que o exercício continue existindo,
+  // senão o histórico fica órfão sob uma chave sem dono.
+  const a = await app();
+  ['sled-push', 'sled-pull', 'wall-balls', 'ski-erg', 'corrida'].forEach(function (k) {
+    assert.ok(a.E('!!CAT[' + JSON.stringify(k) + ']'), 'sumiu do catálogo: ' + k);
+  });
   a.fechar();
 });

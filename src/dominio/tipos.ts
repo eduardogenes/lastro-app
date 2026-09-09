@@ -77,6 +77,16 @@ export interface Treino<E = Slot> {
   name: string;
   tag: string;
   ex: E[];
+  /**
+   * 1 quando o conteúdo do dia se decide NO dia.
+   *
+   * O sábado é aula de box: quem programa é o box, e nunca se sabe de véspera.
+   * Um dia aberto nasce sem exercício, e o que entra nele não é uma emenda à
+   * prescrição — é o próprio dia. Daí as duas consequências: não há pendência
+   * (nada foi prescrito) e não há promoção no fim (não há conteúdo permanente
+   * para o que foi feito virar).
+   */
+  aberto?: 1;
 }
 
 /**

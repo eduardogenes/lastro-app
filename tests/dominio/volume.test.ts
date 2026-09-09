@@ -3,7 +3,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { alvoDoPrograma, impacto, seriesDeGrupo, seriesPorMusculo } from '../../src/dominio/volume';
-import { ALT, EX_BASE, LEGADO, PROGRAMA, ROT_BASE, slugEx } from '../../src/dominio/programa';
+import { ALT, EX_BASE, LEGADO, PROGRAMA, ROT_BASE, SIMULACAO_HYROX, slugEx } from '../../src/dominio/programa';
 import type { IdEx, Log } from '../../src/dominio/tipos';
 import { DIA, inicioDaSemana, log } from './ajuda';
 
@@ -147,7 +147,16 @@ test('o HYROX é sessão da rotação, mas não série de hipertrofia', () => {
   assert.ok(ROT_BASE.indexOf('HX') >= 0, 'o dia se chama HX, não F');
   assert.strictEqual(ROT_BASE.indexOf('F'), -1,
     'F significou o treino de posteriores no histórico dele; não se reaproveita');
-  f.ex.forEach(ex => {
+
+  // O sábado é ABERTO: quem programa é o box, e nada é prescrito de véspera.
+  assert.strictEqual(f.aberto, 1, 'o dia se decide no dia');
+  assert.deepStrictEqual(f.ex, [], 'e por isso nasce sem exercício');
+
+  // As nove estações saíram da prescrição e continuam no catálogo. A regra que
+  // este teste sempre guardou vale para elas, onde quer que morem: estação com
+  // grupo muscular entraria no alvo por músculo, e o HYROX se mede por tempo.
+  assert.strictEqual(SIMULACAO_HYROX.length, 9, 'a prova tem nove estações');
+  SIMULACAO_HYROX.forEach(ex => {
     assert.strictEqual(ex.g, '', 'estação com grupo entraria no alvo por músculo: ' + ex.n);
     assert.strictEqual(ex.u, 'seg', 'o HYROX se mede por tempo: ' + ex.n);
   });

@@ -126,17 +126,12 @@ export const PROGRAMA: Record<string, Treino<ExercicioPrescrito>> = {
   // repetições são fixas, o que melhora é o relógio. O app já sabe disso —
   // exercício por tempo não recebe selo de subir carga, e o histórico vira
   // tempo total em vez de volume.
-  HX: { name:'HYROX', tag:'condicionamento, não hipertrofia', ex:[
-    {n:'Corrida', car:'corpo', g:'', s:8, r:'1 km', c:1, d:D_CURTO, u:'seg', cue:'Os 8 km da prova, um a cada estação. Registre o tempo de cada quilômetro em segundos: 4:12 são 252.'},
-    {n:'Ski erg', car:'corpo', g:'', s:1, r:'1000 m', c:0, d:D_CURTO, u:'seg', cue:'Puxada com o tronco, não só com o braço. Tempo em segundos.'},
-    {n:'Sled push', car:'lado', g:'', s:1, r:'50 m', c:1, d:D_CURTO, u:'seg', cue:'Carga por lado no campo de carga, tempo em segundos. Passos curtos e contínuos: parar custa mais do que ir devagar.'},
-    {n:'Sled pull', car:'lado', g:'', s:1, r:'50 m', c:1, d:D_CURTO, u:'seg', cue:'Puxada com o quadril para trás, não só com o braço.'},
-    {n:'Burpee broad jump', car:'corpo', g:'', s:1, r:'80 m', c:1, d:D_CURTO, u:'seg', cue:'A estação que mais custa em fôlego. Salto curto e cadência constante.'},
-    {n:'Remo ergômetro', car:'corpo', g:'', s:1, r:'1000 m', c:0, d:D_CURTO, u:'seg', cue:'Perna, tronco, braço — nessa ordem. Tempo em segundos.'},
-    {n:'Farmers carry', car:'halter', g:'', s:1, r:'200 m', c:0, d:D_CURTO, u:'seg', cue:'Um peso em cada mão. Escápula encaixada, sem deixar o ombro subir.'},
-    {n:'Lunges com sandbag', car:'halter1', g:'', s:1, r:'100 m', c:1, d:D_CURTO, u:'seg', cue:'Joelho tocando o chão a cada passo, como a prova exige. O peso é o do saco.'},
-    {n:'Wall balls', car:'halter1', g:'', s:1, r:'100 reps', c:1, d:D_CURTO, u:'seg', cue:'A última estação, com a perna já destruída. O peso é o da bola; o tempo é o que conta.'},
-  ]},
+  // O sábado é ABERTO: quem programa é o box, e ele nunca sabe de véspera.
+  // Nasce sem exercício, e o que entra nele é o próprio dia, não uma emenda à
+  // prescrição. As nove estações da prova continuam no catálogo, em
+  // SIMULACAO_HYROX, a um toque de distância para o dia em que ele fizer a
+  // prova inteira.
+  HX: { name:'HYROX', tag:'o que o box programar', aberto:1, ex:[] },
 };
 
 export const RULES: Regra[] = [
@@ -547,12 +542,41 @@ const PEGADA_POR_NOME: Record<string, { t: string; pe?: 1 }> = {
   'Wall balls':                             { t: 'mãos sob a bola, cotovelo por dentro' }
 };
 
+
+/**
+ * As nove estações da prova de HYROX, na ordem dela.
+ *
+ * Elas SAÍRAM da prescrição do sábado e continuam aqui por dois motivos. O
+ * primeiro é histórico: quem já registrou um sled push precisa que o exercício
+ * continue existindo no catálogo, senão o registro fica órfão. O segundo é que
+ * a prova inteira é um treino legítimo de vez em quando — e aí ela entra de uma
+ * vez, pelo atalho, em vez de nove adições à mão.
+ *
+ * Isto é a PROVA, não o treino de sábado. Era essa a confusão: 8 km de corrida
+ * intercalados com 8 estações é o evento, e o app o mostrava como se fosse a
+ * sessão da semana, com meta de 16 séries que nunca se cumpria.
+ */
+export const SIMULACAO_HYROX: ExercicioPrescrito[] = [
+  {n:'Corrida', car:'corpo', g:'', s:8, r:'1 km', c:1, d:D_CURTO, u:'seg', cue:'Os 8 km da prova, um a cada estação. Registre o tempo de cada quilômetro em segundos: 4:12 são 252.'},
+  {n:'Ski erg', car:'corpo', g:'', s:1, r:'1000 m', c:0, d:D_CURTO, u:'seg', cue:'Puxada com o tronco, não só com o braço. Tempo em segundos.'},
+  {n:'Sled push', car:'lado', g:'', s:1, r:'50 m', c:1, d:D_CURTO, u:'seg', cue:'Carga por lado no campo de carga, tempo em segundos. Passos curtos e contínuos: parar custa mais do que ir devagar.'},
+  {n:'Sled pull', car:'lado', g:'', s:1, r:'50 m', c:1, d:D_CURTO, u:'seg', cue:'Puxada com o quadril para trás, não só com o braço.'},
+  {n:'Burpee broad jump', car:'corpo', g:'', s:1, r:'80 m', c:1, d:D_CURTO, u:'seg', cue:'A estação que mais custa em fôlego. Salto curto e cadência constante.'},
+  {n:'Remo ergômetro', car:'corpo', g:'', s:1, r:'1000 m', c:0, d:D_CURTO, u:'seg', cue:'Perna, tronco, braço — nessa ordem. Tempo em segundos.'},
+  {n:'Farmers carry', car:'halter', g:'', s:1, r:'200 m', c:0, d:D_CURTO, u:'seg', cue:'Um peso em cada mão. Escápula encaixada, sem deixar o ombro subir.'},
+  {n:'Lunges com sandbag', car:'halter1', g:'', s:1, r:'100 m', c:1, d:D_CURTO, u:'seg', cue:'Joelho tocando o chão a cada passo, como a prova exige. O peso é o do saco.'},
+  {n:'Wall balls', car:'halter1', g:'', s:1, r:'100 reps', c:1, d:D_CURTO, u:'seg', cue:'A última estação, com a perna já destruída. O peso é o da bola; o tempo é o que conta.'},
+];
+
 export const EX_BASE: Record<IdEx, Exercicio> = (function () {
   const c: Record<IdEx, Exercicio> = {};
   ROT_BASE.forEach(function (d) {
     PROGRAMA[d].ex.forEach(function (ex) {
       c[slugEx(ex.n)] = { n:ex.n, car:ex.car, g:ex.g, c:ex.c, cue:ex.cue, u:ex.u };
     });
+  });
+  SIMULACAO_HYROX.forEach(function (ex) {
+    c[slugEx(ex.n)] = { n:ex.n, car:ex.car, g:ex.g, c:ex.c, cue:ex.cue, u:ex.u };
   });
   Object.keys(LEGADO).forEach(function (nome) {
     const k = slugEx(nome), l = LEGADO[nome];
@@ -646,7 +670,7 @@ export const MODAIS: string[] = ['bike', 'esteira inclinada', 'elíptico', 'remo
 export function semeiaProg(): Record<string, Treino> {
   const p: Record<string, Treino> = {};
   ROT_BASE.forEach(function (d) {
-    p[d] = { name: PROGRAMA[d].name, tag: PROGRAMA[d].tag,
+    p[d] = { name: PROGRAMA[d].name, tag: PROGRAMA[d].tag, aberto: PROGRAMA[d].aberto,
       ex: PROGRAMA[d].ex.map(function (ex) {
         return { id: slugEx(ex.n), s: ex.s, r: ex.r, d: ex.d, rir: ex.rir, desde: 0 };
       }) };

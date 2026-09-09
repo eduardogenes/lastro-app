@@ -14,6 +14,7 @@ O [README](../README.md) cobre o uso; aqui está o porquê das decisões.
 - [Camada de storage](#camada-de-storage)
 - [Fotos: as do aparelho e as do corpo](#fotos-as-do-aparelho-e-as-do-corpo)
 - [O Voltar do sistema](#o-voltar-do-sistema)
+- [O sábado é um dia aberto](#o-sábado-é-um-dia-aberto)
 - [Registro contínuo](#registro-contínuo)
 - [Ciclo da sessão](#ciclo-da-sessão)
 - [Tipo de carga](#tipo-de-carga)
@@ -674,6 +675,61 @@ manda na posição de leitura é o app.
 
 Efeito colateral bem-vindo: na bancada, o Voltar da janela do computador passou
 a fechar a folha dentro do aparelho, em vez de navegar a bancada para fora.
+
+---
+
+## O sábado é um dia aberto
+
+Cinco dias da rotação são prescrição do treinador. O sexto não: sábado é aula de
+box, e quem programa é o box — nunca se sabe de véspera.
+
+O app modelava o sábado como as **nove estações da prova de HYROX**: 8 km de
+corrida intercalados com 8 estações. Isso é o EVENTO, não a sessão da semana, e
+a diferença aparecia em quatro lugares ao mesmo tempo:
+
+- meta de `0/16 séries`, que o box nunca ia cumprir;
+- linguagem de RIR (`isolador · última pode ir a 0–1`) num remo de 1000 m;
+- confirmação de "9 exercícios pendentes?" ao finalizar, toda semana;
+- e, se ele registrasse o que de fato fez, **uma pergunta de promoção por
+  movimento** no fim — o app perguntando se aquilo entra no programa oficial.
+
+O último é o mais revelador: o app foi construído para **frear** mudança de
+programa, e isso está certo de segunda a sexta. No sábado, a mudança é a
+natureza do dia, e o freio vira obstáculo.
+
+### `aberto: 1`
+
+Um quarto conceito, ao lado de prescrição, mods e sessão avulsa — porque nenhum
+dos três dizia "dia cujo conteúdo se decide no dia".
+
+Um dia aberto nasce com `ex: []`. O que entra nele é o próprio dia, não uma
+emenda a ele, e daí saem as duas consequências que resolvem os quatro sintomas:
+
+| | |
+|---|---|
+| **Não há pendência** | nada foi prescrito, então não há o que cobrar no fim. |
+| **Não há promoção** | não existe conteúdo permanente para o movimento virar. `finalizarSessao` pula a tela de decisão quando `diaAberto(dia)`. |
+
+A tela acompanha: a métrica do topo deixa de ser `séries feitas/prescritas` e
+passa a ser **movimentos** (um traço antes da aula, não um zero), o rótulo da
+seção vira "o que o box passou hoje", e a meta na tela de programa deixa de ser
+uma conta — é `o que o box programar`.
+
+**A versão mínima está contida na completa:** se ele não adicionar nada, o dia
+aberto é exatamente "só presença" — inicia, finaliza, entra na rotação e na
+cadência da semana.
+
+### As nove estações não sumiram
+
+Elas saíram da prescrição e ficaram em `SIMULACAO_HYROX`, dentro do catálogo,
+por dois motivos. Histórico: quem já registrou um sled push precisa que o
+exercício continue existindo, senão o registro fica órfão sob uma chave sem
+dono — é o mesmo erro que a migração 2→3 existiu para consertar. E porque a
+prova inteira é um treino legítimo de vez em quando: aí ela entra pelo atalho,
+de uma vez, em vez de nove adições à mão.
+
+**Nada disso mexeu no alvo por músculo.** As estações sempre tiveram `g: ''`, e
+por isso nunca entraram em `ALVO`. O sábado continua sendo presença e tempo.
 
 ---
 
