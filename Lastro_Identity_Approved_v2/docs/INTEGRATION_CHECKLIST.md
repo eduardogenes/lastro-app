@@ -1,0 +1,12 @@
+# CHECKLIST
+- [ ] Conferir `00_APPROVED_REFERENCE_BOARD.png` antes de implementar
+- [ ] Usar `lastro-symbol-approved.svg` sem alterar geometria
+- [ ] favicon
+- [ ] apple-touch-icon 180
+- [ ] PWA any 192/512
+- [ ] PWA maskable 192/512
+- [ ] manifest
+- [ ] service worker/cache
+- [ ] build/lint/typecheck
+- [ ] nenhum asset antigo referenciado
+- [ ] nenhum dado local alterado
