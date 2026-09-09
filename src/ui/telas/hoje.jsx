@@ -13,7 +13,7 @@ import {
   CartaoFoco, GradeMetricas, HeroMetrica, Procedencia, Secao, Ticks, useAgora
 } from '../instrumento/primitivos.jsx';
 import { LinhaTimeline } from '../instrumento/timeline.jsx';
-import { fmtInt } from '../../dominio/formato';
+import { fmtInt, fmtLitros } from '../../dominio/formato';
 import {
   minutosDe, refeicoesDeHoje, resumoDaRefeicao, totalDaRefeicao, totalDoDia, totalRegistrado
 } from '../../dominio/nutricao/calculo';
@@ -125,7 +125,7 @@ export function Hoje({ ctx }) {
           total={COPOS}
           onMuda={ctx.setAgua}
           unidade={`${COPO} ml por toque`}
-          alvo={`${(COPOS * COPO / 1000).toFixed(1).replace('.', ',')} l`}
+          medida={`${fmtLitros(comidaDoDia.agua * COPO)} / ${fmtLitros(COPOS * COPO)} l`}
         />
       </Secao>
     </>

@@ -106,10 +106,13 @@ test('a água sobe e desce no toque', async () => {
   a.clicar(ticks[2]);
   await a.esperar();
   assert.strictEqual(a.E('S.dia.agua'), 3);
+  assert.strictEqual(a.texto('.ins-ticks-l'), '250 ml por toque0,75 / 3,5 l',
+    'o rótulo diz quanto já foi, não só quanto é a meta');
   // tocar na última cheia remove ela: é o desfazer sem botão de desfazer
   a.clicar(a.$$('.ins-tick')[2]);
   await a.esperar();
   assert.strictEqual(a.E('S.dia.agua'), 2);
+  assert.strictEqual(a.texto('.ins-ticks-l'), '250 ml por toque0,5 / 3,5 l');
   a.fechar();
 });
 

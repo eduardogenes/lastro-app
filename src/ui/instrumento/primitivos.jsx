@@ -166,8 +166,13 @@ export function Sparkline({ valores, fatias = 14, piso = 2 }) {
 /**
  * Quantidade que se toca para cima e para baixo. Tocar na última célula cheia
  * remove ela — é como se desfaz sem botão de desfazer.
+ *
+ * Os dois rótulos embaixo são texto pronto e o componente não conhece unidade
+ * nenhuma: `unidade` diz quanto vale um toque e `medida` diz onde a contagem
+ * está. Contar célula cheia é trabalho do olho; traduzir para litro é de quem
+ * chama.
  */
-export function Ticks({ n, total, onMuda, unidade, alvo }) {
+export function Ticks({ n, total, onMuda, unidade, medida }) {
   return (
     <div class="ins-ticks-w">
       <div class="ins-ticks">
@@ -181,7 +186,7 @@ export function Ticks({ n, total, onMuda, unidade, alvo }) {
         ))}
       </div>
       <div class="ins-ticks-l">
-        <span>{unidade}</span><span>{alvo}</span>
+        <span>{unidade}</span><span>{medida}</span>
       </div>
     </div>
   );

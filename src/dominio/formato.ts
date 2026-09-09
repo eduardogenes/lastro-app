@@ -12,6 +12,15 @@ export function fmtNum(n: number): string { return n % 1 === 0 ? String(n) : Str
 
 export function fmtInt(n: number): string { return Math.round(n).toLocaleString('pt-BR'); }
 
+// ---------- água ----------
+// O copo é de 250 ml, então o acumulado anda de quarto em quarto de litro. Uma
+// casa decimal arredondaria 1,75 para 1,8 e faria o rótulo mentir sobre o toque
+// que acabou de acontecer; duas casas, com o zero à toa aparado, escrevem
+// "0,25 l", "1,5 l" e "2 l" sem nunca inventar precisão que o copo não tem.
+export function fmtLitros(ml: number): string {
+  return (Math.round(ml/10)/100).toFixed(2).replace(/\.?0+$/, '').replace('.', ',');
+}
+
 // ---------- corpo ----------
 // O peso do dia não decide nada: oscila com água, sal e intestino.
 // Quem decide é a MÉDIA DA SEMANA e o ritmo entre semanas.

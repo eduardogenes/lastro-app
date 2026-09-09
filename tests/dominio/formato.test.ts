@@ -4,7 +4,8 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import {
   MESES, PERIODOS, diaExtenso, fmtDate, fmtDec, fmtDec2, fmtDesc, fmtDur, fmtHora,
-  fmtInt, fmtK, fmtNum, fmtSig, fmtSig2, escAttr, escapeHTML, periodoDe, sameDay, weekStart
+  fmtInt, fmtK, fmtLitros, fmtNum, fmtSig, fmtSig2, escAttr, escapeHTML, periodoDe, sameDay,
+  weekStart
 } from '../../src/dominio/formato';
 import { DIA } from './ajuda';
 
@@ -30,6 +31,15 @@ test('o ritmo tem duas casas porque a regra distingue 0,05 de 0,14', () => {
   assert.strictEqual(fmtDec2(0.05), '0,05');
   assert.strictEqual(fmtDec2(0.14), '0,14');
   assert.strictEqual(fmtDec(0.15), '0,2', 'uma casa só arredondaria para o mesmo número');
+});
+
+test('o litro tem a casa que o copo de 250 ml exige, e nenhuma à toa', () => {
+  assert.strictEqual(fmtLitros(0), '0');
+  assert.strictEqual(fmtLitros(250), '0,25');
+  assert.strictEqual(fmtLitros(500), '0,5', 'zero à toa aparado');
+  assert.strictEqual(fmtLitros(1750), '1,75', 'uma casa só arredondaria para 1,8');
+  assert.strictEqual(fmtLitros(2000), '2');
+  assert.strictEqual(fmtLitros(3500), '3,5');
 });
 
 test('milhar vira k para caber na tela pequena', () => {
