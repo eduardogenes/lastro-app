@@ -162,3 +162,53 @@ test('o cartão de um movimento com grandeza não pede RIR nem aproximação', a
     'o cartão diz o que foi passado, não só um número solto');
   a.fechar();
 });
+
+test('o catálogo conhece o vocabulário do box', async () => {
+  const a = await app({});
+  a.aba('treino');
+  // 15 destes não devolviam NADA e 4 devolviam aparelho de musculação
+  const termos = ['bike', 'box jump', 'double under', 'kettlebell', 'thruster',
+                  'air squat', 'sit', 'devil press', 'clean', 'push press',
+                  'snatch', 'mountain', 'burpee', 'prancha'];
+  termos.forEach(function (q) {
+    const comGrandeza = a.J(`(function(){ view.addQ=${JSON.stringify(q)};
+      return catalogoDeAdicao('HX').achados.filter(function(x){ return !!CAT[x.id].u; }); })()`);
+    assert.ok(comGrandeza.length > 0, 'a busca por "' + q + '" não acha movimento de box');
+  });
+  a.fechar();
+});
+
+test('todo movimento de box fica fora do alvo por músculo e declara grandeza', async () => {
+  const a = await app({});
+  const falhas = a.J(`(function(){
+    return MOVIMENTOS_DE_BOX.filter(function (ex) { return ex.g !== '' || !ex.u || !(ex.q > 0); })
+      .map(function (ex) { return ex.n; });
+  })()`);
+  assert.deepStrictEqual(falhas, [],
+    'movimento com grupo entraria no volume; sem grandeza viraria série de musculação');
+  assert.strictEqual(a.E('ALVO_TOTAL'), 90, 'o alvo continua sendo só a musculação');
+  a.fechar();
+});
+
+test('exercício cadastrado por ele pode declarar grandeza', async () => {
+  const a = await app({});
+  a.aba('treino');
+  a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
+  a.E('view.day="HX"');
+  a.E('abrirAddEx()'); a.E('abrirNovoEx()');
+  await a.esperar();
+  a.doc.getElementById('nxn').value = 'Sandbag over shoulder';
+  a.doc.getElementById('nxg').value = 'peito';
+  a.doc.getElementById('nxu').value = 'rep';
+  a.doc.getElementById('nxq').value = '15';
+  a.clicar('.novoex .dbtn');
+  await a.esperar(60);
+
+  const ex = a.J('S.ex["sandbag-over-shoulder"]');
+  assert.strictEqual(ex.u, 'rep', 'a grandeza escolhida entra no catálogo dele');
+  assert.strictEqual(ex.q, 15);
+  assert.strictEqual(ex.g, '',
+    'movimento com grandeza não leva grupo: contaria como série de peito no volume');
+  assert.strictEqual(a.E('treino("HX").ex[0].u'), 'rep', 'e entra no dia já medido certo');
+  a.fechar();
+});

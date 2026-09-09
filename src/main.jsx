@@ -1987,10 +1987,19 @@ async function criarExercicio() {
   const g = (document.getElementById('nxg') || {}).value || '';
   const car = (document.getElementById('nxc') || {}).value || 'pino';
   const comp = !!(document.getElementById('nxk') || {}).checked;
+  // A grandeza no cadastro. Sem ela, um movimento que ele criasse nascia como
+  // série de musculação — "Burpee" entrava 3 × 10–15, com coluna de kg e selo
+  // de RIR — e não havia caminho nenhum para corrigir isso no catálogo.
+  const un = (document.getElementById('nxu') || {}).value || '';
+  const q = numeroDoCampo((document.getElementById('nxq') || {}).value);
   if (nome.trim().length < 3) { toast('Dê um nome ao exercício.'); return; }
   const k = slugEx(nome);
   if (CAT[k] && !CAT[k].arq) { toast('Já existe um exercício com esse nome.'); return; }
-  S.ex[k] = { n: nome.trim(), g: g, car: car, c: comp ? 1 : 0, cue: '', meu: 1 };
+  S.ex[k] = { n: nome.trim(), g: un ? '' : g, car: car, c: comp ? 1 : 0, cue: '', meu: 1 };
+  // Movimento com grandeza não recebe grupo muscular, pela mesma razão que as
+  // estações: atribuí-lo a um músculo faria o painel de volume contar burpee
+  // como série de peito.
+  if (un) { S.ex[k].u = un; if (q) S.ex[k].q = q; }
   montaCatalogo();
   view.novoEx = false;
   await save();
@@ -5435,7 +5444,10 @@ function catalogoDeAdicao(d) {
       }),
     novo: view.novoEx
       ? { grupos: gruposDoPlano(),
-          cargas: Object.keys(CARGAS).map(function (c) { return { k: c, t: CARGAS[c].nome }; }) }
+          cargas: Object.keys(CARGAS).map(function (c) { return { k: c, t: CARGAS[c].nome }; }),
+          unidades: [{ k:'', t:'repetições com carga' }, { k:'m', t:'metros' },
+                     { k:'cal', t:'calorias' }, { k:'rep', t:'repetições' },
+                     { k:'seg', t:'segundos' }] }
       : null
   };
 }

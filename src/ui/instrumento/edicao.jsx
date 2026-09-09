@@ -115,6 +115,14 @@ export function AddEx({ c, acoes }) {
           <select id="nxc" class="addq">
             {c.novo.cargas.map(x => <option key={x.k} value={x.k}>{x.t}</option>)}
           </select>
+          {/* A grandeza. Sem ela, movimento de aula de box nascia como série de
+              hipertrofia: "Burpee" entrava 3 × 10–15, com campo de carga e
+              selo de RIR, e não havia onde corrigir. */}
+          <select id="nxu" class="addq">
+            {c.novo.unidades.map(x => <option key={x.k} value={x.k}>{x.t}</option>)}
+          </select>
+          <input type="text" inputmode="decimal" id="nxq" class="addq"
+                 placeholder="quanto em cada passada (opcional)" />
           <label class="nxk">
             <input type="checkbox" id="nxk" /> é um composto (descanso mais longo)
           </label>

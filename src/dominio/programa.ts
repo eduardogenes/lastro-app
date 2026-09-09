@@ -571,6 +571,58 @@ export const SIMULACAO_HYROX: ExercicioPrescrito[] = [
   {n:'Wall balls', car:'halter1', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:100, cue:'A última estação, com a perna já destruída. O peso é o da bola; o tempo é o que conta.'},
 ];
 
+/**
+ * O vocabulário do box: os movimentos que aparecem em quase toda aula de HYROX
+ * e que o catálogo não conhecia.
+ *
+ * Medido antes disto: de 28 termos que um praticante digitaria, o catálogo
+ * respondia a 9 — todos estações da prova —, devolvia NADA em 15, e em 4
+ * devolvia aparelho de musculação. Buscar "corda" trazia *Tríceps corda na
+ * polia*; buscar "prancha" trazia *Prancha com peso*.
+ *
+ * Todos entram com `g: ''`, pela mesma razão que as estações: atribuí-los a um
+ * músculo faria o painel de volume contar burpee como série de peito. E todos
+ * declaram grandeza — a aula de box não se mede em faixa de repetição.
+ *
+ * A quantidade é o que o box costuma passar, e é só o valor com que o campo
+ * NASCE: quem decide é a lousa, e ele corrige em dois toques. O peso não entra
+ * aqui de propósito — wall ball, sandbag, farmer e kettlebell são carga fixa
+ * por meses no mesmo box, e quem sabe qual é ele é o registro anterior, que a
+ * coluna ANTERIOR já devolve com um toque.
+ *
+ * Isto NÃO é prescrição e não entra em dia nenhum: é catálogo, alcançável pela
+ * busca. O que o box passou continua sendo decidido no dia.
+ */
+export const MOVIMENTOS_DE_BOX: ExercicioPrescrito[] = [
+  // ergômetros — em caloria, que é como a lousa costuma passar quando não é
+  // distância. O mesmo aparelho em metros já existe nas estações.
+  {n:'Assault bike', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'cal', q:15, cue:'Braço e perna juntos. A caloria sobe com a potência, e o ritmo dela não converte para metro.'},
+  {n:'Bike erg', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'cal', q:15, cue:'Cadência constante vale mais que arrancada.'},
+
+  // repetição com carga — a carga é escolha dele e fica fixa por meses
+  {n:'Kettlebell swing', car:'halter1', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:20, cue:'Quadril, não ombro: o braço só acompanha o que o quadril lançou.'},
+  {n:'Thruster', car:'halter', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:15, cue:'Agachamento e desenvolvimento no mesmo movimento, sem pausa no meio.'},
+  {n:'Devil press', car:'halter', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:10, cue:'Burpee com halteres e desenvolvimento no fim. Cara.'},
+  {n:'Clean and jerk', car:'barra', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:10},
+  {n:'Push press', car:'barra', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:12},
+  {n:'Snatch com halter', car:'halter1', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:20, cue:'Alterna o braço. O halter sobe pela linha do corpo, não em arco.'},
+
+  // repetição sem carga — forçar um campo de peso aqui seria ruído
+  {n:'Burpee', car:'corpo', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:20, cue:'Peito no chão, salto no fim. Cadência constante custa menos que arrancar e parar.'},
+  {n:'Box jump', car:'corpo', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:20, cue:'Descer com controle poupa mais tendão do que subir com força.'},
+  {n:'Double under', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:50, cue:'Punho, não braço. Corda de velocidade.'},
+  {n:'Pula-corda', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:100},
+  {n:'Air squat', car:'corpo', g:'', s:1, r:'', c:1, d:D_CURTO, u:'rep', q:30},
+  {n:'Sit-up', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:25},
+  {n:'Mountain climber', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'rep', q:40},
+
+  // distância sem carga
+  {n:'Lunge', car:'corpo', g:'', s:1, r:'', c:1, d:D_CURTO, u:'m', q:50, cue:'A versão sem saco. Joelho tocando o chão a cada passo.'},
+
+  // tempo — a janela é fixa e o que melhora é quanto sai dela
+  {n:'Prancha', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'seg', q:60, cue:'Sem carga: aqui o que se compara é o tempo, e mais é melhor.'}
+];
+
 export const EX_BASE: Record<IdEx, Exercicio> = (function () {
   const c: Record<IdEx, Exercicio> = {};
   ROT_BASE.forEach(function (d) {
@@ -578,7 +630,7 @@ export const EX_BASE: Record<IdEx, Exercicio> = (function () {
       c[slugEx(ex.n)] = { n:ex.n, car:ex.car, g:ex.g, c:ex.c, cue:ex.cue, u:ex.u, q:ex.q };
     });
   });
-  SIMULACAO_HYROX.forEach(function (ex) {
+  SIMULACAO_HYROX.concat(MOVIMENTOS_DE_BOX).forEach(function (ex) {
     c[slugEx(ex.n)] = { n:ex.n, car:ex.car, g:ex.g, c:ex.c, cue:ex.cue, u:ex.u, q:ex.q };
   });
   Object.keys(LEGADO).forEach(function (nome) {
