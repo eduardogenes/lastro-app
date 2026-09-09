@@ -6,7 +6,7 @@
 // um número é derivado, quem mostra tem que dizer de onde veio.
 
 import type {
-  Alimento, DiaComida, Item, LinhaCompra, Quando, Refeicao, Totais, Turno
+  Alimento, DiaComida, DiaComidaHist, Item, LinhaCompra, Quando, Refeicao, Totais, Turno
 } from './tipos';
 
 export const VAZIO: Totais = { kcal: 0, p: 0, c: 0, g: 0 };
@@ -259,4 +259,125 @@ export function fmtKg(v: number, u: 'g' | 'ml'): string {
     return (Math.round(v / 100) / 10).toFixed(1).replace('.', ',') + (u === 'g' ? ' kg' : ' l');
   }
   return Math.round(v) + ' ' + u;
+}
+
+
+// ---------- o dia que já passou ----------
+//
+// O dia corrente era sobrescrito na virada da data. Guardá-lo é o que fecha o
+// laço monitorar → comparar → ajustar: sem histórico, cada dia zera e a etapa
+// de comparar não existe.
+
+/**
+ * Fecha o dia corrente num registro histórico.
+ *
+ * Os totais são CONGELADOS aqui, contra o plano vigente, e carregam o carimbo
+ * dele. É o único jeito de o passado continuar verdadeiro quando o plano muda:
+ * derivar depois leria o plano de HOJE e responderia "quanto isso custaria
+ * agora" fingindo responder "quanto custou naquele dia".
+ */
+export function fechaDia(
+  dia: DiaComida,
+  plano: Refeicao[],
+  catalogo: Record<string, Alimento>,
+  pv: number,
+  ajuste: -1 | 0 | 1,
+  agora: number = Date.now()
+): DiaComidaHist {
+  const treinando = dia.cadencia === 'treino';
+  const alta = !!dia.alta;
+  const done: Record<string, number> = {};
+  Object.keys(dia.done || {}).forEach(function (k) { done[k] = agora; });
+  const h: DiaComidaHist = {
+    d: dia.data,
+    done: done,
+    agua: dia.agua || 0,
+    escala: Object.assign({}, dia.escala || {}),
+    tot: totalRegistrado(plano, catalogo, dia, treinando, alta),
+    pv: pv,
+    m: agora
+  };
+  if (dia.cadencia) h.cadencia = dia.cadencia;
+  if (dia.alta) h.alta = 1;
+  if (dia.turno) h.turno = dia.turno;
+  if (ajuste) h.aj = ajuste;
+  return h;
+}
+
+/**
+ * A aderência de um dia: quanto do prescrito foi de fato cumprido.
+ *
+ * PONDERADA pela escala, e não a contagem crua de refeições marcadas. "Marcou
+ * feito com escala 0,5" e "comeu tudo" não são a mesma coisa, e o app já tem
+ * esse dado — descartá-lo na hora de medir seria jogar fora justamente o mais
+ * informativo.
+ *
+ * `null` quando NADA foi marcado. Ausência de registro não é aderência zero:
+ * ele pode ter comido perfeitamente e só não ter aberto o app, e tratar o
+ * silêncio como falha é erro de medição — engana o próprio usuário sobre o que
+ * aconteceu.
+ */
+export function aderenciaDoDia(h: DiaComidaHist, refs: Refeicao[]): number | null {
+  const ids = Object.keys(h.done || {});
+  if (!ids.length || !refs.length) return null;
+  const noDia: Record<string, 1> = {};
+  refs.forEach(function (r) { noDia[r.id] = 1; });
+  let soma = 0;
+  ids.forEach(function (id) {
+    if (!noDia[id]) return;                       // refeição que não existe mais
+    const e = h.escala && h.escala[id];
+    soma += (typeof e === 'number' && e >= 0) ? e : 1;
+  });
+  return soma / refs.length;
+}
+
+/** Quantas vezes cada refeição foi cumprida, no período. */
+export interface PadraoDeRefeicao {
+  id: string;
+  /** dias em que foi marcada */
+  feitas: number;
+  /** dias em que ela existia no dia (denominador honesto) */
+  possiveis: number;
+}
+
+/**
+ * O padrão por refeição — qual delas falha mais.
+ *
+ * Devolve CONTAGEM, nunca percentual. Um número único comparado contra 100%
+ * implícito funciona como nota, e feedback que dirige a atenção para a
+ * autoavaliação é o tipo que a literatura mostra piorar o desempenho em cerca
+ * de um terço dos casos. "Feito em 14 de 20 dias" e "70% de aderência" são
+ * matematicamente iguais e psicologicamente opostos.
+ */
+export function padraoPorRefeicao(
+  hist: DiaComidaHist[],
+  plano: Refeicao[]
+): PadraoDeRefeicao[] {
+  const por: Record<string, PadraoDeRefeicao> = {};
+  plano.forEach(function (r) { por[r.id] = { id: r.id, feitas: 0, possiveis: 0 }; });
+  hist.forEach(function (h) {
+    const refs = refeicoesDeHoje(plano, h.cadencia === 'treino', !!h.alta, h.turno);
+    // dia sem registro nenhum não entra no denominador: silêncio não é falha
+    if (!Object.keys(h.done || {}).length) return;
+    refs.forEach(function (r) {
+      if (!por[r.id]) por[r.id] = { id: r.id, feitas: 0, possiveis: 0 };
+      por[r.id].possiveis++;
+      if (h.done[r.id]) por[r.id].feitas++;
+    });
+  });
+  return plano.map(function (r) { return por[r.id]; }).filter(Boolean);
+}
+
+/** Os dias do histórico dentro de uma janela, do mais antigo ao mais novo. */
+export function janelaDoHistorico(
+  hist: DiaComidaHist[],
+  dias: number,
+  hojeISO: string
+): DiaComidaHist[] {
+  const corte = new Date(hojeISO + 'T00:00:00');
+  corte.setDate(corte.getDate() - dias);
+  const limite = corte.toISOString().slice(0, 10);
+  return hist.filter(function (h) { return h.d > limite; })
+             .slice()
+             .sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
 }

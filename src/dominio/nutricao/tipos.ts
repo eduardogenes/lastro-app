@@ -100,6 +100,65 @@ export interface DiaComida {
   turno?: Turno;
 }
 
+/**
+ * Um dia de comida que já passou.
+ *
+ * Existe porque o dia corrente era SOBRESCRITO na virada da data: o que ele
+ * comeu ontem não existia em lugar nenhum. Sem isso o laço de autorregulação
+ * — monitorar, comparar, ajustar — fica travado no primeiro terço, e o app
+ * não consegue responder nem "qual refeição eu mais falho".
+ *
+ * O que NÃO tem aqui é tão decidido quanto o que tem: nada de nota de texto,
+ * foto de refeição, horário de cada copo ou escala de humor. São campos que
+ * apps de dieta guardam e ninguém relê — e cada campo a mais na tela de
+ * entrada é atrito, que é a causa dominante de abandono de registro.
+ */
+export interface DiaComidaHist {
+  /** 'AAAA-MM-DD' local — a chave natural */
+  d: string;
+  /**
+   * refeição → instante em que foi marcada.
+   *
+   * Instante e não `1` porque é o que permite fundir: dois aparelhos marcando
+   * refeições diferentes no mesmo dia precisam somar, e desmarcar precisa de
+   * lápide. É a mesma forma de `S.descanso`, pelo mesmo motivo.
+   */
+  done: Record<string, number>;
+  /** copos de água ao fechar o dia */
+  agua: number;
+  /** ajuste de porção por refeição: 0,5 = comeu metade */
+  escala: Record<string, number>;
+  cadencia?: 'treino' | 'descanso' | null;
+  alta?: 1;
+  turno?: Turno;
+  /**
+   * Os quatro totais, CONGELADOS.
+   *
+   * Aqui a lei "nada derivável é guardado duas vezes" não se aplica, e a razão
+   * é precisa: ela pressupõe uma única leitura possível do insumo. Como o
+   * plano é editável, "o total deriva do plano" quer dizer na verdade "deriva
+   * do plano NO INSTANTE T" — e T é um valor que nada mais no sistema lembra.
+   * Sem congelar, cortar o arroz do almoço hoje reescreveria o janeiro dele:
+   * medido, 1.348 → 1.220 kcal num dia já vivido, sem ninguém ter comido
+   * diferente. Isso não é omitir duplicata, é mentir sobre o passado.
+   */
+  tot: Totais;
+  /**
+   * Carimbo da versão do plano com que `tot` foi calculado.
+   *
+   * Não guarda O QUE era o plano — guarda QUANDO ele era aquele. É o bastante
+   * para a tela dizer "este dia foi calculado contra um plano diferente do
+   * atual", que é a regra do produto de todo número derivado dizer de onde
+   * veio, sem o custo de um snapshot por dia (que a 10 anos estoura o teto do
+   * Safari: 1.907 bytes × 3.650 dias são 6,6 MiB).
+   */
+  pv: number;
+  /** o ajuste calórico em vigor naquele dia: −1, 0 ou 1 */
+  aj?: -1 | 0 | 1;
+  /** quando foi alterado; a fusão o usa para desempatar */
+  m?: number;
+}
+
 /** Uma linha da lista de compras, derivada — nunca guardada. */
 export interface LinhaCompra {
   f: string;

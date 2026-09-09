@@ -8,7 +8,7 @@
 
 import type { Cadencia } from './dia';
 import type { Ajuste } from './corpo';
-import type { Alimento, DiaComida, Refeicao } from './nutricao/tipos';
+import type { Alimento, DiaComida, DiaComidaHist, Refeicao } from './nutricao/tipos';
 
 /** Os seis tipos de carregamento. O app rotula, nunca converte. */
 export type TipoCarga = 'pino' | 'lado' | 'barra' | 'halter' | 'halter1' | 'corpo' | 'assist';
@@ -428,6 +428,15 @@ export interface EstadoComida {
   alimentos: Record<string, Partial<Alimento>>;
   /** alimentos do código que ele escondeu */
   ocultos: Record<string, 1>;
+  /**
+   * Quando o plano ou a tabela de alimentos mudaram pela última vez.
+   *
+   * É o carimbo que cada dia do histórico guarda em `pv`. Serve a uma coisa
+   * só: a tela saber dizer "este dia foi calculado contra um plano diferente
+   * do atual". Sem ele, o total congelado seria um número sem procedência — e
+   * neste app todo número derivado diz de onde veio.
+   */
+  v?: number;
 }
 
 /** O estado persistido inteiro, sob a chave `lastro-v1`. */
@@ -475,8 +484,17 @@ export interface Estado {
   cadencia: Cadencia[] | null;
   /** a metade de comida */
   comida: EstadoComida;
-  /** o dia de comida, carimbado com a data; zera sozinho */
+  /** o dia de comida, carimbado com a data; ao virar a data ele FECHA em `comidaHist` */
   dia: DiaComida | null;
+  /**
+   * Os dias de comida que já passaram.
+   *
+   * Coleção com chave natural (a data), como `protocolo.sessoes` — e por isso
+   * funde sem perda, ao contrário do plano, que é documento. Antes disto o dia
+   * anterior era simplesmente sobrescrito: nada do que ele comeu sobrevivia à
+   * meia-noite.
+   */
+  comidaHist: DiaComidaHist[];
   /** o ±150 kcal em vigor */
   ajuste: Ajuste;
   /**

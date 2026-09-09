@@ -37,7 +37,8 @@ import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from '
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
 import {
   arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia,
-  refeicoesDeHoje, posTreinoDe, conflitosDeTurno
+  refeicoesDeHoje, posTreinoDe, conflitosDeTurno,
+  fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto,
@@ -340,6 +341,7 @@ function normalizaEstado() {
   // existente a reformatar, e um backup de qualquer versão chega por este
   // mesmo caminho.
   if (!Array.isArray(S.aulas)) S.aulas = [];
+  if (!Array.isArray(S.comidaHist)) S.comidaHist = [];
   if (typeof S.mtime !== 'number') S.mtime = 0;
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
   if (!S.descanso || typeof S.descanso !== 'object') S.descanso = {};
@@ -1701,12 +1703,66 @@ function hojeISO(t) {
 function diaDeComida() {
   const hoje = hojeISO();
   if (!S.dia || S.dia.data !== hoje) {
+    // A virada do dia é aqui, e é aqui que o dia velho FECHA. Não precisa de
+    // job nem de cron — esta arquitetura não tem nenhum dos dois, e o gatilho
+    // preguiçoso já existia: até agora ele simplesmente descartava o dia
+    // anterior, e nada do que ele comeu sobrevivia à meia-noite.
+    if (S.dia && S.dia.data) fechaDiaDeComida(S.dia);
     S.dia = { data: hoje, done: {}, agua: 0, escala: {}, cadencia: null, alta: 0 };
   }
   if (!S.dia.done) S.dia.done = {};
   if (!S.dia.escala) S.dia.escala = {};
   return S.dia;
 }
+
+/**
+ * Empurra um dia vivido para o histórico.
+ *
+ * Os totais são congelados AQUI, contra o plano vigente. Derivar depois leria
+ * o plano de hoje: cortar o arroz do almoço reescreveria o janeiro dele.
+ *
+ * Idempotente pela data — reabrir o app duas vezes no mesmo dia não duplica, e
+ * um dia que já esteja no histórico é atualizado, não repetido.
+ */
+function fechaDiaDeComida(dia) {
+  if (!Array.isArray(S.comidaHist)) S.comidaHist = [];
+  const marcou = Object.keys(dia.done || {}).length > 0;
+  // Dia sem NADA: nem marca, nem água, nem enquadramento. Não vale uma linha
+  // no histórico — e guardá-lo como zero seria dizer que ele não comeu, que é
+  // o erro de medição que confunde silêncio com falha.
+  if (!marcou && !(dia.agua > 0) && !dia.cadencia && !dia.turno) return;
+
+  const h = fechaDia(dia, planoDeComida(), catalogoAlimentos(),
+                     versaoDoPlano(), S.ajuste || 0, Date.now());
+  const j = S.comidaHist.findIndex(function (x) { return x.d === h.d; });
+  if (j >= 0) S.comidaHist[j] = h; else S.comidaHist.push(h);
+  S.comidaHist.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  if (S.comidaHist.length > 4000) S.comidaHist = S.comidaHist.slice(-4000);
+}
+
+/**
+ * O carimbo da versão do plano.
+ *
+ * Nasce na primeira leitura e é reescrito toda vez que o plano ou a tabela de
+ * alimentos mudam. Não guarda o QUE era o plano — guarda QUANDO ele era
+ * aquele, que é o bastante para a tela dizer que um dia foi calculado contra
+ * outro plano. Um snapshot por dia custaria 6,6 MiB em dez anos, acima do teto
+ * do Safari.
+ */
+function versaoDoPlano() {
+  if (!S.comida.v) S.comida.v = Date.now();
+  return S.comida.v;
+}
+
+/**
+ * Carimba que o plano mudou.
+ *
+ * Monotônico de propósito: duas mudanças no mesmo milissegundo — ou uma
+ * mudança no mesmo instante em que o carimbo nasceu — deixariam a versão
+ * parada, e um dia fechado passaria a parecer calculado contra o plano atual
+ * quando não foi. O relógio não é garantia de avanço; o `+1` é.
+ */
+function planoMudou() { S.comida.v = Math.max(Date.now(), (S.comida.v || 0) + 1); }
 
 /** O catálogo de alimentos efetivo: o do código mais o que ele cadastrou. */
 function catalogoAlimentos() {
@@ -2072,6 +2128,7 @@ async function salvarAulaComoModelo() {
   const nome = (window.prompt('Nome deste modelo de aula:', '') || '').trim();
   if (!nome) return;
   if (!Array.isArray(S.aulas)) S.aulas = [];
+  if (!Array.isArray(S.comidaHist)) S.comidaHist = [];
   const agora = Date.now();
   // Mesmo nome sobrescreve em vez de duplicar: uma lista com três "circuito"
   // não diz qual é qual, e ele não tem como saber sem abrir os três.
@@ -4582,6 +4639,7 @@ CTX.alternaCadencia = function (i) {
 
 CTX.restauraPrograma = function () { restaurarTudo(); };
 CTX.restauraPlano = function () {
+  planoMudou();
   if (!confirm('Restaurar o plano do nutricionista?\n\nSeus alimentos cadastrados e todo o histórico ficam. Volta só a prescrição.')) return;
   S.comida.plano = JSON.parse(JSON.stringify(PLANO_BASE));
   S.ajuste = 0;
@@ -4809,6 +4867,7 @@ CTX.refeicaoParaEditar = function (id) {
 };
 
 CTX.salvaRefeicao = function (id, campos) {
+  planoMudou();
   const plano = planoDeComida();
   let r = id ? achaRefeicao(id) : null;
   if (!r) {
@@ -4821,6 +4880,7 @@ CTX.salvaRefeicao = function (id, campos) {
 };
 
 CTX.duplicaRefeicao = function (id) {
+  planoMudou();
   const r = achaRefeicao(id);
   if (!r) return;
   const copia = JSON.parse(JSON.stringify(r));
@@ -4833,6 +4893,7 @@ CTX.duplicaRefeicao = function (id) {
 };
 
 CTX.removeRefeicao = function (id) {
+  planoMudou();
   const r = achaRefeicao(id);
   if (!r) return;
   if (!confirm('Remover "' + r.n + '" do plano?\n\nIsso vale para todo dia. O histórico do que você já marcou não muda.')) return;
@@ -4849,6 +4910,7 @@ CTX.removeRefeicao = function (id) {
 // ---- item dentro da refeição ----
 
 CTX.setQuantidade = function (refId, idx, q) {
+  planoMudou();
   const r = achaRefeicao(refId);
   if (!r || !r.itens[idx]) return;
   r.itens[idx].q = Math.max(0, Math.round(q));
@@ -4856,6 +4918,7 @@ CTX.setQuantidade = function (refId, idx, q) {
 };
 
 CTX.removeItem = function (refId, idx) {
+  planoMudou();
   const r = achaRefeicao(refId);
   if (!r || !r.itens[idx]) return;
   r.itens.splice(idx, 1);
@@ -4863,6 +4926,7 @@ CTX.removeItem = function (refId, idx) {
 };
 
 CTX.alternaAlta = function (refId, idx) {
+  planoMudou();
   const r = achaRefeicao(refId);
   if (!r || !r.itens[idx]) return;
   if (r.itens[idx].alta) delete r.itens[idx].alta; else r.itens[idx].alta = true;
@@ -4870,6 +4934,7 @@ CTX.alternaAlta = function (refId, idx) {
 };
 
 CTX.adicionaItem = function (refId, foodId) {
+  planoMudou();
   const r = achaRefeicao(refId);
   if (!r) return;
   r.itens.push({ f: foodId, q: 100 });
@@ -4878,6 +4943,7 @@ CTX.adicionaItem = function (refId, foodId) {
 };
 
 CTX.trocaItem = function (refId, idx, foodId) {
+  planoMudou();
   const r = achaRefeicao(refId);
   if (!r || !r.itens[idx]) return;
   r.itens[idx].f = foodId;
@@ -4905,6 +4971,7 @@ CTX.alimentoParaEditar = function (id) {
 };
 
 CTX.salvaAlimento = function (id, campos) {
+  planoMudou();
   const alvo = id || idAlimento(campos.n);
   const base = ALIMENTOS_BASE[alvo];
   S.comida.alimentos[alvo] = Object.assign(

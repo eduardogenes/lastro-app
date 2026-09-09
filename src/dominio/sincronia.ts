@@ -28,9 +28,10 @@
 import type {
   Cardio, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId, Sessao, SessaoFoto
 } from './tipos';
+import type { DiaComidaHist } from './nutricao/tipos';
 
 /** Limites por coleção, iguais aos que o app aplica ao gravar. */
-const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200, aulas: 60 };
+const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200, aulas: 60, comida: 4000 };
 
 /** Lápides mais velhas que isto são podadas: o que sumiu há meses já sumiu dos dois lados. */
 export const LAPIDE_DIAS = 90;
@@ -87,6 +88,13 @@ export function chaveDeMarca(qual: 'peso' | 'cintura', x: Pick<Marca, 't'>): str
   return qual + ':' + x.t;
 }
 export function chaveDeCardio(c: Pick<Cardio, 't'>): string { return 'cardio:' + c.t; }
+/** Um dia de comida do histórico. A chave é a data — duas não existem. */
+export function chaveDeDiaComida(h: Pick<DiaComidaHist, 'd'>): string { return 'comida:' + h.d; }
+/** Uma refeição marcada dentro de um dia. Desmarcar precisa de lápide própria. */
+export function chaveDeRefeicaoFeita(dia: string, refId: string): string {
+  return 'comida:' + dia + ':' + refId;
+}
+
 /** O modelo de aula. A chave é o id, que nasce com ele e não muda ao renomear. */
 export function chaveDeAula(a: Pick<ModeloDeAula, 'id'>): string { return 'aula:' + a.id; }
 export function chaveDeDescanso(dataISO: string): string { return 'descanso:' + dataISO; }
@@ -242,6 +250,76 @@ function uneSessoesDeFoto(
 }
 
 /** Une dois mapas simples. Em conflito de chave, vence o lado mais recente. */
+/**
+ * Une os dias de comida CAMPO A CAMPO, e não como documento inteiro.
+ *
+ * O motivo é o mesmo que fez `uneSessoesDeFoto` existir: marcar o almoço no
+ * iPhone e a água no iPad, no mesmo dia, com os dois offline. Vencedor-leva-
+ * tudo por carimbo descartaria o dia INTEIRO de um dos lados — o bug de
+ * sempre, só que na comida.
+ *
+ * Cada campo funde do jeito que a natureza dele pede:
+ *
+ * - `done` é PRESENÇA: união das duas chaves, com lápide para o desmarcado.
+ *   É a mesma forma de `S.descanso`, e pelo mesmo motivo — união simples faria
+ *   desmarcar num aparelho ser desfeito pelo outro.
+ * - `agua` é contador que só cresce ao longo do dia: fica o MAIOR. Carimbar um
+ *   inteiro custaria mais que o risco, e subestimar um copo é ruído aceitável.
+ * - `escala`, `tot`, `pv` e o enquadramento do dia vêm do lado com carimbo mais
+ *   novo. São decisões tomadas uma vez, e a corrida entre dois aparelhos no
+ *   mesmo dia é rara — mas quando houver, o registro mais recente é a leitura
+ *   mais provável de estar certa.
+ */
+function uneDiasDeComida(
+  local: DiaComidaHist[], remoto: DiaComidaHist[], mortos: Record<string, number>
+): { itens: DiaComidaHist[]; vindos: number; apagados: number } {
+  const por: Record<string, DiaComidaHist> = {};
+  const daqui: Record<string, 1> = {};
+  let vindos = 0, apagados = 0;
+
+  (Array.isArray(local) ? local : []).forEach(function (x) {
+    if (x && x.d) { por[x.d] = JSON.parse(JSON.stringify(x)); daqui[x.d] = 1; }
+  });
+
+  (Array.isArray(remoto) ? remoto : []).forEach(function (x) {
+    if (!x || !x.d) return;
+    const meu = por[x.d];
+    if (!meu) { por[x.d] = JSON.parse(JSON.stringify(x)); vindos++; return; }
+
+    // done: união, respeitando a lápide de cada refeição
+    Object.keys(x.done || {}).forEach(function (id) {
+      const quando = x.done[id];
+      if (typeof quando !== 'number') return;
+      const morto = mortos[chaveDeRefeicaoFeita(x.d, id)];
+      if (morto != null && quando <= morto) return;
+      if (meu.done[id] == null) { meu.done[id] = quando; vindos++; }
+    });
+    // e o que ESTE lado tem também passa pela lápide do outro
+    Object.keys(meu.done || {}).forEach(function (id) {
+      const morto = mortos[chaveDeRefeicaoFeita(x.d, id)];
+      if (morto != null && meu.done[id] <= morto) { delete meu.done[id]; apagados++; }
+    });
+
+    meu.agua = Math.max(meu.agua || 0, x.agua || 0);
+
+    if (carimboM(x) > carimboM(meu)) {
+      meu.escala = Object.assign({}, x.escala || {});
+      meu.tot = x.tot; meu.pv = x.pv;
+      meu.cadencia = x.cadencia; meu.alta = x.alta; meu.turno = x.turno; meu.aj = x.aj;
+      meu.m = x.m;
+    }
+  });
+
+  const itens: DiaComidaHist[] = [];
+  Object.keys(por).forEach(function (d) {
+    const morto = mortos[chaveDeDiaComida({ d: d })];
+    if (morto != null && carimboM(por[d]) <= morto) { apagados++; return; }
+    itens.push(por[d]);
+  });
+  itens.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  return { itens: itens, vindos: vindos, apagados: apagados };
+}
+
 function uneMapa<T>(local: Record<string, T>, remoto: Record<string, T>, remotoManda: boolean): Record<string, T> {
   const saida: Record<string, T> = {};
   const a = remotoManda ? local : remoto;
@@ -336,6 +414,11 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   base.cardio = c.itens.slice(-TETO.cardio);
   resumo.cardio = c.vindos;
   resumo.apagados += c.apagados;
+
+  // ---- dias de comida ----
+  const cm = uneDiasDeComida(local.comidaHist || [], remoto.comidaHist || [], mortos);
+  base.comidaHist = cm.itens.slice(-TETO.comida);
+  resumo.apagados += cm.apagados;
 
   // ---- modelos de aula ----
   // Coleção e não documento: um modelo salvo no iPhone não pode sumir porque o
