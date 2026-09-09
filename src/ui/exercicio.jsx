@@ -259,12 +259,18 @@ export function Exercicio({ vm, acoes }) {
           <div class="ex-name">{vm.nome}</div>
           {vm.alt && <div class="swapped">no lugar de {vm.nomeOriginal}</div>}
           <div class="ex-sub">
-            <span>{vm.series} × {vm.faixa}</span>
-            <span class={'tag' + (vm.composto ? ' comp' : '')}>
-              {vm.rir
-                ? (vm.composto ? 'composto · RIR ' : 'isolador · RIR ') + vm.rir
-                : (vm.composto ? 'composto · 1–2 na reserva' : 'isolador · última pode ir a 0–1')}
-            </span>
+            <span>{vm.series}{vm.faixa ? ' × ' + vm.faixa : ''}</span>
+            {/* RIR não se aplica a exercício medido por tempo: "isolador ·
+                última pode ir a 0–1" num remo de 1000 m é linguagem de
+                hipertrofia aplicada a condicionamento, e era um dos sinais de
+                que o sábado estava modelado como o que não é. */}
+            {!vm.seg && (
+              <span class={'tag' + (vm.composto ? ' comp' : '')}>
+                {vm.rir
+                  ? (vm.composto ? 'composto · RIR ' : 'isolador · RIR ') + vm.rir
+                  : (vm.composto ? 'composto · 1–2 na reserva' : 'isolador · última pode ir a 0–1')}
+              </span>
+            )}
             {vm.bi === 1 && <span class="tag bi-t">bi-set · sem pausa até o próximo</span>}
             {vm.bi === 2 && <span class="tag bi-t">bi-set · o descanso é aqui</span>}
             {vm.alt && <span class="tag swap-t">substituído</span>}

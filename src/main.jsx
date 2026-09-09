@@ -1134,7 +1134,15 @@ async function liberaSave() {
 function altOf(i) {
   const t = treino(view.day);
   const ex = t && t.ex[i];
-  return (ex && ex.orig && ex.orig !== ex.id) ? ex.id : null;
+  if (!ex || !ex.orig || ex.orig === ex.id) return null;
+  // `mod: 2` é exercício ADICIONADO, não trocado. O `orig` dele é uma chave
+  // sintética (`id#instante`) que existe só para o mod ter identidade própria e
+  // poder ser encadeado — não é o exercício que saiu do lugar. Sem esta linha o
+  // cartão anunciava "no lugar de remo-ergometro#1788963143430" e um selo de
+  // SUBSTITUÍDO em cima de algo que não substituiu nada. Aparecia em qualquer
+  // adição ao dia; virou o caminho principal quando o sábado ficou aberto.
+  if (ex.mod === 2) return null;
+  return ex.id;
 }
 function logKey(d,i) { return id(d,i); }
 
@@ -1845,7 +1853,14 @@ function buscaEx(q) {
 
 async function addExercicio(idEx) {
   const e = exDe(idEx);
-  const s = 3, r = e.c ? '6–10' : '10–15', desc = e.c ? D_COMPOSTO : D_ISOLADOR;
+  // Exercício medido por TEMPO não tem faixa de repetição a prescrever: uma
+  // corrida ou um sled entram como uma passada, e o alvo é o relógio. Dar-lhe
+  // `3 × 10–15` era a mesma linguagem de hipertrofia que fazia o sábado inteiro
+  // parecer o que não é.
+  const seg = isTime(e);
+  const s = seg ? 1 : 3;
+  const r = seg ? '' : (e.c ? '6–10' : '10–15');
+  const desc = seg ? D_CURTO : (e.c ? D_COMPOSTO : D_ISOLADOR);
   // na tela de programa a adição é permanente; na tela de hoje é só do dia
   if (view.prog && view.prog.day) {
     const d = view.prog.day;
@@ -3975,6 +3990,11 @@ CTX.treino = function () {
     // movimentos entraram.
     aberto: diaAberto(d),
     movimentos: P ? P.ex.length : 0,
+    // O catálogo de adição também é desenhado AQUI, e não só dentro da edição
+    // do dia: num dia aberto adicionar movimento é o uso normal da tela, não
+    // uma emenda ao programa. Fica preso ao dia aberto fora do modo de edição
+    // para as duas superfícies nunca desenharem o mesmo painel ao mesmo tempo.
+    addEx: (diaAberto(d) && !view.editProg && view.addEx) ? catalogoDeAdicao(d) : null,
     volume: fmtK(volumeDoDia(d)),
     ciclo: String(Math.floor(S.done.length / rot().length) + 1),
     sessoes: S.done.length,

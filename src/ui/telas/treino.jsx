@@ -11,6 +11,7 @@
 
 import { Cabecalho, GradeMetricas, Secao, Vazio, useAgora } from '../instrumento/primitivos.jsx';
 import { Exercicio } from '../exercicio.jsx';
+import { AddEx } from '../instrumento/edicao.jsx';
 import { EdicaoDoDia } from './edicaodia.jsx';
 
 export function Treino({ ctx }) {
@@ -177,9 +178,11 @@ export function Treino({ ctx }) {
                 <Exercicio key={vm.id} vm={vm} acoes={ctx.acoesEx} />
               ))}
 
-        {t.aberto && !t.editando && (
+        {t.addEx && <AddEx c={t.addEx} acoes={ctx.acoesAdd} />}
+
+        {t.aberto && !t.editando && !t.addEx && (
           <div class="tr-aberto">
-            <button class="ins-btn-add" onClick={ctx.abrirAddEx}>+ adicionar movimento</button>
+            <button class="ins-btn-add" onClick={ctx.acoesAdd.abre}>+ adicionar movimento</button>
             <button class="ins-btn-secondary tr-sim" onClick={ctx.poeSimulacao}>
               simulação completa · 9 estações
             </button>

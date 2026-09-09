@@ -187,3 +187,57 @@ test('as estações da prova continuam no catálogo depois de sair da prescriç�
   });
   a.fechar();
 });
+
+test('adicionar movimento no dia aberto abre o catálogo e entra sem virar troca', async () => {
+  // O botão não fazia nada: apontava para `ctx.abrirAddEx`, que não existe — a
+  // ação mora em `ctx.acoesAdd.abre` —, e o painel do catálogo só era desenhado
+  // pela edição do dia e pela tela de programa, nunca pelo treino.
+  const a = await app();
+  a.E('go("HX")');
+  await a.esperar();
+
+  a.E('CTX.acoesAdd.abre()');
+  await a.esperar();
+  assert.ok(a.$('.addex'), 'o catálogo abre a partir do dia aberto');
+
+  a.E("CTX.acoesAdd.busca('remo erg')");
+  await a.esperar();
+  const achado = a.$('.addlist .swapopt');
+  assert.ok(achado, 'a busca acha');
+  a.clicar(achado);
+  await a.esperar(60);
+
+  assert.strictEqual(a.E('treino("HX").ex.length'), 1, 'o movimento entrou no dia');
+  assert.ok(!a.E('view.addEx'), 'e o painel fecha sozinho');
+
+  // Adicionado NÃO é substituído: o `orig` de um mod `add` é uma chave
+  // sintética (`id#instante`) para o mod ter identidade, não o exercício que
+  // saiu do lugar. O cartão anunciava "no lugar de remo-ergometro#1788963143430".
+  assert.strictEqual(a.E('altOf(0)'), null, 'nada foi substituído');
+  a.E('toggle(0)');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-ex="0"] .swapped'), null, 'e o cartão não anuncia troca');
+  a.fechar();
+});
+
+test('exercício por tempo não recebe linguagem de hipertrofia', async () => {
+  // "isolador · última pode ir a 0–1" num remo de 1000 m era um dos sinais de
+  // que o sábado estava modelado como o que não é.
+  const a = await app();
+  a.E('go("HX")');
+  await a.E('poeSimulacao()');
+  await a.esperar();
+  a.E('toggle(0)');
+  await a.esperar();
+
+  const cartao = a.$('[data-ex="0"]');
+  assert.ok(/Corrida/.test(cartao.textContent), 'é a corrida');
+  assert.strictEqual(cartao.querySelector('.tag'), null,
+    'sem selo de RIR: o alvo de um exercício por tempo é o relógio');
+
+  // e um exercício de musculação continua com o selo
+  a.E('go("A"); toggle(0)');
+  await a.esperar();
+  assert.ok(a.$('[data-ex="0"] .tag'), 'na musculação o selo continua');
+  a.fechar();
+});
