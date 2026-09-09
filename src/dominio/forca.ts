@@ -11,7 +11,7 @@
 // dela como estimativa em todo lugar. Serve para comparar consigo mesma ao
 // longo das semanas, não para prescrever um número de barra.
 
-import { isTime } from './carga';
+import { temUnidade } from './carga';
 import type { Estado, IdEx, Log } from './tipos';
 
 const DIA = 86400000;
@@ -22,9 +22,18 @@ export function e1rmDaSerie(carga: number, reps: number): number {
   return carga * (1 + reps / 30);
 }
 
-/** O melhor e1RM de uma entrada de histórico. */
+/**
+ * O melhor e1RM de uma entrada de histórico.
+ *
+ * Registro COM GRANDEZA DECLARADA vale zero, e a regra é ampla de propósito.
+ * Enquanto só existia `u:'seg'`, testar por ele bastava. Com metro, caloria e
+ * repetição no modelo, testar por `'seg'` deixaria passar wall balls de 9 kg ×
+ * 100 reps como um e1RM de 39 kg — e este número não morre aqui: ele vira o
+ * sinal de força que a REGRA CALÓRICA consome. Uma unidade nova mal fechada
+ * faria o app mentir na metade da comida, longe de onde o erro foi cometido.
+ */
 export function e1rmDoLog(l: Log): number {
-  if (l.u === 'seg') return 0;   // exercício por tempo não tem carga máxima
+  if (temUnidade(l)) return 0;   // movimento com grandeza própria não tem carga máxima
   return l.sets.reduce((m, s) => (s ? Math.max(m, e1rmDaSerie(s[0], s[1])) : m), 0);
 }
 
@@ -55,7 +64,7 @@ export interface Tendencia {
  */
 export function tendenciaDeForca(
   logs: Record<IdEx, Log[]>,
-  ehTempo: (k: IdEx) => boolean,
+  temGrandeza: (k: IdEx) => boolean,
   agora: number = Date.now()
 ): Tendencia {
   const fimRecente = agora, iniRecente = agora - 14 * DIA;
@@ -64,7 +73,7 @@ export function tendenciaDeForca(
   let somaAgora = 0, somaAntes = 0, base = 0;
 
   Object.keys(logs).forEach(k => {
-    if (ehTempo(k)) return;
+    if (temGrandeza(k)) return;
     const h = logs[k] || [];
     const janela = (de: number, ate: number) => {
       const v = h.filter(e => e.t >= de && e.t < ate).map(e1rmDoLog).filter(x => x > 0);

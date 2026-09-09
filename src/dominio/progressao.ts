@@ -4,7 +4,7 @@
 // rápido do que tendão consegue se adaptar. As regras daqui são o freio, e por
 // isso valem mais como função pura testável do que como trecho de render.
 
-import { isTime, topReps } from './carga';
+import { temUnidade, topReps } from './carga';
 import type { Exercicio, IdEx, Log, Serie } from './tipos';
 
 const DIA = 86400000;
@@ -63,7 +63,7 @@ export function shouldUp(
   ex: Partial<Exercicio> & { s: number; r: string },
   pausaDias: number
 ): boolean {
-  if (isTime(ex)) return false;                 // prancha não ganha selo de subir carga
+  if (temUnidade(ex)) return false;             // movimento com grandeza própria não ganha selo de carga
   if (pausaDias >= PAUSA_DIAS) return false;    // voltando de pausa longa
   if (!ultimo || ultimo.sets.length < ex.s) return false;
   const t = topReps(ex.r);

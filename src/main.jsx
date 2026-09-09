@@ -10,7 +10,9 @@ import {
   escapeHTML, escAttr
 } from './dominio/formato';
 import {
-  totalAnilhas, isTime, tutOf, volOf, maxLoad, repsOf, topReps
+  totalAnilhas, isTime, tutOf, volOf, maxLoad, repsOf, topReps,
+  unidadeDe, temUnidade, cronometrado, menosEhMelhor, ritmoDe,
+  ROTULO_UNIDADE, ESCALA_RITMO
 } from './dominio/carga';
 import { montaNoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
@@ -2600,7 +2602,7 @@ function cinturaMes() { return _cinturaMes(S.body.cintura); }
  * ele ligava na mão; agora sai do e1RM das cargas registradas.
  */
 function forcaSubindo() {
-  const t = tendenciaDeForca(S.logs, function (k) { return exDe(k).u === 'seg'; });
+  const t = tendenciaDeForca(S.logs, function (k) { return temUnidade(exDe(k)); });
   return sinalDeForca(t, S.perfManual);
 }
 function veredito() { return _veredito(S.body, forcaSubindo()); }
@@ -4016,7 +4018,7 @@ CTX.abreHistorico = function () { openHist(0); };
 
 // ---------- DADOS ----------
 CTX.dados = function () {
-  const t = tendenciaDeForca(S.logs, function (k) { return exDe(k).u === 'seg'; });
+  const t = tendenciaDeForca(S.logs, function (k) { return temUnidade(exDe(k)); });
   const v = veredito();
   const alvo = ajusteDoVeredito(v);
 
@@ -4029,7 +4031,7 @@ CTX.dados = function () {
     const ini = fim - 7 * 86400000;
     let soma = 0;
     Object.keys(S.logs).forEach(function (k) {
-      if (exDe(k).u === 'seg') return;
+      if (temUnidade(exDe(k))) return;
       const janela = (S.logs[k] || []).filter(function (e) { return e.t >= ini && e.t < fim; });
       if (!janela.length) return;
       soma += Math.max.apply(null, janela.map(function (e) {

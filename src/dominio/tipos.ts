@@ -13,6 +13,23 @@ import type { Alimento, DiaComida, Refeicao } from './nutricao/tipos';
 /** Os seis tipos de carregamento. O app rotula, nunca converte. */
 export type TipoCarga = 'pino' | 'lado' | 'barra' | 'halter' | 'halter1' | 'corpo' | 'assist';
 
+/**
+ * A grandeza em que um movimento se mede. Quatro, e não há quinta.
+ *
+ * Nasceu como `u: 'seg'`, que era o único escape do par [carga, repetições] —
+ * e escape de um valor só não é modelo. Aula de box mede em metro (corrida,
+ * sled, farmer), em caloria (bike, remo, ski), em repetição (wall ball, burpee,
+ * box jump) e em segundo (prancha, EMOM). `'seg'` continua valendo e querendo
+ * dizer o mesmo: é a generalização do precedente, não a substituição dele.
+ *
+ * **Caloria não converte para metro, e a tentação de normalizar é o erro.** A
+ * relação potência→caloria é aproximadamente linear e potência→ritmo é
+ * inversa-cúbica: qualquer fator fixo está errado para todo mundo que não tenha
+ * a potência que serviu de referência. "1000 m de remo" e "20 cal de remo" são
+ * duas séries históricas diferentes, e ficam separadas para sempre.
+ */
+export type Unidade = 'seg' | 'm' | 'cal' | 'rep';
+
 /** Letra do treino na rotação. */
 export type Dia = string;
 
@@ -36,8 +53,16 @@ export interface Exercicio {
   peg?: string;
   /** 1 quando `peg` fala de posição do pé, não da mão */
   pegPe?: 1;
-  /** 'seg' quando o exercício é medido por tempo, não por repetição */
-  u?: 'seg';
+  /**
+   * A grandeza PADRÃO do movimento, quando ele não se mede em repetição com
+   * carga. Ausente = série de musculação, que é o caso da esmagadora maioria
+   * do catálogo.
+   *
+   * É padrão e não verdade: o mesmo remo é 500 m num sábado e 15 cal no outro,
+   * e quem decide é a lousa do box. Por isso o slot e o registro carregam a
+   * sua própria — esta aqui só diz com o que o campo nasce preenchido.
+   */
+  u?: Unidade;
   /** verdadeiro quando o exercício saiu do catálogo mas tem histórico */
   sumido?: 1;
   /** cadastrado por ele, não veio do código */
@@ -59,6 +84,24 @@ export interface Slot {
   d: number;
   /** repetições na reserva alvo, como '1–2'; ausente nos slots anteriores à revisão de 2026 */
   rir?: string;
+  /**
+   * A grandeza deste movimento HOJE, quando não é repetição com carga.
+   *
+   * Mora no slot e não só no catálogo porque é a lousa que decide: o box passa
+   * 500 m de remo num sábado e 15 cal no outro, e as duas coisas não se
+   * comparam. Ausente = o padrão do exercício.
+   */
+  u?: Unidade;
+  /**
+   * Quanto foi prescrito de `u` em cada passada: 500 (metros), 15 (calorias),
+   * 20 (repetições), 60 (segundos).
+   *
+   * É prescrição, não resultado — o resultado é a série. Fica separado de `r`
+   * porque `r` é texto para ler ('6–10') e este é número para dividir: sem ele
+   * não há ritmo, e sem ritmo 500 m e 1000 m caem no mesmo histórico como se
+   * fossem a mesma coisa.
+   */
+  q?: number;
   /** quando entrou nesta posição; 0 = veio do treinador e não conta na regra das 6 a 8 semanas */
   desde: number;
   /** 1 quando é bi-set com o exercício seguinte */
@@ -90,7 +133,22 @@ export interface Treino<E = Slot> {
 }
 
 /**
- * Uma série registrada: [carga, repetições, RIR].
+ * Uma série registrada: [carga, resultado, RIR].
+ *
+ * ---- O que é o segundo número ----
+ *
+ * Ele é `repetições` na série de musculação, e continua sendo. Onde há
+ * `Unidade`, ele é o RESULTADO daquela passada, e a unidade diz qual:
+ *
+ * | `u` | o que foi prescrito (`q`) | o que a série guarda |
+ * |---|---|---|
+ * | `m` · `cal` | 500 m, 15 cal | **segundos** — a distância é fixa, o relógio é o que melhora |
+ * | `rep` · `seg` | 20 reps, 60 s | **quanto saiu** — a janela é fixa, a quantidade é o que melhora |
+ *
+ * Daí sai a direção, e ela é propriedade da UNIDADE, nunca do exercício: em
+ * `m` e `cal` menos é melhor, em `rep` e `seg` mais é melhor. Foi por não ter
+ * essa distinção que 5×500 m de remo apareciam como `+423%` em ácido contra um
+ * 500 m sozinho — o app somava segundos e comemorava ficar mais lento.
  *
  * O RIR é a terceira posição e é opcional — série antiga tem só dois números, e
  * continua válida. Quem lê carga e repetição indexa [0] e [1] e não precisa
@@ -111,8 +169,16 @@ export interface Log {
   sets: Serie[];
   /** posição de origem, quando difere da chave (houve troca) */
   sl?: IdEx;
-  /** exercício por tempo */
-  u?: 'seg';
+  /**
+   * A grandeza com que ESTE registro foi feito.
+   *
+   * Carimbada na projeção, e não lida do catálogo na hora de mostrar, porque o
+   * catálogo muda e o registro não pode mudar com ele. Já era assim quando só
+   * existia `'seg'`, e é o que a generalização aproveita.
+   */
+  u?: Unidade;
+  /** quanto foi prescrito de `u` em cada passada, no dia em que isto foi feito */
+  q?: number;
   /** quando este registro foi alterado pela última vez; a fusão o usa para decidir */
   m?: number;
   obs?: string;
@@ -165,7 +231,9 @@ export type Mod =
   | { k: 'desc'; slot: IdEx; de: number; para: number }
   | { k: 'rm'; slot: IdEx }
   | { k: 'mover'; slot: IdEx; de: number; para: number }
-  | { k: 'add'; id: IdEx; s: number; r: string; d: number; pos: number; n?: 0 | 1 };
+  | { k: 'med'; slot: IdEx; u?: Unidade; q?: number }
+  | { k: 'add'; id: IdEx; s: number; r: string; d: number; pos: number; n?: 0 | 1;
+      u?: Unidade; q?: number };
 
 export interface Mods {
   day: Dia;
