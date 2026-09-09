@@ -136,7 +136,7 @@ function aplicaMods(d, slots) {
   let out = slots.map(function (sl) { return Object.assign({}, sl); });
   list.forEach(function (x) {
     if (x.k === 'add') {
-      const novo = { id:x.id, s:x.s, r:x.r, d:x.d, desde:0, mod:2, orig:x.id + '#' + x.n };
+      const novo = { id:x.id, s:x.s, r:x.r, d:x.d, u:x.u, q:x.q, desde:0, mod:2, orig:x.id + '#' + x.n };
       out.splice(Math.max(0, Math.min(x.pos, out.length)), 0, novo);
       return;
     }
@@ -148,6 +148,10 @@ function aplicaMods(d, slots) {
     if (x.k === 'sets')  { sl.s = x.para; sl.mod = sl.mod || 1; }
     if (x.k === 'reps')  { sl.r = x.para; sl.mod = sl.mod || 1; }
     if (x.k === 'desc')  { sl.d = x.para; sl.mod = sl.mod || 1; }
+    // A medida do dia. Não carrega `de`/`para` como os outros mods porque não
+    // há o que desfazer para: a grandeza de um movimento de box não tem valor
+    // oficial anterior — ela nasce no dia, com a lousa.
+    if (x.k === 'med')   { sl.u = x.u; sl.q = x.q; sl.mod = sl.mod || 1; }
     if (x.k === 'troca') { sl.id = x.por; sl.mod = sl.mod || 1; }
     if (x.k === 'mover') {
       out.splice(i, 1);
@@ -263,8 +267,11 @@ function treino(d) {
   if (!p) return null;
   return { name: p.name, tag: p.tag, aberto: p.aberto, ex: aplicaMods(d, p.ex).map(function (sl) {
     const e = exDe(sl.id);
-    return { id:sl.id, n:e.n, car:e.car, g:e.g, c:e.c, cue:e.cue, u:e.u,
-             peg:e.peg, pegPe:e.pegPe,
+    // A grandeza do SLOT vence a do catálogo: o mesmo remo é 500 m num sábado
+    // e 15 cal no outro, e quem decide é a lousa do box. O catálogo só diz com
+    // o que o campo nasce preenchido.
+    return { id:sl.id, n:e.n, car:e.car, g:e.g, c:e.c, cue:e.cue, u:sl.u || e.u,
+             q:sl.q, peg:e.peg, pegPe:e.pegPe,
              s:sl.s, r:sl.r, d:sl.d, rir:sl.rir || '', desde:sl.desde, bi:sl.bi || 0,
              mod:sl.mod || 0, orig:sl.orig || sl.id };
   }) };
@@ -575,13 +582,13 @@ function abreSessao(dia) {
 }
 
 function setsDoRascunho(ex, e, key) {
-  const seg = isTime(ex);
+  const seg = temUnidade(ex);
   const corpo = isCorpo(key, ex);
   const sets = [];
   let any = false;
   for (let k = 0; k < setsFor(ex); k++) {
     const x = e.s[k];
-    // em exercício por tempo ou de peso do corpo o segundo campo basta
+    // em movimento com grandeza própria ou de peso do corpo o segundo campo basta
     const ok = x && x[1] != null && (seg || corpo || x[0] != null);
     if (ok) {
       const s = [x[0] != null ? x[0] : 0, x[1]];
@@ -629,7 +636,13 @@ function projeta(i) {
   // slot de origem: o registro vive no histórico do exercício, mas ainda
   // precisamos saber em que posição do treino ele foi feito
   if (key !== slot) entry.sl = slot; else delete entry.sl;
-  if (isTime(ex)) entry.u = 'seg'; else delete entry.u;
+  // A grandeza vai carimbada no registro, não lida do catálogo na hora de
+  // mostrar: o catálogo muda, e o que foi feito não muda com ele. `q` viaja
+  // junto porque sem ele não há ritmo — e sem ritmo 500 m e 1000 m caem no
+  // mesmo histórico como se fossem a mesma coisa.
+  const un = unidadeDe(ex);
+  if (un) entry.u = un; else delete entry.u;
+  if (un && ex.q > 0) entry.q = ex.q; else delete entry.q;
   if (e.aq) entry.aq = 1; else delete entry.aq;
   const obs = (e.obs||'').trim();
   if (obs) entry.obs = obs; else delete entry.obs;
@@ -1235,9 +1248,27 @@ function cargaTipo(key, ex) {
 }
 function isCorpo(key, ex) { return cargaTipo(key, ex) === 'corpo'; }
 function shouldUp(d, i, ex) { return _shouldUp(lastOf(d, i), ex, pausaEx(id(d, i))); }
+/**
+ * Como uma série se lê quando o movimento tem grandeza própria.
+ *
+ * O que muda entre as unidades é QUAL número é o resultado. Em metro e
+ * caloria o trabalho está na prescrição e a série guarda o relógio, então os
+ * dois precisam aparecer juntos — `500 m · 110s` é legível e `110s` sozinho
+ * não diz nada. Em repetição e segundo a série JÁ é o trabalho, e repetir a
+ * prescrição ao lado seria dizer a mesma coisa duas vezes.
+ */
+function textoDaSerie(x, u, q) {
+  if (!x) return null;
+  const carga = x[0] ? fmtNum(x[0]) + 'kg · ' : '';
+  if (cronometrado(u)) {
+    return carga + (q > 0 ? fmtInt(q) + ' ' + ROTULO_UNIDADE[u] + ' · ' : '') + x[1] + 's';
+  }
+  return carga + x[1] + (u ? ' ' + ROTULO_UNIDADE[u] : 's');
+}
+
 function fmtLast(l, seg) {
   if (!l) return null;
-  if (seg) return l.sets.map(s => s ? (s[0] ? fmtNum(s[0])+'kg×'+s[1]+'s' : s[1]+'s') : '–').join('  ');
+  if (seg) return l.sets.map(s => textoDaSerie(s, l.u, l.q) || '–').join('  ');
   return l.sets.map(s => s ? fmtNum(s[0])+'×'+s[1] : '–').join('  ');
 }
 
@@ -1280,14 +1311,26 @@ async function alternaDescanso(t) {
   fecharAdicionar();
 }
 
-function chartSVG(H, modo, rot) {
+function chartSVG(H, modo, rot, un) {
   if (!H.length) return '';
   const n = H.length;
 
   // faixa de cima: o que progride. Embaixo: a métrica de apoio, quando existe.
   // Em peso do corpo, quem progride é a repetição; a carga é o acessório.
-  let A, B = null;
-  if (modo === 'seg') {
+  //
+  // No RITMO o eixo é INVERTIDO, e isso não é enfeite. O gráfico inteiro do app
+  // é construído sobre "mais alto é melhor"; ritmo é a única métrica em que o
+  // número desce quando o desempenho sobe. Plotá-lo cru faria a linha de quem
+  // está melhorando descer — o mesmo erro que o `+423%` cometia, só que em
+  // forma de desenho.
+  let A, B = null, inv = 0;
+  if (modo === 'ritmo') {
+    const esc = ESCALA_RITMO[un] || { fator: 1, rot: 's' };
+    A = { v: H.map(function (x) { const r = ritmoDe(x); return r == null ? 0 : r * esc.fator; }),
+          u: esc.rot, f: fmtDec };
+    inv = 1;
+    if (H.some(function (x) { return maxLoad(x) > 0; })) B = { v: H.map(maxLoad), u: rot||'kg', f: fmtNum };
+  } else if (modo === 'seg') {
     A = { v: H.map(tutOf), u:'seg', f: fmtInt };
     if (H.some(function (x) { return maxLoad(x) > 0; })) B = { v: H.map(maxLoad), u: rot||'kg', f: fmtNum };
   } else if (modo === 'corpo') {
@@ -1304,7 +1347,11 @@ function chartSVG(H, modo, rot) {
   const alt = (B ? bB : aB) + 16;
   const aHi = Math.max.apply(null, A.v), aLo = Math.min.apply(null, A.v);
   const px = i => n === 1 ? (x0+x1)/2 : x0 + (x1-x0) * i/(n-1);
-  const ay = v => aHi === aLo ? (aT+aB)/2 : aB - (v-aLo)/(aHi-aLo) * (aB-aT);
+  const ay = v => {
+    if (aHi === aLo) return (aT+aB)/2;
+    const f = (v-aLo)/(aHi-aLo);
+    return aB - (inv ? 1-f : f) * (aB-aT);
+  };
   const anchor = i => i === 0 && n > 1 ? 'start' : (i === n-1 && n > 1 ? 'end' : 'middle');
 
   let g = `<svg viewBox="0 0 320 ${alt+8}" class="chart" role="img" aria-label="progresso das últimas ${n} sessões">`;
@@ -1312,7 +1359,7 @@ function chartSVG(H, modo, rot) {
   g += `<line x1="${x0}" y1="${aT}" x2="${x1}" y2="${aT}" class="gl"/>`
      + `<line x1="${x0}" y1="${aB}" x2="${x1}" y2="${aB}" class="gl"/>`
      + `<text x="${x0-8}" y="${ay(aHi)+3}" class="ax" text-anchor="end">${A.f(aHi)}</text>`
-     + (aHi === aLo ? '' : `<text x="${x0-8}" y="${aB+3}" class="ax" text-anchor="end">${A.f(aLo)}</text>`)
+     + (aHi === aLo ? '' : `<text x="${x0-8}" y="${ay(aLo)+3}" class="ax" text-anchor="end">${A.f(aLo)}</text>`)
      + `<text x="${x0-8}" y="${aT-9}" class="axu" text-anchor="end">${A.u}</text>`;
   if (n > 1) g += `<polyline class="cl" points="${H.map((h,i)=> px(i)+','+ay(A.v[i])).join(' ')}"/>`;
   H.forEach((h,i) => {
@@ -3237,17 +3284,33 @@ function itensDaSessao(marca) {
         : (sameDay(e.t, marca.t) && e.sid == null && (doDia[k] || doDia[e.sl]));
       if (!bate) return;
       const ex = exDe(k);
-      const seg = e.u === 'seg';
-      const met = seg ? tutOf : volOf;
+      const un = e.u || null;
+      const seg = !!un;
+      // Ritmo onde o resultado é o relógio; o resto como sempre foi. E o
+      // recorde compara na DIREÇÃO da unidade: um remo mais lento chegou a
+      // aparecer como "recorde de tempo", que é a mesma mentira do +423%.
+      const ritmo = cronometrado(un) && ritmoDe(e) != null;
+      const met = ritmo ? function (l) { const r = ritmoDe(l); return r == null ? 0 : r; }
+                : seg ? tutOf : volOf;
       const antes = S.logs[k].filter(function (x) { return x.t < e.t; });
+      const comparaveis = antes.filter(function (x) { return met(x) > 0; });
+      const melhor = comparaveis.length
+        ? (ritmo ? Math.min.apply(null, comparaveis.map(met))
+                 : Math.max.apply(null, comparaveis.map(met)))
+        : null;
+      const ant = antes.length ? met(antes[antes.length-1]) : 0;
+      const cru = ant > 0 ? Math.round((met(e) - ant) / ant * 100) : null;
       out.push({
         t: e.t, nome: ex.n,
-        seg: seg, sets: e.sets, met: met(e), dor: e.dor || [],
+        seg: seg, un: un, q: e.q, ritmo: ritmo,
+        sets: e.sets, met: met(e), dor: e.dor || [],
         novo: !antes.length,
-        delta: antes.length && met(antes[antes.length-1]) > 0
-          ? Math.round((met(e) - met(antes[antes.length-1])) / met(antes[antes.length-1]) * 100) : null,
+        delta: cru,
+        // o delta continua sendo o número cru; quem sabe se ele foi BOM é a
+        // unidade, e é isso que a tela pinta
+        bom: cru != null && (ritmo ? cru < 0 : cru > 0),
         recCarga: !seg && antes.length > 0 && maxLoad(e) > Math.max.apply(null, antes.map(maxLoad)),
-        recMet: antes.length > 0 && met(e) > Math.max.apply(null, antes.map(met)),
+        recMet: melhor != null && met(e) > 0 && (ritmo ? met(e) < melhor : met(e) > melhor),
         // exercício que não está mais neste treino: substituto de hoje, ou
         // sobra de um programa anterior
         fora: t && !doDia[k] ? 1 : 0
@@ -3366,19 +3429,28 @@ function retro() {
         const H = S.logs[k].filter(function (e) { return e.t >= de && e.t <= ate; });
         if (!H.length) return;
         const nome = k === base ? ex.n : k.slice(base.length+1);
-        const seg = isTime(ex);
-        const met = seg ? tutOf : volOf;
+        // A grandeza sai do REGISTRO. Ler do catálogo aqui faria o bloco
+        // inteiro mudar de leitura no dia em que o exercício mudasse de medida.
+        const un = (H[0] && H[0].u) || unidadeDe(ex) || null;
+        const seg = !!un;
+        const ritmo = cronometrado(un) && H.some(function (e) { return ritmoDe(e) != null; });
+        const met = ritmo ? function (e) { const r = ritmoDe(e); return r == null ? 0 : r; }
+                  : seg ? tutOf : volOf;
         H.forEach(function (e) {
           if (!seg) volTotal += volOf(e);
           (e.dor||[]).forEach(function (x) { dores[x] = (dores[x]||0) + 1; });
         });
         if (H.length < 2) return;
         const a = H[0], b = H[H.length-1];
-        const ci = seg ? tutOf(a) : maxLoad(a), cf = seg ? tutOf(b) : maxLoad(b);
+        const ci = ritmo ? met(a) : seg ? tutOf(a) : maxLoad(a);
+        const cf = ritmo ? met(b) : seg ? tutOf(b) : maxLoad(b);
         const dv = met(a) > 0 ? Math.round((met(b)-met(a))/met(a)*100) : null;
-        const item = { nome:nome, n:H.length, ci:ci, cf:cf, dv:dv, seg:seg,
+        // "Evoluiu" é na direção da unidade. Antes era sempre `cf > ci`, e por
+        // isso o remo que ficou mais lento entrava na lista dos que evoluíram.
+        const melhorou = ritmo ? (ci > 0 && cf > 0 && cf < ci) : cf > ci;
+        const item = { nome:nome, n:H.length, ci:ci, cf:cf, dv:dv, seg:seg, ritmo:ritmo, un:un,
                        dc: ci > 0 ? Math.round((cf-ci)/ci*100) : null };
-        if (cf > ci) evol.push(item);
+        if (melhorou) evol.push(item);
         else if (cf === ci && H.length >= 3) parados.push(item);
       });
     });
@@ -3386,7 +3458,11 @@ function retro() {
 
   sessoes = S.done.filter(function (x) { return x.t >= de; }).length;
   const semanas = Math.max(1, (ate - de) / (7*86400000));
-  evol.sort(function (a,b) { return (b.dc||0) - (a.dc||0); });
+  // Ordena por GANHO, não pelo sinal cru: em ritmo o número que melhora é o
+  // que desce, e ordenar por `dc` jogaria justamente quem mais evoluiu para o
+  // fim da lista.
+  const ganho = function (x) { return (x.ritmo ? -1 : 1) * (x.dc || 0); };
+  evol.sort(function (a,b) { return ganho(b) - ganho(a); });
 
   return { de:de, ate:ate, sessoes:sessoes, semanas:semanas, volTotal:volTotal,
            evol:evol, parados:parados, dores:dores,
@@ -4882,20 +4958,21 @@ CTX.detalheDaSessao = function () {
     itens: R.itens.map(function (x) {
       const marcas = [];
       if (x.recCarga) marcas.push('recorde de carga');
-      else if (x.recMet) marcas.push('recorde de ' + (x.seg ? 'tempo' : 'volume'));
+      else if (x.recMet) marcas.push('recorde de ' + (x.ritmo ? 'ritmo' : x.seg ? 'tempo' : 'volume'));
       if (x.novo) marcas.push('primeira vez');
       if (x.fora) marcas.push('fora do treino');
       return {
         nome: x.nome,
         delta: x.delta === null ? null : (x.delta > 0 ? '+' : '') + x.delta + '%',
-        deltaCor: x.delta > 0 ? 'ins-acid' : '',
+        deltaCor: x.bom ? 'ins-acid' : '',
         series: x.sets.map(function (y) {
           if (!y) return null;
-          return x.seg
-            ? (y[0] ? fmtNum(y[0]) + 'kg × ' + y[1] + 's' : y[1] + 's')
-            : fmtNum(y[0]) + '×' + y[1];
+          return x.seg ? textoDaSerie(y, x.un, x.q) : fmtNum(y[0]) + '×' + y[1];
         }),
-        meta: fmtInt(x.met) + ' ' + (x.seg ? 'seg' : 'vol'),
+        meta: x.ritmo
+          ? fmtDec(x.met * (ESCALA_RITMO[x.un] || { fator: 1 }).fator) + ' ' +
+            (ESCALA_RITMO[x.un] || { rot: 's' }).rot
+          : fmtInt(x.met) + ' ' + (x.seg ? 'seg' : 'vol'),
         marcas: marcas,
         nota: x.dor.length ? 'dor em ' + x.dor.map(dorName).join(' e ') : null
       };
@@ -4919,13 +4996,27 @@ CTX.historico = function () {
   const H = (S.logs[sel] || []).slice(-6);
   const base = (S.logs[sel] || []).length - H.length;
 
-  const seg = isTime(ex) || (H[0] && H[0].u === 'seg');
+  // A grandeza vem do registro antes de vir do catálogo: o catálogo muda, e o
+  // que foi feito não muda com ele.
+  const un = (H[0] && H[0].u) || unidadeDe(ex) || null;
+  const seg = !!un;
+  const ritmo = cronometrado(un) && H.some(function (x) { return ritmoDe(x) != null; });
+  const esc = ESCALA_RITMO[un] || { fator: 1, rot: 's' };
   const corpo = !seg && tipo === 'corpo';
   const rotCarga = seg ? 'kg' : CARGAS[tipo].rot;
-  const met = seg ? tutOf : (corpo ? repsOf : volOf);
+  const met = ritmo
+    ? function (l) { const r = ritmoDe(l); return r == null ? 0 : r * esc.fator; }
+    : seg ? tutOf : (corpo ? repsOf : volOf);
+  // Onde o resultado é o relógio, cair é melhorar. É o único lugar do app em
+  // que o sinal do delta não basta para saber se foi bom.
+  const bom = function (delta) { return delta == null ? false : (ritmo ? delta < 0 : delta > 0); };
 
   const marcas = [];
-  marcas.push({ k: 'c', t: ex.c ? 'composto' : 'isolador', cls: ex.c ? 'comp' : '' });
+  // "isolador" num remo de 1000 m é linguagem de hipertrofia aplicada a
+  // condicionamento — o mesmo erro que fazia o sábado inteiro parecer o que
+  // não é. Onde há grandeza própria, a marca que vale é a grandeza.
+  if (seg) marcas.push({ k: 'c', t: ROTULO_UNIDADE[un], cls: '' });
+  else marcas.push({ k: 'c', t: ex.c ? 'composto' : 'isolador', cls: ex.c ? 'comp' : '' });
   marcas.push({ k: 'car', t: CARGAS[tipo].nome, cls: '' });
   if (sel !== id(d, i)) marcas.push({ k: 'sub', t: 'substituto', cls: 'swap-t' });
 
@@ -4962,7 +5053,11 @@ CTX.historico = function () {
 
   return Object.assign(cab, {
     vazio: false,
-    stats: (seg
+    stats: (ritmo
+      ? [{ k: 'a', rotulo: 'ritmo · ' + esc.rot, valor: fmtDec(met(last)) },
+         { k: 'b', rotulo: 'trabalho · ' + ROTULO_UNIDADE[un],
+           valor: fmtInt((last.q || 0) * last.sets.filter(Boolean).length) }]
+      : seg
       ? [{ k: 'a', rotulo: 'tempo da última · seg', valor: fmtInt(tutOf(last)) },
          { k: 'b', rotulo: 'média por série · seg',
            valor: fmtInt(Math.round(tutOf(last) / Math.max(last.sets.filter(Boolean).length, 1))) }]
@@ -4973,15 +5068,17 @@ CTX.historico = function () {
          { k: 'b', rotulo: 'volume da última', valor: fmtInt(volOf(last)) }]
     ).concat([{
       k: 'd',
-      rotulo: (seg ? 'tempo' : corpo ? 'repetições' : 'volume') + ' no período',
+      rotulo: (ritmo ? 'ritmo' : seg ? 'tempo' : corpo ? 'repetições' : 'volume') + ' no período',
       valor: dv === null ? '–' : (dv > 0 ? '+' : '') + dv + '%',
-      cor: dv !== null && dv > 0 ? 'ins-acid' : ''
+      cor: bom(dv) ? 'ins-acid' : ''
     }]),
     // O gráfico continua sendo SVG gerado: é desenho, não estrutura, e não
     // carrega nenhum handler. Entra por markup e sai daqui inteiro.
-    svg: chartSVG(H, seg ? 'seg' : (corpo ? 'corpo' : null), rotCarga),
+    svg: chartSVG(H, ritmo ? 'ritmo' : seg ? 'seg' : (corpo ? 'corpo' : null), rotCarga, un),
     legenda: [
-      { k: 'c', t: seg ? 'tempo total sob tensão' : corpo ? 'repetições da sessão' : 'carga máxima da sessão' },
+      { k: 'c', t: ritmo ? 'ritmo · ' + esc.rot + ' · menor é melhor'
+                 : seg ? 'tempo total sob tensão'
+                 : corpo ? 'repetições da sessão' : 'carga máxima da sessão' },
       (seg || corpo)
         ? (H.some(function (x) { return maxLoad(x) > 0; }) ? { k: 'v', t: 'carga adicionada' } : null)
         : { k: 'v', t: 'volume total' }
@@ -4993,14 +5090,14 @@ CTX.historico = function () {
       return {
         real: base + k,
         data: fmtDate(s.t),
-        valor: fmtInt(v),
-        unidade: seg ? 'seg no total' : 'kg×reps',
+        valor: ritmo ? fmtDec(v) : fmtInt(v),
+        unidade: ritmo ? esc.rot : seg ? 'seg no total' : 'kg×reps',
         deload: !!s.dl,
         delta: delta === null ? null : (delta > 0 ? '+' : '') + delta + '%',
-        deltaCor: delta > 0 ? 'ins-acid' : '',
+        deltaCor: bom(delta) ? 'ins-acid' : '',
         series: s.sets.map(function (x) {
           if (!x) return null;
-          return seg ? (x[0] ? fmtNum(x[0]) + 'kg × ' + x[1] + 's' : x[1] + 's')
+          return seg ? textoDaSerie(x, s.u, s.q)
                      : (corpo && !x[0] ? x[1] + ' reps' : fmtNum(x[0]) + '×' + x[1]);
         }),
         reps: (seg || corpo) ? null : repsOf(s) + ' reps',
@@ -5073,7 +5170,15 @@ CTX.voltaDoPromo = function () { voltarDoPromo(); };
 CTX.retrospectiva = function () {
   const R = retro();
   const dores = Object.keys(R.dores);
-  const un = function (x) { return x.seg ? 's' : 'kg'; };
+  // O sufixo do par "de → para". Em ritmo ele é a escala da unidade, e o
+  // número que aparece é o ritmo — não o tempo somado, que era comparação
+  // entre sessões de tamanhos diferentes.
+  const un = function (x) {
+    return x.ritmo ? ' ' + (ESCALA_RITMO[x.un] || { rot: 's' }).rot : x.seg ? 's' : 'kg';
+  };
+  const val = function (x, v) {
+    return x.ritmo ? fmtDec(v * (ESCALA_RITMO[x.un] || { fator: 1 }).fator) : fmtNum(v);
+  };
   return {
     olho: 'retrospectiva de bloco',
     meta: fmtDate(R.de) + ' a ' + fmtDate(R.ate),
@@ -5087,11 +5192,11 @@ CTX.retrospectiva = function () {
     evol: R.evol.slice(0, 8).map(function (x) {
       return {
         nome: x.nome,
-        delta: x.dc === null ? null : '+' + x.dc + '%',
+        delta: x.dc === null ? null : (x.dc > 0 ? '+' : '') + x.dc + '%',
         deltaCor: 'ins-acid',
-        series: [fmtNum(x.ci) + un(x) + ' → ' + fmtNum(x.cf) + un(x)],
+        series: [val(x, x.ci) + un(x) + ' → ' + val(x, x.cf) + un(x)],
         meta: [x.n + ' sessões'].concat(
-          x.dv === null ? [] : ['volume ' + (x.dv > 0 ? '+' : '') + x.dv + '%']),
+          x.dv === null ? [] : [(x.ritmo ? 'ritmo ' : 'volume ') + (x.dv > 0 ? '+' : '') + x.dv + '%']),
         marcas: []
       };
     }),
@@ -5099,8 +5204,8 @@ CTX.retrospectiva = function () {
       return {
         nome: x.nome,
         delta: x.dv === null ? null : (x.dv > 0 ? '+' : '') + x.dv + '%',
-        deltaCor: x.dv > 0 ? 'ins-acid' : '',
-        series: [fmtNum(x.cf) + un(x) + ' o bloco inteiro'],
+        deltaCor: (x.ritmo ? x.dv < 0 : x.dv > 0) ? 'ins-acid' : '',
+        series: [val(x, x.cf) + un(x) + ' o bloco inteiro'],
         meta: x.n + ' sessões',
         marcas: []
       };
