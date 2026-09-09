@@ -18,6 +18,8 @@ O [README](../README.md) cobre o uso; aqui está o porquê das decisões.
 - [Registro contínuo](#registro-contínuo)
 - [Ciclo da sessão](#ciclo-da-sessão)
 - [Tipo de carga](#tipo-de-carga)
+- [A grandeza de um movimento](#a-grandeza-de-um-movimento)
+- [Aula de box: repetir e reaproveitar](#aula-de-box-repetir-e-reaproveitar)
 - [Séries por músculo](#séries-por-músculo)
 - [A bancada: dois documentos, um app](#a-bancada-dois-documentos-um-app)
 - [Detalhes que parecem bugs](#detalhes-que-parecem-bugs)
@@ -159,7 +161,7 @@ S = {
       t: 0, sid: 0,                     // instante e id da sessão
       sets: [[60, 8], [60, 8], null],   // [carga, reps]; null = série não feita
       sl: 'pendulum-squat',             // posição de origem, se houve troca
-      u: 'seg',                         // exercício por tempo
+      u: 'm', q: 500,                   // a grandeza e o trabalho prescrito
       obs: '', dor: ['cotovelo'],
       dl: 1, aq: 1                      // feito em deload / com aproximação
     }]
@@ -174,11 +176,12 @@ S = {
     livre: 1, grupos: ['peito'], nome: ''   // sessão avulsa, fora do plano
   }],
 
-  prog: { A: { name, tag, ex: [ { id, s, r, d, desde } ] } },   // o programa dele
+  prog: { A: { name, tag, ex: [ { id, s, r, d, u, q, desde } ] } },  // o programa dele
   rot: ['A','B','C','E','D','F'],
   ex:  { 'meu-aparelho': { n, g, car, c, cue, meu: 1 } },       // catálogo dele
   mods: { day: 'C', t: 0, list: [] },                           // mudanças de hoje
   progLog: [{ t, day, txt, motivo }],                           // decisões do programa
+  aulas: [{ id, nome, t, m, mov: [] }],                         // modelos de aula de box
 
   sessao: { day, inicio, ultima, sid, manual, pausadoEm, pausas: [], pulados: [] },
   draft: null,                          // buffer de digitação da sessão aberta
@@ -754,6 +757,16 @@ toma é peso na tela mais usada do app. O dia aberto tem uma porta só.
 **Nada disso mexeu no alvo por músculo.** As estações sempre tiveram `g: ''`, e
 por isso nunca entraram em `ALVO`. O sábado continua sendo presença e tempo.
 
+### O que veio depois: a aula, e não a prova
+
+Desfeita a confusão, sobrou o problema de verdade — **registrar a AULA**, que é
+condicionamento variado e muda toda semana. Duas coisas o travavam, e as duas
+foram medidas antes de mexer: o modelo de série não comportava as grandezas (só
+existia `u: 'seg'`), e inserir movimento a movimento custava 66 interações.
+
+O que saiu daí está em [A grandeza de um movimento](#a-grandeza-de-um-movimento)
+e em [Aula de box: repetir e reaproveitar](#aula-de-box-repetir-e-reaproveitar).
+
 ---
 
 ## Registro contínuo
@@ -830,6 +843,120 @@ implemento único, e três exercícios do HYROX já o usavam para coisas que nã
 halter: wall balls é uma bola, lunges com sandbag é um saco. O que estava errado
 era o rótulo. A chave no estado continua `halter1`, então nada no histórico se
 moveu.
+
+---
+
+## A grandeza de um movimento
+
+Uma série é `[carga, resultado, RIR]`, e por muito tempo o único escape do par
+"carga × repetições" foi `u: 'seg'` no exercício. Escape de um valor só não é
+modelo, e aula de HYROX em box não cabia nele: corrida em metros, bike em
+calorias, wall ball em repetições, prancha em segundos.
+
+`Unidade` são quatro — `seg`, `m`, `cal`, `rep` — e `'seg'` continua valendo e
+querendo dizer o mesmo. É generalização do precedente, não substituição.
+
+### Caloria não converte para metro
+
+A tentação é normalizar tudo numa grandeza só. Não dá: a relação
+potência → caloria é aproximadamente linear e potência → ritmo é inversa-cúbica,
+então qualquer fator fixo está errado para todo mundo que não tenha a potência
+que serviu de referência. **"1000 m de remo" e "20 cal de remo" são duas séries
+históricas diferentes, e ficam separadas para sempre.**
+
+### A unidade é do REGISTRO, não do exercício
+
+Ela mora em três lugares, e a ordem importa:
+
+| | |
+|---|---|
+| `Exercicio.u` / `.q` | o PADRÃO — com o que o campo nasce preenchido |
+| `Slot.u` / `.q` | a medida de HOJE, que vence o padrão |
+| `Log.u` / `.q` | o que foi CARIMBADO naquele registro |
+
+O mesmo remo é 500 m num sábado e 15 cal no outro, e quem decide é a lousa do
+box. Prender a unidade ao catálogo obrigaria dois exercícios — "Remo (m)" e
+"Remo (cal)" — e dois históricos para o mesmo ergômetro. E o registro carrega a
+sua porque o catálogo muda e o que foi feito não muda com ele; já era assim
+quando só existia `'seg'`.
+
+### O que é o segundo número da série
+
+| `u` | prescrito em `q` | a série guarda |
+|---|---|---|
+| `m` · `cal` | 500 m, 15 cal | **segundos** — o trabalho é fixo, o relógio é o que melhora |
+| `rep` · `seg` | 20 reps, 60 s | **quanto saiu** — a janela é fixa, a quantidade é o que melhora |
+
+### A direção sai da unidade, nunca do exercício
+
+Em `m` e `cal` menos é melhor; em `rep` e `seg` mais é melhor. Sem essa
+distinção o app somava segundos e chamava a soma de progresso: **5×500 m de remo
+apareciam como `+423%` em ácido contra um 500 m sozinho**, o remo mais lento
+ganhava "recorde de tempo", e entrava na lista dos exercícios que subiram no
+bloco.
+
+O que se compara em movimento cronometrado é o **ritmo** (`ritmoDe`), em s/100 m
+ou s/cal. Ele resolve dois problemas com um número: põe sessões de tamanhos
+diferentes no mesmo eixo e aponta para o lado certo. **O gráfico inverte o eixo
+onde menor é melhor** — plotar ritmo cru faria a linha de quem melhora descer,
+que é o mesmo erro em forma de desenho.
+
+### O guarda que não pode afrouxar
+
+`e1rmDoLog` devolve 0 para **qualquer** grandeza declarada, não só para `'seg'`.
+A regra é ampla de propósito: com metro e repetição no modelo, testar por
+`'seg'` deixaria wall balls de 9 kg × 100 reps virar um e1RM de 39 kg — e esse
+número não morre no histórico, ele vira o sinal de força que a **regra calórica**
+consome. Uma unidade nova mal fechada faz o app mentir na metade da comida,
+longe de onde o erro foi cometido.
+
+Pelo mesmo motivo, movimento com grandeza entra no catálogo com `g: ''`: um
+burpee com grupo muscular viraria série de peito no painel de volume.
+
+### Sem migração
+
+`Unidade` e `q` entraram como campos **opcionais**, e campo novo e opcional
+recebe padrão em `normalizaEstado()` — não há dado existente a reformatar.
+`u: 'seg'` gravado continua válido e continua querendo dizer a mesma coisa.
+
+`S.aulas` entrou pelo mesmo caminho: campo novo, opcional, padrão em
+`normalizaEstado()`. E entrou também na lista de campos do backup — coleção que
+fica de fora do export some na primeira troca de aparelho.
+
+O histórico das nove estações já tinha sido apagado pela 6 → 7, então nenhum
+registro carregava a ambiguidade de "segundos para uma distância fixa" sob a
+marca de "segundos como resultado".
+
+---
+
+## Aula de box: repetir e reaproveitar
+
+Montar uma aula de cinco movimentos em cinco rounds custava **66 interações** —
+32 toques e 34 teclas — antes do primeiro número digitado. Aula de box muda toda
+semana, mas o **vocabulário** do box não muda: os mesmos seis a oito movimentos
+voltam.
+
+Três portas, e as três só existem no dia aberto — pôr uma aula inteira num dia
+de prescrição seria emendar o programa do treinador por atalho:
+
+- **Repetir o sábado passado** remonta os movimentos da última sessão daquele
+  dia a partir de `S.logs`, com a medida de cada um. Sai do histórico e não de
+  um campo próprio para não criar a segunda fonte de verdade.
+- **`S.aulas`** guarda modelos nomeados. É **coleção com chave natural** e funde
+  como o cardio, não como documento: um modelo salvo num aparelho não pode sumir
+  porque o outro gravou depois. Apagar deixa lápide, senão a primeira
+  sincronização o ressuscita.
+- **A lista rápida** põe a aula inteira numa tela, um campo por movimento.
+
+As duas primeiras põem **prescrição, nunca resultado**. Um modelo que trouxesse
+as cargas da última vez pareceria registro pronto, e registro que aparece
+sozinho é o jeito mais rápido de encher o histórico de número que ninguém fez.
+
+Na lista rápida o valor entra em TODAS as passadas do movimento, e a linha diz
+isso com todas as letras ("5 passadas · o mesmo em todas"). Escrever o mesmo
+número cinco vezes em silêncio seria o app inventando dado; com o rótulo à vista
+é uma aproximação que ele aceita, e o cartão continua ali para quem quiser
+diferenciar round a round.
 
 ---
 
