@@ -19,6 +19,10 @@
 .ex {
   border-bottom: 1px solid var(--ins-hairline);
   padding: var(--ins-4) 0;
+  /* Abrir um exercício ROLA até ele (ver `mostraExercicio` no casco). Isto diz
+     onde ele para: abaixo da barra de status e do relógio grudado, nunca por
+     baixo dos dois. */
+  scroll-margin-top: calc(var(--sa-top) + var(--ins-relogio));
 }
 .ex:last-child { border-bottom: 0; }
 
@@ -503,6 +507,9 @@
      A faixa acima continua deixando o conteúdo passar, que é o comportamento
      do app inteiro; o que não pode é o número parar ali. */
   position: sticky; top: var(--sa-top); z-index: 25;
+  /* A altura é cobrada por `--ins-relogio`, que é o que o exercício aberto usa
+     para saber onde parar ao rolar. Se ela mudar aqui, muda lá. */
+  min-height: var(--ins-relogio); box-sizing: border-box;
   display: flex; align-items: center; gap: var(--ins-3);
   margin-top: var(--ins-5);
   /* opaco e vazando a goteira, como a faixa de voltar da tela cheia: o

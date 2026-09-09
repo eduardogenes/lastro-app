@@ -2862,7 +2862,30 @@ function diaDaSessaoAberta() {
 }
 
 function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); window.scrollTo(0,0); carregaFotosDoDia(); }
-function toggle(i){ view.open = view.open===i ? null : i; view.swapOpen = null; view.nota = null; view.carga = null; render(); }
+/**
+ * Traz o exercício recém-aberto para a tela.
+ *
+ * Sem isto, abrir o primeiro exercício não mostrava a série: com a sessão
+ * correndo, a primeira linha de digitar nascia em y=826 numa janela de 874 —
+ * atrás da tab bar, invisível. Abrir e ROLAR eram duas ações, e a segunda caía
+ * sobre quem está de pé, com uma mão, entre uma série e outra.
+ *
+ * `instant` e não `smooth`: o sistema tem exatamente dois movimentos (§6 do
+ * DESIGN) e este não vira o terceiro. O cartão simplesmente já está lá.
+ * Onde ele para é o `scroll-margin-top` de `.ex`.
+ */
+function mostraExercicio(i) {
+  const el = document.querySelector('[data-ex="' + i + '"]');
+  if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'instant' });
+}
+
+function toggle(i){
+  const abrindo = view.open !== i;
+  view.open = abrindo ? i : null;
+  view.swapOpen = null; view.nota = null; view.carga = null;
+  render();
+  if (abrindo) mostraExercicio(i);
+}
 function dorName(k){ const x = DORES.filter(y=>y.k===k)[0]; return x ? x.t : k; }
 
 // Grava no rascunho a cada tecla, sem re-render: o campo não perde o foco

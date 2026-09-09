@@ -327,6 +327,19 @@ test('a trava de retrato não pega janela de computador', () => {
 });
 
 
+test('abrir um exercício sabe onde parar de rolar', () => {
+  // Abrir passou a ROLAR até o cartão. Sem recuo, o nome do exercício para
+  // embaixo do relógio grudado da sessão — e o recuo tem que sair do MESMO
+  // token que dá altura ao relógio, senão os dois divergem em silêncio.
+  const treino = fs.readFileSync(path.join(RAIZ, 'src', 'treino.css'), 'utf8');
+  const ex = treino.match(/\n\.ex\s*\{([^}]*)\}/);
+  assert.ok(ex, 'a regra do cartão existe');
+  assert.match(ex![1], /scroll-margin-top:\s*calc\(var\(--sa-top\) \+ var\(--ins-relogio\)\)/);
+  assert.match(regras(treino, '.day-rel'), /min-height:\s*var\(--ins-relogio\)/,
+    'a altura do relógio e o recuo do scroll não podem divergir');
+});
+
+
 // ============================================================
 // A BANCADA
 //

@@ -550,3 +550,39 @@ test('dia com um treino só continua abrindo direto', async () => {
   assert.strictEqual(a.J('view.sessao.day'), 'B', 'sem escolha a fazer, abre logo');
   a.fechar();
 });
+
+test('abrir um exercício traz a série para a tela', async () => {
+  // Medido no navegador, com a sessão correndo: a primeira linha de digitar
+  // nascia em y=826 numa janela de 874 — atrás da tab bar, invisível. Abrir e
+  // ROLAR eram duas ações, e a segunda caía sobre quem está de pé, com uma
+  // mão, entre uma série e outra. Agora abrir já põe o cartão no topo.
+  const a = await app();
+  const rolou = [];
+  a.window.Element.prototype.scrollIntoView = function (o) {
+    rolou.push({ ex: this.getAttribute('data-ex'), bloco: o && o.block, como: o && o.behavior });
+  };
+
+  a.E('toggle(0)');
+  assert.deepStrictEqual(rolou, [{ ex: '0', bloco: 'start', como: 'instant' }],
+    'rola até o cartão que abriu, alinhando o topo dele');
+
+  a.E('toggle(0)');
+  assert.strictEqual(rolou.length, 1, 'fechar não rola: nada novo entrou na tela');
+
+  a.E('toggle(2)');
+  assert.strictEqual(rolou.length, 2, 'e cada abertura rola até o SEU cartão');
+  assert.strictEqual(rolou[1].ex, '2');
+  a.fechar();
+});
+
+test('o cartão de exercício tem endereço no DOM', async () => {
+  // `data-ex` é como o casco alcança o cartão para rolar até ele. Sem o
+  // atributo o `querySelector` volta null e o scroll vira silêncio — o modo de
+  // falha exato que esta correção existe para tirar.
+  const a = await app();
+  const cartoes = a.$$('[data-ex]');
+  assert.ok(cartoes.length >= 3, 'todo exercício da lista tem endereço');
+  assert.deepStrictEqual(cartoes.slice(0, 3).map(e => e.getAttribute('data-ex')), ['0', '1', '2'],
+    'e o endereço é a posição, que é o que o toggle conhece');
+  a.fechar();
+});

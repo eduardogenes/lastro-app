@@ -205,7 +205,9 @@ function Dor({ i, vm, acoes }) {
 export function Exercicio({ vm, acoes }) {
   const i = vm.i;
   return (
-    <div class={'ex' + (vm.aberto ? ' open' : '') + (vm.pulado ? ' pulado' : '')}>
+    /* `data-ex` é o endereço do cartão: abrir um exercício rola até ele, e
+       quem rola é o casco, que não tem referência a este nó de outro jeito. */
+    <div class={'ex' + (vm.aberto ? ' open' : '') + (vm.pulado ? ' pulado' : '')} data-ex={i}>
       <div class="ex-top" onClick={() => acoes.toggle(i)}>
         {/* A miniatura ocupa a calha que era só do número. Sem foto ela não
             some: vira o próprio caminho de tirar uma, e por isso para o toque

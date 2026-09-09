@@ -102,4 +102,10 @@
 
   /* Altura da tab bar, para quem precisa reservar espaço embaixo. */
   --ins-tabbar: calc(52px + var(--sa-bottom));
+
+  /* Altura do relógio da sessão, que gruda no topo enquanto o treino corre.
+     Existe como token porque quem ROLA precisa parar abaixo dele: sem isto o
+     exercício aberto encosta o próprio nome embaixo do relógio. `.day-rel`
+     cobra a altura, para que os dois não possam divergir. */
+  --ins-relogio: 40px;
 }
