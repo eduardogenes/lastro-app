@@ -48,8 +48,8 @@ import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPl
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
-  chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog, chaveDeMarca, chaveDeSessaoFoto,
-  chaveDeSessao, funde
+  chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
+  chaveDeMarca, chaveDeSessaoFoto, chaveDeSessao, funde
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -284,9 +284,9 @@ function treino(d) {
 
 
 
-let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], protocolo:{ poses:null, sessoes:[] } };
+let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] } };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
-  editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null,
+  editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null, aulas:false,
   protocolo:null, comparar:null, ajuste:null, camera:null };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
@@ -333,6 +333,10 @@ function normalizaEstado() {
   if (!S.ex || typeof S.ex !== 'object') S.ex = {};
   if (!S.mods || typeof S.mods !== 'object' || !S.mods.day || !Array.isArray(S.mods.list)) S.mods = null;
   if (!Array.isArray(S.progLog)) S.progLog = [];
+  // Campo novo e opcional: recebe padrão aqui, sem migração — não há dado
+  // existente a reformatar, e um backup de qualquer versão chega por este
+  // mesmo caminho.
+  if (!Array.isArray(S.aulas)) S.aulas = [];
   if (typeof S.mtime !== 'number') S.mtime = 0;
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
   if (!S.descanso || typeof S.descanso !== 'object') S.descanso = {};
@@ -1939,6 +1943,135 @@ function slotOriginal(d, slotId) {
   return p.ex.filter(function (x) { return x.id === slotId; })[0] || null;
 }
 
+// ---------- aula de box: repetir e reaproveitar ----------
+// Aula de box muda toda semana, mas o VOCABULÁRIO do box não muda: os mesmos
+// seis a oito movimentos voltam. Montar uma aula de cinco movimentos em cinco
+// rounds custava 66 interações — 32 toques e 34 teclas — antes do primeiro
+// número digitado, e é isso que estas duas portas atacam.
+//
+// As duas põem PRESCRIÇÃO no dia, nunca resultado. Trazer as cargas da última
+// vez pareceria registro pronto, e registro que aparece sozinho é o jeito mais
+// rápido de encher o histórico de número que ninguém fez.
+
+/**
+ * O descanso com que um movimento entra num dia.
+ *
+ * Movimento com grandeza própria entra curto: numa aula em rounds o intervalo
+ * é o que o coach dita, e 3 minutos entre um wall ball e outro seriam a
+ * prescrição de hipertrofia de volta pela porta dos fundos.
+ */
+function descansoPadrao(ex) {
+  if (temUnidade(ex)) return D_CURTO;
+  return ex && ex.c ? D_COMPOSTO : D_ISOLADOR;
+}
+
+/** Os movimentos de um dia, na forma que um modelo guarda. */
+function movimentosDoDia(d) {
+  const t = treino(d);
+  if (!t) return [];
+  return t.ex.map(function (ex) {
+    return { id: ex.id, s: ex.s, d: ex.d, r: ex.r, u: ex.u, q: ex.q };
+  });
+}
+
+/**
+ * A última sessão registrada naquele dia da rotação, com o que ela teve.
+ *
+ * Sai de `S.logs` e não de um campo próprio: o que ele fez está no histórico, e
+ * guardar uma segunda cópia criaria a segunda fonte de verdade que este projeto
+ * evita em toda parte. `q` e `u` vêm carimbados no registro, então o modelo sai
+ * de lá medido do jeito certo.
+ */
+function ultimaAulaDe(d) {
+  const sessoes = S.done.filter(function (x) { return x.day === d && x.sid; });
+  if (!sessoes.length) return null;
+  const marca = sessoes[sessoes.length - 1];
+  const mov = [];
+  Object.keys(S.logs).forEach(function (k) {
+    (S.logs[k] || []).forEach(function (e) {
+      if (e.sid !== marca.sid) return;
+      const ex = exDe(k);
+      // O descanso sai da mesma regra que `addExercicio` usa, e não de
+      // `descOf`: o log não guarda descanso, e `descOf` cairia no padrão de
+      // COMPOSTO — 3 minutos entre um wall ball e outro dentro de um circuito.
+      mov.push({ id: k, t: e.t,
+                 s: Math.max(1, e.sets.filter(Boolean).length),
+                 d: descansoPadrao(ex), r: '', u: e.u, q: e.q });
+    });
+  });
+  if (!mov.length) return null;
+  mov.sort(function (a, b) { return a.t - b.t; });
+  return { t: marca.t, mov: mov.map(function (m) {
+    return { id: m.id, s: m.s, d: m.d, r: m.r, u: m.u, q: m.q };
+  }) };
+}
+
+/** Põe uma lista de movimentos no dia, como mods. */
+async function poeMovimentos(d, mov, comoContar) {
+  if (!mov.length) return;
+  mov.forEach(function (m, k) {
+    poeMod(d, { k:'add', id: m.id, s: m.s, r: m.r || '', d: m.d, u: m.u, q: m.q,
+                pos: treino(d).ex.length, n: Date.now() + k });
+  });
+  view.addEx = false; view.addQ = ''; view.novoEx = false; view.aulas = false;
+  await save(); render();
+  toast(comoContar);
+}
+
+async function repetirUltimaAula() {
+  const d = view.day;
+  const a = ultimaAulaDe(d);
+  if (!a) { toast('Não há sábado anterior para repetir.'); return; }
+  await poeMovimentos(d, a.mov,
+    a.mov.length + (a.mov.length === 1 ? ' movimento' : ' movimentos') + ' do sábado passado.');
+}
+
+/**
+ * Salva o dia como modelo.
+ *
+ * O nome é pedido por `prompt` — é a mesma porta que o app já usa para renomear
+ * treino, e uma folha inteira para uma linha de texto seria a quarta camada que
+ * o contrato de navegação não tem.
+ */
+async function salvarAulaComoModelo() {
+  const d = view.day;
+  const mov = movimentosDoDia(d);
+  if (!mov.length) { toast('Não há movimento nenhum para salvar.'); return; }
+  const nome = (window.prompt('Nome deste modelo de aula:', '') || '').trim();
+  if (!nome) return;
+  if (!Array.isArray(S.aulas)) S.aulas = [];
+  const agora = Date.now();
+  // Mesmo nome sobrescreve em vez de duplicar: uma lista com três "circuito"
+  // não diz qual é qual, e ele não tem como saber sem abrir os três.
+  const j = S.aulas.findIndex(function (x) { return x.nome.toLowerCase() === nome.toLowerCase(); });
+  const modelo = { id: j >= 0 ? S.aulas[j].id : 'a' + agora, nome: nome,
+                   t: j >= 0 ? S.aulas[j].t : agora, m: agora, mov: mov };
+  if (j >= 0) S.aulas[j] = modelo; else S.aulas.push(modelo);
+  if (S.aulas.length > 60) S.aulas = S.aulas.slice(-60);
+  await save(); render();
+  toast(j >= 0 ? 'Modelo "' + nome + '" atualizado.' : 'Modelo "' + nome + '" salvo.');
+}
+
+async function aplicarModeloDeAula(id) {
+  const a = (S.aulas || []).filter(function (x) { return x.id === id; })[0];
+  if (!a) return;
+  await poeMovimentos(view.day, a.mov, 'Aula "' + a.nome + '" no dia de hoje.');
+}
+
+async function apagarModeloDeAula(id) {
+  const a = (S.aulas || []).filter(function (x) { return x.id === id; })[0];
+  if (!a) return;
+  if (!confirm('Apagar o modelo "' + a.nome + '"? As sessões já registradas com ele não mudam.')) return;
+  // Lápide, não delete seco: a fusão une as duas listas pela chave natural, e o
+  // que só existe de um lado VOLTA na primeira sincronização.
+  lapide(chaveDeAula(a));
+  S.aulas = S.aulas.filter(function (x) { return x.id !== id; });
+  await save(); render();
+  toast('Modelo apagado.');
+}
+
+function abrirAulas() { view.aulas = !view.aulas; render(); }
+
 function abrirAddEx() { view.addEx = true; view.addQ = ''; render(); }
 function fecharAddEx() { view.addEx = false; view.addQ = ''; view.novoEx = false; render(); }
 function buscaEx(q) {
@@ -1960,7 +2093,7 @@ async function addExercicio(idEx) {
   const seg = !!un;
   const s = seg ? 1 : 3;
   const r = seg ? '' : (e.c ? '6–10' : '10–15');
-  const desc = seg ? D_CURTO : (e.c ? D_COMPOSTO : D_ISOLADOR);
+  const desc = descansoPadrao(e);
   // na tela de programa a adição é permanente; na tela de hoje é só do dia
   if (view.prog && view.prog.day) {
     const d = view.prog.day;
@@ -4163,6 +4296,23 @@ CTX.treino = function () {
     // uma emenda ao programa. Fica preso ao dia aberto fora do modo de edição
     // para as duas superfícies nunca desenharem o mesmo painel ao mesmo tempo.
     addEx: (diaAberto(d) && !view.editProg && view.addEx) ? catalogoDeAdicao(d) : null,
+    // As portas rápidas do dia aberto. Só existem no dia aberto: pôr uma aula
+    // inteira num dia de prescrição seria emendar o programa do treinador por
+    // atalho, que é exatamente o que o app existe para frear.
+    aulas: (diaAberto(d) && !view.editProg) ? (function () {
+      const ult = ultimaAulaDe(d);
+      return {
+        painelAberto: !!view.aulas,
+        // O sábado passado, com quantos movimentos teve. Sem sessão anterior a
+        // porta não aparece: um botão que não faz nada é pior que sua ausência.
+        ultima: ult ? { n: ult.mov.length, quando: fmtDate(ult.t) } : null,
+        modelos: (S.aulas || []).slice().reverse().map(function (a) {
+          return { id: a.id, nome: a.nome,
+                   sub: a.mov.length + (a.mov.length === 1 ? ' movimento' : ' movimentos') };
+        }),
+        podeSalvar: (P ? P.ex.length : 0) > 0
+      };
+    })() : null,
     volume: fmtK(volumeDoDia(d)),
     ciclo: String(Math.floor(S.done.length / rot().length) + 1),
     sessoes: S.done.length,
@@ -5463,6 +5613,14 @@ CTX.acoesDia = {
   fechaTroca: function (i) { toggleSwap(i); },
   desfaz: function (j) { desfazMod(j); },
   pronto: function () { modoEdicao(false); }
+};
+
+CTX.acoesAulas = {
+  abre: function () { abrirAulas(); },
+  repete: function () { repetirUltimaAula(); },
+  aplica: function (id) { aplicarModeloDeAula(id); },
+  salva: function () { salvarAulaComoModelo(); },
+  apaga: function (id) { apagarModeloDeAula(id); }
 };
 
 CTX.acoesAdd = {

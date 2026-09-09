@@ -747,3 +747,18 @@
 /* A porta de entrada do sábado. Uma só: a simulação da prova inteira saiu — ela
    supunha um uso que não acontece, e um atalho que ninguém toma é peso. */
 .tr-aberto { margin-top: var(--ins-6); }
+/* As portas rápidas ficam ACIMA do "+ adicionar movimento" e mais apagadas:
+   adicionar um a um continua sendo a porta principal, e estas são o atalho de
+   quem já tem sábado anterior ou modelo salvo. */
+.tr-aulas { margin-top: var(--ins-5); color: var(--ins-text-4); border-style: dashed; }
+
+/* Uma linha de modelo: o modelo inteiro é o alvo, e o destrutivo fica na ponta,
+   em coral, com alvo próprio — nunca competindo com o toque que aplica. */
+.aulal { display: flex; align-items: stretch; gap: var(--ins-2); }
+.aulal-b { flex: 1; min-width: 0; }
+.aulal-x {
+  flex: 0 0 auto; padding: 0 var(--ins-4); min-height: var(--ins-tap);
+  background: transparent; border: 1px solid var(--ins-border);
+  font: 400 10px/1 var(--ins-font-mono);
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ins-coral);
+}

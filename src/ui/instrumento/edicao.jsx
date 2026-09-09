@@ -81,6 +81,77 @@ export function Troca({ i, t, acoes }) {
 }
 
 /**
+ * As portas rápidas do dia aberto: repetir o sábado passado e os modelos.
+ *
+ * Existe porque montar uma aula de cinco movimentos em cinco rounds custava 66
+ * interações — 32 toques e 34 teclas — antes do primeiro número. Aula de box
+ * muda toda semana, mas o vocabulário do box não muda, e é essa a folga que
+ * estas duas portas exploram.
+ *
+ * Elas põem PRESCRIÇÃO, nunca resultado. Um modelo que trouxesse as cargas da
+ * última vez pareceria registro pronto, e registro que aparece sozinho é o
+ * jeito mais rápido de encher o histórico de número que ninguém fez.
+ */
+export function Aulas({ c, acoes }) {
+  if (!c.painelAberto) {
+    // Fechado é uma linha só, e ela some quando não há nada a oferecer: sem
+    // sábado anterior e sem modelo salvo, o botão abriria o vazio.
+    if (!c.ultima && !c.modelos.length && !c.podeSalvar) return null;
+    return (
+      <button class="ins-btn-add tr-aulas" onClick={acoes.abre}>
+        aulas salvas e o sábado passado
+      </button>
+    );
+  }
+  return (
+    <div class="addex">
+      <div class="swap-h ins-label">Montar a aula de hoje</div>
+
+      {c.ultima && (
+        <button class="swapopt" onClick={acoes.repete}>
+          {/* Em `.swaptxt` e não solto: `.swapopt` é flex, e `b` e `span`
+              soltos viram duas colunas — o que serve para "nome do exercício /
+              grupo", e quebra num rótulo de ação que ocupa três linhas. */}
+          <span class="swaptxt">
+            <b>Repetir o sábado passado</b>
+            <span>{c.ultima.n} {c.ultima.n === 1 ? 'movimento' : 'movimentos'} · {c.ultima.quando} · entra sem carga nenhuma</span>
+          </span>
+        </button>
+      )}
+
+      {c.modelos.length > 0 && (
+        <div class="swap-g">
+          <div class="swap-h ins-label">Modelos</div>
+          {c.modelos.map(m => (
+            <div class="aulal" key={m.id}>
+              <button class="swapopt aulal-b" onClick={() => acoes.aplica(m.id)}>
+                <span class="swaptxt"><b>{m.nome}</b><span>{m.sub}</span></span>
+              </button>
+              {/* Destrutivo um nível para dentro e em coral, nunca na lista:
+                  aqui ele está na linha do próprio objeto, que é o nível de
+                  dentro dele. */}
+              <button class="aulal-x" aria-label={`apagar o modelo ${m.nome}`}
+                      onClick={() => acoes.apaga(m.id)}>apagar</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {c.podeSalvar && (
+        <button class="swapopt novo" onClick={acoes.salva}>
+          <span class="swaptxt">
+            <b>Salvar a aula de hoje como modelo</b>
+            <span>Guarda os movimentos e como cada um se mede. Não guarda carga nem resultado.</span>
+          </span>
+        </button>
+      )}
+
+      <button class="swapopt cancel" onClick={acoes.abre}><b>Fechar</b></button>
+    </div>
+  );
+}
+
+/**
  * O catálogo, para adicionar exercício.
  *
  * O campo de busca é `id="addq"` porque `buscaEx()` re-renderiza a lista a

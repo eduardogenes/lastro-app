@@ -26,11 +26,11 @@
 //   antiga que T.
 
 import type {
-  Cardio, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, PoseId, Sessao, SessaoFoto
+  Cardio, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId, Sessao, SessaoFoto
 } from './tipos';
 
 /** Limites por coleção, iguais aos que o app aplica ao gravar. */
-const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200 };
+const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200, aulas: 60 };
 
 /** Lápides mais velhas que isto são podadas: o que sumiu há meses já sumiu dos dois lados. */
 export const LAPIDE_DIAS = 90;
@@ -87,6 +87,8 @@ export function chaveDeMarca(qual: 'peso' | 'cintura', x: Pick<Marca, 't'>): str
   return qual + ':' + x.t;
 }
 export function chaveDeCardio(c: Pick<Cardio, 't'>): string { return 'cardio:' + c.t; }
+/** O modelo de aula. A chave é o id, que nasce com ele e não muda ao renomear. */
+export function chaveDeAula(a: Pick<ModeloDeAula, 'id'>): string { return 'aula:' + a.id; }
 export function chaveDeDescanso(dataISO: string): string { return 'descanso:' + dataISO; }
 export function chaveDeFoto(idEx: IdEx): string { return 'foto:' + idEx; }
 
@@ -334,6 +336,14 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   base.cardio = c.itens.slice(-TETO.cardio);
   resumo.cardio = c.vindos;
   resumo.apagados += c.apagados;
+
+  // ---- modelos de aula ----
+  // Coleção e não documento: um modelo salvo no iPhone não pode sumir porque o
+  // outro aparelho gravou qualquer outra coisa depois.
+  const au = uneLista<ModeloDeAula>(local.aulas || [], remoto.aulas || [], chaveDeAula, carimboM, mortos);
+  au.itens.sort(porTempo);
+  base.aulas = au.itens.slice(-TETO.aulas);
+  resumo.apagados += au.apagados;
 
   // ---- peso e cintura ----
   base.body = { peso: [], cintura: [] };

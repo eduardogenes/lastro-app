@@ -11,7 +11,7 @@
 
 import { Cabecalho, GradeMetricas, Secao, Vazio, useAgora } from '../instrumento/primitivos.jsx';
 import { Exercicio } from '../exercicio.jsx';
-import { AddEx } from '../instrumento/edicao.jsx';
+import { AddEx, Aulas } from '../instrumento/edicao.jsx';
 import { EdicaoDoDia } from './edicaodia.jsx';
 
 export function Treino({ ctx }) {
@@ -168,10 +168,14 @@ export function Treino({ ctx }) {
           : t.exercicios.length === 0
             ? (t.aberto
                 /* O vazio de um dia aberto não é falta: é o estado normal dele
-                   antes da aula. O texto diz isso, senão lê como erro. */
+                   antes da aula. O texto diz isso, senão lê como erro.
+
+                   Não cita mais a "prova inteira": o atalho que punha as nove
+                   estações de uma vez saiu, e o vazio continuou oferecendo um
+                   caminho que não existe mais. */
                 ? <Vazio>
-                    Sábado é o que o box programar. Adicione o que entrou na aula —
-                    ou a prova inteira, se for dia de simulação.
+                    Sábado é o que o box programar. Adicione o que entrou na aula,
+                    repita o sábado passado ou aplique um modelo.
                   </Vazio>
                 : <Vazio>Este treino ainda não tem exercício nenhum.</Vazio>)
             : t.exercicios.map(vm => (
@@ -179,6 +183,10 @@ export function Treino({ ctx }) {
               ))}
 
         {t.addEx && <AddEx c={t.addEx} acoes={ctx.acoesAdd} />}
+
+        {t.aulas && !t.editando && !t.addEx && (
+          <Aulas c={t.aulas} acoes={ctx.acoesAulas} />
+        )}
 
         {t.aberto && !t.editando && !t.addEx && (
           <button class="ins-btn-add tr-aberto" onClick={ctx.acoesAdd.abre}>

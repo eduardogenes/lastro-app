@@ -69,6 +69,8 @@ test('exportar carrega todos os campos do estado', async () => {
      'mtime', 'apagados',
      // os dias que ele marcou como descanso
      'descanso', 'fotos', 'promoPendente',
+     // os modelos de aula de box: coleção com chave natural, some se ficar de fora
+     'aulas',
      // o protocolo de fotos: a ORDEM de poses e as sessões. Só as referências
      // entram — os bytes moram no Cache Storage e replicam pelo bucket, e é
      // por isso que um backup em JSON continua cabendo num e-mail

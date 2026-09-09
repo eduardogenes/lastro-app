@@ -385,6 +385,29 @@ export interface Rascunho {
   ex: Record<string, RascunhoEx>;
 }
 
+/**
+ * Um modelo de aula de box: a lista de movimentos e como cada um se mede.
+ *
+ * Existe porque aula de box MUDA toda semana, mas o vocabulário do box não
+ * muda: os mesmos seis a oito movimentos voltam. Medido no app antes disto,
+ * montar uma aula de cinco movimentos em cinco rounds custava 66 interações —
+ * 32 toques e 34 teclas — antes do primeiro número digitado.
+ *
+ * Guarda a PRESCRIÇÃO, nunca o resultado. Um modelo que carregasse as cargas
+ * da última vez pareceria registro pronto, e registro que aparece sozinho é o
+ * jeito mais rápido de encher o histórico de número que ninguém fez.
+ */
+export interface ModeloDeAula {
+  /** chave natural, para a fusão convergir sem sorteio */
+  id: string;
+  nome: string;
+  /** quando foi criado */
+  t: number;
+  /** quando foi alterado; a fusão o usa para decidir */
+  m?: number;
+  mov: Array<{ id: IdEx; s: number; d: number; r?: string; u?: Unidade; q?: number }>;
+}
+
 /** Estado das compras. Derivado no cálculo, mas o que foi MARCADO persiste. */
 export interface EstadoCompras {
   /** itens já no carrinho */
@@ -432,6 +455,15 @@ export interface Estado {
   /** as mudanças de hoje */
   mods: Mods | null;
   progLog: EntradaProgLog[];
+  /**
+   * Os modelos de aula de box que ele salvou.
+   *
+   * É coleção com chave natural, e por isso funde sem perda — ao contrário do
+   * programa e do plano de comida, que são DOCUMENTOS e vêm inteiros do lado
+   * que mandou por último. Um modelo salvo num aparelho não pode sumir porque
+   * o outro gravou depois.
+   */
+  aulas: ModeloDeAula[];
 
   // ---- o que a fusão com a nutrição trouxe ----
 
