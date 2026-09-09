@@ -255,6 +255,7 @@ test('acompanhamento mostra média de duração e marca o aproximado', async () 
   });
   const a = await app({ agora: agora, estado: { logs: logs, done: done } });
   a.aba('dados');
+  await a.modo('treino');
 
   const rotulo = a.$$('.ins-grade-c').map(function (x) { return x.textContent; }).join(' ');
   assert.ok(/méd/.test(rotulo), rotulo);

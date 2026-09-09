@@ -514,11 +514,16 @@
 .gu-cobra p { margin: var(--ins-3) 0 var(--ins-5); }
 .gu-cobra b { color: var(--ins-amber); font-weight: 500; }
 
-.gu-regra { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-hairline); }
-.gu-regra:last-child { border-bottom: 0; }
+/* A regra virou linha que abre no lugar: quem desenha o fio de baixo e o alvo
+   de 46px é o `.ins-lx` de dentro, então a casca não repete nem um nem outro. */
+.gu-regra:last-child .ins-lx { border-bottom: 0; }
 .gu-regra.atencao .ins-label { color: var(--ins-amber); }
-.gu-regra-t { margin: var(--ins-3) 0 0; }
+/* Os dois viram bloco para empilhar: dentro do cabeçalho da linha expansível
+   eles são irmãos inline, e sem isto o rótulo e o título saem na mesma frase. */
+.gu-regra-k { display: block; }
+.gu-regra-t { display: block; margin: var(--ins-3) 0 0; }
 .gu-regra-p { margin: var(--ins-3) 0 0; }
+.gu-regra-p:first-child { margin-top: 0; }
 .gu-regra-p b { color: var(--ins-text); font-weight: 500; }
 
 .gu-bloco { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-hairline); }

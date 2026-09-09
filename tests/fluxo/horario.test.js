@@ -54,6 +54,7 @@ test('lista do mês mostra a hora embaixo da data', async () => {
     logs: {}, done: [{ day: 'A', t: t, sid: t, dur: 50 * 60000, fim: 'manual' }]
   } });
   a.aba('dados');
+  await a.modo('treino');
   assert.ok(a.texto('.sess-d').includes('06:40'), a.texto('.sess-d'));
   a.fechar();
 });
@@ -70,6 +71,7 @@ test('horário típico do mês, com o mais cedo e o mais tarde', async () => {
   ];
   const a = await app({ estado: { logs: {}, done: done } });
   a.aba('dados');
+  await a.modo('treino');
 
   const linha = a.$$('.mediasem').map(function (x) { return x.textContent.replace(/\s+/g, ' '); })
     .find(function (x) { return /em média/.test(x); });
@@ -117,6 +119,7 @@ test('retroativo com horário informado registra a hora', async () => {
   assert.strictEqual(new Date(m.t).toDateString(), new Date(ontem).toDateString(), 'continua ontem');
 
   a.aba('dados');
+  await a.modo('treino');
   assert.ok(a.texto('.sess-d').includes('05:50'));
   a.fechar();
 });
@@ -155,6 +158,7 @@ test('calendário marca o período do dia', async () => {
   ];
   const a = await app({ estado: { logs: {}, done: done } });
   a.aba('dados');
+  await a.modo('treino');
 
   const marca = function (n) {
     const cel = a.$$('.cal-d').find(function (c) {

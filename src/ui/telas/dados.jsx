@@ -11,9 +11,11 @@
 // sobreviveu bem à repintura; converter a estrutura dele é a última pendência.
 
 import {
-  Cabecalho, GradeMetricas, Procedencia, Secao, Sparkline, Stepper, Vazio, Veredito
+  Cabecalho, GradeMetricas, Procedencia, Secao, Sparkline, Stepper, Vazio, Veredito,
+  Chips
 } from '../instrumento/primitivos.jsx';
 import { fmtDec } from '../../dominio/formato';
+import { useState } from 'preact/hooks';
 
 /** Uma medida corporal: stepper, botão e a curva das últimas 14 semanas. */
 function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children }) {
@@ -263,7 +265,25 @@ function Musculos({ m, ctx }) {
   );
 }
 
+// Os dois assuntos do acompanhamento. Sem eles a tela somava 3.955px — quase
+// cinco telas de rolagem — não por estar mal organizada, mas por fazer oito
+// coisas legítimas de uma vez.
+//
+// A divisão não é por frequência de uso, é por ASSUNTO: "como está meu corpo" e
+// "como está meu treino" são duas perguntas, e quem entra aqui já sabe qual das
+// duas está fazendo. O mesmo recurso que a COMIDA usa para caber em uma tela.
+//
+// CORPO é o padrão porque é onde mora o veredito — a única coisa desta tela que
+// pede uma AÇÃO, e a que responde "e agora?" antes de "como está?".
+const MODOS = [
+  { k: 'corpo', t: 'corpo' },
+  { k: 'treino', t: 'treino' }
+];
+
 export function Dados({ ctx }) {
+  // Local, como na COMIDA: trocar de aba desmonta a tela e o modo volta ao
+  // padrão. É o que se quer — voltar ao DADOS é voltar ao veredito.
+  const [modo, setModo] = useState('corpo');
   const d = ctx.dados();
   const c = ctx.corpo();
 
@@ -271,7 +291,12 @@ export function Dados({ ctx }) {
     <>
       <Cabecalho olho="acompanhamento" titulo="Dados" />
 
-      <Secao primeira rotulo="o que fazer com a comida">
+      <Secao primeira>
+        <Chips opcoes={MODOS} valor={modo} onMuda={setModo} />
+      </Secao>
+
+      {modo === 'corpo' && <>
+      <Secao rotulo="o que fazer com a comida">
         <Veredito
           rotulo="a regra do plano"
           veredito={d.veredito.t}
@@ -323,7 +348,9 @@ export function Dados({ ctx }) {
       </Medida>
 
       <Fotos f={ctx.protocoloFotos()} ctx={ctx} />
+      </>}
 
+      {modo === 'treino' && <>
       <Secao rotulo="força estimada" nota="e1rm · fórmula de epley">
         {d.forca.serie.some(x => x != null)
           ? <div class="dd-spark"><Sparkline valores={d.forca.serie} /></div>
@@ -384,6 +411,7 @@ export function Dados({ ctx }) {
       <Musculos m={c.musculos} ctx={ctx} />
 
       <Mes m={ctx.mes()} ctx={ctx} />
+      </>}
     </>
   );
 }

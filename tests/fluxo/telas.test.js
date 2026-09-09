@@ -127,6 +127,7 @@ test('faixa da semana marca os dias e abre atalho nos vazios', async () => {
   // Numa segunda-feira não existe dia passado e vazio na semana; o calendário
   // do mês sempre tem, então o atalho é verificado lá.
   a.aba('dados');
+  await a.modo('treino');
   const vazio = a.$$('.cal-d').find(function (c) {
     return !c.className.includes('feito') && !c.className.includes('futuro');
   });
@@ -148,6 +149,7 @@ test('acompanhamento soma dias, tempo e volume do mês', async () => {
   }
   const a = await app({ agora: agora, estado: { logs: logs, done: done } });
   a.aba('dados');
+  await a.modo('treino');
 
   const stats = a.$$('.ins-grade-c .ins-metric-m').map(function (x) { return x.textContent; });
   assert.ok(stats.includes('3'), 'três dias treinados: ' + stats.join(','));
@@ -299,6 +301,7 @@ test('painel de músculos avisa quando há treino avulso no período', async () 
     { t: seg + 3600000, sid: seg, livre: 1, grupos: ['peito', 'tríceps'] }
   ] } });
   a.aba('dados');
+  await a.modo('treino');
   const nota = a.$$('.ins-provenance').find(function (x) { return /avuls/.test(x.textContent); });
   assert.ok(nota, 'sem o aviso o número pareceria completo quando não é');
   assert.ok(nota.textContent.includes('peito'));
@@ -520,6 +523,7 @@ test('dia com dois treinos leva à lista, em vez de abrir um deles em silêncio'
       { day: 'D', t: tD, sid: tD, dur: 90 * 60000, fim: 'manual' }
     ]
   }, aba: 'dados' });
+  await a.modo('treino');
 
   const cel = a.$('.cal-d.hoje');
   assert.ok(cel.textContent.includes('B') && cel.textContent.includes('D'),
@@ -544,6 +548,7 @@ test('dia com um treino só continua abrindo direto', async () => {
     plano: 6, logs: {},
     done: [{ day: 'B', t: d.getTime(), sid: d.getTime(), dur: 40 * 60000, fim: 'manual' }]
   }, aba: 'dados' });
+  await a.modo('treino');
 
   a.clicar(a.$('.cal-d.hoje'));
   await a.esperar(60);
@@ -584,5 +589,36 @@ test('o cartão de exercício tem endereço no DOM', async () => {
   assert.ok(cartoes.length >= 3, 'todo exercício da lista tem endereço');
   assert.deepStrictEqual(cartoes.slice(0, 3).map(e => e.getAttribute('data-ex')), ['0', '1', '2'],
     'e o endereço é a posição, que é o que o toggle conhece');
+  a.fechar();
+});
+
+test('as regras de execução nascem fechadas e abrem uma por vez', async () => {
+  // As catorze regras abertas somavam 4.428px — 64% do guia inteiro, cinco
+  // telas de rolagem só delas. São material de REFERÊNCIA: lê-se uma vez e
+  // depois se volta procurando UMA regra.
+  const a = await app();
+  a.aba('guia');
+  await a.esperar();
+
+  const regras = a.$$('.gu-regra');
+  assert.ok(regras.length >= 10, 'as regras do treinador continuam todas na tela');
+  assert.strictEqual(a.$$('.gu-regra .ins-lx-c').length, 0, 'nenhuma nasce aberta');
+
+  // O título fica à vista: fechada, a lista É o índice das regras.
+  const titulos = a.$$('.gu-regra-t').map(function (x) { return x.textContent.trim(); });
+  assert.ok(titulos.every(function (t) { return t.length > 0; }), 'todo título visível');
+
+  a.clicar(a.$$('.gu-regra .ins-lx-h')[1]);
+  await a.esperar();
+  assert.strictEqual(a.$$('.gu-regra .ins-lx-c').length, 1, 'abriu no lugar');
+
+  a.clicar(a.$$('.gu-regra .ins-lx-h')[3]);
+  await a.esperar();
+  assert.strictEqual(a.$$('.gu-regra .ins-lx-c').length, 1,
+    'abrir outra fecha a anterior: duas abertas devolvem a rolagem que a lista tirou');
+
+  a.clicar(a.$$('.gu-regra .ins-lx-h')[3]);
+  await a.esperar();
+  assert.strictEqual(a.$$('.gu-regra .ins-lx-c').length, 0, 'e tocar de novo fecha');
   a.fechar();
 });

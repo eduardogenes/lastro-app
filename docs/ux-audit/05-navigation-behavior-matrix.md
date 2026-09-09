@@ -13,8 +13,13 @@ coisa · **Fechar** = `×`, véu ou Esc · **Aba** = tocar em outro destino.
 | **Hoje** | A | Raiz + botão de estado | não | sim | não | folha | topo | — | tab bar some | topo + base | Aba |
 | **Treino** | A / H | Próprio, relógio sticky | não | sim | não | folha (foto) | topo | — | tab bar some | topo + base | Aba |
 | **Comida** | A | Próprio, 3 modos | não | sim | não | folha | topo | — | tab bar some | topo + base | Aba |
-| **Dados** | A | Próprio | não | sim | não | — | topo | — | tab bar some | topo + base | Aba |
+| **Dados** | A | Próprio, 2 modos | não | sim | não | — | topo | — | tab bar some | topo + base | Aba |
 | **Guia** | A | Próprio + índice | não | sim | não | — | topo | — | tab bar some | topo + base | Aba |
+
+**Modos internos.** COMIDA (plano · alimentos · compras) e DADOS (corpo ·
+treino) usam `Chips` e guardam o modo em estado do componente, não em `view`:
+trocar de aba desmonta a tela e o modo volta ao padrão. É o comportamento
+desejado — voltar ao DADOS é voltar ao veredito.
 
 Na raiz de uma aba o Voltar **sai do app** — é o comportamento certo, e não se
 intercepta.
@@ -77,3 +82,14 @@ Três níveis é o teto. Uma quarta folha é redesenho.
 | Sair de uma folha | `×` | `×` **ou** Voltar do sistema |
 | Voltar de uma lista longa e continuar de onde parou | reencontrar o lugar à mão | **0** — restaura |
 | Esticar o descanso quando a máquina está ocupada | parar e recomeçar na mão | **1 toque** em `+15` |
+| Achar uma regra do treinador no guia | rolar até cinco telas de prosa | ler 14 títulos, abrir uma |
+
+## Altura das abas, em telas de 844px
+
+| Aba | Antes | Depois |
+|---|---|---|
+| Guia | 6.945px · **8,2** | 3.623px · **4,3** |
+| Dados | 3.955px · **4,7** | corpo 1.613px · **1,9** · treino 2.586px · **3,1** |
+| Hoje | 1.317px · 1,6 | igual |
+| Treino | 1.501px · 1,8 | igual |
+| Comida | 844px · 1,0 | igual |

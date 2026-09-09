@@ -244,6 +244,7 @@ test('o descanso aparece nas duas telas, e do mesmo jeito', async () => {
   assert.ok(!cel.className.includes('feito'), 'e nunca com o peso de dia treinado');
 
   a.aba('dados');
+  await a.modo('treino');
   assert.strictEqual(a.$$('.cal-d.descanso').length, 1, 'o mês diz a mesma coisa');
   a.fechar();
 });

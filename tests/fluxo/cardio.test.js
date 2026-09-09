@@ -68,6 +68,7 @@ test('calendário marca cardio sem competir com a letra do treino', async () => 
     cardio: [{ t: dia + 3600000, m: 'bike', min: 20, i: 'leve' }]
   } });
   a.aba('dados');
+  await a.modo('treino');
 
   const cel = a.$$('.cal-d').find(function (c) {
     return c.querySelector('em') && c.querySelector('em').textContent === '2';
@@ -85,6 +86,7 @@ test('dia só de cardio fica marcado mesmo sem treino', async () => {
   const a = await app({ estado: { logs: {}, done: [],
     cardio: [{ t: dia, m: 'esteira inclinada', min: 25, i: 'moderado' }] } });
   a.aba('dados');
+  await a.modo('treino');
 
   const cel = a.$$('.cal-d').find(function (c) {
     return c.querySelector('em') && c.querySelector('em').textContent === '3';
@@ -107,6 +109,7 @@ test('lista do mês e total de cardio', async () => {
     ]
   } });
   a.aba('dados');
+  await a.modo('treino');
 
   assert.strictEqual(a.$$('.sessrow .tag.card-t').length, 1, 'a sessão do dia 4 teve cardio junto');
   const totais = a.$$('.mediasem').map(function (x) { return x.textContent.replace(/\s+/g, ' '); });
@@ -136,12 +139,21 @@ test('detalhe da sessão mostra o cardio do mesmo dia', async () => {
   a.fechar();
 });
 
-test('a aba corpo continua com o bloco completo', async () => {
+test('o DADOS separa corpo e treino, e nenhuma regra se perde na divisão', async () => {
+  // A tela somava quase cinco telas de rolagem e passou a ter dois modos. O que
+  // este teste guarda não é o layout: é que a divisão não ENGOLIU nada. Cada
+  // regra continua existindo, no modo a que ela pertence.
+  const proc = a => a.$$('.ins-provenance').map(function (x) { return x.textContent; }).join(' | ');
+
   const a = await app();
   a.aba('dados');
-  const proc = a.$$('.ins-provenance').map(function (x) { return x.textContent; }).join(' | ');
-  assert.ok(/mesmo ponto, em jejum/.test(proc), 'regra de posicionamento da cintura');
-  assert.ok(/nunca antes do treino/.test(proc), 'regra de quando fazer cardio');
+
+  assert.strictEqual(a.modo(), 'corpo', 'abre no corpo, que é onde mora o veredito');
+  assert.ok(/mesmo ponto, em jejum/.test(proc(a)), 'regra de posicionamento da cintura');
+  assert.ok(a.$('.ins-veredito'), 'e o veredito continua sendo a primeira coisa');
+
+  await a.modo('treino');
+  assert.ok(/nunca antes do treino/.test(proc(a)), 'regra de quando fazer cardio');
   assert.ok(a.$$('.ins-label').some(function (x) { return x.textContent === 'cardio'; }));
   a.fechar();
 });

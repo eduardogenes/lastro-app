@@ -10,6 +10,8 @@
 // destrói histórico, e ele fica no fim da última aba, atrás de confirmação.
 
 import { Cabecalho, Procedencia, Secao } from '../instrumento/primitivos.jsx';
+import { LinhaExpansivel } from '../instrumento/folha.jsx';
+import { useState } from 'preact/hooks';
 
 // Segunda primeiro, como se lê uma semana. O índice da cadência é getDay(),
 // que começa no domingo — a conversão fica aqui e não no domínio.
@@ -20,17 +22,37 @@ const SEMANA = [
   { rot: 'sáb', i: 6 }
 ];
 
-/** Uma regra de execução do treinador. */
-function Regra({ r }) {
+/**
+ * Uma regra de execução do treinador — o título à vista, a prosa a um toque.
+ *
+ * As catorze regras abertas somavam 4.428px: 64% do guia inteiro, cinco telas
+ * de rolagem só delas. E são material de REFERÊNCIA — lê-se uma vez com calma e
+ * depois se volta procurando UMA regra, o que era rolar até achar.
+ *
+ * O que fica visível é o título, e ele não é rótulo: é a regra inteira ("Dupla
+ * progressão: primeiro repetição, depois carga"). O que se recolhe é a
+ * justificativa. Por isso a lista fechada não esconde nada — ela vira o índice
+ * das regras, que antes não existia.
+ */
+function Regra({ r, aberta, aoAbrir }) {
   return (
     <div class={'gu-regra' + (r.warn ? ' atencao' : '')}>
-      <div class="ins-label">{r.k}</div>
-      <h3 class="ins-subtitle gu-regra-t">{r.t}</h3>
-      {r.p.map((x, i) => (
-        // O texto do treinador tem <b> no meio das frases; é conteúdo dele,
-        // não marcação nossa, e vem de constante no código — nunca de entrada.
-        <p key={i} class="ins-body-sm ins-t2 gu-regra-p" dangerouslySetInnerHTML={{ __html: x }} />
-      ))}
+      <LinhaExpansivel
+        aberta={aberta}
+        aoAbrir={aoAbrir}
+        cabecalho={
+          <>
+            <span class="ins-label gu-regra-k">{r.k}</span>
+            <span class="ins-subtitle gu-regra-t">{r.t}</span>
+          </>
+        }
+      >
+        {r.p.map((x, i) => (
+          // O texto do treinador tem <b> no meio das frases; é conteúdo dele,
+          // não marcação nossa, e vem de constante no código — nunca de entrada.
+          <p key={i} class="ins-body-sm ins-t2 gu-regra-p" dangerouslySetInnerHTML={{ __html: x }} />
+        ))}
+      </LinhaExpansivel>
     </div>
   );
 }
@@ -54,6 +76,9 @@ const SECOES = [
 ];
 
 export function Guia({ ctx }) {
+  // Uma aberta por vez: duas regras abertas já devolvem a rolagem que a lista
+  // existe para tirar, e nenhuma delas se lê em comparação com a outra.
+  const [regraAberta, setRegraAberta] = useState(null);
   const g = ctx.guia();
   const d = ctx.dadosDoApp();
   const n = ctx.nuvem();
@@ -124,8 +149,14 @@ export function Guia({ ctx }) {
         </Procedencia>
       </Secao>
 
-      <Secao id="gu-exec" rotulo="execução" nota="as regras do treinador">
-        {g.regras.map(r => <Regra key={r.k} r={r} />)}
+      <Secao id="gu-exec" rotulo="execução" nota="toque para abrir">
+        {g.regras.map(r => (
+          <Regra
+            key={r.k} r={r}
+            aberta={regraAberta === r.k}
+            aoAbrir={() => setRegraAberta(regraAberta === r.k ? null : r.k)}
+          />
+        ))}
       </Secao>
 
       <Secao id="gu-prog" rotulo="o programa">

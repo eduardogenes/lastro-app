@@ -93,6 +93,7 @@ test('cardio conta a semana e reseta na segunda', async () => {
     { t: seg + 3600000, m: 'bike', min: 20, i: 'leve' }       // esta semana
   ] } });
   a.aba('dados');
+  await a.modo('treino');
   assert.strictEqual(a.E('cardioSemana().length'), 1, 'a da semana passada não conta');
   assert.strictEqual(a.E('CTX.corpo().cardio.semana'), 1, 'e a tela conta o mesmo');
   const nota = a.$$('.ins-secao-nota').map(function (x) { return x.textContent; }).join(' | ');
@@ -103,6 +104,7 @@ test('cardio conta a semana e reseta na segunda', async () => {
 test('cardio avisa quando houve treino de perna no mesmo dia', async () => {
   const a = await app({ estado: { logs: {}, done: [{ day: 'B', t: Date.now(), sid: Date.now() }] } });
   a.aba('dados');
+  await a.modo('treino');
   const aviso = a.$$('.ins-provenance').map(function (x) { return x.textContent; }).join(' | ');
   assert.ok(/treino B/.test(aviso), 'deve sinalizar sem bloquear: ' + aviso);
   assert.strictEqual(a.$('.ins-btn-add[disabled]'), null, 'sinaliza, não bloqueia');
@@ -141,6 +143,7 @@ test('sessão de cardio registrada por engano pode ser apagada', async () => {
   await a.E('S.cardio.push({ t: Date.now(), m: "bike", min: 25, i: "moderado" }); save()');
   await a.esperar();
   a.aba('dados');
+  await a.modo('treino');
 
   const linha = a.$$('.crow').find(function (x) { return /bike/.test(x.textContent); });
   assert.ok(linha, 'a sessão da semana aparece com a porta de saída');

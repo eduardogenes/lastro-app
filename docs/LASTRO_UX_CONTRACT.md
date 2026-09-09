@@ -106,6 +106,28 @@ Cinco destinos, fixos: HOJE · TREINO · COMIDA · DADOS · GUIA.
 - Fecham por: `×`, véu, Esc e Voltar do sistema.
 - Folha é tarefa curta. Fluxo de várias etapas é destino.
 
+## 6.1 · Altura de tela
+
+Uma aba que passa de **três telas de rolagem** precisa de justificativa. Não é
+proibição — é o ponto em que a rolagem deixa de ser leitura e vira procura.
+
+Duas ferramentas, e as duas já existem no sistema:
+
+| Quando | O quê |
+|---|---|
+| A tela faz **dois assuntos** diferentes | `Chips` no topo, um modo por assunto. É o que a COMIDA faz para caber em uma tela, e o DADOS passou a fazer. |
+| A tela tem **referência longa** — prosa que se lê uma vez e depois se consulta | `LinhaExpansivel`: o título fica à vista, o texto vem a um toque. |
+
+**A regra do que pode ser recolhido:** só se o que fica visível já responder à
+pergunta sozinho. O título "Dupla progressão: primeiro repetição, depois carga"
+**é** a regra; a prosa embaixo é a justificativa. Recolher a justificativa é
+divulgação progressiva. Recolher a resposta é esconder.
+
+Não recolher: controle, ação, número que se acompanha, aviso.
+
+Medir antes e depois, em pixels. "Parece grande" não é diagnóstico — o guia
+tinha uma seção que era 64% da tela inteira, e isso não se via rolando.
+
 ## 7 · Ação fixa no rodapé
 
 Não usar por reflexo. Só quando concluir a tela depende dela.
@@ -174,6 +196,7 @@ Toda tela declara os quatro: **carregando · vazio · erro · conteúdo**.
 Antes de considerar pronta:
 
 - [ ] tipo definido: aba, destino ou folha
+- [ ] altura medida; acima de três telas, §6.1
 - [ ] cabeçalho na forma certa do tipo
 - [ ] Voltar desfaz uma camada, e só uma
 - [ ] tab bar conforme §5

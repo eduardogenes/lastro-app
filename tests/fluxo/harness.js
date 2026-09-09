@@ -236,6 +236,32 @@ function abrirApp(opcoes) {
      * testa a fusão passa `aba` explicitamente.
      */
     aba: function (nome) { w.__escopo('CTX.vaiPara(' + JSON.stringify(nome) + ')'); },
+
+    /**
+     * Escolhe o modo interno do DADOS ('corpo' | 'treino') ou da COMIDA.
+     *
+     * O modo é estado do componente, não de `view`, então não dá para alcançá-lo
+     * pelo `__escopo` — e é bom que não dê: o caminho é o mesmo do usuário,
+     * tocar no chip.
+     *
+     * **Devolve promessa, e precisa de `await`.** `useState` do Preact agenda o
+     * render num microtask em vez de rodar na hora, ao contrário do `render()`
+     * do casco que o `aba()` chama. Ler o DOM logo depois do clique pega a tela
+     * anterior.
+     *
+     * Sem argumento devolve o modo aceso, e aí é síncrono.
+     */
+    modo: function (nome) {
+      const chips = Array.from(d.querySelectorAll('.ins-chips .ins-chip'));
+      if (nome == null) {
+        const on = chips.filter(function (b) { return b.classList.contains('on'); })[0];
+        return on ? on.textContent.trim() : null;
+      }
+      const alvo = chips.filter(function (b) { return b.textContent.trim() === nome; })[0];
+      if (!alvo) throw new Error('modo "' + nome + '" não está na tela');
+      alvo.dispatchEvent(new w.Event('click', { bubbles: true }));
+      return app.esperar();
+    },
     esperar: function (ms) { return new Promise(function (r) { setTimeout(r, ms == null ? 20 : ms); }); },
 
     /** preenche uma série; null em qualquer campo deixa o campo intocado */

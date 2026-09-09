@@ -35,7 +35,40 @@ pesagens, nos perfis 320×640 · 360×800 · 375×667 · 390×844 · 412×915 ·
 | Série digitada + app oculto em 250 ms | perdida | em disco |
 | Registrar 3 séries iguais | ~9 interações | **3 toques** |
 
-Suíte: **626 → 645 testes**, todos verdes. `tsc --noEmit` limpo. Build limpo.
+Suíte: **626 → 646 testes**, todos verdes. `tsc --noEmit` limpo. Build limpo.
+
+## Segunda rodada: a altura das telas
+
+Levantada depois, por relato de uso — a auditoria original mediu largura,
+overflow, alvo e contraste, e **não mediu altura**. Foi um buraco de método: as
+duas telas mais longas do app passaram batido porque cada parte delas, isolada,
+estava certa.
+
+| Aba | Antes | Depois |
+|---|---|---|
+| Guia | 6.945px · **8,2 telas** | 3.623px · **4,3** |
+| Dados | 3.955px · **4,7 telas** | corpo **1,9** · treino **3,1** |
+
+**Guia.** Uma seção era 64% da tela inteira: as catorze regras de execução do
+treinador, ~6.800 caracteres de prosa, sempre abertas. São referência — lê-se
+uma vez e depois se volta procurando UMA regra, o que era rolar cinco telas.
+Cada regra virou `LinhaExpansivel`: o título à vista, a prosa a um toque. A
+lista fechada não esconde nada, porque o título **é** a regra; e de quebra ela
+virou o índice das regras, que não existia.
+
+**Dados.** Aqui não havia vilão — oito seções de tamanho parecido, todas
+legítimas. Dividida por assunto em `corpo` e `treino` com o mesmo `Chips` que a
+COMIDA já usava para caber em uma tela. `corpo` é o padrão porque é onde mora o
+veredito, a única coisa da tela que pede uma ação.
+
+Nenhum componente novo: `LinhaExpansivel` e `Chips` já existiam no sistema.
+
+**22 testes quebraram, e estavam certos em quebrar** — liam conteúdo que agora
+mora num modo. O harness ganhou `a.modo()`, que toca no chip como o usuário
+tocaria; ele devolve promessa porque `useState` do Preact agenda o render num
+microtask, ao contrário do `render()` do casco. Dois testes precisaram ser
+reescritos, não remendados: um afirmava que a regra da cintura e a do cardio
+estavam na mesma tela, o que deliberadamente deixou de ser verdade.
 
 ## O que quebrei e consertei no caminho
 
