@@ -232,3 +232,72 @@ test('o cabeçalho acompanha a quantidade enquanto ele digita', async () => {
     'o cabeçalho dizia 1.000 enquanto o campo já mostrava 500');
   a.fechar();
 });
+
+test('no dia aberto o catálogo abre pelos movimentos de box, na ordem', async () => {
+  const a = await app({});
+  a.aba('treino');
+  a.E('view.addQ=""');
+  const hx = a.J(`catalogoDeAdicao('HX').achados.map(function(x){return x.n})`);
+  assert.deepStrictEqual(hx.slice(0, 9), [
+    'Corrida', 'Wall balls', 'Remo ergômetro', 'Ski erg', 'Sled push',
+    'Sled pull', 'Farmers carry', 'Lunges com sandbag', 'Burpee broad jump'
+  ], 'as nove estações da prova primeiro, na ordem em que ele as procura');
+  assert.deepStrictEqual(hx.slice(9, 16), [
+    'Kettlebell swing', 'Box jump', 'Burpee', 'Assault bike', 'Bike erg',
+    'Double under', 'Thruster'
+  ], 'e depois os frequentes que não são oficiais');
+  assert.ok(hx[16].localeCompare(hx[17]) <= 0, 'do 17º em diante volta a ser alfabético');
+  a.fechar();
+});
+
+test('a prioridade não existe nos dias de musculação', async () => {
+  const a = await app({});
+  a.aba('treino');
+  a.E('view.addQ=""');
+  const dia = a.J(`catalogoDeAdicao('A').achados.map(function(x){return x.n})`);
+  const ordenado = dia.slice().sort(function (x, y) { return x.localeCompare(y); });
+  assert.deepStrictEqual(dia, ordenado,
+    'no dia de prescrição pôr sled no topo seria oferecer o caminho errado');
+  a.fechar();
+});
+
+test('a prioridade também vale dentro da busca', async () => {
+  const a = await app({});
+  a.aba('treino');
+  a.E('view.addQ="burpee"');
+  const r = a.J(`catalogoDeAdicao('HX').achados.map(function(x){return x.n})`);
+  assert.strictEqual(r[0], 'Burpee broad jump', 'a estação da prova vem antes do burpee solto');
+  a.E('view.addQ="s"');
+  const s = a.J(`catalogoDeAdicao('HX').achados.map(function(x){return x.n}).slice(0,3)`);
+  assert.deepStrictEqual(s, ['Wall balls', 'Ski erg', 'Sled push'],
+    'digitar uma letra faz o box subir, em vez de dezenas de aparelhos');
+  a.fechar();
+});
+
+test('a linha diz a medida, não "sem grupo"', async () => {
+  const a = await app({});
+  a.aba('treino');
+  a.E('view.addQ="remo erg"');
+  const r = a.J(`catalogoDeAdicao('HX').achados`);
+  assert.strictEqual(r[0].sub, '1.000 m', '"sem grupo" dezesseis vezes no topo não diria nada');
+  a.E('view.addQ="wall"');
+  assert.strictEqual(a.J(`catalogoDeAdicao('HX').achados`)[0].sub, '100 reps');
+  a.E('view.addQ="assault"');
+  assert.strictEqual(a.J(`catalogoDeAdicao('HX').achados`)[0].sub, '15 cal');
+  // e o exercício de musculação continua mostrando o grupo (pushdown já está
+  // no treino A, e o aviso disso continua vindo junto)
+  a.E('view.addQ="pushdown"');
+  assert.strictEqual(a.J(`catalogoDeAdicao('A').achados`)[0].sub,
+    'tríceps · já está neste treino');
+  a.fechar();
+});
+
+test('todo nome da lista de frequentes existe no catálogo', async () => {
+  const a = await app({});
+  const orfaos = a.J(`(function(){
+    return FREQUENTES_NO_BOX.filter(function (n) { return !EX_BASE[slugEx(n)]; });
+  })()`);
+  assert.deepStrictEqual(orfaos, [],
+    'um nome com erro de digitação sumiria da prioridade em silêncio');
+  a.fechar();
+});

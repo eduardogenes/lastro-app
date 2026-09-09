@@ -1,6 +1,6 @@
 import {
   ROT_BASE, D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO,
-  PROGRAMA, RULES, ALT, slugEx, EX_BASE,
+  PROGRAMA, RULES, ALT, slugEx, EX_BASE, FREQUENTES_NO_BOX,
   PRIORIDADES, NIVEIS, nivelDe, PRIO, CARGAS, DORES, MODAIS
 } from './dominio/programa';
 import {
@@ -5673,6 +5673,16 @@ function catalogoDeAdicao(d) {
   const nodia = {};
   const t = treino(d);
   if (t) t.ex.forEach(function (x) { nodia[x.id] = 1; });
+
+  // No DIA ABERTO o que ele procura é sempre o mesmo punhado, e a ordem
+  // alfabética o espalha por 180 exercícios — o remo e o trenó caem no meio da
+  // musculação. Nos outros dias a prioridade não existe: lá o que se adiciona
+  // é exercício de hipertrofia, e pôr sled no topo seria oferecer o caminho
+  // errado na tela mais usada do app.
+  const prio = {};
+  if (diaAberto(d)) FREQUENTES_NO_BOX.forEach(function (n, i) { prio[slugEx(n)] = i + 1; });
+  const posicao = function (k) { return prio[k] || 999; };
+
   return {
     dia: d,
     busca: view.addQ || '',
@@ -5681,11 +5691,21 @@ function catalogoDeAdicao(d) {
       .filter(function (k) {
         return !q || CAT[k].n.toLowerCase().indexOf(q) >= 0 || (CAT[k].g || '').indexOf(q) >= 0;
       })
-      .sort(function (a, b) { return CAT[a].n.localeCompare(CAT[b].n); })
+      .sort(function (a, b) {
+        const pa = posicao(a), pb = posicao(b);
+        return pa !== pb ? pa - pb : CAT[a].n.localeCompare(CAT[b].n);
+      })
       .slice(0, 40)
       .map(function (k) {
+        // A procedência da linha é a GRANDEZA quando existe: um movimento de
+        // box tem `g: ''` de propósito, e "sem grupo" dezesseis vezes seguidas
+        // no topo da lista não diria nada. `1.000 m` diz o que vai entrar.
+        const un = unidadeDe(CAT[k]);
+        const medida = un
+          ? (CAT[k].q > 0 ? fmtInt(CAT[k].q) + ' ' + ROTULO_UNIDADE[un] : ROTULO_UNIDADE[un])
+          : (CAT[k].g || 'sem grupo');
         return { id: k, n: CAT[k].n,
-                 sub: (CAT[k].g || 'sem grupo') + (nodia[k] ? ' · já está neste treino' : '') };
+                 sub: medida + (nodia[k] ? ' · já está neste treino' : '') };
       }),
     novo: view.novoEx
       ? { grupos: gruposDoPlano(),

@@ -623,6 +623,43 @@ export const MOVIMENTOS_DE_BOX: ExercicioPrescrito[] = [
   {n:'Prancha', car:'corpo', g:'', s:1, r:'', c:0, d:D_CURTO, u:'seg', q:60, cue:'Sem carga: aqui o que se compara é o tempo, e mais é melhor.'}
 ];
 
+/**
+ * O que quase sempre está numa aula de HYROX, na ordem em que se procura.
+ *
+ * Serve a UMA coisa só: ordenar a busca de adicionar movimento no dia aberto.
+ * O catálogo tem 180 exercícios e a ordem alfabética joga *Air squat* ao lado
+ * de *Abdominal na polia*, com o remo e o trenó lá embaixo — no sábado, o que
+ * ele procura é sempre este punhado.
+ *
+ * As nove primeiras são as estações da prova, e é por isso que voltam toda
+ * semana: a aula treina exatamente elas. As últimas aparecem bastante sem
+ * serem oficiais.
+ *
+ * É lista de NOMES e não de ids porque nome é o que se lê e se confere contra
+ * o catálogo; o slug sai de `slugEx`. Um nome que não exista aqui sumiria da
+ * prioridade em silêncio, e é o teste que segura isso.
+ */
+export const FREQUENTES_NO_BOX: string[] = [
+  // as nove estações da prova
+  'Corrida',
+  'Wall balls',
+  'Remo ergômetro',
+  'Ski erg',
+  'Sled push',
+  'Sled pull',
+  'Farmers carry',
+  'Lunges com sandbag',
+  'Burpee broad jump',
+  // frequentes, sem serem oficiais
+  'Kettlebell swing',
+  'Box jump',
+  'Burpee',
+  'Assault bike',
+  'Bike erg',
+  'Double under',
+  'Thruster'
+];
+
 export const EX_BASE: Record<IdEx, Exercicio> = (function () {
   const c: Record<IdEx, Exercicio> = {};
   ROT_BASE.forEach(function (d) {
