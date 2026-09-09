@@ -1326,7 +1326,7 @@ function textoTotal(i, key, ex) {
   if (dr) for (let k = setsFor(ex)-1; k >= 0; k--) if (dr.s[k] && dr.s[k][0] != null) { v = dr.s[k][0]; break; }
   if (v == null) { const p = lastSet(key, 0); if (p) v = p[0]; }
   if (!v) return '';
-  return `${fmtNum(v)} ${c.cada} · <b>${fmtNum(totalAnilhas(v))} kg ${c.total}</b>${c.obs}`;
+  return `${fmtNum(v)} ${c.cada} · <b>${fmtNum(totalAnilhas(v, c.barra))} kg ${c.total}</b>${c.obs}`;
 }
 
 function atualizaAnilhas(i) {
@@ -4955,7 +4955,7 @@ CTX.historico = function () {
         }),
         reps: (seg || corpo) ? null : repsOf(s) + ' reps',
         anilhas: (!seg && CARGAS[tipo].dobra && maxLoad(s))
-          ? fmtNum(totalAnilhas(maxLoad(s))) + ' kg ' + CARGAS[tipo].total : null,
+          ? fmtNum(totalAnilhas(maxLoad(s), CARGAS[tipo].barra)) + ' kg ' + CARGAS[tipo].total : null,
         dor: s.dor && s.dor.length ? 'dor em ' + s.dor.map(dorName).join(' e ') : null,
         rir: s.rir ? 'última série a ' + s.rir + ' da falha' : null,
         obs: s.obs || null,

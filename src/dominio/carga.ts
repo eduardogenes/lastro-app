@@ -7,7 +7,17 @@
 import type { Exercicio, Log, Serie } from './tipos';
 
 // total em anilhas: sempre 2x o lado, nunca somando a barra
-export function totalAnilhas(v: number): number { return v > 0 ? v*2 : 0; }
+/**
+ * O total de um carregamento que se dobra: os dois lados, mais a barra quando
+ * o tipo tem uma.
+ *
+ * `barra` existe porque nem todo "kg por lado" é a mesma coisa. Máquina de
+ * anilha, sled e Smith não têm barra a somar — o número deles é anilha e ponto.
+ * A barra livre tem, e são 20 kg que mudam o total de toda série.
+ */
+export function totalAnilhas(v: number, barra: number = 0): number {
+  return v > 0 ? v*2 + barra : 0;
+}
 
 // Exercício por tempo: a série continua sendo [a,b], mas b são segundos
 // em vez de repetições e a carga é opcional (0 = peso do corpo).

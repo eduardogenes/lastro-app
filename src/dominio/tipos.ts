@@ -11,7 +11,7 @@ import type { Ajuste } from './corpo';
 import type { Alimento, DiaComida, Refeicao } from './nutricao/tipos';
 
 /** Os seis tipos de carregamento. O app rotula, nunca converte. */
-export type TipoCarga = 'pino' | 'lado' | 'halter' | 'halter1' | 'corpo' | 'assist';
+export type TipoCarga = 'pino' | 'lado' | 'barra' | 'halter' | 'halter1' | 'corpo' | 'assist';
 
 /** Letra do treino na rotação. */
 export type Dia = string;

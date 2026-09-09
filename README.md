@@ -234,7 +234,7 @@ src/dominio/             as regras, sem DOM e sem estado global
   tipos.ts                 o formato do estado inteiro
   programa.ts              PROGRAMA, ALT, catálogo base, semeadura
   formato.ts               números, datas, semana
-  carga.ts                 os seis tipos e as agregações de série
+  carga.ts                 os sete tipos e as agregações de série
   volume.ts                alvo por músculo, impacto, séries registradas
   progressao.ts            histórico, dupla progressão, freio de pausa longa
   corpo.ts                 médias semanais e as três regras de ajuste
@@ -290,7 +290,7 @@ lock, vibração, `confirm` e `prompt`.
 | `dominio/volume` | Alvo calculado do programa, atribuição por exercício, corte de semana |
 | `dominio/progressao` | Dupla progressão, freio de pausa longa, placeholder, dor seguida |
 | `dominio/migracoes` | 1→2 e 2→3, chave por chave, e a cadeia inteira |
-| `dominio/carga` | Os seis tipos, total em anilhas, topo da faixa |
+| `dominio/carga` | Os sete tipos, total em anilhas, topo da faixa |
 | `dominio/formato` | Datas, semana, período do dia, escapamento |
 | `dominio/estilo` | Paleta intacta, nenhum `var()` órfão, tela cheia em `svh` |
 | `fluxo/sessao` | Registro contínuo, encerramento automático, hidratação, deload |

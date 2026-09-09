@@ -61,3 +61,12 @@ test('o topo da faixa é o segundo número, com traço ou meia-risca', () => {
   assert.strictEqual(topReps('8-12'), 12, 'hífen comum também');
   assert.strictEqual(topReps('12–20'), 20);
 });
+
+test('a barra entra no total só onde existe barra', () => {
+  // Máquina de anilha, Smith e sled não têm barra a somar: o número deles é
+  // anilha e ponto. A barra livre tem, e são 20 kg em toda série.
+  assert.strictEqual(totalAnilhas(60), 120, 'sem barra continua sendo anilha × 2');
+  assert.strictEqual(totalAnilhas(60, 20), 140, 'barra livre soma os 20 kg');
+  assert.strictEqual(totalAnilhas(0, 20), 0, 'sem anilha não há total, nem com barra');
+  assert.strictEqual(totalAnilhas(-5, 20), 0);
+});

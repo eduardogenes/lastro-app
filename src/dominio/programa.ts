@@ -38,6 +38,8 @@ export interface Carga {
   cada?: string;
   total?: string;
   obs?: string;
+  /** kg da barra, somados ao total. Só a barra livre tem. */
+  barra?: number;
 }
 
 // Seis dias ativos, domingo de descanso. Cinco de musculação mais o HYROX de
@@ -500,10 +502,20 @@ export const CARGAS: Record<TipoCarga, Carga> = {
              ajuda:'O número é a carga selecionada, e pronto.' },
   lado:    { rot:'kg/lado', nome:'anilha por lado', dobra:1, cada:'de cada lado', total:'em anilhas', obs:', fora a barra',
              ajuda:'Só um lado, sem contar a barra. O app mostra o total em anilhas.' },
+  // A barra livre é o carregamento mais padrão que existe e não tinha tipo: o
+  // `lado` diz "fora a barra" e soma anilha × 2, o que erra 20 kg em toda série
+  // de supino, agachamento ou terra. Ela é separada do `lado` porque máquina de
+  // anilha, Smith e sled não têm barra a somar — o número deles é anilha e ponto.
+  barra:   { rot:'kg/lado', nome:'barra livre', dobra:1, cada:'de cada lado', total:'na barra', obs:'', barra:20,
+             ajuda:'Anilha de cada lado. O app soma as duas e a barra olímpica de 20 kg.' },
   halter:  { rot:'kg/lado', nome:'halter em cada mão', dobra:1, cada:'em cada mão', total:'nas duas mãos', obs:'',
              ajuda:'Um halter por mão. O app mostra o total das duas.' },
-  halter1: { rot:'kg',      nome:'um halter só',
-             ajuda:'Um halter só, segurado com uma ou duas mãos. O número é o peso dele.' },
+  // Não se chama mais "um halter só": o tipo sempre serviu a qualquer implemento
+  // único, e três exercícios do HYROX já o usavam para coisas que não são
+  // halter — wall balls é uma bola, lunges com sandbag é um saco. O que estava
+  // errado era o nome, não o comportamento.
+  halter1: { rot:'kg',      nome:'um peso só',
+             ajuda:'Um implemento só: halter, kettlebell, sandbag, bola, anilha. O número é o peso dele.' },
   corpo:   { rot:'+kg',     nome:'peso do corpo',
              ajuda:'Só o que você acrescentou. Pode ficar vazio.' },
   assist:  { rot:'ajuda',   nome:'assistida',

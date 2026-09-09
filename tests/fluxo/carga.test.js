@@ -130,3 +130,42 @@ test('histórico por lado carrega a unidade no eixo e no resumo da série', asyn
   assert.ok(a.$$('.ex-sub .tag').some(function (x) { return x.textContent.trim() === 'anilha por lado'; }));
   a.fechar();
 });
+
+test('a barra livre é um tipo à parte, e só ela soma a barra', async () => {
+  // O `lado` era o único "kg por lado" que existia, e diz `fora a barra`: um
+  // supino registrado nele errava 20 kg em toda série. A saída não foi afrouxar
+  // a regra de não converter, foi separar o caso — os 20 kg entram porque ELE
+  // declarou que aquilo é uma barra olímpica.
+  const a = await app();
+  a.E('toggle(0)');
+  await a.esperar();
+
+  const total = () => a.texto('#tot0');
+
+  a.E("setCarga(0, 'barra')");
+  await a.esperar();
+  a.preencher(0, 0, 60, 8);
+  await a.esperar();
+  assert.match(total(), /140 kg na barra/, 'anilha × 2 + a barra: ' + total());
+
+  a.E("setCarga(0, 'lado')");
+  await a.esperar();
+  assert.match(total(), /120 kg em anilhas, fora a barra/,
+    'e a máquina de anilha continua sem somar nada: ' + total());
+  a.fechar();
+});
+
+test('o tipo de implemento único não se chama mais halter', async () => {
+  // Três exercícios do HYROX já usavam este tipo para o que não é halter: wall
+  // balls é uma bola, lunges com sandbag é um saco.
+  const a = await app();
+  a.E('toggle(0)');
+  a.E('abrirCarga(0)');
+  await a.esperar();
+
+  const nomes = a.$$('.chip').map(function (c) { return c.textContent.trim(); });
+  assert.ok(nomes.includes('um peso só'), 'o rótulo é neutro de implemento: ' + nomes.join(' · '));
+  assert.ok(!nomes.includes('um halter só'), 'e o nome antigo saiu');
+  assert.ok(nomes.includes('barra livre'), 'e a barra livre está entre as opções');
+  a.fechar();
+});

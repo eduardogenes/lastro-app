@@ -119,7 +119,7 @@ consequências para quem for mexer:
 | `CAT` | Catálogo efetivo — `EX_BASE` mais `S.ex`, o que ele cadastrou. Remontado por `montaCatalogo()`. |
 | `ALT` | Substitutos indicados pelo treinador, com o que muda em cada troca. |
 | `ALVO` / `ALVO_TOTAL` | Séries por músculo prescritas pelo treinador. Calculados do `PROGRAMA` no boot, nunca transcritos. |
-| `CARGAS` | Os seis tipos de carregamento. |
+| `CARGAS` | Os sete tipos de carregamento. |
 | `RULES` | Conteúdo da aba de execução. |
 | `D_COMPOSTO` … `D_CURTO` | Descanso por categoria, em segundos. |
 
@@ -718,13 +718,39 @@ A ambiguidade "esse peso é de um lado ou dos dois?" é propriedade do
 equipamento, não da série. Declara-se uma vez por exercício em `car`, e ele pode
 corrigir na hora — a correção fica em `S.carga`, indexada pelo exercício.
 
-Os seis tipos: `pino` (placa), `lado` (anilha por lado), `halter` (um em cada
-mão), `halter1` (um só), `corpo` (peso do corpo mais carga), `assist`
-(assistido).
+Os sete tipos: `pino` (placa), `lado` (anilha por lado), `barra` (barra livre),
+`halter` (um em cada mão), `halter1` (um implemento só), `corpo` (peso do corpo
+mais carga), `assist` (assistido).
 
-**O app nunca converte, só rotula.** Converter seria mentira: barra olímpica tem
-20 kg, a W tem 10, e articulada tem alavanca própria. O total exibido em anilhas
-é só exibição, e nunca soma o peso da barra.
+**O app nunca converte, só rotula.** Converter seria mentira: a W tem 10 kg, a
+articulada tem alavanca própria, e máquina de anilha, Smith e sled não têm barra
+nenhuma a somar. O total exibido continua sendo exibição, e continua sem somar
+barra — **exceto onde ele foi avisado de que existe uma**.
+
+### A barra, e por que ela é um tipo e não uma regra
+
+Este documento dizia, e por bons motivos, que o total *nunca* soma o peso da
+barra. A regra estava certa e o efeito colateral não: como `lado` era o único
+"kg por lado" que existia, a barra livre — o carregamento mais padrão da
+musculação — não tinha onde ser registrada, e o total de um supino errava 20 kg
+em toda série.
+
+A saída não foi afrouxar a regra, foi **separar o caso**. `lado` continua
+exatamente como era, com o `fora a barra` e sem somar nada: é o que cobre
+máquina de anilha, Smith e sled, onde não há barra a contar ou o peso dela é
+propriedade da máquina. `barra` é um tipo à parte, e os 20 kg só entram porque
+**ele declarou que aquilo é uma barra olímpica** — a conversão deixa de ser
+suposição do app e passa a ser informação dele.
+
+O voto vencido: não somar nada e escrever "+ a barra" no texto. Perde-se um
+número certo para não arriscar um errado numa academia de barra atípica. Ficou
+para o dia em que aparecer uma — aí o peso vira campo, não constante.
+
+`halter1` **não se chama mais "um halter só"**. O tipo sempre serviu a qualquer
+implemento único, e três exercícios do HYROX já o usavam para coisas que não são
+halter: wall balls é uma bola, lunges com sandbag é um saco. O que estava errado
+era o rótulo. A chave no estado continua `halter1`, então nada no histórico se
+moveu.
 
 ---
 
