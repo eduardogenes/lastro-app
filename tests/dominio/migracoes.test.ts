@@ -8,7 +8,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import {
-  ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6
+  ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7
 } from '../../src/dominio/migracoes';
 import { EX_BASE, slugEx } from '../../src/dominio/programa';
 import type { Estado, Log } from '../../src/dominio/tipos';
@@ -283,4 +283,36 @@ test('5→6 é involução: rodar de novo não mexe em nada', () => {
   const depois = JSON.parse(JSON.stringify(S));
   assert.strictEqual(migraPlano6(S), null, 'o guarda de versão segura');
   assert.deepStrictEqual(S, depois);
+});
+
+test('6→7 zera o histórico do HYROX com lápide, e não toca na presença', () => {
+  const agora = Date.now();
+  const S = {
+    plano: 6,
+    logs: {
+      'sled-push':   [{ t: agora, sid: 1, sets: [[60, 252]] }],
+      'wall-balls':  [{ t: agora, sid: 1, sets: [[9, 300]] },
+                      { t: agora - 86400000, sid: 2, sets: [[9, 310]] }],
+      'leg-press':   [{ t: agora, sid: 1, sets: [[100, 10]] }]
+    },
+    done: [{ day: 'HX', t: agora, sid: 1, dur: 3600000 }]
+  } as unknown as Estado;
+
+  const r = migraPlano7(S)!;
+  assert.strictEqual(r.exercicios, 2, 'dois exercícios de HYROX tinham histórico');
+  assert.strictEqual(r.entradas, 3, 'e três entradas ao todo');
+
+  assert.strictEqual(S.logs['sled-push'], undefined);
+  assert.strictEqual(S.logs['wall-balls'], undefined);
+  assert.ok(S.logs['leg-press'], 'a musculação não é tocada');
+  assert.strictEqual(S.done.length, 1, 'a presença fica: ter treinado no sábado é outro fato');
+
+  // Sem lápide, a primeira sincronização traria tudo de volta: a fusão une as
+  // duas listas pela chave natural, e o que só existe de um lado volta.
+  const mortos = (S as Estado & { apagados?: Record<string, number> }).apagados!;
+  assert.strictEqual(Object.keys(mortos).length, 3, 'uma lápide por entrada');
+  assert.ok(mortos['log:sled-push:1:sled-push'] > 0, Object.keys(mortos).join(' · '));
+
+  assert.strictEqual(S.plano, 7);
+  assert.strictEqual(migraPlano7(S), null, 'não roda duas vezes');
 });

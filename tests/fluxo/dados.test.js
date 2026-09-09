@@ -205,7 +205,7 @@ test('histórico do plano antigo é reindexado, não apagado', async () => {
     'supino-inclinado-com-halteres'
   ], 'chave por exercício, não por posição');
 
-  assert.strictEqual(a.E('S.plano'), 6, 'a cadeia inteira roda, até a 5→6');
+  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'), 'a cadeia inteira roda');
   assert.deepStrictEqual(a.J('S.logs["supino-inclinado-com-halteres"][0].sets'), [[30, 10], [30, 10]],
     'as séries continuam íntegras');
   assert.deepStrictEqual(a.J('S.carga'), {}, 'correção de carga apontava para posição antiga');

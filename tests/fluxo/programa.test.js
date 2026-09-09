@@ -184,7 +184,9 @@ test('estado do plano 1 atravessa as duas migrações sem perder nada', async ()
   } });
   await a.esperar();
 
-  assert.strictEqual(a.E('S.plano'), 6, 'a cadeia inteira roda, até a 5→6');
+  // PLANO_ATUAL e não um número: a propriedade é "a cadeia inteira rodou",
+  // e ela não deve quebrar toda vez que uma migração nova entra.
+  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'), 'a cadeia inteira roda');
   assert.strictEqual(a.E('S.done.length'), 2, 'o calendário atravessa intacto');
 
   const logs = a.J('S.logs');

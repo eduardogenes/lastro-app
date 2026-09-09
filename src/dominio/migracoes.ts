@@ -10,7 +10,8 @@
 
 import { CADENCIA_PADRAO } from './dia';
 import { PLANO_BASE } from './nutricao/alimentos';
-import { EX_BASE, slugEx } from './programa';
+import { EX_BASE, SIMULACAO_HYROX, slugEx } from './programa';
+import { chaveDeLog } from './sincronia';
 import type { Estado, IdEx, Log, Treino } from './tipos';
 
 // ---------- migração de plano ----------
@@ -20,7 +21,7 @@ import type { Estado, IdEx, Log, Treino } from './tipos';
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-export const PLANO_ATUAL = 6;
+export const PLANO_ATUAL = 7;
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -404,5 +405,50 @@ export function migraPlano6(S: Estado): Resultado6 | null {
   });
 
   S.plano = 6;
+  return r;
+}
+
+// ---------- 6 -> 7: o histórico das estações de HYROX ----------
+// Ele pediu para zerar: os registros do sábado foram feitos enquanto o dia
+// ainda era modelado como prescrição de hipertrofia — com meta de 16 séries e
+// linguagem de RIR num remo de 1000 m — e nenhum deles quer dizer o que
+// aparenta. Zerar aqui é mais honesto que carregar número que ninguém vai ler.
+//
+// **Lápide por entrada, e é isso que faz a migração funcionar.** Um `delete`
+// seco no mapa local seria desfeito na primeira sincronização: a fusão une as
+// duas listas pela chave natural, e o que só existe de um lado VOLTA. O que
+// diz "isto morreu de propósito" é o carimbo em `S.apagados`, com a mesma
+// chave que `uneLista` consulta.
+//
+// A PRESENÇA não é tocada: `S.done` continua inteiro, e com ela a rotação, a
+// contagem de ciclo, a cadência da semana e o calendário. Ele disse que não há
+// nada de importante nos EXERCÍCIOS; ter treinado no sábado é outro fato.
+
+/** O que a migração 6→7 apagou, para o app poder contar. */
+export interface Resultado7 {
+  /** quantos exercícios ficaram sem histórico */
+  exercicios: number;
+  /** quantas entradas foram apagadas */
+  entradas: number;
+}
+
+export function migraPlano7(S: Estado): Resultado7 | null {
+  if (S.plano >= 7) return null;
+  const r: Resultado7 = { exercicios: 0, entradas: 0 };
+  const agora = Date.now();
+  const mortos = (S as Estado & { apagados?: Record<string, number> }).apagados
+    || ((S as Estado & { apagados?: Record<string, number> }).apagados = {});
+
+  SIMULACAO_HYROX.forEach(function (ex) {
+    const idEx = slugEx(ex.n);
+    const lista = (S.logs || {})[idEx];
+    if (!lista || !lista.length) return;
+    lista.forEach(function (l) { mortos[chaveDeLog(idEx, l)] = agora; });
+    r.exercicios++;
+    r.entradas += lista.length;
+    delete S.logs[idEx];
+  });
+
+  S.plano = 7;
   return r;
 }

@@ -330,6 +330,25 @@ uma troca, não como duas mudanças.
 
 ## Migrações
 
+**6 → 7 — o histórico das estações de HYROX.** A única migração do projeto que
+APAGA em vez de converter, e ela foi pedida: os registros do sábado foram feitos
+enquanto o dia ainda era modelado como prescrição de hipertrofia, e nenhum deles
+quer dizer o que aparenta.
+
+Duas decisões dentro dela:
+
+- **Lápide por entrada, e é isso que a faz funcionar.** Um `delete` seco no mapa
+  local seria desfeito na primeira sincronização — a fusão une as duas listas
+  pela chave natural, e o que só existe de um lado VOLTA. O que diz "isto morreu
+  de propósito" é o carimbo em `S.apagados`, com a mesma chave que `uneLista`
+  consulta.
+- **A presença não é tocada.** `S.done` fica inteiro, e com ele a rotação, a
+  contagem de ciclo, a cadência da semana e o calendário. Não havia nada de
+  importante nos EXERCÍCIOS; ter treinado no sábado é outro fato.
+
+E ela avisa: apagar histórico em silêncio é o tipo de coisa que se descobre
+semanas depois sem saber se foi bug.
+
 `PLANO_ATUAL` governa a versão do formato. As migrações rodam em cadeia no
 `load()` e também na importação.
 

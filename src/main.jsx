@@ -42,7 +42,7 @@ import { mediasSemanais, pesoRitmo as _pesoRitmo,
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
-import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6 } from './dominio/migracoes';
+import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
@@ -380,6 +380,7 @@ async function load() {
   migraPlano4(S);
   migraPlano5(S);
   migraPlano6(S);
+  const m7 = migraPlano7(S);
   garanteProgramaERotacao();
   montaCatalogo();
 
@@ -420,6 +421,14 @@ async function load() {
   await carregaSync();
   await NUVEM.pronta();
   if (NUVEM.sessao()) { render(); sincroniza(); }
+  // O que a 6→7 apagou merece ser dito: apagar histórico em silêncio é o tipo
+  // de coisa que a pessoa descobre semanas depois e não sabe se foi bug.
+  if (m7 && m7.entradas) {
+    await save();
+    toast('Histórico do HYROX zerado: ' + m7.entradas +
+      (m7.entradas === 1 ? ' entrada' : ' entradas') + ' em ' + m7.exercicios +
+      (m7.exercicios === 1 ? ' exercício.' : ' exercícios.'));
+  }
   if (m3) {
     await save();
     const rec = m3.recuperados.length
