@@ -188,21 +188,26 @@ test('o override manual vence o cálculo', () => {
 
 test('peso parado com força subindo vira observar, não comer mais', () => {
   const body = { peso: pesagens([73.0, 73.05, 73.10]), cintura: [] };
-  assert.strictEqual(veredito(body).t, 'Comer mais', 'sem o sinal, a regra é a de antes');
-  const v = veredito(body, true);
+  assert.strictEqual(veredito(body, { diasRegistrados: 14 }).t, 'Comer mais',
+    'sem o sinal de força, o ganho travado pede mais comida');
+  const v = veredito(body, { diasRegistrados: 14, forcaSubindo: true });
   assert.strictEqual(v.k, 'observar');
   assert.ok(v.p.includes('recomposição'), v.p);
 });
 
 test('a força subindo não salva quem está engordando rápido', () => {
   const body = { peso: pesagens([73.0, 73.6, 74.2]), cintura: [] };
-  assert.strictEqual(veredito(body, true).t, 'Comer menos', 'o ramo de cima não depende do sinal');
+  assert.strictEqual(
+    veredito(body, { diasRegistrados: 14, forcaSubindo: true, gorduraVisual: 'sim' }).t,
+    'Comer menos', 'o ramo de cima não consulta o sinal de força');
 });
 
 test('o veredito decide e o ajuste executa', () => {
-  assert.strictEqual(ajusteDoVeredito(veredito({ peso: pesagens([73.0, 73.05, 73.10]), cintura: [] })), 1);
-  assert.strictEqual(ajusteDoVeredito(veredito({ peso: pesagens([73.0, 73.6, 74.2]), cintura: [] })), -1);
-  assert.strictEqual(ajusteDoVeredito(veredito({ peso: pesagens([73.0, 73.25, 73.5]), cintura: [] })), 0);
+  const reg = { diasRegistrados: 14 };
+  const A = (p: number[], extra = {}) => ajusteDoVeredito(veredito({ peso: pesagens(p), cintura: [] }, { ...reg, ...extra }));
+  assert.strictEqual(A([73.0, 73.05, 73.10]), 1);
+  assert.strictEqual(A([73.0, 73.6, 74.2], { gorduraVisual: 'sim' }), -1);
+  assert.strictEqual(A([73.0, 73.25, 73.5]), 0);
 });
 
 test('observar e faltam não mexem na comida', () => {

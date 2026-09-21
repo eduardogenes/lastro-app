@@ -744,14 +744,36 @@ nunca no mesmo período dos treinos B ou E, que são os dias de perna.
 
 ## Ajuste da dieta
 
-Decide a **média semanal**, nunca o peso do dia. Peso 3 a 4 vezes por semana,
-cintura 1 vez por semana, sempre no mesmo ponto e horário.
+Decide a **média semanal**, nunca o peso do dia, e o critério é de **duas
+semanas consecutivas** — não a média de duas. Peso 3 a 4 vezes por semana.
+
+A faixa-alvo é **+0,15 a +0,30 kg por semana**. É alvo de eficiência, não
+limite de velocidade: ganhar acima dela não é ruim por si, desde que esteja
+comprando músculo e performance.
 
 | Situação | O que fazer |
 |---|---|
-| Média subindo menos de 0,15 kg por semana, por 2 semanas | Comer mais |
-| Média subindo mais de 0,4 kg por semana, por 2 semanas | Comer menos |
-| Cintura subindo mais de 1,5 cm no mês | Comer menos |
+| Abaixo de 0,10 kg/semana por 2 semanas, com performance parada | +150 kcal |
+| Entre 0,15 e 0,30 kg/semana | Manter |
+| Entre 0,30 e 0,40 kg/semana | Manter e observar |
+| Acima de 0,40 kg/semana por 1 semana só | Nada |
+| Acima de 0,40 por 2 semanas, com aumento visual claro de gordura | −150 kcal |
+| Acima de 0,40 por 2 semanas, sem piora nas fotos | Manter |
+| Qualquer outro caso | Não alterar, continuar observando |
 
-A cintura tem prioridade sobre o peso: se ela sobe, o superávit está virando
-gordura mesmo que a balança esteja na faixa.
+**O peso sozinho nunca corta.** Ele abre revisão; o corte de −150 kcal só
+sai com adesão registrada E aumento visual claro de gordura. A regra é
+multifatorial de propósito.
+
+**O passo é fixo, nunca proporcional.** ±150 kcal, que na dieta-base são
+−60 g de arroz cozido no almoço e −60 g no jantar. Ganhar 0,90 kg/semana
+não gera corte maior que ganhar 0,41: os dados são ruidosos demais, e um
+corte proporcional transformaria água e glicogênio em déficit exagerado.
+
+**Depois de um ajuste, a nova ingestão vira a linha de base.** Cortou e o
+peso voltou à faixa? Mantém as calorias novas — não devolve as 150. Subir
+tem critério próprio, e é essa assimetria que evita o efeito sanfona.
+
+**Cintura saiu do algoritmo.** Ela era prioritária e vetava o peso; como
+medir não está acontecendo, as fotos padronizadas passaram a ser a segunda
+camada de confirmação. Medida ocasional vira informação complementar.

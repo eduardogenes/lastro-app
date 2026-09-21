@@ -20,6 +20,26 @@ function pesagens(medias) {
   return out;
 }
 
+/**
+ * Dias de comida registrados, para destravar a regra.
+ *
+ * A trava de adesão do nutricionista: o app só mexe nas calorias quando sabe
+ * se o ganho veio da dieta prescrita ou de saídas dela. Sem isto semeado, o
+ * veredito correto é "registrar antes de mexer" — e é o que o último teste
+ * daqui cobra.
+ */
+function comidaRegistrada(dias) {
+  const out = [];
+  for (let i = 1; i <= dias; i++) {
+    const d = new Date(Date.now() - i * DIA);
+    const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0');
+    out.push({ d: iso, done: { cafe: Date.now() }, agua: 0, escala: {},
+               tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 1, m: Date.now() });
+  }
+  return out.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+}
+
 function medidas(pares) {   // [{diasAtras, valor}]
   return pares.map(function (p) { return { t: Date.now() - p.d * DIA, v: p.v }; })
               .sort(function (x, y) { return x.t - y.t; });
@@ -37,7 +57,7 @@ async function veredito(peso, cintura) {
 // dá para varrer os limites exatos. O que sobra aqui é a ligação: o veredito
 // calculado precisa chegar na tela, e chegar no lugar certo.
 test('o veredito da regra é o que aparece na aba corpo', async () => {
-  const a = await app({ estado: { logs: [], done: [],
+  const a = await app({ estado: { logs: [], done: [], comidaHist: comidaRegistrada(14),
     body: { peso: pesagens([73.0, 73.05, 73.10]), cintura: [] } } });
   a.aba('dados');
   // o veredito é o cartão do Instrumento; o legado saiu de DADOS para não
@@ -48,14 +68,27 @@ test('o veredito da regra é o que aparece na aba corpo', async () => {
   a.fechar();
 });
 
-test('cintura tem precedência sobre o peso, e a tela diz por quê', async () => {
-  const a = await app({ estado: { logs: [], done: [], body: {
+test('cintura alta não sobrepõe mais o peso na faixa', async () => {
+  // Ela tinha precedência e vetava o peso. Saiu do algoritmo: medir
+  // circunferência parou de acontecer, e as fotos padronizadas passaram a ser
+  // a segunda camada de confirmação. Medida ocasional vira informação.
+  const a = await app({ estado: { logs: [], done: [], comidaHist: comidaRegistrada(14), body: {
     peso: pesagens([73.0, 73.25, 73.5]),
     cintura: medidas([{ d: 28, v: 80.0 }, { d: 21, v: 80.6 }, { d: 7, v: 81.4 }, { d: 0, v: 82.0 }])
   } } });
   a.aba('dados');
-  assert.strictEqual(a.texto('.ins-veredito-t'), 'Comer menos');
-  assert.ok(a.texto('.ins-veredito-p').includes('cintura'));
+  assert.strictEqual(a.texto('.ins-veredito-t'), 'Manter como está');
+  a.fechar();
+});
+
+test('sem registro de comida, a tela manda registrar em vez de cortar', async () => {
+  // O peso sozinho não corta: sem saber se o ganho veio da dieta ou de uma
+  // saída dela, tirar comida do plano puniria os dias em que ele seguiu.
+  const a = await app({ estado: { logs: [], done: [], comidaHist: [],
+    body: { peso: pesagens([73.0, 73.6, 74.2]), cintura: [] } } });
+  a.aba('dados');
+  assert.strictEqual(a.texto('.ins-veredito-t'), 'Registrar antes de mexer');
+  assert.ok(a.texto('.ins-veredito-p').includes('saídas'), a.texto('.ins-veredito-p'));
   a.fechar();
 });
 

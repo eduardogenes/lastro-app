@@ -2938,7 +2938,33 @@ function forcaSubindo() {
   const t = tendenciaDeForca(S.logs, function (k) { return temUnidade(exDe(k)); });
   return sinalDeForca(t, S.perfManual);
 }
-function veredito() { return _veredito(S.body, forcaSubindo()); }
+/**
+ * Dias com registro de comida nos últimos 14.
+ *
+ * A trava de adesão do nutricionista: mudança automática só é permitida com
+ * cerca de 80% dos 14 dias registrados. Dia mudo não é dia de falha — é dia
+ * sobre o qual o app não sabe nada, e é justamente por isso que ele não pode
+ * embasar um corte. Conta dia COM registro, não aderência.
+ */
+function diasRegistrados() {
+  if (!Array.isArray(S.comidaHist)) return 0;
+  const hoje = new Date();
+  const iso = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
+              String(hoje.getDate()).padStart(2, '0');
+  return janelaDoHistorico(S.comidaHist, 14, iso)
+    .filter(function (h) { return Object.keys(h.done || {}).length > 0; }).length;
+}
+
+function veredito() {
+  return _veredito(S.body, {
+    forcaSubindo: forcaSubindo(),
+    diasRegistrados: diasRegistrados(),
+    // A leitura das fotos ainda não é perguntada em lugar nenhum. Enquanto
+    // não for, o peso abre revisão e NUNCA corta sozinho — que é o que a
+    // regra do nutricionista manda fazer na ausência do sinal.
+    gorduraVisual: null
+  });
+}
 
 /** Quanto de arroz o plano manda hoje, com o ajuste em vigor aplicado. */
 function arrozAtual() {

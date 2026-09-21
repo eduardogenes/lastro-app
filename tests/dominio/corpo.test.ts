@@ -8,80 +8,153 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { cinturaMes, mediasSemanais, pesoRitmo, veredito } from '../../src/dominio/corpo';
-import { medidas, pesagens } from './ajuda';
+import { medidas, naSemana, pesagens } from './ajuda';
 
 const semCintura = { peso: [] as ReturnType<typeof pesagens>, cintura: [] };
 
-test('ganho travado manda comer mais', () => {
-  const v = veredito({ peso: pesagens([73.0, 73.05, 73.10]), cintura: [] });
+// Registrado o bastante e força parada: o cenário em que a regra PODE agir.
+// Passar isto explicitamente é o ponto — sem adesão registrada, nada muda.
+const OK = { diasRegistrados: 14, forcaSubindo: false };
+
+test('ganho travado por 2 semanas, com força parada, manda comer mais', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.05, 73.10]), cintura: [] }, OK);
   assert.strictEqual(v.t, 'Comer mais');
-  assert.ok(v.p.includes('0,05'), v.p);
-  assert.ok(v.p.includes('abaixo de 0,15'));
+  assert.ok(v.p.includes('+150 kcal'), v.p);
 });
 
-test('ganho rápido manda comer menos', () => {
-  const v = veredito({ peso: pesagens([73.0, 73.6, 74.2]), cintura: [] });
-  assert.strictEqual(v.t, 'Comer menos');
-  assert.ok(v.p.includes('0,60'));
-  assert.ok(v.p.includes('acima de 0,4'));
+test('ganho travado com a força subindo é recomposição: não mexe', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.05, 73.10]), cintura: [] },
+                      { diasRegistrados: 14, forcaSubindo: true });
+  assert.strictEqual(v.k, 'observar');
+  assert.ok(v.p.includes('recomposição'), v.p);
 });
 
-test('ganho na faixa manda manter', () => {
-  const v = veredito({ peso: pesagens([73.0, 73.25, 73.5]), cintura: [] });
+test('ganho na faixa-alvo manda manter', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.25, 73.5]), cintura: [] }, OK);
   assert.strictEqual(v.t, 'Manter como está');
   assert.ok(v.p.includes('0,25'));
 });
 
-test('limite exato de 0,15 ainda é comer mais', () => {
-  assert.strictEqual(veredito({ peso: pesagens([73.0, 73.15, 73.30]), cintura: [] }).t, 'Comer mais');
+// ---------- o erro que motivou tudo: persistência, não média ----------
+
+test('uma semana aberrante NÃO corta: +0,10 e depois +0,75', () => {
+  // A média das duas dá 0,425 e a regra antiga cortava. Só uma semana passou
+  // de 0,40, então o critério temporal ainda não foi confirmado.
+  const v = veredito({ peso: pesagens([73.0, 73.10, 73.85]), cintura: [] },
+                      { diasRegistrados: 14, forcaSubindo: false, gorduraVisual: 'sim' });
+  assert.notStrictEqual(v.k, 'menos', 'uma semana só não confirma: ' + v.p);
+  assert.strictEqual(v.k, 'observar');
 });
 
-test('limite exato de 0,40 ainda é manter', () => {
-  assert.strictEqual(veredito({ peso: pesagens([73.0, 73.40, 73.80]), cintura: [] }).t, 'Manter como está');
+test('duas semanas seguidas acima de 0,40, com gordura visual, cortam', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.6, 74.2]), cintura: [] },
+                      { diasRegistrados: 14, forcaSubindo: false, gorduraVisual: 'sim' });
+  assert.strictEqual(v.t, 'Comer menos');
+  assert.ok(v.p.includes('−150 kcal'), v.p);
 });
 
-test('perdendo peso: o texto não diz que subiu', () => {
-  const v = veredito({ peso: pesagens([73.5, 73.2, 73.0]), cintura: [] });
-  assert.strictEqual(v.t, 'Comer mais');
-  assert.ok(v.p.includes('caiu'), 'não pode dizer "subiu −0,25": ' + v.p);
+test('duas semanas acima de 0,40 sem piora nas fotos: o ganho é produtivo', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.6, 74.2]), cintura: [] },
+                      { diasRegistrados: 14, forcaSubindo: false, gorduraVisual: 'nao' });
+  assert.strictEqual(v.k, 'manter', v.p);
 });
 
-test('cintura estourando manda comer menos mesmo com peso na faixa', () => {
+test('sem a leitura das fotos, o peso abre revisão e não corta', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.6, 74.2]), cintura: [] },
+                      { diasRegistrados: 14, forcaSubindo: false, gorduraVisual: null });
+  assert.strictEqual(v.k, 'observar');
+  assert.strictEqual(v.falta, 'gordura');
+});
+
+test('fotos inconclusivas também não cortam', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.6, 74.2]), cintura: [] },
+                      { diasRegistrados: 14, forcaSubindo: false, gorduraVisual: 'incerto' });
+  assert.strictEqual(v.k, 'observar');
+});
+
+// ---------- a trava de adesão ----------
+
+test('sem registro suficiente o app não corta, mesmo com tudo apontando para lá', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.6, 74.2]), cintura: [] },
+                      { diasRegistrados: 6, forcaSubindo: false, gorduraVisual: 'sim' });
+  assert.strictEqual(v.k, 'observar');
+  assert.strictEqual(v.falta, 'aderencia');
+  assert.ok(v.p.includes('saídas'), v.p);
+});
+
+test('10 de 14 dias ainda é pouco; 11 já serve', () => {
+  const peso = pesagens([73.0, 73.6, 74.2]);
+  const base = { forcaSubindo: false, gorduraVisual: 'sim' as const };
+  assert.strictEqual(veredito({ peso, cintura: [] }, { ...base, diasRegistrados: 10 }).k, 'observar');
+  assert.strictEqual(veredito({ peso, cintura: [] }, { ...base, diasRegistrados: 11 }).k, 'menos');
+});
+
+test('sem medir adesão nenhuma, também não mexe', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.6, 74.2]), cintura: [] },
+                      { forcaSubindo: false, gorduraVisual: 'sim' });
+  assert.strictEqual(v.falta, 'aderencia');
+});
+
+// ---------- a cintura saiu do algoritmo ----------
+
+test('cintura estourando não sobrepõe mais o peso na faixa', () => {
+  // Antes ela tinha prioridade e mandava comer menos. Medir circunferência
+  // parou de acontecer, e as fotos cobrem melhor a mesma pergunta.
   const v = veredito({
     peso: pesagens([73.0, 73.25, 73.5]),
     cintura: medidas([{ d: 28, v: 80.0 }, { d: 21, v: 80.6 }, { d: 7, v: 81.4 }, { d: 0, v: 82.0 }])
-  });
-  assert.strictEqual(v.t, 'Comer menos');
-  assert.ok(v.p.includes('cintura'));
+  }, OK);
+  assert.strictEqual(v.t, 'Manter como está', 'a cintura é informação, não veto: ' + v.p);
 });
 
-test('cintura dentro do limite não sobrepõe o peso', () => {
-  const v = veredito({
-    peso: pesagens([73.0, 73.25, 73.5]),
-    cintura: medidas([{ d: 28, v: 80.0 }, { d: 21, v: 80.2 }, { d: 7, v: 80.5 }, { d: 0, v: 80.7 }])
-  });
-  assert.strictEqual(v.t, 'Manter como está');
+// ---------- os limites, e o caso omisso ----------
+
+test('exatamente 0,40 não é "acima de 0,40"', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.40, 73.80]), cintura: [] },
+                      { ...OK, gorduraVisual: 'sim' });
+  assert.notStrictEqual(v.k, 'menos');
+  assert.strictEqual(v.k, 'observar', 'fora da faixa-alvo, mas sem critério para agir');
 });
 
-test('uma semana só não aplica a regra', () => {
-  assert.strictEqual(veredito({ peso: pesagens([73.0]), cintura: [] }).t, 'Faltam dados');
+test('exatamente 0,10 não é "abaixo de 0,10"', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.10, 73.20]), cintura: [] }, OK);
+  assert.notStrictEqual(v.k, 'mais');
 });
 
-test('duas semanas avisam que falta uma', () => {
-  const v = veredito({ peso: pesagens([73.0, 73.25]), cintura: [] });
-  assert.strictEqual(v.t, 'Falta uma semana');
-  assert.ok(v.p.includes('2 semanas'));
+test('perdendo peso o texto não diz que subiu', () => {
+  const v = veredito({ peso: pesagens([73.5, 73.2, 73.0]), cintura: [] }, OK);
+  assert.strictEqual(v.t, 'Comer mais');
+  assert.ok(!v.p.includes('subiu'), 'não pode dizer "subiu −0,30": ' + v.p);
+});
+
+test('entre 0,30 e 0,40 o caso é omisso: observar, não mexer', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.35, 73.70]), cintura: [] }, OK);
+  assert.strictEqual(v.k, 'observar');
+});
+
+// ---------- dados insuficientes ----------
+
+test('duas semanas não bastam: a regra pede duas TAXAS, logo três semanas', () => {
+  const v = veredito({ peso: pesagens([73.0, 73.25]), cintura: [] }, OK);
+  assert.strictEqual(v.t, 'Faltam dados');
+});
+
+test('semana com uma pesagem só não é média', () => {
+  const W = pesagens([73.0, 73.25, 73.5]);
+  const magra = W.filter((_, i) => i < 8 || i === 8);   // a última semana fica com 1
+  assert.strictEqual(veredito({ peso: magra, cintura: [] }, OK).t, 'Faltam dados');
 });
 
 test('sem nada registrado pede registro', () => {
-  assert.strictEqual(veredito(semCintura).t, 'Faltam dados');
+  assert.strictEqual(veredito(semCintura, OK).t, 'Faltam dados');
 });
 
 test('cintura usa média semanal, não medida solta', () => {
-  const W = mediasSemanais(
-    medidas([{ d: 28, v: 80.0 }, { d: 26, v: 80.4 }, { d: 2, v: 82.2 }, { d: 0, v: 81.8 }])
-  ).map(x => Math.round(x.v * 100) / 100);
-  assert.ok(W.length >= 2);
+  const W = mediasSemanais(naSemana([
+    { s: 4, dow: 1, v: 80.0 }, { s: 4, dow: 3, v: 80.4 },
+    { s: 1, dow: 1, v: 82.2 }, { s: 1, dow: 3, v: 81.8 }
+  ])).map(x => Math.round(x.v * 100) / 100);
+  assert.strictEqual(W.length, 2, 'duas semanas, não quatro medidas soltas');
   assert.strictEqual(W[0], 80.2, 'as duas medidas da mesma semana viram média');
 });
 

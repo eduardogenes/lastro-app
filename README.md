@@ -118,9 +118,10 @@ veredito usa **média semanal**, nunca o valor do dia:
 
 | Situação | O que o app diz |
 |---|---|
-| Média subindo menos de 0,15 kg/semana por 2 semanas | Comer mais |
-| Média subindo mais de 0,4 kg/semana por 2 semanas | Comer menos |
-| Cintura +1,5 cm no mês | Comer menos |
+| Abaixo de 0,10 kg/semana por 2 semanas seguidas, com performance parada | +150 kcal |
+| Entre 0,15 e 0,30 kg/semana | Manter |
+| Acima de 0,4 kg/semana por 2 semanas seguidas, com piora visual clara | −150 kcal |
+| Qualquer outro caso | Observar, sem mexer na comida |
 
 Na mesma aba, séries por músculo na semana, comparadas com o **mesmo ponto** das
 semanas anteriores, e um aviso quando o programa saiu do alvo do treinador.
