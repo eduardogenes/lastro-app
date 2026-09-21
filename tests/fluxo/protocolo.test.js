@@ -31,6 +31,20 @@ function iso(t) {
 const hoje = () => iso(Date.now());
 const diasAtras = n => iso(Date.now() - n * DIA);
 
+/**
+ * Domingo 00:00 da semana em que caiu o dia de `n` dias atrás.
+ *
+ * Pesagem semeada por "dias atrás" não garante SEMANA: `-28` e `-27` caem em
+ * semanas diferentes quando a suíte roda num sábado, e a média da semana da
+ * foto passava a ter uma pesagem só. Quem afirma média escolhe a semana.
+ */
+function semanaDe(n) {
+  const d = new Date(Date.now() - n * DIA);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay());
+  return d.getTime();
+}
+
 const guardadas = a => guardadasEm(a, 'lastro-corpo');
 
 /** Dispara a captura da pose em foco, pelo mesmo caminho que o `input` usa. */
@@ -471,9 +485,10 @@ test('o peso ao lado da foto é a média da semana, e vem do registro corporal',
   nuvemComBucket(a);
   const velha = diasAtras(28), nova = diasAtras(14);
   comSessoes(a, [velha, nova], 'frente-relaxado');
+  const semana = semanaDe(28);
   a.E(`S.body.peso = [
-    { t: Date.now() - 28 * ${DIA}, v: 90 },
-    { t: Date.now() - 27 * ${DIA}, v: 92 },
+    { t: ${semana + 1 * DIA + 10 * 3600000}, v: 90 },
+    { t: ${semana + 2 * DIA + 10 * 3600000}, v: 92 },
     { t: Date.now() - 14 * ${DIA}, v: 88 }
   ]`);
 

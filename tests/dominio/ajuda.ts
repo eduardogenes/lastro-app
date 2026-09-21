@@ -30,6 +30,25 @@ export function pesagens(medias: number[]): Marca[] {
   return out;
 }
 
+/**
+ * Medidas ancoradas a uma semana ESCOLHIDA, por semanas atrás e dia da semana.
+ *
+ * `medidas()` conta dias para trás a partir de hoje, e por isso duas marcas
+ * caem na mesma semana ou em semanas diferentes conforme o dia em que a suíte
+ * roda: com `-28` e `-26`, uma sexta ou um sábado atravessam o domingo e
+ * separam o que o teste queria junto. Quem mede média semanal escolhe a
+ * semana; não sorteia.
+ *
+ * `s` é quantas semanas atrás, contadas do início da semana em curso; `dow` é
+ * o dia dentro dela, 0 = domingo.
+ */
+export function naSemana(pares: Array<{ s: number; dow: number; v: number }>): Marca[] {
+  const base = inicioDaSemana(Date.now());
+  return pares
+    .map(p => ({ t: base - p.s * 7 * DIA + p.dow * DIA + 10 * 3600000, v: p.v }))
+    .sort((x, y) => x.t - y.t);
+}
+
 /** Medidas soltas, informadas por dias atrás. */
 export function medidas(pares: Array<{ d: number; v: number }>): Marca[] {
   return pares.map(p => ({ t: Date.now() - p.d * DIA, v: p.v }))
