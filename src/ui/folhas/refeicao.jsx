@@ -168,6 +168,28 @@ export function FolhaDia({ ctx }) {
         >{d.alta ? 'ligado' : 'desligado'}</button>
       </div>
 
+      {/* Como o dia foi. O peso responde ao que ele COMEU, não ao que estava
+          prescrito — e numa semana de saídas, reduzir o plano-base tiraria
+          comida dos dias em que ele seguiu, para compensar calorias que
+          vieram de fora dele. Sair sabendo o que comeu não estraga a semana;
+          sair sem saber, sim. */}
+      <div class="fd-aderencia">
+        <div class="ins-label">como foi o dia</div>
+        <div class="chips ins-chips">
+          {d.aderencias.map(x => (
+            <button
+              key={x.k}
+              class={'chip ins-chip' + (d.aderencia === x.k ? ' on' : '')}
+              onClick={() => ctx.setAderencia(x.k)}
+            >{x.t}</button>
+          ))}
+        </div>
+        <p class="ins-body-sm ins-t3">
+          Entra na régua calórica: com menos de 11 dos últimos 14 dias
+          interpretáveis, o app avisa do ganho mas não tira comida do plano.
+        </p>
+      </div>
+
       <Procedencia>{d.procedencia}</Procedencia>
     </Folha>
   );

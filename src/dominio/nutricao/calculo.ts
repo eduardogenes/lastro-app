@@ -363,6 +363,7 @@ export function fechaDia(
   if (dia.cadencia) h.cadencia = dia.cadencia;
   if (dia.alta) h.alta = 1;
   if (dia.turno) h.turno = dia.turno;
+  if (dia.aderencia) h.aderencia = dia.aderencia;
   if (ajuste) h.aj = ajuste;
   return h;
 }
@@ -429,6 +430,34 @@ export function padraoPorRefeicao(
     });
   });
   return plano.map(function (r) { return por[r.id]; }).filter(Boolean);
+}
+
+/**
+ * O dia é interpretável? Isto é: o app sabe o que ele comeu?
+ *
+ * Dia mudo não é dia de falha — é dia sobre o qual não há informação, e por
+ * isso não pode embasar corte. `fora` conta: sair do plano sabendo mais ou
+ * menos o que comeu ainda deixa a semana legível. `perdido` não conta, mesmo
+ * com refeições marcadas: o que ele marcou não descreve o que entrou.
+ */
+export function diaInterpretavel(h: DiaComidaHist): boolean {
+  if (h.aderencia === 'perdido') return false;
+  return Object.keys(h.done || {}).length > 0;
+}
+
+/**
+ * Quantos dias de uma janela são interpretáveis.
+ *
+ * É a trava de adesão: abaixo dela o app avisa do ganho, mas não mexe nas
+ * calorias. O denominador é a janela, não os dias registrados — senão uma
+ * semana com dois dias registrados daria 100%.
+ */
+export function diasInterpretaveis(
+  hist: DiaComidaHist[],
+  dias: number,
+  hojeISO: string
+): number {
+  return janelaDoHistorico(hist, dias, hojeISO).filter(diaInterpretavel).length;
 }
 
 /** Os dias do histórico dentro de uma janela, do mais antigo ao mais novo. */

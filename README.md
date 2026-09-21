@@ -128,9 +128,13 @@ média de duas, que deixaria uma semana de retenção decidir sozinha:
 pergunta em **comparar** — "comparando com N dias atrás, a gordura visual
 aumentou claramente?" — feita ali porque é ali que as duas fotos estão à vista.
 Ela vale 14 dias e some depois; sem ela o app não tira comida do plano. A
-redução também exige registro de comida em pelo menos 11 dos últimos 14 dias,
-senão o app estaria cortando o plano por causa de refeições que vieram de fora
-dele.
+redução também exige **11 dos últimos 14 dias interpretáveis** — senão o app
+estaria cortando o plano por causa de refeições que vieram de fora dele.
+
+Interpretável é o dia sobre o qual o app sabe algo. A folha do dia pergunta
+como ele foi, em três estados: **segui o plano** (o padrão, e não se guarda),
+**saí mas sei o que comi** — que ainda conta, porque a semana continua legível
+— e **saí e não sei quanto**, que não conta nem com refeições marcadas.
 
 **O ajuste é um saldo, não um interruptor.** Depois de aplicado, a nova
 ingestão vira a linha de base: o peso voltar à faixa não devolve as 150 kcal.

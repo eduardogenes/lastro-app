@@ -38,7 +38,7 @@ import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos
 import {
   arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia,
   refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao,
-  fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico,
+  fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis,
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
@@ -1938,6 +1938,15 @@ const CTX = {
     queueSave(); render();
   },
   setAlta: function (v) { diaDeComida().alta = v ? 1 : 0; queueSave(); render(); },
+  /**
+   * Como o dia foi. Ajuste de hoje, como a escala e o turno: zera com a data,
+   * e é congelado no histórico por `fechaDia`.
+   */
+  setAderencia: function (v) {
+    const d = diaDeComida();
+    if (!v || v === 'plano') delete d.aderencia; else d.aderencia = v;
+    queueSave(); render();
+  },
   /** O turno do treino de hoje. Ajuste de hoje: zera com a data, como a escala. */
   setTurno: function (t) {
     const d = diaDeComida();
@@ -2944,17 +2953,16 @@ function forcaSubindo() {
  * Dias com registro de comida nos últimos 14.
  *
  * A trava de adesão do nutricionista: mudança automática só é permitida com
- * cerca de 80% dos 14 dias registrados. Dia mudo não é dia de falha — é dia
- * sobre o qual o app não sabe nada, e é justamente por isso que ele não pode
- * embasar um corte. Conta dia COM registro, não aderência.
+ * cerca de 80% dos 14 dias interpretáveis. Conta dia sobre o qual o app SABE
+ * algo, não aderência: quem seguiu o plano e quem saiu sabendo o que comeu
+ * contam igual. Só o dia perdido não conta — ver `diaInterpretavel`.
  */
 function diasRegistrados() {
   if (!Array.isArray(S.comidaHist)) return 0;
   const hoje = new Date();
   const iso = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
               String(hoje.getDate()).padStart(2, '0');
-  return janelaDoHistorico(S.comidaHist, 14, iso)
-    .filter(function (h) { return Object.keys(h.done || {}).length > 0; }).length;
+  return diasInterpretaveis(S.comidaHist, 14, iso);
 }
 
 function veredito() {
@@ -4331,6 +4339,12 @@ CTX.seletorDeDia = function () {
     treino: h.treino,
     cadencia: h.cadencia,
     alta: !!dia.alta,
+    aderencia: dia.aderencia || 'plano',
+    aderencias: [
+      { k: 'plano',   t: 'segui o plano' },
+      { k: 'fora',    t: 'saí, mas sei o que comi' },
+      { k: 'perdido', t: 'saí e não sei quanto' }
+    ],
     turno: dia.turno || 'manha',
     turnos: TURNOS.map(function (x) {
       // `manha` não tem hora própria: a hora é a do plano, seja qual for.

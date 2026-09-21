@@ -25,14 +25,16 @@ function pesagens(medias) {
 }
 
 /** 14 dias com registro: sem isto a trava de adesão não deixa nada acontecer. */
-function comidaRegistrada(dias) {
+function comidaRegistrada(dias, aderencia) {
   const out = [];
   for (let i = 1; i <= dias; i++) {
     const d = new Date(Date.now() - i * DIA);
     const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
                 String(d.getDate()).padStart(2, '0');
-    out.push({ d: iso, done: { cafe: Date.now() }, agua: 0, escala: {},
-               tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 1, m: Date.now() });
+    const h = { d: iso, done: { cafe: Date.now() }, agua: 0, escala: {},
+                tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 1, m: Date.now() };
+    if (aderencia) h.aderencia = aderencia;
+    out.push(h);
   }
   return out.sort(function (x, y) { return x.d < y.d ? -1 : 1; });
 }
@@ -215,5 +217,52 @@ test('num par de três meses a pergunta não aparece', async () => {
   comFotos(a, [iso(92), iso(0)]);
   a.E('CTX.abreComparar()');
   assert.strictEqual(a.J('CTX.comparacao().pergunta'), null);
+  a.fechar();
+});
+
+// ---------- as saídas da dieta ----------
+// O peso responde ao que ele COMEU, não ao que estava prescrito. Reduzir o
+// plano-base numa semana de saídas tiraria comida dos dias em que ele seguiu.
+
+async function comDieta(aderencia) {
+  const a = await app({ estado: {
+    logs: {}, done: [], perfManual: false,
+    comidaHist: comidaRegistrada(14, aderencia),
+    body: { peso: pesagens([73.0, 73.6, 74.2]), cintura: [] }
+  } });
+  cacheFalso(a);
+  comFotos(a, [iso(14), iso(0)]);
+  a.E('CTX.abreComparar()');
+  await a.E("CTX.setGordura('sim')"); await a.esperar();
+  a.aba('dados');
+  return a;
+}
+
+test('semana perdida trava o corte, mesmo com as fotos confirmando', async () => {
+  const a = await comDieta('perdido');
+  const v = a.J('CTX.dados().veredito');
+  assert.strictEqual(v.t, 'Registrar antes de mexer');
+  assert.strictEqual(v.podeAplicar, false, 'não se corta o plano por comida que veio de fora dele');
+  a.fechar();
+});
+
+test('sair do plano sabendo o que comeu não trava', async () => {
+  const a = await comDieta('fora');
+  assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Comer menos',
+    'saída registrada ainda deixa a semana legível');
+  a.fechar();
+});
+
+test('a folha do dia oferece os três estados, e a escolha persiste', async () => {
+  const a = await app();
+  a.aba('comida');
+  a.E('CTX.abreSeletorDeDia()');
+
+  await a.E("CTX.setAderencia('perdido')"); await a.esperar();
+  assert.strictEqual(a.E('diaDeComida().aderencia'), 'perdido');
+
+  await a.E("CTX.setAderencia('plano')"); await a.esperar();
+  assert.strictEqual(a.E('diaDeComida().aderencia'), undefined,
+    'seguir o plano é a ausência de marca: não se guarda o padrão');
   a.fechar();
 });

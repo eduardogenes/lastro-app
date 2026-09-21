@@ -106,6 +106,19 @@ export interface DiaComida {
   /** hoje é dia de alta demanda */
   alta?: 1;
   /**
+   * Como o dia foi de fato, em três estados.
+   *
+   * Ausente = `plano`: marcar as refeições já diz que comeu o que estava
+   * prescrito, e perguntar de novo seria perguntar o que o app já sabe.
+   *
+   * A distinção existe porque o peso responde à ingestão REAL, não à
+   * prescrição. Numa semana de saídas, mandar reduzir o plano-base tiraria
+   * comida justamente dos dias em que ele seguiu, para compensar calorias que
+   * vieram de fora dele. `fora` continua interpretável — ele sabe mais ou
+   * menos o que comeu; `perdido` não, e é o único que derruba o dia da conta.
+   */
+  aderencia?: 'plano' | 'fora' | 'perdido';
+  /**
    * O turno do treino de hoje. Ausente = `manha`, o plano como está escrito.
    *
    * Mora aqui, junto de `escala` e `alta`, e não no plano: **editar é
@@ -147,6 +160,8 @@ export interface DiaComidaHist {
   cadencia?: 'treino' | 'descanso' | null;
   alta?: 1;
   turno?: Turno;
+  /** como o dia foi; ver `DiaComida.aderencia` */
+  aderencia?: 'plano' | 'fora' | 'perdido';
   /**
    * Os quatro totais, CONGELADOS.
    *
@@ -169,7 +184,6 @@ export interface DiaComidaHist {
    * Safari: 1.907 bytes × 3.650 dias são 6,6 MiB).
    */
   pv: number;
-  /** o ajuste calórico em vigor naquele dia: −1, 0 ou 1 */
   /** passos de ajuste em vigor naquele dia, acumulados */
   aj?: number;
   /** quando foi alterado; a fusão o usa para desempatar */

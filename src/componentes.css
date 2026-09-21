@@ -421,6 +421,15 @@
 }
 .fd-alta p { margin: 0; }
 
+/* Como o dia foi: mesma anatomia do bloco acima, mas com três opções em vez
+   de um interruptor — não é ligar/desligar, é qual dos três. */
+.fd-aderencia {
+  margin-top: var(--ins-9); padding-top: var(--ins-6);
+  border-top: 1px solid var(--ins-rule);
+  display: flex; flex-direction: column; gap: var(--ins-4); align-items: flex-start;
+}
+.fd-aderencia p { margin: 0; }
+
 /* ---- Tela COMIDA ------------------------------------------------------- */
 
 .cm-cat { margin-top: var(--ins-7); }

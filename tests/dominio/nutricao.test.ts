@@ -8,11 +8,13 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { ALIMENTOS_BASE, CATEGORIAS, PLANO_BASE } from '../../src/dominio/nutricao/alimentos';
 import {
-  arrozDoAjuste, fmtKg, itemEntra, listaDeCompras, minutosDe, refeicaoEntra,
-  refeicoesDeHoje, resumoDaRefeicao, totalDaRefeicao, totalDoDia, totalDoItem
+  arrozDoAjuste, diaInterpretavel, diasInterpretaveis, fechaDia, fmtKg, itemEntra,
+  listaDeCompras, minutosDe, refeicaoEntra, refeicoesDeHoje, resumoDaRefeicao,
+  totalDaRefeicao, totalDoDia, totalDoItem
 } from '../../src/dominio/nutricao/calculo';
 import { migraPlano4 } from '../../src/dominio/migracoes';
 import type { Estado } from '../../src/dominio/tipos';
+import type { DiaComidaHist } from '../../src/dominio/nutricao/tipos';
 
 const cat = ALIMENTOS_BASE;
 
@@ -217,4 +219,45 @@ test('3→4 respeita o que já existe', () => {
   const r = migraPlano4(S)!;
   assert.strictEqual(r.cadencia, false, 'cadência dele não é sobrescrita');
   assert.strictEqual(S.cadencia[0], 'treino');
+});
+
+// ---------- a trava de adesão ----------
+// O peso responde à ingestão REAL, não à prescrição. Numa semana de saídas,
+// reduzir o plano-base tiraria comida dos dias em que ele seguiu.
+
+const diaHist = (d: string, extra: Partial<DiaComidaHist> = {}): DiaComidaHist =>
+  Object.assign({ d, done: { cafe: 1 }, agua: 0, escala: {},
+                  tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 1, m: 1 }, extra) as DiaComidaHist;
+
+test('seguir o plano e sair sabendo o que comeu contam igual', () => {
+  assert.strictEqual(diaInterpretavel(diaHist('2026-09-10')), true, 'ausente = seguiu');
+  assert.strictEqual(diaInterpretavel(diaHist('2026-09-10', { aderencia: 'plano' })), true);
+  assert.strictEqual(diaInterpretavel(diaHist('2026-09-10', { aderencia: 'fora' })), true,
+    'saída registrada ainda deixa a semana legível');
+});
+
+test('dia perdido não conta, mesmo com refeições marcadas', () => {
+  assert.strictEqual(diaInterpretavel(diaHist('2026-09-10', { aderencia: 'perdido' })), false,
+    'o que ele marcou não descreve o que entrou');
+});
+
+test('dia mudo não conta: silêncio não é registro', () => {
+  assert.strictEqual(diaInterpretavel(diaHist('2026-09-10', { done: {} })), false);
+});
+
+test('a contagem olha a janela inteira, não só os dias que existem', () => {
+  const hoje = '2026-09-19';
+  const hist = [
+    diaHist('2026-09-18'), diaHist('2026-09-17', { aderencia: 'fora' }),
+    diaHist('2026-09-16', { aderencia: 'perdido' }), diaHist('2026-09-15', { done: {} }),
+    diaHist('2026-08-20')                                   // fora da janela
+  ];
+  assert.strictEqual(diasInterpretaveis(hist, 14, hoje), 2, 'dois dos cinco');
+});
+
+test('fechaDia congela como o dia foi', () => {
+  const dia = { data: '2026-09-19', done: { cafe: 1 }, agua: 0, escala: {},
+                aderencia: 'fora' as const };
+  const h = fechaDia(dia as never, PLANO_BASE, cat, 1, 0);
+  assert.strictEqual(h.aderencia, 'fora', 'senão o passado vira "seguiu o plano"');
 });
