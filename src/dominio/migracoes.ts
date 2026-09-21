@@ -302,6 +302,7 @@ export function migraPlano4(S: Estado): Resultado4 | null {
   S.ajuste = Math.round(S.ajuste);
   if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
   if (!Array.isArray(S.gordura)) S.gordura = [];
+  if (!S.quadro || typeof S.quadro !== 'object') S.quadro = null;
   if (S.perfManual !== true && S.perfManual !== false) S.perfManual = null;
   if (!S.dia || typeof S.dia !== 'object') S.dia = null;
 

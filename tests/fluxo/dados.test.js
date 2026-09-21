@@ -71,6 +71,9 @@ test('exportar carrega todos os campos do estado', async () => {
      // as leituras de gordura visual: é o sinal que destrava o corte, e sem
      // ele no backup trocar de celular faria o app voltar a só abrir revisão
      'gordura',
+     // o quadro do box do dia em curso: se ficar de fora, trocar de aparelho
+     // no meio da aula perde a lousa antes de ela virar nota da sessão
+     'quadro',
      // a sincronização: o carimbo do estado e as lápides do que foi apagado
      'mtime', 'apagados',
      // os dias que ele marcou como descanso

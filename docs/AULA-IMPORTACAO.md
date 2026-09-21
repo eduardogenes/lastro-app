@@ -253,15 +253,30 @@ O que o quadro diz e o arquivo não carrega como dado:
 ## Como o arquivo entra no app
 
 No dia aberto (sábado), no painel **Montar a aula de hoje** → **Colar uma
-aula**. É a quarta porta, ao lado de repetir o sábado passado, dos modelos
-salvos e da lista rápida.
+aula**. É a quarta porta, ao lado da lista rápida.
 
-Entra como **modelo**, nunca como dia preenchido — pela mesma razão das outras
-três: modelo é prescrição, e dia preenchido pareceria registro pronto. Depois
-se aplica no dia com um toque, pelo caminho que já existe.
+**Preenche o dia, não a biblioteca de modelos.** A aula do box não se sabe
+antes: ele descobre o que vai ser quando entra. Então a porta certa é a da
+entrada nova, e não a do reuso — as duas portas de reuso (repetir o sábado
+passado, modelos salvos) continuam existindo para quando ele **reconhecer**
+uma aula repetida, o que só dá para fazer no box, olhando a lousa.
 
-Mesmo nome **atualiza** em vez de duplicar: importar o quadro da semana
-seguinte não pode encher a lista de "HYROX MZ" indistinguíveis.
+Entra **prescrição sem carga**, como as outras portas. Carga que aparece
+preenchida sozinha é o jeito mais rápido de encher o histórico de número que
+ninguém fez.
+
+### O quadro tem duas vidas
+
+**Durante a aula**, ele fica no alto do dia: o time cap, o peso sugerido e o
+que mais a lousa disse e o app não modela.
+
+**Depois**, vira a nota da sessão no histórico. É a única chance — um quadro
+não se reconstrói a partir da prescrição, como o treino de musculação se
+reconstrói. Três meses depois, "3 × 400 m de ski" sem a lousa não explica por
+que o tempo foi aquele.
+
+Se ele salvar o dia como modelo, o quadro vai junto: salvar é justamente o
+gesto de quem reconheceu uma aula que se repete.
 
 O backup continua sendo outra coisa. `importText` substitui o estado inteiro —
 exige `logs` e `done` e avisa que apaga o histórico. Aula é incremental e

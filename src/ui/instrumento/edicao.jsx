@@ -207,8 +207,12 @@ export function Aulas({ c, acoes }) {
       )}
 
       {/* A quarta porta: a aula escrita fora do app. O quadro do box vira
-          arquivo numa conversa, e o arquivo entra aqui — como MODELO e nunca
-          como dia preenchido, pela mesma razão das outras três. */}
+          arquivo numa conversa, e o arquivo preenche o DIA.
+          
+          Fica ao lado da lista rápida, que também é entrada nova, e não junto
+          das duas de reuso: a aula do box não se sabe antes — ele descobre o
+          que vai ser quando entra no box. Reusar continua possível pelo botão
+          de salvar como modelo, quando ele reconhecer uma repetida. */}
       {c.colando ? (
         <div class="swap-g aulac">
           <div class="swap-h ins-label">Colar uma aula</div>
@@ -223,8 +227,8 @@ export function Aulas({ c, acoes }) {
             <button class="ins-btn-secondary" onClick={acoes.cola}>cancelar</button>
           </div>
           <p class="crule ins-provenance">
-            Entra como modelo. Movimento que o app não conhece só passa se o
-            arquivo declarar o que ele mede.
+            Entra no dia de hoje, sem carga. Movimento que o app não conhece só
+            passa se o arquivo declarar o que ele mede.
           </p>
         </div>
       ) : (

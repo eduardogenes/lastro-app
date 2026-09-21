@@ -798,6 +798,17 @@
 
 /* Uma linha de modelo: o modelo inteiro é o alvo, e o destrutivo fica na ponta,
    em coral, com alvo próprio — nunca competindo com o toque que aplica. */
+/* O quadro do box no alto do dia. Mono e `pre-line`: é transcrição, e as
+   quebras de linha da lousa são a estrutura que o app não modelou. */
+.tr-quadro {
+  background: var(--ins-surface-low); border: 1px solid var(--ins-rule);
+  padding: var(--ins-5) var(--ins-6); margin-bottom: var(--ins-7);
+}
+.tr-quadro-t {
+  white-space: pre-line; margin: var(--ins-3) 0 0;
+  font: 400 10px/1.6 var(--ins-font-mono); color: var(--ins-text-3);
+}
+
 .aulal { display: flex; align-items: stretch; gap: var(--ins-2); }
 .aulal-b { flex: 1; min-width: 0; }
 

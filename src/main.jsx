@@ -347,6 +347,7 @@ function normalizaEstado() {
   // existente a reformatar, e um backup de qualquer versão chega por este
   // mesmo caminho.
   if (!Array.isArray(S.aulas)) S.aulas = [];
+  if (!S.quadro || typeof S.quadro !== 'object') S.quadro = null;
   if (!Array.isArray(S.comidaHist)) S.comidaHist = [];
   if (typeof S.mtime !== 'number') S.mtime = 0;
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
@@ -638,6 +639,16 @@ function fechaSessao(comoFim) {
       resumoMods: pendentes.map(function (m) { return textoMod(s.day, m); })
     };
   }
+
+  // O quadro do box vira a nota da sessão. É a única chance: ele não se
+  // reconstrói depois a partir da prescrição, como o treino de musculação se
+  // reconstrói. Sem isto, o time cap, o peso em libras e o "alternate with
+  // partner" não ficam em lugar nenhum.
+  if (marca && S.quadro && S.quadro.day === s.day) {
+    marca.obs = S.quadro.texto;
+    marca.m = Date.now();
+  }
+  if (S.quadro && S.quadro.day === s.day) S.quadro = null;
 
   S.sessao = null;
   S.draft = null;
@@ -2238,6 +2249,10 @@ async function salvarAulaComoModelo() {
   const j = S.aulas.findIndex(function (x) { return x.nome.toLowerCase() === nome.toLowerCase(); });
   const modelo = { id: j >= 0 ? S.aulas[j].id : 'a' + agora, nome: nome,
                    t: j >= 0 ? S.aulas[j].t : agora, m: agora, mov: mov };
+  // Se o dia veio de um quadro colado, ele vai junto: salvar é justamente o
+  // gesto de quem reconheceu uma aula que se repete, e o modelo sem a lousa
+  // perderia o time cap e os pesos na próxima vez.
+  if (S.quadro && S.quadro.day === d) modelo.quadro = S.quadro.texto;
   if (j >= 0) S.aulas[j] = modelo; else S.aulas.push(modelo);
   if (S.aulas.length > 60) S.aulas = S.aulas.slice(-60);
   await save(); render();
@@ -2247,47 +2262,47 @@ async function salvarAulaComoModelo() {
 /**
  * Importa uma aula escrita fora do app.
  *
- * Entra como MODELO e não como dia preenchido, pelo mesmo motivo das outras
- * duas portas: modelo é prescrição, e dia preenchido pareceria registro pronto.
- * Depois ele aplica no dia com um toque, pelo caminho que já existe.
+ * Preenche o DIA, não a biblioteca de modelos. A aula do box não se sabe
+ * antes — ele descobre o que vai ser quando entra —, então a porta certa é a
+ * da entrada nova, ao lado da lista rápida, e não a do reuso. Salvar como
+ * modelo continua sendo decisão dele, para quando reconhecer uma repetida.
+ *
+ * Põe prescrição sem carga, como `repetirUltimaAula`: carga que aparece
+ * preenchida sozinha é o jeito mais rápido de encher o histórico de número que
+ * ninguém fez.
  *
  * O formato está em docs/AULA-IMPORTACAO.md; a leitura e as recusas moram em
  * dominio/aula.ts, onde custam microssegundos para testar.
  */
 async function importaAulaColada(texto) {
+  const d = view.day;
+  if (!diaAberto(d)) { toast('A aula do box só entra no dia aberto.'); return; }
+
   const r = leAula(texto, function (id) { return !!CAT[id]; });
   if (!r.ok) { toast(r.erro); return; }
   const a = r.aula;
 
-  // Cadastra o vocabulário novo antes do modelo: sem isso o modelo apontaria
-  // para id que o catálogo não conhece, e a aula abriria com linha vazia.
+  // Cadastra o vocabulário novo antes de montar o dia: sem isso o dia
+  // apontaria para id que o catálogo não conhece, e a linha nasceria vazia.
   a.novos.forEach(function (x) {
     S.ex[x.id] = { n: x.n, g: '', car: x.car, c: 0, cue: '', meu: 1 };
     if (x.u) { S.ex[x.id].u = x.u; if (x.q) S.ex[x.id].q = x.q; }
   });
   if (a.novos.length) montaCatalogo();
 
-  if (!Array.isArray(S.aulas)) S.aulas = [];
-  const agora = Date.now();
-  // Mesmo nome sobrescreve, como em salvarAulaComoModelo: importar o quadro da
-  // semana seguinte não pode encher a lista de "HYROX MZ" indistinguíveis.
-  const j = S.aulas.findIndex(function (x) { return x.nome.toLowerCase() === a.nome.toLowerCase(); });
-  const modelo = { id: j >= 0 ? S.aulas[j].id : 'a' + agora, nome: a.nome,
-                   t: j >= 0 ? S.aulas[j].t : agora, m: agora, mov: a.mov };
-  if (a.quadro) modelo.quadro = a.quadro;
-  if (a.data) modelo.data = a.data;
-  if (j >= 0) S.aulas[j] = modelo; else S.aulas.push(modelo);
-  if (S.aulas.length > 60) S.aulas = S.aulas.slice(-60);
+  // O quadro fica guardado até a sessão nascer. Ela só existe na primeira
+  // série, e é em `fechaSessao` que ele vira a nota do histórico.
+  if (a.quadro) {
+    S.quadro = { day: d, texto: a.quadro, t: Date.now() };
+    if (a.data) S.quadro.data = a.data;
+  }
 
   view.colaAula = false;
-  await save(); render();
-
-  let msg = (j >= 0 ? 'Modelo "' + a.nome + '" atualizado' : 'Aula "' + a.nome + '" importada')
-          + ' · ' + a.mov.length + (a.mov.length === 1 ? ' movimento' : ' movimentos');
+  let msg = a.nome + ' · ' + a.mov.length + (a.mov.length === 1 ? ' movimento' : ' movimentos');
   if (a.novos.length) {
     msg += ' · ' + a.novos.length + (a.novos.length === 1 ? ' cadastrado' : ' cadastrados');
   }
-  toast(msg + (r.avisos.length ? ' · ' + r.avisos[0] : ''));
+  await poeMovimentos(d, a.mov, msg + (r.avisos.length ? ' · ' + r.avisos[0] : ''));
 }
 
 async function aplicarModeloDeAula(id) {
@@ -4099,7 +4114,7 @@ async function wipe() {
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
-        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura,
+        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura, quadro:S.quadro,
         perfManual:S.perfManual, compras:S.compras };
   // Passa pela mesma normalização do boot: é o único lugar que sabe o padrão de
   // cada campo, e reconstruir o estado à mão aqui já deixou a nutrição sem
@@ -4750,14 +4765,17 @@ CTX.treino = function () {
         ultima: ult ? { n: ult.mov.length, quando: fmtDate(ult.t) } : null,
         modelos: (S.aulas || []).slice().reverse().map(function (a) {
           return { id: a.id, nome: a.nome,
-                   sub: a.mov.length + (a.mov.length === 1 ? ' movimento' : ' movimentos')
-                        + (a.data ? ' · ' + fmtDate(instanteDaData(a.data)) : ''),
+                   sub: a.mov.length + (a.mov.length === 1 ? ' movimento' : ' movimentos'),
                    quadro: a.quadro || null };
         }),
         podeSalvar: (P ? P.ex.length : 0) > 0,
         colando: !!view.colaAula
       };
     })() : null,
+    // O quadro do box enquanto a aula acontece: time cap, peso sugerido e o
+    // que mais a lousa disse e o app não modela. Some quando a sessão encerra,
+    // depois de virar a nota dela.
+    quadro: (S.quadro && S.quadro.day === d) ? S.quadro.texto : null,
     volume: fmtK(volumeDoDia(d)),
     ciclo: String(Math.floor(S.done.length / rot().length) + 1),
     sessoes: S.done.length,

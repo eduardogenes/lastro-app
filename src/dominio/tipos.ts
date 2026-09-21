@@ -415,8 +415,6 @@ export interface ModeloDeAula {
    * dizia. É a mesma escolha do texto do veredito ao lado do ajuste calórico.
    */
   quadro?: string;
-  /** o dia em que o box passou esta aula, quando o arquivo disse */
-  data?: string;
 }
 
 /** Estado das compras. Derivado no cálculo, mas o que foi MARCADO persiste. */
@@ -504,6 +502,21 @@ export interface Estado {
    * o outro gravou depois.
    */
   aulas: ModeloDeAula[];
+
+  /**
+   * O quadro da aula de hoje, colado do box.
+   *
+   * Vive no estado e não no modelo porque a aula do box **não se sabe antes**:
+   * ele descobre o que vai ser quando entra. A importação preenche o DIA, e
+   * reusar é decisão separada — o botão de salvar como modelo continua ali
+   * para quando ele reconhecer uma aula repetida.
+   *
+   * Some quando a sessão encerra, depois de ser copiado para a nota dela: o
+   * quadro nunca se repete de propósito, então se não ficar no histórico não
+   * fica em lugar nenhum. Não dá para reconstruí-lo depois a partir da
+   * prescrição, como dá com a musculação.
+   */
+  quadro: { day: Dia; texto: string; data?: string; t: number } | null;
 
   // ---- o que a fusão com a nutrição trouxe ----
 

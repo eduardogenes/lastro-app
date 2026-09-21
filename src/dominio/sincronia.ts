@@ -454,6 +454,12 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   base.aulas = au.itens.slice(-TETO.aulas);
   resumo.apagados += au.apagados;
 
+  // ---- o quadro do box de hoje ----
+  // Documento e não coleção: é o quadro do dia em curso, e existe um só. Vence
+  // o mais novo, que é o aparelho onde ele acabou de colar a lousa.
+  const ql = local.quadro, qr = remoto.quadro;
+  base.quadro = (qr && (!ql || (qr.t || 0) > (ql.t || 0))) ? qr : (ql || null);
+
   // ---- leituras de gordura visual ----
   // Coleção como as outras: a resposta dada no computador não pode sumir
   // porque o iPhone gravou outra coisa depois.

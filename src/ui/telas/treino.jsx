@@ -163,6 +163,17 @@ export function Treino({ ctx }) {
               ? `${t.movimentos} ${t.movimentos === 1 ? 'movimento' : 'movimentos'}`
               : 'nada prescrito')
           : `${t.feitas} de ${t.prescritas} séries`}>
+        {/* O quadro do box, enquanto a aula acontece. Antes dos cartões porque
+            é a prescrição do dia — o time cap, o peso sugerido e o que mais a
+            lousa disse e o app deliberadamente não modela. Some quando a
+            sessão encerra, depois de virar a nota dela no histórico. */}
+        {t.quadro && !t.editando && (
+          <div class="tr-quadro">
+            <div class="ins-label">o quadro do box</div>
+            <p class="tr-quadro-t">{t.quadro}</p>
+          </div>
+        )}
+
         {/* A lista rápida vem ANTES dos cartões: quem a abre está no fim da
             aula e não quer rolar cinco cartões para chegar nela. */}
         {t.rapido && !t.editando && !t.addEx && (
