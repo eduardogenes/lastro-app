@@ -24,7 +24,7 @@ Gerado a partir do app. Para atualizar depois de mexer no `PROGRAMA`:
 | **C** | Costas + deltoides + bíceps | 7 | 17 |
 | **D** | Especialização: lateral + panturrilha + abdômen | 6 | 17 |
 | **E** | Peito superior + costas + braços | 6 | 14 |
-| **HX** | HYROX | 9 | 16 |
+| **HX** | HYROX | 0 | 0 |
 
 ### Séries por músculo na rotação completa
 
@@ -586,79 +586,7 @@ Se a máquina estiver ocupada:
 
 ## Treino HX — HYROX
 
-*condicionamento, não hipertrofia*
-
-### 01. Corrida
-
-**8 × 1 km** (por tempo) · condicionamento · descanso 90 s
-
-Carga: peso do corpo. Só o que você acrescentou. Pode ficar vazio.
-
-> Os 8 km da prova, um a cada estação. Registre o tempo de cada quilômetro em segundos: 4:12 são 252.
-
-### 02. Ski erg
-
-**1 × 1000 m** (por tempo) · condicionamento · descanso 90 s
-
-Carga: peso do corpo. Só o que você acrescentou. Pode ficar vazio.
-
-> Puxada com o tronco, não só com o braço. Tempo em segundos.
-
-### 03. Sled push
-
-**1 × 50 m** (por tempo) · condicionamento · descanso 90 s
-
-Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
-
-> Carga por lado no campo de carga, tempo em segundos. Passos curtos e contínuos: parar custa mais do que ir devagar.
-
-### 04. Sled pull
-
-**1 × 50 m** (por tempo) · condicionamento · descanso 90 s
-
-Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
-
-> Puxada com o quadril para trás, não só com o braço.
-
-### 05. Burpee broad jump
-
-**1 × 80 m** (por tempo) · condicionamento · descanso 90 s
-
-Carga: peso do corpo. Só o que você acrescentou. Pode ficar vazio.
-
-> A estação que mais custa em fôlego. Salto curto e cadência constante.
-
-### 06. Remo ergômetro
-
-**1 × 1000 m** (por tempo) · condicionamento · descanso 90 s
-
-Carga: peso do corpo. Só o que você acrescentou. Pode ficar vazio.
-
-> Perna, tronco, braço — nessa ordem. Tempo em segundos.
-
-### 07. Farmers carry
-
-**1 × 200 m** (por tempo) · condicionamento · descanso 90 s
-
-Carga: halter em cada mão. Um halter por mão. O app mostra o total das duas.
-
-> Um peso em cada mão. Escápula encaixada, sem deixar o ombro subir.
-
-### 08. Lunges com sandbag
-
-**1 × 100 m** (por tempo) · condicionamento · descanso 90 s
-
-Carga: um halter só. Um halter só, segurado com uma ou duas mãos. O número é o peso dele.
-
-> Joelho tocando o chão a cada passo, como a prova exige. O peso é o do saco.
-
-### 09. Wall balls
-
-**1 × 100 reps** (por tempo) · condicionamento · descanso 90 s
-
-Carga: um halter só. Um halter só, segurado com uma ou duas mãos. O número é o peso dele.
-
-> A última estação, com a perna já destruída. O peso é o da bola; o tempo é o que conta.
+*o que o box programar*
 
 ---
 
