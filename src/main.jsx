@@ -423,6 +423,7 @@ async function load() {
   }
 
   encerraSePreciso();                  // sessão vencida fecha ANTES de decidir a rota
+  ligaBatida();
   // Abrir o app com treino em andamento cai no treino, não em HOJE. Sair e
   // voltar no meio de uma série é o caso mais comum de reabertura que existe
   // neste app, e devolvê-lo a HOJE cobrava dois toques com o celular na mão
@@ -464,7 +465,20 @@ async function load() {
 // ---------- ciclo de vida da sessão ----------
 // Não existe botão de salvar. A sessão nasce na primeira série completa e
 // se encerra sozinha por inatividade ou na virada do dia.
-const SESSAO_LIMITE = 4*3600*1000;
+//
+// Eram 4 horas, e 4 horas nunca encerraram nada de útil: quem esquece de
+// finalizar guarda o celular e só reabre no dia seguinte, quando a virada do
+// dia já tinha fechado a sessão. O limite real de um treino parado é bem
+// menor — 1h30 sem série nova não é descanso, é treino esquecido.
+const SESSAO_LIMITE = 90*60*1000;
+
+// Depois de perguntar, quanto o app espera antes de encerrar sozinho.
+//
+// Existe porque a pergunta só vale se houver chance de responder: encerrar no
+// mesmo instante em que pergunta seria decorar uma decisão já tomada. Dez
+// minutos cobrem banheiro, fila do aparelho e telefonema — e não custam nada,
+// porque a duração gravada vai até a ÚLTIMA SÉRIE, não até o fecho.
+const GRACA_ENCERRAMENTO = 10*60*1000;
 
 // Duração líquida: tempo total menos o que foi pausado. O botão nunca é
 // pré-condição para gravar série — ele só acrescenta precisão ao tempo.
@@ -538,10 +552,59 @@ function encerraSePreciso() {
     fechaSessao('auto');
     return true;
   }
-  const parada = Date.now() - (s.ultima || s.inicio);
-  if (parada < SESSAO_LIMITE && sameDay(s.inicio, Date.now())) return false;
+  // Na abertura o app fecha o que já passou da graça. Entre o limite e ela, a
+  // sessão continua viva e a faixa pergunta — reabrir o app é justamente a
+  // chance de responder.
+  const parada = paradaDaSessao(s);
+  if (parada < SESSAO_LIMITE + GRACA_ENCERRAMENTO && sameDay(s.inicio, Date.now())) return false;
   fechaSessao('auto');
   return true;
+}
+
+/**
+ * Há quanto tempo a sessão não recebe série.
+ *
+ * Pausado devolve zero: pausar é intenção declarada, e cobrar inatividade de
+ * quem avisou que parou seria punir o aviso. Só a virada do dia encerra uma
+ * sessão pausada, como já era.
+ */
+function paradaDaSessao(s) {
+  if (!s || s.pausadoEm) return 0;
+  return Date.now() - (s.ultima || s.inicio);
+}
+
+/** Parada o bastante para o app perguntar se ele ainda está treinando. */
+function sessaoEsquecida(s) {
+  return paradaDaSessao(s) >= SESSAO_LIMITE;
+}
+
+// A batida que faz a pergunta aparecer sem reabrir o app.
+//
+// `encerraSePreciso` só roda no boot, e isso bastava quando o limite era de 4
+// horas: ninguém fica com o app aberto tanto tempo. Com 1h30 o caso comum é
+// outro — o celular fica na bancada com o app aberto, e sem batida a pergunta
+// só apareceria na próxima abertura, que é tarde demais para ser pergunta.
+let batida = null;
+let faixaPerguntando = false;
+
+function ligaBatida() {
+  if (batida) return;
+  batida = setInterval(function () {
+    const s = S.sessao;
+    if (!s) { faixaPerguntando = false; return; }
+    const parada = paradaDaSessao(s);
+    if (parada >= SESSAO_LIMITE + GRACA_ENCERRAMENTO) {
+      fechaSessao('auto');
+      faixaPerguntando = false;
+      save(); render();
+      toast('Treino encerrado sozinho. A duração vai até a última série.');
+      return;
+    }
+    // Só repinta na VIRADA: a faixa sai de atalho para pergunta uma vez, e
+    // renderizar a cada 30 s sem nada mudar seria trabalho por nada.
+    const agora = parada >= SESSAO_LIMITE;
+    if (agora !== faixaPerguntando) { faixaPerguntando = agora; render(); }
+  }, 30000);
 }
 
 function fechaSessao(comoFim) {
@@ -6602,18 +6665,46 @@ CTX.setGordura = function (v) {
  * de destino porque um atalho que não diz para onde vai obriga a tocar para
  * descobrir, e o toque é o que ele existe para economizar.
  */
-CTX.atalhoDeTreino = function () {
+CTX.faixaDaSessao = function () {
   const s = S.sessao;
-  if (!s || view.aba === 'treino') return null;
+  if (!s) return null;
   const t = treino(s.day);
   if (!t) return null;
+
+  // A pergunta aparece em TODAS as abas, treino inclusive: quem esqueceu de
+  // finalizar costuma ter esquecido olhando justamente para ela.
+  if (sessaoEsquecida(s)) {
+    return { tipo: 'pergunta', dia: s.day,
+             txt: 'Treino ' + s.day + ' sem série nova há ' + fmtDur(paradaDaSessao(s)) + '.' };
+  }
+
+  if (view.aba === 'treino') return null;
   const i = ondeEleEstava(estadosDoDia(s.day));
   return {
-    dia: s.day,
+    tipo: 'atalho', dia: s.day,
     // Sem pendente, o atalho continua: encerrar é decisão dele, e sumir com a
     // porta seria esconder a sessão aberta justamente quando ela acabou.
     txt: i == null ? 'tudo registrado · encerrar' : t.ex[i].n
   };
+};
+
+/** "Continuo treinando": zera o relógio de inatividade, e só isso. */
+CTX.continuaSessao = async function () {
+  const s = S.sessao;
+  if (!s) return;
+  s.ultima = Date.now();
+  faixaPerguntando = false;
+  await save(); render();
+  toast('Treino continua.');
+};
+
+/** "Já parei": encerra com a duração indo até a última série registrada. */
+CTX.encerraSessaoEsquecida = async function () {
+  if (!S.sessao) return;
+  fechaSessao('auto');
+  faixaPerguntando = false;
+  await save(); render(); window.scrollTo(0, 0);
+  toast('Treino encerrado. A duração vai até a última série.');
 };
 
 CTX.voltaAoTreino = function () {

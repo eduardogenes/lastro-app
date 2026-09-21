@@ -61,8 +61,20 @@ rede nenhuma.
 ### Registrar
 
 **Não existe botão de salvar.** Cada série entra no histórico assim que você
-preenche carga e repetição. A sessão nasce sozinha na primeira série completa e
-se encerra sozinha por inatividade ou na virada do dia.
+preenche carga e repetição. A sessão nasce sozinha na primeira série completa.
+
+**Ao completar o último set, o próximo exercício abre sozinho** — pronto para
+receber os números, sem iniciar nada. O que você acabou de fazer colapsa e
+continua a um toque, para corrigir o que digitou.
+
+**Enquanto o treino corre, uma faixa acima da tab bar leva de volta a ele** de
+qualquer aba, já posicionada no exercício em que você parou. Ela some na
+própria aba de treino.
+
+Passando de **1h30 sem série nova**, a mesma faixa pergunta se você continua ou
+já parou. Sem resposta, encerra dez minutos depois — e a duração gravada vai
+até a última série, nunca até o instante do fecho. A virada do dia também
+encerra. Pausar é aviso: enquanto pausado, o relógio de inatividade não corre.
 
 O campo mostra a carga da última vez como placeholder. Quando todas as séries
 batem o topo da faixa, aparece o selo **↑ subir carga** — dupla progressão:
