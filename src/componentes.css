@@ -1326,7 +1326,7 @@
    aqui entraria como medida de espaço fora da escala de 4. */
 #toast {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-6));
+  bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-atalho-h) + var(--ins-6));
   width: calc(100% - 36px); max-width: 424px; z-index: 30;
   background: var(--ins-surface); border: 1px solid var(--ins-border); color: var(--ins-text);
   font: 400 11.5px/1.45 var(--ins-font-mono);
@@ -1350,6 +1350,26 @@
   display: none; flex-direction: column; gap: var(--ins-3);
 }
 #timer.on { display: flex; }
+
+/* O atalho de treino em andamento. Divide a faixa acima da tab bar com o
+   cronômetro e se empilha sobre ele — nunca os dois no mesmo lugar. z-index
+   abaixo do cronômetro porque, se algum dia se tocarem, quem some é a porta e
+   não o relógio que está contando. */
+.ins-atalho {
+  position: fixed; bottom: calc(var(--ins-tabbar) + var(--ins-timer-h));
+  left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 460px; z-index: 34;
+  background: var(--ins-surface); color: var(--ins-text);
+  border: none; border-top: 1px solid var(--ins-rule); border-bottom: 1px solid var(--ins-rule);
+  padding: var(--ins-4) var(--ins-8); min-height: 46px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--ins-2);
+  text-align: left;
+}
+.ins-atalho-o { font: 400 9px/1 var(--ins-font-mono); color: var(--ins-text-4); }
+.ins-atalho-v {
+  font: 400 12px/1.2 var(--ins-font-display); color: var(--ins-acid);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+}
 /* A procedência do descanso. Some quando não há o que dizer — o cronômetro
    ligado na mão pelo botão do cartão não tem série de origem. */
 #tctx { color: var(--ins-text-4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

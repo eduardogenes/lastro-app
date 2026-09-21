@@ -10,6 +10,7 @@
 // toque a mais do que custava antes da fusão.
 
 import { TabBar } from './instrumento/tabbar.jsx';
+import { AtalhoTreino } from './instrumento/atalhotreino.jsx';
 import { Hoje } from './telas/hoje.jsx';
 import { Treino } from './telas/treino.jsx';
 import { Comida } from './telas/comida.jsx';
@@ -48,6 +49,8 @@ export function App({ ctx }) {
       </main>
 
       {ctx.folhas()}
+
+      <AtalhoTreino atalho={ctx.atalhoDeTreino()} onVolta={ctx.voltaAoTreino} />
 
       <TabBar ativa={aba} onMuda={ctx.vaiPara} />
     </>

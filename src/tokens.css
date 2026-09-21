@@ -107,6 +107,11 @@
      empilha acima dele em vez de nascer atrás. */
   --ins-timer-h: 0px;
 
+  /* Altura do atalho de treino em andamento; 0 quando não há sessão. Escrito
+     pelo componente, e lido pelo toast e pelo fim da página, que se empilham
+     acima dele — mesmo motivo do cronômetro. */
+  --ins-atalho-h: 0px;
+
   /* Altura do relógio da sessão, que gruda no topo enquanto o treino corre.
      Existe como token porque quem ROLA precisa parar abaixo dele: sem isto o
      exercício aberto encosta o próprio nome embaixo do relógio. `.day-rel`

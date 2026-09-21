@@ -173,7 +173,7 @@ p, .ins-prosa, input, textarea {
      como trazê-lo à vista. Na tela de treino o que sumia era "abrir o
      programa", 52px dele.
      O token nasce 0px no tokens.css, então o `var()` dispensa fallback. */
-  padding-bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-9));
+  padding-bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-atalho-h) + var(--ins-9));
   -webkit-font-smoothing: antialiased;
 }
 

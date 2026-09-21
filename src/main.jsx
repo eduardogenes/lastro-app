@@ -18,6 +18,7 @@ import { montaNoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
 import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX } from './dominio/corpo';
+import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
@@ -727,6 +728,22 @@ function pendencias(dia, sid, pulados) {
     r[estadoEx(dia, i, sid, pulados)].push({ i: i, nome: ex.n });
   });
   return r;
+}
+
+/**
+ * Os estados dos exercícios de um dia, na ordem do treino.
+ *
+ * Recebe o dia em vez de ler `view.day`: o atalho de voltar ao treino é
+ * consultado de OUTRA aba, onde o dia aberto pode não ser o da sessão.
+ */
+function estadosDoDia(dia) {
+  const d = dia || view.day;
+  const t = treino(d);
+  if (!t) return [];
+  const s = S.sessao;
+  return t.ex.map(function (_, j) {
+    return estadoEx(d, j, s ? s.sid : null, s ? s.pulados : []);
+  });
 }
 
 function ehPulado(i) {
@@ -3444,6 +3461,34 @@ function autoTimer(i, k, e) {
     return;
   }
   startTimer(descOf(ex), 'descanso · série ' + (k + 1) + ' · ' + ex.n);
+  // O descanso primeiro: ele é do exercício que ACABOU, e o rótulo dele diz
+  // qual foi. Só então a tela anda.
+  if (k === ult) avancaExercicio(i);
+}
+
+/**
+ * Ao completar o último set, abre o próximo pendente.
+ *
+ * Tira um toque por exercício de quem está de pé, com uma mão, entre séries —
+ * o mesmo motivo pelo qual o cronômetro passou a disparar sozinho. Abre
+ * PRONTO, não INICIADO: não começa sessão, não dispara descanso e não
+ * preenche nada. O que ele acabou de fazer colapsa, como já acontecia no
+ * bi-set, e continua a um toque para quem precisa corrigir o que digitou.
+ *
+ * Nada acontece se o exercício ainda tem série faltando, nem se não há mais
+ * pendente à frente: chegar ao fim é informação, e quem decide o que fazer
+ * com o que ficou para trás é a tela de finalizar.
+ */
+function avancaExercicio(i) {
+  const t = treino(view.day);
+  if (!t) return;
+  const estados = estadosDoDia();
+  if (estados[i] !== 'feito') return;
+  const prox = proximoDepois(estados, i);
+  if (prox == null) return;
+  view.open = prox; view.swapOpen = null;
+  render();
+  mostraExercicio(prox);
 }
 
 function proximoDoBiset(i) {
@@ -6547,6 +6592,40 @@ CTX.setGordura = function (v) {
   if (i >= 0) S.gordura[i] = leitura; else S.gordura.push(leitura);
   S.gordura.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
   queueSave(); render();
+};
+
+/**
+ * O atalho de volta ao treino em andamento.
+ *
+ * Só existe quando há sessão aberta, e some na própria aba de treino — ali
+ * ele seria uma porta para a sala em que já se está. Diz o nome do exercício
+ * de destino porque um atalho que não diz para onde vai obriga a tocar para
+ * descobrir, e o toque é o que ele existe para economizar.
+ */
+CTX.atalhoDeTreino = function () {
+  const s = S.sessao;
+  if (!s || view.aba === 'treino') return null;
+  const t = treino(s.day);
+  if (!t) return null;
+  const i = ondeEleEstava(estadosDoDia(s.day));
+  return {
+    dia: s.day,
+    // Sem pendente, o atalho continua: encerrar é decisão dele, e sumir com a
+    // porta seria esconder a sessão aberta justamente quando ela acabou.
+    txt: i == null ? 'tudo registrado · encerrar' : t.ex[i].n
+  };
+};
+
+CTX.voltaAoTreino = function () {
+  const s = S.sessao;
+  if (!s) return;
+  view.day = s.day;
+  view.aba = 'treino';
+  view.swapOpen = null;
+  view.open = ondeEleEstava(estadosDoDia(s.day));
+  render();
+  if (view.open != null) mostraExercicio(view.open);
+  else window.scrollTo(0, 0);
 };
 
 CTX.protocoloFotos = function () {
