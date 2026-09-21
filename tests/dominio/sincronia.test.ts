@@ -452,3 +452,23 @@ test('a fusão com ajuste também é estável ao repetir', () => {
   assert.deepStrictEqual(dois.estado.protocolo, um.protocolo);
   assert.strictEqual(dois.resumo.identicos, true);
 });
+
+// ---------- as leituras de gordura visual ----------
+// Coleção com chave natural, como as sessões de foto: a resposta dada no
+// computador não pode sumir porque o iPhone gravou qualquer outra coisa depois.
+
+test('leituras de gordura de dois aparelhos se juntam', () => {
+  const pc = estado({ gordura: [{ d: '2026-09-05', de: '2026-08-22', v: 'nao', t: 100 }] });
+  const cel = estado({ gordura: [{ d: '2026-09-19', de: '2026-09-05', v: 'sim', t: 200 }] });
+  const r = funde(pc, cel, T0).estado;
+  assert.strictEqual(r.gordura.length, 2, 'nenhuma das duas some');
+  assert.deepStrictEqual(r.gordura.map(x => x.d), ['2026-09-05', '2026-09-19'], 'em ordem de data');
+});
+
+test('a mesma leitura respondida duas vezes: vence a mais recente', () => {
+  const antes = estado({ gordura: [{ d: '2026-09-19', de: '2026-09-05', v: 'sim', t: 100 }] });
+  const depois = estado({ gordura: [{ d: '2026-09-19', de: '2026-09-05', v: 'incerto', t: 300 }] });
+  assert.strictEqual(funde(antes, depois, T0).estado.gordura.length, 1, 'é a mesma leitura');
+  assert.strictEqual(funde(antes, depois, T0).estado.gordura[0].v, 'incerto');
+  assert.strictEqual(funde(depois, antes, T0).estado.gordura[0].v, 'incerto', 'e a ordem não muda nada');
+});

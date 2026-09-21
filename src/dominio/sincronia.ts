@@ -29,6 +29,7 @@ import type {
   Cardio, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId, Sessao, SessaoFoto
 } from './tipos';
 import type { DiaComida, DiaComidaHist } from './nutricao/tipos';
+import type { LeituraDeGordura } from './corpo';
 
 /** Limites por coleção, iguais aos que o app aplica ao gravar. */
 const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200, aulas: 60, comida: 4000 };
@@ -98,6 +99,7 @@ export function chaveDeRefeicaoFeita(dia: string, refId: string): string {
 /** O modelo de aula. A chave é o id, que nasce com ele e não muda ao renomear. */
 export function chaveDeAula(a: Pick<ModeloDeAula, 'id'>): string { return 'aula:' + a.id; }
 export function chaveDeDescanso(dataISO: string): string { return 'descanso:' + dataISO; }
+export function chaveDeLeitura(l: { d: string }): string { return 'gordura:' + l.d; }
 export function chaveDeFoto(idEx: IdEx): string { return 'foto:' + idEx; }
 
 /**
@@ -451,6 +453,17 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   au.itens.sort(porTempo);
   base.aulas = au.itens.slice(-TETO.aulas);
   resumo.apagados += au.apagados;
+
+  // ---- leituras de gordura visual ----
+  // Coleção como as outras: a resposta dada no computador não pode sumir
+  // porque o iPhone gravou outra coisa depois.
+  const go = uneLista<LeituraDeGordura>(
+    local.gordura || [], remoto.gordura || [], chaveDeLeitura,
+    function (x) { return typeof x.t === 'number' ? x.t : 0; }, mortos
+  );
+  go.itens.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  base.gordura = go.itens.slice(-TETO.protocolo);
+  resumo.apagados += go.apagados;
 
   // ---- peso e cintura ----
   base.body = { peso: [], cintura: [] };

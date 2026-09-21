@@ -17,7 +17,7 @@ import {
 import { montaNoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
-import { ajusteDoVeredito } from './dominio/corpo';
+import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX } from './dominio/corpo';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
@@ -321,6 +321,7 @@ function normalizaEstado() {
   if (typeof S.ajuste !== 'number' || !isFinite(S.ajuste)) S.ajuste = 0;
   S.ajuste = Math.round(S.ajuste);
   if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
+  if (!Array.isArray(S.gordura)) S.gordura = [];
   if (S.perfManual !== true && S.perfManual !== false) S.perfManual = null;
   if (!S.dia || typeof S.dia !== 'object') S.dia = null;
 
@@ -2960,10 +2961,10 @@ function veredito() {
   return _veredito(S.body, {
     forcaSubindo: forcaSubindo(),
     diasRegistrados: diasRegistrados(),
-    // A leitura das fotos ainda não é perguntada em lugar nenhum. Enquanto
-    // não for, o peso abre revisão e NUNCA corta sozinho — que é o que a
-    // regra do nutricionista manda fazer na ausência do sinal.
-    gorduraVisual: null
+    // A segunda camada de confirmação, que substituiu a cintura. Perguntada na
+    // tela de comparar, onde as duas fotos estão à vista. Envelhece em 14 dias:
+    // sem leitura recente o peso abre revisão e não corta.
+    gorduraVisual: leituraVigente(S.gordura, Date.now())
   });
 }
 
@@ -3935,7 +3936,7 @@ async function wipe() {
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
-        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist,
+        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura,
         perfManual:S.perfManual, compras:S.compras };
   // Passa pela mesma normalização do boot: é o único lugar que sabe o padrão de
   // cada campo, e reconstruir o estado à mão aqui já deixou a nutrição sem
@@ -6477,8 +6478,29 @@ CTX.comparacao = function () {
                 comFoto.length + ' sessões nesta pose';
   }
 
+  // A pergunta do fechamento semanal, feita onde a resposta está à vista: ele
+  // já está com as duas fotos na frente. Só aparece quando o par cobre mais ou
+  // menos duas semanas — que é sobre o que a pergunta é. Num par de três meses
+  // ela seria outra pergunta, e guardar a resposta como se fosse esta mentiria
+  // para a régua calórica.
+  let pergunta = null;
+  if (par) {
+    const dias = Math.abs(Math.round((instanteDaData(c.ate) - instanteDaData(c.de)) / 86400000));
+    if (dias >= JANELA_MIN && dias <= JANELA_MAX) {
+      const ja = (S.gordura || []).filter(function (x) { return x.d === c.ate; })[0];
+      pergunta = {
+        t: 'Comparando com ' + dias + ' dias atrás: a gordura visual aumentou claramente?',
+        valor: ja ? ja.v : null,
+        opcoes: [{ k: 'sim', t: 'sim' }, { k: 'nao', t: 'não' }, { k: 'incerto', t: 'incerto' }],
+        nota: 'Entra na régua calórica: o peso sozinho não corta, e sem esta leitura ' +
+              'ele abre revisão em vez de tirar comida do plano.'
+      };
+    }
+  }
+
   return {
     meta: S.protocolo.sessoes.length + (S.protocolo.sessoes.length === 1 ? ' sessão' : ' sessões'),
+    pergunta: pergunta,
     poses: lista.map(function (p) { return { k: p.id, t: p.n }; }),
     pose: c.pose,
     par: par,
@@ -6495,6 +6517,24 @@ CTX.comparacao = function () {
 };
 
 /** O resumo que aparece na aba DADOS, ao lado de peso e cintura. */
+/**
+ * Guarda a leitura de gordura do par em tela.
+ *
+ * Chave natural: a data da sessão mais NOVA do par. Responder de novo
+ * substitui — não existe histórico de opinião sobre o mesmo par, e sim a
+ * resposta em vigor. Sem toast: é registro silencioso, como toda série.
+ */
+CTX.setGordura = function (v) {
+  const c = view.comparar;
+  if (!c || !c.de || !c.ate) return;
+  if (!Array.isArray(S.gordura)) S.gordura = [];
+  const leitura = { d: c.ate, de: c.de, v: v, t: Date.now() };
+  const i = S.gordura.findIndex(function (x) { return x.d === c.ate; });
+  if (i >= 0) S.gordura[i] = leitura; else S.gordura.push(leitura);
+  S.gordura.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  queueSave(); render();
+};
+
 CTX.protocoloFotos = function () {
   const lista = posesDo(S.protocolo.poses);
   const u = ultimaSessaoFoto(S.protocolo.sessoes);

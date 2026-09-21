@@ -72,6 +72,57 @@ export interface Sinais {
   gorduraVisual?: 'sim' | 'nao' | 'incerto' | null;
 }
 
+/**
+ * Uma leitura de gordura visual, feita comparando duas fotos.
+ *
+ * Não é análise sofisticada: é a pergunta que o nutricionista pediu para o
+ * fechamento da semana — "comparando com 2 semanas atrás, a gordura visual
+ * aumentou claramente?". Ela é a segunda camada de confirmação que substituiu
+ * a cintura, e sem ela o peso não corta.
+ */
+export interface LeituraDeGordura {
+  /** a data da sessão MAIS NOVA do par comparado; é a chave natural */
+  d: string;
+  /** a data da sessão mais antiga do par */
+  de: string;
+  v: 'sim' | 'nao' | 'incerto';
+  /** quando ele respondeu */
+  t: number;
+}
+
+/** Quantos dias uma leitura continua valendo para a decisão. */
+export const VALIDADE_LEITURA = 14;
+
+/** O intervalo em que a pergunta faz sentido: "duas semanas atrás", com folga. */
+export const JANELA_MIN = 10, JANELA_MAX = 28;
+
+/**
+ * A leitura que vale para a decisão de hoje.
+ *
+ * Envelhece de propósito. A regra compara duas semanas de peso, e uma resposta
+ * dada há um mês fala de outro corpo — usá-la seria confirmar o presente com
+ * evidência do passado. Sem leitura recente o veredito diz o que falta, que é
+ * o comportamento conservador e o que a regra manda na ausência do sinal.
+ *
+ * A validade conta da sessão MAIS NOVA do par, não de quando ele respondeu:
+ * responder hoje sobre um par de três meses atrás não torna o par recente.
+ */
+export function leituraVigente(
+  leituras: LeituraDeGordura[] | null | undefined,
+  agora: number = Date.now()
+): 'sim' | 'nao' | 'incerto' | null {
+  if (!Array.isArray(leituras) || !leituras.length) return null;
+  const corte = agora - VALIDADE_LEITURA * DIA;
+  let melhor: LeituraDeGordura | null = null;
+  leituras.forEach(function (x) {
+    if (!x || !x.d || !x.v) return;
+    const quando = new Date(x.d + 'T12:00:00').getTime();
+    if (!isFinite(quando) || quando < corte) return;
+    if (!melhor || x.d > melhor.d) melhor = x;
+  });
+  return melhor ? (melhor as LeituraDeGordura).v : null;
+}
+
 /** Acima disto, duas semanas seguidas pedem revisão. */
 export const ALTO = 0.40;
 /** Abaixo disto, duas semanas seguidas com força parada pedem mais comida. */

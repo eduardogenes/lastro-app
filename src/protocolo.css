@@ -94,6 +94,11 @@
 .cp-modo { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
 
 .cp-par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-3); margin-top: var(--ins-7); }
+
+/* A pergunta da régua calórica, separada do que está acima por uma régua: ela
+   não é leitura da foto, é o que se faz com a leitura. */
+.cp-gordura { margin-top: var(--ins-7); padding-top: var(--ins-5); border-top: 1px solid var(--ins-rule); }
+.cp-gordura .ins-label { display: block; margin-bottom: var(--ins-3); }
 .cp-lado { margin: 0; display: flex; flex-direction: column; gap: var(--ins-2); }
 .cp-lado figcaption { display: flex; flex-direction: column; gap: var(--ins-1); }
 .cp-num { color: var(--ins-text-3); }

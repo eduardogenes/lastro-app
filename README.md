@@ -113,8 +113,9 @@ cadastrou.
 **Acompanhamento** tem o calendário do mês, dias treinados, tempo e volume, e a
 média móvel de treinos por semana.
 
-**Corpo** tem peso (3 a 4× por semana), cintura (1× por semana) e cardio. O
-veredito usa **média semanal**, nunca o valor do dia:
+**Corpo** tem peso (3 a 4× por semana) e cardio. O veredito usa **média
+semanal**, nunca o valor do dia, e exige **duas semanas consecutivas** — não a
+média de duas, que deixaria uma semana de retenção decidir sozinha:
 
 | Situação | O que o app diz |
 |---|---|
@@ -122,6 +123,21 @@ veredito usa **média semanal**, nunca o valor do dia:
 | Entre 0,15 e 0,30 kg/semana | Manter |
 | Acima de 0,4 kg/semana por 2 semanas seguidas, com piora visual clara | −150 kcal |
 | Qualquer outro caso | Observar, sem mexer na comida |
+
+**O peso sozinho nunca corta.** Ele abre revisão. A piora visual vem de uma
+pergunta em **comparar** — "comparando com N dias atrás, a gordura visual
+aumentou claramente?" — feita ali porque é ali que as duas fotos estão à vista.
+Ela vale 14 dias e some depois; sem ela o app não tira comida do plano. A
+redução também exige registro de comida em pelo menos 11 dos últimos 14 dias,
+senão o app estaria cortando o plano por causa de refeições que vieram de fora
+dele.
+
+**O ajuste é um saldo, não um interruptor.** Depois de aplicado, a nova
+ingestão vira a linha de base: o peso voltar à faixa não devolve as 150 kcal.
+Para zerar, restaure o plano em ajustes.
+
+Cintura saiu do algoritmo — medir parou de acontecer, e as fotos cobrem melhor
+a mesma pergunta. Medida ocasional continua entrando como informação.
 
 Na mesma aba, séries por músculo na semana, comparadas com o **mesmo ponto** das
 semanas anteriores, e um aviso quando o programa saiu do alvo do treinador.

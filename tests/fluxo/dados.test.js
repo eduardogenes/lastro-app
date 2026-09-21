@@ -68,6 +68,9 @@ test('exportar carrega todos os campos do estado', async () => {
      // o ledger do ajuste: o saldo sozinho não diz de onde veio, e a regra
      // do nutricionista audita justamente as trocas contra a adesão da época
      'ajusteHist',
+     // as leituras de gordura visual: é o sinal que destrava o corte, e sem
+     // ele no backup trocar de celular faria o app voltar a só abrir revisão
+     'gordura',
      // a sincronização: o carimbo do estado e as lápides do que foi apagado
      'mtime', 'apagados',
      // os dias que ele marcou como descanso

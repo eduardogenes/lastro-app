@@ -7,7 +7,7 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { cinturaMes, mediasSemanais, pesoRitmo, veredito } from '../../src/dominio/corpo';
+import { cinturaMes, leituraVigente, mediasSemanais, pesoRitmo, veredito } from '../../src/dominio/corpo';
 import { medidas, naSemana, pesagens } from './ajuda';
 
 const semCintura = { peso: [] as ReturnType<typeof pesagens>, cintura: [] };
@@ -167,4 +167,40 @@ test('o ritmo é medido sobre pelo menos 12 dias', () => {
   const r = pesoRitmo(pesagens([73.0, 73.3]));
   assert.strictEqual(r.ok, true);
   assert.strictEqual(r.duasSemanas, false, 'duas semanas seguidas dão 7 dias de base, não 12');
+});
+
+// ---------- a leitura de gordura visual ----------
+
+test('a leitura mais recente é a que vale', () => {
+  const hoje = new Date();
+  const iso = d => new Date(hoje.getTime() - d * 86400000).toISOString().slice(0, 10);
+  const v = leituraVigente([
+    { d: iso(10), de: iso(24), v: 'nao', t: Date.now() },
+    { d: iso(2),  de: iso(16), v: 'sim', t: Date.now() }
+  ]);
+  assert.strictEqual(v, 'sim');
+});
+
+test('leitura velha não decide o presente', () => {
+  const antiga = new Date(Date.now() - 40 * 86400000).toISOString().slice(0, 10);
+  assert.strictEqual(
+    leituraVigente([{ d: antiga, de: antiga, v: 'sim', t: Date.now() }]),
+    null, 'responder hoje sobre um par de mês passado não torna o par recente');
+});
+
+test('sem leitura nenhuma é null, não "não"', () => {
+  assert.strictEqual(leituraVigente([]), null);
+  assert.strictEqual(leituraVigente(null), null);
+  assert.strictEqual(leituraVigente(undefined), null);
+});
+
+test('a leitura velha some e o corte volta a travar', () => {
+  const antiga = new Date(Date.now() - 40 * 86400000).toISOString().slice(0, 10);
+  const body = { peso: pesagens([73.0, 73.6, 74.2]), cintura: [] };
+  const v = veredito(body, {
+    diasRegistrados: 14, forcaSubindo: false,
+    gorduraVisual: leituraVigente([{ d: antiga, de: antiga, v: 'sim', t: Date.now() }])
+  });
+  assert.strictEqual(v.k, 'observar');
+  assert.strictEqual(v.falta, 'gordura', 'evidência vencida é ausência de evidência');
 });

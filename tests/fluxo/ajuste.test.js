@@ -9,6 +9,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { app, inicioDaSemana, DIA } from './harness.js';
+import { cacheFalso } from './dubles.js';
 
 function pesagens(medias) {
   const ultima = inicioDaSemana(Date.now()) - 7 * DIA;
@@ -135,5 +136,84 @@ test('restaurar o plano é o caminho documentado para zerar', async () => {
   a.E('window.confirm = function () { return true; }');
   await a.E('CTX.restauraPlano()'); await a.esperar();
   assert.strictEqual(a.E('S.ajuste'), 0);
+  a.fechar();
+});
+
+// ---------- a leitura das fotos, que é o que destrava o corte ----------
+
+const iso = n => {
+  const d = new Date(Date.now() - n * DIA);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+};
+
+function comFotos(a, datas) {
+  a.E(`S.protocolo.sessoes = ${JSON.stringify(datas)}.map(function (d, i) {
+    return { d: d, t: 1, m: 1, fotos: { 'frente-relaxado': { v: i + 1, ext: 'webp' } } };
+  })`);
+}
+
+test('a leitura das fotos destrava o corte que o peso sozinho não dá', async () => {
+  const a = await comPeso([73.0, 73.6, 74.2]);          // duas semanas acima de 0,40
+  cacheFalso(a);
+  comFotos(a, [iso(14), iso(0)]);
+
+  a.aba('dados');
+  assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Observar',
+    'sem a leitura, o peso abre revisão e não corta');
+
+  a.E('CTX.abreComparar()');
+  const p = a.J('CTX.comparacao().pergunta');
+  assert.ok(p, 'a pergunta aparece num par de 14 dias');
+  assert.strictEqual(p.valor, null, 'e começa sem resposta');
+
+  await a.E("CTX.setGordura('sim')"); await a.esperar();
+  assert.strictEqual(a.J('S.gordura').length, 1);
+  assert.strictEqual(a.J('S.gordura')[0].v, 'sim');
+  assert.strictEqual(a.J('S.gordura')[0].d, iso(0), 'a chave é a sessão mais nova');
+
+  a.aba('dados');
+  const v = a.J('CTX.dados().veredito');
+  assert.strictEqual(v.t, 'Comer menos');
+  assert.strictEqual(v.podeAplicar, true, 'e agora há o que aplicar');
+  a.fechar();
+});
+
+test('fotos sem piora mandam manter, e não cortam', async () => {
+  const a = await comPeso([73.0, 73.6, 74.2]);
+  cacheFalso(a);
+  comFotos(a, [iso(14), iso(0)]);
+  a.E('CTX.abreComparar()');
+  await a.E("CTX.setGordura('nao')"); await a.esperar();
+
+  a.aba('dados');
+  assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Manter como está',
+    'ganho acima da faixa não é ruim por si: está comprando músculo');
+  a.fechar();
+});
+
+test('responder de novo substitui, em vez de empilhar opinião', async () => {
+  const a = await comPeso([73.0, 73.6, 74.2]);
+  cacheFalso(a);
+  comFotos(a, [iso(14), iso(0)]);
+  a.E('CTX.abreComparar()');
+  await a.E("CTX.setGordura('sim')"); await a.esperar();
+  await a.E("CTX.setGordura('incerto')"); await a.esperar();
+
+  assert.strictEqual(a.J('S.gordura').length, 1, 'uma leitura por par');
+  assert.strictEqual(a.J('S.gordura')[0].v, 'incerto');
+  a.aba('dados');
+  assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Observar', 'incerto não corta');
+  assert.strictEqual(a.E('CTX.dados().veredito.podeAplicar'), false);
+  a.fechar();
+});
+
+test('num par de três meses a pergunta não aparece', async () => {
+  // Seria outra pergunta, e a régua leria a resposta como se fosse esta.
+  const a = await comPeso([73.0, 73.6, 74.2]);
+  cacheFalso(a);
+  comFotos(a, [iso(92), iso(0)]);
+  a.E('CTX.abreComparar()');
+  assert.strictEqual(a.J('CTX.comparacao().pergunta'), null);
   a.fechar();
 });

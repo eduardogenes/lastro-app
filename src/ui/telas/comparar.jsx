@@ -10,6 +10,12 @@
 // Entre duas sessões seguidas a diferença é quase toda água, sono e horário, e é
 // assim que se desiste de um plano que estava funcionando.
 //
+// A pergunta de gordura visual mora aqui, e não numa tela de fechamento
+// semanal, porque é aqui que a resposta está à vista. Ela só aparece quando o
+// par cobre mais ou menos duas semanas: num par de três meses seria outra
+// pergunta, e a régua calórica leria a resposta como se fosse esta. Substituiu
+// a cintura como segunda camada de confirmação — medir parou de acontecer.
+//
 // O peso e a cintura embaixo de cada foto são MÉDIA DA SEMANA e vêm de
 // `S.body` — a sessão de fotos não pede número nenhum. O protocolo manda
 // fotografar de manhã em jejum, que é o mesmo momento da pesagem: perguntar de
@@ -100,6 +106,19 @@ export function Comparar({ ctx }) {
                   <Lado l={c.ate} aoAjustar={d => ctx.abreAjuste(d, c.pose)} />
                 </div>
               )}
+
+            {/* A pergunta do nutricionista, feita aqui e não numa tela de
+                fechamento: a resposta está na tela, logo acima. Ela é a
+                segunda camada de confirmação que substituiu a cintura —
+                medir circunferência parou de acontecer. */}
+            {c.pergunta && (
+              <div class="cp-gordura">
+                <div class="ins-label obs-h">{c.pergunta.t}</div>
+                <Chips opcoes={c.pergunta.opcoes} valor={c.pergunta.valor}
+                       onMuda={ctx.setGordura} />
+                <Procedencia>{c.pergunta.nota}</Procedencia>
+              </div>
+            )}
 
             <Procedencia>{c.intervalo}</Procedencia>
             <Procedencia>

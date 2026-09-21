@@ -7,7 +7,7 @@
 // lugar onde um contrato só documentado se solta do código sem ninguém ver.
 
 import type { Cadencia } from './dia';
-import type { Ajuste } from './corpo';
+import type { Ajuste, LeituraDeGordura } from './corpo';
 import type { Alimento, DiaComida, DiaComidaHist, Refeicao } from './nutricao/tipos';
 
 /** Os seis tipos de carregamento. O app rotula, nunca converte. */
@@ -527,6 +527,14 @@ export interface Estado {
   ajuste: number;
   /** Os passos que de fato aconteceram, com a procedência de cada um. */
   ajusteHist: PassoDeAjuste[];
+  /**
+   * As leituras de gordura visual, uma por par de fotos comparado.
+   *
+   * Coleção com chave natural (a data da sessão mais nova), como
+   * `protocolo.sessoes`: responder no iPhone e no computador não pode fazer
+   * uma resposta sumir porque a outra gravou depois.
+   */
+  gordura: LeituraDeGordura[];
   /**
    * Override do sinal de força. `null` = o app calcula a partir das cargas.
    * Existe porque o cálculo não sabe que ele voltou de duas semanas doente.
