@@ -36,11 +36,17 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
   assert.strictEqual(a.E('S.logs["pendulum-squat"].length'), 1);
   assert.strictEqual(a.J('S.carga')['pendulum-squat'], 'lado', 'a correção de carga acompanhou');
 
-  // a coluna ANTERIOR mostra o que ele fez, agora no dia B
+  // a coluna ANTERIOR mostra o que ele fez, agora no dia B. A flexora e não o
+  // agachamento: o pendulum saiu do programa na revisão do treinador, e o
+  // slot 0 do B passou a ser o agachamento no Smith, que não tem passado.
   a.E('go("B")');
-  a.E('toggle(0)');
-  assert.match(a.texto('.ex.open .setrow .setant'), /^120 × /,
+  a.E('toggle(1)');
+  assert.match(a.texto('.ex.open .setrow .setant'), /^45 × /,
     'a evolução continua: o app mostra a carga do treino antigo');
+
+  // e o que saiu do programa não perde o que foi levantado nele
+  assert.strictEqual(a.E('CAT["pendulum-squat"].n'), 'Pendulum squat',
+    'o pendulum saiu do dia B, não do catálogo');
 
   // exercício que saiu do programa continua nomeado, não vira slug cru
   assert.strictEqual(a.E('CAT["remada-horizontal-na-maquina"].n'), 'Remada horizontal na máquina');

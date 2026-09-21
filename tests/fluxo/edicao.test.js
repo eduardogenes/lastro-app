@@ -120,8 +120,8 @@ test('trocar exercício é uma mudança de hoje, e sai na lista', async () => {
   a.E('setAlt(0, "agachamento-hack")');
 
   assert.strictEqual(a.E('treino("B").ex[0].id'), 'agachamento-hack');
-  assert.strictEqual(a.E('treino("B").ex[0].orig'), 'pendulum-squat');
-  assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'pendulum-squat', 'oficial intocado');
+  assert.strictEqual(a.E('treino("B").ex[0].orig'), 'agachamento-no-smith');
+  assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'agachamento-no-smith', 'oficial intocado');
   assert.strictEqual(a.J('S.mods.list')[0].k, 'troca');
   a.fechar();
 });
@@ -318,20 +318,20 @@ test('o alvo do treinador é calculado do programa, nunca transcrito', async () 
 test('trocar exercício recém-promovido avisa da regra de 6 a 8 semanas', async () => {
   const a = await app();
   a.E('S.prog.B.ex[0].desde = Date.now() - 14*86400000');
-  const imp = a.J('impactoDoMod("B", { k:"troca", slot:"pendulum-squat", por:"belt-squat" })');
+  const imp = a.J('impactoDoMod("B", { k:"troca", slot:"agachamento-no-smith", por:"belt-squat" })');
   assert.ok(imp, 'exercício com 2 semanas de casa gera aviso');
   assert.match(imp.txt, /6 a 8 semanas/);
   assert.strictEqual(imp.acima, 1);
 
   // o que veio do treinador (desde 0) não entra nessa conta
   a.E('S.prog.B.ex[0].desde = 0');
-  assert.strictEqual(a.J('impactoDoMod("B", { k:"troca", slot:"pendulum-squat", por:"belt-squat" })'), null);
+  assert.strictEqual(a.J('impactoDoMod("B", { k:"troca", slot:"agachamento-no-smith", por:"belt-squat" })'), null);
   a.fechar();
 });
 
 test('promover uma troca reinicia o relógio do exercício no programa', async () => {
   const a = await app();
-  a.E('aplicaAoOficial("B", [{ k:"troca", slot:"pendulum-squat", por:"belt-squat" }], "decisao")');
+  a.E('aplicaAoOficial("B", [{ k:"troca", slot:"agachamento-no-smith", por:"belt-squat" }], "decisao")');
   assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'belt-squat');
   assert.ok(a.E('S.prog.B.ex[0].desde') > Date.now() - 5000, 'entrou agora, conta a partir de agora');
   a.fechar();

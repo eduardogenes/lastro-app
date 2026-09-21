@@ -82,9 +82,10 @@ test('descanso automático na última série usa o tempo do exercício', async (
   const a = await app();
   a.E('go("B")');
 
-  // pendulum squat: grande composto, 3 min
+  // agachamento no Smith: grande composto, 3 min
   a.E('toggle(0)');
-  for (let k = 0; k < 3; k++) a.preencher(0, k, 100, 8);
+  const n = a.E('setsFor(treino("B").ex[0])');
+  for (let k = 0; k < n; k++) a.preencher(0, k, 100, 8);
   assert.ok(a.doc.getElementById('timer').className.includes('on'));
   assert.strictEqual(a.texto('#tval'), '3:00');
 

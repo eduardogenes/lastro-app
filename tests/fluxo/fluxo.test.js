@@ -48,14 +48,18 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   a.aba('treino');
   assert.strictEqual(a.E('view.day'), 'B');
   a.E('toggle(0)');
-  for (let k = 0; k < 3; k++) a.preencher(0, k, 70, 9);
+  const setsB0 = a.E('setsFor(treino("B").ex[0])');
+  for (let k = 0; k < setsB0; k++) a.preencher(0, k, 70, 9);
 
   a.E('go("D")');                          // navega e volta: nada pode se perder
   a.E('go("B")');
   assert.strictEqual(a.log('B', 0).length, 1, 'a série continua lá');
 
   a.E('modoEdicao(true)');
-  a.E('mudaSeries(4, 1)');                 // adutora
+  // Lido do programa e não fixado: a prescrição do treinador muda, e um número
+  // cravado aqui transformaria revisão de treino em teste quebrado.
+  const antesDoSlot4 = a.E('treino("B").ex[4].s');
+  a.E('mudaSeries(4, 1)');
   a.E('modoEdicao(false)');
   await a.E('finalizarSessao()');
   await a.esperar();
@@ -64,7 +68,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   await a.E('concluirPromo()');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.prog.B.ex[4].s'), 3, 'essa ele quis para valer');
+  assert.strictEqual(a.E('S.prog.B.ex[4].s'), antesDoSlot4 + 1, 'essa ele quis para valer');
   assert.strictEqual(a.E('S.progLog.length'), 1);
   assert.strictEqual(a.J('S.progLog')[0].motivo, 'decisao');
 
@@ -113,7 +117,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   await b.esperar();
 
   assert.strictEqual(b.E('S.done.length'), 4, 'três treinos e o retroativo');
-  assert.strictEqual(b.E('S.prog.B.ex[4].s'), 3, 'a promoção sobreviveu');
+  assert.strictEqual(b.E('S.prog.B.ex[4].s'), antesDoSlot4 + 1, 'a promoção sobreviveu');
   assert.strictEqual(b.E('CAT["pendulum-da-unidade-nova"].n'), 'Pendulum da unidade nova');
   assert.strictEqual(b.E('S.mods'), null, 'nenhum mod ficou pendurado');
   assert.strictEqual(b.E('S.sessao'), null);
@@ -124,8 +128,8 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   const mus = b.J('seriesPorMusculo(0, Date.now() + 1)');
   // 3 do supino no Smith que substituiu o chest press + 2 do crucifixo inclinado
   assert.strictEqual(mus['peito superior'], 5, 'o supino no Smith contou em peito superior');
-  // 3 do pendulum squat na terça + 3 do aparelho novo cadastrado na quarta
-  assert.strictEqual(mus['quadríceps'], 6, 'o pendulum novo contou em quadríceps');
+  // o agachamento da terça + 3 do aparelho novo cadastrado na quarta
+  assert.strictEqual(mus['quadríceps'], setsB0 + 3, 'o pendulum novo contou em quadríceps');
 
   // e todas as telas continuam de pé
   ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (t) {

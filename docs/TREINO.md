@@ -36,13 +36,13 @@ Uma rotação são 6 sessões, o que dá uma semana.
 | delt lateral | 12 | prioridade |
 | dorsal | 10 | prioridade |
 | panturrilha | 10 | prioridade |
-| posterior | 6 | prioridade |
-| glúteo | 2 | prioridade |
-| quadríceps | 7 |  |
+| posterior | 7 | prioridade |
+| glúteo | 3 | prioridade |
 | tríceps | 6 |  |
 | costas espessura | 6 |  |
 | bíceps | 6 |  |
 | abdômen | 6 |  |
+| quadríceps | 5 |  |
 | delt posterior | 3 |  |
 | adutores | 2 |  |
 | delt anterior | 2 |  |
@@ -172,23 +172,22 @@ Se a máquina estiver ocupada:
 
 *a perna inteira num dia só*
 
-### 01. Pendulum squat
+### 01. Agachamento no Smith
 
-**3 × 6–10** · quadríceps · composto, RIR 1–2 · descanso 3 min
+**2 × 6–10** · quadríceps · composto, RIR 1–2 · descanso 3 min
 
 Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
 
-> Quadríceps é seu ponto forte: o volume é baixo de propósito, a intenção não. Hack squat serve igual.
+> Amplitude máxima confortável e repetível, com a posição dos pés estável entre as sessões. Não tente transformá-lo em agachamento para glúteo: aqui se quer um padrão estável e progressível, com bom estímulo de quadríceps sem gastar volume nele.
 
 Se a máquina estiver ocupada:
 
-- **Agachamento hack** — Mesma ideia, curva de resistência diferente.
-- **Belt squat** — Tira a carga da coluna.
-- **Leg press vertical** — Mais quadril, menos joelho.
+- **Agachamento hack** — Considerado pelo treinador para a mesma função. Curva de resistência diferente.
+- **Belt squat** — Considerado pelo treinador para a mesma função. Tira a carga da coluna.
 
 ### 02. Cadeira flexora sentada
 
-**3 × 8–12** · posterior · isolador, RIR 1 · descanso 2 min
+**4 × 8–12** · posterior · isolador, RIR 1 · descanso 2 min
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
@@ -230,7 +229,7 @@ Se a máquina estiver ocupada:
 
 ### 05. Cadeira extensora
 
-**2 × 10–15** · quadríceps · isolador, RIR 0–1 · descanso 2 min
+**1 × 10–15** · quadríceps · isolador, RIR 0–1 · descanso 2 min
 
 Carga: placa. O número é a carga selecionada, e pronto.
 
@@ -244,7 +243,7 @@ Se a máquina estiver ocupada:
 
 ### 06. Elevação pélvica na máquina
 
-**2 × 8–12** · glúteo · composto, RIR 1 · descanso 150 s
+**3 × 8–12** · glúteo · composto, RIR 1 · descanso 150 s
 
 Carga: anilha por lado. Só um lado, sem contar a barra. O app mostra o total em anilhas.
 

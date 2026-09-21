@@ -21,7 +21,7 @@ import type { Estado, IdEx, Log, Treino } from './tipos';
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-export const PLANO_ATUAL = 8;
+export const PLANO_ATUAL = 9;
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -492,5 +492,54 @@ export function migraPlano8(S: Estado): Resultado8 | null {
     });
   }
   S.plano = 8;
+  return r;
+}
+
+// ---------- 8 -> 9: a revisão do dia B ----------
+//
+// O treinador revisou a terça em setembro de 2026: ênfase a posteriores e
+// glúteo, e menos orçamento direto de quadríceps — que segue sendo ponto forte
+// relativo. Quatro mudanças, uma delas troca de exercício.
+//
+// A migração aplica DELTA, e nunca reescreve o dia. Só mexe no slot que ainda
+// está exatamente como o programa antigo prescrevia; se ele já tinha mudado
+// aquele exercício na mão e promovido ao oficial, o número dele fica. É a
+// mesma regra da 7→8, e é o que separa "o treinador mudou" de "eu apago o que
+// você decidiu".
+//
+// Os valores antigos estão congelados aqui, como manda a regra: migração lê
+// dado da época, nunca o código de hoje — que já vem alterado.
+
+/** O que o dia B prescrevia até o plano 8, no que esta revisão tocou. */
+export const REVISAO_B_PLANO_8 = {
+  troca: { de: 'pendulum-squat', para: 'agachamento-no-smith', sDe: 3, sPara: 2 },
+  series: [
+    { id: 'cadeira-flexora-sentada', de: 3, para: 4 },
+    { id: 'cadeira-extensora', de: 2, para: 1 },
+    { id: 'elevacao-pelvica-na-maquina', de: 2, para: 3 }
+  ]
+};
+
+/** O que a migração 8→9 mexeu. */
+export interface Resultado9 { trocou: 0 | 1; series: number; }
+
+export function migraPlano9(S: Estado): Resultado9 | null {
+  if (S.plano >= 9) return null;
+  const r: Resultado9 = { trocou: 0, series: 0 };
+  const b = S.prog && S.prog['B'];
+
+  if (b && Array.isArray(b.ex)) {
+    const t = REVISAO_B_PLANO_8.troca;
+    b.ex.forEach(function (sl) {
+      if (sl.id === t.de && sl.s === t.sDe) { sl.id = t.para; sl.s = t.sPara; r.trocou = 1; }
+    });
+    REVISAO_B_PLANO_8.series.forEach(function (m) {
+      b.ex.forEach(function (sl) {
+        if (sl.id === m.id && sl.s === m.de) { sl.s = m.para; r.series++; }
+      });
+    });
+  }
+
+  S.plano = 9;
   return r;
 }

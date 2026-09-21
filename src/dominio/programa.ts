@@ -80,12 +80,12 @@ export const PROGRAMA: Record<string, Treino<ExercicioPrescrito>> = {
     {n:'Pushdown', car:'pino', g:'tríceps', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'0–1', cue:'Tríceps não é prioridade: já recebe bastante dos presses. Duas séries bem feitas bastam.'},
   ]},
   B: { name:'Pernas completas + panturrilhas', tag:'a perna inteira num dia só', ex:[
-    {n:'Pendulum squat', car:'lado', g:'quadríceps', s:3, r:'6–10', c:1, d:D_COMPOSTO, rir:'1–2', cue:'Quadríceps é seu ponto forte: o volume é baixo de propósito, a intenção não. Hack squat serve igual.'},
-    {n:'Cadeira flexora sentada', car:'pino', g:'posterior', s:3, r:'8–12', c:0, d:D_MEDIO, rir:'1', cue:'Antes do terra: o isquiotibial começa a repetição mais alongado aqui do que em qualquer flexora deitada.'},
+    {n:'Agachamento no Smith', car:'lado', g:'quadríceps', s:2, r:'6–10', c:1, d:D_COMPOSTO, rir:'1–2', cue:'Amplitude máxima confortável e repetível, com a posição dos pés estável entre as sessões. Não tente transformá-lo em agachamento para glúteo: aqui se quer um padrão estável e progressível, com bom estímulo de quadríceps sem gastar volume nele.'},
+    {n:'Cadeira flexora sentada', car:'pino', g:'posterior', s:4, r:'8–12', c:0, d:D_MEDIO, rir:'1', cue:'Antes do terra: o isquiotibial começa a repetição mais alongado aqui do que em qualquer flexora deitada.'},
     {n:'Terra romeno no Smith', car:'lado', g:'posterior', s:3, r:'6–10', c:1, d:D_COMPOSTO, rir:'1–2', cue:'Smith porque, para o seu objetivo, estabilidade é vantagem e não defeito. Quadril para trás, coluna neutra.'},
     {n:'Leg press', car:'lado', g:'quadríceps', s:2, r:'10–15', c:1, d:D_MAQUINA, rir:'1–2', cue:'Amplitude completa sem soltar a lombar do banco.'},
-    {n:'Cadeira extensora', car:'pino', g:'quadríceps', s:2, r:'10–15', c:0, d:D_MEDIO, rir:'0–1', cue:'A última série pode ir bem perto da falha.'},
-    {n:'Elevação pélvica na máquina', car:'lado', g:'glúteo', s:2, r:'8–12', c:1, d:D_MAQUINA, rir:'1', cue:'Pausa no topo com o queixo para dentro.'},
+    {n:'Cadeira extensora', car:'pino', g:'quadríceps', s:1, r:'10–15', c:0, d:D_MEDIO, rir:'0–1', cue:'A última série pode ir bem perto da falha.'},
+    {n:'Elevação pélvica na máquina', car:'lado', g:'glúteo', s:3, r:'8–12', c:1, d:D_MAQUINA, rir:'1', cue:'Pausa no topo com o queixo para dentro.'},
     {n:'Adutora', car:'pino', g:'adutores', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Manutenção e progressão. Adutores contribuem para uma coxa completa.'},
     {n:'Panturrilha em pé', car:'pino', g:'panturrilha', s:3, r:'6–10', c:0, d:D_MEDIO, rir:'1', cue:'Joelho estendido, para o gastrocnêmio. Execução rígida: descida completa, pausa alongado, subida completa. Nada de virar 10 repetições em 20 meios movimentos de tornozelo.'},
     {n:'Panturrilha sentada', car:'lado', g:'panturrilha', s:2, r:'10–15', c:0, d:D_ISOLADOR, rir:'1', cue:'Joelho flexionado, para o sóleo. Pause no alongamento. Nada de quicar.'},
@@ -261,6 +261,9 @@ export const ALT: Record<string, Substituto[]> = {
     {n:'Rosca Bayesian no cabo', w:'Braço atrás do corpo, mais alongamento.'},
     {n:'Rosca alternada com halteres', w:'Um lado por vez, com supinação.'}],
   // C
+  'Agachamento no Smith': [
+    {n:'Agachamento hack', w:'Considerado pelo treinador para a mesma função. Curva de resistência diferente.'},
+    {n:'Belt squat', w:'Considerado pelo treinador para a mesma função. Tira a carga da coluna.'}],
   'Pendulum squat': [
     {n:'Agachamento hack', w:'Mesma ideia, curva de resistência diferente.'},
     {n:'Belt squat', w:'Tira a carga da coluna.'},
@@ -401,6 +404,7 @@ export const ALT: Record<string, Substituto[]> = {
 // indicado para um exercício do programa novo. Ficam nomeados, com o grupo
 // certo, e disponíveis para quando a máquina do dia estiver ocupada.
 export const LEGADO: Record<string, { car: TipoCarga; g: string; c: 0 | 1; cue: string }> = {
+  'Pendulum squat': {car:'lado', g:'quadríceps', c:1, cue:'Saiu do programa na revisão que deu ênfase a posteriores e glúteo. O agachamento no Smith ocupou o lugar, com duas séries em vez de três.'},
   'Remada horizontal na máquina': {car:'pino', g:'costas espessura', c:1, cue:'Escolha o equipamento onde dá para deixar a escápula protrair e depois retrair confortável.'},
   'Encolhimento na máquina': {car:'pino', g:'trapézio', c:0, cue:'Saiu do programa: trapézio não é limitação visual, e remadas e terra romeno já dão estímulo.'},
   'Remada para deltoide posterior com apoio de peito': {car:'lado', g:'delt posterior', c:1, cue:'Cotovelo afastado do tronco, puxando para trás.'},
@@ -516,6 +520,7 @@ const PEGADA_POR_NOME: Record<string, { t: string; pe?: 1 }> = {
   'Tríceps corda na polia':                 { t: 'neutra; abra as pontas no fim' },
 
   // --- perna: aqui a decisão é do PÉ, e é ela que cruza com o tendão patelar ---
+  'Agachamento no Smith':                   { t: 'largura dos ombros, e a mesma posição entre as sessões', pe: 1 },
   'Pendulum squat':                         { t: 'largura dos ombros, no meio da plataforma', pe: 1 },
   'Leg press':                              { t: 'largura dos ombros, no meio da plataforma', pe: 1 },
   'Leg press 45°':                          { t: 'largura dos ombros, no meio da plataforma', pe: 1 },

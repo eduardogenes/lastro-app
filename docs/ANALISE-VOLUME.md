@@ -63,22 +63,22 @@ Distribuição: B (5), D (5)
 
 Aparece em mais de um treino: **Panturrilha em pé**, **Panturrilha sentada**.
 
-### posterior — 6 séries
+### posterior — 7 séries
 
-Distribuição: B (6)
+Distribuição: B (7)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| B | Cadeira flexora sentada | 3 × 8–12 | isolador |
+| B | Cadeira flexora sentada | 4 × 8–12 | isolador |
 | B | Terra romeno no Smith | 3 × 6–10 | composto |
 
-### glúteo — 2 séries
+### glúteo — 3 séries
 
-Distribuição: B (2)
+Distribuição: B (3)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| B | Elevação pélvica na máquina | 2 × 8–12 | composto |
+| B | Elevação pélvica na máquina | 3 × 8–12 | composto |
 
 ## Progressão direcionada
 
@@ -158,15 +158,15 @@ Distribuição: E (2)
 
 ## Ponto forte · menor prioridade de alocação
 
-### quadríceps — 7 séries
+### quadríceps — 5 séries
 
-Distribuição: B (7)
+Distribuição: B (5)
 
 | Treino | Exercício | Séries × reps | |
 |---|---|---|---|
-| B | Pendulum squat | 3 × 6–10 | composto |
+| B | Agachamento no Smith | 2 × 6–10 | composto |
 | B | Leg press | 2 × 10–15 | composto |
-| B | Cadeira extensora | 2 × 10–15 | isolador |
+| B | Cadeira extensora | 1 × 10–15 | isolador |
 
 ---
 

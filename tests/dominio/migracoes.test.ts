@@ -8,7 +8,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import {
-  ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7
+  ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano9
 } from '../../src/dominio/migracoes';
 import { EX_BASE, slugEx } from '../../src/dominio/programa';
 import type { Estado, Log } from '../../src/dominio/tipos';
@@ -315,4 +315,62 @@ test('6→7 zera o histórico do HYROX com lápide, e não toca na presença', (
 
   assert.strictEqual(S.plano, 7);
   assert.strictEqual(migraPlano7(S), null, 'não roda duas vezes');
+});
+
+// ---------- 8 -> 9: a revisão do dia B ----------
+// Ênfase a posteriores e glúteo; menos orçamento direto de quadríceps.
+
+function progPlano8() {
+  return {
+    B: { name: 'Pernas completas + panturrilhas', tag: '', ex: [
+      { id: 'pendulum-squat', s: 3, r: '6–10', d: 180, rir: '1–2', desde: 0 },
+      { id: 'cadeira-flexora-sentada', s: 3, r: '8–12', d: 120, rir: '1', desde: 0 },
+      { id: 'terra-romeno-no-smith', s: 3, r: '6–10', d: 180, rir: '1–2', desde: 0 },
+      { id: 'cadeira-extensora', s: 2, r: '10–15', d: 120, rir: '0–1', desde: 0 },
+      { id: 'elevacao-pelvica-na-maquina', s: 2, r: '8–12', d: 150, rir: '1', desde: 0 }
+    ] }
+  };
+}
+
+test('a revisão do dia B troca o agachamento e ajusta três volumes', () => {
+  const S = { plano: 8, prog: progPlano8() } as unknown as Estado;
+  const r = migraPlano9(S)!;
+
+  assert.strictEqual(r.trocou, 1);
+  assert.strictEqual(r.series, 3);
+  const ex = S.prog!.B.ex;
+  assert.strictEqual(ex[0].id, 'agachamento-no-smith', 'o pendulum saiu');
+  assert.strictEqual(ex[0].s, 2, 'e com duas séries, não três');
+  assert.strictEqual(ex[1].s, 4, 'flexora 3 → 4');
+  assert.strictEqual(ex[3].s, 1, 'extensora 2 → 1');
+  assert.strictEqual(ex[4].s, 3, 'elevação pélvica 2 → 3');
+  assert.strictEqual(S.plano, 9);
+});
+
+test('o que ele já tinha mudado na mão fica como está', () => {
+  // Migração aplica delta, e só onde o slot ainda está como o programa antigo
+  // prescrevia. Reescrever o dia apagaria o que ele promoveu ao oficial.
+  const prog = progPlano8();
+  prog.B.ex[1].s = 5;                       // ele já tinha levado a flexora a 5
+  const S = { plano: 8, prog: prog } as unknown as Estado;
+  const r = migraPlano9(S)!;
+
+  assert.strictEqual(S.prog!.B.ex[1].s, 5, 'o número dele sobreviveu');
+  assert.strictEqual(r.series, 2, 'e a migração conta só as que de fato mexeu');
+  assert.strictEqual(S.prog!.B.ex[3].s, 1, 'as outras seguem ajustadas');
+});
+
+test('rodar duas vezes não muda nada', () => {
+  const S = { plano: 8, prog: progPlano8() } as unknown as Estado;
+  migraPlano9(S);
+  const depois = JSON.stringify(S.prog);
+  assert.strictEqual(migraPlano9(S), null, 'a segunda chamada devolve null');
+  assert.strictEqual(JSON.stringify(S.prog), depois);
+});
+
+test('sem programa salvo ela não quebra', () => {
+  const S = { plano: 8, prog: null } as unknown as Estado;
+  const r = migraPlano9(S)!;
+  assert.strictEqual(r.trocou, 0);
+  assert.strictEqual(S.plano, 9);
 });

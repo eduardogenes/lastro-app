@@ -24,12 +24,12 @@ test('mudar série no programa é imediato e fica no histórico', async () => {
   const a = await noPrograma('B');
   await a.E('progSeries("B",0,1)');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.B.ex[0].s'), 4);
-  assert.strictEqual(a.E('treino("B").ex[0].s'), 4, 'vale já no próximo treino');
+  assert.strictEqual(a.E('S.prog.B.ex[0].s'), 3);
+  assert.strictEqual(a.E('treino("B").ex[0].s'), 3, 'vale já no próximo treino');
 
   const log = a.J('S.progLog');
   assert.strictEqual(log.length, 1);
-  assert.match(log[0].txt, /Pendulum squat: 3 → 4 séries/);
+  assert.match(log[0].txt, /Agachamento no Smith: 2 → 3 séries/);
   assert.strictEqual(log[0].day, 'B');
   a.fechar();
 });
@@ -74,7 +74,7 @@ test('trocar exercício com menos de 6 semanas pede confirmação', async () => 
   a.recusar();
   await a.E('progSetTroca("B",0,"belt-squat")');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'pendulum-squat', 'a regra do treinador segura a troca');
+  assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'agachamento-no-smith', 'a regra do treinador segura a troca');
   assert.match(a.perguntas().join(' '), /6 a 8 semanas/);
   a.fechar();
 });
