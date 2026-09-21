@@ -65,6 +65,9 @@ test('exportar carrega todos os campos do estado', async () => {
      // a fusão: sem estes no backup, trocar de celular perderia o plano
      // nutricional, a cadência e o ajuste calórico em vigor
      'ajuste', 'cadencia', 'comida', 'compras', 'dia', 'perfManual',
+     // o ledger do ajuste: o saldo sozinho não diz de onde veio, e a regra
+     // do nutricionista audita justamente as trocas contra a adesão da época
+     'ajusteHist',
      // a sincronização: o carimbo do estado e as lápides do que foi apagado
      'mtime', 'apagados',
      // os dias que ele marcou como descanso

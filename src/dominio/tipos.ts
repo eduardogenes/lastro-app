@@ -409,6 +409,26 @@ export interface ModeloDeAula {
 }
 
 /** Estado das compras. Derivado no cálculo, mas o que foi MARCADO persiste. */
+/**
+ * Um passo de ajuste que aconteceu, e de onde ele veio.
+ *
+ * O app já cobra que todo número derivado diga a procedência; um número que
+ * MUDA a comida com mais razão ainda. Guarda o veredito que o motivou e a
+ * adesão registrada na hora — que é o que `trocasDeAjuste()` audita depois.
+ */
+export interface PassoDeAjuste {
+  t: number;
+  /** saldo antes e depois, em passos */
+  de: number;
+  para: number;
+  /** o veredito que motivou; só estes dois produzem passo */
+  k: 'mais' | 'menos';
+  /** o texto do veredito, guardado inteiro: é a procedência por extenso */
+  p: string;
+  /** dias com registro de comida nos 14 anteriores */
+  reg: number;
+}
+
 export interface EstadoCompras {
   /** itens já no carrinho */
   comprado: Record<string, 1>;
@@ -495,8 +515,18 @@ export interface Estado {
    * meia-noite.
    */
   comidaHist: DiaComidaHist[];
-  /** o ±150 kcal em vigor */
-  ajuste: Ajuste;
+  /**
+   * Quantos passos de ±150 kcal estão em vigor, ACUMULADOS.
+   *
+   * Não é estado ternário, e a diferença é a regra: depois de um ajuste, a
+   * nova ingestão vira a LINHA DE BASE. Cortou e o peso voltou à faixa? As
+   * calorias novas ficam — não se devolve o passo. Dois cortes seguidos são
+   * −300 kcal, não outro −150. É essa assimetria que evita o efeito sanfona,
+   * e ela não cabe em `-1 | 0 | 1`, que descreve um destino e não um saldo.
+   */
+  ajuste: number;
+  /** Os passos que de fato aconteceram, com a procedência de cada um. */
+  ajusteHist: PassoDeAjuste[];
   /**
    * Override do sinal de força. `null` = o app calcula a partir das cargas.
    * Existe porque o cálculo não sabe que ele voltou de duas semanas doente.

@@ -170,7 +170,8 @@ export interface DiaComidaHist {
    */
   pv: number;
   /** o ajuste calórico em vigor naquele dia: −1, 0 ou 1 */
-  aj?: -1 | 0 | 1;
+  /** passos de ajuste em vigor naquele dia, acumulados */
+  aj?: number;
   /** quando foi alterado; a fusão o usa para desempatar */
   m?: number;
 }

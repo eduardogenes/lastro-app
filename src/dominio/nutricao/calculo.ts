@@ -250,15 +250,23 @@ export function resumoDaRefeicao(
 /**
  * O ajuste calórico, aplicado onde o plano manda aplicar: no arroz.
  *
- * ±150 kcal em arroz cozido a 128 kcal/100 g dão ~117 g. Arredondado para 15 g,
- * que é a menor colherada que dá para medir sem balança de precisão às 12h30
- * no trabalho — precisão maior que a da execução é falsa precisão.
+ * ±150 kcal em arroz cozido a 128 kcal/100 g dão ~117 g, arredondado para 120.
+ * Esse número vale pelo **dia inteiro**: na prescrição são −60 g no almoço e
+ * −60 g no jantar. Por isso o passo se REPARTE entre as refeições que levam
+ * arroz — aplicá-lo inteiro em cada uma dobrava o ajuste, e um "+150 kcal"
+ * movia ~320 kcal de comida.
+ *
+ * O arredondamento de 15 g cai sobre o PASSO, não sobre o prato: é o que se
+ * mede com a colher é quanto muda, e snapar a base à grade mexia numa
+ * quantidade que o nutricionista escreveu (250 g viravam 255 sem ajuste nenhum).
+ *
+ * `ajuste` é o SALDO de passos, não um estado: dois cortes valem o dobro.
  */
 export const PASSO_ARROZ = 120;
 
-/** Quanto o arroz muda para um dado ajuste. */
-export function arrozDoAjuste(base: number, ajuste: -1 | 0 | 1): number {
-  return Math.max(0, Math.round((base + ajuste * PASSO_ARROZ) / 15) * 15);
+export function arrozDoAjuste(base: number, ajuste: number, refeicoes: number = 1): number {
+  const passo = Math.round((ajuste * PASSO_ARROZ) / Math.max(1, refeicoes) / 15) * 15;
+  return Math.max(0, Math.round(base) + passo);
 }
 
 /**
@@ -336,7 +344,7 @@ export function fechaDia(
   plano: Refeicao[],
   catalogo: Record<string, Alimento>,
   pv: number,
-  ajuste: -1 | 0 | 1,
+  ajuste: number,
   agora: number = Date.now()
 ): DiaComidaHist {
   const treinando = dia.cadencia === 'treino';

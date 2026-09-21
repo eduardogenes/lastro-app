@@ -318,7 +318,9 @@ function normalizaEstado() {
   if (!S.comida.alimentos || typeof S.comida.alimentos !== 'object') S.comida.alimentos = {};
   if (!S.comida.ocultos || typeof S.comida.ocultos !== 'object') S.comida.ocultos = {};
   if (!S.compras || typeof S.compras !== 'object') S.compras = { comprado:{}, extras:[], removidas:{}, dias:7 };
-  if (S.ajuste !== -1 && S.ajuste !== 1) S.ajuste = 0;
+  if (typeof S.ajuste !== 'number' || !isFinite(S.ajuste)) S.ajuste = 0;
+  S.ajuste = Math.round(S.ajuste);
+  if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
   if (S.perfManual !== true && S.perfManual !== false) S.perfManual = null;
   if (!S.dia || typeof S.dia !== 'object') S.dia = null;
 
@@ -1895,8 +1897,7 @@ const CTX = {
         return { id: r.id, txt: r.n + ' foi para as ' + r.t + ', depois do treino' };
       }),
       alvo: totalDoDia(plano, cat, treinando, alta, {}),
-      cadenciaTxt:
-        (S.ajuste === 0 ? 'plano atual' : S.ajuste > 0 ? 'ajuste +150 kcal' : 'ajuste −150 kcal') +
+      cadenciaTxt: rotuloDoAjuste() +
         ' · ' + (h.previsto ? 'dia previsto pela cadência da semana' : 'dia confirmado'),
       sessao: {
         nome: P ? P.name : null,
@@ -2966,14 +2967,34 @@ function veredito() {
   });
 }
 
+/**
+ * O rótulo do ajuste em vigor.
+ *
+ * Diz o SALDO, não o último passo: depois de um ajuste a nova ingestão vira a
+ * linha de base, então dois cortes são −300 kcal e a tela precisa dizer isso.
+ * Vive aqui porque DADOS e COMIDA mostram o mesmo texto, e duas cópias
+ * divergiriam no dia em que o saldo passasse de um passo.
+ */
+function rotuloDoAjuste() {
+  const n = S.ajuste || 0;
+  if (!n) return 'plano base';
+  const passos = Math.abs(n);
+  return 'ajuste ' + (n > 0 ? '+' : '−') + (passos * 150) + ' kcal' +
+         (passos > 1 ? ' · ' + passos + ' passos' : '');
+}
+
 /** Quanto de arroz o plano manda hoje, com o ajuste em vigor aplicado. */
 function arrozAtual() {
+  // Soma o que o plano diz, e NÃO reaplica o ajuste: `aplicaArroz()` já gravou
+  // o passo dentro de `i.q`. Aplicar de novo aqui contava o ajuste duas vezes,
+  // e o número da tela mentia por 120 g — invisível enquanto o saldo era
+  // ternário e no máximo um passo, mas o saldo acumulado empilharia o erro.
   const plano = planoDeComida();
-  let base = 0;
+  let total = 0;
   plano.forEach(function (r) {
-    r.itens.forEach(function (i) { if (i.arroz) base += i.q; });
+    r.itens.forEach(function (i) { if (i.arroz) total += i.q; });
   });
-  return arrozDoAjuste(base, S.ajuste);
+  return Math.round(total);
 }
 
 /**
@@ -2983,13 +3004,17 @@ function arrozAtual() {
  */
 function aplicaArroz(ajusteAntes) {
   const plano = planoDeComida();
+  const itens = [];
   plano.forEach(function (r) {
-    r.itens.forEach(function (i) {
-      if (!i.arroz) return;
-      // desfaz o ajuste anterior antes de aplicar o novo, senão eles somam
-      const base = arrozDoAjuste(i.q, -ajusteAntes);
-      i.q = arrozDoAjuste(base, S.ajuste);
-    });
+    r.itens.forEach(function (i) { if (i.arroz) itens.push(i); });
+  });
+  if (!itens.length) return;
+  // O passo é diário e se reparte entre as refeições com arroz — ver
+  // arrozDoAjuste. Desfaz o saldo anterior antes de aplicar o novo, senão os
+  // dois somam; com o passo na grade de 15 g, ida e volta são exatas.
+  itens.forEach(function (i) {
+    const base = arrozDoAjuste(i.q, -ajusteAntes, itens.length);
+    i.q = arrozDoAjuste(base, S.ajuste || 0, itens.length);
   });
 }
 
@@ -3910,7 +3935,7 @@ async function wipe() {
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
-        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste,
+        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist,
         perfManual:S.perfManual, compras:S.compras };
   // Passa pela mesma normalização do boot: é o único lugar que sabe o padrão de
   // cada campo, e reconstruir o estado à mão aqui já deixou a nutrição sem
@@ -4717,10 +4742,15 @@ CTX.dados = function () {
     veredito: {
       t: v.t, p: v.p,
       cor: (v.k === 'menos' || v.k === 'observar') ? 'amber' : v.k === 'faltam' ? 't4' : 'acid',
-      podeAplicar: alvo !== S.ajuste && v.k !== 'faltam',
-      acaoTxt: alvo > 0 ? 'aplicar +150 kcal' : alvo < 0 ? 'aplicar −150 kcal' : 'voltar ao plano base',
-      estado: (S.ajuste === 0 ? 'plano atual' : S.ajuste > 0 ? 'ajuste +150 kcal' : 'ajuste −150 kcal') +
-              ' · arroz ' + arrozAtual() + ' g'
+      // Só 'mais' e 'menos' propõem passo. 'observar' e 'manter' não oferecem
+      // ação nenhuma: antes, com o alvo lido como DESTINO, um veredito de
+      // observar com corte em vigor punha na tela um botão "voltar ao plano
+      // base" — convidando a devolver as 150 kcal, que é exatamente o que a
+      // regra proíbe. Desfazer existe, e é o restaurar do plano, um nível
+      // para dentro e com confirmação.
+      podeAplicar: v.k === 'mais' || v.k === 'menos',
+      acaoTxt: alvo > 0 ? 'aplicar +150 kcal' : alvo < 0 ? 'aplicar −150 kcal' : null,
+      estado: rotuloDoAjuste() + ' · arroz ' + arrozAtual() + ' g'
     },
     comida: dadosDeComida(),
     forca: {
@@ -4741,8 +4771,14 @@ CTX.dados = function () {
 
 CTX.setPerfManual = function (v) { S.perfManual = v; queueSave(); render(); };
 CTX.aplicaAjuste = function () {
-  const antes = S.ajuste;
-  S.ajuste = ajusteDoVeredito(veredito());
+  const v = veredito();
+  const passo = ajusteDoVeredito(v);
+  if (!passo) return;                   // observar e manter não propõem passo
+  const antes = S.ajuste || 0;
+  S.ajuste = antes + passo;
+  if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
+  S.ajusteHist.push({ t: Date.now(), de: antes, para: S.ajuste,
+                      k: v.k, p: v.p, reg: diasRegistrados() });
   aplicaArroz(antes);
   queueSave(); render();
   toast('Ajuste aplicado. O arroz do plano foi para ' + arrozAtual() + ' g.');

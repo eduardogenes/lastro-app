@@ -98,10 +98,23 @@ test('o resumo lista o que tem dentro, na unidade certa', () => {
 // ---------- o ajuste calórico ----------
 
 test('o ajuste move o arroz em passos mensuráveis', () => {
-  assert.strictEqual(arrozDoAjuste(200, 0), 195, 'arredonda para múltiplo de 15');
-  assert.strictEqual(arrozDoAjuste(200, 1), 315, '200 + 120 arredondado ao múltiplo de 15');
-  assert.strictEqual(arrozDoAjuste(200, -1), 75);
+  assert.strictEqual(arrozDoAjuste(200, 0), 200, 'sem ajuste, o prato não se mexe');
+  assert.strictEqual(arrozDoAjuste(200, 1), 320, 'o passo de 120 g é múltiplo de 15');
+  assert.strictEqual(arrozDoAjuste(200, -1), 80);
   assert.strictEqual(arrozDoAjuste(50, -1), 0, 'nunca negativo');
+});
+
+test('o passo é do DIA e se reparte entre as refeições com arroz', () => {
+  // Na prescrição, −60 g no almoço e −60 g no jantar: 120 g pelo dia. Aplicar
+  // os 120 em cada prato dobrava o ajuste.
+  assert.strictEqual(arrozDoAjuste(250, 1, 2), 310, 'metade do passo em cada prato');
+  assert.strictEqual(arrozDoAjuste(250, -1, 2), 190);
+  assert.strictEqual(arrozDoAjuste(250, 2, 2), 370, 'dois passos valem o dobro');
+});
+
+test('desfazer o saldo devolve o prato ao que era', () => {
+  const depois = arrozDoAjuste(250, 1, 2);
+  assert.strictEqual(arrozDoAjuste(depois, -1, 2), 250, 'ida e volta sem deriva');
 });
 
 // ---------- compras ----------

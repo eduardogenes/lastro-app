@@ -295,7 +295,12 @@ export function migraPlano4(S: Estado): Resultado4 | null {
     S.compras = { comprado: {}, extras: [], removidas: {}, dias: 7 };
   }
 
-  if (S.ajuste !== -1 && S.ajuste !== 1) S.ajuste = 0;
+  // O ajuste virou SALDO de passos: qualquer inteiro serve, e o clamp ternário
+  // de antes apagaria um segundo corte. Valores antigos (-1, 0, 1) já são
+  // saldos válidos, então não há o que converter — só o que parar de truncar.
+  if (typeof S.ajuste !== 'number' || !isFinite(S.ajuste)) S.ajuste = 0;
+  S.ajuste = Math.round(S.ajuste);
+  if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
   if (S.perfManual !== true && S.perfManual !== false) S.perfManual = null;
   if (!S.dia || typeof S.dia !== 'object') S.dia = null;
 
