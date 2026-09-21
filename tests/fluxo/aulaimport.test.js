@@ -145,3 +145,68 @@ test('o catálogo vence o arquivo: cadastro por cima é ignorado com aviso', asy
   assert.ok(a.toast().includes('já existe'), a.toast());
   a.fechar();
 });
+
+// ---------- o segundo quadro real: blocos de round, zero cadastros ----------
+
+const HYROX_FRIDAY = {
+  lastro: 'aula', v: 1, nome: 'Hyrox Friday',
+  quadro: 'Hyrox Friday\n3 RNDS: 400m Ski · 30m Sled-Push · 25m Walking Lunges\n3 RNDS: 400m Row · 30m Sled-Pull · 25 Wall Ball\nE5MIN = 15m Burpee Broad Jumps',
+  mov: [
+    { n: 'Ski erg', s: 3, q: 400, u: 'm' },
+    { n: 'Sled push', s: 3, q: 30, u: 'm' },
+    { n: 'Lunge', s: 3, q: 25, u: 'm' },
+    { n: 'Remo ergômetro', s: 3, q: 400, u: 'm' },
+    { n: 'Sled pull', s: 3, q: 30, u: 'm' },
+    { n: 'Wall balls', s: 3, q: 25, u: 'rep' },
+    { n: 'Corrida', s: 3, q: 400, u: 'm' },
+    { n: 'Farmers carry', s: 3, q: 30, u: 'm' },
+    { n: 'Burpee broad jump', s: 1, q: 15, u: 'm' }
+  ]
+};
+
+test('o quadro de blocos de round entra sem cadastrar nada', async () => {
+  // As nove estações sobreviveram em SIMULACAO_HYROX quando o sábado deixou de
+  // ser simulação, e é isto que faz `novo` ser exceção e não regra.
+  const a = await app();
+  const antes = a.E('Object.keys(S.ex).length');
+
+  await cola(a, HYROX_FRIDAY);
+  await a.esperar();
+
+  assert.strictEqual(a.E('Object.keys(S.ex).length'), antes, 'nenhum cadastro novo');
+  assert.strictEqual(a.J('S.aulas')[0].mov.length, 9);
+  assert.ok(!a.toast().includes('não existe'), a.toast());
+  a.fechar();
+});
+
+test('a grandeza é do movimento, nunca do bloco', async () => {
+  // No mesmo round, ski e sled vão em metro e a wall ball em repetição. Um
+  // campo de grandeza no bloco teria feito a wall ball virar 25 metros.
+  const a = await app();
+  await cola(a, HYROX_FRIDAY);
+  await a.esperar();
+  const mov = a.J('S.aulas')[0].mov;
+  const por = {};
+  mov.forEach(function (m) { por[m.id] = m.u; });
+  assert.strictEqual(por['ski-erg'], 'm');
+  assert.strictEqual(por['wall-balls'], 'rep');
+  assert.strictEqual(por['sled-push'], 'm');
+  a.fechar();
+});
+
+test('os três blocos viram nove entradas, e o dia recebe as nove', async () => {
+  const a = await app();
+  await cola(a, HYROX_FRIDAY);
+  await a.esperar();
+  a.E('go("HX")');
+  await a.E(`aplicarModeloDeAula(${JSON.stringify('x')})`);   // id errado: não faz nada
+  await a.esperar();
+  assert.strictEqual(a.E('treino(view.day).ex.length'), 0, 'id inexistente não monta nada');
+
+  await a.E(`aplicarModeloDeAula(${JSON.stringify(a.J('S.aulas')[0].id)})`);
+  await a.esperar();
+  assert.strictEqual(a.E('treino(view.day).ex.length'), 9);
+  assert.strictEqual(a.E('treino(view.day).ex.filter(function (e) { return e.s === 3; }).length'), 8,
+    'oito dos nove fazem três passadas');
+  a.fechar();
+});

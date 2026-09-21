@@ -145,6 +145,97 @@ O que este exemplo ensinou:
 
 ---
 
+## Exemplo 2 — Hyrox Friday
+
+O quadro, em blocos de round:
+
+```
+Hyrox Friday
+3 RNDS:  400 m Ski · 30 m Sled-Push · 25 m Walking Lunges
+3 RNDS:  400 m Row · 30 m Sled-Pull · 25 Wall Ball
+3 RNDS:  400 m Run · 30 m Farmers Carry · 25 m [não lido]
+E5MIN =  15 m Burpee Broad Jumps
+```
+
+**Zero cadastros.** Todos os nove movimentos já existem no catálogo — este é o
+quadro que prova que `novo` é exceção.
+
+```json
+{
+  "lastro": "aula",
+  "v": 1,
+  "nome": "Hyrox Friday",
+  "quadro": "Hyrox Friday\n3 RNDS: 400m Ski · 30m Sled-Push · 25m Walking Lunges\n3 RNDS: 400m Row · 30m Sled-Pull · 25 Wall Ball\n3 RNDS: 400m Run · 30m Farmers Carry · 25m ?\nE5MIN = 15m Burpee Broad Jumps",
+  "mov": [
+    { "n": "Ski erg",           "s": 3, "q": 400, "u": "m" },
+    { "n": "Sled push",         "s": 3, "q": 30,  "u": "m" },
+    { "n": "Lunge",             "s": 3, "q": 25,  "u": "m" },
+    { "n": "Remo ergômetro",    "s": 3, "q": 400, "u": "m" },
+    { "n": "Sled pull",         "s": 3, "q": 30,  "u": "m" },
+    { "n": "Wall balls",        "s": 3, "q": 25,  "u": "rep" },
+    { "n": "Corrida",           "s": 3, "q": 400, "u": "m" },
+    { "n": "Farmers carry",     "s": 3, "q": 30,  "u": "m" },
+    { "n": "Burpee broad jump", "s": 1, "q": 15,  "u": "m" }
+  ]
+}
+```
+
+O que este exemplo ensinou:
+
+- **Três blocos de round, três movimentos cada.** Viram nove entradas com
+  `s: 3`, e os números ficam certos — ele faz três passadas de cada. É o que
+  rebaixou o limite do round de "perda" para "ordem descritiva".
+- **O bloco de round não precisa de campo.** Um `bloco: 1` aqui só serviria
+  para desenhar na tela o que o texto já diz.
+- **`25 Wall Ball` está em repetição, não em metro**, apesar de os vizinhos do
+  bloco estarem em metro. A grandeza é do movimento, nunca do bloco — e é por
+  isso que ela é declarada linha a linha.
+
+## O glossário da lousa
+
+O quadro é escrito para quem está na aula, não para um parser. Abreviação é a
+norma, e quem transcreve precisa expandir — errar `FC` uma semana planta
+farmers carry onde era outra coisa.
+
+| na lousa | é |
+|---|---|
+| `RNDS` | rounds |
+| `WB` | wall ball |
+| `BBJ` | burpee broad jump |
+| `FC` | farmers carry |
+| `WL` | walking lunges |
+| `DB` | dumbbell (halter) |
+| `T.C` | time cap |
+| `E5MIN` · `EMOM` | a cada 5 minutos · a cada minuto |
+| `#` | libras. `50#` são ~22,7 kg |
+| `(20/15)` | peso sugerido: homem / mulher |
+
+**Duas unidades de peso já apareceram** — kg no primeiro quadro, libras no
+terceiro. É mais uma razão para o peso ficar no texto: estruturá-lo obrigaria
+a converter, e converter é o que este app não faz em lugar nenhum.
+
+## O que o catálogo já cobre
+
+O vocabulário do box vive em `SIMULACAO_HYROX` e `MOVIMENTOS_DE_BOX`, em
+[src/dominio/programa.ts](../src/dominio/programa.ts). As nove estações
+continuam lá mesmo depois de o sábado deixar de ser simulação, e é por isso
+que `novo` é exceção e não regra:
+
+| o quadro escreve | o catálogo tem | mede em |
+|---|---|---|
+| Run | Corrida | m |
+| Ski | Ski erg | m |
+| Row | Remo ergômetro | m |
+| Sled push · Sled pull | iguais | m |
+| BBJ | Burpee broad jump | m |
+| FC | Farmers carry | m |
+| Sandbag lunges | Lunges com sandbag | m |
+| WB | Wall balls | rep |
+| Walking lunges sem peso | Lunge | m |
+
+Quatro quadros reais: o primeiro pediu três cadastros, o segundo e o terceiro
+nenhum.
+
 ## Limites conhecidos
 
 O que o quadro diz e o arquivo não carrega como dado:
@@ -153,7 +244,8 @@ O que o quadro diz e o arquivo não carrega como dado:
 |---|---|
 | blocos (`PLIO + SPRINT`, `WOD`) | o modelo é lista plana, e estruturar não sobrevive ao segundo quadro |
 | time cap (`T.C 20MIN`, `15MIN`) | não há campo, e inventar um sem saber o que o app faria com ele é campo morto |
-| o par do round (`15 squat jump + 200 m`) | vira dois movimentos com `s: 3`. O número está certo, o acoplamento se perde |
+| o bloco de round (`3 RNDS: 400 m Ski + 30 m sled + 25 m lunge`) | vira três movimentos com `s: 3`. **Menos grave do que parecia**: ele registra três passadas de cada, e os números ficam certos. O que se perde é a ordem descritiva, que o texto guarda |
+| `E5MIN`, `EMOM`, `alternate w/ partner` | estrutura de tempo e de execução em dupla. Mesma razão dos blocos |
 | peso sugerido (`20/15`) | decifrado, e ainda assim só no texto — ver acima o porquê |
 
 ---
