@@ -45,7 +45,7 @@ import {
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto,
-         seriesPorMusculo as _seriesPorMusculo } from './dominio/volume';
+         seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
 import { mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
@@ -5134,6 +5134,13 @@ CTX.musculos = function () {
       : null,
     temHistorico: temHistorico,
     fora: lista.map(impactoOficial).filter(Boolean),
+    // As linhas lidas EM CONJUNTO. O painel sempre teve o dado para responder
+    // "a semana priorizou o que devia?" — em linhas separadas, e ninguém
+    // cruzava. Descreve e para: o que fazer com a frase é do treinador.
+    leitura: leituraDaSemana(lista.map(function (g) {
+      return { g: g, n: atual[g] || 0,
+               media: temHistorico ? (antes[g] || 0) / janela : null };
+    }), nivelDe, janela),
     linhas: lista.map(function (g) {
       const n = atual[g] || 0;
       const m = temHistorico ? (antes[g] || 0) / janela : null;

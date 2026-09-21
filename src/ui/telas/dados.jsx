@@ -246,6 +246,25 @@ function Musculos({ m, ctx }) {
         ))}
       </div>
 
+      {/* As linhas lidas em conjunto. Fica DEPOIS do painel de propósito: é
+          leitura do que está acima, e antes dele seria veredito.
+
+          Descreve e para. A regra 6 do produto é "não inventar conselho de
+          treino", e ela continua inteira — dizer que o peito levou 12 séries e
+          o peito superior 6 é relatar o que aconteceu. A frase existe para ser
+          levada ao treinador, não para o app ocupar o lugar dele. */}
+      {m.leitura.length > 0 && (
+        <div class="dd-leitura">
+          <div class="ins-label">a semana, lida junto</div>
+          {m.leitura.map(l => (
+            <p key={l.txt} class="ins-body-sm ins-t2 dd-leitura-l">{l.txt}</p>
+          ))}
+          <Procedencia>
+            descrição, não recomendação — o que fazer com ela é do treinador.
+          </Procedencia>
+        </div>
+      )}
+
       {m.avulsosTxt && <Procedencia>{m.avulsosTxt}</Procedencia>}
 
       {!m.temHistorico && (

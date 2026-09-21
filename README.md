@@ -158,6 +158,12 @@ a mesma pergunta. Medida ocasional continua entrando como informação.
 Na mesma aba, séries por músculo na semana, comparadas com o **mesmo ponto** das
 semanas anteriores, e um aviso quando o programa saiu do alvo do treinador.
 
+Abaixo do painel, **a semana lida junto**: quando um músculo de prioridade
+normal leva mais séries do que um de prioridade máxima da mesma região — peito
+contra peito superior —, e quantos dos priorizados ficaram abaixo da própria
+média. É **descrição, não recomendação**: o que fazer com a frase é do
+treinador, e ela existe para ser levada a ele.
+
 ### Esqueceu de registrar
 
 Toque num dia vazio do calendário. Dá para lançar um treino do plano, com ou sem

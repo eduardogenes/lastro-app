@@ -506,6 +506,14 @@
   border: 1px solid var(--ins-amber);
 }
 .dd-fora-l { margin-top: var(--ins-3); }
+
+/* A leitura da semana. Sem cor avaliativa: ela descreve, e pintar de âmbar ou
+   de ácido já seria opinar sobre o que descreveu. */
+.dd-leitura {
+  margin-top: var(--ins-7); padding-top: var(--ins-5);
+  border-top: 1px solid var(--ins-rule);
+}
+.dd-leitura-l { margin: var(--ins-3) 0 0; }
 .dd-fora .ins-btn-secondary { margin-top: var(--ins-5); }
 
 /* Uma barra por músculo. Sem eixo e sem legenda: a barra É o gráfico. */
