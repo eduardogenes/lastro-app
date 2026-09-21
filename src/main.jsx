@@ -19,6 +19,7 @@ import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui
 import { ehBancada } from './palco.js';
 import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
+import { leAula } from './dominio/aula';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
@@ -2241,6 +2242,52 @@ async function salvarAulaComoModelo() {
   if (S.aulas.length > 60) S.aulas = S.aulas.slice(-60);
   await save(); render();
   toast(j >= 0 ? 'Modelo "' + nome + '" atualizado.' : 'Modelo "' + nome + '" salvo.');
+}
+
+/**
+ * Importa uma aula escrita fora do app.
+ *
+ * Entra como MODELO e não como dia preenchido, pelo mesmo motivo das outras
+ * duas portas: modelo é prescrição, e dia preenchido pareceria registro pronto.
+ * Depois ele aplica no dia com um toque, pelo caminho que já existe.
+ *
+ * O formato está em docs/AULA-IMPORTACAO.md; a leitura e as recusas moram em
+ * dominio/aula.ts, onde custam microssegundos para testar.
+ */
+async function importaAulaColada(texto) {
+  const r = leAula(texto, function (id) { return !!CAT[id]; });
+  if (!r.ok) { toast(r.erro); return; }
+  const a = r.aula;
+
+  // Cadastra o vocabulário novo antes do modelo: sem isso o modelo apontaria
+  // para id que o catálogo não conhece, e a aula abriria com linha vazia.
+  a.novos.forEach(function (x) {
+    S.ex[x.id] = { n: x.n, g: '', car: x.car, c: 0, cue: '', meu: 1 };
+    if (x.u) { S.ex[x.id].u = x.u; if (x.q) S.ex[x.id].q = x.q; }
+  });
+  if (a.novos.length) montaCatalogo();
+
+  if (!Array.isArray(S.aulas)) S.aulas = [];
+  const agora = Date.now();
+  // Mesmo nome sobrescreve, como em salvarAulaComoModelo: importar o quadro da
+  // semana seguinte não pode encher a lista de "HYROX MZ" indistinguíveis.
+  const j = S.aulas.findIndex(function (x) { return x.nome.toLowerCase() === a.nome.toLowerCase(); });
+  const modelo = { id: j >= 0 ? S.aulas[j].id : 'a' + agora, nome: a.nome,
+                   t: j >= 0 ? S.aulas[j].t : agora, m: agora, mov: a.mov };
+  if (a.quadro) modelo.quadro = a.quadro;
+  if (a.data) modelo.data = a.data;
+  if (j >= 0) S.aulas[j] = modelo; else S.aulas.push(modelo);
+  if (S.aulas.length > 60) S.aulas = S.aulas.slice(-60);
+
+  view.colaAula = false;
+  await save(); render();
+
+  let msg = (j >= 0 ? 'Modelo "' + a.nome + '" atualizado' : 'Aula "' + a.nome + '" importada')
+          + ' · ' + a.mov.length + (a.mov.length === 1 ? ' movimento' : ' movimentos');
+  if (a.novos.length) {
+    msg += ' · ' + a.novos.length + (a.novos.length === 1 ? ' cadastrado' : ' cadastrados');
+  }
+  toast(msg + (r.avisos.length ? ' · ' + r.avisos[0] : ''));
 }
 
 async function aplicarModeloDeAula(id) {
@@ -4703,9 +4750,12 @@ CTX.treino = function () {
         ultima: ult ? { n: ult.mov.length, quando: fmtDate(ult.t) } : null,
         modelos: (S.aulas || []).slice().reverse().map(function (a) {
           return { id: a.id, nome: a.nome,
-                   sub: a.mov.length + (a.mov.length === 1 ? ' movimento' : ' movimentos') };
+                   sub: a.mov.length + (a.mov.length === 1 ? ' movimento' : ' movimentos')
+                        + (a.data ? ' · ' + fmtDate(instanteDaData(a.data)) : ''),
+                   quadro: a.quadro || null };
         }),
-        podeSalvar: (P ? P.ex.length : 0) > 0
+        podeSalvar: (P ? P.ex.length : 0) > 0,
+        colando: !!view.colaAula
       };
     })() : null,
     volume: fmtK(volumeDoDia(d)),
@@ -6157,7 +6207,9 @@ CTX.acoesAulas = {
   repete: function () { repetirUltimaAula(); },
   aplica: function (id) { aplicarModeloDeAula(id); },
   salva: function () { salvarAulaComoModelo(); },
-  apaga: function (id) { apagarModeloDeAula(id); }
+  apaga: function (id) { apagarModeloDeAula(id); },
+  cola: function () { view.colaAula = !view.colaAula; render(); },
+  importa: function (txt) { importaAulaColada(txt); }
 };
 
 CTX.acoesAdd = {

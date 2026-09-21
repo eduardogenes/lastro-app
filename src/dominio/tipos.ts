@@ -405,7 +405,18 @@ export interface ModeloDeAula {
   t: number;
   /** quando foi alterado; a fusão o usa para decidir */
   m?: number;
-  mov: Array<{ id: IdEx; s: number; d: number; r?: string; u?: Unidade; q?: number }>;
+  mov: Array<{ id: IdEx; s: number; d?: number; r?: string; u?: Unidade; q?: number }>;
+  /**
+   * A lousa transcrita, quando o modelo veio de um quadro importado.
+   *
+   * O app guarda como TEXTO o que não sabe modelar — blocos, time cap, o par
+   * dentro do round, a notação de carga do box. Estruturar isso seria escrever
+   * uma linguagem de treino; deixar cair seria perder metade do que o quadro
+   * dizia. É a mesma escolha do texto do veredito ao lado do ajuste calórico.
+   */
+  quadro?: string;
+  /** o dia em que o box passou esta aula, quando o arquivo disse */
+  data?: string;
 }
 
 /** Estado das compras. Derivado no cálculo, mas o que foi MARCADO persiste. */

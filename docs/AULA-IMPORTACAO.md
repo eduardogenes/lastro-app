@@ -53,6 +53,14 @@ guardar o texto do veredito inteiro ao lado do número.
 | `mov[].d` | descanso em segundos, quando o quadro manda |
 | `mov[].novo` | só quando o movimento não existe no catálogo (ver abaixo) |
 
+**O arquivo é recusado inteiro, nunca pela metade.** Um movimento sem
+declaração derruba a aula toda — importar parte dela plantaria um modelo que
+ele acha completo, e é o tipo de erro que só aparece no meio do sábado.
+
+**O catálogo vence o arquivo.** Se o movimento já existe, o `novo` é ignorado
+com aviso: um arquivo colado não pode mudar a grandeza de um exercício que tem
+meses de histórico, porque isso fundiria duas séries históricas numa só, torta.
+
 ### Movimento que o app ainda não conhece
 
 Metade do primeiro quadro real era vocabulário novo. O arquivo declara:
@@ -134,18 +142,19 @@ O que o quadro diz e o arquivo não carrega como dado:
 
 ---
 
-## Como o arquivo entra no app, hoje
+## Como o arquivo entra no app
 
-**Não entra.** `importText` substitui o estado inteiro: exige `logs` e `done` e
-avisa "isso substitui o histórico atual". Não existe importação incremental.
+No dia aberto (sábado), no painel **Montar a aula de hoje** → **Colar uma
+aula**. É a quarta porta, ao lado de repetir o sábado passado, dos modelos
+salvos e da lista rápida.
 
-Enquanto não existir, o caminho do protótipo é dar a volta:
+Entra como **modelo**, nunca como dia preenchido — pela mesma razão das outras
+três: modelo é prescrição, e dia preenchido pareceria registro pronto. Depois
+se aplica no dia com um toque, pelo caminho que já existe.
 
-1. ajustes → o app → exportar o backup
-2. o backup vai para a conversa, junto com a foto do quadro
-3. volta o mesmo backup com a aula dentro de `aulas`
-4. ajustes → importar
+Mesmo nome **atualiza** em vez de duplicar: importar o quadro da semana
+seguinte não pode encher a lista de "HYROX MZ" indistinguíveis.
 
-Serve para validar o formato sem uma linha de código no app, que é o objetivo
-desta fase. Não serve para o sábado de manhã — o que vier depois disto é
-construir a porta de entrada de verdade.
+O backup continua sendo outra coisa. `importText` substitui o estado inteiro —
+exige `logs` e `done` e avisa que apaga o histórico. Aula é incremental e
+funde; backup é restauração.

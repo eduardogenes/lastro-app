@@ -800,6 +800,20 @@
    em coral, com alvo próprio — nunca competindo com o toque que aplica. */
 .aulal { display: flex; align-items: stretch; gap: var(--ins-2); }
 .aulal-b { flex: 1; min-width: 0; }
+
+/* O quadro do box dentro do modelo. Mono porque é transcrição, e `pre-line`
+   porque as quebras de linha da lousa são a estrutura que o app deliberadamente
+   NÃO modelou — apagá-las apagaria o que o texto existe para guardar. */
+.aulal-q {
+  white-space: pre-line; font: 400 9px/1.5 var(--ins-font-mono);
+  color: var(--ins-text-5); margin-top: var(--ins-3);
+}
+
+/* A caixa de colar a aula. */
+.aulac { display: flex; flex-direction: column; gap: var(--ins-4); }
+.aulac-t { width: 100%; font: 400 11px/1.4 var(--ins-font-mono); resize: vertical; }
+.aulac-acoes { display: flex; gap: var(--ins-4); }
+.aulac-acoes button { flex: 1; }
 .aulal-x {
   flex: 0 0 auto; padding: 0 var(--ins-4); min-height: var(--ins-tap);
   background: transparent; border: 1px solid var(--ins-border);

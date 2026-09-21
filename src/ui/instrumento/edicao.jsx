@@ -177,7 +177,15 @@ export function Aulas({ c, acoes }) {
           {c.modelos.map(m => (
             <div class="aulal" key={m.id}>
               <button class="swapopt aulal-b" onClick={() => acoes.aplica(m.id)}>
-                <span class="swaptxt"><b>{m.nome}</b><span>{m.sub}</span></span>
+                <span class="swaptxt">
+                  <b>{m.nome}</b>
+                  <span>{m.sub}</span>
+                  {/* O quadro como o box escreveu. Fica à vista e não atrás de
+                      um toque: é justamente o que o app NÃO sabe modelar —
+                      blocos, time cap, a notação de carga — e escondê-lo
+                      devolveria o problema que ele existe para resolver. */}
+                  {m.quadro && <span class="aulal-q">{m.quadro}</span>}
+                </span>
               </button>
               {/* Destrutivo um nível para dentro e em coral, nunca na lista:
                   aqui ele está na linha do próprio objeto, que é o nível de
@@ -194,6 +202,36 @@ export function Aulas({ c, acoes }) {
           <span class="swaptxt">
             <b>Salvar a aula de hoje como modelo</b>
             <span>Guarda os movimentos e como cada um se mede. Não guarda carga nem resultado.</span>
+          </span>
+        </button>
+      )}
+
+      {/* A quarta porta: a aula escrita fora do app. O quadro do box vira
+          arquivo numa conversa, e o arquivo entra aqui — como MODELO e nunca
+          como dia preenchido, pela mesma razão das outras três. */}
+      {c.colando ? (
+        <div class="swap-g aulac">
+          <div class="swap-h ins-label">Colar uma aula</div>
+          <textarea class="ins-input aulac-t" id="aulacol" rows="6"
+                    placeholder={'{"lastro":"aula", ...}'}
+                    aria-label="o arquivo da aula" />
+          <div class="aulac-acoes">
+            <button class="ins-btn-primary"
+                    onClick={() => acoes.importa(document.getElementById('aulacol').value)}>
+              importar
+            </button>
+            <button class="ins-btn-secondary" onClick={acoes.cola}>cancelar</button>
+          </div>
+          <p class="crule ins-provenance">
+            Entra como modelo. Movimento que o app não conhece só passa se o
+            arquivo declarar o que ele mede.
+          </p>
+        </div>
+      ) : (
+        <button class="swapopt novo aulac-abre" onClick={acoes.cola}>
+          <span class="swaptxt">
+            <b>Colar uma aula</b>
+            <span>O quadro do box, escrito fora do app.</span>
           </span>
         </button>
       )}
