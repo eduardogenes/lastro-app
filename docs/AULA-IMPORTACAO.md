@@ -77,6 +77,21 @@ a mesma regra de quando ele cadastra na mão.
 no mesmo box, e quem sabe qual é é o registro anterior — que a coluna ANTERIOR
 devolve com um toque. O quadro em texto guarda o que a lousa dizia.
 
+### `(20/15)` e `(10/5)` — os pesos sugeridos
+
+A notação do box é **maior para homens, menor para mulheres**, em kg. Então
+`3X 15 SQUAT JUMP (20/15)` sugere 20 kg para ele.
+
+**Continua só no texto do quadro, de propósito.** A sugestão da lousa só ajuda
+na PRIMEIRA vez que o movimento aparece: a partir do segundo registro, o que
+ele de fato levantou é melhor informação do que o que o box sugeriu, e isso a
+coluna ANTERIOR já devolve. Um campo próprio custaria atravessar o modelo, o
+slot do dia e o cartão para um ganho que expira no primeiro sábado.
+
+Se um dia ela for para o cartão, vai como **rótulo de prescrição** — anatomia
+de `peg`, nunca preenchendo o campo de carga. Carga que aparece preenchida
+sozinha é o jeito mais rápido de encher o histórico de número que ninguém fez.
+
 ---
 
 ## Exemplo 1 — HYROX MZ, 20/09/2026
@@ -124,8 +139,9 @@ O que este exemplo ensinou:
   array justamente por isso.
 - **Três de seis movimentos não existiam** no catálogo. Sem `novo`, o formato
   não serve para quadro nenhum.
-- **`(20/15)` e `(10/5)` não foram interpretados.** Ficam no `quadro`, por
-  extenso. Ver limites.
+- **`(20/15)` e `(10/5)` são os pesos sugeridos** — maior para homens, menor
+  para mulheres, em kg. Ficam no `quadro` por extenso, e não viram campo; o
+  porquê está acima.
 
 ---
 
@@ -138,7 +154,7 @@ O que o quadro diz e o arquivo não carrega como dado:
 | blocos (`PLIO + SPRINT`, `WOD`) | o modelo é lista plana, e estruturar não sobrevive ao segundo quadro |
 | time cap (`T.C 20MIN`, `15MIN`) | não há campo, e inventar um sem saber o que o app faria com ele é campo morto |
 | o par do round (`15 squat jump + 200 m`) | vira dois movimentos com `s: 3`. O número está certo, o acoplamento se perde |
-| `(20/15)` · `(10/5)` | convenção do box que ainda não foi decifrada |
+| peso sugerido (`20/15`) | decifrado, e ainda assim só no texto — ver acima o porquê |
 
 ---
 
