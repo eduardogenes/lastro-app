@@ -25,7 +25,7 @@ export interface Substituto { n: string; w: string; }
 export interface Regra { k: string; t: string; warn: 0 | 1; p: string[]; }
 
 /** Níveis de prioridade muscular, do mais para o menos prioritário. */
-export type Nivel = 'maxima' | 'secundaria' | 'normal' | 'indireto';
+export type Nivel = 'maxima' | 'secundaria' | 'direcionada' | 'normal' | 'forte' | 'indireto';
 
 /** Como um tipo de carregamento se apresenta na tela. */
 export interface Carga {
@@ -695,19 +695,76 @@ export const EX_BASE: Record<IdEx, Exercicio> = (function () {
   return c;
 })();
 
-// A hierarquia estética: peito superior e delt lateral são prioridade 1;
-// dorsal em largura e panturrilha, prioridade 2. O deltoide anterior entrou na
-// segunda faixa quando ganhou trabalho direto — são só 2 séries, mas
-// direcionadas, e não mais "o que sobra dos presses". Quadríceps saiu da fila:
-// é ponto forte, e cedeu volume para quem precisa crescer.
+// A hierarquia estética, em cinco faixas. Revisada pelo treinador em setembro
+// de 2026, quando ele deu ênfase extra a posteriores e glúteos.
+//
+// Três coisas mudaram nessa revisão, e todas vieram dele:
+//
+// **Posterior de coxa e glúteo máximo subiram para secundária.** Estavam em
+// progressão normal. A perna passou a ter hierarquia própria — posterior e
+// glúteo acima de quadríceps — pelo mesmo motivo que o peito já tinha.
+//
+// **Quadríceps ganhou faixa própria, abaixo da normal.** É ponto forte
+// relativo e não precisa disputar o mesmo orçamento de volume e recuperação.
+//
+// **Deltoide anterior saiu da secundária** para uma faixa só dele: queremos
+// trabalho DIRETO, mas em volume controlado, porque ele já recebe estímulo
+// nos presses. Estar na secundária dizia "mais volume", que não é o caso.
+//
+// `dorsal` é largura e `costas espessura` é espessura: objetivos diferentes
+// dentro do programa, e por isso em faixas diferentes.
 export const PRIORIDADES: Record<Nivel, { rot: string; mus: string[] }> = {
   maxima:      { rot:'prioridade máxima', mus:['peito superior','delt lateral'] },
-  secundaria:  { rot:'prioridade secundária', mus:['dorsal','panturrilha','delt anterior'] },
-  normal:      { rot:'', mus:['posterior','abdômen','costas espessura','delt posterior','bíceps','tríceps','peito','quadríceps','glúteo','glúteo médio','adutores'] },
+  secundaria:  { rot:'prioridade secundária', mus:['dorsal','panturrilha','posterior','glúteo'] },
+  direcionada: { rot:'progressão direcionada', mus:['delt anterior'] },
+  normal:      { rot:'', mus:['peito','glúteo médio','adutores','bíceps','tríceps','abdômen','costas espessura','delt posterior'] },
+  forte:       { rot:'ponto forte', mus:['quadríceps'] },
   indireto:    { rot:'estímulo indireto basta', mus:['trapézio','tibial'] }
 };
 
-export const NIVEIS: Nivel[] = ['maxima','secundaria','normal','indireto'];
+export const NIVEIS: Nivel[] = ['maxima','secundaria','direcionada','normal','forte','indireto'];
+
+/**
+ * A região a que cada músculo pertence.
+ *
+ * Existe porque comparar volume entre regiões não diz nada: "peito levou 8
+ * séries e delt lateral, 0" é a maior diferença de um painel e não significa
+ * coisa alguma — são dias diferentes do programa, e um não tira volume do
+ * outro. Dentro da região, sim: peito superior disputa com peito, e posterior
+ * disputa com quadríceps.
+ *
+ * Mapa explícito e não heurística sobre o nome: `posterior`, `glúteo` e
+ * `quadríceps` são a mesma perna e não compartilham uma única palavra, o que
+ * um agrupamento por prefixo jamais veria.
+ */
+export const REGIOES: Record<string, string> = {
+  'peito superior':'peito', 'peito':'peito',
+  'delt lateral':'ombro', 'delt anterior':'ombro', 'delt posterior':'ombro',
+  'dorsal':'costas', 'costas espessura':'costas', 'trapézio':'costas',
+  'posterior':'perna', 'glúteo':'perna', 'glúteo médio':'perna',
+  'adutores':'perna', 'quadríceps':'perna',
+  'panturrilha':'panturrilha', 'tibial':'panturrilha',
+  'bíceps':'braço', 'tríceps':'braço',
+  'abdômen':'abdômen'
+};
+
+/** A região de um músculo; o próprio nome quando ele não está no mapa. */
+export function regiaoDe(g: string): string { return REGIOES[g] || g; }
+
+/** Posição na hierarquia. Menor é mais prioritário. */
+export function ordemDe(g: string): number { return NIVEIS.indexOf(nivelDe(g)); }
+
+/**
+ * O músculo está entre os que o programa manda priorizar em VOLUME?
+ *
+ * Máxima e secundária, só. `direcionada` fica de fora de propósito: ela quer
+ * trabalho direto em volume controlado, e cobrar volume dela seria inverter a
+ * instrução.
+ */
+export function ehPriorizado(g: string): boolean {
+  const nv = nivelDe(g);
+  return nv === 'maxima' || nv === 'secundaria';
+}
 
 export function nivelDe(g: string): Nivel {
   for (let i = 0; i < NIVEIS.length; i++) if (PRIORIDADES[NIVEIS[i]].mus.indexOf(g) >= 0) return NIVEIS[i];

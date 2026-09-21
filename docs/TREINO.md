@@ -5,7 +5,7 @@ registra. Cinco sessões de musculação mais o HYROX de sábado; domingo descan
 
 **Objetivo:** hipertrofia com ganho de gordura controlado.
 
-**Pontos fracos priorizados:** peito superior, delt lateral, dorsal, panturrilha, delt anterior.
+**Pontos fracos priorizados:** peito superior, delt lateral, dorsal, panturrilha, posterior, glúteo.
 
 Este é o programa **do treinador**, como ele prescreveu. O programa que
 abre no app pode ter divergido: veja a diferença em ajustes → programa.
@@ -36,16 +36,16 @@ Uma rotação são 6 sessões, o que dá uma semana.
 | delt lateral | 12 | prioridade |
 | dorsal | 10 | prioridade |
 | panturrilha | 10 | prioridade |
-| delt anterior | 2 | prioridade |
+| posterior | 6 | prioridade |
+| glúteo | 2 | prioridade |
 | quadríceps | 7 |  |
 | tríceps | 6 |  |
-| posterior | 6 |  |
 | costas espessura | 6 |  |
 | bíceps | 6 |  |
 | abdômen | 6 |  |
 | delt posterior | 3 |  |
-| glúteo | 2 |  |
 | adutores | 2 |  |
+| delt anterior | 2 |  |
 | peito | 2 |  |
 
 ---

@@ -259,8 +259,13 @@ function Musculos({ m, ctx }) {
           {m.leitura.map(l => (
             <p key={l.txt} class="ins-body-sm ins-t2 dd-leitura-l">{l.txt}</p>
           ))}
+          {/* A ressalva é do treinador, e é o que impede a frase de virar
+              cobrança: prioridade também se expressa em seleção de exercício,
+              posição no treino, frequência e qualidade da série. */}
           <Procedencia>
-            descrição, não recomendação — o que fazer com ela é do treinador.
+            desvio para olhar, não erro — prioridade não se mede só em séries:
+            também em seleção de exercício, posição no treino, frequência e
+            qualidade. O que fazer com isto é do treinador.
           </Procedencia>
         </div>
       )}

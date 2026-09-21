@@ -1,7 +1,7 @@
 import {
   ROT_BASE, D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO,
   PROGRAMA, RULES, ALT, slugEx, EX_BASE, FREQUENTES_NO_BOX,
-  PRIORIDADES, NIVEIS, nivelDe, PRIO, CARGAS, DORES, MODAIS
+  PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, ehPriorizado, PRIO, CARGAS, DORES, MODAIS
 } from './dominio/programa';
 import {
   fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca,
@@ -5140,7 +5140,7 @@ CTX.musculos = function () {
     leitura: leituraDaSemana(lista.map(function (g) {
       return { g: g, n: atual[g] || 0,
                media: temHistorico ? (antes[g] || 0) / janela : null };
-    }), nivelDe, janela),
+    }), { ordem: ordemDe, regiao: regiaoDe, priorizado: ehPriorizado }, janela),
     linhas: lista.map(function (g) {
       const n = atual[g] || 0;
       const m = temHistorico ? (antes[g] || 0) / janela : null;
@@ -5152,7 +5152,7 @@ CTX.musculos = function () {
         // sem o prefixo 'prioridade': a 9px na coluna de 104px ele quebrava em
         // duas linhas e engordava toda linha de músculo secundário. A string
         // completa continua em PRIORIDADES, que é o que os documentos geram.
-        rot: (PRIORIDADES[nivel].rot || '').replace(/^prioridade /, '') || null,
+        rot: (PRIORIDADES[nivel].rot || '').replace(/^(prioridade|progressão) /, '') || null,
         media: m !== null ? fmtDec(m) : null,
         dif: dif, difCor: dif === null ? '' : dif > 0 ? 'ins-acid' : dif < -25 ? 'ins-amber' : ''
       };

@@ -158,11 +158,14 @@ a mesma pergunta. Medida ocasional continua entrando como informação.
 Na mesma aba, séries por músculo na semana, comparadas com o **mesmo ponto** das
 semanas anteriores, e um aviso quando o programa saiu do alvo do treinador.
 
-Abaixo do painel, **a semana lida junto**: quando um músculo de prioridade
-normal leva mais séries do que um de prioridade máxima da mesma região — peito
-contra peito superior —, e quantos dos priorizados ficaram abaixo da própria
-média. É **descrição, não recomendação**: o que fazer com a frase é do
-treinador, e ela existe para ser levada a ele.
+Abaixo do painel, **a semana lida junto**: quando um músculo menos prioritário
+leva mais séries do que um mais prioritário **da mesma região** — peito contra
+peito superior, quadríceps contra posterior —, e quantos dos priorizados
+ficaram abaixo da própria média.
+
+É **desvio para olhar, não erro**. Prioridade não se mede só em séries: também
+em seleção de exercício, posição no treino, frequência e qualidade. A ressalva
+é do treinador, e a frase existe para ser levada a ele.
 
 ### Esqueceu de registrar
 

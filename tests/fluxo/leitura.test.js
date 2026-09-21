@@ -43,7 +43,7 @@ test('o painel lê as linhas juntas e diz a inversão', async () => {
   a.fechar();
 });
 
-test('a tela diz que é descrição, e não recomendação', async () => {
+test('a tela carrega a ressalva do treinador', async () => {
   const logs = {};
   semana(logs, 'chest-press-horizontal-convergente', 8, 2);
   semana(logs, 'chest-press-inclinado-convergente', 3, 1);
@@ -52,7 +52,9 @@ test('a tela diz que é descrição, e não recomendação', async () => {
   await a.modo('treino');
 
   const bloco = a.$('.dd-leitura').textContent.toLowerCase();
-  assert.ok(bloco.includes('descrição, não recomendação'), bloco);
+  // A ressalva é dele: prioridade não se mede só em séries.
+  assert.ok(bloco.includes('desvio para olhar, não erro'), bloco);
+  assert.ok(bloco.includes('seleção de exercício'), bloco);
   ['aument', 'reduz', 'deveria', 'precisa corrig'].forEach(function (p) {
     assert.ok(!bloco.includes(p), 'virou conselho com "' + p + '": ' + bloco);
   });

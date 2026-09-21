@@ -53,8 +53,14 @@ const ordem = Object.keys(porMusculo).sort(function (a, b) {
 NIVEIS.forEach(function (nv) {
   const mus = ordem.filter(function (g) { return nivelDe(g) === nv; });
   if (!mus.length) return;
+  // O rótulo sai de PRIORIDADES, que é a fonte única da hierarquia. Um mapa
+  // próprio aqui já escreveu "## undefined" no documento quando o treinador
+  // criou duas faixas novas, e ninguém percebeu até o doc ser lido.
   const titulo = { maxima:'Prioridade máxima', secundaria:'Prioridade secundária',
-                   normal:'Desenvolvimento normal', indireto:'Estímulo indireto basta' }[nv];
+                   direcionada:'Progressão direcionada', normal:'Desenvolvimento normal',
+                   forte:'Ponto forte · menor prioridade de alocação',
+                   indireto:'Estímulo indireto basta' }[nv];
+  if (!titulo) throw new Error('faixa sem título no gerador: ' + nv);
   p('## ' + titulo);
   p('');
   mus.forEach(function (g) {
