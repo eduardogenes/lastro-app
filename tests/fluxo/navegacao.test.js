@@ -85,6 +85,38 @@ test('folhas empilhadas fecham uma por Voltar', async () => {
   a.fechar();
 });
 
+test('o Escape fecha uma folha por vez, mesmo com três abertas', async () => {
+  // Cada folha monta o seu ouvinte no `document`, e todos recebem a mesma
+  // tecla: com a pilha cheia, um Escape fechava duas de uma vez — Voltar
+  // desfazendo duas camadas, que é justamente o que o contrato proíbe.
+  // Refeição e o editor dela dividem o nível 50, então o desempate é a ordem
+  // de desenho, e não só o z-index.
+  const a = await app();
+  await a.pronto();
+  a.E("CTX.abreFolha({ k: 'editaRefeicao', id: null })");
+  await a.esperar();
+  a.E("CTX.abreFolha({ k: 'seletor', ref: null, idx: 0 })");
+  await a.esperar();
+  a.E("CTX.abreFolha({ k: 'editaAlimento', id: null })");
+  await a.esperar();
+  await a.esperar();        // o ouvinte da folha nova entra no efeito, um tick depois
+  assert.strictEqual(a.J('(view.pilha || []).length'), 3);
+
+  const esc = () => {
+    a.doc.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape' }));
+    return a.esperar();
+  };
+
+  await esc();
+  assert.strictEqual(a.J('(view.pilha || []).length'), 2, 'fechou só a de cima');
+  await esc();
+  assert.strictEqual(a.J('(view.pilha || []).length'), 1);
+  await esc();
+  assert.strictEqual(a.J('(view.pilha || []).length'), 0);
+  assert.ok(a.$('.ins-tabbar'), 'o app continua de pé');
+  a.fechar();
+});
+
 test('o Voltar sai de um destino de tela cheia', async () => {
   const a = await app();
   await a.pronto();

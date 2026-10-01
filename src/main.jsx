@@ -2901,6 +2901,11 @@ async function addCardio() {
   toast(`${f.min} min de ${f.m} registrados · ${n} de ${CARDIO_ALVO} nesta semana`);
 }
 async function delCardio(t) {
+  // Esta lista existe para desfazer um registro errado, e por isso mesmo ela
+  // não pode apagar o certo num toque de passagem.
+  const c = S.cardio.filter(function (x) { return x.t === t; })[0];
+  if (c && !confirm('Remover ' + c.min + ' min de ' + c.m + ' de ' + fmtDate(t) + '?\n\n' +
+      'Sai da contagem da semana. O treino do dia não muda.')) return;
   lapide(chaveDeCardio({ t: t }));
   S.cardio = S.cardio.filter(c => c.t !== t);
   await save();
@@ -3321,6 +3326,15 @@ async function addBody(k) {
     : `${fmtDec(v)} ${un} registrado ${rotulo === 'hoje' ? 'hoje' : 'em ' + rotulo}.`);
 }
 async function delBody(k, t) {
+  // Confirma, como as outras ações destrutivas: a medida é um ponto de um dia
+  // que já passou, e desfazer seria ter decorado o número. O aviso delimita o
+  // estrago em vez de dramatizar.
+  const m = S.body[k].filter(function (x) { return x.t === t; })[0];
+  const alvo = k === 'peso' ? 'o peso' : 'a cintura';
+  const un = k === 'peso' ? ' kg' : ' cm';
+  if (m && !confirm('Remover ' + alvo + ' de ' + fmtDate(t) +
+      ' (' + fmtDec(m.v) + un + ')?\n\n' +
+      'Sai da média da semana e do ritmo. As outras medidas ficam.')) return;
   lapide(chaveDeMarca(k, { t: t }));
   S.body[k] = S.body[k].filter(x => x.t !== t);
   await save(); render();
@@ -5301,9 +5315,15 @@ CTX.setQuantidade = function (refId, idx, q) {
 };
 
 CTX.removeItem = function (refId, idx) {
-  planoMudou();
   const r = achaRefeicao(refId);
   if (!r || !r.itens[idx]) return;
+  // O item sai do plano de TODO dia, e voltar pede achar o alimento de novo e
+  // digitar a quantidade que estava aqui. Confirma, e diz o que não se perde.
+  const a = catalogoAlimentos()[r.itens[idx].f];
+  if (!confirm('Tirar ' + (a ? a.n.toLowerCase() : 'este item') + ' de ' + r.n + '?\n\n' +
+      'Muda o plano de todos os dias, não só o de hoje. ' +
+      'O alimento continua na biblioteca.')) return;
+  planoMudou();
   r.itens.splice(idx, 1);
   queueSave(); render();
 };

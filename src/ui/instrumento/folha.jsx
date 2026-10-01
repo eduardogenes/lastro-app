@@ -116,8 +116,23 @@ export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao
   }, []);
 
   // Escape fecha — vale no Safari de desktop e para teclado externo no iPad.
+  //
+  // Só a de cima responde. Cada folha monta o seu próprio ouvinte no
+  // `document`, e todos recebem a mesma tecla: com duas abertas, um Escape
+  // fechava as duas, e Voltar passa a desfazer duas camadas de uma vez.
+  // Quem está em cima é quem tem o maior z-index — o nível declarado — e, em
+  // empate, a última desenhada: refeição e o editor dela dividem o nível 50.
   useEffect(() => {
-    const tecla = e => { if (e.key === 'Escape') aoFechar(); };
+    const tecla = e => {
+      if (e.key !== 'Escape') return;
+      const eu = caixa.current && caixa.current.parentElement;
+      if (!eu) return;
+      const z = w => Number(w.style.zIndex || 0);
+      let topo = eu;
+      document.querySelectorAll('.ins-folha-w').forEach(w => { if (z(w) >= z(topo)) topo = w; });
+      if (eu !== topo) return;
+      aoFechar();
+    };
     document.addEventListener('keydown', tecla);
     return () => document.removeEventListener('keydown', tecla);
   }, [aoFechar]);
@@ -126,7 +141,9 @@ export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao
   // `position: fixed` sai da árvore visualmente de qualquer lugar — desde que
   // NENHUM ancestral tenha transform, filter ou perspective, que criariam um
   // bloco de contenção e prenderiam a folha dentro dele. O Instrumento não usa
-  // nenhum dos três, e um teste cobra isso.
+  // nenhum dos três em `html`, `body` ou `#app`, e quem cobra isso é
+  // `tests/dominio/estilo.test.ts`, em "nada entre a folha e a janela cria
+  // bloco de contenção" — a promessa ficou um ano aqui sem teste nenhum.
   return (
     <div class="ins-folha-w" style={`z-index:${nivel}`}>
       {/* Tocar no véu fecha. O véu é irmão da folha, não pai: pai capturaria

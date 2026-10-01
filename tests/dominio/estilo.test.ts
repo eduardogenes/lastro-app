@@ -507,3 +507,34 @@ test('os aparelhos da prateleira são medidas de retrato, e plausíveis', () => 
     assert.ok(my > 40 ? sat === 20 : sat >= 20, 'queixo e entalhe no mesmo aparelho');
   });
 });
+
+test('nada entre a folha e a janela cria bloco de contenção', () => {
+  // A promessa que `src/ui/instrumento/folha.jsx` escreve e que não tinha
+  // teste: a folha é `position: fixed` e sai da árvore visualmente de onde
+  // estiver, DESDE QUE nenhum ancestral declare transform, filter,
+  // perspective, backdrop-filter, will-change ou contain. Qualquer um deles
+  // cria bloco de contenção e prende a folha dentro do pai — ela deixa de
+  // cobrir a tela e passa a rolar com o conteúdo, sem erro nenhum.
+  //
+  // Os ancestrais são poucos e fixos: a folha mora no `#app`, dentro do body.
+  // Por isso o teste é de FONTE e não de DOM: o defeito nasce de uma linha
+  // nova em `html`, `body` ou `#app`, não da árvore.
+  const ANCESTRAL = /^(html|body|:root|\*|#app)([.:[][^ >+~]*)?$/;
+  const PRESO = /(transform|filter|perspective|backdrop-filter|will-change|contain)\s*:/g;
+
+  const culpadas: string[] = [];
+  css.replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/@media[^{]*\{/g, '')          // o wrapper sai; as regras de dentro ficam
+    .split('}')
+    .forEach(bloco => {
+      const p = bloco.split('{');
+      if (p.length !== 2) return;
+      const alcanca = p[0].split(',').some(s => ANCESTRAL.test(s.trim().replace(/::[a-z-]+$/, '')));
+      if (!alcanca) return;
+      const achados = p[1].match(PRESO);
+      if (achados) culpadas.push(p[0].trim() + ' → ' + achados.join(' '));
+    });
+
+  assert.deepStrictEqual(culpadas, [],
+    'ancestral da folha com bloco de contenção: a folha para de ser fixa');
+});
