@@ -281,7 +281,10 @@ function Musculos({ m, ctx }) {
         série DIRETA · comparado com o mesmo ponto das {m.janela} semanas
         anteriores
       </Procedencia>
-      <p class="ins-body-xs ins-t5 dd-nota">
+      {/* Nível 3: esta ressalva não repete nada da tela — ela diz que o número
+          acima subestima o estímulo. Prosa que precisa ser lida não vai no
+          nível 5. */}
+      <p class="ins-body-xs ins-t3 dd-nota">
         Tríceps também trabalha nos supinos, bíceps nas puxadas e glúteo no
         terra. O estímulo real desses é maior que o número aqui.
       </p>

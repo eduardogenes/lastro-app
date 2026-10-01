@@ -485,7 +485,7 @@
 .note {
   width: 100%; min-height: 76px; padding: var(--ins-5); resize: vertical;
   background: var(--ins-surface); border: 1px solid var(--ins-border);
-  font: 400 15px/1.5 var(--ins-font-display); color: var(--ins-text);
+  font: 400 16px/1.5 var(--ins-font-display); color: var(--ins-text);
 }
 
 /* ---- Os freios: dor e pausa -------------------------------------------- */
@@ -822,7 +822,9 @@
 
 /* A caixa de colar a aula. */
 .aulac { display: flex; flex-direction: column; gap: var(--ins-4); }
-.aulac-t { width: 100%; font: 400 11px/1.4 var(--ins-font-mono); resize: vertical; }
+/* 16px pelo piso de campo (`base.css`): é uma caixa de COLAR, e o zoom do
+   Safari ao focar chega justamente quando o quadro inteiro já está dentro. */
+.aulac-t { width: 100%; font: 400 16px/1.4 var(--ins-font-mono); resize: vertical; }
 .aulac-acoes { display: flex; gap: var(--ins-4); }
 .aulac-acoes button { flex: 1; }
 .aulal-x {

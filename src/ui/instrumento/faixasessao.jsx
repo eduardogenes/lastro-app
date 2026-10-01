@@ -34,7 +34,10 @@ export function FaixaDaSessao({ faixa, onVolta, onContinua, onEncerra }) {
   if (faixa.tipo === 'pergunta') {
     return (
       <div ref={ref} class="ins-faixa ins-faixa-p" role="status">
-        <span class="ins-faixa-o">{faixa.txt}</span>
+        {/* Prosa, e por isso display e não o rótulo mono de 9px da sobrancelha:
+            é uma frase inteira — "Treino A sem série nova há 1h32." —, lida de
+            pé, por quem já esqueceu o treino aberto uma vez. */}
+        <span class="ins-body-xs ins-faixa-q">{faixa.txt}</span>
         <div class="ins-faixa-acoes">
           <button class="ins-faixa-b" onClick={onContinua}>continuo treinando</button>
           <button class="ins-faixa-b" onClick={onEncerra}>já parei</button>

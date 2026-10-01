@@ -490,12 +490,12 @@
 .dd-dia { margin-top: var(--ins-3); }
 
 /* Sincronização, na aba guia */
-.gu-campo { margin-bottom: var(--ins-3); font: 400 13px/1 var(--ins-font-mono); }
+.gu-campo { margin-bottom: var(--ins-3); font: 400 16px/1 var(--ins-font-mono); }
 .gu-sync { margin-bottom: var(--ins-4); }
 /* O seletor nativo herda a tipografia do sistema para não destoar do resto da
    tela; o desenho do calendário quem faz é o aparelho. */
 .dd-data {
-  font: 400 13px/1 var(--ins-font-mono);
+  font: 400 16px/1 var(--ins-font-mono);
   color: var(--ins-text-2); background: transparent;
   border: 1px solid var(--ins-border-strong); min-height: var(--ins-tap);
 }
@@ -611,9 +611,12 @@
 }
 .gu-arquivo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
+/* 16px, e não os 11 que caberiam mais JSON na caixa: abaixo disso o Safari dá
+   zoom ao focar, e aqui ele focaria com o backup inteiro colado dentro. O piso
+   de `base.css` vale para campo, não só para campo bonito. */
 .gu-json {
   width: 100%; min-height: 120px; margin-top: var(--ins-2);
-  font: 400 11px/1.5 var(--ins-font-mono); resize: vertical;
+  font: 400 16px/1.5 var(--ins-font-mono); resize: vertical;
 }
 .gu-apagar { margin-top: var(--ins-5); }
 .gu-apagar + .ins-provenance { margin-top: var(--ins-3); }
@@ -1382,7 +1385,7 @@
 /* A pergunta é âmbar, não ácido: atenção, não ação desejada. Ela não pede que
    ele faça algo melhor — pede que diga o que já aconteceu. */
 .ins-faixa-p { border-top-color: var(--ins-amber); gap: var(--ins-4); }
-.ins-faixa-p .ins-faixa-o { color: var(--ins-amber); }
+.ins-faixa-q { color: var(--ins-amber); }
 .ins-faixa-acoes { display: flex; gap: var(--ins-4); width: 100%; }
 .ins-faixa-b {
   flex: 1; background: none; border: 1px solid var(--ins-border); color: var(--ins-text-2);

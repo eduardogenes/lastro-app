@@ -66,9 +66,15 @@ export function Secao({ rotulo, nota, children, primeira, continua, id }) {
   );
 }
 
-/** Estado vazio: uma frase. Sem ilustração, sem mascote. */
+/**
+ * Estado vazio: uma frase. Sem ilustração, sem mascote.
+ *
+ * Nível 3, não 5: o nível 5 dá 3,2:1 e existe para o REDUNDANTE — dica que
+ * repete o que já está na tela. O vazio é o contrário disso: é a única coisa
+ * escrita ali, e dizer o que falta num cinza que reprova em AA é não dizer.
+ */
 export function Vazio({ children }) {
-  return <p class="ins-body-sm ins-t5 ins-vazio">{children}</p>;
+  return <p class="ins-body-sm ins-t3 ins-vazio">{children}</p>;
 }
 
 /** Linha de procedência: de onde veio um número derivado. */

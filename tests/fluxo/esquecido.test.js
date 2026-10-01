@@ -47,7 +47,9 @@ test('passando de 1h30 a faixa pergunta, e pergunta até na aba de treino', asyn
   const f = a.J('CTX.faixaDaSessao()');
   assert.strictEqual(f.tipo, 'pergunta');
   assert.ok(a.$('.ins-faixa-p'), 'e está na tela');
-  assert.ok(a.texto('.ins-faixa-o').includes('sem série nova'), a.texto('.ins-faixa-o'));
+  // `.ins-faixa-q`, e não a sobrancelha: a pergunta é prosa em display, porque
+  // rótulo mono de 9px não é onde se lê uma frase.
+  assert.ok(a.texto('.ins-faixa-q').includes('sem série nova'), a.texto('.ins-faixa-q'));
   a.fechar();
 });
 

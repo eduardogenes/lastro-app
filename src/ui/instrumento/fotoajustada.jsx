@@ -21,7 +21,10 @@ export function FotoAjustada({ url, enq, alt, classe, vazio, estilo }) {
   if (!url) {
     return (
       <div class={'fa fa-vazio ' + (classe || '')} style={estilo}>
-        <span class="ins-body-sm ins-t5">{vazio || 'sem foto'}</span>
+        {/* Nível 3 pelo mesmo motivo do `Vazio`: aqui está a única frase do
+            quadro — "buscando a foto…", "sem foto nesta pose" —, e o nível 5
+            reprova em AA. */}
+        <span class="ins-body-sm ins-t3">{vazio || 'sem foto'}</span>
       </div>
     );
   }
