@@ -146,8 +146,8 @@ de métrica), 3px (§3.14, vão da sparkline), 9px (§3.10, chip de CTA), 17px
 
 `tests/dominio/estilo.test.ts` cobra o valor de `padding`, `margin` e `gap` em
 `base.css`, `componentes.css` e `treino.css`. Não lê `protocolo.css` nem estilo
-embutido no JSX, aceita também 1, 2 e 46, e aceita as quatro exceções em
-qualquer lugar.
+embutido no JSX, aceita também 1 e 46 — o 2 agora é degrau declarado — e aceita
+as quatro exceções em qualquer lugar, não só onde elas foram autorizadas.
 
 ## Toque
 
