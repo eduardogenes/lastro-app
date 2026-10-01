@@ -388,6 +388,58 @@ test('referência sem bytes em lugar nenhum não quebra a tela', async () => {
 
   assert.strictEqual(a.J('CTX.sessaoDeFotos().pose.ref').url, null);
   assert.strictEqual(a.$('.pr-fig img'), null, 'sem <img> apontando para nada');
+  // E o quadro diz o que houve. Antes ficava escrito "buscando a foto…" para
+  // sempre: a tela afirmando que ainda tenta, quando já tinha desistido.
+  assert.strictEqual(a.J('CTX.sessaoDeFotos().pose.ref').aviso, 'a nuvem não devolveu a foto');
+  // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
+  // render que o aviso de falha dispara sem documento para desenhar.
+  await a.esperar(80);
+  a.fechar();
+});
+
+test('a foto que a nuvem não devolveu diz isso, e tentar de novo traz', async () => {
+  // O quarto estado da tela que faz E/S. O bucket responde sem os bytes — foto
+  // que o outro aparelho ainda não subiu, ou rede caindo no meio — e a
+  // recuperação mora no quadro que falhou.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const antes = diasAtras(14);
+  nuvemComBucket(a, {}, {});
+  comSessoes(a, [diasAtras(28), antes], 'frente-relaxado');
+
+  a.E('CTX.abreComparar()');
+  await a.esperar(80);
+
+  const c = () => a.J('CTX.comparacao()');
+  assert.strictEqual(c().ate.aviso, 'a nuvem não devolveu a foto');
+  assert.strictEqual(c().ate.retomar, true, 'e há o que tentar');
+  // Uma porta por quadro: as duas datas falharam, e cada uma tenta a sua.
+  assert.strictEqual(a.$$('.fa-retomar').length, 2);
+
+  // o byte aparece no bucket e ele toca "tentar de novo" no lado de depois
+  a.E(`globalThis.__bucketCorpo[${JSON.stringify(antes + '/frente-relaxado.webp')}] = 1`);
+  a.clicar(a.$$('.fa-retomar')[1]);
+  await a.esperar(80);
+
+  assert.match(c().ate.url, /^blob:/, 'a foto chegou');
+  assert.strictEqual(c().ate.retomar, false, 'e a falha não ficou grudada');
+  a.fechar();
+});
+
+test('sem conta na nuvem a foto do outro aparelho não oferece tentar de novo', async () => {
+  // Tentar de novo daria exatamente na mesma: a porta é entrar na conta, e
+  // oferecer um botão que não resolve é pior que não oferecer nenhum.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
+
+  a.E('CTX.abreComparar()');
+  await a.esperar(80);
+
+  const c = a.J('CTX.comparacao()');
+  assert.strictEqual(c.ate.aviso, 'a foto está na nuvem, e este aparelho não entrou na conta');
+  assert.strictEqual(c.ate.retomar, false);
+  assert.strictEqual(a.$('.fa-retomar'), null);
   a.fechar();
 });
 
@@ -474,6 +526,9 @@ test('comparar abre numa pose que tem par, não num vazio', async () => {
   a.E('CTX.abreComparar()');
   assert.strictEqual(a.E('view.comparar.pose'), 'frente-duplo-biceps');
   assert.ok(a.J('CTX.comparacao()').par, 'abriu com par montado');
+  // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
+  // render que o aviso de falha dispara sem documento para desenhar.
+  await a.esperar(80);
   a.fechar();
 });
 
@@ -496,6 +551,9 @@ test('o peso ao lado da foto é a média da semana, e vem do registro corporal',
   const c = a.J('CTX.comparacao()');
   assert.strictEqual(c.de.peso, '91,0 kg', 'média das duas pesagens daquela semana');
   assert.strictEqual(c.ate.peso, '88,0 kg');
+  // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
+  // render que o aviso de falha dispara sem documento para desenhar.
+  await a.esperar(80);
   a.fechar();
 });
 
@@ -509,6 +567,9 @@ test('sem pesagem naquela semana, o lugar do número fica vazio em vez de zero',
   const c = a.J('CTX.comparacao()');
   assert.strictEqual(c.de.peso, 'peso –');
   assert.strictEqual(c.de.cintura, 'cintura –');
+  // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
+  // render que o aviso de falha dispara sem documento para desenhar.
+  await a.esperar(80);
   a.fechar();
 });
 
@@ -523,6 +584,9 @@ test('a nota da sessão reaparece na comparação, que é onde ela serve', async
 
   a.E('CTX.abreComparar()');
   assert.ok(a.J('CTX.comparacao()').notas.some(n => n.includes('voltando de gripe')));
+  // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
+  // render que o aviso de falha dispara sem documento para desenhar.
+  await a.esperar(80);
   a.fechar();
 });
 
@@ -535,6 +599,9 @@ test('backup antigo, sem protocolo nenhum, entra sem quebrar', async () => {
   const a = await app({ estado: { logs: {}, done: [] }, aba: 'dados' });
   assert.deepStrictEqual(a.J('S.protocolo'), { poses: null, sessoes: [] });
   assert.ok(a.$('.dd-fotos'), 'e a seção desenha');
+  // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
+  // render que o aviso de falha dispara sem documento para desenhar.
+  await a.esperar(80);
   a.fechar();
 });
 
@@ -650,6 +717,9 @@ test('o mesmo recorte é aplicado na captura e na comparação', async () => {
     return s.fotos['frente-relaxado'].enq;
   })()`);
   assert.strictEqual(daVelha.r, 3);
+  // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
+  // render que o aviso de falha dispara sem documento para desenhar.
+  await a.esperar(80);
   a.fechar();
 });
 
@@ -1075,5 +1145,8 @@ test('andar entre poses não joga a sessão de fotos para o topo', async () => {
 
   // E a pose andou de verdade — senão o teste passaria com o botão quebrado.
   assert.notStrictEqual(a.E('view.protocolo.pose'), a.E('ordemDePoses()[0]'));
+  // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
+  // render que o aviso de falha dispara sem documento para desenhar.
+  await a.esperar(80);
   a.fechar();
 });

@@ -1128,6 +1128,43 @@ async function reconciliaCorpo() {
  * Garante que os bytes daquelas sessões estejam AQUI, buscando no bucket o que
  * faltar. É o caminho de volta da poda: abrir uma sessão antiga a traz.
  */
+/**
+ * Por que uma foto não apareceu.
+ *
+ * O quadro vazio não distingue "ainda vem" de "não vem": sem isto, uma falha
+ * de rede fica escrita para sempre como "buscando a foto…", que é a tela
+ * mentindo que ainda está tentando. A chave é data|pose, e a marca morre
+ * sozinha quando os bytes chegam.
+ */
+const falhaDeFoto = {};
+function chaveDaFalha(d, pose) { return d + '|' + pose; }
+function marcaFalha(k, por) {
+  if (falhaDeFoto[k] === por) return false;
+  falhaDeFoto[k] = por;
+  return true;
+}
+function limpaFalha(k) {
+  if (!falhaDeFoto[k]) return false;
+  delete falhaDeFoto[k];
+  return true;
+}
+
+const AVISO_DA_FALHA = {
+  semconta: 'a foto está na nuvem, e este aparelho não entrou na conta',
+  nuvem: 'a nuvem não devolveu a foto'
+};
+
+/** O que escrever no quadro: o estado real, não "buscando" para sempre. */
+function avisoDaFoto(d, pose, temRef, semFoto) {
+  if (!temRef) return semFoto;
+  const f = falhaDeFoto[chaveDaFalha(d, pose)];
+  return f ? AVISO_DA_FALHA[f] : 'buscando a foto…';
+}
+/** Só 'nuvem' vale tentar de novo: sem conta, a porta é entrar nela. */
+function podeTentarFoto(d, pose, temRef) {
+  return !!(temRef && falhaDeFoto[chaveDaFalha(d, pose)] === 'nuvem');
+}
+
 async function garanteBytesDoCorpo(datas) {
   let mudou = false;
   for (const d of datas || []) {
@@ -1136,14 +1173,19 @@ async function garanteBytesDoCorpo(datas) {
     for (const pose of Object.keys(ses.fotos || {})) {
       const ref = ses.fotos[pose];
       if (!ref || !ref.v) continue;
+      const k = chaveDaFalha(d, pose);
       if (await CORPO.tem(d, pose, ref.ext)) {
         if (await CORPO.carrega(d, pose, ref)) mudou = true;
+        if (limpaFalha(k)) mudou = true;
         continue;
       }
-      if (!NUVEM.sessao()) continue;
+      // Sem conta não é erro de rede: a foto existe, está no outro aparelho, e
+      // o caminho para ela é entrar na nuvem — não tentar de novo.
+      if (!NUVEM.sessao()) { if (marcaFalha(k, 'semconta')) mudou = true; continue; }
       const r = await NUVEM.baixaCorpo(d, pose, ref.ext);
-      if (!r.ok || !r.v) continue;
+      if (!r.ok || !r.v) { if (marcaFalha(k, 'nuvem')) mudou = true; continue; }
       await CORPO.guarda(d, pose, r.v, ref.ext);
+      if (limpaFalha(k)) mudou = true;
       if (await CORPO.carrega(d, pose, ref)) mudou = true;
     }
   }
@@ -6633,9 +6675,12 @@ CTX.sessaoDeFotos = function () {
         ? (function () {
             const r = sessaoDe(S.protocolo.sessoes, ref.d).fotos[pose.id];
             return {
+              d: ref.d,
               txt: fmtDate(instanteDaData(ref.d)),
               url: CORPO.urlDaFoto(ref.d, pose.id, r),
-              enq: (r && r.enq) || null
+              enq: (r && r.enq) || null,
+              aviso: avisoDaFoto(ref.d, pose.id, true, ''),
+              retomar: podeTentarFoto(ref.d, pose.id, true)
             };
           })()
         : null
@@ -6665,6 +6710,15 @@ function aplicaParPadrao() {
 }
 
 CTX.setPoseComparada = function (id) { view.comparar.pose = id; aplicaParPadrao(); render(); };
+/** Tentar de novo mora na tela que mostrou a falha, como o "ajustar". */
+CTX.tentaFotos = function (d) {
+  Object.keys(falhaDeFoto).forEach(function (k) {
+    if (k.indexOf(d + '|') === 0) delete falhaDeFoto[k];
+  });
+  render();
+  garanteBytesDoCorpo([d]);
+};
+
 CTX.setDataComparada = function (qual, d) {
   view.comparar[qual] = d;
   garanteBytesDoCorpo([d]);
@@ -6685,7 +6739,8 @@ function ladoDaComparacao(d, pose) {
     data: ses ? fmtDate(instanteDaData(d)) : '–',
     url: ref ? CORPO.urlDaFoto(d, pose, ref) : null,
     enq: (ref && ref.enq) || null,
-    aviso: ref ? 'buscando a foto…' : 'sem foto nesta pose',
+    aviso: avisoDaFoto(d, pose, !!ref, 'sem foto nesta pose'),
+    retomar: podeTentarFoto(d, pose, !!ref),
     peso: peso == null ? 'peso –' : fmtDec(peso) + ' kg',
     cintura: cint == null ? 'cintura –' : fmtDec(cint) + ' cm'
   };

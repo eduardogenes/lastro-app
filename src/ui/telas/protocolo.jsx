@@ -96,7 +96,8 @@ export function Protocolo({ ctx }) {
           <FotoAjustada
             url={p.ref && p.ref.url} enq={p.ref && p.ref.enq}
             alt={p.ref ? 'Referência: ' + p.n + ' em ' + p.ref.txt : ''}
-            vazio={p.ref ? 'buscando a foto…' : 'primeira vez nesta pose'}
+            vazio={p.ref ? p.ref.aviso : 'primeira vez nesta pose'}
+            aoTentar={p.ref && p.ref.retomar ? () => ctx.tentaFotos(p.ref.d) : null}
           />
           <figcaption class="ins-label">{p.ref ? 'referência · ' + p.ref.txt : 'sem referência'}</figcaption>
         </figure>

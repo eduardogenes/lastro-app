@@ -17,7 +17,7 @@ import { transform } from '../../dominio/enquadramento';
  * @param enq    o enquadramento, ou null para a foto como ela saiu
  * @param vazio  o que dizer quando não há o que desenhar
  */
-export function FotoAjustada({ url, enq, alt, classe, vazio, estilo }) {
+export function FotoAjustada({ url, enq, alt, classe, vazio, estilo, aoTentar }) {
   if (!url) {
     return (
       <div class={'fa fa-vazio ' + (classe || '')} style={estilo}>
@@ -25,6 +25,11 @@ export function FotoAjustada({ url, enq, alt, classe, vazio, estilo }) {
             quadro — "buscando a foto…", "sem foto nesta pose" —, e o nível 5
             reprova em AA. */}
         <span class="ins-body-sm ins-t3">{vazio || 'sem foto'}</span>
+        {/* A recuperação mora no quadro que falhou, e não num canto da tela:
+            é aqui que se percebe que a foto não veio. Quem decide se existe
+            o que tentar é quem sabe o motivo — sem conta na nuvem, tentar de
+            novo daria na mesma. */}
+        {aoTentar && <button class="fa-retomar" onClick={aoTentar}>tentar de novo</button>}
       </div>
     );
   }

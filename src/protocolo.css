@@ -52,8 +52,15 @@
   transform-origin: center;
 }
 .fa-vazio {
-  display: flex; align-items: center; justify-content: center;
-  text-align: center; padding: var(--ins-7);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--ins-4); text-align: center; padding: var(--ins-7);
+}
+/* Âmbar: é aviso, não ação desejada. O alvo chega aos 46px pela altura própria,
+   porque aqui há espaço — ao contrário do "ajustar" da legenda. */
+.fa-retomar {
+  background: none; border: 1px solid var(--ins-amber); color: var(--ins-amber);
+  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
+  min-height: var(--ins-tap); padding: 0 var(--ins-5);
 }
 /* ---------- execução ---------- */
 .pr-como { margin-top: var(--ins-9); }

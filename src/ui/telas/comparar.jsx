@@ -26,10 +26,11 @@ import { Chips, Procedencia, Vazio } from '../instrumento/primitivos.jsx';
 import { TelaCheia } from '../instrumento/telacheia.jsx';
 
 /** Um lado da comparação: a foto, a data e os números daquela semana. */
-function Lado({ l, aoAjustar }) {
+function Lado({ l, aoAjustar, aoTentar }) {
   return (
     <figure class="cp-lado">
-      <FotoAjustada url={l.url} enq={l.enq} alt={l.pose + ' em ' + l.data} vazio={l.aviso} />
+      <FotoAjustada url={l.url} enq={l.enq} alt={l.pose + ' em ' + l.data} vazio={l.aviso}
+                    aoTentar={l.retomar ? () => aoTentar(l.d) : null} />
       <figcaption>
         <span class="ins-label">{l.data}</span>
         <span class="ins-data cp-num">{l.peso}</span>
@@ -83,7 +84,9 @@ export function Comparar({ ctx }) {
               ? (
                 <>
                   <div class="cp-onion">
-                    <FotoAjustada url={c.de.url} enq={c.de.enq} alt={'Antes: ' + c.de.data} vazio={c.de.aviso} />
+                    <FotoAjustada url={c.de.url} enq={c.de.enq} alt={'Antes: ' + c.de.data}
+                                  vazio={c.de.aviso}
+                                  aoTentar={c.de.retomar ? () => ctx.tentaFotos(c.de.d) : null} />
                     {c.ate.url && (
                       <FotoAjustada
                         url={c.ate.url} enq={c.ate.enq} alt={'Depois: ' + c.ate.data}
@@ -102,8 +105,10 @@ export function Comparar({ ctx }) {
               )
               : (
                 <div class="cp-par">
-                  <Lado l={c.de} aoAjustar={d => ctx.abreAjuste(d, c.pose)} />
-                  <Lado l={c.ate} aoAjustar={d => ctx.abreAjuste(d, c.pose)} />
+                  <Lado l={c.de} aoAjustar={d => ctx.abreAjuste(d, c.pose)}
+                        aoTentar={ctx.tentaFotos} />
+                  <Lado l={c.ate} aoAjustar={d => ctx.abreAjuste(d, c.pose)}
+                        aoTentar={ctx.tentaFotos} />
                 </div>
               )}
 
