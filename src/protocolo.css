@@ -184,11 +184,15 @@
    fotos, e consertar o enquadramento é a exceção, não o convite. */
 .cp-ajustar {
   align-self: flex-start; margin-top: var(--ins-2);
-  padding: 0; background: none; border: 0;
+  padding: 0; background: none; border: 0; position: relative;
   font: 400 11px/1 var(--ins-font-mono);
   letter-spacing: .14em; text-transform: uppercase;
   color: var(--ins-text-4); text-decoration: underline;
 }
+/* 11px de desenho, 47px de área: o `::after` estende o alvo sem engordar o
+   rótulo, que é discreto de propósito. O vizinho de cima é texto, não outro
+   toque, então a expansão não rouba nada. */
+.cp-ajustar::after { content: ""; position: absolute; inset: -18px -10px; }
 .cp-ajustar:active { color: var(--ins-text); }
 
 

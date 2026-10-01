@@ -1377,8 +1377,10 @@
   text-align: left;
 }
 .ins-faixa-o { font: 400 9px/1.3 var(--ins-font-mono); color: var(--ins-text-4); }
+/* 15px: é o nome do exercício e a faixa inteira é o botão que leva de volta
+   ao treino — piso de nome tocável, não de meta. */
 .ins-atalho-v {
-  font: 400 12px/1.2 var(--ins-font-display); color: var(--ins-acid);
+  font: 400 15px/1.2 var(--ins-font-display); color: var(--ins-acid);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
 }
 
@@ -1412,8 +1414,11 @@
 }
 /* Os dois de ajuste são apertados no meio da série, de pé: alvo maior que o
    `parar`, que é de uma vez só. O gap de 6px entre eles é o que impede o
-   polegar de pegar o vizinho. */
-#tmenos, #tmais { min-width: 40px; min-height: 40px; }
+   polegar de pegar o vizinho.
+   46 e não 40: controle repetido tem piso, e este é o controle mais repetido
+   do app no pior contexto que ele tem — era a regra violada pelo motivo que a
+   escreveu. */
+#tmenos, #tmais { min-width: var(--ins-tap); min-height: var(--ins-tap); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
