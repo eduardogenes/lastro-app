@@ -893,6 +893,11 @@ async function finalizarSessao() {
                    motivo: null, feitas: feitas,
                    resumoMods: mods.map(function (m) { return textoMod(s.day, m); }) };
     view.editProg = false;
+    // A decisão é um destino como os outros: entra no topo e, se ele sair sem
+    // responder, devolve o treino onde ele estava. Sem isto, voltar caía na
+    // rolagem da tela da decisão — que é curta — e o exercício em que ele
+    // tinha parado sumia.
+    entraNoDestino('promo');
     render();
     return;
   }
@@ -2497,6 +2502,7 @@ function voltarDoPromo() {
   if (view.promo && view.promo.guardada) { S.promoPendente = null; queueSave(); }
   view.promo = null;
   render();
+  saiDoDestino('promo');
 }
 
 // Aplica ao programa oficial as mudanças escolhidas, na ordem em que foram
@@ -2540,6 +2546,9 @@ async function concluirPromo() {
   const n = escolhidos.length ? aplicaAoOficial(P.day, escolhidos, P.motivo) : 0;
   view.promo = null;
   S.promoPendente = null;
+  // Fim de fluxo: a sessão encerra, o dia gira, e a posição que ele tinha no
+  // treino de ontem não é mais a dele. Topo, como manda o contrato.
+  esqueceDestino('promo');
 
   if (P.guardada) {
     // a sessão já tinha fechado sozinha: só a decisão faltava
@@ -2564,6 +2573,7 @@ function abrePromoGuardada() {
     day: g.day, mods: g.mods.slice(), dec: g.mods.map(function () { return 'hoje'; }),
     motivo: null, feitas: 0, resumoMods: g.resumoMods || [], guardada: true, quando: g.t
   };
+  entraNoDestino('promo');
   render();
   return true;
 }
@@ -6464,7 +6474,10 @@ function andaPose(delta) {
   const i = ordem.indexOf(view.protocolo.pose) + delta;
   if (i < 0 || i >= ordem.length) return;
   view.protocolo.pose = ordem[i];
-  render(); window.scrollTo(0, 0);
+  // Sem `scrollTo`: `‹ anterior` e `próxima ›` ficam no meio da página e são
+  // tocados nove vezes seguidas. Jogar ao topo tira o botão de baixo do polegar
+  // a cada pose — é o mesmo conserto que `mudaMes` já levou.
+  render();
 }
 CTX.posAnterior = function () { andaPose(-1); };
 CTX.posProxima = function () { andaPose(1); };
@@ -6845,6 +6858,9 @@ function entraNoDestino(chave) {
   scrollDoDestino[chave] = window.scrollY;
   window.scrollTo(0, 0);
 }
+
+/** Fim de fluxo: o destino fechou, e a posição guardada não serve mais. */
+function esqueceDestino(chave) { delete scrollDoDestino[chave]; }
 
 function saiDoDestino(chave) {
   const y = scrollDoDestino[chave] || 0;

@@ -1055,3 +1055,25 @@ test('sair de uma tela cheia devolve a posição de leitura', async () => {
   assert.strictEqual(a.E("scrollDoDestino['comparar']"), undefined, 'e devolveu, sem deixar lixo');
   a.fechar();
 });
+
+test('andar entre poses não joga a sessão de fotos para o topo', async () => {
+  // `‹ anterior` e `próxima ›` ficam no meio da página e são tocados nove vezes
+  // seguidas: o topo tirava o botão de baixo do polegar a cada pose.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  a.E('CTX.abreProtocolo()');
+  await a.esperar();
+
+  const pedidos = [];
+  a.window.scrollTo = function (x, top) {
+    pedidos.push(x && typeof x === 'object' ? x.top : top);
+  };
+
+  a.E('CTX.posProxima()');
+  await a.esperar();
+  assert.strictEqual(pedidos.length, 0, 'paginar pose não pede rolagem');
+
+  // E a pose andou de verdade — senão o teste passaria com o botão quebrado.
+  assert.notStrictEqual(a.E('view.protocolo.pose'), a.E('ordemDePoses()[0]'));
+  a.fechar();
+});

@@ -129,3 +129,42 @@ test('sair sem responder mantém o conservador e não repete a pergunta', async 
   assert.strictEqual(a.E('S.prog.A.ex[7] ? S.prog.A.ex[7].s : 0'), antes, 'e o oficial não mudou');
   a.fechar();
 });
+
+test('a decisão é um destino: entra no topo e devolve a posição ao voltar', async () => {
+  // Ela abre no meio de um treino rolado até o sétimo exercício. Sem o par
+  // entra/sai, voltar sem responder caía na rolagem da tela da decisão — que é
+  // curta — e o exercício em que ele tinha parado sumia.
+  const a = await app();
+  a.E('toggle(0)');
+  a.preencher(0, 0, 60, 8);
+  a.E('setAlt(0, "supino-inclinado-no-smith")');
+  await a.esperar();
+
+  a.E('window.scrollY = 980');            // jsdom não rola sozinho
+  await a.E('finalizarSessao()');
+  assert.strictEqual(a.E("scrollDoDestino['promo']"), 980, 'guardou antes de trocar a tela');
+
+  a.E('voltarDoPromo()');
+  await a.esperar();
+  assert.strictEqual(a.E("scrollDoDestino['promo']"), undefined, 'devolveu, sem deixar lixo');
+  a.fechar();
+});
+
+test('responder a decisão é fim de fluxo: não devolve posição nenhuma', async () => {
+  const a = await app();
+  a.E('toggle(0)');
+  a.preencher(0, 0, 60, 8);
+  a.E('setAlt(0, "supino-inclinado-no-smith")');
+  await a.esperar();
+
+  a.E('window.scrollY = 980');
+  await a.E('finalizarSessao()');
+  a.E('decidePromo(0, "oficial")');
+  a.E('motivoPromo("decisao")');
+  await a.E('concluirPromo()');
+  await a.esperar();
+
+  // O dia girou e a sessão encerrou: a posição do treino de ontem não é a dele.
+  assert.strictEqual(a.E("scrollDoDestino['promo']"), undefined);
+  a.fechar();
+});
