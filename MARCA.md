@@ -64,8 +64,16 @@ A coluna da direita é o que um app da categoria escreveria no mesmo lugar.
 | Controle confundível explica o que ele **não** faz. | *isto diz só em que dias você costuma treinar. Qual sessão vem é sempre a rotação.* | ~~Monte a sua semana ideal.~~ |
 | Ao oferecer um override, diga em que condição ele é legítimo. | *Assuma na mão só quando ele estiver cego — volta de pausa, troca de exercício, semana de deload.* | ~~Personalize do seu jeito.~~ |
 | No destrutivo, delimite o estrago em vez de dramatizar. | *isto não tem volta, e não apaga o programa nem o plano — só o que você registrou.* | ~~Esta ação é irreversível. Tem certeza?~~ |
-| Estado vazio é uma frase. Sem ilustração, sem mascote. | *Ainda não há carga registrada suficiente para estimar.* | ~~Nada por aqui ainda. Bora começar?~~ |
+| Estado vazio diz o que falta, e a ação quando existe uma. Sem ilustração, sem mascote, sem consolo. | *Ainda não há carga registrada suficiente para estimar.* | ~~Nada por aqui ainda. Bora começar?~~ |
 | Commit descreve o efeito visível, em português, minúscula, sem o diff. | *a decisão de fim de treino não se perde quando a sessão fecha sozinha* | ~~fix: corrige bug no handler de encerramento~~ |
+
+**"Nunca comemore" não é regra de palavra: é regra de sinal.** A tabela acima
+governa string, e era só isso que estava escrito — então a comemoração
+reapareceu por fora dela, em cor: ácido pintando recorde, delta positivo,
+exercício que subiu. Vale para qualquer coisa que o app possa dizer sem falar —
+cor, movimento, som — e os dois lugares onde isso virou regra conferível são o
+inegociável 4 e a seção Movimento do [DESIGN.md](DESIGN.md). O app devolve o
+número; quem decide se foi bom é quem treinou.
 
 Quando surgir dúvida de tom, a resposta está no `git log` antes de estar aqui.
 
@@ -109,8 +117,9 @@ errado — inclusive este parágrafo.
 `#D9FF16` sobre preto `#0E1112`, que são as cores da marca, enquanto dentro do
 app valem `--ins-acid` `#CBF35E` sobre `--ins-canvas` `#0C0E0C`. O Instrumento
 governa o que se vê **dentro**; o ícone mora na tela de início, que é do
-sistema operacional. Trocar um pelo outro em qualquer direção quebra o que
-[tests/dominio/estilo.test.ts](tests/dominio/estilo.test.ts) tranca.
+sistema operacional. Nenhum teste tranca essa separação hoje:
+[tests/dominio/estilo.test.ts](tests/dominio/estilo.test.ts) prende a paleta do
+Instrumento em `tokens.css` e não lê o ícone.
 
 **Máscara é arquivo próprio.** `icone-512-mascara.png` e `icone-192-mascara.png`
 trazem o símbolo recuado 18% para caber no círculo seguro do Android, com o
@@ -133,10 +142,15 @@ Convivem em camadas, e a fronteira já estava no código antes de alguém decidi
 > **`ins-` nomeia o que se vê. `lastro-` nomeia o que se guarda.**
 
 Instrumento é o sistema visual e fala com quem escreve código: [DESIGN.md](DESIGN.md),
-`src/ui/instrumento/`, e o prefixo de toda classe e todo token. Lastro é o
-artefato e fala com quem abre: chave, cache, backup, ícone. Não existe
-superfície onde os dois apareçam juntos. Nem endosso, nem absorção — duas
-nomeações com públicos diferentes.
+`src/ui/instrumento/`, e o prefixo de todo token e de toda classe que nasce
+nova. Duas exceções, as duas decididas: as famílias de classe herdadas do
+sistema antigo (`.ex`, `.setrow`, `.cal-*` e outras) ficam sem ele porque são o
+contrato dos testes de fluxo com o DOM (`src/componentes.css`, bloco "O que veio
+do sistema antigo"; `src/treino.css`, cabeçalho); e os `--sa-*` são a área
+segura do sistema operacional, não do Instrumento.
+Lastro é o artefato e fala com quem abre: chave, cache, backup, ícone. Não
+existe superfície onde os dois apareçam juntos. Nem endosso, nem absorção —
+duas nomeações com públicos diferentes.
 
 **Voto vencido.** Absorver: renomear Instrumento para Lastro, porque dois nomes
 para um usuário é um a mais. Perdeu por custo e por perda de significado — o

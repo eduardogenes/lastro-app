@@ -1,3 +1,7 @@
+<!-- ADOTADO. Este arquivo é o registro do que a revisão propôs; o texto que
+     vale é docs/LASTRO_UX_CONTRACT.md, que o recebeu junto com as decisões de
+     07-decisoes.md. Não edite este candidato: ele é foto, não documento. -->
+
 <!--
   CANDIDATO. Não é o docs/LASTRO_UX_CONTRACT.md: é a versão que
   docs/design-review/06-parecer.md justifica. Cada trecho alterado traz um

@@ -5,19 +5,25 @@
    Não invente cor. Se precisar de uma nova, ela nasce aqui.
 
    Os seis inegociáveis, para quem for mexer:
-     1. Raio zero. Só ponto de status, thumb do slider e o
-        indicador de home são redondos.
+     1. Raio zero. Só ponto de status, thumb do slider e a
+        miniatura do aparelho (10px) são redondos.
      2. Número em mono, prosa em display. Nunca misturar dentro
-        de uma mesma string.
-     3. Fio de 1px, não cartão. Caixa com borda é só para objeto
-        destacado de verdade (veredito, formulário, resumo).
+        de uma mesma string: "250 g arroz" é mono só quando é
+        dado numa coluna de valores.
+     3. Fio de 1px, não cartão. Caixa com borda é LISTA FECHADA:
+        veredito, formulário, resumo.
         Nunca sombra. Nunca preenchimento para "agrupar".
      4. Um acento, e ele significa. Ácido = agora / feito / seu /
         aperte aqui. Âmbar = preste atenção. Coral = destrói dado.
-        No máximo um elemento ácido por região da tela.
-     5. Rótulo mono em caixa alta é estrutura, nunca ênfase.
-     6. Quase nenhum movimento. Existem dois: o pulso do ponto ao
-        vivo (2,4 s) e o indicador de aba (220 ms).
+        No máximo um elemento ácido COMPETINDO em cada região da
+        tela, e nunca ácido por comparação favorável: "melhor que
+        antes" é elogio, e o app não comemora por cor.
+     5. Rótulo mono em caixa alta é estrutura, nunca ênfase: abre
+        seção, nomeia valor, ou é rótulo de ação em botão.
+     6. Quase nenhum movimento, e nenhum que comemore. Ele só
+        interpola grandeza contínua, diz que a tela está viva ou
+        mostra para onde se andou. Os que existem estão na tabela
+        de DESIGN.md — são quatro, não dois.
    ============================================================ */
 
 :root {
@@ -92,7 +98,7 @@
      entre fileiras não permite, o quanto deu está escrito na própria regra. */
   --ins-tap-dense: 28px;
 
-  /* ---- Movimento: existem exatamente dois ---- */
+  /* ---- Movimento: a curva e a duração que os quatro usam ---- */
   --ins-ease: cubic-bezier(.2, .8, .2, 1);
   --ins-dur: 220ms;
 

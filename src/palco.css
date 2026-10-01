@@ -24,11 +24,13 @@
       ganhou sombra, e é por isso que a tela continua lendo como
       tela: ela é a única região plana da composição.
 
-   3. QUASE NENHUM MOVIMENTO -> existem dois na bancada.
-      O pouso, uma vez, na abertura; e a virada, quando se gira o
-      aparelho. Ambos são estado — "chegou", "virou" —, ambos abaixo
-      de 520ms, ambos mortos por `prefers-reduced-motion`. O app
-      dentro do vidro continua com os dois dele e mais nenhum.
+   3. QUASE NENHUM MOVIMENTO -> existem três na bancada.
+      O pouso, uma vez, na abertura; a virada, quando se gira o
+      aparelho; e o painel com a régua pousando depois dele (420ms,
+      140ms de atraso). Os três são estado — "chegou", "virou" —,
+      todos até 520ms, todos mortos por `prefers-reduced-motion`. O
+      app dentro do vidro continua com os quatro dele e mais nenhum,
+      e nenhum deles comemora nada.
 
    4. A CAMADA DO SISTEMA NÃO USA AS FONTES DO APP.
       Relógio, sinal e bateria são do iOS, e escrevê-los em Space

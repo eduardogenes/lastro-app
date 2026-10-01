@@ -48,7 +48,7 @@ descartar sessão de treino.
 | `‹ voltar` | sobe na hierarquia | topo de destino |
 | `×` | encerra a superfície | cabeçalho de folha |
 | cancelar | sai sem aplicar | só onde há alteração não aplicada |
-| salvar / concluir | aplica | ação primária, último elemento |
+| salvar / concluir | aplica | ação primária; na folha, o último elemento |
 
 Não misturar. Uma folha nunca diz "voltar"; um destino nunca diz "fechar".
 
@@ -60,7 +60,7 @@ Não misturar. Uma folha nunca diz "voltar"; um destino nunca diz "fechar".
 | **Voltar de um destino** | **restaura a posição exata** |
 | Fechar folha | mantém a posição, sem exceção |
 | Trocar de aba | topo |
-| Atualizar dado na mesma tela | **não mexe** |
+| Atualizar dado na mesma tela | **não mexe** — o topo só vem com troca de aba, de dia, de destino ou fim de fluxo |
 
 O último caso é o mais fácil de errar, porque `render(); window.scrollTo(0,0)`
 vira idioma: certo ao entrar num destino, errado ao repintar a tela em que já se
@@ -106,7 +106,10 @@ Cinco destinos, fixos: HOJE · TREINO · COMIDA · DADOS · GUIA.
 
 - Máximo três níveis: 50 · 70 · 80. Uma quarta é redesenho, não exceção.
 - Ao abrir: trava o scroll do corpo (`position: fixed` com o deslocamento
-  gravado), **manda o foco para dentro** e torna **inerte** o que está atrás.
+  gravado), **manda o foco para dentro** e torna **inerte** o que está atrás —
+  menos o cronômetro de descanso e o toast, que moram fora do `#app` de
+  propósito: tornar o "parar" inalcançável durante uma folha seria pior que o
+  vazamento de foco que resta ([06-final-review.md](ux-audit/06-final-review.md)).
 - Ao fechar: destrava, devolve o scroll, **devolve o foco ao acionador**, e a
   rota por baixo não muda.
 - Fecham por: `×`, véu, Esc e Voltar do sistema.
@@ -139,16 +142,14 @@ tinha uma seção que era 64% da tela inteira, e isso não se via rolando.
 Não usar por reflexo. Só quando concluir a tela depende dela.
 
 Se existir: o conteúdo ganha `padding-bottom` equivalente, o último elemento
-continua inteiro visível, `safe-area-inset-bottom` é respeitada, e ela **não
-coexiste com a tab bar**. Se as duas forem necessárias ao mesmo tempo, a tela
-está errada.
+continua inteiro visível, e `safe-area-inset-bottom` é respeitada.
 
 **O rodapé é uma pilha, não um lugar disputado.** Hoje moram lá, de baixo para
-cima: tab bar → cronômetro de descanso → toast. Cada camada nova **mede** a de
-baixo em vez de chutar um `bottom`, e o `padding-bottom` da página soma todas —
-senão o fim do conteúdo fica atrás delas, e como já é o fim da rolagem não há
-como trazê-lo à vista. Quem tem altura variável publica a medida na raiz
-(`--ins-timer-h`); quem se empilha lê de lá.
+cima: tab bar → cronômetro de descanso → faixa da sessão → toast. Cada camada
+nova **mede** a de baixo em vez de chutar um `bottom`, e o `padding-bottom` da
+página soma todas — senão o fim do conteúdo fica atrás delas, e como já é o fim
+da rolagem não há como trazê-lo à vista. Quem tem altura variável publica a
+medida na raiz (`--ins-timer-h`, `--ins-faixa-h`); quem se empilha lê de lá.
 
 ## 8 · Treino ativo
 
@@ -168,16 +169,22 @@ O contexto é: de pé, uma mão, cansado, olhando por segundos.
 
 ## 9 · Ações destrutivas
 
-- Reversível → executa e oferece desfazer.
+- Reversível → prefere desfazer a confirmar. O desfazer pode ser o próprio
+  gesto — apagar o campo da série, tocar a última célula cheia —, e o que
+  executa sem confirmar tem de ter volta.
 - Difícil de reverter → confirma, com o que se perde dito em português.
 - Destrutivo mora **um nível para dentro**, em coral, nunca na lista.
 - Não confirmar ação comum: confirmação repetida deixa de ser lida.
 
 ## 10 · Estados
 
-Toda tela declara os quatro: **carregando · vazio · erro · conteúdo**.
+Tela que depende de E/S — nuvem, fotos, câmera, arquivo — declara os quatro:
+**carregando · vazio · erro · conteúdo**. As que só leem o estado local declaram
+vazio e conteúdo: o dado já está em memória, e não há o que carregar nem o que
+falhar.
 
-- Vazio explica o que é a área, por que está vazia e qual é a ação.
+- Vazio diz o que falta, e a ação quando existe uma. Sem ilustração, sem
+  mascote, sem consolo ([MARCA.md](../MARCA.md), Voz).
 - Erro aparece perto do que o causou, permite tentar de novo e **nunca apaga o
   que o usuário digitou**.
 - Sem layout shift ao sair de carregando.
@@ -187,11 +194,14 @@ Toda tela declara os quatro: **carregando · vazio · erro · conteúdo**.
 - WCAG 2.2 AA onde aplicável.
 - **Todo controle tem nome acessível.** Campo sem rótulo visível leva
   `aria-label`. Botão cujo conteúdo é símbolo (`·`, `×`, `···`) leva `aria-label`.
-- Alvo ≥ 24×24 (norma); ≥ 46 px para controle repetido (padrão interno);
-  28 px só para toggle de um toque em linha densa.
+- Alvo ≥ 24×24 (norma); ≥ 46 px para controle repetido (padrão interno).
+  Controle secundário em linha cheia pode ter 28 px de **desenho**, com a área
+  estendida a ≥ 44 por `::after` — desenho e alvo são medidas diferentes
+  ([DESIGN.md](../DESIGN.md), Toque).
 - Foco sempre visível, e nunca escondido atrás de sticky.
 - Estado nunca só por cor.
-- `prefers-reduced-motion` desliga os dois movimentos do sistema.
+- `prefers-reduced-motion` desliga todo movimento do sistema
+  ([DESIGN.md](../DESIGN.md), Movimento).
 
 ## 12 · Viewport e área segura
 
@@ -217,9 +227,9 @@ Antes de considerar pronta:
 - [ ] ação fixa justificada (ou ausente)
 - [ ] teclado: campo em foco continua visível
 - [ ] área segura em cima, embaixo e nas laterais
-- [ ] estado de carregando
-- [ ] estado vazio que explica e aponta a ação
-- [ ] estado de erro com recuperação, sem perder entrada
+- [ ] tela com E/S: estado de carregando
+- [ ] estado vazio que diz o que falta, e a ação quando existe
+- [ ] tela com E/S: estado de erro com recuperação, sem perder entrada
 - [ ] foco entra ao abrir e volta ao fechar
 - [ ] todo controle com nome acessível
 - [ ] alvos conforme §11
@@ -228,5 +238,8 @@ Antes de considerar pronta:
 - [ ] 390 e 430 px conferidos
 - [ ] deitado não quebra nem reinicia
 - [ ] Voltar do sistema conferido
-- [ ] PWA instalado conferido
+- [ ] PWA instalado conferido — **o dono, no aparelho dele**, depois de mudança
+      de layout, área segura ou rodapé. Nenhum teste alcança isto, e escrever o
+      item sem o responsável era o mesmo que não ter o item.
 - [ ] reload no meio da tarefa preserva o estado
+

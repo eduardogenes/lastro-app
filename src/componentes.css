@@ -1428,8 +1428,10 @@
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
-/* As três exceções ao raio zero: ponto de status, ponto ao vivo, thumb do
-   slider. Antes havia uma regra que zerava o raio de TUDO dentro de #app —
+/* O que é redondo por decisão: ponto de status, ponto ao vivo e thumb do
+   slider — os três pontos contam como um na lista do DESIGN.md, que fecha com a
+   miniatura do aparelho (10px, em `--ins-raio-foto`).
+   Antes havia uma regra que zerava o raio de TUDO dentro de #app —
    muleta enquanto as telas em string nasciam com 2 a 12px. Não é mais
    necessária: nenhuma regra do projeto declara raio. */
 .ins-live-dot, .ins-tl-ponto,

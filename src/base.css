@@ -208,7 +208,8 @@ p, .ins-prosa, input, textarea {
   font: 400 10px/1.4 var(--ins-font-mono);
   /* text-4, não text-5: procedência CARREGA informação ("cru · 3,4 kg
      prontos") e a 10px o nível 5 dá 3,2:1, que reprova em AA. O nível 5 fica
-     para o redundante — aba inativa, dica que repete o que já está na tela. */
+     para o redundante: dica que repete o que já está na tela. A aba inativa
+     saiu desta lista quando a medição subiu ela para o nível 4. */
   letter-spacing: .06em; color: var(--ins-text-4);
 }
 
@@ -304,7 +305,7 @@ p, .ins-prosa, input, textarea {
   font: 600 19px/1 var(--ins-font-mono); letter-spacing: -.03em;
 }
 
-/* ---- Movimento: existem exatamente dois ------------------------------- */
+/* ---- Movimento: o pulso, um dos quatro que o app tem ------------------ */
 
 @keyframes ins-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
 
