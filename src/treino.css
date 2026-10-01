@@ -233,8 +233,11 @@
   letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-4);
 }
 .rirscale-v { display: flex; gap: var(--ins-2); flex: 1; }
+/* 44, e não os 28 do degrau denso: aqui o desenho PODE crescer — a escala é um
+   painel que abre embaixo da série e fecha na escolha, não uma linha de lista.
+   Estender área por ::after esbarraria no campo de repetição logo acima. */
 .rirop {
-  flex: 1; min-height: var(--ins-tap-dense);
+  flex: 1; min-height: 44px;
   background: transparent; color: var(--ins-text-3);
   border: 1px solid var(--ins-border);
   font: 500 15px/1 var(--ins-font-mono);
@@ -467,7 +470,12 @@
   border: 1px solid var(--ins-border); background: transparent;
   font: 400 11px/1 var(--ins-font-mono);
   letter-spacing: .06em; color: var(--ins-text-3);
+  position: relative;
 }
+/* 31 de desenho, 37 de alvo: estes chips QUEBRAM linha, e o vão de 6px entre
+   duas fileiras é o limite — crescer além dele faria a de baixo roubar o toque
+   da de cima, que é pior que o alvo pequeno. Mesma decisão do `.ins-chip`. */
+.chip::after { content: ""; position: absolute; inset: -3px 0; }
 .chip.on, .chip.sel {
   background: var(--ins-acid); color: var(--ins-on-acid); border-color: var(--ins-acid);
 }

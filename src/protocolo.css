@@ -23,6 +23,9 @@
   background: none; border: 0; padding: 0;
   position: relative; cursor: pointer;
 }
+/* 28 de desenho, 44 de alvo. No `::before` porque o `::after` aqui É o traço do
+   ponto. Só na vertical: os nove são vizinhos na horizontal. */
+.pr-ponto::before { content: ""; position: absolute; inset: -8px 0; }
 .pr-ponto::after {
   content: ""; position: absolute; left: 0; right: 0; top: 50%;
   height: var(--ins-indicator); transform: translateY(-50%);

@@ -935,7 +935,13 @@
 .stepper button {
   width: 38px; height: 38px; border: 0; background: none;
   color: var(--ins-acid); font-size: 18px; line-height: 1;
+  position: relative;
 }
+/* 38 de desenho, 46 de alvo. Só na vertical: na horizontal os dois botões são
+   vizinhos com o número no meio, e crescer para o lado faria um toque no − cair
+   no +. O vão entre duas linhas é 8px, e cada uma leva metade — é a mesma conta
+   do chip. */
+.stepper button::after { content: ""; position: absolute; inset: -4px 0; }
 .stepper button:disabled { color: var(--ins-text-5); }
 .stepper b { font: 500 15px/1 var(--ins-font-mono); min-width: 16px; text-align: center; }
 .stepper span {

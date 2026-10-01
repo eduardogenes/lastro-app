@@ -86,7 +86,11 @@
   /* ---- Toque ---- */
   --ins-tap: 46px;        /* controle numérico repetido; 46 e não 44 de propósito:
                              ele usa de pé, suado, com uma mão */
-  --ins-tap-dense: 28px;  /* toggle de um toque dentro de linha densa */
+  /* 28px é DESENHO, não alvo: controle secundário dentro de linha cheia — caixa
+     de marcar, chip, opção de escala, ponto de pose, o "marcar" do cardio. Quem
+     usa este degrau estende a ÁREA por ::after até 44 no mínimo; onde o vão
+     entre fileiras não permite, o quanto deu está escrito na própria regra. */
+  --ins-tap-dense: 28px;
 
   /* ---- Movimento: existem exatamente dois ---- */
   --ins-ease: cubic-bezier(.2, .8, .2, 1);
