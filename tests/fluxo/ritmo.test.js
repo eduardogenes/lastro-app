@@ -62,7 +62,9 @@ test('ficar mais lento não é pintado de verde', async () => {
 
   const periodo = v.stats.filter(function (x) { return x.rotulo.indexOf('no período') >= 0; })[0];
   assert.ok(periodo, 'existe a linha do período');
-  assert.strictEqual(periodo.cor, '', 'o ritmo piorou de 22,0 para 23,0 — não é ácido');
+  // Sem cor nenhuma, e não só sem a verde: desde a revisão de design, ácido não
+  // pinta comparação favorável em lugar nenhum — nem quando ela é favorável.
+  assert.ok(!periodo.cor, 'o ritmo piorou de 22,0 para 23,0 — não é ácido');
 
   // a sessão de cinco tiros contra o 500 m sozinho: era aqui que saía o +423%
   const ultima = v.sessoes[0];

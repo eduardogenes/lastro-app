@@ -223,3 +223,23 @@ test('trocar de mês não mexe na posição de leitura', async () => {
   assert.deepStrictEqual(pedidos, []);
   a.fechar();
 });
+
+test('recorde não é pintado de ácido: o app não comemora por cor', async () => {
+  // A decisão da revisão de design: ácido significa agora, feito, seu e aperte
+  // aqui — nenhum dos quatro é "melhor que antes". O número do recorde continua
+  // na tela; o que sai é o elogio por cor.
+  const antes = emHoje(6, 22) - 8 * DIA;
+  const t = emHoje(6, 22) - DIA;
+  const a = await app({ estado: {
+    logs: { A0: [{ t: antes, sid: antes, sets: [[40, 10]] }, { t: t, sid: t, sets: [[50, 10]] }] },
+    done: [{ day: 'A', t: antes, sid: antes, dur: 60 * 60000, fim: 'manual' },
+           { day: 'A', t: t, sid: t, dur: 60 * 60000, fim: 'manual' }]
+  } });
+  a.E('abrirSessao(' + t + ')');
+  const v = a.J('CTX.detalheDaSessao()');
+  const rec = v.stats.filter(function (x) { return /recorde/.test(x.rotulo); })[0];
+  assert.ok(rec, 'a linha de recordes existe');
+  assert.strictEqual(rec.valor, '1', '40 kg para 50 kg é recorde de carga');
+  assert.ok(!rec.cor, 'e não vem com cor nenhuma');
+  a.fechar();
+});

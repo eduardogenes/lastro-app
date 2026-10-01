@@ -5016,7 +5016,9 @@ CTX.dados = function () {
       serie: porSemana,
       agora: t.ok ? Math.round(t.agora) + ' kg' : '—',
       delta: t.ok ? (t.delta >= 0 ? '+' : '−') + (Math.abs(t.delta) * 100).toFixed(1).replace('.', ',') + '%' : '—',
-      cor: t.ok ? (t.subindo ? 'ins-acid' : 'ins-amber') : '',
+      // Sem ácido para "subindo": é comparação com antes, e o app não
+      // comemora. O âmbar fica, porque "não está subindo" pede atenção.
+      cor: t.ok && !t.subindo ? 'ins-amber' : '',
       txt: textoDaTendencia(t, S.perfManual),
       opcoes: [
         { k: 'auto', t: 'o app decide', v: null, on: S.perfManual == null },
@@ -5119,6 +5121,8 @@ CTX.corpo = function () {
       serie: serieSemanal(S.body.peso, 14),
       media: r.ok ? fmtDec(r.last.v) + ' kg' : '—',
       ritmo: (r.ok && r.duasSemanas) ? fmtSig2(r.kgSem) : '—',
+      // Ácido fica: não é "melhor que antes", é DENTRO DA FAIXA que o
+      // nutricionista prescreveu — estado contra uma regra, como "feito".
       ritmoCor: (r.ok && r.duasSemanas)
         ? (r.kgSem >= 0.15 && r.kgSem <= 0.4 ? 'ins-acid' : 'ins-amber') : '',
       nota: naSemana + (naSemana === 1 ? ' pesagem nesta semana' : ' pesagens nesta semana'),
@@ -5222,7 +5226,9 @@ CTX.musculos = function () {
         // completa continua em PRIORIDADES, que é o que os documentos geram.
         rot: (PRIORIDADES[nivel].rot || '').replace(/^(prioridade|progressão) /, '') || null,
         media: m !== null ? fmtDec(m) : null,
-        dif: dif, difCor: dif === null ? '' : dif > 0 ? 'ins-acid' : dif < -25 ? 'ins-amber' : ''
+        // O ácido saiu: `dif` é contra as semanas anteriores, e volume acima do
+        // de antes não é "feito", é melhor que antes. A queda forte continua âmbar.
+        dif: dif, difCor: dif !== null && dif < -25 ? 'ins-amber' : ''
       };
     })
   };
@@ -5495,6 +5501,8 @@ CTX.nuvem = function () {
           : sync.sujo ? 'há mudanças para enviar'
           : quando ? 'em dia · ' + quando
           : 'ainda não sincronizou',
+    // Ácido fica: "em dia" é FEITO — o estado do que já subiu —, não uma
+    // comparação com antes.
     cor: sync.erro ? 'ins-amber' : (sync.sujo || !quando) ? '' : 'ins-acid'
   };
 };
@@ -5849,8 +5857,9 @@ CTX.detalheDaSessao = function () {
           : dur == null ? 'tempo não medido' : exato ? 'tempo exato' : 'tempo aproximado',
         valor: dur != null ? fmtDur(dur) : '–' },
       { k: 'v', rotulo: 'volume · kg×reps', valor: R.vol ? fmtInt(R.vol) : '–' },
-      { k: 'r', rotulo: recordes === 1 ? 'recorde' : 'recordes', valor: String(recordes),
-        cor: recordes ? 'ins-acid' : '' }
+      // Recorde é a comparação favorável mais pura que existe aqui, e pintá-lo
+      // de ácido era o app dizendo "você foi bem" por cor. O número basta.
+      { k: 'r', rotulo: recordes === 1 ? 'recorde' : 'recordes', valor: String(recordes) }
     ],
     horario: hIni ? (hFim ? { de: hIni, ate: hFim } : { de: hIni, ate: null }) : null,
     notas: notas,
@@ -5877,7 +5886,9 @@ CTX.detalheDaSessao = function () {
       return {
         nome: x.nome,
         delta: x.delta === null ? null : (x.delta > 0 ? '+' : '') + x.delta + '%',
-        deltaCor: x.bom ? 'ins-acid' : '',
+      // Ácido não pinta comparação favorável: "melhor que antes" é elogio, e o
+      // app não comemora. O sinal que sobra é o âmbar, que pede atenção.
+        deltaCor: '',
         series: x.sets.map(function (y) {
           if (!y) return null;
           return x.seg ? textoDaSerie(y, x.un, x.q) : fmtNum(y[0]) + '×' + y[1];
@@ -5982,8 +5993,7 @@ CTX.historico = function () {
     ).concat([{
       k: 'd',
       rotulo: (ritmo ? 'ritmo' : seg ? 'tempo' : corpo ? 'repetições' : 'volume') + ' no período',
-      valor: dv === null ? '–' : (dv > 0 ? '+' : '') + dv + '%',
-      cor: bom(dv) ? 'ins-acid' : ''
+      valor: dv === null ? '–' : (dv > 0 ? '+' : '') + dv + '%'
     }]),
     // O gráfico continua sendo SVG gerado: é desenho, não estrutura, e não
     // carrega nenhum handler. Entra por markup e sai daqui inteiro.
@@ -6007,7 +6017,9 @@ CTX.historico = function () {
         unidade: ritmo ? esc.rot : seg ? 'seg no total' : 'kg×reps',
         deload: !!s.dl,
         delta: delta === null ? null : (delta > 0 ? '+' : '') + delta + '%',
-        deltaCor: bom(delta) ? 'ins-acid' : '',
+      // Ácido não pinta comparação favorável: "melhor que antes" é elogio, e o
+      // app não comemora. O sinal que sobra é o âmbar, que pede atenção.
+        deltaCor: '',
         series: s.sets.map(function (x) {
           if (!x) return null;
           return seg ? textoDaSerie(x, s.u, s.q)
@@ -6099,14 +6111,15 @@ CTX.retrospectiva = function () {
     stats: [
       { k: 'a', rotulo: 'treinos por semana', valor: fmtDec(R.sessoes / R.semanas) },
       { k: 'b', rotulo: 'volume acumulado', valor: fmtInt(R.volTotal) },
-      { k: 'c', rotulo: 'exercícios que subiram', valor: String(R.evol.length),
-        cor: R.evol.length ? 'ins-acid' : '' }
+      { k: 'c', rotulo: 'exercícios que subiram', valor: String(R.evol.length) }
     ],
     evol: R.evol.slice(0, 8).map(function (x) {
       return {
         nome: x.nome,
         delta: x.dc === null ? null : (x.dc > 0 ? '+' : '') + x.dc + '%',
-        deltaCor: 'ins-acid',
+      // Ácido não pinta comparação favorável: "melhor que antes" é elogio, e o
+      // app não comemora. O sinal que sobra é o âmbar, que pede atenção.
+        deltaCor: '',
         series: [val(x, x.ci) + un(x) + ' → ' + val(x, x.cf) + un(x)],
         meta: [x.n + ' sessões'].concat(
           x.dv === null ? [] : [(x.ritmo ? 'ritmo ' : 'volume ') + (x.dv > 0 ? '+' : '') + x.dv + '%']),
@@ -6117,7 +6130,9 @@ CTX.retrospectiva = function () {
       return {
         nome: x.nome,
         delta: x.dv === null ? null : (x.dv > 0 ? '+' : '') + x.dv + '%',
-        deltaCor: (x.ritmo ? x.dv < 0 : x.dv > 0) ? 'ins-acid' : '',
+      // Ácido não pinta comparação favorável: "melhor que antes" é elogio, e o
+      // app não comemora. O sinal que sobra é o âmbar, que pede atenção.
+        deltaCor: '',
         series: [val(x, x.cf) + un(x) + ' o bloco inteiro'],
         meta: x.n + ' sessões',
         marcas: []
