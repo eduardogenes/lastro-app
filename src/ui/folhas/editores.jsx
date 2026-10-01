@@ -147,7 +147,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
 
 /* ---------- seletor de alimento ---------- */
 
-export function FolhaSeletor({ ctx, ref: refId, idx }) {
+export function FolhaSeletor({ ctx, alvo: refId, idx }) {
   const [q, setQ] = useState('');
   const lista = ctx.alimentosParaSeletor(q);
   const escolhe = id => idx == null ? ctx.adicionaItem(refId, id) : ctx.trocaItem(refId, idx, id);
@@ -158,8 +158,14 @@ export function FolhaSeletor({ ctx, ref: refId, idx }) {
       titulo="Alimento"
       nivel={70}
       aoFechar={ctx.fechaFolha}
+      // `trocaFolha`, não `abreFolha`: cadastrar é a continuação desta busca —
+      // ela não achou o alimento —, e empilhar por cima dela era a quarta folha
+      // que o contrato não tem. Salvar já põe o alimento na refeição e volta
+      // para ela; `para` é esse endereço.
       acao={
-        <button class="ins-btn-add" onClick={() => ctx.abreFolha({ k: 'editaAlimento', id: null })}>
+        <button class="ins-btn-add"
+                onClick={() => ctx.trocaFolha({ k: 'editaAlimento', id: null,
+                                                para: { ref: refId, idx: idx } })}>
           + cadastrar alimento novo
         </button>
       }

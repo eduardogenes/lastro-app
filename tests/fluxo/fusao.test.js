@@ -316,6 +316,63 @@ test('cadastrar alimento cria id próprio e aparece na biblioteca', async () => 
   a.fechar();
 });
 
+test('escolher um alimento na busca põe ele na refeição', async () => {
+  // O caminho do usuário, que nenhum teste fazia: todos chamavam `adicionaItem`
+  // direto. A folha recebia a refeição de destino numa prop chamada `ref` —
+  // reservada do Preact, que nunca chega ao componente —, então escolher na
+  // lista não fazia nada. Sem erro, sem toast, sem nada (`9914199`).
+  const a = await app({ aba: 'comida' });
+  a.E('CTX.editaRefeicao("almoco")');
+  a.E('CTX.abreFolha({ k: "seletor", ref: "almoco", idx: null })');
+  await a.esperar(150);
+
+  const itens = () => a.J('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens');
+  const antes = itens().length;
+  const opcao = a.$$('.ins-folha button').filter(function (b) { return /^Aveia/.test(b.textContent); })[0];
+  assert.ok(opcao, 'a aveia está na lista da busca');
+  a.clicar(opcao);
+  await a.esperar(150);
+
+  assert.strictEqual(itens().length, antes + 1, 'entrou na refeição');
+  assert.strictEqual(itens()[antes].f, 'aveia');
+  assert.strictEqual(a.J('view.pilha.length'), 1, 'e a busca fechou, voltando para a refeição');
+  a.fechar();
+});
+
+test('cadastrar a partir da busca não abre a quarta folha, e já põe na refeição', async () => {
+  // O caminho que chegava a quatro: refeição → ··· → trocar → cadastrar. Agora o
+  // cadastro TOMA o lugar da busca que não achou, e salvar põe o alimento na
+  // refeição — antes ele era criado e ficava em lugar nenhum, e quem pediu
+  // "trocar" ainda tinha que achar na lista o que acabou de digitar.
+  const a = await app({ aba: 'comida' });
+  a.E('CTX.editaRefeicao("almoco")');
+  a.E('CTX.abreFolha({ k: "seletor", ref: "almoco", idx: null })');
+  await a.esperar(150);
+  assert.strictEqual(a.J('view.pilha.length'), 2, 'editar a refeição e a busca');
+
+  const cadastrar = a.$$('.ins-folha .ins-btn-add')
+    .filter(function (b) { return /cadastrar/.test(b.textContent); })[0];
+  assert.ok(cadastrar, 'o botão de cadastrar está na folha da busca');
+  a.clicar(cadastrar);
+  await a.esperar(150);
+
+  assert.strictEqual(a.J('view.pilha.length'), 2, 'o cadastro tomou o lugar da busca');
+  assert.strictEqual(a.J('view.pilha')[1].k, 'editaAlimento');
+  assert.strictEqual(a.$$('.ins-folha').length, 2, 'e na tela também são duas');
+
+  const antes = a.E('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens.length');
+  a.E(`CTX.salvaAlimento(null, { n: "Tapioca de teste", cat: "mercearia",
+                    u: "g", kcal: 240, p: 0.5, c: 58, g: 0.2, cru: 0 })`);
+  await a.esperar(150);
+
+  const itens = a.J('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens');
+  assert.strictEqual(itens.length, antes + 1, 'o alimento novo entrou na refeição');
+  assert.strictEqual(itens[itens.length - 1].f, 'tapioca-de-teste');
+  assert.strictEqual(a.J('view.pilha.length'), 1, 'e voltou para a refeição que ele estava editando');
+  assert.ok(/posto em/.test(a.toast()), 'o aviso diz onde ele foi parar: ' + a.toast());
+  a.fechar();
+});
+
 test('remover alimento em uso tira ele das refeições que o citam', async () => {
   // Sem isto o plano ficaria apontando para um id órfão e o total do dia
   // mudaria sem explicação.

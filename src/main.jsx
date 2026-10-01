@@ -4532,7 +4532,11 @@ function folhaAberta() {
     if (f.k === 'refeicao') return <FolhaRefeicao key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'dia') return <FolhaDia key={i} ctx={CTX} />;
     if (f.k === 'editaRefeicao') return <FolhaEditaRefeicao key={i} ctx={CTX} id={f.id} />;
-    if (f.k === 'seletor') return <FolhaSeletor key={i} ctx={CTX} ref={f.ref} idx={f.idx} />;
+    // `alvo`, e nunca `ref`: `ref` é prop reservada do Preact e NÃO chega ao
+    // componente. A folha recebia `undefined` como refeição de destino, e
+    // escolher um alimento na busca não fazia nada — sem erro, sem toast, sem
+    // nada. Os testes não pegavam porque chamavam `adicionaItem` direto.
+    if (f.k === 'seletor') return <FolhaSeletor key={i} ctx={CTX} alvo={f.ref} idx={f.idx} />;
     if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
     return null;
@@ -5272,6 +5276,15 @@ CTX.abreCardio = function () { abrirCardioRapido(); };
 function pilha() { return view.pilha || (view.pilha = []); }
 
 CTX.abreFolha = function (f) { pilha().push(f); render(); };
+/**
+ * Troca a folha do topo em vez de empilhar.
+ *
+ * Existe por um caminho só: refeição → `···` → trocar → cadastrar alimento
+ * novo, que chegava à QUARTA folha — a primeira em que ninguém sabe mais o que
+ * o fechar leva de volta. Cadastrar é a continuação da busca que não achou, não
+ * uma camada por cima dela.
+ */
+CTX.trocaFolha = function (f) { pilha().pop(); pilha().push(f); render(); };
 CTX.fechaFolha = function () { pilha().pop(); render(); };
 CTX.fechaTudo = function () { view.pilha = []; render(); };
 
@@ -5430,6 +5443,23 @@ CTX.salvaAlimento = function (id, campos) {
     base ? {} : { meu: 1 }
   );
   delete S.comida.ocultos[alvo];
+
+  // Cadastrado a partir da busca de uma refeição? Então ele já ENTRA nela: a
+  // folha trouxe para onde ia (`para`), e sem isso cadastrar deixava o alimento
+  // criado e posto em lugar nenhum — quem pediu "trocar" ainda tinha que achar
+  // na lista o que acabou de digitar.
+  const topo = pilha()[pilha().length - 1];
+  const para = !id && topo && topo.k === 'editaAlimento' ? topo.para : null;
+  if (para) {
+    const r = achaRefeicao(para.ref);
+    // Sem fechar aqui: esta folha tomou o lugar da busca, e são elas que fecham
+    // a folha de onde a escolha veio.
+    if (para.idx == null) CTX.adicionaItem(para.ref, alvo);
+    else CTX.trocaItem(para.ref, para.idx, alvo);
+    toast('Alimento cadastrado e posto em ' + (r ? r.n : 'refeição') + '.');
+    return alvo;
+  }
+
   CTX.fechaFolha();
   queueSave(); render();
   toast(id ? 'Alimento atualizado.' : 'Alimento cadastrado.');
