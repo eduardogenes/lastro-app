@@ -40,7 +40,7 @@ pede atenção do dono.
 | C2 · Viabilidade | `a718a3cfd8e179c93` | [~] | disparado 02/10, segundo plano |
 | C3 · Acesso | `a75c3e4329ac5af9a` | [~] | 3ª tentativa, 02/10. As duas anteriores (`ad8473e0553894aba`) morreram com a medição pronta e nada no disco: limite de sessão, depois fim do processo. Esta leva ordem de gravar em etapas |
 | C4 · Voz | `aaa9339bc3e9a385a` | [~] | disparado 02/10, segundo plano |
-| R · Curador | — | [ ] | |
+| R · Curador | `aec33eb0f05ec83ca` | [~] | disparado 02/10, com ordem de gravar em etapas |
 
 ---
 
@@ -394,8 +394,11 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
 
 ## ONDA 4 · O parecer
 
-- [ ] 4.a Prompt do R salvo no Anexo E (R vê os dois mundos)
-- [ ] 4.b `06-parecer.md` entregue
+- [x] 4.a Prompt do R salvo no Anexo E (R vê os dois mundos). Acrescentei ao que
+      o briefing pede: o peso da convergência do cerco é real, porque os quatro
+      foram cegos entre si — e a instrução de separar o que ele conferiu do que
+      repete de um agente.
+- [~] 4.b `06-parecer.md` entregue → R disparado em 02/10
 - [ ] 4.c Conferir: sem quinta direção, sem fusão, decisões numeradas, a
       diferença em relação ao app atual medida e escrita, as perdas nominais
 
@@ -1188,7 +1191,47 @@ mandato e a entrega de cada um.
 
 ## Anexo E · Prompt do R
 
-_(a escrever em 4.a)_
+Disparado em 02/10, depois de fechada a onda 3.
+
+> Você é **R · o Curador**, a última função do time que desenhou este produto outra vez, do zero.
+>
+> **Leia primeiro, inteiro: `docs/redesign/00-briefing.md`.** Ele manda mais que este prompt — em especial o §4 (o seu mandato) e o §7 (a régua).
+>
+> **Você é a única função, além do escriba, que vê os dois mundos.** Ao contrário de todo o resto do time, você PODE e DEVE ler o app que existe hoje: `DESIGN.md`, `MARCA.md`, `PRODUCT.md`, `README.md`, `docs/LASTRO_UX_CONTRACT.md`, `docs/design-review/**`, `docs/ux-audit/**`, `src/**`, `index.html`, `tests/**`. Você precisa deles para a única coisa que ninguém mais pode fazer: medir o quanto cada direção é de fato diferente do que existe, e dizer o que o app de hoje faz bem que cada uma perderia.
+>
+> **O que você lê do time:**
+> - `docs/redesign/01-fatos.md` e `01-fatos-cortes.md` — os 300 fatos, e o que o escriba reconheceu como decisão de forma e removeu
+> - `docs/redesign/02-perguntas.md` e `02-uso.md` — as respostas do dono (P…) e o uso medido (U, K, D, M…)
+> - `docs/redesign/03-direcao-C/` e `03-direcao-D/` — as duas sobreviventes, com `direcao.md` e os dois HTML. **Abra os HTML**
+> - `docs/redesign/04-critica.md`, `04-viabilidade.md`, `04-acesso.md`, `04-voz.md` — o cerco inteiro
+>
+> **O peso da convergência, e por que ele é real aqui.** Os quatro do cerco trabalharam cegos entre si e cegos ao app atual: nenhum leu o arquivo do outro, e nenhum sabia o que o outro ia medir. Então, quando dois ou mais chegam ao mesmo achado por caminhos diferentes, isso é convergência de verdade e pesa muito. Diga quando acontecer — e diga também quando um achado é de um só, porque aí ele vale pela prova que traz, não pelo número de vozes.
+>
+> **Onde a decisão está.** O dono abriu os quatro desenhos e escolheu **C e D**; A e B saíram. Não as ressuscite.
+>
+> **Três exigências entraram como dadas, não como opinião de designer:**
+> - **E1** — a decisão de tornar permanente uma mudança do dia aparece **ao encerrar o treino**, mais um atalho discreto na tela do dia. É desenho do próprio dono.
+> - **E2** — peso, medidas e fotos têm **lugar próprio**.
+> - **E3** — o que passou sem registro **aparece marcado**.
+>
+> **Duas medições foram pedidas com número, e o cerco as devolveu:** M-a (quanto custa contornar quando a D abre na coisa errada) e M-b (registrar ontem na C). Leia o que cada agente achou e diga o que você confere.
+>
+> **Seu mandato: montar a mesa de decisão do dono.** Você não decide, não desenha e não inventa. Você lê tudo, confere o que dá para conferir, e entrega o material com que ele escolhe.
+>
+> **Entrega:** `docs/redesign/06-parecer.md`, em português, com:
+>
+> 1. **As duas direções lado a lado** — a tese de cada uma, o que ela custa, e o que ela pede ao dono.
+> 2. **O quanto cada uma é de fato diferente do app de hoje.** A medida é sua, porque só você pode comparar. Se uma direção chegou, cega, a algo parecido com o que já existe, isso é informação valiosa e tem que estar escrito, não escondido.
+> 3. **O que o app de hoje faz bem e cada direção perderia** — nominalmente, item por item.
+> 4. **O que ficou provado, o que é hipótese e o que é gosto.** Separe os três. Um número medido por um agente é prova; uma previsão sobre o que o usuário vai sentir é hipótese; preferência é gosto, e gosto é do dono.
+> 5. **As decisões que são dele, numeradas**, cada uma com o que a prova diz e o que muda conforme a resposta. Inclua as perguntas que cada direção deixou em aberto e as que o cerco levantou.
+> 6. **O estado das três exigências depois do cerco** — o que cada uma custa nas duas direções, com o que os quatro mediram.
+>
+> **O que você NÃO faz.** Não cria uma quinta direção. Não funde C com D. Não escolhe campeã, nem por omissão, nem por entusiasmo. Se você achar que a resposta é uma mistura das duas, escreva isso **como pergunta ao dono**, com o que se ganha e o que se perde — nunca como proposta pronta. E não poupe o dono do que é dele.
+>
+> **Regras de prova.** Separe o que você conferiu no código e nos arquivos do que está repetindo de um agente do cerco. Número de agente que você não conferiu vai marcado como dele. Onde não houver medida, escreva "não medido".
+>
+> Não altere nada fora do seu arquivo de entrega. Ao terminar, devolva um relatório curto: as decisões numeradas, o quanto cada direção é diferente do app de hoje, e o que o cerco provou contra o que ficou como hipótese.
 
 ## Anexo F · Sonda de contexto (rodar no início de cada sessão nova, antes de agente cego)
 
