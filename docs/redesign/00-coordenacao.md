@@ -38,7 +38,7 @@ pede atenção do dono.
 | D4 · pasta D | `ae937a74dfef3fe2e` | [x] | entregue e conferida |
 | C1 · Crítico | `a531da66b7c3b010a` | [~] | disparado 02/10, segundo plano |
 | C2 · Viabilidade | `a718a3cfd8e179c93` | [~] | disparado 02/10, segundo plano |
-| C3 · Acesso | `ad8473e0553894aba` | [~] | disparado 02/10, segundo plano |
+| C3 · Acesso | `a75c3e4329ac5af9a` | [~] | 3ª tentativa, 02/10. As duas anteriores (`ad8473e0553894aba`) morreram com a medição pronta e nada no disco: limite de sessão, depois fim do processo. Esta leva ordem de gravar em etapas |
 | C4 · Voz | `aaa9339bc3e9a385a` | [~] | disparado 02/10, segundo plano |
 | R · Curador | — | [ ] | |
 
@@ -352,12 +352,29 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
 - [x] 3.a′ Sonda do Anexo F rodada nesta sessão nova antes de qualquer cego:
       **1 SIM, 2 NÃO, 3 NÃO** — as notas técnicas estão fora do contexto deles.
 - [~] 3.b Disparar C1–C4 em paralelo, cegos entre si → disparados em 02/10
-- [ ] 3.c `04-critica.md` (C1)
-- [ ] 3.d `04-viabilidade.md` (C2)
+- [!] 3.b′ **Os quatro caíram juntos por limite de sessão da API** (13h30, 02/10,
+      conta trocada depois). C1, C2 e C4 já tinham gravado a entrega inteira; o C3
+      caiu no meio da sonda mais funda, sem nada no disco. Retomado pelo id na
+      mesma sessão; a sessão terminou antes de ele voltar. Terceira tentativa
+      disparada como agente novo, com o prompt do Anexo D mais a ordem de gravar
+      em etapas — a lição das duas quedas é que segurar a entrega para o fim
+      perde a medição inteira.
+- [x] 3.c `04-critica.md` (C1) — 766 l. Mede M-a e M-b, 9 achados em C e 8 em D,
+      ordenados, mais "o que aguenta" com 11 itens. Derruba a premissa de M-b no
+      caso desenhado (C 4 toques, D 5) e a confirma no caso real (dia vazio:
+      C ~14 toques, D 1 — mas o 1 de D pré-marca "comi tudo", que é a direção que
+      a própria D descartou).
+- [x] 3.d `04-viabilidade.md` (C2) — 1097 l. Preço item por item nas duas, as três
+      exigências em separado, o que é impossível, e tabela final de veredito.
 - [ ] 3.e `04-acesso.md` (C3)
-- [ ] 3.f `04-voz.md` (C4)
-- [ ] 3.g Conferir os quatro contra vazamento e contra o mandato (quem ataca
-      não desenha)
+- [x] 3.f `04-voz.md` (C4) — 820 l. Oito regras de voz com motivo, o nome das
+      coisas, as palavras das três exigências, as strings dos quatro momentos, o
+      que o leitor de tela ouve, e as que não couberam no espaço do desenho.
+- [~] 3.g Conferir os quatro contra vazamento e contra o mandato (quem ataca
+      não desenha) → **três conferidos, limpos**: zero vocabulário do app atual
+      (busca por Instrumento, tokens `--ins`, raio zero, hairline, as duas fontes,
+      sparkline, o hex do acento, e os nomes dos arquivos proibidos); zero
+      proposta de solução no C1; zero mexida em layout no C4. Falta o C3.
 
 ## ONDA 4 · O parecer
 
