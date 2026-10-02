@@ -366,15 +366,31 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       a própria D descartou).
 - [x] 3.d `04-viabilidade.md` (C2) — 1097 l. Preço item por item nas duas, as três
       exigências em separado, o que é impossível, e tabela final de veredito.
-- [ ] 3.e `04-acesso.md` (C3)
+- [x] 3.e `04-acesso.md` (C3) — 700 l., na 3ª tentativa. Mediu com Chromium:
+      51 telefones, 1 526 elementos com texto, 525 controles. Achou e neutralizou
+      um encaixe que encolhia os telefones (os botões da D saíam a 0,426 do
+      tamanho declarado) antes de medir. C: 3 reprovações firmes em AA; D: 4 firmes
+      + 1 limítrofe + 1 defeito de estado programático. As duas passam em contraste
+      de texto (zero), em alvo mínimo (zero abaixo de 24) e em foco visível
+      (525/525).
 - [x] 3.f `04-voz.md` (C4) — 820 l. Oito regras de voz com motivo, o nome das
       coisas, as palavras das três exigências, as strings dos quatro momentos, o
       que o leitor de tela ouve, e as que não couberam no espaço do desenho.
-- [~] 3.g Conferir os quatro contra vazamento e contra o mandato (quem ataca
-      não desenha) → **três conferidos, limpos**: zero vocabulário do app atual
-      (busca por Instrumento, tokens `--ins`, raio zero, hairline, as duas fontes,
-      sparkline, o hex do acento, e os nomes dos arquivos proibidos); zero
-      proposta de solução no C1; zero mexida em layout no C4. Falta o C3.
+- [x] 3.g Conferir os quatro contra vazamento e contra o mandato → **os quatro
+      limpos**: zero vocabulário do app atual (busca por Instrumento, tokens
+      `--ins`, raio zero, hairline, as duas fontes, sparkline, o hex do acento e
+      os nomes dos arquivos proibidos); zero proposta de solução no C1; zero
+      mexida em layout no C4; zero redesenho e zero escolha entre C e D no C3.
+- [x] 3.h **Onda 3 fechada.** Achado convergente mais forte, e os três chegaram
+      nele por caminhos diferentes, cegos entre si: **E1 é a única exigência que
+      cria defeito novo, e nas duas direções.** C1 pelo número (só alcança as 37%
+      a 58% de sessões que ele encerra; o instante é o nº 1 em dificuldade do
+      produto); C3 pela medida ("discreto" é exatamente o que já reprova em alvo
+      nos dois desenhos); C4 pelo conflito (as duas recusam por escrito perguntar
+      sob o relógio). Vai para o parecer como decisão do dono, não como conserto.
+- [x] 3.i **Notas de mobile devolvidas ao `~/.claude/CLAUDE.md`** e o arquivo
+      lateral apagado (fecha o R1). Ressalva: se a onda 5 usar agente cego, elas
+      precisam sair outra vez — o canal de vazamento volta com elas.
 
 ## ONDA 4 · O parecer
 
