@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Depois de comer</title>
+<style>
+/*__CSS_COMUM__*/
+
+/* ---- momento 2 ---- */
+.body{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.body>*{flex:none}
+.day{margin:12px 16px 0}
+.day h4{font-size:13px;color:var(--ink-2);margin:0 0 2px;font-weight:700;line-height:1.3}
+.dl{list-style:none;margin:0;padding:0}
+.dl li{display:grid;grid-template-columns:20px 44px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:36px;border-top:1px solid var(--line);font-size:15px;padding:2px 0}
+.dl .si{width:20px;height:20px;color:var(--ink)}
+.dl li.o .si,.dl li.f .si{color:var(--ink-3)}
+.dl li.nw .si{color:var(--accent)}
+.dl time{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:14px}
+.dl .nm{font-weight:600;line-height:1.25}
+.dl .nm small{display:block;font-weight:500;font-size:12px;color:var(--ink-2)}
+.dl .st{font-size:13px;color:var(--ink-2);text-align:right;line-height:1.25}
+.dl li.nw .st{color:var(--accent-ink);font-weight:700}
+.dl li.o .st{font-style:italic}
+.known{margin:12px 16px 0}
+.cells{display:grid;grid-template-columns:repeat(14,1fr);gap:4px}
+.cell{height:22px;border-radius:5px;border:1.5px dashed var(--ink-3)}
+.cell.full{background:var(--ink);border:1.5px solid var(--ink)}
+.cell.part{border:1.5px solid var(--ink);background:linear-gradient(to top,var(--ink) 50%,transparent 50%)}
+.cell.today{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.kl{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:4px}
+.known p{font-size:13px;color:var(--ink-2);margin:4px 0 0;line-height:1.4}
+.known p b{color:var(--ink)}
+.kr{display:flex;align-items:flex-start;gap:8px}
+.kr p{flex:1}
+.done{margin:10px 16px 0;padding:12px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.done .h{display:flex;align-items:center;gap:10px}
+.done .h .t{flex:1;min-width:0}
+.done .h b{display:block;font-size:17px;line-height:1.25}
+.done .h small{display:block;font-size:13px;color:var(--ink-2)}
+.done .ico{width:26px;height:26px}
+.done .more{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:14px;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+.done .more .t{flex:1}
+.done .more b{color:var(--ink)}
+.ask{margin:10px 0 2px;padding:10px 12px;border-radius:14px;background:var(--surface-2)}
+.ask>b{display:block;font-size:15px;margin-bottom:8px;line-height:1.3}
+.ask p{font-size:13px;color:var(--ink-2);margin:8px 0 0;line-height:1.4}
+.sheet.full{top:50px;padding:8px 16px 28px;display:flex;flex-direction:column;overflow:hidden}
+.rr{display:grid;grid-template-columns:90px minmax(0,1fr);gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line)}
+.rr .nm{font-size:14px;font-weight:700;line-height:1.2}
+.rr .nm small{display:block;font-weight:500;color:var(--ink-2);font-size:12px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.seg.two2{grid-template-columns:1fr 1fr}
+.seg button{min-height:44px;border-radius:11px;border:1.5px solid var(--line-2);font-size:13px;font-weight:700;text-align:center;background:var(--surface);padding:0 2px;line-height:1.1}
+.seg button[aria-checked="true"].pv{background:var(--accent-soft);border:2px solid var(--accent);color:var(--accent-ink)}
+.seg button[aria-checked="true"].me{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.seg button[aria-checked="true"].nn{border:2px solid var(--ink)}
+.rb{margin-top:10px;padding:10px 12px;border-radius:14px;border:1.5px solid var(--line-2);font-size:14px;line-height:1.4}
+.rb .l{font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:2px;letter-spacing:.02em}
+.rb .c{display:block;margin-top:4px;color:var(--ink-2);font-size:13px}
+.primary[disabled]{background:var(--surface-2);color:var(--ink-2);border:1.5px dashed var(--line-2)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;list-style:none;padding:0;margin:12px 0 0;font-size:14px;color:var(--ink-2)}
+.legend li{display:flex;align-items:center;gap:6px}
+.legend svg{width:20px;height:20px;color:var(--ink)}
+.legend .a svg{color:var(--accent)}
+.legend .g svg{color:var(--ink-3)}
+.wk{font-size:12px;font-weight:700;color:var(--ink-2);margin:12px 16px 0;letter-spacing:.02em}
+.dr{display:flex;align-items:center;gap:10px;margin:0 16px;padding:7px 0;border-top:1px solid var(--line);min-height:58px}
+.dr:first-of-type{border-top:0}
+.dr .si{width:20px;height:20px;color:var(--ink);flex:none}
+.dr.o .si{color:var(--ink-3)}
+.dr .t{flex:1;min-width:0;line-height:1.3}
+.dr .t b{display:block;font-size:15px}
+.dr .t small{display:block;font-size:13px;color:var(--ink-2)}
+.dr .t small.ok{color:var(--ink)}
+.dr .lk{padding:0 4px}
+.legend-note{font-size:13px;color:var(--ink-2);margin:6px 0 0;max-width:68ch}
+</style>
+</head>
+<body>
+<!--__SPRITE__-->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="s-full" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.5" fill="currentColor"/><path d="M5.8 10.4l2.8 2.8 5.6-5.8" fill="none" style="stroke:var(--surface)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="s-half" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 1.4A8.6 8.6 0 0 0 10 18.6Z" fill="currentColor"/></symbol>
+  <symbol id="s-out" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 16L16 4" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="s-open" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3.2 2.6"/></symbol>
+  <symbol id="s-now" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="10" r="4" fill="currentColor"/></symbol>
+  <symbol id="s-fut" viewBox="0 0 20 20"><circle cx="10" cy="10" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+</svg>
+
+<header class="doc">
+  <p class="eyebrow">Direção D · O previsto já está escrito</p>
+  <h1>Momento 2 · Depois de comer</h1>
+  <p class="lead">Quarta, 30/09, 15h41, no trabalho: o lanche da tarde, comido inteiro. No dia seguinte, quinta, a quarta é refeita de memória: o almoço foi pela metade, o jantar saiu do plano (ele sabe o que comeu) e a água ficou sem conta.</p>
+  <p class="lead"><b>Na hora, um toque.</b> Depois, o plano daquele dia já vem marcado, e ele só mexe no que foi diferente. Antes de guardar, a tela lê de volta o que vai ficar registrado.</p>
+  <p class="lead">Os telefones 1 e 4 respondem ao toque.</p>
+  <ul class="legend" aria-label="Formas de estado">
+    <li><svg><use href="#s-full"/></svg>comi tudo</li>
+    <li><svg><use href="#s-half"/></svg>metade</li>
+    <li><svg><use href="#s-out"/></svg>fora do plano</li>
+    <li class="g"><svg><use href="#s-open"/></svg>sem marca: desconhecido, não zero</li>
+    <li class="a"><svg><use href="#s-now"/></svg>agora</li>
+    <li class="g"><svg><use href="#s-fut"/></svg>ainda por vir</li>
+  </ul>
+  <p class="legend-note">Cada estado tem forma e palavra, não só cor. A cor de destaque marca o que veio do plano e ainda não foi confirmado; a tinta cheia marca o que ele declarou.</p>
+  <div class="themes" role="group" aria-label="Tema da página">Tema:
+    <button type="button" data-theme="" aria-pressed="true">Sistema</button>
+    <button type="button" data-theme="light" aria-pressed="false">Claro</button>
+    <button type="button" data-theme="dark" aria-pressed="false">Escuro</button>
+  </div>
+</header>
+
+<main class="states">
+
+<!-- ============ 1 · PROTÓTIPO ============ -->
+<figure class="state" id="e1">
+  <figcaption>
+    <h2><span class="n">1</span>O caso: 15h41, o lanche, um toque</h2>
+    <p class="cap">O cartão de cima é a refeição do momento: a próxima que está a até 30 min, ou a última que passou sem marca. O lanche do plano é às 16h00 e ele come por volta de 15h30 (F181, P5, K4); a janela cobre os dois horários. “Comi tudo” é o previsto, e a porção é o que muda (F195, F199). <b>Este telefone responde ao toque.</b></p>
+  </figcaption>
+  <div class="wrap"><div class="phone" id="proto">
+    <div class="sb"><span class="num">15:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body">
+        <div class="ag-h"><div><div class="ag-d">quarta, 30 de setembro</div><button class="daytype">Dia de treino · Treino C, 6h18–7h12</button></div><button class="ib" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+        <section class="now" data-p="ask">
+          <div class="now-k">Agora · no plano às 16h00</div>
+          <h3>Lanche da tarde</h3>
+          <p class="items">leite 250 ml · banana 120 g · aveia 40 g · pasta de amendoim 10 g · leite em pó 10 g · whey 30 g · pão 50 g · geleia light 20 g · 819 kcal</p>
+          <div data-p="btns">
+            <button class="primary" data-a="tudo">Comi tudo</button>
+            <div class="two" style="margin-top:8px"><button class="sec" data-a="metade">Metade</button><button class="sec" data-a="fora">Não comi isso</button></div>
+          </div>
+          <div class="ask" data-p="foraask" hidden>
+            <b>Sabe o que comeu no lugar?</b>
+            <div class="two"><button class="sec" data-a="sei">Sei (ou nada)</button><button class="sec" data-a="nsei">Não sei quanto</button></div>
+            <p>Sem saber quanto, hoje deixa de contar para a regra do nutricionista. É melhor isso do que um número inventado.</p>
+          </div>
+        </section>
+        <section class="done enter" data-p="done" hidden>
+          <div class="h"><svg class="ico" data-p="doneico"><use href="#s-full"/></svg><span class="t"><b data-p="donetxt">Lanche da tarde · comi tudo</b><small>marcado às 15h41, neste aparelho</small></span><button class="lk" data-a="undo">Desfazer</button></div>
+          <div class="more"><span class="t">Antes dele, sem marca hoje: <b>pré‑treino, treino, café e almoço</b></span><button class="pill">Pôr hoje em dia</button></div>
+          <div class="more"><span class="t">Próximo no plano: <b>jantar às 19h30</b></span></div>
+        </section>
+        <section class="day">
+          <h4>Hoje · dia de treino · 3.007 kcal no plano</h4>
+          <ol class="dl">
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>5h45</time><span class="nm">Pré‑treino</span><span class="st">sem marca</span></li>
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>6h15</time><span class="nm">Treino <small style="display:inline">· água 600 ml</small></span><span class="st">sem marca</span></li>
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">sem marca</span></li>
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">sem marca</span></li>
+            <li class="nw" data-p="lancherow"><svg class="si"><use href="#s-now"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">agora</span></li>
+            <li class="f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span></li>
+          </ol>
+        </section>
+        <div class="row"><span class="t">Água<small data-p="water">nenhum copo marcado · meta: 14 de 250 ml</small></span><button class="pill" data-a="copo">+1 copo</button></div>
+        <section class="known">
+          <div class="cells" data-p="cells"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell today"></i></div>
+          <div class="kl"><span>sex 18/09</span><span>hoje</span></div>
+          <div class="kr"><p data-p="knowntxt">Dias com marca nos últimos 14: <b>0</b>. A regra precisa de 11.</p><button class="lk">Pôr em dia</button></div>
+        </section>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 2 ============ -->
+<figure class="state" id="e2">
+  <figcaption>
+    <h2><span class="n">2</span>Um toque depois</h2>
+    <p class="cap">Hoje passou a contar para a regra: dia com refeição marcada é dia de consumo conhecido (F200). As quatro refeições que passaram sem marca não viram zero e ficam “sem marca” (F198). O atalho para pôr hoje em dia aparece ali mesmo, sem cobrança.</p>
+  </figcaption>
+  <div class="wrap"><div class="phone">
+    <div class="sb"><span class="num">15:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body">
+        <div class="ag-h"><div><div class="ag-d">quarta, 30 de setembro</div><button class="daytype">Dia de treino · Treino C, 6h18–7h12</button></div><button class="ib" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+        <section class="done">
+          <div class="h"><svg class="ico"><use href="#s-full"/></svg><span class="t"><b>Lanche da tarde · comi tudo</b><small>marcado às 15h41, neste aparelho</small></span><button class="lk">Desfazer</button></div>
+          <div class="more"><span class="t">Antes dele, sem marca hoje: <b>pré‑treino, treino, café e almoço</b></span><button class="pill">Pôr hoje em dia</button></div>
+          <div class="more"><span class="t">Próximo no plano: <b>jantar às 19h30</b></span></div>
+        </section>
+        <section class="day">
+          <h4>Hoje · dia de treino · 3.007 kcal no plano</h4>
+          <ol class="dl">
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>5h45</time><span class="nm">Pré‑treino</span><span class="st">sem marca</span></li>
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>6h15</time><span class="nm">Treino <small style="display:inline">· água 600 ml</small></span><span class="st">sem marca</span></li>
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">sem marca</span></li>
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">sem marca</span></li>
+            <li><svg class="si"><use href="#s-full"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">comi tudo · 15h41</span></li>
+            <li class="f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span></li>
+          </ol>
+        </section>
+        <div class="row"><span class="t">Água<small>nenhum copo marcado · meta: 14 de 250 ml</small></span><button class="pill">+1 copo</button></div>
+        <section class="known">
+          <div class="cells"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell part today"></i></div>
+          <div class="kl"><span>sex 18/09</span><span>hoje</span></div>
+          <div class="kr"><p>Dias com marca nos últimos 14: <b>1</b>. Hoje passou a contar.</p><button class="lk">Pôr em dia</button></div>
+        </section>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 3 ============ -->
+<figure class="state" id="e3">
+  <figcaption>
+    <h2><span class="n">3</span>No dia seguinte: ontem ficou pela metade</h2>
+    <p class="cap">As únicas marcações reais de comida chegaram 1 e 4 dias depois (P1). O que ficou para trás aparece onde ele já abre o app. Não há notificação, porque o produto não tem servidor (F11). Hoje, o pré e o treino foram marcados entre séries, na academia (momento 1, estado 2).</p>
+  </figcaption>
+  <div class="wrap"><div class="phone">
+    <div class="sb"><span class="num">13:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body">
+        <div class="ag-h"><div><div class="ag-d">quinta, 1º de outubro</div><button class="daytype">Dia de treino · Treino D, 6h15–7h05</button></div><button class="ib" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+        <section class="now">
+          <div class="now-k">Agora · no plano às 12h30</div>
+          <h3>Almoço</h3>
+          <p class="items">arroz 250 g · feijão 50 g · frango 80 g · legumes/verduras 100 g · azeite 15 g · kiwi 100 g · 719 kcal</p>
+          <button class="primary">Comi tudo</button>
+          <div class="two" style="margin-top:8px"><button class="sec">Metade</button><button class="sec">Não comi isso</button></div>
+        </section>
+        <section class="band">
+          <b>Ontem ficou pela metade</b>
+          <p>Quarta só tem o lanche marcado. A água ficou sem conta.</p>
+          <button class="sec" style="width:100%">Pôr ontem em dia</button>
+        </section>
+        <section class="day">
+          <h4>Hoje · dia de treino</h4>
+          <ol class="dl">
+            <li><svg class="si"><use href="#s-full"/></svg><time>5h45</time><span class="nm">Pré‑treino</span><span class="st">comi tudo · 6h31</span></li>
+            <li><svg class="si"><use href="#s-full"/></svg><time>6h15</time><span class="nm">Treino</span><span class="st">comi tudo · 7h02</span></li>
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">sem marca</span></li>
+            <li class="nw"><svg class="si"><use href="#s-now"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">agora</span></li>
+          </ol>
+        </section>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 4 · PROTÓTIPO ============ -->
+<figure class="state" id="e4">
+  <figcaption>
+    <h2><span class="n">4</span>Pôr ontem em dia: o plano vem marcado</h2>
+    <p class="cap">O destaque mostra o que veio do plano; a tinta cheia mostra o que ele declarou (o lanche, marcado na hora). Cada refeição tem quatro saídas: tudo, metade (F199), fora do plano e não sei. A água não vem preenchida, porque nada indica que ele beba o previsto (água marcada em 2 dias, no máximo, P1). <b>Este telefone responde ao toque: mude o almoço e o jantar.</b></p>
+  </figcaption>
+  <div class="wrap"><div class="phone" id="proto2">
+    <div class="sb"><span class="num">13:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body" aria-hidden="true">
+        <div class="ag-h"><div><div class="ag-d">quinta, 1º de outubro</div></div></div>
+      </div>
+      <div class="scrim"></div>
+      <div class="sheet full" role="dialog" aria-label="Pôr quarta em dia">
+        <div class="grab"></div>
+        <div data-p="form">
+          <h3>Quarta, 30/09 · dia de treino</h3>
+          <p class="sub">O plano daquele dia vem marcado como comido. Mude só o que foi diferente. O que você não lembra, marque “não sei”.</p>
+          <div data-p="rows"></div>
+          <div class="rb" aria-live="polite"><span class="l">VAI FICAR REGISTRADO</span><span data-p="rbtxt"></span><span class="c" data-p="rbc"></span></div>
+          <button class="primary" data-p="save" style="margin-top:10px">Guardar quarta</button>
+        </div>
+        <div data-p="saved" hidden>
+          <h3>Quarta guardada</h3>
+          <p class="sub" data-p="savedtxt"></p>
+          <button class="sec" data-p="again" style="width:100%">Recomeçar o protótipo</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 5 ============ -->
+<figure class="state" id="e5">
+  <figcaption>
+    <h2><span class="n">5</span>Jantar fora do plano: a única pergunta</h2>
+    <p class="cap">O dia guarda um estado só: seguiu o plano, saiu sabendo o que comeu, ou saiu sem saber quanto (F195). A pergunta só aparece quando há um “fora” e diz a consequência: sem saber quanto, o dia deixa de contar (F200), e isso é melhor do que inventar. Só dá para guardar depois de responder.</p>
+  </figcaption>
+  <div class="wrap"><div class="phone">
+    <div class="sb"><span class="num">13:42</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="scrim"></div>
+      <div class="sheet full" role="dialog" aria-label="Pôr quarta em dia">
+        <div class="grab"></div>
+        <h3>Quarta, 30/09 · dia de treino</h3>
+        <div class="rr"><span class="nm">Pré‑treino<small>5h45</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+        <div class="rr"><span class="nm">Treino<small>6h15</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+        <div class="rr"><span class="nm">Café<small>8h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+        <div class="rr"><span class="nm">Almoço<small>12h30</small></span><div class="seg"><button>Tudo</button><button class="me" aria-checked="true">Metade</button><button>Fora</button><button>Não sei</button></div></div>
+        <div class="rr"><span class="nm">Lanche<small>na hora, 15h41</small></span><div class="seg"><button class="me" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+        <div class="rr"><span class="nm">Jantar<small>19h30</small></span><div class="seg"><button>Tudo</button><button>Metade</button><button class="me" aria-checked="true">Fora</button><button>Não sei</button></div></div>
+        <div class="ask">
+          <b>Jantar fora do plano: você sabe o que comeu?</b>
+          <div class="two"><button class="sec">Sei o que comi</button><button class="sec">Não sei quanto</button></div>
+          <p>Sei: quarta continua contando para a regra do nutricionista. Não sei: quarta deixa de contar, o que é melhor do que um número inventado.</p>
+        </div>
+        <div class="rr"><span class="nm">Água</span><div class="seg two2"><button class="nn" aria-checked="true">Não contei</button><button>Contar copos</button></div></div>
+        <div class="rb"><span class="l">VAI FICAR REGISTRADO</span>Quarta: pré‑treino, treino, café e lanche inteiros; <b>almoço pela metade</b>; <b>jantar fora do plano</b> (falta dizer se sabe o que comeu). Água: não contei.</div>
+        <button class="primary" disabled style="margin-top:10px">Responda o jantar para guardar</button>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 6 ============ -->
+<figure class="state" id="e6">
+  <figcaption>
+    <h2><span class="n">6</span>Guardado: a leitura de volta fica</h2>
+    <p class="cap">A frase lida antes de guardar vira a confirmação, com desfazer. A contagem não muda: quarta já contava desde o lanche (F200). Agora, além de contar, ela diz o que aconteceu, e a adesão é ponderada pela porção de verdade (F199).</p>
+  </figcaption>
+  <div class="wrap"><div class="phone">
+    <div class="sb"><span class="num">13:42</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body">
+        <div class="ag-h"><div><div class="ag-d">quinta, 1º de outubro</div><button class="daytype">Dia de treino · Treino D, 6h15–7h05</button></div><button class="ib" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+        <section class="done enter">
+          <div class="h"><svg class="ico"><use href="#s-full"/></svg><span class="t"><b>Quarta guardada</b><small>Pré‑treino, treino, café e lanche inteiros; almoço pela metade; jantar fora do plano, sabendo o que comeu. Água: não contei.</small></span><button class="lk">Desfazer</button></div>
+          <div class="known" style="margin:10px 0 0">
+            <div class="cells"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part today"></i></div>
+            <div class="kl"><span>sex 18/09</span><span>qua</span></div>
+            <p>Dias com marca nos últimos 14: <b>2</b>. Quarta já contava desde o lanche; agora diz o que aconteceu.</p>
+          </div>
+        </section>
+        <section class="now">
+          <div class="now-k">Agora · no plano às 12h30</div>
+          <h3>Almoço</h3>
+          <p class="items">arroz 250 g · feijão 50 g · frango 80 g · legumes/verduras 100 g · azeite 15 g · kiwi 100 g · 719 kcal</p>
+          <button class="primary">Comi tudo</button>
+          <div class="two" style="margin-top:8px"><button class="sec">Metade</button><button class="sec">Não comi isso</button></div>
+        </section>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 7 ============ -->
+<figure class="state" id="e7">
+  <figcaption>
+    <h2><span class="n">7</span>Vazio do dia: 5h20, nada marcado</h2>
+    <p class="cap">Dia sem marca é desconhecido, não zero (F198), e a tela diz isso. Às 5h20 ainda não há sessão, então “dia de treino” é palpite do padrão semanal (F187), e a tela também diz isso. A pesagem é antes do treino e depois do pré (F42): aparece logo abaixo.</p>
+  </figcaption>
+  <div class="wrap"><div class="phone">
+    <div class="sb"><span class="num">5:20</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body">
+        <div class="ag-h"><div><div class="ag-d">quinta, 1º de outubro</div><button class="daytype">Dia de treino? Palpite do padrão semanal · mudar</button></div><button class="ib" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+        <section class="now">
+          <div class="now-k">Daqui a 25 min · no plano às 5h45</div>
+          <h3>Pré‑treino</h3>
+          <p class="items">pão Artesano 35 g · doce de leite 20 g · canela 1 g · café 200 ml · 163 kcal</p>
+          <button class="primary">Comi tudo</button>
+          <div class="two" style="margin-top:8px"><button class="sec">Metade</button><button class="sec">Não comi isso</button></div>
+        </section>
+        <div class="row"><span class="t">Peso de hoje<small>antes de treinar, depois do pré · última: 73,8 (seg)</small></span><button class="pill">Anotar</button></div>
+        <div class="row"><span class="t">Ontem: só o lanche tem marca<small>quarta, 30/09</small></span><button class="pill">Pôr em dia</button></div>
+        <section class="day">
+          <h4>Hoje ainda não tem marca: por enquanto, é desconhecido. Não é zero.</h4>
+          <ol class="dl">
+            <li class="nw"><svg class="si"><use href="#s-now"/></svg><time>5h45</time><span class="nm">Pré‑treino</span><span class="st">a seguir</span></li>
+            <li class="f"><svg class="si"><use href="#s-fut"/></svg><time>6h15</time><span class="nm">Treino</span><span class="st">água 600 ml</span></li>
+            <li class="f"><svg class="si"><use href="#s-fut"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">629 kcal</span></li>
+            <li class="f"><svg class="si"><use href="#s-fut"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">719 kcal</span></li>
+          </ol>
+        </section>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 8 ============ -->
+<figure class="state" id="e8">
+  <figcaption>
+    <h2><span class="n">8</span>Vazio de verdade: sem plano neste endereço</h2>
+    <p class="cap">Um endereço novo abre um app vazio, e o ícone antigo continua apontando para o endereço velho (F56). Antes de oferecer um recomeço, a tela diz onde estão os dados. Aparelho novo sem plano já aconteceu (F271). O plano original do nutricionista fica guardado para restauração (F207).</p>
+  </figcaption>
+  <div class="wrap"><div class="phone">
+    <div class="sb"><span class="num">15:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body" style="padding:0 16px">
+        <div class="ag-h" style="padding:4px 0"><div><div class="ag-d">quarta, 30 de setembro</div></div><button class="ib" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+        <div class="band" style="margin:90px 0 0">
+          <b>Este endereço ainda não tem plano alimentar.</b>
+          <p>O plano é o do seu nutricionista. Os dados moram no endereço de onde o app abre: se você usava o app por outro endereço, ou pelo ícone antigo da Tela de Início, o seu registro está lá, intacto.</p>
+          <div class="btns"><button class="primary">Restaurar o plano original do nutricionista</button><button class="sec">Trazer de uma cópia de segurança</button><button class="sec">Entrar na conta e sincronizar</button></div>
+        </div>
+        <p class="small" style="margin:12px 0 0">Nada aqui apaga o que existe em outro endereço.</p>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 9 ============ -->
+<figure class="state" id="e9">
+  <figcaption>
+    <h2><span class="n">9</span>Carregando</h2>
+    <p class="cap">Os dados são locais, então o app abre sem rede (F72). O esqueleto tem a forma da tela e um prazo de 4 s; depois disso, mostra o erro de abertura (momento 1, estado 9). O carregamento infinito já aconteceu (F273).</p>
+  </figcaption>
+  <div class="wrap"><div class="phone" aria-busy="true">
+    <div class="sb"><span class="num">15:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body">
+        <div class="ag-h"><div><div class="sk" style="width:230px;height:24px;margin-top:4px"></div><div class="sk" style="width:180px;height:14px;margin-top:10px"></div></div></div>
+        <section class="now" style="border-color:var(--line)">
+          <div class="sk" style="width:150px;height:13px"></div>
+          <div class="sk" style="width:200px;height:26px;margin-top:8px"></div>
+          <div class="sk" style="width:100%;height:40px;margin-top:10px"></div>
+          <div class="sk" style="width:100%;height:56px;margin-top:12px;border-radius:16px"></div>
+          <div class="two" style="margin-top:8px"><div class="sk" style="height:52px;border-radius:14px"></div><div class="sk" style="height:52px;border-radius:14px"></div></div>
+        </section>
+        <p class="small" style="margin-top:14px;font-size:15px;color:var(--ink)">Abrindo o dia de hoje…</p>
+        <p class="small">Lendo o registro deste aparelho. Não usa rede.</p>
+        <section class="day"><div class="sk" style="width:100%;height:38px;margin-top:8px"></div><div class="sk" style="width:100%;height:38px;margin-top:6px"></div><div class="sk" style="width:100%;height:38px;margin-top:6px"></div></section>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 10 ============ -->
+<figure class="state" id="e10">
+  <figcaption>
+    <h2><span class="n">10</span>Erro: o lanche não foi guardado</h2>
+    <p class="cap">Não há falso sucesso. O cartão diz que não guardou e por quê, e mantém a escolha para tentar de novo. A linha do lanche continua “agora” e a contagem de dias não se mexe. O teto do armazenamento local é de cerca de 5 MiB (F53).</p>
+  </figcaption>
+  <div class="wrap"><div class="phone">
+    <div class="sb"><span class="num">15:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body">
+        <div class="ag-h"><div><div class="ag-d">quarta, 30 de setembro</div><button class="daytype">Dia de treino · Treino C, 6h18–7h12</button></div><button class="ib" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+        <section class="now">
+          <div class="now-k">Agora · no plano às 16h00</div>
+          <h3>Lanche da tarde</h3>
+          <div class="err" role="alert" style="margin:8px 0 10px">
+            <div class="wh"><svg width="22" height="22"><use href="#warn"/></svg><div><b>Não guardei o lanche.</b><p>O espaço de armazenamento deste aparelho recusou a gravação. Sua escolha ficou aqui: comi tudo, 15h41.</p></div></div>
+          </div>
+          <button class="primary">Tentar guardar de novo</button>
+          <button class="sec" style="width:100%;margin-top:8px">Copiar o registro inteiro (cópia de segurança)</button>
+        </section>
+        <section class="day">
+          <h4>Hoje · dia de treino</h4>
+          <ol class="dl">
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">sem marca</span></li>
+            <li class="nw"><svg class="si"><use href="#s-now"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">agora · não guardado</span></li>
+            <li class="f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span></li>
+          </ol>
+        </section>
+        <section class="known">
+          <div class="cells"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell today"></i></div>
+          <p>Dias com marca nos últimos 14: <b>0</b>.</p>
+        </section>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 11 ============ -->
+<figure class="state" id="e11">
+  <figcaption>
+    <h2><span class="n">11</span>Erro: aberto numa aba privada</h2>
+    <p class="cap">No modo privado do Safari nada sobrevive ao fechar (F55). Aberto como site, e não pelo ícone, o iOS apaga o registro depois de 7 dias sem uso (F52). A marca vale, mas a tela diz até quando, e o aviso não some sozinho.</p>
+  </figcaption>
+  <div class="wrap"><div class="phone">
+    <div class="sb"><span class="num">15:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body">
+        <div class="ag-h"><div><div class="ag-d">quarta, 30 de setembro</div><button class="daytype">Dia de treino · Treino C, 6h18–7h12</button></div><button class="ib" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+        <div class="warn" style="margin:6px 16px 0">
+          <div class="wh"><svg width="22" height="22"><use href="#warn"/></svg><div><b>Aberto numa aba privada do Safari</b><p>O que você marcar aqui some quando a aba fechar. Para guardar de verdade, abra o app pelo ícone da Tela de Início.</p></div></div>
+        </div>
+        <section class="done">
+          <div class="h"><svg class="ico"><use href="#s-full"/></svg><span class="t"><b>Lanche da tarde · comi tudo</b><small>15h41 · vale só até fechar esta aba</small></span><button class="lk">Desfazer</button></div>
+        </section>
+        <section class="day">
+          <h4>Hoje · dia de treino</h4>
+          <ol class="dl">
+            <li class="o"><svg class="si"><use href="#s-open"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">sem marca</span></li>
+            <li><svg class="si"><use href="#s-full"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">comi tudo · até fechar</span></li>
+            <li class="f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span></li>
+          </ol>
+        </section>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 12 ============ -->
+<figure class="state" id="e12">
+  <figcaption>
+    <h2><span class="n">12</span>Caso ruim: 11 dos últimos 14 dias sem marca</h2>
+    <p class="cap">É o estado real (P1: 1 dia com refeição marcada em 22). “Pôr em dia” mostra só os 14 dias que a regra lê (F213); os dias mais antigos ficam em Dias, sem cobrança. “Como no plano” é um toque por dia, e a linha mostra o que foi gravado, com desfazer. A segunda‑feira acabou de ser posta em dia.</p>
+  </figcaption>
+  <div class="wrap"><div class="phone">
+    <div class="sb"><span class="num">13:45</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body">
+        <div class="ag-h"><div><div class="ag-d">Pôr em dia</div><div class="sh-m">últimos 14 dias · sex 18/09 a qui 01/10</div></div></div>
+        <div class="info" style="margin:8px 16px 0"><p><b>11 dos últimos 14 dias sem marca.</b> A regra do nutricionista precisa de 11 com marca; agora são 3.</p><p>Marque só o que você lembra. Dia sem marca fica desconhecido: não vira zero e não vira “no plano”.</p></div>
+        <div class="wk">SEMANA DE 27/09 A 03/10</div>
+        <div class="dr"><svg class="si"><use href="#s-half"/></svg><span class="t"><b>qui 01/10 · hoje</b><small>Treino D · pré e treino marcados</small></span><button class="pill">Completar</button></div>
+        <div class="dr"><svg class="si"><use href="#s-full"/></svg><span class="t"><b>qua 30/09</b><small class="ok">Treino C · completo</small></span></div>
+        <div class="dr o"><svg class="si"><use href="#s-open"/></svg><span class="t"><b>ter 29/09</b><small>Treino B · sem marca</small></span><button class="pill">Como no plano</button><button class="lk">Detalhar</button></div>
+        <div class="dr"><svg class="si"><use href="#s-full"/></svg><span class="t"><b>seg 28/09</b><small class="ok">Como no plano: 6 momentos inteiros</small></span><button class="lk">Desfazer</button></div>
+        <div class="dr o"><svg class="si"><use href="#s-open"/></svg><span class="t"><b>dom 27/09</b><small>Descanso · sem marca</small></span><button class="pill">Como no plano</button><button class="lk">Detalhar</button></div>
+        <div class="wk">SEMANA DE 20/09 A 26/09</div>
+        <div class="dr o"><svg class="si"><use href="#s-open"/></svg><span class="t"><b>sáb 26/09</b><small>Aula de HYROX · sem marca</small></span><button class="pill">Como no plano</button><button class="lk">Detalhar</button></div>
+        <div class="dr o"><svg class="si"><use href="#s-open"/></svg><span class="t"><b>sex 25/09</b><small>Treino E · sem marca</small></span><button class="pill">Como no plano</button><button class="lk">Detalhar</button></div>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+<!-- ============ 13 ============ -->
+<figure class="state" id="e13">
+  <figcaption>
+    <h2><span class="n">13</span>Dia diferente: treino às 18h15</h2>
+    <p class="cap">O pré e o treino andam com a sessão (F189), e o café do pré sai porque passa das 16h (F192). O jantar fica onde está: o fim estimado do treino cai antes dele. A estimativa usa a mediana das últimas sessões (F193; 51 min, P1). O jantar vira o pós‑treino (F191). Nenhuma refeição é criada, apagada ou fundida.</p>
+  </figcaption>
+  <div class="wrap"><div class="phone">
+    <div class="sb"><span class="num">15:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+    <div class="scr">
+      <div class="body">
+        <div class="ag-h"><div><div class="ag-d">sexta, 25 de setembro</div><button class="daytype">Treino E às 18h15 hoje · mudar</button></div><button class="ib" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+        <section class="now">
+          <div class="now-k">Agora · no plano às 16h00</div>
+          <h3>Lanche da tarde</h3>
+          <button class="primary">Comi tudo</button>
+          <div class="two" style="margin-top:8px"><button class="sec">Metade</button><button class="sec">Não comi isso</button></div>
+        </section>
+        <section class="day">
+          <h4>Hoje · o treino vai para a noite</h4>
+          <ol class="dl">
+            <li><svg class="si"><use href="#s-full"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">comi tudo · 8h24</span></li>
+            <li><svg class="si"><use href="#s-half"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">metade · 13h02</span></li>
+            <li class="nw"><svg class="si"><use href="#s-now"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">agora</span></li>
+            <li class="f"><svg class="si"><use href="#s-fut"/></svg><time>17h45</time><span class="nm">Pré‑treino<small>andou com o treino · sem o café, depois das 16h</small></span><span class="st">128 kcal</span></li>
+            <li class="f"><svg class="si"><use href="#s-fut"/></svg><time>18h15</time><span class="nm">Treino<small>água 600 ml · fim estimado ~19h06</small></span><span class="st"></span></li>
+            <li class="f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar<small>fica no horário · é o pós‑treino</small></span><span class="st">678 kcal</span></li>
+          </ol>
+        </section>
+      </div>
+      <div class="tabwrap">
+        <nav class="tabbar" aria-label="Lugares"><button class="tab on" aria-current="page"><svg width="24" height="24"><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg width="24" height="24"><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg width="24" height="24"><use href="#t-evo"/></svg>Evolução</button><button class="tab"><svg width="24" height="24"><use href="#t-presc"/></svg>Prescrição</button></nav>
+        <div class="hi"><i></i></div>
+      </div>
+    </div>
+  </div></div>
+</figure>
+
+</main>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  document.querySelectorAll('.themes button').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.getAttribute('data-theme');
+      if(t){root.setAttribute('data-theme',t);}else{root.removeAttribute('data-theme');}
+      document.querySelectorAll('.themes button').forEach(function(o){o.setAttribute('aria-pressed',String(o===b));});
+    });
+  });
+  function fit(){
+    document.querySelectorAll('.wrap').forEach(function(w){
+      var p=w.querySelector('.phone'); if(!p) return;
+      var s=Math.min(1,w.clientWidth/414);
+      p.style.transform='scale('+s+')'; w.style.height=(896*s)+'px';
+    });
+  }
+  window.addEventListener('resize',fit); fit();
+
+  /* ---- protótipo 1: o lanche ---- */
+  var P=document.getElementById('proto');
+  if(P){
+    var q=function(n){return P.querySelector('[data-p="'+n+'"]');};
+    var water=0;
+    function mark(kind){
+      var map={tudo:['s-full','comi tudo'],metade:['s-half','metade'],sei:['s-out','fora do plano, sei o que comi'],nsei:['s-out','fora do plano, não sei quanto']};
+      var m=map[kind];
+      q('ask').hidden=true; q('done').hidden=false;
+      q('doneico').innerHTML='<use href="#'+m[0]+'"/>';
+      q('donetxt').textContent='Lanche da tarde · '+m[1];
+      var row=q('lancherow'); row.className='';
+      row.querySelector('.si').innerHTML='<use href="#'+m[0]+'"/>';
+      row.querySelector('.st').textContent=(kind==='tudo'?'comi tudo':kind==='metade'?'metade':'fora do plano')+' · 15h41';
+      var cells=q('cells').querySelectorAll('.cell'), last=cells[cells.length-1];
+      var counts=(kind!=='nsei');
+      last.className='cell today'+(counts?' part':'');
+      q('knowntxt').innerHTML=counts?'Dias com marca nos últimos 14: <b>1</b>. Hoje passou a contar.':'Dias com marca nos últimos 14: <b>0</b>. Hoje não conta: saiu do plano sem saber quanto.';
+    }
+    function reset(){
+      q('ask').hidden=false; q('done').hidden=true; q('btns').hidden=false; q('foraask').hidden=true;
+      var row=q('lancherow'); row.className='nw'; row.querySelector('.si').innerHTML='<use href="#s-now"/>'; row.querySelector('.st').textContent='agora';
+      var cells=q('cells').querySelectorAll('.cell'); cells[cells.length-1].className='cell today';
+      q('knowntxt').innerHTML='Dias com marca nos últimos 14: <b>0</b>. A regra precisa de 11.';
+    }
+    P.querySelector('[data-a="tudo"]').addEventListener('click',function(){mark('tudo');});
+    P.querySelector('[data-a="metade"]').addEventListener('click',function(){mark('metade');});
+    P.querySelector('[data-a="fora"]').addEventListener('click',function(){q('btns').hidden=true;q('foraask').hidden=false;});
+    P.querySelector('[data-a="sei"]').addEventListener('click',function(){mark('sei');});
+    P.querySelector('[data-a="nsei"]').addEventListener('click',function(){mark('nsei');});
+    P.querySelector('[data-a="undo"]').addEventListener('click',reset);
+    P.querySelector('[data-a="copo"]').addEventListener('click',function(){water=Math.min(14,water+1);q('water').textContent=water+' de 14 copos de 250 ml';});
+  }
+
+  /* ---- protótipo 2: pôr ontem em dia ---- */
+  var Q=document.getElementById('proto2');
+  if(Q){
+    var g=function(n){return Q.querySelector('[data-p="'+n+'"]');};
+    var meals=[['pre','Pré‑treino','5h45','pré‑treino'],['tre','Treino','6h15','treino'],['caf','Café','8h00','café'],['alm','Almoço','12h30','almoço'],['lan','Lanche','na hora, 15h41','lanche'],['jan','Jantar','19h30','jantar']];
+    var opts=[['tudo','Tudo'],['metade','Metade'],['fora','Fora'],['nsei','Não sei']];
+    var S, answer, waterMode, waterN;
+    function init(){
+      S={}; meals.forEach(function(m){S[m[0]]={v:'tudo',o:(m[0]==='lan'?'me':'pv')};});
+      answer=null; waterMode='nc'; waterN=0; build(); g('form').hidden=false; g('saved').hidden=true;
+    }
+    function join(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' e '+a[a.length-1];}
+    function build(){
+      var h='';
+      meals.forEach(function(m){
+        h+='<div class="rr"><span class="nm">'+m[1]+'<small>'+m[2]+'</small></span><div class="seg" role="radiogroup" aria-label="'+m[1]+'">';
+        opts.forEach(function(o){
+          var on=S[m[0]].v===o[0];
+          h+='<button role="radio" data-m="'+m[0]+'" data-v="'+o[0]+'" aria-checked="'+on+'" class="'+(on?S[m[0]].o:'')+'">'+o[1]+'</button>';
+        });
+        h+='</div></div>';
+        if(m[0]==='jan' && anyFora()){
+          h+='<div class="ask"><b>Fora do plano: você sabe o que comeu?</b><div class="two"><button class="sec" data-ans="sei" aria-pressed="'+(answer==='sei')+'"'+(answer==='sei'?' style="border:2px solid var(--ink)"':'')+'>Sei o que comi</button><button class="sec" data-ans="nsei" aria-pressed="'+(answer==='nsei')+'"'+(answer==='nsei'?' style="border:2px solid var(--ink)"':'')+'>Não sei quanto</button></div><p>Sei: quarta continua contando para a regra. Não sei: quarta deixa de contar, o que é melhor do que um número inventado.</p></div>';
+        }
+      });
+      h+='<div class="rr"><span class="nm">Água</span><div class="seg two2" role="radiogroup" aria-label="Água"><button role="radio" data-w="nc" aria-checked="'+(waterMode==='nc')+'" class="'+(waterMode==='nc'?'nn':'')+'">Não contei</button><button role="radio" data-w="ct" aria-checked="'+(waterMode==='ct')+'" class="'+(waterMode==='ct'?'me':'')+'">'+(waterMode==='ct'?waterN+' copos · +1':'Contar copos')+'</button></div></div>';
+      g('rows').innerHTML=h;
+      g('rows').querySelectorAll('[data-m]').forEach(function(b){b.addEventListener('click',function(){
+        var k=b.getAttribute('data-m'); S[k]={v:b.getAttribute('data-v'),o:'me'}; if(!anyFora()) answer=null; build();
+      });});
+      g('rows').querySelectorAll('[data-ans]').forEach(function(b){b.addEventListener('click',function(){answer=b.getAttribute('data-ans');build();});});
+      g('rows').querySelectorAll('[data-w]').forEach(function(b){b.addEventListener('click',function(){
+        var w=b.getAttribute('data-w'); if(w==='ct'){ if(waterMode==='ct'){waterN=Math.min(14,waterN+1);} waterMode='ct'; } else {waterMode='nc';waterN=0;} build();
+      });});
+      readback();
+    }
+    function anyFora(){return meals.some(function(m){return S[m[0]].v==='fora';});}
+    function readback(){
+      var by={tudo:[],metade:[],fora:[],nsei:[]};
+      meals.forEach(function(m){by[S[m[0]].v].push(m[3]);});
+      var parts=[];
+      if(by.tudo.length) parts.push(join(by.tudo)+(by.tudo.length>1?' inteiros':' inteiro'));
+      if(by.metade.length) parts.push('<b>'+join(by.metade)+' pela metade</b>');
+      if(by.fora.length) parts.push('<b>'+join(by.fora)+' fora do plano</b>'+(answer==='sei'?', sabendo o que comeu':answer==='nsei'?', sem saber quanto':' (falta dizer se sabe o que comeu)'));
+      if(by.nsei.length) parts.push(join(by.nsei)+' sem marca (não lembro)');
+      var t='Quarta: '+parts.join('; ')+'. Água: '+(waterMode==='nc'?'não contei.':waterN+(waterN===1?' copo.':' copos.'));
+      t=t.charAt(0).toUpperCase()+t.slice(1);
+      g('rbtxt').innerHTML=t;
+      var c=(answer==='nsei')?'Quarta deixa de contar para a regra do nutricionista.':'Quarta conta para a regra do nutricionista.';
+      g('rbc').textContent=c;
+      var ok=!anyFora()||answer;
+      var s=g('save'); s.disabled=!ok; s.textContent=ok?'Guardar quarta':'Responda o “fora do plano” para guardar';
+      g('savedtxt').innerHTML=t+' '+c;
+    }
+    g('save').addEventListener('click',function(){g('form').hidden=true;g('saved').hidden=false;});
+    g('again').addEventListener('click',init);
+    init();
+  }
+})();
+</script>
+</body>
+</html>

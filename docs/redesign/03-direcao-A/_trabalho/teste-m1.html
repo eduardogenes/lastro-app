@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8">
+<style>body{margin:0}iframe{border:0;width:414px;height:1900px}</style>
+<iframe id="f" src="../momento-1.html?tema=light"></iframe>
+<script>
+var f=document.getElementById('f');
+f.onload=function(){
+  var d=f.contentDocument, v=d.getElementById('vivo');
+  function bt(sel){return v.querySelector(sel);}
+  bt('[data-p="1"]').click();
+  bt('[data-rir="1"]').click();
+  setTimeout(function(){
+    bt('[data-reg]').click();
+    setTimeout(function(){ d.getElementById('e1').scrollIntoView(); },2500);
+  },100);
+};
+</script>

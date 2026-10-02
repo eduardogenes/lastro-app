@@ -1,0 +1,11 @@
+<!doctype html><meta charset="utf-8">
+<style>body{margin:0}iframe{border:0;width:414px;height:1900px}</style>
+<iframe id="f" src="../momento-2.html?tema=light"></iframe>
+<script>
+var f=document.getElementById('f');
+f.onload=function(){
+  var d=f.contentDocument, v=d.getElementById('vivo');
+  v.querySelector('[data-p="tudo"]').click();
+  setTimeout(function(){ d.getElementById('e1').scrollIntoView(); },300);
+};
+</script>

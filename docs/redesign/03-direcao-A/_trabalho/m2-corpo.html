@@ -1,0 +1,453 @@
+<header class="doc-cab">
+  <p class="sobre">Direção A · Lápis e tinta · Momento 2 de 2</p>
+  <h1>Depois de comer, no meio do dia</h1>
+  <p>O dia chega escrito <b>a lápis</b>: o plano do nutricionista, refeição por refeição, nos horários dele. Marcar é <b>passar a tinta</b>: um toque em “Comi”. E o que não foi marcado na hora continua a lápis no dia certo, esperando: <b>amanhã, a mesma tela serve para pôr ontem em dia</b>, também com um toque por refeição.</p>
+  <div class="leg" aria-label="Legenda">
+    <div class="l"><b>a lápis</b>borda tracejada, grafite: previsto pelo plano, ainda não marcado</div>
+    <div class="t"><b>a tinta ✓</b>fundo azul-tinta, com hora: marcado e guardado</div>
+  </div>
+  <p style="font-size:.8rem;color:var(--texto-2)">Plano, horários, quantidades e regras vêm do 01-fatos (F181 a F201, F213); as horas reais do dono e o caso vêm do 02-uso (P5, §9 M2). † marca associação provável, não confirmada nos fatos. Telas de 414 × 896 pontos.</p>
+  <div class="temas" role="group" aria-label="Tema de cor">
+    <span>Ver em:</span>
+    <button type="button" data-tema="sistema" aria-pressed="true">tema do sistema</button>
+    <button type="button" data-tema="light" aria-pressed="false">claro</button>
+    <button type="button" data-tema="dark" aria-pressed="false">escuro</button>
+  </div>
+</header>
+
+<nav class="indice" aria-label="Estados deste momento">
+  <b>Estados</b>
+  <ol>
+    <li><a href="#e1">O caso: o lanche das 15h34 (toque para testar)</a></li>
+    <li><a href="#e2">Logo depois, mais abaixo na mesma tela</a></li>
+    <li><a href="#e3">Comeu só parte</a></li>
+    <li><a href="#e4">No dia seguinte: ontem ficou a lápis</a></li>
+    <li><a href="#e5">Pondo ontem em dia, de memória</a></li>
+    <li><a href="#e6">Ontem revisado</a></li>
+    <li><a href="#e7">Os últimos 14 dias, e o “não lembro”</a></li>
+    <li><a href="#e8">Treino à noite: o plano anda junto</a></li>
+    <li><a href="#e9">Descanso e alta demanda</a></li>
+    <li><a href="#e10">Depois da meia-noite</a></li>
+    <li><a href="#e11">Vazio: primeiro dia, sem plano</a></li>
+    <li><a href="#e12">Carregando e não guardou</a></li>
+    <li><a href="#e13">No notebook</a></li>
+  </ol>
+</nav>
+
+<main class="estados">
+
+<!-- =============================== E1 · interativo =============================== -->
+<section class="estado" id="e1">
+  <div class="legenda">
+    <div class="n">ESTADO 1 · O CASO DE REFERÊNCIA · INTERATIVO</div>
+    <h2>Quarta, 15h34, no trabalho. O lanche foi comido inteiro.</h2>
+    <p>Ao abrir, Hoje mostra o dia inteiro em ordem de hora, e a refeição mais perto de agora vem aberta, com o botão grande. Um toque em <b>Comi tudo</b>. O que ficou da manhã continua visível a lápis, cada linha com o seu “Comi”, sem cobrança. Experimente aqui.</p>
+    <p class="f">F181, F182, F195, F198, F200, F213 · P5 · 02-uso §9 M2</p>
+  </div>
+  <div class="tela" id="vivo">
+    <div class="sb" aria-hidden="true"><span>15:34</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="hcab"><div><span>quarta, 30 de setembro</span><h1>Hoje</h1></div><button class="bnav" type="button">Ajustes</button></div>
+    <div id="vivo-faixa"></div>
+    <div class="lista" style="margin-top:8px">
+      <div class="it lapis"><span class="h">5h45</span><span><span class="n">Pré-treino</span><br><span class="s">163 kcal</span></span><button class="acao" type="button">Comi</button></div>
+      <div class="it tinta"><span class="h">6h05</span><span><span class="n">Treino C ✓</span><br><span class="s">6h05–7h12 · 17 de 17 séries</span></span><span class="s">dia de<br>treino</span></div>
+      <div class="it lapis"><span class="h">6h15</span><span><span class="n">Intra-treino</span><br><span class="s">água 600 ml</span></span><button class="acao" type="button">Bebi</button></div>
+      <div class="it tinta"><span class="h">peso</span><span><span class="n">73,8 kg ✓</span><br><span class="s">às 6h41 · 2ª da semana</span></span><span></span></div>
+      <div class="it lapis"><span class="h">8h00</span><span><span class="n">Café da manhã</span><br><span class="s">629 kcal</span></span><button class="acao" type="button">Comi</button></div>
+      <div class="it lapis"><span class="h">12h30</span><span><span class="n">Almoço</span><br><span class="s">719 kcal</span></span><button class="acao" type="button">Comi</button></div>
+      <div id="vivo-lanche"></div>
+      <div class="it lapis depois"><span class="h">19h30</span><span><span class="n">Jantar</span><br><span class="s">678 kcal · mais tarde</span></span><span></span></div>
+    </div>
+    <div class="ctl-toast" id="vivo-toast"></div>
+    <nav class="tabs" aria-label="Lugares">
+      <button type="button" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Hoje</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M5 19V11M9.5 19V7M14 19v-9M18.5 19V5"/></svg>Semana</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M8 6h11M8 12h11M8 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>Prescrição</button>
+      <button type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2.5"/><path d="M7 21l1.5-8M17 21l-1.5-8M6 10.5h12"/></svg>Corpo</button>
+    </nav>
+    <div class="hi" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- =============================== E2 =============================== -->
+<section class="estado" id="e2">
+  <div class="legenda">
+    <div class="n">ESTADO 2 · DEPOIS DO TOQUE, ROLANDO A MESMA TELA</div>
+    <h2>O lanche virou tinta. O dia passou a ser conhecido.</h2>
+    <p>O quadrado de hoje na faixa dos 14 dias ficou meio cheio: o dia já conta, mas ainda tem refeição a lápis. A água não vira zero quando não é marcada: fica “sem conta” (F198). Cada copo é um botão; tocar no sexto quer dizer seis, e serve tanto para “+1 agora” quanto para lembrar o total à noite.</p>
+    <p class="f">F194, F195, F198, F199, F200, F213</p>
+  </div>
+  <div class="tela">
+    <div class="sb" aria-hidden="true"><span>15:34</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="topo-compacto"><b>Hoje</b> · quarta, 30/09</div>
+    <button class="faixa" type="button" aria-label="Comida conhecida em 1 dos últimos 14 dias. A regra do nutricionista pede 11. Abrir os 14 dias.">
+      <span class="faixa-l1"><span>Comida: <b>1</b> de 14 dias conhecidos</span><span>a regra pede 11 ›</span></span>
+      <span class="qs" aria-hidden="true"><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q meio hoje"></i></span>
+    </button>
+    <div class="lista" style="margin-top:8px">
+      <div class="it lapis"><span class="h">8h00</span><span><span class="n">Café da manhã</span><br><span class="s">629 kcal</span></span><button class="acao" type="button">Comi</button></div>
+      <div class="it lapis"><span class="h">12h30</span><span><span class="n">Almoço</span><br><span class="s">719 kcal</span></span><button class="acao" type="button">Comi</button></div>
+      <div class="it tinta entra"><span class="h">16h00</span><span><span class="n">Lanche da tarde ✓</span><br><span class="s">tudo · marcado às 15h34</span></span><button class="acao" type="button" aria-label="Mudar a marca do lanche">Mudar</button></div>
+      <div class="it lapis depois"><span class="h">19h30</span><span><span class="n">Jantar</span><br><span class="s">678 kcal · mais tarde</span></span><span></span></div>
+      <div class="it lapis" style="display:block"><span class="n">Água · sem conta</span><span class="s"> · meta 14 copos de 250 ml (3,5 l)</span>
+        <div class="copos" role="group" aria-label="Copos de água: toque no copo do total">
+          <button class="copo" type="button" aria-label="1 copo"></button><button class="copo" type="button" aria-label="2 copos"></button><button class="copo" type="button" aria-label="3 copos"></button><button class="copo" type="button" aria-label="4 copos"></button><button class="copo" type="button" aria-label="5 copos"></button><button class="copo" type="button" aria-label="6 copos"></button><button class="copo" type="button" aria-label="7 copos"></button>
+          <button class="copo" type="button" aria-label="8 copos"></button><button class="copo" type="button" aria-label="9 copos"></button><button class="copo" type="button" aria-label="10 copos"></button><button class="copo" type="button" aria-label="11 copos"></button><button class="copo" type="button" aria-label="12 copos"></button><button class="copo" type="button" aria-label="13 copos"></button><button class="copo" type="button" aria-label="14 copos"></button>
+        </div>
+      </div>
+      <div class="it lapis" style="display:block"><span class="n">Como foi o dia?</span><span class="s"> · responda à noite, ou amanhã</span>
+        <div class="tres"><button type="button">Segui o plano</button><button type="button">Saí do plano e sei o que comi</button><button type="button">Saí e não sei quanto</button></div>
+      </div>
+    </div>
+    <div class="toast-fixo"><div class="toast" role="status"><span>Lanche: tudo, às 15h34</span><button type="button">Desfazer</button></div></div>
+    <nav class="tabs" aria-label="Lugares">
+      <button type="button" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Hoje</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M5 19V11M9.5 19V7M14 19v-9M18.5 19V5"/></svg>Semana</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M8 6h11M8 12h11M8 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>Prescrição</button>
+      <button type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2.5"/><path d="M7 21l1.5-8M17 21l-1.5-8M6 10.5h12"/></svg>Corpo</button>
+    </nav>
+    <div class="hi" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- =============================== E3 =============================== -->
+<section class="estado" id="e3">
+  <div class="legenda">
+    <div class="n">ESTADO 3 · COMEU SÓ PARTE</div>
+    <h2>“Outra porção”: tudo, metade, outra fração ou não comeu.</h2>
+    <p>A porção vale só para aquele dia e conta proporcionalmente (F196, F199). Mudar a quantidade do plano para sempre é outra coisa, feita em Prescrição; a folha diz isso para não confundir as duas. “Não comi isto” não grava nada: a refeição fica sem marca, como era.</p>
+    <p class="f">F195, F196, F199 · pergunta 5 do direcao.md</p>
+  </div>
+  <div class="tela">
+    <div class="sb" aria-hidden="true"><span>15:36</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="topo-compacto"><b>Hoje</b> · quarta, 30/09</div>
+    <div class="lista" style="margin-top:8px">
+      <div class="it lapis"><span class="h">12h30</span><span><span class="n">Almoço</span><br><span class="s">719 kcal</span></span><button class="acao" type="button">Comi</button></div>
+    </div>
+    <div class="veu"></div>
+    <div class="folha" role="dialog" aria-label="Porção do almoço">
+      <div class="pega"></div>
+      <h4>Almoço de hoje · 12h30</h4>
+      <p class="sub">arroz 250 g · feijão 50 g · frango 80 g · legumes/verduras 100 g · azeite 15 g · kiwi 100 g · 719 kcal</p>
+      <button class="op" type="button"><b>Comi tudo</b><span>porção 1</span></button>
+      <button class="op esc" type="button"><b>Comi metade</b><span>porção 0,5 · conta metade</span></button>
+      <div class="op" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="margin:0"><b style="color:var(--texto)">Outra porção</b>¼, ¾…</span>
+        <span class="mini-passo"><button type="button" aria-label="menos um quarto">−</button><b class="num">¾</b><button type="button" aria-label="mais um quarto">+</button></span></div>
+      <button class="op" type="button"><b>Não comi isto</b><span>fica sem marca; se o dia saiu do plano, diga em “Como foi o dia”</span></button>
+      <p class="sub" style="margin:4px 2px 12px">Vale só para hoje. Mudar a quantidade do plano, para todos os dias, é em Prescrição › Plano.</p>
+      <button class="registrar" type="button">Marcar metade do almoço</button>
+    </div>
+    <div class="hi" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- =============================== E4 =============================== -->
+<section class="estado" id="e4">
+  <div class="legenda">
+    <div class="n">ESTADO 4 · A SEGUNDA FORMA DO MOMENTO: DE MEMÓRIA, NO DIA SEGUINTE</div>
+    <h2>Quinta, 13h41. Ontem ficou quase todo a lápis.</h2>
+    <p>No uso medido, a comida só chegou ao registro assim: um e quatro dias depois, às 13h41 e às 17h23 (02-uso U10). Então ontem aparece no topo de Hoje, com o que falta dito por extenso e duas saídas: o atalho de um toque, que é uma declaração dele, e a revisão item por item. “Agora não” some até amanhã; o dia continua a lápis em Semana.</p>
+    <p class="f">F197, F198, F200 · P1 item 9 · 02-uso U10, U11</p>
+  </div>
+  <div class="tela">
+    <div class="sb" aria-hidden="true"><span>13:41</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="hcab"><div><span>quinta, 1 de outubro</span><h1>Hoje</h1></div><button class="bnav" type="button">Ajustes</button></div>
+    <div class="info ontem" style="margin-top:2px"><b>Ontem, quarta 30/09, ficou a lápis</b>Pré-treino, intra-treino, café, almoço, jantar e a água. Só o lanche foi marcado (15h34).
+      <button class="registrar" type="button" style="margin-top:10px;height:52px;font-size:1rem">Revisar ontem, item por item</button>
+      <div class="linha-bt" style="margin-top:8px"><button class="bt" type="button">Foi tudo no plano</button><button class="bt" type="button">Agora não</button></div>
+    </div>
+    <button class="faixa" type="button" aria-label="Comida conhecida em 2 dos últimos 14 dias. A regra pede 11." style="margin-top:10px">
+      <span class="faixa-l1"><span>Comida: <b>2</b> de 14 dias conhecidos</span><span>a regra pede 11 ›</span></span>
+      <span class="qs" aria-hidden="true"><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q meio"></i><i class="q meio hoje"></i></span>
+    </button>
+    <div class="lista" style="margin-top:8px">
+      <div class="it tinta"><span class="h">5h45</span><span><span class="n">Pré-treino ✓</span><br><span class="s">tudo · 5h52</span></span><span></span></div>
+      <div class="it tinta"><span class="h">6h10</span><span><span class="n">Treino D ✓</span><br><span class="s">6h10–7h05</span></span><span></span></div>
+      <div class="it tinta"><span class="h">8h00</span><span><span class="n">Café da manhã ✓</span><br><span class="s">tudo · 8h24</span></span><span></span></div>
+      <div class="it grande"><span class="h">agora</span><span><span class="n" style="font-size:1.05rem">Almoço · 12h30</span><br><span class="s">719 kcal</span></span>
+        <div class="corpo linha-bt"><button class="bt cheio" type="button">Comi tudo</button><button class="bt" type="button">Outra porção</button></div></div>
+    </div>
+    <nav class="tabs" aria-label="Lugares">
+      <button type="button" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Hoje</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M5 19V11M9.5 19V7M14 19v-9M18.5 19V5"/></svg>Semana</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M8 6h11M8 12h11M8 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>Prescrição</button>
+      <button type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2.5"/><path d="M7 21l1.5-8M17 21l-1.5-8M6 10.5h12"/></svg>Corpo</button>
+    </nav>
+    <div class="hi" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- =============================== E5 =============================== -->
+<section class="estado" id="e5">
+  <div class="legenda">
+    <div class="n">ESTADO 5 · O CASO, SEGUNDA PARTE: ONTEM, DE MEMÓRIA</div>
+    <h2>Almoço pela metade, jantar fora do plano, água sem conta.</h2>
+    <p>É a mesma tela de Hoje, no dia de ontem, com três botões em cada linha. O que ele lembra vira tinta; o que não lembra pode ficar como está. Em “Como foi o dia”, cada resposta diz o que acontece com a regra do nutricionista, porque é ali que o dia conta ou não conta.</p>
+    <p class="f">F195, F197, F199, F200, F213 · 02-uso §9 M2</p>
+  </div>
+  <div class="tela">
+    <div class="sb" aria-hidden="true"><span>13:43</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="scab" style="border:0;padding-bottom:0">
+      <div class="scab-l1"><button class="bnav" type="button">‹ Hoje</button><div class="scab-tit"><b>Ontem · quarta 30/09</b><span>dia de treino · de memória</span></div><span style="width:44px"></span></div>
+    </div>
+    <div class="lista" style="margin-top:4px">
+      <div class="it3 tinta"><span><span class="h">5h45</span> <span class="n">Pré-treino</span></span><span class="seg"><button type="button" aria-pressed="true">Tudo</button><button type="button">Metade</button><button type="button">Não</button></span></div>
+      <div class="it3 tinta"><span><span class="h">6h15</span> <span class="n">Intra · água</span></span><span class="seg"><button type="button" aria-pressed="true">Tudo</button><button type="button">Metade</button><button type="button">Não</button></span></div>
+      <div class="it3 tinta"><span><span class="h">8h00</span> <span class="n">Café</span></span><span class="seg"><button type="button" aria-pressed="true">Tudo</button><button type="button">Metade</button><button type="button">Não</button></span></div>
+      <div class="it3 tinta meio"><span><span class="h">12h30</span> <span class="n">Almoço</span></span><span class="seg"><button type="button">Tudo</button><button type="button" aria-pressed="true">Metade</button><button type="button">Não</button></span></div>
+      <div class="it3 tinta"><span><span class="h">16h00</span> <span class="n">Lanche</span><br><span class="s">tudo · marcado ontem 15h34</span></span><span class="seg"><button type="button" aria-pressed="true">Tudo</button><button type="button">Metade</button><button type="button">Não</button></span></div>
+      <div class="it3 nao"><span><span class="h">19h30</span> <span class="n">Jantar</span><br><span class="s">não comi isto</span></span><span class="seg"><button type="button">Tudo</button><button type="button">Metade</button><button type="button" aria-pressed="true">Não</button></span></div>
+      <div class="it3 lapis"><span><span class="n">Água</span><br><span class="s">sem conta</span></span><span class="seg"><button type="button">Contar copos</button><button type="button" aria-pressed="true">Não contei</button></span></div>
+    </div>
+    <div class="como">
+      <b>Como foi o dia?</b>
+      <button class="op" type="button"><b>Segui o plano</b><span>conta para a regra</span></button>
+      <button class="op esc" type="button"><b>Saí do plano e sei o que comi ✓</b><span>conta para a regra: o dia é conhecido</span></button>
+      <button class="op" type="button"><b>Saí do plano e não sei quanto</b><span>não conta: a regra trata o dia como desconhecido</span></button>
+    </div>
+    <div class="ctl" style="padding-top:10px"><button class="registrar" type="button">Pronto</button></div>
+    <div class="hi" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- =============================== E6 =============================== -->
+<section class="estado" id="e6">
+  <div class="legenda">
+    <div class="n">ESTADO 6 · ONTEM REVISADO</div>
+    <h2>De volta a Hoje: o quadrado de ontem encheu, e o resumo diz o que ficou.</h2>
+    <p>O número de dias conhecidos não mudou (o lanche já tinha feito de ontem um dia conhecido), mas ontem agora está completo. A faixa diz quanto falta para a regra decidir, sem tom de cobrança: é a consequência, não um placar.</p>
+    <p class="f">F200, F201, F212, F213, F215</p>
+  </div>
+  <div class="tela">
+    <div class="sb" aria-hidden="true"><span>13:44</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="hcab"><div><span>quinta, 1 de outubro</span><h1>Hoje</h1></div><button class="bnav" type="button">Ajustes</button></div>
+    <button class="faixa" type="button" aria-label="Comida conhecida em 2 dos últimos 14 dias. A regra pede 11." style="margin-top:2px">
+      <span class="faixa-l1"><span>Comida: <b>2</b> de 14 dias conhecidos</span><span>a regra pede 11 ›</span></span>
+      <span class="qs" aria-hidden="true"><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q t entra"></i><i class="q meio hoje"></i></span>
+      <span class="faixa-l2">Faltam 9 dias conhecidos para a regra do nutricionista voltar a decidir. Até lá, ela diz “não mexer e registrar mais”.</span>
+    </button>
+    <div class="info" style="border-color:var(--tinta-texto)"><b>Quarta 30/09 revisada ✓</b>5 de 6 refeições do plano: almoço pela metade, jantar fora do plano. Saiu do plano sabendo o que comeu. Água sem conta.
+      <div class="linha-bt"><button class="bt" type="button">Ver o dia</button><button class="bt" type="button">Desfazer a revisão</button></div>
+    </div>
+    <div class="lista" style="margin-top:10px">
+      <div class="it tinta"><span class="h">5h45</span><span><span class="n">Pré-treino ✓</span><br><span class="s">tudo · 5h52</span></span><span></span></div>
+      <div class="it tinta"><span class="h">8h00</span><span><span class="n">Café da manhã ✓</span><br><span class="s">tudo · 8h24</span></span><span></span></div>
+      <div class="it grande"><span class="h">agora</span><span><span class="n" style="font-size:1.05rem">Almoço · 12h30</span><br><span class="s">719 kcal</span></span>
+        <div class="corpo linha-bt"><button class="bt cheio" type="button">Comi tudo</button><button class="bt" type="button">Outra porção</button></div></div>
+    </div>
+    <nav class="tabs" aria-label="Lugares">
+      <button type="button" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Hoje</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M5 19V11M9.5 19V7M14 19v-9M18.5 19V5"/></svg>Semana</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M8 6h11M8 12h11M8 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>Prescrição</button>
+      <button type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2.5"/><path d="M7 21l1.5-8M17 21l-1.5-8M6 10.5h12"/></svg>Corpo</button>
+    </nav>
+    <div class="hi" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- =============================== E7 =============================== -->
+<section class="estado" id="e7">
+  <div class="legenda">
+    <div class="n">ESTADO 7 · CASO RUIM: NOVE DIAS ATRÁS</div>
+    <h2>Os 14 dias, um por linha. “Não lembro” é uma resposta válida.</h2>
+    <p>Tocar na faixa abre os 14 dias que a regra olha. Um dia de nove dias atrás pode ser declarado “tudo no plano” se ele lembra, revisado se lembra em parte, ou deixado a lápis. Deixar a lápis é honesto: dia sem marca é desconhecido, não zero. Dias de antes da janela continuam abertos, valem para os padrões e não para a regra.</p>
+    <p class="f">F198, F200, F201, F209, F213</p>
+  </div>
+  <div class="tela">
+    <div class="sb" aria-hidden="true"><span>13:46</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="scab" style="padding-bottom:4px">
+      <div class="scab-l1"><button class="bnav" type="button">‹ Hoje</button><div class="scab-tit"><b>Os últimos 14 dias</b><span>de 18/09 a 01/10 · a regra pede 11 conhecidos</span></div><span style="width:44px"></span></div>
+    </div>
+    <div class="lista dias" style="margin-top:8px">
+      <div class="dia"><i class="q meio hoje"></i><span><b>qui 01/10 · hoje</b><br><span class="s">3 de 6 marcadas até agora</span></span></div>
+      <div class="dia"><i class="q t"></i><span><b>qua 30/09</b><br><span class="s">revisado · saiu do plano sabendo</span></span></div>
+      <div class="dia"><i class="q"></i><span><b>ter 29/09</b><br><span class="s">tudo a lápis</span></span><button class="acao" type="button">Abrir</button></div>
+      <div class="dia"><i class="q"></i><span><b>seg 28/09</b><br><span class="s">tudo a lápis</span></span><button class="acao" type="button">Abrir</button></div>
+      <div class="dia"><i class="q"></i><span><b>dom 27/09 · descanso</b><br><span class="s">tudo a lápis</span></span><button class="acao" type="button">Abrir</button></div>
+      <div class="dia"><i class="q"></i><span><b>sáb 26/09 … qua 23/09</b><br><span class="s">4 dias a lápis</span></span><button class="acao" type="button">Abrir</button></div>
+      <div class="dia aberto"><i class="q"></i><span><b>ter 22/09 · 9 dias atrás</b><br><span class="s">tudo a lápis · dia de treino (treino A registrado)</span></span>
+        <div class="corpo"><button class="bt cheio" type="button" style="width:100%">Foi tudo no plano</button>
+          <div class="linha-bt" style="margin-top:8px"><button class="bt" type="button">Revisar item por item</button><button class="bt" type="button">Não lembro</button></div>
+          <p class="s" style="margin:8px 2px 0">“Não lembro” deixa o dia a lápis: desconhecido, não zero.</p></div></div>
+      <div class="dia"><i class="q"></i><span><b>seg 21/09 … sex 18/09</b><br><span class="s">4 dias a lápis</span></span><button class="acao" type="button">Abrir</button></div>
+    </div>
+    <div class="hi" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- =============================== E8 =============================== -->
+<section class="estado" id="e8">
+  <div class="legenda">
+    <div class="n">ESTADO 8 · O LÁPIS SEGUE A REGRA DE HORÁRIOS</div>
+    <h2>Treino às 18h15: o pré e o intra andam junto, e o jantar vai para depois.</h2>
+    <p>Quando o treino do dia é à tarde ou à noite, o lápis se redesenha pela regra do nutricionista: pré 30 min antes, jantar 15 min depois do fim estimado, nada criado nem apagado. E o café sai do pré-treino, porque cafeína depois das 16h não entra. Cada mudança diz por que mudou.</p>
+    <p class="f">F186, F187, F189, F190, F191, F192, F193 · 02-uso K2</p>
+  </div>
+  <div class="tela">
+    <div class="sb" aria-hidden="true"><span>16:20</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="hcab"><div><span>sexta, 2 de outubro</span><h1>Hoje</h1></div><button class="bnav" type="button">Ajustes</button></div>
+    <div class="chips"><button type="button" class="chipd">Dia de treino ▾</button><button type="button" class="chipd sel">Treino à noite, 18h15 ▾</button><button type="button" class="chipd">Alta demanda: não</button></div>
+    <div class="lista" style="margin-top:8px">
+      <div class="it tinta"><span class="h">8h00</span><span><span class="n">Café da manhã ✓</span><br><span class="s">tudo · 8h31</span></span><span></span></div>
+      <div class="it tinta"><span class="h">12h30</span><span><span class="n">Almoço ✓</span><br><span class="s">tudo · 13h02</span></span><span></span></div>
+      <div class="it tinta"><span class="h">16h00</span><span><span class="n">Lanche da tarde ✓</span><br><span class="s">tudo · 15h48</span></span><span></span></div>
+      <div class="it lapis"><span class="h">17h45</span><span><span class="n">Pré-treino</span><br><span class="s">pão Artesano 35 g · doce de leite 20 g · canela 1 g · <s>café 200 ml</s></span><span class="mudou">sem o café: cafeína depois das 16h não entra</span></span><button class="acao" type="button">Comi</button></div>
+      <div class="it lapis"><span class="h">18h15</span><span><span class="n">Treino A · próximo</span><br><span class="s">intra: água 600 ml</span></span><button class="acao" type="button">Abrir</button></div>
+      <div class="it lapis"><span class="h">19h45</span><span><span class="n">Jantar</span><br><span class="s">678 kcal</span><span class="mudou">era 19h30: cairia dentro do treino; vai para 15 min depois do fim estimado</span></span><span></span></div>
+    </div>
+    <nav class="tabs" aria-label="Lugares">
+      <button type="button" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Hoje</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M5 19V11M9.5 19V7M14 19v-9M18.5 19V5"/></svg>Semana</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M8 6h11M8 12h11M8 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>Prescrição</button>
+      <button type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2.5"/><path d="M7 21l1.5-8M17 21l-1.5-8M6 10.5h12"/></svg>Corpo</button>
+    </nav>
+    <div class="hi" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- =============================== E9 =============================== -->
+<section class="estado" id="e9">
+  <div class="legenda">
+    <div class="n">ESTADO 9 · RECORTE: O TIPO DO DIA MUDA O LÁPIS</div>
+    <h2>Domingo de descanso; quinta de alta demanda.</h2>
+    <p>O tipo do dia segue a precedência dos fatos: sessão registrada, sessão aberta, definição à mão, e só por último o palpite do padrão semanal, que vem marcado como palpite. Em dia de descanso, pré e intra nem aparecem. Em dia de alta demanda, a maltodextrina entra a lápis no intra.</p>
+    <p class="f">F181, F183, F186, F187, F188</p>
+  </div>
+  <div class="tela recorte">
+    <div class="sb" aria-hidden="true"><span>12:10</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="hcab"><div><span>domingo, 4 de outubro</span><h1 style="font-size:1.3rem">Hoje</h1></div></div>
+    <div class="chips"><button type="button" class="chipd">Descanso · palpite do padrão semanal ▾</button></div>
+    <div class="lista" style="margin-top:8px">
+      <div class="it lapis"><span class="h">8h00</span><span><span class="n">Café da manhã</span><br><span class="s">629 kcal</span></span><button class="acao" type="button">Comi</button></div>
+      <div class="it lapis"><span class="h">12h30</span><span><span class="n">Almoço</span><br><span class="s">719 kcal · dia de descanso: 2.844 kcal no total</span></span><button class="acao" type="button">Comi</button></div>
+    </div>
+    <div class="hcab" style="margin-top:16px"><div><span>quinta, 8 de outubro</span><h1 style="font-size:1.3rem">Hoje</h1></div></div>
+    <div class="chips"><button type="button" class="chipd">Dia de treino · sessão aberta</button><button type="button" class="chipd sel">Alta demanda: sim</button></div>
+    <div class="lista" style="margin-top:8px">
+      <div class="it lapis"><span class="h">6h15</span><span><span class="n">Intra-treino</span><br><span class="s">água 600 ml · maltodextrina 25 g (95 kcal) · dia com 3.102 kcal</span></span><button class="acao" type="button">Bebi</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== E10 =============================== -->
+<section class="estado" id="e10">
+  <div class="legenda">
+    <div class="n">ESTADO 10 · CASO RUIM: DEPOIS DA MEIA-NOITE</div>
+    <h2>00h40: o jantar de ontem ainda está a lápis, com a data dele escrita.</h2>
+    <p>Datas já erraram nas fronteiras (registro antes das 3h caindo no dia anterior por causa do fuso, F7; contas quebrando entre 23h e meia-noite, F299). Aqui não se adivinha: até as 4h, o que sobrou de ontem fica no topo, cada linha com a própria data, e a marca vai para o dia que está escrito nela.</p>
+    <p class="f">F7, F197, F288, F299 · P5 (ceia às vezes)</p>
+  </div>
+  <div class="tela">
+    <div class="sb" aria-hidden="true"><span>0:40</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="hcab"><div><span>quinta, 1 de outubro</span><h1>Hoje</h1></div><button class="bnav" type="button">Ajustes</button></div>
+    <div class="bloco-data">Ainda de ontem · <b>quarta, 30/09</b></div>
+    <div class="lista">
+      <div class="it lapis"><span class="h">19h30</span><span><span class="n">Jantar · qua 30/09</span><br><span class="s">678 kcal</span></span><button class="acao" type="button">Comi</button></div>
+      <div class="it lapis" style="display:block"><span class="n">Água · qua 30/09 · sem conta</span>
+        <div class="copos" role="group" aria-label="Copos de água de quarta">
+          <button class="copo" type="button" aria-label="1 copo"></button><button class="copo" type="button" aria-label="2 copos"></button><button class="copo" type="button" aria-label="3 copos"></button><button class="copo" type="button" aria-label="4 copos"></button><button class="copo" type="button" aria-label="5 copos"></button><button class="copo" type="button" aria-label="6 copos"></button><button class="copo" type="button" aria-label="7 copos"></button>
+          <button class="copo" type="button" aria-label="8 copos"></button><button class="copo" type="button" aria-label="9 copos"></button><button class="copo" type="button" aria-label="10 copos"></button><button class="copo" type="button" aria-label="11 copos"></button><button class="copo" type="button" aria-label="12 copos"></button><button class="copo" type="button" aria-label="13 copos"></button><button class="copo" type="button" aria-label="14 copos"></button>
+        </div>
+      </div>
+      <div class="it lapis"><span class="h">dia</span><span><span class="n">Como foi quarta?</span><br><span class="s">responda agora ou amanhã</span></span><button class="acao" type="button">Responder</button></div>
+    </div>
+    <div class="bloco-data" style="margin-top:14px">Hoje · <b>quinta, 01/10</b></div>
+    <div class="lista">
+      <div class="it lapis depois"><span class="h">5h45</span><span><span class="n">Pré-treino</span><br><span class="s">163 kcal · daqui a 5 horas</span></span><span></span></div>
+      <div class="it lapis depois"><span class="h">8h00</span><span><span class="n">Café da manhã</span><br><span class="s">629 kcal</span></span><span></span></div>
+    </div>
+    <nav class="tabs" aria-label="Lugares">
+      <button type="button" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Hoje</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M5 19V11M9.5 19V7M14 19v-9M18.5 19V5"/></svg>Semana</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M8 6h11M8 12h11M8 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>Prescrição</button>
+      <button type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2.5"/><path d="M7 21l1.5-8M17 21l-1.5-8M6 10.5h12"/></svg>Corpo</button>
+    </nav>
+    <div class="hi" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- =============================== E11 =============================== -->
+<section class="estado" id="e11">
+  <div class="legenda">
+    <div class="n">ESTADO 11 · VAZIO</div>
+    <h2>Primeiro dia: o plano inteiro a lápis, e uma frase que ensina o resto.</h2>
+    <p>Não há tela vazia na comida enquanto existir um plano: o vazio é o dia todo a lápis, com a faixa de 14 dias sem nada. Embaixo, o vazio de verdade, para quem ainda não tem plano do nutricionista neste aparelho (aparelho novo, endereço novo, outro usuário).</p>
+    <p class="f">F56, F198, F207, F271 · P3 (outros usuários)</p>
+  </div>
+  <div class="tela">
+    <div class="sb" aria-hidden="true"><span>9:12</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="hcab"><div><span>primeiro dia</span><h1>Hoje</h1></div><button class="bnav" type="button">Ajustes</button></div>
+    <div class="info" style="margin-top:2px"><b>O que está a lápis é o plano do nutricionista para hoje.</b>Toque em “Comi” no que você comer, na hora ou depois. O que ficar a lápis espera por você no dia certo.</div>
+    <button class="faixa" type="button" style="margin-top:10px" aria-label="Nenhum dia com comida conhecida ainda">
+      <span class="faixa-l1"><span>Comida: nenhum dia conhecido ainda</span><span>a regra pede 11 ›</span></span>
+      <span class="qs" aria-hidden="true"><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q"></i><i class="q hoje"></i></span>
+    </button>
+    <div class="lista" style="margin-top:8px">
+      <div class="it lapis"><span class="h">8h00</span><span><span class="n">Café da manhã</span><br><span class="s">629 kcal</span></span><button class="acao" type="button">Comi</button></div>
+      <div class="it lapis"><span class="h">12h30</span><span><span class="n">Almoço</span><br><span class="s">719 kcal</span></span><button class="acao" type="button">Comi</button></div>
+    </div>
+    <div class="info" style="margin-top:16px;border-style:dashed"><b>Sem plano alimentar neste aparelho</b>Quando houver um plano, ele aparece aqui a lápis. Se você já tinha um em outro aparelho ou endereço, ele continua lá.
+      <div class="linha-bt"><button class="bt" type="button">Entrar na conta</button><button class="bt" type="button">Restaurar cópia</button></div>
+    </div>
+    <nav class="tabs" aria-label="Lugares">
+      <button type="button" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Hoje</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M5 19V11M9.5 19V7M14 19v-9M18.5 19V5"/></svg>Semana</button>
+      <button type="button"><svg viewBox="0 0 24 24"><path d="M8 6h11M8 12h11M8 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>Prescrição</button>
+      <button type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2.5"/><path d="M7 21l1.5-8M17 21l-1.5-8M6 10.5h12"/></svg>Corpo</button>
+    </nav>
+    <div class="hi" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- =============================== E12 =============================== -->
+<section class="estado" id="e12">
+  <div class="legenda">
+    <div class="n">ESTADO 12 · RECORTE: CARREGANDO E NÃO GUARDOU</div>
+    <h2>O toque que não guardou não fica azul.</h2>
+    <p>Escolher um alimento não fez nada, sem erro, por 48 dias (F296), e nada do que ele comia sobrevivia à meia-noite (F288). Aqui a marca só vira tinta depois de gravada; se a gravação falha, a linha continua a lápis, com borda de erro e a frase do que fazer. Carregar tem prazo, como no momento 1.</p>
+    <p class="f">F53, F273, F288, F296</p>
+  </div>
+  <div class="tela recorte">
+    <div class="sb" aria-hidden="true"><span>15:34</span><span class="d"><span class="sinal"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="bat"></span></span></div>
+    <div class="bloco-data">Carregando · até 2 s</div>
+    <div class="lista">
+      <div class="it lapis"><span class="h">····</span><span><span class="n">lendo o plano e as marcas deste aparelho</span></span><span></span></div>
+    </div>
+    <div class="bloco-data" style="margin-top:14px">Não guardou</div>
+    <div class="lista">
+      <div class="it lapis erro"><span class="h">16h00</span><span><span class="n">Lanche da tarde</span><br><span class="s">não guardado: continua a lápis</span></span><button class="acao" type="button">Comi</button></div>
+    </div>
+    <div class="aviso" role="alert"><b>A marca do lanche não foi guardada.</b>O espaço deste navegador acabou. Nada do que já está azul se perdeu. Salvar uma cópia e liberar espaço resolve.
+      <div class="linha-bt"><button class="bt alerta" type="button">Tentar de novo</button><button class="bt" type="button">Salvar uma cópia</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== E13 =============================== -->
+<section class="estado" id="e13" style="width:min(100%,980px)">
+  <div class="legenda">
+    <div class="n">ESTADO 13 · NO NOTEBOOK (U14)</div>
+    <h2>A mesma regra de lápis e tinta, com 14 dias numa tela.</h2>
+    <p>Sentado e com teclado, ele acompanha os registros (P11). Em Semana, cada coluna é um dia, cada linha uma refeição; clicar numa casa marca ou desmarca, e as setas e a barra de espaço fazem o mesmo. No telefone, role para o lado para ver o quadro inteiro.</p>
+    <p class="f">F50, F201, F213 · P8, P11 · 02-uso U14</p>
+  </div>
+  <div class="larga" tabindex="0" aria-label="Quadro de 14 dias; role para o lado">
+    <div class="tela-l">
+      <div class="lcab"><b>Semana</b><span>Comida · de 18/09 a 01/10 · <b>2</b> dos 14 dias conhecidos · a regra pede 11</span></div>
+      <div class="grade" role="grid" aria-label="Refeições por dia">
+        <span class="gh"></span><span class="gh">sex<br>18</span><span class="gh">sáb<br>19</span><span class="gh">dom<br>20</span><span class="gh">seg<br>21</span><span class="gh">ter<br>22</span><span class="gh">qua<br>23</span><span class="gh">qui<br>24</span><span class="gh">sex<br>25</span><span class="gh">sáb<br>26</span><span class="gh">dom<br>27</span><span class="gh">seg<br>28</span><span class="gh">ter<br>29</span><span class="gh">qua<br>30</span><span class="gh">qui<br>01</span>
+        <span class="gr">Pré-treino</span><i class="c"></i><i class="c"></i><i class="c x"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c x"></i><i class="c"></i><i class="c"></i><i class="c t"></i><i class="c t"></i>
+        <span class="gr">Intra-treino</span><i class="c"></i><i class="c"></i><i class="c x"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c x"></i><i class="c"></i><i class="c"></i><i class="c t"></i><i class="c"></i>
+        <span class="gr">Café</span><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c t"></i><i class="c t"></i>
+        <span class="gr">Almoço</span><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c m"></i><i class="c"></i>
+        <span class="gr">Lanche</span><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c t"></i><i class="c"></i>
+        <span class="gr">Jantar</span><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c n"></i><i class="c"></i>
+        <span class="gr">Água</span><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i>
+        <span class="gr">Como foi</span><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c t">sabia</i><i class="c"></i>
+      </div>
+      <div class="lleg"><span><i class="c"></i> a lápis</span><span><i class="c t"></i> tudo</span><span><i class="c m"></i> metade</span><span><i class="c n"></i> não comeu (dia revisado)</span><span><i class="c x"></i> não se aplica (dia de descanso)</span></div>
+    </div>
+  </div>
+</section>
+
+</main>

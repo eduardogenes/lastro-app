@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Depois de comer · Direção C</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#E7E2D8;--paper:#F5F2EB;--card:#FFFFFF;--text:#1B1A17;--muted:#5D594F;--line:#D6CFC2;
+  --ghost:#857F74;--ink:#1F3B67;--on-ink:#FFFFFF;--ink-soft:#E3E9F3;--ink-text:#1F3B67;
+  --now:#B0420D;--now-soft:#FAE6D8;--warn:#7A4A00;--warn-soft:#FAEDD3;--err:#A3241A;--err-soft:#FBE6E2;
+  --hatch-c:rgba(120,113,100,.32);--frame:#141414;--scrim:rgba(20,18,14,.42);
+  --hatch:repeating-linear-gradient(135deg,var(--hatch-c) 0 1.5px,transparent 1.5px 7px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#0B0B0A;--paper:#161512;--card:#211F1B;--text:#F2EEE6;--muted:#ADA79A;--line:#3A3731;
+  --ghost:#8F897D;--ink:#A9C3EE;--on-ink:#0D1A30;--ink-soft:#1F2B3F;--ink-text:#C3D6F6;
+  --now:#F59A5F;--now-soft:#3A2416;--warn:#F3C277;--warn-soft:#33270F;--err:#F4978C;--err-soft:#3B1D19;
+  --hatch-c:rgba(210,200,180,.22);--frame:#2B2B2B;--scrim:rgba(0,0,0,.55);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0B0B0A;--paper:#161512;--card:#211F1B;--text:#F2EEE6;--muted:#ADA79A;--line:#3A3731;
+  --ghost:#8F897D;--ink:#A9C3EE;--on-ink:#0D1A30;--ink-soft:#1F2B3F;--ink-text:#C3D6F6;
+  --now:#F59A5F;--now-soft:#3A2416;--warn:#F3C277;--warn-soft:#33270F;--err:#F4978C;--err-soft:#3B1D19;
+  --hatch-c:rgba(210,200,180,.22);--frame:#2B2B2B;--scrim:rgba(0,0,0,.55);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--page);color:var(--text);overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:3px solid var(--now);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ic{width:20px;height:20px;flex:none}
+
+/* página */
+.doc{padding-bottom:72px}
+.intro{max-width:560px;margin:0 auto;padding:28px 16px 4px}
+.kicker{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intro h1{font-size:26px;line-height:1.2;margin:6px 0 12px;letter-spacing:-.01em}
+.intro p{margin:0 0 10px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.lg{font-size:14px;padding:9px 12px;border-radius:10px}
+.lg.pencil{border:1.5px dashed var(--ghost);color:var(--muted)}
+.lg.ink{background:var(--ink-soft);color:var(--ink-text);font-weight:600}
+.lg.hatch{background-image:var(--hatch);border:1px solid var(--line);color:var(--text)}
+.lg.now{border:2px solid var(--now);background:var(--now-soft);color:var(--text)}
+.theme{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.theme button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:22px;font-size:14px;background:var(--card)}
+.theme button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.toc{max-width:560px;margin:14px auto 0;padding:0 16px}
+.toc ol{list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.toc a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--text);text-decoration:none;font-size:14px}
+.state{margin:44px auto 0}
+.cap{max-width:560px;margin:0 auto 14px;padding:0 16px}
+.cap .tag{font-size:13px;font-weight:700;color:var(--now);letter-spacing:.05em;text-transform:uppercase}
+.cap h2{font-size:21px;line-height:1.25;margin:4px 0 6px}
+.cap p{font-size:15px;color:var(--muted);margin:0 0 6px}
+.cap p b{color:var(--text)}
+.cap .refs{font-size:13px}
+.demo-reset{display:flex;justify-content:center;margin-top:12px}
+.demo-reset button{min-height:44px;padding:0 18px;border-radius:22px;border:1px solid var(--line);background:var(--card);font-size:14px}
+
+/* telefone */
+.phone{position:relative;width:100%;max-width:414px;height:896px;margin:0 auto;background:var(--paper);color:var(--text);display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
+.phone.short{height:600px}
+@media (min-width:480px){.phone{border-radius:48px;box-shadow:0 0 0 10px var(--frame),0 30px 60px rgba(0,0,0,.22)}.state{margin-top:72px}.phone.short{border-radius:48px 48px 24px 24px}}
+.sb{flex:none;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font-size:15px;font-weight:600;position:relative;z-index:9}
+.sb::before{content:"";position:absolute;left:50%;top:0;width:209px;height:30px;transform:translateX(-50%);background:#000;border-radius:0 0 22px 22px}
+.sig{display:flex;align-items:flex-end;gap:2px;height:12px}
+.sig i{width:3px;background:currentColor;opacity:.25;border-radius:1px}
+.sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:6px}.sig i:nth-child(3){height:9px}.sig i:nth-child(4){height:12px}
+.sig i.on{opacity:1}
+.bat{width:25px;height:12px;border:1.5px solid currentColor;border-radius:4px;margin-left:7px;position:relative;opacity:.9}
+.bat::after{content:"";position:absolute;top:1.5px;bottom:1.5px;left:1.5px;width:55%;background:currentColor;border-radius:1.5px}
+.hi{flex:none;height:34px;display:flex;align-items:center;justify-content:center;position:relative;z-index:9}
+.hi::after{content:"";width:134px;height:5px;border-radius:3px;background:var(--text)}
+.hi.oncard{background:var(--card)}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+
+/* sessão */
+.s-head{display:flex;align-items:center;justify-content:space-between;padding:2px 8px 0;min-height:50px}
+.back{min-height:44px;min-width:72px;padding:0 10px;color:var(--ink-text);font-weight:600;font-size:17px;text-align:left}
+.s-title{text-align:center;display:flex;flex-direction:column;line-height:1.2}
+.s-title strong{font-size:17px}
+.s-title span{font-size:13px;color:var(--muted)}
+.pill{min-height:44px;min-width:72px;padding:0 14px;border-radius:22px;border:1.5px solid var(--line);background:var(--card);font-size:15px;font-weight:600}
+.s-status{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);padding:0 16px 8px}
+.dot{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--muted);flex:none}
+.segs{display:flex;gap:6px;padding:0 16px}
+.g{display:flex;gap:2px}
+.g i{flex:1;height:7px;border-radius:4px;border:1px dashed var(--ghost)}
+.g i.d{background:var(--ink);border:1px solid var(--ink)}
+.g i.c{background:var(--now);border:1px solid var(--now)}
+.left{font-size:13px;color:var(--muted);padding:7px 16px 0}
+.left b{color:var(--text);font-weight:600}
+
+.ex{padding:12px 16px 0}
+.over{font-size:13px;color:var(--muted);font-weight:600}
+.ex-name{font-size:27px;line-height:1.12;letter-spacing:-.015em;margin:3px 0 4px;font-weight:700}
+.ex-name.sm{font-size:20px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.ex-name .ok{font-size:14px;color:var(--ink-text);font-weight:700;white-space:nowrap}
+.meta{font-size:15px;color:var(--muted)}
+.tagline{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--warn);background:var(--warn-soft);padding:5px 9px;border-radius:8px;margin:2px 0 6px}
+.ex-actions{display:flex;gap:8px;margin:10px 0 0}
+.gb{min-height:44px;padding:0 13px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:15px;white-space:nowrap}
+.sets{list-style:none;margin:12px 0 0;display:flex;flex-direction:column;gap:6px}
+.set{display:grid;grid-template-columns:26px 1fr auto;align-items:center;column-gap:8px;min-height:50px;padding:6px 12px;border-radius:12px}
+.set .n{font-weight:700;color:var(--muted);font-size:15px}
+.set .v{font-weight:700;font-size:19px;display:block}
+.set .s{font-size:13px;color:var(--muted);display:block}
+.set .e{font-size:13px;color:var(--muted);text-align:right}
+.set.ink{background:var(--ink-soft);color:var(--ink-text)}
+.set.ink .n,.set.ink .s,.set.ink .e{color:var(--ink-text)}
+.set.cur{border:2px solid var(--now);background:var(--now-soft)}
+.set.pencil{border:1.5px dashed var(--ghost);color:var(--muted)}
+.set.err{border:2px solid var(--err);background:var(--err-soft);color:var(--err)}
+.set.err .n,.set.err .s,.set.err .e{color:var(--err)}
+.set.fresh{animation:ink .5s ease-out}
+@keyframes ink{from{background:var(--now-soft)}to{background:var(--ink-soft)}}
+.rir{grid-column:1/-1;display:flex;align-items:center;gap:5px;margin-top:8px}
+.rir>span{font-size:13px;margin-right:2px;line-height:1.15;color:var(--ink-text);font-weight:600}
+.rir button{flex:1;min-width:0;height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-weight:700;font-size:17px;color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.rir button small{font-size:11px;font-weight:600;color:var(--muted);margin-top:2px}
+.rir button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.rir button[aria-pressed="true"] small{color:var(--on-ink)}
+.falta{list-style:none;margin:6px 0 0;border-left:2px dashed var(--ghost);padding-left:10px}
+.falta li{display:flex;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted);min-height:27px;align-items:center}
+.falta li b{color:var(--text);font-weight:700;white-space:nowrap}
+.falta li span:last-child{white-space:nowrap}
+.extra{width:100%;min-height:50px;border:1.5px dashed var(--ghost);border-radius:12px;color:var(--ink-text);font-weight:600;font-size:16px}
+
+.view-b>.ex{flex:1 1 auto;min-height:0;overflow-y:auto;padding-bottom:10px}
+.entry{flex:none;margin-top:auto;padding:12px 16px 8px;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0}
+.entry .over{margin-bottom:1px}
+.entry-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.entry-h strong{font-size:17px}
+.entry-h span{font-size:14px;color:var(--muted);text-align:right}
+.load{width:100%;min-height:60px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:0 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);text-align:left}
+.load .lbl{font-size:14px;color:var(--muted)}
+.load .kg{font-size:28px;font-weight:700;letter-spacing:-.01em}
+.load .kg small{font-size:16px;font-weight:600;color:var(--muted)}
+.load .same{font-size:13px;color:var(--muted);text-align:right;line-height:1.25}
+.load.typing{border:2px solid var(--ink)}
+.caret{display:inline-block;width:2px;height:26px;background:var(--ink);vertical-align:-3px;margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.reps-h{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin:12px 2px 6px;gap:8px}
+.chips{display:flex;gap:6px}
+.chip{flex:1;min-width:0;height:64px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);font-size:25px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;font-variant-numeric:tabular-nums;line-height:1;transition:background .15s,color .15s,transform .1s}
+.chip:active{transform:scale(.96)}
+.chip.out{border-style:dashed;border-color:var(--ghost);color:var(--muted);font-weight:600}
+.chip small{font-size:12px;font-weight:600;color:var(--muted);margin-top:4px}
+.chip.sel{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.chip.sel small{color:var(--on-ink)}
+.chip.tap::after{content:"";position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:var(--now);opacity:.26;pointer-events:none}
+.chip.tap::before{content:"";position:absolute;left:50%;top:50%;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:50%;border:2px solid var(--now);opacity:.5;pointer-events:none}
+.hint{font-size:14px;color:var(--muted);margin:6px 2px 0;display:flex;align-items:center;flex-wrap:wrap}
+.link{color:var(--ink-text);font-weight:600;min-height:44px;padding:0 4px 0 0;font-size:14px}
+.cue{font-size:14px;line-height:1.35;background:var(--paper);border-left:3px solid var(--ink);padding:8px 10px;border-radius:0 10px 10px 0;margin:8px 0 10px}
+.cue b{font-weight:700}
+.nextline{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;margin:0 0 10px;padding:0 12px;border:1.5px dashed var(--ghost);border-radius:12px;font-size:15px;color:var(--muted);width:100%;text-align:left}
+.nextline b{color:var(--text)}
+
+.rest{margin:10px 16px 0;padding:10px 14px 12px;border-radius:16px;background:var(--card);border:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;align-items:end;gap:6px 14px}
+.rest .l{font-size:13px;color:var(--muted);font-weight:700;display:block;margin-bottom:2px}
+.rest .t{font-size:42px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.rest .r{font-size:13px;color:var(--muted);text-align:right;line-height:1.3}
+.rest .bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--line);position:relative;overflow:hidden}
+.rest .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink);border-radius:3px}
+.rest.over .t{color:var(--now)}
+.rest.over .bar i{background:var(--now)}
+.rest.slim{grid-template-columns:auto 1fr;padding:8px 14px}
+.rest.slim .t{font-size:30px}
+
+.banner{margin:8px 16px 0;padding:12px 14px;border-radius:14px;background:var(--err-soft);color:var(--err);border:1.5px solid var(--err);font-size:15px;line-height:1.35}
+.banner strong{display:block;font-size:16px;margin-bottom:2px}
+.banner .row-b{display:flex;gap:8px;margin-top:10px}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;font-weight:700;font-size:15px}
+.btn.solid{background:var(--ink);color:var(--on-ink)}
+.btn.errb{background:var(--err);color:var(--card)}
+.btn.line{border:1.5px solid var(--line);background:var(--card);color:var(--text)}
+
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.kp button{height:54px;border-radius:12px;background:var(--paper);border:1px solid var(--line);font-size:25px;font-weight:600;font-variant-numeric:tabular-nums}
+.kp .wide{grid-column:span 2;background:var(--ink);color:var(--on-ink);border-color:var(--ink);font-size:18px;font-weight:700}
+.kp .soft{font-size:16px;font-weight:600;color:var(--muted)}
+
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-radius:22px 22px 0 0;padding:8px 16px 44px;box-shadow:0 -10px 30px rgba(0,0,0,.18)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.sh-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.sh-h strong{font-size:20px}
+.sh-h span{font-size:14px;color:var(--muted)}
+.sh-row{padding:12px 0;border-top:1px solid var(--line)}
+.sh-row .t1{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sh-row .t1 strong{font-size:16px}
+.sh-row .t1 span{font-size:13px;color:var(--muted)}
+.sh-row p{font-size:13px;color:var(--muted);margin-top:2px}
+.sh-actions{display:flex;gap:8px;margin-top:8px}
+.sh-actions .btn{flex:1}
+.counter{display:flex;align-items:center;gap:8px;margin-top:8px}
+.counter .val{flex:1;text-align:center;font-size:22px;font-weight:700}
+.counter .val small{font-size:14px;color:var(--muted);font-weight:600}
+.sq{width:56px;height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);font-size:22px;font-weight:700}
+.sq.big{width:auto;flex:none;padding:0 16px;background:var(--ink);color:var(--on-ink);border-color:var(--ink);font-size:16px}
+
+/* Hoje */
+.d-head{display:flex;align-items:center;gap:2px;padding:0 6px 6px}
+.d-head .arrow{width:44px;height:44px;border-radius:22px;font-size:24px;color:var(--ink-text);line-height:1}
+.d-head .arrow[disabled]{color:var(--line)}
+.d-head .ttl{flex:1;text-align:center;line-height:1.2}
+.d-head .ttl strong{display:block;font-size:20px}
+.d-head .ttl span{font-size:13px;color:var(--muted)}
+.pend{margin:0 16px 8px;padding:12px 14px;border-radius:14px;background:var(--card);border:1.5px dashed var(--ghost)}
+.pend strong{display:block;font-size:16px}
+.pend p{font-size:14px;color:var(--muted);margin-top:2px}
+.pend .row-b{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.script{list-style:none;padding:0 16px;display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:46px 1fr auto;align-items:center;column-gap:10px;min-height:50px;padding:6px 10px;border-radius:12px}
+.row time{font-size:14px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.row .w strong{display:block;font-size:16px;line-height:1.25}
+.row .w span{display:block;font-size:13px;color:var(--muted);line-height:1.3}
+.row.ink{background:var(--ink-soft)}
+.row.ink time,.row.ink .w strong,.row.ink .w span,.row.ink .ck{color:var(--ink-text)}
+.row.pencil{border:1.5px dashed var(--ghost)}
+.row.hatch{background-image:var(--hatch);border:1px solid var(--line)}
+.row.hatch time,.row.hatch .w strong,.row.hatch .w span{background:var(--paper);width:fit-content;padding:0 4px;margin-left:-4px;border-radius:4px}
+.row.target{border:2px solid var(--now);background:var(--now-soft)}
+.row .tagx{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.mini{min-height:44px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-size:14px;font-weight:700;color:var(--ink-text)}
+.nowline{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--now);padding:2px 0}
+.nowline::before,.nowline::after{content:"";flex:1;height:2px;background:var(--now);border-radius:1px}
+.agora{margin-top:auto;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:12px 16px 10px}
+.agora h3{font-size:22px;line-height:1.2;margin:2px 0 4px;letter-spacing:-.01em}
+.agora .items{font-size:14px;color:var(--muted);line-height:1.35}
+.primary{width:100%;min-height:56px;border-radius:16px;background:var(--ink);color:var(--on-ink);font-size:18px;font-weight:700;margin-top:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.secondary{min-height:48px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:16px}
+.tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--card)}
+.tabs a{min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.tabs a::before{content:"";width:22px;height:3px;border-radius:2px;background:transparent}
+.tabs a.on{color:var(--ink-text)}
+.tabs a.on::before{background:var(--ink-text)}
+
+/* carregando */
+.sk{background:var(--line);border-radius:8px;opacity:.7}
+@media (prefers-reduced-motion:no-preference){.sk{animation:pulse 1.6s ease-in-out infinite}.view-b.enter{animation:rise .28s ease-out}}
+@keyframes pulse{50%{opacity:.35}}
+@keyframes rise{from{opacity:.4;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.set.fresh{animation:none}.caret{animation:none}}
+.msg{margin:auto 20px;text-align:left}
+.msg strong{display:block;font-size:20px;line-height:1.25;margin-bottom:6px}
+.msg p{font-size:15px;color:var(--muted);margin-bottom:8px}
+.msg .tech{font-size:13px;font-family:ui-monospace,Menlo,monospace;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.msg .col{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.msg .col .btn{min-height:50px}
+
+/* paisagem */
+.landwrap{width:100%;max-width:896px;margin:0 auto;position:relative;overflow:hidden}
+.landwrap .phone.land{position:absolute;left:0;top:0;width:896px;max-width:none;height:414px;transform-origin:0 0;flex-direction:row;border-radius:0}
+@media (min-width:480px){.landwrap{overflow:visible}.landwrap .phone.land{border-radius:48px}}
+.land .notchv{position:absolute;left:0;top:50%;width:30px;height:209px;margin-top:-104px;background:#000;border-radius:0 22px 22px 0;z-index:9}
+.land .colA{width:47%;padding:14px 10px 16px 54px;display:flex;flex-direction:column;overflow:hidden}
+.land .colB{flex:1;display:flex;flex-direction:column;padding:10px 44px 22px 0}
+.land .colB .entry{margin-top:auto;border-radius:22px;border:1px solid var(--line)}
+.land .hil{position:absolute;left:50%;bottom:7px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:var(--text)}
+/* próprios do momento 2 */
+.known{margin:0 16px 8px;padding:9px 12px 10px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.known-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px}
+.known-h b{font-size:16px}
+.known-h .r{color:var(--muted);font-size:13px;white-space:nowrap}
+.cells{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;margin-top:8px}
+.cells i{height:14px;border-radius:4px;border:1px solid var(--line)}
+.cells i.k{background:var(--ink);border-color:var(--ink)}
+.cells i.u{background-image:var(--hatch)}
+.cells i.t{outline:2px solid var(--now);outline-offset:1px}
+.cells i.drop{border:2px solid var(--err);background-image:var(--hatch)}
+.cells-l{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
+.known .rule{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.35}
+.water{margin:0 16px 8px;display:flex;align-items:center;gap:10px;min-height:56px;padding:4px 6px 4px 12px;border-radius:14px;border:1.5px dashed var(--ghost)}
+.water .w1{flex:1;line-height:1.25}
+.water .w1 strong{display:block;font-size:16px}
+.water .w1 span{font-size:13px;color:var(--muted)}
+.water.ink{border:1.5px solid transparent;background:var(--ink-soft)}
+.water.ink strong,.water.ink span{color:var(--ink-text)}
+.water .sq{width:auto;padding:0 14px}
+.row .choice{grid-column:1/-1;display:flex;gap:6px;margin-top:8px}
+.choice button{flex:1;min-height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-weight:600;font-size:14px;color:var(--text);line-height:1.15;padding:0 4px}
+.choice button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.follow{grid-column:1/-1;margin-top:10px;font-size:14px;font-weight:600}
+.row.open{background:var(--card);border:1.5px solid var(--line)}
+.row.open.ink{background:var(--ink-soft);border-color:transparent}
+.row .ck{font-size:18px;font-weight:700}
+.nnote{font-size:13px;color:var(--muted);margin-top:6px;padding-left:10px;border-left:3px solid var(--line);line-height:1.35}
+.toast{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-radius:14px;background:var(--ink);color:var(--on-ink);font-size:15px;line-height:1.3}
+.toast .u{margin-left:auto;font-weight:700;text-decoration:underline;min-height:44px;padding:0 10px;color:var(--on-ink);flex:none}
+.agora .q{font-size:16px;font-weight:700;margin:12px 0 0}
+.agora .choice{display:flex;gap:6px;margin-top:8px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);margin-top:8px;min-height:64px}
+.opt strong{display:block;font-size:16px}
+.opt span{display:block;font-size:13px;color:var(--muted);margin-top:2px;line-height:1.35}
+.opt.warn{border-color:var(--warn);background:var(--warn-soft)}
+.opt.warn strong,.opt.warn span{color:var(--warn)}
+.okbar{margin-top:auto;padding:12px 16px 10px;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0}
+.okbar .state-l{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--ink-soft);color:var(--ink-text);font-size:15px;line-height:1.35}
+.okbar .state-l.warn{background:var(--warn-soft);color:var(--warn);border:1.5px solid var(--warn)}
+.okbar .row-b{display:flex;gap:8px;margin-top:10px}
+.okbar .row-b .btn{flex:1;min-height:50px}
+.subnote{font-size:13px;color:var(--muted);padding:0 16px 8px;line-height:1.35}
+.daystrip{display:flex;gap:6px;padding:0 16px 10px;overflow:hidden}
+.daystrip button{flex:none;width:50px;min-height:54px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;color:var(--muted)}
+.daystrip button b{font-size:18px;color:var(--text)}
+.daystrip button.u{background-image:var(--hatch)}
+.daystrip button.k{background:var(--ink-soft)}
+.daystrip button.k b{color:var(--ink-text)}
+.daystrip button[aria-pressed="true"]{border:2.5px solid var(--now)}
+.segrow{display:flex;align-items:center;gap:8px;padding:0 16px 8px;flex-wrap:wrap}
+.segrow .lab{font-size:13px;color:var(--muted)}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.seg button{min-height:44px;padding:0 12px;font-size:14px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
+.seg button+button{border-left:1.5px solid var(--line)}
+.palpite{font-size:12px;font-weight:700;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:4px 8px;text-transform:uppercase;letter-spacing:.04em}
+.emptyline{font-size:14px;color:var(--muted);padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);line-height:1.35}
+.emptyline b{color:var(--text)}
+.phone .live-sheet[hidden]{display:none}
+</style>
+</head>
+<body>
+<main class="doc">
+
+<header class="intro">
+  <p class="kicker">Direção C · Previsto e feito</p>
+  <h1>Momento 2 · Depois de comer, no meio do dia</h1>
+  <p>O caso do 02-uso tem duas partes. Primeiro, o lanche de por volta das 15:30, no trabalho, comido inteiro. Depois, no dia seguinte, o dia anterior refeito de memória: o almoço comido pela metade, o jantar fora do plano (sabendo o que comeu) e a água sem conta.</p>
+  <p>A direção: o dia já vem escrito a lápis pelo plano do nutricionista. Marcar a refeição é passá-la a tinta com um toque, e só o que foi diferente pede mais toques. O dia de ontem, refeito de memória, usa a mesma tela e o mesmo toque.</p>
+  <div class="legend" aria-label="Legenda">
+    <span class="lg pencil">previsto (lápis)</span>
+    <span class="lg ink">feito (tinta)</span>
+    <span class="lg hatch">sem marca (não sabido)</span>
+    <span class="lg now">o que é agora</span>
+  </div>
+  <p style="font-size:15px;color:var(--muted)">Cada estado abaixo aparece numa tela da largura do iPhone 11 Pro Max (414 × 896 pontos). A primeira tela funciona: marque o lanche.</p>
+  <div class="theme" role="group" aria-label="Tema">
+    <button data-t="" aria-pressed="true">Do sistema</button><button data-t="light" aria-pressed="false">Claro</button><button data-t="dark" aria-pressed="false">Escuro</button>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Estados deste momento">
+  <ol>
+    <li><a href="#m1">1 · Caso base</a></li>
+    <li><a href="#m2">2 · Marcado</a></li>
+    <li><a href="#m3">3 · Outra coisa</a></li>
+    <li><a href="#m4">4 · No dia seguinte</a></li>
+    <li><a href="#m5">5 · Ontem, de memória</a></li>
+    <li><a href="#m6">6 · Treino ou descanso?</a></li>
+    <li><a href="#m7">7 · Vazio</a></li>
+    <li><a href="#m8">8 · Sem plano · abrindo</a></li>
+    <li><a href="#m9">9 · Não gravou</a></li>
+    <li><a href="#m10">10 · Caso ruim</a></li>
+  </ol>
+</nav>
+
+<!-- ============ 1 ============ -->
+<section class="state" id="m1" aria-labelledby="m1x">
+  <div class="cap">
+    <p class="tag">Estado 1 · caso base · funciona ao toque</p>
+    <h2 id="m1x">15:34, no trabalho: o lanche, num toque</h2>
+    <p>O app abre em <b>Hoje</b>: o dia em ordem de hora, com o que foi marcado a tinta e o resto a lápis. O que é "agora" fica embaixo, ao alcance do polegar da mão que não segura a comida. Às 15:34 o agora é o lanche, que o plano põe às 16:00 e que ele come por volta das 15:30. O cartão mostra os itens e a nota do nutricionista. <b>"Comi tudo" é o toque.</b></p>
+    <p>A manhã, que já está a tinta, aparece encolhida numa linha só. O almoço passou sem marca e aparece <b>hachurado</b>, não em vermelho: ainda dá para marcar.</p>
+    <p>No topo fica o que a regra do nutricionista pede: 11 dos últimos 14 dias com o consumo conhecido. É a consequência dele, na linguagem da regra, e não uma sequência a manter nem uma nota.</p>
+    <p class="refs">F181 · F182 · F195 · F198 · F199 · F213 · F194 · P5 · K4 · F40 · U10</p>
+  </div>
+  <div class="phone" id="live2" role="group" aria-label="Tela do caso base, interativa">
+    <div class="sb"><span class="num">15:34</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" aria-label="Dia anterior">‹</button><div class="ttl"><strong>Hoje</strong><span>terça, 29/09 · dia de treino</span></div><button class="arrow" aria-label="Dia seguinte" disabled>›</button></div>
+      <div class="known">
+        <div class="known-h"><span>Comida conhecida em <b class="num">9 de 14</b> dias</span><span class="r">a regra pede 11</span></div>
+        <div class="cells" role="img" aria-label="Últimos 14 dias: 9 conhecidos, 5 sem marca"><i class="u"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k t"></i></div>
+        <div class="cells-l"><span>16/09</span><span>hoje</span></div>
+      </div>
+      <div class="water"><div class="w1"><strong>Água · sem conta</strong><span>meta: 14 copos de 250 ml</span></div><button class="sq big">+1 copo</button></div>
+      <ol class="script" data-script>
+        <li class="row ink"><time>manhã</time><span class="w"><strong>5 marcados</strong><span>pré-treino · treino B · água do treino · peso 73,8 kg · café</span></span><span class="ck">✓</span></li>
+        <li class="row hatch"><time>12:30</time><span class="w"><strong>Almoço</strong><span>sem marca · 719 kcal</span></span><button class="mini">marcar</button></li>
+        <li class="nowline" data-now>agora 15:34</li>
+        <li class="row target" data-lanche><time>16:00</time><span class="w"><strong>Lanche da tarde</strong><span>previsto · 819 kcal</span></span><span></span></li>
+        <li class="row pencil"><time>19:30</time><span class="w"><strong>Jantar</strong><span>previsto · 678 kcal</span></span><span></span></li>
+      </ol>
+      <section class="agora" aria-label="Agora" data-agora>
+        <p class="over">Agora · previsto 16:00 · 819 kcal</p>
+        <h3>Lanche da tarde</h3>
+        <p class="items">leite 250 ml · banana 120 g · aveia 40 g · pasta de amendoim 10 g · leite em pó 10 g · whey 30 g · pão 50 g · geleia light 20 g</p>
+        <p class="nnote">“Bata leite + banana + aveia + pasta + leite em pó + whey. Pão e geleia ficam separados.” — nutricionista</p>
+        <button class="primary" data-a="tudo">Comi tudo</button>
+        <div class="two"><button class="secondary" data-a="metade">Metade</button><button class="secondary" data-a="outra">Outra coisa</button></div>
+      </section>
+    </div>
+    <nav class="tabs" aria-label="Lugares"><a class="on" href="#m1">Hoje</a><a href="#m1">Semanas</a><a href="#m1">Prescrição</a></nav>
+    <div class="hi oncard"></div>
+    <div class="scrim live-sheet" hidden data-scrim></div>
+    <div class="sheet live-sheet" hidden data-sheet role="dialog" aria-label="Lanche: outra coisa">
+      <div class="grab"></div>
+      <div class="sh-h"><strong>Lanche · outra coisa</strong><span>o que houve?</span></div>
+      <button class="opt" data-o="sei"><strong>Comi outra coisa e sei o que foi</strong><span>O dia fica como “saiu do plano, sabendo o que comeu”. Continua contando para a regra.</span></button>
+      <button class="opt warn" data-o="naosei"><strong>Comi outra coisa e não sei quanto</strong><span>O dia inteiro deixa de contar para a regra: 9 → 8 de 14.</span></button>
+      <button class="opt" data-o="nada"><strong>Não comi</strong><span>O lanche fica sem marca. O resto do dia continua valendo.</span></button>
+      <button class="btn line" style="width:100%;margin-top:10px" data-o="cancel">Cancelar</button>
+    </div>
+    <p class="vh" aria-live="polite" data-say></p>
+  </div>
+  <div class="demo-reset"><button id="reset2">Recomeçar a demonstração</button></div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="state" id="m2" aria-labelledby="m2x">
+  <div class="cap">
+    <p class="tag">Estado 2 · um toque depois</p>
+    <h2 id="m2x">Marcado. E o almoço que ficou para trás aparece, sem cobrança</h2>
+    <p>O lanche passa a tinta com a hora da marca, e o aviso diz que gravou neste aparelho. "Desfazer" fica à mão. No lugar do cartão aparece uma pergunta só: o almoço das 12:30 ficou sem marca, como foi? Ele pode responder com um toque ou escolher <b>Depois</b>. A pergunta não vira aviso vermelho nem notificação, e não aparece de novo no mesmo dia.</p>
+    <p>Por que perguntar: um dia com uma refeição marcada já conta como conhecido para a regra. Mas a adesão do dia é ponderada pela porção, e uma refeição sem marca num dia conhecido pesa como não comida.</p>
+    <p class="refs">F197 · F199 · F200 · F296 · P5</p>
+  </div>
+  <div class="phone" role="group" aria-label="Tela depois de marcar o lanche">
+    <div class="sb"><span class="num">15:34</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" aria-label="Dia anterior">‹</button><div class="ttl"><strong>Hoje</strong><span>terça, 29/09 · dia de treino</span></div><button class="arrow" disabled aria-label="Dia seguinte">›</button></div>
+      <div class="known">
+        <div class="known-h"><span>Comida conhecida em <b class="num">9 de 14</b> dias</span><span class="r">a regra pede 11</span></div>
+        <div class="cells" role="img" aria-label="Últimos 14 dias: 9 conhecidos"><i class="u"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k t"></i></div>
+        <div class="cells-l"><span>16/09</span><span>hoje</span></div>
+      </div>
+      <div class="water"><div class="w1"><strong>Água · sem conta</strong><span>meta: 14 copos de 250 ml</span></div><button class="sq big">+1 copo</button></div>
+      <ol class="script">
+        <li class="row ink"><time>manhã</time><span class="w"><strong>5 marcados</strong><span>pré-treino · treino B · água do treino · peso 73,8 kg · café</span></span><span class="ck">✓</span></li>
+        <li class="row hatch"><time>12:30</time><span class="w"><strong>Almoço</strong><span>sem marca · 719 kcal</span></span><button class="mini">marcar</button></li>
+        <li class="row ink"><time>15:34</time><span class="w"><strong>Lanche da tarde</strong><span>tudo · 819 kcal</span></span><span class="ck">✓</span></li>
+        <li class="nowline">agora 15:34</li>
+        <li class="row pencil"><time>19:30</time><span class="w"><strong>Jantar</strong><span>previsto · 678 kcal</span></span><span></span></li>
+      </ol>
+      <section class="agora" aria-label="Agora">
+        <div class="toast" role="status">Lanche marcado: tudo, às 15:34. Gravado neste aparelho.<button class="u">Desfazer</button></div>
+        <p class="q">O almoço das 12:30 ficou sem marca. Como foi?</p>
+        <div class="choice"><button>Tudo</button><button>Metade</button><button>Outra coisa</button><button>Depois</button></div>
+        <p class="hint" style="margin-top:10px">Próximo previsto: jantar, 19:30.</p>
+      </section>
+    </div>
+    <nav class="tabs" aria-label="Lugares"><a class="on" href="#m2">Hoje</a><a href="#m2">Semanas</a><a href="#m2">Prescrição</a></nav>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="state" id="m3" aria-labelledby="m3x">
+  <div class="cap">
+    <p class="tag">Estado 3 · quando não foi o do plano</p>
+    <h2 id="m3x">"Outra coisa": três saídas, cada uma com a sua consequência escrita</h2>
+    <p>O dia guarda três estados: seguiu o plano; saiu e sabe o que comeu; saiu e não sabe quanto. A folha traduz isso em frases de quem comeu, e diz <b>antes do toque</b> o que cada uma faz com a regra. "Não sei quanto" tira o dia inteiro da conta, e a folha mostra o número caindo (9 → 8). A escolha continua dele. O app não esconde a opção nem empurra para outra.</p>
+    <p>"Não comi" deixa a refeição sem marca. O produto não separa "não comi" de "esqueci", e esta direção não inventa essa diferença: ela vai como pergunta ao dono.</p>
+    <p class="refs">F195 · F200 · F292 · F213 · F198</p>
+  </div>
+  <div class="phone" role="group" aria-label="Tela com a folha Outra coisa">
+    <div class="sb"><span class="num">15:34</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" aria-label="Dia anterior">‹</button><div class="ttl"><strong>Hoje</strong><span>terça, 29/09 · dia de treino</span></div><button class="arrow" disabled aria-label="Dia seguinte">›</button></div>
+      <div class="known">
+        <div class="known-h"><span>Comida conhecida em <b class="num">9 de 14</b> dias</span><span class="r">a regra pede 11</span></div>
+        <div class="cells"><i class="u"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k t"></i></div>
+      </div>
+      <ol class="script">
+        <li class="row ink"><time>manhã</time><span class="w"><strong>5 marcados</strong><span>pré-treino · treino B · água do treino · peso · café</span></span><span class="ck">✓</span></li>
+        <li class="row target"><time>16:00</time><span class="w"><strong>Lanche da tarde</strong><span>previsto · 819 kcal</span></span><span></span></li>
+      </ol>
+    </div>
+    <div class="scrim"></div>
+    <div class="sheet" role="dialog" aria-label="Lanche: outra coisa">
+      <div class="grab"></div>
+      <div class="sh-h"><strong>Lanche · outra coisa</strong><span>o que houve?</span></div>
+      <button class="opt"><strong>Comi outra coisa e sei o que foi</strong><span>O dia fica como “saiu do plano, sabendo o que comeu”. Continua contando para a regra.</span></button>
+      <button class="opt warn"><strong>Comi outra coisa e não sei quanto</strong><span>O dia inteiro deixa de contar para a regra: 9 → 8 de 14.</span></button>
+      <button class="opt"><strong>Não comi</strong><span>O lanche fica sem marca. O resto do dia continua valendo.</span></button>
+      <button class="btn line" style="width:100%;margin-top:10px">Cancelar</button>
+    </div>
+    <div class="hi" style="position:absolute;left:0;right:0;bottom:0;z-index:7"></div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="state" id="m4" aria-labelledby="m4x">
+  <div class="cap">
+    <p class="tag">Estado 4 · segunda forma do momento</p>
+    <h2 id="m4x">Quarta, 13:41: o almoço de hoje, e ontem esperando</h2>
+    <p>Hoje a comida só chegou ao registro de memória, dias depois: um dia marcado em 22, com as marcas feitas às 13:41 e às 17:23. A direção trata isso como forma normal do momento, e não como falha. Ao abrir, a <b>pendência</b> diz o que ficou a lápis ontem. Ela não bloqueia o almoço de hoje, que continua sendo o "agora", embaixo. Dá para resolver ontem já ou mais tarde.</p>
+    <p>A pendência só aparece para dias que ainda entram na conta dos 14. Dias mais antigos que isso não aparecem aqui; seguem acessíveis pelo ‹.</p>
+    <p class="refs">U11 · P1 · F197 · F213 · F181</p>
+  </div>
+  <div class="phone" role="group" aria-label="Tela do dia seguinte">
+    <div class="sb"><span class="num">13:41</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" aria-label="Dia anterior">‹</button><div class="ttl"><strong>Hoje</strong><span>quarta, 30/09 · dia de treino</span></div><button class="arrow" disabled aria-label="Dia seguinte">›</button></div>
+      <div class="pend" role="region" aria-label="Pendência">
+        <strong>Ontem, terça, ficou a lápis em parte</strong>
+        <p>Almoço sem marca · jantar sem marca · água sem conta</p>
+        <div class="row-b"><button class="btn solid">Completar ontem</button><button class="btn line">Mais tarde</button></div>
+      </div>
+      <div class="water ink"><div class="w1"><strong>Água · 3 copos</strong><span>de 14</span></div><button class="sq big">+1 copo</button></div>
+      <ol class="script">
+        <li class="row ink"><time>manhã</time><span class="w"><strong>5 marcados</strong><span>pré-treino · treino C · água do treino · peso · café</span></span><span class="ck">✓</span></li>
+        <li class="row target"><time>12:30</time><span class="w"><strong>Almoço</strong><span>previsto · 719 kcal</span></span><span></span></li>
+        <li class="nowline">agora 13:41</li>
+        <li class="row pencil"><time>16:00</time><span class="w"><strong>Lanche da tarde</strong><span>previsto · 819 kcal</span></span><span></span></li>
+      </ol>
+      <section class="agora" aria-label="Agora">
+        <p class="over">Agora · previsto 12:30 · 719 kcal</p>
+        <h3>Almoço</h3>
+        <p class="items">arroz 250 g · feijão 50 g · frango 80 g · legumes/verduras 100 g · azeite 15 g · kiwi 100 g</p>
+        <button class="primary">Comi tudo</button>
+        <div class="two"><button class="secondary">Metade</button><button class="secondary">Outra coisa</button></div>
+      </section>
+    </div>
+    <nav class="tabs" aria-label="Lugares"><a class="on" href="#m4">Hoje</a><a href="#m4">Semanas</a><a href="#m4">Prescrição</a></nav>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="state" id="m5" aria-labelledby="m5x">
+  <div class="cap">
+    <p class="tag">Estado 5 · o caso do dia seguinte, resolvido</p>
+    <h2 id="m5x">Ontem, de memória: três toques e um "sei"</h2>
+    <p>"Completar ontem" abre o mesmo roteiro, agora do dia anterior, e <b>cada toque grava</b>. O almoço vai como <b>Metade</b>, porção 0,5. O jantar vai como <b>Não foi o do plano</b>, que pergunta na mesma linha se ele sabe o que comeu. Ele toca em <b>Sei</b>, e o dia fica "saiu do plano, sabendo o que comeu". A água fica <b>sem conta</b>, que é a verdade, e não zero.</p>
+    <p>O rodapé diz o resultado na língua da regra: terça é dia conhecido e conta. As marcas guardam a hora em que foram feitas, então fica visível que vieram no dia seguinte.</p>
+    <p class="refs">F195 · F199 · F200 · F197 · F198 · F194 · U11 · M2</p>
+  </div>
+  <div class="phone" role="group" aria-label="Tela de ontem refeito de memória">
+    <div class="sb"><span class="num">13:43</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back" style="min-width:0">‹ Hoje</button><div class="ttl"><strong>Terça, 29/09</strong><span>de memória · cada toque grava</span></div><span style="width:60px"></span></div>
+      <ol class="script">
+        <li class="row ink"><time>dia</time><span class="w"><strong>6 marcados no dia</strong><span>pré-treino · treino B · água do treino · peso · café · lanche</span></span><span class="ck">✓</span></li>
+        <li class="row open ink"><time>12:30</time><span class="w"><strong>Almoço</strong><span>metade · marcado em 30/09, 13:42</span></span><span class="ck">✓</span>
+          <div class="choice"><button aria-pressed="false">Tudo</button><button aria-pressed="true">Metade</button><button aria-pressed="false">Não foi o do plano</button></div>
+        </li>
+        <li class="row open"><time>19:30</time><span class="w"><strong>Jantar</strong><span>não foi o do plano</span></span><span></span>
+          <div class="choice"><button aria-pressed="false">Tudo</button><button aria-pressed="false">Metade</button><button aria-pressed="true">Não foi o do plano</button></div>
+          <p class="follow">Sabe o que comeu no lugar?</p>
+          <div class="choice"><button aria-pressed="true">Sei</button><button aria-pressed="false">Não sei quanto</button></div>
+        </li>
+        <li class="row open"><time>água</time><span class="w"><strong>Água de ontem</strong><span>sem conta: não é zero, é não sabido</span></span><span></span>
+          <div class="choice"><button aria-pressed="true">Sem conta</button><button aria-pressed="false">Contar copos</button></div>
+        </li>
+      </ol>
+      <section class="okbar" aria-label="Resultado">
+        <div class="state-l" role="status"><span class="ck">✓</span><span><b>Terça conta para a regra.</b> Dia conhecido: saiu do plano, sabendo o que comeu.</span></div>
+        <div class="row-b"><button class="btn solid">Voltar para hoje</button></div>
+      </section>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="state" id="m6" aria-labelledby="m6x">
+  <div class="cap">
+    <p class="tag">Estado 6 · o dia ainda é palpite</p>
+    <h2 id="m6x">05:47, em casa, o pré-treino: hoje é dia de treino?</h2>
+    <p>Antes da sessão existir, saber se hoje é dia de treino é palpite do padrão semanal, e o palpite decide se o pré-treino e a água do treino estão no plano. A direção diz isso com uma <b>etiqueta de palpite</b> e deixa trocar com um toque. O palpite some sozinho quando a sessão é registrada.</p>
+    <p>Se o treino for à tarde ou à noite, o horário muda pela regra do nutricionista: o pré vai para 30 min antes da sessão, e a refeição que cairia dentro do treino passa para 15 min depois do fim estimado. Com o treino às 18:15, por exemplo, o pré fica às 17:45 e o jantar às 19:45. As linhas a lápis já aparecem nos novos horários.</p>
+    <p class="refs">F187 · F188 · F189 · F190 · F191 · F38 · F181</p>
+  </div>
+  <div class="phone" role="group" aria-label="Tela do pré-treino com o dia em palpite">
+    <div class="sb"><span class="num">5:47</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" aria-label="Dia anterior">‹</button><div class="ttl"><strong>Hoje</strong><span>terça, 29/09</span></div><button class="arrow" disabled aria-label="Dia seguinte">›</button></div>
+      <div class="segrow"><span class="palpite">palpite</span><div class="seg" role="group" aria-label="Tipo do dia"><button aria-pressed="true">Dia de treino</button><button aria-pressed="false">Descanso</button></div><div class="seg"><button aria-pressed="true">manhã</button><button aria-pressed="false">tarde</button><button aria-pressed="false">noite</button></div></div>
+      <div class="known">
+        <div class="known-h"><span>Comida conhecida em <b class="num">8 de 14</b> dias</span><span class="r">a regra pede 11</span></div>
+        <div class="cells"><i class="u"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="t"></i></div>
+      </div>
+      <ol class="script">
+        <li class="row target"><time>05:45</time><span class="w"><strong>Pré-treino</strong><span>previsto · 163 kcal</span></span><span></span></li>
+        <li class="nowline">agora 5:47</li>
+        <li class="row pencil"><time>06:15</time><span class="w"><strong>Treino B · e água do treino</strong><span>previsto pela sequência · água 600 ml</span></span><span></span></li>
+        <li class="row pencil"><time>08:00</time><span class="w"><strong>Café da manhã</strong><span>previsto · 629 kcal</span></span><span></span></li>
+      </ol>
+      <section class="agora" aria-label="Agora">
+        <p class="over">Agora · previsto 05:45 · 163 kcal</p>
+        <h3>Pré-treino</h3>
+        <p class="items">pão Artesano 35 g · doce de leite 20 g · canela 1 g · café 200 ml</p>
+        <button class="primary">Comi tudo</button>
+        <div class="two"><button class="secondary">Metade</button><button class="secondary">Outra coisa</button></div>
+      </section>
+    </div>
+    <nav class="tabs" aria-label="Lugares"><a class="on" href="#m6">Hoje</a><a href="#m6">Semanas</a><a href="#m6">Prescrição</a></nav>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="state" id="m7" aria-labelledby="m7x">
+  <div class="cap">
+    <p class="tag">Estado 7 · vazio</p>
+    <h2 id="m7x">Nada marcado: o retrato de hoje do registro real</h2>
+    <p>Esta tela parte do registro real até 30/09: <b>1 dia com refeição marcada em 22</b>. Nos últimos 14 dias, então, o consumo é conhecido em 1. O vazio diz o que significa: dia sem marca não é zero, é não sabido. Diz também o que isso faz com a regra, que fica em "não mexer e registrar mais". O vazio não ensina a usar o app nem mostra ilustração. O agora já está ali, pronto: o café das 8:00.</p>
+    <p>Domingo é dia de descanso pelo padrão semanal, então não há pré-treino nem água do treino.</p>
+    <p class="refs">P1 · F198 · F212 · F213 · F186 · F188 · F181</p>
+  </div>
+  <div class="phone" role="group" aria-label="Tela de dia vazio">
+    <div class="sb"><span class="num">9:10</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" aria-label="Dia anterior">‹</button><div class="ttl"><strong>Hoje</strong><span>domingo, 27/09 · descanso</span></div><button class="arrow" disabled aria-label="Dia seguinte">›</button></div>
+      <div class="known">
+        <div class="known-h"><span>Comida conhecida em <b class="num">1 de 14</b> dias</span><span class="r">a regra pede 11</span></div>
+        <div class="cells" role="img" aria-label="Últimos 14 dias: 1 conhecido"><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u t"></i></div>
+        <p class="rule">Com menos de 11, a regra do nutricionista fica em “não mexer e registrar mais”.</p>
+      </div>
+      <ol class="script">
+        <li class="emptyline"><b>Nada marcado hoje.</b> Um dia sem marca não conta como zero: conta como não sabido.</li>
+        <li class="row target"><time>08:00</time><span class="w"><strong>Café da manhã</strong><span>previsto · 629 kcal</span></span><span></span></li>
+        <li class="nowline">agora 9:10</li>
+        <li class="row pencil"><time>12:30</time><span class="w"><strong>Almoço</strong><span>previsto · 719 kcal</span></span><span></span></li>
+      </ol>
+      <section class="agora" aria-label="Agora">
+        <p class="over">Agora · previsto 08:00 · 629 kcal</p>
+        <h3>Café da manhã</h3>
+        <p class="items">cuscuz 200 g · frango 70 g · requeijão light 30 g · leite integral 250 ml · uva 120 g</p>
+        <button class="primary">Comi tudo</button>
+        <div class="two"><button class="secondary">Metade</button><button class="secondary">Outra coisa</button></div>
+      </section>
+    </div>
+    <nav class="tabs" aria-label="Lugares"><a class="on" href="#m7">Hoje</a><a href="#m7">Semanas</a><a href="#m7">Prescrição</a></nav>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="state" id="m8" aria-labelledby="m8x">
+  <div class="cap">
+    <p class="tag">Estado 8 · sem plano · abrindo</p>
+    <h2 id="m8x">Aparelho sem plano alimentar, e a abertura</h2>
+    <p><b>Sem plano:</b> já aconteceu de um aparelho novo ficar sem plano alimentar para sempre. Sem plano não há lápis, então a tela não finge um dia: diz que o plano vem do nutricionista e oferece os dois caminhos que o produto tem, restaurar o plano dele ou trazer de uma cópia de segurança. O app não monta plano, porque não cria prescrição.</p>
+    <p><b>Abrindo:</b> o desenho do dia aparece na hora, com blocos no lugar das linhas. A leitura é local. Se passar de alguns segundos, entra a mesma tela de "abertura demorando" do momento 1.</p>
+    <p class="refs">F271 · F207 · F2 · F250 · F273 · F72</p>
+  </div>
+  <div class="phone short" role="group" aria-label="Tela sem plano alimentar">
+    <div class="sb"><span class="num">15:34</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" aria-label="Dia anterior">‹</button><div class="ttl"><strong>Hoje</strong><span>terça, 29/09</span></div><button class="arrow" disabled aria-label="Dia seguinte">›</button></div>
+      <div class="msg">
+        <strong>Este aparelho não tem plano alimentar</strong>
+        <p>O plano vem do seu nutricionista. Sem ele não há o que prever, nem o que marcar.</p>
+        <div class="col"><button class="btn solid">Restaurar o plano do nutricionista</button><button class="btn line">Trazer de uma cópia de segurança</button></div>
+      </div>
+    </div>
+    <div class="hi"></div>
+  </div>
+  <div style="height:28px"></div>
+  <div class="phone short" role="group" aria-label="Tela abrindo">
+    <div class="sb"><span class="num">15:34</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app" style="padding:6px 16px">
+      <div style="display:flex;justify-content:center;margin-bottom:16px"><span class="sk" style="width:150px;height:40px"></span></div>
+      <span class="sk" style="display:block;height:62px;margin-bottom:12px;border-radius:14px"></span>
+      <span class="sk" style="display:block;height:52px;margin-bottom:12px;border-radius:14px"></span>
+      <span class="sk" style="display:block;height:48px;margin-bottom:6px"></span>
+      <span class="sk" style="display:block;height:48px;margin-bottom:6px"></span>
+      <span class="sk" style="display:block;height:48px;margin-bottom:6px"></span>
+      <p style="font-size:15px;color:var(--muted);text-align:center;margin-top:auto;padding-bottom:16px">Lendo o dia deste aparelho.<br>Não precisa de rede.</p>
+    </div>
+    <div class="hi"></div>
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section class="state" id="m9" aria-labelledby="m9x">
+  <div class="cap">
+    <p class="tag">Estado 9 · erro</p>
+    <h2 id="m9x">O toque não gravou, e isso aparece</h2>
+    <p>Por quase sete semanas, escolher um alimento não fazia nada, sem erro, e ninguém notou. Por isso, aqui, <b>nenhum toque fica sem resposta</b>. A gravação boa vira tinta e um aviso de "gravado"; a ruim vira a linha com borda e texto de "não gravado". A marca fica na tela até gravar. A frase diz a causa provável e oferece tentar de novo. O resto do dia continua usável.</p>
+    <p class="refs">F296 · F288 · F55 · F53</p>
+  </div>
+  <div class="phone" role="group" aria-label="Tela de erro ao marcar">
+    <div class="sb"><span class="num">15:34</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" aria-label="Dia anterior">‹</button><div class="ttl"><strong>Hoje</strong><span>terça, 29/09 · dia de treino</span></div><button class="arrow" disabled aria-label="Dia seguinte">›</button></div>
+      <div class="known">
+        <div class="known-h"><span>Comida conhecida em <b class="num">9 de 14</b> dias</span><span class="r">a regra pede 11</span></div>
+        <div class="cells"><i class="u"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k t"></i></div>
+      </div>
+      <ol class="script">
+        <li class="row ink"><time>manhã</time><span class="w"><strong>5 marcados</strong><span>pré-treino · treino B · água do treino · peso · café</span></span><span class="ck">✓</span></li>
+        <li class="row hatch"><time>12:30</time><span class="w"><strong>Almoço</strong><span>sem marca · 719 kcal</span></span><button class="mini">marcar</button></li>
+        <li class="row" style="border:2px solid var(--err);background:var(--err-soft)"><time style="color:var(--err)">15:34</time><span class="w"><strong style="color:var(--err)">Lanche da tarde · tudo</strong><span style="color:var(--err)">só na tela · não gravado</span></span><span style="color:var(--err);font-weight:700">!</span></li>
+        <li class="nowline">agora 15:34</li>
+        <li class="row pencil"><time>19:30</time><span class="w"><strong>Jantar</strong><span>previsto · 678 kcal</span></span><span></span></li>
+      </ol>
+      <section class="agora" aria-label="Agora">
+        <div class="banner" role="alert" style="margin:0">
+          <strong>Não gravou neste aparelho</strong>
+          O lanche fica na tela como não gravado até dar certo. O Safari em modo privado recusa guardar: abra o app pelo ícone da tela de início.
+          <div class="row-b"><button class="btn errb">Tentar de novo</button></div>
+        </div>
+      </section>
+    </div>
+    <nav class="tabs" aria-label="Lugares"><a class="on" href="#m9">Hoje</a><a href="#m9">Semanas</a><a href="#m9">Prescrição</a></nav>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="state" id="m10" aria-labelledby="m10x">
+  <div class="cap">
+    <p class="tag">Estado 10 · caso ruim</p>
+    <h2 id="m10x">Cinco dias depois, ele não lembra: "não sei quanto"</h2>
+    <p>Ele escolhe o dia numa fileira dos últimos 14, sem a roda de data do iPhone. Os dias hachurados são os sem marca. Na sexta, 25/09, só o café estava marcado, e o resto ele não lembra. Ele toca "Saiu do plano, não sei quanto". A regra trata esse dia como desconhecido, então <b>a sexta sai da conta (10 → 9 de 14)</b>, e o app diz isso no momento, com "Desfazer" ao lado. Não há julgamento nem vermelho: o laranja aqui é aviso de consequência, e vem escrito.</p>
+    <p>Já aconteceu de esse mesmo dia contar como registro e liberar um corte de comida. A direção deixa a consequência à vista para isso não se repetir em silêncio.</p>
+    <p class="refs">F200 · F292 · F213 · F67 · F209 · U11</p>
+  </div>
+  <div class="phone" role="group" aria-label="Tela do caso ruim">
+    <div class="sb"><span class="num">13:50</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back" style="min-width:0">‹ Hoje</button><div class="ttl"><strong>Sexta, 25/09</strong><span>de memória · 5 dias atrás</span></div><span style="width:60px"></span></div>
+      <div class="daystrip" role="group" aria-label="Escolher o dia">
+        <button class="u"><span>ter</span><b>22</b></button><button class="k"><span>qua</span><b>23</b></button><button class="k"><span>qui</span><b>24</b></button><button class="u" aria-pressed="true"><span>sex</span><b>25</b></button><button class="u"><span>sáb</span><b>26</b></button><button class="u"><span>dom</span><b>27</b></button><button class="k"><span>seg</span><b>28</b></button>
+      </div>
+      <div class="known">
+        <div class="known-h"><span>Comida conhecida em <b class="num">9 de 14</b> dias</span><span class="r">era 10 · pede 11</span></div>
+        <div class="cells" role="img" aria-label="Últimos 14 dias: 9 conhecidos; sexta saiu da conta"><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="k"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="drop"></i><i class="u"></i><i class="u"></i><i class="k"></i><i class="k"></i><i class="k t"></i></div>
+        <div class="cells-l"><span>17/09</span><span>hoje</span></div>
+      </div>
+      <ol class="script">
+        <li class="row ink"><time>08:00</time><span class="w"><strong>Café da manhã</strong><span>tudo · marcado na sexta</span></span><span class="ck">✓</span></li>
+        <li class="row hatch"><time>12:30</time><span class="w"><strong>Almoço · lanche · jantar</strong><span>sem marca</span></span><span></span></li>
+        <li class="row open"><time>dia</time><span class="w"><strong>Como foi o dia</strong><span>escolhido agora</span></span><span></span>
+          <div class="choice"><button aria-pressed="false">Seguiu o plano</button><button aria-pressed="false">Saiu, sei o que comi</button><button aria-pressed="true">Saiu, não sei quanto</button></div>
+        </li>
+      </ol>
+      <section class="okbar" aria-label="Consequência">
+        <div class="state-l warn" role="status"><span class="ck">!</span><span><b>Sexta saiu da conta: 10 → 9 de 14.</b> Para a regra do nutricionista, “não sei quanto” é dia desconhecido. Se lembrar o que comeu, “sei o que comi” mantém o dia contando.</span></div>
+        <div class="row-b"><button class="btn line">Desfazer</button><button class="btn solid">Voltar para hoje</button></div>
+      </section>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+</main>
+<script>
+(function(){
+  var root=document.documentElement;
+  document.querySelectorAll('.theme button').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.getAttribute('data-t');
+      if(t){root.setAttribute('data-theme',t);}else{root.removeAttribute('data-theme');}
+      document.querySelectorAll('.theme button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});
+    });
+  });
+  var p=document.getElementById('live2');if(!p)return;
+  var ag=p.querySelector('[data-agora]'),lan=p.querySelector('[data-lanche]'),now=p.querySelector('[data-now]');
+  var sheet=p.querySelector('[data-sheet]'),scrim=p.querySelector('[data-scrim]'),say=p.querySelector('[data-say]');
+  var cells=p.querySelector('.cells'),known=p.querySelector('.known-h b');
+  var alm=p.querySelectorAll('.script .row')[1];
+  var orig={ag:ag.innerHTML,lan:lan.innerHTML,lanC:lan.className,alm:alm.innerHTML,almC:alm.className,cells:cells.innerHTML};
+  var alvo='lanche';
+  function linha(el,hora,nome,sub,tinta){
+    el.className='row '+(tinta?'ink fresh':'hatch');
+    el.innerHTML='<time>'+hora+'</time><span class="w"><strong>'+nome+'</strong><span>'+sub+'</span></span><span class="ck">'+(tinta?'✓':'')+'</span>';
+  }
+  function cai(){known.textContent='8 de 14';cells.children[13].className='drop t';}
+  function proximo(msg){
+    ag.innerHTML='<div class="toast" role="status">'+msg+'<button class="u" data-undo>Desfazer</button></div>'+
+      '<p class="over" style="margin-top:12px">Próximo · previsto 19:30 · 678 kcal</p><h3>Jantar</h3>'+
+      '<p class="items">arroz 250 g · feijão 50 g · lombo suíno 80 g · legumes/verduras 100 g · azeite 15 g</p>'+
+      '<p class="hint" style="margin-top:6px">Nada a marcar agora. Se já comeu, dá para marcar antes da hora.</p>';
+    ag.querySelector('[data-undo]').addEventListener('click',reset);say.textContent=msg;
+  }
+  function depoisDoLanche(msg){
+    lan.parentNode.insertBefore(now,lan.nextSibling);
+    ag.innerHTML='<div class="toast" role="status">'+msg+' Gravado neste aparelho.<button class="u" data-undo>Desfazer</button></div>'+
+      '<p class="q">O almoço das 12:30 ficou sem marca. Como foi?</p>'+
+      '<div class="choice" data-alm><button data-x="tudo">Tudo</button><button data-x="metade">Metade</button><button data-x="outra">Outra coisa</button><button data-x="depois">Depois</button></div>'+
+      '<p class="hint" style="margin-top:10px">Próximo previsto: jantar, 19:30.</p>';
+    say.textContent=msg+' Gravado neste aparelho.';
+    ag.querySelector('[data-undo]').addEventListener('click',reset);
+    ag.querySelectorAll('[data-alm] button').forEach(function(b){
+      b.addEventListener('click',function(){
+        var x=b.getAttribute('data-x');
+        if(x==='tudo'){linha(alm,'12:30','Almoço','tudo · marcado às 15:35',true);proximo('Almoço marcado: tudo. Gravado neste aparelho.');}
+        else if(x==='metade'){linha(alm,'12:30','Almoço','metade · marcado às 15:35',true);proximo('Almoço marcado: metade. Gravado neste aparelho.');}
+        else if(x==='outra'){abrir('almoco');}
+        else{proximo('O almoço fica para depois.');}
+      });
+    });
+  }
+  function abrir(qual){
+    alvo=qual;var nome=qual==='lanche'?'Lanche':'Almoço';
+    sheet.querySelector('.sh-h strong').textContent=nome+' · outra coisa';
+    sheet.querySelector('[data-o="nada"] span').textContent='O '+nome.toLowerCase()+' fica sem marca. O resto do dia continua valendo.';
+    sheet.hidden=false;scrim.hidden=false;sheet.querySelector('button').focus();
+  }
+  function fechar(){sheet.hidden=true;scrim.hidden=true;}
+  function reset(){
+    fechar();ag.innerHTML=orig.ag;lan.className=orig.lanC;lan.innerHTML=orig.lan;alm.className=orig.almC;alm.innerHTML=orig.alm;
+    lan.parentNode.insertBefore(now,lan);cells.innerHTML=orig.cells;known.textContent='9 de 14';bind();say.textContent='Desfeito.';
+  }
+  function bind(){
+    ag.querySelectorAll('[data-a]').forEach(function(b){
+      b.addEventListener('click',function(){
+        var a=b.getAttribute('data-a');
+        if(a==='tudo'){linha(lan,'15:34','Lanche da tarde','tudo · 819 kcal',true);depoisDoLanche('Lanche marcado: tudo, às 15:34.');}
+        else if(a==='metade'){linha(lan,'15:34','Lanche da tarde','metade · porção 0,5',true);depoisDoLanche('Lanche marcado: metade, às 15:34.');}
+        else abrir('lanche');
+      });
+    });
+  }
+  bind();
+  scrim.addEventListener('click',fechar);
+  sheet.querySelectorAll('[data-o]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var o=b.getAttribute('data-o');fechar();if(o==='cancel')return;
+      var el=alvo==='lanche'?lan:alm,h=alvo==='lanche'?'16:00':'12:30',n=alvo==='lanche'?'Lanche da tarde':'Almoço';
+      var msg;
+      if(o==='sei'){linha(el,h,n,'não foi o do plano · dia: saiu, sabendo',false);msg='Dia marcado: saiu do plano, sabendo o que comeu.';}
+      else if(o==='naosei'){linha(el,h,n,'não foi o do plano · dia: sem saber quanto',false);cai();msg='Dia marcado: sem saber quanto. Hoje deixa de contar (8 de 14).';}
+      else{linha(el,h,n,'sem marca · não comeu',false);msg=n+' fica sem marca.';}
+      if(alvo==='lanche')depoisDoLanche(msg);else proximo(msg+' Gravado neste aparelho.');
+    });
+  });
+})();
+</script>
+</body>
+</html>
