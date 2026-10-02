@@ -398,11 +398,42 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       o briefing pede: o peso da convergência do cerco é real, porque os quatro
       foram cegos entre si — e a instrução de separar o que ele conferiu do que
       repete de um agente.
-- [~] 4.b `06-parecer.md` entregue → R disparado em 02/10
-- [ ] 4.c Conferir: sem quinta direção, sem fusão, decisões numeradas, a
-      diferença em relação ao app atual medida e escrita, as perdas nominais
+- [x] 4.b `06-parecer.md` entregue → 1189 l., 7 seções, 15 decisões numeradas,
+      16 achados marcados como convergentes e 6 como não medidos.
+- [x] 4.c Conferido: **sem quinta direção, sem fusão, sem campeã** (busca por
+      linguagem de escolha e de proposta: zero). §2 mede a diferença contra o app
+      atual em 17 dimensões, §3 nomeia as perdas item por item, §5 tem as 15
+      decisões numeradas. A pergunta da mistura (decisão 15) está escrita como
+      pergunta, com a tabela dos defeitos que cada uma resolveria na outra, e sem
+      desenho — como o briefing manda.
+- [x] 4.d **Conferência minha das duas afirmações mais pesadas do parecer**, que
+      são as que mudam a mesa do dono:
+      - **E1 já existe no app.** Confirmo de primeira mão: `src/ui/telas/decisao.jsx`
+        é a tela da decisão, e `S.promoPendente` guarda a pergunta quando a sessão
+        fecha sozinha e a devolve na abertura seguinte, sem interromper treino novo.
+        Trabalhei nesse fluxo nesta mesma semana (`1f53ec3`, posição de leitura da
+        decisão). O número que o cerco usou contra E1 — alcançar só 37% a 58% das
+        sessões — já tem resposta no código.
+      - **Pôr comida em dia é impossível hoje.** Confirmo em `main.jsx:1847`:
+        `diaDeComida()` fecha o dia velho na virada e nasce um novo vazio; `S.dia`
+        é um objeto só, do dia corrente. Peso e treino aceitam data passada;
+        comida não tem onde escrever. Isso reenquadra M-b: os ~14 toques de C não
+        se comparam a um número menor, comparam-se à tarefa não existir.
+      - **A divisão dos testes confere**: 372 de domínio e 513 de fluxo, 885 ao
+        todo. Rodei as duas pastas em separado.
+- [!] 4.e Transitório observado: uma rodada isolada de `tests/fluxo` acusou 1
+      falha e as duas seguintes passaram 513/513. Combina com as 4 rejeições
+      soltas já registradas (render que aterrissa depois de a janela fechar).
+      Não bloqueia; fica anotado para não virar surpresa.
 
-### ═══ PARADA 3 · o dono decide ═══
+### ═══ PARADA 3 · o dono decide ═══ ← AQUI
+
+- [~] P3.a Apresentar o parecer ao dono (02/10). O achado que reenquadra tudo: as
+      duas sobreviventes abrem a tese com a mesma oração, palavra por palavra, e
+      essa oração é a tese do app que já existe. Ele não escolhe entre duas
+      filosofias — escolhe entre duas execuções da mesma, que também é a de hoje.
+- [ ] P3.b **Parar.** Nada da onda 5 é disparado até ele decidir.
+- [ ] P3.c Registrar, literal, o que ele decidiu
 
 - [ ] P3.a Apresentar o parecer
 - [ ] P3.b **Parar.**
