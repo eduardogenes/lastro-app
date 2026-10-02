@@ -36,7 +36,10 @@ pede atenção do dono.
 | D2 · pasta B | `af436860cf1f32133` | [x] | entregue e conferida |
 | D3 · pasta C | `a19c8199d8bb2abc2` | [x] | entregue e conferida |
 | D4 · pasta D | `ae937a74dfef3fe2e` | [x] | entregue e conferida |
-| C1–C4 | — | [ ] | |
+| C1 · Crítico | `a531da66b7c3b010a` | [~] | disparado 02/10, segundo plano |
+| C2 · Viabilidade | `a718a3cfd8e179c93` | [~] | disparado 02/10, segundo plano |
+| C3 · Acesso | `ad8473e0553894aba` | [~] | disparado 02/10, segundo plano |
+| C4 · Voz | `aaa9339bc3e9a385a` | [~] | disparado 02/10, segundo plano |
 | R · Curador | — | [ ] | |
 
 ---
