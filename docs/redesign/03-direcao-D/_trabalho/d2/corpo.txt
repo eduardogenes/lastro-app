@@ -1,0 +1,335 @@
+@titulo Corpo
+@h1 O corpo: um lugar só, onde se lê e se registra
+@lead Quinta, 01/10, 6h02, em casa. Ele já fotografou (5h32) e já comeu o pré-treino (5h45); a pesagem é sempre antes de treinar, em semi-jejum, com a mesma roupa (P6, F42). Peso, medidas com fita, bioimpedância e fotos passam a ter <b>tela própria, e é nela que se registra</b> — ele aceitou o custo de sair de onde está para registrar.
+@lead <b>O previsto ocupa o lugar da resposta, também aqui.</b> O peso não abre teclado: a régua já vem centrada no último valor, e o que saiu na balança fica a um toque de distância. A bioimpedância vem com os números do mês passado no lugar, porque composição corporal muda devagar: confirmar é um toque, corrigir é outro. Número com vírgula nunca passa pelo teclado do sistema, que descarta a vírgula e entrega vazio (F63).
+@lead No topo fica o que decide: <b>a média da semana e a taxa</b>, não o peso de hoje. O peso de um dia oscila com água, sal e intestino, e a flutuação diária passa de 1 kg enquanto o ganho que se quer enxergar é de centenas de gramas por semana (F14, F211).
+@css
+.band2{margin:8px 16px 0;padding:11px 14px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.band2 .top2{display:flex;align-items:baseline;gap:10px}
+.band2 .n2{font-size:34px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.band2 .n2 span{font-size:14px;font-weight:600;color:var(--ink-2)}
+.band2 .tx{margin-left:auto;text-align:right;font-size:13px;color:var(--ink-2);line-height:1.25}
+.band2 .tx b{display:block;font-size:19px;color:var(--ink);font-variant-numeric:tabular-nums}
+.band2 .cx2{font-size:13px;color:var(--ink-2);margin-top:7px;line-height:1.35}
+.band2 .cx2 b{color:var(--ink)}
+.alvo{display:inline-block;padding:1px 6px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink);font-weight:700;font-size:12px}
+.seg-l{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin:2px 16px 0;font-variant-numeric:tabular-nums}
+.mrow{display:flex;align-items:center;gap:10px;margin:0 16px;padding:8px 0;border-top:1px solid var(--line);min-height:58px}
+.mrow .t{flex:1;min-width:0;line-height:1.25}
+.mrow .t b{font-size:15.5px;display:block}
+.mrow .t small{font-size:12.5px;color:var(--ink-2);display:block}
+.mrow .v2{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;line-height:1.1;flex:none}
+.mrow .v2 span{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block}
+.mrow .v2.todo{font-size:14px;color:var(--accent-ink);border:1.5px dashed var(--accent);border-radius:10px;padding:6px 9px;font-weight:700}
+.mrow .v2.nova{font-size:14px;color:var(--ink-2);font-weight:600}
+@fim
+
+=== 1 |  | O caso: registrar o peso sem abrir teclado
+cap: A régua vem centrada no último peso (73,4 de 29/09) e anda de 100 em 100 g, que é a casa decimal que o produto guarda (F208). Tocar no número grava: <b>um toque, sem teclado</b>. O que está acima é o que decide — média da semana e taxa contra o intervalo-alvo do nutricionista (+0,15 a +0,30 kg/semana, F14). “Outro valor” abre o teclado do app, com vírgula, para quando a balança mostra algo fora da régua.
+@sb 6:02 | cheio
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>qui 01/10 · 6h02</small></h2><button class="act">Histórico</button></div>
+  <div class="band2">
+    <div class="top2"><div><div class="n2">73,5 <span>kg</span></div><div style="font-size:12.5px;color:var(--ink-2);margin-top:2px">média desta semana · 2 pesagens</div></div>
+      <div class="tx"><b>+0,03</b>kg/semana<br><span class="alvo">alvo +0,15 a +0,30</span></div></div>
+    <div class="cx2">Três semanas seguidas com média válida. A taxa está <b>abaixo de 0,10</b> nas duas últimas — é a faixa em que a regra do nutricionista olha a força e a adesão antes de mexer na comida.</div>
+  </div>
+  <div class="fin">
+    <div class="fr"><div class="t">Cintura e medidas com fita<small>a fita chegou hoje · nenhuma medida ainda</small></div><span class="v todo">medir</span></div>
+    <div class="fr"><div class="t">Bioimpedância<small>uma vez por mês · nunca registrada</small></div><span class="v todo">registrar</span></div>
+    <div class="fr"><div class="t">Fotos do corpo<small>sessão de hoje, 9 poses, 5h32</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">completa</span></div>
+    <div class="fr"><div class="t">Comparar com 07/08<small>mesma pose, 55 dias</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+  </div>
+  <section class="ctl">
+    <div class="load-row"><span class="lbl">Hoje</span><button class="load">73,4 <span>kg</span></button><span class="same">seu último peso, 29/09</span></div>
+    <div class="strip-lbl">Peso de hoje: toque no que a balança mostrou</div>
+    <div class="strip" data-start="73,4" role="group" aria-label="Peso de hoje em quilos">
+      <button class="rep w" data-n="72,8">72,8</button><button class="rep w" data-n="72,9">72,9</button><button class="rep w" data-n="73,0">73,0</button><button class="rep w" data-n="73,1">73,1</button><button class="rep w" data-n="73,2">73,2</button><button class="rep w" data-n="73,3">73,3</button><button class="rep w last" data-n="73,4">73,4<small>último</small></button><button class="rep w" data-n="73,5">73,5</button><button class="rep w" data-n="73,6">73,6</button><button class="rep w" data-n="73,7">73,7</button><button class="rep w" data-n="73,8">73,8</button><button class="rep w" data-n="73,9">73,9</button><button class="rep w" data-n="74,0">74,0</button>
+    </div>
+    <div class="acts"><button>Outro valor</button><button>Outro dia</button><button>Medidas e balança</button></div>
+  </section>
+  {{tabs corpo}}
+  {{hi}}
+</div>
+
+=== 2 |  | Guardado — e o valor continua na tela para ser corrigido
+cap: Corrigir no lugar é a regra: o 73,8 fica na tela e se toca nele de novo para mudar, agora ou daqui a um mês (F208: registrar de novo no mesmo dia substitui). Sem prazo, sem “desfazer” que some em 5 s. A tela também mostra o efeito honesto do dia: a média da semana mexeu 100 g. <b>Um dia não decide nada</b>, e dizer isso é mais útil que comemorar.
+@sb 6:02 | cheio
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>qui 01/10 · 6h02</small></h2><button class="act">Histórico</button></div>
+  <div class="band2">
+    <div class="top2"><div><div class="n2">73,6 <span>kg</span></div><div style="font-size:12.5px;color:var(--ink-2);margin-top:2px">média desta semana · 3 pesagens</div></div>
+      <div class="tx"><b>+0,06</b>kg/semana<br><span class="alvo">alvo +0,15 a +0,30</span></div></div>
+    <div class="cx2">A média subiu <b>100 g</b> com a pesagem de hoje. A regra lê a média e a taxa, nunca o peso de um dia.</div>
+  </div>
+  <div class="done enter">
+    <div class="h"><svg class="ico" width="26" height="26"><use href="#ck"/></svg><div class="t"><b>73,8 kg guardado</b><small>hoje, 6h02 · toque no número para corrigir</small></div><button class="pill">73,8</button></div>
+    <div class="more"><span class="t">Esta semana: <b>73,6 · 73,4 · 73,8</b>. A prescrição pede 3 a 4 pesagens por semana.</span></div>
+  </div>
+  <div class="fin">
+    <div class="fr"><div class="t">Cintura<small>fita comprada hoje · primeira medida</small></div><span class="v todo">medir</span></div>
+    <div class="fr"><div class="t">Bioimpedância<small>uma vez por mês · nunca registrada</small></div><span class="v todo">registrar</span></div>
+    <div class="fr"><div class="t">Fotos<small>sessão de hoje, 9 poses, 5h32</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">completa</span></div>
+  </div>
+  <div class="note-f">Nada aqui vence. O que não for medido hoje continua esperando sem cobrar.</div>
+  {{tabs corpo}}
+  {{hi}}
+</div>
+
+=== 3 |  | Pesagem esquecida, descoberta semanas depois
+cap: Pesagem esquecida pode aparecer semanas depois, não só no dia seguinte (F209) — e 36% a 50% das pesagens medidas chegaram com data passada (P1). A data é qualquer dia passado, nunca futuro (F208). A hora fica vazia de propósito: inventar hora já sujou a média de horário deste produto (F270). A régua se recentra no peso que havia <b>naquela</b> semana, não no de hoje.
+@sb 21:40 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Peso de outro dia<small>escolha a data</small></h2></div>
+  <div class="body">
+    <div class="seg3 g4" role="radiogroup" aria-label="Dia" style="margin-top:8px">
+      <button aria-pressed="false">hoje<br><small style="font-weight:600;color:var(--ink-2)">01/10</small></button>
+      <button aria-pressed="false">ontem<br><small style="font-weight:600;color:var(--ink-2)">30/09</small></button>
+      <button aria-pressed="true">sáb<br><small style="font-weight:600">19/09</small></button>
+      <button aria-pressed="false">outro<br><small style="font-weight:600;color:var(--ink-2)">dia</small></button>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t">Hora<small>não é registrada em data passada — e não é inventada</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div>
+      <div class="fr"><div class="t">19/09 está vazio<small>semana de 13 a 19/09: 2 pesagens até aqui</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#ok2"/></svg></div>
+    </div>
+    <div class="note-f">Guardar aqui muda a média daquela semana e pode mudar a taxa que a regra do nutricionista lê. A tela de <b>Semana</b> mostra o antes e o depois.</div>
+  </div>
+  <section class="ctl">
+    <div class="strip-lbl">Peso de sábado, 19/09</div>
+    <div class="strip" data-start="73,4" role="group" aria-label="Peso em quilos">
+      <button class="rep w" data-n="73,0">73,0</button><button class="rep w" data-n="73,1">73,1</button><button class="rep w" data-n="73,2">73,2</button><button class="rep w" data-n="73,3">73,3</button><button class="rep w last" data-n="73,4">73,4<small>na época</small></button><button class="rep w" data-n="73,5">73,5</button><button class="rep w" data-n="73,6">73,6</button><button class="rep w" data-n="73,7">73,7</button><button class="rep w" data-n="73,8">73,8</button>
+    </div>
+    <div class="acts"><button>Outro valor</button><button>Apagar esse dia</button></div>
+  </section>
+  {{hi}}
+</div>
+
+=== 4 |  | Já existe peso hoje: substituir é dito antes, não depois
+cap: Uma medida por dia; registrar de novo no mesmo dia substitui (F208). Em vez de avisar depois do toque, a tela traz o valor que já existe e o que vai acontecer com ele. Esta tela também é a resposta a um defeito antigo: registrar peso já recusou número válido e já travou com erro (F275) — aqui não há número inválido possível, porque não há digitação livre.
+@sb 15:10 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Peso de hoje<small>qui 01/10</small></h2></div>
+  <div class="body">
+    <div class="warn" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>Hoje já tem 73,8 kg, de 6h02</b><p>Guardar outro valor substitui esse. A pesagem da manhã, em semi-jejum, é a que a regra espera — a de agora, depois do almoço, não é comparável.</p></div></div></div>
+    <div class="fin"><div class="fr"><div class="t">73,8 kg<small>hoje, 6h02</small></div><button class="pill">corrigir</button></div></div>
+  </div>
+  <section class="ctl">
+    <div class="strip-lbl">Substituir por</div>
+    <div class="strip" data-start="73,8" role="group" aria-label="Peso em quilos">
+      <button class="rep w" data-n="73,4">73,4</button><button class="rep w" data-n="73,5">73,5</button><button class="rep w" data-n="73,6">73,6</button><button class="rep w" data-n="73,7">73,7</button><button class="rep w last" data-n="73,8">73,8<small>guardado</small></button><button class="rep w" data-n="73,9">73,9</button><button class="rep w" data-n="74,0">74,0</button><button class="rep w" data-n="74,1">74,1</button><button class="rep w" data-n="74,2">74,2</button><button class="rep w" data-n="74,3">74,3</button>
+    </div>
+    <div class="acts"><button>Manter 73,8</button><button>Outro valor</button></div>
+  </section>
+  {{hi}}
+</div>
+
+=== 5 |  | Medidas com fita: a primeira de todas, e o que a fita erra
+cap: Ele comprou a fita em 01/10 e quer medir cintura, braço e o que der para medir sozinho (P6, D1). Nunca houve uma medida (P1). A fita erra de posicionamento mais do que a balança varia de água (F43), e por isso cada medida guarda, na primeira vez, <b>como ele mediu</b> — uma frase dele, no teclado do sistema, que volta como lembrete nas próximas. A cintura é informação complementar: saiu da regra do nutricionista em 21/09 (F221).
+@sb 6:05 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Medidas com fita<small>qui 01/10 · primeira vez</small></h2></div>
+  <div class="body">
+    <div class="note-f">Guarde na primeira vez <b>onde</b> você passou a fita. Repetir o ponto vale mais que o número em si.</div>
+    <div class="mrow"><div class="t"><b>Cintura</b><small>sem medida · a fita chegou hoje</small></div><span class="v2 todo">medir</span></div>
+    <div class="mrow"><div class="t"><b>Braço</b><small>sem medida</small></div><span class="v2 todo">medir</span></div>
+    <div class="mrow"><div class="t"><b>Coxa</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <div class="mrow"><div class="t"><b>Panturrilha</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <div class="mrow"><div class="t"><b>Peito</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <div class="mrow"><div class="t"><b>Quadril</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <p class="small" style="margin:10px 16px 0">Só entram medidas que você tira sozinho. Ligar uma medida aqui não cria cobrança: elas não têm frequência prescrita.</p>
+  </div>
+  <section class="ctl">
+    <div class="strip-lbl">Cintura, em centímetros</div>
+    <div class="strip" data-start="80,0" role="group" aria-label="Cintura em centímetros">
+      <button class="rep cm" data-n="77,0">77,0</button><button class="rep cm" data-n="77,5">77,5</button><button class="rep cm" data-n="78,0">78,0</button><button class="rep cm" data-n="78,5">78,5</button><button class="rep cm" data-n="79,0">79,0</button><button class="rep cm" data-n="79,5">79,5</button><button class="rep cm" data-n="80,0">80,0</button><button class="rep cm" data-n="80,5">80,5</button><button class="rep cm" data-n="81,0">81,0</button><button class="rep cm" data-n="81,5">81,5</button>
+    </div>
+    <div class="range">sem última medida, a régua abre no meio da faixa comum e “outro valor” abre o teclado</div>
+    <div class="acts"><button>Outro valor</button><button>Como eu medi</button></div>
+  </section>
+  {{hi}}
+</div>
+
+=== 6 |  | Bioimpedância: o mês passado já está escrito, ele só corrige
+cap: Uma vez por mês (D2), sentado, transcrevendo da balança. São treze números, e digitá-los do zero todo mês seria o tipo de fluxo que ele recusa. Então <b>cada campo vem com o valor do mês passado</b> e a variação ao lado: o que não mudou fica como está, o que mudou recebe um toque. Os campos aceitam ficar vazios — nenhuma balança mostra tudo, e inventar número aqui estragaria a série inteira.
+@sb 21:28 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Bioimpedância<small>qui 01/10 · anterior: 03/09</small></h2><button class="act">Guardar</button></div>
+  <div class="body">
+    <p class="sec-l t0">Gordura</p>
+    <div class="fields">
+      <div class="fld cur"><span class="l">Percentual</span><span class="v">16,8<span> %</span></span><span class="d">era 17,4 · −0,6</span></div>
+      <div class="fld"><span class="l">Massa de gordura</span><span class="v">12,3<span> kg</span></span><span class="d">era 12,6</span></div>
+      <div class="fld wide"><span class="l">Gordura visceral</span><span class="v">5<span> · nível</span></span><span class="d">era 5 · sem mudança</span></div>
+    </div>
+    <p class="sec-l">Massa</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Massa magra</span><span class="v">58,1<span> kg</span></span><span class="d">era 56,9 · +1,2</span></div>
+      <div class="fld"><span class="l">Massa óssea</span><span class="v">3,1<span> kg</span></span><span class="d">era 3,1</span></div>
+    </div>
+    <p class="sec-l">Água corporal</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Intracelular</span><span class="v">24,6<span> l</span></span><span class="d">era 24,1</span></div>
+      <div class="fld"><span class="l">Extracelular</span><span class="v">14,2<span> l</span></span><span class="d">era 14,0</span></div>
+    </div>
+    <p class="sec-l">Metabolismo</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Taxa metabólica basal</span><span class="v">1.712<span> kcal</span></span><span class="d">era 1.689</span></div>
+      <div class="fld"><span class="l">Idade metabólica</span><span class="v">24<span> anos</span></span><span class="d">era 25</span></div>
+      <div class="fld wide"><span class="l">IMC ajustado</span><span class="v">23,4</span><span class="d">era 23,2 · com o peso de hoje, 73,8 kg</span></div>
+    </div>
+    <p class="sec-l">Por segmento · massa magra</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Braço direito</span><span class="v">3,4<span> kg</span></span><span class="d">era 3,3</span></div>
+      <div class="fld"><span class="l">Braço esquerdo</span><span class="v">3,3<span> kg</span></span><span class="d">era 3,2</span></div>
+      <div class="fld"><span class="l">Perna direita</span><span class="v">9,8<span> kg</span></span><span class="d">era 9,7</span></div>
+      <div class="fld"><span class="l">Perna esquerda</span><span class="v">9,7<span> kg</span></span><span class="d">era 9,7</span></div>
+      <div class="fld wide"><span class="l">Tronco</span><span class="v">26,4<span> kg</span></span><span class="d">era 25,8 · +0,6</span></div>
+    </div>
+    <div class="note-f">Treze números do mês passado já estão no lugar. Toque só no que mudou.</div>
+  </div>
+  {{hi}}
+</div>
+
+=== 7 |  | Bioimpedância na primeira vez: tudo vazio, e vazio pode continuar vazio
+cap: Sem mês anterior não há previsto, e a tela não finge: todos os campos ficam em branco, com a unidade de cada um. “Deixe em branco o que a sua balança não mostra” está escrito porque não se sabe qual balança é dele — e um campo obrigatório aqui convidaria a chutar. O teclado é o do app, por causa da vírgula (F63); o número com milhar (taxa basal) também.
+@sb 21:24 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Bioimpedância<small>primeira vez</small></h2><button class="act" style="color:var(--ink-3)">Guardar</button></div>
+  <div class="body">
+    <div class="note-f">Deixe em branco o que a sua balança não mostra. Nada aqui é obrigatório, e o que ficar vazio não vira zero.</div>
+    <p class="sec-l">Gordura</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Percentual</span><span class="v">— %</span></div>
+      <div class="fld vazio"><span class="l">Massa de gordura</span><span class="v">— kg</span></div>
+      <div class="fld vazio wide"><span class="l">Gordura visceral</span><span class="v">— nível</span></div>
+    </div>
+    <p class="sec-l">Massa</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Massa magra</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Massa óssea</span><span class="v">— kg</span></div>
+    </div>
+    <p class="sec-l">Água corporal</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Intracelular</span><span class="v">— l</span></div>
+      <div class="fld vazio"><span class="l">Extracelular</span><span class="v">— l</span></div>
+    </div>
+    <p class="sec-l">Metabolismo</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Taxa metabólica basal</span><span class="v">— kcal</span></div>
+      <div class="fld vazio"><span class="l">Idade metabólica</span><span class="v">— anos</span></div>
+      <div class="fld vazio wide"><span class="l">IMC ajustado</span><span class="v">—</span></div>
+    </div>
+    <p class="sec-l">Por segmento · massa magra</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Braço direito</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Braço esquerdo</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Perna direita</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Perna esquerda</span><span class="v">— kg</span></div>
+      <div class="fld vazio wide"><span class="l">Tronco</span><span class="v">— kg</span></div>
+    </div>
+  </div>
+  {{hi}}
+</div>
+
+=== 8 |  | A leitura: a curva que achatou, e os pontos que não decidem
+cap: Nove semanas de médias semanais. A linha é o que a regra lê; os pontos pequenos são as pesagens do dia, espalhadas em torno dela — <b>a oscilação diária passa de 1 kg</b> (F14), e vê-la ao lado da média explica por que um dia não decide nada. A faixa clara é o alvo do nutricionista traduzido em inclinação. O achatamento das últimas três semanas é a história: taxa +0,10, +0,03 e +0,03.
+@sb 21:30 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Peso<small>9 semanas · 31 pesagens</small></h2><button class="act">Semana</button></div>
+  <div class="body">
+    <div class="chart">
+      <svg viewBox="0 0 390 118" role="img" aria-label="Médias semanais de 71,5 a 73,5 kg, com achatamento nas últimas três semanas">
+        <path d="M10 96 L370 10 L370 34 L10 101 Z" fill="var(--accent-soft)"/>
+        <g stroke="var(--line)" stroke-width="1">
+          <line x1="10" y1="108" x2="380" y2="108"/><line x1="10" y1="10" x2="380" y2="10" stroke-dasharray="3 4"/>
+        </g>
+        <g fill="var(--ink-3)" opacity=".85">
+          <circle cx="10" cy="86" r="2.6"/><circle cx="22" cy="104" r="2.6"/><circle cx="46" cy="74" r="2.6"/><circle cx="64" cy="88" r="2.6"/><circle cx="92" cy="58" r="2.6"/><circle cx="110" cy="72" r="2.6"/><circle cx="140" cy="42" r="2.6"/><circle cx="156" cy="56" r="2.6"/><circle cx="186" cy="26" r="2.6"/><circle cx="200" cy="42" r="2.6"/><circle cx="230" cy="16" r="2.6"/><circle cx="246" cy="30" r="2.6"/><circle cx="276" cy="12" r="2.6"/><circle cx="290" cy="26" r="2.6"/><circle cx="320" cy="10" r="2.6"/><circle cx="334" cy="24" r="2.6"/><circle cx="364" cy="9" r="2.6"/><circle cx="376" cy="24" r="2.6"/>
+        </g>
+        <polyline points="10,96 55,80 100,65 145,49 190,34 235,23 280,19 325,18 370,17" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <g fill="var(--ink)"><circle cx="280" cy="19" r="4"/><circle cx="325" cy="18" r="4"/><circle cx="370" cy="17" r="4"/></g>
+        <circle cx="370" cy="17" r="8" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      </svg>
+      <div class="cl"><span>02/08 · 71,5</span><span>hoje · 73,6</span></div>
+    </div>
+    <p class="ckey">Linha: média da semana. Pontos: pesagens do dia. Faixa: o alvo de +0,15 a +0,30 kg por semana.</p>
+    <p class="sec-l">Taxa, semana a semana</p>
+    <div class="fin">
+      <div class="fr"><div class="t">27/09 a 03/10<small>em curso · 3 pesagens</small></div><span class="v">+0,06 <small>abaixo do alvo</small></span></div>
+      <div class="fr"><div class="t">20/09 a 26/09<small>3 pesagens</small></div><span class="v">+0,03 <small>abaixo do alvo</small></span></div>
+      <div class="fr"><div class="t">13/09 a 19/09<small>3 pesagens</small></div><span class="v">+0,10 <small>abaixo do alvo</small></span></div>
+      <div class="fr"><div class="t">06/09 a 12/09<small>2 pesagens</small></div><span class="v">+0,27 <small>no alvo</small></span></div>
+    </div>
+    <div class="note-f">Duas taxas seguidas abaixo de 0,10 é exatamente o que a regra do nutricionista lê. O que ela decide está na tela <b>Semana</b>.</div>
+  </div>
+  {{tabs corpo}}
+  {{hi}}
+</div>
+
+=== 9 |  | A semana com uma pesagem só: a média não vale, e a tela diz o que falta
+cap: A média da semana precisa de pelo menos 2 pesagens (F211), e um buraco entre semanas quebra a sequência de três que a regra exige (F212). Em vez de mostrar uma média falsa, a tela mostra o que falta e quantos dias restam para conseguir — e diz qual decisão fica parada por causa disso. É a única cobrança que esta direção aceita fazer, porque ela tem consequência escrita.
+@sb 21:32 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Corpo<small>sex 02/10</small></h2></div>
+  <div class="band2">
+    <div class="top2"><div><div class="n2" style="color:var(--ink-3);font-size:26px">sem média</div><div style="font-size:12.5px;color:var(--ink-2);margin-top:2px">esta semana · 1 pesagem</div></div>
+      <div class="tx"><b>—</b>kg/semana</div></div>
+    <div class="cx2">Faltam <b>2 dias</b> na semana e <b>1 pesagem</b> para a média valer. Sem ela, a sequência de três semanas se quebra e a regra do nutricionista volta a “pedir pesagens”.</div>
+  </div>
+  <div class="fin">
+    <div class="fr"><div class="t">dom 27/09<small></small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div>
+    <div class="fr"><div class="t">seg 28/09<small>6h40</small></div><span class="v">73,6 <small>kg</small></span></div>
+    <div class="fr"><div class="t">ter 29/09 · qua 30/09 · qui 01/10<small>sem pesagem</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div>
+    <div class="fr"><div class="t">sex 02/10 · sáb 03/10<small>ainda dá tempo</small></div><span class="v todo">pesar</span></div>
+  </div>
+  <p class="small" style="margin:10px 16px 0">A prescrição pede 3 a 4 pesagens por semana. No medido foram 2,75.</p>
+  <section class="ctl">
+    <div class="strip-lbl">Peso de hoje</div>
+    <div class="strip" data-start="73,6" role="group" aria-label="Peso em quilos">
+      <button class="rep w" data-n="73,2">73,2</button><button class="rep w" data-n="73,3">73,3</button><button class="rep w" data-n="73,4">73,4</button><button class="rep w" data-n="73,5">73,5</button><button class="rep w last" data-n="73,6">73,6<small>último</small></button><button class="rep w" data-n="73,7">73,7</button><button class="rep w" data-n="73,8">73,8</button><button class="rep w" data-n="73,9">73,9</button><button class="rep w" data-n="74,0">74,0</button>
+    </div>
+    <div class="acts"><button>Outro valor</button><button>Outro dia</button><button>Não me pesei</button></div>
+  </section>
+  {{hi}}
+</div>
+
+=== 10 |  | Vazio de verdade: nenhum peso, nenhuma medida, nenhuma foto
+cap: Aparelho novo, ou histórico apagado. O vazio diz <b>quanto custa sair dele</b>, em dias e em toques, porque a regra do nutricionista precisa de três semanas seguidas com média válida antes de decidir qualquer coisa (F212). Nenhuma barra de progresso, nenhum “comece agora!”: só o caminho, com os números reais da prescrição.
+@sb 7:10 | cheio
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>nada registrado ainda</small></h2></div>
+  <div class="body">
+    <div class="big">
+      <div class="n1">3 <span>semanas até a regra poder decidir</span></div>
+      <div class="cx">Ela precisa de três semanas seguidas com média válida, e cada média precisa de pelo menos <b>2 pesagens</b>. São 6 pesagens, em 3 semanas, para o primeiro veredito existir.</div>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t"><b>Peso</b><small>de manhã, antes de treinar, mesma roupa</small></div><span class="v todo">primeira</span></div>
+      <div class="fr"><div class="t"><b>Cintura e outras medidas</b><small>sem frequência prescrita · quando você quiser</small></div><span class="v todo">primeira</span></div>
+      <div class="fr"><div class="t"><b>Bioimpedância</b><small>uma vez por mês</small></div><span class="v todo">primeira</span></div>
+      <div class="fr"><div class="t"><b>Fotos</b><small>a cada 14 dias, 9 poses, menos de 5 min</small></div><span class="v todo">primeira</span></div>
+    </div>
+    <div class="note-f">Se você já tem histórico em outro aparelho, <b>entrar na conta</b> traz tudo de volta antes de registrar qualquer coisa aqui.</div>
+  </div>
+  {{tabs corpo}}
+  {{hi}}
+</div>
+
+=== 11 |  | Erro: o peso não foi guardado, e continua na tela
+cap: Armazenamento cheio (F53). O número que ele tocou fica onde está, a média não se mexe e a tela não diz “guardado”. A saída oferecida é a que resolve: baixar a cópia de segurança agora e liberar as fotos antigas, que já estão na cópia remota (F232, F249). Fechar o app logo depois de digitar já perdeu registro neste produto (F294) — por isso o aviso é fixo e não some sozinho.
+@sb 6:03 | cheio
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>qui 01/10 · 6h03</small></h2></div>
+  <div class="body">
+    <div class="err" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>73,8 kg não foi guardado</b><p>O armazenamento deste navegador está cheio. A média da semana continua em 73,5, com 2 pesagens.</p></div></div></div>
+    <div class="fin"><div class="fr"><div class="t">Peso de hoje<small>na tela, não gravado</small></div><span class="v">73,8 <small>kg</small></span></div></div>
+    <p class="sec-l">Antes de tentar de novo</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Baixar a cópia de segurança<small>arquivo JSON com o estado inteiro</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#down"/></svg></div>
+      <div class="fr"><div class="t">Liberar as fotos antigas<small>as 4 sessões mais novas ficam; as outras voltam da cópia remota</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#nuv"/></svg></div>
+    </div>
+    <div class="fab"><button class="primary" style="min-height:52px">Tentar de novo</button></div>
+    <p class="small" style="margin:10px 16px 0">Não feche o app antes de resolver: o valor só existe nesta tela.</p>
+  </div>
+  {{hi}}
+</div>

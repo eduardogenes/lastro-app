@@ -1,0 +1,255 @@
+@titulo Sessão de fotos
+@h1 A sessão de fotos, sozinho, a 3 metros do aparelho
+@lead Quinta, 01/10, 5h31, em casa, em jejum, de roupa justa, descalço. Ele está sobre a marca de fita no chão, a cerca de 3 m do celular apoiado, e <b>não alcança o aparelho</b> (F45). São 9 poses na mesma ordem, girando sempre para o mesmo lado, em menos de 5 minutos (F226). A última sessão levou 88 s do primeiro ao último disparo — cerca de 10 s por pose (P1).
+@lead <b>Ele não sabe se lê a tela a 3 m</b> (a resposta P7 não veio). Então o desenho não depende disso: as duas hipóteses estão aqui, marcadas. A <b>hipótese B</b> — não lê — é o que o app usa por padrão e é o que está desenhado em todos os estados da sessão: a informação chega por <b>posição, tamanho, forma e som</b>, nunca por frase. A <b>hipótese A</b> — lê — só acrescenta texto por cima do mesmo desenho. Se a resposta mudar, nada precisa ser redesenhado.
+@lead O som é possível aqui porque a sessão começa com um toque, e só um toque autoriza áudio no Safari do iOS (F58). Vibração não existe no navegador: nada depende dela.
+@css
+.pre{margin:8px 16px 0;padding:11px 13px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+.pre b{display:block;font-size:15.5px;margin-bottom:6px}
+.pre ul{list-style:none;margin:0;padding:0;font-size:14px;line-height:1.4}
+.pre li{display:flex;gap:8px;padding:4px 0;border-top:1px solid var(--line)}
+.pre li:first-child{border-top:0}
+.pre li svg{flex:none;margin-top:2px;color:var(--ink-2)}
+.pre li b{display:inline;font-size:14px;margin:0}
+.q3{margin:10px 16px 0;padding:12px 13px;border-radius:18px;border:2px solid var(--accent);background:var(--surface)}
+.q3>b{display:block;font-size:16px;line-height:1.3}
+.q3>p{font-size:13px;color:var(--ink-2);margin:3px 0 9px;line-height:1.35}
+.giro{position:absolute;inset:0;display:grid;place-items:center}
+.pl{display:flex;align-items:center;gap:9px;margin:0 16px;padding:8px 0;border-top:1px solid var(--line);font-size:14.5px;min-height:50px}
+.pl .n{width:26px;height:26px;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;font-size:13px;font-weight:700;flex:none;font-variant-numeric:tabular-nums}
+.pl .n.ok{background:var(--ink);color:var(--bg)}
+.pl .n.bad{background:var(--err-bg);color:var(--err-ink);box-shadow:inset 0 0 0 1.5px var(--err-line)}
+.pl .t{flex:1;min-width:0;line-height:1.25}
+.pl .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+@fim
+
+=== 1 |  | Antes de se afastar, com o telefone na mão
+cap: Esta é a única leitura da sessão: acontece a 40 cm, antes de ele andar até a marca. Traz o preparo que não muda entre sessões (F228) e a pergunta que decide o resto — <b>“a 3 m você lê o telefone?”</b>, com <b>“não sei”</b> como resposta válida, que leva à hipótese B. O botão de começar é também o que libera o som: no Safari do iOS, áudio só existe dentro de um toque (F58).
+@sb 5:31 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Sessão de fotos<small>qui 01/10 · 14 dias desde 15/09</small></h2></div>
+  <div class="body">
+    <div class="pre">
+      <b>O preparo, igual ao das outras sessões</b>
+      <ul>
+        <li><svg width="18" height="18"><use href="#ok2"/></svg><span>Celular a <b>3,0 m</b> da marca, lente 2× · lente na altura do umbigo</span></li>
+        <li><svg width="18" height="18"><use href="#ok2"/></svg><span>Corpo a 80 cm da parede · pés no <b>T</b> de fita</span></li>
+        <li><svg width="18" height="18"><use href="#ok2"/></svg><span>Uma luz frontal, nada vindo de cima</span></li>
+        <li><svg width="18" height="18"><use href="#ok2"/></svg><span>Mesma roupa justa, descalço, em jejum</span></li>
+      </ul>
+    </div>
+    <div class="q3">
+      <b>A 3 metros, você lê o telefone?</b>
+      <p>Decide se a sessão fala por texto grande ou só por som, forma e posição. Pode mudar depois, e não trava nada.</p>
+      <div class="seg3"><button aria-pressed="false">Sim</button><button aria-pressed="false">Não</button><button aria-pressed="true">Não sei</button></div>
+      <p style="margin:9px 0 0">“Não sei” usa o desenho que não depende de leitura.</p>
+    </div>
+    <p class="sec-l">Ordem das 9 poses</p>
+    <p class="lead-p">1 frente relaxado · 2 frente duplo bíceps · 3 abdômen e coxa · 4 perfil direito, braços à frente · 5 perfil direito natural · 6 costas relaxado · 7 costas duplo bíceps · 8 costas mãos na cintura · 9 perfil esquerdo. <b>Gire sempre para o mesmo lado</b>, sem sair da marca.</p>
+  </div>
+  <section class="ctl">
+    <button class="primary" style="min-height:64px;font-size:20px"><svg width="22" height="22" style="margin-right:8px"><use href="#som"/></svg>Começar — 12 s por pose</button>
+    <p class="small" style="margin:8px 0 0">Este toque é o que liga o som. Sem ele, o iPhone não deixa o app falar.</p>
+  </section>
+  {{hi}}
+</div>
+
+=== 2 |  | Hipótese B, o padrão: a 3 m, nada que precise ser lido
+cap: O que ele precisa saber a 3 m é só isto: <b>em que pose está</b> (os 9 blocos no topo, do tamanho de um dedo), <b>quanto falta para o disparo</b> (o anel, que esvazia) e <b>se está dentro do quadro</b> (a própria imagem dele, que é a coisa mais legível a 3 m). A instrução chega por voz. Nenhuma palavra é obrigatória para a sessão funcionar. A marca de canto é anotação deste documento, não da tela.
+@sb 5:32 | cheio
+<div class="scr">
+  <div class="full">
+    <span class="hip">Hipótese B · não lê a 3 m</span>
+    <div class="top"><div class="nine"><i class="f"></i><i class="f"></i><i class="f"></i><i class="c"></i><i></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="frame">
+      <svg viewBox="0 0 120 160"><use href="#p4"/></svg>
+      <div class="guia"></div>
+      <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="9"/><circle cx="50" cy="50" r="44" fill="none" stroke="#9E9BFF" stroke-width="9" stroke-linecap="round" stroke-dasharray="276" stroke-dashoffset="166" transform="rotate(-90 50 50)"/></svg><b>3</b></div>
+    </div>
+    <div class="bot"><div class="linha"><span class="vz"><svg width="20" height="20"><use href="#som"/></svg>“Perfil direito… três, dois, um”</span><span class="vz">4 / 9</span></div></div>
+    <div class="hi"><i style="background:#fff"></i></div>
+  </div>
+</div>
+
+=== 3 |  | O disparo, dito sem palavra nenhuma
+cap: A confirmação é do tamanho da tela: um clarão curto, o bloco da pose fechando em branco e o som do obturador. Os três dizem a mesma coisa por canais diferentes — e a contagem “5 / 9” muda de lugar sozinha. Se o som estiver desligado no aparelho, o clarão e o bloco continuam valendo. Nada depende de vibração, que o Safari do iOS não tem (F58).
+@sb 5:32 | cheio
+<div class="scr">
+  <div class="full">
+    <span class="hip">disparo da pose 4</span>
+    <div class="top"><div class="nine"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="c"></i><i></i><i></i><i></i><i></i></div>
+      <p class="giant sm" style="margin-top:auto;margin-bottom:6px">guardada</p></div>
+    <div class="frame">
+      <svg viewBox="0 0 120 160"><use href="#p4"/></svg>
+      <div class="flash" style="opacity:.62"></div>
+      <div class="ring"><svg width="130" height="130" style="color:#15171A"><use href="#ok2"/></svg></div>
+    </div>
+    <div class="bot"><div class="linha"><span class="vz">5 / 9</span><span class="vz"><svg width="20" height="20"><use href="#som"/></svg>clique do obturador</span></div></div>
+    <div class="hi"><i style="background:#fff"></i></div>
+  </div>
+</div>
+
+=== 4 |  | Entre uma pose e outra: girar é desenho, não frase
+cap: A instrução que mais erra é o giro — “girar 60° em vez de 90° e achar que emagreceu” é o erro típico desta pose (F227). Então o giro vira a maior coisa da tela: a seta curva com o ângulo, sobre a marca do chão. Isso se lê a 3 m sem depender de ler letra, e é o mesmo em qualquer hipótese. A voz diz junto: “gire noventa graus”.
+@sb 5:32 | cheio
+<div class="scr">
+  <div class="full">
+    <span class="hip">entre poses · 7 s</span>
+    <div class="top"><div class="nine"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="c"></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="frame vazio">
+      <div class="giro">
+        <svg viewBox="0 0 200 200" style="width:74%;height:auto;color:#fff">
+          <ellipse cx="100" cy="150" rx="66" ry="17" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="3"/>
+          <path d="M66 150 h68 M100 150 v20" stroke="rgba(255,255,255,.45)" stroke-width="4" stroke-linecap="round"/>
+          <path d="M34 96 A66 66 0 0 1 152 54" fill="none" stroke="#9E9BFF" stroke-width="13" stroke-linecap="round"/>
+          <path d="M136 30 L170 56 L132 76 Z" fill="#9E9BFF"/>
+          <text x="100" y="118" text-anchor="middle" font-size="46" font-weight="800" fill="#fff">90°</text>
+        </svg>
+      </div>
+    </div>
+    <div class="bot"><div class="linha"><span class="vz"><svg width="20" height="20"><use href="#som"/></svg>“Gire noventa graus”</span><span class="vz">7 s</span></div></div>
+    <div class="hi"><i style="background:#fff"></i></div>
+  </div>
+</div>
+
+=== 5 |  | Hipótese A: se ele lê a 3 m, só entra texto — nada muda de lugar
+cap: Mesmo desenho, mesma contagem, mesmos blocos; por cima, o nome da pose em corpo grande e as três instruções dela (texto real de F227). Se a resposta for “sim”, o app liga esta camada; se for “não” ou “não sei”, ela não existe. <b>Nenhum estado da sessão precisa ser redesenhado para a resposta mudar</b> — é por isso que a pergunta pode ficar sem resposta.
+@sb 5:32 | cheio
+<div class="scr">
+  <div class="full">
+    <span class="hip">Hipótese A · lê a 3 m</span>
+    <div class="top"><div class="nine"><i class="f"></i><i class="f"></i><i class="f"></i><i class="c"></i><i></i><i></i><i></i><i></i><i></i></div>
+      <p class="giant">Perfil direito</p></div>
+    <div class="frame">
+      <svg viewBox="0 0 120 160"><use href="#p4"/></svg>
+      <div class="guia"></div>
+      <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="9"/><circle cx="50" cy="50" r="44" fill="none" stroke="#9E9BFF" stroke-width="9" stroke-linecap="round" stroke-dasharray="276" stroke-dashoffset="166" transform="rotate(-90 50 50)"/></svg><b>3</b></div>
+    </div>
+    <div class="bot"><p class="inst">Gire 90° sobre a marca, lado direito para a câmera. Os pés continuam no T.</p><div class="linha"><span class="vz"><svg width="20" height="20"><use href="#som"/></svg>voz junto</span><span class="vz">4 / 9</span></div></div>
+    <div class="hi"><i style="background:#fff"></i></div>
+  </div>
+</div>
+
+=== 6 |  | O primeiro quadro saiu preto: a pose se refaz sozinha
+cap: Capturar antes de o vídeo ter o primeiro quadro produz imagem preta (F78) — e ele está a 3 m, sem como perceber. O app percebe: quadro quase todo preto na primeira foto, a pose volta para o fim da fila e a voz diz. A tela mostra o que vai acontecer <b>por forma</b> — o bloco 1 volta a ficar vazio, marcado —, sem exigir leitura, e sem contar como pose feita.
+@sb 5:32 | cheio
+<div class="scr">
+  <div class="full">
+    <span class="hip">quadro preto detectado</span>
+    <div class="top"><div class="nine"><i class="x"></i><i class="f"></i><i class="c"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <p class="giant sm" style="margin-top:12px">A 1ª saiu<br>preta</p></div>
+    <div class="frame"><svg viewBox="0 0 120 160"><use href="#p3"/></svg><div class="guia"></div></div>
+    <div class="bot"><p class="inst">Ela volta no fim. Siga: pose 3.</p><div class="linha"><span class="vz"><svg width="20" height="20"><use href="#som"/></svg>“A primeira vai repetir no fim”</span><span class="vz">3 / 9</span></div></div>
+    <div class="hi"><i style="background:#fff"></i></div>
+  </div>
+</div>
+
+=== 7 |  | Interrompida: a sessão continua no mesmo dia, de onde parou
+cap: A sessão pode ser interrompida e continuada no mesmo dia; a próxima é sempre a primeira pose ainda sem foto (F235). Aqui ele voltou com o telefone na mão, então a tela é de leitura normal — a lista diz quais poses existem, qual falha, e continuar é um toque. A sessão é uma por data e começa na primeira foto (F234).
+@sb 6:04 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Sessão de hoje<small>qui 01/10 · 5 de 9 poses</small></h2></div>
+  <div class="body">
+    <div class="poses" style="margin-top:10px"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></div>
+    <p class="small" style="margin:6px 16px 0">Começou às 5h32. Parou na pose 5.</p>
+    <div class="pl"><span class="n ok">1</span><div class="t">Frente relaxado<small>5h32 · refeita depois da preta</small></div></div>
+    <div class="pl"><span class="n ok">2</span><div class="t">Frente duplo bíceps<small>5h32</small></div></div>
+    <div class="pl"><span class="n ok">3</span><div class="t">Abdômen e coxa<small>5h33</small></div></div>
+    <div class="pl"><span class="n ok">4</span><div class="t">Perfil direito, braços à frente<small>5h33</small></div></div>
+    <div class="pl"><span class="n ok">5</span><div class="t">Perfil direito natural<small>5h33</small></div></div>
+    <div class="pl"><span class="n">6</span><div class="t">Costas relaxado<small>a próxima</small></div></div>
+    <div class="pl"><span class="n">7</span><div class="t">Costas duplo bíceps</div></div>
+    <div class="pl"><span class="n">8</span><div class="t">Costas mãos na cintura</div></div>
+    <div class="pl"><span class="n">9</span><div class="t">Perfil esquerdo</div></div>
+  </div>
+  <section class="ctl">
+    <button class="primary" style="min-height:60px;font-size:19px">Continuar na pose 6</button>
+    <div class="two" style="margin-top:8px"><button class="sec">Refazer uma pose</button><button class="sec">Terminar com 5</button></div>
+    <p class="small" style="margin:8px 0 0">Terminar com 5 não é erro: a sessão de 24/08 teve 3 poses e continua valendo.</p>
+  </section>
+  {{hi}}
+</div>
+
+=== 8 |  | Erro: a câmera não abriu — e a 3 m não existe plano B
+cap: Pedir a câmera pode falhar de cinco jeitos (F77); este é o mais comum, e a saída não está no app, está nos Ajustes do iPhone. A tela diz a saída em uma frase e <b>não oferece a câmera do iPhone como alternativa</b>: durante a captura nativa o app não existe (F76), e de 3 m ele não alcança o aparelho para disparar (F45). Fingir alternativa faria ele atravessar o quarto para descobrir sozinho.
+@sb 5:31 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Sessão de fotos<small>qui 01/10</small></h2></div>
+  <div class="body">
+    <div class="err" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>A câmera está bloqueada para este app</b><p>Ajustes do iPhone › Safari › Câmera › Permitir. Depois volte aqui: a sessão começa do zero, sem perder nada.</p></div></div></div>
+    <p class="sec-l">As outras quatro falhas, se aparecerem</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Câmera ocupada por outro app<small>feche o outro app e volte</small></div></div>
+      <div class="fr"><div class="t">Nenhuma câmera disponível<small>nada a fazer neste aparelho</small></div></div>
+      <div class="fr"><div class="t">Navegador sem suporte<small>abra pelo ícone instalado, não pelo site</small></div></div>
+      <div class="fr"><div class="t">Falha sem motivo declarado<small>tentar de novo costuma resolver</small></div></div>
+    </div>
+    <div class="note-f">Enquanto a câmera não abre, a sessão de hoje não existe — e não fica marcada como pendente. A próxima continua caindo em 15/10.</div>
+  </div>
+  <section class="ctl"><button class="primary" style="min-height:56px">Tentar de novo</button></section>
+  {{hi}}
+</div>
+
+=== 9 |  | Erro no meio: a pose 6 não coube no aparelho
+cap: Armazenamento cheio (F53) no meio da sessão. Nada de falso sucesso: o bloco da pose 6 fica marcado como <b>não guardada</b> — forma e cor diferentes de “ainda não feita” —, a voz avisa, e a sessão para em vez de seguir fingindo. Ele está a 3 m, então a tela resolve o que dá sozinha: oferece liberar as fotos antigas, que já estão na cópia remota (F232).
+@sb 5:33 | cheio
+<div class="scr">
+  <div class="full">
+    <span class="hip">armazenamento cheio</span>
+    <div class="top"><div class="nine"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="x"></i><i></i><i></i><i></i></div></div>
+    <div class="frame vazio"><div class="giro" style="padding:0 18px"><p class="giant sm" style="color:#FFADA3">A pose 6 não<br>foi guardada</p></div></div>
+    <div class="bot"><p class="inst">Memória cheia. A sessão parou aqui.<br>Pegue o telefone.</p><div class="linha"><span class="vz" style="background:#3A1714"><svg width="20" height="20"><use href="#warn"/></svg>“Memória cheia. Pegue o telefone.”</span><span class="vz">5 / 9</span></div></div>
+    <div class="hi"><i style="background:#fff"></i></div>
+  </div>
+</div>
+
+=== 10 |  | Fim: 9 de 9, e o que a sessão deixa guardado
+cap: O resumo aparece quando ele volta ao aparelho. Diz o tempo real (88 s, como em 01/10), o que foi guardado, e o que ainda vai subir — os arquivos sobem um de cada vez e, sem rede, esperam (F247). A nota da sessão existe para explicar, meses depois, um período fora da curva (F234), e usa o teclado do sistema, porque é texto e ele está sentado. A comparação é oferta, não pergunta.
+@sb 5:34 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Sessão guardada<small>qui 01/10 · 5h32 às 5h34</small></h2></div>
+  <div class="body">
+    <div class="done enter">
+      <div class="h"><svg class="ico" width="26" height="26"><use href="#ck"/></svg><div class="t"><b>9 de 9 poses</b><small>1 min 28 s do primeiro ao último disparo</small></div></div>
+      <div class="more"><span class="t">Subindo para a cópia remota: <b>3 de 9</b>. Pode fechar o app; continua depois.</span></div>
+    </div>
+    <div class="poses"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></div>
+    <div class="fin">
+      <div class="fr"><div class="t">Peso desta sessão<small>média da semana, não o peso de hoje</small></div><span class="v">73,5 <small>kg</small></span></div>
+      <div class="fr"><div class="t">Cintura desta sessão<small>primeira medida foi hoje</small></div><span class="v">—</span></div>
+      <div class="fr"><div class="t">Nota da sessão<small>opcional · teclado do sistema</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#pen"/></svg></div>
+    </div>
+    <p class="sec-l">Se quiser, agora</p>
+    <div class="fin">
+      <div class="fr"><div class="t"><b>Comparar com 07/08</b><small>mesma pose, 55 dias — o par longo</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+      <div class="fr"><div class="t">Responder a pergunta do nutricionista<small>par de 16 dias com 15/09 · vale por 14 dias</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+    </div>
+    <div class="note-f">A próxima sessão cai em <b>qui 15/10</b>. Nada aqui vence.</div>
+  </div>
+  {{hi}}
+</div>
+
+=== 11 |  | Vazio: a primeira sessão da vida, quando ainda não há marca no chão
+cap: Na primeira vez o custo não é fotografar: é montar a geometria que vai valer para sempre (F228, F229). Então a primeira sessão tem um passo a mais, uma vez só — colar a fita no chão em T, marcar a parede, medir os 3,0 m. Depois disso some. A tela mede o que dá para medir sozinho e não promete conferir o que não tem como conferir.
+@sb 5:28 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Primeira sessão<small>uma vez só</small></h2></div>
+  <div class="body">
+    <div class="note-f">Esta tela aparece uma vez. A partir da segunda sessão, o preparo vira uma lista de quatro linhas.</div>
+    <div class="pre">
+      <b>Montar a marca, agora</b>
+      <ul>
+        <li><svg width="18" height="18"><use href="#fita"/></svg><span>Fita no chão em <b>T</b>: uma linha para os pés, outra para o giro</span></li>
+        <li><svg width="18" height="18"><use href="#fita"/></svg><span>Fita na parede, atrás de você, na altura dos ombros</span></li>
+        <li><svg width="18" height="18"><use href="#fita"/></svg><span><b>3,0 m</b> da marca ao celular, com a lente 2× — ou 2,5 m com a 1×</span></li>
+        <li><svg width="18" height="18"><use href="#fita"/></svg><span>Celular na altura do umbigo, encostado em algo firme</span></li>
+        <li><svg width="18" height="18"><use href="#ok2"/></svg><span>80 cm entre você e a parede</span></li>
+      </ul>
+    </div>
+    <div class="warn" style="margin:10px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>Duas fotos só se comparam com a mesma geometria</b><p>Na prática a fita sai do lugar e o celular encosta torto. Endireitar depois resolve até 6°; o resto, não.</p></div></div></div>
+    <p class="sec-l">Depois da primeira</p>
+    <p class="lead-p">A cada 14 dias, de manhã, em jejum, antes de comer e treinar, com a mesma roupa justa. 9 poses, menos de 5 minutos.</p>
+  </div>
+  <section class="ctl"><button class="primary" style="min-height:60px;font-size:19px">Marca pronta — começar</button></section>
+  {{hi}}
+</div>

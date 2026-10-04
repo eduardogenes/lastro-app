@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prescrição · Direção C</title>
+<style>
+:root{color-scheme:light;--page:#E7E2D8;--paper:#F5F2EB;--card:#FFFFFF;--text:#1B1A17;--muted:#5D594F;--line:#D6CFC2;--ghost:#857F74;--ink:#1F3B67;--on-ink:#FFFFFF;--ink-soft:#E3E9F3;--ink-text:#1F3B67;--now:#B0420D;--now-soft:#FAE6D8;--warn:#7A4A00;--warn-soft:#FAEDD3;--err:#A3241A;--err-soft:#FBE6E2;--ok:#1E5B3A;--ok-soft:#E0EFE4;--hatch-c:rgba(120,113,100,.32);--frame:#141414;--scrim:rgba(20,18,14,.42);--hatch:repeating-linear-gradient(135deg,var(--hatch-c) 0 1.5px,transparent 1.5px 7px)}
+.phone[data-tema="escuro"]{color-scheme:dark;--paper:#161512;--card:#211F1B;--text:#F2EEE6;--muted:#ADA79A;--line:#3A3731;--ghost:#8F897D;--ink:#A9C3EE;--on-ink:#0D1A30;--ink-soft:#1F2B3F;--ink-text:#C3D6F6;--now:#F59A5F;--now-soft:#3A2416;--warn:#F3C277;--warn-soft:#33270F;--err:#F4978C;--err-soft:#3B1D19;--ok:#8FD3AA;--ok-soft:#16301F;--hatch-c:rgba(210,200,180,.22);--frame:#2B2B2B;--scrim:rgba(0,0,0,.55)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--page);color:var(--text);overflow-x:clip}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:3px solid var(--now);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.doc{padding-bottom:80px}
+.intro{max-width:620px;margin:0 auto;padding:28px 16px 4px}
+.kicker{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intro h1{font-size:26px;line-height:1.2;margin:6px 0 12px;letter-spacing:-.01em}
+.intro p{margin:0 0 10px}
+.theme{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:14px 0 0}
+.theme>span{font-size:14px;color:var(--muted);margin-right:4px}
+.theme button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:22px;font-size:14px;background:var(--card)}
+.theme button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.toc{max-width:620px;margin:14px auto 0;padding:0 16px}
+.toc ol{list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.toc a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--text);text-decoration:none;font-size:14px}
+.state{margin:46px auto 0}
+.cap{max-width:620px;margin:0 auto 14px;padding:0 16px}
+.cap .tag{font-size:13px;font-weight:700;color:var(--now);letter-spacing:.05em;text-transform:uppercase}
+.cap h2{font-size:21px;line-height:1.25;margin:4px 0 6px}
+.cap p{font-size:15px;color:var(--muted);margin:0 0 6px}
+.cap p b{color:var(--text)}
+.cap .refs{font-size:13px}
+.cap .no{border-left:3px solid var(--line);padding-left:10px;color:var(--text);font-size:14px}
+.cap .q{border-left:3px solid var(--now);padding-left:10px;color:var(--text);font-size:14px}
+.phone{position:relative;width:100%;max-width:414px;height:896px;margin:0 auto;background:var(--paper);color:var(--text);display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
+@media (min-width:480px){.phone{border-radius:48px;box-shadow:0 0 0 10px var(--frame),0 30px 60px rgba(0,0,0,.22)}.state{margin-top:72px}}
+.sb{flex:none;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font-size:15px;font-weight:600;position:relative;z-index:9}
+.sb::before{content:"";position:absolute;left:50%;top:0;width:209px;height:30px;transform:translateX(-50%);background:#000;border-radius:0 0 22px 22px}
+.sig{display:flex;align-items:flex-end;gap:2px;height:12px}
+.sig i{width:3px;background:currentColor;opacity:.25;border-radius:1px}
+.sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:6px}.sig i:nth-child(3){height:9px}.sig i:nth-child(4){height:12px}
+.sig i.on{opacity:1}
+.bat{width:25px;height:12px;border:1.5px solid currentColor;border-radius:4px;margin-left:7px;position:relative;opacity:.9}
+.bat::after{content:"";position:absolute;top:1.5px;bottom:1.5px;left:1.5px;width:55%;background:currentColor;border-radius:1.5px}
+.hi{flex:none;height:34px;display:flex;align-items:center;justify-content:center;position:relative;z-index:9}
+.hi::after{content:"";width:134px;height:5px;border-radius:3px;background:var(--text);opacity:.85}
+.hi.oncard{background:var(--card)}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--card)}
+.tabs a{min-height:50px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;position:relative}
+.tabs a.on{color:var(--ink-text)}
+.tabs a.on::before{content:"";position:absolute;top:0;width:22px;height:3px;border-radius:2px;background:var(--ink-text)}
+.d-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:2px 6px;min-height:50px}
+.d-head .ttl{text-align:center;line-height:1.2}
+.d-head .ttl strong{display:block;font-size:17px}
+.d-head .ttl span{font-size:13px;color:var(--muted)}
+.back{min-width:72px;min-height:44px;font-size:17px;font-weight:600;color:var(--ink-text);text-align:left;padding:0 8px}
+.pillb{min-height:44px;min-width:60px;padding:0 13px;border-radius:22px;border:1.5px solid var(--line);background:var(--card);font-size:15px;font-weight:600}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:0 16px 10px}
+.scroll::-webkit-scrollbar{display:none}
+.over{font-size:13px;color:var(--muted);font-weight:600;margin-top:16px}
+.primary{width:100%;min-height:56px;border-radius:16px;background:var(--ink);color:var(--on-ink);font-size:18px;font-weight:700}
+.secondary{min-height:48px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:16px;padding:0 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.note{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.35}
+.duo{max-width:680px;margin:0 auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:28px;justify-items:center}
+@media (min-width:700px){.duo{grid-template-columns:1fr 1fr}}
+.frame{width:290px}
+.shrink{width:290px;height:628px;position:relative;overflow:hidden;border-radius:30px;box-shadow:0 0 0 7px var(--frame),0 16px 34px rgba(0,0,0,.2)}
+.shrink .phone{position:absolute;top:0;left:0;width:414px;max-width:414px;height:896px;transform:scale(.6996);transform-origin:top left;border-radius:0;box-shadow:none}
+.frame p{text-align:center;font-size:14px;color:var(--muted);margin-top:10px}
+
+/* prescrição */
+.sec{margin-top:12px;padding:13px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.sec-h h3{font-size:17px}
+.sec-h span{font-size:13px;color:var(--muted)}
+.sub{font-size:14px;color:var(--muted);margin-top:3px;line-height:1.35}
+.dec{margin-top:10px;padding:13px;border-radius:16px;border:2px solid var(--now);background:var(--now-soft)}
+.dec.quiet{border:1.5px dashed var(--ghost);background:transparent}
+.dec.done{border:0;background:var(--ink-soft);color:var(--ink-text)}
+.dec .wh{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.dec.done .wh{color:var(--ink-text)}
+.dec h4{font-size:17px;line-height:1.25;margin:4px 0 2px}
+.chg{display:grid;grid-template-columns:1fr 22px 1fr;align-items:center;gap:6px;margin:9px 0 0}
+.chg .c{padding:8px;border-radius:11px;background:var(--paper);font-size:14px;line-height:1.25;text-align:center}
+.chg .c b{display:block;font-size:15px}
+.chg .c.to{background:var(--card);border:1.5px solid var(--ink);color:var(--ink-text)}
+.chg .ar{text-align:center;color:var(--muted);font-size:18px}
+.conseq{font-size:13px;color:var(--muted);margin-top:9px;line-height:1.4}
+.conseq b{color:var(--text)}
+.prazo{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:13px;font-weight:700;color:var(--warn);background:var(--warn-soft);padding:7px 10px;border-radius:10px;line-height:1.3}
+.prazo.late{color:var(--err);background:var(--err-soft)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.acts button{min-height:52px;border-radius:13px;font-weight:700;font-size:16px;border:1.5px solid var(--line);background:var(--card)}
+.acts button.keep{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.linkrow{display:flex;justify-content:space-between;align-items:center;min-height:50px;padding:6px 0;border-top:1px solid var(--line);font-size:16px;width:100%;text-align:left;gap:10px}
+.linkrow span{color:var(--muted);font-size:14px}
+.diff{list-style:none;margin-top:6px}
+.diff li{display:grid;grid-template-columns:62px 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.3}
+.diff li b{font-size:13px;color:var(--muted);font-weight:700}
+.diff li i{font-style:normal;color:var(--muted);display:block;font-size:13px}
+.clock{display:flex;gap:4px;margin-top:8px}
+.clock i{flex:1;height:10px;border-radius:5px;background:var(--line)}
+.clock i.on{background:var(--ink)}
+.clock i.over{background:var(--warn)}
+.match{display:grid;grid-template-columns:1fr 22px 1fr;align-items:center;gap:6px;margin-top:8px}
+.match .c{padding:9px;border-radius:11px;background:var(--paper);font-size:14px;line-height:1.25}
+.match .c.q{border:1.5px dashed var(--ghost)}
+.match .ar{text-align:center;color:var(--muted)}
+.meal{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:15px}
+.meal time{font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.meal .w strong{display:block;font-size:15px}
+.meal .w span{display:block;font-size:12px;color:var(--muted);line-height:1.3}
+.meal b{font-variant-numeric:tabular-nums;font-size:14px}
+.warnb{padding:11px 12px;border-radius:13px;background:var(--warn-soft);color:var(--warn);font-size:14px;line-height:1.35;margin-top:10px}
+.warnb strong{display:block;font-size:15px;margin-bottom:3px}
+.errb{padding:11px 12px;border-radius:13px;background:var(--err-soft);color:var(--err);border:1.5px solid var(--err);font-size:14px;line-height:1.35;margin-top:10px}
+.errb strong{display:block;font-size:15px;margin-bottom:3px}
+.errb ul{margin:6px 0 0 18px}
+.okb{padding:11px 12px;border-radius:13px;background:var(--ok-soft);color:var(--ok);font-size:14px;line-height:1.35;margin-top:10px}
+.empty{text-align:center;padding:18px 10px}
+.empty .b{font-size:19px;font-weight:700;margin-bottom:6px}
+.empty p{font-size:15px;color:var(--muted);line-height:1.4}
+.toast{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-radius:14px;background:var(--ink);color:var(--on-ink);font-size:15px;line-height:1.3;margin-top:10px}
+.toast .u{margin-left:auto;font-weight:700;text-decoration:underline;min-height:44px;padding:0 10px;color:var(--on-ink);flex:none}
+@media (prefers-reduced-motion:no-preference){.dec{transition:background .2s ease-out,border-color .2s ease-out}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="doc">
+
+<header class="intro">
+  <p class="kicker">Direção C · Previsto e feito · tela nova</p>
+  <h1>Prescrição: o que vem de fora, e o que espera decisão</h1>
+  <p>O programa e o plano alimentar não nascem aqui: vêm de dois agentes que o dono criou, um treinador e um nutricionista, que não falam entre si. Em seis semanas chegaram quatro versões do programa, uma a cada 12 a 16 dias. Esta tela é o lugar dessas coisas — e é onde ele se senta, em casa ou no notebook.</p>
+  <p><b>A direção, aqui:</b> ao encerrar o treino <b>nada é perguntado</b>. O que ele mudou no dia — trocou de exercício, fez uma série a mais, mudou a carga — espera numa fila, para resolver sentado. Cada item mostra o que foi, de onde veio, o que muda na semana se virar permanente, e <b>quando vence</b>.</p>
+  <p class="q"><b>O vencimento é pergunta minha ao dono, não decisão minha.</b> O que eu desenhei é o mínimo que me parece defensável: no vencimento o item <b>não some</b> — ele vai para “arquivadas sem decisão”, continua visível e reabrível, e o que mudou naquele dia continua gravado na sessão daquele dia, como sempre esteve. Uma mudança que desaparece sozinha é um defeito que este produto já teve. As três saídas possíveis estão no estado 3 e no `direcao-2.md`.</p>
+  <div class="theme" role="group" aria-label="Tema das telas">
+    <span>Tema das telas:</span>
+    <button data-t="claro" aria-pressed="true">Claro</button><button data-t="escuro" aria-pressed="false">Escuro</button>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Estados desta tela">
+  <ol>
+    <li><a href="#p1">1 · A fila que espera</a></li>
+    <li><a href="#p2">2 · Decidida</a></li>
+    <li><a href="#p3">3 · Vence hoje · vencida</a></li>
+    <li><a href="#p4">4 · O programa</a></li>
+    <li><a href="#p5">5 · Uma revisão chega</a></li>
+    <li><a href="#p6">6 · Erro: revisão recusada</a></li>
+    <li><a href="#p7">7 · O plano alimentar</a></li>
+    <li><a href="#p8">8 · Vazio</a></li>
+    <li><a href="#p9">9 · Claro e escuro</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section class="state" id="p1" aria-labelledby="p1h">
+  <div class="cap">
+    <p class="tag">Estado 1 · caso base · funciona ao toque</p>
+    <h2 id="p1h">Domingo à noite, sentado: três mudanças esperando</h2>
+    <p>Nenhuma dessas perguntas foi feita na academia. Elas vieram sozinhas das sessões de quarta, sexta e sábado, e estão aqui porque é aqui que dá para pensar. <b>Toque em “Manter no programa” ou “Foi só naquele dia”.</b></p>
+    <p>Cada item traz a conta que o dono não tem como fazer de cabeça: se a flexora passar de 4 para 5 séries, o posterior de coxa vai de 7 para 8 séries por semana, contra 7 prescritas pelo treinador. É a diferença entre decidir e chutar.</p>
+    <p>E traz o motivo que estava na sessão: “máquina ocupada”. O motivo é opcional no registro e, quando existe, é o que faz a decisão de hoje ser possível três dias depois.</p>
+    <p class="no">O que esta tela recusa: pedir decisão na academia. Terminar a sessão é a situação mais difícil do uso medido — cinco condições adversas ao mesmo tempo — e 42% a 59% das sessões nem chegam a ser encerradas por ele. Decisão de programa ali é decisão perdida.</p>
+    <p class="refs">F15 · F17 · F98 · F151 · F159 · F161 · F163 · F179 · F280 · U3 · U4 · U15 · decisão 1 do dono</p>
+  </div>
+  <div class="phone" id="live" role="group" aria-label="Fila de decisões, interativa">
+    <div class="sb"><span class="num">20:48</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹</button><div class="ttl"><strong>Prescrição</strong><span>domingo, 04/10</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="sec" style="margin-top:8px">
+          <div class="sec-h"><h3>Esperando decisão</h3><span data-cont>3 mudanças</span></div>
+          <p class="sub">Do que você mudou no dia, nas últimas sessões. Nada disto foi perguntado na academia.</p>
+        </div>
+
+        <div class="dec" data-item1>
+          <p class="wh">Treino A · posição 4 · sexta, 02/10</p>
+          <h4>Você trocou o exercício</h4>
+          <div class="chg">
+            <div class="c"><b>Pulldown unilateral</b>prescrito</div>
+            <div class="ar" aria-hidden="true">→</div>
+            <div class="c to"><b>Puxada neutra unilateral</b>feito · substituto indicado pelo treinador</div>
+          </div>
+          <p class="conseq">Motivo anotado na sessão: <b>máquina ocupada</b>. O alvo continua sendo dorsal, e o volume do dorsal não muda: <b>10 séries na semana</b>, como o treinador prescreveu.</p>
+          <p class="conseq">“Mesmo ângulo, trajetória travada.” — o que muda ao trocar, segundo o treinador.</p>
+          <div class="prazo"><span aria-hidden="true">⏳</span>Vence em 2 dias · depois disso vai para “arquivadas sem decisão”, e o programa fica como está</div>
+          <div class="acts"><button class="keep" data-keep>Manter no programa</button><button data-day>Foi só naquele dia</button></div>
+          <button class="secondary" style="width:100%;margin-top:8px">Ver a sessão de sexta</button>
+        </div>
+
+        <div class="dec quiet">
+          <p class="wh">Treino B · Cadeira flexora sentada · quarta, 30/09</p>
+          <h4>Você fez uma série a mais</h4>
+          <div class="chg">
+            <div class="c"><b>4 séries</b>prescrito</div>
+            <div class="ar" aria-hidden="true">→</div>
+            <div class="c to"><b>5 séries</b>feito</div>
+          </div>
+          <p class="conseq">Se virar permanente: posterior de coxa passa de <b>7 para 8 séries por semana</b>, contra 7 prescritas. O treinador pediu para não acrescentar séries agora — só 1 a 2 num músculo estagnado, depois de várias exposições, com recuperação boa e sem dor.</p>
+          <div class="prazo"><span aria-hidden="true">⏳</span>Vence em 4 dias</div>
+          <div class="acts"><button class="keep">Manter no programa</button><button>Foi só naquele dia</button></div>
+        </div>
+
+        <div class="dec quiet">
+          <p class="wh">Treino D · Panturrilha sentada · sábado, 03/10</p>
+          <h4>Você mudou o intervalo de repetições</h4>
+          <div class="chg">
+            <div class="c"><b>3 × 8–15</b>prescrito</div>
+            <div class="ar" aria-hidden="true">→</div>
+            <div class="c to"><b>3 × 10–15</b>feito</div>
+          </div>
+          <p class="conseq">O volume por músculo não muda: <b>10 séries de panturrilha na semana</b>. Muda o alvo da dupla progressão, que é o que decide quando subir carga.</p>
+          <div class="prazo"><span aria-hidden="true">⏳</span>Vence em 5 dias</div>
+          <div class="acts"><button class="keep">Manter no programa</button><button>Foi só naquele dia</button></div>
+        </div>
+
+        <p class="note">Decidir não é obrigatório, e não decidir também é uma coisa que acontece — por isso o que mudou no dia já está gravado na sessão daquele dia, decida você o que decidir.</p>
+
+        <p class="over">O resto desta tela</p>
+        <button class="linkrow">Programa · pessoal e do treinador <span>4 diferenças</span></button>
+        <button class="linkrow">Plano alimentar <span>6 momentos · +150 kcal</span></button>
+        <button class="linkrow">Exercícios <span>182 no repertório</span></button>
+        <button class="linkrow">Aulas guardadas <span>7 de 60</span></button>
+        <button class="linkrow">Compras <span>7 dias · 22 alimentos</span></button>
+        <button class="linkrow">Este aparelho <span>conta, cópia, versão</span></button>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#p1">Hoje</a><a href="#p1">Semanas</a><a class="on" href="#p1">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="state" id="p2" aria-labelledby="p2h">
+  <div class="cap">
+    <p class="tag">Estado 2 · decidida</p>
+    <h2 id="p2h">O que acontece depois do toque</h2>
+    <p>“Manter no programa” escreve uma mudança permanente com data, treino, descrição e motivo opcional — e <b>reinicia o relógio de 6 a 8 semanas</b> daquela posição, porque o exercício que está ali agora é outro. O histórico não se mexe: ele é por exercício, não por posição, e trocar, reordenar ou remover não toca no histórico de nenhum outro.</p>
+    <p>“Foi só naquele dia” não apaga nada: a troca continua registrada na sessão de sexta, e o programa volta a propor o Pulldown unilateral na próxima vez. A diferença entre as duas saídas está escrita antes do toque, não depois.</p>
+    <p>O desfazer fica na própria linha, como em todo o resto do produto: corrigir é a regra, e não há prazo para corrigir.</p>
+    <p class="refs">F117 · F151 · F159 · F162 · F163 · F98 · decisão 3 do dono</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">20:49</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹</button><div class="ttl"><strong>Prescrição</strong><span>domingo, 04/10</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="dec done" style="margin-top:8px">
+          <p class="wh">Treino A · posição 4 · decidido agora</p>
+          <h4>Puxada neutra unilateral entrou no programa</h4>
+          <p class="conseq" style="color:inherit">Mudança permanente registrada em 04/10, no treino A, com o motivo “máquina ocupada”. O Pulldown unilateral continua existindo, com o histórico dele intacto, e segue como substituto indicado.</p>
+        </div>
+        <div class="toast">Gravado neste aparelho<button class="u">Desfazer</button></div>
+        <div class="sec">
+          <div class="sec-h"><h3>Relógio desta posição</h3><span>regra das 6 a 8 semanas</span></div>
+          <p class="sub">O treinador pede manter os principais por 6 a 8 semanas. Esta posição acabou de trocar: o relógio voltou a zero.</p>
+          <div class="clock" role="img" aria-label="Semana 1 de 6 a 8"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <p class="note">Exercício que veio do treinador não conta aqui — o relógio mede desde quando <b>você</b> pôs aquele exercício naquela posição.</p>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><h3>Mudanças permanentes</h3><span>5 em setembro · cabem 300</span></div>
+          <ul class="diff">
+            <li><b>04/10</b><span>Treino A · posição 4: Pulldown unilateral → Puxada neutra unilateral<i>motivo: máquina ocupada</i></span></li>
+            <li><b>21/09</b><span>Treino B: agachamento no Smith 2 séries no lugar do pendulum squat 3<i>veio da revisão do treinador</i></span></li>
+            <li><b>21/09</b><span>Treino B: flexora 3 → 4 séries<i>veio da revisão do treinador</i></span></li>
+          </ul>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><h3>E se fosse “foi só naquele dia”</h3></div>
+          <p class="sub">A troca continuaria registrada na sessão de sexta, o histórico da Puxada neutra unilateral continuaria existindo, e o treino A voltaria a propor o Pulldown unilateral na próxima vez. Nada se perde nos dois caminhos — muda só o que o programa propõe amanhã.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#p2">Hoje</a><a href="#p2">Semanas</a><a class="on" href="#p2">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="state" id="p3" aria-labelledby="p3h">
+  <div class="cap">
+    <p class="tag">Estado 3 · vence hoje, e vencida</p>
+    <h2 id="p3h">O vencimento: o que eu desenhei, e o que eu pergunto</h2>
+    <p>O dono decidiu que a espera vence em alguns dias. O que acontece no vencimento ele não decidiu — e eu não decido no lugar dele. O que desenhei é a saída que não repete o defeito conhecido: <b>no vencimento o item muda de lugar, não de existência</b>. Ele vai para “arquivadas sem decisão”, com a data em que venceu, e pode ser reaberto a qualquer hora. O que mudou naquele dia continua na sessão daquele dia.</p>
+    <p>As três saídas possíveis, que preciso que o dono escolha:</p>
+    <p><b>(a) arquivar sem decidir</b> — o programa fica como estava. É o desenhado. Risco: a troca boa se perde por silêncio, e o mesmo item volta a aparecer na próxima vez que ele trocar de novo.<br>
+      <b>(b) virar permanente sozinha</b> — o que ele fez três vezes vira o programa. Risco: o programa muda sem ninguém decidir, que é o oposto do que o treinador pediu.<br>
+      <b>(c) perguntar de novo quando a posição voltar</b> — o item ressurge quando o treino A aparecer. Risco: a pergunta cai justamente na academia, que é onde ela não pode cair.</p>
+    <p>Há um dado que ajuda a decidir e que o desenho já mostra: <b>quantas vezes a mesma troca aconteceu</b>. Uma troca repetida três vezes em três sessões não é um acidente.</p>
+    <p class="refs">F159 · F163 · F280 · F295 · decisão 1 do dono</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">20:52</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹</button><div class="ttl"><strong>Esperando decisão</strong><span>1 vence hoje</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="dec" style="margin-top:8px">
+          <p class="wh">Treino C · posição 7 · segunda, 28/09</p>
+          <h4>Rosca martelo → Rosca martelo na corda</h4>
+          <p class="conseq">Esta mesma troca já aconteceu <b>3 vezes nas últimas 3 sessões do treino C</b>. Não parece acidente.</p>
+          <div class="prazo late"><span aria-hidden="true">⏳</span>Vence hoje · à meia-noite vai para “arquivadas sem decisão” e o programa fica como está</div>
+          <div class="acts"><button class="keep">Manter no programa</button><button>Foi só naqueles dias</button></div>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><h3>Arquivadas sem decisão</h3><span>2</span></div>
+          <p class="sub">Venceram e ninguém decidiu. O programa ficou como estava. Nada foi apagado: o que mudou em cada dia continua na sessão daquele dia.</p>
+          <ul class="diff">
+            <li><b>venceu<br>26/09</b><span>Treino E · Crossover de baixo para cima → Crucifixo inclinado no cabo<i>da sessão de 21/09 · motivo: máquina quebrada</i><button class="secondary" style="margin-top:7px;min-height:44px;font-size:14px">Reabrir</button></span></li>
+            <li><b>venceu<br>18/09</b><span>Treino B · leg press 2 → 3 séries<i>da sessão de 13/09 · sem motivo anotado</i><button class="secondary" style="margin-top:7px;min-height:44px;font-size:14px">Reabrir</button></span></li>
+          </ul>
+        </div>
+        <div class="warnb">
+          <strong>Isto aqui é a parte que depende de uma resposta do dono</strong>
+          O vencimento muda o lugar do item, nunca a existência dele. Se o dono preferir que vencer signifique virar permanente, ou que a pergunta volte quando o treino C reaparecer, é só trocar esta regra — a tela é a mesma.
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#p3">Hoje</a><a href="#p3">Semanas</a><a class="on" href="#p3">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="state" id="p4" aria-labelledby="p4h">
+  <div class="cap">
+    <p class="tag">Estado 4 · o programa</p>
+    <h2 id="p4h">O seu programa, e o do treinador, lado a lado</h2>
+    <p>O programa pessoal nasce como cópia do programa do treinador e vai divergindo. O do treinador fica guardado como referência e como volta: dá para restaurar um treino ou o programa inteiro, sem tocar no histórico nem nos exercícios cadastrados.</p>
+    <p>As diferenças são calculáveis, e por isso aparecem como lista, não como sensação: troca de exercício, séries, repetições, descanso, entrou, saiu, ordem mudou, sequência mudou, treino criado por você. Em P1-B foram 4 mudanças permanentes e 5 voltas ao programa do treinador em quatro semanas.</p>
+    <p>O relógio de 6 a 8 semanas por posição fica aqui, porque é aqui que a regra do treinador se verifica — e ele avisa quando uma posição passa de 8 semanas, sem mandar trocar: a regra dele diz manter <b>desde que</b> não doa, ele sinta o músculo e progrida.</p>
+    <p class="refs">F80 · F82 · F83 · F98 · F160 · F161 · F162 · F164 · F165 · U15 · P1</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">20:58</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Prescrição</button><div class="ttl"><strong>Programa</strong><span>A → B → C → D → E → aula</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="sec" style="margin-top:8px">
+          <div class="sec-h"><h3>Diferenças para o treinador</h3><span>4</span></div>
+          <ul class="diff">
+            <li><b>Treino A</b><span>posição 4 trocada: Pulldown unilateral → Puxada neutra unilateral<i>04/10 · máquina ocupada</i></span></li>
+            <li><b>Treino B</b><span>flexora com 5 séries, prescrito 4<i>posterior de coxa: 8 na semana, prescrito 7</i></span></li>
+            <li><b>Treino D</b><span>panturrilha sentada 3 × 10–15, prescrito 3 × 8–15</span></li>
+            <li><b>Treino E</b><span>ordem: crossover antes da rosca Bayesian</span></li>
+          </ul>
+          <div class="two"><button class="secondary">Restaurar só o treino B</button><button class="secondary">Restaurar tudo</button></div>
+          <p class="note">Restaurar devolve a prescrição do treinador e não toca no histórico nem nos exercícios que você cadastrou. É também o caminho por onde uma prescrição nova chega ao aparelho.</p>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><h3>Há quanto tempo cada posição está assim</h3><span>regra: 6 a 8 semanas</span></div>
+          <ul class="diff">
+            <li><b>9 sem.</b><span>Treino A · 1 · Chest press inclinado convergente<i>passou de 8 semanas — vale olhar, não vale trocar por calendário</i></span></li>
+            <li><b>6 sem.</b><span>Treino B · 3 · Terra romeno no Smith</span></li>
+            <li><b>1 sem.</b><span>Treino A · 4 · Puxada neutra unilateral</span></li>
+          </ul>
+          <p class="note">A regra do treinador: manter os principais por 6 a 8 semanas, <b>desde que</b> não provoquem dor articular, você sinta o músculo alvo, a máquina siga disponível e a técnica esteja melhorando.</p>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><h3>Volume da semana</h3><span>90 séries prescritas</span></div>
+          <p class="sub">A — 8 exercícios, 20 séries · B — 9, 22 · C — 7, 17 · D — 6, 17 · E — 6, 14 · aula — sem conteúdo prescrito.</p>
+        </div>
+        <button class="linkrow">Criar um treino <span>entra na sequência</span></button>
+        <button class="linkrow">Reordenar a sequência <span>A → B → C → D → E</span></button>
+        <button class="linkrow">Cadastrar exercício <span>182 no repertório</span></button>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#p4">Hoje</a><a href="#p4">Semanas</a><a class="on" href="#p4">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="state" id="p5" aria-labelledby="p5h">
+  <div class="cap">
+    <p class="tag">Estado 5 · uma revisão chega do treinador</p>
+    <h2 id="p5h">Os nomes não batem, e adivinhar é o pior caminho</h2>
+    <p>As revisões chegam com nomes diferentes para o mesmo exercício: “Flexora sentada” é a Cadeira flexora sentada; “Hip thrust máquina” é a Elevação pélvica na máquina. E o exercício é identificado para sempre por um código gerado do nome na primeira vez — <b>deixar entrar com nome novo cria um exercício novo e parte o histórico em dois</b>.</p>
+    <p>Por isso a revisão não se aplica antes de o dono dizer quem é quem. A tela propõe o par mais provável, com o histórico de cada candidato à vista, e aceita “é outro exercício, crie novo”. Nenhum par é aplicado sem resposta: já houve conversão que mandou histórico para o exercício errado.</p>
+    <p>Aplicar a revisão é uma mudança permanente como qualquer outra, com data e descrição, e o programa do treinador guardado passa a ser a versão nova.</p>
+    <p class="refs">F2 · F117 · F160 · F166 · F262 · F263 · F300 · U15</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:04</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Programa</button><div class="ttl"><strong>Revisão do treinador</strong><span>chegou em 04/10 · 5ª versão</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="warnb" style="margin-top:8px">
+          <strong>2 nomes não batem com o que existe aqui</strong>
+          Nada foi aplicado ainda. Enquanto estes dois não forem resolvidos, o seu programa continua exatamente como está.
+        </div>
+        <div class="sec">
+          <div class="sec-h"><h3>1 de 2</h3><span>Treino B</span></div>
+          <div class="match">
+            <div class="c q"><b>“Flexora sentada”</b><br>como veio na revisão</div>
+            <div class="ar" aria-hidden="true">=</div>
+            <div class="c"><b>Cadeira flexora sentada</b><br>24 séries registradas desde 07/08</div>
+          </div>
+          <div class="two"><button class="secondary" style="background:var(--ink);color:var(--on-ink);border-color:var(--ink)">É o mesmo</button><button class="secondary">É outro · criar novo</button></div>
+          <p class="note">“É o mesmo” mantém o código e o histórico, e muda só o nome exibido. “É outro” cria um exercício novo, com histórico vazio — e isso é irreversível para o código, ainda que renomear depois continue possível.</p>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><h3>2 de 2</h3><span>Treino B</span></div>
+          <div class="match">
+            <div class="c q"><b>“Hip thrust máquina”</b><br>como veio na revisão</div>
+            <div class="ar" aria-hidden="true">=</div>
+            <div class="c"><b>Elevação pélvica na máquina</b><br>9 séries registradas desde 24/08</div>
+          </div>
+          <div class="two"><button class="secondary">É o mesmo</button><button class="secondary">É outro · criar novo</button></div>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><h3>O que a revisão muda</h3><span>depois de resolver os nomes</span></div>
+          <ul class="diff">
+            <li><b>Treino B</b><span>flexora 4 → 5 séries<i>posterior de coxa: 7 → 8 na semana</i></span></li>
+            <li><b>Treino D</b><span>entra: Elevação lateral deitado no banco inclinado<i>deltoide lateral: 12 → 14 na semana</i></span></li>
+          </ul>
+          <button class="primary" style="margin-top:10px" disabled>Aplicar a revisão</button>
+          <p class="note">O botão só liga quando os dois nomes estiverem resolvidos.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#p5">Hoje</a><a href="#p5">Semanas</a><a class="on" href="#p5">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="state" id="p6" aria-labelledby="p6h">
+  <div class="cap">
+    <p class="tag">Estado 6 · erro · a revisão não entra</p>
+    <h2 id="p6h">Recusada inteira, com o motivo, e o programa intacto</h2>
+    <p>Arquivo inválido, arquivo que não é uma revisão, exercício sem nome: a recusa é do arquivo inteiro, e o programa não muda nem um pouco. Meia revisão aplicada seria pior que nenhuma — e, diferente de uma lousa, um programa meio aplicado contamina todo registro futuro.</p>
+    <p>A tela diz o que houve, onde, e o que dá para fazer agora: tentar outro arquivo, ou pedir ao agente que mande de novo. O programa continua servindo o treino de amanhã sem nenhuma dependência disso.</p>
+    <p class="refs">F132 (mesmo princípio) · F166 · F250 · F300 · F276</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:07</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Programa</button><div class="ttl"><strong>Revisão do treinador</strong><span>não aplicada</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="errb" style="margin-top:8px">
+          <strong>O arquivo da revisão não entrou</strong>
+          Nada dele foi aproveitado, e o seu programa está exatamente como estava antes.
+          <ul>
+            <li>o treino “F” cita um exercício sem nome, na posição 3;</li>
+            <li>o descanso da posição 5 do treino A veio como “2:30 min”, que não é um número de segundos.</li>
+          </ul>
+        </div>
+        <div class="okb">Seu programa continua valendo. O próximo treino da sequência é o <b>A</b>, com os mesmos 8 exercícios de sempre.</div>
+        <div class="two"><button class="secondary">Tentar outro arquivo</button><button class="secondary">Ver o programa atual</button></div>
+        <div class="sec">
+          <div class="sec-h"><h3>Por que recusar inteiro</h3></div>
+          <p class="sub">Uma revisão meio aplicada deixaria o programa num estado que ninguém prescreveu — nem o treinador, nem você. E todo registro feito depois carregaria esse estado.</p>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><h3>Cópia de segurança</h3><span>antes de qualquer revisão</span></div>
+          <p class="sub">O estado inteiro sai num arquivo, com as referências das fotos. Restaurar substitui tudo, não combina — e aceita cópia de qualquer versão anterior.</p>
+          <button class="secondary" style="width:100%;margin-top:9px">Guardar uma cópia agora</button>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#p6">Hoje</a><a href="#p6">Semanas</a><a class="on" href="#p6">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="state" id="p7" aria-labelledby="p7h">
+  <div class="cap">
+    <p class="tag">Estado 7 · o plano alimentar</p>
+    <h2 id="p7h">Seis momentos, o ajuste em vigor, e a volta</h2>
+    <p>O plano do nutricionista aparece como ele é: seis momentos com hora, itens e quilocalorias, cada um com a nota dele. Dois só existem em dia de treino. O que o ajuste de ±150 kcal mudou aparece <b>na linha do item</b>, com o número original ao lado — o arroz está em 310 g porque um passo foi aplicado em 04/10, e isso não é segredo nem detalhe escondido.</p>
+    <p>Restaurar o plano do nutricionista devolve a prescrição original <b>e zera o ajuste acumulado</b>. Está escrito antes do toque. O histórico dos passos continua na tela da semana.</p>
+    <p>Mudar uma quantidade aqui vale para todos os dias dali para a frente; a porção de um dia só vive naquele dia. Editar o plano nunca reescreve o que já foi vivido — um dia vivido já caiu de 1.348 para 1.220 kcal neste produto porque uma edição voltou no tempo.</p>
+    <p class="refs">F181 · F182 · F183 · F184 · F186 · F196 · F197 · F206 · F207 · F218 · F288 · P5 · K4</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:12</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Prescrição</button><div class="ttl"><strong>Plano alimentar</strong><span>dia de treino · 3.161 kcal</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="sec" style="margin-top:8px">
+          <div class="sec-h"><h3>Ajuste em vigor</h3><span>desde 04/10</span></div>
+          <p class="sub"><b style="color:var(--text)">+150 kcal</b> sobre o plano original, executados no arroz do almoço e do jantar.</p>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><h3>Os seis momentos</h3><span>horário do plano</span></div>
+          <div class="meal"><time>05:45</time><span class="w"><strong>Pré-treino</strong><span>pão Artesano 35 g · doce de leite 20 g · canela 1 g · café 200 ml</span></span><b>163</b></div>
+          <div class="meal"><time>06:15</time><span class="w"><strong>Treino</strong><span>água 600 ml · maltodextrina 25 g só em dia de alta demanda</span></span><b>0</b></div>
+          <div class="meal"><time>08:00</time><span class="w"><strong>Café da manhã</strong><span>cuscuz 200 g · frango 70 g · requeijão light 30 g · leite 250 ml · uva 120 g</span></span><b>629</b></div>
+          <div class="meal"><time>12:30</time><span class="w"><strong>Almoço</strong><span>arroz <b style="color:var(--ink-text)">310 g</b> (plano: 250) · feijão 50 g · frango 80 g · legumes 100 g · azeite 15 g · kiwi 100 g</span></span><b>796</b></div>
+          <div class="meal"><time>16:00</time><span class="w"><strong>Lanche da tarde</strong><span>leite 250 ml · banana 120 g · aveia 40 g · pasta 10 g · leite em pó 10 g · whey 30 g · pão 50 g · geleia 20 g</span></span><b>819</b></div>
+          <div class="meal"><time>19:30</time><span class="w"><strong>Jantar</strong><span>arroz <b style="color:var(--ink-text)">310 g</b> (plano: 250) · feijão 50 g · lombo 80 g · legumes 100 g · azeite 15 g</span></span><b>755</b></div>
+        </div>
+        <p class="note">Pré-treino e treino só existem em dia de treino. Em dia de treino à tarde ou à noite, o pré e o treino andam junto com a sessão e a refeição que cair dentro dela vai para 15 min depois do fim estimado — nenhuma refeição é criada, apagada ou fundida.</p>
+        <div class="sec">
+          <div class="sec-h"><h3>Voltar ao plano do nutricionista</h3></div>
+          <p class="sub">Devolve a prescrição original <b style="color:var(--text)">e zera o ajuste acumulado de +150 kcal</b>. O arroz volta a 250 g. Os dias já vividos não mudam.</p>
+          <button class="secondary" style="width:100%;margin-top:9px">Restaurar</button>
+        </div>
+        <button class="linkrow">Alimentos <span>36 do nutricionista</span></button>
+        <button class="linkrow">Compras <span>7 dias à frente</span></button>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#p7">Hoje</a><a href="#p7">Semanas</a><a class="on" href="#p7">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="state" id="p8" aria-labelledby="p8h">
+  <div class="cap">
+    <p class="tag">Estado 8 · vazio · o estado normal</p>
+    <h2 id="p8h">Nada esperando decisão</h2>
+    <p>Na maior parte dos dias a fila está vazia: em quatro semanas medidas foram 2 mudanças só do dia e 4 trocas por substituto. O vazio é o estado comum desta tela, e ele precisa parecer certo — não parecer que falta alguma coisa.</p>
+    <p>Com a fila vazia, a tela vira o que ela é no resto do tempo: a lista do que vem de fora. E diz, sem alarme, quando foi a última revisão de cada agente — as quatro chegaram a cada 12 a 16 dias, e a última foi em 21/09.</p>
+    <p class="refs">F262 · F2 · P1 (2 mudanças só do dia em P1-B) · U15</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">22:10</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹</button><div class="ttl"><strong>Prescrição</strong><span>terça, 29/09</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="empty" style="padding-top:26px">
+          <p class="b">Nada esperando decisão</p>
+          <p>As últimas sessões saíram como estavam no programa. Quando você mudar algo no dia, aparece aqui — nunca na academia.</p>
+        </div>
+        <p class="over" style="margin-top:6px">O que vem de fora</p>
+        <button class="linkrow">Programa do treinador <span>revisão de 21/09</span></button>
+        <button class="linkrow">Plano do nutricionista <span>regra de 21/09</span></button>
+        <button class="linkrow">Seu programa <span>sem diferenças</span></button>
+        <button class="linkrow">Exercícios <span>182 no repertório</span></button>
+        <button class="linkrow">Aulas guardadas <span>7 de 60</span></button>
+        <button class="linkrow">Compras <span>7 dias · 22 alimentos</span></button>
+        <button class="linkrow">Este aparelho <span>conta, cópia, versão</span></button>
+        <div class="sec">
+          <div class="sec-h"><h3>Este aparelho</h3><span>sem rede agora</span></div>
+          <p class="sub">Tudo grava aqui primeiro. A cópia remota é réplica, e a sincronização acontece ao abrir, ao voltar e alguns segundos depois de cada mudança.</p>
+          <p class="note">Versão instalada 9.4 · uma versão nova fica valendo na próxima abertura. O número fica sempre visível aqui, porque já aconteceu de o aparelho ficar na versão velha sem nenhum aviso.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#p8">Hoje</a><a href="#p8">Semanas</a><a class="on" href="#p8">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="state" id="p9" aria-labelledby="p9h">
+  <div class="cap">
+    <p class="tag">Estado 9 · claro e escuro</p>
+    <h2 id="p9h">Os dois temas, desenhados</h2>
+    <p>O item que pede decisão é o único com borda laranja cheia nos dois temas; os que ainda têm folga ficam tracejados. O prazo usa fundo de aviso e <b>palavra</b> (“vence em 2 dias”), nunca só cor — e quem está no último dia ganha a palavra “vence hoje”, não um vermelho mais forte.</p>
+    <p class="refs">decisão 5 do dono · decisão 6 do dono</p>
+  </div>
+  <div class="duo">
+    <div class="frame">
+      <div class="shrink"><div class="phone">
+        <div class="sb"><span class="num">20:48</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+        <div class="app">
+          <div class="d-head"><button class="back">‹</button><div class="ttl"><strong>Prescrição</strong><span>domingo, 04/10</span></div><button class="pillb">···</button></div>
+          <div class="scroll">
+            <div class="sec" style="margin-top:8px"><div class="sec-h"><h3>Esperando decisão</h3><span>3 mudanças</span></div>
+              <p class="sub">Nada disto foi perguntado na academia.</p></div>
+            <div class="dec">
+              <p class="wh">Treino A · posição 4 · sexta, 02/10</p>
+              <h4>Você trocou o exercício</h4>
+              <div class="chg"><div class="c"><b>Pulldown unilateral</b>prescrito</div><div class="ar">→</div><div class="c to"><b>Puxada neutra unilateral</b>feito</div></div>
+              <p class="conseq">Motivo: <b>máquina ocupada</b>. O dorsal continua com 10 séries na semana.</p>
+              <div class="prazo">⏳ Vence em 2 dias</div>
+              <div class="acts"><button class="keep">Manter no programa</button><button>Foi só naquele dia</button></div>
+            </div>
+          </div>
+          <nav class="tabs"><a href="#p9">Hoje</a><a href="#p9">Semanas</a><a class="on" href="#p9">Prescrição</a></nav>
+        </div>
+        <div class="hi oncard"></div>
+      </div></div>
+      <p>Claro</p>
+    </div>
+    <div class="frame">
+      <div class="shrink"><div class="phone" data-tema="escuro" data-fixo>
+        <div class="sb"><span class="num">20:48</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+        <div class="app">
+          <div class="d-head"><button class="back">‹</button><div class="ttl"><strong>Prescrição</strong><span>domingo, 04/10</span></div><button class="pillb">···</button></div>
+          <div class="scroll">
+            <div class="sec" style="margin-top:8px"><div class="sec-h"><h3>Esperando decisão</h3><span>3 mudanças</span></div>
+              <p class="sub">Nada disto foi perguntado na academia.</p></div>
+            <div class="dec">
+              <p class="wh">Treino A · posição 4 · sexta, 02/10</p>
+              <h4>Você trocou o exercício</h4>
+              <div class="chg"><div class="c"><b>Pulldown unilateral</b>prescrito</div><div class="ar">→</div><div class="c to"><b>Puxada neutra unilateral</b>feito</div></div>
+              <p class="conseq">Motivo: <b>máquina ocupada</b>. O dorsal continua com 10 séries na semana.</p>
+              <div class="prazo">⏳ Vence em 2 dias</div>
+              <div class="acts"><button class="keep">Manter no programa</button><button>Foi só naquele dia</button></div>
+            </div>
+          </div>
+          <nav class="tabs"><a href="#p9">Hoje</a><a href="#p9">Semanas</a><a class="on" href="#p9">Prescrição</a></nav>
+        </div>
+        <div class="hi oncard"></div>
+      </div></div>
+      <p>Escuro</p>
+    </div>
+  </div>
+</section>
+
+</main>
+<script>
+(function(){
+  var btns=document.querySelectorAll('.theme button');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    btns.forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+    var t=b.dataset.t;
+    document.querySelectorAll('.phone').forEach(function(p){
+      if(p.hasAttribute('data-fixo'))return;
+      if(t==='escuro')p.setAttribute('data-tema','escuro');else p.removeAttribute('data-tema');
+    });
+  })});
+  var live=document.getElementById('live');if(!live)return;
+  var item=live.querySelector('[data-item1]'),keep=live.querySelector('[data-keep]'),day=live.querySelector('[data-day]'),
+      cont=live.querySelector('[data-cont]');
+  function resolve(txt,det){
+    item.className='dec done';
+    item.innerHTML='<p class="wh">Treino A · posição 4 · decidido agora</p><h4>'+txt+'</h4>'+
+      '<p class="conseq" style="color:inherit">'+det+'</p>'+
+      '<div class="toast">Gravado neste aparelho<button class="u">Desfazer</button></div>';
+    cont.textContent='2 mudanças';
+    item.querySelector('.u').addEventListener('click',function(){location.reload()});
+  }
+  keep.addEventListener('click',function(){resolve('Puxada neutra unilateral entrou no programa',
+    'Mudança permanente registrada em 04/10, no treino A, com o motivo “máquina ocupada”. O Pulldown unilateral continua existindo, com o histórico dele intacto. O relógio de 6 a 8 semanas desta posição voltou a zero.');});
+  day.addEventListener('click',function(){resolve('Ficou só na sexta',
+    'O programa continua com o Pulldown unilateral na posição 4. A troca continua registrada na sessão de 02/10, e a Puxada neutra unilateral manteve as séries daquele dia no histórico dela.');});
+})();
+</script>
+</body>
+</html>

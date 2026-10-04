@@ -1,0 +1,306 @@
+@titulo Aula do box
+@h1 A aula do box · presença num toque, detalhe só se ele quiser
+@lead Sábado, 03/10, 9h41. A aula acabou; ele está sentado, ofegante, o celular saiu da mochila agora. A janela é curta (F36). A aula é a <b>6ª posição da sequência</b> — vem depois do Treino E, não porque é sábado (F80, F81).
+@lead <b>O gesto inteiro: um toque.</b> "Fiz a aula" grava a presença e fecha o assunto. O detalhe — o peso que ele pegou, o quanto correu — é oferta, nunca dívida: não fica pendente, não vence e pode chegar dias depois. É a 3ª situação mais difícil do uso medido e a de maior falha de detalhe: 5 aulas em 8 semanas, nenhuma com movimentos, nenhuma com lousa, 4 das 5 registradas depois do dia (P1).
+@lead Nesta tela não existe RIR, não existe carga obrigatória, não existe descanso prescrito e não existem nove estações cobradas como pendentes. Tudo isso já foi defeito deste produto (F281, F285, F286).
+@css
+.go{display:flex;align-items:center;justify-content:center;width:100%;min-height:72px;border-radius:20px;background:var(--accent);color:var(--on-accent);font-size:23px;font-weight:700;text-align:center;gap:10px}
+.go.done{background:var(--surface);color:var(--ink);border:2px solid var(--ink)}
+.mv{display:flex;align-items:center;gap:10px;margin:0 16px;padding:8px 0;border-top:1px solid var(--line);min-height:56px}
+.mv .t{flex:1;min-width:0;line-height:1.25}
+.mv .t b{font-size:15.5px;display:block}
+.mv .t small{font-size:12.5px;color:var(--ink-2);display:block;margin-top:1px}
+.mv .un{font-size:12px;font-weight:700;color:var(--ink-2);border:1px solid var(--line-2);border-radius:7px;padding:2px 6px;flex:none}
+.mv .add{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;border:1.5px solid var(--line-2);flex:none;color:var(--ink)}
+.mv.has .un{border-color:var(--ink);color:var(--ink)}
+.optrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.optrow::-webkit-scrollbar{display:none}
+.olbl{font-size:12px;font-weight:700;color:var(--ink-2);letter-spacing:.03em;text-transform:uppercase;margin:14px 0 0}
+.board{margin:8px 16px 0;padding:11px 13px;border-radius:16px;background:var(--surface-2);font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-line}
+.rnd{margin:8px 16px 0;padding:10px 12px;border-radius:16px;border:1px solid var(--line);background:var(--surface)}
+.rnd>b{font-size:13px;color:var(--ink-2);display:block;margin-bottom:4px}
+.rnd ul{list-style:none;margin:0;padding:0;font-size:14.5px}
+.rnd li{display:flex;gap:8px;padding:4px 0;border-top:1px solid var(--line);align-items:baseline}
+.rnd li:first-child{border-top:0}
+.rnd li .q{font-variant-numeric:tabular-nums;font-weight:700;width:62px;flex:none}
+.rnd li .n{flex:1;min-width:0}
+.rnd li .r{font-size:12.5px;color:var(--ink-2);font-weight:700}
+
+@fim
+=== 1 |  | O caso: acabou a aula, e o registro inteiro é um botão
+cap: Ele está sentado, ofegante, com o celular na mão há dez segundos (F36). A única coisa grande da tela é <b>“Fiz a aula”</b>, no terço de baixo, ao alcance do polegar. O resto é leitura curta: quantas aulas, qual foi a anterior e o que vem depois na sequência (F81). As três ofertas ficam abaixo do botão, em tamanho de conversa, e nenhuma delas é obrigatória (P4).
+@sb 9:41 | fraco
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Aula do box<small>sáb 03/10 · 9h41 · 6ª da sequência</small></h2></div>
+  <div class="body">
+    <div class="big">
+      <div class="n1">6ª <span>aula desde 06/08</span></div>
+      <div class="cx">A anterior foi <b>sáb 26/09</b>: presença e nada mais. Depois desta, a sequência volta ao <b>Treino A</b>.</div>
+    </div>
+    <div class="note-f">O que não entrar aqui não fica pendente, não vence e pode entrar depois — hoje à noite, amanhã ou nunca.</div>
+  </div>
+  <section class="ctl">
+    <button class="go"><svg width="26" height="26"><use href="#ok2"/></svg>Fiz a aula</button>
+    <p class="olbl">Se quiser, agora ou depois</p>
+    <div class="optrow">
+      <button class="chip">Guardar um peso</button>
+      <button class="chip">Guardar uma corrida</button>
+      <button class="chip"><svg width="18" height="18"><use href="#lousa"/></svg>Fotografar a lousa</button>
+    </div>
+  </section>
+  {{hi}}
+</div>
+
+=== 2 |  | Guardada. Nenhuma pergunta depois do toque
+cap: A confirmação aparece só depois de a presença estar gravada no aparelho (F294 cobrou isso). O que muda na tela é o que mudou no mundo: a sequência voltou ao Treino A. As ofertas continuam ali, sem prazo e sem aviso — ao contrário das mudanças do dia na musculação, que agora vencem (ver <b>prescricao.html</b>).
+@sb 9:41 | fraco
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Aula do box<small>sáb 03/10 · 9h41</small></h2></div>
+  <div class="body">
+    <div class="done enter">
+      <div class="h"><svg class="ico" width="26" height="26"><use href="#ck"/></svg><div class="t"><b>Aula guardada às 9h41</b><small>sábado, 03/10 · presença</small></div><button class="lk"><svg width="18" height="18"><use href="#undo"/></svg>Desfazer</button></div>
+      <div class="more"><span class="t">O próximo treino da sequência é o <b>Treino A</b>.</span></div>
+    </div>
+    <div class="note-f">Sem detalhe, a aula fica completa do mesmo jeito. Detalhar depois não é “pôr em dia”: é um acréscimo.</div>
+    <p class="olbl" style="margin:16px 16px 0">Se quiser</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Guardar um peso<small>wall ball, sandbag, kettlebell, farmers</small></div><button class="add" style="width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line-2);display:grid;place-items:center"><svg width="22" height="22"><use href="#plus"/></svg></button></div>
+      <div class="fr"><div class="t">Guardar uma corrida<small>quanto deu, em metros ou em tempo</small></div><button class="add" style="width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line-2);display:grid;place-items:center"><svg width="22" height="22"><use href="#plus"/></svg></button></div>
+      <div class="fr"><div class="t">Fotografar a lousa<small>a transcrição é feita fora do app, quando der</small></div><button class="add" style="width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line-2);display:grid;place-items:center"><svg width="22" height="22"><use href="#cam"/></svg></button></div>
+    </div>
+  </div>
+  {{hi}}
+</div>
+
+=== 3 |  | Guardar um peso: a lista é a do que ele procura, e a primeira vez não tem referência
+cap: A ordem dos movimentos é a ordem em que ele os procura (F122), não a ordem da prova. Cada um mostra em que unidade se mede (F143) — e todos mostram “sem registro anterior”, porque o histórico das estações foi apagado a pedido dele em 09/09 (F283, F254). A tela diz isso em vez de fingir que sabe. Tocar num movimento abre o teclado do app, com vírgula (F63).
+@sb 9:43 | fraco
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Guardar um peso<small>aula de sáb 03/10</small></h2></div>
+  <div class="body">
+    <div class="warn" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>Nenhum movimento tem registro anterior</b><p>O histórico das estações foi apagado a seu pedido em 09/09. O que você guardar hoje passa a ser a referência da próxima aula.</p></div></div></div>
+    <p class="sec-l">Mais procurados</p>
+    <div class="mv"><div class="t"><b>Wall ball</b><small>peso da bola · repetições</small></div><span class="un">rep</span><button class="add" aria-label="Guardar wall ball"><svg width="22" height="22"><use href="#plus"/></svg></button></div>
+    <div class="mv"><div class="t"><b>Corrida</b><small>distância do dia · tempo</small></div><span class="un">m</span><button class="add" aria-label="Guardar corrida"><svg width="22" height="22"><use href="#plus"/></svg></button></div>
+    <div class="mv"><div class="t"><b>Remo ergômetro</b><small>metros ou calorias — a unidade é do dia</small></div><span class="un">m · cal</span><button class="add" aria-label="Guardar remo"><svg width="22" height="22"><use href="#plus"/></svg></button></div>
+    <div class="mv"><div class="t"><b>Ski erg</b><small>distância do dia · tempo</small></div><span class="un">m</span><button class="add" aria-label="Guardar ski erg"><svg width="22" height="22"><use href="#plus"/></svg></button></div>
+    <div class="mv"><div class="t"><b>Sled push</b><small>peso no trenó · tempo</small></div><span class="un">m</span><button class="add" aria-label="Guardar sled push"><svg width="22" height="22"><use href="#plus"/></svg></button></div>
+    <div class="mv"><div class="t"><b>Sled pull</b><small>peso no trenó · tempo</small></div><span class="un">m</span><button class="add" aria-label="Guardar sled pull"><svg width="22" height="22"><use href="#plus"/></svg></button></div>
+    <div class="mv"><div class="t"><b>Farmers carry</b><small>peso por mão · tempo</small></div><span class="un">m</span><button class="add" aria-label="Guardar farmers carry"><svg width="22" height="22"><use href="#plus"/></svg></button></div>
+    <div class="mv"><div class="t"><b>Lunges com sandbag</b><small>peso do saco · tempo</small></div><span class="un">m</span><button class="add" aria-label="Guardar lunges"><svg width="22" height="22"><use href="#plus"/></svg></button></div>
+    <p class="small" style="margin:12px 16px 0">Mais 8 movimentos · buscar</p>
+  </div>
+  {{hi}}
+</div>
+
+=== 4 |  | O peso, e o resultado na unidade certa
+cap: Wall ball se mede em repetições: a quantidade do dia é fixa e o resultado é quanto saiu (F144). O peso da bola é um número com vírgula, no teclado do app (F63, F65 — o teclado do sistema cobre meia tela). O que ele mais quer guardar está em primeiro: <b>o peso</b>. As repetições são opcionais, e ficam embaixo. Nenhum RIR em lugar nenhum (F285).
+@sb 9:44 | fraco
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Wall ball<small>aula de sáb 03/10</small></h2></div>
+  <div class="body">
+    <div class="note-f">Sem registro anterior deste movimento. O que entrar aqui vira a referência.</div>
+  </div>
+  <div class="sheet" style="position:static;border-radius:0;box-shadow:none;background:transparent;padding:8px 16px 4px;margin-top:auto">
+    <div class="disp"><b class="num">9</b><i class="caret"></i><span>kg<br>peso da bola</span></div>
+    <div class="kp">
+      <button>1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button><button>7</button><button>8</button><button>9</button><button>,</button><button>0</button><button aria-label="Apagar">←</button>
+    </div>
+    <div class="fin" style="margin:0 0 10px"><div class="fr"><div class="t">Repetições<small>opcional · quantas saíram</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div></div>
+    <button class="primary">Guardar</button>
+  </div>
+  {{hi}}
+</div>
+
+=== 5 |  | Duas semanas depois, de pé no box: a referência existe
+cap: Isto é o motivo do detalhe, nas palavras dele: “quando eu chegar lá, saber qual é o wall ball que eu costumo pegar, ou o que eu peguei por último” (P4). Os pesos do box ficam os mesmos por meses, e a melhor referência é o registro anterior (F123). A corrida vem com o ritmo ao lado (22 s/100 m), que é o que torna comparáveis distâncias diferentes (F146) — 400 m de hoje contra 1 km da outra vez.
+@sb 9:05 | fraco
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Aula do box<small>sáb 17/10 · 9h05 · antes de começar</small></h2></div>
+  <div class="body">
+    <p class="sec-l t0">Na última aula, sáb 03/10</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Wall ball<small>100 repetições</small></div><span class="v">9 <small>kg</small></span></div>
+      <div class="fr"><div class="t">Corrida<small>1 km em 4:12 · 252 s</small></div><span class="v">22 <small>s/100 m</small></span></div>
+      <div class="fr"><div class="t">Farmers carry<small>200 m</small></div><span class="v">22,5 <small>kg por mão</small></span></div>
+      <div class="fr"><div class="t">Sled push<small>50 m · 1:04</small></div><span class="v">100 <small>kg no trenó</small></span></div>
+    </div>
+    <p class="small" style="margin:10px 16px 0">Peso guardado é peso do dia: a lousa muda toda semana (F37, F148).</p>
+  </div>
+  <section class="ctl">
+    <button class="go"><svg width="26" height="26"><use href="#ok2"/></svg>Fiz a aula</button>
+    <p class="olbl">Se quiser, agora ou depois</p>
+    <div class="optrow">
+      <button class="chip">Guardar um peso</button>
+      <button class="chip">Guardar uma corrida</button>
+      <button class="chip"><svg width="18" height="18"><use href="#lousa"/></svg>Fotografar a lousa</button>
+    </div>
+  </section>
+  {{hi}}
+</div>
+
+=== 6 |  | A lousa: foto agora, transcrição quando der
+cap: O conteúdo da aula só se conhece ao chegar, pela lousa (F37), e a transcrição é feita por um assistente fora do app (F130), “quando der” (P4). Então a foto é um toque e acaba ali: nada fica esperando resposta. A tela diz onde a lousa vai morar — guardada no dia e, quando a aula termina, virando a nota daquela sessão (F134).
+@sb 9:43 | fraco
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Lousa de sáb 03/10<small>foto guardada às 9h43</small></h2></div>
+  <div class="body">
+    <div class="foto" style="margin:8px 16px 0;aspect-ratio:4/3;background:#2A2724;display:grid;place-items:center;text-align:center;padding:14px">
+      <p style="color:#E9E4D8;font:700 15px/1.4 ui-monospace,Menlo,monospace;margin:0">3 RNDS<br>400 m SKI · 30 m SLED-PUSH<br>25 m WALKING LUNGES<br>— — —<br>E5MIN = 15 m BBJ</p>
+      <span class="tag">foto da lousa · 03/10 9h43</span>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t">Mandar para transcrever<small>sai do app; volta como arquivo</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+      <div class="fr"><div class="t">Refazer a foto<small>a de agora é substituída</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#cam"/></svg></div>
+    </div>
+    <div class="note-f">A foto fica guardada no dia. Quando a aula termina, a lousa passa a ser a nota daquela aula — e depois disso não se reconstrói de outra forma (F134).</div>
+    <p class="small" style="margin:10px 16px 0">Sem transcrição, a aula continua completa: a presença já está guardada.</p>
+  </div>
+  {{hi}}
+</div>
+
+=== 7 |  | A transcrição chegou: o que vira dado e o que fica só no texto
+cap: Lousa real transcrita (F127). Cada movimento traz a sua unidade, e no mesmo round há unidades diferentes — remo em metros e wall ball em repetições (F129). O que a lousa diz e <b>não</b> vira dado — blocos, time cap, ordem dentro do round, E5MIN, dupla, peso sugerido (F133) — fica no texto literal, que a tela mostra inteiro em vez de descartar. Versão 2 do arquivo: aceita, com aviso (F132). Nada é gravado antes de ele usar.
+@sb 21:10 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>“Hyrox Friday”<small>arquivo de aula · 10 movimentos · sáb 03/10</small></h2></div>
+  <div class="body">
+    <div class="warn" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>Dois avisos, nada impedido</b><p>O arquivo é da versão 2 (esta cópia lê a 1): aceito. Um trecho ilegível da terceira linha não virou movimento — continua no texto.</p></div></div></div>
+    <div class="rnd"><b>3 rounds</b><ul>
+      <li><span class="q">400 m</span><span class="n">Ski erg</span><span class="r">tempo</span></li>
+      <li><span class="q">30 m</span><span class="n">Sled push</span><span class="r">tempo</span></li>
+      <li><span class="q">25 m</span><span class="n">Walking lunges</span><span class="r">tempo</span></li>
+    </ul></div>
+    <div class="rnd"><b>3 rounds</b><ul>
+      <li><span class="q">400 m</span><span class="n">Remo ergômetro</span><span class="r">tempo</span></li>
+      <li><span class="q">30 m</span><span class="n">Sled pull</span><span class="r">tempo</span></li>
+      <li><span class="q">25 rep</span><span class="n">Wall ball</span><span class="r">quantas saíram</span></li>
+    </ul></div>
+    <div class="rnd"><b>3 rounds · 1 a cada 5 min</b><ul>
+      <li><span class="q">400 m</span><span class="n">Corrida</span><span class="r">tempo</span></li>
+      <li><span class="q">30 m</span><span class="n">Farmers carry</span><span class="r">tempo</span></li>
+      <li><span class="q">15 m</span><span class="n">Burpee broad jump</span><span class="r">tempo</span></li>
+    </ul></div>
+    <p class="sec-l">A lousa, como estava escrita</p>
+    <div class="board">3 RNDS: 400 m Ski · 30 m Sled-Push · 25 m Walking Lunges
+3 RNDS: 400 m Row · 30 m Sled-Pull · 25 Wall Ball
+3 RNDS: 400 m Run · 30 m Farmers Carry · 25 m [ilegível]
+E5MIN = 15 m Burpee Broad Jumps</div>
+  </div>
+  <section class="ctl">
+    <button class="primary">Usar esta lousa na aula de 03/10</button>
+    <div class="two" style="margin-top:8px"><button class="sec">Guardar para reusar</button><button class="sec">Descartar</button></div>
+  </section>
+  {{hi}}
+</div>
+
+=== 8 |  | Erro: o arquivo foi recusado inteiro, e a tela diz exatamente por quê
+cap: Lousa real de 20/09 (F126): tinha três movimentos que o app não conhece. O arquivo é recusado <b>inteiro, nunca pela metade</b> (F132) — meia aula guardada seria pior que nenhuma. A tela traz o motivo literal, o que pedir ao assistente, e lembra que a presença já está guardada: o erro do arquivo não desfaz o toque que importava.
+@sb 21:14 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Arquivo recusado<small>“HYROX MZ!” · 20/09</small></h2></div>
+  <div class="body">
+    <div class="err" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>Nada foi guardado</b><p>O movimento <b>“ABD (remador)”</b> não é conhecido e o arquivo não disse como ele se mede. Sem isso, o app não sabe se 80 é repetição, metro, caloria ou segundo.</p><p>Também são novos: <b>squat jump</b> e <b>split jump</b> — esses dois vieram declarados em repetições e passariam.</p></div></div></div>
+    <p class="sec-l">O que fazer</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Pedir ao assistente que declare a unidade<small>“abd (remador): 80 repetições, sem carga”</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+      <div class="fr"><div class="t">Cadastrar “abd (remador)” aqui<small>nome, unidade e quantidade padrão</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#plus"/></svg></div>
+      <div class="fr"><div class="t">Deixar só a presença<small>a aula de 20/09 continua registrada</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#ck"/></svg></div>
+    </div>
+    <p class="sec-l">O arquivo não foi apagado</p>
+    <div class="board">PLIO + SPRINT (15MIN)
+3X 15 SQUAT JUMP + 200M (20/15) REST 1MIN
+3X 12 SPLIT JUMP + 300M (20/15) REST 1MIN
+WOD — T.C 20MIN: 150 WALL BALL; 100M BURPEES
+BROAD JUMP; 80 ABD (REMADOR) (10/5); 1KM RUN</div>
+  </div>
+  {{hi}}
+</div>
+
+=== 9 |  | Remontar a aula anterior, sem as cargas
+cap: A aula anterior se remonta a partir dos registros dele — movimentos e medidas, nunca as cargas (F136); aulas guardadas para reuso também não guardam carga (F135). A razão está no mundo: a lousa muda toda semana (F37) e a quantidade é do dia (F148). Remontar economiza a digitação da estrutura e não finge saber o peso de hoje.
+@sb 9:06 | fraco
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Montar a aula de hoje<small>sáb 17/10</small></h2></div>
+  <div class="body">
+    <div class="fin">
+      <div class="fr"><div class="t"><b>Repetir a de sáb 03/10</b><small>10 movimentos · as cargas vêm vazias</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#undo"/></svg></div>
+    </div>
+    <p class="sec-l">Aulas guardadas <span style="text-transform:none;font-weight:600">· 2 de 60</span></p>
+    <div class="fin">
+      <div class="fr"><div class="t">Hyrox Friday<small>9 movimentos em 3 rounds · com a lousa</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+      <div class="fr"><div class="t">Engine curto<small>4 movimentos · sem lousa</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+    </div>
+    <p class="sec-l">Ou</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Esperar a transcrição da lousa de hoje<small>a foto já está guardada</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#lousa"/></svg></div>
+      <div class="fr"><div class="t">Montar movimento por movimento<small>da lista do que você procura</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#plus"/></svg></div>
+    </div>
+    <div class="note-f">Nada disso é necessário para a aula contar. A presença é um toque, na tela anterior.</div>
+  </div>
+  {{hi}}
+</div>
+
+=== 10 |  | Depois do dia: 4 das 5 aulas medidas chegaram assim
+cap: Segunda, 20h12, em casa. A aula foi no sábado. O dia vem escolhido na linha de cima, e a hora é opcional: <b>sem hora, o registro não finge ter horário</b> — inventar 7h00 já sujou a média deste produto (F270, F158). A sequência não se move pela data, e sim pela ordem: a aula de sábado continua sendo a 6ª posição, mesmo registrada na segunda (F81).
+@sb 20:12 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Aula do box<small>registrar em data passada</small></h2></div>
+  <div class="body">
+    <div class="seg3 g4" role="radiogroup" aria-label="Dia da aula" style="margin-top:8px">
+      <button aria-pressed="false">hoje<br><small style="font-weight:600;color:var(--ink-2)">seg 05/10</small></button>
+      <button aria-pressed="false">ontem<br><small style="font-weight:600;color:var(--ink-2)">dom 04/10</small></button>
+      <button aria-pressed="true">sábado<br><small style="font-weight:600">03/10</small></button>
+      <button aria-pressed="false">outro<br><small style="font-weight:600;color:var(--ink-2)">dia</small></button>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t">Hora<small>opcional — sem ela, o registro não tem horário confiável</small></div><span class="v todo">—</span></div>
+    </div>
+    <div class="note-f">Sábado 03/10 ainda está sem nenhum treino. A sequência depois desta aula volta ao <b>Treino A</b>.</div>
+  </div>
+  <section class="ctl">
+    <button class="go"><svg width="26" height="26"><use href="#ok2"/></svg>Fiz a aula no sábado</button>
+    <p class="olbl">Se quiser</p>
+    <div class="optrow"><button class="chip">Guardar um peso</button><button class="chip">Guardar uma corrida</button></div>
+  </section>
+  {{hi}}
+</div>
+
+=== 11 |  | Vazio: cinco aulas, nenhuma com detalhe — e a tela não cobra
+cap: O estado medido, com os números reais (P1): 5 aulas desde 06/08, nenhuma com movimentos, nenhuma com lousa, 4 registradas depois do dia. O vazio aqui <b>não é falha a ser cobrada</b>: é escolha dele (P4). Por isso a lista mostra as presenças como registros completos, com uma linha explicando por que não há referência de peso — e um único convite, sem cor de alarme.
+@sb 21:08 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Aulas do box<small>5 desde 06/08</small></h2></div>
+  <div class="body">
+    <div class="fin">
+      <div class="fr"><div class="t"><b>sáb 26/09</b><small>presença · registrada no dia</small></div><span class="v" style="font-size:14px;color:var(--ink-2)">sem detalhe</span></div>
+      <div class="fr"><div class="t"><b>qui 10/09</b><small>presença · registrada 2 dias depois</small></div><span class="v" style="font-size:14px;color:var(--ink-2)">sem detalhe</span></div>
+      <div class="fr"><div class="t"><b>sáb 29/08</b><small>presença · registrada 1 dia depois</small></div><span class="v" style="font-size:14px;color:var(--ink-2)">sem detalhe</span></div>
+      <div class="fr"><div class="t"><b>qui 20/08</b><small>presença · registrada 3 dias depois</small></div><span class="v" style="font-size:14px;color:var(--ink-2)">sem detalhe</span></div>
+      <div class="fr"><div class="t"><b>sáb 08/08</b><small>presença · registrada 1 dia depois</small></div><span class="v" style="font-size:14px;color:var(--ink-2)">sem detalhe</span></div>
+    </div>
+    <div class="note-f">Cinco presenças, nenhum detalhe — e nenhuma delas está incompleta. O detalhe só existe se você quiser.</div>
+    <p class="small" style="margin:12px 16px 0">Os registros de estação feitos antes de 09/09 foram apagados a seu pedido: naquela época a aula era tratada como treino de hipertrofia e os números não queriam dizer nada (F283).</p>
+    <div class="fab"><button class="sec">Detalhar a de 26/09</button><button class="sec">Nova aula</button></div>
+  </div>
+  {{tabs dias}}
+  {{hi}}
+</div>
+
+=== 12 |  | Erro: a presença entrou, o detalhe não
+cap: Armazenamento cheio no meio do detalhe (F53). A regra da direção vale aqui: <b>nada de falso sucesso</b> — a tela separa o que ficou gravado do que não ficou, mantém na tela o que ele digitou, e não promete que “vai tentar depois” sem dizer onde. A presença, que é o registro que importa, está a salvo.
+@sb 9:45 | fraco
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Wall ball<small>aula de sáb 03/10</small></h2></div>
+  <div class="body">
+    <div class="err" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>9 kg × 100 não foi guardado</b><p>O armazenamento deste navegador está cheio. A presença da aula, guardada às 9h41, continua lá.</p></div></div></div>
+    <div class="fin"><div class="fr"><div class="t">Wall ball<small>ainda na tela, não gravado</small></div><span class="v">9 <small>kg × 100</small></span></div></div>
+    <p class="sec-l">Antes de tentar de novo</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Baixar uma cópia de segurança<small>arquivo JSON, agora</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#down"/></svg></div>
+      <div class="fr"><div class="t">Liberar espaço<small>fotos de corpo antigas saem do aparelho e ficam na cópia remota</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#nuv"/></svg></div>
+    </div>
+    <div class="fab"><button class="primary" style="min-height:52px">Tentar de novo</button></div>
+  </div>
+  {{hi}}
+</div>

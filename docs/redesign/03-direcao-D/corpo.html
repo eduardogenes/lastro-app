@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corpo</title>
+<style>
+
+:root{
+  color-scheme:light;
+  --page:#E7E3DB;--bg:#F5F3EE;--surface:#FFFFFF;--surface-2:#EDEAE3;
+  --ink:#15171A;--ink-2:#474C54;--ink-3:#5C6169;
+  --line:#DCD7CD;--line-2:#8C867A;
+  --accent:#3833DB;--accent-ink:#2C28BE;--accent-soft:#E9E8FD;--on-accent:#FFFFFF;
+  --warn-bg:#FBEFD6;--warn-ink:#5E3B00;--warn-line:#D9A955;
+  --err-bg:#FBE4E1;--err-ink:#7F1A12;--err-line:#D98A80;
+  --scrim:rgba(18,18,30,.42);
+}
+.phone.dark{
+  color-scheme:dark;
+  --page:#08090A;--bg:#111214;--surface:#1B1D21;--surface-2:#25282D;
+  --ink:#F2F1EE;--ink-2:#BCC0C7;--ink-3:#A2A6AE;
+  --line:#33363C;--line-2:#7C818A;
+  --accent:#9E9BFF;--accent-ink:#B6B4FF;--accent-soft:#272550;--on-accent:#14123F;
+  --warn-bg:#33270F;--warn-ink:#F3CF85;--warn-line:#7A5A1E;
+  --err-bg:#3A1714;--err-ink:#FFADA3;--err-line:#7E3129;
+  --scrim:rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;background:var(--page)}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;text-align:inherit;-webkit-user-select:none;user-select:none}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button[disabled]{cursor:default}
+.num{font-variant-numeric:tabular-nums}
+svg{display:block}
+
+/* página */
+.doc{max-width:1400px;margin:0 auto;padding:28px 16px 4px}
+.eyebrow{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);margin:0 0 6px;font-weight:600}
+h1{font-size:30px;line-height:1.12;margin:0 0 12px;letter-spacing:-.02em}
+.lead{max-width:68ch;margin:0 0 8px;color:var(--ink-2);font-size:16px}
+.lead b{color:var(--ink)}
+.themes{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:14px 0 0;font-size:14px;color:var(--ink-2)}
+.themes button{border:1.5px solid var(--line-2);border-radius:999px;padding:0 14px;min-height:44px;font-size:14px;font-weight:600;color:var(--ink)}
+.themes button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.states{max-width:1400px;margin:0 auto;padding:20px 16px 56px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:40px 28px;align-items:start}
+.state{margin:0;min-width:0}
+.state.wide{grid-column:1/-1}
+.state figcaption{margin:0 0 12px;max-width:414px}
+.state.wide figcaption{max-width:70ch}
+.state h2{font-size:17px;line-height:1.25;margin:0 0 4px}
+.state h2 .n{display:inline-block;min-width:28px;height:28px;line-height:28px;text-align:center;border-radius:8px;background:var(--ink);color:var(--bg);font-size:14px;margin-right:6px;vertical-align:1px}
+.state p.cap{font-size:14px;color:var(--ink-2);margin:0}
+.wrap{width:100%;max-width:414px}
+.wrap.land{max-width:896px}
+
+/* telefone */
+.phone{width:414px;height:896px;transform-origin:0 0;border-radius:52px;background:var(--bg);color:var(--ink);box-shadow:0 0 0 1.5px var(--line-2),0 26px 50px -30px rgba(20,15,0,.55);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.phone.land{width:896px;height:414px;display:block}
+.sb{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 40px;font-size:15px;font-weight:600;position:relative}
+.sb .notch{position:absolute;left:50%;top:0;width:210px;height:30px;margin-left:-105px;background:#000;border-radius:0 0 20px 20px}
+.sb .ic{display:flex;gap:6px;align-items:center}
+.hi{height:34px;flex:none;display:flex;align-items:center;justify-content:center}
+.hi i{width:134px;height:5px;border-radius:3px;background:var(--ink);opacity:.85}
+.scr{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* sessão: cabeçalho */
+.sh{padding:4px 16px 10px;border-bottom:1px solid var(--line);flex:none}
+.sh-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.sh-t{font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.sh-t .sh-d{font-size:14px;font-weight:600;color:var(--ink-2);margin-left:4px}
+.sh-sub{font-size:14px;color:var(--ink-2);line-height:1.3}
+.sh-m{font-size:14px;color:var(--ink-2);font-variant-numeric:tabular-nums;line-height:1.35}
+.ib{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin:-6px -10px 0 0;flex:none;color:var(--ink)}
+.map{display:flex;gap:6px;margin-top:8px;align-items:center;min-height:30px}
+.map .g{display:flex;gap:3px;padding:5px 6px;border-radius:8px;background:var(--surface-2);position:relative}
+.map .d{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--ink-3)}
+.map .d.f{background:var(--ink);border-color:var(--ink)}
+.map .d.c{border:2px solid var(--accent);background:var(--accent-soft)}
+.map .d.x{border-style:dashed}
+.map .g.mx::after{content:"";position:absolute;left:5px;right:5px;bottom:-5px;height:2px;border-radius:2px;background:var(--ink-2)}
+.sh-r{font-size:13px;color:var(--ink-2);margin-top:8px}
+
+/* cartão do exercício */
+.card{margin:10px 16px 0;padding:12px 14px 12px;background:var(--surface);border-radius:20px;border:1px solid var(--line);flex:none}
+.kick{font-size:13px;color:var(--ink-2);font-weight:600}
+.ex{font-size:25px;line-height:1.12;font-weight:750;font-weight:700;margin:2px 0 4px;letter-spacing:-.015em}
+.presc{font-size:15px;color:var(--ink-2)}
+.presc b{color:var(--ink)}
+table.ref{width:100%;border-collapse:collapse;margin-top:10px;font-variant-numeric:tabular-nums}
+.ref th,.ref td{text-align:left;padding:6px 4px 6px 0;border-top:1px solid var(--line);vertical-align:top}
+.ref thead th{font-size:12px;color:var(--ink-3);font-weight:600;border-top:0;padding-bottom:2px}
+.ref tbody th{font-size:13px;color:var(--ink-2);font-weight:600;width:70px;line-height:1.2}
+.ref tbody th small{display:block;font-weight:500;font-size:12px}
+.ref td{font-weight:700;font-size:17px;line-height:1.2}
+.ref td small{display:block;font-weight:500;color:var(--ink-2);font-size:12px}
+.ref td.pend span{display:inline-block;min-width:44px;text-align:center;border:1.5px dashed var(--accent);color:var(--accent-ink);border-radius:8px;padding:0 6px}
+.ref td.new span{display:inline-block;background:var(--ink);color:var(--bg);border-radius:8px;padding:0 6px}
+.ref td.hl{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:var(--accent)}
+.ref td.dim{color:var(--ink-3);font-weight:500}
+.links{display:flex;gap:4px;margin-top:4px}
+.lk{min-height:44px;padding:0 6px;display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--accent-ink)}
+.lk svg{flex:none}
+.info{margin-top:10px;padding:10px 12px;border-radius:14px;background:var(--accent-soft);font-size:14px;line-height:1.4}
+.info p{margin:0}
+.info p+p{margin-top:4px}
+.quote{margin:10px 0 0;padding:0 0 0 12px;border-left:3px solid var(--line-2);font-size:15px;line-height:1.38}
+.quote cite{display:block;font-style:normal;font-size:12px;color:var(--ink-2);margin-top:3px;font-weight:600}
+.appr{margin-top:10px;font-size:14px;color:var(--ink-2)}
+.appr b{color:var(--ink)}
+.appr ol{margin:3px 0 0;padding-left:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+.toggle{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;font-weight:600;width:100%}
+.box{width:26px;height:26px;border-radius:8px;border:2px solid var(--line-2);flex:none}
+.small{font-size:13px;color:var(--ink-2);margin:6px 16px 0}
+
+/* descanso */
+.rest{margin:10px 16px 0;padding:10px 14px 10px;border-radius:18px;background:var(--surface-2);flex:none}
+.rest-top{display:flex;align-items:baseline;gap:10px}
+.rest-l{font-size:13px;font-weight:700;color:var(--ink-2)}
+.rest-t{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
+.rest-r{font-size:14px;color:var(--ink-2);margin-left:auto;text-align:right}
+.bar{height:6px;border-radius:3px;background:var(--line);position:relative;margin:9px 0 6px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--ink)}
+.bar b{position:absolute;top:-4px;width:2px;height:14px;background:var(--ink-2);left:66.66%}
+.hint{font-size:13px;color:var(--ink-2)}
+
+.also-l{font-size:12px;font-weight:700;color:var(--ink-2);margin:10px 16px 4px;letter-spacing:.02em}
+.also{display:flex;gap:8px;padding:0 16px;overflow-x:auto;scrollbar-width:none;flex:none}
+.also::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line-2);font-size:14px;display:inline-flex;align-items:center;gap:6px;background:var(--surface);white-space:nowrap}
+.chip b{font-weight:700}
+.chip.ok{border-color:var(--ink)}
+.next{margin:10px 16px 0;font-size:14px;color:var(--ink-2)}
+.next b{color:var(--ink)}
+.prev{display:flex;align-items:center;gap:8px;margin:10px 16px 0;font-size:14px;color:var(--ink-2);flex:none}
+.prev .t{flex:1;min-width:0;line-height:1.3}
+.prev .t b{color:var(--ink)}
+.pill{min-height:44px;padding:0 12px;border-radius:12px;border:1.5px solid var(--line-2);font-weight:700;color:var(--ink);display:inline-flex;align-items:center;font-size:14px;background:var(--surface);flex:none}
+
+/* zona do polegar */
+.ctl{margin-top:auto;padding:8px 16px 4px;flex:none}
+.load-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lbl{font-size:13px;color:var(--ink-2);font-weight:700}
+.load{min-height:48px;padding:0 14px;border-radius:14px;border:1.5px solid var(--line-2);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;display:inline-flex;align-items:baseline;gap:5px;background:var(--surface)}
+.load span{font-size:14px;font-weight:600;color:var(--ink-2)}
+.load.need{border:2px solid var(--accent);color:var(--accent-ink);font-size:17px;align-items:center}
+.same{font-size:13px;color:var(--ink-2)}
+.strip-lbl{font-size:13px;color:var(--ink-2);margin:0 0 6px;font-weight:700}
+.strip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 14px;scroll-snap-type:x proximity}
+.strip::-webkit-scrollbar{display:none}
+.rep{flex:none;width:54px;height:64px;border-radius:16px;background:var(--surface);border:1.5px solid var(--line-2);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;scroll-snap-align:start;text-align:center}
+.rep small{font-size:11px;font-weight:600;color:var(--accent-ink);margin-top:3px}
+.rep.in::after{content:"";position:absolute;left:-4px;right:-4px;bottom:-10px;height:3px;background:var(--ink-3)}
+.rep.last{border:2px solid var(--accent);background:var(--accent-soft)}
+.rep.hit{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.strip.off .rep{opacity:.38}
+.range{font-size:12px;color:var(--ink-2);margin:0 0 6px}
+.acts{display:flex;gap:8px}
+.acts button{flex:1;min-height:44px;border-radius:12px;font-size:14px;font-weight:600;color:var(--ink);background:var(--surface-2);text-align:center}
+.saved{display:flex;align-items:center;gap:8px;font-size:15px;margin-bottom:6px;min-height:44px}
+.saved .t{flex:1;min-width:0;line-height:1.3}
+.saved em{font-style:normal;font-weight:700;color:var(--accent-ink)}
+.ico{width:22px;height:22px;flex:none;color:var(--ink)}
+.rir{display:flex;gap:6px;margin-bottom:8px}
+.rir button{flex:none;width:52px;height:56px;border-radius:14px;border:1.5px solid var(--line-2);background:var(--surface);font-size:22px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.rir button small{font-size:11px;font-weight:600;color:var(--accent-ink);margin-top:3px}
+.rir .tgt{border:2px solid var(--accent);background:var(--accent-soft)}
+.rir .skip{flex:1;width:auto;font-size:15px}
+.extra{width:100%;min-height:48px;border-radius:14px;border:1.5px dashed var(--line-2);font-weight:700;font-size:15px;text-align:center}
+
+/* folhas, avisos */
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:26px 26px 0 0;padding:8px 16px 40px;box-shadow:0 -12px 40px rgba(0,0,0,.22)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line-2);margin:0 auto 12px;opacity:.7}
+.sheet h3{font-size:20px;margin:0 0 2px;line-height:1.2}
+.sheet .sub{font-size:14px;color:var(--ink-2);margin:0 0 10px}
+.disp{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:16px;border:2px solid var(--accent);margin-bottom:8px}
+.disp b{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.1}
+.disp .caret{width:2px;height:34px;background:var(--accent)}
+.disp span{font-size:15px;color:var(--ink-2);margin-left:auto;text-align:right;line-height:1.25}
+.used{display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:13px;color:var(--ink-2)}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.kp button{height:54px;border-radius:14px;background:var(--surface-2);font-size:24px;font-weight:600;text-align:center;font-variant-numeric:tabular-nums}
+.two{display:flex;gap:8px}
+.two>*{flex:1}
+.primary{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;border-radius:16px;background:var(--accent);color:var(--on-accent);font-size:18px;font-weight:700;text-align:center}
+.sec{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:14px;border:1.5px solid var(--line-2);font-weight:700;font-size:15px;background:var(--surface);text-align:center;padding:0 10px;line-height:1.2}
+.opt{display:flex;gap:10px;align-items:flex-start;width:100%;padding:11px 2px;border-top:1px solid var(--line);min-height:56px}
+.opt .tx{flex:1;min-width:0}
+.opt b{display:block;font-size:16px;line-height:1.25}
+.opt span{display:block;font-size:13px;color:var(--ink-2);line-height:1.35;margin-top:2px}
+.opt .q{font-style:italic;color:var(--ink)}
+.opt .star{width:18px;height:18px;flex:none;margin-top:2px;color:var(--ink)}
+.opt .sp{width:18px;flex:none}
+.grp{font-size:12px;font-weight:700;color:var(--ink-2);margin:12px 0 4px;letter-spacing:.02em}
+.warn{background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--warn-line);border-radius:16px;padding:11px 13px;font-size:14px;line-height:1.4}
+.warn b,.err b{display:block;font-size:15px;margin-bottom:2px}
+.warn p,.err p{margin:0}
+.warn p+p,.err p+p{margin-top:4px}
+.err{background:var(--err-bg);color:var(--err-ink);border:1px solid var(--err-line);border-radius:16px;padding:11px 13px;font-size:14px;line-height:1.4}
+.wh{display:flex;gap:8px;align-items:flex-start}
+.wh svg{flex:none;margin-top:1px}
+.btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+
+/* esqueleto */
+.sk{background:var(--surface-2);border-radius:8px}
+@media (prefers-reduced-motion:no-preference){
+  .sk{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .rep,.rir button,.chip,.sec,.primary{transition:transform .12s ease,background-color .15s ease}
+  .rep:active,.rir button:active,.chip:active,.sec:active,.primary:active{transform:scale(.95)}
+  .enter{animation:enter .24s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .bar i{transition:width 1s linear}
+}
+
+/* hoje (Agora) */
+.ag-h{display:flex;justify-content:space-between;align-items:flex-start;padding:4px 16px 4px;flex:none}
+.ag-d{font-size:23px;font-weight:700;letter-spacing:-.015em;line-height:1.2}
+.daytype{min-height:36px;display:inline-flex;align-items:center;font-size:14px;color:var(--ink-2);font-weight:600}
+.band{margin:8px 16px 0;padding:12px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);flex:none}
+.band>b{display:block;font-size:16px;line-height:1.25}
+.band>p{margin:3px 0 10px;font-size:14px;color:var(--ink-2)}
+.row{display:flex;align-items:center;gap:10px;margin:8px 16px 0;padding:6px 6px 6px 14px;border-radius:16px;background:var(--surface-2);font-size:15px;min-height:56px;flex:none}
+.row .t{flex:1;min-width:0;line-height:1.3}
+.row .t small{display:block;font-size:13px;color:var(--ink-2)}
+.now{margin:10px 16px 0;padding:14px 16px 16px;border-radius:22px;background:var(--surface);border:2px solid var(--accent);flex:none}
+.now-k{font-size:13px;color:var(--accent-ink);font-weight:700}
+.now h3{font-size:25px;margin:2px 0 4px;line-height:1.15;letter-spacing:-.015em}
+.now .items{font-size:14px;color:var(--ink-2);margin:0 0 12px}
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:var(--surface);padding-top:4px;margin-top:auto}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;min-height:50px;color:var(--ink-2);font-weight:600;text-align:center}
+.tab.on{color:var(--accent-ink)}
+.tabwrap{flex:none;background:var(--surface);margin-top:auto}
+
+/* paisagem */
+.land .notch-v{position:absolute;left:0;top:50%;width:30px;height:210px;margin-top:-105px;background:#000;border-radius:0 20px 20px 0}
+.land .hi{position:absolute;left:0;right:0;bottom:0;height:21px}
+.land-body{position:absolute;left:48px;right:44px;top:10px;bottom:24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.land-body .col{display:flex;flex-direction:column;min-height:0}
+.land-body .sh{padding:0 0 8px}
+.land-body .card,.land-body .rest,.land-body .prev{margin-left:0;margin-right:0}
+.land-body .ctl{padding:0;margin-top:0}
+
+/* ======== parada 4: página com os dois temas lado a lado ======== */
+.states{grid-template-columns:repeat(auto-fill,minmax(min(100%,700px),1fr))}
+.pair{display:flex;gap:14px;align-items:flex-start}
+.pair>div{flex:1 1 0;min-width:0}
+.tl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:0 0 5px}
+.state figcaption{max-width:74ch}
+.phone{box-shadow:0 0 0 1.5px var(--line-2),0 18px 36px -24px rgba(20,15,0,.5)}
+.doc h1{max-width:30ch}
+.doc .lead+.lead{margin-top:8px}
+.idx{max-width:1400px;margin:0 auto;padding:4px 16px 0;font-size:14px;color:var(--ink-2)}
+.idx a{color:var(--accent-ink)}
+
+.phone:has(.full) .sb{color:#fff}
+/* ======== telas comuns (não-sessão) ======== */
+.nav{display:flex;align-items:center;gap:6px;padding:0 10px 4px;flex:none}
+.nav .bk{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;flex:none;color:var(--ink)}
+.nav h2{font-size:21px;font-weight:700;letter-spacing:-.015em;flex:1;margin:0;line-height:1.15;min-width:0}
+.nav h2 small{display:block;font-size:13px;font-weight:600;color:var(--ink-2)}
+.nav .act{min-height:44px;padding:0 8px;font-size:14px;font-weight:700;color:var(--accent-ink);flex:none;text-align:right;line-height:1.2}
+.lead-p{margin:0 16px 2px;font-size:14px;color:var(--ink-2);line-height:1.4}
+.lead-p b{color:var(--ink)}
+.sec-l{font-size:12px;font-weight:700;color:var(--ink-2);margin:14px 16px 4px;letter-spacing:.03em;text-transform:uppercase}
+.sec-l.t0{margin-top:8px}
+.big{margin:8px 16px 0;padding:11px 14px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.big .n1{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px}
+.big .n1 span{font-size:15px;font-weight:600;color:var(--ink-2);letter-spacing:0}
+.big .cx{font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.35}
+.big .cx b{color:var(--ink)}
+.tabbar.five{grid-template-columns:repeat(5,1fr)}
+.tab svg{width:24px;height:24px}
+.fab{margin:10px 16px 0;display:flex;gap:8px}
+.fab>*{flex:1}
+.note-f{margin:8px 16px 0;padding:9px 12px;border-radius:14px;border:1.5px dashed var(--line-2);font-size:14px;color:var(--ink-2);line-height:1.35}
+.fin{margin:10px 16px 0;padding:0;border-radius:18px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+.fin .fr{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--line);min-height:56px}
+.fin .fr:first-child{border-top:0}
+.fin .fr .t{flex:1;min-width:0;line-height:1.3;font-size:15px}
+.fin .fr .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.fin .fr .v{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;line-height:1.1}
+.fin .fr .v small{display:block;font-size:12px;font-weight:600;color:var(--ink-2)}
+.fin .fr .v.todo{font-size:14px;font-weight:700;color:var(--accent-ink);border:1.5px dashed var(--accent);border-radius:10px;padding:5px 8px}
+.rep.w{width:76px;font-size:23px}
+.rep.w small{font-size:10.5px}
+.rep.cm{width:64px;font-size:21px}
+
+/* medidas / bioimpedância */
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:6px 16px 0}
+.fld{border:1.5px solid var(--line-2);border-radius:14px;padding:6px 9px;background:var(--surface);min-height:60px;display:flex;flex-direction:column;justify-content:center}
+.fld .l{font-size:11.5px;color:var(--ink-2);font-weight:700;line-height:1.15}
+.fld .v{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:3px}
+.fld .v span{font-size:12px;font-weight:600;color:var(--ink-2)}
+.fld .d{font-size:11.5px;color:var(--ink-2);line-height:1.2;margin-top:1px}
+.fld.vazio .v{color:var(--ink-3);font-weight:600;font-size:15px}
+.fld.wide{grid-column:1/-1}
+.fld.cur{border:2px solid var(--accent)}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 16px 0}
+.seg3 button{min-height:44px;border-radius:12px;border:1.5px solid var(--line-2);background:var(--surface);font-size:14px;font-weight:700;text-align:center;padding:0 4px;line-height:1.15}
+.seg3 button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg3.g2{grid-template-columns:1fr 1fr}
+.seg3.g4{grid-template-columns:repeat(4,1fr)}
+
+/* gráfico */
+.chart{margin:8px 16px 0}
+.chart svg{width:100%;height:auto;overflow:visible}
+.cl{font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;margin-top:3px}
+.ckey{font-size:12.5px;color:var(--ink-2);margin:5px 16px 0;line-height:1.35}
+
+/* fotos */
+.foto{position:relative;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:#CFC8BA}
+.foto svg{position:absolute;inset:0;width:100%;height:100%}
+.foto .tag{position:absolute;left:6px;bottom:5px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 6px;font-variant-numeric:tabular-nums}
+.foto.falta{background:var(--surface-2);display:grid;place-items:center;text-align:center;padding:10px}
+.foto.falta p{font-size:13px;color:var(--ink-2);margin:0;line-height:1.35;position:relative}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 16px 0}
+.duo .cp{font-size:12.5px;color:var(--ink-2);margin:4px 0 0;line-height:1.3;font-variant-numeric:tabular-nums}
+.duo .cp b{color:var(--ink);font-size:14px;display:block}
+.cort{position:relative;margin:6px 16px 0;border-radius:14px;overflow:hidden;aspect-ratio:3/4}
+.cort .lay{position:absolute;inset:0}
+.cort .lay.nova{clip-path:inset(0 0 0 54%)}
+.cort .hd{position:absolute;top:0;bottom:0;left:54%;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.cort .hd i{position:absolute;top:50%;left:50%;margin:-22px 0 0 -22px;width:44px;height:44px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:block}
+.cort .hd i::before,.cort .hd i::after{content:"";position:absolute;top:16px;width:0;height:0;border:6px solid transparent}
+.cort .hd i::before{left:6px;border-right-color:#15171A}
+.cort .hd i::after{right:6px;border-left-color:#15171A}
+.cort .mk{position:absolute;top:6px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 6px}
+.cort .mk.l{left:6px}.cort .mk.r{right:6px}
+.poses{display:flex;gap:4px;margin:8px 16px 0}
+.poses i{flex:1;height:9px;border-radius:3px;background:var(--surface-2);border:1px solid var(--line-2)}
+.poses i.f{background:var(--ink);border-color:var(--ink)}
+.poses i.c{background:var(--accent);border-color:var(--accent)}
+.poses i.x{background:repeating-linear-gradient(45deg,var(--err-line) 0 3px,transparent 3px 6px);border-color:var(--err-line)}
+
+/* sessão de fotos, modo 3 metros */
+.full{position:absolute;inset:0;display:flex;flex-direction:column;background:#0C0B0A;color:#fff;overflow:hidden}
+.full .top{flex:1;min-height:0;display:flex;flex-direction:column;padding:36px 12px 6px}
+.full .frame{position:relative;width:100%;aspect-ratio:3/4;flex:none;overflow:hidden;background:#CFC8BA}
+.full .frame>svg{position:absolute;inset:0;width:100%;height:100%}
+.full .frame.vazio{background:#15161A}
+.full .guia{position:absolute;inset:12px 26px;border:2px dashed rgba(255,255,255,.7);border-radius:6px}
+.full .bot{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;padding:6px 12px 2px;gap:8px}
+.full .nine{display:flex;gap:5px;flex:none}
+.full .nine i{flex:1;height:24px;border-radius:5px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 2px rgba(255,255,255,.8)}
+.full .nine i.f{background:#fff;box-shadow:none}
+.full .nine i.c{background:#9E9BFF;box-shadow:none}
+.full .nine i.x{background:repeating-linear-gradient(45deg,#FFADA3 0 4px,transparent 4px 8px);box-shadow:inset 0 0 0 2px #FFADA3}
+.full .ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:190px;height:190px}
+.full .ring svg{width:190px;height:190px}
+.full .ring b{position:absolute;font-size:76px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.55)}
+.full .giant{font-size:44px;font-weight:800;line-height:1;letter-spacing:-.03em;margin:14px 0 0;text-align:center}
+.full .giant.sm{font-size:32px;line-height:1.08}
+.full .inst{font-size:20px;font-weight:600;line-height:1.3;margin:0;text-align:center}
+.full .linha{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.full .vz{font-size:15px;font-weight:700;background:rgba(255,255,255,.14);border-radius:12px;padding:8px 11px;display:flex;align-items:center;gap:7px;line-height:1.25}
+.full .vz svg{flex:none}
+.full .flash{position:absolute;inset:0;background:#fff}
+.full .giro{position:absolute;inset:0;display:grid;place-items:center}
+.hip{position:absolute;left:10px;top:10px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:#15171A;color:#fff;border:1.5px dashed #fff;border-radius:8px;padding:3px 8px;z-index:3}
+/* listas de pendência / prescrição */
+.item{margin:8px 16px 0;padding:11px 13px 12px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+.item.due{border:2px solid var(--warn-line);background:var(--warn-bg);color:var(--warn-ink)}
+.item.gone{border-style:dashed;color:var(--ink-2)}
+.item .hd2{display:flex;align-items:baseline;gap:8px}
+.item .hd2 b{font-size:15.5px;line-height:1.25;flex:1;min-width:0}
+.item .hd2 .pz{font-size:12px;font-weight:700;white-space:nowrap}
+.item .de{font-size:13.5px;color:var(--ink-2);margin:3px 0 0;line-height:1.35}
+.item.due .de{color:var(--warn-ink)}
+.item .two{margin-top:9px}
+.item .sec{min-height:48px}
+.diff{display:flex;gap:9px;align-items:flex-start;margin:0 16px;padding:9px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.35}
+.diff .mk2{font-size:11px;font-weight:800;border-radius:6px;padding:2px 5px;flex:none;margin-top:1px;letter-spacing:.02em}
+.diff .mk2.tr{background:var(--accent-soft);color:var(--accent-ink)}
+.diff .mk2.eu{background:var(--ink);color:var(--bg)}
+.diff .t{flex:1;min-width:0}
+.diff .t b{display:block;font-weight:700}
+.diff .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.meal{display:flex;gap:9px;align-items:flex-start;margin:0 16px;padding:9px 0;border-top:1px solid var(--line)}
+.meal time{font-size:13px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums;width:44px;flex:none;padding-top:2px}
+.meal .t{flex:1;min-width:0}
+.meal .t b{font-size:15px;display:block;line-height:1.2}
+.meal .t small{font-size:12.5px;color:var(--ink-2);display:block;line-height:1.35;margin-top:1px}
+.meal .kc{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink-2);flex:none;padding-top:2px}
+.meal.mine .t b::after{content:" · você";font-size:11px;font-weight:700;color:var(--accent-ink);letter-spacing:.02em}
+.tot{display:flex;justify-content:space-between;margin:9px 16px 0;padding-top:8px;border-top:2px solid var(--line);font-size:14px;font-weight:700}
+.tot span{color:var(--ink-2);font-weight:600}
+
+.band2{margin:8px 16px 0;padding:11px 14px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.band2 .top2{display:flex;align-items:baseline;gap:10px}
+.band2 .n2{font-size:34px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.band2 .n2 span{font-size:14px;font-weight:600;color:var(--ink-2)}
+.band2 .tx{margin-left:auto;text-align:right;font-size:13px;color:var(--ink-2);line-height:1.25}
+.band2 .tx b{display:block;font-size:19px;color:var(--ink);font-variant-numeric:tabular-nums}
+.band2 .cx2{font-size:13px;color:var(--ink-2);margin-top:7px;line-height:1.35}
+.band2 .cx2 b{color:var(--ink)}
+.alvo{display:inline-block;padding:1px 6px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink);font-weight:700;font-size:12px}
+.seg-l{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin:2px 16px 0;font-variant-numeric:tabular-nums}
+.mrow{display:flex;align-items:center;gap:10px;margin:0 16px;padding:8px 0;border-top:1px solid var(--line);min-height:58px}
+.mrow .t{flex:1;min-width:0;line-height:1.25}
+.mrow .t b{font-size:15.5px;display:block}
+.mrow .t small{font-size:12.5px;color:var(--ink-2);display:block}
+.mrow .v2{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;line-height:1.1;flex:none}
+.mrow .v2 span{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block}
+.mrow .v2.todo{font-size:14px;color:var(--accent-ink);border:1.5px dashed var(--accent);border-radius:10px;padding:6px 9px;font-weight:700}
+.mrow .v2.nova{font-size:14px;color:var(--ink-2);font-weight:600}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<linearGradient id="gw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4DED1"/><stop offset=".62" stop-color="#D3CBBB"/><stop offset=".63" stop-color="#C2B9A7"/><stop offset="1" stop-color="#B5AB97"/></linearGradient>
+</defs>
+<symbol id="p1" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L37 90 L35 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L83 90 L85 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p2" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L26 72 L34 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L94 72 L86 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="34" cy="44" r="5" fill="#3A352D"/><circle cx="86" cy="44" r="5" fill="#3A352D"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p3" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 60 L30 44 L48 33" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 60 L90 44 L72 33" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p4" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M86 144 L86 156 L94 150 Z" fill="rgba(0,0,0,.42)"/><path d="M51 58 L69 58 L67 112 L49 112 Z" fill="#3A352D"/><path d="M62 108 L64 147" stroke="#6E6558" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M57 108 L55 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M58 63 L84 71 L102 71" stroke="#6E6558" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M58 62 L86 66 L104 66" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="59" cy="33" r="11.5" fill="#3A352D"/><path d="M59 44 L59 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p5" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M86 144 L86 156 L94 150 Z" fill="rgba(0,0,0,.42)"/><path d="M51 58 L69 58 L67 112 L49 112 Z" fill="#3A352D"/><path d="M62 108 L64 147" stroke="#6E6558" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M57 108 L55 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M58 62 L63 88 L61 107" stroke="#6E6558" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M57 62 L62 90 L60 108" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="59" cy="33" r="11.5" fill="#3A352D"/><path d="M59 44 L59 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p6" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L37 90 L35 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L83 90 L85 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p7" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L26 72 L34 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L94 72 L86 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="34" cy="44" r="5" fill="#3A352D"/><circle cx="86" cy="44" r="5" fill="#3A352D"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p8" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L28 82 L48 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L92 82 L72 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p9" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M34 144 L34 156 L26 150 Z" fill="rgba(0,0,0,.42)"/><path d="M51 58 L69 58 L67 112 L49 112 Z" fill="#3A352D"/><path d="M62 108 L64 147" stroke="#6E6558" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M57 108 L55 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M62 62 L57 88 L59 107" stroke="#6E6558" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M63 62 L58 90 L60 108" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="59" cy="33" r="11.5" fill="#3A352D"/><path d="M59 44 L59 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="bk" viewBox="0 0 24 24"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="fw" viewBox="0 0 24 24"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="undo" viewBox="0 0 24 24"><path d="M7 9h8a4.5 4.5 0 110 9H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 5.5L6.5 9l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="down" viewBox="0 0 24 24"><path d="M12 4v11M7.5 11L12 15.5 16.5 11M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="som" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" fill="currentColor"/><path d="M15 9a4.5 4.5 0 010 6M17.8 6.5a8 8 0 010 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="fita" viewBox="0 0 24 24"><path d="M3.5 7.5h17v9h-17z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 7.5v3M10.5 7.5v4.5M14 7.5v3M17.5 7.5v4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="bal" viewBox="0 0 24 24"><path d="M4 5.5h16v13H4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 9.5a4 4 0 018 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 9.5l2.5-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="lousa" viewBox="0 0 24 24"><path d="M3.5 4.5h17v12h-17z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 19.5l1.6-3M16 19.5l-1.6-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6.5 8h7M6.5 11h5M6.5 13.8h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="run" viewBox="0 0 24 24"><circle cx="14.5" cy="4.8" r="2.1" fill="currentColor"/><path d="M13 8.2l-3.4 2.2 1.6 3.1-2.6 4.4M11.2 13.5l3.6 1.3 1 4.3M13.6 9.6l3.4 1.6 2.4-.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="t-corpo" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8.2v6.3M7.5 10.3h9M9.6 14.5L8.4 21M14.4 14.5L15.6 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="t-sem" viewBox="0 0 24 24"><path d="M4 19.5h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="5" y="12" width="3.4" height="5" rx="1.2" fill="currentColor"/><rect x="10.3" y="8.5" width="3.4" height="8.5" rx="1.2" fill="currentColor"/><rect x="15.6" y="4.5" width="3.4" height="12.5" rx="1.2" fill="currentColor"/></symbol>
+<symbol id="ok2" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="rel" viewBox="0 0 24 24"><circle cx="12" cy="12.5" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4.5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 2.5h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="pen" viewBox="0 0 24 24"><path d="M4 20l1-4.2L16.2 4.6l3.2 3.2L8.2 19 4 20z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+<symbol id="nuv" viewBox="0 0 24 24"><path d="M7 17.5h9.5a3.5 3.5 0 00.2-7 5 5 0 00-9.6 1.3A3 3 0 007 17.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+
+  <symbol id="sig" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor" opacity=".28"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor" opacity=".28"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor" opacity=".28"/></symbol>
+  <symbol id="bat" viewBox="0 0 27 12"><rect x=".75" y=".75" width="22" height="10.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/><rect x="2.5" y="2.5" width="13" height="7" rx="1.5" fill="currentColor"/><rect x="24" y="4" width="1.8" height="4" rx=".9" fill="currentColor" opacity=".5"/></symbol>
+  <symbol id="dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.1" fill="currentColor"/><circle cx="12" cy="12" r="2.1" fill="currentColor"/><circle cx="19" cy="12" r="2.1" fill="currentColor"/></symbol>
+  <symbol id="ck" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.5" fill="currentColor"/><path d="M5.8 10.4l2.8 2.8 5.6-5.8" fill="none" style="stroke:var(--surface)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="cam" viewBox="0 0 20 20"><path d="M3 6.5h3l1.4-2h5.2l1.4 2h3v9H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="10" cy="11" r="2.8" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="note" viewBox="0 0 20 20"><path d="M4 3.5h12v13H4z M7 7.5h6 M7 10.5h6 M7 13.5h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="star" viewBox="0 0 20 20"><path d="M10 2.2l2.3 4.9 5.3.6-3.9 3.6 1.1 5.3L10 13.9l-4.8 2.7 1.1-5.3-3.9-3.6 5.3-.6z" fill="currentColor"/></symbol>
+  <symbol id="warn" viewBox="0 0 20 20"><path d="M10 2.5l8 14H2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 8v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14.4" r="1.05" fill="currentColor"/></symbol>
+  <symbol id="gear" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="t-agora" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="t-dias" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="t-evo" viewBox="0 0 24 24"><path d="M3.5 18l5-6 4 3 7-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 20.5h17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="t-presc" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 3.5h6v3H9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+
+<symbol id="sig-c" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor"/></symbol><symbol id="p1b" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M38.5 57 L81.5 57 L72.5 112 L47.5 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M43 61 L34 90 L32 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M77 61 L86 90 L88 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol><symbol id="p8b" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M38.5 57 L81.5 57 L72.5 112 L47.5 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M43 61 L26 82 L47 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M77 61 L94 82 L73 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol></svg>
+
+<header class="doc">
+  <p class="eyebrow">Direção D · O previsto já está escrito</p>
+  <h1>O corpo: um lugar só, onde se lê e se registra</h1>
+  <p class="lead">Quinta, 01/10, 6h02, em casa. Ele já fotografou (5h32) e já comeu o pré-treino (5h45); a pesagem é sempre antes de treinar, em semi-jejum, com a mesma roupa (P6, F42). Peso, medidas com fita, bioimpedância e fotos passam a ter <b>tela própria, e é nela que se registra</b> — ele aceitou o custo de sair de onde está para registrar.</p>
+  <p class="lead"><b>O previsto ocupa o lugar da resposta, também aqui.</b> O peso não abre teclado: a régua já vem centrada no último valor, e o que saiu na balança fica a um toque de distância. A bioimpedância vem com os números do mês passado no lugar, porque composição corporal muda devagar: confirmar é um toque, corrigir é outro. Número com vírgula nunca passa pelo teclado do sistema, que descarta a vírgula e entrega vazio (F63).</p>
+  <p class="lead">No topo fica o que decide: <b>a média da semana e a taxa</b>, não o peso de hoje. O peso de um dia oscila com água, sal e intestino, e a flutuação diária passa de 1 kg enquanto o ganho que se quer enxergar é de centenas de gramas por semana (F14, F211).</p>
+  <p class="lead" style="font-size:14px">Cada estado aparece duas vezes: <b>claro</b> e <b>escuro</b>. O tema segue o aparelho, com troca manual; as fotos do corpo não mudam de tema, porque foto não inverte. Viewport de iPhone 11 Pro Max, 414 × 896 pt.</p>
+</header>
+
+<main class="states">
+
+<figure class="state">
+<figcaption><h2><span class="n">1</span>O caso: registrar o peso sem abrir teclado</h2><p class="cap">A régua vem centrada no último peso (73,4 de 29/09) e anda de 100 em 100 g, que é a casa decimal que o produto guarda (F208). Tocar no número grava: <b>um toque, sem teclado</b>. O que está acima é o que decide — média da semana e taxa contra o intervalo-alvo do nutricionista (+0,15 a +0,30 kg/semana, F14). “Outro valor” abre o teclado do app, com vírgula, para quando a balança mostra algo fora da régua.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">6:02</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>qui 01/10 · 6h02</small></h2><button class="act">Histórico</button></div>
+  <div class="band2">
+    <div class="top2"><div><div class="n2">73,5 <span>kg</span></div><div style="font-size:12.5px;color:var(--ink-2);margin-top:2px">média desta semana · 2 pesagens</div></div>
+      <div class="tx"><b>+0,03</b>kg/semana<br><span class="alvo">alvo +0,15 a +0,30</span></div></div>
+    <div class="cx2">Três semanas seguidas com média válida. A taxa está <b>abaixo de 0,10</b> nas duas últimas — é a faixa em que a regra do nutricionista olha a força e a adesão antes de mexer na comida.</div>
+  </div>
+  <div class="fin">
+    <div class="fr"><div class="t">Cintura e medidas com fita<small>a fita chegou hoje · nenhuma medida ainda</small></div><span class="v todo">medir</span></div>
+    <div class="fr"><div class="t">Bioimpedância<small>uma vez por mês · nunca registrada</small></div><span class="v todo">registrar</span></div>
+    <div class="fr"><div class="t">Fotos do corpo<small>sessão de hoje, 9 poses, 5h32</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">completa</span></div>
+    <div class="fr"><div class="t">Comparar com 07/08<small>mesma pose, 55 dias</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+  </div>
+  <section class="ctl">
+    <div class="load-row"><span class="lbl">Hoje</span><button class="load">73,4 <span>kg</span></button><span class="same">seu último peso, 29/09</span></div>
+    <div class="strip-lbl">Peso de hoje: toque no que a balança mostrou</div>
+    <div class="strip" data-start="73,4" role="group" aria-label="Peso de hoje em quilos">
+      <button class="rep w" data-n="72,8">72,8</button><button class="rep w" data-n="72,9">72,9</button><button class="rep w" data-n="73,0">73,0</button><button class="rep w" data-n="73,1">73,1</button><button class="rep w" data-n="73,2">73,2</button><button class="rep w" data-n="73,3">73,3</button><button class="rep w last" data-n="73,4">73,4<small>último</small></button><button class="rep w" data-n="73,5">73,5</button><button class="rep w" data-n="73,6">73,6</button><button class="rep w" data-n="73,7">73,7</button><button class="rep w" data-n="73,8">73,8</button><button class="rep w" data-n="73,9">73,9</button><button class="rep w" data-n="74,0">74,0</button>
+    </div>
+    <div class="acts"><button>Outro valor</button><button>Outro dia</button><button>Medidas e balança</button></div>
+  </section>
+  <div class="tabwrap"><div class="tabbar five"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab on"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></div></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">6:02</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>qui 01/10 · 6h02</small></h2><button class="act">Histórico</button></div>
+  <div class="band2">
+    <div class="top2"><div><div class="n2">73,5 <span>kg</span></div><div style="font-size:12.5px;color:var(--ink-2);margin-top:2px">média desta semana · 2 pesagens</div></div>
+      <div class="tx"><b>+0,03</b>kg/semana<br><span class="alvo">alvo +0,15 a +0,30</span></div></div>
+    <div class="cx2">Três semanas seguidas com média válida. A taxa está <b>abaixo de 0,10</b> nas duas últimas — é a faixa em que a regra do nutricionista olha a força e a adesão antes de mexer na comida.</div>
+  </div>
+  <div class="fin">
+    <div class="fr"><div class="t">Cintura e medidas com fita<small>a fita chegou hoje · nenhuma medida ainda</small></div><span class="v todo">medir</span></div>
+    <div class="fr"><div class="t">Bioimpedância<small>uma vez por mês · nunca registrada</small></div><span class="v todo">registrar</span></div>
+    <div class="fr"><div class="t">Fotos do corpo<small>sessão de hoje, 9 poses, 5h32</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">completa</span></div>
+    <div class="fr"><div class="t">Comparar com 07/08<small>mesma pose, 55 dias</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+  </div>
+  <section class="ctl">
+    <div class="load-row"><span class="lbl">Hoje</span><button class="load">73,4 <span>kg</span></button><span class="same">seu último peso, 29/09</span></div>
+    <div class="strip-lbl">Peso de hoje: toque no que a balança mostrou</div>
+    <div class="strip" data-start="73,4" role="group" aria-label="Peso de hoje em quilos">
+      <button class="rep w" data-n="72,8">72,8</button><button class="rep w" data-n="72,9">72,9</button><button class="rep w" data-n="73,0">73,0</button><button class="rep w" data-n="73,1">73,1</button><button class="rep w" data-n="73,2">73,2</button><button class="rep w" data-n="73,3">73,3</button><button class="rep w last" data-n="73,4">73,4<small>último</small></button><button class="rep w" data-n="73,5">73,5</button><button class="rep w" data-n="73,6">73,6</button><button class="rep w" data-n="73,7">73,7</button><button class="rep w" data-n="73,8">73,8</button><button class="rep w" data-n="73,9">73,9</button><button class="rep w" data-n="74,0">74,0</button>
+    </div>
+    <div class="acts"><button>Outro valor</button><button>Outro dia</button><button>Medidas e balança</button></div>
+  </section>
+  <div class="tabwrap"><div class="tabbar five"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab on"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></div></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state">
+<figcaption><h2><span class="n">2</span>Guardado — e o valor continua na tela para ser corrigido</h2><p class="cap">Corrigir no lugar é a regra: o 73,8 fica na tela e se toca nele de novo para mudar, agora ou daqui a um mês (F208: registrar de novo no mesmo dia substitui). Sem prazo, sem “desfazer” que some em 5 s. A tela também mostra o efeito honesto do dia: a média da semana mexeu 100 g. <b>Um dia não decide nada</b>, e dizer isso é mais útil que comemorar.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">6:02</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>qui 01/10 · 6h02</small></h2><button class="act">Histórico</button></div>
+  <div class="band2">
+    <div class="top2"><div><div class="n2">73,6 <span>kg</span></div><div style="font-size:12.5px;color:var(--ink-2);margin-top:2px">média desta semana · 3 pesagens</div></div>
+      <div class="tx"><b>+0,06</b>kg/semana<br><span class="alvo">alvo +0,15 a +0,30</span></div></div>
+    <div class="cx2">A média subiu <b>100 g</b> com a pesagem de hoje. A regra lê a média e a taxa, nunca o peso de um dia.</div>
+  </div>
+  <div class="done enter">
+    <div class="h"><svg class="ico" width="26" height="26"><use href="#ck"/></svg><div class="t"><b>73,8 kg guardado</b><small>hoje, 6h02 · toque no número para corrigir</small></div><button class="pill">73,8</button></div>
+    <div class="more"><span class="t">Esta semana: <b>73,6 · 73,4 · 73,8</b>. A prescrição pede 3 a 4 pesagens por semana.</span></div>
+  </div>
+  <div class="fin">
+    <div class="fr"><div class="t">Cintura<small>fita comprada hoje · primeira medida</small></div><span class="v todo">medir</span></div>
+    <div class="fr"><div class="t">Bioimpedância<small>uma vez por mês · nunca registrada</small></div><span class="v todo">registrar</span></div>
+    <div class="fr"><div class="t">Fotos<small>sessão de hoje, 9 poses, 5h32</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">completa</span></div>
+  </div>
+  <div class="note-f">Nada aqui vence. O que não for medido hoje continua esperando sem cobrar.</div>
+  <div class="tabwrap"><div class="tabbar five"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab on"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></div></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">6:02</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>qui 01/10 · 6h02</small></h2><button class="act">Histórico</button></div>
+  <div class="band2">
+    <div class="top2"><div><div class="n2">73,6 <span>kg</span></div><div style="font-size:12.5px;color:var(--ink-2);margin-top:2px">média desta semana · 3 pesagens</div></div>
+      <div class="tx"><b>+0,06</b>kg/semana<br><span class="alvo">alvo +0,15 a +0,30</span></div></div>
+    <div class="cx2">A média subiu <b>100 g</b> com a pesagem de hoje. A regra lê a média e a taxa, nunca o peso de um dia.</div>
+  </div>
+  <div class="done enter">
+    <div class="h"><svg class="ico" width="26" height="26"><use href="#ck"/></svg><div class="t"><b>73,8 kg guardado</b><small>hoje, 6h02 · toque no número para corrigir</small></div><button class="pill">73,8</button></div>
+    <div class="more"><span class="t">Esta semana: <b>73,6 · 73,4 · 73,8</b>. A prescrição pede 3 a 4 pesagens por semana.</span></div>
+  </div>
+  <div class="fin">
+    <div class="fr"><div class="t">Cintura<small>fita comprada hoje · primeira medida</small></div><span class="v todo">medir</span></div>
+    <div class="fr"><div class="t">Bioimpedância<small>uma vez por mês · nunca registrada</small></div><span class="v todo">registrar</span></div>
+    <div class="fr"><div class="t">Fotos<small>sessão de hoje, 9 poses, 5h32</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">completa</span></div>
+  </div>
+  <div class="note-f">Nada aqui vence. O que não for medido hoje continua esperando sem cobrar.</div>
+  <div class="tabwrap"><div class="tabbar five"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab on"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></div></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state">
+<figcaption><h2><span class="n">3</span>Pesagem esquecida, descoberta semanas depois</h2><p class="cap">Pesagem esquecida pode aparecer semanas depois, não só no dia seguinte (F209) — e 36% a 50% das pesagens medidas chegaram com data passada (P1). A data é qualquer dia passado, nunca futuro (F208). A hora fica vazia de propósito: inventar hora já sujou a média de horário deste produto (F270). A régua se recentra no peso que havia <b>naquela</b> semana, não no de hoje.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Peso de outro dia<small>escolha a data</small></h2></div>
+  <div class="body">
+    <div class="seg3 g4" role="radiogroup" aria-label="Dia" style="margin-top:8px">
+      <button aria-pressed="false">hoje<br><small style="font-weight:600;color:var(--ink-2)">01/10</small></button>
+      <button aria-pressed="false">ontem<br><small style="font-weight:600;color:var(--ink-2)">30/09</small></button>
+      <button aria-pressed="true">sáb<br><small style="font-weight:600">19/09</small></button>
+      <button aria-pressed="false">outro<br><small style="font-weight:600;color:var(--ink-2)">dia</small></button>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t">Hora<small>não é registrada em data passada — e não é inventada</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div>
+      <div class="fr"><div class="t">19/09 está vazio<small>semana de 13 a 19/09: 2 pesagens até aqui</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#ok2"/></svg></div>
+    </div>
+    <div class="note-f">Guardar aqui muda a média daquela semana e pode mudar a taxa que a regra do nutricionista lê. A tela de <b>Semana</b> mostra o antes e o depois.</div>
+  </div>
+  <section class="ctl">
+    <div class="strip-lbl">Peso de sábado, 19/09</div>
+    <div class="strip" data-start="73,4" role="group" aria-label="Peso em quilos">
+      <button class="rep w" data-n="73,0">73,0</button><button class="rep w" data-n="73,1">73,1</button><button class="rep w" data-n="73,2">73,2</button><button class="rep w" data-n="73,3">73,3</button><button class="rep w last" data-n="73,4">73,4<small>na época</small></button><button class="rep w" data-n="73,5">73,5</button><button class="rep w" data-n="73,6">73,6</button><button class="rep w" data-n="73,7">73,7</button><button class="rep w" data-n="73,8">73,8</button>
+    </div>
+    <div class="acts"><button>Outro valor</button><button>Apagar esse dia</button></div>
+  </section>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Peso de outro dia<small>escolha a data</small></h2></div>
+  <div class="body">
+    <div class="seg3 g4" role="radiogroup" aria-label="Dia" style="margin-top:8px">
+      <button aria-pressed="false">hoje<br><small style="font-weight:600;color:var(--ink-2)">01/10</small></button>
+      <button aria-pressed="false">ontem<br><small style="font-weight:600;color:var(--ink-2)">30/09</small></button>
+      <button aria-pressed="true">sáb<br><small style="font-weight:600">19/09</small></button>
+      <button aria-pressed="false">outro<br><small style="font-weight:600;color:var(--ink-2)">dia</small></button>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t">Hora<small>não é registrada em data passada — e não é inventada</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div>
+      <div class="fr"><div class="t">19/09 está vazio<small>semana de 13 a 19/09: 2 pesagens até aqui</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#ok2"/></svg></div>
+    </div>
+    <div class="note-f">Guardar aqui muda a média daquela semana e pode mudar a taxa que a regra do nutricionista lê. A tela de <b>Semana</b> mostra o antes e o depois.</div>
+  </div>
+  <section class="ctl">
+    <div class="strip-lbl">Peso de sábado, 19/09</div>
+    <div class="strip" data-start="73,4" role="group" aria-label="Peso em quilos">
+      <button class="rep w" data-n="73,0">73,0</button><button class="rep w" data-n="73,1">73,1</button><button class="rep w" data-n="73,2">73,2</button><button class="rep w" data-n="73,3">73,3</button><button class="rep w last" data-n="73,4">73,4<small>na época</small></button><button class="rep w" data-n="73,5">73,5</button><button class="rep w" data-n="73,6">73,6</button><button class="rep w" data-n="73,7">73,7</button><button class="rep w" data-n="73,8">73,8</button>
+    </div>
+    <div class="acts"><button>Outro valor</button><button>Apagar esse dia</button></div>
+  </section>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state">
+<figcaption><h2><span class="n">4</span>Já existe peso hoje: substituir é dito antes, não depois</h2><p class="cap">Uma medida por dia; registrar de novo no mesmo dia substitui (F208). Em vez de avisar depois do toque, a tela traz o valor que já existe e o que vai acontecer com ele. Esta tela também é a resposta a um defeito antigo: registrar peso já recusou número válido e já travou com erro (F275) — aqui não há número inválido possível, porque não há digitação livre.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">15:10</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Peso de hoje<small>qui 01/10</small></h2></div>
+  <div class="body">
+    <div class="warn" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>Hoje já tem 73,8 kg, de 6h02</b><p>Guardar outro valor substitui esse. A pesagem da manhã, em semi-jejum, é a que a regra espera — a de agora, depois do almoço, não é comparável.</p></div></div></div>
+    <div class="fin"><div class="fr"><div class="t">73,8 kg<small>hoje, 6h02</small></div><button class="pill">corrigir</button></div></div>
+  </div>
+  <section class="ctl">
+    <div class="strip-lbl">Substituir por</div>
+    <div class="strip" data-start="73,8" role="group" aria-label="Peso em quilos">
+      <button class="rep w" data-n="73,4">73,4</button><button class="rep w" data-n="73,5">73,5</button><button class="rep w" data-n="73,6">73,6</button><button class="rep w" data-n="73,7">73,7</button><button class="rep w last" data-n="73,8">73,8<small>guardado</small></button><button class="rep w" data-n="73,9">73,9</button><button class="rep w" data-n="74,0">74,0</button><button class="rep w" data-n="74,1">74,1</button><button class="rep w" data-n="74,2">74,2</button><button class="rep w" data-n="74,3">74,3</button>
+    </div>
+    <div class="acts"><button>Manter 73,8</button><button>Outro valor</button></div>
+  </section>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">15:10</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Peso de hoje<small>qui 01/10</small></h2></div>
+  <div class="body">
+    <div class="warn" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>Hoje já tem 73,8 kg, de 6h02</b><p>Guardar outro valor substitui esse. A pesagem da manhã, em semi-jejum, é a que a regra espera — a de agora, depois do almoço, não é comparável.</p></div></div></div>
+    <div class="fin"><div class="fr"><div class="t">73,8 kg<small>hoje, 6h02</small></div><button class="pill">corrigir</button></div></div>
+  </div>
+  <section class="ctl">
+    <div class="strip-lbl">Substituir por</div>
+    <div class="strip" data-start="73,8" role="group" aria-label="Peso em quilos">
+      <button class="rep w" data-n="73,4">73,4</button><button class="rep w" data-n="73,5">73,5</button><button class="rep w" data-n="73,6">73,6</button><button class="rep w" data-n="73,7">73,7</button><button class="rep w last" data-n="73,8">73,8<small>guardado</small></button><button class="rep w" data-n="73,9">73,9</button><button class="rep w" data-n="74,0">74,0</button><button class="rep w" data-n="74,1">74,1</button><button class="rep w" data-n="74,2">74,2</button><button class="rep w" data-n="74,3">74,3</button>
+    </div>
+    <div class="acts"><button>Manter 73,8</button><button>Outro valor</button></div>
+  </section>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state">
+<figcaption><h2><span class="n">5</span>Medidas com fita: a primeira de todas, e o que a fita erra</h2><p class="cap">Ele comprou a fita em 01/10 e quer medir cintura, braço e o que der para medir sozinho (P6, D1). Nunca houve uma medida (P1). A fita erra de posicionamento mais do que a balança varia de água (F43), e por isso cada medida guarda, na primeira vez, <b>como ele mediu</b> — uma frase dele, no teclado do sistema, que volta como lembrete nas próximas. A cintura é informação complementar: saiu da regra do nutricionista em 21/09 (F221).</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">6:05</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Medidas com fita<small>qui 01/10 · primeira vez</small></h2></div>
+  <div class="body">
+    <div class="note-f">Guarde na primeira vez <b>onde</b> você passou a fita. Repetir o ponto vale mais que o número em si.</div>
+    <div class="mrow"><div class="t"><b>Cintura</b><small>sem medida · a fita chegou hoje</small></div><span class="v2 todo">medir</span></div>
+    <div class="mrow"><div class="t"><b>Braço</b><small>sem medida</small></div><span class="v2 todo">medir</span></div>
+    <div class="mrow"><div class="t"><b>Coxa</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <div class="mrow"><div class="t"><b>Panturrilha</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <div class="mrow"><div class="t"><b>Peito</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <div class="mrow"><div class="t"><b>Quadril</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <p class="small" style="margin:10px 16px 0">Só entram medidas que você tira sozinho. Ligar uma medida aqui não cria cobrança: elas não têm frequência prescrita.</p>
+  </div>
+  <section class="ctl">
+    <div class="strip-lbl">Cintura, em centímetros</div>
+    <div class="strip" data-start="80,0" role="group" aria-label="Cintura em centímetros">
+      <button class="rep cm" data-n="77,0">77,0</button><button class="rep cm" data-n="77,5">77,5</button><button class="rep cm" data-n="78,0">78,0</button><button class="rep cm" data-n="78,5">78,5</button><button class="rep cm" data-n="79,0">79,0</button><button class="rep cm" data-n="79,5">79,5</button><button class="rep cm" data-n="80,0">80,0</button><button class="rep cm" data-n="80,5">80,5</button><button class="rep cm" data-n="81,0">81,0</button><button class="rep cm" data-n="81,5">81,5</button>
+    </div>
+    <div class="range">sem última medida, a régua abre no meio da faixa comum e “outro valor” abre o teclado</div>
+    <div class="acts"><button>Outro valor</button><button>Como eu medi</button></div>
+  </section>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">6:05</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Medidas com fita<small>qui 01/10 · primeira vez</small></h2></div>
+  <div class="body">
+    <div class="note-f">Guarde na primeira vez <b>onde</b> você passou a fita. Repetir o ponto vale mais que o número em si.</div>
+    <div class="mrow"><div class="t"><b>Cintura</b><small>sem medida · a fita chegou hoje</small></div><span class="v2 todo">medir</span></div>
+    <div class="mrow"><div class="t"><b>Braço</b><small>sem medida</small></div><span class="v2 todo">medir</span></div>
+    <div class="mrow"><div class="t"><b>Coxa</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <div class="mrow"><div class="t"><b>Panturrilha</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <div class="mrow"><div class="t"><b>Peito</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <div class="mrow"><div class="t"><b>Quadril</b><small>sem medida</small></div><span class="v2 nova">ligar</span></div>
+    <p class="small" style="margin:10px 16px 0">Só entram medidas que você tira sozinho. Ligar uma medida aqui não cria cobrança: elas não têm frequência prescrita.</p>
+  </div>
+  <section class="ctl">
+    <div class="strip-lbl">Cintura, em centímetros</div>
+    <div class="strip" data-start="80,0" role="group" aria-label="Cintura em centímetros">
+      <button class="rep cm" data-n="77,0">77,0</button><button class="rep cm" data-n="77,5">77,5</button><button class="rep cm" data-n="78,0">78,0</button><button class="rep cm" data-n="78,5">78,5</button><button class="rep cm" data-n="79,0">79,0</button><button class="rep cm" data-n="79,5">79,5</button><button class="rep cm" data-n="80,0">80,0</button><button class="rep cm" data-n="80,5">80,5</button><button class="rep cm" data-n="81,0">81,0</button><button class="rep cm" data-n="81,5">81,5</button>
+    </div>
+    <div class="range">sem última medida, a régua abre no meio da faixa comum e “outro valor” abre o teclado</div>
+    <div class="acts"><button>Outro valor</button><button>Como eu medi</button></div>
+  </section>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state">
+<figcaption><h2><span class="n">6</span>Bioimpedância: o mês passado já está escrito, ele só corrige</h2><p class="cap">Uma vez por mês (D2), sentado, transcrevendo da balança. São treze números, e digitá-los do zero todo mês seria o tipo de fluxo que ele recusa. Então <b>cada campo vem com o valor do mês passado</b> e a variação ao lado: o que não mudou fica como está, o que mudou recebe um toque. Os campos aceitam ficar vazios — nenhuma balança mostra tudo, e inventar número aqui estragaria a série inteira.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:28</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Bioimpedância<small>qui 01/10 · anterior: 03/09</small></h2><button class="act">Guardar</button></div>
+  <div class="body">
+    <p class="sec-l t0">Gordura</p>
+    <div class="fields">
+      <div class="fld cur"><span class="l">Percentual</span><span class="v">16,8<span> %</span></span><span class="d">era 17,4 · −0,6</span></div>
+      <div class="fld"><span class="l">Massa de gordura</span><span class="v">12,3<span> kg</span></span><span class="d">era 12,6</span></div>
+      <div class="fld wide"><span class="l">Gordura visceral</span><span class="v">5<span> · nível</span></span><span class="d">era 5 · sem mudança</span></div>
+    </div>
+    <p class="sec-l">Massa</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Massa magra</span><span class="v">58,1<span> kg</span></span><span class="d">era 56,9 · +1,2</span></div>
+      <div class="fld"><span class="l">Massa óssea</span><span class="v">3,1<span> kg</span></span><span class="d">era 3,1</span></div>
+    </div>
+    <p class="sec-l">Água corporal</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Intracelular</span><span class="v">24,6<span> l</span></span><span class="d">era 24,1</span></div>
+      <div class="fld"><span class="l">Extracelular</span><span class="v">14,2<span> l</span></span><span class="d">era 14,0</span></div>
+    </div>
+    <p class="sec-l">Metabolismo</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Taxa metabólica basal</span><span class="v">1.712<span> kcal</span></span><span class="d">era 1.689</span></div>
+      <div class="fld"><span class="l">Idade metabólica</span><span class="v">24<span> anos</span></span><span class="d">era 25</span></div>
+      <div class="fld wide"><span class="l">IMC ajustado</span><span class="v">23,4</span><span class="d">era 23,2 · com o peso de hoje, 73,8 kg</span></div>
+    </div>
+    <p class="sec-l">Por segmento · massa magra</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Braço direito</span><span class="v">3,4<span> kg</span></span><span class="d">era 3,3</span></div>
+      <div class="fld"><span class="l">Braço esquerdo</span><span class="v">3,3<span> kg</span></span><span class="d">era 3,2</span></div>
+      <div class="fld"><span class="l">Perna direita</span><span class="v">9,8<span> kg</span></span><span class="d">era 9,7</span></div>
+      <div class="fld"><span class="l">Perna esquerda</span><span class="v">9,7<span> kg</span></span><span class="d">era 9,7</span></div>
+      <div class="fld wide"><span class="l">Tronco</span><span class="v">26,4<span> kg</span></span><span class="d">era 25,8 · +0,6</span></div>
+    </div>
+    <div class="note-f">Treze números do mês passado já estão no lugar. Toque só no que mudou.</div>
+  </div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:28</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Bioimpedância<small>qui 01/10 · anterior: 03/09</small></h2><button class="act">Guardar</button></div>
+  <div class="body">
+    <p class="sec-l t0">Gordura</p>
+    <div class="fields">
+      <div class="fld cur"><span class="l">Percentual</span><span class="v">16,8<span> %</span></span><span class="d">era 17,4 · −0,6</span></div>
+      <div class="fld"><span class="l">Massa de gordura</span><span class="v">12,3<span> kg</span></span><span class="d">era 12,6</span></div>
+      <div class="fld wide"><span class="l">Gordura visceral</span><span class="v">5<span> · nível</span></span><span class="d">era 5 · sem mudança</span></div>
+    </div>
+    <p class="sec-l">Massa</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Massa magra</span><span class="v">58,1<span> kg</span></span><span class="d">era 56,9 · +1,2</span></div>
+      <div class="fld"><span class="l">Massa óssea</span><span class="v">3,1<span> kg</span></span><span class="d">era 3,1</span></div>
+    </div>
+    <p class="sec-l">Água corporal</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Intracelular</span><span class="v">24,6<span> l</span></span><span class="d">era 24,1</span></div>
+      <div class="fld"><span class="l">Extracelular</span><span class="v">14,2<span> l</span></span><span class="d">era 14,0</span></div>
+    </div>
+    <p class="sec-l">Metabolismo</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Taxa metabólica basal</span><span class="v">1.712<span> kcal</span></span><span class="d">era 1.689</span></div>
+      <div class="fld"><span class="l">Idade metabólica</span><span class="v">24<span> anos</span></span><span class="d">era 25</span></div>
+      <div class="fld wide"><span class="l">IMC ajustado</span><span class="v">23,4</span><span class="d">era 23,2 · com o peso de hoje, 73,8 kg</span></div>
+    </div>
+    <p class="sec-l">Por segmento · massa magra</p>
+    <div class="fields">
+      <div class="fld"><span class="l">Braço direito</span><span class="v">3,4<span> kg</span></span><span class="d">era 3,3</span></div>
+      <div class="fld"><span class="l">Braço esquerdo</span><span class="v">3,3<span> kg</span></span><span class="d">era 3,2</span></div>
+      <div class="fld"><span class="l">Perna direita</span><span class="v">9,8<span> kg</span></span><span class="d">era 9,7</span></div>
+      <div class="fld"><span class="l">Perna esquerda</span><span class="v">9,7<span> kg</span></span><span class="d">era 9,7</span></div>
+      <div class="fld wide"><span class="l">Tronco</span><span class="v">26,4<span> kg</span></span><span class="d">era 25,8 · +0,6</span></div>
+    </div>
+    <div class="note-f">Treze números do mês passado já estão no lugar. Toque só no que mudou.</div>
+  </div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state">
+<figcaption><h2><span class="n">7</span>Bioimpedância na primeira vez: tudo vazio, e vazio pode continuar vazio</h2><p class="cap">Sem mês anterior não há previsto, e a tela não finge: todos os campos ficam em branco, com a unidade de cada um. “Deixe em branco o que a sua balança não mostra” está escrito porque não se sabe qual balança é dele — e um campo obrigatório aqui convidaria a chutar. O teclado é o do app, por causa da vírgula (F63); o número com milhar (taxa basal) também.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:24</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Bioimpedância<small>primeira vez</small></h2><button class="act" style="color:var(--ink-3)">Guardar</button></div>
+  <div class="body">
+    <div class="note-f">Deixe em branco o que a sua balança não mostra. Nada aqui é obrigatório, e o que ficar vazio não vira zero.</div>
+    <p class="sec-l">Gordura</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Percentual</span><span class="v">— %</span></div>
+      <div class="fld vazio"><span class="l">Massa de gordura</span><span class="v">— kg</span></div>
+      <div class="fld vazio wide"><span class="l">Gordura visceral</span><span class="v">— nível</span></div>
+    </div>
+    <p class="sec-l">Massa</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Massa magra</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Massa óssea</span><span class="v">— kg</span></div>
+    </div>
+    <p class="sec-l">Água corporal</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Intracelular</span><span class="v">— l</span></div>
+      <div class="fld vazio"><span class="l">Extracelular</span><span class="v">— l</span></div>
+    </div>
+    <p class="sec-l">Metabolismo</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Taxa metabólica basal</span><span class="v">— kcal</span></div>
+      <div class="fld vazio"><span class="l">Idade metabólica</span><span class="v">— anos</span></div>
+      <div class="fld vazio wide"><span class="l">IMC ajustado</span><span class="v">—</span></div>
+    </div>
+    <p class="sec-l">Por segmento · massa magra</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Braço direito</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Braço esquerdo</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Perna direita</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Perna esquerda</span><span class="v">— kg</span></div>
+      <div class="fld vazio wide"><span class="l">Tronco</span><span class="v">— kg</span></div>
+    </div>
+  </div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:24</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Bioimpedância<small>primeira vez</small></h2><button class="act" style="color:var(--ink-3)">Guardar</button></div>
+  <div class="body">
+    <div class="note-f">Deixe em branco o que a sua balança não mostra. Nada aqui é obrigatório, e o que ficar vazio não vira zero.</div>
+    <p class="sec-l">Gordura</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Percentual</span><span class="v">— %</span></div>
+      <div class="fld vazio"><span class="l">Massa de gordura</span><span class="v">— kg</span></div>
+      <div class="fld vazio wide"><span class="l">Gordura visceral</span><span class="v">— nível</span></div>
+    </div>
+    <p class="sec-l">Massa</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Massa magra</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Massa óssea</span><span class="v">— kg</span></div>
+    </div>
+    <p class="sec-l">Água corporal</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Intracelular</span><span class="v">— l</span></div>
+      <div class="fld vazio"><span class="l">Extracelular</span><span class="v">— l</span></div>
+    </div>
+    <p class="sec-l">Metabolismo</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Taxa metabólica basal</span><span class="v">— kcal</span></div>
+      <div class="fld vazio"><span class="l">Idade metabólica</span><span class="v">— anos</span></div>
+      <div class="fld vazio wide"><span class="l">IMC ajustado</span><span class="v">—</span></div>
+    </div>
+    <p class="sec-l">Por segmento · massa magra</p>
+    <div class="fields">
+      <div class="fld vazio"><span class="l">Braço direito</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Braço esquerdo</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Perna direita</span><span class="v">— kg</span></div>
+      <div class="fld vazio"><span class="l">Perna esquerda</span><span class="v">— kg</span></div>
+      <div class="fld vazio wide"><span class="l">Tronco</span><span class="v">— kg</span></div>
+    </div>
+  </div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state">
+<figcaption><h2><span class="n">8</span>A leitura: a curva que achatou, e os pontos que não decidem</h2><p class="cap">Nove semanas de médias semanais. A linha é o que a regra lê; os pontos pequenos são as pesagens do dia, espalhadas em torno dela — <b>a oscilação diária passa de 1 kg</b> (F14), e vê-la ao lado da média explica por que um dia não decide nada. A faixa clara é o alvo do nutricionista traduzido em inclinação. O achatamento das últimas três semanas é a história: taxa +0,10, +0,03 e +0,03.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:30</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Peso<small>9 semanas · 31 pesagens</small></h2><button class="act">Semana</button></div>
+  <div class="body">
+    <div class="chart">
+      <svg viewBox="0 0 390 118" role="img" aria-label="Médias semanais de 71,5 a 73,5 kg, com achatamento nas últimas três semanas">
+        <path d="M10 96 L370 10 L370 34 L10 101 Z" fill="var(--accent-soft)"/>
+        <g stroke="var(--line)" stroke-width="1">
+          <line x1="10" y1="108" x2="380" y2="108"/><line x1="10" y1="10" x2="380" y2="10" stroke-dasharray="3 4"/>
+        </g>
+        <g fill="var(--ink-3)" opacity=".85">
+          <circle cx="10" cy="86" r="2.6"/><circle cx="22" cy="104" r="2.6"/><circle cx="46" cy="74" r="2.6"/><circle cx="64" cy="88" r="2.6"/><circle cx="92" cy="58" r="2.6"/><circle cx="110" cy="72" r="2.6"/><circle cx="140" cy="42" r="2.6"/><circle cx="156" cy="56" r="2.6"/><circle cx="186" cy="26" r="2.6"/><circle cx="200" cy="42" r="2.6"/><circle cx="230" cy="16" r="2.6"/><circle cx="246" cy="30" r="2.6"/><circle cx="276" cy="12" r="2.6"/><circle cx="290" cy="26" r="2.6"/><circle cx="320" cy="10" r="2.6"/><circle cx="334" cy="24" r="2.6"/><circle cx="364" cy="9" r="2.6"/><circle cx="376" cy="24" r="2.6"/>
+        </g>
+        <polyline points="10,96 55,80 100,65 145,49 190,34 235,23 280,19 325,18 370,17" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <g fill="var(--ink)"><circle cx="280" cy="19" r="4"/><circle cx="325" cy="18" r="4"/><circle cx="370" cy="17" r="4"/></g>
+        <circle cx="370" cy="17" r="8" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      </svg>
+      <div class="cl"><span>02/08 · 71,5</span><span>hoje · 73,6</span></div>
+    </div>
+    <p class="ckey">Linha: média da semana. Pontos: pesagens do dia. Faixa: o alvo de +0,15 a +0,30 kg por semana.</p>
+    <p class="sec-l">Taxa, semana a semana</p>
+    <div class="fin">
+      <div class="fr"><div class="t">27/09 a 03/10<small>em curso · 3 pesagens</small></div><span class="v">+0,06 <small>abaixo do alvo</small></span></div>
+      <div class="fr"><div class="t">20/09 a 26/09<small>3 pesagens</small></div><span class="v">+0,03 <small>abaixo do alvo</small></span></div>
+      <div class="fr"><div class="t">13/09 a 19/09<small>3 pesagens</small></div><span class="v">+0,10 <small>abaixo do alvo</small></span></div>
+      <div class="fr"><div class="t">06/09 a 12/09<small>2 pesagens</small></div><span class="v">+0,27 <small>no alvo</small></span></div>
+    </div>
+    <div class="note-f">Duas taxas seguidas abaixo de 0,10 é exatamente o que a regra do nutricionista lê. O que ela decide está na tela <b>Semana</b>.</div>
+  </div>
+  <div class="tabwrap"><div class="tabbar five"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab on"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></div></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:30</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Peso<small>9 semanas · 31 pesagens</small></h2><button class="act">Semana</button></div>
+  <div class="body">
+    <div class="chart">
+      <svg viewBox="0 0 390 118" role="img" aria-label="Médias semanais de 71,5 a 73,5 kg, com achatamento nas últimas três semanas">
+        <path d="M10 96 L370 10 L370 34 L10 101 Z" fill="var(--accent-soft)"/>
+        <g stroke="var(--line)" stroke-width="1">
+          <line x1="10" y1="108" x2="380" y2="108"/><line x1="10" y1="10" x2="380" y2="10" stroke-dasharray="3 4"/>
+        </g>
+        <g fill="var(--ink-3)" opacity=".85">
+          <circle cx="10" cy="86" r="2.6"/><circle cx="22" cy="104" r="2.6"/><circle cx="46" cy="74" r="2.6"/><circle cx="64" cy="88" r="2.6"/><circle cx="92" cy="58" r="2.6"/><circle cx="110" cy="72" r="2.6"/><circle cx="140" cy="42" r="2.6"/><circle cx="156" cy="56" r="2.6"/><circle cx="186" cy="26" r="2.6"/><circle cx="200" cy="42" r="2.6"/><circle cx="230" cy="16" r="2.6"/><circle cx="246" cy="30" r="2.6"/><circle cx="276" cy="12" r="2.6"/><circle cx="290" cy="26" r="2.6"/><circle cx="320" cy="10" r="2.6"/><circle cx="334" cy="24" r="2.6"/><circle cx="364" cy="9" r="2.6"/><circle cx="376" cy="24" r="2.6"/>
+        </g>
+        <polyline points="10,96 55,80 100,65 145,49 190,34 235,23 280,19 325,18 370,17" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <g fill="var(--ink)"><circle cx="280" cy="19" r="4"/><circle cx="325" cy="18" r="4"/><circle cx="370" cy="17" r="4"/></g>
+        <circle cx="370" cy="17" r="8" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      </svg>
+      <div class="cl"><span>02/08 · 71,5</span><span>hoje · 73,6</span></div>
+    </div>
+    <p class="ckey">Linha: média da semana. Pontos: pesagens do dia. Faixa: o alvo de +0,15 a +0,30 kg por semana.</p>
+    <p class="sec-l">Taxa, semana a semana</p>
+    <div class="fin">
+      <div class="fr"><div class="t">27/09 a 03/10<small>em curso · 3 pesagens</small></div><span class="v">+0,06 <small>abaixo do alvo</small></span></div>
+      <div class="fr"><div class="t">20/09 a 26/09<small>3 pesagens</small></div><span class="v">+0,03 <small>abaixo do alvo</small></span></div>
+      <div class="fr"><div class="t">13/09 a 19/09<small>3 pesagens</small></div><span class="v">+0,10 <small>abaixo do alvo</small></span></div>
+      <div class="fr"><div class="t">06/09 a 12/09<small>2 pesagens</small></div><span class="v">+0,27 <small>no alvo</small></span></div>
+    </div>
+    <div class="note-f">Duas taxas seguidas abaixo de 0,10 é exatamente o que a regra do nutricionista lê. O que ela decide está na tela <b>Semana</b>.</div>
+  </div>
+  <div class="tabwrap"><div class="tabbar five"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab on"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></div></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state">
+<figcaption><h2><span class="n">9</span>A semana com uma pesagem só: a média não vale, e a tela diz o que falta</h2><p class="cap">A média da semana precisa de pelo menos 2 pesagens (F211), e um buraco entre semanas quebra a sequência de três que a regra exige (F212). Em vez de mostrar uma média falsa, a tela mostra o que falta e quantos dias restam para conseguir — e diz qual decisão fica parada por causa disso. É a única cobrança que esta direção aceita fazer, porque ela tem consequência escrita.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:32</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Corpo<small>sex 02/10</small></h2></div>
+  <div class="band2">
+    <div class="top2"><div><div class="n2" style="color:var(--ink-3);font-size:26px">sem média</div><div style="font-size:12.5px;color:var(--ink-2);margin-top:2px">esta semana · 1 pesagem</div></div>
+      <div class="tx"><b>—</b>kg/semana</div></div>
+    <div class="cx2">Faltam <b>2 dias</b> na semana e <b>1 pesagem</b> para a média valer. Sem ela, a sequência de três semanas se quebra e a regra do nutricionista volta a “pedir pesagens”.</div>
+  </div>
+  <div class="fin">
+    <div class="fr"><div class="t">dom 27/09<small></small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div>
+    <div class="fr"><div class="t">seg 28/09<small>6h40</small></div><span class="v">73,6 <small>kg</small></span></div>
+    <div class="fr"><div class="t">ter 29/09 · qua 30/09 · qui 01/10<small>sem pesagem</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div>
+    <div class="fr"><div class="t">sex 02/10 · sáb 03/10<small>ainda dá tempo</small></div><span class="v todo">pesar</span></div>
+  </div>
+  <p class="small" style="margin:10px 16px 0">A prescrição pede 3 a 4 pesagens por semana. No medido foram 2,75.</p>
+  <section class="ctl">
+    <div class="strip-lbl">Peso de hoje</div>
+    <div class="strip" data-start="73,6" role="group" aria-label="Peso em quilos">
+      <button class="rep w" data-n="73,2">73,2</button><button class="rep w" data-n="73,3">73,3</button><button class="rep w" data-n="73,4">73,4</button><button class="rep w" data-n="73,5">73,5</button><button class="rep w last" data-n="73,6">73,6<small>último</small></button><button class="rep w" data-n="73,7">73,7</button><button class="rep w" data-n="73,8">73,8</button><button class="rep w" data-n="73,9">73,9</button><button class="rep w" data-n="74,0">74,0</button>
+    </div>
+    <div class="acts"><button>Outro valor</button><button>Outro dia</button><button>Não me pesei</button></div>
+  </section>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:32</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Corpo<small>sex 02/10</small></h2></div>
+  <div class="band2">
+    <div class="top2"><div><div class="n2" style="color:var(--ink-3);font-size:26px">sem média</div><div style="font-size:12.5px;color:var(--ink-2);margin-top:2px">esta semana · 1 pesagem</div></div>
+      <div class="tx"><b>—</b>kg/semana</div></div>
+    <div class="cx2">Faltam <b>2 dias</b> na semana e <b>1 pesagem</b> para a média valer. Sem ela, a sequência de três semanas se quebra e a regra do nutricionista volta a “pedir pesagens”.</div>
+  </div>
+  <div class="fin">
+    <div class="fr"><div class="t">dom 27/09<small></small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div>
+    <div class="fr"><div class="t">seg 28/09<small>6h40</small></div><span class="v">73,6 <small>kg</small></span></div>
+    <div class="fr"><div class="t">ter 29/09 · qua 30/09 · qui 01/10<small>sem pesagem</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div>
+    <div class="fr"><div class="t">sex 02/10 · sáb 03/10<small>ainda dá tempo</small></div><span class="v todo">pesar</span></div>
+  </div>
+  <p class="small" style="margin:10px 16px 0">A prescrição pede 3 a 4 pesagens por semana. No medido foram 2,75.</p>
+  <section class="ctl">
+    <div class="strip-lbl">Peso de hoje</div>
+    <div class="strip" data-start="73,6" role="group" aria-label="Peso em quilos">
+      <button class="rep w" data-n="73,2">73,2</button><button class="rep w" data-n="73,3">73,3</button><button class="rep w" data-n="73,4">73,4</button><button class="rep w" data-n="73,5">73,5</button><button class="rep w last" data-n="73,6">73,6<small>último</small></button><button class="rep w" data-n="73,7">73,7</button><button class="rep w" data-n="73,8">73,8</button><button class="rep w" data-n="73,9">73,9</button><button class="rep w" data-n="74,0">74,0</button>
+    </div>
+    <div class="acts"><button>Outro valor</button><button>Outro dia</button><button>Não me pesei</button></div>
+  </section>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state">
+<figcaption><h2><span class="n">10</span>Vazio de verdade: nenhum peso, nenhuma medida, nenhuma foto</h2><p class="cap">Aparelho novo, ou histórico apagado. O vazio diz <b>quanto custa sair dele</b>, em dias e em toques, porque a regra do nutricionista precisa de três semanas seguidas com média válida antes de decidir qualquer coisa (F212). Nenhuma barra de progresso, nenhum “comece agora!”: só o caminho, com os números reais da prescrição.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">7:10</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>nada registrado ainda</small></h2></div>
+  <div class="body">
+    <div class="big">
+      <div class="n1">3 <span>semanas até a regra poder decidir</span></div>
+      <div class="cx">Ela precisa de três semanas seguidas com média válida, e cada média precisa de pelo menos <b>2 pesagens</b>. São 6 pesagens, em 3 semanas, para o primeiro veredito existir.</div>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t"><b>Peso</b><small>de manhã, antes de treinar, mesma roupa</small></div><span class="v todo">primeira</span></div>
+      <div class="fr"><div class="t"><b>Cintura e outras medidas</b><small>sem frequência prescrita · quando você quiser</small></div><span class="v todo">primeira</span></div>
+      <div class="fr"><div class="t"><b>Bioimpedância</b><small>uma vez por mês</small></div><span class="v todo">primeira</span></div>
+      <div class="fr"><div class="t"><b>Fotos</b><small>a cada 14 dias, 9 poses, menos de 5 min</small></div><span class="v todo">primeira</span></div>
+    </div>
+    <div class="note-f">Se você já tem histórico em outro aparelho, <b>entrar na conta</b> traz tudo de volta antes de registrar qualquer coisa aqui.</div>
+  </div>
+  <div class="tabwrap"><div class="tabbar five"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab on"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></div></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">7:10</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>nada registrado ainda</small></h2></div>
+  <div class="body">
+    <div class="big">
+      <div class="n1">3 <span>semanas até a regra poder decidir</span></div>
+      <div class="cx">Ela precisa de três semanas seguidas com média válida, e cada média precisa de pelo menos <b>2 pesagens</b>. São 6 pesagens, em 3 semanas, para o primeiro veredito existir.</div>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t"><b>Peso</b><small>de manhã, antes de treinar, mesma roupa</small></div><span class="v todo">primeira</span></div>
+      <div class="fr"><div class="t"><b>Cintura e outras medidas</b><small>sem frequência prescrita · quando você quiser</small></div><span class="v todo">primeira</span></div>
+      <div class="fr"><div class="t"><b>Bioimpedância</b><small>uma vez por mês</small></div><span class="v todo">primeira</span></div>
+      <div class="fr"><div class="t"><b>Fotos</b><small>a cada 14 dias, 9 poses, menos de 5 min</small></div><span class="v todo">primeira</span></div>
+    </div>
+    <div class="note-f">Se você já tem histórico em outro aparelho, <b>entrar na conta</b> traz tudo de volta antes de registrar qualquer coisa aqui.</div>
+  </div>
+  <div class="tabwrap"><div class="tabbar five"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab on"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></div></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state">
+<figcaption><h2><span class="n">11</span>Erro: o peso não foi guardado, e continua na tela</h2><p class="cap">Armazenamento cheio (F53). O número que ele tocou fica onde está, a média não se mexe e a tela não diz “guardado”. A saída oferecida é a que resolve: baixar a cópia de segurança agora e liberar as fotos antigas, que já estão na cópia remota (F232, F249). Fechar o app logo depois de digitar já perdeu registro neste produto (F294) — por isso o aviso é fixo e não some sozinho.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">6:03</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>qui 01/10 · 6h03</small></h2></div>
+  <div class="body">
+    <div class="err" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>73,8 kg não foi guardado</b><p>O armazenamento deste navegador está cheio. A média da semana continua em 73,5, com 2 pesagens.</p></div></div></div>
+    <div class="fin"><div class="fr"><div class="t">Peso de hoje<small>na tela, não gravado</small></div><span class="v">73,8 <small>kg</small></span></div></div>
+    <p class="sec-l">Antes de tentar de novo</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Baixar a cópia de segurança<small>arquivo JSON com o estado inteiro</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#down"/></svg></div>
+      <div class="fr"><div class="t">Liberar as fotos antigas<small>as 4 sessões mais novas ficam; as outras voltam da cópia remota</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#nuv"/></svg></div>
+    </div>
+    <div class="fab"><button class="primary" style="min-height:52px">Tentar de novo</button></div>
+    <p class="small" style="margin:10px 16px 0">Não feche o app antes de resolver: o valor só existe nesta tela.</p>
+  </div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">6:03</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="nav"><h2>Corpo<small>qui 01/10 · 6h03</small></h2></div>
+  <div class="body">
+    <div class="err" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>73,8 kg não foi guardado</b><p>O armazenamento deste navegador está cheio. A média da semana continua em 73,5, com 2 pesagens.</p></div></div></div>
+    <div class="fin"><div class="fr"><div class="t">Peso de hoje<small>na tela, não gravado</small></div><span class="v">73,8 <small>kg</small></span></div></div>
+    <p class="sec-l">Antes de tentar de novo</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Baixar a cópia de segurança<small>arquivo JSON com o estado inteiro</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#down"/></svg></div>
+      <div class="fr"><div class="t">Liberar as fotos antigas<small>as 4 sessões mais novas ficam; as outras voltam da cópia remota</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#nuv"/></svg></div>
+    </div>
+    <div class="fab"><button class="primary" style="min-height:52px">Tentar de novo</button></div>
+    <p class="small" style="margin:10px 16px 0">Não feche o app antes de resolver: o valor só existe nesta tela.</p>
+  </div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+
+</main>
+
+<script>
+(function(){
+  function fit(){
+    document.querySelectorAll('.wrap').forEach(function(w){
+      var p=w.querySelector('.phone'); if(!p) return;
+      var W=414,H=896, s=Math.min(1,w.clientWidth/W);
+      p.style.transform='scale('+s+')'; w.style.height=(H*s)+'px';
+    });
+  }
+  window.addEventListener('resize',fit); fit();
+  document.querySelectorAll('.strip[data-start]').forEach(function(st){
+    var n=st.getAttribute('data-start'), t=null;
+    st.querySelectorAll('.rep').forEach(function(r){ if(!t && r.getAttribute('data-n')===n) t=r; });
+    if(t) st.scrollLeft=t.offsetLeft-st.offsetLeft-(st.clientWidth/2-t.offsetWidth/2);
+  });
+  /* cortina: arrastar para trocar entre a foto antiga e a nova */
+  document.querySelectorAll('.cort[data-drag]').forEach(function(c){
+    function set(x){
+      var r=c.getBoundingClientRect(), p=Math.max(6,Math.min(94,(x-r.left)/r.width*100));
+      c.querySelector('.lay.nova').style.clipPath='inset(0 0 0 '+p+'%)';
+      c.querySelector('.hd').style.left=p+'%';
+    }
+    var on=false;
+    c.addEventListener('pointerdown',function(e){on=true;set(e.clientX);c.setPointerCapture(e.pointerId);});
+    c.addEventListener('pointermove',function(e){if(on)set(e.clientX);});
+    c.addEventListener('pointerup',function(){on=false;});
+    c.addEventListener('pointercancel',function(){on=false;});
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comparar fotos · Direção C</title>
+<style>
+:root{color-scheme:light;--page:#E7E2D8;--paper:#F5F2EB;--card:#FFFFFF;--text:#1B1A17;--muted:#5D594F;--line:#D6CFC2;--ghost:#857F74;--ink:#1F3B67;--on-ink:#FFFFFF;--ink-soft:#E3E9F3;--ink-text:#1F3B67;--now:#B0420D;--now-soft:#FAE6D8;--warn:#7A4A00;--warn-soft:#FAEDD3;--err:#A3241A;--err-soft:#FBE6E2;--ok:#1E5B3A;--ok-soft:#E0EFE4;--hatch-c:rgba(120,113,100,.32);--frame:#141414;--scrim:rgba(20,18,14,.42);--hatch:repeating-linear-gradient(135deg,var(--hatch-c) 0 1.5px,transparent 1.5px 7px)}
+.phone[data-tema="escuro"]{color-scheme:dark;--paper:#161512;--card:#211F1B;--text:#F2EEE6;--muted:#ADA79A;--line:#3A3731;--ghost:#8F897D;--ink:#A9C3EE;--on-ink:#0D1A30;--ink-soft:#1F2B3F;--ink-text:#C3D6F6;--now:#F59A5F;--now-soft:#3A2416;--warn:#F3C277;--warn-soft:#33270F;--err:#F4978C;--err-soft:#3B1D19;--ok:#8FD3AA;--ok-soft:#16301F;--hatch-c:rgba(210,200,180,.22);--frame:#2B2B2B;--scrim:rgba(0,0,0,.55)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--page);color:var(--text);overflow-x:clip}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:3px solid var(--now);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.doc{padding-bottom:80px}
+.intro{max-width:620px;margin:0 auto;padding:28px 16px 4px}
+.kicker{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intro h1{font-size:26px;line-height:1.2;margin:6px 0 12px;letter-spacing:-.01em}
+.intro p{margin:0 0 10px}
+.theme{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:14px 0 0}
+.theme>span{font-size:14px;color:var(--muted);margin-right:4px}
+.theme button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:22px;font-size:14px;background:var(--card)}
+.theme button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.toc{max-width:620px;margin:14px auto 0;padding:0 16px}
+.toc ol{list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.toc a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--text);text-decoration:none;font-size:14px}
+.state{margin:46px auto 0}
+.cap{max-width:620px;margin:0 auto 14px;padding:0 16px}
+.cap .tag{font-size:13px;font-weight:700;color:var(--now);letter-spacing:.05em;text-transform:uppercase}
+.cap h2{font-size:21px;line-height:1.25;margin:4px 0 6px}
+.cap p{font-size:15px;color:var(--muted);margin:0 0 6px}
+.cap p b{color:var(--text)}
+.cap .refs{font-size:13px}
+.cap .no{border-left:3px solid var(--line);padding-left:10px;color:var(--text);font-size:14px}
+.phone{position:relative;width:100%;max-width:414px;height:896px;margin:0 auto;background:var(--paper);color:var(--text);display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
+@media (min-width:480px){.phone{border-radius:48px;box-shadow:0 0 0 10px var(--frame),0 30px 60px rgba(0,0,0,.22)}.state{margin-top:72px}}
+.sb{flex:none;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font-size:15px;font-weight:600;position:relative;z-index:9}
+.sb::before{content:"";position:absolute;left:50%;top:0;width:209px;height:30px;transform:translateX(-50%);background:#000;border-radius:0 0 22px 22px}
+.sig{display:flex;align-items:flex-end;gap:2px;height:12px}
+.sig i{width:3px;background:currentColor;opacity:.25;border-radius:1px}
+.sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:6px}.sig i:nth-child(3){height:9px}.sig i:nth-child(4){height:12px}
+.sig i.on{opacity:1}
+.bat{width:25px;height:12px;border:1.5px solid currentColor;border-radius:4px;margin-left:7px;position:relative;opacity:.9}
+.bat::after{content:"";position:absolute;top:1.5px;bottom:1.5px;left:1.5px;width:55%;background:currentColor;border-radius:1.5px}
+.hi{flex:none;height:34px;display:flex;align-items:center;justify-content:center;position:relative;z-index:9}
+.hi::after{content:"";width:134px;height:5px;border-radius:3px;background:var(--text);opacity:.85}
+.hi.oncard{background:var(--card)}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--card)}
+.tabs a{min-height:50px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;position:relative}
+.tabs a.on{color:var(--ink-text)}
+.tabs a.on::before{content:"";position:absolute;top:0;width:22px;height:3px;border-radius:2px;background:var(--ink-text)}
+.d-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:2px 6px;min-height:50px}
+.d-head .ttl{text-align:center;line-height:1.2}
+.d-head .ttl strong{display:block;font-size:17px}
+.d-head .ttl span{font-size:13px;color:var(--muted)}
+.back{min-width:72px;min-height:44px;font-size:17px;font-weight:600;color:var(--ink-text);text-align:left;padding:0 8px}
+.pillb{min-height:44px;min-width:60px;padding:0 13px;border-radius:22px;border:1.5px solid var(--line);background:var(--card);font-size:15px;font-weight:600}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:0 14px 10px}
+.scroll::-webkit-scrollbar{display:none}
+.over{font-size:13px;color:var(--muted);font-weight:600}
+.primary{width:100%;min-height:56px;border-radius:16px;background:var(--ink);color:var(--on-ink);font-size:18px;font-weight:700}
+.secondary{min-height:48px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:16px;padding:0 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.note{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.35}
+.duo{max-width:680px;margin:0 auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:28px;justify-items:center}
+@media (min-width:700px){.duo{grid-template-columns:1fr 1fr}}
+.frame{width:290px}
+.shrink{width:290px;height:628px;position:relative;overflow:hidden;border-radius:30px;box-shadow:0 0 0 7px var(--frame),0 16px 34px rgba(0,0,0,.2)}
+.shrink .phone{position:absolute;top:0;left:0;width:414px;max-width:414px;height:896px;transform:scale(.6996);transform-origin:top left;border-radius:0;box-shadow:none}
+.frame p{text-align:center;font-size:14px;color:var(--muted);margin-top:10px}
+
+/* comparar */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ph{position:relative;aspect-ratio:3/4;border-radius:14px;background:var(--card);border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:8px}
+.ph .geo{position:absolute;inset:0;pointer-events:none}
+.ph .geo i{position:absolute;background:var(--line)}
+.ph .geo .h{left:6%;right:6%;top:50%;height:1px}
+.ph .geo .v{top:8%;bottom:8%;left:50%;width:1px;background:repeating-linear-gradient(to bottom,var(--line) 0 5px,transparent 5px 10px)}
+.ph .geo .t{left:34%;right:34%;bottom:12%;height:2px;background:var(--ghost);opacity:.6}
+.ph .geo .t2{left:49.4%;bottom:12%;width:2px;height:16px;background:var(--ghost);opacity:.6}
+.ph .tp{display:flex;justify-content:space-between;align-items:flex-start;gap:4px;position:relative;z-index:2}
+.ph .dt{font-size:14px;font-weight:700}
+.ph .bd{font-size:11px;font-weight:700;padding:3px 6px;border-radius:7px;background:var(--ink-soft);color:var(--ink-text);white-space:nowrap}
+.ph .bd.warn{background:var(--warn-soft);color:var(--warn)}
+.ph .bd.err{background:var(--err-soft);color:var(--err)}
+.ph .mid{position:relative;z-index:2;text-align:center;font-size:12px;color:var(--muted);line-height:1.3;background:var(--card);padding:4px 2px;border-radius:6px;margin:0 2px}
+.ph .bt{position:relative;z-index:2;font-size:12px;color:var(--muted);line-height:1.35}
+.ph .bt b{color:var(--text);font-size:14px}
+.ph.miss{background-image:var(--hatch)}
+.ph.miss .mid,.ph.miss .bt{background:var(--card);border-radius:6px;padding:4px}
+.pose-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:12px 0 6px}
+.pose-h h3{font-size:20px;line-height:1.15}
+.pose-h .ix{font-size:13px;color:var(--muted);white-space:nowrap}
+.gap{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:13px;background:var(--ink-soft);color:var(--ink-text);margin-top:8px}
+.gap b{font-size:17px}
+.gap span{font-size:13px}
+.strip{display:flex;gap:6px;overflow:hidden;margin-top:10px}
+.strip button{flex:none;min-width:58px;min-height:62px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--muted)}
+.strip button b{font-size:15px;color:var(--text)}
+.strip button[aria-pressed="true"]{border:2px solid var(--now);background:var(--now-soft)}
+.strip button:disabled{opacity:.45}
+.warnb{padding:11px 12px;border-radius:13px;background:var(--warn-soft);color:var(--warn);font-size:14px;line-height:1.35;margin-top:10px}
+.warnb strong{display:block;font-size:15px;margin-bottom:3px}
+.errb{padding:11px 12px;border-radius:13px;background:var(--err-soft);color:var(--err);border:1.5px solid var(--err);font-size:14px;line-height:1.35;margin-top:10px}
+.errb strong{display:block;font-size:15px;margin-bottom:3px}
+.okb{padding:11px 12px;border-radius:13px;background:var(--ok-soft);color:var(--ok);font-size:14px;line-height:1.35;margin-top:10px}
+.ask{margin-top:12px;padding:13px;border-radius:16px;border:2px solid var(--now);background:var(--now-soft)}
+.ask .q{font-size:16px;font-weight:700;line-height:1.3}
+.ask .src{font-size:12px;color:var(--muted);margin-top:3px}
+.ask .opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
+.ask .opts button{min-height:52px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-weight:700;font-size:16px}
+.ask .cons{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.35}
+.sel{display:flex;gap:6px;margin-top:10px}
+.sel button{flex:1;min-height:52px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-size:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.sel button b{font-size:15px}
+.sel button[aria-pressed="true"]{border:2px solid var(--ink);background:var(--ink-soft);color:var(--ink-text)}
+.empty{text-align:center;padding:18px 10px}
+.empty .big{font-size:19px;font-weight:700;margin-bottom:6px}
+.empty p{font-size:15px;color:var(--muted);line-height:1.4}
+.tilt{transform:rotate(-3deg) scale(1.08)}
+@media (prefers-reduced-motion:no-preference){.ph{transition:transform .25s ease-out}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="doc">
+
+<header class="intro">
+  <p class="kicker">Direção C · Previsto e feito · tela nova</p>
+  <h1>Comparar as fotos antigas com a de agora</h1>
+  <p>É o que o dono diz fazer mais: “os comparativos dos antepassados com o atual, isso eu vejo bastante”. A frequência não foi medida; a dificuldade dela não é de corpo nem de pressa — é que a foto antiga pode simplesmente não estar no aparelho.</p>
+  <p><b>A direção, aqui:</b> a comparação que o app abre por padrão é a <b>longa</b> — a mais nova contra a mais antiga da mesma pose —, porque duas semanas de diferença são quase só água e sono. E a comparação só existe entre <b>a mesma pose com a mesma geometria</b>: a tela diz quando a geometria não bate, em vez de deixar ele achar que emagreceu porque girou 60° em vez de 90°.</p>
+  <p class="no" style="border-left:3px solid var(--line);padding-left:10px;font-size:14px;color:var(--text)"><b>Sobre as imagens deste desenho:</b> onde entra a foto, a tela mostra a identificação real daquela foto — data, pose, estado do arquivo, peso e cintura da semana — e as linhas de geometria de que a comparação depende: a altura da lente (umbigo), o centro e a marca de fita no chão. Nenhuma imagem de corpo foi inventada para este desenho.</p>
+  <div class="theme" role="group" aria-label="Tema das telas">
+    <span>Tema das telas:</span>
+    <button data-t="claro" aria-pressed="true">Claro</button><button data-t="escuro" aria-pressed="false">Escuro</button>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Estados desta tela">
+  <ol>
+    <li><a href="#c1">1 · A comparação longa</a></li>
+    <li><a href="#c2">2 · As 9 poses</a></li>
+    <li><a href="#c3">3 · Geometria torta</a></li>
+    <li><a href="#c4">4 · A pergunta do nutricionista</a></li>
+    <li><a href="#c5">5 · A foto não está aqui</a></li>
+    <li><a href="#c6">6 · Sem conta · busca falhou</a></li>
+    <li><a href="#c7">7 · Vazio</a></li>
+    <li><a href="#c8">8 · Claro e escuro</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section class="state" id="c1" aria-labelledby="c1h">
+  <div class="cap">
+    <p class="tag">Estado 1 · caso base · funciona ao toque</p>
+    <h2 id="c1h">Sentado, sem pressa: 04/09 contra 01/10</h2>
+    <p>Abre na pose 1, <b>frente relaxado</b>, com o par mais distante que tem a mesma geometria: 04/09 contra 01/10, 27 dias. A faixa de poses embaixo troca o par com um toque — <b>toque numa pose para ver</b>. O que muda entre uma pose e outra é só o conteúdo das duas molduras; a posição delas na tela não se mexe, porque é a sobreposição mental das duas que faz o trabalho.</p>
+    <p>Entre as duas molduras fica o que o registro sabe daquele par: os dias de intervalo e a diferença de peso <b>pela média da semana de cada sessão</b>, nunca pelo peso de um dia. A cintura aparece como está: sem medida nenhuma até 01/10, porque ele não tinha fita.</p>
+    <p>O alvo visual do treinador fica abaixo das fotos, em texto, porque é a pergunta que ele está respondendo ao olhar: preenchimento clavicular, ombros mais largos, o V aparecendo relaxado, panturrilha acompanhando a coxa.</p>
+    <p class="refs">F13 · F18 · F44 · F226 · F229 · F230 · F232 · F233 · F234 · U13 · P8 · P1</p>
+  </div>
+  <div class="phone" id="live" role="group" aria-label="Comparação de fotos, interativa">
+    <div class="sb"><span class="num">21:34</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Comparar</strong><span>8 sessões · 9 poses</span></div><button class="pillb" aria-label="Mais opções">···</button></div>
+      <div class="scroll">
+        <div class="pose-h"><h3 data-nome>Frente relaxado</h3><span class="ix">pose <span data-ix>1</span> de 9</span></div>
+        <div class="pair">
+          <div class="ph">
+            <div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div>
+            <div class="tp"><span class="dt num">04/09</span><span class="bd">no aparelho</span></div>
+            <p class="mid">foto · 04/09 · <span data-nome2>frente relaxado</span></p>
+            <p class="bt"><b class="num">73,2 kg</b><br>média da semana, 3 pesagens<br>cintura: sem medida</p>
+          </div>
+          <div class="ph">
+            <div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div>
+            <div class="tp"><span class="dt num">01/10</span><span class="bd">no aparelho</span></div>
+            <p class="mid">foto · 01/10 · <span data-nome3>frente relaxado</span></p>
+            <p class="bt"><b class="num">74,0 kg</b><br>média da semana, 2 pesagens<br>cintura: sem medida</p>
+          </div>
+        </div>
+        <div class="gap"><b class="num">27 dias</b><span>· peso da semana <b class="num">+0,8 kg</b> · mesma geometria nas duas</span></div>
+        <div class="strip" role="group" aria-label="Poses" data-strip>
+          <button aria-pressed="true" data-p="Frente relaxado"><b>1</b><span>frente</span></button>
+          <button aria-pressed="false" data-p="Frente duplo bíceps"><b>2</b><span>duplo</span></button>
+          <button aria-pressed="false" data-p="Abdômen e coxa"><b>3</b><span>abd+coxa</span></button>
+          <button aria-pressed="false" data-p="Perfil direito"><b>4</b><span>perfil D</span></button>
+          <button aria-pressed="false" data-p="Perfil direito natural"><b>5</b><span>perfil D</span></button>
+        </div>
+        <p class="note">Deslizar a faixa mostra as 9. A ordem é a da rotina, sempre a mesma, e é o que permite comparar.</p>
+        <div class="two"><button class="secondary">Trocar as datas</button><button class="secondary">Ver uma de cada vez</button></div>
+        <p class="over" style="margin-top:16px">O que o treinador disse para procurar</p>
+        <p style="font-size:14px;color:var(--muted);margin-top:3px">Mais preenchimento clavicular, ombros mais largos, o V aparecendo <b style="color:var(--text)">relaxado</b> — não só em pose —, panturrilha acompanhando a coxa.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#c1">Hoje</a><a class="on" href="#c1">Semanas</a><a href="#c1">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="state" id="c2" aria-labelledby="c2h">
+  <div class="cap">
+    <p class="tag">Estado 2 · as nove poses, e o que cada uma cobre</p>
+    <h2 id="c2h">Nem toda pose tem par longo</h2>
+    <p>As sessões não têm todas as nove poses: as de agosto, anteriores à rotina, têm 5, 6, 6 e 3; as de setembro têm 8 e 9. Então, para algumas poses, o par mais distante é de 27 dias, e para outras, de 11. A faixa de poses diz isso <b>antes do toque</b>, e a pose que não tem par aparece apagada, com o motivo.</p>
+    <p>Cada pose carrega, do próprio registro, <b>o que ela revela</b> e <b>o erro típico</b> dela. Isso não é enfeite: a comparação da pose 4 não quer dizer nada se ele girou 60° em vez de 90°, e é esse o aviso que evita a conclusão errada.</p>
+    <p class="refs">F226 · F227 · F229 · F230 · F234 · P1 (6 sessões: 5, 6, 6, 3, 8, 9)</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:36</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Comparar</strong><span>pose 4 de 9</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="pose-h"><h3>Perfil direito</h3><span class="ix">braços estendidos à frente</span></div>
+        <div class="pair">
+          <div class="ph">
+            <div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div>
+            <div class="tp"><span class="dt num">04/09</span><span class="bd">no aparelho</span></div>
+            <p class="mid">foto · 04/09 · perfil direito</p>
+            <p class="bt"><b class="num">73,2 kg</b><br>média da semana</p>
+          </div>
+          <div class="ph">
+            <div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div>
+            <div class="tp"><span class="dt num">01/10</span><span class="bd">no aparelho</span></div>
+            <p class="mid">foto · 01/10 · perfil direito</p>
+            <p class="bt"><b class="num">74,0 kg</b><br>média da semana</p>
+          </div>
+        </div>
+        <div class="gap"><b class="num">27 dias</b><span>· o par mais longo desta pose</span></div>
+        <div class="warnb">
+          <strong>O que esta pose revela</strong>
+          A espessura da cintura de perfil — onde a mudança aparece primeiro.<br>
+          <b style="display:block;margin-top:6px">O erro típico:</b> girar 60° em vez de 90° e achar que emagreceu.
+        </div>
+        <div class="strip" role="group" aria-label="Poses, com a cobertura de cada uma">
+          <button aria-pressed="false"><b>2</b><span>6 sessões</span></button>
+          <button aria-pressed="false"><b>3</b><span>5 sessões</span></button>
+          <button aria-pressed="true"><b>4</b><span>3 sessões</span></button>
+          <button aria-pressed="false"><b>5</b><span>3 sessões</span></button>
+          <button disabled aria-disabled="true"><b>9</b><span>só 01/10</span></button>
+        </div>
+        <p class="note">A pose 9 (perfil esquerdo) só existe em 01/10: não há par, e por isso ela está apagada. Nada a esconde — ela aparece, e diz por quê.</p>
+        <p class="note">As quatro sessões de agosto são fotos antigas trazidas para o registro, de antes da rotina: elas aparecem no fim da lista de datas, marcadas, porque a geometria delas não foi a mesma.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#c2">Hoje</a><a class="on" href="#c2">Semanas</a><a href="#c2">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="state" id="c3" aria-labelledby="c3h">
+  <div class="cap">
+    <p class="tag">Estado 3 · geometria torta · correção no lugar</p>
+    <h2 id="c3h">O celular estava 3° torto: endireitar, sem reescrever a foto</h2>
+    <p>A fita sai do lugar e o celular encosta um grau torto. O app mede o desencontro e <b>oferece a correção dentro da própria moldura</b>: até 6° de giro e até 2× de recorte, nunca brilho, contraste ou filtro. Endireitar 3° custa um toque, e o <b>desfazer está sempre lá</b>, porque o ajuste é guardado como parâmetro: a foto original nunca é reescrita.</p>
+    <p>Este estado mostra também o par curto, 15/09 contra 01/10, com o aviso que importa: 16 dias são quase só água e sono. O app não esconde o par curto — ele diz o que esse par vale.</p>
+    <p class="no">O que esta tela recusa: endireitar sozinha. Um ajuste automático mudaria a geometria de comparação sem ele saber, que é exatamente o que torna duas fotos incomparáveis.</p>
+    <p class="refs">F228 · F229 · F230 · F231</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:40</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Comparar</button><div class="ttl"><strong>Frente relaxado</strong><span>15/09 → 01/10</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="pair">
+          <div class="ph">
+            <div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div>
+            <div class="tp"><span class="dt num">15/09</span><span class="bd">no aparelho</span></div>
+            <p class="mid">foto · 15/09 · frente relaxado</p>
+            <p class="bt"><b class="num">73,6 kg</b><br>média da semana</p>
+          </div>
+          <div class="ph tilt">
+            <div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div>
+            <div class="tp"><span class="dt num">01/10</span><span class="bd warn">3° torta</span></div>
+            <p class="mid">foto · 01/10 · frente relaxado</p>
+            <p class="bt"><b class="num">74,0 kg</b><br>média da semana</p>
+          </div>
+        </div>
+        <div class="warnb">
+          <strong>A câmera estava 3° fora do prumo em 01/10</strong>
+          Duas fotos só se comparam com a mesma pose e a mesma geometria. Endireitar 3° entra dentro do limite de 6° e não corta nada da borda.
+        </div>
+        <div class="two"><button class="primary" style="min-height:52px;font-size:17px">Endireitar 3°</button><button class="secondary">Deixar como está</button></div>
+        <p class="note">O ajuste fica guardado como número, não como foto nova: a original continua intacta e desfazer funciona hoje, amanhã e daqui a um ano. Giro até 6°, recorte até 2×. Brilho, contraste e filtro não existem aqui — mudariam o que você está tentando ver.</p>
+        <div class="warnb" style="background:var(--ink-soft);color:var(--ink-text)">
+          <strong>16 dias é pouco para concluir</strong>
+          Entre duas sessões seguidas, a diferença é quase toda água e sono. Quem mostra mudança é o par longo: 04/09 → 01/10.
+          <button class="secondary" style="width:100%;margin-top:10px">Ver o par longo (27 dias)</button>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#c3">Hoje</a><a class="on" href="#c3">Semanas</a><a href="#c3">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="state" id="c4" aria-labelledby="c4h">
+  <div class="cap">
+    <p class="tag">Estado 4 · a pergunta que destrava o corte</p>
+    <h2 id="c4h">A avaliação visual, feita onde ele já está olhando</h2>
+    <p>A regra do nutricionista só corta 150 kcal com <b>adesão registrada e avaliação visual</b>. A avaliação nunca foi respondida nenhuma vez, e sem ela a regra não corta. A pergunta vive aqui, no lugar onde ele já está comparando fotos por vontade própria, e não numa tela de configuração que ele nunca abriria.</p>
+    <p>A pergunta é a do nutricionista, palavra por palavra, e vale só para um par com <b>10 a 28 dias</b> de intervalo. O par longo de 04/09 → 01/10 tem 27: serve. Um par de agosto contra 01/10 não serve para a pergunta, mesmo sendo melhor para enxergar a mudança — e a tela diz isso em vez de calar.</p>
+    <p>Debaixo de cada resposta está a consequência, escrita antes do toque. “Incerto” é uma resposta legítima: ela mantém o plano como está.</p>
+    <p class="refs">F212 · F215 · F220 · F230 · P1 (0 avaliações)</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:44</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Comparar</button><div class="ttl"><strong>Frente relaxado</strong><span>04/09 → 01/10 · 27 dias</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="pair">
+          <div class="ph">
+            <div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div>
+            <div class="tp"><span class="dt num">04/09</span><span class="bd">no aparelho</span></div>
+            <p class="mid">foto · 04/09 · frente relaxado</p>
+            <p class="bt"><b class="num">73,2 kg</b></p>
+          </div>
+          <div class="ph">
+            <div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div>
+            <div class="tp"><span class="dt num">01/10</span><span class="bd">no aparelho</span></div>
+            <p class="mid">foto · 01/10 · frente relaxado</p>
+            <p class="bt"><b class="num">74,0 kg</b></p>
+          </div>
+        </div>
+        <div class="ask">
+          <p class="q">Comparando com cerca de duas semanas atrás, a gordura visual aumentou claramente?</p>
+          <p class="src">pergunta do nutricionista · vale para pares de 10 a 28 dias · este tem 27</p>
+          <div class="opts" role="group" aria-label="Resposta">
+            <button>Sim</button><button>Não</button><button>Incerto</button>
+          </div>
+          <p class="cons"><b>Sim</b> + adesão registrada e peso subindo acima de 0,40 nas duas semanas: a regra libera o corte de 150 kcal, que continua só acontecendo se você aplicar.<br><b>Não</b>: o ganho está comprando músculo; a regra manda manter.<br><b>Incerto</b>: a regra não mexe. É uma resposta, não uma falta.</p>
+        </div>
+        <p class="note">A resposta vale por 14 dias contados da foto mais nova do par, e responder de novo o mesmo par substitui a resposta anterior. Nenhuma resposta é cobrada: a tela pergunta uma vez por par válido e não insiste.</p>
+        <div class="warnb">
+          <strong>Para enxergar, o par de agosto é melhor</strong>
+          Mas ele tem mais de 28 dias e não serve para esta pergunta. Dá para ver os dois: a pergunta fica no par de 27 dias.
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#c4">Hoje</a><a class="on" href="#c4">Semanas</a><a href="#c4">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="state" id="c5" aria-labelledby="c5h">
+  <div class="cap">
+    <p class="tag">Estado 5 · a foto antiga não está neste aparelho</p>
+    <h2 id="c5h">O caso normal, não o caso raro</h2>
+    <p>O aparelho guarda os arquivos só das <b>4 sessões mais recentes</b>; as antigas moram na cópia remota. E, a cada versão nova publicada do app, a cópia local das fotos do corpo é apagada. Quer dizer: a comparação longa, que é a que ele mais quer ver, é justamente a que costuma precisar de rede.</p>
+    <p>Então a moldura vazia não fica girando: ela diz <b>em que estado está aquele arquivo</b> e oferece o único botão que resolve. Quando a busca está em curso, há um limite de espera e um caminho de saída — uma foto que nunca chega já ficou “buscando” para sempre neste produto.</p>
+    <p>A faixa de poses continua utilizável: baixar uma pose não bloqueia olhar outra.</p>
+    <p class="refs">F232 · F238 · F247 · F252 · F297 · U13</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:48</span><span class="sig"><i class="on"></i><i></i><i></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Comparar</strong><span>frente relaxado</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="pair">
+          <div class="ph miss">
+            <div class="tp"><span class="dt num">04/09</span><span class="bd warn">na cópia remota</span></div>
+            <p class="mid">o arquivo desta foto não está neste aparelho</p>
+            <p class="bt"><button class="secondary" style="width:100%;min-height:44px;font-size:14px">Baixar (≈150 KB)</button></p>
+          </div>
+          <div class="ph">
+            <div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div>
+            <div class="tp"><span class="dt num">01/10</span><span class="bd">no aparelho</span></div>
+            <p class="mid">foto · 01/10 · frente relaxado</p>
+            <p class="bt"><b class="num">74,0 kg</b><br>média da semana</p>
+          </div>
+        </div>
+        <div class="warnb">
+          <strong>Por que ela não está aqui</strong>
+          O aparelho guarda os arquivos das 4 sessões mais recentes. As anteriores ficam na cópia remota e voltam quando você pede. A atualização do app de 30/09 também limpou a cópia local das fotos do corpo.
+        </div>
+        <p class="note">Sinal fraco agora. O download tenta e, se não vier, mostra “tentar de novo” — não fica buscando para sempre.</p>
+        <div class="strip" role="group" aria-label="Poses">
+          <button aria-pressed="true"><b>1</b><span>baixar</span></button>
+          <button aria-pressed="false"><b>2</b><span>baixar</span></button>
+          <button aria-pressed="false"><b>3</b><span>aqui</span></button>
+          <button aria-pressed="false"><b>4</b><span>aqui</span></button>
+          <button aria-pressed="false"><b>5</b><span>aqui</span></button>
+        </div>
+        <button class="secondary" style="width:100%;margin-top:10px">Baixar a sessão inteira de 04/09 · 9 fotos, ≈1,3 MB</button>
+        <p class="note">Baixar uma sessão inteira é um pedido só, com um número só. As fotos sobem e descem uma de cada vez; sem rede, param e tentam depois, sem avisar duas vezes.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#c5">Hoje</a><a class="on" href="#c5">Semanas</a><a href="#c5">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="state" id="c6" aria-labelledby="c6h">
+  <div class="cap">
+    <p class="tag">Estado 6 · erro · os dois becos sem saída</p>
+    <h2 id="c6h">Sem conta não há de onde buscar; a busca que falhou se tenta de novo</h2>
+    <p>São estados diferentes e precisam de palavras diferentes. <b>Busca falhou</b> é temporário: tentar de novo resolve. <b>Sem conta</b> não é temporário: não existe cópia remota de onde buscar, e o que o aparelho apagou não volta. Dizer “erro ao carregar” nos dois casos seria mentir num deles.</p>
+    <p>O segundo caso é grave o bastante para a tela falar dele por inteiro, uma vez: sem conta, a cada atualização do app as fotos do corpo deste aparelho se perdem. A saída está escrita ali, e é a única.</p>
+    <p class="refs">F238 · F241 · F247 · F252 · F297 · F248</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:52</span><span class="sig"><i></i><i></i><i></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Comparar</strong><span>frente relaxado</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="pair">
+          <div class="ph miss">
+            <div class="tp"><span class="dt num">04/09</span><span class="bd err">busca falhou</span></div>
+            <p class="mid">não consegui baixar: sem rede agora</p>
+            <p class="bt"><button class="secondary" style="width:100%;min-height:44px;font-size:14px">Tentar de novo</button></p>
+          </div>
+          <div class="ph miss">
+            <div class="tp"><span class="dt num">22/08</span><span class="bd err">sem conta</span></div>
+            <p class="mid">não há cópia remota de onde buscar</p>
+            <p class="bt">este arquivo não está em lugar nenhum</p>
+          </div>
+        </div>
+        <div class="errb">
+          <strong>Sem conta, as fotos do corpo não sobrevivem a uma atualização</strong>
+          Elas ficam só neste aparelho, e o app limpa essa cópia local a cada versão nova. As de 22/08 já se foram assim. Isso não tem como ser desfeito aqui.
+          <button class="secondary" style="width:100%;margin-top:10px">Entrar numa conta e subir as que ainda estão aqui</button>
+        </div>
+        <p class="note">“Busca falhou” e “sem conta” são coisas diferentes, e a tela não usa a mesma palavra para as duas. A primeira tenta de novo; a segunda não tem o que tentar.</p>
+        <div class="okb">As fotos de 15/09 e 01/10 estão neste aparelho e podem ser comparadas agora, sem rede nenhuma.
+          <button class="secondary" style="width:100%;margin-top:10px">Comparar 15/09 → 01/10</button>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#c6">Hoje</a><a class="on" href="#c6">Semanas</a><a href="#c6">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="state" id="c7" aria-labelledby="c7h">
+  <div class="cap">
+    <p class="tag">Estado 7 · vazio</p>
+    <h2 id="c7h">Uma sessão só: não há comparação, e dizer isso é o conteúdo</h2>
+    <p>Comparar precisa de duas sessões da mesma pose. Com uma só, a tela não inventa um gráfico nem mostra a foto sozinha fingindo que é comparação: ela mostra o que existe, diz o que falta e <b>quando</b> aquilo deixa de faltar — a rotina é a cada 14 dias, então a próxima sessão é dia 15.</p>
+    <p>O vazio também avisa do que mais custa caro aqui: duas fotos só se comparam com a mesma geometria, e a geometria é a fita no chão e a distância da lente. O que ele fizer na primeira sessão define o que vai dar para comparar na segunda.</p>
+    <p class="refs">F226 · F228 · F229 · F230 · F234</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">9:12</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Comparar</strong><span>1 sessão</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="empty">
+          <p class="big">Ainda não há par</p>
+          <p>Você tem uma sessão, de 01/10, com 9 poses. Comparar precisa de duas sessões da mesma pose.</p>
+        </div>
+        <div class="pair" style="margin-top:4px">
+          <div class="ph">
+            <div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div>
+            <div class="tp"><span class="dt num">01/10</span><span class="bd">no aparelho</span></div>
+            <p class="mid">foto · 01/10 · frente relaxado</p>
+            <p class="bt"><b class="num">74,0 kg</b><br>média da semana</p>
+          </div>
+          <div class="ph miss">
+            <div class="tp"><span class="dt">a próxima</span><span class="bd warn">15/10</span></div>
+            <p class="mid">a rotina é a cada 14 dias</p>
+            <p class="bt">o par longo começa a existir aqui</p>
+          </div>
+        </div>
+        <div class="warnb">
+          <strong>O que decide se vai dar para comparar</strong>
+          A mesma pose e a mesma geometria: 3,0 m da marca com a lente 2×, a lente na altura do umbigo, 80 cm da parede, uma luz frontal, os pés no T. É isso que a sessão de fotos guia.
+        </div>
+        <button class="primary" style="margin-top:12px">Ver a próxima sessão de fotos</button>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#c7">Hoje</a><a class="on" href="#c7">Semanas</a><a href="#c7">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="state" id="c8" aria-labelledby="c8h">
+  <div class="cap">
+    <p class="tag">Estado 8 · claro e escuro</p>
+    <h2 id="c8h">Os dois temas, desenhados</h2>
+    <p>No escuro, a moldura da foto fica mais clara que o papel, e não mais escura: a foto é o objeto, e o objeto se destaca do fundo nos dois temas. As linhas de geometria sobem de contraste no escuro para continuarem visíveis. A hachura de “não está aqui” é listrada nos dois, e não depende de cor para ser lida.</p>
+    <p class="refs">decisão 5 do dono</p>
+  </div>
+  <div class="duo">
+    <div class="frame">
+      <div class="shrink"><div class="phone">
+        <div class="sb"><span class="num">21:34</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+        <div class="app">
+          <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Comparar</strong><span>8 sessões · 9 poses</span></div><button class="pillb">···</button></div>
+          <div class="scroll">
+            <div class="pose-h"><h3>Frente relaxado</h3><span class="ix">pose 1 de 9</span></div>
+            <div class="pair">
+              <div class="ph"><div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div><div class="tp"><span class="dt num">04/09</span><span class="bd">no aparelho</span></div><p class="mid">foto · 04/09</p><p class="bt"><b class="num">73,2 kg</b><br>média da semana</p></div>
+              <div class="ph miss"><div class="tp"><span class="dt num">01/10</span><span class="bd warn">na cópia remota</span></div><p class="mid">não está neste aparelho</p><p class="bt">baixar ≈150 KB</p></div>
+            </div>
+            <div class="gap"><b class="num">27 dias</b><span>· peso da semana <b class="num">+0,8 kg</b></span></div>
+            <div class="strip"><button aria-pressed="true"><b>1</b><span>frente</span></button><button><b>2</b><span>duplo</span></button><button><b>3</b><span>abd+coxa</span></button><button><b>4</b><span>perfil D</span></button></div>
+          </div>
+          <nav class="tabs"><a href="#c8">Hoje</a><a class="on" href="#c8">Semanas</a><a href="#c8">Prescrição</a></nav>
+        </div>
+        <div class="hi oncard"></div>
+      </div></div>
+      <p>Claro</p>
+    </div>
+    <div class="frame">
+      <div class="shrink"><div class="phone" data-tema="escuro" data-fixo>
+        <div class="sb"><span class="num">21:34</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+        <div class="app">
+          <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Comparar</strong><span>8 sessões · 9 poses</span></div><button class="pillb">···</button></div>
+          <div class="scroll">
+            <div class="pose-h"><h3>Frente relaxado</h3><span class="ix">pose 1 de 9</span></div>
+            <div class="pair">
+              <div class="ph"><div class="geo"><i class="h"></i><i class="v"></i><i class="t"></i><i class="t2"></i></div><div class="tp"><span class="dt num">04/09</span><span class="bd">no aparelho</span></div><p class="mid">foto · 04/09</p><p class="bt"><b class="num">73,2 kg</b><br>média da semana</p></div>
+              <div class="ph miss"><div class="tp"><span class="dt num">01/10</span><span class="bd warn">na cópia remota</span></div><p class="mid">não está neste aparelho</p><p class="bt">baixar ≈150 KB</p></div>
+            </div>
+            <div class="gap"><b class="num">27 dias</b><span>· peso da semana <b class="num">+0,8 kg</b></span></div>
+            <div class="strip"><button aria-pressed="true"><b>1</b><span>frente</span></button><button><b>2</b><span>duplo</span></button><button><b>3</b><span>abd+coxa</span></button><button><b>4</b><span>perfil D</span></button></div>
+          </div>
+          <nav class="tabs"><a href="#c8">Hoje</a><a class="on" href="#c8">Semanas</a><a href="#c8">Prescrição</a></nav>
+        </div>
+        <div class="hi oncard"></div>
+      </div></div>
+      <p>Escuro</p>
+    </div>
+  </div>
+</section>
+
+</main>
+<script>
+(function(){
+  var btns=document.querySelectorAll('.theme button');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    btns.forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+    var t=b.dataset.t;
+    document.querySelectorAll('.phone').forEach(function(p){
+      if(p.hasAttribute('data-fixo'))return;
+      if(t==='escuro')p.setAttribute('data-tema','escuro');else p.removeAttribute('data-tema');
+    });
+  })});
+  var live=document.getElementById('live');if(!live)return;
+  var strip=live.querySelector('[data-strip]'),nome=live.querySelector('[data-nome]'),ix=live.querySelector('[data-ix]'),
+      n2=live.querySelector('[data-nome2]'),n3=live.querySelector('[data-nome3]');
+  strip.querySelectorAll('button').forEach(function(b,i){
+    b.addEventListener('click',function(){
+      strip.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+      nome.textContent=b.dataset.p;ix.textContent=String(i+1);
+      n2.textContent=b.dataset.p.toLowerCase();n3.textContent=b.dataset.p.toLowerCase();
+    });
+  });
+})();
+</script>
+</body>
+</html>

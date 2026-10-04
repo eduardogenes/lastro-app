@@ -1,0 +1,303 @@
+@titulo Semana
+@h1 A semana, e a régua do nutricionista pronta para aplicar
+@lead Quinta, 01/10, 21h30, sentado, no notebook ou no telefone. Esta é a decisão que <b>nunca aconteceu nenhuma vez</b> no uso medido: zero avaliações visuais e zero passos de ±150 kcal em oito semanas (P1). O dono diz que não existe esse momento e que gostaria que existisse (P8, D3). Por decisão dele, a revisão fica <b>sempre disponível, sem dia fixo</b>.
+@lead <b>A tela é a régua, não um resumo dela.</b> O veredito vem em primeiro, em palavras; abaixo, os três números que o produziram e o que falta, com o caminho para conseguir (F215). Quando a regra produz passo, o botão traz a consequência escrita antes do toque: +150 kcal são +120 g de arroz cozido por dia, +60 g no almoço e +60 g no jantar (F218).
+@lead O que esta tela recusa: aplicar sozinha (F3), cortar por causa de uma semana só (F290), passo proporcional ao erro (F216) e devolver um corte já feito quando o peso volta ao alvo (F217, F291).
+@css
+.vere{margin:8px 16px 0;padding:13px 15px 14px;border-radius:22px;border:2px solid var(--accent);background:var(--surface)}
+.vere .k{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink)}
+.vere h3{font-size:26px;line-height:1.12;margin:3px 0 5px;letter-spacing:-.02em}
+.vere p{font-size:14px;color:var(--ink-2);margin:0;line-height:1.4}
+.vere p b{color:var(--ink)}
+.vere.calm{border:1px solid var(--line)}
+.vere.calm .k{color:var(--ink-2)}
+.gate{display:flex;gap:10px;align-items:flex-start;margin:0 16px;padding:10px 0;border-top:1px solid var(--line)}
+.gate .ic2{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;flex:none;margin-top:1px}
+.gate .ic2.ok{background:var(--ink);color:var(--bg)}
+.gate .ic2.no{background:var(--warn-bg);color:var(--warn-ink);box-shadow:inset 0 0 0 1.5px var(--warn-line)}
+.gate .t{flex:1;min-width:0}
+.gate .t b{display:block;font-size:15.5px;line-height:1.25}
+.gate .t small{display:block;font-size:13px;color:var(--ink-2);line-height:1.35;margin-top:2px}
+.gate .t em{font-style:normal;font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+.gate .go2{min-height:44px;padding:0 10px;border-radius:12px;border:1.5px solid var(--line-2);font-size:13.5px;font-weight:700;flex:none;align-self:center;background:var(--surface)}
+.regra{margin:8px 16px 0;padding:10px 12px;border-radius:16px;background:var(--surface-2);font-size:13.5px;line-height:1.45}
+.regra li{list-style:none;padding:4px 0;border-top:1px solid var(--line)}
+.regra ul{margin:0;padding:0}
+.regra li:first-child{border-top:0}
+.regra li.on{font-weight:700;color:var(--ink)}
+.regra li.off{color:var(--ink-2)}
+.regra li.on::before{content:"→ ";color:var(--accent-ink);font-weight:800}
+.regra li.off::before{content:"· ";color:var(--ink-3)}
+.passo{margin:10px 16px 0;padding:12px 14px;border-radius:20px;border:2px solid var(--accent);background:var(--accent-soft)}
+.passo b.t2{display:block;font-size:19px;line-height:1.2;margin-bottom:6px}
+.passo table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.passo td{padding:4px 0;border-top:1px solid rgba(0,0,0,.12)}
+.passo td:last-child{text-align:right;font-weight:700}
+.passo tr:first-child td{border-top:0}
+.phone.dark .passo td{border-top-color:rgba(255,255,255,.16)}
+.wkrow{display:flex;align-items:center;gap:10px;margin:0 16px;padding:7px 0;border-top:1px solid var(--line);font-size:14.5px;min-height:50px}
+.wkrow .t{flex:1;min-width:0;line-height:1.25}
+.wkrow .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.wkrow .v3{font-variant-numeric:tabular-nums;font-weight:700;font-size:17px;flex:none;text-align:right}
+.wkrow .v3 small{display:block;font-size:12px;font-weight:600;color:var(--ink-2)}
+.volbar{height:9px;border-radius:5px;background:var(--surface-2);position:relative;overflow:hidden;margin-top:4px}
+.volbar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink);border-radius:5px}
+.volbar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--accent)}
+@fim
+
+=== 1 |  | O caso: o veredito que o uso medido produz hoje
+cap: Com a adesão em 1 dia de 14, a regra não tem como mexer na comida — e é isso que está escrito em palavras, antes de qualquer número. Abaixo, os três portões da regra, cada um com o seu estado e o que falta: <b>taxa</b> (pronta), <b>força</b> (pronta) e <b>adesão</b> (faltam 10 dias). O que falta tem caminho, não cobrança: o botão leva aos 14 dias que a regra lê.
+@sb 21:30 | cheio
+<div class="scr">
+  <div class="nav"><h2>Semana<small>27/09 a 03/10 · em curso</small></h2><button class="act">Semanas</button></div>
+  <div class="body">
+    <div class="vere">
+      <span class="k">A regra do nutricionista diz</span>
+      <h3>Não mexer, e registrar mais</h3>
+      <p>O peso está subindo devagar demais <b>e não dá para saber se é por comer menos do que o plano</b>. Mexer na comida agora seria mexer no escuro.</p>
+    </div>
+    <div class="gate"><span class="ic2 ok"><svg width="16" height="16"><use href="#ok2"/></svg></span><div class="t"><b>Taxa: <em>+0,07</em> e <em>+0,03</em> kg/semana</b><small>duas semanas seguidas abaixo de 0,10 · três semanas com média válida (13/09, 20/09, 27/09)</small></div></div>
+    <div class="gate"><span class="ic2 ok"><svg width="16" height="16"><use href="#ok2"/></svg></span><div class="t"><b>Força: não está subindo</b><small><em>+0,4%</em> em 2 semanas, sobre 7 exercícios — abaixo de 1%, que é ruído de anilha</small></div><button class="go2">Ver</button></div>
+    <div class="gate"><span class="ic2 no"><svg width="16" height="16"><use href="#warn"/></svg></span><div class="t"><b>Adesão: <em>1</em> dia de 14</b><small>a regra precisa de 11. Faltam 10 dias com consumo conhecido — e 13 dos 14 ainda podem ser preenchidos</small></div><button class="go2">Pôr em dia</button></div>
+    <div class="known" style="margin-top:12px">
+      <div class="cells">
+        <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell full"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell today"></span>
+      </div>
+      <div class="kl"><span>18/09</span><span>hoje</span></div>
+      <p>Dias com consumo conhecido nos últimos 14: <b>1</b>. Um dia com uma refeição marcada já conta.</p>
+    </div>
+    <div class="note-f">Enquanto a adesão não chega a 11, o veredito não muda, por mais pesagem que entre. A tela não vai pedir isso de novo em outro lugar.</div>
+  </div>
+  {{tabs semana}}
+  {{hi}}
+</div>
+
+=== 2 |  | A régua inteira, com o caminho percorrido marcado
+cap: A regra escrita do nutricionista, com os sete casos, e o que vale hoje em destaque (F212). Os limites são exatos e a tela os escreve assim: <b>0,40 não é “acima de 0,40”; 0,10 não é “abaixo de 0,10”</b> (F214). Mostrar a régua inteira é o que torna o veredito discutível com o agente nutricionista, que é quem pode mudá-la — o app não cria prescrição (F2).
+@sb 21:31 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Por que este veredito<small>regra de 21/09/2026</small></h2></div>
+  <div class="body">
+    <div class="regra">
+      <ul>
+        <li class="off">Abaixo de 0,10 nas duas, com força subindo: não mexer — é recomposição.</li>
+        <li class="on">Abaixo de 0,10 nas duas, sem adesão registrada suficiente: não mexer e registrar mais.</li>
+        <li class="off">Abaixo de 0,10 nas duas, com força não subindo <b>e</b> adesão registrada: +150 kcal.</li>
+        <li class="off">Acima de 0,40 nas duas: abre revisão. Corta −150 só com adesão <b>e</b> avaliação visual “aumentou claramente”. Fotos sem piora: manter.</li>
+        <li class="off">Última semana entre 0,15 e 0,30: manter — é o intervalo-alvo.</li>
+        <li class="off">Qualquer outro caso, inclusive 0,30 a 0,40 e uma semana isolada fora do intervalo: não mexer, continuar observando.</li>
+        <li class="off">Sem semanas suficientes: pedir pesagens, 3 a 4 por semana.</li>
+      </ul>
+    </div>
+    <p class="sec-l">Os números desta leitura</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Média 13/09 a 19/09<small>3 pesagens</small></div><span class="v">73,47 <small>kg</small></span></div>
+      <div class="fr"><div class="t">Média 20/09 a 26/09<small>3 pesagens</small></div><span class="v">73,50 <small>kg</small></span></div>
+      <div class="fr"><div class="t">Média 27/09 a 03/10<small>3 pesagens · semana em curso</small></div><span class="v">73,56 <small>kg</small></span></div>
+      <div class="fr"><div class="t">Limite cruzado<small>as duas taxas ficaram abaixo de 0,10</small></div><span class="v">0,10</span></div>
+      <div class="fr"><div class="t">Ajuste em vigor<small>nenhum passo aplicado até hoje</small></div><span class="v">0 <small>kcal</small></span></div>
+    </div>
+    <div class="note-f">0,10 exato <b>não</b> é “abaixo de 0,10”. Uma taxa de +0,10 cairia em “continuar observando”, e não aqui.</div>
+  </div>
+  {{hi}}
+</div>
+
+=== 3 |  | Com a adesão cumprida: o passo fica pronto, com a conta à mostra
+cap: Mesma semana, adesão em 11 de 14. Agora a regra produz passo — e o botão só aparece depois da conta inteira: 150 kcal viram <b>120 g de arroz cozido por dia</b>, repartidos entre as refeições que têm arroz, em degraus de 15 g (F218). O produto já errou essa quantidade por um passo inteiro e já convidou a devolver um corte (F291); por isso a tabela mostra de quanto para quanto, em gramas, em cada refeição.
+@sb 21:33 | cheio
+<div class="scr">
+  <div class="nav"><h2>Semana<small>27/09 a 03/10</small></h2><button class="act">Semanas</button></div>
+  <div class="body">
+    <div class="vere">
+      <span class="k">A regra do nutricionista diz</span>
+      <h3>Aumentar 150 kcal</h3>
+      <p>Peso subindo devagar demais em duas semanas seguidas, força parada e <b>adesão registrada suficiente</b>. O passo é fixo: ganhar 0,02 ou 0,09 kg/semana dá o mesmo +150.</p>
+    </div>
+    <div class="gate"><span class="ic2 ok"><svg width="16" height="16"><use href="#ok2"/></svg></span><div class="t"><b>Taxa: <em>+0,07</em> e <em>+0,03</em> kg/semana</b><small>abaixo de 0,10 nas duas</small></div></div>
+    <div class="gate"><span class="ic2 ok"><svg width="16" height="16"><use href="#ok2"/></svg></span><div class="t"><b>Força: não está subindo</b><small>+0,4% em 2 semanas, sobre 7 exercícios</small></div></div>
+    <div class="gate"><span class="ic2 ok"><svg width="16" height="16"><use href="#ok2"/></svg></span><div class="t"><b>Adesão: <em>11</em> dias de 14</b><small>o mínimo da regra. 10 de 14 não bastaria</small></div></div>
+    <div class="passo">
+      <b class="t2">O que muda no prato</b>
+      <table>
+        <tr><td>Almoço · arroz cozido</td><td>250 → 310 g</td></tr>
+        <tr><td>Jantar · arroz cozido</td><td>250 → 310 g</td></tr>
+        <tr><td>Dia de treino</td><td>3.007 → 3.157 kcal</td></tr>
+        <tr><td>Ajuste acumulado</td><td>0 → +150 kcal</td></tr>
+      </table>
+    </div>
+    <div class="fab"><button class="primary" style="min-height:56px">Aplicar +150 kcal</button></div>
+    <p class="small" style="margin:10px 16px 0">Depois de aplicado, 3.157 vira a nova base. Se o peso voltar ao alvo, o passo <b>não</b> é devolvido sozinho.</p>
+  </div>
+  {{tabs semana}}
+  {{hi}}
+</div>
+
+=== 4 |  | Aplicado: fica guardado o que foi, por que foi, e com que adesão
+cap: Cada passo guarda quando, de quanto para quanto, que saída da regra o motivou, <b>o texto completo da regra naquele momento</b> e a adesão dos 14 dias anteriores (F219). Isso existe porque a regra muda (mudou em 21/09) e porque, meses depois, só o texto da época explica a decisão. Desfazer não tem prazo — corrigir no lugar vale aqui também.
+@sb 21:34 | cheio
+<div class="scr">
+  <div class="nav"><h2>Semana<small>27/09 a 03/10</small></h2></div>
+  <div class="body">
+    <div class="done enter">
+      <div class="h"><svg class="ico" width="26" height="26"><use href="#ck"/></svg><div class="t"><b>+150 kcal aplicado</b><small>01/10 às 21h34 · 3.007 → 3.157 kcal em dia de treino</small></div><button class="lk"><svg width="18" height="18"><use href="#undo"/></svg>Desfazer</button></div>
+      <div class="more"><span class="t">O plano alimentar já mostra <b>arroz 310 g</b> no almoço e no jantar.</span></div>
+    </div>
+    <p class="sec-l">O que ficou guardado com o passo</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Saída da regra<small>abaixo de 0,10 nas duas, força parada, adesão suficiente</small></div><span class="v" style="font-size:14px">+150</span></div>
+      <div class="fr"><div class="t">Adesão nos 14 dias anteriores<small>o que destravou o passo</small></div><span class="v">11 <small>de 14</small></span></div>
+      <div class="fr"><div class="t">Texto da regra em 01/10<small>guardado inteiro, como estava</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+      <div class="fr"><div class="t">Ajuste acumulado<small>a nova base</small></div><span class="v">+150 <small>kcal</small></span></div>
+    </div>
+    <div class="note-f">Dias de comida já registrados <b>não</b> são reescritos por isto. Cada dia passado guarda os totais congelados contra o plano daquele dia.</div>
+    <p class="small" style="margin:12px 16px 0">O próximo veredito só muda com duas semanas novas de taxa. Até lá, esta tela mostra o mesmo passo aplicado.</p>
+  </div>
+  {{tabs semana}}
+  {{hi}}
+</div>
+
+=== 5 |  | O ramo do corte: a regra para e pede a foto, não a balança
+cap: Semana hipotética, com o peso subindo rápido demais: +0,46 e +0,52. A regra abre revisão, mas <b>só corta com adesão e com a avaliação visual “aumentou claramente”</b> (F212) — e a avaliação nunca foi respondida nenhuma vez (P1). A tela não esconde o botão de corte: diz que ele não existe ainda e por quê. “Fotos sem piora: manter” está escrito, porque é a parte da regra que mais surpreende.
+@sb 21:36 | cheio
+<div class="scr">
+  <div class="nav"><h2>Semana<small>exemplo: peso subindo rápido</small></h2></div>
+  <div class="body">
+    <div class="vere calm">
+      <span class="k">A regra do nutricionista diz</span>
+      <h3>Não mexer: falta a avaliação das fotos</h3>
+      <p>Subiu acima de 0,40 nas duas semanas, com adesão registrada. <b>Sem a resposta sobre a gordura visual, não há corte.</b> Se as fotos não mostrarem piora, o certo é manter: o ganho está comprando músculo.</p>
+    </div>
+    <div class="gate"><span class="ic2 ok"><svg width="16" height="16"><use href="#ok2"/></svg></span><div class="t"><b>Taxa: <em>+0,46</em> e <em>+0,52</em> kg/semana</b><small>acima de 0,40 nas duas</small></div></div>
+    <div class="gate"><span class="ic2 ok"><svg width="16" height="16"><use href="#ok2"/></svg></span><div class="t"><b>Adesão: <em>12</em> dias de 14</b></div></div>
+    <div class="gate"><span class="ic2 no"><svg width="16" height="16"><use href="#warn"/></svg></span><div class="t"><b>Avaliação visual: sem resposta</b><small>há par válido: 15/09 e 01/10, 16 dias — a pergunta vale para pares de 10 a 28 dias</small></div><button class="go2">Responder</button></div>
+    <div class="duo" style="margin-top:12px">
+      <div><div class="foto"><svg><use href="#p1"/></svg><span class="tag">15/09</span></div></div>
+      <div><div class="foto"><svg><use href="#p1b"/></svg><span class="tag">01/10</span></div></div>
+    </div>
+    <p class="small" style="margin:8px 16px 0">Comparando com cerca de duas semanas atrás, a gordura visual aumentou claramente? A resposta vale por 14 dias.</p>
+    <div class="seg3" style="margin-top:8px"><button aria-pressed="false">Sim</button><button aria-pressed="false">Não</button><button aria-pressed="false">Incerto</button></div>
+    <p class="small" style="margin:10px 16px 0">“Incerto” também é resposta: com ela, a regra mantém a comida como está.</p>
+  </div>
+  {{hi}}
+</div>
+
+=== 6 |  | Uma semana só fora do intervalo não corta nada
+cap: Este produto já cortou comida por causa de uma semana só: +0,10 seguido de +0,75 deu média 0,425 e disparou o corte (F290). A regra de 21/09 fechou essa porta, e a tela escreve o fechamento com os números do caso: duas taxas, uma dentro e uma fora, dão <b>“continuar observando”</b>. Mostrar a semana isolada em destaque seria convidar a decisão errada; por isso ela aparece com a vizinha ao lado.
+@sb 21:37 | cheio
+<div class="scr">
+  <div class="nav"><h2>Semana<small>exemplo: uma semana fora</small></h2></div>
+  <div class="body">
+    <div class="vere calm">
+      <span class="k">A regra do nutricionista diz</span>
+      <h3>Não mexer, continuar observando</h3>
+      <p>Uma semana sozinha fora do intervalo não decide. <b>São as duas taxas seguidas que mandam</b>, e aqui elas não apontam para o mesmo lado.</p>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t">Semana anterior<small>dentro do intervalo-alvo</small></div><span class="v">+0,10</span></div>
+      <div class="fr"><div class="t">Última semana<small>muito acima — sozinha, não corta</small></div><span class="v">+0,75</span></div>
+      <div class="fr"><div class="t">Média das duas<small>o número que já disparou corte errado neste produto</small></div><span class="v" style="color:var(--ink-3)">0,425</span></div>
+    </div>
+    <div class="note-f">A regra não usa a média das duas taxas. Ela exige que <b>as duas</b> cruzem o mesmo limite.</div>
+    <p class="sec-l">O que fazer agora</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Continuar pesando<small>3 a 4 vezes por semana</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#bal"/></svg></div>
+      <div class="fr"><div class="t">Marcar a comida<small>é o que falta para qualquer decisão futura</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+    </div>
+  </div>
+  {{tabs semana}}
+  {{hi}}
+</div>
+
+=== 7 |  | Vazio: sem semanas suficientes, e exatamente o que falta
+cap: A regra exige três semanas seguidas com média válida, e semana sem pesagens suficientes <b>quebra a sequência</b> (F212). O vazio aqui não é uma tela em branco: é a lista das semanas com o motivo de cada reprovação e quantas pesagens faltaram. O ritmo de ganho, além disso, só é calculável com 12 dias ou mais de base (F222).
+@sb 21:38 | cheio
+<div class="scr">
+  <div class="nav"><h2>Semana<small>sem veredito ainda</small></h2></div>
+  <div class="body">
+    <div class="vere calm">
+      <span class="k">A regra do nutricionista diz</span>
+      <h3>Pedir pesagens</h3>
+      <p>Faltam semanas com média válida. <b>Uma semana vale com 2 pesagens</b>; são três semanas seguidas para a regra decidir qualquer coisa.</p>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t">27/09 a 03/10<small>em curso · faltam 2 dias</small></div><span class="v">1 <small>pesagem</small></span></div>
+      <div class="fr"><div class="t">20/09 a 26/09<small>média válida</small></div><span class="v">3 <small>pesagens</small></span></div>
+      <div class="fr"><div class="t">13/09 a 19/09<small>buraco: quebra a sequência</small></div><span class="v" style="color:var(--err-ink)">1 <small>pesagem</small></span></div>
+      <div class="fr"><div class="t">06/09 a 12/09<small>média válida</small></div><span class="v">2 <small>pesagens</small></span></div>
+    </div>
+    <div class="note-f">Com a semana de 13/09 incompleta, as de 06/09 e 20/09 não formam sequência. Uma pesagem com data passada em 13/09 ainda resolve isso — se você souber o número.</div>
+    <div class="fab"><button class="sec">Pesar hoje</button><button class="sec">Peso de outro dia</button></div>
+    <p class="small" style="margin:10px 16px 0">Não invente o peso daquele dia. Uma média falsa produz veredito falso, e o veredito mexe na comida.</p>
+  </div>
+  {{tabs semana}}
+  {{hi}}
+</div>
+
+=== 8 |  | O resto da semana: força, volume e comida, no mesmo lugar
+cap: Abaixo do veredito mora a leitura que ele pediu — “acompanhar esse tipo de evolução” (P8). A semana em curso se compara com <b>o mesmo ponto</b> das semanas anteriores, senão toda terça pareceria queda (F177). O volume por músculo vem contra o prescrito, com a maior inversão dentro da mesma região (F178). A comida aparece quase vazia, porque é o que ela é: 1 dia marcado em 22.
+@sb 21:39 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Semana<small>27/09 a 03/10 · quinta-feira</small></h2></div>
+  <div class="body">
+    <p class="sec-l t0">Treino</p>
+    <div class="wkrow"><div class="t">Sessões<small>A seg · B ter · C qua · D qui · falta E e a aula</small></div><span class="v3">4<small>de 6</small></span></div>
+    <div class="wkrow"><div class="t">Séries<small>na quinta das 3 semanas anteriores: 71, 68, 73</small></div><span class="v3">73<small>de 90</small></span></div>
+    <div class="wkrow"><div class="t">Força estimada<small>7 exercícios nas duas janelas · abaixo de 1% é ruído</small></div><span class="v3">+0,4%<small>em 2 semanas</small></span></div>
+    <p class="sec-l">Séries por músculo, contra o prescrito</p>
+    <div class="wkrow"><div class="t">Deltoide lateral <small>prioridade máxima</small><div class="volbar"><i style="width:100%"></i><b style="left:100%"></b></div></div><span class="v3">12<small>de 12</small></span></div>
+    <div class="wkrow"><div class="t">Peito superior <small>prioridade máxima · o treino E ainda não aconteceu</small><div class="volbar"><i style="width:50%"></i><b style="left:100%"></b></div></div><span class="v3">5<small>de 10</small></span></div>
+    <div class="wkrow"><div class="t">Dorsal <small>secundária</small><div class="volbar"><i style="width:100%"></i><b style="left:100%"></b></div></div><span class="v3">10<small>de 10</small></span></div>
+    <div class="wkrow"><div class="t">Panturrilha <small>secundária</small><div class="volbar"><i style="width:100%"></i><b style="left:100%"></b></div></div><span class="v3">10<small>de 10</small></span></div>
+    <div class="warn" style="margin:10px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>Maior inversão da semana · ombro</b><p>Deltoide posterior (prioridade normal) levou 3 séries; deltoide anterior (direcionada) levou 2. Comparar regiões diferentes não diria nada.</p></div></div></div>
+    <p class="sec-l">Comida</p>
+    <div class="wkrow"><div class="t">Dias com consumo conhecido<small>nos últimos 14</small></div><span class="v3">1<small>de 14</small></span></div>
+    <div class="wkrow"><div class="t">Por refeição<small>sem base: um dia não forma padrão</small></div><span class="v3" style="font-size:14px;color:var(--ink-2)">—</span></div>
+    <div class="wkrow"><div class="t">Água<small>marcada em 2 dias, no máximo</small></div><span class="v3" style="font-size:14px;color:var(--ink-2)">—</span></div>
+    <p class="sec-l">Corpo</p>
+    <div class="wkrow"><div class="t">Pesagens<small>a prescrição pede 3 a 4</small></div><span class="v3">3<small>nesta semana</small></span></div>
+    <div class="wkrow"><div class="t">Fotos<small>sessão de 01/10, 9 poses · próxima em 15/10</small></div><span class="v3">9<small>poses</small></span></div>
+  </div>
+  {{tabs semana}}
+  {{hi}}
+</div>
+
+=== 9 |  | Quando o cálculo da força fica cego, ele responde à mão
+cap: O sinal de força que a regra consome é calculado das cargas (F4) — mas o cálculo cega na volta de pausa, na troca de exercício, no deload e na doença, e aí ele pode declará-lo à mão (F223). A tela mostra os dois lados: o que o cálculo viu, por que não serve agora, e a declaração dele <b>com data</b>, para que meses depois se saiba que aquele veredito não veio do cálculo.
+@sb 21:41 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Sinal de força<small>o que a regra lê</small></h2></div>
+  <div class="body">
+    <div class="warn" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>O cálculo está cego esta semana</b><p>Só 2 exercícios aparecem nas duas janelas de 2 semanas; a tendência precisa de pelo menos 3. Houve troca de exercício no treino E em 12/09.</p></div></div></div>
+    <div class="fin">
+      <div class="fr"><div class="t">O que o cálculo viu<small>2 exercícios · insuficiente</small></div><span class="v" style="font-size:14px;color:var(--ink-2)">sem leitura</span></div>
+      <div class="fr"><div class="t">Declarado por você<small>01/10 · vale enquanto o cálculo não voltar</small></div><span class="v" style="font-size:14px">não está subindo</span></div>
+    </div>
+    <p class="sec-l">Mudar a declaração</p>
+    <div class="seg3 g2"><button aria-pressed="false">Está subindo</button><button aria-pressed="true">Não está subindo</button></div>
+    <div class="fab"><button class="sec">Voltar a usar o cálculo</button></div>
+    <div class="note-f">Enquanto houver declaração manual, o veredito da semana diz de onde veio o sinal de força. Sem declaração, vale o cálculo.</div>
+  </div>
+  {{hi}}
+</div>
+
+=== 10 |  | Erro ao aplicar o passo: nada entra pela metade
+cap: O passo mexe em duas refeições, no total do dia e no ajuste acumulado. Se a gravação falha, <b>nada disso acontece</b> — e a tela diz exatamente isso, em vez de mostrar meio plano alterado. O produto já teve conversão que mexeu em dado pela metade (F300) e passo que movia quantidade errada (F291); por isso o estado de erro aqui é tão explícito quanto o de sucesso.
+@sb 21:34 | cheio
+<div class="scr">
+  <div class="nav"><h2>Semana<small>27/09 a 03/10</small></h2></div>
+  <div class="body">
+    <div class="err" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>O passo não foi aplicado</b><p>O armazenamento deste navegador está cheio. O plano continua em 3.007 kcal, com arroz 250 g no almoço e no jantar, e o ajuste acumulado continua em 0.</p></div></div></div>
+    <div class="passo">
+      <b class="t2">O que ia mudar, e não mudou</b>
+      <table>
+        <tr><td>Almoço · arroz cozido</td><td>250 g</td></tr>
+        <tr><td>Jantar · arroz cozido</td><td>250 g</td></tr>
+        <tr><td>Dia de treino</td><td>3.007 kcal</td></tr>
+      </table>
+    </div>
+    <div class="fab"><button class="primary" style="min-height:52px">Tentar de novo</button><button class="sec">Baixar cópia</button></div>
+    <p class="small" style="margin:10px 16px 0">O veredito continua valendo: +150 kcal. Ele não vence e não some.</p>
+  </div>
+  {{tabs semana}}
+  {{hi}}
+</div>

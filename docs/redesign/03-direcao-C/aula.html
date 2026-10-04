@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A aula do box · Direção C</title>
+<style>
+:root{color-scheme:light;--page:#E7E2D8;--paper:#F5F2EB;--card:#FFFFFF;--text:#1B1A17;--muted:#5D594F;--line:#D6CFC2;--ghost:#857F74;--ink:#1F3B67;--on-ink:#FFFFFF;--ink-soft:#E3E9F3;--ink-text:#1F3B67;--now:#B0420D;--now-soft:#FAE6D8;--warn:#7A4A00;--warn-soft:#FAEDD3;--err:#A3241A;--err-soft:#FBE6E2;--ok:#1E5B3A;--ok-soft:#E0EFE4;--hatch-c:rgba(120,113,100,.32);--frame:#141414;--scrim:rgba(20,18,14,.42);--hatch:repeating-linear-gradient(135deg,var(--hatch-c) 0 1.5px,transparent 1.5px 7px)}
+.phone[data-tema="escuro"]{color-scheme:dark;--paper:#161512;--card:#211F1B;--text:#F2EEE6;--muted:#ADA79A;--line:#3A3731;--ghost:#8F897D;--ink:#A9C3EE;--on-ink:#0D1A30;--ink-soft:#1F2B3F;--ink-text:#C3D6F6;--now:#F59A5F;--now-soft:#3A2416;--warn:#F3C277;--warn-soft:#33270F;--err:#F4978C;--err-soft:#3B1D19;--ok:#8FD3AA;--ok-soft:#16301F;--hatch-c:rgba(210,200,180,.22);--frame:#2B2B2B;--scrim:rgba(0,0,0,.55)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--page);color:var(--text);overflow-x:clip}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:3px solid var(--now);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.doc{padding-bottom:80px}
+.intro{max-width:620px;margin:0 auto;padding:28px 16px 4px}
+.kicker{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intro h1{font-size:26px;line-height:1.2;margin:6px 0 12px;letter-spacing:-.01em}
+.intro p{margin:0 0 10px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.lg{font-size:14px;padding:9px 12px;border-radius:10px}
+.lg.pencil{border:1.5px dashed var(--ghost);color:var(--muted)}
+.lg.ink{background:var(--ink-soft);color:var(--ink-text);font-weight:600}
+.lg.hatch{background-image:var(--hatch);border:1px solid var(--line)}
+.lg.now{border:2px solid var(--now);background:var(--now-soft)}
+.theme{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:14px 0 0}
+.theme>span{font-size:14px;color:var(--muted);margin-right:4px}
+.theme button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:22px;font-size:14px;background:var(--card)}
+.theme button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.toc{max-width:620px;margin:14px auto 0;padding:0 16px}
+.toc ol{list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.toc a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--text);text-decoration:none;font-size:14px}
+.state{margin:46px auto 0}
+.cap{max-width:620px;margin:0 auto 14px;padding:0 16px}
+.cap .tag{font-size:13px;font-weight:700;color:var(--now);letter-spacing:.05em;text-transform:uppercase}
+.cap h2{font-size:21px;line-height:1.25;margin:4px 0 6px}
+.cap p{font-size:15px;color:var(--muted);margin:0 0 6px}
+.cap p b{color:var(--text)}
+.cap .refs{font-size:13px}
+.cap .no{border-left:3px solid var(--line);padding-left:10px;color:var(--text);font-size:14px}
+.phone{position:relative;width:100%;max-width:414px;height:896px;margin:0 auto;background:var(--paper);color:var(--text);display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
+@media (min-width:480px){.phone{border-radius:48px;box-shadow:0 0 0 10px var(--frame),0 30px 60px rgba(0,0,0,.22)}.state{margin-top:72px}}
+.sb{flex:none;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font-size:15px;font-weight:600;position:relative;z-index:9}
+.sb::before{content:"";position:absolute;left:50%;top:0;width:209px;height:30px;transform:translateX(-50%);background:#000;border-radius:0 0 22px 22px}
+.sig{display:flex;align-items:flex-end;gap:2px;height:12px}
+.sig i{width:3px;background:currentColor;opacity:.25;border-radius:1px}
+.sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:6px}.sig i:nth-child(3){height:9px}.sig i:nth-child(4){height:12px}
+.sig i.on{opacity:1}
+.bat{width:25px;height:12px;border:1.5px solid currentColor;border-radius:4px;margin-left:7px;position:relative;opacity:.9}
+.bat::after{content:"";position:absolute;top:1.5px;bottom:1.5px;left:1.5px;width:55%;background:currentColor;border-radius:1.5px}
+.hi{flex:none;height:34px;display:flex;align-items:center;justify-content:center;position:relative;z-index:9}
+.hi::after{content:"";width:134px;height:5px;border-radius:3px;background:var(--text);opacity:.85}
+.hi.oncard{background:var(--card)}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--card)}
+.tabs a{min-height:50px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;position:relative}
+.tabs a.on{color:var(--ink-text)}
+.tabs a.on::before{content:"";position:absolute;top:0;width:22px;height:3px;border-radius:2px;background:var(--ink-text)}
+.d-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:2px 6px;min-height:50px}
+.d-head .ttl{text-align:center;line-height:1.2}
+.d-head .ttl strong{display:block;font-size:17px}
+.d-head .ttl span{font-size:13px;color:var(--muted)}
+.back{min-width:72px;min-height:44px;font-size:17px;font-weight:600;color:var(--ink-text);text-align:left;padding:0 8px}
+.pillb{min-height:44px;min-width:60px;padding:0 13px;border-radius:22px;border:1.5px solid var(--line);background:var(--card);font-size:15px;font-weight:600}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:0 16px 10px}
+.scroll::-webkit-scrollbar{display:none}
+.over{font-size:13px;color:var(--muted);font-weight:600}
+.primary{width:100%;min-height:56px;border-radius:16px;background:var(--ink);color:var(--on-ink);font-size:18px;font-weight:700}
+.secondary{min-height:48px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:16px;padding:0 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.mini{min-height:44px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-size:14px;font-weight:700;color:var(--ink-text)}
+.toast{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-radius:14px;background:var(--ink);color:var(--on-ink);font-size:15px;line-height:1.3;margin:10px 0 0}
+.toast .u{margin-left:auto;font-weight:700;text-decoration:underline;min-height:44px;padding:0 10px;color:var(--on-ink);flex:none}
+.note{font-size:13px;color:var(--muted);margin-top:8px}
+.duo{max-width:680px;margin:0 auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:28px;justify-items:center}
+@media (min-width:700px){.duo{grid-template-columns:1fr 1fr}}
+.frame{width:290px}
+.shrink{width:290px;height:628px;position:relative;overflow:hidden;border-radius:30px;box-shadow:0 0 0 7px var(--frame),0 16px 34px rgba(0,0,0,.2)}
+.shrink .phone{position:absolute;top:0;left:0;width:414px;max-width:414px;height:896px;transform:scale(.6996);transform-origin:top left;border-radius:0;box-shadow:none}
+.frame p{text-align:center;font-size:14px;color:var(--muted);margin-top:10px}
+
+/* aula */
+.seq{margin:0 16px 10px;padding:11px 13px;border-radius:14px;border:1.5px dashed var(--ghost)}
+.seq strong{display:block;font-size:16px}
+.seq span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.fui{width:100%;min-height:132px;border-radius:20px;background:var(--now);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.phone[data-tema="escuro"] .fui{color:#241003}
+.fui b{font-size:40px;line-height:1;letter-spacing:-.02em}
+.fui span{font-size:15px;opacity:.95}
+@media (prefers-reduced-motion:no-preference){.fui{transition:transform .12s ease-out}.fui:active{transform:scale(.985)}}
+.only{font-size:14px;color:var(--muted);text-align:center;margin:10px 4px 0;line-height:1.35}
+.feito{display:flex;align-items:center;gap:10px;padding:14px;border-radius:16px;background:var(--ink-soft);color:var(--ink-text)}
+.feito .ck{font-size:22px;font-weight:700}
+.feito strong{display:block;font-size:17px}
+.feito span{display:block;font-size:13px}
+.mv{list-style:none;display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.mv li{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;min-height:60px;padding:8px 10px;border-radius:13px;border:1.5px dashed var(--ghost)}
+.mv li.ink{border:0;background:var(--ink-soft);color:var(--ink-text)}
+.mv .nm{font-size:16px;font-weight:600;line-height:1.2}
+.mv .sub{font-size:13px;color:var(--muted);display:block;margin-top:2px}
+.mv li.ink .sub{color:var(--ink-text)}
+.mv .tap{min-height:46px;padding:0 13px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-weight:700;font-size:16px;white-space:nowrap}
+.mv .val{font-size:19px;font-weight:700;white-space:nowrap}
+.srch{display:flex;align-items:center;gap:8px;min-height:50px;padding:0 12px;border-radius:13px;border:1.5px solid var(--line);background:var(--card);color:var(--muted);font-size:16px;margin-top:10px;width:100%;text-align:left}
+.kb{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:8px 8px 12px;z-index:7;box-shadow:0 -8px 24px rgba(0,0,0,.14)}
+.kb-h{display:flex;align-items:baseline;justify-content:space-between;padding:2px 6px 8px}
+.kb-h strong{font-size:17px}
+.kb-h span{font-size:13px;color:var(--muted)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.keys button{min-height:56px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:23px;font-weight:600}
+.keys button.wide{grid-column:span 2}
+.keys button.go{background:var(--ink);color:var(--on-ink);border-color:var(--ink);font-size:18px;font-weight:700}
+.val-box{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:13px;border:2px solid var(--now);background:var(--now-soft);margin:0 2px 10px}
+.val-box .big{font-size:30px;font-weight:700}
+.val-box .un{font-size:14px;color:var(--muted)}
+.board{padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.board pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;color:var(--text)}
+.board .bh{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.warnb{padding:12px 13px;border-radius:14px;background:var(--warn-soft);color:var(--warn);font-size:14px;line-height:1.35}
+.warnb strong{display:block;font-size:15px;margin-bottom:3px}
+.errb{padding:12px 13px;border-radius:14px;background:var(--err-soft);color:var(--err);border:1.5px solid var(--err);font-size:14px;line-height:1.35}
+.errb strong{display:block;font-size:16px;margin-bottom:4px}
+.errb ul{margin:6px 0 0 18px;font-size:14px}
+.days{display:flex;gap:6px;margin-top:8px}
+.days button{flex:1;min-height:62px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:13px;color:var(--muted)}
+.days button b{font-size:18px;color:var(--text)}
+.days button[aria-pressed="true"]{border:2px solid var(--now);background:var(--now-soft)}
+.days button:disabled{opacity:.4}
+.empty{text-align:center;padding:16px 8px}
+.empty .big{font-size:19px;font-weight:700;margin-bottom:6px}
+.empty p{font-size:15px;color:var(--muted);line-height:1.4}
+.ref{margin-top:14px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.ref h4{font-size:15px;margin-bottom:2px}
+.ref p{font-size:13px;color:var(--muted)}
+.ref dl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin-top:9px;font-size:16px}
+.ref dt{padding:7px 0;border-top:1px solid var(--line)}
+.ref dd{padding:7px 0;border-top:1px solid var(--line);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="doc">
+
+<header class="intro">
+  <p class="kicker">Direção C · Previsto e feito · tela nova</p>
+  <h1>A aula do box</h1>
+  <p>Terceira situação mais difícil do uso medido, e a de maior falha de detalhe: cinco aulas em oito semanas, nenhuma com movimentos, nenhuma com a lousa, quatro das cinco registradas depois do dia. A janela de registro é depois da aula, sentado, ofegante, curta, com o celular saindo da mochila.</p>
+  <p><b>A direção, aqui:</b> a aula inteira cabe num toque — <b>“Fui”</b> — e isso já é um registro completo, não um registro pela metade. O detalhe existe para uma coisa só, que foi o que o dono pediu: chegar na aula seguinte sabendo <b>qual peso ele costuma pegar</b>. Por isso o detalhe é uma lista de cargas, não um formulário de treino.</p>
+  <p>A aula é o sexto treino da sequência A → B → C → D → E → aula, e avança por <b>posição na sequência</b>, não por dia da semana: quinta ou sábado dá no mesmo.</p>
+  <div class="legend" aria-label="Legenda">
+    <span class="lg pencil">previsto (lápis)</span>
+    <span class="lg ink">feito (tinta)</span>
+    <span class="lg hatch">sem marca (não sabido)</span>
+    <span class="lg now">o que é agora</span>
+  </div>
+  <div class="theme" role="group" aria-label="Tema das telas">
+    <span>Tema das telas:</span>
+    <button data-t="claro" aria-pressed="true">Claro</button><button data-t="escuro" aria-pressed="false">Escuro</button>
+  </div>
+  <p class="note">No aparelho o tema segue o sistema, com troca manual. Este documento abre claro; o botão acima troca as telas, e o último estado mostra os dois lado a lado.</p>
+</header>
+
+<nav class="toc" aria-label="Estados desta tela">
+  <ol>
+    <li><a href="#a1">1 · Um toque</a></li>
+    <li><a href="#a2">2 · O detalhe que ele quis</a></li>
+    <li><a href="#a3">3 · O número</a></li>
+    <li><a href="#a4">4 · A lousa, depois</a></li>
+    <li><a href="#a5">5 · Erro: arquivo recusado</a></li>
+    <li><a href="#a6">6 · Movimento desconhecido</a></li>
+    <li><a href="#a7">7 · Dias depois</a></li>
+    <li><a href="#a8">8 · Vazio</a></li>
+    <li><a href="#a9">9 · Claro e escuro</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section class="state" id="a1" aria-labelledby="a1h">
+  <div class="cap">
+    <p class="tag">Estado 1 · caso base · funciona ao toque</p>
+    <h2 id="a1h">9:48, sábado, sentado no box, ofegante</h2>
+    <p>A aula acabou. O celular sai da mochila. A tela tem <b>um alvo</b>, grande o bastante para a mão trêmula e para a vista cansada, e um texto que diz que ele pode parar aqui. <b>Toque em “Fui”.</b></p>
+    <p>Acima, a lápis, o que o app sabe sem perguntar: a aula é a 6ª da sequência e o último treino registrado foi o E, na sexta. Nenhum número é pedido, nenhuma série é cobrada, nenhum movimento aparece como pendente.</p>
+    <p class="no"><b>O que esta tela recusa fazer:</b> pedir RIR, pedir carga obrigatória, cobrar as nove estações da prova como pendentes, propor aquecimento, herdar descanso de hipertrofia, contar as estações no volume por músculo e perguntar, a cada movimento, se ele entra no programa permanente. Tudo isso já aconteceu neste produto e não quis dizer nada.</p>
+    <p class="refs">F36 · F37 · F80 · F81 · F100 · F118 · F149 · F281 · F282 · F285 · F286 · P4 · U7</p>
+  </div>
+  <div class="phone" id="live" role="group" aria-label="Tela da aula, interativa">
+    <div class="sb"><span class="num">9:48</span><span class="sig"><i class="on"></i><i class="on"></i><i></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Aula do box</strong><span>sábado, 03/10</span></div><button class="pillb" aria-label="Mais opções">···</button></div>
+      <div class="seq">
+        <strong>6ª da sequência · depois do treino E</strong>
+        <span>o último da prescrição foi o E, em 02/10 · a aula não é extra, é o sexto treino</span>
+      </div>
+      <div class="scroll">
+        <div data-antes>
+          <button class="fui" data-fui aria-label="Fui à aula do box, gravar presença"><b>Fui</b><span>grava a presença da aula</span></button>
+          <p class="only">É só isto. Detalhar é opcional, agora ou nunca.</p>
+          <div class="ref" aria-label="Referência de carga">
+            <h4>O que eu costumo pegar</h4>
+            <p>para olhar antes do próximo round, se der</p>
+            <dl>
+              <dt>Wall ball</dt><dd>9 kg</dd>
+              <dt>Sandbag (lunges)</dt><dd>20 kg</dd>
+              <dt>Kettlebell swing</dt><dd>24 kg</dd>
+              <dt>Farmers carry</dt><dd>2 × 24 kg</dd>
+            </dl>
+            <p style="margin-top:9px">da última aula detalhada, 20/09 · os pesos do box ficam os mesmos por meses</p>
+          </div>
+        </div>
+        <div data-depois hidden>
+          <div class="feito"><span class="ck">✓</span><span><strong>Aula registrada · sábado, 03/10</strong><span>presença gravada neste aparelho · 6ª da sequência cumprida</span></span></div>
+          <div class="toast">Gravado. A sequência segue para o treino A.<button class="u">Desfazer</button></div>
+          <p class="over" style="margin-top:18px">Se quiser, e só se quiser</p>
+          <ul class="mv">
+            <li><span><span class="nm">Wall ball</span><span class="sub">9 kg na última vez · um toque confirma</span></span><button class="tap">9 kg</button></li>
+            <li><span><span class="nm">Corrida</span><span class="sub">quanto você correu hoje</span></span><button class="tap">anotar</button></li>
+            <li><span><span class="nm">Sled push</span><span class="sub">20 kg na última vez</span></span><button class="tap">20 kg</button></li>
+          </ul>
+          <button class="srch">Procurar outro movimento…</button>
+          <p class="note">Nada aqui vence, nada aqui cobra. A aula já está registrada.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#a1">Hoje</a><a href="#a1">Semanas</a><a href="#a1">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="state" id="a2" aria-labelledby="a2h">
+  <div class="cap">
+    <p class="tag">Estado 2 · o detalhe que ele pediu</p>
+    <h2 id="a2h">Depois do “Fui”: uma lista de cargas, não um treino</h2>
+    <p>O dono disse o que quer guardar: “os pesos que eu uso” e “o tanto que eu consegui correr”, para saber, ao chegar na aula seguinte, qual peso ele costuma pegar. Então o detalhe é exatamente isso: os movimentos que ele mais procura, na ordem em que os procura, cada um com <b>a carga da última vez e um toque para dizer “a mesma”</b>. Confirmar uma carga custa um toque; a aula não fica “incompleta” se ele confirmar uma e parar.</p>
+    <p>Cada movimento guarda a <b>unidade e a quantidade do dia</b>: o mesmo remo é 500 m numa aula e 15 cal na outra, e as duas ficam como históricos separados. Num mesmo round, o ski está em metros e o wall ball em repetições — a tela mostra as duas sem traduzir uma na outra.</p>
+    <p class="no">Esta tela mostra as “últimas vezes” já existindo. No registro medido não existe nenhuma: zero aulas com movimentos. O estado 8 é a verdade de hoje; este é o que ele ganha depois da primeira aula detalhada.</p>
+    <p class="refs">F121 · F122 · F123 · F129 · F143 · F144 · F147 · F148 · D4 · P4</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">9:51</span><span class="sig"><i class="on"></i><i class="on"></i><i></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Aula do box</strong><span>sábado, 03/10 · registrada</span></div><button class="pillb" aria-label="Mais opções">···</button></div>
+      <div class="scroll">
+        <div class="feito"><span class="ck">✓</span><span><strong>Aula registrada</strong><span>presença gravada · detalhe opcional abaixo</span></span></div>
+        <p class="over" style="margin-top:16px">O que eu peguei hoje · 3 de 16 anotados</p>
+        <ul class="mv">
+          <li class="ink"><span><span class="nm">Wall ball · 25 rep</span><span class="sub">9 kg, como sempre · 3 rounds</span></span><span class="val">9 kg</span></li>
+          <li class="ink"><span><span class="nm">Corrida · 400 m</span><span class="sub">1:38 no melhor round · 3 rounds</span></span><span class="val num">1:38</span></li>
+          <li class="ink"><span><span class="nm">Ski erg · 400 m</span><span class="sub">1:44 · sem carga</span></span><span class="val num">1:44</span></li>
+          <li><span><span class="nm">Remo</span><span class="sub">última vez: 500 m em 1:52 · hoje foi 400 m?</span></span><button class="tap">anotar</button></li>
+          <li><span><span class="nm">Sled pull</span><span class="sub">última vez: 30 m com 20 kg</span></span><button class="tap">20 kg</button></li>
+          <li><span><span class="nm">Farmers carry</span><span class="sub">última vez: 2 × 24 kg, 30 m</span></span><button class="tap">24 kg</button></li>
+        </ul>
+        <button class="srch">Procurar outro movimento…</button>
+        <p class="note">A busca ignora acento e aceita as palavras em qualquer ordem: “push sled” acha “Sled push”. Erro de digitação ela não corrige, de propósito — registrar no movimento errado é pior que não achar.</p>
+        <p class="note">Parar aqui não deixa nada pendente.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#a2">Hoje</a><a href="#a2">Semanas</a><a href="#a2">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="state" id="a3" aria-labelledby="a3h">
+  <div class="cap">
+    <p class="tag">Estado 3 · o número, com uma mão</p>
+    <h2 id="a3h">“Quanto eu corri”: o teclado do app, sentado e ofegante</h2>
+    <p>O teclado é o do app, não o do sistema: aqui ele está ofegante, com uma mão, e o teclado do iPhone cobre metade da tela e descarta a vírgula de um campo numérico. As teclas são grandes, o valor fica acima delas, e a unidade do dia vem escrita ao lado — <b>400 m em minutos e segundos</b>, porque em metros e calorias o que se guarda é o tempo.</p>
+    <p>Quando a lousa dá o peso em libras (“50#”), a conversão aparece ao lado do valor, sem trocar o que ele digitou: a carga é guardada como digitada, e o app nunca converte entre tipos de carregamento por conta própria.</p>
+    <p class="no">Nenhum RIR é pedido. Nenhum aquecimento é proposto. Nenhum descanso é herdado entre um wall ball e outro. Em movimento medido por unidade, não existe carga sugerida nem indicação de subir peso.</p>
+    <p class="refs">F63 · F64 · F65 · F120 · F124 · F139 · F140 · F141 · F144 · F145 · F149 · F285 · F286</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">9:53</span><span class="sig"><i class="on"></i><i class="on"></i><i></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Aula</button><div class="ttl"><strong>Corrida</strong><span>400 m · 3 rounds · sábado, 03/10</span></div><button class="pillb" aria-label="Mais opções">···</button></div>
+      <div class="scroll">
+        <p class="over">O melhor round de hoje</p>
+        <div class="val-box" style="margin-top:8px"><span><span class="big num">1:38</span> <span class="un">min:s em 400 m</span></span><span class="un">ritmo 24,5 s/100 m</span></div>
+        <p class="note">Em metros e em calorias a quantidade é fixa e o que se guarda é o tempo; menos tempo é melhor. O ritmo por 100 m é o que torna comparável uma aula de 400 m com uma de 1 km.</p>
+        <p class="over" style="margin-top:16px">Última vez · 20/09</p>
+        <p style="font-size:16px;margin-top:4px">1 km em 4:12 <span style="color:var(--muted);font-size:14px">· 25,2 s/100 m</span></p>
+        <p class="note">Distâncias diferentes não viram recorde uma da outra: a comparação é pelo ritmo, e cada distância guarda a sua série.</p>
+      </div>
+      <div class="kb" role="group" aria-label="Teclado do app">
+        <div class="kb-h"><strong>1:38</strong><span>minutos : segundos</span></div>
+        <div class="keys">
+          <button>1</button><button>2</button><button>3</button>
+          <button>4</button><button>5</button><button>6</button>
+          <button>7</button><button>8</button><button>9</button>
+          <button>:</button><button>0</button><button aria-label="Apagar">⌫</button>
+          <button class="go wide">Gravar</button><button class="secondary" style="border-radius:12px">Sem número</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="state" id="a4" aria-labelledby="a4h">
+  <div class="cap">
+    <p class="tag">Estado 4 · a lousa chega depois</p>
+    <h2 id="a4h">“Tiro a foto e mando quando der”: o arquivo da lousa, aceito</h2>
+    <p>A lousa é fotografada e transcrita fora do app, por um assistente, num arquivo. Quando o arquivo chega — horas depois, em casa, sentado — ele entra na aula que já estava registrada: <b>a presença não espera a lousa</b>. O texto literal da lousa fica guardado junto do dia e, quando a sessão termina, passa a ser a nota daquela sessão. Depois disso, uma lousa não se reconstrói de outra forma, e é por isso que o texto é guardado inteiro, com as abreviações do box.</p>
+    <p>A tela diz, antes de qualquer coisa, <b>o que a lousa não vira dado</b>: blocos, time cap, ordem dentro do round, EMOM, dupla dividindo repetições e peso sugerido existem só no texto. Fingir que são dados seria inventar estrutura que o app não sabe usar.</p>
+    <p>Lousa real, de 25/09, transcrita literalmente.</p>
+    <p class="refs">F124 · F127 · F130 · F131 · F133 · F134 · F135 · P4</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:07</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Aula</button><div class="ttl"><strong>Lousa de 25/09</strong><span>arquivo aceito · 7 movimentos</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="board">
+          <p class="bh">Transcrição literal · “Hyrox Friday”</p>
+          <pre>3 RNDS: 400 m Ski · 30 m Sled-Push · 25 m Walking Lunges
+3 RNDS: 400 m Row · 30 m Sled-Pull · 25 Wall Ball
+3 RNDS: 400 m Run · 30 m Farmers Carry · 25 m [ilegível]
+E5MIN = 15 m Burpee Broad Jumps</pre>
+        </div>
+        <div class="warnb" style="margin-top:10px">
+          <strong>Isto fica só no texto</strong>
+          os três blocos, a ordem dentro de cada round, o E5MIN e o “[ilegível]”. O app não transforma isso em dado porque não saberia o que fazer com ele depois.
+        </div>
+        <p class="over" style="margin-top:16px">Movimentos reconhecidos · nenhum desconhecido</p>
+        <ul class="mv">
+          <li class="ink"><span><span class="nm">Ski erg · 3 × 400 m</span><span class="sub">1:44 anotado hoje</span></span><span class="val num">1:44</span></li>
+          <li class="ink"><span><span class="nm">Wall ball · 3 × 25 rep</span><span class="sub">9 kg anotado hoje</span></span><span class="val">9 kg</span></li>
+          <li><span><span class="nm">Sled push · 3 × 30 m</span><span class="sub">última vez: 20 kg</span></span><button class="tap">20 kg</button></li>
+          <li><span><span class="nm">Walking lunges · 3 × 25 m</span><span class="sub">sem carga registrada</span></span><button class="tap">anotar</button></li>
+          <li><span><span class="nm">Remo · 3 × 400 m</span><span class="sub">última vez: 500 m em 1:52</span></span><button class="tap">anotar</button></li>
+        </ul>
+        <div class="two" style="margin-top:12px"><button class="secondary">Guardar esta aula</button><button class="secondary">Ver as 7 guardadas</button></div>
+        <p class="note">Guardar uma aula guarda a prescrição dela e a lousa — movimentos, vezes, unidade, quantidade, descanso —, nunca as cargas. Cabem 60.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#a4">Hoje</a><a href="#a4">Semanas</a><a href="#a4">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="state" id="a5" aria-labelledby="a5h">
+  <div class="cap">
+    <p class="tag">Estado 5 · erro · o arquivo é recusado inteiro</p>
+    <h2 id="a5h">A lousa não entrou: o motivo, e a aula intacta</h2>
+    <p>A interpretação do arquivo recusa <b>o arquivo inteiro, nunca pela metade</b> — meia lousa seria pior que nenhuma. A tela diz qual das treze causas aconteceu, em português, e onde ela está no arquivo. O que ela não faz é apagar a aula: a presença de sábado continua gravada, e ele pode mandar transcrever de novo quando der.</p>
+    <p>Dois casos valem aviso e não recusa: movimento já conhecido que vem com declaração — a declaração é ignorada; e arquivo de versão maior que 1 — aceito, com aviso.</p>
+    <p class="refs">F131 · F132 · F134 · P4</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:09</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Aula</button><div class="ttl"><strong>Lousa</strong><span>arquivo recusado</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="errb">
+          <strong>O arquivo não entrou</strong>
+          Nada foi aproveitado dele, de propósito: metade de uma lousa viraria um registro falso.
+          <ul>
+            <li>o 4º movimento não tem nome;</li>
+            <li>o 6º movimento (“wall ball dupla”) é desconhecido e veio sem a declaração de carregamento e de unidade;</li>
+            <li>a quantidade do 2º movimento (“400”) veio sem unidade.</li>
+          </ul>
+        </div>
+        <div class="feito" style="margin-top:12px"><span class="ck">✓</span><span><strong>A aula de sábado continua registrada</strong><span>a presença não depende da lousa</span></span></div>
+        <div class="two" style="margin-top:12px"><button class="secondary">Tentar outro arquivo</button><button class="secondary">Escrever à mão</button></div>
+        <p class="note">Escrever à mão abre a mesma lista de movimentos do estado 2, com a busca. Não há obrigação de ter lousa.</p>
+        <p class="over" style="margin-top:16px">Avisos, que não recusam</p>
+        <p class="note">Versão de arquivo maior que 1: aceito, com aviso. Movimento já conhecido que chega com declaração: a declaração é ignorada, com aviso.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#a5">Hoje</a><a href="#a5">Semanas</a><a href="#a5">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="state" id="a6" aria-labelledby="a6h">
+  <div class="cap">
+    <p class="tag">Estado 6 · movimento desconhecido</p>
+    <h2 id="a6h">A lousa de 20/09: três dos seis movimentos o app não conhece</h2>
+    <p>Acontece: numa das quatro lousas transcritas, três de seis movimentos eram novos. O app conhece 182 movimentos e não vai conhecer os que o box inventar. Para um movimento novo ele precisa de duas coisas, e só duas: <b>como se carrega</b> e <b>em que unidade se mede</b>. Sem isso o histórico dele não quer dizer nada depois.</p>
+    <p>A saída de cima é não responder: “deixar fora” mantém a aula registrada e o movimento no texto da lousa. Isso é melhor que um movimento cadastrado errado, que fica para sempre — o código de um exercício nasce do nome na primeira vez e não muda mais.</p>
+    <p class="refs">F116 · F117 · F126 · F131 · F132 · F140 · F143 · F165 · F282</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:14</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Lousa</button><div class="ttl"><strong>Movimento novo</strong><span>1 de 3 · lousa de 20/09</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="board">
+          <p class="bh">No texto da lousa</p>
+          <pre>PLIO + SPRINT (15MIN): 3X 15 SQUAT JUMP + 200M (20/15)</pre>
+        </div>
+        <p class="over" style="margin-top:14px">Squat jump</p>
+        <h3 style="font-size:24px;margin:2px 0 10px">Como se carrega?</h3>
+        <ul class="mv">
+          <li><span><span class="nm">Peso corporal</span><span class="sub">só o que foi acrescentado, pode ficar vazio</span></span><button class="tap">usar</button></li>
+          <li><span><span class="nm">Um implemento</span><span class="sub">halter, kettlebell, sandbag, bola, anilha</span></span><button class="tap">usar</button></li>
+          <li><span><span class="nm">Um halter em cada mão</span><span class="sub">kg por mão</span></span><button class="tap">usar</button></li>
+        </ul>
+        <p class="over" style="margin-top:14px">E em que unidade?</p>
+        <div class="two" style="margin-top:4px"><button class="secondary">repetições</button><button class="secondary">segundos</button></div>
+        <div class="two"><button class="secondary">metros</button><button class="secondary">calorias</button></div>
+        <p class="note">São quatro unidades, e só quatro. Em repetições e em segundos a janela é fixa e o resultado é quanto saiu; em metros e em calorias a quantidade é fixa e o resultado é o tempo.</p>
+        <button class="secondary" style="width:100%;margin-top:14px">Deixar fora · fica só no texto da lousa</button>
+        <p class="note">A aula de 20/09 continua registrada do mesmo jeito.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#a6">Hoje</a><a href="#a6">Semanas</a><a href="#a6">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="state" id="a7" aria-labelledby="a7h">
+  <div class="cap">
+    <p class="tag">Estado 7 · o caso mais frequente: dias depois</p>
+    <h2 id="a7h">Domingo, 04/10: a aula de ontem, de memória</h2>
+    <p>Quatro das cinco aulas medidas foram registradas depois do dia. Então este é o caminho normal, não o remendo: o mesmo “Fui”, com o dia escolhido numa <b>fileira de dias</b>, não na roda de dia-mês-ano do sistema. Os dias que já têm treino registrado aparecem apagados, porque a aula não se sobrepõe a eles.</p>
+    <p>A aula registrada em data passada <b>avança a sequência pela posição</b>, não pelo calendário: ela continua sendo a 6ª depois do E, e isso não muda se ela foi na quinta ou no sábado. É a diferença que o dono decidiu.</p>
+    <p>Quando não há lousa nem memória de carga, a aula anterior pode ser <b>remontada do próprio registro</b> dele — movimentos e medidas, nunca cargas.</p>
+    <p class="refs">F67 · F81 · F136 · F156 · F157 · F158 · U7 · U11 · P1</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">11:02</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Aula do box</strong><span>registrar em outro dia</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <p class="over">Que dia foi?</p>
+        <div class="days" role="group" aria-label="Escolher o dia">
+          <button aria-pressed="false"><span>qua</span><b class="num">30</b></button>
+          <button aria-pressed="false" disabled><span>qui</span><b class="num">01</b><span>treino</span></button>
+          <button aria-pressed="false" disabled><span>sex</span><b class="num">02</b><span>treino E</span></button>
+          <button aria-pressed="true"><span>sáb</span><b class="num">03</b></button>
+          <button aria-pressed="false"><span>hoje</span><b class="num">04</b></button>
+        </div>
+        <p class="note">Quinta e sexta já têm treino da prescrição: a aula não entra por cima. Qualquer outro dia passado serve; dia futuro, nenhum.</p>
+        <button class="fui" style="margin-top:14px" aria-label="Fui à aula no sábado 3 de outubro"><b>Fui no sábado</b><span>grava a presença em 03/10</span></button>
+        <p class="only">O horário é opcional. Sem horário, o registro não entra na conta de horário típico — e é melhor assim que um horário inventado.</p>
+        <div class="ref">
+          <h4>Se quiser puxar a aula anterior</h4>
+          <p>remontada do seu próprio registro: movimentos e medidas, sem cargas</p>
+          <dl>
+            <dt>Ski erg</dt><dd>3 × 400 m</dd>
+            <dt>Wall ball</dt><dd>3 × 25 rep</dd>
+            <dt>Corrida</dt><dd>3 × 400 m</dd>
+          </dl>
+          <button class="secondary" style="width:100%;margin-top:10px">Usar como ponto de partida</button>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#a7">Hoje</a><a href="#a7">Semanas</a><a href="#a7">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="state" id="a8" aria-labelledby="a8h">
+  <div class="cap">
+    <p class="tag">Estado 8 · vazio · a verdade medida</p>
+    <h2 id="a8h">Nenhuma aula detalhada: cinco presenças e mais nada</h2>
+    <p>Este é o estado real do registro: cinco aulas em oito semanas, nenhuma com movimentos, nenhuma com lousa. Não há “última vez” para mostrar, e o vazio não finge que há. O que ele diz é o que é verdade: a presença das cinco aulas está lá, a sequência andou, e o detalhe que falta não deixou nenhum buraco.</p>
+    <p>O vazio também não insiste. Ele oferece uma coisa só — a primeira carga anotada vira a referência da próxima aula — e explica por que isso valeria o toque. Depois cala.</p>
+    <p class="refs">F123 · F136 · P1 · P4 · U7 · §4 item 6 do 02-uso</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">9:49</span><span class="sig"><i class="on"></i><i class="on"></i><i></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Aula do box</strong><span>sábado, 03/10 · registrada</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="feito"><span class="ck">✓</span><span><strong>Aula registrada</strong><span>a 6ª presença desde agosto</span></span></div>
+        <div class="empty" style="margin-top:18px">
+          <p class="big">Nenhuma carga anotada ainda</p>
+          <p>Cinco aulas registradas, nenhuma com movimentos. Não tenho o que te mostrar como “última vez”.</p>
+        </div>
+        <div class="ref">
+          <h4>A primeira anotação é a que vale</h4>
+          <p>O peso do wall ball, da sandbag e do kettlebell no box fica o mesmo por meses. A referência de carga que falta aqui é a sua própria: anotar uma vez resolve as próximas.</p>
+          <button class="secondary" style="width:100%;margin-top:10px">Anotar um peso de hoje</button>
+        </div>
+        <p class="note" style="margin-top:14px">Nada disso é obrigatório, e a aula não fica incompleta sem isso. Das cinco aulas anteriores, nenhuma aparece como pendente em lugar nenhum.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#a8">Hoje</a><a href="#a8">Semanas</a><a href="#a8">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="state" id="a9" aria-labelledby="a9h">
+  <div class="cap">
+    <p class="tag">Estado 9 · claro e escuro</p>
+    <h2 id="a9h">Os dois temas, desenhados</h2>
+    <p>O tema segue o aparelho, com troca manual. Os dois são desenhados, não derivados: no escuro o papel é quente e não preto puro, a tinta azul vira azul claro para manter o contraste do texto, e o laranja do “agora” clareia para não vibrar sobre fundo escuro. O “Fui” mantém a área e o peso nos dois.</p>
+    <p class="refs">decisão 5 do dono · F49 · F68</p>
+  </div>
+  <div class="duo">
+    <div class="frame">
+      <div class="shrink"><div class="phone">
+        <div class="sb"><span class="num">9:48</span><span class="sig"><i class="on"></i><i class="on"></i><i></i><i></i><b class="bat"></b></span></div>
+        <div class="app">
+          <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Aula do box</strong><span>sábado, 03/10</span></div><button class="pillb">···</button></div>
+          <div class="seq"><strong>6ª da sequência · depois do treino E</strong><span>o último da prescrição foi o E, em 02/10</span></div>
+          <div class="scroll">
+            <button class="fui"><b>Fui</b><span>grava a presença da aula</span></button>
+            <p class="only">É só isto. Detalhar é opcional, agora ou nunca.</p>
+            <div class="ref"><h4>O que eu costumo pegar</h4><p>da última aula detalhada, 20/09</p>
+              <dl><dt>Wall ball</dt><dd>9 kg</dd><dt>Sandbag (lunges)</dt><dd>20 kg</dd><dt>Kettlebell swing</dt><dd>24 kg</dd></dl>
+            </div>
+          </div>
+          <nav class="tabs"><a class="on" href="#a9">Hoje</a><a href="#a9">Semanas</a><a href="#a9">Prescrição</a></nav>
+        </div>
+        <div class="hi oncard"></div>
+      </div></div>
+      <p>Claro</p>
+    </div>
+    <div class="frame">
+      <div class="shrink"><div class="phone" data-tema="escuro" data-fixo>
+        <div class="sb"><span class="num">9:48</span><span class="sig"><i class="on"></i><i class="on"></i><i></i><i></i><b class="bat"></b></span></div>
+        <div class="app">
+          <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Aula do box</strong><span>sábado, 03/10</span></div><button class="pillb">···</button></div>
+          <div class="seq"><strong>6ª da sequência · depois do treino E</strong><span>o último da prescrição foi o E, em 02/10</span></div>
+          <div class="scroll">
+            <button class="fui"><b>Fui</b><span>grava a presença da aula</span></button>
+            <p class="only">É só isto. Detalhar é opcional, agora ou nunca.</p>
+            <div class="ref"><h4>O que eu costumo pegar</h4><p>da última aula detalhada, 20/09</p>
+              <dl><dt>Wall ball</dt><dd>9 kg</dd><dt>Sandbag (lunges)</dt><dd>20 kg</dd><dt>Kettlebell swing</dt><dd>24 kg</dd></dl>
+            </div>
+          </div>
+          <nav class="tabs"><a class="on" href="#a9">Hoje</a><a href="#a9">Semanas</a><a href="#a9">Prescrição</a></nav>
+        </div>
+        <div class="hi oncard"></div>
+      </div></div>
+      <p>Escuro</p>
+    </div>
+  </div>
+</section>
+
+</main>
+<script>
+(function(){
+  var btns=document.querySelectorAll('.theme button');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    btns.forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+    var t=b.dataset.t;
+    document.querySelectorAll('.phone').forEach(function(p){
+      if(p.hasAttribute('data-fixo'))return;
+      if(t==='escuro')p.setAttribute('data-tema','escuro');else p.removeAttribute('data-tema');
+    });
+  })});
+  var live=document.getElementById('live');
+  if(!live)return;
+  var fui=live.querySelector('[data-fui]'),antes=live.querySelector('[data-antes]'),dep=live.querySelector('[data-depois]');
+  fui.addEventListener('click',function(){antes.hidden=true;dep.hidden=false;
+    var h=live.querySelector('.d-head .ttl span');h.textContent='sábado, 03/10 · registrada';
+    dep.querySelector('.toast .u').focus({preventScroll:true});
+  });
+  dep.querySelector('.toast .u').addEventListener('click',function(){dep.hidden=true;antes.hidden=false;
+    live.querySelector('.d-head .ttl span').textContent='sábado, 03/10';fui.focus({preventScroll:true});});
+})();
+</script>
+</body>
+</html>

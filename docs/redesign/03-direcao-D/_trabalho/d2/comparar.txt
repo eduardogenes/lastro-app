@@ -1,0 +1,241 @@
+@titulo Comparar fotos
+@h1 Comparar as fotos antigas com a atual
+@lead Quinta, 01/10, 21h10, sentado. De manhã ele fez a 3ª sessão de fotos da rotina (9 poses em 1 min 28 s, P1). É o que ele diz fazer mais: “os comparativos dos antepassados com o atual, isso eu vejo bastante mesmo” (P8).
+@lead <b>A comparação vem pronta.</b> Nada é escolhido para chegar aqui: o par que abre é o intervalo longo — a mais antiga contra a mais nova, na mesma pose (F230) —, porque comparar com a sessão anterior engana: em duas semanas a diferença é quase toda água e sono. Trocar de pose é um toque; trocar de par é um toque.
+@lead Duas coisas difíceis moram aqui: <b>o arquivo pode não estar no aparelho</b> (o iPhone guarda só as 4 sessões mais recentes, F232, e cada atualização do app apaga a cópia local, F252) e <b>a pose pode não existir na sessão antiga</b> (as primeiras sessões tiveram 5, 6, 6 e 3 poses, P1). Nenhuma das duas pode virar tela em branco.
+@css
+.poserow{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:0 16px 2px;margin-top:8px}
+.poserow::-webkit-scrollbar{display:none}
+.pchip{flex:none;min-height:44px;padding:0 12px;border-radius:12px;border:1.5px solid var(--line-2);font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;background:var(--surface);white-space:nowrap}
+.pchip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.par{display:flex;align-items:center;gap:8px;margin:10px 16px 0;font-size:13.5px;color:var(--ink-2)}
+.par b{color:var(--ink)}
+.par .sp{flex:1}
+.sess{display:flex;align-items:center;gap:10px;margin:0 16px;padding:9px 0;border-top:1px solid var(--line);min-height:56px}
+.sess .mini{width:30px;height:40px;border-radius:4px;background:#CFC8BA;position:relative;overflow:hidden;flex:none}
+.sess .mini svg{position:absolute;inset:0;width:100%;height:100%}
+.sess .t{flex:1;min-width:0;line-height:1.25}
+.sess .t b{font-size:15px;display:block}
+.sess .t small{font-size:12.5px;color:var(--ink-2);display:block}
+.sess .w{font-size:12.5px;font-weight:700;color:var(--ink-2);text-align:right;flex:none;line-height:1.25}
+.aval{margin:10px 16px 0;padding:12px 13px;border-radius:18px;border:2px solid var(--accent);background:var(--surface)}
+.aval>b{display:block;font-size:16px;line-height:1.3;margin-bottom:3px}
+.aval>p{font-size:13px;color:var(--ink-2);margin:0 0 9px;line-height:1.35}
+@fim
+
+=== 1 |  | O caso: a comparação já está montada
+cap: Mesma pose, intervalo longo, lado a lado. Embaixo de cada foto, o que estava no corpo naquela semana: a média semanal do peso, que é o número que decide (F211, F233). A cintura aparece vazia nas duas porque ela nunca foi medida — não havia fita até 01/10 (F44, P1). A tela mostra o vazio com a palavra certa em vez de um zero.
+@sb 21:10 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Comparar<small>frente relaxado · 55 dias</small></h2><button class="act">Cortina</button></div>
+  <div class="duo">
+    <div><div class="foto"><svg><use href="#p1"/></svg><span class="tag">07/08</span></div><p class="cp"><b>sex 07/08</b>71,5 kg na semana<br>cintura: sem medida</p></div>
+    <div><div class="foto"><svg><use href="#p1b"/></svg><span class="tag">01/10</span></div><p class="cp"><b>qui 01/10</b>73,5 kg na semana<br>cintura: sem medida</p></div>
+  </div>
+  <div class="par"><span>Par mais longo que existe desta pose: <b>55 dias</b>, +2,0 kg</span></div>
+  <div class="poserow" role="group" aria-label="Pose">
+    <button class="pchip" aria-pressed="true">Frente relaxado</button>
+    <button class="pchip" aria-pressed="false">Frente duplo bíceps</button>
+    <button class="pchip" aria-pressed="false">Abdômen e coxa</button>
+    <button class="pchip" aria-pressed="false">Perfil direito</button>
+  </div>
+  <p class="small" style="margin:10px 16px 0">9 poses · arraste para ver as outras</p>
+  <div class="fab"><button class="sec">Trocar o par</button><button class="sec">Endireitar</button></div>
+  <div class="note-f">Comparar com a sessão anterior engana: em duas semanas a diferença é quase toda água e sono. Por isso o par que abre é o mais longo.</div>
+  {{tabs corpo}}
+  {{hi}}
+</div>
+
+=== 2 |  | A cortina: uma foto por cima da outra, um dedo só
+cap: As duas fotos ocupam o mesmo lugar e a cortina diz onde uma termina e a outra começa. É a leitura que a geometria permite: mesma pose, mesma distância, mesmas marcas (F229). Serve de pé, com uma mão, e não depende de ler nada. <b>Este telefone responde ao toque: arraste a cortina.</b> O movimento tem função — mostra onde está o corte —, e é a única animação da tela.
+@sb 21:11 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Comparar<small>frente relaxado · 55 dias</small></h2><button class="act">Lado a lado</button></div>
+  <div class="cort" data-drag="1">
+    <div class="lay"><svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%"><use href="#p1"/></svg></div>
+    <div class="lay nova"><svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;filter:saturate(1.06) brightness(1.03)"><use href="#p1b"/></svg></div>
+    <span class="mk l">07/08 · 71,5 kg</span><span class="mk r">01/10 · 73,5 kg</span>
+    <div class="hd"><i></i></div>
+  </div>
+  <div class="par"><span><b>55 dias</b> · +2,0 kg na média semanal</span></div>
+  <div class="poserow" role="group" aria-label="Pose">
+    <button class="pchip" aria-pressed="true">Frente relaxado</button>
+    <button class="pchip" aria-pressed="false">Frente duplo bíceps</button>
+    <button class="pchip" aria-pressed="false">Abdômen e coxa</button>
+  </div>
+  <div class="note-f">A cortina só existe entre fotos da mesma pose. Poses diferentes não se sobrepõem: a geometria muda e a comparação mente.</div>
+  {{tabs corpo}}
+  {{hi}}
+</div>
+
+=== 3 |  | Ele escolheu um par curto: a tela avisa e não impede
+cap: 15/09 contra 01/10 são 16 dias. O aviso é o fato (F230), não uma proibição: ele continua vendo o par que pediu, com a frase do que aquele intervalo consegue mostrar. O atalho de volta ao par longo fica ao lado. Avisar e obedecer é diferente de bloquear.
+@sb 21:12 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Comparar<small>frente relaxado · 16 dias</small></h2><button class="act">Cortina</button></div>
+  <div class="duo">
+    <div><div class="foto"><svg><use href="#p1"/></svg><span class="tag">15/09</span></div><p class="cp"><b>ter 15/09</b>73,1 kg na semana</p></div>
+    <div><div class="foto"><svg><use href="#p1b"/></svg><span class="tag">01/10</span></div><p class="cp"><b>qui 01/10</b>73,5 kg na semana</p></div>
+  </div>
+  <div class="warn" style="margin:10px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>16 dias mostram pouco</b><p>Nesse intervalo a diferença é quase toda água e sono. Serve para a pergunta do nutricionista; não serve para ver mudança.</p></div></div></div>
+  <div class="fab"><button class="primary" style="min-height:52px">Voltar ao par de 55 dias</button></div>
+  <p class="small" style="margin:10px 16px 0">Pares desta pose: 55, 47, 32, 23 e 16 dias.</p>
+  {{tabs corpo}}
+  {{hi}}
+</div>
+
+=== 4 |  | Escolher a sessão: onde cada arquivo está, dito antes do toque
+cap: Seis sessões, com quantas poses cada uma teve (P1: 5, 6, 6, 3, 8, 9). O aparelho guarda os arquivos só das 4 mais recentes; as antigas moram na cópia remota (F232) — e isso é exatamente a parte que ele mais usa. Então a lista <b>diz onde o arquivo está antes de ele tocar</b>, e quanto vai precisar baixar. Sem rede, as duas primeiras não abrem; a tela não finge o contrário.
+@sb 21:12 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Trocar o par<small>frente relaxado</small></h2></div>
+  <div class="body">
+    <p class="sec-l t0">A mais antiga do par</p>
+    <div class="sess"><span class="mini"><svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><use href="#p1"/></svg></span><div class="t"><b>sex 07/08</b><small>5 poses · fotos anteriores à rotina</small></div><span class="w">na cópia remota<br>150 KB</span></div>
+    <div class="sess"><span class="mini"><svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><use href="#p1"/></svg></span><div class="t"><b>ter 11/08</b><small>6 poses · fotos anteriores à rotina</small></div><span class="w">na cópia remota<br>150 KB</span></div>
+    <div class="sess"><span class="mini"><svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><use href="#p1"/></svg></span><div class="t"><b>ter 18/08</b><small>6 poses</small></div><span class="w">no aparelho</span></div>
+    <div class="sess"><span class="mini"><svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><use href="#p1"/></svg></span><div class="t"><b>dom 24/08</b><small>3 poses · faltam 6</small></div><span class="w">no aparelho</span></div>
+    <p class="sec-l">A mais nova do par</p>
+    <div class="sess"><span class="mini"><svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><use href="#p1"/></svg></span><div class="t"><b>sex 04/09</b><small>8 poses · 3 min 34 s</small></div><span class="w">no aparelho</span></div>
+    <div class="sess"><span class="mini"><svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><use href="#p1"/></svg></span><div class="t"><b>ter 15/09</b><small>9 poses · 2 min 09 s</small></div><span class="w">no aparelho</span></div>
+    <div class="sess"><span class="mini"><svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><use href="#p1"/></svg></span><div class="t"><b>qui 01/10</b><small>9 poses · 1 min 28 s</small></div><span class="w">no aparelho<br>escolhida</span></div>
+    <div class="note-f">Em 01/10 a sessão foi a mais rápida das três: 88 s do primeiro ao último disparo.</div>
+  </div>
+  {{hi}}
+</div>
+
+=== 5 |  | Baixando a foto antiga: com fim, nunca para sempre
+cap: Foto que não chegou já ficou “sendo buscada” para sempre neste produto (F297). Aqui a busca tem contagem, tamanho e um fim: ou chega, ou vira erro com motivo. Enquanto isso, o lado novo do par já está na tela — metade da comparação funciona sem rede.
+@sb 21:13 | fraco
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Comparar<small>frente relaxado · 55 dias</small></h2></div>
+  <div class="duo">
+    <div><div class="foto falta"><p><svg width="26" height="26" style="color:var(--ink-2)"><use href="#down"/></svg><br>Baixando<br>1 de 1 · 150 KB</p></div><p class="cp"><b>sex 07/08</b>71,5 kg na semana</p></div>
+    <div><div class="foto"><svg><use href="#p1b"/></svg><span class="tag">01/10</span></div><p class="cp"><b>qui 01/10</b>73,5 kg na semana</p></div>
+  </div>
+  <div class="par"><span>O arquivo de 07/08 não está neste aparelho. Ele vem da cópia remota.</span></div>
+  <div class="fab"><button class="sec">Cancelar</button><button class="sec">Comparar com 18/08</button></div>
+  <p class="small" style="margin:10px 16px 0">Sinal fraco. Se não chegar em 20 s, a tela avisa e oferece tentar de novo.</p>
+  {{tabs corpo}}
+  {{hi}}
+</div>
+
+=== 6 |  | Três ausências diferentes, três palavras diferentes
+cap: Faltar não é uma coisa só (F238). <b>Buscou e falhou</b> pede tentar de novo. <b>Sem conta</b> não tem como buscar — e a saída é entrar, não insistir. <b>Nunca tirada</b> não é erro nenhum: a sessão de 24/08 teve 3 poses, e esta não é uma delas. Tratar as três como “erro ao carregar” seria mentir em duas.
+@sb 21:14 | fraco
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Comparar<small>as três ausências</small></h2></div>
+  <div class="body">
+    <div class="duo" style="margin-top:4px">
+      <div><div class="foto falta" style="border:1.5px solid var(--err-line)"><p><svg width="24" height="24" style="color:var(--err-ink)"><use href="#warn"/></svg><br><b style="color:var(--err-ink)">Não chegou</b><br>a busca falhou</p></div><p class="cp"><b>07/08</b>tentar de novo</p></div>
+      <div><div class="foto falta"><p><svg width="24" height="24" style="color:var(--ink-2)"><use href="#nuv"/></svg><br><b>Este aparelho não tem conta</b><br>não há como buscar o arquivo</p></div><p class="cp"><b>11/08</b>entrar na conta</p></div>
+    </div>
+    <div class="duo">
+      <div><div class="foto falta"><p><b>Pose não feita</b><br>a sessão de 24/08 teve 3 poses</p></div><p class="cp"><b>24/08</b>sem esta pose</p></div>
+      <div><div class="foto"><svg><use href="#p8b"/></svg><span class="tag">01/10</span></div><p class="cp"><b>qui 01/10</b>costas mãos na cintura</p></div>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t">Tentar de novo a de 07/08<small>sinal fraco agora</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#undo"/></svg></div>
+      <div class="fr"><div class="t">Entrar na conta<small>para buscar as sessões antigas</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+      <div class="fr"><div class="t">Comparar com a sessão de 04/09<small>a mais antiga que tem esta pose</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+    </div>
+  </div>
+  {{hi}}
+</div>
+
+=== 7 |  | A pose não existe lá atrás: o par recua sozinho, dizendo que recuou
+cap: “Costas mãos na cintura” só começou a ser fotografada quando as sessões ficaram completas. Em vez de tela vazia, o par mais longo <b>possível</b> daquela pose se monta sozinho — 27 dias em vez de 55 — e a diferença aparece escrita, porque um intervalo menor muda o que a foto consegue mostrar (F230). As poses que faltam ficam listadas, para ele saber por quê.
+@sb 21:15 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Comparar<small>costas mãos na cintura · 27 dias</small></h2><button class="act">Cortina</button></div>
+  <div class="duo">
+    <div><div class="foto"><svg><use href="#p8"/></svg><span class="tag">04/09</span></div><p class="cp"><b>sex 04/09</b>72,4 kg na semana</p></div>
+    <div><div class="foto"><svg><use href="#p8b"/></svg><span class="tag">01/10</span></div><p class="cp"><b>qui 01/10</b>73,5 kg na semana</p></div>
+  </div>
+  <div class="warn" style="margin:10px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>27 dias, e não 55</b><p>As sessões de 07/08, 11/08, 18/08 e 24/08 não têm esta pose. O par mais longo possível dela começa em 04/09.</p></div></div></div>
+  <p class="sec-l">Poses com par de 55 dias</p>
+  <p class="lead-p">Frente relaxado · frente duplo bíceps · abdômen e coxa · perfil direito natural · costas relaxado.</p>
+  <p class="sec-l">Poses com par mais curto</p>
+  <p class="lead-p">Perfil direito braços à frente (47 d) · costas duplo bíceps (32 d) · <b>costas mãos na cintura (27 d)</b> · perfil esquerdo (27 d).</p>
+  {{tabs corpo}}
+  {{hi}}
+</div>
+
+=== 8 |  | Endireitar: 6 graus, nada mais — e o original fica
+cap: Na prática a fita sai do lugar e o celular encosta um grau torto; endireitar custa menos de 3° (F229). O ajuste existe por isso e para nada além disso: giro de até 6°, recorte de até 2×, <b>sem brilho, sem contraste, sem filtro</b> (F231). A foto original nunca é reescrita — o que se guarda é o parâmetro —, então desfazer é sempre possível, hoje ou daqui a um ano.
+@sb 21:16 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Endireitar<small>01/10 · frente relaxado</small></h2><button class="act">Guardar</button></div>
+  <div class="body">
+    <div style="margin:8px 16px 0;position:relative"><div class="foto" style="aspect-ratio:3/4"><svg style="transform:rotate(-2.4deg) scale(1.06)"><use href="#p1b"/></svg>
+      <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 49.6%,rgba(255,255,255,.85) 49.6% 50.4%,transparent 50.4%)"></div>
+      <span class="tag">−2,4° · 1,06×</span></div></div>
+    <p class="sec-l">Giro</p>
+    <div class="strip" style="padding:0 16px 10px">
+      <button class="rep cm">−6°</button><button class="rep cm">−4°</button><button class="rep cm hit">−2,4°</button><button class="rep cm">0°</button><button class="rep cm">+2°</button><button class="rep cm">+4°</button><button class="rep cm">+6°</button>
+    </div>
+    <div class="fin">
+      <div class="fr"><div class="t">Recorte<small>mínimo que impede borda vazia: 1,13×</small></div><span class="v">1,06 <small>×</small></span></div>
+      <div class="fr"><div class="t">Brilho, contraste, filtro<small>não existem aqui: mudariam o que a foto responde</small></div><span class="v" style="font-size:14px;color:var(--ink-2);font-weight:600">—</span></div>
+    </div>
+    <div class="note-f">A foto original continua intacta. Desfazer devolve o enquadramento de câmera, sempre.</div>
+  </div>
+  {{hi}}
+</div>
+
+=== 9 |  | A pergunta do nutricionista, no único lugar onde ela faz sentido
+cap: A regra não corta caloria sem esta resposta, e ela nunca foi respondida: zero avaliações em oito semanas (P1, F212). Ela vale só para um par de 10 a 28 dias (F220) — por isso aparece aqui, sobre o par de 16 dias, e não sobre o de 55. A tela diz o que a resposta faz, quanto tempo ela vale e que responder de novo substitui. Três respostas, e “incerto” é uma delas.
+@sb 21:17 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Comparar<small>frente relaxado · 16 dias</small></h2></div>
+  <div class="duo">
+    <div><div class="foto"><svg><use href="#p1"/></svg><span class="tag">15/09</span></div><p class="cp"><b>ter 15/09</b>73,1 kg</p></div>
+    <div><div class="foto"><svg><use href="#p1b"/></svg><span class="tag">01/10</span></div><p class="cp"><b>qui 01/10</b>73,5 kg</p></div>
+  </div>
+  <div class="aval">
+    <b>Comparando com cerca de duas semanas atrás, a gordura visual aumentou claramente?</b>
+    <p>Pergunta do nutricionista. Vale só para este par (16 dias) e por 14 dias a partir de 01/10. Responder de novo substitui a resposta.</p>
+    <div class="seg3"><button aria-pressed="false">Sim</button><button aria-pressed="false">Não</button><button aria-pressed="false">Incerto</button></div>
+    <p style="font-size:12.5px;color:var(--ink-2);margin:9px 0 0;line-height:1.35">“Sim” é o que permite um corte de −150 kcal quando o peso sobe rápido demais. “Não” mantém: o ganho está comprando músculo. “Incerto” não mexe em nada.</p>
+  </div>
+  <p class="small" style="margin:10px 16px 0">Sem esta resposta, a regra fica em “não mexer” mesmo com o peso subindo acima de 0,40 kg por semana.</p>
+  {{tabs corpo}}
+  {{hi}}
+</div>
+
+=== 10 |  | Depois de uma atualização do app, as fotos locais somem
+cap: Hoje, a cada versão publicada, a cópia local das fotos do corpo é apagada pelo próprio app (F252). Com conta, elas voltam da cópia remota; sem conta, ou antes de terem subido, se perdem. A tela não espera ele descobrir isso sozinho numa comparação vazia: diz quantas voltam, quantas não existem em outro lugar e o que fazer agora.
+@sb 7:02 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Fotos do corpo<small>versão nova instalada</small></h2></div>
+  <div class="body">
+    <div class="warn" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>As fotos saíram deste aparelho</b><p>A atualização apagou a cópia local. 45 das 54 fotos estão na cópia remota e voltam quando você abrir uma comparação.</p></div></div></div>
+    <div class="err" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>9 fotos de 01/10 ainda não tinham subido</b><p>Elas foram tiradas hoje de manhã, no sinal de casa, e a subida é uma de cada vez. Essas nove não existem em outro lugar.</p></div></div></div>
+    <div class="fab"><button class="primary" style="min-height:52px">Subir as 9 agora</button></div>
+    <p class="small" style="margin:10px 16px 0">Leva cerca de 40 s nesta rede. Dá para sair da tela: a subida continua.</p>
+    <p class="sec-l">Enquanto isso</p>
+    <div class="fin">
+      <div class="fr"><div class="t">Comparar 07/08 × 15/09<small>as duas estão na cópia remota</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#fw"/></svg></div>
+      <div class="fr"><div class="t">Baixar uma cópia de segurança<small>o arquivo JSON leva as referências, não as fotos</small></div><svg width="22" height="22" style="color:var(--ink-2)"><use href="#down"/></svg></div>
+    </div>
+  </div>
+  {{hi}}
+</div>
+
+=== 11 |  | Vazio: uma sessão só, e nada para comparar ainda
+cap: O vazio aqui tem data: a próxima sessão é o que falta, e ela é a cada 14 dias (F226). A tela não mostra moldura cinza nem convite genérico — mostra a única foto que existe, diz quando a segunda acontece e o que a comparação vai conseguir responder quando houver par.
+@sb 21:20 | cheio
+<div class="scr">
+  <div class="nav"><button class="bk" aria-label="Voltar"><svg width="24" height="24"><use href="#bk"/></svg></button><h2>Comparar<small>frente relaxado</small></h2></div>
+  <div class="duo">
+    <div><div class="foto falta"><p><b>Ainda não há par</b><br>a primeira sessão foi hoje</p></div><p class="cp"><b>—</b>sem sessão anterior</p></div>
+    <div><div class="foto"><svg><use href="#p1b"/></svg><span class="tag">01/10</span></div><p class="cp"><b>qui 01/10</b>73,5 kg na semana</p></div>
+  </div>
+  <div class="big">
+    <div class="n1">14 <span>dias até a próxima sessão</span></div>
+    <div class="cx">A segunda sessão cai em <b>qui 15/10</b>. Com ela nasce o primeiro par, e com 10 a 28 dias de intervalo ele já serve para a pergunta do nutricionista.</div>
+  </div>
+  <div class="note-f">Uma foto sozinha não responde nada. O que esta tela faz é guardar a geometria: mesma marca no chão, mesma distância, mesma luz — para que daqui a 14 dias as duas sejam comparáveis.</div>
+  {{tabs corpo}}
+  {{hi}}
+</div>
