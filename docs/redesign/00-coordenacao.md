@@ -566,6 +566,39 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       O invólucro do artefato também substitui o `<meta viewport>` das duas, que
       traziam `user-scalable=no`/`maximum-scale=1`: no publicado dá para dar
       zoom. Não muda nenhum fluxo do roteiro.
+- [x] P3.i.5 **A ESCOLHA, registrada em 05/10.** Depois de usar os dois
+      protótipos: *"acho que gostei mais da d. achei mais organizado e
+      intuitivo"*. Confirmada como decisão em pergunta de desempate, na forma
+      **"D, com peças da C dentro"**.
+
+      **Vai a D**, com três peças da C entrando como requisito — não como
+      redesenho, e não por iniciativa minha; cada uma é um defeito que o cerco
+      mediu na D e achou resolvido na C:
+      - **as linhas do dia viram tocáveis** (resolve M-a: contornar custava 1 a 2
+        toques e começar o treino não tinha caminho). Isso responde a decisão 2,
+        que estava adiada;
+      - **cada toque grava, sem botão de guardar no fim** (resolve o único ponto
+        das duas em que fechar o app perde trabalho);
+      - **a conta de volume semanal na prescrição** (subir uma série da flexora
+        leva o posterior a 8 contra 7 prescritas).
+
+      **Recusada:** a folha de pôr em dia abrir em branco. Ele manteve a da D,
+      que abre pré-marcada como "comi tudo".
+
+      **Repetições: fica a régua da D**, que responde a decisão 5, também
+      adiada. O defeito medido dela — 6 de 12 valores sem arrastar, e toque
+      engolido como arrasto na ação mais frequente — vai para o detalhamento.
+
+      Escrito também na folha de respostas (documento `folha/respostas`, versão
+      86), para a folha não ficar dizendo "ainda não sei".
+
+- [!] P3.i.6 **Conflito entre duas respostas dele, levantado na hora:** manter a
+      folha pré-marcada como "comi tudo" **e** tirar o botão de guardar não
+      convivem sem uma terceira regra. Sem o guardar, o pré-marcado vira registro
+      sozinho, e um dia inteiro passa a contar como consumo conhecido sem ele ter
+      dito nada — que é exatamente o F290/F292, o dia chutado que destravou um
+      corte de comida. Levado a ele.
+
 - [!] P3.i.4 **Comparação torta num ponto, declarado pelas duas:** o salto de
       6h55 para 15h30 ao sair da sessão é ficção necessária (o lanche não existe
       de manhã). Conferir, quando o dono comparar, se as duas fazem o salto no
