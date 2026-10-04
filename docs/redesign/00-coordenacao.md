@@ -620,9 +620,18 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
 - [ ] P3.a Apresentar o parecer
 - [ ] P3.b **Parar.**
 
-## ONDA 5 · O ofício
+## ONDA 5 · O ofício ← AQUI
 
-- [ ] 5.a O escopo é definido pelo curador junto com o dono, não aqui
+- [~] 5.a O escopo é definido pelo curador junto com o dono, não aqui.
+      **Pedido ao curador em 05/10** (`a21b25f7a62196e3a`): `07-plano.md` com o
+      que está em aberto e trava o quê, as frentes e o que cada uma produz,
+      **como isto chega ao app que existe** — a parte que só quem vê os dois
+      mundos escreve —, o que fica para depois e os riscos. Sem estimativa de
+      prazo: ninguém mediu.
+- [ ] 5.b O dono aprova o plano
+- [ ] 5.c Frentes disparadas conforme o plano
+- [ ] 5.d A rede do D13 antes de qualquer reescrita: inventário do que cada grupo
+      dos 513 testes de fluxo protege, uma linha cada (P3.j)
 
 ---
 
