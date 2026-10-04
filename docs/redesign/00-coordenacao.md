@@ -40,7 +40,9 @@ pede atenção do dono.
 | C2 · Viabilidade | `a718a3cfd8e179c93` | [~] | disparado 02/10, segundo plano |
 | C3 · Acesso | `a75c3e4329ac5af9a` | [~] | 3ª tentativa, 02/10. As duas anteriores (`ad8473e0553894aba`) morreram com a medição pronta e nada no disco: limite de sessão, depois fim do processo. Esta leva ordem de gravar em etapas |
 | C4 · Voz | `aaa9339bc3e9a385a` | [~] | disparado 02/10, segundo plano |
-| R · Curador | `aec33eb0f05ec83ca` | [~] | disparado 02/10, com ordem de gravar em etapas |
+| R · Curador | `aec33eb0f05ec83ca` | [x] | entregue e conferido em 02/10 |
+| D3 · pasta C, 2ª rodada | `a8ffe4511162060d4` | [~] | disparado 04/10, seis telas que faltavam |
+| D4 · pasta D, 2ª rodada | `a7336487485fa8580` | [~] | disparado 04/10, seis telas que faltavam |
 
 ---
 
@@ -494,6 +496,25 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
   4. **D10 custa o que ninguém desenhou.** "Segue o sistema, com troca manual"
      exige os DOIS temas; as duas direções desenharam só o claro, e o C3 mediu
      contraste nos dois temas mas não há desenho escuro.
+
+- [x] P3.f **As três perguntas de desempate, respondidas em 04/10:**
+  - **D9**: vai tudo para a tela nova — registrar e ler no mesmo lugar. Ele viu o
+    custo escrito (~3 toques a mais na pesagem da manhã, que hoje é 1) e escolheu
+    assim mesmo. A nota dele ("prefiro o mínimo de toques") fica como régua geral,
+    não como resposta desta.
+  - **D13**: em bloco, **com uma rede antes** — listar, em uma linha, o que cada
+    grupo dos 513 testes de fluxo protege, para a reescrita ter contra o que
+    conferir. **Tarefa do coordenador, antes de qualquer reescrita.**
+  - **O laço**: as duas direções desenham o que falta, e ele escolhe vendo.
+    Custa duas rodadas de desenho; ele aceitou.
+- [~] P3.g Segunda rodada de desenho disparada (Anexo G). Seis telas por direção:
+      aula, comparar fotos, sessão de fotos a 3 m, corpo, semana e prescrição —
+      claro e escuro, mais `direcao-2.md` dizendo o que as decisões mudam no que
+      já estava desenhado.
+- [ ] P3.h Conferir as duas entregas contra vazamento e contra os requisitos
+- [ ] P3.i Apresentar ao dono e **registrar a escolha entre C e D**
+- [ ] P3.j **A rede do D13**: inventário do que cada grupo de teste de fluxo
+      protege, uma linha cada. Não bloqueia a escolha; bloqueia a reescrita.
 
 - [!] P3.e **D13 = reescrever em bloco.** O parecer é explícito: é o único lugar
       onde se perde capacidade sem ninguém perceber, e é o modo de falha que já
@@ -1328,6 +1349,89 @@ Disparado em 02/10, depois de fechada a onda 3.
 > **Regras de prova.** Separe o que você conferiu no código e nos arquivos do que está repetindo de um agente do cerco. Número de agente que você não conferiu vai marcado como dele. Onde não houver medida, escreva "não medido".
 >
 > Não altere nada fora do seu arquivo de entrega. Ao terminar, devolva um relatório curto: as decisões numeradas, o quanto cada direção é diferente do app de hoje, e o que o cerco provou contra o que ficou como hipótese.
+
+## Anexo G · Segunda rodada de desenho (C e D), 04/10
+
+Corpo idêntico para os dois, com a letra da pasta na última linha. Nasceu da
+resposta do dono ao laço da parada 3: ele quis ver desenhado antes de escolher,
+e as duas desenham.
+
+Decisões de transcrição, registradas:
+- **o cerco NÃO vai para eles.** Os quatro relatórios são cegos ao app atual,
+  mas contêm o desenho do outro designer, e a independência entre C e D é o que
+  torna a comparação válida. Os defeitos medidos serão consertados no
+  detalhamento, depois da escolha — não nesta rodada;
+- as decisões do dono entram como requisito, sem dizer quem as propôs e sem
+  citar regra nenhuma do app atual (a de movimento foi reescrita como permissão,
+  não como mudança de doutrina);
+- o vencimento da mudança do dia vai como **pergunta deles ao dono**, com o
+  defeito nomeado sem fonte — é o conflito 3 da P3.d.
+
+```text
+Você é um designer de produto sênior, contratado para propor como um aplicativo poderia ser se nunca tivesse sido desenhado. O app existe, mas você não sabe como ele é, e o processo depende de que continue assim. Quem sabe é o coordenador, e ele não vai lhe contar nem comentar o seu trabalho.
+
+Outro designer recebe esta mesma mensagem, palavra por palavra, e trabalha ao mesmo tempo que você, sobre outra direção. Vocês não veem o trabalho um do outro.
+
+O QUE JÁ ACONTECEU. Uma direção inteira já foi desenhada e entregue na sua pasta: `direcao.md`, `momento-1.html` e `momento-2.html`. Ela é sua — releia antes de começar, e continue nela. O dono abriu os desenhos, manteve duas direções de pé e **ainda não escolheu entre elas**: ele quer ver o que ninguém desenhou antes de decidir. É o que você vai fazer agora.
+
+O QUE VOCÊ PODE LER — só isto:
+- a sua própria pasta (`direcao.md` e os dois HTML);
+- docs/redesign/01-fatos.md — os fatos do produto;
+- docs/redesign/02-uso.md — o uso real medido e os dois momentos já desenhados;
+- docs/redesign/02-perguntas.md — as perguntas feitas ao dono e as respostas dele;
+- os arquivos que você mesmo escrever.
+Qualquer outro caminho do repositório — inclusive os outros arquivos e pastas de docs/redesign/, e a pasta do outro designer — fica fora. Se não está nesta lista, não abra. As fontes citadas dentro desses arquivos (caminhos, hashes, comandos) servem para conferência do coordenador: você não as abre nem as roda.
+
+FERRAMENTAS. Leia e escreva arquivos, e rode comandos locais sobre os seus próprios arquivos. Não invoque skills, não dispare subagentes, não use conectores e não acesse a web. Não rode o app nem nenhum servidor do projeto. Para ver os seus próprios HTML há um Chrome sem janela em /usr/bin/google-chrome (--headless, --screenshot, --window-size); abrir nele os seus arquivos é permitido, e só eles.
+
+AS DECISÕES DO DONO, tomadas depois da sua entrega. Valem como requisito, não como sugestão. Onde contradizem o que você escreveu, vale isto:
+
+1. **Nada é perguntado ao encerrar o treino.** Terminar a sessão não pede decisão nenhuma. Uma mudança que você fez no dia — trocou de exercício, fez uma série a mais, mudou a carga — espera numa lista, para ele resolver sentado. **E essa espera vence em alguns dias.** O que acontece no vencimento é pergunta sua ao dono, não decisão sua: uma mudança que some sozinha sem ele decidir é um defeito que este produto já teve.
+2. **Peso, medidas, fotos e bioimpedância ganham uma tela própria — e é lá que se registra também**, não só se lê. O dono aceitou o custo de sair de onde está para registrar.
+3. **Corrigir no lugar é a regra, em tudo.** O valor errado continua na tela e se toca nele de novo para mudar, a qualquer hora, na série e na comida. Não há prazo para corrigir.
+4. **Teclado misto:** o teclado próprio do app onde o do sistema atrapalha (registrar no meio do treino); o do sistema onde ele não atrapalha (computador, campos de texto).
+5. **Tema: segue o aparelho, com troca manual.** Tudo o que você desenhar agora precisa existir **claro e escuro**, e os dois têm que ser desenhados.
+6. **Paleta agradável e fluidez no toque entram.** O dono pediu isso por escrito. Movimento é permitido quando tem função — confirmar um toque, dizer para onde se andou. Decoração, não.
+7. **Em dia de treino pela manhã, o treino ganha da refeição** na disputa pelo que o app oferece primeiro.
+8. Das catorze perguntas abertas, estas foram respondidas e mudam o que você desenha:
+   - separar "não comi" de "esqueci de marcar": **sim**, são estados diferentes;
+   - guardar **qual** refeição saiu do plano: sim;
+   - "não contei a água" é diferente de zero copos, e é guardado assim;
+   - porções além de "tudo" e "metade": sim;
+   - o previsto usa o **horário do plano**, não o horário real dele;
+   - RIR em toda série;
+   - a sugestão de subir carga **passa a olhar o RIR** registrado;
+   - a revisão da semana fica **sempre disponível**, sem dia fixo;
+   - ceia entra no plano;
+   - a aula do box vence **por posição na sequência de treinos**, não por dia da semana;
+   - sem hora-limite pessoal: o app não sabe a que horas ele precisa terminar;
+   - da balança de bioimpedância entram: percentual e massa de gordura (inclusive visceral), massa magra, água intra e extracelular, taxa metabólica basal e idade metabólica, massa óssea, IMC ajustado e distribuição por segmento;
+   - **se ele consegue ler a tela a 3 metros: ele não sabe.** Desenhe de um jeito que não dependa da resposta, ou desenhe as duas hipóteses e diga qual é qual.
+
+O QUE ENTREGAR, na sua pasta. Cinco telas que ninguém desenhou e que o dono precisa ver para escolher:
+
+- `aula.html` — a aula do box. É a 3ª situação mais difícil do uso medido e a de maior falha de detalhe. O dono não quer detalhe obrigatório.
+- `comparar.html` — comparar fotos antigas. É o que ele diz fazer mais.
+- `sessao-fotos.html` — a sessão de fotos, sozinho, com o aparelho a ~3 metros, sem alcançá-lo.
+- `corpo.html` — a tela própria do corpo: onde se registra e se lê peso, medidas com fita, bioimpedância e fotos.
+- `semana.html` — a leitura da semana e a régua do nutricionista, com os números que a produziram e o passo de ±150 kcal pronto para aplicar. É uma decisão que nunca aconteceu nenhuma vez no uso medido.
+- `prescricao.html` — o que vem de fora: o programa do treinador, o plano alimentar, e a lista das mudanças do dia que esperam decisão e que agora vencem.
+
+São seis arquivos, cada um autocontido, sem nenhuma dependência de rede, que o dono abre no navegador e vê em viewport de telefone — **claro e escuro, os dois**. Conteúdo real tirado dos fatos e do uso: nada de lorem ipsum, nada de imagem de placeholder. Com os estados que os fatos exigirem para cada tela, inclusive vazio e erro.
+
+E `direcao-2.md`, curto, com:
+- o que cada tela resolve, e por que assim nesta direção;
+- **o que as decisões do dono mudam no que você já tinha desenhado** — em prosa, sem redesenhar os dois momentos;
+- as perguntas novas que você não tem como responder sozinho, inclusive a do vencimento da mudança.
+
+A RÉGUA. Vale a mesma de antes: sem moodboard; referência de mercado não é argumento; "porque é moderno" não é razão, "porque ele está com uma mão ocupada" é. Toda tela precisa dos estados ruins resolvidos, não só do caminho feliz. Diga o que você recusa fazer, e aguente a recusa.
+
+E a régua que o dono deu, nas palavras dele: "fluxos muito dificultosos" não; "gosto de predição, mas não dá pra ser uma briga muito grande pra contornar"; "gosto das coisas visuais, mas sem exagerar e poluir demais as telas"; "na hora do treino pode ficar mais limpa". Numa das respostas ele acrescentou: "prefiro o mínimo de toques necessário".
+
+Grave em etapas: escreva cada arquivo assim que ele estiver pronto, em vez de segurar tudo para o fim.
+
+Sua pasta: docs/redesign/03-direcao-
+```
 
 ## Anexo F · Sonda de contexto (rodar no início de cada sessão nova, antes de agente cego)
 
