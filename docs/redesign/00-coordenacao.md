@@ -41,6 +41,7 @@ pede atenção do dono.
 | C3 · Acesso | `a75c3e4329ac5af9a` | [~] | 3ª tentativa, 02/10. As duas anteriores (`ad8473e0553894aba`) morreram com a medição pronta e nada no disco: limite de sessão, depois fim do processo. Esta leva ordem de gravar em etapas |
 | C4 · Voz | `aaa9339bc3e9a385a` | [~] | disparado 02/10, segundo plano |
 | R · Curador | `aec33eb0f05ec83ca` | [x] | entregue e conferido em 02/10 |
+| R · Curador, plano da onda 5 | `a21b25f7a62196e3a` | [~] | disparado 05/10 |
 | D3 · pasta C, protótipo | `a3c49047b0d25eec2` | [x] | entregue 04/10, roteiro inteiro rodando |
 | D4 · pasta D, protótipo | `a5c1301c7eaecc0ef` | [x] | entregue 04/10, roteiro inteiro rodando |
 | D3 · pasta C, 2ª rodada | `a8ffe4511162060d4` | [x] | entregue 04/10: seis telas, 51 estados, mais `direcao-2.md` |
@@ -430,7 +431,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       soltas já registradas (render que aterrissa depois de a janela fechar).
       Não bloqueia; fica anotado para não virar surpresa.
 
-### ═══ PARADA 3 · o dono decide ═══ ← AQUI
+### ═══ PARADA 3 · o dono decide ═══ — FECHADA em 05/10
 
 - [~] P3.a Apresentar o parecer ao dono (02/10). O achado que reenquadra tudo: as
       duas sobreviventes abrem a tese com a mesma oração, palavra por palavra, e
