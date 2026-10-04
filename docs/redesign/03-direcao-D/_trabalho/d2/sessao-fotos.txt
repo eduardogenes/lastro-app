@@ -58,7 +58,7 @@ cap: Esta é a única leitura da sessão: acontece a 40 cm, antes de ele andar a
 cap: O que ele precisa saber a 3 m é só isto: <b>em que pose está</b> (os 9 blocos no topo, do tamanho de um dedo), <b>quanto falta para o disparo</b> (o anel, que esvazia) e <b>se está dentro do quadro</b> (a própria imagem dele, que é a coisa mais legível a 3 m). A instrução chega por voz. Nenhuma palavra é obrigatória para a sessão funcionar. A marca de canto é anotação deste documento, não da tela.
 @sb 5:32 | cheio
 <div class="scr">
-  <div class="full">
+  <div class="cheia">
     <span class="hip">Hipótese B · não lê a 3 m</span>
     <div class="top"><div class="nine"><i class="f"></i><i class="f"></i><i class="f"></i><i class="c"></i><i></i><i></i><i></i><i></i><i></i></div></div>
     <div class="frame">
@@ -75,7 +75,7 @@ cap: O que ele precisa saber a 3 m é só isto: <b>em que pose está</b> (os 9 b
 cap: A confirmação é do tamanho da tela: um clarão curto, o bloco da pose fechando em branco e o som do obturador. Os três dizem a mesma coisa por canais diferentes — e a contagem “5 / 9” muda de lugar sozinha. Se o som estiver desligado no aparelho, o clarão e o bloco continuam valendo. Nada depende de vibração, que o Safari do iOS não tem (F58).
 @sb 5:32 | cheio
 <div class="scr">
-  <div class="full">
+  <div class="cheia">
     <span class="hip">disparo da pose 4</span>
     <div class="top"><div class="nine"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="c"></i><i></i><i></i><i></i><i></i></div>
       <p class="giant sm" style="margin-top:auto;margin-bottom:6px">guardada</p></div>
@@ -93,7 +93,7 @@ cap: A confirmação é do tamanho da tela: um clarão curto, o bloco da pose fe
 cap: A instrução que mais erra é o giro — “girar 60° em vez de 90° e achar que emagreceu” é o erro típico desta pose (F227). Então o giro vira a maior coisa da tela: a seta curva com o ângulo, sobre a marca do chão. Isso se lê a 3 m sem depender de ler letra, e é o mesmo em qualquer hipótese. A voz diz junto: “gire noventa graus”.
 @sb 5:32 | cheio
 <div class="scr">
-  <div class="full">
+  <div class="cheia">
     <span class="hip">entre poses · 7 s</span>
     <div class="top"><div class="nine"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="c"></i><i></i><i></i><i></i><i></i></div></div>
     <div class="frame vazio">
@@ -116,7 +116,7 @@ cap: A instrução que mais erra é o giro — “girar 60° em vez de 90° e ac
 cap: Mesmo desenho, mesma contagem, mesmos blocos; por cima, o nome da pose em corpo grande e as três instruções dela (texto real de F227). Se a resposta for “sim”, o app liga esta camada; se for “não” ou “não sei”, ela não existe. <b>Nenhum estado da sessão precisa ser redesenhado para a resposta mudar</b> — é por isso que a pergunta pode ficar sem resposta.
 @sb 5:32 | cheio
 <div class="scr">
-  <div class="full">
+  <div class="cheia">
     <span class="hip">Hipótese A · lê a 3 m</span>
     <div class="top"><div class="nine"><i class="f"></i><i class="f"></i><i class="f"></i><i class="c"></i><i></i><i></i><i></i><i></i><i></i></div>
       <p class="giant">Perfil direito</p></div>
@@ -134,7 +134,7 @@ cap: Mesmo desenho, mesma contagem, mesmos blocos; por cima, o nome da pose em c
 cap: Capturar antes de o vídeo ter o primeiro quadro produz imagem preta (F78) — e ele está a 3 m, sem como perceber. O app percebe: quadro quase todo preto na primeira foto, a pose volta para o fim da fila e a voz diz. A tela mostra o que vai acontecer <b>por forma</b> — o bloco 1 volta a ficar vazio, marcado —, sem exigir leitura, e sem contar como pose feita.
 @sb 5:32 | cheio
 <div class="scr">
-  <div class="full">
+  <div class="cheia">
     <span class="hip">quadro preto detectado</span>
     <div class="top"><div class="nine"><i class="x"></i><i class="f"></i><i class="c"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <p class="giant sm" style="margin-top:12px">A 1ª saiu<br>preta</p></div>
@@ -194,7 +194,7 @@ cap: Pedir a câmera pode falhar de cinco jeitos (F77); este é o mais comum, e 
 cap: Armazenamento cheio (F53) no meio da sessão. Nada de falso sucesso: o bloco da pose 6 fica marcado como <b>não guardada</b> — forma e cor diferentes de “ainda não feita” —, a voz avisa, e a sessão para em vez de seguir fingindo. Ele está a 3 m, então a tela resolve o que dá sozinha: oferece liberar as fotos antigas, que já estão na cópia remota (F232).
 @sb 5:33 | cheio
 <div class="scr">
-  <div class="full">
+  <div class="cheia">
     <span class="hip">armazenamento cheio</span>
     <div class="top"><div class="nine"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="x"></i><i></i><i></i><i></i></div></div>
     <div class="frame vazio"><div class="giro" style="padding:0 18px"><p class="giant sm" style="color:#FFADA3">A pose 6 não<br>foi guardada</p></div></div>
