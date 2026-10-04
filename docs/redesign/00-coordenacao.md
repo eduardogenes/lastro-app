@@ -42,7 +42,7 @@ pede atenção do dono.
 | C4 · Voz | `aaa9339bc3e9a385a` | [~] | disparado 02/10, segundo plano |
 | R · Curador | `aec33eb0f05ec83ca` | [x] | entregue e conferido em 02/10 |
 | D3 · pasta C, 2ª rodada | `a8ffe4511162060d4` | [x] | entregue 04/10: seis telas, 51 estados, mais `direcao-2.md` |
-| D4 · pasta D, 2ª rodada | `a7336487485fa8580` | [~] | caiu por limite com 5 das 6 no disco; retomado pelo id para a prescrição e o texto |
+| D4 · pasta D, 2ª rodada | `a7336487485fa8580` | [x] | entregue 04/10: seis telas, 66 estados, mais `direcao-2.md`. Caiu uma vez e foi retomada pelo id |
 
 ---
 
@@ -517,10 +517,22 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
     resolveu a dúvida dos 3 m por aritmética do aparelho (69 mm de tela ⇒ 4 a 8
     caracteres legíveis por linha) e entregou a união das duas hipóteses, que não
     depende da resposta do dono — era exatamente o que o prompt pedia.
-  - **D, cinco das seis conferidas e limpas** (aula, comparar, corpo, semana,
-    sessão de fotos): fecham o documento, sem rede, sem vazamento. Falta a
-    prescrição e o `direcao-2.md`.
-  - Tudo commitado antes de retomar, para a próxima queda não custar nada.
+  - **D, conferida e limpa** depois da retomada: seis telas, 66 estados, sem rede,
+    sem vazamento, os dois temas. Ao montar a última tela o desenhista achou uma
+    colisão de nome de classe que atingia as cinco já commitadas — desenhava uma
+    barra preta sobre o cabeçalho da semana — e reconstruiu as cinco. Conferi:
+    a classe antiga sumiu dos seis e a nova está nos seis.
+  - Tudo commitado antes de retomar, para a queda não custar nada. Funcionou.
+- [x] P3.i.1 Comparação das seis telas entregue ao dono (artefato
+      `8z5BBrZDbzP8WBNuxeMbho`): o que as duas fazem igual, onde se separam, o
+      padrão somando as seis, e as perguntas que elas devolveram.
+      **Leitura minha, registrada:** a D continua prevendo onde a C não prevê
+      (peso em régua posicionada, bioimpedância pré-preenchida com o mês
+      passado) — a mesma separação dos dois primeiros momentos, agora em telas
+      novas, o que mostra que não era detalhe de desenho. A melhor ideia isolada
+      da rodada é o vencimento da D, amarrado à volta do treino em vez de a um
+      número de dias. A C ganha na conta de volume da prescrição e no conserto da
+      foto torta. E as duas chegaram, cegas, ao mesmo desenho da sessão de fotos.
 - [ ] P3.i Apresentar ao dono e **registrar a escolha entre C e D**
 - [ ] P3.j **A rede do D13**: inventário do que cada grupo de teste de fluxo
       protege, uma linha cada. Não bloqueia a escolha; bloqueia a reescrita.
