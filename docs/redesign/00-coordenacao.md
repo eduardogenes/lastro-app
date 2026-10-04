@@ -41,8 +41,8 @@ pede atenção do dono.
 | C3 · Acesso | `a75c3e4329ac5af9a` | [~] | 3ª tentativa, 02/10. As duas anteriores (`ad8473e0553894aba`) morreram com a medição pronta e nada no disco: limite de sessão, depois fim do processo. Esta leva ordem de gravar em etapas |
 | C4 · Voz | `aaa9339bc3e9a385a` | [~] | disparado 02/10, segundo plano |
 | R · Curador | `aec33eb0f05ec83ca` | [x] | entregue e conferido em 02/10 |
-| D3 · pasta C, 2ª rodada | `a8ffe4511162060d4` | [~] | disparado 04/10, seis telas que faltavam |
-| D4 · pasta D, 2ª rodada | `a7336487485fa8580` | [~] | disparado 04/10, seis telas que faltavam |
+| D3 · pasta C, 2ª rodada | `a8ffe4511162060d4` | [x] | entregue 04/10: seis telas, 51 estados, mais `direcao-2.md` |
+| D4 · pasta D, 2ª rodada | `a7336487485fa8580` | [~] | caiu por limite com 5 das 6 no disco; retomado pelo id para a prescrição e o texto |
 
 ---
 
@@ -511,7 +511,16 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       aula, comparar fotos, sessão de fotos a 3 m, corpo, semana e prescrição —
       claro e escuro, mais `direcao-2.md` dizendo o que as decisões mudam no que
       já estava desenhado.
-- [ ] P3.h Conferir as duas entregas contra vazamento e contra os requisitos
+- [~] P3.h Conferir as duas entregas contra vazamento e contra os requisitos
+  - **C, conferida e limpa**: seis telas, zero dependência de rede nos oito HTML
+    da pasta, zero vocabulário do app atual, os dois temas em todos. O desenhista
+    resolveu a dúvida dos 3 m por aritmética do aparelho (69 mm de tela ⇒ 4 a 8
+    caracteres legíveis por linha) e entregou a união das duas hipóteses, que não
+    depende da resposta do dono — era exatamente o que o prompt pedia.
+  - **D, cinco das seis conferidas e limpas** (aula, comparar, corpo, semana,
+    sessão de fotos): fecham o documento, sem rede, sem vazamento. Falta a
+    prescrição e o `direcao-2.md`.
+  - Tudo commitado antes de retomar, para a próxima queda não custar nada.
 - [ ] P3.i Apresentar ao dono e **registrar a escolha entre C e D**
 - [ ] P3.j **A rede do D13**: inventário do que cada grupo de teste de fluxo
       protege, uma linha cada. Não bloqueia a escolha; bloqueia a reescrita.
