@@ -41,6 +41,8 @@ pede atenção do dono.
 | C3 · Acesso | `a75c3e4329ac5af9a` | [~] | 3ª tentativa, 02/10. As duas anteriores (`ad8473e0553894aba`) morreram com a medição pronta e nada no disco: limite de sessão, depois fim do processo. Esta leva ordem de gravar em etapas |
 | C4 · Voz | `aaa9339bc3e9a385a` | [~] | disparado 02/10, segundo plano |
 | R · Curador | `aec33eb0f05ec83ca` | [x] | entregue e conferido em 02/10 |
+| D3 · pasta C, protótipo | `a3c49047b0d25eec2` | [~] | disparado 04/10 |
+| D4 · pasta D, protótipo | `a5c1301c7eaecc0ef` | [~] | disparado 04/10 |
 | D3 · pasta C, 2ª rodada | `a8ffe4511162060d4` | [x] | entregue 04/10: seis telas, 51 estados, mais `direcao-2.md` |
 | D4 · pasta D, 2ª rodada | `a7336487485fa8580` | [x] | entregue 04/10: seis telas, 66 estados, mais `direcao-2.md`. Caiu uma vez e foi retomada pelo id |
 
@@ -533,7 +535,18 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       da rodada é o vencimento da D, amarrado à volta do treino em vez de a um
       número de dias. A C ganha na conta de volume da prescrição e no conserto da
       foto torta. E as duas chegaram, cegas, ao mesmo desenho da sessão de fotos.
-- [ ] P3.i Apresentar ao dono e **registrar a escolha entre C e D**
+- [~] P3.i Apresentar ao dono e **registrar a escolha entre C e D**
+  - 04/10, depois de ver a comparação das seis telas, ele perguntou se precisa
+    escolher entre as duas e pediu protótipo. Respondido: escolher uma inteira
+    não é obrigatório, mas a mistura precisa de um autor e é rodada nova — o
+    coordenador não funde (briefing §4, Onda 4).
+  - **Ele escolheu: protótipo tocável nas DUAS**, mesmo roteiro, e decide depois
+    de usar. Disparados (Anexo H).
+  - Dito a ele o que protótipo não responde: testa impressão em três minutos, não
+    hábito ao longo de semanas — decide bem entre C e D, decide mal se a tese
+    está certa.
+- [ ] P3.i.2 Conferir os dois protótipos: roteiro completo, sem rede, dois temas,
+      `100svh`, sem diálogo do sistema
 - [ ] P3.j **A rede do D13**: inventário do que cada grupo de teste de fluxo
       protege, uma linha cada. Não bloqueia a escolha; bloqueia a reescrita.
 
@@ -1450,6 +1463,74 @@ A RÉGUA. Vale a mesma de antes: sem moodboard; referência de mercado não é a
 E a régua que o dono deu, nas palavras dele: "fluxos muito dificultosos" não; "gosto de predição, mas não dá pra ser uma briga muito grande pra contornar"; "gosto das coisas visuais, mas sem exagerar e poluir demais as telas"; "na hora do treino pode ficar mais limpa". Numa das respostas ele acrescentou: "prefiro o mínimo de toques necessário".
 
 Grave em etapas: escreva cada arquivo assim que ele estiver pronto, em vez de segurar tudo para o fim.
+
+Sua pasta: docs/redesign/03-direcao-
+```
+
+## Anexo H · Protótipo tocável (C e D), 04/10
+
+Corpo idêntico para os dois, com a letra da pasta na última linha. Nasceu da
+pergunta do dono: "preciso decidir entre as duas? queria ver um protótipo".
+
+Decisões de transcrição:
+- **o roteiro é idêntico e obrigatório nas duas** — registrar a série do caso
+  medido, errar e corrigir, ir à comida sem perder a sessão, pôr ontem em dia,
+  registrar o peso, abrir a bioimpedância, voltar. Sem roteiro igual não há
+  comparação, e é só isso que o protótipo serve para decidir;
+- **proibido redesenhar.** É a direção que já existe, posta de pé. O que aparecer
+  de errado ao tocar vira anotação, que é o achado mais valioso desta rodada;
+- `100svh` e área segura vão no prompt como regra, não como dica: é a armadilha
+  registrada no `~/.claude/CLAUDE.md` do dono, e ela some de um protótipo de
+  tela cheia aberto no iPhone;
+- nada de `alert`/`confirm`, porque ele vai abrir no celular e um diálogo do
+  sistema trava a impressão;
+- o protótipo pode guardar em `localStorage` (não é a opção "instalável" que ele
+  recusou; é só não perder o estado ao trocar de aba).
+
+```text
+Você é o designer de produto sênior responsável por uma das direções deste app. Você já entregou duas rodadas: os dois momentos e, depois, seis telas. Agora vem a terceira, e é diferente das outras duas.
+
+O QUE MUDA. Até aqui você desenhou **galerias**: telas lado a lado que o dono olha. Agora ele quer **usar**. Ele vai abrir o seu arquivo no celular, com o polegar, e tocar — e vai fazer o mesmo com a outra direção, no mesmo dia, para escolher entre as duas com o dedo em vez de escolher lendo.
+
+Então o que você entrega é **um app de mentira que funciona de verdade**: um arquivo só, `prototipo.html`, autocontido, sem nenhuma dependência de rede. Uma tela por vez ocupando a janela inteira — nada de dois telefones lado a lado, nada de legenda explicando o estado. O toque faz a coisa acontecer, e a tela responde.
+
+Você NÃO redesenha nada. Isto é a sua direção, do jeito que você já a desenhou, posta de pé. Se durante a montagem você perceber que alguma coisa não funciona quando tocada, conserte o mínimo e **anote** — essa anotação vale ouro, e vai no fim do arquivo que você escrever.
+
+O ROTEIRO, IGUAL NAS DUAS DIREÇÕES. É o que torna a comparação possível. Ele precisa conseguir fazer isto, nesta ordem, sem instrução nenhuma na tela:
+
+1. **Registrar a série.** O protótipo abre numa terça, 6h55, décima série da sessão: pulldown unilateral, série 2 de 2, e na última vez foi 45 kg × 9 repetições. Hoje saiu 45 × 10. Ele registra.
+2. **Logo depois:** o descanso começa a contar sozinho; ele pode marcar o RIR se quiser; e pode fazer **uma série a mais** além das prescritas.
+3. **Errar e consertar.** Ele toca o número errado — 11 em vez de 10 — e conserta. Este passo é obrigatório no protótipo: é uma das decisões do dono (corrigir no lugar, sempre).
+4. **Ir para a comida sem perder a sessão.** Marcar o lanche das 15h30 como comido inteiro. E marcar o almoço de **ontem** como metade, que é o caminho de pôr em dia.
+5. **Ir para o corpo.** Registrar o peso da manhã, 73,4 kg. E abrir a bioimpedância.
+6. **Voltar para a sessão** e ver que nada se perdeu.
+
+Tudo o que estiver fora desse roteiro pode ser um beco: o toque não precisa levar a lugar nenhum, desde que não pareça quebrado. Prefira desabilitar visivelmente a fingir que funciona.
+
+AS REGRAS DO PROTÓTIPO:
+
+- **Um arquivo, sem rede.** Nenhum `src` externo, nenhuma fonte baixada, nenhuma imagem de fora. Se precisar de ícone, desenhe em SVG inline.
+- **Tela cheia de telefone.** Use `100svh` para a altura, não `100vh` — em iPhone o `100vh` é a janela com a barra recolhida, e sobra um pedaço rolável que mostra o fundo. Respeite a área segura de cima e de baixo.
+- **Tema: segue o aparelho, com troca manual**, que foi decisão do dono. Então os dois temas de verdade, e um jeito de trocar dentro do protótipo.
+- **O estado é real durante o uso.** Registrar muda a tela e continua mudado quando ele volta. Guardar no próprio navegador (localStorage) é bem-vindo, e um botão discreto de "começar de novo" ajuda — mas se guardar, trate a leitura e a escrita com try/catch, porque em aba privada isso falha.
+- **Nada de alerta, confirmação ou pergunta do sistema.** Se precisar confirmar, desenhe dentro da página.
+- **O movimento entra**, porque o dono pediu fluidez: o toque afunda, o que foi registrado aparece onde foi parar. Com função, não decoração. E morre em `prefers-reduced-motion`.
+- **Conteúdo real** tirado dos fatos e do uso: os nomes dos exercícios, as refeições do plano, os números. Nada de lorem ipsum.
+
+O QUE VOCÊ PODE LER — só isto:
+- a sua própria pasta inteira (`direcao.md`, `direcao-2.md` e os oito HTML);
+- docs/redesign/01-fatos.md, 02-uso.md e 02-perguntas.md;
+- os arquivos que você mesmo escrever.
+Qualquer outro caminho do repositório fica fora, inclusive a pasta do outro designer e os outros arquivos de docs/redesign/. As fontes citadas dentro desses arquivos servem para conferência do coordenador: você não as abre nem as roda.
+
+FERRAMENTAS. Leia e escreva arquivos, e rode comandos locais sobre os seus próprios arquivos. Não invoque skills, não dispare subagentes, não use conectores e não acesse a web. Não rode o app nem nenhum servidor do projeto. Para ver o seu próprio HTML há um Chrome sem janela em /usr/bin/google-chrome (--headless, --screenshot, --window-size); use-o para conferir que a tela cabe e que os dois temas funcionam.
+
+ALÉM DO `prototipo.html`, escreva `prototipo.md`, curto:
+- o que ficou de fora do protótipo e por quê;
+- **o que você descobriu ao pôr a sua direção de pé** — o que só apareceu quando virou coisa tocável;
+- o que você consertou durante a montagem, se consertou.
+
+Grave em etapas: o arquivo no disco cedo, e vá melhorando. Não segure para o fim.
 
 Sua pasta: docs/redesign/03-direcao-
 ```
