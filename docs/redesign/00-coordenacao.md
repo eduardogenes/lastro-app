@@ -41,8 +41,8 @@ pede atenção do dono.
 | C3 · Acesso | `a75c3e4329ac5af9a` | [~] | 3ª tentativa, 02/10. As duas anteriores (`ad8473e0553894aba`) morreram com a medição pronta e nada no disco: limite de sessão, depois fim do processo. Esta leva ordem de gravar em etapas |
 | C4 · Voz | `aaa9339bc3e9a385a` | [~] | disparado 02/10, segundo plano |
 | R · Curador | `aec33eb0f05ec83ca` | [x] | entregue e conferido em 02/10 |
-| D3 · pasta C, protótipo | `a3c49047b0d25eec2` | [~] | disparado 04/10 |
-| D4 · pasta D, protótipo | `a5c1301c7eaecc0ef` | [~] | disparado 04/10 |
+| D3 · pasta C, protótipo | `a3c49047b0d25eec2` | [x] | entregue 04/10, roteiro inteiro rodando |
+| D4 · pasta D, protótipo | `a5c1301c7eaecc0ef` | [x] | entregue 04/10, roteiro inteiro rodando |
 | D3 · pasta C, 2ª rodada | `a8ffe4511162060d4` | [x] | entregue 04/10: seis telas, 51 estados, mais `direcao-2.md` |
 | D4 · pasta D, 2ª rodada | `a7336487485fa8580` | [x] | entregue 04/10: seis telas, 66 estados, mais `direcao-2.md`. Caiu uma vez e foi retomada pelo id |
 
@@ -545,8 +545,31 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
   - Dito a ele o que protótipo não responde: testa impressão em três minutos, não
     hábito ao longo de semanas — decide bem entre C e D, decide mal se a tese
     está certa.
-- [ ] P3.i.2 Conferir os dois protótipos: roteiro completo, sem rede, dois temas,
-      `100svh`, sem diálogo do sistema
+- [x] P3.i.2 Conferidos os dois: zero dependência de rede, zero diálogo do
+      sistema, `100svh` com área segura, os dois temas, `prefers-reduced-motion`
+      desligando o movimento, e o script compila. Os dois declaram ter rodado o
+      roteiro inteiro em Chrome sem janela (C: 33 passos de clique em três
+      tamanhos de tela; D: 12 passagens a 414×896).
+- [x] P3.i.3 Publicados para o dono abrir no celular:
+      **C `AmCCbEGxynppVWhkqWXXBU`**, **D `Y17FJJ8ksFRpoaj3uSx4Gu`**.
+      Duas intervenções minhas nas cópias publicadas, com os arquivos do
+      repositório intactos:
+      - **a D passou a abrir clara** (`tema:""` → `tema:"light"`). A C já abria
+        assim por decisão do próprio desenhista. Com temas padrão diferentes a
+        comparação começaria torta, e o dono tem regra de não receber tela
+        escura. O seletor de três posições continua nas duas, então o tema que
+        segue o aparelho — que é a decisão de produto dele — continua testável;
+      - **o acolchoamento de área segura do invólucro do artefato foi zerado**
+        (`:root{padding:0}`): as duas telas já tratam `env(safe-area-inset-*)`
+        sozinhas, e o acolchoamento duplo deixaria um pedaço rolável embaixo,
+        que é exatamente a armadilha registrada no CLAUDE.md do dono.
+      O invólucro do artefato também substitui o `<meta viewport>` das duas, que
+      traziam `user-scalable=no`/`maximum-scale=1`: no publicado dá para dar
+      zoom. Não muda nenhum fluxo do roteiro.
+- [!] P3.i.4 **Comparação torta num ponto, declarado pelas duas:** o salto de
+      6h55 para 15h30 ao sair da sessão é ficção necessária (o lanche não existe
+      de manhã). Conferir, quando o dono comparar, se as duas fazem o salto no
+      mesmo lugar — a D avisou que faz ao sair da sessão.
 - [ ] P3.j **A rede do D13**: inventário do que cada grupo de teste de fluxo
       protege, uma linha cada. Não bloqueia a escolha; bloqueia a reescrita.
 
