@@ -333,3 +333,52 @@ test('o backup sai em UTF-8, e o acento sobrevive à volta', async () => {
 
   a.fechar();
 });
+
+test('reimportar devolve TODOS os campos, não só as séries', async () => {
+  // O caminho de volta dele é exportar e importar. A exportação leva o estado
+  // inteiro e tem asserção que cobra isso; a importação é lista branca, e a
+  // lista tinha ficado para trás em seis campos. Como `normalizaEstado()` roda
+  // logo depois e devolve os seis vazios, o app abria limpo e não avisava nada:
+  // o backup continuava no disco, intacto e inútil.
+  const a = await app();
+
+  // os seis que sumiam, com conteúdo reconhecível
+  a.E(`S.ajusteHist = [{ t: 1, de: 0, para: -1, k: 'menos', p: 150, reg: 12 }]`);
+  a.E(`S.aulas = [{ n: 'HYROX sexta', mov: [{ n: 'wall ball', s: 3, q: 20, u: 'rep' }] }]`);
+  a.E(`S.comidaHist = [{ d: '2026-09-30', kcal: 2410, aderencia: 'plano' }]`);
+  a.E(`S.gordura = [{ d: '2026-09-28', v: 'nao' }]`);
+  a.E(`S.protocolo = { poses: ['frente-relaxado'], sessoes: [{ d: '2026-09-28', t: 1, m: 1, fotos: {} }] }`);
+  a.E(`S.quadro = { day: 'F', texto: '5 RNDS · 20 WB', t: 1 }`);
+  await a.E('save()');
+
+  a.aba('guia');
+  await a.modo('o app');
+  a.E('showJSON()');
+  const bkp = a.doc.getElementById('jout').value;
+  const antes = JSON.parse(bkp).data;
+
+  await a.E('wipe()');
+  await a.esperar();
+  a.aba('guia');
+  await a.E('importText(' + JSON.stringify(bkp) + ')');
+  await a.esperar(60);
+
+  // nenhum campo exportado pode se perder na volta
+  const depois = a.J('S');
+  const sumiram = Object.keys(antes).filter(k => {
+    // `mtime` é o carimbo do estado: ele muda ao gravar, e mudar é o certo.
+    if (k === 'mtime') return false;
+    const d = JSON.stringify(depois[k]), o = JSON.stringify(antes[k]);
+    return o !== undefined && o !== 'null' && o !== '[]' && o !== '{}' && d !== o;
+  });
+  assert.deepStrictEqual(sumiram, [], 'campos perdidos na importação');
+
+  // e os seis, nominalmente, porque são o motivo deste teste existir
+  assert.strictEqual(a.E('S.ajusteHist.length'), 1, 'o ledger do ajuste');
+  assert.strictEqual(a.E('S.aulas.length'), 1, 'os modelos de aula');
+  assert.strictEqual(a.E('S.comidaHist.length'), 1, 'os dias de comida fechados');
+  assert.strictEqual(a.E('S.gordura.length'), 1, 'as leituras de gordura visual');
+  assert.strictEqual(a.E('S.protocolo.sessoes.length'), 1, 'as sessões de foto');
+  assert.strictEqual(a.E('S.quadro ? S.quadro.texto : null'), '5 RNDS · 20 WB', 'o quadro do dia');
+  a.fechar();
+});

@@ -3469,8 +3469,12 @@ async function importText(txt) {
         mods: d.mods || null, progLog: Array.isArray(d.progLog) ? d.progLog : [],
         // A metade de comida entra pelo mesmo caminho. Whitelist e não spread
         // de propósito: um backup adulterado não pode injetar campo que o app
-        // não conhece. O preço é este — campo novo tem que ser listado aqui,
-        // e um teste cobra que a lista bata com o que é exportado.
+        // não conhece. O preço é este — campo novo tem que ser listado aqui.
+        // O teste que cobra a paridade com a exportação é
+        // "reimportar devolve TODOS os campos" em `tests/fluxo/dados.test.js`:
+        // ele escreve em cada campo, exporta, apaga, importa e compara tudo.
+        // Antes dele, a promessa deste comentário não existia em teste nenhum,
+        // e seis campos tinham ficado para trás.
         cadencia: Array.isArray(d.cadencia) && d.cadencia.length === 7 ? d.cadencia : null,
         comida: (d.comida && typeof d.comida === 'object') ? d.comida : null,
         dia: (d.dia && typeof d.dia === 'object') ? d.dia : null,
@@ -3483,7 +3487,17 @@ async function importText(txt) {
         apagados: (d.apagados && typeof d.apagados === 'object') ? d.apagados : {},
         descanso: (d.descanso && typeof d.descanso === 'object') ? d.descanso : {},
         fotos: (d.fotos && typeof d.fotos === 'object') ? d.fotos : {},
-        promoPendente: (d.promoPendente && typeof d.promoPendente === 'object') ? d.promoPendente : null };
+        promoPendente: (d.promoPendente && typeof d.promoPendente === 'object') ? d.promoPendente : null,
+        // Estes seis ficaram para trás quando nasceram, e a perda era MUDA:
+        // `normalizaEstado()` roda logo abaixo e devolve todos vazios, então o
+        // app abria limpo sem avisar nada — com o backup intacto no disco e
+        // inútil. É o caminho de volta dele que estava quebrado.
+        ajusteHist: Array.isArray(d.ajusteHist) ? d.ajusteHist : [],
+        gordura: Array.isArray(d.gordura) ? d.gordura : [],
+        aulas: Array.isArray(d.aulas) ? d.aulas : [],
+        comidaHist: Array.isArray(d.comidaHist) ? d.comidaHist : [],
+        protocolo: (d.protocolo && typeof d.protocolo === 'object') ? d.protocolo : null,
+        quadro: (d.quadro && typeof d.quadro === 'object') ? d.quadro : null };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();
