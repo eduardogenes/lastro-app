@@ -432,8 +432,73 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       duas sobreviventes abrem a tese com a mesma oração, palavra por palavra, e
       essa oração é a tese do app que já existe. Ele não escolhe entre duas
       filosofias — escolhe entre duas execuções da mesma, que também é a de hoje.
-- [ ] P3.b **Parar.** Nada da onda 5 é disparado até ele decidir.
-- [ ] P3.c Registrar, literal, o que ele decidiu
+- [x] P3.b **Parar.** Respondido em 04/10, na folha de decisões (artefato
+      `E6Xz162eyGNjQgUWehq7KJ`, documento `folha/respostas`, versão 85).
+- [x] P3.c Registrar, literal, o que ele decidiu:
+
+  **A escolha entre C e D: NÃO FEITA.** Marcou "ainda não sei, quero responder o
+  resto primeiro". Combinada com a decisão 12 ("quero ver desenhado antes de
+  escolher"), fecha um círculo: a opção 12 dizia que quem desenha o que falta é a
+  direção escolhida. **É o bloqueio a resolver antes de qualquer onda 5.**
+
+  **Decidido (10):**
+
+  | | decisão | resposta |
+  |---|---|---|
+  | D1 | pergunta ao encerrar o treino (E1) | **TIRA a exigência.** A mudança espera numa lista. Ele abre mão do que ele mesmo pediu na parada 2, e o produto perde uma capacidade que hoje tem e tem teste |
+  | D4 | o que o app mostra na porta da academia | **o treino ganha da refeição** na manhã de dia de treino |
+  | D6 | consertar um número errado | **corrigir no lugar, sempre**, série e comida. Alinha com a regra escrita do app de hoje |
+  | D8 | teclado | **misto**: teclado próprio onde atrapalha, do sistema onde não (notebook, campos de texto) |
+  | D10 | tema | "decido vendo" **+ nota que é a decisão**: "de acordo com o sistema, mas com a possibilidade de mudar qnd quiser" → segue o tema do aparelho, com troca manual |
+  | D11 | paleta e movimento | **SIM**, e a regra vigente "quase nenhum movimento" muda de propósito |
+  | D12 | o que ninguém desenhou | **quer ver desenhado antes de escolher** |
+  | D13 | os 513 testes de fluxo | **reescrever em bloco** — a opção que o parecer nomeia como o modo de falha histórico do projeto |
+  | D9 | lugar do corpo | "depende da direção" **+ nota: "eu nao entendi muito bem ql a questao, mas prefiro o minimo de toues necessario"** → não respondida de fato |
+  | escolha | C ou D | "ainda não sei" |
+
+  **Adiado para o detalhamento (4):** D2 (lista do dia da D tocável), D3 (fechar
+  dia de comida passado), D5 (janela de repetições), D7 (até quando a marca
+  aparece).
+
+  **As catorze abertas, respondidas 14 de 14:**
+
+  | | pergunta | resposta |
+  |---|---|---|
+  | 14.1 | hora-limite pessoal | não |
+  | 14.2 | guardar qual refeição saiu do plano | sim (mexe nos dados) |
+  | 14.3 | separar "não comi" de "esqueci" | **sim** |
+  | 14.4 | "não contei a água" ≠ zero copos | sim, **como fato** (mexe nos dados) |
+  | 14.5 | porções além de tudo e metade | sim |
+  | 14.6 | previsto no horário real dele | **não: horário do plano** |
+  | 14.7 | RIR | em toda série |
+  | 14.8 | o aviso de subir carga olha o RIR | **sim, entra no cálculo** |
+  | 14.9 | quanto a mudança do dia espera | **vence em alguns dias** |
+  | 14.10 | lê a tela a 3 m | não sei → continua travando a sessão de fotos |
+  | 14.11 | bioimpedância e fita | respondida em texto longo: percentual e massa de gordura (com visceral), massa magra, água intra e extracelular, taxa metabólica basal e idade metabólica, massa óssea, IMC ajustado e distribuição por segmento |
+  | 14.12 | revisão da semana em dia fixo | não, sempre disponível |
+  | 14.13 | ceia | **sim** e **é assunto do nutricionista** (as duas) |
+  | 14.14 | vencimento da aula do box | por posição na sequência |
+
+- [!] P3.d **Quatro conflitos entre respostas, para levar a ele antes da onda 5:**
+
+  1. **O círculo da escolha.** `escolha` = "não sei" e D12 = "quero ver desenhado
+     antes". Como só a direção escolhida desenharia o que falta, nada anda. Saídas:
+     pedir às DUAS que desenhem (dobra o custo), ou escolher com o que existe.
+  2. **14.3 decide a D3 sem dizer.** Ele adiou "como fechar um dia passado" e
+     respondeu **sim** a "separar não comi de esqueci" — que é exatamente a
+     terceira saída da D3. Na prática a D3 está respondida.
+  3. **D1 + 14.9 criam uma pergunta nova.** Tirou a pergunta ao encerrar E disse
+     que a mudança do dia **vence em alguns dias**. Mudança que vence sem ele
+     decidir é o F280 nominal — o defeito que descartava a mudança do dia em
+     silêncio. Falta dizer o que acontece no vencimento.
+  4. **D10 custa o que ninguém desenhou.** "Segue o sistema, com troca manual"
+     exige os DOIS temas; as duas direções desenharam só o claro, e o C3 mediu
+     contraste nos dois temas mas não há desenho escuro.
+
+- [!] P3.e **D13 = reescrever em bloco.** O parecer é explícito: é o único lugar
+      onde se perde capacidade sem ninguém perceber, e é o modo de falha que já
+      aconteceu quatro vezes neste projeto. Levar a ele uma vez, com a prova, e
+      aceitar a resposta dele seja qual for.
 
 - [ ] P3.a Apresentar o parecer
 - [ ] P3.b **Parar.**
