@@ -592,12 +592,17 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       Escrito também na folha de respostas (documento `folha/respostas`, versão
       86), para a folha não ficar dizendo "ainda não sei".
 
-- [!] P3.i.6 **Conflito entre duas respostas dele, levantado na hora:** manter a
-      folha pré-marcada como "comi tudo" **e** tirar o botão de guardar não
-      convivem sem uma terceira regra. Sem o guardar, o pré-marcado vira registro
-      sozinho, e um dia inteiro passa a contar como consumo conhecido sem ele ter
-      dito nada — que é exatamente o F290/F292, o dia chutado que destravou um
-      corte de comida. Levado a ele.
+- [x] P3.i.6 **Conflito entre duas respostas dele, levantado e resolvido na
+      hora.** Manter a folha pré-marcada como "comi tudo" **e** tirar o botão de
+      guardar não conviviam: sem o guardar, o pré-marcado viraria registro
+      sozinho, e um dia inteiro contaria como consumo conhecido sem ele ter dito
+      nada — o F290/F292, o dia chutado que destravou um corte de comida.
+
+      **Resolvido por ele: o pré-marcado é sugestão até o toque.** A folha abre
+      com o plano marcado como proposta, e nada daquilo é registro; **um** toque
+      em qualquer linha — inclusive um "foi tudo isso mesmo" — fecha o dia
+      inteiro. Fica barato (um toque por dia, não zero) e nada é declarado sem
+      ele. Vai como requisito para o detalhamento.
 
 - [!] P3.i.4 **Comparação torta num ponto, declarado pelas duas:** o salto de
       6h55 para 15h30 ao sair da sessão é ficção necessária (o lanche não existe
