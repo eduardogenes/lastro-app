@@ -808,6 +808,29 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         silencioso: consertar o desligamento das telas antes de a reescrita se
         apoiar na rede, ou seguir sabendo do ruído. A frente 2 mexe exatamente
         nesse código.
+      - [~] **O dono escolheu CONSERTAR primeiro, em 05/10** ("faça o conserto e
+        depois continue"). Disparado (`abd0e945afe6a1570`) →
+        `09-desligamento.md`.
+        **O que eu localizei antes de passar, para o agente não começar do
+        zero:** as quatro rejeições saem **todas de `protocolo.test.js`**, o
+        caminho do byte da foto; o `undefined` é o `document`, e
+        `createElementNS` é o Preact criando SVG no diff, então **é render, não
+        efeito solto**; o `fechar()` do harness faz só `stopTimer()` e
+        `w.close()`; e **o app não tem desmontagem nenhuma** —
+        `grep -nE "render\(null|unmount" src/ -r` não acha nada. O harness
+        fecha a janela por baixo de um app que continua trabalhando.
+        **O aviso que pesa mais:** a tentativa anterior **piorou** (guarda de
+        render levou de 4 para 6, foi medida e revertida). Então mandei **não**
+        começar por guarda de render, e sim por **cancelar o trabalho em voo no
+        desligamento** — com a direção marcada como sugestão, não ordem.
+        **Protocolo obrigatório:** `grep -c "Unhandled Rejection"` antes (4) e
+        depois (tem de ser 0; sobrar 1 ou 2 se declara, não se esconde), suíte
+        em 954, e **dez execuções registradas uma por uma** — com a frase de que
+        dez limpas **não provam** que a intermitência acabou, dado que a
+        original aparecia uma vez em 24. Proibido mexer em expectativa de teste
+        para a rejeição sumir.
+        **Isto não é só higiene de teste:** é a disciplina de desligamento que a
+        frente 2 vai precisar e que hoje não existe no app.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
