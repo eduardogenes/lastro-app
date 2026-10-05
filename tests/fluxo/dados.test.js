@@ -349,6 +349,22 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   a.E(`S.gordura = [{ d: '2026-09-28', v: 'nao' }]`);
   a.E(`S.protocolo = { poses: ['frente-relaxado'], sessoes: [{ d: '2026-09-28', t: 1, m: 1, fotos: {} }] }`);
   a.E(`S.quadro = { day: 'F', texto: '5 RNDS · 20 WB', t: 1 }`);
+
+  // As cinco chaves da bioimpedância, que a migração 9→10 abriu. Entram aqui
+  // com conteúdo porque sem conteúdo a perda seria MUDA: `normalizaEstado()`
+  // roda depois da importação e devolve a chave como lista vazia, então uma
+  // lista branca incompleta passaria batida contra um corpo vazio. É o mesmo
+  // mecanismo que escondeu os seis campos de topo.
+  a.E(`S.body.bioPeso = [{ t: 1790000000000, v: 79.2, m: 1790000000000 }]`);
+  a.E(`S.body.bioMusculo = [{ t: 1790000000000, v: 37.4, m: 1790000000000 }]`);
+  a.E(`S.body.bioGordura = [{ t: 1790000000000, v: 14.1, m: 1790000000000 }]`);
+  a.E(`S.body.bioGorduraPct = [{ t: 1790000000000, v: 17.8, m: 1790000000000 }]`);
+  a.E(`S.body.bioAgua = [{ t: 1790000000000, v: 45.3, m: 1790000000000 }]`);
+  // e os três campos novos do dia de comida, dentro de `S.dia`
+  a.E(`diaDeComida()`);
+  a.E(`S.dia.done = { pos: 1790000000000 }`);
+  a.E(`S.dia.como = { pos: 'fora' }`);
+  a.E(`S.dia.aguaNaoContada = 1`);
   await a.E('save()');
 
   a.aba('guia');
@@ -380,5 +396,58 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   assert.strictEqual(a.E('S.gordura.length'), 1, 'as leituras de gordura visual');
   assert.strictEqual(a.E('S.protocolo.sessoes.length'), 1, 'as sessões de foto');
   assert.strictEqual(a.E('S.quadro ? S.quadro.texto : null'), '5 RNDS · 20 WB', 'o quadro do dia');
+
+  // e, nominalmente, o que entrou na migração 9→10: a lista branca da
+  // importação é por CHAVE dentro de `body`, então uma grandeza nova que não
+  // entrasse nela sumiria sem a asserção de topo notar
+  assert.strictEqual(a.E('S.body.bioPeso.length'), 1, 'o peso da bioimpedância');
+  assert.strictEqual(a.E('S.body.bioMusculo[0].v'), 37.4, 'a massa muscular esquelética');
+  assert.strictEqual(a.E('S.body.bioGordura[0].v'), 14.1, 'a massa de gordura');
+  assert.strictEqual(a.E('S.body.bioGorduraPct[0].v'), 17.8, 'o percentual de gordura');
+  assert.strictEqual(a.E('S.body.bioAgua[0].v'), 45.3, 'a água corporal total');
+  assert.strictEqual(a.E('S.body.peso.length'), antes.body.peso.length,
+    'e a pesagem da manhã segue sendo outro registro, intocada');
+  assert.strictEqual(a.E('S.dia.done.pos'), 1790000000000, 'o instante da marca');
+  assert.strictEqual(a.E('S.dia.como.pos'), 'fora', 'qual refeição saiu do plano');
+  assert.strictEqual(a.E('S.dia.aguaNaoContada'), 1, '"não contei a água" como fato');
+  a.fechar();
+});
+
+test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => {
+  // A asserção da exportação (acima) tranca as chaves de TOPO, e `body` é uma
+  // só. As grandezas moram dentro dela, e a importação as copia por nome: sem
+  // este teste, acrescentar a oitava medida e esquecer a lista branca não
+  // deixaria nada vermelho.
+  const a = await app();
+  const chaves = a.J('MARCAS_DO_CORPO');
+  assert.deepStrictEqual(chaves.slice().sort(), [
+    'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso', 'cintura', 'peso'
+  ], 'peso da manhã, cintura e as cinco da bioimpedância');
+
+  // uma medida reconhecível em cada, com valor diferente por grandeza
+  chaves.forEach(function (k, i) {
+    a.E('S.body[' + JSON.stringify(k) + '] = [{ t: ' + (1790000000000 + i) +
+        ', v: ' + (10 + i) + ', m: 1 }]');
+  });
+  await a.E('save()');
+
+  a.aba('guia');
+  await a.modo('o app');
+  a.E('showJSON()');
+  const bkp = a.doc.getElementById('jout').value;
+  assert.deepStrictEqual(Object.keys(JSON.parse(bkp).data.body).sort(), chaves.slice().sort(),
+    'a exportação leva o estado inteiro, então as sete saem');
+
+  await a.E('wipe()');
+  await a.esperar();
+  a.aba('guia');
+  await a.E('importText(' + JSON.stringify(bkp) + ')');
+  await a.esperar(60);
+
+  chaves.forEach(function (k, i) {
+    assert.strictEqual(a.E('S.body[' + JSON.stringify(k) + '].length'), 1, k + ' voltou');
+    assert.strictEqual(a.E('S.body[' + JSON.stringify(k) + '][0].v'), 10 + i,
+      k + ' voltou com o valor dela, e não com o de outra grandeza');
+  });
   a.fechar();
 });
