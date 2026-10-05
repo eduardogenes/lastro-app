@@ -899,3 +899,260 @@ mudanças de regra**, não a folha inteira:
 As cinco são pequenas de desenho e nenhuma delas é de gosto: cada uma nasceu de
 uma diferença entre o que o desenho faz e o que o dado permite ou a decisão dele
 manda.
+
+---
+
+## 5 · Corrigir no lugar, com alvo
+
+Nasceu no protótipo (descoberta 4) e **não existe em nenhum dos oito HTML** — o
+que quer dizer que ninguém mediu nada dele, nem o parecer nem a auditoria de
+acesso, que são anteriores. Então esta seção especifica pela primeira vez, e
+diz o que ficou sem medida.
+
+### 5.1 · O alvo dentro da tabela, e ele é o menor da direção
+
+Cada número guardado é um botão dentro da tabela do exercício. Conferi a forma
+no fonte, e o rótulo acessível dela está certo:
+
+```html
+<button class="cellb" data-a="corrigir" data-ex="5" data-s="3" data-e="0"
+        aria-label="Série 3: 55 por 9 repetições. Tocar para corrigir">55 × 9</button>
+```
+
+(`03-direcao-D/prototipo.html:635`.) O rótulo diz o número **e** o que o toque
+faz — é exatamente o que 1.1.1 e 2.4.4 pedem, e é melhor do que a média do
+arquivo.
+
+**O problema é o tamanho, e ele nunca foi medido.** `.cellb` tem
+`padding: 1px 7px; font-size: 17px` (`:94`), dentro de
+`.ref td { line-height: 1.2 }` (`:89`). **Conta:** `17 × 1,2 + 1 + 1 ≈ 22 px de
+altura`. A largura, com "55 × 9" em dígitos tabulares mais 14 px de
+preenchimento, fica por volta de 64 px. **Cerca de 64 × 22 px.** Não há
+`::after` estendendo a área (procurei `.cellb::after` no arquivo: não existe).
+
+Por que ninguém mediu: C3 mediu os **nove HTML** e achou 12 alvos abaixo de
+44 px — `.map` a 30 px (3 ocorrências) e `.daytype` a 36 px (9)
+(`04-acesso.md`, D-7, conferi). **`.cellb` não está nessa lista porque nasceu
+depois dela**, no protótipo. Pela minha conta ele é **o menor alvo interativo da
+direção inteira**, 8 px abaixo do pior que a auditoria encontrou, e é um
+**controle repetido** — um por série, até quatro por exercício, vinte por
+sessão de Treino A.
+
+**O requisito, e ele é o mesmo mecanismo que o repositório já tem:**
+
+- `::after` com `position: absolute` e `inset: -Npx 0`, levando o **alvo** a
+  46 px sem crescer o desenho. É o caso *controle pequeno estende o ALVO sem
+  crescer o desenho*, e os quatro últimos seletores dessa lista entraram
+  exatamente por isto: "o descanso, a anotação, o aquecimento e o RIR ficavam
+  entre 34 e 40 px — todos apertados de pé, com uma mão, entre uma série e
+  outra" (conferi o comentário em `tests/dominio/estilo.test.ts`). **`.cellb`
+  está pior do que os quatro que motivaram a regra.**
+- **O segundo valor do `inset` é zero**, e não é detalhe: o vizinho horizontal é
+  o botão da **série seguinte**. É a mesma geometria do caso *o alvo do tick
+  cresce só na vertical*, e a consequência aqui é mais branda — tocar errado
+  abre a correção da série errada, e a tela diz qual série é, então ele desfaz —
+  mas continua sendo um toque jogado fora numa ação que já é de correção.
+- **Para cima e para baixo há espaço seguro:** a linha "Última" é `<td>` de
+  texto, sem controle (conferi `:643-650`). Estender o alvo por cima dela não
+  rouba toque de ninguém.
+
+**E uma coisa que o rótulo acessível faz certo e que precisa sobreviver:** ele
+carrega o valor. `aria-label="Série 3: 55 por 9 repetições. Tocar para
+corrigir"` é o que permite achar a série errada sem ver a tabela. Numa reescrita
+de componente, esse rótulo é a primeira coisa que se perde.
+
+### 5.2 · O segundo estado da régua
+
+A régua ganha um segundo estado: **o valor guardado em tinta cheia, marcado
+"agora", ao lado da "última"**. Conferi a implementação, e ela é um quarto
+argumento em `regua(ref, fx, marca, atual)` com duas classes:
+
+- `.rep.last` — a referência, "última", borda de 2 px na cor de acento com fundo
+  suave (`prototipo.html:140`);
+- `.rep.now` — o guardado, fundo cheio e texto invertido (`:141`), com o
+  `<small>` dizendo "agora" (`:142`, com a cor do texto invertida também);
+- e `.rep.in` — o sublinhado da faixa prescrita (`:139`), que é ortogonal aos
+  dois.
+
+**Três requisitos que o estado novo traz, e nenhum deles está no protótipo:**
+
+1. **A distinção não pode ser só de cor.** `.rep.now` troca fundo e texto;
+   `.rep.last` troca borda e fundo. Em tinta cheia contra borda, a diferença é
+   de **forma** além de cor, o que já satisfaz 1.4.1 — mas o `<small>` que
+   carrega a palavra ("agora" / "última") é o que torna a diferença legível, e
+   ele existe nos dois. **Requisito:** a palavra fica; ela não é redundância, é
+   o conteúdo.
+2. **Os dois estados podem cair no mesmo botão, e o código já decide quem
+   ganha.** Se o valor guardado for igual ao da última, `cls` recebe `last` e
+   `now` ao mesmo tempo (conferi a concatenação em `regua`), e só um
+   `<small>` é emitido — o de "agora", porque a condição do `marca` vem antes na
+   expressão ternária. **Requisito:** quando os dois coincidem, a palavra é
+   **"agora, igual à última"**, e não uma das duas. É o caso mais comum, porque
+   repetir o número da última é o que acontece na maioria das séries.
+3. **`centrarStrip()` passa a centrar no guardado**, porque procura
+   `.rep.now` antes de `.rep.last` (conferi). Isso está certo — na correção o
+   foco é o valor que está lá, não a referência — e é mais uma razão para a
+   posição da janela ser derivada do valor em foco (§1.3, R4), e não um
+   `scrollLeft` guardado.
+
+### 5.3 · Corrigir não reinicia o descanso — e a regra já existe, apoiada numa guarda que evapora
+
+Esta é a regra que vale mais, e o briefing a trata como coisa a especificar.
+**Conferi, e ela já existe no app de hoje** — pelo mecanismo errado.
+
+**Como ela já vale.** `autoTimer(i, k, e)` dispara `startTimer` quando a série
+fica completa, e tem duas guardas (conferi em `src/main.jsx`):
+
+```js
+if (!cheia) { view.fired[tag] = false; return; }
+if (view.fired[tag]) return;
+view.fired[tag] = true;
+```
+
+`tag` é `view.day + i + ':' + k` — dia, posição do exercício, número da série.
+Corrigir 9 para 8 mantém `cheia` verdadeiro e `view.fired[tag]` verdadeiro, então
+a função **retorna antes de `startTimer`**. O descanso não reinicia. ✔
+
+**E o protótipo também não reinicia:** `corrigeSerie()` escreve `d.reps = v` e
+**não toca** em `S.sess.restFrom` nem em `d.at` (conferi a função inteira). O
+texto na tela diz as duas coisas: "o guardado está em tinta cheia · o horário
+não muda" (`:757`). A descoberta 5 do protótipo está certa, e o desenho a honra.
+
+**O problema é onde a guarda mora.** `view.fired` é campo de `view`, que é
+`let view = { … fired:{} … }` em `src/main.jsx` — **memória, nunca disco**.
+Conferi os três lugares que o zeram: `fechaSessao`, o descarte de sessão vazia
+em `finalizarSessao`, e `wipe()`. Nada o persiste e nada o reconstrói no boot.
+
+**Consequência, e é um defeito vivo no app de hoje:** ele registra a série 2 às
+6h40, o iOS fecha o app em segundo plano (o estado M1-8 existe justamente para
+isso), ele reabre às 6h55 e corrige a série 2 de 9 para 8. `view.fired` nasceu
+vazio. `cheia` é verdadeiro. `view.fired[tag]` é `undefined`. **`startTimer`
+dispara um descanso de 2 minutos para uma série que acabou quinze minutos
+atrás.** Não há caso de teste para isto: os 12 casos de
+`tests/fluxo/cronometro.test.js` cobram o descanso sobreviver ao fechamento — o
+que ele faz, porque é recalculado pelo relógio de parede —, e os 8 de
+`tests/fluxo/serie.test.js` cobram o disparo; nenhum cobra **corrigir depois de
+reabrir**.
+
+**Requisito, e ele é de modelo, não de tela:** a regra "corrigir não reinicia o
+descanso" passa a ser derivada do **dado**, não de uma variável de sessão de
+memória. O dado para isso já existe: cada série registrada tem o instante
+(`entry.sets` por `projeta`, e no protótipo `reg.at`). A pergunta "este toque
+inicia um descanso?" é respondida por "esta série está sendo **registrada agora**
+ou **corrigida**?", e as duas são distinguíveis sem `view.fired`: registrar é
+escrever uma série que não tinha valor; corrigir é mudar uma que tinha. A direção
+D já separa os dois atos em dois estados de tela diferentes (`S.modo === "reg"`
+contra `"corr"`), o que torna a distinção explícita em vez de inferida.
+
+**E o caso de teste que falta tem de nascer com a mudança:** *"corrigir uma série
+depois de reabrir o app não inicia descanso"*. Hoje ele ficaria **vermelho**, e
+é por isso que ele vale.
+
+### 5.4 · O que corrigir nunca muda
+
+Quatro invariantes, e eu as escrevo porque cada uma é um jeito de a correção
+mentir:
+
+1. **O horário da série não muda.** Está no desenho ("o horário não muda") e no
+   dado (`corrigeSerie` não toca `d.at`). O instante é medição; o valor é
+   declaração.
+2. **O descanso não reinicia** (§5.3), e o cronômetro continua contando de onde
+   estava — ele é "agora menos o instante da série", e é isso que o faz
+   sobreviver ao bloqueio e a outro app (`tests/fluxo/cronometro.test.js`).
+3. **Corrigir não reabre sessão nem mexe na rotação.** Corrigir uma série de
+   semanas atrás é ato de histórico; a frente 1 já deu dois endereços para ele
+   (Dias › detalhe da sessão, para o dia; histórico do exercício, para a série —
+   achado 1), e **essa porta depende da proposta dela** (§10).
+4. **A tela diz que foi correção, não gravação.** O protótipo faz isso com uma
+   palavra: `S.corrigida` troca "guardada" por "corrigida" na frase de
+   confirmação (conferi em `zonaDepois`). **Requisito:** a palavra fica, e o
+   anúncio de §1.3 R6 a carrega — "série 3 corrigida: 55 kg × 8" e não
+   "guardada", porque guardada de novo soa como série nova.
+
+---
+
+## 6 · O teclado misto, campo por campo
+
+**A regra, em uma frase:** teclado próprio onde a entrada acontece **de pé,
+dentro da sessão, com uma mão, e o valor é um número curto de faixa conhecida**;
+teclado do sistema onde a entrada é **texto**, ou longa, ou acontece sentado, ou
+pode ser colada.
+
+As duas metades têm preço medido, e os dois estão escritos:
+
+**O que o teclado do sistema cobra**, e o app já conhece a conta:
+`DESIGN.md` manda "campo de texto nunca abaixo de 16px — o Safari dá zoom ao
+focar, e a tela fica torta no meio de uma série", e há caso que o segura (*o
+campo nunca fica abaixo de 16px*). E o próprio fonte da série diz o resto, sobre
+o RIR: *"Botão e não campo: um dígito não vale abrir o teclado numérico, que
+cobre metade da tela no meio da série"* (conferi `src/ui/exercicio.jsx:99-101`).
+
+**O que o teclado próprio cobra**, e aqui o defeito é nominal: **no notebook ele
+não tem os dígitos do teclado físico.** C2 nomeou (do parecer, decisão 8), e eu
+**conferi no fonte**: `grep -c "keydown\|keypress\|keyup"` no
+`03-direcao-D/prototipo.html` devolve **0**. O teclado de doze teclas de
+`folhaCarga()` existe só por `click`. Quem está no notebook, com teclado de
+verdade na frente, tem de **mirar com o mouse** em 7-8-9-4-5-6-1-2-3-,-0-⌫.
+**A frequência de uso no notebook é não medida** — o dono disse "bastante"
+(P8, P11), e o parecer registra que ninguém contou.
+
+E o que C3 mediu dos dois teclados, que é a ironia do material: **em D as 12
+teclas têm preenchimento a 1,20:1 e borda zero** (D-5). O teclado construído
+para ser mais seguro é o pior caso de contraste dos dois arquivos.
+
+### 6.1 · A regra, campo por campo
+
+| a entrada | onde | hoje | o veredito | por quê |
+|---|---|---|---|---|
+| **repetições da série** | sessão | `input inputmode="numeric"` (`exercicio.jsx:93-97`) | **nenhum teclado** — a régua | é a ação de 48/semana, de pé; um toque é a tese da direção (§1) |
+| **repetição fora da régua** | sessão | o mesmo campo | **próprio**, pela porta "Outro valor" | é a saída da régua, e é raro; o parecer mediu que em C ela custa 4 toques, e isso é o teto |
+| **carga da série** | sessão | `input inputmode="decimal"` (`:84-90`) | **próprio, com vírgula e casa decimal fixa** | C2 marcou a casa decimal fixa ("736" → 73,6) como **ponto a favor**: mata F63 e F275 na entrada. E `limpaNum(el, dec)` já existe para normalizar vírgula — passa a ser a mesma conta, feita antes |
+| **RIR** | sessão | **já é botão**, 0 a 4 (`:99-110`) | **nenhum teclado** — fica botão | a razão está escrita no fonte, e a D mantém (0–4 mais "sem RIR") |
+| **peso da manhã** | Corpo, e o atalho do descanso | `registraPeso`, aceita vírgula | **próprio**, com a régua de 100 g na frente (§1.4) | é de pé, na balança, e é um número de faixa estreita. A régua resolve o caso comum e o próprio resolve o resto |
+| **cintura** | Corpo | `registraCintura` | **próprio** | mesma situação do peso: de pé, com a fita na mão |
+| **bioimpedância (5 campos)** | Corpo | não existe | **do sistema** | é **sentado**, com o papel da balança na mão, cinco números de uma vez. Quatro são obrigatórios (5.a' P3) e um deles é o **peso dela**, que é registro separado da pesagem da manhã (5.a''') — a tela mostra os dois de propósito |
+| **medidas com fita** | Corpo | não existe | **próprio** para o número, **do sistema** para o "como ele mediu" | o número é de pé; o texto é texto |
+| **lista rápida da aula** | sessão da aula | `inpRapido(el, i, pos)` | **próprio** | o fonte diz quando acontece: "DEPOIS da aula, ofegante, sentado, e ela é curta" — curta é o que define, não sentado |
+| **observação do exercício** | sessão | `obsIn(el, i)` | **do sistema** | é texto |
+| **nota da sessão** | sessão, pelo `···` | `setNotaDaSessao` | **do sistema** | é texto, e a D já põe no `···` com a razão: "teclado do sistema, fora do caminho rápido" (conferi em `menuSessao`) |
+| **motivo da mudança** | Prescrição | `motivoPromo` | **do sistema** | é texto, e a frente 1 já escreveu por quê: "porque é texto e ele está sentado" |
+| **hora do retroativo** | Dias | `addHora(el)`, máscara `hh:` | **do sistema**, `inputmode="numeric"` | a máscara já existe e funciona; teclado próprio com dois pontos é teclado novo para um caso raro |
+| **nome de treino avulso** | Dias | `addNome(el)` | **do sistema** | é texto |
+| **correção da duração** | Dias › detalhe | `guardaCamposEdicao` lê `#ed{k}_0`, `#ed{k}_1`, `#edobs` | **do sistema** | é sentado, e um dos três campos é texto livre |
+| **criar exercício (6 campos)** | Prescrição | `criarExercicio()` lê `#nxn`, `#nxg`, `#nxc`, `#nxk`, `#nxu`, `#nxq` | **do sistema** | seis campos, dois deles texto; é cadastro, não registro |
+| **quantidade de alimento** | Prescrição | `atualizaPrescricao(i)` escreve em `#presc{i}` | **do sistema** | muda o plano para **todo** dia (`tests/fluxo/fusao.test.js`); é decisão sentada |
+| **busca (exercício e alimento)** | Prescrição, sessão | `buscaEx(q)` | **do sistema**, sempre | é texto, e há caso que cobra que o teclado **não feche a cada letra** — o que um teclado próprio tornaria impossível de garantir, porque o foco passaria a ser do app |
+| **importar texto (backup, aula)** | Ajustes, Prescrição | `importaTexto` | **do sistema**, obrigatoriamente | **colar**. Teclado próprio não cola, e as duas direções assumiram esse custo por escrito |
+| **água, porção, turno, cadência** | Agora, folhas | botões e chips | **nenhum teclado** | já são assim, e estão certos |
+
+### 6.2 · Os quatro requisitos do teclado próprio, e um deles é o conserto do defeito medido
+
+**T1 · Ele aceita o teclado físico.** `keydown` nos dígitos, na vírgula, no
+ponto (mapeado para vírgula), em `Backspace` e em `Enter`. É o conserto do único
+defeito nomeado por C2, e é a diferença entre o teclado próprio ser uma escolha
+e ser uma perda no notebook. Sem isto, quem está no notebook digita com o mouse.
+**E a frequência disso é não medida** — então o requisito não se justifica por
+volume, se justifica por não haver razão para não o fazer.
+
+**T2 · Ele é alcançável e operável por teclado, e anuncia o que tem.** Doze
+botões numa grade de três colunas (conferi a ordem no protótipo:
+`7 8 9 / 4 5 6 / 1 2 3 / , 0 ⌫`), com nome escrito nos dois que não são dígito —
+e o protótipo já faz isso: `aria-label="Apagar o último número"` e
+`aria-label="vírgula"` (conferi). **Requisito:** fica, e o visor passa a ser
+região viva, porque hoje `<b data-k="d">` muda de texto sem anunciar nada
+(conferi `folhaCarga`) — é o mesmo defeito do R-D1, num lugar onde o valor é a
+única coisa que existe.
+
+**T3 · O limite de contraste das teclas passa de 1,20:1.** É a medida de C3
+(D-5). O critério é 1.4.11, **≥ 3:1** para limite de componente. É conserto de
+token, e a frente 4 é que decide o valor — mas o requisito nasce aqui, porque é
+um controle de interação.
+
+**T4 · O cursor do visor não pisca sozinho se "reduzir movimento" estiver
+ligado.** A D põe o movimento todo dentro de
+`@media (prefers-reduced-motion: no-preference)` e o `.caret` dela não tem
+animação nenhuma (conferi `prototipo.html:298`: é um retângulo estático). **A de
+C pisca a 1 Hz, infinitamente** (`.caret` com `animation: blink 1s steps(1)
+infinite`, conferi em `03-direcao-C/momento-1.html:148-149`), e o parecer
+registra que está abaixo dos 3 Hz do critério 2.3.1 — passa, e é o único
+movimento infinito dos dois arquivos. **Requisito:** a forma da D, estática.
