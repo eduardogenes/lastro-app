@@ -656,3 +656,317 @@ devolve `ctx.telaCheia()` antes de montar a faixa e a barra — conferi. Com o
 modo sendo tela cheia, a faixa não apareceria lá; é por isso que a pergunta de
 1h30 tem de ser desenhada **dentro** do modo (4.3, item 1), e não herdada da
 faixa.
+
+---
+
+## 5 · A regra de precedência do cartão de cima
+
+O Agora responde "e agora?" com **um** cartão. Esta é a regra inteira, com as
+colisões resolvidas uma a uma. A decisão do dono é que **o treino ganha da
+refeição** (D4, PARADA 3), e ela entra como a regra 3.
+
+### 5.0 · Acima do cartão, e não é cartão: o aviso de que nada vai ficar
+
+Se o aparelho não está guardando — aba privada, armazenamento bloqueado —, o
+aviso fica **acima** do cartão e diz até quando vale o que ele tocar. Conferi em
+`prototipo.html:981` ("Este aparelho não está guardando… O que você marcar vale
+até fechar esta aba — e não entra na conta dos 14 dias") e nos estados M2‑11 e
+M2‑8. Não disputa o topo porque não é uma ação: é a condição de validade de
+todas as outras.
+
+### 5.1 · A ordem
+
+**1 · A sessão aberta ganha de tudo.** Havendo sessão, a primeira coisa do Agora
+é a faixa — "Treino A está aberto · N de M séries guardadas · Voltar à sessão".
+Conferi a ordem no protótipo: a faixa (`prototipo.html:1035-1038`) vem antes do
+cartão da refeição (`:1040`). Razão: é o único estado em que o topo competiria
+com um modo que já está aberto, e é o estado mais comum medido — de 42% a 59%
+das sessões fecham sem ele (do parecer).
+
+- **Colisão com a pergunta de 1h30:** se a sessão está parada há 1h30, a faixa
+  **vira a pergunta** e mantém o topo. Já é assim:
+  `CTX.faixaDaSessao` devolve a pergunta antes de qualquer outra coisa
+  (`src/main.jsx:6902-6905`, conferi).
+
+**2 · A sessão de ontem que fechou sozinha ganha do treino de hoje.** Conferi o
+estado M1‑13: a faixa "A sessão de ontem ficou aberta. Fechei na última série:
+6h20 → 7h31, cerca de 1h11 (aproximada)" com "Está certo" / "Corrigir o fim"
+(`momento-1.html:796-800`) está **acima** do cartão "Agora · treino das 6h15"
+(`:803-809`). Razão: é uma confirmação sobre um registro **já escrito**, e o
+número escrito está aproximado até ele dizer.
+
+**3 · Enquanto o treino do dia não aconteceu, o treino ganha da refeição.** É a
+decisão do dono. O pré‑treino desce para a linha de baixo e reaparece dentro do
+descanso, que é onde ele de fato é marcado (`direcao-2.md` §2, e conferi as
+linhas "Peso de hoje" e "Pré‑treino · 5h45" abaixo do cartão em
+`momento-1.html:810-811`).
+
+- **O que define "enquanto não aconteceu", sem usar a rotina do dono** — e isto
+  é **proposta minha**, porque a decisão diz "manhã de dia de treino" e "manhã"
+  não é um dado: o treino ganha o topo **enquanto a janela do treino previsto
+  daquele dia não passou**. A janela vem do turno do dia (`S.dia.turno`,
+  `tests/fluxo/turno.test.js`) e, sem turno declarado, do padrão semanal —
+  **dito como palpite**, que já é a regra da D ("sessão registrada manda; sem
+  ela, o palpite do padrão semanal, dito como palpite", `direcao.md`). Nenhum
+  usuário precisa ter a manhã do dono (P3/D8: "Nada usa a rotina do dono como
+  regra").
+- **Colisão: treino à noite.** A mesma regra vale sem emenda — o treino ganha
+  enquanto a janela dele não passou, e o dia se reorganiza sozinho em volta
+  dela: conferi o estado M2‑13 (treino às 18h15, o pré anda, o café sai depois
+  das 16h, o jantar fica e vira pós‑treino).
+- **Colisão: dia de descanso.** Não há treino, então a refeição ganha **por
+  ausência**, não por regra. E o turno não é oferecido em dia de descanso
+  (`tests/fluxo/turno.test.js`).
+- **Colisão: dia da aula.** A aula **é** a sessão daquele dia — é a 6ª posição
+  da sequência, não "o sábado" (`direcao-2.md`). Entra por esta mesma regra 3, e
+  o cartão dela é um botão só: "Fiz a aula" (conferi `aula.html`, estado 1).
+- **Colisão: o treino já foi feito hoje.** A regra 3 se encerra, e vale a 4.
+  Dois treinos no mesmo dia são possíveis (`tests/fluxo/ciclo.test.js`), e o
+  segundo volta a ganhar pela mesma regra quando ele o começa.
+
+**4 · Passada a janela do treino, a refeição do momento ganha o topo** — e a
+regra dela tem duas metades:
+
+- **A próxima refeição do plano cuja hora esteja a até 30 min à frente.**
+- **O cartão de cima é só para frente.** Se não houver nada à frente, **não há
+  cartão de refeição**: o que passou sem marca vira a linha "Pôr hoje em dia".
+  Isto **corrige a regra escrita da D** ("se não houver, é a última que passou
+  sem marca"), que se virava contra si mesma um segundo depois de marcar —
+  marcado o lanche das 15h30, ela jogava o almoço das 12h30 para o topo como se
+  fosse agora (`prototipo.md`, descoberta 6). Conferi a correção no protótipo:
+  `momento()` em `prototipo.html:1056-1064` e a guarda `adiante` em `:1041`.
+- **A hora é a do plano, não a dele.** Decisão 14.6: o previsto usa o horário do
+  plano. O lanche das 16h00 é o previsto mesmo que ele coma às 15h30; a janela
+  de 30 min cobre os dois, e a marca grava o instante real do toque (conferi
+  `prototipo.md`, "O lanche das 15h30").
+
+**5 · Pesagem, sessão de fotos e cardio não disputam o topo: são linhas.** Cada
+um tem um dia em que é previsto, e nenhum deles é "a próxima coisa a fazer" no
+sentido que o cartão responde. Conferi: em M1‑13, "Peso de hoje" e "Pré‑treino"
+são linhas com um botão de pílula, abaixo do cartão. O convite da sessão de
+fotos quando faz 14 dias segue a mesma forma.
+
+**6 · O vencimento da mudança do dia é aviso, não cartão.** Aparece **uma vez**,
+no Agora da manhã daquele treino, e **nunca durante a sessão** (`direcao-2.md`
+§3, pergunta 1). É a linha "Para decidir com calma", com o resumo da mudança e
+um "Ver" — conferi em `momento-1.html:802`.
+
+**7 · Quando nada compete, a tela não fica muda.** Três subcasos:
+
+- **Dia já resolvido** (tudo marcado, treino feito): o topo passa a ser a
+  **confirmação do que acabou de ser marcado**, com "Corrigir" — conferi
+  `section.done` em `prototipo.html:1046-1053`. O app de hoje faz algo
+  equivalente por outro caminho: `src/ui/telas/hoje.jsx:47-49` tem três
+  recursos em cascata e o comentário diz por quê — "se tudo foi feito, o foco
+  passa a ser a última, para a tela não ficar muda" (conferi).
+- **Dia que ainda não começou** (5h20, nada marcado): o cartão é a primeira
+  coisa do dia, o tipo de dia é dito como palpite, e a pesagem fica abaixo —
+  conferi o estado M2‑7.
+- **Dia de descanso, fora de qualquer janela:** ficam a linha do dia, a água e a
+  contagem dos 14 dias, e **não há cartão**. Este estado **não está desenhado**
+  em nenhum dos nove HTML que eu abri.
+
+### 5.2 · O que a regra nunca faz, e a proposta que falta
+
+**A regra nunca inventa.** Enquanto não há sessão registrada, o tipo e o horário
+do dia são palpite, e o parecer mediu o preço de tratar palpite como fato: ~3
+marcas falsas de buraco por semana, e o cardio prescrito hachurado
+indefinidamente (do parecer, decisão 7). **Nenhuma das duas direções tem regra
+que diga quando um previsto que é palpite pode virar buraco**, e `07-plano.md`
+§1.2 diz que esta frente **propõe** a regra.
+
+**A proposta.** Um previsto que é palpite aparece como **"por vir"** e nunca
+como "sem marca". Ele vira dado declarado quando o dia se confirma, e o dia se
+confirma por **um de três atos**:
+
+1. **uma sessão registrada naquele dia** — que manda sobre o palpite, e isso já
+   é a regra escrita da D;
+2. **o dia marcado como descanso** (`S.descanso`, `src/dominio/tipos.ts:600`);
+3. **a virada da data** — que é o instante em que o app já fecha o dia de comida
+   e decide se ele vale uma linha de histórico (`fechaDiaDeComida`,
+   `src/main.jsx:1871-1875`, com a frase que vale a regra inteira: "guardá‑lo
+   como zero seria dizer que ele não comeu, que é o erro de medição que confunde
+   silêncio com falha").
+
+Por que esta e não outra: ela não precisa de carimbo novo no dado, usa os três
+atos que o app **já** reconhece, e o terceiro é exatamente o momento em que o
+domínio já distingue silêncio de zero. Consequências diretas: as marcas falsas
+de buraco da manhã desaparecem, e a linha do cardio só vira "sem marca" quando a
+semana fecha.
+
+Como ela decide quando um palpite vira dado declarado, **ela volta ao dono como
+proposta, não como pergunta** — é o que `07-plano.md` §1.2 manda.
+
+---
+
+## 6 · Onde aterrissam as três peças da C
+
+### 6.1 · Peça 1 · As linhas do dia tocáveis — e a exceção que eu fui conferir não existe
+
+**Existe hoje, inteira.** `src/ui/instrumento/timeline.jsx` dá a cada linha três
+afordâncias: a caixa de marcar (`:45`), o corpo da linha como botão (`:46-53`) e
+o `···` (`:60-62`). `src/ui/telas/hoje.jsx:120-122` liga as três.
+
+**O que não bate.** O briefing desta frente e `07-plano.md` (§1.1 #6 e §3.3)
+dizem que "hoje o app tira a caixa de marcar e o `···` de toda linha de refeição
+**enquanto o treino está ativo**, de propósito", citando
+`aoMarcar={treino ? null : …}` em `src/ui/telas/hoje.jsx:120`. **Conferi, e não
+é isso.** A variável `treino` daquela linha vem de
+`const treino = ctx.ehLinhaDeTreino(r);` (`src/ui/telas/hoje.jsx:101`), e
+`ehLinhaDeTreino(r) { return r.id === 'treino'; }` (`src/main.jsx:1948`,
+conferi). É um teste de **tipo de linha**, não de sessão ativa.
+
+O que o app tira é a caixa de marcar e o `···` **da linha do treino** — a linha
+que não tem refeição para marcar e cuja edição é outro ato (ela abre o treino).
+As linhas de refeição mantêm as três afordâncias **com ou sem sessão aberta**:
+conferi `CTX.hoje()` (`src/main.jsx:2008-2051`) e nada ali muda `refs` nem as
+afordâncias por causa de `S.sessao`; a única coisa que a sessão aberta muda é o
+rótulo `sessao.meta` ("sessão aberta", `:2048`).
+
+**O que isso faz com a peça.** Ela continua sendo "devolver o que o app já faz",
+como `07-plano.md` §3.3 diz — mas **não há exceção para cair**, e a pergunta
+1.1 #6 do plano (respondida pelo dono em 5.a' P4 com "sim, sempre") era sobre um
+estado que não existe. A resposta do dono continua valendo como requisito, e ela
+agora custa **zero** no Agora.
+
+**Onde ela custa, então.** Em dois lugares, e só:
+
+1. **No Agora da D.** É ali que está a regressão: as linhas do roteiro da D são
+   `<li>` sem controle e sem `role` (do parecer §3.1 #3), e o protótipo as
+   manteve inertes — conferi `prototipo.html:1028-1034`: `<li>` com `<svg>`,
+   `<time>` e dois `<span>`, nenhum botão. **A peça aterrissa aqui**: a linha do
+   dia no Agora volta a ter as três afordâncias.
+2. **Durante o treino**, que na arquitetura nova não é mais "na aba de hoje com
+   a barra visível". O modo esconde o resumo do dia (4.2), e "sempre, inclusive
+   durante o treino" se cumpre por **dois** caminhos, não por pôr a timeline
+   inteira dentro do modo: a **seta** devolve o Agora com um toque e a sessão
+   aberta (4.5), e as **entradas rápidas do descanso** — pré‑treino, água, e o
+   atalho de peso — resolvem o que é frequente sem sair (`direcao.md`, M1‑2).
+   Pôr a timeline inteira dentro do modo contrariaria o que o próprio dono
+   pediu: "na hora do treino pode ficar mais limpa" (do parecer, decisão 15).
+
+### 6.2 · Peça 2 · Cada toque grava — o requisito é **não construir o lote**
+
+**Já é assim.** Cada série completa entra no histórico na hora, e o fonte diz
+"**Não existe estado 'não salvo'**" (`src/main.jsx:661-663`, conferi).
+`marcaRefeicao` grava no mesmo gesto (`src/main.jsx:2055-2059`: `queueSave()` na
+linha seguinte à marca, conferi). `save()` é chamada em 59 lugares
+(`07-plano.md` §3.3, **do plano** — não recontei).
+
+**O requisito, então, é negativo:** a folha de pôr o dia em dia **não** ganha um
+botão de guardar, e o lote **não** se constrói. O dono já resolveu o conflito que
+isso cria, e a resolução dele é literal (P3.i.6): **o pré‑marcado é sugestão até
+o toque**; a folha abre com o plano marcado como proposta, nada daquilo é
+registro, e **um** toque em qualquer linha — inclusive um "foi tudo isso mesmo" —
+fecha o dia inteiro.
+
+**O que isso exige de mim, e é consequência de camada:** a folha é uma `folha`
+na pilha (`view.pilha`, `src/ui/navegacao.js:65`), e o Voltar do sistema fecha
+uma folha por vez (`tests/fluxo/navegacao.test.js:70`). Então **fechar a folha
+sem tocar em nada não grava nada** — e isso não é um efeito colateral a
+consertar, é a diferença entre sugestão e registro, e é o que impede o F290/F292
+(o dia chutado que destravou um corte de comida). O lugar onde a folha vive é
+**Dias**, e ela é alcançável do Agora pelas linhas "Pôr hoje em dia" e "Pôr
+ontem em dia" — que são a mesma folha (`direcao.md`, "o que o desenho não
+mostra"). A folha em si é da frente 2.
+
+### 6.3 · Peça 3 · A conta de volume na Prescrição — e a ordem é amarrada por uma função que ninguém testou
+
+**A conta existe** em `src/dominio/volume.ts`, com **13 casos** em
+`tests/dominio/volume.test.ts` (contei as 13 chamadas de `test(`).
+
+**O que não bate, e muda o preço.** `07-plano.md` §3.3 diz que ela "já aparece
+na tela — em `src/ui/instrumento/edicao.jsx:41` e em
+`src/ui/telas/decisao.jsx:36`". Conferi: ela aparece em **quatro** lugares de
+render, e as duas funções **não são a mesma**:
+
+| onde | por qual função |
+|---|---|
+| a edição do treino de hoje — `src/ui/instrumento/edicao.jsx:41-45`, montado de `CTX.edicaoDoDia` | `impactoSeries` → `impacto()` de `volume.ts` (`src/main.jsx:6251`, `:6264`) |
+| **o editor de programa** — o **mesmo** componente, montado de `programaDia` | `impactoOficial` → `impacto()` (`src/main.jsx:6435`, `:6448`) |
+| **o painel de volume**, "fora do alvo do treinador" — `src/ui/telas/dados.jsx:220-225` | `impactoOficial` → `impacto()` (`src/main.jsx:5226`) |
+| a tela de decisão — `src/ui/telas/decisao.jsx:36-38` | **`impactoDoMod`**, que **não** está em `volume.ts`: está em `src/main.jsx:2481-2520` |
+
+**E é aqui que a ordem fica amarrada.** A forma que a peça pede é a
+**transição** — "subir uma série da flexora leva o posterior a 8 contra 7
+prescritas" (`00-coordenacao.md`, P3.i.5) —, e a própria D desenhou exatamente
+isso na Prescrição: "deltoide lateral passa de 12 para 13 séries na semana,
+contra 12 prescritas pelo treinador" (conferi `prescricao.html`, estado 1).
+**`impacto()` não produz transição**: ela afirma o número de agora — "peito: 12
+na rotação · o treinador prescreveu 10" (`src/dominio/volume.ts:55-62`, com as
+três formas asseridas em `tests/dominio/volume.test.ts:48-50`). A transição sai
+**só** de `impactoDoMod`, e o **único chamador** dela é `CTX.decisao`
+(`src/main.jsx:6116`) — a tela que a D1 remove.
+
+**Pior, e é o achado:** das quatro ramificações de `impactoDoMod` (`sets`,
+`add`, `rm`, `troca`), **só `troca` tem teste** —
+`tests/fluxo/edicao.test.js:321-328`, que cobra o aviso das 6 a 8 semanas. As
+três ramificações que produzem o número "antes → depois" **não têm asserção em
+lugar nenhum**: procurei a flecha e a frase "na rotação" nos testes e só achei
+`volume.test.ts` (a forma do número de agora) e `telaprograma.test.js:200` e
+`:307` (`impactoOficial`). Ou seja: **a peça que o dono pediu descansa hoje numa
+função sem teste, com um chamador só, e o chamador está marcado para sair.**
+
+**O requisito, na ordem:**
+
+1. `impactoDoMod` sai de `src/main.jsx` e vira função de domínio ao lado de
+   `impacto()`, com teste para as quatro ramificações — `sets`, `add`, `rm` e
+   `troca`;
+2. a lista de Prescrição passa a ser o chamador dela;
+3. **só então** `src/ui/telas/decisao.jsx` sai.
+
+Fora dessa ordem, a conta desaparece entre uma coisa e outra — e é exatamente o
+que `07-plano.md` §3.6 avisa.
+
+### 6.4 · O outro lado do §3.6: o carregador da mudança pendente, e o que falta nele
+
+`07-plano.md` §3.6 exige que `promoPendente` **não** se apague junto com a tela,
+porque é o mecanismo de que a lista que espera e vence precisa. Conferi o
+mecanismo, e ele tem **três buracos** para o uso novo:
+
+1. **No fecho manual não existe carregador nenhum.** `fechaSessao` só escreve
+   `S.promoPendente` quando `comoFim === 'auto'` (`src/main.jsx:633-640`,
+   conferi, e o comentário diz por quê: "Pela porta da frente quem pergunta é
+   `finalizarSessao`"). E `finalizarSessao` faz o oposto — `S.promoPendente =
+   null` e abre a pergunta (`:889-891`, conferi). Tirada a pergunta, **o fecho
+   manual descarta a mudança em silêncio**, que é o F280 nominal. **Requisito:**
+   o carregador se escreve nos **dois** fechos.
+2. **A mudança do dia morre com a sessão.** `fechaSessao` termina com
+   `S.mods = null` e o comentário "as mudanças do dia não sobrevivem ao fim da
+   sessão" (`src/main.jsx:656`, conferi). Isso é correto para `S.mods` — o que
+   vale o dia é do dia — e é justamente por isso que o carregador é
+   obrigatório: sem ele não sobra cópia de nada.
+3. **`promoPendente` guarda UMA, e a decisão do dono pede uma LISTA.** O tipo é
+   `promoPendente: PromoPendente | null` (`src/dominio/tipos.ts:613`), e
+   `PromoPendente` tem um `day` só (`:270-277`, conferi). A escrita é atribuição
+   direta (`src/main.jsx:637`), então o próximo fecho automático **sobrescreve**
+   o anterior. A Prescrição da D mostra **três** mudanças esperando, de três
+   treinos diferentes, cada uma com o seu vencimento (conferi
+   `prescricao.html`, estado 1), mais uma quarta em "Venceu sem você". Isso não
+   cabe no dado de hoje.
+   E há um segundo lado, pior: **`promoPendente` não tem regra na fusão.**
+   Procurei em `src/dominio/sincronia.ts` e não há nenhuma ocorrência — e o
+   `funde()` trata **tudo que não é coleção** como documento, vindo inteiro do
+   lado de `mtime` mais novo (`src/dominio/sincronia.ts:410-416`, conferi, com o
+   comentário "clone do lado que manda nos documentos"). Para uma pergunta de um
+   dia isso passa; para uma **lista de mudanças que vence**, significa que o que
+   o celular registrou pode sumir porque o notebook sincronizou depois.
+   **Requisito:** a lista vira **coleção com chave natural** (o dia mais o `sid`
+   da sessão, que é o que distingue dois treinos no mesmo dia), com lápide para
+   a decisão tomada não ressuscitar — a mesma disciplina de `comidaHist`,
+   `protocolo.sessoes` e `aulas` (`src/dominio/tipos.ts:498-507`, `:536-541`).
+
+   **E isto é uma quinta mudança de dado persistido, que `07-plano.md` §3.4 não
+   lista.** As quatro de lá são o instante da marca por refeição, qual refeição
+   saiu do plano, "não contei a água" como fato e abrir `S.body`. Esta é a
+   quinta, ela passa pelos mesmos seis portões, e ela carrega a decisão do
+   próprio dono (5.a' P1 e P2). **Isto é da frente 0, não minha** — eu só a
+   nomeio, porque descobri o buraco conferindo o lugar.
+
+**O que o vencimento *não* precisa.** 5.a' P1 diz que vencer por posição "sai de
+graça do modelo; nenhum carimbo novo no dado", e conferi que é verdade: a
+posição de cada treino na sequência é `S.rot`, e o app já calcula qual é o
+próximo e monta a fila com a marca de "próximo" (`src/main.jsx:4871-4874`). "O
+dia em que aquele treino volta" é derivável de `day` + `S.rot`, sem campo novo.
+O que **não** é de graça é guardar mais de uma mudança pendente, que é o ponto 3
+acima.
