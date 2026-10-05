@@ -1009,6 +1009,47 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         proibições escritas; o teto de 125% em vez de 200%; se 320px é alvo deste
         produto; e se o bloqueio de pinça pode ser revisto — este último agora
         **com a prova de que a razão escrita dele é falsa.**
+      - [x] **A rede endurecida, em 05/10** (`a705b1399ed98e858` + resgate do
+        coordenador) → `09-rede-endurecida.md`. **957 passando** (de 954), 53
+        arquivos, zero rejeições. Conferi cada etapa.
+        **O agente caiu por limite de sessão** (429, reset 19h40) com trabalho
+        não commitado. **Resgate:** salvei o diff antes de tocar em nada;
+        **devolvi `src/tokens.css`**, que ele tinha minificado como arquivo de
+        medição e ia limpar quando caiu — a minificação havia destruído ~100
+        linhas de comentário com as razões escritas (o 46px contra 44, a exceção
+        do raio da foto, a derivação da coluna de valores, os pisos de área
+        segura); e commitei o `estilo.test.ts` dele, que era bom e era
+        justamente o conserto que faltava.
+        **Os dois defeitos vivos, consertados, os dois com caso nascido
+        vermelho:** corrigir uma série depois de reabrir o app disparava
+        descanso (a guarda era `view.fired`, memória; passou a vir do rascunho
+        em disco, com a série do histórico como segunda fonte); e os dois fechos
+        de sessão discordavam — aula de box que fechava sozinha enfileirava os
+        movimentos, a encerrada no toque não. Neste, **o caso do fecho
+        automático nasceu vermelho e o do toque já estava verde**, que é a
+        assimetria medida.
+        **Os oito buracos da rede de CSS fechados**, e o maior era o da coleta:
+        provei empiricamente que renomear `src/treino.css` agora dá **18
+        vermelhos nomeando o arquivo**, onde antes dava `Tests no tests`. O
+        remédio errado também ficou fechado — **arquivo vazio reprova igual**,
+        porque caso verde sobre nada é pior que vermelho. A lista de folhas
+        ficou **declarada e não descoberta**, com a razão escrita: lista
+        declarada reprova quando falta arquivo; descoberta fica cega justamente
+        quando as regras mudam de lugar.
+        **A Parte 3 fiz eu**, porque o agente não chegou: `migracaochave`
+        subia 7 apps e chamava `fechar()` zero vezes. Conferi por leitura (e
+        está dito assim, não instrumentei): `ligaBatida()` é chamada **sem
+        guarda** no boot, então os 7 ligavam intervalo que nada desligava.
+        **Não contaminava nada hoje** — o corpo sai na primeira linha sem sessão
+        e nenhum dos 7 abre uma —, mas o intervalo é quem chama o fecho
+        automático: **bastava alguém semear uma sessão aberta ali** para ele
+        fechá-la sozinho no meio da rodada e mudar outro caso. Consertado,
+        custou uma linha por teste.
+        **Não medido, e registrado:** se o vermelho de 1 em 24 acabou (o nome do
+        caso foi perdido e a causa suspeita foi removida antes de se poder
+        correlacionar); memória, antes e depois; tempo da suíte; e **o resto da
+        suíte quanto a `fechar()`** — só este arquivo foi auditado, pode haver
+        outros.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
