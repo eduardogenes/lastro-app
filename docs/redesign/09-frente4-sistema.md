@@ -2430,3 +2430,77 @@ e **nenhum dos 38 casos diria uma palavra.**
 >
 > **E `overflow-x: clip` continua autorizado, por nome, com a razão na própria
 > asserção** — senão o conserto mata a regra que o `clip` serve.
+
+---
+
+## 10 · O que eu fui conferir e não bateu
+
+Onde o código discorda do que estava escrito, **vale o código.** Nove pontos, e
+os cinco primeiros mudam trabalho.
+
+| # | o que estava escrito | o que o código diz |
+|---|---|---|
+| 1 | Os 38 casos se dividem em **10 acoplados** a nome concreto e **28 invariantes genéricas** (`08-rede.md` §4) | A divisão real é **13 invariantes puras, 16 presos a nome do app, 8 da bancada e 1 que afirma a paleta por valor hexadecimal** (§0.1). São **25** casos amarrados a nome concreto, não 10. **E a conta de "quantos ficam vermelhos" não existe:** os nove arquivos lidos no escopo do módulo derrubam a carga, e **medi** — renomeei `src/treino.css` numa cópia e a suíte respondeu `Tests  no tests`. **Zero de 38 executados**, e o relatório diz "erro de carga", que ninguém lê como regressão de design (§0.2, B0) |
+| 2 | A direção D propôs **quatro gestos com função**, e o trabalho é especificá-los (meu briefing, e `07-plano.md`, frente 4) | A prosa propôs quatro; **o fonte tem sete movimentos**, e eles não são os quatro. **Dois dos quatro nomeados não têm quadro nenhum:** o clarão é um `<div>` branco estático com `opacity:.62` no markup, e o anel é `stroke-dashoffset="166"` **fixo**. Um sétimo é **CSS morto** — `@keyframes tick` existe e a classe `tick` nunca é aplicada. E três movimentos que **existem** não estão na lista: o bloco que chega, o esqueleto que pulsa e a barra do descanso (§8.1, §8.2) |
+| 3 | A `Procedencia` "não é mantida como primitiva" por nenhuma das direções, e "ou a frente 4 a reconstrói como token e componente, ou ela deixa de ser regra" (`07-plano.md` §4) | A frase está certa **sobre as duas direções** e não há nada a reconstruir: ela **é** primitiva no app, com componente (`src/ui/instrumento/primitivos.jsx`), classe (`.ins-provenance`), razão de cor medida no comentário, e **47 chamadas em 12 arquivos** (medi). A alternativa não é "reconstruir ou perder": é **preservar ou perder** (§7) |
+| 4 | Nenhum dos 38 casos cobre o que a direção derruba | **Três inegociáveis caem e nenhum caso diz uma palavra.** Medi: a direção traz **511** `border-radius` em 20 valores contra **11** declarações (seis delas `50%`) no app; **zero** `font-family` contra o par Space Grotesk + IBM Plex Mono com 16 papéis; **58** `box-shadow` contra 4, e as 4 do app são fio desenhado como sombra. **Não existe caso sobre raio, sobre sombra nem sobre família** (§2) |
+| 5 | O cronômetro "não anima largura" é regra protegida por caso | **Medi: portei o CSS da direção e o caso ficou VERDE** com `.bar i { transition: width 1s linear }` e `bar.style.width = …%` dentro do mesmo arquivo. A asserção casa `#tfill` por nome **e** o nome literal da variável `fill` (`!/fill\.style\.width/`). A direção já escreve `bar.style.width` — **renomear a variável desarma a asserção, e ela já está renomeada** (§8.5, item 4) |
+| 6 | "A única animação infinita é o cursor de texto do teclado próprio da C, a 1 Hz" (`04-acesso.md` §1), repetido pela frente 2 (§6.2, T4: "é o único movimento infinito dos dois arquivos") | **São duas.** `.sk { animation: pulse 1.4s ease-in-out infinite }` está em **oito dos nove** arquivos da D, `momento-1.html` incluído. As duas passam 2.3.1 (0,71 Hz e 1 Hz, abaixo de 3 Hz) — **mas o critério que vale para o pulso é 2.2.2**, e ninguém o aplicou: ele escapa de "dura mais de cinco segundos" **por um segundo**, porque o prazo de carregando da direção é 4 s (§8.5, item 3) |
+| 7 | A frente 2 achou **sete classes** de controle a exatamente 44 px e declarou a contagem de instâncias como não medida | **São oito dentro do telefone**: falta `.seg3 button`, que existe em seis dos nove. E uma das sete que ela listou — `.themes button` — é o botão `Sistema · Claro · Escuro` **da galeria**, fora do telefone. **E a contagem de instâncias não é a medida certa:** medi ~370, mas metade é o mesmo estado pintado duas vezes (claro e escuro) e `.nav .act` com 121 botões é a barra de cinco lugares repetida por estado — no app são **cinco** controles. A unidade é a classe, e são oito (§5.3) |
+| 8 | O contrato manda "foco sempre visível" (`docs/LASTRO_UX_CONTRACT.md` §11) | **O app não tem regra de `:focus-visible` para botão nenhum.** Medi as quatro folhas de regra: existe **uma** regra de anel para elemento não-campo (`.tc-titulo:focus-visible`) e **sete** `outline: none` em campos, todos com substituto. Todo botão do app depende do anel padrão do navegador, sobre um canvas `#0C0E0C`, e **nenhum dos 38 casos olha anel de foco**. A direção declara um `button:focus-visible` e a auditoria mediu **525 de 525** focáveis recebendo anel — é a única das trocas em que ela é estritamente melhor de graça (§5.5) |
+| 9 | `DESIGN.md`, Espaço: o caso da escala "não lê `protocolo.css` nem **estilo embutido no JSX**" | A primeira metade está certa. A segunda **envelheceu**: medi **zero** `style={{…}}` em `src/ui/` e **zero** `style="` em `src/main.jsx`. Não há estilo embutido a cobrir. E a lista de ressalvas de lá não menciona os quatro buracos que eu medi — longhand lateral, ponto-e-vírgula no fim, decimal lido errado e fronteira de regra atravessada (§0.2) |
+
+**E o que eu fui conferir e bateu**, para a lista não ser só de divergência:
+
+- **`rem` aparece zero vezes nas seis folhas** — confirmei, e estendi: **toda**
+  `font-size` e **todo** atalho `font:` das seis está em px.
+- **O padrão interno de 46 px é token com razão escrita** (`--ins-tap`), e o
+  contrato de UX o repete.
+- **Os 12 alvos abaixo de 44 px da direção são dois de classe** — `.map` a 30 e
+  `.daytype` a 36 —, e medindo os **nove** arquivos não aparece nenhum terceiro.
+- **`.cellb` tem cerca de 22 px** e **não** tem `::after` (procurei: não existe).
+- **O 178 da auditoria está certo** para `momento-1` (54) mais `momento-2` (124).
+- **A direção não usa `backdrop-filter`, `will-change`, `contain` nem
+  `perspective`** — zero de cada nos nove. A armadilha do dono não é
+  reintroduzida.
+- **A conta de contraste reproduz sete medidas independentes de C3**, ao
+  centésimo (§1.4). É o que me deixa estender a conta ao escuro dos sete
+  arquivos que ninguém mediu.
+- **A direção já cumpre `tela cheia usa svh, não vh`**, na forma dupla
+  (`height: 100vh; height: 100svh`).
+- **`position: sticky` aparece zero vezes nos nove** — a direção pina por irmão
+  de flex, e é por isso que §9 existe.
+
+**Quatro correções que eu faço a mim mesmo**, porque são do mesmo tipo das nove
+de cima e seria desonesto listar só as dos outros:
+
+1. **Eu ia escrever que `.k` tem duas definições contraditórias na direção** —
+   `.k{color:var(--ink-2)}` num arquivo e `.k{… caixa alta, acento}` em outro —
+   e que o nome da classe significava duas coisas. Fui conferir arquivo por
+   arquivo: `.k` como seletor de topo existe **só em `semana.html`**, com a
+   definição de caixa alta; a outra era seletor descendente, de outro `.k`. **O
+   achado continua sendo quatro classes para um trabalho, mas não há colisão de
+   nome** (§7.2).
+2. **Eu ia listar `.themes button` entre os alvos de 44 px do produto.** É o
+   botão de troca de tema **da galeria**, fora do telefone. Não conta, e eu o
+   tirei antes de somar (§5.3).
+3. **Eu ia propor uma família de tokens `--ins-procedencia-*`.** Desisti: ela é
+   um **papel tipográfico**, e os três valores que a definem já são tokens. Um
+   token a mais seria um quarto lugar onde a mesma decisão mora — que é
+   exatamente a doença que §7 descreve (§7.4).
+4. **Eu ia escrever que "o contraste do tema escuro nunca foi medido".** Fui ler
+   o método da auditoria e ela diz, com todas as letras, *"Medi os dois temas"*.
+   O que não foi medido é **sete arquivos**, nos dois temas, porque são
+   posteriores a ela — e `07-plano.md` §1.3 #1 já dizia isso com precisão ("nas
+   telas novas"). Eu ia dar à frente 4 um crédito que era do plano (§1.4).
+
+**E a nota sobre o método**, porque é o tipo de coisa que passa: **tudo que esta
+frente afirma de cor, de tamanho, de contagem e de movimento foi medido com um
+comando, e o comando está reproduzido ao lado do número.** A medição mais útil do
+documento é a de §0.3 — portar o CSS da direção para dentro das folhas de hoje e
+rodar os 38 —, e ela custa dois comandos. **Nada foi alterado no repositório para
+produzi-la:** a cópia mora no diretório de rascunho da sessão.
+
+**Mas medir cor não é ver cor.** Razão de contraste é aritmética sobre dois
+hexadecimais; o que o dono vê é um painel de 1,03:1 na luz de um subsolo de
+academia às 6h15, e **isso não está medido e não dá para calcular.**
