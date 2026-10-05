@@ -970,3 +970,117 @@ próximo e monta a fila com a marca de "próximo" (`src/main.jsx:4871-4874`). "O
 dia em que aquele treino volta" é derivável de `day` + `S.rot`, sem campo novo.
 O que **não** é de graça é guardar mais de uma mudança pendente, que é o ponto 3
 acima.
+
+---
+
+## 7 · O que eu fui conferir e não bateu
+
+Onde o código discorda do que estava escrito, **vale o código**. Sete pontos.
+
+| # | o que estava escrito | o que o código diz |
+|---|---|---|
+| 1 | O app tira a caixa de marcar e o `···` das linhas de refeição **enquanto o treino está ativo** (`07-plano.md` §1.1 #6 e §3.3) | A variável daquele `if` é **tipo de linha**, não sessão ativa: `ehLinhaDeTreino(r) { return r.id === 'treino'; }` (`src/main.jsx:1948`). As linhas de refeição mantêm as três afordâncias com ou sem sessão. **Não há exceção para cair** (§6.1) |
+| 2 | A conta de volume "já aparece na tela — em **duas** telas" (`07-plano.md` §3.3) | Aparece em **quatro** lugares de render, e a tela que a D1 remove usa **outra função**: `impactoDoMod` (`src/main.jsx:2481`), que não está em `volume.ts` e tem **uma** ramificação testada de quatro (§6.3) |
+| 3 | `promoPendente` é o mecanismo de que a lista que vence precisa (`07-plano.md` §3.6) | É o mecanismo certo, mas guarda **uma** mudança (`src/dominio/tipos.ts:270-277`, `:613`) e **não tem regra na fusão** — `funde()` a trata como documento (`src/dominio/sincronia.ts:410-416`). A lista da decisão do dono não cabe nele: é uma **quinta** mudança de dado, que `07-plano.md` §3.4 não lista (§6.4) |
+| 4 | Tirar a pergunta e manter o carregador basta | No fecho **manual** o carregador nem é escrito: `fechaSessao` só o escreve em `'auto'` (`src/main.jsx:633`) e `finalizarSessao` o zera (`:889`). Sem a pergunta, o fecho manual descarta em silêncio — o F280 nominal (§6.4) |
+| 5 | "Placar na tela de hoje e registro sem sair dela" (`08-rede.md`, linha do `cardio.test.js`) | Placar e registro estão na aba **TREINO** (`src/ui/telas/treino.jsx:114-146`), e os casos que dizem "tela de hoje" rodam no padrão do harness, que é `'treino'` (`tests/fluxo/harness.js:321`). Levar o cardio para o Agora é mudança, não restauração (achado 4) |
+| 6 | As duas direções especificam o Voltar por camada como novo, e ele está pronto (`07-plano.md` §3.5) | Pronto, e eu me encaixo nele. Mas o `view.sessao` que já está em `camadasAbertas` (`src/ui/navegacao.js:55`) **não é** a sessão ao vivo: é o detalhe de uma sessão passada (`src/ui/telas/sessao.jsx`). O modo é camada **nova**, e a mais funda (§4.7) |
+| 7 | A bioimpedância "aceita ficar vazio" em todo campo, e são "treze números" (`corpo.html`, estado 6, e `direcao-2.md` recusa 4) | O desenho tem **quinze** campos dizendo treze — o próprio desenhista achou o erro (`prototipo.md`, descoberta 8). E a decisão do dono (5.a' P3) é **cinco** campos, **quatro deles obrigatórios**, o que **derruba a recusa 4 da D**. A decisão manda |
+
+**O que eu fui conferir e bateu**, para a lista não ser só de divergência: as
+151 linhas de `src/ui/navegacao.js` e os 9 casos de
+`tests/fluxo/navegacao.test.js`; os 9 casos de `tests/fluxo/promocao.test.js`;
+os 13 casos de `tests/dominio/volume.test.ts`; as 32 chaves de topo do `Estado`
+sob asserção em `tests/fluxo/dados.test.js:50-90`; `MIN_REGISTRADOS = 11` em
+`src/dominio/corpo.ts:135`; a guarda `|| S.sessao` de `abrePromoGuardada`
+(`src/main.jsx:2613`); e as 14 regras de `RULES` em
+`src/dominio/programa.ts:136`.
+
+---
+
+## 8 · As decisões do dono, e o fluxo que as obedece
+
+Nenhuma destas se reabre aqui.
+
+| a decisão | o fluxo que a obedece |
+|---|---|
+| **A mudança do dia vence por posição**, quando aquele treino voltar (5.a' P1) | §8.1, passos 3 e 5. Não pede carimbo novo: a posição é `S.rot`, e o app já calcula o próximo (`src/main.jsx:4871-4874`) |
+| **Ao vencer, vira "só daquele dia", dito e desfazível** (5.a' P2) | §8.1, passo 5. O bloco "Venceu sem você" da `prescricao.html` é a forma |
+| **A pergunta do fim do treino sai; o mecanismo fica** (D1 + §3.6) | §6.4 — e o mecanismo precisa de três consertos antes de servir |
+| **A pesagem entre séries vale lá também, por atalho** (5.a' P5) | O descanso tem a tecla "Peso de hoje", que **abre Corpo** com a mesma régua. O dono do dado é Corpo (1.3, 1.7) |
+| **Cinco campos de bioimpedância, e o peso dela é registro separado** (5.a' P3, 5.a''') | Corpo possui os dois registros, e eles convivem na tela de propósito (1.3). A migração é da frente 0 |
+| **A folha de pôr em dia abre pré‑marcada como sugestão** (P3.i.6) | §6.2: nada é registro até o toque, um toque fecha o dia, fechar a folha sem tocar não grava. A folha vive em **Dias**, alcançável do Agora |
+| **O treino ganha da refeição** (D4) | §5.1, regra 3, com a janela do treino previsto como definição operacional |
+| **As linhas do dia tocáveis valem sempre** (5.a' P4) | §6.1: no Agora elas já valem; durante o treino valem pela seta e pelas entradas rápidas |
+| **Cada toque grava, sem botão de guardar** (peça 2) | §6.2: o requisito é não construir o lote |
+| **O tema segue o aparelho, com troca manual** (D10) | A troca manual é de **Ajustes** (1.6). O resto é da frente 4 |
+| **Reescrever os testes de fluxo em bloco, com a rede antes** (D13) | §2 e §3 são a lista contra a qual a reescrita se confere. Três casos trocam de asserção de propósito: achado 4, achado 5 e o de `promocao.test.js` citado em §4.7 |
+
+### 8.1 · O fluxo do vencimento, passo a passo
+
+1. **Na sessão**, ele muda algo do dia — séries, repetições, descanso, remover,
+   mover, trocar, acrescentar. A mudança é de `S.mods`, vale o dia, e a conta de
+   volume aparece na hora de mexer (`impactoSeries`,
+   `src/ui/instrumento/edicao.jsx:41-45`).
+2. **A sessão morre** — por encerrar (toque) ou por inatividade (1h30 + 10 min
+   de graça). **Nos dois casos** a mudança é copiada para a lista que espera, e
+   `S.mods` zera como já zera (`src/main.jsx:656`). Nenhuma pergunta é feita.
+3. **A lista mora em Prescrição.** Cada linha diz: o que mudou, de que sessão
+   veio, **quando vence** — o dia em que aquele treino volta —, e **a conta de
+   volume se virar permanente**. Duas respostas do tamanho do polegar, "Foi só
+   naquele dia" / "Virou permanente", e um motivo opcional no teclado do
+   sistema, porque é texto e ele está sentado (conferi `prescricao.html`,
+   estado 1).
+4. **Na manhã do dia em que aquele treino volta**, o Agora mostra **um** aviso:
+   a linha "Para decidir com calma", uma vez, e **nunca durante a sessão**.
+5. **Se ele não decidir até lá, a mudança vence** e não some: vira "só daquele
+   dia", **dito** ("Ficou como só daquele dia quando o Treino B voltou") e
+   **desfazível** ("Tornar permanente agora"), e a sessão onde ela aconteceu
+   continua com o que foi registrado (conferi o bloco "Venceu sem você" em
+   `prescricao.html`, estado 1). Nada entra no programa em silêncio, e nada é
+   descartado em silêncio.
+6. **Decidida ou vencida, a linha sai da fila e deixa lápide**, para a fusão não
+   a ressuscitar — a mesma disciplina das outras coleções com chave natural.
+
+---
+
+## 9 · O que esta frente não decide, o que fica para depois, e o que ninguém mediu
+
+**O que ela não decide**, por mandato: o estado e a interação dentro de cada
+lugar (frente 2), as palavras — inclusive os nomes dos cinco lugares (frente 3),
+e os tokens, a escala e o movimento (frente 4).
+
+**O que fica para depois, declarado:**
+
+- **Dias não tem desenho** (achado 6). É o lugar que recebe mais capacidade
+  pronta e o único dos cinco sem pixel para conferir.
+- **O Agora de um dia de descanso fora de qualquer janela** não está desenhado
+  em nenhum dos nove HTML (§5.1, regra 7).
+- **O destrutivo** segue sem desenho, com três endereços (achado 8). O
+  comportamento de hoje fica, e fica dito.
+- **A bancada e a superfície de conflito entre dois aparelhos** não têm lugar
+  (achado 9).
+- **O "ciclo"** não tem lugar em desenho nenhum que eu abri (achado 7). Proposta:
+  Semana.
+- **As catorze regras do treinador e o alvo por tipo de dia** não tinham lugar
+  (achado 2). Proposta: Prescrição. Não muda regra nenhuma, então não volta à
+  mesa do dono.
+- **O deload** muda de lugar contra uma razão escrita no fonte (achado 3). **Isto
+  muda uma regra**, e por isso volta à mesa dele com os dois argumentos.
+- **A regra do palpite que vira buraco** (§5.2) é proposta desta frente, e
+  `07-plano.md` §1.2 manda que volte a ele como proposta.
+
+**O que ninguém mediu, e esta frente herda sem inventar número:**
+
+- **A seta de saída da sessão nunca foi medida em aparelho.** Ela nasceu no
+  protótipo (`prototipo.md`, "o que consertei"), fica no canto de cima do
+  cabeçalho — o ponto mais longe do polegar numa tela de iPhone 11 Pro Max — e
+  é a única saída visível do modo. C3 mediu os alvos dos HTML, não este. **Não
+  medido**, e é medição da frente 2, com aparelho e dedo.
+- **Quantas camadas o uso real empilha**, e portanto quantas vezes o Voltar é
+  apertado numa sessão. **Não medido.**
+- **Se o aviso do vencimento aparecendo uma vez é suficiente** para ele decidir
+  antes do prazo. O protótipo testou impressão em três minutos, não hábito ao
+  longo de semanas (do plano, risco 6). **Hipótese, não fato.**
+- **A frequência com que ele corrige uma série de semanas atrás** — o que daria
+  o peso do achado 1. **Não medido.**
