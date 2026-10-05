@@ -532,3 +532,370 @@ ausência de ambiguidade; (b) a régua com o alvo menor, cabendo mais valores e
 piorando o erro de dedo — que é justamente a tensão que C3 nomeou como sem saída
 fácil; (c) a régua como está, aceitando a taxa medida como custo declarado.
 **A decisão é dele.**
+
+---
+
+## 2 · As linhas do dia como alvo (peça 1) — e o preço mudou de lugar
+
+**A frente 1 derrubou a premissa e eu reconferi.** `ehLinhaDeTreino(r)` devolve
+`r.id === 'treino'` (conferi em `src/main.jsx`) — é teste de **tipo de linha**,
+não de sessão ativa. Toda linha de refeição do app de hoje tem as três
+afordâncias com ou sem sessão aberta, e eu as li no componente:
+`LinhaTimeline` monta a `Caixa` quando recebe `aoMarcar`, o corpo da linha como
+`<button class="ins-tl-toque">` quando recebe `aoAbrir`, e o
+`<button class="ins-tl-mais" aria-label="editar …">···</button>` quando recebe
+`aoEditar` (conferi `src/ui/instrumento/timeline.jsx:45`, `:46-53` e `:60-62`).
+
+**Então a peça 1 custa zero no Agora de hoje.** Onde ela custa é na lista que a
+direção D desenhou, e eu fui conferir no fonte do protótipo. É pior do que "sem
+controle":
+
+```html
+<li class="…"><svg class="si">…</svg><time>…</time>
+  <span class="nm">…</span><span class="st">…</span></li>
+```
+
+(conferi, `03-direcao-D/prototipo.html:1029-1030`). **Nenhum botão, nenhum
+`role`, nenhuma caixa de marcar, nenhum `···`, em nenhuma das linhas do dia.** A
+única coisa tocável na região é a pílula "+1 copo" da água (`:1035`). E os 14
+quadradinhos da regra do nutricionista são `<i class="cell">` vazios (`:1044`) —
+sem nome acessível e sem `aria-hidden`, o que os põe entre os 178 ícones mudos
+de §8.1; aqui são decorativos de verdade, porque a frase logo abaixo carrega o
+número ("Dias com marca nos últimos 14: 11"), e por isso a resposta certa para
+eles é `aria-hidden`, não rótulo.
+
+**O requisito, então:** a linha do dia no Agora volta a ter as três afordâncias
+que o app já tem, nas três situações em que a frente 1 já disse que elas valem —
+hoje, com sessão aberta e sem. Nada de novo precisa ser inventado; o que precisa
+é **não** nascer inerte.
+
+**Três coisas que a volta das afordâncias arrasta, e que são interação:**
+
+1. **O alvo não pode ser forçado duas vezes.** A linha da timeline **já é** o
+   alvo, e o caso *alvo de toque não é forçado duas vezes* afirma que
+   `.ins-tl-toque` não tem `min-height` — com a medida que motivou a regra
+   escrita no teste: um `min-height` ali engordou a timeline em 16 px por linha
+   (conferi, `tests/dominio/estilo.test.ts`). A caixa de marcar é que é
+   pequena, e ela está na lista dos que estendem o alvo por `::after`
+   (`.ins-caixa`, mesmo arquivo).
+2. **O `···` precisa continuar com nome escrito.** Hoje tem
+   (`aria-label="editar {nome}"`). Três reticências sem nome é o caso 1.1.1 em
+   miniatura, e é o tipo de atributo que se perde numa reescrita de componente.
+3. **A ordem dos três alvos na linha é a ordem de leitura.** `tabindex` positivo
+   não existe no app e não pode nascer aqui — o caso *2.4.3* do
+   `04-acesso.md` registra "zero `tabindex` positivo nos quatro arquivos; a
+   ordem do DOM é a ordem de leitura". Caixa, corpo, `···`: é a ordem do
+   componente de hoje e é a ordem certa, porque a mais frequente vem primeiro.
+
+**O que NÃO aterrissa aqui:** pôr a timeline inteira dentro do modo de sessão. A
+frente 1 já resolveu isso por outros dois caminhos (a seta e as entradas rápidas
+do descanso) e citou o dono contra: *"na hora do treino pode ficar mais limpa"*
+(do parecer, decisão 15). Eu não reabro.
+
+---
+
+## 3 · Cada toque grava (peça 2) — o requisito é NÃO construir o lote, e o protótipo construiu um
+
+**A gravação já é assim**, e o fonte diz por quê: *"Não existe estado 'não
+salvo'"* (conferi em `src/main.jsx`, acima de `abreSessao`). Cada série completa
+vai para o histórico na hora, por `projeta()`, que é chamada por `inp()` a cada
+tecla (conferi as duas). `marcaRefeicao` grava no mesmo gesto. `save()` é
+chamada em 59 lugares (**do plano** §3.3 — não recontei).
+
+**Então o requisito é negativo, e eu o escrevo com todas as letras para ninguém
+recomprar: não se constrói o lote.** Não é "não acrescentar um botão de
+guardar" — é mais forte, porque **o protótipo já tem um**, e ele é a forma
+canônica do lote:
+
+- a folha de pôr em dia abre com um acumulador local, `var estado = {}`;
+- cada toque escreve **só nesse acumulador**;
+- o disco é tocado uma vez, no `click` de
+  `el("button","primary", ontem ? "Guardar segunda" : "Guardar hoje")`, que vive
+  no rodapé da folha;
+- e esse botão fica **desabilitado** enquanto uma pergunta não é respondida, com
+  o rótulo trocado para "Responda a pergunta para guardar".
+
+Conferi as quatro coisas em `folhaPorEmDia()`,
+`03-direcao-D/prototipo.html:1144-1245`.
+
+**O que isso significa de concreto:** quem implementar a folha a partir do
+protótipo vai copiar o lote junto, porque ele é a arquitetura do arquivo. A
+decisão do dono é o contrário (P3.i.6: o pré-marcado é sugestão **até o toque**;
+um toque em qualquer linha fecha o dia), e a frente 1 já tirou a consequência de
+camada: **fechar a folha sem tocar em nada não grava nada**, e isso não é efeito
+colateral a consertar — é a diferença entre sugestão e registro, e é o que
+impede o F290/F292.
+
+**Requisito, em três linhas:** sem acumulador local; cada toque chama
+`poeComidaNoDia` e grava; o rodapé da folha não tem botão de guardar. O que
+sobra no rodapé é a frase de leitura de volta (§4.3), que informa e não
+comanda.
+
+**E uma guarda que precisa ficar escrita, porque ela vem de graça e se perde de
+graça:** `poeComidaNoDia` **não reescreve a linha nem adianta o `m`** quando a
+chamada não muda nada (conferi o `JSON.stringify(... { m: 0 })` na função). Com
+gravação a cada toque, isso deixa de ser detalhe e passa a ser o que impede o
+aparelho de afirmar ser a cópia mais nova de um dia que ele não tocou, dezenas
+de vezes por folha aberta.
+
+---
+
+## 4 · A folha de pôr o dia em dia
+
+Esta é a peça que **muda regra**. Ela volta à mesa do dono **desenhada**, e esta
+seção é o desenho.
+
+### 4.1 · O chão que já existe, e os seus limites
+
+A frente 0 entregou `poeComidaNoDia` (`src/dominio/nutricao/calculo.ts`), com 14
+casos em `tests/dominio/diario.test.ts`. **Li o contrato inteiro antes de
+desenhar.** O que ela aceita, o que ela recusa e o que ela faz:
+
+| o que | o contrato |
+|---|---|
+| **recusa data futura** | `'futuro'` quando `data > hojeISO`. Dia que não aconteceu não se registra |
+| **recusa data ilegível** | `'data'`. `d` é a chave natural do histórico **e** a da fusão |
+| **recusa dia que continua mudo** | `'mudo'`. Dia vazio não vira linha: guardá-lo como zero diria que ele não comeu |
+| **completa, não substitui** | `done`, `como` e `escala` se unem chave a chave, o que vem agora vencendo |
+| **água só se vier** | `agua` escreve só com `c.agua != null`; sem isso, o que a linha tinha fica |
+| **recongela o total, com `pv` novo** | o congelamento protege o passado de mudança no **plano**, não nas **marcas** |
+| **não bumpa `m` sem mudança** | chamada que não muda nada devolve a linha anterior |
+| **`ajuste` é de quem chama** | `null` preserva; a função não adivinha o que vigorava naquele dia |
+| **o plano é o de HOJE** | o plano daquela data não existe em lugar nenhum; `pv` registra isso |
+
+**Os três limites que a tela tem de dizer em voz alta**, porque a função não
+mente e a tela não pode:
+
+1. **"Este dia foi contado contra o plano de hoje."** É o `pv`, e a própria
+   frente 0 escreveu que existe para a tela poder dizer isso. Se ele puser em
+   dia uma terça de antes da ceia entrar no plano, o dia é recalculado contra um
+   plano de **sete** refeições. A folha precisa dizer qual plano usou — e
+   `PLANO_DESCANSO`/`PLANO_TREINO` do dia também: o protótipo abre a segunda com
+   o plano de descanso, de quatro refeições (**do protótipo**, nota da data), o
+   que hoje seriam cinco, com a ceia.
+2. **Pôr um dia em dia não apaga nada.** Marca nova vence marca velha chave a
+   chave; o resto fica. A folha não oferece "limpar o dia", e **não pode**
+   oferecer: apagar um dia do histórico é destrutivo, não foi desenhado
+   (`07-plano.md` §4) e `poeComidaNoDia` não faz isso.
+3. **Um dia que ficar mudo depois de ele mexer continua mudo.** Se ele abrir a
+   folha, desmarcar tudo e sair, a função devolve `'mudo'` e a linha anterior
+   fica como estava. A folha tem de dizer isso em vez de piscar um sucesso — é o
+   caso em que o resultado da gravação é "nada mudou", e o app já tem doutrina
+   contra falso sucesso.
+
+### 4.2 · O que a folha mostra
+
+Ela é uma **folha**, no sentido que este repositório dá à palavra: o único padrão
+modal do sistema, `position: fixed`, com trava de scroll por
+`position: fixed` no `body` (porque no iOS `overflow: hidden` não segura o
+scroll de toque) e com `inert` nos irmãos, porque `aria-modal` descreve a
+intenção e quem impede o foco de vazar é o `inert` — 39 elementos continuavam
+tabuláveis atrás do modal antes disso (conferi
+`src/ui/instrumento/folha.jsx:10-60`, e a medida está no comentário). **Ela
+herda tudo isso e não reinventa nada.**
+
+Três consequências de camada que já estão resolvidas e que o desenho não pode
+contrariar:
+
+- **Folhas empilham três níveis, nunca mais** — "na quarta ninguém mais sabe o
+  que fechar leva de volta para onde" (`folha.jsx`, cabeçalho). A folha de pôr em
+  dia é nível 1; se ela abrir a folha de uma refeição, é nível 2; o editor é
+  nível 3. **Não há nível 4**, então a folha de pôr em dia não pode abrir uma
+  refeição que abre um alimento que abre uma régua.
+- **Nada entre a folha e a janela pode criar bloco de contenção** — nem
+  `transform`, nem `filter`, nem `backdrop-filter`, nem `will-change`, nem
+  `contain`, em `html`, `body`, `:root`, `*` ou `#app`. Há caso para isso
+  (*nada entre a folha e a janela cria bloco de contenção*), e ele é de fonte e
+  não de DOM, de propósito: "o defeito nasce de uma linha nova em `html`, `body`
+  ou `#app`". Vale para a animação de entrada da folha também.
+- **O Voltar do sistema fecha uma folha por vez** (`src/ui/navegacao.js`;
+  `tests/fluxo/navegacao.test.js`). Fechar a folha é fechar uma camada, não
+  confirmar nada.
+
+**O conteúdo, de cima para baixo:**
+
+1. **O título, que é a data, e é `h1` com foco.** O caso *a tela cheia tem
+   título de primeiro nível, e ele recebe foco* vale para o destino de tela
+   cheia; a folha precisa do equivalente, e `TelaCheia` mostra a forma:
+   `tabindex="-1"` e `.focus({ preventScroll: true })`, "foco sem mexer no
+   scroll, que já foi para o topo" (conferi `telacheia.jsx:19-40`). Sem isso,
+   para teclado e VoiceOver a tela muda e o cursor fica atrás.
+2. **A linha de procedência, que diz qual plano foi usado** (§4.1, item 1).
+3. **Uma linha por refeição do plano daquele dia**, em ordem de relógio, com o
+   horário **do plano** — a decisão 14.6 (o previsto usa o horário do plano) e a
+   regra que a frente 1 confirmou.
+4. **A água, separada das refeições**, porque "não contei a água" é fato e não
+   ausência (é a terceira das cinco mudanças de dado do plano §3.4).
+5. **A frase de leitura de volta**, numa região viva (§4.3).
+
+### 4.3 · O que um toque faz, e o que a tela diz de volta
+
+**Abre pré-marcada como sugestão.** Conferi a regra no protótipo e ela está
+certa:
+
+```js
+estado[m.k] = ontem ? "tudo" : (S.ref[m.k] || (m.h > agora ? null : "tudo"));
+```
+
+(`prototipo.html:1149-1152`). Para um dia passado, tudo vem marcado como comido;
+para hoje, o que já tem marca mantém a marca dele, o que já passou da hora vem
+como "tudo", e **o que ainda não aconteceu vem sem marca.**
+
+**Nada daquilo é registro.** A diferença entre o pré-marcado e o registrado tem
+de ser visível sem leitura de texto, e o protótipo já distingue as duas no
+desenho: a classe `me` para o que foi declarado na hora e `pv` para o que é
+previsão (conferi `naHora` em `:1161` e as duas classes em `:1167-1174`).
+**Requisito:** a distinção não pode ser só de cor — é 1.4.1, e o
+`04-acesso.md` já cobra isso em outro ponto ("não pode ser marca só de cor").
+Forma, peso ou palavra, junto com a cor.
+
+**Um toque em qualquer linha fecha o dia.** É a decisão do dono (P3.i.6), e com
+a gravação a cada toque (§3) ela tem uma consequência precisa que precisa estar
+dita: **o primeiro toque grava o dia inteiro como está sugerido**, e cada toque
+seguinte corrige uma linha. Não é "o toque grava aquela linha" — é "o toque
+transforma a sugestão inteira em registro, com a linha tocada já corrigida".
+Qualquer outra leitura exige um botão de guardar, e o botão está proibido.
+
+**E é por isso que a frase de leitura de volta é obrigatória, não ornamento.** Se
+um toque grava sete refeições, a tela tem de dizer **as sete**, com as palavras
+que foram gravadas, antes e depois. O protótipo já faz isso certo, e esta é a
+melhor coisa dele: a frase é montada por `frase()` e vive num nó com
+`aria-live="polite"` (conferi `:1192` e `:1196-1198`), e ela diz inclusive o que
+**não** foi marcado ("Fica sem marca: jantar."). **Requisito:** a frase fica, com
+`aria-live="polite"`, e passa a dizer também **o que acabou de ser gravado** —
+porque agora a gravação acontece durante a frase, não depois dela.
+
+### 4.4 · As refeições que ainda não aconteceram
+
+Ficam **desabilitadas** — é o achado 7 do protótipo, e conferi a implementação:
+`var futuro = (!ontem && m.h > agora && !S.ref[m.k])` e, nos quatro botões da
+linha, `if (futuro) b.disabled = true`, com o rótulo "por vir" no lugar do
+horário (`:1161-1171`).
+
+**Está certo e eu não mexo na regra.** Pré-marcar o jantar das 19h30 às 15h30
+seria exatamente o erro que esta direção recusa. Duas coisas a acrescentar, e as
+duas são de interação:
+
+1. **Desabilitado precisa dizer por que, e "por vir" diz.** Um controle inerte
+   sem explicação é o beco que §7 trata. Aqui a explicação existe e está na
+   própria linha. **Requisito:** ela continua na linha, não num rodapé.
+2. **O limite é a hora do plano, não a de agora, e isso tem um canto.** `m.h >
+   agora` compara o horário **do plano** com o relógio. A ceia é 21:30
+   (conferi `src/dominio/nutricao/alimentos.ts:126`), então entre 21:30 e a
+   virada da data a ceia deixa de ser "por vir" e passa a vir pré-marcada como
+   comida. Isso é o comportamento certo — mas significa que **a folha aberta às
+   22h sugere que ele já tomou a ceia**, e o pré-marcado é sugestão: o primeiro
+   toque em qualquer linha a grava. **Requisito:** a última refeição do dia
+   nunca entra pré-marcada por passagem de horário; ela entra pré-marcada só
+   quando o dia já está fechado (dia passado). Para hoje, a refeição cuja hora
+   passou há menos de 30 minutos fica sem marca, pela mesma razão que a janela
+   de 30 min existe na regra do cartão de cima (frente 1, §5.1, regra 4).
+
+### 4.5 · Fechar sem tocar, e o que o Voltar faz
+
+**Fechar a folha sem tocar em nada não grava nada.** Nem o pré-marcado, nem a
+água, nem nada. Três caminhos levam a isso, e os três têm de ter o mesmo
+resultado: o véu, o Voltar do sistema, e o botão de fechar da folha.
+
+E a recíproca, que é o que torna a regra honesta: **se ele tocou uma linha, o
+dia está gravado, e fechar não desfaz.** Não existe "cancelar" depois do
+primeiro toque, porque não existe lote. O que existe é **reabrir e corrigir**,
+que é o caso de uso que `poeComidaNoDia` foi escrita para atender ("corrigir a
+porção de um dia passado é o caso de uso", frente 0). **Requisito:** a folha não
+tem "Cancelar". Oferecer um cancelar que não cancela é falso.
+
+### 4.6 · O que a folha precisa e o chão não permite — quatro coisas
+
+Aqui eu segui a instrução ao pé da letra: **não especificar comportamento que a
+função não permite sem dizer que precisa mudar.** Quatro achados, e o terceiro é
+o mais grave.
+
+**1 · "Não comi" não está na folha, e é a capacidade que destrava o portão.**
+O domínio tem `ComoFoiARefeicao = 'fora' | 'nao'` (conferi,
+`src/dominio/nutricao/tipos.ts:110`), e `'nao'` é **"não comi esta refeição",
+dito como fato**. A frente 0 escreveu por que ele importa: *"declarar 'não comi'
+com um toque passa a produzir um dia **contado**, em vez de silêncio — que é o
+que torna o portão alcançável"* (o portão é `MIN_REGISTRADOS = 11` em 14). E
+`pesoDaRefeicao` devolve **0** para `'nao'`, de propósito: é zero conhecido, não
+ausência.
+
+**A folha do protótipo não o oferece.** Os quatro botões por linha são
+`Tudo · Metade · Fora · Não sei` (conferi `:1165`). "Não comi" não está lá, e
+"sem marca" — que é o que sobra para quem pulou uma refeição — é **silêncio**, e
+silêncio não conta para o portão. Ou seja: **a folha, como desenhada, não
+alcança a única razão pela qual o dono ganharia dias contados ao pôr um dia em
+dia.** Isto não exige mudar a função; exige um quinto botão. **Requisito:** a
+linha oferece **"Não comi"**, e a frase de leitura de volta o distingue de "fica
+sem marca" com palavras diferentes, porque são coisas diferentes no dado.
+
+**2 · "Não sei" é por refeição na tela e por DIA no dado.** O protótipo trata
+`nsei` como estado de uma refeição (`estado[m.k] = "nsei"`). No domínio não
+existe: `ComoFoiARefeicao` tem dois valores. O que existe é
+`aderencia: 'plano' | 'fora' | 'perdido'`, que é campo **do dia** (conferi em
+`ComidaDoDia` e em `DiaComidaHist`). E o próprio texto do protótipo confirma que
+a consequência é do dia: *"Não sei: o dia deixa de contar para a regra — e é
+melhor assim do que um número inventado"* (`:1227`).
+
+**Requisito:** o controle pode ficar na linha, mas **a tela tem de dizer que ele
+vale o dia**. Marcar uma refeição como "não sei" tira o dia **inteiro** da conta
+do nutricionista, e um controle por linha com efeito de dia que não anuncia isso
+é a definição de consequência escondida. A frase de leitura de volta é o lugar
+certo para dizê-lo, e ela já é região viva.
+
+**3 · Porção acima de 1 não existe na folha, e o dono disse que ela existe.** O
+app de hoje tem cinco porções — `½ · ¾ · cheia · 1¼ · 1½` — em
+`src/ui/folhas/refeicao.jsx:14-15` (conferi), e duas delas estão **acima de 1**,
+que é o "comi mais que o plano". A folha de pôr em dia oferece só
+`Tudo · Metade`, isto é, `escala: 1` e `escala: 0.5`. **Conclusão:** hoje "comi
+uma vez e meia o almoço" só se diz no dia corrente, pela folha da refeição —
+pôr um dia em dia não alcança a porção que o dono pediu. **Requisito:** a linha
+da folha abre a régua de porções quando ele quiser mais que Tudo/Metade, e a
+régua é a que já existe, com os cinco valores. Não é campo novo nem função nova:
+`escala` é `Record<string, number>` em `ComidaDoDia`, e aceita 1,5.
+`prototipo.md` registra que o desenhista **não** inventou os valores de
+propósito ("inventar os valores seria pior") — eles existem, e são esses cinco.
+
+**E é aqui que os dois números da adesão têm de aparecer.** A frente 0 pôs teto
+de 1 por refeição em `pesoDaRefeicao` e mediu o excedente à parte em
+`excessoDoDia`, com a razão escrita: sem teto, "comer mais que o plano aparecia
+como aderir MELHOR do que aderir", e um dia de excesso era contado como dia
+cumprido **pelo excedente**. E o excesso não compensa a falta: `{almoco: 1.5,
+jantar: 0.5}` dá adesão 5,5/6 e excesso 0,5/6 (**da frente 0** — não refiz a
+conta). **Requisito de onde mostrar:** os dois moram **juntos, em Semana**, que
+é o lugar do veredito e dos três portões (frente 1, §1.4) — "100% e +8%" é um
+dia cumprido com sobra, "100%" sozinho é um dia cumprido. Na folha e na linha do
+dia aparece **só a porção**, que é o que ele acabou de dizer; a adesão e o
+excesso são leitura de semana, e pô-los na folha seria pôr nota em cima de
+registro, que é precisamente o que `padraoPorRefeicao` existe para não fazer
+("devolve CONTAGEM, nunca percentual… feedback que dirige a atenção para a
+autoavaliação piora o desempenho em cerca de um terço dos casos").
+
+**4 · A pergunta do "fora do plano" bloqueia, e não pode bloquear.** No
+protótipo, marcar qualquer refeição como "Fora" desabilita o botão de guardar até
+ele responder "Sei o que comi" ou "Não sei quanto" (conferi `:1218-1231`). Com o
+botão de guardar removido (§3), o bloqueio não tem onde morar — e não deve ter:
+"um toque em qualquer linha fecha o dia" e "responda a pergunta para guardar"
+são regras contrárias. **Requisito:** a pergunta continua, porque a distinção que
+ela faz é real e tem consequência no portão, mas ela aparece **depois** da
+gravação, como uma linha a mais na folha, com o estado inicial dito —
+`aderencia` sem resposta é `'plano'`, e `'plano'` é o padrão de quem não
+respondeu. O dia já está gravado; o que a resposta muda é se ele conta.
+
+### 4.7 · O que sobe à mesa dele, e é só isto
+
+Esta peça muda regra, então o que vai à mesa do dono é **uma lista curta de
+mudanças de regra**, não a folha inteira:
+
+1. **O quinto botão, "Não comi"** (§4.6, item 1) — porque é o que faz pôr um dia
+   em dia produzir dia contado, e sem ele a peça não entrega o que a decisão dele
+   prometeu.
+2. **"Não sei" vale o dia, e a tela passa a dizer isso** (§4.6, item 2).
+3. **A porção acima de 1 alcança o dia passado** (§4.6, item 3), com a régua de
+   cinco valores que já existe.
+4. **A pergunta do "fora do plano" deixa de bloquear** (§4.6, item 4).
+5. **A última refeição do dia não vem pré-marcada por passagem de horário**
+   (§4.4, item 2).
+
+As cinco são pequenas de desenho e nenhuma delas é de gosto: cada uma nasceu de
+uma diferença entre o que o desenho faz e o que o dado permite ou a decisão dele
+manda.
