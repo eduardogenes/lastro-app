@@ -112,11 +112,13 @@ monta a expressão regular a partir do literal e afirma `assert.ok(m, 'sumiu do
 CSS: ' + sel)`. Renomear o seletor **é** a falha. Não é estatística: é
 construção.
 
-### 0.2 · Sete buracos nas asserções — quatro deles novos, e um é estrutural
+### 0.2 · Nove buracos nas asserções — sete deles novos, e um é estrutural
 
-A frente 2 achou quatro buracos nos 38 (§0.1 dela) e eles valem. Conferi os
-quatro e achei três mais, **e um deles cancela a conta inteira de "quantos ficam
-vermelhos".**
+A frente 2 achou quatro buracos nos 38 (§0.1 dela) e eles valem. Dois deles são
+de asserção (os longhands da escala e as duas árvores de ancestral) e viram B1 e
+B7 aqui; os outros dois — o acoplamento a seletor literal e o caso do `svh` que
+não exige `svh` — estão em §0.1. **Conferi os quatro e achei sete mais**, e um
+deles cancela a conta inteira de "quantos ficam vermelhos".
 
 **B0 · Os 38 não ficam vermelhos: eles não rodam.** `estilo.test.ts` lê **nove
 arquivos no escopo do módulo**, fora de qualquer `test()`: `src/tokens.css`,
@@ -220,6 +222,13 @@ container* inspeciona **só `body`**, e o `prototipo.html` da D declara
 `#app{position:relative;height:100vh;height:100svh;width:100%;overflow:hidden}`
 (`prototipo.html:53`). Portei e o caso ficou **verde**.
 
+**B8 · A asserção da barra do cronômetro depende do nome de uma variável.**
+*O cronômetro de descanso não anima largura* afirma
+`!/fill\.style\.width/.test(mainJsx)` — o **nome literal da variável** `fill`.
+A direção escreve `bar.style.width` (`prototipo.html:1412`). **Renomear a
+variável desarma a asserção, e a direção já a renomeou sem saber.** O detalhe
+inteiro está em §8.5, item 4, porque é lá que a regra vive.
+
 ### 0.3 · O que eu medi portando a direção: quatro vermelhos, e três verdes que deviam ser vermelhos
 
 **Medi**, e este é o número mais útil deste documento. No diretório de rascunho:
@@ -262,7 +271,7 @@ produzir estes números.**
 
 ### 0.4 · O contrato de forma do CSS, e ele não é gosto
 
-Três dos sete buracos (B2, B4, B6) têm a **mesma** causa: as regras deste
+Três dos nove buracos (B2, B4, B6) têm a **mesma** causa: as regras deste
 produto são cobradas por expressão regular escrita contra CSS formatado à mão, e
 o material da direção é minificado. Então o primeiro requisito do sistema novo
 não é de cor nem de tamanho:
@@ -2537,47 +2546,57 @@ academia às 6h15, e **isso não está medido e não dá para calcular.**
 | 21 | A casca é a do app: a **janela** rola. Mais `--ins-regua-h`, o quarto token de altura reservada | §9.2 |
 | 22 | O caso do `sticky` passa a inspecionar `html`, `body`, `:root`, `*` e `#app` | §9.4 |
 
-### 11.2 · Os 38 casos: o que acontece com cada grupo
+### 11.2 · Os 38 casos, um destino para cada: 9 + 12 + 8 + 1 + 8
 
-**Vão inteiros, sem uma letra mudada — 13.** São as invariantes puras de §0.1, e
-elas são o que a rede chamou certo: a especificação mobile deste produto em forma
-executável.
+A classificação de §0.1 é por **acoplamento**. Esta é por **destino**, e as duas
+contas fecham em 38.
 
-**Mudam de seletor e de nada mais — 9.** *o voltar fica grudado no topo*, *o
-relógio da sessão gruda no topo*, *a barra de status tem fundo*, *o cronômetro
-não divide o rodapé*, *abrir um exercício sabe onde parar de rolar*, *a tela cheia
-tem título de primeiro nível*, *mas campo e prosa continuam selecionáveis*, *alvo
-de toque não é forçado duas vezes*, *o alvo do tick cresce só na vertical*.
+**Vão inteiros, sem uma letra mudada — 9.** *tela cheia usa svh, não vh*; *a
+paleta antiga não existe mais, nem por apelido*; *a raiz recusa os gestos de
+zoom*; *o viewport não deixa o navegador escalar a página*; *a pinça do WebKit é
+recusada*; *segurar o dedo na interface não abre menu nem seleciona*; *a barra
+deslizante toma o gesto*; *o toast é anunciado por leitor de tela*; *nada entre a
+folha e a janela cria bloco de contenção*. **São a especificação mobile deste
+produto, e a rede estava certa sobre eles.**
 
-**Mudam de asserção, com a razão — 6:**
+**Mudam de seletor e de nada mais — 12.** *o voltar fica grudado no topo*; *o
+relógio da sessão gruda no topo*; *a barra de status tem fundo*; *o cronômetro
+não divide o rodapé com a tab bar*; *abrir um exercício sabe onde parar de
+rolar*; *a tela cheia tem título de primeiro nível, e ele recebe foco*; *mas
+campo e prosa continuam selecionáveis*; *alvo de toque não é forçado duas vezes*;
+*o alvo do tick cresce só na vertical*; *a marca de recorde não pinta ácido sobre
+ácido*; *o app avisa quando o telefone está deitado*; *a trava de retrato não
+pega janela de computador*.
+
+**Mudam de asserção, com a razão — 8:**
 
 | caso | o que muda |
 |---|---|
 | *a paleta do Instrumento está inteira e mora nos tokens* | passa a afirmar os **20 tokens novos nos dois temas**, e a afirmar que **todo token de cor tem valor nos dois** — que é a asserção que a de hoje não faz, porque hoje há um tema só |
-| *cor nova não entra solta no meio das regras* | cobra `rgba`, `hsl`, `oklch`, `color-mix` além de `#hex` (requisito 2) |
+| *cor nova não entra solta no meio das regras* | cobra `rgba`, `hsl`, `oklch` e `color-mix` além de `#hex` (requisito 2) |
 | *espaço vertical fica na escala de 4* | lê as cinco folhas, cobra os longhands laterais e de eixo, não exige `;`, lê decimal como decimal e não atravessa `}` (§0.2) |
 | *toda custom property usada tem dono* | vê bloco minificado (B6), e ganha a **recíproca**: todo dono é usado. Medi **2** tokens definidos e nunca usados hoje |
 | *o campo nunca fica abaixo de 16px* | passa a cobrar `1rem`, com a razão: o que o Safari exige é 16 px **computado**, e o piso sobe junto do controle de tamanho |
 | *o cronômetro de descanso não anima largura* | para de depender de `#tfill` e do nome da variável `fill` (requisito 14) |
-| *nenhum ancestral do sticky vira scroll container* | inspeciona a cadeia inteira (requisito 22) |
+| *nenhum ancestral do sticky vira scroll container* | inspeciona a cadeia inteira — `html`, `body`, `:root`, `*`, `#app` (requisito 22) |
 | *controle pequeno estende o ALVO sem crescer o desenho* | `.cellb` entra na lista, e ele é o caso mais forte que a regra já teve |
 
 **Morre, e é o único que o sistema novo apaga em vez de renomear — 1.** *O texto
-que se toca não usa o nível mais apagado*. Ele existe porque
-`--ins-text-5` mede 3,22:1 e cinco seletores precisavam ser proibidos de usá-lo.
-**A paleta nova tem três níveis de texto e os três passam em AA nos dois temas,
-sobre os quatro fundos** — o pior caso é 4,87:1 (§1.4). O caso vira uma afirmação
-sobre a **paleta** e não sobre quem a usa: *não existe nível de texto abaixo de
-4,5:1 sobre nenhum dos quatro fundos, em nenhum dos dois temas.* Uma asserção, e
+que se toca não usa o nível mais apagado*. Ele existe porque `--ins-text-5` mede
+**3,22:1** (medi) e cinco seletores precisavam ser proibidos de usá-lo. **A
+paleta nova tem três níveis de texto e os três passam em AA nos dois temas, sobre
+os quatro fundos** — o pior caso é 4,87:1 (§1.4). O caso vira uma afirmação sobre
+a **paleta** e não sobre quem a usa: *não existe nível de texto abaixo de 4,5:1
+sobre nenhum dos quatro fundos, em nenhum dos dois temas.* Uma asserção, e
 nenhuma lista de seletores para envelhecer.
 
 **Ficam em limbo — 8.** Os da bancada. `07-plano.md` §4 manda trocar
 `src/palco.js` e `src/palco.css` "por outra coisa, não desenhada", e a frente 1
 registrou isso como o achado 9 dela. **Enquanto a bancada existir, os oito valem
 inteiros e eu não toco neles.** Quando ela sair, saem com ela — e é bom que isso
-seja uma decisão e não um efeito.
+seja uma decisão e não um efeito colateral.
 
-### 11.3 · Os doze casos novos, que é o que torna este documento executável
+### 11.3 · Os treze casos novos, que é o que torna este documento executável
 
 Cada um ficaria **vermelho hoje** se escrito agora, e é por isso que cada um vale.
 O número de vermelhos de nascença está ao lado.
