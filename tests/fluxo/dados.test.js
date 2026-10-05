@@ -540,5 +540,15 @@ test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async ()
   // e o dia já fechado não foi reescrito
   assert.deepStrictEqual(a.J('S.comidaHist'), era.comidaHist,
     'o histórico congelado atravessa a migração intacto');
+
+  // a importação é o OUTRO caminho pelo qual a migração tem que rodar: um
+  // backup do plano 10 entra aqui e também sai com a ceia
+  a.aba('guia');
+  await a.E('importText(' + JSON.stringify(JSON.stringify({ app: 'lastro', data: era })) + ')');
+  await a.esperar(60);
+  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'), 'a cadeia roda na importação também');
+  assert.deepStrictEqual(a.J('S.comida.plano.map(function(r){return r.id})'),
+    ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar', 'ceia'],
+    'o backup do plano 10 restaurado não volta sem a ceia');
   a.fechar();
 });

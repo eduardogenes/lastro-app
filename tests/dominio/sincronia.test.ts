@@ -10,6 +10,7 @@ import { funde, chaveDeLog, chaveDeSessao, chaveDeMarca, chaveDeCardio, chaveDeP
 import type { Corpo, Enquadramento, Estado, Log, QualMarca, SessaoFoto } from '../../src/dominio/tipos';
 import type { DiaComidaHist } from '../../src/dominio/nutricao/tipos';
 import { MARCAS_DO_CORPO } from '../../src/dominio/corpo';
+import { migraPlano11 } from '../../src/dominio/migracoes';
 
 /** Um `S.body` com as sete séries vazias. Os testes preenchem as que importam. */
 function corpoVazio(): Corpo {
@@ -682,4 +683,47 @@ test('a chave da pergunta é o `sid`, e não o dia — que é editável no trein
     T0
   );
   assert.strictEqual(r.promoPendente.length, 1, 'uma pergunta, uma resposta');
+});
+
+// ---------- a ceia atravessando dois aparelhos ----------
+// O plano de comida é DOCUMENTO: vem inteiro do lado com `mtime` mais novo. Não
+// virou coleção na migração 10 → 11, e não devia — "documento se edita
+// deliberadamente, num aparelho por vez" é a regra escrita no topo do módulo.
+// Mas isso cria uma janela durante a atualização, e ela se fecha sozinha.
+
+test('o aparelho que ainda não migrou não deixa a ceia sumir do outro', () => {
+  const planoSem = [
+    { id: 'jantar', t: '19:30', n: 'Jantar', tag: '', quando: 'sempre' as const, itens: [] }
+  ];
+  const planoCom = planoSem.concat([
+    { id: 'ceia', t: '21:30', n: 'Ceia', tag: '', quando: 'sempre' as const, itens: [] }
+  ]);
+
+  const migrado = estado({ mtime: T0 - DIA, plano: 11,
+                           comida: { plano: planoCom, alimentos: {}, ocultos: {} } } as Partial<Estado>);
+  const atrasado = estado({ mtime: T0, plano: 10,
+                            comida: { plano: planoSem, alimentos: {}, ocultos: {} } } as Partial<Estado>);
+
+  const { estado: r } = funde(migrado, atrasado, T0);
+  // o documento do lado mais novo vence, e com ele a VERSÃO do formato
+  assert.deepStrictEqual(r.comida.plano!.map(x => x.id), ['jantar'],
+    'o plano do lado que gravou por último vence, como todo documento');
+  assert.strictEqual(r.plano, 10,
+    'e `plano` vem no mesmo clone — é o que faz a janela se fechar sozinha');
+  // o boot seguinte roda a cadeia e `migraPlano11` devolve a ceia
+  migraPlano11(r);
+  assert.deepStrictEqual(r.comida.plano!.map(x => x.id), ['jantar', 'ceia']);
+  assert.strictEqual(r.plano, 11);
+});
+
+test('a refeição marcada sobrevive à ausência temporária dela no plano', () => {
+  // Durante a janela acima, a marca da ceia já existe no dia e no histórico —
+  // que são COLEÇÕES e fundem por chave. `aderenciaDoDia` ignora id que não
+  // está no plano de hoje ("refeição que não existe mais"), então a marca não
+  // conta enquanto a ceia falta, e volta a contar quando ela volta.
+  const dia = { data: '2026-08-24', done: { ceia: T0 - 3600000 }, agua: 0, escala: {} };
+  const a = estado({ mtime: T0 - DIA, dia: dia } as Partial<Estado>);
+  const b = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 2, escala: {} } } as Partial<Estado>);
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.dia!.done.ceia, T0 - 3600000, 'a marca não se perde');
 });
