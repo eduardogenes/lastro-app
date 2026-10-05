@@ -739,6 +739,53 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         contava o dia como cumprido pelo excedente sozinho. Com duas leituras
         nada se perde. É aritmética que o nutricionista pode querer de outro
         jeito, então fica dito.
+      - [x] **5.a'''' RESPONDIDA em 05/10: a ceia é copo de leite com duas
+        colheres de Neston.** Entrou como **migração 10 → 11** (`ba03f95` →
+        `038efb0`, 5 commits). **Conferi:** `npm test` → **954 passando**,
+        `tsc --noEmit` limpo, `PLANO_ATUAL = 11` com `migraPlano11` e
+        `CEIA_PLANO_11`, `neston` no catálogo, zero coautoria.
+        Três coisas que eu decidi em cima do dado dele, não por palpite:
+        **250 ml** porque `pos` e `lanche` já usam `q: 250` para leite — é a
+        convenção dele; **30 g** porque é a porção que o rótulo do Neston usa;
+        **21:30** que foi **suposição minha**, marcada como tal em dois lugares
+        no código e no documento, porque ele não deu horário.
+        **O alvo calórico, medido e sob asserção** (`migracoes.test.ts:694`):
+        dia de treino 3.007,1 → 3.278,7; descanso 2.844,1 → 3.115,7; **+271,6
+        kcal em todos, ~9%**. Confirmei a aritmética sozinho (152,5 do leite +
+        119,1 do Neston). O "antes" não é só cálculo: é `tot.kcal` congelado na
+        fixture, escrito pelo build da época.
+        **Os 17 vermelhos revelaram um defeito real**, e é a rede funcionando: em
+        `diario.test.ts` o "dia cheio" estava **escrito à mão**, então a ceia o
+        transformou num dia com refeição faltando enquanto o teste continuava
+        chamando aquilo de "comeu tudo". Passou a ser derivado do plano, e o
+        mesmo foi feito em `fusao.test.js` — não envelhecem na próxima refeição.
+        **Uma janela de sincronização achada e fechada:** o plano é documento, e
+        um aparelho ainda no plano 10 podia vencer o documento e a ceia sair. A
+        versão do formato viaja no **mesmo clone**, então o lado atrasado leva a
+        versão de volta a 10 e o boot seguinte roda `migraPlano11`. Dois testes.
+        **As duas cópias congeladas** (`CEIA_PLANO_11` e a do `PLANO_BASE`) não
+        se referenciam de propósito, com um teste cobrando que descrevam a mesma
+        ceia — é o que impede aparelho migrado e aparelho novo de nascerem
+        diferentes. A mensagem do teste diz o que fazer se ficar vermelho:
+        migração 11 → 12, nunca copiar o valor de um lado para o outro.
+      - [ ] **5.a'''''' PENDENTE COM O DONO — duas coisas da ceia:**
+        1. **Os valores do Neston** continuam **não conferidos contra a lata**.
+           Fui eu que os passei de memória (397 kcal, 9,5 P, 78 C, 4,5 G por
+           100 g) e estão marcados no código como pendentes. A frente 0 mediu o
+           que podia: os macros fecham com o kcal declarado dentro de **1,7%**,
+           folga normal de rótulo — e escreveu no código que consistência
+           interna **não é** conferência. É a única coisa desta entrega que
+           depende de alguém olhar um objeto físico.
+        2. **O ledger do ajuste calórico foi construído sobre o alvo antigo**, e
+           o alvo subiu ~9%. Ninguém mediu o efeito do alvo novo sobre as
+           decisões de corte já registradas em `S.ajusteHist`. Declarado como
+           não medido, e é decisão dele com o nutricionista.
+      - [~] **Uma falha intermitente que EU vi e a frente 0 não reportou.** Na
+        minha primeira execução da suíte: 953 passando, **1 vermelho**. Perdi o
+        nome (cortei a saída). Nas **nove** execuções seguintes, 954/954. Caça
+        em curso com relatório JSON por execução. Não atribuo à ceia sem prova —
+        pode ser anterior —, mas fica registrado porque falha que se esconde é
+        pior que falha fixa.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
