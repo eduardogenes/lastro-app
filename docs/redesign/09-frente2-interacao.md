@@ -1486,3 +1486,221 @@ aparece depois é o Agora, com a confirmação do que foi registrado.
 **o fecho manual descarta a mudança do dia em silêncio.** É §9.2, e é o F280
 nominal. Não dá para especificar "encerrar não pergunta nada" sem especificar,
 na mesma mudança, onde a mudança vai parar.
+
+---
+
+## 8 · O portão de acesso — é portão desta frente, e não acabamento no fim
+
+Portão quer dizer: um estado não está pronto antes disto, e não "isto se arruma
+depois". A razão é aritmética — são 178 ícones e um padrão de alvo, e as duas
+coisas se resolvem no componente, uma vez. Deixar para o fim é refazer 178 vezes.
+
+### 8.1 · Os 178 ícones mudos
+
+**Medido por C3:** **178 `<svg>`** na direção D, **0 de 178** com
+`aria-hidden="true"`, `<title>` ou `aria-label`; **102 dos 178** ficam **fora**
+de um controle já nomeado (`04-acesso.md`, R-D2 e a tabela D-2, conferi). O
+critério é 1.1.1.
+
+**A regra, e ela é binária:** todo `<svg>` é uma de duas coisas, e nunca uma
+terceira.
+
+1. **Decorativo** — `aria-hidden="true"`, e o nome vem do controle que o contém
+   ou do texto ao lado. São os 76 que estão dentro de controle nomeado, mais os
+   14 quadradinhos dos 14 dias (§2), que têm a frase logo abaixo carregando o
+   número.
+2. **Portador do nome** — `role="img"` com `aria-label` escrito, ou um `<title>`
+   dentro do `<svg>`. São os 102 que estão sozinhos.
+
+**E o padrão de ouro já está no material**, na outra direção: *"Os dez gráficos
+sem texto da C têm `role="img"` **com rótulo escrito**, e o rótulo carrega o
+número"* (do parecer). Carregar o número é a diferença entre um nome e uma
+etiqueta: "Séries da semana" não serve; "Séries da semana: 12 de 12 prescritas"
+serve.
+
+**Requisito de implementação, e é ele que torna isto portão:** o ícone não é
+escrito à mão 178 vezes. Ele entra por **um** componente, cuja assinatura **não
+permite** omitir a escolha — ou recebe um rótulo, ou recebe a marca de
+decorativo, e não existe terceira forma de chamá-lo. É a mesma disciplina que
+`tests/dominio/estilo.test.ts` aplica à cor ("cor nova não entra solta no meio
+das regras: dê um nome a ele antes de usar"), e o caso que a segura é do mesmo
+tipo — de **fonte**, não de DOM, porque o defeito nasce de uma chamada nova e
+não da árvore.
+
+### 8.2 · Os 12 alvos, e o padrão de 46 — que é um token e não uma convenção
+
+**Medido por C3:** **12 alvos abaixo de 44 px** na direção D — `.map` a **30 px**
+(3 ocorrências) e `.daytype` a **36 px** (9) (`04-acesso.md`, D-7, conferi).
+Contra 44, são 12. Contra o padrão interno, são muito mais.
+
+**O padrão interno não é uma frase num documento: é um token com a razão
+escrita.** Conferi em `src/tokens.css`:
+
+```css
+--ins-tap: 46px;   /* controle numérico repetido; 46 e não 44 de propósito:
+                      ele usa de pé, suado, com uma mão */
+--ins-tap-dense: 28px;
+```
+
+E o segundo token traz a saída para a densidade, também escrita: *"28px é
+DESENHO, não alvo: controle secundário dentro de linha cheia… Quem usa este
+degrau estende a ÁREA por `::after` até 44 no mínimo; onde o vão entre fileiras
+não permite, o quanto deu está escrito na própria regra."* O contrato de UX
+repete: *"Alvo ≥ 24×24 (norma); ≥ 46 px para controle repetido (padrão
+interno)"* (`docs/LASTRO_UX_CONTRACT.md:197`, conferi).
+
+**Então a régua desta frente é essa, e ela tem três degraus, não um:**
+
+| degrau | quando | mecanismo |
+|---|---|---|
+| **46 px de alvo** | controle **repetido** — a régua, o `.cellb`, a caixa de marcar da linha do dia, o RIR, os pontos do mapa da sessão | desenho de 46, ou desenho menor com `::after` levando o alvo a 46 |
+| **44 px de alvo** | controle não repetido, dentro de linha cheia | `::after` com `inset` negativo |
+| **24 × 24** | o mínimo da norma, e nada do app desce até aqui | — |
+
+**Os três alvos desta frente que estão abaixo e precisam subir:**
+
+1. **`.cellb`**, cerca de **22 px** (§5.1) — nunca medido por ninguém, e é o
+   menor da direção. É controle repetido: `--ins-tap`, por `::after` vertical.
+2. **`.map`**, **30 px** — é o mapa da sessão, um ponto por série, **vinte por
+   sessão de Treino A**. Controle repetido por definição. E ele tem um segundo
+   problema que o alvo não resolve: é um dos três `overflow-x: auto` do arquivo
+   (§1.2), então os pontos das últimas séries ficam fora da janela pela mesma
+   conta de §1.1.
+3. **`.daytype`**, **36 px** — nove ocorrências, e é o botão que diz o tipo de
+   dia no Agora. No protótipo é um dos becos silenciosos (§7.0).
+
+**E os sete que estão a exatamente 44 px**, que passam a norma e reprovam o
+padrão interno, todos de controle repetido ou quase: `.ib` (44 × 44), `.lk`,
+`.chip`, `.pill`, `.nav .act`, `.seg button` e `.acts button` (conferi as sete
+regras em `03-direcao-D/prototipo.html`). **Conta de classes no CSS, não de
+instâncias renderizadas** — eu não contei instância por instância, e C3 contou
+contra 44, não contra 46. **O número de alvos que reprovam o padrão interno de
+46 é, portanto, não medido.**
+
+### 8.3 · A série guardada não é anunciada — a reprovação grave da D
+
+É o **R-D1**, e o parecer o chama assim: *"a série guardada não é anunciada —
+`<div class="saved">` sem `role`/`aria-live`; o ato mais frequente do produto é
+mudo para leitor de tela."* Conferi o `<div class="saved">` em `zonaDepois()`, e
+é isso: nenhum `role`, nenhum `aria-live`.
+
+Já está em §1.3 como requisito R6, e repito aqui por uma razão: **é a única
+reprovação dos dois arquivos que piora um comportamento que hoje funciona.** Os
+outros defeitos de acesso da D são coisas que o app de hoje também não tem
+(ícone sem nome, alvo pequeno). Este é diferente: hoje o valor mora num
+`<input>`, e o campo ecoa o que foi digitado **por ser campo**
+(`src/ui/exercicio.jsx:84-98`, conferi). Trocar o campo por um botão **remove um
+anúncio que existe de graça**, e nada o repõe.
+
+**E há um segundo lugar com o mesmo defeito, que ninguém listou:** o visor do
+teclado próprio. `<b data-k="d">` tem o texto trocado a cada tecla, sem região
+viva (conferi `folhaCarga`). Num teclado onde o visor é a única coisa que existe,
+isso quer dizer que **digitar é mudo**. O requisito está em §6.2, T2.
+
+**E um terceiro, que a D fez certo e que não pode se perder:** a frase de
+leitura de volta da folha de pôr em dia **já** é região viva, com
+`aria-live="polite"` (conferi `:1192`). É o único `aria-live` do arquivo inteiro.
+
+### 8.4 · 320 px — o protocolo, e ninguém mediu
+
+**Está no checklist de tela nova do contrato vigente** e **ninguém mediu**. O
+parecer registra a razão: *"A régua de D rola na horizontal por projeto, e C3
+mediu que 10 elementos do M1 saem pela direita do telefone de 414 px (ele
+classificou isso, corretamente, como a régua funcionando e não como corte). A
+320 px o problema é maior, e não foi medido por ninguém."*
+
+**O critério é 1.4.10 Reflow (AA):** o conteúdo tem de servir a 320 px de
+largura **sem exigir rolagem nos dois eixos**. Rolagem horizontal **de um
+controle** (a régua) não viola; rolagem horizontal **da página** viola.
+
+**O protocolo.** Não exige o aparelho do dono — dá para fazer com uma janela de
+navegador —, mas exige olhar, e eu não o executei.
+
+1. Abrir cada estado com a janela em **320 × 568** CSS px (o menor iPhone que já
+   existiu, e o número que o critério usa).
+2. Para cada estado, anotar **três** coisas: (a) existe rolagem horizontal da
+   **página**? (b) existe conteúdo **cortado e inalcançável**? (c) existe texto
+   que **sobrepõe** outro texto?
+3. A pergunta (b) é a que importa mais aqui, e é por causa de uma regra do app:
+   o `body` tem `overflow-x: clip`, posto de propósito para matar o rubber-band
+   e proteger o `sticky` (é o caso *nenhum ancestral do sticky vira scroll
+   container*, conferi). **`clip` corta sem rolar.** Então, a 320 px, conteúdo
+   largo demais não ganha barra de rolagem: ele **desaparece**, sem erro nenhum.
+   Isso é melhor que violar 1.4.10 por rolagem e **pior** para o dono, porque
+   conteúdo cortado e inalcançável é perda de função. **O protocolo tem de
+   distinguir os dois**, e é essa distinção que torna a medição necessária em
+   vez de dedutível.
+4. Rodar nos estados onde a conta de §1.1 prevê aperto: a régua (cada botão
+   mantém 54 px fixos, então a 320 px cabem **4** e não 6 — `(320 − 32 − 54) ÷
+   60 = 3,9`, **conta**), a fileira de três botões de `.acts`, a barra dos cinco
+   lugares, a tabela do exercício com quatro séries, e os cinco campos da
+   bioimpedância.
+
+**O número que reprova:** **1 ou mais** estados com rolagem horizontal de página
+**ou** com conteúdo cortado e inalcançável. Não há tolerância porque não é
+estatística.
+
+### 8.5 · 200% de texto — o protocolo, e o conflito que ninguém nomeou
+
+**Também não medido** — o parecer o lista: *"o layout dos dois a 200% de texto"*.
+Aqui eu achei uma coisa que muda a pergunta, e ela precisa ser dita antes do
+protocolo.
+
+**O critério é 1.4.4 Resize Text (AA):** o texto tem de poder ir a 200% sem
+perda de conteúdo ou de função. E **o app de hoje bloqueia isso em três
+camadas, todas de propósito e todas com caso de teste:**
+
+1. `index.html:9` — `maximum-scale=1, user-scalable=no` (caso *o viewport não
+   deixa o navegador escalar a página*).
+2. `src/base.css`, na regra `html` — `touch-action: pan-x pan-y`, com o
+   comentário que diz o que se perde: *"O que se perde é a pinça para enxergar
+   melhor. É aceitável aqui porque nenhum texto do app é menor que 16px e a
+   leitura não depende dela — e porque zoom acidental no meio de uma série, com a
+   mão suada, custa mais que zoom deliberado ganha."* (Caso *a raiz recusa os
+   gestos de zoom*.)
+3. `src/main.jsx` — `gesturestart`, `gesturechange` e `gestureend` recusados com
+   `passive: false`, porque o Safari implementa a pinça como gesto próprio,
+   acima do `touch-action` (caso *a pinça do WebKit é recusada*).
+
+**E há uma quarta camada, que é tipográfica e que ninguém mencionou:** eu contei
+as cinco folhas e **`rem` aparece zero vezes** em todas as cinco
+(`tokens.css`, `base.css`, `componentes.css`, `treino.css`, `protocolo.css`).
+Toda a tipografia é em `px`. Isso quer dizer que, mesmo sem as três camadas
+acima, o ajuste de tamanho de texto do sistema **não alcançaria** o texto deste
+app — ele só é alcançado por zoom de página, que é justamente o que está
+bloqueado.
+
+**Então a afirmação honesta não é "não medido": é "bloqueado, de propósito, e
+com a razão escrita".** 1.4.4 não é atingível no app como ele está, e isso é
+decisão registrada em três casos de teste e dois comentários de fonte. O
+`04-acesso.md` diz que "nenhuma das duas direções põe `maximum-scale` nem
+`user-scalable=no`" — e está certo, porque ele mediu **os nove HTML**, que não
+são o app. O app põe.
+
+**O que ainda vale medir, e por isso o protocolo existe:** se o desenho
+**sobreviveria** a 200%. Isso responde a uma pergunta de verdade — se o bloqueio
+é uma escolha que pode ser revista, ou se é a única coisa que impede a tela de
+quebrar. São respostas muito diferentes.
+
+**O protocolo.**
+
+1. Numa janela de **414 px** de largura, aplicar **200% de zoom de página** (não
+   de fonte — com tipografia em `px`, zoom de fonte não faz nada).
+2. Para cada estado, anotar: (a) algum texto some? (b) algum texto sobrepõe
+   outro? (c) algum controle sai da tela sem caminho até ele? (d) a régua
+   continua operável?
+3. Rodar nos mesmos cinco estados apertados de §8.4, mais a frase de leitura de
+   volta da folha (que é longa e cresce com o número de refeições — agora sete,
+   com a ceia).
+
+**O número que reprova:** **1 ou mais** respostas (a), (b) ou (c). A (d) é
+informativa, porque a régua a 200% com botões de 108 px só mostra **2** valores
+pela conta de §1.1 — o que é previsível e não é defeito novo, é o mesmo defeito
+em escala.
+
+**E o que o resultado decide:** se nada quebrar, o bloqueio de zoom passa a ser
+uma escolha revisável, e o que a sustenta é só o argumento do toque acidental —
+que é bom e é dele. Se quebrar, o bloqueio passa a ser a única coisa que segura
+a tela de pé, e isso é um fato que ninguém sabe hoje. **Em nenhum dos dois casos
+a decisão é minha:** o argumento escrito no fonte é do produto, e revê-lo é
+decisão do dono.
