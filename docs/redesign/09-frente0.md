@@ -11,6 +11,10 @@ frente 1 achou a quinta (`S.promoPendente`) e o coordenador a confirmou no
 código no meio desta entrega. Ela entrou na **mesma** migração, pela regra que o
 plano escreve — duas migrações pagam os portões duas vezes. Está no §1.5.
 
+Depois disso o dono respondeu a ceia, que eu tinha recusado inventar, e ela
+entrou numa **segunda** migração, a **10 → 11** — a 10 já estava gravada, e
+migração não se reescreve. Está no §7, com o alvo calórico medido.
+
 Nenhuma linha deste arquivo tem estimativa de prazo. Onde não houve medição,
 está escrito que não houve.
 
@@ -24,9 +28,9 @@ está escrito que não houve.
 
 | | antes (`39d2fdb`) | depois (`HEAD`) |
 |---|---:|---:|
-| `tests/fluxo/` | 514 | 516 |
-| `tests/dominio/` | 372 | 425 |
-| total | 886 | 941 |
+| `tests/fluxo/` | 514 | 517 |
+| `tests/dominio/` | 372 | 437 |
+| total | 886 | 954 |
 | *unhandled rejections* da suíte de fluxo | 4 | 4 |
 
 **Medido** com `npm test` (que roda `vite build` no `pretest` — a suíte testa o
@@ -34,9 +38,13 @@ build, não o fonte). `npx tsc --noEmit` sai limpo. As quatro rejeições não
 tratadas (`createElementNS` ×2, `addEventListener` ×2) são as mesmas de antes:
 trabalho assíncrono chegando numa janela jsdom já fechada. Não mexi nelas.
 
-Os 372 de domínio **não ficaram vermelhos em momento nenhum** — e os 53 novos
-estão entre eles: `migracoes.test.ts` 27 → 41, `sincronia.test.ts` 36 → 51,
-`diario.test.ts` 13 → 37. Em fluxo, `dados.test.js` 19 → 21.
+Os 65 testes de domínio novos: `migracoes.test.ts` 27 → 51, `sincronia.test.ts`
+36 → 53, `diario.test.ts` 13 → 37. Em fluxo, `dados.test.js` 19 → 22.
+
+**Os 372 de domínio nunca ficaram vermelhos por erro meu.** Dezessete casos
+ficaram vermelhos uma vez, de propósito, quando a ceia entrou no plano: todos
+afirmavam "seis refeições" ou a lista ordenada delas, e o plano passou a ter
+sete. Era o alarme funcionando — ver §7.7 e §6.
 
 ---
 
@@ -388,16 +396,14 @@ esperando.
    `S.promoPendente` é a quinta — achada pela frente 1, confirmada pelo
    coordenador e por mim no código. Entrou na mesma migração. §1.5.
 
-1. **A ceia não existe no plano.** `PLANO_BASE`
-   (`src/dominio/nutricao/alimentos.ts:96-101`) tem **seis** refeições — `pre`,
-   `treino`, `pos`, `almoco`, `lanche`, `jantar` — e nenhuma ceia. A nota do
-   jantar diz, literalmente: *"Sem ceia obrigatória: o dia já fecha proteína e
-   energia com quatro refeições proteicas completas."* Então "a ceia conta na
-   adesão" **não é mudança de código**: é o dono acrescentar a refeição ao plano
-   (o app já tem `CTX.novaRefeicao`), e aí ela conta sozinha, inclusive para
-   trás, porque o denominador é o plano. Deixei provado por teste e **não
-   inventei a ceia**: ninguém prescreveu horário nem itens, e inventar a
-   prescrição do nutricionista não é meu lugar. Ver §4.
+1. **A ceia não existia no plano.** `PLANO_BASE` tinha **seis** refeições —
+   `pre`, `treino`, `pos`, `almoco`, `lanche`, `jantar` — e nenhuma ceia. A nota
+   do jantar dizia, literalmente: *"Sem ceia obrigatória: o dia já fecha proteína
+   e energia com quatro refeições proteicas completas."* Então "a ceia conta na
+   adesão" não era mudança de aritmética: o denominador é o plano, e faltava a
+   refeição. **Não a inventei** — ninguém tinha prescrito horário nem itens. O
+   dono respondeu depois (copo de leite com duas colheres de Neston), e aí ela
+   entrou, pela migração 10 → 11: **§7**.
 2. **As porções acima de 1 já estão na tela.** `PORCOES` em
    `src/ui/folhas/refeicao.jsx:14` oferece ½, ¾, cheia, **1¼ e 1½**. O plano
    dizia certo que não pedem migração, mas não dizia que **já existem** — então a
@@ -594,10 +600,13 @@ portão, não serviria para nada.
 
 ## 6 · O que toquei fora do que era meu, e o erro de staging
 
-**Quatro linhas, em dois arquivos de `tests/fluxo/`.** As duas migrações de forma
-tornam isso inevitável: um teste que afirma a forma antiga de um campo
-persistido fica vermelho quando a forma muda. Em cada caso mudei **só a
-asserção de forma**, nunca o nome do teste nem o que ele protege.
+**Nove linhas removidas e catorze acrescentadas, em três arquivos de
+`tests/fluxo/`** — `fusao.test.js`, `promocao.test.js` e `turno.test.js`;
+`dados.test.js` é meu e não conta aqui. **Medido** com
+`git diff --stat 39d2fdb..HEAD`. Mudar a forma de um campo persistido — ou o
+conteúdo da prescrição — torna isso inevitável: um teste que afirma a forma
+antiga fica vermelho. Em cada caso mudei **só a asserção**, nunca o nome do teste
+nem o que ele protege.
 
 1. **`tests/fluxo/fusao.test.js`, uma linha.** *"remover uma refeição limpa o que
    era do dia junto"* afirmava `S.dia.done.lanche === 1`. Trocado pela
@@ -613,11 +622,35 @@ asserção de forma**, nunca o nome do teste nem o que ele protege.
    nove capacidades, então não toquei em mais nada dentro dele: os 9 casos
    continuam 9, verdes.
 
+3. **`tests/fluxo/fusao.test.js`, três linhas** (as outras três, da ceia).
+   Afirmavam `S.comida.plano.length === 6` em "plano nutricional semeado", "a
+   nutrição nasce da prescrição" e "apagar o histórico não apaga o plano
+   nutricional". Passaram a comparar com `a.E('PLANO_BASE.length')` — o que elas
+   protegem é *"o plano nasce da prescrição inteira"*, e contra a prescrição é
+   que elas devem medir. **Não voltam a envelhecer** na próxima refeição.
+4. **`tests/fluxo/turno.test.js`, uma linha e meia.** A lista ordenada do turno
+   da noite ganhou `'21:30 ceia'`, e o `linhas.length === 6` passou a
+   `=== ordem.length`. O que o teste protege — o pré e o treino andam, o café
+   fica às 8h, o jantar sai de dentro da sessão — está intacto, e a ceia das
+   21:30 comprova de lado que ela não é empurrada pela sessão da noite.
+
+**E seis asserções em três arquivos de `tests/dominio/`, que são meus:**
+`nutricao.test.ts` (seis refeições → sete, 36 alimentos → 37, e a semente
+comparada com `PLANO_BASE.length`), `turno.test.ts` (as três listas ordenadas) e
+`diario.test.ts`. Neste último fiz mais que adaptar: o **"dia cheio" estava
+escrito à mão** (`{ pre, treino, pos, almoco, lanche, jantar }`) e a ceia o
+transformou num dia com uma refeição faltando, enquanto o teste continuava
+chamando aquilo de "comeu tudo". Passou a ser derivado do plano
+(`todoOPlano(treino)`), e os denominadores saem de `refs.length` em vez de `6`
+literal. **Esse era o defeito real**: não o número, mas a lista congelada à mão
+num teste que afirma "tudo".
+
 **Conferi** com `grep` em toda a pasta que não havia outra linha afirmando as
-formas antigas. Deixar a suíte vermelha para honrar a fronteira de arquivo
-serviria à letra contra o propósito dela, que é não colidir com outro agente — e
-a frente 1, que corre junto, só escreve em `docs/redesign/`. Fica registrado
-aqui, com o diff descrito linha por linha, para o coordenador rever.
+formas antigas nem a contagem antiga. Deixar a suíte vermelha para honrar a
+fronteira de arquivo serviria à letra contra o propósito dela, que é não colidir
+com outro agente — e a frente 1, que corre junto, só escreve em
+`docs/redesign/`. Fica registrado aqui, com o diff descrito linha por linha,
+para o coordenador rever.
 
 **O erro de staging, e o que mudou.** O commit `2a634b5` levou
 `docs/redesign/09-frente1-lugares.md`, da frente 1, porque eu usei `git add -A`.
@@ -627,7 +660,181 @@ antes. O que estiver fora de `src/dominio/**`, `src/main.jsx`, `tests/dominio/**
 `tests/fluxo/dados.test.js` — e, pelas quatro linhas acima, `fusao.test.js` e
 `promocao.test.js` — fica de fora.
 
-## 7 · Os commits
+## 7 · A ceia — a migração 10 → 11
+
+Chegou depois do resto desta frente: o dono respondeu **copo de leite com duas
+colheres de Neston**. Eu tinha recusado inventá-la (§2 item 1), e a recusa
+estava certa — `PLANO_BASE` tinha seis refeições e a nota do jantar dizia "Sem
+ceia obrigatória".
+
+Entra numa migração própria, **10 → 11**, e não na 9 → 10: a 10 já estava
+gravada e migração não se reescreve (§3.5 do plano).
+
+### 7.1 · O que entrou
+
+| | onde |
+|---|---|
+| `neston` no catálogo | `src/dominio/nutricao/alimentos.ts:45` |
+| a refeição `ceia` no `PLANO_BASE` | `src/dominio/nutricao/alimentos.ts:126` |
+| a nota do jantar, que ficou falsa | `src/dominio/nutricao/alimentos.ts:114` |
+| `CEIA_PLANO_11` e `migraPlano11` | `src/dominio/migracoes.ts:734` e `:746`, com `PLANO_ATUAL = 11` |
+| ligada nas duas cadeias | `src/main.jsx:442` (boot) e `:3643` (importação) |
+| fixture do plano 10 | `tests/dominio/fixtures/estado-plano-10.json` |
+
+A ceia: `{ id: 'ceia', t: '21:30', n: 'Ceia', tag: 'ANTES DE DORMIR', quando:
+'sempre', itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 30 }] }`.
+
+**O que é de onde, para ninguém confundir base com suposição:**
+
+- **250 ml de leite** — é a porção que o próprio plano dele já usa, em `pos` e em
+  `lanche`, as duas com `q: 250`. **Conferi** nas duas.
+- **30 g de Neston** — a porção que o rótulo chama de "2 colheres de sopa". Não
+  achei fonte melhor dentro do repositório: nenhuma outra refeição tem convenção
+  de colher (`aveia` 40 g, `pasta` 10 g, `leitepo` 10 g são quantidades, não
+  colheres). **Não medi** colher nenhuma.
+- **`t: '21:30'`** — **SUPOSTO pelo coordenador, não prescrito pelo dono.** Ele
+  disse o que come, não a que horas. Está dito no comentário do código
+  (`alimentos.ts:118-122`) e é trivial de trocar, porque o horário só decide a
+  posição da linha na timeline, que `refeicoesDeHoje` ordena por relógio. **Não
+  medido, não prescrito: suposto.**
+- **`tag: 'ANTES DE DORMIR'`** — escolhida por mim na gramática das outras
+  (`RÁPIDO E FUNCIONAL`, `REFEIÇÃO FORTE`, `PRATO PRINCIPAL`, `GRANDE
+  REFEIÇÃO`, `INTRA-TREINO`). Palavra de superfície; a frente 3 é dona da voz.
+- **A `nota`** também é minha, e descritiva de propósito: diz o que é e de onde
+  vêm as duas quantidades. **Não inventei razão nutricional nenhuma** — nenhum
+  profissional escreveu por que a ceia entrou.
+
+**Os valores do Neston estão marcados no código como PENDENTES DE CONFERÊNCIA
+contra a embalagem**, com o motivo ao lado (`alimentos.ts:36-45`): ~397 kcal,
+~9,5 g de proteína, ~78 g de carboidrato, ~4,5 g de gordura por 100 g. Vieram de
+segunda mão e **ninguém leu o rótulo**. O que eu pude medir, e medi: os macros
+fecham com o kcal declarado dentro de **1,7%** (9,5×4 + 78×4 + 4,5×9 = 390,5
+contra 397), que é a folga normal de arredondamento e fibra num rótulo.
+**Consistência interna não é conferência**, e o comentário no código diz isso.
+
+Importa porque o alvo calórico é **calculado** do plano: valor errado aqui
+contamina o alvo do dia e, por ele, o ledger do ajuste calórico — que audita
+decisões de corte contra a ingestão da época.
+
+**A nota do jantar.** Era *"Sem ceia obrigatória: o dia já fecha proteína e
+energia com quatro refeições proteicas completas."* Ficou falsa. Reescrita para
+*"Quatro refeições proteicas completas já fecham proteína e energia até aqui. A
+ceia entrou depois e é acréscimo, não substituição: nada aqui foi reduzido para
+ela caber."* — a razão nutricional que ela registrava continua lá, e a frase
+nova é verificável: **não reduzi nada** em refeição nenhuma.
+
+### 7.2 · O alvo calórico, medido
+
+O coordenador pediu medido e não suposto. **Medido** com `totalDoDia` do próprio
+domínio, sobre `ALIMENTOS_BASE`, e sob asserção em
+`tests/dominio/migracoes.test.ts` (*"a ceia sobe o alvo do dia em 271,6 kcal —
+medido, não suposto"*), partindo da fixture do plano 10:
+
+| dia | alvo antes | alvo depois | delta |
+|---|---:|---:|---:|
+| treino | 3.007,1 kcal | 3.278,7 kcal | **+271,6 (+9,03%)** |
+| descanso | 2.844,1 kcal | 3.115,7 kcal | **+271,6 (+9,55%)** |
+| treino + alta demanda | 3.102,1 kcal | 3.373,7 kcal | **+271,6 (+8,76%)** |
+
+A ceia sozinha: **271,6 kcal · 10,85 g P · 35,15 g C · 9,6 g G** — 152,5 do leite
+(250 ml × 61 kcal/100 ml) e 119,1 do Neston (30 g × 397 kcal/100 g). **A conta
+grosseira do coordenador batia:** ele estimou ~272 kcal, 152 + 119.
+
+O 3.007,1 não é só cálculo: é o número **congelado na fixture**, em
+`comidaHist[0].tot.kcal`, escrito pelo build do plano 10 num dia de treino com
+as seis refeições marcadas. O alvo "antes" está gravado em disco.
+
+**Este número é decisão dele e do nutricionista, não nossa.** O ledger do ajuste
+calórico (`S.ajusteHist`) foi construído sobre o alvo antigo, e um salto de ~9%
+no alvo muda o que "seguir o plano" significa. **Não medi** nenhuma consequência
+disso sobre as decisões de corte já tomadas — é leitura do `trocasDeAjuste` que
+ninguém pediu.
+
+### 7.3 · Os portões
+
+| portão | como |
+|---|---|
+| **tipo** | **nada a mudar, e conferi por quê:** a ceia usa só campos que `Refeicao` já tem e o Neston só campos de `Alimento`. Nenhum campo novo, nenhuma forma nova |
+| **migração + fixture** | `migraPlano11` (`migracoes.ts:746`) e `estado-plano-10.json`, gerado pelo build do plano 10 em `ba03f95^` com o app em execução — mesma técnica da fixture do plano 9 |
+| **fusão** | **nada a mudar, e isso é decisão:** o plano é documento, e documento não vira coleção por causa de uma refeição. Mas a janela entre aparelhos está sob teste — ver 7.5 |
+| **listas brancas** | **nenhuma chave de topo nova.** `comida` já está na asserção da exportação e na lista branca da importação, e o objeto inteiro passa. A migração roda na importação também, e isso está sob asserção: um backup do plano 10 restaurado sai com a ceia |
+| **`tsc --noEmit`** | limpo |
+| **total congelado** | nada reescrito — ver 7.4 |
+
+### 7.4 · O denominador, e o histórico intocado
+
+O denominador da adesão **vai de 6 para 7**, pelo caminho que o §6 já provava:
+`aderenciaDoDia` divide por `refeicoesDeHoje(plano de HOJE, …)`. Agora está
+provado com a ceia de verdade e sobre o dia congelado da fixture
+(`tests/dominio/migracoes.test.ts`, *"a ceia entra na conta do dia e muda o
+denominador do histórico congelado"*): o mesmo dia passa de **6/6 para 6/7**, e
+`tot.kcal` fica **idêntico**. **Nenhum byte do histórico foi reescrito.**
+
+Em dia de treino são 7 refeições; em dia de descanso, 5 — `pre` e `treino` são
+`quando: 'treino'`, e a ceia é `sempre`. **Conferi** executando
+`refeicoesDeHoje`: `pos almoco lanche jantar ceia` no descanso. E a ceia das
+21:30 **não é empurrada** por nenhum dos três turnos, inclusive o da noite, cuja
+sessão acaba por volta das 19:30 — está nas três listas ordenadas de
+`tests/dominio/turno.test.ts`.
+
+**O que a forma do dado NÃO distingue, e eu não escolhi calado:** remover uma
+refeição do plano a tira do array e **não deixa lápide**, então o dado não
+separa "nunca teve ceia" de "tirou de propósito". O que impede a migração de
+devolvê-la é o **portão de versão** — ela roda uma vez e nunca mais —, e isso
+está sob teste nominal (*"10→11 roda uma vez só, e por isso respeita quem apagou
+a ceia depois"*). **É garantia da versão, não da forma**, e a diferença importa
+num caso: restaurar um backup tirado **antes** da migração reinsere a ceia,
+porque aquele backup é do plano 10. Isso é o esperado de restaurar um backup
+antigo — ele traz o plano antigo —, mas fica dito em vez de descoberto.
+
+### 7.5 · A janela entre dois aparelhos, e por que ela se fecha sozinha
+
+O plano é documento: vem inteiro do lado com `mtime` mais novo. Durante a
+atualização, um aparelho ainda no plano 10 pode vencer o documento e o plano
+voltar a não ter a ceia. **Conferi o que acontece, e tem saída:** `plano` — a
+versão do formato — vem no **mesmo clone** que o documento, então o lado
+atrasado leva a versão de volta a 10, e o boot seguinte roda `migraPlano11` e
+devolve a ceia. Dois testes em `tests/dominio/sincronia.test.ts`.
+
+E a marca da ceia já feita **não se perde** nessa janela: o dia e o histórico são
+coleções e fundem por chave. `aderenciaDoDia` apenas ignora o id enquanto ele
+não está no plano ("refeição que não existe mais") e volta a contá-lo depois.
+
+### 7.6 · As duas cópias congeladas, e o teste que as amarra
+
+`CEIA_PLANO_11` (na migração) e a ceia do `PLANO_BASE` são **duas cópias que não
+se referenciam**, de propósito: migração lê o dado da época, nunca o código de
+hoje — é a mesma disciplina de `NOME_POS_PLANO_7` e `REVISAO_B_PLANO_8`.
+
+O risco disso é as duas populações nascerem diferentes: quem migrou recebe a
+cópia da migração, quem instala agora recebe a da base. Então há um teste que
+cobra que as duas descrevam a **mesma** ceia hoje — *"a ceia do aparelho migrado
+é a MESMA do aparelho novo"* —, e a mensagem dele diz o que fazer se ficar
+vermelho: **migração nova (11 → 12), não copiar o valor de um lado para o
+outro.**
+
+### 7.7 · O que não fiz, nesta parte
+
+- **Não conferi os valores do Neston contra a embalagem.** Não tenho a lata.
+  Ficaram marcados como pendentes, no código e aqui. É a única coisa desta
+  entrega que depende de alguém olhar um objeto físico.
+- **Não medi colher de sopa de Neston.** 30 g é a porção do rótulo, por
+  transitividade da mesma fonte não conferida.
+- **Não escolhi o horário da ceia** — o 21:30 é suposição do coordenador, e está
+  marcada como tal nos dois lugares.
+- **Não escrevi razão nutricional** na nota da ceia: ninguém prescreveu uma.
+- **Não medi** o efeito do alvo novo sobre as decisões de corte já registradas em
+  `S.ajusteHist`.
+- **Não mexi em `S.comida.ocultos` nem em `S.comida.alimentos`.** Se ele tiver
+  cadastrado um `neston` próprio, o dele vence em `catalogoAlimentos()`, e isso é
+  o certo. **Não medi** nem posso saber se é o caso no aparelho dele.
+- **Dezessete casos ficaram vermelhos uma vez**, todos afirmando "seis
+  refeições" ou a lista ordenada delas — em dois arquivos de `tests/fluxo/` que
+  não são meus e três de `tests/dominio/` que são. Adaptei as asserções e, onde
+  dava, fiz com que derivassem do plano em vez de contar à mão, para não
+  envelhecerem na próxima refeição. Ver §6, que tem a lista linha por linha.
+
+## 8 · Os commits
 
 | | |
 |---|---|
@@ -639,3 +846,7 @@ antes. O que estiver fora de `src/dominio/**`, `src/main.jsx`, `tests/dominio/**
 | `79372e5` | `poeComidaNoDia` |
 | `279c791` | o estado congelado do plano 9 entra pelo boot e sai migrado |
 | `967ec72` | `promoPendente` vira coleção com chave natural, na mesma migração |
+| `f346923` | esta entrega escrita |
+| `ba03f95` | a ceia no plano, e a migração 10 → 11 |
+| `df27e1b` | a migração 10 → 11 sob prova, com a fixture do plano 10 |
+| `e76a963` | a janela da ceia entre dois aparelhos se fecha sozinha |
