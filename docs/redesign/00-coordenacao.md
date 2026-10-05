@@ -686,6 +686,59 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         reescrever, para e escreve o porquê — essa decisão volta ao dono.
         Dono dos arquivos: `src/dominio/**`, `src/main.jsx`, `tests/dominio/**`
         e `tests/fluxo/dados.test.js` (só ele).
+        **ENTREGUE em 05/10** (`fe369d7` → `f346923`, 9 commits, sem coautoria).
+        `09-frente0.md`. **Conferi por conta própria antes de aceitar:** rodei
+        `npm test` (**941 passando**, 53 arquivos, fluxo 514 → 516, domínio
+        372 → 425, e os **mesmos 4** unhandled rejections de antes, não um a
+        mais), `npx tsc --noEmit` limpo, `PLANO_ATUAL = 10` com `migraPlano10`,
+        zero linha de coautoria, e li os diffs dos dois arquivos de fluxo fora
+        do escopo dela.
+        **A migração saiu com cinco mudanças numa só**, como o plano manda.
+        A quinta (`promoPendente` → coleção) ela resolveu **rejeitando a chave
+        natural que eu propus**: `day + sid` fundiria a mesma pergunta como duas
+        entradas, porque `day` é editável no meio do treino e ele responderia
+        duas vezes. Adotou `sid` sozinho. Conferi: `sid` é atribuído no
+        nascimento da sessão e nunca reatribuído (`grep '\.sid ='` não acha
+        nada). **A razão dela é melhor que a minha.**
+        **O total congelado não precisou ser reescrito**, e ela não parou: a
+        adesão já era leitura derivada (divide por `refeicoesDeHoje` do plano de
+        hoje; o congelado é `tot`, que a adesão não usa). A regra nova reconta
+        para trás sem tocar em byte, com teste — o mesmo dia fechado passa de
+        6/6 para 6/7 e `tot.kcal` fica idêntico. Era exatamente o cuidado que eu
+        pus no briefing, e ele se resolveu sozinho.
+        **Quatro defeitos de dado já embarcados, achados e consertados** (conferi
+        o primeiro contra `39d2fdb`, que não tinha `aderencia` em `sincronia.ts`
+        nenhuma vez): `aderencia` sumia na fusão do dia aberto; o dia aberto não
+        tinha carimbo nenhum; `fechaDia` perdia a hora da marca (carimbava todas
+        com a hora do fechamento — foi a fixture que mostrou); e a lápide da
+        refeição não tinha quem a escrevesse (`chaveDeRefeicaoFeita` existia na
+        fusão e nada no app a gravava). Mais um na promo, da mesma família do
+        bug da importação: **`finalizarSessao` apagava as perguntas guardadas de
+        OUTRAS sessões**, porque `S.promoPendente = null` varria o documento
+        inteiro.
+        **A fixture não foi digitada:** gerada rodando o build do `39d2fdb` no
+        harness, com relógio fixo, vivendo um dia pelos verbos do app e virando
+        a data. É o dado da época, não um objeto com a forma de hoje. Registro
+        em `tests/dominio/fixtures/LEIA.md`.
+      - [ ] **5.a'''' PENDENTE COM O DONO — a ceia não existe no plano dele.**
+        `PLANO_BASE` tem **seis** refeições (`pre`, `treino`, `pos`, `almoco`,
+        `lanche`, `jantar`) e a nota do jantar diz, textualmente, *"Sem ceia
+        obrigatória: o dia já fecha proteína e energia com quatro refeições
+        proteicas completas."* Conferi em `src/dominio/nutricao/alimentos.ts`.
+        Então **"a ceia conta na adesão" não é código**: é o dono acrescentar a
+        refeição, e ninguém prescreveu horário nem itens. A frente 0 não a
+        inventou, e fez certo.
+        Pior: mudar `PLANO_BASE` **não alcança o aparelho dele**, porque o plano
+        é documento persistido semeado da base. Para entrar no plano que já
+        existe, precisa de **outra migração**, com o conteúdo congelado dentro
+        dela. Perguntado a ele em 05/10.
+      - [~] **5.a''''' Decisão que a frente 0 tomou e que ele pode derrubar:**
+        **teto de 1 por refeição** na adesão (`Math.min(1, peso)`), com o
+        excedente medido à parte em `excessoDoDia`. Sem o teto, comer mais que o
+        plano aparecia como aderir *melhor* que aderir, e o recorte do histórico
+        contava o dia como cumprido pelo excedente sozinho. Com duas leituras
+        nada se perde. É aritmética que o nutricionista pode querer de outro
+        jeito, então fica dito.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
