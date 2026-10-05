@@ -831,6 +831,61 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         para a rejeição sumir.
         **Isto não é só higiene de teste:** é a disciplina de desligamento que a
         frente 2 vai precisar e que hoje não existe no app.
+      - [x] **CONSERTADO em 05/10: 4 → 0** (`3d28db2`, `17ab671`).
+        `09-desligamento.md`. **Conferi:**
+        `npx vitest run --project fluxo | grep -c "Unhandled Rejection"` → **0**;
+        `npm test` → **954 passando**, 53 arquivos, e a **linha de "Errors"
+        desapareceu** do relatório (antes dizia "Errors 4 errors"); o diff em
+        `tests/` é **só o `fechar()` do harness** (15 linhas), nenhuma
+        expectativa tocada; zero coautoria.
+        **A guarda de render era mesmo metade do problema, e agora se sabe por
+        quê.** As duas rejeições de `createElementNS` vinham de
+        `garanteBytesDoCorpo`, que volta de doze `await` depois do `close()` e
+        chama `render()` seis vezes. Mas as duas de `addEventListener` vinham da
+        **fila de re-render do próprio Preact** — `useState` agenda num
+        microtask, `useEffect` espera a pintura — e **nenhuma guarda em
+        `render()` alcança isso, porque não passa por lá**. É a explicação de por
+        que a tentativa anterior piorou: silenciou o caminho visível e deixou o
+        invisível. Desmontar alcança os dois, e por mecanismo: quem executa
+        pendência no Preact confere `_parentDom`, que o unmount anula.
+        O conserto: `desmontaDoApp()` em `raiz.jsx`, `CTX.desliga()` que trava o
+        render, para os três relógios e desmonta, nessa ordem; bail depois de
+        cada `await` em `garanteBytesDoCorpo`; e o `fechar()` chamando `desliga()`
+        antes de `w.close()`.
+        **Dois achados de método que valem mais que o conserto:**
+        1. **A primeira instrumentação dele mentiu** e dizia o contrário do
+           verdadeiro ("o render nunca é chamado depois do fechamento"). Causa: o
+           `treeshake: true` do `vite.config.js` removeu a função marcadora,
+           alcançável só por string via `__escopo`, e o Rollup dobrou o `if` em
+           código morto. **O sinal era os dois builds saírem com hash idêntico.**
+           Por isso `desliga` entrou em `CTX` e não em `window`. **Lição para
+           toda instrumentação futura neste repo:** conferir a string de
+           diagnóstico no bundle antes de acreditar na medida.
+        2. **Um bug de produção que a suíte NÃO pegaria**, introduzido e pego por
+           ele: `let desligado` tinha de ficar no topo do arquivo (linha 84), não
+           ao lado de quem o escreve (4677). `load()` roda na avaliação do
+           módulo quando `readyState` não é `'loading'` — script de módulo é
+           diferido, então em produção já é `'interactive'` (conferi a condição
+           em `main.jsx:4707`). Um `let` abaixo faria da primeira pintura um erro
+           de TDZ **em produção e não nos testes**, porque no jsdom o script é
+           inline e o `readyState` ainda é `'loading'`.
+        **Dez execuções limpas, e ele escreveu que isso NÃO prova** que a
+        intermitência acabou — a original aparecia uma vez em 24. O que mudou é
+        que a suíte deixou de ter a condição que o Vitest chama de *"might cause
+        false positive tests"*. O elo segue **suspeita, não medida**, e não dá
+        mais para medir: o nome do caso foi perdido e a causa foi removida.
+        **Descartado com medida, não por palpite:** `reconciliaFotos` e
+        `reconciliaCorpo` ficaram **sem** guarda — instrumentadas depois de cada
+        `await`, nenhuma volta depois do desligamento em nenhum dos 517 casos.
+        **Não medido, e registrado:** `CTX.desliga()` **nunca é chamado no app
+        real** — `pagehide`/`beforeunload` não foram ligados, de propósito, porque
+        desmontar em `pagehide` deixaria o app em branco ao voltar do cache de
+        navegação do iOS, que é como este app é usado. O verbo existe e hoje só o
+        harness usa. E `migracaochave.test.js` sobe 7 apps e chama `fechar()`
+        zero vezes — essas janelas nunca são desligadas; consequência não medida.
+        **Detalhe operacional para sessões futuras:** `console.log` de dentro do
+        jsdom **não aparece** no relatório do Vitest. Canal de diagnóstico tem de
+        ser `fs.appendFileSync`.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
