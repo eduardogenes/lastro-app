@@ -2,6 +2,9 @@
 // Regra 2 do projeto: nenhuma mudança pode quebrar o que já está salvo.
 import { test } from 'vitest';
 import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { app, DIA, FONTE } from './harness.js';
 
 // Formato original: só logs e done, sem sid, dur, deload, cardio, body ou carga.
@@ -448,6 +451,49 @@ test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
     assert.strictEqual(a.E('S.body[' + JSON.stringify(k) + '].length'), 1, k + ' voltou');
     assert.strictEqual(a.E('S.body[' + JSON.stringify(k) + '][0].v'), 10 + i,
       k + ' voltou com o valor dela, e não com o de outra grandeza');
+  });
+  a.fechar();
+});
+
+test('o estado congelado do plano 9 entra pelo boot e sai migrado', async () => {
+  // A migração roda no boot E na importação, pelo mesmo caminho — é a regra do
+  // `ARQUITETURA`. Os testes de domínio exercitam `migraPlano10` direto; este
+  // prova que ela está LIGADA na cadeia do boot, e com o dado da época: o
+  // arquivo é o estado inteiro que o build do plano 9 escreveu.
+  const cru = fs.readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dominio', 'fixtures', 'estado-plano-9.json'),
+    'utf8'
+  );
+  const era = JSON.parse(cru);
+  assert.strictEqual(era.plano, 9, 'a fixture é do plano 9');
+  assert.deepStrictEqual(Object.keys(era.body).sort(), ['cintura', 'peso']);
+  assert.deepStrictEqual(era.dia.done, { pos: 1, almoco: 1, lanche: 1 }, 'a marca era o literal 1');
+
+  const a = await app({ estado: cru, agora: new Date(era.dia.data + 'T10:00:00').getTime() });
+  await a.esperar();
+
+  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'), 'a cadeia inteira roda no boot');
+  assert.strictEqual(a.E('S.plano'), 10);
+
+  const meiaNoite = new Date(era.dia.data + 'T00:00:00').getTime();
+  assert.deepStrictEqual(a.J('S.dia.done'),
+    { pos: meiaNoite, almoco: meiaNoite, lanche: meiaNoite },
+    'as três marcas ganharam o instante mais antigo compatível com a data');
+
+  assert.deepStrictEqual(Object.keys(a.J('S.body')).sort(), [
+    'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso', 'cintura', 'peso'
+  ], 'as cinco chaves da bioimpedância existem');
+  assert.deepStrictEqual(a.J('S.body.peso'), era.body.peso,
+    'e a pesagem da manhã atravessa intocada: ela é outro registro');
+  assert.deepStrictEqual(a.J('S.body.bioPeso'), [], 'a da balança começa vazia');
+
+  assert.deepStrictEqual(a.J('S.comidaHist'), era.comidaHist,
+    'o histórico já tinha instante, e migração não reescreve o que está certo');
+
+  // e as telas abrem com ele, que é o que a regra 2 cobra
+  ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (t) {
+    a.aba(t);
+    assert.ok(a.doc.getElementById('app').innerHTML.length > 600, 'aba ' + t + ' vazia');
   });
   a.fechar();
 });
