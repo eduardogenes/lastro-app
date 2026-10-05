@@ -642,7 +642,17 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       | P7 | "não comi" conta como dia conhecido | **sim** — o portão de 11 em 14, que nunca abriu, passa a ser alcançável |
       | P8 | porções | **com uma acima de 1**, para "comi mais que o plano" |
 
-- [!] 5.a'' **Dois pontos a conferir com ele antes de virarem código:**
+- [x] 5.a''' **Os dois pontos, respondidos em 05/10:**
+      1. **O peso da bioimpedância é outro registro**, separado da pesagem da
+         manhã: ele pesa numa balança e mede na outra, em horas diferentes. Os
+         dois convivem de propósito, e a migração abre as cinco chaves.
+      2. **A ceia e o "não comi" são posição do nutricionista**, não palpite
+         dele. Seguem como regra, inclusive para trás — a adesão histórica pode
+         ser recontada.
+      3. Por onde começar: **pela rede**, que não depende de decisão nenhuma. O
+         plano em linguagem direta vem depois dela andar.
+
+- [~] 5.a'' **Dois pontos a conferir com ele antes de virarem código:**
       1. **O "peso" da lista da bioimpedância.** `S.body.peso` já existe e é a
          pesagem da manhã. Se o peso da balança de bioimpedância for o mesmo
          registro, a migração abre quatro chaves novas, não cinco — e a tela não
