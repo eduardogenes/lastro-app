@@ -447,11 +447,24 @@ restantes — as seis telas da segunda rodada e o `prototipo.html` — são de 0
 diz, no que não mediu, que os lugares "descritos e não desenhados" ficaram de
 fora; eles passaram a existir depois.
 
-**Então corrijo o meu briefing em dois pontos:** o escuro **foi** medido — a
-auditoria diz "medi os dois temas: claro, e escuro por `data-theme='dark'`" — e o
-que não foi medido é **sete arquivos, nos dois temas**. E nos seis da segunda
-rodada o método da auditoria não funcionaria como está: `data-theme` não existe
-neles, o escuro é `.phone.dark`.
+**`07-plano.md` §1.3 #1 está preciso e eu o confirmo:** *"O que não existe é
+medida de contraste do escuro **nas telas novas**: não medido."* Confirmei a
+leitura: a auditoria mediu os dois temas (*"claro, e escuro por
+`data-theme='dark'`"*) nos dois arquivos que existiam quando ela rodou.
+
+**O que eu acrescento são três coisas:**
+
+1. **O buraco é de sete arquivos, não de seis, e nos dois temas.** O
+   `prototipo.html` também é posterior à auditoria (04/10) e também nunca foi
+   medido — nem no claro. O plano nomeia "as seis telas da segunda rodada"; o
+   protótipo, que é a tela única e a que o dono tocou, não está na conta de
+   ninguém.
+2. **O método da auditoria não roda nos seis como está escrito.** Ele troca
+   `data-theme="dark"`, e nos seis `data-theme` **não existe** — o escuro é
+   `.phone.dark`, e cada estado já está desenhado nos dois temas lado a lado.
+   Quem repetir a medição precisa saber disso antes, senão mede o claro duas
+   vezes.
+3. **A parte que é aritmética eu medi**, e está abaixo.
 
 **O que eu posso medir sem aparelho e sem navegador, e medi:** a razão de
 contraste **entre tokens**, pela luminância relativa da WCAG 2.x. Isto é
