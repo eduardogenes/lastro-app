@@ -473,3 +473,186 @@ coisa não desenhada nas duas direções (`07-plano.md` §4). E a fusão de dois
 aparelhos decide sem tela nenhuma: existe e é testada (`tests/fluxo/sincronia.test.js`,
 12 casos), e nenhuma direção desenhou o que se vê quando ela decide. Nenhum dos
 cinco lugares as recebe. Declarado.
+
+---
+
+## 4 · A sessão como modo, com saída própria
+
+O protótipo achou o defeito mais básico de todos: **a sessão não tinha saída.**
+Instalado no iPhone não existe barra de navegador (`prototipo.md`, descoberta
+1), e o dedo ficava preso dentro do treino, sem caminho para a comida.
+
+Esta seção define o modo. Ela **se encaixa** em `src/ui/navegacao.js`, que já
+está pronto e testado, e não o reinventa.
+
+### 4.1 · O que entra em modo de sessão
+
+| o que | onde está hoje |
+|---|---|
+| o registro da série — carga, repetições, RIR — e a régua | `src/ui/exercicio.jsx:84-98` (hoje dois campos de texto com `inputmode="decimal"`) |
+| o teclado próprio da carga, com vírgula | não existe hoje; é D8, teclado misto |
+| o descanso: começa em qualquer série completada, conta do instante-alvo | `tests/fluxo/cronometro.test.js` (12 casos), `tests/fluxo/serie.test.js` (8 casos) |
+| o mapa da sessão e a projeção de fim pelo ritmo do dia | `prototipo.html:577-590` |
+| as mudanças só do dia: séries, repetições, descanso, remover, mover, acrescentar, trocar | `src/ui/telas/edicaodia.jsx` + `src/ui/instrumento/edicao.jsx`; `CTX.edicaoDoDia` em `src/main.jsx:6238` |
+| a conta de volume na hora de mexer | `impactoSeries` em `src/main.jsx:2138`, renderizado em `src/ui/instrumento/edicao.jsx:41-45` |
+| a troca por máquina ocupada, com o histórico de cada substituto, e a foto do aparelho | `src/ui/exercicio.jsx:140-168`; `S.fotos` |
+| a dor, e o aviso de dor repetida | `tests/fluxo/sessao.test.js` (a hidratação recupera dor e substituto) |
+| pular (decisão registrada e reversível), aproximação, bi-set | `tests/fluxo/ciclo.test.js` (18 casos), `src/ui/exercicio.jsx:410` |
+| pausar, retomar, finalizar, corrigir a duração, a nota da sessão | `src/ui/telas/treino.jsx:74-81`; `finalizarSessao` em `src/main.jsx:870-904` |
+| o quadro do box durante a aula, e a lista rápida | `S.quadro` (`src/dominio/tipos.ts:510`); `src/ui/telas/treino.jsx:166-178` |
+| a correção no lugar: cada número guardado é botão dentro da tabela | não existe hoje; nasceu no protótipo (`prototipo.md`, descoberta 4) |
+| as entradas rápidas do descanso: pré‑treino, água, e o **atalho** de peso | `direcao.md`, M1‑2; o atalho **abre Corpo** e não escreve (5.a' P5) |
+| o histórico de um exercício, hoje alcançável só daqui | `src/ui/telas/historico.jsx`; achado 1 |
+
+### 4.2 · O que a sessão esconde
+
+| o que | por quê |
+|---|---|
+| **a barra dos cinco lugares** | O contrato de UX vigente manda o contrário — "**Continua visível durante o treino ativo**… Esconder a navegação aqui protegeria contra um risco que não existe" (`docs/LASTRO_UX_CONTRACT.md:98-101`, conferi). Mas o mesmo contrato, duas linhas acima, já manda que a barra "**some em destino de tela cheia** (o assunto é um só, e ela convidaria a sair no meio)" (`:94-95`). A sessão virando tela cheia cai na segunda regra, e a primeira cai — **e o que paga por ela é a saída.** A razão escrita da primeira regra era "sair para conferir a comida e voltar é um caminho legítimo"; a seta e a faixa entregam esse caminho, com um toque para cada lado |
+| o resumo do dia, as médias, os placares | é "como está?", e o modo responde "e agora?" |
+| **o aviso do vencimento da mudança do dia** | desenhado para aparecer no Agora da manhã daquele treino, "uma vez, e **nunca durante a sessão**" (`direcao-2.md` §3, pergunta 1) |
+| **a pergunta guardada sobre o programa**, enquanto houver sessão | já é assim, com guarda explícita: `abrePromoGuardada` tem `if (… \|\| S.sessao) return false` (`src/main.jsx:2613`, conferi), e o comentário diz por quê — "perguntar sobre o programa enquanto ele registra série é interromper a única coisa que o app existe para não atrapalhar" |
+| a atualização do app | "nunca durante a sessão" (`direcao.md`, tabela de tarefas) |
+
+### 4.3 · O que ela **não** pode esconder
+
+1. **A pergunta de 1h30.** Hoje ela aparece em **todas** as abas, treino
+   inclusive, e a ordem do código é deliberada: `CTX.faixaDaSessao` devolve a
+   pergunta **antes** do `if (view.aba === 'treino') return null`
+   (`src/main.jsx:6902-6907`, conferi). O comentário: "quem esqueceu de
+   finalizar costuma ter esquecido olhando justamente para ela". São 6 casos em
+   `tests/fluxo/esquecido.test.js`. **Dentro do modo, a pergunta continua.**
+2. **As linhas do dia tocáveis.** 5.a' P4: "sim, sempre". Seção 6.
+3. **O relógio de parede.** O protótipo descobriu que o app não tem relógio
+   nenhum e que a projeção de fim não se confere sem ele (`prototipo.md`,
+   descoberta 2). Dentro do modo, a hora fica no cabeçalho.
+4. **O erro de gravação.** A confirmação só aparece depois de gravar no
+   aparelho; se não gravou, a tela diz e guarda a escolha (M1‑10 e a regra 6 da
+   D). É o "nada de falso sucesso", que já é doutrina (`src/main.jsx`, "Não
+   existe estado 'não salvo'").
+5. **A própria saída.** A seta não some em nenhum estado do modo.
+
+### 4.4 · Como se entra — e entrar no modo não é começar a sessão
+
+Esta distinção é a espinha da seção, e ela é regra de produto, não detalhe:
+
+- **Entrar no modo é navegação.** Pode-se entrar e sair sem que exista sessão
+  nenhuma. É o estado M1‑7, "vazio da sessão: antes da primeira série".
+- **A sessão nasce na primeira série completa.** `abreSessao(dia)` é chamada
+  pela projeção quando carga e repetição ficam preenchidas, e a marca entra com
+  `ini: 'auto'` (`src/main.jsx:664-673`, conferi). Série incompleta não abre
+  sessão (`tests/fluxo/sessao.test.js`).
+- **O botão de iniciar nunca é pré‑condição para gravar série.** Ele só
+  acrescenta precisão ao tempo — está escrito no fonte, acima de `somaPausas`
+  (`src/main.jsx:486-487`, conferi), e são 18 casos em
+  `tests/fluxo/ciclo.test.js`. Quando ele é tocado, a marca entra com
+  `ini: 'manual'` (`iniciarSessao`, `src/main.jsx:509-520`).
+
+Portas de entrada:
+
+1. **O cartão de cima do Agora**, quando o treino ganha o topo: "Começar
+   agora", com a linha "Ou comece direto na primeira série" embaixo — conferi
+   em `momento-1.html:808-809`.
+2. **A faixa**, quando a sessão já existe: "Voltar à sessão" (conferi em
+   `prototipo.html:1087`; hoje é `FaixaDaSessao` com `onVolta`,
+   `src/ui/app.jsx:53-58`).
+3. **O pouso do app.** Abrir o app com treino em andamento **cai na sessão, não
+   no Agora**. Isso já existe e tem razão escrita: `view.aba = 'treino'` quando
+   `diaDaSessaoAberta()` devolve algo (`src/main.jsx:430-436`, conferi) —
+   "sair e voltar no meio de uma série é o caso mais comum de reabertura que
+   existe neste app, e devolvê-lo a HOJE cobrava dois toques com o celular na
+   mão suada". **Requisito: a regra fica, e o destino passa a ser o modo.** E
+   ela roda **depois** de `encerraSePreciso()`, que fecha a sessão vencida
+   antes de decidir a rota (`:427`) — a ordem importa e não se inverte.
+
+### 4.5 · Como se sai — três saídas, e elas não são a mesma coisa
+
+| saída | o que faz | onde está |
+|---|---|---|
+| **a seta do cabeçalho** | fecha o **modo** e deixa a **sessão aberta**. O rótulo acessível diz isso com todas as letras: "Voltar ao Agora, deixando a sessão aberta" | `prototipo.html:566`, com `go("agora")` em `:787` — conferi |
+| **o Voltar do sistema** | fecha **uma camada**: a folha aberta, ou o destino aberto de dentro do modo, ou o modo. Nunca fecha o app | `src/ui/navegacao.js`; 4.7 |
+| **encerrar** | mata a **sessão**, não o modo: grava a duração, marca o fim como manual, gira a rotação | `finalizarSessao` em `src/main.jsx:870-904`; `fechaSessao` em `:613-659` |
+
+E duas coisas que **não** são saída:
+
+- **Não existe botão de salvar.** Sair do modo não guarda nada porque tudo já
+  está guardado: `save()` é chamada em 59 lugares (`07-plano.md` §3.3) e cada
+  série completa vai para o histórico na hora (`src/main.jsx:661-663`: "Não
+  existe estado 'não salvo'"). São 26 casos em `tests/fluxo/sessao.test.js`.
+- **A sessão morre sozinha**, e isso é regra de produto. Sem série nova por
+  1h30 (`SESSAO_LIMITE = 90*60*1000`, `src/main.jsx:476`) a faixa **pergunta**;
+  passados mais 10 min de graça (`GRACA_ENCERRAMENTO`, `:484`) ela encerra
+  sozinha, com a duração indo **até a última série** e o fim marcado como
+  aproximado (`fechaSessao`, `:617-620`). A batida que faz a pergunta aparecer
+  sem reabrir o app está em `ligaBatida` (`:591-610`), e `encerraSePreciso`
+  (`:555-570`) fecha o que já passou da graça na abertura. Pausado não conta
+  como esquecido, porque pausar é aviso e não ausência (`paradaDaSessao`,
+  `:576-579`).
+
+### 4.6 · O que acontece ao voltar
+
+1. **Cai na mesma série.** A posição é derivada, não guardada:
+   `ondeEleEstava(estadosDoDia(s.day))` é o que alimenta o texto da faixa
+   (`src/main.jsx:6908`, conferi), e é a mesma leitura que o modo usa para
+   abrir onde ele parou. É o estado M1‑8.
+2. **O descanso é recalculado, nunca retomado de um contador.** É "agora menos
+   o instante da série", e é por isso que sobrevive ao bloqueio, a outro app e
+   ao fechamento (`tests/fluxo/cronometro.test.js`, 12 casos). `retomaDescanso()`
+   roda depois do render, porque a barra do cronômetro vive fora da árvore do
+   Preact (`src/main.jsx:439-441`, conferi).
+3. **A posição de leitura volta.** Quem manda nela é o app, não o navegador:
+   `history.scrollRestoration = 'manual'` em `src/ui/navegacao.js:131`, com a
+   medição que motivou isso escrita no comentário. O caso que cobra está em
+   `tests/fluxo/navegacao.test.js` ("voltar de um destino devolve a posição de
+   leitura").
+4. **Se a sessão morreu enquanto ele estava fora**, a faixa não está mais lá e
+   o Agora diz o que aconteceu, com a duração dita como aproximada e uma
+   pergunta só — "Está certo" / "Corrigir o fim" (conferi o estado M1‑13 em
+   `momento-1.html:796-800`).
+5. **O que ele registrou continua registrado.** Voltar não é confirmar.
+
+### 4.7 · O encaixe em `src/ui/navegacao.js` — uma camada nova, e nada mais
+
+Li o arquivo inteiro (151 linhas) e os nove casos de
+`tests/fluxo/navegacao.test.js`. O mecanismo é este: `camadasAbertas(view)` é
+uma **leitura** de `view`, feita na mesma ordem de prioridade que `telaCheia()`
+usa para escolher o que desenhar, só que ao contrário — `telaCheia()` devolve o
+primeiro `if` que casa, que é o que está **por cima**, então `camadasAbertas`
+empurra de baixo para cima (`src/ui/navegacao.js:41-42` e `:53-66`). Depois de
+cada `render()`, `sincronizaHistorico(n)` empurra uma entrada por camada nova e
+consome as que o botão do app fechou. Cada entrada carrega a própria
+profundidade (`{ lastro: k }`), e no `popstate` a pergunta é "em que
+profundidade o histórico está agora?" — sem contador de eventos, de propósito.
+
+**O que a sessão como modo exige, e é só isto:**
+
+1. **Uma camada nova, a mais funda das telas cheias.** Hoje a sessão ao vivo
+   **não é** camada: ela vive dentro da aba de treino, e o `view.sessao` que
+   aparece em `camadasAbertas` (`:55`) é **outra coisa** — é o detalhe de uma
+   sessão passada (`src/ui/telas/sessao.jsx`, cabeçalho: "O detalhe de uma
+   sessão passada"; e `telaCheia()` em `src/main.jsx:2108-2120` confirma a
+   cadeia). O modo entra como uma chave própria, empurrada **antes** de todas
+   as outras na lista — porque tudo que se abre de dentro dele (o histórico do
+   exercício, a câmera, o ajuste de foto, as folhas) fica **por cima** dele.
+   Em `telaCheia()`, pelo espelho, o modo é o **último** `if` antes do
+   `return null`.
+2. **Nada mais.** Quem abre uma camada continua só ligando a flag; quem fecha,
+   só desligando (`src/ui/navegacao.js:17-22`). A seta do cabeçalho desliga a
+   flag do modo, e `sincronizaHistorico` consome a entrada órfã sozinho — é
+   exatamente o caso que `tests/fluxo/navegacao.test.js` já cobra ("fechar pelo
+   botão do app não deixa entrada órfã no histórico").
+
+**O caso que a frente 0 precisa repontar, e o que ele passa a dizer:** "o
+Voltar sai de um destino de tela cheia" (`tests/fluxo/navegacao.test.js:120`)
+ganha o modo como destino. E o caso de `promocao.test.js` que diz "a decisão é
+um destino que guarda e devolve a posição de leitura" deixa de ser sobre uma
+camada: com a tela de decisão removida (D1), a lista mora em Prescrição, e
+guardar a posição de leitura passa a ser assunto de `vaiPara` — não de
+`camadasAbertas`.
+
+**Uma consequência que vale dizer em voz alta:** hoje a faixa da sessão
+**não** aparece dentro de destino de tela cheia, porque `src/ui/app.jsx:26`
+devolve `ctx.telaCheia()` antes de montar a faixa e a barra — conferi. Com o
+modo sendo tela cheia, a faixa não apareceria lá; é por isso que a pergunta de
+1h30 tem de ser desenhada **dentro** do modo (4.3, item 1), e não herdada da
+faixa.
