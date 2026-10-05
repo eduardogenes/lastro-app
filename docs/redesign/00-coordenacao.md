@@ -665,8 +665,16 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
 
 - [ ] 5.b O dono aprova o plano
 - [ ] 5.c Frentes disparadas conforme o plano
-- [ ] 5.d A rede do D13 antes de qualquer reescrita: inventário do que cada grupo
-      dos 513 testes de fluxo protege, uma linha cada (P3.j)
+- [~] 5.d A rede do D13 antes de qualquer reescrita → disparada em 05/10
+      (`a0889f72cb2470c26`), entrega `08-rede.md`. Cinco seções: uma linha por
+      arquivo em linguagem de capacidade (os nove nomes de `promocao.test.js`
+      como régua); a classificação que decide o custo — quantos casos entram por
+      verbo do modelo, e portanto podem ser repontados com a interface de hoje
+      de pé, contra quantos dependem da tela; **o ponto único de falha**, que é
+      a seção mais importante; o vão entre fluxo e domínio; e quais capacidades
+      **não têm verbo no `CTX`**, porque são essas que obrigam a entrar pela
+      tela e viram o trabalho de verdade.
+      Mandado conferir por conta própria o número de 203 que o curador mediu.
 
 ---
 
