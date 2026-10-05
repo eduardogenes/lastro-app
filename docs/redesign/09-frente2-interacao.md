@@ -2064,8 +2064,29 @@ afordâncias com ou sem sessão (§2). Os **178** `<svg>` com **0** nomeados e o
 `impactoDoMod` tem **uma** ramificação testada de quatro, com **um** chamador em
 `src/` (§9.1).
 
-**Uma correção que eu faço a mim mesmo**, porque é o tipo de coisa que passa: eu
-escrevi "**conta**" em todo lugar onde calculei geometria em vez de medir. A
+**Três correções que eu faço a mim mesmo**, porque elas são do mesmo tipo das
+seis de cima e seria desonesto listar só as dos outros:
+
+1. **Eu ia pedir `overflow-x: clip` por causa da animação de `voa()`**, pelo
+   defeito de `translateX(+N)` que a preferência do dono descreve. Fui conferir:
+   o `.ghost` é `position: fixed` (`prototipo.html:304`), e elemento fixo não
+   contribui para o transbordo rolável. **O defeito não é este caso.** Virou
+   requisito de vigilância, e no caminho eu achei a coisa que importava: as duas
+   cascas são incompatíveis — o protótipo rola por dentro com
+   `body { overflow: hidden }`, e o `body` do app é proibido de ter isso, com
+   caso e razão escrita (§1.3, R7).
+2. **Eu ia escrever que `.map` são vinte alvos de 30 px**, um ponto por série.
+   Fui conferir: é **um** botão de largura cheia, com rótulo que carrega o
+   número (`:577`). O defeito dele é de altura e de leitura, não de alcance, e
+   os pontos são decorativos (§8.2, item 2).
+3. **Eu ia escrever que, quando "última" e "agora" caem no mesmo botão, a
+   palavra que ganha é "agora".** Fui ler o ternário: ganha **`marca`**, isto é
+   "última" — enquanto a **pintura** que ganha é a de "agora", porque `.rep.now`
+   vem depois no CSS. O botão fica pintado de uma coisa e rotulado de outra, e é
+   o caso **mais comum** da régua (§5.2, item 2).
+
+**E a nota sobre o método**, porque é o tipo de coisa que passa: eu escrevi
+"**conta**" em todo lugar onde calculei geometria em vez de medir. A
 conta reproduziu **três** medidas independentes que outros fizeram — os 714 px
 de C3, os 49 × 64 px dos botões de C, e a captura de C1 com o 10 fora da tela —
 e é por isso que eu confio nela para estender ao que ninguém mediu (a régua do
