@@ -628,6 +628,31 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       **como isto chega ao app que existe** — a parte que só quem vê os dois
       mundos escreve —, o que fica para depois e os riscos. Sem estimativa de
       prazo: ninguém mediu.
+- [x] 5.a' **As oito do plano, respondidas em 05/10** (folha de respostas, versão
+      101). Registro literal:
+
+      | | pergunta | resposta |
+      |---|---|---|
+      | P1 | prazo da mudança do dia | **por posição: vence quando aquele treino voltar.** Sai de graça do modelo; nenhum carimbo novo no dado |
+      | P2 | o que acontece ao vencer | **vira "só daquele dia", dito e desfazível.** Fecha o F280 que a D1 tinha reaberto |
+      | P3 | campos da bioimpedância | **cinco, não treze:** peso (kg, obrigatório), massa muscular esquelética (kg, obrigatório), massa de gordura (kg, obrigatório), percentual de gordura (%, obrigatório), água corporal total (L, opcional) |
+      | P4 | linhas tocáveis durante o treino | **sim, sempre** |
+      | P5 | pesagem entre séries | **lá também: atalho no descanso** |
+      | P6 | a ceia conta na adesão | **sim** |
+      | P7 | "não comi" conta como dia conhecido | **sim** — o portão de 11 em 14, que nunca abriu, passa a ser alcançável |
+      | P8 | porções | **com uma acima de 1**, para "comi mais que o plano" |
+
+- [!] 5.a'' **Dois pontos a conferir com ele antes de virarem código:**
+      1. **O "peso" da lista da bioimpedância.** `S.body.peso` já existe e é a
+         pesagem da manhã. Se o peso da balança de bioimpedância for o mesmo
+         registro, a migração abre quatro chaves novas, não cinco — e a tela não
+         pede o peso duas vezes. Se for outro, duplica de propósito. Não
+         perguntado ainda.
+      2. **P6 e P7 estavam marcadas como "resposta do nutricionista"** e vieram
+         respondidas direto. A da ceia muda a adesão **para trás** (o total de
+         cada dia está congelado no histórico), então vale confirmar se é
+         posição dele ou do agente.
+
 - [ ] 5.b O dono aprova o plano
 - [ ] 5.c Frentes disparadas conforme o plano
 - [ ] 5.d A rede do D13 antes de qualquer reescrita: inventário do que cada grupo
