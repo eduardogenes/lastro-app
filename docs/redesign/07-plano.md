@@ -89,8 +89,9 @@ duas. Ficam cinco, nesta ordem.
 
 ### Frente 0 · A rede — prova e dado
 
-**Produz:** (a) a lista branca da importação fechada e sob asserção; (b) o
-inventário dos 513 casos de fluxo, um grupo por linha; (c) a superfície de verbos
+**Produz:** (a) a lista branca da importação fechada e sob asserção — **feita em
+`6035a5c`**; (b) o inventário dos casos de fluxo, um grupo por linha — **feito em
+`08-rede.md`**; (c) a superfície de verbos
 estável, com os casos que não dependem de pixel repontados e verdes **ainda sobre
 a interface de hoje**; (d) uma migração única, com fixture.
 
@@ -202,6 +203,13 @@ Custa uma lista e um teste, não depende de nenhuma resposta dele, e não é
 desenho.
 
 ### 3.2 · O inventário dos 513, e a forma que ele precisa ter
+
+> **Retificado em 05/10 por `08-rede.md`, que mediu em execução em vez de por
+> leitura de código.** São **514** casos, não 513 — o commit `6035a5c`
+> acrescentou um. E são **220** que não tocam a tela (177 por verbo, 43 por
+> leitura), não 203: rodando a suíte instrumentada, dez casos tocavam a tela sem
+> marcador textual nenhum. Os números abaixo são os da medição por leitura e
+> ficam como registro; os que valem estão em `08-rede.md`.
 
 O dono escolheu reescrever em bloco **com uma rede antes**: uma linha por grupo,
 dizendo o que o grupo protege. Medi a pasta para a rede ter forma:

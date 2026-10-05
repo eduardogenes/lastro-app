@@ -652,7 +652,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       3. Por onde começar: **pela rede**, que não depende de decisão nenhuma. O
          plano em linguagem direta vem depois dela andar.
 
-- [~] 5.a'' **Dois pontos a conferir com ele antes de virarem código:**
+- [x] 5.a'' **Dois pontos conferidos com ele em 05/10 — ver 5.a''' acima:**
       1. **O "peso" da lista da bioimpedância.** `S.body.peso` já existe e é a
          pesagem da manhã. Se o peso da balança de bioimpedância for o mesmo
          registro, a migração abre quatro chaves novas, não cinco — e a tela não
@@ -665,7 +665,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
 
 - [ ] 5.b O dono aprova o plano
 - [ ] 5.c Frentes disparadas conforme o plano
-- [~] 5.d A rede do D13 antes de qualquer reescrita → disparada em 05/10
+- [x] 5.d A rede do D13 antes de qualquer reescrita → disparada em 05/10
       (`a0889f72cb2470c26`), entrega `08-rede.md`. Cinco seções: uma linha por
       arquivo em linguagem de capacidade (os nove nomes de `promocao.test.js`
       como régua); a classificação que decide o custo — quantos casos entram por
@@ -675,6 +675,38 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       **não têm verbo no `CTX`**, porque são essas que obrigam a entrar pela
       tela e viram o trabalho de verdade.
       Mandado conferir por conta própria o número de 203 que o curador mediu.
+      **Entregue em 05/10** (`1624952`), 672 linhas. Conferi por conta própria,
+      antes de aceitar: 514 casos de fluxo, 372 de domínio, 38 em
+      `estilo.test.ts`, 180 chaves de `CTX` (19 + 161), `inp(el, i, k, pos)`
+      recebendo o elemento, `criarExercicio` lendo os seis campos, 110
+      `a.preencher`, `apagaMedida` nunca chamado por nome com o teste clicando
+      em `.crow-x`, `setDeload` pelo nome nu. Tudo confere.
+      **Três correções que ele trouxe e que o plano herdava erradas:**
+      (1) são **514** e não 513 — `6035a5c` acrescentou um caso;
+      (2) são **220** sem tela e não 203 — ele mediu em execução, com os
+      ajudantes do harness instrumentados, e achou dez casos que tocavam a tela
+      sem marcador textual; rodando só o filtro textual ele mesmo obteve 230,
+      então a execução corrige nos dois sentidos e o 203 carrega o erro oposto;
+      (3) **38 dos 372 de domínio não sobrevivem inteiros** — `estilo.test.ts`
+      lê as cinco folhas de CSS por nome, e 10 dos 38 citam classe, token ou
+      hexadecimal concreto. Os outros 28 são a especificação mobile do produto
+      em forma executável (`svh`, escala de 4, campo nunca abaixo de 16px,
+      nenhum ancestral do `sticky` virando scroll container) e valem **antes**
+      da primeira linha de CSS novo, não depois.
+      **O ponto único de falha: 103 casos, 20% da suíte** — 66 dos 193 nomes de
+      verbo são acionados por um caso só. Quatro arquivos são guarda única de
+      uma área inteira: `cronometro` (wake lock, AudioContext, bipe, vibração),
+      `navegacao` (History API), `publicacao` (service worker, manifesto,
+      `vercel.json`), `migracaochave` (a chave legada).
+      **As capacidades sem verbo**, que são o trabalho de verdade: sete funções
+      que recebem o elemento e não o valor — a pior é `inp(el, i, k, pos)`,
+      **registrar uma série**, a interação mais frequente do produto, sem porta
+      por valor —, quatro verbos que leem os argumentos da tela
+      (`criarExercicio`, `guardaCamposEdicao`, `atualizaPrescricao`, `buscaEx`),
+      onze `useState` fora do alcance do `__escopo`, e 27 casos que tocam a tela
+      sem chamar verbo nenhum. As 98 chaves de `CTX` que nenhum teste chama
+      **não** estão sem teste: são as que a interface chama no clique, e são as
+      mais baratas de blindar, porque o verbo já existe.
 
 ---
 
