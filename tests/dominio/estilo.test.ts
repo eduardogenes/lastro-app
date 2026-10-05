@@ -72,11 +72,49 @@ test('a paleta antiga não existe mais, nem por apelido', () => {
 test('tela cheia usa svh, não vh', () => {
   // 100vh no iOS é a viewport GRANDE, com a barra do navegador recolhida:
   // sobra um trecho rolável do tamanho da barra e o fundo do body aparece.
-  const alturas = [...css.matchAll(/(?:min-)?height:\s*100vh/g)];
-  alturas.forEach(m => {
-    const depois = css.slice(m.index!, m.index! + 200);
-    assert.ok(/100svh/.test(depois), '100vh sem 100svh logo abaixo como correção');
-  });
+  // `lvh` é essa mesma viewport por nome próprio, e `dvh` muda de tamanho
+  // enquanto se rola: os três têm o mesmo defeito e o mesmo conserto.
+  //
+  // O caso cobrava só metade. Ele iterava as ocorrências de `height: 100vh` e
+  // pedia `100svh` nos 200 caracteres seguintes — então uma folha reescrita SEM
+  // nenhum dos dois passava com ZERO iterações, e a tela cheia voltava a não
+  // ter altura estável sem ninguém ficar vermelho. A regra do projeto é
+  // `height: 100vh; height: 100svh;`, nessa ordem, e as três metades dela agora
+  // são cobradas: o `svh` existe, o fallback nunca fica sozinho, e o `svh`
+  // nunca fica sem o fallback antes dele (invertida, a ordem faz o fallback
+  // vencer em quem suporta os dois).
+  //
+  // TELA CHEIA é o que o caso promete, então o alcance é a altura de 100 da
+  // viewport, em qualquer das quatro unidades. Teto ABAIXO de 100 fica fora de
+  // propósito: o `max-height: 92dvh` da folha de baixo não é tela cheia, é
+  // limite, e tem a razão escrita ao lado dele ("com a barra do Safari aberta,
+  // 92vh passa da tela e o botão primário fica fora do alcance").
+  const sem = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const ALTURA = /(?<![\w-])((?:min-|max-)?height)\s*:\s*([^;{}]+)[;}]/g;
+  const GRANDE = /(?<![\w-])100(?:vh|lvh|dvh)(?![\w-])/;
+  const ESTAVEL = /(?<![\w-])100svh(?![\w-])/;
+  const PERTO = 200;
+
+  const decls = [...sem.matchAll(ALTURA)].map(m => ({
+    prop: m[1], valor: m[2], i: m.index!, texto: m[0].trim()
+  }));
+  // uma declaração que já traz os dois (um `min()`, por exemplo) se resolve
+  const grandes = decls.filter(d => GRANDE.test(d.valor) && !ESTAVEL.test(d.valor));
+  const estaveis = decls.filter(d => ESTAVEL.test(d.valor));
+  const soEstaveis = estaveis.filter(d => !GRANDE.test(d.valor));
+
+  assert.ok(estaveis.length > 0,
+    'nenhuma altura de tela cheia em svh: a folha nova sem nenhum dos dois passava calada');
+
+  assert.deepStrictEqual(
+    grandes.filter(g => !estaveis.some(e => e.prop === g.prop && e.i > g.i && e.i - g.i < PERTO))
+           .map(d => d.texto), [],
+    'viewport de 100 sem a MESMA propriedade em 100svh logo abaixo');
+
+  assert.deepStrictEqual(
+    soEstaveis.filter(e => !grandes.some(g => g.prop === e.prop && g.i < e.i && e.i - g.i < PERTO))
+              .map(d => d.texto), [],
+    '100svh sem o fallback em 100vh antes dele: invertida, a ordem faz o fallback vencer');
 });
 
 test('espaço vertical fica na escala de 4', () => {
@@ -93,15 +131,21 @@ test('espaço vertical fica na escala de 4', () => {
   //   3px  §3.14 vão das barras da sparkline
   //   9px  §3.10 padding do chip de CTA (a faixa é 9–12)
   //   17px      alinhamento óptico do ponto da timeline com a primeira linha
+  //   3px  também: o vão óptico do sufixo de unidade ao lado do volume
   const EXCECOES = [3, 5, 9, 17];
 
-  const arquivos = ['base.css', 'componentes.css', 'treino.css'];
+  // TODAS as folhas, e não as três que o caso lia. `protocolo.css` estava nas
+  // FOLHAS dos outros casos e fora desta lista: metade do espaçamento do app
+  // não passava pela régua. E o padrão casava só `-top|-bottom`, então
+  // `padding-left: 7px` e `margin-inline: 7px` passavam — os longhands
+  // laterais e os lógicos entram agora, com `row-gap`/`column-gap`.
+  const arquivos = FOLHAS;
   const fora: string[] = [];
 
   arquivos.forEach(f => {
     // sem comentários: eles citam medidas em prosa e virariam falso positivo
     const s = fs.readFileSync(path.join(RAIZ, 'src', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    const re = /(padding|margin|gap)(-top|-bottom)?:\s*([^;]+);/g;
+    const re = /(?<![\w-])(padding|margin|gap|row-gap|column-gap)(-top|-bottom|-left|-right|-inline|-block|-inline-start|-inline-end|-block-start|-block-end)?:\s*([^;{}]+)[;}]/g;
     let m;
     while ((m = re.exec(s))) {
       (m[3].match(/(?<![\w-])(\d+)px/g) || []).forEach(px => {
@@ -148,8 +192,64 @@ function regras(css: string, seletor: string): string {
                         '\\s*(?:,[^{]*)?\\{([^}]*)\\}', 'g');
   return [...css.matchAll(re)].map(m => m[1]).join('\n');
 }
+
+/**
+ * As regras de uma folha, cada uma com a sua LISTA de seletores separada.
+ *
+ * Existe para que um caso possa perguntar "existe regra que alcança `input` e
+ * declara 16px?" em vez de casar `input, textarea, select` nessa ordem, numa
+ * linha só. A ordem e o agrupamento de uma lista de seletores não são contrato
+ * de produto: renomear ou reordenar quebrava o teste sem quebrar nada na tela.
+ *
+ * O prelúdio de `@media`/`@supports` sai e o que eles embrulham é cobrado como
+ * qualquer outra regra — como em `seletores()`, logo abaixo. `@keyframes` sai
+ * inteiro: `0%`/`100%` não são seletor de nada.
+ */
+function blocos(css: string): { sels: string[]; corpo: string }[] {
+  const limpo = css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/@keyframes[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '')
+    .replace(/@[a-z-]+[^{]*\{/g, '');
+  const out: { sels: string[]; corpo: string }[] = [];
+  limpo.split('}').forEach(bloco => {
+    const p = bloco.split('{');
+    if (p.length !== 2) return;
+    const sels = p[0].split(',').map(x => x.trim()).filter(Boolean);
+    if (sels.length) out.push({ sels: sels, corpo: p[1] });
+  });
+  return out;
+}
+
+/**
+ * Os ancestrais de tudo que o app desenha: a folha, o cabeçalho do modo, a
+ * faixa, o cronômetro. São poucos e fixos — o app mora no `#app`, dentro do
+ * body — e é por isso que dois casos podem ser de FONTE em vez de DOM.
+ *
+ * UMA constante para os dois casos de ancestral de propósito. Eles olhavam
+ * árvores diferentes: o do bloco de contenção via `html|body|:root|*|#app`, e o
+ * do scroll container via só o `body`. Um `overflow: hidden` em `#app` matava o
+ * `sticky` da única saída da sessão e nenhum dos 38 casos pegava.
+ */
+const ANCESTRAL = /^(html|body|:root|\*|#app)([.:[][^ >+~]*)?$/;
+
+/** O seletor de um bloco, sem o pseudo-elemento, para casar com ANCESTRAL. */
+function raizDe(sel: string): string { return sel.replace(/::[a-z-]+$/, ''); }
 const indexHtml = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
 const mainJsx = fs.readFileSync(path.join(RAIZ, 'src', 'main.jsx'), 'utf8');
+// Os componentes de onde saem os SELETORES de quatro casos. Seis dos 28 casos
+// "genéricos" estavam presos a um seletor literal — renomear a classe quebrava
+// o teste sem quebrar o produto. Onde dá, o seletor passa a vir de quem o usa.
+const telacheia = fs.readFileSync(path.join(RAIZ, 'src', 'ui', 'instrumento', 'telacheia.jsx'), 'utf8');
+const primitivos = fs.readFileSync(path.join(RAIZ, 'src', 'ui', 'instrumento', 'primitivos.jsx'), 'utf8');
+
+/** O trecho de UM componente exportado, para não casar a marcação do vizinho. */
+function trechoDeComponente(fonte: string, nome: string): string {
+  const i = fonte.indexOf('export function ' + nome);
+  if (i < 0) return '';
+  const resto = fonte.slice(i);
+  const fim = resto.indexOf('export function', 1);
+  return fim > 0 ? resto.slice(0, fim) : resto;
+}
 
 test('a raiz recusa os gestos de zoom, e não só os botões', () => {
   // Estava só no `button`, e o toque duplo que incomoda é o dado num texto,
@@ -187,9 +287,24 @@ test('segurar o dedo na interface não abre menu nem seleciona', () => {
 test('mas campo e prosa continuam selecionáveis', () => {
   // sem isto não se seleciona o que se digitou para corrigir, que é o oposto
   // de comportamento de aplicativo
-  const m = base.match(/p,\s*\.ins-prosa,\s*input,\s*textarea\s*\{([^}]*)\}/);
-  assert.ok(m, 'a exceção existe e alcança os campos');
-  assert.match(m![1], /user-select:\s*text/);
+  //
+  // Casava `p, .ins-prosa, input, textarea` — quatro seletores, nessa ordem,
+  // numa regra só. Separar a exceção em duas regras deixava tudo selecionável e
+  // o caso VERMELHO. Agora a pergunta é por ELEMENTO, em qualquer agrupamento e
+  // qualquer ordem. `.ins-prosa` saiu do casamento de propósito: é nome de
+  // classe, e o redesenho renomeia classe — a metade da prosa fica cobrada pelo
+  // `p`, que é elemento e não se renomeia, mais a exigência de que a liberação
+  // continue alcançando ALGUMA classe de prosa, qualquer que seja o nome.
+  const LIBERA = /(?<![-\w])user-select:\s*text/;
+  const livres = blocos(css).filter(b => LIBERA.test(b.corpo));
+
+  ['p', 'input', 'textarea'].forEach(el => {
+    assert.ok(livres.some(b => b.sels.some(sel => sel === el)),
+      el + ' deixou de ser selecionável: não se corrige o que não se seleciona');
+  });
+
+  assert.ok(livres.some(b => b.sels.some(sel => /^\.[\w-]+$/.test(sel))),
+    'a prosa por classe também continua selecionável');
 });
 
 test('a barra deslizante toma o gesto, em vez de disputá-lo com a rolagem', () => {
@@ -197,9 +312,41 @@ test('a barra deslizante toma o gesto, em vez de disputá-lo com a rolagem', () 
 });
 
 test('o campo nunca fica abaixo de 16px, que é o que faz o Safari dar zoom', () => {
-  const m = base.match(/\ninput,\s*textarea,\s*select\s*\{([^}]*)\}/);
-  assert.ok(m, 'a regra dos campos existe');
-  assert.match(m![1], /font-size:\s*16px/);
+  // Com fonte menor o Safari dá zoom ao focar o campo, e a tela fica torta no
+  // meio de uma série. É a regra que mais se quebra sozinha, porque no desktop
+  // nada acontece.
+  //
+  // Casava `/\ninput,\s*textarea,\s*select\s*\{/`: a regra tinha de existir
+  // com os três elementos, nessa ordem, numa linha só. Separar por elemento
+  // deixava o 16px honrado em tudo e o caso VERMELHO. Agora são duas perguntas,
+  // as duas por elemento e as duas indiferentes a ordem e agrupamento: cada
+  // campo tem uma regra que o alcança INTEIRO com 16px ou mais, e nenhuma regra
+  // que alcance campo desce abaixo de 16.
+  const CAMPOS = ['input', 'textarea', 'select'];
+  const PX = /font-size:\s*(\d+(?:\.\d+)?)px/g;
+  const todos = blocos(css);
+
+  CAMPOS.forEach(el => {
+    // seletor que é o elemento cru: alcança TODO campo daquele tipo. Narrar com
+    // pseudo ou atributo deixaria algum campo fora do piso.
+    const piso = todos.filter(b => b.sels.some(sel => sel === el))
+      .flatMap(b => [...b.corpo.matchAll(PX)].map(m => Number(m[1])));
+    assert.ok(piso.length > 0, el + ' ficou sem font-size numa regra que o alcance inteiro');
+    assert.ok(Math.max(...piso) >= 16,
+      el + ': o maior font-size declarado é ' + Math.max(...piso) + 'px, abaixo do piso de 16');
+  });
+
+  // e nenhuma regra que alcance campo — por classe, por atributo, por ancestral
+  // — baixa o piso depois
+  const ALCANCA = new RegExp('(?:^|[\\s>+~])(' + CAMPOS.join('|') + ')(?![\\w-])');
+  const pequenas: string[] = [];
+  todos.forEach(b => {
+    if (!b.sels.some(sel => ALCANCA.test(sel))) return;
+    [...b.corpo.matchAll(PX)].forEach(m => {
+      if (Number(m[1]) < 16) pequenas.push(b.sels.join(', ') + ' → ' + m[0]);
+    });
+  });
+  assert.deepStrictEqual(pequenas, [], 'campo abaixo de 16px: o Safari dá zoom ao focar');
 });
 
 // ---------- a saída de uma tela cheia ----------
@@ -208,21 +355,62 @@ test('o voltar fica grudado no topo, porque é a única saída', () => {
   // O app não usa `history`: em PWA instalado não há botão do navegador nem
   // gesto de borda. Se este botão rolar para fora, sair exige rolar tudo de
   // volta — e ele rolava, em quatro dos cinco destinos.
-  const comp = fs.readFileSync(path.join(RAIZ, 'src', 'componentes.css'), 'utf8');
-  const topo = comp.match(/\.tc-topo\s*\{([^}]*)\}/);
-  assert.ok(topo, 'a regra existe');
-  assert.match(topo![1], /position:\s*sticky/);
-  assert.match(topo![1], /top:\s*0/);
-  assert.match(topo![1], /background:/, 'opaco: o conteúdo passa por baixo e precisa sumir');
+  //
+  // Casava `.tc-topo` literal, numa folha nomeada. O nome da classe não é
+  // contrato de produto: renomeá-la quebrava o teste sem quebrar nada. Agora o
+  // seletor vem de QUEM O USA — a barra que envolve o botão de voltar na casca
+  // da tela cheia — e a regra é procurada em todas as folhas.
+  const barra = telacheia.slice(0, telacheia.indexOf('onClick={aoVoltar}'));
+  assert.ok(telacheia.includes('onClick={aoVoltar}'),
+    'a casca da tela cheia perdeu o botão de voltar, que é a única saída');
+  const envolve = [...barra.matchAll(/<div[^>]*class="([^"]+)"/g)].pop();
+  assert.ok(envolve, 'o voltar não está dentro de nenhuma barra');
+
+  const classes = envolve![1].trim().split(/\s+/);
+  const grudada = classes.filter(c => /position:\s*sticky/.test(regras(css, '.' + c)));
+  assert.ok(grudada.length > 0,
+    'a barra do voltar (' + classes.join(' ') + ') não gruda: sair exigiria rolar tudo de volta');
+
+  const corpo = regras(css, '.' + grudada[0]);
+  assert.match(corpo, /top:\s*0/);
+  assert.match(corpo, /background:/, 'opaco: o conteúdo passa por baixo e precisa sumir');
 });
 
 test('nenhum ancestral do sticky vira scroll container', () => {
-  // Um `overflow: hidden` no body derrubaria o sticky em silêncio — hidden
-  // vira `auto` no outro eixo e cria o container. `clip` corta sem rolar.
-  const corpo = regras(base, 'body');
-  assert.match(corpo, /overflow-x:\s*clip/);
-  assert.ok(!/overflow(-x)?:\s*(hidden|auto|scroll)/.test(corpo),
-    'overflow que cria scroll container mata o voltar grudado');
+  // O `sticky` morre se QUALQUER ancestral tiver `overflow` diferente de
+  // `visible`: ele passa a se ancorar nesse ancestral, e se quem rola é a
+  // janela, o cabeçalho acompanha o conteúdo e some sob a barra do Safari.
+  // `overflow-x: hidden` sozinho também quebra, porque o outro eixo vira
+  // `auto`; `clip` corta sem criar scroll container.
+  //
+  // O caso olhava SÓ o `body`. Um `overflow: hidden` em `#app` mataria o sticky
+  // do cabeçalho do modo — que é onde mora a única saída da sessão — e nenhum
+  // dos 38 casos pegaria. Agora a árvore é a MESMA de 'nada entre a folha e a
+  // janela cria bloco de contenção' (a constante ANCESTRAL): os dois casos
+  // olham os mesmos ancestrais, porque a folha e o cabeçalho moram os dois no
+  // `#app`, dentro do body.
+  //
+  // A única exceção é o corpo TRAVADO enquanto uma folha está aberta: ali o
+  // scroll da página está desligado de propósito (`position: fixed; inset: 0`),
+  // não há sticky a ancorar, e a posição é devolvida ao fechar. Ela é nomeada
+  // por seletor para que um `overflow: hidden` NOVO em `body` ou `#app`
+  // continue sendo pego.
+  const TRAVA = 'body.ins-travado';
+  const SEGURO = /:\s*(?:visible|clip)(?:\s+(?:visible|clip))?\s*$/;
+
+  const culpadas: string[] = [];
+  blocos(css).forEach(b => {
+    const alcanca = b.sels.filter(sel => ANCESTRAL.test(raizDe(sel)) && sel !== TRAVA);
+    if (!alcanca.length) return;
+    (b.corpo.match(/overflow(?:-x|-y)?\s*:[^;}]+/g) || []).forEach(d => {
+      if (!SEGURO.test(d.trim())) culpadas.push(alcanca.join(', ') + ' → ' + d.trim());
+    });
+  });
+  assert.deepStrictEqual(culpadas, [],
+    'overflow que cria scroll container num ancestral mata o voltar grudado');
+
+  // e a goteira lateral continua cortada por `clip`, que não cria o container
+  assert.match(regras(base, 'body'), /overflow-x:\s*clip/);
 });
 
 // ---------- alvo de toque ----------
@@ -246,11 +434,24 @@ test('controle pequeno estende o ALVO sem crescer o desenho', () => {
 });
 
 test('o alvo do tick cresce só na vertical', () => {
-  // Na horizontal o vizinho é a repetição seguinte: crescer para o lado faria
-  // um toque na borda registrar o número errado.
-  const css = fs.readFileSync(path.join(RAIZ, 'src', 'componentes.css'), 'utf8');
-  const m = css.match(/\.ins-tick::after\s*\{([^}]*)\}/);
-  assert.match(m![1], /inset:\s*-\d+px\s+0/, 'o segundo valor tem que ser 0');
+  // Na horizontal o vizinho é a célula seguinte da mesma contagem: crescer para
+  // o lado faria um toque na borda registrar o número errado.
+  //
+  // Casava `.ins-tick::after` literal. Agora as duas classes vêm do componente
+  // que desenha a contagem, e o teste cobra também a PREMISSA que torna a regra
+  // necessária: que os ticks fiquem em linha. Se um dia eles virarem coluna, é
+  // este caso que tem de ser reescrito — e ele diz isso ficando vermelho.
+  const corpoTicks = trechoDeComponente(primitivos, 'Ticks');
+  const antesDoBotao = corpoTicks.slice(0, corpoTicks.indexOf('<button'));
+  const fila = [...antesDoBotao.matchAll(/<div[^>]*class="([^"]+)"/g)].pop();
+  const tick = corpoTicks.match(/<button[\s\S]*?class=\{'([a-z0-9-]+)'/);
+  assert.ok(fila && tick, 'o componente da contagem mudou de forma');
+
+  assert.match(regras(css, '.' + fila![1].trim().split(/\s+/)[0]), /display:\s*flex/,
+    'os ticks ficam em LINHA: é por isso que o alvo não pode crescer para o lado');
+  const alvo = regras(css, '.' + tick![1] + '::after');
+  assert.ok(alvo, '.' + tick![1] + '::after perdeu a área de toque estendida');
+  assert.match(alvo, /inset:\s*-[\d.]+px\s+0(?![\d.])/, 'o segundo valor tem que ser 0');
 });
 
 test('o toast é anunciado por leitor de tela', () => {
@@ -262,10 +463,21 @@ test('o toast é anunciado por leitor de tela', () => {
 });
 
 test('a tela cheia tem título de primeiro nível, e ele recebe foco', () => {
-  const tc = fs.readFileSync(path.join(RAIZ, 'src', 'ui', 'instrumento', 'telacheia.jsx'), 'utf8');
-  assert.match(tc, /<h1[^>]*class="ins-display tc-titulo/, 'o destino precisa de h1');
-  assert.match(tc, /tabindex="-1"/, 'alvo de foco sem entrar na tabulação');
-  assert.match(tc, /\.focus\(\{ preventScroll: true \}\)/,
+  // Casava `class="ins-display tc-titulo` — dois nomes de classe, nessa ordem,
+  // dentro da tag. O que não pode mudar é o h1 existir, ser alvo de foco e
+  // receber o foco sem mexer no scroll; como ele se chama é assunto do CSS.
+  //
+  // E de quebra as três asserções passam a ser sobre o MESMO elemento: antes,
+  // `tabindex="-1"` e o `.focus()` casavam em qualquer lugar do arquivo, então
+  // um tabindex num botão qualquer já satisfazia o caso.
+  const h1 = telacheia.match(/<h1\b[^>]*>/);
+  assert.ok(h1, 'o destino precisa de h1: sem a shell das abas não há título de primeiro nível');
+  assert.match(h1![0], /tabindex="-1"/, 'alvo de foco sem entrar na tabulação');
+
+  const ref = h1![0].match(/ref=\{([A-Za-z_$][\w$]*)\}/);
+  assert.ok(ref, 'o h1 não é a referência que recebe o foco');
+  assert.match(telacheia,
+    new RegExp(ref![1] + '\\.current\\.focus\\(\\{\\s*preventScroll:\\s*true\\s*\\}\\)'),
     'foco sem mexer no scroll, que já foi para o topo');
 });
 
@@ -376,13 +588,26 @@ test('abrir um exercício sabe onde parar de rolar', () => {
 test('o cronômetro de descanso não anima largura', () => {
   // Ele repinta 4× por segundo por até três minutos. Animar `width` refaz o
   // layout a cada quadro; a escala roda no compositor e desenha a mesma barra.
-  const comp = fs.readFileSync(path.join(RAIZ, 'src', 'componentes.css'), 'utf8');
-  const m = comp.match(/#tfill\s*\{([^}]*)\}/);
-  assert.ok(m, 'a barra do cronômetro existe');
-  assert.ok(!/transition:[^;]*width/.test(m![1]), 'largura animada custa layout por quadro');
-  assert.match(m![1], /transition:\s*transform/);
-  assert.match(mainJsx, /fill\.style\.transform = 'scaleX\(/);
-  assert.ok(!/fill\.style\.width/.test(mainJsx), 'o JS voltou a escrever largura');
+  //
+  // Casava `#tfill` literal, numa folha nomeada. O id vem agora de QUEM ESCALA:
+  // o teste acha no JS a variável que recebe `scaleX`, descobre de qual
+  // `getElementById` ela veio, confere que esse id existe no HTML e cobra a
+  // regra dele em qualquer folha. Renomear o id nos três lugares continua
+  // verde; animar largura em qualquer um deles fica vermelho.
+  const escala = mainJsx.match(/(\w+)\.style\.transform = 'scaleX\(/);
+  assert.ok(escala, 'o JS deixou de escalar a barra');
+  const achado = mainJsx.match(new RegExp(
+    '(?:const|let|var)\\s+' + escala![1] + "\\s*=\\s*document\\.getElementById\\('([\\w-]+)'\\)"));
+  assert.ok(achado, 'a barra escalada não vem de um getElementById com id achável');
+
+  const id = achado![1];
+  assert.ok(new RegExp('id="' + id + '"').test(indexHtml), 'o elemento ' + id + ' existe no HTML');
+  const corpo = regras(css, '#' + id);
+  assert.ok(corpo, 'a barra do cronômetro (#' + id + ') perdeu a regra dela');
+  assert.ok(!/transition:[^;]*width/.test(corpo), 'largura animada custa layout por quadro');
+  assert.match(corpo, /transition:\s*transform/);
+  assert.ok(!new RegExp(escala![1] + '\\.style\\.width').test(mainJsx),
+    'o JS voltou a escrever largura');
 });
 
 
@@ -519,21 +744,18 @@ test('nada entre a folha e a janela cria bloco de contenção', () => {
   // Os ancestrais são poucos e fixos: a folha mora no `#app`, dentro do body.
   // Por isso o teste é de FONTE e não de DOM: o defeito nasce de uma linha
   // nova em `html`, `body` ou `#app`, não da árvore.
-  const ANCESTRAL = /^(html|body|:root|\*|#app)([.:[][^ >+~]*)?$/;
+  //
+  // A árvore é a constante ANCESTRAL, compartilhada com 'nenhum ancestral do
+  // sticky vira scroll container'. Os dois casos olhavam árvores diferentes, e
+  // era por isso que `#app` ficava sem rede num dos dois.
   const PRESO = /(transform|filter|perspective|backdrop-filter|will-change|contain)\s*:/g;
 
   const culpadas: string[] = [];
-  css.replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/@media[^{]*\{/g, '')          // o wrapper sai; as regras de dentro ficam
-    .split('}')
-    .forEach(bloco => {
-      const p = bloco.split('{');
-      if (p.length !== 2) return;
-      const alcanca = p[0].split(',').some(s => ANCESTRAL.test(s.trim().replace(/::[a-z-]+$/, '')));
-      if (!alcanca) return;
-      const achados = p[1].match(PRESO);
-      if (achados) culpadas.push(p[0].trim() + ' → ' + achados.join(' '));
-    });
+  blocos(css).forEach(b => {
+    if (!b.sels.some(sel => ANCESTRAL.test(raizDe(sel)))) return;
+    const achados = b.corpo.match(PRESO);
+    if (achados) culpadas.push(b.sels.join(', ') + ' → ' + achados.join(' '));
+  });
 
   assert.deepStrictEqual(culpadas, [],
     'ancestral da folha com bloco de contenção: a folha para de ser fixa');
