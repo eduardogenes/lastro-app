@@ -10,7 +10,8 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { ALIMENTOS_BASE, PLANO_BASE } from '../../src/dominio/nutricao/alimentos';
 import {
-  aderenciaDoDia, fechaDia, janelaDoHistorico, padraoPorRefeicao, refeicoesDeHoje
+  aderenciaDoDia, diaInterpretavel, excessoDoDia, fechaDia, janelaDoHistorico, padraoPorRefeicao,
+  refeicoesDeHoje
 } from '../../src/dominio/nutricao/calculo';
 import type { DiaComida, DiaComidaHist } from '../../src/dominio/nutricao/tipos';
 
@@ -196,4 +197,111 @@ test('"não contei a água" desce como fato, e cai se houver copo', () => {
                        PLANO_BASE, cat, 1, 0, 1791090000000);
   assert.strictEqual(com.aguaNaoContada, undefined, 'contou: o fato não se sustenta');
   assert.strictEqual(com.agua, 6);
+});
+
+// ---------- as regras do nutricionista ----------
+// Três, e as três valem para trás. O que torna isso possível sem reescrever o
+// histórico é que a ADERÊNCIA é leitura derivada: ela lê `done` e `escala` do
+// dia congelado contra o PLANO DE HOJE, a cada chamada. O que está congelado é
+// `tot` — calorias e macros —, e a aderência não o usa.
+
+test('uma refeição que entra no plano muda o denominador de todo dia, sem tocar no congelado', () => {
+  // É a regra da ceia, e o motivo de ela valer para trás de graça: o dono
+  // acrescenta a refeição ao plano e a conta de ontem se refaz na leitura.
+  const h = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 } }),
+                     PLANO_BASE, cat, 1, 0, 1000);
+  const kcalCongelado = h.tot.kcal;
+
+  const seis = refeicoesDeHoje(PLANO_BASE, true, false);
+  assert.strictEqual(seis.length, 6, 'o plano de hoje tem seis refeições em dia de treino');
+  assert.strictEqual(aderenciaDoDia(h, seis), 1, 'seis de seis');
+
+  // o plano ganha uma refeição — a ceia, que hoje não existe no PLANO_BASE
+  const comCeia = JSON.parse(JSON.stringify(PLANO_BASE));
+  comCeia.push({ id: 'ceia', t: '22:00', n: 'Ceia', tag: '', quando: 'sempre', itens: [] });
+  const sete = refeicoesDeHoje(comCeia, true, false);
+  assert.strictEqual(sete.length, 7);
+
+  const a = aderenciaDoDia(h, sete)!;
+  assert.ok(Math.abs(a - 6 / 7) < 1e-9, 'o MESMO dia passa a ser seis de sete');
+  assert.strictEqual(h.tot.kcal, kcalCongelado,
+    'e o total congelado não é tocado: ele é o registro do que foi contado na época');
+});
+
+test('"não comi" conta o dia e vale zero naquela refeição', () => {
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const h = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 },
+                           como: { jantar: 'nao' } }), PLANO_BASE, cat, 1, 0, 1000);
+
+  assert.strictEqual(diaInterpretavel(h), true,
+    'dia honesto não pode valer menos que dia esquecido');
+  const a = aderenciaDoDia(h, refs)!;
+  assert.ok(Math.abs(a - 5 / 6) < 1e-9, 'cinco de seis: o jantar declarado não entra');
+});
+
+test('o dia em que ele não comeu nada é dia conhecido, com aderência zero', () => {
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const h = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 },
+                           como: { pre: 'nao', treino: 'nao', pos: 'nao', almoco: 'nao',
+                                   lanche: 'nao', jantar: 'nao' } }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(diaInterpretavel(h), true, 'o app sabe exatamente o que entrou: nada');
+  assert.strictEqual(aderenciaDoDia(h, refs), 0);
+  assert.strictEqual(h.tot.kcal, 0, 'e o total congelado não soma refeição que ele disse não ter comido');
+});
+
+test('"saí do plano" numa refeição conta como cumprida, com a procedência', () => {
+  // Ele comeu; só não foi aquilo. O app só tem os números do plano, e a marca é
+  // a procedência dizendo que o número é do prescrito.
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const h = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 },
+                           como: { almoco: 'fora' } }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(aderenciaDoDia(h, refs), 1);
+  assert.strictEqual(h.como!.almoco, 'fora', 'mas o dia carrega que o almoço não foi o do plano');
+  assert.ok(h.tot.kcal > 0);
+});
+
+test('a aderência não passa de 100%, e o excesso é medido à parte', () => {
+  // A régua de porções do app vai até 1½. Sem teto, comer mais que o plano
+  // aparecia como aderir MELHOR do que aderir — e `recorteDoHistorico` contava
+  // o dia como cumprido por causa do excedente, não do cumprimento.
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const todas = { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 };
+
+  const cheio = fechaDia(dia({ done: todas }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(aderenciaDoDia(cheio, refs), 1);
+  assert.strictEqual(excessoDoDia(cheio, refs), 0, 'seguiu o plano: nada acima');
+
+  const comeuMais = fechaDia(dia({ done: todas, escala: { almoco: 1.5 } }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(aderenciaDoDia(comeuMais, refs), 1,
+    'cumprir uma refeição é cumpri-la; mais que ela não é mais cumprimento');
+  const ex = excessoDoDia(comeuMais, refs)!;
+  assert.ok(Math.abs(ex - 0.5 / 6) < 1e-9, 'meia porção de seis refeições');
+
+  // e o excesso não compensa a falta: são duas leituras, não uma soma
+  const faltouEComeuMais = fechaDia(dia({ done: todas, escala: { almoco: 1.5, jantar: 0.5 } }),
+                                    PLANO_BASE, cat, 1, 0, 1000);
+  const a = aderenciaDoDia(faltouEComeuMais, refs)!;
+  assert.ok(Math.abs(a - 5.5 / 6) < 1e-9, 'metade do jantar continua pesando contra');
+  assert.ok(Math.abs(excessoDoDia(faltouEComeuMais, refs)! - 0.5 / 6) < 1e-9);
+});
+
+test('o excesso ignora a refeição que ele declarou não ter comido', () => {
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const h = fechaDia(dia({ done: { pos: 1, almoco: 1 }, escala: { almoco: 1.5 },
+                           como: { almoco: 'nao' } }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(excessoDoDia(h, refs), 0, 'não comeu: não há excedente a medir');
+});
+
+test('"não comi" não conta como refeição cumprida no padrão por refeição', () => {
+  // Esta leitura responde "qual refeição eu mais falho". Contar um pulo
+  // declarado como acerto a faria apontar para o lado errado.
+  const h: DiaComidaHist[] = [
+    fechaDia(dia({ data: '2026-01-10', done: { pos: 1, jantar: 1 } }), PLANO_BASE, cat, 1, 0, 1),
+    fechaDia(dia({ data: '2026-01-11', done: { pos: 1, jantar: 1 }, como: { jantar: 'nao' } }),
+             PLANO_BASE, cat, 1, 0, 2)
+  ];
+  const p = padraoPorRefeicao(h, PLANO_BASE);
+  const jantar = p.filter(x => x.id === 'jantar')[0];
+  assert.strictEqual(jantar.possiveis, 2, 'os dois dias entram no denominador');
+  assert.strictEqual(jantar.feitas, 1, 'e só um deles foi cumprido');
 });

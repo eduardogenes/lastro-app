@@ -86,15 +86,15 @@ contraintuitivo, eu digo por quê.
 |---|---|
 | o cartão de cima — a próxima coisa a fazer, e a regra que o escolhe (seção 3) | `CartaoFoco` em `src/ui/telas/hoje.jsx:59-70` |
 | a linha do dia de hoje, em ordem de relógio, com refeição e treino na mesma espinha | `src/ui/telas/hoje.jsx:100-127` + `src/ui/instrumento/timeline.jsx` |
-| a marca de refeição **de hoje** e a porção **de hoje** | `S.dia.done` e `S.dia.escala`; `marcaRefeicao` em `src/main.jsx:2055-2059`, `setEscala` em `:2067` |
-| a água de hoje | `S.dia.agua`; `setAgua` em `src/main.jsx:2060` |
+| a marca de refeição **de hoje** e a porção **de hoje** | `S.dia.done` e `S.dia.escala`; `marcaRefeicao` em `src/main.jsx`, `setEscala` no mesmo arquivo |
+| a água de hoje | `S.dia.agua`; `setAgua` em `src/main.jsx` |
 | o tipo de dia e o turno do treino, na linha do cabeçalho | `S.dia.turno`; o botão de estado em `src/ui/app.jsx:39-43`, a regra em `tests/fluxo/turno.test.js` (9 casos) |
 | a porta de entrada da sessão | hoje o cartão-foco aponta para a aba de treino (`src/ui/telas/hoje.jsx:68`) |
 | o placar do cardio da semana e o registro dele sem sair da tela | hoje em `src/ui/telas/treino.jsx:114-146`; a regra em `tests/fluxo/cardio.test.js` (10 casos) |
 | a contagem dos 14 dias que a regra lê | a `Sparkline` de 14 fatias, `src/ui/instrumento/primitivos.jsx:130` |
 | o convite da sessão de fotos quando faz 14 dias, e o convite da pesagem da manhã | `S.protocolo.sessoes`, `S.body.peso` |
 | a presença da aula, no dia da aula | `tests/fluxo/aula.test.js`, `tests/fluxo/aulaimport.test.js` |
-| a faixa da sessão aberta e a pergunta de 1h30 | `src/ui/instrumento/faixasessao.jsx`; `CTX.faixaDaSessao` em `src/main.jsx:6894-6915` |
+| a faixa da sessão aberta e a pergunta de 1h30 | `src/ui/instrumento/faixasessao.jsx`; `CTX.faixaDaSessao` em `src/main.jsx` |
 | o botão de Ajustes, no canto | `prototipo.html:978` |
 
 **Não possui:**
@@ -121,10 +121,10 @@ contraintuitivo, eu digo por quê.
 | o que | o dado, hoje |
 |---|---|
 | o calendário do mês e o dia a dia | `src/ui/telas/dados.jsx` (o calendário é o que sobrou em string, cabeçalho do arquivo) |
-| os dias de comida já fechados | `S.comidaHist` (`src/dominio/tipos.ts:541`); a virada em `fechaDiaDeComida`, `src/main.jsx:1871` |
+| os dias de comida já fechados | `S.comidaHist` (`src/dominio/tipos.ts`); a virada em `fechaDiaDeComida`, `src/main.jsx` |
 | as sessões registradas e o detalhe de uma sessão, com corrigir a duração e apagar o treino | `S.done`; `src/ui/telas/sessao.jsx` |
 | o registro retroativo de treino, com e sem séries, com e sem hora | `src/ui/telas/retroativo.jsx`; `tests/fluxo/retro.test.js` (9 casos) |
-| marcar um dia passado como descanso | `S.descanso` (`src/dominio/tipos.ts:600`) |
+| marcar um dia passado como descanso | `S.descanso` (`src/dominio/tipos.ts`) |
 | a hora de cada registro, e o "nunca inventa o que não mediu" | `tests/fluxo/horario.test.js` (14 casos) |
 | a folha de pôr o dia em dia — **o lugar**; a folha é da frente 2 | `momento-2.html`, estados 4 a 6 e 12 |
 | o dia com dois treinos levando à lista, em vez de abrir um em silêncio | `tests/fluxo/telas.test.js` |
@@ -155,13 +155,13 @@ comida, o detalhe da sessão, o retroativo, o descanso, a correção e o apagar.
 
 | o que | o dado, hoje |
 |---|---|
-| o peso, com uma medida por dia, aceitando vírgula, substituindo a do mesmo dia e podendo ser lançado em data bem anterior (nunca futura) | `S.body.peso`; o seletor de data em `src/main.jsx:3288-3302`; `tests/fluxo/corpo.test.js` (25 casos) |
-| a cintura, com data por medida e sem se misturar com o peso | `S.body.cintura` (`src/dominio/tipos.ts:481`) |
-| as medidas com fita, e **como ele mediu**, em texto dele | não existe hoje: `S.body` é `{ peso, cintura }`, fechado no tipo (`src/dominio/tipos.ts:481`) e na fusão (`src/dominio/sincronia.ts`) — conferi as duas chaves |
+| o peso, com uma medida por dia, aceitando vírgula, substituindo a do mesmo dia e podendo ser lançado em data bem anterior (nunca futura) | `S.body.peso`; o seletor de data em `src/main.jsx`; `tests/fluxo/corpo.test.js` (25 casos) |
+| a cintura, com data por medida e sem se misturar com o peso | `S.body.cintura` (`src/dominio/tipos.ts`) |
+| as medidas com fita, e **como ele mediu**, em texto dele | não existe hoje: `S.body` é `{ peso, cintura }`, fechado no tipo (`src/dominio/tipos.ts`) e na fusão (`src/dominio/sincronia.ts`) — conferi as duas chaves |
 | a bioimpedância, **cinco campos** (5.a', P3), com o **peso dela como registro separado** da pesagem da manhã (5.a''') | não existe hoje; é a migração da frente 0 |
 | as fotos do corpo: a sessão de fotos, o ajuste de enquadramento, a comparação | `S.protocolo`; `tests/fluxo/protocolo.test.js` (58 casos), `tests/fluxo/fotos.test.js` (20 casos) |
-| a leitura de gordura visual, respondida sobre o par de fotos | `S.gordura` (`src/dominio/tipos.ts:559`) |
-| o destrutivo das medidas, com o estrago delimitado em texto | `delBody` em `src/main.jsx:3370-3383` |
+| a leitura de gordura visual, respondida sobre o par de fotos | `S.gordura` (`src/dominio/tipos.ts`) |
+| o destrutivo das medidas, com o estrago delimitado em texto | `delBody` em `src/main.jsx` |
 
 **Não possui:**
 
@@ -189,11 +189,11 @@ comida?*
 
 | o que | o dado, hoje |
 |---|---|
-| o veredito da regra, com os números que o produziram, e os três portões (taxa, força, adesão) | `veredito` em `src/dominio/corpo.ts:173-235`, com `MIN_REGISTRADOS = 11` em `:135` (conferi); a tela em `src/ui/telas/dados.jsx:346-356` |
-| o passo de ±150 kcal e o saldo acumulado, com a procedência de cada passo | `S.ajuste` e `S.ajusteHist` (`src/dominio/tipos.ts:551-552`); `tests/fluxo/ajuste.test.js` (14 casos) |
+| o veredito da regra, com os números que o produziram, e os três portões (taxa, força, adesão) | `veredito` em `src/dominio/corpo.ts`, com `MIN_REGISTRADOS = 11` no mesmo arquivo (conferi); a tela em `src/ui/telas/dados.jsx:346-356` |
+| o passo de ±150 kcal e o saldo acumulado, com a procedência de cada passo | `S.ajuste` e `S.ajusteHist` (`src/dominio/tipos.ts`); `tests/fluxo/ajuste.test.js` (14 casos) |
 | a média semanal do peso e a taxa entre semanas | derivado de `S.body.peso` por `src/dominio/corpo.ts`; a mesma leitura aparece em Corpo |
-| a força estimada, a tendência e o sinal manual | `S.perfManual` (`src/dominio/tipos.ts:566`); `tests/fluxo/ritmo.test.js` |
-| as séries por músculo e a leitura das linhas **em conjunto**, que nomeia a inversão | `seriesPorMusculo` e `leituraDaSemana` em `src/dominio/volume.ts:77` e `:153`; o painel em `src/ui/telas/dados.jsx:220-225`; `tests/fluxo/leitura.test.js` (3 casos) |
+| a força estimada, a tendência e o sinal manual | `S.perfManual` (`src/dominio/tipos.ts`); `tests/fluxo/ritmo.test.js` |
+| as séries por músculo e a leitura das linhas **em conjunto**, que nomeia a inversão | `seriesPorMusculo` e `leituraDaSemana` em `src/dominio/volume.ts`; o painel em `src/ui/telas/dados.jsx:220-225`; `tests/fluxo/leitura.test.js` (3 casos) |
 | a retrospectiva do bloco | `src/ui/telas/retrospectiva.jsx` |
 | os padrões de comida | `direcao-2.md` §2 |
 
@@ -216,13 +216,13 @@ de "só leitura" seria mentir sobre essas duas.
 | o que | o dado, hoje |
 |---|---|
 | o programa dele e a rotação | `S.prog`, `S.rot`; `src/ui/telas/programa.jsx`; `tests/fluxo/telaprograma.test.js` (23 casos) |
-| o programa do treinador, congelado, e a diferença lida como troca | `PROGRAMA` em `src/dominio/programa.ts`; `difDoDia` em `src/main.jsx:2638` |
-| o histórico de mudanças do programa, com o motivo | `S.progLog`; `aplicaAoOficial` em `src/main.jsx:2550-2583` |
+| o programa do treinador, congelado, e a diferença lida como troca | `PROGRAMA` em `src/dominio/programa.ts`; `difDoDia` em `src/main.jsx` |
+| o histórico de mudanças do programa, com o motivo | `S.progLog`; `aplicaAoOficial` em `src/main.jsx` |
 | o catálogo de exercícios, o cadastro, o renome e o arquivado | `S.ex`; o renome em `src/ui/telas/historico.jsx:30-45`; `tests/fluxo/dados.test.js` |
 | o plano alimentar, a base de alimentos e as compras | `S.comida.plano`, `S.comida.alimentos`, `S.compras`; `src/ui/telas/comida.jsx` |
-| o padrão semanal (a cadência) | `S.cadencia`; hoje em `src/ui/telas/guia.jsx:160-182`, modo "o app" — conferi, e o teste diz por quê: "a cadência é ajuste, não prescrição" (`tests/fluxo/fusao.test.js:190`) |
+| o padrão semanal (a cadência) | `S.cadencia`; hoje em `src/ui/telas/guia.jsx:160-182`, modo "o app" — conferi, e o teste diz por quê: "a cadência é ajuste, não prescrição" (`tests/fluxo/fusao.test.js`) |
 | a revisão que chega com outro nome, perguntando antes de gravar | `tests/fluxo/aula.test.js`/`trocaprograma.test.js`; `prescricao.html`, estado 6 |
-| **a lista das mudanças do dia que esperam decisão, e que vencem** | `S.promoPendente` (`src/dominio/tipos.ts:584`); hoje a pergunta é `src/ui/telas/decisao.jsx` |
+| **a lista das mudanças do dia que esperam decisão, e que vencem** | `S.promoPendente` (`src/dominio/tipos.ts`); hoje a pergunta é `src/ui/telas/decisao.jsx` |
 | **a conta de volume de cada mudança que espera** (peça 3 da C) | seção 4 |
 
 **Não possui:**
@@ -236,7 +236,7 @@ de "só leitura" seria mentir sobre essas duas.
 
 Um botão no canto do Agora. **Possui:** a conta e a sincronia (`S.mtime`,
 `S.apagados`; `tests/fluxo/sincronia.test.js`, 12 casos), a cópia de segurança
-e a restauração (`src/main.jsx:3458-3486`; `tests/fluxo/dados.test.js`, 19
+e a restauração (`src/main.jsx`; `tests/fluxo/dados.test.js`, 19
 casos), apagar o histórico (`wipe()`), a versão e a atualização
 (`tests/fluxo/publicacao.test.js`, 13 casos), e a troca manual de tema (D10).
 
@@ -246,7 +246,7 @@ casos), apagar o histórico (`wipe()`), a versão e a atualização
 
 | o dado | dono | vista |
 |---|---|---|
-| peso do dia (`S.body.peso`, `src/dominio/tipos.ts:481`) | **Corpo** | Agora (o convite da manhã, o atalho do descanso); Semana (a média e a taxa) |
+| peso do dia (`S.body.peso`, `src/dominio/tipos.ts`) | **Corpo** | Agora (o convite da manhã, o atalho do descanso); Semana (a média e a taxa) |
 | média semanal e taxa | **ninguém guarda** — é derivado por `src/dominio/corpo.ts` | Corpo (no topo) e Semana (no veredito) |
 | dias com marca nos últimos 14 | **Agora** (o dia corrente, `S.dia`) e **Dias** (`S.comidaHist`) | Agora (os 14 quadradinhos) e Semana (o portão da adesão) |
 | marca de refeição | **Agora** para hoje; **Dias** para qualquer outro dia | — |
@@ -260,7 +260,7 @@ casos), apagar o histórico (`wipe()`), a versão e a atualização
 | duração da sessão | **Dias** (o registro em `S.done`) | sessão (o relógio ao vivo) |
 | ajuste calórico (`S.ajuste`) | **Semana** | Agora e Prescrição (o alvo do dia já ajustado) |
 | turno do treino (`S.dia.turno`) | **Agora** | Dias (o horário das refeições daquele dia) |
-| quadro da aula (`S.quadro`) | **a sessão**, e ao encerrar ele vira a nota em `S.done` (`src/main.jsx:645-651`) | Dias (a nota da sessão) |
+| quadro da aula (`S.quadro`) | **a sessão**, e ao encerrar ele vira a nota em `S.done` (`src/main.jsx`) | Dias (a nota da sessão) |
 
 **A regra que fecha esta seção:** se uma tela mostra um dado que não é dela,
 ela mostra **e não escreve**. A única exceção autorizada é o atalho de peso
@@ -342,7 +342,7 @@ Dentro de cada cartão moram quatro coisas que não têm segunda porta:
    mover histórico.
 3. **A correção do tipo de carga** por movimento — anilha por lado, dois
    halteres, barra livre, peso do corpo (`src/ui/exercicio.jsx:247-258`;
-   `setCarga` em `src/main.jsx:3822-3825`). São 11 casos em
+   `setCarga` em `src/main.jsx`). São 11 casos em
    `tests/fluxo/carga.test.js`, e o comentário do fonte diz que é "decisão de
    uma vez por movimento".
 4. **A troca por substituto com o histórico de cada opção**
@@ -357,7 +357,7 @@ quando ele for corrigir.
 
 **Proposta da frente 1** (proposta, não decisão): Prescrição › Programa ›
 Treino X já lista os exercícios com séries, repetições e descanso
-(`programaDia` em `src/main.jsx:6423-6453`). Cada linha ganha a porta para o
+(`programaDia` em `src/main.jsx`). Cada linha ganha a porta para o
 histórico daquele exercício, e o renome e o tipo de carga vão com ela. A
 correção de uma série passada ganha **duas** portas, porque são duas perguntas:
 em **Dias › detalhe da sessão** a unidade é o **dia** (corrigir a duração,
@@ -367,14 +367,14 @@ exatamente isso), e no **histórico do exercício** a unidade é a **série**.
 ### Achado 2 · As catorze regras de execução do treinador não têm lugar em nenhuma das duas direções
 
 Elas existem, com texto escrito e procedência: `RULES` em
-`src/dominio/programa.ts:136`, **catorze entradas** — contei as chaves: `regra
+`src/dominio/programa.ts`, **catorze entradas** — contei as chaves: `regra
 1` a `regra 5`, `volume`, `hyrox`, `fadiga`, `atenção`, `aquecimento`,
 `deload`, `bike`, `prioridades`, `sucesso`. São servidas por
-`src/main.jsx:5081` e desenhadas em `src/ui/telas/guia.jsx:139-155`, uma aberta
+`src/main.jsx` e desenhadas em `src/ui/telas/guia.jsx:139-155`, uma aberta
 por vez, com a procedência da pegada dita **uma vez só** ali e não em cada
 cartão. No mesmo modo mora **o alvo calórico por tipo de dia, calculado do
 plano e nunca escrito à parte** (`src/ui/telas/guia.jsx:119-136`, com a
-procedência explícita; o caso que o cobra é `tests/fluxo/fusao.test.js:209`).
+procedência explícita; o caso que o cobra é `tests/fluxo/fusao.test.js`).
 
 Conferi as tabelas de tarefas das duas direções: **nem a D nem a C têm linha
 para as regras do treinador.** `07-plano.md` §4 também não as lista entre o que
@@ -405,7 +405,7 @@ A linha de `cardio.test.js` em `08-rede.md` fala em "placar na tela de hoje e
 registro sem sair dela". Conferi: o placar (`.cardl`) e o registro rápido
 (`.cardq`) estão na aba **TREINO** — `src/ui/telas/treino.jsx:114-146` —, e os
 dois casos cujo nome diz "tela de hoje" rodam no padrão do harness, que é
-`'treino'` (`tests/fluxo/harness.js:321`). O nome do caso e o comentário do
+`'treino'` (`tests/fluxo/harness.js`). O nome do caso e o comentário do
 arquivo de teste envelheceram; o código não.
 
 Levar o cardio para o Agora — que é o que a D manda (`direcao.md`: "Cardio |
@@ -436,12 +436,12 @@ Prescrição ganharam tela na segunda rodada; Dias não.
 O cabeçalho do TREINO traz três células: séries feitas de prescritas, volume do
 dia e **ciclo**, com o número de sessões (`src/ui/telas/treino.jsx:34-53`;
 `ciclo` é `Math.floor(S.done.length / rot().length) + 1` em
-`src/main.jsx:4866`, conferi). Dessas três:
+`src/main.jsx`, conferi). Dessas três:
 
 - **séries feitas de prescritas** está no cabeçalho da sessão da D ("série N de
   M") e no mapa da sessão — conferi em `prototipo.html:567-577`;
 - **volume do dia** já tem casa: o detalhe da sessão mostra "volume · kg×reps"
-  (`src/main.jsx:5932`, conferi), e o detalhe é de Dias;
+  (`src/main.jsx`, conferi), e o detalhe é de Dias;
 - **ciclo** não aparece em desenho nenhum que eu tenha aberto.
 
 **Proposta:** ciclo é leitura de Semana, ao lado da retrospectiva do bloco —
@@ -454,7 +454,7 @@ inteiros procurando o ciclo com outro nome.
 
 - **apagar uma medida** passa por `confirm()` do sistema com o estrago
   delimitado em texto — "Sai da média da semana e do ritmo. As outras medidas
-  ficam." (`delBody`, `src/main.jsx:3370-3383`, conferi);
+  ficam." (`delBody`, `src/main.jsx`, conferi);
 - **apagar uma sessão ou uma série** é oferecido no detalhe da sessão e no
   histórico do exercício, com lápide nas duas coisas e aviso de quantas séries
   vão junto — menos no treino em andamento (`src/ui/telas/sessao.jsx`;
@@ -493,13 +493,13 @@ está pronto e testado, e não o reinventa.
 | o teclado próprio da carga, com vírgula | não existe hoje; é D8, teclado misto |
 | o descanso: começa em qualquer série completada, conta do instante-alvo | `tests/fluxo/cronometro.test.js` (12 casos), `tests/fluxo/serie.test.js` (8 casos) |
 | o mapa da sessão e a projeção de fim pelo ritmo do dia | `prototipo.html:577-590` |
-| as mudanças só do dia: séries, repetições, descanso, remover, mover, acrescentar, trocar | `src/ui/telas/edicaodia.jsx` + `src/ui/instrumento/edicao.jsx`; `CTX.edicaoDoDia` em `src/main.jsx:6238` |
-| a conta de volume na hora de mexer | `impactoSeries` em `src/main.jsx:2138`, renderizado em `src/ui/instrumento/edicao.jsx:41-45` |
+| as mudanças só do dia: séries, repetições, descanso, remover, mover, acrescentar, trocar | `src/ui/telas/edicaodia.jsx` + `src/ui/instrumento/edicao.jsx`; `CTX.edicaoDoDia` em `src/main.jsx` |
+| a conta de volume na hora de mexer | `impactoSeries` em `src/main.jsx`, renderizado em `src/ui/instrumento/edicao.jsx:41-45` |
 | a troca por máquina ocupada, com o histórico de cada substituto, e a foto do aparelho | `src/ui/exercicio.jsx:140-168`; `S.fotos` |
 | a dor, e o aviso de dor repetida | `tests/fluxo/sessao.test.js` (a hidratação recupera dor e substituto) |
 | pular (decisão registrada e reversível), aproximação, bi-set | `tests/fluxo/ciclo.test.js` (18 casos), `src/ui/exercicio.jsx:410` |
-| pausar, retomar, finalizar, corrigir a duração, a nota da sessão | `src/ui/telas/treino.jsx:74-81`; `finalizarSessao` em `src/main.jsx:870-904` |
-| o quadro do box durante a aula, e a lista rápida | `S.quadro` (`src/dominio/tipos.ts:510`); `src/ui/telas/treino.jsx:166-178` |
+| pausar, retomar, finalizar, corrigir a duração, a nota da sessão | `src/ui/telas/treino.jsx:74-81`; `finalizarSessao` em `src/main.jsx` |
+| o quadro do box durante a aula, e a lista rápida | `S.quadro` (`src/dominio/tipos.ts`); `src/ui/telas/treino.jsx:166-178` |
 | a correção no lugar: cada número guardado é botão dentro da tabela | não existe hoje; nasceu no protótipo (`prototipo.md`, descoberta 4) |
 | as entradas rápidas do descanso: pré‑treino, água, e o **atalho** de peso | `direcao.md`, M1‑2; o atalho **abre Corpo** e não escreve (5.a' P5) |
 | o histórico de um exercício, hoje alcançável só daqui | `src/ui/telas/historico.jsx`; achado 1 |
@@ -511,7 +511,7 @@ está pronto e testado, e não o reinventa.
 | **a barra dos cinco lugares** | O contrato de UX vigente manda o contrário — "**Continua visível durante o treino ativo**… Esconder a navegação aqui protegeria contra um risco que não existe" (`docs/LASTRO_UX_CONTRACT.md:98-101`, conferi). Mas o mesmo contrato, duas linhas acima, já manda que a barra "**some em destino de tela cheia** (o assunto é um só, e ela convidaria a sair no meio)" (`:94-95`). A sessão virando tela cheia cai na segunda regra, e a primeira cai — **e o que paga por ela é a saída.** A razão escrita da primeira regra era "sair para conferir a comida e voltar é um caminho legítimo"; a seta e a faixa entregam esse caminho, com um toque para cada lado |
 | o resumo do dia, as médias, os placares | é "como está?", e o modo responde "e agora?" |
 | **o aviso do vencimento da mudança do dia** | desenhado para aparecer no Agora da manhã daquele treino, "uma vez, e **nunca durante a sessão**" (`direcao-2.md` §3, pergunta 1) |
-| **a pergunta guardada sobre o programa**, enquanto houver sessão | já é assim, com guarda explícita: `abrePromoGuardada` tem `if (… \|\| S.sessao) return false` (`src/main.jsx:2613`, conferi), e o comentário diz por quê — "perguntar sobre o programa enquanto ele registra série é interromper a única coisa que o app existe para não atrapalhar" |
+| **a pergunta guardada sobre o programa**, enquanto houver sessão | já é assim, com guarda explícita: `abrePromoGuardada` tem `if (… \|\| S.sessao) return false` (`src/main.jsx`, conferi), e o comentário diz por quê — "perguntar sobre o programa enquanto ele registra série é interromper a única coisa que o app existe para não atrapalhar" |
 | a atualização do app | "nunca durante a sessão" (`direcao.md`, tabela de tarefas) |
 
 ### 4.3 · O que ela **não** pode esconder
@@ -519,7 +519,7 @@ está pronto e testado, e não o reinventa.
 1. **A pergunta de 1h30.** Hoje ela aparece em **todas** as abas, treino
    inclusive, e a ordem do código é deliberada: `CTX.faixaDaSessao` devolve a
    pergunta **antes** do `if (view.aba === 'treino') return null`
-   (`src/main.jsx:6902-6907`, conferi). O comentário: "quem esqueceu de
+   (`src/main.jsx`, conferi). O comentário: "quem esqueceu de
    finalizar costuma ter esquecido olhando justamente para ela". São 6 casos em
    `tests/fluxo/esquecido.test.js`. **Dentro do modo, a pergunta continua.**
 2. **As linhas do dia tocáveis.** 5.a' P4: "sim, sempre". Seção 6.
@@ -540,13 +540,13 @@ Esta distinção é a espinha da seção, e ela é regra de produto, não detalh
   nenhuma. É o estado M1‑7, "vazio da sessão: antes da primeira série".
 - **A sessão nasce na primeira série completa.** `abreSessao(dia)` é chamada
   pela projeção quando carga e repetição ficam preenchidas, e a marca entra com
-  `ini: 'auto'` (`src/main.jsx:664-673`, conferi). Série incompleta não abre
+  `ini: 'auto'` (`src/main.jsx`, conferi). Série incompleta não abre
   sessão (`tests/fluxo/sessao.test.js`).
 - **O botão de iniciar nunca é pré‑condição para gravar série.** Ele só
   acrescenta precisão ao tempo — está escrito no fonte, acima de `somaPausas`
-  (`src/main.jsx:486-487`, conferi), e são 18 casos em
+  (`src/main.jsx`, conferi), e são 18 casos em
   `tests/fluxo/ciclo.test.js`. Quando ele é tocado, a marca entra com
-  `ini: 'manual'` (`iniciarSessao`, `src/main.jsx:509-520`).
+  `ini: 'manual'` (`iniciarSessao`, `src/main.jsx`).
 
 Portas de entrada:
 
@@ -558,12 +558,12 @@ Portas de entrada:
    `src/ui/app.jsx:53-58`).
 3. **O pouso do app.** Abrir o app com treino em andamento **cai na sessão, não
    no Agora**. Isso já existe e tem razão escrita: `view.aba = 'treino'` quando
-   `diaDaSessaoAberta()` devolve algo (`src/main.jsx:430-436`, conferi) —
+   `diaDaSessaoAberta()` devolve algo (`src/main.jsx`, conferi) —
    "sair e voltar no meio de uma série é o caso mais comum de reabertura que
    existe neste app, e devolvê-lo a HOJE cobrava dois toques com o celular na
    mão suada". **Requisito: a regra fica, e o destino passa a ser o modo.** E
    ela roda **depois** de `encerraSePreciso()`, que fecha a sessão vencida
-   antes de decidir a rota (`:427`) — a ordem importa e não se inverte.
+   antes de decidir a rota — a ordem importa e não se inverte.
 
 ### 4.5 · Como se sai — três saídas, e elas não são a mesma coisa
 
@@ -571,35 +571,35 @@ Portas de entrada:
 |---|---|---|
 | **a seta do cabeçalho** | fecha o **modo** e deixa a **sessão aberta**. O rótulo acessível diz isso com todas as letras: "Voltar ao Agora, deixando a sessão aberta" | `prototipo.html:566`, com `go("agora")` em `:787` — conferi |
 | **o Voltar do sistema** | fecha **uma camada**: a folha aberta, ou o destino aberto de dentro do modo, ou o modo. Nunca fecha o app | `src/ui/navegacao.js`; 4.7 |
-| **encerrar** | mata a **sessão**, não o modo: grava a duração, marca o fim como manual, gira a rotação | `finalizarSessao` em `src/main.jsx:870-904`; `fechaSessao` em `:613-659` |
+| **encerrar** | mata a **sessão**, não o modo: grava a duração, marca o fim como manual, gira a rotação | `finalizarSessao` em `src/main.jsx`; `fechaSessao` no mesmo arquivo |
 
 E duas coisas que **não** são saída:
 
 - **Não existe botão de salvar.** Sair do modo não guarda nada porque tudo já
   está guardado: `save()` é chamada em 59 lugares (`07-plano.md` §3.3) e cada
-  série completa vai para o histórico na hora (`src/main.jsx:661-663`: "Não
+  série completa vai para o histórico na hora (`src/main.jsx`: "Não
   existe estado 'não salvo'"). São 26 casos em `tests/fluxo/sessao.test.js`.
 - **A sessão morre sozinha**, e isso é regra de produto. Sem série nova por
-  1h30 (`SESSAO_LIMITE = 90*60*1000`, `src/main.jsx:476`) a faixa **pergunta**;
-  passados mais 10 min de graça (`GRACA_ENCERRAMENTO`, `:484`) ela encerra
+  1h30 (`SESSAO_LIMITE = 90*60*1000`, `src/main.jsx`) a faixa **pergunta**;
+  passados mais 10 min de graça (`GRACA_ENCERRAMENTO`) ela encerra
   sozinha, com a duração indo **até a última série** e o fim marcado como
-  aproximado (`fechaSessao`, `:617-620`). A batida que faz a pergunta aparecer
-  sem reabrir o app está em `ligaBatida` (`:591-610`), e `encerraSePreciso`
-  (`:555-570`) fecha o que já passou da graça na abertura. Pausado não conta
-  como esquecido, porque pausar é aviso e não ausência (`paradaDaSessao`,
-  `:576-579`).
+  aproximado (`fechaSessao`). A batida que faz a pergunta aparecer
+  sem reabrir o app está em `ligaBatida`, e `encerraSePreciso`
+  fecha o que já passou da graça na abertura. Pausado não conta
+  como esquecido, porque pausar é aviso e não ausência
+  (`paradaDaSessao`).
 
 ### 4.6 · O que acontece ao voltar
 
 1. **Cai na mesma série.** A posição é derivada, não guardada:
    `ondeEleEstava(estadosDoDia(s.day))` é o que alimenta o texto da faixa
-   (`src/main.jsx:6908`, conferi), e é a mesma leitura que o modo usa para
+   (`src/main.jsx`, conferi), e é a mesma leitura que o modo usa para
    abrir onde ele parou. É o estado M1‑8.
 2. **O descanso é recalculado, nunca retomado de um contador.** É "agora menos
    o instante da série", e é por isso que sobrevive ao bloqueio, a outro app e
    ao fechamento (`tests/fluxo/cronometro.test.js`, 12 casos). `retomaDescanso()`
    roda depois do render, porque a barra do cronômetro vive fora da árvore do
-   Preact (`src/main.jsx:439-441`, conferi).
+   Preact (`src/main.jsx`, conferi).
 3. **A posição de leitura volta.** Quem manda nela é o app, não o navegador:
    `history.scrollRestoration = 'manual'` em `src/ui/navegacao.js:131`, com a
    medição que motivou isso escrita no comentário. O caso que cobra está em
@@ -630,7 +630,7 @@ profundidade o histórico está agora?" — sem contador de eventos, de propósi
    **não é** camada: ela vive dentro da aba de treino, e o `view.sessao` que
    aparece em `camadasAbertas` (`:55`) é **outra coisa** — é o detalhe de uma
    sessão passada (`src/ui/telas/sessao.jsx`, cabeçalho: "O detalhe de uma
-   sessão passada"; e `telaCheia()` em `src/main.jsx:2108-2120` confirma a
+   sessão passada"; e `telaCheia()` em `src/main.jsx` confirma a
    cadeia). O modo entra como uma chave própria, empurrada **antes** de todas
    as outras na lista — porque tudo que se abre de dentro dele (o histórico do
    exercício, a câmera, o ajuste de foto, as folhas) fica **por cima** dele.
@@ -643,7 +643,7 @@ profundidade o histórico está agora?" — sem contador de eventos, de propósi
    botão do app não deixa entrada órfã no histórico").
 
 **O caso que a frente 0 precisa repontar, e o que ele passa a dizer:** "o
-Voltar sai de um destino de tela cheia" (`tests/fluxo/navegacao.test.js:120`)
+Voltar sai de um destino de tela cheia" (`tests/fluxo/navegacao.test.js`)
 ganha o modo como destino. E o caso de `promocao.test.js` que diz "a decisão é
 um destino que guarda e devolve a posição de leitura" deixa de ser sobre uma
 camada: com a tela de decisão removida (D1), a lista mora em Prescrição, e
@@ -686,7 +686,7 @@ das sessões fecham sem ele (do parecer).
 - **Colisão com a pergunta de 1h30:** se a sessão está parada há 1h30, a faixa
   **vira a pergunta** e mantém o topo. Já é assim:
   `CTX.faixaDaSessao` devolve a pergunta antes de qualquer outra coisa
-  (`src/main.jsx:6902-6905`, conferi).
+  (`src/main.jsx`, conferi).
 
 **2 · A sessão de ontem que fechou sozinha ganha do treino de hoje.** Conferi o
 estado M1‑13: a faixa "A sessão de ontem ficou aberta. Fechei na última série:
@@ -781,10 +781,10 @@ confirma por **um de três atos**:
 
 1. **uma sessão registrada naquele dia** — que manda sobre o palpite, e isso já
    é a regra escrita da D;
-2. **o dia marcado como descanso** (`S.descanso`, `src/dominio/tipos.ts:600`);
+2. **o dia marcado como descanso** (`S.descanso`, `src/dominio/tipos.ts`);
 3. **a virada da data** — que é o instante em que o app já fecha o dia de comida
    e decide se ele vale uma linha de histórico (`fechaDiaDeComida`,
-   `src/main.jsx:1871-1875`, com a frase que vale a regra inteira: "guardá‑lo
+   `src/main.jsx`, com a frase que vale a regra inteira: "guardá‑lo
    como zero seria dizer que ele não comeu, que é o erro de medição que confunde
    silêncio com falha").
 
@@ -813,15 +813,15 @@ dizem que "hoje o app tira a caixa de marcar e o `···` de toda linha de refei
 `aoMarcar={treino ? null : …}` em `src/ui/telas/hoje.jsx:120`. **Conferi, e não
 é isso.** A variável `treino` daquela linha vem de
 `const treino = ctx.ehLinhaDeTreino(r);` (`src/ui/telas/hoje.jsx:101`), e
-`ehLinhaDeTreino(r) { return r.id === 'treino'; }` (`src/main.jsx:1948`,
+`ehLinhaDeTreino(r) { return r.id === 'treino'; }` (`src/main.jsx`,
 conferi). É um teste de **tipo de linha**, não de sessão ativa.
 
 O que o app tira é a caixa de marcar e o `···` **da linha do treino** — a linha
 que não tem refeição para marcar e cuja edição é outro ato (ela abre o treino).
 As linhas de refeição mantêm as três afordâncias **com ou sem sessão aberta**:
-conferi `CTX.hoje()` (`src/main.jsx:2008-2051`) e nada ali muda `refs` nem as
+conferi `CTX.hoje()` (`src/main.jsx`) e nada ali muda `refs` nem as
 afordâncias por causa de `S.sessao`; a única coisa que a sessão aberta muda é o
-rótulo `sessao.meta` ("sessão aberta", `:2048`).
+rótulo `sessao.meta` ("sessão aberta").
 
 **O que isso faz com a peça.** Ela continua sendo "devolver o que o app já faz",
 como `07-plano.md` §3.3 diz — mas **não há exceção para cair**, e a pergunta
@@ -848,8 +848,8 @@ agora custa **zero** no Agora.
 ### 6.2 · Peça 2 · Cada toque grava — o requisito é **não construir o lote**
 
 **Já é assim.** Cada série completa entra no histórico na hora, e o fonte diz
-"**Não existe estado 'não salvo'**" (`src/main.jsx:661-663`, conferi).
-`marcaRefeicao` grava no mesmo gesto (`src/main.jsx:2055-2059`: `queueSave()` na
+"**Não existe estado 'não salvo'**" (`src/main.jsx`, conferi).
+`marcaRefeicao` grava no mesmo gesto (`src/main.jsx`: `queueSave()` na
 linha seguinte à marca, conferi). `save()` é chamada em 59 lugares
 (`07-plano.md` §3.3, **do plano** — não recontei).
 
@@ -862,7 +862,7 @@ fecha o dia inteiro.
 
 **O que isso exige de mim, e é consequência de camada:** a folha é uma `folha`
 na pilha (`view.pilha`, `src/ui/navegacao.js:65`), e o Voltar do sistema fecha
-uma folha por vez (`tests/fluxo/navegacao.test.js:70`). Então **fechar a folha
+uma folha por vez (`tests/fluxo/navegacao.test.js`). Então **fechar a folha
 sem tocar em nada não grava nada** — e isso não é um efeito colateral a
 consertar, é a diferença entre sugestão e registro, e é o que impede o F290/F292
 (o dia chutado que destravou um corte de comida). O lugar onde a folha vive é
@@ -882,10 +882,10 @@ render, e as duas funções **não são a mesma**:
 
 | onde | por qual função |
 |---|---|
-| a edição do treino de hoje — `src/ui/instrumento/edicao.jsx:41-45`, montado de `CTX.edicaoDoDia` | `impactoSeries` → `impacto()` de `volume.ts` (`src/main.jsx:6251`, `:6264`) |
-| **o editor de programa** — o **mesmo** componente, montado de `programaDia` | `impactoOficial` → `impacto()` (`src/main.jsx:6435`, `:6448`) |
-| **o painel de volume**, "fora do alvo do treinador" — `src/ui/telas/dados.jsx:220-225` | `impactoOficial` → `impacto()` (`src/main.jsx:5226`) |
-| a tela de decisão — `src/ui/telas/decisao.jsx:36-38` | **`impactoDoMod`**, que **não** está em `volume.ts`: está em `src/main.jsx:2481-2520` |
+| a edição do treino de hoje — `src/ui/instrumento/edicao.jsx:41-45`, montado de `CTX.edicaoDoDia` | `impactoSeries` → `impacto()` de `volume.ts` (`impactoSeries` em `src/main.jsx`) |
+| **o editor de programa** — o **mesmo** componente, montado de `programaDia` | `impactoOficial` → `impacto()` (`programaDia` em `src/main.jsx`) |
+| **o painel de volume**, "fora do alvo do treinador" — `src/ui/telas/dados.jsx:220-225` | `impactoOficial` → `impacto()` (`src/main.jsx`) |
+| a tela de decisão — `src/ui/telas/decisao.jsx:36-38` | **`impactoDoMod`**, que **não** está em `volume.ts`: está em `src/main.jsx` |
 
 **E é aqui que a ordem fica amarrada.** A forma que a peça pede é a
 **transição** — "subir uma série da flexora leva o posterior a 8 contra 7
@@ -893,18 +893,18 @@ prescritas" (`00-coordenacao.md`, P3.i.5) —, e a própria D desenhou exatament
 isso na Prescrição: "deltoide lateral passa de 12 para 13 séries na semana,
 contra 12 prescritas pelo treinador" (conferi `prescricao.html`, estado 1).
 **`impacto()` não produz transição**: ela afirma o número de agora — "peito: 12
-na rotação · o treinador prescreveu 10" (`src/dominio/volume.ts:55-62`, com as
-três formas asseridas em `tests/dominio/volume.test.ts:48-50`). A transição sai
+na rotação · o treinador prescreveu 10" (`src/dominio/volume.ts`, com as
+três formas asseridas em `tests/dominio/volume.test.ts`). A transição sai
 **só** de `impactoDoMod`, e o **único chamador** dela é `CTX.decisao`
-(`src/main.jsx:6116`) — a tela que a D1 remove.
+(`src/main.jsx`) — a tela que a D1 remove.
 
 **Pior, e é o achado:** das quatro ramificações de `impactoDoMod` (`sets`,
 `add`, `rm`, `troca`), **só `troca` tem teste** —
-`tests/fluxo/edicao.test.js:321-328`, que cobra o aviso das 6 a 8 semanas. As
+`tests/fluxo/edicao.test.js`, que cobra o aviso das 6 a 8 semanas. As
 três ramificações que produzem o número "antes → depois" **não têm asserção em
 lugar nenhum**: procurei a flecha e a frase "na rotação" nos testes e só achei
-`volume.test.ts` (a forma do número de agora) e `telaprograma.test.js:200` e
-`:307` (`impactoOficial`). Ou seja: **a peça que o dono pediu descansa hoje numa
+`volume.test.ts` (a forma do número de agora) e `telaprograma.test.js`, nos dois casos que cobram
+`impactoOficial`. Ou seja: **a peça que o dono pediu descansa hoje numa
 função sem teste, com um chamador só, e o chamador está marcado para sair.**
 
 **O requisito, na ordem:**
@@ -925,21 +925,21 @@ porque é o mecanismo de que a lista que espera e vence precisa. Conferi o
 mecanismo, e ele tem **três buracos** para o uso novo:
 
 1. **No fecho manual não existe carregador nenhum.** `fechaSessao` só escreve
-   `S.promoPendente` quando `comoFim === 'auto'` (`src/main.jsx:633-640`,
+   `S.promoPendente` quando `comoFim === 'auto'` (`src/main.jsx`,
    conferi, e o comentário diz por quê: "Pela porta da frente quem pergunta é
    `finalizarSessao`"). E `finalizarSessao` faz o oposto — `S.promoPendente =
-   null` e abre a pergunta (`:889-891`, conferi). Tirada a pergunta, **o fecho
+   null` e abre a pergunta (conferi). Tirada a pergunta, **o fecho
    manual descarta a mudança em silêncio**, que é o F280 nominal. **Requisito:**
    o carregador se escreve nos **dois** fechos.
 2. **A mudança do dia morre com a sessão.** `fechaSessao` termina com
    `S.mods = null` e o comentário "as mudanças do dia não sobrevivem ao fim da
-   sessão" (`src/main.jsx:656`, conferi). Isso é correto para `S.mods` — o que
+   sessão" (`src/main.jsx`, conferi). Isso é correto para `S.mods` — o que
    vale o dia é do dia — e é justamente por isso que o carregador é
    obrigatório: sem ele não sobra cópia de nada.
 3. **`promoPendente` guarda UMA, e a decisão do dono pede uma LISTA.** O tipo é
-   `promoPendente: PromoPendente | null` (`src/dominio/tipos.ts:613`), e
-   `PromoPendente` tem um `day` só (`:270-277`, conferi). A escrita é atribuição
-   direta (`src/main.jsx:637`), então o próximo fecho automático **sobrescreve**
+   `promoPendente: PromoPendente | null` (`src/dominio/tipos.ts`), e
+   `PromoPendente` tem um `day` só (conferi). A escrita é atribuição
+   direta (`src/main.jsx`), então o próximo fecho automático **sobrescreve**
    o anterior. A Prescrição da D mostra **três** mudanças esperando, de três
    treinos diferentes, cada uma com o seu vencimento (conferi
    `prescricao.html`, estado 1), mais uma quarta em "Venceu sem você". Isso não
@@ -947,14 +947,14 @@ mecanismo, e ele tem **três buracos** para o uso novo:
    E há um segundo lado, pior: **`promoPendente` não tem regra na fusão.**
    Procurei em `src/dominio/sincronia.ts` e não há nenhuma ocorrência — e o
    `funde()` trata **tudo que não é coleção** como documento, vindo inteiro do
-   lado de `mtime` mais novo (`src/dominio/sincronia.ts:410-416`, conferi, com o
+   lado de `mtime` mais novo (`src/dominio/sincronia.ts`, conferi, com o
    comentário "clone do lado que manda nos documentos"). Para uma pergunta de um
    dia isso passa; para uma **lista de mudanças que vence**, significa que o que
    o celular registrou pode sumir porque o notebook sincronizou depois.
    **Requisito:** a lista vira **coleção com chave natural** (o dia mais o `sid`
    da sessão, que é o que distingue dois treinos no mesmo dia), com lápide para
    a decisão tomada não ressuscitar — a mesma disciplina de `comidaHist`,
-   `protocolo.sessoes` e `aulas` (`src/dominio/tipos.ts:498-507`, `:536-541`).
+   `protocolo.sessoes` e `aulas` (`src/dominio/tipos.ts`).
 
    **E isto é uma quinta mudança de dado persistido, que `07-plano.md` §3.4 não
    lista.** As quatro de lá são o instante da marca por refeição, qual refeição
@@ -966,7 +966,7 @@ mecanismo, e ele tem **três buracos** para o uso novo:
 **O que o vencimento *não* precisa.** 5.a' P1 diz que vencer por posição "sai de
 graça do modelo; nenhum carimbo novo no dado", e conferi que é verdade: a
 posição de cada treino na sequência é `S.rot`, e o app já calcula qual é o
-próximo e monta a fila com a marca de "próximo" (`src/main.jsx:4871-4874`). "O
+próximo e monta a fila com a marca de "próximo" (`src/main.jsx`). "O
 dia em que aquele treino volta" é derivável de `day` + `S.rot`, sem campo novo.
 O que **não** é de graça é guardar mais de uma mudança pendente, que é o ponto 3
 acima.
@@ -979,11 +979,11 @@ Onde o código discorda do que estava escrito, **vale o código**. Sete pontos.
 
 | # | o que estava escrito | o que o código diz |
 |---|---|---|
-| 1 | O app tira a caixa de marcar e o `···` das linhas de refeição **enquanto o treino está ativo** (`07-plano.md` §1.1 #6 e §3.3) | A variável daquele `if` é **tipo de linha**, não sessão ativa: `ehLinhaDeTreino(r) { return r.id === 'treino'; }` (`src/main.jsx:1948`). As linhas de refeição mantêm as três afordâncias com ou sem sessão. **Não há exceção para cair** (§6.1) |
-| 2 | A conta de volume "já aparece na tela — em **duas** telas" (`07-plano.md` §3.3) | Aparece em **quatro** lugares de render, e a tela que a D1 remove usa **outra função**: `impactoDoMod` (`src/main.jsx:2481`), que não está em `volume.ts` e tem **uma** ramificação testada de quatro (§6.3) |
-| 3 | `promoPendente` é o mecanismo de que a lista que vence precisa (`07-plano.md` §3.6) | É o mecanismo certo, mas guarda **uma** mudança (`src/dominio/tipos.ts:270-277`, `:613`) e **não tem regra na fusão** — `funde()` a trata como documento (`src/dominio/sincronia.ts:410-416`). A lista da decisão do dono não cabe nele: é uma **quinta** mudança de dado, que `07-plano.md` §3.4 não lista (§6.4) |
-| 4 | Tirar a pergunta e manter o carregador basta | No fecho **manual** o carregador nem é escrito: `fechaSessao` só o escreve em `'auto'` (`src/main.jsx:633`) e `finalizarSessao` o zera (`:889`). Sem a pergunta, o fecho manual descarta em silêncio — o F280 nominal (§6.4) |
-| 5 | "Placar na tela de hoje e registro sem sair dela" (`08-rede.md`, linha do `cardio.test.js`) | Placar e registro estão na aba **TREINO** (`src/ui/telas/treino.jsx:114-146`), e os casos que dizem "tela de hoje" rodam no padrão do harness, que é `'treino'` (`tests/fluxo/harness.js:321`). Levar o cardio para o Agora é mudança, não restauração (achado 4) |
+| 1 | O app tira a caixa de marcar e o `···` das linhas de refeição **enquanto o treino está ativo** (`07-plano.md` §1.1 #6 e §3.3) | A variável daquele `if` é **tipo de linha**, não sessão ativa: `ehLinhaDeTreino(r) { return r.id === 'treino'; }` (`src/main.jsx`). As linhas de refeição mantêm as três afordâncias com ou sem sessão. **Não há exceção para cair** (§6.1) |
+| 2 | A conta de volume "já aparece na tela — em **duas** telas" (`07-plano.md` §3.3) | Aparece em **quatro** lugares de render, e a tela que a D1 remove usa **outra função**: `impactoDoMod` (`src/main.jsx`), que não está em `volume.ts` e tem **uma** ramificação testada de quatro (§6.3) |
+| 3 | `promoPendente` é o mecanismo de que a lista que vence precisa (`07-plano.md` §3.6) | É o mecanismo certo, mas guarda **uma** mudança (`src/dominio/tipos.ts`) e **não tem regra na fusão** — `funde()` a trata como documento (`src/dominio/sincronia.ts`). A lista da decisão do dono não cabe nele: é uma **quinta** mudança de dado, que `07-plano.md` §3.4 não lista (§6.4) |
+| 4 | Tirar a pergunta e manter o carregador basta | No fecho **manual** o carregador nem é escrito: `fechaSessao` só o escreve em `'auto'` (`src/main.jsx`) e `finalizarSessao` o zera. Sem a pergunta, o fecho manual descarta em silêncio — o F280 nominal (§6.4) |
+| 5 | "Placar na tela de hoje e registro sem sair dela" (`08-rede.md`, linha do `cardio.test.js`) | Placar e registro estão na aba **TREINO** (`src/ui/telas/treino.jsx:114-146`), e os casos que dizem "tela de hoje" rodam no padrão do harness, que é `'treino'` (`tests/fluxo/harness.js`). Levar o cardio para o Agora é mudança, não restauração (achado 4) |
 | 6 | As duas direções especificam o Voltar por camada como novo, e ele está pronto (`07-plano.md` §3.5) | Pronto, e eu me encaixo nele. Mas o `view.sessao` que já está em `camadasAbertas` (`src/ui/navegacao.js:55`) **não é** a sessão ao vivo: é o detalhe de uma sessão passada (`src/ui/telas/sessao.jsx`). O modo é camada **nova**, e a mais funda (§4.7) |
 | 7 | A bioimpedância "aceita ficar vazio" em todo campo, e são "treze números" (`corpo.html`, estado 6, e `direcao-2.md` recusa 4) | O desenho tem **quinze** campos dizendo treze — o próprio desenhista achou o erro (`prototipo.md`, descoberta 8). E a decisão do dono (5.a' P3) é **cinco** campos, **quatro deles obrigatórios**, o que **derruba a recusa 4 da D**. A decisão manda |
 
@@ -991,10 +991,10 @@ Onde o código discorda do que estava escrito, **vale o código**. Sete pontos.
 151 linhas de `src/ui/navegacao.js` e os 9 casos de
 `tests/fluxo/navegacao.test.js`; os 9 casos de `tests/fluxo/promocao.test.js`;
 os 13 casos de `tests/dominio/volume.test.ts`; as 32 chaves de topo do `Estado`
-sob asserção em `tests/fluxo/dados.test.js:50-90`; `MIN_REGISTRADOS = 11` em
-`src/dominio/corpo.ts:135`; a guarda `|| S.sessao` de `abrePromoGuardada`
-(`src/main.jsx:2613`); e as 14 regras de `RULES` em
-`src/dominio/programa.ts:136`.
+sob asserção em `tests/fluxo/dados.test.js`; `MIN_REGISTRADOS = 11` em
+`src/dominio/corpo.ts`; a guarda `|| S.sessao` de `abrePromoGuardada`
+(`src/main.jsx`); e as 14 regras de `RULES` em
+`src/dominio/programa.ts`.
 
 ---
 
@@ -1004,7 +1004,7 @@ Nenhuma destas se reabre aqui.
 
 | a decisão | o fluxo que a obedece |
 |---|---|
-| **A mudança do dia vence por posição**, quando aquele treino voltar (5.a' P1) | §8.1, passos 3 e 5. Não pede carimbo novo: a posição é `S.rot`, e o app já calcula o próximo (`src/main.jsx:4871-4874`) |
+| **A mudança do dia vence por posição**, quando aquele treino voltar (5.a' P1) | §8.1, passos 3 e 5. Não pede carimbo novo: a posição é `S.rot`, e o app já calcula o próximo (`src/main.jsx`) |
 | **Ao vencer, vira "só daquele dia", dito e desfazível** (5.a' P2) | §8.1, passo 5. O bloco "Venceu sem você" da `prescricao.html` é a forma |
 | **A pergunta do fim do treino sai; o mecanismo fica** (D1 + §3.6) | §6.4 — e o mecanismo precisa de três consertos antes de servir |
 | **A pesagem entre séries vale lá também, por atalho** (5.a' P5) | O descanso tem a tecla "Peso de hoje", que **abre Corpo** com a mesma régua. O dono do dado é Corpo (1.3, 1.7) |
@@ -1024,7 +1024,7 @@ Nenhuma destas se reabre aqui.
    `src/ui/instrumento/edicao.jsx:41-45`).
 2. **A sessão morre** — por encerrar (toque) ou por inatividade (1h30 + 10 min
    de graça). **Nos dois casos** a mudança é copiada para a lista que espera, e
-   `S.mods` zera como já zera (`src/main.jsx:656`). Nenhuma pergunta é feita.
+   `S.mods` zera como já zera (`src/main.jsx`). Nenhuma pergunta é feita.
 3. **A lista mora em Prescrição.** Cada linha diz: o que mudou, de que sessão
    veio, **quando vence** — o dia em que aquele treino volta —, e **a conta de
    volume se virar permanente**. Duas respostas do tamanho do polegar, "Foi só

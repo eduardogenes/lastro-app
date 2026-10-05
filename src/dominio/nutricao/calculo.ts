@@ -65,7 +65,17 @@ export function totalDoDia(
     .reduce((acc, r) => somaTotais(acc, totalDaRefeicao(r, catalogo, alta, escala[r.id] ?? 1)), VAZIO);
 }
 
-/** O que já foi comido: só as refeições marcadas. */
+/**
+ * O que já foi comido: só as refeições marcadas.
+ *
+ * Refeição marcada com `como: 'nao'` fica FORA: ele declarou que não comeu, e
+ * somar as calorias dela seria o total afirmar o contrário do que ele disse.
+ *
+ * Refeição com `como: 'fora'` entra com os números do plano, porque são os
+ * únicos que o app tem — ele comeu, só não foi isto. A marca é a procedência
+ * que diz que o número é do prescrito, não do que entrou; o app não adivinha a
+ * diferença e não finge saber.
+ */
 export function totalRegistrado(
   plano: Refeicao[],
   catalogo: Record<string, Alimento>,
@@ -74,7 +84,8 @@ export function totalRegistrado(
   alta: boolean
 ): Totais {
   return plano
-    .filter(r => refeicaoEntra(r, treino, alta) && dia.done[r.id])
+    .filter(r => refeicaoEntra(r, treino, alta) && dia.done[r.id]
+                 && !(dia.como && dia.como[r.id] === 'nao'))
     .reduce((acc, r) => somaTotais(acc, totalDaRefeicao(r, catalogo, alta, dia.escala[r.id] ?? 1)), VAZIO);
 }
 
@@ -390,17 +401,47 @@ export function fechaDia(
 }
 
 /**
+ * O peso de uma refeição na aderência do dia: de 0 a 1, nunca mais.
+ *
+ * `'nao'` é 0 — ele declarou que não comeu aquela refeição, e isso é diferente
+ * de não ter marcado nada: um é fato, o outro é silêncio. `'fora'` mantém o
+ * peso da escala, porque a marca fala do CONTEÚDO e a escala da quantidade.
+ *
+ * O TETO DE 1 é a decisão que as porções acima de 1 obrigaram. A régua de
+ * porções do app vai até 1½, e sem teto `escala: 1.5` empurrava a aderência do
+ * dia acima de 100% — ou seja, comer mais que o plano aparecia como aderir
+ * MELHOR do que aderir. Aderência responde "quanto do prescrito foi cumprido",
+ * e cumprir uma refeição é cumpri-la: mais que ela não é mais cumprimento.
+ * O excedente não é descartado, é medido à parte, em `excessoDoDia` — pelo
+ * mesmo motivo que esta função pondera em vez de contar: o dado existe e jogar
+ * fora o mais informativo seria o erro.
+ */
+function pesoDaRefeicao(h: DiaComidaHist, id: string): number {
+  if (h.como && h.como[id] === 'nao') return 0;
+  const e = h.escala && h.escala[id];
+  const peso = (typeof e === 'number' && isFinite(e) && e >= 0) ? e : 1;
+  return Math.min(1, peso);
+}
+
+/**
  * A aderência de um dia: quanto do prescrito foi de fato cumprido.
  *
  * PONDERADA pela escala, e não a contagem crua de refeições marcadas. "Marcou
  * feito com escala 0,5" e "comeu tudo" não são a mesma coisa, e o app já tem
  * esse dado — descartá-lo na hora de medir seria jogar fora justamente o mais
- * informativo.
+ * informativo. Nunca passa de 1: ver `pesoDaRefeicao`.
  *
  * `null` quando NADA foi marcado. Ausência de registro não é aderência zero:
  * ele pode ter comido perfeitamente e só não ter aberto o app, e tratar o
  * silêncio como falha é erro de medição — engana o próprio usuário sobre o que
  * aconteceu.
+ *
+ * O DENOMINADOR é `refs`, as refeições do plano naquele dia — e é por isso que
+ * a regra do nutricionista sobre a ceia vale **para trás sem reescrever byte
+ * nenhum**: `refs` sai de `refeicoesDeHoje(plano, …)` com o plano de HOJE, a
+ * cada leitura. Uma refeição que entra no plano muda o denominador de todo dia
+ * do histórico na próxima leitura. O que está congelado em `DiaComidaHist` é
+ * `tot` — as calorias e os macros —, e a aderência não o usa.
  */
 export function aderenciaDoDia(h: DiaComidaHist, refs: Refeicao[]): number | null {
   const ids = Object.keys(h.done || {});
@@ -410,8 +451,36 @@ export function aderenciaDoDia(h: DiaComidaHist, refs: Refeicao[]): number | nul
   let soma = 0;
   ids.forEach(function (id) {
     if (!noDia[id]) return;                       // refeição que não existe mais
+    soma += pesoDaRefeicao(h, id);
+  });
+  return soma / refs.length;
+}
+
+/**
+ * O que passou do plano naquele dia — a outra metade da porção acima de 1.
+ *
+ * Existe porque a aderência ganhou teto de 1 por refeição, e sem este número o
+ * "comi mais que o plano" sumiria do sistema: ninguém saberia a diferença entre
+ * o dia seguido à risca e o dia em que ele comeu uma vez e meia o almoço.
+ *
+ * É a MESMA base da aderência — somatório ponderado sobre as refeições do dia
+ * —, só que contando o excedente: `escala: 1.5` numa refeição de seis dá 0,083.
+ * Então aderência e excesso se leem juntos: 100% e +8% é um dia cumprido com
+ * sobra, e 100% sozinho é um dia cumprido.
+ *
+ * `null` nas mesmas condições da aderência: silêncio não é zero.
+ */
+export function excessoDoDia(h: DiaComidaHist, refs: Refeicao[]): number | null {
+  const ids = Object.keys(h.done || {});
+  if (!ids.length || !refs.length) return null;
+  const noDia: Record<string, 1> = {};
+  refs.forEach(function (r) { noDia[r.id] = 1; });
+  let soma = 0;
+  ids.forEach(function (id) {
+    if (!noDia[id]) return;
+    if (h.como && h.como[id] === 'nao') return;   // não comeu: não há excedente
     const e = h.escala && h.escala[id];
-    soma += (typeof e === 'number' && e >= 0) ? e : 1;
+    if (typeof e === 'number' && isFinite(e) && e > 1) soma += e - 1;
   });
   return soma / refs.length;
 }
@@ -447,7 +516,10 @@ export function padraoPorRefeicao(
     refs.forEach(function (r) {
       if (!por[r.id]) por[r.id] = { id: r.id, feitas: 0, possiveis: 0 };
       por[r.id].possiveis++;
-      if (h.done[r.id]) por[r.id].feitas++;
+      // marcada com "não comi" não é cumprida: esta leitura responde "qual
+      // refeição eu mais falho", e contar um pulo declarado como acerto faria
+      // ela apontar justamente para o lado errado
+      if (h.done[r.id] && !(h.como && h.como[r.id] === 'nao')) por[r.id].feitas++;
     });
   });
   return plano.map(function (r) { return por[r.id]; }).filter(Boolean);
@@ -460,6 +532,19 @@ export function padraoPorRefeicao(
  * isso não pode embasar corte. `fora` conta: sair do plano sabendo mais ou
  * menos o que comeu ainda deixa a semana legível. `perdido` não conta, mesmo
  * com refeições marcadas: o que ele marcou não descreve o que entrou.
+ *
+ * **"Não comi" CONTA** — é posição do nutricionista, e é o que diferencia um
+ * dia honesto de um dia esquecido. Uma refeição marcada com `como: 'nao'` é
+ * consumo conhecido, e conhecido é zero: o app sabe exatamente o que entrou
+ * ali. Vem de graça da forma do dado, porque "não comi" é marca em `done` com
+ * atributo, e não ausência de marca; a alternativa — guardar o "não comi" fora
+ * de `done` — faria o dia honesto valer menos que o dia esquecido, que é
+ * exatamente o defeito que a regra existe para corrigir.
+ *
+ * É esta função que alimenta o portão de `MIN_REGISTRADOS` (11 em 14,
+ * `src/dominio/corpo.ts`) — o portão que nunca abriu uma vez. O limiar não
+ * muda: é do nutricionista. O que muda é que declarar "não comi" com um toque
+ * passa a produzir um dia contado, em vez de silêncio.
  */
 export function diaInterpretavel(h: DiaComidaHist): boolean {
   if (h.aderencia === 'perdido') return false;
@@ -550,7 +635,7 @@ export function contagemDaRefeicao(
     const refs = refeicoesDeHoje(plano, h.cadencia === 'treino', !!h.alta, h.turno);
     if (!refs.some(function (r) { return r.id === refId; })) return;
     possiveis++;
-    if (h.done[refId]) feitas++;
+    if (h.done[refId] && !(h.como && h.como[refId] === 'nao')) feitas++;
   });
   return { feitas: feitas, possiveis: possiveis };
 }
