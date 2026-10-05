@@ -235,3 +235,54 @@ test('digitar num dia aberto não troca a métrica do topo por uma meta', async 
     'atualizaEstado escrevia "feitas/prescritas" por cima — meta que o box nunca prometeu');
   a.fechar();
 });
+
+// Os dois fechos de sessão, no dia ABERTO.
+//
+// `finalizarSessao` tem a guarda `!diaAberto(...)` com a razão escrita ao lado:
+// num dia aberto o que foi adicionado É o dia, não uma emenda a ele — não há
+// conteúdo permanente para aquilo virar, e perguntar "isto fica no programa?"
+// a cada movimento do box seria uma pergunta por semana sem resposta certa.
+// Essa razão não fala do modo de fecho, então vale para os dois. `fechaSessao`
+// não tinha a guarda: a aula que fechava sozinha enfileirava os movimentos como
+// mudança esperando decisão, e a encerrada no toque não.
+
+test('aula que fecha sozinha não enfileira os movimentos como mudança pendente', async () => {
+  const a = await noSabado(comSabadoAnterior());
+  a.E('repetirUltimaAula()');
+  await a.esperar(60);
+  assert.ok(a.J('modsDoDia("HX")').length > 0,
+    'num dia aberto os movimentos do dia são mods: é o que a guarda tem de ver');
+
+  // cinco horas sem tocar em nada: o app encerra por conta própria
+  a.E('S.sessao.ultima = Date.now() - 5 * 3600 * 1000');
+  a.E('encerraSePreciso()');
+  await a.esperar();
+
+  assert.strictEqual(a.E('S.sessao'), null, 'a sessão fechou sozinha');
+  assert.deepStrictEqual(a.J('S.promoPendente'), [],
+    'nada a decidir: no dia aberto o movimento não tem conteúdo permanente para virar');
+  a.fechar();
+});
+
+test('e a aula encerrada no toque também não — os dois fechos concordam', async () => {
+  const a = await noSabado(comSabadoAnterior());
+  a.E('repetirUltimaAula()');
+  await a.esperar(60);
+  a.E('abrirRapido()');
+  await a.esperar();
+  a.digitar('fr0', 104);
+  a.digitar('fr1', 108);
+  a.digitar('fw2', 9);
+  a.digitar('fr2', 20);
+  a.digitar('fr3', 60);
+  await a.esperar();
+  assert.ok(a.J('modsDoDia("HX")').length > 0, 'os mods continuam lá');
+
+  await a.E('finalizarSessao()');
+  await a.esperar();
+
+  assert.strictEqual(a.E('view.promo'), null, 'nenhuma pergunta de programa');
+  assert.deepStrictEqual(a.J('S.promoPendente'), [], 'e nada ficou esperando decisão');
+  assert.strictEqual(a.E('S.sessao'), null, 'a sessão encerrou');
+  a.fechar();
+});

@@ -720,7 +720,15 @@ function fechaSessao(comoFim) {
   // Só no fecho AUTOMÁTICO. Pela porta da frente quem pergunta é
   // `finalizarSessao`, e reagendar aqui faria a mesma pergunta voltar logo
   // depois de respondida.
-  const pendentes = comoFim === 'auto' ? modsDoDia(s.day) : [];
+  //
+  // E só em dia de PRESCRIÇÃO, pela mesma razão escrita em `finalizarSessao`:
+  // num dia ABERTO o que foi adicionado É o dia, não uma emenda a ele — não há
+  // conteúdo permanente para aquilo virar. A razão não fala do modo de fecho, e
+  // por isso vale para os dois. Sem esta metade, a aula de box que fechava
+  // SOZINHA enfileirava os movimentos como mudança esperando decisão e a
+  // encerrada no toque não: mesma situação, dois resultados, e uma pergunta por
+  // semana sem resposta certa.
+  const pendentes = (comoFim === 'auto' && !diaAberto(s.day)) ? modsDoDia(s.day) : [];
   if (pendentes.length) guardaPromo(s, pendentes);
 
   // O quadro do box vira a nota da sessão. É a única chance: ele não se
