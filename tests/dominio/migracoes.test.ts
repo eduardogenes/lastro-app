@@ -10,9 +10,11 @@ import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import {
   ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano9,
-  migraPlano10
+  migraPlano10, migraPlano11, CEIA_PLANO_11
 } from '../../src/dominio/migracoes';
 import { MARCAS_DA_BIO } from '../../src/dominio/corpo';
+import { ALIMENTOS_BASE, PLANO_BASE } from '../../src/dominio/nutricao/alimentos';
+import { aderenciaDoDia, refeicoesDeHoje, totalDoDia } from '../../src/dominio/nutricao/calculo';
 import { EX_BASE, slugEx } from '../../src/dominio/programa';
 import type { Estado, Log } from '../../src/dominio/tipos';
 import { DIA, log } from './ajuda';
@@ -556,4 +558,167 @@ test('a fixture do plano 9 tem `promoPendente` como documento, e sai como lista'
   assert.strictEqual(S.promoPendente as unknown, null, 'no plano 9 era documento, e estava vazio');
   migraPlano10(S);
   assert.deepStrictEqual(S.promoPendente, []);
+});
+
+// ---------- 10 -> 11: a ceia ----------
+// O plano é DOCUMENTO PERSISTIDO: `planoDeComida()` o semeia da base uma vez e
+// a partir daí ele é dele, editável. Mudar `PLANO_BASE` alcança aparelho novo e
+// não alcança o dele — e é por isso que a ceia precisa de migração.
+
+/** O estado do plano 10, lido do disco: gerado pelo build do plano 10. */
+function fixturePlano10(): Estado {
+  const p = new URL('./fixtures/estado-plano-10.json', import.meta.url);
+  return JSON.parse(readFileSync(p, 'utf8')) as Estado;
+}
+
+test('a fixture do plano 10 é o dado da época: seis refeições, e nenhuma ceia', () => {
+  const S = fixturePlano10();
+  assert.strictEqual(S.plano, 10);
+  assert.deepStrictEqual(S.comida.plano!.map(r => r.id),
+    ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar']);
+  assert.strictEqual(S.comidaHist.length, 1);
+  assert.deepStrictEqual(Object.keys(S.comidaHist[0].done).sort(),
+    ['almoco', 'jantar', 'lanche', 'pos', 'pre', 'treino'],
+    'e o dia fechado marcou as seis — é o 6/6 que vira 6/7');
+});
+
+test('10→11 insere a ceia no plano guardado', () => {
+  const S = fixturePlano10();
+  const r = migraPlano11(S)!;
+
+  assert.strictEqual(r.inseriu, 1);
+  assert.deepStrictEqual(S.comida.plano!.map(r2 => r2.id),
+    ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar', 'ceia']);
+  const ceia = S.comida.plano!.filter(x => x.id === 'ceia')[0];
+  assert.strictEqual(ceia.t, '21:30');
+  assert.strictEqual(ceia.quando, 'sempre');
+  assert.deepStrictEqual(ceia.itens, [{ f: 'leite', q: 250 }, { f: 'neston', q: 30 }]);
+  assert.strictEqual(S.plano, 11);
+});
+
+test('a ceia do aparelho migrado é a MESMA do aparelho novo', () => {
+  // A migração carrega uma cópia congelada que não referencia `PLANO_BASE`, de
+  // propósito: migração lê o dado da época. Este teste é o que impede as duas
+  // populações de nascerem diferentes.
+  //
+  // SE ESTE TESTE FICAR VERMELHO: alguém mudou a ceia num dos dois lugares. A
+  // saída não é copiar o valor para o outro — é uma MIGRAÇÃO NOVA (11→12) que
+  // leve a revisão ao aparelho de quem já migrou, mais a mudança em
+  // `PLANO_BASE`, mais este teste atualizado para a ceia nova.
+  const daBase = PLANO_BASE.filter(r => r.id === 'ceia')[0];
+  assert.ok(daBase, 'a ceia está no PLANO_BASE');
+  assert.deepStrictEqual(CEIA_PLANO_11, daBase,
+    'a ceia da migração e a do PLANO_BASE descrevem a mesma refeição');
+});
+
+test('10→11 não duplica nem sobrescreve uma ceia que já existe', () => {
+  // Pode ser a ceia que ELE criou, com o horário e os itens dele. A migração
+  // não tem autoridade sobre o que ele escreveu.
+  const S = fixturePlano10();
+  const dele = { id: 'ceia', t: '23:00', n: 'Minha ceia', tag: 'TARDE DA NOITE',
+                 quando: 'sempre' as const, itens: [{ f: 'iogurte', q: 170 }] };
+  S.comida.plano!.push(JSON.parse(JSON.stringify(dele)));
+
+  const r = migraPlano11(S)!;
+  assert.strictEqual(r.inseriu, 0);
+  assert.strictEqual(S.comida.plano!.filter(x => x.id === 'ceia').length, 1, 'uma ceia, não duas');
+  assert.deepStrictEqual(S.comida.plano!.filter(x => x.id === 'ceia')[0], dele,
+    'e é a dele, intacta');
+});
+
+test('10→11 insere sem reconstruir o plano: as edições dele ficam', () => {
+  // Presumir que o plano guardado é igual à base seria apagar as edições dele.
+  const S = fixturePlano10();
+  const plano = S.comida.plano!;
+  plano[3].itens[0].q = 150;                 // ele cortou o arroz do almoço
+  plano[4].n = 'Vitamina';                   // e renomeou o lanche
+  plano.splice(plano.findIndex(r => r.id === 'treino'), 1);   // e removeu o intra
+
+  migraPlano11(S);
+
+  assert.strictEqual(S.comida.plano!.filter(r => r.id === 'almoco')[0].itens[0].q, 150);
+  assert.strictEqual(S.comida.plano!.filter(r => r.id === 'lanche')[0].n, 'Vitamina');
+  assert.strictEqual(S.comida.plano!.filter(r => r.id === 'treino').length, 0,
+    'a refeição que ele removeu não volta');
+  assert.strictEqual(S.comida.plano!.filter(r => r.id === 'ceia').length, 1, 'e a ceia entrou');
+});
+
+test('10→11 atravessa estado sem plano guardado sem criar um de uma refeição', () => {
+  // `planoDeComida()` semeia da base, que já tem a ceia. Inserir aqui daria um
+  // plano com a ceia e nada mais.
+  const S = { plano: 10, comida: { plano: null, alimentos: {}, ocultos: {} } } as unknown as Estado;
+  const r = migraPlano11(S)!;
+  assert.strictEqual(r.inseriu, 0);
+  assert.strictEqual(S.comida.plano, null);
+  assert.strictEqual(S.plano, 11, 'e a versão avança: a semente do boot já traz a ceia');
+
+  const semComida = { plano: 10 } as unknown as Estado;
+  assert.strictEqual(migraPlano11(semComida)!.inseriu, 0);
+  assert.strictEqual(semComida.plano, 11);
+});
+
+test('10→11 roda uma vez só, e por isso respeita quem apagou a ceia depois', () => {
+  // A forma do dado NÃO distingue "nunca teve ceia" de "tirou de propósito":
+  // remover uma refeição do plano a tira do array, sem lápide. O que impede a
+  // migração de devolvê-la é o PORTÃO DE VERSÃO — ela roda uma vez e nunca
+  // mais. Fica dito porque é garantia da versão, não da forma.
+  const S = fixturePlano10();
+  migraPlano11(S);
+  assert.strictEqual(S.plano, 11);
+
+  // ele tira a ceia
+  S.comida.plano = S.comida.plano!.filter(r => r.id !== 'ceia');
+  assert.strictEqual(migraPlano11(S), null, 'a segunda chamada devolve null');
+  assert.strictEqual(S.comida.plano.filter(r => r.id === 'ceia').length, 0,
+    'e a ceia que ele tirou não volta');
+});
+
+test('a ceia entra na conta do dia e muda o denominador do histórico congelado', () => {
+  // O caminho que o teste de `diario.test.ts` já prova em abstrato, agora com a
+  // ceia de verdade e sobre o dia congelado da fixture.
+  const S = fixturePlano10();
+  const h = S.comidaHist[0];
+  const kcalCongelado = h.tot.kcal;
+  const antes = refeicoesDeHoje(S.comida.plano!, true, false);
+  assert.strictEqual(aderenciaDoDia(h, antes), 1, 'seis de seis contra o plano de seis');
+
+  migraPlano11(S);
+  const depois = refeicoesDeHoje(S.comida.plano!, true, false);
+  assert.strictEqual(depois.length, antes.length + 1);
+  const a = aderenciaDoDia(h, depois)!;
+  assert.ok(Math.abs(a - 6 / 7) < 1e-9, 'o MESMO dia passa a ser seis de sete');
+  assert.strictEqual(S.comidaHist[0].tot.kcal, kcalCongelado,
+    'e o total congelado do dia não é tocado: nenhum byte do histórico é reescrito');
+});
+
+test('a ceia sobe o alvo do dia em 271,6 kcal — medido, não suposto', () => {
+  // O alvo é CALCULADO do plano, então acrescentar refeição o sobe. O número
+  // importa para ele e para o nutricionista: o ledger do ajuste calórico foi
+  // construído sobre o alvo antigo.
+  const S = fixturePlano10();
+  const cat = ALIMENTOS_BASE;
+  const antes = totalDoDia(S.comida.plano!, cat, true, false, {});
+  migraPlano11(S);
+  const depois = totalDoDia(S.comida.plano!, cat, true, false, {});
+
+  assert.ok(Math.abs((depois.kcal - antes.kcal) - 271.6) < 0.05,
+    'delta medido: ' + (depois.kcal - antes.kcal));
+  assert.ok(Math.abs(antes.kcal - 3007.1) < 0.05, 'alvo de dia de treino antes: ' + antes.kcal);
+  assert.ok(Math.abs(depois.kcal - 3278.7) < 0.05, 'e depois: ' + depois.kcal);
+
+  const descansoAntes = totalDoDia(fixturePlano10().comida.plano!, cat, false, false, {});
+  const descansoDepois = totalDoDia(S.comida.plano!, cat, false, false, {});
+  assert.ok(Math.abs(descansoAntes.kcal - 2844.1) < 0.05, 'descanso antes: ' + descansoAntes.kcal);
+  assert.ok(Math.abs(descansoDepois.kcal - 3115.7) < 0.05, 'descanso depois: ' + descansoDepois.kcal);
+});
+
+test('o Neston não precisa de migração: o catálogo é derivado', () => {
+  // `catalogoAlimentos()` monta de `ALIMENTOS_BASE` + o que ele cadastrou,
+  // menos o que ele escondeu, a cada render. Alimento do código chega pelo
+  // build, e nenhum byte do estado guarda a biblioteca.
+  const S = fixturePlano10();
+  assert.deepStrictEqual(S.comida.alimentos, {}, 'o estado não carrega a biblioteca');
+  assert.ok(ALIMENTOS_BASE.neston, 'o Neston está no código');
+  assert.strictEqual(ALIMENTOS_BASE.neston.u, 'g');
+  assert.strictEqual(ALIMENTOS_BASE.neston.cat, 'mercearia');
 });

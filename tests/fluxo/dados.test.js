@@ -506,3 +506,39 @@ test('o estado congelado do plano 9 entra pelo boot e sai migrado', async () => 
   });
   a.fechar();
 });
+
+test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async () => {
+  // A ceia é a única coisa da migração 10→11 que o app precisa levar ao estado:
+  // o plano é documento persistido. O Neston chega pelo build, sem migração.
+  const cru = fs.readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dominio', 'fixtures', 'estado-plano-10.json'),
+    'utf8'
+  );
+  const era = JSON.parse(cru);
+  assert.strictEqual(era.plano, 10, 'a fixture é do plano 10');
+  assert.deepStrictEqual(era.comida.plano.map(r => r.id),
+    ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar'], 'sem ceia');
+
+  const a = await app({ estado: cru, agora: new Date(era.dia.data + 'T10:00:00').getTime() });
+  await a.esperar();
+
+  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'));
+  assert.deepStrictEqual(a.J('S.comida.plano.map(function(r){return r.id})'),
+    ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar', 'ceia']);
+  assert.strictEqual(a.E('S.comida.plano.filter(function(r){return r.id==="ceia"})[0].t'), '21:30');
+
+  // o Neston está no catálogo sem nunca ter entrado no estado
+  assert.ok(a.E('!!catalogoAlimentos().neston'), 'o catálogo é derivado do código');
+  assert.deepStrictEqual(a.J('S.comida.alimentos'), {}, 'e o estado não guarda a biblioteca');
+
+  // a ceia aparece na timeline de HOJE, no relógio dela
+  a.aba('hoje');
+  await a.esperar();
+  const ordem = a.J('CTX.hoje().refs.map(function(r){return r.t+" "+r.id})');
+  assert.strictEqual(ordem[ordem.length - 1], '21:30 ceia', 'última do relógio');
+
+  // e o dia já fechado não foi reescrito
+  assert.deepStrictEqual(a.J('S.comidaHist'), era.comidaHist,
+    'o histórico congelado atravessa a migração intacto');
+  a.fechar();
+});
