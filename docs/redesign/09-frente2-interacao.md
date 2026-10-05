@@ -1704,3 +1704,195 @@ que é bom e é dele. Se quebrar, o bloqueio passa a ser a única coisa que segu
 a tela de pé, e isso é um fato que ninguém sabe hoje. **Em nenhum dos dois casos
 a decisão é minha:** o argumento escrito no fonte é do produto, e revê-lo é
 decisão do dono.
+
+---
+
+## 9 · Os três requisitos de ordem
+
+Não são desenho, são **sequência**. Fora de ordem, alguma coisa desaparece entre
+uma mudança e outra — é o que `07-plano.md` §3.6 chama de "a capacidade que sai
+sem ninguém notar". Conferi os três no código.
+
+### 9.1 · A conta de volume: a ordem é amarrada por uma função sem teste
+
+**Confirmei o achado da frente 1, e acrescento a forma que a mudança precisa
+ter.**
+
+`impactoDoMod(d, m)` vive em `src/main.jsx` e **não** em
+`src/dominio/volume.ts` (conferi as duas coisas). Ela é a única que produz a
+forma **"antes → depois"** que a peça pede — por exemplo
+`"deltoide lateral: 12 → 13 na rotação · o treinador prescreveu 12"`. `impacto()`,
+que está em `volume.ts` com 13 casos em `tests/dominio/volume.test.ts`
+(contei os `test(`), só afirma **o número de agora**.
+
+**O único chamador de `impactoDoMod` em `src/` é `CTX.decisao`** — conferi com
+grep: duas ocorrências em `src/main.jsx` (a definição e a chamada) e duas em
+`tests/fluxo/edicao.test.js`. A tela que D1 remove é a única chamadora.
+
+**E das quatro ramificações, só `troca` tem teste.** As duas chamadas do teste
+são ambas de `troca` (conferi: `{ k:"troca", slot:"agachamento-no-smith",
+por:"belt-squat" }`, uma afirmando o aviso das 6 a 8 semanas e outra afirmando
+`null`). `sets`, `add` e `rm` — **as três que produzem o "antes → depois"** — não
+têm asserção em lugar nenhum.
+
+**O que a frente 1 não disse e que muda o tamanho do trabalho:** `impactoDoMod`
+tem **sete colaboradores que leem estado de módulo**, e é isso que a torna não
+pura hoje:
+
+| colaborador | o que lê |
+|---|---|
+| `exDe(x)` | `CAT`, o catálogo de exercícios |
+| `nomeEx(x)` | `CAT`, por `exDe` |
+| `seriesOficiais(g)` | `S.prog` e `rot()` |
+| `ALVO[g]` | já é puro: `alvoDoPrograma(PROGRAMA, ROT_BASE)`, derivado do programa congelado |
+| `slotOriginal(d, slot)` | `S.prog` |
+| `semanasNoPrograma(sl)` | `Date.now()` |
+| `semanasDe(t)` | `Date.now()` |
+
+**A forma que a função de domínio precisa ter**, pela disciplina que o módulo já
+segue ("nenhuma função deste módulo lê relógio", e `agora` entra por parâmetro
+em todo `calculo.ts`): programa, rotação, catálogo, mapa de alvos e `agora`
+entram **por parâmetro**. É a mesma assinatura que `impacto(g, agora, alvo)` já
+tem, estendida. E `seriesDeGrupo` já está em `volume.ts` (conferi), então metade
+do caminho está feita.
+
+**A ordem obrigatória, e ela não se inverte:**
+
+1. **`impactoDoMod` vira função de domínio ao lado de `impacto()`**, com os
+   parâmetros acima e **teste para as quatro ramificações** — `sets`, `add`,
+   `rm` e `troca`. Três delas ficam vermelhas de nascença, porque hoje não têm
+   asserção nenhuma, e é justamente por isso que elas vão primeiro.
+2. **A lista de Prescrição passa a ser a chamadora.**
+3. **Só então `src/ui/telas/decisao.jsx` sai.**
+
+**E uma nota de leitura, para a reponta não se assustar:** `impactoDoMod`
+devolve `null` para `reps`, `desc` e `mover`. Isso é **correto** — o formato de
+`Mod` tem sete tipos (`{ k:'sets'|'reps'|'desc'|'troca'|'rm'|'add'|'mover' }`,
+conferi o comentário em `src/main.jsx`), e mudar repetição, descanso ou ordem
+não muda contagem de série por músculo. "Quatro ramificações" é certo; os três
+`null` são decisão, não omissão, e o teste novo tem de afirmar os `null`
+também — senão a próxima pessoa "conserta" o que está certo.
+
+### 9.2 · O carregador da mudança pendente, nos DOIS fechos
+
+**Confirmei o achado da frente 1, e a frente 0 já fez metade.**
+
+O que a frente 0 entregou (conferi): `S.promoPendente` é
+`PromoPendente[]`, com `guardaPromo(s, pendentes)` e `soltaPromo(sid)` em
+`src/main.jsx`, chave natural `chaveDePromo(p) = 'promo:' + sid` em
+`src/dominio/sincronia.ts`, lápide em `soltaPromo`, teto de 60 entradas, e regra
+de fusão por coleção (`base.promoPendente = pp.itens.slice(-TETO.promo)`).
+
+**E uma correção à frente 1, pequena e a favor:** ela pediu a chave como "o dia
+mais o `sid`". A frente 0 a fez **`sid` sozinho**, e o comentário do tipo
+explica por que isso é melhor: *"`day` é editável no meio do treino… uma chave
+composta faria a MESMA pergunta fundir como duas entradas se os dois aparelhos
+tivessem registrado letras diferentes para a mesma sessão. Ele responderia duas
+vezes."* (conferi em `src/dominio/tipos.ts`.) **Vale a do código.**
+
+**O que falta, e é o que me cabe especificar:**
+
+**No fecho automático o carregador já escreve.** `fechaSessao` tem
+`const pendentes = comoFim === 'auto' ? modsDoDia(s.day) : []` e chama
+`guardaPromo` (conferi).
+
+**No fecho manual não escreve nada, e o que existe faz o contrário.**
+`finalizarSessao` chama **`soltaPromo(s.sid)`** — que tira da lista **e deixa
+lápide** — e abre `view.promo` para a pergunta (conferi). Tirada a pergunta
+(D1), o que sobra é `soltaPromo` sem nada em troca: **a mudança é descartada em
+silêncio, e com lápide**, que é pior do que descartada, porque a lápide impede o
+outro aparelho de a trazer de volta na fusão. **É o F280 nominal, e a lápide o
+torna definitivo.**
+
+**O requisito, em três linhas:**
+
+1. `finalizarSessao` passa a chamar **`guardaPromo(s, mods)`** no lugar de
+   `soltaPromo(s.sid)` + `view.promo`.
+2. `soltaPromo` **continua existindo e continua sendo a única porta da lápide** —
+   ela passa a ser chamada de **Prescrição**, quando ele decide, e do vencimento
+   (§9.3), quando ele deixa vencer. Decidir e vencer deixam lápide; encerrar
+   não.
+3. **A guarda do dia aberto vai para os dois fechos.** `finalizarSessao` tem
+   `if (mods.length && !diaAberto(s.day))`, com a razão escrita: *"Num dia
+   ABERTO o que foi adicionado É o dia, não uma emenda a ele: não há conteúdo
+   permanente para aquilo virar, e perguntar 'isto fica no programa?' a cada
+   movimento do box seria uma pergunta por semana sem resposta certa."*
+   **`fechaSessao` não tem essa guarda** (conferi: a única condição é
+   `comoFim === 'auto'`). Hoje isso significa que uma aula de box que fecha
+   **sozinha** enfileira os movimentos dela como mudanças esperando decisão, e
+   uma que ele encerra **no toque** não. A assimetria é invisível e produz uma
+   pergunta por semana sem resposta certa — exatamente o que o comentário diz
+   que não se deve fazer. **Requisito:** `!diaAberto(s.day)` nos dois.
+
+**E uma consequência de interação, que é o meu lado disto:** o encerramento
+deixa de perguntar e passa a **informar**. Encerrar com mudança do dia produz
+uma linha no Agora, não uma pergunta: *"A série a mais do Treino A está
+esperando decisão em Prescrição."* Sem isso, a mudança some da vista dele no
+mesmo instante em que o app passa a guardá-la — e "guardado em silêncio" é tão
+ruim quanto "descartado em silêncio", porque ele não sabe que há algo a decidir.
+O protótipo já tem a frase certa no cartão do exercício, e ela pode ser a mesma:
+*"A série a mais é mudança só de hoje. Se vira permanente, você decide sentado —
+ela espera em Prescrição até o Treino A voltar."* (conferi `:654`.)
+
+### 9.3 · O vencimento por posição, como leitura derivada
+
+**A frente 0 deixou `day` e `t` na coleção de propósito e não criou campo de
+vencimento**, e o comentário do tipo diz por quê, com a resposta do dono dentro:
+*"**Não há campo de vencimento**, e isto é resposta do dono, não omissão: a
+mudança vence *por posição* — quando aquele treino voltar na sequência —, e isso
+'sai de graça do modelo; nenhum carimbo novo no dado'. O que ela vira ao vencer
+('só daquele dia') é o estado em que a mudança já está, porque nunca foi
+promovida ao oficial: não há o que gravar."* (Conferi em `src/dominio/tipos.ts`.)
+
+**Conferi que sai de graça mesmo, e aqui está a leitura inteira.** Ela usa três
+coisas que já existem: `S.rot` (por `rot()`), `S.done` e `nextDay()`.
+
+**Quando vence** — e isto é o predicado, não uma data:
+
+> Uma mudança pendente `p` **venceu** quando existe em `S.done` uma sessão `x`
+> com `x.day === p.day`, sem `x.livre`, e `x.t > p.t`.
+
+Em palavra: aquele treino voltou e aconteteceu depois que a mudança ficou
+esperando. Nenhum campo novo, nenhuma data guardada, e **nada que dependa do
+relógio** — o que a torna testável sem congelar tempo.
+
+**Quando ela vai vencer** — e isto é o que a tela mostra como prazo:
+
+> `voltas(p) = (rot().indexOf(p.day) − rot().indexOf(nextDay()) + N) % N`, com
+> `N = rot().length`.
+
+`voltas(p) === 0` quer dizer "a próxima sessão é aquele treino" — é o dia em que
+o aviso da manhã aparece (frente 1, §5.1, regra 6: **uma vez**, no Agora, e
+**nunca durante a sessão**). `voltas(p) === 2` quer dizer "faltam dois treinos".
+**A tela diz em treinos, não em dias**, e isso não é escolha de palavra: a
+sequência A→B→C→D→E→aula avança **pela ordem, não pelo dia da semana** (F81,
+registrado no `prototipo.md`), então "quarta-feira" seria um palpite e "faltam
+dois treinos" é um fato.
+
+**As duas leituras concordam no instante da virada, e isso precisa ser dito**
+porque é o que impede o aviso de aparecer depois de vencer: `nextDay()` sai de
+`ultimaDoPlano()`, que é a última entrada de `S.done` com `day` e sem `livre`
+(conferi as duas funções). No instante em que a sessão do Treino A entra em
+`S.done`, `venceu(p)` passa a ser verdadeiro **e** `nextDay()` deixa de ser `A`.
+Nunca há uma janela em que o aviso diga "hoje" e a mudança já esteja vencida.
+
+**O que o vencimento faz na tela** — e aqui a decisão do dono (5.a' P2) é
+literal: **vira "só daquele dia", dito e desfazível.**
+
+- **Dito:** uma linha que nomeia o que aconteceu, sem passivo e sem culpa —
+  *"Ficou como só daquele dia quando o Treino A voltou."* A forma está desenhada
+  no bloco "Venceu sem você" da `prescricao.html`, estado 1.
+- **Desfazível:** *"Tornar permanente agora."* E desfazer é possível porque
+  **nada foi apagado**: a mudança nunca foi promovida ao oficial, e a sessão onde
+  ela aconteceu continua com o que foi registrado.
+- **Nada entra no programa em silêncio, e nada é descartado em silêncio.** As
+  duas metades, e a segunda é a que o §9.2 paga.
+
+**Por quanto tempo o desfazer continua oferecido — e isto é pergunta que eu não
+respondo.** A coleção tem teto de 60 entradas (`S.promoPendente.slice(-60)`,
+conferi), e a decisão do dono diz "desfazível" sem dizer até quando. Sessenta
+mudanças vencidas acumuladas é uma lista que ninguém lê. **Isto sobe à mesa
+dele**, com a observação de que a resposta não precisa de campo novo:
+`voltas(p)` já diz quantos treinos passaram desde o vencimento, e um limite em
+treinos — "o desfazer vale até aquele treino voltar outra vez" — usaria a mesma
+leitura e a mesma palavra.
