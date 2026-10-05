@@ -7,7 +7,7 @@ test('estado migra para o plano 4 e a nutrição nasce semeada', async () => {
   const a = await app();
   assert.deepStrictEqual(a.erros, []);
   assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'));
-  assert.strictEqual(a.E('S.comida.plano.length'), 6, 'plano nutricional semeado');
+  assert.strictEqual(a.E('S.comida.plano.length'), a.E('PLANO_BASE.length'), 'plano nutricional semeado');
   assert.strictEqual(a.J('S.cadencia').length, 7, 'cadência da semana nasce com 7 posições');
   assert.strictEqual(a.E('S.ajuste'), 0);
   assert.strictEqual(a.E('S.perfManual'), null, 'o app calcula a força até ele dizer o contrário');
@@ -50,7 +50,7 @@ test('backup antigo, sem a metade de comida, abre semeado em vez de vazio', asyn
   const a = await app({ estado: {
     plano: 3, logs: {}, done: [], prog: null, rot: null, ex: {}
   } });
-  assert.strictEqual(a.E('S.comida.plano.length'), 6, 'a nutrição nasce da prescrição');
+  assert.strictEqual(a.E('S.comida.plano.length'), a.E('PLANO_BASE.length'), 'a nutrição nasce da prescrição');
   assert.strictEqual(a.J('S.cadencia').length, 7);
   assert.strictEqual(a.E('S.ajuste'), 0, 'sem ajuste herdado de lugar nenhum');
   a.fechar();
@@ -184,7 +184,7 @@ test('apagar o histórico não apaga o plano nutricional', async () => {
   assert.strictEqual(a.E('S.done.length'), 0, 'o histórico foi');
   assert.strictEqual(a.E('S.comida.plano[0].itens[0].q'), 777, 'o plano editado ficou');
   assert.strictEqual(a.J('S.cadencia')[0], 'treino', 'a cadência ficou');
-  assert.ok(a.E('S.comida.plano.length') === 6);
+  assert.ok(a.E('S.comida.plano.length') === a.E('PLANO_BASE.length'));
   a.fechar();
 });
 

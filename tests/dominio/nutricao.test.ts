@@ -19,10 +19,11 @@ import type { DiaComidaHist } from '../../src/dominio/nutricao/tipos';
 const cat = ALIMENTOS_BASE;
 
 test('a prescrição chegou inteira do plano original', () => {
-  assert.strictEqual(Object.keys(cat).length, 36, '36 alimentos na biblioteca');
-  assert.strictEqual(PLANO_BASE.length, 6, 'seis refeições');
+  assert.strictEqual(Object.keys(cat).length, 37, '37 alimentos na biblioteca');
+  assert.strictEqual(PLANO_BASE.length, 7, 'sete refeições');
   assert.deepStrictEqual(PLANO_BASE.map(r => r.id),
-    ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar']);
+    ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar', 'ceia'],
+    'a ceia entrou no plano 11, e o Neston no catálogo com ela');
 });
 
 test('todo alimento declara categoria conhecida e unidade válida', () => {
@@ -191,9 +192,9 @@ test('3→4 é aditiva: não toca em nada do treino', () => {
 test('3→4 semeia o plano nutricional e a cadência', () => {
   const S = estado3();
   const r = migraPlano4(S)!;
-  assert.strictEqual(r.refeicoes, 6);
+  assert.strictEqual(r.refeicoes, PLANO_BASE.length, 'a semente é o plano inteiro de hoje');
   assert.strictEqual(r.cadencia, true);
-  assert.strictEqual(S.comida.plano!.length, 6);
+  assert.strictEqual(S.comida.plano!.length, PLANO_BASE.length);
   assert.strictEqual(S.cadencia!.length, 7);
   assert.strictEqual(S.cadencia![0], 'descanso', 'domingo é folga na semana típica dele');
   assert.strictEqual(S.ajuste, 0);

@@ -15,6 +15,7 @@ import { EX_BASE, SIMULACAO_HYROX, slugEx } from './programa';
 import { chaveDeLog } from './sincronia';
 import type { DiaComidaHist } from './nutricao/tipos';
 import type { Estado, IdEx, Log, Marca, PromoPendente, Treino } from './tipos';
+import type { Refeicao } from './nutricao/tipos';
 
 // ---------- migração de plano ----------
 // As chaves do histórico são dia+posição (A0, B3...). Trocar o programa faria
@@ -23,7 +24,7 @@ import type { Estado, IdEx, Log, Marca, PromoPendente, Treino } from './tipos';
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-export const PLANO_ATUAL = 10;
+export const PLANO_ATUAL = 11;
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -696,5 +697,72 @@ export function migraPlano10(S: Estado): Resultado10 | null {
   if (antes === 1 && S.promoPendente.length) r.promos = S.promoPendente.length;
 
   S.plano = 10;
+  return r;
+}
+
+// ---------- 10 -> 11: a ceia ----------
+//
+// O dono respondeu a ceia (14.13 era "sim, e é assunto do nutricionista"; a
+// resposta de agora diz O QUE é): copo de leite com duas colheres de Neston.
+//
+// Por que isto é migração, e não só uma linha em `PLANO_BASE`: o plano é
+// DOCUMENTO PERSISTIDO. `planoDeComida()` o semeia da base uma vez, quando o
+// estado nasce (`if (!S.comida.plano) S.comida.plano = clone(PLANO_BASE)`), e a
+// partir daí o plano é dele — editável, e divergindo conforme ele decide.
+// Mudar a base alcança aparelho novo e NÃO alcança o dele.
+//
+// Duas coisas que esta migração NÃO precisa fazer, e é bom dizer por quê:
+//
+// - **O Neston não entra aqui.** O catálogo de alimentos é DERIVADO a cada
+//   render, de `ALIMENTOS_BASE` mais o que ele cadastrou, menos o que ele
+//   escondeu (`catalogoAlimentos()` em `src/main.jsx`). Alimento do código
+//   chega ao aparelho pelo build, sem migração. Se ele tiver cadastrado um
+//   `neston` próprio, o dele vence na mesma função — e isso é o certo.
+// - **Não reconstruir o plano.** A migração INSERE uma refeição; ela não
+//   compara o plano guardado com a base, não corrige nome, horário nem item que
+//   ele tenha mexido, e não reordena nada. Presumir que o plano guardado é
+//   igual à base seria apagar as edições dele, que é o oposto da regra 2.
+//
+// A cópia congelada abaixo não referencia `PLANO_BASE` de propósito: migração lê
+// o dado da época, nunca o código de hoje — se amanhã o nutricionista revisar a
+// ceia, a revisão é uma migração nova e esta continua inserindo o que o plano 11
+// prescrevia. Um teste de domínio cobra que as duas cópias descrevam a mesma
+// ceia HOJE, que é o que impede as duas populações (aparelho migrado e aparelho
+// novo) de nascerem diferentes.
+
+/** A ceia, como o plano 11 a prescreveu. Congelada: não lê `PLANO_BASE`. */
+export const CEIA_PLANO_11: Refeicao = {
+  id: 'ceia', t: '21:30', n: 'Ceia', tag: 'ANTES DE DORMIR', quando: 'sempre',
+  nota: 'Copo de leite com duas colheres de Neston. As duas colheres são a porção que o próprio rótulo usa; o copo de 250 ml é a porção de leite que o resto deste plano já usa.',
+  itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 30 }]
+};
+
+/** O que a migração 10→11 mexeu. */
+export interface Resultado11 {
+  /** 1 quando a ceia foi inserida no plano dele */
+  inseriu: 0 | 1;
+}
+
+export function migraPlano11(S: Estado): Resultado11 | null {
+  if (S.plano >= 11) return null;
+  const r: Resultado11 = { inseriu: 0 };
+
+  const plano = S.comida && S.comida.plano;
+  // Sem plano guardado não há o que migrar: `planoDeComida()` vai semear da
+  // base, que já tem a ceia. Inserir aqui criaria um plano de uma refeição só.
+  if (Array.isArray(plano)) {
+    const tem = plano.some(function (ref) { return ref && ref.id === CEIA_PLANO_11.id; });
+    if (!tem) {
+      // No fim da lista: a ceia é a última do relógio entre as refeições da
+      // base, e `refeicoesDeHoje` ordena por horário de qualquer forma.
+      plano.push(JSON.parse(JSON.stringify(CEIA_PLANO_11)));
+      r.inseriu = 1;
+    }
+    // Já tinha uma refeição com este id: não duplica E NÃO SOBRESCREVE. Pode
+    // ser a ceia que ele mesmo criou, com o horário e os itens dele, e a
+    // migração não tem autoridade sobre o que ele escreveu.
+  }
+
+  S.plano = 11;
   return r;
 }

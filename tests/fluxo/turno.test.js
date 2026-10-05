@@ -52,9 +52,10 @@ test('escolher o turno reordena o diário', async () => {
   const linhas = a.$$('.ins-tl-hora, .tl-hora').map(e => e.textContent.trim());
   const ordem = a.J('CTX.hoje().refs.map(function(r){return r.t+" "+r.id})');
   assert.deepStrictEqual(ordem, [
-    '08:00 pos', '12:30 almoco', '16:00 lanche', '17:45 pre', '18:15 treino', '19:45 jantar'
+    '08:00 pos', '12:30 almoco', '16:00 lanche', '17:45 pre', '18:15 treino', '19:45 jantar',
+    '21:30 ceia'
   ], 'o pré e o treino andam, o café fica às 8h, e o jantar sai de dentro da sessão');
-  assert.ok(linhas.length === 0 || linhas.length === 6);
+  assert.ok(linhas.length === 0 || linhas.length === ordem.length);
   a.fechar();
 });
 

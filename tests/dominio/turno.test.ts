@@ -31,7 +31,8 @@ test('manhã é o plano como está escrito', () => {
   assert.strictEqual(deslocamentoDoTurno(PLANO_BASE, null), 0, 'ausente é manhã');
   assert.deepStrictEqual(horas('manha'), horas(undefined));
   assert.deepStrictEqual(horas('manha'), [
-    '05:45 pre', '06:15 treino', '08:00 pos', '12:30 almoco', '16:00 lanche', '19:30 jantar'
+    '05:45 pre', '06:15 treino', '08:00 pos', '12:30 almoco', '16:00 lanche', '19:30 jantar',
+    '21:30 ceia'
   ]);
 });
 
@@ -47,7 +48,8 @@ test('o pré e o intra andam; o resto fica no relógio', () => {
 
 test('o almoço não cabe num treino de 12h15 e vai para depois dele', () => {
   assert.deepStrictEqual(horas('tarde'), [
-    '08:00 pos', '11:45 pre', '12:15 treino', '13:45 almoco', '16:00 lanche', '19:30 jantar'
+    '08:00 pos', '11:45 pre', '12:15 treino', '13:45 almoco', '16:00 lanche', '19:30 jantar',
+    '21:30 ceia'
   ], 'o almoço passa a ser o pós-treino, e não se antecipa');
   const movidas = refeicoesMovidas(emTurno('tarde'));
   assert.deepStrictEqual(movidas.map(r => r.id), ['almoco']);
@@ -55,8 +57,9 @@ test('o almoço não cabe num treino de 12h15 e vai para depois dele', () => {
 
 test('o jantar também não cabe num treino de 18h15, que termina lá pelas 19h30', () => {
   assert.deepStrictEqual(horas('noite'), [
-    '08:00 pos', '12:30 almoco', '16:00 lanche', '17:45 pre', '18:15 treino', '19:45 jantar'
-  ]);
+    '08:00 pos', '12:30 almoco', '16:00 lanche', '17:45 pre', '18:15 treino', '19:45 jantar',
+    '21:30 ceia'
+  ], 'a ceia das 21:30 fica fora da sessão da noite, que acaba por volta das 19:30');
   assert.deepStrictEqual(refeicoesMovidas(emTurno('noite')).map(r => r.id), ['jantar']);
 });
 

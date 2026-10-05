@@ -16,6 +16,22 @@ import {
 import type { DiaComida, DiaComidaHist } from '../../src/dominio/nutricao/tipos';
 
 const cat = ALIMENTOS_BASE;
+
+/**
+ * Todas as refeições do plano marcadas, derivado do PLANO.
+ *
+ * Escrito à mão, o "dia cheio" destes testes envelhecia a cada refeição nova —
+ * e envelheceu: a ceia do plano 11 fez `{ pre, treino, pos, almoco, lanche,
+ * jantar }` passar a descrever um dia com uma refeição faltando, enquanto o
+ * teste continuava chamando aquilo de "comeu tudo".
+ */
+function todoOPlano(treino: boolean): Record<string, number> {
+  const out: Record<string, number> = {};
+  PLANO_BASE.filter(function (r) { return r.quando === 'sempre' || (treino && r.quando === 'treino'); })
+            .forEach(function (r) { out[r.id] = 1; });
+  return out;
+}
+
 const dia = (extra: Partial<DiaComida> = {}): DiaComida => Object.assign({
   data: '2026-01-14', done: {}, agua: 0, escala: {}, cadencia: 'treino' as const, alta: 0 as const
 }, extra);
@@ -36,12 +52,12 @@ test('o total é congelado no fechamento, contra o plano daquele dia', () => {
 
 test('a aderência é ponderada pela escala, não pela contagem crua', () => {
   const refs = refeicoesDeHoje(PLANO_BASE, true, false);
-  const cheio = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 } }),
-                         PLANO_BASE, cat, 1, 0, 1000);
+  const todas = todoOPlano(true);
+  const cheio = fechaDia(dia({ done: todas }), PLANO_BASE, cat, 1, 0, 1000);
   assert.strictEqual(aderenciaDoDia(cheio, refs), 1);
 
-  const meio = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 },
-                              escala: { jantar: 0.5 } }), PLANO_BASE, cat, 1, 0, 1000);
+  const meio = fechaDia(dia({ done: todas, escala: { jantar: 0.5 } }),
+                        PLANO_BASE, cat, 1, 0, 1000);
   const a = aderenciaDoDia(meio, refs)!;
   assert.ok(a < 1 && a > 0.9,
     '"marcou feito com metade" não é igual a "comeu tudo" — o app já tem esse dado');
@@ -107,7 +123,11 @@ import {
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
 } from '../../src/dominio/nutricao/calculo';
 
-const cheio = { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 };
+// "cheio" é TODA refeição do plano, derivado dele: escrito à mão, ele
+// envelhecia a cada refeição nova — a ceia do plano 11 deixou estes testes
+// afirmando "dia inteiro" sobre um dia com uma refeição faltando.
+const cheio: Record<string, 1> = {};
+PLANO_BASE.forEach(function (r) { cheio[r.id] = 1; });
 const hist = (dias: Array<[string, Record<string, 1>, Partial<DiaComida>?]>) =>
   dias.map(([d, done, extra]) =>
     fechaDia(dia(Object.assign({ data: d, done }, extra || {})), PLANO_BASE, cat, 1, 0, 1));
@@ -208,42 +228,43 @@ test('"não contei a água" desce como fato, e cai se houver copo', () => {
 test('uma refeição que entra no plano muda o denominador de todo dia, sem tocar no congelado', () => {
   // É a regra da ceia, e o motivo de ela valer para trás de graça: o dono
   // acrescenta a refeição ao plano e a conta de ontem se refaz na leitura.
-  const h = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 } }),
-                     PLANO_BASE, cat, 1, 0, 1000);
+  const h = fechaDia(dia({ done: todoOPlano(true) }), PLANO_BASE, cat, 1, 0, 1000);
   const kcalCongelado = h.tot.kcal;
 
-  const seis = refeicoesDeHoje(PLANO_BASE, true, false);
-  assert.strictEqual(seis.length, 6, 'o plano de hoje tem seis refeições em dia de treino');
-  assert.strictEqual(aderenciaDoDia(h, seis), 1, 'seis de seis');
+  const hoje = refeicoesDeHoje(PLANO_BASE, true, false);
+  const n = hoje.length;
+  assert.strictEqual(aderenciaDoDia(h, hoje), 1, 'todas as do plano, cumpridas');
 
-  // o plano ganha uma refeição — a ceia, que hoje não existe no PLANO_BASE
-  const comCeia = JSON.parse(JSON.stringify(PLANO_BASE));
-  comCeia.push({ id: 'ceia', t: '22:00', n: 'Ceia', tag: '', quando: 'sempre', itens: [] });
-  const sete = refeicoesDeHoje(comCeia, true, false);
-  assert.strictEqual(sete.length, 7);
+  // o plano ganha uma refeição que não existe nele
+  const maior = JSON.parse(JSON.stringify(PLANO_BASE));
+  maior.push({ id: 'lanche2', t: '22:00', n: 'Outro lanche', tag: '', quando: 'sempre', itens: [] });
+  const mais = refeicoesDeHoje(maior, true, false);
+  assert.strictEqual(mais.length, n + 1);
 
-  const a = aderenciaDoDia(h, sete)!;
-  assert.ok(Math.abs(a - 6 / 7) < 1e-9, 'o MESMO dia passa a ser seis de sete');
+  const a = aderenciaDoDia(h, mais)!;
+  assert.ok(Math.abs(a - n / (n + 1)) < 1e-9,
+    'o MESMO dia passa a ser ' + n + ' de ' + (n + 1));
   assert.strictEqual(h.tot.kcal, kcalCongelado,
     'e o total congelado não é tocado: ele é o registro do que foi contado na época');
 });
 
 test('"não comi" conta o dia e vale zero naquela refeição', () => {
   const refs = refeicoesDeHoje(PLANO_BASE, true, false);
-  const h = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 },
-                           como: { jantar: 'nao' } }), PLANO_BASE, cat, 1, 0, 1000);
+  const h = fechaDia(dia({ done: todoOPlano(true), como: { jantar: 'nao' } }),
+                     PLANO_BASE, cat, 1, 0, 1000);
 
   assert.strictEqual(diaInterpretavel(h), true,
     'dia honesto não pode valer menos que dia esquecido');
+  const n = refs.length;
   const a = aderenciaDoDia(h, refs)!;
-  assert.ok(Math.abs(a - 5 / 6) < 1e-9, 'cinco de seis: o jantar declarado não entra');
+  assert.ok(Math.abs(a - (n - 1) / n) < 1e-9, 'o jantar declarado não entra no numerador');
 });
 
 test('o dia em que ele não comeu nada é dia conhecido, com aderência zero', () => {
   const refs = refeicoesDeHoje(PLANO_BASE, true, false);
-  const h = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 },
-                           como: { pre: 'nao', treino: 'nao', pos: 'nao', almoco: 'nao',
-                                   lanche: 'nao', jantar: 'nao' } }), PLANO_BASE, cat, 1, 0, 1000);
+  const nada: Record<string, 'nao'> = {};
+  Object.keys(todoOPlano(true)).forEach(function (id) { nada[id] = 'nao'; });
+  const h = fechaDia(dia({ done: todoOPlano(true), como: nada }), PLANO_BASE, cat, 1, 0, 1000);
   assert.strictEqual(diaInterpretavel(h), true, 'o app sabe exatamente o que entrou: nada');
   assert.strictEqual(aderenciaDoDia(h, refs), 0);
   assert.strictEqual(h.tot.kcal, 0, 'e o total congelado não soma refeição que ele disse não ter comido');
@@ -253,8 +274,8 @@ test('"saí do plano" numa refeição conta como cumprida, com a procedência', 
   // Ele comeu; só não foi aquilo. O app só tem os números do plano, e a marca é
   // a procedência dizendo que o número é do prescrito.
   const refs = refeicoesDeHoje(PLANO_BASE, true, false);
-  const h = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 },
-                           como: { almoco: 'fora' } }), PLANO_BASE, cat, 1, 0, 1000);
+  const h = fechaDia(dia({ done: todoOPlano(true), como: { almoco: 'fora' } }),
+                     PLANO_BASE, cat, 1, 0, 1000);
   assert.strictEqual(aderenciaDoDia(h, refs), 1);
   assert.strictEqual(h.como!.almoco, 'fora', 'mas o dia carrega que o almoço não foi o do plano');
   assert.ok(h.tot.kcal > 0);
@@ -265,7 +286,8 @@ test('a aderência não passa de 100%, e o excesso é medido à parte', () => {
   // aparecia como aderir MELHOR do que aderir — e `recorteDoHistorico` contava
   // o dia como cumprido por causa do excedente, não do cumprimento.
   const refs = refeicoesDeHoje(PLANO_BASE, true, false);
-  const todas = { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 };
+  const n = refs.length;
+  const todas = todoOPlano(true);
 
   const cheio = fechaDia(dia({ done: todas }), PLANO_BASE, cat, 1, 0, 1000);
   assert.strictEqual(aderenciaDoDia(cheio, refs), 1);
@@ -275,14 +297,14 @@ test('a aderência não passa de 100%, e o excesso é medido à parte', () => {
   assert.strictEqual(aderenciaDoDia(comeuMais, refs), 1,
     'cumprir uma refeição é cumpri-la; mais que ela não é mais cumprimento');
   const ex = excessoDoDia(comeuMais, refs)!;
-  assert.ok(Math.abs(ex - 0.5 / 6) < 1e-9, 'meia porção de seis refeições');
+  assert.ok(Math.abs(ex - 0.5 / n) < 1e-9, 'meia porção dividida pelas refeições do dia');
 
   // e o excesso não compensa a falta: são duas leituras, não uma soma
   const faltouEComeuMais = fechaDia(dia({ done: todas, escala: { almoco: 1.5, jantar: 0.5 } }),
                                     PLANO_BASE, cat, 1, 0, 1000);
   const a = aderenciaDoDia(faltouEComeuMais, refs)!;
-  assert.ok(Math.abs(a - 5.5 / 6) < 1e-9, 'metade do jantar continua pesando contra');
-  assert.ok(Math.abs(excessoDoDia(faltouEComeuMais, refs)! - 0.5 / 6) < 1e-9);
+  assert.ok(Math.abs(a - (n - 0.5) / n) < 1e-9, 'metade do jantar continua pesando contra');
+  assert.ok(Math.abs(excessoDoDia(faltouEComeuMais, refs)! - 0.5 / n) < 1e-9);
 });
 
 test('o excesso ignora a refeição que ele declarou não ter comido', () => {
@@ -443,8 +465,7 @@ test('o dia posto em dia entra nas leituras como qualquer outro', () => {
   // aderência da semana, senão registrar o passado não serve para nada.
   let hist: DiaComidaHist[] = [];
   ['2026-01-10', '2026-01-11', '2026-01-12'].forEach(function (d) {
-    hist = poe(hist, d, { done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 },
-                          cadencia: 'treino' }).hist;
+    hist = poe(hist, d, { done: todoOPlano(true), cadencia: 'treino' }).hist;
   });
   assert.strictEqual(diasInterpretaveis(hist, 14, HOJE), 3);
 

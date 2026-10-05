@@ -479,7 +479,7 @@ test('o estado congelado do plano 9 entra pelo boot e sai migrado', async () => 
   await a.esperar();
 
   assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'), 'a cadeia inteira roda no boot');
-  assert.strictEqual(a.E('S.plano'), 10);
+  assert.ok(a.E('S.plano') >= 10, 'passou pela 9→10');
 
   const meiaNoite = new Date(era.dia.data + 'T00:00:00').getTime();
   assert.deepStrictEqual(a.J('S.dia.done'),

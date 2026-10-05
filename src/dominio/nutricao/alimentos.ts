@@ -30,6 +30,19 @@ const CRU: Array<[string, string, string, 'g' | 'ml', number, number, number, nu
   ['feijao', 'Feijão cozido', 'mercearia', 'g', 76, 4.8, 13.6, 0.5, 0.43],
   ['aveia', 'Aveia', 'mercearia', 'g', 394, 13.9, 66.6, 8.5, 0],
   ['cereal', 'Cereal de milho simples', 'mercearia', 'g', 375, 7, 84, 1, 0],
+  // ATENÇÃO · VALORES PENDENTES DE CONFERÊNCIA CONTRA A EMBALAGEM.
+  //
+  // Os quatro números abaixo foram passados de segunda mão e NINGUÉM os leu no
+  // rótulo. Não são medidos, e esta linha não pode ser tratada como se fossem
+  // até que alguém confira a lata: o alvo calórico é CALCULADO do plano, então
+  // um valor errado aqui contamina o alvo do dia, e por ele o ledger do ajuste
+  // calórico — que audita decisões de corte contra a ingestão da época.
+  //
+  // O que dá para dizer sem a embalagem: os macros fecham com o kcal declarado
+  // dentro de 1,7% (9,5×4 + 78×4 + 4,5×9 = 390,5 contra 397), que é a folga
+  // normal de arredondamento e fibra num rótulo. Consistência interna não é
+  // conferência.
+  ['neston', 'Neston 3 Cereais', 'mercearia', 'g', 397, 9.5, 78, 4.5, 0],
   ['atum', 'Atum drenado', 'mercearia', 'g', 116, 26, 0, 1, 0],
   ['pasta', 'Pasta de amendoim', 'mercearia', 'g', 588, 25, 20, 50, 0],
   ['azeite', 'Azeite de oliva', 'mercearia', 'g', 884, 0, 0, 100, 0],
@@ -98,5 +111,17 @@ export const PLANO_BASE: Refeicao[] =[
   { id: 'pos', t: '08:00', n: 'Café da manhã', tag: 'REFEIÇÃO FORTE', quando: 'sempre', nota: 'Quatro fontes de energia e proteína sem depender de fogão no trabalho.', itens: [{ f: 'cuscuz', q: 200 }, { f: 'frango', q: 70 }, { f: 'requeijao', q: 30 }, { f: 'leite', q: 250 }, { f: 'uva', q: 120 }] },
   { id: 'almoco', t: '12:30', n: 'Almoço', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'O kiwi entra diariamente junto de feijão, aveia e vegetais para elevar fibra e ajudar a regularidade intestinal.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'frango', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }, { f: 'kiwi', q: 100 }] },
   { id: 'lanche', t: '16:00', n: 'Lanche da tarde', tag: 'GRANDE REFEIÇÃO', quando: 'sempre', nota: 'Bata leite + banana + aveia + pasta + leite em pó + whey. Pão e geleia ficam separados.', itens: [{ f: 'leite', q: 250 }, { f: 'banana', q: 120 }, { f: 'aveia', q: 40 }, { f: 'pasta', q: 10 }, { f: 'leitepo', q: 10 }, { f: 'whey', q: 30 }, { f: 'pao', q: 50 }, { f: 'geleia', q: 20 }] },
-  { id: 'jantar', t: '19:30', n: 'Jantar', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'Sem ceia obrigatória: o dia já fecha proteína e energia com quatro refeições proteicas completas.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'suino', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }] }
+  { id: 'jantar', t: '19:30', n: 'Jantar', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'Quatro refeições proteicas completas já fecham proteína e energia até aqui. A ceia entrou depois e é acréscimo, não substituição: nada aqui foi reduzido para ela caber.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'suino', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }] },
+  // A ceia. Entrou no plano 11, e a mesma refeição vai ao aparelho dele pela
+  // migração 10 → 11 (`src/dominio/migracoes.ts`), que carrega uma CÓPIA
+  // CONGELADA dela: migração lê o dado da época, nunca o código de hoje. As
+  // duas cópias não se referenciam de propósito, e um teste de domínio cobra
+  // que elas descrevam a MESMA ceia — se esta linha mudar, aquele teste fica
+  // vermelho e a mudança precisa de uma migração nova, não de um ajuste lá.
+  //
+  // `t` é SUPOSTO, não prescrito: ele disse o que come, não a que horas. 21:30
+  // põe a ceia depois do jantar das 19:30 e antes do sono de quem levanta para
+  // um pré-treino às 05:45. O horário só decide a posição da linha na timeline,
+  // que `refeicoesDeHoje` ordena por relógio.
+  { id: 'ceia', t: '21:30', n: 'Ceia', tag: 'ANTES DE DORMIR', quando: 'sempre', nota: 'Copo de leite com duas colheres de Neston. As duas colheres são a porção que o próprio rótulo usa; o copo de 250 ml é a porção de leite que o resto deste plano já usa.', itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 30 }] }
 ];

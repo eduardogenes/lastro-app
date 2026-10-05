@@ -51,7 +51,7 @@ import { MARCAS_DO_CORPO, mediasSemanais, pesoRitmo as _pesoRitmo,
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
-import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10 } from './dominio/migracoes';
+import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
@@ -439,6 +439,7 @@ async function load() {
   migraPlano8(S);
   migraPlano9(S);
   migraPlano10(S);
+  migraPlano11(S);
   garanteProgramaERotacao();
   montaCatalogo();
 
@@ -3639,6 +3640,7 @@ async function importText(txt) {
   migraPlano8(S);
   migraPlano9(S);
   migraPlano10(S);
+  migraPlano11(S);
   montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;

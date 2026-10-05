@@ -1,0 +1,623 @@
+{
+  "logs": {},
+  "done": [],
+  "deload": false,
+  "draft": null,
+  "sessao": null,
+  "cardio": [],
+  "body": {
+    "peso": [
+      {
+        "t": 1791196800000,
+        "v": 79,
+        "m": 1791196800000
+      }
+    ],
+    "cintura": [],
+    "bioPeso": [],
+    "bioMusculo": [],
+    "bioGordura": [],
+    "bioGorduraPct": [],
+    "bioAgua": []
+  },
+  "carga": {},
+  "export": 0,
+  "plano": 10,
+  "prog": {
+    "A": {
+      "name": "Peito superior + dorsais + lateral + tríceps",
+      "tag": "os três alvos com você inteiro",
+      "ex": [
+        {
+          "id": "chest-press-inclinado-convergente",
+          "s": 3,
+          "r": "6–10",
+          "d": 180,
+          "rir": "1–2",
+          "desde": 0
+        },
+        {
+          "id": "pulldown-convergente",
+          "s": 3,
+          "r": "6–10",
+          "d": 150,
+          "rir": "1–2",
+          "desde": 0
+        },
+        {
+          "id": "crucifixo-inclinado-no-cabo",
+          "s": 2,
+          "r": "10–15",
+          "d": 120,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "pulldown-unilateral",
+          "s": 2,
+          "r": "8–12",
+          "d": 120,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "elevacao-lateral-na-maquina",
+          "s": 3,
+          "r": "10–15",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "elevacao-lateral-unilateral-no-cabo",
+          "s": 3,
+          "r": "12–20",
+          "d": 90,
+          "rir": "0–1",
+          "desde": 0
+        },
+        {
+          "id": "extensao-de-triceps-acima-da-cabeca-no-cabo",
+          "s": 2,
+          "r": "8–12",
+          "d": 120,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "pushdown",
+          "s": 2,
+          "r": "10–15",
+          "d": 105,
+          "rir": "0–1",
+          "desde": 0
+        }
+      ]
+    },
+    "B": {
+      "name": "Pernas completas + panturrilhas",
+      "tag": "a perna inteira num dia só",
+      "ex": [
+        {
+          "id": "agachamento-no-smith",
+          "s": 2,
+          "r": "6–10",
+          "d": 180,
+          "rir": "1–2",
+          "desde": 0
+        },
+        {
+          "id": "cadeira-flexora-sentada",
+          "s": 4,
+          "r": "8–12",
+          "d": 120,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "terra-romeno-no-smith",
+          "s": 3,
+          "r": "6–10",
+          "d": 180,
+          "rir": "1–2",
+          "desde": 0
+        },
+        {
+          "id": "leg-press",
+          "s": 2,
+          "r": "10–15",
+          "d": 150,
+          "rir": "1–2",
+          "desde": 0
+        },
+        {
+          "id": "cadeira-extensora",
+          "s": 1,
+          "r": "10–15",
+          "d": 120,
+          "rir": "0–1",
+          "desde": 0
+        },
+        {
+          "id": "elevacao-pelvica-na-maquina",
+          "s": 3,
+          "r": "8–12",
+          "d": 150,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "adutora",
+          "s": 2,
+          "r": "10–15",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "panturrilha-em-pe",
+          "s": 3,
+          "r": "6–10",
+          "d": 120,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "panturrilha-sentada",
+          "s": 2,
+          "r": "10–15",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        }
+      ]
+    },
+    "C": {
+      "name": "Costas + deltoides + bíceps",
+      "tag": "aqui entra o deltoide anterior",
+      "ex": [
+        {
+          "id": "remada-para-dorsal-com-apoio-de-peito",
+          "s": 3,
+          "r": "6–10",
+          "d": 150,
+          "rir": "1–2",
+          "desde": 0
+        },
+        {
+          "id": "high-row-com-apoio-de-peito",
+          "s": 3,
+          "r": "8–12",
+          "d": 150,
+          "rir": "1–2",
+          "desde": 0
+        },
+        {
+          "id": "pullover-em-maquina-ou-cabo",
+          "s": 2,
+          "r": "10–15",
+          "d": 120,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "reverse-pec-deck",
+          "s": 3,
+          "r": "12–20",
+          "d": 105,
+          "rir": "0–1",
+          "desde": 0
+        },
+        {
+          "id": "elevacao-frontal-unilateral-no-cabo",
+          "s": 2,
+          "r": "10–15",
+          "d": 90,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "rosca-scott-na-maquina",
+          "s": 2,
+          "r": "8–12",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "rosca-martelo",
+          "s": 2,
+          "r": "10–15",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        }
+      ]
+    },
+    "D": {
+      "name": "Especialização: lateral + panturrilha + abdômen",
+      "tag": "treino de verdade, fadiga sistêmica baixa",
+      "ex": [
+        {
+          "id": "elevacao-lateral-na-maquina",
+          "s": 3,
+          "r": "10–15",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "elevacao-lateral-unilateral-no-cabo",
+          "s": 3,
+          "r": "12–20",
+          "d": 90,
+          "rir": "0–1",
+          "desde": 0
+        },
+        {
+          "id": "panturrilha-sentada",
+          "s": 3,
+          "r": "8–15",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "panturrilha-em-pe",
+          "s": 2,
+          "r": "8–12",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "crunch-no-cabo-ou-maquina",
+          "s": 3,
+          "r": "8–15",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "elevacao-de-pernas-ou-reverse-crunch",
+          "s": 3,
+          "r": "10–15",
+          "d": 90,
+          "rir": "1",
+          "desde": 0
+        }
+      ]
+    },
+    "E": {
+      "name": "Peito superior + costas + braços",
+      "tag": "compacto: amanhã tem HYROX",
+      "ex": [
+        {
+          "id": "supino-inclinado-no-smith",
+          "s": 3,
+          "r": "6–10",
+          "d": 180,
+          "rir": "1–2",
+          "desde": 0
+        },
+        {
+          "id": "remada-convergente-com-apoio-de-peito",
+          "s": 3,
+          "r": "8–12",
+          "d": 150,
+          "rir": "1–2",
+          "desde": 0
+        },
+        {
+          "id": "chest-press-horizontal-convergente",
+          "s": 2,
+          "r": "8–12",
+          "d": 150,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "crossover-de-baixo-para-cima",
+          "s": 2,
+          "r": "10–15",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "rosca-bayesian-no-cabo",
+          "s": 2,
+          "r": "10–15",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        },
+        {
+          "id": "extensao-de-triceps-acima-da-cabeca-no-cabo",
+          "s": 2,
+          "r": "10–15",
+          "d": 105,
+          "rir": "1",
+          "desde": 0
+        }
+      ]
+    },
+    "HX": {
+      "name": "HYROX",
+      "tag": "o que o box programar",
+      "aberto": 1,
+      "ex": []
+    }
+  },
+  "rot": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "HX"
+  ],
+  "ex": {},
+  "mods": null,
+  "progLog": [],
+  "aulas": [],
+  "protocolo": {
+    "poses": null,
+    "sessoes": []
+  },
+  "promoPendente": [],
+  "cadencia": [
+    "descanso",
+    "treino",
+    "treino",
+    "treino",
+    "treino",
+    "treino",
+    "treino"
+  ],
+  "comida": {
+    "plano": [
+      {
+        "id": "pre",
+        "t": "05:45",
+        "n": "Pré-treino",
+        "tag": "RÁPIDO E FUNCIONAL",
+        "quando": "treino",
+        "nota": "Carboidrato rápido antes de um treino após o jejum noturno. Volume baixo, digestão rápida. Uma fatia de pão, doce de leite e canela.",
+        "itens": [
+          {
+            "f": "pao",
+            "q": 35
+          },
+          {
+            "f": "docedeleite",
+            "q": 20
+          },
+          {
+            "f": "canela",
+            "q": 1
+          },
+          {
+            "f": "cafe",
+            "q": 200,
+            "caf": 1
+          }
+        ]
+      },
+      {
+        "id": "treino",
+        "t": "06:15",
+        "n": "Treino",
+        "tag": "INTRA-TREINO",
+        "quando": "treino",
+        "nota": "Musculação 6h15–7h30. Nos dias de alta demanda entram 25 g de carboidrato na água.",
+        "itens": [
+          {
+            "f": "agua",
+            "q": 600
+          },
+          {
+            "f": "malto",
+            "q": 25,
+            "alta": true
+          }
+        ]
+      },
+      {
+        "id": "pos",
+        "t": "08:00",
+        "n": "Café da manhã",
+        "tag": "REFEIÇÃO FORTE",
+        "quando": "sempre",
+        "nota": "Quatro fontes de energia e proteína sem depender de fogão no trabalho.",
+        "itens": [
+          {
+            "f": "cuscuz",
+            "q": 200
+          },
+          {
+            "f": "frango",
+            "q": 70
+          },
+          {
+            "f": "requeijao",
+            "q": 30
+          },
+          {
+            "f": "leite",
+            "q": 250
+          },
+          {
+            "f": "uva",
+            "q": 120
+          }
+        ]
+      },
+      {
+        "id": "almoco",
+        "t": "12:30",
+        "n": "Almoço",
+        "tag": "PRATO PRINCIPAL",
+        "quando": "sempre",
+        "nota": "O kiwi entra diariamente junto de feijão, aveia e vegetais para elevar fibra e ajudar a regularidade intestinal.",
+        "itens": [
+          {
+            "f": "arroz",
+            "q": 250,
+            "arroz": true
+          },
+          {
+            "f": "feijao",
+            "q": 50
+          },
+          {
+            "f": "frango",
+            "q": 80
+          },
+          {
+            "f": "legumes",
+            "q": 100
+          },
+          {
+            "f": "azeite",
+            "q": 15
+          },
+          {
+            "f": "kiwi",
+            "q": 100
+          }
+        ]
+      },
+      {
+        "id": "lanche",
+        "t": "16:00",
+        "n": "Lanche da tarde",
+        "tag": "GRANDE REFEIÇÃO",
+        "quando": "sempre",
+        "nota": "Bata leite + banana + aveia + pasta + leite em pó + whey. Pão e geleia ficam separados.",
+        "itens": [
+          {
+            "f": "leite",
+            "q": 250
+          },
+          {
+            "f": "banana",
+            "q": 120
+          },
+          {
+            "f": "aveia",
+            "q": 40
+          },
+          {
+            "f": "pasta",
+            "q": 10
+          },
+          {
+            "f": "leitepo",
+            "q": 10
+          },
+          {
+            "f": "whey",
+            "q": 30
+          },
+          {
+            "f": "pao",
+            "q": 50
+          },
+          {
+            "f": "geleia",
+            "q": 20
+          }
+        ]
+      },
+      {
+        "id": "jantar",
+        "t": "19:30",
+        "n": "Jantar",
+        "tag": "PRATO PRINCIPAL",
+        "quando": "sempre",
+        "nota": "Sem ceia obrigatória: o dia já fecha proteína e energia com quatro refeições proteicas completas.",
+        "itens": [
+          {
+            "f": "arroz",
+            "q": 250,
+            "arroz": true
+          },
+          {
+            "f": "feijao",
+            "q": 50
+          },
+          {
+            "f": "suino",
+            "q": 80
+          },
+          {
+            "f": "legumes",
+            "q": 100
+          },
+          {
+            "f": "azeite",
+            "q": 15
+          }
+        ]
+      }
+    ],
+    "alimentos": {},
+    "ocultos": {},
+    "v": 1791283200000
+  },
+  "compras": {
+    "comprado": {},
+    "extras": [],
+    "removidas": {},
+    "dias": 7
+  },
+  "ajuste": 0,
+  "ajusteHist": [],
+  "gordura": [],
+  "perfManual": null,
+  "dia": {
+    "data": "2026-10-06",
+    "done": {
+      "pos": 1791283200000,
+      "almoco": 1791283200000
+    },
+    "agua": 0,
+    "escala": {},
+    "cadencia": null,
+    "alta": 0,
+    "como": {
+      "almoco": "fora"
+    },
+    "aguaNaoContada": 1
+  },
+  "quadro": null,
+  "comidaHist": [
+    {
+      "d": "2026-10-05",
+      "done": {
+        "pre": 1791196800000,
+        "treino": 1791196800000,
+        "pos": 1791196800000,
+        "almoco": 1791196800000,
+        "lanche": 1791196800000,
+        "jantar": 1791196800000
+      },
+      "agua": 8,
+      "escala": {},
+      "tot": {
+        "kcal": 3007.1,
+        "p": 158.135,
+        "c": 402.94,
+        "g": 82.16000000000001
+      },
+      "pv": 1791283200000,
+      "m": 1791283200000,
+      "cadencia": "treino"
+    }
+  ],
+  "mtime": 1791196800000,
+  "apagados": {},
+  "descanso": {},
+  "fotos": {}
+}
