@@ -6,7 +6,7 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { funde, chaveDeLog, chaveDeSessao, chaveDeMarca, chaveDeCardio, chaveDeSessaoFoto, chaveDeFotoDoCorpo, LAPIDE_DIAS } from '../../src/dominio/sincronia';
+import { funde, chaveDeLog, chaveDeSessao, chaveDeMarca, chaveDeCardio, chaveDePromo, chaveDeSessaoFoto, chaveDeFotoDoCorpo, LAPIDE_DIAS } from '../../src/dominio/sincronia';
 import type { Corpo, Enquadramento, Estado, Log, QualMarca, SessaoFoto } from '../../src/dominio/tipos';
 import type { DiaComidaHist } from '../../src/dominio/nutricao/tipos';
 import { MARCAS_DO_CORPO } from '../../src/dominio/corpo';
@@ -626,4 +626,60 @@ test('o ajuste de porção do dia aberto vem do lado que tocou depois', () => {
   const novo = estado({ mtime: T0, dia: { data: '2026-08-24', done: { jantar: T0 - DIA }, agua: 0, escala: { jantar: 0.5 } } });
   assert.strictEqual(funde(velho, novo, T0).estado.dia!.escala.jantar, 0.5);
   assert.strictEqual(funde(novo, velho, T0).estado.dia!.escala.jantar, 0.5, 'dos dois lados');
+});
+
+test('a pergunta guardada no celular não some porque o notebook sincronizou depois', () => {
+  // Enquanto `promoPendente` era documento, a fusão a trazia INTEIRA do lado
+  // com `mtime` mais novo — "tudo que não é coleção vem dele". O que o celular
+  // registrou se perdia, em silêncio.
+  const promo = (sid: number, day: string) => ({
+    sid: sid, day: day, t: sid, m: sid,
+    mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }], resumoMods: ['Pushdown: 2 → 3 séries']
+  });
+  const celular = estado({ mtime: T0 - DIA, promoPendente: [promo(T0 - DIA, 'A')] } as Partial<Estado>);
+  const notebook = estado({ mtime: T0, promoPendente: [promo(T0, 'B')] } as Partial<Estado>);
+
+  const { estado: r } = funde(notebook, celular, T0);
+  assert.strictEqual(r.promoPendente.length, 2, 'as duas perguntas esperam');
+  assert.deepStrictEqual(r.promoPendente.map(p => p.day), ['A', 'B'], 'em ordem de tempo');
+  assert.deepStrictEqual(funde(celular, notebook, T0).estado.promoPendente.map(p => p.day),
+    ['A', 'B'], 'e a ordem dos lados não muda nada');
+});
+
+test('responder uma pergunta não a ressuscita do outro aparelho', () => {
+  const promo = { sid: T0 - DIA, day: 'A', t: T0 - DIA, m: T0 - DIA,
+                  mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }], resumoMods: [] };
+  const respondeu = estado({ mtime: T0, promoPendente: [],
+                             apagados: { [chaveDePromo(promo)]: T0 } } as Partial<Estado>);
+  const nuvem = estado({ mtime: T0 - DIA, promoPendente: [promo] } as Partial<Estado>);
+  assert.deepStrictEqual(funde(respondeu, nuvem, T0).estado.promoPendente, [],
+    'sem lápide, a pergunta que ele acabou de responder voltava');
+});
+
+test('a mesma sessão fechada nos dois aparelhos é UMA pergunta', () => {
+  // Os dois tinham a sessão aberta e os dois a encerraram sozinhos: a chave é o
+  // `sid`, então vira uma entrada e ele responde uma vez.
+  const base = { sid: T0 - DIA, day: 'A', t: T0 - DIA,
+                 mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }], resumoMods: [] };
+  const aqui = estado({ mtime: T0, promoPendente: [Object.assign({}, base, { m: T0 })] } as Partial<Estado>);
+  const la = estado({ mtime: T0 - 1000, promoPendente: [Object.assign({}, base, { m: T0 - 2000 })] } as Partial<Estado>);
+  const { estado: r } = funde(aqui, la, T0);
+  assert.strictEqual(r.promoPendente.length, 1);
+  assert.strictEqual(r.promoPendente[0].m, T0, 'vence o carimbo mais novo');
+});
+
+test('a chave da pergunta é o `sid`, e não o dia — que é editável no treino', () => {
+  // "Trocar de dia no meio do treino não perde nem sobrescreve": se `day`
+  // entrasse na chave, a MESMA pergunta fundiria como duas e ele responderia
+  // duas vezes.
+  const mods = [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }];
+  const comoA = { sid: T0, day: 'A', t: T0, m: T0 - 1000, mods: mods, resumoMods: [] };
+  const comoB = { sid: T0, day: 'B', t: T0, m: T0, mods: mods, resumoMods: [] };
+  assert.strictEqual(chaveDePromo(comoA), chaveDePromo(comoB));
+  const { estado: r } = funde(
+    estado({ mtime: T0, promoPendente: [comoA] } as Partial<Estado>),
+    estado({ mtime: T0 - 1, promoPendente: [comoB] } as Partial<Estado>),
+    T0
+  );
+  assert.strictEqual(r.promoPendente.length, 1, 'uma pergunta, uma resposta');
 });

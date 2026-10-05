@@ -56,7 +56,8 @@ test('levar para o oficial muda o programa; só hoje não muda', async () => {
   await a.esperar();
 
   assert.strictEqual(a.E('S.prog.A.ex[0].s'), antes + 1, 'o programa mudou');
-  assert.strictEqual(a.E('S.promoPendente'), null, 'e nada ficou pendente');
+  // coleção desde o plano 10; era documento, e "nada pendente" era `null`
+  assert.deepStrictEqual(a.J('S.promoPendente'), [], 'e nada ficou pendente');
   assert.ok(a.J('S.progLog').length > 0, 'a mudança fica registrada com data');
   a.fechar();
 });
@@ -75,7 +76,7 @@ test('sessão que morre sozinha guarda a pergunta para a próxima abertura', asy
   await a.esperar();
 
   assert.strictEqual(a.E('S.sessao'), null, 'a sessão fechou');
-  const g = a.J('S.promoPendente');
+  const g = a.J('S.promoPendente')[0];   // coleção desde o plano 10
   assert.ok(g, 'e a pergunta ficou guardada');
   assert.strictEqual(g.day, 'A');
   assert.strictEqual(g.mods.length, 1);
@@ -125,7 +126,7 @@ test('sair sem responder mantém o conservador e não repete a pergunta', async 
   a.E('voltarDoPromo()');
   await a.esperar();
   assert.strictEqual(a.E('view.promo'), null);
-  assert.strictEqual(a.E('S.promoPendente'), null, 'não fica reaparecendo para sempre');
+  assert.deepStrictEqual(a.J('S.promoPendente'), [], 'não fica reaparecendo para sempre');
   assert.strictEqual(a.E('S.prog.A.ex[7] ? S.prog.A.ex[7].s : 0'), antes, 'e o oficial não mudou');
   a.fechar();
 });

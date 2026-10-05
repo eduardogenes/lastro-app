@@ -480,7 +480,7 @@ test('9→10 roda uma vez só', () => {
 test('9→10 atravessa estado sem dia, sem histórico e sem corpo', () => {
   const S = { plano: 9 } as unknown as Estado;
   const r = migraPlano10(S)!;
-  assert.deepStrictEqual(r, { marcas: 0, dias: 0, chaves: 0 });
+  assert.deepStrictEqual(r, { marcas: 0, dias: 0, chaves: 0, promos: 0 });
   assert.strictEqual(S.plano, 10, 'e a versão avança: um aparelho novo não fica em 9');
 });
 
@@ -508,4 +508,52 @@ test('9→10 não quebra em dia com data ilegível', () => {
   assert.strictEqual(r.marcas, 0, 'sem data não há instante honesto: a marca fica como está');
   assert.strictEqual(S.dia!.done.pos, 1);
   assert.strictEqual(S.plano, 10);
+});
+
+test('9→10 transforma a pergunta guardada em coleção, sem perder a que havia', () => {
+  // Era documento: UMA pergunta, com um `day` só, e escrita por atribuição
+  // direta — o fecho seguinte sobrescrevia o anterior.
+  const S = {
+    plano: 9,
+    promoPendente: { day: 'A', t: 1791000000000,
+                     mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }],
+                     resumoMods: ['Pushdown: 2 → 3 séries'] }
+  } as unknown as Estado;
+  const r = migraPlano10(S)!;
+
+  assert.strictEqual(r.promos, 1);
+  assert.ok(Array.isArray(S.promoPendente));
+  assert.strictEqual(S.promoPendente.length, 1, 'a pergunta que havia não se perde');
+  assert.strictEqual(S.promoPendente[0].day, 'A');
+  assert.strictEqual(S.promoPendente[0].mods.length, 1);
+  assert.strictEqual(S.promoPendente[0].sid, 1791000000000,
+    'o `sid` que faltava vem de `t`: está no dado, então os dois aparelhos ' +
+    'derivam a MESMA chave do MESMO registro, que é o que a fusão pede');
+});
+
+test('9→10 atravessa `promoPendente` nulo e lista já pronta', () => {
+  const vazio = { plano: 9, promoPendente: null } as unknown as Estado;
+  assert.strictEqual(migraPlano10(vazio)!.promos, 0);
+  assert.deepStrictEqual(vazio.promoPendente, []);
+
+  const pronta = { plano: 9, promoPendente: [
+    { sid: 1, day: 'A', t: 1, mods: [{ k: 'sets', slot: 'x', de: 1, para: 2 }], resumoMods: [] }
+  ] } as unknown as Estado;
+  migraPlano10(pronta);
+  assert.strictEqual(pronta.promoPendente.length, 1, 'lista pronta passa intacta');
+});
+
+test('a pergunta sem mudança nenhuma não vira entrada', () => {
+  // `abrePromoGuardada` já recusava `mods` vazio; a coleção não precisa guardar
+  // uma pergunta que não pergunta nada.
+  const S = { plano: 9, promoPendente: { day: 'A', t: 1, mods: [], resumoMods: [] } } as unknown as Estado;
+  migraPlano10(S);
+  assert.deepStrictEqual(S.promoPendente, []);
+});
+
+test('a fixture do plano 9 tem `promoPendente` como documento, e sai como lista', () => {
+  const S = fixturePlano9();
+  assert.strictEqual(S.promoPendente as unknown, null, 'no plano 9 era documento, e estava vazio');
+  migraPlano10(S);
+  assert.deepStrictEqual(S.promoPendente, []);
 });

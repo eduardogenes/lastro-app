@@ -51,12 +51,12 @@ import { MARCAS_DO_CORPO, mediasSemanais, pesoRitmo as _pesoRitmo,
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
-import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10 } from './dominio/migracoes';
+import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
-  chaveDeMarca, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde
+  chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -312,7 +312,7 @@ function corpoDoBackup(body) {
 
 
 
-let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] } };
+let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] }, promoPendente:[] };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null, aulas:false, rapido:false,
   protocolo:null, comparar:null, ajuste:null, camera:null };
@@ -383,7 +383,14 @@ function normalizaEstado() {
   if (!Array.isArray(S.protocolo.sessoes)) S.protocolo.sessoes = [];
   if (!Array.isArray(S.protocolo.poses) || !S.protocolo.poses.length) S.protocolo.poses = null;
   S.protocolo.sessoes.forEach(function (x) { if (!x.fotos || typeof x.fotos !== 'object') x.fotos = {}; });
-  if (!S.promoPendente || typeof S.promoPendente !== 'object') S.promoPendente = null;
+  // Coleção desde o plano 10. O OBJETO antigo fica INTACTO aqui para
+  // `migraPlano10` convertê-lo: `normalizaEstado` roda ANTES das migrações, nos
+  // dois caminhos, e tratar a pergunta guardada como "forma inválida" a
+  // apagaria antes de alguém poder convertê-la. Só o que não é nem lista nem
+  // objeto vira lista vazia.
+  if (!Array.isArray(S.promoPendente) && !(S.promoPendente && typeof S.promoPendente === 'object')) {
+    S.promoPendente = [];
+  }
 }
 
 /** Lê uma chave crua do storage. null quando não há nada lá. */
@@ -634,6 +641,52 @@ function ligaBatida() {
   }, 30000);
 }
 
+// ---------- as perguntas de programa que esperam ----------
+// Coleção com chave natural, lápide e teto, como o resto do estado que dois
+// aparelhos tocam. Era um documento — uma pergunta, ou `null` —, e a escrita era
+// atribuição direta: o fecho seguinte sobrescrevia o anterior, e a fusão trazia
+// o campo inteiro do lado com `mtime` mais novo.
+//
+// As duas funções recebem a SESSÃO e o `sid`, não o modo de fecho: nenhuma
+// delas sabe se o fecho foi manual ou automático, e é de propósito. Hoje só o
+// fecho automático guarda (`fechaSessao`, logo abaixo) porque pela porta da
+// frente quem pergunta é `finalizarSessao`; quando a pergunta do fim do treino
+// sair, o fecho manual passa a guardar pelo mesmo caminho, sem mexer na forma
+// do dado.
+
+/** Guarda a decisão de uma sessão para a próxima abertura. */
+function guardaPromo(s, pendentes) {
+  if (!Array.isArray(S.promoPendente)) S.promoPendente = listaDePromo(S.promoPendente);
+  const agora = Date.now();
+  const p = {
+    sid: s.sid, day: s.day, t: agora,
+    mods: JSON.parse(JSON.stringify(pendentes)),
+    resumoMods: pendentes.map(function (m) { return textoMod(s.day, m); }),
+    m: agora
+  };
+  // a chave é o `sid`: fechar a mesma sessão duas vezes atualiza, não duplica
+  const j = S.promoPendente.findIndex(function (x) { return chaveDePromo(x) === chaveDePromo(p); });
+  if (j >= 0) S.promoPendente[j] = p; else S.promoPendente.push(p);
+  S.promoPendente.sort(function (a, b) { return (a.t || 0) - (b.t || 0); });
+  if (S.promoPendente.length > 60) S.promoPendente = S.promoPendente.slice(-60);
+}
+
+/**
+ * Resolve a pergunta de UMA sessão: ela sai da lista e ganha lápide.
+ *
+ * A lápide é o que impede o outro aparelho de trazer de volta a pergunta que ele
+ * acabou de responder — é a mesma regra das outras coleções. E tirar só a desta
+ * sessão é o que impede o contrário: responder uma apagava todas as outras,
+ * porque o campo era um documento só.
+ */
+function soltaPromo(sid) {
+  if (!Array.isArray(S.promoPendente)) S.promoPendente = listaDePromo(S.promoPendente);
+  if (sid == null) return;
+  const chave = chaveDePromo({ sid: sid, t: sid });
+  S.promoPendente = S.promoPendente.filter(function (x) { return chaveDePromo(x) !== chave; });
+  lapide(chave);
+}
+
 function fechaSessao(comoFim) {
   const s = S.sessao;
   if (!s) return;
@@ -657,13 +710,7 @@ function fechaSessao(comoFim) {
   // `finalizarSessao`, e reagendar aqui faria a mesma pergunta voltar logo
   // depois de respondida.
   const pendentes = comoFim === 'auto' ? modsDoDia(s.day) : [];
-  if (pendentes.length) {
-    S.promoPendente = {
-      day: s.day, t: Date.now(),
-      mods: JSON.parse(JSON.stringify(pendentes)),
-      resumoMods: pendentes.map(function (m) { return textoMod(s.day, m); })
-    };
-  }
+  if (pendentes.length) guardaPromo(s, pendentes);
 
   // O quadro do box vira a nota da sessão. É a única chance: ele não se
   // reconstrói depois a partir da prescrição, como o treino de musculação se
@@ -909,11 +956,14 @@ async function finalizarSessao() {
   // conteúdo permanente para aquilo virar, e perguntar "isto fica no programa?"
   // a cada movimento do box seria uma pergunta por semana sem resposta certa.
   if (mods.length && !diaAberto(s.day)) {
-    // fechando pela porta da frente: a pergunta é agora, e não fica guardada
-    S.promoPendente = null;
+    // fechando pela porta da frente: a pergunta é agora, e não fica guardada.
+    // Tira só a DESTA sessão: enquanto era documento, esta linha apagava
+    // qualquer pergunta guardada de outra sessão junto — a da terça sumia
+    // porque ele finalizou a quinta.
+    soltaPromo(s.sid);
     // a sessão continua aberta até ele decidir: sair sem responder mantém o
     // padrão conservador, que é não mexer no oficial
-    view.promo = { day: s.day, mods: mods.slice(), dec: mods.map(function () { return 'hoje'; }),
+    view.promo = { sid: s.sid, day: s.day, mods: mods.slice(), dec: mods.map(function () { return 'hoje'; }),
                    motivo: null, feitas: feitas,
                    resumoMods: mods.map(function (m) { return textoMod(s.day, m); }) };
     view.editProg = false;
@@ -2608,7 +2658,7 @@ function motivoPromo(k) { view.promo.motivo = view.promo.motivo === k ? null : k
 function voltarDoPromo() {
   // sair sem responder mantém o padrão conservador — e não deixa a pergunta
   // reaparecendo para sempre
-  if (view.promo && view.promo.guardada) { S.promoPendente = null; queueSave(); }
+  if (view.promo && view.promo.guardada) { soltaPromo(view.promo.sid); queueSave(); }
   view.promo = null;
   render();
   saiDoDestino('promo');
@@ -2654,7 +2704,7 @@ async function concluirPromo() {
   const escolhidos = P.mods.filter(function (m, j) { return P.dec[j] === 'oficial'; });
   const n = escolhidos.length ? aplicaAoOficial(P.day, escolhidos, P.motivo) : 0;
   view.promo = null;
-  S.promoPendente = null;
+  soltaPromo(P.sid);
   // Fim de fluxo: a sessão encerra, o dia gira, e a posição que ele tinha no
   // treino de ontem não é mais a dele. Topo, como manda o contrato.
   esqueceDestino('promo');
@@ -2676,9 +2726,13 @@ async function concluirPromo() {
  * o app existe para não atrapalhar.
  */
 function abrePromoGuardada() {
-  const g = S.promoPendente;
+  // A MAIS ANTIGA primeiro: a lista é ordenada por tempo, e perguntar na ordem
+  // em que as sessões fecharam é a única ordem que ele reconhece. As outras
+  // continuam esperando, e aparecem nas aberturas seguintes.
+  const g = (Array.isArray(S.promoPendente) ? S.promoPendente : [])[0];
   if (!g || !Array.isArray(g.mods) || !g.mods.length || S.sessao) return false;
   view.promo = {
+    sid: typeof g.sid === 'number' ? g.sid : g.t,
     day: g.day, mods: g.mods.slice(), dec: g.mods.map(function () { return 'hoje'; }),
     motivo: null, feitas: 0, resumoMods: g.resumoMods || [], guardada: true, quando: g.t
   };
@@ -3557,7 +3611,9 @@ async function importText(txt) {
         apagados: (d.apagados && typeof d.apagados === 'object') ? d.apagados : {},
         descanso: (d.descanso && typeof d.descanso === 'object') ? d.descanso : {},
         fotos: (d.fotos && typeof d.fotos === 'object') ? d.fotos : {},
-        promoPendente: (d.promoPendente && typeof d.promoPendente === 'object') ? d.promoPendente : null,
+        // Coleção desde o plano 10, e o backup pode ser de antes: o documento
+        // antigo entra como está e `migraPlano10` o converte, logo abaixo.
+        promoPendente: (d.promoPendente && typeof d.promoPendente === 'object') ? d.promoPendente : [],
         // Estes seis ficaram para trás quando nasceram, e a perda era MUDA:
         // `normalizaEstado()` roda logo abaixo e devolve todos vazios, então o
         // app abria limpo sem avisar nada — com o backup intacto no disco e

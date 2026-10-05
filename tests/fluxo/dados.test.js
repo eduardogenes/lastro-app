@@ -368,6 +368,10 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   a.E(`S.dia.done = { pos: 1790000000000 }`);
   a.E(`S.dia.como = { pos: 'fora' }`);
   a.E(`S.dia.aguaNaoContada = 1`);
+  // a lista de perguntas de programa que esperam — coleção desde o plano 10
+  a.E(`S.promoPendente = [{ sid: 1790000000000, day: 'A', t: 1790000000000, m: 1790000000000,
+        mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }],
+        resumoMods: ['Pushdown: 2 → 3 séries'] }]`);
   await a.E('save()');
 
   a.aba('guia');
@@ -413,6 +417,8 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   assert.strictEqual(a.E('S.dia.done.pos'), 1790000000000, 'o instante da marca');
   assert.strictEqual(a.E('S.dia.como.pos'), 'fora', 'qual refeição saiu do plano');
   assert.strictEqual(a.E('S.dia.aguaNaoContada'), 1, '"não contei a água" como fato');
+  assert.strictEqual(a.E('S.promoPendente.length'), 1, 'a pergunta de programa que espera');
+  assert.strictEqual(a.E('S.promoPendente[0].sid'), 1790000000000, 'com a chave natural dela');
   a.fechar();
 });
 
@@ -489,6 +495,9 @@ test('o estado congelado do plano 9 entra pelo boot e sai migrado', async () => 
 
   assert.deepStrictEqual(a.J('S.comidaHist'), era.comidaHist,
     'o histórico já tinha instante, e migração não reescreve o que está certo');
+
+  assert.strictEqual(era.promoPendente, null, 'no plano 9 era documento');
+  assert.deepStrictEqual(a.J('S.promoPendente'), [], 'e sai como coleção');
 
   // e as telas abrem com ele, que é o que a regra 2 cobra
   ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (t) {

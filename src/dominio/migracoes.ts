@@ -14,7 +14,7 @@ import { PLANO_BASE } from './nutricao/alimentos';
 import { EX_BASE, SIMULACAO_HYROX, slugEx } from './programa';
 import { chaveDeLog } from './sincronia';
 import type { DiaComidaHist } from './nutricao/tipos';
-import type { Estado, IdEx, Log, Marca, Treino } from './tipos';
+import type { Estado, IdEx, Log, Marca, PromoPendente, Treino } from './tipos';
 
 // ---------- migração de plano ----------
 // As chaves do histórico são dia+posição (A0, B3...). Trocar o programa faria
@@ -546,14 +546,14 @@ export function migraPlano9(S: Estado): Resultado9 | null {
   return r;
 }
 
-// ---------- 9 -> 10: o corpo aberto e a hora da marca ----------
+// ---------- 9 -> 10: o corpo aberto, a hora da marca e a lista que espera ----------
 //
-// Uma migração só para quatro mudanças de dado persistido, porque o caro aqui
+// Uma migração só para cinco mudanças de dado persistido, porque o caro aqui
 // não é migrar: é esquecer um dos portões — tipo, migração com fixture, regra
 // de fusão, as duas listas brancas da cópia, `tsc` limpo. Duas migrações
 // pagariam os cinco duas vezes.
 //
-// Das quatro, **uma só é reformatação de dado existente**, e é por ela que esta
+// Das cinco, **duas são reformatação de dado existente**, e é por elas que esta
 // função precisa existir:
 //
 // 1. `S.dia.done` era `Record<string, 1>` e passa a ser `Record<string,
@@ -566,6 +566,10 @@ export function migraPlano9(S: Estado): Resultado9 | null {
 //    `normalizaEstado()`, campo novo e vazio receberia padrão lá e dispensaria
 //    migração; entram aqui de propósito, para o bump de versão ser a prova de
 //    que as cinco existem e para a fixture cobri-las.
+//
+// 3. `S.promoPendente` era um DOCUMENTO — uma pergunta guardada, ou `null` — e
+//    passa a ser coleção com chave natural (`sid`), lápide e teto. Ver
+//    `listaDePromo` logo abaixo, e `Estado.promoPendente` para o porquê.
 //
 // As outras duas — qual refeição saiu do plano (`dia.como`) e "não contei a
 // água" (`dia.aguaNaoContada`) — são campos OPCIONAIS cuja ausência já tem o
@@ -590,6 +594,40 @@ export interface Resultado10 {
   dias: number;
   /** chaves de medida criadas em `S.body` */
   chaves: number;
+  /** perguntas de programa que viraram entrada de coleção */
+  promos: number;
+}
+
+/**
+ * A pergunta guardada, na forma de coleção.
+ *
+ * Até o plano 9 `S.promoPendente` era um documento — uma pergunta, ou `null` —
+ * e por isso não tinha chave natural nem regra de fusão. Esta função é a
+ * conversão, e vive aqui e não em `normalizaEstado()` por um motivo de ORDEM:
+ * `normalizaEstado` roda ANTES das migrações, nos dois caminhos (boot e
+ * importação), e se ele tratasse o objeto antigo como "forma inválida" a
+ * pergunta guardada seria apagada antes de alguém poder convertê-la.
+ *
+ * O `sid` que falta: a pergunta antiga não carregava o da sessão. A migração usa
+ * `t`, o instante do fecho, como identidade — ele está no dado, então os dois
+ * aparelhos derivam a MESMA chave do MESMO registro, que é tudo que a fusão
+ * pede. Se os dois tiverem perguntas diferentes guardadas, os `t` diferem e as
+ * duas sobrevivem: hoje uma das duas se perde, e é o defeito.
+ */
+export function listaDePromo(v: unknown): PromoPendente[] {
+  if (Array.isArray(v)) {
+    return (v as PromoPendente[]).filter(function (p) {
+      return p && typeof p === 'object' && Array.isArray(p.mods) && p.mods.length;
+    });
+  }
+  const g = v as PromoPendente | null;
+  if (!g || typeof g !== 'object' || !Array.isArray(g.mods) || !g.mods.length) return [];
+  return [{
+    sid: typeof g.sid === 'number' ? g.sid : g.t,
+    day: g.day, t: g.t, mods: g.mods,
+    resumoMods: Array.isArray(g.resumoMods) ? g.resumoMods : [],
+    m: typeof g.m === 'number' ? g.m : g.t
+  }];
 }
 
 /** Meia-noite local de 'AAAA-MM-DD'. `null` quando a data não é legível. */
@@ -620,7 +658,7 @@ function instantesDoDone(done: Record<string, number>, quando: number): number {
 
 export function migraPlano10(S: Estado): Resultado10 | null {
   if (S.plano >= 10) return null;
-  const r: Resultado10 = { marcas: 0, dias: 0, chaves: 0 };
+  const r: Resultado10 = { marcas: 0, dias: 0, chaves: 0, promos: 0 };
 
   // 1 · o instante da marca no dia corrente
   if (S.dia && S.dia.data) {
@@ -651,6 +689,11 @@ export function migraPlano10(S: Estado): Resultado10 | null {
       r.chaves++;
     });
   }
+
+  // 3 · a pergunta guardada vira coleção com chave natural
+  const antes = Array.isArray(S.promoPendente) ? -1 : (S.promoPendente ? 1 : 0);
+  S.promoPendente = listaDePromo(S.promoPendente);
+  if (antes === 1 && S.promoPendente.length) r.promos = S.promoPendente.length;
 
   S.plano = 10;
   return r;

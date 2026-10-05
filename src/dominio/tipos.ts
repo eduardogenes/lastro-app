@@ -266,14 +266,42 @@ export interface EntradaProgLog {
   m?: number;
 }
 
-/** Uma decisão de programa que ficou para a próxima abertura. */
+/**
+ * Uma decisão de programa que ficou esperando.
+ *
+ * É COLEÇÃO, e não um documento só (ver `Estado.promoPendente`). A chave natural
+ * é o `sid` da sessão: uma sessão produz uma pergunta, e `sid` já é a identidade
+ * de uma sessão neste repositório — é o que `chaveDeSessao` usa, sozinho. Nasce
+ * no começo da sessão e nunca é reatribuído.
+ *
+ * Não é `day + sid`, embora `day` esteja aqui: `day` é editável no meio do
+ * treino ("trocar de dia no meio do treino não perde nem sobrescreve"), e uma
+ * chave composta faria a MESMA pergunta fundir como duas entradas se os dois
+ * aparelhos tivessem registrado letras diferentes para a mesma sessão. Ele
+ * responderia duas vezes.
+ *
+ * **Não há campo de vencimento**, e isto é resposta do dono, não omissão: a
+ * mudança vence *por posição* — quando aquele treino voltar na sequência —, e
+ * isso "sai de graça do modelo; nenhum carimbo novo no dado". O que ela vira ao
+ * vencer ("só daquele dia") é o estado em que a mudança já está, porque nunca
+ * foi promovida ao oficial: não há o que gravar.
+ */
 export interface PromoPendente {
+  /**
+   * A sessão de onde a pergunta veio. A chave natural da coleção.
+   *
+   * Opcional só por causa do dado anterior ao plano 10, que não tinha o campo —
+   * a migração 9→10 preenche com `t`. Entrada nova sempre traz o `sid`.
+   */
+  sid?: number;
   day: Dia;
   /** quando a sessão fechou, para a tela poder dizer de que treino se trata */
   t: number;
   mods: Mod[];
   /** cada mudança já em português, como a tela mostra */
   resumoMods: string[];
+  /** quando foi alterada pela última vez; a fusão a usa para desempatar */
+  m?: number;
 }
 
 /**
@@ -610,7 +638,25 @@ export interface Estado {
    * programa. Guardada aqui, a pergunta aparece na abertura seguinte em vez de
    * a resposta ser decidida em silêncio, sempre para o mesmo lado.
    */
-  promoPendente: PromoPendente | null;
+  /**
+   * As mudanças do dia que esperam decisão.
+   *
+   * Era `PromoPendente | null` — UMA pergunta, com um `day` só —, e a escrita
+   * era atribuição direta: o fecho seguinte sobrescrevia o anterior, e a
+   * pergunta da terça sumia quando a quinta fechou sozinha. Pior, não era
+   * coleção, então a fusão a trazia INTEIRA do lado com `mtime` mais novo
+   * (`src/dominio/sincronia.ts`, "tudo que não é coleção vem dele"): o que o
+   * celular registrou sumia porque o notebook sincronizou depois.
+   *
+   * Lista porque a decisão do dono pede lista: a pergunta do fim do treino sai,
+   * e o que a substitui é um conjunto de mudanças que esperam e vencem por
+   * posição. Várias podem estar esperando ao mesmo tempo.
+   *
+   * O nome ficou no singular, como `S.gordura` e `S.cardio`, para não renomear
+   * uma chave de topo do estado — renomear obrigaria a lista branca da cópia a
+   * conhecer dois nomes para sempre.
+   */
+  promoPendente: PromoPendente[];
   /**
    * A foto do aparelho, por exercício — só a REFERÊNCIA, nunca os bytes.
    *

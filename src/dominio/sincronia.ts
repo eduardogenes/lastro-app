@@ -26,15 +26,15 @@
 //   antiga que T.
 
 import type {
-  Cardio, Corpo, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId, QualMarca,
-  Sessao, SessaoFoto
+  Cardio, Corpo, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId,
+  PromoPendente, QualMarca, Sessao, SessaoFoto
 } from './tipos';
 import type { ComoFoiARefeicao, DiaComida, DiaComidaHist } from './nutricao/tipos';
 import { MARCAS_DO_CORPO } from './corpo';
 import type { LeituraDeGordura } from './corpo';
 
 /** Limites por coleção, iguais aos que o app aplica ao gravar. */
-const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200, aulas: 60, comida: 4000 };
+const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200, aulas: 60, comida: 4000, promo: 60 };
 
 /** Lápides mais velhas que isto são podadas: o que sumiu há meses já sumiu dos dois lados. */
 export const LAPIDE_DIAS = 90;
@@ -104,6 +104,23 @@ export function chaveDeDiaComida(h: Pick<DiaComidaHist, 'd'>): string { return '
 /** Uma refeição marcada dentro de um dia. Desmarcar precisa de lápide própria. */
 export function chaveDeRefeicaoFeita(dia: string, refId: string): string {
   return 'comida:' + dia + ':' + refId;
+}
+
+/**
+ * Uma pergunta de programa que espera decisão. A chave é o `sid` da sessão.
+ *
+ * `sid` sozinho, e não `day + sid`: `sid` já é a identidade de uma sessão neste
+ * módulo — `chaveDeSessao` usa só ele —, nasce no começo da sessão e nunca é
+ * reatribuído. `day` é editável no meio do treino, e entrar na chave faria a
+ * MESMA pergunta fundir como duas entradas se os dois aparelhos tivessem
+ * registrado letras diferentes para a mesma sessão; ele responderia duas vezes.
+ *
+ * Entrada anterior ao plano 10 não tem `sid`, e a migração o preencheu com `t`.
+ * O `|| p.t` aqui é o mesmo caminho, para o caso de um backup antigo chegar por
+ * fora da migração.
+ */
+export function chaveDePromo(p: Pick<PromoPendente, 'sid' | 't'>): string {
+  return 'promo:' + (typeof p.sid === 'number' ? p.sid : p.t);
 }
 
 /** O modelo de aula. A chave é o id, que nasce com ele e não muda ao renomear. */
@@ -519,6 +536,21 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   au.itens.sort(porTempo);
   base.aulas = au.itens.slice(-TETO.aulas);
   resumo.apagados += au.apagados;
+
+  // ---- as perguntas de programa que esperam ----
+  // Coleção e não documento, e a troca conserta uma perda que já existia: como
+  // `promoPendente` não era coleção, ela vinha INTEIRA do lado com `mtime` mais
+  // novo, e a pergunta guardada no celular sumia porque o notebook sincronizou
+  // depois. Lápide porque responder é resolver: sem ela, o outro aparelho
+  // traria de volta a pergunta que ele acabou de responder.
+  const pp = uneLista<PromoPendente>(
+    Array.isArray(local.promoPendente) ? local.promoPendente : [],
+    Array.isArray(remoto.promoPendente) ? remoto.promoPendente : [],
+    chaveDePromo, carimboM, mortos
+  );
+  pp.itens.sort(porTempo);
+  base.promoPendente = pp.itens.slice(-TETO.promo);
+  resumo.apagados += pp.apagados;
 
   // ---- o quadro do box de hoje ----
   // Documento e não coleção: é o quadro do dia em curso, e existe um só. Vence
