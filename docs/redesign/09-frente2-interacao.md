@@ -345,17 +345,33 @@ e as duas vêm da experiência escrita do dono neste projeto:
 
 - O `transform: scale(.95)` do toque (`prototipo.html:307`) **não** pode cair em
   cima da faixa como um todo, só no botão.
-- A animação de "voar" o valor até a tabela (`voa()`, usada por `registraSerie`
-  e por `corrigeSerie`) move um elemento **para a direita** quando a tabela está
-  à direita do botão. É o caso documentado da preferência global: `translateX`
-  positivo faz transbordar pela direita, cria barra de rolagem horizontal
-  transitória, a viewport reflui e o que é fixo ou centrado pisca — no Blink, e
-  só no sentido positivo. **Requisito:** um ancestral do conteúdo animado com
-  `overflow-x: clip`, nunca `hidden`, porque `hidden` viraria `auto` no outro
-  eixo e mataria o `sticky` do cabeçalho do modo, que é onde mora a única saída.
-  O `body` do app já tem `overflow-x: clip`, e há um caso que o segura
-  (*nenhum ancestral do sticky vira scroll container*) — mas ele olha **só o
-  `body`** (§0.1, item 4), e a animação acontece dentro de `#app`.
+- **A animação de "voar" o valor até a tabela não é o risco, e eu fui conferir
+  antes de pedir o conserto errado.** `voa()` (usada por `registraSerie` e por
+  `corrigeSerie`) cria um `.ghost` **`position: fixed`** e o anima com
+  `translate(calc(-50% + dx px), calc(-50% + dy px))` (conferi a função e a
+  regra `:304`). Elemento fixo **não** contribui para o transbordo rolável da
+  janela, então o defeito de `translateX(+N)` descrito na preferência do dono —
+  transbordo pela direita, barra de rolagem horizontal transitória, o fixo
+  centrado piscando no Blink — **não é este caso.** **Requisito, então, é de
+  vigilância e não de conserto:** se a implementação trocar o fantasma fixo por
+  um elemento no fluxo (o caminho mais curto num componente Preact), o defeito
+  passa a existir, e a resposta é `overflow-x: clip` num ancestral — nunca
+  `hidden`, que viraria `auto` no outro eixo. O `body` do app já tem
+  `overflow-x: clip` e há um caso que o segura, mas ele olha **só o `body`**
+  (§0.1, item 4) e a animação acontece dentro de `#app`.
+- **E o que eu achei conferindo isso é maior do que o que eu fui conferir: as
+  duas cascas são incompatíveis.** O protótipo rola por dentro —
+  `html, body { height: 100% }`, `body { overflow: hidden }` e um
+  `.scroll { flex:1; min-height:0; overflow-y:auto }` fazendo a rolagem
+  (conferi `:42-44` e `:57`). O app rola pela **janela**, e o `body` dele é
+  **proibido** de ter `overflow: hidden` — é o caso *nenhum ancestral do sticky
+  vira scroll container*, que afirma `overflow-x: clip` no `body` e **nenhum**
+  `hidden`, `auto` ou `scroll`, com a razão escrita: *"Um `overflow: hidden` no
+  body derrubaria o sticky em silêncio — hidden vira `auto` no outro eixo e cria
+  o container."* **Requisito:** quem portar o protótipo escolhe a casca do app,
+  não a dele. Copiar `body { overflow: hidden }` junto com o resto deixa o caso
+  **vermelho** — e, pior, por um motivo que parece arbitrário para quem não leu
+  o comentário, o que convida a mexer na asserção em vez de na casca.
 
 ### 1.4 · A régua do peso, que ninguém mediu, e é pior
 
@@ -982,13 +998,19 @@ argumento em `regua(ref, fx, marca, atual)` com duas classes:
    carrega a palavra ("agora" / "última") é o que torna a diferença legível, e
    ele existe nos dois. **Requisito:** a palavra fica; ela não é redundância, é
    o conteúdo.
-2. **Os dois estados podem cair no mesmo botão, e o código já decide quem
-   ganha.** Se o valor guardado for igual ao da última, `cls` recebe `last` e
-   `now` ao mesmo tempo (conferi a concatenação em `regua`), e só um
-   `<small>` é emitido — o de "agora", porque a condição do `marca` vem antes na
-   expressão ternária. **Requisito:** quando os dois coincidem, a palavra é
-   **"agora, igual à última"**, e não uma das duas. É o caso mais comum, porque
-   repetir o número da última é o que acontece na maioria das séries.
+2. **Os dois estados caem no mesmo botão no caso mais comum, e aí a pintura e a
+   palavra se contradizem.** Se o valor guardado for igual ao da última — que é
+   o que acontece na maioria das séries —, `cls` recebe `last` **e** `now` ao
+   mesmo tempo, e só **um** `<small>` é emitido. Conferi qual: a expressão é
+   `(v===ref && marca ? marca : (atual!=null && v===atual ? 'agora' : ''))`,
+   então quem ganha é **`marca`**, isto é, a palavra **"última"**. Mas no CSS
+   `.rep.now` é declarada **depois** de `.rep.last`
+   (`prototipo.html:140-141`), então a **pintura** que ganha é a de "agora", em
+   tinta cheia. **O botão fica pintado como o valor guardado e rotulado como a
+   referência.** Para quem lê a tela, é ambíguo; para quem ouve o `<small>`, é
+   errado. **Requisito:** quando os dois coincidem, a palavra é
+   **"agora, igual à última"** — as duas, porque as duas são verdade e nenhuma
+   delas sozinha descreve o botão.
 3. **`centrarStrip()` passa a centrar no guardado**, porque procura
    `.rep.now` antes de `.rep.last` (conferi). Isso está certo — na correção o
    foco é o valor que está lá, não a referência — e é mais uma razão para a
@@ -1561,11 +1583,23 @@ interno)"* (`docs/LASTRO_UX_CONTRACT.md:197`, conferi).
 
 1. **`.cellb`**, cerca de **22 px** (§5.1) — nunca medido por ninguém, e é o
    menor da direção. É controle repetido: `--ins-tap`, por `::after` vertical.
-2. **`.map`**, **30 px** — é o mapa da sessão, um ponto por série, **vinte por
-   sessão de Treino A**. Controle repetido por definição. E ele tem um segundo
-   problema que o alvo não resolve: é um dos três `overflow-x: auto` do arquivo
-   (§1.2), então os pontos das últimas séries ficam fora da janela pela mesma
-   conta de §1.1.
+2. **`.map`**, **30 px** — e aqui eu corrijo uma leitura minha antes de
+   escrevê-la errado: o mapa da sessão **não** é um alvo por série. É **um**
+   `<button class="map" data-a="mapa">` de largura cheia, com os pontos como
+   conteúdo dentro dele e um rótulo que carrega o número — `aria-label="Ver a
+   sessão inteira: 10 de 20 séries guardadas"` (conferi `prototipo.html:577`).
+   Então é **um** alvo de 382 × 30 px: passa folgado na largura e reprova na
+   altura, contra 44 e contra 46. Os três alvos de 30 px que C3 contou são três
+   ocorrências deste mesmo botão, não três pontos.
+   **Duas consequências disso, e as duas são boas de saber:** o rótulo já
+   carrega o número, o que torna os pontos **decorativos** — eles são parte dos
+   178 de §8.1, e a resposta para eles é `aria-hidden`, não nome. E o
+   `overflow-x: auto` dele (um dos três de §1.2) deixa de ser problema de
+   alcance e passa a ser de **leitura**: os pontos das últimas séries ficam fora
+   da janela pela conta de §1.1, e quem precisa do número tem o rótulo. O que
+   isso pede não é alvo maior na horizontal — é a altura em 46 e os pontos
+   legíveis sem arrastar, ou a confissão de que o mapa é um atalho e o número
+   mora no rótulo.
 3. **`.daytype`**, **36 px** — nove ocorrências, e é o botão que diz o tipo de
    dia no Agora. No protótipo é um dos becos silenciosos (§7.0).
 
@@ -1852,7 +1886,7 @@ coisas que já existem: `S.rot` (por `rot()`), `S.done` e `nextDay()`.
 > Uma mudança pendente `p` **venceu** quando existe em `S.done` uma sessão `x`
 > com `x.day === p.day`, sem `x.livre`, e `x.t > p.t`.
 
-Em palavra: aquele treino voltou e aconteteceu depois que a mudança ficou
+Em palavra: aquele treino voltou e aconteceu depois que a mudança ficou
 esperando. Nenhum campo novo, nenhuma data guardada, e **nada que dependa do
 relógio** — o que a torna testável sem congelar tempo.
 
