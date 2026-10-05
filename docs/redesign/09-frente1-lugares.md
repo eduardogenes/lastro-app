@@ -266,3 +266,210 @@ casos), apagar o histórico (`wipe()`), a versão e a atualização
 ela mostra **e não escreve**. A única exceção autorizada é o atalho de peso
 dentro do descanso, e ele não escreve: abre Corpo (seção 2, e é a resposta de
 5.a' P5).
+
+---
+
+## 2 · A conferência contra a seção 1 da rede
+
+Trinta e três arquivos, 514 casos. Para cada um: o lugar que recebe o que ele
+protege. A régua é a da rede — capacidade, não tela.
+
+| arquivo (casos) | onde mora |
+|---|---|
+| `ajuste.test.js` (14) | **Semana** — o saldo cumulativo, o ledger, o passo. O portão da foto é vista; o dono da leitura é Corpo |
+| `aula.test.js` (12) | **Agora** (presença no dia da aula) + **sessão** (movimentos, lista rápida) + a biblioteca de modelos, desenhada em `aula.html`, estado 9 |
+| `aulaimport.test.js` (14) | **sessão** (o quadro visível durante a aula, virando nota ao encerrar) + **Prescrição › Exercícios** (o vocabulário novo, cadastrado antes de o dia ser montado) |
+| `avanco.test.js` (10) | **sessão** + a faixa fora dela (seção 3) |
+| `cardio.test.js` (10) | **Agora** (placar e registro) + **Dias** (calendário e faixa da semana) + **sessão** (fim das sessões A e D). Ver achado 4 |
+| `carga.test.js` (11) | **sessão** (o total como exibição) + a correção do tipo, que é por movimento. Ver achado 1 |
+| `ciclo.test.js` (18) | **sessão**. O deload é achado 3 |
+| `corpo.test.js` (25) | **Corpo** (as medidas, a data por medida) + **Semana** (a média, o ritmo, o "sem registro de comida registre em vez de cortar") |
+| `cronometro.test.js` (12) | **sessão** |
+| `dados.test.js` (19) | **Ajustes**. Dois casos atravessam: "todas as telas renderizam com o formato antigo" é invariante dos cinco lugares, e o exercício arquivado é de **Prescrição** |
+| `diario.test.js` (9) | **Dias** (o histórico fechado) + **Agora** (o dia corrente) |
+| `edicao.test.js` (27) | **sessão** (mexer no dia sem mexer no oficial, o impacto no volume na hora) + **Prescrição** (a decisão, que agora é lista) |
+| `esquecido.test.js` (6) | atravessa: a faixa, nos quatro lugares e **dentro** do modo (seção 3) |
+| `fluxo.test.js` (5) | atravessa. "O app não presume que hoje é o dia da sessão" é regra do **Agora** |
+| `fotos.test.js` (20) | **Corpo** |
+| `fusao.test.js` (24) | **Agora** (a timeline em ordem de relógio, o cartão-foco antes de qualquer resumo) + **Prescrição** (quantidade muda o plano para todo dia; remover alimento sai das refeições que o citam) + a pilha de folhas em três níveis, que é navegação |
+| `horario.test.js` (14) | **Dias** (a hora de cada registro, o horário típico, a posição de leitura ao trocar de mês) + **sessão** (só o começo, com sessão em andamento) |
+| `leitura.test.js` (3) | **Semana** |
+| `migracaochave.test.js` (7) | nenhum lugar: é infra de armazenamento |
+| `navegacao.test.js` (9) | atravessa (seção 3) |
+| `programa.test.js` (12) | **Prescrição** — a chave do histórico é o exercício, a rotação vem do estado |
+| `promocao.test.js` (9) | **Prescrição** — e é a seção 5 inteira |
+| `protocolo.test.js` (58) | **Corpo** |
+| `publicacao.test.js` (13) | nenhum lugar: é publicação |
+| `retro.test.js` (9) | **Dias** |
+| `ritmo.test.js` (19) | **Semana** (ritmo, eixo invertido, retrospectiva, volume acumulado) + **sessão** (o catálogo abre pela prioridade do dia aberto) + **Prescrição** (a busca sem acento, no treino e na comida; o movimento de box fora do alvo por músculo) |
+| `serie.test.js` (8) | **sessão** |
+| `sessao.test.js` (26) | **sessão** + **Dias** (o detalhe, com corrigir e apagar). A regra de pouso é a seção 3 |
+| `sincronia.test.js` (12) | **Ajustes**. A marca de descanso que viaja é dado de **Dias** |
+| `telaprograma.test.js` (23) | **Prescrição** + **Semana** (o painel atribui a série ao exercício registrado, não à posição) |
+| `telas.test.js` (39) | atravessa. "As cinco abas renderizando" vira "os cinco lugares"; "o app abre em HOJE" vira a regra de pouso do **Agora**; "abrir um exercício põe o cartão no topo" é da **sessão**; "o contexto de treino só na aba de treino" é o achado 5 |
+| `trocaprograma.test.js` (8) | **Prescrição** |
+| `turno.test.js` (9) | **Agora** |
+
+**Uma nota de leitura, e não é achado.** O fluxo de importar a aula **escreve
+no catálogo de exercícios**, que é de Prescrição (`tests/fluxo/aulaimport.test.js`:
+"o vocabulário novo cadastrado antes de o dia ser montado"). Isso é legítimo:
+cadastrar é ato, não vista, e o ato acontece onde a necessidade aparece. A regra
+de 1.7 continua inteira — quem mostra não escreve; quem cadastra, cadastra.
+
+---
+
+## 3 · Os nove achados: capacidade de hoje que fica sem lugar
+
+Ordenados por quanta capacidade perdem, não por tamanho.
+
+### Achado 1 · O cartão do exercício fora da sessão não tem lugar — e com ele vão quatro capacidades
+
+Hoje a aba TREINO desenha os cartões do treino **de qualquer dia da rotação**,
+com ou sem sessão aberta. Conferi: o seletor de dia está em
+`src/ui/telas/treino.jsx:27-31`, a fila da rotação em `:85-93` (`vaiParaDia`), e
+os cartões vêm de `t.exercicios` em `:200-203`, sem consultar `S.sessao`.
+Dentro de cada cartão moram quatro coisas que não têm segunda porta:
+
+1. **O histórico de um exercício** — o gráfico que responde "estou ficando mais
+   forte nisto?", a tabela em ordem inversa e **a correção de uma série de
+   semanas atrás** (`src/ui/telas/historico.jsx`). Ele abre **só** pelo botão
+   "histórico" do cartão: `src/ui/exercicio.jsx:422` é o único chamador de
+   `openHist` em `src/` — conferi com grep. A métrica muda com o tipo de
+   exercício (tempo na prancha, repetição na barra fixa, volume no resto), e o
+   arquivo diz por quê.
+2. **O renome do exercício**, que vive dentro dessa mesma tela
+   (`src/ui/telas/historico.jsx:30-45`): troca o rótulo sobre o mesmo id, sem
+   mover histórico.
+3. **A correção do tipo de carga** por movimento — anilha por lado, dois
+   halteres, barra livre, peso do corpo (`src/ui/exercicio.jsx:247-258`;
+   `setCarga` em `src/main.jsx:3822-3825`). São 11 casos em
+   `tests/fluxo/carga.test.js`, e o comentário do fonte diz que é "decisão de
+   uma vez por movimento".
+4. **A troca por substituto com o histórico de cada opção**
+   (`src/ui/exercicio.jsx:140-168`): cada substituto mostra a última carga
+   registrada **nele**.
+
+Na D, a sessão é o treino de **hoje** e entra-se nela pelo Agora. **Nenhum dos
+cinco lugares abre o cartão de um exercício de outro dia.** Consequência
+concreta: "corrigir a série de três semanas atrás" e "consertar o tipo de carga
+da flexora numa quinta" perdem o caminho, e a perda não aparece no dia — aparece
+quando ele for corrigir.
+
+**Proposta da frente 1** (proposta, não decisão): Prescrição › Programa ›
+Treino X já lista os exercícios com séries, repetições e descanso
+(`programaDia` em `src/main.jsx:6423-6453`). Cada linha ganha a porta para o
+histórico daquele exercício, e o renome e o tipo de carga vão com ela. A
+correção de uma série passada ganha **duas** portas, porque são duas perguntas:
+em **Dias › detalhe da sessão** a unidade é o **dia** (corrigir a duração,
+apagar o treino — `src/ui/telas/sessao.jsx`, e o cabeçalho do arquivo diz
+exatamente isso), e no **histórico do exercício** a unidade é a **série**.
+
+### Achado 2 · As catorze regras de execução do treinador não têm lugar em nenhuma das duas direções
+
+Elas existem, com texto escrito e procedência: `RULES` em
+`src/dominio/programa.ts:136`, **catorze entradas** — contei as chaves: `regra
+1` a `regra 5`, `volume`, `hyrox`, `fadiga`, `atenção`, `aquecimento`,
+`deload`, `bike`, `prioridades`, `sucesso`. São servidas por
+`src/main.jsx:5081` e desenhadas em `src/ui/telas/guia.jsx:139-155`, uma aberta
+por vez, com a procedência da pegada dita **uma vez só** ali e não em cada
+cartão. No mesmo modo mora **o alvo calórico por tipo de dia, calculado do
+plano e nunca escrito à parte** (`src/ui/telas/guia.jsx:119-136`, com a
+procedência explícita; o caso que o cobra é `tests/fluxo/fusao.test.js:209`).
+
+Conferi as tabelas de tarefas das duas direções: **nem a D nem a C têm linha
+para as regras do treinador.** `07-plano.md` §4 também não as lista entre o que
+fica para depois — ou seja, elas não estavam nem na lista do que se sabe que
+falta.
+
+**Proposta:** Prescrição, que é por definição "o que vem de fora" (`direcao.md`,
+"O produto não cria prescrição"). As regras são do treinador, como o programa,
+e o alvo por tipo de dia é derivado do plano, que também mora lá.
+
+### Achado 3 · O deload muda de lugar contra uma razão escrita no fonte
+
+Hoje o interruptor mora em Ajustes (GUIA › o app) e o comentário diz por quê,
+palavra por palavra: *"Fica AQUI, e não no TREINO, de propósito: um interruptor
+que corta metade das séries não deve estar a um toque no meio de uma sessão. O
+app existe em parte para frear, e o caminho de menor esforço tem que ser o
+conservador. O estado dele já aparece no TREINO quando ligado."*
+(`src/ui/telas/guia.jsx:186-192`, conferi.)
+
+A D o põe no menu ⋯ da sessão (`03-direcao-D/direcao.md`, tabela de tarefas:
+"Deload | sessão, menu ⋯"). As duas coisas não podem valer ao mesmo tempo. Não
+é decisão minha: é regra, e sobe com os dois argumentos escritos — o de hoje
+(freiar) e o da D (o raro mora no ⋯, e deload é raro).
+
+### Achado 4 · O placar do cardio não está onde a rede diz que está
+
+A linha de `cardio.test.js` em `08-rede.md` fala em "placar na tela de hoje e
+registro sem sair dela". Conferi: o placar (`.cardl`) e o registro rápido
+(`.cardq`) estão na aba **TREINO** — `src/ui/telas/treino.jsx:114-146` —, e os
+dois casos cujo nome diz "tela de hoje" rodam no padrão do harness, que é
+`'treino'` (`tests/fluxo/harness.js:321`). O nome do caso e o comentário do
+arquivo de teste envelheceram; o código não.
+
+Levar o cardio para o Agora — que é o que a D manda (`direcao.md`: "Cardio |
+fim das sessões A e D; Agora") — é portanto **mudança de lugar**, não
+restauração. Muda onde o placar aparece no pouso, e é bom que a reponta saiba
+disso, porque o caso que falar em "tela de hoje" vai passar a falar a verdade
+pela primeira vez.
+
+### Achado 5 · "O contexto de treino só na aba de treino" deixa de existir como regra
+
+É um dos 39 casos de `tests/fluxo/telas.test.js`. Com a sessão virando modo e a
+aba de treino desaparecendo, essa regra não tem como ser reescrita igual. O que
+a substitui está na seção 4: o contexto de treino existe **dentro do modo**, e
+fora dele só a faixa. Quem repontar esse caso precisa trocar a asserção de
+propósito, e não por acidente — é exatamente o tipo de caso que se apaga sem
+ninguém notar.
+
+### Achado 6 · Dias é o único dos cinco lugares sem desenho
+
+Já dito em 1.2, e repetido aqui porque é o lugar que recebe mais capacidade
+pronta do app de hoje — o calendário do mês, o histórico de comida fechado, o
+detalhe da sessão com corrigir e apagar, o retroativo, o descanso, a hora de
+cada registro — e é o único dos cinco sem um pixel para conferir. Semana e
+Prescrição ganharam tela na segunda rodada; Dias não.
+
+### Achado 7 · O "ciclo" não tem lugar
+
+O cabeçalho do TREINO traz três células: séries feitas de prescritas, volume do
+dia e **ciclo**, com o número de sessões (`src/ui/telas/treino.jsx:34-53`;
+`ciclo` é `Math.floor(S.done.length / rot().length) + 1` em
+`src/main.jsx:4866`, conferi). Dessas três:
+
+- **séries feitas de prescritas** está no cabeçalho da sessão da D ("série N de
+  M") e no mapa da sessão — conferi em `prototipo.html:567-577`;
+- **volume do dia** já tem casa: o detalhe da sessão mostra "volume · kg×reps"
+  (`src/main.jsx:5932`, conferi), e o detalhe é de Dias;
+- **ciclo** não aparece em desenho nenhum que eu tenha aberto.
+
+**Proposta:** ciclo é leitura de Semana, ao lado da retrospectiva do bloco —
+é a mesma pergunta ("em que ponto do bloco eu estou"). Não conferi os nove HTML
+inteiros procurando o ciclo com outro nome.
+
+### Achado 8 · O destrutivo segue sem desenho, e agora precisa de três endereços
+
+`07-plano.md` §4 registra que nenhuma das duas direções trata apagar. Hoje:
+
+- **apagar uma medida** passa por `confirm()` do sistema com o estrago
+  delimitado em texto — "Sai da média da semana e do ritmo. As outras medidas
+  ficam." (`delBody`, `src/main.jsx:3370-3383`, conferi);
+- **apagar uma sessão ou uma série** é oferecido no detalhe da sessão e no
+  histórico do exercício, com lápide nas duas coisas e aviso de quantas séries
+  vão junto — menos no treino em andamento (`src/ui/telas/sessao.jsx`;
+  `tests/fluxo/sessao.test.js`);
+- **apagar o histórico inteiro** é o único botão que destrói, e mora em
+  Ajustes.
+
+Os três endereços nos cinco lugares: **Corpo** (medida), **Dias** e a **sessão**
+(registro), **Ajustes** (tudo). Enquanto não houver desenho, o comportamento de
+hoje fica — e fica dito, não por esquecimento.
+
+### Achado 9 · A bancada e a superfície de conflito seguem sem lugar
+
+`src/palco.js` e `src/palco.css` — que eu **não abri** — são trocados por outra
+coisa não desenhada nas duas direções (`07-plano.md` §4). E a fusão de dois
+aparelhos decide sem tela nenhuma: existe e é testada (`tests/fluxo/sincronia.test.js`,
+12 casos), e nenhuma direção desenhou o que se vê quando ela decide. Nenhum dos
+cinco lugares as recebe. Declarado.
