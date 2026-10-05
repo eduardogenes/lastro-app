@@ -1547,3 +1547,259 @@ e **0** focáveis sem anel nas duas direções, contra a tabela 2.4.7 dela.
 >
 > **E `outline` não serve para mais nada** (requisito 7): nenhum estado do
 > sistema usa `outline`, porque `outline` é o foco.
+
+---
+
+## 6 · Os ícones — e não são 178
+
+### 6.1 · A contagem, medida nos nove: 49 desenhos em 1.069 lugares
+
+O briefing manda decidir a regra dos **178 `<svg>` sem nome** que vêm de
+`04-acesso.md`. **Conferi a origem do 178 e medi o resto.**
+
+**O 178 está certo e é de dois arquivos.** A auditoria mediu
+`momento-1.html` (54 `<svg>`) e `momento-2.html` (124). Os outros sete arquivos
+são posteriores a ela (§1.4). **Medi os nove:**
+
+| | medi |
+|---|---:|
+| `<svg>` nos nove arquivos | **1.088** |
+| deles, instâncias de ícone (`<svg><use href="#…"/></svg>`) | **1.069** |
+| blocos de sprite (`<svg width="0" height="0" … aria-hidden="true">`) | 9 |
+| gráficos desenhados em linha | 10 |
+| **desenhos distintos** (`<symbol id="…">`) | **49** |
+| `<svg>` com `role="img"` e `aria-label` | **2** |
+
+**O número que importa para a regra é 49, não 1.069 e não 178.** A direção já
+resolveu o problema de escala sozinha: ela desenha cada ícone **uma vez**, num
+`<symbol>`, e o usa por `<use href="#id">`. Então **a decisão "decorativo ou
+portador do nome" se toma 49 vezes, no lugar onde o desenho mora** — não 1.069
+vezes no lugar onde ele aparece.
+
+**E 314 dos 1.069 não portam.** Medi: `bat` (158 usos), `sig-c` (110) e `sig`
+(46) são a **bateria e o sinal da barra de status do telefone de mentira**. O app
+não desenha barra de status: ele declara
+`apple-mobile-web-app-status-bar-style: black-translucent` (conferi,
+`index.html`) e o **sistema** desenha o relógio, o sinal e a bateria; o
+`body::before` do app só pinta o fundo atrás deles, com caso próprio (*a barra de
+status tem fundo*). **Então a conta real do app é 46 desenhos em 755 usos.**
+
+### 6.2 · A regra, e ela tem quatro casos — não dois
+
+A auditoria dividiu em dois: 102 "soltos" e 76 "dentro de controle com nome, o
+que atenua mas não resolve". **Fui ler os 49 desenhos um por um, e a divisão em
+dois deixa duas situações sem resposta.** Os quatro casos:
+
+**Caso 1 · Decorativo. `aria-hidden="true"`, e o nome vem de fora.**
+
+O ícone repete o que o texto ao lado já diz, ou mora dentro de um controle cujo
+nome já o cobre. Medi os que caem aqui, e é a maioria:
+
+- os **seis ícones da barra de lugares** (`t-agora`, `t-dias`, `t-corpo`,
+  `t-sem`, `t-presc`, `t-evo`) — cada um dentro de um botão com o nome escrito
+  embaixo;
+- `bk` (90 usos) e `dots` (15) — dentro de `.ib` com `aria-label` escrito
+  (`aria-label="Voltar ao Agora, deixando a sessão aberta"`,
+  `aria-label="Opções da sessão"`; conferi os dois);
+- `ck` (17) — ao lado de *"Série 2 guardada neste aparelho"*;
+- as **sete formas de estado** (`s-full`, `s-half`, `s-out`, `s-fut`, `s-now`,
+  `s-nsei`, `s-open`) — em **todos** os usos a palavra está encostada: na legenda
+  (`<li><svg><use href="#s-full"/></svg>comi tudo</li>`) e no cabeçalho da
+  refeição (`<svg class="ico"><use href="#s-full"/></svg><b>Lanche da tarde ·
+  comi tudo</b>`). Conferi os dois;
+- os **ícones de afordância no fim da linha** — `fw`, `nuv`, `bal`, `rel`, `pen`,
+  `down` — que dizem "esta linha abre algo" e cujo texto está à esquerda
+  (`<div class="t">Continuar pesando<small>3 a 4 vezes por semana</small></div><svg…><use href="#bal"/>`);
+- `cam`, `note`, `undo`, `lousa`, `som`, `fita` — dentro de botão com texto ao
+  lado (`<button class="lk"><svg…><use href="#undo"/></svg>Desfazer</button>`);
+- os **14 quadradinhos dos 14 dias** — e esses nem são `<svg>`: são
+  `<i class="cell">` pintados por CSS, então não estão nos 1.069. A frente 2 já
+  decidiu certo (§2 dela): `aria-hidden`, porque a frase logo abaixo carrega o
+  número.
+
+**Caso 2 · Portador do nome. `role="img"` com `aria-label` escrito, e o rótulo
+carrega o número.**
+
+O ícone é a única coisa que existe, e o que ele diz não está escrito em lugar
+nenhum. Medi os que caem aqui:
+
+- **as 11 poses do protocolo de fotos** (`p1` a `p9`, mais `p1b` e `p8b`, 55
+  usos) — `<div class="frame"><svg viewBox="0 0 120 160"><use href="#p3"/></svg>`,
+  sozinhas no quadro. A silhueta **é** a instrução de como se posicionar, e ela é
+  lida **a três metros** (C7: sozinho, longe do aparelho, sem alcançá-lo). Nada
+  escrito diz qual pose é;
+- os **10 gráficos desenhados em linha**. Dois deles já estão certos: o gráfico
+  de médias semanais de `corpo.html` leva
+  `role="img" aria-label="Médias semanais de 71,5 a 73,5 kg, com achatamento nas
+  últimas três semanas"` — e **são os únicos 2 `<svg>` nomeados dos nove**
+  (medi). É o padrão de ouro que o parecer atribuiu à direção C, e a D o tem
+  também: em um gráfico, desenhado duas vezes (claro e escuro).
+
+**O rótulo carrega o número, e essa é a regra inteira:** "Séries da semana" não
+serve; "Séries da semana: 12 de 12 prescritas" serve. É a diferença entre um nome
+e uma etiqueta.
+
+**Caso 3 · O ícone diz mais do que o nome do controle diz. O nome cresce, e o
+ícone volta a ser decorativo.**
+
+**Este caso não existe na divisão da auditoria**, e eu achei quatro instâncias
+dele medindo os 49. Nos quatro, o ícone está dentro de um controle **com** nome —
+logo cai no balde dos "76, atenuado" — **mas o nome não inclui o que o ícone
+diz.** Então nem `aria-hidden` serve (perde informação) nem `role="img"` serve
+(o controle passa a ter dois nomes).
+
+| onde | o que o ícone diz | o que o nome diz |
+|---|---|---|
+| `star` em `.opt` | **"indicado pelo treinador"** | `<b>Elevação lateral unilateral no cabo</b>` mais a última carga. **Em nenhum lugar diz indicado** |
+| `ok2` em `.gate .ic2.ok` | **"este portão está cumprido"** | *"Taxa: +0,07 e +0,03 kg/semana"* — os números, e não o veredito |
+| `warn` em `.gate .ic2.no` | **"este portão não está cumprido"** | *"Adesão: 1 dia de 14"* — idem |
+| `warn` em `.item.due` | **"esta mudança vence agora"** | o resumo da mudança |
+
+**A resposta, e ela é melhor para todo mundo e não só para leitor de tela:** o
+**texto** passa a dizer a palavra, e aí o ícone fica decorativo.
+*"Elevação lateral unilateral no cabo · indicado pelo treinador"*.
+*"Taxa: cumprida — +0,07 e +0,03 kg/semana"*. *"Adesão: falta — 1 dia de 14"*.
+**É a mesma doutrina que o E3 da auditoria já aplicou à cor** ("não pode ser
+marca só de cor") estendida à **forma**: estado nunca só por forma. Quem olha a
+tela de pé, na luz da academia, também ganha — um asterisco e um triângulo são
+duas formas de 16 px, e a palavra não depende de enxergá-las.
+
+**As palavras são da frente 3**, e os exemplos acima são ilustração do formato,
+não proposta de voz.
+
+**Caso 4 · O controle não tem nome nenhum. Não é problema de ícone.**
+
+Medi um, e são **28 usos**: `plus` dentro de
+`<button class="add" style="width:44px;height:44px;…"><svg width="22" height="22"><use href="#plus"/></svg></button>`.
+**Um botão de 44 × 44 px cujo único conteúdo é um ícone, sem `aria-label` e sem
+texto.** Para leitor de tela é "botão", sem mais nada — é 1.1.1 e é 4.1.2, e é
+pior do que os 102 soltos da auditoria, porque um ícone solto ao menos não finge
+ser um controle operável anônimo.
+
+**A resposta:** o **controle** ganha `aria-label` (é o padrão que a própria
+direção usa em `.ib`, e ela o usa bem), e o ícone passa a ser caso 1.
+
+### 6.3 · O requisito que torna isto portão, e não acabamento
+
+A frente 2 escreveu o requisito e eu o assino, com a correção da escala:
+
+> **Requisito 10 · O ícone entra por um componente cuja assinatura não permite
+> omitir a escolha.** Ou ele recebe um rótulo, ou recebe a marca de decorativo, e
+> **não existe terceira forma de chamá-lo**. Em Preact isso é um componente com
+> dois modos e nenhum padrão: `<Icone nome="bk" decorativo />` ou
+> `<Icone nome="p3" rotulo="Pose 3: perfil direito, braços ao lado do corpo" />`,
+> e chamar sem um dos dois é erro de tipo, não aviso.
+>
+> **E a decisão mora no catálogo, não na chamada.** São **46 desenhos** que
+> portam (49 menos os três da barra de status de mentira), e **42 deles são
+> decorativos em todos os usos medidos** — então o componente tem um catálogo com
+> o padrão de cada desenho, e a chamada só precisa falar quando foge do padrão.
+> Os quatro que **nunca** são decorativos: as 11 poses (um id por pose), os
+> gráficos em linha, e nada mais.
+>
+> **Por que isto é portão e não acabamento:** 755 usos. Se a decisão mora na
+> chamada, ela se toma 755 vezes e se esquece algumas. Se mora no catálogo, são
+> 46 linhas, uma vez. **A diferença entre as duas é a diferença entre uma regra e
+> um esforço**, e é a mesma disciplina que o caso *cor nova não entra solta no
+> meio das regras* aplica à cor: "dê um nome a ele antes de usar".
+>
+> **O caso que falta, e ele é de fonte e não de DOM**, pela mesma razão escrita
+> no caso da folha ("o defeito nasce de uma linha nova"): nenhum `<svg>` nos
+> componentes sem `aria-hidden`, `role="img"` com `aria-label`, ou `<title>`. Com
+> o componente obrigatório, o caso pode ser mais forte e mais barato: **não
+> existe `<svg>` escrito à mão fora do catálogo de ícones.** Uma asserção, um
+> lugar.
+
+---
+
+## 7 · A `Procedencia` — ela já é primitiva, e a pergunta do plano está mal posta
+
+`07-plano.md` §4 põe a alternativa assim: *"As duas carregam no conteúdo a
+promessa de que todo número derivado diz de onde veio; nenhuma a mantém como
+primitiva. Ou a frente 4 a reconstrói como token e componente, ou ela deixa de
+ser regra e passa a depender de quem escreve cada tela — o que é a definição de
+regra perdida."*
+
+**Fui procurar para reconstruir, e ela já existe. A frase "nenhuma a mantém como
+primitiva" é sobre as duas direções, e está certa sobre elas — mas não há nada a
+reconstruir: há uma primitiva viva a preservar.**
+
+### 7.1 · O que existe hoje, medido
+
+| | onde |
+|---|---|
+| **o componente** | `export function Procedencia({ children })` em `src/ui/instrumento/primitivos.jsx`, com o comentário *"Linha de procedência: de onde veio um número derivado."* |
+| **a classe** | `.ins-provenance` em `src/base.css` |
+| **a forma** | `font: 400 10px/1.4 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-4)` |
+| **quantos lugares a usam** | **47 chamadas de `<Procedencia>`, em 12 arquivos** (medi): `dados.jsx` 15, `guia.jsx` 6, `refeicao.jsx` 4, `protocolo.jsx` 4, `comparar.jsx` 4, `camera.jsx` 3, `editores.jsx` 3, `comida.jsx` 2, `ajustefoto.jsx` 2, `sessao.jsx` 2, `hoje.jsx` 1, `historico.jsx` 1 |
+| **a razão da cor, escrita** | *"text-4, não text-5: procedência CARREGA informação ('cru · 3,4 kg prontos') e a 10px o nível 5 dá 3,2:1, que reprova em AA. O nível 5 fica para o redundante"* |
+
+**Quarenta e sete lugares.** Ela não é uma ideia: ela é o segundo componente mais
+usado do sistema depois dos de layout, e a razão da cor dela foi medida.
+
+### 7.2 · O que a direção tem no lugar: quatro classes anônimas e 674 `<small>`
+
+**Medi os nove HTML.** A promessa de procedência está no **conteúdo** — e é boa:
+"o treinador prescreveu 12", "A regra do nutricionista diz", "marcado às 15h41,
+neste aparelho", "contado contra o plano de hoje". Mas **a forma não tem dono**:
+
+| classe | forma | onde |
+|---|---|---|
+| `.hint` | 13px, `--ink-2` | nos nove |
+| `.sub` | 14px, `--ink-2` | nos nove |
+| `.foot` | 12px, `--ink-3` | só no `prototipo.html` |
+| `.k` | 12px, peso 800, caixa alta, `--accent-ink` | só no `semana.html`, e lá são **10** ocorrências da mesma frase: "A regra do nutricionista diz" |
+
+**Quatro classes, três tamanhos, três cores, para um trabalho.** E o carregador
+de verdade é outro: **674 `<small>`** nos nove (medi), estilizados por **27
+regras de contexto diferentes** — `.gate .t small`, `.meal .t small`,
+`.ref td small`, `.rep small`, `.dl .nm small`, `.fin .fr .v small`… **O mesmo
+significado tem 27 aparências, cada uma herdada de onde ele caiu.**
+
+**Isto é exatamente o que `07-plano.md` chama de regra perdida**, e não porque
+alguém esqueceu: porque a direção é uma galeria de telas, e numa galeria cada
+tela resolve a sua. Numa reescrita de componente, 674 `<small>` com 27
+aparências não viram nada — viram 674 decisões.
+
+### 7.3 · A decisão: ela fica, fica obrigatória, e muda de forma
+
+> **Requisito 11 · `Procedencia` continua primitiva, e passa a ser a única forma
+> de dizer de onde veio um número.**
+>
+> - **O componente fica**, com o nome e o contrato que já tem.
+> - **A classe fica**, renomeada para o vocabulário do sistema novo:
+>   `.ins-procedencia`.
+> - **A forma muda**, porque a monoespaçada saiu (§2.2) e a escala é nova (§3.2):
+>   `font-size: var(--ins-t-meta)` (12px, em `rem`), `letter-spacing: .04em`,
+>   `color: var(--ins-tinta-3)`. **Medi que isto é melhor do que hoje**:
+>   `tinta-3` dá **4,87 a 6,23:1** no claro e **6,06 a 8,16:1** no escuro, contra
+>   os 5,01:1 de `--ins-text-4` sobre o canvas de hoje — e o degrau de 12 px em
+>   vez de 10 px reforça, porque a razão escrita da cor de hoje era justamente a
+>   de que a 10 px o nível de baixo reprovava.
+> - **Ela não é `<small>`.** `<small>` é "letra miúda" em HTML e qualquer
+>   container pode repintá-la; `.ins-procedencia` é um papel do sistema e tem uma
+>   forma só, em qualquer lugar onde apareça.
+> - **Ela não carrega número que não seja a origem.** A regra de uma linha:
+>   *se a frase responde "de onde veio este número?", é `Procedencia`; se ela
+>   responde outra coisa, é prosa de apoio (`--ins-t-apoio`).*
+>
+> **E o caso que falta, que é o que torna isto regra e não hábito:** nenhuma
+> folha do sistema estiliza `small` por contexto. É asserção de fonte, de uma
+> linha, e ela faz o que 27 regras de contexto desfazem.
+
+### 7.4 · A consequência, dita como o plano pediu
+
+**Se este requisito não for cumprido, a procedência deixa de ser regra** — e a
+forma concreta de isso acontecer é esta, medida: a reescrita porta os 674
+`<small>` da direção, cada um herdando a aparência do bloco onde caiu; os 47
+`<Procedencia>` de hoje viram 47 `<div>` ou `<small>`; e a promessa de que "todo
+número derivado diz de onde veio" passa a depender de cada tela nova lembrar.
+**Não há nada que a segure**: não existe caso de teste sobre procedência hoje, e
+é por isso que eu escrevo um.
+
+**E uma coisa que eu decidi NÃO fazer, para não aumentar o problema:** não
+proponho um **token** de procedência (`--ins-procedencia-*`). Ela é um **papel
+tipográfico** — tamanho, tracking, cor —, e os três valores já são tokens
+(`--ins-t-meta`, `--ins-tinta-3`). Um token a mais seria um quarto lugar onde a
+mesma decisão mora. **A primitiva é o componente mais a classe, e é o
+suficiente.**
