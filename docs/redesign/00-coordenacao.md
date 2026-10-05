@@ -886,6 +886,63 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         **Detalhe operacional para sessões futuras:** `console.log` de dentro do
         jsdom **não aparece** no relatório do Vitest. Canal de diagnóstico tem de
         ser `fs.appendFileSync`.
+      - **Frente 2 ENTREGUE em 05/10** (`ab4a13c2e9876c2e7`),
+        `09-frente2-interacao.md`, 2.172 linhas, 12 seções, 9 commits só nesse
+        arquivo. **Conferi os quatro pontos que mudam trabalho, e dois erros
+        eram MEUS, não dele:**
+        1. **O `scrollLeft` da régua não se perde pelo cronômetro.** `tick()`
+           escreve só `textContent` e não chama `render()`. Quem derruba é o
+           **relógio de parede**: no `prototipo.html`, um `setInterval` de
+           **5000 ms** que, na virada do minuto, faz `save(); render()`, e o
+           render faz `sc.innerHTML = h` seguido de `centrarStrip(sc)`
+           (linhas 1418-1421, 609, 611 — conferi). **É pior que o plano dizia:**
+           o arrasto tem validade de no máximo um minuto, a perda chega num
+           instante que o dono não controla, **vale com o cronômetro parado**, e
+           o `innerHTML` derruba o **foco** junto. Eu busquei em `src/` — lugar
+           errado: a régua só existe no protótipo.
+        2. **Os becos: 8 ocorrências, 1 com `disabled`, 7 sem.** A contagem dele
+           está certa; a minha primeira contou **linhas** (5) e não ocorrências.
+           E `data-a="beco"` não tem ramificação nenhuma no tratador de cliques:
+           "Máquina ocupada", "Dor" e "Pular" recebem foco, escalam no toque e
+           não fazem nem dizem nada. **É falso sucesso num app cuja doutrina o
+           proíbe.** Também: "pular", "deload" e "encerrar" **não estão
+           desenhados** — zero ocorrências nos oito HTML.
+        3. **`view.fired` é memória, nunca disco** (`main.jsx:326`, resetado em
+           739, 949, 4361). Então "corrigir não reinicia o descanso" vale só
+           dentro da sessão viva: **reabrir o app e corrigir uma série daquela
+           sessão dispara um descanso** para uma série que acabou minutos antes.
+           Nenhum dos 20 casos de `cronometro`+`serie` cobra isso.
+        4. **`rem` aparece ZERO vezes nas folhas** — conferi as seis, todas 0.
+           Então 200% de texto não é "não medido": é **bloqueado, em quatro
+           camadas**, e nem o ajuste de texto do sistema alcançaria.
+        **Quatro buracos na própria rede**, que ele achou lendo os 38 casos de
+        `estilo.test.ts`: seis dos "28 genéricos" estão presos a seletor
+        literal; o caso do `svh` não exige `svh`, só que `100vh` não apareça
+        sozinho; o da escala de 4 não olha `protocolo.css`; e os dois casos de
+        ancestral olham árvores diferentes — **um `overflow: hidden` em `#app`
+        mataria o sticky da única saída e nenhum dos 38 pegaria.** Isso corrige
+        a leitura otimista que a `08-rede.md` fez dos 28.
+        **Achados que ninguém tinha escrito:** a régua do **peso em Corpo** é
+        pior que a de repetições (4 de 13 alcançáveis), e erro de dedo lá entra
+        na média semanal que decide ±150 kcal; `.cellb`, o alvo de corrigir no
+        lugar, tem **~22 px** — o menor da direção e 8 abaixo do pior que a
+        auditoria achou, porque **nasceu depois dela**; a folha de pôr em dia
+        **não oferece "Não comi"**, que é justamente o que torna o portão de 11
+        em 14 alcançável; **o protótipo tem botão de guardar e constrói o
+        lote**, contra o requisito; e `finalizarSessao` chama `soltaPromo`, que
+        **deixa lápide** — então o descarte silencioso do fecho manual é
+        **definitivo**, pior que descarte.
+        **Cinco protocolos de medição escritos para o DONO executar**, nenhum
+        executado, com o teto de confiança dito em cada um (ex.: zero engolidas
+        em 60 tentativas só prova "abaixo de 5%").
+      - [ ] **5.b' NOVE DECISÕES NA MESA DELE**, da frente 2: cinco mudanças de
+        regra na folha de pôr o dia em dia (o botão "Não comi"; "Não sei"
+        valendo o dia com a tela dizendo isso; porção acima de 1 alcançando dia
+        passado; a pergunta do "fora do plano" deixando de bloquear; a última
+        refeição não vindo pré-marcada por passagem de horário), mais o que
+        fazer se a régua reprovar a medição, o lugar do deload e se desligá-lo
+        no meio devolve as séries, por quanto tempo o desfazer do vencimento
+        segue oferecido, e se o bloqueio de zoom pode ser revisto.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
