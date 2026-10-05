@@ -305,8 +305,22 @@ function abrirApp(opcoes) {
     /** o texto cru que sobrou na chave antiga; null quando a migração a apagou */
     legado: function () { return w.localStorage.getItem(CHAVE_LEGADO); },
 
+    /**
+     * Fecha o aparelho — e DESLIGA o app antes de fechar.
+     *
+     * A ordem é o conserto. Antes daqui o harness só parava o cronômetro e
+     * chamava `w.close()`: a janela morria debaixo de um app que continuava
+     * trabalhando, e o que estava em voo acordava sem `document`. Eram as
+     * quatro rejeições não tratadas que a suíte reportava ao fim de cada
+     * execução — todas de `protocolo.test.js`, onde a busca dos bytes da foto
+     * de corpo ainda está esperando o IndexedDB quando o teste termina.
+     *
+     * `CTX.desliga()` já para os relógios (o cronômetro inclusive) e desmonta a
+     * árvore do Preact, que é o que faz o Preact DESCARTAR re-render enfileirado
+     * e efeito pendente em vez de rodá-los contra o vazio.
+     */
     fechar: function () {
-      try { w.__escopo('stopTimer()'); } catch (e) {}
+      try { w.__escopo('CTX.desliga()'); } catch (e) {}
       try { w.close(); } catch (e) {}
     }
   };

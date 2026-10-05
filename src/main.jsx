@@ -14,7 +14,7 @@ import {
   unidadeDe, temUnidade, cronometrado, menosEhMelhor, ritmoDe,
   ROTULO_UNIDADE, ESCALA_RITMO
 } from './dominio/carga';
-import { montaNoApp } from './ui/raiz.jsx';
+import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
 import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX } from './dominio/corpo';
@@ -72,6 +72,16 @@ import {
   IDENTIDADE, arrasta as arrastaRecorte, ehIdentidade,
   normaliza as normalizaEnq, zoomMinimo
 } from './dominio/enquadramento';
+
+// O app já foi desligado? Toda continuação `async` deste arquivo pergunta isto
+// depois de um `await`, e `render()` pergunta antes de pintar. Quem desliga é
+// `CTX.desliga()`, lá embaixo, junto com a explicação.
+//
+// Declarada AQUI, antes de tudo, e não ao lado de quem a escreve: `load()` pode
+// rodar ainda na avaliação deste módulo — script de módulo é diferido, e aí
+// `document.readyState` já é 'interactive' — e o boot pinta a primeira tela.
+// Um `let` mais abaixo faria dessa primeira pintura um erro de TDZ.
+let desligado = false;
 
 // A chave de hoje e a de ontem.
 //
@@ -1249,8 +1259,16 @@ async function garanteBytesDoCorpo(datas) {
       const ref = ses.fotos[pose];
       if (!ref || !ref.v) continue;
       const k = chaveDaFalha(d, pose);
-      if (await CORPO.tem(d, pose, ref.ext)) {
+      // Depois de CADA await, a mesma pergunta: ainda tem alguém aí? O
+      // IndexedDB e a rede levam tempo, e o que vem depois daqui mexe no cache
+      // de URL de blob e termina em `render()`. Esta função é chamada sem
+      // `await` — os bytes vão por fora —, então um erro aqui não cai em
+      // nenhum `try` do app: vira rejeição não tratada e contamina a suíte.
+      const aqui = await CORPO.tem(d, pose, ref.ext);
+      if (desligado) return;
+      if (aqui) {
         if (await CORPO.carrega(d, pose, ref)) mudou = true;
+        if (desligado) return;
         if (limpaFalha(k)) mudou = true;
         continue;
       }
@@ -1258,10 +1276,13 @@ async function garanteBytesDoCorpo(datas) {
       // o caminho para ela é entrar na nuvem — não tentar de novo.
       if (!NUVEM.sessao()) { if (marcaFalha(k, 'semconta')) mudou = true; continue; }
       const r = await NUVEM.baixaCorpo(d, pose, ref.ext);
+      if (desligado) return;
       if (!r.ok || !r.v) { if (marcaFalha(k, 'nuvem')) mudou = true; continue; }
       await CORPO.guarda(d, pose, r.v, ref.ext);
+      if (desligado) return;
       if (limpaFalha(k)) mudou = true;
       if (await CORPO.carrega(d, pose, ref)) mudou = true;
+      if (desligado) return;
     }
   }
   if (mudou) render();
@@ -4631,6 +4652,38 @@ window.addEventListener('online', function () { sincroniza(); });
 });
 
 // ---------------------------------------------------------------------------
+// ---------- desligamento ----------
+// O app não tinha fim. Tinha boot, e depois trabalhava até a página morrer — e
+// quando a página morria primeiro, o trabalho em voo acordava sem documento.
+//
+// A rotina que busca os bytes da foto de corpo espera o IndexedDB e espera a
+// rede; nesse intervalo a página pode já ter ido, e ela volta para pintar de
+// qualquer jeito. Era essa a origem das quatro rejeições não tratadas da suíte
+// de fluxo: `createElementNS` e `addEventListener` sobre um `document` que
+// deixou de existir.
+//
+/**
+ * Encerra o app de propósito, em ordem: primeiro ninguém mais renderiza, depois
+ * os relógios param, por último a árvore sai.
+ *
+ * A ordem importa. Desmontar antes de travar o render deixaria uma janela em que
+ * uma continuação remontaria a árvore inteira — e o desligamento teria
+ * desligado nada.
+ *
+ * Quem chama hoje é o harness dos testes de fluxo, antes de fechar a janela do
+ * jsdom. Mas o verbo é do app, não do teste: a disciplina que falta aqui é a
+ * mesma que vai faltar em qualquer tela que espere algo e volte para pintar.
+ */
+CTX.desliga = function () {
+  if (desligado) return;
+  desligado = true;
+  stopTimer();
+  if (relogioT) { clearInterval(relogioT); relogioT = null; }
+  if (batida) { clearInterval(batida); batida = null; }
+  desmontaDoApp();
+};
+
+// ---------------------------------------------------------------------------
 // A única porta que o app abre para fora de si.
 //
 // `eval` direto neste escopo enxerga tudo o que está declarado aqui, e é o que
@@ -4754,6 +4807,7 @@ CTX.seletorDeDia = function () {
 // Monta a shell do Instrumento. As cinco abas são componentes; as telas cheias
 // tomam o lugar da shell inteira, tab bar inclusive.
 function render() {
+  if (desligado) return;
   montaNoApp(<App ctx={CTX} />);
   ajustaRelogio();
   // Depois de montar, e não antes: aqui `view` já é o que está na tela, e a
