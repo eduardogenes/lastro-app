@@ -286,6 +286,65 @@ não é de cor nem de tamanho:
 > defeitos que não existem. É o único requisito deste documento que não tem nada
 > a ver com o que aparece na tela, e é o que segura todos os outros.
 
+### 0.5 · Enquanto eu escrevia, outro agente endureceu dez dos 38 — e cinco dos nove buracos fecharam
+
+**Isto não é nota de rodapé: é o estado do repositório no momento em que eu
+entrego.** Há uma mudança **não commitada** em `tests/dominio/estilo.test.ts` na
+árvore de trabalho (conferi com `git diff`: 275 linhas acrescentadas, 53
+removidas, **ainda 38 casos, os mesmos 38 nomes**). Ela endurece dez deles — o
+`svh`, a escala, o seletor selecionável, a barra deslizante, o voltar grudado, o
+`sticky`, o controle pequeno, o toast, onde parar de rolar e o bloco de
+contenção — e acrescenta três ajudantes compartilhados (`blocos()`, `raizDe()` e
+a constante `ANCESTRAL` hoisteada).
+
+**Rodei os dois.** A medição de §0.3 foi feita contra a versão **commitada**
+(conferi o horário de modificação do arquivo: ele mudou depois). Repeti o mesmo
+experimento contra a versão **da árvore de trabalho**, e o resultado mudou:
+
+| | commitada | na árvore de trabalho |
+|---|---:|---:|
+| vermelhos ao portar o CSS da direção | **4** | **5** |
+| *nenhum ancestral do sticky vira scroll container* | **verde** com `#app{overflow:hidden}` | **vermelho**, e acusa os dois: `body → overflow:hidden` e `#app → overflow:hidden` |
+| *espaço vertical fica na escala de 4* | 20 ofensores, **nove apontando a regra errada** | **6 ofensores, todos certos** — `padding:1px 7px` (o `.cellb`), `padding:11px 14px 12px`, `margin-top:7px`, `gap:7px`, `padding:11px 2px`, `padding:11px 13px` |
+
+**O que isso faz com os nove buracos de §0.2:**
+
+| buraco | estado |
+|---|---|
+| **B1** longhand lateral | **fechado** — a expressão agora cobre `-left`, `-right`, `-inline`, `-block`, os lógicos, e `row-gap`/`column-gap` |
+| **B2** exige `;` no fim | **fechado** — o terminador passou a ser `[;}]` |
+| **B4** atravessa a fronteira da regra | **fechado** — o valor passou a ser `[^;{}]+`, que não cruza `}` |
+| **B7** as duas árvores de ancestral | **fechado** — o caso do `sticky` passou a usar a mesma constante `ANCESTRAL` do caso da folha. **É o meu requisito 22, já feito** |
+| **B8** o nome da variável `fill` | **fechado, e melhor do que eu especifiquei** — o caso passou a achar no JS a variável que recebe `scaleX`, descobrir de qual `getElementById` ela veio, conferir que o id existe no HTML e cobrar a regra dele em **qualquer** folha. Renomear nos três lugares continua verde |
+| **B0** a lista `FOLHAS` literal | **aberto** — a escala passou a ler `FOLHAS` em vez de três nomes, o que é melhor, mas a lista continua literal e os nove arquivos continuam lidos no escopo do módulo |
+| **B3** `7.5px` lido como `5px` | **aberto** — a expressão interna continua `(?<![\w-])(\d+)px` |
+| **B5** `rgba()` escapa do teste de cor | **aberto** — *cor nova não entra solta* não foi tocado |
+| **B6** bloco de tokens minificado | **aberto** — *toda custom property usada tem dono* não foi tocado, e segue acusando **11 órfãs falsas** ao portar a direção |
+
+**Duas correções à minha própria especificação, por causa disso:**
+
+1. **O requisito 22 tem uma exceção que eu não vi, e quem o implementou viu.** A
+   trava da folha é `body.ins-travado { position: fixed; inset: 0; overflow:
+   hidden }` — um `overflow: hidden` **no `body`**, correto e necessário. Uma
+   verificação ingênua da cadeia inteira ficaria **vermelha no código certo**. A
+   versão nova nomeia o seletor da exceção e diz por quê: *"ali o scroll da
+   página está desligado de propósito, não há sticky a ancorar, e a posição é
+   devolvida ao fechar. Ela é nomeada por seletor para que um `overflow: hidden`
+   NOVO em `body` ou `#app` continue sendo pego."* **Acrescento isso ao requisito
+   22** (§9.4): a exceção é `body.ins-travado`, por nome, com a razão.
+2. **A segunda metade do meu requisito 14 já existe**, e eu o deixo escrito como
+   está porque a **primeira** metade continua necessária: o caso novo amarra a
+   barra **do app** (aquela cujo id vem do `getElementById` que o JS escala). A
+   barra **nova** da direção é `.bar i`, outro elemento, e nenhum caso a alcança.
+   **O caso novo que eu proponho — *nenhuma `transition` menciona `width` nem
+   `height`* — continua valendo**, e é o que pega qualquer barra futura.
+
+**E a lição de método, porque ela vale mais do que o saldo:** eu medi, escrevi o
+número, e o número andou enquanto eu escrevia. **O que não andou foi o nome do
+caso.** É exatamente a razão pela qual o briefing manda citar nome de classe, de
+token e de caso de teste em vez de número de linha — e aqui ela se provou dentro
+de uma sessão.
+
 ---
 
 ## 1 · Os tokens, nos dois temas
@@ -2433,6 +2492,16 @@ e **nenhum dos 38 casos diria uma palavra.**
 > não de DOM pela mesma razão escrita lá: *"o defeito nasce de uma linha nova em
 > `html`, `body` ou `#app`, não da árvore."*
 >
+> **Com uma exceção nomeada por seletor, e eu não a tinha visto:**
+> `body.ins-travado { position: fixed; inset: 0; overflow: hidden }` — a trava da
+> folha. Ali o `overflow: hidden` **está certo**: o scroll da página está
+> desligado de propósito, não há `sticky` a ancorar, e a posição é devolvida ao
+> fechar. Sem nomear a exceção, a verificação da cadeia inteira fica **vermelha
+> no código correto**. Nomeá-la **por seletor**, e não por arquivo, é o que faz
+> um `overflow: hidden` **novo** em `body` ou em `#app` continuar sendo pego.
+> **(Quem implementou isto na árvore de trabalho enquanto eu escrevia viu a
+> exceção antes de mim — §0.5.)**
+>
 > **Os dois casos passam a olhar a mesma árvore**, e isso é o conserto do buraco
 > 4 da frente 2: hoje um olha `body` e o outro olha cinco seletores, e o vão entre
 > as duas listas é exatamente onde o `#app` cabe.
@@ -2574,11 +2643,11 @@ pega janela de computador*.
 |---|---|
 | *a paleta do Instrumento está inteira e mora nos tokens* | passa a afirmar os **20 tokens novos nos dois temas**, e a afirmar que **todo token de cor tem valor nos dois** — que é a asserção que a de hoje não faz, porque hoje há um tema só |
 | *cor nova não entra solta no meio das regras* | cobra `rgba`, `hsl`, `oklch` e `color-mix` além de `#hex` (requisito 2) |
-| *espaço vertical fica na escala de 4* | lê as cinco folhas, cobra os longhands laterais e de eixo, não exige `;`, lê decimal como decimal e não atravessa `}` (§0.2) |
+| *espaço vertical fica na escala de 4* | lê as cinco folhas, cobra os longhands laterais e de eixo, não exige `;`, lê decimal como decimal e não atravessa `}` (§0.2). **Quatro dos cinco já feitos na árvore de trabalho; falta o decimal (B3), §0.5** |
 | *toda custom property usada tem dono* | vê bloco minificado (B6), e ganha a **recíproca**: todo dono é usado. Medi **2** tokens definidos e nunca usados hoje |
 | *o campo nunca fica abaixo de 16px* | passa a cobrar `1rem`, com a razão: o que o Safari exige é 16 px **computado**, e o piso sobe junto do controle de tamanho |
-| *o cronômetro de descanso não anima largura* | para de depender de `#tfill` e do nome da variável `fill` (requisito 14) |
-| *nenhum ancestral do sticky vira scroll container* | inspeciona a cadeia inteira — `html`, `body`, `:root`, `*`, `#app` (requisito 22) |
+| *o cronômetro de descanso não anima largura* | para de depender de `#tfill` e do nome da variável `fill` (requisito 14). **Já feito na árvore de trabalho, §0.5** — e o caso novo *nenhuma `transition` menciona `width` nem `height`* continua sendo necessário, porque o endurecimento amarra a barra **do app** e não uma barra nova |
+| *nenhum ancestral do sticky vira scroll container* | inspeciona a cadeia inteira — `html`, `body`, `:root`, `*`, `#app` —, com `body.ins-travado` nomeada como exceção (requisito 22). **Já feito na árvore de trabalho, §0.5** |
 | *controle pequeno estende o ALVO sem crescer o desenho* | `.cellb` entra na lista, e ele é o caso mais forte que a regra já teve |
 
 **Morre, e é o único que o sistema novo apaga em vez de renomear — 1.** *O texto
