@@ -10,8 +10,8 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { ALIMENTOS_BASE, PLANO_BASE } from '../../src/dominio/nutricao/alimentos';
 import {
-  aderenciaDoDia, diaInterpretavel, excessoDoDia, fechaDia, janelaDoHistorico, padraoPorRefeicao,
-  refeicoesDeHoje
+  aderenciaDoDia, diaInterpretavel, diasInterpretaveis, excessoDoDia, fechaDia, janelaDoHistorico,
+  padraoPorRefeicao, poeComidaNoDia, refeicoesDeHoje
 } from '../../src/dominio/nutricao/calculo';
 import type { DiaComida, DiaComidaHist } from '../../src/dominio/nutricao/tipos';
 
@@ -304,4 +304,156 @@ test('"não comi" não conta como refeição cumprida no padrão por refeição'
   const jantar = p.filter(x => x.id === 'jantar')[0];
   assert.strictEqual(jantar.possiveis, 2, 'os dois dias entram no denominador');
   assert.strictEqual(jantar.feitas, 1, 'e só um deles foi cumprido');
+});
+
+// ---------- pôr comida num dia de data arbitrária ----------
+// A tarefa que o app não tinha: `diaDeComida()` carimba o dia com a data,
+// `fechaDiaDeComida` congela o dia velho na virada e `marcaRefeicao` escreve
+// sempre no dia corrente. Não havia caminho para a terça que ele esqueceu.
+
+const HOJE = '2026-01-14';
+const AGORA = new Date('2026-01-14T21:00:00').getTime();
+
+function poe(hist: DiaComidaHist[], data: string, c: Parameters<typeof poeComidaNoDia>[2],
+             ajuste: number | null = 0) {
+  return poeComidaNoDia(hist, data, c, PLANO_BASE, cat, HOJE, 777, ajuste, AGORA);
+}
+
+test('um dia passado ganha linha, com o total congelado e o carimbo do plano', () => {
+  const r = poe([], '2026-01-11', { done: { pos: 1, almoco: 1 }, agua: 6, cadencia: 'descanso' });
+  assert.strictEqual(r.recusa, null);
+  assert.strictEqual(r.hist.length, 1);
+  assert.strictEqual(r.dia!.d, '2026-01-11');
+  assert.strictEqual(r.dia!.agua, 6);
+  assert.strictEqual(r.dia!.cadencia, 'descanso');
+  assert.ok(r.dia!.tot.kcal > 0, 'o total é congelado agora, como em qualquer fechamento');
+  assert.strictEqual(r.dia!.pv, 777, 'e carrega a procedência do plano com que foi contado');
+  assert.strictEqual(r.dia!.m, AGORA, 'o carimbo de alteração é o instante de quem chamou');
+});
+
+test('o instante da marca é de quem chama: a função não lê relógio', () => {
+  const marcado = new Date('2026-01-11T12:40:00').getTime();
+  const r = poe([], '2026-01-11', { done: { almoco: marcado } });
+  assert.strictEqual(r.dia!.done.almoco, marcado);
+
+  // sem instante aproveitável, cai para o `agora` recebido — nunca para
+  // `Date.now()`, que escaparia da porta pela qual o teste viaja no tempo
+  const sem = poe([], '2026-01-11', { done: { almoco: 1 } });
+  assert.strictEqual(sem.dia!.done.almoco, AGORA);
+});
+
+test('hoje também é data arbitrária', () => {
+  const r = poe([], HOJE, { done: { pos: 1 } });
+  assert.strictEqual(r.recusa, null);
+  assert.strictEqual(r.dia!.d, HOJE);
+});
+
+test('data futura é recusada: dia que não aconteceu não se registra', () => {
+  const r = poe([], '2026-01-15', { done: { pos: 1 } });
+  assert.strictEqual(r.recusa, 'futuro');
+  assert.strictEqual(r.dia, null);
+  assert.deepStrictEqual(r.hist, [], 'e nada é gravado');
+});
+
+test('data ilegível é recusada em vez de virar linha com chave torta', () => {
+  // `d` é a chave natural do histórico e a chave da fusão. Uma linha com data
+  // inválida nunca mais seria alcançada por lápide nenhuma.
+  ['ontem', '2026-1-4', '', '2026-01-14T10:00'].forEach(function (d) {
+    const r = poe([], d, { done: { pos: 1 } });
+    assert.strictEqual(r.recusa, 'data', d + ' devia ser recusada');
+    assert.deepStrictEqual(r.hist, []);
+  });
+});
+
+test('pôr em dia COMPLETA a linha que existe, em vez de apagar o resto dela', () => {
+  // "marquei o jantar que esqueci" não pode virar "apaguei o resto da terça".
+  const antes = poe([], '2026-01-11', { done: { pos: 1, almoco: 1 }, agua: 5, turno: 'noite' }).hist;
+  const r = poe(antes, '2026-01-11', { done: { jantar: 1 }, escala: { jantar: 0.5 } });
+
+  assert.strictEqual(r.hist.length, 1, 'não duplica: a data é a chave natural');
+  assert.deepStrictEqual(Object.keys(r.dia!.done).sort(), ['almoco', 'jantar', 'pos']);
+  assert.strictEqual(r.dia!.agua, 5, 'a água que já estava lá fica');
+  assert.strictEqual(r.dia!.turno, 'noite', 'e o turno também');
+  assert.strictEqual(r.dia!.escala.jantar, 0.5);
+});
+
+test('o que vem agora vence o que estava, chave a chave', () => {
+  const antes = poe([], '2026-01-11', { done: { almoco: 1 }, escala: { almoco: 1 }, agua: 2 }).hist;
+  const r = poe(antes, '2026-01-11', { escala: { almoco: 0.5 }, agua: 9, como: { almoco: 'fora' } });
+  assert.strictEqual(r.dia!.escala.almoco, 0.5, 'corrigir a porção de um dia passado é o caso de uso');
+  assert.strictEqual(r.dia!.agua, 9);
+  assert.strictEqual(r.dia!.como!.almoco, 'fora');
+});
+
+test('o total é recontado quando as marcas mudam — e só por isso', () => {
+  // O congelamento protege o passado de mudança no PLANO, não de mudança nas
+  // MARCAS: elas mudaram agora, de propósito.
+  const antes = poe([], '2026-01-11', { done: { pos: 1 } }).hist;
+  const so = antes[0].tot.kcal;
+  const r = poe(antes, '2026-01-11', { done: { almoco: 1 } });
+  assert.ok(r.dia!.tot.kcal > so, 'duas refeições somam mais que uma');
+});
+
+test('dia que continua mudo não vira linha', () => {
+  const r = poe([], '2026-01-11', {});
+  assert.strictEqual(r.recusa, 'mudo');
+  assert.deepStrictEqual(r.hist, [],
+    'guardar um dia vazio como zero seria dizer que ele não comeu');
+
+  // água declarada como não contada JÁ é informação sobre o dia
+  const comFato = poe([], '2026-01-11', { aguaNaoContada: 1 });
+  assert.strictEqual(comFato.recusa, null);
+  assert.strictEqual(comFato.dia!.aguaNaoContada, 1);
+});
+
+test('chamada que não muda nada não reescreve a linha nem adianta o carimbo', () => {
+  // Apagar um dia do histórico é destrutivo e não foi desenhado: esta função
+  // acrescenta, não remove. E bumpar `m` sem mudança faria este aparelho
+  // afirmar ser a cópia mais nova de um dia que ele não tocou.
+  const antes = poe([], '2026-01-11', { done: { pos: 1 } }).hist;
+  const r = poe(antes, '2026-01-11', {});
+  assert.strictEqual(r.recusa, null);
+  assert.strictEqual(r.hist.length, 1);
+  assert.deepStrictEqual(r.hist[0], antes[0], 'a linha fica exatamente como estava');
+  assert.strictEqual(r.dia, antes[0]);
+});
+
+test('o histórico de entrada não é tocado, e o de saída sai em ordem de data', () => {
+  const original: DiaComidaHist[] = [];
+  const um = poe(original, '2026-01-12', { done: { pos: 1 } }).hist;
+  assert.deepStrictEqual(original, [], 'função pura: devolve outro array');
+
+  const dois = poe(um, '2026-01-09', { done: { pos: 1 } }).hist;
+  const tres = poe(dois, '2026-01-11', { done: { pos: 1 } }).hist;
+  assert.deepStrictEqual(tres.map(x => x.d), ['2026-01-09', '2026-01-11', '2026-01-12']);
+  assert.strictEqual(um.length, 1, 'e as chamadas anteriores continuam com o que tinham');
+});
+
+test('o ajuste em vigor naquele dia é de quem chama; `null` preserva o que havia', () => {
+  const antes = poe([], '2026-01-11', { done: { pos: 1 } }, -2).hist;
+  assert.strictEqual(antes[0].aj, -2);
+  const mantem = poe(antes, '2026-01-11', { done: { almoco: 1 } }, null);
+  assert.strictEqual(mantem.dia!.aj, -2, 'o passo da época não é sobrescrito pelo de hoje');
+  const troca = poe(antes, '2026-01-11', { done: { almoco: 1 } }, 1);
+  assert.strictEqual(troca.dia!.aj, 1);
+});
+
+test('o dia posto em dia entra nas leituras como qualquer outro', () => {
+  // É o ponto: pôr o dia em dia tem que mover o portão de 11 em 14 e a
+  // aderência da semana, senão registrar o passado não serve para nada.
+  let hist: DiaComidaHist[] = [];
+  ['2026-01-10', '2026-01-11', '2026-01-12'].forEach(function (d) {
+    hist = poe(hist, d, { done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 },
+                          cadencia: 'treino' }).hist;
+  });
+  assert.strictEqual(diasInterpretaveis(hist, 14, HOJE), 3);
+
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  assert.strictEqual(aderenciaDoDia(hist[0], refs), 1);
+
+  // e um dia honesto de "não comi" conta igual
+  hist = poe(hist, '2026-01-13', { done: { pos: 1, almoco: 1 }, como: { almoco: 'nao' },
+                                   cadencia: 'descanso' }).hist;
+  assert.strictEqual(diasInterpretaveis(hist, 14, HOJE), 4);
+  assert.strictEqual(hist[3].como!.almoco, 'nao');
 });

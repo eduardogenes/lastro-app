@@ -400,6 +400,145 @@ export function fechaDia(
   return h;
 }
 
+// ---------- pôr comida num dia de data arbitrária ----------
+//
+// A tarefa que o app não tem. Hoje `diaDeComida()` carimba o dia com a data,
+// `fechaDiaDeComida` congela o dia velho na virada, e `marcaRefeicao` escreve
+// SEMPRE no dia corrente: não existe caminho para registrar a terça que ele
+// esqueceu de marcar. Esta função é esse caminho, e só ela — a folha que a
+// chama é outra frente.
+//
+// Função pura: não lê relógio, não lê estado, não toca em tela, e devolve um
+// histórico NOVO em vez de mexer no que recebeu.
+
+/** O que aconteceu num dia. Só o que vier preenchido é escrito. */
+export interface ComidaDoDia {
+  /** refeição → instante da marca. O instante é de quem chama: aqui não há relógio */
+  done?: Record<string, number>;
+  /** refeição → como ela saiu do plano */
+  como?: Record<string, ComoFoiARefeicao>;
+  /** ajuste de porção por refeição */
+  escala?: Record<string, number>;
+  agua?: number;
+  aguaNaoContada?: 1;
+  cadencia?: 'treino' | 'descanso' | null;
+  alta?: 1;
+  turno?: Turno;
+  aderencia?: 'plano' | 'fora' | 'perdido';
+}
+
+export interface PostoNoDia {
+  /** o histórico novo, em ordem de data. O de entrada não é tocado */
+  hist: DiaComidaHist[];
+  /** o dia gravado, ou `null` quando nada foi gravado */
+  dia: DiaComidaHist | null;
+  /** por que nada foi gravado */
+  recusa: 'data' | 'futuro' | 'mudo' | null;
+}
+
+/**
+ * Põe comida num dia de data arbitrária, criando ou completando a linha dele.
+ *
+ * As regras, e cada uma é uma decisão:
+ *
+ * **Data futura é recusada.** Um dia que não aconteceu não pode ser
+ * registrado — é a mesma regra que a tela de corpo já aplica à pesagem em data
+ * passada (`nunca futura`, `tests/fluxo/corpo.test.js`). `hojeISO` entra por
+ * parâmetro porque nenhuma função deste módulo lê relógio.
+ *
+ * **O que já estava no dia não é apagado: é completado.** `done`, `como` e
+ * `escala` se unem chave a chave, com o que vem agora vencendo em conflito;
+ * `agua` e os campos de dia só são escritos se vierem. Pôr o dia em dia é
+ * acrescentar o que faltou, e um merge que zerasse o resto transformaria
+ * "marquei o jantar que esqueci" em "apaguei o resto da terça".
+ *
+ * **Dia que continua mudo não vira linha.** Mesma regra de
+ * `fechaDiaDeComida`: guardar um dia vazio como zero seria dizer que ele não
+ * comeu, que é o erro de medição que confunde silêncio com falha. Se a linha já
+ * existia, ela fica como está — apagar um dia do histórico é destrutivo, não
+ * foi desenhado, e não é isto que esta função faz.
+ *
+ * **O total é recongelado, com carimbo novo.** O congelamento de
+ * `DiaComidaHist.tot` protege o passado de mudanças no PLANO, não de mudanças
+ * nas MARCAS: as marcas mudaram agora, de propósito, então o total tem que
+ * mudar com elas — é o mesmo que `fechaDiaDeComida` faz ao reabrir um dia.
+ * `pv` é a procedência, e é ele que permite a tela dizer "este dia foi
+ * calculado contra um plano diferente do atual".
+ *
+ * **O limite honesto, dito:** para um dia passado, `plano` é o plano de HOJE —
+ * o plano daquela data não existe em lugar nenhum (`pv` guarda QUANDO ele era
+ * aquele, não O QUE era). Então um dia posto em dia é contado contra o plano
+ * atual, e `pv` registra isso. Não há como fazer melhor sem um snapshot por
+ * dia, que a 10 anos estoura o teto do Safari — o cálculo está no comentário de
+ * `DiaComidaHist.pv`.
+ *
+ * `ajuste` segue a mesma honestidade: quem chama passa o que estava em vigor
+ * NAQUELE dia. Com `null`, o que a linha já tinha é preservado.
+ */
+export function poeComidaNoDia(
+  hist: DiaComidaHist[],
+  data: string,
+  comida: ComidaDoDia,
+  plano: Refeicao[],
+  catalogo: Record<string, Alimento>,
+  hojeISO: string,
+  pv: number,
+  ajuste: number | null,
+  agora: number
+): PostoNoDia {
+  const lista = Array.isArray(hist) ? hist.slice() : [];
+  const nada = function (recusa: PostoNoDia['recusa']): PostoNoDia {
+    return { hist: lista, dia: null, recusa: recusa };
+  };
+
+  if (typeof data !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return nada('data');
+  if (typeof hojeISO === 'string' && data > hojeISO) return nada('futuro');
+
+  const j = lista.findIndex(function (x) { return x && x.d === data; });
+  const antes: DiaComidaHist | null = j >= 0 ? lista[j] : null;
+  const c = comida || {};
+
+  // o dia na forma do dia CORRENTE, que é o que `fechaDia` sabe congelar: uma
+  // função só decide o que é total congelado, e é a que já decidia
+  const dia: DiaComida = {
+    data: data,
+    done: Object.assign({}, antes ? antes.done : {}, c.done || {}),
+    agua: c.agua != null ? Math.max(0, c.agua) : (antes ? antes.agua || 0 : 0),
+    escala: Object.assign({}, antes ? antes.escala : {}, c.escala || {}),
+    como: Object.assign({}, antes ? antes.como : {}, c.como || {}),
+    cadencia: c.cadencia !== undefined ? c.cadencia : (antes ? antes.cadencia : null)
+  };
+  const alta = c.alta !== undefined ? c.alta : (antes ? antes.alta : undefined);
+  if (alta) dia.alta = 1;
+  const turno = c.turno !== undefined ? c.turno : (antes ? antes.turno : undefined);
+  if (turno) dia.turno = turno;
+  const aderencia = c.aderencia !== undefined ? c.aderencia : (antes ? antes.aderencia : undefined);
+  if (aderencia) dia.aderencia = aderencia;
+  const semConta = c.aguaNaoContada !== undefined
+    ? c.aguaNaoContada : (antes ? antes.aguaNaoContada : undefined);
+  if (semConta) dia.aguaNaoContada = 1;
+
+  const mudo = !Object.keys(dia.done).length && !(dia.agua > 0)
+               && !dia.cadencia && !dia.turno && !dia.aderencia && !dia.aguaNaoContada;
+  if (mudo) return nada('mudo');
+
+  const h = fechaDia(dia, plano, catalogo, pv,
+                     ajuste != null ? ajuste : (antes && antes.aj) || 0, agora);
+
+  // Chamada que não mudou nada não reescreve a linha nem adianta o carimbo de
+  // alteração: `m` é o que a fusão usa para desempatar, e bumpá-lo sem mudança
+  // faria este aparelho afirmar ser a cópia mais nova de um dia que ele não
+  // tocou. É a mesma regra do `identicos` da sincronização.
+  if (antes && JSON.stringify(Object.assign({}, h, { m: 0 }))
+            === JSON.stringify(Object.assign({}, antes, { m: 0 }))) {
+    return { hist: lista, dia: antes, recusa: null };
+  }
+
+  if (j >= 0) lista[j] = h; else lista.push(h);
+  lista.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  return { hist: lista, dia: h, recusa: null };
+}
+
 /**
  * O peso de uma refeição na aderência do dia: de 0 a 1, nunca mais.
  *
