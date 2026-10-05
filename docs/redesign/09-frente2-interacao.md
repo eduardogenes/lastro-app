@@ -1896,3 +1896,222 @@ dele**, com a observação de que a resposta não precisa de campo novo:
 `voltas(p)` já diz quantos treinos passaram desde o vencimento, e um limite em
 treinos — "o desfazer vale até aquele treino voltar outra vez" — usaria a mesma
 leitura e a mesma palavra.
+
+---
+
+## 10 · As duas coisas que a frente 1 deixou na minha mão
+
+### 10.1 · A seta de saída da sessão — a conta, e o protocolo
+
+A frente 1 a entregou assim: *"nasceu no protótipo, fica no canto de cima — o
+ponto mais longe do polegar — e é a única saída visível do modo. Não medido, e é
+medição da frente 2, com aparelho e dedo."*
+
+**A conta, para o protocolo ter um número de onde partir.** Conferi a seta no
+fonte:
+
+```html
+<button class="ib l" data-a="sair"
+        aria-label="Voltar ao Agora, deixando a sessão aberta">…</button>
+```
+
+(`prototipo.html:566`.) Ela é `.ib`, **44 × 44 px** (`:66`), dentro de
+`.sh { padding: 6px 16px 10px }` (`:60`), dentro de
+`.top { padding-top: env(safe-area-inset-top) }` (`:55`).
+
+Num iPhone 11 Pro Max, `safe-area-inset-top` é 44 px (o entalhe). **Conta:** o
+centro da seta fica em cerca de **(38, 72)** numa janela de 414 × 896. Da quina
+de baixo à direita — onde o polegar da mão direita pivota, com o telefone numa
+mão — a distância é `√(376² + 824²) ≈ 906 px`. A diagonal inteira da tela é
+`√(414² + 896²) ≈ 987 px`. **A seta está a 92% da diagonal da tela do ponto em
+que o polegar gira.** É o ponto interativo mais distante do modo, e a conta diz
+quanto.
+
+**O alvo passa a norma e reprova o padrão interno:** 44 × 44 contra os
+`--ins-tap: 46px` de controle repetido. E ela **é** repetida: sair da sessão e
+voltar é o caminho que a própria frente 1 usou para cumprir "as linhas do dia
+tocáveis valem sempre, inclusive durante o treino" (§6.1 dela). Quanto mais a
+arquitetura depende da seta, mais vezes ela é tocada.
+
+**O que a conta NÃO decide, e por isso o protocolo existe:** alcance de polegar
+depende da mão. Eu não tenho a mão dele e não invento o número.
+
+**O protocolo — Medição E · a seta.** Nas condições de §1.5, ao longo de
+**dez sessões reais** (não um teste: uso):
+
+Para cada vez que ele sai da sessão, anotar **uma** de quatro coisas:
+
+| resultado | o que foi |
+|---|---|
+| **alcançou** | chegou na seta sem mudar a pega |
+| **mudou a pega** | escorregou o telefone na mão, ou subiu o dedo pelo corpo do aparelho |
+| **duas mãos** | precisou da outra mão |
+| **não usou a seta** | saiu pelo gesto de borda, ou não saiu e desistiu |
+
+E anotar junto: **quantas vezes ele saiu por sessão**, porque é esse número que
+diz quanto a arquitetura cobra da seta.
+
+**O número que reprova:** **"duas mãos" em mais de 1 de cada 10 saídas**, ou
+**qualquer** "desistiu". Duas mãos num instante em que a outra está na barra, no
+halter ou apoiada é a definição de alvo fora de alcance, e é pior do que um alvo
+pequeno, porque um alvo pequeno se erra e se tenta de novo.
+
+**O que o resultado decide**, e as três saídas estão desenhadas em outro lugar do
+material, então nenhuma precisa de invenção: (a) a seta desce para a zona do
+polegar, que é onde a D já põe tudo que é frequente; (b) a seta ganha um
+segundo caminho na parte de baixo, duplicando o alvo sem mover o de cima; (c)
+fica como está, com a taxa medida registrada como custo.
+
+**E uma coisa que eu achei conferindo isto, que muda a frase "a única saída":**
+ver §11, item 4. **O gesto de borda existe e funciona** — `src/ui/navegacao.js`
+foi escrito por causa dele. A seta continua sendo a única saída **visível**, que
+é como a frente 1 a descreveu, e isso é exato. Mas no protocolo o resultado
+"saiu pelo gesto de borda" tem de ser contado separado, porque **ele existe**,
+não é falha de registro.
+
+### 10.2 · O cartão do exercício fora da sessão — a premissa de que eu dependo
+
+A frente 1 achou que **o cartão do exercício fora da sessão não tem lugar** nos
+cinco lugares, e que com ele vão quatro capacidades: o histórico de um exercício
+(com o gráfico, a tabela em ordem inversa e **a correção de uma série de semanas
+atrás**), o renome, a correção do tipo de carga por movimento, e a troca por
+substituto com o histórico de cada opção. A proposta dela é **Prescrição ›
+Programa › Treino X**, uma porta por linha.
+
+**A minha especificação depende dessa porta em dois pontos, e eu declaro a
+dependência:**
+
+1. **§5 inteiro — corrigir no lugar — só cobre a sessão de hoje.** O alvo dentro
+   da tabela (`.cellb`) existe dentro do modo, sobre `S.sess.done`. Corrigir a
+   série de três semanas atrás é **outra tela**, e hoje ela abre **só** pelo
+   botão "histórico" do cartão do exercício — a frente 1 conferiu com grep que
+   `src/ui/exercicio.jsx:422` é o único chamador de `openHist` em `src/`. **Se a
+   porta de Prescrição não existir, a correção de série passada não tem
+   caminho**, e o alvo que eu especifiquei em §5.1 serve só ao dia corrente.
+2. **§7.4 — máquina ocupada — mostra "o que já foi feito de cada substituto".**
+   Isso é a quarta capacidade da lista dela. Dentro da sessão continua
+   existindo, porque é o cartão aberto. Fora dela, não.
+
+**Então, como premissa:** eu especifico a interação assumindo que a porta
+existe, e **se ela não existir, §5 vale só para a sessão do dia e §7.4 perde o
+histórico dos substitutos fora do modo.** Não é algo que eu possa consertar por
+dentro da interação — é lugar, e lugar é da frente 1.
+
+**E uma medida que falta para dimensionar isto**, que a frente 1 já declarou:
+**a frequência com que ele corrige uma série de semanas atrás é não medida.**
+Sem ela, não dá para dizer se perder essa porta é grave ou é teórico. Eu não a
+inventei e não a medi.
+
+---
+
+## 11 · O que eu fui conferir e não bateu
+
+Onde o código discorda do que estava escrito, **vale o código.** Seis pontos, e
+os quatro primeiros mudam trabalho.
+
+| # | o que estava escrito | o que o código diz |
+|---|---|---|
+| 1 | O `scrollLeft` da régua se perde "**a cada render do cronômetro vizinho**" (meu briefing, e `07-plano.md` §2, frente 2, item 1) | `tick()` roda a cada 1 s e escreve **só `textContent` e `style.width`** em três nós; ela **não chama `render()`** e não toca na faixa (conferi a função inteira). Quem derruba a posição é o **relógio de parede**: um segundo `setInterval`, de 5 s, chama `render()` quando o minuto vira, e `renderSessao()` faz `sc.innerHTML = h` e depois `centrarStrip(sc)`. **Consequência pior do que a descrita:** o arrasto tem validade de no máximo **um minuto**, a perda chega num instante que ele não controla, **vale com o cronômetro parado**, e o `innerHTML` derruba o **foco** junto (§1.2, causa 3) |
+| 2 | Os sete estados ruins "**estão desenhados nos oito HTML** e o protótipo os deixou como **becos desabilitados**" | **Quatro** estão desenhados (erro de gravação, carregando, máquina ocupada, dor); **três não** — "pular" é só botão em sete lugares, e "deload" e "encerrar" são **uma linha de texto cada** numa folha desabilitada do protótipo, com **zero** ocorrências nos oito HTML. E os becos **não estão desabilitados**: `data-a="beco"` aparece 8 vezes e **não tem ramificação nenhuma** no tratador de cliques; **7 das 8 não têm `disabled`** — recebem foco, escalam no toque e não fazem nem dizem nada (§7.0) |
+| 3 | "Corrigir não reinicia o descanso" é regra a especificar (meu briefing e `07-plano.md` §2) | **Já vale no app de hoje**, e o protótipo também a honra (`corrigeSerie` não toca `restFrom` nem `at`). Mas no app ela se apoia em `view.fired[tag]`, que é campo de `view` — **memória, nunca disco** (conferi a declaração e os três lugares que o zeram). **Defeito vivo:** reabrir o app e corrigir uma série daquela sessão dispara um descanso para uma série que acabou minutos antes, e **nenhum dos 20 casos de `cronometro` e `serie` cobra isso** (§5.3) |
+| 4 | "Em PWA instalado não há botão do navegador **nem gesto de borda**" (comentário do caso *o voltar fica grudado no topo*, em `tests/dominio/estilo.test.ts`) | **O gesto de borda existe**, e o app foi consertado por causa dele: o cabeçalho de `src/ui/navegacao.js` diz, com a falha medida dentro, *"No Android — onde o Voltar é botão e é gesto — e **no gesto de borda do Safari**, o primeiro Voltar em qualquer ponto FECHAVA O APP… em todos, direto para fora"*. E o arquivo usa `history.pushState`, `history.go`, `popstate` e `history.scrollRestoration` (conferi as quatro). **O comentário do teste envelheceu**; a asserção dele continua certa, por outro motivo (a seta é a única saída **visível**, e ela rolava para fora em quatro dos cinco destinos). Isto importa para §10.1: o protocolo conta "saiu pelo gesto de borda" como **saída**, não como falha |
+| 5 | A régua tem "12 valores", 6 alcançáveis (do cerco e do parecer) | Os **12** são a elevação lateral unilateral no cabo, que tem a faixa prescrita mais larga do treino. `regua()` monta de `min(ref−4, fx[0]−1)` a `max(ref+5, fx[1]+2)`, o que dá **10 a 13 valores** nas 20 séries do Treino A — 10 em quinze delas. **O "6" é o que não muda**: é teto da geometria (54 px de botão, 6 de vão, 382 de tela), e independe do exercício. O que varia é quantos ficam escondidos: **4 a 7** (§1.1). A medida do parecer está certa; o invariante é mais forte do que ela |
+| 6 | A chave da coleção de mudanças pendentes é "o dia mais o `sid`" (`09-frente1-lugares.md` §6.4) | A frente 0 a fez **`sid` sozinho** (`chaveDePromo(p) = 'promo:' + sid`), e o comentário do tipo diz por que é melhor: *"`day` é editável no meio do treino… uma chave composta faria a MESMA pergunta fundir como duas entradas se os dois aparelhos tivessem registrado letras diferentes para a mesma sessão. Ele responderia duas vezes."* **Vale a do código** (§9.2) |
+
+**E duas coisas que eu fui conferir e bateram**, para a lista não ser só de
+divergência: `scroll-snap-type: x proximity` e não `mandatory`, e **três**
+`overflow-x: auto` (`.map`, `.also`, `.strip`), com um quarto `overflow-x` que é
+`hidden` em `.scroll` (§1.2). A folha de pôr em dia **abre pré-marcada** e as
+refeições futuras **ficam desabilitadas**, com o rótulo "por vir" (§4.3 e §4.4).
+`ehLinhaDeTreino(r)` é `r.id === 'treino'` e as linhas de refeição têm as três
+afordâncias com ou sem sessão (§2). Os **178** `<svg>` com **0** nomeados e os
+**12** alvos abaixo de 44 px — 3 a 30, 9 a 36 (§8). O padrão interno de
+**46 px** é token com razão escrita, `--ins-tap` em `src/tokens.css` (§8.2). E
+`impactoDoMod` tem **uma** ramificação testada de quatro, com **um** chamador em
+`src/` (§9.1).
+
+**Uma correção que eu faço a mim mesmo**, porque é o tipo de coisa que passa: eu
+escrevi "**conta**" em todo lugar onde calculei geometria em vez de medir. A
+conta reproduziu **três** medidas independentes que outros fizeram — os 714 px
+de C3, os 49 × 64 px dos botões de C, e a captura de C1 com o 10 fora da tela —
+e é por isso que eu confio nela para estender ao que ninguém mediu (a régua do
+peso, o `.cellb`, a 320 px). **Mas ela não substitui dedo em vidro**, e nenhum
+número de §1.5 pode ser preenchido por cálculo.
+
+---
+
+## 12 · O que esta frente não decide, o que sobe à mesa dele, e o que ninguém mediu
+
+**O que ela não decide**, por mandato: os cinco lugares e o fluxo entre eles
+(frente 1), as palavras — inclusive os rótulos que eu citei como exemplo, que são
+ilustração e não proposta de voz (frente 3), e os tokens, a escala, a cor e o
+movimento (frente 4). Onde eu disse "46 px" e "3:1", eu citei padrão existente e
+critério de norma, não escolhi valor novo.
+
+**O que sobe à mesa do dono, e é só isto:**
+
+| o que | onde | por quê sobe |
+|---|---|---|
+| **As cinco mudanças de regra da folha de pôr em dia** | §4.7 | a folha muda regra, e cada uma das cinco nasceu de uma diferença entre o desenho e o que o dado permite ou a decisão dele manda |
+| **O que fazer se a régua reprovar a medição A** | §1.6 | a alternativa medida como melhor é o controle que ele recusou; a troca é dele, não minha |
+| **O deload: lugar e comportamento** | §7.7 | é o achado 3 da frente 1 (muda regra, com razão escrita no fonte contra), mais a pergunta nova: desligar no meio da sessão devolve as séries? |
+| **Por quanto tempo o desfazer do vencimento continua oferecido** | §9.3 | a decisão dele diz "desfazível" e não diz até quando; a coleção tem teto de 60 |
+| **Se o bloqueio de zoom pode ser revisto** | §8.5 | depende do resultado do protocolo de 200%, e o argumento que o sustenta é dele e está escrito no fonte |
+
+**O que fica para depois, declarado:**
+
+- **A folha de pôr em dia é a única superfície desta frente que tem desenho de
+  verdade para conferir.** O protótipo a montou inteira. A régua consertada, o
+  `.cellb` com alvo, os três estados que faltam e o teclado com teclado físico
+  **não têm pixel**, e esta frente é texto.
+- **Dias não tem desenho** (achado 6 da frente 1) e é onde a folha mora. Eu
+  especifiquei a folha; a tela que a abre não existe.
+- **O destrutivo** segue sem desenho (achado 8 da frente 1). A folha de pôr em
+  dia **não** oferece apagar, e isso não é escolha minha: `poeComidaNoDia` não
+  faz isso (§4.1, limite 2).
+- **O mapa da sessão** (`.map`, 30 px, com `overflow-x: auto`) tem o mesmo
+  defeito da régua, em miniatura, e eu só o nomeei (§8.2). Vinte pontos numa
+  faixa de 382 px é a mesma conta.
+- **Os quatro gestos com função que a D propôs** — a cortina, o clarão, o anel,
+  o toque que afunda — são da frente 4, como seção de sistema visual. Eu só
+  especifiquei o que o movimento **não** pode fazer: piscar o fixo (§1.3, R7) e
+  rodar com "reduzir movimento" ligado (§6.2, T4).
+
+**O que ninguém mediu, e esta frente herda sem inventar número:**
+
+- **A taxa de toque engolido como arrasto.** É a pergunta central de §1, e exige
+  aparelho e dedo. Protocolo em §1.5, medição A.
+- **A régua do peso**, em nada: nem alcance, nem engolimento. Conta em §1.4,
+  protocolo em §1.5, medição D.
+- **O alvo de `.cellb`** (cerca de 22 px por conta) nunca foi medido por
+  ninguém, porque nasceu depois da auditoria de acesso (§5.1).
+- **Quantos alvos reprovam o padrão interno de 46 px.** C3 contou contra 44 e
+  achou 12. Contra 46, eu achei **sete classes** de controle a exatamente 44, e
+  **não contei instâncias** (§8.2).
+- **320 px de largura.** Protocolo em §8.4. E a pergunta que o protocolo tem de
+  distinguir — cortado ou rolável — é consequência do `overflow-x: clip` do
+  `body`, e também não foi medida.
+- **200% de texto.** Protocolo em §8.5. E o achado que muda a pergunta: está
+  bloqueado em **três** camadas de propósito, e a tipografia é toda em `px`
+  (`rem` aparece **zero** vezes nas cinco folhas), então nem o ajuste de texto
+  do sistema a alcançaria.
+- **A seta de saída da sessão.** Conta em §10.1 (92% da diagonal da tela do
+  pivô do polegar), protocolo na medição E. Alcance de polegar depende da mão, e
+  eu não tenho a mão dele.
+- **A frequência de uso no notebook.** O dono disse "bastante" (P8, P11); o
+  parecer registra que ninguém contou. É o que daria peso ao T1 de §6.2 — e o
+  requisito se justifica sem ela, porque não há razão para o teclado próprio
+  recusar o teclado físico.
+- **A frequência com que ele corrige uma série de semanas atrás.** Declarada
+  pela frente 1, e é o que daria peso à dependência de §10.2.
+- **Se o aviso do vencimento aparecendo uma vez basta** para ele decidir antes
+  do prazo. O protótipo testou impressão em três minutos, não hábito ao longo de
+  semanas. **Hipótese, não fato** — e vale para tudo que eu escrevi a partir do
+  protótipo.
+- **A taxa de toque errado com a mão suada**, em qualquer controle. O parecer já
+  a declarou não medida, e ela pesa nas decisões 5 e 6. A medição A a mede **só
+  para a régua**.
+- **VoiceOver no iOS de verdade.** C3 mediu a árvore em Chromium. Todos os
+  requisitos de anúncio deste documento (§1.3 R6, §6.2 T2, §8.3) foram escritos
+  contra a norma e contra a medida de Chromium, **não** contra o leitor que o
+  dono usaria.
