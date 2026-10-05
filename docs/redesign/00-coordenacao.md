@@ -786,6 +786,28 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         em curso com relatório JSON por execução. Não atribuo à ceia sem prova —
         pode ser anterior —, mas fica registrado porque falha que se esconde é
         pior que falha fixa.
+        **Caça encerrada sem nome: 1 falha em 24 execuções.** Depois da falha,
+        23 execuções limpas (6 por `npm test` com build, 17 por `npx vitest run`
+        sobre o dist já construído). Não reproduzi, e o nome do caso foi perdido
+        na primeira saída.
+        **A suspeita, com base e não medida:** as **4 unhandled rejections** que
+        a suíte de fluxo já tinha antes de qualquer frente — `createElementNS`
+        ×2 e `addEventListener` ×2, todas depois do `a.fechar()`, trabalho
+        assíncrono do app chegando numa janela jsdom já fechada. O próprio
+        Vitest avisa que elas *"might cause false positive tests"*, e uma
+        rejeição que pousa durante outro arquivo explica exatamente uma falha que
+        muda de lugar e não se reproduz. A `08-rede.md` já as havia registrado;
+        o `07-plano.md` **não** as tem na lista de riscos.
+        **Por que isto não é detalhe:** a rede é o mecanismo de segurança da
+        reescrita em bloco. Uma suíte que mente uma vez em 24 é uma rede
+        comprometida — se um vermelho da reponta puder ser ruído, a regra "se
+        ficou vermelho, o erro é da reponta" deixa de valer. Tentativa anterior
+        de mitigar (guarda de render) foi **medida e piorou** (6 rejeições em vez
+        de 4) e foi revertida.
+        **Vai à mesa do dono como escolha de ordem**, não como conserto
+        silencioso: consertar o desligamento das telas antes de a reescrita se
+        apoiar na rede, ou seguir sabendo do ruído. A frente 2 mexe exatamente
+        nesse código.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
