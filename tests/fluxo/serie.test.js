@@ -198,3 +198,46 @@ test('sair do app descarrega a gravação represada', async () => {
   );
   a.fechar();
 });
+
+test('corrigir uma série depois de reabrir o app não inicia descanso', async () => {
+  // O iOS fecha o app em segundo plano no meio do treino. A marca de "esta
+  // série já disparou" vivia só em `view.fired`, que é memória: ao reabrir ela
+  // nascia vazia, e corrigir uma série registrada quinze minutos antes
+  // disparava um descanso de dois minutos para uma série que já acabou.
+  const base = comHistorico();
+  const a = await app(base);
+  await a.pronto();
+  a.E('iniciarSessao()');
+  await a.esperar();
+  a.E('toggle(0)');
+  await a.esperar();
+
+  a.preencher(0, 0, 60, 9);
+  await a.esperar();
+  assert.ok(a.E("document.getElementById('timer').classList.contains('on')"),
+    'registrar a série 1 dispara o descanso, como sempre');
+
+  // segundo plano: descarrega o que o debounce de 700 ms represou
+  Object.defineProperty(a.doc, 'hidden', { value: true, configurable: true });
+  a.doc.dispatchEvent(new a.window.Event('visibilitychange'));
+  await a.esperar(50);
+  const disco = a.gravado();
+  a.fechar();
+
+  // quinze minutos depois ele reabre e corrige a repetição daquela série
+  const b = await app({ estado: disco, agora: base.agora + 15 * 60000 });
+  await b.pronto();
+  assert.strictEqual(b.E('S.sessao && S.sessao.day'), 'A', 'a sessão continua aberta');
+  b.E('toggle(0)');
+  await b.esperar();
+  assert.strictEqual(b.doc.getElementById('r0_0').value, '9',
+    'a série registrada antes de fechar está na tela');
+
+  b.digitar('r0_0', 8);
+  await b.esperar();
+  assert.ok(!b.E("document.getElementById('timer').classList.contains('on')"),
+    'corrigir 9 para 8 não começa descanso para uma série que acabou há quinze minutos');
+  const log = b.log('A', 0);
+  assert.deepStrictEqual(log[log.length - 1].sets[0], [60, 8], 'e a correção foi gravada');
+  b.fechar();
+});

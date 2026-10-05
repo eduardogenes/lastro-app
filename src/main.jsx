@@ -323,7 +323,7 @@ function corpoDoBackup(body) {
 
 
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] }, promoPendente:[] };
-let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
+let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null, aulas:false, rapido:false,
   protocolo:null, comparar:null, ajuste:null, camera:null };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
@@ -736,7 +736,6 @@ function fechaSessao(comoFim) {
   S.sessao = null;
   S.draft = null;
   S.mods = null;   // as mudanças do dia não sobrevivem ao fim da sessão
-  view.fired = {};
   view.day = nextDay();
 }
 
@@ -946,7 +945,7 @@ async function finalizarSessao() {
     lapide(chaveDeSessao({ sid: s.sid }));
     S.done = S.done.filter(function (x) { return x.sid !== s.sid; });
     S.sessao = null; S.draft = null; S.mods = null;
-    view.open = null; view.fired = {}; view.editProg = false;
+    view.open = null; view.editProg = false;
     view.day = nextDay();
     soltarTela();
     await save(); render(); window.scrollTo(0, 0);
@@ -3736,6 +3735,8 @@ function limpaNum(el, dec) {
 function inp(el, i, k, pos) {
   const e = draftOf(i);
   if (!e.s[k]) e.s[k] = [null,null];
+  // antes da escrita, senão registrar e corrigir ficam indistinguíveis
+  const jaRegistrada = serieJaRegistrada(i, k);
   const raw = limpaNum(el, pos === 0);
   const num = pos === 0 ? parseFloat(raw) : parseInt(raw,10);
   const v = (raw === '' || isNaN(num)) ? null : num;
@@ -3748,7 +3749,7 @@ function inp(el, i, k, pos) {
   atualizaEstado();
   atualizaAnilhas(i);
   queueSave();
-  autoTimer(i, k, e);
+  autoTimer(i, k, e, jaRegistrada);
 }
 
 /**
@@ -3789,6 +3790,38 @@ function inpRapido(el, i, pos) {
 
 function abrirRapido() { view.rapido = !view.rapido; view.open = null; render(); }
 
+/** Série completa: carga E repetição. É o critério do disparo do descanso. */
+function serieCheia(e, k) {
+  return !!(e && e.s && e.s[k] && e.s[k][0] != null && e.s[k][1] != null);
+}
+
+/**
+ * Esta série já estava registrada ANTES deste toque?
+ *
+ * É a pergunta que separa REGISTRAR de CORRIGIR, e é ela que decide se o
+ * descanso começa. Tem de ser feita antes da escrita: depois dela os dois atos
+ * são indistinguíveis.
+ *
+ * A marca era `view.fired[dia + i + ':' + k]` — campo de `view`, MEMÓRIA e
+ * nunca disco. O iOS fecha o app em segundo plano no meio do treino; ao reabrir
+ * a marca nascia vazia, e corrigir uma série registrada quinze minutos antes
+ * disparava um descanso de dois minutos para uma série que já tinha acabado.
+ *
+ * A resposta agora vem do DADO, que sobrevive ao processo: o rascunho, que vai
+ * a disco, e — como segunda fonte, para quando o rascunho daquela posição ainda
+ * não foi hidratado — a série já escrita no histórico desta sessão. As duas
+ * espelham a mesma verdade, porque `projeta` reescreve o histórico a partir do
+ * rascunho; a segunda só cobre a janela em que a primeira está vazia.
+ */
+function serieJaRegistrada(i, k) {
+  if (serieCheia(draftPeek(i), k)) return true;
+  const s = S.sessao;
+  if (!s) return false;
+  const entry = entradaDaSessao(view.day, i, s.sid);
+  const set = entry && entry.sets && entry.sets[k];
+  return !!(set && set[0] != null && set[1] != null);
+}
+
 // O cronômetro começa sozinho quando QUALQUER série fica completa.
 //
 // Começava só na última do exercício, e isso deixava sem cronômetro justamente
@@ -3797,18 +3830,24 @@ function abrirRapido() { view.rapido = !view.rapido; view.open = null; render();
 // a mais por série, de pé, com uma mão, que é o contexto que este app existe
 // para respeitar.
 //
-// A marca de "já disparou" passou a ser POR SÉRIE (`dia + exercício : série`).
-// Com uma marca por exercício, a série 2 não dispararia depois da 1. Apagar o
-// campo rearma aquela série e só ela.
-function autoTimer(i, k, e) {
+// A pergunta é POR SÉRIE, não por exercício: com uma marca por exercício, a
+// série 2 não dispararia depois da 1. E apagar o campo rearma aquela série e só
+// ela.
+//
+// `jaRegistrada` vem do CHAMADOR, medido antes da escrita (`serieJaRegistrada`):
+// é o que separa registrar de corrigir, e é por isso que corrigir não reinicia
+// o descanso.
+function autoTimer(i, k, e, jaRegistrada) {
   const ex = treino(view.day).ex[i];
   const ult = setsFor(ex) - 1;
-  const tag = view.day + i + ':' + k;
-  const cheia = e.s[k] && e.s[k][0] != null && e.s[k][1] != null;
+  const cheia = serieCheia(e, k);
 
-  if (!cheia) { view.fired[tag] = false; return; }
-  if (view.fired[tag]) return;
-  view.fired[tag] = true;
+  // série incompleta não tem descanso a começar — e completá-la de novo depois
+  // de apagar o campo REARMA o disparo daquela série, porque aí ela deixou de
+  // estar registrada
+  if (!cheia) return;
+  // corrigir não reinicia o descanso: o valor muda, o instante não
+  if (jaRegistrada) return;
 
   // O bi-set não descansa entre as suas séries — é essa a definição. O primeiro
   // encadeia direto no segundo, e só quando o exercício acabou; nas séries do
@@ -3877,6 +3916,7 @@ function usaAnterior(i, k) {
   if (!p) return;
   const e = draftOf(i);
   if (!e.s[k]) e.s[k] = [null, null];
+  const jaRegistrada = serieJaRegistrada(i, k);
   e.s[k][0] = p[0];
   e.s[k][1] = p[1];
   segurarTela();
@@ -3885,7 +3925,7 @@ function usaAnterior(i, k) {
   atualizaAnilhas(i);
   queueSave();
   render();
-  autoTimer(i, k, e);
+  autoTimer(i, k, e, jaRegistrada);
 }
 
 function obsIn(el, i) { draftOf(i).obs = el.value; projeta(i); queueSave(); }
@@ -4358,7 +4398,7 @@ async function wipe() {
   // exatamente o histórico que ele acabou de mandar apagar.
   try { await DB.delete(KEY_LEGADO); } catch(e){}
   view.day='A'; view.aba='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
-  view.swapOpen=null; view.fired={};
+  view.swapOpen=null;
   render();
   toast('Histórico apagado.');
 }
