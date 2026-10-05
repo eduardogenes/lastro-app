@@ -1288,3 +1288,262 @@ precisa de outra forma a 320 px ou se 320 px não é um alvo deste produto.
 320 px no checklist de tela nova (frente 2 §8.4), o aparelho do dono tem 414 px,
 e o segundo usuário não existe no dado (`PRODUCT.md`, e `07-plano.md` §4).
 **Isto sobe à mesa dele** junto do resto (§11).
+
+---
+
+## 5 · O alvo e o foco
+
+### 5.1 · Os três degraus, e eles já são token com razão escrita
+
+Nada a inventar aqui: `src/tokens.css` já traz os dois valores **com a medida
+que os motivou escrita ao lado** (conferi):
+
+```css
+--ins-tap: 46px;        /* controle numérico repetido; 46 e não 44 de propósito:
+                           ele usa de pé, suado, com uma mão */
+--ins-tap-dense: 28px;  /* 28px é DESENHO, não alvo: … Quem usa este degrau
+                           estende a ÁREA por ::after até 44 no mínimo */
+```
+
+E `docs/LASTRO_UX_CONTRACT.md` §11 fecha: *"Alvo ≥ 24×24 (norma); ≥ 46 px para
+controle repetido (padrão interno)."*
+
+**A régua desta frente, e ela é a da frente 2 (§8.2 dela), confirmada:**
+
+| degrau | quando | mecanismo |
+|---|---|---|
+| **46 px de alvo** | controle **repetido**: a régua, o `.cellb`, a caixa de marcar da linha do dia, o RIR, o mapa da sessão, as cinco abas | desenho de 46, **ou** desenho menor com `::after` levando o alvo a 46 |
+| **44 px de alvo** | controle não repetido dentro de linha cheia | `::after` com `inset` negativo |
+| **24 × 24** | o mínimo da norma (2.5.8 AA). **Nada deste app desce até aqui** | — |
+
+**E o mecanismo é o que o repositório já tem e já cobra:** `::after` com
+`position: absolute` e `inset` negativo, estendendo a área sem mexer no desenho
+— é o caso *controle pequeno estende o ALVO sem crescer o desenho*, com onze
+seletores presos nele e a medida que o motivou escrita no teste: *"o descanso, a
+anotação, o aquecimento e o RIR ficavam entre 34 e 40px — todos apertados de pé,
+com uma mão, entre uma série e outra."*
+
+### 5.2 · `.cellb`: 22 px, e a decisão é que ele cresce — por `::after`, para cima e para baixo
+
+A frente 2 o achou e fez a conta: `padding: 1px 7px; font-size: 17px` dentro de
+`.ref td { line-height: 1.2 }` → `17 × 1,2 + 1 + 1 ≈ 22 px` de altura. **Refiz a
+conta do fonte e ela fecha** (`prototipo.html:94`, `:89`). É o menor alvo
+interativo da direção inteira, 8 px abaixo do pior que a auditoria achou, e
+**nunca foi auditado porque nasceu depois da auditoria** — `04-acesso.md` é de
+02/10 e o `prototipo.html` é de 04/10 (conferi as datas).
+
+**Fui ler o gerador dele, e achei duas coisas que a frente 2 não tinha**
+(`prototipo.html:635-636`):
+
+1. **A célula tem duas linhas, não uma.** O `<td>` leva o botão **e** um
+   `<small>` embaixo: `'<small>'+(d.rir==null?'sem RIR':'RIR '+d.rir)+' · '+hhmm(d.at)+'</small>'`
+   — o RIR e o horário da série. `.ref td small` é `display:block; font-size:12px`
+   (`:90`). Então a conta da **célula** é outra: `6 px` de `padding-top` +
+   `22,4 px` do botão + `≈16,8 px` do `<small>` + `6 px` de `padding-bottom`
+   ≈ **51 px de linha**. **Conta.**
+2. **Isso resolve o aperto, e resolve para baixo.** O alvo precisa crescer 24 px
+   para chegar a 46; **ele tem 22,8 px de espaço só para baixo, dentro da própria
+   célula** (o `<small>` mais o padding), e o `<small>` é texto sem controle. Para
+   cima há 6 px de padding e depois `thead th` com `padding-bottom: 2px` (`:86`),
+   também texto.
+
+> **Requisito 6 · `.cellb::after { position: absolute; inset: -12px 0 }`.**
+>
+> - **46,4 px de alvo** (`22,4 + 24`), sem crescer um pixel do desenho. **Conta.**
+> - **O segundo valor é zero, e não é detalhe:** o vizinho horizontal é o botão
+>   da série **seguinte**, na mesma linha (`for(c=1;c<=cols;c++)` gera um `<td>`
+>   por série). É literalmente a geometria do caso *o alvo do tick cresce só na
+>   vertical*, com a razão que já está escrita lá: *"na horizontal o vizinho é a
+>   repetição seguinte: crescer para o lado faria um toque na borda registrar o
+>   número errado."* Aqui o erro é mais brando — abre a correção da série errada,
+>   e a tela diz qual série é — mas continua sendo um toque jogado fora numa ação
+>   que já é de correção.
+> - **`.cellb` entra na lista do caso *controle pequeno estende o ALVO*.** Ele
+>   está pior do que os quatro que motivaram aquela lista (34 a 40 px); com 22 px
+>   ele é o caso mais forte que a regra já teve.
+>
+> **Por que não "a interação muda" e por que não "declara-se o custo":** mudar a
+> interação significaria tirar o botão de dentro da tabela, e a correção no lugar
+> é decisão do dono tocada no protótipo (descoberta 4). Declarar o custo
+> significaria aceitar 22 px num controle repetido — um por série, até quatro por
+> exercício, vinte por sessão de Treino A — enquanto o repositório tem o
+> mecanismo pronto, testado, e com onze seletores já usando. **Não há terceira
+> opção defensável.**
+
+**E um achado que é meu e muda uma regra:** `.cellb.fix` — o estado "esta é a
+série que está sendo corrigida" — é
+`outline: 2px solid var(--accent); outline-offset: 2px` (`prototipo.html:95`).
+**É exatamente a forma do anel de foco** (§5.5). Um `.cellb` focado por teclado
+**e** em correção mostra o mesmo canal duas vezes, e quem navega por teclado não
+tem como saber qual dos dois está vendo.
+
+> **Requisito 7 · `outline` é do foco, e de mais nada.** O estado de correção usa
+> outro canal: **preenchimento invertido** (o `.cellb` já é `background: tinta;
+> color: tela`, então o corrigido fica vazado — borda de `--ins-fio-largura-2` em
+> `--ins-acento`, fundo de `--ins-acento-suave`, texto em `--ins-acento-tinta`,
+> que mede 8,09:1, §1.4). Forma, não só cor — é 1.4.1, e é a mesma disciplina que
+> a frente 2 exigiu de `.rep.now` contra `.rep.last` (§5.2 dela).
+
+### 5.3 · Os oito a exatamente 44, nomeados — e por que a conta é de classe
+
+A frente 2 declarou "não medido: quantos alvos reprovam o padrão interno de
+46 px", porque C3 contou contra 44 e ela achou **sete classes** a exatamente 44
+sem contar instâncias.
+
+**Medi, e são oito dentro do telefone, não sete.** A que falta na lista dela é
+`.seg3 button`, que existe em seis dos nove arquivos:
+
+| classe | altura | o que é |
+|---|---:|---|
+| `.ib` | 44 × 44 | o botão de ícone do cabeçalho — **inclusive a seta de saída da sessão** |
+| `.lk` | 44 | o link em linha ("Ver o aparelho", "Desfazer") |
+| `.chip` | 44 | o chip ("+1 copo") |
+| `.pill` | 44 | a pílula de ação nas linhas do dia |
+| `.nav .act` | 44 | a ação dentro da barra |
+| `.seg button` | 44 | o segmento de porção (`Tudo · Metade · …`) |
+| `.seg3 button` | 44 | o segmento de três — **o que a frente 2 não listou** |
+| `.acts button` | 44 | "Máquina ocupada", "Dor", "Pular" |
+
+**E uma classe que está na lista dela e não devia:** `.themes button` também mede
+44, mas é o botão `Sistema · Claro · Escuro` **da galeria**, fora do telefone. Não
+conta.
+
+**Por que eu não dou número de instância, e isto é correção de método, não
+desculpa.** Medi as instâncias e o número é **cerca de 370** nos nove arquivos
+(`.ib` 27, `.lk` 27, `.chip` 34, `.pill` 27, `.nav` 121 botões, `.seg` 29,
+`.seg3` 54, `.acts` 51). **Esse número não quer dizer nada**, por duas razões
+que a medição mostra:
+
+- **as seis telas da segunda rodada desenham cada estado duas vezes**, claro e
+  escuro, então metade das 370 é a mesma coisa pintada de outra cor;
+- **`.nav .act` com 121 botões é a barra dos cinco lugares repetida por estado**
+  — no app são **cinco** controles, não 121.
+
+**A unidade certa é a classe, e a resposta é oito.** E as oito juntas são o
+chrome inteiro do produto: o cabeçalho, a barra, o chip, a pílula, o segmento e a
+fileira de ação.
+
+> **Requisito 8 · As oito sobem de 44 para `var(--ins-tap)`, que é 46.** Não por
+> `::after` — por desenho, porque todas as oito já são `min-height` e subir dois
+> pixels num `min-height` é trocar um número por um token. **Duas exceções, com
+> a razão:**
+>
+> - **`.nav .act`** está dentro de `.tabbar`, cuja altura total é
+>   `--ins-tabbar: calc(52px + var(--sa-bottom))` — e esse token tem três casos
+>   dependendo dele (o cronômetro que se empilha acima, o `padding-bottom` do
+>   `#app`, o toast). **Subir a aba para 46 cabe nos 52** e não muda o token.
+>   Conferi: a `.tab` da direção já mede 50 ou 52 (`prototipo.html` usa 52).
+> - **`.lk`**, que é o link em linha dentro de prosa, **fica em 44**: é o degrau
+>   do meio da régua (controle não repetido em linha cheia), e forçar 46 nele
+>   engorda a linha de prosa em dois pixels por ocorrência. É o mesmo raciocínio
+>   do caso *alvo de toque não é forçado duas vezes*, que mediu 16 px por linha
+>   de engorda na timeline.
+
+### 5.4 · `.map` e `.daytype`: os doze da auditoria, com a conta do conserto
+
+Os dois únicos controles abaixo de 44 px nos nove (medi, e bate com a auditoria):
+
+**`.map` — `min-height: 30px`, 3 ocorrências.** A frente 2 já corrigiu a leitura
+e eu confirmo no fonte: é **um** `<button class="map">` de largura cheia, com os
+pontos como conteúdo dentro dele e um rótulo que carrega o número —
+`aria-label="Ver a sessão inteira: 10 de 20 séries guardadas"`
+(`prototipo.html:577`). Então **os pontos são decorativos** (§6) e o defeito é de
+altura.
+
+> `.map::after { position: absolute; inset: -8px 0 }` → **46 px de alvo**
+> (`30 + 16`). **Conta.** O segundo valor em zero por consistência, embora aqui o
+> vizinho horizontal seja a borda da tela: a régua é "zero onde o vizinho é
+> controle", e manter zero sempre é uma regra em vez de duas.
+>
+> **E o que isto não resolve, dito:** `.map` tem `overflow-x: auto` (um dos três
+> da direção), e os pontos das últimas séries ficam fora da janela pela conta da
+> frente 2 (§1.1 dela). Alvo maior não traz ponto nenhum para dentro. **O que
+> traz é o rótulo**, que já carrega o número — e é por isso que a resposta certa
+> para os pontos é `aria-hidden`.
+
+**`.daytype` — `min-height: 36px`, 9 ocorrências.** É o botão que diz o tipo de
+dia no Agora, e trocá-lo reposiciona todas as refeições (F187, F189, M2-13).
+
+> `.daytype::after { position: absolute; inset: -5px 0 }` → **46 px**
+> (`36 + 10`). **Conta.** É **controle repetido** no sentido da régua: aparece
+> em nove estados dos nove arquivos, e a auditoria registra por que ele é caro:
+> *"Tocar o controle que reorganiza o dia inteiro num alvo de 36 px de altura,
+> sentado no meio do trabalho, é barato; de pé e suado, não."*
+>
+> **E ele é um dos becos silenciosos do protótipo** (frente 2 §7.0): recebe foco,
+> escala no toque e não faz nada. Alvo de 46 px num botão que não responde é pior
+> do que alvo de 36 — então **este requisito só vale junto com o estado**, que é
+> da frente 2.
+
+### 5.5 · O foco — e o app não tem anel de foco para botão nenhum
+
+**Isto é o maior buraco que eu achei do lado do app, e nenhum documento do
+redesenho o nomeia.**
+
+**Medi as quatro folhas de regra.** Regras de foco que existem:
+
+| regra | onde |
+|---|---|
+| `.tc-titulo:focus { outline: none }` e `.tc-titulo:focus-visible { outline: var(--ins-indicator) solid var(--ins-acid); outline-offset: var(--ins-1) }` | `src/componentes.css` |
+| `input:focus, textarea:focus, select:focus { outline: none; border-color: var(--ins-acid) }` | `src/base.css` |
+| mais **seis** `outline: none` em campos específicos, cada um com um substituto visível (`border-color` ou `box-shadow: inset 0 -1px 0` em ácido) | `componentes.css`, `treino.css` |
+
+**E é isso.** **Não existe nenhuma regra de `:focus-visible` para `button`, para
+`a`, para `[role]` nem para `[tabindex]`.** Todo botão deste app depende do anel
+padrão do navegador — e o app declara `<meta name="color-scheme" content="dark">`
+com um canvas a `#0C0E0C`, que é onde o anel padrão tem menos chance de aparecer.
+
+**O contrato manda o contrário:** *"Foco sempre visível, e nunca escondido atrás
+de sticky"* (`docs/LASTRO_UX_CONTRACT.md` §11). **E nenhum dos 38 casos afirma
+nada sobre anel de foco.** A regra existe escrita, não tem implementação geral e
+não tem rede.
+
+**A direção faz certo, e é a única das seis trocas em que ela é estritamente
+melhor de graça.** Medi: todos os nove declaram, uma vez, no `button`:
+
+```css
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px }
+```
+
+E a auditoria mediu o efeito: *"Dos 525 focáveis medidos, 525 recebem anel"* —
+e **0** focáveis sem anel nas duas direções, contra a tabela 2.4.7 dela.
+
+> **Requisito 9 · Três tokens de foco, e uma regra só.**
+>
+> ```css
+> --ins-foco:         var(--ins-acento);
+> --ins-foco-largura: 3px;
+> --ins-foco-folga:   2px;
+> ```
+>
+> ```css
+> :focus-visible {
+>   outline: var(--ins-foco-largura) solid var(--ins-foco);
+>   outline-offset: var(--ins-foco-folga);
+> }
+> ```
+>
+> **`:focus-visible` e não `:focus`**, e a razão já está escrita no app de hoje,
+> em `src/componentes.css`: *"no toque o anel apareceria em…"* — quem toca não
+> quer anel; quem tabula quer.
+>
+> **Por que 3 px e não os 2 px de hoje** (`--ins-indicator`): é o valor da
+> direção, e **medi que ele funciona** — `acento` sobre os quatro fundos dá 6,16 a
+> 7,88:1 no claro e 6,05 a 8,15:1 no escuro (§1.4), muito acima dos 3:1 de
+> 1.4.11. `--ins-indicator: 2px` continua existindo para o indicador de aba, que
+> é outra coisa.
+>
+> **O caso que a folga de 2 px resolve, e é o único caso difícil:** num botão
+> **preenchido de acento** (`.primary`), um anel de acento encostado no
+> preenchimento seria invisível. Com `outline-offset: 2px` a folga mostra a
+> **página** entre o anel e o botão, e página contra acento é 6,16:1 nos dois
+> lados da folga. **Conta.** Por isso a folga não é estética: sem ela o anel
+> desaparece no botão mais importante da tela.
+>
+> **Os sete `outline: none` dos campos ficam**, porque os sete têm substituto
+> visível e porque campo focado com anel **e** borda de acento é dois canais para
+> a mesma coisa. **Requisito:** cada `outline: none` continua obrigado a ter o
+> substituto na mesma regra, e isso vira caso (§11) — hoje é disciplina sem rede.
+>
+> **E `outline` não serve para mais nada** (requisito 7): nenhum estado do
+> sistema usa `outline`, porque `outline` é o foco.
