@@ -663,8 +663,37 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
          cada dia está congelado no histórico), então vale confirmar se é
          posição dele ou do agente.
 
-- [ ] 5.b O dono aprova o plano
-- [ ] 5.c Frentes disparadas conforme o plano
+- [x] 5.b **O dono aprovou o plano inteiro em 05/10**, as cinco frentes na ordem
+      proposta, sem cortar nenhuma. O plano lhe foi levado em página
+      (`claude.ai/artifact/FdmHboU1fQ9H6HUesTHXbu`), com a rede medida, as cinco
+      frentes, as três coisas que mudam de preço e a pergunta sozinha no fim.
+- [~] 5.c Frentes disparadas conforme o plano. **Duas em 05/10**; as outras três
+      esperam, porque o próprio plano as encadeia — a frente 2 precisa dos
+      lugares definidos, a 3 só corre quando os estados existem, e a 4 se apoia
+      nas duas.
+      - **Frente 0** (`a14cbd9eb1e8cb540`) → `09-frente0.md`. Entrega a migração
+        única 9 → 10 com as quatro mudanças de dado persistido juntas (as cinco
+        chaves da bioimpedância, com o peso **separado** da pesagem da manhã; o
+        instante da marca por refeição convergindo o dia corrente na forma que
+        `DiaComidaHist.done` já tem; qual refeição saiu do plano; "não contei a
+        água" como fato), cada uma pelos seis portões, mais a função pura que
+        põe comida em dia de data arbitrária — que o app não tem e é o chão da
+        folha da frente 2.
+        **O cuidado que eu pus por escrito:** a adesão histórica está congelada
+        em `DiaComidaHist.tot`/`.pv` por invariante deliberada. "Pode ser
+        recontada" não autoriza reescrever o histórico; a recontagem é leitura
+        derivada sobre o total congelado. Se ele concluir que é impossível sem
+        reescrever, para e escreve o porquê — essa decisão volta ao dono.
+        Dono dos arquivos: `src/dominio/**`, `src/main.jsx`, `tests/dominio/**`
+        e `tests/fluxo/dados.test.js` (só ele).
+      - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
+        lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
+        capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
+        pode trazer; a sessão como modo com saída própria, encaixada no
+        `src/ui/navegacao.js` que já está pronto e testado; a precedência do
+        cartão de cima; e onde aterrissam as três peças da C, com o §3.6 do
+        plano na mão por causa da ordem amarrada.
+        Só escreve em `docs/redesign/`, para não colidir com a frente 0.
 - [x] 5.d A rede do D13 antes de qualquer reescrita → disparada em 05/10
       (`a0889f72cb2470c26`), entrega `08-rede.md`. Cinco seções: uma linha por
       arquivo em linguagem de capacidade (os nove nomes de `promocao.test.js`
