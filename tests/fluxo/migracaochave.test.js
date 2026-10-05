@@ -36,6 +36,7 @@ test('o histórico da chave velha entra, e a chave velha some', async () => {
   assert.strictEqual(a.E('S.done.length'), 1, 'a sessão da chave velha chegou');
   assert.ok(a.gravado(), 'o estado foi regravado na chave nova');
   assert.strictEqual(a.legado(), null, 'a chave velha foi apagada depois de gravar');
+  a.fechar();
 });
 
 test('série registrada no build antigo depois da migração não se perde', async () => {
@@ -52,6 +53,7 @@ test('série registrada no build antigo depois da migração não se perde', asy
   assert.deepStrictEqual(sids, [ANTEONTEM, ONTEM].sort(),
     'a fusão manteve as duas sessões, uma de cada chave');
   assert.strictEqual(a.legado(), null);
+  a.fechar();
 });
 
 test('apagar o histórico leva a chave velha junto', async () => {
@@ -67,6 +69,7 @@ test('apagar o histórico leva a chave velha junto', async () => {
   assert.strictEqual(a.window.localStorage.getItem(CHAVE), null);
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_LEGADO), null,
     'a chave velha ficou para trás, e o próximo boot ressuscitaria o que ele apagou');
+  a.fechar();
 });
 
 test('a sessão da nuvem é promovida da chave velha, e a velha some', async () => {
@@ -80,6 +83,7 @@ test('a sessão da nuvem é promovida da chave velha, e a velha some', async () 
     'a sessão foi regravada na chave nova, inteira');
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM_LEGADO), null,
     'a chave velha só some depois de a nova estar gravada');
+  a.fechar();
 });
 
 test('com as duas chaves, a nova manda e a velha some assim mesmo', async () => {
@@ -96,6 +100,7 @@ test('com as duas chaves, a nova manda e a velha some assim mesmo', async () => 
 
   assert.strictEqual(a.E('NUVEM.sessao() && NUVEM.sessao().email'), 'nova@exemplo.com');
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM_LEGADO), null);
+  a.fechar();
 });
 
 test('sem nenhuma das duas, ninguém está logado e nada é criado', async () => {
@@ -105,6 +110,7 @@ test('sem nenhuma das duas, ninguém está logado e nada é criado', async () =>
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM), null,
     'ler a chave não pode criar a chave');
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM_LEGADO), null);
+  a.fechar();
 });
 
 test('sair apaga as duas chaves da sessão', async () => {
@@ -117,4 +123,5 @@ test('sair apaga as duas chaves da sessão', async () => {
 
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM), null);
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM_LEGADO), null);
+  a.fechar();
 });
