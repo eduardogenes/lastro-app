@@ -53,6 +53,17 @@ deles), `src/ui/telas/comparar.jsx`, `src/ui/telas/protocolo.jsx`,
 `src/ui/telas/camera.jsx` e `src/ui/telas/retroativo.jsx` — destes eu li a
 linha correspondente da rede e o cabeçalho citado no parecer, não o arquivo.
 
+**Por que eu cito por nome e não por número de linha em parte dos arquivos.**
+Enquanto eu escrevia, a frente 0 estava mexendo em `src/main.jsx`,
+`src/dominio/**` e `tests/**` — ela commitou duas vezes no meio desta sessão, e
+os números de linha que eu havia anotado já tinham andado quando fui conferir.
+Então, nesses três caminhos, **eu cito o nome da função, da constante ou do
+tipo**, que é estável: `fechaSessao`, `impactoDoMod`, `SESSAO_LIMITE`,
+`PromoPendente`. Em `src/ui/**`, nos nove HTML da D e nos documentos — que
+ninguém está editando — eu mantenho o número de linha. Qualquer número de linha
+deste arquivo vale para o estado do repositório em `80607b9`, que é o último
+commit meu antes de a frente 0 publicar.
+
 ---
 
 ## 1 · Os cinco lugares, e o que cada um possui
@@ -236,7 +247,8 @@ de "só leitura" seria mentir sobre essas duas.
 
 Um botão no canto do Agora. **Possui:** a conta e a sincronia (`S.mtime`,
 `S.apagados`; `tests/fluxo/sincronia.test.js`, 12 casos), a cópia de segurança
-e a restauração (`src/main.jsx`; `tests/fluxo/dados.test.js`, 19
+e a restauração (a lista da importação em `src/main.jsx`, do plano §3.1;
+`tests/fluxo/dados.test.js`, 19
 casos), apagar o histórico (`wipe()`), a versão e a atualização
 (`tests/fluxo/publicacao.test.js`, 13 casos), e a troca manual de tema (D10).
 
@@ -260,7 +272,7 @@ casos), apagar o histórico (`wipe()`), a versão e a atualização
 | duração da sessão | **Dias** (o registro em `S.done`) | sessão (o relógio ao vivo) |
 | ajuste calórico (`S.ajuste`) | **Semana** | Agora e Prescrição (o alvo do dia já ajustado) |
 | turno do treino (`S.dia.turno`) | **Agora** | Dias (o horário das refeições daquele dia) |
-| quadro da aula (`S.quadro`) | **a sessão**, e ao encerrar ele vira a nota em `S.done` (`src/main.jsx`) | Dias (a nota da sessão) |
+| quadro da aula (`S.quadro`) | **a sessão**, e ao encerrar ele vira a nota em `S.done` (`fechaSessao` em `src/main.jsx`) | Dias (a nota da sessão) |
 
 **A regra que fecha esta seção:** se uma tela mostra um dado que não é dela,
 ela mostra **e não escreve**. A única exceção autorizada é o atalho de peso
@@ -370,7 +382,7 @@ Elas existem, com texto escrito e procedência: `RULES` em
 `src/dominio/programa.ts`, **catorze entradas** — contei as chaves: `regra
 1` a `regra 5`, `volume`, `hyrox`, `fadiga`, `atenção`, `aquecimento`,
 `deload`, `bike`, `prioridades`, `sucesso`. São servidas por
-`src/main.jsx` e desenhadas em `src/ui/telas/guia.jsx:139-155`, uma aberta
+`CTX.guia` em `src/main.jsx` e desenhadas em `src/ui/telas/guia.jsx:139-155`, uma aberta
 por vez, com a procedência da pegada dita **uma vez só** ali e não em cada
 cartão. No mesmo modo mora **o alvo calórico por tipo de dia, calculado do
 plano e nunca escrito à parte** (`src/ui/telas/guia.jsx:119-136`, com a
@@ -436,12 +448,12 @@ Prescrição ganharam tela na segunda rodada; Dias não.
 O cabeçalho do TREINO traz três células: séries feitas de prescritas, volume do
 dia e **ciclo**, com o número de sessões (`src/ui/telas/treino.jsx:34-53`;
 `ciclo` é `Math.floor(S.done.length / rot().length) + 1` em
-`src/main.jsx`, conferi). Dessas três:
+`CTX.treino`, em `src/main.jsx` — conferi). Dessas três:
 
 - **séries feitas de prescritas** está no cabeçalho da sessão da D ("série N de
   M") e no mapa da sessão — conferi em `prototipo.html:567-577`;
 - **volume do dia** já tem casa: o detalhe da sessão mostra "volume · kg×reps"
-  (`src/main.jsx`, conferi), e o detalhe é de Dias;
+  (`CTX.detalheDaSessao` em `src/main.jsx`, conferi), e o detalhe é de Dias;
 - **ciclo** não aparece em desenho nenhum que eu tenha aberto.
 
 **Proposta:** ciclo é leitura de Semana, ao lado da retrospectiva do bloco —
@@ -519,7 +531,7 @@ está pronto e testado, e não o reinventa.
 1. **A pergunta de 1h30.** Hoje ela aparece em **todas** as abas, treino
    inclusive, e a ordem do código é deliberada: `CTX.faixaDaSessao` devolve a
    pergunta **antes** do `if (view.aba === 'treino') return null`
-   (`src/main.jsx`, conferi). O comentário: "quem esqueceu de
+   (`CTX.faixaDaSessao` em `src/main.jsx`, conferi). O comentário: "quem esqueceu de
    finalizar costuma ter esquecido olhando justamente para ela". São 6 casos em
    `tests/fluxo/esquecido.test.js`. **Dentro do modo, a pergunta continua.**
 2. **As linhas do dia tocáveis.** 5.a' P4: "sim, sempre". Seção 6.
@@ -577,7 +589,8 @@ E duas coisas que **não** são saída:
 
 - **Não existe botão de salvar.** Sair do modo não guarda nada porque tudo já
   está guardado: `save()` é chamada em 59 lugares (`07-plano.md` §3.3) e cada
-  série completa vai para o histórico na hora (`src/main.jsx`: "Não
+  série completa vai para o histórico na hora (o comentário acima de
+  `abreSessao`, em `src/main.jsx`: "Não
   existe estado 'não salvo'"). São 26 casos em `tests/fluxo/sessao.test.js`.
 - **A sessão morre sozinha**, e isso é regra de produto. Sem série nova por
   1h30 (`SESSAO_LIMITE = 90*60*1000`, `src/main.jsx`) a faixa **pergunta**;
@@ -593,13 +606,13 @@ E duas coisas que **não** são saída:
 
 1. **Cai na mesma série.** A posição é derivada, não guardada:
    `ondeEleEstava(estadosDoDia(s.day))` é o que alimenta o texto da faixa
-   (`src/main.jsx`, conferi), e é a mesma leitura que o modo usa para
+   (`CTX.faixaDaSessao` em `src/main.jsx`, conferi), e é a mesma leitura que o modo usa para
    abrir onde ele parou. É o estado M1‑8.
 2. **O descanso é recalculado, nunca retomado de um contador.** É "agora menos
    o instante da série", e é por isso que sobrevive ao bloqueio, a outro app e
    ao fechamento (`tests/fluxo/cronometro.test.js`, 12 casos). `retomaDescanso()`
    roda depois do render, porque a barra do cronômetro vive fora da árvore do
-   Preact (`src/main.jsx`, conferi).
+   Preact (`retomaDescanso` no boot de `src/main.jsx`, conferi).
 3. **A posição de leitura volta.** Quem manda nela é o app, não o navegador:
    `history.scrollRestoration = 'manual'` em `src/ui/navegacao.js:131`, com a
    medição que motivou isso escrita no comentário. O caso que cobra está em
@@ -686,7 +699,7 @@ das sessões fecham sem ele (do parecer).
 - **Colisão com a pergunta de 1h30:** se a sessão está parada há 1h30, a faixa
   **vira a pergunta** e mantém o topo. Já é assim:
   `CTX.faixaDaSessao` devolve a pergunta antes de qualquer outra coisa
-  (`src/main.jsx`, conferi).
+  (`CTX.faixaDaSessao` em `src/main.jsx`, conferi).
 
 **2 · A sessão de ontem que fechou sozinha ganha do treino de hoje.** Conferi o
 estado M1‑13: a faixa "A sessão de ontem ficou aberta. Fechei na última série:
@@ -882,9 +895,9 @@ render, e as duas funções **não são a mesma**:
 
 | onde | por qual função |
 |---|---|
-| a edição do treino de hoje — `src/ui/instrumento/edicao.jsx:41-45`, montado de `CTX.edicaoDoDia` | `impactoSeries` → `impacto()` de `volume.ts` (`impactoSeries` em `src/main.jsx`) |
+| a edição do treino de hoje — `src/ui/instrumento/edicao.jsx:41-45`, montado de `CTX.edicaoDoDia` | `impactoSeries` → `impacto()` de `volume.ts`, via `CTX.edicaoDoDia` em `src/main.jsx` |
 | **o editor de programa** — o **mesmo** componente, montado de `programaDia` | `impactoOficial` → `impacto()` (`programaDia` em `src/main.jsx`) |
-| **o painel de volume**, "fora do alvo do treinador" — `src/ui/telas/dados.jsx:220-225` | `impactoOficial` → `impacto()` (`src/main.jsx`) |
+| **o painel de volume**, "fora do alvo do treinador" — `src/ui/telas/dados.jsx:220-225` | `impactoOficial` → `impacto()`, via `CTX.musculos` em `src/main.jsx` |
 | a tela de decisão — `src/ui/telas/decisao.jsx:36-38` | **`impactoDoMod`**, que **não** está em `volume.ts`: está em `src/main.jsx` |
 
 **E é aqui que a ordem fica amarrada.** A forma que a peça pede é a
@@ -993,7 +1006,7 @@ Onde o código discorda do que estava escrito, **vale o código**. Sete pontos.
 os 13 casos de `tests/dominio/volume.test.ts`; as 32 chaves de topo do `Estado`
 sob asserção em `tests/fluxo/dados.test.js`; `MIN_REGISTRADOS = 11` em
 `src/dominio/corpo.ts`; a guarda `|| S.sessao` de `abrePromoGuardada`
-(`src/main.jsx`); e as 14 regras de `RULES` em
+(em `src/main.jsx`); e as 14 regras de `RULES` em
 `src/dominio/programa.ts`.
 
 ---
@@ -1024,7 +1037,8 @@ Nenhuma destas se reabre aqui.
    `src/ui/instrumento/edicao.jsx:41-45`).
 2. **A sessão morre** — por encerrar (toque) ou por inatividade (1h30 + 10 min
    de graça). **Nos dois casos** a mudança é copiada para a lista que espera, e
-   `S.mods` zera como já zera (`src/main.jsx`). Nenhuma pergunta é feita.
+   `S.mods` zera como já zera (`fechaSessao` em `src/main.jsx`). Nenhuma
+   pergunta é feita.
 3. **A lista mora em Prescrição.** Cada linha diz: o que mudou, de que sessão
    veio, **quando vence** — o dia em que aquele treino volta —, e **a conta de
    volume se virar permanente**. Duas respostas do tamanho do polegar, "Foi só
