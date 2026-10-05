@@ -1156,3 +1156,333 @@ C pisca a 1 Hz, infinitamente** (`.caret` com `animation: blink 1s steps(1)
 infinite`, conferi em `03-direcao-C/momento-1.html:148-149`), e o parecer
 registra que está abaixo dos 3 Hz do critério 2.3.1 — passa, e é o único
 movimento infinito dos dois arquivos. **Requisito:** a forma da D, estática.
+
+---
+
+## 7 · Os sete estados ruins, de pé
+
+A regra desta seção é uma: **um estado sem saída é defeito.** O protótipo achou
+esse defeito uma vez, da forma mais básica possível — a sessão não tinha saída —
+e achou porque virou coisa tocável. As sete situações abaixo são as que podem
+repetir o erro.
+
+### 7.0 · Três dos sete não estão desenhados, e os becos não estão desabilitados
+
+**O briefing diz que os sete "estão desenhados nos oito HTML e o protótipo os
+deixou como becos desabilitados". Conferi, e as duas metades da frase estão
+erradas.**
+
+**Metade 1 · Quatro estão desenhados; três não.**
+
+| estado | desenhado? | onde |
+|---|---|---|
+| **erro de gravação** | **sim**, em oito lugares | `momento-1` 9 e 10, `momento-2` 10 e 11, `corpo` 11, `aula` 12, `semana` 10, `prescricao` 11, `sessao-fotos` 9, `comparar` 10 |
+| **carregando** | **sim** | `momento-1` 8, `momento-2` 9 |
+| **máquina ocupada** | **sim** | `momento-1` 12 |
+| **dor** | **sim** | `momento-1` 11 |
+| **pular** | **não** | é **botão** em sete lugares do `momento-1` (seis na fileira `.acts` e um dentro do estado 11), e não tem estado nenhum: o que aparece depois do toque, o que ele pode fazer dali e como se desfaz não está em desenho nenhum |
+| **deload** | **não** | **uma linha de texto** numa folha desabilitada do protótipo: `["Deload hoje", "metade das séries, mesmas cargas"]`. Zero ocorrências nos oito HTML (contei: `semana.html` menciona a palavra numa frase sobre o cálculo da força ficar cego, que é outro assunto) |
+| **encerrar** | **não** | **uma linha de texto** na mesma folha: `["Encerrar a sessão", "fim igual à última série; não pergunta nada"]` |
+
+Conferi as duas últimas em `menuSessao()`, `03-direcao-D/prototipo.html:855-861`.
+A folha tem cinco itens e `b.disabled = true` em todos.
+
+**Metade 2 · Os becos da sessão não estão desabilitados: eles são silenciosos.**
+`data-a="beco"` aparece **oito vezes** no protótipo e **não tem ramificação
+nenhuma** na cadeia de `else if` que trata os cliques — procurei `"beco"` em
+todo o arquivo e as oito ocorrências são as do atributo. Das oito, **sete não
+têm `disabled`**: "Máquina ocupada", "Dor" e "Pular" na zona do polegar
+(`:725`), "Ver o aparelho" e "Nota do treinador" no cartão do exercício 4
+(`:653`), o botão de tipo de dia no Agora (`:977`) e "Outro dia" em Corpo
+(`:1289`). Só "Histórico" está desabilitado (`:1252`).
+
+**O que isso significa de concreto:** esses sete botões recebem foco, escalam no
+toque (`transform: scale(.95)`, `:307`) e **não fazem nada e não dizem nada**.
+Isso é pior do que desabilitado em três sentidos: um botão desabilitado anuncia
+que está desabilitado para um leitor de tela; não entra na tabulação; e não dá o
+retorno tátil de "funcionou". Para quem usa VoiceOver, "Dor" é um botão normal
+que não responde. **É a definição de falso sucesso**, numa doutrina que diz
+"nada de falso sucesso" e num app cujo fonte afirma "não existe estado 'não
+salvo'".
+
+Isto não é crítica ao protótipo — ele diz por escrito que os deixou de fora e
+por quê, e a escolha foi certa para a escolha do dono. **É aviso para quem
+implementar**: o arquivo que vai ser lido como referência tem sete botões que
+parecem prontos e não são, e três dos sete estados não têm um pixel.
+
+### 7.1 · A forma comum: o que todo estado ruim precisa
+
+Antes dos sete, o que vale para os sete. Cada um precisa de **quatro** coisas, e
+a quarta é a que falta em todos os becos:
+
+1. **O que aconteceu**, em palavra e não em código. As duas direções já fazem
+   isso e o parecer confirmou (3.3.1: `role="alert"` em todo painel de falha, e a
+   causa dita em palavra).
+2. **O que NÃO aconteceu.** É a melhor coisa dos erros da D, e está no estado 9:
+   *"Nada foi apagado e nada saiu do aparelho. A rede não é a causa: o registro
+   mora aqui."* Um erro que não delimita o estrago faz o dono supor o pior.
+3. **O que ele pode fazer dali**, com alvo de tamanho de dedo. Os erros da D têm
+   duas saídas cada, e as duas são ações: "Tentar guardar de novo" e "Copiar o
+   registro inteiro (cópia de segurança)".
+4. **Como se sai sem fazer nada.** É o que falta. `04-acesso.md` já cobra isto
+   em E1-a para um caso específico — "**descartável sem responder**, com alvo de
+   dispensa ≥ 44 px, sem prender o foco". **Requisito:** vale para os sete. Todo
+   estado ruim é dispensável sem responder, e dispensar não escolhe por ele.
+
+E duas regras de forma que vêm da rede:
+
+- **`role="alert"` só onde interrompe; `role="status"` onde informa.** O app tem
+  uma região viva, `#toast`, com `aria-live="polite"` e a razão escrita
+  ("polite: o toast informa, nunca interrompe"). Erro de gravação de série
+  **interrompe** — é `alert`. Carregando **informa** — é `status`. Pôr tudo em
+  `alert` treina o dono a ignorar o `alert`.
+- **Nada do que aparece pode criar bloco de contenção acima da folha** nem
+  `overflow` acima do `sticky` do cabeçalho (§0.1, item 4). Painéis de erro são
+  justamente onde se põe `backdrop-filter` por reflexo — e a preferência do dono
+  é explícita contra isso, com a razão medida: pisca no Blink ao animar um
+  vizinho, e **não** pisca no iPhone real, o que engana.
+
+### 7.2 · Erro de gravação
+
+**O que aparece.** O desenho está pronto e é o melhor do arquivo. O estado 10 do
+`momento-1`: a faixa da sessão passa a dizer "série 10 de 20 · **não
+guardada**", a célula da série 2 na tabela diz "45 × 10 · **não guardada**" em
+vez de só o número, e o painel diz: *"A série 2 não foi guardada. O espaço de
+armazenamento deste aparelho recusou a gravação. A série continua aqui, 45 × 10,
+enquanto o app estiver aberto."* Três lugares dizendo a mesma coisa, e o
+terceiro diz **até quando** o valor vale.
+
+**O que ele pode fazer dali.** Duas saídas: "Tentar guardar de novo" e "Copiar o
+registro inteiro (cópia de segurança)". A segunda é a que não perde nada, porque
+o estado inteiro é regravado a cada série (F256) — então a cópia é uma cópia
+completa, não um remendo.
+
+**Como se sai.** **Aqui está o que falta, e é a quarta coisa de §7.1:** o painel
+não tem dispensa. **Requisito:** ele é dispensável, e dispensar **não** apaga a
+marca de "não guardada" — a marca fica na faixa e na célula, porque é o estado
+do dado, não o estado do aviso. Dispensar o painel e continuar treinando é
+comportamento legítimo; perder a marca não é.
+
+**Três requisitos que o dado impõe, e que o desenho não pode contrariar:**
+
+1. **A confirmação só aparece depois de gravar no aparelho.** Já é a regra
+   escrita da D (M1-2: "A confirmação só aparece depois de gravar no aparelho")
+   e é doutrina do app ("Não existe estado 'não salvo'"). Com a régua, isso
+   significa que **o toque no número não pode pintar o estado "guardada" antes
+   do retorno da gravação** — e a animação de `voa()` do protótipo faz
+   exatamente isso, chamando `render()` no fim do voo (conferi `registraSerie`).
+   **Requisito:** o voo é decoração; quem autoriza a palavra "guardada" é o
+   retorno do disco.
+2. **O erro de gravação tem de alcançar o anúncio.** É o R6 de §1.3 pelo outro
+   lado: se a confirmação passa a ser anunciada, a **falha** também passa, e com
+   `role="alert"`, porque interrompe.
+3. **O desligamento vale aqui também.** O caminho do erro de gravação é um
+   `await` que volta para pintar — é o padrão exato que produziu as quatro
+   rejeições não tratadas de `09-desligamento.md`, e a pilha delas passava por um
+   render disparado por "o aviso de falha". **Requisito:** confere `desligado`
+   antes de pintar o erro.
+
+### 7.3 · Carregando
+
+**O que aparece.** Um esqueleto **com a forma da tela que vem**, e um prazo de
+**4 s** (M1-8 e M2-9). Passados os 4 s, a tela vira o estado 9 — "o registro
+deste aparelho não abriu. Esperei 4 s" — com a causa dita e com a negativa
+("a rede não é a causa: o registro mora aqui"). O motivo do prazo está no
+fato: um carregamento que nunca terminava já aconteceu (F273).
+
+**O que ele pode fazer dali.** Nada, durante os 4 s — e isso está certo, é
+espera. Depois dos 4 s: "Tentar de novo", "Ver o detalhe técnico", e a frase de
+escape ("Se acontecer de novo: Ajustes › Cópia de segurança, a partir de outro
+aparelho com a conta").
+
+**Como se sai.** O estado se resolve sozinho, nos dois ramos. **Requisito:** o
+esqueleto é `role="status"` e **não** `alert`, e não prende foco, porque não há
+nada para focar.
+
+**E um requisito de posição, que é meu:** ao abrir, **volta exatamente à série em
+que parou** (está dito no M1-8). A frente 1 já fixou o mecanismo: a posição é
+derivada, `ondeEleEstava(estadosDoDia(s.day))`, e a sessão manda na chegada. O
+que esta frente acrescenta é a **janela da régua**: ela também volta derivada do
+valor em foco (§1.3, R4), não restaurada de um `scrollLeft` guardado — porque um
+`scrollLeft` guardado de uma sessão de ontem é pior do que nenhum.
+
+### 7.4 · Máquina ocupada
+
+**O que aparece.** M1-12, e o desenho ordena as saídas por preço, o que é a
+coisa certa: primeiro "**Fazer antes o próximo**" — a saída mais barata, porque
+não muda nada do programa (é mover, F159) e a tela diz o efeito inteiro
+("Elevação lateral unilateral no cabo agora; esta volta logo depois"). Depois os
+substitutos do treinador, com ★ nos indicados por ele, **o que já foi feito de
+cada um** ("Última vez: 7,5 × 20 · 20 · 20") e se há foto do aparelho. Por
+último, "Pular hoje". E no alto: "**Vale só para hoje. O programa não muda.**"
+
+**O que ele pode fazer dali.** Quatro coisas: mover, trocar por um dos três
+substitutos, pular, ou fechar e fazer mesmo assim.
+
+**Como se sai.** **Requisito:** fechar o painel volta à régua do exercício
+original, sem registrar nada. Hoje, no protótipo, o botão que abre isto não abre
+nada (§7.0).
+
+**Dois requisitos que a frente 1 amarra:**
+
+1. **A troca é mudança do dia, e o dia morre com a sessão.** `S.mods` zera em
+   `fechaSessao` — "as mudanças do dia não sobrevivem ao fim da sessão"
+   (conferi). Então a frase "vale só para hoje" é verdade no dado, e **o
+   carregador de §9.2 é o que a faz esperar decisão** em vez de desaparecer.
+2. **O histórico de cada substituto é a capacidade que a frente 1 achou sem
+   lugar** (achado 1, item 4): "cada substituto mostra a última carga registrada
+   **nele**". Dentro da sessão isso continua existindo. Fora dela, depende da
+   porta que a frente 1 propôs (§10).
+
+**E um requisito de acesso que é desta frente:** C3 mediu os botões dessa região
+e eles reprovam. **D-6:** os 16 botões de `.acts` — "Máquina ocupada", "Dor",
+"Pular", "Trocar de novo", "Cancelar a série a mais" — e as 4 linhas de
+substituto medem **122 a 382 × 44 px, borda 0, preenchimento 1,08:1**, contra o
+mínimo de 3:1; e `.opt` tem divisória a 1,43:1 (`04-acesso.md`, conferi). O
+parecer acrescenta o que isso significa aqui: são os controles de U4, **a
+situação nº 2 em dificuldade**, e "Dor" e "Pular" **têm consequência diferente**
+(F172 contra F154). Três botões lado a lado de 122 × 44 px sem nada entre eles,
+num instante de dificuldade, com consequências diferentes. **Requisito:** limite
+visível de 3:1 entre eles, e separação que não seja só o vão.
+
+### 7.5 · Dor
+
+**O que aparece.** M1-11. A detecção é real e vem do dado: dor marcada nas duas
+últimas sessões **do exercício**, e as duas podem ter vindo de treinos
+diferentes porque o histórico é do exercício (F151) — no desenho, uma do Treino
+A e outra do E. A regra aparece **nas palavras do treinador** (F102): *"dor de
+tendão apareceu, tirar este exercício por 2 semanas e substituir por outro
+ângulo. Nunca empurrar por cima."* E as duas datas estão escritas.
+
+**O que ele pode fazer dali.** Três, e a decisão é dele (F2): "Ver os 3
+substitutos", "Pular hoje", "Fazer mesmo assim". E o desenho diz a regra que
+vale para as três: *"Qualquer escolha fica registrada no dia."*
+
+**Como se sai.** **A régua só aparece depois da escolha** — está na legenda do
+estado, e é a parte mais importante do desenho: sem escolha não há como
+registrar série, porque registrar série aqui seria "fazer mesmo assim" sem
+dizer. **Requisito:** isto é a única exceção autorizada à regra de §7.1, item 4,
+e ela precisa estar dita: **este estado não é dispensável sem responder.** Mas
+"Fazer mesmo assim" **é** a resposta de dispensa, e por isso a exceção é
+aparente: há três saídas, e uma delas é continuar.
+
+**E um requisito que o dado impõe:** marcar dor é o que alimenta a detecção da
+próxima vez. O app já guarda `dor` no rascunho do exercício
+(`draftOf(i)` devolve `{ s, obs, dor, alt }`, conferi) e a hidratação recupera
+dor e substituto (`tests/fluxo/sessao.test.js`). **Requisito:** o caminho de
+marcar dor não pode ficar atrás do painel que a dor repetida abre — senão a
+primeira dor não tem como ser marcada, e a segunda nunca é detectada.
+
+### 7.6 · Pular — o estado que não existe
+
+**Não está desenhado em lugar nenhum** (§7.0). O que existe é o botão, em sete
+lugares, e **uma** frase de legenda que diz a regra: *"Pular é decisão e não
+volta como pendente (F154)."*
+
+Essa frase é tudo o que se sabe, e ela resolve metade de uma das três perguntas.
+**Especificando, então:**
+
+**O que aparece.** Confirmação, e não execução direta. A razão é a própria frase:
+pular **não volta como pendente**, logo é irreversível pela via normal — e um
+toque único numa fileira de três botões de 122 × 44 px sem limite visível
+(§7.4), num momento de dificuldade, não é lugar para irreversível. **Requisito:**
+o toque em "Pular" abre uma confirmação de uma linha que diz as três coisas: o
+que vai ficar registrado ("Elevação lateral na máquina: pulada hoje"), que isto
+**não volta a pedir** ("o exercício não reaparece como pendente nesta sessão"), e
+que o programa não muda.
+
+**O que ele pode fazer dali.** Confirmar, ou voltar. E — isto é requisito, não
+escolha — **desfazer**, enquanto a sessão estiver aberta. O app de hoje já guarda
+a lista: `S.sessao.pulados` nasce como array em `abreSessao` e é copiada para a
+marca em `fechaSessao` (`if (s.pulados && s.pulados.length) marca.pulados =
+s.pulados.slice()`, conferi). Tirar um id dessa lista é a operação inteira, e
+`tests/fluxo/ciclo.test.js` (18 casos) já cobra pular como "decisão registrada e
+reversível" — **então reversível já é a regra testada do app**, e "não volta como
+pendente" fala de outra coisa: de ele não ser oferecido de novo sozinho. As duas
+convivem, e o desenho precisa dizer as duas, porque juntas elas parecem
+contraditórias.
+
+**Como se sai.** O exercício pulado continua na lista do dia, marcado como
+pulado, com o desfazer a um toque. Ele não some: um exercício que desaparece da
+lista depois de pulado é um estado sem saída, porque o caminho de volta deixa de
+existir na tela.
+
+### 7.7 · Deload — o estado que não existe, e que muda de lugar contra uma razão escrita
+
+**Não está desenhado** (§7.0): uma linha numa folha desabilitada,
+"Deload hoje · metade das séries, mesmas cargas".
+
+**E ele não é só desenho que falta: é regra que a frente 1 já mandou para a mesa
+do dono** (achado 3). Hoje o interruptor mora em Ajustes, e o comentário do
+fonte diz por quê, palavra por palavra: *"Fica AQUI, e não no TREINO, de
+propósito: um interruptor que corta metade das séries não deve estar a um toque
+no meio de uma sessão. O app existe em parte para frear, e o caminho de menor
+esforço tem que ser o conservador."* A D o põe no `···` da sessão. **As duas não
+podem valer ao mesmo tempo, e a decisão não é minha.**
+
+**O que eu especifico é o estado, para os dois lugares**, porque ele falta nos
+dois:
+
+**O que aparece.** O app de hoje já tem a frase do efeito, e ela é boa:
+"Deload ativo: metade das séries, mesmas cargas." / "Deload desligado. Séries
+completas de volta." (conferi `toast()` em `src/main.jsx`). O que falta é o
+**estado**, não a mensagem: com deload ligado, cada exercício mostra metade das
+séries prescritas, e a tabela do exercício tem de dizer que o número de séries
+que está ali **não é o prescrito**. Hoje o estado aparece no TREINO quando ligado
+(está no mesmo comentário do fonte), e com a aba de treino virando modo isso
+precisa de endereço novo.
+
+**O que ele pode fazer dali.** Desligar. E — requisito — **ver quantas séries
+ficaram de fora**, porque é o número que a conta de volume vai ler. A marca já
+existe no dado: `abreSessao` grava `marca.dl = 1` quando `S.deload` está ligado
+(conferi), então a sessão sabe que foi deload e o histórico também.
+
+**Como se sai.** Desligando. E a pergunta que precisa de resposta antes de isto
+virar código: **desligar no meio da sessão devolve as séries que faltam?** O dado
+diz que sim por construção, porque a lista de séries é derivada do prescrito mais
+`S.deload`; mas então uma série registrada na metade cortada reaparece como
+pendente. **Isto é pergunta de regra, e eu não a respondo:** sobe junto do
+achado 3, porque é a mesma decisão.
+
+### 7.8 · Encerrar — o estado que não existe, e o que o dono já decidiu dele
+
+**Não está desenhado** (§7.0): uma linha numa folha desabilitada,
+"Encerrar a sessão · fim igual à última série; não pergunta nada".
+
+**E "não pergunta nada" é decisão do dono** (D1: a pergunta do fim do treino
+sai). Então o estado é curto, e é curto de propósito.
+
+**O que aparece.** Hoje, `finalizarSessao` faz **duas** perguntas por `confirm()`
+do sistema, e conferi as duas: "Nenhuma série registrada neste treino. Descartar
+a sessão?" quando não há nada feito, e "Finalizar com N exercícios pendentes?",
+com a lista dos quatro primeiros e "e mais N", quando há. **As duas são sobre o
+registro, não sobre o programa**, e a decisão do dono tira a **terceira** — a do
+programa. **Requisito:** as duas primeiras ficam, e deixam de ser `confirm()` do
+sistema, porque `confirm()` prende foco e não é descartável sem responder (é o
+E1-a do `04-acesso.md`, literalmente: "não pode prender o foco nem cobrir o
+elemento focado, e tem de ser descartável sem responder").
+
+**O que ele pode fazer dali.** Encerrar, ou voltar. E o que o encerramento faz,
+que precisa estar na tela antes do toque porque é o que o dono vai conferir:
+grava a duração (até o **instante do toque**, não até a última série — é a
+diferença entre `comoFim === 'manual'` e `'auto'`, conferi em `fechaSessao`),
+marca o fim como manual, e **gira a rotação** (`view.day = nextDay()`).
+
+**Aqui há uma contradição entre o desenho e o código, e vale o código.** A linha
+do protótipo diz "fim igual à última série". Isso é o que o fecho **automático**
+faz: `const fim = comoFim === 'manual' ? Date.now() : (s.ultima || s.inicio)`.
+No fecho **manual** o fim é o instante do toque, e tem de ser — é o que a
+palavra "acabei" significa, e é o que o comentário do fonte diz ("sem 'acabei', o
+melhor palpite é a última série; com, é o instante do toque"). **Requisito:** a
+linha do `···` passa a dizer o que o fecho manual faz, e o "fim igual à última
+série" fica onde ele é verdade: na faixa do encerramento automático, que a
+frente 1 já pôs como regra 2 da precedência ("Fechei na última série: 6h20 →
+7h31, cerca de 1h11 (aproximada)").
+
+**Como se sai.** Encerrar fecha a **sessão**, não o modo (frente 1, §4.5). O que
+aparece depois é o Agora, com a confirmação do que foi registrado.
+
+**E o requisito que vem de fora e é o mais caro desta seção:** tirada a pergunta,
+**o fecho manual descarta a mudança do dia em silêncio.** É §9.2, e é o F280
+nominal. Não dá para especificar "encerrar não pergunta nada" sem especificar,
+na mesma mudança, onde a mudança vai parar.
