@@ -9,9 +9,52 @@
 // subir um DOM.
 
 import { fmtDec, fmtDec2, weekStart } from './formato';
-import type { Marca } from './tipos';
+import type { Marca, QualMarca } from './tipos';
 
 const DIA = 86400000;
+
+// ---------- o que o corpo mede ----------
+// Uma tabela só, e todo mundo a enumera daqui: a fusão (`sincronia.ts`), a
+// migração (`migracoes.ts`), o padrão do boot e a lista branca da importação
+// (`src/main.jsx`). Duas listas divergiriam no dia em que uma grandeza nova
+// entrasse — e a que ficasse para trás perderia o dado em silêncio, que é
+// exatamente o defeito que a lista branca da cópia de segurança acabou de
+// pagar.
+
+/** Uma grandeza medida do corpo, com a unidade e se a entrada pode ficar vazia. */
+export interface MedidaDoCorpo {
+  k: QualMarca;
+  /** o nome dela, para a tela não ter uma tabela própria */
+  n: string;
+  u: 'kg' | 'cm' | '%' | 'L';
+  /** sai da balança de bioimpedância, na mesma leitura das outras `bio` */
+  bio: boolean;
+  /**
+   * A entrada exige valor.
+   *
+   * Água corporal total é a única opcional das cinco da bioimpedância: foi a
+   * resposta dele, e não uma leniência do app. Aqui é declaração de domínio —
+   * a tela a obedece, não a decide.
+   */
+  obrigatorio: boolean;
+}
+
+export const MEDIDAS_DO_CORPO: MedidaDoCorpo[] = [
+  { k: 'peso',          n: 'peso',                      u: 'kg', bio: false, obrigatorio: true },
+  { k: 'cintura',       n: 'cintura',                   u: 'cm', bio: false, obrigatorio: true },
+  { k: 'bioPeso',       n: 'peso na bioimpedância',     u: 'kg', bio: true,  obrigatorio: true },
+  { k: 'bioMusculo',    n: 'massa muscular esquelética', u: 'kg', bio: true,  obrigatorio: true },
+  { k: 'bioGordura',    n: 'massa de gordura',          u: 'kg', bio: true,  obrigatorio: true },
+  { k: 'bioGorduraPct', n: 'percentual de gordura',     u: '%',  bio: true,  obrigatorio: true },
+  { k: 'bioAgua',       n: 'água corporal total',       u: 'L',  bio: true,  obrigatorio: false }
+];
+
+/** As chaves de `S.body`, na ordem da tabela. */
+export const MARCAS_DO_CORPO: QualMarca[] = MEDIDAS_DO_CORPO.map(function (m) { return m.k; });
+
+/** Só as da balança de bioimpedância — as cinco que a migração 9 → 10 abriu. */
+export const MARCAS_DA_BIO: QualMarca[] =
+  MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).map(function (m) { return m.k; });
 
 /** Uma semana de marcas, já resumida na média. */
 export interface Semana {

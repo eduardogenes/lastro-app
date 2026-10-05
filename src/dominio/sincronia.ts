@@ -26,9 +26,11 @@
 //   antiga que T.
 
 import type {
-  Cardio, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId, Sessao, SessaoFoto
+  Cardio, Corpo, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId, QualMarca,
+  Sessao, SessaoFoto
 } from './tipos';
-import type { DiaComida, DiaComidaHist } from './nutricao/tipos';
+import type { ComoFoiARefeicao, DiaComida, DiaComidaHist } from './nutricao/tipos';
+import { MARCAS_DO_CORPO } from './corpo';
 import type { LeituraDeGordura } from './corpo';
 
 /** Limites por coleção, iguais aos que o app aplica ao gravar. */
@@ -85,7 +87,15 @@ export function chaveDeLog(idEx: IdEx, l: Pick<Log, 'sid' | 'sl'>): string {
   return 'log:' + idEx + ':' + l.sid + ':' + (l.sl || idEx);
 }
 export function chaveDeSessao(m: Pick<Sessao, 'sid'>): string { return 'done:' + m.sid; }
-export function chaveDeMarca(qual: 'peso' | 'cintura', x: Pick<Marca, 't'>): string {
+/**
+ * Uma medida do corpo. A chave é a grandeza mais o instante.
+ *
+ * `qual` é `QualMarca` e não `'peso' | 'cintura'`: as cinco chaves da
+ * bioimpedância entraram na migração 9 → 10, e uma chave de fusão que não
+ * alcançasse `bioGordura` faria a medida nova nunca morrer por lápide — o
+ * outro aparelho a traria de volta depois de apagada.
+ */
+export function chaveDeMarca(qual: QualMarca, x: Pick<Marca, 't'>): string {
   return qual + ':' + x.t;
 }
 export function chaveDeCardio(c: Pick<Cardio, 't'>): string { return 'cardio:' + c.t; }
@@ -265,8 +275,14 @@ function uneSessoesDeFoto(
  * - `done` é PRESENÇA: união das duas chaves, com lápide para o desmarcado.
  *   É a mesma forma de `S.descanso`, e pelo mesmo motivo — união simples faria
  *   desmarcar num aparelho ser desfeito pelo outro.
+ * - `como` é ATRIBUTO da marca, e viaja com ela: o lado cuja marca entrou traz
+ *   o "fora do plano" ou o "não comi" junto, e a lápide que mata a marca mata o
+ *   atributo também. Fundido à parte, ele descreveria uma marca que não existe.
  * - `agua` é contador que só cresce ao longo do dia: fica o MAIOR. Carimbar um
  *   inteiro custaria mais que o risco, e subestimar um copo é ruído aceitável.
+ * - `aguaNaoContada` é o único campo em que CONTAR vence: declarar que não
+ *   contou e, no outro aparelho, ter contado são afirmações sobre o mesmo dia, e
+ *   a segunda tem dado por trás. Então o fato cai quando a união dá copo.
  * - `escala`, `tot`, `pv` e o enquadramento do dia vêm do lado com carimbo mais
  *   novo. São decisões tomadas uma vez, e a corrida entre dois aparelhos no
  *   mesmo dia é rara — mas quando houver, o registro mais recente é a leitura
@@ -288,26 +304,42 @@ function uneDiasDeComida(
     const meu = por[x.d];
     if (!meu) { por[x.d] = JSON.parse(JSON.stringify(x)); vindos++; return; }
 
-    // done: união, respeitando a lápide de cada refeição
+    // done: união, respeitando a lápide de cada refeição. `como` acompanha a
+    // marca que entrou: é atributo dela, não registro próprio
     Object.keys(x.done || {}).forEach(function (id) {
       const quando = x.done[id];
       if (typeof quando !== 'number') return;
       const morto = mortos[chaveDeRefeicaoFeita(x.d, id)];
       if (morto != null && quando <= morto) return;
-      if (meu.done[id] == null) { meu.done[id] = quando; vindos++; }
+      if (meu.done[id] == null) {
+        meu.done[id] = quando; vindos++;
+        const como = x.como && x.como[id];
+        if (como) { if (!meu.como) meu.como = {}; meu.como[id] = como; }
+      }
     });
     // e o que ESTE lado tem também passa pela lápide do outro
     Object.keys(meu.done || {}).forEach(function (id) {
       const morto = mortos[chaveDeRefeicaoFeita(x.d, id)];
-      if (morto != null && meu.done[id] <= morto) { delete meu.done[id]; apagados++; }
+      if (morto != null && meu.done[id] <= morto) {
+        delete meu.done[id];
+        if (meu.como) delete meu.como[id];
+        apagados++;
+      }
     });
 
     meu.agua = Math.max(meu.agua || 0, x.agua || 0);
+    // o fato "não contei" só sobrevive se NENHUM dos dois lados contou
+    if (!x.aguaNaoContada || !meu.aguaNaoContada) delete meu.aguaNaoContada;
+    if (meu.agua > 0) delete meu.aguaNaoContada;
 
     if (carimboM(x) > carimboM(meu)) {
       meu.escala = Object.assign({}, x.escala || {});
       meu.tot = x.tot; meu.pv = x.pv;
       meu.cadencia = x.cadencia; meu.alta = x.alta; meu.turno = x.turno; meu.aj = x.aj;
+      // `aderencia` faltava nesta lista, e por isso o enquadramento do dia era o
+      // do lado local sempre, mesmo quando o outro aparelho o tinha respondido
+      // depois. É decisão tomada uma vez, como a cadência e o turno
+      meu.aderencia = x.aderencia;
       meu.m = x.m;
     }
   });
@@ -316,7 +348,17 @@ function uneDiasDeComida(
   Object.keys(por).forEach(function (d) {
     const morto = mortos[chaveDeDiaComida({ d: d })];
     if (morto != null && carimboM(por[d]) <= morto) { apagados++; return; }
-    itens.push(por[d]);
+    // `como` sem marca não descreve nada: a invariante é que ele é atributo de
+    // quem está em `done`, e deixá-lo solto viraria "fora do plano" numa
+    // refeição que o dia não diz ter acontecido
+    const h = por[d];
+    if (h.como) {
+      Object.keys(h.como).forEach(function (id) {
+        if (h.done == null || h.done[id] == null) delete h.como![id];
+      });
+      if (!Object.keys(h.como).length) delete h.como;
+    }
+    itens.push(h);
   });
   itens.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
   return { itens: itens, vindos: vindos, apagados: apagados };
@@ -428,21 +470,32 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   // um dos dois sumir. É o mesmo dado dos dias fechados, então funde pela
   // mesma função — só volta à forma de `DiaComida` no fim.
   if (local.dia && remoto.dia && local.dia.data === remoto.dia.data) {
+    // Antes da migração 9 → 10 esta conversão achatava a marca em `1` nos dois
+    // sentidos, porque era a forma do dia aberto. Com `done` convergido, o
+    // INSTANTE atravessa: é ele que a lápide de `chaveDeRefeicaoFeita` compara,
+    // e achatá-lo fazia toda marca do dia aberto parecer de 1970 — qualquer
+    // lápide a mataria.
     const comoHist = function (d: DiaComida): DiaComidaHist {
-      const done: Record<string, number> = {};
-      Object.keys(d.done || {}).forEach(function (k) { done[k] = 1; });
-      return { d: d.data, done: done, agua: d.agua || 0,
+      return { d: d.data, done: Object.assign({}, d.done || {}), agua: d.agua || 0,
+               aguaNaoContada: d.aguaNaoContada,
                escala: Object.assign({}, d.escala || {}),
+               como: d.como ? Object.assign({}, d.como) : undefined,
+               // `aderencia` não entrava nesta conversão, e o `base.dia`
+               // reconstruído abaixo não a devolvia: fundir dois aparelhos no
+               // mesmo dia APAGAVA o enquadramento ("saí do plano", "dia
+               // perdido") sem dizer nada
+               aderencia: d.aderencia,
                cadencia: d.cadencia, alta: d.alta, turno: d.turno,
                tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 0,
                m: (d as DiaComida & { m?: number }).m || 0 };
     };
     const j = uneDiasDeComida([comoHist(local.dia)], [comoHist(remoto.dia)], mortos).itens[0];
     if (j) {
-      const done: Record<string, 1> = {};
-      Object.keys(j.done).forEach(function (k) { done[k] = 1; });
-      base.dia = { data: j.d, done: done, agua: j.agua, escala: j.escala,
+      base.dia = { data: j.d, done: j.done, agua: j.agua, escala: j.escala,
                    cadencia: j.cadencia, alta: j.alta, turno: j.turno };
+      if (j.aguaNaoContada) base.dia.aguaNaoContada = 1;
+      if (j.como) base.dia.como = j.como;
+      if (j.aderencia) base.dia.aderencia = j.aderencia;
     }
   }
 
@@ -471,9 +524,13 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   base.gordura = go.itens.slice(-TETO.protocolo);
   resumo.apagados += go.apagados;
 
-  // ---- peso e cintura ----
-  base.body = { peso: [], cintura: [] };
-  (['peso', 'cintura'] as const).forEach(function (qual) {
+  // ---- as medidas do corpo ----
+  // Enumera `MARCAS_DO_CORPO` e não uma lista escrita aqui: foram duas listas —
+  // esta e a do tipo — que mantiveram `S.body` fechado em `{ peso, cintura }`, e
+  // a migração 9 → 10 abriu as duas no mesmo passo. Grandeza que entrar na
+  // tabela de `corpo.ts` passa a fundir sem ninguém editar este arquivo.
+  base.body = {} as Corpo;
+  MARCAS_DO_CORPO.forEach(function (qual) {
     const r = uneLista<Marca>(
       (local.body && local.body[qual]) || [], (remoto.body && remoto.body[qual]) || [],
       function (x) { return chaveDeMarca(qual, x); }, carimboM, mortos

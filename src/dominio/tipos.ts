@@ -353,6 +353,29 @@ export interface SessaoFoto {
 /** Uma marca corporal. */
 export interface Marca { t: number; v: number; /** alterada em */ m?: number; }
 
+/**
+ * Qual série de medida do corpo. Uma chave por grandeza, e cada uma é uma
+ * coleção independente, com data própria.
+ *
+ * `peso` é a **pesagem da manhã**, na balança do banheiro. `bioPeso` é o peso
+ * que a balança de bioimpedância leu, e os dois convivem de propósito: são
+ * dois aparelhos, em horas diferentes, e nenhum dos dois é a correção do
+ * outro. Unificá-los faria o app inventar uma medida que ninguém fez — e é
+ * `peso` que alimenta a média semanal e o ritmo da regra do nutricionista
+ * (`src/dominio/corpo.ts`), que não pode mudar de fonte.
+ *
+ * As cinco `bio*` saem da mesma leitura, mas ficam separadas e não num
+ * registro composto, porque a fusão une por chave natural: duas chaves
+ * independentes somam, e um registro composto de cinco campos obrigaria
+ * vencedor-leva-tudo dentro dele.
+ */
+export type QualMarca =
+  | 'peso' | 'cintura'
+  | 'bioPeso' | 'bioMusculo' | 'bioGordura' | 'bioGorduraPct' | 'bioAgua';
+
+/** As séries de medida do corpo. A forma de `S.body`. */
+export type Corpo = Record<QualMarca, Marca[]>;
+
 /** Uma sessão de cardio. */
 export interface Cardio {
   t: number;
@@ -478,7 +501,12 @@ export interface Estado {
   draft: Rascunho | null;
   sessao: SessaoAberta | null;
   cardio: Cardio[];
-  body: { peso: Marca[]; cintura: Marca[] };
+  /**
+   * As medidas do corpo, uma coleção por grandeza. Ver `QualMarca`: `peso` é a
+   * pesagem da manhã e `bioPeso` é a da balança de bioimpedância, separados de
+   * propósito.
+   */
+  body: Corpo;
   /** correção do tipo de carga, por exercício */
   carga: Record<IdEx, TipoCarga>;
   /** timestamp do último backup */

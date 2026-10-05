@@ -8,11 +8,13 @@
 // As duas migrações recebem o estado em vez de mexer num global: é o que
 // permite testar cada uma contra uma fixture, sem subir o app inteiro.
 
+import { MARCAS_DA_BIO } from './corpo';
 import { CADENCIA_PADRAO } from './dia';
 import { PLANO_BASE } from './nutricao/alimentos';
 import { EX_BASE, SIMULACAO_HYROX, slugEx } from './programa';
 import { chaveDeLog } from './sincronia';
-import type { Estado, IdEx, Log, Treino } from './tipos';
+import type { DiaComidaHist } from './nutricao/tipos';
+import type { Estado, IdEx, Log, Marca, Treino } from './tipos';
 
 // ---------- migração de plano ----------
 // As chaves do histórico são dia+posição (A0, B3...). Trocar o programa faria
@@ -21,7 +23,7 @@ import type { Estado, IdEx, Log, Treino } from './tipos';
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-export const PLANO_ATUAL = 9;
+export const PLANO_ATUAL = 10;
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -541,5 +543,115 @@ export function migraPlano9(S: Estado): Resultado9 | null {
   }
 
   S.plano = 9;
+  return r;
+}
+
+// ---------- 9 -> 10: o corpo aberto e a hora da marca ----------
+//
+// Uma migração só para quatro mudanças de dado persistido, porque o caro aqui
+// não é migrar: é esquecer um dos portões — tipo, migração com fixture, regra
+// de fusão, as duas listas brancas da cópia, `tsc` limpo. Duas migrações
+// pagariam os cinco duas vezes.
+//
+// Das quatro, **uma só é reformatação de dado existente**, e é por ela que esta
+// função precisa existir:
+//
+// 1. `S.dia.done` era `Record<string, 1>` e passa a ser `Record<string,
+//    number>` — o instante da marca. Não é campo novo: é convergir o dia
+//    corrente na forma que `DiaComidaHist.done` já tinha, e pelo mesmo motivo
+//    escrito lá ("instante e não `1` porque é o que permite fundir… e desmarcar
+//    precisa de lápide").
+//
+// 2. `S.body` ganha as cinco chaves da bioimpedância. Pelo contrato de
+//    `normalizaEstado()`, campo novo e vazio receberia padrão lá e dispensaria
+//    migração; entram aqui de propósito, para o bump de versão ser a prova de
+//    que as cinco existem e para a fixture cobri-las.
+//
+// As outras duas — qual refeição saiu do plano (`dia.como`) e "não contei a
+// água" (`dia.aguaNaoContada`) — são campos OPCIONAIS cuja ausência já tem o
+// significado certo: ausente é "comeu o que estava prescrito" e "a água foi
+// contada". Não há byte a reformatar, e inventar um aqui seria afirmar sobre o
+// passado o que ninguém registrou.
+//
+// A hora que a marca antiga não tem: o literal `1` não carrega nada, e o app
+// nunca gravou a hora de cada refeição no dia corrente. Em vez de carimbar o
+// instante da migração — que faria a marca nascer mais nova que qualquer
+// lápide escrita antes dela, e ressuscitaria o que o outro aparelho desmarcou
+// —, a migração usa a MEIA-NOITE do dia, que é o instante mais antigo
+// compatível com a data. Conferido: nenhum caminho do app escreve lápide de
+// `chaveDeRefeicaoFeita` hoje, então para o dado que existe a escolha é
+// inobservável; ela vale para quando a lápide passar a ser escrita.
+
+/** O que a migração 9→10 mexeu. */
+export interface Resultado10 {
+  /** marcas do dia corrente que ganharam instante */
+  marcas: number;
+  /** dias do histórico que tinham marca sem instante */
+  dias: number;
+  /** chaves de medida criadas em `S.body` */
+  chaves: number;
+}
+
+/** Meia-noite local de 'AAAA-MM-DD'. `null` quando a data não é legível. */
+function meiaNoiteDe(d: string): number | null {
+  if (typeof d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+  const t = new Date(d + 'T00:00:00').getTime();
+  return isFinite(t) ? t : null;
+}
+
+/**
+ * Converte as marcas de um `done` para instante.
+ *
+ * Só toca no que não é instante: `1` e qualquer coisa que não seja número
+ * finito maior que 1. Uma marca com instante de verdade — as que `fechaDia`
+ * gravou — fica como está, porque ela é o dado e a migração não sabe mais que
+ * ela.
+ */
+function instantesDoDone(done: Record<string, number>, quando: number): number {
+  let n = 0;
+  Object.keys(done || {}).forEach(function (k) {
+    const v = done[k];
+    if (typeof v === 'number' && isFinite(v) && v > 1) return;
+    done[k] = quando;
+    n++;
+  });
+  return n;
+}
+
+export function migraPlano10(S: Estado): Resultado10 | null {
+  if (S.plano >= 10) return null;
+  const r: Resultado10 = { marcas: 0, dias: 0, chaves: 0 };
+
+  // 1 · o instante da marca no dia corrente
+  if (S.dia && S.dia.data) {
+    const quando = meiaNoiteDe(S.dia.data);
+    if (quando != null && S.dia.done) {
+      r.marcas = instantesDoDone(S.dia.done as Record<string, number>, quando);
+    }
+  }
+
+  // e, por garantia, no histórico: `fechaDia` sempre gravou instante, mas um
+  // backup fundido por um build antigo pode ter trazido o `1` do dia aberto
+  // para dentro de uma linha fechada, e `1` é 1970 — toda lápide o mata
+  if (Array.isArray(S.comidaHist)) {
+    (S.comidaHist as DiaComidaHist[]).forEach(function (h) {
+      if (!h || !h.d || !h.done) return;
+      const quando = meiaNoiteDe(h.d);
+      if (quando == null) return;
+      if (instantesDoDone(h.done, quando)) r.dias++;
+    });
+  }
+
+  // 2 · as cinco chaves da bioimpedância
+  if (S.body && typeof S.body === 'object') {
+    const body = S.body as unknown as Record<string, Marca[]>;
+    MARCAS_DA_BIO.forEach(function (k) {
+      if (Array.isArray(body[k])) return;
+      body[k] = [];
+      r.chaves++;
+    });
+  }
+
+  S.plano = 10;
   return r;
 }

@@ -7,9 +7,12 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
+import { readFileSync } from 'node:fs';
 import {
-  ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano9
+  ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano9,
+  migraPlano10
 } from '../../src/dominio/migracoes';
+import { MARCAS_DA_BIO } from '../../src/dominio/corpo';
 import { EX_BASE, slugEx } from '../../src/dominio/programa';
 import type { Estado, Log } from '../../src/dominio/tipos';
 import { DIA, log } from './ajuda';
@@ -373,4 +376,136 @@ test('sem programa salvo ela não quebra', () => {
   const r = migraPlano9(S)!;
   assert.strictEqual(r.trocou, 0);
   assert.strictEqual(S.plano, 9);
+});
+
+// ---------- 9 -> 10: o corpo aberto e a hora da marca ----------
+// Quatro mudanças de dado persistido numa migração só. O que esta função
+// REFORMATA é uma: a marca do dia corrente, que era o literal `1` e passa a ser
+// o instante que o histórico já guardava. As cinco chaves da bioimpedância
+// entram vazias, e os dois campos opcionais do dia (`como`, `aguaNaoContada`)
+// não têm byte a reformatar — ausente já significa o que tem de significar.
+
+/**
+ * O estado do plano 9, lido do disco e não escrito aqui.
+ *
+ * `tests/dominio/fixtures/estado-plano-9.json` foi gerado pelo BUILD do plano
+ * 9, com o app em execução e o relógio fixado — ver `fixtures/LEIA.md`. É o
+ * ponto da disciplina: uma fixture digitada à mão tem a forma que quem digita
+ * imagina, que é a de hoje, e é justamente a que a migração não encontra.
+ */
+function fixturePlano9(): Estado {
+  const p = new URL('./fixtures/estado-plano-9.json', import.meta.url);
+  return JSON.parse(readFileSync(p, 'utf8')) as Estado;
+}
+
+test('a fixture é o dado da época, e não a forma de hoje', () => {
+  const S = fixturePlano9();
+  assert.strictEqual(S.plano, 9);
+  assert.deepStrictEqual(Object.keys(S.body).sort(), ['cintura', 'peso'],
+    'o corpo do plano 9 tem DUAS chaves — é o que a migração abre');
+  assert.deepStrictEqual(S.dia!.done, { pos: 1, almoco: 1, lanche: 1 },
+    'e a marca do dia corrente é o literal 1, sem hora nenhuma');
+  const h = S.comidaHist[0];
+  const instantes = Object.keys(h.done).map(k => h.done[k]);
+  assert.ok(instantes.every(v => v > 1), 'o histórico já guardava instante');
+  assert.strictEqual(new Set(instantes).size, 1,
+    'mas todos iguais: fechaDia carimbava a hora do FECHAMENTO, não a da marca');
+});
+
+test('9→10 dá hora à marca do dia corrente, sem inventar hora', () => {
+  const S = fixturePlano9();
+  const r = migraPlano10(S)!;
+
+  assert.strictEqual(r.marcas, 3, 'as três marcas do dia aberto');
+  const meiaNoite = new Date(S.dia!.data + 'T00:00:00').getTime();
+  assert.deepStrictEqual(S.dia!.done, { pos: meiaNoite, almoco: meiaNoite, lanche: meiaNoite },
+    'meia-noite do dia: o instante mais antigo compatível com a data. ' +
+    'Carimbar o instante da migração faria a marca nascer mais nova que ' +
+    'qualquer lápide escrita antes dela, e ressuscitaria o desmarcado');
+  assert.strictEqual(S.plano, 10);
+});
+
+test('9→10 não toca em marca que já tem instante de verdade', () => {
+  const S = fixturePlano9();
+  const antes = JSON.stringify(S.comidaHist[0].done);
+  const r = migraPlano10(S)!;
+  assert.strictEqual(JSON.stringify(S.comidaHist[0].done), antes,
+    'o histórico é o dado; a migração não sabe mais que ele');
+  assert.strictEqual(r.dias, 0);
+});
+
+test('9→10 abre as cinco chaves da bioimpedância, e só as cinco', () => {
+  const S = fixturePlano9();
+  const r = migraPlano10(S)!;
+
+  assert.strictEqual(r.chaves, 5);
+  assert.deepStrictEqual(Object.keys(S.body).sort(), [
+    'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso', 'cintura', 'peso'
+  ]);
+  MARCAS_DA_BIO.forEach(function (k) {
+    assert.deepStrictEqual(S.body[k], [], k + ' nasce vazia');
+  });
+});
+
+test('o peso da manhã sobrevive intocado, separado do da bioimpedância', () => {
+  // A resposta do dono: ele pesa numa balança e mede na outra, em horas
+  // diferentes. Os dois convivem de propósito, e é `peso` que alimenta a média
+  // semanal e o ritmo da regra do nutricionista.
+  const S = fixturePlano9();
+  const pesagens = JSON.stringify(S.body.peso);
+  migraPlano10(S);
+  assert.strictEqual(JSON.stringify(S.body.peso), pesagens);
+  assert.strictEqual(S.body.peso.length, 2, 'as duas pesagens da fixture');
+  assert.deepStrictEqual(S.body.bioPeso, [], 'e a bioimpedância começa do zero');
+});
+
+test('9→10 não inventa `como` nem `aguaNaoContada`', () => {
+  // Ausente já significa o certo: comeu o prescrito, e a água foi contada.
+  // Semear um valor aqui seria afirmar sobre o passado o que ninguém registrou.
+  const S = fixturePlano9();
+  migraPlano10(S);
+  assert.strictEqual(S.dia!.como, undefined);
+  assert.strictEqual(S.dia!.aguaNaoContada, undefined);
+  assert.strictEqual(S.comidaHist[0].como, undefined);
+});
+
+test('9→10 roda uma vez só', () => {
+  const S = fixturePlano9();
+  migraPlano10(S);
+  const depois = JSON.stringify(S);
+  assert.strictEqual(migraPlano10(S), null, 'a segunda chamada devolve null');
+  assert.strictEqual(JSON.stringify(S), depois);
+});
+
+test('9→10 atravessa estado sem dia, sem histórico e sem corpo', () => {
+  const S = { plano: 9 } as unknown as Estado;
+  const r = migraPlano10(S)!;
+  assert.deepStrictEqual(r, { marcas: 0, dias: 0, chaves: 0 });
+  assert.strictEqual(S.plano, 10, 'e a versão avança: um aparelho novo não fica em 9');
+});
+
+test('9→10 conserta a marca sem instante que um build antigo deixou no histórico', () => {
+  // `fechaDia` sempre gravou instante. Mas a fusão achatava a marca do dia
+  // ABERTO em `1` nos dois sentidos, e um backup fundido por aquele build podia
+  // trazer o `1` para dentro de uma linha fechada — e `1` é 1970, que toda
+  // lápide mata.
+  const S = {
+    plano: 9,
+    comidaHist: [{ d: '2026-02-10', done: { pos: 1, almoco: 1771000000000 }, agua: 3,
+                   escala: {}, tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 0 }]
+  } as unknown as Estado;
+  const r = migraPlano10(S)!;
+
+  assert.strictEqual(r.dias, 1);
+  const meiaNoite = new Date('2026-02-10T00:00:00').getTime();
+  assert.strictEqual(S.comidaHist[0].done.pos, meiaNoite);
+  assert.strictEqual(S.comidaHist[0].done.almoco, 1771000000000, 'o instante bom fica');
+});
+
+test('9→10 não quebra em dia com data ilegível', () => {
+  const S = { plano: 9, dia: { data: 'ontem', done: { pos: 1 }, agua: 0, escala: {} } } as unknown as Estado;
+  const r = migraPlano10(S)!;
+  assert.strictEqual(r.marcas, 0, 'sem data não há instante honesto: a marca fica como está');
+  assert.strictEqual(S.dia!.done.pos, 1);
+  assert.strictEqual(S.plano, 10);
 });

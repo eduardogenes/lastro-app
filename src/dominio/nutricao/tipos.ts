@@ -91,16 +91,59 @@ export interface Totais {
   g: number;
 }
 
+/**
+ * Como uma refeição marcada saiu do plano.
+ *
+ * Ausente é o caso dominante e por isso não se grava: marcar a refeição já diz
+ * que comeu o que estava prescrito, e um valor `'plano'` em todo dia seria
+ * byte para repetir o padrão.
+ *
+ * `'fora'` é "comi, mas não foi isto" — o total congelado do dia continua
+ * sendo o do plano, porque é o que o app sabe, e esta marca é a procedência
+ * dizendo que ele não é a refeição de verdade.
+ *
+ * `'nao'` é "não comi esta refeição", e é diferente de não ter marcado nada:
+ * um é fato declarado, o outro é silêncio. Essa diferença é o que faz o dia
+ * contar como dia de consumo conhecido (`diaInterpretavel`) em vez de ficar
+ * fora da janela de 14 dias da regra do nutricionista.
+ */
+export type ComoFoiARefeicao = 'fora' | 'nao';
+
 /** O estado do dia de comida. Carimbado com a data, zera sozinho. */
 export interface DiaComida {
   /** 'AAAA-MM-DD' — o carimbo que faz o dia zerar sozinho */
   data: string;
-  /** refeições marcadas como feitas */
-  done: Record<string, 1>;
+  /**
+   * refeição → INSTANTE em que foi marcada.
+   *
+   * Era `Record<string, 1>`: a marca existia e a hora não. A forma é agora a
+   * mesma de `DiaComidaHist.done`, pelos dois motivos escritos lá — fundir dois
+   * aparelhos que marcaram refeições diferentes no mesmo dia, e dar à lápide de
+   * `chaveDeRefeicaoFeita` um instante contra o qual decidir. Convergir também
+   * conserta uma perda que a fixture do plano 9 registra: `fechaDia` carimbava
+   * TODAS as marcas com a hora do fechamento, porque não tinha a de cada uma.
+   */
+  done: Record<string, number>;
   /** copos de água */
   agua: number;
+  /**
+   * "Não contei a água" como FATO, e não como zero copos.
+   *
+   * `agua: 0` é ambíguo: pode ser o dia em que ele não bebeu nada e o dia em
+   * que ele não contou. Como leitura derivada não dá para separar os dois, e um
+   * zero lido como abandono de registro é o tipo de erro de medição que este
+   * app trata como mentira sobre o passado. Ausente = a conta valeu.
+   */
+  aguaNaoContada?: 1;
   /** ajuste de porção SÓ DE HOJE, por refeição: 1 = 100% */
   escala: Record<string, number>;
+  /**
+   * refeição → como ela saiu do plano. Ausente = comeu o prescrito.
+   *
+   * É atributo da MARCA, não registro próprio: só tem sentido para refeição que
+   * está em `done`, viaja com ela na fusão e morre com a lápide dela.
+   */
+  como?: Record<string, ComoFoiARefeicao>;
   /** override da cadência de hoje */
   cadencia?: 'treino' | 'descanso' | null;
   /** hoje é dia de alta demanda */
@@ -155,8 +198,12 @@ export interface DiaComidaHist {
   done: Record<string, number>;
   /** copos de água ao fechar o dia */
   agua: number;
+  /** a água daquele dia não foi contada; ver `DiaComida.aguaNaoContada` */
+  aguaNaoContada?: 1;
   /** ajuste de porção por refeição: 0,5 = comeu metade */
   escala: Record<string, number>;
+  /** refeição → como ela saiu do plano; ver `DiaComida.como` */
+  como?: Record<string, ComoFoiARefeicao>;
   cadencia?: 'treino' | 'descanso' | null;
   alta?: 1;
   turno?: Turno;

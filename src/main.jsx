@@ -46,12 +46,12 @@ import {
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
-import { mediasSemanais, pesoRitmo as _pesoRitmo,
+import { MARCAS_DO_CORPO, mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
-import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9 } from './dominio/migracoes';
+import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
@@ -284,14 +284,35 @@ function treino(d) {
   }) };
 }
 
+// ---------- as medidas do corpo ----------
+// `S.body` tem uma coleção por grandeza, e a lista delas vive em
+// `MARCAS_DO_CORPO` (`src/dominio/corpo.ts`). Estas duas funções existem para
+// que NENHUM lugar do app escreva essa lista à mão: o estado inicial, o
+// `normalizaEstado`, o apagar tudo e a lista branca da importação passam todos
+// por aqui. Enquanto era `{ peso, cintura }` havia quatro cópias da forma, e
+// foi por uma lista escrita à mão que a importação derrubou seis campos de topo
+// em silêncio.
+
+/** Um `S.body` vazio, com todas as séries de medida. */
+function corpoVazio() {
+  const b = {};
+  MARCAS_DO_CORPO.forEach(function (k) { b[k] = []; });
+  return b;
+}
+
+/** O `S.body` de um backup, chave por chave. O que não for lista vira lista. */
+function corpoDoBackup(body) {
+  const b = corpoVazio();
+  if (!body || typeof body !== 'object') return b;
+  MARCAS_DO_CORPO.forEach(function (k) { if (Array.isArray(body[k])) b[k] = body[k]; });
+  return b;
+}
 
 
 
 
 
-
-
-let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] } };
+let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] } };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null, aulas:false, rapido:false,
   protocolo:null, comparar:null, ajuste:null, camera:null };
@@ -336,9 +357,11 @@ function normalizaEstado() {
   if (!Array.isArray(S.cardio)) S.cardio = [];
   if (typeof S.export !== 'number') S.export = 0;
   if (!S.carga || typeof S.carga !== 'object') S.carga = {};
-  if (!S.body || typeof S.body !== 'object') S.body = { peso:[], cintura:[] };
-  if (!Array.isArray(S.body.peso)) S.body.peso = [];
-  if (!Array.isArray(S.body.cintura)) S.body.cintura = [];
+  // As SETE séries de medida, enumeradas de `MARCAS_DO_CORPO`: peso e cintura,
+  // mais as cinco da bioimpedância que a migração 9→10 abriu. Lista escrita à
+  // mão aqui era o que deixava uma grandeza nova sem padrão no aparelho novo.
+  if (!S.body || typeof S.body !== 'object') S.body = corpoVazio();
+  MARCAS_DO_CORPO.forEach(function (k) { if (!Array.isArray(S.body[k])) S.body[k] = []; });
   if (typeof S.plano !== 'number') S.plano = 1;   // estado anterior à troca de programa
   if (!S.ex || typeof S.ex !== 'object') S.ex = {};
   if (!S.mods || typeof S.mods !== 'object' || !S.mods.day || !Array.isArray(S.mods.list)) S.mods = null;
@@ -408,6 +431,7 @@ async function load() {
   const m7 = migraPlano7(S);
   migraPlano8(S);
   migraPlano9(S);
+  migraPlano10(S);
   garanteProgramaERotacao();
   montaCatalogo();
 
@@ -3458,8 +3482,11 @@ async function importText(txt) {
 
   S = { logs: d.logs, done: d.done, deload: !!d.deload, draft: d.draft || null,
         cardio: Array.isArray(d.cardio) ? d.cardio : [],
-        body: { peso: (d.body && Array.isArray(d.body.peso)) ? d.body.peso : [],
-                cintura: (d.body && Array.isArray(d.body.cintura)) ? d.body.cintura : [] },
+        // A lista branca das medidas do corpo também é por chave, e também
+        // enumera `MARCAS_DO_CORPO`: escrita à mão, ela derrubaria em silêncio
+        // as cinco da bioimpedância — que é exatamente como os seis campos de
+        // topo tinham sido perdidos.
+        body: corpoDoBackup(d.body),
         sessao: d.sessao || null,
         carga: (d.carga && typeof d.carga === 'object') ? d.carga : {},
         export: typeof d.export === 'number' ? d.export : 0,
@@ -3512,6 +3539,7 @@ async function importText(txt) {
   migraPlano7(S);
   migraPlano8(S);
   migraPlano9(S);
+  migraPlano10(S);
   montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;
@@ -4192,7 +4220,7 @@ async function wipe() {
   // apagar o histórico não apaga o programa: os exercícios que ele cadastrou
   // e as mudanças que promoveu ao oficial sobrevivem
   S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
-        body:{ peso:[], cintura:[] }, carga:{}, export:0,
+        body:corpoVazio(), carga:{}, export:0,
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
