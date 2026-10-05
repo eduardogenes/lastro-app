@@ -59,7 +59,12 @@ test('backup antigo, sem a metade de comida, abre semeado em vez de vazio', asyn
 test('HOJE mostra comida e treino na MESMA timeline, em ordem de relógio', async () => {
   // É o argumento inteiro da fusão: o pré-treino das 5h45 e a sessão das 6h15
   // são uma sequência só. Em eixos separados, pareciam dois apps.
-  const a = await app({ aba: 'hoje' });
+  //
+  // A cadência vem semeada treinando em todos os sete dias: a padrão descansa
+  // domingo (`CADENCIA_PADRAO`, índice 0), e no domingo esta tela não tem linha
+  // de treino nenhuma — o teste passava seis dias por semana e quebrava no
+  // sétimo. Quem afirma "treino e comida na mesma lista" semeia o treino.
+  const a = await app({ aba: 'hoje', estado: { cadencia: ['treino','treino','treino','treino','treino','treino','treino'] } });
   const linhas = a.$$('.ins-tl');
   assert.ok(linhas.length >= 5, 'as refeições do dia estão na tela: ' + linhas.length);
 
@@ -136,7 +141,9 @@ test('abrir uma refeição mostra o que tem dentro e o ajuste só de hoje', asyn
 });
 
 test('o dia previsto se identifica como previsão, e confirmar muda o alvo', async () => {
-  const a = await app({ aba: 'hoje' });
+  // Mesma semeadura da timeline, pelo mesmo motivo: o teste tira o treino do dia
+  // e cobra que o alvo caia. No domingo não há treino para tirar.
+  const a = await app({ aba: 'hoje', estado: { cadencia: ['treino','treino','treino','treino','treino','treino','treino'] } });
   const previsto = a.E('CTX.hoje().diaHoje.previsto');
   if (previsto) {
     assert.ok(a.texto('.ins-secao-nota') || a.texto('.ins-provenance'),
