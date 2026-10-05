@@ -862,7 +862,7 @@ fundo desconhecido é **contorno**, não sombra.
 §1.5 que `--ins-superficie-2` difere de `--ins-tela` por **1,08:1** no claro e
 1,27:1 no escuro. A direção usa esse preenchimento para agrupar em **muitos**
 lugares (`.row`, `.sk`, `.kp button`, `.acts button`). **Então o preenchimento
-quase não agrupa — e é exactly o R-D7 da auditoria**, que mediu 32 controles cujo
+quase não agrupa — e é exatamente o R-D7 da auditoria**, que mediu 32 controles cujo
 único canal é esse preenchimento, a 1,08:1 a 1,20:1. A resposta está em §5.5 e
 em §1.5: **onde o preenchimento é o único canal de um controle, ele ganha
 `--ins-fio-controle` de 1,5 px.** O inegociável 3 fica inteiro nesta parte, e
@@ -1803,3 +1803,480 @@ tipográfico** — tamanho, tracking, cor —, e os três valores já são token
 (`--ins-t-meta`, `--ins-tinta-3`). Um token a mais seria um quarto lugar onde a
 mesma decisão mora. **A primitiva é o componente mais a classe, e é o
 suficiente.**
+
+---
+
+## 8 · Movimento
+
+Esta seção não é frente porque o curador cortou: *"abrir uma frente para isso
+convidaria a inventar movimento que a direção não pediu"* (`07-plano.md`). Então
+eu **não invento gesto nenhum**. O que eu faço é medir o que a direção tem, dizer
+o que ela não tem, e decidir o que passa pelo portão.
+
+### 8.1 · O inventário da direção, do fonte: são sete, não quatro — e um é CSS morto
+
+**Medi os nove HTML. Existem exatamente dois `@keyframes` em cada arquivo**, e o
+conjunto todo é este:
+
+| # | o movimento | mecanismo | em quais arquivos | dentro do portão? |
+|---|---|---|---|---|
+| 1 | **o toque que afunda** | `transform: scale(.95)` em `:active`, com `transition: transform .12s ease, background-color .15s ease` | nos nove | **sim** (`no-preference`) |
+| 2 | **o bloco que chega** (`.enter`) | `@keyframes enter` `.24s`/`.26s` — `opacity 0→1` e `translateY(10px)→0` | nos nove | **sim**, e no `prototipo` também por JS (`if(reduzido)`) |
+| 3 | **o esqueleto pulsando** (`.sk`) | `@keyframes pulse 1.4s ease-in-out infinite` — opacidade até `.55` | **oito** dos nove (não no `prototipo`) | **sim** |
+| 4 | **a barra do descanso** | `transition: width 1s linear`, com `bar.style.width = …%` escrito pelo JS | nos nove | **sim** |
+| 5 | **o véu e a folha** | `transition: opacity .2s` no véu e `transform .24s cubic-bezier(.2,.8,.2,1)` na folha | **só** o `prototipo` | **sim**, e ele é o único com bloco `reduce` |
+| 6 | **o fantasma que voa** (`voa()`) | `.ghost` `position: fixed`, animado por JS | **só** o `prototipo` | **sim**, por JS: `if(reduzido||!de){ achaDestino(); return; }` |
+| 7 | **o relógio tiquetaqueando** (`.tick`) | `@keyframes tick .5s` — `opacity` e `translateY(-6px)` | declarado no `prototipo` | — |
+
+**O número 7 é CSS morto.** Medi: a classe `tick` **nunca é aplicada** no markup
+nem no JS do `prototipo.html` — as seis ocorrências da palavra são a função
+`tick()` do relógio, que é outra coisa. A regra e o `@keyframes` existem e não
+pintam nada.
+
+### 8.2 · Dois dos quatro gestos nomeados não têm quadro nenhum
+
+O briefing diz que a direção propôs **quatro gestos com função**: a cortina que
+diz onde está o corte, o clarão do disparo, o anel que esvazia, o toque que
+afunda. **Fui procurar os quatro no fonte, e só dois existem como movimento:**
+
+| o gesto nomeado | o que está no fonte |
+|---|---|
+| **o toque que afunda** | **existe**, e é o número 1 da tabela acima |
+| **a cortina que diz onde está o corte** | **existe, e não é animação.** `.cort .lay.nova { clip-path: inset(0 0 0 54%) }` com um puxador de 44 px, movido por **arrasto** (`document.querySelectorAll('.cort[data-drag]')` no JS de `corpo`, `comparar` e `sessao-fotos`). Zero `transition`, zero `@keyframes`, e **fora** do bloco `no-preference` |
+| **o clarão do disparo** | **não existe como movimento.** `.cheia .flash { position: absolute; inset: 0; background: #fff }`, com `style="opacity:.62"` escrito no markup. **Um quadro estático.** Zero keyframes, zero transition |
+| **o anel que esvazia** | **não existe como movimento.** `<circle … stroke-dasharray="276" stroke-dashoffset="166" …>` — os dois valores **fixos no markup**, em todos os usos. Um quadro estático |
+
+**Então o briefing tem razão sobre a intenção e não sobre o material: dois dos
+quatro foram desenhados como uma fotografia do meio do gesto.** E três
+movimentos que **existem** não estão na lista dos quatro: o bloco que chega, o
+esqueleto que pulsa e a barra do descanso.
+
+**Isto muda o que esta seção faz.** Para o toque e a cortina eu especifico o que
+está lá. Para o clarão e o anel eu especifico **a partir de um quadro parado**, e
+digo que é isso que estou fazendo — não há o que portar, há o que escrever. E eu
+não aumento a lista: os três que a prosa da direção não nomeia já estavam no
+CSS dela, com a mão do desenhista.
+
+### 8.3 · Quatro das seis formas vivas são proibidas pelo nome neste projeto
+
+**Isto é a colisão de frente desta seção, e nenhum documento do redesenho a
+nomeou.** O handoff do sistema, em `DESIGN_SYSTEM.md:18`, escreve o inegociável 6
+assim (conferi):
+
+> *"**Almost no motion.** There are two animations in the whole product: the live
+> dot pulse (2.4s) and the tab indicator slide (220ms). **No entrance animations,
+> no fades, no skeletons that shimmer, no springy sheets.**"*
+
+E `docs/design-review/05-movimento.md` reafirma em português — *"nada de animação
+de entrada em conteúdo, nada de fade, nada de esqueleto que cintila, nada de
+folha com elasticidade"* — e recusa duas delas **uma por uma, com a razão**:
+
+| ideia | a recusa escrita |
+|---|---|
+| **Skeleton, shimmer, fade de entrada em lista** | *"Proibidos pelo nome em `DESIGN_SYSTEM.md:18`. E U-46 mostra que o app quase não tem estado de carregando: o dado é local, não há espera a encenar."* |
+| **A folha subir ao abrir** | *"era o único lugar onde a revisão de design achou função para movimento novo — dizer de onde a camada veio —, e perdeu **por ser animação de entrada**, que a lista acima proíbe pelo nome, e porque o véu atrás dela ou aparece de uma vez ou pede um fade, que é mais movimento ainda."* |
+
+**Cruzando com o inventário:** o `.enter` é animação de entrada **e** fade; o
+`.sk` é esqueleto que cintila; a folha e o véu são a folha subindo com fade do
+véu. **São quatro das seis formas vivas da direção escolhida, e as quatro estão
+na lista de proibidas.** A quinta forma proibida — "folha com elasticidade" — a
+direção **não** comete: `cubic-bezier(.2,.8,.2,1)` é saída suave sem
+ultrapassagem (medi a curva: nenhum ponto de controle acima de 1).
+
+**E o app tem um inventário de quatro movimentos, com tabela e com regra de
+entrada** (`DESIGN.md`, Movimento): o pulso do ponto ao vivo (2,4 s, infinito), o
+indicador de aba (220 ms em `left`), a barra do cronômetro (250 ms em
+`transform: scaleX`) e a rolagem até a sessão destacada. Medi e confirmei: **4
+movimentos, 1 `@keyframes`, 2 `transition`, 1 `scrollIntoView`** nas folhas e no
+`main.jsx`. A regra de entrada está escrita: *"Movimento novo entra nesta tabela,
+com a função que cumpre, antes de entrar no código."*
+
+**Então a decisão desta seção é: cada um dos movimentos da direção entra na
+tabela com a função que cumpre, ou sai.** E onde eu derrubo uma proibição
+escrita, eu digo qual e por quê.
+
+### 8.4 · O portão: qual dos dois, e por que o da direção
+
+Os dois lados resolvem `prefers-reduced-motion` por disciplinas **opostas**:
+
+| | mecanismo | o que acontece com movimento novo |
+|---|---|---|
+| **o app** | `@media (prefers-reduced-motion: reduce) { .ins-live-dot { animation: none } * { transition: none !important } }` — **por exclusão** | `transition` morre sozinha. **`animation` NÃO morre** — o bloco desliga `animation` só em `.ins-live-dot`. `DESIGN.md` avisa com todas as letras: *"Um `@keyframes` novo **não** morre sozinho… Movimento novo é `transition`, ou entra no bloco."* |
+| **a direção** | tudo dentro de `@media (prefers-reduced-motion: no-preference)` — **por adesão** | movimento novo **não roda** com `reduce` ligado, sem ninguém se lembrar de nada |
+
+**A auditoria já deu o veredito e eu assino:** *"A afirmação da D confere, e é o
+padrão certo (opção por adesão, não por exclusão)."*
+
+> **Requisito 12 · O portão é por adesão, e ele é um só.** Todo movimento do
+> sistema mora dentro de `@media (prefers-reduced-motion: no-preference)`. O
+> curinga `* { transition: none !important }` **sai**: com o portão por adesão
+> ele não tem o que matar, e `!important` num curinga é a regra mais difícil de
+> depurar que existe num CSS.
+>
+> **A razão, escrita para não precisar deste documento:** *o portão é por adesão
+> porque ele falha fechado. Com exclusão, quem escreve um `@keyframes` novo
+> precisa lembrar de dois lugares; quem esquece entrega movimento a quem pediu
+> para não ter. Com adesão, quem esquece entrega nada, que é o erro barato.*
+>
+> **E o `reduce` declara o estado final, não a ausência.** O `prototipo.html` já
+> faz isto certo e é o modelo: `@media (prefers-reduced-motion: reduce) { .ov
+> .scrim { opacity: 1 } .ov .sheet { transform: none } }`. Sem esse bloco, a
+> folha ficaria parada **em `translateY(100%)`** — isto é, fora da tela. **Um
+> portão que só tira o movimento, sem pôr o estado final, não desliga movimento:
+> esconde a interface.** Isto vira caso (§11), porque é o modo de falha que mais
+> se parece com "funcionou".
+>
+> **O que o portão NÃO alcança, e é por isso que ele não basta sozinho:**
+> manipulação direta. A cortina (§8.5, item 8) é movida pelo dedo, e o dedo é o
+> relógio — não há o que desligar. E as três chamadas de `scrollIntoView` e as
+> animações feitas em JS precisam perguntar por conta própria: o app já faz
+> (`matchMedia('(prefers-reduced-motion: reduce)')` em `src/main.jsx`) e o
+> `prototipo` também (`var reduzido = …` na abertura, usado em cinco lugares).
+> **Requisito: todo caminho de movimento em JS lê a preferência, e o portão de
+> CSS não é desculpa para não ler.**
+
+### 8.5 · Os movimentos, um por um, com o que sobra sob `reduce`
+
+**1 · O toque que afunda. FICA, e ganha o que falta nele.**
+
+Função: dizer que o toque chegou. **É o único movimento do produto que acontece
+dezenas de vezes por sessão** — a régua é tocada 48 vezes por semana (do parecer,
+decisão 8) — e é o único que o dono tocou e aprovou no protótipo.
+
+Forma: `transform: scale(.95)` em `:active`, `transition: transform
+var(--ins-dur-toque) ease` com `--ins-dur-toque: 120ms`, que é o valor da
+direção.
+
+**E aqui está o que falta, e é requisito:** medi as regras `:active` da direção e
+**elas só mudam `transform`.** A `transition` menciona `background-color`, mas
+nenhuma regra `:active` declara cor. **Então com `reduce` ligado, tocar um botão
+deste app não mostra nada** — nem afundar, nem mudar de cor — até o render
+chegar.
+
+> **Requisito 13 · `:active` muda o preenchimento, fora do portão.** Todo
+> controle tocável ganha, em `:active`, `background: var(--ins-superficie-2)` (ou
+> um degrau acima do seu repouso), **declarado fora do bloco `no-preference`**,
+> para que a troca aconteça com `reduce` ligado. **Isso não é movimento: é
+> estado**, e é por isso que ele mora fora do portão. O `scale(.95)` continua
+> dentro.
+>
+> **A medida que justifica:** `--ins-superficie-2` contra `--ins-tela` é 1,08:1
+> (§1.5) — **fraco demais para ser o único canal.** Então em `:active` o
+> preenchimento vem com `--ins-fio-controle` de `1.5px` (3,26:1 / 4,79:1), e aí
+> o toque tem um canal que se vê. **Não medi na luz da academia.**
+
+**2 · O bloco que chega (`.enter`). SAI.** É o único que eu removo, e a razão é
+deste produto.
+
+A forma é proibida por nome em dois documentos (§8.3). **E há uma razão medida
+que vale mais que a proibição:** `.enter` é aplicada ao painel
+`<div class="saved">` — a confirmação da série (conferi, `prototipo.html:734`,
+pela flag `S.flash`). Uma animação de 240 a 260 ms na confirmação **atrasa em um
+quarto de segundo o instante em que ele pode ler que a série foi guardada**, de
+pé, entre duas séries. E o projeto já recusou exatamente esse custo, com
+decisão registrada: `MARCA.md:158`, sobre o splash — *"Um frame a mais entre o
+toque e a próxima série."*
+
+**E há uma razão de doutrina que fecha:** a frente 2 (§7.2, requisito 1) exigiu
+que *"o voo é decoração; quem autoriza a palavra 'guardada' é o retorno do
+disco"*. Um painel que **chega animado** diz "apareci"; um painel que
+**simplesmente está lá** diz "está guardado". O segundo é o que o app promete
+("não existe estado 'não salvo'").
+
+**O que fica no lugar:** nada, e é de propósito. O painel aparece. **A frente 2
+já pôs ali o canal que importa e que a direção não tem:** `role="status"` com
+`aria-live="polite"` e o valor dentro do anúncio (R6 dela, a reprovação R-D1 da
+auditoria). **Um anúncio de leitor de tela entrega a mesma informação que a
+animação entregava, e entrega para quem a animação nunca alcançou.**
+
+**3 · O esqueleto pulsando. O esqueleto FICA; o pulso SAI.**
+
+O esqueleto tem função e é medida: o estado de carregando existe por causa do
+F273, um carregamento que nunca terminava, e a direção o resolve com um esqueleto
+**na forma da tela que vem** mais um prazo de 4 s (frente 2 §7.3). **A forma do
+esqueleto é informação** — diz o que está vindo e quanto é.
+
+**O pulso é o que a proibição nomeia**, e a razão escrita em
+`05-movimento.md` — *"o dado é local, não há espera a encenar"* — vale: a espera
+aqui não é rede, é abrir o registro do próprio aparelho.
+
+**E eu achei um argumento a mais, que é de norma e que ninguém aplicou.** O
+critério relevante para o pulso não é 2.3.1 (três piscadas, 3 Hz) — a 1,4 s ele
+está em 0,71 Hz, folgado. **É 2.2.2 Pause, Stop, Hide**, que cobra mecanismo de
+pausa para conteúdo em movimento que (a) começa sozinho, (b) **dura mais de cinco
+segundos** e (c) aparece em paralelo com outro conteúdo. O esqueleto da direção
+cumpre (a) e (c), e escapa de (b) **por um segundo**: o prazo dela é 4 s.
+
+**Então, como está, o pulso passa 2.2.2 só porque o carregamento tem teto de
+4 s.** Se alguém afrouxar o teto para 6 s — e teto de espera é exatamente o
+número que se afrouxa quando alguém reclama de telas piscando —, o critério
+reprova, e **ninguém vai relacionar as duas mudanças.** Tirar o pulso corta essa
+dependência.
+
+**O que fica no lugar:** a forma do esqueleto, parada, em
+`--ins-superficie-2`. E o prazo de 4 s, que passa a ser requisito de estado e não
+de movimento.
+
+**4 · A barra do descanso. FICA como movimento e TROCA de mecanismo.**
+
+Função: **interpolar uma grandeza contínua amostrada.** É a primeira das três
+funções que `DESIGN.md` autoriza, e é literalmente o mesmo movimento que o app já
+tem (`#tfill`).
+
+**O mecanismo da direção é o que o app proibiu, com custo medido.** Medi: a
+direção tem `.bar i { transition: width 1s linear }` **e** `bar.style.width =
+Math.min(100, …) + "%"` no JS (`prototipo.html:1412`). O caso *o cronômetro de
+descanso não anima largura* existe por causa disso, com a razão no teste:
+*"Ele repinta 4× por segundo por até três minutos. Animar `width` refaz o layout a
+cada quadro; a escala roda no compositor e desenha a mesma barra."* — e com o
+commit que pagou a conta (`3ef9bb9`).
+
+**E medi que a asserção não pega a barra da direção, por dois motivos
+independentes:**
+
+- ela casa `#tfill` por nome, e a barra da direção é `.bar i`;
+- ela afirma `!/fill\.style\.width/.test(mainJsx)` — **o nome literal da variável
+  `fill`**. A direção escreve `bar.style.width`. **Renomear a variável desarma a
+  asserção**, e a direção já a renomeou sem saber.
+
+Foi o que a medição de §0.3 mostrou: portei o CSS da direção e o caso ficou
+**verde** com `transition: width` dentro do mesmo arquivo.
+
+> **Requisito 14 · A barra interpola em `transform: scaleX()`, e a duração é o
+> período de amostragem.** `transform-origin: left center`,
+> `transition: transform <período> linear`, e o JS escreve `scaleX`, nunca
+> `width`. Se a amostragem for de 1 s (como na direção), a duração é 1 s; se for
+> de 250 ms (como no app), 250 ms. É a regra que `DESIGN.md` já escreve:
+> *"`linear` com duração igual ao período de amostragem"*.
+>
+> **E a asserção para de depender de dois nomes:** ela passa a cobrar que
+> **nenhuma** regra das folhas tenha `transition` que mencione `width` ou
+> `height`, e que **nenhum** JS do app escreva `.style.width` numa barra de
+> progresso. A segunda metade é mais difícil de escrever bem do que a primeira,
+> e a primeira já é a que vale: sem `transition: width`, escrever `width` custa
+> um repaint e não um layout por quadro.
+>
+> **E o que `reduce` faz com ela, que já está decidido e eu não reabro:**
+> `DESIGN.md` escreve que sob `reduce` *"a barra passa a andar em degraus de
+> 250 ms — quatro por segundo —, e é assim que fica: quem liga `reduce` pediu
+> para não interpolar."* Vale igual com 1 s: a barra anda em degraus de um
+> segundo, e o número ao lado continua exato.
+
+**5 · O véu e a folha. FICAM — e é aqui que eu derrubo uma proibição escrita.**
+
+> **Decisão: a folha sobe ao abrir, e o véu aparece com fade de 200 ms.** Isto
+> contraria `DESIGN_SYSTEM.md:18` ("no entrance animations") e contraria a recusa
+> explícita de `docs/design-review/05-movimento.md`. **Digo por quê, e a razão
+> está no próprio sistema:**
+>
+> 1. **A função é uma das três que o sistema autoriza.** `DESIGN.md` escreve que
+>    movimento aqui faz três coisas, e a terceira é **"dizer de onde uma camada
+>    veio"**. A folha subindo é essa coisa, exatamente. A revisão de design
+>    **achou** a função — ela escreveu *"era o único lugar onde a revisão achou
+>    função para movimento novo"* — e recusou **por forma**, não por função.
+> 2. **A camada tem três níveis, e a profundidade é a informação que se perde.**
+>    `src/ui/instrumento/folha.jsx` escreve a razão do teto: *"na quarta ninguém
+>    mais sabe o que fechar leva de volta para onde."* Com três níveis vivos, o
+>    movimento que diz de que lado a camada entrou é o que faz "fechar leva de
+>    volta" ser legível. É a mesma informação que o indicador de aba dá — "para
+>    que lado se andou" — e o indicador de aba **está** na tabela dos quatro.
+> 3. **O dono escolheu a direção tocando-a**, e a folha subindo é uma das coisas
+>    que ele tocou.
+> 4. **A proibição é de forma e vem de fora.** `DESIGN_SYSTEM.md` é o handoff; a
+>    lista de cinco formas proibidas foi escrita antes de existir uma pilha de
+>    folhas de três níveis.
+>
+> **E a proibição de "folha com elasticidade" fica inteira:**
+> `cubic-bezier(.2,.8,.2,1)` em 240 ms, sem ultrapassagem. A folha chega e para.
+>
+> **O que `reduce` deixa no lugar:** o estado final, que o `prototipo` já
+> escreve. A folha está em posição e o véu está opaco **no primeiro quadro**.
+> Nada de meia-animação.
+>
+> **Isto sobe à mesa dele** (§11), porque derrubar uma proibição escrita não é
+> decisão de quem escreve o documento.
+
+**6 · O fantasma que voa. FICA, e é a quarta função, nomeada.**
+
+Função: **dizer para onde um valor foi.** Não é nenhuma das três de `DESIGN.md`,
+então ou eu a nomeio ou o movimento entra sem razão.
+
+**A razão é medida, e é da frente 2.** O valor sai de um botão da régua e vai
+para uma célula da tabela. A tabela tem **até quatro células lado a lado**
+(`for(c=1;c<=cols;c++)`), e a célula é `.cellb`, **22 px de altura, o menor alvo
+da direção**. Sem o voo, o dono tem de **achar** qual das quatro células recebeu
+o número, lendo as quatro. Com o voo, ele vê. **É informação, e é a informação
+mais caro de obter de outro jeito naquela tela.**
+
+> **Requisito 15 · A quarta função autorizada é "dizer para onde um valor foi", e
+> ela tem um usuário só: o registro de série.** Não vale para marcar refeição,
+> para aplicar o passo de kcal nem para nada mais — porque em todos os outros o
+> destino é a própria linha que ele tocou.
+>
+> **Duas restrições que vêm da frente 2 e da preferência do dono, e as duas são
+> de vigilância:** o fantasma é `position: fixed` e **tem de continuar sendo**,
+> porque elemento fixo não contribui para o transbordo rolável da janela — se ele
+> virar elemento no fluxo (o caminho mais curto num componente Preact), o
+> `translateX(+N)` passa a criar barra de rolagem horizontal transitória e o
+> rodapé fixo centrado pisca no Blink. **A resposta então é `overflow-x: clip`
+> num ancestral — nunca `hidden`**, que viraria `auto` no outro eixo e quebraria
+> o `sticky`. E o `scale(.95)` do toque **não** cai na faixa como um todo, só no
+> botão (frente 2, R7).
+>
+> **O que `reduce` deixa no lugar:** o valor aparece na célula, e a célula ganha
+> o estado de "acabou de receber" por **forma**, não por movimento. O `prototipo`
+> já faz: `if(reduzido){ render(); S.flash=false; }`.
+
+**7 · O relógio tiquetaqueando. NÃO EXISTE.** CSS morto (§8.1). Não especifico,
+e registro para ninguém "consertar" a ausência dele.
+
+**8 · A cortina. FICA, e ela não entra no portão — com uma distinção que
+importa.**
+
+A cortina é `clip-path: inset(0 0 0 54%)` movido por arrasto. **Enquanto o dedo
+está nela, não há movimento a desligar: o dedo é o relógio.** `reduce` não se
+aplica a manipulação direta, e pôr `transition` ali seria **pior** — a cortina
+atrasaria em relação ao dedo.
+
+> **Requisito 16 · Zero `transition` na cortina enquanto ela é arrastada. E
+> `transition: clip-path var(--ins-dur) var(--ins-ease)` quando a posição é
+> **tocada** em vez de arrastada** — num toque num dos dois marcadores
+> (`.cort .mk.l` / `.cort .mk.r`), que leva a cortina até a ponta. Aí a transição
+> **é** a quarta função ("dizer para onde foi") e **entra** no portão, porque aí é
+> movimento.
+>
+> **A distinção em uma frase, e ela vale para o sistema todo:** *o que o dedo
+> move não tem transição; o que o app move tem.*
+
+**9 · O clarão do disparo. ESPECIFICADO a partir de um quadro parado, e é um dos
+dois que a direção não animou.**
+
+Função: dizer que a foto foi tirada. **E é o único canal disponível**, por dois
+fatos registrados: ele está a cerca de 3 m do aparelho, sem alcançá-lo (C7, F45),
+e **o Safari do iOS não vibra** (F58). Som há — o `prototipo` tem o ícone `som`
+e a locução "Perfil direito… três, dois, um" —, mas som num ambiente onde não se
+sabe o ruído não é garantia.
+
+> **Requisito 17 · O clarão é `opacity` de `.62` a `0` em 140 ms, `ease-out`,
+> sobre `--ins-foto-tinta`.** O `.62` é o valor que o desenho já traz escrito no
+> markup; os 140 ms são meus, e a razão é que ele precisa ser visto **de 3 m e de
+> relance** — mais curto não se vê, mais longo esconde a foto que acabou de ser
+> feita. **Não medido:** se 140 ms é visível a 3 m. É o mesmo buraco que a
+> auditoria registra como *"o maior buraco de acesso que sobra"* — "A 3 m, ele lê
+> a tela?", P7, sem resposta.
+>
+> **O que `reduce` deixa no lugar, e é o requisito que importa:** **o contador e
+> a miniatura.** O desenho já tem `4 / 9` na barra de baixo e a foto entrando na
+> tira; sob `reduce`, **o contador avançar é o que diz "tirou"**, e ele é estado,
+> não movimento. **Requisito: o contador existe e avança nos dois casos**, com e
+> sem movimento — senão quem liga `reduce` fica sem nenhum sinal de que a foto
+> saiu, numa situação em que ele não está perto da tela.
+
+**10 · O anel que esvazia. ESPECIFICADO a partir de um quadro parado, e é
+interpolação — a primeira função.**
+
+Função: **interpolar uma grandeza contínua amostrada** — a contagem de 3 s antes
+do disparo. É o mesmo papel da barra do descanso, e a mesma regra se aplica.
+
+> **Requisito 18 · O anel interpola em `stroke-dashoffset`, com `transition:
+> stroke-dashoffset <período de amostragem> linear`.** O desenho já traz
+> `stroke-dasharray="276"` (que é `2πr` para `r=44`: **conta** —
+> `2 × π × 44 = 276,5`) e `stroke-dashoffset` é o que anda. **Não `transform`
+> aqui**, e a exceção tem razão: `stroke-dashoffset` não refaz layout, e girar o
+> anel por `transform` desenharia outra coisa.
+>
+> **O que `reduce` deixa no lugar:** **o número no meio, que já está lá, a 76 px**
+> (`--ins-n-foto-3`), contando 3, 2, 1. Sob `reduce`, o anel fica **cheio e
+> parado** e o número faz o trabalho inteiro. **E o número é melhor do que o anel
+> a 3 m**: 76 px contra um arco de 9 px de espessura. **Requisito: o número
+> existe nos dois casos.**
+
+### 8.6 · A regra que fecha a seção, e ela é a do app
+
+> **Requisito 19 · Movimento novo entra na tabela com a função que cumpre, antes
+> de entrar no código.** É a regra que `DESIGN.md` já escreve, e ela já provou
+> valer duas vezes neste repositório: *"A rolagem entrou sem que ninguém citasse
+> a regra (`02077e3`); seis dias depois, outra rolagem foi recusada justamente
+> por citá-la."*
+>
+> **As funções autorizadas passam a ser quatro**, e esta é a lista inteira:
+>
+> 1. **interpolar** uma grandeza contínua amostrada — a barra do descanso, o anel
+>    do disparo;
+> 2. **dizer que a tela está viva agora** — o ponto ao vivo, se ele sobreviver ao
+>    redesenho (ele é do sistema velho e a direção não o tem);
+> 3. **dizer de onde uma camada veio** — a folha e o véu (§8.5, item 5);
+> 4. **dizer para onde um valor foi** — o fantasma do registro de série, e só ele
+>    (§8.5, item 6).
+>
+> **E a tabela do sistema novo tem sete linhas**, contra as quatro de hoje: o
+> toque que afunda, a barra do descanso, a folha, o véu, o fantasma, o clarão e o
+> anel. **Não oito**: o `.enter` e o pulso do esqueleto saíram, e o `.tick` nunca
+> existiu.
+>
+> **O que continua recusado, com a razão de cada um, para a próxima pessoa não
+> recomprar:** transição entre lugares da barra, deslizar conteúdo, animar altura
+> de linha expansível, animar a abertura do cartão de exercício (*"É o momento de
+> 6h15"*, `main.jsx`), qualquer movimento no fim do descanso (*"Ele não está
+> olhando. O canal é som"*), e **qualquer movimento que marque conquista** — que
+> `05-movimento.md` estendeu a "quadro e curva, não só frase".
+
+### 8.7 · As quatro armadilhas de mobile deste projeto, conferidas uma a uma
+
+As quatro notas do dono valem como regra, e eu conferi se o sistema novo
+reintroduz alguma. **Nenhuma, e três por medição:**
+
+**1 · `100svh`, nunca `100vh` sozinho, e a cadeia inteira alinhada.**
+
+A direção faz certo no único lugar que importa: `#app { height: 100vh; height:
+100svh }` (medi, `prototipo.html:53`) — a forma dupla, na ordem certa, que é
+exatamente o que o caso *tela cheia usa svh, não vh* pede (e a frente 2 achou que
+o caso aceita `100svh` sozinho com zero iterações, o que também passa).
+
+**Mas a cadeia não está alinhada, e é o defeito que a nota do dono descreve.**
+Medi no `prototipo.html`: `html, body { height: 100% }` (`:42`) acima de um
+`#app` em `100svh`. **`height: 100%` em `html` não é `100svh`**: ele resolve
+contra o bloco contenedor inicial, que não é a viewport pequena. **É um ancestral
+em outra unidade, que é o item 2 da nota do dono** ("Basta UM wrapper acima… pra
+reintroduzir a sobra").
+
+O app de hoje não tem esse problema porque a casca dele é outra: `body
+{ min-height: 100vh; min-height: 100svh }` e **nada** com `height: 100%`
+(conferi `src/base.css`).
+
+> **Requisito 20 · Nenhum `height: 100%` em `html` nem em `body`.** A altura de
+> tela cheia é `100svh`, com `100vh` só de recuo, e **em um lugar só** da cadeia.
+> **Isto é da casca, e a casca é §9.**
+
+**2 · `sticky` morre se qualquer ancestral tiver `overflow` diferente de
+`visible`; e `overflow-x: hidden` sozinho também quebra.**
+
+**Medi: `position: sticky` aparece ZERO vezes nos nove HTML da direção.** Ela não
+usa `sticky` — e `overflow: hidden` aparece **67** vezes. É §9.
+
+**3 · `backdrop-filter` pisca no Blink e não no WebKit.**
+
+**Medi: zero `backdrop-filter`, zero `will-change`, zero `contain`, zero
+`perspective` nos nove.** O app tem duas ocorrências da palavra e **as duas são
+comentários dizendo que não se usa**, com a razão. **Os dois lados já concordam,
+e o sistema novo mantém zero vidro** (§2.5).
+
+**4 · `translateX(+N)` faz elemento fixo centrado piscar no Blink.**
+
+**Medi os transforms da direção.** `.enter` usa `translateY`, não X — e sai
+(§8.5). `.tick` usa `translateY` — e não existe. A cortina usa `clip-path`, não
+`transform`. **O único `translateX` com valor positivo possível é o
+`voa()`**, e ele é `position: fixed`, que não contribui para o transbordo rolável
+— a frente 2 conferiu e eu confirmo no fonte (`.ghost { position: fixed }`,
+`prototipo.html:304`). **A armadilha não é este caso**, e o requisito é de
+vigilância, não de conserto (§8.5, item 6).
+
+**E uma quinta, que não está nas notas do dono e que eu achei:** `overscroll-behavior`.
+A direção declara `html, body { overscroll-behavior: none }` (medi, `:42`) e o app
+declara o mesmo em `html, body` (conferi, `src/base.css`, com a razão escrita:
+*"Mata o rubber-band… Mata junto o puxar-para-recarregar, que num app instalado é
+só uma forma de perder o que estava na tela."*). **Os dois concordam.** E a
+direção acrescenta `overscroll-behavior: contain` em `.scroll` e em
+`.sheet .sbody`, que é o que impede o rolar de dentro de uma folha de virar
+rolar da página atrás. **Isso fica**, e é a única coisa da casca da direção que
+entra sem discussão.
