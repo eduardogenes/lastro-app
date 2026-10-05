@@ -943,6 +943,72 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         fazer se a régua reprovar a medição, o lugar do deload e se desligá-lo
         no meio devolve as séries, por quanto tempo o desfazer do vencimento
         segue oferecido, e se o bloqueio de zoom pode ser revisto.
+      - **Frente 4 ENTREGUE em 05/10** (`aec1a02379de40dab`),
+        `09-frente4-sistema.md`, 2.778 linhas, 13 commits, só em
+        `docs/redesign/`. Vinte tokens nos dois temas com dono por token, a
+        escala, 23 requisitos numerados e 13 casos de teste novos.
+        **O achado que corrige a `08-rede.md` E o que eu disse ao dono:**
+        `estilo.test.ts` tem **nove `readFileSync` no escopo do módulo** — a
+        lista `FOLHAS` com `.map(readFileSync)` na linha 23, mais `base.css`,
+        `index.html`, `main.jsx`, `telacheia.jsx`, `primitivos.jsx`, `palco.css`
+        e `palco.js`. Conferi uma por uma. **Então renomear uma folha não dá 10
+        vermelhos: derruba a coleta do arquivo inteiro.** Ela mediu numa cópia:
+        `Tests  no tests`, **zero de 38 executados**. A contagem "10 acoplados /
+        28 genéricos" assumia falha por caso; a realidade é colapso por arquivo,
+        e **um arquivo que não coleta só desaparece da contagem** — quem olha
+        "nenhuma falha" passa batido. Ela também recontou os amarrados a nome
+        concreto: **25, não 10.** Passado ao agente do endurecimento como a peça
+        mais importante dele, com a regra de que arquivo faltando tem de
+        produzir **vermelho nomeando o arquivo**.
+        **Erro meu no briefing, confirmado:** `docs/redesign/04-critica/acesso.md`
+        não existe — é `04-acesso.md`, e `04-critica/` não é diretório. Ela achou
+        o arquivo sozinha.
+        **A razão escrita que sustenta o bloqueio de zoom é FALSA**, e isso é
+        decisão do dono com prova nova: `src/base.css:30` diz *"nenhum texto do
+        app é menor que 16px"*. Conferi: há `font-size` a 7,5px, 8px, 9px, 9,5px
+        e 10px nas folhas — e o `DESIGN.md` escreve piso de 9px, então três ficam
+        abaixo do próprio piso. A regra dos 16px vale só para **campo de
+        formulário** (`base.css:126`, com razão própria e correta: o Safari dá
+        zoom ao focar campo menor). Alguém generalizou a regra do campo para o
+        app inteiro, e **é essa generalização falsa que justifica bloquear a
+        pinça.**
+        **Quatro coisas que estavam mal contadas nos documentos anteriores:**
+        os ícones **não são 178** — são **49 desenhos em 1.069 lugares**, e
+        **314 desses usos são a barra de status do telefone de mentira, que não
+        porta**; a `Procedencia` **já é primitiva** (componente, classe, razão de
+        cor medida, 47 chamadas em 12 arquivos), então a pergunta do plano
+        ("reconstruir ou perder") estava mal posta — o risco é **perdê-la**; os
+        movimentos são **sete, não quatro**, um é CSS morto, e **dois dos quatro
+        gestos nomeados não existem como movimento** (o clarão é um `<div>`
+        branco estático, o anel é `stroke-dashoffset` fixo); e são **oito**
+        classes a exatamente 44px, não sete.
+        **Três inegociáveis do projeto caem com a direção e nenhum dos 38 diz
+        uma palavra:** raio zero (**511** declarações de raio contra 11),
+        mono+display (**zero** `font-family` na direção) e sombra (58 contra 4 —
+        e as 4 do app são fio desenhado como sombra).
+        **Um defeito de acesso no app de HOJE:** `--ins-border-strong`, a borda
+        interativa, mede **1,84:1** em 24 usos, incluindo controles de 46px.
+        Reprova hoje, e a auditoria mediu as direções, não o app.
+        **Ela resolveu as três coisas difíceis que eu pus na mão dela:**
+        `.cellb` cresce para 46,4px por pseudo-elemento, e ela achou que a célula
+        já tem **22,8px de folga** porque o `<td>` tem duas linhas; o texto a
+        200% recebe **sim para unidade relativa** (tipo em `rem`, geometria em
+        `px`, três degraus em Ajustes até 125%) **com a declaração explícita de
+        que isso não satisfaz o critério e por quê** — a 200% a régua mostra 2 de
+        12 valores; e as duas cascas: fica a do app, com razão medida (19
+        `window.scrollTo`, a posição por destino e a trava da folha leem a
+        rolagem da janela; com a casca da direção **a trava da folha falha em
+        silêncio**, que é o defeito que ela existe para consertar).
+        **A medição mais útil dela:** portou o `<style>` do protótipo para dentro
+        de `componentes.css` numa cópia e rodou os 38 → **4 vermelhos e três
+        verdes que deviam ser vermelhos** (o cronômetro com `transition: width`,
+        o `sticky` com `#app{overflow:hidden}`, e raio/sombra sem caso nenhum).
+      - [ ] **5.b'' MAIS SEIS DECISÕES, da frente 4**, somando **15** com as nove
+        da frente 2: os três inegociáveis caindo; o terceiro sinal passando de
+        "destrói dado" para "pare"; a folha subindo ao abrir contra duas
+        proibições escritas; o teto de 125% em vez de 200%; se 320px é alvo deste
+        produto; e se o bloqueio de pinça pode ser revisto — este último agora
+        **com a prova de que a razão escrita dele é falsa.**
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
