@@ -70,7 +70,7 @@ commit meu antes de a frente 0 publicar.
 
 A barra de baixo passa a ter cinco: **Agora · Dias · Corpo · Semana ·
 Prescrição** (`docs/redesign/03-direcao-D/direcao-2.md` §2; conferi os cinco
-no `tabbar()` de `docs/redesign/03-direcao-D/prototipo.html:1068`). A partição
+no `tabbar()` de `docs/redesign/03-direcao-D/prototipo.html:1067-1076`). A partição
 de "Evolução" em Corpo e Semana é a decisão do desenhista depois das respostas
 do dono, e ela tem um motivo de uma linha: **o corpo deixou de ser leitura e
 passou a ser registro.**
@@ -451,7 +451,7 @@ dia e **ciclo**, com o número de sessões (`src/ui/telas/treino.jsx:34-53`;
 `CTX.treino`, em `src/main.jsx` — conferi). Dessas três:
 
 - **séries feitas de prescritas** está no cabeçalho da sessão da D ("série N de
-  M") e no mapa da sessão — conferi em `prototipo.html:567-577`;
+  M") e no mapa da sessão — conferi em `prototipo.html:563-576` e `:577-589`;
 - **volume do dia** já tem casa: o detalhe da sessão mostra "volume · kg×reps"
   (`CTX.detalheDaSessao` em `src/main.jsx`, conferi), e o detalhe é de Dias;
 - **ciclo** não aparece em desenho nenhum que eu tenha aberto.
@@ -504,7 +504,7 @@ está pronto e testado, e não o reinventa.
 | o registro da série — carga, repetições, RIR — e a régua | `src/ui/exercicio.jsx:84-98` (hoje dois campos de texto com `inputmode="decimal"`) |
 | o teclado próprio da carga, com vírgula | não existe hoje; é D8, teclado misto |
 | o descanso: começa em qualquer série completada, conta do instante-alvo | `tests/fluxo/cronometro.test.js` (12 casos), `tests/fluxo/serie.test.js` (8 casos) |
-| o mapa da sessão e a projeção de fim pelo ritmo do dia | `prototipo.html:577-590` |
+| o mapa da sessão e a projeção de fim pelo ritmo do dia | `prototipo.html:577-589` |
 | as mudanças só do dia: séries, repetições, descanso, remover, mover, acrescentar, trocar | `src/ui/telas/edicaodia.jsx` + `src/ui/instrumento/edicao.jsx`; `CTX.edicaoDoDia` em `src/main.jsx` |
 | a conta de volume na hora de mexer | `impactoSeries` em `src/main.jsx`, renderizado em `src/ui/instrumento/edicao.jsx:41-45` |
 | a troca por máquina ocupada, com o histórico de cada substituto, e a foto do aparelho | `src/ui/exercicio.jsx:140-168`; `S.fotos` |
@@ -564,9 +564,9 @@ Portas de entrada:
 
 1. **O cartão de cima do Agora**, quando o treino ganha o topo: "Começar
    agora", com a linha "Ou comece direto na primeira série" embaixo — conferi
-   em `momento-1.html:808-809`.
+   em `momento-1.html:807-808`.
 2. **A faixa**, quando a sessão já existe: "Voltar à sessão" (conferi em
-   `prototipo.html:1087`; hoje é `FaixaDaSessao` com `onVolta`,
+   `prototipo.html:988`; hoje é `FaixaDaSessao` com `onVolta`,
    `src/ui/app.jsx:53-58`).
 3. **O pouso do app.** Abrir o app com treino em andamento **cai na sessão, não
    no Agora**. Isso já existe e tem razão escrita: `view.aba = 'treino'` quando
@@ -621,7 +621,7 @@ E duas coisas que **não** são saída:
 4. **Se a sessão morreu enquanto ele estava fora**, a faixa não está mais lá e
    o Agora diz o que aconteceu, com a duração dita como aproximada e uma
    pergunta só — "Está certo" / "Corrigir o fim" (conferi o estado M1‑13 em
-   `momento-1.html:796-800`).
+   `momento-1.html:797-801`).
 5. **O que ele registrou continua registrado.** Voltar não é confirmar.
 
 ### 4.7 · O encaixe em `src/ui/navegacao.js` — uma camada nova, e nada mais
@@ -682,7 +682,7 @@ refeição** (D4, PARADA 3), e ela entra como a regra 3.
 
 Se o aparelho não está guardando — aba privada, armazenamento bloqueado —, o
 aviso fica **acima** do cartão e diz até quando vale o que ele tocar. Conferi em
-`prototipo.html:981` ("Este aparelho não está guardando… O que você marcar vale
+`prototipo.html:982` ("Este aparelho não está guardando… O que você marcar vale
 até fechar esta aba — e não entra na conta dos 14 dias") e nos estados M2‑11 e
 M2‑8. Não disputa o topo porque não é uma ação: é a condição de validade de
 todas as outras.
@@ -691,8 +691,8 @@ todas as outras.
 
 **1 · A sessão aberta ganha de tudo.** Havendo sessão, a primeira coisa do Agora
 é a faixa — "Treino A está aberto · N de M séries guardadas · Voltar à sessão".
-Conferi a ordem no protótipo: a faixa (`prototipo.html:1035-1038`) vem antes do
-cartão da refeição (`:1040`). Razão: é o único estado em que o topo competiria
+Conferi a ordem no protótipo: a faixa (`prototipo.html:987-988`) vem antes do
+cartão da refeição (`:995`). Razão: é o único estado em que o topo competiria
 com um modo que já está aberto, e é o estado mais comum medido — de 42% a 59%
 das sessões fecham sem ele (do parecer).
 
@@ -704,8 +704,8 @@ das sessões fecham sem ele (do parecer).
 **2 · A sessão de ontem que fechou sozinha ganha do treino de hoje.** Conferi o
 estado M1‑13: a faixa "A sessão de ontem ficou aberta. Fechei na última série:
 6h20 → 7h31, cerca de 1h11 (aproximada)" com "Está certo" / "Corrigir o fim"
-(`momento-1.html:796-800`) está **acima** do cartão "Agora · treino das 6h15"
-(`:803-809`). Razão: é uma confirmação sobre um registro **já escrito**, e o
+(`momento-1.html:797-801`) está **acima** do cartão "Agora · treino das 6h15"
+(`:803-808`). Razão: é uma confirmação sobre um registro **já escrito**, e o
 número escrito está aproximado até ele dizer.
 
 **3 · Enquanto o treino do dia não aconteceu, o treino ganha da refeição.** É a
@@ -747,7 +747,7 @@ regra dela tem duas metades:
   sem marca"), que se virava contra si mesma um segundo depois de marcar —
   marcado o lanche das 15h30, ela jogava o almoço das 12h30 para o topo como se
   fosse agora (`prototipo.md`, descoberta 6). Conferi a correção no protótipo:
-  `momento()` em `prototipo.html:1056-1064` e a guarda `adiante` em `:1041`.
+  `momento()` em `prototipo.html:1059-1065` e a guarda `adiante` em `:993`.
 - **A hora é a do plano, não a dele.** Decisão 14.6: o previsto usa o horário do
   plano. O lanche das 16h00 é o previsto mesmo que ele coma às 15h30; a janela
   de 30 min cobre os dois, e a marca grava o instante real do toque (conferi
@@ -768,7 +768,7 @@ um "Ver" — conferi em `momento-1.html:802`.
 
 - **Dia já resolvido** (tudo marcado, treino feito): o topo passa a ser a
   **confirmação do que acabou de ser marcado**, com "Corrigir" — conferi
-  `section.done` em `prototipo.html:1046-1053`. O app de hoje faz algo
+  `section.done` em `prototipo.html:1005-1013`. O app de hoje faz algo
   equivalente por outro caminho: `src/ui/telas/hoje.jsx:47-49` tem três
   recursos em cascata e o comentário diz por quê — "se tudo foi feito, o foco
   passa a ser a última, para a tela não ficar muda" (conferi).
@@ -846,7 +846,7 @@ agora custa **zero** no Agora.
 
 1. **No Agora da D.** É ali que está a regressão: as linhas do roteiro da D são
    `<li>` sem controle e sem `role` (do parecer §3.1 #3), e o protótipo as
-   manteve inertes — conferi `prototipo.html:1028-1034`: `<li>` com `<svg>`,
+   manteve inertes — conferi `prototipo.html:1029-1030`: `<li>` com `<svg>`,
    `<time>` e dois `<span>`, nenhum botão. **A peça aterrissa aqui**: a linha do
    dia no Agora volta a ter as três afordâncias.
 2. **Durante o treino**, que na arquitetura nova não é mais "na aba de hoje com
