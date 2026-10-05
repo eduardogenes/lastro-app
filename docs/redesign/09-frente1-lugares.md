@@ -78,7 +78,7 @@ passou a ser registro.**
 Duas coisas que **não são lugar** e precisam de nome, porque capacidade real
 mora nelas:
 
-- **A sessão** é um **modo**, não uma aba. Está na seção 2.
+- **A sessão** é um **modo**, não uma aba. Está na seção 4.
 - **Os ajustes** são um botão no canto do Agora (`direcao.md`, "Os ajustes… não
   são lugar"; conferi o botão de engrenagem no cabeçalho do Agora em
   `prototipo.html:978`). Está em 1.6.
@@ -95,7 +95,7 @@ contraintuitivo, eu digo por quê.
 
 | o que | o dado, hoje |
 |---|---|
-| o cartão de cima — a próxima coisa a fazer, e a regra que o escolhe (seção 3) | `CartaoFoco` em `src/ui/telas/hoje.jsx:59-70` |
+| o cartão de cima — a próxima coisa a fazer, e a regra que o escolhe (seção 5) | `CartaoFoco` em `src/ui/telas/hoje.jsx:59-70` |
 | a linha do dia de hoje, em ordem de relógio, com refeição e treino na mesma espinha | `src/ui/telas/hoje.jsx:100-127` + `src/ui/instrumento/timeline.jsx` |
 | a marca de refeição **de hoje** e a porção **de hoje** | `S.dia.done` e `S.dia.escala`; `marcaRefeicao` em `src/main.jsx`, `setEscala` no mesmo arquivo |
 | a água de hoje | `S.dia.agua`; `setAgua` em `src/main.jsx` |
@@ -189,7 +189,7 @@ para a tela nova — registrar e ler no mesmo lugar — vendo que a pesagem da
 manhã passava de um toque para dois a partir do descanso (`00-coordenacao.md`,
 P3.f). Em 5.a' P5 ele acrescentou que a pesagem entre séries **vale lá
 também**, por atalho. As duas respostas convivem: o dono do dado é Corpo, e o
-descanso tem um atalho que abre Corpo (seção 2).
+descanso tem um atalho que abre Corpo (seção 4).
 
 ### 1.4 · Semana
 
@@ -234,7 +234,7 @@ de "só leitura" seria mentir sobre essas duas.
 | o padrão semanal (a cadência) | `S.cadencia`; hoje em `src/ui/telas/guia.jsx:160-182`, modo "o app" — conferi, e o teste diz por quê: "a cadência é ajuste, não prescrição" (`tests/fluxo/fusao.test.js`) |
 | a revisão que chega com outro nome, perguntando antes de gravar | `tests/fluxo/aula.test.js`/`trocaprograma.test.js`; `prescricao.html`, estado 6 |
 | **a lista das mudanças do dia que esperam decisão, e que vencem** | `S.promoPendente` (`src/dominio/tipos.ts`); hoje a pergunta é `src/ui/telas/decisao.jsx` |
-| **a conta de volume de cada mudança que espera** (peça 3 da C) | seção 4 |
+| **a conta de volume de cada mudança que espera** (peça 3 da C) | §6.3 |
 
 **Não possui:**
 
@@ -276,7 +276,7 @@ casos), apagar o histórico (`wipe()`), a versão e a atualização
 
 **A regra que fecha esta seção:** se uma tela mostra um dado que não é dela,
 ela mostra **e não escreve**. A única exceção autorizada é o atalho de peso
-dentro do descanso, e ele não escreve: abre Corpo (seção 2, e é a resposta de
+dentro do descanso, e ele não escreve: abre Corpo (seção 4, e é a resposta de
 5.a' P5).
 
 ---
@@ -291,7 +291,7 @@ protege. A régua é a da rede — capacidade, não tela.
 | `ajuste.test.js` (14) | **Semana** — o saldo cumulativo, o ledger, o passo. O portão da foto é vista; o dono da leitura é Corpo |
 | `aula.test.js` (12) | **Agora** (presença no dia da aula) + **sessão** (movimentos, lista rápida) + a biblioteca de modelos, desenhada em `aula.html`, estado 9 |
 | `aulaimport.test.js` (14) | **sessão** (o quadro visível durante a aula, virando nota ao encerrar) + **Prescrição › Exercícios** (o vocabulário novo, cadastrado antes de o dia ser montado) |
-| `avanco.test.js` (10) | **sessão** + a faixa fora dela (seção 3) |
+| `avanco.test.js` (10) | **sessão** + a faixa fora dela (seção 4) |
 | `cardio.test.js` (10) | **Agora** (placar e registro) + **Dias** (calendário e faixa da semana) + **sessão** (fim das sessões A e D). Ver achado 4 |
 | `carga.test.js` (11) | **sessão** (o total como exibição) + a correção do tipo, que é por movimento. Ver achado 1 |
 | `ciclo.test.js` (18) | **sessão**. O deload é achado 3 |
@@ -300,22 +300,22 @@ protege. A régua é a da rede — capacidade, não tela.
 | `dados.test.js` (19) | **Ajustes**. Dois casos atravessam: "todas as telas renderizam com o formato antigo" é invariante dos cinco lugares, e o exercício arquivado é de **Prescrição** |
 | `diario.test.js` (9) | **Dias** (o histórico fechado) + **Agora** (o dia corrente) |
 | `edicao.test.js` (27) | **sessão** (mexer no dia sem mexer no oficial, o impacto no volume na hora) + **Prescrição** (a decisão, que agora é lista) |
-| `esquecido.test.js` (6) | atravessa: a faixa, nos quatro lugares e **dentro** do modo (seção 3) |
+| `esquecido.test.js` (6) | atravessa: a faixa, nos quatro lugares e **dentro** do modo (seção 4) |
 | `fluxo.test.js` (5) | atravessa. "O app não presume que hoje é o dia da sessão" é regra do **Agora** |
 | `fotos.test.js` (20) | **Corpo** |
 | `fusao.test.js` (24) | **Agora** (a timeline em ordem de relógio, o cartão-foco antes de qualquer resumo) + **Prescrição** (quantidade muda o plano para todo dia; remover alimento sai das refeições que o citam) + a pilha de folhas em três níveis, que é navegação |
 | `horario.test.js` (14) | **Dias** (a hora de cada registro, o horário típico, a posição de leitura ao trocar de mês) + **sessão** (só o começo, com sessão em andamento) |
 | `leitura.test.js` (3) | **Semana** |
 | `migracaochave.test.js` (7) | nenhum lugar: é infra de armazenamento |
-| `navegacao.test.js` (9) | atravessa (seção 3) |
+| `navegacao.test.js` (9) | atravessa (seção 4) |
 | `programa.test.js` (12) | **Prescrição** — a chave do histórico é o exercício, a rotação vem do estado |
-| `promocao.test.js` (9) | **Prescrição** — e é a seção 5 inteira |
+| `promocao.test.js` (9) | **Prescrição** — e é o §6.4 inteiro |
 | `protocolo.test.js` (58) | **Corpo** |
 | `publicacao.test.js` (13) | nenhum lugar: é publicação |
 | `retro.test.js` (9) | **Dias** |
 | `ritmo.test.js` (19) | **Semana** (ritmo, eixo invertido, retrospectiva, volume acumulado) + **sessão** (o catálogo abre pela prioridade do dia aberto) + **Prescrição** (a busca sem acento, no treino e na comida; o movimento de box fora do alvo por músculo) |
 | `serie.test.js` (8) | **sessão** |
-| `sessao.test.js` (26) | **sessão** + **Dias** (o detalhe, com corrigir e apagar). A regra de pouso é a seção 3 |
+| `sessao.test.js` (26) | **sessão** + **Dias** (o detalhe, com corrigir e apagar). A regra de pouso é o §4.4 |
 | `sincronia.test.js` (12) | **Ajustes**. A marca de descanso que viaja é dado de **Dias** |
 | `telaprograma.test.js` (23) | **Prescrição** + **Semana** (o painel atribui a série ao exercício registrado, não à posição) |
 | `telas.test.js` (39) | atravessa. "As cinco abas renderizando" vira "os cinco lugares"; "o app abre em HOJE" vira a regra de pouso do **Agora**; "abrir um exercício põe o cartão no topo" é da **sessão**; "o contexto de treino só na aba de treino" é o achado 5 |
@@ -534,7 +534,7 @@ está pronto e testado, e não o reinventa.
    (`CTX.faixaDaSessao` em `src/main.jsx`, conferi). O comentário: "quem esqueceu de
    finalizar costuma ter esquecido olhando justamente para ela". São 6 casos em
    `tests/fluxo/esquecido.test.js`. **Dentro do modo, a pergunta continua.**
-2. **As linhas do dia tocáveis.** 5.a' P4: "sim, sempre". Seção 6.
+2. **As linhas do dia tocáveis.** 5.a' P4: "sim, sempre". §6.1.
 3. **O relógio de parede.** O protótipo descobriu que o app não tem relógio
    nenhum e que a projeção de fim não se confere sem ele (`prototipo.md`,
    descoberta 2). Dentro do modo, a hora fica no cabeçalho.
