@@ -2504,3 +2504,186 @@ produzi-la:** a cópia mora no diretório de rascunho da sessão.
 **Mas medir cor não é ver cor.** Razão de contraste é aritmética sobre dois
 hexadecimais; o que o dono vê é um painel de 1,03:1 na luz de um subsolo de
 academia às 6h15, e **isso não está medido e não dá para calcular.**
+
+---
+
+## 11 · Os 23 requisitos, os casos, o que sobe à mesa dele, e o que ninguém mediu
+
+### 11.1 · Os requisitos, numa lista
+
+| # | o requisito | onde |
+|---:|---|---|
+| 0 | A lista `FOLHAS` passa a ser varredura de `src/*.css`, não literal | §0.2 |
+| 1 | A forma do CSS é do sistema: uma declaração por linha, `;` sempre, um token por linha | §0.4 |
+| 2 | Cor é token em qualquer notação — `rgba`, `hsl`, `oklch`, `color-mix` —, com a exceção de preto e branco com alfa dentro de `box-shadow` | §1.7 |
+| 3 | A câmera é um tema, com seis `--ins-foto-*` fixos nos dois temas e a razão escrita | §1.7 |
+| 4 | O piso de texto é 11 px, com a exceção de 9 px dentro de `svg` de gráfico | §3.2 |
+| 5 | Tipo em `rem`, geometria em `px`, e um controle de três degraus em Ajustes | §4.2 |
+| 6 | `.cellb::after { position: absolute; inset: -12px 0 }` — 46,4 px de alvo | §5.2 |
+| 7 | `outline` é do foco e de mais nada; o estado de correção usa outro canal | §5.2 |
+| 8 | As oito classes a 44 px sobem para `--ins-tap`, com duas exceções escritas | §5.3 |
+| 9 | Três tokens de foco e uma regra global de `:focus-visible` | §5.5 |
+| 10 | O ícone entra por um componente cuja assinatura não deixa esquecer a escolha | §6.3 |
+| 11 | `Procedencia` continua primitiva, e é a única forma de dizer de onde veio um número | §7.3 |
+| 12 | O portão de movimento é por adesão, e o `reduce` declara o estado final | §8.4 |
+| 13 | `:active` muda o preenchimento, **fora** do portão | §8.5 |
+| 14 | A barra do descanso interpola em `transform: scaleX()`, nunca em `width` | §8.5 |
+| 15 | A quarta função autorizada é "dizer para onde um valor foi", com um usuário só | §8.5 |
+| 16 | Zero `transition` na cortina arrastada; transição só quando o app a move | §8.5 |
+| 17 | O clarão é `opacity .62 → 0` em 140 ms, e o contador avança nos dois casos | §8.5 |
+| 18 | O anel interpola em `stroke-dashoffset`, e o número de 76 px existe nos dois casos | §8.5 |
+| 19 | Movimento novo entra na tabela com a função que cumpre, antes do código | §8.6 |
+| 20 | Nenhum `height: 100%` em `html` nem em `body`; `100svh` em um lugar da cadeia | §8.7 |
+| 21 | A casca é a do app: a **janela** rola. Mais `--ins-regua-h`, o quarto token de altura reservada | §9.2 |
+| 22 | O caso do `sticky` passa a inspecionar `html`, `body`, `:root`, `*` e `#app` | §9.4 |
+
+### 11.2 · Os 38 casos: o que acontece com cada grupo
+
+**Vão inteiros, sem uma letra mudada — 13.** São as invariantes puras de §0.1, e
+elas são o que a rede chamou certo: a especificação mobile deste produto em forma
+executável.
+
+**Mudam de seletor e de nada mais — 9.** *o voltar fica grudado no topo*, *o
+relógio da sessão gruda no topo*, *a barra de status tem fundo*, *o cronômetro
+não divide o rodapé*, *abrir um exercício sabe onde parar de rolar*, *a tela cheia
+tem título de primeiro nível*, *mas campo e prosa continuam selecionáveis*, *alvo
+de toque não é forçado duas vezes*, *o alvo do tick cresce só na vertical*.
+
+**Mudam de asserção, com a razão — 6:**
+
+| caso | o que muda |
+|---|---|
+| *a paleta do Instrumento está inteira e mora nos tokens* | passa a afirmar os **20 tokens novos nos dois temas**, e a afirmar que **todo token de cor tem valor nos dois** — que é a asserção que a de hoje não faz, porque hoje há um tema só |
+| *cor nova não entra solta no meio das regras* | cobra `rgba`, `hsl`, `oklch`, `color-mix` além de `#hex` (requisito 2) |
+| *espaço vertical fica na escala de 4* | lê as cinco folhas, cobra os longhands laterais e de eixo, não exige `;`, lê decimal como decimal e não atravessa `}` (§0.2) |
+| *toda custom property usada tem dono* | vê bloco minificado (B6), e ganha a **recíproca**: todo dono é usado. Medi **2** tokens definidos e nunca usados hoje |
+| *o campo nunca fica abaixo de 16px* | passa a cobrar `1rem`, com a razão: o que o Safari exige é 16 px **computado**, e o piso sobe junto do controle de tamanho |
+| *o cronômetro de descanso não anima largura* | para de depender de `#tfill` e do nome da variável `fill` (requisito 14) |
+| *nenhum ancestral do sticky vira scroll container* | inspeciona a cadeia inteira (requisito 22) |
+| *controle pequeno estende o ALVO sem crescer o desenho* | `.cellb` entra na lista, e ele é o caso mais forte que a regra já teve |
+
+**Morre, e é o único que o sistema novo apaga em vez de renomear — 1.** *O texto
+que se toca não usa o nível mais apagado*. Ele existe porque
+`--ins-text-5` mede 3,22:1 e cinco seletores precisavam ser proibidos de usá-lo.
+**A paleta nova tem três níveis de texto e os três passam em AA nos dois temas,
+sobre os quatro fundos** — o pior caso é 4,87:1 (§1.4). O caso vira uma afirmação
+sobre a **paleta** e não sobre quem a usa: *não existe nível de texto abaixo de
+4,5:1 sobre nenhum dos quatro fundos, em nenhum dos dois temas.* Uma asserção, e
+nenhuma lista de seletores para envelhecer.
+
+**Ficam em limbo — 8.** Os da bancada. `07-plano.md` §4 manda trocar
+`src/palco.js` e `src/palco.css` "por outra coisa, não desenhada", e a frente 1
+registrou isso como o achado 9 dela. **Enquanto a bancada existir, os oito valem
+inteiros e eu não toco neles.** Quando ela sair, saem com ela — e é bom que isso
+seja uma decisão e não um efeito.
+
+### 11.3 · Os doze casos novos, que é o que torna este documento executável
+
+Cada um ficaria **vermelho hoje** se escrito agora, e é por isso que cada um vale.
+O número de vermelhos de nascença está ao lado.
+
+| o caso novo | vermelho hoje em | de onde |
+|---|---|---|
+| *o raio só anda na escala, e nenhum literal fora dos tokens* | nada hoje (o app não tem raio); **511 declarações** ao portar a direção | §2.1 |
+| *nenhum tamanho de texto abaixo de 11px, exceto em `svg` de gráfico* | **3 lugares** (`.chart .axu` 7,5, `.cal-h` 8,5, `.cal-d .per` 8) | §3.2 |
+| *todo tamanho de texto é `rem`, e px de tipo só em tokens.css* | **221 declarações** | §4.2 |
+| *existe uma regra global de `:focus-visible`* | **1**: não existe | §5.5 |
+| *nenhum `outline: none` sem substituto visível na mesma regra* | 0 hoje (os sete têm) — e é exatamente por isso que ele vale: ele segura o que já está certo | §5.5 |
+| *`outline` só aparece em `:focus-visible`* | 0 hoje; **1** ao portar a direção (`.cellb.fix`) | §5.2 |
+| *nenhum `<svg>` escrito à mão fora do catálogo de ícones* | n/a hoje; é o que torna a regra dos ícones barata | §6.3 |
+| *nenhuma folha estiliza `small` por contexto* | 0 hoje; **27 regras** ao portar a direção | §7.3 |
+| *todo movimento mora dentro de `no-preference`* | **4** hoje (1 `@keyframes` e 2 `transition` fora, mais o curinga) | §8.4 |
+| *todo bloco `reduce` que anula um `transform` declara o estado final* | 0 hoje; é o modo de falha que mais se parece com "funcionou" | §8.4 |
+| *nenhuma `transition` menciona `width` nem `height`* | 0 hoje; **1** ao portar a direção | §8.5 |
+| *nenhum `height: 100%` em `html` nem em `body`* | 0 hoje; **1** ao portar a casca da direção | §8.7 |
+| *a lista de folhas é varredura, e nenhum token é definido sem uso* | **2** tokens hoje | §0.2, §1.1 |
+
+**E uma regra de método para quem os escrever:** todos são de **fonte**, não de
+DOM, pela razão que o caso da folha já escreve — *"o defeito nasce de uma linha
+nova em `html`, `body` ou `#app`, não da árvore."* Jsdom não faz layout; o fonte
+denuncia.
+
+### 11.4 · O que sobe à mesa dele, e é só isto
+
+| o que | onde | por que sobe |
+|---|---|---|
+| **Três dos seis inegociáveis caem** — raio zero, número em mono mais prosa em display, e o rótulo mono como estrutura | §2.1, §2.2 | são regras numeradas do sistema, com razão escrita, e a direção que ele escolheu as derruba. **Não é decisão de quem escreve o documento de sistema** |
+| **O terceiro sinal passa de "destrói dado" para "pare"** | §1.3 | é mudança no inegociável 4, e o que distingue "falhou" de "vai destruir" passa a ser a palavra |
+| **A folha sobe ao abrir** | §8.5, item 5 | derruba uma proibição escrita em dois documentos (`DESIGN_SYSTEM.md:18` e a recusa explícita de `05-movimento.md`), e eu a derrubo com a razão — mas derrubar proibição escrita não é minha |
+| **O controle de tamanho de texto para em 125%, não em 200%** | §4.3 | **escrevo contra 1.4.4 de propósito**, e a razão é a régua: a 200% ela mostra 2 de 12 valores. **E esta pergunta é a mesma de §1.6 da frente 2** — se a régua mudar de forma, 200% passa a ser possível. Vale decidir as duas juntas |
+| **Se 320 px é alvo deste produto** | §4.5 | o contrato o põe no checklist, o aparelho dele tem 414, e o segundo usuário não existe no dado. A medição G dá a lista; a decisão de atender é dele |
+| **Se o bloqueio de pinça pode ser revisto** | §4.1, §4.5 | depende de G4. Se a tela sobreviver a 200%, o bloqueio passa a ser teto escolhido; se não, ele é a única coisa que a segura de pé. **O argumento que o sustenta é dele e está escrito no fonte** |
+
+### 11.5 · O que esta frente não decide
+
+- **Os cinco lugares e o fluxo entre eles** (frente 1), **o estado e a interação
+  dentro de cada um** (frente 2), e **as palavras** (frente 3) — inclusive os
+  rótulos que eu citei como exemplo em §6.2, que são ilustração de formato e não
+  proposta de voz.
+- **Onde o controle de tamanho de texto mora.** Eu propus Ajustes, porque é onde
+  a frente 1 já pôs a troca manual de tema (§1.6 dela) e é a mesma espécie de
+  coisa. **É proposta ao território dela**, não decisão minha.
+- **Se o piso de 11 px cabe no calendário e no gráfico.** Três declarações sobem
+  (§3.2), e o calendário tem sete colunas em 382 px. **É olho em tela.**
+- **O que acontece com a bancada.** Oito dos 38 casos vivem nela e
+  `07-plano.md` §4 já a mandou para depois.
+
+### 11.6 · O que ninguém mediu, e esta frente herda sem inventar número
+
+**Do contraste e da cor:**
+
+- **O contraste composto dos sete arquivos que a auditoria não alcançou** — as
+  seis telas da segunda rodada e o `prototipo.html` —, **nos dois temas**.
+  Protocolo na **medição F** (§1.7), com as duas mudanças de método que ele exige.
+- **Se o preenchimento de 1,03:1 do painel de atenção se vê.** A conta diz que
+  ele quase não difere da página; o que o olho faz com isso, não.
+- **A luz da academia, o sol, a luva e o magnésio.** `01-fatos.md` não os
+  registra e a auditoria repete. **Toda razão de contraste deste documento é
+  contra um vidro limpo num quarto neutro.**
+- **Daltonismo.** A auditoria não simulou, e a defesa medida é a mesma: nenhum
+  estado é dito só por cor. Com a regra dos ícones (§6.2, caso 3), nenhum passa a
+  ser dito só por **forma** tampouco.
+
+**Do tamanho e da largura:**
+
+- **320 px e 200%**, nas seis passadas da **medição G** (§4.5), nos dois temas. E
+  a distinção que ela tem de registrar em colunas separadas: **cortado não é
+  rolável.**
+- **Se alguma linha quebra a 112,5% e a 125%.** Medi quantas declarações se
+  movem; não medi o que o texto faz quando se move.
+- **Se 2 px de raio e 1 a 2 px de tipo aparecem.** São 84 seletores de raio e
+  199 declarações de tipo que andam no máximo 2 px (§2.1, §3.2). **Nenhuma
+  aritmética responde isso.**
+- **Se `user-scalable=no` continua honrado no app instalado.** O comentário do
+  `index.html` afirma que sim; eu não medi. **É uma passada de dez segundos — pinçar
+  a tela no app instalado — e ela decide se a camada 1 faz algo ou é decoração.**
+
+**Do movimento:**
+
+- **Se 140 ms de clarão se vê a três metros** (§8.5, item 9). E, atrás disso, a
+  pergunta que a auditoria chama de *"o maior buraco de acesso que sobra"*: **a
+  3 m, ele lê a tela?** (P7, sem resposta).
+- **Se o toque que afunda, com o preenchimento do requisito 13, se vê com a mão
+  suada.** O parecer já declarou não medida a taxa de toque errado com a mão
+  suada, e a medição A da frente 2 a mede **só para a régua**.
+
+**Do leitor de tela e do corpo:**
+
+- **VoiceOver no iOS de verdade.** C3 mediu a árvore em Chromium. Toda a regra
+  dos ícones (§6) foi escrita contra a norma e contra a medida de Chromium,
+  **não** contra o leitor que o dono usaria.
+- **As necessidades de acessibilidade do dono.** `04-acesso.md` §7: *"o
+  repositório não as registra."* **Então o requisito 5 não nasce de necessidade
+  medida dele** — nasce de piso para qualquer usuário, que é a decisão P3/D8
+  ("nada usa a rotina do dono como regra"). Isso precisa ficar dito, porque é a
+  diferença entre atender um fato e atender um critério.
+
+**Do material:**
+
+- **Os sete arquivos da direção que a auditoria não mediu nunca foram medidos em
+  nada** — nem contraste, nem alvo, nem árvore de acessibilidade, nem foco. Eu
+  medi deles o que é aritmética de fonte (cor, tamanho, raio, sombra, contagem de
+  ícone, movimento). **Alvo, árvore e foco deles continuam não medidos.**
+- **E o protótipo testou três minutos, não semanas.** Tudo que eu afirmei a partir
+  dele — a geometria da régua, a casca, o movimento, o `.cellb` — é impressão de
+  uso posta de pé por um desenhista num dia, não hábito. **Hipótese, não fato.**
