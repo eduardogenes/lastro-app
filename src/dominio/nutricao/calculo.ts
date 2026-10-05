@@ -6,7 +6,7 @@
 // um número é derivado, quem mostra tem que dizer de onde veio.
 
 import type {
-  Alimento, DiaComida, DiaComidaHist, Item, LinhaCompra, Quando, Refeicao, Totais, Turno
+  Alimento, ComoFoiARefeicao, DiaComida, DiaComidaHist, Item, LinhaCompra, Quando, Refeicao, Totais, Turno
 } from './tipos';
 
 export const VAZIO: Totais = { kcal: 0, p: 0, c: 0, g: 0 };
@@ -338,6 +338,13 @@ export function fmtKg(v: number, u: 'g' | 'ml'): string {
  * dele. É o único jeito de o passado continuar verdadeiro quando o plano muda:
  * derivar depois leria o plano de HOJE e responderia "quanto isso custaria
  * agora" fingindo responder "quanto custou naquele dia".
+ *
+ * O INSTANTE de cada marca atravessa. Antes da migração 9→10 o dia corrente não
+ * tinha a hora de cada refeição — era `Record<string, 1>` —, e esta função
+ * carimbava todas com a hora do FECHAMENTO: um dia inteiro aparecia marcado às
+ * 23h59, e a fixture do plano 9 registra isso. Com `DiaComida.done` convergido,
+ * a hora que sobrevive é a da marca; a do fechamento só entra onde não houver
+ * outra.
  */
 export function fechaDia(
   dia: DiaComida,
@@ -350,7 +357,10 @@ export function fechaDia(
   const treinando = dia.cadencia === 'treino';
   const alta = !!dia.alta;
   const done: Record<string, number> = {};
-  Object.keys(dia.done || {}).forEach(function (k) { done[k] = agora; });
+  Object.keys(dia.done || {}).forEach(function (k) {
+    const q = dia.done[k];
+    done[k] = (typeof q === 'number' && isFinite(q) && q > 1) ? q : agora;
+  });
   const h: DiaComidaHist = {
     d: dia.data,
     done: done,
@@ -360,6 +370,17 @@ export function fechaDia(
     pv: pv,
     m: agora
   };
+  // `como` é atributo da marca: só desce ao histórico para refeição que está em
+  // `done`. Solto, ele afirmaria "saiu do plano" sobre uma refeição que o dia
+  // não diz ter acontecido.
+  if (dia.como) {
+    const como: Record<string, ComoFoiARefeicao> = {};
+    Object.keys(dia.como).forEach(function (k) {
+      if (done[k] != null && dia.como![k]) como[k] = dia.como![k];
+    });
+    if (Object.keys(como).length) h.como = como;
+  }
+  if (dia.aguaNaoContada && !h.agua) h.aguaNaoContada = 1;
   if (dia.cadencia) h.cadencia = dia.cadencia;
   if (dia.alta) h.alta = 1;
   if (dia.turno) h.turno = dia.turno;

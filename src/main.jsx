@@ -56,7 +56,7 @@ import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from '
 import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
-  chaveDeMarca, chaveDeSessaoFoto, chaveDeSessao, funde
+  chaveDeMarca, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -2076,12 +2076,55 @@ const CTX = {
   ehLinhaDeTreino: ehLinhaDeTreino,
 
   // ---------- ações do dia ----------
-  marcaRefeicao: function (id) {
+  /**
+   * Marca ou desmarca uma refeição de HOJE.
+   *
+   * Grava o INSTANTE, e não `1`: é a forma convergida com o histórico desde a
+   * migração 9→10, e é o que a lápide compara. `como` é opcional — ausente é
+   * "comeu o que estava prescrito", que é o caso dominante e por isso não se
+   * grava; `'fora'` é "comi, mas não foi isto" e `'nao'` é "não comi esta
+   * refeição", que é diferente de não ter marcado nada.
+   *
+   * Desmarcar deixa LÁPIDE. `chaveDeRefeicaoFeita` existia na fusão desde que o
+   * dia aberto passou a fundir campo a campo, e ninguém a escrevia: desmarcar
+   * aqui era desfeito pelo outro aparelho, que ainda tinha a marca.
+   */
+  marcaRefeicao: function (id, como) {
     const d = diaDeComida();
-    if (d.done[id]) delete d.done[id]; else d.done[id] = 1;
+    if (d.done[id]) {
+      delete d.done[id];
+      if (d.como) {
+        delete d.como[id];
+        if (!Object.keys(d.como).length) delete d.como;
+      }
+      lapide(chaveDeRefeicaoFeita(d.data, id));
+    } else {
+      // Nunca igual nem anterior à lápide daquela refeição: marcar, desmarcar e
+      // marcar de novo dentro do mesmo milissegundo daria `quando <= morto`, e a
+      // fusão apagaria a marca que ele acabou de fazer.
+      const morta = (S.apagados || {})[chaveDeRefeicaoFeita(d.data, id)] || 0;
+      d.done[id] = Math.max(Date.now(), morta + 1);
+      if (como === 'fora' || como === 'nao') {
+        if (!d.como) d.como = {};
+        d.como[id] = como;
+      }
+    }
     queueSave(); render();
   },
-  setAgua: function (n) { diaDeComida().agua = Math.max(0, n); queueSave(); render(); },
+  /**
+   * Os copos de água de hoje — ou o fato de que ele não contou.
+   *
+   * `null` declara "não contei a água", que não é zero copo: `agua: 0` juntava
+   * o dia em que ele não bebeu nada com o dia em que ele não contou, e um zero
+   * lido como abandono de registro é erro de medição. Contar de novo derruba o
+   * fato, porque contar tem dado por trás.
+   */
+  setAgua: function (n) {
+    const d = diaDeComida();
+    if (n == null) { d.aguaNaoContada = 1; }
+    else { d.agua = Math.max(0, n); delete d.aguaNaoContada; }
+    queueSave(); render();
+  },
   abreRefeicao: function (id) { CTX.abreFolha({ k: 'refeicao', id: id }); },
   editaRefeicao: function (id) { CTX.abreFolha({ k: 'editaRefeicao', id: id }); },
   novaRefeicao: function () { CTX.abreFolha({ k: 'editaRefeicao', id: null }); },

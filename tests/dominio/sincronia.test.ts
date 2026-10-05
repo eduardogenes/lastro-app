@@ -7,7 +7,16 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { funde, chaveDeLog, chaveDeSessao, chaveDeMarca, chaveDeCardio, chaveDeSessaoFoto, chaveDeFotoDoCorpo, LAPIDE_DIAS } from '../../src/dominio/sincronia';
-import type { Enquadramento, Estado, Log, SessaoFoto } from '../../src/dominio/tipos';
+import type { Corpo, Enquadramento, Estado, Log, QualMarca, SessaoFoto } from '../../src/dominio/tipos';
+import type { DiaComidaHist } from '../../src/dominio/nutricao/tipos';
+import { MARCAS_DO_CORPO } from '../../src/dominio/corpo';
+
+/** Um `S.body` com as sete séries vazias. Os testes preenchem as que importam. */
+function corpoVazio(): Corpo {
+  const b = {} as Corpo;
+  MARCAS_DO_CORPO.forEach(function (k: QualMarca) { b[k] = []; });
+  return b;
+}
 
 const DIA = 86400000;
 const T0 = new Date(2026, 7, 24, 9, 0).getTime();
@@ -471,4 +480,150 @@ test('a mesma leitura respondida duas vezes: vence a mais recente', () => {
   assert.strictEqual(funde(antes, depois, T0).estado.gordura.length, 1, 'é a mesma leitura');
   assert.strictEqual(funde(antes, depois, T0).estado.gordura[0].v, 'incerto');
   assert.strictEqual(funde(depois, antes, T0).estado.gordura[0].v, 'incerto', 'e a ordem não muda nada');
+});
+
+// ---------- o que a migração 9 → 10 pôs na fusão ----------
+// Campo persistido novo tem que atravessar aqui, senão dois aparelhos que
+// somavam voltam a se sobrescrever. São quatro coisas: as cinco chaves do
+// corpo, o instante da marca, `como` como atributo da marca e o fato de a água
+// não ter sido contada.
+
+test('as cinco medidas da bioimpedância somam como o peso e a cintura', () => {
+  // A fusão enumerava `['peso','cintura']` escrito à mão: uma grandeza nova
+  // nunca chegaria do outro aparelho, e a tela mostraria só metade da leitura.
+  const balanca = estado({ mtime: T0, body: Object.assign(corpoVazio(), {
+    bioPeso: [{ t: T0, v: 79.2 }], bioMusculo: [{ t: T0, v: 37.4 }],
+    bioGordura: [{ t: T0, v: 14.1 }], bioGorduraPct: [{ t: T0, v: 17.8 }],
+    bioAgua: [{ t: T0, v: 45.3 }]
+  }) });
+  const outro = estado({ mtime: T0 - DIA, body: Object.assign(corpoVazio(), {
+    bioPeso: [{ t: T0 - 7 * DIA, v: 80.1 }]
+  }) });
+
+  const { estado: r, resumo } = funde(outro, balanca, T0);
+  assert.strictEqual(r.body.bioPeso.length, 2, 'duas leituras de dias diferentes');
+  assert.deepStrictEqual(r.body.bioPeso.map(x => x.v), [80.1, 79.2], 'em ordem de tempo');
+  assert.strictEqual(r.body.bioMusculo[0].v, 37.4);
+  assert.strictEqual(r.body.bioGordura[0].v, 14.1);
+  assert.strictEqual(r.body.bioGorduraPct[0].v, 17.8);
+  assert.strictEqual(r.body.bioAgua[0].v, 45.3);
+  assert.strictEqual(resumo.medidas, 5, 'cinco medidas vieram do outro lado');
+});
+
+test('a lápide alcança a medida da bioimpedância', () => {
+  // Sem `chaveDeMarca` aceitando a grandeza nova, a chave da lápide não casava
+  // com a da fusão e a medida apagada voltava do outro aparelho.
+  const aqui = estado({ mtime: T0, body: corpoVazio(), apagados: { [chaveDeMarca('bioGordura', { t: T0 - DIA })]: T0 } });
+  const nuvem = estado({ mtime: T0 - DIA, body: Object.assign(corpoVazio(), {
+    bioGordura: [{ t: T0 - DIA, v: 14.1 }]
+  }) });
+  const { estado: r } = funde(aqui, nuvem, T0);
+  assert.deepStrictEqual(r.body.bioGordura, [], 'o que ele apagou aqui não ressuscita');
+});
+
+test('o peso da manhã e o da bioimpedância não se misturam', () => {
+  // São dois aparelhos e duas horas: ele pesa numa balança e mede na outra. A
+  // chave de fusão carrega a grandeza, então o mesmo instante nas duas não
+  // colide.
+  const a = estado({ mtime: T0, body: Object.assign(corpoVazio(), {
+    peso: [{ t: T0, v: 79.4 }], bioPeso: [{ t: T0, v: 79.2 }]
+  }) });
+  const b = estado({ mtime: T0 - 1000, body: corpoVazio() });
+  const { estado: r } = funde(b, a, T0);
+  assert.strictEqual(r.body.peso[0].v, 79.4, 'a pesagem da manhã');
+  assert.strictEqual(r.body.bioPeso[0].v, 79.2, 'e a da balança de bioimpedância');
+});
+
+test('o instante da marca atravessa a fusão do dia aberto', () => {
+  // A conversão interna achatava a marca em `1` nos dois sentidos, porque era a
+  // forma do dia corrente. `1` é 1970: qualquer lápide o matava.
+  const manha = 'pos', tarde = 'lanche';
+  const a = estado({ mtime: T0, dia: { data: '2026-08-24', done: { [manha]: T0 - 3600000 }, agua: 3, escala: {} } });
+  const b = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: { [tarde]: T0 - 600000 }, agua: 1, escala: {} } });
+
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.dia!.done[manha], T0 - 3600000, 'a hora da marca da manhã');
+  assert.strictEqual(r.dia!.done[tarde], T0 - 600000, 'e a da tarde, somadas');
+  assert.strictEqual(r.dia!.agua, 3, 'a água é contador que só cresce: fica o maior');
+});
+
+test('desmarcar uma refeição num aparelho não é desfeito pelo outro', () => {
+  const chave = 'comida:2026-08-24:almoco';
+  const aqui = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} },
+                        apagados: { [chave]: T0 } });
+  const nuvem = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: { almoco: T0 - 3600000 }, agua: 0, escala: {} } });
+  const { estado: r } = funde(aqui, nuvem, T0);
+  assert.strictEqual(r.dia!.done.almoco, undefined, 'a lápide vence a cópia mais antiga');
+});
+
+test('`como` viaja com a marca, e morre com a lápide dela', () => {
+  const a = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} } });
+  const b = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: { jantar: T0 - 600000 },
+                                              como: { jantar: 'fora' }, agua: 0, escala: {} } });
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.dia!.done.jantar, T0 - 600000, 'a marca veio');
+  assert.strictEqual(r.dia!.como!.jantar, 'fora', 'e o "saí do plano" veio com ela');
+
+  // agora com lápide: a marca morre e o atributo não fica solto descrevendo
+  // uma refeição que o dia não diz ter acontecido
+  const comLapide = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} },
+                             apagados: { 'comida:2026-08-24:jantar': T0 } });
+  const { estado: r2 } = funde(comLapide, b, T0);
+  assert.strictEqual(r2.dia!.done.jantar, undefined);
+  assert.strictEqual(r2.dia!.como, undefined, 'nem o atributo sobra');
+});
+
+test('"não comi" atravessa a fusão como fato, e não como silêncio', () => {
+  const a = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} } });
+  const b = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: { ceia: T0 - 600000 },
+                                              como: { ceia: 'nao' }, agua: 0, escala: {} } });
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.dia!.como!.ceia, 'nao',
+    'é o que separa "não comi" de "esqueci de marcar", e o que faz o dia contar');
+});
+
+test('quem contou a água vence quem declarou não ter contado', () => {
+  // As duas são afirmações sobre o mesmo dia, e a segunda tem dado por trás.
+  const naoContou = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {}, aguaNaoContada: 1 } });
+  const contou = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: {}, agua: 5, escala: {} } });
+  const { estado: r } = funde(naoContou, contou, T0);
+  assert.strictEqual(r.dia!.agua, 5);
+  assert.strictEqual(r.dia!.aguaNaoContada, undefined, 'o fato cai quando a união dá copo');
+
+  // mas se os DOIS não contaram, o fato sobrevive — senão o dia voltaria a
+  // parecer um dia de zero copo
+  const outro = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {}, aguaNaoContada: 1 } });
+  const { estado: r2 } = funde(naoContou, outro, T0);
+  assert.strictEqual(r2.dia!.aguaNaoContada, 1);
+});
+
+test('o enquadramento do dia aberto sobrevive à fusão', () => {
+  // Achado de passagem: `aderencia` não entrava na conversão do dia e a
+  // reconstrução não a devolvia. Fundir dois aparelhos no mesmo dia APAGAVA
+  // "saí do plano" e "dia perdido", em silêncio.
+  const a = estado({ mtime: T0, dia: { data: '2026-08-24', done: { pos: T0 }, agua: 2, escala: {}, aderencia: 'fora' } });
+  const b = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} } });
+  assert.strictEqual(funde(a, b, T0).estado.dia!.aderencia, 'fora');
+  assert.strictEqual(funde(b, a, T0).estado.dia!.aderencia, 'fora', 'dos dois lados');
+});
+
+test('o enquadramento de um dia fechado vem do lado que respondeu depois', () => {
+  const dia = (extra: Partial<DiaComidaHist>): DiaComidaHist => Object.assign({
+    d: '2026-08-20', done: { pos: T0 - DIA }, agua: 4, escala: {},
+    tot: { kcal: 2000, p: 100, c: 250, g: 60 }, pv: 1
+  }, extra) as DiaComidaHist;
+  const antigo = estado({ mtime: T0, comidaHist: [dia({ m: T0 - DIA })] });
+  const novo = estado({ mtime: T0 - 1000, comidaHist: [dia({ m: T0, aderencia: 'perdido' })] });
+  const { estado: r } = funde(antigo, novo, T0);
+  assert.strictEqual(r.comidaHist[0].aderencia, 'perdido',
+    'faltava nesta lista, e o lado local vencia sempre');
+});
+
+test('o ajuste de porção do dia aberto vem do lado que tocou depois', () => {
+  // Mesmo defeito do enquadramento: sem carimbo, os dois lados empatavam em 0 e
+  // o `escala` do lado local vencia sempre.
+  const velho = estado({ mtime: T0 - DIA, dia: { data: '2026-08-24', done: { jantar: T0 - DIA }, agua: 0, escala: {} } });
+  const novo = estado({ mtime: T0, dia: { data: '2026-08-24', done: { jantar: T0 - DIA }, agua: 0, escala: { jantar: 0.5 } } });
+  assert.strictEqual(funde(velho, novo, T0).estado.dia!.escala.jantar, 0.5);
+  assert.strictEqual(funde(novo, velho, T0).estado.dia!.escala.jantar, 0.5, 'dos dois lados');
 });

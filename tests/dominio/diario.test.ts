@@ -160,3 +160,40 @@ test('sem troca de ajuste não há auditoria a fazer', () => {
   const h = hist([['2026-01-10', cheio], ['2026-01-11', cheio]]);
   assert.deepStrictEqual(trocasDeAjuste(h, PLANO_BASE), []);
 });
+
+// ---------- o que a migração 9 → 10 pôs no fechamento ----------
+
+test('o instante de cada marca atravessa o fechamento', () => {
+  // A fixture do plano 9 registra o defeito: `fechaDia` carimbava TODAS as
+  // marcas com a hora do fechamento, porque o dia corrente não tinha a hora de
+  // cada uma. Um dia inteiro aparecia marcado na mesma hora.
+  const manha = 1791000000000, tarde = 1791040000000;
+  const h = fechaDia(dia({ done: { pos: manha, lanche: tarde } }), PLANO_BASE, cat, 1, 0, 1791090000000);
+  assert.strictEqual(h.done.pos, manha);
+  assert.strictEqual(h.done.lanche, tarde);
+});
+
+test('marca sem instante cai para a hora do fechamento, que é o que se sabe', () => {
+  const h = fechaDia(dia({ done: { pos: 1 } }), PLANO_BASE, cat, 1, 0, 1791090000000);
+  assert.strictEqual(h.done.pos, 1791090000000,
+    'não dá para inventar a hora; a do fechamento é a única verdadeira disponível');
+});
+
+test('`como` desce ao histórico só para refeição que foi marcada', () => {
+  const h = fechaDia(dia({ done: { pos: 1791000000000 }, como: { pos: 'fora', jantar: 'nao' } }),
+                     PLANO_BASE, cat, 1, 0, 1791090000000);
+  assert.deepStrictEqual(h.como, { pos: 'fora' },
+    '`como` é atributo da marca: solto, afirmaria algo sobre uma refeição que o dia não registra');
+});
+
+test('"não contei a água" desce como fato, e cai se houver copo', () => {
+  const sem = fechaDia(dia({ done: { pos: 1791000000000 }, aguaNaoContada: 1 }),
+                       PLANO_BASE, cat, 1, 0, 1791090000000);
+  assert.strictEqual(sem.aguaNaoContada, 1, 'zero copo e "não contei" não são o mesmo dia');
+  assert.strictEqual(sem.agua, 0);
+
+  const com = fechaDia(dia({ done: { pos: 1791000000000 }, agua: 6, aguaNaoContada: 1 }),
+                       PLANO_BASE, cat, 1, 0, 1791090000000);
+  assert.strictEqual(com.aguaNaoContada, undefined, 'contou: o fato não se sustenta');
+  assert.strictEqual(com.agua, 6);
+});

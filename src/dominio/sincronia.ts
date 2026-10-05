@@ -475,7 +475,14 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
     // INSTANTE atravessa: é ele que a lápide de `chaveDeRefeicaoFeita` compara,
     // e achatá-lo fazia toda marca do dia aberto parecer de 1970 — qualquer
     // lápide a mataria.
-    const comoHist = function (d: DiaComida): DiaComidaHist {
+    //
+    // O carimbo do dia aberto é o `mtime` DO ESTADO. `DiaComida` não tem campo
+    // de alteração — o dia zera com a data, e carimbá-lo custaria uma escrita a
+    // cada toque —, e sem carimbo os dois lados empatavam em 0: as decisões
+    // tomadas uma vez (escala, cadência, turno, enquadramento) vinham SEMPRE do
+    // lado local, mesmo quando o outro aparelho as havia respondido depois. O
+    // `mtime` é o mesmo sinal que já decide os documentos duas linhas acima.
+    const comoHist = function (d: DiaComida, mtime: number): DiaComidaHist {
       return { d: d.data, done: Object.assign({}, d.done || {}), agua: d.agua || 0,
                aguaNaoContada: d.aguaNaoContada,
                escala: Object.assign({}, d.escala || {}),
@@ -487,12 +494,18 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
                aderencia: d.aderencia,
                cadencia: d.cadencia, alta: d.alta, turno: d.turno,
                tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 0,
-               m: (d as DiaComida & { m?: number }).m || 0 };
+               m: (d as DiaComida & { m?: number }).m || mtime };
     };
-    const j = uneDiasDeComida([comoHist(local.dia)], [comoHist(remoto.dia)], mortos).itens[0];
+    const j = uneDiasDeComida(
+      [comoHist(local.dia, mtimeDe(local))],
+      [comoHist(remoto.dia, mtimeDe(remoto))],
+      mortos
+    ).itens[0];
     if (j) {
       base.dia = { data: j.d, done: j.done, agua: j.agua, escala: j.escala,
                    cadencia: j.cadencia, alta: j.alta, turno: j.turno };
+      // `m` não volta para `base.dia`: `DiaComida` não tem o campo, e o carimbo
+      // que importa para a próxima fusão é o `mtime` do estado, logo abaixo.
       if (j.aguaNaoContada) base.dia.aguaNaoContada = 1;
       if (j.como) base.dia.como = j.como;
       if (j.aderencia) base.dia.aderencia = j.aderencia;

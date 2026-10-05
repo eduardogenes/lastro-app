@@ -416,7 +416,10 @@ test('remover uma refeição limpa o que era do dia junto', async () => {
   a.E('CTX.marcaRefeicao("lanche")');
   a.E('CTX.setEscala("lanche", 0.5)');
   await a.esperar();
-  assert.strictEqual(a.E('S.dia.done.lanche'), 1);
+  // instante, e não `1`: `DiaComida.done` convergiu na forma de
+  // `DiaComidaHist.done` na migração 9→10. O que este teste protege são as
+  // duas asserções depois do `removeRefeicao`; esta é a pré-condição.
+  assert.ok(a.E('S.dia.done.lanche') > 1, 'ficou marcada, com a hora da marca');
 
   a.aceitar();
   a.E('CTX.removeRefeicao("lanche")');
