@@ -1046,3 +1046,245 @@ regra estão abaixo de 16px. **Isso não é defeito** — a escala do projeto p�
 piso da prosa em 13 e o do rótulo em 9, de propósito, e 16px é o piso de
 **campo de texto**, por causa do zoom do Safari. O que é defeito é outra coisa, e
 está em §4.
+
+---
+
+## 4 · O texto a 200% — a decisão mais consequente deste documento, e ela é minha
+
+A frente 2 mediu que `rem` aparece **zero** vezes nas folhas e concluiu que o
+texto a 200% está "bloqueado em quatro camadas, de propósito". **Conferi as
+quatro, medi a quinta, e achei que a razão escrita que sustenta a primeira é
+falsa.**
+
+### 4.1 · As camadas, conferidas — e a frase do fonte que o projeto desmente
+
+| | camada | onde | o que o fonte diz |
+|---|---|---|---|
+| 1 | `maximum-scale=1, user-scalable=no` | `index.html` | *"o zoom do navegador não existe aqui. O Safari os ignora numa aba comum, mas os **respeita instalado na tela de início**, que é o único jeito como este app é usado"* |
+| 2 | `touch-action: pan-x pan-y` na raiz | `src/base.css`, regra `html` | *"os únicos gestos dele nesta página são rolar. Some o zoom por toque duplo e some o de pinça"* |
+| 3 | `gesturestart`, `gesturechange`, `gestureend` recusados com `passive: false` | `src/main.jsx` | o Safari implementa a pinça como gesto próprio, acima do `touch-action` |
+| 4 | **zero `rem`** | as **seis** folhas | nada escrito: é consequência, não decisão declarada |
+
+**Confirmei a quarta e estendi:** medi `rem` em `tokens.css`, `base.css`,
+`componentes.css`, `treino.css`, `protocolo.css` **e `palco.css`** — **zero nas
+seis**, e **toda** `font-size` e todo atalho `font:` em px, nas seis. O briefing
+está certo, e vale para a sexta folha também.
+
+**A quinta, que não é camada — é a ausência de controle.** O manifesto declara
+`"display": "standalone"` (conferi, `public/manifest.webmanifest`). Instalado na
+tela de início, **não existe interface de navegador**: não há o menu "aA" do
+Safari, não há zoom de página, não há ajuste de tamanho de texto. **Mesmo que as
+quatro camadas não existissem, não haveria onde tocar.** Isto é o argumento
+decisivo desta seção, e nenhum documento do redesenho o nomeou.
+
+**E a sexta declaração, que parece camada e não é:** `text-size-adjust: 100%`
+em `html`, com a razão escrita — *"Safari infla texto ao girar para paisagem.
+Isto desliga."*. A auditoria de acesso já leu isto certo: ela *"só desliga a
+inflação automática do Safari e não impede o usuário de ampliar"*. **Não conto
+como bloqueio**, e a direção D usa a mesma declaração.
+
+**Agora o que não bate, e é o achado desta seção.** A camada 2 traz a razão de
+ser do bloqueio inteiro, escrita em `src/base.css`:
+
+> *"O que se perde é a pinça para enxergar melhor. É aceitável aqui porque
+> **nenhum texto do app é menor que 16px** e a leitura não depende dela — e porque
+> zoom acidental no meio de uma série, com a mão suada, custa mais que zoom
+> deliberado ganha."*
+
+**A frase do meio é falsa, e o próprio projeto a desmente em outro arquivo.**
+`DESIGN.md`, Tipografia, escreve os pisos: *"nunca abaixo de 9px em rótulo mono,
+13px em prosa, 16px em campo de texto (Safari), 15px em nome tocável."* Isto é,
+o sistema **manda** texto de 9 px. E medi as quatro folhas de regra:
+
+- **221** declarações de tamanho de texto (`font-size` mais o atalho `font:`);
+- **183 delas abaixo de 16px** — 83%;
+- o menor é **7,5px** (`.chart .axu`), e há **8px** (`.cal-d .per`) e **8,5px**
+  (`.cal-h`), que estão abaixo do piso de 9 px do próprio documento;
+- a distribuição: 9px em **30** declarações, 10px em 39, 11px em 33, 13px em 23,
+  15px em 18.
+
+**Então 83% do texto deste app é menor que 16px, e três declarações são menores
+que o piso que o projeto escreveu para si.** A frase de `base.css` é de quando o
+campo de texto era o único texto em que alguém pensou — o 16 px dela é o piso do
+Safari para campo, não o piso do app —, e ela ficou sustentando uma decisão que
+ela não sustenta.
+
+**Isto não é defeito de tipografia.** O sistema tem rótulo de 9 px de propósito,
+e `DESIGN.md` explica por quê. **É defeito de justificativa:** a única razão
+escrita para bloquear o zoom é uma afirmação de fato, e o fato é outro.
+
+### 4.2 · A decisão: `rem` no tipo, `px` na geometria, e um controle em Ajustes
+
+**O sistema novo usa unidade relativa. Sim.** E usa de uma forma só, com uma
+exceção nomeada.
+
+> **Requisito 5 · Tipo em `rem`, geometria em `px`.**
+>
+> - **Todo token de tipo é `rem`**, com a raiz em 16 px: `--ins-t-rotulo:
+>   0.6875rem` (11), `--ins-t-meta: 0.75rem` (12), `--ins-t-apoio: 0.8125rem`
+>   (13), `--ins-t-corpo: 0.875rem` (14), e assim por diante. Em 100% a tela é
+>   pixel por pixel o que a direção desenhou.
+> - **Toda geometria continua `px`**: espaço, raio, largura de fio, `--ins-tap`,
+>   `--ins-tap-dense`, as alturas derivadas, e `env(safe-area-inset-*)`, que é px
+>   por natureza.
+> - **Ajustes ganha um controle de tamanho de texto, de três degraus**, ao lado
+>   da troca manual de tema — que é onde a frente 1 já pôs a decisão D10
+>   (§1.6 dela). Ele escreve `font-size` na raiz: **100% (16px) · 112,5% (18px) ·
+>   125% (20px)**. É um valor guardado, como o tema.
+> - **A pinça continua recusada**, com as três camadas intactas. **A razão
+>   escrita em `src/base.css` é reescrita na mesma gravação**, porque a que está
+>   lá é falsa.
+
+**A razão nova, escrita para não precisar deste documento:**
+
+> *O gesto de pinça fica recusado porque, de pé, com a mão suada, entre duas
+> séries, pinçar por acidente custa mais do que pinçar de propósito ganha — e
+> isso é medida de uso deste app, não preferência. O que o produto deve em troca
+> é o que a pinça daria: texto maior. Como o app é instalado na tela de início
+> (`display: standalone`), **não existe interface de navegador para ampliar**;
+> então quem entrega texto maior é o próprio app, por Ajustes, em três degraus,
+> e é por isso que todo token de tipo é `rem` e nenhum é px. Tipo em `rem`,
+> geometria em px: o texto cresce, o alvo não encolhe e a área segura não se
+> move.*
+
+**O que cada degrau entrega, em conta:**
+
+| token | 100% | 112,5% | 125% |
+|---|---:|---:|---:|
+| `--ins-t-rotulo` (11) | 11,00 | 12,38 | **13,75** |
+| `--ins-t-meta` (12) | 12,00 | 13,50 | **15,00** |
+| `--ins-t-apoio` (13) | 13,00 | 14,63 | **16,25** |
+| `--ins-t-corpo` (14) | 14,00 | 15,75 | **17,50** |
+| `--ins-t-nome` (17) | 17,00 | 19,13 | **21,25** |
+
+**Conta.** No degrau de cima, o rótulo de 11 px chega a 13,75 e a prosa de apoio
+passa de 16 px. **Medi quantas declarações da direção isso alcança:** os três
+degraus menores — 11, 12 e 13, somados aos meios-pixels que caem neles — são
+**496 das 1.173** declarações de tamanho dentro do telefone, **42%**. É onde o
+problema está e é onde o controle chega.
+
+### 4.3 · O que isto NÃO entrega, dito com todas as letras
+
+**Isto não satisfaz 1.4.4.** O critério pede 200% sem perda de conteúdo nem de
+função, e o controle para em 125%. **Eu escrevo contra um critério de
+acessibilidade conhecido, e a razão é esta:**
+
+**A 200% a régua perde função, e o número é da frente 2.** `.rep` tem 54 px de
+largura fixa e o número dentro dela é de 26 px. A 200% o número vai a 52 px e o
+botão teria de crescer com ele; a frente 2 fez a conta e a 200% a régua mostra
+**2** valores em vez de 6 (§8.5 dela). **Dois de doze não é "texto maior": é a
+ação mais frequente do produto, 48 vezes por semana, deixando de funcionar.**
+
+**E a 125% ela já aperta.** 26 px a 125% são 32,5 px, e dois dígitos tabulares a
+32,5 px não cabem em 54 px de botão. Daí a exceção:
+
+> **A exceção nomeada: `--ins-n-m` — o número da régua e o do RIR — é `px`, não
+> `rem`.** A razão: a geometria da régua é a medida mais caro do redesenho
+> inteiro (6 de 12 valores alcançáveis, 714 px de conteúdo em 382 px de tela,
+> frente 2 §1.1), e crescer o número força crescer o botão, que encolhe a janela,
+> que piora o defeito que a frente 2 está consertando. **E o número da régua é de
+> 26 px**: não é texto pequeno, é o maior numeral de um controle no app. Ele não
+> precisa do controle de tamanho. Os outros três números — `--ins-n-l` (34),
+> `--ins-n-xl` (40) e a família da foto — pela mesma razão: já são grandes, e os
+> três vivem em caixa de altura fixa.
+
+**Então o que o produto entrega é isto, e é o que eu defendo:** o texto **de
+leitura** vai a 125% e o texto **de número** fica. Quem precisa de 200% para ler
+não é atendido, e **isso é um custo declarado, não um esquecimento.**
+
+**O que sobe à mesa dele** (§11): se 125% é pouco, o caminho de verdade para
+200% existe e tem um preço nomeado — a régua deixa de ser faixa de botões de
+largura fixa e passa a ser outra coisa, que é a decisão que a frente 2 pôs na
+mesa dele em §1.6 dela. **As duas perguntas são a mesma pergunta**, e é bom que
+ele decida as duas juntas.
+
+### 4.4 · O que quebra, e o que ninguém mediu disso
+
+**Quebra certo, e é conserto na mesma gravação:**
+
+1. **Os 183 valores em px viram `rem`.** É varredura, não desenho.
+2. **O caso *o campo nunca fica abaixo de 16px*.** Ele casa
+   `font-size:\s*16px` literal em `input, textarea, select`. Com `rem`, a regra
+   passa a ser `font-size: 1rem`, que **em 100% é 16px e nos outros dois degraus é
+   mais** — isto é, a regra fica mais forte e o caso fica **vermelho**. A asserção
+   passa a cobrar `font-size: 1rem` (ou `>= 1rem`), com a razão reescrita: o que o
+   Safari exige é 16 px **computado**, e `1rem` com a raiz em 16 px é exatamente
+   isso, com o piso subindo junto do controle.
+3. **`.cal-h` a 8,5px, `.cal-d .per` a 8px e `.chart .axu` a 7,5px** sobem para
+   o piso de 11 px (ou para a exceção de 9 px dentro de `svg`, §3.2).
+
+**Não medido, e eu não invento número:**
+
+- **Se alguma linha quebra a 112,5% e a 125%.** Cada nome fica 12,5% e 25% mais
+  largo e a largura da tela não muda. O lugar mais provável é a linha do dia no
+  Agora e a tabela do exercício, que já têm quatro colunas em 382 px. **É olho em
+  tela, e está na medição G.**
+- **Se o controle em três degraus basta.** Ninguém mediu se o dono precisa de
+  texto maior. `04-acesso.md` §7 registra: *"As necessidades de acessibilidade
+  do dono — o repositório não as registra."* Então este requisito **não** nasce
+  de necessidade medida dele: nasce de piso para qualquer usuário, que é a
+  decisão P3/D8 ("nada usa a rotina do dono como regra").
+- **Se `user-scalable=no` continua honrado instalado.** O comentário do
+  `index.html` afirma que sim, e eu **não** medi no aparelho. É uma passada de
+  dez segundos — pinçar a tela no app instalado — e ela decide se a camada 1 faz
+  algo ou é decoração. Entra na medição G.
+
+### 4.5 · Os dois protocolos: 320 px e 200%, e cortado não é rolável
+
+A frente 2 escreveu os dois (§8.4 e §8.5 dela) e eu os herdo. **Acrescento o que
+é meu, e é a distinção que a frente 2 nomeou e que vale repetir porque ela muda o
+que se olha:**
+
+> **A 320 px, conteúdo largo demais não ganha barra de rolagem: ele desaparece.**
+> `body { overflow-x: clip }` está em `src/base.css` com a razão escrita (matar o
+> rubber-band e proteger o `sticky`), e há caso que o segura — *nenhum ancestral
+> do sticky vira scroll container*. **`clip` corta sem rolar.** Então a 320 px
+> o critério 1.4.10 **passa** (não há rolagem de página) e o dono **perde função**
+> (há conteúdo inalcançável). **É melhor para a norma e pior para ele.**
+
+**Medição G · o texto grande e a tela estreita, na mesma passada.** Não exige o
+aparelho dele; exige uma janela de navegador e olhar. Eu não a executei.
+
+**Para cada estado dos nove HTML, em cada um dos dois temas:**
+
+| passada | janela | tamanho de texto |
+|---|---|---|
+| G1 | 414 × 896 | 100% (controle) |
+| G2 | 414 × 896 | 112,5% |
+| G3 | 414 × 896 | 125% |
+| G4 | 414 × 896 | **200% de zoom de página** (o que 1.4.4 pede, para saber se dá) |
+| G5 | **320 × 568** | 100% |
+| G6 | 320 × 568 | 125% |
+
+**Em cada passada, anotar quatro coisas, e a terceira é a que a frente 2
+destacou:**
+
+- (a) existe rolagem horizontal **da página**? → é violação de 1.4.10;
+- (b) algum texto **sobrepõe** outro?
+- (c) existe conteúdo **cortado e inalcançável**? → **não** é violação de 1.4.10,
+  porque `clip` não rola, **e é perda de função.** As duas respostas vão em
+  colunas separadas, e uma linha pode ter (c) sem ter (a);
+- (d) algum controle sai da tela **sem caminho até ele**?
+
+**Rodar nos estados que a conta prevê apertados:** a régua (a 320 px cabem
+**4** botões e não 6 — `(320 − 32 − 54) ÷ 60 = 3,9`, **conta da frente 2**), a
+fileira de três botões de `.acts`, a barra dos cinco lugares, a tabela do
+exercício com quatro séries, os cinco campos da bioimpedância, e a frase de
+leitura de volta da folha de pôr em dia, que é longa e cresce com o número de
+refeições.
+
+**O número que reprova:** **1 ou mais** respostas (a), (b) ou (d) em G1, G2, G3,
+G5 e G6. Sem tolerância, porque não é estatística. **G4 é informativa**: ela
+responde se 200% seria possível, e o resultado dela é o que sustenta ou derruba
+a decisão de §4.2 — se a tela sobreviver a 200% inteira, o controle de três
+degraus é teto escolhido e não teto necessário, e isso volta à mesa dele.
+
+**E a resposta (c) não reprova nada: ela vira lista.** Cada conteúdo cortado e
+inalcançável é uma linha com o estado, a janela e o que desapareceu. **A decisão
+de cada linha é de desenho, não de sistema**, e é daí que sai se aquele estado
+precisa de outra forma a 320 px ou se 320 px não é um alvo deste produto.
+
+**O que decide se 320 px é alvo:** ninguém mediu. O contrato de UX vigente põe
+320 px no checklist de tela nova (frente 2 §8.4), o aparelho do dono tem 414 px,
+e o segundo usuário não existe no dado (`PRODUCT.md`, e `07-plano.md` §4).
+**Isto sobe à mesa dele** junto do resto (§11).
