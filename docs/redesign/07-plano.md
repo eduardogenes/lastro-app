@@ -9,6 +9,12 @@ quem vê os dois mundos pode escrever.
 
 Não há estimativa de prazo em nenhuma linha. Ninguém mediu isso.
 
+> **Cinco afirmações deste plano não bateram com o código.** A frente 1 as
+> achou lendo o fonte, e eu confirmei as cinco uma por uma em 05/10. As
+> retificações estão marcadas abaixo, no ponto afetado, e o detalhe está em
+> `09-frente1-lugares.md`. Onde este plano e o código discordarem, **vale o
+> código.**
+
 ## 0 · A convenção de prova
 
 - **conferi** — eu abri o arquivo nesta sessão e contei, com o caminho ao lado.
@@ -30,7 +36,7 @@ Ordenadas pelo que travam, não pelo tamanho.
 | 3 | **"Não comi" conta como dia de consumo conhecido?** Ele separou "não comi" de "esqueci" (14.3) sem dizer isto | a mesma contagem, e o portão de 11 de 14 (`MIN_REGISTRADOS = 11`, `src/dominio/corpo.ts`, conferi) | Se contar, o portão que **nunca abriu uma vez** passa a ser alcançável. Se não contar, um dia honesto vale menos que um dia esquecido |
 | 4 | **Quais porções, além de tudo e metade?** Ele disse "sim" a mais de duas (14.5), sem dizer quais. "Comi mais que o plano" é a que pesa | a régua curta de porções, e a aritmética da adesão | Uma porção acima de 1 faz a adesão passar de 100% (ponderação por porção, F199, **do cerco**). **Não pede migração**: `escala` já é `Record<string, number>` no dia corrente e no histórico (conferi) |
 | 5 | **A lista de campos da bioimpedância**, cada um com unidade e se aceita ficar vazio. A resposta de 14.11 veio em prosa, e "distribuição por segmento" é tabela, não número. A própria D entregou "treze números" com quinze campos, e o desenhista achou o próprio erro | **a única migração que abre `S.body`**, e com ela o maior bloco da tela de Corpo | `S.body` é `{ peso, cintura }` — duas chaves, fechadas no tipo (`src/dominio/tipos.ts:481`) **e na fusão** (`base.body = { peso: [], cintura: [] }`, `src/dominio/sincronia.ts:475-482`, conferi). Abrir essa forma é trabalho de uma vez; abrir duas vezes é pagar os seis portões duas vezes |
-| 6 | **As linhas do dia tocáveis valem durante a sessão aberta?** Achado meu: hoje o app tira a caixa de marcar e o `···` de toda linha de refeição **enquanto o treino está ativo**, de propósito (`aoMarcar={treino ? null : …}`, `src/ui/telas/hoje.jsx:120`, conferi) | a regra do Agora durante a sessão, onde ela encontra "o treino ganha da refeição" (D4) | É a única parte do requisito das linhas tocáveis que não é "devolver o que o app já faz" (§3.3). Se valer durante a sessão, a tela que ele pediu mais limpa na hora do treino fica menos limpa |
+| 6 | ~~**As linhas do dia tocáveis valem durante a sessão aberta?**~~ **RETIFICADO: a pergunta não tinha objeto.** Achado meu: hoje o app tira a caixa de marcar e o `···` de toda linha de refeição **enquanto o treino está ativo**, de propósito (`aoMarcar={treino ? null : …}`, `src/ui/telas/hoje.jsx:120`, conferi) | a regra do Agora durante a sessão, onde ela encontra "o treino ganha da refeição" (D4) | É a única parte do requisito das linhas tocáveis que não é "devolver o que o app já faz" (§3.3). **Mas a exceção não existe:** `aoMarcar={treino ? null : …}` usa `const treino = ctx.ehLinhaDeTreino(r)`, e `ehLinhaDeTreino(r) { return r.id === 'treino'; }` — é **tipo de linha**, não sessão ativa. O que o app tira é a caixa e o `···` **da linha do treino**, sempre, com ou sem sessão. Nada em `CTX.hoje()` muda afordância por `S.sessao`. Conferi. O dono respondeu P4 ("sim, sempre") a um estado inexistente; a resposta não causa dano e a peça 1 **custa zero no Agora**. Onde ela custa é na lista inerte da D |
 | 7 | **A régua de repetições, se o conserto não bastar.** O defeito é dele por consequência: a alternativa medida como melhor nesse ponto era o controle de botões fixos da C, que ele recusou ao escolher a régua | nada agora; trava a frente 2 se a medição depois do conserto continuar ruim | Se o toque continuar sendo engolido como arrasto na ação mais frequente, a saída é um controle que ele já viu e não quis — e isso volta à mesa dele, não à do detalhamento |
 | 8 | **A pesagem entre séries: só na tela nova, ou lá também?** Ele mandou tudo para a tela nova (D9) e, na mesma folha, escreveu "prefiro o mínimo de toques" | nada estrutural: a D desenhou o atalho do descanso abrindo Corpo | Custa ~1 toque a mais na pesagem da manhã, que é onde 7 de 11 pesagens aconteceram entre 6h28 e 7h52 (**do cerco**, P1). Ele já viu esse custo escrito e decidiu assim mesmo; fica aqui porque a nota dele contradiz a decisão dele |
 
@@ -275,7 +281,31 @@ achado meu, e ele muda o preço das três peças da C:
   Prescrição é render. **Mas ver §3.6**: uma das duas telas onde ela aparece hoje
   é justamente a que a decisão D1 remove.
 
+  > **RETIFICADO.** Duas coisas estão erradas aqui, e eu confirmei as duas.
+  > Primeiro, `impacto()` alimenta **três** telas (a edição do dia, o editor de
+  > programa e o painel de volume), não duas. Segundo, e é o que muda o
+  > requisito: **`src/ui/telas/decisao.jsx` não usa `impacto()`.** Ela usa
+  > `impactoDoMod`, que vive em `src/main.jsx` e **não** em
+  > `src/dominio/volume.ts`, e é a única que produz a forma "antes → depois" que
+  > a peça da C pede. `impacto()` só afirma o número de agora. Único chamador de
+  > `impactoDoMod`: a tela que a D1 remove. E das quatro ramificações dela
+  > (`sets`, `add`, `rm`, `troca`), **só `troca` tem teste** — as três que
+  > produzem o número não têm asserção em lugar nenhum.
+  >
+  > Então a peça 3 **não é render**, e a ordem é: `impactoDoMod` vira função de
+  > domínio com teste → a lista de Prescrição passa a ser o chamador → **só
+  > então** `decisao.jsx` sai.
+
 ### 3.4 · O que exige migração de dado guardado
+
+> **RETIFICADO: são cinco, não quatro.** `S.promoPendente` é
+> `PromoPendente | null` e guarda **uma** mudança, com um `day` só, escrita por
+> atribuição direta — o próximo fecho sobrescreve o anterior. A decisão do dono
+> pede uma **lista** que espera e vence. E **não há regra de fusão para ele**:
+> `sincronia.ts` clona "tudo que não é coleção" do lado com `mtime` mais novo,
+> então o que o celular registrou pode sumir porque o notebook sincronizou
+> depois. Precisa virar coleção com chave natural e lápide, **dentro da mesma
+> migração 9 → 10**. Passado à frente 0 em 05/10.
 
 Quatro mudanças, e a disciplina deste repositório as encarece uma a uma: campo
 persistido novo passa por **seis portões** — tipo, `migraPlanoN` com o bump de
@@ -326,6 +356,15 @@ próxima abertura, e a pergunta guardada não interrompe um treino em andamento.
 carregador disso é `S.promoPendente` (7 ocorrências em `src/main.jsx`, conferi).
 
 Duas consequências, e as duas são requisito:
+
+> **RETIFICADO, e o furo é maior do que este parágrafo diz.** No fecho
+> **manual** não existe carregador nenhum: `fechaSessao` tem
+> `const pendentes = comoFim === 'auto' ? modsDoDia(s.day) : []`, com a razão
+> escrita no comentário acima ("Pela porta da frente quem pergunta é
+> `finalizarSessao`"), e `finalizarSessao` faz `S.promoPendente = null` de
+> propósito. Tirada a pergunta, **o fecho manual descarta a mudança em
+> silêncio** — o F280 nominal, não só o risco dele. O carregador tem de ser
+> escrito nos **dois** fechos. Conferi.
 
 1. **`promoPendente` não se apaga junto com a tela.** Ele é exatamente o mecanismo
    que a lista de mudanças que espera e **vence** precisa. Tirar a pergunta e

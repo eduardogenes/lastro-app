@@ -694,6 +694,45 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         cartão de cima; e onde aterrissam as três peças da C, com o §3.6 do
         plano na mão por causa da ordem amarrada.
         Só escreve em `docs/redesign/`, para não colidir com a frente 0.
+        **ENTREGUE em 05/10** (`a72f1fa` → `378cf6e`, 8 commits, só no arquivo
+        dela — conferi commit a commit). `09-frente1-lugares.md`, nove seções.
+        **Cinco afirmações minhas não bateram com o código, e eu confirmei as
+        cinco uma por uma** antes de aceitar; as retificações estão no
+        `07-plano.md` no ponto afetado, e a do cardio no `08-rede.md`:
+        (1) a exceção das linhas do dia durante o treino **não existe** —
+        `ehLinhaDeTreino` é tipo de linha, não sessão ativa, então P4 respondeu
+        a um estado inexistente e a peça 1 custa zero no Agora;
+        (2) a conta de volume alimenta **três** telas por `impacto()`, e a tela
+        que a D1 remove usa **`impactoDoMod`**, que está em `src/main.jsx` e não
+        em `volume.ts` — é a única que produz "antes → depois", só a ramificação
+        `troca` tem teste, e por isso a peça 3 **não é render**;
+        (3) `promoPendente` guarda **uma** mudança e **não tem regra de fusão** —
+        quinto campo persistido, passado à frente 0;
+        (4) no fecho **manual** não existe carregador nenhum, com a razão escrita
+        no fonte — tirada a pergunta, a mudança é descartada em silêncio;
+        (5) o placar do cardio está na aba TREINO, não em HOJE.
+        **Nove achados de capacidade sem lugar**, e os três primeiros importam:
+        o cartão do exercício fora da sessão não tem lugar em nenhum dos cinco e
+        leva quatro capacidades consigo (histórico com correção de série antiga,
+        renome, correção do tipo de carga, troca com histórico do substituto —
+        `openHist` tem **um único chamador** em todo o `src/`); as **catorze
+        regras de execução do treinador** (`RULES` em `src/dominio/programa.ts`)
+        não têm lugar em nenhuma das duas direções nem no §4 do plano; e **Dias
+        é o único dos cinco lugares sem desenho**, sendo o que recebe mais
+        capacidade pronta.
+        **Duas propostas que voltam à mesa dele:** a regra do palpite que vira
+        buraco (o §1.2 do plano mandou esta frente propor), resolvida por três
+        atos que o app já reconhece e sem carimbo novo; e o deload, que muda de
+        lugar contra uma razão escrita no fonte.
+        Também: a decisão de cinco campos de bioimpedância com quatro
+        obrigatórios **derruba a recusa 4 da D** ("recuso campo obrigatório") —
+        a decisão manda.
+      - **Nota de processo:** a frente 0 commitou com `git add -A` e varreu o
+        arquivo da frente 1 no `2a634b5` (nada perdido). Avisada, com a lista
+        dos arquivos dela. Ela também entrou em `tests/fluxo/fusao.test.js`,
+        fora do escopo que eu dei, mas a mudança é consequência correta de
+        `done` virar instante e preserva o que o teste protege — eu teria
+        autorizado.
 - [x] 5.d A rede do D13 antes de qualquer reescrita → disparada em 05/10
       (`a0889f72cb2470c26`), entrega `08-rede.md`. Cinco seções: uma linha por
       arquivo em linguagem de capacidade (os nove nomes de `promocao.test.js`
