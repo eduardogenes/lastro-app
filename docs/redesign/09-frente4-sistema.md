@@ -719,3 +719,330 @@ de valores do histórico —, e a direção redesenha aquela tela).
 **O que fica sem valor até alguém medir:** nada. Não deixei token sem valor, e
 onde eu não tinha de onde tirar o valor, eu o derivei de uma medida que está no
 fonte e escrevi a derivação.
+
+---
+
+## 2 · Os seis inegociáveis, e os três que a direção escolhida derruba
+
+`src/tokens.css` abre com seis regras numeradas, e `DESIGN.md` as repete com a
+razão de cada uma. **Medi a direção contra as seis.** Três caem, uma troca de
+valor e duas ficam. **Nenhum dos 38 casos diz uma palavra sobre as três que
+caem** — então, se este documento não disser, elas caem em silêncio.
+
+### 2.1 · Raio zero cai: 511 declarações contra 11
+
+**Inegociável 1:** *"Raio zero. Só ponto de status, thumb do slider e a
+miniatura do aparelho (10px) são redondos."*
+
+**Medi os dois lados:**
+
+| | declarações de `border-radius` | valores distintos |
+|---|---:|---:|
+| as folhas de hoje | **11** — 6 são `50%`, 3 são `0`, 1 é `var(--ins-radius)` (que é 0), 1 é `var(--ins-raio-foto)` (10px) | 3 |
+| os nove HTML da D | **511** | **20** |
+
+A regra de hoje não é frase num documento: ela é o estado do CSS. E o comentário
+em `src/componentes.css` conta a história: *"Antes havia uma regra que zerava o
+raio de TUDO dentro de `#app` — muleta enquanto as telas em string nasciam com 2
+a 12px. Não é mais necessária: nenhuma regra do projeto declara raio."* **A
+direção escolhida reinstala exatamente o que aquela muleta existia para matar.**
+
+**A decisão, e ela é da direção, não minha: o raio entra.** O dono escolheu a D
+depois de tocá-la, e a forma arredondada é parte do que ele tocou. O que eu
+decido é que ele entra **como escala**, não como 20 valores soltos.
+
+**A escala, derivada de medir os 84 seletores com raio dentro do telefone**
+(exclui o chrome da galeria e a moldura `.phone`, de 52px, que não existe no app):
+
+| token | valor | quem pinta com ele | medi |
+|---|---:|---|---:|
+| `--ins-raio-1` | `4px` | marca pequena: barra do descanso, puxador, ponto de pose, listra | **11** seletores (2, 3, 4, 5 px) |
+| `--ins-raio-2` | `8px` | pílula de valor: `.cellb`, etiqueta de foto, selo, quadradinho | **19** seletores (6 a 11 px) |
+| `--ins-raio-3` | `14px` | controle: botão, tecla do teclado próprio, campo, `.rep` | **32** seletores (12 a 16 px) |
+| `--ins-raio-4` | `20px` | bloco: cartão, painel, faixa, o quadro da foto | **18** seletores (17 a 22 px) |
+| `--ins-raio-5` | `26px` | **só a folha**, e só as duas quinas de cima | **1** seletor (`.sheet`) |
+| `--ins-raio-pil` | `999px` | o chip, que é pílula de verdade | **1** seletor (`.chip`) |
+| — | `50%` literal | ponto de status, ponto ao vivo, thumb do slider, o puxador da cortina | como hoje: fica literal, porque é círculo e não raio |
+
+**Cobertura medida: 84 de 84.** Nenhum seletor da direção precisa de um valor
+fora desta escala. Os 20 valores viram 6 degraus e o custo é de no máximo 2 px em
+cada declaração — e **eu não medi se 2 px de diferença aparecem**: isso é olho em
+tela, não aritmética.
+
+**O inegociável 1 passa a ser:** *"Raio em seis degraus, e o degrau diz o que a
+coisa é: 4 para marca, 8 para valor, 14 para controle, 20 para bloco, 26 só para
+a folha, pílula para o chip. Raio solto no meio das regras não entra — ele nasce
+nomeado, como cor."* E há um caso a escrever (§11), porque hoje não existe
+nenhum.
+
+### 2.2 · Mono mais display cai: a direção tem zero `font-family`
+
+**Inegociável 2:** *"Número em mono, prosa em display."* Space Grotesk mais IBM
+Plex Mono, com 16 papéis tipográficos repartidos entre as duas
+(`DESIGN.md`, Tipografia).
+
+**Medi os nove HTML: zero declarações de `font-family`.** Uma pilha de sistema
+só, no `body`:
+
+```
+font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+      Roboto, "Helvetica Neue", Arial, sans-serif
+```
+
+E **154** declarações de `font-variant-numeric: tabular-nums` (medi), que é o
+mecanismo que substitui a monoespaçada: o número alinha em coluna **sem** trocar
+de família.
+
+**A única exceção nos nove, e é a certa:** `.board` em `aula.html` —
+`font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace` — que é o quadro
+do box transcrito. Ali o monoespaçado **é o conteúdo**: é a reprodução de uma
+lousa escrita à mão, com colunas alinhadas por espaço.
+
+**A decisão: uma família, e o dígito tabular no lugar da monoespaçada.** Três
+razões, e duas são medidas neste produto:
+
+1. **O app não baixa fonte nenhuma hoje e não pode começar.** `index.html` não
+   carrega fonte externa (conferi), e `src/tokens.css` declara Space Grotesk e
+   IBM Plex Mono com `system-ui` e `ui-monospace` de reserva — isto é, **no
+   iPhone do dono, sem as fontes instaladas, o app já cai na pilha do
+   sistema hoje.** A família "do sistema" não é mudança: é o que ele já vê.
+2. **A razão do par era "eixo de contraste real"** (`DESIGN.md`): geométrica
+   contra grotesca monoespaçada. `tabular-nums` entrega a parte que importava —
+   dígito de largura fixa, para o número não dançar na coluna enquanto conta — e
+   perde a parte que era identidade.
+3. **E a perda é real, e eu a declaro:** o inegociável 5 ("rótulo mono em caixa
+   alta é estrutura, nunca ênfase") **cai junto**, porque ele é um papel da
+   monoespaçada. Sem mono, "rótulo de estrutura" passa a ser **caixa alta com
+   tracking e peso**, no mesmo corpo de família, e isso é um canal mais fraco: a
+   diferença entre rótulo e ênfase passa a depender só de tamanho e de tracking.
+
+**Os dois tokens:** `--ins-fonte` (a pilha do sistema) e `--ins-fonte-quadro`
+(`ui-monospace`, e **só** o quadro do box). Dois, não um, porque o quadro existe
+e é conteúdo.
+
+**O que vem de graça, e vale dizer:** `rem` (§4) é muito mais barato com uma
+família de sistema do que com duas fontes baixadas, porque não há métrica de
+fonte própria a reajustar a cada degrau de tamanho.
+
+### 2.3 · "Nunca sombra" cai pela metade, e a metade que cai é uma só
+
+**Inegociável 3:** *"Fio de 1px, não cartão… Nunca sombra. Nunca preenchimento
+para 'agrupar'."*
+
+**Medi:** as folhas de hoje têm **4** `box-shadow`, e **as quatro são fio
+desenhado como sombra**: `inset 0 -1px 0 var(--ins-acid)` em `.rirbtn.on`,
+`inset 0 -1px 0 var(--ins-border)`, `inset 0 -1px 0 var(--ins-acid)` e
+`inset 0 0 0 1px var(--ins-text)` em `.cal-d.hoje`. **Zero sombra projetada.** A
+regra é cumprida à risca.
+
+Os nove HTML da D têm **58** `box-shadow` não-`none` (medi). A maioria é a mesma
+coisa — `inset 0 0 0 1.5px <cor>`, fio desenhado como sombra, em pílula de
+estado. **Mas há uma sombra projetada de verdade, e ela é da folha:**
+
+```
+.sheet { box-shadow: 0 -12px 40px rgba(0,0,0,.22) }
+```
+
+Mais `0 2px 8px rgba(0,0,0,.35)` no puxador da cortina e
+`0 2px 14px rgba(0,0,0,.55)` como `text-shadow` no número do anel.
+
+**A decisão: `inset` continua permitido e sombra projetada entra em UM lugar
+só — a folha —, e a razão é de camada e não de estilo.** A folha é
+`position: fixed` cobrindo a tela, e o que precisa ficar visível é **onde ela
+acaba e onde o conteúdo de baixo começa**. Hoje isso é resolvido com `--ins-veu`
+atrás dela; a sombra de 12 px acima da borda de cima é o segundo canal da mesma
+informação, e com `--ins-raio-5` nas quinas de cima ela diz "esta coisa está por
+cima". **As outras duas saem:** o puxador da cortina e o número do anel ficam com
+o seu limite desenhado (borda, ou a diferença de cor contra `--ins-foto-fundo`),
+porque ali a sombra é só para destacar de cima de uma fotografia, e fotografia é
+o único lugar do app onde a cor de fundo é desconhecida — a resposta certa para
+fundo desconhecido é **contorno**, não sombra.
+
+**"Nunca preenchimento para agrupar" fica, e aqui o número é incômodo:** medi em
+§1.5 que `--ins-superficie-2` difere de `--ins-tela` por **1,08:1** no claro e
+1,27:1 no escuro. A direção usa esse preenchimento para agrupar em **muitos**
+lugares (`.row`, `.sk`, `.kp button`, `.acts button`). **Então o preenchimento
+quase não agrupa — e é exactly o R-D7 da auditoria**, que mediu 32 controles cujo
+único canal é esse preenchimento, a 1,08:1 a 1,20:1. A resposta está em §5.5 e
+em §1.5: **onde o preenchimento é o único canal de um controle, ele ganha
+`--ins-fio-controle` de 1,5 px.** O inegociável 3 fica inteiro nesta parte, e
+consertar o R-D7 é cumpri-lo.
+
+### 2.4 · O acento troca de cor e continua significando
+
+**Inegociável 4:** *"Um acento, e ele significa. Ácido = agora / feito / seu /
+aperte aqui. Âmbar = preste atenção. Coral = destrói dado. No máximo um elemento
+ácido COMPETINDO em cada região da tela, e nunca ácido por comparação favorável."*
+
+O acento passa de **ácido `#CBF35E`** (verde-limão) para **`#3833DB` / `#9E9BFF`**
+(índigo). A estrutura fica: um acento, âmbar de atenção, e um terceiro sinal.
+**O que muda é o significado do terceiro** (§1.3): de "destrói dado" para "pare".
+
+**As duas metades que ficam valendo sem emenda**, e as duas são as que mais
+custam:
+
+- **No máximo um elemento de acento competindo por região.** Esta é a que não tem
+  caso de teste e não vai ter: ela é de composição, não de fonte. Fica no
+  documento e no olho de quem revisa.
+- **Nunca acento por comparação favorável.** "Melhor que antes" é elogio, e o app
+  não comemora por cor — `MARCA.md`, `PRODUCT.md` e `DESIGN.md` dizem a mesma
+  coisa em três lugares, e `docs/design-review/05-movimento.md` estendeu a
+  proibição de comemorar a "quadro e curva, não só frase". **Vale para o índigo
+  igual: a seta que sobe no gráfico de força não é da cor do acento.**
+
+### 2.5 · O que fica inteiro
+
+**Inegociável 6, "quase nenhum movimento", fica — e é a seção 8, que é onde ele
+sangra.**
+
+E uma coisa que a direção faz melhor do que o app e que eu quero deixar escrita,
+porque é a única das seis onde a troca é ganho de graça: **a direção não usa
+`backdrop-filter`.** Medi: zero nos nove arquivos, e zero `will-change`, zero
+`contain`, zero `perspective`. As folhas de hoje têm duas ocorrências da palavra
+`backdrop-filter` e **as duas são comentários dizendo que ele não é usado**, com
+a razão escrita: *"Sem backdrop-filter: pisca no Blink ao rolar e o sistema não
+tem vidro"* (`.ins-tabbar`) e *"opaco: o conteúdo passa POR BAIXO e precisa
+sumir, não borrar"* (`.tc-topo`). **É a preferência global do dono, e os dois
+lados já concordam com ela.** Fica como está: **zero vidro**, e o fundo
+compensado com opacidade cheia.
+
+E a consequência de camada vem junto, porque é o caso *nada entre a folha e a
+janela cria bloco de contenção*: **zero `transform`, `filter`, `perspective`,
+`backdrop-filter`, `will-change` e `contain` em `html`, `body`, `:root`, `*` e
+`#app`.** A direção já cumpre (medi: o único `#app` dela declara
+`position`, `height`, `width`, `overflow` e `background`). O caso vai inteiro.
+
+---
+
+## 3 · A escala
+
+### 3.1 · Espaço: 93% da direção já cai na escala de hoje
+
+**Medi todos os `padding`, `margin` e `gap` dos nove HTML: 2.599 ocorrências de
+valor em px.** Contra a escala que o caso *espaço vertical fica na escala de 4*
+já aceita — `1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 26, 34, 46` mais as quatro
+exceções `3, 5, 9, 17`:
+
+| | ocorrências |
+|---|---:|
+| **dentro da escala** | **2.410 (93%)** |
+| fora | 189 (7%) |
+
+**Os nove valores que ficam fora**, com a contagem de cada:
+`7px` (26), `11px` (48), `13px` (29), `15px` (1), `18px` (16), `28px` (23),
+`30px` (8), `36px` (6), `40px` (24), `56px` (8).
+
+**Isto é a melhor notícia deste documento.** A escala de espaço do sistema velho
+e a da direção nova são quase a mesma escala, e nove valores em 2.599 é o que
+separa as duas. **Decisão: a escala fica exatamente como está**, e os 189
+ocorrências fora dela são realocadas para o degrau vizinho:
+
+| fora | vai para | quem usa, e o que muda |
+|---|---|---|
+| `7px` | **6** | `.cellb{padding:1px 7px}` e `gap:7px`. É o alvo de corrigir no lugar; 1 px de cada lado |
+| `11px` | **12** | `.warn{padding:11px 13px}`, `.board`, `.kp`. Um pixel |
+| `13px` | **12 ou 14** | idem |
+| `18px`, `15px` | **16 ou 20** | — |
+| `28px`, `30px`, `36px` | **26 ou 34** | são vãos de seção |
+| `40px`, `56px` | **34 ou 46** | `46` já está na escala e é o token de toque |
+
+**O que isto custa, dito:** nenhuma mudança passa de 2 px por declaração. **Não
+medi se a soma delas muda a altura de alguma tela** — é olho em tela, e a lição
+que motivou o caso está escrita nele: *"Valor solto no meio não quebra nada
+visivelmente; só vai afrouxando o ritmo até a tela ficar 20% mais alta sem
+ninguém saber por quê. Foi o que aconteceu."* **Então a realocação se faz uma
+vez, com a tela aberta ao lado, e não a cada regra.**
+
+**E os buracos de §0.2 se consertam na mesma gravação**, porque sem eles a
+medição acima é a última vez que alguém sabe o número: o caso passa a ler as
+cinco folhas (não três), a cobrar os longhands laterais e de eixo, a aceitar
+decimal sem lê-lo errado, e a não atravessar `}`.
+
+### 3.2 · Tipo: a direção não tem escala, e o app tem
+
+**Medi os nove HTML: 28 tamanhos distintos**, incluindo meio pixel — 10,5, 11,5,
+12,5, 13,5, 14,5 e 15,5 — e todos os inteiros de 11 a 26. **Isso não é escala, é
+contínuo.** Na soma: 1.173 declarações de tamanho dentro do telefone.
+
+**O app tem escala**, e é a melhor coisa que o sistema velho entrega para esta
+frente: `DESIGN.md`, Tipografia, com **16 papéis**, cada um com fonte, tamanho,
+peso e tracking, e com os pisos escritos:
+
+> *"Pisos: nunca abaixo de 9px em rótulo mono, 13px em prosa, 16px em campo de
+> texto (Safari), 15px em nome tocável."*
+
+**A escala nova, derivada da distribuição medida da direção** — cada degrau
+nasce do aglomerado maior da faixa, e o número de usos está ao lado para mostrar
+que o degrau não foi escolhido por simetria:
+
+| papel | px | usos medidos na faixa | quem pinta com ele, na direção |
+|---|---:|---:|---|
+| `--ins-t-rotulo` | 11 | 48 + 15 (11,5) | `.tab` (o rótulo da barra), `.foto .tag`, `.cort .mk`, `.hip` |
+| `--ins-t-meta` | 12 | 157 + 41 (12,5) | `.alvo`, `.also-l`, `.dl .nm small` — meta e **procedência** (§7) |
+| `--ins-t-apoio` | 13 | 223 + 12 (13,5) | `.ask p`, `.band2 .tx` — prosa de apoio |
+| `--ins-t-corpo` | 14 | **274** + 3 (14,5) | `.band>p`, `.chip`, `.acts button` — **o degrau mais usado da direção** |
+| `--ins-t-corpo-forte` | 15 | **154** + 10 (15,5) | `.ask>b`, `.cheia .vz`, `.ag-d .hr` |
+| `--ins-t-nome` | 17 | 27 + 21 (16) + 9 (18) | `.cellb`, `.ref td`, `.band>b`, `.opt b`, `.primary` |
+| `--ins-t-titulo` | 20 | 25 + 10 (19) + 21 (21) | `.sh-t`, `.sheet h3`, `.ghost`, `.nav h2` |
+| `--ins-t-tela` | 24 | 18 (24) + 17 (23) + 18 (25) | `.ag-d`, `.ex`, `.now h3`, `.kp button` |
+| `--ins-n-m` | 26 | 10 + 9 (22) | `.rep` — **o número da régua** — e `.rir button` |
+| `--ins-n-l` | 34 | 11 | `.rest-t` (o descanso), `.band2 .n2` |
+| `--ins-n-xl` | 40 | 9 + 6 (38) | `.disp b` (o visor do teclado próprio) e `.big .n1` (o número que a tela é sobre, em Corpo e Semana) |
+
+E a família da **foto em tela cheia**, que tem escada própria porque é lida **a
+três metros** (é a situação C7: sozinho, longe do aparelho, sem alcançá-lo — e a
+auditoria registra que ninguém mediu se ele lê a tela a essa distância):
+`--ins-n-foto-1: 32px`, `-2: 44px`, `-3: 76px` — `.cheia .giant.sm`,
+`.cheia .giant` e `.cheia .ring b`. **Três degraus, 18 declarações medidas, e
+nenhum deles encolhe**, porque encolher o número que ele lê de longe é a única
+mudança desta seção que teria custo conhecido.
+
+**Doze papéis mais três de foto, de 28 tamanhos.** Quatro dos doze são número,
+e eles existem separados porque o número é o que o produto é sobre.
+
+**O que a redução custa, e eu digo com números medidos:**
+
+| movimento | declarações | quais |
+|---|---:|---|
+| meio pixel | **88** | 10,5 · 11,5 · 12,5 · 13,5 · 14,5 · 15,5 |
+| um pixel | **96** | 16→17 (21), 18→17 (9), 19→20 (10), 21→20 (21), 23→24 (17), 25→24 (18) |
+| dois pixels | **15** | 22→24 no `.rir button` (9) e 38→40 no `.big .n1` (6) |
+| nenhum | **18** | a família da foto, que fica |
+
+**Não medi se alguma delas quebra uma linha** — um nome que cabia em 23 px e não
+cabe em 24 quebra para a segunda linha, e isso é layout, não aritmética. É a
+única parte desta seção que precisa de olho em tela, e o lugar mais provável é
+`.ex` e `.now h3` (25→24, que **encolhe**, então não quebra) contra `.ag-d` e
+`.go` (23→24, que **cresce**).
+
+**E o piso sobe, porque três declarações de hoje estão abaixo do piso escrito do
+próprio projeto.** Medi nas folhas de hoje:
+
+| | tamanho | quem |
+|---|---:|---|
+| `.chart .axu` | **7,5px** | a unidade do eixo do gráfico |
+| `.cal-h` | **8,5px** | o cabeçalho de dia da semana no calendário (S T Q Q S S D) |
+| `.cal-d .per` | **8px** | o marcador de período no dia do calendário |
+
+O piso escrito é **9px em rótulo mono**. Estas três estão abaixo dele, e **nenhum
+dos 38 casos olha tamanho de fonte fora de `input, textarea, select`.** A regra
+existe, está escrita, e não tem rede.
+
+> **Requisito 4 · O piso é 11px, e ele tem rede.** `--ins-t-rotulo: 11px` é o
+> menor degrau, e nada desce abaixo dele. **Uma exceção, declarada:** texto
+> dentro de `<svg>` de gráfico pode ir a **9px**, porque ali o texto é eixo
+> — lido de perto, sentado, com o número grande ao lado dizendo a mesma coisa —
+> e porque o degrau de 11 px no eixo rouba largura da área de desenho. A exceção
+> é por seletor e com a razão na própria regra, como o projeto já faz com os
+> chips que param em 37 e 41 px de alvo (`DESIGN.md`, Toque).
+>
+> **O caso que falta:** nenhum tamanho de fonte abaixo de 11px nas folhas, exceto
+> dentro de uma regra que case `svg` ou `.chart`. Hoje ele ficaria **vermelho**
+> em três lugares, e é por isso que ele vale.
+
+**E uma nota de leitura, para a próxima pessoa não "consertar" o que está
+certo:** medi que **183 das 221** declarações de tamanho nas quatro folhas de
+regra estão abaixo de 16px. **Isso não é defeito** — a escala do projeto põe o
+piso da prosa em 13 e o do rótulo em 9, de propósito, e 16px é o piso de
+**campo de texto**, por causa do zoom do Safari. O que é defeito é outra coisa, e
+está em §4.
