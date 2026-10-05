@@ -2280,3 +2280,140 @@ direção acrescenta `overscroll-behavior: contain` em `.scroll` e em
 `.sheet .sbody`, que é o que impede o rolar de dentro de uma folha de virar
 rolar da página atrás. **Isso fica**, e é a única coisa da casca da direção que
 entra sem discussão.
+
+---
+
+## 9 · As duas cascas incompatíveis
+
+A frente 2 achou isto conferindo outra coisa (§1.3, R7 dela) e me deixou:
+*"quem portar o protótipo escolhe a casca do app, não a dele. Copiar `body
+{ overflow: hidden }` junto com o resto deixa o caso **vermelho** — e, pior, por
+um motivo que parece arbitrário para quem não leu o comentário, o que convida a
+mexer na asserção em vez de na casca."*
+
+**É maior do que uma linha de `body`.** Medi as duas cascas inteiras, e elas são
+dois modelos de rolagem opostos.
+
+### 9.1 · O que cada uma é, medido
+
+| | **o app**: a janela rola | **a direção**: rola por dentro |
+|---|---|---|
+| `html, body` | `overscroll-behavior: none`, **sem altura** | `height: 100%`, `overscroll-behavior: none` |
+| `body` | `min-height: 100vh; min-height: 100svh; overflow-x: clip` | **`overflow: hidden`** |
+| o contêiner | `#app { max-width: 460px; margin: 0 auto; padding-bottom: calc(--ins-tabbar + --ins-timer-h + --ins-faixa-h + --ins-9) }`, **sem `overflow`** | `#app { position: relative; height: 100vh; height: 100svh; overflow: hidden }` |
+| a tela | — | `.screen { position: absolute; inset: 0; display: flex; flex-direction: column; min-height: 0 }` |
+| quem rola | **a janela** | `.scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain }` |
+| o topo preso | `position: sticky` em `.tc-topo` (`top: 0`) e `.day-rel` (`top: var(--sa-top)`) | **irmão de flex**: `.top { flex: none; padding-top: env(safe-area-inset-top) }`. **Zero `position: sticky` nos nove arquivos** (medi) |
+| o rodapé preso | `position: fixed; bottom: 0` na tab bar; `bottom: var(--ins-tabbar)` no cronômetro | **irmão de flex**: `.bot { flex: none; padding-bottom: env(safe-area-inset-bottom) }` |
+| a folha | `position: fixed; inset: 0` (`.ins-folha-w`) | **`position: absolute; inset: 0`** dentro do `#app` (`.ov`) |
+| a trava de rolagem da folha | `body.ins-travado { position: fixed; inset: 0; overflow: hidden }`, com `body.style.top = -scrollY` | nenhuma: o `body` já não rola |
+
+**As duas funcionam. O que não funciona é a mistura**, e o problema não é
+estético: é que **metade do app de hoje lê e escreve a rolagem da janela.**
+
+### 9.2 · A decisão: a casca do app, e a razão é medida
+
+**Medi o que depende de `window` rolar:**
+
+| | quantos |
+|---|---:|
+| `window.scrollTo(…)` em `src/main.jsx` | **19** |
+| `window.scrollY` lido | **3** (`saiDoDestino`, `folha.jsx`, e o comentário de `mudaMes`) |
+| `scrollDoDestino[chave]` — a posição guardada por destino | 5 referências |
+| `scrollIntoView` | 2 |
+| `.focus({ preventScroll: true })` | 3 |
+| `history.scrollRestoration = 'manual'` | 1, em `src/ui/navegacao.js`, **com a medição escrita no comentário** |
+| `scroll-margin-top: calc(var(--sa-top) + var(--ins-relogio))` em `.ex` | 1, **com caso próprio** |
+
+**E a trava da folha é o caso que decide**, porque ela falha em silêncio. Conferi
+`src/ui/instrumento/folha.jsx`: ela lê `window.scrollY`, escreve
+`body.style.top = -${y}px`, põe a classe `ins-travado` — que é `position: fixed;
+inset: 0` — e devolve a posição ao fechar. **O comentário diz por que é assim:**
+*"`position: fixed` é o único jeito confiável no iOS — `overflow: hidden` sozinho
+não segura o scroll de toque."*
+
+**Com a casca da direção, `window.scrollY` é sempre zero.** Então
+`body.style.top = "-0px"` não faz nada, a trava não trava, e o conteúdo atrás da
+folha continua rolando com o dedo no iOS — **que é exatamente o defeito que
+aquele código existe para consertar.** E nada estoura: `window.scrollTo` num
+`body` que não rola é uma função que retorna sem erro.
+
+> **Requisito 21 · A casca é a do app. A JANELA é quem rola.** A tela da sessão
+> **não** vira uma coluna de altura fixa com rolagem interna. O cabeçalho é
+> `position: sticky`; a zona do polegar é `position: fixed; bottom: 0`, com a
+> altura reservada por token no `padding-bottom` do `#app`, do mesmo jeito que a
+> tab bar, o cronômetro e a faixa da sessão já fazem.
+>
+> **O token novo é um só, e segue o padrão que já existe e já tem razão escrita:**
+> `--ins-regua-h`, nascendo `0px` no `tokens.css` e escrito pelo componente
+> quando a zona do polegar está na tela — como `--ins-timer-h` e
+> `--ins-faixa-h`. O `padding-bottom` do `#app` passa a somar as quatro parcelas.
+
+### 9.3 · A razão, escrita de forma que a próxima pessoa não precise achar o comentário
+
+Isto é o que a frente 2 pediu, e é o único bloco deste documento escrito para ser
+copiado para dentro do CSS:
+
+> **Por que o `body` deste app não pode ter `overflow`, e por que `clip` não é a
+> mesma coisa que `hidden`.**
+>
+> *Quem rola nesta interface é a janela. O cabeçalho de cada destino fica preso
+> no topo por `position: sticky`, e `sticky` se ancora no primeiro ancestral que
+> for um contêiner de rolagem. Qualquer `overflow` diferente de `visible` em
+> `html`, `body` ou `#app` cria esse contêiner — e aí o cabeçalho deixa de se
+> ancorar na janela e passa a subir junto com o conteúdo, desaparecendo sob a
+> barra do Safari. **Não há erro, não há aviso: o cabeçalho simplesmente some ao
+> rolar, no telefone, e não no computador.** Como o cabeçalho é a única saída
+> visível de um destino de tela cheia, perdê-lo é ficar preso.*
+>
+> *`overflow-x: hidden` não escapa disso: quando um eixo é `hidden`, o outro
+> passa a valer `auto`, e `auto` é contêiner de rolagem. `overflow-x: clip` é a
+> única forma que corta sem criar contêiner, e é por isso que o `body` tem `clip`
+> e não `hidden`. O `clip` está aqui para matar o rubber-band — puxar além do fim
+> revelava uma faixa do fundo que não devia existir — e não para esconder
+> conteúdo.*
+>
+> *E `clip` tem um preço que precisa ficar dito: conteúdo mais largo que a tela
+> **desaparece em vez de rolar**. Numa janela de 320 px isso satisfaz o critério
+> de reflow (não há rolagem horizontal de página) e **perde função** (há conteúdo
+> inalcançável, sem nenhum sinal). Quem medir larguras estreitas tem de anotar as
+> duas coisas em colunas separadas: **cortado não é rolável.***
+>
+> *A folha depende da mesma escolha por outro caminho: ela é `position: fixed`, e
+> a trava de rolagem do corpo enquanto ela está aberta lê `window.scrollY` e
+> escreve `top: -Ypx` no `body`. Se a janela não rolar, `scrollY` é zero, a trava
+> não trava, e no iOS o conteúdo atrás da folha volta a rolar com o dedo — sem
+> erro nenhum.*
+>
+> *Em resumo: **`overflow-x: clip` no `body`, e mais nada.** Nem no `body`, nem no
+> `html`, nem no `#app`. Se uma tela precisar de rolagem interna, ela declara o
+> `overflow` **no elemento que rola**, e esse elemento não pode estar entre um
+> `sticky` e a janela.*
+
+### 9.4 · E o buraco que nenhum dos 38 casos pega — medido
+
+O caso *nenhum ancestral do sticky vira scroll container* inspeciona **só
+`body`**, e só em `base.css` (conferi a linha: `const corpo = regras(base,
+'body')`). A frente 2 o achou (buraco 4 dela). **Eu medi, e a direção escolhida
+já traz o defeito pronto:**
+
+`prototipo.html:53` declara
+`#app { position: relative; height: 100vh; height: 100svh; width: 100%; overflow: hidden; background: var(--bg) }`.
+
+Portei esse CSS para dentro de `componentes.css` e rodei os 38 (§0.3): **o caso
+ficou verde.** Um `overflow: hidden` em `#app` mataria o `sticky` do cabeçalho do
+modo de sessão — que é onde mora a única saída visível (frente 1, §4.3, item 5) —
+e **nenhum dos 38 casos diria uma palavra.**
+
+> **Requisito 22 · O caso passa a inspecionar a cadeia inteira, e a cadeia é
+> conhecida.** `html`, `body`, `:root`, `*` e `#app` — a mesma lista que o caso
+> *nada entre a folha e a janela cria bloco de contenção* já usa, e é de fonte e
+> não de DOM pela mesma razão escrita lá: *"o defeito nasce de uma linha nova em
+> `html`, `body` ou `#app`, não da árvore."*
+>
+> **Os dois casos passam a olhar a mesma árvore**, e isso é o conserto do buraco
+> 4 da frente 2: hoje um olha `body` e o outro olha cinco seletores, e o vão entre
+> as duas listas é exatamente onde o `#app` cabe.
+>
+> **E `overflow-x: clip` continua autorizado, por nome, com a razão na própria
+> asserção** — senão o conserto mata a regra que o `clip` serve.
