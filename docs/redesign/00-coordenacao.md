@@ -1113,6 +1113,77 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       - [~] **As três tarefas marcadas como feitas sem resultado:** Neston,
         ledger do ajuste e a passada da pinça. Marcar feito não traz o número —
         **os três resultados foram pedidos a ele em 06/10.**
+      - **Frente 3 ENTREGUE em 06/10** (`ab327d8807b2d792d`),
+        `09-frente3-palavras.md`, 2.085 linhas, 14 seções, 7 commits. **Quinta e
+        última frente.** Os cinco nomes confirmados; o rótulo mono substituído
+        (decisão 12); "falhou" contra "vai destruir" escrito nas duas famílias; a
+        folha, a lista que vence, os portões, os sete estados, corrigir no lugar,
+        as três saídas e a bioimpedância; e oito frases que nomeiam regra em
+        seção separada.
+      - **DOIS ERROS MEUS que ela achou, e os dois confirmei:**
+        1. **A frente 1 achou SETE afirmações erradas, não cinco.** O §7 dela
+           abre com "Sete pontos" e a tabela tem sete linhas. Eu relatei cinco ao
+           dono porque repassei o relatório de entrega dela, **não o documento**.
+           As outras duas contas batem (frente 2 = seis, frente 4 = nove).
+        2. **A frente 1 NÃO propôs o lugar novo do deload — ela recusou
+           propor.** Literal: *"Não é decisão minha: é regra, e sobe com os dois
+           argumentos escritos."* Quem propôs o menu `···` foi a **Direção D**.
+           Eu escrevi "muda de lugar como a frente 1 propôs" no cartão da
+           pergunta 6 **e** no briefing da frente 3.
+           **E o cartão subestimou o que ele decidia.** A razão escrita em
+           `src/ui/telas/guia.jsx` é: *"um interruptor que corta metade das
+           séries não deve estar a um toque no meio de uma sessão. O app existe
+           em parte para frear, e o caminho de menor esforço tem que ser o
+           conservador."* **O lugar ERA o freio.** Levado de volta a ele em
+           06/10, com a mitigação que a frente 3 escreveu: o item do menu deixa
+           de ser interruptor com nome e passa a dizer o corte em número antes do
+           toque — *"Deload hoje · corta 20 séries para 10, nas mesmas cargas"* —,
+           o que põe o freio na palavra, já que ele saiu do lugar.
+      - [ ] **O NOME DA MEDIDA DA BIOIMPEDÂNCIA, e é urgente porque já está no
+        código.** Ele disse **"massa magra"** em 14.11 e **"massa muscular
+        esquelética"** em P3 (`00-coordenacao.md:482` e `:638`). **São dois
+        números diferentes na mesma balança**, não sinônimos: massa magra é tudo
+        que não é gordura (osso, água, órgãos); massa muscular esquelética é só o
+        músculo. A migração 10 seguiu o P3, que é a resposta mais recente e mais
+        específica: `MEDIDAS_DO_CORPO` tem `bioMusculo` = *'massa muscular
+        esquelética'* (`src/dominio/corpo.ts:46`, conferi). **Se ele quis massa
+        magra, o campo está errado agora** — e, como a tela vai pedir o número
+        pelo nome, a série fica errada para sempre. Barato hoje, caro depois.
+      - **Resolvido por implicação, não vai à mesa dele:** a decisão 5 derrubou
+        também a segunda metade do requisito da frente 2 — *"a refeição cuja hora
+        passou há menos de 30 minutos fica sem marca"* (`09-frente2-interacao.md`
+        linha 807, conferi), que ninguém tinha nomeado. Se a passagem de horário
+        pré-marca, pré-marca. A frente 3 escreveu palavras que valem nos dois
+        casos porque nomeiam a **causa** da marca: *"A ceia vem marcada porque
+        passou das 21h30, não porque o app sabe."*
+      - [ ] **5.b''' QUATRO da frente 3 na mesa dele**, duas nascidas das
+        respostas de 06/10:
+        1. **Qual é a adesão de um dia com uma refeição em "não sei".** A decisão
+           2 moveu "Não sei" para a refeição e **não disse o que isso faz com o
+           dia**. Peso 0 subestima; peso 1 **infla** — e inflar adesão é o
+           mecanismo exato do corte errado do F292. As duas versões estão
+           escritas; vale a B enquanto ele não disser, porque é o que o app já
+           faz.
+        2. **Para que lado o silêncio cai na pergunta do "fora do plano".** A
+           decisão 4 tirou o bloqueio, e a ausência de resposta hoje cai no lado
+           que **infla**. Com o bloqueio, a pergunta nunca ficava sem resposta.
+        3. **Se "Evolução" volta.** A partição em Corpo e Semana apagou a palavra
+           dele do produto: 12 ocorrências na primeira rodada, **zero** nas sete
+           telas da segunda. Proposta: volta como nome do destino de leitura em
+           Corpo, no lugar de "Histórico".
+        4. **Se a promessa "a tela não vai pedir isso de novo em outro lugar" é
+           cumprível.**
+      - **Ela contraria quatro regras de voz, todas reunidas com a razão** — e a
+        primeira é consequência direta da decisão 13: *"Isso não tem volta"*
+        fica, e **passa de redundância a canal**, agora que a cor não diz mais
+        "destrói dado". Também: conferiu os 23 `confirm()` do app e achou que
+        **só nove destroem dado que o aparelho não reconstrói** — pintar os 23 de
+        "pare" mataria o painel.
+      - **Correção a uma régua minha:** a recusa de linguagem metafórica pelo
+        dono **não existe como proibição escrita**; o que existe é o pedido dele
+        de 02/10, registrado, de traduzir o vocabulário dos designers para o que
+        acontece na tela. Vale como régua deste projeto, **não** como argumento
+        contra outra pessoa. Eu a citei como proibição em três briefings.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
