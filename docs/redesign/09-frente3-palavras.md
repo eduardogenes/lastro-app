@@ -7,7 +7,8 @@ lugares**.
 A régua é `04-voz.md`: oito regras de voz, cada uma com motivo e prova, escritas
 por C4. Eu não as reabro. Onde uma palavra minha contraria uma delas, **eu digo
 qual regra e por quê**, no lugar onde a palavra aparece — e não passo por cima
-em silêncio. São três casos no documento inteiro, e estão em §11.5.
+em silêncio. São **quatro** casos no documento inteiro, e eles estão reunidos em
+§12.3.
 
 **Nenhuma linha deste arquivo tem estimativa de prazo ou de horas.** Ninguém
 mediu isso. E nenhuma frase daqui foi lida por ele numa tela: o protótipo foi
@@ -73,9 +74,17 @@ menos de 10% da borda, escrevo "no limite", como ela.
 
 **Uma régua minha, que vale para tudo abaixo.** Se uma frase precisa de
 explicação para ser entendida, ela está errada. E nenhuma palavra deste
-documento é metáfora: o dono recusou linguagem figurada neste projeto por
-escrito, e "a lápis", "passar a caneta", "no escuro" e afins não aparecem aqui
-nem como ilustração.
+documento é metáfora — "a lápis", "a tinta", "hachura", "visto", "passar a
+caneta" não aparecem aqui nem como ilustração.
+
+**A prova disso, e ela é mais fraca do que me foi dito.** Eu procurei uma recusa
+literal de linguagem figurada pelo dono e **não achei**. O que o registro tem é
+isto, em `00-coordenacao.md`, na linha de 02/10: *"Peça visual de comparação
+feita para o dono (artefato publicado, em linguagem direta: o vocabulário dos
+designers — lápis, tinta, hachura, visto — foi traduzido para o que acontece na
+tela, **a pedido dele**)."* **Ele pediu a tradução, não escreveu a recusa.** A
+régua é a mesma na prática, e eu a sigo; mas ela é um pedido registrado, não uma
+proibição dele, e a diferença fica escrita (§13, item 6).
 
 ---
 
@@ -1830,3 +1839,241 @@ E a recíproca, que é o que torna a exceção honesta: **sair da folha sem toca
 "Guardar os cinco" não grava nada, e a tela diz isso antes** —
 **"Nada está registrado até você tocar em Guardar os cinco."** É a mesma frase da
 folha de pôr em dia (§4.1), com o botão no lugar do toque.
+
+---
+
+## 11 · As frases que nomeiam uma regra
+
+**Esta seção é separada das outras de propósito.** Tudo acima descreve tela: o
+que está escrito, e o que isso diz ao dono. **O que está aqui define regra** — se
+uma destas frases mudar, o comportamento do produto muda com ela, e nenhuma delas
+é decisão de quem escreve palavras.
+
+### 11.1 · As oito frases, e só estas
+
+| # | a frase | a regra que ela define | onde |
+|---|---|---|---|
+| 1 | **Cada mudança vence quando aquele treino voltar. Se você não decidir até lá, ela fica como só daquele dia.** | O prazo da mudança do dia é por **posição**, não por data; e o vencimento resolve para "só daquele dia", não para permanente nem para o silêncio | §5.3 |
+| 2 | **Dá para fazer entrar no Treino B até a próxima vez dele.** | O desfazer do vencimento tem prazo, e o prazo é mais um retorno daquele treino (decisão 8) | §5.6 |
+| 3 | **A segunda passa a contar para a regra do nutricionista: 3 dias conhecidos nos últimos 14. A regra pede 11.** | Um dia com **uma** marca qualquer é dia conhecido — inclusive uma marca de "não comi". É o portão `MIN_REGISTRADOS = 11` e é a definição de adesão | §4.3 |
+| 4 | **Sem resposta, a segunda conta como se tivesse seguido o plano.** | Com a pergunta do fora do plano deixando de bloquear, o silêncio empurra o dia para `aderencia: 'plano'` — o lado que **infla** a adesão | §4.4 |
+| 5 | **O almoço fica desconhecido. A segunda continua contando, com uma refeição de cinco que a regra não sabe ler.** (versão A) **ou** **Sem saber quanto foi o almoço, a segunda inteira deixa de contar para a regra: 3 dias conhecidos passam a 2.** (versão B) | O que um "não sei" por refeição faz com a adesão do dia. **As duas versões estão escritas porque a regra não existe ainda** | §4.5 |
+| 6 | **Taxa: cumprida** · **Força: cumprida — não está subindo** · **Adesão: falta — 1 dia de 14** | Os três portões da regra do nutricionista, e qual condição cada um verifica. "Força cumprida" significa força **não** subindo, e a frase tem de dizer as duas metades | §6.2 |
+| 7 | **Enquanto a adesão não chega a 11, o veredito não muda, por mais pesagem que entre. A tela não vai pedir isso de novo em outro lugar.** | Uma promessa sobre o produto: o portão da adesão cobra num lugar só. Se não for cumprida, a frase sai | §6.3 |
+| 8 | **O peso da manhã é o que a regra do nutricionista lê. O peso da balança de bioimpedância fica com os outros quatro números dela, e não entra na média da semana.** | Qual dos dois pesos alimenta `mediasSemanais` e o veredito — e, por consequência, qual dos dois decide comida | §10.2 |
+
+**Três frases que parecem nomear regra e não nomeiam**, para a lista não crescer
+sozinha:
+
+- **"Pulada não é esquecida: ela fica escrita como pulada e não volta a ser
+  pedida."** — descreve o que o dado já faz (`estadoEx` devolve `'pulado'`
+  separado de `'nada'`, conferi), e a reversibilidade já é regra testada
+  (`tests/fluxo/ciclo.test.js`, 18 casos). Nada a decidir.
+- **"Deload desligado. As 10 séries voltaram… e as 2 que você já registrou
+  ficam."** — é a decisão 7 dita; a regra já foi decidida por ele.
+- **"o fim é agora, 7h31"** — descreve `fechaSessao('manual')`, que já é o
+  código.
+
+### 11.2 · O que sobe à mesa dele, e é só isto
+
+| o que | onde | por que sobe |
+|---|---|---|
+| **Qual é a adesão de um dia com uma refeição em "não sei"** — versão A ou versão B | §4.5 | A decisão 2 moveu "Não sei" para a refeição e **não disse o que isso faz com o dia**. Peso 0 na refeição desconhecida subestima a adesão; peso 1 a infla, e inflar adesão é o mecanismo exato do corte errado de F292. A pergunta é de regra do nutricionista, não de palavra. **Escrito enquanto isso: a versão B**, porque é o que o dado faz hoje |
+| **Para que lado o silêncio cai, na pergunta do fora do plano** | §4.4 | A decisão 4 tirou o bloqueio. Com o bloqueio, a pergunta nunca ficava sem resposta; sem ele, fica — e `aderencia` ausente é `'plano'`. **Isto é novo: nasceu da decisão dele, e nenhuma frente o nomeou** |
+| **Se "Evolução" volta como nome do destino de leitura em Corpo** | §1.7 | É palavra dele, dita duas vezes (P6, P8), e a partição de Evolução em Corpo e Semana a apagou do produto: zero ocorrências nas sete telas da segunda rodada. V7 manda que a palavra dele vença a minha, então **o escrito é "Evolução"** — mas trocar "Histórico" por ela é troca de uma palavra dele por outra, e isso é dele |
+| **Se a promessa "a tela não vai pedir isso de novo em outro lugar" é cumprível** | §6.3 | É a única frase do material que promete o que o produto **não** vai fazer. Se o portão da adesão cobrar em Agora também, a frase passa a ser falsa e sai |
+| **"Massa muscular esquelética" contra "massa magra"** | §10 | Ele disse as duas, em respostas diferentes: "massa magra" na resposta longa (14.11) e "massa muscular esquelética" na que decidiu os cinco campos (5.a' P3). **São dois números diferentes na mesma balança**, não sinônimos. Vale a última, mas se a balança dele mostrar só um dos dois, a tela está pedindo o número errado — e isso estraga a série para sempre |
+
+**E uma coisa que eu não levo à mesa dele**, porque não é dele: a decisão 9 diz
+que, se a régua reprovar a medição, ela vai para os botões fixos da Direção C. **A
+instrução me pedia as duas versões das palavras conforme o controle. Não há duas
+versões:** o rótulo da régua é **"Repetições · um toque guarda"** e o de um botão
+fixo é **"Repetições · um toque guarda"**, porque V6 manda que o rótulo diga o
+que o toque grava, e o toque grava a mesma coisa nos dois controles. O que muda
+com o controle é **quantos valores aparecem**, e isso é geometria. **As palavras
+são as mesmas, e isto é resposta e não omissão.**
+
+**O único texto que muda com o controle** é o da faixa prescrita, porque na régua
+ela é um sublinhado e num conjunto de botões fixos ela é uma legenda:
+
+| controle | o que está escrito |
+|---|---|
+| régua rolável | **alvo 8–12**, sob o número, e a faixa sublinhada |
+| botões fixos da C | **alvo 8–12 · os seis valores da faixa** |
+
+---
+
+## 12 · Onde eu mudei a palavra do desenho, e o que não caiu de pé
+
+### 12.1 · A lista curta, para o curador conferir sem reler as tabelas
+
+| era | passa a ser | regra e prova |
+|---|---|---|
+| "Agora · no plano às 16h00" (sobrancelha do cartão, `momento-2.html`) | **no plano às 16h00** | A palavra "agora" fazia quatro trabalhos; o da sobrancelha é o único que repete o nome da aba (§1.1) |
+| "Histórico" (cabeçalho de Corpo) | **Evolução** | V7: a palavra dele, apagada pela partição (§1.7) |
+| "Fora" (botão da folha de pôr em dia) · "Fora do plano" (C4) | **Outra coisa** | Com o quinto botão a fatia cai a 50,4 pt, e "Fora do plano" pede três linhas (§4.2) |
+| "Tudo · Metade · Fora · Não sei" (quatro botões) | **Tudo · Metade · Outra coisa · Não comi · Não sei** | Decisão 1, e os cinco completam "comi…" na voz dele (V8) |
+| "Responda a pergunta para guardar" | **sai** | Decisão 4: a pergunta deixa de bloquear |
+| "Foi só naquele dia" / "Virou permanente" | **Fica só naquele dia** / **Entra no Treino D** | V6: o rótulo diz o que o toque grava, e os dois estavam no passado (§5.4) |
+| "levar para o oficial" (`src/ui/telas/decisao.jsx`) | **Entra no Treino D** | V7: "o oficial" é vocabulário interno |
+| "vence 05/10 · em 4 dias" | **vence quando o Treino A voltar · faltam 2 treinos** | F81: a sequência avança pela ordem. Uma data é previsão, e V3 obriga a marcá-la (§5.3) |
+| "deltoide lateral passa de 12 para 13 séries **na semana**" | **…na rotação** | `seriesOficiais` soma sobre `rot()`, e `ROT_BASE` tem seis posições. "Semana" é paráfrase (§5.5) |
+| "adicionou Leg press" · "removeu Pullover" · "mudou Leg press de posição" (`textoMod`) | **Leg press: entrou no dia** · **Pullover em máquina: saiu do dia** · **Leg press: feito antes, fora da ordem** | V8: os atos dele não se narram em terceira pessoa. E os sete ramos passam a ter uma gramática só (§5.2) |
+| "Observar" (três situações diferentes, `veredito`) | **Não mexer: falta a sua leitura das fotos** / **Não mexer: peso parado com carga subindo** / **Não mexer: uma semana sozinha não decide** | Duas das três não têm nada a fazer e uma tem; o título não separava (§6.1) |
+| "Manter como está" | **Não mexer: a taxa está na faixa** | V1: a regra decide mexer no plano, não o que ele mantém (§6.1) |
+| "Faltam dados" | **Não mexer: faltam pesagens** | Gramática única, e diz quais dados |
+| "Ver" (botão do portão da força) | **Ver a força** | V6: o rótulo diz a coisa |
+| "Elevação lateral na máquina ocupada" (título) | **Máquina ocupada** + o exercício no subtítulo | C4 já tinha feito a troca (§10 dela) |
+| "finalizar" (botão, `src/ui/telas/treino.jsx`) | **Encerrar o treino** | O app diz "finalizar" no botão e "encerrado" no toast; uma palavra só (§7.7) |
+| "Treino A encerrado · 1h11 · 8 exercícios" | **Encerrei o Treino A · 6h20 → 7h31 · 1h11 · 8 exercícios** | V8: a passiva esconde o agente |
+| "Lendo o registro deste aparelho. Não usa rede." | **…Não precisa de rede.** | O app **pode** usar rede para replicar; o que é verdade é que não depende dela (F72) |
+| "era 5 · sem mudança" (bioimpedância) | **era 5** | "Sem mudança" afirma uma medida de zero onde há ausência de diferença |
+| "Nada aqui é obrigatório" (bioimpedância) | **Quatro números são obrigatórios. A água corporal total pode ficar vazia — e vazia não é zero.** | Decisão 5.a' P3 |
+| "massa magra" (bioimpedância) | **Massa muscular esquelética** | É outro número, e é a palavra da decisão dele (§10) |
+| "Peso de hoje" | **Peso da manhã** | Com dois pesos no mesmo dia, "de hoje" deixou de distinguir (§10.2) |
+| "KCAL" · "PROTEÍNA" · "CINTURA" (`.ins-label`) | **kcal** · **proteína** · **cm** | Caixa alta era a mono fazendo estrutura em cima de uma unidade (§2.1, R4) |
+| "pendente", "pendência", "a fazer" como nome da lista | **Esperando decisão** | V5, e é a palavra do desenho |
+
+### 12.2 · As palavras verdadeiras que não cabem — Lista A, e são quatro
+
+Mesma convenção de C4: palavras dentro das regras, que eu não encurto, e que a
+conta diz que não entram no espaço que o desenho dá.
+
+| # | a string | onde | a conta | por que eu não encurto |
+|---|---|---|---|---|
+| A1 | **"Dor muscular difusa no dia seguinte é normal; pontual no cotovelo, no ombro da frente ou no joelho abaixo da patela é sinal de tendão. — treinador"** (147 car., F20) | §7.4, a folha de Dor | É a A6 de C4, e eu herdo a conta dela: o subtítulo da folha é de uma linha a 13–14 px, cerca de 60 caracteres | É o que separa "dói porque treinei" de "dói porque é tendão", é frase do treinador (V1), e dita depois do toque não serve de nada |
+| A2 | **"Fora do plano"** (13 car., a decisão de C4 em §10 dela) | §4.2, a folha de pôr em dia com cinco botões | A fatia cai de 69 pt para 54,4 (50,4 úteis) com o quinto botão; a 13 px em peso 700 são 6,7 caracteres por linha, e "Fora do plano" pede **três** — uma delas sendo o artigo "do" sozinho | Não encurto para "Fora", que V7 recusa. **Resolvi trocando a palavra** por "Outra coisa", que cabe em duas linhas e diz o mesmo dado — então esta é a única da lista que tem saída, e a saída está escrita |
+| A3 | **"Massa muscular esquelética"** (26 car.) | §10.1, a folha de bioimpedância | **Não medi**: não abri o CSS das linhas de campo de `corpo.html`, e é o rótulo de campo mais longo do produto | É a palavra da decisão dele e **não é sinônimo de "massa magra"** (§10). Encurtar aqui é pedir outro número |
+| A4 | **"Prescrição"** a 320 px | §1.6, a barra dos cinco lugares | A fatia cai a 64 pt; a 11 px em peso 600 o nome dá 63,8 pt — na borda em 100%, e três linhas no degrau de 125% | Nenhum nome mais curto cobre as duas prescrições sem colidir com dado de dentro (§1.5). **A quebra em duas linhas é a saída, e custa 1,5 pt de altura de barra** |
+
+**E duas onde o espaço aceita a quebra**, e por isso não contam: "Outra coisa",
+"Não comi" e "Não sei" em duas linhas na fatia de 50,4 pt da folha (§4.2); e
+"igual à última" em duas linhas se alguém insistir em pô-la no botão da régua —
+que é justamente o que eu recusei (§8.3).
+
+### 12.3 · As quatro vezes em que eu contrario uma regra de voz, reunidas
+
+| # | a regra | o que ela recusa | o que eu escrevo, e por quê |
+|---|---|---|---|
+| 1 | **V4** | *"Esta ação não pode ser desfeita."* | **"Isso não tem volta"** fica, nas nove frases de "pare". V4 recusa a frase **sozinha** — um diálogo que afirma irreversibilidade sem dizer o custo. No app ela nunca está sozinha: vem com o número do que vai embora. E com a decisão 13 tirando "destrói dado" da cor, **ela passa de redundância a canal** (§3.1) |
+| 2 | **V7**, na decisão de C4 | "Fora" abreviado; a decisão dela foi **"Fora do plano"** | **"Outra coisa"**, porque com o quinto botão "Fora do plano" pede três linhas numa fatia de 50,4 pt. Não é abreviação: o tipo diz *"'fora' é 'comi, mas não foi isto'"*, e "comi outra coisa" é isso por inteiro (§4.2) |
+| 3 | **V7** | "não troque palavra que funciona só para parecer nova" | **"Peso da manhã"** no lugar de **"Peso de hoje"**. Não é para parecer nova: a decisão 5.a''' cria um segundo peso no mesmo dia, de outra balança, e "de hoje" deixou de distinguir os dois (§10.2) |
+| 4 | **V2** | *"um botão 'Salvar' (o toque é a gravação)"* | **"Guardar os cinco"** fica na bioimpedância, e só lá. Os cinco números são **uma medição**, quatro são obrigatórios, e gravar campo a campo guardaria uma medição de três números que nenhuma leitura usa. **Aqui o lote é o dado** (§10.3) |
+
+**Nenhuma outra.** Onde uma palavra deste documento parece contrariar uma regra e
+não está nesta lista, ou eu errei ou a regra não dizia o que parecia — e nos dois
+casos vale a regra.
+
+---
+
+## 13 · O que eu fui conferir e não bateu
+
+Onde o código ou o registro discorda do que estava escrito, **vale o código**.
+Sete pontos, e os quatro primeiros mudam trabalho.
+
+| # | o que estava escrito | o que eu achei |
+|---|---|---|
+| 1 | "A frente 1 achou cinco afirmações minhas erradas" (o meu briefing) | **Sete.** `09-frente1-lugares.md` §7 abre com *"Sete pontos"* e a tabela tem sete linhas: a caixa de marcar das linhas de refeição (`ehLinhaDeTreino(r)` é `r.id === 'treino'`, não sessão ativa), a conta de volume em quatro lugares e não dois, o `promoPendente` guardando uma mudança, o carregador não escrito no fecho manual, o placar do cardio na aba TREINO, o `view.sessao` de `camadasAbertas` não sendo a sessão ao vivo, e os quinze campos da bioimpedância dizendo treze. **As contas das outras duas batem:** a frente 2 achou **seis** (§11 dela) mais três correções a si mesma, e a frente 4 achou **nove** (§10 dela) |
+| 2 | "O deload muda de lugar **como a frente 1 propôs**" (o meu briefing, e o registro das quinze) | **A frente 1 não propôs.** O achado 3 dela diz, literalmente: *"Não é decisão minha: é regra, e sobe com os dois argumentos escritos — o de hoje (frear) e o da D (o raro mora no ⋯, e deload é raro)."* Quem propôs o menu `···` foi a direção D (`03-direcao-D/direcao.md`, tabela de tarefas: "Deload | sessão, menu ⋯"). **Isto importa para as palavras:** a razão escrita no fonte não era "o lugar é ruim", era *"um interruptor que corta metade das séries não deve estar a um toque no meio de uma sessão"* — o lugar **era** o freio. Com ele fora, o freio tem de ser a palavra, e é por isso que o item do menu deixa de ser um interruptor com nome (§7.6) |
+| 3 | "os sete estados ruins… o protótipo os deixou como becos desabilitados" (herdado do briefing da frente 2) | **A frente 2 já havia derrubado as duas metades**, e eu confirmei a parte que me toca: para **três** dos sete não existe palavra em desenho nenhum, e **sete dos oito** becos não têm `disabled`. O que eu acrescento é a consequência de palavra: desses sete, **quatro não aparecem em nenhum dos sete estados** — "Ver o aparelho", "Nota do treinador", "Histórico" e "Outro dia" —, e eu escrevo as palavras deles em §7.8, inclusive a única frase deste documento que manda **tirar** um controle da tela |
+| 4 | "A frente 2 havia especificado o contrário" sobre a última refeição pré-marcada | **Confirmado, e é mais forte do que isso.** O requisito dela não é só sobre a última refeição: *"Para hoje, a refeição cuja hora passou há menos de 30 minutos fica sem marca"* (§4.4, item 2 dela). A decisão 5 derruba **as duas metades** — a da última refeição e a janela de 30 minutos —, e a segunda não está nomeada no registro das quinze. **Escrevi as palavras só da que ele decidiu** (a última refeição vem pré-marcada); a janela de 30 minutos **continua sem resposta**, e as palavras de §4.1 valem nos dois casos porque elas nomeiam a causa da marca (a passagem do horário), não qual refeição é |
+| 5 | "A bioimpedância… as palavras não existem" (o meu briefing, e o plano) | **C4 já tinha escrito parte.** `04-voz.md` §4.2 traz **"Bioimpedância · uma vez por mês"** (com a razão: é a palavra do dono, V7), a pergunta literal da avaliação visual, a validade dela, e os cinco estados da foto. O que faltava eram **os cinco campos e os dois pesos** — e a E2 dela diz, explicitamente, que "quais números entram vai para §12", onde ela o declara não medido. **Não escrevi nada que ela já tivesse escrito**, e os cinco estados da foto e a pergunta da gordura ficam inteiros, dela |
+| 6 | "O dono recusou explicitamente linguagem abstrata e metafórica neste projeto" (o meu briefing) | **Não achei a recusa literal dele.** O que o registro tem é a linha de 02/10 de `00-coordenacao.md`: a peça de comparação foi feita *"em linguagem direta: o vocabulário dos designers — lápis, tinta, hachura, visto — foi traduzido para o que acontece na tela, **a pedido dele**"*. É pedido registrado, não proibição escrita. **A régua é a mesma e eu a sigo**; a diferença é que ela não serve de argumento contra outra pessoa |
+| 7 | "os portões da semana têm palavras escritas pelo desenhista" (o plano, §2, frente 3) | **Metade. As melhores palavras dos portões estão no domínio, não no desenho.** `veredito` em `src/dominio/corpo.ts` já devolve a prosa de cada saída, com os números que a produziram e a atribuição dentro — *"Mas não há registro suficiente dos últimos 14 dias para saber se o ganho veio da dieta ou de saídas dela. Tirar comida do plano agora puniria os dias em que você seguiu."* **Não troquei uma palavra dessa prosa.** O que era do desenhista eram os títulos e os rótulos dos três portões, e é só isso que eu reescrevi (§6) |
+
+**E o que eu fui conferir e bateu**, para a lista não ser só de divergência: os
+cinco nomes da barra no `tabbar()` do protótipo; `PORCOES` com os cinco valores
+`0.5, 0.75, 1, 1.25, 1.5` em `src/ui/folhas/refeicao.jsx`;
+`ComoFoiARefeicao = 'fora' | 'nao'` com a razão de `'nao'` escrita no tipo;
+`aderencia?: 'plano' | 'fora' | 'perdido'` como campo **do dia**;
+`diaInterpretavel` recusando o dia `'perdido'` e aceitando qualquer `done`;
+`MIN_REGISTRADOS = 11`; `PLANO_ATUAL = 11` com `migraPlano11` sendo a da ceia;
+`aguaNaoContada?: 1` com a razão no comentário; `promoPendente: PromoPendente[]`
+já como coleção, com `sid` de chave; `resumoMods: string[]` sendo escrito por
+`textoMod` nas duas chamadas; os quatro `confirm()` que dizem "Isso não tem
+volta"; `delBody` com o estrago delimitado em texto; o par
+`'continuo treinando'` / `'já parei'` em `FaixaDaSessao`; e `.ins-label` a 10 px
+em mono, caixa alta e `.18em` de tracking, com 76 ocorrências em `src/ui/`.
+
+**Uma correção que eu faço a mim mesmo**, porque é do mesmo tipo das sete de
+cima: eu ia escrever que o requisito da frente 2 para o botão da régua
+("agora, igual à última") **não cabia**. Fui fazer a conta e cabe — em três
+linhas de 11 px, ocupando 62 dos 64 px de altura do botão. **Ele cabe e é ruim**,
+que é uma afirmação mais fraca e mais honesta, e é por isso que a minha resposta
+em §8.3 se justifica pela leitura e não pela borda.
+
+---
+
+## 14 · O que esta frente não decide, e o que ninguém mediu
+
+**O que ela não decide**, por mandato: os cinco lugares e o fluxo entre eles
+(frente 1 — eu só os **nomeio**), o estado e a interação dentro de cada um
+(frente 2), e os tokens, a escala, a cor e o movimento (frente 4). Onde eu citei
+um token (`--ins-t-corpo-forte`, `--ins-t-meta`, `--ins-tinta-3`), citei o que a
+frente 4 já definiu; **não escolhi valor novo nenhum.**
+
+E três coisas que são de palavra e que eu deliberadamente **não** decido:
+
+- **Onde a régua de porções é alcançada da linha da folha** (§4.2). A régua tem
+  palavras minhas; o gesto que a abre é da frente 2.
+- **Se o rótulo de seção a 15 px cabe nas telas que o usam** (§2.1, R2). São 76
+  lugares, e cada um ganha altura. **É olho em tela.**
+- **A ordem dos cinco botões da folha** (§4.2). Eu escrevo os cinco rótulos; qual
+  vem primeiro é alcance de polegar, e a frente 2 tem o protocolo.
+
+**O que fica para depois, declarado:**
+
+- **Dias não tem desenho** (achado 6 da frente 1) e é onde a folha de pôr em dia
+  mora. **Eu escrevi as palavras da folha; a tela que a abre não existe**, e por
+  isso o título dela ("Segunda, 05/10") é a única coisa que eu sei que vai estar
+  no alto.
+- **O destrutivo não tem desenho** (achado 8 da frente 1). **As palavras das nove
+  frases de "pare" estão escritas** (§3.3) e o comportamento de hoje é
+  `confirm()` do sistema — que `04-acesso.md` já reprovou, porque prende o foco e
+  não é descartável sem responder. **As palavras existem antes do painel.**
+- **A bancada e a superfície de conflito entre dois aparelhos** não têm lugar nem
+  palavra (achado 9 da frente 1). Eu não escrevi nada para elas: sem saber o que
+  a tela mostra quando dois aparelhos discordam, qualquer frase minha seria
+  invenção.
+- **O segundo usuário.** `PRODUCT.md` ainda diz que não existe usuário além de um
+  (do plano, §4). **Toda palavra deste documento é para uma pessoa que conhece o
+  próprio treino**, e nenhuma delas funcionaria para quem está vendo a
+  prescrição pela primeira vez: não há onboarding, não há glossário, e "RIR" e
+  "deload" entram sem explicação de propósito (V7).
+- **A aula.** `aula.html` tem nove estados e eu **não abri** o conteúdo dela. O
+  quadro do box transcrito é a única coisa do produto em monoespaçada por ser
+  conteúdo (frente 4 §2.2), e as palavras da aula não são minhas até alguém
+  conferir o que já está lá.
+
+**O que ninguém mediu, e esta frente herda sem inventar número:**
+
+- **Nenhuma frase deste documento foi lida por ele numa tela.** O protótipo foi
+  tocado por três minutos (`prototipo.md`), e nenhuma das decisões que só
+  aparecem em semanas — a lista que vence, o contador dos 14 dias, a frase de
+  leitura de volta da folha — tem medida. **Hipótese, não fato**, e isso vale
+  para tudo que eu escrevi a partir do protótipo.
+- **Se "Prescrição" cabe na fatia da barra**, a 100% e a 125%, e a 320 px. A
+  conta está em §1.6 e diz "no limite" no degrau de cima. **Conta, não medida**,
+  e a medição é a G da frente 4 — que precisa ser feita **com estes cinco nomes**,
+  e não com rótulos de exemplo.
+- **Se o rótulo de seção a 15 px em caixa de frase se distingue da prosa a 14 px**
+  a um braço de distância, na luz da academia. A frente 4 declarou que a luz da
+  academia, o sol, a luva e o magnésio não estão em `01-fatos.md`. **A mesma
+  ausência vale para tamanho de letra**, e é o canal que substitui a forma da
+  mono (§2.2).
+- **Se "Outra coisa" é lido como "comi outra coisa"** sem a cabeça da frase
+  presente. A cabeça aparece uma vez, no alto da folha; depois da rolagem, o
+  botão está sozinho. **Não medido**, e é a única palavra minha que depende de
+  contexto na mesma tela.
+- **Se três linhas de 11 px num botão de 54 px são legíveis** — é o que eu usei
+  como razão para recusar o requisito da frente 2 em §8.3. A conta diz que cabe;
+  **se é legível, ninguém mediu.**
+- **Se ele lê a tela a três metros**, que decide se o olho da sessão de fotos
+  vira título (§2.1, R3, exceção). C4 já declarou isso não medido (P7 ficou sem
+  essa parte).
+- **Quantas linhas a tela ganha com os rótulos maiores e quantas perde com os
+  rótulos que saem** (§2.1, R1 e R2). As duas contas se compensam ou não se
+  compensam, e **nenhuma das duas foi feita**: é layout.
+- **VoiceOver no iOS de verdade.** Todos os rótulos acessíveis deste documento
+  foram escritos contra a norma e contra a medida que C3 fez em Chromium, **não**
+  contra o leitor que o dono usaria. É a mesma ausência que a frente 2 declarou.
