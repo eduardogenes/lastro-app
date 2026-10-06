@@ -333,3 +333,295 @@ status — não se ouve (`04-voz.md` §9).
 
 **Nunca:** emoji, "seção", "página", "aba" dentro do nome acessível, nem o
 número sem a palavra que ele conta.
+
+---
+
+## 2 · O que substitui o rótulo em monoespaçada (decisão 12)
+
+A decisão 12 derruba três inegociáveis, e a nota literal dele é **"sem
+herancas"** — caem limpos. Dois são de forma e são da frente 4: o raio zero e o
+par mono/display. **O terceiro é meu**, porque o que cai com ele é um canal de
+leitura: *"rótulo mono em caixa alta é estrutura, nunca ênfase"* (inegociável 5,
+`src/tokens.css`, pela frente 4 §2.2).
+
+**O que o rótulo mono fazia, medido.** Conferi em `src/base.css`: `.ins-label` é
+`font: 400 10px/1 var(--ins-font-mono); letter-spacing: .18em; text-transform:
+uppercase; color: var(--ins-text-4)`, e `.ins-label-sm` é a mesma coisa a 9 px
+com `.16em`. Contei no `src/ui/`: **76 ocorrências de `.ins-label` e 7 de
+`.ins-label-sm`**, em 21 arquivos — 50 delas chegando por uma propriedade
+`rotulo` ou `olho`.
+
+**E ele fazia três trabalhos, não um.** Classifiquei lendo os lugares de
+chamada, um por um — **não contei cada ocorrência para dentro de um dos três
+baldes**, então os três são qualitativos:
+
+| trabalho | exemplos que eu li | o que ele realmente diz |
+|---|---|---|
+| **o olho** — a linha acima do título de uma folha ou de uma tela cheia | `olho="pose 3 de 9"`, `olho="registrar treino passado"`, `olho="da prescrição"`, `olho="o aparelho"`, `olho="hoje é"` (`src/ui/instrumento/folha.jsx`, `telacheia.jsx`, `src/ui/telas/protocolo.jsx`, `retroativo.jsx`, `src/ui/folhas/editores.jsx`) | **procedência ou posição**, não estrutura: de onde vem, ou onde estou na série |
+| **o rótulo de seção** | `"o que tem dentro"`, `"porção · só de hoje"`, `"turno do treino"`, `"como foi o dia"`, `"motivo (opcional)"`, `"por 100 g"` (`src/ui/folhas/refeicao.jsx`, `editores.jsx`, `src/ui/telas/decisao.jsx`) | **estrutura**: o que o bloco abaixo possui |
+| **o rótulo de célula de número** | as células de `GradeMetricas` (`kcal`, `proteína`, `carboidrato`, `gordura`) e o de `HeroMetrica` (`src/ui/instrumento/primitivos.jsx`, conferi as duas) | **a unidade ou o nome do número**, que é conteúdo |
+
+**Uma forma para três trabalhos funcionava porque a forma era forte.** Sem ela,
+os três se misturam: "kcal" em caixa baixa, 10 px, ao lado de "o que tem
+dentro" em caixa baixa, 10 px, são duas coisas que não se distinguem.
+
+### 2.1 · A decisão: menos rótulos, cada um maior, e a palavra diz qual é qual
+
+**A regra inteira em uma frase:** perdido o canal da forma da letra, a hierarquia
+passa a ser carregada por **o que a palavra é** (unidade, procedência ou nome de
+seção) e por **tamanho**, e isso só fecha se o número de rótulos cair — porque
+rótulo maior ocupa mais lugar.
+
+**R1 · O rótulo de seção só existe quando a seção tem mais de uma linha e a
+primeira não a nomeia.** Onde ele repetiria a primeira linha, sai. Exemplos do
+app de hoje:
+
+| hoje | passa a ser | por quê |
+|---|---|---|
+| rótulo **"peso"** acima de "Peso de hoje · 73,8 · última: 73,4 em 29/09" | **sai** | a primeira linha já diz "Peso" |
+| rótulo **"deload"** acima de "Modo deload · Mostra metade das séries…" (`src/ui/telas/guia.jsx`, conferi) | **sai** | idem |
+| rótulo **"o que tem dentro"** acima da lista de itens de uma refeição | **fica** | as linhas são "leite 250 ml", "banana 120 g": nenhuma nomeia a lista |
+| rótulo **"como foi o dia"** acima dos três estados | **fica** | as linhas são as três respostas; sem o rótulo, são três botões sem pergunta |
+| rótulo **"motivo (opcional)"** acima dos chips | **fica** | idem |
+
+**R2 · O que fica muda de forma, e fica maior.** O rótulo de seção passa para
+`--ins-t-corpo-forte` (15 px, em `rem`), peso 600, **caixa de frase**, sem
+`letter-spacing` extra, na tinta de leitura — e **não** em caixa alta: caixa alta
+com tracking é o rótulo mono sem a mono, e a decisão dele é "sem herancas".
+
+**E ele é frase nominal com artigo**, que é o que distingue estrutura de
+conteúdo sem depender de forma: nenhuma linha de conteúdo deste app começa com
+artigo isolado. "O que tem dentro", "A porção de hoje", "O turno do treino",
+"Como foi o dia", "O motivo". Conteúdo é "Peso de hoje · 73,8", "Almoço · sem
+marca" — nome e valor.
+
+**O custo, declarado:** o rótulo sai de 10 px e vai a 15, e fica **maior do que a
+prosa de apoio que ele introduz** (13 px) e maior do que a procedência (12 px).
+Isso é proposital — um rótulo que organiza tem de ser pelo menos tão forte
+quanto o que ele organiza, e com a forma fora, só o tamanho restou para dizer
+isso. **O preço é altura de tela, e é por isso que R1 vem primeiro.** Quantas
+linhas isso acrescenta a cada tela: **ninguém mediu, e é conta de layout, não de
+palavra.**
+
+**R3 · O olho deixa de ser rótulo e vira procedência, com a primitiva que já
+existe.** Os cinco exemplos que eu li — "pose 3 de 9", "da prescrição", "o
+aparelho", "registrar treino passado", "hoje é" — respondem "de onde veio isto"
+ou "onde eu estou na série", e a frente 4 já decidiu que *se a frase responde "de
+onde veio este número?", é `Procedencia`* (§7.3 dela, requisito 11). **Então o
+olho é `Procedencia`:** 12 px, tinta-3, caixa de frase, uma forma só em todo
+lugar. Um a mais do que a frente 4 previu, e sem token novo.
+
+**Uma exceção, e é uma só:** `olho="pose 3 de 9"` e `olho={'pose ' + d.indice +
+' de ' + d.total}` são lidos **a três metros** na sessão de fotos (C7; e se ele
+lê a tela a essa distância **não foi medido** — `04-voz.md` §12, item 6). A 12 px
+não se lê a três metros. **Ali o olho vira título**, na escada própria da foto
+(`--ins-n-foto-1`, 32 px, frente 4 §3.2), e o nome da pose vem com ele:
+**"Pose 3 de 9 · perfil direito"**.
+
+**R4 · O rótulo de célula de número passa a ser a unidade escrita como ela se
+escreve.** "kcal", "kg", "cm", "l", "g", "%" são unidades, e unidade não tem
+caixa alta. `KCAL` era a mono fazendo trabalho de estrutura em cima de uma
+unidade. **Passa a:** `--ins-t-meta` (12 px), caixa baixa, tinta-3, junto do
+número — a mesma forma da procedência, porque é a mesma espécie de coisa: diz o
+que o número é.
+
+| hoje | passa a ser |
+|---|---|
+| `KCAL` · `3.007` | `3.007` **kcal** |
+| `PROTEÍNA` · `186` | `186 g` de **proteína** |
+| `CINTURA` · `81,0` | `81,0` **cm** |
+
+**E o nome por extenso onde a unidade é ambígua:** "l" minúsculo ao lado de um
+número é o pior caractere da tipografia do sistema. Na bioimpedância, a água
+corporal total escreve **"litros"**, não "l" (§10).
+
+### 2.2 · O que isto NÃO entrega, dito com todas as letras
+
+**O canal que cai não é substituído por um igual.** A forma da letra era um
+canal que funcionava **sem leitura** — dava para saber que aquilo era estrutura
+sem ler a palavra, de relance, de pé. Tamanho e artigo exigem **ler**. Na zona do
+polegar, entre duas séries, isso é pior, e V6 é explícita: ali o orçamento é um
+relance.
+
+**A resposta, e ela é a única honesta:** na zona do polegar **não há rótulo de
+seção nenhum**, nem antes nem depois desta mudança. V6 já mandava isso ("nada
+passa de uma linha e de três palavras; prosa fica acima, onde ler é opcional"), e
+conferi que os rótulos que eu li vivem em folha, em editor e em tela cheia — não
+na régua, não no descanso, não nos botões de declarar. **A perda de canal cai
+onde ler é opcional, e não onde ler é caro.** É por isso que eu aceito a decisão
+dele sem ressalva, enquanto a frente 4 a aceitou com ressalva.
+
+**O que ninguém mediu:** se 15 px em caixa de frase se distingue de 14 px de
+prosa a um braço de distância, na luz da academia. A frente 4 mediu contraste
+contra vidro limpo em quarto neutro, e declarou que a luz da academia, o sol, a
+luva e o magnésio não estão em `01-fatos.md`. **A mesma ausência vale para
+tamanho.**
+
+---
+
+## 3 · "Falhou" contra "vai destruir" — as duas famílias de frase (decisão 13)
+
+Esta é a seção mais importante deste documento, e é por uma razão de uma linha:
+**o aviso mais forte do produto deixa de ser dito pela cor.**
+
+**O que mudou.** O inegociável 4 dizia *"Coral = destrói dado"*
+(`src/tokens.css`, pela frente 4 §2.4). A decisão 13 troca o significado do
+terceiro sinal de "destrói dado" para **"pare"**, e a frente 4 escreveu a
+consequência: as duas situações que param o dedo — **a gravação que falhou** e
+**a ação que vai destruir** — passam a usar o mesmo painel, com a mesma moldura
+(`--ins-pare-fundo`, `--ins-pare-tinta`, `--ins-pare-fio`), e **o que as
+distingue é a palavra**. Ela declarou o custo: *"quem olhar só a cor não sabe se
+falhou ou se vai destruir."*
+
+**Então a palavra tem de fazer um trabalho que ela nunca fez sozinha.** Não
+basta as duas frases serem diferentes: elas têm de ser **inconfundíveis de
+relance**, e de relance ninguém lê a frase inteira — lê-se o começo e o botão.
+
+### 3.1 · As quatro diferenças, e as quatro são audíveis
+
+As duas situações já diferem em quatro coisas no **dado**, e a gramática das duas
+famílias não inventa nada: ela expõe as quatro.
+
+| | **falhou** | **vai destruir** |
+|---|---|---|
+| **quando** | já aconteceu | ainda não aconteceu |
+| **de quem foi** | do app, ou do armazenamento | dele: foi um toque que pediu |
+| **o que já se perdeu** | **nada ainda** — o valor está na tela | **nada ainda** — e é o toque seguinte que apaga |
+| **a saída** | tentar outra vez a mesma coisa | não tocar |
+
+Daí as quatro regras de gramática:
+
+**G1 · Tempo verbal.** A família do falhou abre em **passado**, com verbo negado.
+A família do destruir abre em **infinitivo**, com o verbo do estrago.
+
+> **Não guardei a série 2.** · **Apagar este treino tira as 14 séries
+> registradas nele.**
+
+**G2 · Sujeito.** No falhou, o sujeito é o app ou o armazenamento. No destruir,
+o sujeito é **a ação** — nunca ele. É V8 pelos dois lados, e V5 pelos dois: o
+sujeito de uma frase de falha nunca é ele, e o sujeito de uma frase de estrago
+também não, porque "você vai apagar" é acusação antes do ato.
+
+**G3 · A primeira palavra, que é a única que se lê de relance.** A família do
+falhou começa pelo verbo negado: **"Não guardei…"**, **"Não consegui…"**, **"O
+armazenamento recusou…"**. A família do destruir começa pelo infinitivo:
+**"Apagar…"**, **"Remover…"**, **"Descartar…"**, **"Substituir…"**. Um "não" na
+frente contra um infinitivo na frente é distinção de uma palavra, e é a que
+sobrevive ao relance.
+
+**G4 · O botão, que é a segunda coisa que se lê.** No falhou, o botão principal
+é **"Tentar de novo"** — repetir a mesma intenção — e há dispensa. No destruir, o
+botão principal é **o verbo com o objeto por extenso**, e a saída é
+**"Deixar como está"**.
+
+> **Nunca, em nenhuma das duas famílias:** "OK" · "Confirmar" · "Sim" · "Tem
+> certeza?" · "Atenção!" · "Erro inesperado" · "Ops" · um botão cujo rótulo não
+> diga o que acontece ao tocar nele.
+
+**Isto toca uma recusa de V4, e eu digo qual.** V4 recusa *"Esta ação não pode
+ser desfeita."* O app de hoje escreve **"Isso não tem volta"** em quatro
+`confirm()` (conferi: `apagarSessao`, o de apagar o registro de treino, `wipe()`
+e o de apagar uma pose). Pela letra de V4, essa frase estaria recusada. **Ela
+fica, e a razão é a decisão 13.** V4 recusa a frase **sozinha** — um diálogo que
+afirma irreversibilidade e não diz o que custa. No app ela nunca aparece
+sozinha: vem com o estrago em número ao lado. E agora que a cor deixou de dizer
+"destrói dado", **essa frase passa de redundância a canal**: é ela que, em
+palavra, diz o que o coral dizia. Quem tirá-la por causa de V4 tira o canal que
+substituiu a cor.
+
+### 3.2 · A família "falhou", escrita
+
+A moldura tem quatro partes, e são as quatro que a frente 2 exige de todo estado
+ruim (§7.1 dela); aqui elas ganham texto.
+
+| parte | o que está escrito | por quê |
+|---|---|---|
+| 1 · o que aconteceu | **Não guardei a série 2.** | V8: o agente é o app (F296, F294) |
+| 2 · a causa, em palavra | **O armazenamento deste aparelho recusou a gravação.** / **O Safari em modo privado recusa guardar.** | F53, F55. Nunca "erro inesperado" (§3.4 de `04-voz.md`) |
+| 3 · o que **não** aconteceu | **Nada foi apagado e nada saiu do aparelho. O valor continua aqui, 45 × 10, enquanto o app estiver aberto.** | A melhor frase do desenho (`momento-1.html`, estado 10), e ela diz **até quando** |
+| 4 · o que fazer | **Tentar de novo** · **Copiar o registro inteiro** | O estado é regravado inteiro a cada série (F256), então a cópia não perde nada (F249) |
+| 5 · como sair sem fazer nada | **Fechar este aviso** | Frente 2 §7.2: o painel é dispensável, **e dispensar não apaga a marca de "não guardada"** — ela fica na faixa e na célula, porque é o estado do dado |
+
+**A marca que fica na linha do dado**, e ela é palavra e não só cor
+(V2): **não guardada**. Na faixa da sessão: **série 10 de 20 · não guardada**. Na
+célula da tabela: **45 × 10 · não guardada**.
+
+**As seis variantes, com o texto exato de cada uma:**
+
+| o que falhou | o que está escrito |
+|---|---|
+| uma série | **Não guardei a série 2.** + causa + **Nada foi apagado. 45 × 10 continua aqui enquanto o app estiver aberto.** |
+| uma refeição | **Não guardei o lanche.** + causa + **A contagem dos 14 dias não se mexeu.** |
+| um dia posto em dia | **Não guardei a segunda.** + causa + **O que a segunda já tinha continua como estava.** |
+| o peso | **Não guardei o peso de hoje.** + causa + **A média da semana não se mexeu.** |
+| a foto | **Não consegui buscar esta foto.** + **Ela está na cópia remota, e o aparelho não alcançou.** + **Tentar de novo** |
+| a abertura do app | **O registro deste aparelho não abriu.** + **Esperei 4 s. Nada foi apagado e nada saiu do aparelho. A rede não é a causa: o registro mora aqui.** |
+
+**O que cada uma acrescenta que a tela sozinha não diria:** a tela mostra o
+número na linha. Ela não diz que o número **não está no disco**, não diz
+**até quando** ele continua existindo, e não diz **o que não se mexeu** — e a
+terceira é a que impede o dono de supor que a conta da regra do nutricionista já
+mudou (V2, V4).
+
+### 3.3 · A família "vai destruir", escrita
+
+**Primeiro: a família é menor do que parece, e isso importa.** Conferi os 23
+`confirm()` de `src/main.jsx`. **Nove destroem dado que o aparelho não reconstrói
+e, com lápide, a sincronia não ressuscita** — essas são "pare". As outras
+**catorze** mexem em prescrição, em catálogo ou em conta, e o registro fica: elas
+**não** são "pare", e pintá-las de "pare" treina o dono a ignorar o painel.
+
+**As nove que são "pare":**
+
+| ação | o que está escrito antes do toque | o botão |
+|---|---|---|
+| apagar o registro de um treino | **Apagar este treino tira as 14 séries registradas nele. Isso não tem volta, e vale para os outros aparelhos.** | **Apagar o treino e as 14 séries** |
+| apagar uma série do histórico de um exercício | **Apagar esta série tira 45 × 10 de 21/09 do histórico do Pulldown unilateral. Isso não tem volta.** | **Apagar a série de 21/09** |
+| descartar a sessão sem série registrada | **Descartar esta sessão apaga o horário de início e a duração. Nenhuma série foi registrada nela, então não há série para perder.** | **Descartar a sessão** |
+| remover um exercício que já tem série hoje | **Tirar este exercício agora apaga as 2 séries que você registrou nele hoje. O histórico das outras sessões fica.** | **Tirar e apagar as 2 séries** |
+| apagar uma medida de peso ou cintura | **Apagar o peso de 28/09 (73,8 kg) tira ele da média da semana e do ritmo. As outras medidas ficam.** | **Apagar o peso de 28/09** |
+| remover um registro de cardio | **Apagar 30 min de corrida de 25/09 tira ele do placar da semana. Isso não tem volta.** | **Apagar o cardio de 25/09** |
+| apagar uma foto do aparelho | **Apagar esta foto tira o perfil direito de 01/10 deste aparelho. Se houver cópia remota, ela continua lá.** | **Apagar a foto deste aparelho** |
+| apagar uma pose do protocolo | **Apagar o perfil direito tira a foto de 01/10 e o par que a comparação usa. Isso não tem volta.** | **Apagar o perfil direito** |
+| apagar todo o histórico | **Apagar todo o histórico tira 48 sessões, 22 dias de comida, 31 pesagens e 36 fotos deste aparelho. Isso não tem volta, e vale para os outros aparelhos.** | **Apagar todo o histórico** |
+
+**E a saída das nove é a mesma, e é esta:** **Deixar como está.** Nunca
+"Cancelar" — "cancelar" é a palavra de abandonar um formulário, e aqui não há
+formulário: há um dado que continua existindo se ele não tocar.
+
+**As catorze que NÃO são "pare", e o que elas são:**
+
+| ação | por que não é "pare" | o que está escrito |
+|---|---|---|
+| tirar um exercício do treino | o histórico do exercício continua guardado (conferi a frase no `confirm()`) | **Tirar Pulldown unilateral do Treino A. O histórico do exercício continua guardado.** |
+| apagar um treino que saiu do programa do treinador | é prescrição, não registro | **Apagar o Treino F do seu programa. As sessões já registradas com ele não mudam.** |
+| desfazer N mudanças no treino | volta ao programa do treinador | **Desfazer 3 mudanças no Treino A: ele volta ao que o treinador prescreveu.** |
+| apagar um modelo de aula | o registro das aulas fica | **Apagar o modelo "HYROX". As sessões já registradas com ele não mudam.** |
+| restaurar o plano do nutricionista | o histórico fica | **Restaurar o plano do nutricionista. Seus alimentos cadastrados e todo o histórico ficam; volta só a prescrição.** |
+| remover uma refeição do plano | vale para todo dia, para a frente | **Remover a ceia do plano. Isso vale para todo dia. O histórico do que você já marcou não muda.** |
+| tirar um item de uma refeição | idem | **Tirar a geleia light do lanche. Isso vale para todo dia.** |
+| remover um alimento da biblioteca | idem | **Remover "geleia light" da biblioteca.** |
+| sair da conta | **nada é apagado** | **Sair da conta neste aparelho. O histórico continua aqui; só para de sincronizar.** |
+| importar uma cópia de segurança | substitui, e o aviso diz o que havia | **Importar 48 sessões e 36 exercícios substitui o histórico atual, de 22 sessões.** + **Exporte antes se tiver dúvida.** |
+
+(As quatro restantes são variações destas, sobre catálogo e sobre renome; não
+escrevo texto novo para elas, e nenhuma é "pare".)
+
+**A razão de separar, dita de uma vez:** se "pare" aparecer nas 23, ele vê o
+painel forte duas vezes por semana por coisa que não apaga nada, e na vez em que
+ele apaga 48 sessões o painel não diz mais nada. **Nove é o número que mantém o
+painel significando.** E a conta é minha, por leitura dos 23 `confirm()`: ninguém
+havia classificado isso.
+
+### 3.4 · A regra de uma linha, para quem escrever a próxima
+
+> **Se o toque seguinte apaga dado que o aparelho não reconstrói, a frase começa
+> com o infinitivo do estrago, diz o número do que vai embora, e o botão repete o
+> verbo com o objeto. Se já falhou, a frase começa com "Não" e um verbo no
+> passado, diz o que não se mexeu, e o botão é "Tentar de novo". Nada mais usa o
+> painel de "pare".**
+
+E o caso que falta, e ele é de palavra e não de cor: **nenhum painel de "pare"
+tem botão cujo rótulo seja "OK", "Confirmar", "Sim" ou "Cancelar".** É asserção
+de fonte, de uma linha, e é a única que impede as duas famílias de voltarem a se
+parecer.
