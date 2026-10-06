@@ -1081,3 +1081,418 @@ dela) —, e com a decisão 8 o momento de sair fica definido pela mesma leitura
 > aqui depois que a sessão fechar.**
 
 Sem elogio e sem "tudo em ordem" (V5): é um estado, não um resultado.
+
+---
+
+## 6 · Os portões da semana
+
+O lugar possui o veredito, os três portões e o passo de ±150 kcal
+(`09-frente1-lugares.md` §1.4). **A regra é do nutricionista**, e V1 manda que
+ela apareça atribuída — o desenho já faz isso e é a melhor coisa dele:
+**"A regra do nutricionista diz"**, como sobrancelha do veredito
+(`semana.html`, os sete estados, conferi). Fica como está.
+
+### 6.1 · O veredito, e o app tem cinco saídas com três gramáticas
+
+**Conferi `veredito` em `src/dominio/corpo.ts`**, inteira. Ela devolve
+`k: 'mais' | 'menos' | 'manter' | 'observar' | 'faltam'`, um título curto `t`,
+uma prosa `p` e, às vezes, `falta: 'aderencia' | 'gordura'`. **Os títulos de
+hoje não estão numa gramática só:** dois são verbos dirigidos a ele ("Comer
+mais", "Comer menos"), um é verbo sem objeto ("Observar"), um é verbo com
+objeto errado ("Manter como está" — o que se mantém é a comida, não "está") e um
+é um substantivo ("Faltam dados").
+
+**E "Observar" nomeia três situações diferentes.** Conferi os nove retornos da
+função: `t: 'Observar'` sai (a) quando falta a leitura das fotos, com
+`falta: 'gordura'`; (b) quando a força está subindo e peso parado com carga
+subindo é recomposição; (c) no caso omisso. **As três têm consequências
+diferentes para ele** — na primeira existe uma coisa que ele pode fazer agora, nas
+outras duas não existe nada a fazer —, e o título não as separa. Só a prosa
+separa, e a prosa é o que ele não lê de relance.
+
+**A gramática única: o veredito é sempre o que a regra faz com a comida, e o que
+vem depois dos dois-pontos é por quê.**
+
+| `k` + `falta` | o título hoje | passa a ser | tem algo a fazer? |
+|---|---|---|---|
+| `mais` | Comer mais | **Comer mais 150 kcal** | sim: aplicar |
+| `menos` | Comer menos | **Comer menos 150 kcal** | sim: aplicar |
+| `manter` | Manter como está | **Não mexer: a taxa está na faixa** | não |
+| `observar` + `gordura` | Observar | **Não mexer: falta a sua leitura das fotos** | **sim: responder** |
+| `observar` + `aderencia` | Registrar antes de mexer | **Não mexer: falta registro de comida** | **sim: pôr em dia** |
+| `observar` (força subindo) | Observar | **Não mexer: peso parado com carga subindo** | não |
+| `observar` (caso omisso) | Observar | **Não mexer: uma semana sozinha não decide** | não |
+| `faltam` | Faltam dados | **Não mexer: faltam pesagens** | **sim: pesar** |
+
+**Por que "Não mexer" e não "Manter":** "manter" é o que ele faria; "não mexer" é
+o que a regra faz. A regra não tem autoridade sobre o que ele come — ela tem
+autoridade sobre o plano, e o que ela decide é mexer ou não mexer nele. É a
+distinção de V1 aplicada ao verbo.
+
+**E a prosa `p` da função fica inteira.** Ela é das melhores coisas escritas
+neste produto: já traz os números que a produziram, já atribui, e já diz o que
+falta. Conferi quatro delas e não troco uma palavra — por exemplo *"Mas não há
+registro suficiente dos últimos 14 dias para saber se o ganho veio da dieta ou de
+saídas dela. Tirar comida do plano agora puniria os dias em que você seguiu."*
+**Uma única emenda:** V3 proíbe certeza falsa, e a prosa de `faltam` diz
+*"média de uma pesagem só não é média"* — perfeito. Nada a fazer.
+
+### 6.2 · Os três portões, e o estado tem de estar na palavra
+
+O desenho dá os três com o estado por **ícone** — `ok2` e `warn` dentro de
+`.gate .ic2` — e a frente 4 achou que isso é o caso 3 dela: *o ícone diz mais do
+que o nome do controle diz*, com a resposta sendo que **o texto passa a dizer a
+palavra, e aí o ícone fica decorativo** (§6.2, caso 3). Ela escreveu os exemplos
+dizendo que eram ilustração de formato. **São estes:**
+
+| portão | o que está escrito |
+|---|---|
+| taxa, cumprido | **Taxa: cumprida — +0,07 e +0,03 kg/semana** · **duas semanas seguidas abaixo de 0,10 · três semanas com média válida (13/09, 20/09, 27/09)** |
+| taxa, não cumprido | **Taxa: falta — duas semanas seguidas com média válida** · **a de 13/09 tem 1 pesagem, e uma semana vale com 2** |
+| força, cumprido | **Força: cumprida — não está subindo** · **+0,4% em 2 semanas, sobre 7 exercícios — abaixo de 1%, que é ruído de anilha** |
+| adesão, cumprido | **Adesão: cumprida — 11 dias de 14** · **o mínimo da regra. 10 de 14 não bastaria** |
+| adesão, não cumprido | **Adesão: falta — 1 dia de 14** · **a regra pede 11. Faltam 10 dias com consumo conhecido, e 13 dos 14 ainda podem ser preenchidos** |
+
+**"cumprida" e "falta", e não "ok" e "atenção".** Duas razões: o portão é da
+regra do nutricionista, e o que ele pergunta é se a condição dela está satisfeita
+— "cumprida" é a palavra dessa pergunta. E "falta" não acusa: o sujeito é a
+condição, não ele. V5.
+
+**"Força: cumprida — não está subindo" é a linha mais estranha do produto, e ela
+está certa.** O portão da força é cumprido **quando a força não está subindo**,
+porque é isso que a regra lê para liberar mais comida (`veredito`, ramo do ganho
+travado: `if (sinais.forcaSubindo) return { k: 'observar' …}`, conferi). Uma
+tela que escrevesse só "Força: cumprida" diria o contrário do que acontece. **As
+duas metades ficam juntas, sempre**, e esta é a linha que mais precisa delas.
+
+**O botão de cada portão que não está cumprido diz para onde ele leva**, e o
+desenho já acerta: **"Pôr em dia"** na adesão, **"Responder"** na avaliação
+visual, **"Pesar hoje"** / **"Peso de outro dia"** no vazio. Mantidos. E o da
+força é **"Ver"** no desenho, que não diz o quê: passa a **"Ver a força"**.
+
+### 6.3 · O passo, e a consequência antes do toque
+
+O desenho faz isto certo e é o melhor exemplo de V4 do material inteiro: o botão
+só aparece depois da conta, e a conta é em gramas de arroz
+(`semana.html`, estado 3, conferi). Mantido, com três emendas de palavra:
+
+| onde | o desenho | emenda |
+|---|---|---|
+| botão | **Aplicar +150 kcal** | fica |
+| a tabela do prato | **Almoço · arroz cozido · 250 → 310 g** | fica: aqui a flecha é tabular e a tabela é tabela |
+| a frase do que não volta | **Depois de aplicado, 3.157 vira a nova base. Se o peso voltar ao alvo, o passo não é devolvido sozinho.** | fica, e é a frase que impede o erro de F217/F291 |
+| sobrancelha | **A regra do nutricionista diz** | fica |
+| a linha do passo aplicado | **+150 kcal aplicado · 01/10 às 21h34 · 3.007 → 3.157 kcal em dia de treino** | passa a **Apliquei +150 kcal em 01/10, às 21h34 · 3.007 → 3.157 kcal em dia de treino** — V8: o agente é o app, e aplicar é ato do registro |
+| desfazer | **Desfazer** | fica, e **sem prazo**: o desenho diz "Desfazer não tem prazo — corrigir no lugar vale aqui também", e isso é verdade no dado (`S.ajuste` e `S.ajusteHist`, com a linha de procedência de cada passo) |
+
+**E uma frase que o desenho tem e que eu quero deixar marcada como obrigatória**,
+porque é a única no produto inteiro que diz ao dono que uma tela não vai insistir:
+
+> **Enquanto a adesão não chega a 11, o veredito não muda, por mais pesagem que
+> entre. A tela não vai pedir isso de novo em outro lugar.**
+
+A segunda metade é uma promessa sobre o produto, não sobre o dado, e ela só é
+verdade se for cumprida: **o portão da adesão só cobra em Semana.** Em Agora
+existe o contador dos 14 dias, que é número e não cobrança. **Se essa promessa
+não for cumprida, a frase sai** — não há meia-promessa aqui.
+
+### 6.4 · O vazio dos portões
+
+| onde | o que está escrito |
+|---|---|
+| veredito | **Não mexer: faltam pesagens** |
+| prosa | **Faltam semanas com média válida. Uma semana vale com 2 pesagens, e são três semanas seguidas para a regra decidir qualquer coisa.** (do desenho, e os números são da função: `MIN_PESAGENS = 2`, e `taxasSemanais` pede `quantas + 1` semanas, conferi) |
+| a lista das semanas | **27/09 a 03/10 · em curso · faltam 2 dias · 1 pesagem** · **13/09 a 19/09 · buraco: quebra a sequência · 1 pesagem** |
+| a saída | **Com a semana de 13/09 incompleta, as de 06/09 e 20/09 não formam sequência. Uma pesagem com data passada em 13/09 ainda resolve isso — se você souber o número.** |
+| a recusa | **Não invente o peso de um dia que passou.** (do desenho, conferi; é V3 em cinco palavras, e é a única frase do material que pede ao dono para não registrar) |
+| nunca | "0 pesagens" onde não houve pesagem · "Adesão: 0%" · um gráfico vazio com eixo |
+
+---
+
+## 7 · Os sete estados ruins
+
+A frente 2 conferiu o briefing e achou que **quatro estão desenhados e três
+não**, e que **sete dos oito becos do protótipo não fazem nem dizem nada** quando
+tocados (§7.0 dela: `data-a="beco"` aparece oito vezes e não tem ramificação
+nenhuma no tratador de cliques; sete das oito não têm `disabled`). **Então para
+três estados as palavras não existem em lugar nenhum, e para os becos não existe
+nem o retorno.**
+
+**A moldura comum, em palavras.** A frente 2 exige quatro coisas de todo estado
+ruim, e a quarta é a que falta em todos (§7.1 dela). As quatro, com texto:
+
+| parte | a forma da frase | exemplo |
+|---|---|---|
+| 1 · o que aconteceu | verbo no passado, sujeito é o app ou a coisa | **Não guardei a série 2.** |
+| 2 · o que **não** aconteceu | o que continua existindo, e até quando | **Nada foi apagado. 45 × 10 continua aqui enquanto o app estiver aberto.** |
+| 3 · o que fazer dali | verbo com objeto, nunca "OK" | **Tentar de novo** |
+| 4 · como sair sem fazer nada | **Fechar este aviso** | e dispensar não escolhe por ele |
+
+**"Fechar este aviso" e não "Depois", "Ignorar" ou "Entendi".** "Depois" promete
+que o aviso volta, e nenhum deles volta sozinho — o app não tem servidor e não
+lembra ninguém de nada (F11). "Ignorar" nomeia o ato como descuido. "Entendi" é
+uma declaração dele sobre o próprio entendimento, que o app não tem como saber.
+
+### 7.1 · Erro de gravação — desenhado, e só falta a dispensa
+
+Está em oito lugares dos nove HTML (frente 2 §7.0), e o texto é o melhor do
+arquivo. As palavras estão escritas em §3.2 deste documento, na família
+"falhou", porque é lá que elas pertencem agora: **o erro de gravação é uma das
+duas situações que acendem o painel de "pare"**, e a outra é a destruição.
+
+**O que falta, e é uma frase:** a dispensa. E a regra da dispensa, que a frente 2
+fixou e que precisa estar dita na tela:
+
+> **Fechar este aviso não apaga a marca: a série 2 continua escrita como não
+> guardada na faixa e na tabela.**
+
+### 7.2 · Carregando — desenhado
+
+| onde | o que está escrito | por quê |
+|---|---|---|
+| durante, até 4 s | **Abrindo a sessão de hoje…** · **Lendo o registro deste aparelho. Não precisa de rede.** | Do desenho (`momento-1.html`, estado 8), com "Não usa rede" passando a "Não precisa de rede": o app **pode** usar rede para replicar, e dizer "não usa" seria falso; o que é verdade é que não depende dela (F72) |
+| passados 4 s | **O registro deste aparelho não abriu.** · **Esperei 4 s. Nada foi apagado e nada saiu do aparelho. A rede não é a causa: o registro mora aqui.** | Do desenho, e é família "falhou" (§3.2). F273 |
+| saídas | **Tentar de novo** · **Ver o detalhe técnico** | Do desenho |
+| a saída de último recurso | **Se acontecer de novo: Ajustes › Cópia de segurança, a partir de outro aparelho com a conta.** | Do desenho |
+| o detalhe técnico | **leitura local sem resposta há 6 s · versão 2026-10-06** | C4, §5 dela, estado 9: F5 — o usuário é quem mantém o código |
+| nunca | "Carregando…" sem fim · "Sincronizando" · uma barra que não acaba | §3.4 de `04-voz.md`; F273, F297 |
+
+**E o estado em que não há nada para carregar**, que o desenho de C tem e o da D
+não (`04-voz.md` §5, estado 9 dela): **"Nenhum registro neste endereço."** +
+**"Se você já usava o app, seu registro continua no endereço e no ícone onde foi
+guardado. Abra por lá."** Mantido sem emenda: F56, e o vazio não pode parecer
+perda.
+
+### 7.3 · Máquina ocupada — desenhado, e as palavras ficam
+
+O desenho ordena as saídas por preço e isso é a coisa certa (frente 2 §7.4).
+Mantidas: **"Vale só para hoje. O programa não muda."** no alto, **"Fazer antes o
+próximo"** como primeira saída com o efeito inteiro dito
+(**"Elevação lateral unilateral no cabo agora; esta volta logo depois"**), os
+substitutos com ★ nos indicados pelo treinador, a última carga de cada um, e
+**"Pular hoje"** por último.
+
+**Quatro emendas, e as quatro são de palavra:**
+
+| o que | emenda | por quê |
+|---|---|---|
+| título | **Elevação lateral na máquina ocupada** → **Máquina ocupada** + **Elevação lateral na máquina** no subtítulo | C4 já tinha feito essa troca para a direção D (§10 dela): "ambiguidade de leitura" — o título de hoje se lê como se a máquina tivesse nome |
+| o ★ | o ícone **e** a palavra | Frente 4 §6.2, caso 3: **em nenhum lugar diz "indicado"**. Passa a **Elevação lateral unilateral no cabo · indicado pelo treinador** |
+| a dispensa | **Fechar e fazer mesmo assim** | A frente 2 exige: fechar volta à régua do exercício original sem registrar nada. "Cancelar" não serviria: ele não cancelou nada, ele decidiu fazer |
+| a frase do treinador | **Treinador: o que muda é o ângulo, não o músculo.** (F106, atribuída) | V1. O desenho a tem sem assinatura, e a direção registra que a ligação dela a este substituto é ilustrativa |
+
+### 7.4 · Dor — desenhado, e é o único que não se dispensa sem responder
+
+Mantido: a detecção com as duas datas, a regra nas palavras do treinador
+(*"dor de tendão apareceu, tirar este exercício por 2 semanas e substituir por
+outro ângulo. Nunca empurrar por cima."* — F102, atribuída), as três saídas
+(**"Ver os 3 substitutos"**, **"Pular hoje"**, **"Fazer mesmo assim"**) e a
+regra que vale para as três: **"Qualquer escolha fica registrada no dia."**
+
+**Duas coisas a acrescentar, e as duas são palavra:**
+
+1. **A frase que distingue dor normal de sinal de tendão não cabe, e C4 já
+   contou.** São 147 caracteres (F20), e o subtítulo da folha é de uma linha — é
+   a A6 da Lista A dela. **Eu não a encurto e não a movo para depois:** ela é o
+   que separa "dói porque treinei" de "dói porque é tendão", e dita depois não
+   serve. **Fica como Lista A**, §12.2, e o que está escrito enquanto isso é a
+   frase de F102, que é a da decisão.
+2. **A exceção à dispensa precisa estar dita.** A régua só aparece depois da
+   escolha (frente 2 §7.5), e isso quer dizer que este é o único estado ruim que
+   não se dispensa sem responder. **A frase que o diz:**
+   **"Escolha uma das três para a régua voltar. 'Fazer mesmo assim' também é
+   escolha, e fica registrada."**
+
+### 7.5 · Pular — as palavras não existiam, e a premissa do desenho estava errada
+
+**Não está desenhado:** é botão em sete lugares do `momento-1` e não tem estado
+nenhum (frente 2 §7.0). A única coisa escrita é a legenda
+*"Pular é decisão e não volta como pendente (F154)."*
+
+**E a premissa da frente 2 para pedir confirmação não se sustenta no código.**
+Ela escreveu: *"pular não volta como pendente, logo é irreversível pela via
+normal"*. **Conferi, e não é irreversível:** `togglePulado` em `src/main.jsx` tira
+ou põe o id na lista, e o toast diz as duas direções —
+`'Exercício de volta.'` quando sai e `'Exercício pulado nesta sessão.'` quando
+entra. São 18 casos em `tests/fluxo/ciclo.test.js`, e a frente 1 já havia
+registrado a capacidade como *"pular (decisão registrada e reversível)"* (§4.1
+dela). A própria frente 2 nota isso dois parágrafos depois e escreve que "as
+duas convivem" — **mas o requisito dela já estava escrito a partir da primeira
+metade.**
+
+**O que isto muda nas palavras:** V4 recusa "tem certeza?", e um diálogo de
+confirmação para um ato reversível a um toque é exatamente isso. **Então não há
+pergunta.** O que há é a frase do que ficou registrado, com o desfazer na própria
+linha — que é V2 ("todo toque diz onde guardou") mais V4.
+
+**E a razão que a frente 2 deu continua valendo, por outro caminho.** O
+problema real que ela mediu não é a irreversibilidade: é que "Máquina ocupada",
+"Dor" e "Pular" são três botões de 122 × 44 px lado a lado, sem limite visível
+(contraste 1,08:1 contra os 3:1 exigidos — `04-acesso.md`, D-6), com
+**consequências diferentes**, num instante de dificuldade. Toque errado é
+provável. **A resposta de palavra para toque errado não é confirmar antes: é
+dizer depois, alto, e deixar o desfazer onde o dedo está.**
+
+| onde | o que está escrito |
+|---|---|
+| o botão | **Pular** |
+| depois do toque, na linha do exercício | **Pulado hoje** · **Desfazer** |
+| a frase de confirmação, na região viva | **Guardei: Elevação lateral na máquina, pulada hoje. Ela não volta a aparecer como esperada nesta sessão.** |
+| o que a frase **não** diz | que o programa mudou — porque não mudou: `S.mods` não é tocado, e os pulados são da sessão (`marca.pulados = s.pulados.slice()` em `fechaSessao`, conferi) |
+| a linha do exercício, dali para a frente | **Elevação lateral na máquina · pulada hoje** · **Desfazer** |
+| no fim da sessão, no resumo | **1 pulado · Elevação lateral na máquina** (é o que `pendencias` já devolve, conferi o balde `pulado`) |
+
+**E a frase que resolve a contradição aparente**, porque "reversível" e "não
+volta como pendente" lidas juntas parecem se contradizer e são as duas verdade:
+
+> **Pulada não é esquecida: ela fica escrita como pulada e não volta a ser
+> pedida. Desfazer põe ela de volta na fila.**
+
+Duas frases, e a diferença entre as duas metades é *o app não insiste* contra *o
+caminho de volta existe*.
+
+**E o requisito que vem de `04-voz.md` §3.1 e que eu confirmo:** **"pulado" e
+"sem marca" nunca usam a mesma palavra**, porque o dado é diferente — `'pulado'`
+é decisão declarada e `'nada'` é ausência (`estadoEx` devolve os quatro estados,
+conferi: `'feito'`, `'parcial'`, `'pulado'`, `'nada'`).
+
+### 7.6 · Deload — as palavras não existiam, e o lugar era o freio
+
+**Não está desenhado:** uma linha de texto numa folha desabilitada do protótipo
+(`["Deload hoje", "metade das séries, mesmas cargas"]` em `menuSessao()`), com
+**zero** ocorrências nos oito HTML (frente 2 §7.0).
+
+**E as duas decisões dele mudam o que as palavras têm de carregar.**
+
+**Decisão 6 · o deload muda de lugar.** Hoje o interruptor mora em Ajustes, e o
+comentário do fonte diz por quê, palavra por palavra: *"Fica AQUI, e não no
+TREINO, de propósito: um interruptor que corta metade das séries não deve estar a
+um toque no meio de uma sessão. O app existe em parte para frear, e o caminho de
+menor esforço tem que ser o conservador."* (`src/ui/telas/guia.jsx`, conferi.)
+Ele decidiu que muda, e que **"a razão escrita no fonte cai"**.
+
+**O que cai com ela é o freio, e o freio era o lugar.** Então o freio passa a ser
+a palavra — e isso é exatamente o que esta frente existe para escrever. **A
+consequência: o item do menu da sessão não pode ser um interruptor com nome.** Ele
+diz o corte, em número, antes do toque (V4):
+
+| onde | o que está escrito |
+|---|---|
+| item do menu `···`, deload desligado | **Deload hoje** · **corta 20 séries para 10, nas mesmas cargas** |
+| item do menu `···`, deload ligado | **Sair do deload** · **devolve 10 séries ao Treino A de hoje** |
+| nunca | um interruptor com o nome sozinho · "Ativar deload" |
+
+**Os números são do dado, não de exemplo:** `setsFor(ex)` chama
+`_setsFor(ex, S.deload)` (conferi), e a lista de séries é derivada do prescrito
+mais `S.deload` — então "de 20 para 10" é calculável na hora de abrir o menu,
+para aquele treino, naquele dia.
+
+**Decisão 7 · desligar no meio devolve as séries, e o que já foi registrado
+fica.** Isto responde a pergunta que a frente 2 levou à mesa dele (§7.7 dela), e
+as palavras têm de dizer **as duas metades**, porque a segunda é a que impede o
+susto:
+
+| quando | o que está escrito | o que acrescenta |
+|---|---|---|
+| ao ligar | **Deload ligado. Metade das séries, mesmas cargas.** | É o toast que o app já tem (`setDeload`, conferi), e está certo |
+| ao ligar, a frase do histórico | **As sessões deste modo ficam marcadas, para a queda de volume não parecer regressão.** | É a frase do app de hoje, em `src/ui/telas/guia.jsx` (conferi). F: `abreSessao` grava `marca.dl = 1` |
+| ao desligar no meio da sessão | **Deload desligado. As 10 séries voltaram: o Pulldown unilateral volta a pedir 4, e as 2 que você já registrou ficam.** | **É a decisão 7 inteira em uma frase.** O app de hoje diz só "Séries completas de volta", e não diz o que acontece com o que já foi registrado — que é a única coisa que ele teme |
+| ao desligar fora da sessão | **Deload desligado. Séries completas de volta.** | O toast de hoje, e fora da sessão não há série registrada para tranquilizar |
+| a marca na tabela, com deload ligado | **2 séries hoje · metade do prescrito, por deload** | Frente 2 §7.7: a tabela tem de dizer que o número de séries ali **não é o prescrito** |
+
+**E a frase que o lugar antigo dizia sem palavra**, que agora tem de ser dita:
+
+> **O deload corta séries, não cargas. Ele é para quando a força está caindo, a
+> dor não passa em 72 h ou o RIR não se mantém — e não para um dia difícil.**
+
+**Isto é citação do treinador e vai atribuída**, porque é a regra dele: o app já
+a escreve no aviso de fim de bloco (*"Deload só se houver evidência de fadiga:
+força caindo por 2 a 3 sessões, dor que não passa em 72 h, RIR difícil de
+manter. Progredindo bem, siga treinando."*, conferi em `src/main.jsx`), e o
+comentário acima do aviso diz que **não é contagem regressiva para um deload
+obrigatório**. A frase sobe do aviso para o menu, porque é no menu que o toque
+acontece agora. **Com assinatura: "Treinador:".**
+
+### 7.7 · Encerrar — as palavras não existiam, e há quatro maneiras de a sessão acabar
+
+**Não está desenhado:** uma linha numa folha desabilitada,
+*"Encerrar a sessão · fim igual à última série; não pergunta nada"*.
+
+**E "não pergunta nada" é decisão dele** (D1): a pergunta do programa sai. Então
+o estado é curto de propósito. **Mas a linha do desenho está errada sobre o
+dado**, e a frente 2 achou: no fecho **manual** o fim é o instante do toque, não
+a última série.
+
+**Conferi, e o quadro é mais largo do que a frente 2 escreveu: há quatro
+maneiras de a sessão acabar, e três delas gravam um fim diferente.**
+
+| como acaba | o fim gravado | `marca.fim` | onde está |
+|---|---|---|---|
+| ele toca **finalizar** dentro da sessão | **o instante do toque** | `'manual'` | `encerraDeVerdade` → `fechaSessao('manual')`; `const fim = comoFim === 'manual' ? Date.now() : (s.ultima \|\| s.inicio)` (conferi) |
+| ele toca **"já parei"** na faixa da pergunta de 1h30 | **a última série** | `'auto'` | `CTX.encerraSessaoEsquecida` → `fechaSessao('auto')` (conferi), com o comentário em cima: *"'Já parei': encerra com a duração indo até a última série registrada"* |
+| passa a graça depois de 1h30 e ninguém responde | **a última série** | `'auto'` | `encerraSePreciso` na abertura, e `ligaBatida` com o app aberto |
+| ele toca **descartar** numa sessão sem série | **nada: a sessão sai** | — | `finalizarSessao`, primeiro ramo (conferi) |
+
+**A segunda linha é a que ninguém escreveu.** A frente 2 escreveu que *"o 'fim
+igual à última série' fica onde ele é verdade: na faixa do encerramento
+automático"* — mas **"já parei" é um toque, não é automático**, e ele grava o fim
+automático. É o único lugar do produto onde um toque dele grava um tempo que não
+é o do toque, e está certo que grave: ele está respondendo depois do fato. **O
+que falta é a palavra dizer isso**, e hoje — ironicamente — é o único dos quatro
+que diz: o toast de `CTX.encerraSessaoEsquecida` é
+*"Treino encerrado. A duração vai até a última série."* (conferi).
+
+**As palavras dos quatro, e três delas são novas:**
+
+| onde | o que está escrito |
+|---|---|
+| item do menu `···` | **Encerrar o treino** · **o fim é agora, 7h31** |
+| … com exercício pendente | **Encerrar com 3 exercícios pendentes** · **eles ficam marcados como não feitos no histórico** · botões **Encerrar assim** / **Voltar ao treino** |
+| … sem série nenhuma | **Descartar esta sessão** · **nenhuma série foi registrada nela. Sai o horário de início e a duração** · botões **Descartar a sessão** / **Deixar como está** (é a família "pare", §3.3) |
+| depois de encerrar | **Encerrei o Treino A · 6h20 → 7h31 · 1h11 · 8 exercícios** |
+| a pergunta de 1h30, na faixa | **Treino A sem série nova há 1h32.** · **continuo treinando** / **já parei** |
+| depois de "já parei" | **Encerrei o Treino A na última série, às 7h24. A duração vai até ela: cerca de 1h04, aproximada.** |
+| depois do fecho por inatividade, na abertura seguinte | **Fechei o Treino A de ontem na última série.** · **6h20 → 7h24 · cerca de 1h04, aproximada** · **Está certo** / **Corrigir o fim** |
+
+**Quatro decisões de palavra embutidas aí, e cada uma tem razão:**
+
+1. **"Encerrar" e não "finalizar".** O app usa as duas: o botão diz
+   `finalizar` e o toast diz `encerrado` (conferi os dois em
+   `src/ui/telas/treino.jsx` e `encerraDeVerdade`). Uma palavra só, e é
+   "encerrar", porque é a que o desenho, a frente 1, a frente 2 e C4 já usam, e
+   porque "finalizar" tem jeito de formulário (V7).
+2. **"o fim é agora, 7h31" antes do toque.** É V4: o que o toque grava, com o
+   número, antes. E é a frase que corrige a linha errada do desenho.
+3. **"Encerrei" na primeira pessoa do app.** V8: encerrar é ato do registro, e o
+   app pode dizer "eu" sobre isso. A frase de hoje — *"Treino A encerrado · 1h11
+   · 8 exercícios"* — é passiva e esconde o agente.
+4. **"aproximada" nos dois fechos automáticos, e nunca no manual.** V3: a
+   duração que vai até a última série é estimativa, porque ninguém mediu o que
+   houve depois dela (F152). A do toque não é.
+
+**E "já parei" fica como está**, na voz dele, duas palavras, e é um dos melhores
+rótulos do app de hoje (`src/ui/instrumento/faixasessao.jsx`, conferi). O par
+**"continuo treinando" / "já parei"** também: as duas são declarações dele sobre
+um fato, que é exatamente o que V8 reserva para a primeira pessoa dele.
+
+### 7.8 · Os sete becos, e o que cada um passa a dizer
+
+A frente 2 mediu: `data-a="beco"` oito vezes, **sete sem `disabled`**, nenhuma
+com ramificação. *"Recebem foco, escalam no toque e não fazem nada e não dizem
+nada."* Três deles — "Máquina ocupada", "Dor", "Pular" — ganham estado acima. Os
+outros quatro ficaram sem palavra em lugar nenhum:
+
+| beco | o que ele é | o que passa a dizer |
+|---|---|---|
+| **Ver o aparelho** (cartão do exercício) | a foto da máquina, que pode não existir | se existe: abre a foto. Se não: **Nenhuma foto desta máquina neste aparelho.** + **Fotografar o aparelho** (F224) |
+| **Nota do treinador** (cartão do exercício) | a orientação de execução | abre a folha com a frase dele, atribuída. Se não houver: **o botão não existe** — V1: o app não inventa nota sem autor |
+| **Histórico** (cabeçalho de Corpo) | a leitura ao longo do tempo | passa a **Evolução** (§1.7) |
+| **Outro dia** (Corpo) | lançar peso com data passada | **Peso de outro dia** · e dentro: **Nunca uma data futura: o dia ainda não aconteceu.** (é o que `poeComidaNoDia` e o seletor de data do peso já recusam) |
+| **o botão de tipo de dia** (Agora) | trocar treino/descanso | **Dia de treino, por palpite · mudar** (é a frase de C4, §10 dela) |
+
+**E a regra que fecha a seção, e ela vale para os 1.069 usos de ícone que a
+frente 4 contou:** **nenhum controle existe sem rótulo, e nenhum rótulo mente
+sobre o que o toque faz.** Um botão que não faz nada é pior do que um botão
+desabilitado, porque desabilitado se anuncia. **Se não há o que dizer, o botão
+não existe** — e esta é a única frase deste documento que manda tirar um
+controle da tela.
