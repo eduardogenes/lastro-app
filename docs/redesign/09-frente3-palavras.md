@@ -625,3 +625,459 @@ E o caso que falta, e ele é de palavra e não de cor: **nenhum painel de "pare"
 tem botão cujo rótulo seja "OK", "Confirmar", "Sim" ou "Cancelar".** É asserção
 de fonte, de uma linha, e é a única que impede as duas famílias de voltarem a se
 parecer.
+
+---
+
+## 4 · A folha de pôr o dia em dia
+
+A frente 2 desenhou a folha e levou cinco mudanças de regra à mesa dele (§4.7
+dela). **Ele respondeu as cinco em 06/10, e uma delas contraria o que a frente 2
+havia especificado.** As palavras abaixo são do comportamento que ele decidiu, não
+do que estava escrito.
+
+**O que a folha mostra, de cima para baixo**, com o texto exato:
+
+| onde | o que está escrito | o que isto diz que a tela sozinha não diria |
+|---|---|---|
+| título (`h1`, recebe foco) | **Segunda, 05/10** | A data é o título porque é o que distingue esta folha de todas as outras aberturas dela (frente 2 §4.2) |
+| procedência, logo abaixo | **Contado contra o plano de hoje · descanso, 5 refeições** | `poeComidaNoDia` recalcula o dia contra o plano de HOJE e grava `pv` justamente para a tela poder dizer isto (frente 2 §4.1, limite 1). Sem esta linha, pôr em dia uma terça de antes da ceia entrar é um dia recontado contra um plano que não era o daquele dia, **e nada na tela diria** |
+| instrução | **Nada aqui está registrado até você tocar.** | Decisão 5 (§4.1) |
+| uma linha por refeição | nome · procedência · cinco botões | §4.2 |
+| a água, separada | **Água** · **Não contei** / **Contar copos** | "não contei" é fato e não ausência (`aguaNaoContada?: 1` em `src/dominio/nutricao/tipos.ts`, com a razão escrita no comentário: "`agua: 0` é ambíguo") |
+| a pergunta do fora do plano, **depois da gravação** | §4.4 | Decisão 4 |
+| a frase de leitura de volta, em região viva | §4.3 | A melhor coisa do protótipo (`frase()` e o nó com `aria-live="polite"`, conferi) |
+| o pé | **O primeiro toque guarda o dia inteiro como está aqui, com a linha que você tocou já corrigida.** | V4: a consequência antes do toque. É a consequência precisa de "um toque em qualquer linha fecha o dia" com a gravação a cada toque (frente 2 §4.3), e sem ela o dono não tem como saber que tocou sete refeições |
+| nunca | "Cancelar" · "Guardar" · "Responda a pergunta para guardar" | Não existe lote (frente 2 §3 e §4.5): um cancelar que não cancela é falso, e o botão de guardar está proibido |
+
+### 4.1 · Decisão 5 · A última refeição continua vindo pré-marcada
+
+**Isto contraria a frente 2**, que havia escrito o requisito oposto: *"a última
+refeição do dia nunca entra pré-marcada por passagem de horário"* (§4.4, item 2
+dela). A decisão dele manda, e muda as palavras: a pré-marcação passa a ser
+**sugestão declarada**, e o texto tem de dizer de onde ela vem.
+
+**A frase que a decisão obriga, e ela é a mais importante da folha:**
+
+> **Nada aqui está registrado até você tocar. A ceia vem marcada porque passou
+> das 21h30, não porque o app sabe.**
+
+**Por que esta frase e não outra.** O que torna a ceia o caso perigoso é que o
+limite é a hora **do plano**, não a de agora: `m.h > agora` compara o horário do
+plano com o relógio (conferi em `folhaPorEmDia`), e a ceia é 21:30
+(`src/dominio/nutricao/alimentos.ts`, conferi). Entre 21:30 e a virada da data,
+a ceia deixa de ser "por vir" e vem marcada como comida. A frase nomeia **a
+causa da marca** — a passagem do horário — em vez de nomear a marca. Nomear a
+causa é o que impede de ler a sugestão como conhecimento.
+
+**E a procedência de cada linha diz a mesma coisa, linha por linha**, porque uma
+frase no alto não sobrevive à rolagem:
+
+| estado da linha | a segunda linha dela |
+|---|---|
+| ainda não aconteceu | **por vir · 21h30** (a palavra do protótipo, conferi, e está certa) |
+| pré-marcada porque a hora passou | **marcada pelo horário · 12h30** |
+| declarada na hora | **na hora · 13h02** (a palavra do protótipo) |
+| declarada depois, de memória | **de memória · marcado em 06/10, 13h42** |
+| sem marca | **no plano · 12h30** |
+
+**"marcada pelo horário" é a palavra nova, e é ela que paga a decisão 5.** Ela
+não aparece em desenho nenhum: o protótipo distingue sugestão de declaração só
+por classe de CSS (`pv` contra `me`, conferi), e a frente 2 exigiu que a
+distinção não fosse só de cor. **Esta é a palavra.**
+
+### 4.2 · Decisão 1 e decisão 3 · Os cinco botões, e o que cabe neles
+
+**Decisão 1: entra o quinto botão, "Não comi".** O protótipo tem quatro
+(`Tudo · Metade · Fora · Não sei`, conferi em `folhaPorEmDia`), e `'nao'` é um
+valor real do domínio — `ComoFoiARefeicao = 'fora' | 'nao'`, com a razão escrita
+no tipo: *"`'nao'` é 'não comi esta refeição', e é diferente de não ter marcado
+nada: um é fato declarado, o outro é silêncio"* (conferi
+`src/dominio/nutricao/tipos.ts`). E `pesoDaRefeicao` devolve 0 para ele, de
+propósito: é zero conhecido.
+
+**Os cinco botões completam uma frase só, e a frase é na voz dele (V8):**
+
+| botão | a frase inteira | o dado |
+|---|---|---|
+| **Tudo** | "Comi tudo" | `escala: 1` |
+| **Metade** | "Comi metade" | `escala: 0.5` |
+| **Outra coisa** | "Comi outra coisa" | `como: 'fora'` |
+| **Não comi** | "Não comi" | `como: 'nao'` |
+| **Não sei** | "Não sei" | §4.5 |
+
+**A cabeça da frase aparece uma vez, no alto**, e nunca se repete nos botões:
+**"Em cada refeição: comi…"**. É V6 pelo lado certo — a folha não é zona do
+polegar, mas o botão continua sendo três palavras no máximo.
+
+**"Outra coisa" no lugar de "Fora", e eu estou tocando uma decisão de C4.** Ela
+recusou "Fora" por nome (§10 dela: *"V7: não se abrevia o conceito"*) e escolheu
+**"Fora do plano", em duas linhas**, porque a fatia da direção D aceitava duas.
+**Com o quinto botão, não aceita mais — e a conta é esta.** `.sheet` tem
+`padding: 8px 16px`, então a largura útil é 382 pt; `.rr` é
+`grid-template-columns: 86px minmax(0,1fr)` com `gap: 8px`, então a coluna dos
+botões tem **288 pt**; `.seg` era `repeat(4, 1fr)` com `gap: 4px` e passa a
+`repeat(5, 1fr)` (conferi as três regras em `prototipo.html`). **Conta:** cada
+botão cai de 69 pt para **54,4 pt**, menos `padding: 0 2px`, dão **50,4 pt
+úteis**; a 13 px em peso 700, a 0,58 em, são **6,7 caracteres por linha**.
+
+| rótulo | linhas que ele pede | altura, a `line-height: 1.1` | cabe em `min-height: 44px`? |
+|---|---|---|---|
+| **Tudo** | 1 | 14,3 pt | sim |
+| **Metade** | 1 (45,2 dos 50,4 pt) | 14,3 pt | sim, **no limite** |
+| **Outra coisa** | 2 | 28,6 pt | sim |
+| **Não comi** | 2 | 28,6 pt | sim |
+| **Não sei** | 2 | 28,6 pt | sim |
+| *"Fora do plano", de C4* | **3** ("Fora" / "do" / "plano") | 42,9 pt | **no limite, e com uma linha de artigo sozinha** |
+
+**Por que "Outra coisa" não é o que V7 recusa.** "Fora" é o conceito abreviado —
+um pedaço de "fora do plano". "Outra coisa" é o dado dito por inteiro, com
+outras palavras: o tipo diz *"'fora' é 'comi, mas não foi isto'"*, e "comi outra
+coisa" é exatamente isso em três palavras. **Não é abreviação; é outra nomeação
+completa.** E ela ganha uma coisa que "Fora do plano" não tinha: completa a mesma
+frase que os outros quatro, na voz dele.
+
+**Decisão 3: a porção acima de 1 alcança dia passado**, com os cinco valores que
+já existem — `PORCOES = [½, ¾, cheia, 1¼, 1½]` em `src/ui/folhas/refeicao.jsx`
+(conferi, e são `0.5, 0.75, 1, 1.25, 1.5`). **Os cinco não entram como botões**:
+seriam dez numa fileira de 288 pt, e nem a conta nem a leitura aguentam. Eles
+são a régua que já existe, alcançada da linha — **como a frente 2 especificou**
+(§4.6, item 3 dela), e por onde se chega a ela é interação, não palavra.
+
+**As palavras da régua de porções dentro da folha**, que não existem em desenho
+nenhum:
+
+| onde | o que está escrito |
+|---|---|
+| título da régua | **Almoço · quanto do plano** |
+| os cinco valores | **½** · **¾** · **cheia** · **1¼** · **1½** (os cinco literais do app, conferi) |
+| sob o valor escolhido | **sua escolha** |
+| sob o valor 1 | **cheia é o plano** |
+| a procedência, se for dia passado | **de memória** |
+| o que a régua **não** diz | nada sobre adesão nem sobre excesso — §4.6 |
+
+### 4.3 · A frase de leitura de volta, e ela muda de tempo verbal
+
+O protótipo monta a frase com `frase()` e a põe num nó com
+`aria-live="polite"`, e diz até o que **não** foi marcado ("Fica sem marca:
+jantar.") — conferi as duas coisas. **A frente 2 exigiu que ela passasse a dizer
+também o que acabou de ser gravado**, porque agora a gravação acontece durante a
+frase. As palavras são estas, e são duas frases, não uma:
+
+| quando | o rótulo da região | o corpo |
+|---|---|---|
+| **antes do primeiro toque** | **Vai ficar registrado** | **Segunda: café da manhã, almoço e jantar inteiros; lanche pela metade. Não comi: ceia. Água: não contei. Fica sem marca: pré-treino.** |
+| **depois de cada toque** | **Guardei neste aparelho** | mesma lista, e mais **Mudei o lanche de inteiro para metade.** |
+
+**Três coisas que a frase tem de distinguir com palavras diferentes**, porque
+são três estados diferentes no dado e o protótipo só tem palavra para dois:
+
+| estado | a palavra na frase | o dado |
+|---|---|---|
+| ele declarou que não comeu | **Não comi: ceia.** | `como: 'nao'` — zero conhecido, e o dia **conta** |
+| ninguém disse nada | **Fica sem marca: pré-treino.** | ausência — e o pré-treino não entra na conta |
+| ele declarou que não sabe | **Não sei: almoço.** | §4.5 |
+
+**É esta distinção que a decisão 1 existe para destravar**, e sem palavras
+diferentes ela não chega ao dono: `diaInterpretavel` devolve verdadeiro com
+**uma** marca qualquer (conferi em `src/dominio/nutricao/calculo.ts`:
+`Object.keys(h.done || {}).length > 0`), e o comentário da função diz o que está
+em jogo — *"declarar 'não comi' com um toque passa a produzir um dia contado, em
+vez de silêncio"*. O portão é `MIN_REGISTRADOS = 11` em 14
+(`src/dominio/corpo.ts`, conferi), **e ele nunca abriu uma vez.**
+
+**Então a frase diz o portão, uma vez, no fim:**
+
+> **A segunda passa a contar para a regra do nutricionista: 3 dias conhecidos
+> nos últimos 14. A regra pede 11.**
+
+### 4.4 · Decisão 4 · A pergunta do fora do plano deixa de bloquear
+
+No protótipo, marcar qualquer refeição como "Fora" desabilita o botão de guardar
+e o rótulo dele vira **"Responda a pergunta para guardar"** (conferi). **Com o
+botão de guardar fora, o bloqueio não tem onde morar**, e ele decidiu que não
+deve ter: um toque fecha o dia, e a pergunta fica para depois.
+
+**As palavras, e elas mudam de lugar e de tempo:**
+
+| onde | o que está escrito |
+|---|---|
+| a linha que aparece **depois** da gravação | **Você comeu outra coisa no almoço. Sabe o que foi?** |
+| botão | **Sei o que comi** |
+| botão | **Não sei quanto** |
+| o estado antes de responder, dito | **Sem resposta, a segunda conta como se tivesse seguido o plano.** |
+| depois de "Sei o que comi" | **A segunda continua contando para a regra.** |
+| depois de "Não sei quanto" | **A segunda deixa de contar para a regra: 3 dias conhecidos passam a 2.** |
+| nunca | "Responda a pergunta para guardar" · "Tem certeza?" |
+
+**A frase do estado inicial é a que esta decisão obriga, e ela é desconfortável
+de propósito.** Conferi o dado: `aderencia?: 'plano' | 'fora' | 'perdido'`, e o
+comentário do tipo diz *"Ausente = `plano`"*. Então **não responder empurra o dia
+para o lado que infla a adesão** — e adesão inflada é exatamente o que produziu
+um corte de comida sem motivo neste produto (F290, F292). Com o bloqueio, a
+pergunta nunca ficava sem resposta; sem o bloqueio, fica.
+
+**Isso não reabre a decisão dele — o bloqueio sai.** O que muda é que a frase
+tem de dizer para que lado o silêncio cai, e **essa frase sobe à mesa dele**
+(§11.2), porque ela nomeia uma regra: *qual é a adesão de um dia em que ele
+disse "comi outra coisa" e não respondeu se sabe o quê.*
+
+### 4.5 · Decisão 2 · "Não sei" passa a valer por refeição — e o dado não faz isso hoje
+
+**O que ele decidiu:** "Não sei" passa a valer **por refeição de verdade**, não
+mais pelo dia inteiro.
+
+**O que o dado faz hoje, conferido.** "Não sei" por refeição **não existe**:
+`ComoFoiARefeicao` tem dois valores, `'fora'` e `'nao'`, e o que existe é
+`aderencia?: 'plano' | 'fora' | 'perdido'`, que é campo **do dia**
+(`DiaComida` e `DiaComidaHist`, conferi os dois). E `diaInterpretavel` começa
+por `if (h.aderencia === 'perdido') return false` — ou seja, hoje **um "não sei"
+derruba o dia inteiro da janela de 14 dias**, que é o que o próprio protótipo
+escreve na tela: *"Não sei: o dia deixa de contar para a regra"* (conferi).
+
+**O custo está registrado e é de dado, não de palavra:** é campo persistido novo,
+pelos seis portões, na migração **11 → 12** (`PLANO_ATUAL = 11` hoje, conferi em
+`src/dominio/migracoes.ts`, com `migraPlano11` sendo a da ceia). O registro das
+quinze já diz isso (`00-coordenacao.md`, consequência 1). **Então as palavras
+abaixo são do comportamento novo, e hoje o dado não faz isso.**
+
+**E aqui está a pergunta que ninguém fez, e sem ela as palavras não existem:**
+se "Não sei" é por refeição, **o dia continua contando?** E, se continua, **que
+peso a refeição desconhecida tem na adesão?** `aderenciaDoDia` soma
+`pesoDaRefeicao` sobre as refeições do plano e divide pelo total (conferi), então
+a refeição desconhecida precisa de um número — e as duas respostas possíveis
+erram para lados opostos:
+
+- **peso 0** subestima a adesão: um almoço esquecido conta como almoço não
+  comido;
+- **peso 1** infla a adesão, e inflar adesão é literalmente o mecanismo do corte
+  errado de F292.
+
+**Como a instrução pediu, escrevo as duas versões**, e a escolha é dele (§11.2).
+
+**Versão A — um "não sei" numa refeição não derruba o dia:**
+
+| onde | o que está escrito |
+|---|---|
+| botão | **Não sei** |
+| a consequência, antes do toque | **O almoço fica desconhecido. A segunda continua contando, com uma refeição de cinco que a regra não sabe ler.** |
+| na frase de leitura de volta | **Não sei: almoço.** |
+| na contagem | **A segunda conta para a regra: 3 dias conhecidos nos últimos 14. A regra pede 11.** |
+| em Semana, ao lado da adesão | **Adesão: 11 dias de 14 · 1 refeição desconhecida na segunda** |
+
+**Versão B — um "não sei" derruba o dia, como hoje:**
+
+| onde | o que está escrito |
+|---|---|
+| botão | **Não sei** |
+| a consequência, antes do toque | **Sem saber quanto foi o almoço, a segunda inteira deixa de contar para a regra: 3 dias conhecidos passam a 2.** |
+| na frase de leitura de volta | **Não sei: almoço — e por isso a segunda fica desconhecida.** |
+| na contagem | **A segunda fica desconhecida: 2 dias conhecidos nos últimos 14. A regra pede 11.** |
+
+**A diferença entre as duas não é de tom: é de quantos dias o portão vê.** E o
+portão é o que nunca abriu. A versão A é a que torna o portão alcançável num dia
+com uma refeição esquecida; a versão B é a que nunca infla. **Enquanto não houver
+resposta, o escrito é a versão B**, porque é o que o dado faz hoje e porque V3
+manda nunca produzir certeza falsa.
+
+### 4.6 · O que a folha nunca diz
+
+| nunca | por quê |
+|---|---|
+| adesão em percentual, na folha ou na linha do dia | A frente 2 já amarrou: adesão e excesso moram **juntos, em Semana**. E o próprio domínio tem a razão escrita em `padraoPorRefeicao` — *"devolve CONTAGEM, nunca percentual… feedback que dirige a atenção para a autoavaliação piora o desempenho em cerca de um terço dos casos"* (conferi) |
+| "limpar o dia" ou "apagar o dia" | `poeComidaNoDia` não faz isso, e apagar um dia do histórico não foi desenhado (frente 2 §4.1, limite 2) |
+| um sucesso quando nada mudou | `poeComidaNoDia` devolve `'mudo'` para dia que continua mudo, e a linha anterior fica. A tela diz: **"Nada mudou na segunda. Ela continua desconhecida."** |
+| "13 dias perdidos" · "você não marcou" · sequência de dias | V5, F22 |
+| "0 refeições" | V3: desconhecido não é zero |
+
+**E o que ela diz quando a data não serve**, porque `poeComidaNoDia` recusa duas
+e a tela não pode inventar (conferi os dois retornos):
+
+| retorno | o que está escrito |
+|---|---|
+| `'futuro'` | **Amanhã ainda não aconteceu. Não dá para registrar o que não foi comido.** |
+| `'data'` | **Não consegui ler esta data.** (família "falhou", §3.2) |
+
+---
+
+## 5 · A lista das mudanças que esperam e vencem
+
+Ela mora em Prescrição (`09-frente1-lugares.md` §1.5) e o mecanismo é
+`S.promoPendente`, que a frente 0 transformou em coleção com chave natural e
+lápide — `promoPendente: PromoPendente[]` em `src/dominio/tipos.ts`, conferi,
+com o comentário contando por que deixou de ser documento.
+
+**A pergunta do fim do treino saiu** (decisão D1 do dono), então **nada disto é
+perguntado na academia.** Essa é a primeira coisa que as palavras têm de dizer,
+porque uma lista que aparece sem ninguém ter sido perguntado parece um erro.
+
+### 5.1 · O cabeçalho e a moldura
+
+| onde | o que está escrito | por quê |
+|---|---|---|
+| cabeçalho | **Prescrição** · **qui 01/10 · 3 esperando decisão** | O desenho, conferido (`prescricao.html`, estado 1), e o número sobe para o nome acessível da aba (§1.8) |
+| título da lista | **Esperando decisão** | O desenho. Substantivo, sem dívida (V5): não é "pendências", não é "a fazer" |
+| a linha que explica a lista, uma vez | **Nada disto foi perguntado no treino. O que você mudou no dia ficou registrado na sessão e esperou aqui.** | É a decisão dele dita como fato (F159: a mudança fica escrita na sessão de qualquer jeito). Sem esta frase, a lista parece uma pergunta que ele não ouviu |
+| título do segundo bloco | **Venceu sem você** | O desenho, conferido. E é a palavra certa: nomeia o prazo como agente, não ele |
+
+### 5.2 · A linha de cada mudança, e os sete textos que o app já grava
+
+**Cada linha diz quatro coisas**, e a ordem é esta: o que mudou, de que sessão
+veio, quando vence, e a conta de volume se virar permanente.
+
+**O que mudou** vem de `textoMod(d, m)` em `src/main.jsx` — e **conferi os sete
+ramos dela, que não estão numa gramática só:**
+
+| `m.k` | o que o app grava hoje | o que passa a gravar |
+|---|---|---|
+| `add` | *adicionou Leg press* | **Leg press: entrou no dia** |
+| `rm` | *removeu Pullover em máquina* | **Pullover em máquina: saiu do dia** |
+| `troca` | *Pullover em máquina → Pullover no cabo* | **Pullover no cabo no lugar de Pullover em máquina** |
+| `sets` | *Elevação lateral na máquina: 3 → 4 séries* | **Elevação lateral na máquina: 4 séries, não 3** |
+| `reps` | *Pulldown unilateral: 10 → 8 repetições* | **Pulldown unilateral: 8 repetições, não 10** |
+| `desc` | *Pulldown unilateral: descanso 2:00 → 1:30* | **Pulldown unilateral: descanso de 1:30, não 2:00** |
+| `mover` | *mudou Leg press de posição* | **Leg press: feito antes, fora da ordem** |
+
+**Três dos sete tinham ele como sujeito** — "adicionou", "removeu", "mudou" —, e
+V8 é explícita: a primeira pessoa é do app e só sobre os próprios atos no
+registro; os atos **dele** não se narram em terceira pessoa. Os outros quatro
+já eram frase nominal. **Uma gramática só: nome prescrito, dois-pontos, o que
+passou a valer, e o que era depois.** "4 séries, não 3" em vez de "3 → 4": a
+flecha é tabular e a lista não é tabela, e o que importa primeiro é o número que
+vale.
+
+**E um requisito de dado, porque senão as palavras velhas sobrevivem para
+sempre.** `PromoPendente` guarda **as duas coisas**: `mods: Mod[]`, que é
+estrutura, e `resumoMods: string[]`, que o tipo descreve como *"cada mudança já
+em português, como a tela mostra"* (conferi). O `resumoMods` é escrito por
+`textoMod` no momento em que a sessão fecha (conferi as duas chamadas, em
+`fechaSessao` e em `finalizarSessao`), e `migraPlano10` o copia como está
+(conferi: `resumoMods: Array.isArray(g.resumoMods) ? g.resumoMods : []`).
+
+> **Requisito meu: a lista renderiza de `mods`, e `resumoMods` passa a ser
+> reserva.** Senão, uma mudança que já está esperando continua escrita na
+> gramática velha ao lado das novas, para sempre, e nenhuma reescrita de palavra
+> alcança o que já está no disco. Renderizar de `mods` tem um segundo ganho de
+> graça: o nome do exercício passa a seguir o renome (F117 — renomear muda só o
+> nome exibido). `resumoMods` continua sendo a única coisa que resta quando o
+> exercício saiu do catálogo, e aí ela é usada.
+
+### 5.3 · A frase do vencimento — e ela conta em treinos, não em dias
+
+**O desenho conta em dias, e isso é palpite.** Conferi em `prescricao.html`,
+estado 1: *"vence 08/10"*, *"Vence quando o Treino D voltar, em 7 dias"*,
+*"vence 05/10"*, *"em 4 dias"*, e a prosa da tela chega a dizer que o prazo "vai
+de 4 a 7 dias sem precisar ser explicado".
+
+**Mas o prazo não é de dias.** A decisão dele (5.a' P1) é **por posição**, e a
+frente 2 derivou o predicado inteiro sem relógio nenhum (§9.3 dela):
+`voltas(p) = (rot().indexOf(p.day) − rot().indexOf(nextDay()) + N) % N`. A
+sequência avança **pela ordem, não pelo dia da semana** — F81, e conferi
+`ROT_BASE = ['A','B','C','D','E','HX']` em `src/dominio/programa.ts`: são seis
+posições, e nada no dado amarra uma posição a uma quarta-feira.
+
+**Então uma data de vencimento é uma previsão do app**, e V3 obriga a marcar
+previsão como previsão. **As palavras:**
+
+| `voltas(p)` | o que está escrito na linha |
+|---|---|
+| 0 | **vence na próxima vez do Treino A — que é a próxima sessão** |
+| 1 | **vence quando o Treino A voltar · falta 1 treino** |
+| 2 ou mais | **vence quando o Treino D voltar · faltam 4 treinos** |
+| já venceu | **venceu quando o Treino B voltou, em 29/09** |
+
+**E a data, se a tela quiser mostrá-la, vem marcada:** **"por volta de 08/10, se
+você treinar todo dia"**. Nunca "vence 08/10" seco, que afirma um dia que o dado
+não conhece.
+
+**A frase que nomeia a regra**, e é esta que sobe à mesa dele (§11.2):
+
+> **Cada mudança vence quando aquele treino voltar. Se você não decidir até lá,
+> ela fica como só daquele dia.**
+
+Duas frases, dezoito palavras, e elas contêm a regra inteira: o prazo, o que
+decide o prazo, e o que acontece no fim dele. **Nenhuma delas diz "permanente"**
+— "permanente" é a palavra do dado e aparece só no histórico de mudanças do
+programa (F163), como C4 já havia fixado.
+
+### 5.4 · Os dois botões, e eles estavam no tempo errado
+
+**O desenho põe os dois no passado**, conferi: **"Foi só naquele dia"** e
+**"Virou permanente"**. V6 manda o contrário: *"o rótulo diz o que o toque
+grava, não o que a tela faz"* — e um botão escrito no passado afirma um fato
+consumado, que é precisamente o que ainda não aconteceu.
+
+| era, no desenho | passa a ser | por quê |
+|---|---|---|
+| **Foi só naquele dia** | **Fica só naquele dia** | Presente: é o que o toque grava. E é o padrão conservador, que o fonte já defende por escrito ("o caminho de menor esforço tem que ser o conservador", acima de `MOTIVOS` em `src/main.jsx`) |
+| **Virou permanente** | **Entra no Treino D** | Nomeia o **destino**, que é a informação que falta — é a decisão de C4 na E1, e ela tem razão: a próxima vez daquele treino volta sem a mudança se ele não decidir (F160, F162) |
+| **Gravar no programa** (tela de confirmação) | **Gravar no Treino D** | O mesmo: o programa tem seis posições, e qual delas recebe é o que ele precisa saber (conferi "Onde entra | Treino D, posição 1 · não mexe no Treino A" no desenho — a informação está lá, no rótulo não estava) |
+| **Tornar permanente agora** (no vencido) | **Entra no Treino B agora** | Idem |
+| **Decidir depois** | **Decidir depois** | Fica. Sem decidir, nada se perde (F159) |
+
+**E os dois botões do app de hoje**, que vão sair com a tela da pergunta
+(`src/ui/telas/decisao.jsx`, conferi): **"só hoje"** e **"levar para o
+oficial"**. O segundo usa **"o oficial"**, que é vocabulário interno — não
+aparece em nenhuma prescrição e o dono nunca o disse. V7 recusa exatamente isso.
+A substituição é a mesma: **Entra no Treino D**.
+
+### 5.5 · A conta de volume na linha, e a unidade que o desenho errou
+
+**O desenho diz "na semana" e o código diz "na rotação", e vale o código.**
+Conferi `impactoDoMod` em `src/main.jsx`: ela monta
+`g + ': ' + oficial + ' → ' + depois + ' séries na rotação'`, com
+`oficial = seriesOficiais(g)`, e `seriesOficiais` soma o programa oficial sobre
+`rot()` — as seis posições. O alvo vem de `ALVO = alvoDoPrograma(PROGRAMA,
+ROT_BASE)` (conferi), também sobre as seis.
+
+Uma rotação é uma semana **só quando ele fecha as seis em sete dias**, e os
+números medidos dizem que isso não é confiável: 42% a 59% das sessões fecham sem
+ele (P1). F179 chama o total de "semanal" e o desenho repetiu; **a função conta
+rotação.** A palavra do app é a certa.
+
+| onde | o que está escrito |
+|---|---|
+| na linha que espera | **Se entrar no Treino D: deltoide lateral passa de 12 para 13 séries na rotação. O treinador prescreveu 12.** |
+| quando o alvo não existe para aquele músculo | **Se entrar no Treino D: deltoide lateral passa de 12 para 13 séries na rotação.** (sem segunda frase — V1: o app não inventa alvo que o treinador não deu) |
+| a ressalva do treinador, onde ela couber | **Treinador: prioridade máxima não significa obrigatoriamente mais séries brutas toda semana.** |
+| nunca | "séries na semana" · "+1 série" como elogio · a seta `→` |
+
+**E uma coisa que a frente 2 mediu e que a palavra tem de respeitar:**
+`impactoDoMod` tem **uma** ramificação testada de quatro (§9.1 dela). Das sete
+espécies de mudança, **só `sets` produz conta de volume** — conferi: os outros
+ramos devolvem `null`. Então **cinco das sete linhas da lista não têm conta
+nenhuma**, e a tela não pode fingir que tem. **O escrito, nessas:** nada. Linha
+sem conta é linha sem conta, e inventar "não altera o volume" seria afirmar o que
+a função não calculou.
+
+### 5.6 · Decisão 8 · O prazo do desfazer
+
+**O que ele decidiu:** o desfazer do vencimento é oferecido **até a próxima
+sessão daquele treino**. A frente 2 havia levado a pergunta à mesa dele porque a
+decisão dizia "desfazível" sem dizer até quando, e porque a coleção tem teto de
+60 entradas (`S.promoPendente.slice(-60)`, pela frente 2 §9.3).
+
+**É prazo, e prazo precisa de palavra que o diga sem o dono ter de adivinhar.**
+E a palavra é a mesma do vencimento, de propósito — a mesma leitura
+(`voltas(p)`), a mesma unidade (treinos), o mesmo verbo:
+
+| estado | o que está escrito |
+|---|---|
+| venceu, e o desfazer vale | **Ficou como só daquele dia quando o Treino B voltou, em 29/09. A sessão de 22/09 continua com as 3 séries registradas.** + **Dá para fazer entrar no Treino B até a próxima vez dele.** + botão **Entra no Treino B agora** |
+| venceu, e o prazo do desfazer passou | **Ficou como só daquele dia em 29/09. O Treino B já voltou duas vezes desde então, e a decisão fechou.** + **Ver a sessão de 22/09** |
+| o que nunca se escreve | "expirado" · "perdeu o prazo" · "você não decidiu" · um relógio contando |
+
+**A segunda linha é a que a decisão 8 obriga, e ela não existe em desenho
+nenhum.** O desenho só tem o estado em que o desfazer vale (`prescricao.html`,
+estado 1, bloco "Venceu sem você", conferi) — porque antes da decisão dele o
+desfazer não tinha fim.
+
+**E uma consequência que ninguém escreveu:** se o desfazer fecha, a linha **sai
+da lista**. A frente 1 já amarrou a disciplina — *"decidida ou vencida, a linha
+sai da fila e deixa lápide, para a fusão não a ressuscitar"* (§8.1, passo 6
+dela) —, e com a decisão 8 o momento de sair fica definido pela mesma leitura.
+**O que a tela diz quando a lista esvazia:**
+
+> **Nenhuma mudança esperando decisão.** · **O que você mudar num treino aparece
+> aqui depois que a sessão fechar.**
+
+Sem elogio e sem "tudo em ordem" (V5): é um estado, não um resultado.
