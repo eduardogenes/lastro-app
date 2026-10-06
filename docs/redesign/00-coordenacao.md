@@ -1050,6 +1050,69 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         correlacionar); memória, antes e depois; tempo da suíte; e **o resto da
         suíte quanto a `fechar()`** — só este arquivo foi auditado, pode haver
         outros.
+      - [x] **AS QUINZE RESPONDIDAS em 06/10** (folha
+        `claude.ai/artifact/Rc4h3591T6UBaf44x31Euy`). Registro literal, por
+        grupo. **Estas respostas mandam sobre os documentos das frentes**, que
+        foram escritos antes delas.
+
+      **A folha de pôr o dia em dia**
+      | | pergunta | resposta |
+      |---|---|---|
+      | 1 | o quinto botão "Não comi" | **entra** |
+      | 2 | "Não sei" vale refeição ou dia | **passa a valer por REFEIÇÃO de verdade** — e isto **custa migração**, ver abaixo |
+      | 3 | porção acima de 1 em dia passado | **sim**, os mesmos cinco valores da tela de hoje |
+      | 4 | a pergunta do "fora do plano" | **deixa de bloquear**; um toque fecha o dia |
+      | 5 | a última refeição pré-marcada | **continua pré-marcada** como as outras |
+
+      **O treino**
+      | | pergunta | resposta |
+      |---|---|---|
+      | 6 | onde mora o deload | **muda** como a frente 1 propôs; a razão escrita no fonte cai |
+      | 7 | desligar o deload no meio | **devolve as séries**; o que já foi registrado fica |
+      | 8 | até quando o desfazer do vencimento | **até a próxima sessão daquele treino** |
+
+      **A régua, o zoom e o texto grande**
+      | | pergunta | resposta |
+      |---|---|---|
+      | 9 | se a régua reprovar a medição | **vai para os botões fixos da C** — pré-autorizado, mas **a medição ainda tem de acontecer**: é condicional, não ordem de trocar agora |
+      | 10 | teto do texto grande | **125%**, e fica escrito que não cumpre 1.4.4 |
+      | 11 | o bloqueio de pinça | **mantém.** Nota literal dele: *"nem precisa desse argumento de mao suada. nao quero esses zoom automatico e pronto. nao gosto."* |
+
+      **O sistema visual**
+      | | pergunta | resposta |
+      |---|---|---|
+      | 12 | os três inegociáveis | **os TRÊS caem** (raio zero, mono/display, rótulo mono como estrutura). Nota literal: *"sem herancas"* — caem limpos, sem meia-medida do sistema velho |
+      | 13 | o terceiro sinal | **muda para "pare"**; a palavra carrega a diferença de "destrói dado" |
+      | 14 | a folha sobe ao abrir | **sobe**; a proibição escrita em dois documentos cai |
+
+      **O alcance**
+      | | pergunta | resposta |
+      |---|---|---|
+      | 15 | 320 px é alvo | **primeiro a medição, depois ele decide** |
+
+      - [ ] **DUAS CONSEQUÊNCIAS DAS RESPOSTAS, que são trabalho novo:**
+        1. **A resposta 2 pede migração 11 → 12.** "Não sei" por refeição não
+           existe no dado: hoje o que existe é a adesão **do dia** marcada como
+           perdida, e `ComoFoiARefeicao` tem dois valores. Virar por refeição é
+           **campo persistido novo**, pelos seis portões. Não estava previsto em
+           nenhuma frente.
+        2. **Os quatro documentos das frentes foram escritos ANTES destas
+           respostas** e precisam ser reconciliados com elas antes de virarem
+           candidatos a substituir `DESIGN.md`, `MARCA.md` e o contrato. Pelo
+           menos: a frente 4 recomendou os três inegociáveis caindo **com
+           ressalva** e ele mandou cair sem herança; a frente 2 especificou a
+           última refeição **não** vindo pré-marcada e ele decidiu o contrário;
+           e a frente 2 deixou o destino da régua aberto.
+      - [ ] **A nota da pergunta 11 aponta para outro mecanismo, e vale dizer a
+        ele.** O que ele recusa é **zoom automático** — o salto que o Safari dá
+        ao focar campo menor que 16px. Isso é impedido pela regra dos 16px no
+        campo (`base.css`, razão própria e correta), **não** pelo
+        `user-scalable=no`. A decisão dele (manter o bloqueio) fica; mas **o
+        comentário falso no fonte tem de ser corrigido** para dizer a razão
+        verdadeira, e não "nenhum texto do app é menor que 16px".
+      - [~] **As três tarefas marcadas como feitas sem resultado:** Neston,
+        ledger do ajuste e a passada da pinça. Marcar feito não traz o número —
+        **os três resultados foram pedidos a ele em 06/10.**
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
