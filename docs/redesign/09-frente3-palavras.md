@@ -1484,18 +1484,20 @@ rótulos do app de hoje (`src/ui/instrumento/faixasessao.jsx`, conferi). O par
 **"continuo treinando" / "já parei"** também: as duas são declarações dele sobre
 um fato, que é exatamente o que V8 reserva para a primeira pessoa dele.
 
-### 7.8 · Os sete becos, e o que cada um passa a dizer
+### 7.8 · Os oito becos, e o que cada um passa a dizer
 
 A frente 2 mediu: `data-a="beco"` oito vezes, **sete sem `disabled`**, nenhuma
 com ramificação. *"Recebem foco, escalam no toque e não fazem nada e não dizem
-nada."* Três deles — "Máquina ocupada", "Dor", "Pular" — ganham estado acima. Os
-outros quatro ficaram sem palavra em lugar nenhum:
+nada."* **Três dos sete** — "Máquina ocupada", "Dor", "Pular" — ganham estado
+acima. **Os outros quatro ficaram sem palavra em lugar nenhum**, e o oitavo — o
+único com `disabled`, "Histórico" — entra na lista porque ele muda de nome por
+outra razão (§1.7):
 
 | beco | o que ele é | o que passa a dizer |
 |---|---|---|
 | **Ver o aparelho** (cartão do exercício) | a foto da máquina, que pode não existir | se existe: abre a foto. Se não: **Nenhuma foto desta máquina neste aparelho.** + **Fotografar o aparelho** (F224) |
 | **Nota do treinador** (cartão do exercício) | a orientação de execução | abre a folha com a frase dele, atribuída. Se não houver: **o botão não existe** — V1: o app não inventa nota sem autor |
-| **Histórico** (cabeçalho de Corpo) | a leitura ao longo do tempo | passa a **Evolução** (§1.7) |
+| **Histórico** (cabeçalho de Corpo) — o oitavo, e o único `disabled` | a leitura ao longo do tempo | passa a **Evolução** (§1.7) |
 | **Outro dia** (Corpo) | lançar peso com data passada | **Peso de outro dia** · e dentro: **Nunca uma data futura: o dia ainda não aconteceu.** (é o que `poeComidaNoDia` e o seletor de data do peso já recusam) |
 | **o botão de tipo de dia** (Agora) | trocar treino/descanso | **Dia de treino, por palpite · mudar** (é a frase de C4, §10 dela) |
 
@@ -1932,7 +1934,11 @@ ela é um sublinhado e num conjunto de botões fixos ela é uma legenda:
 | "massa magra" (bioimpedância) | **Massa muscular esquelética** | É outro número, e é a palavra da decisão dele (§10) |
 | "Peso de hoje" | **Peso da manhã** | Com dois pesos no mesmo dia, "de hoje" deixou de distinguir (§10.2) |
 | "KCAL" · "PROTEÍNA" · "CINTURA" (`.ins-label`) | **kcal** · **proteína** · **cm** | Caixa alta era a mono fazendo estrutura em cima de uma unidade (§2.1, R4) |
-| "pendente", "pendência", "a fazer" como nome da lista | **Esperando decisão** | V5, e é a palavra do desenho |
+
+**E uma que eu confirmo em vez de mudar**, porque é a melhor palavra do desenho
+e vale dizer por quê: **"Esperando decisão"** como título da lista. C4 recusou
+"pendente" e "pendência" por nomearem dívida (§3.4 dela); "esperando decisão"
+nomeia o estado sem cobrar, e o sujeito que espera é a mudança, não ele.
 
 ### 12.2 · As palavras verdadeiras que não cabem — Lista A, e são quatro
 
@@ -1975,7 +1981,7 @@ Sete pontos, e os quatro primeiros mudam trabalho.
 |---|---|---|
 | 1 | "A frente 1 achou cinco afirmações minhas erradas" (o meu briefing) | **Sete.** `09-frente1-lugares.md` §7 abre com *"Sete pontos"* e a tabela tem sete linhas: a caixa de marcar das linhas de refeição (`ehLinhaDeTreino(r)` é `r.id === 'treino'`, não sessão ativa), a conta de volume em quatro lugares e não dois, o `promoPendente` guardando uma mudança, o carregador não escrito no fecho manual, o placar do cardio na aba TREINO, o `view.sessao` de `camadasAbertas` não sendo a sessão ao vivo, e os quinze campos da bioimpedância dizendo treze. **As contas das outras duas batem:** a frente 2 achou **seis** (§11 dela) mais três correções a si mesma, e a frente 4 achou **nove** (§10 dela) |
 | 2 | "O deload muda de lugar **como a frente 1 propôs**" (o meu briefing, e o registro das quinze) | **A frente 1 não propôs.** O achado 3 dela diz, literalmente: *"Não é decisão minha: é regra, e sobe com os dois argumentos escritos — o de hoje (frear) e o da D (o raro mora no ⋯, e deload é raro)."* Quem propôs o menu `···` foi a direção D (`03-direcao-D/direcao.md`, tabela de tarefas: "Deload | sessão, menu ⋯"). **Isto importa para as palavras:** a razão escrita no fonte não era "o lugar é ruim", era *"um interruptor que corta metade das séries não deve estar a um toque no meio de uma sessão"* — o lugar **era** o freio. Com ele fora, o freio tem de ser a palavra, e é por isso que o item do menu deixa de ser um interruptor com nome (§7.6) |
-| 3 | "os sete estados ruins… o protótipo os deixou como becos desabilitados" (herdado do briefing da frente 2) | **A frente 2 já havia derrubado as duas metades**, e eu confirmei a parte que me toca: para **três** dos sete não existe palavra em desenho nenhum, e **sete dos oito** becos não têm `disabled`. O que eu acrescento é a consequência de palavra: desses sete, **quatro não aparecem em nenhum dos sete estados** — "Ver o aparelho", "Nota do treinador", "Histórico" e "Outro dia" —, e eu escrevo as palavras deles em §7.8, inclusive a única frase deste documento que manda **tirar** um controle da tela |
+| 3 | "os sete estados ruins… o protótipo os deixou como becos desabilitados" (herdado do briefing da frente 2) | **A frente 2 já havia derrubado as duas metades**, e eu confirmei a parte que me toca: para **três** dos sete não existe palavra em desenho nenhum, e **sete dos oito** becos não têm `disabled`. O que eu acrescento é a consequência de palavra: desses sete, **quatro não aparecem em nenhum dos sete estados** — "Ver o aparelho", "Nota do treinador", o botão de tipo de dia e "Outro dia" —, e eu escrevo as palavras deles em §7.8, junto do oitavo beco, que é o único `disabled`. Lá está também a única frase deste documento que manda **tirar** um controle da tela |
 | 4 | "A frente 2 havia especificado o contrário" sobre a última refeição pré-marcada | **Confirmado, e é mais forte do que isso.** O requisito dela não é só sobre a última refeição: *"Para hoje, a refeição cuja hora passou há menos de 30 minutos fica sem marca"* (§4.4, item 2 dela). A decisão 5 derruba **as duas metades** — a da última refeição e a janela de 30 minutos —, e a segunda não está nomeada no registro das quinze. **Escrevi as palavras só da que ele decidiu** (a última refeição vem pré-marcada); a janela de 30 minutos **continua sem resposta**, e as palavras de §4.1 valem nos dois casos porque elas nomeiam a causa da marca (a passagem do horário), não qual refeição é |
 | 5 | "A bioimpedância… as palavras não existem" (o meu briefing, e o plano) | **C4 já tinha escrito parte.** `04-voz.md` §4.2 traz **"Bioimpedância · uma vez por mês"** (com a razão: é a palavra do dono, V7), a pergunta literal da avaliação visual, a validade dela, e os cinco estados da foto. O que faltava eram **os cinco campos e os dois pesos** — e a E2 dela diz, explicitamente, que "quais números entram vai para §12", onde ela o declara não medido. **Não escrevi nada que ela já tivesse escrito**, e os cinco estados da foto e a pergunta da gordura ficam inteiros, dela |
 | 6 | "O dono recusou explicitamente linguagem abstrata e metafórica neste projeto" (o meu briefing) | **Não achei a recusa literal dele.** O que o registro tem é a linha de 02/10 de `00-coordenacao.md`: a peça de comparação foi feita *"em linguagem direta: o vocabulário dos designers — lápis, tinta, hachura, visto — foi traduzido para o que acontece na tela, **a pedido dele**"*. É pedido registrado, não proibição escrita. **A régua é a mesma e eu a sigo**; a diferença é que ela não serve de argumento contra outra pessoa |
