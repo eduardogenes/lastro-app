@@ -1496,3 +1496,337 @@ sobre o que o toque faz.** Um botão que não faz nada é pior do que um botão
 desabilitado, porque desabilitado se anuncia. **Se não há o que dizer, o botão
 não existe** — e esta é a única frase deste documento que manda tirar um
 controle da tela.
+
+---
+
+## 8 · Corrigir no lugar
+
+Nasceu no protótipo (descoberta 4) e **não existe em nenhum dos oito HTML**, o
+que quer dizer que ninguém mediu nada dele (frente 2 §5). As palavras abaixo são
+as primeiras.
+
+### 8.1 · O rótulo do número guardado, que já está certo e precisa sobreviver
+
+```html
+<button class="cellb" aria-label="Série 3: 55 por 9 repetições. Tocar para corrigir">55 × 9</button>
+```
+
+(`prototipo.html`, conferi.) **O rótulo diz o valor e o que o toque faz**, que é
+V6 inteira, e a frente 2 avisou que *"numa reescrita de componente, esse rótulo é
+a primeira coisa que se perde"*. **Fica, com uma emenda:** "por" vira "vezes"
+quando o número é carga, porque "55 por 9" se ouve como razão e "55 quilos vezes
+9 repetições" é o que está escrito. O padrão:
+
+> **"Série 3: 55 quilos, 9 repetições. Tocar para corrigir."**
+
+Unidade por extenso, porque número abreviado não se lê em voz
+(`04-voz.md` §9, obrigação 1).
+
+### 8.2 · O título e o que ele diz do estado
+
+| onde | o que está escrito | por quê |
+|---|---|---|
+| título da correção | **Corrigir a série 3** | V6: o verbo e a coisa |
+| subtítulo | **guardada: 55 kg × 9 · às 6h52** | V2: o que está no disco, com o instante. É `d.at`, que a correção não toca (`corrigeSerie` não mexe nele, conferi pela frente 2) |
+| cabeça da régua | **Repetições · um toque corrige** | O rótulo diz o que o toque faz, e **não** "um toque guarda", que é o da primeira gravação |
+| saídas | **Voltar** · **Apagar esta série** | "Apagar" é família "pare" (§3.3), e fica longe dos números (F28) |
+| nunca | "Salvar" · "Confirmar correção" · "Cancelar" | V2; e não há lote a cancelar |
+
+### 8.3 · O estado novo: o valor guardado marcado "agora", ao lado da "última"
+
+A régua ganha um segundo estado — `.rep.now` em tinta cheia com o `<small>`
+dizendo "agora", e `.rep.last` com borda de acento dizendo "última" (conferi as
+três regras). **A frente 2 achou o defeito e eu mudo a resposta dela, com a
+conta.**
+
+**O defeito, dela:** no caso mais comum o valor guardado é igual ao da última, e
+aí o mesmo botão recebe as duas classes. O ternário
+`(v===ref && marca ? marca : (atual!=null && v===atual ? 'agora' : ''))` faz a
+**palavra** ganhar ser "última"; o CSS, com `.rep.now` depois de `.rep.last`,
+faz a **pintura** ganhar ser a de "agora". *"O botão fica pintado como o valor
+guardado e rotulado como a referência."* O requisito dela: a palavra passa a ser
+**"agora, igual à última"**.
+
+**Conferi se cabe, e cabe mal.** `.rep` é `width: 54px; height: 64px`, com o
+número a 26 px e `.rep small` a 11 px peso 600, `margin-top: 3px` (conferi as
+três). **Conta:** 54 px de largura a 0,58 em dão **8,5 caracteres por linha**;
+"agora, igual à última" tem 21 e pede **três linhas**. Em altura: 26 do número +
+3 de margem + 33 de três linhas = **62 dos 64 px**. Cabe — **no limite** — e são
+três linhas de 11 px embaixo de um número de 26 px numa caixa de 54 px.
+
+**A minha resposta, e ela é mais barata:** **a palavra concorda com a pintura, e
+o segundo fato sai do botão.**
+
+| caso | o `<small>` | por quê |
+|---|---|---|
+| é a referência | **última** | 6 caracteres, uma linha |
+| é o valor guardado | **agora** | 5 caracteres, uma linha |
+| é os dois | **agora** | a pintura de `.rep.now` é a que aparece; a palavra tem de dizer o que a pintura diz, senão o botão mente para quem olha **e** para quem ouve |
+
+**E o fato que sai do botão vai para onde já há espaço**, na frase de
+confirmação, que a frente 2 já exige que seja anunciada (§1.3, R6 dela):
+
+> **Corrigi a série 3: 55 kg × 9, igual à última.**
+
+**Por que isto é melhor do que a resposta dela, em três linhas:** o botão fica
+com uma palavra de uma linha, a contradição entre pintura e palavra morre, e o
+"igual à última" é dito onde ele cabe **e** onde ele é mais útil — na frase que
+é lida depois do toque, e não no alvo que se procura antes dele. A informação
+não se perde: a linha "Última" da tabela está logo acima, e é `<td>` de texto
+(conferi pela frente 2 §5.1).
+
+**E "Corrigi", não "Guardei".** O protótipo já troca a palavra
+(`S.corrigida` troca "guardada" por "corrigida" em `zonaDepois`, pela frente 2
+§5.4), e a razão é de dado: guardar de novo soa como série nova, e série nova
+reiniciaria o descanso — que é justamente o que corrigir **não** faz.
+
+### 8.4 · As quatro coisas que corrigir não muda, e as quatro têm frase
+
+A frente 2 escreveu as quatro invariantes (§5.4 dela). **Cada uma é um jeito de a
+correção mentir, então cada uma precisa de uma frase que ninguém tenha de
+procurar:**
+
+| invariante | o que está escrito, e onde |
+|---|---|
+| o horário não muda | **às 6h52**, no subtítulo da correção, sem palavra nenhuma a mais. O instante é medição; o valor é declaração — e deixar o horário visível é o que diz isso sem explicar |
+| o descanso não reinicia | **O descanso continua de onde estava.** · na própria tela da correção, uma linha. O desenho diz "o horário não muda", que é a invariante 1 e não esta |
+| não reabre sessão nem mexe na rotação | **Esta série é de 21/09. Corrigir não reabre aquele treino.** · só aparece quando a série corrigida é de outro dia |
+| a tela diz que foi correção | **Corrigi a série 3: 55 kg × 9.** · §8.3 |
+
+**E a frase que o defeito vivo obriga.** A frente 2 achou que a regra "corrigir
+não reinicia o descanso" se apoia em `view.fired[tag]`, que é memória e nunca
+disco, e que **reabrir o app e corrigir dispara um descanso para uma série que
+acabou minutos antes** (§5.3 dela). **Enquanto esse defeito existir**, a frase
+"O descanso continua de onde estava" é **falsa depois de reabrir o app** — e uma
+frase falsa é pior do que nenhuma.
+
+> **Requisito de ordem, e é o único deste documento:** a frase "O descanso
+> continua de onde estava" só entra na tela **depois** de a regra passar a ser
+> derivada do dado, como a frente 2 especificou. Antes disso, a tela não diz
+> nada sobre o descanso na correção — e o caso de teste que falta
+> (*"corrigir uma série depois de reabrir o app não inicia descanso"*) é o que
+> libera a frase.
+
+---
+
+## 9 · A saída da sessão — três saídas, e elas dizem três coisas
+
+A frente 1 separou as três e disse que precisam de palavras diferentes (§4.5
+dela). As três fazem coisas diferentes com **duas** coisas — o modo e a sessão —
+e é essa a distinção que as palavras têm de carregar:
+
+| saída | o que ela fecha | o que ela deixa aberto |
+|---|---|---|
+| **a seta** do cabeçalho | o **modo** | a **sessão** |
+| **o Voltar do sistema** | **uma camada** — a folha, ou o destino, ou o modo | tudo o resto |
+| **encerrar** | a **sessão** | o modo, que então não tem mais o que mostrar |
+
+### 9.1 · A seta
+
+| onde | o que está escrito |
+|---|---|
+| o rótulo acessível | **Voltar ao Agora, deixando a sessão aberta** |
+| o que aparece ao sair | a faixa, com **treino A em andamento** + o exercício (é o que o app já tem, `FaixaDaSessao`, conferi) |
+| o rótulo acessível da faixa | **voltar ao treino A: Pulldown unilateral, série 2** (é o que o app já monta, conferi) |
+
+**O rótulo do desenho está certo e fica inteiro**, e a segunda metade é a que
+importa: *"deixando a sessão aberta"*. Sem ela, uma seta num cabeçalho de treino
+se lê como desistir do treino — e o protótipo achou que o defeito mais básico de
+todos era não ter saída nenhuma (`prototipo.md`, descoberta 1).
+
+**Uma colisão que eu registro e não conserto aqui:** o rótulo diz "Agora" e a
+régua da correção diz "agora" no `<small>` (§8.3). Para quem ouve, as duas
+palavras aparecem na mesma tela com dois sentidos. **A régua da correção e a seta
+não são tocadas uma depois da outra**, então a colisão é de vocabulário e não de
+leitura — mas ela existe, e se um dos dois tiver de mudar, **muda a da régua**,
+porque a seta é a única saída visível do modo e o nome do destino não pode ser
+aproximado.
+
+**E uma coisa que a frente 2 achou conferindo o alcance, e que muda a frase "a
+única saída":** o gesto de borda existe e funciona —
+`src/ui/navegacao.js` foi escrito por causa dele (§11, item 4 dela). A seta é a
+única saída **visível**, que é como a frente 1 a descreveu, e isso é exato.
+**Nenhuma palavra do produto pode afirmar que ela é a única saída**, porque não
+é.
+
+### 9.2 · O Voltar do sistema
+
+**Não tem palavra, e é por isso que ele está aqui.** Ele é botão no Android e
+gesto de borda no Safari, e `src/ui/navegacao.js` resolve o comportamento por
+camada. **O que a frente 3 escreve sobre ele é uma proibição:**
+
+> **Nenhuma tela do produto escreve instrução sobre o Voltar do sistema.** Não
+> existe "use o Voltar para sair", não existe "o Voltar fecha esta folha", não
+> existe seta desenhada imitando o do sistema.
+
+Duas razões: o gesto não existe em todo aparelho da mesma forma, e uma instrução
+que depende do aparelho está errada em metade deles. E porque uma folha que
+precisa explicar como se fecha está mal desenhada — o que ela precisa é de uma
+saída visível, e a saída visível tem palavra própria.
+
+**A exceção, e é uma:** a folha que **sobe** ao abrir (decisão 14) ganha uma
+palavra para o gesto de baixar, porque esse gesto é do app e não do sistema:
+**"Puxe para baixo para voltar à série"** — a frase de C4 (§5 dela, C · M1 · 7),
+inteira, porque ela nomeia o destino e não só o gesto.
+
+### 9.3 · Encerrar
+
+As palavras estão em §7.7, com os quatro fins. **O que esta seção acrescenta é a
+razão de encerrar não ser uma saída do modo:** encerrar mata a sessão e o modo
+fica sem assunto, então a tela seguinte é o Agora — e é lá que a confirmação
+aparece (**"Encerrei o Treino A · 6h20 → 7h31 · 1h11 · 8 exercícios"**).
+
+**E a frase que não existe em desenho nenhum e que a arquitetura obriga:** se ele
+encerrar com a folha do dia aberta, ou com a correção aberta, a camada fecha
+junto. **A tela diz o que fechou:**
+
+> **Encerrei o Treino A. Fechei a folha do dia sem registrar nada.**
+
+É V2 pelos dois lados: o que guardou e o que não guardou.
+
+### 9.4 · O que nenhuma das três diz
+
+| nunca | por quê |
+|---|---|
+| "Salvar e sair" | Não existe estado "não salvo" — é doutrina do fonte (o comentário acima de `abreSessao`, conferi pela frente 1 §4.5), e `save()` é chamada em 59 lugares |
+| "Sair sem salvar" | Idem, e é pior: afirma uma perda que não acontece |
+| "Tem certeza que quer sair?" | V4. E sair não custa nada |
+| "Treino cancelado" | Nada é cancelado: ou a sessão existe e fica, ou não existe e é descartada, e descartar tem palavra própria (§7.7) |
+
+---
+
+## 10 · A bioimpedância, e os dois pesos que convivem de propósito
+
+**O que ele decidiu** (5.a' P3 e 5.a''', conferi o registro literal): **cinco
+campos, quatro deles obrigatórios** — peso (kg), massa muscular esquelética (kg),
+massa de gordura (kg), percentual de gordura (%), e água corporal total (L,
+opcional). E **o peso da bioimpedância é outro registro**, separado da pesagem da
+manhã: *"ele pesa numa balança e mede na outra, em horas diferentes. Os dois
+convivem de propósito."*
+
+**Três coisas que isto derruba no desenho, e eu as digo antes de escrever:**
+
+1. **"Treze números" cai para cinco.** A frente 1 já achou que o desenho tem
+   **quinze** campos dizendo treze, e que o próprio desenhista achou o erro
+   (`09-frente1-lugares.md` §7, item 7; `prototipo.md`, descoberta 8).
+2. **"Nada aqui é obrigatório" cai.** É a frase do estado 7 de `corpo.html`
+   (conferi: *"Deixe em branco o que a sua balança não mostra. Nada aqui é
+   obrigatório, e o que ficar vazio não vira zero."*) e é a recusa 4 da direção
+   D. Quatro campos passam a ser obrigatórios.
+3. **"Massa magra" cai, e é outro número.** O desenho pede **massa magra**; a
+   decisão dele pede **massa muscular esquelética**. São dois números diferentes
+   na mesma balança — a magra inclui osso, água e órgãos; a muscular esquelética
+   não. **A palavra dele vence** (V7), e não é sinônimo: se a tela escrever
+   "massa magra" e ele transcrever o número da massa muscular esquelética, a
+   série fica errada para sempre. (Na resposta longa anterior, 14.11, ele havia
+   dito "massa magra"; na resposta que **decidiu os cinco campos**, 5.a' P3, ele
+   disse "massa muscular esquelética". Vale a última.)
+
+### 10.1 · A folha, com o texto exato
+
+| onde | o que está escrito | o que isto diz que a tela sozinha não diria |
+|---|---|---|
+| título | **Bioimpedância** | É a palavra dele (P6), por extenso, e C4 já a fixou (V7) |
+| procedência | **uma vez por mês · anterior: 03/09** | D2, e o desenho |
+| a instrução, na primeira vez | **Os cinco números saem da balança de bioimpedância, não da balança de casa.** | É a frase que a decisão dos dois pesos obriga, e §10.2 |
+| a instrução, nas seguintes | **Os quatro números do mês passado estão no lugar. Toque só no que mudou.** | A premissa do desenho, com "treze" virando "quatro". Composição corporal muda devagar, e redigitar cinco números todo mês é o fluxo que ele recusa |
+| campo 1 | **Peso** · **kg** · **o que esta balança mostrou** | §10.2 |
+| campo 2 | **Massa muscular esquelética** · **kg** | A palavra dele |
+| campo 3 | **Massa de gordura** · **kg** | A palavra dele |
+| campo 4 | **Percentual de gordura** · **%** | A palavra dele |
+| campo 5 | **Água corporal total** · **litros** · **pode ficar vazio** | "litros" por extenso: "l" minúsculo ao lado de um número é o pior caractere da pilha do sistema (§2.1, R4) |
+| a variação, ao lado de cada campo | **era 17,4 · −0,6** | Do desenho, e é `fmtSig` (conferi: arredonda antes de decidir o sinal, "senão −0,04 vira −0,0") |
+| a variação, quando não mudou | **era 3,1** · sem número de variação | Do desenho ("era 5 · sem mudança" passa a só "era 5": "sem mudança" é a ausência de diferença, e escrevê-la é afirmar uma medida de zero) |
+| o teclado | **próprio, com vírgula** | F63: a vírgula é o separador decimal e um campo `number` a descarta |
+| o obrigatório | **Quatro números são obrigatórios. A água corporal total pode ficar vazia — e vazia não é zero.** | Substitui "Nada aqui é obrigatório". V3: vazio não vira zero |
+| o botão | **Guardar os cinco** | §10.3 |
+| nunca | "IMC" · "idade metabólica" · "gordura visceral" · "por segmento" | Saíram na decisão dele. Um campo que a tela pede e o dado não guarda é um número que ele transcreve para o nada |
+
+**E o que a tela diz quando falta um dos quatro obrigatórios:**
+
+> **Falta a massa muscular esquelética. Os cinco números são uma medição só: com
+> quatro, a série do mês fica sem comparação.**
+
+**Não é "campo obrigatório".** A frase diz **por que** ele é obrigatório, que é a
+única coisa que torna a exigência razoável num fluxo que ele faz sentado, uma vez
+por mês, transcrevendo de um visor.
+
+### 10.2 · Os dois pesos, e a frase que impede de ler como erro
+
+**O problema de palavra, dito claro:** a tela de Corpo mostra **dois pesos do
+mesmo dia, com números diferentes**. Sem uma palavra, isso se lê como duplicação
+ou como erro de digitação — e o reflexo é apagar um dos dois, que é destruição
+(§3.3).
+
+**O que os separa no dado, conferido:** `veredito` recebe
+`body: { peso: Marca[]; cintura: Marca[] }` e a média da semana sai de
+`mediasSemanais(body.peso)` (conferi as duas em `src/dominio/corpo.ts`).
+**Então a regra do nutricionista lê a pesagem da manhã, e só ela.** O peso da
+bioimpedância é um dos cinco números daquela medição; ele não entra em
+`mediasSemanais`, não entra em `taxasSemanais` e não chega ao veredito.
+
+**A frase, e é a mais importante desta seção:**
+
+> **O peso da manhã é o que a regra do nutricionista lê. O peso da balança de
+> bioimpedância fica com os outros quatro números dela, e não entra na média da
+> semana.**
+
+**Duas frases curtas, e a segunda é a que desarma o reflexo de apagar.** Ela não
+diz "não é erro" — dizer "não é erro" sugere que poderia ser. Ela diz o que cada
+número faz, e a diferença deixa de ser um problema.
+
+**E os rótulos mudam, porque "Peso de hoje" deixou de distinguir.** C4 escreveu
+"Peso de hoje" e o app e o desenho usam variações disso. **Com dois pesos do
+mesmo dia, "de hoje" não separa nada:** os dois são de hoje.
+
+| em Corpo | o rótulo | a procedência |
+|---|---|---|
+| a pesagem da manhã | **Peso da manhã** | **da balança de casa, em semi-jejum, antes do treino** |
+| o peso da bioimpedância | **Peso na bioimpedância** | **da outra balança · 01/10, 21h28** |
+
+**A procedência da primeira é literal de P6** (*"eu me peso sempre antes de
+treinar, de manhã, em jejum. Em semi-jejum, né?... com praticamente a mesma
+roupa"*) e do desenho (*"da balança de casa, de manhã, antes do treino"*). V7: é
+a descrição dele do próprio ato.
+
+**E nos outros lugares onde o peso aparece, o rótulo segue:** em Agora, o convite
+da manhã é **"Peso da manhã · sem marca"**; em Semana, a média é **"Média da
+semana · 73,5 · 4 pesagens da manhã"**. **O qualificador vira parte do nome** nos
+três lugares, porque o dia em que ele registra os dois é o dia em que o nome sem
+qualificador mente.
+
+**Isto renomeia uma palavra que funcionava, e eu digo por quê.** V7 manda não
+trocar palavra que funciona. "Peso de hoje" funcionava enquanto havia um peso por
+dia — e `S.body.peso` aceita **uma medida por dia**, substituindo a do mesmo dia
+(`tests/fluxo/corpo.test.js`, 25 casos, pela frente 1). A decisão 5.a''' cria um
+segundo peso no mesmo dia, de outra balança. **A palavra não parou de ser bonita:
+parou de ser verdadeira.**
+
+### 10.3 · O botão "Guardar", que contraria V2 — e por quê
+
+**V2 recusa um botão "Salvar" por nome:** *"um botão 'Salvar' (o toque é a
+gravação)"*. O desenho da bioimpedância tem **"Guardar"** no cabeçalho (conferi
+em `corpo.html`, estados 6 e 7), e **eu o mantenho.** Digo a regra e a razão, em
+vez de passar por cima:
+
+**As cinco gravações sem botão do produto são todas de uma coisa só:** uma série,
+uma refeição, um copo, um peso, uma porção. Um toque, um dado, e o dado faz
+sentido sozinho.
+
+**A bioimpedância não é isso.** Os cinco números são **uma medição** — saíram do
+mesmo visor, no mesmo minuto, da mesma balança —, e quatro deles são
+obrigatórios porque a série do mês só compara se os quatro estiverem lá
+(§10.1). Gravar campo a campo guardaria uma medição de três números, que é um
+registro que nenhuma leitura usa. **Aqui o lote é o dado, e não um atraso
+inventado.**
+
+**O que o rótulo tem de fazer para não ser o "Salvar" que V2 recusa:** dizer
+quantos, e o que entra.
+
+> **Guardar os cinco** · e, depois: **Guardei os cinco números de 01/10 neste
+> aparelho.**
+
+E a recíproca, que é o que torna a exceção honesta: **sair da folha sem tocar em
+"Guardar os cinco" não grava nada, e a tela diz isso antes** —
+**"Nada está registrado até você tocar em Guardar os cinco."** É a mesma frase da
+folha de pôr em dia (§4.1), com o botão no lugar do toque.
