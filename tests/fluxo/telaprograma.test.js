@@ -24,10 +24,10 @@ test('mudar série no programa é imediato e fica no histórico', async () => {
   const a = await noPrograma('B');
   await a.v('progSeries', 'B', 0, 1);
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.B.ex[0].s'), 3);
+  assert.strictEqual(a.S().prog.B.ex[0].s, 3);
   assert.strictEqual(a.E('treino("B").ex[0].s'), 3, 'vale já no próximo treino');
 
-  const log = a.J('S.progLog');
+  const log = a.S().progLog;
   assert.strictEqual(log.length, 1);
   assert.match(log[0].txt, /Agachamento no Smith: 2 → 3 séries/);
   assert.strictEqual(log[0].day, 'B');
@@ -36,10 +36,10 @@ test('mudar série no programa é imediato e fica no histórico', async () => {
 
 test('reordenar exercício no programa', async () => {
   const a = await noPrograma('C');
-  const segundo = a.E('S.prog.C.ex[1].id');
+  const segundo = a.S().prog.C.ex[1].id;
   await a.v('moverProg', 'C', 1, -1);
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.C.ex[0].id'), segundo);
+  assert.strictEqual(a.S().prog.C.ex[0].id, segundo);
   a.fechar();
 });
 
@@ -54,7 +54,7 @@ test('remover exercício do programa não toca no histórico', async () => {
   a.v('abrirPrograma', 'C');
   await a.v('progRemove', 'C', 0);
   await a.esperar();
-  assert.notStrictEqual(a.E('S.prog.C.ex[0].id'), chave, 'saiu do programa');
+  assert.notStrictEqual(a.S().prog.C.ex[0].id, chave, 'saiu do programa');
   assert.ok(a.J('S.logs[' + JSON.stringify(chave) + ']'), 'mas o histórico continua guardado');
   a.fechar();
 });
@@ -63,8 +63,8 @@ test('trocar no programa reinicia o relógio do exercício', async () => {
   const a = await noPrograma('B');
   await a.v('progSetTroca', 'B', 0, 'belt-squat');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'belt-squat');
-  assert.ok(a.E('S.prog.B.ex[0].desde') > Date.now() - 5000);
+  assert.strictEqual(a.S().prog.B.ex[0].id, 'belt-squat');
+  assert.ok(a.S().prog.B.ex[0].desde > Date.now() - 5000);
   a.fechar();
 });
 
@@ -74,19 +74,19 @@ test('trocar exercício com menos de 6 semanas pede confirmação', async () => 
   a.recusar();
   await a.v('progSetTroca', 'B', 0, 'belt-squat');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'agachamento-no-smith', 'a regra do treinador segura a troca');
+  assert.strictEqual(a.S().prog.B.ex[0].id, 'agachamento-no-smith', 'a regra do treinador segura a troca');
   assert.match(a.perguntas().join(' '), /6 a 8 semanas/);
   a.fechar();
 });
 
 test('adicionar exercício pela tela de programa é permanente', async () => {
   const a = await noPrograma('C');
-  const antes = a.E('S.prog.C.ex.length');
+  const antes = a.S().prog.C.ex.length;
   await a.v('addExercicio', 'belt-squat');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.C.ex.length'), antes + 1);
-  assert.strictEqual(a.E('S.mods'), null, 'não passa pelos mods do dia');
-  assert.match(a.J('S.progLog')[0].txt, /Belt squat entrou/);
+  assert.strictEqual(a.S().prog.C.ex.length, antes + 1);
+  assert.strictEqual(a.S().mods, null, 'não passa pelos mods do dia');
+  assert.match(a.S().progLog[0].txt, /Belt squat entrou/);
   a.fechar();
 });
 
@@ -148,7 +148,7 @@ test('restaurar tudo volta programa e rotação, sem tocar no histórico nem no 
   await a.esperar();
   assert.strictEqual(a.v('difTotal'), 0);
   assert.deepStrictEqual(a.vJ('rot'), ['A', 'B', 'C', 'D', 'E', 'HX']);
-  assert.strictEqual(a.E('CAT["meu-aparelho"].n'), 'Meu aparelho', 'o que ele cadastrou continua lá');
+  assert.strictEqual(a.dado('CAT')["meu-aparelho"].n, 'Meu aparelho', 'o que ele cadastrou continua lá');
   a.fechar();
 });
 
@@ -168,13 +168,13 @@ test('criar treino novo entra na rotação e começa vazio', async () => {
   a.responder('Braço extra');
   await a.v('criarTreino');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.F.name'), 'Braço extra');
-  assert.deepStrictEqual(a.J('S.prog.F.ex'), []);
+  assert.strictEqual(a.S().prog.F.name, 'Braço extra');
+  assert.deepStrictEqual(a.S().prog.F.ex, []);
   assert.strictEqual(a.vJ('rot').indexOf('F'), 6);
 
   await a.v('addExercicio', 'rosca-martelo');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.F.ex.length'), 1);
+  assert.strictEqual(a.S().prog.F.ex.length, 1);
   assert.strictEqual(a.E('treino("F").ex[0].n'), 'Rosca martelo');
   a.fechar();
 });
@@ -186,7 +186,7 @@ test('apagar um treino que ele criou tira da rotação', async () => {
   await a.esperar();
   await a.v('restaurarDia', 'F');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.F'), undefined);
+  assert.strictEqual(a.S().prog.F, undefined);
   assert.strictEqual(a.vJ('rot').indexOf('F'), -1);
   a.fechar();
 });
@@ -224,15 +224,15 @@ test('as duas edições não se confundem', async () => {
   a.v('modoEdicao', true);
   a.v('mudaSeries', 2, 1);
   const hoje = a.E('treino("A").ex[2].s');
-  const oficial = a.E('S.prog.A.ex[2].s');
+  const oficial = a.S().prog.A.ex[2].s;
 
   a.v('abrirPrograma', 'C');
   await a.v('progSeries', 'C', 0, 1);
   await a.esperar();
 
-  assert.strictEqual(a.E('S.prog.A.ex[2].s'), oficial, 'o mod do dia continua sendo só do dia');
+  assert.strictEqual(a.S().prog.A.ex[2].s, oficial, 'o mod do dia continua sendo só do dia');
   assert.strictEqual(a.E('treino("A").ex[2].s'), hoje);
-  assert.strictEqual(a.E('S.prog.C.ex[0].s'), 4, 'e a edição de programa é permanente');
+  assert.strictEqual(a.S().prog.C.ex[0].s, 4, 'e a edição de programa é permanente');
   a.fechar();
 });
 
@@ -247,7 +247,7 @@ test('todas as telas do programa renderizam', async () => {
   a.v('abrirPrograma', 'E');
   assert.ok(a.$$('.edx').length, 'o treino abre com os exercícios');
   a.v('fecharPrograma');
-  assert.strictEqual(a.E('view.prog'), null);
+  assert.strictEqual(a.vista().prog, null);
   assert.ok(a.$('.ins-estado-v'), 'e volta para a tela de treino');
   a.fechar();
 });
