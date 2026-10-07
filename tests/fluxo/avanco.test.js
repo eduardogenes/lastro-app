@@ -134,7 +134,7 @@ test('o atalho diz para onde vai, e leva até lá', async () => {
   await a.esperar();
 
   a.aba('dados');
-  const nome = a.E('treino("A").ex[0].n');
+  const nome = a.vJ('treino', 'A').ex[0].n;
   assert.ok(a.$('.ins-atalho').textContent.includes(nome),
     'um atalho que não diz para onde vai obriga a tocar para descobrir');
 
