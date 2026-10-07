@@ -63,7 +63,7 @@ test('a aula colada preenche o DIA, não a biblioteca de modelos', async () => {
   await a.esperar();
 
   assert.strictEqual(a.E('treino(view.day).ex.length'), 8, 'os oito movimentos entraram no dia');
-  assert.strictEqual(a.J('S.aulas').length, 0, 'e nada virou modelo: reusar é decisão dele');
+  assert.strictEqual(a.S().aulas.length, 0, 'e nada virou modelo: reusar é decisão dele');
   a.fechar();
 });
 
@@ -71,21 +71,21 @@ test('entra prescrição, nunca resultado', async () => {
   const a = await noBox();
   await cola(a, HYROX_MZ);
   await a.esperar();
-  assert.strictEqual(a.E('S.sessao'), null, 'colar não abre sessão');
+  assert.strictEqual(a.S().sessao, null, 'colar não abre sessão');
   assert.strictEqual(a.E('Object.keys(S.logs).length'), 0, 'e não registra série nenhuma');
   a.fechar();
 });
 
 test('o vocabulário novo é cadastrado antes do dia ser montado', async () => {
   const a = await noBox();
-  assert.strictEqual(a.E('!!CAT["squat-jump"]'), false);
+  assert.strictEqual(!!a.dado('CAT')["squat-jump"], false);
   await cola(a, HYROX_MZ);
   await a.esperar();
 
   ['squat-jump', 'split-jump', 'abdominal-no-remador'].forEach(function (k) {
-    assert.ok(a.E(`!!CAT[${JSON.stringify(k)}]`), k + ' não foi cadastrado');
-    assert.strictEqual(a.E(`CAT[${JSON.stringify(k)}].u`), 'rep');
-    assert.strictEqual(a.E(`S.ex[${JSON.stringify(k)}].meu`), 1);
+    assert.ok(!!a.dado('CAT')[k], k + ' não foi cadastrado');
+    assert.strictEqual(a.dado('CAT')[k].u, 'rep');
+    assert.strictEqual(a.S().ex[k].meu, 1);
   });
   a.fechar();
 });
@@ -146,7 +146,7 @@ test('ao encerrar, o quadro vira a nota da sessão', async () => {
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   await a.esperar();
-  const sid = a.E('S.sessao.sid');
+  const sid = a.S().sessao.sid;
 
   await a.v('fechaSessao', 'manual');
   await a.v('save');
@@ -154,7 +154,7 @@ test('ao encerrar, o quadro vira a nota da sessão', async () => {
 
   const marca = a.J(`S.done.filter(function (x) { return x.sid === ${sid}; })[0]`);
   assert.ok(marca.obs.includes('T.C 20MIN'), 'a lousa ficou no histórico: ' + marca.obs);
-  assert.strictEqual(a.E('S.quadro'), null, 'e saiu do dia');
+  assert.strictEqual(a.S().quadro, null, 'e saiu do dia');
   a.fechar();
 });
 
@@ -168,7 +168,7 @@ test('salvar como modelo leva o quadro junto', async () => {
   await a.v('salvarAulaComoModelo');
   await a.esperar();
 
-  const m = a.J('S.aulas')[0];
+  const m = a.S().aulas[0];
   assert.strictEqual(m.nome, 'Chipper do MZ');
   assert.ok(m.quadro.includes('T.C 20MIN'));
   a.fechar();
@@ -184,7 +184,7 @@ test('duas aulas coladas no mesmo dia somam, e nenhuma vira modelo', async () =>
                   mov: [{ n: 'Burpee', s: 1, q: 30, u: 'rep' }] });
   await a.esperar();
   assert.strictEqual(a.E('treino(view.day).ex.length'), 10);
-  assert.strictEqual(a.J('S.aulas').length, 0);
+  assert.strictEqual(a.S().aulas.length, 0);
   a.fechar();
 });
 
@@ -219,18 +219,18 @@ test('movimento desconhecido sem declaração é recusado inteiro', async () => 
                         { n: 'Sled drag', s: 1, q: 50, u: 'm' }] });
   await a.esperar();
   assert.strictEqual(a.E('treino(view.day).ex.length'), 0, 'nem a corrida entrou');
-  assert.strictEqual(a.E('!!CAT["sled-drag"]'), false);
+  assert.strictEqual(!!a.dado('CAT')["sled-drag"], false);
   assert.ok(a.toast().includes('não existe no catálogo'), a.toast());
   a.fechar();
 });
 
 test('o catálogo vence o arquivo: cadastro por cima é ignorado com aviso', async () => {
   const a = await noBox();
-  const antes = a.E('CAT["corrida"].u');
+  const antes = a.dado('CAT')["corrida"].u;
   await cola(a, { lastro: 'aula', v: 1, nome: 'Y',
                   mov: [{ n: 'Corrida', novo: { car: 'corpo', u: 'cal' }, s: 1, q: 15, u: 'cal' }] });
   await a.esperar();
-  assert.strictEqual(a.E('CAT["corrida"].u'), antes,
+  assert.strictEqual(a.dado('CAT')["corrida"].u, antes,
     'um arquivo colado não muda a grandeza de quem tem meses de histórico');
   assert.ok(a.toast().includes('já existe'), a.toast());
   a.fechar();
