@@ -110,24 +110,24 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
 
   // é o sexto dia, chega pela rotação como qualquer outro
   a.v('go', 'HX');
-  assert.strictEqual(a.E('treino("HX").name'), 'HYROX');
+  assert.strictEqual(a.vJ('treino', 'HX').name, 'HYROX');
 
   // ...mas nasce VAZIO: quem programa o sábado é o box, e nada é prescrito de
   // véspera. As estações da prova continuam no catálogo e entram pela busca,
   // como qualquer outro exercício.
-  assert.strictEqual(a.E('treino("HX").ex.length'), 0, 'o dia aberto começa sem nada');
+  assert.strictEqual(a.vJ('treino', 'HX').ex.length, 0, 'o dia aberto começa sem nada');
   await a.v('addExercicio', 'corrida');
   await a.esperar();
-  assert.strictEqual(a.E('treino("HX").ex.length'), 1, 'o que ele adiciona é o dia');
-  assert.strictEqual(a.E('treino("HX").ex[0].n'), 'Corrida');
+  assert.strictEqual(a.vJ('treino', 'HX').ex.length, 1, 'o que ele adiciona é o dia');
+  assert.strictEqual(a.vJ('treino', 'HX').ex[0].n, 'Corrida');
 
   // Entra com UMA série: um movimento com grandeza própria é uma passada, e o
   // alvo dele é o relógio, não uma faixa de repetição.
-  assert.strictEqual(a.E('treino("HX").ex[0].s'), 1);
-  assert.strictEqual(a.E('treino("HX").ex[0].r'), '');
+  assert.strictEqual(a.vJ('treino', 'HX').ex[0].s, 1);
+  assert.strictEqual(a.vJ('treino', 'HX').ex[0].r, '');
   // e traz a medida do catálogo junto: 1 km, que é o que a prova pede
-  assert.strictEqual(a.E('treino("HX").ex[0].u'), 'm');
-  assert.strictEqual(a.E('treino("HX").ex[0].q'), 1000);
+  assert.strictEqual(a.vJ('treino', 'HX').ex[0].u, 'm');
+  assert.strictEqual(a.vJ('treino', 'HX').ex[0].q, 1000);
 
   // registra o TEMPO daquela distância: o segundo campo é segundo, a carga é
   // opcional e a coluna de RIR não existe
@@ -154,7 +154,7 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   await a.v('addExercicio', 'sled-push');
   await a.esperar();
   a.v('toggle', 1);
-  assert.strictEqual(a.E('treino("HX").ex[1].n'), 'Sled push');
+  assert.strictEqual(a.vJ('treino', 'HX').ex[1].n, 'Sled push');
   assert.deepStrictEqual(a.vJ('altList', 'HX', 1), [],
     'exercício sem grupo não puxa "mesmo grupo muscular" nem oferece troca');
 
@@ -163,7 +163,7 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   assert.ok(a.texto('.htitle').includes('HYROX'));
   // A meta do sábado não é uma conta: dizer "0 séries" prometeria um número
   // que o box nunca vai respeitar.
-  assert.strictEqual(a.E('programaDia("HX").meta'), 'o que o box programar');
+  assert.strictEqual(a.vJ('programaDia', 'HX').meta, 'o que o box programar');
   a.fechar();
 });
 
@@ -186,7 +186,7 @@ test('o dia aberto não pede promoção nem cobra pendência', async () => {
   await a.v('addExercicio', 'sled-push');
   await a.v('addExercicio', 'wall-balls');
   await a.esperar();
-  assert.strictEqual(a.J("modsDoDia('HX').length"), 3, 'o que ele adicionou virou mod do dia');
+  assert.strictEqual(a.vJ('modsDoDia', 'HX').length, 3, 'o que ele adicionou virou mod do dia');
 
   a.v('toggle', 0);
   a.preencher(0, 0, null, 252);
@@ -229,7 +229,7 @@ test('adicionar movimento no dia aberto abre o catálogo e entra sem virar troca
   a.clicar(achado);
   await a.esperar(60);
 
-  assert.strictEqual(a.E('treino("HX").ex.length'), 1, 'o movimento entrou no dia');
+  assert.strictEqual(a.vJ('treino', 'HX').ex.length, 1, 'o movimento entrou no dia');
   assert.ok(!a.vista().addEx, 'e o painel fecha sozinho');
 
   // Adicionado NÃO é substituído: o `orig` de um mod `add` é uma chave
