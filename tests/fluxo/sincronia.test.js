@@ -40,11 +40,11 @@ const nuvem = a => a.J('globalThis.__nuvem');
 
 test('sem conta, o app não fala com a nuvem', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   await a.esperar();
   assert.strictEqual(a.E('sync.sujo'), false, 'nem marca sujeira');
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
   assert.strictEqual(a.E('sync.v'), null);
   a.fechar();
 });
@@ -52,11 +52,11 @@ test('sem conta, o app não fala com a nuvem', async () => {
 test('primeira sincronização cria a linha e sobe o que existe', async () => {
   const a = await app();
   nuvemFalsa(a, null);
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   await a.esperar();
 
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
   const n = nuvem(a);
   assert.strictEqual(n.empurros.length, 1);
   assert.strictEqual(n.empurros[0].deV, null, 'linha nova: parte do nada');
@@ -77,10 +77,10 @@ test('o que o outro aparelho gravou desce e se junta ao daqui', async () => {
     progLog: [], apagados: {}, mtime: t, export: 0
   } });
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);          // e aqui tem um treino de hoje
   await a.esperar();
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
 
   assert.strictEqual(a.E('S.logs["pendulum-squat"].length'), 1, 'desceu o de lá');
   assert.strictEqual(a.E('S.logs["chest-press-inclinado-convergente"].length'), 1, 'e o daqui ficou');
@@ -100,10 +100,10 @@ test('conflito no meio do caminho refaz o ciclo em vez de perder', async () => {
   } });
   a.E('globalThis.__nuvem.conflitaUmaVez = true');
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   await a.esperar();
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
 
   const n = nuvem(a);
   assert.strictEqual(n.puxadas, 2, 'releu depois do conflito');
@@ -119,10 +119,10 @@ test('sem rede, o app não perde nada e volta a sincronizar depois', async () =>
   nuvemFalsa(a, null);
   a.E("globalThis.__nuvem.falha = 'rede'");
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   await a.esperar();
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
 
   assert.ok(a.E('sync.erro'), 'a tela sabe que falhou');
   assert.strictEqual(a.E('sync.sujo'), true, 'e continua devendo o envio');
@@ -130,7 +130,7 @@ test('sem rede, o app não perde nada e volta a sincronizar depois', async () =>
     'a série está registrada localmente do mesmo jeito');
 
   a.E("globalThis.__nuvem.falha = null");
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
   assert.strictEqual(a.E('sync.sujo'), false, 'ao voltar a rede, sobe');
   assert.strictEqual(nuvem(a).linha.data.done.length, 1);
   a.fechar();
@@ -139,13 +139,13 @@ test('sem rede, o app não perde nada e volta a sincronizar depois', async () =>
 test('nada mudou de nenhum lado: não reescreve à toa', async () => {
   const a = await app();
   nuvemFalsa(a, null);
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   await a.esperar();
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
   const depoisDoPrimeiro = nuvem(a).empurros.length;
 
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
   assert.strictEqual(nuvem(a).empurros.length, depoisDoPrimeiro,
     'segunda chamada sem mudança não gera escrita');
   a.fechar();
@@ -157,12 +157,12 @@ test('apagar aqui não é desfeito pelo que a nuvem ainda tem', async () => {
     logs: {}, done: [], body: { peso: [{ t: t, v: 73.4 }], cintura: [] }, cardio: []
   } });
   nuvemFalsa(a, null);
-  await a.E('sincroniza()');                     // a nuvem passa a ter a pesagem
+  await a.v('sincroniza');                     // a nuvem passa a ter a pesagem
   assert.strictEqual(nuvem(a).linha.data.body.peso.length, 1);
 
   await a.E('delBody("peso", ' + t + ')');       // apagou aqui
   await a.esperar();
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
 
   assert.strictEqual(a.E('S.body.peso.length'), 0, 'apagada aqui');
   assert.strictEqual(nuvem(a).linha.data.body.peso.length, 0, 'e apagada na nuvem');
@@ -177,12 +177,12 @@ test('dia marcado como descanso viaja e some quando desmarcado', async () => {
 
   await a.E('alternaDescanso(' + ontem + ')');
   await a.esperar();
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
   assert.strictEqual(Object.keys(nuvem(a).linha.data.descanso).length, 1, 'subiu a marca');
 
   await a.E('alternaDescanso(' + ontem + ')');   // desmarcou
   await a.esperar();
-  await a.E('sincroniza()');
+  await a.v('sincroniza');
   assert.strictEqual(Object.keys(nuvem(a).linha.data.descanso).length, 0,
     'desmarcar não é desfeito pela nuvem que ainda tinha a marca');
   a.fechar();
@@ -194,7 +194,7 @@ test('descanso não conta como treino em lugar nenhum', async () => {
   await a.E('alternaDescanso(' + ontem + ')');
   await a.esperar();
   assert.strictEqual(a.E('S.done.length'), 0, 'não entra em done');
-  assert.strictEqual(a.E('sessoesDeTrabalho()'), 0, 'nem na conta do bloco');
+  assert.strictEqual(a.v('sessoesDeTrabalho'), 0, 'nem na conta do bloco');
   assert.strictEqual(a.E('ehDescanso(' + ontem + ')'), true, 'mas o calendário sabe');
   a.fechar();
 });
@@ -217,7 +217,7 @@ test('a tela de lançamento aguenta a opção de descanso', async () => {
   const rotulos = a.$$('.chips .ins-chip').map(x => x.textContent);
   assert.ok(rotulos.includes('foi descanso'), rotulos.join(' | '));
 
-  a.E("addSet('tipo','descanso')");
+  a.v('addSet', 'tipo', 'descanso');
   assert.ok(a.$('.add-acoes .ins-btn-primary'), 'a tela continua de pé');
   assert.match(a.$('.add-acoes .ins-btn-primary').textContent, /descanso/i);
   assert.strictEqual(a.$('#ahora'), null, 'descanso não tem horário nem duração');
