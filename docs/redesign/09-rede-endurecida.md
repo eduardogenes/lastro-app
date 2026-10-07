@@ -171,3 +171,202 @@ conferida depois — **957, zero rejeições.**
   feito aqui.
 
 Nenhuma estimativa de prazo em nenhuma linha.
+
+---
+
+## 5 · As duas de 06/10 (noite): o "não sei" por refeição e o comentário do zoom
+
+Acrescentado depois, por um terceiro agente, sobre as decisões 3 e 7 da seção
+"As oito de 06/10 (noite)" do `00-coordenacao.md`. **Nenhuma decisão foi
+reaberta.** As duas entraram em commits separados (`6e8a3fa`, `d625147`).
+
+### A linha de base
+
+| | antes | depois |
+|---|---:|---:|
+| Testes passando | 957 | **965** |
+| `tests/fluxo/` | 520 | 520 |
+| `tests/dominio/` | 437 | **445** |
+| Arquivos | 53 | 53 |
+| Unhandled rejections | 0 | **0** |
+| `tsc --noEmit` | limpo | limpo |
+
+**Oito casos entraram, nenhum saiu, nenhum arquivo novo.** Todos em
+`tests/dominio/`, que é o sinal mais confiável do repositório. `npm test` — que
+reconstrói o `dist/` no `pretest` — rodado antes de mexer em nada, depois da
+mudança de domínio e depois do comentário.
+
+**Uma correção de número que este próprio documento carregava:** a seção 4 diz
+"são 517 casos" sobre `tests/fluxo/`. **São 520**, medido com
+`npx vitest run tests/fluxo`; a linha de baixo deste documento ficou com 957 no
+total, que está certo, então o 517 vem com um 440 implícito em `tests/dominio/`
+que também não bate — o domínio tinha **437**. Medido nos dois sentidos, com o
+fonte da mudança guardado no `stash`.
+
+### 5.1 · "Não sei" por refeição
+
+**O que entrou.** `ComoFoiARefeicao` ganha um terceiro valor, `'nsei'`. O nome é
+curto e sem acento, como os dois irmãos, e não é prefixo de `'nao'` — um
+`grep 'nsei'` acha só ele.
+
+A aritmética é a que o coordenador fechou: **a refeição pesa 0 na adesão do dia
+e NÃO sai do denominador.** Reusa o mecanismo que já existia —
+`pesoDaRefeicao` devolvia 0 para `'nao'`.
+
+**A condição de peso zero passou a morar numa função só**, `semCumprimento`, em
+vez de ficar escrita à mão em quatro pontos. É a doutrina que o `main.jsx` já
+escreve sobre a lista das medidas do corpo ("que NENHUM lugar do app escreva
+essa lista à mão"), e aqui ela paga: escrita à mão, bastava um esquecimento num
+dos quatro para o "não sei" voltar a contar como refeição cumprida — que é
+inflar adesão, o mecanismo exato do corte errado.
+
+**Os quatro pontos onde `'nsei'` zera**, e por que em cada um:
+
+| leitura | o que faz | razão |
+|---|---|---|
+| `pesoDaRefeicao` → `aderenciaDoDia` | 0, no denominador | a decisão |
+| `excessoDoDia` | ignora a refeição | sem isto o mesmo dado diria 0 de adesão e +½ porção de excesso sobre a mesma refeição |
+| `padraoPorRefeicao` | entra em `possiveis`, não em `feitas` | a frase é "feita em X dos últimos Y dias"; um desconhecido não é acerto |
+| `contagemDaRefeicao` | igual | a mesma frase, na outra tela |
+
+**E o ponto onde ele NÃO é "não comi", que é o achado desta parte.**
+`totalRegistrado` tira do total a refeição marcada com `'nao'`, porque zero
+conhecido é zero. **`'nsei'` fica**, pelo caminho de `'fora'`, com os números do
+plano. Tirá-la faria o total afirmar **zero kcal** sobre uma refeição que ele
+não sabe descrever — a única coisa que se sabe falsa das três. `semCumprimento`
+existe e **de propósito não é chamado ali**, com a razão escrita na função.
+Os dois pesam 0 na adesão, e **só nisso** eles se encontram.
+
+**`diaInterpretavel` não precisou de uma linha.** Ele exige uma marca qualquer, e
+`'nsei'` é marca em `done`. Está agora escrito lá que isso é decisão e não
+efeito colateral, com o "não há limiar" explícito — e que o "não sei" **do dia**
+continua sendo `aderencia: 'perdido'`, o único valor que derruba o dia.
+
+**O setter** (`marcaRefeicao`, `src/main.jsx`) aceita o terceiro valor.
+
+**O rótulo da tela é "Não sei"**, e é da frente 3 — `09-frente3-palavras.md`,
+§4.2 (o quinto botão, na fatia de 50,4 pt, em duas linhas) e §4.5 **versão A**,
+que é a que a decisão do coordenador escolheu. Não inventei palavra nenhuma.
+
+**O que NÃO entrou, e é o mais importante desta parte:** a folha dos cinco
+botões não existe. **Hoje nenhum chamador de `marcaRefeicao` passa `como`, em
+valor nenhum** — nem `'fora'`, nem `'nao'`. Os dois chamadores
+(`src/ui/folhas/refeicao.jsx`, `src/ui/telas/hoje.jsx`) chamam com um argumento
+só. Então os três valores de `como` são **capacidade de domínio sem lugar onde
+morar**, exatamente o tipo de achado que a frente 1 catalogou: alcançáveis por
+`poeComidaNoDia` e pela fusão, inalcançáveis pelo dedo. Construir a folha é
+redesenho, não isto.
+
+### 5.2 · A migração: não precisa, e aqui está o porquê
+
+**Conferido em vez de presumido, portão por portão.** `PLANO_ATUAL` fica em
+**11**.
+
+| portão | precisa? | o que foi conferido |
+|---|---|---|
+| tipo | **sim, e é só isso** | `ComoFoiARefeicao` passa a ter três valores; `tsc --noEmit` limpo |
+| `migraPlanoN` + bump + fixture | **não** | `como` **já é** campo persistido opcional desde a migração 9→10, que o diz com estas palavras: campo "cuja ausência já tem o significado certo… não há byte a reformatar". Valor novo não é campo novo: **dado antigo simplesmente não tem o valor novo**, e não existe byte antigo que signifique "não sei o almoço" esperando conversão |
+| regra de fusão + chave + lápide | **não** | a regra de `como` em `sincronia.ts` é `if (como)`, **agnóstica ao valor**; a lápide é a da marca (`chaveDeRefeicaoFeita`), e a invariante "`como` só para id em `done`" já é aplicada nos dois lados. Um caso novo prova isso e fica vermelho se alguém enumerar valores ali |
+| as duas listas brancas da cópia | **não** | a importação é **por chave de topo**: `dia: (d.dia && typeof d.dia === 'object') ? d.dia : null` e `comidaHist: Array.isArray(…)`. Nenhuma das duas enumera subcampo de `dia`, e `normalizaEstado` **não valida** valor de `como` |
+| `tsc --noEmit` | sim | limpo antes e depois |
+| total congelado | **nada a fazer** | `tot` sai de `totalRegistrado`, onde `'nsei'` entra com os números do plano. A adesão não lê `tot` ("o que está congelado é `tot`… e a aderência não o usa") |
+
+**E a migração que seria errada fazer.** Converter o `aderencia: 'perdido'` dos
+dias antigos em `'nsei'` por refeição afirmaria **quais** refeições ele não
+soube, que ninguém registrou. É o que o próprio `migracoes.ts` proíbe:
+"inventar um aqui seria afirmar sobre o passado o que ninguém registrou". Os
+dois registros coexistem de propósito — um diz "não sei o que foi este almoço",
+o outro diz "não sei o que foi este dia".
+
+### 5.3 · O comentário do bloqueio de zoom
+
+**As duas metades estavam erradas, e as duas foram remedidas aqui.**
+
+**1. "Nenhum texto do app é menor que 16px" é falso.** Contado nas cinco folhas
+de `src/*.css`: **28 declarações de `font-size` em px, 22 delas abaixo de
+16px**. A menor é **7,5px** (`componentes.css`, rótulo do eixo da sparkline).
+Não há `font-size` em token (`var()`), em `rem`, nem inline em JSX — as folhas
+são a história inteira, conferido.
+
+**Uma afirmação da instrução que não bateu:** ela diz que **três** valores ficam
+abaixo do piso de 9px do `DESIGN.md`. **São dois** — 7,5px e 8px. O piso é
+"nunca abaixo de 9px em rótulo mono", então 9px e 9,5px estão dentro dele. A
+lista de valores da instrução (7,5 · 8 · 9 · 9,5 · 10) também é parcial: há
+ainda 11, 11,5, 12, 13, 14 e 15px abaixo de 16. **Vale o código: a menor é 7,5px
+e duas furam o piso.**
+
+O comentário agora diz isso, e diz que o "nunca abaixo de 16px" é regra **dos
+campos de formulário**, mais abaixo no mesmo arquivo, onde ela tem razão própria
+e correta — o Safari dá zoom ao focar campo com fonte menor.
+
+**2. O bloqueio não funciona onde ele usa o app.** A pinça funciona no PWA
+instalado, medido pelo dono em 06/10. Então `user-scalable=no` não é honrado
+ali, e o comentário passa a dizer que nesta configuração — que é **a** de uso —
+a declaração não faz efeito. O que ela ainda alcança é o Safari fora da tela
+cheia.
+
+**O que ficou de pé, e é dele:** zoom acidental no meio de uma série, com a mão
+suada, custa mais que zoom deliberado ganha. Essa razão nunca dependeu das duas
+afirmações erradas. **A meta tag e o `touch-action` ficam** — remover é mudança
+que ele não pediu.
+
+**Três casos em `estilo.test.ts` prometiam o EFEITO no nome**, e o efeito foi
+medido ausente no app instalado:
+
+| antes | depois |
+|---|---|
+| `a raiz recusa os gestos de zoom, e não só os botões` | `o 'touch-action' que recusa o zoom está na RAIZ, e não só nos botões` |
+| `o viewport não deixa o navegador escalar a página` | `o viewport DECLARA que o navegador não escala a página` |
+| `a pinça do WebKit é recusada, que o touch-action não alcança` | `a pinça do WebKit tem recusa própria, que o touch-action não alcança` |
+
+**Nenhuma asserção mudou**, e o cabeçalho da seção passou a carregar a medição
+de 06/10 — para que ninguém leia os três como prova de que o zoom não acontece.
+O caso do piso de 16px no campo não foi tocado: ele é o único dali que descreve
+um efeito real e continua verdadeiro.
+
+**Nenhuma mudança de comportamento nesta parte.** Só comentário e nome de caso.
+
+### 5.4 · Os oito casos novos
+
+Todos em `tests/dominio/`. Sete em `diario.test.ts`, um em `sincronia.test.ts`.
+
+| caso | o que trava |
+|---|---|
+| `"não sei" numa refeição pesa zero e o dia CONTINUA contando` | a decisão inteira: adesão `(n−1)/n` e `diaInterpretavel` verdadeiro |
+| `não há limiar: o dia inteiro em "não sei" é adesão zero e ainda conta` | contra a tentação de inventar "se mais da metade for não sei, o dia cai" |
+| `"não sei" é distinguível de silêncio, com o mesmo número` | mesmo número, registros diferentes; e o silêncio do dia inteiro dá `null`, não zero |
+| `"não sei" NÃO é "não comi": o total do dia não afirma zero kcal` | o único ponto onde os dois se separam, e que `'nsei'` segue `'fora'` |
+| `o excesso ignora a refeição em "não sei"…` | que adesão e excesso não digam coisas opostas sobre o mesmo dado |
+| `"não sei" não conta como cumprida em nenhuma das duas contagens…` | `padraoPorRefeicao` **e** `contagemDaRefeicao` com a mesma régua |
+| `pôr "não sei" num dia passado é o caso de uso…` | `poeComidaNoDia`, que é por onde ele volta à terça esquecida |
+| `"não sei" atravessa a fusão sem regra nova, porque é valor e não campo` | a prova de que não migrar está certo: fica vermelho se a fusão enumerar valores |
+
+### 5.5 · O que eu não medi
+
+- **Nada no aparelho.** A pinça no PWA instalado é medição do dono, de 06/10,
+  aceita como dada. Não tenho aparelho e não a reproduzi — e o que o comentário
+  agora afirma sobre o app instalado repousa inteiramente nela.
+- **Se o `touch-action: pan-x pan-y` ainda bloqueia o toque duplo** no app
+  instalado, com a pinça furando. A medição do dono é sobre a **pinça**. O toque
+  duplo pode estar bloqueado e provavelmente está; **não foi medido**, e o
+  comentário não afirma nem nega.
+- **Legibilidade do 7,5px.** Contei a declaração; não medi se aquele rótulo é
+  legível no aparelho dele. A decisão de manter o bloqueio é dele e não foi
+  reaberta, mas o custo real do que se perde segue **sem medição**.
+- **Se os dois valores abaixo do piso de 9px são deliberados.** Conferi o
+  `DESIGN.md`: a lista de exceções citadas por fonte existe **só para a escala
+  de espaço**, e não há equivalente para tipografia — então 7,5px e 8px furam o
+  piso **sem exceção declarada**. E a escala de tipo do documento não tem 8,
+  11, 11,5 nem 12, que também estão nas folhas. Nada disso é cobrado: o caso de
+  escala do `estilo.test.ts` lê `padding`, `margin` e `gap`, **não
+  `font-size`**. **Fica apontado, não resolvido** — é decisão de design, não de
+  rede, e não estava na instrução.
+- **A folha dos cinco botões.** Não construída, por ser redesenho. Então o
+  `'nsei'` **nunca foi exercitado pelo dedo** — só por domínio, fusão e
+  `poeComidaNoDia`. O mesmo valia e vale para `'fora'` e `'nao'`.
+- **Tempo da suíte**, antes e depois.
+- **O resto da suíte quanto a nome de caso que promete efeito.** Só a seção de
+  comportamento de aplicativo do `estilo.test.ts` foi auditada, por instrução.
+  Pode haver outros nomes assim em outros arquivos.
+
+Nenhuma estimativa de prazo em nenhuma linha.
