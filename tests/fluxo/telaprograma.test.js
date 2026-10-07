@@ -6,7 +6,7 @@ import { app } from './harness.js';
 
 async function noPrograma(d) {
   const a = await app();
-  a.E('abrirPrograma(' + (d ? JSON.stringify(d) : 'null') + ')');
+  a.v('abrirPrograma', d || null);
   return a;
 }
 
@@ -277,7 +277,7 @@ test('exercício cadastrado por ele conta no painel', async () => {
   await a.esperar();
   a.v('modoEdicao', false);
   const i = a.E('treino("A").ex.length') - 1;
-  a.E('toggle(' + i + ')');
+  a.v('toggle', i);
   a.preencher(i, 0, 50, 10);
 
   assert.strictEqual(a.J('seriesPorMusculo(0, Date.now() + 1)')['dorsal'], 1);
