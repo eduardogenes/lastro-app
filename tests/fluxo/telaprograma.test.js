@@ -25,7 +25,7 @@ test('mudar série no programa é imediato e fica no histórico', async () => {
   await a.v('progSeries', 'B', 0, 1);
   await a.esperar();
   assert.strictEqual(a.S().prog.B.ex[0].s, 3);
-  assert.strictEqual(a.E('treino("B").ex[0].s'), 3, 'vale já no próximo treino');
+  assert.strictEqual(a.vJ('treino', 'B').ex[0].s, 3, 'vale já no próximo treino');
 
   const log = a.S().progLog;
   assert.strictEqual(log.length, 1);
@@ -131,7 +131,7 @@ test('restaurar um treino desfaz só aquele treino', async () => {
   await a.v('restaurarDia', 'C');
   await a.esperar();
   assert.deepStrictEqual(a.vJ('difDoDia', 'C'), []);
-  assert.strictEqual(a.E('difDoDia("A").length'), 1, 'o A continua como ele deixou');
+  assert.strictEqual(a.vJ('difDoDia', 'A').length, 1, 'o A continua como ele deixou');
   a.fechar();
 });
 
@@ -175,7 +175,7 @@ test('criar treino novo entra na rotação e começa vazio', async () => {
   await a.v('addExercicio', 'rosca-martelo');
   await a.esperar();
   assert.strictEqual(a.S().prog.F.ex.length, 1);
-  assert.strictEqual(a.E('treino("F").ex[0].n'), 'Rosca martelo');
+  assert.strictEqual(a.vJ('treino', 'F').ex[0].n, 'Rosca martelo');
   a.fechar();
 });
 
@@ -223,7 +223,7 @@ test('as duas edições não se confundem', async () => {
   const a = await app();
   a.v('modoEdicao', true);
   a.v('mudaSeries', 2, 1);
-  const hoje = a.E('treino("A").ex[2].s');
+  const hoje = a.vJ('treino', 'A').ex[2].s;
   const oficial = a.S().prog.A.ex[2].s;
 
   a.v('abrirPrograma', 'C');
@@ -231,7 +231,7 @@ test('as duas edições não se confundem', async () => {
   await a.esperar();
 
   assert.strictEqual(a.S().prog.A.ex[2].s, oficial, 'o mod do dia continua sendo só do dia');
-  assert.strictEqual(a.E('treino("A").ex[2].s'), hoje);
+  assert.strictEqual(a.vJ('treino', 'A').ex[2].s, hoje);
   assert.strictEqual(a.S().prog.C.ex[0].s, 4, 'e a edição de programa é permanente');
   a.fechar();
 });
@@ -276,7 +276,7 @@ test('exercício cadastrado por ele conta no painel', async () => {
   await a.v('addExercicio', 'maquina-nova');
   await a.esperar();
   a.v('modoEdicao', false);
-  const i = a.E('treino("A").ex.length') - 1;
+  const i = a.vJ('treino', 'A').ex.length - 1;
   a.v('toggle', i);
   a.preencher(i, 0, 50, 10);
 
