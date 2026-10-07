@@ -63,7 +63,7 @@ test('repetir traz a prescrição, nunca o resultado', async () => {
   // wall balls foi 9 kg × 20 no sábado passado. Nada disso pode aparecer como
   // registro de hoje: registro que aparece sozinho é o jeito mais rápido de
   // encher o histórico de número que ninguém fez.
-  const sid = a.J('S.sessao.sid');
+  const sid = a.S().sessao.sid;
   const hoje = a.J(`(function(){
     var n = 0;
     Object.keys(S.logs).forEach(function (k) {
@@ -93,7 +93,7 @@ test('salvar como modelo guarda os movimentos e não a carga', async () => {
   a.v('salvarAulaComoModelo');
   await a.esperar(60);
 
-  const aulas = a.J('S.aulas');
+  const aulas = a.S().aulas;
   assert.strictEqual(aulas.length, 1);
   assert.strictEqual(aulas[0].nome, 'circuito de sábado');
   assert.strictEqual(aulas[0].mov.length, 4);
@@ -110,7 +110,7 @@ test('salvar com um nome que já existe atualiza em vez de duplicar', async () =
   a.responder('circuito');
   a.v('salvarAulaComoModelo');
   await a.esperar(60);
-  const id = a.J('S.aulas[0].id');
+  const id = a.S().aulas[0].id;
 
   a.v('removerEx', 0);
   await a.esperar(60);
@@ -118,9 +118,9 @@ test('salvar com um nome que já existe atualiza em vez de duplicar', async () =
   a.v('salvarAulaComoModelo');
   await a.esperar(60);
 
-  assert.strictEqual(a.J('S.aulas').length, 1, 'uma lista com três "circuito" não diz qual é qual');
-  assert.strictEqual(a.J('S.aulas[0].id'), id, 'o id não muda: é a chave natural da fusão');
-  assert.strictEqual(a.J('S.aulas[0].mov').length, 3, 'e o conteúdo é o de agora');
+  assert.strictEqual(a.S().aulas.length, 1, 'uma lista com três "circuito" não diz qual é qual');
+  assert.strictEqual(a.S().aulas[0].id, id, 'o id não muda: é a chave natural da fusão');
+  assert.strictEqual(a.S().aulas[0].mov.length, 3, 'e o conteúdo é o de agora');
   a.fechar();
 });
 
@@ -138,7 +138,7 @@ test('aplicar um modelo põe os movimentos no dia', async () => {
   await a.esperar();
   assert.strictEqual(a.E('treino("HX").ex.length'), 0);
 
-  const id = a.J('S.aulas[0].id');
+  const id = a.S().aulas[0].id;
   a.E(`aplicarModeloDeAula(${JSON.stringify(id)})`);
   await a.esperar(60);
   assert.strictEqual(a.E('treino("HX").ex.length'), 4);
@@ -153,12 +153,12 @@ test('apagar um modelo deixa lápide, senão a sincronização o ressuscita', as
   a.responder('circuito');
   a.v('salvarAulaComoModelo');
   await a.esperar(60);
-  const id = a.J('S.aulas[0].id');
+  const id = a.S().aulas[0].id;
 
   a.E(`apagarModeloDeAula(${JSON.stringify(id)})`);
   await a.esperar(60);
-  assert.deepStrictEqual(a.J('S.aulas'), []);
-  assert.ok(a.J('S.apagados')['aula:' + id] > 0,
+  assert.deepStrictEqual(a.S().aulas, []);
+  assert.ok(a.S().apagados['aula:' + id] > 0,
     'sem a lápide, a fusão traz de volta o que só existe do outro lado');
   a.fechar();
 });
@@ -258,8 +258,8 @@ test('aula que fecha sozinha não enfileira os movimentos como mudança pendente
   a.v('encerraSePreciso');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.sessao'), null, 'a sessão fechou sozinha');
-  assert.deepStrictEqual(a.J('S.promoPendente'), [],
+  assert.strictEqual(a.S().sessao, null, 'a sessão fechou sozinha');
+  assert.deepStrictEqual(a.S().promoPendente, [],
     'nada a decidir: no dia aberto o movimento não tem conteúdo permanente para virar');
   a.fechar();
 });
@@ -281,8 +281,8 @@ test('e a aula encerrada no toque também não — os dois fechos concordam', as
   await a.v('finalizarSessao');
   await a.esperar();
 
-  assert.strictEqual(a.E('view.promo'), null, 'nenhuma pergunta de programa');
-  assert.deepStrictEqual(a.J('S.promoPendente'), [], 'e nada ficou esperando decisão');
-  assert.strictEqual(a.E('S.sessao'), null, 'a sessão encerrou');
+  assert.strictEqual(a.vista().promo, null, 'nenhuma pergunta de programa');
+  assert.deepStrictEqual(a.S().promoPendente, [], 'e nada ficou esperando decisão');
+  assert.strictEqual(a.S().sessao, null, 'a sessão encerrou');
   a.fechar();
 });
