@@ -37,7 +37,7 @@ test('sessão em andamento mostra só o começo', async () => {
   await a.v('iniciarSessao');
   a.E('S.sessao.inicio = ' + emHoje(6, 5));
   a.E('S.done[0].t = ' + emHoje(6, 5));
-  const t = a.E('S.done[0].t');
+  const t = a.S().done[0].t;
   a.E('abrirSessao(' + t + ')');
   const linha = a.texto('.horario');
   assert.ok(/começou às/.test(linha), linha);
@@ -89,7 +89,7 @@ test('retroativo sem horário não inventa hora', async () => {
   await a.v('gravarRetro', false);
   await a.esperar();
 
-  const m = a.J('S.done[0]');
+  const m = a.S().done[0];
   assert.strictEqual(m.hora, undefined);
   assert.strictEqual(a.E('temHora(S.done[0])'), false);
 
@@ -111,7 +111,7 @@ test('retroativo com horário informado registra a hora', async () => {
   await a.v('gravarRetro', false);
   await a.esperar();
 
-  const m = a.J('S.done[0]');
+  const m = a.S().done[0];
   assert.strictEqual(m.hora, 1);
   const d = new Date(m.t);
   assert.strictEqual(d.getHours(), 5);
@@ -131,7 +131,7 @@ test('horário inválido é ignorado sem quebrar', async () => {
   a.digitar('ahora', '99:99');
   await a.v('gravarRetro', false);
   await a.esperar();
-  assert.strictEqual(a.E('S.done[0].hora'), undefined, 'cai para sem horário em vez de gravar lixo');
+  assert.strictEqual(a.S().done[0].hora, undefined, 'cai para sem horário em vez de gravar lixo');
   a.fechar();
 });
 
@@ -214,12 +214,12 @@ test('trocar de mês não mexe na posição de leitura', async () => {
 
   a.v('mudaMes', -1);
   await a.esperar();
-  assert.strictEqual(a.E('view.mes'), -1, 'andou um mês para trás');
+  assert.strictEqual(a.vista().mes, -1, 'andou um mês para trás');
   assert.deepStrictEqual(pedidos, [], 'e não pediu rolagem nenhuma');
 
   a.v('mudaMes', 1);
   await a.esperar();
-  assert.strictEqual(a.E('view.mes'), 0, 'e volta sem rolar também');
+  assert.strictEqual(a.vista().mes, 0, 'e volta sem rolar também');
   assert.deepStrictEqual(pedidos, []);
   a.fechar();
 });
