@@ -94,7 +94,7 @@ test('exercício cadastrado por ele aparece na troca e tem histórico próprio',
 test('o programa do treinador continua congelado e comparável', async () => {
   const a = await app();
   a.E('S.prog.A.ex[0].s = 9; render()');
-  assert.strictEqual(a.E('treino("A").ex[0].s'), 9, 'o programa dele mudou');
+  assert.strictEqual(a.vJ('treino', 'A').ex[0].s, 9, 'o programa dele mudou');
   assert.strictEqual(a.dado('PROGRAMA').A.ex[0].s, 3, 'o do treinador não');
 
   const alvo = a.J(`
@@ -111,8 +111,8 @@ test('o programa do treinador continua congelado e comparável', async () => {
 test('id sem entrada no catálogo não derruba a tela', async () => {
   const a = await app();
   a.E('S.prog.A.ex[0].id = "exercicio-que-sumiu"; render()');
-  assert.strictEqual(a.E('treino("A").ex[0].n'), 'exercicio-que-sumiu');
-  assert.strictEqual(a.E('treino("A").ex[0].sumido'), undefined);
+  assert.strictEqual(a.vJ('treino', 'A').ex[0].n, 'exercicio-que-sumiu');
+  assert.strictEqual(a.vJ('treino', 'A').ex[0].sumido, undefined);
   assert.ok(a.doc.getElementById('app').innerHTML.length > 600, 'a tela continua de pé');
   a.fechar();
 });
@@ -145,9 +145,9 @@ test('estado sem programa nasce com o do treinador', async () => {
   const a = await app({ estado: { logs: {}, done: [], prog: null, rot: null } });
   await a.esperar();
   assert.deepStrictEqual(a.vJ('rot'), ['A', 'B', 'C', 'D', 'E', 'F']);
-  assert.strictEqual(a.E('treino("A").ex.length'), 7);
-  assert.strictEqual(a.E('treino("A").ex[0].s'), 3);
-  assert.strictEqual(a.E('treino("A").ex[0].d'), 180, 'o descanso vem do slot');
+  assert.strictEqual(a.vJ('treino', 'A').ex.length, 7);
+  assert.strictEqual(a.vJ('treino', 'A').ex[0].s, 3);
+  assert.strictEqual(a.vJ('treino', 'A').ex[0].d, 180, 'o descanso vem do slot');
   a.fechar();
 });
 
