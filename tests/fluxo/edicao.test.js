@@ -8,14 +8,14 @@ import { app, DIA } from './harness.js';
 // abre a edição no dia da rotação
 async function editando(o) {
   const a = await app(o);
-  a.E('modoEdicao(true)');
+  a.v('modoEdicao', true);
   return a;
 }
 
 test('editar só aparece no treino do dia', async () => {
   const a = await app();
   assert.ok(a.$('.edlink'), 'no dia da rotação, dá para editar');
-  a.E('go("E")');
+  a.v('go', 'E');
   assert.strictEqual(a.$('.edlink'), null, 'outro dia é edição de programa, não de sessão');
   a.fechar();
 });
@@ -23,7 +23,7 @@ test('editar só aparece no treino do dia', async () => {
 test('mudar séries vale para hoje e não toca no oficial', async () => {
   const a = await editando();
   const oficial = a.E('S.prog.A.ex[4].s');
-  a.E('mudaSeries(4, 1)');
+  a.v('mudaSeries', 4, 1);
 
   assert.strictEqual(a.E('treino("A").ex[4].s'), oficial + 1, 'o treino de hoje mudou');
   assert.strictEqual(a.E('S.prog.A.ex[4].s'), oficial, 'o oficial ficou onde estava');
@@ -36,25 +36,25 @@ test('mudar séries vale para hoje e não toca no oficial', async () => {
 
 test('voltar ao valor original apaga o mod em vez de registrar ida e volta', async () => {
   const a = await editando();
-  a.E('mudaSeries(4, 1)');
-  a.E('mudaSeries(4, 1)');
+  a.v('mudaSeries', 4, 1);
+  a.v('mudaSeries', 4, 1);
   assert.strictEqual(a.E('S.mods.list.length'), 1, 'dois toques, uma mudança');
   assert.strictEqual(a.J('S.mods.list')[0].para, a.E('S.prog.A.ex[4].s') + 2);
 
-  a.E('mudaSeries(4, -1)');
-  a.E('mudaSeries(4, -1)');
+  a.v('mudaSeries', 4, -1);
+  a.v('mudaSeries', 4, -1);
   assert.strictEqual(a.E('S.mods.list.length'), 0, 'voltou ao original: não houve mudança');
   a.fechar();
 });
 
 test('a série registrada segue o exercício quando ele muda de posição', async () => {
   const a = await app();
-  a.E('toggle(3)');
+  a.v('toggle', 3);
   a.preencher(3, 0, 50, 10);
   const chave = a.k('A', 3);
 
-  a.E('modoEdicao(true)');
-  a.E('moverEx(3, -1)');
+  a.v('modoEdicao', true);
+  a.v('moverEx', 3, -1);
   assert.strictEqual(a.k('A', 2), chave, 'subiu uma posição');
   assert.strictEqual(a.log('A', 2).length, 1, 'e o registro veio junto');
   a.fechar();
@@ -63,13 +63,13 @@ test('a série registrada segue o exercício quando ele muda de posição', asyn
 test('adicionar exercício entra só no dia e mantém histórico próprio', async () => {
   const a = await editando();
   const antes = a.E('treino("A").ex.length');
-  await a.E('addExercicio("pec-deck")');
+  await a.v('addExercicio', 'pec-deck');
   await a.esperar();
 
   assert.strictEqual(a.E('treino("A").ex.length'), antes + 1);
   assert.strictEqual(a.E('S.prog.A.ex.length'), antes, 'o oficial não cresceu');
 
-  a.E('modoEdicao(false)');
+  a.v('modoEdicao', false);
   a.E('toggle(' + antes + ')');
   a.preencher(antes, 0, 40, 12);
   assert.strictEqual(a.J('S.logs["pec-deck"]').length, 1, 'e já registra no histórico dele');
@@ -78,13 +78,13 @@ test('adicionar exercício entra só no dia e mantém histórico próprio', asyn
 
 test('remover exercício tira do dia e apaga o registro da sessão', async () => {
   const a = await app();
-  a.E('toggle(1)');
+  a.v('toggle', 1);
   a.preencher(1, 0, 30, 12);
   const chave = a.k('A', 1);
   assert.ok(a.J('S.logs[' + JSON.stringify(chave) + ']'));
 
-  a.E('modoEdicao(true)');
-  await a.E('removerEx(1)');
+  a.v('modoEdicao', true);
+  await a.v('removerEx', 1);
   await a.esperar();
 
   assert.notStrictEqual(a.k('A', 1), chave, 'saiu do treino de hoje');
@@ -97,7 +97,7 @@ test('remover exercício tira do dia e apaga o registro da sessão', async () =>
 
 test('cadastrar equipamento novo cria exercício com histórico próprio', async () => {
   const a = await editando();
-  a.E('abrirNovoEx()');
+  a.v('abrirNovoEx');
   a.digitar('nxn', 'Chest press da academia nova');
   a.E('document.getElementById("nxg").value = "peito superior"');
   a.E('document.getElementById("nxk").checked = true');
@@ -115,9 +115,9 @@ test('cadastrar equipamento novo cria exercício com histórico próprio', async
 test('trocar exercício é uma mudança de hoje, e sai na lista', async () => {
   const a = await editando();
   const orig = a.k('B', 0);
-  a.E('go("B")');
-  a.E('modoEdicao(true)');
-  a.E('setAlt(0, "agachamento-hack")');
+  a.v('go', 'B');
+  a.v('modoEdicao', true);
+  a.v('setAlt', 0, 'agachamento-hack');
 
   assert.strictEqual(a.E('treino("B").ex[0].id'), 'agachamento-hack');
   assert.strictEqual(a.E('treino("B").ex[0].orig'), 'agachamento-no-smith');
@@ -129,8 +129,8 @@ test('trocar exercício é uma mudança de hoje, e sai na lista', async () => {
 test('desfazer uma mudança volta o dia ao programa', async () => {
   const a = await editando();
   const antes = a.E('treino("A").ex[4].s');
-  a.E('mudaSeries(4, 1)');
-  a.E('desfazMod(0)');
+  a.v('mudaSeries', 4, 1);
+  a.v('desfazMod', 0);
   assert.strictEqual(a.E('treino("A").ex[4].s'), antes);
   assert.strictEqual(a.E('S.mods.list.length'), 0);
   a.fechar();
@@ -138,21 +138,21 @@ test('desfazer uma mudança volta o dia ao programa', async () => {
 
 test('finalizar com mudanças abre a decisão, e o padrão é só hoje', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
-  a.E('modoEdicao(true)');
-  a.E('mudaSeries(4, 1)');
-  a.E('modoEdicao(false)');
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 4, 1);
+  a.v('modoEdicao', false);
 
   const oficial = a.E('S.prog.A.ex[4].s');
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   await a.esperar();
 
   assert.ok(a.$('.promo'), 'a tela de decisão aparece antes de encerrar');
   assert.ok(a.E('!!S.sessao'), 'e a sessão continua aberta até ele responder');
   assert.deepStrictEqual(a.J('view.promo.dec'), ['hoje'], 'o padrão é o conservador');
 
-  await a.E('concluirPromo()');
+  await a.v('concluirPromo');
   await a.esperar();
   assert.strictEqual(a.E('S.sessao'), null, 'agora sim encerrou');
   assert.strictEqual(a.E('S.prog.A.ex[4].s'), oficial, 'e o oficial não mudou');
@@ -162,18 +162,18 @@ test('finalizar com mudanças abre a decisão, e o padrão é só hoje', async (
 
 test('levar para o oficial muda o programa e fica registrado', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
-  a.E('modoEdicao(true)');
-  a.E('mudaSeries(4, 1)');
-  a.E('modoEdicao(false)');
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 4, 1);
+  a.v('modoEdicao', false);
 
   const oficial = a.E('S.prog.A.ex[4].s');
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   await a.esperar();
-  a.E('decidePromo(0, "oficial")');
-  a.E('motivoPromo("decisao")');
-  await a.E('concluirPromo()');
+  a.v('decidePromo', 0, 'oficial');
+  a.v('motivoPromo', 'decisao');
+  await a.v('concluirPromo');
   await a.esperar();
 
   assert.strictEqual(a.E('S.prog.A.ex[4].s'), oficial + 1, 'o programa de amanhã mudou');
@@ -186,21 +186,21 @@ test('levar para o oficial muda o programa e fica registrado', async () => {
 
 test('decidir cada mudança separadamente', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
-  a.E('modoEdicao(true)');
-  a.E('mudaSeries(4, 1)');
-  a.E('setAlt(2, "elevacao-lateral-com-halteres")');
-  a.E('modoEdicao(false)');
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 4, 1);
+  a.v('setAlt', 2, 'elevacao-lateral-com-halteres');
+  a.v('modoEdicao', false);
 
   const series = a.E('S.prog.A.ex[4].s');
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   await a.esperar();
   assert.strictEqual(a.E('view.promo.mods.length'), 2);
 
   // aceita a série, recusa a troca: são decisões sem relação nenhuma
-  a.E('decidePromo(0, "oficial")');
-  await a.E('concluirPromo()');
+  a.v('decidePromo', 0, 'oficial');
+  await a.v('concluirPromo');
   await a.esperar();
 
   assert.strictEqual(a.E('S.prog.A.ex[4].s'), series + 1);
@@ -210,15 +210,15 @@ test('decidir cada mudança separadamente', async () => {
 
 test('o que mudou fica no registro do dia mesmo sem virar permanente', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
-  a.E('modoEdicao(true)');
-  a.E('setAlt(0, "supino-inclinado-com-halteres")');
-  a.E('modoEdicao(false)');
+  a.v('modoEdicao', true);
+  a.v('setAlt', 0, 'supino-inclinado-com-halteres');
+  a.v('modoEdicao', false);
 
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   await a.esperar();
-  await a.E('concluirPromo()');
+  await a.v('concluirPromo');
   await a.esperar();
 
   const m = a.J('S.done[S.done.length-1]');
@@ -229,9 +229,9 @@ test('o que mudou fica no registro do dia mesmo sem virar permanente', async () 
 
 test('finalizar sem mudanças não mostra a tela de decisão', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   await a.esperar();
   assert.strictEqual(a.E('view.promo'), null);
   assert.strictEqual(a.E('S.sessao'), null);
@@ -240,15 +240,15 @@ test('finalizar sem mudanças não mostra a tela de decisão', async () => {
 
 test('encerramento automático não promove nada', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  a.E('modoEdicao(true)');
-  a.E('mudaSeries(4, 1)');
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 4, 1);
   const oficial = a.E('S.prog.A.ex[4].s');
 
   // some por cinco horas: o app encerra sozinho
   a.E('S.sessao.ultima = Date.now() - 5*3600*1000; S.sessao.inicio = S.sessao.ultima');
-  a.E('encerraSePreciso()');
+  a.v('encerraSePreciso');
   assert.strictEqual(a.E('S.sessao'), null);
   assert.strictEqual(a.E('S.prog.A.ex[4].s'), oficial, 'sem decisão, nada vira permanente');
   assert.strictEqual(a.E('S.mods'), null);
@@ -257,14 +257,14 @@ test('encerramento automático não promove nada', async () => {
 
 test('as mudanças sobrevivem a navegar entre os dias no meio do treino', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  a.E('modoEdicao(true)');
-  a.E('mudaSeries(4, 1)');
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 4, 1);
   const alvo = a.E('treino("A").ex[4].s');
 
-  a.E('go("E")');
-  a.E('go("A")');
+  a.v('go', 'E');
+  a.v('go', 'A');
   assert.strictEqual(a.E('treino("A").ex[4].s'), alvo, 'o mod não se perde ao trocar de dia');
   assert.strictEqual(a.E('S.mods.list.length'), 1);
   a.fechar();
@@ -272,11 +272,11 @@ test('as mudanças sobrevivem a navegar entre os dias no meio do treino', async 
 
 test('as mudanças sobrevivem a fechar e reabrir o app', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  a.E('modoEdicao(true)');
-  a.E('mudaSeries(4, 1)');
-  await a.E('save()');
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 4, 1);
+  await a.v('save');
   await a.esperar();
   const bruto = a.gravado();
   a.fechar();
@@ -290,12 +290,12 @@ test('as mudanças sobrevivem a fechar e reabrir o app', async () => {
 
 test('o impacto no volume aparece na hora de mexer', async () => {
   const a = await editando();
-  const imp = a.J('impactoSeries("A", "delt lateral")');
+  const imp = a.vJ('impactoSeries', 'A', 'delt lateral');
   assert.match(imp.txt, /delt lateral: 12/);
   assert.strictEqual(imp.acima, 0);
 
-  a.E('mudaSeries(4, 1)');
-  const depois = a.J('impactoSeries("A", "delt lateral")');
+  a.v('mudaSeries', 4, 1);
+  const depois = a.vJ('impactoSeries', 'A', 'delt lateral');
   assert.match(depois.txt, /13/);
   assert.match(depois.txt, /o treinador prescreveu 12/);
   assert.strictEqual(depois.acima, 1, 'acima do alvo é sinalizado');
@@ -311,7 +311,7 @@ test('o alvo do treinador é calculado do programa, nunca transcrito', async () 
   // mexer no programa dele não move o alvo
   a.E('S.prog.A.ex[4].s = 9');   // eram 3
   assert.strictEqual(a.E('ALVO["delt lateral"]'), 12, 'o alvo é do treinador e não se move');
-  assert.strictEqual(a.E('seriesDe("delt lateral")'), 18, 'o número dele acompanha a edição');
+  assert.strictEqual(a.v('seriesDe', 'delt lateral'), 18, 'o número dele acompanha a edição');
   a.fechar();
 });
 
@@ -373,7 +373,7 @@ test('o nome novo aparece no título e no cartão', async () => {
   await a.esperar(60);
   assert.strictEqual(a.texto('.htitle'), 'Cadeira do fundo');
 
-  a.E('CTX.fechaHist()');
+  a.v('ctx.fechaHist');
   assert.ok(a.$$('.ex').map(x => x.textContent).join(' ').includes('Cadeira do fundo'),
     'o cartão do treino segue o nome');
   a.fechar();
