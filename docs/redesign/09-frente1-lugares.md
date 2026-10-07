@@ -75,6 +75,16 @@ de "Evolução" em Corpo e Semana é a decisão do desenhista depois das respost
 do dono, e ela tem um motivo de uma linha: **o corpo deixou de ser leitura e
 passou a ser registro.**
 
+> **RECONCILIADO em 06/10 · "Evolução" volta, e não como sexto lugar.** A
+> frente 3 mediu que a partição apagou a palavra do dono do produto — 12
+> ocorrências nas duas telas da primeira rodada, **zero** nas sete da segunda — e
+> propôs que ela voltasse como **nome do destino de leitura dentro de Corpo, no
+> lugar de "Histórico"** (`09-frente3-palavras.md` §1.7). **O dono aceitou a
+> proposta.** Então: a barra continua com estes cinco nomes e a partição fica de
+> pé; o que muda é que o botão do cabeçalho de Corpo deixa de dizer "Histórico" e
+> passa a dizer **"Evolução"**, e o título do destino também. **Nada nesta seção
+> muda** — é palavra dentro de um lugar, e lugar é o que esta frente delimita.
+
 Duas coisas que **não são lugar** e precisam de nome, porque capacidade real
 mora nelas:
 
@@ -410,6 +420,40 @@ A D o põe no menu ⋯ da sessão (`03-direcao-D/direcao.md`, tabela de tarefas:
 "Deload | sessão, menu ⋯"). As duas coisas não podem valer ao mesmo tempo. Não
 é decisão minha: é regra, e sobe com os dois argumentos escritos — o de hoje
 (freiar) e o da D (o raro mora no ⋯, e deload é raro).
+
+> **RECONCILIADO em 06/10 · o dono decidiu MUDAR DE LUGAR, duas vezes.**
+>
+> **A decisão:** o deload **muda de lugar** — vai para o menu ⋯ da sessão, como a
+> direção D desenhou (decisão 6 das quinze). E foi **perguntado de novo na noite
+> do mesmo dia**, depois de o coordenador corrigir o cartão que ele tinha lido:
+> o cartão da pergunta 6 dizia só "muda de lugar" e **subestimava o que ele
+> decidia**. Ele **manteve** a decisão, agora sabendo que **o lugar ERA o freio**
+> (pergunta 2 das oito da noite).
+>
+> **Duas correções ao registro de quem leu isto antes de 06/10, as duas do
+> coordenador:**
+> 1. **Esta frente NÃO propôs o lugar novo — ela recusou propor.** O que está
+>    escrito acima é literal: *"Não é decisão minha: é regra, e sobe com os dois
+>    argumentos escritos."* Quem propôs o menu ⋯ foi a **Direção D**. O cartão da
+>    pergunta e o briefing da frente 3 diziam "muda de lugar como a frente 1
+>    propôs", e isso era erro de atribuição.
+> 2. **Esta frente achou SETE afirmações erradas do coordenador, não cinco** — o
+>    §7 abre com "Sete pontos" e a tabela tem sete linhas. O cinco saiu do
+>    relatório de entrega, não deste documento.
+>
+> **O argumento derrubado fica aqui inteiro, porque era bom e é o que ninguém
+> pode esquecer ao implementar:** a razão escrita em `src/ui/telas/guia.jsx` é
+> *"um interruptor que corta metade das séries não deve estar a um toque no meio
+> de uma sessão. O app existe em parte para frear, e o caminho de menor esforço
+> tem que ser o conservador."* Quem mover o interruptor está removendo um freio
+> deliberado, não só reorganizando um menu.
+>
+> **A mitigação, e ela é a frente 3 que escreveu:** o item do menu deixa de ser
+> interruptor com nome e passa a **dizer o corte em número antes do toque** —
+> *"Deload hoje · corta 20 séries para 10, nas mesmas cargas"*
+> (`09-frente3-palavras.md` §7.6). **O freio passa do lugar para a palavra**, já
+> que ele saiu do lugar. **Ninguém mediu** se a palavra freia tanto quanto o
+> lugar freava; é hábito ao longo de semanas, e o protótipo testou três minutos.
 
 ### Achado 4 · O placar do cardio não está onde a rede diz que está
 
@@ -1079,8 +1123,12 @@ e os tokens, a escala e o movimento (frente 4).
 - **As catorze regras do treinador e o alvo por tipo de dia** não tinham lugar
   (achado 2). Proposta: Prescrição. Não muda regra nenhuma, então não volta à
   mesa do dono.
-- **O deload** muda de lugar contra uma razão escrita no fonte (achado 3). **Isto
-  muda uma regra**, e por isso volta à mesa dele com os dois argumentos.
+- ~~**O deload** muda de lugar contra uma razão escrita no fonte (achado 3).
+  **Isto muda uma regra**, e por isso volta à mesa dele com os dois
+  argumentos.~~ **RESPONDIDO em 06/10: ele decidiu mudar de lugar**, e manteve a
+  decisão na mesma noite depois de saber que o lugar era o freio. A razão escrita
+  no fonte cai; o freio passa para a palavra do item de menu, que diz o corte em
+  número antes do toque. Ver o achado 3, que tem o argumento derrubado inteiro.
 - **A regra do palpite que vira buraco** (§5.2) é proposta desta frente, e
   `07-plano.md` §1.2 manda que volte a ele como proposta.
 
@@ -1098,3 +1146,39 @@ e os tokens, a escala e o movimento (frente 4).
   longo de semanas (do plano, risco 6). **Hipótese, não fato.**
 - **A frequência com que ele corrige uma série de semanas atrás** — o que daria
   o peso do achado 1. **Não medido.**
+
+---
+
+## 10 · Reconciliação com as decisões de 06/10
+
+Este documento foi escrito em 05/10, antes das 23 decisões que o dono tomou em
+06/10. A autoridade sobre elas é a ONDA 5 de `docs/redesign/00-coordenacao.md`,
+que **não** é editada aqui. Esta seção diz o que foi alinhado e contra o quê.
+
+### 10.1 · O que foi alinhado
+
+| o que mudou aqui | contra qual decisão | onde |
+|---|---|---|
+| **O deload muda de lugar, e o argumento derrubado fica registrado** | decisão 6 das quinze ("muda… a razão escrita no fonte cai") e a pergunta 2 das oito da noite ("mantém, agora sabendo que o lugar era o freio") | achado 3, §9 |
+| **"Evolução" volta como nome do destino de leitura em Corpo, no lugar de "Histórico"** | pergunta 5 das oito da noite ("aceita a proposta") | §1 |
+| **A atribuição corrigida: esta frente recusou propor o lugar do deload; quem propôs o menu ⋯ foi a Direção D** | correção do coordenador, em 06/10, a um erro dele | achado 3 |
+| **São sete afirmações erradas do coordenador, não cinco** | correção do coordenador, em 06/10: o §7 abre com "Sete pontos" e a tabela tem sete linhas | achado 3 |
+
+**Duas coisas desta frente que as decisões de 06/10 confirmaram sem emenda**, e
+vale dizer porque dá contorno ao resto: a decisão de cinco campos de
+bioimpedância com quatro obrigatórios (§1.3) **derruba a recusa 4 da Direção D**
+("recuso campo obrigatório") — a decisão do dono manda; e o achado 2 (as catorze
+regras do treinador sem lugar, proposta: Prescrição) **não muda regra nenhuma**,
+então nunca precisou da mesa dele.
+
+### 10.2 · O que esta reconciliação NÃO resolve
+
+- **A regra do palpite que vira buraco** (§5.2) continua como proposta desta
+  frente na mesa dele. Nenhuma das 23 decisões de 06/10 a tocou.
+- **Dias continua sem desenho** (achado 6), e é onde mora a folha de pôr o dia em
+  dia — a superfície que as decisões 1 a 5 do dono mais mexeram. **As decisões
+  mudaram o que a folha faz; o lugar que a abre continua sem pixel.**
+- **O cartão do exercício fora da sessão continua sem lugar** (achado 1), com as
+  quatro capacidades que ele leva consigo. Nada em 06/10 mexeu nisso.
+- **O que o freio da palavra freia**, agora que o deload saiu do lugar que
+  freava: **ninguém mediu.** É hábito ao longo de semanas.
