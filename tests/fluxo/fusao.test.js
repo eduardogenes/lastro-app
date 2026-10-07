@@ -144,7 +144,7 @@ test('o dia previsto se identifica como previsão, e confirmar muda o alvo', asy
   // Mesma semeadura da timeline, pelo mesmo motivo: o teste tira o treino do dia
   // e cobra que o alvo caia. No domingo não há treino para tirar.
   const a = await app({ aba: 'hoje', estado: { cadencia: ['treino','treino','treino','treino','treino','treino','treino'] } });
-  const previsto = a.E('CTX.hoje().diaHoje.previsto');
+  const previsto = a.vJ('ctx.hoje').diaHoje.previsto;
   if (previsto) {
     assert.ok(a.texto('.ins-secao-nota') || a.texto('.ins-provenance'),
       'a tela avisa que o dia é palpite');
@@ -154,7 +154,7 @@ test('o dia previsto se identifica como previsão, e confirmar muda o alvo', asy
   await a.esperar();
   const alvoDepois = a.E('Math.round(CTX.hoje().alvo.kcal)');
   assert.ok(alvoDepois < alvoAntes, 'sem treino saem o pré e o intra: ' + alvoAntes + ' → ' + alvoDepois);
-  assert.strictEqual(a.E('CTX.hoje().diaHoje.previsto'), false, 'ele disse, então não é mais palpite');
+  assert.strictEqual(a.vJ('ctx.hoje').diaHoje.previsto, false, 'ele disse, então não é mais palpite');
   a.fechar();
 });
 
@@ -403,8 +403,8 @@ test('alimento da prescrição é editável mas não some do código', async () 
   const a = await app({ aba: 'comida' });
   a.E('CTX.salvaAlimento("arroz", { n: "Arroz integral cozido", cat: "mercearia", u: "g", kcal: 111, p: 2.6, c: 23, g: 0.9, cru: 0.36 })');
   await a.esperar();
-  assert.strictEqual(a.E('CTX.alimentoParaEditar("arroz").n'), 'Arroz integral cozido');
-  assert.strictEqual(a.E('CTX.alimentoParaEditar("arroz").daPrescricao'), true,
+  assert.strictEqual(a.vJ('ctx.alimentoParaEditar', 'arroz').n, 'Arroz integral cozido');
+  assert.strictEqual(a.vJ('ctx.alimentoParaEditar', 'arroz').daPrescricao, true,
     'continua sabendo que veio da prescrição');
   assert.strictEqual(a.dado('ALIMENTOS_BASE')["arroz"].n, 'Arroz branco cozido',
     'o do código não é tocado — restaurar o plano devolve o original');
