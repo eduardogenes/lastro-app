@@ -32,7 +32,7 @@ test('o painel lê as linhas juntas e diz a inversão', async () => {
   a.aba('dados');
   await a.modo('treino');
 
-  const leitura = a.J('CTX.musculos().leitura');
+  const leitura = a.vJ('ctx.musculos').leitura;
   const inv = leitura.filter(function (x) { return x.k === 'inversao'; })[0];
   assert.ok(inv, 'nenhuma inversão lida: ' + JSON.stringify(leitura));
   assert.ok(inv.txt.includes('peito levou 8'), inv.txt);
