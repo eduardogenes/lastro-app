@@ -12,9 +12,9 @@ function emHoje(h, m) {
 
 test('o relógio diz desde que horas', async () => {
   const a = await app();
-  await a.E('iniciarSessao()');
+  await a.v('iniciarSessao');
   a.E('S.sessao.inicio = ' + emHoje(6, 22));
-  a.E('render()');
+  a.v('render');
   assert.strictEqual(a.texto('.day-rel em'), 'desde 06:22');
   a.fechar();
 });
@@ -34,7 +34,7 @@ test('detalhe da sessão mostra início e fim', async () => {
 
 test('sessão em andamento mostra só o começo', async () => {
   const a = await app();
-  await a.E('iniciarSessao()');
+  await a.v('iniciarSessao');
   a.E('S.sessao.inicio = ' + emHoje(6, 5));
   a.E('S.done[0].t = ' + emHoje(6, 5));
   const t = a.E('S.done[0].t');
@@ -85,8 +85,8 @@ test('horário típico do mês, com o mais cedo e o mais tarde', async () => {
 test('retroativo sem horário não inventa hora', async () => {
   const a = await app();
   a.E('abrirAdicionar(' + (Date.now() - DIA) + ')');
-  a.E('addSet("tipo","B")');
-  await a.E('gravarRetro(false)');
+  a.v('addSet', 'tipo', 'B');
+  await a.v('gravarRetro', false);
   await a.esperar();
 
   const m = a.J('S.done[0]');
@@ -106,9 +106,9 @@ test('retroativo com horário informado registra a hora', async () => {
   const a = await app({ agora: agora });
   const ontem = agora - DIA;
   a.E('abrirAdicionar(' + ontem + ')');
-  a.E('addSet("tipo","B")');
+  a.v('addSet', 'tipo', 'B');
   a.digitar('ahora', '05:50');
-  await a.E('gravarRetro(false)');
+  await a.v('gravarRetro', false);
   await a.esperar();
 
   const m = a.J('S.done[0]');
@@ -127,9 +127,9 @@ test('retroativo com horário informado registra a hora', async () => {
 test('horário inválido é ignorado sem quebrar', async () => {
   const a = await app();
   a.E('abrirAdicionar(' + (Date.now() - DIA) + ')');
-  a.E('addSet("tipo","B")');
+  a.v('addSet', 'tipo', 'B');
   a.digitar('ahora', '99:99');
-  await a.E('gravarRetro(false)');
+  await a.v('gravarRetro', false);
   await a.esperar();
   assert.strictEqual(a.E('S.done[0].hora'), undefined, 'cai para sem horário em vez de gravar lixo');
   a.fechar();
@@ -138,9 +138,9 @@ test('horário inválido é ignorado sem quebrar', async () => {
 test('treino avulso não entra na conta de horário', async () => {
   const a = await app();
   a.E('abrirAdicionar(' + (Date.now() - DIA) + ')');
-  a.E('addSet("tipo","livre")');
-  a.E('addSet("grupo","peito")');
-  await a.E('gravarRetro(false)');
+  a.v('addSet', 'tipo', 'livre');
+  a.v('addSet', 'grupo', 'peito');
+  await a.v('gravarRetro', false);
   await a.esperar();
   assert.strictEqual(a.E('temHora(S.done[0])'), false);
   a.fechar();
@@ -189,8 +189,8 @@ test('limites das faixas de período', async () => {
 test('sem horário medido não há marcador de período', async () => {
   const a = await app();
   a.E('abrirAdicionar(' + (Date.now() - DIA) + ')');
-  a.E('addSet("tipo","B")');
-  await a.E('gravarRetro(false)');
+  a.v('addSet', 'tipo', 'B');
+  await a.v('gravarRetro', false);
   await a.esperar();
 
   a.aba('dados');
@@ -212,12 +212,12 @@ test('trocar de mês não mexe na posição de leitura', async () => {
     pedidos.push(x && typeof x === 'object' ? x.top : top);
   };
 
-  a.E('mudaMes(-1)');
+  a.v('mudaMes', -1);
   await a.esperar();
   assert.strictEqual(a.E('view.mes'), -1, 'andou um mês para trás');
   assert.deepStrictEqual(pedidos, [], 'e não pediu rolagem nenhuma');
 
-  a.E('mudaMes(1)');
+  a.v('mudaMes', 1);
   await a.esperar();
   assert.strictEqual(a.E('view.mes'), 0, 'e volta sem rolar também');
   assert.deepStrictEqual(pedidos, []);
@@ -236,7 +236,7 @@ test('recorde não é pintado de ácido: o app não comemora por cor', async () 
            { day: 'A', t: t, sid: t, dur: 60 * 60000, fim: 'manual' }]
   } });
   a.E('abrirSessao(' + t + ')');
-  const v = a.J('CTX.detalheDaSessao()');
+  const v = a.vJ('ctx.detalheDaSessao');
   const rec = v.stats.filter(function (x) { return /recorde/.test(x.rotulo); })[0];
   assert.ok(rec, 'a linha de recordes existe');
   assert.strictEqual(rec.valor, '1', '40 kg para 50 kg é recorde de carga');
