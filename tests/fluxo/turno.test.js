@@ -80,7 +80,7 @@ test('o turno é ajuste de HOJE: o plano não se move', async () => {
   await abreFolha(a);
   a.clicar(a.$$('.fd-turno-op')[1]);          // tarde
   await a.esperar();
-  assert.strictEqual(a.J('S.dia.turno'), 'tarde', 'mora no dia, que zera com a data');
+  assert.strictEqual(a.S().dia.turno, 'tarde', 'mora no dia, que zera com a data');
   const plano = a.J('planoDeComida().map(function(r){return r.t+" "+r.id})');
   assert.deepStrictEqual(plano.slice(0, 2), ['05:45 pre', '06:15 treino'],
     'em COMIDA a edição vale para todo dia — e ela não aconteceu');
@@ -111,7 +111,7 @@ test('voltar para a manhã desfaz o deslocamento', async () => {
   a.clicar(a.$$('.fd-turno-op')[0]);
   await a.esperar();
   // `E` e não `J`: JSON.stringify(undefined) não é JSON, e ausência é o ponto
-  assert.strictEqual(a.E('S.dia.turno'), undefined, 'manhã é a ausência de deslocamento');
+  assert.strictEqual(a.S().dia.turno, undefined, 'manhã é a ausência de deslocamento');
   assert.strictEqual(a.E('"turno" in S.dia'), false, 'a chave sai, não fica como null');
   assert.strictEqual(a.J('CTX.hoje().refs[0].t'), '05:45');
   a.fechar();
@@ -134,8 +134,8 @@ test('a migração 7→8 tira o papel do nome, e só do nome que era dela', asyn
     plano: [{ id: 'pos', t: '08:00', n: 'Café da manhã / pós-treino',
               tag: '', quando: 'sempre', itens: [] }],
     alimentos: {}, ocultos: {} } } });
-  assert.strictEqual(a.J('S.comida.plano[0].n'), 'Café da manhã');
-  assert.strictEqual(a.J('S.plano'), a.E('PLANO_ATUAL'));
+  assert.strictEqual(a.S().comida.plano[0].n, 'Café da manhã');
+  assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'));
   a.fechar();
 
   const b = await app({ estado: { plano: 7, comida: {
