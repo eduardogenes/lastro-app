@@ -22,13 +22,13 @@ test('editar só aparece no treino do dia', async () => {
 
 test('mudar séries vale para hoje e não toca no oficial', async () => {
   const a = await editando();
-  const oficial = a.E('S.prog.A.ex[4].s');
+  const oficial = a.S().prog.A.ex[4].s;
   a.v('mudaSeries', 4, 1);
 
   assert.strictEqual(a.E('treino("A").ex[4].s'), oficial + 1, 'o treino de hoje mudou');
-  assert.strictEqual(a.E('S.prog.A.ex[4].s'), oficial, 'o oficial ficou onde estava');
+  assert.strictEqual(a.S().prog.A.ex[4].s, oficial, 'o oficial ficou onde estava');
 
-  const mods = a.J('S.mods.list');
+  const mods = a.S().mods.list;
   assert.strictEqual(mods.length, 1);
   assert.deepStrictEqual([mods[0].k, mods[0].de, mods[0].para], ['sets', oficial, oficial + 1]);
   a.fechar();
@@ -38,12 +38,12 @@ test('voltar ao valor original apaga o mod em vez de registrar ida e volta', asy
   const a = await editando();
   a.v('mudaSeries', 4, 1);
   a.v('mudaSeries', 4, 1);
-  assert.strictEqual(a.E('S.mods.list.length'), 1, 'dois toques, uma mudança');
-  assert.strictEqual(a.J('S.mods.list')[0].para, a.E('S.prog.A.ex[4].s') + 2);
+  assert.strictEqual(a.S().mods.list.length, 1, 'dois toques, uma mudança');
+  assert.strictEqual(a.S().mods.list[0].para, a.S().prog.A.ex[4].s + 2);
 
   a.v('mudaSeries', 4, -1);
   a.v('mudaSeries', 4, -1);
-  assert.strictEqual(a.E('S.mods.list.length'), 0, 'voltou ao original: não houve mudança');
+  assert.strictEqual(a.S().mods.list.length, 0, 'voltou ao original: não houve mudança');
   a.fechar();
 });
 
@@ -67,12 +67,12 @@ test('adicionar exercício entra só no dia e mantém histórico próprio', asyn
   await a.esperar();
 
   assert.strictEqual(a.E('treino("A").ex.length'), antes + 1);
-  assert.strictEqual(a.E('S.prog.A.ex.length'), antes, 'o oficial não cresceu');
+  assert.strictEqual(a.S().prog.A.ex.length, antes, 'o oficial não cresceu');
 
   a.v('modoEdicao', false);
   a.E('toggle(' + antes + ')');
   a.preencher(antes, 0, 40, 12);
-  assert.strictEqual(a.J('S.logs["pec-deck"]').length, 1, 'e já registra no histórico dele');
+  assert.strictEqual(a.S().logs["pec-deck"].length, 1, 'e já registra no histórico dele');
   a.fechar();
 });
 
@@ -121,8 +121,8 @@ test('trocar exercício é uma mudança de hoje, e sai na lista', async () => {
 
   assert.strictEqual(a.E('treino("B").ex[0].id'), 'agachamento-hack');
   assert.strictEqual(a.E('treino("B").ex[0].orig'), 'agachamento-no-smith');
-  assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'agachamento-no-smith', 'oficial intocado');
-  assert.strictEqual(a.J('S.mods.list')[0].k, 'troca');
+  assert.strictEqual(a.S().prog.B.ex[0].id, 'agachamento-no-smith', 'oficial intocado');
+  assert.strictEqual(a.S().mods.list[0].k, 'troca');
   a.fechar();
 });
 
@@ -132,7 +132,7 @@ test('desfazer uma mudança volta o dia ao programa', async () => {
   a.v('mudaSeries', 4, 1);
   a.v('desfazMod', 0);
   assert.strictEqual(a.E('treino("A").ex[4].s'), antes);
-  assert.strictEqual(a.E('S.mods.list.length'), 0);
+  assert.strictEqual(a.S().mods.list.length, 0);
   a.fechar();
 });
 
@@ -144,19 +144,19 @@ test('finalizar com mudanças abre a decisão, e o padrão é só hoje', async (
   a.v('mudaSeries', 4, 1);
   a.v('modoEdicao', false);
 
-  const oficial = a.E('S.prog.A.ex[4].s');
+  const oficial = a.S().prog.A.ex[4].s;
   await a.v('finalizarSessao');
   await a.esperar();
 
   assert.ok(a.$('.promo'), 'a tela de decisão aparece antes de encerrar');
-  assert.ok(a.E('!!S.sessao'), 'e a sessão continua aberta até ele responder');
-  assert.deepStrictEqual(a.J('view.promo.dec'), ['hoje'], 'o padrão é o conservador');
+  assert.ok(!!a.S().sessao, 'e a sessão continua aberta até ele responder');
+  assert.deepStrictEqual(a.vista().promo.dec, ['hoje'], 'o padrão é o conservador');
 
   await a.v('concluirPromo');
   await a.esperar();
-  assert.strictEqual(a.E('S.sessao'), null, 'agora sim encerrou');
-  assert.strictEqual(a.E('S.prog.A.ex[4].s'), oficial, 'e o oficial não mudou');
-  assert.strictEqual(a.E('S.mods'), null, 'as mudanças do dia morrem com a sessão');
+  assert.strictEqual(a.S().sessao, null, 'agora sim encerrou');
+  assert.strictEqual(a.S().prog.A.ex[4].s, oficial, 'e o oficial não mudou');
+  assert.strictEqual(a.S().mods, null, 'as mudanças do dia morrem com a sessão');
   a.fechar();
 });
 
@@ -168,7 +168,7 @@ test('levar para o oficial muda o programa e fica registrado', async () => {
   a.v('mudaSeries', 4, 1);
   a.v('modoEdicao', false);
 
-  const oficial = a.E('S.prog.A.ex[4].s');
+  const oficial = a.S().prog.A.ex[4].s;
   await a.v('finalizarSessao');
   await a.esperar();
   a.v('decidePromo', 0, 'oficial');
@@ -176,8 +176,8 @@ test('levar para o oficial muda o programa e fica registrado', async () => {
   await a.v('concluirPromo');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.prog.A.ex[4].s'), oficial + 1, 'o programa de amanhã mudou');
-  const log = a.J('S.progLog');
+  assert.strictEqual(a.S().prog.A.ex[4].s, oficial + 1, 'o programa de amanhã mudou');
+  const log = a.S().progLog;
   assert.strictEqual(log.length, 1);
   assert.strictEqual(log[0].motivo, 'decisao');
   assert.match(log[0].txt, /séries/);
@@ -193,18 +193,18 @@ test('decidir cada mudança separadamente', async () => {
   a.v('setAlt', 2, 'elevacao-lateral-com-halteres');
   a.v('modoEdicao', false);
 
-  const series = a.E('S.prog.A.ex[4].s');
+  const series = a.S().prog.A.ex[4].s;
   await a.v('finalizarSessao');
   await a.esperar();
-  assert.strictEqual(a.E('view.promo.mods.length'), 2);
+  assert.strictEqual(a.vista().promo.mods.length, 2);
 
   // aceita a série, recusa a troca: são decisões sem relação nenhuma
   a.v('decidePromo', 0, 'oficial');
   await a.v('concluirPromo');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.prog.A.ex[4].s'), series + 1);
-  assert.strictEqual(a.E('S.prog.A.ex[4].id'), 'elevacao-lateral-na-maquina', 'a troca era só de hoje');
+  assert.strictEqual(a.S().prog.A.ex[4].s, series + 1);
+  assert.strictEqual(a.S().prog.A.ex[4].id, 'elevacao-lateral-na-maquina', 'a troca era só de hoje');
   a.fechar();
 });
 
@@ -233,8 +233,8 @@ test('finalizar sem mudanças não mostra a tela de decisão', async () => {
   for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
   await a.v('finalizarSessao');
   await a.esperar();
-  assert.strictEqual(a.E('view.promo'), null);
-  assert.strictEqual(a.E('S.sessao'), null);
+  assert.strictEqual(a.vista().promo, null);
+  assert.strictEqual(a.S().sessao, null);
   a.fechar();
 });
 
@@ -244,14 +244,14 @@ test('encerramento automático não promove nada', async () => {
   a.preencher(0, 0, 40, 10);
   a.v('modoEdicao', true);
   a.v('mudaSeries', 4, 1);
-  const oficial = a.E('S.prog.A.ex[4].s');
+  const oficial = a.S().prog.A.ex[4].s;
 
   // some por cinco horas: o app encerra sozinho
   a.E('S.sessao.ultima = Date.now() - 5*3600*1000; S.sessao.inicio = S.sessao.ultima');
   a.v('encerraSePreciso');
-  assert.strictEqual(a.E('S.sessao'), null);
-  assert.strictEqual(a.E('S.prog.A.ex[4].s'), oficial, 'sem decisão, nada vira permanente');
-  assert.strictEqual(a.E('S.mods'), null);
+  assert.strictEqual(a.S().sessao, null);
+  assert.strictEqual(a.S().prog.A.ex[4].s, oficial, 'sem decisão, nada vira permanente');
+  assert.strictEqual(a.S().mods, null);
   a.fechar();
 });
 
@@ -266,7 +266,7 @@ test('as mudanças sobrevivem a navegar entre os dias no meio do treino', async 
   a.v('go', 'E');
   a.v('go', 'A');
   assert.strictEqual(a.E('treino("A").ex[4].s'), alvo, 'o mod não se perde ao trocar de dia');
-  assert.strictEqual(a.E('S.mods.list.length'), 1);
+  assert.strictEqual(a.S().mods.list.length, 1);
   a.fechar();
 });
 
@@ -304,13 +304,13 @@ test('o impacto no volume aparece na hora de mexer', async () => {
 
 test('o alvo do treinador é calculado do programa, nunca transcrito', async () => {
   const a = await app();
-  assert.strictEqual(a.E('ALVO_TOTAL'), 90);
-  assert.strictEqual(a.E('ALVO["delt lateral"]'), 12);
-  assert.strictEqual(a.E('ALVO["dorsal"]'), 10);
+  assert.strictEqual(a.dado('ALVO_TOTAL'), 90);
+  assert.strictEqual(a.dado('ALVO')["delt lateral"], 12);
+  assert.strictEqual(a.dado('ALVO')["dorsal"], 10);
 
   // mexer no programa dele não move o alvo
   a.E('S.prog.A.ex[4].s = 9');   // eram 3
-  assert.strictEqual(a.E('ALVO["delt lateral"]'), 12, 'o alvo é do treinador e não se move');
+  assert.strictEqual(a.dado('ALVO')["delt lateral"], 12, 'o alvo é do treinador e não se move');
   assert.strictEqual(a.v('seriesDe', 'delt lateral'), 18, 'o número dele acompanha a edição');
   a.fechar();
 });
@@ -332,8 +332,8 @@ test('trocar exercício recém-promovido avisa da regra de 6 a 8 semanas', async
 test('promover uma troca reinicia o relógio do exercício no programa', async () => {
   const a = await app();
   a.E('aplicaAoOficial("B", [{ k:"troca", slot:"agachamento-no-smith", por:"belt-squat" }], "decisao")');
-  assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'belt-squat');
-  assert.ok(a.E('S.prog.B.ex[0].desde') > Date.now() - 5000, 'entrou agora, conta a partir de agora');
+  assert.strictEqual(a.S().prog.B.ex[0].id, 'belt-squat');
+  assert.ok(a.S().prog.B.ex[0].desde > Date.now() - 5000, 'entrou agora, conta a partir de agora');
   a.fechar();
 });
 
@@ -357,10 +357,10 @@ test('renomear não move o histórico, porque não mexe no id', async () => {
   await a.esperar(60);
 
   assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), 'Máquina nova do canto');
-  assert.ok(a.E(`!!CAT[${JSON.stringify(alvo)}]`), 'o id continua existindo no catálogo');
+  assert.ok(!!a.dado('CAT')[alvo], 'o id continua existindo no catálogo');
   assert.strictEqual(a.E(`(S.logs[${JSON.stringify(alvo)}] || []).length`), series,
     'as séries continuam sob a MESMA chave');
-  assert.ok(a.E(`!!S.fotos[${JSON.stringify(alvo)}]`), 'a foto do aparelho também');
+  assert.ok(!!a.S().fotos[alvo], 'a foto do aparelho também');
   assert.ok(a.E(`S.prog[view.hist.day].ex.some(function(x){return x.id === ${JSON.stringify(alvo)};})`),
     'e a prescrição no programa');
   a.fechar();
@@ -382,11 +382,11 @@ test('o nome novo aparece no título e no cartão', async () => {
 test('renomear um exercício do código grava só o nome, sobre o mesmo id', async () => {
   const a = await app();
   const alvo = abreHistorico(a);
-  assert.strictEqual(a.E(`!!S.ex[${JSON.stringify(alvo)}]`), false, 'vem do código, não de S.ex');
+  assert.strictEqual(!!a.S().ex[alvo], false, 'vem do código, não de S.ex');
 
   await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Apelido dele')`);
   await a.esperar(60);
-  const marca = a.J(`S.ex[${JSON.stringify(alvo)}]`);
+  const marca = a.S().ex[alvo];
   assert.deepStrictEqual(Object.keys(marca), ['n'], 'só o nome vira override');
   assert.strictEqual(marca.n, 'Apelido dele');
   a.fechar();
@@ -422,7 +422,7 @@ test('nome curto demais e nome repetido são recusados', async () => {
 
   // o nome de OUTRO exercício do catálogo
   const outro = a.E(`Object.keys(CAT).filter(function(k){return k !== ${JSON.stringify(alvo)} && !CAT[k].arq;})[0]`);
-  const nomeDoOutro = a.E(`CAT[${JSON.stringify(outro)}].n`);
+  const nomeDoOutro = a.dado('CAT')[outro].n;
   await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, ${JSON.stringify(nomeDoOutro)})`);
   await a.esperar(40);
   assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), original, 'não trocou');
