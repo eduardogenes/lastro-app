@@ -25,9 +25,9 @@ test('registro rápido sem sair da tela de hoje', async () => {
   await a.v('addCardio');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.cardio.length'), 1);
-  assert.strictEqual(a.E('S.cardio[0].m'), 'remo');
-  assert.strictEqual(a.E('S.cardio[0].min'), 30);
+  assert.strictEqual(a.S().cardio.length, 1);
+  assert.strictEqual(a.S().cardio[0].m, 'remo');
+  assert.strictEqual(a.S().cardio[0].min, 30);
   assert.strictEqual(a.$('.cardq'), null, 'fecha depois de registrar');
   assert.ok(a.texto('.cardl').includes('30 min de remo'), a.texto('.cardl'));
   a.fechar();
