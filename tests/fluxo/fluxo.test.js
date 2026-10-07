@@ -36,7 +36,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   a.v('cardioSet', 'min', 30);
   await a.v('addCardio');
   await a.esperar();
-  assert.strictEqual(a.E('cardioSemana().length'), 1);
+  assert.strictEqual(a.vJ('cardioSemana').length, 1);
 
   // pesagem
   a.E('view.bodyForm = { peso: "73,4" }');
@@ -58,7 +58,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   a.v('modoEdicao', true);
   // Lido do programa e não fixado: a prescrição do treinador muda, e um número
   // cravado aqui transformaria revisão de treino em teste quebrado.
-  const antesDoSlot4 = a.E('treino("B").ex[4].s');
+  const antesDoSlot4 = a.vJ('treino', 'B').ex[4].s;
   a.v('mudaSeries', 4, 1);
   a.v('modoEdicao', false);
   await a.v('finalizarSessao');
@@ -83,7 +83,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   await a.esperar();
   a.v('modoEdicao', false);
 
-  const novo = a.E('treino("C").ex.length') - 1;
+  const novo = a.vJ('treino', 'C').ex.length - 1;
   a.v('toggle', novo);
   for (let k = 0; k < 3; k++) a.preencher(novo, k, 120, 8);
   assert.strictEqual(a.S().logs["pendulum-da-unidade-nova"].length, 1,
@@ -152,7 +152,7 @@ test('deload com programa editado corta as séries pela metade do que ele prescr
   await a.v('setDeload', true);
   await a.esperar();
 
-  assert.strictEqual(a.E('treino("A").ex[0].s'), 4, 'a prescrição é a dele');
+  assert.strictEqual(a.vJ('treino', 'A').ex[0].s, 4, 'a prescrição é a dele');
   assert.strictEqual(a.E('setsFor(treino("A").ex[0])'), 2, 'e o deload corta essa, não a do treinador');
   a.v('toggle', 0);
   assert.strictEqual(a.$$('.ex.open .setrow').length, 2, 'duas linhas na tela, não quatro');
@@ -232,7 +232,7 @@ test('importar um backup do formato antigo reconstrói tudo', async () => {
   assert.ok(a.S().logs["supino-inclinado-com-halteres"], 'reindexado por exercício');
   assert.ok(a.S().logs["remada-unilateral-na-polia-baixa"]);
   assert.ok(!!a.S().prog, 'e ganhou um programa');
-  assert.strictEqual(a.E('treino("A").ex.length'), 7);
+  assert.strictEqual(a.vJ('treino', 'A').ex.length, 7);
   assert.strictEqual(a.S().done.length, 1);
   assert.strictEqual(a.S().body.peso.length, 1);
 
