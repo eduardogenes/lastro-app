@@ -84,7 +84,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   a.v('modoEdicao', false);
 
   const novo = a.E('treino("C").ex.length') - 1;
-  a.E('toggle(' + novo + ')');
+  a.v('toggle', novo);
   for (let k = 0; k < 3; k++) a.preencher(novo, k, 120, 8);
   assert.strictEqual(a.S().logs["pendulum-da-unidade-nova"].length, 1,
     'equipamento novo já tem histórico próprio');
@@ -99,7 +99,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
 
   // ---- quinta: esqueceu de registrar, lança retroativo ----
   a.aba('dados');
-  a.E('abrirAdicionar(' + (Date.now() - 1 * DIA) + ')');
+  a.v('abrirAdicionar', (Date.now() - 1 * DIA));
   a.v('addSet', 'tipo', 'E');
   a.v('addSet', 'dur', 55);
   await a.v('gravarRetro', false);
@@ -175,7 +175,7 @@ test('exercício removido do programa continua abrindo no histórico antigo', as
   a.v('fecharPrograma');
 
   a.aba('dados');
-  a.E('abrirSessao(' + t + ')');
+  a.v('abrirSessao', t);
   const txt = a.doc.getElementById('app').textContent;
   assert.ok(txt.includes('Chest press inclinado convergente'), 'a sessão de cinco dias atrás abre igual');
   assert.ok(txt.includes('fora do treino'), 'sinalizado como fora do programa de hoje');
@@ -221,7 +221,7 @@ test('importar um backup do formato antigo reconstrói tudo', async () => {
 
   const a = await app();
   a.aba('guia');
-  await a.E('importText(' + JSON.stringify(antigo) + ')');
+  await a.v('importText', antigo);
   await a.esperar(60);
 
   // Ancorado em PLANO_ATUAL e não num número escrito à mão: a asserção é
