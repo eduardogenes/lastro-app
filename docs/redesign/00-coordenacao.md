@@ -1332,6 +1332,74 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       piso de tipo sem exceção declarada**, e o caso de escala do `estilo.test.ts`
       lê `padding`, `margin` e `gap`, **não `font-size`**. É decisão de design,
       não de rede.
+
+      ## A entrega (c) da frente 0, finalmente feita — 07/10
+
+      `a92468afbe40e8694` → `docs/redesign/09-superficie.md`, 556 linhas, **95
+      commits**. Era a peça em que todo o argumento de reescrita reversível se
+      apoia, e o documento da própria frente 0 dizia que ela "não é esta".
+      **Conferi:** `npm test` → **965 passando** (520 fluxo + 445 domínio), 53
+      arquivos, zero rejeições, árvore limpa.
+
+      **A superfície existe:** `window.__modelo` (`src/main.jsx:5016`), com
+      `contrato: 1`, **147 verbos**, **23 leituras** (todas `get`, porque `S`,
+      `view` e `CAT` são religados em tempo de execução) e três portas de
+      travessia de realm. O contrato está escrito no fonte: nenhuma chave recebe
+      nem devolve elemento do DOM (duas exceções declaradas), chamar um verbo faz
+      o que o dedo faz, acrescentar chave é livre e tirar ou renomear não é, e **a
+      superfície não escreve no estado**.
+
+      **A reponta, medida por mim:** **1931 → 396** entradas pela ponte de `eval`
+      (contando `a.E` e `a.J`), **queda de 80%** — 1.535 casos passaram a entrar
+      por nome e valor. Um commit por arquivo. **Cinco arquivos saíram
+      inteiramente da ponte:** `cardio`, `leitura`, `migracaochave`, `navegacao`,
+      `publicacao`. Nenhum nome de caso mudou, nenhuma asserção mudou.
+      **As cinco assinaturas de maior alavanca entraram com os testes
+      intocados:** `inp` → `anotaSerie(i,k,pos,valor)`, mais
+      `criarExercicioCom`, `guardaEdicaoCom`, `textoDaPrescricao` e
+      `setBuscaDeExercicio`. Seis das sete funções que recebiam elemento têm par
+      por valor; `importFile` ficou de fora com razão escrita (o que ela
+      acrescenta é `FileReader`, que é plataforma e não modelo).
+
+      **O treeshake virou medida, não suposição.** No commit das assinaturas,
+      `anotaHoraAvulsa` — a única que nenhuma casca chamava — **saiu do bundle**
+      (`grep -c` → 0); no commit seguinte, que só a nomeia dentro da tabela,
+      **voltou** (→ 1). É por isso que a tabela alcança as funções por
+      **referência**. Era o buraco que já tinha enganado um agente aqui.
+
+      **A falha que vale mais que o conserto, e ela é o modo de falha inteiro da
+      ponte num exemplo:** `a.E('abrirPrograma(' + (d ? JSON.stringify(d) :
+      'null') + ')')`. O `'null'` ali é **texto de código**, não valor. A reponta
+      mecânica passou a string `"null"` e dois casos de `telaprograma` caíram na
+      hora. **Quando o argumento é fonte, "o valor" e "a fonte do valor" se
+      confundem e nada avisa.** Por valor, `null` é `null`.
+
+      **A correção que AUMENTA o argumento da rede:** eu escrevi, e a `08-rede.md`
+      supõe, que a ponte alcança "as 335 funções de módulo de `main.jsx`".
+      **Ela alcança o escopo de topo do BUNDLE inteiro, atravessando arquivo.**
+      Prova dele, que eu confirmei: um caso de `fotos.test.js` chamava
+      `migraCache()` pelo nome nu, e `migraCache` mora em `src/infra/fotos.js` —
+      há agora um comentário em `src/main.jsx:4870` dizendo isso com estas
+      palavras. **A superfície ingovernada era maior e menos governada do que o
+      inventário dizia**, e o caso passou a entrar por `a.v('migraCache')`.
+
+      **Oito afirmações minhas corrigidas**, todas de contagem e todas para mais:
+      `CTX` tem **181** chaves e não 180; **93** sem chamador de teste e não 98;
+      **129** funções pelo nome nu e não 128; **111** usos de `a.preencher` e não
+      110. As de forma conferiram: as sete funções que recebem elemento, os seis
+      campos de `criarExercicio` (com `#nxk` por `.checked`) e os onze `useState`.
+
+      - [ ] **O que falta da reponta**, com tabela por arquivo no §3 do documento
+        dele: **396 entradas**, em quatro categorias — **103** escrevem em
+        `S`/`view` (fora do contrato, por desenho); **61** alcançam o DOM de
+        dentro do `a.E` e esperam as telas novas; **168** são expressão composta,
+        repontáveis mas pedindo remontar a expressão em JS; **62** são sobra
+        simples de conserto curto.
+      - [ ] **E o lance mais barato que sobrou:** ele **não escreveu um só teste
+        novo**, de propósito. As **93 chaves de `CTX` sem teste próprio** agora
+        estão **alcançáveis e nomeadas** — o documento as lista por assunto. São
+        as mais baratas de blindar, porque o verbo já existe e o teste novo só
+        precisa chamá-lo em vez de clicar.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
