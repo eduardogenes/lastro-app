@@ -17,12 +17,12 @@ test('ao completar o último set, o próximo abre pronto', async () => {
   const a = await app();
   a.v('go', 'A');
   a.v('toggle', 0);
-  assert.strictEqual(a.E('view.open'), 0);
+  assert.strictEqual(a.vista().open, 0);
 
   completa(a, 0);
   await a.esperar();
 
-  assert.strictEqual(a.E('view.open'), 1, 'a tela andou sozinha');
+  assert.strictEqual(a.vista().open, 1, 'a tela andou sozinha');
   assert.strictEqual(a.E('estadoEx(view.day, 0, S.sessao.sid, S.sessao.pulados)'), 'feito');
   assert.strictEqual(a.E('estadoEx(view.day, 1, S.sessao.sid, S.sessao.pulados)'), 'nada',
     'aberto PRONTO, não iniciado: nada foi preenchido nele');
@@ -36,7 +36,7 @@ test('com série faltando, a tela não anda', async () => {
   const n = a.E('setsFor(treino(view.day).ex[0])');
   for (let k = 0; k < n - 1; k++) a.preencher(0, k, 40, 10);
   await a.esperar();
-  assert.strictEqual(a.E('view.open'), 0, 'ainda falta uma série neste');
+  assert.strictEqual(a.vista().open, 0, 'ainda falta uma série neste');
   a.fechar();
 });
 
@@ -50,7 +50,7 @@ test('o avanço pula o que foi pulado de propósito', async () => {
   completa(a, 0);
   await a.esperar();
 
-  assert.strictEqual(a.E('view.open'), 2, 'voltar a oferecer o que ele recusou seria discutir');
+  assert.strictEqual(a.vista().open, 2, 'voltar a oferecer o que ele recusou seria discutir');
   a.fechar();
 });
 
@@ -66,7 +66,7 @@ test('no último pendente, a tela fica onde está', async () => {
   completa(a, 0);
   await a.esperar();
 
-  assert.strictEqual(a.E('view.open'), 0,
+  assert.strictEqual(a.vista().open, 0,
     'chegar ao fim é informação, e quem decide é a tela de finalizar');
   a.fechar();
 });
@@ -81,8 +81,8 @@ test('o descanso ainda começa, e diz de qual exercício é', async () => {
   completa(a, 0);
   await a.esperar();
 
-  assert.ok(a.E('timerFim') > Date.now(), 'o descanso está correndo');
-  assert.ok(a.E('timerCtx').includes(nome), 'e é o do exercício que acabou: ' + a.E('timerCtx'));
+  assert.ok(a.dado('timerFim') > Date.now(), 'o descanso está correndo');
+  assert.ok(a.dado('timerCtx').includes(nome), 'e é o do exercício que acabou: ' + a.dado('timerCtx'));
   a.fechar();
 });
 
@@ -104,7 +104,7 @@ test('com treino em andamento, o atalho aparece nas outras abas', async () => {
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   await a.esperar();
-  assert.ok(a.E('S.sessao'), 'a sessão nasceu na primeira série');
+  assert.ok(a.S().sessao, 'a sessão nasceu na primeira série');
 
   a.aba('comida');
   const b = a.$('.ins-atalho');
@@ -140,8 +140,8 @@ test('o atalho diz para onde vai, e leva até lá', async () => {
 
   a.clicar(a.$('.ins-atalho'));
   await a.esperar();
-  assert.strictEqual(a.E('view.aba'), 'treino');
-  assert.strictEqual(a.E('view.open'), 0, 'o exercício começado vence a ordem');
+  assert.strictEqual(a.vista().aba, 'treino');
+  assert.strictEqual(a.vista().open, 0, 'o exercício começado vence a ordem');
   a.fechar();
 });
 
@@ -156,6 +156,6 @@ test('sem exercício começado, o atalho aponta o primeiro não tocado', async (
   a.aba('guia');
   a.clicar(a.$('.ins-atalho'));
   await a.esperar();
-  assert.strictEqual(a.E('view.open'), 1);
+  assert.strictEqual(a.vista().open, 1);
   a.fechar();
 });
