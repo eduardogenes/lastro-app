@@ -1271,6 +1271,67 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       comentário**, que passa a dizer a verdade. E o que de fato impede o "zoom
       automático" que ele recusa é a **regra dos 16px no campo**, que é real,
       funciona e tem razão própria escrita.
+
+      ### Implementado em 06/10 (`a7432639ad8690062`) — e o estado honesto disto
+
+      `6e8a3fa`, `d625147`, `31bca12`. **965 passando** (de 957; oito casos
+      novos, nenhum saiu), 53 arquivos, zero rejeições, `tsc` limpo. Conferi a
+      suíte e a divisão por conta própria.
+
+      `ComoFoiARefeicao` ganhou **`'nsei'`** — peso 0, **dentro** do
+      denominador, como eu decidi. E ele fez melhor que o pedido: a condição de
+      peso zero saiu de quatro pontos à mão para **uma função só**
+      (`semCumprimento`), porque bastava um esquecimento num deles para "não
+      sei" voltar a contar como cumprido — ou seja, inflar adesão, que é o
+      defeito que a decisão existe para evitar.
+
+      **O achado dele, e é bom:** `totalRegistrado` tira do total quem tem
+      `'nao'`, porque **zero conhecido é zero**. Mas `'nsei'` **fica**, com os
+      números do plano — tirá-la faria o total afirmar **zero kcal** sobre uma
+      refeição que ele não sabe descrever, que é a única das três coisas que se
+      sabe **falsa**. Então `semCumprimento` existe e de propósito **não** é
+      chamado ali, com a razão escrita na função, para ninguém "consertar" pela
+      simetria depois.
+
+      **Nenhuma migração, conferido portão por portão:** `como` já é campo
+      persistido opcional desde a 9→10; **valor novo não é campo novo**. A fusão
+      é `if (como)`, agnóstica ao valor, com a lápide da marca. As listas brancas
+      são por chave de topo. `PLANO_ATUAL` fica em **11**. E ele nomeou a
+      migração que seria **errada**: converter o `'perdido'` do dia em `'nsei'`
+      por refeição afirmaria **quais** refeições ele não soube — o que o próprio
+      `migracoes.ts` proíbe.
+
+      - [ ] **O ESTADO HONESTO, e é o achado que mais importa:** **nenhum
+        chamador de `marcaRefeicao` passa `como`, em valor nenhum** — conferi os
+        dois (`src/ui/folhas/refeicao.jsx` e `src/ui/telas/hoje.jsx`), e os dois
+        chamam com um argumento só. Então os três valores de `como` — `'fora'`,
+        `'nao'` e `'nsei'` — são **capacidade de domínio sem lugar onde morar**:
+        alcançáveis por `poeComidaNoDia` e pela fusão, **inalcançáveis pelo
+        dedo**. É exatamente a espécie de coisa que a frente 1 catalogou.
+        **Consequência para o dono:** o botão "Não comi" que ele aprovou e o
+        "Não sei" por refeição estão **no dado e não na tela**. Construir a folha
+        dos cinco botões é a frente 2 virando código, e isso ainda não começou.
+        Está na ordem certa (modelo antes de tela), mas ele precisa saber que
+        tocar nesses botões ainda não existe.
+
+      **Três afirmações minhas que ele desmentiu, as três conferidas:**
+      1. **"três ficam abaixo do piso de 9px" → são DOIS** (7,5px e 8px). O piso
+         é "nunca abaixo de 9px", então 9 e 9,5 estão **dentro**. E a minha lista
+         (7,5 · 8 · 9 · 9,5 · 10) era **parcial**: medido, são **28 declarações
+         de `font-size` nas cinco folhas, 22 abaixo de 16px, a menor 7,5px** no
+         eixo da sparkline. O ponto para o dono fica **mais** forte, não menos.
+      2. **A divisão da linha de base: 520 fluxo / 445 domínio**, não 517/440.
+         O 517 saiu da **seção 4 do `09-rede-endurecida.md`, que eu escrevi
+         errada**, e de lá se propagou para os briefings. Corrigido na fonte
+         (`601159e`).
+      3. O rótulo "Não sei" ele tirou da frente 3 (§4.2 e §4.5, **versão A** — a
+         que a minha decisão escolheu). Não inventou palavra.
+
+      **Apontado e não resolvido, de propósito:** o `DESIGN.md` declara exceções
+      citadas por fonte **só para a escala de espaço**; **7,5px e 8px furam o
+      piso de tipo sem exceção declarada**, e o caso de escala do `estilo.test.ts`
+      lê `padding`, `margin` e `gap`, **não `font-size`**. É decisão de design,
+      não de rede.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
