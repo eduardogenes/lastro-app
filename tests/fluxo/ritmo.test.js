@@ -188,7 +188,7 @@ test('todo movimento de box fica fora do alvo por músculo e declara grandeza', 
   })()`);
   assert.deepStrictEqual(falhas, [],
     'movimento com grupo entraria no volume; sem grandeza viraria série de musculação');
-  assert.strictEqual(a.E('ALVO_TOTAL'), 90, 'o alvo continua sendo só a musculação');
+  assert.strictEqual(a.dado('ALVO_TOTAL'), 90, 'o alvo continua sendo só a musculação');
   a.fechar();
 });
 
@@ -206,7 +206,7 @@ test('exercício cadastrado por ele pode declarar grandeza', async () => {
   a.clicar('.novoex .dbtn');
   await a.esperar(60);
 
-  const ex = a.J('S.ex["sandbag-over-shoulder"]');
+  const ex = a.S().ex["sandbag-over-shoulder"];
   assert.strictEqual(ex.u, 'rep', 'a grandeza escolhida entra no catálogo dele');
   assert.strictEqual(ex.q, 15);
   assert.strictEqual(ex.g, '',
