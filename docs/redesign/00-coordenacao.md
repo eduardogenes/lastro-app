@@ -1184,6 +1184,93 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         de 02/10, registrado, de traduzir o vocabulário dos designers para o que
         acontece na tela. Vale como régua deste projeto, **não** como argumento
         contra outra pessoa. Eu a citei como proibição em três briefings.
+
+      ## As oito de 06/10 (noite) — e três delas ele delegou a mim
+
+      | | pergunta | resposta |
+      |---|---|---|
+      | 1 | massa magra ou muscular esquelética | **massa muscular esquelética** — é o que a migração 10 já gravou, nada a mudar |
+      | 2 | o deload muda de lugar | **mantém**, agora sabendo que o lugar era o freio |
+      | 3 | a adesão de um dia com "não sei" | **delegada a mim**, literal: *"faça com achar mais adequado. nao quero mais qlqr pergunta sobre isso. decida sozinho se alguma coisa aparecer"* |
+      | 4 | para que lado cai o silêncio do "fora do plano" | **mesma resposta da 3** |
+      | 5 | "Evolução" volta | **aceita a proposta**: volta como nome do destino de leitura em Corpo, no lugar de "Histórico" |
+      | 6 | o ledger do ajuste | **recalculam** |
+      | 7 | o zoom funcionou no app instalado | **sim** |
+      | 8 | 320 px é alvo | **delegada a mim**, "seguindo o contexto" |
+
+      **AUTORIZAÇÃO PERMANENTE sobre a 3 e a 4:** ele não quer mais nenhuma
+      pergunta sobre a aritmética da adesão. Frente nenhuma deve levar isso de
+      volta à mesa dele. Decido eu, e registro aqui.
+
+      ### O que eu decidi na 3 e na 4, e com que razão
+
+      **3 · "Não sei" por refeição pesa ZERO na adesão do dia, e NÃO sai do
+      denominador.** A razão é do próprio projeto, escrita em dois lugares:
+      `diasInterpretaveis` diz *"o denominador é a janela, não os dias
+      registrados — senão uma semana com dois dias registrados daria 100%"*, e
+      a mesma lógica vale dentro do dia; e a regra de que **o caminho de menor
+      esforço tem de ser o conservador**. Subestimar **segura** o corte;
+      inflar **autoriza** um corte que não devia acontecer, que é o mecanismo do
+      F292. O mecanismo já existe: `pesoDaRefeicao` devolve 0 para
+      `como[id] === 'nao'`, e "não sei" entra como um terceiro valor de `como`
+      com o mesmo peso.
+      **O dia continua interpretável**, porque `diaInterpretavel` só exige uma
+      marca qualquer — a incerteza aparece no número baixo, conservadoramente, em
+      vez de tirar o dia da conta. **Nenhum limiar novo inventado.**
+      **E "não sei" fica distinguível de silêncio no registro:** silêncio não
+      entra em `done` e dá `null` no dia inteiro ("ausência de registro não é
+      aderência zero", está escrito); "não sei" é marca explícita que pesa 0.
+      Mesmo número, registros diferentes — que é o certo.
+
+      **4 · Nada muda na aritmética, e conferi por quê.** `aderencia` tem três
+      valores (`'plano' | 'fora' | 'perdido'`) e **a única leitura lógica em todo
+      o domínio é `=== 'perdido'`** (`calculo.ts:689`). "Plano" contra "fora"
+      **não alimenta cálculo nenhum** hoje: é registro para ele ler. Então tirar
+      o bloqueio não infla conta — ele torna o **registro** menos completo, e
+      esse é o preço que ele escolheu pagar por fechar o dia num toque.
+      **O que fica anotado como armadilha:** se algum dia "fora" passar a
+      alimentar cálculo, **o ausente não pode cair em "plano"**. Quem mexer nisso
+      lê este parágrafo primeiro.
+
+      ### 8 · 320 px: o alvo é 414, e 320 fica declarado fora
+
+      Contexto que usei: o aparelho dele tem **414 px**; o segundo usuário **não
+      existe no dado**; e a frente 3 mediu que o nome **"Prescrição" já transborda
+      a fatia da aba a 320 px, a 100% de texto** — atender 320 obrigaria a
+      renomear um dos cinco lugares por um usuário que ainda não existe.
+      **Decisão: 414 é o alvo. 320 não é.** Mas a invariante barata fica, e ela
+      é o que impede o estrago: **nada pode ter largura fixa maior que a tela, e
+      a página nunca rola na horizontal** — a rede já testa isso e custa zero.
+      Se um segundo usuário chegar num telefone pequeno, a lista do que quebra já
+      está escrita (medição G) e o custo é conhecido. **Declarado, não
+      esquecido.**
+
+      ### 6 · "Recalculam" já é automático — e revela o que importa de verdade
+
+      Conferi a forma do ledger: `PassoDeAjuste` guarda `de` e `para` **em
+      passos**, não em kcal absoluto (`src/dominio/tipos.ts`). O alvo efetivo é
+      o alvo do plano **mais** o saldo de passos. Então o alvo novo já entra
+      embaixo dos passos existentes, sem reescrever byte nenhum: a resposta dele
+      está satisfeita pelo desenho que já existe. **Nada a construir.**
+      **Mas a consequência de verdade é outra, e é dele com o nutricionista:**
+      a ceia é comida que ele **já comia** e que o plano **não contava** — o
+      plano dizia, textualmente, "Sem ceia obrigatória". Então o alvo subestimava
+      a ingestão real em ~197 kcal, e **todos os cortes do ledger foram decididos
+      contra um déficit ~197 kcal mais raso do que se acreditava.** Não é bug de
+      código: é o plano ficando honesto. Levado a ele em 06/10.
+
+      ### 7 · O zoom funciona no app instalado — então o bloqueio é decoração
+
+      Ele mediu: **a pinça funciona.** Então `user-scalable=no` **não é honrado**
+      no PWA instalado, que é como ele usa o app. O comentário em `src/base.css`
+      estava errado **duas vezes**: a afirmação de que nenhum texto é menor que
+      16px é falsa (há texto a 7,5px), e o bloqueio que ele justifica não bloqueia
+      nada ali.
+      **A decisão 11 dele (manter) fica** — tirar a meta tag é mudança que ele não
+      pediu, e ela ainda vale no Safari fora da tela cheia. **O que muda é o
+      comentário**, que passa a dizer a verdade. E o que de fato impede o "zoom
+      automático" que ele recusa é a **regra dos 16px no campo**, que é real,
+      funciona e tem razão própria escrita.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
