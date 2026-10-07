@@ -173,7 +173,7 @@ test('a sessão avança sozinha para a pose que falta', async () => {
   await tirar(a);
   await a.esperar(60);
   assert.strictEqual(a.vista().protocolo.pose, 'frente-abdomen-coxa');
-  assert.strictEqual(a.E('CTX.sessaoDeFotos().faltando'), 7);
+  assert.strictEqual(a.vJ('ctx.sessaoDeFotos').faltando, 7);
   a.fechar();
 });
 
@@ -189,7 +189,7 @@ test('a foto anterior da mesma pose aparece antes do disparo', async () => {
   a.v('ctx.comecaSessaoDeFotos');
   await a.esperar(60);
 
-  const ref = a.J('CTX.sessaoDeFotos().pose.ref');
+  const ref = a.vJ('ctx.sessaoDeFotos').pose.ref;
   assert.ok(ref, 'a referência foi encontrada');
   assert.match(ref.url, /^blob:/, 'e os bytes dela chegaram à tela');
   assert.ok(a.$('.pr-fig img'), 'a imagem está desenhada');
@@ -202,7 +202,7 @@ test('na primeira vez a tela diz que não há referência, sem quadro quebrado',
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
 
-  assert.strictEqual(a.E('CTX.sessaoDeFotos().pose.ref'), null);
+  assert.strictEqual(a.vJ('ctx.sessaoDeFotos').pose.ref, null);
   assert.strictEqual(a.$('.pr-fig img'), null, 'nenhuma <img> sem bytes');
   assert.ok(a.texto('.fa-vazio').includes('primeira vez'));
   a.fechar();
@@ -386,11 +386,11 @@ test('referência sem bytes em lugar nenhum não quebra a tela', async () => {
   a.v('ctx.comecaSessaoDeFotos');
   await a.esperar(80);
 
-  assert.strictEqual(a.J('CTX.sessaoDeFotos().pose.ref').url, null);
+  assert.strictEqual(a.vJ('ctx.sessaoDeFotos').pose.ref.url, null);
   assert.strictEqual(a.$('.pr-fig img'), null, 'sem <img> apontando para nada');
   // E o quadro diz o que houve. Antes ficava escrito "buscando a foto…" para
   // sempre: a tela afirmando que ainda tenta, quando já tinha desistido.
-  assert.strictEqual(a.J('CTX.sessaoDeFotos().pose.ref').aviso, 'a nuvem não devolveu a foto');
+  assert.strictEqual(a.vJ('ctx.sessaoDeFotos').pose.ref.aviso, 'a nuvem não devolveu a foto');
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
   // render que o aviso de falha dispara sem documento para desenhar.
   await a.esperar(80);
@@ -708,7 +708,7 @@ test('o mesmo recorte é aplicado na captura e na comparação', async () => {
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
   await a.esperar(60);
-  const ref = a.J('CTX.sessaoDeFotos().pose.ref');
+  const ref = a.vJ('ctx.sessaoDeFotos').pose.ref;
   assert.strictEqual(ref.enq, null, 'a referência aqui é a de 14 dias, que não foi ajustada');
 
   // e a de 28 dias, quando é ela a referência, chega ajustada
@@ -737,7 +737,7 @@ test('a foto sobreposta pode ser trocada para qualquer outra data', async () => 
   assert.strictEqual(a.vista().ajuste.fantasmaD, datas[1], 'abre na vizinha');
 
   // as opções são as OUTRAS sessões naquela pose, nunca a própria
-  assert.deepStrictEqual(a.J('CTX.ajusteEmEdicao().datas').map(o => o.d), [datas[0], datas[1]]);
+  assert.deepStrictEqual(a.vJ('ctx.ajusteEmEdicao').datas.map(o => o.d), [datas[0], datas[1]]);
   assert.strictEqual(a.$$('.aj-fantasma option').length, 2);
 
   a.E(`CTX.setDataDoFantasma(${JSON.stringify(datas[0])})`);
@@ -865,7 +865,7 @@ test('sem getUserMedia, a câmera do sistema volta a ser a principal', async () 
   a.v('ctx.comecaSessaoDeFotos');
   a.v('render');
 
-  assert.strictEqual(a.J('CTX.sessaoDeFotos().temCamera'), false);
+  assert.strictEqual(a.vJ('ctx.sessaoDeFotos').temCamera, false);
   const b = a.$$('.pr-disparo');
   assert.strictEqual(b.length, 1, 'um caminho só, e não um botão que não abre');
   assert.strictEqual(b[0].textContent.trim(), 'tirar a foto');
@@ -1144,7 +1144,7 @@ test('andar entre poses não joga a sessão de fotos para o topo', async () => {
   assert.strictEqual(pedidos.length, 0, 'paginar pose não pede rolagem');
 
   // E a pose andou de verdade — senão o teste passaria com o botão quebrado.
-  assert.notStrictEqual(a.vista().protocolo.pose, a.E('ordemDePoses()[0]'));
+  assert.notStrictEqual(a.vista().protocolo.pose, a.vJ('ordemDePoses')[0]);
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
   // render que o aviso de falha dispara sem documento para desenhar.
   await a.esperar(80);
