@@ -28,7 +28,7 @@ test('o backup leva a metade de comida e devolve ela igual', async () => {
 
   a.aba('guia');
   await a.modo('o app');
-  a.E('showJSON()');
+  a.v('showJSON');
   const json = a.doc.getElementById('jout').value;
   const bkp = JSON.parse(json);
   assert.strictEqual(bkp.data.ajuste, 1);
@@ -134,7 +134,7 @@ test('abrir uma refeição mostra o que tem dentro e o ajuste só de hoje', asyn
 
   // e o corpo fica travado enquanto ela está aberta
   assert.ok(a.doc.body.className.includes('ins-travado'), 'no iOS é a única trava que segura');
-  a.E('CTX.fechaFolha()');
+  a.v('ctx.fechaFolha');
   await a.esperar(150);
   assert.ok(!a.doc.body.className.includes('ins-travado'), 'e destrava ao fechar');
   a.fechar();
@@ -150,7 +150,7 @@ test('o dia previsto se identifica como previsão, e confirmar muda o alvo', asy
       'a tela avisa que o dia é palpite');
   }
   const alvoAntes = a.E('Math.round(CTX.hoje().alvo.kcal)');
-  a.E('CTX.setCadenciaDeHoje("descanso")');
+  a.v('ctx.setCadenciaDeHoje', 'descanso');
   await a.esperar();
   const alvoDepois = a.E('Math.round(CTX.hoje().alvo.kcal)');
   assert.ok(alvoDepois < alvoAntes, 'sem treino saem o pré e o intra: ' + alvoAntes + ' → ' + alvoDepois);
@@ -178,7 +178,7 @@ test('apagar o histórico não apaga o plano nutricional', async () => {
   a.E('S.comida.plano[0].itens[0].q = 777');
   a.E('S.cadencia = ["treino","treino","treino","treino","treino","treino","treino"]');
   a.aceitar();
-  await a.E('wipe()');
+  await a.v('wipe');
   await a.esperar();
 
   assert.strictEqual(a.E('S.done.length'), 0, 'o histórico foi');
@@ -211,7 +211,7 @@ test('o alvo calórico sai do plano, não de um número escrito à parte', async
   const a = await app({ aba: 'guia' });
   const antes = a.texto('.ins-linha-v');
   a.E('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens[0].q += 500');
-  a.E('render()');
+  a.v('render');
   assert.notStrictEqual(a.texto('.ins-linha-v'), antes, 'mexer no plano recalcula o alvo na hora');
   a.fechar();
 });
@@ -225,7 +225,7 @@ test('a unidade é rótulo de coluna; a referência é a coluna ANTERIOR', () =>
   // escrever a carga apagava a referência das repetições justamente na hora
   // de escrevê-las. A coluna diz as três coisas e não sai da tela.
   return app().then(async a => {
-    a.E('toggle(0)');
+    a.v('toggle', 0);
     const unidades = a.$$('.ex.open .sethead .f').map(u => u.textContent);
     assert.ok(unidades.includes('kg'), 'a carga declara a unidade: ' + unidades.join(','));
     assert.ok(unidades.includes('reps'), 'a repetição também: ' + unidades.join(','));
@@ -233,7 +233,7 @@ test('a unidade é rótulo de coluna; a referência é a coluna ANTERIOR', () =>
 
     a.preencher(0, 0, 55, 8);
     a.E('S.sessao = null');
-    a.E('render()');
+    a.v('render');
     assert.strictEqual(a.texto('.ex.open .setrow .setant'), '55 × 8', 'com histórico, o que ele fez');
     a.fechar();
   });
@@ -251,7 +251,7 @@ test('o placeholder de carregamento some quando o app monta', async () => {
   assert.ok(!/undefined/.test(app_.textContent), 'texto "undefined" vazou para a tela');
 
   // e sobrevive a re-render: limpar só pode acontecer no primeiro mount
-  a.E('render()');
+  a.v('render');
   assert.ok(a.$('.ins-cab'), 'o cabeçalho continua depois de re-renderizar');
   assert.ok(a.$$('.ins-tab').length === 5);
   a.fechar();
@@ -264,7 +264,7 @@ test('editar a quantidade de um item muda o plano para todo dia', async () => {
   // e vale amanhã também. O controle de porção da folha de refeição é o outro
   // lado — "só de hoje" — e os dois dizem qual é na tela.
   const a = await app({ aba: 'comida' });
-  a.E('CTX.editaRefeicao("almoco")');
+  a.v('ctx.editaRefeicao', 'almoco');
   await a.esperar(150);
   assert.ok(a.$('.ins-folha'), 'a folha de edição abriu');
 
@@ -280,18 +280,18 @@ test('editar a quantidade de um item muda o plano para todo dia', async () => {
 
 test('as folhas empilham em três níveis e voltam uma a uma', async () => {
   const a = await app({ aba: 'comida' });
-  a.E('CTX.editaRefeicao("almoco")');
+  a.v('ctx.editaRefeicao', 'almoco');
   a.E('CTX.abreFolha({ k: "seletor", ref: "almoco", idx: null })');
   a.E('CTX.abreFolha({ k: "editaAlimento", id: null })');
   await a.esperar(150);
   assert.strictEqual(a.$$('.ins-folha').length, 3, 'três folhas na pilha');
 
-  a.E('CTX.fechaFolha()');
+  a.v('ctx.fechaFolha');
   await a.esperar(150);
   assert.strictEqual(a.$$('.ins-folha').length, 2, 'fecha uma, volta para a de baixo');
   assert.ok(a.doc.body.className.includes('ins-travado'), 'o corpo segue travado com folha aberta');
 
-  a.E('CTX.fechaTudo()');
+  a.v('ctx.fechaTudo');
   await a.esperar(150);
   assert.strictEqual(a.$$('.ins-folha').length, 0);
   assert.ok(!a.doc.body.className.includes('ins-travado'), 'e destrava quando a última fecha');
@@ -301,8 +301,8 @@ test('as folhas empilham em três níveis e voltam uma a uma', async () => {
 test('adicionar alimento a uma refeição entra no plano e no total do dia', async () => {
   const a = await app({ aba: 'comida' });
   const antes = a.E('Math.round(CTX.hoje().alvo.kcal)');
-  a.E('CTX.editaRefeicao("almoco")');
-  a.E('CTX.adicionaItem("almoco", "aveia")');
+  a.v('ctx.editaRefeicao', 'almoco');
+  a.v('ctx.adicionaItem', 'almoco', 'aveia');
   await a.esperar();
 
   const itens = a.J('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens');
@@ -313,13 +313,13 @@ test('adicionar alimento a uma refeição entra no plano e no total do dia', asy
 
 test('cadastrar alimento cria id próprio e aparece na biblioteca', async () => {
   const a = await app({ aba: 'comida' });
-  a.E('CTX.novoAlimento()');
+  a.v('ctx.novoAlimento');
   const id = a.E(`CTX.salvaAlimento(null, { n: "Pasta de castanha", cat: "mercearia",
                     u: "g", kcal: 600, p: 18, c: 12, g: 55, cru: 0 })`);
   await a.esperar();
   assert.strictEqual(id, 'pasta-de-castanha', 'id derivado do nome, como nos exercícios');
   assert.strictEqual(a.E('S.comida.alimentos["pasta-de-castanha"].meu'), 1, 'marcado como dele');
-  assert.ok(a.J('CTX.alimentosFiltrados("castanha")').length === 1);
+  assert.ok(a.vJ('ctx.alimentosFiltrados', 'castanha').length === 1);
   a.fechar();
 });
 
@@ -329,7 +329,7 @@ test('escolher um alimento na busca põe ele na refeição', async () => {
   // reservada do Preact, que nunca chega ao componente —, então escolher na
   // lista não fazia nada. Sem erro, sem toast, sem nada (`9914199`).
   const a = await app({ aba: 'comida' });
-  a.E('CTX.editaRefeicao("almoco")');
+  a.v('ctx.editaRefeicao', 'almoco');
   a.E('CTX.abreFolha({ k: "seletor", ref: "almoco", idx: null })');
   await a.esperar(150);
 
@@ -352,7 +352,7 @@ test('cadastrar a partir da busca não abre a quarta folha, e já põe na refei�
   // refeição — antes ele era criado e ficava em lugar nenhum, e quem pediu
   // "trocar" ainda tinha que achar na lista o que acabou de digitar.
   const a = await app({ aba: 'comida' });
-  a.E('CTX.editaRefeicao("almoco")');
+  a.v('ctx.editaRefeicao', 'almoco');
   a.E('CTX.abreFolha({ k: "seletor", ref: "almoco", idx: null })');
   await a.esperar(150);
   assert.strictEqual(a.J('view.pilha.length'), 2, 'editar a refeição e a busca');
@@ -388,7 +388,7 @@ test('remover alimento em uso tira ele das refeições que o citam', async () =>
   const usava = a.E('S.comida.plano.filter(function(r){return r.itens.some(function(i){return i.f==="arroz";});}).length');
   assert.ok(usava > 0, 'o arroz está no plano');
 
-  a.E('CTX.removeAlimento("arroz")');
+  a.v('ctx.removeAlimento', 'arroz');
   await a.esperar();
   assert.ok(a.perguntas().some(function (p) { return /refeições|refeição/.test(p); }),
     'avisa em quantas refeições ele estava');
@@ -413,8 +413,8 @@ test('alimento da prescrição é editável mas não some do código', async () 
 
 test('remover uma refeição limpa o que era do dia junto', async () => {
   const a = await app({ aba: 'hoje' });
-  a.E('CTX.marcaRefeicao("lanche")');
-  a.E('CTX.setEscala("lanche", 0.5)');
+  a.v('ctx.marcaRefeicao', 'lanche');
+  a.v('ctx.setEscala', 'lanche', 0.5);
   await a.esperar();
   // instante, e não `1`: `DiaComida.done` convergiu na forma de
   // `DiaComidaHist.done` na migração 9→10. O que este teste protege são as
@@ -422,7 +422,7 @@ test('remover uma refeição limpa o que era do dia junto', async () => {
   assert.ok(a.E('S.dia.done.lanche') > 1, 'ficou marcada, com a hora da marca');
 
   a.aceitar();
-  a.E('CTX.removeRefeicao("lanche")');
+  a.v('ctx.removeRefeicao', 'lanche');
   await a.esperar();
   assert.strictEqual(a.E('S.comida.plano.filter(function(r){return r.id==="lanche";}).length'), 0);
   assert.strictEqual(a.E('S.dia.done.lanche'), undefined, 'a marcação de hoje foi junto');
