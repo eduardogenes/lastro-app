@@ -32,7 +32,12 @@ html {
      1. TEM texto bem abaixo de 16px. Das 28 declarações de `font-size` nas
         folhas, 22 estão abaixo de 16px, e a menor é 7,5px (o rótulo do eixo da
         sparkline, `componentes.css`); duas ficam abaixo do piso de 9px que o
-        DESIGN.md escreve para rótulo mono (7,5px e 8px). O "nunca abaixo de
+        DESIGN.md escreve para rótulo mono (7,5px e 8px).
+        ESTES NÚMEROS CONTAM SÓ `font-size`. Contando também o tamanho dentro
+        do atalho `font:`, que é como a frente 4 contou, dá algo na casa de 200
+        declarações e 170 abaixo de 16px, e aí 8,5px entra como terceira abaixo
+        do piso. Os dois pares estão certos e medem coisas diferentes: lado a
+        lado eles parecem se desmentir. Quem citar um deles diz qual. O "nunca abaixo de
         16px" é regra dos CAMPOS DE FORMULÁRIO, mais abaixo neste arquivo, onde
         ela tem razão própria e correta — o Safari dá zoom ao focar campo com
         fonte menor. Não é, e nunca foi, afirmação sobre o app inteiro.

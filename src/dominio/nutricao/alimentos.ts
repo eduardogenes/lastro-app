@@ -30,13 +30,11 @@ const CRU: Array<[string, string, string, 'g' | 'ml', number, number, number, nu
   ['feijao', 'Feijão cozido', 'mercearia', 'g', 76, 4.8, 13.6, 0.5, 0.43],
   ['aveia', 'Aveia', 'mercearia', 'g', 394, 13.9, 66.6, 8.5, 0],
   ['cereal', 'Cereal de milho simples', 'mercearia', 'g', 375, 7, 84, 1, 0],
-  // ATENÇÃO · VALORES PENDENTES DE CONFERÊNCIA CONTRA A EMBALAGEM.
-  //
-  // Os quatro números abaixo foram passados de segunda mão e NINGUÉM os leu no
-  // rótulo. Não são medidos, e esta linha não pode ser tratada como se fossem
-  // até que alguém confira a lata: o alvo calórico é CALCULADO do plano, então
-  // um valor errado aqui contamina o alvo do dia, e por ele o ledger do ajuste
-  // calórico — que audita decisões de corte contra a ingestão da época.
+  // Por que esta linha tem comentário: o alvo calórico é CALCULADO do plano,
+  // então um valor errado aqui contamina o alvo do dia, e por ele o ledger do
+  // ajuste calórico — que audita decisões de corte contra a ingestão da época.
+  // Nasceu com quatro números de segunda mão, marcada como pendente, e a marca
+  // valeu: os quatro estavam errados.
   //
   // CONFERIDO em 06/10 contra o rótulo, por pedido do dono, em duas fontes que
   // concordam: Open Food Facts (EAN 7891000098950) e a tabela do produto no
