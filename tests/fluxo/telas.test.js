@@ -38,8 +38,8 @@ test('a nuvem não é pré-condição para o app abrir', async () => {
   // Sem sessão e sem rede, tudo tem que funcionar: é a regra que separa
   // "sincroniza" de "depende de servidor".
   const a = await app();
-  assert.strictEqual(a.E('NUVEM.sessao()'), null, 'abre sem login nenhum');
-  a.E('toggle(0)');
+  assert.strictEqual(a.v('nuvem.sessao'), null, 'abre sem login nenhum');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   assert.strictEqual(a.log('A', 0).length, 1, 'e registra série do mesmo jeito');
   assert.strictEqual(a.E('sync.sujo'), false, 'sem sessão, nem marca sujeira');
@@ -162,9 +162,9 @@ test('acompanhamento soma dias, tempo e volume do mês', async () => {
 test('acompanhamento não avança para o futuro', async () => {
   const a = await app();
   a.aba('dados');
-  a.E('mudaMes(1)');
+  a.v('mudaMes', 1);
   assert.strictEqual(a.E('view.mes'), 0);
-  a.E('mudaMes(-1)');
+  a.v('mudaMes', -1);
   assert.strictEqual(a.E('view.mes'), -1);
   a.fechar();
 });
@@ -200,7 +200,7 @@ test('dor em duas sessões seguidas sugere trocar o ângulo', async () => {
     ] },
     done: [{ day: 'F', t: t2, sid: t2 }]
   } });
-  a.E('go("A")');
+  a.v('go', 'A');
   assert.ok(a.texto('.painbox').includes('duas últimas sessões'));
   assert.ok(a.$('.painbtn'), 'sugere, com atalho, mas não troca sozinho');
   a.fechar();
@@ -212,31 +212,31 @@ test('pausa longa suspende o selo de subir carga', async () => {
     logs: { A0: [{ t: t, sid: t, sets: [[40, 10], [40, 10], [40, 10], [40, 10]] }] },
     done: [{ day: 'F', t: t, sid: t }]
   } });
-  a.E('go("A")');
+  a.v('go', 'A');
   assert.strictEqual(a.$('.up'), null, 'não manda subir carga voltando de 30 dias parado');
   assert.ok(a.$$('.deload').some(function (x) { return /dias desde o último treino/.test(x.textContent); }));
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   assert.match(a.texto('.ex.open .setrow .setant'), /^40 × /, 'a referência continua visível');
   a.fechar();
 });
 
 test('anotação e dor ficam atrás de um link', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   assert.strictEqual(a.$$('.ex.open .chip').length, 0, 'chips não ocupam espaço por padrão');
   // dois .notabtn no exercício aberto: o seletor de carga e a anotação
   const links = a.$$('.ex.open .notabtn').map(function (x) { return x.textContent.trim(); });
   assert.ok(links.includes('anotar algo'), links.join(' | '));
 
-  a.E('abrirNota(0)');
+  a.v('abrirNota', 0);
   // o RIR saiu daqui: virou coluna por série. Sobraram as dores de tendão.
   assert.strictEqual(a.$$('.ex.open .chip').length, 3);
   const chips = a.$$('.ex.open .chip').map(function (x) { return x.textContent.trim(); });
   assert.ok(chips.includes('cotovelo'), chips.join(' | '));
 
   a.digitar('o0', 'algo');
-  a.E('toggle(0)');
-  a.E('toggle(0)');
+  a.v('toggle', 0);
+  a.v('toggle', 0);
   assert.ok(a.doc.getElementById('o0'), 'com conteúdo, o bloco reabre sozinho');
   a.fechar();
 });
@@ -247,19 +247,19 @@ test('correção de sessão passada altera e apaga', async () => {
     logs: { A0: [{ t: t, sid: t, sets: [[400, 10], [40, 10]] }] },
     done: [{ day: 'F', t: t, sid: t }]
   } });
-  a.E('go("A")');
-  a.E('toggle(0)');
-  a.E('openHist(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
   assert.ok(a.$('.edbtn'), 'toda sessão do histórico pode ser corrigida');
 
-  a.E('editarSessao(0)');
+  a.v('editarSessao', 0);
   a.digitar('ed0_0', '40');
-  await a.E('salvarEdicao()');
+  await a.v('salvarEdicao');
   await a.esperar();
   assert.strictEqual(a.log('A',0)[0].sets[0][0], 40, 'digitou 400 no lugar de 40');
 
-  a.E('editarSessao(0)');
-  await a.E('apagarSessao()');
+  a.v('editarSessao', 0);
+  await a.v('apagarSessao');
   await a.esperar();
   assert.strictEqual(a.log('A',0), null);
   a.fechar();
@@ -320,8 +320,8 @@ test('o gráfico do histórico é desenho, não comportamento', async () => {
                  { t: t, sid: t, sets: [[45, 10]] }] },
     done: [{ day: 'A', t: t, sid: t }]
   } });
-  a.E('go("A")');
-  a.E('openHist(0)');
+  a.v('go', 'A');
+  a.v('openHist', 0);
 
   const g = a.$('.ins-grafico');
   assert.ok(g, 'o gráfico foi desenhado');
@@ -343,8 +343,8 @@ test('cada série tem carga, repetição e RIR, com o anterior ao lado', async (
     ] },
     done: [{ day: 'A', t: t, sid: t, dur: 0 }]
   } });
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
 
   const head = a.$('.ex.open .sethead');
   assert.ok(head, 'a tabela tem cabeçalho');
@@ -361,7 +361,7 @@ test('cada série tem carga, repetição e RIR, com o anterior ao lado', async (
 
 test('o RIR entra na própria série, em dois toques', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
 
   assert.strictEqual(a.$$('.ex.open .rirscale').length, 0, 'fechado, não custa espaço');
@@ -382,7 +382,7 @@ test('o RIR entra na própria série, em dois toques', async () => {
 test('tocar de novo no valor escolhido limpa o RIR', async () => {
   // sem isto, um toque errado não teria volta: não há teclado para apagar
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   a.clicar(a.doc.getElementById('q0_0'));
   a.clicar(a.$$('.ex.open .rirscale .rirop')[1]);
@@ -396,7 +396,7 @@ test('tocar de novo no valor escolhido limpa o RIR', async () => {
 
 test('a escala abre só na série tocada', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.clicar(a.doc.getElementById('q0_1'));
   assert.strictEqual(a.$$('.ex.open .rirscale').length, 1, 'uma linha por vez');
   assert.match(a.texto('.ex.open .rirscale-r'), /série 2/);
@@ -405,7 +405,7 @@ test('a escala abre só na série tocada', async () => {
 
 test('o descanso é um por exercício, não um por série', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   assert.strictEqual(a.$$('.ex.open .restlinha').length, 1,
     'o valor era o mesmo em todas as linhas: repeti-lo ocupava a coluna do RIR');
   assert.match(a.$('.ex.open .restlinha').textContent, /descanso/i);
@@ -425,11 +425,11 @@ test('a tabela do cartão não alcança o formulário de corrigir sessão', asyn
   } });
   const st = el => a.doc.defaultView.getComputedStyle(el);
 
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   assert.strictEqual(st(a.$('.ex.open .setrow')).display, 'grid', 'no cartão é tabela');
 
-  a.E('openHist(0)');
+  a.v('openHist', 0);
   a.clicar(a.$('.edbtn'));
   const linha = a.$('.ed-sets .setrow');
   assert.strictEqual(linha.children.length, 4, 'o formulário tem quatro células');
@@ -441,7 +441,7 @@ test('a tabela do cartão não alcança o formulário de corrigir sessão', asyn
 
 test('o RIR vazio não desenha fio: o ponto já ocupa o lugar', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   const st = el => a.doc.defaultView.getComputedStyle(el);
   const rir = a.doc.getElementById('q0_0');
   assert.ok(rir.className.includes('vazio'));
@@ -455,7 +455,7 @@ test('o cabeçalho da tabela cabe nas próprias colunas', async () => {
   // "série" em mono 9px com tracking não cabe na largura de um dígito, e
   // transbordava por cima de "anterior"
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   const st = el => a.doc.defaultView.getComputedStyle(el);
   const cols = st(a.$('.ex.open .sethead')).gridTemplateColumns;
   assert.strictEqual(cols, st(a.$('.ex.open .setrow')).gridTemplateColumns,
@@ -471,7 +471,7 @@ test('a tabela usa a largura do cartão, sem recuo herdado', async () => {
   // era lista. Virou tabela com coluna de número própria: manter os dois era
   // cobrar 34px de largura por um alinhamento que a coluna já faz.
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   const pad = a.doc.defaultView.getComputedStyle(a.$('.ex.open .sets')).paddingLeft;
   assert.ok(pad === '' || /^(0|0px|var\(--ins-)/.test(pad) === false || !/34/.test(pad),
     'sem recuo de 34px à esquerda: ' + pad);
@@ -486,8 +486,8 @@ test('o pior caso do "anterior" cabe sem cortar', async () => {
     logs: { 'chest-press-inclinado-convergente': [{ t: t, sid: t, sets: [[127.5, 12, 2]] }] },
     done: [{ day: 'A', t: t, sid: t, dur: 0 }]
   } });
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   const txt = a.texto('.ex.open .setrow .setant');
   // ponto e não vírgula: é `fmtNum`, a mesma formatação de carga que a conta de
   // anilhas e os rótulos do gráfico usam no app inteiro
@@ -567,14 +567,14 @@ test('abrir um exercício traz a série para a tela', async () => {
     rolou.push({ ex: this.getAttribute('data-ex'), bloco: o && o.block, como: o && o.behavior });
   };
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   assert.deepStrictEqual(rolou, [{ ex: '0', bloco: 'start', como: 'instant' }],
     'rola até o cartão que abriu, alinhando o topo dele');
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   assert.strictEqual(rolou.length, 1, 'fechar não rola: nada novo entrou na tela');
 
-  a.E('toggle(2)');
+  a.v('toggle', 2);
   assert.strictEqual(rolou.length, 2, 'e cada abertura rola até o SEU cartão');
   assert.strictEqual(rolou[1].ex, '2');
   a.fechar();
