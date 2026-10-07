@@ -50,7 +50,7 @@ function comPeso(medias) {
 test('dois passos no mesmo sentido somam, e a tela diz que são dois', async () => {
   const a = await comPeso([73.0, 73.05, 73.10]);
   a.aba('dados');
-  assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Comer mais');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer mais');
   const base = a.v('arrozAtual');
 
   await a.v('ctx.aplicaAjuste'); await a.esperar();
@@ -60,8 +60,8 @@ test('dois passos no mesmo sentido somam, e a tela diz que são dois', async () 
   await a.v('ctx.aplicaAjuste'); await a.esperar();
   assert.strictEqual(a.S().ajuste, 2, 'o segundo passo soma ao primeiro');
   assert.strictEqual(a.v('arrozAtual'), base + 240, 'e o arroz anda de novo');
-  assert.ok(a.E('CTX.dados().veredito.estado').includes('2 passos'),
-    a.E('CTX.dados().veredito.estado'));
+  assert.ok(a.vJ('ctx.dados').veredito.estado.includes('2 passos'),
+    a.vJ('ctx.dados').veredito.estado);
   a.fechar();
 });
 
@@ -71,7 +71,7 @@ test('observar não oferece desfazer o corte', async () => {
   const a = await comPeso([73.0, 73.20, 73.55]);
   a.E('S.ajuste = -1');
   a.aba('dados');
-  const v = a.J('CTX.dados().veredito');
+  const v = a.vJ('ctx.dados').veredito;
   assert.strictEqual(v.t, 'Observar');
   assert.strictEqual(v.podeAplicar, false, 'nada a aplicar: observar não é decisão');
   assert.strictEqual(v.acaoTxt, null);
@@ -99,7 +99,7 @@ test('cada passo guarda de onde veio', async () => {
 test('manter não mexe no saldo nem no ledger', async () => {
   const a = await comPeso([73.0, 73.25, 73.5]);
   a.aba('dados');
-  assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Manter como está');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Manter como está');
   await a.v('ctx.aplicaAjuste'); await a.esperar();
   assert.strictEqual(a.S().ajuste, 0);
   assert.strictEqual(a.S().ajusteHist.length, 0);
@@ -161,11 +161,11 @@ test('a leitura das fotos destrava o corte que o peso sozinho não dá', async (
   comFotos(a, [iso(14), iso(0)]);
 
   a.aba('dados');
-  assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Observar',
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Observar',
     'sem a leitura, o peso abre revisão e não corta');
 
   a.v('ctx.abreComparar');
-  const p = a.J('CTX.comparacao().pergunta');
+  const p = a.vJ('ctx.comparacao').pergunta;
   assert.ok(p, 'a pergunta aparece num par de 14 dias');
   assert.strictEqual(p.valor, null, 'e começa sem resposta');
 
@@ -175,7 +175,7 @@ test('a leitura das fotos destrava o corte que o peso sozinho não dá', async (
   assert.strictEqual(a.S().gordura[0].d, iso(0), 'a chave é a sessão mais nova');
 
   a.aba('dados');
-  const v = a.J('CTX.dados().veredito');
+  const v = a.vJ('ctx.dados').veredito;
   assert.strictEqual(v.t, 'Comer menos');
   assert.strictEqual(v.podeAplicar, true, 'e agora há o que aplicar');
   a.fechar();
@@ -189,7 +189,7 @@ test('fotos sem piora mandam manter, e não cortam', async () => {
   await a.v('ctx.setGordura', 'nao'); await a.esperar();
 
   a.aba('dados');
-  assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Manter como está',
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Manter como está',
     'ganho acima da faixa não é ruim por si: está comprando músculo');
   a.fechar();
 });
@@ -205,8 +205,8 @@ test('responder de novo substitui, em vez de empilhar opinião', async () => {
   assert.strictEqual(a.S().gordura.length, 1, 'uma leitura por par');
   assert.strictEqual(a.S().gordura[0].v, 'incerto');
   a.aba('dados');
-  assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Observar', 'incerto não corta');
-  assert.strictEqual(a.E('CTX.dados().veredito.podeAplicar'), false);
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Observar', 'incerto não corta');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.podeAplicar, false);
   a.fechar();
 });
 
@@ -216,7 +216,7 @@ test('num par de três meses a pergunta não aparece', async () => {
   cacheFalso(a);
   comFotos(a, [iso(92), iso(0)]);
   a.v('ctx.abreComparar');
-  assert.strictEqual(a.J('CTX.comparacao().pergunta'), null);
+  assert.strictEqual(a.vJ('ctx.comparacao').pergunta, null);
   a.fechar();
 });
 
@@ -240,7 +240,7 @@ async function comDieta(aderencia) {
 
 test('semana perdida trava o corte, mesmo com as fotos confirmando', async () => {
   const a = await comDieta('perdido');
-  const v = a.J('CTX.dados().veredito');
+  const v = a.vJ('ctx.dados').veredito;
   assert.strictEqual(v.t, 'Registrar antes de mexer');
   assert.strictEqual(v.podeAplicar, false, 'não se corta o plano por comida que veio de fora dele');
   a.fechar();
@@ -248,7 +248,7 @@ test('semana perdida trava o corte, mesmo com as fotos confirmando', async () =>
 
 test('sair do plano sabendo o que comeu não trava', async () => {
   const a = await comDieta('fora');
-  assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Comer menos',
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer menos',
     'saída registrada ainda deixa a semana legível');
   a.fechar();
 });
@@ -259,10 +259,10 @@ test('a folha do dia oferece os três estados, e a escolha persiste', async () =
   a.v('ctx.abreSeletorDeDia');
 
   await a.v('ctx.setAderencia', 'perdido'); await a.esperar();
-  assert.strictEqual(a.E('diaDeComida().aderencia'), 'perdido');
+  assert.strictEqual(a.vJ('diaDeComida').aderencia, 'perdido');
 
   await a.v('ctx.setAderencia', 'plano'); await a.esperar();
-  assert.strictEqual(a.E('diaDeComida().aderencia'), undefined,
+  assert.strictEqual(a.vJ('diaDeComida').aderencia, undefined,
     'seguir o plano é a ausência de marca: não se guarda o padrão');
   a.fechar();
 });
