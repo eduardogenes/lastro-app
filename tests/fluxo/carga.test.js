@@ -72,13 +72,13 @@ test('correção do tipo persiste e some ao voltar ao padrão', async () => {
   a.v('toggle', 1);
   await a.v('setCarga', 1, 'lado');
   await a.esperar();
-  assert.strictEqual(a.J('S.carga')[a.k('A',1)], 'lado',
+  assert.strictEqual(a.S().carga[a.k('A',1)], 'lado',
     'a correção acompanha o exercício, não a posição no treino');
   assert.strictEqual(a.texto('.ex.open .sethead .f'), 'kg/lado');
 
   await a.v('setCarga', 1, 'pino');
   await a.esperar();
-  assert.deepStrictEqual(a.J('S.carga'), {}, 'voltar ao padrão não deixa lixo no estado');
+  assert.deepStrictEqual(a.S().carga, {}, 'voltar ao padrão não deixa lixo no estado');
   a.fechar();
 });
 
@@ -88,7 +88,7 @@ test('chave interna continua pino para não quebrar correção antiga', async ()
   await a.esperar();
   assert.strictEqual(a.E('cargaTipo(id("A",0), treino("A").ex[0])'), 'pino');
   assert.strictEqual(a.E('CARGAS[cargaTipo(id("A",0), treino("A").ex[0])].nome'), 'placa');
-  assert.strictEqual(a.J('S.carga')[a.k('A',0)], 'pino', 'reindexada para o exercício');
+  assert.strictEqual(a.S().carga[a.k('A',0)], 'pino', 'reindexada para o exercício');
   a.fechar();
 });
 
