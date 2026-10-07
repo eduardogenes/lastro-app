@@ -161,7 +161,8 @@ conferida depois — **957, zero rejeições.**
 - **Memória.** Ninguém mediu quanto as 7 janelas custavam, nem quanto se
   ganhou. O conserto entrou pelo gatilho latente, não por número de memória.
 - **Tempo da suíte**, antes e depois. Não medido.
-- **O resto da suíte quanto a `fechar()`.** São 517 casos e vários arquivos
+- **O resto da suíte quanto a `fechar()`.** São 520 casos (eu escrevi 517 aqui
+  primeiro, e estava errado — ver §5) e vários arquivos
   embrulham a abertura do app em auxiliares locais, então contagem por busca de
   texto não é confiável. **Só este arquivo foi auditado**, por instrução. Pode
   haver outros.
