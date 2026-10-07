@@ -33,9 +33,9 @@ test('o descanso começa em QUALQUER série, não só na última', async () => {
   // mais frequente da sessão: a que separa a série 1 da 2.
   const a = await app(comHistorico());
   await a.pronto();
-  a.E('iniciarSessao()');
+  a.v('iniciarSessao');
   await a.esperar();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   await a.esperar();
 
   a.preencher(0, 0, 60, 8);
@@ -44,7 +44,7 @@ test('o descanso começa em QUALQUER série, não só na última', async () => {
     'a série 1 de 3 dispara o descanso');
   assert.notStrictEqual(a.texto('#tval'), '0:00', 'e ele está contando');
 
-  a.E('stopTimer()');
+  a.v('stopTimer');
   a.preencher(0, 1, 60, 8);
   await a.esperar();
   assert.ok(a.E("document.getElementById('timer').classList.contains('on')"),
@@ -55,14 +55,14 @@ test('o descanso começa em QUALQUER série, não só na última', async () => {
 test('apagar o campo rearma o disparo daquela série, e só dela', async () => {
   const a = await app(comHistorico());
   await a.pronto();
-  a.E('iniciarSessao()');
+  a.v('iniciarSessao');
   await a.esperar();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   await a.esperar();
 
   a.preencher(0, 0, 60, 8);
   await a.esperar();
-  a.E('stopTimer()');
+  a.v('stopTimer');
 
   // mexer de novo na MESMA série não redispara
   a.digitar('r0_0', 9);
@@ -85,9 +85,9 @@ test('tocar na coluna ANTERIOR registra a série inteira', async () => {
   // e os dois números iam para o teclado virtual assim mesmo.
   const a = await app(comHistorico());
   await a.pronto();
-  a.E('iniciarSessao()');
+  a.v('iniciarSessao');
   await a.esperar();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   await a.esperar();
 
   const botao = a.$('[data-ex="0"] .setant-b');
@@ -110,9 +110,9 @@ test('tocar na coluna ANTERIOR registra a série inteira', async () => {
 test('sem histórico não há o que copiar, e a coluna volta a ser inerte', async () => {
   const a = await app();
   await a.pronto();
-  a.E('iniciarSessao()');
+  a.v('iniciarSessao');
   await a.esperar();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   await a.esperar();
   assert.ok(!a.$('[data-ex="0"] .setant-b'), 'nada de botão que não faria nada');
   a.fechar();
@@ -123,9 +123,9 @@ test('todo controle do cartão de exercício tem nome acessível', async () => {
   // o cartão mais usado do produto, ilegível no VoiceOver.
   const a = await app(comHistorico());
   await a.pronto();
-  a.E('iniciarSessao()');
+  a.v('iniciarSessao');
   await a.esperar();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   await a.esperar();
 
   const cartao = a.$('[data-ex="0"]');
@@ -178,9 +178,9 @@ test('sair do app descarrega a gravação represada', async () => {
   // dentro dessa janela perdia a série recém-digitada.
   const a = await app(comHistorico());
   await a.pronto();
-  a.E('iniciarSessao()');
+  a.v('iniciarSessao');
   await a.esperar();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   await a.esperar();
 
   a.preencher(0, 0, 72, 9);
@@ -207,9 +207,9 @@ test('corrigir uma série depois de reabrir o app não inicia descanso', async (
   const base = comHistorico();
   const a = await app(base);
   await a.pronto();
-  a.E('iniciarSessao()');
+  a.v('iniciarSessao');
   await a.esperar();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   await a.esperar();
 
   a.preencher(0, 0, 60, 9);
