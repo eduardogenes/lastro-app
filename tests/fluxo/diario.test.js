@@ -13,16 +13,16 @@ async function noHoje() {
 
 test('o dia vivido vai para o histórico na virada da data', async () => {
   const a = await noHoje();
-  a.E('CTX.marcaRefeicao("pos")');
-  a.E('CTX.marcaRefeicao("almoco")');
-  a.E('CTX.setAgua(11)');
+  a.v('ctx.marcaRefeicao', 'pos');
+  a.v('ctx.marcaRefeicao', 'almoco');
+  a.v('ctx.setAgua', 11);
   a.E('diaDeComida().turno = "noite"');
   await a.esperar();
   const ontem = a.J('S.dia.data');
   assert.deepStrictEqual(a.J('S.comidaHist'), [], 'nada ainda: o dia está aberto');
 
   a.viajar(DIA);
-  a.E('diaDeComida()');            // a primeira leitura no dia seguinte fecha o anterior
+  a.v('diaDeComida');            // a primeira leitura no dia seguinte fecha o anterior
   await a.esperar();
 
   const h = a.J('S.comidaHist');
@@ -37,17 +37,17 @@ test('o dia vivido vai para o histórico na virada da data', async () => {
 
 test('o passado não se reescreve quando o plano muda', async () => {
   const a = await noHoje();
-  a.E('CTX.marcaRefeicao("pos")');
-  a.E('CTX.marcaRefeicao("almoco")');
+  a.v('ctx.marcaRefeicao', 'pos');
+  a.v('ctx.marcaRefeicao', 'almoco');
   await a.esperar();
   a.viajar(DIA);
-  a.E('diaDeComida()');
+  a.v('diaDeComida');
   await a.esperar();
   const antes = a.J('S.comidaHist[0].tot.kcal');
   const pvAntes = a.J('S.comidaHist[0].pv');
 
   // o nutricionista corta o arroz do almoço
-  a.E('CTX.setQuantidade("almoco", 0, 150)');
+  a.v('ctx.setQuantidade', 'almoco', 0, 150);
   await a.esperar(60);
 
   assert.strictEqual(a.J('S.comidaHist[0].tot.kcal'), antes,
@@ -60,7 +60,7 @@ test('o passado não se reescreve quando o plano muda', async () => {
 test('dia inteiramente mudo não vira linha', async () => {
   const a = await noHoje();
   a.viajar(DIA);
-  a.E('diaDeComida()');
+  a.v('diaDeComida');
   await a.esperar();
   assert.deepStrictEqual(a.J('S.comidaHist'), [],
     'guardar um dia vazio como zero seria dizer que ele não comeu');
@@ -69,10 +69,10 @@ test('dia inteiramente mudo não vira linha', async () => {
 
 test('fechar duas vezes o mesmo dia não duplica', async () => {
   const a = await noHoje();
-  a.E('CTX.marcaRefeicao("pos")');
+  a.v('ctx.marcaRefeicao', 'pos');
   await a.esperar();
   a.viajar(DIA);
-  a.E('diaDeComida()'); a.E('diaDeComida()'); a.E('diaDeComida()');
+  a.v('diaDeComida'); a.v('diaDeComida'); a.v('diaDeComida');
   await a.esperar();
   assert.strictEqual(a.J('S.comidaHist').length, 1);
   a.fechar();
@@ -80,14 +80,14 @@ test('fechar duas vezes o mesmo dia não duplica', async () => {
 
 test('o histórico atravessa o backup', async () => {
   const a = await noHoje();
-  a.E('CTX.marcaRefeicao("pos")');
+  a.v('ctx.marcaRefeicao', 'pos');
   await a.esperar();
   a.viajar(DIA);
-  a.E('diaDeComida()');
+  a.v('diaDeComida');
   await a.esperar();
   a.aba('guia');
   await a.modo('o app');
-  a.E('showJSON()');
+  a.v('showJSON');
   const bkp = JSON.parse(a.doc.getElementById('jout').value);
   assert.strictEqual(bkp.data.comidaHist.length, 1,
     'coleção que fica de fora do export some na primeira troca de aparelho');
