@@ -85,7 +85,7 @@ test('exercício cadastrado por ele aparece na troca e tem histórico próprio',
   a.v('toggle', 4);
   a.v('setAlt', 4, 'maquina-nova-da-academia');
   a.preencher(4, 0, 25, 15);
-  assert.strictEqual(a.J('S.logs["maquina-nova-da-academia"]').length, 1);
+  assert.strictEqual(a.S().logs["maquina-nova-da-academia"].length, 1);
   assert.strictEqual(a.E('S.logs[' + JSON.stringify(original) + ']'), undefined,
     'não contamina o exercício original');
   a.fechar();
@@ -95,7 +95,7 @@ test('o programa do treinador continua congelado e comparável', async () => {
   const a = await app();
   a.E('S.prog.A.ex[0].s = 9; render()');
   assert.strictEqual(a.E('treino("A").ex[0].s'), 9, 'o programa dele mudou');
-  assert.strictEqual(a.E('PROGRAMA.A.ex[0].s'), 3, 'o do treinador não');
+  assert.strictEqual(a.dado('PROGRAMA').A.ex[0].s, 3, 'o do treinador não');
 
   const alvo = a.J(`
     ROT_BASE.reduce(function (acc, d) {
@@ -135,7 +135,7 @@ test('o mesmo aparelho em duas posições da mesma sessão não se sobrescreve',
   a.v('setAlt', 5, 'pec-deck');
   a.preencher(5, 0, 45, 10);
 
-  const h = a.J('S.logs["pec-deck"]');
+  const h = a.S().logs["pec-deck"];
   assert.strictEqual(h.length, 2, 'duas posições, dois registros');
   assert.notStrictEqual(h[0].sl, h[1].sl);
   a.fechar();
@@ -186,10 +186,10 @@ test('estado do plano 1 atravessa as duas migrações sem perder nada', async ()
 
   // PLANO_ATUAL e não um número: a propriedade é "a cadeia inteira rodou",
   // e ela não deve quebrar toda vez que uma migração nova entra.
-  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'), 'a cadeia inteira roda');
-  assert.strictEqual(a.E('S.done.length'), 2, 'o calendário atravessa intacto');
+  assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'), 'a cadeia inteira roda');
+  assert.strictEqual(a.S().done.length, 2, 'o calendário atravessa intacto');
 
-  const logs = a.J('S.logs');
+  const logs = a.S().logs;
   // mesa flexora deitada continua no programa: volta para o histórico ativo
   assert.ok(logs['mesa-flexora-deitada'], 'exercício que sobreviveu volta a ser ativo');
   assert.deepStrictEqual(logs['mesa-flexora-deitada'][0].sets, [[45, 12], [45, 12]]);
@@ -203,7 +203,7 @@ test('estado do plano 1 atravessa as duas migrações sem perder nada', async ()
   assert.ok(logs['remada-unilateral-na-polia-baixa'], 'substituto virou exercício');
 
   assert.strictEqual(Object.keys(logs).length, 4, 'quatro chaves entraram, quatro saíram');
-  assert.deepStrictEqual(a.J('S.carga'), {}, 'correção posicional do plano 1 não sobrevive');
+  assert.deepStrictEqual(a.S().carga, {}, 'correção posicional do plano 1 não sobrevive');
 
   // e as telas continuam de pé
   ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (x) {
