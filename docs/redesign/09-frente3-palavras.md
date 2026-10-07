@@ -316,9 +316,21 @@ P6 é sobre registrar bioimpedância e medidas, que são de Corpo; a de P8 cita
 pesos", que são as duas peças deste destino. Semana é o veredito e o passo — é
 decisão, não acompanhamento.
 
-**Isto sobe à mesa dele** (§11.1), porque é a palavra dele e a troca é de uma
+~~**Isto sobe à mesa dele** (§11.1), porque é a palavra dele e a troca é de uma
 palavra dele por outra minha. Enquanto não houver resposta, **o escrito é
-"Evolução"**, porque V7 é explícita: a palavra dele vence a minha.
+"Evolução"**, porque V7 é explícita: a palavra dele vence a minha.~~
+
+> **RECONCILIADO em 06/10 · ACEITO. "Evolução" volta.** Resposta dele na noite de
+> 06/10 (pergunta 5 das oito): *"aceita a proposta: volta como nome do destino de
+> leitura em Corpo, no lugar de 'Histórico'"*. **Então as duas linhas da tabela
+> acima deixam de ser proposta e passam a ser o escrito:** o botão do cabeçalho
+> de Corpo diz **Evolução**, e o título do destino diz **Evolução · 9 semanas ·
+> 31 pesagens**.
+>
+> **O que a decisão NÃO faz, e vale dizer para ninguém ler demais:** ela **não
+> desfaz a partição** em Corpo e Semana e **não cria um sexto lugar**. Os cinco
+> nomes da barra ficam como estão (§1.8). O que volta é a palavra dele **dentro**
+> de Corpo.
 
 ### 1.8 · Os cinco, numa linha, com o rótulo acessível de cada um
 
@@ -665,6 +677,15 @@ refeição do dia nunca entra pré-marcada por passagem de horário"* (§4.4, it
 dela). A decisão dele manda, e muda as palavras: a pré-marcação passa a ser
 **sugestão declarada**, e o texto tem de dizer de onde ela vem.
 
+> **RECONCILIAÇÃO (06/10) · a decisão 5 derrubou DUAS metades, não uma.** A
+> segunda metade do requisito da frente 2 — *"a refeição cuja hora passou há
+> menos de 30 minutos fica sem marca"* — ninguém tinha nomeado, e ela **cai por
+> implicação**: se a passagem de horário pré-marca, pré-marca. Está registrado
+> como resolvido, **não como pergunta aberta**.
+> **E as palavras desta seção já valiam nos dois casos**, porque elas nomeiam a
+> **causa** da marca e não a marca: *"A ceia vem marcada porque passou das 21h30,
+> não porque o app sabe."* Nada a reescrever aqui.
+
 **A frase que a decisão obriga, e ela é a mais importante da folha:**
 
 > **Nada aqui está registrado até você tocar. A ceia vem marcada porque passou
@@ -713,6 +734,21 @@ propósito: é zero conhecido.
 | **Outra coisa** | "Comi outra coisa" | `como: 'fora'` |
 | **Não comi** | "Não comi" | `como: 'nao'` |
 | **Não sei** | "Não sei" | §4.5 |
+
+> **RECONCILIAÇÃO (06/10) · duas correções de dado nesta tabela, e um estado
+> honesto.**
+>
+> 1. **`ComoFoiARefeicao` tem TRÊS valores desde 06/10**, não dois:
+>    `'fora' | 'nao' | 'nsei'`. O terceiro foi implementado em `6e8a3fa`, com
+>    peso 0 dentro do denominador. Então a linha "**Não sei**" desta tabela tem
+>    dado próprio agora — `como: 'nsei'` — e não só uma remissão a §4.5.
+> 2. **E nenhum dos cinco botões existe na tela.** **Nenhum chamador de
+>    `marcaRefeicao` passa `como`, em valor nenhum** — conferido nos dois
+>    chamadores (`src/ui/folhas/refeicao.jsx` e `src/ui/telas/hoje.jsx`), que
+>    chamam com um argumento só. Os três valores são **capacidade de domínio sem
+>    lugar onde morar**: alcançáveis pelo modelo, **inalcançáveis pelo dedo**.
+>    **A folha dos cinco botões é dado e ainda não é tela**, e estas palavras
+>    esperam a tela que vai carregá-las.
 
 **A cabeça da frase aparece uma vez, no alto**, e nunca se repete nos botões:
 **"Em cada refeição: comi…"**. É V6 pelo lado certo — a folha não é zona do
@@ -835,19 +871,39 @@ disse "comi outra coisa" e não respondeu se sabe o quê.*
 **O que ele decidiu:** "Não sei" passa a valer **por refeição de verdade**, não
 mais pelo dia inteiro.
 
-**O que o dado faz hoje, conferido.** "Não sei" por refeição **não existe**:
-`ComoFoiARefeicao` tem dois valores, `'fora'` e `'nao'`, e o que existe é
-`aderencia?: 'plano' | 'fora' | 'perdido'`, que é campo **do dia**
-(`DiaComida` e `DiaComidaHist`, conferi os dois). E `diaInterpretavel` começa
-por `if (h.aderencia === 'perdido') return false` — ou seja, hoje **um "não sei"
-derruba o dia inteiro da janela de 14 dias**, que é o que o próprio protótipo
-escreve na tela: *"Não sei: o dia deixa de contar para a regra"* (conferi).
+**O que o dado fazia quando eu escrevi isto, conferido.** "Não sei" por refeição
+**não existia**: `ComoFoiARefeicao` tinha dois valores, `'fora'` e `'nao'`, e o
+que existia era `aderencia?: 'plano' | 'fora' | 'perdido'`, que é campo **do
+dia** (`DiaComida` e `DiaComidaHist`, conferi os dois). E `diaInterpretavel`
+começa por `if (h.aderencia === 'perdido') return false` — ou seja, o "não sei"
+**do dia** derruba o dia inteiro da janela de 14 dias, que é o que o próprio
+protótipo escreve na tela: *"Não sei: o dia deixa de contar para a regra"*
+(conferi).
 
-**O custo está registrado e é de dado, não de palavra:** é campo persistido novo,
-pelos seis portões, na migração **11 → 12** (`PLANO_ATUAL = 11` hoje, conferi em
-`src/dominio/migracoes.ts`, com `migraPlano11` sendo a da ceia). O registro das
-quinze já diz isso (`00-coordenacao.md`, consequência 1). **Então as palavras
-abaixo são do comportamento novo, e hoje o dado não faz isso.**
+~~**O custo está registrado e é de dado, não de palavra:** é campo persistido
+novo, pelos seis portões, na migração **11 → 12**.~~
+
+> **RECONCILIADO em 06/10 · o dado FAZ isso agora, e sem migração nenhuma.**
+>
+> **Implementado em `6e8a3fa`:** `ComoFoiARefeicao` ganhou **`'nsei'`**, e
+> `PLANO_ATUAL` **fica em 11**. **A previsão de migração 11 → 12 estava errada**,
+> e a razão é de uma linha: `como` já era **campo persistido opcional** desde a
+> migração 9→10, e **valor novo não é campo novo**. A fusão é `if (como)`,
+> agnóstica ao valor; as listas brancas são por chave de topo. **Conferido portão
+> por portão pelo coordenador** e registrado em `00-coordenacao.md` — que
+> também nomeia a migração que **seria errada**: converter o `'perdido'` do dia em
+> `'nsei'` por refeição afirmaria **quais** refeições ele não soube, o que o
+> próprio `migracoes.ts` proíbe.
+>
+> **E os dois "não sei" convivem de propósito:** `aderencia: 'perdido'` é o "não
+> sei o que foi este **dia**" e continua sendo o único valor que derruba o dia;
+> `como: 'nsei'` é o "não sei o que foi este **almoço**" e **não** derruba o dia.
+> A razão está escrita no fonte, em `diaInterpretavel`.
+>
+> **Então as palavras abaixo deixam de ser "do comportamento novo": elas
+> descrevem o que o modelo já faz.** O que **não** existe é a tela que as
+> carrega: **nenhum chamador de `marcaRefeicao` passa `como`**, em valor nenhum.
+> A folha dos cinco botões é dado e ainda não é tela.
 
 **E aqui está a pergunta que ninguém fez, e sem ela as palavras não existem:**
 se "Não sei" é por refeição, **o dia continua contando?** E, se continua, **que
@@ -861,7 +917,39 @@ erram para lados opostos:
 - **peso 1** infla a adesão, e inflar adesão é literalmente o mecanismo do corte
   errado de F292.
 
-**Como a instrução pediu, escrevo as duas versões**, e a escolha é dele (§11.2).
+~~**Como a instrução pediu, escrevo as duas versões**, e a escolha é dele
+(§11.2).~~
+
+> **RECONCILIADO em 06/10 · DECIDIDO: é a VERSÃO A, e a pergunta está fechada
+> para sempre.**
+>
+> O dono **delegou** esta decisão ao coordenador, em termos literais: *"faça com
+> achar mais adequado. nao quero mais qlqr pergunta sobre isso. decida sozinho se
+> alguma coisa aparecer"*. **O coordenador decidiu: peso 0, e NÃO sai do
+> denominador** — que é a **versão A** abaixo.
+>
+> **As duas razões, e as duas são do próprio projeto:**
+> 1. `diasInterpretaveis` escreve que *"o denominador é a janela, não os dias
+>    registrados — senão uma semana com dois dias registrados daria 100%"*, e a
+>    mesma lógica vale **dentro** do dia.
+> 2. **O caminho de menor esforço tem de ser o conservador.** Subestimar
+>    **segura** o corte; inflar **autoriza** um corte que não devia acontecer — o
+>    mecanismo exato do F292.
+>
+> **Nenhum limiar novo foi inventado:** um dia inteiro em "não sei" é adesão 0 e
+> **continua contando** para o portão de 11 em 14. E "não sei" fica **distinguível
+> de silêncio** no registro: silêncio não entra em `done` e dá `null` no dia
+> inteiro; `'nsei'` é marca explícita que pesa 0. Mesmo número, registros
+> diferentes.
+>
+> **AUTORIZAÇÃO PERMANENTE:** o dono não quer mais nenhuma pergunta sobre a
+> aritmética da adesão. **Nenhum documento volta a listar isso como pergunta
+> aberta** — nem esta frente, nem nenhuma outra.
+>
+> **A versão B fica escrita abaixo, e não é lixo:** ela é o texto do **"não sei"
+> do dia** (`aderencia: 'perdido'`), que continua existindo no dado e continua
+> derrubando o dia. Onde a folha oferece esse outro "não sei", **ninguém
+> especificou** — e eu não invento. Ver §15.2.
 
 **Versão A — um "não sei" numa refeição não derruba o dia:**
 
@@ -884,9 +972,16 @@ erram para lados opostos:
 
 **A diferença entre as duas não é de tom: é de quantos dias o portão vê.** E o
 portão é o que nunca abriu. A versão A é a que torna o portão alcançável num dia
-com uma refeição esquecida; a versão B é a que nunca infla. **Enquanto não houver
-resposta, o escrito é a versão B**, porque é o que o dado faz hoje e porque V3
-manda nunca produzir certeza falsa.
+com uma refeição esquecida; a versão B é a que nunca infla.
+~~**Enquanto não houver resposta, o escrito é a versão B**, porque é o que o dado
+faz hoje e porque V3 manda nunca produzir certeza falsa.~~
+**O escrito é a VERSÃO A** — decidido em 06/10, implementado, e é o que o dado
+faz hoje. A versão B passa a ser o texto do "não sei" **do dia**, que é outro
+registro.
+**E a versão A não viola V3:** ela não produz certeza falsa nenhuma — ela diz a
+incerteza na palavra (*"uma refeição de cinco que a regra não sabe ler"*) e
+**segura** a conta no número, pesando 0. O que V3 proíbe é afirmar o que não se
+sabe; pesar 0 é o contrário disso.
 
 ### 4.6 · O que a folha nunca diz
 
@@ -1858,8 +1953,8 @@ uma destas frases mudar, o comportamento do produto muda com ela, e nenhuma dela
 | 1 | **Cada mudança vence quando aquele treino voltar. Se você não decidir até lá, ela fica como só daquele dia.** | O prazo da mudança do dia é por **posição**, não por data; e o vencimento resolve para "só daquele dia", não para permanente nem para o silêncio | §5.3 |
 | 2 | **Dá para fazer entrar no Treino B até a próxima vez dele.** | O desfazer do vencimento tem prazo, e o prazo é mais um retorno daquele treino (decisão 8) | §5.6 |
 | 3 | **A segunda passa a contar para a regra do nutricionista: 3 dias conhecidos nos últimos 14. A regra pede 11.** | Um dia com **uma** marca qualquer é dia conhecido — inclusive uma marca de "não comi". É o portão `MIN_REGISTRADOS = 11` e é a definição de adesão | §4.3 |
-| 4 | **Sem resposta, a segunda conta como se tivesse seguido o plano.** | Com a pergunta do fora do plano deixando de bloquear, o silêncio empurra o dia para `aderencia: 'plano'` — o lado que **infla** a adesão | §4.4 |
-| 5 | **O almoço fica desconhecido. A segunda continua contando, com uma refeição de cinco que a regra não sabe ler.** (versão A) **ou** **Sem saber quanto foi o almoço, a segunda inteira deixa de contar para a regra: 3 dias conhecidos passam a 2.** (versão B) | O que um "não sei" por refeição faz com a adesão do dia. **As duas versões estão escritas porque a regra não existe ainda** | §4.5 |
+| 4 | **Sem resposta, a segunda conta como se tivesse seguido o plano.** | Com a pergunta do fora do plano deixando de bloquear, o silêncio empurra o dia para `aderencia: 'plano'`. **CORRIGIDO em 06/10:** eu escrevi "o lado que **infla** a adesão", e isso **não é verdade** — a única leitura lógica de `aderencia` em todo o domínio é `=== 'perdido'`, então "plano" contra "fora" **não alimenta cálculo nenhum**. A frase continua nomeando regra, mas a regra é **de registro**: o silêncio deixa o registro menos completo, não a conta mais alta | §4.4 |
+| 5 | **O almoço fica desconhecido. A segunda continua contando, com uma refeição de cinco que a regra não sabe ler.** — **versão A, e ela é a escrita** | O que um "não sei" por refeição faz com a adesão do dia. ~~As duas versões estão escritas porque a regra não existe ainda~~ **DECIDIDO em 06/10 e implementado:** peso 0, dentro do denominador, o dia continua contando. A versão B passa a ser o texto do "não sei" **do dia** (`aderencia: 'perdido'`), que é outro registro | §4.5 |
 | 6 | **Taxa: cumprida** · **Força: cumprida — não está subindo** · **Adesão: falta — 1 dia de 14** | Os três portões da regra do nutricionista, e qual condição cada um verifica. "Força cumprida" significa força **não** subindo, e a frase tem de dizer as duas metades | §6.2 |
 | 7 | **Enquanto a adesão não chega a 11, o veredito não muda, por mais pesagem que entre. A tela não vai pedir isso de novo em outro lugar.** | Uma promessa sobre o produto: o portão da adesão cobra num lugar só. Se não for cumprida, a frase sai | §6.3 |
 | 8 | **O peso da manhã é o que a regra do nutricionista lê. O peso da balança de bioimpedância fica com os outros quatro números dela, e não entra na média da semana.** | Qual dos dois pesos alimenta `mediasSemanais` e o veredito — e, por consequência, qual dos dois decide comida | §10.2 |
@@ -1878,13 +1973,15 @@ sozinha:
 
 ### 11.2 · O que sobe à mesa dele, e é só isto
 
-| o que | onde | por que sobe |
-|---|---|---|
-| **Qual é a adesão de um dia com uma refeição em "não sei"** — versão A ou versão B | §4.5 | A decisão 2 moveu "Não sei" para a refeição e **não disse o que isso faz com o dia**. Peso 0 na refeição desconhecida subestima a adesão; peso 1 a infla, e inflar adesão é o mecanismo exato do corte errado de F292. A pergunta é de regra do nutricionista, não de palavra. **Escrito enquanto isso: a versão B**, porque é o que o dado faz hoje |
-| **Para que lado o silêncio cai, na pergunta do fora do plano** | §4.4 | A decisão 4 tirou o bloqueio. Com o bloqueio, a pergunta nunca ficava sem resposta; sem ele, fica — e `aderencia` ausente é `'plano'`. **Isto é novo: nasceu da decisão dele, e nenhuma frente o nomeou** |
-| **Se "Evolução" volta como nome do destino de leitura em Corpo** | §1.7 | É palavra dele, dita duas vezes (P6, P8), e a partição de Evolução em Corpo e Semana a apagou do produto: zero ocorrências nas sete telas da segunda rodada. V7 manda que a palavra dele vença a minha, então **o escrito é "Evolução"** — mas trocar "Histórico" por ela é troca de uma palavra dele por outra, e isso é dele |
-| **Se a promessa "a tela não vai pedir isso de novo em outro lugar" é cumprível** | §6.3 | É a única frase do material que promete o que o produto **não** vai fazer. Se o portão da adesão cobrar em Agora também, a frase passa a ser falsa e sai |
-| **"Massa muscular esquelética" contra "massa magra"** | §10 | Ele disse as duas, em respostas diferentes: "massa magra" na resposta longa (14.11) e "massa muscular esquelética" na que decidiu os cinco campos (5.a' P3). **São dois números diferentes na mesma balança**, não sinônimos. Vale a última, mas se a balança dele mostrar só um dos dois, a tela está pedindo o número errado — e isso estraga a série para sempre |
+**TRÊS DAS CINCO FORAM RESPONDIDAS em 06/10, e sobram duas.**
+
+| o que | onde | por que subia | o que ele decidiu |
+|---|---|---|---|
+| ~~**Qual é a adesão de um dia com uma refeição em "não sei"**~~ | §4.5 | A decisão 2 moveu "Não sei" para a refeição e não disse o que isso faz com o dia. Peso 0 subestima; peso 1 infla, e inflar adesão é o mecanismo do F292 | **FECHADA.** Ele **delegou** ao coordenador, com autorização permanente (*"nao quero mais qlqr pergunta sobre isso"*). Decidido: **peso 0, dentro do denominador** — a **versão A** —, e **implementado**. **Não volta à mesa dele, por nenhuma frente** |
+| ~~**Para que lado o silêncio cai, na pergunta do fora do plano**~~ | §4.4 | A decisão 4 tirou o bloqueio; `aderencia` ausente é `'plano'` | **FECHADA**, pela mesma delegação. **Nada muda na aritmética**, e a razão é que `'plano'` contra `'fora'` **não alimenta cálculo nenhum** — a única leitura lógica é `=== 'perdido'`. O preço é **registro menos completo**, e é o que ele escolheu pagar por fechar o dia num toque. **Armadilha anotada:** se "fora" passar a alimentar cálculo, o ausente não pode cair em "plano" |
+| ~~**Se "Evolução" volta como nome do destino de leitura em Corpo**~~ | §1.7 | É palavra dele, dita duas vezes (P6, P8), e a partição a apagou do produto | **ACEITA.** Volta como nome do destino de leitura em Corpo, no lugar de "Histórico". Não desfaz a partição nem cria sexto lugar |
+| **Se a promessa "a tela não vai pedir isso de novo em outro lugar" é cumprível** | §6.3 | É a única frase do material que promete o que o produto **não** vai fazer. Se o portão da adesão cobrar em Agora também, a frase passa a ser falsa e sai | **CONTINUA ABERTA.** Nenhuma das 23 decisões de 06/10 a tocou |
+| **"Massa muscular esquelética" contra "massa magra"** | §10 | Ele disse as duas, em respostas diferentes: "massa magra" na resposta longa (14.11) e "massa muscular esquelética" na que decidiu os cinco campos (5.a' P3). **São dois números diferentes na mesma balança**, não sinônimos | **RESPONDIDA: massa muscular esquelética** (pergunta 1 das oito da noite) — que é o que a migração 10 já gravou em `MEDIDAS_DO_CORPO`. **Nada a mudar.** O risco que esta linha nomeava — a balança dele mostrar só o outro número — **ninguém mediu** |
 
 **E uma coisa que eu não levo à mesa dele**, porque não é dele: a decisão 9 diz
 que, se a régua reprovar a medição, ela vai para os botões fixos da Direção C. **A
@@ -2083,3 +2180,56 @@ E três coisas que são de palavra e que eu deliberadamente **não** decido:
 - **VoiceOver no iOS de verdade.** Todos os rótulos acessíveis deste documento
   foram escritos contra a norma e contra a medida que C3 fez em Chromium, **não**
   contra o leitor que o dono usaria. É a mesma ausência que a frente 2 declarou.
+
+---
+
+## 15 · Reconciliação com as decisões de 06/10
+
+Esta frente foi escrita **depois** das quinze respostas de 06/10 — e é por isso
+que §4.1, §4.2, §4.4, §4.5, §5.6, §7.6 e §2 já trazem "decisão N" no título.
+**O que ela não podia saber eram as oito respostas da noite do mesmo dia e as
+três que o dono delegou ao coordenador.** A autoridade é a ONDA 5 de
+`docs/redesign/00-coordenacao.md`, que **não** é editada aqui.
+
+### 15.1 · O que foi alinhado
+
+| o que mudou aqui | contra qual decisão | onde |
+|---|---|---|
+| **"Evolução" volta** — deixou de ser proposta e passou a ser o escrito | pergunta 5 das oito da noite: "aceita a proposta" | §1.7, §11.2 |
+| **A adesão de um dia com "não sei" é a VERSÃO A**: peso 0, dentro do denominador, o dia continua contando | pergunta 3 das oito, **delegada ao coordenador**, com autorização permanente; decidido e implementado em `6e8a3fa` | §4.5, §11.1 (frase 5), §11.2 |
+| **O silêncio do "fora do plano" não muda nada na aritmética**, e a razão é que `'plano'` contra `'fora'` não alimenta cálculo | pergunta 4 das oito, mesma delegação; verificado em `calculo.ts` | §4.4, §11.1 (frase 4), §11.2 |
+| **`ComoFoiARefeicao` tem TRÊS valores, e não custou migração** — a previsão de "migração 11 → 12" estava errada, porque `como` já era campo persistido e valor novo não é campo novo | implementação de 06/10, conferida portão por portão | §4.2, §4.5 |
+| **"Massa muscular esquelética" está respondido**, e é o que a migração 10 já gravou | pergunta 1 das oito da noite | §11.2 |
+| **A metade dos 30 minutos da frente 2 cai por implicação**, não como pergunta aberta | consequência da decisão 5, registrada pelo coordenador | §4.1 |
+| **Os cinco botões são dado e ainda não são tela** | medição do coordenador: nenhum chamador de `marcaRefeicao` passa `como`, em valor nenhum | §4.2, §4.5 |
+
+**Uma correção que eu faço a mim mesma**, e ela é do mesmo tipo das sete do §13:
+a frase 4 de §11.1 dizia que o silêncio cai no lado que **infla** a adesão.
+**Não infla.** A única leitura lógica de `aderencia` em todo o domínio é
+`=== 'perdido'`; "plano" contra "fora" é registro para ele ler, e não alimenta
+conta nenhuma. A frase continua nomeando regra — mas regra **de registro**.
+
+**E uma correção ao registro, não a mim:** `00-coordenacao.md` diz que esta
+frente *"mediu"* que "Prescrição" *"já transborda"* a fatia da aba a 320 px.
+§1.6 é explícito em dizer *"Isto é conta, não medida"* e *"Não medido"*, e o
+número é **63,8 pt calculados numa fatia de 64 pt** — **na borda**, não
+transbordando. A 125% ela quebra em duas linhas, e §1.6 declara que quebrar em
+duas linhas é a saída aceitável. A decisão que o registro sustenta (320 px fora)
+não depende disto.
+
+### 15.2 · O que esta reconciliação NÃO resolve
+
+- **As palavras do "não sei" DO DIA, e onde a folha o oferece.** Os dois "não
+  sei" existem no dado e dizem coisas diferentes; só o do dia derruba o dia. A
+  versão B de §4.5 serve de texto para ele, **mas ninguém especificou se a folha
+  oferece os dois nem como eles se distinguem na tela.** Falta especificação, e
+  eu não a invento.
+- **A promessa "a tela não vai pedir isso de novo em outro lugar"** (§6.3)
+  continua aberta na mesa dele. Nenhuma das 23 decisões a tocou.
+- **A frase de leitura de volta com sete refeições** — a ceia entrou, e a frase
+  cresce com o número de refeições. **Ninguém mediu** se ela ainda é legível, e
+  agora há um fato novo: a ceia é a **última** linha e **continua vindo
+  pré-marcada** (decisão 5), então a frase tem de dizer isso em cima de uma
+  linha que o dono não tocou.
+- **Nenhuma frase deste documento foi lida por ele numa tela**, e isso não mudou
+  com nenhuma decisão de 06/10.
