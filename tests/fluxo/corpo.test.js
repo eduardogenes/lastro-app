@@ -98,13 +98,13 @@ test('registro aceita vírgula e substitui a medida do mesmo dia', async () => {
   a.E('view.bodyForm = { peso: "73,4" }');
   await a.v('addBody', 'peso');
   await a.esperar();
-  assert.strictEqual(a.E('S.body.peso[0].v'), 73.4, 'vírgula do teclado pt-BR');
+  assert.strictEqual(a.S().body.peso[0].v, 73.4, 'vírgula do teclado pt-BR');
 
   a.E('view.bodyForm = { peso: "73,8" }');
   await a.v('addBody', 'peso');
   await a.esperar();
-  assert.strictEqual(a.E('S.body.peso.length'), 1, 'uma medida por dia');
-  assert.strictEqual(a.E('S.body.peso[0].v'), 73.8);
+  assert.strictEqual(a.S().body.peso.length, 1, 'uma medida por dia');
+  assert.strictEqual(a.S().body.peso[0].v, 73.8);
   a.fechar();
 });
 
@@ -114,7 +114,7 @@ test('entrada inválida não grava', async () => {
   a.E('view.bodyForm = { peso: "abc" }');
   await a.v('addBody', 'peso');
   await a.esperar();
-  assert.strictEqual(a.E('S.body.peso.length'), 0);
+  assert.strictEqual(a.S().body.peso.length, 0);
   assert.ok(a.toast().includes('número válido'));
   a.fechar();
 });
@@ -167,7 +167,7 @@ test('pesagem errada pode ser apagada', async () => {
   linha.querySelector('.crow-x').click();
   await a.esperar();
 
-  assert.ok(!a.J('S.body.peso').some(function (x) { return x.v === 743; }), 'e sai do histórico');
+  assert.ok(!a.S().body.peso.some(function (x) { return x.v === 743; }), 'e sai do histórico');
   a.fechar();
 });
 
@@ -183,7 +183,7 @@ test('sessão de cardio registrada por engano pode ser apagada', async () => {
   linha.querySelector('.crow-x').click();
   await a.esperar();
 
-  assert.strictEqual(a.E('S.cardio.length'), 0);
+  assert.strictEqual(a.S().cardio.length, 0);
   a.fechar();
 });
 
@@ -202,7 +202,7 @@ test('preencher treino passado avisa para onde as séries estão indo', async ()
   assert.ok(botao, 'e a porta de saída fica no próprio aviso');
   await botao.click();
   await a.esperar();
-  assert.strictEqual(a.E('S.sessao'), null, 'concluir encerra a sessão retroativa');
+  assert.strictEqual(a.S().sessao, null, 'concluir encerra a sessão retroativa');
   a.fechar();
 });
 
@@ -237,8 +237,8 @@ test('registrar peso grava o número que o stepper mostra', async () => {
   assert.strictEqual(a.E("CTX.corpo().peso.valor"), 75);
   await a.v('addBody', 'peso');
   await a.esperar();
-  assert.strictEqual(a.J('S.body.peso').length, 1, 'o botão sozinho já registra');
-  assert.strictEqual(a.J('S.body.peso')[0].v, 75);
+  assert.strictEqual(a.S().body.peso.length, 1, 'o botão sozinho já registra');
+  assert.strictEqual(a.S().body.peso[0].v, 75);
   a.fechar();
 });
 
@@ -251,7 +251,7 @@ test('mexer no stepper antes de registrar não quebra a tela', async () => {
   assert.strictEqual(a.E("CTX.corpo().peso.valor"), 73.4, 'a tela mostra o que ele escolheu');
   await a.v('addBody', 'peso');
   await a.esperar();
-  assert.strictEqual(a.J('S.body.peso')[0].v, 73.4, 'e é isso que vai para o histórico');
+  assert.strictEqual(a.S().body.peso[0].v, 73.4, 'e é isso que vai para o histórico');
 
   // depois de gravar, o stepper se deriva da última medida em vez de zerar
   assert.strictEqual(a.E("CTX.corpo().peso.valor"), 73.4);
@@ -267,12 +267,12 @@ test('o botão de registrar na tela chega até o histórico', async () => {
 
   a.clicar(botoes[0]);
   await a.esperar();
-  assert.strictEqual(a.J('S.body.peso').length, 1, 'clicar em "registrar hoje" registra');
+  assert.strictEqual(a.S().body.peso.length, 1, 'clicar em "registrar hoje" registra');
 
   a.clicar(botoes[1]);
   await a.esperar();
-  assert.strictEqual(a.J('S.body.cintura').length, 1, 'e a cintura também');
-  assert.strictEqual(a.J('S.body.cintura')[0].v, 85);
+  assert.strictEqual(a.S().body.cintura.length, 1, 'e a cintura também');
+  assert.strictEqual(a.S().body.cintura[0].v, 85);
   a.fechar();
 });
 
@@ -283,8 +283,8 @@ test('cintura usa o stepper dela, não o do peso', async () => {
   a.v('ctx.setCintura', 84.5);
   await a.v('addBody', 'cintura');
   await a.esperar();
-  assert.strictEqual(a.J('S.body.cintura')[0].v, 84.5);
-  assert.strictEqual(a.J('S.body.peso').length, 1, 'o peso não foi tocado');
+  assert.strictEqual(a.S().body.cintura[0].v, 84.5);
+  assert.strictEqual(a.S().body.peso.length, 1, 'o peso não foi tocado');
   a.fechar();
 });
 
@@ -321,7 +321,7 @@ test('dá para registrar numa data bem anterior, não só nos últimos dias', as
   await a.v('addBody', 'peso');
   await a.esperar();
 
-  const m = a.J('S.body.peso');
+  const m = a.S().body.peso;
   assert.strictEqual(m.length, 1);
   assert.strictEqual(m[0].v, 71.2);
   assert.strictEqual(a.E('sameDay(S.body.peso[0].t, ' + antigo + ')'), true,
@@ -396,8 +396,8 @@ test('escolher um dia já medido parte do valor daquele dia', async () => {
   a.v('ctx.setPeso', 73.9);
   await a.v('addBody', 'peso');
   await a.esperar();
-  assert.strictEqual(a.J('S.body.peso').length, 2, 'corrigiu, não duplicou');
-  assert.strictEqual(a.J('S.body.peso')[0].v, 73.9);
+  assert.strictEqual(a.S().body.peso.length, 2, 'corrigiu, não duplicou');
+  assert.strictEqual(a.S().body.peso[0].v, 73.9);
   a.fechar();
 });
 
