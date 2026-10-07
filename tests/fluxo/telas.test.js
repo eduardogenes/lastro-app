@@ -286,7 +286,7 @@ test('séries por músculo compara com o mesmo ponto das semanas anteriores', as
       '{ t: ' + (semanaPassada + 5 * 86400000) + ', sid: 2, sets: [[40,10],[40,10]] }]');
 
   const cedo = a.J('seriesPorMusculo(' + semanaPassada + ', ' + seg + ', 86400000)');
-  const tudo = a.J('seriesPorMusculo(' + semanaPassada + ', ' + seg + ')');
+  const tudo = a.vJ('seriesPorMusculo', semanaPassada, seg);
   assert.strictEqual(tudo[g], 4, 'a semana inteira conta as duas sessões');
   assert.strictEqual(cedo[g], 2, 'cortada no primeiro dia, conta só a primeira');
 
