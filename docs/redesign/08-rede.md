@@ -23,6 +23,16 @@ e um número inventado aqui viraria promessa. Onde não há medida, está escrit
 
 ## O número de casos: 514, não 513
 
+> **RETIFICAÇÃO (06/10) — este número envelheceu, e a conta que o produziu
+> continua certa.** O **514** é a medição de 05/10 e vale para o commit que esta
+> seção cita. **A linha de base de hoje, medida com `npm test` em 06/10, é: 965
+> passando, 53 arquivos, `tests/fluxo/` 520 e `tests/dominio/` 445, zero
+> rejeições não tratadas.** As cinco frentes e os consertos de dado entraram no
+> meio. O número certo está na ONDA 5 de `00-coordenacao.md`; a divisão
+> **517/440** que circulou em briefings era errada (ela saiu da seção 4 de
+> `09-rede-endurecida.md`, já corrigida em `601159e`). **Nada do método desta
+> seção muda** — só o total.
+
 O plano fala em 513 testes de fluxo. **São 514.** Como foi contado:
 
 ```
