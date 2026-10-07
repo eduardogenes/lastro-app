@@ -42,7 +42,7 @@ test('a nuvem não é pré-condição para o app abrir', async () => {
   a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   assert.strictEqual(a.log('A', 0).length, 1, 'e registra série do mesmo jeito');
-  assert.strictEqual(a.E('sync.sujo'), false, 'sem sessão, nem marca sujeira');
+  assert.strictEqual(a.dado('sync').sujo, false, 'sem sessão, nem marca sujeira');
   a.fechar();
 });
 
@@ -100,7 +100,7 @@ test('o app abre em HOJE, não no treino', async () => {
   // O padrão de verdade é HOJE: é o que responde "e agora?" ao acordar.
   const a = await app({ aba: 'hoje' });
   assert.ok(a.$('.ins-foco') || a.$('.ins-tl'), 'HOJE mostra o foco ou a timeline');
-  assert.strictEqual(a.E('view.aba'), 'hoje');
+  assert.strictEqual(a.vista().aba, 'hoje');
   a.fechar();
 });
 
@@ -133,7 +133,7 @@ test('faixa da semana marca os dias e abre atalho nos vazios', async () => {
   });
   assert.ok(vazio, 'o mês sempre tem algum dia passado sem treino');
   a.clicar(vazio);
-  assert.ok(a.E('view.add'), 'tocar num dia vazio abre o lançamento retroativo');
+  assert.ok(a.vista().add, 'tocar num dia vazio abre o lançamento retroativo');
   a.fechar();
 });
 
@@ -163,9 +163,9 @@ test('acompanhamento não avança para o futuro', async () => {
   const a = await app();
   a.aba('dados');
   a.v('mudaMes', 1);
-  assert.strictEqual(a.E('view.mes'), 0);
+  assert.strictEqual(a.vista().mes, 0);
   a.v('mudaMes', -1);
-  assert.strictEqual(a.E('view.mes'), -1);
+  assert.strictEqual(a.vista().mes, -1);
   a.fechar();
 });
 
@@ -531,13 +531,13 @@ test('dia com dois treinos leva à lista, em vez de abrir um deles em silêncio'
 
   a.clicar(cel);
   await a.esperar(60);
-  assert.strictEqual(a.E('view.sessao'), null, 'não escolheu por ele');
+  assert.strictEqual(a.vista().sessao, null, 'não escolheu por ele');
   assert.strictEqual(a.$$('.sessrow.destacada').length, 2, 'apontou as duas linhas');
 
   // e cada linha abre a SUA
   a.clicar(a.$$('.sessrow.destacada')[1]);
   await a.esperar(60);
-  assert.strictEqual(a.J('view.sessao.day'), 'B', 'a de baixo é o B, o mais cedo');
+  assert.strictEqual(a.vista().sessao.day, 'B', 'a de baixo é o B, o mais cedo');
   a.fechar();
 });
 
@@ -552,7 +552,7 @@ test('dia com um treino só continua abrindo direto', async () => {
 
   a.clicar(a.$('.cal-d.hoje'));
   await a.esperar(60);
-  assert.strictEqual(a.J('view.sessao.day'), 'B', 'sem escolha a fazer, abre logo');
+  assert.strictEqual(a.vista().sessao.day, 'B', 'sem escolha a fazer, abre logo');
   a.fechar();
 });
 
@@ -686,7 +686,7 @@ test('a retrospectiva mudou de casa e continua abrindo', async () => {
 
   a.clicar(botao);
   await a.esperar();
-  assert.ok(a.J('view.retro'), 'e abre de verdade');
+  assert.ok(a.vista().retro, 'e abre de verdade');
   a.fechar();
 });
 
