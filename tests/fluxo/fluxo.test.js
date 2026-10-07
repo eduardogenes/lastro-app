@@ -10,20 +10,20 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
 
   // ---- segunda: treino A, com a máquina de peito ocupada ----
   assert.strictEqual(a.E('view.day'), 'A');
-  a.E('toggle(0)');
-  a.E('setAlt(0, "supino-inclinado-no-smith")');       // vira mod de troca
+  a.v('toggle', 0);
+  a.v('setAlt', 0, 'supino-inclinado-no-smith');       // vira mod de troca
   for (let k = 0; k < 3; k++) a.preencher(0, k, 60, 8);
-  a.E('toggle(2)');                                   // crucifixo inclinado: 2 séries
+  a.v('toggle', 2);                                   // crucifixo inclinado: 2 séries
   for (let k = 0; k < 2; k++) a.preencher(2, k, 20, 12);
 
   assert.strictEqual(a.J('S.logs["supino-inclinado-no-smith"]').length, 1,
     'a série foi para o histórico do que ele de fato usou');
 
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   await a.esperar();
   assert.ok(a.$('.promo'), 'houve mudança: pergunta antes de encerrar');
-  a.E('motivoPromo("ocupada")');
-  await a.E('concluirPromo()');           // padrão: só hoje
+  a.v('motivoPromo', 'ocupada');
+  await a.v('concluirPromo');           // padrão: só hoje
   await a.esperar();
 
   assert.strictEqual(a.E('S.prog.A.ex[0].id'), 'chest-press-inclinado-convergente',
@@ -33,39 +33,39 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
 
   // cardio depois do A, como o treinador pediu
   a.aba('dados');
-  a.E('cardioSet("min",30)');
-  await a.E('addCardio()');
+  a.v('cardioSet', 'min', 30);
+  await a.v('addCardio');
   await a.esperar();
   assert.strictEqual(a.E('cardioSemana().length'), 1);
 
   // pesagem
   a.E('view.bodyForm = { peso: "73,4" }');
-  await a.E('addBody("peso")');
+  await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.E('S.body.peso.length'), 1);
 
   // ---- terça: treino B, e ele decide que lateral merece mais uma série ----
   a.aba('treino');
   assert.strictEqual(a.E('view.day'), 'B');
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   const setsB0 = a.E('setsFor(treino("B").ex[0])');
   for (let k = 0; k < setsB0; k++) a.preencher(0, k, 70, 9);
 
-  a.E('go("D")');                          // navega e volta: nada pode se perder
-  a.E('go("B")');
+  a.v('go', 'D');                          // navega e volta: nada pode se perder
+  a.v('go', 'B');
   assert.strictEqual(a.log('B', 0).length, 1, 'a série continua lá');
 
-  a.E('modoEdicao(true)');
+  a.v('modoEdicao', true);
   // Lido do programa e não fixado: a prescrição do treinador muda, e um número
   // cravado aqui transformaria revisão de treino em teste quebrado.
   const antesDoSlot4 = a.E('treino("B").ex[4].s');
-  a.E('mudaSeries(4, 1)');
-  a.E('modoEdicao(false)');
-  await a.E('finalizarSessao()');
+  a.v('mudaSeries', 4, 1);
+  a.v('modoEdicao', false);
+  await a.v('finalizarSessao');
   await a.esperar();
-  a.E('decidePromo(0, "oficial")');
-  a.E('motivoPromo("decisao")');
-  await a.E('concluirPromo()');
+  a.v('decidePromo', 0, 'oficial');
+  a.v('motivoPromo', 'decisao');
+  await a.v('concluirPromo');
   await a.esperar();
 
   assert.strictEqual(a.E('S.prog.B.ex[4].s'), antesDoSlot4 + 1, 'essa ele quis para valer');
@@ -74,14 +74,14 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
 
   // ---- quarta: treino C, com um aparelho que o app não conhecia ----
   assert.strictEqual(a.E('view.day'), 'C');
-  a.E('modoEdicao(true)');
-  a.E('abrirNovoEx()');
+  a.v('modoEdicao', true);
+  a.v('abrirNovoEx');
   a.digitar('nxn', 'Pendulum da unidade nova');
   a.E('document.getElementById("nxg").value = "quadríceps"');
   a.E('document.getElementById("nxk").checked = true');
   await a.E('criarExercicio()');
   await a.esperar();
-  a.E('modoEdicao(false)');
+  a.v('modoEdicao', false);
 
   const novo = a.E('treino("C").ex.length') - 1;
   a.E('toggle(' + novo + ')');
@@ -89,10 +89,10 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   assert.strictEqual(a.J('S.logs["pendulum-da-unidade-nova"]').length, 1,
     'equipamento novo já tem histórico próprio');
 
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   await a.esperar();
-  a.E('decidePromo(0, "oficial")');
-  await a.E('concluirPromo()');
+  a.v('decidePromo', 0, 'oficial');
+  await a.v('concluirPromo');
   await a.esperar();
   assert.ok(a.J('S.prog.C.ex').some(function (x) { return x.id === 'pendulum-da-unidade-nova'; }),
     'e entrou no programa porque ele quis');
@@ -100,9 +100,9 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   // ---- quinta: esqueceu de registrar, lança retroativo ----
   a.aba('dados');
   a.E('abrirAdicionar(' + (Date.now() - 1 * DIA) + ')');
-  a.E('addSet("tipo","E")');
-  a.E('addSet("dur",55)');
-  await a.E('gravarRetro(false)');
+  a.v('addSet', 'tipo', 'E');
+  a.v('addSet', 'dur', 55);
+  await a.v('gravarRetro', false);
   await a.esperar();
   // done fica ordenado por data: o lançamento de ontem não é o último
   const retro = a.J('S.done.filter(function (x) { return x.retro; })');
@@ -145,16 +145,16 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
 
 test('deload com programa editado corta as séries pela metade do que ele prescreveu', async () => {
   const a = await app();
-  a.E('abrirPrograma("A")');
-  await a.E('progSeries("A",0,1)');        // 3 → 4
+  a.v('abrirPrograma', 'A');
+  await a.v('progSeries', 'A', 0, 1);        // 3 → 4
   await a.esperar();
-  a.E('fecharPrograma()');
-  await a.E('setDeload(true)');
+  a.v('fecharPrograma');
+  await a.v('setDeload', true);
   await a.esperar();
 
   assert.strictEqual(a.E('treino("A").ex[0].s'), 4, 'a prescrição é a dele');
   assert.strictEqual(a.E('setsFor(treino("A").ex[0])'), 2, 'e o deload corta essa, não a do treinador');
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   assert.strictEqual(a.$$('.ex.open .setrow').length, 2, 'duas linhas na tela, não quatro');
   assert.ok(a.texto('.ex.open .ex-sub').includes('deload'));
   a.fechar();
@@ -169,10 +169,10 @@ test('exercício removido do programa continua abrindo no histórico antigo', as
   await a.esperar();
   const chave = a.k('A', 0);
 
-  a.E('abrirPrograma("A")');
-  await a.E('progRemove("A",0)');
+  a.v('abrirPrograma', 'A');
+  await a.v('progRemove', 'A', 0);
   await a.esperar();
-  a.E('fecharPrograma()');
+  a.v('fecharPrograma');
 
   a.aba('dados');
   a.E('abrirSessao(' + t + ')');
@@ -187,17 +187,17 @@ test('o app não presume que o dia de hoje é o dia da sessão', async () => {
   // Sessão aberta no C, ele navega para o F e edita: o mod tem que continuar
   // sendo do C, e o F não deve virar editável.
   const a = await app();
-  a.E('go("C")');
-  a.E('toggle(0)');
+  a.v('go', 'C');
+  a.v('toggle', 0);
   a.preencher(0, 0, 100, 8);
   assert.strictEqual(a.E('S.sessao.day'), 'C');
 
-  a.E('go("F")');
+  a.v('go', 'F');
   assert.strictEqual(a.$('.edlink'), null, 'com sessão aberta no C, o F não é editável');
 
-  a.E('go("C")');
-  a.E('modoEdicao(true)');
-  a.E('mudaSeries(1, 1)');
+  a.v('go', 'C');
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 1, 1);
   assert.strictEqual(a.E('S.mods.day'), 'C');
   assert.strictEqual(a.E('S.mods.list.length'), 1);
   a.fechar();
