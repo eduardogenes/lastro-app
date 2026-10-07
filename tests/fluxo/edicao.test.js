@@ -70,7 +70,7 @@ test('adicionar exercício entra só no dia e mantém histórico próprio', asyn
   assert.strictEqual(a.S().prog.A.ex.length, antes, 'o oficial não cresceu');
 
   a.v('modoEdicao', false);
-  a.E('toggle(' + antes + ')');
+  a.v('toggle', antes);
   a.preencher(antes, 0, 40, 12);
   assert.strictEqual(a.S().logs["pec-deck"].length, 1, 'e já registra no histórico dele');
   a.fechar();
