@@ -319,7 +319,7 @@ test('o detalhe de um treino do plano oferece corrigir e apagar', async () => {
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
   const a = await app({ agora: agora, estado: f, aba: 'dados' });
-  a.E('abrirSessao(' + f.t + ')');
+  a.v('abrirSessao', f.t);
 
   const d = a.vJ('ctx.detalheDaSessao');
   assert.strictEqual(d.livre, false, 'é treino do plano, não avulso');
@@ -335,7 +335,7 @@ test('corrigir o tempo torna a duração declarada, e o aproximado some', async 
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
   const a = await app({ agora: agora, estado: f, aba: 'dados' });
-  a.E('abrirSessao(' + f.t + ')');
+  a.v('abrirSessao', f.t);
   assert.strictEqual(a.vJ('ctx.detalheDaSessao').exato, false, 'nasce aproximado');
 
   await a.E('CTX.corrigeDuracao(' + f.t + ', 45)');
@@ -374,7 +374,7 @@ test('apagar o treino leva as séries dele junto, com lápide nas duas coisas', 
   const comHistorico = () => a.J('Object.keys(S.logs)').length;
   assert.strictEqual(comHistorico(), 2, 'dois exercícios com histórico');
 
-  a.E('abrirSessao(' + f.t + ')');
+  a.v('abrirSessao', f.t);
   await a.E('CTX.editaSessao(' + f.t + ')');
   await a.esperar(80);
 
@@ -391,7 +391,7 @@ test('o aviso diz quantas séries vão junto antes de apagar', async () => {
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
   const a = await app({ agora: agora, estado: f, aba: 'dados' });
-  a.E('abrirSessao(' + f.t + ')');
+  a.v('abrirSessao', f.t);
 
   a.recusar();
   await a.E('CTX.editaSessao(' + f.t + ')');
