@@ -175,7 +175,7 @@ test('pulado não entra na contagem de pendências da confirmação', async () =
   a.v('toggle', 0);
   for (let k = 0; k < a.E('setsFor(treino(\'A\').ex[0])'); k++) a.preencher(0, k, 40, 10);
   const total = a.E('treino(\'A\').ex.length');
-  for (let i = 1; i < total; i++) await a.E('pularEx(' + i + ')');
+  for (let i = 1; i < total; i++) await a.v('pularEx', i);
   await a.esperar();
 
   await a.v('finalizarSessao');
@@ -213,7 +213,7 @@ test('detalhe da sessão mostra pendências e pausa', async () => {
 
   await a.v('finalizarSessao');
   await a.esperar();
-  a.E('abrirSessao(' + t + ')');
+  a.v('abrirSessao', t);
 
   const pend = a.texto('.pend');
   assert.ok(/1 pulado/.test(pend), pend);
