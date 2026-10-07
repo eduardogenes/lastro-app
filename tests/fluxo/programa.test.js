@@ -21,7 +21,7 @@ test('a chave do histórico é o exercício, não a posição', async () => {
 test('inserir um exercício no meio não desloca o histórico dos outros', async () => {
   // A regressão que este redesenho existe para impedir.
   const a = await app();
-  a.E('toggle(3)');
+  a.v('toggle', 3);
   a.preencher(3, 0, 50, 10);
   const chave = a.k('A', 3);
   const antes = a.J('S.logs[' + JSON.stringify(chave) + ']');
@@ -63,7 +63,7 @@ test('o catálogo conhece o programa e os substitutos', async () => {
 
 test('a lista de troca traz o indicado do treinador e o resto do grupo', async () => {
   const a = await app();
-  const lista = a.J('altList("A", 4)');   // elevação lateral na máquina
+  const lista = a.vJ('altList', 'A', 4);   // elevação lateral na máquina
   assert.ok(lista.length >= 3);
   assert.ok(lista[0].ind, 'o que o treinador indicou vem primeiro');
   assert.ok(lista.some(function (x) { return !x.ind; }), 'e depois o resto do grupo');
@@ -77,13 +77,13 @@ test('exercício cadastrado por ele aparece na troca e tem histórico próprio',
   a.E(`S.ex["maquina-nova-da-academia"] = { n:"Máquina nova da academia",
         car:"pino", g:"delt lateral", c:0, cue:"", meu:1 }; montaCatalogo(); render()`);
 
-  const lista = a.J('altList("A", 4)');
+  const lista = a.vJ('altList', 'A', 4);
   const achou = lista.filter(function (x) { return x.id === 'maquina-nova-da-academia'; })[0];
   assert.ok(achou, 'sem isso, todo equipamento novo nasceria invisível');
 
   const original = a.k('A', 4);
-  a.E('toggle(4)');
-  a.E('setAlt(4,"maquina-nova-da-academia")');
+  a.v('toggle', 4);
+  a.v('setAlt', 4, 'maquina-nova-da-academia');
   a.preencher(4, 0, 25, 15);
   assert.strictEqual(a.J('S.logs["maquina-nova-da-academia"]').length, 1);
   assert.strictEqual(a.E('S.logs[' + JSON.stringify(original) + ']'), undefined,
@@ -121,18 +121,18 @@ test('a rotação vem do estado e o app não presume seis dias', async () => {
   // plano 3 explícito: a migração reescreve a rotação, e aqui queremos a dele
   const a = await app({ estado: { plano: 3, logs: {}, done: [{ day: 'C', t: Date.now(), sid: Date.now() }],
                                   rot: ['A', 'B', 'C'] } });
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C']);
-  assert.strictEqual(a.E('nextDay()'), 'A', 'depois do último volta para o primeiro');
+  assert.deepStrictEqual(a.vJ('rot'), ['A', 'B', 'C']);
+  assert.strictEqual(a.v('nextDay'), 'A', 'depois do último volta para o primeiro');
   a.fechar();
 });
 
 test('o mesmo aparelho em duas posições da mesma sessão não se sobrescreve', async () => {
   const a = await app();
-  a.E('toggle(4)');
-  a.E('setAlt(4,"pec-deck")');
+  a.v('toggle', 4);
+  a.v('setAlt', 4, 'pec-deck');
   a.preencher(4, 0, 40, 12);
-  a.E('toggle(5)');
-  a.E('setAlt(5,"pec-deck")');
+  a.v('toggle', 5);
+  a.v('setAlt', 5, 'pec-deck');
   a.preencher(5, 0, 45, 10);
 
   const h = a.J('S.logs["pec-deck"]');
@@ -144,7 +144,7 @@ test('o mesmo aparelho em duas posições da mesma sessão não se sobrescreve',
 test('estado sem programa nasce com o do treinador', async () => {
   const a = await app({ estado: { logs: {}, done: [], prog: null, rot: null } });
   await a.esperar();
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'D', 'E', 'F']);
+  assert.deepStrictEqual(a.vJ('rot'), ['A', 'B', 'C', 'D', 'E', 'F']);
   assert.strictEqual(a.E('treino("A").ex.length'), 7);
   assert.strictEqual(a.E('treino("A").ex[0].s'), 3);
   assert.strictEqual(a.E('treino("A").ex[0].d'), 180, 'o descanso vem do slot');
@@ -155,7 +155,7 @@ test('o programa editado sobrevive a fechar e reabrir', async () => {
   const a = await app();
   a.E('S.prog.A.ex[0].s = 4');
   a.E('S.ex["meu-aparelho"] = { n:"Meu aparelho", car:"pino", g:"peito", c:0, cue:"", meu:1 }');
-  await a.E('save()');
+  await a.v('save');
   await a.esperar();
   const bruto = a.gravado();
   a.fechar();
