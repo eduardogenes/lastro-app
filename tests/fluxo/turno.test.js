@@ -35,7 +35,7 @@ test('o botão PREVISTO oferece os três turnos, com a hora de cada um', async (
 test('cada opção diz de antemão qual refeição vira o pós-treino', async () => {
   const a = await noHoje();
   await abreFolha(a);
-  const t = a.J('CTX.seletorDeDia().turnos');
+  const t = a.vJ('ctx.seletorDeDia').turnos;
   assert.strictEqual(t[0].pos, 'Café da manhã');
   assert.strictEqual(t[1].pos, 'Almoço');
   assert.strictEqual(t[2].pos, 'Jantar',
@@ -71,7 +71,7 @@ test('o selo de pós-treino aparece na refeição certa', async () => {
   assert.strictEqual(comSelo[0].querySelector('.ins-tl-nome').textContent, 'Jantar',
     'à noite o jantar recebe o papel');
   assert.strictEqual(comSelo[0].querySelector('.ins-tl-selo').textContent, 'pós-treino');
-  assert.strictEqual(a.J('CTX.hoje().posTreino'), 'jantar');
+  assert.strictEqual(a.vJ('ctx.hoje').posTreino, 'jantar');
   a.fechar();
 });
 
@@ -97,7 +97,7 @@ test('o almoço que não cabe no treino vai para depois dele', async () => {
   const nota = a.texto('.hj-conflito');
   assert.ok(nota && /Almoço foi para as 13:45/.test(nota),
     'não é aviso: é a procedência de um horário que não bate com o plano — ' + nota);
-  assert.strictEqual(a.J('CTX.hoje().posTreino'), 'almoco',
+  assert.strictEqual(a.vJ('ctx.hoje').posTreino, 'almoco',
     'e é ele que carrega o papel de pós-treino');
   a.fechar();
 });
@@ -113,7 +113,7 @@ test('voltar para a manhã desfaz o deslocamento', async () => {
   // `E` e não `J`: JSON.stringify(undefined) não é JSON, e ausência é o ponto
   assert.strictEqual(a.S().dia.turno, undefined, 'manhã é a ausência de deslocamento');
   assert.strictEqual(a.E('"turno" in S.dia'), false, 'a chave sai, não fica como null');
-  assert.strictEqual(a.J('CTX.hoje().refs[0].t'), '05:45');
+  assert.strictEqual(a.vJ('ctx.hoje').refs[0].t, '05:45');
   a.fechar();
 });
 
