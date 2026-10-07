@@ -22,7 +22,7 @@ test('estado do formato original carrega com padrões', async () => {
   assert.deepStrictEqual(a.J('S.carga'), {});
   assert.deepStrictEqual(a.J('S.cardio'), []);
   assert.deepStrictEqual(a.J('S.body.peso'), []);
-  assert.strictEqual(a.E('nextDay()'), 'B');
+  assert.strictEqual(a.v('nextDay'), 'B');
   a.fechar();
 });
 
@@ -45,19 +45,19 @@ test('sessão sem sid abre no detalhe e mostra traço na duração', async () =>
 
 test('a referência do exercício vem do histórico antigo', async () => {
   const a = await app({ estado: ANTIGO });
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   assert.match(a.texto('.ex.open .setrow .setant'), /^30 × /);
   a.fechar();
 });
 
 test('exportar carrega todos os campos do estado', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   a.aba('guia');
   await a.modo('o app');
-  a.E('showJSON()');
+  a.v('showJSON');
 
   const bkp = JSON.parse(a.doc.getElementById('jout').value);
   assert.strictEqual(bkp.app, 'lastro');
@@ -96,22 +96,22 @@ test('exportar carrega todos os campos do estado', async () => {
 
 test('apagar e reimportar devolve os dados idênticos', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   a.preencher(0, 1, 40, 9);
   a.E('abrirAdicionar(' + (Date.now() - 2 * DIA) + ')');
-  a.E('addSet("tipo","livre")');
-  a.E('addSet("grupo","dorsal")');
-  await a.E('gravarRetro(false)');
+  a.v('addSet', 'tipo', 'livre');
+  a.v('addSet', 'grupo', 'dorsal');
+  await a.v('gravarRetro', false);
   await a.esperar();
 
   a.aba('guia');
   await a.modo('o app');
-  a.E('showJSON()');
+  a.v('showJSON');
   const bkp = a.doc.getElementById('jout').value;
   const antes = JSON.parse(bkp).data;
 
-  await a.E('wipe()');
+  await a.v('wipe');
   await a.esperar();
   assert.strictEqual(a.E('S.done.length'), 0);
 
@@ -127,12 +127,12 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
 
 test('importar lixo não toca no estado', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   const antes = a.J('S.logs');
 
   a.aba('guia');
-  await a.E('importText("{ isso nao e json")');
+  await a.v('importText', '{ isso nao e json');
   assert.ok(a.toast().includes('JSON inválido'));
 
   await a.E('importText(JSON.stringify({ qualquer: 1 }))');
@@ -168,12 +168,12 @@ test('histórico longo não é truncado', async () => {
 
 test('abrir o JSON conta como backup', async () => {
   const a = await app({ estado: { logs: {}, done: [{ day: 'A', t: Date.now() - 60 * DIA }] } });
-  assert.ok(a.E('diasSemBackup()') > 30);
+  assert.ok(a.v('diasSemBackup') > 30);
   a.aba('guia');
   assert.ok(a.$('.gu-cobra'), 'o GUIA cobra o backup quando passou de 30 dias');
   assert.match(a.texto('.gu-cobra'), /backup|exportou/);
 
-  a.E('showJSON()');
+  a.v('showJSON');
   await a.esperar();
   assert.ok(a.E('S.export') > 0, 'quem copia o texto na mão também fez backup');
   a.aba('guia');
@@ -183,7 +183,7 @@ test('abrir o JSON conta como backup', async () => {
 
 test('dados sobrevivem a fechar e reabrir o app', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 42.5, 10);
   await a.esperar(900);                 // espera o debounce do save
   const gravado = a.gravado();
@@ -273,8 +273,8 @@ test('exercício novo não herda a carga do que ocupava a posição', async () =
     done: [{ day: 'F', t: t, sid: t }]
   } });
   await a.esperar();
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   // vazio, não 'kg': a unidade fica no rótulo ao lado, e o placeholder é
   // reservado para o dado — a carga da última vez. Sem histórico, sem número.
   assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '', 'sem referência: é outro exercício');
@@ -320,7 +320,7 @@ test('o backup sai em UTF-8, e o acento sobrevive à volta', async () => {
   // leitor do outro lado adivinha, e adivinha errado.
   const a = await app();
 
-  const txt = a.E('payload()');
+  const txt = a.v('payload');
   const o = JSON.parse(txt);
   assert.ok(o.data.prog.A.name.includes('tríceps'), 'acento cru no export: ' + o.data.prog.A.name);
   assert.ok(/6–10/.test(o.data.prog.A.ex[0].r), 'travessão cru no export: ' + o.data.prog.A.ex[0].r);
@@ -364,7 +364,7 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   a.E(`S.body.bioGorduraPct = [{ t: 1790000000000, v: 17.8, m: 1790000000000 }]`);
   a.E(`S.body.bioAgua = [{ t: 1790000000000, v: 45.3, m: 1790000000000 }]`);
   // e os três campos novos do dia de comida, dentro de `S.dia`
-  a.E(`diaDeComida()`);
+  a.v('diaDeComida');
   a.E(`S.dia.done = { pos: 1790000000000 }`);
   a.E(`S.dia.como = { pos: 'fora' }`);
   a.E(`S.dia.aguaNaoContada = 1`);
@@ -372,15 +372,15 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   a.E(`S.promoPendente = [{ sid: 1790000000000, day: 'A', t: 1790000000000, m: 1790000000000,
         mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }],
         resumoMods: ['Pushdown: 2 → 3 séries'] }]`);
-  await a.E('save()');
+  await a.v('save');
 
   a.aba('guia');
   await a.modo('o app');
-  a.E('showJSON()');
+  a.v('showJSON');
   const bkp = a.doc.getElementById('jout').value;
   const antes = JSON.parse(bkp).data;
 
-  await a.E('wipe()');
+  await a.v('wipe');
   await a.esperar();
   a.aba('guia');
   await a.E('importText(' + JSON.stringify(bkp) + ')');
@@ -438,16 +438,16 @@ test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
     a.E('S.body[' + JSON.stringify(k) + '] = [{ t: ' + (1790000000000 + i) +
         ', v: ' + (10 + i) + ', m: 1 }]');
   });
-  await a.E('save()');
+  await a.v('save');
 
   a.aba('guia');
   await a.modo('o app');
-  a.E('showJSON()');
+  a.v('showJSON');
   const bkp = a.doc.getElementById('jout').value;
   assert.deepStrictEqual(Object.keys(JSON.parse(bkp).data.body).sort(), chaves.slice().sort(),
     'a exportação leva o estado inteiro, então as sete saem');
 
-  await a.E('wipe()');
+  await a.v('wipe');
   await a.esperar();
   a.aba('guia');
   await a.E('importText(' + JSON.stringify(bkp) + ')');
