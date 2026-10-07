@@ -26,10 +26,27 @@ html {
      árvore inteira, e quem precisa de menos (o quadro de ajuste, que arrasta)
      continua podendo pedir `none`.
 
-     O que se perde é a pinça para enxergar melhor. É aceitável aqui porque
-     nenhum texto do app é menor que 16px e a leitura não depende dela — e
-     porque zoom acidental no meio de uma série, com a mão suada, custa mais que
-     zoom deliberado ganha. */
+     O que se perde é a pinça para enxergar melhor, e o preço é maior do que
+     este comentário já afirmou. Duas correções medidas em 06/10:
+
+     1. TEM texto bem abaixo de 16px. Das 28 declarações de `font-size` nas
+        folhas, 22 estão abaixo de 16px, e a menor é 7,5px (o rótulo do eixo da
+        sparkline, `componentes.css`); duas ficam abaixo do piso de 9px que o
+        DESIGN.md escreve para rótulo mono (7,5px e 8px). O "nunca abaixo de
+        16px" é regra dos CAMPOS DE FORMULÁRIO, mais abaixo neste arquivo, onde
+        ela tem razão própria e correta — o Safari dá zoom ao focar campo com
+        fonte menor. Não é, e nunca foi, afirmação sobre o app inteiro.
+
+     2. No app INSTALADO na tela de início, a pinça FUNCIONA — medido no
+        aparelho. O `user-scalable=no` do `index.html` não é honrado ali, então
+        nesta configuração, que é como o app é usado, a declaração não faz
+        efeito. O que ela ainda alcança é o Safari fora da tela cheia.
+
+     O bloqueio fica, e a razão que o sustenta é esta, que não dependia de
+     nenhuma das duas: zoom acidental no meio de uma série, com a mão suada,
+     custa mais que zoom deliberado ganha. E o que de fato impede o zoom
+     automático — o que o Safari dá sozinho, sem ninguém pedir — é a regra dos
+     16px no campo, que é real e funciona. */
   touch-action: pan-x pan-y;
 }
 

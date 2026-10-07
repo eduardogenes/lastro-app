@@ -280,6 +280,15 @@ test('alvo de toque não é forçado duas vezes', () => {
 // O app é instalado na tela de início e usado de pé, com uma mão, suado. Zoom
 // acidental no meio de uma série custa mais do que zoom deliberado ganha, e
 // cada regra abaixo tira um gesto que só faz sentido numa página.
+//
+// O QUE ESTES CASOS GUARDAM É A DECLARAÇÃO, NÃO O EFEITO, e a diferença foi
+// medida: em 06/10, no PWA instalado na tela de início, a PINÇA FUNCIONA. Nem
+// o `user-scalable=no`, nem o `touch-action`, nem a recusa dos eventos de gesto
+// a impedem ali. A decisão é manter as três — elas ainda valem no Safari fora
+// da tela cheia, e o bloqueio é do dono —, mas nenhum nome de caso abaixo pode
+// prometer que o zoom não acontece. O que de fato impede o zoom AUTOMÁTICO, o
+// que o Safari dá sozinho ao focar campo, é o piso de 16px do campo, e esse
+// caso está mais abaixo.
 
 const base = () => fonte('src/base.css');
 
@@ -348,7 +357,7 @@ function trechoDeComponente(fonte: string, nome: string): string {
   return fim > 0 ? resto.slice(0, fim) : resto;
 }
 
-test('a raiz recusa os gestos de zoom, e não só os botões', () => {
+test('o `touch-action` que recusa o zoom está na RAIZ, e não só nos botões', () => {
   // Estava só no `button`, e o toque duplo que incomoda é o dado num texto,
   // num cartão ou numa foto. O efetivo é a interseção com os ancestrais, então
   // declarar na raiz alcança a árvore inteira.
@@ -358,14 +367,19 @@ test('a raiz recusa os gestos de zoom, e não só os botões', () => {
     'pan-x pan-y: rolar sim, pinça e toque duplo não');
 });
 
-test('o viewport não deixa o navegador escalar a página', () => {
+test('o viewport DECLARA que o navegador não escala a página', () => {
+  // "Declara" e não "impede": no app instalado a declaração não é honrada
+  // (medido em 06/10). Ela fica porque ainda vale no Safari fora da tela cheia.
   assert.match(indexHtml(), /user-scalable=no/);
   assert.match(indexHtml(), /maximum-scale=1/);
   assert.match(indexHtml(), /viewport-fit=cover/, 'a área segura continua contada');
 });
 
-test('a pinça do WebKit é recusada, que o touch-action não alcança', () => {
+test('a pinça do WebKit tem recusa própria, que o touch-action não alcança', () => {
   // O Safari implementa a pinça como gesto próprio, acima do touch-action.
+  // A recusa está escrita; ela não é suficiente no app instalado, onde a pinça
+  // funciona (medido em 06/10). O caso guarda que os três eventos continuam
+  // sendo recusados, não que o gesto não aconteça.
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(n => {
     assert.ok(mainJsx().includes(n), 'falta recusar ' + n);
   });
