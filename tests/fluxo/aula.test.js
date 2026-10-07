@@ -139,7 +139,7 @@ test('aplicar um modelo põe os movimentos no dia', async () => {
   assert.strictEqual(a.vJ('treino', 'HX').ex.length, 0);
 
   const id = a.S().aulas[0].id;
-  a.E(`aplicarModeloDeAula(${JSON.stringify(id)})`);
+  a.v('aplicarModeloDeAula', id);
   await a.esperar(60);
   assert.strictEqual(a.vJ('treino', 'HX').ex.length, 4);
   assert.strictEqual(a.vJ('treino', 'HX').ex[3].u, 'cal', 'a medida vem junto');
@@ -155,7 +155,7 @@ test('apagar um modelo deixa lápide, senão a sincronização o ressuscita', as
   await a.esperar(60);
   const id = a.S().aulas[0].id;
 
-  a.E(`apagarModeloDeAula(${JSON.stringify(id)})`);
+  a.v('apagarModeloDeAula', id);
   await a.esperar(60);
   assert.deepStrictEqual(a.S().aulas, []);
   assert.ok(a.S().apagados['aula:' + id] > 0,
