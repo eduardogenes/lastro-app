@@ -15,8 +15,8 @@ test('série incompleta não abre sessão', async () => {
   const a = await app();
   a.v('toggle', 0);
   a.preencher(0, 0, 40, null);          // só a carga
-  assert.strictEqual(a.E('S.sessao'), null);
-  assert.strictEqual(a.E('S.done.length'), 0);
+  assert.strictEqual(a.S().sessao, null);
+  assert.strictEqual(a.S().done.length, 0);
   assert.deepStrictEqual(a.J('Object.keys(S.logs)'), []);
   a.fechar();
 });
@@ -27,12 +27,12 @@ test('série completa abre a sessão e grava na hora', async () => {
   a.preencher(0, 0, 40, 10);
 
   assert.ok(a.E('S.sessao !== null'), 'sessão deveria estar aberta');
-  assert.strictEqual(a.E('S.done.length'), 1);
-  assert.strictEqual(a.E('S.done[0].sid'), a.E('S.sessao.sid'));
+  assert.strictEqual(a.S().done.length, 1);
+  assert.strictEqual(a.S().done[0].sid, a.S().sessao.sid);
 
   const log = a.log('A',0)[0];
   assert.deepStrictEqual(log.sets[0], [40, 10]);
-  assert.strictEqual(log.sid, a.E('S.sessao.sid'));
+  assert.strictEqual(log.sid, a.S().sessao.sid);
   a.fechar();
 });
 
@@ -66,7 +66,7 @@ test('sessão encerra por inatividade, grava duração e avança a rotação', a
   const a = await app();
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  const estado = a.J('S');
+  const estado = a.S();
 
   // seis horas atrás, última série cinco horas atrás
   const agora = Date.now();
@@ -88,7 +88,7 @@ test('sessão do mesmo dia com pouca pausa continua aberta', async () => {
   const a = await app();
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  const estado = a.J('S');
+  const estado = a.S();
   estado.sessao.ultima = Date.now() - 30 * 60 * 1000;   // 30 min de descanso
   a.fechar();
 
@@ -182,13 +182,13 @@ test('substituto acumula histórico próprio entre treinos', async () => {
   a.v('toggle', 1);
   a.v('setAlt', 1, 'crossover-na-polia-baixa');
   a.preencher(1, 0, 20, 12);
-  assert.strictEqual(a.J('S.logs["crossover-na-polia-baixa"]').length, 1);
+  assert.strictEqual(a.S().logs["crossover-na-polia-baixa"].length, 1);
 
   a.v('go', 'E');
   a.v('toggle', 3);
   a.v('setAlt', 3, 'crossover-na-polia-baixa');
   a.preencher(3, 0, 22, 12);
-  const h = a.J('S.logs["crossover-na-polia-baixa"]');
+  const h = a.S().logs["crossover-na-polia-baixa"];
   assert.strictEqual(h.length, 2, 'mesma chave, dois dias diferentes');
   assert.notStrictEqual(h[0].sl, h[1].sl, 'cada um sabe de que posição veio');
   a.fechar();
@@ -205,7 +205,7 @@ test('deload corta as séries pela metade e marca a sessão', async () => {
 
   a.preencher(0, 0, 40, 10);
   assert.strictEqual(a.log('A',0)[0].dl, 1);
-  assert.strictEqual(a.E('S.done[0].dl'), 1);
+  assert.strictEqual(a.S().done[0].dl, 1);
   assert.strictEqual(a.v('sessoesDeTrabalho'), 0, 'deload não conta para as 48');
   a.fechar();
 });
@@ -231,7 +231,7 @@ test('abrir o app com treino em andamento cai no treino, não em HOJE', async ()
   await a.pronto();                    // sem a.aba(): é o boot que tem que decidir
 
   assert.strictEqual(a.v('ctx.abaAtual'), 'treino');
-  assert.strictEqual(a.E('view.day'), 'B', 'e no dia da sessão');
+  assert.strictEqual(a.vista().day, 'B', 'e no dia da sessão');
   assert.strictEqual(a.E('S.sessao && S.sessao.day'), 'B', 'a sessão sobreviveu ao boot');
   a.fechar();
 });
@@ -249,7 +249,7 @@ test('sessão vencida não sequestra a abertura', async () => {
   const agora = agoraEstavel();
   const a = abrirApp({ agora: agora, estado: emTreino('B', agora - 2 * DIA) });
   await a.pronto();
-  assert.strictEqual(a.E('S.sessao'), null, 'foi encerrada no boot');
+  assert.strictEqual(a.S().sessao, null, 'foi encerrada no boot');
   assert.strictEqual(a.v('ctx.abaAtual'), 'hoje');
   a.fechar();
 });
@@ -259,11 +259,11 @@ test('chegar na aba TREINO cai no dia da sessão, venha de onde vier', async () 
   const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
 
   a.v('go', 'C');
-  assert.strictEqual(a.E('view.day'), 'C', 'dentro da aba, o dia é livre');
+  assert.strictEqual(a.vista().day, 'C', 'dentro da aba, o dia é livre');
 
   a.aba('comida');
   a.aba('treino');
-  assert.strictEqual(a.E('view.day'), 'B', 'voltando de fora, cai na sessão de novo');
+  assert.strictEqual(a.vista().day, 'B', 'voltando de fora, cai na sessão de novo');
   a.fechar();
 });
 
@@ -271,9 +271,9 @@ test('mas não congela: dentro da aba o dia continua livre', async () => {
   const agora = agoraEstavel();
   const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
   a.v('go', 'D');
-  assert.strictEqual(a.E('view.day'), 'D');
+  assert.strictEqual(a.vista().day, 'D');
   a.v('render');
-  assert.strictEqual(a.E('view.day'), 'D', 'redesenhar não puxa de volta');
+  assert.strictEqual(a.vista().day, 'D', 'redesenhar não puxa de volta');
   a.fechar();
 });
 
@@ -282,7 +282,7 @@ test('sem sessão, trocar de aba não mexe no dia escolhido', async () => {
   a.v('go', 'C');
   a.aba('comida');
   a.aba('treino');
-  assert.strictEqual(a.E('view.day'), 'C', 'nada a priorizar, nada muda');
+  assert.strictEqual(a.vista().day, 'C', 'nada a priorizar, nada muda');
   a.fechar();
 });
 
@@ -341,7 +341,7 @@ test('corrigir o tempo torna a duração declarada, e o aproximado some', async 
   await a.E('CTX.corrigeDuracao(' + f.t + ', 45)');
   await a.esperar(60);
 
-  const m = a.J('S.done[0]');
+  const m = a.S().done[0];
   assert.strictEqual(m.dur, 45 * 60000);
   assert.strictEqual(m.fim, 'manual', 'passa a ser declarado, não estimado');
   assert.ok(m.m > 0, 'com carimbo, senão a fusão devolve o valor velho');
@@ -356,11 +356,11 @@ test('a correção é presa a limites, e não aceita lixo', async () => {
 
   await a.E('CTX.corrigeDuracao(' + f.t + ', 0)');
   await a.esperar(40);
-  assert.strictEqual(a.J('S.done[0]').dur, 60000, 'piso de um minuto');
+  assert.strictEqual(a.S().done[0].dur, 60000, 'piso de um minuto');
 
   await a.E('CTX.corrigeDuracao(' + f.t + ', 9999)');
   await a.esperar(40);
-  assert.strictEqual(a.J('S.done[0]').dur, 600 * 60000, 'teto de dez horas');
+  assert.strictEqual(a.S().done[0].dur, 600 * 60000, 'teto de dez horas');
   a.fechar();
 });
 
@@ -370,7 +370,7 @@ test('apagar o treino leva as séries dele junto, com lápide nas duas coisas', 
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
   const a = await app({ agora: agora, estado: f, aba: 'dados' });
-  assert.strictEqual(a.J('S.done').length, 1);
+  assert.strictEqual(a.S().done.length, 1);
   const comHistorico = () => a.J('Object.keys(S.logs)').length;
   assert.strictEqual(comHistorico(), 2, 'dois exercícios com histórico');
 
@@ -378,12 +378,12 @@ test('apagar o treino leva as séries dele junto, com lápide nas duas coisas', 
   await a.E('CTX.editaSessao(' + f.t + ')');
   await a.esperar(80);
 
-  assert.deepStrictEqual(a.J('S.done'), [], 'a marca do dia saiu');
+  assert.deepStrictEqual(a.S().done, [], 'a marca do dia saiu');
   assert.strictEqual(comHistorico(), 0, 'e os exercícios ficaram sem histórico nenhum');
-  const mortos = a.J('S.apagados');
+  const mortos = a.S().apagados;
   assert.ok(mortos['done:' + f.t], 'lápide da sessão');
   assert.ok(Object.keys(mortos).some(k => k.indexOf('log:') === 0), 'e das séries');
-  assert.strictEqual(a.E('view.sessao'), null, 'a tela fechou sozinha');
+  assert.strictEqual(a.vista().sessao, null, 'a tela fechou sozinha');
   a.fechar();
 });
 
@@ -396,7 +396,7 @@ test('o aviso diz quantas séries vão junto antes de apagar', async () => {
   a.recusar();
   await a.E('CTX.editaSessao(' + f.t + ')');
   await a.esperar(60);
-  assert.strictEqual(a.J('S.done').length, 1, 'recusou: nada foi apagado');
+  assert.strictEqual(a.S().done.length, 1, 'recusou: nada foi apagado');
   const p = a.perguntas().join(' ');
   assert.ok(/5 séries/.test(p), 'a conta das séries aparece: ' + p);
   assert.ok(/outros aparelhos/.test(p), 'e que vale para os outros: ' + p);
@@ -413,7 +413,7 @@ test('o treino EM ANDAMENTO não se apaga por aqui', async () => {
 
   await a.E('CTX.editaSessao(' + f.t + ')');
   await a.esperar(60);
-  assert.strictEqual(a.J('S.done').length, 1, 'continua lá');
+  assert.strictEqual(a.S().done.length, 1, 'continua lá');
   assert.ok(/em andamento/.test(a.toast()), a.toast());
   a.fechar();
 });
