@@ -8,7 +8,7 @@ const ONTEM = () => Date.now() - DIA;
 
 test('treino do plano lançado sem detalhar', async () => {
   const a = await app();
-  a.E('abrirAdicionar(' + ONTEM() + ')');
+  a.v('abrirAdicionar', ONTEM());
   a.v('addSet', 'tipo', 'D');
   a.v('addSet', 'dur', 60);
   await a.v('gravarRetro', false);
@@ -28,7 +28,7 @@ test('done fica ordenado por data mesmo lançando para trás', async () => {
   const a = await app();
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);          // sessão de hoje
-  a.E('abrirAdicionar(' + (Date.now() - 3 * DIA) + ')');
+  a.v('abrirAdicionar', (Date.now() - 3 * DIA));
   a.v('addSet', 'tipo', 'B');
   await a.v('gravarRetro', false);
   await a.esperar();
@@ -39,7 +39,7 @@ test('done fica ordenado por data mesmo lançando para trás', async () => {
 
 test('treino avulso exige grupo muscular', async () => {
   const a = await app();
-  a.E('abrirAdicionar(' + ONTEM() + ')');
+  a.v('abrirAdicionar', ONTEM());
   a.v('addSet', 'tipo', 'livre');
   await a.v('gravarRetro', false);
   await a.esperar();
@@ -51,7 +51,7 @@ test('treino avulso exige grupo muscular', async () => {
 
 test('treino avulso é presença, não é o programa', async () => {
   const a = await app();
-  a.E('abrirAdicionar(' + ONTEM() + ')');
+  a.v('abrirAdicionar', ONTEM());
   a.v('addSet', 'tipo', 'livre');
   a.v('addSet', 'grupo', 'peito');
   a.v('addSet', 'grupo', 'tríceps');
@@ -72,7 +72,7 @@ test('treino avulso é presença, não é o programa', async () => {
 test('preencher os exercícios grava na data do treino, não na de hoje', async () => {
   const a = await app();
   const ontem = ONTEM();
-  a.E('abrirAdicionar(' + ontem + ')');
+  a.v('abrirAdicionar', ontem);
   a.v('addSet', 'tipo', 'B');
   a.v('addSet', 'dur', 50);
   await a.v('gravarRetro', true);
@@ -100,7 +100,7 @@ test('abrir retroativo com treino em andamento encerra o de hoje', async () => {
   a.preencher(0, 0, 40, 10);
   a.E('S.sessao.inicio = Date.now() - 50*60000');
 
-  a.E('abrirAdicionar(' + ONTEM() + ')');
+  a.v('abrirAdicionar', ONTEM());
   a.v('addSet', 'tipo', 'C');
   await a.v('gravarRetro', true);
   await a.esperar();
@@ -115,7 +115,7 @@ test('abrir retroativo com treino em andamento encerra o de hoje', async () => {
 test('sessão retroativa esquecida encerra na virada do dia de uso', async () => {
   const a = await app();
   const ontem = ONTEM();
-  a.E('abrirAdicionar(' + ontem + ')');
+  a.v('abrirAdicionar', ontem);
   a.v('addSet', 'tipo', 'C');
   await a.v('gravarRetro', true);
   await a.esperar();
@@ -145,14 +145,14 @@ test('dia vazio do calendário é atalho para lançar', async () => {
 test('apagar registro avulso', async () => {
   const a = await app();
   const t = Date.now() - 2 * DIA;
-  a.E('abrirAdicionar(' + t + ')');
+  a.v('abrirAdicionar', t);
   a.v('addSet', 'tipo', 'livre');
   a.v('addSet', 'grupo', 'dorsal');
   await a.v('gravarRetro', false);
   await a.esperar();
 
   const marca = a.S().done[0];
-  a.E('abrirSessao(' + marca.t + ')');
+  a.v('abrirSessao', marca.t);
   assert.strictEqual(a.texto('.htitle'), 'dorsal');
 
   // pelo mesmo caminho da tela: o botão de apagar chama CTX.editaSessao
