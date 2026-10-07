@@ -26,7 +26,7 @@ está escrito que não houve.
 
 ## O estado da suíte
 
-| | antes (`39d2fdb`) | depois (`HEAD`) |
+| | antes (`39d2fdb`) | depois (a entrega desta frente) |
 |---|---:|---:|
 | `tests/fluxo/` | 514 | 517 |
 | `tests/dominio/` | 372 | 437 |
@@ -37,6 +37,15 @@ está escrito que não houve.
 build, não o fonte). `npx tsc --noEmit` sai limpo. As quatro rejeições não
 tratadas (`createElementNS` ×2, `addEventListener` ×2) são as mesmas de antes:
 trabalho assíncrono chegando numa janela jsdom já fechada. Não mexi nelas.
+
+**RETIFICAÇÃO (06/10).** A coluna da direita dizia "`HEAD`", e `HEAD` andou
+desde então. Os números acima são a medição **desta entrega** e continuam
+válidos como tal. A linha de base de hoje, medida com `npm test` em 06/10, é
+**965 passando, 53 arquivos, zero rejeições não tratadas** — `tests/fluxo/`
+**520** e `tests/dominio/` **445**. As 4 rejeições não tratadas foram fechadas
+depois desta entrega, dando ao app um desligamento: `09-desligamento.md` conta
+como, e o registro da ONDA 5 em `00-coordenacao.md` o aceita. Qualquer número de
+suíte deste arquivo vale para a data dele, não para hoje.
 
 Os 65 testes de domínio novos: `migracoes.test.ts` 27 → 51, `sincronia.test.ts`
 36 → 53, `diario.test.ts` 13 → 37. Em fluxo, `dados.test.js` 19 → 22.
@@ -434,6 +443,25 @@ também: 514 e 372, e as 4 rejeições.
 
 ## 3 · A aritmética da adesão, e a decisão sobre passar de 100%
 
+> **RECONCILIAÇÃO (06/10) · o estado honesto desta seção inteira.** Toda a
+> aritmética abaixo é alcançável pelo **modelo** e **inalcançável pelo dedo**:
+> **nenhum chamador de `marcaRefeicao` passa `como`, em valor nenhum.** Conferi
+> os dois chamadores — `src/ui/folhas/refeicao.jsx` e `src/ui/telas/hoje.jsx` —,
+> e os dois chamam com um argumento só. Então os três valores de `como` hoje
+> existentes (`'fora'`, `'nao'` e, desde 06/10, `'nsei'`) são **capacidade de
+> domínio sem lugar onde morar**: `poeComidaNoDia` e a fusão os alcançam, o dedo
+> do dono não. Onde esta seção diz "declarar com um toque", leia **"quando
+> houver onde tocar"**: a folha dos cinco botões é a frente 2 virando código, e
+> isso não começou. Está na ordem certa — modelo antes de tela —, mas não pode
+> ficar implícito.
+>
+> **E um valor novo entrou depois desta entrega:** `'nsei'` — "não sei" por
+> refeição —, com **peso 0 e dentro do denominador**, pela decisão 2 do dono de
+> 06/10 e pela aritmética que o coordenador decidiu por delegação dele. Não
+> custou migração: `como` já era campo persistido opcional desde a 9→10, e valor
+> novo não é campo novo. A condição de peso zero saiu de quatro pontos à mão
+> para uma função só, `semCumprimento` (`src/dominio/nutricao/calculo.ts`).
+
 **A decisão: a adesão tem teto de 1 por refeição, e o que passou do plano é
 medido à parte.**
 
@@ -576,6 +604,14 @@ portão, não serviria para nada.
   opcional de `marcaRefeicao`, e "não contei a água" como `setAgua(null)` — zero
   nome novo na superfície. A superfície de verbos estável é a entrega (c) da
   frente 0, que não é esta.
+  **RECONCILIAÇÃO (06/10):** e esse segundo argumento **nunca é passado**.
+  Conferi os dois chamadores de `marcaRefeicao` (`src/ui/folhas/refeicao.jsx` e
+  `src/ui/telas/hoje.jsx`): os dois chamam com um argumento só. Então `'fora'`,
+  `'nao'` e `'nsei'` são alcançáveis por `poeComidaNoDia` e pela fusão e
+  **inalcançáveis pelo dedo** — é a mesma espécie de coisa que a frente 1
+  catalogou como "capacidade sem lugar onde morar", e aqui foi esta frente que a
+  criou. O botão "Não comi" que o dono aprovou (decisão 1) e o "Não sei" por
+  refeição (decisão 2) estão **no dado e não na tela.**
 - **Não escrevi o ajuste em vigor numa data passada.** `poeComidaNoDia` recebe o
   `ajuste` por parâmetro e deixa o contrato dito. Um ajudante
   `ajusteNaData(ajusteHist, data)` seria curto e cabe em `src/dominio`, mas é
@@ -682,16 +718,30 @@ gravada e migração não se reescreve (§3.5 do plano).
 | fixture do plano 10 | `tests/dominio/fixtures/estado-plano-10.json` |
 
 A ceia: `{ id: 'ceia', t: '21:30', n: 'Ceia', tag: 'ANTES DE DORMIR', quando:
-'sempre', itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 30 }] }`.
+'sempre', itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 12 }] }`.
+
+> **RECONCILIADO em 06/10 · a porção era 30 g e passou a 12 g.** O dono pediu a
+> conferência do rótulo, e ela derrubou a quantidade: **o rótulo declara 30 g em
+> CINCO colheres de sopa**, logo duas colheres são **12 g**, não 30. O `q: 30`
+> deste documento era a leitura errada da mesma fonte não conferida que deu os
+> macros. Está corrigido no código (`bb17c43`), na cópia congelada da migração e
+> na cópia do `PLANO_BASE` — e não virou migração 11 → 12 porque a branch nunca
+> foi publicada e nenhum aparelho rodou o plano 11. **O teste das duas cópias
+> congeladas pegou a divergência** quando só uma foi alterada, que é exatamente
+> o que §7.6 escreveu que ele existe para fazer.
 
 **O que é de onde, para ninguém confundir base com suposição:**
 
 - **250 ml de leite** — é a porção que o próprio plano dele já usa, em `pos` e em
   `lanche`, as duas com `q: 250`. **Conferi** nas duas.
-- **30 g de Neston** — a porção que o rótulo chama de "2 colheres de sopa". Não
-  achei fonte melhor dentro do repositório: nenhuma outra refeição tem convenção
+- ~~**30 g de Neston** — a porção que o rótulo chama de "2 colheres de sopa".~~
+  **ERRADO, e corrigido em 06/10: são 12 g.** O rótulo declara 30 g em **cinco**
+  colheres de sopa — 6 g por colher —, então duas colheres são 12 g. Eu li "30 g
+  = 2 colheres" de uma fonte de segunda mão e não tinha como conferir: não achei
+  fonte melhor dentro do repositório, porque nenhuma outra refeição tem convenção
   de colher (`aveia` 40 g, `pasta` 10 g, `leitepo` 10 g são quantidades, não
-  colheres). **Não medi** colher nenhuma.
+  colheres). **Continua verdade que ninguém pesou uma colher**: o 6 g por colher
+  é o rótulo dividido por cinco, não medição de balança.
 - **`t: '21:30'`** — **SUPOSTO pelo coordenador, não prescrito pelo dono.** Ele
   disse o que come, não a que horas. Está dito no comentário do código
   (`alimentos.ts:118-122`) e é trivial de trocar, porque o horário só decide a
@@ -704,13 +754,25 @@ A ceia: `{ id: 'ceia', t: '21:30', n: 'Ceia', tag: 'ANTES DE DORMIR', quando:
   vêm as duas quantidades. **Não inventei razão nutricional nenhuma** — nenhum
   profissional escreveu por que a ceia entrou.
 
-**Os valores do Neston estão marcados no código como PENDENTES DE CONFERÊNCIA
-contra a embalagem**, com o motivo ao lado (`alimentos.ts:36-45`): ~397 kcal,
-~9,5 g de proteína, ~78 g de carboidrato, ~4,5 g de gordura por 100 g. Vieram de
-segunda mão e **ninguém leu o rótulo**. O que eu pude medir, e medi: os macros
-fecham com o kcal declarado dentro de **1,7%** (9,5×4 + 78×4 + 4,5×9 = 390,5
-contra 397), que é a folga normal de arredondamento e fibra num rótulo.
-**Consistência interna não é conferência**, e o comentário no código diz isso.
+**Os valores do Neston estavam marcados no código como PENDENTES DE CONFERÊNCIA
+contra a embalagem**, com o motivo ao lado: ~397 kcal, ~9,5 g de proteína,
+~78 g de carboidrato, ~4,5 g de gordura por 100 g. Vieram de segunda mão e
+**ninguém leu o rótulo**. O que eu pude medir, e medi: os macros fechavam com o
+kcal declarado dentro de **1,7%** (9,5×4 + 78×4 + 4,5×9 = 390,5 contra 397), que
+é a folga normal de arredondamento e fibra num rótulo. **Consistência interna
+não é conferência**, e o comentário no código dizia isso.
+
+> **RECONCILIADO em 06/10 · conferido, e os quatro números estavam errados.**
+> O dono pediu a conferência. Duas fontes que concordam — Open Food Facts pelo
+> EAN 7891000098950 e a tabela do produto no varejo — dão, por 100 g: **373 kcal
+> (não 397), 13 g de proteína (não 9,5), 70 g de carboidrato (não 78), 2,3 g de
+> gordura (não 4,5)**, mais 9,67 g de fibra, que o catálogo não guarda. Os
+> valores velhos vinham da memória de um agente.
+> **E a consistência interna não teria achado isto:** os números errados
+> fechavam dentro de 1,7%, e os certos também fecham (13×4 + 70×4 + 2,3×9 =
+> 352,7 contra 373, dentro de 5,5% com a fibra fora da conta). Era por isso que
+> a linha ficou marcada como pendente, e é a prova de que a marca valia.
+> Está no código em `bb17c43` (`src/dominio/nutricao/alimentos.ts`).
 
 Importa porque o alvo calórico é **calculado** do plano: valor errado aqui
 contamina o alvo do dia e, por ele, o ledger do ajuste calórico — que audita
@@ -727,28 +789,65 @@ nova é verificável: **não reduzi nada** em refeição nenhuma.
 
 O coordenador pediu medido e não suposto. **Medido** com `totalDoDia` do próprio
 domínio, sobre `ALIMENTOS_BASE`, e sob asserção em
-`tests/dominio/migracoes.test.ts` (*"a ceia sobe o alvo do dia em 271,6 kcal —
-medido, não suposto"*), partindo da fixture do plano 10:
+`tests/dominio/migracoes.test.ts`, partindo da fixture do plano 10.
+
+> **RECONCILIADO em 06/10 · o número é 197,26 e não 271,6.** Os dois erros do
+> Neston — 397 kcal por 100 g em vez de 373, e 30 g de porção em vez de 12 —
+> inflavam o delta em 74 kcal. O teste é a fonte e está verde: ele se chama hoje
+> *"a ceia sobe o alvo do dia em 197,3 kcal — medido contra o rótulo"* e afirma
+> `197,26 ± 0,05`, `3.204,36` no dia de treino e `3.041,36` no descanso. A tabela
+> abaixo é a medição nova, e eu a refiz com `totalDoDia` sobre `PLANO_BASE` em
+> 06/10, com e sem a ceia:
 
 | dia | alvo antes | alvo depois | delta |
 |---|---:|---:|---:|
-| treino | 3.007,1 kcal | 3.278,7 kcal | **+271,6 (+9,03%)** |
-| descanso | 2.844,1 kcal | 3.115,7 kcal | **+271,6 (+9,55%)** |
-| treino + alta demanda | 3.102,1 kcal | 3.373,7 kcal | **+271,6 (+8,76%)** |
+| treino | 3.007,1 kcal | 3.204,36 kcal | **+197,26 (+6,56%)** |
+| descanso | 2.844,1 kcal | 3.041,36 kcal | **+197,26 (+6,94%)** |
+| treino + alta demanda | 3.102,1 kcal | 3.299,36 kcal | **+197,26 (+6,36%)** |
 
-A ceia sozinha: **271,6 kcal · 10,85 g P · 35,15 g C · 9,6 g G** — 152,5 do leite
-(250 ml × 61 kcal/100 ml) e 119,1 do Neston (30 g × 397 kcal/100 g). **A conta
-grosseira do coordenador batia:** ele estimou ~272 kcal, 152 + 119.
+Os dois primeiros estão sob asserção no teste; **o terceiro não**, e é conta
+medida por execução — a alta demanda acrescenta 95 kcal fixos ao dia de treino,
+antes e depois.
+
+A ceia sozinha: **197,26 kcal · 9,56 g P · 20,15 g C · 8,53 g G** — 152,5 do
+leite (250 ml × 61 kcal/100 ml) e 44,76 do Neston (12 g × 373 kcal/100 g).
+**A conta grosseira do coordenador (~272 kcal, 152 + 119) batia com os números
+errados, e errava com os certos** — ela reproduzia a aritmética, não o rótulo.
+Os valores que esta tabela dava antes eram: 271,6 kcal · 10,85 g P · 35,15 g C ·
+9,6 g G, com +9,03% / +9,55% / +8,76%. **Ficam registrados para quem já tinha
+lido o número velho em algum lugar.**
 
 O 3.007,1 não é só cálculo: é o número **congelado na fixture**, em
 `comidaHist[0].tot.kcal`, escrito pelo build do plano 10 num dia de treino com
-as seis refeições marcadas. O alvo "antes" está gravado em disco.
+as seis refeições marcadas. O alvo "antes" está gravado em disco, e **esse lado
+da tabela não mudou**: o erro era todo do lado "depois".
 
 **Este número é decisão dele e do nutricionista, não nossa.** O ledger do ajuste
-calórico (`S.ajusteHist`) foi construído sobre o alvo antigo, e um salto de ~9%
-no alvo muda o que "seguir o plano" significa. **Não medi** nenhuma consequência
-disso sobre as decisões de corte já tomadas — é leitura do `trocasDeAjuste` que
-ninguém pediu.
+calórico (`S.ajusteHist`) foi construído sobre o alvo antigo, e um salto de
+~6,6% no alvo muda o que "seguir o plano" significa. **Não medi** nenhuma
+consequência disso sobre as decisões de corte já tomadas — é leitura do
+`trocasDeAjuste` que ninguém pediu.
+
+#### 7.2.1 · O que o número revelou, e é o achado que mais vale desta parte
+
+**RECONCILIAÇÃO (06/10).** Ao responder "o ledger do ajuste recalcula" (decisão
+6 da noite de 06/10), o coordenador conferiu a forma do ledger e achou que não
+havia nada a construir: `PassoDeAjuste` guarda `de` e `para` **em passos**, não
+em kcal absoluto, e o alvo efetivo é o alvo do plano **mais** o saldo de passos.
+O alvo novo entra embaixo dos passos existentes sem reescrever byte nenhum.
+
+**Mas a consequência de verdade não é de código, e é esta:** a ceia é comida que
+o dono **já comia** e que o plano **não contava**. A nota do jantar dizia,
+textualmente, *"Sem ceia obrigatória"* (§2, item 1 deste documento, conferido).
+Então o alvo **subestimava a ingestão real** em ~197 kcal, e **todos os cortes já
+registrados em `S.ajusteHist` foram decididos contra um déficit ~197 kcal mais
+raso do que se acreditava.**
+
+**Não é bug: é o plano ficando honesto.** Quem lê isto como defeito de dado erra
+duas vezes — o dado está certo, e o que mudou é o que o plano diz que ele come.
+Levado ao dono em 06/10. **Ninguém mediu** quanto esse déficit mais raso muda
+cada decisão de corte já tomada: isso é leitura dele com o nutricionista, e
+continua não medida.
 
 ### 7.3 · Os portões
 
@@ -818,13 +917,22 @@ outro.**
 - **Não conferi os valores do Neston contra a embalagem.** Não tenho a lata.
   Ficaram marcados como pendentes, no código e aqui. É a única coisa desta
   entrega que depende de alguém olhar um objeto físico.
-- **Não medi colher de sopa de Neston.** 30 g é a porção do rótulo, por
-  transitividade da mesma fonte não conferida.
+  **RESOLVIDO em 06/10:** conferido por pedido do dono, em duas fontes de rótulo
+  que concordam, e **os quatro números estavam errados** (§7.1). A marca de
+  pendente valeu.
+- ~~**Não medi colher de sopa de Neston.** 30 g é a porção do rótulo, por
+  transitividade da mesma fonte não conferida.~~ **E era 12 g, não 30** — o
+  rótulo declara 30 g em cinco colheres. **Continua não medido:** ninguém pesou
+  uma colher; o 6 g por colher é o rótulo dividido por cinco.
 - **Não escolhi o horário da ceia** — o 21:30 é suposição do coordenador, e está
   marcada como tal nos dois lugares.
 - **Não escrevi razão nutricional** na nota da ceia: ninguém prescreveu uma.
 - **Não medi** o efeito do alvo novo sobre as decisões de corte já registradas em
-  `S.ajusteHist`.
+  `S.ajusteHist`. **Continua não medido em 06/10**, e agora com o nome do que
+  está em jogo: o déficit contra o qual cada corte foi decidido era ~197 kcal
+  mais raso do que se acreditava (§7.2.1). O ledger não precisa de conserto — ele
+  guarda passos, não kcal absoluto —, mas **a leitura dele contra o alvo novo
+  ninguém fez.**
 - **Não mexi em `S.comida.ocultos` nem em `S.comida.alimentos`.** Se ele tiver
   cadastrado um `neston` próprio, o dele vence em `catalogoAlimentos()`, e isso é
   o certo. **Não medi** nem posso saber se é o caso no aparelho dele.
@@ -850,3 +958,42 @@ outro.**
 | `ba03f95` | a ceia no plano, e a migração 10 → 11 |
 | `df27e1b` | a migração 10 → 11 sob prova, com a fixture do plano 10 |
 | `e76a963` | a janela da ceia entre dois aparelhos se fecha sozinha |
+
+---
+
+## 9 · Reconciliação com as decisões de 06/10
+
+Este documento foi escrito em 05/10. As decisões do dono de **06/10** vieram
+depois, e a autoridade sobre elas é a ONDA 5 de `docs/redesign/00-coordenacao.md`
+— que **não** é editada aqui. Esta seção diz o que foi alinhado, contra qual
+decisão, e o que não dá para alinhar sem alguém decidir.
+
+### 9.1 · O que foi alinhado
+
+| o que mudou aqui | contra qual decisão / medição | onde |
+|---|---|---|
+| **A porção da ceia: 30 g → 12 g de Neston** | o dono pediu a conferência do rótulo; o rótulo declara 30 g em **cinco** colheres de sopa | §7.1 |
+| **Os macros do Neston: 373 kcal, 13 P, 70 C, 2,3 G por 100 g** (eram 397 / 9,5 / 78 / 4,5) | conferido em 06/10 contra o rótulo, duas fontes que concordam; os velhos vinham da memória de um agente | §7.1, §7.7 |
+| **O delta do alvo: +271,6 → +197,26 kcal/dia**, e a tabela de antes/depois refeita | `tests/dominio/migracoes.test.ts`, verde e sob asserção (197,26 ± 0,05; 3.204,36 treino; 3.041,36 descanso) | §7.2 |
+| **O percentual: ~9% → ~6,6%** | consequência aritmética do acima, medida por execução | §7.2 |
+| **O achado novo: o plano não contava a ceia, e por isso o alvo subestimava a ingestão real** | decisão 6 da noite de 06/10 ("o ledger recalcula") e a leitura do coordenador em cima dela | §7.2.1 (seção nova) |
+| **Os três valores de `como` são dado e não são tela** | medição do coordenador em 06/10: nenhum chamador de `marcaRefeicao` passa `como`, em valor nenhum — conferido nos dois chamadores | §3 (bloco no topo), §5 |
+| **`'nsei'` existe desde 06/10, com peso 0 dentro do denominador, e sem migração** | decisão 2 do dono; a aritmética delegada ao coordenador e decidida por ele; implementado em `6e8a3fa` | §3 (bloco no topo) |
+| **Os números de suíte deste arquivo são da data dele** | linha de base de 06/10 medida: 965 passando, 53 arquivos, 520 fluxo / 445 domínio, zero rejeições | "O estado da suíte" |
+
+### 9.2 · O que esta reconciliação NÃO resolve
+
+- **O efeito do alvo novo sobre cada corte já registrado em `S.ajusteHist`**
+  continua **não medido**. O ledger não precisa de conserto (ele guarda passos,
+  não kcal absoluto), mas ninguém releu as decisões de corte contra o alvo novo.
+  É decisão do dono com o nutricionista.
+- **Ninguém pesou uma colher de sopa de Neston.** Os 6 g por colher são o rótulo
+  dividido por cinco.
+- **O `t: '21:30'` da ceia continua suposição do coordenador**, não prescrição.
+  Nada em 06/10 mexeu nisso.
+- **O comentário de `src/dominio/nutricao/alimentos.ts` diz duas coisas de uma
+  vez.** O bloco abre com *"ATENÇÃO · VALORES PENDENTES DE CONFERÊNCIA CONTRA A
+  EMBALAGEM"* e, oito linhas abaixo, com *"CONFERIDO em 06/10 contra o rótulo"*.
+  As duas afirmações convivem no mesmo comentário, e a primeira ficou falsa. **É
+  conserto de uma linha em `src/`, e esta reconciliação não toca em `src/`** —
+  fica apontado.
