@@ -9,14 +9,14 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   const a = await app();
 
   // ---- segunda: treino A, com a máquina de peito ocupada ----
-  assert.strictEqual(a.E('view.day'), 'A');
+  assert.strictEqual(a.vista().day, 'A');
   a.v('toggle', 0);
   a.v('setAlt', 0, 'supino-inclinado-no-smith');       // vira mod de troca
   for (let k = 0; k < 3; k++) a.preencher(0, k, 60, 8);
   a.v('toggle', 2);                                   // crucifixo inclinado: 2 séries
   for (let k = 0; k < 2; k++) a.preencher(2, k, 20, 12);
 
-  assert.strictEqual(a.J('S.logs["supino-inclinado-no-smith"]').length, 1,
+  assert.strictEqual(a.S().logs["supino-inclinado-no-smith"].length, 1,
     'a série foi para o histórico do que ele de fato usou');
 
   await a.v('finalizarSessao');
@@ -26,10 +26,10 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   await a.v('concluirPromo');           // padrão: só hoje
   await a.esperar();
 
-  assert.strictEqual(a.E('S.prog.A.ex[0].id'), 'chest-press-inclinado-convergente',
+  assert.strictEqual(a.S().prog.A.ex[0].id, 'chest-press-inclinado-convergente',
     'máquina ocupada não muda o programa');
-  assert.strictEqual(a.E('S.progLog.length'), 0);
-  assert.strictEqual(a.E('view.day'), 'B', 'a rotação avançou');
+  assert.strictEqual(a.S().progLog.length, 0);
+  assert.strictEqual(a.vista().day, 'B', 'a rotação avançou');
 
   // cardio depois do A, como o treinador pediu
   a.aba('dados');
@@ -42,11 +42,11 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   a.E('view.bodyForm = { peso: "73,4" }');
   await a.v('addBody', 'peso');
   await a.esperar();
-  assert.strictEqual(a.E('S.body.peso.length'), 1);
+  assert.strictEqual(a.S().body.peso.length, 1);
 
   // ---- terça: treino B, e ele decide que lateral merece mais uma série ----
   a.aba('treino');
-  assert.strictEqual(a.E('view.day'), 'B');
+  assert.strictEqual(a.vista().day, 'B');
   a.v('toggle', 0);
   const setsB0 = a.E('setsFor(treino("B").ex[0])');
   for (let k = 0; k < setsB0; k++) a.preencher(0, k, 70, 9);
@@ -68,12 +68,12 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   await a.v('concluirPromo');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.prog.B.ex[4].s'), antesDoSlot4 + 1, 'essa ele quis para valer');
-  assert.strictEqual(a.E('S.progLog.length'), 1);
-  assert.strictEqual(a.J('S.progLog')[0].motivo, 'decisao');
+  assert.strictEqual(a.S().prog.B.ex[4].s, antesDoSlot4 + 1, 'essa ele quis para valer');
+  assert.strictEqual(a.S().progLog.length, 1);
+  assert.strictEqual(a.S().progLog[0].motivo, 'decisao');
 
   // ---- quarta: treino C, com um aparelho que o app não conhecia ----
-  assert.strictEqual(a.E('view.day'), 'C');
+  assert.strictEqual(a.vista().day, 'C');
   a.v('modoEdicao', true);
   a.v('abrirNovoEx');
   a.digitar('nxn', 'Pendulum da unidade nova');
@@ -86,7 +86,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   const novo = a.E('treino("C").ex.length') - 1;
   a.E('toggle(' + novo + ')');
   for (let k = 0; k < 3; k++) a.preencher(novo, k, 120, 8);
-  assert.strictEqual(a.J('S.logs["pendulum-da-unidade-nova"]').length, 1,
+  assert.strictEqual(a.S().logs["pendulum-da-unidade-nova"].length, 1,
     'equipamento novo já tem histórico próprio');
 
   await a.v('finalizarSessao');
@@ -94,7 +94,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   a.v('decidePromo', 0, 'oficial');
   await a.v('concluirPromo');
   await a.esperar();
-  assert.ok(a.J('S.prog.C.ex').some(function (x) { return x.id === 'pendulum-da-unidade-nova'; }),
+  assert.ok(a.S().prog.C.ex.some(function (x) { return x.id === 'pendulum-da-unidade-nova'; }),
     'e entrou no programa porque ele quis');
 
   // ---- quinta: esqueceu de registrar, lança retroativo ----
@@ -190,7 +190,7 @@ test('o app não presume que o dia de hoje é o dia da sessão', async () => {
   a.v('go', 'C');
   a.v('toggle', 0);
   a.preencher(0, 0, 100, 8);
-  assert.strictEqual(a.E('S.sessao.day'), 'C');
+  assert.strictEqual(a.S().sessao.day, 'C');
 
   a.v('go', 'F');
   assert.strictEqual(a.$('.edlink'), null, 'com sessão aberta no C, o F não é editável');
@@ -198,8 +198,8 @@ test('o app não presume que o dia de hoje é o dia da sessão', async () => {
   a.v('go', 'C');
   a.v('modoEdicao', true);
   a.v('mudaSeries', 1, 1);
-  assert.strictEqual(a.E('S.mods.day'), 'C');
-  assert.strictEqual(a.E('S.mods.list.length'), 1);
+  assert.strictEqual(a.S().mods.day, 'C');
+  assert.strictEqual(a.S().mods.list.length, 1);
   a.fechar();
 });
 
@@ -227,14 +227,14 @@ test('importar um backup do formato antigo reconstrói tudo', async () => {
   // Ancorado em PLANO_ATUAL e não num número escrito à mão: a asserção é
   // "passou pela cadeia INTEIRA", e fixar 6 a fazia envelhecer em silêncio —
   // foi assim que a importação ficou parando na 6 sem ninguém ver.
-  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'),
+  assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'),
     'a importação passa pela mesma cadeia que o boot');
-  assert.ok(a.J('S.logs["supino-inclinado-com-halteres"]'), 'reindexado por exercício');
-  assert.ok(a.J('S.logs["remada-unilateral-na-polia-baixa"]'));
-  assert.ok(a.E('!!S.prog'), 'e ganhou um programa');
+  assert.ok(a.S().logs["supino-inclinado-com-halteres"], 'reindexado por exercício');
+  assert.ok(a.S().logs["remada-unilateral-na-polia-baixa"]);
+  assert.ok(!!a.S().prog, 'e ganhou um programa');
   assert.strictEqual(a.E('treino("A").ex.length'), 7);
-  assert.strictEqual(a.E('S.done.length'), 1);
-  assert.strictEqual(a.E('S.body.peso.length'), 1);
+  assert.strictEqual(a.S().done.length, 1);
+  assert.strictEqual(a.S().body.peso.length, 1);
 
   a.aba('treino');
   assert.ok(a.doc.getElementById('app').innerHTML.length > 600);
