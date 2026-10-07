@@ -25,7 +25,7 @@ test('mudar séries vale para hoje e não toca no oficial', async () => {
   const oficial = a.S().prog.A.ex[4].s;
   a.v('mudaSeries', 4, 1);
 
-  assert.strictEqual(a.E('treino("A").ex[4].s'), oficial + 1, 'o treino de hoje mudou');
+  assert.strictEqual(a.vJ('treino', 'A').ex[4].s, oficial + 1, 'o treino de hoje mudou');
   assert.strictEqual(a.S().prog.A.ex[4].s, oficial, 'o oficial ficou onde estava');
 
   const mods = a.S().mods.list;
@@ -62,11 +62,11 @@ test('a série registrada segue o exercício quando ele muda de posição', asyn
 
 test('adicionar exercício entra só no dia e mantém histórico próprio', async () => {
   const a = await editando();
-  const antes = a.E('treino("A").ex.length');
+  const antes = a.vJ('treino', 'A').ex.length;
   await a.v('addExercicio', 'pec-deck');
   await a.esperar();
 
-  assert.strictEqual(a.E('treino("A").ex.length'), antes + 1);
+  assert.strictEqual(a.vJ('treino', 'A').ex.length, antes + 1);
   assert.strictEqual(a.S().prog.A.ex.length, antes, 'o oficial não cresceu');
 
   a.v('modoEdicao', false);
@@ -108,7 +108,7 @@ test('cadastrar equipamento novo cria exercício com histórico próprio', async
   assert.strictEqual(a.E('CAT["' + k + '"].g'), 'peito superior');
   assert.strictEqual(a.E('CAT["' + k + '"].c'), 1);
   assert.strictEqual(a.E('CAT["' + k + '"].meu'), 1);
-  assert.ok(a.J('treino("A").ex').some(function (x) { return x.id === k; }), 'já entrou no dia');
+  assert.ok(a.vJ('treino', 'A').ex.some(function (x) { return x.id === k; }), 'já entrou no dia');
   a.fechar();
 });
 
@@ -119,8 +119,8 @@ test('trocar exercício é uma mudança de hoje, e sai na lista', async () => {
   a.v('modoEdicao', true);
   a.v('setAlt', 0, 'agachamento-hack');
 
-  assert.strictEqual(a.E('treino("B").ex[0].id'), 'agachamento-hack');
-  assert.strictEqual(a.E('treino("B").ex[0].orig'), 'agachamento-no-smith');
+  assert.strictEqual(a.vJ('treino', 'B').ex[0].id, 'agachamento-hack');
+  assert.strictEqual(a.vJ('treino', 'B').ex[0].orig, 'agachamento-no-smith');
   assert.strictEqual(a.S().prog.B.ex[0].id, 'agachamento-no-smith', 'oficial intocado');
   assert.strictEqual(a.S().mods.list[0].k, 'troca');
   a.fechar();
@@ -128,10 +128,10 @@ test('trocar exercício é uma mudança de hoje, e sai na lista', async () => {
 
 test('desfazer uma mudança volta o dia ao programa', async () => {
   const a = await editando();
-  const antes = a.E('treino("A").ex[4].s');
+  const antes = a.vJ('treino', 'A').ex[4].s;
   a.v('mudaSeries', 4, 1);
   a.v('desfazMod', 0);
-  assert.strictEqual(a.E('treino("A").ex[4].s'), antes);
+  assert.strictEqual(a.vJ('treino', 'A').ex[4].s, antes);
   assert.strictEqual(a.S().mods.list.length, 0);
   a.fechar();
 });
@@ -261,11 +261,11 @@ test('as mudanças sobrevivem a navegar entre os dias no meio do treino', async 
   a.preencher(0, 0, 40, 10);
   a.v('modoEdicao', true);
   a.v('mudaSeries', 4, 1);
-  const alvo = a.E('treino("A").ex[4].s');
+  const alvo = a.vJ('treino', 'A').ex[4].s;
 
   a.v('go', 'E');
   a.v('go', 'A');
-  assert.strictEqual(a.E('treino("A").ex[4].s'), alvo, 'o mod não se perde ao trocar de dia');
+  assert.strictEqual(a.vJ('treino', 'A').ex[4].s, alvo, 'o mod não se perde ao trocar de dia');
   assert.strictEqual(a.S().mods.list.length, 1);
   a.fechar();
 });
@@ -399,7 +399,7 @@ test('voltar ao nome do treinador apaga o override em vez de copiá-lo', async (
 
   await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Outro nome qualquer')`);
   await a.esperar(60);
-  assert.strictEqual(a.J('CTX.historico().renome').doCodigo, original,
+  assert.strictEqual(a.vJ('ctx.historico').renome.doCodigo, original,
     'a tela oferece a volta, com o nome do código');
 
   await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, ${JSON.stringify(original)})`);
