@@ -38,7 +38,7 @@ async function abreHistoricoDoRemo() {
   const a = await app(comRemo());
   a.aba('treino');
   a.E('view.day="HX"');
-  a.E('addExercicio("remo-ergometro")');
+  a.v('addExercicio', 'remo-ergometro');
   await a.esperar(50);
   a.E('view.hist={day:"HX",i:0,key:"remo-ergometro"}');
   return a;
@@ -46,7 +46,7 @@ async function abreHistoricoDoRemo() {
 
 test('o histórico de distância fala em ritmo, não em soma de segundos', async () => {
   const a = await abreHistoricoDoRemo();
-  const v = a.J('CTX.historico()');
+  const v = a.vJ('ctx.historico');
 
   assert.ok(v.stats[0].rotulo.indexOf('ritmo') >= 0,
     'a primeira estatística é o ritmo, e não "tempo da última": ' + v.stats[0].rotulo);
@@ -58,7 +58,7 @@ test('o histórico de distância fala em ritmo, não em soma de segundos', async
 
 test('ficar mais lento não é pintado de verde', async () => {
   const a = await abreHistoricoDoRemo();
-  const v = a.J('CTX.historico()');
+  const v = a.vJ('ctx.historico');
 
   const periodo = v.stats.filter(function (x) { return x.rotulo.indexOf('no período') >= 0; })[0];
   assert.ok(periodo, 'existe a linha do período');
@@ -77,7 +77,7 @@ test('ficar mais lento não é pintado de verde', async () => {
 
 test('a série mostra o trabalho junto com o relógio', async () => {
   const a = await abreHistoricoDoRemo();
-  const v = a.J('CTX.historico()');
+  const v = a.vJ('ctx.historico');
   assert.strictEqual(v.sessoes[0].series[0], '500 m · 110s',
     '"110s" sozinho não diz o que foi feito');
   // fmtInt separa milhar, como todo inteiro do app
@@ -88,7 +88,7 @@ test('a série mostra o trabalho junto com o relógio', async () => {
 
 test('o eixo do gráfico é invertido onde menor é melhor', async () => {
   const a = await abreHistoricoDoRemo();
-  const v = a.J('CTX.historico()');
+  const v = a.vJ('ctx.historico');
   // O melhor ritmo do período é 22,0 (o 1000 m); o pior é 23,0. Num eixo
   // normal o maior valor fica no topo — aqui o que tem que ficar no topo é o
   // melhor, senão a linha de quem melhora desce e o desenho mente igual.
@@ -103,7 +103,7 @@ test('o eixo do gráfico é invertido onde menor é melhor', async () => {
 
 test('a retrospectiva do bloco não chama piora de evolução', async () => {
   const a = await abreHistoricoDoRemo();
-  const R = a.J('retro()');
+  const R = a.vJ('retro');
   const remo = R.evol.filter(function (x) { return x.nome === 'Remo ergômetro'; });
   assert.strictEqual(remo.length, 0,
     'o remo ficou mais lento no bloco e não pode aparecer entre os que subiram');
@@ -112,7 +112,7 @@ test('a retrospectiva do bloco não chama piora de evolução', async () => {
 
 test('o volume acumulado continua sem contar movimento com grandeza', async () => {
   const a = await abreHistoricoDoRemo();
-  const R = a.J('retro()');
+  const R = a.vJ('retro');
   assert.strictEqual(R.volTotal, 0,
     'metro não vira kg×reps — é a mesma razão que mantém o sábado fora do alvo por músculo');
   a.fechar();
@@ -123,15 +123,15 @@ test('trocar a medida do dia alcança o que já foi digitado', async () => {
   a.aba('treino');
   a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
   a.E('view.day="HX"');
-  a.E('addExercicio("remo-ergometro")');
+  a.v('addExercicio', 'remo-ergometro');
   await a.esperar(50);
 
   // o box passou 500 m, não os 1000 da prova
-  a.E('poeMedida(0, undefined, "500")');
+  a.v('poeMedida', 0, undefined, '500');
   await a.esperar();
   assert.strictEqual(a.E('treino("HX").ex[0].q'), 500, 'a quantidade do dia entra no slot');
 
-  a.E('view.open=0'); a.E('render()');
+  a.E('view.open=0'); a.v('render');
   await a.esperar();
   a.preencher(0, 0, null, 110);
   let h = a.log('HX', 0);
@@ -139,7 +139,7 @@ test('trocar a medida do dia alcança o que já foi digitado', async () => {
   assert.strictEqual(h[0].u, 'm');
 
   // e se ele corrigir a grandeza depois de já ter digitado, o registro segue
-  a.E('poeMedida(0, "cal", undefined)');
+  a.v('poeMedida', 0, 'cal', undefined);
   await a.esperar();
   h = a.log('HX', 0);
   assert.strictEqual(h[0].u, 'cal',
@@ -152,9 +152,9 @@ test('o cartão de um movimento com grandeza não pede RIR nem aproximação', a
   a.aba('treino');
   a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
   a.E('view.day="HX"');
-  a.E('addExercicio("remo-ergometro")');
+  a.v('addExercicio', 'remo-ergometro');
   await a.esperar(50);
-  a.E('view.open=0'); a.E('render()');
+  a.E('view.open=0'); a.v('render');
   await a.esperar();
 
   assert.strictEqual(a.$$('.ex.open .rirbtn').length, 0, 'nenhum botão de RIR na tabela');
@@ -197,7 +197,7 @@ test('exercício cadastrado por ele pode declarar grandeza', async () => {
   a.aba('treino');
   a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
   a.E('view.day="HX"');
-  a.E('abrirAddEx()'); a.E('abrirNovoEx()');
+  a.v('abrirAddEx'); a.v('abrirNovoEx');
   await a.esperar();
   a.doc.getElementById('nxn').value = 'Sandbag over shoulder';
   a.doc.getElementById('nxg').value = 'peito';
@@ -220,9 +220,9 @@ test('o cabeçalho acompanha a quantidade enquanto ele digita', async () => {
   a.aba('treino');
   a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
   a.E('view.day="HX"');
-  a.E('addExercicio("remo-ergometro")');
+  a.v('addExercicio', 'remo-ergometro');
   await a.esperar(50);
-  a.E('view.open=0'); a.E('abrirMedida(0)');
+  a.E('view.open=0'); a.v('abrirMedida', 0);
   await a.esperar();
   assert.strictEqual(a.texto('#presc0'), '1 × 1.000 m');
 
