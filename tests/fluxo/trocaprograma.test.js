@@ -22,13 +22,13 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
   } });
 
   await a.esperar();
-  await a.E('restaurarTudo()');
+  await a.v('restaurarTudo');
   await a.esperar();
 
-  assert.deepStrictEqual(a.J('rot()'), ['A','B','C','D','E','HX'],
+  assert.deepStrictEqual(a.vJ('rot'), ['A','B','C','D','E','HX'],
     'cinco dias de musculação mais o HYROX');
   assert.strictEqual(a.E('S.prog.HX.name'), 'HYROX');
-  assert.strictEqual(a.E('difTotal()'), 0, 'igual ao treinador');
+  assert.strictEqual(a.v('difTotal'), 0, 'igual ao treinador');
 
   // o histórico seguiu o exercício para a nova posição
   assert.strictEqual(a.k('A', 0), 'chest-press-inclinado-convergente');
@@ -39,8 +39,8 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
   // a coluna ANTERIOR mostra o que ele fez, agora no dia B. A flexora e não o
   // agachamento: o pendulum saiu do programa na revisão do treinador, e o
   // slot 0 do B passou a ser o agachamento no Smith, que não tem passado.
-  a.E('go("B")');
-  a.E('toggle(1)');
+  a.v('go', 'B');
+  a.v('toggle', 1);
   assert.match(a.texto('.ex.open .setrow .setant'), /^45 × /,
     'a evolução continua: o app mostra a carga do treino antigo');
 
@@ -54,8 +54,8 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
   assert.ok(!a.E('CAT["tibial-anterior"].sumido'), 'não é fantasma');
 
   // RIR alvo aparece no cartão, e o registrado entra na própria série
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   assert.ok(a.texto('.ex.open .tag').includes('RIR 1–2'), a.texto('.ex.open .tag'));
   a.preencher(0, 0, 57.5, 9);
   a.clicar(a.doc.getElementById('q0_0'));
@@ -71,13 +71,13 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
 
 test('backup exportado e reimportado preserva o RIR do plano e o da série', async () => {
   const a = await app();
-  await a.E('restaurarTudo()');
-  a.E('toggle(0)');
+  await a.v('restaurarTudo');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   a.clicar(a.doc.getElementById('q0_0'));
   a.clicar(a.$$('.ex.open .rirscale .rirop')[1]);   // o RIR daquela série
   await a.esperar();
-  const json = a.E('payload()');
+  const json = a.v('payload');
   a.fechar();
 
   const b = await app();
@@ -105,18 +105,18 @@ test('backup antigo (plano 2) cai nos ids da época, não no programa de hoje', 
 
 test('o HYROX é sessão da rotação sem virar série de hipertrofia', async () => {
   const a = await app();
-  await a.E('restaurarTudo()');
+  await a.v('restaurarTudo');
   await a.esperar();
 
   // é o sexto dia, chega pela rotação como qualquer outro
-  a.E('go("HX")');
+  a.v('go', 'HX');
   assert.strictEqual(a.E('treino("HX").name'), 'HYROX');
 
   // ...mas nasce VAZIO: quem programa o sábado é o box, e nada é prescrito de
   // véspera. As estações da prova continuam no catálogo e entram pela busca,
   // como qualquer outro exercício.
   assert.strictEqual(a.E('treino("HX").ex.length'), 0, 'o dia aberto começa sem nada');
-  await a.E("addExercicio('corrida')");
+  await a.v('addExercicio', 'corrida');
   await a.esperar();
   assert.strictEqual(a.E('treino("HX").ex.length'), 1, 'o que ele adiciona é o dia');
   assert.strictEqual(a.E('treino("HX").ex[0].n'), 'Corrida');
@@ -131,7 +131,7 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
 
   // registra o TEMPO daquela distância: o segundo campo é segundo, a carga é
   // opcional e a coluna de RIR não existe
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   // o primeiro .f é o da carga; o segundo é o que diz a medida
   assert.strictEqual(a.$$('.ex.open .sethead .f')[1].textContent, 'seg');
   assert.strictEqual(a.$$('.ex.open .sethead .f').length, 2,
@@ -151,15 +151,15 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
 
   // sem selo de subir carga e sem lista de troca: sled não tem substituto
   assert.ok(!a.$('.ex.open .up'), 'tempo melhor não é carga maior');
-  await a.E("addExercicio('sled-push')");
+  await a.v('addExercicio', 'sled-push');
   await a.esperar();
-  a.E('toggle(1)');
+  a.v('toggle', 1);
   assert.strictEqual(a.E('treino("HX").ex[1].n'), 'Sled push');
-  assert.deepStrictEqual(a.J('altList("HX", 1)'), [],
+  assert.deepStrictEqual(a.vJ('altList', 'HX', 1), [],
     'exercício sem grupo não puxa "mesmo grupo muscular" nem oferece troca');
 
   // a tela de programa chama o dia de estações, não de séries
-  a.E('abrirPrograma("HX")');
+  a.v('abrirPrograma', 'HX');
   assert.ok(a.texto('.htitle').includes('HYROX'));
   // A meta do sábado não é uma conta: dizer "0 séries" prometeria um número
   // que o box nunca vai respeitar.
@@ -172,26 +172,26 @@ test('o dia aberto não pede promoção nem cobra pendência', async () => {
   // segunda a sexta. No sábado vira obstáculo: o que entra no dia É o dia, não
   // uma emenda a ele, e não há conteúdo permanente para aquilo virar.
   const a = await app();
-  a.E('go("HX")');
+  a.v('go', 'HX');
   await a.esperar();
 
-  assert.ok(a.E('diaAberto("HX")'), 'sábado é dia aberto');
-  assert.ok(!a.E('diaAberto("A")'), 'e segunda não');
+  assert.ok(a.v('diaAberto', 'HX'), 'sábado é dia aberto');
+  assert.ok(!a.v('diaAberto', 'A'), 'e segunda não');
 
   // nada prescrito, nada pendente — não há o que cobrar no fim
-  const p = a.J("pendencias('HX', 0, [])");
+  const p = a.vJ('pendencias', 'HX', 0, []);
   assert.deepStrictEqual(p.nada, [], 'nada prescrito, nada pendente');
 
-  await a.E("addExercicio('corrida')");
-  await a.E("addExercicio('sled-push')");
-  await a.E("addExercicio('wall-balls')");
+  await a.v('addExercicio', 'corrida');
+  await a.v('addExercicio', 'sled-push');
+  await a.v('addExercicio', 'wall-balls');
   await a.esperar();
   assert.strictEqual(a.J("modsDoDia('HX').length"), 3, 'o que ele adicionou virou mod do dia');
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, null, 252);
   await a.esperar();
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   await a.esperar(60);
 
   assert.ok(!a.J('!!view.promo'),
@@ -215,7 +215,7 @@ test('adicionar movimento no dia aberto abre o catálogo e entra sem virar troca
   // ação mora em `ctx.acoesAdd.abre` —, e o painel do catálogo só era desenhado
   // pela edição do dia e pela tela de programa, nunca pelo treino.
   const a = await app();
-  a.E('go("HX")');
+  a.v('go', 'HX');
   await a.esperar();
 
   a.E('CTX.acoesAdd.abre()');
@@ -235,8 +235,8 @@ test('adicionar movimento no dia aberto abre o catálogo e entra sem virar troca
   // Adicionado NÃO é substituído: o `orig` de um mod `add` é uma chave
   // sintética (`id#instante`) para o mod ter identidade, não o exercício que
   // saiu do lugar. O cartão anunciava "no lugar de remo-ergometro#1788963143430".
-  assert.strictEqual(a.E('altOf(0)'), null, 'nada foi substituído');
-  a.E('toggle(0)');
+  assert.strictEqual(a.v('altOf', 0), null, 'nada foi substituído');
+  a.v('toggle', 0);
   await a.esperar();
   assert.strictEqual(a.$('[data-ex="0"] .swapped'), null, 'e o cartão não anuncia troca');
   a.fechar();
@@ -246,10 +246,10 @@ test('exercício por tempo não recebe linguagem de hipertrofia', async () => {
   // "isolador · última pode ir a 0–1" num remo de 1000 m era um dos sinais de
   // que o sábado estava modelado como o que não é.
   const a = await app();
-  a.E('go("HX")');
-  await a.E("addExercicio('corrida')");
+  a.v('go', 'HX');
+  await a.v('addExercicio', 'corrida');
   await a.esperar();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   await a.esperar();
 
   const cartao = a.$('[data-ex="0"]');
