@@ -541,13 +541,48 @@ lados:
   valores **fora** da faixa medem 3,55:1 e passam; os **dentro** medem 1,55:1.
   Isto é defeito de C, não da forma — mas é o que está medido dela.
 
-**Portanto:** se a medição A reprovar, o que sobe à mesa dele é a escolha entre
+~~**Portanto:** se a medição A reprovar, o que sobe à mesa dele é a escolha entre
 três coisas, com o preço de cada uma escrito, e **nenhuma delas é "deixar como
 está"**: (a) os sete botões fixos de C, perdendo valores e ganhando a
 ausência de ambiguidade; (b) a régua com o alvo menor, cabendo mais valores e
 piorando o erro de dedo — que é justamente a tensão que C3 nomeou como sem saída
 fácil; (c) a régua como está, aceitando a taxa medida como custo declarado.
-**A decisão é dele.**
+**A decisão é dele.**~~
+
+> **RECONCILIADO em 06/10 · ele já escolheu, antes da medição, e escolheu (a).
+> Mas a medição AINDA TEM DE ACONTECER.**
+>
+> **Decisão 9 das quinze, literal no registro:** se a régua reprovar a medição,
+> *"vai para os botões fixos da C"* — **pré-autorizado**, e o registro acrescenta
+> que *"a medição ainda tem de acontecer: é condicional, não ordem de trocar
+> agora"*.
+>
+> **Para não haver leitura torta, as três coisas que isto é e as duas que não
+> é:**
+>
+> - **É** uma autorização prévia: se a medição A reprovar, a troca sai **sem
+>   voltar à mesa dele**, e sai para os sete botões fixos da C.
+> - **É** condicional: o gatilho é o número de reprovação escrito em §1.5 — mais
+>   de **3 engolidas em 60**, ou **1 ou mais erros de alvo em 60**.
+> - **É** uma escolha feita com o preço na mão: as duas perdas medidas de C
+>   continuam valendo e estão escritas acima — sete valores em vez de 10 a 13
+>   (com o 10 e o 11 fora da janela no caso que quebra) e `.chip` a **1,00:1** de
+>   preenchimento, branco sobre branco.
+> - **NÃO é** ordem de trocar agora. **A medição A não aconteceu**, e ela exige o
+>   aparelho e o dedo dele, de pé, na academia, com a mão suada. Ninguém pode
+>   substituí-la por conta. Enquanto ela não acontecer, **os sete requisitos de
+>   §1.3 são o trabalho**, e a régua é o controle.
+> - **NÃO é** o fim das opções (b) e (c): elas deixam de ser escolha dele e
+>   passam a ser **caminhos que a decisão descartou**. Ficam escritas acima
+>   porque, se a medição reprovar **e** os botões fixos também reprovarem no
+>   mesmo teste, quem estiver ali precisa saber que elas existiram e por quanto.
+>
+> **E a frente 3 fechou a consequência de palavra**, para a troca não esperar por
+> texto novo: o rótulo é **"Repetições · um toque guarda"** nos dois controles,
+> porque o toque grava a mesma coisa. **O único texto que muda é o da faixa
+> prescrita** — na régua é sublinhado sob o número (**alvo 8–12**), nos botões
+> fixos é legenda (**alvo 8–12 · os seis valores da faixa**)
+> (`09-frente3-palavras.md` §11.2).
 
 ---
 
@@ -801,11 +836,42 @@ duas são de interação:
    virada da data a ceia deixa de ser "por vir" e passa a vir pré-marcada como
    comida. Isso é o comportamento certo — mas significa que **a folha aberta às
    22h sugere que ele já tomou a ceia**, e o pré-marcado é sugestão: o primeiro
-   toque em qualquer linha a grava. **Requisito:** a última refeição do dia
-   nunca entra pré-marcada por passagem de horário; ela entra pré-marcada só
-   quando o dia já está fechado (dia passado). Para hoje, a refeição cuja hora
-   passou há menos de 30 minutos fica sem marca, pela mesma razão que a janela
-   de 30 min existe na regra do cartão de cima (frente 1, §5.1, regra 4).
+   toque em qualquer linha a grava.
+   ~~**Requisito:** a última refeição do dia nunca entra pré-marcada por
+   passagem de horário; ela entra pré-marcada só quando o dia já está fechado
+   (dia passado). Para hoje, a refeição cuja hora passou há menos de 30 minutos
+   fica sem marca, pela mesma razão que a janela de 30 min existe na regra do
+   cartão de cima (frente 1, §5.1, regra 4).~~
+
+> **RECONCILIADO em 06/10 · o requisito acima foi DERRUBADO pelo dono, nas duas
+> metades.**
+>
+> **O que ele decidiu (decisão 5 das quinze):** *"a última refeição continua
+> pré-marcada como as outras"*. O requisito desta frente dizia o contrário, e
+> cai inteiro.
+>
+> **A segunda metade cai por implicação, não por pergunta aberta.** O pedaço
+> *"a refeição cuja hora passou há menos de 30 minutos fica sem marca"* nunca foi
+> nomeado por ninguém na mesa dele, e o coordenador registrou em 06/10 que a
+> decisão 5 o derruba junto: **se a passagem de horário pré-marca, pré-marca.**
+> Não é pergunta pendente; é consequência resolvida. **Não a trate como aberta.**
+>
+> **O argumento desta frente fica registrado, porque ele era bom e o risco que
+> ele nomeia continua existindo:** a folha aberta às 22h sugere que ele já tomou
+> a ceia, e um toque em qualquer linha grava a sugestão inteira como registro
+> (§4.3). Era disso que o requisito tentava defender.
+>
+> **O que paga a decisão é palavra, e a frente 3 a escreveu** (§4.1 dela): a
+> pré-marcação passa a ser **sugestão declarada**, e o texto nomeia **a causa da
+> marca** em vez de nomear a marca —
+> *"Nada aqui está registrado até você tocar. A ceia vem marcada porque passou
+> das 21h30, não porque o app sabe."* Mais a procedência linha por linha, com
+> **"marcada pelo horário · 12h30"** como a palavra nova que distingue sugestão
+> de declaração sem depender de cor — que era o outro requisito desta frente
+> (§4.3), e esse **fica de pé**.
+>
+> **Ninguém mediu** se a frase segura o engano que o requisito derrubado
+> segurava. É leitura em uso, de pé, às 22h.
 
 ### 4.5 · Fechar sem tocar, e o que o Voltar faz
 
@@ -844,6 +910,17 @@ dia.** Isto não exige mudar a função; exige um quinto botão. **Requisito:** 
 linha oferece **"Não comi"**, e a frase de leitura de volta o distingue de "fica
 sem marca" com palavras diferentes, porque são coisas diferentes no dado.
 
+> **RECONCILIADO em 06/10 · o quinto botão ENTRA** (decisão 1 das quinze). Este
+> requisito foi aceito como estava escrito.
+> **E o estado honesto dele:** `'nao'` existe no domínio, mas **nenhum chamador
+> de `marcaRefeicao` passa `como`, em valor nenhum** — conferido pelo coordenador
+> nos dois chamadores (`src/ui/folhas/refeicao.jsx` e `src/ui/telas/hoje.jsx`),
+> que chamam com um argumento só. Então "Não comi" é **capacidade de domínio sem
+> lugar onde morar**: o modelo o alcança, o dedo não. **A folha dos cinco botões
+> é esta frente virando código, e isso ainda não começou.** Está na ordem certa
+> — modelo antes de tela —, mas nada neste documento pode ser lido como "a folha
+> já existe e funciona".
+
 **2 · "Não sei" é por refeição na tela e por DIA no dado.** O protótipo trata
 `nsei` como estado de uma refeição (`estado[m.k] = "nsei"`). No domínio não
 existe: `ComoFoiARefeicao` tem dois valores. O que existe é
@@ -852,11 +929,52 @@ existe: `ComoFoiARefeicao` tem dois valores. O que existe é
 a consequência é do dia: *"Não sei: o dia deixa de contar para a regra — e é
 melhor assim do que um número inventado"* (`:1227`).
 
-**Requisito:** o controle pode ficar na linha, mas **a tela tem de dizer que ele
-vale o dia**. Marcar uma refeição como "não sei" tira o dia **inteiro** da conta
-do nutricionista, e um controle por linha com efeito de dia que não anuncia isso
-é a definição de consequência escondida. A frase de leitura de volta é o lugar
-certo para dizê-lo, e ela já é região viva.
+~~**Requisito:** o controle pode ficar na linha, mas **a tela tem de dizer que
+ele vale o dia**. Marcar uma refeição como "não sei" tira o dia **inteiro** da
+conta do nutricionista, e um controle por linha com efeito de dia que não
+anuncia isso é a definição de consequência escondida.~~ A frase de leitura de
+volta continua sendo o lugar certo para dizer a consequência, e ela já é região
+viva.
+
+> **RECONCILIADO em 06/10 · o requisito acima foi DERRUBADO, e a aritmética está
+> decidida e implementada. NÃO é pergunta aberta, e não volta a ser.**
+>
+> **Decisão 2 das quinze:** "Não sei" **passa a valer por REFEIÇÃO de verdade**.
+> Então a tela **não** deve dizer que ele vale o dia, porque ele não vale mais.
+>
+> **A aritmética, decidida pelo coordenador por delegação expressa do dono e já
+> implementada** (`6e8a3fa`): a refeição em "não sei" pesa **0** e **NÃO sai do
+> denominador**. `ComoFoiARefeicao` ganhou o terceiro valor `'nsei'`, e o peso
+> zero virou uma função só, `semCumprimento`. **O dia continua interpretável**:
+> `diaInterpretavel` só exige uma marca qualquer, e `'nsei'` é marca — a
+> incerteza aparece no número baixo, conservadoramente, em vez de tirar o dia da
+> janela de 14. **Nenhum limiar novo:** um dia inteiro em "não sei" é adesão 0 e
+> continua contando para o portão de 11 em 14.
+>
+> **A razão, que é do próprio projeto:** subestimar **segura** o corte; inflar
+> **autoriza** um corte que não devia acontecer, que é o mecanismo exato do F292.
+> E o caminho de menor esforço tem de ser o conservador. Nenhuma migração foi
+> precisa: `como` já era campo persistido opcional desde a 9→10, e **valor novo
+> não é campo novo** — o que derruba também a previsão de "migração 11 → 12" que
+> circulou junto com a decisão 2.
+>
+> **AUTORIZAÇÃO PERMANENTE, e ela é literal do dono:** *"nao quero mais qlqr
+> pergunta sobre isso"*. **Nenhum documento deve voltar a listar a aritmética do
+> "não sei" como pergunta aberta.** O mesmo vale para o lado em que cai o
+> silêncio do "fora do plano" (item 4 abaixo).
+>
+> **O que esta frente escreveu e continua valendo:** o controle fica na linha, e
+> a consequência tem de ser dita antes do toque — só que a consequência agora é
+> outra. As palavras estão na **versão A** da frente 3 (§4.5 dela), que é a que
+> esta decisão escolheu: *"O almoço fica desconhecido. A segunda continua
+> contando, com uma refeição de cinco que a regra não sabe ler."*
+>
+> **E uma distinção que não pode se perder:** o "não sei" **do dia** continua
+> existindo e continua sendo `aderencia: 'perdido'`, e continua sendo o único
+> valor que derruba o dia inteiro (`diaInterpretavel`, primeira linha). São dois
+> registros diferentes de propósito: um diz "não sei o que foi este almoço", o
+> outro diz "não sei o que foi este dia". **Onde a folha oferece qual dos dois,
+> ninguém especificou** — ver §13.2.
 
 **3 · Porção acima de 1 não existe na folha, e o dono disse que ela existe.** O
 app de hoje tem cinco porções — `½ · ¾ · cheia · 1¼ · 1½` — em
@@ -870,6 +988,11 @@ régua é a que já existe, com os cinco valores. Não é campo novo nem funçã
 `escala` é `Record<string, number>` em `ComidaDoDia`, e aceita 1,5.
 `prototipo.md` registra que o desenhista **não** inventou os valores de
 propósito ("inventar os valores seria pior") — eles existem, e são esses cinco.
+
+> **RECONCILIADO em 06/10 · aceito como estava** (decisão 3 das quinze): porção
+> acima de 1 em dia passado, **sim**, com **os mesmos cinco valores da tela de
+> hoje**. O requisito desta frente passa inteiro, inclusive a recusa de inventar
+> valor novo.
 
 **E é aqui que os dois números da adesão têm de aparecer.** A frente 0 pôs teto
 de 1 por refeição em `pesoDaRefeicao` e mediu o excedente à parte em
@@ -897,6 +1020,31 @@ gravação, como uma linha a mais na folha, com o estado inicial dito —
 `aderencia` sem resposta é `'plano'`, e `'plano'` é o padrão de quem não
 respondeu. O dia já está gravado; o que a resposta muda é se ele conta.
 
+> **RECONCILIADO em 06/10 · aceito, e a última frase deste requisito está
+> ERRADA** — e isso é bom, porque barateia a decisão.
+>
+> **Decisão 4 das quinze:** a pergunta do "fora do plano" **deixa de bloquear**;
+> um toque fecha o dia. O requisito desta frente passa: a pergunta continua e
+> aparece **depois** da gravação.
+>
+> **O que não bate com o código, conferido pelo coordenador em 06/10 e
+> reconferido aqui:** *"o que a resposta muda é se ele conta"* é falso.
+> `aderencia` tem três valores (`'plano' | 'fora' | 'perdido'`) e **a única
+> leitura lógica dele em todo o domínio é `=== 'perdido'`**
+> (`src/dominio/nutricao/calculo.ts`, em `diaInterpretavel`). "Plano" contra
+> "fora" **não alimenta cálculo nenhum**: é registro para ele ler. Então tirar o
+> bloqueio **não infla conta nenhuma** — ele torna o **registro** menos
+> completo, e esse é o preço que o dono escolheu pagar por fechar o dia num
+> toque.
+>
+> **A armadilha, anotada para quem mexer nisso depois:** se algum dia "fora"
+> passar a alimentar cálculo, **o ausente não pode cair em "plano"**. Quem mudar
+> isso lê este parágrafo primeiro.
+>
+> **E para que lado cai o silêncio é decisão FECHADA**, sob a mesma autorização
+> permanente do item 2: nada muda na aritmética, e **nenhum documento volta a
+> listar isso como pergunta aberta.**
+
 ### 4.7 · O que sobe à mesa dele, e é só isto
 
 Esta peça muda regra, então o que vai à mesa do dono é **uma lista curta de
@@ -915,6 +1063,21 @@ mudanças de regra**, não a folha inteira:
 As cinco são pequenas de desenho e nenhuma delas é de gosto: cada uma nasceu de
 uma diferença entre o que o desenho faz e o que o dado permite ou a decisão dele
 manda.
+
+> **AS CINCO ESTÃO RESPONDIDAS, em 06/10. Esta mesa fechou.**
+>
+> | # | o que esta frente pediu | o que ele decidiu |
+> |---|---|---|
+> | 1 | o quinto botão "Não comi" | **entra** (decisão 1) — aceito como escrito |
+> | 2 | "Não sei" vale o dia, e a tela diz isso | **DERRUBADO** (decisão 2): vale **por refeição** de verdade. Peso 0, dentro do denominador, o dia continua contando. Decidido e implementado; não volta à mesa dele |
+> | 3 | porção acima de 1 no dia passado | **sim** (decisão 3), os mesmos cinco valores — aceito como escrito |
+> | 4 | a pergunta do "fora do plano" deixa de bloquear | **deixa de bloquear** (decisão 4) — aceito como escrito; e tirar o bloqueio não infla conta nenhuma, porque "plano" contra "fora" não alimenta cálculo |
+> | 5 | a última refeição não vem pré-marcada | **DERRUBADO** (decisão 5): **continua pré-marcada como as outras**. A metade dos 30 minutos cai por implicação |
+>
+> **Três das cinco passaram, duas caíram.** Os argumentos das duas que caíram
+> ficam registrados nos itens de origem (§4.4 item 2 e §4.6 item 2), porque quem
+> for implementar precisa saber que o ponto foi pesado e que havia argumento do
+> outro lado.
 
 ---
 
@@ -1466,6 +1629,29 @@ diz que sim por construção, porque a lista de séries é derivada do prescrito
 pendente. **Isto é pergunta de regra, e eu não a respondo:** sobe junto do
 achado 3, porque é a mesma decisão.
 
+> **RECONCILIADO em 06/10 · as duas perguntas desta seção estão respondidas.**
+>
+> - **Onde mora o deload (decisão 6, confirmada na noite do mesmo dia):**
+>   **muda** — vai para o menu `···` da sessão, como a Direcção D desenhou, e **a
+>   razão escrita no fonte cai**. Ele manteve a decisão depois de saber que **o
+>   lugar ERA o freio**. O argumento derrubado está inteiro em
+>   `09-frente1-lugares.md`, achado 3; a mitigação é de palavra, e a frente 3 a
+>   escreveu: o item do menu **diz o corte em número antes do toque** —
+>   *"Deload hoje · corta 20 séries para 10, nas mesmas cargas"*.
+>   **Então este estado precisa ser especificado para UM lugar, não dois**, e o
+>   lugar é o menu da sessão. O que esta seção diz sobre "o estado falta nos dois"
+>   continua valendo para o lugar que ficou.
+> - **Desligar no meio (decisão 7):** **devolve as séries**, e **o que já foi
+>   registrado fica**. A segunda metade é a que responde o que esta seção nomeou
+>   como risco — a série registrada na metade cortada não reaparece como
+>   pendente nem desaparece. A frase que diz as duas metades está em
+>   `09-frente3-palavras.md` §7.6.
+>
+> **E o lugar novo do estado tem consequência que ninguém fechou:** o fonte diz
+> que *"o estado dele já aparece no TREINO quando ligado"*, e com a aba de treino
+> virando modo isso continua **sem endereço**. A decisão moveu o **interruptor**;
+> **onde o estado "deload ligado" se lê fora da sessão ninguém especificou.**
+
 ### 7.8 · Encerrar — o estado que não existe, e o que o dono já decidiu dele
 
 **Não está desenhado** (§7.0): uma linha numa folha desabilitada,
@@ -1674,6 +1860,42 @@ navegador —, mas exige olhar, e eu não o executei.
 **ou** com conteúdo cortado e inalcançável. Não há tolerância porque não é
 estatística.
 
+> **RECONCILIADO em 06/10 · 320 px NÃO É ALVO. O alvo é 414, e 320 fica
+> declarado fora.**
+>
+> O dono respondeu primeiro *"primeiro a medição, depois ele decide"* (decisão 15
+> das quinze) e, na noite do mesmo dia, **delegou a decisão ao coordenador**
+> ("seguindo o contexto", pergunta 8 das oito). **A decisão registrada é: 414 é
+> o alvo; 320 não é.** O contexto usado: o aparelho dele tem 414 px, o segundo
+> usuário **não existe no dado**, e a frente 3 achou que o nome **"Prescrição"
+> encosta na fatia da aba a 320 px já a 100% de texto** — atender 320 obrigaria
+> a renomear um dos cinco lugares por um usuário que ainda não existe.
+>
+> **E uma precisão sobre esse número, porque o registro o endureceu demais:**
+> `00-coordenacao.md` diz que a frente 3 *"mediu"* que "Prescrição" *"já
+> transborda"* a fatia a 320 px. **Ela não mediu e não transborda:** §1.6 dela é
+> explícito — *"Isto é conta, não medida"* e *"Não medido"* — e o número é
+> **63,8 pt de avanço calculado numa fatia de 64 pt**, isto é, **exatamente na
+> borda**. A 125% de texto ela quebra em duas linhas, e quebrar em duas linhas é
+> a saída que a própria frente 3 declara aceitável. **A conclusão (320 fora) não
+> muda** — ela se sustenta no aparelho de 414 px e no segundo usuário que não
+> existe —, mas o argumento da aba é **conta na borda**, não transbordo medido.
+>
+> **O que FICA de pé, e é o que impede o estrago:** **nada pode ter largura fixa
+> maior que a tela, e a página nunca rola na horizontal.** A rede já testa isso e
+> custa zero.
+>
+> **Então o protocolo acima não é mais portão** — ele continua válido como
+> **medição opcional** que produz a lista do que quebraria se um segundo usuário
+> chegasse num telefone pequeno. O custo fica conhecido e **declarado, não
+> esquecido**. A distinção que ele nomeia — **cortado não é rolável**, porque
+> `body { overflow-x: clip }` corta sem rolar — continua sendo a parte mais útil
+> dele, e ela vale a 414 px também.
+>
+> **E o checklist do contrato de UX vigente continua pedindo 320 px.** Esta
+> decisão o contraria: quem reescrever o contrato tem de tirar 320 px do
+> checklist e pôr a invariante no lugar. **Ninguém fez isso ainda.**
+
 ### 8.5 · 200% de texto — o protocolo, e o conflito que ninguém nomeou
 
 **Também não medido** — o parecer o lista: *"o layout dos dois a 200% de texto"*.
@@ -1738,6 +1960,50 @@ que é bom e é dele. Se quebrar, o bloqueio passa a ser a única coisa que segu
 a tela de pé, e isso é um fato que ninguém sabe hoje. **Em nenhum dos dois casos
 a decisão é minha:** o argumento escrito no fonte é do produto, e revê-lo é
 decisão do dono.
+
+> **RECONCILIADO em 06/10 · três coisas, e uma delas desmente esta seção.**
+>
+> **1 · O teto do texto é 125%, não 200%** (decisão 10 das quinze), *"e fica
+> escrito que não cumpre 1.4.4"*. É o que a frente 4 recomendou, com a conta da
+> régua desta frente dentro (a 200% a régua mostra 2 de 12 valores). Então o
+> protocolo de 200% **deixa de ser portão**: ele fica como a passada G4 da
+> medição G da frente 4, **informativa**, para dizer se 200% seria possível.
+>
+> **2 · O bloqueio de pinça FICA** (decisão 11). Nota literal dele: *"nem precisa
+> desse argumento de mao suada. nao quero esses zoom automatico e pronto. nao
+> gosto."* **A decisão é dele e não depende de nenhuma medição** — o que esta
+> seção punha como "pode ser revisto se nada quebrar" não é mais pergunta.
+> E o coordenador registrou o que a nota dele aponta: **o que ele recusa é o zoom
+> AUTOMÁTICO** — o salto que o Safari dá ao focar campo menor que 16px —, e
+> **isso é impedido pela regra dos 16px no campo**, não pelo `user-scalable=no`.
+>
+> **3 · E a MEDIÇÃO desmente a premissa desta seção: no PWA instalado a PINÇA
+> FUNCIONA.** Ele mediu no aparelho em 06/10 (pergunta 7 das oito da noite:
+> **sim**). Então, **onde ele usa o app**, nem o `user-scalable=no`, nem o
+> `touch-action`, nem a recusa dos eventos de gesto impedem a pinça. As três
+> camadas que esta seção lista existem como **declaração** e **não produzem o
+> efeito** ali — o que elas ainda alcançam é o Safari fora da tela cheia.
+> As duas coisas convivem e as duas têm de ser registradas: **a decisão de manter
+> e a medição de que ali não faz efeito.**
+>
+> **E a citação de `src/base.css` nesta seção envelheceu.** A frase *"nenhum texto
+> do app é menor que 16px"* era **falsa** e foi reescrita no fonte em 06/10
+> (`d625147`). **Medido por mim agora, nas cinco folhas, com os comentários
+> removidos:** são **27** declarações de `font-size`, **21** abaixo de 16px, a
+> menor **7,5px** (o rótulo do eixo da sparkline), e **duas** abaixo do piso de
+> 9px do próprio `DESIGN.md` (7,5 e 8). **Contando também o atalho `font:`** — que
+> é como a frente 4 contou — são **221** declarações com valor em px, **183**
+> abaixo de 16px (83%) e **três** abaixo de 9px (7,5 · 8 · 8,5). **Os dois pares
+> de números medem coisas diferentes e os dois estão certos**; qualquer um deles
+> derruba a frase antiga.
+> *(Nota de precisão: o registro em `00-coordenacao.md` diz "28 declarações, 22
+> abaixo de 16px". São 27 e 21 — a 28ª ocorrência de `font-size` no arquivo é a
+> menção à palavra dentro do próprio comentário que escreve o número, em
+> `src/base.css`. O comentário se contou.)*
+> O comentário novo diz as duas correções e mantém a razão que de fato sustenta o
+> bloqueio, que nunca dependeu daquela afirmação. Três nomes de caso em
+> `estilo.test.ts` passaram a nomear **a declaração** em vez de prometer **o
+> efeito**; nenhuma asserção mudou.
 
 ---
 
@@ -1931,6 +2197,20 @@ dele**, com a observação de que a resposta não precisa de campo novo:
 treinos — "o desfazer vale até aquele treino voltar outra vez" — usaria a mesma
 leitura e a mesma palavra.
 
+> **RECONCILIADO em 06/10 · RESPONDIDO, e ele respondeu exatamente a forma que
+> esta seção propunha.**
+>
+> **Decisão 8 das quinze:** o desfazer do vencimento vale **até a próxima sessão
+> daquele treino**. É limite **em treinos**, não em dias nem em número de
+> entradas, e usa `voltas(p)` — nenhum campo novo, como esta seção havia
+> previsto. A frase está escrita em `09-frente3-palavras.md` §5.6:
+> *"Dá para fazer entrar no Treino B até a próxima vez dele."*
+>
+> **O teto de 60 entradas continua existindo e não foi tocado pela decisão.** Com
+> o desfazer expirando em um retorno, a lista que ninguém lê para de crescer na
+> prática — mas **ninguém mediu** quantas entradas vencidas ficam visíveis por
+> vez, e o `slice(-60)` continua sendo o único limite real no dado.
+
 ---
 
 ## 10 · As duas coisas que a frente 1 deixou na minha mão
@@ -2103,15 +2383,16 @@ ilustração e não proposta de voz (frente 3), e os tokens, a escala, a cor e o
 movimento (frente 4). Onde eu disse "46 px" e "3:1", eu citei padrão existente e
 critério de norma, não escolhi valor novo.
 
-**O que sobe à mesa do dono, e é só isto:**
+**O que sobe à mesa do dono — e as cinco linhas estão RESPONDIDAS desde 06/10.
+Esta mesa fechou:**
 
-| o que | onde | por quê sobe |
-|---|---|---|
-| **As cinco mudanças de regra da folha de pôr em dia** | §4.7 | a folha muda regra, e cada uma das cinco nasceu de uma diferença entre o desenho e o que o dado permite ou a decisão dele manda |
-| **O que fazer se a régua reprovar a medição A** | §1.6 | a alternativa medida como melhor é o controle que ele recusou; a troca é dele, não minha |
-| **O deload: lugar e comportamento** | §7.7 | é o achado 3 da frente 1 (muda regra, com razão escrita no fonte contra), mais a pergunta nova: desligar no meio da sessão devolve as séries? |
-| **Por quanto tempo o desfazer do vencimento continua oferecido** | §9.3 | a decisão dele diz "desfazível" e não diz até quando; a coleção tem teto de 60 |
-| **Se o bloqueio de zoom pode ser revisto** | §8.5 | depende do resultado do protocolo de 200%, e o argumento que o sustenta é dele e está escrito no fonte |
+| o que | onde | por quê subia | o que ele decidiu |
+|---|---|---|---|
+| **As cinco mudanças de regra da folha de pôr em dia** | §4.7 | a folha muda regra, e cada uma das cinco nasceu de uma diferença entre o desenho e o que o dado permite ou a decisão dele manda | **três aceitas, duas derrubadas** (decisões 1 a 5). A tabela está em §4.7 |
+| **O que fazer se a régua reprovar a medição A** | §1.6 | a alternativa medida como melhor é o controle que ele recusou; a troca é dele, não minha | **pré-autorizou os botões fixos da C** (decisão 9) — condicional, e **a medição ainda não aconteceu** |
+| **O deload: lugar e comportamento** | §7.7 | é o achado 3 da frente 1 (muda regra, com razão escrita no fonte contra), mais a pergunta nova: desligar no meio da sessão devolve as séries? | **muda de lugar** (decisão 6, mantida na noite sabendo que o lugar era o freio) e **devolve as séries, com o registrado ficando** (decisão 7) |
+| **Por quanto tempo o desfazer do vencimento continua oferecido** | §9.3 | a decisão dele diz "desfazível" e não diz até quando; a coleção tem teto de 60 | **até a próxima sessão daquele treino** (decisão 8) — em treinos, sem campo novo |
+| **Se o bloqueio de zoom pode ser revisto** | §8.5 | depende do resultado do protocolo de 200%, e o argumento que o sustenta é dele e está escrito no fonte | **mantém, e não depende de medição** (decisão 11). **Mas ele mediu que a pinça FUNCIONA no PWA instalado**, então ali a declaração não faz efeito |
 
 **O que fica para depois, declarado:**
 
@@ -2146,10 +2427,19 @@ critério de norma, não escolhi valor novo.
 - **320 px de largura.** Protocolo em §8.4. E a pergunta que o protocolo tem de
   distinguir — cortado ou rolável — é consequência do `overflow-x: clip` do
   `body`, e também não foi medida.
+  **RECONCILIADO em 06/10: 320 px deixou de ser alvo** — o alvo é 414, e 320 fica
+  declarado fora, com a invariante de que nada tem largura fixa maior que a tela
+  e a página nunca rola na horizontal. Continua **não medido**, e agora isso é
+  escolha e não dívida.
 - **200% de texto.** Protocolo em §8.5. E o achado que muda a pergunta: está
   bloqueado em **três** camadas de propósito, e a tipografia é toda em `px`
   (`rem` aparece **zero** vezes nas cinco folhas), então nem o ajuste de texto
   do sistema a alcançaria.
+  **RECONCILIADO em 06/10, em dois pontos:** o teto decidido é **125%** (decisão
+  10), com 1.4.4 declarado não cumprido — então 200% virou passada
+  **informativa** (G4 da frente 4) e não portão; e **"bloqueado em três camadas"
+  é falso onde ele usa o app** — medido em 06/10, no PWA instalado **a pinça
+  funciona**. As três camadas são declaração; o efeito, ali, não acontece.
 - **A seta de saída da sessão.** Conta em §10.1 (92% da diagonal da tela do
   pivô do polegar), protocolo na medição E. Alcance de polegar depende da mão, e
   eu não tenho a mão dele.
@@ -2170,3 +2460,60 @@ critério de norma, não escolhi valor novo.
   requisitos de anúncio deste documento (§1.3 R6, §6.2 T2, §8.3) foram escritos
   contra a norma e contra a medida de Chromium, **não** contra o leitor que o
   dono usaria.
+
+---
+
+## 13 · Reconciliação com as decisões de 06/10
+
+Este documento foi escrito em 05/10. As 23 decisões do dono vieram em **06/10**,
+e a autoridade sobre elas é a ONDA 5 de `docs/redesign/00-coordenacao.md`, que
+**não** é editada aqui. Esta seção diz o que foi alinhado, contra qual decisão, e
+o que continua sem resposta.
+
+### 13.1 · O que foi alinhado
+
+| o que mudou aqui | contra qual decisão / medição | onde | sentido |
+|---|---|---|---|
+| **A última refeição CONTINUA pré-marcada**; o requisito oposto desta frente cai | decisão 5 | §4.4, item 2 | **derrubada** |
+| **A metade dos 30 minutos cai por implicação** — não é pergunta aberta | consequência da decisão 5, registrada pelo coordenador | §4.4, item 2 | **derrubada** |
+| **"Não sei" vale por REFEIÇÃO**, pesa 0, **não sai do denominador**, e o dia continua contando | decisão 2 + a aritmética delegada ao coordenador, já implementada em `6e8a3fa` | §4.6, item 2 | **derrubada** |
+| **O quinto botão "Não comi" entra** | decisão 1 | §4.6, item 1 | aceita |
+| **Porção acima de 1 alcança o dia passado**, com os cinco valores | decisão 3 | §4.6, item 3 | aceita |
+| **A pergunta do "fora do plano" deixa de bloquear** — e tirar o bloqueio não infla conta nenhuma, porque "plano" contra "fora" não alimenta cálculo | decisão 4 + a verificação do coordenador em `calculo.ts` | §4.6, item 4 | aceita, com a última frase do requisito corrigida |
+| **A régua: se a medição A reprovar, vai para os botões fixos da C — pré-autorizado, e a medição ainda não aconteceu** | decisão 9 | §1.6 | aceita como condicional |
+| **O deload muda de lugar** (um lugar, não dois) e **desligar no meio devolve as séries** | decisões 6 e 7, mais a confirmação da noite | §7.7 | decidida |
+| **O desfazer do vencimento vale até a próxima sessão daquele treino** | decisão 8 | §9.3 | aceita, e é a forma que esta frente previu |
+| **320 px não é alvo; 414 é** | decisão 15 + a delegação da noite (pergunta 8) | §8.4, §12 | decidida |
+| **O teto do texto é 125%**, com 1.4.4 declarado não cumprido | decisão 10 | §8.5, §12 | decidida |
+| **O bloqueio de pinça fica** — e **a pinça funciona no PWA instalado**, medido | decisão 11 + a medição da noite (pergunta 7) | §8.5, §12 | decidida, com a premissa desta seção desmentida |
+| **Os três valores de `como` são dado e ainda não são tela** | medição do coordenador: nenhum chamador de `marcaRefeicao` passa `como` | §4.6, item 1 | fato novo |
+
+**Uma correção de número que eu faço aqui, contra o registro:** `00-coordenacao.md`
+diz que a frente 3 *"mediu"* que "Prescrição" *"já transborda"* a fatia da aba a
+320 px. **Ela não mediu e não transborda** — §1.6 dela diz *"Isto é conta, não
+medida"* e o valor é **63,8 pt calculados numa fatia de 64 pt**, na borda. A
+conclusão (320 fora) não depende disso. Detalhe em §8.4.
+
+### 13.2 · O que esta reconciliação NÃO resolve
+
+- **A medição A não aconteceu.** É a pergunta central de §1, exige o aparelho e o
+  dedo dele, de pé, na academia, com a mão suada, e **nenhuma conta a
+  substitui**. A decisão 9 só diz o que fazer com o resultado. Enquanto isso, os
+  sete requisitos de §1.3 são o trabalho.
+- **Nenhuma das medições deste documento foi executada** — A, B, C, D, E, nem o
+  protocolo de 320 px, nem o de 200%. As decisões de 06/10 mudaram o **destino**
+  de alguns resultados, não o fato de que ninguém mediu.
+- **Onde a folha oferece o "não sei" DO DIA, e como ele se distingue do "não sei"
+  da refeição.** Os dois existem no dado e querem dizer coisas diferentes
+  ("não sei o que foi este almoço" contra "não sei o que foi este dia"); só o
+  segundo derruba o dia. **Ninguém especificou se a folha oferece os dois, nem
+  com que palavras.** Isto é especificação que falta, e eu não a invento.
+- **Onde se lê "deload ligado" fora da sessão.** A decisão 6 moveu o
+  interruptor para o menu `···` da sessão; o fonte dizia que o estado *"já
+  aparece no TREINO quando ligado"*, e com a aba de treino virando modo isso
+  **continua sem endereço**. Falta especificação.
+- **O checklist do contrato de UX vigente continua pedindo 320 px.** A decisão o
+  contraria, e ninguém reescreveu o contrato.
+- **Se a frase de sugestão declarada segura o engano** que o requisito derrubado
+  de §4.4 segurava — a folha aberta às 22h sugerindo que a ceia foi tomada.
+  **Ninguém mediu**, e é leitura em uso.
