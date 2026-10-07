@@ -356,7 +356,7 @@ test('renomear não move o histórico, porque não mexe no id', async () => {
   await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Máquina nova do canto')`);
   await a.esperar(60);
 
-  assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), 'Máquina nova do canto');
+  assert.strictEqual(a.v('nomeEx', alvo), 'Máquina nova do canto');
   assert.ok(!!a.dado('CAT')[alvo], 'o id continua existindo no catálogo');
   assert.strictEqual(a.E(`(S.logs[${JSON.stringify(alvo)}] || []).length`), series,
     'as séries continuam sob a MESMA chave');
@@ -395,7 +395,7 @@ test('renomear um exercício do código grava só o nome, sobre o mesmo id', asy
 test('voltar ao nome do treinador apaga o override em vez de copiá-lo', async () => {
   const a = await app();
   const alvo = abreHistorico(a);
-  const original = a.E(`nomeEx(${JSON.stringify(alvo)})`);
+  const original = a.v('nomeEx', alvo);
 
   await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Outro nome qualquer')`);
   await a.esperar(60);
@@ -404,7 +404,7 @@ test('voltar ao nome do treinador apaga o override em vez de copiá-lo', async (
 
   await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, ${JSON.stringify(original)})`);
   await a.esperar(60);
-  assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), original);
+  assert.strictEqual(a.v('nomeEx', alvo), original);
   assert.strictEqual(a.E(`!!(S.ex[${JSON.stringify(alvo)}] && S.ex[${JSON.stringify(alvo)}].n)`), false,
     'o estado não guarda cópia do que já está no código');
   a.fechar();
@@ -413,11 +413,11 @@ test('voltar ao nome do treinador apaga o override em vez de copiá-lo', async (
 test('nome curto demais e nome repetido são recusados', async () => {
   const a = await app();
   const alvo = abreHistorico(a);
-  const original = a.E(`nomeEx(${JSON.stringify(alvo)})`);
+  const original = a.v('nomeEx', alvo);
 
   await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'ab')`);
   await a.esperar(40);
-  assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), original);
+  assert.strictEqual(a.v('nomeEx', alvo), original);
   assert.ok(/três letras/.test(a.toast()), a.toast());
 
   // o nome de OUTRO exercício do catálogo
@@ -425,7 +425,7 @@ test('nome curto demais e nome repetido são recusados', async () => {
   const nomeDoOutro = a.dado('CAT')[outro].n;
   await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, ${JSON.stringify(nomeDoOutro)})`);
   await a.esperar(40);
-  assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), original, 'não trocou');
+  assert.strictEqual(a.v('nomeEx', alvo), original, 'não trocou');
   assert.ok(/Já existe/.test(a.toast()), a.toast());
   a.fechar();
 });
@@ -435,6 +435,6 @@ test('espaço em excesso não vira nome diferente', async () => {
   const alvo = abreHistorico(a);
   await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, '   Leg    press   45   ')`);
   await a.esperar(60);
-  assert.strictEqual(a.E(`nomeEx(${JSON.stringify(alvo)})`), 'Leg press 45');
+  assert.strictEqual(a.v('nomeEx', alvo), 'Leg press 45');
   a.fechar();
 });
