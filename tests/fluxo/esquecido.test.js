@@ -12,8 +12,8 @@ const MIN = 60 * 1000;
 /** Sessão aberta de verdade, com uma série registrada. */
 async function comSessao() {
   const a = await app();
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   await a.esperar();
   assert.ok(a.E('S.sessao'), 'a sessão nasceu na primeira série');
@@ -35,7 +35,7 @@ test('antes de 1h30 a faixa é atalho, não pergunta', async () => {
   const a = await comSessao();
   parada(a, 80);
   a.aba('comida');
-  assert.strictEqual(a.J('CTX.faixaDaSessao()').tipo, 'atalho');
+  assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'atalho');
   a.fechar();
 });
 
@@ -44,7 +44,7 @@ test('passando de 1h30 a faixa pergunta, e pergunta até na aba de treino', asyn
   const a = await comSessao();
   parada(a, 95);
   a.aba('treino');
-  const f = a.J('CTX.faixaDaSessao()');
+  const f = a.vJ('ctx.faixaDaSessao');
   assert.strictEqual(f.tipo, 'pergunta');
   assert.ok(a.$('.ins-faixa-p'), 'e está na tela');
   // `.ins-faixa-q`, e não a sobrancelha: a pergunta é prosa em display, porque
@@ -55,10 +55,10 @@ test('passando de 1h30 a faixa pergunta, e pergunta até na aba de treino', asyn
 
 test('pausado não conta como esquecido: pausar é aviso, não ausência', async () => {
   const a = await comSessao();
-  await a.E('pausarSessao()');
+  await a.v('pausarSessao');
   a.E(`S.sessao.pausadoEm = Date.now() - 200 * ${MIN}`);
   a.aba('comida');
-  assert.strictEqual(a.J('CTX.faixaDaSessao()').tipo, 'atalho',
+  assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'atalho',
     'cobrar inatividade de quem avisou que parou seria punir o aviso');
   a.fechar();
 });
@@ -67,12 +67,12 @@ test('"continuo treinando" zera o relógio e devolve o atalho', async () => {
   const a = await comSessao();
   parada(a, 95);
   a.aba('comida');
-  assert.strictEqual(a.J('CTX.faixaDaSessao()').tipo, 'pergunta');
+  assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'pergunta');
 
-  await a.E('CTX.continuaSessao()');
+  await a.v('ctx.continuaSessao');
   await a.esperar();
   assert.ok(a.E('S.sessao'), 'a sessão continua aberta');
-  assert.strictEqual(a.J('CTX.faixaDaSessao()').tipo, 'atalho');
+  assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'atalho');
   a.fechar();
 });
 
@@ -82,7 +82,7 @@ test('"já parei" grava a duração até a última série, não até agora', asy
   a.E(`S.sessao.inicio = Date.now() - 100 * ${MIN}`);
   parada(a, 95);                                  // treinou 5 min, parou 95
 
-  await a.E('CTX.encerraSessaoEsquecida()');
+  await a.v('ctx.encerraSessaoEsquecida');
   await a.esperar();
 
   assert.strictEqual(a.E('S.sessao'), null);
@@ -103,7 +103,7 @@ test('na abertura: dentro da graça a sessão vive, além dela fecha', async () 
 
   const viva = await app({ estado: estado(95) });
   assert.ok(viva.E('S.sessao'), 'reabrir o app é justamente a chance de responder');
-  assert.strictEqual(viva.J('CTX.faixaDaSessao()').tipo, 'pergunta');
+  assert.strictEqual(viva.vJ('ctx.faixaDaSessao').tipo, 'pergunta');
   viva.fechar();
 
   const morta = await app({ estado: estado(105) });
