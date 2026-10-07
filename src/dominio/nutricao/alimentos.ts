@@ -38,11 +38,16 @@ const CRU: Array<[string, string, string, 'g' | 'ml', number, number, number, nu
   // um valor errado aqui contamina o alvo do dia, e por ele o ledger do ajuste
   // calórico — que audita decisões de corte contra a ingestão da época.
   //
-  // O que dá para dizer sem a embalagem: os macros fecham com o kcal declarado
-  // dentro de 1,7% (9,5×4 + 78×4 + 4,5×9 = 390,5 contra 397), que é a folga
-  // normal de arredondamento e fibra num rótulo. Consistência interna não é
-  // conferência.
-  ['neston', 'Neston 3 Cereais', 'mercearia', 'g', 397, 9.5, 78, 4.5, 0],
+  // CONFERIDO em 06/10 contra o rótulo, por pedido do dono, em duas fontes que
+  // concordam: Open Food Facts (EAN 7891000098950) e a tabela do produto no
+  // varejo. Por 100 g: 373 kcal, 13 g de proteína, 70 g de carboidrato, 2,33 g
+  // de gordura, 9,67 g de fibra (a fibra não entra aqui porque o catálogo não a
+  // guarda).
+  //
+  // Os valores anteriores vinham da memória de um agente e estavam errados nos
+  // quatro números — proteína 9,5 contra 13, gordura 4,5 contra 2,3. Era por
+  // isso que ficaram marcados como pendentes.
+  ['neston', 'Neston 3 Cereais', 'mercearia', 'g', 373, 13, 70, 2.3, 0],
   ['atum', 'Atum drenado', 'mercearia', 'g', 116, 26, 0, 1, 0],
   ['pasta', 'Pasta de amendoim', 'mercearia', 'g', 588, 25, 20, 50, 0],
   ['azeite', 'Azeite de oliva', 'mercearia', 'g', 884, 0, 0, 100, 0],
@@ -123,5 +128,5 @@ export const PLANO_BASE: Refeicao[] =[
   // põe a ceia depois do jantar das 19:30 e antes do sono de quem levanta para
   // um pré-treino às 05:45. O horário só decide a posição da linha na timeline,
   // que `refeicoesDeHoje` ordena por relógio.
-  { id: 'ceia', t: '21:30', n: 'Ceia', tag: 'ANTES DE DORMIR', quando: 'sempre', nota: 'Copo de leite com duas colheres de Neston. As duas colheres são a porção que o próprio rótulo usa; o copo de 250 ml é a porção de leite que o resto deste plano já usa.', itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 30 }] }
+  { id: 'ceia', t: '21:30', n: 'Ceia', tag: 'ANTES DE DORMIR', quando: 'sempre', nota: 'Copo de leite com duas colheres de Neston. O copo de 250 ml é a porção de leite que o resto deste plano já usa; as duas colheres saem da porção do rótulo, que declara 30 g em CINCO colheres de sopa — 6 g por colher.', itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 12 }] }
 ];

@@ -733,8 +733,8 @@ export function migraPlano10(S: Estado): Resultado10 | null {
 /** A ceia, como o plano 11 a prescreveu. Congelada: não lê `PLANO_BASE`. */
 export const CEIA_PLANO_11: Refeicao = {
   id: 'ceia', t: '21:30', n: 'Ceia', tag: 'ANTES DE DORMIR', quando: 'sempre',
-  nota: 'Copo de leite com duas colheres de Neston. As duas colheres são a porção que o próprio rótulo usa; o copo de 250 ml é a porção de leite que o resto deste plano já usa.',
-  itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 30 }]
+  nota: 'Copo de leite com duas colheres de Neston. O copo de 250 ml é a porção de leite que o resto deste plano já usa; as duas colheres saem da porção do rótulo, que declara 30 g em CINCO colheres de sopa — 6 g por colher.',
+  itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 12 }]
 };
 
 /** O que a migração 10→11 mexeu. */

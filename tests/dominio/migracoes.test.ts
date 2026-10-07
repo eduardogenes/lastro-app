@@ -592,7 +592,7 @@ test('10→11 insere a ceia no plano guardado', () => {
   const ceia = S.comida.plano!.filter(x => x.id === 'ceia')[0];
   assert.strictEqual(ceia.t, '21:30');
   assert.strictEqual(ceia.quando, 'sempre');
-  assert.deepStrictEqual(ceia.itens, [{ f: 'leite', q: 250 }, { f: 'neston', q: 30 }]);
+  assert.deepStrictEqual(ceia.itens, [{ f: 'leite', q: 250 }, { f: 'neston', q: 12 }]);
   assert.strictEqual(S.plano, 11);
 });
 
@@ -691,25 +691,30 @@ test('a ceia entra na conta do dia e muda o denominador do histórico congelado'
     'e o total congelado do dia não é tocado: nenhum byte do histórico é reescrito');
 });
 
-test('a ceia sobe o alvo do dia em 271,6 kcal — medido, não suposto', () => {
+test('a ceia sobe o alvo do dia em 197,3 kcal — medido contra o rótulo', () => {
   // O alvo é CALCULADO do plano, então acrescentar refeição o sobe. O número
   // importa para ele e para o nutricionista: o ledger do ajuste calórico foi
   // construído sobre o alvo antigo.
+  //
+  // Este número já foi 271,6, com os valores do Neston vindos da memória de um
+  // agente e a porção em 30 g. Conferido contra o rótulo em 06/10, os dois
+  // mudaram: 373 kcal por 100 g (não 397) e duas colheres são 12 g (não 30 —
+  // o rótulo declara 30 g em CINCO colheres). O alvo sobe 197,3 e não 271,6.
   const S = fixturePlano10();
   const cat = ALIMENTOS_BASE;
   const antes = totalDoDia(S.comida.plano!, cat, true, false, {});
   migraPlano11(S);
   const depois = totalDoDia(S.comida.plano!, cat, true, false, {});
 
-  assert.ok(Math.abs((depois.kcal - antes.kcal) - 271.6) < 0.05,
+  assert.ok(Math.abs((depois.kcal - antes.kcal) - 197.26) < 0.05,
     'delta medido: ' + (depois.kcal - antes.kcal));
   assert.ok(Math.abs(antes.kcal - 3007.1) < 0.05, 'alvo de dia de treino antes: ' + antes.kcal);
-  assert.ok(Math.abs(depois.kcal - 3278.7) < 0.05, 'e depois: ' + depois.kcal);
+  assert.ok(Math.abs(depois.kcal - 3204.36) < 0.05, 'e depois: ' + depois.kcal);
 
   const descansoAntes = totalDoDia(fixturePlano10().comida.plano!, cat, false, false, {});
   const descansoDepois = totalDoDia(S.comida.plano!, cat, false, false, {});
   assert.ok(Math.abs(descansoAntes.kcal - 2844.1) < 0.05, 'descanso antes: ' + descansoAntes.kcal);
-  assert.ok(Math.abs(descansoDepois.kcal - 3115.7) < 0.05, 'descanso depois: ' + descansoDepois.kcal);
+  assert.ok(Math.abs(descansoDepois.kcal - 3041.36) < 0.05, 'descanso depois: ' + descansoDepois.kcal);
 });
 
 test('o Neston não precisa de migração: o catálogo é derivado', () => {
