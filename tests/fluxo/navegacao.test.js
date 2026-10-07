@@ -44,7 +44,7 @@ test('abrir camada empurra uma entrada no histórico', async () => {
   await a.pronto();
   const antes = a.window.history.length;
 
-  a.E("CTX.abreFolha({ k: 'dia' })");
+  a.v('ctx.abreFolha', { k: 'dia' });
   await a.esperar();
 
   assert.ok(a.$('.ins-folha'), 'a folha está na tela');
@@ -56,7 +56,7 @@ test('abrir camada empurra uma entrada no histórico', async () => {
 test('o Voltar do sistema fecha a folha em vez de sair do app', async () => {
   const a = await app();
   await a.pronto();
-  a.E("CTX.abreFolha({ k: 'dia' })");
+  a.v('ctx.abreFolha', { k: 'dia' });
   await a.esperar();
   assert.ok(a.$('.ins-folha'), 'a folha abriu');
 
@@ -70,17 +70,17 @@ test('o Voltar do sistema fecha a folha em vez de sair do app', async () => {
 test('folhas empilhadas fecham uma por Voltar', async () => {
   const a = await app();
   await a.pronto();
-  a.E("CTX.abreFolha({ k: 'editaRefeicao', id: null })");
+  a.v('ctx.abreFolha', { k: 'editaRefeicao', id: null });
   await a.esperar();
-  a.E("CTX.abreFolha({ k: 'seletor', ref: null, idx: 0 })");
+  a.v('ctx.abreFolha', { k: 'seletor', ref: null, idx: 0 });
   await a.esperar();
-  assert.strictEqual(a.J('(view.pilha || []).length'), 2);
+  assert.strictEqual((a.vista().pilha || []).length, 2);
 
   await voltar(a);
-  assert.strictEqual(a.J('(view.pilha || []).length'), 1, 'fechou só a de cima');
+  assert.strictEqual((a.vista().pilha || []).length, 1, 'fechou só a de cima');
 
   await voltar(a);
-  assert.strictEqual(a.J('(view.pilha || []).length'), 0, 'e depois a de baixo');
+  assert.strictEqual((a.vista().pilha || []).length, 0, 'e depois a de baixo');
   assert.ok(a.$('.ins-tabbar'), 'o app continua de pé');
   a.fechar();
 });
@@ -93,14 +93,14 @@ test('o Escape fecha uma folha por vez, mesmo com três abertas', async () => {
   // de desenho, e não só o z-index.
   const a = await app();
   await a.pronto();
-  a.E("CTX.abreFolha({ k: 'editaRefeicao', id: null })");
+  a.v('ctx.abreFolha', { k: 'editaRefeicao', id: null });
   await a.esperar();
-  a.E("CTX.abreFolha({ k: 'seletor', ref: null, idx: 0 })");
+  a.v('ctx.abreFolha', { k: 'seletor', ref: null, idx: 0 });
   await a.esperar();
-  a.E("CTX.abreFolha({ k: 'editaAlimento', id: null })");
+  a.v('ctx.abreFolha', { k: 'editaAlimento', id: null });
   await a.esperar();
   await a.esperar();        // o ouvinte da folha nova entra no efeito, um tick depois
-  assert.strictEqual(a.J('(view.pilha || []).length'), 3);
+  assert.strictEqual((a.vista().pilha || []).length, 3);
 
   const esc = () => {
     a.doc.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape' }));
@@ -108,11 +108,11 @@ test('o Escape fecha uma folha por vez, mesmo com três abertas', async () => {
   };
 
   await esc();
-  assert.strictEqual(a.J('(view.pilha || []).length'), 2, 'fechou só a de cima');
+  assert.strictEqual((a.vista().pilha || []).length, 2, 'fechou só a de cima');
   await esc();
-  assert.strictEqual(a.J('(view.pilha || []).length'), 1);
+  assert.strictEqual((a.vista().pilha || []).length, 1);
   await esc();
-  assert.strictEqual(a.J('(view.pilha || []).length'), 0);
+  assert.strictEqual((a.vista().pilha || []).length, 0);
   assert.ok(a.$('.ins-tabbar'), 'o app continua de pé');
   a.fechar();
 });
@@ -120,13 +120,13 @@ test('o Escape fecha uma folha por vez, mesmo com três abertas', async () => {
 test('o Voltar sai de um destino de tela cheia', async () => {
   const a = await app();
   await a.pronto();
-  a.E('abrirPrograma(null)');
+  a.v('abrirPrograma', null);
   await a.esperar();
-  assert.ok(a.J('!!view.prog'), 'o programa abriu');
+  assert.ok(!!a.vista().prog, 'o programa abriu');
 
   await voltar(a);
 
-  assert.ok(!a.J('!!view.prog'), 'o Voltar fechou o programa');
+  assert.ok(!!!a.vista().prog, 'o Voltar fechou o programa');
   assert.ok(a.$('.ins-tabbar'), 'e devolveu a shell com a tab bar');
   a.fechar();
 });
@@ -136,9 +136,9 @@ test('fechar pelo botão do app não deixa entrada órfã no histórico', async 
   // usuário apertaria duas vezes para sair de uma tela que já tinha fechado.
   const a = await app();
   await a.pronto();
-  a.E("CTX.abreFolha({ k: 'dia' })");
+  a.v('ctx.abreFolha', { k: 'dia' });
   await a.esperar();
-  a.E('CTX.fechaFolha()');
+  a.v('ctx.fechaFolha');
   await a.esperar(80);
 
   assert.strictEqual(
@@ -169,11 +169,11 @@ test('voltar de um destino devolve a posição de leitura', async () => {
   };
 
   y = 1500;
-  a.E('abrirPrograma(null)');
+  a.v('abrirPrograma', null);
   await a.esperar();
   assert.strictEqual(pedidos[pedidos.length - 1], 0, 'entrar no destino leva ao topo');
 
-  a.E('fecharPrograma()');
+  a.v('fecharPrograma');
   await a.esperar();
   assert.strictEqual(pedidos[pedidos.length - 1], 1500, 'sair devolve onde se estava');
   a.fechar();
@@ -192,7 +192,7 @@ test('a folha entra em foco, isola o fundo e devolve o foco ao sair', async () =
   assert.ok(acionador, 'o botão de estado do cabeçalho abre o seletor de dia');
   acionador.focus();
 
-  a.E("CTX.abreFolha({ k: 'dia' })");
+  a.v('ctx.abreFolha', { k: 'dia' });
   await a.esperar();
 
   const folha = a.$('.ins-folha');
@@ -208,7 +208,7 @@ test('a folha entra em foco, isola o fundo e devolve o foco ao sair', async () =
     'e a folha não foi tornada inerte junto'
   );
 
-  a.E('CTX.fechaFolha()');
+  a.v('ctx.fechaFolha');
   await a.esperar();
 
   assert.ok(!a.$('.ins-folha'), 'a folha fechou');
