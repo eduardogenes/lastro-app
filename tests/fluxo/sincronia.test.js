@@ -43,9 +43,9 @@ test('sem conta, o app não fala com a nuvem', async () => {
   a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   await a.esperar();
-  assert.strictEqual(a.E('sync.sujo'), false, 'nem marca sujeira');
+  assert.strictEqual(a.dado('sync').sujo, false, 'nem marca sujeira');
   await a.v('sincroniza');
-  assert.strictEqual(a.E('sync.v'), null);
+  assert.strictEqual(a.dado('sync').v, null);
   a.fechar();
 });
 
@@ -61,8 +61,8 @@ test('primeira sincronização cria a linha e sobe o que existe', async () => {
   assert.strictEqual(n.empurros.length, 1);
   assert.strictEqual(n.empurros[0].deV, null, 'linha nova: parte do nada');
   assert.ok(n.linha.data.logs['chest-press-inclinado-convergente'], 'a série subiu');
-  assert.strictEqual(a.E('sync.v'), 1);
-  assert.strictEqual(a.E('sync.sujo'), false, 'limpou depois de subir');
+  assert.strictEqual(a.dado('sync').v, 1);
+  assert.strictEqual(a.dado('sync').sujo, false, 'limpou depois de subir');
   a.fechar();
 });
 
@@ -82,9 +82,9 @@ test('o que o outro aparelho gravou desce e se junta ao daqui', async () => {
   await a.esperar();
   await a.v('sincroniza');
 
-  assert.strictEqual(a.E('S.logs["pendulum-squat"].length'), 1, 'desceu o de lá');
-  assert.strictEqual(a.E('S.logs["chest-press-inclinado-convergente"].length'), 1, 'e o daqui ficou');
-  assert.strictEqual(a.E('S.done.length'), 2, 'as duas sessões');
+  assert.strictEqual(a.S().logs["pendulum-squat"].length, 1, 'desceu o de lá');
+  assert.strictEqual(a.S().logs["chest-press-inclinado-convergente"].length, 1, 'e o daqui ficou');
+  assert.strictEqual(a.S().done.length, 2, 'as duas sessões');
 
   const n = nuvem(a);
   assert.strictEqual(n.empurros[0].deV, 7, 'a escrita declarou de que versão partiu');
@@ -108,9 +108,9 @@ test('conflito no meio do caminho refaz o ciclo em vez de perder', async () => {
   const n = nuvem(a);
   assert.strictEqual(n.puxadas, 2, 'releu depois do conflito');
   assert.strictEqual(n.empurros.length, 1, 'e gravou na segunda tentativa');
-  assert.strictEqual(a.E('S.logs["chest-press-inclinado-convergente"].length'), 1,
+  assert.strictEqual(a.S().logs["chest-press-inclinado-convergente"].length, 1,
     'a série local sobreviveu ao conflito');
-  assert.strictEqual(a.E('sync.sujo'), false);
+  assert.strictEqual(a.dado('sync').sujo, false);
   a.fechar();
 });
 
@@ -124,14 +124,14 @@ test('sem rede, o app não perde nada e volta a sincronizar depois', async () =>
   await a.esperar();
   await a.v('sincroniza');
 
-  assert.ok(a.E('sync.erro'), 'a tela sabe que falhou');
-  assert.strictEqual(a.E('sync.sujo'), true, 'e continua devendo o envio');
-  assert.strictEqual(a.E('S.logs["chest-press-inclinado-convergente"].length'), 1,
+  assert.ok(a.dado('sync').erro, 'a tela sabe que falhou');
+  assert.strictEqual(a.dado('sync').sujo, true, 'e continua devendo o envio');
+  assert.strictEqual(a.S().logs["chest-press-inclinado-convergente"].length, 1,
     'a série está registrada localmente do mesmo jeito');
 
   a.E("globalThis.__nuvem.falha = null");
   await a.v('sincroniza');
-  assert.strictEqual(a.E('sync.sujo'), false, 'ao voltar a rede, sobe');
+  assert.strictEqual(a.dado('sync').sujo, false, 'ao voltar a rede, sobe');
   assert.strictEqual(nuvem(a).linha.data.done.length, 1);
   a.fechar();
 });
@@ -164,9 +164,9 @@ test('apagar aqui não é desfeito pelo que a nuvem ainda tem', async () => {
   await a.esperar();
   await a.v('sincroniza');
 
-  assert.strictEqual(a.E('S.body.peso.length'), 0, 'apagada aqui');
+  assert.strictEqual(a.S().body.peso.length, 0, 'apagada aqui');
   assert.strictEqual(nuvem(a).linha.data.body.peso.length, 0, 'e apagada na nuvem');
-  assert.ok(Object.keys(a.J('S.apagados')).length > 0, 'a lápide viajou junto');
+  assert.ok(Object.keys(a.S().apagados).length > 0, 'a lápide viajou junto');
   a.fechar();
 });
 
@@ -193,7 +193,7 @@ test('descanso não conta como treino em lugar nenhum', async () => {
   const a = await app({ estado: { logs: {}, done: [] } });
   await a.E('alternaDescanso(' + ontem + ')');
   await a.esperar();
-  assert.strictEqual(a.E('S.done.length'), 0, 'não entra em done');
+  assert.strictEqual(a.S().done.length, 0, 'não entra em done');
   assert.strictEqual(a.v('sessoesDeTrabalho'), 0, 'nem na conta do bloco');
   assert.strictEqual(a.E('ehDescanso(' + ontem + ')'), true, 'mas o calendário sabe');
   a.fechar();
