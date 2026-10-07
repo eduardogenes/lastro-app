@@ -96,7 +96,7 @@ test('backup antigo (plano 2) cai nos ids da época, não no programa de hoje', 
     plano: 2, logs: { 'C0': [{ t, sid: t, sets: [[100, 8]] }] }, done: [], carga: {}
   }});
   const a = await app();
-  await a.E('importText(' + JSON.stringify(antigo) + ')');
+  await a.v('importText', antigo);
   await a.esperar();
   assert.ok(a.S().logs["pendulum-squat"], 'histórico foi para o exercício certo da época');
   assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'));
