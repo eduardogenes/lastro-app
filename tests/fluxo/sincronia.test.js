@@ -175,12 +175,12 @@ test('dia marcado como descanso viaja e some quando desmarcado', async () => {
   const a = await app({ estado: { logs: {}, done: [] } });
   nuvemFalsa(a, null);
 
-  await a.E('alternaDescanso(' + ontem + ')');
+  await a.v('alternaDescanso', ontem);
   await a.esperar();
   await a.v('sincroniza');
   assert.strictEqual(Object.keys(nuvem(a).linha.data.descanso).length, 1, 'subiu a marca');
 
-  await a.E('alternaDescanso(' + ontem + ')');   // desmarcou
+  await a.v('alternaDescanso', ontem);   // desmarcou
   await a.esperar();
   await a.v('sincroniza');
   assert.strictEqual(Object.keys(nuvem(a).linha.data.descanso).length, 0,
@@ -191,20 +191,20 @@ test('dia marcado como descanso viaja e some quando desmarcado', async () => {
 test('descanso não conta como treino em lugar nenhum', async () => {
   const ontem = Date.now() - 86400000;
   const a = await app({ estado: { logs: {}, done: [] } });
-  await a.E('alternaDescanso(' + ontem + ')');
+  await a.v('alternaDescanso', ontem);
   await a.esperar();
   assert.strictEqual(a.S().done.length, 0, 'não entra em done');
   assert.strictEqual(a.v('sessoesDeTrabalho'), 0, 'nem na conta do bloco');
-  assert.strictEqual(a.E('ehDescanso(' + ontem + ')'), true, 'mas o calendário sabe');
+  assert.strictEqual(a.v('ehDescanso', ontem), true, 'mas o calendário sabe');
   a.fechar();
 });
 
 test('dia com treino registrado recusa a marca de descanso', async () => {
   const t = Date.now() - 86400000;
   const a = await app({ estado: { logs: {}, done: [{ day: 'A', t: t, sid: t, dur: 0 }] } });
-  await a.E('alternaDescanso(' + t + ')');
+  await a.v('alternaDescanso', t);
   await a.esperar();
-  assert.strictEqual(a.E('ehDescanso(' + t + ')'), false,
+  assert.strictEqual(a.v('ehDescanso', t), false,
     'o fato já respondeu: o app não pode afirmar as duas coisas');
   a.fechar();
 });
@@ -213,7 +213,7 @@ test('a tela de lançamento aguenta a opção de descanso', async () => {
   // regressão: 'descanso' não é letra da rotação, e descrever o treino dela
   // derrubava a tela inteira antes de qualquer mensagem
   const a = await app({ estado: { logs: {}, done: [] } });
-  a.E('abrirAdicionar(' + (Date.now() - 86400000) + ')');
+  a.v('abrirAdicionar', (Date.now() - 86400000));
   const rotulos = a.$$('.chips .ins-chip').map(x => x.textContent);
   assert.ok(rotulos.includes('foi descanso'), rotulos.join(' | '));
 
@@ -235,7 +235,7 @@ test('o descanso aparece nas duas telas, e do mesmo jeito', async () => {
   const antes = a.$$('.wd .wd-v').map(x => x.textContent);
   assert.strictEqual(antes[0], '+', 'sem marca, o domingo convida a registrar');
 
-  await a.E('alternaDescanso(' + dom + ')');
+  await a.v('alternaDescanso', dom);
   await a.esperar();
 
   const cel = a.$$('.wd')[0];
