@@ -15,8 +15,8 @@ function completa(a, i) {
 
 test('ao completar o último set, o próximo abre pronto', async () => {
   const a = await app();
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   assert.strictEqual(a.E('view.open'), 0);
 
   completa(a, 0);
@@ -31,8 +31,8 @@ test('ao completar o último set, o próximo abre pronto', async () => {
 
 test('com série faltando, a tela não anda', async () => {
   const a = await app();
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   const n = a.E('setsFor(treino(view.day).ex[0])');
   for (let k = 0; k < n - 1; k++) a.preencher(0, k, 40, 10);
   await a.esperar();
@@ -42,11 +42,11 @@ test('com série faltando, a tela não anda', async () => {
 
 test('o avanço pula o que foi pulado de propósito', async () => {
   const a = await app();
-  a.E('go("A")');
-  await a.E('pularEx(1)');
+  a.v('go', 'A');
+  await a.v('pularEx', 1);
   await a.esperar();
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   completa(a, 0);
   await a.esperar();
 
@@ -56,13 +56,13 @@ test('o avanço pula o que foi pulado de propósito', async () => {
 
 test('no último pendente, a tela fica onde está', async () => {
   const a = await app();
-  a.E('go("A")');
+  a.v('go', 'A');
   const total = a.E('treino(view.day).ex.length');
   // deixa só o primeiro pendente: pula todos os outros
   for (let j = 1; j < total; j++) await a.E(`pularEx(${j})`);
   await a.esperar();
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   completa(a, 0);
   await a.esperar();
 
@@ -75,8 +75,8 @@ test('o descanso ainda começa, e diz de qual exercício é', async () => {
   // O cronômetro é do exercício que ACABOU, não do que abriu. Se o rótulo
   // andasse junto com a tela, ele diria a coisa errada.
   const a = await app();
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   const nome = a.E('treino(view.day).ex[0].n');
   completa(a, 0);
   await a.esperar();
@@ -100,8 +100,8 @@ test('sem sessão aberta não há atalho', async () => {
 
 test('com treino em andamento, o atalho aparece nas outras abas', async () => {
   const a = await app();
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   await a.esperar();
   assert.ok(a.E('S.sessao'), 'a sessão nasceu na primeira série');
@@ -115,8 +115,8 @@ test('com treino em andamento, o atalho aparece nas outras abas', async () => {
 
 test('na própria aba de treino o atalho some', async () => {
   const a = await app();
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   await a.esperar();
 
@@ -128,8 +128,8 @@ test('na própria aba de treino o atalho some', async () => {
 
 test('o atalho diz para onde vai, e leva até lá', async () => {
   const a = await app();
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);      // deixa o 0 PARCIAL: é onde ele parou
   await a.esperar();
 
@@ -147,8 +147,8 @@ test('o atalho diz para onde vai, e leva até lá', async () => {
 
 test('sem exercício começado, o atalho aponta o primeiro não tocado', async () => {
   const a = await app();
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'A');
+  a.v('toggle', 0);
   const n = a.E('setsFor(treino(view.day).ex[0])');
   for (let k = 0; k < n; k++) a.preencher(0, k, 40, 10);
   await a.esperar();
