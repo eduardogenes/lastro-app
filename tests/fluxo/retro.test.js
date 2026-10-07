@@ -9,9 +9,9 @@ const ONTEM = () => Date.now() - DIA;
 test('treino do plano lançado sem detalhar', async () => {
   const a = await app();
   a.E('abrirAdicionar(' + ONTEM() + ')');
-  a.E('addSet("tipo","D")');
-  a.E('addSet("dur",60)');
-  await a.E('gravarRetro(false)');
+  a.v('addSet', 'tipo', 'D');
+  a.v('addSet', 'dur', 60);
+  await a.v('gravarRetro', false);
   await a.esperar();
 
   const m = a.J('S.done[S.done.length-1]');
@@ -20,17 +20,17 @@ test('treino do plano lançado sem detalhar', async () => {
   assert.strictEqual(m.dur, 60 * 60000);
   assert.ok(a.toast().includes('Treino D registrado'));
   // depois de D vem E desde o plano 5, quando as letras foram alfabetizadas
-  assert.strictEqual(a.E('nextDay()'), 'E', 'a rotação segue o treino lançado');
+  assert.strictEqual(a.v('nextDay'), 'E', 'a rotação segue o treino lançado');
   a.fechar();
 });
 
 test('done fica ordenado por data mesmo lançando para trás', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);          // sessão de hoje
   a.E('abrirAdicionar(' + (Date.now() - 3 * DIA) + ')');
-  a.E('addSet("tipo","B")');
-  await a.E('gravarRetro(false)');
+  a.v('addSet', 'tipo', 'B');
+  await a.v('gravarRetro', false);
   await a.esperar();
 
   assert.ok(a.E('S.done.every(function (x,i,arr) { return i === 0 || arr[i-1].t <= x.t; })'));
@@ -40,8 +40,8 @@ test('done fica ordenado por data mesmo lançando para trás', async () => {
 test('treino avulso exige grupo muscular', async () => {
   const a = await app();
   a.E('abrirAdicionar(' + ONTEM() + ')');
-  a.E('addSet("tipo","livre")');
-  await a.E('gravarRetro(false)');
+  a.v('addSet', 'tipo', 'livre');
+  await a.v('gravarRetro', false);
   await a.esperar();
 
   assert.ok(a.toast().includes('grupo muscular'));
@@ -52,11 +52,11 @@ test('treino avulso exige grupo muscular', async () => {
 test('treino avulso é presença, não é o programa', async () => {
   const a = await app();
   a.E('abrirAdicionar(' + ONTEM() + ')');
-  a.E('addSet("tipo","livre")');
-  a.E('addSet("grupo","peito")');
-  a.E('addSet("grupo","tríceps")');
-  a.E('addSet("dur",45)');
-  await a.E('gravarRetro(false)');
+  a.v('addSet', 'tipo', 'livre');
+  a.v('addSet', 'grupo', 'peito');
+  a.v('addSet', 'grupo', 'tríceps');
+  a.v('addSet', 'dur', 45);
+  await a.v('gravarRetro', false);
   await a.esperar();
 
   const m = a.J('S.done.filter(function (x) { return x.livre; })[0]');
@@ -64,8 +64,8 @@ test('treino avulso é presença, não é o programa', async () => {
   assert.strictEqual(m.dur, 45 * 60000);
   assert.strictEqual(m.day, undefined, 'avulso não tem letra de treino');
 
-  assert.strictEqual(a.E('nextDay()'), 'A', 'rotação intocada');
-  assert.strictEqual(a.E('sessoesDeTrabalho()'), 0, 'fora da conta das 48');
+  assert.strictEqual(a.v('nextDay'), 'A', 'rotação intocada');
+  assert.strictEqual(a.v('sessoesDeTrabalho'), 0, 'fora da conta das 48');
   a.fechar();
 });
 
@@ -73,9 +73,9 @@ test('preencher os exercícios grava na data do treino, não na de hoje', async 
   const a = await app();
   const ontem = ONTEM();
   a.E('abrirAdicionar(' + ontem + ')');
-  a.E('addSet("tipo","B")');
-  a.E('addSet("dur",50)');
-  await a.E('gravarRetro(true)');
+  a.v('addSet', 'tipo', 'B');
+  a.v('addSet', 'dur', 50);
+  await a.v('gravarRetro', true);
   await a.esperar();
 
   assert.strictEqual(a.E('S.sessao.retro'), 1);
@@ -85,7 +85,7 @@ test('preencher os exercícios grava na data do treino, não na de hoje', async 
   const entrada = a.log('B',0)[0];
   assert.strictEqual(new Date(entrada.t).toDateString(), new Date(ontem).toDateString());
 
-  await a.E('concluirRetro()');
+  await a.v('concluirRetro');
   await a.esperar();
   assert.strictEqual(a.E('S.sessao'), null);
   assert.strictEqual(a.E('S.done.filter(function (x) { return x.day === "B"; })[0].dur'), 50 * 60000,
@@ -96,13 +96,13 @@ test('preencher os exercícios grava na data do treino, não na de hoje', async 
 test('abrir retroativo com treino em andamento encerra o de hoje', async () => {
   // Antes disso a sessão de hoje ficava órfã e perdia a duração.
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   a.E('S.sessao.inicio = Date.now() - 50*60000');
 
   a.E('abrirAdicionar(' + ONTEM() + ')');
-  a.E('addSet("tipo","C")');
-  await a.E('gravarRetro(true)');
+  a.v('addSet', 'tipo', 'C');
+  await a.v('gravarRetro', true);
   await a.esperar();
 
   const hoje = a.J('S.done.filter(function (x) { return x.day === "A"; })[0]');
@@ -116,8 +116,8 @@ test('sessão retroativa esquecida encerra na virada do dia de uso', async () =>
   const a = await app();
   const ontem = ONTEM();
   a.E('abrirAdicionar(' + ontem + ')');
-  a.E('addSet("tipo","C")');
-  await a.E('gravarRetro(true)');
+  a.v('addSet', 'tipo', 'C');
+  await a.v('gravarRetro', true);
   await a.esperar();
   a.preencher(0, 0, 100, 8);
 
@@ -146,9 +146,9 @@ test('apagar registro avulso', async () => {
   const a = await app();
   const t = Date.now() - 2 * DIA;
   a.E('abrirAdicionar(' + t + ')');
-  a.E('addSet("tipo","livre")');
-  a.E('addSet("grupo","dorsal")');
-  await a.E('gravarRetro(false)');
+  a.v('addSet', 'tipo', 'livre');
+  a.v('addSet', 'grupo', 'dorsal');
+  await a.v('gravarRetro', false);
   await a.esperar();
 
   const marca = a.J('S.done[0]');
