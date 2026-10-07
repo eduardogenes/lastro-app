@@ -1474,8 +1474,20 @@ põe 320 px no checklist de tela nova (frente 2 §8.4), o aparelho do dono tem
 > um dos cinco lugares por um usuário que ainda não existe.
 >
 > **A invariante barata FICA, e ela é o que impede o estrago:** **nada pode ter
-> largura fixa maior que a tela, e a página nunca rola na horizontal.** A rede já
-> testa isso e custa zero.
+> largura fixa maior que a tela, e a página nunca rola na horizontal.**
+>
+> **E a rede só testa metade dela, o que é trabalho desta frente.**
+> `00-coordenacao.md` diz que *"a rede já testa isso e custa zero"*. Conferi os
+> 38 casos: a página não rolar na horizontal está coberto **indiretamente**, pelo
+> `assert.match(regras(base(), 'body'), /overflow-x:\s*clip/)` que vive dentro do
+> caso *nenhum ancestral do sticky vira scroll container* — asserção de
+> **declaração**, como todas as de §11.3, porque jsdom não faz layout.
+> **"Nada com largura fixa maior que a tela" não tem caso nenhum:** nenhum dos 38
+> nomes fala de largura. **Então o 14º caso novo desta frente já nasceu, e §11.3
+> não o tem** — *nenhuma regra declara largura fixa maior que a tela do alvo*. Eu
+> não o escrevo aqui porque não medi quantas regras ficariam vermelhas, e **não
+> invento número de vermelho de nascença** — que é justamente a coluna que torna
+> os treze de §11.3 executáveis.
 >
 > **O que isso faz com a medição G:** **G5 e G6 deixam de ser portão.** As duas
 > passadas de 320 px continuam válidas como medição **opcional**, e o que elas
@@ -2990,3 +3002,9 @@ continua verdadeiro e o custo continua real** — ele foi aceito, não resolvido
 - **Nenhuma das 23 decisões tocou os nove buracos de asserção de §0.2, os 13
   casos novos de §11.3, nem os oito casos em limbo na bancada.** Isso continua
   como estava.
+- **A invariante que sobrou da decisão de 320 px só está metade testada.**
+  Conferi os 38 casos: `overflow-x: clip` no `body` está sob asserção (dentro do
+  caso do `sticky`); **"nada com largura fixa maior que a tela" não tem caso
+  nenhum.** É um **14º caso novo** que §11.3 não lista, e eu não o escrevo porque
+  **não medi** quantas regras ficariam vermelhas — e vermelho de nascença sem
+  número é exatamente o que esta frente recusa fazer.

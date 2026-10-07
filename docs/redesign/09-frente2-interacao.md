@@ -1882,8 +1882,18 @@ estatística.
 > existe —, mas o argumento da aba é **conta na borda**, não transbordo medido.
 >
 > **O que FICA de pé, e é o que impede o estrago:** **nada pode ter largura fixa
-> maior que a tela, e a página nunca rola na horizontal.** A rede já testa isso e
-> custa zero.
+> maior que a tela, e a página nunca rola na horizontal.**
+>
+> **E aqui eu corrijo o registro:** `00-coordenacao.md` diz que *"a rede já testa
+> isso e custa zero"*. **Ela testa metade.** Fui ver os 38 casos de
+> `tests/dominio/estilo.test.ts`: a página não rolar na horizontal está coberto
+> **indiretamente**, por `assert.match(regras(base(), 'body'),
+> /overflow-x:\s*clip/)` dentro do caso *nenhum ancestral do sticky vira scroll
+> container* — e é asserção de **declaração**, não de layout, porque jsdom não faz
+> layout. **"Nada com largura fixa maior que a tela" NÃO TEM CASO NENHUM:**
+> nenhum dos 38 nomes fala de largura, e eu não achei asserção de `width` contra
+> a tela em arquivo nenhum. **A invariante continua sendo a decisão certa e
+> continua sendo barata — mas metade dela ainda precisa ser escrita como caso.**
 >
 > **Então o protocolo acima não é mais portão** — ele continua válido como
 > **medição opcional** que produz a lista do que quebraria se um segundo usuário
@@ -2517,3 +2527,8 @@ conclusão (320 fora) não depende disso. Detalhe em §8.4.
 - **Se a frase de sugestão declarada segura o engano** que o requisito derrubado
   de §4.4 segurava — a folha aberta às 22h sugerindo que a ceia foi tomada.
   **Ninguém mediu**, e é leitura em uso.
+- **A invariante que sobrou da decisão de 320 px só está metade testada.**
+  "A página nunca rola na horizontal" está sob asserção como **declaração**
+  (`overflow-x: clip` no `body`); **"nada com largura fixa maior que a tela" não
+  tem caso nenhum** nos 38 de `estilo.test.ts`. O caso que falta é da frente 4, e
+  ela não o tem na lista dos treze.
