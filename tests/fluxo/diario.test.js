@@ -139,7 +139,7 @@ test('a folha da refeição mostra o padrão dela antes de ele marcar', async ()
 
 test('sem histórico suficiente a folha não inventa padrão', async () => {
   const a = await noHoje();
-  assert.strictEqual(a.J('CTX.refeicao("lanche").padrao'), null,
+  assert.strictEqual(a.vJ('ctx.refeicao', 'lanche').padrao, null,
     'mostrar um número que ainda não quer dizer nada é pior que calar');
   a.fechar();
 });
