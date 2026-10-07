@@ -20,7 +20,7 @@ test('finalizar pela porta da frente pergunta sobre a troca', async () => {
   await a.esperar();
 
   await a.v('finalizarSessao');
-  assert.ok(a.E('view.promo'), 'a decisão aparece');
+  assert.ok(a.vista().promo, 'a decisão aparece');
   assert.match(a.texto('.htitle'), /programa/i);
   assert.ok(a.doc.getElementById('app').textContent.includes('Supino inclinado no Smith'),
     'e diz qual foi a mudança');
@@ -35,7 +35,7 @@ test('série a mais também vira pergunta', async () => {
   await a.esperar();
   await a.v('finalizarSessao');
 
-  const P = a.J('view.promo');
+  const P = a.vista().promo;
   assert.strictEqual(P.mods.length, 1);
   assert.strictEqual(P.mods[0].k, 'sets');
   assert.strictEqual(P.dec[0], 'hoje', 'o padrão é conservador: não mexe no oficial');
@@ -44,7 +44,7 @@ test('série a mais também vira pergunta', async () => {
 
 test('levar para o oficial muda o programa; só hoje não muda', async () => {
   const a = await app();
-  const antes = a.E('S.prog.A.ex[0].s');
+  const antes = a.S().prog.A.ex[0].s;
 
   a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
@@ -55,10 +55,10 @@ test('levar para o oficial muda o programa; só hoje não muda', async () => {
   await a.v('concluirPromo');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.prog.A.ex[0].s'), antes + 1, 'o programa mudou');
+  assert.strictEqual(a.S().prog.A.ex[0].s, antes + 1, 'o programa mudou');
   // coleção desde o plano 10; era documento, e "nada pendente" era `null`
-  assert.deepStrictEqual(a.J('S.promoPendente'), [], 'e nada ficou pendente');
-  assert.ok(a.J('S.progLog').length > 0, 'a mudança fica registrada com data');
+  assert.deepStrictEqual(a.S().promoPendente, [], 'e nada ficou pendente');
+  assert.ok(a.S().progLog.length > 0, 'a mudança fica registrada com data');
   a.fechar();
 });
 
@@ -75,8 +75,8 @@ test('sessão que morre sozinha guarda a pergunta para a próxima abertura', asy
   a.v('encerraSePreciso');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.sessao'), null, 'a sessão fechou');
-  const g = a.J('S.promoPendente')[0];   // coleção desde o plano 10
+  assert.strictEqual(a.S().sessao, null, 'a sessão fechou');
+  const g = a.S().promoPendente[0];   // coleção desde o plano 10
   assert.ok(g, 'e a pergunta ficou guardada');
   assert.strictEqual(g.day, 'A');
   assert.strictEqual(g.mods.length, 1);
@@ -91,8 +91,8 @@ test('a pergunta guardada aparece ao abrir o app de novo', async () => {
                      resumoMods: ['Pushdown: 2 → 3 séries'] }
   } });
   await a.esperar();
-  assert.ok(a.E('view.promo'), 'a decisão abre sozinha');
-  assert.strictEqual(a.E('view.promo.guardada'), true);
+  assert.ok(a.vista().promo, 'a decisão abre sozinha');
+  assert.strictEqual(a.vista().promo.guardada, true);
   assert.ok(a.doc.getElementById('app').textContent.includes('Pushdown'));
   a.fechar();
 });
@@ -108,8 +108,8 @@ test('a pergunta guardada não interrompe um treino em andamento', async () => {
                      resumoMods: ['Pushdown: 2 → 3 séries'] }
   } });
   await a.esperar();
-  assert.ok(!a.E('view.promo'), 'a pergunta espera a sessão acabar');
-  assert.ok(a.E('S.promoPendente'), 'mas continua guardada');
+  assert.ok(!a.vista().promo, 'a pergunta espera a sessão acabar');
+  assert.ok(a.S().promoPendente, 'mas continua guardada');
   a.fechar();
 });
 
@@ -125,8 +125,8 @@ test('sair sem responder mantém o conservador e não repete a pergunta', async 
 
   a.v('voltarDoPromo');
   await a.esperar();
-  assert.strictEqual(a.E('view.promo'), null);
-  assert.deepStrictEqual(a.J('S.promoPendente'), [], 'não fica reaparecendo para sempre');
+  assert.strictEqual(a.vista().promo, null);
+  assert.deepStrictEqual(a.S().promoPendente, [], 'não fica reaparecendo para sempre');
   assert.strictEqual(a.E('S.prog.A.ex[7] ? S.prog.A.ex[7].s : 0'), antes, 'e o oficial não mudou');
   a.fechar();
 });
@@ -143,11 +143,11 @@ test('a decisão é um destino: entra no topo e devolve a posição ao voltar', 
 
   a.E('window.scrollY = 980');            // jsdom não rola sozinho
   await a.v('finalizarSessao');
-  assert.strictEqual(a.E("scrollDoDestino['promo']"), 980, 'guardou antes de trocar a tela');
+  assert.strictEqual(a.dado('scrollDoDestino')['promo'], 980, 'guardou antes de trocar a tela');
 
   a.v('voltarDoPromo');
   await a.esperar();
-  assert.strictEqual(a.E("scrollDoDestino['promo']"), undefined, 'devolveu, sem deixar lixo');
+  assert.strictEqual(a.dado('scrollDoDestino')['promo'], undefined, 'devolveu, sem deixar lixo');
   a.fechar();
 });
 
@@ -166,6 +166,6 @@ test('responder a decisão é fim de fluxo: não devolve posição nenhuma', asy
   await a.esperar();
 
   // O dia girou e a sessão encerrou: a posição do treino de ontem não é a dele.
-  assert.strictEqual(a.E("scrollDoDestino['promo']"), undefined);
+  assert.strictEqual(a.dado('scrollDoDestino')['promo'], undefined);
   a.fechar();
 });
