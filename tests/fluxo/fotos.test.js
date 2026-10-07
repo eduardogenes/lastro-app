@@ -32,7 +32,7 @@ test('a foto entra no cache do aparelho, e só a referência no estado', async (
   await a.E(`tiraFoto({ files: [new Blob(['foto'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(50);
 
-  const ref = a.J('S.fotos["chest-press-inclinado-convergente"]');
+  const ref = a.S().fotos["chest-press-inclinado-convergente"];
   assert.ok(ref && ref.v > 0, 'a referência ficou no estado');
   assert.strictEqual(ref.ext, 'webp');
   assert.deepStrictEqual(guardadas(a), ['./foto/chest-press-inclinado-convergente.webp'],
@@ -55,9 +55,9 @@ test('apagar tira a referência e deixa lápide', async () => {
 
   await a.v('apagaFoto');
   await a.esperar(50);
-  assert.strictEqual(a.E('S.fotos["chest-press-inclinado-convergente"]'), undefined);
+  assert.strictEqual(a.S().fotos["chest-press-inclinado-convergente"], undefined);
   assert.deepStrictEqual(guardadas(a), [], 'os bytes saíram do cache também');
-  assert.ok(a.J('S.apagados')['foto:chest-press-inclinado-convergente'],
+  assert.ok(a.S().apagados['foto:chest-press-inclinado-convergente'],
     'a lápide impede o outro aparelho de ressuscitar a referência');
   a.fechar();
 });
@@ -139,8 +139,8 @@ test('sem rede, a reconciliação para e não perde a conta', async () => {
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(80);
 
-  assert.ok(a.J('S.fotos')['chest-press-inclinado-convergente'], 'a foto está aqui de qualquer forma');
-  assert.strictEqual(a.E('sync.fotos["chest-press-inclinado-convergente"]'), undefined,
+  assert.ok(a.S().fotos['chest-press-inclinado-convergente'], 'a foto está aqui de qualquer forma');
+  assert.strictEqual(a.dado('sync').fotos["chest-press-inclinado-convergente"], undefined,
     'e não foi marcada como enviada — a próxima sincronização tenta de novo');
   a.fechar();
 });
@@ -252,7 +252,7 @@ test('PNG entra e sai como WebP: nada de PNG chega ao bucket', async () => {
   a.v('abreFoto', 0);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/png' })], value: '' })`);
   await a.esperar(60);
-  assert.strictEqual(a.J('S.fotos["chest-press-inclinado-convergente"]').ext, 'webp');
+  assert.strictEqual(a.S().fotos["chest-press-inclinado-convergente"].ext, 'webp');
   a.fechar();
 });
 
@@ -275,9 +275,9 @@ test('tocar na miniatura não abre o exercício junto', async () => {
   // abrir o exercício e abrir a câmera são intenções diferentes; sem parar a
   // propagação, um toque faria as duas
   const a = await app();
-  assert.strictEqual(a.E('view.open'), null);
+  assert.strictEqual(a.vista().open, null);
   a.clicar(a.$('.exfoto'));
-  assert.strictEqual(a.E('view.open'), null, 'o cartão continua fechado');
+  assert.strictEqual(a.vista().open, null, 'o cartão continua fechado');
   a.fechar();
 });
 
