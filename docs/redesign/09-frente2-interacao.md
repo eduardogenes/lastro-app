@@ -1632,7 +1632,7 @@ achado 3, porque é a mesma decisão.
 > **RECONCILIADO em 06/10 · as duas perguntas desta seção estão respondidas.**
 >
 > - **Onde mora o deload (decisão 6, confirmada na noite do mesmo dia):**
->   **muda** — vai para o menu `···` da sessão, como a Direcção D desenhou, e **a
+>   **muda** — vai para o menu `···` da sessão, como a Direção D desenhou, e **a
 >   razão escrita no fonte cai**. Ele manteve a decisão depois de saber que **o
 >   lugar ERA o freio**. O argumento derrubado está inteiro em
 >   `09-frente1-lugares.md`, achado 3; a mitigação é de palavra, e a frente 3 a

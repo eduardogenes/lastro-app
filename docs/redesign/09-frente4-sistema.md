@@ -1360,7 +1360,7 @@ ele decida as duas juntas.
 > critério, que é a coisa mais desconfortável deste documento.
 >
 > **E a régua, que era a outra metade da mesma pergunta** (decisão 9): ele
-> **pré-autorizou** a troca para os botões fixos da Direcção C **se a medição A da
+> **pré-autorizou** a troca para os botões fixos da Direção C **se a medição A da
 > frente 2 reprovar**. É condicional, e **a medição ainda não aconteceu** — ela
 > exige o aparelho e o dedo dele. **Então o caminho para 200% não está fechado:
 > ele está amarrado a um resultado que ninguém tem.** Se os botões fixos
@@ -2857,7 +2857,7 @@ denuncia.
 
 **A mesma decisão 9 que fecha o lado da régua não é desta frente, mas amarra
 este documento:** se a medição A da frente 2 reprovar a régua, ela vai para os
-botões fixos da Direcção C — **pré-autorizado, e a medição ainda não
+botões fixos da Direção C — **pré-autorizado, e a medição ainda não
 aconteceu**. É a geometria que trava o teto de texto em 125% (§4.3), então o
 teto é firme **hoje** e amarrado a um resultado que ninguém tem.
 
