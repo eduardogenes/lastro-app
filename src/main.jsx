@@ -4856,8 +4856,167 @@ CTX.desliga = function () {
   desmontaDoApp();
 };
 
+// ===========================================================================
+// A SUPERFÍCIE — os verbos do modelo, com nome, contrato e porta própria.
+// ===========================================================================
+//
+// A interface inteira do app vai ser reescrita. A suíte de fluxo é a rede de
+// segurança dessa reescrita, e ela entra no app por `window.__escopo` logo
+// abaixo: uma `eval` dentro deste escopo. Isso funciona e é frágil por três
+// razões que não se consertam com cuidado:
+//
+// 1. **O alcance não é este arquivo — é o bundle inteiro.** Depois do rollup
+//    todos os módulos de `src/` ficam num escopo de topo só, e a `eval` vê
+//    todos. `a.E('migraCache()')` chama `src/infra/fotos.js` sem pedir licença.
+//    Nenhuma dessas 341 funções prometeu nada a ninguém.
+// 2. **Nada é alcançado por referência, então nada é verificável.** Um nome
+//    errado só aparece como `ReferenceError` na hora, e renomear uma função
+//    interna quebra testes sem um único aviso do compilador ou do bundler.
+// 3. **`treeshake: true` apaga o que só a string alcança.** Já aconteceu aqui:
+//    a função sumiu do build e a medição saiu invertida, com os dois builds
+//    saindo com hash idêntico. Esta superfície existe por REFERÊNCIA — as
+//    chaves abaixo são o próprio nome da função, e é isso que a mantém viva.
+//
+// O CONTRATO, que é o que a torna reusável depois da reescrita:
+//
+// - **Nenhuma chave recebe elemento do DOM, nem devolve um.** Todo argumento é
+//   valor: número, texto, booleano ou dado puro. Quem lê campo é casca da
+//   interface, e casca não entra aqui. Duas exceções declaradas: `tiraFoto` e
+//   `tiraFotoDoCorpo` recebem um pato `{ files, value }` — era convenção dos
+//   testes, e está escrito aqui para virar contrato.
+// - **Chamar um verbo daqui faz o que o dedo faz.** A interface não tem rota
+//   paralela: ela lê o campo e chama o mesmo verbo.
+// - **`verbos` é verbo, `dado` é leitura.** `dado` é tudo getter, porque `S`,
+//   `view` e `CAT` são RELIGADOS em tempo de execução (importar um backup troca
+//   `S` inteiro) — uma cópia por valor aqui apontaria para o estado de antes.
+// - **Acrescentar chave é livre; tirar e renomear, não.** Quem depende disto é
+//   uma suíte que a reescrita não pode reescrever.
+// - **A superfície não escreve no estado.** Semear `S` no meio de um teste
+//   continua sendo `__escopo`, e de propósito: isso é cirurgia de fixture, não
+//   verbo, e dar-lhe nome estável seria prometer o formato interno do estado.
+const SUPERFICIE = {
+  // Sobe quando uma chave muda de significado ou sai. Acrescentar não mexe.
+  contrato: 1,
+
+  // As 181 chaves da ponte com a shell do Instrumento, alcançáveis sem `eval`.
+  ctx: CTX,
+  nuvem: NUVEM,
+
+  verbos: {
+    // ---- por valor, onde antes só havia elemento ou campo na tela ----
+    anotaSerie, anotaSerieRapida, anotaObservacao, anotaNomeAvulso, anotaHoraAvulsa,
+    mascaraDeHora, soNumero, criarExercicioCom, guardaEdicaoCom, textoDaPrescricao,
+    setBuscaDeExercicio,
+
+    // ---- os verbos do módulo que a suíte aciona pelo nome nu ----
+    abreFoto, abrirAddEx, abrirAdicionar, abrirCardioRapido, abrirCarga, abrirMedida,
+    abrirNota, abrirNovoEx, abrirPrograma, abrirRapido, abrirSessao, addBody, addCardio,
+    addExercicio, addSet, ajustaTimer, altList, altOf, alternaDescanso, apagaFoto,
+    apagarModeloDeAula, apagarSessao, aplicaAoOficial, aplicarModeloDeAula, arrozAtual,
+    cardioSemana, cardioSet, cargaTipo, catalogoAlimentos, catalogoDeAdicao, concluirPromo,
+    concluirRetro, criarTreino, decidePromo, delBody, descOf, desfazMod, diaAberto,
+    diaDeComida, diasSemBackup, difDoDia, difTotal, duracaoAtual, editarSessao, ehDescanso,
+    encerraSePreciso, estadoEx, exDe, fechaSessao, fecharPrograma, finalizarSessao,
+    garanteBytesDoCorpo, go, gravarRetro, historico, hojeISO, id, impactoDoMod,
+    impactoOficial, impactoSeries, importText, importaAulaColada, iniciarSessao, logKey,
+    modoEdicao, modoPrograma, modsDoDia, montaCatalogo, motivoPromo, moverDia, moverEx,
+    moverProg, mudaMes, mudaSeries, nextDay, nomeEx, openHist, ordemDePoses, pausarSessao,
+    payload, pendencias, pintaTimer, planoDeComida, poeMedida, progDesc, progRemove,
+    progSeries, progSetTroca, programaDia, pularEx, reconciliaCorpo, reconciliaFotos,
+    removerEx, render, repetirUltimaAula, restaurarDia, restaurarTudo, retomarSessao,
+    retro, rot, salvarAulaComoModelo, salvarEdicao, save, seriesDe, seriesFeitasHoje,
+    seriesPorMusculo, sessoesDeTrabalho, setAlt, setCarga, setDeload, setsFor, showJSON,
+    sincroniza, soltarTela, startTimer, stopTimer, temHora, tickRelogio, tiraFoto,
+    tiraFotoDoCorpo, toggle, toggleDor, toggleSwap, treino, trocaDoDia, veredito,
+    voltarDoPromo, wipe,
+
+    // ---- regra pura de `src/dominio/`, que o app já importa ----
+    // Entram pela superfície em vez de o teste de fluxo importar o fonte: o que
+    // esta suíte cobra é o BUILD, e importar o módulo ao lado o contornaria.
+    funde, migraPlano, migraPlano3, periodoDe, sameDay, slugEx, weekStart,
+
+    // ---- o cache de fotos, que mora em src/infra/fotos.js ----
+    migraCache: FOTO.migraCache
+  },
+
+  dado: {
+    get S() { return S; },
+    get view() { return view; },
+    get CAT() { return CAT; },
+    get CARGAS() { return CARGAS; },
+    get ALVO() { return ALVO; },
+    get ALVO_TOTAL() { return ALVO_TOTAL; },
+    get ALT() { return ALT; },
+    get EX_BASE() { return EX_BASE; },
+    get FREQUENTES_NO_BOX() { return FREQUENTES_NO_BOX; },
+    get PROGRAMA() { return PROGRAMA; },
+    get ROT_BASE() { return ROT_BASE; },
+    get PLANO_ATUAL() { return PLANO_ATUAL; },
+    get PLANO_BASE() { return PLANO_BASE; },
+    get ALIMENTOS_BASE() { return ALIMENTOS_BASE; },
+    get MARCAS_DO_CORPO() { return MARCAS_DO_CORPO; },
+    // O relógio do descanso e a tela acesa: variáveis de módulo, e a única
+    // forma de observá-las de fora era ler o nome nu pela `eval`.
+    get timer() { return timer; },
+    get timerFim() { return timerFim; },
+    get timerCtx() { return timerCtx; },
+    get audioCtx() { return audioCtx; },
+    get querSegurar() { return querSegurar; },
+    get relogioT() { return relogioT; },
+    get sync() { return sync; },
+    get scrollDoDestino() { return scrollDoDestino; }
+  },
+
+  /**
+   * Chama um verbo pelo nome, com os argumentos atravessando o realm.
+   *
+   * O nome é `'toggle'`, `'ctx.hoje'` ou `'nuvem.sessao'`. Nome fora da
+   * superfície estoura aqui, com o nome no erro — o contrário da `eval`, onde
+   * um `ReferenceError` nu não diz de quem é a culpa.
+   *
+   * Os argumentos passam por `JSON` porque um objeto criado no realm do Node
+   * tem outro `Object.prototype`, e o app o receberia como forasteiro. O
+   * primitivo passa direto, inclusive `undefined` — que `JSON` apagaria, e há
+   * verbo que distingue `undefined` de `null` (`poeMedida`, `guardaEdicaoCom`).
+   */
+  chama: function (nome, args) {
+    const ponto = String(nome).indexOf('.');
+    const dono = ponto < 0 ? SUPERFICIE.verbos : SUPERFICIE[String(nome).slice(0, ponto)];
+    const chave = ponto < 0 ? String(nome) : String(nome).slice(ponto + 1);
+    const f = dono && dono[chave];
+    if (typeof f !== 'function') throw new Error('verbo fora da superfície: ' + nome);
+    const vs = [];
+    for (let i = 0; i < (args ? args.length : 0); i++) {
+      const v = args[i];
+      vs.push((v === null || typeof v !== 'object') ? v : JSON.parse(JSON.stringify(v)));
+    }
+    return f.apply(ponto < 0 ? null : dono, vs);
+  },
+
+  /**
+   * O mesmo, devolvendo o resultado serializado.
+   *
+   * Embrulhado em `{ v: … }` de propósito: `JSON.stringify(undefined)` devolve
+   * `undefined` em vez de texto, e o chamador perderia a diferença entre "o
+   * verbo não devolveu nada" e "o verbo falhou".
+   */
+  chamaJSON: function (nome, args) {
+    return JSON.stringify({ v: SUPERFICIE.chama(nome, args) });
+  },
+
+  /** Uma leitura de `dado`, serializada para atravessar o realm. */
+  leJSON: function (chave) {
+    return JSON.stringify({ v: SUPERFICIE.dado[chave] });
+  }
+};
+
+// Publicada em `window` e não só em `CTX` porque o ponto é entrar SEM `eval` —
+// e a atribuição em si é efeito colateral de topo, que é o que faz o rollup
+// manter a tabela e, com ela, cada função que ela nomeia.
+window.__modelo = SUPERFICIE;
+
 // ---------------------------------------------------------------------------
-// A única porta que o app abre para fora de si.
+// A porta velha, que a superfície ainda não substitui.
 //
 // `eval` direto neste escopo enxerga tudo o que está declarado aqui, e é o que
 // os testes de fluxo usam para chegar em `S`, `view` e nas funções internas.
@@ -4866,6 +5025,10 @@ CTX.desliga = function () {
 //
 // A ponte de 91 handlers globais que morava aqui ao lado morreu junto com o
 // último `onclick=` do fonte: todo evento hoje é função passada por prop.
+//
+// O que ainda só passa por aqui: escrever em `S` no meio de um teste, instalar
+// dublê em `globalThis`, e ler nome que a superfície não nomeia. Cada caso de
+// teste que deixa de usá-la é um pedaço de rede que sobrevive ao redesenho.
 window.__escopo = function (codigo) { return eval(codigo); };
 
 // Arranca quando o DOM existir, tanto embutido no Claude.ai

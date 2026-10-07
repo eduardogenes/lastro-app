@@ -216,6 +216,48 @@ function abrirApp(opcoes) {
     /** avalia e devolve já desserializado, para atravessar realms com segurança */
     J: function (codigo) { return JSON.parse(w.__escopo('JSON.stringify(' + codigo + ')')); },
 
+    // ----- a superfície: a porta por VALOR, sem `eval` e sem tocar a tela -----
+    //
+    // `a.E('toggle(0)')` e `a.v('toggle', 0)` fazem a mesma coisa, e a segunda
+    // sobrevive ao redesenho: ela entra por uma tabela de nomes que o app
+    // declara, com contrato escrito em `src/main.jsx`, em vez de por uma string
+    // avaliada no escopo de topo do bundle inteiro.
+    //
+    // O que NÃO passa por aqui, de propósito: escrever em `S` no meio do teste
+    // e instalar dublê em `globalThis`. Isso continua em `a.E`.
+
+    /** a superfície crua, no realm do jsdom — para quem precisa do objeto */
+    m: w.__modelo,
+
+    /**
+     * Chama um verbo por valor. `a.v('toggle', 0)`, `a.v('ctx.setAgua', 3)`.
+     *
+     * Devolve o que o verbo devolveu, CRU. Primitivo atravessa o realm sem
+     * ajuda; verbo `async` devolve promessa do jsdom, que `await` resolve. Para
+     * objeto ou lista use `a.vJ`, senão `deepStrictEqual` reclama de protótipo.
+     */
+    v: function (nome) {
+      return w.__modelo.chama(nome, Array.prototype.slice.call(arguments, 1));
+    },
+
+    /** o mesmo, com o resultado já desserializado no realm do Node */
+    vJ: function (nome) {
+      return JSON.parse(w.__modelo.chamaJSON(nome, Array.prototype.slice.call(arguments, 1))).v;
+    },
+
+    /** o estado inteiro, desserializado — substitui `a.J('S…')` */
+    S: function () { return JSON.parse(w.__modelo.leJSON('S')).v; },
+
+    /** `view`, desserializado — substitui `a.J('view…')` */
+    vista: function () { return JSON.parse(w.__modelo.leJSON('view')).v; },
+
+    /**
+     * Uma leitura nomeada da superfície: `a.dado('CAT')`, `a.dado('timer')`.
+     * Desserializada, menos o que não é dado — `timer` é um handle de
+     * `setInterval`, e aí o que importa é só se existe.
+     */
+    dado: function (chave) { return JSON.parse(w.__modelo.leJSON(chave)).v; },
+
     /** id do exercício que ocupa a posição i do treino d — a chave do histórico */
     k: function (dia, i) { return w.__escopo('id(' + JSON.stringify(dia) + ',' + i + ')'); },
     /** histórico daquela posição, já desserializado */
