@@ -279,7 +279,7 @@ test('séries por músculo compara com o mesmo ponto das semanas anteriores', as
 
   const semanaPassada = seg - 7 * 86400000;
   // chave real do catálogo: sem grupo muscular a série não entra na conta
-  const ex = a.E('treino("A").ex[0].id');
+  const ex = a.vJ('treino', 'A').ex[0].id;
   const g = a.E('exDe(' + JSON.stringify(ex) + ').g');
   a.E('S.logs[' + JSON.stringify(ex) + '] = [' +
       '{ t: ' + (semanaPassada + 3600000) + ', sid: 1, sets: [[40,10],[40,10]] },' +
