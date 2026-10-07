@@ -45,7 +45,7 @@ test('treino avulso exige grupo muscular', async () => {
   await a.esperar();
 
   assert.ok(a.toast().includes('grupo muscular'));
-  assert.strictEqual(a.E('S.done.length'), 0);
+  assert.strictEqual(a.S().done.length, 0);
   a.fechar();
 });
 
@@ -78,8 +78,8 @@ test('preencher os exercícios grava na data do treino, não na de hoje', async 
   await a.v('gravarRetro', true);
   await a.esperar();
 
-  assert.strictEqual(a.E('S.sessao.retro'), 1);
-  assert.strictEqual(a.E('view.day'), 'B');
+  assert.strictEqual(a.S().sessao.retro, 1);
+  assert.strictEqual(a.vista().day, 'B');
 
   a.preencher(0, 0, 60, 12);
   const entrada = a.log('B',0)[0];
@@ -87,7 +87,7 @@ test('preencher os exercícios grava na data do treino, não na de hoje', async 
 
   await a.v('concluirRetro');
   await a.esperar();
-  assert.strictEqual(a.E('S.sessao'), null);
+  assert.strictEqual(a.S().sessao, null);
   assert.strictEqual(a.E('S.done.filter(function (x) { return x.day === "B"; })[0].dur'), 50 * 60000,
     'duração informada no formulário não é sobrescrita pelo encerramento');
   a.fechar();
@@ -107,7 +107,7 @@ test('abrir retroativo com treino em andamento encerra o de hoje', async () => {
 
   const hoje = a.J('S.done.filter(function (x) { return x.day === "A"; })[0]');
   assert.ok(hoje.dur >= 49 * 60000 && hoje.dur <= 51 * 60000, 'duração de hoje foi gravada');
-  assert.strictEqual(a.E('S.sessao.day'), 'C');
+  assert.strictEqual(a.S().sessao.day, 'C');
   assert.strictEqual(a.log('A',0)[0].sets.filter(Boolean).length, 1, 'séries de hoje preservadas');
   a.fechar();
 });
@@ -121,7 +121,7 @@ test('sessão retroativa esquecida encerra na virada do dia de uso', async () =>
   await a.esperar();
   a.preencher(0, 0, 100, 8);
 
-  const estado = a.J('S');
+  const estado = a.S();
   estado.sessao.tocado = Date.now() - 5 * 3600 * 1000;
   a.fechar();
 
@@ -138,7 +138,7 @@ test('dia vazio do calendário é atalho para lançar', async () => {
   const vazios = a.$$('.cal-d:not(.feito):not(.futuro)');
   assert.ok(vazios.length > 0);
   a.clicar(vazios[0]);
-  assert.ok(a.E('view.add'), 'tocar num dia vazio abre o lançamento retroativo');
+  assert.ok(a.vista().add, 'tocar num dia vazio abre o lançamento retroativo');
   a.fechar();
 });
 
@@ -151,13 +151,13 @@ test('apagar registro avulso', async () => {
   await a.v('gravarRetro', false);
   await a.esperar();
 
-  const marca = a.J('S.done[0]');
+  const marca = a.S().done[0];
   a.E('abrirSessao(' + marca.t + ')');
   assert.strictEqual(a.texto('.htitle'), 'dorsal');
 
   // pelo mesmo caminho da tela: o botão de apagar chama CTX.editaSessao
   await a.E('CTX.editaSessao(' + marca.t + ')');
   await a.esperar();
-  assert.strictEqual(a.E('S.done.length'), 0);
+  assert.strictEqual(a.S().done.length, 0);
   a.fechar();
 });
