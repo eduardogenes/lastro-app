@@ -90,7 +90,7 @@ test('quem já tem foto de hoje não vê a montagem de novo', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
-  a.E('render()');
+  a.v('render');
 
   a.clicar(a.$('.dd-fotos-b .ins-btn-primary'));
   assert.strictEqual(a.$('.pr-setup'), null, 'a sessão continua de onde parou');
@@ -101,8 +101,8 @@ test('quem já tem foto de hoje não vê a montagem de novo', async () => {
 test('a sessão nasce na primeira foto: referência no estado, bytes no cache', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
 
   assert.deepStrictEqual(a.J('S.protocolo.sessoes'), [], 'antes da foto não há sessão');
 
@@ -128,8 +128,8 @@ test('o byte não entra no estado, que é reserializado a cada série', async ()
   // matariam o app em duas semanas.
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await tirar(a);
   await a.esperar(60);
 
@@ -145,8 +145,8 @@ test('a foto de corpo é gravada maior que a do aparelho', async () => {
   // ombro mudou — é o mesmo caminho de redução, com outro teto.
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await tirar(a);
   await a.esperar(60);
 
@@ -161,8 +161,8 @@ test('a sessão avança sozinha para a pose que falta', async () => {
   // toque a mais nove vezes.
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   assert.strictEqual(a.E('view.protocolo.pose'), 'frente-relaxado');
 
   await tirar(a);
@@ -185,8 +185,8 @@ test('a foto anterior da mesma pose aparece antes do disparo', async () => {
   comSessoes(a, [diasAtras(14)], 'frente-relaxado');
   await semear(a, diasAtras(14), 'frente-relaxado');
 
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await a.esperar(60);
 
   const ref = a.J('CTX.sessaoDeFotos().pose.ref');
@@ -199,8 +199,8 @@ test('a foto anterior da mesma pose aparece antes do disparo', async () => {
 test('na primeira vez a tela diz que não há referência, sem quadro quebrado', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
 
   assert.strictEqual(a.E('CTX.sessaoDeFotos().pose.ref'), null);
   assert.strictEqual(a.$('.pr-fig img'), null, 'nenhuma <img> sem bytes');
@@ -213,13 +213,13 @@ test('na primeira vez a tela diz que não há referência, sem quadro quebrado',
 test('refazer uma pose deixa lápide, senão o outro aparelho traz a velha de volta', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await tirar(a);
   await a.esperar(60);
 
   // volta para a primeira e tira de novo
-  a.E(`CTX.vaiParaPose('frente-relaxado')`);
+  a.v('ctx.vaiParaPose', 'frente-relaxado');
   await tirar(a);
   await a.esperar(60);
 
@@ -232,14 +232,14 @@ test('apagar a única foto apaga a sessão junto', async () => {
   // A sessão nasce na primeira foto e não tem por que sobreviver à última.
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await tirar(a);
   await a.esperar(60);
   assert.strictEqual(a.J('S.protocolo.sessoes').length, 1);
 
-  a.E(`CTX.vaiParaPose('frente-relaxado')`);
-  await a.E(`CTX.apagaFotoDoCorpo('frente-relaxado')`);
+  a.v('ctx.vaiParaPose', 'frente-relaxado');
+  await a.v('ctx.apagaFotoDoCorpo', 'frente-relaxado');
   await a.esperar(60);
 
   assert.deepStrictEqual(a.J('S.protocolo.sessoes'), []);
@@ -251,14 +251,14 @@ test('apagar a única foto apaga a sessão junto', async () => {
 test('apagar uma de duas mantém a sessão viva', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await tirar(a);
   await a.esperar(60);
   await tirar(a);
   await a.esperar(60);
 
-  await a.E(`CTX.apagaFotoDoCorpo('frente-relaxado')`);
+  await a.v('ctx.apagaFotoDoCorpo', 'frente-relaxado');
   await a.esperar(60);
 
   const sessoes = a.J('S.protocolo.sessoes');
@@ -273,12 +273,12 @@ test('a foto tirada aqui sobe para o bucket do corpo', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   nuvemComBucket(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await tirar(a);
   await a.esperar(60);
 
-  await a.E('reconciliaCorpo()');
+  await a.v('reconciliaCorpo');
   await a.esperar(60);
 
   assert.deepStrictEqual(a.J('globalThis.__subiuCorpo'), [hoje() + '/frente-relaxado']);
@@ -293,12 +293,12 @@ test('sem rede, a foto fica aqui e não é dada como enviada', async () => {
   cacheFalso(a);
   nuvemComBucket(a);
   a.E(`NUVEM.subirCorpo = async () => ({ ok: false, erro: 'rede', msg: 'sem conexão' })`);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await tirar(a);
   await a.esperar(60);
 
-  await a.E('reconciliaCorpo()');
+  await a.v('reconciliaCorpo');
   await a.esperar(60);
 
   assert.strictEqual(a.J('S.protocolo.sessoes').length, 1, 'a foto está aqui de qualquer forma');
@@ -321,7 +321,7 @@ test('a poda deixa no aparelho só as sessões recentes', async () => {
   for (const d of datas) await semear(a, d, 'frente-relaxado');
   assert.strictEqual(guardadas(a).length, 5);
 
-  await a.E('reconciliaCorpo()');
+  await a.v('reconciliaCorpo');
   await a.esperar(80);
 
   assert.deepStrictEqual(guardadas(a), datas.slice(1).map(d => './corpo/' + d + '/frente-relaxado.webp'),
@@ -344,7 +344,7 @@ test('foto que ainda não subiu segura a poda do cache inteiro', async () => {
   // a do meio não tem bytes aqui: nada a subir, e o bucket não a confirma
   for (const d of datas) if (d !== datas[2]) await semear(a, d, 'frente-relaxado');
 
-  await a.E('reconciliaCorpo()');
+  await a.v('reconciliaCorpo');
   await a.esperar(80);
 
   assert.ok(guardadas(a).includes('./corpo/' + datas[0] + '/frente-relaxado.webp'),
@@ -368,8 +368,8 @@ test('abrir uma sessão podada traz os bytes de volta do bucket', async () => {
 
   assert.deepStrictEqual(guardadas(a), ['./corpo/' + antiga + '/frente-relaxado.webp'],
     'voltaram do bucket para o cache');
-  a.E('CTX.abreComparar()');
-  assert.match(a.J('CTX.comparacao()').de.url, /^blob:/,
+  a.v('ctx.abreComparar');
+  assert.match(a.vJ('ctx.comparacao').de.url, /^blob:/,
     'e chegaram à tela como endereço de objeto');
   a.fechar();
 });
@@ -382,8 +382,8 @@ test('referência sem bytes em lugar nenhum não quebra a tela', async () => {
   nuvemComBucket(a);
   comSessoes(a, [diasAtras(14)], 'frente-relaxado');
 
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await a.esperar(80);
 
   assert.strictEqual(a.J('CTX.sessaoDeFotos().pose.ref').url, null);
@@ -407,10 +407,10 @@ test('a foto que a nuvem não devolveu diz isso, e tentar de novo traz', async (
   nuvemComBucket(a, {}, {});
   comSessoes(a, [diasAtras(28), antes], 'frente-relaxado');
 
-  a.E('CTX.abreComparar()');
+  a.v('ctx.abreComparar');
   await a.esperar(80);
 
-  const c = () => a.J('CTX.comparacao()');
+  const c = () => a.vJ('ctx.comparacao');
   assert.strictEqual(c().ate.aviso, 'a nuvem não devolveu a foto');
   assert.strictEqual(c().ate.retomar, true, 'e há o que tentar');
   // Uma porta por quadro: as duas datas falharam, e cada uma tenta a sua.
@@ -433,10 +433,10 @@ test('sem conta na nuvem a foto do outro aparelho não oferece tentar de novo', 
   cacheFalso(a);
   comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
 
-  a.E('CTX.abreComparar()');
+  a.v('ctx.abreComparar');
   await a.esperar(80);
 
-  const c = a.J('CTX.comparacao()');
+  const c = a.vJ('ctx.comparacao');
   assert.strictEqual(c.ate.aviso, 'a foto está na nuvem, e este aparelho não entrou na conta');
   assert.strictEqual(c.ate.retomar, false);
   assert.strictEqual(a.$('.fa-retomar'), null);
@@ -447,7 +447,7 @@ test('sem conta na nuvem a foto do outro aparelho não oferece tentar de novo', 
 
 test('sem sessão nenhuma, o resumo convida e não oferece comparação', async () => {
   const a = await app({ aba: 'dados' });
-  const f = a.J('CTX.protocoloFotos()');
+  const f = a.vJ('ctx.protocoloFotos');
   assert.strictEqual(f.tem, false);
   assert.strictEqual(f.nota, 'nenhuma sessão ainda');
   assert.strictEqual(f.dias, '–');
@@ -462,9 +462,9 @@ test('o atraso é informação, não cobrança', async () => {
   // não há medalha e não há tela de parabéns em lugar nenhum deste produto.
   const a = await app({ aba: 'dados' });
   comSessoes(a, [diasAtras(20)], 'frente-relaxado');
-  a.E('render()');
+  a.v('render');
 
-  const f = a.J('CTX.protocoloFotos()');
+  const f = a.vJ('ctx.protocoloFotos');
   assert.strictEqual(f.dias, '20');
   assert.strictEqual(f.diasCor, 'ins-amber', 'passou de 14 dias');
   assert.strictEqual(f.cadencia, 'a cada 14 dias');
@@ -478,19 +478,19 @@ test('o atraso é informação, não cobrança', async () => {
 test('sessão de hoje pela metade convida a continuar de onde parou', async () => {
   const a = await app({ aba: 'dados' });
   comSessoes(a, [hoje()], 'frente-relaxado');
-  a.E('render()');
-  assert.strictEqual(a.J('CTX.protocoloFotos()').cta, 'continuar · 1 de 9');
+  a.v('render');
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').cta, 'continuar · 1 de 9');
   a.fechar();
 });
 
 test('comparar só aparece quando há duas sessões na mesma pose', async () => {
   const a = await app({ aba: 'dados' });
   comSessoes(a, [diasAtras(14)], 'frente-relaxado');
-  a.E('render()');
+  a.v('render');
   assert.strictEqual(a.$('.dd-fotos-b .ins-btn-secondary'), null, 'uma sessão não compara');
 
   comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
-  a.E('render()');
+  a.v('render');
   assert.strictEqual(a.texto('.dd-fotos-b .ins-btn-secondary'), 'comparar');
   a.fechar();
 });
@@ -506,10 +506,10 @@ test('o par padrão é a mais nova contra a MAIS ANTIGA', async () => {
   const datas = [56, 28, 14].map(diasAtras);
   comSessoes(a, datas, 'frente-relaxado');
 
-  a.E('CTX.abreComparar()');
+  a.v('ctx.abreComparar');
   assert.strictEqual(a.E('view.comparar.de'), datas[0]);
   assert.strictEqual(a.E('view.comparar.ate'), datas[2]);
-  assert.ok(a.J('CTX.comparacao()').intervalo.startsWith('42 dias entre as duas'));
+  assert.ok(a.vJ('ctx.comparacao').intervalo.startsWith('42 dias entre as duas'));
   a.fechar();
 });
 
@@ -523,9 +523,9 @@ test('comparar abre numa pose que tem par, não num vazio', async () => {
     { d: ${JSON.stringify(diasAtras(14))}, t: 2, m: 2, fotos: { 'frente-relaxado': { v: 2, ext: 'webp' }, 'frente-duplo-biceps': { v: 3, ext: 'webp' } } }
   ]`);
 
-  a.E('CTX.abreComparar()');
+  a.v('ctx.abreComparar');
   assert.strictEqual(a.E('view.comparar.pose'), 'frente-duplo-biceps');
-  assert.ok(a.J('CTX.comparacao()').par, 'abriu com par montado');
+  assert.ok(a.vJ('ctx.comparacao').par, 'abriu com par montado');
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
   // render que o aviso de falha dispara sem documento para desenhar.
   await a.esperar(80);
@@ -547,8 +547,8 @@ test('o peso ao lado da foto é a média da semana, e vem do registro corporal',
     { t: Date.now() - 14 * ${DIA}, v: 88 }
   ]`);
 
-  a.E('CTX.abreComparar()');
-  const c = a.J('CTX.comparacao()');
+  a.v('ctx.abreComparar');
+  const c = a.vJ('ctx.comparacao');
   assert.strictEqual(c.de.peso, '91,0 kg', 'média das duas pesagens daquela semana');
   assert.strictEqual(c.ate.peso, '88,0 kg');
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
@@ -563,8 +563,8 @@ test('sem pesagem naquela semana, o lugar do número fica vazio em vez de zero',
   nuvemComBucket(a);
   comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
 
-  a.E('CTX.abreComparar()');
-  const c = a.J('CTX.comparacao()');
+  a.v('ctx.abreComparar');
+  const c = a.vJ('ctx.comparacao');
   assert.strictEqual(c.de.peso, 'peso –');
   assert.strictEqual(c.de.cintura, 'cintura –');
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
@@ -582,8 +582,8 @@ test('a nota da sessão reaparece na comparação, que é onde ela serve', async
   comSessoes(a, [velha, diasAtras(14)], 'frente-relaxado');
   a.E(`S.protocolo.sessoes[0].obs = 'voltando de gripe'`);
 
-  a.E('CTX.abreComparar()');
-  assert.ok(a.J('CTX.comparacao()').notas.some(n => n.includes('voltando de gripe')));
+  a.v('ctx.abreComparar');
+  assert.ok(a.vJ('ctx.comparacao').notas.some(n => n.includes('voltando de gripe')));
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
   // render que o aviso de falha dispara sem documento para desenhar.
   await a.esperar(80);
@@ -608,7 +608,7 @@ test('backup antigo, sem protocolo nenhum, entra sem quebrar', async () => {
 test('ordem de poses vazia cai na do código, sem sumir com a tela', async () => {
   const a = await app({ estado: { logs: {}, done: [], protocolo: { poses: [], sessoes: [] } }, aba: 'dados' });
   assert.strictEqual(a.E('S.protocolo.poses'), null, 'normalizada para "a do código"');
-  assert.strictEqual(a.J('CTX.protocoloFotos()').pontos.length, 9);
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').pontos.length, 9);
   a.fechar();
 });
 
@@ -619,16 +619,16 @@ test('ordem de poses vazia cai na do código, sem sumir com a tela', async () =>
 test('ajustar grava o recorte no estado e não toca nos bytes', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await tirar(a);
   await a.esperar(60);
   const antes = guardadas(a);
 
   a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
   assert.ok(a.$('.aj-quadro'), 'a tela de ajuste abriu');
-  a.E('CTX.setGiroDoAjuste(2)');
-  await a.E('CTX.salvaAjuste()');
+  a.v('ctx.setGiroDoAjuste', 2);
+  await a.v('ctx.salvaAjuste');
   await a.esperar(60);
 
   const ref = a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"]');
@@ -644,10 +644,10 @@ test('girar sobe o zoom sozinho, para não abrir borda vazia', async () => {
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
-  assert.strictEqual(a.J('CTX.ajusteEmEdicao()').enq.z, 1);
+  assert.strictEqual(a.vJ('ctx.ajusteEmEdicao').enq.z, 1);
 
-  a.E('CTX.setGiroDoAjuste(6)');
-  const enq = a.J('CTX.ajusteEmEdicao()').enq;
+  a.v('ctx.setGiroDoAjuste', 6);
+  const enq = a.vJ('ctx.ajusteEmEdicao').enq;
   assert.ok(enq.z > 1.12, 'a 6° o mínimo é ~1,13: ' + enq.z);
   a.fechar();
 });
@@ -658,14 +658,14 @@ test('o ajuste que não faz nada sai do estado em vez de virar zeros', async () 
   comSessoes(a, [hoje()], 'frente-relaxado');
 
   a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
-  a.E('CTX.setGiroDoAjuste(3)');
-  await a.E('CTX.salvaAjuste()');
+  a.v('ctx.setGiroDoAjuste', 3);
+  await a.v('ctx.salvaAjuste');
   await a.esperar(60);
   assert.ok(a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"]').enq);
 
   a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
-  a.E('CTX.zeraAjuste()');
-  await a.E('CTX.salvaAjuste()');
+  a.v('ctx.zeraAjuste');
+  await a.v('ctx.salvaAjuste');
   await a.esperar(60);
   assert.strictEqual(a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"]').enq, undefined,
     'voltou a ser a foto como saiu, sem objeto de zeros no estado');
@@ -678,8 +678,8 @@ test('sair sem salvar descarta: o original nunca foi tocado', async () => {
   comSessoes(a, [hoje()], 'frente-relaxado');
 
   a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
-  a.E('CTX.setGiroDoAjuste(5)');
-  a.E('CTX.fechaAjuste()');
+  a.v('ctx.setGiroDoAjuste', 5);
+  a.v('ctx.fechaAjuste');
   assert.strictEqual(a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"]').enq, undefined);
   assert.strictEqual(a.E('view.ajuste'), null);
   a.fechar();
@@ -696,17 +696,17 @@ test('o mesmo recorte é aplicado na captura e na comparação', async () => {
   for (const d of [velha, nova]) await semear(a, d, 'frente-relaxado');
 
   a.E(`CTX.abreAjuste(${JSON.stringify(velha)}, 'frente-relaxado')`);
-  a.E('CTX.setGiroDoAjuste(3)');
-  await a.E('CTX.salvaAjuste()');
+  a.v('ctx.setGiroDoAjuste', 3);
+  await a.v('ctx.salvaAjuste');
   await a.esperar(60);
 
-  a.E('CTX.abreComparar()');
+  a.v('ctx.abreComparar');
   await a.esperar(60);
-  assert.strictEqual(a.J('CTX.comparacao()').de.enq.r, 3, 'a comparação leva o ajuste');
+  assert.strictEqual(a.vJ('ctx.comparacao').de.enq.r, 3, 'a comparação leva o ajuste');
 
-  a.E('CTX.fechaComparar()');
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.fechaComparar');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   await a.esperar(60);
   const ref = a.J('CTX.sessaoDeFotos().pose.ref');
   assert.strictEqual(ref.enq, null, 'a referência aqui é a de 14 dias, que não foi ajustada');
@@ -742,7 +742,7 @@ test('a foto sobreposta pode ser trocada para qualquer outra data', async () => 
 
   a.E(`CTX.setDataDoFantasma(${JSON.stringify(datas[0])})`);
   await a.esperar(60);
-  const d = a.J('CTX.ajusteEmEdicao()');
+  const d = a.vJ('ctx.ajusteEmEdicao');
   assert.strictEqual(d.fantasmaD, datas[0]);
   assert.ok(d.refUrl, 'e os bytes da escolhida chegaram');
   assert.ok(d.refTxt, 'com a data escrita ao lado');
@@ -761,7 +761,7 @@ test('a sessão mais antiga alinha contra a SEGUINTE, e não fica sem fantasma',
   a.E(`CTX.abreAjuste(${JSON.stringify(datas[0])}, 'frente-relaxado')`);
   await a.esperar(60);
   assert.strictEqual(a.E('view.ajuste.fantasmaD'), datas[1]);
-  assert.ok(a.J('CTX.ajusteEmEdicao()').refUrl);
+  assert.ok(a.vJ('ctx.ajusteEmEdicao').refUrl);
   a.fechar();
 });
 
@@ -774,7 +774,7 @@ test('pose que só existe numa sessão não oferece contra o que alinhar', async
 
   a.E(`CTX.abreAjuste(${JSON.stringify(so)}, 'frente-relaxado')`);
   await a.esperar(60);
-  assert.deepStrictEqual(a.J('CTX.ajusteEmEdicao()').datas, []);
+  assert.deepStrictEqual(a.vJ('ctx.ajusteEmEdicao').datas, []);
   assert.strictEqual(a.$('.aj-fantasma'), null, 'sem seletor quando não há escolha');
   a.fechar();
 });
@@ -789,7 +789,7 @@ test('a tela de ajuste abre com o fantasma da sessão anterior', async () => {
 
   a.E(`CTX.abreAjuste(${JSON.stringify(nova)}, 'frente-relaxado')`);
   await a.esperar(60);
-  const d = a.J('CTX.ajusteEmEdicao()');
+  const d = a.vJ('ctx.ajusteEmEdicao');
   assert.strictEqual(d.fantasma, true, 'já vem ligado');
   assert.ok(d.refUrl, 'e a foto anterior está carregada');
   assert.strictEqual(a.$$('.aj-quadro .fa').length, 2, 'duas camadas no quadro');
@@ -805,7 +805,7 @@ test('na primeira sessão não há fantasma, e a tela não quebra', async () => 
 
   a.E(`CTX.abreAjuste(${JSON.stringify(so)}, 'frente-relaxado')`);
   await a.esperar(60);
-  assert.strictEqual(a.J('CTX.ajusteEmEdicao()').refUrl, null);
+  assert.strictEqual(a.vJ('ctx.ajusteEmEdicao').refUrl, null);
   assert.strictEqual(a.$$('.aj-quadro .fa').length, 1, 'uma camada só');
   a.fechar();
 });
@@ -813,13 +813,13 @@ test('na primeira sessão não há fantasma, e a tela não quebra', async () => 
 test('ajustar não é oferecido onde não há foto', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
   assert.strictEqual(a.$('.pr-sobre'), null, 'sem foto, nem ajustar nem apagar');
 
   await tirar(a);
   await a.esperar(60);
-  a.E(`CTX.vaiParaPose('frente-relaxado')`);
+  a.v('ctx.vaiParaPose', 'frente-relaxado');
   assert.ok(a.$('.pr-sobre'), 'com foto, os dois aparecem');
   assert.deepStrictEqual(
     a.$$('.pr-sobre button').map(b => b.textContent.trim()), ['ajustar', 'apagar']);
@@ -848,9 +848,9 @@ test('a tela da pose oferece os dois caminhos de captura', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   cameraFalsa(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  a.E('render()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  a.v('render');
 
   const rotulos = a.$$('.pr-disparo').map(x => x.textContent.trim());
   assert.deepStrictEqual(rotulos, ['tirar com sobreposição', 'usar a câmera do sistema']);
@@ -861,9 +861,9 @@ test('sem getUserMedia, a câmera do sistema volta a ser a principal', async () 
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   a.E('delete navigator.mediaDevices');
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  a.E('render()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  a.v('render');
 
   assert.strictEqual(a.J('CTX.sessaoDeFotos().temCamera'), false);
   const b = a.$$('.pr-disparo');
@@ -876,9 +876,9 @@ test('abrir a câmera pede a traseira, e em retrato', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   cameraFalsa(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  await a.E('CTX.abreCamera()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
   await a.esperar(60);
 
   const pedido = a.J('globalThis.__gumPedidos[0]');
@@ -887,7 +887,7 @@ test('abrir a câmera pede a traseira, e em retrato', async () => {
   // ideal, nunca exact: exigência faria o aparelho recusar a câmera inteira
   assert.ok(pedido.video.width.ideal && pedido.video.height.ideal);
   assert.ok(pedido.video.height.ideal > pedido.video.width.ideal, 'retrato');
-  assert.strictEqual(a.J('CTX.cameraViva()').pronta, true);
+  assert.strictEqual(a.vJ('ctx.cameraViva').pronta, true);
   assert.ok(a.$('.cam-video'), 'o quadro vivo está na tela');
   a.fechar();
 });
@@ -897,13 +897,13 @@ test('sair da tela DESLIGA a câmera', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   cameraFalsa(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  await a.E('CTX.abreCamera()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
   await a.esperar(60);
   assert.strictEqual(a.E('globalThis.__faixasVivas'), 1);
 
-  a.E('CTX.fechaCamera()');
+  a.v('ctx.fechaCamera');
   assert.strictEqual(a.E('globalThis.__faixasVivas'), 0, 'nenhuma faixa sobrou viva');
   assert.strictEqual(a.E('view.camera'), null);
   a.fechar();
@@ -913,12 +913,12 @@ test('permissão negada não vira tela quebrada, vira o que fazer a respeito', a
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   cameraFalsa(a, { erro: 'NotAllowedError' });
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  await a.E('CTX.abreCamera()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
   await a.esperar(60);
 
-  const erro = a.J('CTX.cameraViva()').erro;
+  const erro = a.vJ('ctx.cameraViva').erro;
   assert.ok(/negado/.test(erro), erro);
   assert.ok(/ajustes/.test(erro), 'e diz onde resolver: ' + erro);
   assert.strictEqual(a.E('globalThis.__faixasVivas'), 0);
@@ -929,13 +929,13 @@ test('disparo sem temporizador guarda a foto e avança a pose', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   cameraFalsa(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  await a.E('CTX.abreCamera()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
   await a.esperar(60);
 
-  a.E('CTX.setTimerDaCamera(0)');
-  a.E('CTX.disparaCamera()');
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
   await a.esperar(120);
 
   const s = a.J('S.protocolo.sessoes');
@@ -951,19 +951,19 @@ test('a contagem pode ser cancelada antes de disparar', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   cameraFalsa(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  await a.E('CTX.abreCamera()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
   await a.esperar(60);
 
-  a.E('CTX.setTimerDaCamera(10)');
-  a.E('CTX.disparaCamera()');
-  assert.strictEqual(a.J('CTX.cameraViva()').contagem, 10);
+  a.v('ctx.setTimerDaCamera', 10);
+  a.v('ctx.disparaCamera');
+  assert.strictEqual(a.vJ('ctx.cameraViva').contagem, 10);
   assert.ok(a.$('.cam-contagem'), 'a contagem cobre o quadro');
 
-  a.E('CTX.cancelaDisparo()');
+  a.v('ctx.cancelaDisparo');
   await a.esperar(120);
-  assert.strictEqual(a.J('CTX.cameraViva()').contagem, null);
+  assert.strictEqual(a.vJ('ctx.cameraViva').contagem, null);
   assert.deepStrictEqual(a.J('S.protocolo.sessoes'), [], 'nada foi gravado');
   a.fechar();
 });
@@ -972,11 +972,11 @@ test('o temporizador padrão dá tempo de andar os três metros', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   cameraFalsa(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  await a.E('CTX.abreCamera()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
   await a.esperar(60);
-  assert.strictEqual(a.J('CTX.cameraViva()').timer, 10);
+  assert.strictEqual(a.vJ('ctx.cameraViva').timer, 10);
   a.fechar();
 });
 
@@ -984,13 +984,13 @@ test('sem quadro ainda, a captura recusa em vez de gravar preto', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   cameraFalsa(a, { semQuadro: true });
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  await a.E('CTX.abreCamera()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
   await a.esperar(60);
 
-  a.E('CTX.setTimerDaCamera(0)');
-  a.E('CTX.disparaCamera()');
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
   await a.esperar(120);
   assert.deepStrictEqual(a.J('S.protocolo.sessoes'), [], 'nada gravado');
   assert.ok(/não está pronta/.test(a.toast()), a.toast());
@@ -1005,12 +1005,12 @@ test('a câmera abre com a sobreposta da sessão vizinha', async () => {
   comSessoes(a, [velha, nova], 'frente-relaxado');
   for (const d of [velha, nova]) await semear(a, d, 'frente-relaxado');
 
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  await a.E('CTX.abreCamera()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
   await a.esperar(80);
 
-  const c = a.J('CTX.cameraViva()');
+  const c = a.vJ('ctx.cameraViva');
   assert.strictEqual(c.fantasmaD, nova, 'a mais recente antes de hoje');
   assert.ok(c.refUrl, 'com os bytes já carregados');
   assert.deepStrictEqual(c.datas.map(o => o.d), [velha, nova]);
@@ -1030,17 +1030,17 @@ test('depois do disparo a sobreposta acompanha a nova pose', async () => {
     'frente-duplo-biceps': { v: 2, ext: 'webp' }
   } }]`);
 
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  await a.E('CTX.abreCamera()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
   await a.esperar(60);
-  assert.strictEqual(a.J('CTX.cameraViva()').pose, 'Frente relaxado');
+  assert.strictEqual(a.vJ('ctx.cameraViva').pose, 'Frente relaxado');
 
-  a.E('CTX.setTimerDaCamera(0)');
-  a.E('CTX.disparaCamera()');
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
   await a.esperar(150);
 
-  const c = a.J('CTX.cameraViva()');
+  const c = a.vJ('ctx.cameraViva');
   assert.strictEqual(c.pose, 'Frente duplo bíceps', 'a tela seguiu a pose');
   assert.strictEqual(c.fantasmaD, velha, 'e a sobreposta é a mesma sessão, na pose nova');
   a.fechar();
@@ -1051,12 +1051,12 @@ test('a foto da câmera interna entra pelo mesmo caminho da do sistema', async (
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   cameraFalsa(a);
-  a.E('CTX.abreProtocolo()');
-  a.E('CTX.comecaSessaoDeFotos()');
-  await a.E('CTX.abreCamera()');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
   await a.esperar(60);
-  a.E('CTX.setTimerDaCamera(0)');
-  a.E('CTX.disparaCamera()');
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
   await a.esperar(150);
 
   const ref = a.J('S.protocolo.sessoes[0].fotos["frente-relaxado"]');
@@ -1072,13 +1072,13 @@ test('refazer pela câmera deixa lápide, como pelo sistema', async () => {
   cacheFalso(a);
   cameraFalsa(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
-  a.E('CTX.abreProtocolo()');
+  a.v('ctx.abreProtocolo');
   a.E(`view.protocolo.montagem = false; view.protocolo.pose = 'frente-relaxado'`);
-  await a.E('CTX.abreCamera()');
+  await a.v('ctx.abreCamera');
   await a.esperar(60);
 
-  a.E('CTX.setTimerDaCamera(0)');
-  a.E('CTX.disparaCamera()');
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
   await a.esperar(150);
   assert.ok(a.J('S.apagados')['corpo:' + hoje() + ':frente-relaxado'],
     'a versão anterior tem lápide');
@@ -1091,11 +1091,11 @@ test('apagar a foto pergunta antes, e recusar cancela', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
-  a.E('CTX.abreProtocolo()');
+  a.v('ctx.abreProtocolo');
   a.E(`view.protocolo.montagem = false; view.protocolo.pose = 'frente-relaxado'`);
 
   a.recusar();
-  await a.E(`CTX.apagaFotoDoCorpo('frente-relaxado')`);
+  await a.v('ctx.apagaFotoDoCorpo', 'frente-relaxado');
   await a.esperar(60);
   assert.strictEqual(a.J('S.protocolo.sessoes').length, 1, 'recusou: a foto ficou');
   const perguntas = a.perguntas().join(' ');
@@ -1103,7 +1103,7 @@ test('apagar a foto pergunta antes, e recusar cancela', async () => {
   assert.ok(/outros na próxima sincronização/.test(perguntas), 'o aviso é honesto');
 
   a.aceitar();
-  await a.E(`CTX.apagaFotoDoCorpo('frente-relaxado')`);
+  await a.v('ctx.apagaFotoDoCorpo', 'frente-relaxado');
   await a.esperar(60);
   assert.deepStrictEqual(a.J('S.protocolo.sessoes'), [], 'aceitou: apagou');
   a.fechar();
@@ -1115,13 +1115,13 @@ test('sair de uma tela cheia devolve a posição de leitura', async () => {
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
   comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
-  a.E('render()');
+  a.v('render');
 
   a.E('window.scrollY = 640');          // jsdom não rola sozinho
-  a.E('CTX.abreComparar()');
+  a.v('ctx.abreComparar');
   assert.strictEqual(a.E("scrollDoDestino['comparar']"), 640, 'guardou antes de trocar a tela');
 
-  a.E('CTX.fechaComparar()');
+  a.v('ctx.fechaComparar');
   assert.strictEqual(a.E("scrollDoDestino['comparar']"), undefined, 'e devolveu, sem deixar lixo');
   a.fechar();
 });
@@ -1131,7 +1131,7 @@ test('andar entre poses não joga a sessão de fotos para o topo', async () => {
   // seguidas: o topo tirava o botão de baixo do polegar a cada pose.
   const a = await app({ aba: 'dados' });
   cacheFalso(a);
-  a.E('CTX.abreProtocolo()');
+  a.v('ctx.abreProtocolo');
   await a.esperar();
 
   const pedidos = [];
@@ -1139,7 +1139,7 @@ test('andar entre poses não joga a sessão de fotos para o topo', async () => {
     pedidos.push(x && typeof x === 'object' ? x.top : top);
   };
 
-  a.E('CTX.posProxima()');
+  a.v('ctx.posProxima');
   await a.esperar();
   assert.strictEqual(pedidos.length, 0, 'paginar pose não pede rolagem');
 
