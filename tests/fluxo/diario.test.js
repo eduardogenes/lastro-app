@@ -18,14 +18,14 @@ test('o dia vivido vai para o histórico na virada da data', async () => {
   a.v('ctx.setAgua', 11);
   a.E('diaDeComida().turno = "noite"');
   await a.esperar();
-  const ontem = a.J('S.dia.data');
-  assert.deepStrictEqual(a.J('S.comidaHist'), [], 'nada ainda: o dia está aberto');
+  const ontem = a.S().dia.data;
+  assert.deepStrictEqual(a.S().comidaHist, [], 'nada ainda: o dia está aberto');
 
   a.viajar(DIA);
   a.v('diaDeComida');            // a primeira leitura no dia seguinte fecha o anterior
   await a.esperar();
 
-  const h = a.J('S.comidaHist');
+  const h = a.S().comidaHist;
   assert.strictEqual(h.length, 1);
   assert.strictEqual(h[0].d, ontem);
   assert.deepStrictEqual(Object.keys(h[0].done).sort(), ['almoco', 'pos']);
@@ -43,16 +43,16 @@ test('o passado não se reescreve quando o plano muda', async () => {
   a.viajar(DIA);
   a.v('diaDeComida');
   await a.esperar();
-  const antes = a.J('S.comidaHist[0].tot.kcal');
-  const pvAntes = a.J('S.comidaHist[0].pv');
+  const antes = a.S().comidaHist[0].tot.kcal;
+  const pvAntes = a.S().comidaHist[0].pv;
 
   // o nutricionista corta o arroz do almoço
   a.v('ctx.setQuantidade', 'almoco', 0, 150);
   await a.esperar(60);
 
-  assert.strictEqual(a.J('S.comidaHist[0].tot.kcal'), antes,
+  assert.strictEqual(a.S().comidaHist[0].tot.kcal, antes,
     'medido antes: o mesmo dia caía de 1.348 para 1.220 kcal sem ninguém comer diferente');
-  assert.ok(a.J('S.comida.v') > pvAntes,
+  assert.ok(a.S().comida.v > pvAntes,
     'e a versão do plano avança, então a tela consegue dizer que ele mudou');
   a.fechar();
 });
@@ -62,7 +62,7 @@ test('dia inteiramente mudo não vira linha', async () => {
   a.viajar(DIA);
   a.v('diaDeComida');
   await a.esperar();
-  assert.deepStrictEqual(a.J('S.comidaHist'), [],
+  assert.deepStrictEqual(a.S().comidaHist, [],
     'guardar um dia vazio como zero seria dizer que ele não comeu');
   a.fechar();
 });
@@ -74,7 +74,7 @@ test('fechar duas vezes o mesmo dia não duplica', async () => {
   a.viajar(DIA);
   a.v('diaDeComida'); a.v('diaDeComida'); a.v('diaDeComida');
   await a.esperar();
-  assert.strictEqual(a.J('S.comidaHist').length, 1);
+  assert.strictEqual(a.S().comidaHist.length, 1);
   a.fechar();
 });
 
