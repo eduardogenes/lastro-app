@@ -16,7 +16,7 @@ async function comSessao() {
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   await a.esperar();
-  assert.ok(a.E('S.sessao'), 'a sessão nasceu na primeira série');
+  assert.ok(a.S().sessao, 'a sessão nasceu na primeira série');
   return a;
 }
 
@@ -71,21 +71,21 @@ test('"continuo treinando" zera o relógio e devolve o atalho', async () => {
 
   await a.v('ctx.continuaSessao');
   await a.esperar();
-  assert.ok(a.E('S.sessao'), 'a sessão continua aberta');
+  assert.ok(a.S().sessao, 'a sessão continua aberta');
   assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'atalho');
   a.fechar();
 });
 
 test('"já parei" grava a duração até a última série, não até agora', async () => {
   const a = await comSessao();
-  const sid = a.E('S.sessao.sid');
+  const sid = a.S().sessao.sid;
   a.E(`S.sessao.inicio = Date.now() - 100 * ${MIN}`);
   parada(a, 95);                                  // treinou 5 min, parou 95
 
   await a.v('ctx.encerraSessaoEsquecida');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.sessao'), null);
+  assert.strictEqual(a.S().sessao, null);
   const dur = a.E(`S.done.filter(function (x) { return x.sid === ${sid}; })[0].dur`);
   assert.ok(dur > 4 * MIN && dur < 10 * MIN,
     'a ociosidade não pode virar treino no histórico: ' + Math.round(dur / MIN) + ' min');
