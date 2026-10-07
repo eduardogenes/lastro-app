@@ -45,7 +45,7 @@ const HYROX_FRIDAY = {
   ]
 };
 
-const cola = (a, o) => a.E(`importaAulaColada(${JSON.stringify(JSON.stringify(o))})`);
+const cola = (a, o) => a.v('importaAulaColada', JSON.stringify(o));
 
 /** O app no sábado, que é o dia aberto. */
 async function noBox() {
