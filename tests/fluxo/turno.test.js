@@ -14,7 +14,7 @@ async function noHoje(estado) {
 /** Garante que hoje é dia de treino, e abre a folha do botão PREVISTO. */
 async function abreFolha(a) {
   a.E('diaDeComida().cadencia = "treino"');
-  a.E('render()');
+  a.v('render');
   await a.esperar();
   a.clicar('.ins-estado');
   await a.esperar();
@@ -120,7 +120,7 @@ test('voltar para a manhã desfaz o deslocamento', async () => {
 test('em dia de descanso o turno não é oferecido', async () => {
   const a = await noHoje();
   a.E('diaDeComida().cadencia = "descanso"');
-  a.E('render()');
+  a.v('render');
   await a.esperar();
   a.clicar('.ins-estado');
   await a.esperar();
