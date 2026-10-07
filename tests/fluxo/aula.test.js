@@ -33,7 +33,7 @@ async function noSabado(opcoes) {
   a.aba('treino');
   a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
   a.E('view.day="HX"');
-  a.E('render()');
+  a.v('render');
   await a.esperar();
   return a;
 }
@@ -42,7 +42,7 @@ test('repetir o sábado passado traz os movimentos com a medida de cada um', asy
   const a = await noSabado(comSabadoAnterior());
   assert.strictEqual(a.E('treino("HX").ex.length'), 0, 'o dia aberto começa vazio');
 
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
 
   const ex = a.J('treino("HX").ex.map(function(x){return {id:x.id,s:x.s,u:x.u,q:x.q}})');
@@ -57,7 +57,7 @@ test('repetir o sábado passado traz os movimentos com a medida de cada um', asy
 
 test('repetir traz a prescrição, nunca o resultado', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
 
   // wall balls foi 9 kg × 20 no sábado passado. Nada disso pode aparecer como
@@ -72,7 +72,7 @@ test('repetir traz a prescrição, nunca o resultado', async () => {
     return n;
   })()`);
   assert.strictEqual(hoje, 0, 'nenhuma série foi registrada só por repetir a aula');
-  assert.strictEqual(a.E('seriesFeitasHoje("HX")'), 0);
+  assert.strictEqual(a.v('seriesFeitasHoje', 'HX'), 0);
   a.fechar();
 });
 
@@ -87,10 +87,10 @@ test('sem sábado anterior a porta não aparece', async () => {
 
 test('salvar como modelo guarda os movimentos e não a carga', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   a.responder('circuito de sábado');
-  a.E('salvarAulaComoModelo()');
+  a.v('salvarAulaComoModelo');
   await a.esperar(60);
 
   const aulas = a.J('S.aulas');
@@ -105,17 +105,17 @@ test('salvar como modelo guarda os movimentos e não a carga', async () => {
 
 test('salvar com um nome que já existe atualiza em vez de duplicar', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   a.responder('circuito');
-  a.E('salvarAulaComoModelo()');
+  a.v('salvarAulaComoModelo');
   await a.esperar(60);
   const id = a.J('S.aulas[0].id');
 
-  a.E('removerEx(0)');
+  a.v('removerEx', 0);
   await a.esperar(60);
   a.responder('Circuito');            // mesmo nome, outra caixa
-  a.E('salvarAulaComoModelo()');
+  a.v('salvarAulaComoModelo');
   await a.esperar(60);
 
   assert.strictEqual(a.J('S.aulas').length, 1, 'uma lista com três "circuito" não diz qual é qual');
@@ -126,15 +126,15 @@ test('salvar com um nome que já existe atualiza em vez de duplicar', async () =
 
 test('aplicar um modelo põe os movimentos no dia', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   a.responder('circuito');
-  a.E('salvarAulaComoModelo()');
+  a.v('salvarAulaComoModelo');
   await a.esperar(60);
 
   // limpa o dia e aplica o modelo
   a.E('S.mods = null');
-  a.E('render()');
+  a.v('render');
   await a.esperar();
   assert.strictEqual(a.E('treino("HX").ex.length'), 0);
 
@@ -148,10 +148,10 @@ test('aplicar um modelo põe os movimentos no dia', async () => {
 
 test('apagar um modelo deixa lápide, senão a sincronização o ressuscita', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   a.responder('circuito');
-  a.E('salvarAulaComoModelo()');
+  a.v('salvarAulaComoModelo');
   await a.esperar(60);
   const id = a.J('S.aulas[0].id');
 
@@ -167,7 +167,7 @@ test('as portas rápidas só existem no dia aberto', async () => {
   const a = await noSabado(comSabadoAnterior());
   a.E('S.sessao=null');
   a.E('view.day="A"');
-  a.E('render()');
+  a.v('render');
   await a.esperar();
   assert.strictEqual(a.J('CTX.treino().aulas'), null,
     'pôr uma aula inteira num dia de prescrição seria emendar o programa por atalho');
@@ -176,9 +176,9 @@ test('as portas rápidas só existem no dia aberto', async () => {
 
 test('a lista rápida registra a aula inteira sem abrir cartão', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
-  a.E('abrirRapido()');
+  a.v('abrirRapido');
   await a.esperar();
 
   const linhas = a.$$('.rapl');
@@ -193,7 +193,7 @@ test('a lista rápida registra a aula inteira sem abrir cartão', async () => {
   a.digitar('fr3', 60);    // bike 15 cal
   await a.esperar();
 
-  assert.strictEqual(a.E('seriesFeitasHoje("HX")'), 7,
+  assert.strictEqual(a.v('seriesFeitasHoje', 'HX'), 7,
     'as passadas de cada movimento entram no histórico na hora, sem salvar');
   const corrida = a.log('HX', 0);
   assert.deepStrictEqual(corrida[corrida.length - 1].sets, [[0, 104], [0, 104]],
@@ -203,7 +203,7 @@ test('a lista rápida registra a aula inteira sem abrir cartão', async () => {
 
 test('a lista rápida diz que o valor vale para todas as passadas', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   const c = a.J('CTX.treino().rapido');
   assert.strictEqual(c.linhas[0].nota, '2 passadas · o mesmo em todas',
@@ -223,11 +223,11 @@ test('a lista rápida não existe sem movimento no dia', async () => {
 
 test('digitar num dia aberto não troca a métrica do topo por uma meta', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   assert.strictEqual(a.texto('#daymeta'), '4', 'o dia aberto conta movimentos');
 
-  a.E('abrirRapido()');
+  a.v('abrirRapido');
   await a.esperar();
   a.digitar('fr0', 104);
   await a.esperar();
@@ -248,14 +248,14 @@ test('digitar num dia aberto não troca a métrica do topo por uma meta', async 
 
 test('aula que fecha sozinha não enfileira os movimentos como mudança pendente', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
-  assert.ok(a.J('modsDoDia("HX")').length > 0,
+  assert.ok(a.vJ('modsDoDia', 'HX').length > 0,
     'num dia aberto os movimentos do dia são mods: é o que a guarda tem de ver');
 
   // cinco horas sem tocar em nada: o app encerra por conta própria
   a.E('S.sessao.ultima = Date.now() - 5 * 3600 * 1000');
-  a.E('encerraSePreciso()');
+  a.v('encerraSePreciso');
   await a.esperar();
 
   assert.strictEqual(a.E('S.sessao'), null, 'a sessão fechou sozinha');
@@ -266,9 +266,9 @@ test('aula que fecha sozinha não enfileira os movimentos como mudança pendente
 
 test('e a aula encerrada no toque também não — os dois fechos concordam', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
-  a.E('abrirRapido()');
+  a.v('abrirRapido');
   await a.esperar();
   a.digitar('fr0', 104);
   a.digitar('fr1', 108);
@@ -276,9 +276,9 @@ test('e a aula encerrada no toque também não — os dois fechos concordam', as
   a.digitar('fr2', 20);
   a.digitar('fr3', 60);
   await a.esperar();
-  assert.ok(a.J('modsDoDia("HX")').length > 0, 'os mods continuam lá');
+  assert.ok(a.vJ('modsDoDia', 'HX').length > 0, 'os mods continuam lá');
 
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   await a.esperar();
 
   assert.strictEqual(a.E('view.promo'), null, 'nenhuma pergunta de programa');
