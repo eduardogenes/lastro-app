@@ -190,7 +190,7 @@ test('sessão de cardio registrada por engano pode ser apagada', async () => {
 test('preencher treino passado avisa para onde as séries estão indo', async () => {
   const a = await app();
   const t = Date.now() - 2 * 86400000;
-  a.E('abrirAdicionar(' + t + ')');
+  a.v('abrirAdicionar', t);
   a.v('addSet', 'tipo', 'A');
   await a.v('gravarRetro', true);
   await a.esperar();
