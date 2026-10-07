@@ -50,7 +50,7 @@ const cola = (a, o) => a.E(`importaAulaColada(${JSON.stringify(JSON.stringify(o)
 /** O app no sábado, que é o dia aberto. */
 async function noBox() {
   const a = await app();
-  a.E('go("HX")');
+  a.v('go', 'HX');
   assert.ok(a.E('diaAberto(view.day)'), 'o sábado é o dia aberto');
   return a;
 }
@@ -143,13 +143,13 @@ test('ao encerrar, o quadro vira a nota da sessão', async () => {
   await cola(a, HYROX_MZ);
   await a.esperar();
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   await a.esperar();
   const sid = a.E('S.sessao.sid');
 
-  await a.E('fechaSessao("manual")');
-  await a.E('save()');
+  await a.v('fechaSessao', 'manual');
+  await a.v('save');
   await a.esperar();
 
   const marca = a.J(`S.done.filter(function (x) { return x.sid === ${sid}; })[0]`);
@@ -165,7 +165,7 @@ test('salvar como modelo leva o quadro junto', async () => {
   await cola(a, HYROX_MZ);
   await a.esperar();
   a.E('window.prompt = function () { return "Chipper do MZ"; }');
-  await a.E('salvarAulaComoModelo()');
+  await a.v('salvarAulaComoModelo');
   await a.esperar();
 
   const m = a.J('S.aulas')[0];
@@ -194,7 +194,7 @@ test('fora do dia aberto a aula não entra', async () => {
   // Pôr a aula do box num dia de prescrição seria emendar o programa do
   // treinador por atalho.
   const a = await app();
-  a.E('go("A")');
+  a.v('go', 'A');
   await cola(a, HYROX_FRIDAY);
   await a.esperar();
   assert.ok(a.toast().includes('dia aberto'), a.toast());
@@ -203,7 +203,7 @@ test('fora do dia aberto a aula não entra', async () => {
 
 test('JSON torto não muda nada', async () => {
   const a = await noBox();
-  await a.E('importaAulaColada("{ isso nao e json")');
+  await a.v('importaAulaColada', '{ isso nao e json');
   await a.esperar();
   assert.strictEqual(a.E('treino(view.day).ex.length'), 0);
   assert.ok(a.toast().includes('JSON inválido'), a.toast());
