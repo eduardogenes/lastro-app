@@ -18,8 +18,8 @@ test('rótulo do campo muda com o tipo', async () => {
 
 test('anilha por lado mostra o total sem contar a barra', async () => {
   const a = await app();
-  a.E('go("C")');
-  a.E('toggle(0)');                       // pendulum squat
+  a.v('go', 'C');
+  a.v('toggle', 0);                       // pendulum squat
   assert.strictEqual(a.texto('.ex.open .sethead .f'), 'kg/lado');
 
   a.preencher(0, 0, 60, 10);
@@ -34,8 +34,8 @@ test('anilha por lado mostra o total sem contar a barra', async () => {
 
 test('halter em cada mão soma as duas', async () => {
   const a = await app();
-  a.E('go("C")');
-  a.E('toggle(6)');                       // rosca martelo
+  a.v('go', 'C');
+  a.v('toggle', 6);                       // rosca martelo
   a.preencher(6, 0, 30, 10);
   assert.ok(a.texto('#tot6').includes('60 kg nas duas mãos'));
   a.fechar();
@@ -45,9 +45,9 @@ test('um halter só não mostra total', async () => {
   // Nenhum exercício do plano nasce como halter único; é uma correção que ele
   // faz na hora, quando pega um halter só em vez de um par.
   const a = await app();
-  a.E('go("C")');
-  a.E('toggle(6)');                       // rosca martelo
-  await a.E('setCarga(6,"halter1")');
+  a.v('go', 'C');
+  a.v('toggle', 6);                       // rosca martelo
+  await a.v('setCarga', 6, 'halter1');
   await a.esperar();
   assert.strictEqual(a.texto('.ex.open .sethead .f'), 'kg');
   assert.strictEqual(a.$('.ex.open .anilhas'), null);
@@ -56,8 +56,8 @@ test('um halter só não mostra total', async () => {
 
 test('peso do corpo aceita carga vazia', async () => {
   const a = await app();
-  a.E('go("D")');
-  a.E('toggle(5)');                       // elevação de pernas ou reverse crunch
+  a.v('go', 'D');
+  a.v('toggle', 5);                       // elevação de pernas ou reverse crunch
   assert.strictEqual(a.texto('.ex.open .sethead .f'), '+kg');
 
   a.preencher(5, 0, null, 12);
@@ -69,14 +69,14 @@ test('peso do corpo aceita carga vazia', async () => {
 
 test('correção do tipo persiste e some ao voltar ao padrão', async () => {
   const a = await app();
-  a.E('toggle(1)');
-  await a.E('setCarga(1,"lado")');
+  a.v('toggle', 1);
+  await a.v('setCarga', 1, 'lado');
   await a.esperar();
   assert.strictEqual(a.J('S.carga')[a.k('A',1)], 'lado',
     'a correção acompanha o exercício, não a posição no treino');
   assert.strictEqual(a.texto('.ex.open .sethead .f'), 'kg/lado');
 
-  await a.E('setCarga(1,"pino")');
+  await a.v('setCarga', 1, 'pino');
   await a.esperar();
   assert.deepStrictEqual(a.J('S.carga'), {}, 'voltar ao padrão não deixa lixo no estado');
   a.fechar();
@@ -102,9 +102,9 @@ test('histórico de peso do corpo plota repetições, não carga', async () => {
   });
 
   const a = await app({ estado: { logs: logs, done: done, plano: 2 } });
-  a.E('go("E")');   // ombros e braços: era D até o plano 5
-  a.E('toggle(8)');
-  a.E('openHist(8)');
+  a.v('go', 'E');   // ombros e braços: era D até o plano 5
+  a.v('toggle', 8);
+  a.v('openHist', 8);
 
   const eixos = a.$$('.chart .axu').map(function (x) { return x.textContent; });
   assert.deepStrictEqual(eixos, ['reps'], 'sem carga, só a faixa de repetições');
@@ -121,9 +121,9 @@ test('histórico por lado carrega a unidade no eixo e no resumo da série', asyn
     logs: { C0: [{ t: t, sid: t, sets: [[90, 10], [90, 10], [90, 9], [90, 9]] }] },
     done: [{ day: 'C', t: t, sid: t, dur: 50 * 60000 }], plano: 2
   } });
-  a.E('go("C")');
-  a.E('toggle(0)');
-  a.E('openHist(0)');
+  a.v('go', 'C');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
 
   assert.ok(a.$$('.chart .axu').map(x => x.textContent).includes('kg/lado'));
   assert.ok(a.texto('.hs-sets').includes('180 kg em anilhas'));
@@ -137,18 +137,18 @@ test('a barra livre é um tipo à parte, e só ela soma a barra', async () => {
   // a regra de não converter, foi separar o caso — os 20 kg entram porque ELE
   // declarou que aquilo é uma barra olímpica.
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   await a.esperar();
 
   const total = () => a.texto('#tot0');
 
-  a.E("setCarga(0, 'barra')");
+  a.v('setCarga', 0, 'barra');
   await a.esperar();
   a.preencher(0, 0, 60, 8);
   await a.esperar();
   assert.match(total(), /140 kg na barra/, 'anilha × 2 + a barra: ' + total());
 
-  a.E("setCarga(0, 'lado')");
+  a.v('setCarga', 0, 'lado');
   await a.esperar();
   assert.match(total(), /120 kg em anilhas, fora a barra/,
     'e a máquina de anilha continua sem somar nada: ' + total());
@@ -159,8 +159,8 @@ test('o tipo de implemento único não se chama mais halter', async () => {
   // Três exercícios do HYROX já usavam este tipo para o que não é halter: wall
   // balls é uma bola, lunges com sandbag é um saco.
   const a = await app();
-  a.E('toggle(0)');
-  a.E('abrirCarga(0)');
+  a.v('toggle', 0);
+  a.v('abrirCarga', 0);
   await a.esperar();
 
   const nomes = a.$$('.chip').map(function (c) { return c.textContent.trim(); });
