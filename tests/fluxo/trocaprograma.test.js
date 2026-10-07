@@ -27,14 +27,14 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
 
   assert.deepStrictEqual(a.vJ('rot'), ['A','B','C','D','E','HX'],
     'cinco dias de musculação mais o HYROX');
-  assert.strictEqual(a.E('S.prog.HX.name'), 'HYROX');
+  assert.strictEqual(a.S().prog.HX.name, 'HYROX');
   assert.strictEqual(a.v('difTotal'), 0, 'igual ao treinador');
 
   // o histórico seguiu o exercício para a nova posição
   assert.strictEqual(a.k('A', 0), 'chest-press-inclinado-convergente');
   assert.strictEqual(a.log('A', 0).length, 1, 'chest press manteve o histórico');
-  assert.strictEqual(a.E('S.logs["pendulum-squat"].length'), 1);
-  assert.strictEqual(a.J('S.carga')['pendulum-squat'], 'lado', 'a correção de carga acompanhou');
+  assert.strictEqual(a.S().logs["pendulum-squat"].length, 1);
+  assert.strictEqual(a.S().carga['pendulum-squat'], 'lado', 'a correção de carga acompanhou');
 
   // a coluna ANTERIOR mostra o que ele fez, agora no dia B. A flexora e não o
   // agachamento: o pendulum saiu do programa na revisão do treinador, e o
@@ -45,13 +45,13 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
     'a evolução continua: o app mostra a carga do treino antigo');
 
   // e o que saiu do programa não perde o que foi levantado nele
-  assert.strictEqual(a.E('CAT["pendulum-squat"].n'), 'Pendulum squat',
+  assert.strictEqual(a.dado('CAT')["pendulum-squat"].n, 'Pendulum squat',
     'o pendulum saiu do dia B, não do catálogo');
 
   // exercício que saiu do programa continua nomeado, não vira slug cru
-  assert.strictEqual(a.E('CAT["remada-horizontal-na-maquina"].n'), 'Remada horizontal na máquina');
-  assert.strictEqual(a.E('CAT["tibial-anterior"].n'), 'Tibial anterior');
-  assert.ok(!a.E('CAT["tibial-anterior"].sumido'), 'não é fantasma');
+  assert.strictEqual(a.dado('CAT')["remada-horizontal-na-maquina"].n, 'Remada horizontal na máquina');
+  assert.strictEqual(a.dado('CAT')["tibial-anterior"].n, 'Tibial anterior');
+  assert.ok(!a.dado('CAT')["tibial-anterior"].sumido, 'não é fantasma');
 
   // RIR alvo aparece no cartão, e o registrado entra na própria série
   a.v('go', 'A');
@@ -98,8 +98,8 @@ test('backup antigo (plano 2) cai nos ids da época, não no programa de hoje', 
   const a = await app();
   await a.E('importText(' + JSON.stringify(antigo) + ')');
   await a.esperar();
-  assert.ok(a.E('S.logs["pendulum-squat"]'), 'histórico foi para o exercício certo da época');
-  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'));
+  assert.ok(a.S().logs["pendulum-squat"], 'histórico foi para o exercício certo da época');
+  assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'));
   a.fechar();
 });
 
@@ -146,8 +146,8 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   // e não conta como série de nenhum músculo
   const mus = a.J('seriesPorMusculo(0, Date.now() + 1)');
   assert.deepStrictEqual(mus, {}, 'corrida não é série de quadríceps');
-  assert.strictEqual(a.E('ALVO_TOTAL'), 90, 'o alvo continua sendo só a musculação');
-  assert.strictEqual(a.E('ALVO[""]'), undefined);
+  assert.strictEqual(a.dado('ALVO_TOTAL'), 90, 'o alvo continua sendo só a musculação');
+  assert.strictEqual(a.dado('ALVO')[""], undefined);
 
   // sem selo de subir carga e sem lista de troca: sled não tem substituto
   assert.ok(!a.$('.ex.open .up'), 'tempo melhor não é carga maior');
@@ -194,9 +194,9 @@ test('o dia aberto não pede promoção nem cobra pendência', async () => {
   await a.v('finalizarSessao');
   await a.esperar(60);
 
-  assert.ok(!a.J('!!view.promo'),
+  assert.ok(!!!a.vista().promo,
     'e mesmo com nove mods no dia, nenhuma pergunta de promoção');
-  assert.ok(!a.J('!!S.sessao'), 'a sessão encerrou direto');
+  assert.ok(!!!a.S().sessao, 'a sessão encerrou direto');
   a.fechar();
 });
 
@@ -230,7 +230,7 @@ test('adicionar movimento no dia aberto abre o catálogo e entra sem virar troca
   await a.esperar(60);
 
   assert.strictEqual(a.E('treino("HX").ex.length'), 1, 'o movimento entrou no dia');
-  assert.ok(!a.E('view.addEx'), 'e o painel fecha sozinho');
+  assert.ok(!a.vista().addEx, 'e o painel fecha sozinho');
 
   // Adicionado NÃO é substituído: o `orig` de um mod `add` é uma chave
   // sintética (`id#instante`) para o mod ter identidade, não o exercício que
