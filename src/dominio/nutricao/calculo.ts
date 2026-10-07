@@ -75,6 +75,15 @@ export function totalDoDia(
  * únicos que o app tem — ele comeu, só não foi isto. A marca é a procedência
  * que diz que o número é do prescrito, não do que entrou; o app não adivinha a
  * diferença e não finge saber.
+ *
+ * `como: 'nsei'` ENTRA, pelo mesmo caminho de `'fora'`, e esta é a leitura em
+ * que ele NÃO é `'nao'` — `semCumprimento` existe e de propósito não é usado
+ * aqui. "Não sei" é não saber a quantidade, não saber que ela foi zero: tirar a
+ * refeição daqui faria o total afirmar zero kcal, que é a única coisa que se
+ * sabe falsa. Entra com o prescrito, que é o que o app tem, e a marca fica como
+ * procedência. A adesão é que pesa 0 — ver `pesoDaRefeicao` —, e são leituras
+ * diferentes de propósito: uma mede quanto do prescrito foi cumprido, a outra
+ * estima o que entrou.
  */
 export function totalRegistrado(
   plano: Refeicao[],
@@ -540,11 +549,37 @@ export function poeComidaNoDia(
 }
 
 /**
+ * A marca diz que não há cumprimento a contar nesta refeição?
+ *
+ * Os DOIS valores que zeram, por razões opostas, e é o único lugar onde eles se
+ * encontram: `'nao'` é zero conhecido — ele declarou que não comeu —, e
+ * `'nsei'` é não saber. Um não pode ser lido pelo outro em nenhuma outra
+ * leitura (ver `totalRegistrado`, onde `'nsei'` segue `'fora'`), e é por isso
+ * que a condição mora numa função só: escrita à mão em cada ponto, bastava um
+ * esquecimento para o "não sei" passar a contar como refeição cumprida — que é
+ * inflar adesão, o mecanismo exato do corte errado.
+ *
+ * `'fora'` NÃO zera: ele comeu, só não foi aquilo.
+ */
+function semCumprimento(h: { como?: Record<string, ComoFoiARefeicao> }, id: string): boolean {
+  const c = h.como && h.como[id];
+  return c === 'nao' || c === 'nsei';
+}
+
+/**
  * O peso de uma refeição na aderência do dia: de 0 a 1, nunca mais.
  *
  * `'nao'` é 0 — ele declarou que não comeu aquela refeição, e isso é diferente
  * de não ter marcado nada: um é fato, o outro é silêncio. `'fora'` mantém o
  * peso da escala, porque a marca fala do CONTEÚDO e a escala da quantidade.
+ *
+ * `'nsei'` também é 0, e NÃO sai do denominador: a decisão é a mesma do
+ * denominador da janela de 14 dias ("o denominador é a janela, não os dias
+ * registrados"), aplicada dentro do dia. Peso 1 inflaria a adesão, e inflar
+ * adesão autoriza um corte que não devia acontecer; peso 0 subestima, e
+ * subestimar só segura o corte. O caminho de menor esforço tem de ser o
+ * conservador. Sem limiar nenhum: não existe quantidade de "não sei" que mude a
+ * regra, só um número mais baixo.
  *
  * O TETO DE 1 é a decisão que as porções acima de 1 obrigaram. A régua de
  * porções do app vai até 1½, e sem teto `escala: 1.5` empurrava a aderência do
@@ -556,7 +591,7 @@ export function poeComidaNoDia(
  * fora o mais informativo seria o erro.
  */
 function pesoDaRefeicao(h: DiaComidaHist, id: string): number {
-  if (h.como && h.como[id] === 'nao') return 0;
+  if (semCumprimento(h, id)) return 0;
   const e = h.escala && h.escala[id];
   const peso = (typeof e === 'number' && isFinite(e) && e >= 0) ? e : 1;
   return Math.min(1, peso);
@@ -617,7 +652,11 @@ export function excessoDoDia(h: DiaComidaHist, refs: Refeicao[]): number | null 
   let soma = 0;
   ids.forEach(function (id) {
     if (!noDia[id]) return;
-    if (h.como && h.como[id] === 'nao') return;   // não comeu: não há excedente
+    // não comeu, ou não sabe: não há excedente a medir. Se esta linha lesse só
+    // `'nao'`, uma refeição em "não sei" com a régua em 1½ pesaria 0 na adesão
+    // e +0,083 no excesso — o mesmo dado dizendo que ele não cumpriu e que
+    // comeu além. Zero nos dois, pelo mesmo motivo
+    if (semCumprimento(h, id)) return;
     const e = h.escala && h.escala[id];
     if (typeof e === 'number' && isFinite(e) && e > 1) soma += e - 1;
   });
@@ -657,8 +696,10 @@ export function padraoPorRefeicao(
       por[r.id].possiveis++;
       // marcada com "não comi" não é cumprida: esta leitura responde "qual
       // refeição eu mais falho", e contar um pulo declarado como acerto faria
-      // ela apontar justamente para o lado errado
-      if (h.done[r.id] && !(h.como && h.como[r.id] === 'nao')) por[r.id].feitas++;
+      // ela apontar justamente para o lado errado. "Não sei" também não é
+      // cumprimento — é a mesma aritmética da adesão por refeição: fica no
+      // denominador (`possiveis`) e não entra no numerador
+      if (h.done[r.id] && !semCumprimento(h, r.id)) por[r.id].feitas++;
     });
   });
   return plano.map(function (r) { return por[r.id]; }).filter(Boolean);
@@ -679,6 +720,17 @@ export function padraoPorRefeicao(
  * atributo, e não ausência de marca; a alternativa — guardar o "não comi" fora
  * de `done` — faria o dia honesto valer menos que o dia esquecido, que é
  * exatamente o defeito que a regra existe para corrigir.
+ *
+ * **"Não sei" POR REFEIÇÃO também conta**, e esta função não precisou de uma
+ * linha para isso: `'nsei'` é marca em `done`, e uma marca qualquer basta. É
+ * decisão, não efeito colateral — a incerteza de uma refeição aparece na adesão
+ * baixa daquele dia (`pesoDaRefeicao` devolve 0), e não tirando o dia da
+ * janela. **Nenhum limiar**: um dia inteiro em "não sei" é adesão 0 e continua
+ * contando.
+ * O "não sei" DO DIA continua sendo `aderencia: 'perdido'`, e continua sendo o
+ * único valor que derruba o dia. São dois registros diferentes de propósito: um
+ * diz "não sei o que foi este almoço", o outro diz "não sei o que foi este
+ * dia".
  *
  * É esta função que alimenta o portão de `MIN_REGISTRADOS` (11 em 14,
  * `src/dominio/corpo.ts`) — o portão que nunca abriu uma vez. O limiar não
@@ -774,7 +826,10 @@ export function contagemDaRefeicao(
     const refs = refeicoesDeHoje(plano, h.cadencia === 'treino', !!h.alta, h.turno);
     if (!refs.some(function (r) { return r.id === refId; })) return;
     possiveis++;
-    if (h.done[refId] && !(h.como && h.como[refId] === 'nao')) feitas++;
+    // "não comi" e "não sei" ficam no denominador e fora do numerador; é a
+    // mesma régua de `padraoPorRefeicao`, e a frase que ela escreve na tela
+    // ("feita em X dos últimos Y dias") não pode contar um desconhecido
+    if (h.done[refId] && !semCumprimento(h, refId)) feitas++;
   });
   return { feitas: feitas, possiveis: possiveis };
 }

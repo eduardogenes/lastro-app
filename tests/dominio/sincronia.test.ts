@@ -583,6 +583,26 @@ test('"não comi" atravessa a fusão como fato, e não como silêncio', () => {
     'é o que separa "não comi" de "esqueci de marcar", e o que faz o dia contar');
 });
 
+test('"não sei" atravessa a fusão sem regra nova, porque é valor e não campo', () => {
+  // O terceiro valor de `como` não pediu migração nem chave de lápide nova: a
+  // regra de fusão de `como` é `if (como)`, agnóstica ao valor, e a lápide é a
+  // da marca (`chaveDeRefeicaoFeita`). Este caso é o que prova que a decisão de
+  // não migrar está certa — se um dia alguém enumerar valores na fusão, aqui
+  // fica vermelho.
+  const a = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} } });
+  const b = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: { almoco: T0 - 600000 },
+                                              como: { almoco: 'nsei' }, agua: 0, escala: {} } });
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.dia!.como!.almoco, 'nsei', 'o valor novo chega inteiro do outro aparelho');
+
+  // e morre com a marca, como os outros dois: atributo solto afirmaria "não sei
+  // o que foi" sobre uma refeição que o dia não diz ter acontecido
+  const comLapide = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} },
+                             apagados: { 'comida:2026-08-24:almoco': T0 } });
+  const { estado: r2 } = funde(comLapide, b, T0);
+  assert.strictEqual(r2.dia!.como, undefined);
+});
+
 test('quem contou a água vence quem declarou não ter contado', () => {
   // As duas são afirmações sobre o mesmo dia, e a segunda tem dado por trás.
   const naoContou = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {}, aguaNaoContada: 1 } });

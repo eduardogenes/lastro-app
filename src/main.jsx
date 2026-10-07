@@ -2161,8 +2161,12 @@ const CTX = {
    * Grava o INSTANTE, e não `1`: é a forma convergida com o histórico desde a
    * migração 9→10, e é o que a lápide compara. `como` é opcional — ausente é
    * "comeu o que estava prescrito", que é o caso dominante e por isso não se
-   * grava; `'fora'` é "comi, mas não foi isto" e `'nao'` é "não comi esta
-   * refeição", que é diferente de não ter marcado nada.
+   * grava; `'fora'` é "comi, mas não foi isto", `'nao'` é "não comi esta
+   * refeição", que é diferente de não ter marcado nada, e `'nsei'` é "não sei o
+   * que foi esta refeição". A fonte da verdade dos três é
+   * `ComoFoiARefeicao` (`src/dominio/nutricao/tipos.ts`), com a aritmética de
+   * cada um escrita lá; a lista aqui é a recusa de gravar valor que o domínio
+   * não conhece.
    *
    * Desmarcar deixa LÁPIDE. `chaveDeRefeicaoFeita` existia na fusão desde que o
    * dia aberto passou a fundir campo a campo, e ninguém a escrevia: desmarcar
@@ -2183,7 +2187,7 @@ const CTX = {
       // fusão apagaria a marca que ele acabou de fazer.
       const morta = (S.apagados || {})[chaveDeRefeicaoFeita(d.data, id)] || 0;
       d.done[id] = Math.max(Date.now(), morta + 1);
-      if (como === 'fora' || como === 'nao') {
+      if (como === 'fora' || como === 'nao' || como === 'nsei') {
         if (!d.como) d.como = {};
         d.como[id] = como;
       }

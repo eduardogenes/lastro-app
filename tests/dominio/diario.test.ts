@@ -328,6 +328,114 @@ test('"não comi" não conta como refeição cumprida no padrão por refeição'
   assert.strictEqual(jantar.feitas, 1, 'e só um deles foi cumprido');
 });
 
+// ---------- "não sei" POR REFEIÇÃO ----------
+// O "Não sei" era do DIA (`aderencia: 'perdido'`) e passa a valer por refeição.
+// A aritmética está fechada: a refeição pesa 0 na adesão e NÃO sai do
+// denominador — a mesma razão do denominador da janela de 14 dias, e a regra de
+// que o caminho de menor esforço tem de ser o conservador. Subestimar segura o
+// corte calórico; inflar autoriza um corte que não devia acontecer.
+
+test('"não sei" numa refeição pesa zero e o dia CONTINUA contando', () => {
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const n = refs.length;
+  const h = fechaDia(dia({ done: todoOPlano(true), como: { almoco: 'nsei' } }),
+                     PLANO_BASE, cat, 1, 0, 1000);
+
+  assert.strictEqual(diaInterpretavel(h), true,
+    'a incerteza aparece no número baixo, não tirando o dia da janela de 14 dias');
+  const a = aderenciaDoDia(h, refs)!;
+  assert.ok(Math.abs(a - (n - 1) / n) < 1e-9,
+    'zero no numerador e a refeição continua no denominador');
+  assert.strictEqual(h.como!.almoco, 'nsei', 'e o registro guarda qual refeição foi');
+});
+
+test('não há limiar: o dia inteiro em "não sei" é adesão zero e ainda conta', () => {
+  // A tentação é inventar "se mais da metade for não sei, o dia cai". Não há
+  // limiar nesta decisão: o único efeito da incerteza é o número mais baixo.
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const tudoIncerto: Record<string, 'nsei'> = {};
+  Object.keys(todoOPlano(true)).forEach(function (id) { tudoIncerto[id] = 'nsei'; });
+  const h = fechaDia(dia({ done: todoOPlano(true), como: tudoIncerto }),
+                     PLANO_BASE, cat, 1, 0, 1000);
+
+  assert.strictEqual(aderenciaDoDia(h, refs), 0);
+  assert.strictEqual(diaInterpretavel(h), true, 'nenhuma quantidade de "não sei" derruba o dia');
+  assert.strictEqual(diasInterpretaveis([h], 14, '2026-01-14'), 1,
+    'o portão de 11 em 14 vê este dia');
+});
+
+test('"não sei" é distinguível de silêncio, com o mesmo número', () => {
+  // Mesmo número, registros diferentes — que é o certo. O silêncio de UMA
+  // refeição dá a mesma adesão porque o denominador é o plano; a diferença está
+  // em `done` e em `como`, e o silêncio do DIA INTEIRO dá `null`, não zero.
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const todas = todoOPlano(true);
+  const semAlmoco: Record<string, number> = Object.assign({}, todas);
+  delete semAlmoco.almoco;
+
+  const incerto = fechaDia(dia({ done: todas, como: { almoco: 'nsei' } }),
+                           PLANO_BASE, cat, 1, 0, 1000);
+  const calado = fechaDia(dia({ done: semAlmoco }), PLANO_BASE, cat, 1, 0, 1000);
+
+  assert.strictEqual(aderenciaDoDia(incerto, refs), aderenciaDoDia(calado, refs),
+    'a adesão não distingue os dois: o denominador é o plano nos dois casos');
+  assert.strictEqual(incerto.done.almoco != null, true, 'mas o registro distingue: há marca');
+  assert.strictEqual(calado.done.almoco, undefined, 'e aqui não há');
+  assert.strictEqual(calado.como, undefined, 'silêncio não tem atributo nenhum');
+
+  const mudo = fechaDia(dia({ done: {} }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(aderenciaDoDia(mudo, refs), null,
+    'ausência de registro não é aderência zero');
+  assert.strictEqual(diaInterpretavel(mudo), false);
+});
+
+test('"não sei" NÃO é "não comi": o total do dia não afirma zero kcal', () => {
+  // É a única leitura em que os dois se separam, e separar é o ponto: "não
+  // comi" é zero conhecido, "não sei" é não saber. Afirmar zero sobre uma
+  // refeição que ele não sabe descrever é a única coisa que se sabe falsa, e por
+  // isso `'nsei'` entra com os números do plano, como `'fora'`.
+  const sei = fechaDia(dia({ done: { pos: 1, almoco: 1 }, como: { almoco: 'nao' } }),
+                       PLANO_BASE, cat, 1, 0, 1000);
+  const naoSei = fechaDia(dia({ done: { pos: 1, almoco: 1 }, como: { almoco: 'nsei' } }),
+                          PLANO_BASE, cat, 1, 0, 1000);
+  const fora = fechaDia(dia({ done: { pos: 1, almoco: 1 }, como: { almoco: 'fora' } }),
+                        PLANO_BASE, cat, 1, 0, 1000);
+
+  assert.ok(naoSei.tot.kcal > sei.tot.kcal, 'o almoço desconhecido não sai do total');
+  assert.strictEqual(naoSei.tot.kcal, fora.tot.kcal, 'segue o caminho de "comi outra coisa"');
+
+  // e os dois PESAM IGUAL na adesão, que é o único que eles têm em comum
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  assert.strictEqual(aderenciaDoDia(naoSei, refs), aderenciaDoDia(sei, refs));
+});
+
+test('o excesso ignora a refeição em "não sei", como ignora a que ele não comeu', () => {
+  // Sem isto o mesmo dado diria duas coisas opostas: 0 na adesão e +meia porção
+  // no excesso, sobre uma refeição que ele declarou não saber.
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const h = fechaDia(dia({ done: { pos: 1, almoco: 1 }, escala: { almoco: 1.5 },
+                           como: { almoco: 'nsei' } }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(excessoDoDia(h, refs), 0, 'não se mede excedente do que não se sabe');
+});
+
+test('"não sei" não conta como cumprida em nenhuma das duas contagens por refeição', () => {
+  // As duas escrevem "feita em X dos últimos Y dias". Contar um desconhecido
+  // como acerto é inflar — e inflar adesão é o mecanismo do corte errado.
+  const h: DiaComidaHist[] = [
+    fechaDia(dia({ data: '2026-01-10', done: { pos: 1, almoco: 1 } }), PLANO_BASE, cat, 1, 0, 1),
+    fechaDia(dia({ data: '2026-01-11', done: { pos: 1, almoco: 1 }, como: { almoco: 'nsei' } }),
+             PLANO_BASE, cat, 1, 0, 2)
+  ];
+
+  const almoco = padraoPorRefeicao(h, PLANO_BASE).filter(x => x.id === 'almoco')[0];
+  assert.strictEqual(almoco.possiveis, 2, 'os dois dias entram no denominador');
+  assert.strictEqual(almoco.feitas, 1, 'e só um deles é cumprimento conhecido');
+
+  const c = contagemDaRefeicao(h, PLANO_BASE, 'almoco', 20, '2026-01-14');
+  assert.strictEqual(c.possiveis, 2);
+  assert.strictEqual(c.feitas, 1, 'a mesma régua nas duas leituras');
+});
+
 // ---------- pôr comida num dia de data arbitrária ----------
 // A tarefa que o app não tinha: `diaDeComida()` carimba o dia com a data,
 // `fechaDiaDeComida` congela o dia velho na virada e `marcaRefeicao` escreve
@@ -405,6 +513,16 @@ test('o que vem agora vence o que estava, chave a chave', () => {
   assert.strictEqual(r.dia!.escala.almoco, 0.5, 'corrigir a porção de um dia passado é o caso de uso');
   assert.strictEqual(r.dia!.agua, 9);
   assert.strictEqual(r.dia!.como!.almoco, 'fora');
+});
+
+test('pôr "não sei" num dia passado é o caso de uso, e o dia continua contando', () => {
+  // É aqui que o "não sei" mais tem sentido: ele volta à terça e declara que
+  // não sabe o que foi o almoço. O dia tem marca, então continua na janela.
+  const antes = poe([], '2026-01-11', { done: { pos: 1, almoco: 1 } }).hist;
+  const r = poe(antes, '2026-01-11', { como: { almoco: 'nsei' } });
+  assert.strictEqual(r.dia!.como!.almoco, 'nsei');
+  assert.strictEqual(diaInterpretavel(r.dia!), true);
+  assert.ok(r.dia!.tot.kcal > 0, 'e o total não passa a afirmar que ele não comeu');
 });
 
 test('o total é recontado quando as marcas mudam — e só por isso', () => {

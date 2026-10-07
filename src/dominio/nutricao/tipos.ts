@@ -106,8 +106,36 @@ export interface Totais {
  * um é fato declarado, o outro é silêncio. Essa diferença é o que faz o dia
  * contar como dia de consumo conhecido (`diaInterpretavel`) em vez de ficar
  * fora da janela de 14 dias da regra do nutricionista.
+ *
+ * `'nsei'` é "não sei o que foi esta refeição" — o "Não sei" que era do DIA
+ * inteiro (`aderencia: 'perdido'`) passando a valer por refeição. É o oposto de
+ * `'nao'`: `'nao'` é zero CONHECIDO, `'nsei'` é não saber. A aritmética está
+ * fechada e é a mesma do denominador da janela de 14 dias ("o denominador é a
+ * janela, não os dias registrados"): a refeição **pesa 0 na adesão do dia e NÃO
+ * sai do denominador**. O caminho de menor esforço tem de ser o conservador —
+ * subestimar segura o corte calórico, inflar autoriza um corte que não devia
+ * acontecer.
+ *
+ * Três consequências que são contrato, e não efeito colateral:
+ *
+ * 1. **O dia continua interpretável.** `diaInterpretavel` só exige uma marca
+ *    qualquer, e `'nsei'` é marca. A incerteza aparece no número baixo, não
+ *    tirando o dia da conta. **Não há limiar**: um dia inteiro em `'nsei'` é
+ *    adesão 0 e continua contando para o portão de 11 em 14.
+ * 2. **É distinguível de silêncio.** Silêncio não entra em `done` e dá `null`
+ *    no dia inteiro ("ausência de registro não é aderência zero"); `'nsei'` é
+ *    marca explícita que pesa 0. Mesmo número, registros diferentes.
+ * 3. **Não é `'nao'` fora da adesão.** No total do dia `'nsei'` segue o caminho
+ *    de `'fora'` — entra com os números do plano, que são os únicos que o app
+ *    tem —, porque afirmar zero kcal sobre uma refeição que ele não sabe
+ *    descrever é a única coisa que se sabe falsa. Ver `totalRegistrado`.
+ *
+ * O rótulo na tela é **"Não sei"**, escrito pela frente 3
+ * (`docs/redesign/09-frente3-palavras.md`, §4.2 e §4.5, versão A). A folha dos
+ * cinco botões que o oferece é do redesenho e ainda não existe: hoje nenhum
+ * chamador de `marcaRefeicao` passa `como`, em valor nenhum.
  */
-export type ComoFoiARefeicao = 'fora' | 'nao';
+export type ComoFoiARefeicao = 'fora' | 'nao' | 'nsei';
 
 /** O estado do dia de comida. Carimbado com a data, zera sozinho. */
 export interface DiaComida {
