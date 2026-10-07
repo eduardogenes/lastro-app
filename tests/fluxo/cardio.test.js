@@ -132,7 +132,7 @@ test('detalhe da sessão mostra o cardio do mesmo dia', async () => {
     done: [{ day: 'A', t: t, sid: t, dur: 50 * 60000, fim: 'manual' }],
     cardio: [{ t: t + 3600000, m: 'bike', min: 20, i: 'leve' }]
   } });
-  a.E('abrirSessao(' + t + ')');
+  a.v('abrirSessao', t);
   const bloco = a.texto('.cardio-dia');
   assert.ok(/20 min de bike/.test(bloco), bloco);
   assert.ok(/leve/.test(bloco));
