@@ -2525,12 +2525,21 @@ function abrirAulas() { view.aulas = !view.aulas; render(); }
 
 function abrirAddEx() { view.addEx = true; view.addQ = ''; render(); }
 function fecharAddEx() { view.addEx = false; view.addQ = ''; view.novoEx = false; render(); }
+/**
+ * O texto da busca do catálogo de adição. **Por valor**, e só dado.
+ *
+ * Quem devolve o foco é a casca (`buscaEx`): manter o teclado aberto é
+ * capacidade de tela, e é o que o teste da busca cobra lendo
+ * `document.activeElement`. O filtro em si é `catalogoDeAdicao()`, que lê
+ * `view.addQ` — e por isso a busca passou a ser conferível sem campo nenhum.
+ */
+function setBuscaDeExercicio(q) { view.addQ = q; render(); }
+
 function buscaEx(q) {
-  view.addQ = q;
   // render() reescreve o innerHTML: sem devolver o foco, o teclado fecha a
   // cada letra digitada
   const foco = document.activeElement && document.activeElement.id;
-  render();
+  setBuscaDeExercicio(q);
   if (foco) { const n = document.getElementById(foco); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }
 }
 
@@ -2566,16 +2575,28 @@ async function addExercicio(idEx) {
 
 function abrirNovoEx() { view.novoEx = true; view.addEx = true; render(); }
 
-async function criarExercicio() {
-  const nome = (document.getElementById('nxn') || {}).value || '';
-  const g = (document.getElementById('nxg') || {}).value || '';
-  const car = (document.getElementById('nxc') || {}).value || 'pino';
-  const comp = !!(document.getElementById('nxk') || {}).checked;
+/**
+ * Cadastra um exercício no catálogo dele e já o põe no treino. **Por valor.**
+ *
+ * Os seis campos (`#nxn`, `#nxg`, `#nxc`, `#nxk`, `#nxu`, `#nxq`) eram lidos
+ * aqui dentro, e por isso `edicao`, `fluxo` e `ritmo` precisavam escrever
+ * `document.getElementById("nxg").value = …` antes de chamar o verbo — três
+ * arquivos acoplados ao id de um campo para exercitar uma regra de catálogo.
+ *
+ * `carga` cai em `'pino'` e `unidade` em `''` quando vêm vazias, como o
+ * formulário já fazia: o padrão é o do campo, não do chamador.
+ */
+async function criarExercicioCom(c) {
+  const d = c || {};
+  const nome = d.nome == null ? '' : String(d.nome);
+  const g = d.grupo == null ? '' : String(d.grupo);
+  const car = d.carga || 'pino';
+  const comp = !!d.composto;
   // A grandeza no cadastro. Sem ela, um movimento que ele criasse nascia como
   // série de musculação — "Burpee" entrava 3 × 10–15, com coluna de kg e selo
   // de RIR — e não havia caminho nenhum para corrigir isso no catálogo.
-  const un = (document.getElementById('nxu') || {}).value || '';
-  const q = numeroDoCampo((document.getElementById('nxq') || {}).value);
+  const un = d.unidade || '';
+  const q = numeroDoCampo(d.q);
   if (nome.trim().length < 3) { toast('Dê um nome ao exercício.'); return; }
   const k = slugEx(nome);
   if (CAT[k] && !CAT[k].arq) { toast('Já existe um exercício com esse nome.'); return; }
@@ -2588,6 +2609,19 @@ async function criarExercicio() {
   view.novoEx = false;
   await save();
   await addExercicio(k);
+}
+
+/** A casca: lê os seis campos do formulário e chama o verbo. */
+async function criarExercicio() {
+  const campo = function (id) { return (document.getElementById(id) || {}).value; };
+  return criarExercicioCom({
+    nome: campo('nxn') || '',
+    grupo: campo('nxg') || '',
+    carga: campo('nxc') || 'pino',
+    composto: !!(document.getElementById('nxk') || {}).checked,
+    unidade: campo('nxu') || '',
+    q: campo('nxq')
+  });
 }
 
 function desfazMod(j) {
@@ -3028,17 +3062,39 @@ function editDor(k) {
   render();
 }
 
+/**
+ * Grava na sessão em correção as séries e a observação. **Por valor.**
+ *
+ * `sets` é a lista NA ORDEM das séries da sessão: cada item é `[carga, reps]`
+ * (número ou texto, vírgula vale ponto). Item `null` ou ausente **não mexe**
+ * naquela série — é o `if (!a || !b) return` da leitura por id, que existia
+ * para o re-render dos chips não apagar o que ainda não estava na tela.
+ *
+ * `obs` ausente (`undefined`) também não mexe na observação; `''` a apaga.
+ */
+function guardaEdicaoCom(sets, obs) {
+  const e = S.logs[view.hist.key][view.edit];
+  e.sets.forEach(function (x, k) {
+    const par = sets && sets[k];
+    if (par == null) return;
+    const w = parseFloat(String(par[0]).replace(',','.')), r = parseInt(par[1],10);
+    e.sets[k] = isNaN(r) ? null : [isNaN(w) ? 0 : w, r];
+  });
+  if (obs !== undefined) {
+    const t = String(obs == null ? '' : obs).trim();
+    if (t) e.obs = t; else delete e.obs;
+  }
+}
+
 // preserva o que já foi digitado quando os chips forçam re-render
 function guardaCamposEdicao() {
   const e = S.logs[view.hist.key][view.edit];
-  e.sets.forEach(function (x, k) {
+  const sets = e.sets.map(function (x, k) {
     const a = document.getElementById('ed'+k+'_0'), b = document.getElementById('ed'+k+'_1');
-    if (!a || !b) return;
-    const w = parseFloat(a.value.replace(',','.')), r = parseInt(b.value,10);
-    e.sets[k] = isNaN(r) ? null : [isNaN(w) ? 0 : w, r];
+    return (a && b) ? [a.value, b.value] : null;
   });
   const o = document.getElementById('edobs');
-  if (o) { const t = o.value.trim(); if (t) e.obs = t; else delete e.obs; }
+  guardaEdicaoCom(sets, o ? o.value : undefined);
 }
 
 async function salvarEdicao() {
@@ -3219,10 +3275,24 @@ function addSet(campo, valor) {
   }
   render();
 }
-function addNome(el){ view.add.nome = el.value; }
+function anotaNomeAvulso(nome) { view.add.nome = nome; }
+function addNome(el){ anotaNomeAvulso(el.value); }
+
+/**
+ * A máscara do horário: só dígito e `:`, e os dois-pontos entram sozinhos.
+ *
+ * `digitando` é o que separa "ele acabou de escrever o segundo dígito" de
+ * "alguém está passando um horário inteiro": só no primeiro caso o `:` nasce,
+ * porque a máscara existe para poupar uma tecla de quem digita, não para
+ * reinterpretar `'06'` vindo por valor.
+ */
+function mascaraDeHora(txt, digitando) {
+  const v = (txt == null ? '' : String(txt)).replace(/[^0-9:]/g, '');
+  return (digitando && v.length === 2 && v.indexOf(':') < 0) ? v + ':' : v;
+}
+function anotaHoraAvulsa(txt) { view.add.hora = mascaraDeHora(txt, false); }
 function addHora(el) {
-  let v = el.value.replace(/[^0-9:]/g, '');
-  if (v.length === 2 && el.value.length === 2 && v.indexOf(':') < 0) v += ':';
+  const v = mascaraDeHora(el.value, el.value.length === 2);
   if (v !== el.value) el.value = v;
   view.add.hora = v;
 }
@@ -3737,31 +3807,61 @@ function dorName(k){ const x = DORES.filter(y=>y.k===k)[0]; return x ? x.t : k; 
 // e nada se perde ao abrir outro exercício ou fechar o app no meio do treino.
 // type="number" recusa vírgula: no teclado pt-BR "73,4" chegava aqui como string
 // vazia. Os campos são type="text" e a limpeza é feita na mão.
-function limpaNum(el, dec) {
-  const antes = el.value;
-  const depois = antes.replace(dec ? /[^0-9.,]/g : /[^0-9]/g, '');
-  if (depois !== antes) el.value = depois;
-  return depois.replace(',', '.');
+/** O que um campo numérico deixa ficar: dígito, e separador decimal quando couber. */
+function filtroNum(dec) { return dec ? /[^0-9.,]/g : /[^0-9]/g; }
+
+/**
+ * O número que há num texto, normalizado: vírgula vale ponto, o resto cai fora.
+ *
+ * É a metade POR VALOR de `limpaNum`. A outra metade — reescrever o campo com o
+ * que sobrou — é da casca, e é a única parte que precisa de um elemento.
+ */
+function soNumero(v, dec) {
+  return (v == null ? '' : String(v)).replace(filtroNum(dec), '').replace(',', '.');
 }
 
-function inp(el, i, k, pos) {
+function limpaNum(el, dec) {
+  const limpo = el.value.replace(filtroNum(dec), '');
+  if (limpo !== el.value) el.value = limpo;
+  return limpo.replace(',', '.');
+}
+
+/**
+ * Registra um valor de série — carga (`pos` 0), repetição (1) ou RIR (2) — na
+ * posição `i` do dia aberto, série `k`. **Por valor.**
+ *
+ * Esta é a interação de maior frequência do produto, e até aqui a única porta
+ * para ela era pôr texto num campo e disparar `input`: `inp` recebia o
+ * elemento, e nenhum teste conseguia registrar uma série sem a tela de hoje.
+ * Agora `inp` é a casca — lê o campo, reescreve o que o campo aceita, pinta o
+ * `done` — e tudo que é modelo mora aqui.
+ *
+ * `valor` aceita número ou texto, com vírgula ou ponto; `''` e `null` apagam a
+ * série, que é o gesto de "digitei errado" e tem de continuar existindo.
+ */
+function anotaSerie(i, k, pos, valor) {
   const e = draftOf(i);
   if (!e.s[k]) e.s[k] = [null,null];
   // antes da escrita, senão registrar e corrigir ficam indistinguíveis
   const jaRegistrada = serieJaRegistrada(i, k);
-  const raw = limpaNum(el, pos === 0);
+  const raw = soNumero(valor, pos === 0);
   const num = pos === 0 ? parseFloat(raw) : parseInt(raw,10);
   const v = (raw === '' || isNaN(num)) ? null : num;
   // RIR não é grandeza aberta: acima de 5 a pessoa não está treinando perto o
   // suficiente para o número significar algo, e negativo não existe
   e.s[k][pos] = (pos === 2 && v != null) ? Math.max(0, Math.min(5, v)) : v;
-  el.classList.toggle('done', el.value !== '');
   segurarTela();
   projeta(i);
   atualizaEstado();
   atualizaAnilhas(i);
   queueSave();
   autoTimer(i, k, e, jaRegistrada);
+}
+
+function inp(el, i, k, pos) {
+  const raw = limpaNum(el, pos === 0);
+  el.classList.toggle('done', el.value !== '');
+  anotaSerie(i, k, pos, raw);
 }
 
 /**
@@ -3782,22 +3882,30 @@ function inp(el, i, k, pos) {
  * Não dispara o cronômetro de descanso: quem preenche isto está com a aula
  * terminada, e um contador de descanso começando aí não serve a ninguém.
  */
-function inpRapido(el, i, pos) {
+function anotaSerieRapida(i, pos, valor) {
   const ex = treino(view.day).ex[i];
   if (!ex) return;
   const e = draftOf(i);
-  const raw = limpaNum(el, pos === 0);
+  const raw = soNumero(valor, pos === 0);
   const num = pos === 0 ? parseFloat(raw) : parseInt(raw, 10);
   const v = (raw === '' || isNaN(num)) ? null : num;
   for (let k = 0; k < setsFor(ex); k++) {
     if (!e.s[k]) e.s[k] = [null, null];
     e.s[k][pos] = v;
   }
-  el.classList.toggle('done', el.value !== '');
   segurarTela();
   projeta(i);
   atualizaEstado();
   queueSave();
+}
+
+function inpRapido(el, i, pos) {
+  // A guarda fica aqui TAMBÉM: sem ela, posição sem exercício passaria a
+  // reescrever o campo e a pintar o `done` — coisa que antes não acontecia.
+  if (!treino(view.day).ex[i]) return;
+  const raw = limpaNum(el, pos === 0);
+  el.classList.toggle('done', el.value !== '');
+  anotaSerieRapida(i, pos, raw);
 }
 
 function abrirRapido() { view.rapido = !view.rapido; view.open = null; render(); }
@@ -3940,7 +4048,8 @@ function usaAnterior(i, k) {
   autoTimer(i, k, e, jaRegistrada);
 }
 
-function obsIn(el, i) { draftOf(i).obs = el.value; projeta(i); queueSave(); }
+function anotaObservacao(i, texto) { draftOf(i).obs = texto; projeta(i); queueSave(); }
+function obsIn(el, i) { anotaObservacao(i, el.value); }
 function toggleAq(i) { const e = draftOf(i); e.aq = !e.aq; projeta(i); queueSave(); render(); }
 // A anotação e os marcadores de dor ficam atrás de um link: na maioria das
 // sessões não há nada a registrar, e ocupavam espaço em todo exercício aberto.
@@ -4002,16 +4111,28 @@ function poeMedida(i, u, qTexto) {
  * ser escrito. Sem isto o cabeçalho dizia `1 × 20 reps` enquanto o campo já
  * mostrava 30, e as duas coisas ficavam na tela ao mesmo tempo.
  */
+/**
+ * A prescrição de uma posição do dia, em texto: `3 × 10–15`, `5 × 400 m`.
+ *
+ * É a metade POR VALOR de `atualizaPrescricao`: o que o cabeçalho tem de dizer,
+ * sem precisar de cabeçalho para dizê-lo. `null` quando não há exercício ali.
+ */
+function textoDaPrescricao(i) {
+  const ex = treino(view.day).ex[i];
+  if (!ex) return null;
+  const un = unidadeDe(ex);
+  const ns = setsFor(ex);
+  return un && ex.q > 0
+    ? ns + ' × ' + fmtInt(ex.q) + ' ' + ROTULO_UNIDADE[un]
+    : ns + (ex.r ? ' × ' + ex.r : '');
+}
+
 function atualizaPrescricao(i) {
   const el = document.getElementById('presc' + i);
   if (!el) return;
-  const ex = treino(view.day).ex[i];
-  if (!ex) return;
-  const un = unidadeDe(ex);
-  const ns = setsFor(ex);
-  el.textContent = un && ex.q > 0
-    ? ns + ' × ' + fmtInt(ex.q) + ' ' + ROTULO_UNIDADE[un]
-    : ns + (ex.r ? ' × ' + ex.r : '');
+  const txt = textoDaPrescricao(i);
+  if (txt == null) return;
+  el.textContent = txt;
 }
 
 /** Número de um campo livre: vírgula vale ponto, e vazio é ausência. */
