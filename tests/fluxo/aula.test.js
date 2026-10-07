@@ -40,7 +40,7 @@ async function noSabado(opcoes) {
 
 test('repetir o sábado passado traz os movimentos com a medida de cada um', async () => {
   const a = await noSabado(comSabadoAnterior());
-  assert.strictEqual(a.E('treino("HX").ex.length'), 0, 'o dia aberto começa vazio');
+  assert.strictEqual(a.vJ('treino', 'HX').ex.length, 0, 'o dia aberto começa vazio');
 
   a.v('repetirUltimaAula');
   await a.esperar(60);
@@ -78,7 +78,7 @@ test('repetir traz a prescrição, nunca o resultado', async () => {
 
 test('sem sábado anterior a porta não aparece', async () => {
   const a = await noSabado({});
-  const c = a.J('CTX.treino().aulas');
+  const c = a.vJ('ctx.treino').aulas;
   assert.strictEqual(c.ultima, null, 'um botão que não faz nada é pior que a ausência dele');
   assert.deepStrictEqual(c.modelos, []);
   assert.strictEqual(c.podeSalvar, false, 'e não há dia nenhum para salvar');
@@ -136,13 +136,13 @@ test('aplicar um modelo põe os movimentos no dia', async () => {
   a.E('S.mods = null');
   a.v('render');
   await a.esperar();
-  assert.strictEqual(a.E('treino("HX").ex.length'), 0);
+  assert.strictEqual(a.vJ('treino', 'HX').ex.length, 0);
 
   const id = a.S().aulas[0].id;
   a.E(`aplicarModeloDeAula(${JSON.stringify(id)})`);
   await a.esperar(60);
-  assert.strictEqual(a.E('treino("HX").ex.length'), 4);
-  assert.strictEqual(a.E('treino("HX").ex[3].u'), 'cal', 'a medida vem junto');
+  assert.strictEqual(a.vJ('treino', 'HX').ex.length, 4);
+  assert.strictEqual(a.vJ('treino', 'HX').ex[3].u, 'cal', 'a medida vem junto');
   a.fechar();
 });
 
@@ -169,7 +169,7 @@ test('as portas rápidas só existem no dia aberto', async () => {
   a.E('view.day="A"');
   a.v('render');
   await a.esperar();
-  assert.strictEqual(a.J('CTX.treino().aulas'), null,
+  assert.strictEqual(a.vJ('ctx.treino').aulas, null,
     'pôr uma aula inteira num dia de prescrição seria emendar o programa por atalho');
   a.fechar();
 });
@@ -205,7 +205,7 @@ test('a lista rápida diz que o valor vale para todas as passadas', async () => 
   const a = await noSabado(comSabadoAnterior());
   a.v('repetirUltimaAula');
   await a.esperar(60);
-  const c = a.J('CTX.treino().rapido');
+  const c = a.vJ('ctx.treino').rapido;
   assert.strictEqual(c.linhas[0].nota, '2 passadas · o mesmo em todas',
     'escrever o mesmo número em silêncio seria o app inventando dado');
   assert.strictEqual(c.linhas[3].nota, null, 'com uma passada só não há o que avisar');
@@ -216,7 +216,7 @@ test('a lista rápida diz que o valor vale para todas as passadas', async () => 
 
 test('a lista rápida não existe sem movimento no dia', async () => {
   const a = await noSabado({});
-  assert.strictEqual(a.J('CTX.treino().rapido'), null,
+  assert.strictEqual(a.vJ('ctx.treino').rapido, null,
     'uma lista vazia não registra nada');
   a.fechar();
 });
