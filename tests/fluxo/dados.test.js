@@ -15,13 +15,13 @@ const ANTIGO = {
 
 test('estado do formato original carrega com padrões', async () => {
   const a = await app({ estado: ANTIGO });
-  assert.strictEqual(a.E('S.done.length'), 1);
-  assert.strictEqual(a.E('S.deload'), false);
-  assert.strictEqual(a.E('S.sessao'), null);
-  assert.strictEqual(a.E('S.export'), 0);
-  assert.deepStrictEqual(a.J('S.carga'), {});
-  assert.deepStrictEqual(a.J('S.cardio'), []);
-  assert.deepStrictEqual(a.J('S.body.peso'), []);
+  assert.strictEqual(a.S().done.length, 1);
+  assert.strictEqual(a.S().deload, false);
+  assert.strictEqual(a.S().sessao, null);
+  assert.strictEqual(a.S().export, 0);
+  assert.deepStrictEqual(a.S().carga, {});
+  assert.deepStrictEqual(a.S().cardio, []);
+  assert.deepStrictEqual(a.S().body.peso, []);
   assert.strictEqual(a.v('nextDay'), 'B');
   a.fechar();
 });
@@ -113,14 +113,14 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
 
   await a.v('wipe');
   await a.esperar();
-  assert.strictEqual(a.E('S.done.length'), 0);
+  assert.strictEqual(a.S().done.length, 0);
 
   a.aba('guia');
   await a.E('importText(' + JSON.stringify(bkp) + ')');
   await a.esperar(60);
 
-  assert.deepStrictEqual(a.J('S.logs'), antes.logs);
-  assert.strictEqual(a.E('S.done.length'), antes.done.length);
+  assert.deepStrictEqual(a.S().logs, antes.logs);
+  assert.strictEqual(a.S().done.length, antes.done.length);
   assert.strictEqual(a.E('S.done.filter(function (x) { return x.livre; }).length'), 1);
   a.fechar();
 });
@@ -129,7 +129,7 @@ test('importar lixo não toca no estado', async () => {
   const a = await app();
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  const antes = a.J('S.logs');
+  const antes = a.S().logs;
 
   a.aba('guia');
   await a.v('importText', '{ isso nao e json');
@@ -138,7 +138,7 @@ test('importar lixo não toca no estado', async () => {
   await a.E('importText(JSON.stringify({ qualquer: 1 }))');
   assert.ok(a.toast().includes('não parece'));
 
-  assert.deepStrictEqual(a.J('S.logs'), antes);
+  assert.deepStrictEqual(a.S().logs, antes);
   a.fechar();
 });
 
@@ -148,7 +148,7 @@ test('importar aceita o objeto cru, sem envelope', async () => {
   a.aba('guia');
   await a.E('importText(' + JSON.stringify(cru) + ')');
   await a.esperar(60);
-  assert.strictEqual(a.E('S.done.length'), 1);
+  assert.strictEqual(a.S().done.length, 1);
   a.fechar();
 });
 
@@ -175,7 +175,7 @@ test('abrir o JSON conta como backup', async () => {
 
   a.v('showJSON');
   await a.esperar();
-  assert.ok(a.E('S.export') > 0, 'quem copia o texto na mão também fez backup');
+  assert.ok(a.S().export > 0, 'quem copia o texto na mão também fez backup');
   a.aba('guia');
   assert.strictEqual(a.$('.gu-cobra'), null, 'e para de cobrar depois que ele exporta');
   a.fechar();
@@ -222,16 +222,16 @@ test('histórico do plano antigo é reindexado, não apagado', async () => {
     'supino-inclinado-com-halteres'
   ], 'chave por exercício, não por posição');
 
-  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'), 'a cadeia inteira roda');
-  assert.deepStrictEqual(a.J('S.logs["supino-inclinado-com-halteres"][0].sets'), [[30, 10], [30, 10]],
+  assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'), 'a cadeia inteira roda');
+  assert.deepStrictEqual(a.S().logs["supino-inclinado-com-halteres"][0].sets, [[30, 10], [30, 10]],
     'as séries continuam íntegras');
-  assert.deepStrictEqual(a.J('S.carga'), {}, 'correção de carga apontava para posição antiga');
-  assert.strictEqual(a.E('S.done.length'), 1, 'o calendário não é tocado');
+  assert.deepStrictEqual(a.S().carga, {}, 'correção de carga apontava para posição antiga');
+  assert.strictEqual(a.S().done.length, 1, 'o calendário não é tocado');
 
   // agachamento hack saiu do programa mas é substituto do pendulum: continua
   // no catálogo. supino inclinado com halteres também.
-  assert.ok(a.E('!!CAT["agachamento-hack"]'), 'exercício conhecido continua no catálogo');
-  assert.strictEqual(a.E('CAT["agachamento-hack"].n'), 'Agachamento hack');
+  assert.ok(!!a.dado('CAT')["agachamento-hack"], 'exercício conhecido continua no catálogo');
+  assert.strictEqual(a.dado('CAT')["agachamento-hack"].n, 'Agachamento hack');
   a.fechar();
 });
 
@@ -244,10 +244,10 @@ test('exercício que sumiu do catálogo vira arquivado, com nome e histórico', 
   } });
   await a.esperar();
   const k = 'aparelho-que-nao-existe-mais';
-  assert.ok(a.J('S.ex')[k], 'entra no catálogo do usuário, marcado como arquivado');
+  assert.ok(a.S().ex[k], 'entra no catálogo do usuário, marcado como arquivado');
   assert.strictEqual(a.E('CAT["' + k + '"].n'), 'Aparelho que não existe mais');
   assert.strictEqual(a.E('CAT["' + k + '"].arq'), 1);
-  assert.strictEqual(a.J('S.logs')[k].length, 1, 'histórico intacto');
+  assert.strictEqual(a.S().logs[k].length, 1, 'histórico intacto');
   a.fechar();
 });
 
@@ -259,7 +259,7 @@ test('substituto antigo passa a viver no histórico do próprio exercício', asy
     done: []
   } });
   await a.esperar();
-  const h = a.J('S.logs')['crossover-na-polia-baixa'];
+  const h = a.S().logs['crossover-na-polia-baixa'];
   assert.ok(h, 'saiu da chave derivada');
   assert.strictEqual(h[0].sl, a.k('A', 1), 'guardando de que posição do treino veio');
   a.fechar();
@@ -387,7 +387,7 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   await a.esperar(60);
 
   // nenhum campo exportado pode se perder na volta
-  const depois = a.J('S');
+  const depois = a.S();
   const sumiram = Object.keys(antes).filter(k => {
     // `mtime` é o carimbo do estado: ele muda ao gravar, e mudar é o certo.
     if (k === 'mtime') return false;
@@ -397,28 +397,28 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   assert.deepStrictEqual(sumiram, [], 'campos perdidos na importação');
 
   // e os seis, nominalmente, porque são o motivo deste teste existir
-  assert.strictEqual(a.E('S.ajusteHist.length'), 1, 'o ledger do ajuste');
-  assert.strictEqual(a.E('S.aulas.length'), 1, 'os modelos de aula');
-  assert.strictEqual(a.E('S.comidaHist.length'), 1, 'os dias de comida fechados');
-  assert.strictEqual(a.E('S.gordura.length'), 1, 'as leituras de gordura visual');
-  assert.strictEqual(a.E('S.protocolo.sessoes.length'), 1, 'as sessões de foto');
+  assert.strictEqual(a.S().ajusteHist.length, 1, 'o ledger do ajuste');
+  assert.strictEqual(a.S().aulas.length, 1, 'os modelos de aula');
+  assert.strictEqual(a.S().comidaHist.length, 1, 'os dias de comida fechados');
+  assert.strictEqual(a.S().gordura.length, 1, 'as leituras de gordura visual');
+  assert.strictEqual(a.S().protocolo.sessoes.length, 1, 'as sessões de foto');
   assert.strictEqual(a.E('S.quadro ? S.quadro.texto : null'), '5 RNDS · 20 WB', 'o quadro do dia');
 
   // e, nominalmente, o que entrou na migração 9→10: a lista branca da
   // importação é por CHAVE dentro de `body`, então uma grandeza nova que não
   // entrasse nela sumiria sem a asserção de topo notar
-  assert.strictEqual(a.E('S.body.bioPeso.length'), 1, 'o peso da bioimpedância');
-  assert.strictEqual(a.E('S.body.bioMusculo[0].v'), 37.4, 'a massa muscular esquelética');
-  assert.strictEqual(a.E('S.body.bioGordura[0].v'), 14.1, 'a massa de gordura');
-  assert.strictEqual(a.E('S.body.bioGorduraPct[0].v'), 17.8, 'o percentual de gordura');
-  assert.strictEqual(a.E('S.body.bioAgua[0].v'), 45.3, 'a água corporal total');
-  assert.strictEqual(a.E('S.body.peso.length'), antes.body.peso.length,
+  assert.strictEqual(a.S().body.bioPeso.length, 1, 'o peso da bioimpedância');
+  assert.strictEqual(a.S().body.bioMusculo[0].v, 37.4, 'a massa muscular esquelética');
+  assert.strictEqual(a.S().body.bioGordura[0].v, 14.1, 'a massa de gordura');
+  assert.strictEqual(a.S().body.bioGorduraPct[0].v, 17.8, 'o percentual de gordura');
+  assert.strictEqual(a.S().body.bioAgua[0].v, 45.3, 'a água corporal total');
+  assert.strictEqual(a.S().body.peso.length, antes.body.peso.length,
     'e a pesagem da manhã segue sendo outro registro, intocada');
-  assert.strictEqual(a.E('S.dia.done.pos'), 1790000000000, 'o instante da marca');
-  assert.strictEqual(a.E('S.dia.como.pos'), 'fora', 'qual refeição saiu do plano');
-  assert.strictEqual(a.E('S.dia.aguaNaoContada'), 1, '"não contei a água" como fato');
-  assert.strictEqual(a.E('S.promoPendente.length'), 1, 'a pergunta de programa que espera');
-  assert.strictEqual(a.E('S.promoPendente[0].sid'), 1790000000000, 'com a chave natural dela');
+  assert.strictEqual(a.S().dia.done.pos, 1790000000000, 'o instante da marca');
+  assert.strictEqual(a.S().dia.como.pos, 'fora', 'qual refeição saiu do plano');
+  assert.strictEqual(a.S().dia.aguaNaoContada, 1, '"não contei a água" como fato');
+  assert.strictEqual(a.S().promoPendente.length, 1, 'a pergunta de programa que espera');
+  assert.strictEqual(a.S().promoPendente[0].sid, 1790000000000, 'com a chave natural dela');
   a.fechar();
 });
 
@@ -428,7 +428,7 @@ test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
   // este teste, acrescentar a oitava medida e esquecer a lista branca não
   // deixaria nada vermelho.
   const a = await app();
-  const chaves = a.J('MARCAS_DO_CORPO');
+  const chaves = a.dado('MARCAS_DO_CORPO');
   assert.deepStrictEqual(chaves.slice().sort(), [
     'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso', 'cintura', 'peso'
   ], 'peso da manhã, cintura e as cinco da bioimpedância');
@@ -478,26 +478,26 @@ test('o estado congelado do plano 9 entra pelo boot e sai migrado', async () => 
   const a = await app({ estado: cru, agora: new Date(era.dia.data + 'T10:00:00').getTime() });
   await a.esperar();
 
-  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'), 'a cadeia inteira roda no boot');
-  assert.ok(a.E('S.plano') >= 10, 'passou pela 9→10');
+  assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'), 'a cadeia inteira roda no boot');
+  assert.ok(a.S().plano >= 10, 'passou pela 9→10');
 
   const meiaNoite = new Date(era.dia.data + 'T00:00:00').getTime();
-  assert.deepStrictEqual(a.J('S.dia.done'),
+  assert.deepStrictEqual(a.S().dia.done,
     { pos: meiaNoite, almoco: meiaNoite, lanche: meiaNoite },
     'as três marcas ganharam o instante mais antigo compatível com a data');
 
-  assert.deepStrictEqual(Object.keys(a.J('S.body')).sort(), [
+  assert.deepStrictEqual(Object.keys(a.S().body).sort(), [
     'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso', 'cintura', 'peso'
   ], 'as cinco chaves da bioimpedância existem');
-  assert.deepStrictEqual(a.J('S.body.peso'), era.body.peso,
+  assert.deepStrictEqual(a.S().body.peso, era.body.peso,
     'e a pesagem da manhã atravessa intocada: ela é outro registro');
-  assert.deepStrictEqual(a.J('S.body.bioPeso'), [], 'a da balança começa vazia');
+  assert.deepStrictEqual(a.S().body.bioPeso, [], 'a da balança começa vazia');
 
-  assert.deepStrictEqual(a.J('S.comidaHist'), era.comidaHist,
+  assert.deepStrictEqual(a.S().comidaHist, era.comidaHist,
     'o histórico já tinha instante, e migração não reescreve o que está certo');
 
   assert.strictEqual(era.promoPendente, null, 'no plano 9 era documento');
-  assert.deepStrictEqual(a.J('S.promoPendente'), [], 'e sai como coleção');
+  assert.deepStrictEqual(a.S().promoPendente, [], 'e sai como coleção');
 
   // e as telas abrem com ele, que é o que a regra 2 cobra
   ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (t) {
@@ -522,14 +522,14 @@ test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async ()
   const a = await app({ estado: cru, agora: new Date(era.dia.data + 'T10:00:00').getTime() });
   await a.esperar();
 
-  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'));
+  assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'));
   assert.deepStrictEqual(a.J('S.comida.plano.map(function(r){return r.id})'),
     ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar', 'ceia']);
   assert.strictEqual(a.E('S.comida.plano.filter(function(r){return r.id==="ceia"})[0].t'), '21:30');
 
   // o Neston está no catálogo sem nunca ter entrado no estado
   assert.ok(a.E('!!catalogoAlimentos().neston'), 'o catálogo é derivado do código');
-  assert.deepStrictEqual(a.J('S.comida.alimentos'), {}, 'e o estado não guarda a biblioteca');
+  assert.deepStrictEqual(a.S().comida.alimentos, {}, 'e o estado não guarda a biblioteca');
 
   // a ceia aparece na timeline de HOJE, no relógio dela
   a.aba('hoje');
@@ -538,7 +538,7 @@ test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async ()
   assert.strictEqual(ordem[ordem.length - 1], '21:30 ceia', 'última do relógio');
 
   // e o dia já fechado não foi reescrito
-  assert.deepStrictEqual(a.J('S.comidaHist'), era.comidaHist,
+  assert.deepStrictEqual(a.S().comidaHist, era.comidaHist,
     'o histórico congelado atravessa a migração intacto');
 
   // a importação é o OUTRO caminho pelo qual a migração tem que rodar: um
@@ -546,7 +546,7 @@ test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async ()
   a.aba('guia');
   await a.E('importText(' + JSON.stringify(JSON.stringify({ app: 'lastro', data: era })) + ')');
   await a.esperar(60);
-  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'), 'a cadeia roda na importação também');
+  assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'), 'a cadeia roda na importação também');
   assert.deepStrictEqual(a.J('S.comida.plano.map(function(r){return r.id})'),
     ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar', 'ceia'],
     'o backup do plano 10 restaurado não volta sem a ceia');
