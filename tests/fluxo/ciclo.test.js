@@ -13,8 +13,8 @@ test('iniciar marca o tempo antes da primeira série', async () => {
   await a.v('iniciarSessao');
   await a.esperar();
   assert.ok(a.E('S.sessao !== null'));
-  assert.strictEqual(a.E('S.sessao.manual'), 1);
-  assert.strictEqual(a.E('S.done[0].ini'), 'manual');
+  assert.strictEqual(a.S().sessao.manual, 1);
+  assert.strictEqual(a.S().done[0].ini, 'manual');
   assert.ok(a.$('#relogio'), 'o relógio toma o lugar do botão');
   assert.match(a.texto('#relogio'), /^\d{2}:\d{2}$/, a.texto('#relogio'));
   assert.match(a.texto('.day-rel em'), /^desde \d{2}:\d{2}$/, 'o rótulo diz desde que horas');
@@ -26,7 +26,7 @@ test('sem iniciar, a primeira série continua abrindo sozinha', async () => {
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   assert.ok(a.E('S.sessao !== null'));
-  assert.strictEqual(a.E('S.done[0].ini'), 'auto');
+  assert.strictEqual(a.S().done[0].ini, 'auto');
   a.fechar();
 });
 
@@ -48,8 +48,8 @@ test('pausar para o relógio e retomar continua', async () => {
 
   await a.v('retomarSessao');
   await a.esperar();
-  assert.strictEqual(a.E('S.sessao.pausadoEm'), null);
-  assert.strictEqual(a.E('S.sessao.pausas.length'), 1);
+  assert.strictEqual(a.S().sessao.pausadoEm, null);
+  assert.strictEqual(a.S().sessao.pausas.length, 1);
   const depois = a.E('duracaoAtual(S.sessao)');
   assert.ok(Math.abs(depois - 20 * 60000) < 2000, 'a pausa saiu da conta: ' + depois);
   a.fechar();
@@ -63,8 +63,8 @@ test('digitar estando pausado retoma sozinho', async () => {
 
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  assert.strictEqual(a.E('S.sessao.pausadoEm'), null, 'digitar é prova de que voltou');
-  assert.strictEqual(a.E('S.sessao.pausas.length'), 1);
+  assert.strictEqual(a.S().sessao.pausadoEm, null, 'digitar é prova de que voltou');
+  assert.strictEqual(a.S().sessao.pausas.length, 1);
   a.fechar();
 });
 
@@ -72,7 +72,7 @@ test('pausado não morre por inatividade, só na virada do dia', async () => {
   const a = await app();
   await a.v('iniciarSessao');
   await a.v('pausarSessao');
-  const estado = a.J('S');
+  const estado = a.S();
   estado.sessao.pausadoEm = Date.now() - 6 * 3600 * 1000;   // seis horas pausado
   a.fechar();
 
@@ -91,10 +91,10 @@ test('finalizar grava tempo exato e marca como manual', async () => {
   await a.v('finalizarSessao');
   await a.esperar();
 
-  const m = a.J('S.done[0]');
+  const m = a.S().done[0];
   assert.strictEqual(m.fim, 'manual');
   assert.ok(Math.abs(m.dur - 62 * 60000) < 3000, 'tempo até o toque, não até a última série');
-  assert.strictEqual(a.E('S.sessao'), null);
+  assert.strictEqual(a.S().sessao, null);
   assert.strictEqual(a.texto('.ins-estado-v'), 'B', 'rotação avançou');
   assert.ok(a.toast().includes('encerrado'));
   a.fechar();
@@ -104,7 +104,7 @@ test('encerramento automático fica marcado como aproximado', async () => {
   const a = await app();
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  const estado = a.J('S');
+  const estado = a.S();
   const agora = Date.now();
   estado.sessao.inicio = agora - 6 * 3600 * 1000;
   estado.sessao.ultima = agora - 5 * 3600 * 1000;
@@ -129,13 +129,13 @@ test('pular é decisão registrada; não feito é ausência derivada', async () 
   await a.v('pularEx', 2);
   await a.esperar();
 
-  const sid = a.E('S.sessao.sid');
+  const sid = a.S().sessao.sid;
   assert.strictEqual(a.E('estadoEx("A",0,' + sid + ',S.sessao.pulados)'), 'feito');
   assert.strictEqual(a.E('estadoEx("A",1,' + sid + ',S.sessao.pulados)'), 'parcial');
   assert.strictEqual(a.E('estadoEx("A",2,' + sid + ',S.sessao.pulados)'), 'pulado');
   assert.strictEqual(a.E('estadoEx("A",3,' + sid + ',S.sessao.pulados)'), 'nada');
 
-  assert.deepStrictEqual(a.J('S.sessao.pulados'), [a.k('A',2)], 'só a decisão é gravada');
+  assert.deepStrictEqual(a.S().sessao.pulados, [a.k('A',2)], 'só a decisão é gravada');
   assert.strictEqual(a.log('A',2), null, 'pular não cria entrada falsa no histórico');
   a.fechar();
 });
@@ -150,7 +150,7 @@ test('exercício pulado colapsa e dá para desfazer', async () => {
   await a.v('pularEx', 2);
   await a.esperar();
   assert.strictEqual(a.$('.ex.pulado'), null);
-  assert.deepStrictEqual(a.J('S.sessao.pulados'), []);
+  assert.deepStrictEqual(a.S().sessao.pulados, []);
   a.fechar();
 });
 
@@ -165,7 +165,7 @@ test('finalizar com pendência pede confirmação', async () => {
   const msg = a.registro.confirmou[a.registro.confirmou.length - 1];
   assert.ok(/pendentes/.test(msg), msg);
   assert.ok(/não feitos/.test(msg));
-  assert.strictEqual(a.E('S.sessao'), null, 'confirmou, então encerrou');
+  assert.strictEqual(a.S().sessao, null, 'confirmou, então encerrou');
   a.fechar();
 });
 
@@ -182,7 +182,7 @@ test('pulado não entra na contagem de pendências da confirmação', async () =
   await a.esperar();
   const msg = a.registro.confirmou[a.registro.confirmou.length - 1] || '';
   assert.ok(!/pendentes/.test(msg), 'já decidiu; perguntar de novo seria duvidar dele: ' + msg);
-  assert.strictEqual(a.E('S.sessao'), null);
+  assert.strictEqual(a.S().sessao, null);
   a.fechar();
 });
 
@@ -190,13 +190,13 @@ test('finalizar sem nenhuma série oferece descartar', async () => {
   const a = await app();
   await a.v('iniciarSessao');
   await a.esperar();
-  assert.strictEqual(a.E('S.done.length'), 1);
+  assert.strictEqual(a.S().done.length, 1);
 
   await a.v('finalizarSessao');
   await a.esperar();
   assert.ok(/Descartar/.test(a.registro.confirmou[a.registro.confirmou.length - 1]));
-  assert.strictEqual(a.E('S.done.length'), 0, 'não vira dia treinado vazio');
-  assert.strictEqual(a.E('S.sessao'), null);
+  assert.strictEqual(a.S().done.length, 0, 'não vira dia treinado vazio');
+  assert.strictEqual(a.S().sessao, null);
   a.fechar();
 });
 
@@ -209,7 +209,7 @@ test('detalhe da sessão mostra pendências e pausa', async () => {
   a.preencher(1, 0, 60, 12);
   await a.v('pularEx', 2);
   a.E('S.sessao.pausas = [{ de: Date.now() - 600000, ate: Date.now() - 300000 }]');
-  const t = a.E('S.done[0].t');
+  const t = a.S().done[0].t;
 
   await a.v('finalizarSessao');
   await a.esperar();
@@ -239,7 +239,7 @@ test('dois treinos no mesmo dia agora são possíveis', async () => {
   await a.v('finalizarSessao');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.done.length'), 2);
+  assert.strictEqual(a.S().done.length, 2);
   assert.deepStrictEqual(a.J('S.done.map(function (x) { return x.day; })'), ['A', 'B']);
   a.fechar();
 });
@@ -295,7 +295,7 @@ test('o relógio para de ticar fora da aba de hoje', async () => {
   await a.v('iniciarSessao');
   assert.ok(a.E('relogioT !== null'));
   a.aba('dados');
-  assert.strictEqual(a.E('relogioT'), null, 'sem intervalo rodando à toa');
+  assert.strictEqual(a.dado('relogioT'), null, 'sem intervalo rodando à toa');
   a.aba('treino');
   assert.ok(a.E('relogioT !== null'));
   a.fechar();
