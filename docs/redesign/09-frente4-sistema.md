@@ -810,6 +810,33 @@ razão de cada uma. **Medi a direção contra as seis.** Três caem, uma troca d
 valor e duas ficam. **Nenhum dos 38 casos diz uma palavra sobre as três que
 caem** — então, se este documento não disser, elas caem em silêncio.
 
+> **RECONCILIADO em 06/10 · OS TRÊS CAEM, e a nota dele é "sem herancas".**
+>
+> **Decisão 12 das quinze:** os **três** inegociáveis caem — raio zero (§2.1),
+> número em mono mais prosa em display (§2.2) e o rótulo mono como estrutura
+> (§2.2, item 3). Nota literal dele: ***"sem herancas"*** — **caem limpos, sem
+> meia-medida do sistema velho.**
+>
+> **E a ressalva deste documento foi DERRUBADA junto.** Eu recomendei a queda
+> **declarando a perda**: que sem a monoespaçada a diferença entre rótulo de
+> estrutura e ênfase passa a depender só de tamanho e de tracking, e que **isso é
+> um canal mais fraco** (§2.2, item 3). **A ressalva não sobrevive à nota dele:**
+> ele não pediu compensação nem exceção, pediu queda limpa. **O argumento fica
+> escrito, porque continua verdadeiro e quem implementar precisa saber do custo**
+> — mas ele não autoriza manter nada do sistema velho "por segurança". Nenhuma
+> regra de dois pesos, nenhuma família mono de reserva para rótulo, nenhum raio
+> zero preservado em algum canto "porque era inegociável".
+>
+> **O que "sem herancas" NÃO decide, e eu não invento:** ele não torna o canal
+> mais forte. **Se caixa alta com tracking a 15 px se distingue da prosa a 14 px
+> a um braço de distância, na luz da academia, ninguém mediu** — a frente 3
+> declarou a mesma ausência (§14 dela). O custo foi aceito, não resolvido.
+>
+> **O que substitui o rótulo mono é da frente 3**, que escreveu a decisão 12 em
+> palavras (§2 dela): menos rótulos, cada um maior, e a palavra dizendo qual é
+> qual. **As duas frentes concordam**, e o que esta diz do canal mais fraco é o
+> preço que aquela escreveu como se paga.
+
 ### 2.1 · Raio zero cai: 511 declarações contra 11
 
 **Inegociável 1:** *"Raio zero. Só ponto de status, thumb do slider e a
@@ -896,6 +923,10 @@ razões, e duas são medidas neste produto:
    monoespaçada. Sem mono, "rótulo de estrutura" passa a ser **caixa alta com
    tracking e peso**, no mesmo corpo de família, e isso é um canal mais fraco: a
    diferença entre rótulo e ênfase passa a depender só de tamanho e de tracking.
+   **RECONCILIADO em 06/10:** o dono **confirmou a queda do inegociável 5 como
+   uma das três** (decisão 12), com a nota *"sem herancas"*. **Esta ressalva foi
+   derrubada:** o canal mais fraco é custo aceito, e não há exceção de mono para
+   rótulo. **Ninguém mediu** se o canal novo se distingue em uso.
 
 **Os dois tokens:** `--ins-fonte` (a pilha do sistema) e `--ins-fonte-quadro`
 (`ui-monospace`, e **só** o quadro do box). Dois, não um, porque o quadro existe
@@ -958,6 +989,17 @@ aperte aqui. Âmbar = preste atenção. Coral = destrói dado. No máximo um ele
 O acento passa de **ácido `#CBF35E`** (verde-limão) para **`#3833DB` / `#9E9BFF`**
 (índigo). A estrutura fica: um acento, âmbar de atenção, e um terceiro sinal.
 **O que muda é o significado do terceiro** (§1.3): de "destrói dado" para "pare".
+
+> **RECONCILIADO em 06/10 · CONFIRMADO pelo dono** (decisão 13 das quinze): o
+> terceiro sinal **muda para "pare"**, e *"a palavra carrega a diferença de
+> 'destrói dado'"*. **Era recomendação deste documento (§1.3) e passou inteira.**
+>
+> **E ela tem uma consequência que a frente 3 nomeou:** com a cor deixando de
+> dizer "destrói dado", a frase ***"Isso não tem volta"*** deixa de ser
+> redundância e **passa a ser canal** — é ela que carrega a diferença agora.
+> A frente 3 também conferiu os 23 `confirm()` do app e achou que **só nove
+> destroem dado que o aparelho não reconstrói**: pintar os 23 de "pare" mataria o
+> painel.
 
 **As duas metades que ficam valendo sem emenda**, e as duas são as que mais
 custam:
@@ -1158,6 +1200,36 @@ Safari, não há zoom de página, não há ajuste de tamanho de texto. **Mesmo q
 quatro camadas não existissem, não haveria onde tocar.** Isto é o argumento
 decisivo desta seção, e nenhum documento do redesenho o nomeou.
 
+> **RECONCILIADO em 06/10 · a razão escrita da CAMADA 1 também é falsa, e isto
+> foi MEDIDO no aparelho.**
+>
+> O comentário de `index.html` citado na tabela acima afirma que o Safari
+> *"respeita instalado na tela de início, que é o único jeito como este app é
+> usado"*. **O dono mediu em 06/10: no PWA instalado, a PINÇA FUNCIONA.** Então
+> `user-scalable=no` **não é honrado ali** — e, com ele, nem o `touch-action` da
+> camada 2 nem a recusa dos eventos de gesto da camada 3 impedem a pinça nessa
+> configuração, que é como o app é usado.
+>
+> **Isto fecha a única medição que §4.4 e §11.6 deixaram pendente** (*"é uma
+> passada de dez segundos — pinçar a tela no app instalado — e ela decide se a
+> camada 1 faz algo ou é decoração"*). **A resposta é: ali é decoração.** O que
+> as três camadas ainda alcançam é o Safari **fora** da tela cheia.
+>
+> **E a decisão do dono é MANTER as três** (decisão 11), com nota literal:
+> *"nem precisa desse argumento de mao suada. nao quero esses zoom automatico e
+> pronto. nao gosto."* **As duas coisas ficam registradas: a decisão e a medição
+> de que ali ela não faz efeito.**
+>
+> **E a nota dele aponta para outro mecanismo, que é real:** o que ele recusa é o
+> zoom **automático** — o salto que o Safari dá ao focar campo com fonte menor
+> que 16px —, e **isso é impedido pela regra dos 16px no campo**, que tem razão
+> própria e correta, **não** pelo `user-scalable=no`.
+>
+> **A frase falsa da camada 2 já foi corrigida no fonte** (`d625147`), e o
+> comentário novo de `src/base.css` diz as duas correções. **O comentário de
+> `index.html` continua afirmando o que a medição desmentiu** — é conserto de
+> comentário em `src/`, e esta reconciliação não toca em `src/`. Fica apontado.
+
 **E a sexta declaração, que parece camada e não é:** `text-size-adjust: 100%`
 em `html`, com a razão escrita — *"Safari infla texto ao girar para paisagem.
 Isto desliga."*. A auditoria de acesso já leu isto certo: ela *"só desliga a
@@ -1279,6 +1351,25 @@ largura fixa e passa a ser outra coisa, que é a decisão que a frente 2 pôs na
 mesa dele em §1.6 dela. **As duas perguntas são a mesma pergunta**, e é bom que
 ele decida as duas juntas.
 
+> **RECONCILIADO em 06/10 · 125% CONFIRMADO, e ele decidiu as duas juntas — como
+> este documento pediu.**
+>
+> **Decisão 10 das quinze:** o teto do texto grande é **125%**, *"e fica escrito
+> que não cumpre 1.4.4"*. **É exatamente a recomendação de §4.2 e a declaração de
+> §4.3, aceitas como escritas** — inclusive a parte de escrever contra o
+> critério, que é a coisa mais desconfortável deste documento.
+>
+> **E a régua, que era a outra metade da mesma pergunta** (decisão 9): ele
+> **pré-autorizou** a troca para os botões fixos da Direcção C **se a medição A da
+> frente 2 reprovar**. É condicional, e **a medição ainda não aconteceu** — ela
+> exige o aparelho e o dedo dele. **Então o caminho para 200% não está fechado:
+> ele está amarrado a um resultado que ninguém tem.** Se os botões fixos
+> entrarem, a geometria que trava o teto em 125% muda, e **a pergunta "125% é
+> pouco?" volta a fazer sentido** — com um número na mão, em vez de uma hipótese.
+>
+> **A exceção nomeada (`--ins-n-m` em px) continua valendo**, e a razão dela é
+> geométrica, não de critério: ela não depende de qual controle vence.
+
 ### 4.4 · O que quebra, e o que ninguém mediu disso
 
 **Quebra certo, e é conserto na mesma gravação:**
@@ -1365,10 +1456,41 @@ inalcançável é uma linha com o estado, a janela e o que desapareceu. **A deci
 de cada linha é de desenho, não de sistema**, e é daí que sai se aquele estado
 precisa de outra forma a 320 px ou se 320 px não é um alvo deste produto.
 
-**O que decide se 320 px é alvo:** ninguém mediu. O contrato de UX vigente põe
-320 px no checklist de tela nova (frente 2 §8.4), o aparelho do dono tem 414 px,
-e o segundo usuário não existe no dado (`PRODUCT.md`, e `07-plano.md` §4).
-**Isto sobe à mesa dele** junto do resto (§11).
+~~**O que decide se 320 px é alvo:** ninguém mediu.~~ O contrato de UX vigente
+põe 320 px no checklist de tela nova (frente 2 §8.4), o aparelho do dono tem
+414 px, e o segundo usuário não existe no dado (`PRODUCT.md`, e `07-plano.md`
+§4).
+
+> **RECONCILIADO em 06/10 · DECIDIDO: o alvo é 414, e 320 px fica declarado
+> fora.**
+>
+> Ele respondeu primeiro *"primeiro a medição, depois ele decide"* (decisão 15) e,
+> na noite do mesmo dia, **delegou a decisão ao coordenador** — "seguindo o
+> contexto" (pergunta 8 das oito). **O contexto usado foi:** o aparelho dele tem
+> **414 px**; o segundo usuário **não existe no dado**; e a frente 3 achou, **por
+> conta e não por medição**, que o nome **"Prescrição" encosta na fatia da aba a
+> 320 px já a 100% de texto** — 63,8 pt calculados numa fatia de 64 pt (§1.6
+> dela, que diz *"Isto é conta, não medida"*). Atender 320 obrigaria a renomear
+> um dos cinco lugares por um usuário que ainda não existe.
+>
+> **A invariante barata FICA, e ela é o que impede o estrago:** **nada pode ter
+> largura fixa maior que a tela, e a página nunca rola na horizontal.** A rede já
+> testa isso e custa zero.
+>
+> **O que isso faz com a medição G:** **G5 e G6 deixam de ser portão.** As duas
+> passadas de 320 px continuam válidas como medição **opcional**, e o que elas
+> produzem é **a lista do que quebraria** se um segundo usuário chegasse num
+> telefone pequeno. **O custo fica conhecido e declarado, não esquecido.**
+> **G1, G2 e G3 continuam portão** — são as passadas de 414 px, que é o alvo. E
+> **G4** é informativa, como esta seção já dizia.
+>
+> **E a distinção que abre esta seção continua sendo a parte mais útil dela:**
+> **cortado não é rolável.** `clip` corta sem rolar, e isso vale a 414 px
+> também — não era um fato sobre 320.
+>
+> **O contrato de UX vigente continua pedindo 320 px no checklist de tela nova, e
+> esta decisão o contraria.** Quem reescrever o contrato tem de tirar 320 px do
+> checklist e pôr a invariante no lugar. **Ninguém fez isso ainda.**
 
 ---
 
@@ -2174,8 +2296,25 @@ Foi o que a medição de §0.3 mostrou: portei o CSS da direção e o caso ficou
 > escreve. A folha está em posição e o véu está opaco **no primeiro quadro**.
 > Nada de meia-animação.
 >
-> **Isto sobe à mesa dele** (§11), porque derrubar uma proibição escrita não é
-> decisão de quem escreve o documento.
+> ~~**Isto sobe à mesa dele** (§11), porque derrubar uma proibição escrita não é
+> decisão de quem escreve o documento.~~
+>
+> **RECONCILIADO em 06/10 · ELE DECIDIU: a folha SOBE** (decisão 14 das quinze),
+> e *"a proibição escrita em dois documentos cai"*. **É a recomendação desta
+> seção, aceita como escrita**, com as quatro razões de cima e com as duas
+> contrapartidas intactas: a proibição de **elasticidade** fica
+> (`cubic-bezier(.2,.8,.2,1)` em 240 ms, sem ultrapassagem), e `reduce` põe **o
+> estado final no primeiro quadro**, sem meia-animação.
+>
+> **O que cai, nominalmente:** a linha 18 de `DESIGN_SYSTEM.md` ("no entrance
+> animations") e a recusa explícita de `docs/design-review/05-movimento.md`,
+> **nos dois casos apenas para a folha** — a decisão é sobre a folha subindo, e
+> não autoriza animação de entrada em lista, em cartão nem em tela. **Os dois
+> documentos continuam de pé para todo o resto**, e quem reescrevê-los tem de
+> escrever a exceção, não apagar a regra.
+>
+> **Ninguém mediu** se 240 ms de subida se percebe como "de onde a camada veio"
+> ou só como atraso. O protótipo foi tocado por três minutos.
 
 **6 · O fantasma que voa. FICA, e é a quarta função, nomeada.**
 
@@ -2691,16 +2830,24 @@ DOM, pela razão que o caso da folha já escreve — *"o defeito nasce de uma li
 nova em `html`, `body` ou `#app`, não da árvore."* Jsdom não faz layout; o fonte
 denuncia.
 
-### 11.4 · O que sobe à mesa dele, e é só isto
+### 11.4 · O que sobe à mesa dele — e as SEIS linhas estão respondidas
 
-| o que | onde | por que sobe |
-|---|---|---|
-| **Três dos seis inegociáveis caem** — raio zero, número em mono mais prosa em display, e o rótulo mono como estrutura | §2.1, §2.2 | são regras numeradas do sistema, com razão escrita, e a direção que ele escolheu as derruba. **Não é decisão de quem escreve o documento de sistema** |
-| **O terceiro sinal passa de "destrói dado" para "pare"** | §1.3 | é mudança no inegociável 4, e o que distingue "falhou" de "vai destruir" passa a ser a palavra |
-| **A folha sobe ao abrir** | §8.5, item 5 | derruba uma proibição escrita em dois documentos (`DESIGN_SYSTEM.md:18` e a recusa explícita de `05-movimento.md`), e eu a derrubo com a razão — mas derrubar proibição escrita não é minha |
-| **O controle de tamanho de texto para em 125%, não em 200%** | §4.3 | **escrevo contra 1.4.4 de propósito**, e a razão é a régua: a 200% ela mostra 2 de 12 valores. **E esta pergunta é a mesma de §1.6 da frente 2** — se a régua mudar de forma, 200% passa a ser possível. Vale decidir as duas juntas |
-| **Se 320 px é alvo deste produto** | §4.5 | o contrato o põe no checklist, o aparelho dele tem 414, e o segundo usuário não existe no dado. A medição G dá a lista; a decisão de atender é dele |
-| **Se o bloqueio de pinça pode ser revisto** | §4.1, §4.5 | depende de G4. Se a tela sobreviver a 200%, o bloqueio passa a ser teto escolhido; se não, ele é a única coisa que a segura de pé. **O argumento que o sustenta é dele e está escrito no fonte** |
+**Esta mesa fechou em 06/10.** Nenhuma linha desta tabela espera resposta.
+
+| o que | onde | por que subia | o que ele decidiu |
+|---|---|---|---|
+| **Três dos seis inegociáveis caem** — raio zero, número em mono mais prosa em display, e o rótulo mono como estrutura | §2.1, §2.2 | são regras numeradas do sistema, com razão escrita, e a direção que ele escolheu as derruba. **Não é decisão de quem escreve o documento de sistema** | **OS TRÊS CAEM** (decisão 12), com nota literal ***"sem herancas"*** — limpos, sem meia-medida do sistema velho. **A ressalva deste documento** (o canal mais fraco do rótulo sem mono) **foi derrubada**: o custo foi aceito, não compensado |
+| **O terceiro sinal passa de "destrói dado" para "pare"** | §1.3 | é mudança no inegociável 4, e o que distingue "falhou" de "vai destruir" passa a ser a palavra | **MUDA para "pare"** (decisão 13) — aceita como escrita; *"a palavra carrega a diferença"*. Consequência: *"Isso não tem volta"* passa de redundância a canal |
+| **A folha sobe ao abrir** | §8.5, item 5 | derruba uma proibição escrita em dois documentos (`DESIGN_SYSTEM.md:18` e a recusa explícita de `05-movimento.md`), e eu a derrubo com a razão — mas derrubar proibição escrita não é minha | **SOBE** (decisão 14) — aceita como escrita, e *"a proibição escrita em dois documentos cai"*. Só para a folha: a proibição fica de pé para lista, cartão e tela |
+| **O controle de tamanho de texto para em 125%, não em 200%** | §4.3 | **escrevo contra 1.4.4 de propósito**, e a razão é a régua: a 200% ela mostra 2 de 12 valores | **125%** (decisão 10), *"e fica escrito que não cumpre 1.4.4"* — aceita como escrita, inclusive a declaração contra o critério |
+| **Se 320 px é alvo deste produto** | §4.5 | o contrato o põe no checklist, o aparelho dele tem 414, e o segundo usuário não existe no dado | **NÃO É. O alvo é 414, e 320 fica declarado fora** (decisão 15 + a delegação da noite). A invariante fica: nada com largura fixa maior que a tela, e a página nunca rola na horizontal. **G5 e G6 deixam de ser portão** |
+| **Se o bloqueio de pinça pode ser revisto** | §4.1, §4.5 | depende de G4. Se a tela sobreviver a 200%, o bloqueio passa a ser teto escolhido; se não, ele é a única coisa que a segura de pé | **FICA, por decisão dele e sem depender de medição** (decisão 11): *"nao quero esses zoom automatico e pronto. nao gosto."* **E ele mediu que a pinça FUNCIONA no PWA instalado** — ali a declaração não faz efeito. As duas coisas valem |
+
+**A mesma decisão 9 que fecha o lado da régua não é desta frente, mas amarra
+este documento:** se a medição A da frente 2 reprovar a régua, ela vai para os
+botões fixos da Direcção C — **pré-autorizado, e a medição ainda não
+aconteceu**. É a geometria que trava o teto de texto em 125% (§4.3), então o
+teto é firme **hoje** e amarrado a um resultado que ninguém tem.
 
 ### 11.5 · O que esta frente não decide
 
@@ -2737,14 +2884,21 @@ denuncia.
 - **320 px e 200%**, nas seis passadas da **medição G** (§4.5), nos dois temas. E
   a distinção que ela tem de registrar em colunas separadas: **cortado não é
   rolável.**
+  **RECONCILIADO em 06/10:** 320 px **não é alvo** e o teto de texto é **125%**,
+  então das seis passadas só **G1, G2 e G3 são portão**. G5 e G6 (320 px) viram
+  medição opcional que produz a lista do que quebraria com um segundo usuário, e
+  G4 (200%) continua informativa. **Nenhuma das seis foi executada.**
 - **Se alguma linha quebra a 112,5% e a 125%.** Medi quantas declarações se
   movem; não medi o que o texto faz quando se move.
 - **Se 2 px de raio e 1 a 2 px de tipo aparecem.** São 84 seletores de raio e
   199 declarações de tipo que andam no máximo 2 px (§2.1, §3.2). **Nenhuma
   aritmética responde isso.**
-- **Se `user-scalable=no` continua honrado no app instalado.** O comentário do
-  `index.html` afirma que sim; eu não medi. **É uma passada de dez segundos — pinçar
-  a tela no app instalado — e ela decide se a camada 1 faz algo ou é decoração.**
+- ~~**Se `user-scalable=no` continua honrado no app instalado.** O comentário do
+  `index.html` afirma que sim; eu não medi.~~ **MEDIDO em 06/10, pelo dono, no
+  aparelho: a pinça FUNCIONA no PWA instalado.** Então a camada 1 **é decoração
+  ali** — e, com ela, as camadas 2 e 3 também. O comentário do `index.html`
+  continua afirmando o contrário, e isso é conserto de uma linha em `src/`.
+  **A decisão de manter as três é dele e fica** (decisão 11).
 
 **Do movimento:**
 
@@ -2775,3 +2929,64 @@ denuncia.
 - **E o protótipo testou três minutos, não semanas.** Tudo que eu afirmei a partir
   dele — a geometria da régua, a casca, o movimento, o `.cellb` — é impressão de
   uso posta de pé por um desenhista num dia, não hábito. **Hipótese, não fato.**
+
+---
+
+## 12 · Reconciliação com as decisões de 06/10
+
+Este documento foi escrito em 05/10. As 23 decisões do dono vieram em **06/10**,
+e a autoridade sobre elas é a ONDA 5 de `docs/redesign/00-coordenacao.md`, que
+**não** é editada aqui.
+
+**As seis linhas que esta frente levou à mesa dele foram respondidas, e cinco
+delas passaram como estavam escritas.** A única que mudou de natureza foi a dos
+três inegociáveis: ela passou, mas **com a ressalva derrubada**.
+
+### 12.1 · O que foi alinhado
+
+| o que mudou aqui | contra qual decisão / medição | onde | sentido |
+|---|---|---|---|
+| **Os três inegociáveis caem, e a nota é "sem herancas"** | decisão 12 | §2 (bloco de abertura), §2.2 item 3, §11.4 | passou, **ressalva derrubada** |
+| **O terceiro sinal muda para "pare"** | decisão 13 | §2.4, §11.4 | passou inteiro |
+| **A folha sobe ao abrir**, e a proibição escrita cai — só para a folha | decisão 14 | §8.5 item 5, §11.4 | passou inteiro |
+| **O teto do texto é 125%**, com 1.4.4 declarado não cumprido | decisão 10 | §4.3, §11.4 | passou inteiro |
+| **320 px não é alvo; 414 é**, com a invariante de pé e G5/G6 fora do portão | decisão 15 + a delegação da noite (pergunta 8) | §4.5, §11.4, §11.6 | decidido |
+| **O bloqueio de pinça fica, por decisão dele — e a pinça FUNCIONA no PWA instalado, medido** | decisão 11 + a medição da noite (pergunta 7) | §4.1, §11.4, §11.6 | decidido, **e a razão escrita da camada 1 cai** |
+
+**A ressalva derrubada, dita uma vez com clareza**, porque é o único lugar deste
+documento onde o dono andou além do que ele recomendava: eu recomendei a queda
+dos três **declarando a perda** — sem monoespaçada, a diferença entre rótulo de
+estrutura e ênfase passa a depender só de tamanho e de tracking, e **esse é um
+canal mais fraco**. A nota dele é *"sem herancas"*: **a queda é limpa.** Nenhuma
+família mono de reserva para rótulo, nenhum raio zero preservado num canto,
+nenhuma regra de dois pesos como ponte. **O argumento fica escrito porque
+continua verdadeiro e o custo continua real** — ele foi aceito, não resolvido.
+
+### 12.2 · O que esta reconciliação NÃO resolve
+
+- **A medição G não foi executada**, em nenhuma das seis passadas. As decisões
+  mudaram o **destino** de três delas (G5 e G6 saíram do portão, G4 segue
+  informativa), não o fato de que ninguém mediu.
+- **Se o canal novo do rótulo se distingue da prosa em uso** — caixa alta com
+  tracking a 15 px contra prosa a 14 px, a um braço, na luz da academia.
+  **Ninguém mediu**, e a frente 3 declarou a mesma ausência (§14 dela). A decisão
+  12 aceitou o custo; ela não o mediu.
+- **O comentário de `index.html` continua afirmando que o Safari respeita
+  `user-scalable=no` instalado na tela de início.** A medição de 06/10 o
+  desmente. É conserto de uma linha em `src/`, e esta reconciliação não toca em
+  `src/` — fica apontado. (O comentário equivalente em `src/base.css` já foi
+  corrigido, em `d625147`.)
+- **O contrato de UX vigente continua pedindo 320 px no checklist de tela nova.**
+  A decisão o contraria, e ninguém reescreveu o contrato.
+- **`DESIGN_SYSTEM.md:18` e `docs/design-review/05-movimento.md` continuam
+  proibindo animação de entrada.** A decisão 14 abre **uma** exceção, para a
+  folha. Quem reescrever os dois documentos escreve a exceção; **apagar a regra
+  seria ir além do que ele decidiu.**
+- **O teto de 125% é firme hoje e amarrado a um resultado que ninguém tem.** A
+  geometria da régua é o que o trava, e a decisão 9 pré-autorizou trocar a régua
+  **se a medição A reprovar** — medição que exige o aparelho e o dedo dele e que
+  **não aconteceu**. Se os botões fixos entrarem, a pergunta "125% é pouco?"
+  volta a fazer sentido.
+- **Nenhuma das 23 decisões tocou os nove buracos de asserção de §0.2, os 13
+  casos novos de §11.3, nem os oito casos em limbo na bancada.** Isso continua
+  como estava.
