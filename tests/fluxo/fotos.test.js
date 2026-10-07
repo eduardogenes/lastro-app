@@ -73,7 +73,7 @@ test('a foto chega à tela como endereço de objeto, sem passar pela rede', asyn
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(60);
 
-  const url = a.E('CTX.foto("chest-press-inclinado-convergente").url');
+  const url = a.vJ('ctx.foto', 'chest-press-inclinado-convergente').url;
   assert.match(url, /^blob:/, 'endereço de objeto, não caminho de rede: ' + url);
   assert.ok(!/^https?:/.test(url), 'e nada de endereço externo');
   a.fechar();
@@ -84,7 +84,7 @@ test('sem os bytes lidos, a tela simplesmente não desenha a imagem', async () =
   const a = await app();
   cacheFalso(a);
   a.E('S.fotos["pendulum-squat"] = { v: 123, ext: "webp" }');
-  assert.strictEqual(a.E('CTX.foto("pendulum-squat").url'), null);
+  assert.strictEqual(a.vJ('ctx.foto', 'pendulum-squat').url, null);
   a.fechar();
 });
 
