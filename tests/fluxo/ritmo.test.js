@@ -129,7 +129,7 @@ test('trocar a medida do dia alcança o que já foi digitado', async () => {
   // o box passou 500 m, não os 1000 da prova
   a.v('poeMedida', 0, undefined, '500');
   await a.esperar();
-  assert.strictEqual(a.E('treino("HX").ex[0].q'), 500, 'a quantidade do dia entra no slot');
+  assert.strictEqual(a.vJ('treino', 'HX').ex[0].q, 500, 'a quantidade do dia entra no slot');
 
   a.E('view.open=0'); a.v('render');
   await a.esperar();
@@ -211,7 +211,7 @@ test('exercício cadastrado por ele pode declarar grandeza', async () => {
   assert.strictEqual(ex.q, 15);
   assert.strictEqual(ex.g, '',
     'movimento com grandeza não leva grupo: contaria como série de peito no volume');
-  assert.strictEqual(a.E('treino("HX").ex[0].u'), 'rep', 'e entra no dia já medido certo');
+  assert.strictEqual(a.vJ('treino', 'HX').ex[0].u, 'rep', 'e entra no dia já medido certo');
   a.fechar();
 });
 
