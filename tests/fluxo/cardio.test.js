@@ -16,13 +16,13 @@ test('registro rápido sem sair da tela de hoje', async () => {
   const a = await app();
   assert.strictEqual(a.$('.cardq'), null, 'fechado por padrão, para não ocupar espaço');
 
-  a.E('abrirCardioRapido()');
+  a.v('abrirCardioRapido');
   assert.ok(a.$('.cardq'), 'abre no lugar');
   assert.ok(a.$$('.cardq .chip').length >= 8, 'modalidade, duração e intensidade');
 
-  a.E('cardioSet("m","remo")');
-  a.E('cardioSet("min",30)');
-  await a.E('addCardio()');
+  a.v('cardioSet', 'm', 'remo');
+  a.v('cardioSet', 'min', 30);
+  await a.v('addCardio');
   await a.esperar();
 
   assert.strictEqual(a.E('S.cardio.length'), 1);
@@ -43,7 +43,7 @@ test('feito hoje muda o estado da linha', async () => {
 
 test('aviso de dia de perna aparece no momento em que importa', async () => {
   const a = await app({ estado: { logs: {}, done: [{ day: 'B', t: Date.now(), sid: Date.now() }] } });
-  a.E('abrirCardioRapido()');
+  a.v('abrirCardioRapido');
   assert.ok(a.texto('.cardq .cwarn').includes('treinou B'), 'sinaliza sem bloquear');
   assert.strictEqual(a.$('.cardq .dbtn[disabled]'), null);
   a.fechar();
