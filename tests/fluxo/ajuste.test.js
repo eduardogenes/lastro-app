@@ -54,11 +54,11 @@ test('dois passos no mesmo sentido somam, e a tela diz que são dois', async () 
   const base = a.v('arrozAtual');
 
   await a.v('ctx.aplicaAjuste'); await a.esperar();
-  assert.strictEqual(a.E('S.ajuste'), 1);
+  assert.strictEqual(a.S().ajuste, 1);
   assert.strictEqual(a.v('arrozAtual'), base + 120, '+150 kcal são 120 g de arroz');
 
   await a.v('ctx.aplicaAjuste'); await a.esperar();
-  assert.strictEqual(a.E('S.ajuste'), 2, 'o segundo passo soma ao primeiro');
+  assert.strictEqual(a.S().ajuste, 2, 'o segundo passo soma ao primeiro');
   assert.strictEqual(a.v('arrozAtual'), base + 240, 'e o arroz anda de novo');
   assert.ok(a.E('CTX.dados().veredito.estado').includes('2 passos'),
     a.E('CTX.dados().veredito.estado'));
@@ -84,7 +84,7 @@ test('cada passo guarda de onde veio', async () => {
   a.aba('dados');
   await a.v('ctx.aplicaAjuste'); await a.esperar();
 
-  const h = a.J('S.ajusteHist');
+  const h = a.S().ajusteHist;
   assert.strictEqual(h.length, 1);
   assert.strictEqual(h[0].de, 0);
   assert.strictEqual(h[0].para, 1);
@@ -101,14 +101,14 @@ test('manter não mexe no saldo nem no ledger', async () => {
   a.aba('dados');
   assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Manter como está');
   await a.v('ctx.aplicaAjuste'); await a.esperar();
-  assert.strictEqual(a.E('S.ajuste'), 0);
-  assert.strictEqual(a.J('S.ajusteHist').length, 0);
+  assert.strictEqual(a.S().ajuste, 0);
+  assert.strictEqual(a.S().ajusteHist.length, 0);
   a.fechar();
 });
 
 test('saldo de dois passos sobrevive ao boot', async () => {
   const a = await app({ estado: { logs: {}, done: [], ajuste: -2 } });
-  assert.strictEqual(a.E('S.ajuste'), -2, 'o clamp ternário de antes truncaria para 0');
+  assert.strictEqual(a.S().ajuste, -2, 'o clamp ternário de antes truncaria para 0');
   a.fechar();
 });
 
@@ -137,7 +137,7 @@ test('restaurar o plano é o caminho documentado para zerar', async () => {
   a.E('S.ajuste = -2');
   a.E('window.confirm = function () { return true; }');
   await a.v('ctx.restauraPlano'); await a.esperar();
-  assert.strictEqual(a.E('S.ajuste'), 0);
+  assert.strictEqual(a.S().ajuste, 0);
   a.fechar();
 });
 
@@ -170,9 +170,9 @@ test('a leitura das fotos destrava o corte que o peso sozinho não dá', async (
   assert.strictEqual(p.valor, null, 'e começa sem resposta');
 
   await a.v('ctx.setGordura', 'sim'); await a.esperar();
-  assert.strictEqual(a.J('S.gordura').length, 1);
-  assert.strictEqual(a.J('S.gordura')[0].v, 'sim');
-  assert.strictEqual(a.J('S.gordura')[0].d, iso(0), 'a chave é a sessão mais nova');
+  assert.strictEqual(a.S().gordura.length, 1);
+  assert.strictEqual(a.S().gordura[0].v, 'sim');
+  assert.strictEqual(a.S().gordura[0].d, iso(0), 'a chave é a sessão mais nova');
 
   a.aba('dados');
   const v = a.J('CTX.dados().veredito');
@@ -202,8 +202,8 @@ test('responder de novo substitui, em vez de empilhar opinião', async () => {
   await a.v('ctx.setGordura', 'sim'); await a.esperar();
   await a.v('ctx.setGordura', 'incerto'); await a.esperar();
 
-  assert.strictEqual(a.J('S.gordura').length, 1, 'uma leitura por par');
-  assert.strictEqual(a.J('S.gordura')[0].v, 'incerto');
+  assert.strictEqual(a.S().gordura.length, 1, 'uma leitura por par');
+  assert.strictEqual(a.S().gordura[0].v, 'incerto');
   a.aba('dados');
   assert.strictEqual(a.E('CTX.dados().veredito.t'), 'Observar', 'incerto não corta');
   assert.strictEqual(a.E('CTX.dados().veredito.podeAplicar'), false);
