@@ -14,12 +14,12 @@ import { app, DIA } from './harness.js';
 
 test('finalizar pela porta da frente pergunta sobre a troca', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
-  a.E('setAlt(0, "supino-inclinado-no-smith")');
+  a.v('setAlt', 0, 'supino-inclinado-no-smith');
   await a.esperar();
 
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   assert.ok(a.E('view.promo'), 'a decisão aparece');
   assert.match(a.texto('.htitle'), /programa/i);
   assert.ok(a.doc.getElementById('app').textContent.includes('Supino inclinado no Smith'),
@@ -29,11 +29,11 @@ test('finalizar pela porta da frente pergunta sobre a troca', async () => {
 
 test('série a mais também vira pergunta', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
-  a.E('mudaSeries(0, 1)');
+  a.v('mudaSeries', 0, 1);
   await a.esperar();
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
 
   const P = a.J('view.promo');
   assert.strictEqual(P.mods.length, 1);
@@ -46,13 +46,13 @@ test('levar para o oficial muda o programa; só hoje não muda', async () => {
   const a = await app();
   const antes = a.E('S.prog.A.ex[0].s');
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
-  a.E('mudaSeries(0, 1)');
+  a.v('mudaSeries', 0, 1);
   await a.esperar();
-  await a.E('finalizarSessao()');
-  a.E('decidePromo(0, "oficial")');
-  await a.E('concluirPromo()');
+  await a.v('finalizarSessao');
+  a.v('decidePromo', 0, 'oficial');
+  await a.v('concluirPromo');
   await a.esperar();
 
   assert.strictEqual(a.E('S.prog.A.ex[0].s'), antes + 1, 'o programa mudou');
@@ -65,14 +65,14 @@ test('levar para o oficial muda o programa; só hoje não muda', async () => {
 test('sessão que morre sozinha guarda a pergunta para a próxima abertura', async () => {
   // é o caso real: ele sai da academia sem tocar em finalizar
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
-  a.E('setAlt(0, "supino-inclinado-no-smith")');
+  a.v('setAlt', 0, 'supino-inclinado-no-smith');
   await a.esperar();
 
   // quatro horas sem tocar em nada: o app encerra por conta própria
   a.E('S.sessao.ultima = Date.now() - 5 * 3600 * 1000');
-  a.E('encerraSePreciso()');
+  a.v('encerraSePreciso');
   await a.esperar();
 
   assert.strictEqual(a.E('S.sessao'), null, 'a sessão fechou');
@@ -123,7 +123,7 @@ test('sair sem responder mantém o conservador e não repete a pergunta', async 
   await a.esperar();
   const antes = a.E('S.prog.A.ex[7] ? S.prog.A.ex[7].s : 0');
 
-  a.E('voltarDoPromo()');
+  a.v('voltarDoPromo');
   await a.esperar();
   assert.strictEqual(a.E('view.promo'), null);
   assert.deepStrictEqual(a.J('S.promoPendente'), [], 'não fica reaparecendo para sempre');
@@ -136,16 +136,16 @@ test('a decisão é um destino: entra no topo e devolve a posição ao voltar', 
   // entra/sai, voltar sem responder caía na rolagem da tela da decisão — que é
   // curta — e o exercício em que ele tinha parado sumia.
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
-  a.E('setAlt(0, "supino-inclinado-no-smith")');
+  a.v('setAlt', 0, 'supino-inclinado-no-smith');
   await a.esperar();
 
   a.E('window.scrollY = 980');            // jsdom não rola sozinho
-  await a.E('finalizarSessao()');
+  await a.v('finalizarSessao');
   assert.strictEqual(a.E("scrollDoDestino['promo']"), 980, 'guardou antes de trocar a tela');
 
-  a.E('voltarDoPromo()');
+  a.v('voltarDoPromo');
   await a.esperar();
   assert.strictEqual(a.E("scrollDoDestino['promo']"), undefined, 'devolveu, sem deixar lixo');
   a.fechar();
@@ -153,16 +153,16 @@ test('a decisão é um destino: entra no topo e devolve a posição ao voltar', 
 
 test('responder a decisão é fim de fluxo: não devolve posição nenhuma', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
-  a.E('setAlt(0, "supino-inclinado-no-smith")');
+  a.v('setAlt', 0, 'supino-inclinado-no-smith');
   await a.esperar();
 
   a.E('window.scrollY = 980');
-  await a.E('finalizarSessao()');
-  a.E('decidePromo(0, "oficial")');
-  a.E('motivoPromo("decisao")');
-  await a.E('concluirPromo()');
+  await a.v('finalizarSessao');
+  a.v('decidePromo', 0, 'oficial');
+  a.v('motivoPromo', 'decisao');
+  await a.v('concluirPromo');
   await a.esperar();
 
   // O dia girou e a sessão encerrou: a posição do treino de ontem não é a dele.
