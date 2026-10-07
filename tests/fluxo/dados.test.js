@@ -37,7 +37,7 @@ test('todas as telas renderizam com estado antigo', async () => {
 
 test('sessão sem sid abre no detalhe e mostra traço na duração', async () => {
   const a = await app({ estado: ANTIGO });
-  a.E('abrirSessao(' + ANTIGO.done[0].t + ')');
+  a.v('abrirSessao', ANTIGO.done[0].t);
   assert.ok(a.$$('.hs').length > 0, 'exercícios do dia aparecem');
   assert.strictEqual(a.$$('.stats b')[0].textContent, '–', 'aquele tempo nunca foi medido');
   a.fechar();
@@ -99,7 +99,7 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   a.preencher(0, 1, 40, 9);
-  a.E('abrirAdicionar(' + (Date.now() - 2 * DIA) + ')');
+  a.v('abrirAdicionar', (Date.now() - 2 * DIA));
   a.v('addSet', 'tipo', 'livre');
   a.v('addSet', 'grupo', 'dorsal');
   await a.v('gravarRetro', false);
@@ -116,7 +116,7 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
   assert.strictEqual(a.S().done.length, 0);
 
   a.aba('guia');
-  await a.E('importText(' + JSON.stringify(bkp) + ')');
+  await a.v('importText', bkp);
   await a.esperar(60);
 
   assert.deepStrictEqual(a.S().logs, antes.logs);
@@ -146,7 +146,7 @@ test('importar aceita o objeto cru, sem envelope', async () => {
   const a = await app();
   const cru = JSON.stringify({ logs: ANTIGO.logs, done: ANTIGO.done });
   a.aba('guia');
-  await a.E('importText(' + JSON.stringify(cru) + ')');
+  await a.v('importText', cru);
   await a.esperar(60);
   assert.strictEqual(a.S().done.length, 1);
   a.fechar();
@@ -292,7 +292,7 @@ test('sessão anterior à troca continua abrindo no calendário', async () => {
   } });
   await a.esperar();
   a.aba('dados');
-  a.E('abrirSessao(' + t + ')');
+  a.v('abrirSessao', t);
   const txt = a.doc.getElementById('app').textContent;
   assert.ok(txt.includes('Supino inclinado com halteres'), txt.slice(0, 300));
   assert.ok(txt.includes('fora do treino'), 'sinalizado como fora do treino de hoje');
@@ -383,7 +383,7 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   await a.v('wipe');
   await a.esperar();
   a.aba('guia');
-  await a.E('importText(' + JSON.stringify(bkp) + ')');
+  await a.v('importText', bkp);
   await a.esperar(60);
 
   // nenhum campo exportado pode se perder na volta
@@ -450,7 +450,7 @@ test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
   await a.v('wipe');
   await a.esperar();
   a.aba('guia');
-  await a.E('importText(' + JSON.stringify(bkp) + ')');
+  await a.v('importText', bkp);
   await a.esperar(60);
 
   chaves.forEach(function (k, i) {
@@ -544,7 +544,7 @@ test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async ()
   // a importação é o OUTRO caminho pelo qual a migração tem que rodar: um
   // backup do plano 10 entra aqui e também sai com a ceia
   a.aba('guia');
-  await a.E('importText(' + JSON.stringify(JSON.stringify({ app: 'lastro', data: era })) + ')');
+  await a.v('importText', JSON.stringify({ app: 'lastro', data: era }));
   await a.esperar(60);
   assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'), 'a cadeia roda na importação também');
   assert.deepStrictEqual(a.J('S.comida.plano.map(function(r){return r.id})'),
