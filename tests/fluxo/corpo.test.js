@@ -96,12 +96,12 @@ test('registro aceita vírgula e substitui a medida do mesmo dia', async () => {
   const a = await app();
   a.aba('dados');
   a.E('view.bodyForm = { peso: "73,4" }');
-  await a.E('addBody("peso")');
+  await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.E('S.body.peso[0].v'), 73.4, 'vírgula do teclado pt-BR');
 
   a.E('view.bodyForm = { peso: "73,8" }');
-  await a.E('addBody("peso")');
+  await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.E('S.body.peso.length'), 1, 'uma medida por dia');
   assert.strictEqual(a.E('S.body.peso[0].v'), 73.8);
@@ -112,7 +112,7 @@ test('entrada inválida não grava', async () => {
   const a = await app();
   a.aba('dados');
   a.E('view.bodyForm = { peso: "abc" }');
-  await a.E('addBody("peso")');
+  await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.E('S.body.peso.length'), 0);
   assert.ok(a.toast().includes('número válido'));
@@ -191,8 +191,8 @@ test('preencher treino passado avisa para onde as séries estão indo', async ()
   const a = await app();
   const t = Date.now() - 2 * 86400000;
   a.E('abrirAdicionar(' + t + ')');
-  a.E('addSet("tipo","A")');
-  await a.E('gravarRetro(true)');
+  a.v('addSet', 'tipo', 'A');
+  await a.v('gravarRetro', true);
   await a.esperar();
 
   const aviso = a.texto('.tr-aviso');
@@ -235,7 +235,7 @@ test('registrar peso grava o número que o stepper mostra', async () => {
 
   // sem nenhuma medida, o stepper parte do padrão e o botão grava ELE
   assert.strictEqual(a.E("CTX.corpo().peso.valor"), 75);
-  await a.E('addBody("peso")');
+  await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.J('S.body.peso').length, 1, 'o botão sozinho já registra');
   assert.strictEqual(a.J('S.body.peso')[0].v, 75);
@@ -247,9 +247,9 @@ test('mexer no stepper antes de registrar não quebra a tela', async () => {
   a.aba('dados');
 
   // o stepper entrega NÚMERO, não string: é o que fazia o .replace estourar
-  a.E('CTX.setPeso(73.4)');
+  a.v('ctx.setPeso', 73.4);
   assert.strictEqual(a.E("CTX.corpo().peso.valor"), 73.4, 'a tela mostra o que ele escolheu');
-  await a.E('addBody("peso")');
+  await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.J('S.body.peso')[0].v, 73.4, 'e é isso que vai para o histórico');
 
@@ -280,8 +280,8 @@ test('cintura usa o stepper dela, não o do peso', async () => {
   const a = await app({ estado: { logs: {}, done: [],
     body: { peso: [{ t: Date.now(), v: 73 }], cintura: [] } } });
   a.aba('dados');
-  a.E('CTX.setCintura(84.5)');
-  await a.E('addBody("cintura")');
+  a.v('ctx.setCintura', 84.5);
+  await a.v('addBody', 'cintura');
   await a.esperar();
   assert.strictEqual(a.J('S.body.cintura')[0].v, 84.5);
   assert.strictEqual(a.J('S.body.peso').length, 1, 'o peso não foi tocado');
@@ -317,8 +317,8 @@ test('dá para registrar numa data bem anterior, não só nos últimos dias', as
 
   const antigo = Date.now() - 23 * DIA;
   a.E('CTX.setDiaCorpo("peso", "' + iso(antigo) + '")');
-  a.E('CTX.setPeso(71.2)');
-  await a.E('addBody("peso")');
+  a.v('ctx.setPeso', 71.2);
+  await a.v('addBody', 'peso');
   await a.esperar();
 
   const m = a.J('S.body.peso');
@@ -338,8 +338,8 @@ test('escolher ontem grava no dia certo, não em hoje', async () => {
   assert.strictEqual(a.E("CTX.corpo().peso.acao"), 'registrar ontem',
     'o botão passa a dizer em que dia vai gravar');
 
-  a.E('CTX.setPeso(73.4)');
-  await a.E('addBody("peso")');
+  a.v('ctx.setPeso', 73.4);
+  await a.v('addBody', 'peso');
   await a.esperar();
 
   assert.strictEqual(a.E('sameDay(S.body.peso[0].t, Date.now())'), false, 'não caiu em hoje');
@@ -362,7 +362,7 @@ test('depois de gravar, a data volta para hoje sozinha', async () => {
   const a = await app({ estado: vazio });
   a.aba('dados');
   a.E('CTX.setDiaCorpo("peso", "' + iso(Date.now() - DIA) + '")');
-  await a.E('addBody("peso")');
+  await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.J('CTX.corpo().peso.dia').hoje, true);
   assert.strictEqual(a.E("CTX.corpo().peso.acao"), 'registrar hoje');
@@ -393,8 +393,8 @@ test('escolher um dia já medido parte do valor daquele dia', async () => {
   a.E('CTX.setDiaCorpo("peso", "' + iso(ontem) + '")');
   assert.strictEqual(a.E('CTX.corpo().peso.valor'), 73.4, 'em ontem, mostra o de ontem');
 
-  a.E('CTX.setPeso(73.9)');
-  await a.E('addBody("peso")');
+  a.v('ctx.setPeso', 73.9);
+  await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.J('S.body.peso').length, 2, 'corrigiu, não duplicou');
   assert.strictEqual(a.J('S.body.peso')[0].v, 73.9);
