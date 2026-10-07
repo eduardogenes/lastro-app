@@ -6,11 +6,11 @@ import { app, DIA } from './harness.js';
 test('estado migra para o plano 4 e a nutrição nasce semeada', async () => {
   const a = await app();
   assert.deepStrictEqual(a.erros, []);
-  assert.strictEqual(a.E('S.plano'), a.E('PLANO_ATUAL'));
-  assert.strictEqual(a.E('S.comida.plano.length'), a.E('PLANO_BASE.length'), 'plano nutricional semeado');
-  assert.strictEqual(a.J('S.cadencia').length, 7, 'cadência da semana nasce com 7 posições');
-  assert.strictEqual(a.E('S.ajuste'), 0);
-  assert.strictEqual(a.E('S.perfManual'), null, 'o app calcula a força até ele dizer o contrário');
+  assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'));
+  assert.strictEqual(a.S().comida.plano.length, a.dado('PLANO_BASE').length, 'plano nutricional semeado');
+  assert.strictEqual(a.S().cadencia.length, 7, 'cadência da semana nasce com 7 posições');
+  assert.strictEqual(a.S().ajuste, 0);
+  assert.strictEqual(a.S().perfManual, null, 'o app calcula a força até ele dizer o contrário');
   assert.ok(a.$$('.ex').length > 0, 'a tela de treino continua montando');
   a.fechar();
 });
@@ -50,9 +50,9 @@ test('backup antigo, sem a metade de comida, abre semeado em vez de vazio', asyn
   const a = await app({ estado: {
     plano: 3, logs: {}, done: [], prog: null, rot: null, ex: {}
   } });
-  assert.strictEqual(a.E('S.comida.plano.length'), a.E('PLANO_BASE.length'), 'a nutrição nasce da prescrição');
-  assert.strictEqual(a.J('S.cadencia').length, 7);
-  assert.strictEqual(a.E('S.ajuste'), 0, 'sem ajuste herdado de lugar nenhum');
+  assert.strictEqual(a.S().comida.plano.length, a.dado('PLANO_BASE').length, 'a nutrição nasce da prescrição');
+  assert.strictEqual(a.S().cadencia.length, 7);
+  assert.strictEqual(a.S().ajuste, 0, 'sem ajuste herdado de lugar nenhum');
   a.fechar();
 });
 
@@ -97,10 +97,10 @@ test('marcar uma refeição soma no registrado e persiste', async () => {
   a.clicar('.ins-tl .ins-caixa');
   await a.esperar();
   assert.notStrictEqual(a.texto('.ins-metric-xl'), antes, 'o kcal registrado subiu');
-  assert.ok(Object.keys(a.J('S.dia.done')).length === 1, 'ficou gravado no dia');
+  assert.ok(Object.keys(a.S().dia.done).length === 1, 'ficou gravado no dia');
   // o salvamento é debounced em 700 ms: sem esperar, o disco ainda está vazio
   await a.esperar(800);
-  assert.strictEqual(a.gravado().dia.data, a.E('S.dia.data'), 'e foi para o disco carimbado com a data');
+  assert.strictEqual(a.gravado().dia.data, a.S().dia.data, 'e foi para o disco carimbado com a data');
   a.fechar();
 });
 
@@ -110,13 +110,13 @@ test('a água sobe e desce no toque', async () => {
   assert.strictEqual(ticks.length, 14, '14 copos de 250 ml');
   a.clicar(ticks[2]);
   await a.esperar();
-  assert.strictEqual(a.E('S.dia.agua'), 3);
+  assert.strictEqual(a.S().dia.agua, 3);
   assert.strictEqual(a.texto('.ins-ticks-l'), '250 ml por toque0,75 / 3,5 l',
     'o rótulo diz quanto já foi, não só quanto é a meta');
   // tocar na última cheia remove ela: é o desfazer sem botão de desfazer
   a.clicar(a.$$('.ins-tick')[2]);
   await a.esperar();
-  assert.strictEqual(a.E('S.dia.agua'), 2);
+  assert.strictEqual(a.S().dia.agua, 2);
   assert.strictEqual(a.texto('.ins-ticks-l'), '250 ml por toque0,5 / 3,5 l');
   a.fechar();
 });
@@ -166,8 +166,8 @@ test('o dia de comida zera sozinho na virada da data', async () => {
     logs: {}, done: [],
     dia: { data: iso, done: { almoco: 1 }, agua: 9, escala: {} }
   } });
-  assert.deepStrictEqual(a.J('S.dia.done'), {}, 'marcação de ontem não conta hoje');
-  assert.strictEqual(a.E('S.dia.agua'), 0);
+  assert.deepStrictEqual(a.S().dia.done, {}, 'marcação de ontem não conta hoje');
+  assert.strictEqual(a.S().dia.agua, 0);
   a.fechar();
 });
 
@@ -181,10 +181,10 @@ test('apagar o histórico não apaga o plano nutricional', async () => {
   await a.v('wipe');
   await a.esperar();
 
-  assert.strictEqual(a.E('S.done.length'), 0, 'o histórico foi');
-  assert.strictEqual(a.E('S.comida.plano[0].itens[0].q'), 777, 'o plano editado ficou');
-  assert.strictEqual(a.J('S.cadencia')[0], 'treino', 'a cadência ficou');
-  assert.ok(a.E('S.comida.plano.length') === a.E('PLANO_BASE.length'));
+  assert.strictEqual(a.S().done.length, 0, 'o histórico foi');
+  assert.strictEqual(a.S().comida.plano[0].itens[0].q, 777, 'o plano editado ficou');
+  assert.strictEqual(a.S().cadencia[0], 'treino', 'a cadência ficou');
+  assert.ok(a.S().comida.plano.length === a.dado('PLANO_BASE').length);
   a.fechar();
 });
 
@@ -195,13 +195,13 @@ test('a cadência da semana é editável e só fala de cadência', async () => {
   const dias = a.$$('.gu-dia');
   assert.strictEqual(dias.length, 7);
 
-  const antes = a.J('S.cadencia').slice();
+  const antes = a.S().cadencia.slice();
   a.clicar(dias[1]);            // segunda: o índice 1, agora a SEGUNDA coluna
   await a.esperar();
-  assert.notStrictEqual(a.J('S.cadencia')[1], antes[1], 'alternou');
+  assert.notStrictEqual(a.S().cadencia[1], antes[1], 'alternou');
 
   // e não guarda letra de treino: qual sessão vem é sempre da rotação
-  a.J('S.cadencia').forEach(function (c) {
+  a.S().cadencia.forEach(function (c) {
     assert.ok(c === 'treino' || c === 'descanso', 'cadência guardou letra: ' + c);
   });
   a.fechar();
@@ -274,7 +274,7 @@ test('editar a quantidade de um item muda o plano para todo dia', async () => {
   assert.strictEqual(
     a.E('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens[0].q'),
     antes + 50, 'a quantidade do plano mudou');
-  assert.deepStrictEqual(a.J('S.dia.escala'), {}, 'e não virou ajuste de hoje');
+  assert.deepStrictEqual(a.S().dia.escala, {}, 'e não virou ajuste de hoje');
   a.fechar();
 });
 
@@ -318,7 +318,7 @@ test('cadastrar alimento cria id próprio e aparece na biblioteca', async () => 
                     u: "g", kcal: 600, p: 18, c: 12, g: 55, cru: 0 })`);
   await a.esperar();
   assert.strictEqual(id, 'pasta-de-castanha', 'id derivado do nome, como nos exercícios');
-  assert.strictEqual(a.E('S.comida.alimentos["pasta-de-castanha"].meu'), 1, 'marcado como dele');
+  assert.strictEqual(a.S().comida.alimentos["pasta-de-castanha"].meu, 1, 'marcado como dele');
   assert.ok(a.vJ('ctx.alimentosFiltrados', 'castanha').length === 1);
   a.fechar();
 });
@@ -342,7 +342,7 @@ test('escolher um alimento na busca põe ele na refeição', async () => {
 
   assert.strictEqual(itens().length, antes + 1, 'entrou na refeição');
   assert.strictEqual(itens()[antes].f, 'aveia');
-  assert.strictEqual(a.J('view.pilha.length'), 1, 'e a busca fechou, voltando para a refeição');
+  assert.strictEqual(a.vista().pilha.length, 1, 'e a busca fechou, voltando para a refeição');
   a.fechar();
 });
 
@@ -355,7 +355,7 @@ test('cadastrar a partir da busca não abre a quarta folha, e já põe na refei�
   a.v('ctx.editaRefeicao', 'almoco');
   a.E('CTX.abreFolha({ k: "seletor", ref: "almoco", idx: null })');
   await a.esperar(150);
-  assert.strictEqual(a.J('view.pilha.length'), 2, 'editar a refeição e a busca');
+  assert.strictEqual(a.vista().pilha.length, 2, 'editar a refeição e a busca');
 
   const cadastrar = a.$$('.ins-folha .ins-btn-add')
     .filter(function (b) { return /cadastrar/.test(b.textContent); })[0];
@@ -363,8 +363,8 @@ test('cadastrar a partir da busca não abre a quarta folha, e já põe na refei�
   a.clicar(cadastrar);
   await a.esperar(150);
 
-  assert.strictEqual(a.J('view.pilha.length'), 2, 'o cadastro tomou o lugar da busca');
-  assert.strictEqual(a.J('view.pilha')[1].k, 'editaAlimento');
+  assert.strictEqual(a.vista().pilha.length, 2, 'o cadastro tomou o lugar da busca');
+  assert.strictEqual(a.vista().pilha[1].k, 'editaAlimento');
   assert.strictEqual(a.$$('.ins-folha').length, 2, 'e na tela também são duas');
 
   const antes = a.E('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens.length');
@@ -375,7 +375,7 @@ test('cadastrar a partir da busca não abre a quarta folha, e já põe na refei�
   const itens = a.J('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens');
   assert.strictEqual(itens.length, antes + 1, 'o alimento novo entrou na refeição');
   assert.strictEqual(itens[itens.length - 1].f, 'tapioca-de-teste');
-  assert.strictEqual(a.J('view.pilha.length'), 1, 'e voltou para a refeição que ele estava editando');
+  assert.strictEqual(a.vista().pilha.length, 1, 'e voltou para a refeição que ele estava editando');
   assert.ok(/posto em/.test(a.toast()), 'o aviso diz onde ele foi parar: ' + a.toast());
   a.fechar();
 });
@@ -395,7 +395,7 @@ test('remover alimento em uso tira ele das refeições que o citam', async () =>
   assert.strictEqual(
     a.E('S.comida.plano.filter(function(r){return r.itens.some(function(i){return i.f==="arroz";});}).length'),
     0, 'saiu de todas');
-  assert.strictEqual(a.E('S.comida.ocultos["arroz"]'), 1, 'da prescrição: escondido, não apagado');
+  assert.strictEqual(a.S().comida.ocultos["arroz"], 1, 'da prescrição: escondido, não apagado');
   a.fechar();
 });
 
@@ -406,7 +406,7 @@ test('alimento da prescrição é editável mas não some do código', async () 
   assert.strictEqual(a.E('CTX.alimentoParaEditar("arroz").n'), 'Arroz integral cozido');
   assert.strictEqual(a.E('CTX.alimentoParaEditar("arroz").daPrescricao'), true,
     'continua sabendo que veio da prescrição');
-  assert.strictEqual(a.E('ALIMENTOS_BASE["arroz"].n'), 'Arroz branco cozido',
+  assert.strictEqual(a.dado('ALIMENTOS_BASE')["arroz"].n, 'Arroz branco cozido',
     'o do código não é tocado — restaurar o plano devolve o original');
   a.fechar();
 });
@@ -419,13 +419,13 @@ test('remover uma refeição limpa o que era do dia junto', async () => {
   // instante, e não `1`: `DiaComida.done` convergiu na forma de
   // `DiaComidaHist.done` na migração 9→10. O que este teste protege são as
   // duas asserções depois do `removeRefeicao`; esta é a pré-condição.
-  assert.ok(a.E('S.dia.done.lanche') > 1, 'ficou marcada, com a hora da marca');
+  assert.ok(a.S().dia.done.lanche > 1, 'ficou marcada, com a hora da marca');
 
   a.aceitar();
   a.v('ctx.removeRefeicao', 'lanche');
   await a.esperar();
   assert.strictEqual(a.E('S.comida.plano.filter(function(r){return r.id==="lanche";}).length'), 0);
-  assert.strictEqual(a.E('S.dia.done.lanche'), undefined, 'a marcação de hoje foi junto');
-  assert.strictEqual(a.E('S.dia.escala.lanche'), undefined, 'o ajuste de porção também');
+  assert.strictEqual(a.S().dia.done.lanche, undefined, 'a marcação de hoje foi junto');
+  assert.strictEqual(a.S().dia.escala.lanche, undefined, 'o ajuste de porção também');
   a.fechar();
 });
