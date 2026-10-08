@@ -248,3 +248,155 @@ test('o descanso aparece nas duas telas, e do mesmo jeito', async () => {
   assert.strictEqual(a.$$('.cal-d.descanso').length, 1, 'o mês diz a mesma coisa');
   a.fechar();
 });
+
+// ===========================================================================
+// Entrar e sair da conta, pelas chaves de `CTX`
+// ===========================================================================
+//
+// Os casos acima usam `nuvemFalsa`, que já entra com a sessão pronta: o CICLO
+// tinha rede, a PORTA não. `nuvemCampo`, `entrarNaNuvem`, `sairDaNuvem` e
+// `sincronizaAgora` não tinham caso próprio — e são a custódia do dado dele
+// fora do aparelho.
+//
+// Cobrem o modelo e não a fiação: que a capacidade existe e o que ela promete.
+// Não dizem nada sobre haver formulário de login na tela nova ligado nelas.
+
+/** `entrar` e `sair` de mentira, sem a sessão já montada. */
+function portaFalsa(a, resposta) {
+  a.E(`
+    globalThis.__porta = { tentativas: [], saiu: 0, empurros: 0 };
+    globalThis.__ses = null;
+    NUVEM.sessao = function () { return globalThis.__ses; };
+    NUVEM.pronta = async function () { return globalThis.__ses; };
+    NUVEM.entrar = async function (email, senha) {
+      globalThis.__porta.tentativas.push({ email: email, senha: senha });
+      const r = ${JSON.stringify(resposta)};
+      if (r.ok) globalThis.__ses = r.v;
+      return r;
+    };
+    NUVEM.sair = async function () { globalThis.__porta.saiu++; globalThis.__ses = null; };
+    NUVEM.puxa = async function () { return { ok: true, v: null }; };
+    NUVEM.empurra = async function () { globalThis.__porta.empurros++; return { ok: true, v: 1 }; };
+  `);
+}
+const porta = a => a.J('globalThis.__porta');
+
+test('ctx.entrarNaNuvem cobra os dois campos antes de falar com a rede', async () => {
+  const a = await app({ aba: 'guia' });
+  portaFalsa(a, { ok: true, v: { email: 'eu@exemplo.com', uid: 'u1' } });
+
+  await a.v('ctx.entrarNaNuvem');
+  await a.esperar(40);
+  assert.strictEqual(porta(a).tentativas.length, 0, 'sem campo nenhum, não bate na rede');
+  assert.strictEqual(a.vJ('ctx.nuvem').erro, 'preencha e-mail e senha');
+
+  a.v('ctx.nuvemCampo', 'email', 'eu@exemplo.com');
+  assert.strictEqual(a.vJ('ctx.nuvem').erro, null, 'digitar limpa o erro anterior');
+  assert.strictEqual(a.vJ('ctx.nuvem').email, 'eu@exemplo.com', 'e o campo fica na tela');
+
+  await a.v('ctx.entrarNaNuvem');
+  await a.esperar(40);
+  assert.strictEqual(porta(a).tentativas.length, 0, 'só com e-mail também não');
+  assert.strictEqual(a.vJ('ctx.nuvem').erro, 'preencha e-mail e senha');
+  a.fechar();
+});
+
+test('ctx.entrarNaNuvem entra, apara o e-mail e não deixa a senha na memória da tela', async () => {
+  const a = await app({ aba: 'guia' });
+  portaFalsa(a, { ok: true, v: { email: 'eu@exemplo.com', uid: 'u1' } });
+
+  a.v('ctx.nuvemCampo', 'email', '  eu@exemplo.com  ');
+  a.v('ctx.nuvemCampo', 'senha', 'segredo');
+  await a.v('ctx.entrarNaNuvem');
+  await a.esperar(60);
+
+  assert.deepStrictEqual(porta(a).tentativas, [{ email: 'eu@exemplo.com', senha: 'segredo' }],
+    'o espaço colado junto com o e-mail é aparado antes de ir para a rede');
+
+  const vm = a.vJ('ctx.nuvem');
+  assert.strictEqual(vm.dentro, true, 'entrou');
+  assert.strictEqual(vm.conta, 'eu@exemplo.com', 'e a tela diz de quem é a conta');
+  // Lido em `view`, e não na leitura `ctx.nuvem`: logado, a leitura NÃO TEM
+  // campo `senha`, então `vm.senha === undefined` passaria com a senha ainda
+  // guardada. Era uma asserção que não sabia ficar vermelha — fora.
+  assert.strictEqual(a.vista().nuvemForm, null,
+    'a senha não fica pendurada na memória da tela depois de usada');
+
+  // Entrar DISPARA a sincronização, e é por isso que o toast que sobra na tela
+  // é o dela e não o do login: `entrarNaNuvem` termina em
+  // `sincroniza({ manual: true })`. É a capacidade que importa — primeiro login
+  // neste aparelho parte de `sync.v = null`, então tudo se funde em vez de o
+  // aparelho novo sobrescrever a nuvem.
+  assert.strictEqual(porta(a).empurros, 1, 'entrar já sincroniza, sem segundo toque');
+  assert.ok(a.dado('sync').em > 0, 'e carimba a hora');
+  a.fechar();
+});
+
+test('ctx.entrarNaNuvem com senha errada mostra o motivo e não entra', async () => {
+  const a = await app({ aba: 'guia' });
+  portaFalsa(a, { ok: false, erro: 'auth', msg: 'e-mail ou senha não conferem' });
+
+  a.v('ctx.nuvemCampo', 'email', 'eu@exemplo.com');
+  a.v('ctx.nuvemCampo', 'senha', 'errada');
+  await a.v('ctx.entrarNaNuvem');
+  await a.esperar(60);
+
+  const vm = a.vJ('ctx.nuvem');
+  assert.strictEqual(vm.dentro, false, 'não entrou');
+  assert.strictEqual(vm.erro, 'e-mail ou senha não conferem', 'e o motivo é o da rede, não um genérico');
+  assert.strictEqual(vm.rodando, false, 'e o botão volta de "entrando..."');
+  assert.strictEqual(vm.email, 'eu@exemplo.com', 'o e-mail digitado fica, para ele só corrigir a senha');
+  a.fechar();
+});
+
+test('ctx.sairDaNuvem pergunta, e o histórico continua no aparelho', async () => {
+  // Sair é o gesto mais fácil de confundir com apagar. O aviso promete que o
+  // histórico fica — e o que ele promete é o que este caso cobra.
+  const t = Date.now() - 2 * 86400000;
+  const a = await app({ aba: 'guia', estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[70, 8]] }] }, done: [{ day: 'A', t: t, sid: t }]
+  } });
+  portaFalsa(a, { ok: true, v: { email: 'eu@exemplo.com', uid: 'u1' } });
+  a.v('ctx.nuvemCampo', 'email', 'eu@exemplo.com');
+  a.v('ctx.nuvemCampo', 'senha', 'segredo');
+  await a.v('ctx.entrarNaNuvem');
+  await a.esperar(60);
+
+  a.recusar();
+  await a.v('ctx.sairDaNuvem');
+  await a.esperar(40);
+  assert.strictEqual(porta(a).saiu, 0, 'recusar não sai');
+  assert.strictEqual(a.vJ('ctx.nuvem').dentro, true);
+  const q = a.perguntas().join(' | ');
+  assert.ok(/histórico continua aqui/.test(q), 'o aviso promete que o histórico fica: ' + q);
+  assert.ok(/para de sincronizar/.test(q), 'e diz o que de fato acontece: ' + q);
+
+  a.aceitar();
+  await a.v('ctx.sairDaNuvem');
+  await a.esperar(60);
+
+  assert.strictEqual(porta(a).saiu, 1, 'saiu');
+  assert.strictEqual(a.vJ('ctx.nuvem').dentro, false);
+  assert.strictEqual(a.S().done.length, 1, 'e o histórico continua aqui, como prometido');
+  assert.deepStrictEqual(a.log('A', 0)[0].sets[0], [70, 8], 'com as séries dentro');
+  assert.strictEqual(a.dado('sync').em, 0, 'o relógio da sincronização zera: não há com quem comparar');
+  assert.strictEqual(a.dado('sync').sujo, false);
+  a.fechar();
+});
+
+test('ctx.sincronizaAgora é a porta manual do mesmo ciclo', async () => {
+  const a = await app();
+  nuvemFalsa(a, null);
+  a.v('toggle', 0);
+  a.preencher(0, 0, 60, 8);
+  await a.esperar();
+
+  await a.v('ctx.sincronizaAgora');
+  await a.esperar(80);
+
+  const n = nuvem(a);
+  assert.strictEqual(n.empurros.length, 1, 'o toque manual sobe o que existe');
+  assert.strictEqual(a.dado('sync').sujo, false, 'e limpa a sujeira');
+  assert.ok(a.dado('sync').em > 0, 'carimbando a hora, que é o que a tela mostra');
+  a.fechar();
+});

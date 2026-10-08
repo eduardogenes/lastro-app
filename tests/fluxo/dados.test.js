@@ -665,3 +665,177 @@ test('ctx.apagaTudo leva junto quatro coisas que ninguém declarou — o escopo 
     'e TODA lápide vai junto, inclusive a de um registro que nada neste gesto apagou');
   a.fechar();
 });
+
+// ===========================================================================
+// A custódia, pelas chaves de `CTX` — o caminho de volta do dono
+// ===========================================================================
+//
+// Este app já perdeu seis campos numa importação, em silêncio (`6035a5c`), e o
+// único caminho de volta dele é exportar e importar. As seis chaves de `CTX`
+// que são esse caminho — `exportar`, `mostraJSON`, `copiaJSON`, `importaTexto`,
+// `importaArquivo`, `alternaColar` — mais a leitura `dadosDoApp` não tinham
+// caso próprio: a rede chegava nelas pelo nome de módulo (`showJSON`,
+// `importText`), que o redesenho pode renomear sem avisar ninguém.
+//
+// Cobrem o modelo e não a fiação: que a capacidade existe e o que ela promete.
+// Nenhum deles diz que a tela nova tem um botão de exportar ligado nela.
+//
+// Os dublês de plataforma continuam entrando por `a.E`, como o contrato da
+// superfície manda: `URL.createObjectURL` e `navigator.clipboard` não existem
+// no jsdom, e um dublê é instalação em `globalThis`, não verbo.
+
+/** O caminho do download e o da área de transferência, que o jsdom não tem. */
+function plataformaDeBackup(a) {
+  a.E(`
+    globalThis.__copiado = [];
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: {
+      writeText: function (t) { globalThis.__copiado.push(t); return Promise.resolve(); }
+    } });
+    URL.createObjectURL = function () { return 'blob:teste/1'; };
+    URL.revokeObjectURL = function () {};
+  `);
+}
+
+const UMA_SESSAO = (function () {
+  const t = Date.now() - 4 * DIA;
+  return { logs: { A0: [{ t: t, sid: t, sets: [[62.5, 9]] }] },
+           done: [{ day: 'A', t: t, sid: t }] };
+})();
+
+test('ctx.mostraJSON abre o backup na tela, conta como backup e fecha no segundo toque', async () => {
+  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  await a.modo('o app');
+  assert.strictEqual(a.vJ('ctx.dadosDoApp').json, null, 'fechado por padrão');
+
+  a.v('ctx.mostraJSON');
+  await a.esperar();
+  const txt = a.vJ('ctx.dadosDoApp').json;
+  assert.ok(/"app": "lastro"/.test(txt), 'o que abre é o backup de verdade, com envelope');
+  assert.ok(/62,?\.?5/.test(txt), 'e com a série dentro');
+  assert.ok(a.S().export > 0, 'abrir conta como backup: quem copia na mão nunca passa pelo clipboard');
+
+  a.v('ctx.mostraJSON');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.dadosDoApp').json, null, 'o mesmo verbo fecha');
+  a.fechar();
+});
+
+test('ctx.copiaJSON leva o backup inteiro para a área de transferência', async () => {
+  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  plataformaDeBackup(a);
+
+  await a.v('ctx.copiaJSON');
+  await a.esperar(60);
+
+  const copiado = a.J('globalThis.__copiado');
+  assert.strictEqual(copiado.length, 1, 'copiou uma vez');
+  const d = JSON.parse(copiado[0]).data;
+  assert.strictEqual(d.done.length, 1, 'e o que foi copiado é o estado, não um resumo');
+  assert.deepStrictEqual(d.logs[Object.keys(d.logs)[0]][0].sets[0], [62.5, 9]);
+  assert.strictEqual(a.toast(), 'JSON copiado.');
+  assert.ok(a.S().export > 0, 'copiar também conta como backup');
+  a.fechar();
+});
+
+test('ctx.exportar gera o arquivo, e sem download cai no texto sem fingir que salvou', async () => {
+  // Os dois caminhos importam. O do arquivo é o dele no iPhone; o do texto é a
+  // rede de segurança — e ela NÃO pode carimbar o backup, porque nada foi
+  // baixado. Carimbar ali faria o app parar de cobrar um backup que não existe.
+  const semDownload = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  semDownload.v('ctx.exportar');
+  await semDownload.esperar(40);
+  assert.match(semDownload.toast(), /não funciona aqui/, 'avisa que o download falhou');
+  assert.ok(/"app": "lastro"/.test(semDownload.vJ('ctx.dadosDoApp').json),
+    'e põe o texto na tela, que é o caminho de volta');
+  assert.strictEqual(semDownload.S().export, 0,
+    'sem arquivo gerado, não há backup para carimbar');
+  semDownload.fechar();
+
+  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  plataformaDeBackup(a);
+  a.v('ctx.exportar');
+  await a.esperar(40);
+  assert.match(a.toast(), /^Arquivo lastro-\d{4}-\d{2}-\d{2}\.json gerado\.$/,
+    'com download, o nome do arquivo leva a data: ' + a.toast());
+  assert.ok(a.S().export > 0, 'e agora sim conta como backup');
+  a.fechar();
+});
+
+test('ctx.importaTexto diz o que vai substituir, e recusar não troca nada', async () => {
+  // O confirm da importação é a última porta antes de o histórico ser trocado.
+  // Nenhum caso o lia: os outros aqui entram com o harness aceitando por padrão.
+  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  const bkp = JSON.stringify({ app: 'lastro', v: 1, data: {
+    logs: { A0: [{ t: Date.now(), sid: Date.now(), sets: [[100, 5]] }] },
+    done: [{ day: 'B', t: Date.now(), sid: Date.now() }, { day: 'C', t: Date.now(), sid: 1 }]
+  } });
+
+  a.recusar();
+  await a.v('ctx.importaTexto', bkp);
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().done.length, 1, 'recusar deixa o histórico daqui');
+  assert.deepStrictEqual(a.log('A', 0)[0].sets[0], [62.5, 9], 'e a série daqui intacta');
+
+  const q = a.perguntas().join(' | ');
+  assert.ok(/Importar 2 sessões e 1 exercícios/.test(q), 'o aviso conta o que VEM: ' + q);
+  assert.ok(/substitui o histórico atual \(1 sessões\)/.test(q), 'e o que SAI: ' + q);
+  assert.ok(/Exporte antes/.test(q), 'e manda exportar antes: ' + q);
+
+  a.aceitar();
+  await a.v('ctx.importaTexto', bkp);
+  await a.esperar(60);
+  assert.strictEqual(a.S().done.length, 2, 'aceitar troca');
+  a.fechar();
+});
+
+test('ctx.importaArquivo lê o arquivo, importa e esvazia o campo', async () => {
+  // A única chave desta família que recebe um objeto do DOM, e por isso ficou
+  // fora de `verbos` — o `Blob` tem de nascer no realm do jsdom. Entra pela
+  // superfície por acesso direto (`a.m.ctx`), que é por nome e sem `eval`.
+  //
+  // Esvaziar `input.value` não é detalhe: sem isso, escolher o MESMO arquivo de
+  // novo não dispara `change`, e a segunda importação não acontece.
+  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  await a.modo('o app');
+  a.v('ctx.mostraJSON');
+  const bkp = a.doc.getElementById('jout').value;
+
+  await a.v('wipe');
+  await a.esperar(60);
+  assert.strictEqual(a.S().done.length, 0, 'o histórico foi');
+
+  const campo = { files: [new a.window.Blob([bkp], { type: 'application/json' })], value: 'backup.json' };
+  a.m.ctx.importaArquivo(campo);
+  await a.esperar(120);
+
+  assert.strictEqual(a.S().done.length, 1, 'o arquivo trouxe a sessão de volta');
+  assert.deepStrictEqual(a.log('A', 0)[0].sets[0], [62.5, 9], 'com a série dentro');
+  assert.strictEqual(campo.value, '', 'e o campo foi esvaziado, senão o mesmo arquivo não entra duas vezes');
+
+  const vazio = { files: [], value: 'nada' };
+  a.m.ctx.importaArquivo(vazio);
+  await a.esperar(40);
+  assert.strictEqual(a.S().done.length, 1, 'cancelar o seletor não mexe em nada');
+  assert.strictEqual(vazio.value, 'nada', 'e não limpa um campo que não foi usado');
+  a.fechar();
+});
+
+test('ctx.alternaColar abre e fecha a área de colar, e ctx.dadosDoApp conta o acervo', async () => {
+  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
+
+  assert.strictEqual(a.vJ('ctx.dadosDoApp').colando, false, 'fechada por padrão');
+  a.v('ctx.alternaColar');
+  assert.strictEqual(a.vJ('ctx.dadosDoApp').colando, true, 'abre');
+  a.v('ctx.alternaColar');
+  assert.strictEqual(a.vJ('ctx.dadosDoApp').colando, false, 'e o mesmo verbo fecha');
+
+  // `dadosDoApp` é a leitura que diz ao dono o tamanho do que ele tem a perder
+  const vm = a.vJ('ctx.dadosDoApp');
+  assert.match(vm.resumo, /1 sessão registrada/, 'conta as sessões, no singular: ' + vm.resumo);
+  assert.match(vm.resumo, /1 exercício com histórico/, 'e os exercícios: ' + vm.resumo);
+  assert.match(vm.resumo, /0 sessões de cardio · 0 pesagens · 0 medidas de cintura/,
+    'cardio, peso e cintura entram no acervo: ' + vm.resumo);
+  assert.match(vm.backupTxt, /nunca exportou/, 'e cobra o backup que nunca houve');
+  a.fechar();
+});
