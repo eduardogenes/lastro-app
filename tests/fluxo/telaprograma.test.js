@@ -323,3 +323,81 @@ test('músculo que saiu do programa mas foi treinado continua aparecendo', async
     'sumir da tabela esconderia trabalho que existiu');
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// `ctx.restauraPrograma`: o destrutivo desta tela
+// ---------------------------------------------------------------------------
+//
+// Por que primeiro, dentro do assunto: é a única chave daqui que APAGA — ela
+// joga fora toda diferença entre o programa dele e o do treinador, de uma vez.
+// O que se perde é a história de escolhas de semanas, e não tem desfazer.
+//
+// O QUE ESTE GRUPO PROVA: que a chave confirma antes, que recusar não apaga
+// nada, que aceitar devolve o programa ao do treinador e registra a linha no
+// log, e que chamar sem diferença nenhuma não pergunta e não mexe.
+//
+// O QUE ESTE GRUPO NÃO COBRE: que o botão da tela esteja ligado nela. Chamar o
+// verbo prova que a capacidade existe no MODELO, não que o dedo a alcança.
+
+test('ctx.restauraPrograma pergunta antes, e recusar deixa as diferenças', async () => {
+  const a = await noPrograma();
+  await a.v('progSeries', 'A', 0, 1);
+  await a.esperar();
+  const comDif = a.S().prog.A.ex[0].s;
+  assert.strictEqual(a.v('difTotal'), 1, 'uma diferença contra o treinador — pré-condição');
+
+  a.recusar();
+  await a.v('ctx.restauraPrograma');
+  await a.esperar();
+
+  const q = a.perguntas().join(' | ');
+  assert.ok(/Desfazer 1 diferença/.test(q), 'o aviso diz QUANTAS vão embora: ' + q);
+  assert.ok(/histórico e os exercícios que você cadastrou não são tocados/.test(q),
+    'e delimita o estrago, em vez de dramatizar: ' + q);
+  assert.strictEqual(a.v('difTotal'), 1, 'recusar deixa a diferença onde estava');
+  assert.strictEqual(a.S().prog.A.ex[0].s, comDif, 'e o programa como ele o tinha');
+  a.fechar();
+});
+
+test('ctx.restauraPrograma aceito devolve o programa do treinador, e registra', async () => {
+  const a = await noPrograma();
+  const doTreinador = a.S().prog.A.ex[0].s;
+  await a.v('progSeries', 'A', 0, 1);
+  await a.v('progSeries', 'B', 0, -1);
+  await a.esperar();
+  assert.strictEqual(a.v('difTotal'), 2, 'duas diferenças — pré-condição');
+  const logAntes = a.S().progLog.length;
+
+  a.aceitar();
+  await a.v('ctx.restauraPrograma');
+  await a.esperar();
+
+  assert.strictEqual(a.v('difTotal'), 0, 'nenhuma diferença sobrou');
+  assert.strictEqual(a.S().prog.A.ex[0].s, doTreinador, 'as séries voltaram às do treinador');
+  assert.deepStrictEqual(a.S().rot, a.dado('ROT_BASE'), 'e a rotação também');
+  assert.strictEqual(a.S().progLog.length, logAntes + 1,
+    'com uma linha no log: daqui a dois meses alguém vai perguntar o que aconteceu');
+  assert.strictEqual(a.S().progLog[a.S().progLog.length - 1].txt,
+    'programa restaurado para o do treinador');
+  assert.strictEqual(a.toast(), 'Programa de volta ao do treinador.');
+
+  // e o histórico não foi tocado: o aviso promete isso
+  assert.deepStrictEqual(a.S().logs, {}, 'o histórico ficou (aqui, vazio por não haver)');
+  a.fechar();
+});
+
+test('ctx.restauraPrograma sem diferença nenhuma não pergunta e não mexe', async () => {
+  // Um confirm destrutivo para não fazer nada treina o dedo a dizer sim sem ler.
+  const a = await noPrograma();
+  assert.strictEqual(a.v('difTotal'), 0, 'programa igual ao do treinador — pré-condição');
+  const antes = JSON.stringify(a.S().prog);
+
+  await a.v('ctx.restauraPrograma');
+  await a.esperar();
+
+  assert.deepStrictEqual(a.perguntas(), [], 'não perguntou nada');
+  assert.strictEqual(JSON.stringify(a.S().prog), antes, 'e não mexeu no programa');
+  assert.strictEqual(a.toast(), 'Seu programa já é o do treinador.', 'só diz que não havia o que fazer');
+  assert.deepStrictEqual(a.S().progLog || [], [], 'nem registrou o que não aconteceu');
+  a.fechar();
+});

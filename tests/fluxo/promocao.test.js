@@ -169,3 +169,89 @@ test('responder a decisão é fim de fluxo: não devolve posição nenhuma', asy
   assert.strictEqual(a.dado('scrollDoDestino')['promo'], undefined);
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// As duas portas da decisão: `ctx.concluiPromo` e `ctx.voltaDoPromo`
+// ---------------------------------------------------------------------------
+//
+// Por que estas duas primeiro, dentro do assunto: são as únicas chaves daqui
+// que ESCREVEM no programa oficial. Uma regressão nelas não aparece no dia —
+// aparece semanas depois, como um programa que mudou sem ninguém ter decidido,
+// ou como uma decisão respondida que não valeu.
+//
+// O QUE ESTE GRUPO PROVA: que a chave `ctx.concluiPromo` leva ao oficial o que
+// foi marcado 'oficial' e **só** isso, e que `ctx.voltaDoPromo` sai mantendo o
+// conservador. Os casos acima provam o mesmo das funções de módulo
+// (`concluirPromo`, `voltarDoPromo`); o que falta a eles é a CHAVE. Uma
+// `CTX.concluiPromo` ligada na função errada — ou sumida — passa por todos
+// eles e tira a decisão da tela sem um teste vermelho.
+//
+// O QUE ESTE GRUPO NÃO COBRE: que o botão da tela esteja ligado nelas. Chamar
+// o verbo prova que a capacidade existe no MODELO, não que o dedo a alcança.
+
+test('ctx.concluiPromo leva ao oficial só o que foi marcado oficial', async () => {
+  const a = await app();
+  const antes = a.S().prog.A.ex.map(function (x) { return x.s; });
+
+  a.v('toggle', 0);
+  a.preencher(0, 0, 60, 8);
+  a.v('mudaSeries', 0, 1);
+  a.v('mudaSeries', 1, 1);
+  await a.esperar();
+  await a.v('finalizarSessao');
+
+  const P = a.vista().promo;
+  assert.strictEqual(P.mods.length, 2, 'duas mudanças pendentes — pré-condição');
+  assert.deepStrictEqual(P.dec, ['hoje', 'hoje'], 'e as duas no padrão conservador');
+
+  a.v('decidePromo', 0, 'oficial');          // a primeira vai; a segunda fica
+  a.v('ctx.concluiPromo');
+  await a.esperar(60);
+
+  const depois = a.S().prog.A.ex.map(function (x) { return x.s; });
+  assert.strictEqual(depois[0], antes[0] + 1, 'a marcada subiu no oficial');
+  assert.strictEqual(depois[1], antes[1],
+    'e a que ficou em "hoje" NÃO subiu: a decisão é por mudança, não por sessão');
+  assert.deepStrictEqual(depois.slice(2), antes.slice(2), 'o resto do dia intocado');
+
+  assert.strictEqual(a.vista().promo, null, 'a pergunta fechou');
+  assert.deepStrictEqual(a.S().promoPendente, [], 'e não ficou guardada para depois');
+  assert.strictEqual(a.S().progLog.length, 1,
+    'uma linha de log, para responder "por que isso mudou?" daqui a dois meses');
+  // RESPONDER encerra o treino. É o que separa esta chave da outra: sem esta
+  // asserção, trocar `concluiPromo` por `voltaDoPromo` no fonte deixa o caso
+  // verde — com uma mudança marcada 'hoje' as duas chaves terminam no mesmo
+  // lugar, e foi uma quebra deliberada que mostrou isso.
+  assert.strictEqual(a.S().sessao, null, 'a sessão encerrou junto: responder é fim de fluxo');
+  assert.ok(/mudança levada/.test(a.toast()), 'e o app diz o que levou: ' + a.toast());
+  a.fechar();
+});
+
+test('ctx.voltaDoPromo sai sem responder e o oficial fica como estava', async () => {
+  const a = await app();
+  const antes = a.S().prog.A.ex[0].s;
+
+  a.v('toggle', 0);
+  a.preencher(0, 0, 60, 8);
+  a.v('mudaSeries', 0, 1);
+  await a.esperar();
+  await a.v('finalizarSessao');
+  assert.ok(a.vista().promo, 'a pergunta abriu — pré-condição');
+
+  a.v('ctx.voltaDoPromo');
+  await a.esperar(60);
+
+  assert.strictEqual(a.vista().promo, null, 'a tela fechou');
+  assert.strictEqual(a.S().prog.A.ex[0].s, antes,
+    'sair sem responder mantém o conservador: o oficial não muda');
+  assert.deepStrictEqual(a.S().promoPendente, [],
+    'e a pergunta não fica reaparecendo para sempre');
+  assert.strictEqual((a.S().progLog || []).length, 0, 'nada a registrar: nada mudou');
+  // SAIR não encerra o treino: o fonte diz "a sessão continua aberta até ele
+  // decidir". É esta asserção que distingue esta chave de `ctx.concluiPromo` —
+  // sem ela, as duas passam o caso, e foi a quebra deliberada que mostrou.
+  assert.ok(a.S().sessao, 'a sessão continua ABERTA: sair da pergunta não é finalizar');
+  assert.strictEqual(a.S().sessao.day, 'A');
+  assert.ok(!/encerrado/.test(a.toast() || ''), 'e o app não diz que encerrou: ' + a.toast());
+  a.fechar();
+});

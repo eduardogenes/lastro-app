@@ -1150,3 +1150,86 @@ test('andar entre poses não joga a sessão de fotos para o topo', async () => {
   await a.esperar(80);
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// `ctx.setNotaDaSessao`: a observação da sessão de fotos
+// ---------------------------------------------------------------------------
+//
+// Ela está no assunto errado na lista do §5 do `09-superficie.md`, ao lado de
+// `editaLinha` e `apagaLinha` — mas não escreve em sessão de TREINO: escreve
+// `obs` numa sessão de FOTO DE CORPO, e por isso a casa dela é aqui.
+//
+// Por que primeiro, dentro do assunto: é a única chave do grupo que ESCREVE em
+// `S`. As outras dezesseis mexem em `view`, e uma regressão nelas custa um
+// controle que não responde — visível no toque seguinte. Uma regressão aqui
+// perde o que ele escreveu sobre o corpo daquele dia, em silêncio, porque a
+// escrita no armazenamento é atrasada 700 ms.
+//
+// O QUE ESTE GRUPO PROVA: que a nota entra na sessão do dia, que a leitura da
+// tela a devolve, que ela só chega ao armazenamento depois do debounce, e que
+// sem sessão de fotos ela sai pela porta em vez de inventar uma sessão.
+//
+// O QUE ESTE GRUPO NÃO COBRE: que algum campo da tela esteja ligado nela, nem
+// que o `textarea` exista. Chamar o verbo prova que a capacidade existe no
+// MODELO, não que o dedo a alcança.
+
+test('ctx.setNotaDaSessao escreve na sessão do dia, com o debounce do rascunho', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
+  a.v('ctx.abreProtocolo');
+  await a.esperar(40);
+  const mAntes = a.S().protocolo.sessoes[0].m;
+
+  a.v('ctx.setNotaDaSessao', 'joelho doendo, agachei menos');
+  assert.strictEqual(a.S().protocolo.sessoes[0].obs, 'joelho doendo, agachei menos',
+    'a nota entrou na sessão daquele dia');
+  assert.ok(a.S().protocolo.sessoes[0].m > mAntes,
+    'com `m` novo, senão a fusão do outro aparelho a descarta por ser mais velha');
+  assert.strictEqual(a.vJ('ctx.sessaoDeFotos').obs, 'joelho doendo, agachei menos',
+    'e a leitura da tela a devolve');
+
+  const gravado = function () {
+    const g = a.gravado();
+    const s = g && g.protocolo && g.protocolo.sessoes && g.protocolo.sessoes[0];
+    return s ? s.obs : undefined;
+  };
+  // Medido a 250 ms, e não logo depois da chamada: `save()` é `async` de
+  // qualquer jeito, então "ainda não gravou" no instante seguinte não prova
+  // debounce nenhum — prova só que a gravação é assíncrona. Foi uma quebra
+  // deliberada (trocar o `setTimeout` por `save()` nu) que mostrou isso: ela
+  // não derrubou a asserção anterior.
+  await a.esperar(250);
+  assert.strictEqual(gravado(), undefined,
+    'a 250 ms ainda não foi ao armazenamento: é o debounce de 700 ms do rascunho');
+  await a.esperar(600);
+  assert.strictEqual(gravado(), 'joelho doendo, agachei menos', 'depois do debounce, foi');
+
+  // apagar a nota é escrita como qualquer outra: '' não é "não mexer"
+  a.v('ctx.setNotaDaSessao', '');
+  await a.esperar(900);
+  assert.strictEqual(a.S().protocolo.sessoes[0].obs, '', 'a nota apagada fica apagada');
+  assert.strictEqual(gravado(), '', 'inclusive no armazenamento');
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('ctx.setNotaDaSessao sem foto no dia não inventa sessão para anotar', async () => {
+  // A sessão de fotos nasce na PRIMEIRA FOTO, como a de treino nasce na
+  // primeira série. Deixar a nota criá-la poria no histórico um dia de fotos
+  // que nunca teve foto.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  a.v('ctx.abreProtocolo');
+  await a.esperar(40);
+  assert.deepStrictEqual(a.S().protocolo.sessoes, [], 'nenhuma sessão ainda — pré-condição');
+
+  a.v('ctx.setNotaDaSessao', 'anotado antes de tirar foto');
+  await a.esperar(800);
+  assert.deepStrictEqual(a.S().protocolo.sessoes, [],
+    'e continua nenhuma: a nota sai pela porta em vez de criar uma');
+  assert.ok(!/anotado antes/.test(JSON.stringify(a.gravado() || {})),
+    'e nada disso chegou ao armazenamento');
+  await a.esperar(60);
+  a.fechar();
+});
