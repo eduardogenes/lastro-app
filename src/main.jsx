@@ -3805,7 +3805,21 @@ async function importText(txt) {
         cadencia: Array.isArray(d.cadencia) && d.cadencia.length === 7 ? d.cadencia : null,
         comida: (d.comida && typeof d.comida === 'object') ? d.comida : null,
         dia: (d.dia && typeof d.dia === 'object') ? d.dia : null,
-        ajuste: (d.ajuste === -1 || d.ajuste === 1) ? d.ajuste : 0,
+        // `ajuste` é SALDO acumulado de passos de ±150 kcal, não estado
+        // ternário — o comentário do tipo diz, com estas palavras, que "dois
+        // cortes seguidos são −300 kcal, não outro −150" e que isso "não cabe
+        // em `-1 | 0 | 1`, que descreve um destino e não um saldo".
+        //
+        // Esta linha clampava a −1|0|1 e era a única no app a fazê-lo: o tipo
+        // diz `number`, quem escreve faz `antes + passo` sem teto, e
+        // `normalizaEstado()` aceita qualquer número finito. Então um backup de
+        // quem estava em dois passos voltava com saldo ZERO, calado — e zero não
+        // parece dado perdido, parece "nenhum ajuste em vigor". Mesma família do
+        // bug dos seis campos: perda muda no único caminho de volta que ele tem.
+        //
+        // Passa número finito e deixa `normalizaEstado()` arredondar: é ele o
+        // único lugar que sabe o padrão de cada campo.
+        ajuste: (typeof d.ajuste === 'number' && isFinite(d.ajuste)) ? d.ajuste : 0,
         perfManual: (d.perfManual === true || d.perfManual === false) ? d.perfManual : null,
         compras: (d.compras && typeof d.compras === 'object') ? d.compras : null,
         // a sincronização: sem estes, importar um backup zeraria o carimbo do

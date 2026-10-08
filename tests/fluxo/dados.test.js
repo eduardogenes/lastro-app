@@ -347,6 +347,14 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
 
   // os seis que sumiam, com conteúdo reconhecível
   a.E(`S.ajusteHist = [{ t: 1, de: 0, para: -1, k: 'menos', p: 150, reg: 12 }]`);
+  // O SALDO do ajuste, com DOIS passos acumulados. Semear 0 aqui era o que
+  // deixava o defeito passar: a asserção de ida e volta abaixo compara todas as
+  // chaves, e 0 volta 0. A importação clampava o saldo a `-1 | 0 | 1` — o
+  // ternário que o comentário do próprio tipo diz NÃO caber, porque "dois
+  // cortes seguidos são −300 kcal, não outro −150". Um backup de quem está em
+  // dois passos voltava com saldo ZERO, calado, no único caminho de volta que
+  // ele tem — e zero não parece dado perdido, parece "nenhum ajuste em vigor".
+  a.E(`S.ajuste = -2`);
   a.E(`S.aulas = [{ n: 'HYROX sexta', mov: [{ n: 'wall ball', s: 3, q: 20, u: 'rep' }] }]`);
   a.E(`S.comidaHist = [{ d: '2026-09-30', kcal: 2410, aderencia: 'plano' }]`);
   a.E(`S.gordura = [{ d: '2026-09-28', v: 'nao' }]`);
