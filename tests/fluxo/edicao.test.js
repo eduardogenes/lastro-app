@@ -438,3 +438,94 @@ test('espaço em excesso não vira nome diferente', async () => {
   assert.strictEqual(a.v('nomeEx', alvo), 'Leg press 45');
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// `ctx.edicaoDoDia` — a leitura inteira da tela de editar o treino de hoje
+// ---------------------------------------------------------------------------
+//
+// Terceiro degrau do critério desta passada (quanto custa uma quebra em
+// silêncio). É a ÚNICA leitura da tela `edicaodia.jsx` — tudo que ela desenha
+// sai daqui —, e a frase que ela monta é o que promete, no meio do treino, que
+// mexer no dia não mexe no programa oficial. Quebrada em silêncio, ou a tela
+// fica vazia, ou ela mente sobre o que acontece com as mudanças no fim da
+// sessão. Não tinha menção em `tests/fluxo/`: a rede chegava nos verbos de
+// mexer, nunca na leitura que os mostra.
+//
+// O QUE ESTE GRUPO NÃO COBRE: que a tela esteja desenhando esta leitura.
+// Chamar o verbo prova que a capacidade existe no MODELO.
+
+test('ctx.edicaoDoDia descreve o dia, a linha de cada exercício e o aviso', async () => {
+  const a = await editando();
+  const d = a.vista().day;
+  const e = a.vJ('ctx.edicaoDoDia');
+
+  assert.strictEqual(e.dia, d, 'é a leitura do dia em edição');
+  assert.strictEqual(e.aviso, 'O programa oficial só muda se você quiser, no fim do treino.',
+    'sem mudança pendente, a promessa é a regra central do produto');
+  assert.deepStrictEqual(e.mods, [], 'e nada na lista de decisões');
+
+  const P = a.S().prog[d].ex;
+  assert.strictEqual(e.linhas.length, P.length, 'uma linha por exercício do dia');
+  assert.strictEqual(e.linhas[0].i, 0);
+  assert.strictEqual(e.linhas[0].ord, '01', 'a ordem vem com dois dígitos, pronta para a tela');
+  // O programa guarda `id` e `s`; o NOME mora no catálogo, e é de lá que a
+  // linha tem de tirá-lo — um nome renomeado por ele aparece aqui ou em lugar
+  // nenhum.
+  assert.strictEqual(e.linhas[0].nome, a.v('nomeEx', P[0].id));
+  assert.strictEqual(e.linhas[0].series, P[0].s, 'com as séries do dia');
+  assert.strictEqual(e.linhas[0].mexido, false, 'nada mexido ainda');
+  assert.strictEqual(e.linhas[0].noLugarDe, null, 'e nada no lugar de nada');
+  assert.strictEqual(e.linhas[0].primeira, true, 'a primeira sabe que é a primeira');
+  assert.strictEqual(e.linhas[0].ultima, false);
+  assert.strictEqual(e.linhas[P.length - 1].ultima, true,
+    'e a última também — é o que apaga as setas de subir e descer nas pontas');
+  assert.strictEqual(e.linhas[0].troca, null, 'o seletor de troca só vem no índice aberto');
+  a.fechar();
+});
+
+test('ctx.edicaoDoDia conta as mudanças pendentes, no singular e no plural', async () => {
+  // A frase decide o que ele entende que vai acontecer no fim do treino, e
+  // "1 mudanças pendentes" é o tipo de erro que faz a tela parecer rascunho.
+  const a = await editando();
+  a.v('mudaSeries', 0, 1);
+  await a.esperar();
+  const uma = a.vJ('ctx.edicaoDoDia');
+  assert.strictEqual(uma.aviso,
+    '1 mudança pendente. No fim do treino você decide se ela fica.');
+  assert.strictEqual(uma.mods.length, 1, 'com uma linha na lista de decisões');
+  assert.strictEqual(uma.linhas[0].mexido, true, 'e a linha mexida marcada');
+
+  a.v('mudaSeries', 1, 1);
+  await a.esperar();
+  const duas = a.vJ('ctx.edicaoDoDia');
+  assert.strictEqual(duas.aviso,
+    '2 mudanças pendentes. No fim do treino você decide o que fica.');
+  assert.strictEqual(duas.mods.length, 2);
+  assert.ok(duas.mods[0].txt, 'cada decisão vem com o texto dela: ' + duas.mods[0].txt);
+  a.fechar();
+});
+
+test('ctx.edicaoDoDia traz o seletor de troca só no índice aberto, e a procedência', async () => {
+  const a = await editando();
+  a.v('toggleSwap', 2);
+  await a.esperar();
+  const e = a.vJ('ctx.edicaoDoDia');
+  assert.ok(e.linhas[2].troca, 'o índice aberto traz as alternativas');
+  assert.ok(e.linhas[2].troca.grupos.length >= 1, 'agrupadas por padrão de movimento');
+  assert.strictEqual(e.linhas[0].troca, null, 'e nenhuma outra linha as traz');
+  assert.strictEqual(e.linhas[2].troca.voltar, null, 'sem troca feita, não há para onde voltar');
+
+  // feita a troca, a linha diz de onde veio — é a procedência que o programa
+  // oficial ainda guarda
+  // A troca entra pela TABELA DE AÇÃO, que `a.v` não alcança — `chama` parte o
+  // nome no primeiro ponto (§8.6). `a.m.ctx` é a porta documentada para as
+  // sete tabelas, e continua sendo por nome e sem `eval`.
+  const alvo = e.linhas[2].troca.grupos[0].opcoes[0];
+  a.m.ctx.acoesDia.escolheTroca(2, alvo.id);
+  await a.esperar();
+  const depois = a.vJ('ctx.edicaoDoDia');
+  assert.ok(/^no lugar de /.test(depois.linhas[2].noLugarDe),
+    'a linha carrega de quem ela tomou o lugar: ' + depois.linhas[2].noLugarDe);
+  assert.strictEqual(depois.linhas[2].mexido, true);
+  a.fechar();
+});

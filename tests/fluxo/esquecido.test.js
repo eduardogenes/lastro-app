@@ -110,3 +110,55 @@ test('na abertura: dentro da graça a sessão vive, além dela fecha', async () 
   assert.strictEqual(morta.E('S.sessao'), null, 'passada a graça, o app não pergunta mais');
   morta.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// `ctx.voltaAoTreino` — a porta de volta que a FAIXA oferece
+// ---------------------------------------------------------------------------
+//
+// Terceiro degrau do critério desta passada (quanto custa uma quebra em
+// silêncio): a faixa é o único lugar do app que leva de qualquer aba de volta à
+// sessão aberta, e `voltaAoTreino` é o verbo dela — `onVolta` em `app.jsx`.
+// Quebrado em silêncio, o treino em andamento fica alcançável só por quem
+// lembrar de trocar a aba E a letra do dia na mão, e a faixa passa a ser um
+// botão que não faz nada. Não tinha uma única menção em `tests/fluxo/`.
+//
+// O QUE ESTE GRUPO NÃO COBRE: que a faixa tenha botão ligado nele. Chamar o
+// verbo prova que a capacidade existe no MODELO, não que o dedo a alcança.
+
+test('ctx.voltaAoTreino leva à aba, ao DIA da sessão e ao exercício onde ele parou', async () => {
+  const a = await comSessao();
+  // sai da sessão: outra aba, e a letra do dia mexida por outro caminho
+  a.v('ctx.vaiPara', 'dados');
+  a.v('go', 'E');
+  a.v('ctx.fechaTudo');
+  assert.strictEqual(a.vista().aba, 'dados', 'pré-condição: longe do treino');
+  assert.strictEqual(a.vista().day, 'E', 'e em outro dia');
+  assert.strictEqual(a.S().sessao.day, 'A', 'a sessão aberta é do A');
+
+  a.v('ctx.voltaAoTreino');
+  await a.esperar();
+
+  assert.strictEqual(a.vista().aba, 'treino', 'voltou para a aba do treino');
+  assert.strictEqual(a.vista().day, 'A', 'e para o dia DA SESSÃO, não o último visitado');
+  assert.strictEqual(a.vista().open, 0,
+    'e ABERTO onde ele parou: `ondeEleEstava` devolve o primeiro PARCIAL, que é o ' +
+    '0 — uma série registrada de várias prescritas');
+  assert.strictEqual(a.vista().swapOpen, null, 'e sem seletor de troca pendurado');
+  a.fechar();
+});
+
+test('ctx.voltaAoTreino sem sessão aberta não mexe na tela', async () => {
+  // A faixa só existe com sessão aberta, mas o verbo é alcançável sem ela —
+  // e inventar uma volta para um treino que ninguém abriu trocaria a aba e a
+  // letra do dia dele sem nada ter acontecido.
+  const a = await app({ aba: 'dados' });
+  assert.strictEqual(a.S().sessao, null, 'pré-condição: nenhuma sessão');
+  const antes = JSON.stringify([a.vista().aba, a.vista().day, a.vista().open]);
+
+  a.v('ctx.voltaAoTreino');
+  await a.esperar();
+
+  assert.strictEqual(JSON.stringify([a.vista().aba, a.vista().day, a.vista().open]), antes,
+    'aba, dia e exercício aberto ficaram exatamente onde estavam: ' + antes);
+  a.fechar();
+});
