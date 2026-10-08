@@ -1,7 +1,7 @@
 // A fusão, de ponta a ponta: um estado antigo abre migrado e íntegro.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app, DIA } from './harness.js';
+import { app, agoraEstavel, DIA } from './harness.js';
 
 test('estado migra para o plano 4 e a nutrição nasce semeada', async () => {
   const a = await app();
@@ -604,5 +604,323 @@ test('removeItem e trocaItem com refeição ou índice que não existe não perg
     'o plano inteiro ficou byte a byte igual');
   assert.strictEqual(a.perguntas().length, perguntasAntes,
     'e nenhuma pergunta foi feita sobre item que não existe');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// O editor de refeição, por valor: abrir, ler, salvar, duplicar, marcar, buscar
+// ---------------------------------------------------------------------------
+//
+// O QUE ESTE GRUPO PROVA: que o editor de refeição é alcançável inteiro pelo
+// MODELO — abrir a folha certa, ler a refeição na forma que o editor consome,
+// gravar campo por campo, duplicar, marcar item de alta demanda e buscar
+// alimento — sem ler um `<input>` e sem `a.E('…')`.
+//
+// O QUE ESTE GRUPO NÃO PROVA: que a tela nova tenha um `···` que chame essas
+// chaves, nem que o formulário mande para `salvaRefeicao` o que ele mostra.
+// Entre o verbo e o dedo há uma fiação que nenhum caso daqui atravessa: a
+// casca que lê os campos continua fora do contrato da superfície, de propósito.
+// Se o redesenho ligar o botão "duplicar" em `salvaRefeicao`, tudo aqui segue
+// verde.
+
+test('ctx.abreRefeicao e ctx.novaRefeicao empilham a folha certa, e nada mais', async () => {
+  const a = await app({ aba: 'comida' });
+  assert.ok(!a.vista().pilha || a.vista().pilha.length === 0, 'nasce sem folha');
+
+  a.v('ctx.abreRefeicao', 'almoco');
+  await a.esperar(150);
+  assert.deepStrictEqual(a.vista().pilha, [{ k: 'refeicao', id: 'almoco' }],
+    'abreRefeicao empilha a folha de LEITURA daquela refeição');
+
+  a.v('ctx.novaRefeicao');
+  await a.esperar(150);
+  assert.deepStrictEqual(a.vista().pilha,
+    [{ k: 'refeicao', id: 'almoco' }, { k: 'editaRefeicao', id: null }],
+    'novaRefeicao empilha o EDITOR sem id — é o que diz ao editor que é nova');
+  assert.strictEqual(a.$$('.ins-folha').length, 2, 'e as duas estão na tela');
+
+  assert.strictEqual(a.S().comida.plano.length, 7,
+    'abrir não cria refeição: a refeição nova só nasce em salvaRefeicao');
+  a.fechar();
+});
+
+test('ctx.refeicaoParaEditar traduz a refeição para o editor, e acusa o alimento sumido', async () => {
+  const a = await app({ aba: 'comida' });
+  const vazia = a.vJ('ctx.refeicaoParaEditar', null);
+  assert.strictEqual(vazia.novo, true, 'sem id é refeição nova');
+  assert.deepStrictEqual([vazia.id, vazia.n, vazia.t, vazia.quando, vazia.itens.length],
+    [null, '', '12:00', 'sempre', 0], 'e vem com o formulário em branco, meio-dia e "sempre"');
+
+  const r = a.vJ('ctx.refeicaoParaEditar', 'almoco');
+  assert.strictEqual(r.novo, false);
+  assert.deepStrictEqual([r.id, r.n, r.t, r.quando], ['almoco', 'Almoço', '12:30', 'sempre']);
+  assert.deepStrictEqual(r.itens.map(function (i) { return i.idx; }), [0, 1, 2, 3, 4, 5],
+    'cada item carrega o PRÓPRIO índice: é por ele que removeItem e trocaItem entram');
+  assert.deepStrictEqual(r.itens[0].n, 'Arroz branco cozido',
+    'o nome vem do catálogo, não do plano — o plano guarda só o id');
+  assert.strictEqual(r.itens[0].u, 'g', 'e a unidade também');
+  assert.strictEqual(r.itens[0].sumido, false);
+
+  // um item apontando para alimento que não existe no catálogo
+  a.v('ctx.trocaItem', 'almoco', 1, 'alimento-fantasma');
+  await a.esperar();
+  const orfao = a.vJ('ctx.refeicaoParaEditar', 'almoco').itens[1];
+  assert.strictEqual(orfao.sumido, true, 'o item órfão se declara sumido');
+  assert.strictEqual(orfao.n, 'alimento-fantasma',
+    'e cai no id como nome, em vez de desenhar uma linha sem rótulo');
+  assert.strictEqual(orfao.q, 50, 'a quantidade dele continua legível, para ele poder corrigir');
+  a.fechar();
+});
+
+test('ctx.salvaRefeicao cria sem id e corrige com id, sem tocar nos itens', async () => {
+  const a = await app({ aba: 'comida' });
+
+  a.v('ctx.salvaRefeicao', 'almoco', { n: 'Almoço no trabalho', t: '13:15' });
+  await a.esperar();
+  const r = a.vJ('ctx.refeicaoParaEditar', 'almoco');
+  assert.strictEqual(r.n, 'Almoço no trabalho');
+  assert.strictEqual(r.t, '13:15');
+  assert.strictEqual(r.itens.length, 6,
+    'salvar os campos não mexe nos itens: campo não citado fica como estava');
+  assert.strictEqual(r.tag, 'PRATO PRINCIPAL', 'nem na tag');
+  assert.strictEqual(a.S().comida.plano.length, 7, 'e não duplicou a refeição');
+
+  a.v('ctx.salvaRefeicao', null, { t: '10:00' });
+  await a.esperar();
+  const plano = a.vJ('ctx.planoCompleto');
+  assert.strictEqual(plano.length, 8, 'sem id, nasce uma refeição nova');
+  const nova = plano.filter(function (x) { return x.t === '10:00'; })[0];
+  assert.strictEqual(nova.n, 'Refeição',
+    'sem nome ela ganha um: refeição sem rótulo na timeline não dá para ser tocada');
+  assert.ok(/^r\d+$/.test(nova.id), 'com id próprio, carimbado do relógio: ' + nova.id);
+  assert.deepStrictEqual(nova.itens, [], 'e nasce vazia');
+  assert.deepStrictEqual(plano.map(function (x) { return x.t; }),
+    ['05:45', '06:15', '08:00', '10:00', '13:15', '16:00', '19:30', '21:30'],
+    'e entra em ordem de relógio, entre o café das 08:00 e o almoço já remarcado');
+  a.fechar();
+});
+
+test('ctx.duplicaRefeicao copia o conteúdo, e a cópia é independente do original', async () => {
+  const a = await app({ aba: 'comida' });
+  a.v('ctx.abreRefeicao', 'ceia');
+  await a.esperar(150);
+  assert.strictEqual(a.$$('.ins-folha').length, 1, 'uma folha aberta — pré-condição');
+
+  a.v('ctx.duplicaRefeicao', 'ceia');
+  await a.esperar(150);
+
+  const plano = a.S().comida.plano;
+  assert.strictEqual(plano.length, 8, 'a cópia entrou no plano');
+  const copia = plano[plano.length - 1];
+  assert.strictEqual(copia.n, 'Ceia (cópia)',
+    'com o nome marcado: duas "Ceia" na lista seriam indistinguíveis');
+  assert.notStrictEqual(copia.id, 'ceia', 'e com id próprio');
+  assert.deepStrictEqual(copia.itens, plano.filter(function (r) { return r.id === 'ceia'; })[0].itens,
+    'o conteúdo veio inteiro');
+  assert.strictEqual(a.toast(), 'Refeição duplicada.', 'e o app diz que duplicou');
+  assert.strictEqual(a.$$('.ins-folha').length, 0, 'a folha fecha: o gesto acabou');
+
+  // independência: mexer na cópia não mexe no original
+  a.v('ctx.removeItem', copia.id, 0);
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', copia.id).itens.length, 1, 'a cópia perdeu um item');
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', 'ceia').itens.length, 2,
+    'e a ORIGINAL não: a cópia é profunda, não um apelido para os mesmos itens');
+  a.fechar();
+});
+
+test('duas duplicações no mesmo milissegundo produzem duas refeições com o MESMO id', async () => {
+  // ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. Ele grava uma assimetria do fonte:
+  // `idAlimento()` procura um id livre em laço (`base-2`, `base-3`…), mas o id
+  // de refeição é `'r' + Date.now()` nu, em `salvaRefeicao` e em
+  // `duplicaRefeicao`. Com o relógio parado — que é como esta suíte roda — duas
+  // duplicações colidem, e `achaRefeicao` passa a devolver sempre a primeira:
+  // a segunda fica no plano, soma no total do dia e é ineditável.
+  //
+  // No aparelho dele dois toques no mesmo milissegundo são implausíveis; o que
+  // este caso guarda é que NADA no código impede a colisão. Se alguém der às
+  // refeições o id colisão-segura dos alimentos, este caso fica vermelho e
+  // aponta a linha.
+  const a = await app({ aba: 'comida', agora: agoraEstavel(8) });
+  a.v('ctx.duplicaRefeicao', 'ceia');
+  a.v('ctx.duplicaRefeicao', 'ceia');
+  await a.esperar();
+
+  const ids = a.S().comida.plano.map(function (r) { return r.id; });
+  assert.strictEqual(ids.length, 9, 'as duas cópias entraram');
+  assert.strictEqual(ids[7], ids[8], 'e com o MESMO id: ' + ids[7]);
+  assert.strictEqual(new Set(ids).size, 8, 'o plano tem 9 refeições e 8 ids');
+  a.fechar();
+});
+
+test('ctx.alternaAlta liga e desliga a marca do item, apagando a chave em vez de gravar false', async () => {
+  const a = await app({ aba: 'comida' });
+  const cru = function (i) { return a.S().comida.plano.filter(function (r) { return r.id === 'almoco'; })[0].itens[i]; };
+  assert.strictEqual(cru(5).alta, undefined, 'o kiwi não é item de alta demanda — pré-condição');
+
+  a.v('ctx.alternaAlta', 'almoco', 5);
+  await a.esperar();
+  assert.strictEqual(cru(5).alta, true, 'ligou');
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', 'almoco').itens[5].alta, true,
+    'e o editor lê a marca');
+  assert.strictEqual(cru(0).alta, undefined, 'o item vizinho não foi tocado');
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', 'treino').itens[1].alta, true,
+    'nem a marca que já existia em outra refeição');
+
+  a.v('ctx.alternaAlta', 'almoco', 5);
+  await a.esperar();
+  assert.ok(!('alta' in cru(5)),
+    'desligar APAGA a chave em vez de gravar false — é o que mantém o backup e a fusão enxutos');
+  assert.strictEqual(cru(5).q, 100, 'e a quantidade atravessa as duas idas');
+  a.fechar();
+});
+
+test('ctx.alimentosParaSeletor acha por pedaço do nome, sem acento, e em ordem', async () => {
+  const a = await app({ aba: 'comida' });
+  const todos = a.vJ('ctx.alimentosParaSeletor', '');
+  assert.ok(todos.length > 20, 'busca vazia é a biblioteca inteira: ' + todos.length);
+  const nomes = todos.map(function (x) { return x.n; });
+  assert.deepStrictEqual(nomes, nomes.slice().sort(function (x, y) { return x.localeCompare(y, 'pt-BR'); }),
+    'em ordem alfabética de pt-BR, que é a ordem em que ele procura com o dedo');
+
+  assert.deepStrictEqual(a.vJ('ctx.alimentosParaSeletor', 'feijao').map(function (x) { return x.n; }),
+    ['Feijão cozido'], 'digitar sem acento acha o acentuado');
+  assert.deepStrictEqual(a.vJ('ctx.alimentosParaSeletor', 'lei').map(function (x) { return x.n; }),
+    ['Doce de leite', 'Geleia light', 'Leite em pó integral', 'Leite integral'],
+    'e o pedaço casa no meio da palavra, não só no começo');
+  assert.deepStrictEqual(a.vJ('ctx.alimentosParaSeletor', 'xyzqk'), [],
+    'sem resultado devolve lista vazia, não a biblioteca inteira');
+
+  // o que ele cadastra entra na mesma busca
+  a.v('ctx.salvaAlimento', null, { n: 'Tapioca pronta', cat: 'mercearia', u: 'g', kcal: 160, p: 0, c: 40, g: 0, cru: 0 });
+  await a.esperar();
+  assert.deepStrictEqual(a.vJ('ctx.alimentosParaSeletor', 'tapioca').map(function (x) { return x.n; }),
+    ['Tapioca pronta'], 'o alimento dele aparece junto com os da prescrição');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// O plano lido inteiro, a cadência da semana e a lista de compras
+// ---------------------------------------------------------------------------
+//
+// O QUE ESTE GRUPO PROVA: que as três leituras do plano (`planoCompleto`,
+// `resumoDoPlano`, e a de compras por trás de `setHorizonteCompras` e
+// `marcaCompra`) respondem ao dado, e que `alternaCadencia` muda um dia da
+// semana e só aquele dia.
+//
+// O QUE ESTE GRUPO NÃO PROVA: que a tela DESENHE o que a leitura devolve. Uma
+// tela nova que lesse `resumoDoPlano` e mostrasse só o total de dia de treino
+// passaria por tudo aqui — e seria exatamente o erro que a existência de dois
+// totais existe para evitar. Nada aqui conta elementos na tela.
+
+test('ctx.planoCompleto devolve o plano em ordem de relógio, com o kcal de cada refeição', async () => {
+  const a = await app({ aba: 'comida' });
+  const plano = a.vJ('ctx.planoCompleto');
+  const horas = plano.map(function (r) { return r.t; });
+  assert.deepStrictEqual(horas, horas.slice().sort(), 'ordenado pelo relógio');
+  assert.ok(plano.every(function (r) { return typeof r.kcal === 'number' && r.kcal > 0; }),
+    'cada refeição vem com o próprio kcal, já somado do catálogo');
+  assert.ok(plano.every(function (r) { return Array.isArray(r.itens); }),
+    'e com os itens, para a lista não precisar de uma segunda leitura');
+
+  // uma refeição fora de ordem no estado: a leitura ordena, o estado não muda
+  a.v('ctx.salvaRefeicao', null, { n: 'Café duplo', t: '06:00' });
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.planoCompleto')[1].n, 'Café duplo',
+    'a nova entra em segundo lugar na LEITURA, entre 05:45 e 06:15');
+  assert.strictEqual(a.S().comida.plano[7].n, 'Café duplo',
+    'e continua em último no ESTADO: planoCompleto ordena sem reescrever o plano');
+  a.fechar();
+});
+
+test('ctx.resumoDoPlano fecha a conta nos dois tipos de dia, e não num só', async () => {
+  const a = await app({ aba: 'comida' });
+  const num = function (s) { return Number(String(s).replace(/\./g, '')); };
+  const antes = a.vJ('ctx.resumoDoPlano');
+  assert.strictEqual(antes.refeicoes, 7, 'conta as refeições do plano');
+  assert.ok(num(antes.treino.kcal) > num(antes.descanso.kcal),
+    'o dia de treino soma mais: as refeições condicionais entram só nele — ' +
+    antes.treino.kcal + ' vs ' + antes.descanso.kcal);
+  assert.match(antes.treino.macros, /^\d+ P · \d+ C · \d+ G$/, 'macros na forma P · C · G');
+
+  // o pré-treino passa a valer todo dia: o total de DESCANSO sobe, o de treino não
+  a.v('ctx.salvaRefeicao', 'pre', { quando: 'sempre' });
+  await a.esperar();
+  const depois = a.vJ('ctx.resumoDoPlano');
+  assert.strictEqual(num(depois.treino.kcal), num(antes.treino.kcal),
+    'o dia de treino já contava o pré-treino: não muda');
+  assert.ok(num(depois.descanso.kcal) > num(antes.descanso.kcal),
+    'e o de descanso sobe pelo kcal do pré-treino — é a prova de que os dois totais ' +
+    'não são o mesmo número escrito duas vezes');
+  assert.strictEqual(depois.refeicoes, 7, 'sem refeição nova: mudou a condição, não a lista');
+  a.fechar();
+});
+
+test('ctx.alternaCadencia vira um dia da semana, e só aquele dia', async () => {
+  const a = await app({ aba: 'comida' });
+  const antes = a.S().cadencia.slice();
+  assert.strictEqual(antes.length, 7, 'sete posições — pré-condição');
+
+  a.v('ctx.alternaCadencia', 0);
+  await a.esperar();
+  const depois = a.S().cadencia;
+  assert.strictEqual(depois.length, 7, 'continua com sete');
+  assert.notStrictEqual(depois[0], antes[0], 'o domingo virou');
+  assert.ok(depois[0] === 'treino' || depois[0] === 'descanso',
+    'para o outro dos dois valores, nunca para um terceiro: ' + depois[0]);
+  assert.deepStrictEqual(depois.slice(1), antes.slice(1),
+    'e os outros seis dias não foram tocados');
+
+  a.v('ctx.alternaCadencia', 0);
+  await a.esperar();
+  assert.deepStrictEqual(a.S().cadencia, antes, 'o mesmo verbo devolve: é alternar, não setar');
+  a.fechar();
+});
+
+test('ctx.marcaCompra liga e desliga o comprado item por item, sem tirar a linha da lista', async () => {
+  const a = await app({ aba: 'comida' });
+  const linhas = a.vJ('ctx.compras').linhas.length;
+  assert.ok(linhas > 5, 'a lista de compras tem linhas: ' + linhas);
+  assert.deepStrictEqual(a.S().compras.comprado, {}, 'nada comprado — pré-condição');
+
+  a.v('ctx.marcaCompra', 'arroz');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.compras').comprado.arroz, 1, 'o arroz ficou marcado');
+  assert.strictEqual(a.vJ('ctx.compras').linhas.length, linhas,
+    'e a linha FICA na lista: marcar é riscar, não remover — remover é outra porta');
+  assert.deepStrictEqual(Object.keys(a.S().compras.comprado), ['arroz'],
+    'nenhum outro item foi marcado de carona');
+  assert.deepStrictEqual(a.S().compras.removidas, {}, 'e nada foi removido da lista');
+
+  a.v('ctx.marcaCompra', 'arroz');
+  await a.esperar();
+  assert.strictEqual(a.S().compras.comprado.arroz, undefined,
+    'o mesmo verbo desmarca, apagando a chave em vez de gravar 0');
+  a.fechar();
+});
+
+test('ctx.setHorizonteCompras muda o horizonte e a lista recalcula em cima dele', async () => {
+  const a = await app({ aba: 'comida' });
+  const antes = a.vJ('ctx.compras');
+  assert.strictEqual(antes.dias, 7, 'o horizonte nasce em uma semana');
+  assert.strictEqual(antes.previsao.treino + antes.previsao.descanso, 7,
+    'e a previsão reparte os sete dias entre treino e descanso');
+  const arrozAntes = antes.linhas.filter(function (l) { return l.f === 'arroz'; })[0];
+  a.v('ctx.marcaCompra', 'arroz');
+  await a.esperar();
+
+  a.v('ctx.setHorizonteCompras', 14);
+  await a.esperar();
+  const depois = a.vJ('ctx.compras');
+  assert.strictEqual(depois.dias, 14, 'o horizonte mudou');
+  assert.strictEqual(a.S().compras.dias, 14, 'e ficou no estado, não só na leitura');
+  assert.strictEqual(depois.previsao.treino + depois.previsao.descanso, 14,
+    'a previsão acompanhou');
+  const arrozDepois = depois.linhas.filter(function (l) { return l.f === 'arroz'; })[0];
+  assert.ok(arrozDepois.pronto > arrozAntes.pronto,
+    'e a quantidade a comprar subiu com o horizonte: ' + arrozAntes.pronto + ' → ' + arrozDepois.pronto);
+
+  assert.strictEqual(a.S().compras.comprado.arroz, 1,
+    'o que ele já marcou como comprado sobrevive à troca de horizonte');
   a.fechar();
 });
