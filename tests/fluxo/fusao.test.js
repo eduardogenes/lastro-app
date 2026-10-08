@@ -549,19 +549,19 @@ test('ctx.trocaItem troca o alimento, preserva a quantidade e não mexe em mais 
   a.fechar();
 });
 
-test('ctx.trocaItem leva junto as marcas do item antigo — inclusive a do arroz', async () => {
-  // ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. Ele grava o que o app faz hoje:
-  // `trocaItem` só reescreve `i.f`, então `i.arroz` e `i.alta` sobrevivem à
-  // troca e passam a valer para o alimento NOVO.
+test('ctx.trocaItem derruba a marca do arroz e preserva a de alta demanda', async () => {
+  // O corte do dono, de 08/10, e é pela NATUREZA da marca:
   //
-  // `i.arroz` é onde o ajuste calórico da dieta aterra (`arrozAtual`,
-  // `aplicaArroz`): trocar o arroz do almoço por outra coisa move a alavanca
-  // do ajuste para um alimento que não é arroz, em silêncio. `i.alta` é o
-  // carboidrato intra-treino do dia de alta demanda. Se alguém decidir que a
-  // troca deve limpar as marcas, este caso fica vermelho e aponta a linha.
+  // - `i.arroz` diz QUAL ALIMENTO o item é — é onde o ajuste calórico aterra
+  //   (`arrozAtual`, `aplicaArroz`). A troca a torna falsa, então ela CAI:
+  //   antes disto, trocar o arroz do almoço por cuscuz movia a alavanca do
+  //   ajuste para algo que não é arroz, em silêncio.
+  // - `i.alta` diz QUANDO o item aparece (só em dia de alta demanda). Descreve
+  //   o lugar no plano, e o lugar não mudou. Então ela FICA.
   const a = await app({ aba: 'comida' });
   const arrozAntes = a.v('arrozAtual');
-  assert.ok(arrozAntes > 0, 'o plano tem arroz, e o ajuste aterra nele: ' + arrozAntes);
+  assert.strictEqual(arrozAntes, 500,
+    'o plano tem arroz em duas refeições, 250 g cada — pré-condição');
   assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', 'almoco').itens[0].arroz, true,
     'o primeiro item do almoço é o arroz marcado — pré-condição');
 
@@ -570,18 +570,45 @@ test('ctx.trocaItem leva junto as marcas do item antigo — inclusive a do arroz
 
   const trocado = a.vJ('ctx.refeicaoParaEditar', 'almoco').itens[0];
   assert.strictEqual(trocado.f, 'cuscuz', 'o item virou cuscuz');
-  assert.strictEqual(trocado.arroz, true,
-    'e CONTINUA marcado como arroz: a marca é do item, e a troca não a limpa');
-  assert.strictEqual(a.v('arrozAtual'), arrozAntes,
-    'então o "arroz do plano" do ajuste segue contando esses 250 g, agora de cuscuz');
+  assert.strictEqual(trocado.arroz, false,
+    'e NÃO é mais arroz: a marca diz qual alimento é, e a troca a tornou falsa');
+  assert.strictEqual(a.S().comida.plano.filter(function (r) { return r.id === 'almoco'; })[0].itens[0].arroz,
+    undefined, 'a marca saiu do plano gravado, não só da leitura do editor');
+  assert.strictEqual(a.v('arrozAtual'), 250,
+    'e o "arroz do plano" do ajuste deixou de contar esses 250 g de cuscuz');
 
-  // a mesma coisa com `alta`, o carboidrato intra-treino
+  // `alta` é o carboidrato intra-treino: lugar no plano, não alimento.
   assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', 'treino').itens[1].alta, true,
     'o malto do intra-treino é marcado como "alta demanda" — pré-condição');
   a.v('ctx.trocaItem', 'treino', 1, 'banana');
   await a.esperar();
   assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', 'treino').itens[1].alta, true,
-    'a marca de alta demanda também passa para o alimento novo');
+    'a marca de alta demanda SOBREVIVE: o item segue só entrando em dia de alta');
+  a.fechar();
+});
+
+test('ctx.trocaItem não decide sobre a marca de cafeína — ela sobrevive, por ora', async () => {
+  // ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. `i.caf` é a terceira marca por item
+  // (`Item.caf` em dominio/nutricao/tipos.ts) e é da mesma natureza de
+  // `i.arroz` — diz qual alimento é, a fonte de cafeína do pré-treino, que
+  // `refeicoesDeHoje` corta do dia quando o pré cai depois do CORTE_CAFEINA.
+  // O dono decidiu `arroz` e `alta` em 08/10 e não foi perguntado sobre esta.
+  // Ela não aparece em `refeicaoParaEditar`, então nenhuma tela a mostra e só
+  // o estado a revela. Se alguém decidir que ela também cai, este caso fica
+  // vermelho e aponta a linha.
+  const a = await app({ aba: 'comida' });
+  const cafeDoPre = function () {
+    return a.S().comida.plano.filter(function (r) { return r.id === 'pre'; })[0].itens[3];
+  };
+  assert.strictEqual(cafeDoPre().f, 'cafe', 'o quarto item do pré é o café — pré-condição');
+  assert.strictEqual(cafeDoPre().caf, 1, 'e é a fonte de cafeína marcada — pré-condição');
+
+  a.v('ctx.trocaItem', 'pre', 3, 'kiwi');
+  await a.esperar();
+
+  assert.strictEqual(cafeDoPre().f, 'kiwi', 'o item virou kiwi');
+  assert.strictEqual(cafeDoPre().caf, 1,
+    'e o kiwi herdou a marca de cafeína — o que o app faz hoje, sem decisão do dono');
   a.fechar();
 });
 

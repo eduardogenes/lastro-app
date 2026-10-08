@@ -6146,6 +6146,21 @@ CTX.trocaItem = function (refId, idx, foodId) {
   const r = achaRefeicao(refId);
   if (!r || !r.itens[idx]) return;
   r.itens[idx].f = foodId;
+  // O corte é pela NATUREZA da marca, não por uma lista:
+  //
+  // - `arroz` diz QUAL ALIMENTO o item é — é onde o ajuste calórico aterra
+  //   (`arrozAtual`, `aplicaArroz`). A troca torna a marca falsa: sem isto,
+  //   trocar o arroz do almoço por cuscuz movia a alavanca do ajuste para algo
+  //   que não é arroz, em silêncio, e a tela passava a chamar de arroz o que
+  //   não é. Então ela CAI.
+  // - `alta` diz QUANDO o item aparece (só em dia de alta demanda). Descreve o
+  //   lugar no plano, e o lugar não mudou com a troca. Então ela FICA.
+  //
+  // `caf` (fonte de cafeína, que `refeicoesDeHoje` corta quando o pré cai na
+  // tarde) é da mesma natureza de `arroz` — diz qual alimento é —, mas o dono
+  // não a decidiu e ela não entra em nenhuma tela: `refeicaoParaEditar` não a
+  // devolve. Fica como está, de propósito, até haver decisão.
+  delete r.itens[idx].arroz;
   CTX.fechaFolha();
   queueSave(); render();
 };
