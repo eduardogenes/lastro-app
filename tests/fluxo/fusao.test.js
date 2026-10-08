@@ -429,3 +429,180 @@ test('remover uma refeição limpa o que era do dia junto', async () => {
   assert.strictEqual(a.S().dia.escala.lanche, undefined, 'o ajuste de porção também');
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// O destrutivo de dentro da refeição: `removeItem` e `trocaItem`
+// ---------------------------------------------------------------------------
+//
+// O QUE ESTE GRUPO PROVA: que as duas capacidades existem NO MODELO, que cada
+// uma apaga o que diz apagar — e, sobretudo, **que ela não apaga mais do que
+// isso**. O escopo delimitado é metade da capacidade: um `removeItem` que
+// crescesse do item para a refeição, ou da refeição de hoje para o plano
+// inteiro, continuaria passando em todo teste que só olhasse o item removido.
+// Por isso cada caso afirma o que FICA, item por item, refeição por refeição.
+//
+// O QUE ESTE GRUPO NÃO PROVA: que exista botão, menu ou `···` na tela ligado
+// nessas chaves. Chamar `a.v('ctx.removeItem', …)` prova a capacidade no
+// modelo; não prova a FIAÇÃO. Se o redesenho esquecer o item destrutivo do
+// editor de refeição, estes casos continuam todos verdes e o dedo não alcança
+// a capacidade. Nenhum deles conta botões.
+//
+// Entram pelo nome e pelo valor (`a.v('ctx.removeItem', 'almoco', 2)`), nunca
+// por `a.E('…')`: é o que os faz sobreviver à reescrita das telas.
+
+test('ctx.removeItem pergunta antes, diz o que muda, e recusar não tira nada', async () => {
+  const a = await app({ aba: 'comida' });
+  const antes = a.vJ('ctx.refeicaoParaEditar', 'almoco').itens.map(function (i) { return i.f; });
+  assert.strictEqual(antes[2], 'frango', 'o terceiro item do almoço é o frango');
+  const versaoAntes = a.S().comida.v;
+
+  a.recusar();
+  a.v('ctx.removeItem', 'almoco', 2);
+  await a.esperar();
+
+  const pergunta = a.perguntas().slice(-1)[0];
+  assert.ok(/^Tirar frango cozido de Almoço\?/.test(pergunta),
+    'a pergunta nomeia o alimento E a refeição: ' + pergunta);
+  assert.ok(/todos os dias/.test(pergunta),
+    'e diz que o estrago é o plano de todo dia, não o de hoje: ' + pergunta);
+  assert.ok(/continua na biblioteca/.test(pergunta),
+    'e delimita: o alimento não é apagado junto: ' + pergunta);
+
+  assert.deepStrictEqual(a.vJ('ctx.refeicaoParaEditar', 'almoco').itens.map(function (i) { return i.f; }),
+    antes, 'recusar deixa a refeição exatamente como estava');
+  assert.strictEqual(a.S().comida.v, versaoAntes,
+    'e nem carimba o plano como mudado — a versão só anda quando algo mudou');
+  a.fechar();
+});
+
+test('ctx.removeItem tira UM item, e nada além daquele item', async () => {
+  // O caso do escopo. `frango` está no almoço E no café da manhã, e o almoço
+  // tem outros cinco itens: as três coisas que um apagamento largo levaria.
+  const a = await app({ aba: 'hoje' });
+  a.v('ctx.marcaRefeicao', 'almoco');
+  a.v('ctx.setEscala', 'almoco', 0.5);
+  await a.esperar();
+  assert.ok(a.S().dia.done.almoco > 1, 'o almoço de hoje está marcado — pré-condição');
+
+  const noCafe = a.vJ('ctx.refeicaoParaEditar', 'pos').itens.map(function (i) { return i.f; });
+  assert.ok(noCafe.indexOf('frango') >= 0, 'o frango também está no café da manhã');
+  const versaoAntes = a.S().comida.v;
+
+  a.aceitar();
+  a.v('ctx.removeItem', 'almoco', 2);
+  await a.esperar();
+
+  const depois = a.vJ('ctx.refeicaoParaEditar', 'almoco').itens;
+  assert.deepStrictEqual(depois.map(function (i) { return i.f; }),
+    ['arroz', 'feijao', 'legumes', 'azeite', 'kiwi'],
+    'saiu o frango, e só ele — os outros cinco ficam, na ordem');
+  assert.deepStrictEqual(depois.map(function (i) { return i.q; }), [250, 50, 100, 15, 100],
+    'com as quantidades intactas: o índice andou, o dado não');
+
+  assert.deepStrictEqual(a.vJ('ctx.refeicaoParaEditar', 'pos').itens.map(function (i) { return i.f; }),
+    noCafe, 'o frango do CAFÉ DA MANHÃ fica: o escopo é o item, não o alimento');
+  assert.strictEqual(a.vJ('ctx.alimentosParaSeletor', 'frango').length, 1,
+    'e o alimento continua na biblioteca, pronto para voltar');
+  assert.strictEqual(a.S().comida.plano.length, 7, 'as sete refeições do plano ficam');
+
+  assert.ok(a.S().dia.done.almoco > 1,
+    'a marcação de HOJE fica — tirar um item não desmarca a refeição comida');
+  assert.strictEqual(a.S().dia.escala.almoco, 0.5,
+    'e o ajuste de porção de hoje também fica (diferente de removeRefeicao, que leva os dois)');
+  assert.ok(a.S().comida.v > (versaoAntes || 0),
+    'o plano foi carimbado como mudado: dia fechado antes disto não mente');
+  a.fechar();
+});
+
+test('ctx.trocaItem troca o alimento, preserva a quantidade e não mexe em mais nada', async () => {
+  const a = await app({ aba: 'comida' });
+  const noCafe = a.vJ('ctx.refeicaoParaEditar', 'pos').itens.map(function (i) { return i.f; });
+  const versaoAntes = a.S().comida.v;
+
+  // uma folha aberta, para medir que o verbo a fecha
+  a.v('ctx.editaRefeicao', 'almoco');
+  a.v('ctx.abreFolha', { k: 'seletor', ref: 'almoco', idx: 2 });
+  await a.esperar(150);
+  assert.strictEqual(a.$$('.ins-folha').length, 2, 'duas folhas na pilha — pré-condição');
+
+  a.v('ctx.trocaItem', 'almoco', 2, 'suino');
+  await a.esperar(150);
+
+  const depois = a.vJ('ctx.refeicaoParaEditar', 'almoco').itens;
+  assert.deepStrictEqual(depois.map(function (i) { return i.f; }),
+    ['arroz', 'feijao', 'suino', 'legumes', 'azeite', 'kiwi'],
+    'o terceiro item virou suíno, na mesma posição');
+  assert.strictEqual(depois[2].q, 80,
+    'e A QUANTIDADE É A DO ITEM ANTIGO: trocar não faz ele digitar 80 g de novo');
+  assert.strictEqual(depois.length, 6, 'nenhum item entrou nem saiu');
+  assert.deepStrictEqual(depois.filter(function (i) { return i.idx !== 2; }).map(function (i) { return i.q; }),
+    [250, 50, 100, 15, 100], 'os outros cinco não foram tocados');
+
+  assert.deepStrictEqual(a.vJ('ctx.refeicaoParaEditar', 'pos').itens.map(function (i) { return i.f; }),
+    noCafe, 'o frango do café da manhã fica: a troca é daquele item, não do alimento');
+  assert.strictEqual(a.vJ('ctx.alimentosParaSeletor', 'frango').length, 1,
+    'e o frango continua na biblioteca, sem ter sido apagado por falta de uso');
+
+  assert.strictEqual(a.$$('.ins-folha').length, 1,
+    'o verbo fecha a folha de onde a escolha veio, e só ela');
+  assert.ok(a.S().comida.v > (versaoAntes || 0), 'e carimba o plano como mudado');
+  a.fechar();
+});
+
+test('ctx.trocaItem leva junto as marcas do item antigo — inclusive a do arroz', async () => {
+  // ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. Ele grava o que o app faz hoje:
+  // `trocaItem` só reescreve `i.f`, então `i.arroz` e `i.alta` sobrevivem à
+  // troca e passam a valer para o alimento NOVO.
+  //
+  // `i.arroz` é onde o ajuste calórico da dieta aterra (`arrozAtual`,
+  // `aplicaArroz`): trocar o arroz do almoço por outra coisa move a alavanca
+  // do ajuste para um alimento que não é arroz, em silêncio. `i.alta` é o
+  // carboidrato intra-treino do dia de alta demanda. Se alguém decidir que a
+  // troca deve limpar as marcas, este caso fica vermelho e aponta a linha.
+  const a = await app({ aba: 'comida' });
+  const arrozAntes = a.v('arrozAtual');
+  assert.ok(arrozAntes > 0, 'o plano tem arroz, e o ajuste aterra nele: ' + arrozAntes);
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', 'almoco').itens[0].arroz, true,
+    'o primeiro item do almoço é o arroz marcado — pré-condição');
+
+  a.v('ctx.trocaItem', 'almoco', 0, 'cuscuz');
+  await a.esperar();
+
+  const trocado = a.vJ('ctx.refeicaoParaEditar', 'almoco').itens[0];
+  assert.strictEqual(trocado.f, 'cuscuz', 'o item virou cuscuz');
+  assert.strictEqual(trocado.arroz, true,
+    'e CONTINUA marcado como arroz: a marca é do item, e a troca não a limpa');
+  assert.strictEqual(a.v('arrozAtual'), arrozAntes,
+    'então o "arroz do plano" do ajuste segue contando esses 250 g, agora de cuscuz');
+
+  // a mesma coisa com `alta`, o carboidrato intra-treino
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', 'treino').itens[1].alta, true,
+    'o malto do intra-treino é marcado como "alta demanda" — pré-condição');
+  a.v('ctx.trocaItem', 'treino', 1, 'banana');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', 'treino').itens[1].alta, true,
+    'a marca de alta demanda também passa para o alimento novo');
+  a.fechar();
+});
+
+test('removeItem e trocaItem com refeição ou índice que não existe não perguntam nem mexem', async () => {
+  // A guarda `if (!r || !r.itens[idx]) return` — e a ordem dela importa:
+  // `removeItem` só pergunta DEPOIS de achar o item, então um índice fora da
+  // lista não produz um `confirm` sobre "este item".
+  const a = await app({ aba: 'comida' });
+  const antes = JSON.stringify(a.S().comida.plano);
+  const perguntasAntes = a.perguntas().length;
+
+  a.v('ctx.removeItem', 'nao-existe', 0);
+  a.v('ctx.removeItem', 'almoco', 99);
+  a.v('ctx.removeItem', 'almoco', -1);
+  a.v('ctx.trocaItem', 'nao-existe', 0, 'arroz');
+  a.v('ctx.trocaItem', 'almoco', 99, 'arroz');
+  await a.esperar();
+
+  assert.strictEqual(JSON.stringify(a.S().comida.plano), antes,
+    'o plano inteiro ficou byte a byte igual');
+  assert.strictEqual(a.perguntas().length, perguntasAntes,
+    'e nenhuma pergunta foi feita sobre item que não existe');
+  a.fechar();
+});
