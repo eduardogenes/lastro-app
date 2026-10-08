@@ -6,7 +6,12 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { funde, chaveDeLog, chaveDeSessao, chaveDeMarca, chaveDeCardio, chaveDePromo, chaveDeSessaoFoto, chaveDeFotoDoCorpo, LAPIDE_DIAS } from '../../src/dominio/sincronia';
+import {
+  chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeDiaComida, chaveDeFoto,
+  chaveDeFotoDoCorpo, chaveDeLeitura, chaveDeLog, chaveDeMarca, chaveDeProgLog,
+  chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessao, chaveDeSessaoFoto,
+  funde, lapidesDoApagamento, LAPIDE_DIAS
+} from '../../src/dominio/sincronia';
 import type { Corpo, Enquadramento, Estado, Log, QualMarca, SessaoFoto } from '../../src/dominio/tipos';
 import type { DiaComidaHist } from '../../src/dominio/nutricao/tipos';
 import { MARCAS_DO_CORPO } from '../../src/dominio/corpo';
@@ -746,4 +751,158 @@ test('a refeição marcada sobrevive à ausência temporária dela no plano', ()
   const b = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 2, escala: {} } } as Partial<Estado>);
   const { estado: r } = funde(a, b, T0);
   assert.strictEqual(r.dia!.done.ceia, T0 - 3600000, 'a marca não se perde');
+});
+
+// ---------- o apagamento em bloco ----------
+//
+// `wipe` esvazia as coleções de uma vez, sem passar registro por registro. Sem
+// lápide nova, a fusão lê o que sobrou no outro aparelho como registro que este
+// simplesmente não tem — e o traz de volta, contra um aviso que promete "isso
+// não tem volta". `lapidesDoApagamento` é o que faz o apagamento em bloco virar
+// o que a fusão já sabe ler.
+
+/** Um estado com UM registro de cada família que a fusão sabe enterrar. */
+function cheio(t: number): Estado {
+  return estado({
+    mtime: t,
+    logs: { supino: [log(t, [[60, 8]])] },
+    done: [{ day: 'A', t: t, sid: t, dur: 0 }],
+    cardio: [{ t: t, m: 'bike', min: 25, i: 'moderado' }],
+    body: Object.assign(corpoVazio(), { peso: [{ t: t, v: 80 }] }),
+    progLog: [{ t: t, day: 'A', txt: 'subiu lateral' }],
+    aulas: [{ id: 'a1', nome: 'sábado do box', t: t, mov: [] }],
+    promoPendente: [{ sid: t, t: t, day: 'A', list: [] }],
+    gordura: [{ d: '2026-08-24', de: '2026-07-24', v: 'sim', t: t }],
+    comidaHist: [{ d: '2026-08-24', done: { almoco: t }, agua: 3, escala: {},
+                   tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 0, m: t }],
+    descanso: { '2026-08-23': t },
+    fotos: { supino: { v: t, ext: 'webp' } },
+    protocolo: { poses: null, sessoes: [{ d: '2026-08-24', t: t, fotos: { frente: { v: t, ext: 'webp' } }, m: t }] }
+  } as Partial<Estado>);
+}
+
+/** O que `wipe` monta: coleções vazias, prescrição de pé. */
+function apagado(t: number): Estado {
+  const s = estado({ mtime: t + 1000, body: corpoVazio() } as Partial<Estado>);
+  (s as Estado & { aulas: unknown[] }).aulas = [];
+  (s as Estado & { comidaHist: unknown[] }).comidaHist = [];
+  (s as Estado & { descanso: Record<string, number> }).descanso = {};
+  (s as Estado & { fotos: Record<string, unknown> }).fotos = {};
+  (s as Estado & { gordura: unknown[] }).gordura = [];
+  (s as Estado & { promoPendente: unknown[] }).promoPendente = [];
+  (s as Estado & { protocolo: unknown }).protocolo = { poses: null, sessoes: [] };
+  return s;
+}
+
+test('o apagamento em bloco rende uma lápide por registro, na chave da fusão', () => {
+  const antes = cheio(T0);
+  const mortos = lapidesDoApagamento(antes, apagado(T0), T0 + 1000);
+
+  // as chaves são as MESMAS que `funde` usa para unir, uma a uma
+  assert.strictEqual(mortos[chaveDeLog('supino', { sid: T0 })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeSessao({ sid: T0 })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeCardio({ t: T0 })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeMarca('peso', { t: T0 })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeProgLog({ t: T0, day: 'A' })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeAula({ id: 'a1' })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDePromo({ sid: T0, t: T0 })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeLeitura({ d: '2026-08-24' })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeDiaComida({ d: '2026-08-24' })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeRefeicaoFeita('2026-08-24', 'almoco')], T0 + 1000,
+    'a refeição marcada tem lápide própria: desmarcar nunca foi apagar o dia');
+  assert.strictEqual(mortos[chaveDeDescanso('2026-08-23')], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeFoto('supino')], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeSessaoFoto('2026-08-24')], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeFotoDoCorpo('2026-08-24', 'frente')], T0 + 1000,
+    'a foto dentro da sessão também: a sessão pode sobreviver sem ela');
+});
+
+test('a lápide é a DIFERENÇA: o que o apagamento preservar não ganha lápide', () => {
+  // É o que mantém a decisão de escopo num lugar só — o estado novo. Se amanhã
+  // o apagamento decidir preservar os modelos de aula, nada aqui muda de lugar.
+  const antes = cheio(T0);
+  const depois = apagado(T0);
+  (depois as Estado & { aulas: unknown[] }).aulas =
+    JSON.parse(JSON.stringify((antes as Estado & { aulas: unknown[] }).aulas));
+
+  const mortos = lapidesDoApagamento(antes, depois, T0 + 1000);
+  assert.strictEqual(mortos[chaveDeAula({ id: 'a1' })], undefined,
+    'o modelo de aula ficou, então nenhuma lápide o persegue');
+  assert.strictEqual(mortos[chaveDeSessao({ sid: T0 })], T0 + 1000, 'e o resto continua enterrado');
+});
+
+test('estado vazio não gera lápide nenhuma, e apagar nada é apagar nada', () => {
+  assert.deepStrictEqual(lapidesDoApagamento(estado(), estado(), T0), {});
+  assert.deepStrictEqual(lapidesDoApagamento(null, null, T0), {});
+  assert.deepStrictEqual(lapidesDoApagamento(cheio(T0), cheio(T0), T0), {},
+    'fundo igual ao de partida: nada saiu, nada morre');
+});
+
+test('com as lápides, a fusão com o aparelho que não soube do apagamento não ressuscita', () => {
+  // o cenário inteiro: o celular apagou, o notebook ainda tem tudo
+  const antes = cheio(T0);
+  const celular = apagado(T0);
+  (celular as Estado & { apagados: Record<string, number> }).apagados =
+    lapidesDoApagamento(antes, celular, T0 + 1000);
+
+  const notebook = cheio(T0);
+  const { estado: r, resumo } = funde(notebook, celular, T0 + 2000);
+
+  assert.deepStrictEqual(Object.keys(r.logs), [], 'as séries não voltam');
+  assert.deepStrictEqual(r.done, [], 'as sessões não voltam');
+  assert.deepStrictEqual(r.cardio, [], 'o cardio não volta');
+  assert.deepStrictEqual(r.body.peso, [], 'a pesagem não volta');
+  assert.deepStrictEqual(r.progLog, [], 'o diário do programa não volta');
+  assert.deepStrictEqual(r.aulas, [], 'o modelo de aula não volta');
+  assert.deepStrictEqual(r.promoPendente, [], 'a pergunta pendente não volta');
+  assert.deepStrictEqual(r.gordura, [], 'a leitura de gordura não volta');
+  assert.deepStrictEqual(r.comidaHist, [], 'o dia de comida não volta');
+  assert.deepStrictEqual(r.descanso, {}, 'o dia de descanso não volta');
+  assert.deepStrictEqual(r.fotos, {}, 'a referência de foto não volta');
+  assert.deepStrictEqual(r.protocolo.sessoes, [], 'a sessão de fotos do corpo não volta');
+  assert.ok(resumo.apagados > 0, 'e a fusão CONTA o que enterrou, em vez de mudar o histórico calada');
+
+  // e fundir de novo não muda mais nada: os dois lados convergem
+  const dois = funde(r, celular, T0 + 3000).estado;
+  assert.deepStrictEqual(Object.keys(dois.logs), []);
+  assert.deepStrictEqual(dois.done, []);
+});
+
+test('o apagamento não alcança o que só existe no OUTRO aparelho', () => {
+  // O alcance é o que ESTE aparelho conhecia. Apagar de menos se conserta
+  // repetindo o gesto no outro aparelho; apagar de mais não se conserta.
+  const antes = cheio(T0);
+  const celular = apagado(T0);
+  (celular as Estado & { apagados: Record<string, number> }).apagados =
+    lapidesDoApagamento(antes, celular, T0 + 1000);
+
+  // o notebook tem o histórico comum MAIS um treino que nunca subiu
+  const soLa = T0 - 5 * DIA;
+  const notebook = cheio(T0);
+  notebook.done.push({ day: 'E', t: soLa, sid: soLa, dur: 0 });
+  notebook.logs.remada = [log(soLa, [[50, 10]])];
+
+  const { estado: r } = funde(notebook, celular, T0 + 2000);
+  assert.deepStrictEqual(r.done.map(x => x.sid), [soLa],
+    'a sessão que o celular nunca viu sobrevive');
+  assert.deepStrictEqual(Object.keys(r.logs), ['remada'], 'com as séries dela');
+});
+
+test('registro que o outro aparelho criou ou editou DEPOIS do apagamento sobrevive', () => {
+  const antes = cheio(T0);
+  const celular = apagado(T0);
+  (celular as Estado & { apagados: Record<string, number> }).apagados =
+    lapidesDoApagamento(antes, celular, T0 + 1000);
+
+  const notebook = cheio(T0);
+  // (a) registro novo: chave nova, e nenhuma lápide fala dele
+  const novo = T0 + 5000;
+  notebook.done.push({ day: 'B', t: novo, sid: novo, dur: 0 });
+  // (b) registro antigo CORRIGIDO depois: a regra da fusão já diz que lápide só
+  // mata o que é mais velho que ela, e corrigir depois é ressurreição deliberada
+  notebook.cardio[0].alt = T0 + 6000;
+
+  const { estado: r } = funde(notebook, celular, T0 + 7000);
+  assert.deepStrictEqual(r.done.map(x => x.sid), [novo], 'o treino de depois fica');
+  assert.strictEqual(r.cardio.length, 1, 'e o cardio corrigido depois do apagamento também');
 });

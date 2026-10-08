@@ -142,6 +142,114 @@ export function chaveDeSessaoFoto(d: string): string { return 'corpo:' + d; }
  */
 export function chaveDeFotoDoCorpo(d: string, pose: PoseId): string { return 'corpo:' + d + ':' + pose; }
 
+/**
+ * Uma linha do diário do programa. A chave é o instante mais o dia.
+ *
+ * Estava escrita à mão dentro de `funde`, e é a única que estava: as outras
+ * todas saem daqui justamente para a lápide e a fusão não poderem divergir.
+ * `lapidesDoApagamento` precisa dela pelo mesmo motivo que as demais.
+ */
+export function chaveDeProgLog(x: Pick<EntradaProgLog, 't' | 'day'>): string {
+  return 'prog:' + x.t + ':' + x.day;
+}
+
+// ---------- o apagamento em bloco ----------
+
+/**
+ * Toda chave de fusão que um estado OCUPA, coleção por coleção.
+ *
+ * Espelha `funde` linha por linha, guardas inclusive: chave que existe aqui e
+ * não lá seria lápide que não mata nada, e chave que existe lá e não aqui é
+ * registro que o apagamento não alcança. As duas formas de errar são silenciosas,
+ * e é por isso que esta função não filtra "registro estranho" por conta própria
+ * — se a fusão o une sob uma chave, é essa chave que a lápide precisa ter.
+ */
+function chavesDoEstado(S: Partial<Estado> | null | undefined): Record<string, 1> {
+  const k: Record<string, 1> = {};
+  if (!S) return k;
+  const lista = function <T>(x: unknown): T[] { return Array.isArray(x) ? (x as T[]) : []; };
+
+  const logs = (S.logs || {}) as Record<string, Log[]>;
+  Object.keys(logs).forEach(function (idEx) {
+    lista<Log>(logs[idEx]).forEach(function (l) { if (l) k[chaveDeLog(idEx, l)] = 1; });
+  });
+  lista<Sessao>(S.done).forEach(function (x) { if (x) k[chaveDeSessao(x)] = 1; });
+  lista<Cardio>(S.cardio).forEach(function (x) { if (x) k[chaveDeCardio(x)] = 1; });
+  lista<EntradaProgLog>(S.progLog).forEach(function (x) { if (x) k[chaveDeProgLog(x)] = 1; });
+  lista<ModeloDeAula>(S.aulas).forEach(function (x) { if (x) k[chaveDeAula(x)] = 1; });
+  lista<PromoPendente>(S.promoPendente).forEach(function (x) { if (x) k[chaveDePromo(x)] = 1; });
+  lista<LeituraDeGordura>(S.gordura).forEach(function (x) { if (x) k[chaveDeLeitura(x)] = 1; });
+
+  // o dia de comida e, DENTRO dele, cada refeição marcada: a fusão tem lápide
+  // para as duas, e desmarcar uma refeição nunca foi apagar o dia
+  lista<DiaComidaHist>(S.comidaHist).forEach(function (h) {
+    if (!h || !h.d) return;
+    k[chaveDeDiaComida(h)] = 1;
+    Object.keys(h.done || {}).forEach(function (id) { k[chaveDeRefeicaoFeita(h.d, id)] = 1; });
+  });
+
+  MARCAS_DO_CORPO.forEach(function (qual) {
+    lista<Marca>(S.body && S.body[qual]).forEach(function (x) {
+      if (x) k[chaveDeMarca(qual, x)] = 1;
+    });
+  });
+
+  Object.keys(S.descanso || {}).forEach(function (d) { k[chaveDeDescanso(d)] = 1; });
+  // referência sem versão a fusão descarta dos DOIS lados, e por isso ela não
+  // ressuscita: lápide para ela seria peso sem efeito
+  const fotos = (S.fotos || {}) as Record<string, FotoRef>;
+  Object.keys(fotos).forEach(function (id) {
+    const f = fotos[id];
+    if (f && typeof f.v === 'number') k[chaveDeFoto(id)] = 1;
+  });
+
+  lista<SessaoFoto>(S.protocolo && S.protocolo.sessoes).forEach(function (s) {
+    if (!s || !s.d) return;
+    k[chaveDeSessaoFoto(s.d)] = 1;
+    Object.keys(s.fotos || {}).forEach(function (pose) {
+      const ref = s.fotos[pose];
+      if (ref && typeof ref.v === 'number') k[chaveDeFotoDoCorpo(s.d, pose)] = 1;
+    });
+  });
+
+  return k;
+}
+
+/**
+ * As lápides de um apagamento em BLOCO.
+ *
+ * `wipe` não apaga registro por registro: ele monta um estado novo e esvazia as
+ * coleções de uma vez. Guardar as lápides antigas não resolveria nada — elas
+ * falam dos registros apagados ANTES —, e sem lápide nova a fusão lê o que
+ * sobrou no outro aparelho como registro que este simplesmente não tem, e o traz
+ * de volta. O aviso promete "isso não tem volta", e tinha.
+ *
+ * O conserto é fazer o apagamento em bloco virar o que a fusão já sabe ler:
+ * **uma lápide por registro que saiu**, com a mesma chave natural que a fusão
+ * usa para uni-lo. Daí a forma desta função ser um DIFERENÇA entre dois estados,
+ * e não "lápide para tudo que havia": se amanhã o apagamento decidir preservar
+ * uma coleção, ela deixa de aparecer no diff e nenhuma lápide a persegue. A
+ * decisão de escopo fica num lugar só, que é o estado novo.
+ *
+ * **O alcance é o que ESTE aparelho conhecia**, e isso é deliberado. Registro
+ * que só existe no outro lado não tem lápide e sobrevive; registro que o outro
+ * lado editar DEPOIS do apagamento sobrevive também, pela regra que a fusão já
+ * tem ("lápide só mata o que é mais velho que ela"). Apagar de menos se conserta
+ * repetindo o gesto no outro aparelho; apagar de mais não se conserta.
+ */
+export function lapidesDoApagamento(
+  antes: Partial<Estado> | null | undefined,
+  depois: Partial<Estado> | null | undefined,
+  agora: number
+): Record<string, number> {
+  const ficou = chavesDoEstado(depois);
+  const saida: Record<string, number> = {};
+  Object.keys(chavesDoEstado(antes)).forEach(function (k) {
+    if (!ficou[k]) saida[k] = agora;
+  });
+  return saida;
+}
+
 // ---------- as peças ----------
 
 /**
@@ -589,7 +697,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   // ---- histórico de mudanças do programa: só cresce ----
   const pl = uneLista<EntradaProgLog>(
     local.progLog || [], remoto.progLog || [],
-    function (x) { return 'prog:' + x.t + ':' + x.day; }, carimboM, mortos
+    chaveDeProgLog, carimboM, mortos
   );
   pl.itens.sort(porTempo);
   base.progLog = pl.itens.slice(-TETO.progLog);
