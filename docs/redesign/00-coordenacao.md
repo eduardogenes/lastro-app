@@ -1470,7 +1470,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         passa 9/9 e todas as execuções seguintes deram 965. **É corrida de foco
         sob carga**, e é da mesma família do vermelho de 1 em 24 que eu persegui
         e não consegui nomear. Agora tem nome.
-      - [~] **Ficaram 55, das quais 51 são trabalho real** (quatro não devem **Agora são 39 (35 de trabalho real)**: câmera/foto 17, rota/shell 12, promoção e retroativo 6. Comida e plano fechou 16 de 16.
+      - [~] **Ficaram 55, das quais 51 são trabalho real** (quatro não devem **TERCEIRA PASSADA em 08/10** (`a09a0e2334cc0223c`, caiu por limite de sessão com a árvore limpa). **Promoção e retroativo fechou 6 de 6.** Medi por conta própria no fonte, não na lista: **201 chaves de `CTX`, 26 sem uma única menção**, das quais **24 são trabalho real** — 16 de câmera e ajuste de foto (o maior bloco e o mais delicado), 4 de rota, 4 de leitura. **Agora são 39 (35 de trabalho real)**: câmera/foto 17, rota/shell 12, promoção e retroativo 6. Comida e plano fechou 16 de 16.
         ganhar rede). Por assunto, com casa indicada na §8.8: **comida e plano
         16** — e é por aqui que eu seguiria, porque `removeItem` e `trocaItem`
         são **destrutivos** e são a prioridade 1 ainda não paga; **câmera e foto
@@ -1515,7 +1515,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         alimento velho), e a pergunta que sobra é se `alta` cai junto — ela é
         marca de **dia de alta demanda**, não do alimento, e pode ser que
         pertença à refeição. Vai à mesa dele com as duas.
-      - [ ] **DEFEITO (h): id de refeição não tem guarda de colisão; id de
+      - [x] **DEFEITO (h): id de refeição não tem guarda de colisão; id de — **CONSERTADO em 08/10** (`21c6813`): `idRefeicao()` com o mesmo laço de `idAlimento`. E o agente achou a consequência que eu não tinha visto: **id duplicado não dá erro** — `achaRefeicao` devolve sempre a primeira, então a segunda refeição fica somando no total do dia e **ineditável**, sem nada na tela dizer por quê.
         alimento tem.** `idAlimento()` procura id livre em laço; refeição é
         `'r' + Date.now()` nu, nas duas portas. Com relógio parado, duas
         duplicações colidem e o plano fica com 9 refeições e 8 ids — a segunda
@@ -1539,6 +1539,21 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         volta 0. Pus a semente de dois passos, a asserção **que já existia** ficou
         vermelha nomeando o campo, e aí consertei (`0931f48`). 1.038 verdes,
         `tsc` limpo.
+      - [ ] **DÍVIDA DE PROVA, criada pela queda do agente em 08/10.** A
+        disciplina desta linha de trabalho é: quebrar o verbo de propósito, ver o
+        vermelho, desfazer, e **escrever a prova por grupo**. O agente da terceira
+        passada caiu antes dessa parte do documento. A última linha dele foi
+        *"All three now go red"*, o que indica que ele fez as quebras — **mas eu
+        não as vi e não as reproduzi.** Os **catorze casos novos** dele
+        (`c3657d6`, mais os dos dois consertos) ficam com a **prova não
+        registrada**, e quem continuar deve refazê-la por amostragem antes de
+        confiar neles. Registrado no §10 do `09-superficie.md`.
+        **Teste que ninguém provou que pode falhar é confiança falsa** — inclusive
+        quando a falha é minha, por não ter conferido antes de aceitar.
+      - [ ] **E ele não confirmou por escrito as quatro que não devem ganhar
+        rede** (`addNome`, `limpaNum`, `addHora`, `folhas`), como eu havia
+        pedido. Minha medição independente concorda com duas (`addNome` e
+        `limpaNum` seguem sem menção); as outras duas valem reconferir.
       - [ ] **DECISÃO NOVA, criada pelo conserto do apagamento:** três campos
         caem no `wipe` sem estar declarados — `aulas` (os modelos de aula),
         `protocolo` (as poses e as sessões de foto) e `fotos` (as fotos dos
@@ -1553,7 +1568,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         encerrar a sessão, e **sobrevive** ao apagamento; `S.aulas` é biblioteca
         durável e não sobrevive. Se fosse hierarquia deliberada, seria a inversa.
         Desfazer custa **uma palavra** no literal. Perguntado a ele em 08/10.
-      - [ ] **E um texto errado na cara do dono:** as mensagens de `delBody` são
+      - [x] **E um texto errado na cara do dono:** as mensagens de `delBody` são — **CONSERTADO em 08/10** (`bb2fef0`): nome e unidade saem de `MEDIDAS_DO_CORPO`. E ele acrescentou `comUnidade(v, u)` com a razão escrita: o `%` cola no número e as outras levam espaço, que é o que o resto do app já faz.
         ternárias em `k === 'peso'`, então remover `bioGorduraPct` perguntaria
         *"Remover a cintura de … (17,8 cm)?"*. Ele leu o fonte e não rodou.
         `CTX.apagaMedida` nas cinco também não tem caso.
