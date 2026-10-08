@@ -1475,6 +1475,67 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         16** — e é por aqui que eu seguiria, porque `removeItem` e `trocaItem`
         são **destrutivos** e são a prioridade 1 ainda não paga; **câmera e foto
         17**; **rota e shell 12**; **promoção e retroativo 6**.
+        **SEGUNDA PASSADA, 08/10** (`a4e3f0485ce25e95f`), §9 do
+        `09-superficie.md`. **As 16 de comida e plano: 16 de 16.** Mais a
+        torneira da bioimpedância. **Conferi:** `npm test` → **1.028 passando**
+        (583 fluxo + 445 domínio), zero rejeições, `tsc` limpo, `CTX` com 182
+        chaves. **Três dos seis assuntos da §5 fechados**; restam **39 sem caso**
+        (35 de trabalho real): câmera/foto 17, rota/shell 12, promoção e
+        retroativo 6.
+        **Cinquenta quebras deliberadas**, cada um dos 26 casos novos vermelho em
+        ao menos uma. Ele escreveu um script que **conta as ocorrências do padrão
+        antes de substituir e grita se não forem exatamente uma** — a receita da
+        passada anterior virou garantia mecânica.
+        **E ele pegou um caso DELE que media nada.** O caso do fecho semeava o
+        backup no armazenamento dizendo medir a lista branca da importação — mas
+        semear entra pelo **boot**, que copia `S` inteiro. **A quebra deliberada
+        da lista branca não o derrubou, e foi só por isso que ele soube.**
+        Reescrito por `wipe` + `importText`; a mesma quebra agora o derruba. O
+        método está escrito: **uma quebra que não produz vermelho é informação.**
+        **O desvio dele na torneira é melhor que a minha sugestão**, e eu aceito:
+        eu propus `registraBio(qual, valor)`, campo a campo; ele construiu
+        `registraBio(leitura, quando)`, **a leitura inteira, com recusa
+        atômica**. Quatro razões, e as quatro valem: a tabela do domínio diz que
+        as cinco saem "na mesma leitura das outras `bio`"; a coluna
+        `obrigatorio` só tem sentido numa escrita de grupo; meia leitura não
+        fecha (gordura sem percentual); e **um instante só é o que as torna uma
+        leitura**. `bioAgua` vazia não entra e não vira zero, mas preenchida com
+        lixo recusa a leitura inteira — **erro de digitação não é "não medi"**.
+        `CORPO_PADRAO` intocado, `bioPeso` série separada da pesagem da manhã.
+      - [ ] **DEFEITO (g), vivo e eu confirmei no fonte: trocar um alimento leva
+        a marca do arroz para o alimento novo.** `CTX.trocaItem` faz
+        `r.itens[idx].f = foodId` — **só `f`**, então `i.arroz` e `i.alta`
+        sobrevivem à troca (`src/main.jsx:6056`). E `i.arroz` é consumido em dois
+        lugares que somam a quantidade dos itens marcados (`:3428`, `:3442`):
+        **é a alavanca onde o ajuste calórico aterra.** Trocar o arroz do almoço
+        por cuscuz move a alavanca do ajuste para algo que não é arroz, **em
+        silêncio**, e a tela passa a chamar de arroz o que não é. Medido: a
+        leitura do arroz atual não muda. O caso grava sem julgar.
+        **O conserto é óbvio na direção** (a troca derruba as marcas que eram do
+        alimento velho), e a pergunta que sobra é se `alta` cai junto — ela é
+        marca de **dia de alta demanda**, não do alimento, e pode ser que
+        pertença à refeição. Vai à mesa dele com as duas.
+      - [ ] **DEFEITO (h): id de refeição não tem guarda de colisão; id de
+        alimento tem.** `idAlimento()` procura id livre em laço; refeição é
+        `'r' + Date.now()` nu, nas duas portas. Com relógio parado, duas
+        duplicações colidem e o plano fica com 9 refeições e 8 ids — a segunda
+        soma no total e é **ineditável**. Ele não mediu caminho realista até lá;
+        o caso guarda que nada impede.
+      - [ ] **E um texto errado na cara do dono:** as mensagens de `delBody` são
+        ternárias em `k === 'peso'`, então remover `bioGorduraPct` perguntaria
+        *"Remover a cintura de … (17,8 cm)?"*. Ele leu o fonte e não rodou.
+        `CTX.apagaMedida` nas cinco também não tem caso.
+      - **O defeito (c) mudou de natureza com a torneira:** `dadosDoApp` não
+        contava as cinco, o que era **coerente** sem caminho de escrita e agora é
+        **omissão real**. Não consertado, de propósito — consertar mudaria a
+        asserção de outro caso.
+      - **Correção dele a mim:** eu disse que o caso da recusa de `addBody` ia
+        ficar vermelho com a torneira. **Ficou verde, e corretamente** — ele mede
+        `CORPO_PADRAO`, que a torneira não toca. O vermelho veio de outra linha
+        (a varredura de chaves de bio no `CTX`, que era `[]` e passou a
+        `['registraBio']`). Mantido, com a mensagem reescrita.
+      - **Acréscimo à receita:** `a.vJ` **não serve para verbo `async`** —
+        `JSON.stringify` de uma promessa é `{}`. Use `await a.v(…)`.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
