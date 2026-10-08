@@ -498,3 +498,158 @@ test('ctx.apagaLinha leva uma linha só — o dia e os outros exercícios ficam'
     'e sem lápide do dia, que não foi apagado');
   a.fechar();
 });
+
+// ===========================================================================
+// A correção de uma linha do histórico, pelas chaves de `CTX`
+// ===========================================================================
+//
+// `editaLinha`, `cancelaEdicao`, `salvaEdicao`, `editDor` e `histKey` não
+// tinham caso próprio. `telas` :: *correção de sessão passada altera e apaga*
+// aciona as funções de módulo e confere o valor corrigido; o que falta é o
+// contorno — o que a edição alcança, o que o cancelar desfaz (e o que não
+// desfaz) e o que trocar de chave faz com uma edição aberta.
+//
+// Cobrem o modelo, não a fiação. Uma ressalva de contrato: `salvaEdicao` e
+// `editDor` LEEM O DOM por dentro (`guardaCamposEdicao`, os ids `ed{k}_0`), e
+// por isso são os únicos desta entrega que não sobrevivem sozinhos ao
+// redesenho. O par por valor deles é `guardaEdicaoCom`, que já está na
+// superfície — e o §2 do 09-superficie.md explica por quê.
+
+/** Uma sessão de três séries no histórico da posição 0 do treino A. */
+async function umaLinha() {
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[60, 10], [60, 8], [55, 8]] }] },
+    done: [{ day: 'A', t: t, sid: t }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
+  return a;
+}
+
+test('ctx.editaLinha abre a edição de UMA linha, e ctx.cancelaEdicao a fecha', async () => {
+  const a = await umaLinha();
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, false, 'fechada por padrão');
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].edicao, null,
+    'e o formulário não existe até ela abrir');
+
+  a.v('ctx.editaLinha', 0);
+  const s = a.vJ('ctx.historico').sessoes[0];
+  assert.strictEqual(s.editando, true, 'abre');
+  assert.deepStrictEqual(s.edicao.sets, [{ carga: '60', reps: '10' },
+                                         { carga: '60', reps: '8' },
+                                         { carga: '55', reps: '8' }],
+    'o formulário parte do que foi registrado, série por série');
+  assert.strictEqual(s.edicao.dores.length, 3, 'com os três marcadores de dor');
+
+  a.v('ctx.cancelaEdicao');
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, false, 'e fecha');
+  a.fechar();
+});
+
+test('ctx.editDor marca e desmarca cada dor por conta própria', async () => {
+  const a = await umaLinha();
+  a.v('ctx.editaLinha', 0);
+  const ligadas = function () {
+    return a.vJ('ctx.historico').sessoes[0].edicao.dores
+            .filter(function (d) { return d.on; }).map(function (d) { return d.k; });
+  };
+  assert.deepStrictEqual(ligadas(), [], 'nenhuma por padrão');
+
+  a.v('ctx.editDor', 'ombro');
+  assert.deepStrictEqual(ligadas(), ['ombro'], 'marca a nomeada');
+  a.v('ctx.editDor', 'patelar');
+  assert.deepStrictEqual(ligadas(), ['ombro', 'patelar'], 'e acumula, sem trocar a anterior');
+  a.v('ctx.editDor', 'ombro');
+  assert.deepStrictEqual(ligadas(), ['patelar'], 'o mesmo verbo desmarca só aquela');
+  assert.deepStrictEqual(a.log('A', 0)[0].dor, ['patelar'],
+    'e a dor vai para o registro, não só para o formulário');
+  a.fechar();
+});
+
+test('ctx.cancelaEdicao NÃO desfaz a dor já marcada — o escopo de hoje', async () => {
+  // ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. `editDor` escreve direto no registro
+  // e `cancelarEdicao` só fecha o formulário (`view.edit = null`): não há
+  // rascunho para descartar. Então marcar uma dor e cancelar deixa a dor.
+  // Registrado para o escopo não mudar em silêncio nos dois sentidos — se
+  // alguém der rascunho ao cancelar, este caso fica vermelho e aponta onde.
+  const a = await umaLinha();
+  a.v('ctx.editaLinha', 0);
+  a.v('ctx.editDor', 'cotovelo');
+  a.v('ctx.cancelaEdicao');
+
+  assert.deepStrictEqual(a.log('A', 0)[0].dor, ['cotovelo'],
+    'cancelar fecha o formulário e deixa a dor marcada');
+  a.fechar();
+});
+
+test('ctx.salvaEdicao fecha a linha, carimba a correção e recusa deixá-la sem série', async () => {
+  const a = await umaLinha();
+  a.v('ctx.editaLinha', 0);
+  const antes = a.log('A', 0)[0].m;
+  assert.strictEqual(antes, undefined, 'a sessão original não tem carimbo de correção');
+
+  await a.v('ctx.salvaEdicao');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, false, 'salvar fecha a linha');
+  assert.ok(a.log('A', 0)[0].m > 0, 'e carimba quando foi corrigida, que é o que a fusão compara');
+  assert.strictEqual(a.toast(), 'Sessão corrigida.');
+
+  // A guarda do fim: uma sessão sem nenhuma série não é correção, é engano.
+  // Alcançada pelos campos porque `salvaEdicao` relê o DOM por dentro — sem
+  // isso o verbo restauraria os valores da tela e a guarda nunca dispararia.
+  a.v('ctx.editaLinha', 0);
+  a.digitar('ed0_1', '');
+  a.digitar('ed1_1', '');
+  a.digitar('ed2_1', '');
+  await a.v('ctx.salvaEdicao');
+  await a.esperar();
+
+  assert.match(a.toast(), /sem nenhuma série\. Use apagar/,
+    'manda apagar em vez de guardar um fantasma: ' + a.toast());
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, true,
+    'e a linha fica aberta, para ele desfazer o que digitou');
+  assert.strictEqual(a.log('A', 0).length, 1, 'sem apagar nada por conta própria');
+  a.fechar();
+});
+
+test('ctx.histKey troca para o histórico do substituto e fecha a edição aberta', async () => {
+  // Fechar a edição ao trocar de chave não é cosmético: `view.edit` é índice
+  // na lista DAQUELA chave. Levá-lo para a outra lista apontaria para a linha
+  // errada — ou para nenhuma —, e o próximo salvar escreveria em cima de uma
+  // sessão que ele não estava editando.
+  const t = Date.now() - 4 * DIA, t2 = Date.now() - 2 * DIA;
+  const a = await app({ estado: {
+    logs: {
+      'chest-press-inclinado-convergente': [{ t: t, sid: t, sets: [[60, 10]] }],
+      'crucifixo-maquina': [{ t: t2, sid: t2, sets: [[20, 12]],
+                              sl: 'chest-press-inclinado-convergente' }]
+    },
+    done: [{ day: 'A', t: t, sid: t }, { day: 'A', t: t2, sid: t2 }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
+
+  const h = a.vJ('ctx.historico');
+  assert.deepStrictEqual(h.variantes.map(function (v) { return v.on; }), [true, false],
+    'abre no exercício do programa, não no substituto');
+  assert.ok(!h.marcas.some(function (m) { return m.k === 'sub'; }), 'e sem o selo de substituto');
+
+  a.v('ctx.editaLinha', 0);
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, true, 'uma edição aberta');
+
+  a.v('ctx.histKey', 'crucifixo-maquina');
+  const h2 = a.vJ('ctx.historico');
+
+  assert.deepStrictEqual(h2.variantes.map(function (v) { return v.on; }), [false, true],
+    'a troca acende a outra chave');
+  assert.strictEqual(h2.titulo, 'crucifixo-maquina', 'e o título passa a ser o do substituto');
+  assert.ok(h2.marcas.some(function (m) { return m.k === 'sub'; }),
+    'com o selo dizendo que não é o exercício do programa');
+  assert.strictEqual(h2.sessoes.length, 1, 'mostrando a sessão DELE');
+  assert.strictEqual(h2.sessoes[0].editando, false,
+    'e a edição que estava aberta fecha: o índice não atravessa de uma lista para a outra');
+  a.fechar();
+});
