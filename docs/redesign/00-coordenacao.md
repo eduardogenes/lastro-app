@@ -1389,7 +1389,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       110. As de forma conferiram: as sete funções que recebem elemento, os seis
       campos de `criarExercicio` (com `#nxk` por `.checked`) e os onze `useState`.
 
-      - [ ] **O que falta da reponta**, com tabela por arquivo no §3 do documento
+      - [~] **O que falta da reponta**, com tabela por arquivo no §3 do documento — segue aberto, e agora é a última dívida de rede que existe.
         dele: **396 entradas**, em quatro categorias — **103** escrevem em
         `S`/`view` (fora do contrato, por desenho); **61** alcançam o DOM de
         dentro do `a.E` e esperam as telas novas; **168** são expressão composta,
@@ -1470,7 +1470,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         passa 9/9 e todas as execuções seguintes deram 965. **É corrida de foco
         sob carga**, e é da mesma família do vermelho de 1 em 24 que eu persegui
         e não consegui nomear. Agora tem nome.
-      - [~] **Ficaram 55, das quais 51 são trabalho real** (quatro não devem **TERCEIRA PASSADA em 08/10** (`a09a0e2334cc0223c`, caiu por limite de sessão com a árvore limpa). **Promoção e retroativo fechou 6 de 6.** Medi por conta própria no fonte, não na lista: **201 chaves de `CTX`, 26 sem uma única menção**, das quais **24 são trabalho real** — 16 de câmera e ajuste de foto (o maior bloco e o mais delicado), 4 de rota, 4 de leitura. **Agora são 39 (35 de trabalho real)**: câmera/foto 17, rota/shell 12, promoção e retroativo 6. Comida e plano fechou 16 de 16.
+      - [x] **Ficaram 55, das quais 51 são trabalho real** (quatro não devem **FECHADO em 08/10 — 24 de 24** (`a0e6f02e90d766330`), §11 do `09-superficie.md`. **1.080 passando** (629 fluxo + 451 domínio), 28 casos novos, zero rejeições, `tsc` limpo. **A rede das capacidades está completa.** E a minha contagem estava errada nos dois números: são **182 chaves e 22 sem menção**, não 201 e 26 — e `cadenciaTxt`, `catalogo`, `comidaDoDia` e `movidas` **não são chaves de `CTX`**: são campos do registro que `CTX.hoje()` devolve, então `a.v('ctx.catalogo')` estoura. A conta de 24 fecha de outro jeito: **20 chaves mais 4 campos de leitura.** **TERCEIRA PASSADA em 08/10** (`a09a0e2334cc0223c`, caiu por limite de sessão com a árvore limpa). **Promoção e retroativo fechou 6 de 6.** Medi por conta própria no fonte, não na lista: **201 chaves de `CTX`, 26 sem uma única menção**, das quais **24 são trabalho real** — 16 de câmera e ajuste de foto (o maior bloco e o mais delicado), 4 de rota, 4 de leitura. **Agora são 39 (35 de trabalho real)**: câmera/foto 17, rota/shell 12, promoção e retroativo 6. Comida e plano fechou 16 de 16.
         ganhar rede). Por assunto, com casa indicada na §8.8: **comida e plano
         16** — e é por aqui que eu seguiria, porque `removeItem` e `trocaItem`
         são **destrutivos** e são a prioridade 1 ainda não paga; **câmera e foto
@@ -1557,6 +1557,43 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       - **A ordem que ele escolheu em 08/10:** primeiro **as 24 capacidades sem
         teste**, e só depois a reescrita. Dezesseis são câmera e ajuste de foto.
         Disse ele que depois delas não sobra preparação.
+      - [ ] **DEFEITO (l), o mais pesado desta semana, e é ANTERIOR a tudo que
+        fizemos: o saldo do arroz desfaz com a contagem errada.** Conferi no
+        fonte: `aplicaArroz` desfaz o saldo anterior com
+        `arrozDoAjuste(i.q, -ajusteAntes, itens.length)` — e `itens.length` é a
+        contagem **de agora**, não a de quando o ajuste foi aplicado. O
+        comentário logo acima diz *"com o passo na grade de 15 g, ida e volta são
+        exatas"*, supondo que a contagem não muda. **Ela muda.**
+        **Medido pelo agente:** base 250/250 → `+1` com dois itens de arroz dá
+        310/310 → o almoço deixa de ser arroz → volta a `0` com um item e o
+        jantar vai a **190, não 250**. **Sessenta gramas abaixo da prescrição,
+        calado** — e o alimento que saiu fica com os +60 g para sempre.
+        **E reproduz por `CTX.removeItem` também**, com os mesmos 190: então a
+        marca do arroz na troca só acrescentou uma segunda porta a um defeito que
+        já existia. **O conserto pede decidir quem é dono do número em `i.q`**, e
+        isso é desenho de dado. Vai à mesa dele.
+      - [ ] **A terceira marca por item existe, e é do dono decidir: `i.caf`.**
+        Eu mandei procurar e ela apareceu. É da **mesma natureza de `arroz`** —
+        diz qual alimento é —, então a regra dele ao pé da letra a derrubaria na
+        troca. O agente **não decidiu**, e fez certo. Três coisas que ele mediu e
+        que pesam na decisão: ela **não aparece em nenhuma tela**
+        (`refeicaoParaEditar` não a devolve); ela faz `refeicoesDeHoje` **cortar**
+        o item do dia depois das 16h; e hoje só o café do pré a tem — então
+        **trocar o café por kiwi faz o kiwi herdar o corte** e desaparecer nos
+        dias de treino à tarde. A razão escrita no tipo é boa e específica: a
+        prescrição é manter a cafeína de manhã, porque ele dorme por volta das
+        23h. Desfazer custa uma linha em cada sentido.
+      - [ ] **DEFEITO (m), e aqui o briefing errou por minha causa:** eu escrevi
+        que *"`apagaFoto()` já chama os dois lados, então o padrão certo existe no
+        arquivo"*. **Vale para a foto de APARELHO e não para a de CORPO.**
+        Conferi: `NUVEM.apagaCorpo` está definido em `src/infra/nuvem.ts:294` e
+        **não tem um único chamador em `src/`** — nem o verbo que apaga UMA foto
+        de corpo o chama. Então **apagar uma foto de corpo pela tela também deixa
+        os bytes no bucket.** O agente parou e escreveu o limite em vez de
+        inventar poda, e fez certo: fazê-la no gesto em bloco seria desenhar
+        política em três frentes (N chamadas de rede num gesto que hoje não faz
+        rede; o que fazer quando a sétima falha; e por que o bloco limparia e o
+        unitário não).
       - [ ] **E ele não confirmou por escrito as quatro que não devem ganhar
         rede** (`addNome`, `limpaNum`, `addHora`, `folhas`), como eu havia
         pedido. Minha medição independente concorda com duas (`addNome` e
