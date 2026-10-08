@@ -1502,7 +1502,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         leitura**. `bioAgua` vazia não entra e não vira zero, mas preenchida com
         lixo recusa a leitura inteira — **erro de digitação não é "não medi"**.
         `CORPO_PADRAO` intocado, `bioPeso` série separada da pesagem da manhã.
-      - [ ] **DEFEITO (g), vivo e eu confirmei no fonte: trocar um alimento leva
+      - [x] **DEFEITO (g), vivo e eu confirmei no fonte: trocar um alimento leva **RESPONDIDO em 08/10: só a marca do arroz cai; a de alta demanda FICA.** A razão dele, e é a certa: a marca do arroz diz *em qual item o ajuste calórico aterra*, e trocar arroz por cuscuz a torna falsa; a de alta demanda diz **quando** o item aparece, não qual alimento é — descreve o lugar no plano e sobrevive à troca. Disparado.
         a marca do arroz para o alimento novo.** `CTX.trocaItem` faz
         `r.itens[idx].f = foodId` — **só `f`**, então `i.arroz` e `i.alta`
         sobrevivem à troca (`src/main.jsx:6056`). E `i.arroz` é consumido em dois
@@ -1550,11 +1550,18 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         confiar neles. Registrado no §10 do `09-superficie.md`.
         **Teste que ninguém provou que pode falhar é confiança falsa** — inclusive
         quando a falha é minha, por não ter conferido antes de aceitar.
+      - [~] **A medição da régua: ele faz nos próximos treinos** (08/10). Então eu
+        planejo com as DUAS possibilidades em aberto e não endureço nenhuma: a
+        régua de pé com teto de 125%, e os botões da C com o teto podendo subir.
+        As palavras das duas versões já estão escritas pela frente 3.
+      - **A ordem que ele escolheu em 08/10:** primeiro **as 24 capacidades sem
+        teste**, e só depois a reescrita. Dezesseis são câmera e ajuste de foto.
+        Disse ele que depois delas não sobra preparação.
       - [ ] **E ele não confirmou por escrito as quatro que não devem ganhar
         rede** (`addNome`, `limpaNum`, `addHora`, `folhas`), como eu havia
         pedido. Minha medição independente concorda com duas (`addNome` e
         `limpaNum` seguem sem menção); as outras duas valem reconferir.
-      - [ ] **DECISÃO NOVA, criada pelo conserto do apagamento:** três campos
+      - [x] **DECISÃO NOVA, criada pelo conserto do apagamento:** três campos **RESPONDIDO em 08/10, e com o corte fino:** preserva `aulas` e `fotos` (são biblioteca e catálogo, iguais aos exercícios que ele cadastrou, que já sobreviviam); em `protocolo`, **`poses` sim e `sessoes` não** — poses é prescrição, sessões são registro, e registro é o que ele mandou apagar. Disparado.
         caem no `wipe` sem estar declarados — `aulas` (os modelos de aula),
         `protocolo` (as poses e as sessões de foto) e `fotos` (as fotos dos
         aparelhos). **Antes do conserto, o apagamento deles era desfeito pela
