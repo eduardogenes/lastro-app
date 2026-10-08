@@ -280,12 +280,12 @@ test('séries por músculo compara com o mesmo ponto das semanas anteriores', as
   const semanaPassada = seg - 7 * 86400000;
   // chave real do catálogo: sem grupo muscular a série não entra na conta
   const ex = a.vJ('treino', 'A').ex[0].id;
-  const g = a.E('exDe(' + JSON.stringify(ex) + ').g');
+  const g = a.vJ('exDe', ex).g;
   a.E('S.logs[' + JSON.stringify(ex) + '] = [' +
       '{ t: ' + (semanaPassada + 3600000) + ', sid: 1, sets: [[40,10],[40,10]] },' +
       '{ t: ' + (semanaPassada + 5 * 86400000) + ', sid: 2, sets: [[40,10],[40,10]] }]');
 
-  const cedo = a.J('seriesPorMusculo(' + semanaPassada + ', ' + seg + ', 86400000)');
+  const cedo = a.vJ('seriesPorMusculo', semanaPassada, seg, 86400000);
   const tudo = a.vJ('seriesPorMusculo', semanaPassada, seg);
   assert.strictEqual(tudo[g], 4, 'a semana inteira conta as duas sessões');
   assert.strictEqual(cedo[g], 2, 'cortada no primeiro dia, conta só a primeira');
