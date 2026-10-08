@@ -146,3 +146,89 @@ test('a migração 7→8 tira o papel do nome, e só do nome que era dela', asyn
     'se ele já tinha renomeado, o nome dele fica');
   b.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// Os dois ajustes do dia, por valor: `setTurno` e `setAlta`
+// ---------------------------------------------------------------------------
+//
+// O QUE ESTE GRUPO PROVA: que os dois ajustes de HOJE são alcançáveis pelo
+// MODELO, que cada um grava onde diz gravar, e que nenhum dos dois encosta no
+// PLANO — a distinção entre "ajuste de hoje" e "plano de todo dia" é a lei 6
+// do sistema, e aqui ela está medida em vez de comentada.
+//
+// Os casos acima deste bloco entram pelo dedo, clicando em `.fd-turno-op`.
+// Estes entram por nome e valor, e é essa a diferença: eles sobrevivem à
+// reescrita da folha.
+//
+// O QUE ESTE GRUPO NÃO PROVA: que a folha nova ofereça os três turnos, nem que
+// o botão de alta demanda exista. `a.v('ctx.setTurno', 'noite')` prova que o
+// modelo aceita a escolha; não prova que há onde tocar. Nada aqui conta botões.
+
+test('ctx.setTurno grava o turno de hoje e fecha a folha, e a manhã apaga a chave', async () => {
+  const a = await noHoje();
+  const planoAntes = JSON.stringify(a.S().comida.plano);
+  await abreFolha(a);
+  assert.strictEqual(a.$$('.ins-folha').length, 1, 'a folha do PREVISTO está aberta');
+
+  a.v('ctx.setTurno', 'noite');
+  await a.esperar(150);
+  assert.strictEqual(a.S().dia.turno, 'noite', 'o turno ficou no dia');
+  assert.strictEqual(a.vJ('ctx.seletorDeDia').turno, 'noite', 'e a leitura concorda');
+  assert.strictEqual(a.$$('.ins-folha').length, 0,
+    'a folha fecha no mesmo gesto: escolher é a saída, não um passo antes dela');
+
+  a.v('ctx.setTurno', 'manha');
+  await a.esperar();
+  assert.ok(!('turno' in a.S().dia),
+    'voltar para a manhã APAGA a chave em vez de gravar "manha" — o padrão não ocupa estado');
+  assert.strictEqual(a.vJ('ctx.seletorDeDia').turno, 'manha',
+    'e a leitura ainda responde "manha", porque é o padrão, não o gravado');
+
+  a.v('ctx.setTurno', 'tarde');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.turno, 'tarde');
+  a.v('ctx.setTurno', null);
+  await a.esperar();
+  assert.ok(!('turno' in a.S().dia), 'e nulo também devolve ao padrão, sem gravar lixo');
+
+  assert.strictEqual(JSON.stringify(a.S().comida.plano), planoAntes,
+    'e nada disso tocou o PLANO: o turno é ajuste de hoje, e zera com a data');
+  a.fechar();
+});
+
+test('ctx.setAlta liga a demanda alta do dia, e o alvo do dia soma o intra-treino', async () => {
+  const a = await noHoje({ cadencia: ['treino','treino','treino','treino','treino','treino','treino'] });
+  const planoAntes = JSON.stringify(a.S().comida.plano);
+  const alvoAntes = a.vJ('ctx.hoje').alvo.kcal;
+  assert.strictEqual(a.S().dia.alta, 0, 'o dia nasce sem alta demanda');
+  assert.strictEqual(a.vJ('ctx.hoje').alta, false, 'e a leitura de HOJE concorda');
+
+  a.v('ctx.setAlta', 1);
+  await a.esperar();
+  assert.strictEqual(a.S().dia.alta, 1, 'ligou no dia');
+  assert.strictEqual(a.vJ('ctx.hoje').alta, true);
+  assert.strictEqual(a.vJ('ctx.seletorDeDia').alta, true, 'as duas leituras do dia concordam');
+  const alvoDepois = a.vJ('ctx.hoje').alvo.kcal;
+  assert.ok(alvoDepois > alvoAntes,
+    'e o ALVO do dia sobe: o carboidrato marcado como "alta" passa a contar — ' +
+    Math.round(alvoAntes) + ' → ' + Math.round(alvoDepois));
+
+  a.v('ctx.setAlta', 0);
+  await a.esperar();
+  assert.strictEqual(a.S().dia.alta, 0, 'e desliga');
+  assert.strictEqual(Math.round(a.vJ('ctx.hoje').alvo.kcal), Math.round(alvoAntes),
+    'devolvendo o alvo ao número de antes');
+
+  // qualquer coisa verdadeira liga; qualquer coisa falsa desliga — e grava 1/0,
+  // não o que veio: o estado vai para o backup e para a fusão.
+  a.v('ctx.setAlta', 'sim');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.alta, 1, 'o verbo normaliza para 1 em vez de guardar o texto');
+  a.v('ctx.setAlta', null);
+  await a.esperar();
+  assert.strictEqual(a.S().dia.alta, 0, 'e para 0 em vez de guardar null');
+
+  assert.strictEqual(JSON.stringify(a.S().comida.plano), planoAntes,
+    'nada disso tocou o PLANO: alta demanda é do dia, e o malto continua no plano de todo dia');
+  a.fechar();
+});
