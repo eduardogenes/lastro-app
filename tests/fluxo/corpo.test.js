@@ -932,3 +932,69 @@ test('a leitura que registraBio grava atravessa a cópia de segurança e volta p
     'sem que a pesagem da manhã tenha ganhado nada de carona');
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// O aviso destrutivo das SETE grandezas: `ctx.apagaMedida`
+// ---------------------------------------------------------------------------
+//
+// O QUE ESTE GRUPO PROVA: que o aviso de `delBody` nomeia a grandeza que vai
+// sair e dá a unidade DELA, para as sete chaves de `MARCAS_DO_CORPO` — não
+// para as duas que um ternário em `k === 'peso'` sabia. Antes daqui, remover
+// uma leitura de `bioGorduraPct` perguntava *"Remover a cintura de … (17,8
+// cm)?"*: nome errado e unidade errada, num aviso que não tem desfazer.
+//
+// O QUE ESTE GRUPO NÃO PROVA: que alguma TELA ofereça a remoção das cinco da
+// bioimpedância ao dedo. `.crow-x` existe para peso e cintura; as cinco ainda
+// não têm tela nenhuma (nem de escrita — ver `ctx.registraBio` acima). O caso
+// chama o verbo, e o que ele garante é que a capacidade está certa no modelo.
+
+test('ctx.apagaMedida nomeia a grandeza certa, na unidade certa, nas sete', async () => {
+  const t = Date.now() - 2 * DIA;
+  // Um valor por grandeza, todos diferentes: valor repetido deixaria um nome
+  // trocado passar por casar com a linha do vizinho.
+  const valores = { peso: 81.2, cintura: 88.4, bioPeso: 79.2, bioMusculo: 37.4,
+                    bioGordura: 14.1, bioGorduraPct: 17.8, bioAgua: 45.3 };
+  const corpo = {};
+  Object.keys(valores).forEach(function (k) { corpo[k] = [{ t: t, v: valores[k] }]; });
+
+  const a = await app({ estado: { logs: {}, done: [], body: corpo } });
+  const tabela = a.dado('MEDIDAS_DO_CORPO');
+  assert.strictEqual(tabela.length, 7, 'sete grandezas na tabela do domínio — pré-condição');
+
+  for (const med of tabela) {
+    a.recusar();
+    await a.v('ctx.apagaMedida', med.k, t);
+    await a.esperar();
+
+    const q = a.perguntas()[a.perguntas().length - 1];
+    assert.ok(q.indexOf('Remover ' + med.n + ' de ') === 0,
+      med.k + ': o aviso abre nomeando a grandeza da tabela — ' + q);
+    // `%` cola no número, o resto leva espaço: é como o app escreve em todo
+    // lugar, e o aviso não é exceção.
+    const esperado = med.u === '%'
+      ? '(' + String(valores[med.k]).replace('.', ',') + '%)'
+      : '(' + String(valores[med.k]).replace('.', ',') + ' ' + med.u + ')';
+    assert.ok(q.indexOf(esperado) > 0,
+      med.k + ': com o valor e a unidade DELA, ' + esperado + ' — ' + q);
+    assert.ok(/outras medidas ficam/.test(q), med.k + ': e delimita o estrago — ' + q);
+    assert.strictEqual(a.S().body[med.k].length, 1, med.k + ': recusar não apagou nada');
+  }
+
+  // E a unidade de uma não vaza para outra: quatro são kg, uma cm, uma % e uma L.
+  const perguntas = a.perguntas().join('\n');
+  assert.strictEqual((perguntas.match(/ cm\)/g) || []).length, 1, 'uma só em cm');
+  assert.strictEqual((perguntas.match(/%\)/g) || []).length, 1, 'uma só em %');
+  assert.strictEqual((perguntas.match(/ L\)/g) || []).length, 1, 'uma só em L');
+  assert.strictEqual((perguntas.match(/ kg\)/g) || []).length, 4, 'e quatro em kg');
+
+  // Aceitar apaga a nomeada, e só ela: o endereço é grandeza + instante.
+  a.aceitar();
+  await a.v('ctx.apagaMedida', 'bioGorduraPct', t);
+  await a.esperar();
+  assert.deepStrictEqual(a.S().body.bioGorduraPct, [], 'a leitura nomeada saiu');
+  assert.strictEqual(a.S().body.cintura.length, 1,
+    'e a cintura — que o aviso velho nomeava no lugar dela — ficou onde estava');
+  assert.ok(a.S().apagados['bioGorduraPct:' + t] > 0,
+    'com lápide própria, senão a fusão do outro aparelho a ressuscita');
+  a.fechar();
+});

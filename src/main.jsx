@@ -3691,15 +3691,30 @@ async function registraBio(leitura, quando) {
         (substituiu ? ' — substituiu a leitura do dia.' : '.'));
   return { ok: true, em: t, gravadas: vai.map(function (x) { return x.k; }) };
 }
+/**
+ * Valor com a unidade da grandeza, como se escreve.
+ *
+ * O `%` cola no número e as outras levam espaço — é a regra que o resto do app
+ * já segue (`+2,3%`, `81,2 kg`), e ela mora aqui para a frase não a decidir.
+ */
+function comUnidade(v, u) { return fmtDec(v) + (u === '%' ? '' : ' ') + u; }
+
 async function delBody(k, t) {
   // Confirma, como as outras ações destrutivas: a medida é um ponto de um dia
   // que já passou, e desfazer seria ter decorado o número. O aviso delimita o
   // estrago em vez de dramatizar.
+  //
+  // Nome e unidade saem de `MEDIDAS_DO_CORPO`, e nunca de um ternário em
+  // `k === 'peso'`. Com as cinco grandezas da bioimpedância em `S.body` desde a
+  // migração 9 → 10, o ternário fazia este aviso DESTRUTIVO perguntar pela
+  // grandeza errada na unidade errada: remover uma leitura de `bioGorduraPct`
+  // perguntava *"Remover a cintura de 08/10 (17,8 cm)?"*. A tabela do domínio
+  // sabe o nome e a unidade das sete; transcrever duas delas aqui era a única
+  // razão de o aviso poder mentir.
   const m = S.body[k].filter(function (x) { return x.t === t; })[0];
-  const alvo = k === 'peso' ? 'o peso' : 'a cintura';
-  const un = k === 'peso' ? ' kg' : ' cm';
-  if (m && !confirm('Remover ' + alvo + ' de ' + fmtDate(t) +
-      ' (' + fmtDec(m.v) + un + ')?\n\n' +
+  const med = MEDIDAS_DO_CORPO.filter(function (x) { return x.k === k; })[0];
+  if (m && !confirm('Remover ' + (med ? med.n : k) + ' de ' + fmtDate(t) +
+      ' (' + comUnidade(m.v, med ? med.u : '') + ')?\n\n' +
       'Sai da média da semana e do ritmo. As outras medidas ficam.')) return;
   lapide(chaveDeMarca(k, { t: t }));
   S.body[k] = S.body[k].filter(x => x.t !== t);
