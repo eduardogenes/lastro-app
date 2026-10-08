@@ -6014,6 +6014,28 @@ function achaRefeicao(id) {
   return planoDeComida().filter(function (r) { return r.id === id; })[0] || null;
 }
 
+/**
+ * Um id de refeição livre, com a mesma guarda de colisão de `idAlimento`.
+ *
+ * Era `'r' + Date.now()` nu, em duas portas — a criação e a duplicação. Dois
+ * ids iguais no plano não dão erro: `achaRefeicao` devolve sempre a primeira, e
+ * a segunda refeição fica no plano somando no total do dia e **ineditável**,
+ * sem nada na tela dizendo por quê. Ninguém mediu caminho realista até a
+ * colisão; o que não havia era razão escrita para um id ter guarda e o outro
+ * não. O laço é o mesmo de `idAlimento`, e um id já carimbado do relógio
+ * raramente entra nele.
+ */
+function idRefeicao() {
+  const base = 'r' + Date.now();
+  const plano = planoDeComida();
+  const ocupado = function (id) {
+    return plano.filter(function (r) { return r.id === id; }).length > 0;
+  };
+  let id = base, n = 2;
+  while (ocupado(id)) id = base + '-' + n++;
+  return id;
+}
+
 // ---- refeição ----
 
 CTX.refeicaoParaEditar = function (id) {
@@ -6042,7 +6064,7 @@ CTX.salvaRefeicao = function (id, campos) {
   const plano = planoDeComida();
   let r = id ? achaRefeicao(id) : null;
   if (!r) {
-    r = { id: 'r' + Date.now(), t: '12:00', n: '', tag: '', quando: 'sempre', nota: '', itens: [] };
+    r = { id: idRefeicao(), t: '12:00', n: '', tag: '', quando: 'sempre', nota: '', itens: [] };
     plano.push(r);
   }
   Object.assign(r, campos);
@@ -6055,7 +6077,7 @@ CTX.duplicaRefeicao = function (id) {
   const r = achaRefeicao(id);
   if (!r) return;
   const copia = JSON.parse(JSON.stringify(r));
-  copia.id = 'r' + Date.now();
+  copia.id = idRefeicao();
   copia.n = r.n + ' (cópia)';
   planoDeComida().push(copia);
   CTX.fechaFolha();

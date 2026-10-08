@@ -729,18 +729,17 @@ test('ctx.duplicaRefeicao copia o conteúdo, e a cópia é independente do origi
   a.fechar();
 });
 
-test('duas duplicações no mesmo milissegundo produzem duas refeições com o MESMO id', async () => {
-  // ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. Ele grava uma assimetria do fonte:
-  // `idAlimento()` procura um id livre em laço (`base-2`, `base-3`…), mas o id
-  // de refeição é `'r' + Date.now()` nu, em `salvaRefeicao` e em
-  // `duplicaRefeicao`. Com o relógio parado — que é como esta suíte roda — duas
-  // duplicações colidem, e `achaRefeicao` passa a devolver sempre a primeira:
-  // a segunda fica no plano, soma no total do dia e é ineditável.
+test('duas duplicações no mesmo milissegundo ganham ids diferentes, e as duas são editáveis', async () => {
+  // Este caso trocou de lado. Ele afirmava a assimetria do fonte — `idAlimento`
+  // procurava um id livre em laço e o de refeição era `'r' + Date.now()` nu, em
+  // `salvaRefeicao` e em `duplicaRefeicao` — e dizia que ficaria vermelho
+  // quando alguém pagasse a guarda. Alguém pagou: `idRefeicao()` faz o laço de
+  // `idAlimento`, e o que o caso cobra agora é a guarda, não o defeito.
   //
-  // No aparelho dele dois toques no mesmo milissegundo são implausíveis; o que
-  // este caso guarda é que NADA no código impede a colisão. Se alguém der às
-  // refeições o id colisão-segura dos alimentos, este caso fica vermelho e
-  // aponta a linha.
+  // Com o relógio parado — que é como esta suíte roda — as duas duplicações
+  // caem no mesmo milissegundo, que é o único jeito de exercitar o laço de
+  // propósito. Dois ids iguais no plano não davam erro: `achaRefeicao` devolvia
+  // sempre a primeira, e a segunda somava no total do dia sem poder ser editada.
   const a = await app({ aba: 'comida', agora: agoraEstavel(8) });
   a.v('ctx.duplicaRefeicao', 'ceia');
   a.v('ctx.duplicaRefeicao', 'ceia');
@@ -748,8 +747,43 @@ test('duas duplicações no mesmo milissegundo produzem duas refeições com o M
 
   const ids = a.S().comida.plano.map(function (r) { return r.id; });
   assert.strictEqual(ids.length, 9, 'as duas cópias entraram');
-  assert.strictEqual(ids[7], ids[8], 'e com o MESMO id: ' + ids[7]);
-  assert.strictEqual(new Set(ids).size, 8, 'o plano tem 9 refeições e 8 ids');
+  assert.notStrictEqual(ids[7], ids[8], 'e com ids DIFERENTES: ' + ids[7] + ' / ' + ids[8]);
+  assert.strictEqual(new Set(ids).size, 9, 'nove refeições, nove ids');
+  assert.ok(/^r\d+(-\d+)?$/.test(ids[8]), 'o segundo sai do laço com sufixo: ' + ids[8]);
+
+  // E a segunda cópia é alcançável: era este o estrago da colisão.
+  a.v('ctx.removeItem', ids[8], 0);
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', ids[8]).itens.length, 1,
+    'a SEGUNDA cópia perdeu um item — ela é editável, e não um apelido da primeira');
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', ids[7]).itens.length, 2,
+    'e a primeira não foi tocada');
+  a.fechar();
+});
+
+test('a criação de refeição tem a MESMA guarda de id da duplicação', async () => {
+  // São duas portas, e só uma estar guardada seria a assimetria de volta num
+  // lugar diferente: `ctx.salvaRefeicao` sem id cria, `ctx.duplicaRefeicao`
+  // copia, e as duas carimbavam `'r' + Date.now()` nu.
+  const a = await app({ aba: 'comida', agora: agoraEstavel(8) });
+  a.v('ctx.salvaRefeicao', null, { t: '10:00', n: 'Uma' });
+  a.v('ctx.salvaRefeicao', null, { t: '10:30', n: 'Outra' });
+  await a.esperar();
+
+  const plano = a.S().comida.plano;
+  const novas = plano.filter(function (r) { return r.n === 'Uma' || r.n === 'Outra'; });
+  assert.strictEqual(novas.length, 2, 'as duas nasceram');
+  assert.notStrictEqual(novas[0].id, novas[1].id,
+    'com ids diferentes: ' + novas[0].id + ' / ' + novas[1].id);
+  assert.strictEqual(new Set(plano.map(function (r) { return r.id; })).size, plano.length,
+    'e o plano inteiro segue sem id repetido');
+
+  // Cada uma responde pelo SEU id: com a colisão, editar a segunda editava a primeira.
+  a.v('ctx.salvaRefeicao', novas[1].id, { n: 'Outra, renomeada' });
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', novas[1].id).n, 'Outra, renomeada');
+  assert.strictEqual(a.vJ('ctx.refeicaoParaEditar', novas[0].id).n, 'Uma',
+    'e a primeira não foi renomeada no lugar dela');
   a.fechar();
 });
 
