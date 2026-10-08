@@ -1276,3 +1276,172 @@ test('ctx.setNotaDaSessao sem foto no dia não inventa sessão para anotar', asy
   await a.esperar(60);
   a.fechar();
 });
+
+// ===========================================================================
+// GRUPO A · As quatro chaves que decidem se a foto EXISTE
+// ===========================================================================
+//
+// O critério desta passada é QUANTO UMA QUEBRA SILENCIOSA CUSTA, do
+// irrecuperável ao visível. Estas quatro são o topo: são as únicas chaves de
+// `CTX` sem rede que chamam `garanteBytesDoCorpo`, a porta que traz os bytes do
+// bucket de volta para o cache. Quebrada em silêncio, qualquer uma delas faz a
+// tela dizer "a nuvem não devolveu a foto" sobre foto que ESTÁ no bucket — e a
+// comparação entre sessões, que é a razão do protocolo existir, fica vazia sem
+// nada dizendo por quê. Nenhuma delas tinha uma única menção em `tests/fluxo/`:
+// a rede chegava até elas pelo clique (`.fa-retomar`) ou pelo nome de módulo
+// dentro de `a.E`, que o redesenho renomeia sem avisar ninguém.
+//
+// O QUE ESTE GRUPO NÃO COBRE: que algum botão ou seletor da tela esteja ligado
+// nelas. Chamar o verbo prova que a capacidade existe no MODELO, não que o dedo
+// a alcança.
+
+test('ctx.tentaFotos limpa a falha daquela data e traz os bytes de novo', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const velha = diasAtras(28), nova = diasAtras(14);
+  nuvemComBucket(a, {}, {});                 // com conta, e o bucket vazio
+  comSessoes(a, [velha, nova], 'frente-relaxado');
+
+  a.v('ctx.abreComparar');
+  await a.esperar(80);
+  const c = () => a.vJ('ctx.comparacao');
+  assert.strictEqual(c().ate.aviso, 'a nuvem não devolveu a foto', 'pré-condição: falhou');
+  assert.strictEqual(c().ate.retomar, true, 'e há o que tentar');
+
+  // o byte aparece no bucket, e é só então que tentar de novo tem o que trazer
+  a.E(`globalThis.__bucketCorpo[${JSON.stringify(nova + '/frente-relaxado.webp')}] = 1`);
+  a.v('ctx.tentaFotos', nova);
+  await a.esperar(80);
+
+  assert.match(c().ate.url, /^blob:/, 'a foto chegou do bucket ao cache e à tela');
+  assert.strictEqual(c().ate.retomar, false, 'e a falha não ficou grudada no quadro');
+  assert.deepStrictEqual(guardadas(a), ['./corpo/' + nova + '/frente-relaxado.webp'],
+    'os bytes ficaram no cache deste aparelho');
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('ctx.tentaFotos não limpa a falha das OUTRAS datas', async () => {
+  // A chave da falha é `data|pose`, e o verbo filtra por prefixo. Limpar tudo
+  // faria o quadro que continua falhando dizer "buscando a foto…" para sempre
+  // — a tela afirmando que ainda tenta depois de já ter desistido, que é
+  // exatamente o defeito que `falhaDeFoto` nasceu para consertar.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const velha = diasAtras(28), nova = diasAtras(14);
+  nuvemComBucket(a, {}, {});
+  comSessoes(a, [velha, nova], 'frente-relaxado');
+
+  a.v('ctx.abreComparar');
+  await a.esperar(80);
+  const c = () => a.vJ('ctx.comparacao');
+  assert.strictEqual(c().de.aviso, 'a nuvem não devolveu a foto', 'as duas falharam');
+  assert.strictEqual(c().ate.aviso, 'a nuvem não devolveu a foto');
+
+  // o byte da NOVA aparece; o da velha continua fora do bucket
+  a.E(`globalThis.__bucketCorpo[${JSON.stringify(nova + '/frente-relaxado.webp')}] = 1`);
+  a.v('ctx.tentaFotos', nova);
+  await a.esperar(80);
+
+  assert.match(c().ate.url, /^blob:/, 'a data tentada trouxe');
+  assert.strictEqual(c().de.aviso, 'a nuvem não devolveu a foto',
+    'e a OUTRA continua com a falha escrita, em vez de voltar a "buscando…"');
+  assert.strictEqual(c().de.retomar, true, 'com a porta dela própria para tentar');
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('ctx.setDataComparada troca um lado do par e busca os bytes da data nova', async () => {
+  // O par padrão é a mais nova contra a mais antiga; trocar um lado é o gesto
+  // que responde "e contra a do meio?". Sem a busca de bytes aqui, a data nova
+  // entraria no estado e o quadro dela abriria vazio.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const datas = [56, 28, 14].map(diasAtras);
+  nuvemComBucket(a, {}, Object.fromEntries(datas.map(d => [d + '/frente-relaxado.webp', 1])));
+  comSessoes(a, datas, 'frente-relaxado');
+
+  a.v('ctx.abreComparar');
+  await a.esperar(80);
+  assert.strictEqual(a.vista().comparar.de, datas[0], 'pré-condição: o par padrão');
+  assert.strictEqual(a.vista().comparar.ate, datas[2]);
+
+  a.v('ctx.setDataComparada', 'de', datas[1]);
+  await a.esperar(80);
+
+  assert.strictEqual(a.vista().comparar.de, datas[1], 'o lado DE virou a do meio');
+  assert.strictEqual(a.vista().comparar.ate, datas[2], 'e o outro lado ficou onde estava');
+  const c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.de.d, datas[1], 'a leitura da tela acompanhou');
+  assert.match(c.de.url, /^blob:/, 'e os bytes da data nova foram buscados');
+  assert.ok(/^14 dias entre as duas/.test(c.intervalo),
+    'o intervalo é o do par novo, 28 → 14 dias atrás: ' + c.intervalo);
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('ctx.setPoseComparada troca a pose e remonta o par padrão dela', async () => {
+  // Cada pose tem seu próprio conjunto de sessões: trocar a pose sem remontar
+  // o par deixaria as duas datas da pose anterior apontando para quadros que
+  // não existem naquela.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const todas = [56, 28, 14].map(diasAtras);
+  nuvemComBucket(a, {}, Object.fromEntries(
+    todas.map(d => [d + '/frente-relaxado.webp', 1])
+      .concat([[todas[1] + '/costas-relaxado.webp', 1], [todas[2] + '/costas-relaxado.webp', 1]])));
+  // a segunda pose só existe nas duas sessões mais recentes
+  a.E(`S.protocolo.sessoes = [
+    { d: ${JSON.stringify(todas[0])}, t: 1, m: 1, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } },
+    { d: ${JSON.stringify(todas[1])}, t: 2, m: 2, fotos: { 'frente-relaxado': { v: 2, ext: 'webp' }, 'costas-relaxado': { v: 3, ext: 'webp' } } },
+    { d: ${JSON.stringify(todas[2])}, t: 3, m: 3, fotos: { 'frente-relaxado': { v: 4, ext: 'webp' }, 'costas-relaxado': { v: 5, ext: 'webp' } } }
+  ]`);
+
+  a.v('ctx.abreComparar');
+  await a.esperar(80);
+  assert.strictEqual(a.vista().comparar.pose, 'frente-relaxado', 'pré-condição');
+  assert.strictEqual(a.vista().comparar.de, todas[0], 'com o par mais largo que essa pose tem');
+
+  a.v('ctx.setPoseComparada', 'costas-relaxado');
+  await a.esperar(80);
+
+  assert.strictEqual(a.vista().comparar.pose, 'costas-relaxado', 'a pose trocou');
+  assert.strictEqual(a.vista().comparar.de, todas[1],
+    'e o par foi REMONTADO no que essa pose tem: a mais antiga dela, não a de antes');
+  assert.strictEqual(a.vista().comparar.ate, todas[2]);
+  const c = a.vJ('ctx.comparacao');
+  assert.match(c.de.url, /^blob:/, 'e os bytes dos dois lados foram buscados');
+  assert.match(c.ate.url, /^blob:/);
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('ctx.setDataDoFantasmaDaCamera troca a sobreposição e busca os bytes dela', async () => {
+  // Alinhar ANTES do disparo é o motivo da câmera de dentro do app existir, e
+  // o fantasma é COM o que se alinha. Trocá-lo sem buscar os bytes deixaria a
+  // câmera sobrepondo nada.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  const datas = [56, 28, 14].map(diasAtras);
+  nuvemComBucket(a, {}, Object.fromEntries(datas.map(d => [d + '/frente-relaxado.webp', 1])));
+  comSessoes(a, datas, 'frente-relaxado');
+
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.esperar(80);
+  await a.v('ctx.abreCamera');
+  await a.esperar(80);
+  assert.strictEqual(a.vista().camera.fantasmaD, datas[2],
+    'a câmera abre na vizinha com a pose — pré-condição');
+
+  a.v('ctx.setDataDoFantasmaDaCamera', datas[0]);
+  await a.esperar(80);
+
+  assert.strictEqual(a.vista().camera.fantasmaD, datas[0], 'o fantasma virou a mais antiga');
+  assert.deepStrictEqual(guardadas(a).includes('./corpo/' + datas[0] + '/frente-relaxado.webp'), true,
+    'e os bytes dela foram buscados do bucket: ' + guardadas(a).join(', '));
+  a.v('ctx.fechaCamera');
+  await a.esperar(60);
+  a.fechar();
+});
