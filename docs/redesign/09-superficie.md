@@ -1509,3 +1509,91 @@ trabalho real**. A lista é literal, por assunto, na forma do §5:
    passava medindo nada (§9.3) só apareceu porque uma quebra *não* o derrubou.
    **Uma quebra que não produz vermelho é informação**, e não um desperdício:
    ou o caso não mede o que diz, ou a quebra não é o que você pensou.
+
+---
+
+## 10 · Terceira passada: dois consertos e treze chaves
+
+**Esta seção foi escrita pelo coordenador, não pelo agente da passada.** Ele caiu
+por limite de sessão (429) com a árvore limpa — commitou tudo que fez e morreu
+antes de escrever a entrega. O que está aqui é o que eu conferi por conta
+própria no código e na suíte, e está marcado onde eu medi.
+
+### A linha de base
+
+| | antes | depois |
+|---|---:|---:|
+| `npm test` | 1.038 | **1.052** |
+| arquivos | 53 | 53 |
+| rejeições não tratadas | 0 | **0** |
+
+Catorze casos novos, três commits: `bb2fef0`, `21c6813`, `c3657d6`. Nenhum caso
+removido.
+
+### Os dois consertos, e os dois leram a fonte da verdade em vez de transcrever
+
+**`bb2fef0` — o aviso de remover medida perguntava pela grandeza errada.** Com as
+cinco da bioimpedância em `S.body` desde a migração 9 → 10, o ternário em
+`k === 'peso'` fazia um aviso **destrutivo** mentir: remover uma leitura de
+`bioGorduraPct` perguntava *"Remover a cintura de 08/10 (17,8 cm)?"* — nome
+errado **e** unidade errada. Agora nome e unidade saem de `MEDIDAS_DO_CORPO`.
+
+Ele acrescentou `comUnidade(v, u)` e a razão vale registro: **o `%` cola no
+número e as outras levam espaço**, que é o que o resto do app já faz
+(`+2,3%`, `81,2 kg`). A regra mora numa função para a frase não a decidir.
+
+**`21c6813` — id de refeição sem guarda de colisão, nas duas portas.**
+`idRefeicao()` passou a usar o mesmo laço de `idAlimento`. **E ele achou a
+consequência que eu não tinha visto:** ids iguais **não dão erro**.
+`achaRefeicao` devolve sempre a primeira, então a segunda refeição fica no plano
+**somando no total do dia e ineditável**, sem nada na tela dizendo por quê.
+Honesto no comentário: ninguém mediu caminho realista até a colisão — o que
+faltava era razão escrita para um id ter guarda e o outro não.
+
+### O critério dele, que não era o meu
+
+Eu pedi "por quanto dói perder em silêncio" e deixei a escolha com ele. Ele
+escolheu **as chaves que ESCREVEM estado que não desfaz** — está no título do
+commit `c3657d6`. É um corte melhor que o meu por assunto, porque atravessa os
+assuntos e põe primeiro o que não tem volta.
+
+**Assunto fechado: promoção e retroativo, 6 de 6.** `concluiPromo`,
+`voltaDoPromo`, `abreRetro`, `retroativo`, `fechaAdicionar`, `gravaRetro` —
+medido por mim, todos com menção em `tests/fluxo/`. Arquivos tocados:
+`promocao`, `retro`, `telaprograma`, `protocolo`, `corpo`, `fusao`.
+
+### O que falta, medido por mim no código e não na lista
+
+Contei as chaves de `CTX` no fonte e cruzei com todas as menções em
+`tests/fluxo/`: **201 chaves, 26 sem uma única menção.** Dessas 26, **duas não
+devem ganhar rede** (`addNome` e `limpaNum` recebem elemento, não valor), então
+**24 são trabalho real**:
+
+**Câmera e ajuste de foto — 16.** `arrastaAjuste`, `fechaProtocolo`,
+`posAnterior`, `setDataComparada`, `setDataDoFantasmaDaCamera`,
+`setFantasmaDaCamera`, `setFantasmaDoAjuste`, `setGradeDaCamera`,
+`setGradeDoAjuste`, `setOpacidade`, `setOpacidadeDaCamera`, `setPoseComparada`,
+`setSobrepor`, `setZoomDoAjuste`, `streamDaCamera`, `tentaFotos`.
+Casa: `protocolo.test.js` e `fotos.test.js`, que já têm os dublês montados.
+**É o maior bloco e o mais delicado:** é onde moram as entradas de DOM dentro do
+`a.E` e onde viviam as quatro rejeições que o `09-desligamento.md` fechou. Use
+`await a.v(…)`.
+
+**Rota e shell — 4.** `abreSessaoDoDia`, `edicaoDoDia`, `vaiParaDia`,
+`voltaAoTreino`.
+
+**Leituras — 4.** `cadenciaTxt`, `catalogo`, `comidaDoDia`, `movidas`.
+
+### O que NÃO foi feito, e o próximo não deve presumir que foi
+
+- **A prova de vermelho dos catorze casos novos não está registrada.** A
+  disciplina das duas passadas anteriores era quebrar o verbo, ver o vermelho,
+  desfazer e **escrever a prova por grupo**. Ele morreu antes dessa parte do
+  documento. A última linha dele antes de cair foi *"All three now go red"*, o
+  que indica que ele fez as quebras — **mas eu não as vi e não as reproduzi.**
+  **Quem continuar deve tratar a prova dos catorze como não registrada**, e vale
+  refazer por amostragem antes de confiar neles.
+- **A frase "cobre o modelo, não a fiação"** pode não estar em todos os blocos
+  novos. Confira.
+- **As quatro que não devem ganhar rede** (`addNome`, `limpaNum`, e antes
+  `addHora` e `folhas`) ele não confirmou por escrito, como eu havia pedido.
