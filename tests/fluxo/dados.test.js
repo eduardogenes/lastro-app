@@ -580,10 +580,13 @@ function estadoCheio(t) {
     body: { peso: [{ t: t, v: 80 }], cintura: [{ t: t, v: 85 }] },
     carga: { A0: 'livre' },
     ex: { meu: { n: 'Meu aparelho', g: 'peito' } },
-    aulas: [{ nome: 'sabado do box', blocos: [] }],
+    aulas: [{ id: 'aula1', nome: 'sabado do box', blocos: [] }],
     comidaHist: [{ d: '2026-10-01', done: {}, agua: 0, escala: {}, tot: {}, pv: 1, m: t }],
-    protocolo: { poses: ['frente'], sessoes: [{ t: t, fotos: {} }] },
-    fotos: { A0: { k: 'x' } },
+    protocolo: {
+      poses: ['frente-relaxado'],
+      sessoes: [{ d: '2026-10-02', t: t, m: t, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } }]
+    },
+    fotos: { A0: { v: 1, ext: 'webp' } },
     apagados: { 'log:nada:1:nada': t },
     progLog: [{ t: t, k: 'troca' }],
     quadro: { texto: 'wod de sabado' }
@@ -640,33 +643,70 @@ test('ctx.apagaTudo leva o que foi REGISTRADO e deixa o que foi PRESCRITO', asyn
   a.fechar();
 });
 
-test('ctx.apagaTudo leva junto três coisas que ninguém declarou — o escopo de hoje', async () => {
-  // ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. Ele grava o que o verbo faz hoje, nos
-  // campos que `wipe()` não lista nem como registro nem como prescrição: o
-  // objeto novo que ele monta simplesmente não os carrega, e `normalizaEstado`
-  // os preenche vazios depois. Se alguém decidir que um deles deve sobreviver,
-  // este caso fica vermelho e aponta a linha — que é o contrário de descobrir
-  // meses depois que a biblioteca de aulas sumiu num toque.
+test('ctx.apagaTudo preserva biblioteca e catálogo, e parte o protocolo ao meio', async () => {
+  // O escopo dos três campos que ninguém tinha declarado, DECLARADO — decisão
+  // do dono, 08/10. Eram "três coisas que ninguém declarou", e o caso de antes
+  // gravava o que o app fazia sem afirmar que estava certo. Agora afirma:
   //
-  // Eram QUATRO, e o quarto era `apagados` — toda lápide ia junto. Esse saiu da
-  // lista: ele não era escopo de produto, era a ressurreição pela fusão, e está
-  // consertado no caso seguinte. Os três que sobraram continuam em aberto.
+  // - `aulas` PRESERVA: são os modelos de aula que ELE salvou. Biblioteca,
+  //   igual a `S.ex`, que já sobrevive com o comentário "não é registro, é
+  //   catálogo".
+  // - `fotos` PRESERVA: as fotos dos aparelhos são atributo do catálogo,
+  //   paralelo exato a `S.ex`.
+  // - `protocolo` é PARTIDO: `poses` é prescrição e fica, `sessoes` é registro
+  //   e vai — e registro é o que o aviso mandou apagar.
   const t = Date.now() - 2 * DIA;
   const a = await app({ estado: estadoCheio(t) });
 
   assert.strictEqual(a.S().aulas.length, 1, 'o modelo de aula estava salvo');
   assert.strictEqual(a.S().protocolo.sessoes.length, 1, 'a sessão de fotos de corpo também');
+  assert.deepStrictEqual(a.S().protocolo.poses, ['frente-relaxado'], 'e a ordem de poses estava escolhida');
 
   await a.v('ctx.apagaTudo');
   await a.esperar(60);
   const d = a.S();
 
-  assert.deepStrictEqual(d.aulas, [],
-    'a biblioteca de modelos de aula vai junto — e `S.ex`, que também é coisa que ELE criou, fica');
-  assert.deepStrictEqual(d.protocolo, { poses: null, sessoes: [] },
-    'as sessões de foto de corpo vão junto, sem podar os bytes no cache nem no bucket');
-  assert.deepStrictEqual(d.fotos, {},
-    'as referências de foto de aparelho vão junto, pelo mesmo caminho');
+  assert.deepStrictEqual(d.aulas, [{ id: 'aula1', nome: 'sabado do box', blocos: [] }],
+    'a biblioteca de modelos de aula FICA — é coisa que ELE criou, como `S.ex`');
+  assert.deepStrictEqual(d.fotos, { A0: { v: 1, ext: 'webp' } },
+    'as fotos dos aparelhos FICAM — atributo do catálogo, não registro de treino');
+  assert.deepStrictEqual(d.protocolo.poses, ['frente-relaxado'],
+    'a ordem das poses FICA: é prescrição');
+  assert.deepStrictEqual(d.protocolo.sessoes, [],
+    'e as sessões de foto de corpo VÃO: são registro');
+  a.fechar();
+});
+
+test('ctx.apagaTudo não deixa lápide no que PRESERVA, e deixa no que leva', async () => {
+  // As duas direções, porque errar cada uma é silencioso e custa coisa
+  // diferente. Lápide no que sobreviveu faz o OUTRO aparelho apagar o que este
+  // preservou — a decisão do dono desfeita pela sincronização, sem nada na
+  // tela. Falta de lápide no que morreu faz o outro aparelho RESSUSCITAR o que
+  // este apagou, contra um aviso que promete que não tem volta.
+  //
+  // As chaves estão escritas à mão de propósito, pelo mesmo motivo do caso
+  // anterior: é a string que o OUTRO aparelho compara.
+  const t = Date.now() - 2 * DIA;
+  const a = await app({ estado: estadoCheio(t) });
+
+  await a.v('ctx.apagaTudo');
+  await a.esperar(60);
+  const mortos = a.S().apagados;
+
+  // o que FICA não é perseguido
+  assert.strictEqual(mortos['aula:aula1'], undefined,
+    'o modelo de aula sobreviveu, então nenhuma lápide o persegue');
+  assert.strictEqual(mortos['foto:A0'], undefined,
+    'a foto do aparelho sobreviveu, idem');
+  assert.deepStrictEqual(
+    Object.keys(mortos).filter(function (k) { return k.indexOf('aula:') === 0 || k.indexOf('foto:') === 0; }),
+    [], 'e nenhuma outra lápide dessas duas famílias nasceu');
+
+  // o que VAI continua levando lápide
+  assert.ok(mortos['corpo:2026-10-02'] > t,
+    'a sessão de foto de corpo morreu, e tem lápide carimbada depois do registro');
+  assert.ok(mortos['corpo:2026-10-02:frente-relaxado'] > t,
+    'e a foto dentro dela tem lápide PRÓPRIA: a da sessão não alcança a pose');
   a.fechar();
 });
 

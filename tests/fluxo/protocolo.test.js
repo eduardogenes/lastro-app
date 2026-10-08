@@ -353,6 +353,49 @@ test('foto que ainda não subiu segura a poda do cache inteiro', async () => {
   a.fechar();
 });
 
+test('apagar o histórico poda os bytes de corpo, e não os do aparelho', async () => {
+  // `reconciliaCorpo` NÃO alcança a poda depois do apagamento: ela termina em
+  // `if (recentes.length === sessoes.length) return;`, e com as sessões
+  // apagadas as duas contagens são zero. Sem a poda dentro do próprio gesto, o
+  // cache fica com todas as fotos de corpo para sempre, sem nada no estado que
+  // as referencie — o único índice delas era `S.protocolo.sessoes`.
+  //
+  // A outra direção, no mesmo caso: as fotos dos APARELHOS sobrevivem ao
+  // apagamento por decisão do dono, então os bytes delas NÃO podem ser podados.
+  // Um só `caches.delete` no gesto apagaria as duas.
+  //
+  // COBRE O MODELO, NÃO A FIAÇÃO: entra por `ctx.apagaTudo`, e não diz que a
+  // tela tem botão ligado nele.
+  const datas = [70, 56].map(diasAtras);
+  const a = await app({
+    aba: 'dados',
+    estado: {
+      fotos: { A0: { v: 1, ext: 'webp' } },
+      protocolo: { poses: null, sessoes: datas.map(function (d, i) {
+        return { d: d, t: 1, m: 1, fotos: { 'frente-relaxado': { v: i + 1, ext: 'webp' } } };
+      }) }
+    }
+  });
+  cacheFalso(a);
+  for (const d of datas) await semear(a, d, 'frente-relaxado');
+  await a.E(`(async () => {
+    const c = await caches.open('lastro-fotos');
+    await c.put('./foto/A0.webp', new Response(new Blob(['x'], { type: 'image/webp' })));
+  })()`);
+  assert.strictEqual(guardadas(a).length, 2, 'os bytes das duas sessões estão no cache');
+  assert.strictEqual(guardadasEm(a, 'lastro-fotos').length, 1, 'e o do aparelho também');
+
+  await a.v('ctx.apagaTudo');
+  await a.esperar(80);
+
+  assert.deepStrictEqual(a.S().protocolo.sessoes, [], 'as sessões saíram do estado');
+  assert.deepStrictEqual(guardadas(a), [],
+    'e os bytes de corpo saíram do cache junto, em vez de ficarem órfãos');
+  assert.deepStrictEqual(guardadasEm(a, 'lastro-fotos'), ['./foto/A0.webp'],
+    'o byte da foto do APARELHO fica: a referência dele sobreviveu ao gesto');
+  a.fechar();
+});
+
 test('abrir uma sessão podada traz os bytes de volta do bucket', async () => {
   // É o caminho de volta da poda. Sem ele, podar seria perder.
   const a = await app({ aba: 'dados' });

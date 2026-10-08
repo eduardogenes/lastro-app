@@ -433,6 +433,35 @@ sessões, e sobrevivem às suas próprias fontes.
 
 Não escolhi nenhuma. Nada do código mudou nesses campos.
 
+### NOTA DE 08/10 — a opção 1 foi escolhida, e esta §7 não descreve mais o código
+
+**O dono decidiu, e a quarta passada da superfície executou.** Dali em diante o
+código discorda do presente do verbo nesta seção, que ficou como registro do que
+havia. O que mudou:
+
+- **`aulas` PRESERVA** e **`fotos` PRESERVA** — nomeadas no literal do `wipe`,
+  pela forma de diff da §5 (a). Nenhuma lápide as persegue.
+- **`protocolo` é PARTIDO:** `poses` preserva (prescrição), `sessoes` não
+  (registro). No literal entra só `protocolo:{ poses: … }`, e
+  `normalizaEstado()` dá o padrão de `sessoes` — a §5 (a) previa a palavra no
+  literal, e metade de objeto cabe na mesma forma.
+- **A poda dos bytes de corpo entrou no gesto** (`CORPO.poda([])`, depois do
+  `save()`), porque o diagnóstico desta seção continua valendo com `sessoes`
+  morrendo. **O bucket NÃO é podado** e o limite está escrito: `NUVEM.apagaCorpo`
+  não tem chamador nenhum em `src/` — nem em `CTX.apagaFotoDoCorpo`, que apaga
+  UMA. A afirmação desta §7 de que *"`apagaFoto` mostra como se faz"* vale só
+  para a foto de APARELHO; para a de corpo o padrão não existe no arquivo.
+- **Os bytes das fotos de aparelho deixaram de ser órfãos** por outra via: a
+  referência sobrevive, então não há órfão a podar.
+- **A incoerência de `gordura` × `protocolo.sessoes`** (as leituras de gordura
+  descreverem fotos que o estado não tem mais) **continua de pé**: `gordura`
+  sobrevive e `sessoes` morre, exatamente como estava.
+- **O caso `dados` :: *leva junto três coisas que ninguém declarou*** virou
+  *preserva biblioteca e catálogo, e parte o protocolo ao meio*, e ganhou um
+  irmão sobre as duas direções da lápide.
+
+Tudo com prova de vermelho registrada em `09-superficie.md` §11.
+
 ---
 
 ## 8 · Migração: conferi, e não precisou

@@ -4656,7 +4656,21 @@ async function wipe() {
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
         cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura, quadro:S.quadro,
-        perfManual:S.perfManual, compras:S.compras };
+        perfManual:S.perfManual, compras:S.compras,
+        // BIBLIOTECA e CATÁLOGO, pela mesma razão de `S.ex` acima — decisão do
+        // dono, 08/10. `aulas` são os modelos de aula que ELE salvou, e `fotos`
+        // são as fotos dos aparelhos, uma por exercício, para reconhecer a
+        // máquina na academia: atributo do catálogo, não registro de treino.
+        aulas:S.aulas, fotos:S.fotos,
+        // `protocolo` é PARTIDO: `poses` é a ordem das poses do protocolo —
+        // prescrição, e fica —, e `sessoes` são as sessões de foto de corpo —
+        // registro, e vão.
+        //
+        // Só `poses` é nomeada aqui de propósito: `normalizaEstado` logo abaixo
+        // é o único lugar que sabe o padrão de cada campo (`sessoes` vira `[]`,
+        // `poses` inválida vira `null`), e reconstruir a forma à mão já deixou a
+        // nutrição sem catálogo uma vez.
+        protocolo:{ poses: S.protocolo && S.protocolo.poses } };
   // Passa pela mesma normalização do boot: é o único lugar que sabe o padrão de
   // cada campo, e reconstruir o estado à mão aqui já deixou a nutrição sem
   // catálogo uma vez.
@@ -4695,6 +4709,34 @@ async function wipe() {
   // A ordem é deliberada: a remoção vem primeiro, e por isso uma escrita que
   // falhe não pode deixar o histórico velho de pé na chave.
   await save();
+
+  // Os BYTES das fotos de corpo que acabaram de perder a referência.
+  //
+  // `reconciliaCorpo` não alcança a poda depois deste gesto: ela termina em
+  // `if (recentes.length === sessoes.length) return;`, e com as sessões
+  // apagadas as duas contagens são ZERO — a igualdade é verdadeira e
+  // `CORPO.poda` nunca roda. Sem isto, o cache fica com todas as fotos de
+  // corpo para sempre, sem nada no estado que as referencie: o único índice
+  // delas era `S.protocolo.sessoes`, e ele acabou de sair.
+  //
+  // `[]` é a lista do que fica, e depois deste gesto o que fica é nada. Não é
+  // política nova: é a mesma porta que a reconciliação usa, com a lista que o
+  // resultado do apagamento dita. O que a lápide deixa voltar do outro
+  // aparelho volta do BUCKET, por `garanteBytes` — a poda já é o caminho
+  // normal das sessões antigas, e tem volta por lá.
+  //
+  // Depois do `save()`, e em `try`: uma falha de cache não pode impedir a
+  // escrita do estado apagado, que é a parte sem volta. E as fotos de APARELHO
+  // (`S.fotos`) não entram aqui — elas sobrevivem ao gesto, então os bytes
+  // delas continuam referenciados.
+  //
+  // O BUCKET das fotos de corpo NÃO é podado, e isto é limite conhecido, não
+  // esquecimento: `NUVEM.apagaCorpo` não tem um único chamador em `src/` — nem
+  // `CTX.apagaFotoDoCorpo`, que apaga UMA, o chama —, e decidir o que fazer
+  // quando uma das N chamadas de rede falha no meio de um gesto que hoje não
+  // faz rede nenhuma é política que ninguém escreveu. Ver `09-superficie.md`.
+  try { await CORPO.poda([]); } catch (e) {}
+
   view.day='A'; view.aba='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
   view.swapOpen=null;
   render();
