@@ -1632,3 +1632,551 @@ tinha escrito: ao provar um caso cujo nome contém "não", a quebra inerte é
 **O que a prova NÃO diz:** que os casos cobrem a fiação. Eles entram pela
 superfície, por nome e valor; se o redesenho esquecer de ligar o botão, os
 quinze seguem verdes. É o mesmo limite das §8 e §9, e ele não muda.
+
+---
+
+## 11 · Quarta passada: dois consertos decididos pelo dono e as 24 últimas
+
+**Nenhuma linha desta seção tem estimativa de prazo.** Onde não houve medição,
+está escrito que não houve, na convenção do topo do arquivo.
+
+Sete commits, nesta ordem — os dois consertos primeiro, de propósito, porque
+trabalho pequeno commitado vale mais que trabalho grande perdido:
+
+| commit | o que |
+|---|---|
+| `14d26a4` | Tarefa 1 — a marca do arroz na troca de alimento |
+| `ebba3f8` | Tarefa 2 — os três campos do apagamento |
+| `8fd2880` | grupo A — as quatro que decidem se a foto EXISTE |
+| `0c0c025` | grupo B — o recorte gravado e a faixa viva |
+| `a700be5` | grupo C — rota e shell |
+| `28c8f1d` | grupo D — preferências de alinhamento e as saídas da pose |
+| `b8b5ecd` | grupo E — os quatro campos de `ctx.hoje()` |
+
+### 11.1 · A linha de base, antes e depois
+
+**Medido**, `npm test`, nos dois extremos:
+
+| | antes | depois |
+|---|---:|---:|
+| `npm test` | 1.052 | **1.080** |
+| `tests/fluxo/` | 601 | **629** |
+| `tests/dominio/` | 451 | **451** |
+| arquivos | 53 | **53** |
+| rejeições não tratadas | 0 | **0** |
+| `npx tsc --noEmit` | limpo | limpo |
+
+**Vinte e oito casos novos. Nenhum caso removido, nenhum pulado, nenhum
+renomeado por conveniência.** Dois casos existentes mudaram de asserção, os dois
+porque pediram por escrito para mudar quando a decisão chegasse — o §11.3 diz
+qual e por quê. Os 451 de domínio nunca ficaram vermelhos em nenhuma das sete
+execuções cheias.
+
+**O flake conhecido não apareceu.** `navegacao` :: *a folha entra em foco* passou
+nas sete execuções.
+
+### 11.2 · Tarefa 1 · A marca do arroz na troca de alimento
+
+`CTX.trocaItem` passou a fazer `delete r.itens[idx].arroz` depois de escrever
+`i.f`. **O corte é pela natureza da marca, e está escrito no fonte**, porque a
+regra do dono é por natureza e não por lista:
+
+- **`i.arroz` CAI.** Ela diz QUAL ALIMENTO o item é — é onde o ajuste calórico
+  aterra (`arrozAtual` soma, `aplicaArroz` reparte). A troca a torna falsa.
+- **`i.alta` FICA.** Ela diz QUANDO o item aparece. Descreve o lugar no plano, e
+  o lugar não mudou.
+
+**Confirmei as duas afirmações do briefing sobre o mecanismo**: `trocaItem` só
+reescrevia `i.f`, e `i.arroz` é lida em exatamente dois lugares de `main.jsx`
+(`arrozAtual` e `aplicaArroz`).
+
+#### A marca que o briefing mandou procurar EXISTE, e eu não decidi
+
+**São TRÊS marcas por item, não duas.** `Item` em
+`src/dominio/nutricao/tipos.ts` declara `caf`, `arroz` e `alta`.
+
+**`i.caf` é da mesma natureza de `i.arroz`** — diz qual alimento é, a fonte de
+cafeína do pré-treino — e por isso a regra do dono, aplicada ao pé da letra,
+mandaria derrubá-la. **Não derrubei, e não decidi:** o briefing manda dizer e não
+decidir sozinho. Ela segue sobrevivendo à troca, com caso que grava o fato e diz
+em letras que não afirma estar certo.
+
+Três coisas que o dono precisa saber para decidir:
+
+1. **A marca não aparece em nenhuma tela.** `CTX.refeicaoParaEditar` devolve
+   `alta` e `arroz` por item, e **não** devolve `caf` — **conferi**. Só o estado
+   a revela, e por isso o caso novo a lê por `a.S()`.
+2. **O que ela faz:** `refeicoesDeHoje` **corta do dia** todo item com `caf`
+   quando a refeição cai depois do `CORTE_CAFEINA` (16h)
+   (`src/dominio/nutricao/calculo.ts`). Não é só rótulo.
+3. **Quem a tem hoje:** um item só, o café do pré-treino
+   (`{ f: 'cafe', q: 200, caf: 1 }`). Então trocar o café do pré por kiwi faz o
+   kiwi herdar o corte da tarde — **medido** no caso novo.
+
+**Desfazer a decisão custa uma linha**, pela forma do conserto: `delete
+r.itens[idx].caf` ao lado do `delete` do arroz.
+
+### 11.3 · Tarefa 2 · Os três campos do apagamento
+
+#### O conserto
+
+No literal que o `wipe` monta entraram **três palavras**, exatamente pela forma
+de diff que a §5 (a) do `09-apagar.md` previa:
+
+```js
+aulas:S.aulas, fotos:S.fotos,
+protocolo:{ poses: S.protocolo && S.protocolo.poses } };
+```
+
+- **`aulas` PRESERVA** — biblioteca, como `S.ex`.
+- **`fotos` PRESERVA** — atributo do catálogo, paralelo exato a `S.ex`.
+- **`protocolo` PARTIDO** — `poses` preserva (prescrição), `sessoes` não
+  (registro).
+
+**O cuidado 2 do briefing estava certo, e o conserto o respeita:** o literal
+nomeia **só `poses`**, e `normalizaEstado()` — que roda logo abaixo e é o único
+lugar que sabe o padrão de cada campo — dá `sessoes = []` e anula `poses`
+inválida. Nenhuma forma foi reconstruída à mão. (O comentário do `wipe` já
+avisava: reconstruir à mão *"já deixou a nutrição sem catálogo uma vez"*.)
+
+#### A lápide, nas DUAS direções, e por que ela acompanhou de graça
+
+`lapidesDoApagamento` é uma **diferença entre dois estados**, e isso é a peça de
+desenho que faz o cuidado 1 do briefing se resolver sozinho: o que passa a
+sobreviver **deixa de aparecer no diff**, e nenhuma lápide o persegue. Nenhuma
+segunda lista para manter em sincronia.
+
+**Conferi as duas direções com caso** (`dados` :: *ctx.apagaTudo **não** deixa
+lápide no que PRESERVA, e deixa no que leva*), com as chaves escritas à mão —
+é a string que o OUTRO aparelho compara:
+
+| direção | chave | o caso afirma |
+|---|---|---|
+| preserva → sem lápide | `aula:aula1` | `undefined` |
+| preserva → sem lápide | `foto:A0` | `undefined` |
+| morre → com lápide | `corpo:2026-10-02` | `> t` do registro |
+| morre → com lápide | `corpo:2026-10-02:frente-relaxado` | `> t` do registro |
+
+A quarta linha importa por si: a foto dentro da sessão precisa de lápide
+**própria**, porque a da sessão não alcança a pose.
+
+#### Os bytes de foto: metade resolvida, metade PARADA e escrita
+
+**O diagnóstico da passada anterior está certo, e eu o reproduzi lendo a linha.**
+`reconciliaCorpo` termina em `if (recentes.length === sessoes.length) return;`,
+e com as sessões apagadas as duas contagens são **zero** — a igualdade é
+verdadeira e `CORPO.poda` nunca é alcançada.
+
+**O que resolvi.** O `wipe` passou a chamar `CORPO.poda([])` — depois do
+`save()` e dentro de `try`, para uma falha de cache não impedir a escrita, que é
+a parte sem volta. **Não é política nova:** é a mesma porta que a reconciliação
+usa, com a lista do que fica, e depois deste gesto o que fica é nada. A volta
+existe e é a normal das sessões antigas: o que a lápide deixar sobreviver volta
+do bucket por `garanteBytesDoCorpo`.
+
+**O que deixou de ser problema sem eu mexer.** Os bytes das fotos de
+**aparelho**: a referência agora sobrevive ao gesto, então não há órfão. O caso
+novo afirma as duas direções no mesmo lugar — `lastro-corpo` esvazia,
+`lastro-fotos` não —, porque um `caches.delete` solto apagaria os dois.
+
+**O que PAREI, e por quê.** O **bucket** das fotos de corpo não é podado.
+
+> **A afirmação do briefing de que *"`apagaFoto()` (apagar UMA) já chama os dois
+> lados, então o padrão certo existe no arquivo"* vale para a foto de APARELHO e
+> NÃO vale para a de corpo.** `CTX.apagaFotoDoCorpo`, que apaga UMA foto de
+> corpo, chama `CORPO.esquece` e **não** chama `NUVEM.apagaCorpo`. **Medido:**
+> `grep -rn 'apagaCorpo' src/` → **uma** ocorrência, a definição em
+> `src/infra/nuvem.ts`. **Zero chamadores.** A única outra menção no repositório
+> é o dublê de `tests/fluxo/dubles.js`.
+
+Então o padrão não existe no arquivo, e inventá-lo no apagamento em bloco seria
+desenhar política nova em três frentes que ninguém escreveu: um laço de N
+chamadas de rede dentro de um gesto que hoje **não faz rede nenhuma**; o que
+fazer quando a chamada 7 de 9 falha (o gesto continua? vira fila de retentativa?
+o aviso muda?); e por que o apagamento em bloco limparia o bucket se o
+apagamento de UMA não limpa. **O limite está escrito no fonte, em cima da poda**,
+para quem abrir o arquivo achar antes de procurar.
+
+**Falta, em uma frase:** uma porta de apagamento de bytes de corpo no lado da
+nuvem, com política de falha, usada pelos DOIS caminhos — o de uma foto e o do
+apagamento em bloco.
+
+**Uma coisa que deixei de propósito.** `sync.fotos['corpo:…']` sobrevive ao
+apagamento. É **coerente** com não podar o bucket: cada entrada afirma "este byte
+está no bucket", e isso continua verdade. Trocar isso sem trocar o bucket faria a
+reconciliação reenviar bytes que já estão lá. Fica como crescimento sem teto, e é
+pequeno: uma chave por foto.
+
+#### Os dois casos existentes que mudaram
+
+Os dois pediram por escrito para mudar.
+
+**(i) `dados` :: *leva junto três coisas que ninguém declarou*** → ***preserva
+biblioteca e catálogo, e parte o protocolo ao meio***. O comentário dele dizia em
+letras: *"ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO … Se alguém decidir que um deles
+deve sobreviver, este caso fica vermelho e aponta a linha"*. Era exatamente esta
+decisão. As três asserções invertidas de sentido, e `protocolo` virou duas — uma
+por metade.
+
+**(ii) A fixture `estadoCheio` ficou mais forte,** e é a mesma de quatro casos:
+a aula ganhou `id`, a sessão de foto ganhou `d` e uma foto com `v`, e a foto de
+aparelho ganhou `v`. Sem isso, `chavesDoEstado` descartava a sessão (sem `d`) e a
+foto (sem `v` numérico), e o caso da lápide não teria o que afirmar. **Nenhuma
+asserção existente mudou por causa disso** — as três que estavam lá continuam
+byte por byte.
+
+### 11.4 · Tarefa 3 · O critério, e quais chaves ganharam caso
+
+#### O critério que usei, e por que não é o do briefing
+
+O briefing pediu "por quanto dói perder em silêncio" e deixou a escolha comigo.
+Escolhi **o que uma quebra silenciosa CUSTA, do irrecuperável ao visível** — um
+corte que atravessa os assuntos, como o da terceira passada, mas por outro eixo:
+ela ordenou por *escreve estado que não desfaz*, e aqui quase nada escreve
+estado. O que está em jogo é **a foto**, que é o único dado deste app que **não
+se refaz**: o corpo de dois meses atrás não volta para ser fotografado.
+
+| grupo | degrau | o que uma quebra silenciosa custa |
+|---|---|---|
+| **A** | 1 | a foto **parece perdida** — a tela diz que a nuvem não devolveu foto que está no bucket |
+| **B** | 2 | o **recorte gravado** sai errado numa foto que não se refaz; ou a câmera não tem quadro para alinhar |
+| **C** | 3 | o **trabalho em andamento** fica inalcançável pelo toque |
+| **D** | 4 | nada se perde: a preferência de olhar aparece quebrada no primeiro toque |
+| **E** | 5 | nada se perde e nada se grava: a **tela de HOJE mente** |
+
+#### As 24, todas, com a casa
+
+**Fechei as 24.** **Medido** ao fim: varredura das chaves de `CTX` cruzada com
+todas as menções em `tests/fluxo/*.js` → **duas** sem menção, e são as duas que
+não devem ter rede.
+
+| grupo | chaves | casa | casos |
+|---|---|---|---:|
+| **A** | `tentaFotos` `setDataComparada` `setPoseComparada` `setDataDoFantasmaDaCamera` | `protocolo` | 5 |
+| **B** | `setZoomDoAjuste` `arrastaAjuste` `streamDaCamera` | `protocolo` | 3 |
+| **C** | `vaiParaDia` `abreSessaoDoDia` | `telas` | 3 |
+| **C** | `voltaAoTreino` | `esquecido` | 2 |
+| **C** | `edicaoDoDia` | `edicao` | 3 |
+| **D** | `setGradeDoAjuste` `setFantasmaDoAjuste` `setSobrepor` `setOpacidade` `setGradeDaCamera` `setFantasmaDaCamera` `setOpacidadeDaCamera` `posAnterior` `fechaProtocolo` | `protocolo` | 5 |
+| **E** | `catalogo` `comidaDoDia` `movidas` `cadenciaTxt` | `turno` | 4 |
+
+Mais 2 na Tarefa 1 (`fusao`) e 3 na Tarefa 2 (`dados` 2, `protocolo` 1) — **28**.
+
+#### As duas que NÃO devem ganhar rede, confirmadas por escrito
+
+A terceira passada deixou isto pendente. **Conferi no fonte:**
+
+- **`CTX.limpaNum = function (el, dec) { limpaNum(el, dec); }`** — `limpaNum` lê
+  `el.value`, **reescreve** `el.value` e devolve o texto limpo. É casca de campo:
+  recebe elemento, o que o contrato do §1 proíbe.
+- **`CTX.addNome = function (el) { addNome(el); }`** — e
+  `addNome(el){ anotaNomeAvulso(el.value); }`. O par **por valor** já está na
+  tabela: `anotaNomeAvulso`. Blindar a casca seria blindar o DOM.
+
+(`addHora` e `folhas`, as outras duas que as passadas anteriores excluíram,
+**já têm menção** em `tests/fluxo/` e por isso não entraram na conta das 24.)
+
+### 11.5 · A prova de vermelho, grupo por grupo, com o TIPO de quebra
+
+**O método, e ele mudou por causa da §10.1.** Cada caso foi provado com quebra
+deliberada em `src/main.jsx` (ou em `src/dominio/sincronia.ts`), `vite build`, e
+leitura do vermelho. **O fonte foi restaurado de uma cópia carimbada antes da
+quebra, não por `git checkout`** — o primeiro `git checkout src/main.jsx` desta
+sessão apagou o conserto da Tarefa 1 junto com a quebra, e eu só percebi porque a
+quebra seguinte não aplicou. **Toda quebra foi conferida por asserção de contagem
+antes de substituir** (regra 7 da §9.8): nenhuma delas falhou em aplicar, e eu
+não precisei ler um `diff` para saber.
+
+**A regra da §10.1 foi aplicada caso a caso, e produziu seis quebras que eu não
+teria feito sem ela.** Onde o nome ou uma asserção do caso diz "não", a quebra
+inerte é **inconclusiva** — verbo morto também não faz a coisa — e a prova é a
+quebra **oposta**, que faz o verbo fazer exatamente o que o caso diz que ele não
+faz.
+
+#### Tarefa 1 · 2 casos, 3 quebras
+
+| # | quebra | tipo | vermelho |
+|---|---|---|---|
+| 1 | o `delete r.itens[idx].arroz` sai | **inerte** | *trocaItem derruba a marca do arroz…* |
+| 2 | o verbo passa a fazer `delete …alta` | **OPOSTA** | o mesmo caso (metade do `alta`) |
+| 3 | o verbo passa a fazer `delete …caf` | **OPOSTA** | *…não decide sobre a marca de cafeína* |
+
+As duas opostas eram obrigatórias: *"preserva a de alta demanda"* e *"ela
+sobrevive, por ora"* são asserções de **não mexer**, e verbo inerte também não
+mexe.
+
+#### Tarefa 2 · 3 casos, 5 quebras
+
+| # | quebra | tipo | vermelho |
+|---|---|---|---|
+| A | os três campos saem do literal (o estado de antes) | **inerte** | *preserva biblioteca e catálogo…*; *não deixa lápide no que PRESERVA…* |
+| B | `lapidesDoApagamento` perde a guarda `if (!ficou[k])` → **lápide para tudo** | **OPOSTA** | *não deixa lápide no que PRESERVA…*; e o caso antigo *deixa uma LÁPIDE por registro que saiu* |
+| C | `lapidesDoApagamento` devolve `{}` | **inerte** | os mesmos dois |
+| D | o `CORPO.poda([])` sai do gesto | **inerte** | *apagar o histórico poda os bytes de corpo, e não os do aparelho* |
+| E | o gesto passa a fazer `caches.delete('lastro-fotos')` | **OPOSTA** | o mesmo caso (metade do aparelho) |
+
+A quebra B é a que a §10.1 exige: *"não deixa lápide no que preserva"* fica verde
+com `lapidesDoApagamento` inerte, e corretamente. Só a lápide **para tudo** a
+derruba.
+
+Na quebra A o caso da poda ficou **verde**, e está certo: as sessões continuam
+morrendo, então a poda continua tendo o que podar. **Quebra que não produz
+vermelho é informação** (regra 8 da §9.8), e aqui a informação é que os dois
+consertos da Tarefa 2 são independentes.
+
+#### Grupo A · 5 casos, 2 lotes
+
+| lote | quebra | tipo | vermelho |
+|---|---|---|---|
+| A-1 | as quatro inertes (só `render()`) | **inerte** | os 5 casos novos **mais** o antigo *a foto que a nuvem não devolveu diz isso, e tentar de novo traz* |
+| A-2 | `tentaFotos` passa a limpar a falha de **todas** as datas | **OPOSTA** | *ctx.tentaFotos **não** limpa a falha das OUTRAS datas* |
+
+O caso negativo deste grupo tem metade positiva (a data tentada trouxe) e metade
+negativa (a outra continua com a falha escrita). A inerte derrubou a primeira; só
+a oposta derruba a segunda.
+
+#### Grupo B · 3 casos, 2 lotes
+
+| lote | quebra | tipo | vermelho |
+|---|---|---|---|
+| B-1 | `setZoomDoAjuste` e `arrastaAjuste` inertes; `streamDaCamera` devolve `null` | **inerte** | os 3 |
+| B-2 | `setZoomDoAjuste` sem `normalizaEnq` (o limite deixa de existir); `arrastaAjuste` sem a folga (arrasta onde não pode); `encerraCamera` deixa a faixa viva | **OPOSTA** | os 3 **mais** o antigo *sair da tela DESLIGA a câmera* |
+
+A oposta cobre as três asserções de "não": *"sem folga, arrastar não move"*,
+*"passa por normalizaEnq, que limita em 2"*, e *"fechar devolve nada"*.
+
+#### Grupo C · 8 casos, 2 lotes
+
+| lote | quebra | tipo | vermelho |
+|---|---|---|---|
+| C-1 | `vaiParaDia`, `abreSessaoDoDia`, `voltaAoTreino` inertes; `edicaoDoDia` devolve a forma vazia | **inerte** | 6 dos 8 novos **mais** 4 antigos (*faixa da semana…*, *dia com dois treinos…*, *dia com um treino só…*, *cadastrar equipamento novo…*) |
+| C-2 | as guardas de ausência saem: `abreSessaoDoDia` trata `null` como `{}`; `voltaAoTreino` inventa `{ day: 'A' }` | **OPOSTA** | *ctx.abreSessaoDoDia sem célula **não** abre nada*; *ctx.voltaAoTreino sem sessão aberta **não** mexe na tela* |
+
+Os dois casos negativos ficaram **VERDES** no lote C-1 — é o fenômeno da §10.1
+acontecendo de novo, e aceitar aquele verde teria deixado as duas guardas de
+ausência sem prova nenhuma.
+
+#### Grupo D · 5 casos, 2 lotes
+
+| lote | quebra | tipo | vermelho |
+|---|---|---|---|
+| D-1 | as nove inertes | **inerte** | os 5 |
+| D-2 | `andaPose` passa a dar a volta (`% ordem.length`); o `!!` sai de `setGradeDoAjuste` e `setGradeDaCamera` | **OPOSTA** | *ctx.posAnterior …e na primeira **não** anda*; e os dois casos de interruptor, na asserção de que a leitura entrega booleano |
+
+#### Grupo E · 4 casos, 2 lotes
+
+| lote | quebra | tipo | vermelho |
+|---|---|---|---|
+| E-1 | os quatro campos vazios (`{}`, dia fabricado vazio, `[]`, `''`) | **inerte** | os 4 **mais** 3 antigos (*o almoço que não cabe no treino…*, *marcar uma refeição soma no registrado…*, *a água sobe e desce no toque*) |
+| E-2 | `catalogo` passa a ser `ALIMENTOS_BASE` (o oculto fica); `comidaDoDia` inventa marca e água; `movidas` publica **todas** as refeições | **OPOSTA** | 3 dos 4 **mais** o antigo *o almoço que não cabe no treino…* |
+
+As opostas deste grupo eram obrigatórias para quatro asserções de ausência: *"o
+escondido sai do catálogo"*, *"nasce sem refeição marcada"*, *"e sem água"*, e
+*"de manhã nada é empurrado"* / *"voltar para a manhã desfaz"*.
+
+**Total: 13 lotes de quebra, 7 execuções cheias de `npm test`, árvore limpa no
+fim de cada commit.** `git status` vazio e `git diff src/` vazio depois de cada
+restauração.
+
+### 11.6 · O que estes 28 casos NÃO cobrem
+
+A frase está no comentário de cada bloco novo, e não em glosa. Em resumo:
+
+1. **Nenhum deles diz que a tela está ligada no verbo.** Eles entram pelo nome e
+   pelo valor; se o redesenho esquecer de pendurar o controle deslizante de
+   opacidade, o interruptor de grade, a célula da tira da semana, o botão da
+   faixa ou o `<video>`, os 28 seguem verdes. É o mesmo limite das §8, §9 e §10,
+   e ele não muda.
+2. **O grupo D não prova que a grade, o fantasma e a opacidade DESENHAM
+   alguma coisa.** Eles provam que a leitura publica o valor que o verbo pôs. Se
+   o CSS que pinta a grade sair, nada fica vermelho.
+3. **`streamDaCamera` não prova que o `<video>` recebe a faixa.** Prova que a
+   faixa existe enquanto a tela está aberta e que ela foi **parada** ao fechar.
+4. **O grupo A não prova a reconciliação de ponta a ponta.** O bucket é dublê, e
+   a rede verdadeira não entra em teste nenhum deste repositório.
+5. **A Tarefa 2 não prova o apagamento com DOIS aparelhos.** O caso da lápide
+   afirma a **chave** que o outro aparelho vai comparar; a fusão ponta a ponta
+   com dois apps vivos é o que o `09-apagar.md` §9 mediu à mão, e eu não repeti.
+6. **A poda do bucket não tem caso porque não tem código** (§11.3).
+7. **O grupo E não prova que a timeline desenha os quatro campos.**
+8. **Nada aqui prova que um dedo humano consegue arrastar o recorte.** `dx`/`dy`
+   chegam como fração do quadro; quem os produz a partir de um `touchmove` é
+   casca, e casca não está na superfície.
+
+### 11.7 · Os defeitos que achei
+
+#### (k) `i.caf` é a terceira marca por item, da mesma natureza de `arroz`, e ninguém a decidiu
+
+Está no §11.2. Não é bem defeito: é decisão que falta, e o caso novo a mantém
+visível em vez de deixá-la para alguém descobrir depois.
+
+#### (l) O saldo do ajuste calórico QUEBRA quando o conjunto de itens com arroz muda — e eu medi
+
+**É o defeito mais pesado que esta passada achou, e ele é ANTERIOR a ela.**
+
+`aplicaArroz(ajusteAntes)` desfaz o saldo anterior e aplica o novo:
+
+```js
+const base = arrozDoAjuste(i.q, -ajusteAntes, itens.length);
+i.q = arrozDoAjuste(base, S.ajuste || 0, itens.length);
+```
+
+`itens.length` é a contagem de itens com `arroz` **AGORA**. O passo de 120 g se
+reparte entre eles. Se o conjunto mudar entre duas chamadas, o desfazer usa um
+divisor diferente do que o fazer usou, e **a diferença fica no prato, calada**.
+
+**Medido** (rascunho, descartado; o plano base tem arroz no almoço e no jantar):
+
+| passo | almoço | jantar | `arrozAtual` |
+|---|---:|---:|---:|
+| base | 250 | 250 | 500 |
+| `+1` com 2 itens (+60 cada) | 310 | 310 | 620 |
+| o almoço deixa de ser arroz | 310 | 310 | 310 |
+| volta a `0`, agora com 1 item | 310 | **190** | **190** |
+
+O jantar devia voltar a **250** e volta a **190**: **60 g abaixo da prescrição**,
+sem nada na tela. E o cuscuz fica com os 310 g — os +60 g que foram concedidos
+como "ajuste de arroz" — para sempre, sem marca nenhuma apontando para eles.
+
+**Medido também pelo outro caminho, e é o que prova que o defeito não é meu:**
+com `CTX.removeItem` no lugar da troca, o jantar vai aos mesmos **190**. A Tarefa
+1 **acrescenta uma segunda porta** para um defeito que `removeItem` já abria.
+
+**Não consertei, e por quê.** O conserto pede política que ninguém escreveu:
+desfazer o saldo com a contagem ANTIGA exige guardá-la (campo novo, migração); ou
+o ajuste passa a ser recalculado do zero a partir da prescrição em vez de
+acumulado em `i.q`; ou `trocaItem` e `removeItem` desfazem o saldo do item antes
+de mexer nele. As três mudam o contrato de quem é dono do número em `i.q`, e isso
+não era a tarefa.
+
+#### (m) `NUVEM.apagaCorpo` não tem um único chamador em `src/`
+
+Está no §11.3, com a medição. Vale repetir aqui porque é mais largo que o
+apagamento em bloco: **apagar UMA foto de corpo pela tela também deixa os bytes
+no bucket.** `CTX.apagaFotoDoCorpo` chama `CORPO.esquece` (cache) e para aí,
+enquanto `apagaFoto` (aparelho) chama `FOTO.esquece` **e** `NUVEM.apagaFoto`. A
+assimetria não tem razão escrita em lugar nenhum.
+
+#### (n) `ctx.hoje()` devolve PEDAÇOS VIVOS do estado, não cópias
+
+`plano: plano` é `S.comida.plano` **por referência** (`planoDeComida()` devolve o
+array gravado), e `comidaDoDia: dia` é `S.dia` **por referência**. Quem recebe a
+leitura pode escrever no plano gravado e no dia aberto sem passar por verbo
+nenhum — e sem `planoMudou()` nem `queueSave()`, então a fusão e o
+armazenamento não saberiam.
+
+(`catalogo: cat` é diferente e mais brando: `catalogoAlimentos()` monta um mapa
+novo a cada chamada. Mas as entradas que vêm de `ALIMENTOS_BASE` entram por
+referência, e são constantes de módulo — escrever nelas contaminaria o catálogo
+de fábrica pelo resto da sessão.)
+
+Hoje ninguém escreve por essa via (a tela só lê), e o caso novo **afirma** que
+`comidaDoDia` é o mesmo objeto de `S.dia`, o que é deliberado e é o que torna a
+leitura confiável. **Não mexi:** decidir se a superfície congela o que devolve é
+mudança de contrato, e provavelmente `contrato: 2`.
+
+#### (o) `CTX.setOpacidade` e `CTX.setOpacidadeDaCamera` não validam nada
+
+Guardam o que receberem. O caso novo afirma que `0` é aceito — e deve ser, é "só
+a de baixo" e não "sem valor" —, mas `-5` ou `'muito'` entram igual, e `view` não
+passa por normalização nenhuma. Não custa dado (não vai para `S`), e por isso
+está no degrau 4 do critério e não num conserto.
+
+### 11.8 · Onde o código discordou do que me foi dito
+
+Oito pontos. Nos oito vale o código.
+
+1. **"201 chaves de `CTX`, 26 sem uma única menção"** → **182 chaves, 22 sem
+   menção.** **Medido** com varredura das duas formas em que `CTX` ganha chave
+   (`CTX.x =` → 163; as de primeiro nível dentro do literal `const CTX = {` →
+   19) cruzada com `tests/fluxo/*.js`. Os 201 do briefing contam campos
+   **aninhados** dentro dos objetos que as leituras devolvem — o que é a mesma
+   confusão do item 2 abaixo. (A §1 diz 181 e a §8.8 diz 93 das 181: as duas
+   contagens vieram de varreduras diferentes desde o começo, e esta seção não as
+   reconcilia — só diz como mediu.)
+2. **"Leituras — 4: `cadenciaTxt`, `catalogo`, `comidaDoDia`, `movidas`"** →
+   **as quatro NÃO são chaves de `CTX`.** São campos do registro que
+   `CTX.hoje()` devolve, dentro do literal do `CTX` em `src/main.jsx`.
+   `a.v('ctx.catalogo')` estoura com *"verbo fora da superfície"*. Elas ganharam
+   caso, e por `a.vJ('ctx.hoje')` — o trabalho era real, a classificação não.
+   **A conta de 24 fecha de outro jeito:** 20 chaves de `CTX` (16 de câmera +
+   4 de rota) **mais** 4 campos de leitura.
+3. **"Confira se há mais alguma marca por item além dessas duas"** → **há:
+   `i.caf`.** §11.2.
+4. **"`apagaFoto()` (apagar UMA) já chama os dois lados, então o padrão certo
+   existe no arquivo"** → vale para a foto de **aparelho** e **não** vale para a
+   de **corpo**. `NUVEM.apagaCorpo` tem **zero** chamadores em `src/`. §11.3.
+5. **"`i.arroz` … é somado em dois lugares do `main.jsx`"** → **certo**, e vale
+   registrar que os dois lugares fazem coisas diferentes: `arrozAtual` **soma**
+   `i.q`, e `aplicaArroz` **coleta os itens** para repartir o passo entre eles —
+   é o segundo que produz o defeito (l), não o primeiro.
+6. **"as quatro rejeições que o `09-desligamento.md` fechou"** → não voltou
+   nenhuma, nas sete execuções cheias. O que **custou** uma volta foi outra
+   coisa: `a.v('ctx.streamDaCamera')` e não `a.v('streamDaCamera')` — a chave é
+   de `CTX`, não da tabela de verbos, e o endereço errado estoura com o nome
+   dentro da mensagem, que é o ponto do §1.
+7. **"`setDataComparada` … o intervalo do par novo"** — nada do briefing, mas
+   registro porque foi erro meu do mesmo tipo que a receita avisa: escrevi a
+   asserção supondo o número em vez de ler a forma primeiro (regra 1 da §8.8).
+   Trocar o lado `de` de 56 para 28 dias atrás contra `ate` em 14 dá **14 dias**,
+   não 28. Uma volta.
+8. **A linha de base do briefing confere nos cinco números** — 1.052, 601, 451,
+   53, zero rejeições, `tsc` limpo. **Medido** antes de tocar em nada.
+
+### 11.9 · Onde parei, para o próximo continuar
+
+#### Fechados — nada a fazer
+
+- **As 24 chaves sem rede: 24 de 24.** ✅ **Medido**: só `addNome` e `limpaNum`
+  seguem sem menção, e as duas estão confirmadas por escrito como casca de DOM
+  (§11.4).
+- **Câmera, comparação e ajuste de foto.** ✅ O assunto que a §8.8 abriu como
+  *"16, nenhuma"* e chamou de *"o maior bolo aberto"* está fechado.
+- **Rota e shell.** ✅
+- **Comida e plano.** ✅ (fechado pela §9; esta passada só consertou `trocaItem`.)
+- **Corpo, medidas e cardio; custódia e nuvem; promoção e retroativo.** ✅
+- **A dívida de prova.** ✅ Os 28 casos desta passada têm prova registrada com o
+  tipo de quebra, caso por caso.
+
+#### Abertos, em ordem de peso
+
+1. **O saldo do ajuste calórico (defeito l).** É o único dos quatro que faz o app
+   mostrar **número errado de comida** sem nada dizendo por quê, e está medido
+   nos dois caminhos. **Pede decisão de desenho**, não conserto mecânico.
+2. **A poda do bucket das fotos de corpo (defeito m).** Uma porta, com política
+   de falha, usada pelo apagamento de UMA e pelo apagamento em bloco.
+3. **A decisão sobre `i.caf`.** Uma linha em cada sentido, e é do dono.
+4. **As sete tabelas de ação seguem fora do alcance de `a.v`.** A §8.6 descreve o
+   conserto (fazer `chama` caminhar o caminho inteiro em vez de parar no primeiro
+   ponto), e ele devolveria travessia de realm a 64 ações. Esta passada usou
+   `a.m.ctx.acoesDia.escolheTroca` num caso novo, pela porta documentada.
+5. **A superfície devolve objetos VIVOS do estado (defeito n).** Decidir se as
+   leituras congelam o que devolvem é mudança de contrato, e provavelmente
+   `contrato: 2`.
+
+#### Acréscimos à receita da §8.8
+
+9. **NÃO restaure o fonte com `git checkout` quando a árvore tem conserto não
+   commitado.** `git checkout src/main.jsx` apaga a quebra **e o conserto**. Copie
+   o arquivo para o rascunho antes da primeira quebra e restaure da cópia.
+   Aconteceu nesta sessão, no primeiro lote.
+10. **Chave de `CTX` entra por `ctx.<nome>`, e chave do módulo por `<nome>` nu.**
+    `streamDaCamera` é de `CTX` e `arrozAtual` é do módulo; o endereço errado
+    estoura com *"verbo fora da superfície: …"*. Custou uma volta.
+11. **Caso que mistura metade positiva e metade negativa precisa dos DOIS
+    lotes.** A §10.1 estabeleceu a regra para o caso cujo NOME contém "não";
+    nesta passada quase todo caso tinha pelo menos uma **asserção** de ausência
+    no meio de um caso de nome positivo — *"e na primeira não anda"*, *"a
+    opacidade sobrevive"*, *"nada disso tocou o estado"*. A leitura útil é: **a
+    quebra inerte prova o que o verbo FAZ; a oposta prova o que ele NÃO faz.** Um
+    caso que afirma as duas coisas precisa das duas, e 6 das 13 quebras desta
+    passada existem só por isso.
+12. **Fixture fraca não fica vermelha — fica muda.** A `estadoCheio` do
+    `dados.test.js` tinha sessão de foto sem `d` e foto sem `v`, e
+    `chavesDoEstado` descarta as duas por guarda. Um caso de lápide escrito sobre
+    ela afirmaria a ausência de lápides que nunca poderiam existir. **Antes de
+    afirmar sobre uma coleção, confirme que a fixture passa as guardas dela.**
+13. **Para medir à mão, ponha o rascunho em `tests/fluxo/`.** `vitest` resolve os
+    projetos por `include: tests/fluxo/**/*.test.js`, e um arquivo fora dessa
+    pasta é ignorado em silêncio — sai "no test files" sem erro. Copie para lá,
+    rode, apague.
