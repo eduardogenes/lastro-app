@@ -609,7 +609,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       6h55 para 15h30 ao sair da sessão é ficção necessária (o lanche não existe
       de manhã). Conferir, quando o dono comparar, se as duas fazem o salto no
       mesmo lugar — a D avisou que faz ao sair da sessão.
-- [ ] P3.j **A rede do D13**: inventário do que cada grupo de teste de fluxo
+- [x] P3.j **A rede do D13** → **ENTREGUE** em `08-rede.md` (05/10): inventário do que cada grupo de teste de fluxo
       protege, uma linha cada. Não bloqueia a escolha; bloqueia a reescrita.
 
 - [!] P3.e **D13 = reescrever em bloco.** O parecer é explícito: é o único lugar
@@ -617,8 +617,8 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       aconteceu quatro vezes neste projeto. Levar a ele uma vez, com a prova, e
       aceitar a resposta dele seja qual for.
 
-- [ ] P3.a Apresentar o parecer
-- [ ] P3.b **Parar.**
+- [x] P3.a Apresentar o parecer → feito; a Parada 3 fechou em 05/10
+- [x] P3.b **Parar.** → cumprido
 
 ## ONDA 5 · O ofício ← AQUI
 
@@ -720,7 +720,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         harness, com relógio fixo, vivendo um dia pelos verbos do app e virando
         a data. É o dado da época, não um objeto com a forma de hoje. Registro
         em `tests/dominio/fixtures/LEIA.md`.
-      - [ ] **5.a'''' PENDENTE COM O DONO — a ceia não existe no plano dele.**
+      - [x] **5.a'''' PENDENTE COM O DONO — a ceia não existe no plano dele.** **RESPONDIDA em 06/10** (leite + Neston) e implementada na migração 10→11.
         `PLANO_BASE` tem **seis** refeições (`pre`, `treino`, `pos`, `almoco`,
         `lanche`, `jantar`) e a nota do jantar diz, textualmente, *"Sem ceia
         obrigatória: o dia já fecha proteína e energia com quatro refeições
@@ -768,7 +768,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         ceia — é o que impede aparelho migrado e aparelho novo de nascerem
         diferentes. A mensagem do teste diz o que fazer se ficar vermelho:
         migração 11 → 12, nunca copiar o valor de um lado para o outro.
-      - [ ] **5.a'''''' PENDENTE COM O DONO — duas coisas da ceia:**
+      - [x] **5.a'''''' PENDENTE COM O DONO — duas coisas da ceia:** **AS DUAS FECHADAS em 06-07/10:** o Neston foi conferido no rótulo (e os quatro números estavam errados), e o ledger foi respondido com "recalculam" — que se revelou automático, porque ele guarda passo e não kcal.
         1. **Os valores do Neston** continuam **não conferidos contra a lata**.
            Fui eu que os passei de memória (397 kcal, 9,5 P, 78 C, 4,5 G por
            100 g) e estão marcados no código como pendentes. A frente 0 mediu o
@@ -935,7 +935,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         **Cinco protocolos de medição escritos para o DONO executar**, nenhum
         executado, com o teto de confiança dito em cada um (ex.: zero engolidas
         em 60 tentativas só prova "abaixo de 5%").
-      - [ ] **5.b' NOVE DECISÕES NA MESA DELE**, da frente 2: cinco mudanças de
+      - [x] **5.b' NOVE DECISÕES NA MESA DELE** — **TODAS RESPONDIDAS em 06/10.**, da frente 2: cinco mudanças de
         regra na folha de pôr o dia em dia (o botão "Não comi"; "Não sei"
         valendo o dia com a tela dizendo isso; porção acima de 1 alcançando dia
         passado; a pergunta do "fora do plano" deixando de bloquear; a última
@@ -1003,7 +1003,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         de `componentes.css` numa cópia e rodou os 38 → **4 vermelhos e três
         verdes que deviam ser vermelhos** (o cronômetro com `transition: width`,
         o `sticky` com `#app{overflow:hidden}`, e raio/sombra sem caso nenhum).
-      - [ ] **5.b'' MAIS SEIS DECISÕES, da frente 4**, somando **15** com as nove
+      - [x] **5.b'' MAIS SEIS DECISÕES, da frente 4** — **TODAS RESPONDIDAS em 06/10.**, somando **15** com as nove
         da frente 2: os três inegociáveis caindo; o terceiro sinal passando de
         "destrói dado" para "pare"; a folha subindo ao abrir contra duas
         proibições escritas; o teto de 125% em vez de 200%; se 320px é alvo deste
@@ -1090,7 +1090,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       |---|---|---|
       | 15 | 320 px é alvo | **primeiro a medição, depois ele decide** |
 
-      - [ ] **DUAS CONSEQUÊNCIAS DAS RESPOSTAS, que são trabalho novo:**
+      - [x] **DUAS CONSEQUÊNCIAS DAS RESPOSTAS, que são trabalho novo:** **AS DUAS FEITAS:** o "não sei" por refeição entrou **sem precisar de migração** (valor novo em campo que já existe não é campo novo), e os cinco documentos foram reconciliados com as 23 decisões.
         1. **A resposta 2 pede migração 11 → 12.** "Não sei" por refeição não
            existe no dado: hoje o que existe é a adesão **do dia** marcada como
            perdida, e `ComoFoiARefeicao` tem dois valores. Virar por refeição é
@@ -1103,7 +1103,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
            ressalva** e ele mandou cair sem herança; a frente 2 especificou a
            última refeição **não** vindo pré-marcada e ele decidiu o contrário;
            e a frente 2 deixou o destino da régua aberto.
-      - [ ] **A nota da pergunta 11 aponta para outro mecanismo, e vale dizer a
+      - [x] **A nota da pergunta 11 aponta para outro mecanismo, e vale dizer a — **DITO a ele em 06/10, e os dois comentários falsos foram corrigidos** (`index.html` e `base.css`).
         ele.** O que ele recusa é **zoom automático** — o salto que o Safari dá
         ao focar campo menor que 16px. Isso é impedido pela regra dos 16px no
         campo (`base.css`, razão própria e correta), **não** pelo
@@ -1139,7 +1139,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
            de ser interruptor com nome e passa a dizer o corte em número antes do
            toque — *"Deload hoje · corta 20 séries para 10, nas mesmas cargas"* —,
            o que põe o freio na palavra, já que ele saiu do lugar.
-      - [ ] **O NOME DA MEDIDA DA BIOIMPEDÂNCIA, e é urgente porque já está no
+      - [x] **O NOME DA MEDIDA DA BIOIMPEDÂNCIA, e é urgente porque já está no — **RESPONDIDO em 06/10: massa muscular esquelética.** É o que o código já gravava; nada a mudar.
         código.** Ele disse **"massa magra"** em 14.11 e **"massa muscular
         esquelética"** em P3 (`00-coordenacao.md:482` e `:638`). **São dois
         números diferentes na mesma balança**, não sinônimos: massa magra é tudo
@@ -1156,7 +1156,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         pré-marca, pré-marca. A frente 3 escreveu palavras que valem nos dois
         casos porque nomeiam a **causa** da marca: *"A ceia vem marcada porque
         passou das 21h30, não porque o app sabe."*
-      - [ ] **5.b''' QUATRO da frente 3 na mesa dele**, duas nascidas das
+      - [~] **5.b''' QUATRO da frente 3 na mesa dele** **TRÊS FECHADAS** (a adesão do "não sei" e o silêncio do "fora do plano" ele delegou a mim e eu decidi; "Evolução" ele aceitou). **Falta uma:** se a promessa "a tela não vai pedir isso de novo em outro lugar" é cumprível., duas nascidas das
         respostas de 06/10:
         1. **Qual é a adesão de um dia com uma refeição em "não sei".** A decisão
            2 moveu "Não sei" para a refeição e **não disse o que isso faz com o
@@ -1395,7 +1395,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         dentro do `a.E` e esperam as telas novas; **168** são expressão composta,
         repontáveis mas pedindo remontar a expressão em JS; **62** são sobra
         simples de conserto curto.
-      - [ ] **E o lance mais barato que sobrou:** ele **não escreveu um só teste
+      - [~] **E o lance mais barato que sobrou:** ele **não escreveu um só teste **54 das 93 blindadas** em duas passadas (08/10). Restam 39, das quais 35 de trabalho real.
         novo**, de propósito. As **93 chaves de `CTX` sem teste próprio** agora
         estão **alcançáveis e nomeadas** — o documento as lista por assunto. São
         as mais baratas de blindar, porque o verbo já existe e o teste novo só
@@ -1423,7 +1423,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         a capacidade fica inalcançável pelo dedo. Dois casos (`salvaEdicao`,
         `editDor`) dependem do DOM **por culpa do verbo**, que relê a tela por
         dentro.
-      - [ ] **DEFEITO (a) PARA O DONO DECIDIR — a bioimpedância não tem torneira.**
+      - [x] **DEFEITO (a) PARA O DONO DECIDIR — a bioimpedância não tem torneira.** **CONSERTADO em 08/10:** `CTX.registraBio(leitura, quando)`, com recusa atômica. A tela não existe, e isso está dito.
         Conferi: **zero das 181 chaves de `CTX` mencionam bioimpedância**
         (`grep -coE "CTX\.[a-zA-Z]*[Bb]io"` → 0). Não existe `registraBio*`,
         não existe setter de rascunho, e `CORPO_PADRAO` não tem valor de partida
@@ -1437,7 +1437,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         de `bioGorduraPct: 18` seria o app **inventando leitura de balança**. O
         verbo torna a capacidade alcançável e testável sem desenhar tela, que é a
         ordem do plano (modelo antes de tela).
-      - [ ] **DEFEITO (b), e eu confirmei o mecanismo no fonte: apagar o
+      - [x] **DEFEITO (b), e eu confirmei o mecanismo no fonte: apagar o — **CONSERTADO em 08/10** (`09-apagar.md`): lápide por registro, alcance limitado ao que este aparelho conhecia. E apareceu metade do conserto que eu não tinha visto: **o `wipe` não gravava nada**.
         histórico leva as LÁPIDES, e o outro aparelho ressuscita o que foi
         apagado.** `wipe()` reconstrói `S` de um literal com lista de chaves
         preservadas, e **`apagados` não está na lista** (nem `aulas`, nem
@@ -1470,7 +1470,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         passa 9/9 e todas as execuções seguintes deram 965. **É corrida de foco
         sob carga**, e é da mesma família do vermelho de 1 em 24 que eu persegui
         e não consegui nomear. Agora tem nome.
-      - [ ] **Ficaram 55, das quais 51 são trabalho real** (quatro não devem
+      - [~] **Ficaram 55, das quais 51 são trabalho real** (quatro não devem **Agora são 39 (35 de trabalho real)**: câmera/foto 17, rota/shell 12, promoção e retroativo 6. Comida e plano fechou 16 de 16.
         ganhar rede). Por assunto, com casa indicada na §8.8: **comida e plano
         16** — e é por aqui que eu seguiria, porque `removeItem` e `trocaItem`
         são **destrutivos** e são a prioridade 1 ainda não paga; **câmera e foto
@@ -1521,6 +1521,38 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         duplicações colidem e o plano fica com 9 refeições e 8 ids — a segunda
         soma no total e é **ineditável**. Ele não mediu caminho realista até lá;
         o caso guarda que nada impede.
+      - [x] **ACHADO E CONSERTADO EM 08/10, fora de qualquer tarefa: importar um
+        backup ZERAVA o saldo do ajuste calórico, em silêncio.** O agente do
+        apagamento tropeçou nisto e eu confirmei: a lista branca da importação
+        clampava `ajuste` a `-1 | 0 | 1`, e o comentário do próprio tipo diz, com
+        estas palavras, que o valor **não cabe nisso** — é saldo acumulado de
+        passos de 150 kcal, e *"dois cortes seguidos são −300 kcal, não outro
+        −150"*. Era a **única** linha do app a clampar: o tipo diz `number`, quem
+        escreve faz `antes + passo` sem teto, e `normalizaEstado` aceita qualquer
+        número finito.
+        **Mesma família do bug dos seis campos**, no mesmo caminho — o único jeito
+        que ele tem de voltar. E pior num aspecto: os seis voltavam **vazios**, o
+        que se vê; este volta **zero**, que não parece dado perdido e sim
+        "nenhum ajuste em vigor".
+        **E o teste estava a UMA LINHA de pegar:** a asserção de ida e volta já
+        comparava todas as chaves exportadas, mas semeava `ajuste` como 0, e 0
+        volta 0. Pus a semente de dois passos, a asserção **que já existia** ficou
+        vermelha nomeando o campo, e aí consertei (`0931f48`). 1.038 verdes,
+        `tsc` limpo.
+      - [ ] **DECISÃO NOVA, criada pelo conserto do apagamento:** três campos
+        caem no `wipe` sem estar declarados — `aulas` (os modelos de aula),
+        `protocolo` (as poses e as sessões de foto) e `fotos` (as fotos dos
+        aparelhos). **Antes do conserto, o apagamento deles era desfeito pela
+        próxima sincronização: o defeito era o que os protegia. Agora morrem nos
+        dois aparelhos.** O agente não mexeu em nenhum e subiu três opções sem
+        escolher.
+        **O veredito dele é "esquecimento, não decisão", e o método é bom:** o
+        literal cresce um campo por vez no commit que cria o campo, e `gordura` e
+        `quadro` **tocaram** o literal quando nasceram enquanto `aulas` e
+        `protocolo` **não**. Mais forte: `quadro` é rascunho do dia e morre ao
+        encerrar a sessão, e **sobrevive** ao apagamento; `S.aulas` é biblioteca
+        durável e não sobrevive. Se fosse hierarquia deliberada, seria a inversa.
+        Desfazer custa **uma palavra** no literal. Perguntado a ele em 08/10.
       - [ ] **E um texto errado na cara do dono:** as mensagens de `delBody` são
         ternárias em `k === 'peso'`, então remover `bioGorduraPct` perguntaria
         *"Remover a cintura de … (17,8 cm)?"*. Ele leu o fonte e não rodou.
