@@ -15,7 +15,7 @@ import {
 import type { Corpo, Enquadramento, Estado, Log, QualMarca, SessaoFoto } from '../../src/dominio/tipos';
 import type { DiaComidaHist } from '../../src/dominio/nutricao/tipos';
 import { MARCAS_DO_CORPO } from '../../src/dominio/corpo';
-import { migraPlano11 } from '../../src/dominio/migracoes';
+import { migraPlano11, migraPlano12 } from '../../src/dominio/migracoes';
 
 /** Um `S.body` com as sete séries vazias. Os testes preenchem as que importam. */
 function corpoVazio(): Corpo {
@@ -739,6 +739,42 @@ test('o aparelho que ainda não migrou não deixa a ceia sumir do outro', () => 
   migraPlano11(r);
   assert.deepStrictEqual(r.comida.plano!.map(x => x.id), ['jantar', 'ceia']);
   assert.strictEqual(r.plano, 11);
+});
+
+test('o registro do que o ajuste deu atravessa a janela da atualização', () => {
+  // `Item.ajq` mora DENTRO do plano, que é documento: ele não precisa de chave
+  // natural, de lápide nem de teto — vem inteiro do lado com `mtime` mais novo,
+  // junto do `plano` que diz qual formato é. A janela é a mesma da ceia, e
+  // fecha do mesmo jeito: a cadeia de migração roda no boot seguinte.
+  //
+  // O que importa é a DIREÇÃO da falha dentro da janela: sem `ajq`, o desfazer
+  // subtrai zero e o prato FICA onde está. Erra para cima, que é o lado
+  // conservador — o que o defeito fazia era o contrário, tirar comida calada.
+  // Os dois pratos de arroz da prescrição, com um passo de +150 kcal em vigor:
+  // 250 g de base mais os 60 g que cada um recebeu.
+  const prato = (id: string, t: string, ajq?: number) => ({
+    id: id, t: t, n: id, tag: '', quando: 'sempre' as const,
+    itens: [ajq == null ? { f: 'arroz', q: 310, arroz: true }
+                        : { f: 'arroz', q: 310, arroz: true, ajq: ajq }]
+  });
+  const comAjq = [prato('almoco', '12:30', 60), prato('jantar', '19:30', 60)];
+  const semAjq = [prato('almoco', '12:30'), prato('jantar', '19:30')];
+
+  const migrado = estado({ mtime: T0 - DIA, plano: 12, ajuste: 1,
+                           comida: { plano: comAjq, alimentos: {}, ocultos: {} } } as Partial<Estado>);
+  const atrasado = estado({ mtime: T0, plano: 11, ajuste: 1,
+                            comida: { plano: semAjq, alimentos: {}, ocultos: {} } } as Partial<Estado>);
+
+  const { estado: r } = funde(migrado, atrasado, T0);
+  assert.strictEqual(r.comida.plano![0].itens[0].ajq, undefined,
+    'o documento do lado atrasado vence, e o registro vai com ele');
+  assert.strictEqual(r.plano, 11, 'e a versão do formato vem no mesmo clone');
+
+  migraPlano12(r);
+  assert.strictEqual(r.comida.plano![0].itens[0].ajq, 60,
+    'o boot seguinte reescreve o registro, e a janela se fecha sozinha');
+  assert.strictEqual(r.comida.plano![0].itens[0].q, 310, 'sem mexer no prato');
+  assert.strictEqual(r.plano, 12);
 });
 
 test('a refeição marcada sobrevive à ausência temporária dela no plano', () => {

@@ -10,11 +10,15 @@ import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import {
   ARQUIVO, PLANO_1, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano9,
-  migraPlano10, migraPlano11, CEIA_PLANO_11
+  migraPlano10, migraPlano11, migraPlano12, CEIA_PLANO_11, PASSO_ARROZ_PLANO_12, GRADE_ARROZ_PLANO_12
 } from '../../src/dominio/migracoes';
 import { MARCAS_DA_BIO } from '../../src/dominio/corpo';
 import { ALIMENTOS_BASE, PLANO_BASE } from '../../src/dominio/nutricao/alimentos';
-import { aderenciaDoDia, refeicoesDeHoje, totalDoDia } from '../../src/dominio/nutricao/calculo';
+import {
+  PASSO_ARROZ, aderenciaDoDia, aplicaAjusteNoArroz, arrozDoAjuste, refeicoesDeHoje,
+  tiraMarcaDeArroz, totalDoDia
+} from '../../src/dominio/nutricao/calculo';
+import type { Item } from '../../src/dominio/nutricao/tipos';
 import { EX_BASE, slugEx } from '../../src/dominio/programa';
 import type { Estado, Log } from '../../src/dominio/tipos';
 import { DIA, log } from './ajuda';
@@ -726,4 +730,181 @@ test('o Neston não precisa de migração: o catálogo é derivado', () => {
   assert.ok(ALIMENTOS_BASE.neston, 'o Neston está no código');
   assert.strictEqual(ALIMENTOS_BASE.neston.u, 'g');
   assert.strictEqual(ALIMENTOS_BASE.neston.cat, 'mercearia');
+});
+
+// ---------- 11 -> 12: quanto o ajuste deu a cada prato ----------
+//
+// O desfazer do ajuste calórico era RECALCULADO pela contagem de pratos com
+// arroz DE AGORA, e não pela de quando somou. O conserto é o item lembrar
+// quanto recebeu — campo persistido novo dentro do plano, que é documento no
+// aparelho dele. O dado de hoje tem `q` inflado e nenhum registro de quanto.
+
+/** O estado do plano 11, lido do disco: gerado pelo build do plano 11. */
+function fixturePlano11(): Estado {
+  const p = new URL('./fixtures/estado-plano-11.json', import.meta.url);
+  return JSON.parse(readFileSync(p, 'utf8')) as Estado;
+}
+
+/** Os itens marcados com arroz do plano guardado, na ordem do plano. */
+function arrozDoPlano(S: Estado): Item[] {
+  const out: Item[] = [];
+  (S.comida.plano || []).forEach(r => r.itens.forEach(i => { if (i.arroz) out.push(i); }));
+  return out;
+}
+
+test('a fixture do plano 11 é o dado da época: arroz inflado e nenhum registro', () => {
+  const S = fixturePlano11();
+  assert.strictEqual(S.plano, 11);
+  assert.strictEqual(S.ajuste, 1, 'um passo de +150 kcal em vigor, aplicado pelo verbo do app');
+  assert.strictEqual(S.ajusteHist.length, 1, 'e o ledger registra de onde ele veio');
+  assert.deepStrictEqual(arrozDoPlano(S).map(i => i.q), [310, 310],
+    'os dois pratos levaram +60 cada: 250 da prescrição mais metade do passo');
+  assert.strictEqual(JSON.stringify(S).indexOf('ajq'), -1,
+    'e nada no estado diz QUANTO cada prato recebeu — é o que falta e o que a 11→12 escreve');
+
+  // o dia que o app VIVEU e fechou na virada da data, com o total congelado
+  const fechado = S.comidaHist[S.comidaHist.length - 1];
+  assert.strictEqual(fechado.d, '2026-10-07');
+  assert.ok(Math.abs(fechado.tot.kcal - 2632.06) < 0.05,
+    'o total congelado do dia fechado: ' + fechado.tot.kcal);
+  assert.strictEqual(fechado.escala.lanche, 0.5, 'com a meia porção do lanche que ele registrou');
+
+  // E o defeito que a fixture registra de passagem: aplicar o ajuste moveu
+  // 120 g de arroz DENTRO do plano persistido e não carimbou a versão dele.
+  // `pv` do dia fechado é anterior ao passo e continua igual a `comida.v`.
+  assert.strictEqual(S.comida.v, fechado.pv,
+    'a versão do plano não andou quando o ajuste mexeu no arroz');
+});
+
+test('11→12 escreve em cada prato o que o ajuste lhe deu', () => {
+  const S = fixturePlano11();
+  const r = migraPlano12(S)!;
+
+  assert.strictEqual(r.itens, 2, 'os dois pratos de arroz');
+  assert.strictEqual(r.cada, 60, 'metade do passo de 120 g, que é o que cada um recebeu');
+  assert.deepStrictEqual(arrozDoPlano(S).map(i => i.ajq), [60, 60]);
+  assert.deepStrictEqual(arrozDoPlano(S).map(i => i.q), [310, 310],
+    'e nenhum prato muda: a migração escreve o registro, não a quantidade');
+  assert.strictEqual(S.plano, 12);
+});
+
+test('depois da 11→12 o desfazer é exato, mesmo mexendo no plano', () => {
+  // O caso medido, de ponta a ponta sobre o dado de verdade: 310 e 310, o
+  // almoço perde a marca, o saldo volta a zero. Sem o registro, o desfazer
+  // achava UM prato e tirava do jantar os 120 g do dia inteiro.
+  const S = fixturePlano11();
+  migraPlano12(S);
+
+  const itens = arrozDoPlano(S);
+  tiraMarcaDeArroz(itens[0]);
+  assert.strictEqual(itens[0].q, 250, 'o prato trocado devolve os 60 que recebeu');
+
+  aplicaAjusteNoArroz(arrozDoPlano(S), 0);
+  assert.deepStrictEqual(arrozDoPlano(S).map(i => i.q), [250],
+    'e o jantar volta à prescrição, não a 190');
+});
+
+test('11→12 escreve o valor que o código de hoje usaria para desfazer', () => {
+  // É o que faz a migração não mudar prato nenhum: o passo repartido pela
+  // contagem ATUAL é exatamente o que `arrozDoAjuste(q, -ajuste, n)` subtrairia.
+  const S = fixturePlano11();
+  const antes = arrozDoPlano(S);
+  const comoHojeDesfaria = antes.map(i => i.q - arrozDoAjuste(i.q, -(S.ajuste || 0), antes.length));
+
+  migraPlano12(S);
+  assert.deepStrictEqual(arrozDoPlano(S).map(i => i.ajq), comoHojeDesfaria,
+    'o mesmo número, byte a byte');
+});
+
+test('11→12 sem saldo em vigor não escreve nada: ausente já é zero', () => {
+  // QUEBRA EM SENTIDO OPOSTO para esta negativa: trocar o portão `if (ajuste…)`
+  // por `if (true)` grava `ajq: 0` nos dois pratos e esta asserção fica
+  // vermelha. Não é o verbo inerte passando — é o verbo escrevendo o padrão.
+  const S = fixturePlano11();
+  S.ajuste = 0;
+  const r = migraPlano12(S)!;
+  assert.strictEqual(r.itens, 0);
+  assert.strictEqual(JSON.stringify(S.comida.plano).indexOf('ajq'), -1,
+    'nenhum byte gravado para dizer "nada foi somado"');
+  assert.strictEqual(S.plano, 12, 'e a versão avança de qualquer forma');
+});
+
+test('11→12 não toca em item que não é fonte de arroz', () => {
+  // QUEBRA EM SENTIDO OPOSTO: tirar o `if (i && i.arroz)` da varredura escreve
+  // `ajq` no feijão, no frango e no azeite, e isto fica vermelho.
+  const S = fixturePlano11();
+  migraPlano12(S);
+  (S.comida.plano || []).forEach(r => r.itens.forEach(i => {
+    if (!i.arroz) assert.strictEqual(i.ajq, undefined, r.n + ' / ' + i.f + ' não é alavanca do ajuste');
+  }));
+});
+
+test('11→12 não reescreve byte nenhum do histórico congelado', () => {
+  // QUEBRA EM SENTIDO OPOSTO: a migração varrer `comidaHist` e recalcular `tot`
+  // contra o plano de hoje deixa isto vermelho — é a disciplina do total
+  // congelado, que vale para toda migração que mexe no plano.
+  const S = fixturePlano11();
+  const antes = JSON.stringify(S.comidaHist);
+  migraPlano12(S);
+  assert.strictEqual(JSON.stringify(S.comidaHist), antes);
+});
+
+test('11→12 não conserta a marca que já caiu, e o número diz isso', () => {
+  // O aparelho em que ele JÁ trocou o arroz do almoço com o passo em vigor: o
+  // almoço ficou com 310 g de cuscuz e sem marca, e nada no dado sabe disso. A
+  // migração vê UM prato e escreve 120 nele — que é o que o código de hoje
+  // subtrairia. O defeito é de uma vez, no primeiro desfazer, e depois acaba.
+  //
+  // Dava para "adivinhar" comparando com o `PLANO_BASE` (310 − 250 = 60). Não
+  // se faz: `setQuantidade` existe, e num plano em que ele cortou o arroz para
+  // 150 à mão a inferência escreveria −100, inventando ajuste que nunca houve.
+  const S = fixturePlano11();
+  const almoco = (S.comida.plano || []).filter(r => r.id === 'almoco')[0];
+  almoco.itens[0].f = 'cuscuz';
+  delete almoco.itens[0].arroz;
+
+  const r = migraPlano12(S)!;
+  assert.strictEqual(r.itens, 1, 'só o jantar tem marca');
+  assert.strictEqual(r.cada, 120, 'e leva o passo inteiro, porque é o único prato de hoje');
+  assert.strictEqual(almoco.itens[0].q, 310, 'o cuscuz fica com os 60 g: a migração não os alcança');
+
+  aplicaAjusteNoArroz(arrozDoPlano(S), 0);
+  assert.deepStrictEqual(arrozDoPlano(S).map(i => i.q), [190],
+    'o primeiro desfazer ainda cai para 190 — idêntico ao de hoje, e é o preço de não adivinhar');
+  aplicaAjusteNoArroz(arrozDoPlano(S), 1);
+  aplicaAjusteNoArroz(arrozDoPlano(S), 0);
+  assert.deepStrictEqual(arrozDoPlano(S).map(i => i.q), [190],
+    'e a partir dali não desce mais: o desfazer passou a ser exato');
+});
+
+test('11→12 atravessa estado sem plano guardado e sem saldo', () => {
+  const S = { plano: 11, ajuste: 2, comida: { plano: null, alimentos: {}, ocultos: {} } } as unknown as Estado;
+  const r = migraPlano12(S)!;
+  assert.strictEqual(r.itens, 0);
+  assert.strictEqual(S.comida.plano, null, 'a semente do boot vem do PLANO_BASE, sem ajuste nenhum');
+  assert.strictEqual(S.plano, 12);
+
+  const semComida = { plano: 11 } as unknown as Estado;
+  assert.strictEqual(migraPlano12(semComida)!.itens, 0);
+  assert.strictEqual(semComida.plano, 12);
+});
+
+test('11→12 roda uma vez só', () => {
+  const S = fixturePlano11();
+  migraPlano12(S);
+  assert.strictEqual(migraPlano12(S), null, 'a segunda chamada devolve null');
+  assert.deepStrictEqual(arrozDoPlano(S).map(i => i.ajq), [60, 60], 'e não dobra o registro');
+});
+
+test('o passo congelado na migração é o mesmo passo de hoje', () => {
+  // A migração não importa `PASSO_ARROZ`: migração lê o dado da época. Este
+  // teste é o que impede as duas cópias de divergirem em silêncio.
+  //
+  // SE ESTE TESTE FICAR VERMELHO: o passo mudou em `calculo.ts`. A saída não é
+  // copiar o número para cá — é uma MIGRAÇÃO NOVA, porque mudar o passo muda o
+  // que já está gravado em `ajq` no aparelho dele.
+  assert.strictEqual(PASSO_ARROZ_PLANO_12, PASSO_ARROZ, 'os 120 g de um passo');
+  assert.strictEqual(arrozDoAjuste(250, 1, 2) - 250, PASSO_ARROZ_PLANO_12 / 2,
+    'e a grade de 15 g continua repartindo o passo do mesmo jeito');
+  assert.strictEqual(GRADE_ARROZ_PLANO_12, 15);
 });

@@ -15,7 +15,7 @@ import { EX_BASE, SIMULACAO_HYROX, slugEx } from './programa';
 import { chaveDeLog } from './sincronia';
 import type { DiaComidaHist } from './nutricao/tipos';
 import type { Estado, IdEx, Log, Marca, PromoPendente, Treino } from './tipos';
-import type { Refeicao } from './nutricao/tipos';
+import type { Item, Refeicao } from './nutricao/tipos';
 
 // ---------- migração de plano ----------
 // As chaves do histórico são dia+posição (A0, B3...). Trocar o programa faria
@@ -764,5 +764,86 @@ export function migraPlano11(S: Estado): Resultado11 | null {
   }
 
   S.plano = 11;
+  return r;
+}
+
+// ---------- 11 -> 12: quanto o ajuste deu a cada prato ----------
+//
+// O passo de 120 g de arroz vale pelo DIA e se reparte entre os itens marcados
+// com `arroz`. Desfazer recalculava o passo pela contagem DE AGORA, e não pela
+// de quando somou: com um passo em vigor, trocar o arroz do almoço por cuscuz
+// fazia o desfazer achar UM item e tirar do jantar os 120 g do dia inteiro —
+// 190 g onde a prescrição é 250 —, enquanto o almoço ficava com os +60 para
+// sempre. O conserto é o item LEMBRAR quanto recebeu (`Item.ajq`), e é campo
+// persistido novo dentro de um documento que já está no aparelho dele.
+//
+// Por que isto é migração: o plano é DOCUMENTO PERSISTIDO, igual à ceia da
+// 10→11. O dado de hoje tem `q` inflado e nenhum registro de quanto — e sem
+// `ajq` o desfazer novo subtrai ZERO, o que mudaria o prato na direção errada
+// no primeiro ajuste depois do build (medido na suíte: um saldo de −1 em dois
+// pratos levaria o próximo corte a 70 g em vez de 130).
+//
+// **O que esta migração escreve é o valor que o código de hoje usaria para
+// desfazer** — o passo repartido pela contagem ATUAL de itens marcados. Com
+// isso o comportamento imediatamente depois dela é idêntico ao de hoje: nenhum
+// prato muda retroativamente, e daí para a frente todo desfazer é exato.
+//
+// O que ela NÃO faz, e é a parte decidida:
+//
+// - **Não reconstrói o passado.** Dava para inferir `ajq` comparando `q` com a
+//   quantidade do `PLANO_BASE` (310 − 250 = 60, e acertaria o jantar do caso
+//   acima). Não se faz: o plano é editável, `setQuantidade` existe, e num plano
+//   em que ele cortou o arroz para 150 à mão a inferência escreveria −100 —
+//   inventando um ajuste que nunca houve, num campo que depois sai do prato.
+//   Migração não adivinha, e aqui o dado não distingue edição dele de ajuste.
+// - **Não conserta quem já perdeu uma marca.** O item que foi trocado enquanto
+//   um passo estava em vigor levou os gramas e não tem mais marca: ele não
+//   aparece nesta conta e nada o traz de volta. O defeito é de uma vez, no
+//   primeiro desfazer depois da migração, e é exatamente o que aconteceria sem
+//   ela — ver o teste "a migração não conserta a marca que já caiu".
+//
+// Os dois números entram congelados, e não importados de `calculo.ts`: migração
+// lê o dado da época, nunca o código de hoje. Um teste de domínio cobra que as
+// cópias continuem descrevendo o mesmo passo HOJE, do mesmo jeito que a ceia.
+
+/** O passo de arroz como o plano 12 o conhecia. Congelado: não lê `PASSO_ARROZ`. */
+export const PASSO_ARROZ_PLANO_12 = 120;
+/** A grade da colher, como o plano 12 a conhecia. */
+export const GRADE_ARROZ_PLANO_12 = 15;
+
+/** O que a migração 11→12 mexeu. */
+export interface Resultado12 {
+  /** quantos itens receberam o registro do que o ajuste lhes deu */
+  itens: number;
+  /** quanto foi escrito em cada um, nas unidades do item */
+  cada: number;
+}
+
+export function migraPlano12(S: Estado): Resultado12 | null {
+  if (S.plano >= 12) return null;
+  const r: Resultado12 = { itens: 0, cada: 0 };
+
+  const plano = S.comida && S.comida.plano;
+  const bruto = S.ajuste;
+  const ajuste = (typeof bruto === 'number' && isFinite(bruto)) ? Math.round(bruto) : 0;
+
+  // Sem saldo em vigor não há nada que o ajuste tenha dado: `ajq` ausente JÁ
+  // quer dizer zero, e escrever zero seria gravar o padrão.
+  if (ajuste && Array.isArray(plano)) {
+    const itens: Item[] = [];
+    plano.forEach(function (ref) {
+      if (!ref || !Array.isArray(ref.itens)) return;
+      ref.itens.forEach(function (i) { if (i && i.arroz) itens.push(i); });
+    });
+    const cada = Math.round(
+      (ajuste * PASSO_ARROZ_PLANO_12) / Math.max(1, itens.length) / GRADE_ARROZ_PLANO_12
+    ) * GRADE_ARROZ_PLANO_12;
+    if (cada) {
+      itens.forEach(function (i) { i.ajq = cada; r.itens++; });
+      r.cada = cada;
+    }
+  }
+
+  S.plano = 12;
   return r;
 }

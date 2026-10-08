@@ -51,3 +51,38 @@ O que ela prova:
   verbos do app, não à mão;
 - `body` tem as sete chaves e `promoPendente` é lista — as duas formas que a
   9 → 10 abriu.
+
+## `estado-plano-11.json`
+
+O mesmo método, um plano depois: o estado inteiro produzido pelo **build do
+plano 11**, antes da migração 11 → 12 existir. Gerado em `5108800`, numa
+*worktree* separada — o build tinha que ser o do plano 11, e o fonte da árvore
+de trabalho já estava consertado. `Date.now` fixado em 08/10/2026 07h55; o dia
+de 07/10 foi vivido pelos verbos do app (`CTX.marcaRefeicao` nas sete
+refeições, `CTX.setAgua`, `CTX.setEscala`), o relógio andou para o dia seguinte
+e `diaDeComida()` o fechou no histórico; aí o veredito pediu **+150 kcal** e
+`CTX.aplicaAjuste` aplicou o passo; e um segundo dia ficou **aberto**, com duas
+refeições marcadas e quatro copos.
+
+Os catorze dias anteriores do histórico são **andaime escrito à mão**, e ficam
+declarados como tal: eles existem só para destravar a adesão de 11 em 14 que o
+ajuste calórico exige. O que a fixture prova está no dia fechado pelo app e no
+plano.
+
+O que ela prova:
+
+- `ajuste` é **1** e `ajusteHist` tem a entrada do passo, com o veredito por
+  extenso — o ledger da época, escrito pelo app e não à mão;
+- os dois itens marcados com `arroz` estão em **310 g** cada: 250 g da
+  prescrição mais metade do passo de 120 g. É o `q` **inflado** que a migração
+  11 → 12 encontra no aparelho;
+- e a string `ajq` **não aparece em lugar nenhum do estado**. Nada no dado de
+  hoje diz QUANTO cada prato recebeu, que é a razão de a 11 → 12 existir: sem
+  esse número, desfazer só sabe recalcular pela contagem de pratos de agora;
+- `comidaHist` termina no dia **2026-10-07**, fechado pelo app, com `tot.kcal`
+  congelado em **2.632,06** e `escala.lanche` em **0,5** — a meia porção que ele
+  registrou, dentro do total. É o byte que nenhuma migração pode reescrever;
+- `comida.v` é **igual ao `pv` desse dia fechado**, mesmo tendo o ajuste movido
+  120 g de arroz dentro do plano DEPOIS do fechamento: `CTX.aplicaAjuste` não
+  chama `planoMudou()`. Não é o que a 11 → 12 conserta — fica registrado aqui
+  porque é o dado mostrando o defeito, e não uma leitura de código.
