@@ -217,3 +217,45 @@ test('a folha entra em foco, isola o fundo e devolve o foco ao sair', async () =
     'e o foco voltou para o botão que abriu');
   a.fechar();
 });
+
+// ===========================================================================
+// `ctx.trocaFolha` — a folha que SUBSTITUI o topo em vez de empilhar
+// ===========================================================================
+//
+// `abreFolha`, `fechaFolha` e `fechaTudo` já têm rede aqui e em `fusao`.
+// `trocaFolha` não tinha caso nenhum que a acionasse pelo nome: `fusao` ::
+// *cadastrar a partir da busca não abre a quarta folha* chega nela por um
+// CLIQUE no botão de cadastrar, então o caso prova a fiação daquele botão e
+// não a capacidade.
+//
+// Ela existe por um caminho só — refeição → `···` → trocar → cadastrar, que
+// chegava à QUARTA folha, a primeira em que ninguém sabe mais o que o fechar
+// leva de volta. Cobre o modelo: que trocar o topo não cresce a pilha e que o
+// fechar volta uma camada, não duas.
+
+test('ctx.trocaFolha substitui o topo, e o Voltar devolve uma camada só', async () => {
+  const a = await app({ aba: 'comida' });
+  a.v('ctx.abreFolha', { k: 'editaRefeicao', id: null });
+  a.v('ctx.abreFolha', { k: 'seletor', ref: null, idx: 0 });
+  await a.esperar(60);
+  assert.deepStrictEqual(a.vista().pilha.map(function (f) { return f.k; }),
+    ['editaRefeicao', 'seletor'], 'duas camadas: editar a refeição e a busca');
+  const entradas = a.window.history.length;
+
+  a.v('ctx.trocaFolha', { k: 'editaAlimento', id: null });
+  await a.esperar(60);
+
+  assert.deepStrictEqual(a.vista().pilha.map(function (f) { return f.k; }),
+    ['editaRefeicao', 'editaAlimento'],
+    'o cadastro tomou o lugar da busca — continuar não é empilhar');
+  assert.strictEqual(a.vista().pilha.length, 2, 'e a pilha não cresceu para três');
+  assert.strictEqual(a.$$('.ins-folha').length, 2, 'na tela também são duas');
+  assert.strictEqual(a.window.history.length, entradas,
+    'nem uma entrada nova de histórico: trocar não é abrir');
+
+  a.v('ctx.fechaFolha');
+  await a.esperar(60);
+  assert.deepStrictEqual(a.vista().pilha.map(function (f) { return f.k; }), ['editaRefeicao'],
+    'e fechar volta para a refeição, que é a camada de baixo');
+  a.fechar();
+});

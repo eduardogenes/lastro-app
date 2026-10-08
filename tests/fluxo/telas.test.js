@@ -717,3 +717,159 @@ test('a pegada aparece onde há decisão, e cala onde resumir seria pior', async
     'na perna a decisão é do pé, e o rótulo diz isso em vez de "pegada"');
   a.fechar();
 });
+
+// ===========================================================================
+// As sete tabelas de ação, e as quatro leituras da shell
+// ===========================================================================
+//
+// `acoesEx`, `acoesDia`, `acoesRapido`, `acoesAulas`, `acoesAdd`,
+// `acoesPrograma` e `acoesProg` são as tabelas por onde CADA tela entrega o
+// que ela sabe fazer. Nenhuma tinha caso próprio, e são o inventário mais
+// fácil de encolher numa reescrita: a tela nova liga oito dos vinte e dois
+// botões do cartão de exercício, ninguém conta, e as capacidades que sobraram
+// não têm nada vermelho a mostrar.
+//
+// Cobrem o modelo, não a fiação: o caso afirma que a CAPACIDADE está no
+// contrato, e explicitamente NÃO que a tela nova a ligou num botão.
+//
+// Duas coisas que o código ensinou aqui, e valem registro:
+//
+//  1. **`a.v` não alcança as tabelas.** `chama` parte o nome no PRIMEIRO
+//     ponto, então `'ctx.acoesDia.subir'` procura a chave literal
+//     `"acoesDia.subir"` em `CTX` e estoura. Entram por `a.m.ctx.acoes…`, que é
+//     a porta por acesso direto — por nome e sem `eval` —, e o §4 do
+//     09-superficie.md já a documenta com a ressalva de realm.
+//  2. **`acoesRapido.inp` e `acoesEx.inp`/`obsIn` recebem elemento do DOM.**
+//     São as cascas do §2, e os pares por valor delas (`anotaSerieRapida`,
+//     `anotaSerie`, `anotaObservacao`) já estão em `verbos`. O caso confere que
+//     o NOME está na tabela, não que ele seja verbo.
+
+/** O inventário completo, por tabela — a lista é o que o caso protege. */
+const TABELAS_DE_ACAO = {
+  acoesEx: ['toggle', 'inp', 'startTimer', 'proximoDoBiset', 'setAlt', 'toggleSwap',
+            'abrirSubstituicao', 'pularEx', 'openHist', 'toggleAq', 'abrirCarga', 'setCarga',
+            'abrirMedida', 'setUnidade', 'setQ', 'abrirNota', 'obsIn', 'toggleDor', 'abreRir',
+            'abreFoto', 'poeRir', 'usaAnterior'],
+  acoesDia: ['subir', 'descer', 'menos', 'mais', 'trocar', 'remover', 'escolheTroca',
+             'fechaTroca', 'desfaz', 'pronto'],
+  acoesRapido: ['abre', 'inp'],
+  acoesAulas: ['abre', 'repete', 'aplica', 'salva', 'apaga', 'cola', 'importa'],
+  acoesAdd: ['abre', 'fecha', 'busca', 'adiciona', 'abreNovo', 'cria'],
+  acoesPrograma: ['volta', 'abreDia', 'modo', 'moveDia', 'criaTreino', 'restauraDia',
+                  'restauraTudo'],
+  acoesProg: ['subir', 'descer', 'menos', 'mais', 'trocar', 'remover', 'escolheTroca',
+              'fechaTroca', 'reps', 'descanso']
+};
+
+test('as sete tabelas de ação entregam o inventário inteiro, e tudo nelas é chamável', async () => {
+  const a = await app();
+
+  Object.keys(TABELAS_DE_ACAO).forEach(function (tabela) {
+    const t = a.m.ctx[tabela];
+    assert.strictEqual(typeof t, 'object', tabela + ' é uma tabela de ações');
+    assert.deepStrictEqual(Object.keys(t).sort(), TABELAS_DE_ACAO[tabela].slice().sort(),
+      tabela + ': o inventário mudou. Acrescentar ação é livre — este caso só quer que ' +
+      'TIRAR uma seja uma decisão escrita, e não um botão que a tela nova esqueceu de ligar.');
+    Object.keys(t).forEach(function (k) {
+      assert.strictEqual(typeof t[k], 'function', tabela + '.' + k + ' é chamável');
+    });
+  });
+
+  // E a porta: nome com dois pontos não resolve, e o erro diz o nome.
+  assert.throws(function () { a.v('ctx.acoesDia.subir', 0); }, /verbo fora da superfície/,
+    '`a.v` parte o nome no primeiro ponto, então a tabela só entra por `a.m.ctx`');
+  a.fechar();
+});
+
+test('acoesDia e acoesProg mexem em programas diferentes — o do dia e o oficial', async () => {
+  // As duas tabelas têm oito nomes iguais, e é a diferença entre elas que é a
+  // regra central do app: mexer no treino de HOJE não mexe no programa oficial.
+  // Um redesenho que ligasse a tabela errada num botão passaria por toda a
+  // suíte de hoje sem um vermelho.
+  const a = await app();
+  const idSaindo = a.k('A', 0);
+  const nomeOficial = a.v('nomeEx', idSaindo);
+
+  a.v('modoEdicao');
+  a.m.ctx.acoesDia.remover(0);
+  await a.esperar();
+
+  assert.strictEqual(a.v('nomeEx', idSaindo), nomeOficial,
+    'remover pela tabela do DIA não toca no catálogo: o exercício continua tendo nome');
+  assert.ok(a.S().prog.A.ex.some(function (x) { return x.id === idSaindo; }),
+    'nem no programa oficial: o exercício continua prescrito lá');
+  assert.deepStrictEqual(a.vJ('modsDoDia', 'A'), [{ k: 'rm', slot: idSaindo }],
+    'o que ela cria é uma MUDANÇA do dia, que a decisão do fim promove ou não');
+  assert.ok(!a.vJ('treino', 'A').ex.some(function (x) { return x.id === idSaindo; }),
+    'e o treino de HOJE, que é o projetado, já não o tem');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// As quatro leituras da shell
+// ---------------------------------------------------------------------------
+
+test('ctx.emTelaCheia diz quando um destino tomou a tela toda', async () => {
+  // Quem pergunta é a shell, para esconder a tabbar: errar aqui é a barra de
+  // abas aparecendo em cima da câmera, ou desaparecendo na tela de treino.
+  const a = await app();
+  assert.strictEqual(a.v('ctx.emTelaCheia'), false, 'a aba de treino não é tela cheia');
+
+  a.v('ctx.abrePrograma');
+  assert.strictEqual(a.v('ctx.emTelaCheia'), true, 'o programa é');
+  a.v('ctx.fechaFolha');
+  a.aba('treino');
+  assert.strictEqual(a.v('ctx.emTelaCheia'), false, 'e sair devolve a shell');
+
+  a.v('openHist', 0);
+  assert.strictEqual(a.v('ctx.emTelaCheia'), true, 'o histórico de um exercício também é');
+  a.fechar();
+});
+
+test('ctx.cabecalhoDeHoje nomeia o dia e o treino previsto, sem inventar', async () => {
+  const a = await app({ agora: agoraEstavel(), estado: { logs: {}, done: [] } });
+  const h = a.vJ('ctx.cabecalhoDeHoje');
+
+  const d = new Date(agoraEstavel());
+  assert.ok(h.olho.includes(String(d.getDate())), 'o olho traz o dia do mês: ' + h.olho);
+  assert.strictEqual(h.olho, h.olho.toUpperCase(), 'em caixa alta, como a tela pede');
+  assert.strictEqual(h.rotulo, 'previsto',
+    'e o treino do dia é PREVISTO enquanto nada foi registrado — o app não afirma o que não mediu');
+  assert.ok(a.dado('ROT_BASE').includes(h.valor), 'o valor é uma letra da rotação: ' + h.valor);
+  a.fechar();
+});
+
+test('ctx.sessaoAberta devolve null sem sessão, e a duração enquanto há uma', async () => {
+  const a = await app();
+  assert.strictEqual(a.vJ('ctx.sessaoAberta'), null, 'sem sessão não há o que mostrar');
+
+  a.v('toggle', 0);
+  a.preencher(0, 0, 60, 8);
+  await a.esperar();
+
+  const s = a.vJ('ctx.sessaoAberta');
+  assert.ok(s, 'a primeira série completa abre a sessão');
+  assert.match(s.duracao, /^\d+ min$|^\d+:\d\d$/,
+    'e a leitura traz a duração já formatada, nunca o instante cru: ' + s.duracao);
+  assert.strictEqual(s.pausada, false, 'correndo');
+
+  await a.v('pausarSessao');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.sessaoAberta').pausada, true, 'pausar aparece aqui');
+  await a.v('retomarSessao');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.sessaoAberta').pausada, false, 'e retomar também');
+  a.fechar();
+});
+
+test('ctx.ehLinhaDeTreino separa a linha de treino das de comida na timeline', async () => {
+  // A timeline de HOJE mistura comida e treino em ordem de relógio. Esta é a
+  // pergunta que decide qual cromo cada linha recebe — e ela é sobre o `id` da
+  // linha, não sobre a letra do dia.
+  const a = await app({ aba: 'hoje' });
+  assert.strictEqual(a.v('ctx.ehLinhaDeTreino', { id: 'treino' }), true);
+  assert.strictEqual(a.v('ctx.ehLinhaDeTreino', { id: 'almoco' }), false);
+  assert.strictEqual(a.v('ctx.ehLinhaDeTreino', { id: 'pre' }), false,
+    'o pré-treino é refeição, e é o que mais se confunde com treino');
+  a.fechar();
+});
