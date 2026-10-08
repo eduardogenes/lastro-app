@@ -66,7 +66,14 @@ test('apagar o histórico leva a chave velha junto', async () => {
   a.aceitar();
   await a.v('wipe');
 
-  assert.strictEqual(a.window.localStorage.getItem(CHAVE), null);
+  // A chave NOVA não fica vazia, e a asserção mudou de lado por isso: `wipe`
+  // GRAVA o estado apagado, com as lápides dentro. Antes ele só removia a
+  // chave, e fechar o app antes do toque seguinte perdia as duas coisas — as
+  // lápides, que são o apagamento, e a prescrição que o gesto preserva.
+  const novo = a.gravado();
+  assert.deepStrictEqual(novo.done, [], 'a chave nova ficou com o estado apagado');
+  assert.ok(Object.keys(novo.apagados).length > 0,
+    'e com a lápide da sessão que saiu, que é o que sobe para o outro aparelho');
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_LEGADO), null,
     'a chave velha ficou para trás, e o próximo boot ressuscitaria o que ele apagou');
   a.fechar();

@@ -400,3 +400,159 @@ test('ctx.sincronizaAgora é a porta manual do mesmo ciclo', async () => {
   assert.ok(a.dado('sync').em > 0, 'carimbando a hora, que é o que a tela mostra');
   a.fechar();
 });
+
+// ===========================================================================
+// Apagar TODO o histórico, com os dois aparelhos
+// ===========================================================================
+//
+// `wipe` é a única ação que apaga o histórico inteiro, e o aviso dela promete
+// *"Isso não tem volta."* Promessa que vale num aparelho só é promessa falsa:
+// sem lápide, a fusão lê os registros do outro lado como registros que este
+// aparelho simplesmente não tem — e os traz de volta.
+//
+// Os casos abaixo precisam de uma nuvem SÓ com dois apps em cima dela.
+// `nuvemFalsa` monta uma linha POR aparelho, e duas linhas nunca se encontram.
+
+/**
+ * Uma linha de nuvem no realm do Node, compartilhada por quantos aparelhos
+ * quiserem. A trava de versão é a de verdade: escrita que parte de versão
+ * vencida é recusada com `conflito`, e o app relê, funde e tenta de novo.
+ *
+ * Atravessa o realm por STRING, nos dois sentidos: objeto do Node desserializado
+ * dentro do jsdom chega com o protótipo errado, e é o app que vai fundi-lo.
+ */
+function nuvemDeDois(inicial) {
+  const nuvem = { linha: inicial || null, empurros: [] };
+  nuvem.liga = function (a) {
+    a.window.__cloudLe = function () {
+      return nuvem.linha ? JSON.stringify(nuvem.linha) : '';
+    };
+    a.window.__cloudGrava = function (deV, dataJSON) {
+      const atual = nuvem.linha ? nuvem.linha.v : null;
+      const de = deV === '' ? null : Number(deV);
+      if (de !== atual) {
+        return JSON.stringify({ ok: false, erro: 'conflito', msg: 'outro aparelho gravou antes' });
+      }
+      const v = (atual || 0) + 1;
+      nuvem.linha = { v: v, data: JSON.parse(dataJSON) };
+      nuvem.empurros.push(v);
+      return JSON.stringify({ ok: true, v: v });
+    };
+    a.E(`
+      NUVEM.sessao = function () { return { email: 'eu@exemplo.com', uid: 'u1' }; };
+      NUVEM.pronta = async function () { return NUVEM.sessao(); };
+      NUVEM.puxa = async function () {
+        const s = globalThis.__cloudLe();
+        return { ok: true, v: s ? JSON.parse(s) : null };
+      };
+      NUVEM.empurra = async function (deV, data) {
+        return JSON.parse(globalThis.__cloudGrava(deV == null ? '' : String(deV), JSON.stringify(data)));
+      };
+      NUVEM.subirFoto = async function () { return { ok: true, v: true }; };
+      NUVEM.baixaFoto = async function () { return { ok: true, v: null }; };
+      NUVEM.subirCorpo = async function () { return { ok: true, v: true }; };
+      NUVEM.baixaCorpo = async function () { return { ok: true, v: null }; };
+    `);
+  };
+  return nuvem;
+}
+
+const T_HIST = Date.now() - 3 * 86400000;
+
+/** O mesmo histórico nos dois aparelhos: é o que dois aparelhos sincronizados têm. */
+function historico() {
+  return {
+    logs: { A0: [{ t: T_HIST, sid: T_HIST, sets: [[60, 10], [60, 10]] }] },
+    done: [{ day: 'A', t: T_HIST, sid: T_HIST, dur: 40 * 60000 }],
+    cardio: [{ t: T_HIST, m: 'bike', min: 25, i: 'moderado' }],
+    body: { peso: [{ t: T_HIST, v: 80 }], cintura: [] }
+  };
+}
+
+/** Quanto histórico este aparelho tem agora, por família. */
+function acervo(a) {
+  const d = a.S();
+  return {
+    exercicios: Object.keys(d.logs).length,
+    sessoes: d.done.length,
+    cardio: d.cardio.length,
+    pesagens: d.body.peso.length
+  };
+}
+
+test('apagar todo o histórico no celular não volta pelo notebook', async () => {
+  const ontem = Date.now() - 86400000;
+  const nuvem = nuvemDeDois(null);
+
+  const cel = await app({ estado: historico() });
+  nuvem.liga(cel);
+  await cel.v('sincroniza');
+  assert.strictEqual(nuvem.linha.data.done.length, 1, 'a nuvem recebeu o histórico');
+
+  const note = await app({ estado: historico() });
+  nuvem.liga(note);
+  await note.v('sincroniza');
+  assert.deepStrictEqual(acervo(note), { exercicios: 1, sessoes: 1, cardio: 1, pesagens: 1 },
+    'os dois aparelhos partem do MESMO histórico');
+
+  // o dono apaga tudo no celular
+  cel.aceitar();
+  await cel.v('wipe');
+  await cel.esperar(60);
+  assert.deepStrictEqual(acervo(cel), { exercicios: 0, sessoes: 0, cardio: 0, pesagens: 0 },
+    'apagou aqui');
+
+  // e chega em casa e abre o notebook, que registra um dia de descanso
+  await note.v('alternaDescanso', ontem);
+  await note.esperar();
+
+  await cel.v('sincroniza');     // o celular sobe o apagamento
+  await cel.esperar(60);
+  await note.v('sincroniza');    // o notebook lê e obedece
+  await note.esperar(60);
+  await cel.v('sincroniza');     // e o celular relê o que o notebook subiu
+  await cel.esperar(60);
+
+  assert.deepStrictEqual(acervo(cel), { exercicios: 0, sessoes: 0, cardio: 0, pesagens: 0 },
+    'o histórico apagado NÃO volta pela fusão');
+  assert.deepStrictEqual(acervo(note), { exercicios: 0, sessoes: 0, cardio: 0, pesagens: 0 },
+    'e morre no notebook também: o aviso diz que não tem volta');
+  assert.strictEqual(nuvem.linha.data.done.length, 0, 'nem sobra na nuvem');
+
+  // o alcance é limitado: o que o notebook registrou DEPOIS do apagamento fica
+  assert.strictEqual(cel.v('ehDescanso', ontem), true,
+    'o descanso que o notebook marcou depois do apagamento chegou e sobreviveu');
+
+  cel.fechar(); note.fechar();
+});
+
+test('o apagamento sobrevive a fechar o app, que é onde ele morria', async () => {
+  // `wipe` removia a chave e NÃO gravava nada no lugar: as lápides ficavam só
+  // na memória. Fechar o app antes do toque seguinte — abrir, apagar, guardar o
+  // telefone — perdia as lápides E a prescrição que o gesto preserva, e a
+  // abertura seguinte era um aparelho vazio que a nuvem reenchia.
+  const nuvem = nuvemDeDois(null);
+
+  const antes = await app({ estado: historico() });
+  nuvem.liga(antes);
+  await antes.v('sincroniza');                 // a nuvem fica com o histórico
+  antes.aceitar();
+  await antes.v('wipe');
+  await antes.esperar(60);
+
+  const disco = antes.gravado();
+  assert.ok(disco, 'o apagamento FICOU gravado, em vez de só na memória');
+  assert.ok(Object.keys(disco.apagados).length > 0, 'com as lápides dentro');
+  assert.ok(disco.comida.plano.length > 0, 'e com a prescrição que o gesto preserva');
+  antes.fechar();
+
+  // o mesmo aparelho, reaberto do que ficou no disco
+  const depois = await app({ estado: disco });
+  nuvem.liga(depois);
+  await depois.v('sincroniza');
+  await depois.esperar(60);
+
+  assert.deepStrictEqual(acervo(depois), { exercicios: 0, sessoes: 0, cardio: 0, pesagens: 0 },
+    'reaberto, o aparelho não é reenchido pela nuvem que ainda tinha tudo');
+  depois.fechar();
+});

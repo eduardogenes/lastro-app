@@ -632,19 +632,17 @@ test('ctx.apagaTudo leva o que foi REGISTRADO e deixa o que foi PRESCRITO', asyn
   a.fechar();
 });
 
-test('ctx.apagaTudo leva junto quatro coisas que ninguém declarou — o escopo de hoje', async () => {
+test('ctx.apagaTudo leva junto três coisas que ninguém declarou — o escopo de hoje', async () => {
   // ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. Ele grava o que o verbo faz hoje, nos
-  // quatro campos que `wipe()` não lista nem como registro nem como prescrição:
-  // o objeto novo que ele monta simplesmente não os carrega, e `normalizaEstado`
+  // campos que `wipe()` não lista nem como registro nem como prescrição: o
+  // objeto novo que ele monta simplesmente não os carrega, e `normalizaEstado`
   // os preenche vazios depois. Se alguém decidir que um deles deve sobreviver,
   // este caso fica vermelho e aponta a linha — que é o contrário de descobrir
   // meses depois que a biblioteca de aulas sumiu num toque.
   //
-  // O mais pesado dos quatro é `apagados`. `wipe()` apaga a chave de storage
-  // LEGADA de propósito, com comentário, para a migração do boot não ressuscitar
-  // amanhã o histórico — e no mesmo gesto joga fora toda lápide, que é
-  // exatamente o que impede a FUSÃO do outro aparelho de ressuscitá-lo pela
-  // outra porta.
+  // Eram QUATRO, e o quarto era `apagados` — toda lápide ia junto. Esse saiu da
+  // lista: ele não era escopo de produto, era a ressurreição pela fusão, e está
+  // consertado no caso seguinte. Os três que sobraram continuam em aberto.
   const t = Date.now() - 2 * DIA;
   const a = await app({ estado: estadoCheio(t) });
 
@@ -661,8 +659,38 @@ test('ctx.apagaTudo leva junto quatro coisas que ninguém declarou — o escopo 
     'as sessões de foto de corpo vão junto, sem podar os bytes no cache nem no bucket');
   assert.deepStrictEqual(d.fotos, {},
     'as referências de foto de aparelho vão junto, pelo mesmo caminho');
-  assert.deepStrictEqual(d.apagados, {},
-    'e TODA lápide vai junto, inclusive a de um registro que nada neste gesto apagou');
+  a.fechar();
+});
+
+test('ctx.apagaTudo deixa uma LÁPIDE por registro que saiu, na chave da fusão', async () => {
+  // Sem isto o aviso mentia: "isso não tem volta" valia num aparelho só, porque
+  // a fusão lê o que sobrou no outro lado como registro que este nunca teve.
+  // As chaves estão escritas à mão de propósito — é a string que o OUTRO
+  // aparelho vai comparar, e um teste que a derivasse do próprio código não
+  // saberia dizer que ela mudou de forma.
+  const t = Date.now() - 2 * DIA;
+  const a = await app({ estado: estadoCheio(t) });
+  const idEx = a.k('A', 0);
+
+  await a.v('ctx.apagaTudo');
+  await a.esperar(60);
+  const mortos = a.S().apagados;
+
+  assert.ok(mortos['done:' + t] > t,
+    'a sessão tem lápide, carimbada DEPOIS do registro — é a comparação que o mata');
+  assert.ok(mortos['log:' + idEx + ':' + t + ':' + idEx], 'a série tem lápide');
+  assert.ok(mortos['cardio:' + t], 'o cardio tem lápide');
+  assert.ok(mortos['peso:' + t], 'a pesagem tem lápide');
+  assert.ok(mortos['cintura:' + t], 'a cintura tem lápide');
+  assert.ok(mortos['comida:2026-10-01'], 'o dia de comida tem lápide');
+
+  assert.strictEqual(mortos['log:nada:1:nada'], t,
+    'e a lápide VELHA fica, com o carimbo dela: ela ainda é a única coisa que ' +
+    'impede o outro aparelho de ressuscitar um registro que este gesto não apagou');
+
+  assert.deepStrictEqual(
+    Object.keys(mortos).filter(function (k) { return k.indexOf('prog:') === 0; }), [],
+    'e o que o gesto PRESERVA não ganha lápide: o diário do programa fica, então nada o persegue');
   a.fechar();
 });
 

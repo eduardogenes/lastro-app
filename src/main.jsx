@@ -56,7 +56,8 @@ import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from '
 import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
-  chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde
+  chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde,
+  lapidesDoApagamento, uneLapides
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -4611,6 +4612,8 @@ function fecharRetro(){ view.retro = false; render(); saiDoDestino('retro'); }
 
 async function wipe() {
   if (!confirm('Apagar todo o histórico? Isso não tem volta.')) return;
+  const antes = S;
+  const agora = Date.now();
   // apagar o histórico não apaga o programa: os exercícios que ele cadastrou
   // e as mudanças que promoveu ao oficial sobrevivem
   S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
@@ -4625,10 +4628,39 @@ async function wipe() {
   // catálogo uma vez.
   normalizaEstado();
   montaCatalogo();
+
+  // A LÁPIDE de cada registro que acabou de sair — a outra porta da mesma
+  // ressurreição que a linha de baixo blinda.
+  //
+  // Preservar as lápides velhas não bastaria: elas falam dos registros apagados
+  // ANTES, e este gesto esvaziou as coleções em bloco, sem passar por `lapide()`
+  // em nenhum registro. Sem lápide nova, a fusão lê o que sobrou no outro
+  // aparelho como registro que este simplesmente não tem, e o traz de volta —
+  // contra um aviso que acabou de prometer que não tem volta.
+  //
+  // As velhas entram junto, por `uneLapides`: lápide de um registro que ESTE
+  // gesto não apagou continua sendo a única coisa que impede o outro aparelho
+  // de ressuscitá-lo, e jogá-la fora aqui era um apagamento desfeito de graça.
+  // Vem de lá, de quebra, a poda dos 90 dias.
+  S.apagados = uneLapides(antes.apagados || {}, lapidesDoApagamento(antes, S, agora), agora);
+
   try { await DB.delete(KEY); } catch(e){}
   // A velha vai junto. Deixá-la seria a migração do boot ressuscitar amanhã
   // exatamente o histórico que ele acabou de mandar apagar.
   try { await DB.delete(KEY_LEGADO); } catch(e){}
+  // E GRAVA — `save`, não `grava`.
+  //
+  // Apagar e não escrever deixava o apagamento só na memória: fechar o app
+  // antes do próximo toque perdia as lápides E a prescrição preservada, porque
+  // a chave tinha acabado de ser removida. O carimbo importa pelo mesmo motivo
+  // que nas outras escritas: é ele que decide de que lado vêm os DOCUMENTOS, e
+  // sem ele os que este gesto zerou (o dia de comida aberto, o rascunho)
+  // voltariam do outro aparelho. E `save` marca a sujeira: apagamento que não
+  // marca sujeira só sobe quando um toque sem relação com ele resolve subir.
+  //
+  // A ordem é deliberada: a remoção vem primeiro, e por isso uma escrita que
+  // falhe não pode deixar o histórico velho de pé na chave.
+  await save();
   view.day='A'; view.aba='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
   view.swapOpen=null;
   render();
