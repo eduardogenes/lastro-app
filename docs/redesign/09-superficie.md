@@ -2180,3 +2180,83 @@ Oito pontos. Nos oito vale o código.
     projetos por `include: tests/fluxo/**/*.test.js`, e um arquivo fora dessa
     pasta é ignorado em silêncio — sai "no test files" sem erro. Copie para lá,
     rode, apague.
+
+---
+
+## 12 · Quarta passada — feita pelo coordenador
+
+**O quarto agente desta linha caiu por limite de sessão antes de fazer qualquer
+coisa** (a última linha dele foi *"vou começar a linha de base enquanto leio os
+documentos"*). Como as duas tarefas estavam especificadas e eu tinha os fatos na
+mão, fiz eu. Está marcado assim porque procedência importa.
+
+**Linha de base:** 1.105 → **1.107 passando**, 53 arquivos, zero rejeições,
+`tsc --noEmit` limpo.
+
+### 12.1 · Dois erros espelhados no carimbo de versão do plano
+
+`S.comida.v` é a versão do plano nutricional, e cada dia de comida fechado guarda
+em `pv` a versão contra a qual foi calculado. A comparação das duas é o que faz a
+tela dizer "este dia foi calculado contra outro plano".
+
+**A regra vale nos dois sentidos: quem muda o plano carimba, quem não muda não.**
+Os dois lados estavam quebrados:
+
+- **`CTX.aplicaAjuste` mudava sem carimbar.** Ela chama `aplicaArroz`, que
+  reescreve a quantidade de arroz em dado **persistido**, e não carimbava. O app
+  **sub-relatava** divergência: o plano mudava e o dia congelado não sabia.
+- **`CTX.restauraPlano` carimbava sem mudar.** `planoMudou()` era a primeira
+  linha, antes do `confirm`. **Cancelar subia a versão**, e o app passava a
+  **super-relatar** — divergência em dias que não divergiram.
+
+**O conserto mudou um ponto de desenho, e a razão é a causa dos dois defeitos:**
+`aplicaAjusteNoArroz` passou de `void` a **devolver se mexeu**. Inferir era o
+problema — um lado inferia que não precisava carimbar, o outro que precisava. **A
+função que mexe é a única que sabe se mexeu.**
+
+**Prova.** Os dois casos nasceram vermelhos (`ajuste.test.js`): o primeiro com
+`versão: 0 → undefined`, o segundo com o carimbo subindo no cancelamento.
+**No caso negativo — *"cancelar NÃO carimba"* — o código de antes É a quebra no
+sentido oposto**, porque ele carimbava. A regra da §10.1 se satisfez por
+construção, e isso está dito em vez de uma quebra encenada.
+
+**E a superfície me pegou no meio.** Eu escrevi os dois casos lendo a versão por
+`a.v('versaoDoPlano')` e a superfície recusou: *"verbo fora da superfície"*. Está
+certa — `versaoDoPlano` é leitura preguiçosa que **inicializa** o campo, e não
+deve estar na tabela. Os casos nasceram vermelhos pelo motivo errado por uma
+rodada, e **foi o contrato que impediu um teste de medir a coisa errada.**
+
+### 12.2 · Trinta entradas repontadas, e o que ficou de fora de propósito
+
+**406 → 391** entradas pela ponte de `eval`. (Subiu de 396 para 406 antes disto
+porque os 25 casos novos do arroz usam a ponte para **cirurgia de fixture**, que
+é a categoria das 103 e está fora do contrato de propósito.)
+
+**Quinze chamadas de verbo saíram da concatenação** — `periodoDe` ×6 em
+`horario`, `corrigeDuracao` ×3 e `editaSessao` ×3 em `sessao`, `editaSessao` em
+`retro`, `exDe` e `seriesPorMusculo` em `telas`. Eram da forma
+`a.E('verbo(' + valor + ')')`, que é **o modo de falha da ponte**: o valor virava
+texto de código, e quando o argumento é fonte, "o valor" e "a fonte do valor" se
+confundem. Foi assim que uma reponta anterior passou a string `"null"` onde
+queria o valor `null`.
+
+**Quinze leituras de caminho simples** — cinco de `CAT` com concatenação do id,
+nove de caminho em `S`, e uma de `view` que compunha com o verbo `id`; essa passou
+a usar `a.k`, que o harness já expõe para exatamente isso.
+
+**Uma correção à classificação da §3.3:** `FOTO_GUARDA` em `fotos` foi contada
+entre as 16 chamadas de verbo concatenadas e **não é verbo do app**. O próprio
+teste a instala como **dublê** em `globalThis` e depois a chama. Pertence à
+categoria das 61, não à das 62. **São 15 chamadas de verbo, não 16.**
+
+**O que ficou de fora, e não é esquecimento:** as leituras com `map` e `filter`
+são a categoria das **168**, e a decisão do dono é repontá-las **junto com a
+reescrita de cada tela** — repontar um arquivo de teste e reescrever a tela que
+ele cobre são a **mesma visita**, e fazer separado é visitar duas vezes.
+
+### 12.3 · Uma lição de método, minha, aplicada
+
+Perdi o nome de duas falhas intermitentes filtrando a saída da suíte com `grep` —
+`grep` que não casa apaga a evidência. Nesta passada capturei a saída inteira em
+arquivo **antes** de filtrar, em todas as execuções. Está aqui para a próxima
+passada fazer igual.
