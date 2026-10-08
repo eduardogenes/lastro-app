@@ -4611,7 +4611,12 @@ function abrirRetro(){ view.retro = true; view.sessao = null; entraNoDestino('re
 function fecharRetro(){ view.retro = false; render(); saiDoDestino('retro'); }
 
 async function wipe() {
-  if (!confirm('Apagar todo o histórico? Isso não tem volta.')) return;
+  // "e vale para os outros aparelhos" é a frase que `apagaRegistroDeTreino` já
+  // usava, e agora ela é verdade aqui também: o gesto deixa lápide, e lápide
+  // viaja. Antes a promessa era menor do que a verdade — o apagamento era
+  // desfeito pela fusão —, e dizer o alcance é o que falta para o dono decidir
+  // com o que ele tem na mão.
+  if (!confirm('Apagar todo o histórico? Isso não tem volta, e vale para os outros aparelhos.')) return;
   const antes = S;
   const agora = Date.now();
   // apagar o histórico não apaga o programa: os exercícios que ele cadastrou

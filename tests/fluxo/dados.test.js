@@ -676,6 +676,11 @@ test('ctx.apagaTudo deixa uma LÁPIDE por registro que saiu, na chave da fusão'
   await a.esperar(60);
   const mortos = a.S().apagados;
 
+  // e o aviso diz o alcance, que é a frase que o apagamento de UM treino já
+  // usava: agora que a lápide viaja, o gesto vale para o outro aparelho
+  assert.ok(/vale para os outros aparelhos/.test(a.perguntas().join(' | ')),
+    'o aviso promete o que o código passou a fazer: ' + a.perguntas().join(' | '));
+
   assert.ok(mortos['done:' + t] > t,
     'a sessão tem lápide, carimbada DEPOIS do registro — é a comparação que o mata');
   assert.ok(mortos['log:' + idEx + ':' + t + ':' + idEx], 'a série tem lápide');
