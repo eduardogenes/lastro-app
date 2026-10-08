@@ -1400,6 +1400,81 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         estão **alcançáveis e nomeadas** — o documento as lista por assunto. São
         as mais baratas de blindar, porque o verbo já existe e o teste novo só
         precisa chamá-lo em vez de clicar.
+        **FEITO EM PARTE, 08/10** (`a1909741be5fb3c68`), §8 do
+        `09-superficie.md`. **38 das 93** ganharam caso, em 37 casos novos, cinco
+        commits por assunto. **Conferi:** `npm test` → **1.002 passando** (557
+        fluxo + 445 domínio), 53 arquivos, zero rejeições, e
+        `git diff -- src/` **vazio** — nenhuma linha de fonte tocada, nenhum caso
+        existente alterado. Dois assuntos fecharam inteiros: corpo/medidas/cardio
+        e custódia/nuvem.
+        **A prova de vermelho foi cumprida:** 39 quebras deliberadas no `src/`, e
+        cada um dos 37 casos ficou vermelho em ao menos uma. Ele **jogou uma
+        asserção fora por não saber ficar vermelha** e escreveu por quê — era
+        `assert.strictEqual(vm.senha, undefined)`, que passava com a senha ainda
+        guardada porque a chave nem existe quando logado.
+        **O achado que justifica a tarefa inteira:** ele alargou `apagarSessao`
+        para apagar **todas** as séries daquele `sid` em vez de uma linha, e
+        `telas.test.js` — que é a guarda única de "correção de sessão passada
+        altera e apaga" — passou **39 de 39**. **A suíte de hoje não vê um
+        apagamento que cresceu do exercício para o treino inteiro.** O caso novo
+        é a única coisa que pega.
+        **E o limite, dito e não glosado:** os 37 cobrem **o modelo, não a
+        fiação**. Se o redesenho esquecer de ligar o botão, os 37 seguem verdes e
+        a capacidade fica inalcançável pelo dedo. Dois casos (`salvaEdicao`,
+        `editDor`) dependem do DOM **por culpa do verbo**, que relê a tela por
+        dentro.
+      - [ ] **DEFEITO (a) PARA O DONO DECIDIR — a bioimpedância não tem torneira.**
+        Conferi: **zero das 181 chaves de `CTX` mencionam bioimpedância**
+        (`grep -coE "CTX\.[a-zA-Z]*[Bb]io"` → 0). Não existe `registraBio*`,
+        não existe setter de rascunho, e `CORPO_PADRAO` não tem valor de partida
+        para as cinco. **Enquanto isso a tubulação inteira existe:**
+        `MEDIDAS_DO_CORPO` declara as sete, a migração 9→10 criou as chaves, a
+        lista branca as preserva e a fusão tem lápide para cada uma. **Toda a
+        tubulação e nenhuma torneira.** O caso está escrito e **ficou verde**
+        (grava a recusa); dar partida às cinco o derruba.
+        Minha recomendação, quando ele decidir: **um verbo de modelo**
+        (`registraBio(qual, valor)`), não um valor em `CORPO_PADRAO` — um padrão
+        de `bioGorduraPct: 18` seria o app **inventando leitura de balança**. O
+        verbo torna a capacidade alcançável e testável sem desenhar tela, que é a
+        ordem do plano (modelo antes de tela).
+      - [ ] **DEFEITO (b), e eu confirmei o mecanismo no fonte: apagar o
+        histórico leva as LÁPIDES, e o outro aparelho ressuscita o que foi
+        apagado.** `wipe()` reconstrói `S` de um literal com lista de chaves
+        preservadas, e **`apagados` não está na lista** (nem `aulas`, nem
+        `protocolo`, nem `fotos`). O comentário logo abaixo prova que o autor
+        conhecia a classe do problema **na outra porta**: *"A velha vai junto.
+        Deixá-la seria a migração do boot ressuscitar amanhã exatamente o
+        histórico que ele acabou de mandar apagar."* **Guarda numa porta,
+        faltando na outra:** apaga no celular, sincroniza com o notebook, e o
+        histórico volta — porque sem lápide a fusão lê os registros do outro lado
+        como registros que este aparelho simplesmente não tem.
+        **E o conserto NÃO é só preservar `apagados`:** o `wipe` esvazia as
+        coleções em bloco sem escrever lápide por registro, então guardar as
+        lápides antigas não basta. O conserto é **o apagamento passar a ser
+        representável para a fusão** — e isso é decisão de desenho de dado, não
+        linha de código. Vai à mesa dele.
+        Mais: `protocolo` e `fotos` fora da lista **orfanam bytes de foto** sem
+        podar cache nem bucket, e `aulas` some enquanto `S.ex` sobrevive.
+      - **Sete correções dele, e duas mudam o mapa:** as cinco grandezas da
+        bioimpedância **não são chaves de `CTX`** e nunca estiveram entre as 93;
+        **`a.v` não alcança as sete tabelas de ação** porque `chama` parte o nome
+        no primeiro ponto, então os 64 nomes dentro delas só entram por
+        `a.m.ctx` — conserto de poucas linhas que **não** precisa subir o
+        contrato. Mais: são **91** sem chamador nenhum e não 92 (o harness aciona
+        `vaiPara` e `desliga`); `setNotaDaSessao` está no assunto errado (é foto
+        de corpo, não sessão de treino); `folhas` é a quarta que **não deve**
+        ganhar rede, porque devolve VNode e o contrato proíbe devolver elemento.
+      - **Flake pré-existente que ele viu e não mexeu, e vale registrar:** a
+        **primeira** execução dele deu **964/1** — `navegacao` :: *a folha entra
+        em foco* falhou no `activeElement`, com nada tocado. O arquivo sozinho
+        passa 9/9 e todas as execuções seguintes deram 965. **É corrida de foco
+        sob carga**, e é da mesma família do vermelho de 1 em 24 que eu persegui
+        e não consegui nomear. Agora tem nome.
+      - [ ] **Ficaram 55, das quais 51 são trabalho real** (quatro não devem
+        ganhar rede). Por assunto, com casa indicada na §8.8: **comida e plano
+        16** — e é por aqui que eu seguiria, porque `removeItem` e `trocaItem`
+        são **destrutivos** e são a prioridade 1 ainda não paga; **câmera e foto
+        17**; **rota e shell 12**; **promoção e retroativo 6**.
       - **Frente 1** (`a37eebea5e0f5982d`) → `09-frente1-lugares.md`. Os cinco
         lugares e o que cada um possui, conferidos **contra a seção 1 da rede** —
         capacidade de hoje sem lugar onde morar é o achado mais valioso que ele
