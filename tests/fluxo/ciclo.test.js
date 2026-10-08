@@ -38,7 +38,7 @@ test('pausar para o relógio e retomar continua', async () => {
 
   await a.v('pausarSessao');
   await a.esperar();
-  assert.ok(a.E('S.sessao.pausadoEm > 0'));
+  assert.ok(a.S().sessao.pausadoEm > 0);
   assert.ok(a.$('.day-rel.pausado'), 'o relógio muda de cor e rótulo');
   assert.strictEqual(a.texto('.day-rel em'), 'pausado');
 

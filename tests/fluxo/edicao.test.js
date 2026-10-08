@@ -105,9 +105,9 @@ test('cadastrar equipamento novo cria exercício com histórico próprio', async
   await a.esperar();
 
   const k = 'chest-press-da-academia-nova';
-  assert.strictEqual(a.E('CAT["' + k + '"].g'), 'peito superior');
-  assert.strictEqual(a.E('CAT["' + k + '"].c'), 1);
-  assert.strictEqual(a.E('CAT["' + k + '"].meu'), 1);
+  assert.strictEqual(a.dado('CAT')[k].g, 'peito superior');
+  assert.strictEqual(a.dado('CAT')[k].c, 1);
+  assert.strictEqual(a.dado('CAT')[k].meu, 1);
   assert.ok(a.vJ('treino', 'A').ex.some(function (x) { return x.id === k; }), 'já entrou no dia');
   a.fechar();
 });
@@ -221,7 +221,7 @@ test('o que mudou fica no registro do dia mesmo sem virar permanente', async () 
   await a.v('concluirPromo');
   await a.esperar();
 
-  const m = a.J('S.done[S.done.length-1]');
+  const m = a.S().done[a.S().done.length - 1];
   assert.ok(Array.isArray(m.mods) && m.mods.length === 1, 'daqui a um mês, o dia se explica');
   assert.match(m.mods[0], /Supino inclinado com halteres/);
   a.fechar();
@@ -344,7 +344,7 @@ test('promover uma troca reinicia o relógio do exercício no programa', async (
 /** Abre o histórico do primeiro exercício do dia e devolve o id dele. */
 function abreHistorico(a) {
   a.E('toggle(0); openHist(0)');
-  return a.E('view.hist.key || id(view.hist.day, view.hist.i)');
+  return (function (h) { return h.key || a.k(h.day, h.i); })(a.vista().hist);
 }
 
 test('renomear não move o histórico, porque não mexe no id', async () => {

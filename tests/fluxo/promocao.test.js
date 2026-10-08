@@ -121,13 +121,13 @@ test('sair sem responder mantém o conservador e não repete a pergunta', async 
                      resumoMods: ['Pushdown: 2 → 3 séries'] }
   } });
   await a.esperar();
-  const antes = a.E('S.prog.A.ex[7] ? S.prog.A.ex[7].s : 0');
+  const antes = (a.S().prog.A.ex[7] || { s: 0 }).s;
 
   a.v('voltarDoPromo');
   await a.esperar();
   assert.strictEqual(a.vista().promo, null);
   assert.deepStrictEqual(a.S().promoPendente, [], 'não fica reaparecendo para sempre');
-  assert.strictEqual(a.E('S.prog.A.ex[7] ? S.prog.A.ex[7].s : 0'), antes, 'e o oficial não mudou');
+  assert.strictEqual((a.S().prog.A.ex[7] || { s: 0 }).s, antes, 'e o oficial não mudou');
   a.fechar();
 });
 

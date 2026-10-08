@@ -14,7 +14,7 @@ test('treino do plano lançado sem detalhar', async () => {
   await a.v('gravarRetro', false);
   await a.esperar();
 
-  const m = a.J('S.done[S.done.length-1]');
+  const m = a.S().done[a.S().done.length - 1];
   assert.strictEqual(m.day, 'D');
   assert.strictEqual(m.retro, 1);
   assert.strictEqual(m.dur, 60 * 60000);

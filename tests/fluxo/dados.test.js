@@ -245,8 +245,8 @@ test('exercício que sumiu do catálogo vira arquivado, com nome e histórico', 
   await a.esperar();
   const k = 'aparelho-que-nao-existe-mais';
   assert.ok(a.S().ex[k], 'entra no catálogo do usuário, marcado como arquivado');
-  assert.strictEqual(a.E('CAT["' + k + '"].n'), 'Aparelho que não existe mais');
-  assert.strictEqual(a.E('CAT["' + k + '"].arq'), 1);
+  assert.strictEqual(a.dado('CAT')[k].n, 'Aparelho que não existe mais');
+  assert.strictEqual(a.dado('CAT')[k].arq, 1);
   assert.strictEqual(a.S().logs[k].length, 1, 'histórico intacto');
   a.fechar();
 });
@@ -410,7 +410,7 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   assert.strictEqual(a.S().comidaHist.length, 1, 'os dias de comida fechados');
   assert.strictEqual(a.S().gordura.length, 1, 'as leituras de gordura visual');
   assert.strictEqual(a.S().protocolo.sessoes.length, 1, 'as sessões de foto');
-  assert.strictEqual(a.E('S.quadro ? S.quadro.texto : null'), '5 RNDS · 20 WB', 'o quadro do dia');
+  assert.strictEqual((a.S().quadro || { texto: null }).texto, '5 RNDS · 20 WB', 'o quadro do dia');
 
   // e, nominalmente, o que entrou na migração 9→10: a lista branca da
   // importação é por CHAVE dentro de `body`, então uma grandeza nova que não

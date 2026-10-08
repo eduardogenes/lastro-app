@@ -102,12 +102,12 @@ test('na abertura: dentro da graça a sessão vive, além dela fecha', async () 
   };
 
   const viva = await app({ estado: estado(95) });
-  assert.ok(viva.E('S.sessao'), 'reabrir o app é justamente a chance de responder');
+  assert.ok(viva.S().sessao, 'reabrir o app é justamente a chance de responder');
   assert.strictEqual(viva.vJ('ctx.faixaDaSessao').tipo, 'pergunta');
   viva.fechar();
 
   const morta = await app({ estado: estado(105) });
-  assert.strictEqual(morta.E('S.sessao'), null, 'passada a graça, o app não pergunta mais');
+  assert.strictEqual(morta.S().sessao, null, 'passada a graça, o app não pergunta mais');
   morta.fechar();
 });
 

@@ -232,7 +232,7 @@ test('abrir o app com treino em andamento cai no treino, não em HOJE', async ()
 
   assert.strictEqual(a.v('ctx.abaAtual'), 'treino');
   assert.strictEqual(a.vista().day, 'B', 'e no dia da sessão');
-  assert.strictEqual(a.E('S.sessao && S.sessao.day'), 'B', 'a sessão sobreviveu ao boot');
+  assert.strictEqual((a.S().sessao || {}).day, 'B', 'a sessão sobreviveu ao boot');
   a.fechar();
 });
 
