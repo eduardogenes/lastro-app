@@ -177,12 +177,12 @@ test('calendário marca o período do dia', async () => {
 test('limites das faixas de período', async () => {
   const a = await app();
   const emH = function (h) { const d = new Date(); d.setHours(h, 0, 0, 0); return d.getTime(); };
-  assert.strictEqual(a.E('periodoDe(' + emH(5) + ').k'), 'manha');
-  assert.strictEqual(a.E('periodoDe(' + emH(11) + ').k'), 'manha');
-  assert.strictEqual(a.E('periodoDe(' + emH(12) + ').k'), 'tarde');
-  assert.strictEqual(a.E('periodoDe(' + emH(17) + ').k'), 'tarde');
-  assert.strictEqual(a.E('periodoDe(' + emH(18) + ').k'), 'noite');
-  assert.strictEqual(a.E('periodoDe(' + emH(4) + ').k'), 'noite', 'madrugada é noite');
+  assert.strictEqual(a.vJ('periodoDe', emH(5)).k, 'manha');
+  assert.strictEqual(a.vJ('periodoDe', emH(11)).k, 'manha');
+  assert.strictEqual(a.vJ('periodoDe', emH(12)).k, 'tarde');
+  assert.strictEqual(a.vJ('periodoDe', emH(17)).k, 'tarde');
+  assert.strictEqual(a.vJ('periodoDe', emH(18)).k, 'noite');
+  assert.strictEqual(a.vJ('periodoDe', emH(4)).k, 'noite', 'madrugada é noite');
   a.fechar();
 });
 

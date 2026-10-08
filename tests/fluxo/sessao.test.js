@@ -338,7 +338,7 @@ test('corrigir o tempo torna a duração declarada, e o aproximado some', async 
   a.v('abrirSessao', f.t);
   assert.strictEqual(a.vJ('ctx.detalheDaSessao').exato, false, 'nasce aproximado');
 
-  await a.E('CTX.corrigeDuracao(' + f.t + ', 45)');
+  await a.v('ctx.corrigeDuracao', f.t, 45);
   await a.esperar(60);
 
   const m = a.S().done[0];
@@ -354,11 +354,11 @@ test('a correção é presa a limites, e não aceita lixo', async () => {
   const f = comTreinoRegistrado(agora);
   const a = await app({ agora: agora, estado: f, aba: 'dados' });
 
-  await a.E('CTX.corrigeDuracao(' + f.t + ', 0)');
+  await a.v('ctx.corrigeDuracao', f.t, 0);
   await a.esperar(40);
   assert.strictEqual(a.S().done[0].dur, 60000, 'piso de um minuto');
 
-  await a.E('CTX.corrigeDuracao(' + f.t + ', 9999)');
+  await a.v('ctx.corrigeDuracao', f.t, 9999);
   await a.esperar(40);
   assert.strictEqual(a.S().done[0].dur, 600 * 60000, 'teto de dez horas');
   a.fechar();
@@ -375,7 +375,7 @@ test('apagar o treino leva as séries dele junto, com lápide nas duas coisas', 
   assert.strictEqual(comHistorico(), 2, 'dois exercícios com histórico');
 
   a.v('abrirSessao', f.t);
-  await a.E('CTX.editaSessao(' + f.t + ')');
+  await a.v('ctx.editaSessao', f.t);
   await a.esperar(80);
 
   assert.deepStrictEqual(a.S().done, [], 'a marca do dia saiu');
@@ -394,7 +394,7 @@ test('o aviso diz quantas séries vão junto antes de apagar', async () => {
   a.v('abrirSessao', f.t);
 
   a.recusar();
-  await a.E('CTX.editaSessao(' + f.t + ')');
+  await a.v('ctx.editaSessao', f.t);
   await a.esperar(60);
   assert.strictEqual(a.S().done.length, 1, 'recusou: nada foi apagado');
   const p = a.perguntas().join(' ');
@@ -411,7 +411,7 @@ test('o treino EM ANDAMENTO não se apaga por aqui', async () => {
   f.sessao = { day: 'A', inicio: f.t, ultima: agora, sid: f.t, manual: 1, pausas: [], pulados: [] };
   const a = await app({ agora: agora, estado: f, aba: 'dados' });
 
-  await a.E('CTX.editaSessao(' + f.t + ')');
+  await a.v('ctx.editaSessao', f.t);
   await a.esperar(60);
   assert.strictEqual(a.S().done.length, 1, 'continua lá');
   assert.ok(/em andamento/.test(a.toast()), a.toast());

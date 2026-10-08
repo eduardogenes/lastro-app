@@ -156,7 +156,7 @@ test('apagar registro avulso', async () => {
   assert.strictEqual(a.texto('.htitle'), 'dorsal');
 
   // pelo mesmo caminho da tela: o botão de apagar chama CTX.editaSessao
-  await a.E('CTX.editaSessao(' + marca.t + ')');
+  await a.v('ctx.editaSessao', marca.t);
   await a.esperar();
   assert.strictEqual(a.S().done.length, 0);
   a.fechar();
