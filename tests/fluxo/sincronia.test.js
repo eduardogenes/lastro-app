@@ -556,3 +556,46 @@ test('o apagamento sobrevive a fechar o app, que é onde ele morria', async () =
     'reaberto, o aparelho não é reenchido pela nuvem que ainda tinha tudo');
   depois.fechar();
 });
+
+test('a refeição marcada HOJE não volta; a água volta, porque é contador', async () => {
+  // O dia aberto não está em `comidaHist` — ele só fecha lá na virada da data —
+  // e a fusão une as marcas dele pela MESMA chave de refeição. Sem lápide, a
+  // marca que o apagamento levou voltava do outro aparelho. Medido: voltava.
+  //
+  // A água é a exceção declarada no topo de `sincronia.ts`: contador que fica
+  // com o MAIOR dos dois, sem carimbo, porque "subestimar um copo é ruído
+  // aceitável". Não há lápide que a alcance, e este caso diz isso em voz alta
+  // em vez de deixar a surpresa para depois.
+  const nuvem = nuvemDeDois(null);
+
+  const cel = await app({ estado: { logs: {}, done: [] }, aba: 'comida' });
+  nuvem.liga(cel);
+  const note = await app({ estado: { logs: {}, done: [] }, aba: 'comida' });
+  nuvem.liga(note);
+
+  await cel.v('ctx.marcaRefeicao', 'almoco');
+  await cel.esperar();
+  await cel.v('sincroniza');
+  await note.v('sincroniza');
+  await note.esperar(60);
+  assert.ok(note.S().dia.done.almoco, 'os dois aparelhos têm a marca de hoje');
+
+  cel.aceitar();
+  await cel.v('wipe');
+  await cel.esperar(60);
+
+  await note.v('ctx.setAgua', 3);     // o notebook mexe em hoje depois do apagamento
+  await note.esperar();
+  await cel.v('sincroniza');
+  await cel.esperar(60);
+  await note.v('sincroniza');
+  await note.esperar(60);
+  await cel.v('sincroniza');
+  await cel.esperar(60);
+
+  assert.deepStrictEqual(cel.S().dia.done, {}, 'a marca de hoje não volta pela fusão');
+  assert.deepStrictEqual(note.S().dia.done, {}, 'e morre no notebook também');
+  assert.strictEqual(cel.S().dia.agua, 3,
+    'a água do notebook chega: é contador sem carimbo, e nenhuma lápide a alcança');
+  cel.fechar(); note.fechar();
+});

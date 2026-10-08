@@ -188,6 +188,22 @@ function chavesDoEstado(S: Partial<Estado> | null | undefined): Record<string, 1
     Object.keys(h.done || {}).forEach(function (id) { k[chaveDeRefeicaoFeita(h.d, id)] = 1; });
   });
 
+  // O dia ABERTO, só pelas MARCAS. Elas não estão em `comidaHist` — o dia só
+  // fecha lá na virada da data — e a fusão as une pela mesma chave de refeição,
+  // então sem isto a marca de hoje voltava do outro aparelho depois do
+  // apagamento. Medido: voltava.
+  //
+  // Só as marcas, e não o dia: `S.dia` é DOCUMENTO, e o que não é coleção vem
+  // do lado com `mtime` mais novo. A água é a exceção dentro da exceção — é
+  // contador que fica com o MAIOR dos dois, por desenho, e por isso não há
+  // lápide que a alcance.
+  const aberto = S.dia as DiaComida | null | undefined;
+  if (aberto && aberto.data) {
+    Object.keys(aberto.done || {}).forEach(function (id) {
+      k[chaveDeRefeicaoFeita(aberto.data, id)] = 1;
+    });
+  }
+
   MARCAS_DO_CORPO.forEach(function (qual) {
     lista<Marca>(S.body && S.body[qual]).forEach(function (x) {
       if (x) k[chaveDeMarca(qual, x)] = 1;
