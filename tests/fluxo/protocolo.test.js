@@ -1553,3 +1553,158 @@ test('ctx.streamDaCamera entrega a faixa viva, e nada depois de fechar', async (
   assert.strictEqual(a.J('globalThis.__faixasVivas'), 0, 'e a faixa foi parada, não só esquecida');
   a.fechar();
 });
+
+// ===========================================================================
+// GRUPO C · As preferências de alinhamento, e as duas saídas da tela
+// ===========================================================================
+//
+// Quarto degrau do critério: aqui nada se perde. Grade, fantasma, opacidade e
+// sobreposição não entram em `S` e não viajam — são preferências de olhar, e
+// uma quebra aparece no primeiro toque. Elas ganham rede por outro motivo: são
+// os três controles que decidem se o alinhamento é possível de fazer, e o
+// grupo é o lugar onde moram as entradas de DOM dentro do `a.E` que esta
+// passada estava reduzindo. `posAnterior` e `fechaProtocolo` entram aqui porque
+// são as duas únicas saídas da pose: uma anda para trás, a outra fecha.
+//
+// O QUE ESTE GRUPO NÃO COBRE: que haja interruptor, controle deslizante ou
+// botão de fechar ligado em qualquer uma delas. Chamar o verbo prova que a
+// capacidade existe no MODELO.
+
+test('ctx.setGradeDoAjuste e ctx.setFantasmaDoAjuste ligam e desligam na leitura', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const velha = diasAtras(28), nova = diasAtras(14);
+  comSessoes(a, [velha, nova], 'frente-relaxado');
+  for (const d of [velha, nova]) await semear(a, d, 'frente-relaxado');
+  a.v('ctx.abreAjuste', nova, 'frente-relaxado');
+  await a.esperar(60);
+
+  const aj = () => a.vJ('ctx.ajusteEmEdicao');
+  assert.strictEqual(aj().grade, false, 'a grade abre desligada');
+  assert.strictEqual(aj().fantasma, true, 'e o fantasma abre LIGADO: alinhar é o motivo da tela');
+
+  a.v('ctx.setGradeDoAjuste', true);
+  assert.strictEqual(aj().grade, true);
+  a.v('ctx.setGradeDoAjuste', false);
+  assert.strictEqual(aj().grade, false, 'e desliga pela mesma porta');
+
+  a.v('ctx.setFantasmaDoAjuste', false);
+  assert.strictEqual(aj().fantasma, false, 'o fantasma sai do caminho quando ele quer ver a foto');
+  a.v('ctx.setFantasmaDoAjuste', true);
+  assert.strictEqual(aj().fantasma, true);
+
+  // os dois são verdade/mentira na leitura: um valor solto não vaza para a tela
+  a.v('ctx.setGradeDoAjuste', 'sim');
+  assert.strictEqual(aj().grade, true, 'a leitura entrega booleano, não o que entrou');
+  assert.strictEqual(a.S().protocolo.sessoes[1].fotos['frente-relaxado'].enq, undefined,
+    'e nada disso tocou o estado: preferência de olhar não é ajuste');
+  a.fechar();
+});
+
+test('ctx.setSobrepor e ctx.setOpacidade comandam a comparação sobreposta', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  const datas = [28, 14].map(diasAtras);
+  nuvemComBucket(a, {}, Object.fromEntries(datas.map(d => [d + '/frente-relaxado.webp', 1])));
+  comSessoes(a, datas, 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  await a.esperar(80);
+
+  const c = () => a.vJ('ctx.comparacao');
+  assert.strictEqual(c().sobrepor, false, 'a comparação abre lado a lado');
+
+  a.v('ctx.setSobrepor', true);
+  assert.strictEqual(c().sobrepor, true, 'e passa a sobrepor');
+  a.v('ctx.setOpacidade', 70);
+  assert.strictEqual(c().opacidade, 70, 'com a opacidade que ele escolheu');
+  a.v('ctx.setOpacidade', 0);
+  assert.strictEqual(c().opacidade, 0, 'inclusive 0, que é só a de baixo — não é "sem valor"');
+  a.v('ctx.setSobrepor', false);
+  assert.strictEqual(c().sobrepor, false);
+  assert.strictEqual(c().opacidade, 0, 'e a opacidade escolhida sobrevive a voltar para lado a lado');
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('ctx.setGradeDaCamera, setFantasmaDaCamera e setOpacidadeDaCamera comandam o quadro vivo', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  const datas = [28, 14].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  for (const d of datas) await semear(a, d, 'frente-relaxado');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.esperar(60);
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+
+  const v = () => a.vista().camera;
+  assert.strictEqual(v().grade, false, 'a grade abre desligada');
+  assert.strictEqual(v().fantasma, true, 'o fantasma abre ligado');
+  assert.strictEqual(v().opacidade, 45, 'e a opacidade começa em 45');
+
+  a.v('ctx.setGradeDaCamera', true);
+  assert.strictEqual(v().grade, true);
+  a.v('ctx.setFantasmaDaCamera', false);
+  assert.strictEqual(v().fantasma, false);
+  a.v('ctx.setOpacidadeDaCamera', 80);
+  assert.strictEqual(v().opacidade, 80);
+
+  a.v('ctx.setGradeDaCamera', 0);
+  assert.strictEqual(v().grade, false, 'os dois interruptores entregam booleano');
+  a.v('ctx.fechaCamera');
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('ctx.posAnterior anda uma pose para trás, e na primeira não anda', async () => {
+  // Nove poses em ordem, e a navegação é só para os lados. Passar do começo
+  // daria a volta e faria a sessão parecer terminada quando ela acabou de
+  // começar.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  a.v('ctx.abreProtocolo');
+  await a.esperar(60);
+  const ordem = a.vJ('ordemDePoses');
+  assert.strictEqual(a.vista().protocolo.pose, ordem[0], 'abre na primeira — pré-condição');
+
+  a.v('ctx.posProxima');
+  a.v('ctx.posProxima');
+  assert.strictEqual(a.vista().protocolo.pose, ordem[2]);
+
+  a.v('ctx.posAnterior');
+  assert.strictEqual(a.vista().protocolo.pose, ordem[1], 'andou UMA para trás');
+  a.v('ctx.posAnterior');
+  assert.strictEqual(a.vista().protocolo.pose, ordem[0], 'e chegou na primeira');
+
+  a.v('ctx.posAnterior');
+  assert.strictEqual(a.vista().protocolo.pose, ordem[0],
+    'e na primeira não anda: não dá a volta para a última');
+  await a.esperar(80);
+  a.fechar();
+});
+
+test('ctx.fechaProtocolo fecha a tela e devolve a posição de leitura', async () => {
+  // `saiDoDestino` é o par de `entraNoDestino`: abrir guardou onde ele estava
+  // na página, e fechar tem de devolvê-lo ali. Sem isso, sair da sessão de
+  // fotos joga ao topo de DADOS, longe do cartão que ele tocou.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  comSessoes(a, [diasAtras(14)], 'frente-relaxado');
+
+  let y = 0;
+  a.window.scrollTo = function (x, top) { y = x && typeof x === 'object' ? x.top : top; };
+  Object.defineProperty(a.window, 'scrollY', { configurable: true, value: 640 });
+
+  a.v('ctx.abreProtocolo');
+  await a.esperar(60);
+  assert.ok(a.vista().protocolo, 'a tela abriu');
+  assert.strictEqual(y, 0, 'e entrar jogou ao topo');
+
+  a.v('ctx.fechaProtocolo');
+  await a.esperar(60);
+  assert.strictEqual(a.vista().protocolo, null, 'a tela fechou');
+  assert.strictEqual(y, 640, 'e devolveu a posição de leitura de onde ele veio');
+  a.fechar();
+});
