@@ -1557,7 +1557,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       - **A ordem que ele escolheu em 08/10:** primeiro **as 24 capacidades sem
         teste**, e só depois a reescrita. Dezesseis são câmera e ajuste de foto.
         Disse ele que depois delas não sobra preparação.
-      - [ ] **DEFEITO (l), o mais pesado desta semana, e é ANTERIOR a tudo que
+      - [x] **DEFEITO (l), o mais pesado desta semana, e é ANTERIOR a tudo que **CONSERTADO em 08/10** (`d39cf1b` → `da1bb65`, `09-arroz.md`). O dono decidiu: **o número é dele** — o app desfaz exatamente o que somou. Campo novo `Item.ajq`, **valor e não marca**, com a invariante `q − ajq` = a prescrição. Migração **12**, pelos seis portões. **Conferi:** 1.105 passando (635 fluxo + 470 domínio) em cinco execuções limpas, `PLANO_ATUAL = 12`, `tsc` limpo. **Cinco casos nasceram vermelhos** com os números reais (190 ≠ 250 em três caminhos, 310 ≠ 250 na devolução, 265 ≠ 250 na duplicação).
         fizemos: o saldo do arroz desfaz com a contagem errada.** Conferi no
         fonte: `aplicaArroz` desfaz o saldo anterior com
         `arrozDoAjuste(i.q, -ajusteAntes, itens.length)` — e `itens.length` é a
@@ -1572,6 +1572,66 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         marca do arroz na troca só acrescentou uma segunda porta a um defeito que
         já existia. **O conserto pede decidir quem é dono do número em `i.q`**, e
         isso é desenho de dado. Vai à mesa dele.
+      - **Cinco correções ao meu briefing do arroz, e três mudam o conserto:**
+        1. **O clamp `Math.max(0, …)` de `arrozDoAjuste` eu não vi**, e é
+           material: ele faz `ajq` ser **o que foi dado**, não **o passo
+           pedido**. Um corte de −120 num prato de 50 g grava −50 e volta a 50,
+           não a 120. Medido por ele.
+        2. **São QUATRO caminhos de reprodução, não dois.** Além de `trocaItem` e
+           `removeItem`: **`removeRefeicao`** (190, leva o item sem passar por
+           `removeItem`) e **`duplicaRefeicao`** (265, clona a marca e faz a
+           contagem **subir**). Eu só conhecia dois. Os quatro cercados.
+        3. **Em `removeItem` não há o que devolver**, e meu briefing pedia
+           devolução nos dois caminhos — errado. O item sai do plano e leva os
+           gramas; não existe prato para devolvê-los. **O defeito ali era tirar
+           comida dos OUTROS pratos.** A devolução só faz sentido onde o item
+           fica e perde a marca: `trocaItem`.
+        4. *"Ida e volta são exatas"* **é falso para 16 itens marcados** mesmo com
+           a contagem inalterada, porque `Math.round(-0.5)` é `-0`: 250 → 265 →
+           265, deriva de 15 g. Inalcançável no plano dele; o conserto o elimina
+           de lado.
+        5. **Nenhuma regra de fusão era necessária** (o plano é documento, não
+           coleção) e **nenhuma linha nova nas listas brancas** (as duas levam
+           `comida` inteiro). Mas **faltava teste**, e agora existe: tirar
+           `comida` de qualquer uma delas fica vermelho. E na janela de
+           sincronização a falha erra **para cima** — mantém comida —, que é o
+           lado conservador.
+      - **A migração dele, e a razão de ter rejeitado a alternativa é a melhor
+        parte:** `migraPlano12` escreve o valor que o código de hoje subtrairia,
+        com asserção comparando os dois cálculos — **nenhum prato muda, e é exato
+        daí em diante**. Ele **rejeitou inferir do `PLANO_BASE`** (310−250=60
+        acertaria o jantar) porque num plano em que o dono **cortou o arroz para
+        150 g à mão**, a inferência escreveria −100 e **inventaria um ajuste que
+        nunca houve**. Dois resíduos ditos por extenso, não escondidos.
+      - [ ] **DEFEITO NOVO, que eu confirmei: `CTX.aplicaAjuste` não chama
+        `planoMudou()`.** Ele move 120 g de arroz no plano **persistido** sem
+        carimbar a versão (conferi: a função chama `aplicaArroz()` e não
+        `planoMudou()`). Consequência que a fixture registra: `comida.v` fica
+        igual ao `pv` do dia fechado **antes** do passo, então **o app
+        sub-relata divergência de plano em dia congelado.** Não mexido, de
+        propósito — fora da tarefa.
+      - [ ] **E um menor, também não mexido:** `CTX.restauraPlano` chama
+        `planoMudou()` **antes** do `confirm`, então **cancelar sobe a versão do
+        plano**.
+      - **Dois achados de método que valem mais que o conserto:**
+        1. **A regra da §10.1 mordeu de um jeito NOVO.** A primeira quebra da
+           negativa *"não toca em item que não é fonte de arroz"* ficou
+           **verde** — e não por ser inerte: **com os 32 itens do plano,
+           `round(120/32/15)*15` é ZERO**, então nada era escrito e não havia o
+           que a quebra mostrasse. Ele trocou por uma que alcança só o feijão
+           (4 itens, passo de 30 g) e aí ficou vermelho. **Lição: a quebra tem de
+           ser grande o bastante para aparecer.** Não basta ser no sentido certo.
+        2. **Ele descartou um caso INFALSIFICÁVEL e removeu a guarda morta
+           junto.** `aplicaAjusteNoArroz([])` é verde com guarda, sem guarda e
+           com verbo inerte — então o caso não media nada e a guarda não defendia
+           nada. Tirou os dois.
+      - [~] **Erro meu de método, segunda vez: perdi o nome de uma falha
+        intermitente filtrando a saída.** Minha primeira execução deu 1.104 com
+        **um** vermelho; as cinco seguintes deram 1.105. É consistente com o
+        flake de foco conhecido do `navegacao`, **mas eu não vi o nome e não vou
+        supor.** Já tinha feito isso com o vermelho de 1 em 24. **Regra para
+        mim:** ao rodar a suíte esperando verde, capturar a saída inteira antes
+        de filtrar — `grep` que não casa apaga a evidência.
       - [ ] **A terceira marca por item existe, e é do dono decidir: `i.caf`.**
         Eu mandei procurar e ela apareceu. É da **mesma natureza de `arroz`** —
         diz qual alimento é —, então a regra dele ao pé da letra a derrubaria na
