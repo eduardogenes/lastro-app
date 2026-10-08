@@ -1014,3 +1014,498 @@ A lista é literal, por assunto, na forma do §5:
    casaram o padrão no fonte e eu só soube porque o `diff` acusou — se a quebra
    não aplica, a prova não existe. Confira que ela aplicou antes de ler o
    vermelho.
+
+---
+
+# 9 · A rede das 93 — segunda passada, e a torneira da bioimpedância
+
+A §8 blindou 38 das 93 e deixou **55 sem caso próprio** (51 de trabalho real).
+Esta seção continua de onde ela parou: fecha o assunto *Comida e plano* — as
+**16** que ninguém tinha tocado — e constrói a porta de escrita que o defeito
+(a) do §8.5 tinha nomeado.
+
+**Nenhuma linha desta seção tem estimativa de prazo.** Onde não houve medição,
+está escrito que não houve.
+
+## 9.1 · A linha de base, antes e depois
+
+**Medido**, `npm test` (que roda `vite build` no `pretest`):
+
+| | antes | depois |
+|---|---:|---:|
+| total | **1 002** | **1 028** |
+| `tests/fluxo/` | 557 | **583** |
+| `tests/dominio/` | 445 | **445** |
+| arquivos | 53 | **53** |
+| rejeições não tratadas | 0 | **0** |
+| `npx tsc --noEmit` | limpo | **limpo** |
+| chaves de `CTX` | 181 | **182** |
+| leituras em `dado` | 23 | **24** |
+
+**+26 casos, em três arquivos que já existiam.** Nenhum arquivo novo. **Uma**
+asserção existente alterada, a declarada na tarefa 2 e explicada no §9.5. Os
+445 de domínio nunca ficaram vermelhos — rodei `tests/dominio` isolado ao fim e
+saiu 445/445.
+
+Por arquivo: `fusao.test.js` 24 → **41**, `turno.test.js` 9 → **11**,
+`corpo.test.js` 34 → **41**.
+
+**Os cinco números da linha de base do briefing batem nos cinco.** 1 002
+passando, 557 + 445, 53 arquivos, zero rejeições, `tsc` limpo — confirmados
+antes de tocar em nada. **O flake de `navegacao` não apareceu** em nenhuma das
+cinco execuções completas desta sessão.
+
+## 9.2 · Quais chaves ganharam caso: as 16 de "comida e plano", todas
+
+Quatro commits, um por assunto, **a suíte verde em cada um**, na ordem de dano:
+o destrutivo primeiro.
+
+| Grupo | Chaves com caso próprio | Quantas | Arquivo |
+|---|---|---:|---|
+| **Destrutivo de dentro da refeição** | `removeItem` `trocaItem` | 2 | `fusao` |
+| **Editor de refeição** | `abreRefeicao` `novaRefeicao` `refeicaoParaEditar` `salvaRefeicao` `duplicaRefeicao` `alternaAlta` `alimentosParaSeletor` | 7 | `fusao` |
+| **Leituras do plano e compras** | `planoCompleto` `resumoDoPlano` `alternaCadencia` `marcaCompra` `setHorizonteCompras` | 5 | `fusao` |
+| **Ajustes do dia** | `setTurno` `setAlta` | 2 | `turno` |
+| | | **16** | |
+
+**O assunto fechou: 16 de 16.** Com ele, três dos seis assuntos do §5 estão
+fechados — *Corpo, medidas e cardio*, *Custódia e nuvem* e *Comida e plano*.
+
+**A casa indicada pelo briefing estava certa**, e não precisei de arquivo novo:
+14 das 16 em `fusao.test.js`, que já tinha os casos de item e de refeição, e as
+duas de ajuste de hoje em `turno.test.js`, que é onde o assunto mora.
+
+**Todos os 26 casos entram por nome e valor** (`a.v('ctx.removeItem', 'almoco',
+2)`). Nenhum usa `a.E('…')` para acionar verbo. Os únicos `a.E` que sobraram
+nos arquivos tocados são os pré-existentes.
+
+## 9.3 · A prova de vermelho, por grupo
+
+**Receita, sempre a mesma: quebrar o verbo no `src/`, rodar `npm run build`, ver
+o caso ficar vermelho, restaurar.** A quebra é no fonte, nunca no teste. O
+script que faz isso **conta as ocorrências do padrão antes de aplicar** e grita
+`QUEBRA NAO APLICA` se não forem exatamente uma — é a regra 5 do §8.8
+automatizada, porque uma quebra que não aplica não é prova de nada.
+
+**Cinquenta quebras. Nenhuma deixou de aplicar, e cada um dos 26 casos novos
+ficou vermelho em ao menos uma.**
+
+### Destrutivo — `removeItem` e `trocaItem` (9 quebras)
+
+| Quebra | Caso que caiu |
+|---|---|
+| `removeItem` sem o `confirm` | *pergunta antes, e recusar não tira nada* |
+| `removeItem` leva **todos** os itens da refeição | *tira UM item, e nada além daquele item* |
+| `removeItem` leva a marcação e a escala de **hoje** junto | *tira UM item…* |
+| `removeItem` cresce do item para o alimento em **todas** as refeições | *tira UM item…* |
+| `removeItem` pergunta **antes** de achar o item | *recusar não tira nada* · *índice que não existe* |
+| `trocaItem` zera a quantidade em 100 | *troca e preserva a quantidade* · *leva as marcas* |
+| `trocaItem` não fecha a folha | *troca e preserva a quantidade* |
+| `trocaItem` limpa `arroz` e `alta` | *leva junto as marcas do item antigo* |
+| `trocaItem` sem a guarda do índice | *índice que não existe não mexe* |
+
+**A quebra que vale ler é a terceira e a quarta juntas.** São as duas formas de
+um apagamento crescer: do item para o DIA (levando a marcação e o ajuste de
+porção de hoje, como `removeRefeicao` faz de propósito) e do item para o
+ALIMENTO (saindo de todas as refeições que o citam, como `removeAlimento` faz
+de propósito). **As duas vizinhas de `removeItem` fazem exatamente isso, e
+legitimamente** — então confundir uma com a outra é o erro provável, não o
+improvável. Os casos afirmam o que FICA: os outros cinco itens, o mesmo
+alimento nas outras refeições, a biblioteca, a marcação de hoje e o ajuste de
+porção de hoje.
+
+A primeira quebra do `removeItem` tem uma nota de método: tirar o `confirm`
+inteiro deixa o verbo **mais** destrutivo, e o caso que cai é o da recusa. Foi
+por isso que escrevi o caso da recusa **antes** do caso do escopo.
+
+### Editor de refeição (15 quebras)
+
+`abreRefeicao` abrindo o editor em vez da folha de leitura · `novaRefeicao`
+mandando um id em vez de `null` · `refeicaoParaEditar` sem o índice do item ·
+`refeicaoParaEditar` nunca acusando alimento sumido · `salvaRefeicao` zerando os
+itens da refeição que corrige · `salvaRefeicao` criando outra em vez de corrigir
+· `salvaRefeicao` deixando a refeição nova sem nome · `duplicaRefeicao`
+compartilhando os itens com a original · não fechando a folha · não marcando a
+cópia no nome · ganhando id colisão-segura · `alternaAlta` gravando `false` em
+vez de apagar a chave · `alternaAlta` alternando **todos** os itens ·
+`alimentosFiltrados` sem ordenar · `alimentosParaSeletor` casando só no começo
+do nome.
+
+Três delas derrubaram mais de um caso: `abreRefeicao` apontando para o editor
+derruba também o **pré-existente** *abrir uma refeição mostra o que tem dentro*;
+`refeicaoParaEditar` sem índice derruba também o caso novo de `trocaItem`; e a
+quebra do grupo seguinte que tira a ordenação de `planoCompleto` derruba também
+o caso de `salvaRefeicao`, que lê o plano por ela. A rede velha e a nova se
+sobrepõem onde deviam.
+
+### Leituras do plano e compras (8 quebras)
+
+`planoCompleto` sem ordenar · `planoCompleto` ordenando o plano **gravado** em
+vez da cópia · `resumoDoPlano` devolvendo o mesmo total nos dois tipos de dia ·
+`alternaCadencia` virando a semana inteira · `marcaCompra` gravando 0 em vez de
+apagar a chave · `marcaCompra` também removendo a linha da lista ·
+`setHorizonteCompras` não persistindo · `setHorizonteCompras` zerando o que já
+foi comprado.
+
+A segunda é a sutil: `planoDeComida().slice().sort(…)` e
+`planoDeComida().sort(…)` diferem em um `.slice()`, e a segunda **reescreve a
+ordem do plano no estado** a cada leitura de tela. A leitura passaria igual; o
+estado mudaria por ser lido. O caso afirma as duas coisas — a leitura ordenada
+E o estado na ordem de inserção.
+
+A terceira é o argumento inteiro de `resumoDoPlano` existir com dois totais: a
+quebra faz os dois números virarem o mesmo, e o caso cai porque ele não compara
+strings fixas — ele **move uma refeição de `quando: 'treino'` para `'sempre'` e
+cobra que o total de DESCANSO suba e o de treino não**. Asserção robusta à
+prescrição mudar, e que mede o desenho em vez do número.
+
+### Ajustes do dia (5 quebras)
+
+`setTurno` gravando `'manha'` em vez de apagar a chave · `setTurno` não fechando
+a folha · `setTurno` também movendo o horário do treino no PLANO · `setAlta`
+guardando o valor cru em vez de 1 ou 0 · `setAlta` escrevendo no PLANO em vez de
+no dia.
+
+A terceira derrubou **três** casos, dois deles pré-existentes (*escolher o turno
+reordena o diário* e *o turno é ajuste de HOJE: o plano não se move*) — a lei 6
+do sistema já tinha guarda pelo dedo, e agora tem pelo modelo.
+
+### Bioimpedância (13 quebras, mais 1 repetida depois de um conserto)
+
+`CORPO_PADRAO` ganhando valor de partida para as cinco · `CTX.registraBio`
+deixando de existir (derruba os 8 casos do assunto) · `registraBio` gravando as
+válidas antes de recusar (não atômico) · exigindo as cinco, ignorando a coluna
+`obrigatorio` · lendo a opcional vazia como zero · unificando o peso da balança
+com a pesagem da manhã · dando um instante diferente a cada grandeza ·
+`gravaMarca` sem lápide · `gravaMarca` empilhando em vez de substituir (derruba
+2 casos pré-existentes) · `registraBio` aceitando data no futuro · recusando
+pela chave crua em vez do nome da tabela · a lista branca da cópia deixando as
+cinco de fora · e **a tabela do domínio tornando a água obrigatória**, que
+derruba os dois casos que leem a coluna `obrigatorio`.
+
+### Um caso que passava medindo nada — pego pela própria disciplina
+
+Escrevi o caso do fecho (*a leitura atravessa a cópia de segurança*) semeando o
+backup no armazenamento e subindo um app novo:
+
+```js
+const b = await app({ estado: bkp.data });
+… 'e as cinco voltaram iguais do outro lado da importação, que é lista branca'
+```
+
+**Ele passava, e a mensagem mentia.** Semear entra pelo **boot**, que copia `S`
+inteiro; a **lista branca** (`corpoDoBackup`) só é atravessada pela
+IMPORTAÇÃO. A quebra deliberada da lista branca **não derrubou o caso** — e foi
+só por isso que eu soube. Reescrito para passar por `wipe` e `importText`, a
+mesma quebra o derruba. **É o modo de falha que esta disciplina existe para
+pegar, e o segundo registrado neste documento** (o primeiro é a asserção
+descartada do §8.3).
+
+Nada foi jogado fora nesta passada: o caso errado foi consertado, não removido,
+porque o que ele queria medir é real.
+
+## 9.4 · O que estes 26 casos NÃO cobrem
+
+**Eles cobrem o MODELO. Nenhum deles cobre a FIAÇÃO** — e **cada grupo carrega
+essa frase por escrito no comentário do bloco**, nomeando o que o grupo prova e
+o que ele deliberadamente não prova, em vez de deixá-la em glosa.
+
+Concretamente:
+
+- **Que exista `···`, botão ou campo ligado em cada chave.** Chamar
+  `a.v('ctx.removeItem', 'almoco', 2)` prova que a capacidade de tirar um item
+  existe no modelo, avisa antes, tira só aquele e deixa o resto. Não prova que o
+  editor de refeição da tela nova tem o item destrutivo. Se o redesenho o
+  esquecer, **todos os 26 continuam verdes**.
+- **Que o formulário mande para `salvaRefeicao` o que ele mostra.** A casca que
+  lê campo está fora do contrato da superfície, de propósito (§1). Um editor que
+  mostrasse `nota` e não a mandasse passaria por tudo aqui.
+- **Que a tela desenhe o que a leitura devolve.** `resumoDoPlano` devolve dois
+  totais porque um só estaria errado metade da semana; uma tela que lesse os
+  dois e mostrasse um passaria verde — e seria exatamente o erro que os dois
+  totais existem para evitar. Nada aqui conta elementos na tela.
+- **A tela da bioimpedância, que NÃO EXISTE.** Ver o §9.5.
+- **Nada foi medido no aparelho dele.** Tudo rodou no jsdom, a partir do build.
+
+## 9.5 · A torneira da bioimpedância: `CTX.registraBio`
+
+### O diagnóstico, conferido
+
+**As quatro afirmações do briefing sobre a tubulação estão certas, as quatro.**
+Conferi uma a uma: `MEDIDAS_DO_CORPO` declara as sete medidas com nome, unidade,
+`bio` e `obrigatorio`; a migração 9 → 10 criou as cinco chaves de `S.body`;
+`corpoDoBackup` as preserva enumerando `MARCAS_DO_CORPO`; `chaveDeMarca` tem
+lápide para cada uma e `tests/dominio/sincronia.test.ts` as funde. **Medido**, o
+`grep` do briefing contra o commit anterior ao meu:
+
+```
+git show HEAD~1:src/main.jsx | grep -coE "CTX\.[a-zA-Z]*[Bb]io"   → 0
+grep -coE "CTX\.[a-zA-Z]*[Bb]io" src/main.jsx                     → 1
+```
+
+**Toda a tubulação e nenhuma torneira.** Agora há uma.
+
+### A forma, e por que não é a que o briefing sugeriu
+
+O briefing propôs `registraBio(qual, valor)`. **Construí
+`registraBio(leitura, quando)`, que recebe a leitura INTEIRA**, e a razão está
+no próprio domínio:
+
+1. **A tabela diz que as cinco são uma leitura só.** O comentário de `bio` em
+   `MEDIDAS_DO_CORPO` é literal: *"sai da balança de bioimpedância, **na mesma
+   leitura das outras `bio`**"*.
+2. **A coluna `obrigatorio` só tem sentido numa escrita de grupo.** O briefing
+   manda respeitar "quatro obrigatórias e uma opcional" na validação — e
+   "obrigatória" é uma propriedade do **conjunto**: numa chamada por grandeza,
+   `registraBio('bioGordura', '')` não teria o que exigir, só o que recusar.
+   Conferi a tabela em vez de presumir: **`bioAgua` é a única com
+   `obrigatorio: false`**, como o briefing disse.
+3. **Meia leitura não fecha.** Massa de gordura sem percentual, percentual sem
+   peso — e é desse dado que a média semanal depois lê. Por isso a recusa é
+   **atômica**: se falta uma obrigatória ou se qualquer valor informado é lixo,
+   **nada entra**, nem as válidas.
+4. **Um instante só para as cinco**, que é o que as torna uma leitura e não
+   cinco medidas soltas. Há caso que mede isso (`new Set(instantes).size === 1`).
+
+As três restrições do briefing foram cumpridas, e conferidas por caso:
+
+- **`CORPO_PADRAO` continua `{ peso: 75, cintura: 85 }`.** Não ganhou valor de
+  partida para nenhuma das cinco, e um caso o tranca: `addBody('bioPeso')`
+  **continua recusando** com *"Digite um número válido."*. Campo de
+  bioimpedância nasce vazio, e a quebra que lhe dá padrão fica vermelha.
+- **`bioPeso` é série SEPARADA de `S.body.peso`.** Um caso registra a pesagem da
+  manhã (80,5) e a leitura da balança (79,2), e cobra que as duas convivam, que
+  nenhuma apague a outra, e que **o veredito da dieta não se mexa** — ele lê a
+  da manhã. A quebra que unifica as duas derruba três casos.
+- **A opcional é opcional, e a tabela é quem diz.** O caso lê
+  `MEDIDAS_DO_CORPO` da superfície e cobra que exatamente uma das cinco tenha
+  `obrigatorio: false`, antes de cobrar que o verbo a obedeça — então mudar a
+  tabela deixa vermelho, em vez de mudar silenciosamente o que o verbo exige.
+  **Água em branco não entra e não vira zero**: ausência de medida não é medida
+  de zero. **Mas água preenchida com lixo recusa a leitura inteira** — deixar
+  passar em silêncio perderia uma medida digitada, e erro de digitação não é
+  "não medi".
+
+Outras duas decisões, para ficarem escritas:
+
+- **Nenhum setter de rascunho, e isso é desenho.** O briefing nota que não
+  existe; não construí nenhum. Verbo por valor não precisa: o contrato do §1
+  diz que *"quem lê campo é casca da interface"*. `registraPeso` precisa de
+  `setPeso` porque a casca dele é um stepper com estado; `registraBio` recebe os
+  valores por argumento.
+- **`CTX.registraBio` devolve a PROMESSA.** O §8.8 avisa que verbo `async`
+  chamado por `CTX` não devolve nada e que promessa solta vira rejeição não
+  tratada. Aqui o verbo **retorna** `registraBio(…)`, então `await a.v(…)`
+  resolve e nada fica em voo. O retorno é `{ ok, em, gravadas }` ou
+  `{ ok, falta, invalidas }` — por valor, nunca um elemento, como o contrato
+  manda.
+
+Um refatoramento pequeno: a gravação de uma marca (substituir a do mesmo dia,
+deixar lápide, ordenar, cortar em 400) saiu de dentro de `addBody` para
+**`gravaMarca(k, v, quando)`**, e as duas portas a usam. Comportamento
+idêntico — a quebra `gravaMarca` sem lápide derruba os casos novos **e** dois
+pré-existentes de `addBody`, que é a prova de que a extração não mudou nada.
+`gravaMarca` **não** entrou em `verbos`: é helper interno, e cada chave da
+superfície é uma promessa.
+
+### O que a torneira NÃO faz
+
+- **Não tem tela.** Não há campo, botão ou folha no app que chame
+  `registraBio`. A capacidade existe no modelo, é alcançável e testável; **o
+  dono não alcança a bioimpedância com o dedo**. A tela é de outra frente, e
+  nenhum caso deste grupo toca o DOM.
+- **Não conserta o resumo do acervo.** `CTX.dadosDoApp` continua listando
+  *sessões · exercícios com histórico · cardio · pesagens · medidas de cintura*,
+  sem as cinco. Era o defeito (c) do §8.5, e **ele mudou de natureza**: enquanto
+  não havia torneira, não havia o que contar; agora o dono pode ter leituras de
+  bioimpedância que o resumo ignora, e o resumo é justamente a leitura que lhe
+  diz **o tamanho do que ele tem a perder**. Não consertei — está fora desta
+  tarefa, e consertar mudaria a asserção de outro caso, o que o briefing proíbe.
+  O caso grava o estado de hoje, para quem consertar ter o vermelho que aponta a
+  linha.
+- **Não valida a coerência da leitura entre si.** Nada cobra que
+  `bioGordura ≈ bioPeso × bioGorduraPct / 100`, nem que a soma de músculo,
+  gordura e água caiba no peso. Não medi se vale a pena; registro que não há.
+- **Não desfaz.** Como `addBody`, registrar de novo no mesmo dia substitui (com
+  lápide). Apagar uma leitura de bioimpedância passaria por `CTX.apagaMedida`,
+  que aceita qualquer `MARCAS_DO_CORPO` — **não testei as cinco por essa porta.**
+
+### O caso existente que mudou, e por quê
+
+É a **única** asserção existente alterada nesta passada, e é a autorizada.
+
+Era *"addBody nas cinco grandezas da bioimpedância recusa hoje, por falta de
+porta"*, em `tests/fluxo/corpo.test.js`. Agora é *"as cinco da bioimpedância
+seguem sem valor de partida, e a porta delas é ctx.registraBio"*.
+
+**O briefing previu que ele ficaria vermelho, e ficou — mas por outra linha do
+que ele supôs**, e a diferença importa:
+
+- A asserção de que **`addBody('bioPeso')` recusa com "Digite um número válido"
+  continuou VERDE**, e corretamente: ela depende de `CORPO_PADRAO` não ter valor
+  de partida, e eu não lhe dei nenhum. Ela foi **mantida**, com a mensagem
+  reescrita para dizer o que ela realmente mede (que a porta da manhã lê
+  rascunho e referência que as cinco não têm).
+- O que ficou vermelho foi
+  `assert.deepStrictEqual(Object.keys(CTX).filter(/bio/i), [])`. **Trocada por
+  `['registraBio']`** — a bioimpedância tem uma porta de escrita, e só uma. É a
+  asserção que o autor da §8 escreveu para apontar a linha no dia em que alguém
+  construísse a torneira, e ela apontou.
+- A asserção do `dadosDoApp` ficou, com o comentário reescrito: o que era
+  coerência passou a ser omissão.
+
+## 9.6 · Os defeitos que achei
+
+### (g) `trocaItem` leva a marca do `arroz` para o alimento novo
+
+`CTX.trocaItem` reescreve **só** `i.f`. Então `i.arroz` e `i.alta` sobrevivem à
+troca e passam a valer para o alimento NOVO. **Medido**: trocar o arroz do
+almoço por cuscuz deixa `arroz: true` no cuscuz, e `arrozAtual()` — a soma de
+`i.q` de todo item marcado — **não muda**.
+
+Isso não é cosmético. `i.arroz` é **onde o ajuste calórico da dieta aterra**:
+`aplicaArroz()` reparte o passo de ±150 kcal entre os itens marcados, e
+`arrozAtual()` é o número que a tela mostra como *"arroz 250 g"*. Trocar o arroz
+por outra coisa **move a alavanca do ajuste para um alimento que não é arroz,
+em silêncio**, e o rótulo da tela passa a chamar de arroz o que não é. `i.alta`
+tem o mesmo mecanismo com o carboidrato intra-treino.
+
+O caso **grava sem julgar** e nomeia as duas marcas. Pode ser intencional —
+quem troca um item talvez queira manter o papel dele na refeição. **A decisão é
+sua.** Se decidir que a troca deve limpar as marcas, o caso fica vermelho e
+aponta a linha.
+
+### (h) Id de refeição não tem guarda de colisão; id de alimento tem
+
+`idAlimento()` procura um id livre em laço (`base`, `base-2`, `base-3`…). O id
+de refeição é `'r' + Date.now()` nu, nas **duas** portas que criam refeição
+(`salvaRefeicao` e `duplicaRefeicao`). **Medido** com o relógio parado — que é
+como boa parte desta suíte roda: duas duplicações colidem, e o plano fica com
+nove refeições e oito ids. `achaRefeicao` devolve sempre a primeira, então a
+segunda **soma no total do dia e é ineditável**: `removeItem`, `trocaItem` e
+`salvaRefeicao` todas caem na outra.
+
+No aparelho dele dois toques no mesmo milissegundo são implausíveis, e eu
+**não medi** nenhum caminho realista até a colisão. O que o caso guarda é que
+**nada no código a impede**, e a assimetria com `idAlimento` ao lado. Dar às
+refeições o mesmo laço fecharia, e o caso ficaria vermelho apontando a linha.
+
+### (i) O destrutivo da refeição é assimétrico: `removeItem` pergunta, `trocaItem` não
+
+`removeItem` confirma, com um aviso que delimita o estrago (*"Muda o plano de
+todos os dias… O alimento continua na biblioteca."*). `trocaItem` substitui o
+alimento **sem perguntar** e sem desfazer. Pode ser desenho — trocar é
+reversível por quem lembra o que estava lá, e a lei 4 põe o destrutivo um nível
+para dentro, onde `trocaItem` já está. **Registro sem opinião**; os dois
+comportamentos estão trancados por caso.
+
+### (j) Nem `trocaItem` nem `adicionaItem` validam o id do alimento
+
+Os dois aceitam qualquer string como `foodId`, e o item fica apontando para um
+alimento que não existe. **Não é defeito puro**: `refeicaoParaEditar` tem
+`sumido: !a` exatamente porque o órfão é possível por outra via — a fusão do
+outro aparelho pode ter removido o alimento da biblioteca. Foi o que usei para
+alcançar o caminho do `sumido` sem tocar o estado na mão. Pela tela a falha é
+inalcançável: o seletor só oferece o catálogo. **Registro como observação.**
+
+### E um que não é do código, é meu
+
+O caso que passava medindo nada (§9.3, fim). Está lá porque **o acerto não vale
+nada sem o erro ao lado** — é a mesma razão por que a §8.3 registrou a asserção
+descartada dela.
+
+## 9.7 · Onde o código discordou do que me foi dito
+
+**Os números do briefing bateram quase todos.** Oito afirmações conferidas, e as
+discordâncias são de forma, não de fato:
+
+1. **"Esse caso vai ficar vermelho"** (o da recusa da bio). → **Ficou, por outra
+   asserção.** A recusa do `addBody` continuou verde, e deve: ela mede
+   `CORPO_PADRAO`, que eu não toquei. O vermelho veio da lista de chaves de
+   `CTX`. Detalhado no §9.5.
+2. **`registraBio(qual, valor)`.** → **Construí por leitura inteira**, com as
+   quatro razões do §9.5. O briefing autorizava o nome ("o nome é seu dentro da
+   gramática do arquivo"); a **forma** é um desvio, e está declarado aqui.
+3. **"Zero das 181 chaves de `CTX` mencionam bioimpedância."** → **Confere**,
+   com o `grep` do briefing rodado contra `HEAD~1`. E `CTX` tem **182** chaves
+   agora (19 no literal + 163 atribuídas, deduplicadas) — era 181 na §6, e subiu
+   pela chave que esta entrega acrescentou.
+4. **"`MEDIDAS_DO_CORPO` diz qual é a opcional."** → **Confere**: `bioAgua`,
+   `obrigatorio: false`, a única das cinco. Conferi na tabela, e o caso a lê de
+   lá em vez de a transcrever.
+5. **"Casa indicada: `fusao.test.js` e `turno.test.js`."** → **Confere**, e não
+   precisei de arquivo novo. `fusao.test.js` tinha **24** casos e
+   `turno.test.js` **9**, como a §8.8 dizia, nos dois.
+6. **"1.002 passando, 557 + 445, 53 arquivos, zero rejeições, `tsc` limpo."** →
+   **Confere nos cinco**, medido antes de tocar em nada.
+7. **"Existe um flake conhecido em `navegacao`."** → **Não apareceu.** Cinco
+   execuções completas nesta sessão, todas 53/53. Não o vi, não o investiguei, e
+   não afirmo que ele não exista.
+8. **"`a.v` devolve valor cru; use `a.vJ` para comparar"** (§8.8, regra 3). →
+   **Confere, e me pegou uma vez.** `registraBio` devolve objeto com lista
+   dentro, e `deepStrictEqual` contra `r.gravadas` reclama do protótipo do outro
+   realm — resolvido com `Array.prototype.slice.call(r.gravadas)`, porque o
+   valor vem do `await` de uma promessa e não passa por `vJ`. Vale como
+   acréscimo à receita: **`vJ` não serve para verbo `async`** —
+   `JSON.stringify` de uma promessa devolve `{}`.
+
+Uma correção ao §8.8 deste documento, e não ao briefing: a lista de abertos diz
+*"Comida e plano — 16, nenhuma"*. **Agora são 16 de 16.**
+
+## 9.8 · Onde parei, para o próximo continuar
+
+**39 das 93 ficaram sem caso próprio** (eram 55). Quatro delas **não devem**
+ganhar (`limpaNum` `addNome` `addHora` `folhas` — §8.6), então **35 são
+trabalho real**. A lista é literal, por assunto, na forma do §5:
+
+### Fechados — nada a fazer
+
+- **Corpo, medidas e cardio**: 7 de 7. ✅
+- **Custódia e nuvem**: 12 de 12. ✅
+- **Comida e plano**: 16 de 16. ✅
+
+### Abertos
+
+- **Câmera, comparação e ajuste de foto — 17, nenhuma.**
+  `setGradeDaCamera` `setFantasmaDaCamera` `setOpacidadeDaCamera`
+  `setDataDoFantasmaDaCamera` `streamDaCamera` `setGradeDoAjuste`
+  `setFantasmaDoAjuste` `setZoomDoAjuste` `arrastaAjuste` `setSobrepor`
+  `setOpacidade` `setPoseComparada` `setDataComparada` `posAnterior` `tentaFotos`
+  `fechaProtocolo` — mais `setNotaDaSessao`, que pertence aqui (§8.7).
+  **É o maior bolo aberto, e é onde eu começaria.** Casa: `protocolo.test.js`
+  (58 casos) e `fotos.test.js` (20), que já têm os dublês montados. O aviso da
+  §8.8 continua valendo: é onde moram as entradas de DOM dentro de `a.E` e as
+  quatro rejeições não tratadas que o `09-desligamento.md` fechou.
+- **Rota e shell — 12.** `vaiPara` `desliga` `vaiParaDia` `abrePrograma`
+  `restauraPrograma` `abreSessaoDoDia` `mes` `edicaoDoDia` `programa`
+  `retrospectiva` `fechaRetro` `voltaAoTreino`. As duas notas medidas da §8.8
+  seguem de pé.
+- **Promoção e retroativo — 6.** `concluiPromo` `voltaDoPromo` `abreRetro`
+  `retroativo` `fechaAdicionar` `gravaRetro`. Casa: `promocao.test.js` (9) e
+  `retro.test.js` (9).
+
+### Fora das 93, e aberto por esta entrega
+
+- **`CTX.registraBio` tem rede no modelo e não tem tela.** Quem fizer a tela
+  precisa, no mínimo: cinco campos (quatro obrigatórios, a água não), a data da
+  leitura, e o resumo do acervo (`dadosDoApp`) contando as cinco — ver o §9.5.
+- **`CTX.apagaMedida` nas cinco da bioimpedância não tem caso.** A porta aceita
+  qualquer `MARCAS_DO_CORPO`; só `peso` e `cintura` estão trancadas por teste, e
+  as mensagens de `delBody` são ternárias em `k === 'peso'` (`'o peso'` ou
+  `'a cintura'`, `' kg'` ou `' cm'`) — então remover uma leitura de
+  `bioGorduraPct` perguntaria *"Remover a cintura de … (17,8 cm)?"*. **Li o
+  fonte e não rodei**: não há caso que exercite as cinco por essa porta, e é o
+  próximo pedaço óbvio de trabalho aqui.
+
+### Acréscimos à receita da §8.8
+
+6. **`a.vJ` não serve para verbo `async`.** `JSON.stringify(promessa)` é `{}`.
+   Use `await a.v(…)` e, para comparar lista, `Array.prototype.slice.call(…)`.
+7. **Automatize a conferência de que a quebra aplicou.** Um script que conta as
+   ocorrências do padrão antes de substituir e grita quando não são exatamente
+   uma transforma a regra 5 em garantia. Cinquenta quebras nesta passada,
+   nenhuma falhou em aplicar, e eu não precisei ler um `diff` para saber.
+8. **Quebre também o que a volta prova, não só o que a ida prova.** O caso que
+   passava medindo nada (§9.3) só apareceu porque uma quebra *não* o derrubou.
+   **Uma quebra que não produz vermelho é informação**, e não um desperdício:
+   ou o caso não mede o que diz, ou a quebra não é o que você pensou.
