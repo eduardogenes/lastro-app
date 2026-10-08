@@ -507,3 +507,174 @@ test('ctx.apagaCardio sai da contagem da semana e não mexe no treino do dia', a
   assert.strictEqual(a.S().done.length, 1, 'e o treino do dia ficou, como o aviso prometeu');
   a.fechar();
 });
+
+// ===========================================================================
+// O registro do corpo, pelas chaves de `CTX`
+// ===========================================================================
+//
+// `registraPeso`, `registraCintura`, `abreDiaCorpo`, `setPerfManual` e
+// `abreCardio` não tinham caso próprio. Os casos de registro acima chamam
+// `addBody` pelo nome de módulo; estes entram pela chave que a tela usa.
+//
+// Cobrem o modelo, não a fiação: provam a capacidade e onde ela para. Nenhum
+// deles afirma que a tela nova tem botão de registrar ligado nestas chaves.
+
+test('ctx.registraPeso e ctx.registraCintura gravam cada um na própria série', async () => {
+  const a = await app({ estado: vazio });
+  a.aba('dados');
+
+  a.v('ctx.setPeso', 78.6);
+  a.v('ctx.setCintura', 86.4);
+  await a.v('ctx.registraPeso');
+  await a.esperar();
+
+  assert.strictEqual(a.S().body.peso.length, 1, 'o peso foi');
+  assert.strictEqual(a.S().body.peso[0].v, 78.6);
+  assert.strictEqual(a.S().body.cintura.length, 0,
+    'e a cintura NÃO foi: um verbo por grandeza, e o rascunho da outra espera');
+
+  await a.v('ctx.registraCintura');
+  await a.esperar();
+  assert.strictEqual(a.S().body.cintura[0].v, 86.4, 'agora sim, com o valor dela');
+  assert.strictEqual(a.S().body.peso.length, 1, 'sem duplicar o peso');
+  a.fechar();
+});
+
+test('ctx.registraPeso recusa o que não é número, e não grava meia medida', async () => {
+  const a = await app({ estado: vazio });
+  a.aba('dados');
+
+  a.v('ctx.setPeso', 'abc');
+  await a.v('ctx.registraPeso');
+  await a.esperar();
+  assert.strictEqual(a.S().body.peso.length, 0, 'texto não vira medida');
+  assert.strictEqual(a.toast(), 'Digite um número válido.');
+
+  a.v('ctx.setPeso', 0);
+  await a.v('ctx.registraPeso');
+  await a.esperar();
+  assert.strictEqual(a.S().body.peso.length, 0, 'nem zero: não existe pesar zero');
+
+  a.v('ctx.setPeso', '79,4');
+  await a.v('ctx.registraPeso');
+  await a.esperar();
+  assert.strictEqual(a.S().body.peso[0].v, 79.4, 'e a vírgula do teclado do iPhone vale ponto');
+  a.fechar();
+});
+
+test('ctx.abreDiaCorpo abre o seletor de data de UMA grandeza e fecha no segundo toque', async () => {
+  const a = await app({ estado: vazio });
+  a.aba('dados');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.dia.aberto, false, 'fechado por padrão');
+
+  a.v('ctx.abreDiaCorpo', 'peso');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.dia.aberto, true, 'abre o do peso');
+  assert.strictEqual(a.vJ('ctx.corpo').cintura.dia.aberto, false,
+    'e só o do peso: um seletor aberto por vez, senão dois campos de data competem');
+
+  a.v('ctx.abreDiaCorpo', 'cintura');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.dia.aberto, false, 'abrir o outro fecha o primeiro');
+  assert.strictEqual(a.vJ('ctx.corpo').cintura.dia.aberto, true);
+
+  a.v('ctx.abreDiaCorpo', 'cintura');
+  assert.strictEqual(a.vJ('ctx.corpo').cintura.dia.aberto, false, 'e o mesmo verbo fecha');
+  a.fechar();
+});
+
+test('ctx.setPerfManual deixa ele contradizer o sinal de força que o app calculou', async () => {
+  // O sinal de força do treino decide se o app manda comer mais: peso parado
+  // com carga subindo é recomposição. Esta chave é a palavra final dele sobre
+  // isso, e a tela precisa dizer de onde o sinal veio.
+  const a = await app({ estado: vazio });
+  a.aba('dados');
+
+  const auto = a.vJ('ctx.dados').forca;
+  assert.strictEqual(auto.opcoes[0].on, true, 'o padrão é o app decidir');
+  assert.match(auto.txt, /coletando|e1rm/, 'e o texto explica de onde o sinal sai: ' + auto.txt);
+
+  a.v('ctx.setPerfManual', true);
+  await a.esperar();
+  const f = a.vJ('ctx.dados').forca;
+  assert.strictEqual(f.opcoes[1].on, true, '"está subindo" fica aceso');
+  assert.strictEqual(f.opcoes[0].on, false, 'e "o app decide" apaga');
+  assert.strictEqual(f.txt, 'definido na mão',
+    'o texto para de inventar certeza do cálculo e diz que foi ele');
+  assert.strictEqual(a.S().perfManual, true, 'e fica no estado, não só na tela');
+
+  a.v('ctx.setPerfManual', false);
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.dados').forca.opcoes[2].on, true, '"não está" é o terceiro valor');
+  assert.strictEqual(a.S().perfManual, false, 'e false não é lido como "sem resposta"');
+
+  a.v('ctx.setPerfManual', null);
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.dados').forca.opcoes[0].on, true, 'e dá para devolver ao app');
+  assert.strictEqual(a.S().perfManual, null);
+  a.fechar();
+});
+
+test('ctx.abreCardio abre e fecha o registro rápido, no cromo do treino', async () => {
+  // O placar e o registro de cardio moram na aba TREINO, no cromo — não em
+  // HOJE. `ctx.cromoDoTreino` é a leitura que os desenha, e também não tinha
+  // caso próprio.
+  const a = await app({ estado: vazio });
+  assert.strictEqual(a.vJ('ctx.cromoDoTreino').cardio.aberto, false, 'fechado por padrão');
+  assert.match(a.vJ('ctx.cromoDoTreino').cardio.resumo, /0 de 2 nesta semana/,
+    'e o placar da semana vem na mesma leitura, sem sair da tela');
+
+  a.v('ctx.abreCardio');
+  assert.strictEqual(a.vJ('ctx.cromoDoTreino').cardio.aberto, true, 'abre');
+  a.v('ctx.abreCardio');
+  assert.strictEqual(a.vJ('ctx.cromoDoTreino').cardio.aberto, false, 'e o mesmo verbo fecha');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// As cinco grandezas da bioimpedância: o dado existe e nada as escreve
+// ---------------------------------------------------------------------------
+//
+// ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. Ele grava o que o app faz hoje, porque
+// o que ele faz hoje é recusar.
+//
+// `MEDIDAS_DO_CORPO` declara sete grandezas; `S.body` tem as sete; a migração
+// 9 → 10 criou as cinco novas; a lista branca da importação as preserva; a
+// fusão tem chave de lápide para cada uma. Mas:
+//
+//   - `CORPO_PADRAO` só tem `peso` e `cintura`, então `baseDoCorpo('bioPeso')`
+//     devolve `undefined` quando a série está vazia;
+//   - não existe chave de `CTX` que escreva o rascunho delas — `setPeso` e
+//     `setCintura` são as duas que existem;
+//   - e não existe `CTX.registraBioPeso` nem equivalente: nenhuma das 181
+//     chaves de `CTX` menciona bioimpedância.
+//
+// Resultado: `addBody('bioPeso')` cai no `isNaN` e recusa. As cinco grandezas
+// atravessam backup, migração e sincronização, e **não há caminho no app que
+// grave a primeira leitura delas**. Se alguém der a elas padrão de partida ou
+// uma chave de escrita, este caso fica vermelho e aponta onde.
+
+test('addBody nas cinco grandezas da bioimpedância recusa hoje, por falta de porta', async () => {
+  const a = await app({ estado: vazio });
+  a.aba('dados');
+
+  const bio = a.dado('MARCAS_DO_CORPO').filter(function (k) { return /^bio/.test(k); });
+  assert.deepStrictEqual(bio, ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua'],
+    'as cinco estão declaradas no domínio');
+
+  for (const k of bio) {
+    await a.v('addBody', k);
+    await a.esperar();
+    assert.strictEqual(a.S().body[k].length, 0, k + ' não grava: não tem valor de partida');
+    assert.strictEqual(a.toast(), 'Digite um número válido.',
+      k + ' recusa com a mensagem de entrada inválida, sem dizer que falta porta');
+  }
+
+  // e nenhuma chave de `CTX` as alcança
+  const chaves = Object.keys(a.m.ctx).filter(function (k) { return /bio/i.test(k); });
+  assert.deepStrictEqual(chaves, [],
+    'nenhuma das chaves de CTX menciona bioimpedância — nem para escrever, nem para ler');
+
+  // o resumo do acervo também não as conta
+  assert.ok(!/bio/i.test(a.vJ('ctx.dadosDoApp').resumo),
+    'e o resumo do que ele tem a perder conta peso e cintura, não as cinco');
+  a.fechar();
+});
