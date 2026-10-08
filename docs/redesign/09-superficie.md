@@ -1597,3 +1597,38 @@ Casa: `protocolo.test.js` e `fotos.test.js`, que já têm os dublês montados.
   novos. Confira.
 - **As quatro que não devem ganhar rede** (`addNome`, `limpaNum`, e antes
   `addHora` e `folhas`) ele não confirmou por escrito, como eu havia pedido.
+
+### 10.1 · A dívida de prova, paga — 15 de 15
+
+**Paga pelo coordenador em 08/10**, porque a §10 a registrou como aberta e
+dívida de prova anunciada e não paga é pior que dívida escondida.
+
+Treze quebras deliberadas em `src/main.jsx`, em **três lotes de verbos que
+afetam conjuntos disjuntos de casos**, para três execuções de `npm test`
+provarem os quinze. O fonte foi restaurado por `git checkout` depois de cada
+lote, e conferido intacto no fim (`git status` vazio, suíte em 1.052).
+
+| lote | verbos quebrados | casos que ficaram vermelhos |
+|---|---|---|
+| **A** | `delBody` (a tabela deixa de responder), `idRefeicao` (a guarda sai), `concluiPromo` (inerte), `setNotaDaSessao` (inerte) | 1, 2, 3, 4, 6 — **mais** *apagaMedida avisa antes* (passada 2) |
+| **B** | `voltaDoPromo`, `gravaRetro`, `fechaAdicionar` (inertes), `retroativo` (sempre `null`), `setNotaDaSessao` (**inverso**: passa a inventar a sessão) | 5, 7, 8, 9, 10 — **mais** três casos antigos de retroativo e horário |
+| **C** | `abreRetro`, `fechaRetro`, `restauraPrograma` (inertes), `retrospectiva` (sempre `null`) | 11, 12, 13, 14, 15 — **mais** *a retrospectiva mudou de casa* |
+
+**O achado do método, e vale mais que a contagem.** O caso 7 —
+*"`setNotaDaSessao` sem foto no dia **não inventa** sessão para anotar"* —
+**ficou VERDE no lote A**, com o verbo inerte. E estava certo: **um verbo inerte
+também não inventa sessão.**
+
+**Asserção negativa não se prova tornando o verbo inerte.** Ela se prova
+quebrando no **sentido oposto** — fazendo o verbo fazer a coisa que o caso diz
+que ele não faz. No lote B o verbo passou a empurrar uma sessão nova quando não
+havia nenhuma, e aí o caso ficou vermelho.
+
+**Isto é regra para as próximas passadas**, e nenhuma das três anteriores a
+tinha escrito: ao provar um caso cujo nome contém "não", a quebra inerte é
+**inconclusiva**. Não vale como prova, e aceitar o verde dela é confundir
+"não derrubou" com "está coberto".
+
+**O que a prova NÃO diz:** que os casos cobrem a fiação. Eles entram pela
+superfície, por nome e valor; se o redesenho esquecer de ligar o botão, os
+quinze seguem verdes. É o mesmo limite das §8 e §9, e ele não muda.

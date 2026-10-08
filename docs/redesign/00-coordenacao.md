@@ -1539,7 +1539,7 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         volta 0. Pus a semente de dois passos, a asserção **que já existia** ficou
         vermelha nomeando o campo, e aí consertei (`0931f48`). 1.038 verdes,
         `tsc` limpo.
-      - [ ] **DÍVIDA DE PROVA, criada pela queda do agente em 08/10.** A
+      - [x] **DÍVIDA DE PROVA PAGA por mim em 08/10 — 15 de 15 (§10.1).** Treze quebras deliberadas em três lotes disjuntos; fonte restaurado e conferido intacto. **E a prova rendeu uma regra que nenhuma das três passadas tinha escrito:** asserção NEGATIVA não se prova com verbo inerte — o caso 7 ficou **verde** com o verbo morto, e corretamente, porque verbo inerte também não inventa sessão. Negativa se prova quebrando no **sentido oposto**. Aceitar o verde da quebra inerte é confundir "não derrubou" com "está coberto". Era a dívida de origem: A
         disciplina desta linha de trabalho é: quebrar o verbo de propósito, ver o
         vermelho, desfazer, e **escrever a prova por grupo**. O agente da terceira
         passada caiu antes dessa parte do documento. A última linha dele foi
