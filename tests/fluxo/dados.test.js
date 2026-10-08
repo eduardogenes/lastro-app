@@ -552,3 +552,116 @@ test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async ()
     'o backup do plano 10 restaurado não volta sem a ceia');
   a.fechar();
 });
+
+// ===========================================================================
+// `ctx.apagaTudo` — a única ação do app que apaga o histórico inteiro
+// ===========================================================================
+//
+// `wipe` já tinha rede: `dados` o usa quatro vezes como PREPARO de um caso de
+// importação, e `fusao` :: *apagar o histórico não apaga o plano nutricional*
+// cobre um campo. Nenhum caso cobria o ESCOPO — e num verbo sem desfazer o
+// escopo é a capacidade. Estes entram por `ctx.apagaTudo`, que é a chave que a
+// tela usa, e nenhum deles afirma que existe botão ligado nela.
+
+/** O estado mais cheio que o app aceita: um campo de cada família. */
+function estadoCheio(t) {
+  return {
+    logs: { A0: [{ t: t, sid: t, sets: [[60, 10]] }] },
+    done: [{ day: 'A', t: t, sid: t }],
+    cardio: [{ t: t, m: 'bike', min: 25, i: 'moderado' }],
+    body: { peso: [{ t: t, v: 80 }], cintura: [{ t: t, v: 85 }] },
+    carga: { A0: 'livre' },
+    ex: { meu: { n: 'Meu aparelho', g: 'peito' } },
+    aulas: [{ nome: 'sabado do box', blocos: [] }],
+    comidaHist: [{ d: '2026-10-01', done: {}, agua: 0, escala: {}, tot: {}, pv: 1, m: t }],
+    protocolo: { poses: ['frente'], sessoes: [{ t: t, fotos: {} }] },
+    fotos: { A0: { k: 'x' } },
+    apagados: { 'log:nada:1:nada': t },
+    progLog: [{ t: t, k: 'troca' }],
+    quadro: { texto: 'wod de sabado' }
+  };
+}
+
+test('ctx.apagaTudo pergunta antes, e recusar não apaga nada', async () => {
+  const t = Date.now() - 2 * DIA;
+  const a = await app({ estado: estadoCheio(t) });
+
+  a.recusar();
+  await a.v('ctx.apagaTudo');
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().done.length, 1, 'recusar deixa o histórico inteiro de pé');
+  assert.strictEqual(Object.keys(a.S().logs).length, 1);
+  const q = a.perguntas().join(' | ');
+  assert.ok(/não tem volta/.test(q), 'e o aviso diz que não tem volta: ' + q);
+  a.fechar();
+});
+
+test('ctx.apagaTudo leva o que foi REGISTRADO e deixa o que foi PRESCRITO', async () => {
+  // A simetria do produto: apagar o registro nunca apaga a prescrição. Se um
+  // destes dois grupos trocar de lado, este caso cai — e é a única coisa que
+  // cai, porque nada mais olha o escopo.
+  const t = Date.now() - 2 * DIA;
+  const a = await app({ estado: estadoCheio(t) });
+  const prog = JSON.stringify(a.S().prog), comida = JSON.stringify(a.S().comida);
+  const rot = a.S().rot.slice();
+
+  await a.v('ctx.apagaTudo');
+  await a.esperar(60);
+  const d = a.S();
+
+  // o registrado vai
+  assert.deepStrictEqual(Object.keys(d.logs), [], 'as séries vão');
+  assert.deepStrictEqual(d.done, [], 'as sessões vão');
+  assert.deepStrictEqual(d.cardio, [], 'o cardio vai');
+  assert.deepStrictEqual(d.body.peso, [], 'as pesagens vão');
+  assert.deepStrictEqual(d.body.cintura, [], 'as cinturas vão');
+  assert.deepStrictEqual(d.carga, {}, 'a correção de tipo de carga vai');
+  assert.deepStrictEqual(d.comidaHist, [], 'o histórico de comida vai');
+  assert.strictEqual(d.export, 0, 'e a marca de backup zera: não há o que exportar');
+
+  // o prescrito, e o que ELE criou, fica
+  assert.strictEqual(JSON.stringify(d.prog), prog, 'o programa oficial fica');
+  assert.deepStrictEqual(d.rot, rot, 'a rotação fica como estava, e não volta para a de fábrica');
+  assert.deepStrictEqual(d.ex.meu, { n: 'Meu aparelho', g: 'peito' },
+    'o aparelho que ELE cadastrou fica: não é registro, é catálogo');
+  assert.deepStrictEqual(d.progLog, [{ t: t, k: 'troca' }], 'o diário do programa fica');
+  assert.strictEqual(JSON.stringify(d.comida), comida, 'o plano nutricional fica');
+  assert.strictEqual(d.cadencia[1], 'treino', 'a cadência da semana fica');
+  assert.ok(d.comida.plano.length > 0, 'e a nutrição não fica sem catálogo — já ficou uma vez');
+  a.fechar();
+});
+
+test('ctx.apagaTudo leva junto quatro coisas que ninguém declarou — o escopo de hoje', async () => {
+  // ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. Ele grava o que o verbo faz hoje, nos
+  // quatro campos que `wipe()` não lista nem como registro nem como prescrição:
+  // o objeto novo que ele monta simplesmente não os carrega, e `normalizaEstado`
+  // os preenche vazios depois. Se alguém decidir que um deles deve sobreviver,
+  // este caso fica vermelho e aponta a linha — que é o contrário de descobrir
+  // meses depois que a biblioteca de aulas sumiu num toque.
+  //
+  // O mais pesado dos quatro é `apagados`. `wipe()` apaga a chave de storage
+  // LEGADA de propósito, com comentário, para a migração do boot não ressuscitar
+  // amanhã o histórico — e no mesmo gesto joga fora toda lápide, que é
+  // exatamente o que impede a FUSÃO do outro aparelho de ressuscitá-lo pela
+  // outra porta.
+  const t = Date.now() - 2 * DIA;
+  const a = await app({ estado: estadoCheio(t) });
+
+  assert.strictEqual(a.S().aulas.length, 1, 'o modelo de aula estava salvo');
+  assert.strictEqual(a.S().protocolo.sessoes.length, 1, 'a sessão de fotos de corpo também');
+
+  await a.v('ctx.apagaTudo');
+  await a.esperar(60);
+  const d = a.S();
+
+  assert.deepStrictEqual(d.aulas, [],
+    'a biblioteca de modelos de aula vai junto — e `S.ex`, que também é coisa que ELE criou, fica');
+  assert.deepStrictEqual(d.protocolo, { poses: null, sessoes: [] },
+    'as sessões de foto de corpo vão junto, sem podar os bytes no cache nem no bucket');
+  assert.deepStrictEqual(d.fotos, {},
+    'as referências de foto de aparelho vão junto, pelo mesmo caminho');
+  assert.deepStrictEqual(d.apagados, {},
+    'e TODA lápide vai junto, inclusive a de um registro que nada neste gesto apagou');
+  a.fechar();
+});

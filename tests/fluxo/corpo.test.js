@@ -426,3 +426,84 @@ test('o seletor de data abre pelo link e aceita o campo nativo', async () => {
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, false, 'mexer no campo muda o dia');
   a.fechar();
 });
+
+// ===========================================================================
+// As chaves destrutivas de `CTX`, chamadas PELO NOME em vez de pelo `.crow-x`
+// ===========================================================================
+//
+// `pesagem errada pode ser apagada` e `sessão de cardio registrada por engano`
+// (acima) clicam no botão: eles provam a FIAÇÃO — que existe um `.crow-x` na
+// tela de hoje ligado no verbo. Os casos daqui provam a CAPACIDADE, pela
+// superfície: que o verbo avisa antes, que apaga só o que nomeia e que deixa
+// lápide. **Nenhum deles diz nada sobre a tela nova ter botão ligado neles** —
+// se o redesenho esquecer o `.crow-x`, estes continuam verdes.
+//
+// Por que destrutivo primeiro: um alcance de apagamento que cresceu sem
+// ninguém pedir, ou um aviso que sumiu, é o defeito que não aparece no dia e
+// se descobre semanas depois, sem desfazer.
+
+test('ctx.apagaMedida avisa antes, e recusar não apaga nada', async () => {
+  const t = Date.now() - 2 * DIA;
+  const a = await app({ estado: { logs: {}, done: [],
+                                  body: { peso: [{ t: t, v: 81.2 }], cintura: [] } } });
+
+  a.recusar();
+  a.v('ctx.apagaMedida', 'peso', t);
+  await a.esperar();
+
+  assert.strictEqual(a.S().body.peso.length, 1, 'recusar deixa a medida onde estava');
+  assert.deepStrictEqual(a.S().apagados, {}, 'e não deixa lápide do que ficou');
+
+  const q = a.perguntas().join(' | ');
+  assert.ok(/81,2 kg/.test(q), 'o aviso diz QUAL medida, com o valor: ' + q);
+  assert.ok(/outras medidas ficam/.test(q), 'e delimita o estrago, em vez de dramatizar: ' + q);
+  a.fechar();
+});
+
+test('ctx.apagaMedida apaga só a medida nomeada, e deixa lápide', async () => {
+  // Três pesagens e uma cintura: o alcance do apagamento é UMA delas. Se ele
+  // crescer para o dia, para a grandeza ou para a semana, este caso cai.
+  const t0 = Date.now() - 3 * DIA, t1 = Date.now() - 2 * DIA, t2 = Date.now() - DIA;
+  const a = await app({ estado: { logs: {}, done: [], body: {
+    peso: [{ t: t0, v: 80 }, { t: t1, v: 81 }, { t: t2, v: 82 }],
+    cintura: [{ t: t1, v: 85 }]
+  } } });
+
+  a.v('ctx.apagaMedida', 'peso', t1);
+  await a.esperar();
+
+  assert.deepStrictEqual(a.S().body.peso.map(x => x.v), [80, 82], 'só a do meio saiu');
+  assert.deepStrictEqual(a.S().body.cintura.map(x => x.v), [85],
+    'a cintura do MESMO dia não vai junto: a grandeza faz parte do endereço');
+  assert.ok(a.S().apagados['peso:' + t1] > 0,
+    'com lápide, senão a fusão do outro aparelho a ressuscita');
+  assert.strictEqual(a.S().apagados['cintura:' + t1], undefined, 'e lápide de uma só');
+  assert.strictEqual(a.toast(), 'Medida removida.');
+  a.fechar();
+});
+
+test('ctx.apagaCardio sai da contagem da semana e não mexe no treino do dia', async () => {
+  const t = Date.now() - 3600000, outro = Date.now() - 2 * DIA;
+  const a = await app({ estado: {
+    logs: {}, done: [{ day: 'A', t: t, sid: t }],
+    cardio: [{ t: t, m: 'bike', min: 25, i: 'moderado' },
+             { t: outro, m: 'esteira', min: 30, i: 'leve' }]
+  } });
+
+  a.recusar();
+  a.v('ctx.apagaCardio', t);
+  await a.esperar();
+  assert.strictEqual(a.S().cardio.length, 2, 'recusar não apaga');
+  const q = a.perguntas().join(' | ');
+  assert.ok(/25 min de bike/.test(q), 'o aviso diz qual sessão: ' + q);
+  assert.ok(/treino do dia não muda/.test(q), 'e diz o que NÃO vai junto: ' + q);
+
+  a.aceitar();
+  a.v('ctx.apagaCardio', t);
+  await a.esperar();
+
+  assert.deepStrictEqual(a.S().cardio.map(x => x.m), ['esteira'], 'só a nomeada saiu');
+  assert.ok(a.S().apagados['cardio:' + t] > 0, 'com lápide');
+  assert.strictEqual(a.S().done.length, 1, 'e o treino do dia ficou, como o aviso prometeu');
+  a.fechar();
+});

@@ -417,3 +417,84 @@ test('o treino EM ANDAMENTO não se apaga por aqui', async () => {
   assert.ok(/em andamento/.test(a.toast()), a.toast());
   a.fechar();
 });
+
+// ===========================================================================
+// `ctx.apagaLinha` — o apagamento ESTREITO, que não é o do detalhe do mês
+// ===========================================================================
+//
+// O app tem dois apagamentos de sessão passada, e eles têm alcances
+// diferentes de propósito:
+//
+//   - o do DETALHE DO MÊS leva a marca do dia e TODAS as séries daquele `sid`,
+//     em todos os exercícios. É o caso *apagar o treino leva as séries dele
+//     junto* , logo acima.
+//   - `ctx.apagaLinha`, aqui, leva UMA linha do histórico de UM exercício. A
+//     marca do dia fica, e as séries do mesmo treino nos outros exercícios
+//     ficam.
+//
+// O segundo alcance não tinha nenhuma asserção. `telas` :: *correção de sessão
+// passada altera e apaga* chama `apagarSessao` e confere que a linha sumiu —
+// não que **só** ela sumiu. Um apagamento que crescesse do exercício para o
+// treino passaria naquele caso. Daí este.
+//
+// Cobre o modelo, não a fiação: prova que a capacidade existe e onde ela para,
+// e nada sobre a tela nova ter um botão ligado em `ctx.apagaLinha`.
+
+test('ctx.apagaLinha avisa antes, e recusar deixa a linha onde estava', async () => {
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[400, 10]] }] },
+    done: [{ day: 'A', t: t, sid: t }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
+  a.v('ctx.editaLinha', 0);
+
+  a.recusar();
+  await a.v('ctx.apagaLinha');
+  await a.esperar();
+
+  assert.strictEqual(a.log('A', 0).length, 1, 'recusar não apaga');
+  const q = a.perguntas().join(' | ');
+  assert.ok(/não tem volta/.test(q), 'e o aviso diz que não tem volta: ' + q);
+  a.fechar();
+});
+
+test('ctx.apagaLinha leva uma linha só — o dia e os outros exercícios ficam', async () => {
+  const velho = Date.now() - 9 * DIA, novo = Date.now() - 2 * DIA;
+  const a = await app({ estado: {
+    logs: {
+      // duas sessões no MESMO exercício, e uma terceira em outro exercício
+      // dentro do MESMO treino da sessão nova
+      A0: [{ t: velho, sid: velho, sets: [[60, 10]] },
+           { t: novo, sid: novo, sets: [[400, 10]] }],
+      A1: [{ t: novo, sid: novo, sets: [[20, 12]] }]
+    },
+    done: [{ day: 'A', t: velho, sid: velho }, { day: 'A', t: novo, sid: novo }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
+
+  const antes = a.log('A', 0);
+  const alvo = antes.findIndex(function (l) { return l.sid === novo; });
+  assert.ok(alvo >= 0, 'a sessão nova está no histórico da posição 0');
+
+  a.v('ctx.editaLinha', alvo);
+  await a.v('ctx.apagaLinha');
+  await a.esperar();
+
+  assert.deepStrictEqual(a.log('A', 0).map(function (l) { return l.sid; }), [velho],
+    'a linha nomeada saiu, e a outra sessão do MESMO exercício ficou');
+  assert.strictEqual(a.log('A', 1).length, 1,
+    'e o mesmo treino no exercício VIZINHO ficou: o alcance é a linha, não o `sid`');
+  assert.strictEqual(a.S().done.length, 2,
+    'a marca do dia fica — quem leva o dia junto é o detalhe do mês, não esta porta');
+
+  assert.ok(a.S().apagados['log:' + a.k('A', 0) + ':' + novo + ':' + a.k('A', 0)] > 0,
+    'com lápide da linha, senão a fusão do outro aparelho a devolve');
+  assert.strictEqual(a.S().apagados['done:' + novo], undefined,
+    'e sem lápide do dia, que não foi apagado');
+  a.fechar();
+});
