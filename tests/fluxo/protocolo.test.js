@@ -1445,3 +1445,111 @@ test('ctx.setDataDoFantasmaDaCamera troca a sobreposição e busca os bytes dela
   await a.esperar(60);
   a.fechar();
 });
+
+// ===========================================================================
+// GRUPO B · As três que compõem o recorte GRAVADO, e a que entrega o quadro
+// ===========================================================================
+//
+// Segundo degrau do critério: `setZoomDoAjuste` e `arrastaAjuste` montam o
+// `enq` que `salvaAjuste` grava na referência da foto, e esse objeto viaja na
+// sincronização e é aplicado na captura, na referência e na comparação.
+// Quebradas em silêncio, elas gravam alinhamento errado numa foto que não se
+// refaz — o corpo de dois meses atrás não volta para ser fotografado de novo.
+// `streamDaCamera` é a única porta para a faixa de vídeo viva: sem ela a tela
+// de alinhar antes do disparo não tem o que sobrepor.
+//
+// O QUE ESTE GRUPO NÃO COBRE: que o arrasto do dedo, o controle de zoom ou o
+// `<video>` estejam ligados nelas. Chamar o verbo prova que a capacidade existe
+// no MODELO, não que o dedo a alcança.
+
+test('ctx.setZoomDoAjuste põe o zoom no recorte, dentro do que dá para desenhar', async () => {
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
+  a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
+  await a.esperar(40);
+  assert.strictEqual(a.vJ('ctx.ajusteEmEdicao').enq.z, 1, 'abre sem zoom — pré-condição');
+
+  a.v('ctx.setZoomDoAjuste', 1.4);
+  assert.strictEqual(a.vJ('ctx.ajusteEmEdicao').enq.z, 1.4, 'o valor entrou');
+  assert.strictEqual(a.vJ('ctx.ajusteEmEdicao').sujo, true, 'e a tela sabe que há o que salvar');
+
+  // o teto é 2: além disso não é recorte, é outra foto
+  a.v('ctx.setZoomDoAjuste', 9);
+  assert.strictEqual(a.vJ('ctx.ajusteEmEdicao').enq.z, 2, 'passa por normalizaEnq, que limita em 2');
+
+  // e o piso é o zoom que o giro em vigor exige, não 1
+  a.v('ctx.setGiroDoAjuste', 6);
+  a.v('ctx.setZoomDoAjuste', 1);
+  const enq = a.vJ('ctx.ajusteEmEdicao').enq;
+  assert.ok(enq.z > 1.12, 'a 6° o piso é ~1,13, e o 1 não desce abaixo dele: ' + enq.z);
+  assert.strictEqual(enq.r, 6, 'e o giro não foi perdido no caminho');
+
+  await a.v('ctx.salvaAjuste');
+  await a.esperar(60);
+  const gravado = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].enq;
+  assert.ok(gravado.z > 1.12, 'o zoom chegou ao estado: ' + gravado.z);
+  a.fechar();
+});
+
+test('ctx.arrastaAjuste move o centro do recorte, e o zoom encolhe o passo', async () => {
+  // `dx`/`dy` vêm em fração do QUADRO e são divididos pelo zoom: quanto mais
+  // perto, menos foto um centímetro de dedo atravessa. Se o zoom não entrasse
+  // na conta, arrastar com zoom alto saltaria a foto inteira.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
+  a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
+  await a.esperar(40);
+  assert.strictEqual(a.vJ('ctx.ajusteEmEdicao').enq.cx, 0.5, 'o centro começa no meio');
+
+  // no zoom mínimo não há folga nenhuma: a foto mal cobre o quadro
+  a.v('ctx.arrastaAjuste', 0.1, 0);
+  assert.strictEqual(a.vJ('ctx.ajusteEmEdicao').enq.cx, 0.5,
+    'sem folga, arrastar não move — e não estoura');
+
+  a.v('ctx.setZoomDoAjuste', 1.5);
+  a.v('ctx.arrastaAjuste', 0.1, 0.1);
+  const perto = a.vJ('ctx.ajusteEmEdicao').enq;
+  assert.ok(perto.cx < 0.5, 'com folga, o centro andou: ' + perto.cx);
+  assert.ok(perto.cy < 0.5, 'nos dois eixos: ' + perto.cy);
+
+  // o MESMO arrasto, com o dobro do zoom, anda a metade da foto
+  a.v('ctx.zeraAjuste');
+  a.v('ctx.setZoomDoAjuste', 2);
+  a.v('ctx.arrastaAjuste', 0.1, 0);
+  const maisPerto = a.vJ('ctx.ajusteEmEdicao').enq;
+  assert.ok(0.5 - maisPerto.cx < 0.5 - perto.cx,
+    'o passo encolheu com o zoom: ' + (0.5 - perto.cx) + ' → ' + (0.5 - maisPerto.cx));
+
+  await a.v('ctx.salvaAjuste');
+  await a.esperar(60);
+  const gravado = a.S().protocolo.sessoes[0].fotos['frente-relaxado'].enq;
+  assert.ok(gravado.cx < 0.5, 'e o centro deslocado chegou ao estado: ' + gravado.cx);
+  a.fechar();
+});
+
+test('ctx.streamDaCamera entrega a faixa viva, e nada depois de fechar', async () => {
+  // É a única porta para a faixa de vídeo. O que ela devolve é o que o
+  // `<video>` recebe, e por isso ela também é a prova de que sair da tela
+  // desligou de verdade: faixa viva mantém o indicador do iOS aceso.
+  const a = await app({ aba: 'dados' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.esperar(60);
+  assert.strictEqual(a.v('ctx.streamDaCamera'), null, 'sem a tela aberta não há faixa');
+
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  assert.ok(a.v('ctx.streamDaCamera'), 'com a câmera aberta, a faixa está lá');
+  assert.strictEqual(a.J('globalThis.__faixasVivas'), 1, 'e é uma faixa viva de verdade');
+
+  a.v('ctx.fechaCamera');
+  await a.esperar(60);
+  assert.strictEqual(a.v('ctx.streamDaCamera'), null, 'fechar devolve nada');
+  assert.strictEqual(a.J('globalThis.__faixasVivas'), 0, 'e a faixa foi parada, não só esquecida');
+  a.fechar();
+});
