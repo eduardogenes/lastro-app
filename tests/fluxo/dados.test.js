@@ -430,6 +430,46 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   a.fechar();
 });
 
+test('o que o ajuste deu a cada prato sai e volta nas duas listas brancas', async () => {
+  // `Item.ajq` é campo persistido novo DENTRO do plano, e as duas listas que
+  // copiam o estado à mão são a da importação (`importText`) e a do apagar
+  // histórico (`wipe`). Nenhuma das duas enumera campo de item: as duas levam
+  // `comida` inteiro, então o campo atravessa sem linha nova nelas. Isto aqui é
+  // o que transforma essa leitura em promessa — a lista da importação já perdeu
+  // campo duas vezes neste projeto, as duas em silêncio.
+  const a = await app();
+  const arroz = () => a.vJ('planoDeComida')
+    .filter(r => r.id === 'almoco')[0].itens
+    .filter(i => i.arroz)[0];
+
+  a.E("planoDeComida().filter(function (r) { return r.id === 'almoco'; })[0]" +
+      ".itens.filter(function (i) { return i.arroz; })[0].ajq = 60");
+  a.E("planoDeComida().filter(function (r) { return r.id === 'almoco'; })[0]" +
+      ".itens.filter(function (i) { return i.arroz; })[0].q = 310");
+  await a.v('save');
+
+  a.aba('guia');
+  await a.modo('o app');
+  a.v('showJSON');
+  const bkp = a.doc.getElementById('jout').value;
+  assert.ok(/"ajq":\s*60/.test(bkp), 'a exportação leva o estado inteiro');
+
+  // `wipe` apaga histórico de TREINO e preserva o plano nutricional, de
+  // propósito — então o registro tem de sobreviver a ele
+  await a.v('wipe'); await a.esperar();
+  assert.strictEqual(arroz().ajq, 60, 'apagar histórico não mexe no plano de comida');
+
+  // e o caminho de volta: o plano vai embora e a importação o traz inteiro
+  a.E('S.comida.plano = null');
+  await a.v('save');
+  a.aba('guia');
+  await a.v('importText', bkp);
+  await a.esperar(60);
+  assert.strictEqual(arroz().q, 310, 'o prato voltou');
+  assert.strictEqual(arroz().ajq, 60, 'e com ele quanto o ajuste lhe deu');
+  a.fechar();
+});
+
 test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => {
   // A asserção da exportação (acima) tranca as chaves de TOPO, e `body` é uma
   // só. As grandezas moram dentro dela, e a importação as copia por nome: sem

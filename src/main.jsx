@@ -38,7 +38,7 @@ import { Programa } from './ui/telas/programa.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
 import {
-  arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia,
+  aplicaAjusteNoArroz, tiraMarcaDeArroz, listaDeCompras, totalDaRefeicao, totalDoDia,
   refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao,
   fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis,
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
@@ -51,7 +51,7 @@ import { MARCAS_DO_CORPO, MEDIDAS_DO_CORPO, mediasSemanais, pesoRitmo as _pesoRi
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
-import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11 } from './dominio/migracoes';
+import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
@@ -451,6 +451,7 @@ async function load() {
   migraPlano9(S);
   migraPlano10(S);
   migraPlano11(S);
+  migraPlano12(S);
   garanteProgramaERotacao();
   montaCatalogo();
 
@@ -3435,21 +3436,19 @@ function arrozAtual() {
  * Aplica o ajuste calórico onde o plano manda aplicar: no arroz.
  * O veredito DECIDE, isto EXECUTA — é a divisão de trabalho entre as duas
  * metades do produto.
+ *
+ * Adaptador: a regra vive em `aplicaAjusteNoArroz` (dominio/nutricao/calculo);
+ * aqui só se junta a lista de itens marcados. Não recebe mais o saldo ANTERIOR
+ * porque não precisa dele: o que cada item recebeu está no item (`ajq`), e era
+ * recalcular isso pela contagem de agora que tirava comida do prato quando o
+ * plano mudava no meio.
  */
-function aplicaArroz(ajusteAntes) {
-  const plano = planoDeComida();
+function aplicaArroz() {
   const itens = [];
-  plano.forEach(function (r) {
+  planoDeComida().forEach(function (r) {
     r.itens.forEach(function (i) { if (i.arroz) itens.push(i); });
   });
-  if (!itens.length) return;
-  // O passo é diário e se reparte entre as refeições com arroz — ver
-  // arrozDoAjuste. Desfaz o saldo anterior antes de aplicar o novo, senão os
-  // dois somam; com o passo na grade de 15 g, ida e volta são exatas.
-  itens.forEach(function (i) {
-    const base = arrozDoAjuste(i.q, -ajusteAntes, itens.length);
-    i.q = arrozDoAjuste(base, S.ajuste || 0, itens.length);
-  });
+  aplicaAjusteNoArroz(itens, S.ajuste || 0);
 }
 
 // Adaptador: a regra vive em dominio/volume.ts; aqui só entram os dados.
@@ -3872,6 +3871,7 @@ async function importText(txt) {
   migraPlano9(S);
   migraPlano10(S);
   migraPlano11(S);
+  migraPlano12(S);
   montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;
@@ -5789,7 +5789,7 @@ CTX.aplicaAjuste = function () {
   if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
   S.ajusteHist.push({ t: Date.now(), de: antes, para: S.ajuste,
                       k: v.k, p: v.p, reg: diasRegistrados() });
-  aplicaArroz(antes);
+  aplicaArroz();
   queueSave(); render();
   toast('Ajuste aplicado. O arroz do plano foi para ' + arrozAtual() + ' g.');
 };
@@ -6162,6 +6162,11 @@ CTX.removeItem = function (refId, idx) {
       'Muda o plano de todos os dias, não só o de hoje. ' +
       'O alimento continua na biblioteca.')) return;
   planoMudou();
+  // Não há o que devolver aqui, e é diferente da troca de propósito: o item SAI
+  // do plano, e com ele os gramas que o ajuste lhe deu. O que o defeito tirava
+  // era comida dos OUTROS pratos, por recalcular o desfazer pela contagem que
+  // sobrou — e isso agora não acontece porque cada um guarda o que recebeu.
+  // Vale igual para `removeRefeicao`, que leva o item junto sem passar por aqui.
   r.itens.splice(idx, 1);
   queueSave(); render();
 };
@@ -6202,7 +6207,11 @@ CTX.trocaItem = function (refId, idx, foodId) {
   // tarde) é da mesma natureza de `arroz` — diz qual alimento é —, mas o dono
   // não a decidiu e ela não entra em nenhuma tela: `refeicaoParaEditar` não a
   // devolve. Fica como está, de propósito, até haver decisão.
-  delete r.itens[idx].arroz;
+  //
+  // A marca cai DEVOLVENDO: o que o ajuste tinha somado a este item volta com
+  // ela. Sem isso o alimento trocado ficava com os gramas para sempre — o
+  // desfazer não passa mais por um item sem marca —, e o número é do dono.
+  tiraMarcaDeArroz(r.itens[idx]);
   CTX.fechaFolha();
   queueSave(); render();
 };

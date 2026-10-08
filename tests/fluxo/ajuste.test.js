@@ -266,3 +266,136 @@ test('a folha do dia oferece os três estados, e a escolha persiste', async () =
     'seguir o plano é a ausência de marca: não se guarda o padrão');
   a.fechar();
 });
+
+// ---------- mexer no plano no meio do ajuste ----------
+//
+// O passo de 120 g se REPARTE entre os itens marcados com arroz, e desfazer
+// recalculava o passo pela contagem DE AGORA — não pela de quando somou. Trocar
+// ou remover um dos dois pratos de arroz com ajuste em vigor fazia o desfazer
+// achar UM item e tirar dele os 120 g do dia inteiro: medido, o jantar caía a
+// 190 g com a prescrição em 250, e o prato trocado ficava com os +60 para
+// sempre, porque perdeu a marca e o desfazer não passava mais por ele.
+//
+// Mexer no plano é normal, e o dono respondeu de quem é o número que fica no
+// prato quando a quantidade de pratos muda: **é dele**. Então o app desfaz
+// exatamente o que somou, e para isso lembra quanto deu a cada item.
+
+/** A quantidade do primeiro item de uma refeição do plano guardado. */
+function itemDe(a, refId) {
+  const r = a.vJ('planoDeComida').filter(function (x) { return x.id === refId; })[0];
+  return r.itens[0];
+}
+
+/** Põe o veredito em "comer menos", que é o caminho de volta do saldo. */
+async function viraParaMenos(a) {
+  a.E('S.body.peso = ' + JSON.stringify(pesagens([73.0, 73.6, 74.2])));
+  comFotos(a, [iso(14), iso(0)]);
+  a.v('ctx.abreComparar');
+  await a.v('ctx.setGordura', 'sim'); await a.esperar();
+  a.aba('dados');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer menos');
+}
+
+test('trocar o arroz de um prato não tira comida do outro', async () => {
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  cacheFalso(a);
+  a.aba('dados');
+  assert.strictEqual(itemDe(a, 'almoco').q, 250, 'a prescrição do almoço');
+  assert.strictEqual(itemDe(a, 'jantar').q, 250, 'e a do jantar');
+
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(a.S().ajuste, 1);
+  assert.strictEqual(itemDe(a, 'almoco').q, 310, '+60 em cada: o passo é do dia');
+  assert.strictEqual(itemDe(a, 'jantar').q, 310);
+
+  // o arroz do almoço vira cuscuz: a marca cai, e o desfazer não passa mais
+  // por ele — era aqui que a contagem de agora virava 1
+  await a.v('ctx.trocaItem', 'almoco', 0, 'cuscuz'); await a.esperar();
+  assert.strictEqual(itemDe(a, 'almoco').arroz, undefined, 'a marca cai na troca');
+
+  await viraParaMenos(a);
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(a.S().ajuste, 0, 'o saldo voltou ao plano base');
+  assert.strictEqual(itemDe(a, 'jantar').q, 250,
+    'o jantar volta à PRESCRIÇÃO, não a 190: o desfazer tira o que deu, não o passo de agora');
+  a.fechar();
+});
+
+test('perder a marca do arroz devolve a parte daquele item', async () => {
+  // A outra metade: o alimento trocado ficava com os +60 g PARA SEMPRE, porque
+  // a marca caiu e o desfazer não o alcança mais. Como o número é do dono, o
+  // app devolve exatamente o que tomou — o item volta à prescrição.
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  a.aba('dados');
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(itemDe(a, 'almoco').q, 310);
+
+  await a.v('ctx.trocaItem', 'almoco', 0, 'cuscuz'); await a.esperar();
+  assert.strictEqual(itemDe(a, 'almoco').f, 'cuscuz');
+  assert.strictEqual(itemDe(a, 'almoco').q, 250,
+    'devolve os 60 g que o ajuste lhe deu, e não fica com eles para sempre');
+  assert.strictEqual(itemDe(a, 'jantar').q, 310,
+    'e o outro prato não é tocado: a troca é de um item só');
+  a.fechar();
+});
+
+test('remover o arroz de um prato não tira comida do outro', async () => {
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  cacheFalso(a);
+  a.aba('dados');
+
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(itemDe(a, 'jantar').q, 310);
+
+  // o item sai do plano inteiro — e sai com os gramas que recebeu, porque não
+  // há mais prato para devolvê-los
+  await a.v('ctx.removeItem', 'almoco', 0); await a.esperar();
+  assert.strictEqual(itemDe(a, 'almoco').f, 'feijao', 'o arroz do almoço saiu do plano');
+
+  await viraParaMenos(a);
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(a.S().ajuste, 0);
+  assert.strictEqual(itemDe(a, 'jantar').q, 250,
+    'o jantar volta à prescrição, e não a 190');
+  a.fechar();
+});
+
+test('remover a refeição inteira não tira comida da outra', async () => {
+  // O terceiro caminho que muda a contagem de pratos com arroz, e o que ninguém
+  // tinha olhado: `removeRefeicao` leva o item junto, sem passar por
+  // `removeItem`.
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  cacheFalso(a);
+  a.aba('dados');
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+
+  await a.v('ctx.removeRefeicao', 'almoco'); await a.esperar();
+  assert.strictEqual(a.vJ('planoDeComida').filter(function (r) { return r.id === 'almoco'; }).length, 0);
+
+  await viraParaMenos(a);
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(itemDe(a, 'jantar').q, 250, 'o jantar volta à prescrição');
+  a.fechar();
+});
+
+test('duplicar a refeição com arroz não tira comida de ninguém', async () => {
+  // `duplicaRefeicao` clona o item COM a marca: a contagem SOBE no meio do
+  // ajuste. O lado de aplicar continua dividindo pela contagem de agora — é o
+  // que o plano prescreve —, e o de desfazer continua exato.
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  cacheFalso(a);
+  a.aba('dados');
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(itemDe(a, 'jantar').q, 310);
+
+  await a.v('ctx.duplicaRefeicao', 'jantar'); await a.esperar();
+  await viraParaMenos(a);
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(a.S().ajuste, 0);
+  a.vJ('planoDeComida').forEach(function (r) {
+    r.itens.forEach(function (i) {
+      if (i.f === 'arroz') assert.strictEqual(i.q, 250, r.n + ' volta à prescrição');
+    });
+  });
+  a.fechar();
+});
