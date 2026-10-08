@@ -3448,7 +3448,11 @@ function aplicaArroz() {
   planoDeComida().forEach(function (r) {
     r.itens.forEach(function (i) { if (i.arroz) itens.push(i); });
   });
-  aplicaAjusteNoArroz(itens, S.ajuste || 0);
+  // Quem muda o plano CARIMBA. `aplicaArroz` reescreve a quantidade de arroz
+  // em dado PERSISTIDO, e não carimbava: `comida.v` ficava igual ao `pv` que o
+  // dia fechado guardou ANTES do passo, então o app não conseguia dizer que
+  // aquele dia foi calculado contra outro plano. Sub-relatava divergência.
+  if (aplicaAjusteNoArroz(itens, S.ajuste || 0)) planoMudou();
 }
 
 // Adaptador: a regra vive em dominio/volume.ts; aqui só entram os dados.
@@ -5822,8 +5826,12 @@ CTX.alternaCadencia = function (i) {
 
 CTX.restauraPrograma = function () { restaurarTudo(); };
 CTX.restauraPlano = function () {
-  planoMudou();
   if (!confirm('Restaurar o plano do nutricionista?\n\nSeus alimentos cadastrados e todo o histórico ficam. Volta só a prescrição.')) return;
+  // O carimbo vem DEPOIS da pergunta, e por isso: ele estava antes, então
+  // cancelar subia a versão do plano sem o plano mudar, e o app passava a
+  // relatar divergência em dias que não divergiram. É o erro espelhado do que
+  // `aplicaArroz` fazia — carimbar sem mudar, em vez de mudar sem carimbar.
+  planoMudou();
   S.comida.plano = JSON.parse(JSON.stringify(PLANO_BASE));
   S.ajuste = 0;
   queueSave(); render();

@@ -399,3 +399,51 @@ test('duplicar a refeição com arroz não tira comida de ninguém', async () =>
   });
   a.fechar();
 });
+
+// ---------- o carimbo de versão do plano ----------
+//
+// `S.comida.v` é a versão do plano nutricional. Cada dia de comida fechado
+// guarda em `pv` a versão contra a qual ele foi calculado, e é a comparação das
+// duas que faz a tela dizer "este dia foi calculado contra outro plano".
+//
+// A regra é uma e vale nos dois sentidos: QUEM MUDA O PLANO CARIMBA, QUEM NÃO
+// MUDA NÃO CARIMBA. Os dois casos abaixo nasceram vermelhos, um de cada lado:
+// aplicar o passo movia 120 g de arroz no plano persistido SEM carimbar (o app
+// sub-relatava divergência), e cancelar a restauração carimbava SEM mudar nada
+// (super-relatava). Erros espelhados no mesmo campo.
+
+test('aplicar o passo carimba a versão do plano, porque ele mexe no arroz', async () => {
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  a.aba('dados');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer mais');
+
+  // `versaoDoPlano` não está na superfície, e não deve estar: é leitura
+  // preguiçosa que INICIALIZA o campo. Lê-se o estado.
+  const antes = a.S().comida.v || 0;
+  const arrozAntes = a.v('arrozAtual');
+
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+
+  assert.strictEqual(a.v('arrozAtual'), arrozAntes + 120, 'o plano mudou de verdade');
+  assert.ok((a.S().comida.v || 0) > antes,
+    'e a versão subiu com ele: um dia fechado antes disto tem de poder dizer ' +
+    'que foi calculado contra outro plano — versão: ' + antes + ' → ' + a.S().comida.v);
+  a.fechar();
+});
+
+test('cancelar a restauração do plano NÃO carimba a versão', async () => {
+  const a = await app();
+  const antes = a.S().comida.v || 0;
+  const planoAntes = JSON.stringify(a.S().comida.plano);
+
+  a.recusar();
+  a.v('ctx.restauraPlano');
+  await a.esperar();
+
+  assert.strictEqual(JSON.stringify(a.S().comida.plano), planoAntes,
+    'cancelar não mexeu no plano');
+  assert.strictEqual(a.S().comida.v || 0, antes,
+    'e por isso não há versão nova a carimbar: carimbar aqui faria o app ' +
+    'relatar divergência de plano em dias que não divergiram');
+  a.fechar();
+});

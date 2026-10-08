@@ -321,16 +321,24 @@ export function quantidadePrescrita(i: Item): number {
  * Chamar duas vezes com o mesmo saldo não acumula: a segunda chamada parte da
  * mesma prescrição e chega no mesmo lugar.
  */
-export function aplicaAjusteNoArroz(itens: Item[], ajuste: number): void {
+export function aplicaAjusteNoArroz(itens: Item[], ajuste: number): boolean {
+  let mudou = false;
   itens.forEach(function (i) {
     const base = quantidadePrescrita(i);
     const q = arrozDoAjuste(base, ajuste, itens.length);
+    if (q !== i.q) mudou = true;
     i.q = q;
     // O que ele DEU, não o passo que se pediu: um corte que esbarrou no zero
     // deu menos, e é o que deu que tem de voltar. Zero não se grava.
     const dado = q - base;
-    if (dado) i.ajq = dado; else delete i.ajq;
+    if (dado) { if (i.ajq !== dado) mudou = true; i.ajq = dado; }
+    else { if (i.ajq !== undefined) mudou = true; delete i.ajq; }
   });
+  // DEVOLVE se mexeu, em vez de deixar o chamador inferir. Quem muda o plano
+  // tem de carimbar a versão, e carimbar sem mudar é o erro oposto — igual de
+  // ruim, porque faz o app relatar divergência onde não houve. A função que
+  // mexe é a única que sabe se mexeu.
+  return mudou;
 }
 
 /**
