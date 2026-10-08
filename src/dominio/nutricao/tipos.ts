@@ -62,6 +62,41 @@ export interface Item {
   arroz?: boolean;
   /** só entra em dia de alta demanda */
   alta?: boolean;
+  /**
+   * Quanto de `q` veio do ajuste calórico, nas unidades do item.
+   *
+   * **É a única coisa aqui que não é marca.** `arroz`, `alta` e `caf` são
+   * MARCAS: dizem o que o item é ou quando ele aparece, são booleanas e quem as
+   * lê não faz conta com elas. `ajq` é VALOR, com sinal e unidade — soma e
+   * subtrai de `q`, e a aritmética dele é a do prato. Daí o nome não ser um
+   * adjetivo: é `aj` de ajuste mais o `q` de quantidade, a parte de `q` que o
+   * ajuste pôs lá.
+   *
+   * A invariante é uma só: **`q − ajq` é a prescrição**. Ausente = zero, que é
+   * o caso dominante (todo item que o ajuste nunca tocou) e por isso não se
+   * grava.
+   *
+   * Existe porque o desfazer era RECALCULADO. O passo de 120 g se reparte entre
+   * os itens marcados com `arroz`, e desfazer dividia pela contagem DE AGORA:
+   * trocar o arroz do almoço por cuscuz com um passo em vigor fazia o desfazer
+   * achar um item só e tirar do jantar os 120 g do dia inteiro — medido, 190 g
+   * onde a prescrição é 250 —, enquanto o almoço ficava com os +60 para sempre,
+   * porque perdeu a marca e o desfazer não passava mais por ele. Mexer no plano
+   * é normal; recalcular supõe que ninguém mexeu.
+   *
+   * O dono respondeu de quem é o número que fica no prato quando a quantidade de
+   * pratos muda (08/10): **"é meu"**. Então o app desfaz exatamente o que somou,
+   * e é isto que ele precisa lembrar para conseguir. A razão de ser essa a
+   * escolha, e não o salto para 370, é a regra escrita do projeto de o caminho
+   * de menor esforço ser o conservador: um número que volta ao que o
+   * nutricionista prescreveu é conservador; um que salta porque ele trocou um
+   * alimento, não.
+   *
+   * Por isso `ajq` é gravado como `q − base` DEPOIS do clamp em zero, e não
+   * como o passo calculado: um corte que tenha esbarrado no zero deu menos do
+   * que o passo pedia, e é o que ele deu que tem de voltar.
+   */
+  ajq?: number;
 }
 
 /** Uma refeição do plano. */

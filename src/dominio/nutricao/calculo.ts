@@ -289,6 +289,63 @@ export function arrozDoAjuste(base: number, ajuste: number, refeicoes: number = 
   return Math.max(0, Math.round(base) + passo);
 }
 
+/** Quanto deste item veio do ajuste. Ausente = nada; ver `Item.ajq`. */
+export function ajusteNoItem(i: Item): number {
+  const v = i.ajq;
+  return (typeof v === 'number' && isFinite(v)) ? v : 0;
+}
+
+/**
+ * A quantidade PRESCRITA do item: o que sobra quando o ajuste é devolvido.
+ *
+ * É a invariante `q − ajq` do tipo, com as duas guardas do prato: arredonda,
+ * porque `q` é número de colher, e não desce abaixo de zero.
+ */
+export function quantidadePrescrita(i: Item): number {
+  return Math.max(0, Math.round(i.q) - ajusteNoItem(i));
+}
+
+/**
+ * Aplica o saldo de passos aos itens marcados com arroz, e grava quanto deu a
+ * cada um.
+ *
+ * O desfazer aqui NÃO é recalculado: a base de cada item é `q − ajq`, que é a
+ * prescrição dele, qualquer que seja a quantidade de pratos hoje. Era o
+ * recálculo pela contagem de agora que tirava comida em silêncio quando o plano
+ * mudava no meio — ver `Item.ajq`.
+ *
+ * Aplicar, por outro lado, CONTINUA dividindo pela contagem de agora: o passo é
+ * do dia inteiro e se reparte entre os pratos que existem hoje, que é o que o
+ * plano prescreve. O defeito era só na volta.
+ *
+ * Chamar duas vezes com o mesmo saldo não acumula: a segunda chamada parte da
+ * mesma prescrição e chega no mesmo lugar.
+ */
+export function aplicaAjusteNoArroz(itens: Item[], ajuste: number): void {
+  itens.forEach(function (i) {
+    const base = quantidadePrescrita(i);
+    const q = arrozDoAjuste(base, ajuste, itens.length);
+    i.q = q;
+    // O que ele DEU, não o passo que se pediu: um corte que esbarrou no zero
+    // deu menos, e é o que deu que tem de voltar. Zero não se grava.
+    const dado = q - base;
+    if (dado) i.ajq = dado; else delete i.ajq;
+  });
+}
+
+/**
+ * Tira do item a marca de arroz — e devolve a ele o que o ajuste lhe deu.
+ *
+ * A marca é o que faz o ajuste aterrar neste item; sem ela, o desfazer nunca
+ * mais passa por aqui, e os gramas ficariam para sempre. Como o número é do
+ * dono, o app devolve exatamente o que tomou: o item volta à prescrição.
+ */
+export function tiraMarcaDeArroz(i: Item): void {
+  i.q = quantidadePrescrita(i);
+  delete i.arroz;
+  delete i.ajq;
+}
+
 /**
  * A lista de compras — derivada, nunca guardada.
  *
