@@ -630,29 +630,34 @@ test('ctx.abreCardio abre e fecha o registro rápido, no cromo do treino', async
 });
 
 // ---------------------------------------------------------------------------
-// As cinco grandezas da bioimpedância: o dado existe e nada as escreve
+// As cinco grandezas da bioimpedância: a tubulação, e a torneira
 // ---------------------------------------------------------------------------
 //
-// ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. Ele grava o que o app faz hoje, porque
-// o que ele faz hoje é recusar.
+// ESTE CASO MUDOU DE ASSUNTO, e é a única asserção alterada nesta passada.
 //
-// `MEDIDAS_DO_CORPO` declara sete grandezas; `S.body` tem as sete; a migração
-// 9 → 10 criou as cinco novas; a lista branca da importação as preserva; a
-// fusão tem chave de lápide para cada uma. Mas:
+// Antes ele gravava a ausência: *"addBody nas cinco grandezas da bioimpedância
+// recusa hoje, por falta de porta"*, com `Object.keys(CTX).filter(/bio/i)`
+// valendo `[]`. A porta agora existe — `CTX.registraBio` —, e a asserção da
+// lista vazia ficou vermelha. **Isso é o acerto, não uma regressão**: ela foi
+// escrita exatamente para ficar vermelha no dia em que alguém construísse a
+// torneira, e apontou a linha como prometido.
 //
-//   - `CORPO_PADRAO` só tem `peso` e `cintura`, então `baseDoCorpo('bioPeso')`
-//     devolve `undefined` quando a série está vazia;
-//   - não existe chave de `CTX` que escreva o rascunho delas — `setPeso` e
-//     `setCintura` são as duas que existem;
-//   - e não existe `CTX.registraBioPeso` nem equivalente: nenhuma das 181
-//     chaves de `CTX` menciona bioimpedância.
+// O que ele guarda agora são as três coisas que continuam verdade:
 //
-// Resultado: `addBody('bioPeso')` cai no `isNaN` e recusa. As cinco grandezas
-// atravessam backup, migração e sincronização, e **não há caminho no app que
-// grave a primeira leitura delas**. Se alguém der a elas padrão de partida ou
-// uma chave de escrita, este caso fica vermelho e aponta onde.
+//   1. **As cinco NÃO ganharam valor de partida.** `CORPO_PADRAO` segue com
+//      `peso` e `cintura` só, então `addBody('bioPeso')` continua recusando —
+//      e deve. Um padrão de `bioGorduraPct: 18` seria o app inventando leitura
+//      de balança; campo de bioimpedância nasce vazio.
+//   2. **A porta das cinco é `registraBio`, e é só ela.** Nenhuma outra chave
+//      de `CTX` menciona bioimpedância.
+//   3. **`dadosDoApp` continua não as contando no resumo do acervo.** Enquanto
+//      não havia torneira isso era coerente — não havia o que contar. Agora é
+//      omissão real: o resumo diz ao dono o tamanho do que ele tem a perder, e
+//      a partir daqui ele pode ter leituras de bioimpedância que o resumo
+//      ignora. Não consertei (está fora desta tarefa) e o caso grava o estado
+//      de hoje, para quem consertar ter o vermelho que aponta a linha.
 
-test('addBody nas cinco grandezas da bioimpedância recusa hoje, por falta de porta', async () => {
+test('as cinco da bioimpedância seguem sem valor de partida, e a porta delas é ctx.registraBio', async () => {
   const a = await app({ estado: vazio });
   a.aba('dados');
 
@@ -665,16 +670,265 @@ test('addBody nas cinco grandezas da bioimpedância recusa hoje, por falta de po
     await a.esperar();
     assert.strictEqual(a.S().body[k].length, 0, k + ' não grava: não tem valor de partida');
     assert.strictEqual(a.toast(), 'Digite um número válido.',
-      k + ' recusa com a mensagem de entrada inválida, sem dizer que falta porta');
+      k + ' recusa pela porta da manhã, que lê rascunho e referência que elas não têm');
   }
 
-  // e nenhuma chave de `CTX` as alcança
+  // e UMA chave de `CTX` as alcança: a torneira, e nenhuma outra
   const chaves = Object.keys(a.m.ctx).filter(function (k) { return /bio/i.test(k); });
-  assert.deepStrictEqual(chaves, [],
-    'nenhuma das chaves de CTX menciona bioimpedância — nem para escrever, nem para ler');
+  assert.deepStrictEqual(chaves, ['registraBio'],
+    'a bioimpedância tem uma porta de escrita, e só uma');
+  assert.strictEqual(typeof a.m.ctx.registraBio, 'function');
 
-  // o resumo do acervo também não as conta
+  // o resumo do acervo AINDA não as conta — ver o comentário acima
   assert.ok(!/bio/i.test(a.vJ('ctx.dadosDoApp').resumo),
-    'e o resumo do que ele tem a perder conta peso e cintura, não as cinco');
+    'o resumo do que ele tem a perder conta peso e cintura, e não as cinco');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// A torneira: `ctx.registraBio`
+// ---------------------------------------------------------------------------
+//
+// O QUE ESTE GRUPO PROVA: que existe no MODELO um caminho de escrita para as
+// cinco grandezas da bioimpedância; que ele grava a leitura inteira num
+// instante só; que ele recusa leitura incompleta sem gravar nada pela metade;
+// que obedece à coluna `obrigatorio` de `MEDIDAS_DO_CORPO` em vez de a
+// transcrever; que o peso da balança de bioimpedância é série SEPARADA da
+// pesagem da manhã; e que o que ele grava atravessa a cópia de segurança.
+//
+// O QUE ESTE GRUPO NÃO PROVA — e aqui a ressalva é mais forte do que de
+// costume: **A TELA NÃO EXISTE.** Não há campo, botão ou folha no app que
+// chame `registraBio`. Chamar o verbo prova que a capacidade existe no modelo;
+// não prova que o dono alcança a bioimpedância com o dedo, porque hoje ele não
+// alcança. A tela é de outra frente, e nada aqui a antecipa: nenhum caso deste
+// grupo toca o DOM.
+
+/** Uma leitura de balança completa, na forma que um campo de aparelho entrega. */
+const LEITURA = {
+  bioPeso: 79.2, bioMusculo: 37.4, bioGordura: 14.1, bioGorduraPct: 17.8, bioAgua: 45.3
+};
+
+test('ctx.registraBio grava a leitura inteira da balança, num instante só', async () => {
+  const a = await app({ estado: vazio });
+  const r = await a.v('ctx.registraBio', LEITURA);
+  await a.esperar();
+
+  assert.strictEqual(r.ok, true, 'a leitura entrou');
+  assert.deepStrictEqual(Array.prototype.slice.call(r.gravadas),
+    ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua'],
+    'as cinco, na ordem da tabela do domínio');
+
+  const S = a.S();
+  assert.deepStrictEqual(
+    ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua']
+      .map(function (k) { return S.body[k].length; }), [1, 1, 1, 1, 1],
+    'uma marca em cada série');
+  assert.strictEqual(S.body.bioGorduraPct[0].v, 17.8, 'com o valor que foi medido');
+  const instantes = ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua']
+    .map(function (k) { return S.body[k][0].t; });
+  assert.strictEqual(new Set(instantes).size, 1,
+    'e TODAS no mesmo instante: é o que as torna uma leitura, e não cinco medidas soltas');
+
+  // texto com vírgula decimal, que é o que um campo de aparelho entrega
+  await a.v('ctx.registraBio', {
+    bioPeso: '78,6', bioMusculo: '37,5', bioGordura: '13,4', bioGorduraPct: '17,0', bioAgua: '45,9'
+  }, Date.now() - DIA);
+  await a.esperar();
+  assert.strictEqual(a.S().body.bioPeso.length, 2, 'a leitura de ontem entrou também');
+  assert.strictEqual(a.S().body.bioPeso[0].v, 78.6,
+    'vírgula decimal lida como número, não como NaN nem como 78');
+  assert.deepStrictEqual(a.S().body.bioPeso.map(function (x) { return x.v; }), [78.6, 79.2],
+    'e a série fica em ordem de tempo, como a do peso da manhã');
+  a.fechar();
+});
+
+test('ctx.registraBio recusa a leitura incompleta, e não grava nada pela metade', async () => {
+  const a = await app({ estado: vazio });
+  const semGordura = Object.assign({}, LEITURA);
+  delete semGordura.bioGordura;
+
+  const r = await a.v('ctx.registraBio', semGordura);
+  await a.esperar();
+  assert.strictEqual(r.ok, false, 'recusou');
+  assert.deepStrictEqual(Array.prototype.slice.call(r.falta), ['bioGordura'],
+    'e diz qual grandeza faltou');
+  assert.strictEqual(a.toast(), 'Falta massa de gordura.',
+    'com o NOME que a tabela do domínio dá a ela, não com a chave crua');
+
+  const S = a.S();
+  assert.deepStrictEqual(
+    ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua']
+      .map(function (k) { return S.body[k].length; }), [0, 0, 0, 0, 0],
+    'NADA entrou: as quatro válidas também ficaram fora. Meia leitura de ' +
+    'bioimpedância não fecha — gordura sem percentual, percentual sem peso');
+
+  // lixo numa das obrigatórias
+  const ruim = await a.v('ctx.registraBio', Object.assign({}, LEITURA, { bioGorduraPct: 'dezoito' }));
+  await a.esperar();
+  assert.strictEqual(ruim.ok, false);
+  assert.deepStrictEqual(Array.prototype.slice.call(ruim.invalidas), ['bioGorduraPct']);
+  assert.strictEqual(a.toast(), 'Número inválido em percentual de gordura.');
+  assert.strictEqual(a.S().body.bioPeso.length, 0, 'e de novo nada entrou');
+
+  // zero e negativo não são medida de balança
+  const zero = await a.v('ctx.registraBio', Object.assign({}, LEITURA, { bioMusculo: 0 }));
+  await a.esperar();
+  assert.strictEqual(zero.ok, false, 'zero quilo de massa muscular não é uma medida');
+  const neg = await a.v('ctx.registraBio', Object.assign({}, LEITURA, { bioPeso: -79 }));
+  await a.esperar();
+  assert.strictEqual(neg.ok, false, 'nem peso negativo');
+  assert.strictEqual(a.S().body.bioPeso.length, 0);
+
+  // leitura sem nada: as quatro obrigatórias aparecem na recusa
+  const nada = await a.v('ctx.registraBio', {});
+  await a.esperar();
+  assert.deepStrictEqual(Array.prototype.slice.call(nada.falta),
+    ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct'],
+    'quatro obrigatórias — a água não está na lista');
+  a.fechar();
+});
+
+test('a água corporal é a única opcional, e é a tabela do domínio que diz isso', async () => {
+  const a = await app({ estado: vazio });
+
+  // a regra vem da tabela, não daqui: se ela mudar, este caso acusa
+  const tabela = a.dado('MEDIDAS_DO_CORPO').filter(function (m) { return m.bio; });
+  assert.strictEqual(tabela.length, 5, 'cinco grandezas saem da balança');
+  assert.deepStrictEqual(tabela.filter(function (m) { return !m.obrigatorio; })
+    .map(function (m) { return m.k; }), ['bioAgua'],
+    'e uma só é opcional, declarada na tabela do domínio');
+
+  const semAgua = Object.assign({}, LEITURA);
+  delete semAgua.bioAgua;
+  const r = await a.v('ctx.registraBio', semAgua);
+  await a.esperar();
+  assert.strictEqual(r.ok, true, 'a leitura sem água entra');
+  assert.deepStrictEqual(Array.prototype.slice.call(r.gravadas),
+    ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct'], 'com quatro medidas');
+  assert.deepStrictEqual(a.S().body.bioAgua, [],
+    'e a água fica VAZIA em vez de virar zero: ausência de medida não é medida de zero');
+
+  // vazia em texto é o mesmo que ausente — é o que um campo em branco entrega
+  const vazia = await a.v('ctx.registraBio', Object.assign({}, LEITURA, { bioAgua: '' }), Date.now() - DIA);
+  await a.esperar();
+  assert.strictEqual(vazia.ok, true, 'campo em branco não é erro de digitação');
+  assert.deepStrictEqual(a.S().body.bioAgua, [], 'e segue sem marca nenhuma');
+
+  // mas lixo na opcional recusa a leitura inteira, em vez de perder a medida
+  const lixo = await a.v('ctx.registraBio', Object.assign({}, LEITURA, { bioAgua: 'x' }), Date.now() - 2 * DIA);
+  await a.esperar();
+  assert.strictEqual(lixo.ok, false,
+    'opcional preenchida com lixo recusa: deixar passar em silêncio perderia ' +
+    'uma medida digitada, e erro de digitação não é "não medi"');
+  a.fechar();
+});
+
+test('o peso da bioimpedância é registro SEPARADO da pesagem da manhã', async () => {
+  // Decisão do dono: ele pesa numa balança de manhã e mede na outra em outra
+  // hora. As duas séries convivem de propósito, e o veredito da dieta — que lê
+  // média semanal e ritmo — continua lendo só a da manhã.
+  const a = await app({ estado: vazio });
+  a.aba('dados');
+  a.v('ctx.setPeso', 80.5);
+  await a.v('ctx.registraPeso');
+  await a.esperar();
+  assert.strictEqual(a.S().body.peso.length, 1, 'a pesagem da manhã entrou');
+  assert.strictEqual(a.S().body.peso[0].v, 80.5);
+  const vereditoAntes = a.vJ('ctx.dados').veredito;
+
+  await a.v('ctx.registraBio', LEITURA);
+  await a.esperar();
+
+  assert.strictEqual(a.S().body.peso.length, 1,
+    'a balança de bioimpedância NÃO acrescenta nem substitui a pesagem da manhã');
+  assert.strictEqual(a.S().body.peso[0].v, 80.5, 'que continua sendo 80,5');
+  assert.strictEqual(a.S().body.bioPeso.length, 1, 'e o peso dela mora na série própria');
+  assert.strictEqual(a.S().body.bioPeso[0].v, 79.2,
+    'com o valor da outra balança — 1,3 kg de diferença entre as duas, que é o fato');
+  assert.deepStrictEqual(a.vJ('ctx.dados').veredito, vereditoAntes,
+    'e o veredito da dieta não se mexeu: ele lê a pesagem da manhã, não a da balança');
+  a.fechar();
+});
+
+test('registrar duas vezes no mesmo dia substitui a leitura e deixa lápide nas cinco', async () => {
+  // A lápide é o que impede a fusão do outro aparelho de ressuscitar a leitura
+  // corrigida: sem ela o dia teria duas medidas de cada grandeza.
+  const a = await app({ estado: vazio });
+  await a.v('ctx.registraBio', LEITURA);
+  await a.esperar();
+  const primeiro = a.S().body.bioPeso[0].t;
+  assert.deepStrictEqual(a.S().apagados || {}, {}, 'nenhuma lápide ainda');
+
+  await a.esperar(5);   // o relógio real anda: a segunda leitura tem outro instante
+  const r = await a.v('ctx.registraBio', Object.assign({}, LEITURA, { bioPeso: 80.1 }));
+  await a.esperar();
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(a.S().body.bioPeso.length, 1,
+    'o dia continua com UMA leitura: a segunda substituiu, não empilhou');
+  assert.strictEqual(a.S().body.bioPeso[0].v, 80.1, 'a corrigida é a que fica');
+  assert.match(a.toast(), /substituiu a leitura do dia/,
+    'e o app diz que substituiu, em vez de deixar parecer que acrescentou');
+
+  const lapides = Object.keys(a.S().apagados || {});
+  assert.strictEqual(lapides.length, 5,
+    'uma lápide por grandeza substituída: ' + lapides.join(' '));
+  assert.ok(lapides.every(function (k) { return k.indexOf(String(primeiro)) >= 0; }),
+    'todas carimbando o instante da leitura antiga: ' + lapides[0]);
+  a.fechar();
+});
+
+test('ctx.registraBio recusa data no futuro, e não grava nada', async () => {
+  const a = await app({ estado: vazio });
+  const r = await a.v('ctx.registraBio', LEITURA, Date.now() + DIA);
+  await a.esperar();
+  assert.strictEqual(r.ok, false, 'recusou');
+  assert.strictEqual(r.futuro, true, 'e diz por quê');
+  assert.strictEqual(a.toast(), 'Data no futuro: a leitura não foi registrada.');
+  assert.strictEqual(a.S().body.bioPeso.length, 0, 'nada entrou');
+
+  // uma data passada entra, e com o instante que foi pedido
+  const quando = Date.now() - 3 * DIA;
+  const ok = await a.v('ctx.registraBio', LEITURA, quando);
+  await a.esperar();
+  assert.strictEqual(ok.ok, true);
+  assert.strictEqual(a.S().body.bioPeso[0].t, quando,
+    'leitura retroativa cai no dia que ele disse, não em hoje');
+  a.fechar();
+});
+
+test('a leitura que registraBio grava atravessa a cópia de segurança e volta pela importação', async () => {
+  // É o fecho do assunto: a tubulação existia e não havia torneira. Isto mede a
+  // água correndo do começo ao fim — torneira, estado, backup, apagar tudo,
+  // importar de volta.
+  //
+  // Pelo caminho da IMPORTAÇÃO, e não semeando o backup no armazenamento: são
+  // portas diferentes. Semear entra pelo boot, que copia `S` inteiro; importar
+  // passa pela LISTA BRANCA (`corpoDoBackup`), que enumera as grandezas por
+  // nome e é a única das duas que pode perder uma em silêncio. A primeira
+  // versão deste caso semeava, e uma quebra deliberada da lista branca não o
+  // derrubava — o caso passava afirmando o que não media.
+  const a = await app({ estado: vazio });
+  await a.v('ctx.registraBio', LEITURA);
+  await a.esperar();
+  const bkp = a.v('payload');
+  assert.strictEqual(JSON.parse(bkp).data.body.bioGorduraPct[0].v, 17.8,
+    'a leitura entrou na cópia de segurança');
+
+  a.aceitar();
+  await a.v('wipe');
+  await a.esperar();
+  assert.strictEqual(a.S().body.bioPeso.length, 0, 'apagou tudo — pré-condição');
+
+  a.aba('guia');
+  await a.v('importText', bkp);
+  await a.esperar(60);
+
+  const S = a.S();
+  assert.deepStrictEqual(
+    ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua']
+      .map(function (k) { return S.body[k][0].v; }), [79.2, 37.4, 14.1, 17.8, 45.3],
+    'e as cinco voltaram iguais pela lista branca, que as copia por nome');
+  assert.strictEqual(S.body.peso.length, 0,
+    'sem que a pesagem da manhã tenha ganhado nada de carona');
   a.fechar();
 });

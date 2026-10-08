@@ -46,7 +46,7 @@ import {
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
-import { MARCAS_DO_CORPO, mediasSemanais, pesoRitmo as _pesoRitmo,
+import { MARCAS_DO_CORPO, MEDIDAS_DO_CORPO, mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
@@ -3559,20 +3559,33 @@ function valorDoCorpo(k) {
   return typeof f[k] === 'number' ? f[k] : parseFloat(String(f[k]).replace(',', '.'));
 }
 
+/**
+ * Põe uma marca na série daquela grandeza, no instante dado.
+ *
+ * A medida do MESMO DIA é substituída, e a substituída ganha lápide: o registro
+ * novo tem outro instante, e sem a lápide a fusão traria os dois de volta e o
+ * dia teria duas medidas.
+ *
+ * @returns {number} quantas medidas daquele dia foram substituídas
+ */
+function gravaMarca(k, v, quando) {
+  if (!Array.isArray(S.body[k])) S.body[k] = [];
+  const arr = S.body[k];
+  const noDia = arr.filter(x => sameDay(x.t, quando));
+  noDia.forEach(x => { lapide(chaveDeMarca(k, x)); arr.splice(arr.indexOf(x), 1); });
+  arr.push({ t: quando, v, m: Date.now() });
+  arr.sort((a,b) => a.t - b.t);
+  if (arr.length > 400) S.body[k] = arr.slice(-400);
+  return noDia.length;
+}
+
 async function addBody(k) {
   const v = valorDoCorpo(k);
   if (isNaN(v) || v <= 0) { toast('Digite um número válido.'); return; }
 
   const quando = instanteDaMedida(k);
   const rotulo = rotuloDoDia(quando);
-  const arr = S.body[k];
-  const noDia = arr.filter(x => sameDay(x.t, quando));
-  // a substituída ganha lápide: o registro novo tem outro instante, e sem isso
-  // a fusão traria os dois de volta e o dia teria duas medidas
-  noDia.forEach(x => { lapide(chaveDeMarca(k, x)); arr.splice(arr.indexOf(x), 1); });
-  arr.push({ t: quando, v, m: Date.now() });
-  arr.sort((a,b) => a.t - b.t);
-  if (arr.length > 400) S.body[k] = arr.slice(-400);
+  const substituiu = gravaMarca(k, v, quando);
 
   // Solta o rascunho: o stepper volta a se derivar da última medida, que é
   // justamente a que acabou de ser gravada. E a data volta para hoje — deixar
@@ -3587,9 +3600,95 @@ async function addBody(k) {
   render();
   const nome = k === 'peso' ? 'Peso' : 'Cintura';
   const un = k === 'peso' ? 'kg' : 'cm';
-  toast(noDia.length
+  toast(substituiu
     ? `${nome} de ${rotulo} atualizado para ${fmtDec(v)} ${un}.`
     : `${fmtDec(v)} ${un} registrado ${rotulo === 'hoje' ? 'hoje' : 'em ' + rotulo}.`);
+}
+
+/**
+ * A TORNEIRA DA BIOIMPEDÂNCIA: registra uma leitura da balança.
+ *
+ * Toda a tubulação das cinco grandezas já existia — `MEDIDAS_DO_CORPO` as
+ * declara, a migração 9 → 10 criou as chaves em `S.body`, a lista branca da
+ * cópia de segurança as preserva, `chaveDeMarca` tem lápide para cada uma e a
+ * fusão as soma. **Faltava a porta de escrita.** Nada no app gravava a
+ * primeira leitura, e `addBody('bioPeso')` recusava com "Digite um número
+ * válido" porque não há (nem deve haver) valor de partida para elas.
+ *
+ * **Recebe a LEITURA INTEIRA, não uma grandeza por vez.** As cinco saem da
+ * mesma pesagem, e a tabela do domínio diz isso em letras (`bio` é *"sai da
+ * balança de bioimpedância, na mesma leitura das outras `bio`"*). Gravar três
+ * de quatro deixaria uma leitura que não fecha — massa de gordura sem
+ * percentual, percentual sem peso — e é dela que a média semanal depois lê.
+ * Por isso a recusa é ATÔMICA: nada entra pela metade.
+ *
+ * **`bioAgua` é a única opcional**, e isso não é leniência do app: é
+ * `MEDIDAS_DO_CORPO[].obrigatorio`, consultado aqui em vez de transcrito.
+ * Vazia, ela não entra — e não vira zero, que seria medição inventada.
+ *
+ * **O peso daqui é registro SEPARADO de `S.body.peso`.** Ele pesa na balança
+ * do banheiro de manhã e mede na de bioimpedância em outra hora; as duas
+ * séries convivem de propósito, e unificá-las perderia a diferença entre as
+ * duas balanças. O veredito da dieta continua lendo só a da manhã.
+ *
+ * **Não há valor de partida para as cinco em `CORPO_PADRAO`, e não deve
+ * haver**: um padrão de `bioGorduraPct: 18` seria o app inventando leitura de
+ * balança. Campo de bioimpedância nasce vazio, e esta é a única porta que o
+ * enche.
+ *
+ * **ESTE VERBO EXISTE E A TELA NÃO.** A capacidade está no modelo, alcançável
+ * e testável por aqui; nenhuma tela do app a oferece ao dedo ainda, e o resumo
+ * do acervo (`CTX.dadosDoApp`) continua não contando as cinco. A tela é de
+ * outra frente.
+ *
+ * @param {object} leitura valores por chave de grandeza. Texto com vírgula
+ *   decimal é aceito, porque é o que um campo de aparelho entrega.
+ * @param {number} [quando] o instante da leitura; o padrão é agora. Data no
+ *   futuro é recusada, como em `CTX.setDiaCorpo`.
+ * @returns {Promise<object>} `{ ok: true, em, gravadas }` ou
+ *   `{ ok: false, falta, invalidas }` — sempre por valor, nunca um elemento.
+ */
+async function registraBio(leitura, quando) {
+  const L = (leitura && typeof leitura === 'object') ? leitura : {};
+  const t = quando == null ? Date.now() : Number(quando);
+  if (!t || isNaN(t) || t > Date.now()) {
+    toast('Data no futuro: a leitura não foi registrada.');
+    return { ok: false, falta: [], invalidas: [], futuro: true };
+  }
+
+  const falta = [], invalidas = [], vai = [];
+  MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).forEach(function (m) {
+    const bruto = L[m.k];
+    if (bruto == null || bruto === '') { if (m.obrigatorio) falta.push(m); return; }
+    const v = typeof bruto === 'number' ? bruto : parseFloat(String(bruto).replace(',', '.'));
+    // Opcional preenchida com lixo também recusa: deixar passar em silêncio
+    // perderia uma medida que ele digitou, e um erro de digitação não é
+    // "não medi".
+    if (isNaN(v) || v <= 0) { invalidas.push(m); return; }
+    vai.push({ k: m.k, v: v });
+  });
+
+  const nomes = function (ms) { return ms.map(function (m) { return m.n; }).join(', '); };
+  if (invalidas.length) {
+    toast('Número inválido em ' + nomes(invalidas) + '.');
+    return { ok: false, falta: falta.map(m => m.k), invalidas: invalidas.map(m => m.k) };
+  }
+  if (falta.length) {
+    toast('Falta ' + nomes(falta) + '.');
+    return { ok: false, falta: falta.map(m => m.k), invalidas: [] };
+  }
+
+  // Um instante só para as cinco: é o que as torna UMA leitura, e é o que a
+  // fusão usa para casar o mesmo dia vindo de dois aparelhos.
+  let substituiu = 0;
+  vai.forEach(function (x) { substituiu += gravaMarca(x.k, x.v, t); });
+
+  await save();
+  render();
+  const rotulo = rotuloDoDia(t);
+  toast('Bioimpedância registrada ' + (rotulo === 'hoje' || rotulo === 'ontem' ? rotulo : 'em ' + rotulo) +
+        (substituiu ? ' — substituiu a leitura do dia.' : '.'));
+  return { ok: true, em: t, gravadas: vai.map(function (x) { return x.k; }) };
 }
 async function delBody(k, t) {
   // Confirma, como as outras ações destrutivas: a medida é um ponto de um dia
@@ -4955,6 +5054,11 @@ const SUPERFICIE = {
     get PLANO_BASE() { return PLANO_BASE; },
     get ALIMENTOS_BASE() { return ALIMENTOS_BASE; },
     get MARCAS_DO_CORPO() { return MARCAS_DO_CORPO; },
+    // A tabela inteira, com nome, unidade e obrigatoriedade. `MARCAS_DO_CORPO`
+    // só dá as chaves, e quem precisa saber que `bioAgua` é a única opcional
+    // teria de transcrever a tabela — que é o defeito que ela existe para
+    // evitar.
+    get MEDIDAS_DO_CORPO() { return MEDIDAS_DO_CORPO; },
     // O relógio do descanso e a tela acesa: variáveis de módulo, e a única
     // forma de observá-las de fora era ler o nome nu pela `eval`.
     get timer() { return timer; },
@@ -5790,6 +5894,16 @@ CTX.setDiaCorpo = function (k, iso) {
 };
 CTX.registraPeso = function () { addBody('peso'); };
 CTX.registraCintura = function () { addBody('cintura'); };
+/**
+ * A porta de escrita das cinco grandezas da bioimpedância — ver `registraBio`.
+ *
+ * Devolve a PROMESSA de propósito: o verbo grava e só então responde se a
+ * leitura entrou, e quem chama precisa dessa resposta para dizer ao dono o
+ * que faltou. `CTX.registraPeso` não devolve nada porque a casca dele lê o
+ * rascunho da tela; aqui o valor vem por argumento, e a resposta volta por
+ * retorno.
+ */
+CTX.registraBio = function (leitura, quando) { return registraBio(leitura, quando); };
 CTX.apagaMedida = function (k, t) { delBody(k, t); };
 CTX.apagaCardio = function (t) { delCardio(t); };
 CTX.abreCardio = function () { abrirCardioRapido(); };
