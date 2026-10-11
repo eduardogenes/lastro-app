@@ -960,3 +960,55 @@ test('todo controle tem anel de foco próprio, e o anel não encosta no botão',
   assert.deepStrictEqual(semAnel, [],
     'controle que fica sem anel de foco próprio, dependendo do navegador');
 });
+
+test('controle menor que o alvo estende a área, ou está na lista de dívida', () => {
+  // O padrão interno é 46px para controle repetido, e `--ins-tap-dense: 28px` é
+  // DESENHO e não alvo: quem usa o degrau pequeno estende a ÁREA por `::after`
+  // até 44 no mínimo. Seis controles fazem isso. **Onze não.**
+  //
+  // A auditoria de acesso mediu os HTML DESENHADOS, não o app — então esta
+  // dívida nunca tinha sido medida aqui. Medida em 11/10: onze controles entre
+  // 32 e 44px sem extensão de área.
+  //
+  // Eles não foram consertados às cegas de propósito, e a razão é que o
+  // conserto errado é PIOR que o defeito: área estendida pode fazer controles
+  // vizinhos roubarem o toque um do outro, e a adjacência não se vê no CSS —
+  // vê-se na tela, que ninguém abriu ainda.
+  //
+  // Então a lista abaixo é dívida nomeada, e ela **só pode encolher**: um
+  // controle pequeno NOVO sem extensão reprova na hora. Quando as telas forem
+  // reescritas e alguém puder olhar a adjacência, os nomes saem daqui.
+  const DIVIDA = ['#timer button', '.dlbtn', '.edbtn', '.edmod button', '.edx-b',
+    '.edx-mv button', '.ins-faixa-b', '.ins-folha-b', '.mesnav button',
+    '.progd-mv button', '.setant-b'];
+
+  const todo = juntos(FOLHAS.map(f => 'src/' + f)).replace(/\/\*[\s\S]*?\*\//g, '');
+  const pequenos: string[] = [];
+  for (const b of blocos(todo)) {
+    const alt = b.corpo.match(/(?:min-height|height)\s*:\s*([0-9.]+)px/);
+    if (!alt) continue;
+    const v = parseFloat(alt[1]);
+    if (v >= 46 || v <= 20) continue;                  // alvo cheio, ou fio/barra
+    for (const sel of b.sels) {
+      const s = sel.trim();
+      // `-b` no fim é o sufixo de botão deste CSS (`.ins-folha-b`,
+      // `.setant-b`): sem ele a detecção fica mais estreita que a lista, e a
+      // asserção de exatidão abaixo pega a discordância — foi como este caso
+      // achou que o meu padrão original deixava quatro de fora.
+      if (!/button|btn|tap|chip|toque|-b$/i.test(s)) continue;
+      const base = s.split(':')[0];
+      if (new RegExp(base.replace(/[.*+?^${}()|[\]\\#]/g, '\\$&') +
+                     '(?::[a-z-]+)?::after').test(todo)) continue;   // estende
+      pequenos.push(s);
+    }
+  }
+  const novos = [...new Set(pequenos)].filter(s => !DIVIDA.includes(s));
+  assert.deepStrictEqual(novos, [],
+    'controle abaixo do alvo e sem `::after` que estenda a área — e fora da ' +
+    'lista de dívida: ou ele cresce, ou estende, ou entra na lista com a razão');
+
+  const saiu = DIVIDA.filter(d => !pequenos.includes(d));
+  assert.deepStrictEqual(saiu, [],
+    'nome na lista de dívida que já não corresponde a um controle pequeno: ' +
+    'se ele foi consertado, tire-o da lista — ela só serve se for exata');
+});
