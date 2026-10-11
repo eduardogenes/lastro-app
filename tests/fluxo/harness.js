@@ -97,6 +97,8 @@ function estadoVazio(extra) {
  * @param {object} [opcoes]
  * @param {object|string} [opcoes.estado] estado inicial gravado no localStorage
  * @param {number} [opcoes.agora] fixa `Date.now` do app, antes do boot
+ * @param {boolean} [opcoes.semArmazenamento] o acesso a `localStorage` estoura,
+ *   como em aba privada: o app cai para memória e não guarda nada
  * @returns {object} app
  */
 function abrirApp(opcoes) {
@@ -199,6 +201,25 @@ function abrirApp(opcoes) {
         Object.keys(o.chaves).forEach(function (k) {
           const v = o.chaves[k];
           w.localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+        });
+      }
+
+      // ---- O aparelho que NÃO está guardando ----
+      //
+      // Aba privada, armazenamento bloqueado por política, `file://` travado:
+      // nesses casos o ACESSO a `localStorage` estoura, e não só a escrita.
+      // `src/infra/db.ts` sonda isso e cai para memória — e até esta passada
+      // ninguém lia o resultado da sonda: o app funcionava inteiro e perdia
+      // tudo ao fechar a aba, em silêncio.
+      //
+      // Vem DEPOIS das semeaduras de propósito: com a opção ligada, o boot
+      // também não consegue LER, que é exatamente o que acontece de verdade.
+      // Semear junto é legítimo e reproduz "estava lá, e agora não dá para
+      // escrever"; o estado semeado simplesmente não chega ao app.
+      if (o.semArmazenamento) {
+        Object.defineProperty(w, 'localStorage', {
+          configurable: true,
+          get: function () { throw new Error('acesso a localStorage bloqueado'); }
         });
       }
     }

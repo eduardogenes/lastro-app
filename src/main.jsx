@@ -7821,6 +7821,21 @@ CTX.fatosDoDia = function () {
   };
 };
 
+/**
+ * O aparelho está guardando?
+ *
+ * `src/infra/db.ts` sonda o armazenamento no boot e cai para memória quando o
+ * acesso estoura — aba privada, armazenamento bloqueado por política, `file://`
+ * travado. Até esta passada **ninguém lia o resultado da sonda**: o app abria
+ * inteiro, marcava refeição, registrava série, e perdia tudo ao fechar a aba
+ * sem dizer uma palavra. É a §5.0 da frente 1, e o aviso dela fica ACIMA do
+ * cartão porque não é uma ação — é a condição de validade de todas as outras.
+ *
+ * `null` antes de a sonda responder conta como guardando: avisar perda antes de
+ * saber seria alarme falso, e alarme falso ensina a ignorar o verdadeiro.
+ */
+CTX.guardando = function () { return DB.mode !== 'mem'; };
+
 /** A próxima coisa a fazer. A regra é `dominio/agora.ts`; os fatos, acima. */
 CTX.cartaoDeCima = function () { return cartaoDeCima(CTX.fatosDoDia()); };
 

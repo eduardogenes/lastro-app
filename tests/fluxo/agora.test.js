@@ -523,3 +523,44 @@ test('no Agora, com o dia fechado o topo confirma em vez de ficar mudo', async (
   assert.ok(txt.indexOf('corrigir') >= 0, 'e oferece corrigir: ' + txt);
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// O aviso de que nada vai ficar
+// ---------------------------------------------------------------------------
+
+test('aparelho que não está guardando avisa ACIMA do cartão', async () => {
+  // §5.0 da frente 1, e é a parte do Agora que **não** é cartão: não disputa o
+  // topo porque não é uma ação — é a condição de validade de todas as outras.
+  //
+  // O buraco que isto fecha é de perda de dado em SILÊNCIO. `src/infra/db.ts`
+  // sonda o armazenamento e cai para memória em aba privada, e até aqui
+  // NINGUÉM lia o resultado da sonda: o app abria inteiro, marcava refeição,
+  // registrava série, e perdia tudo ao fechar a aba sem dizer uma palavra.
+  const agora = agoraEstavel(12, 10);
+  const a = await app({ aba: 'hoje', agora: agora, semArmazenamento: true });
+
+  assert.strictEqual(a.v('ctx.guardando'), false, 'o app sabe que não está guardando');
+  const aviso = a.$('.ins-aviso-perda');
+  assert.ok(aviso, 'e diz');
+  const txt = aviso.textContent;
+  assert.ok(txt.indexOf('não está guardando') >= 0, txt);
+  assert.ok(txt.indexOf('até fechar esta aba') >= 0, 'diz até QUANDO vale: ' + txt);
+  assert.ok(txt.indexOf('14 dias') >= 0,
+    'e que não entra na conta que a regra do corte lê: ' + txt);
+
+  // ACIMA do cartão, e isto é a regra: a condição de validade vem antes da ação
+  const html = a.doc.getElementById('app').innerHTML;
+  assert.ok(html.indexOf('ins-aviso-perda') < html.indexOf('ins-foco'),
+    'o aviso vem antes do cartão');
+  a.fechar();
+});
+
+test('aparelho que guarda não mostra aviso nenhum', async () => {
+  // A quebra espelhada: um aviso de perda num aparelho que guarda é alarme
+  // falso, e alarme falso ensina a ignorar o verdadeiro.
+  const agora = agoraEstavel(12, 10);
+  const a = await app({ aba: 'hoje', agora: agora, estado: { logs: {}, done: [] } });
+  assert.strictEqual(a.v('ctx.guardando'), true);
+  assert.ok(!a.$('.ins-aviso-perda'), 'nada de aviso');
+  a.fechar();
+});

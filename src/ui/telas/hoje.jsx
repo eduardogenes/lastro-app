@@ -175,6 +175,21 @@ export function Hoje({ ctx }) {
 
   return (
     <>
+      {/* ACIMA do cartão, e não é cartão: não disputa o topo porque não é uma
+          ação — é a condição de validade de todas as outras (§5.0).
+          Diz até QUANDO vale o que ele tocar, e que aquele dia não entra na
+          conta dos 14 dias que a regra do corte lê. Sem a segunda metade, ele
+          marcaria o dia inteiro e descobriria depois que a adesão não mexeu. */}
+      {!ctx.guardando() && (
+        <div class="ins-aviso-perda" role="status">
+          <b class="ins-label">Este aparelho não está guardando</b>
+          <p class="ins-body-sm">
+            Aba privada ou armazenamento bloqueado. O que você marcar vale até
+            fechar esta aba — e não entra na conta dos 14 dias.
+          </p>
+        </div>
+      )}
+
       {f && <CartaoFoco agora={hhmm} {...f} />}
 
       <Secao rotulo="energia" nota={diaHoje.previsto ? 'previsão · confirme no topo' : null}>

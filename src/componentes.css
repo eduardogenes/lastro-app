@@ -129,6 +129,18 @@
 .ins-foco .ins-chip-cta { margin-top: var(--ins-4); }
 /* Duas respostas opostas, lado a lado e do mesmo tamanho: o fim aproximado não
    tem resposta padrão, e dar mais área a uma delas é escolher por ele. */
+/* O aviso de que nada vai ficar. Moldura de ATENÇÃO e não de perigo: não houve
+   destruição, e o que se pede não é parar — é saber. Fica acima do cartão, com o
+   fio de atenção à esquerda, para ler-se antes de qualquer ação. */
+.ins-aviso-perda {
+  margin: var(--ins-6) 0 0;
+  padding: var(--ins-5) var(--ins-6);
+  border-left: 2px solid var(--ins-atencao-fio);
+  background: var(--ins-superficie-2);
+  color: var(--ins-atencao-tinta);
+}
+.ins-aviso-perda p { margin: var(--ins-3) 0 0; color: var(--ins-tinta-2); }
+
 .ins-foco-acoes { display: flex; gap: var(--ins-4); margin-top: var(--ins-6); }
 .ins-foco-acoes > * { flex: 1; }
 
