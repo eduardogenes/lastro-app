@@ -1853,6 +1853,31 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       **Não medido:** nenhum olho viu este anel. E a parte do contrato que diz
       "nunca escondido atrás de sticky" segue sem medição.
 
+- [x] **6.a'' As palavras do aviso** (`11/10`) → §12 do `10-tokens.md`. **Dívida
+      que os tokens criaram e que durou um commit:** a cor do terceiro sinal
+      mudou de "destrói dado" para "pare", então as duas situações que param o
+      dedo passaram a usar a mesma moldura e **a palavra passou a ser o que as
+      distingue** — e a palavra não tinha assumido. Cinco avisos não abriam pelo
+      verbo; um terminava em "Continuar?", que a voz recusa. A regra virou caso,
+      e é **morfológica** (infinitivo termina em -ar/-er/-ir), então se mantém
+      sozinha.
+      **E registrei um erro meu de método:** a primeira versão do caso flagrou
+      código **certo**, porque checava a forma sintática em vez da propriedade.
+      Fiz o teste **resolver indireção** para entender o código, funcionou, e
+      **joguei fora** — heurística em teste é lugar onde defeito se esconde. O
+      código passou a abrir com literal.
+
+- [x] **6.a''' Duas guardas de acesso** (`11/10`) → §13. A do nome acessível saiu
+      de **um cartão** para o app inteiro (nasceu verde, e eu a provei antes de
+      commitar). E a do alvo de toque trouxe um achado: **no app, 6 controles
+      pequenos estendem a área e 11 não** — entre 32 e 44px. A auditoria de
+      acesso mediu os HTML **desenhados**; ninguém tinha medido aqui.
+      **Não consertei os onze às cegas:** área estendida pode fazer vizinhos
+      roubarem o toque um do outro, e a adjacência se vê na tela, não no CSS.
+      Dívida nomeada, **só pode encolher** — e com uma segunda asserção que cobra
+      a **exatidão** da lista, que foi quem pegou que o meu padrão de detecção
+      discordava da própria lista que eu escrevi.
+
 - [ ] **6.b A próxima peça da reescrita** — as telas, pela ordem do plano. A
       decisão do dono é que **os 168 repontes de expressão composta sejam feitos
       junto com a reescrita de cada tela**, numa visita só por arquivo.

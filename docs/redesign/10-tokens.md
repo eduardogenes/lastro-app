@@ -240,3 +240,62 @@ do produto — então a frase é tudo que existe ali, e é exatamente por isso q
 primeira palavra carrega tanto. **A família "falhou" — a do painel de gravação
 que não deu — não foi escrita nesta passada:** ela não vive em `confirm()`, e
 entra com os sete estados ruins.
+
+---
+
+## 13 · Duas guardas de acesso, e uma dívida que ninguém tinha medido aqui
+
+**Feitas pelo coordenador em 11/10.** Nenhuma muda comportamento: as duas
+transformam em regra cobrada o que estava só em documento.
+
+### 13.1 · O nome acessível sai de um cartão para o app inteiro
+
+Havia guarda — `serie.test.js` :: *todo controle do cartão de exercício tem nome
+acessível* — e ela cobria **um cartão**. Um `···` ou um `×` novo em qualquer
+outra tela nasceria sem nome, e quem usa leitor de tela ouviria **"botão"** e
+nada mais.
+
+Os três botões de símbolo que existem hoje **já têm** `aria-label`, então o caso
+nasceu verde. **E por isso eu o provei antes de commitar** — guarda verde de
+nascença é exatamente o que este projeto passou a semana exigindo que se prove.
+Tirando o rótulo de um deles, o vermelho mostra **o símbolo e os atributos**, o
+que basta para achar o botão.
+
+### 13.2 · O alvo pequeno estende a área, ou entra na dívida nomeada
+
+O padrão interno é **46px para controle repetido**, e `--ins-tap-dense: 28px` é
+**desenho e não alvo**: quem usa o degrau pequeno **estende a área** por
+`::after` até 44 no mínimo.
+
+**Medido em 11/10, e ninguém tinha medido isto aqui:** a auditoria de acesso
+mediu os **HTML desenhados**, não o app. No app:
+
+| | |
+|---|---:|
+| Controles pequenos que **estendem** a área | **6** |
+| Controles pequenos que **não** estendem | **11** |
+
+Os onze estão entre **32 e 44px**, sem extensão — abaixo do padrão interno e,
+dez deles, abaixo do mínimo da norma.
+
+**Não foram consertados às cegas, e a razão é que o conserto errado é pior que o
+defeito.** Área estendida pode fazer controles vizinhos **roubarem o toque um do
+outro**, e a adjacência **não se vê no CSS** — vê-se na tela, que ninguém abriu
+ainda. Um alvo de 40px que funciona é melhor que um de 46 que rouba o toque do
+vizinho.
+
+Então a lista é **dívida nomeada, e só pode encolher**: um controle pequeno novo
+sem extensão reprova na hora. Quando as telas forem reescritas e alguém puder
+olhar a adjacência, os nomes saem.
+
+**E há uma segunda asserção que cobra a exatidão da lista** — nome que já não
+corresponde a um controle pequeno tem de sair dela. **Foi ela que pegou um erro
+meu:** o meu padrão de detecção deixava quatro controles de fora, discordando da
+própria lista que eu havia escrito a partir de outra medição. Lista de dívida que
+não é exata é pior que nenhuma, porque passa a acobertar.
+
+### O que não foi medido
+
+**A adjacência dos onze.** É a única coisa que decide se eles podem crescer, e
+ela depende de ver a tela. **E nada nesta seção foi visto** — as duas guardas
+leem fonte, não pixel.
