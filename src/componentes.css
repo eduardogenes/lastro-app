@@ -127,6 +127,10 @@
   overflow: hidden;
 }
 .ins-foco .ins-chip-cta { margin-top: var(--ins-4); }
+/* Duas respostas opostas, lado a lado e do mesmo tamanho: o fim aproximado não
+   tem resposta padrão, e dar mais área a uma delas é escolher por ele. */
+.ins-foco-acoes { display: flex; gap: var(--ins-4); margin-top: var(--ins-6); }
+.ins-foco-acoes > * { flex: 1; }
 
 /* ---- Veredito --------------------------------------------------------- */
 

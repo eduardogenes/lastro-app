@@ -266,9 +266,28 @@ export function Veredito({ rotulo, veredito, cor = 'acid', explicacao, acao, est
  * O cartão-foco: responde "e agora?". Primeira coisa da tela principal e um
  * alvo de toque só. Sem borda e sem preenchimento — flutua no papel.
  */
-export function CartaoFoco({ agora, rotulo, nome, contagem, contagemRotulo, resumo, cta, onClick }) {
+/**
+ * O cartão de cima: UM cartão respondendo "e agora?".
+ *
+ * Uma forma visual só para os seis tipos que a regra devolve
+ * (`src/dominio/agora.ts`), porque o lugar da resposta não muda com o tipo da
+ * resposta — o que muda é o que preenche cada fatia.
+ *
+ * Duas formas de agir, e a escolha não é estética:
+ *
+ * - **`cta`**: o cartão INTEIRO é o botão. É o caso de quase todos — "abrir e
+ *   marcar", "voltar à sessão" —, em que há uma ação óbvia e o alvo maior é o
+ *   que serve à mão suada.
+ * - **`acoes`**: duas respostas, e aí o cartão deixa de ser botão e vira
+ *   moldura com botões dentro. É o fim aproximado: "Está certo" e "Corrigir o
+ *   fim" são respostas OPOSTAS, e esconder uma delas atrás do toque no cartão
+ *   escolheria por ele. Botão dentro de botão não existe em HTML, então a
+ *   moldura precisa deixar de ser `<button>` — e é o que `Fora` faz aqui.
+ */
+export function CartaoFoco({ agora, rotulo, nome, contagem, contagemRotulo, resumo, cta, onClick, acoes }) {
+  const Fora = acoes && acoes.length ? 'div' : 'button';
   return (
-    <button class="ins-foco" onClick={onClick}>
+    <Fora class="ins-foco" onClick={acoes && acoes.length ? undefined : onClick}>
       <div class="ins-foco-agora">
         <span class="ins-live-dot" />
         <span class="ins-label">agora · {agora}</span>
@@ -287,7 +306,19 @@ export function CartaoFoco({ agora, rotulo, nome, contagem, contagemRotulo, resu
       </div>
       {resumo && <p class="ins-body-sm ins-t3 ins-foco-res">{resumo}</p>}
       {cta && <span class="ins-chip-cta">{cta}</span>}
-    </button>
+      {acoes && acoes.length > 0 && (
+        <div class="ins-foco-acoes">
+          {acoes.map(function (a, i) {
+            return (
+              <button key={a.t}
+                      class={i === 0 ? 'ins-btn-primary' : 'ins-btn-secondary'}
+                      data-a={a.a}
+                      onClick={a.onClick}>{a.t}</button>
+            );
+          })}
+        </div>
+      )}
+    </Fora>
   );
 }
 

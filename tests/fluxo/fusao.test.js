@@ -79,7 +79,20 @@ test('HOJE mostra comida e treino na MESMA timeline, em ordem de relógio', asyn
 });
 
 test('o cartão-foco responde "e agora?" antes de qualquer resumo', async () => {
-  const a = await app({ aba: 'hoje' });
+  // Relógio E tipo de dia fixos, e isto passou a ser necessário: o cartão vem
+  // da regra de `dominio/agora.ts`, e o `null` dela é resposta LEGÍTIMA — dia
+  // de descanso fora de qualquer janela não tem cartão. Com o relógio real, o
+  // caso dependia da hora em que a suíte rodasse, e com a cadência prevista
+  // pela semana dependia do dia em que ela rodasse. Às 12h10 de um dia de
+  // treino a janela do treino já passou e o almoço das 12h30 está a 20 min:
+  // há cartão, sempre.
+  const agora = agoraEstavel(12, 10);
+  const a = await app({
+    aba: 'hoje', agora: agora,
+    estado: { logs: {}, done: [],
+              dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
+                     escala: {}, cadencia: 'treino', alta: 0 } }
+  });
   const foco = a.$('.ins-foco');
   assert.ok(foco, 'o foco é a primeira coisa da tela');
   assert.ok(a.$('.ins-live-dot'), 'com o ponto ao vivo');

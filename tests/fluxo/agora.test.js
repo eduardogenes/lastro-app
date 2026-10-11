@@ -73,7 +73,7 @@ test('a sessão que fechou sozinha ontem ganha do treino de hoje', async () => {
       logs: {}, done: [
         { sid: 1, day: 'E', t: agora - DIA, dur: 71 * MIN, fim: 'auto', sets: [] }
       ],
-      dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
+      dia: { data: dataLocal(agora), done: {}, agua: 0,
              escala: {}, cadencia: 'treino', alta: 0 }
     }
   });
@@ -96,7 +96,7 @@ test('o fim já confirmado não pede confirmação de novo', async () => {
       logs: {}, done: [
         { sid: 1, day: 'E', t: agora - DIA, dur: 71 * MIN, fim: 'manual', sets: [] }
       ],
-      dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
+      dia: { data: dataLocal(agora), done: {}, agua: 0,
              escala: {}, cadencia: 'treino', alta: 0 }
     }
   });
@@ -118,7 +118,7 @@ test('só a sessão MAIS RECENTE pede confirmação', async () => {
         { sid: 1, day: 'C', t: agora - 9 * DIA, dur: 65 * MIN, fim: 'auto', sets: [] },
         { sid: 2, day: 'E', t: agora - DIA, dur: 71 * MIN, fim: 'manual', sets: [] }
       ],
-      dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
+      dia: { data: dataLocal(agora), done: {}, agua: 0,
              escala: {}, cadencia: 'treino', alta: 0 }
     }
   });
@@ -135,7 +135,7 @@ test('enquanto a janela do treino não passou, o cartão é o treino', async () 
   const a = await app({
     agora: agora,
     estado: { logs: {}, done: [],
-              dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
+              dia: { data: dataLocal(agora), done: {}, agua: 0,
                      escala: {}, cadencia: 'treino', alta: 0 } }
   });
 
@@ -152,7 +152,7 @@ test('passada a janela do treino, a refeição assume o topo', async () => {
   const a = await app({
     agora: agora,
     estado: { logs: {}, done: [],
-              dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
+              dia: { data: dataLocal(agora), done: {}, agua: 0,
                      escala: {}, cadencia: 'treino', alta: 0 } }
   });
 
@@ -179,7 +179,7 @@ test('sessão já registrada hoje tira o treino da disputa, dentro da janela', a
       logs: {}, done: [
         { sid: 1, day: 'A', t: agora - 20 * MIN, dur: 70 * MIN, fim: 'manual', sets: [] }
       ],
-      dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
+      dia: { data: dataLocal(agora), done: {}, agua: 0,
              escala: {}, cadencia: 'treino', alta: 0 }
     }
   });
@@ -206,7 +206,7 @@ test('o pré-treino e o intra nunca recebem o cartão', async () => {
   const a = await app({
     agora: agora,
     estado: { logs: {}, done: [],
-              dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
+              dia: { data: dataLocal(agora), done: {}, agua: 0,
                      escala: {}, cadencia: 'treino', alta: 0 } }
   });
 
@@ -225,7 +225,7 @@ test('em dia de descanso a refeição ganha por ausência de treino', async () =
   const a = await app({
     agora: agora,
     estado: { logs: {}, done: [],
-              dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
+              dia: { data: dataLocal(agora), done: {}, agua: 0,
                      escala: {}, cadencia: 'descanso', alta: 0 } }
   });
 
@@ -255,7 +255,7 @@ test('no dia da aula, o cartão é o da aula', async () => {
       logs: {}, done: [
         { sid: 1, day: 'E', t: agora - 2 * DIA, dur: 70 * MIN, fim: 'manual', sets: [] }
       ],
-      dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
+      dia: { data: dataLocal(agora), done: {}, agua: 0,
              escala: {}, cadencia: 'treino', alta: 0 }
     }
   });
@@ -281,5 +281,245 @@ test('sem turno declarado, o treino previsto é dito como palpite', async () => 
     assert.strictEqual(a.vJ('ctx.hoje').diaHoje.cadencia, 'descanso',
       'ou o padrão semanal previu descanso, e aí não há treino a prever');
   }
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// A VISTA: o cartão desenhado, e o que o toque nele faz
+// ---------------------------------------------------------------------------
+//
+// Acima cobra-se a ESCOLHA do cartão. Aqui, o desenho e a ação — e é metade
+// própria porque a regra pode estar certa e o cartão mudo, ou o cartão certo e
+// o toque ligado em nada. Foi o que aconteceu enquanto eu escrevia: a ação de
+// "Corrigir o fim" apontava para `ctx.abrirSessao`, que **não existe** em `CTX`
+// (é verbo nu da tabela), e nenhum caso teria pegado.
+
+/**
+ * A data LOCAL, como `hojeISO()` a escreve.
+ *
+ * `toISOString().slice(0, 10)` dá a data em UTC, e isso é uma armadilha de
+ * fixture que me custou um vermelho: às 23h em UTC−3 o UTC já virou o dia
+ * seguinte, o carimbo não bate com `hojeISO()`, e `diaDeComida()` RESETA o dia
+ * — apagando as marcas que o caso acabou de semear. De manhã passa; à noite,
+ * não.
+ */
+function dataLocal(t) {
+  const d = new Date(t);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+
+/** O dia de comida de hoje, na forma que o boot aceita. */
+function diaDe(agora, cadencia) {
+  return { data: dataLocal(agora), done: {}, agua: 0,
+           escala: {}, cadencia: cadencia, alta: 0 };
+}
+
+test('no Agora, o cartão da sessão aberta conta as séries e volta para ela', async () => {
+  const a = await comSessao();
+  a.v('ctx.vaiPara', 'hoje');
+  await a.esperar();
+
+  const foco = a.$('.ins-foco');
+  assert.ok(foco, 'há cartão');
+  assert.ok(a.texto('.ins-foco').indexOf('Treino A') >= 0, a.texto('.ins-foco'));
+  // A contagem é o que a tira de baixo NÃO tem, e é a razão de o cartão a
+  // substituir aqui em vez de as duas conviverem.
+  assert.ok(/de \d+ séries/.test(a.texto('.ins-foco')), a.texto('.ins-foco'));
+  assert.ok(a.texto('.ins-foco').indexOf('voltar à sessão') >= 0, a.texto('.ins-foco'));
+
+  foco.click();
+  await a.esperar();
+  assert.strictEqual(a.vista().modoSessao, true, 'o toque entra NO MODO, não na aba');
+  a.fechar();
+});
+
+test('no Agora a tira de baixo não é desenhada; em outra aba, é', async () => {
+  // Duas peças para o mesmo trabalho na mesma tela é o oposto da regra de UM
+  // cartão. Fora do Agora a tira continua sendo o único caminho de volta.
+  const a = await comSessao();
+  a.v('ctx.vaiPara', 'hoje');
+  await a.esperar();
+  assert.ok(!a.$('.ins-faixa'), 'no Agora, não: o cartão de cima já é a sessão');
+  assert.ok(a.$('.ins-foco'), 'e o cartão está lá no lugar dela');
+
+  a.v('ctx.vaiPara', 'comida');
+  await a.esperar();
+  assert.ok(a.$('.ins-faixa'), 'na comida, sim: é o único caminho de volta de lá');
+  a.fechar();
+});
+
+test('no Agora, a pergunta de 1h30 mantém o topo COM as duas respostas', async () => {
+  // A quebra que isto segura: como a tira não é desenhada no Agora, um cartão
+  // com um toque só ("ir para a sessão") faria o Agora PERDER a resposta "já
+  // parei" — e quem esqueceu o treino aberto está olhando justamente para cá.
+  const a = await comSessao();
+  a.E(`S.sessao.ultima = Date.now() - 95 * ${MIN}`);
+  a.v('ctx.vaiPara', 'hoje');
+  await a.esperar();
+
+  const txt = a.texto('.ins-foco');
+  assert.ok(txt.indexOf('sem série nova') >= 0, 'a frase é a do modelo: ' + txt);
+  // As palavras são as da tira, não outras: primeira pessoa, minúsculas.
+  assert.ok(a.$('[data-a="continuo"]'), 'a resposta de continuar está à vista');
+  assert.ok(a.$('[data-a="ja-parei"]'), 'e a de parar também');
+  assert.ok(!a.$('.ins-foco .ins-chip-cta'),
+    'e não há um toque único no cartão: as duas respostas são opostas');
+
+  a.$('[data-a="ja-parei"]').click();
+  await a.esperar();
+  assert.strictEqual(a.S().sessao, null, '"já parei" encerra de verdade, do Agora');
+  a.fechar();
+});
+
+test('no Agora, o cartão do fim aproximado tem as duas respostas, e "está certo" fecha o assunto', async () => {
+  const agora = agoraEstavel(6, 15);
+  const a = await app({
+    aba: 'hoje', agora: agora,
+    estado: {
+      plano: 7,
+      logs: {}, done: [
+        { sid: 1, day: 'E', t: agora - DIA, dur: 71 * MIN, fim: 'auto', sets: [] }
+      ],
+      dia: diaDe(agora, 'treino')
+    }
+  });
+
+  const txt = a.texto('.ins-foco');
+  assert.ok(txt.indexOf('Fechei na última série') >= 0, txt);
+  assert.ok(txt.indexOf('aproximada') >= 0, 'e diz que o número é aproximado: ' + txt);
+  assert.ok(a.$('[data-a="fim-corrigir"]'), 'a resposta de corrigir existe e está ligada');
+
+  a.$('[data-a="fim-ok"]').click();
+  await a.esperar();
+  assert.strictEqual(a.S().done[0].fim, 'manual',
+    '"está certo" declara o tempo: é o MESMO carimbo da correção');
+  assert.strictEqual(a.S().done[0].dur, 71 * MIN, 'e sem mexer no número');
+  assert.notStrictEqual(a.vJ('ctx.cartaoDeCima').k, 'confirmar',
+    'e a pergunta sai sozinha, sem marca de "já respondi"');
+  a.fechar();
+});
+
+test('no Agora, o cartão do treino abre o MODO no dia de hoje — a porta 1', async () => {
+  // A terceira porta do modo (frente 1, §4.4), a que faltava. Entrar no modo
+  // NÃO começa a sessão: ela nasce na primeira série completa.
+  const agora = agoraEstavel(6, 30);
+  const a = await app({
+    aba: 'hoje', agora: agora,
+    estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino') }
+  });
+
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima').k, 'treino', 'pré-condição: o cartão é o treino');
+  const esperado = a.vJ('ctx.hoje').diaHoje.treino;
+
+  // A letra do dia é mexida por OUTRO caminho antes do toque, e isto é o que
+  // faz o caso discriminar: sem isso `view.day` já valia o dia de hoje, e o
+  // verbo podia nem escrevê-lo que o verde vinha igual.
+  a.v('go', esperado === 'C' ? 'B' : 'C');
+  await a.esperar();
+  assert.notStrictEqual(a.vista().day, esperado,
+    'pré-condição: o dedo deixou a letra em outro dia (' + a.vista().day + ')');
+
+  a.$('.ins-foco').click();
+  await a.esperar();
+  assert.strictEqual(a.vista().modoSessao, true, 'entrou no modo');
+  assert.strictEqual(a.vista().day, esperado,
+    'e no dia de HOJE, não no que o dedo tinha deixado em outro caminho');
+  assert.strictEqual(a.S().sessao, null,
+    'e sem abrir sessão: entrar no modo é navegação, a sessão nasce na primeira série');
+  a.fechar();
+});
+
+test('no Agora, o cartão da refeição longe diz "mais tarde", não "faltam"', async () => {
+  // `janela` é o que separa "é agora" de "é a próxima coisa do dia". Sem isso o
+  // cartão falaria de algo de três horas adiante com a voz de algo de dez
+  // minutos.
+  const agora = agoraEstavel(10, 0);
+  const a = await app({
+    aba: 'hoje', agora: agora,
+    estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino') }
+  });
+
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima').janela, false, 'pré-condição: fora da janela');
+  assert.ok(a.texto('.ins-foco').indexOf('mais tarde') >= 0, a.texto('.ins-foco'));
+
+  // e dentro da janela volta a ser a contagem normal
+  const b = await app({
+    aba: 'hoje', agora: agoraEstavel(12, 10),
+    estado: { plano: 7, logs: {}, done: [], dia: diaDe(agoraEstavel(12, 10), 'treino') }
+  });
+  assert.strictEqual(b.vJ('ctx.cartaoDeCima').janela, true);
+  assert.ok(b.texto('.ins-foco').indexOf('faltam') >= 0, b.texto('.ins-foco'));
+  a.fechar(); b.fechar();
+});
+
+test('a linha acesa da timeline é o assunto do cartão', async () => {
+  // Uma regra só para a mesma pergunta. Antes a linha acesa e o cartão vinham
+  // da MESMA variável por acaso; agora a linha é derivada do cartão de
+  // propósito, porque duas regras divergiriam e a tela diria duas coisas.
+  const agora = agoraEstavel(10, 0);
+  const a = await app({
+    aba: 'hoje', agora: agora,
+    estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino') }
+  });
+
+  const c = a.vJ('ctx.cartaoDeCima');
+  assert.strictEqual(c.k, 'refeicao', 'pré-condição');
+  const acesas = a.$$('.ins-tl.agora');
+  assert.strictEqual(acesas.length, 1, 'uma linha acesa, e só uma');
+  assert.ok(acesas[0].textContent.indexOf(a.vJ('ctx.hoje').refs
+    .filter(r => r.id === c.id)[0].n) >= 0,
+    'e é a do cartão: ' + acesas[0].textContent);
+  a.fechar();
+});
+
+test('no Agora, o cartão da aula é um botão só e leva ao modo', async () => {
+  // Frente 1, literal: "o cartão dela é um botão só: Fiz a aula". A aula É a
+  // sessão daquele dia, e registrar acontece no modo — o quadro do box vira a
+  // nota da sessão, e é a única chance de ele ficar em algum lugar.
+  const agora = agoraEstavel(6, 45);
+  const a = await app({
+    aba: 'hoje', agora: agora,
+    estado: {
+      plano: 7,
+      logs: {}, done: [
+        { sid: 1, day: 'E', t: agora - 2 * DIA, dur: 70 * MIN, fim: 'manual', sets: [] }
+      ],
+      dia: diaDe(agora, 'treino')
+    }
+  });
+
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima').k, 'aula', 'pré-condição: a rotação caiu na aula');
+  const txt = a.texto('.ins-foco');
+  assert.ok(txt.indexOf('fiz a aula') >= 0, txt);
+  assert.ok(!a.$('.ins-foco-acoes'), 'um botão só: nada de duas respostas aqui');
+
+  a.$('.ins-foco').click();
+  await a.esperar();
+  assert.strictEqual(a.vista().modoSessao, true);
+  assert.strictEqual(a.vista().day, 'HX', 'no dia da aula');
+  a.fechar();
+});
+
+test('no Agora, com o dia fechado o topo confirma em vez de ficar mudo', async () => {
+  // Regra 7: a tela não fica muda quando tudo foi feito. O topo passa a ser a
+  // confirmação do que foi marcado, com "corrigir" — e é a ÚLTIMA do dia pelo
+  // relógio, não a de marcação mais recente: o cartão confirma o fim do dia.
+  const agora = agoraEstavel(23, 0);
+  const a = await app({
+    aba: 'hoje', agora: agora,
+    estado: {
+      plano: 7, logs: {}, done: [],
+      dia: { data: dataLocal(agora), agua: 0, escala: {},
+             cadencia: 'descanso', alta: 0,
+             done: { pos: 1, almoco: 1, lanche: 1, jantar: 1, ceia: 1 } }
+    }
+  });
+
+  const c = a.vJ('ctx.cartaoDeCima');
+  assert.strictEqual(c.k, 'resolvido', 'pré-condição: nada à frente e nada sem marca');
+  const txt = a.texto('.ins-foco');
+  assert.ok(txt.indexOf('dia fechado') >= 0, txt);
+  assert.ok(txt.indexOf('corrigir') >= 0, 'e oferece corrigir: ' + txt);
   a.fechar();
 });

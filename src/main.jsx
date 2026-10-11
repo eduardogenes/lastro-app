@@ -4567,6 +4567,28 @@ async function corrigeDuracao(t, minutos) {
   toast('Tempo corrigido.');
 }
 
+/**
+ * "Está certo": o tempo aproximado passa a ser declarado, sem mudar o número.
+ *
+ * É a outra metade de `corrigeDuracao`, e a resposta mais comum — o app fechou
+ * na última série e quase sempre a última série É quando ele parou. Sem este
+ * verbo, aceitar custaria entrar na tela da sessão e redigitar o mesmo número,
+ * e o cartão do Agora ficaria para sempre perguntando o que ele já respondeu.
+ *
+ * `fim: 'manual'` é o MESMO carimbo que a correção escreve, e é de propósito:
+ * o que o carimbo significa é "este tempo é declarado", não "este tempo foi
+ * mudado". É ele que tira o "aproximado" da tela e que faz a pergunta sair do
+ * cartão de cima, sem precisar de uma marca de "já respondi".
+ */
+async function confirmaDuracao(t) {
+  const m = S.done.filter(function (x) { return x.t === t; })[0];
+  if (!m || m.fim === 'manual') return;
+  m.fim = 'manual';
+  m.m = Date.now();                    // carimbo: é ele que a fusão compara
+  await save(); render();
+  toast('Tempo confirmado.');
+}
+
 function abrirSessao(t){ view.sessao = S.done.filter(function (x) { return x.t === t; })[0]; if (view.sessao) { entraNoDestino('sessao'); render(); } }
 function fecharSessao(){ view.sessao = null; render(); saiDoDestino('sessao'); }
 
@@ -6743,6 +6765,11 @@ CTX.detalheDaSessao = function () {
 CTX.fechaSessao = function () { fecharSessao(); };
 CTX.editaSessao = function (t) { apagaRegistroDeTreino(t); };
 CTX.corrigeDuracao = function (t, min) { corrigeDuracao(t, min); };
+/* Uma porta só, e aqui: `corrigeDuracao` já mora em `CTX`, e as duas são as
+   duas metades da mesma resposta. Pôr esta também na tabela de verbos nus daria
+   dois caminhos para o mesmo verbo, que é o que a superfície existe para não
+   ter. */
+CTX.confirmaDuracao = function (t) { confirmaDuracao(t); };
 
 // ---------- tela cheia: histórico do exercício ----------
 CTX.renomeiaExercicio = function (idEx, nome) { renomeiaExercicio(idEx, nome); };
@@ -7930,6 +7957,27 @@ function abreModo() {
 }
 
 CTX.abreModoDeSessao = function () { if (abreModo()) render(); };
+
+/**
+ * A PORTA 1 do modo: o cartão de cima do Agora.
+ *
+ * As outras duas portas devolvem alguém a uma sessão que já existe (a faixa) ou
+ * a reabrem no pouso do app. Esta é a que COMEÇA — e começar não é abrir
+ * sessão: "entrar no modo é navegação", e a sessão nasce na primeira série
+ * completa (frente 1, §4.4). Por isso aqui não há `abreSessao` nenhuma.
+ *
+ * O dia vem resolvido, e não de `view.day`: o cartão fala do treino de HOJE, e
+ * o dedo pode ter deixado a letra em outro dia por outro caminho.
+ */
+CTX.abreTreinoDeHoje = function () {
+  const h = diaResolvido();
+  if (!h.treino) return;               // dia de descanso: não há treino a abrir
+  view.day = h.treino;
+  view.aba = 'treino';
+  view.swapOpen = null;
+  abreModo();
+  render();
+};
 
 CTX.fechaModoDeSessao = function () {
   if (!view.modoSessao) return;

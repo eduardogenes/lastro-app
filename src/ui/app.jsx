@@ -50,8 +50,15 @@ export function App({ ctx }) {
 
       {ctx.folhas()}
 
+      {/* No AGORA a tira não é desenhada: lá o cartão de cima É a sessão, e com
+          a contagem de séries que a tira não tem — duas peças para o mesmo
+          trabalho na mesma tela é o oposto da regra de UM cartão.
+          Montada com `faixa={null}` em vez de removida da árvore: o efeito de
+          layout dela escreve `--ins-faixa-h`, que o toast e o fim da página
+          leem. Fora da árvore, o efeito não roda e a variável fica com a altura
+          da ABA ANTERIOR — espaço reservado para uma tira que não está ali. */}
       <FaixaDaSessao
-        faixa={ctx.faixaDaSessao()}
+        faixa={aba === 'hoje' ? null : ctx.faixaDaSessao()}
         onVolta={ctx.voltaAoTreino}
         onContinua={ctx.continuaSessao}
         onEncerra={ctx.encerraSessaoEsquecida}
