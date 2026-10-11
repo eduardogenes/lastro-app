@@ -33,7 +33,15 @@ export function SessaoModo({ ctx }) {
                 aria-label="Voltar ao Agora, deixando a sessão aberta"
                 onClick={ctx.fechaModoDeSessao}>‹</button>
       </div>
-      <Treino ctx={ctx} />
+      {/* O `<main>` é do MODO, e precisa ser. A tela cheia é devolvida antes
+          da casca (`app.jsx`), então o `<main>` dela não entra — e sem este
+          aqui o relógio da sessão vira filho do invólucro, que é um flex
+          column: o sticky dele se prende ao bloco que o contém, e trocar o pai
+          é trocar a âncora. Vale também como marco: no modo, o modo é a
+          página, e há exatamente um `<main>` nela. */}
+      <main>
+        <Treino ctx={ctx} />
+      </main>
     </div>
   );
 }

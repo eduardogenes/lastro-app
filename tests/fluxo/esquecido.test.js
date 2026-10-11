@@ -6,6 +6,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { app } from './harness.js';
+import { camadasAbertas } from '../../src/ui/navegacao.js';
 
 const MIN = 60 * 1000;
 
@@ -153,12 +154,38 @@ test('ctx.voltaAoTreino sem sessão aberta não mexe na tela', async () => {
   // letra do dia dele sem nada ter acontecido.
   const a = await app({ aba: 'dados' });
   assert.strictEqual(a.S().sessao, null, 'pré-condição: nenhuma sessão');
-  const antes = JSON.stringify([a.vista().aba, a.vista().day, a.vista().open]);
+  const foto = () => JSON.stringify(
+    [a.vista().aba, a.vista().day, a.vista().open, a.vista().modoSessao]);
+  const antes = foto();
 
   a.v('ctx.voltaAoTreino');
   await a.esperar();
 
-  assert.strictEqual(JSON.stringify([a.vista().aba, a.vista().day, a.vista().open]), antes,
-    'aba, dia e exercício aberto ficaram exatamente onde estavam: ' + antes);
+  assert.strictEqual(foto(), antes,
+    'aba, dia, exercício aberto E o modo ficaram exatamente onde estavam: ' + antes);
+  a.fechar();
+});
+
+test('ctx.voltaAoTreino abre o MODO, e não só a aba atrás dele', async () => {
+  // A faixa é a porta 2 do modo (frente 1, §4.4). Antes desta passada o verbo
+  // devolvia à ABA do treino — a mesma tela de quem está só planejando o dia,
+  // com barra de abas e tudo. Entrar no treino em andamento e entrar para
+  // olhar o treino passaram a ser duas coisas diferentes, e a faixa pertence à
+  // primeira: quem a toca está com a mão na barra, não navegando.
+  const a = await comSessao();
+  a.v('ctx.vaiPara', 'dados');
+  a.v('ctx.fechaTudo');
+  assert.strictEqual(a.vista().modoSessao, false, 'pré-condição: fora do modo');
+
+  a.v('ctx.voltaAoTreino');
+  await a.esperar();
+
+  assert.strictEqual(a.vista().modoSessao, true, 'a faixa entrou NO MODO');
+  assert.deepStrictEqual(camadasAbertas(a.vista()), ['modoSessao'],
+    'e o modo é a única camada: a faixa não deixa nada pendurado por cima');
+  // A aba e o dia continuam arrumados por baixo — é o que fecha o modo de
+  // volta no lugar certo, sem este caso dizer de novo o que o de cima já diz.
+  assert.strictEqual(a.vista().aba, 'treino', 'com a aba certa por baixo');
+  assert.strictEqual(a.vista().day, 'A', 'e o dia da sessão');
   a.fechar();
 });

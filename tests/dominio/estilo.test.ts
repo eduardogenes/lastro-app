@@ -643,6 +643,45 @@ test('o relógio da sessão gruda no topo enquanto o treino corre', () => {
   assert.ok(!/top:\s*0\s*;/.test(rel), 'top: 0 põe o número embaixo do relógio do sistema');
 });
 
+test('a saída do modo gruda no topo, e a cadeia acima dela não cria scroll', () => {
+  // A frente 1 escreveu a regra com todas as letras: "a seta não some em nenhum
+  // estado do modo" (§4.3, item 5). Barra não-sticky some ao rolar — e o modo
+  // existe justamente porque o dedo ficava preso numa tela sem saída. Uma
+  // saída que rola para fora é a mesma armadilha com um passo a mais.
+  const comp = fonte('src/componentes.css');
+  const topo = regras(comp, '.ins-modo-topo');
+  assert.match(topo, /position:\s*sticky/, 'a barra da saída gruda');
+  assert.match(topo, /background:/,
+    'e é opaca: o conteúdo passa por baixo dela e precisa sumir');
+  // Nada de `backdrop-filter` aqui: ele pisca no Blink ao animar vizinho ou
+  // resetar o scroll, e fundo um pouco mais opaco resolve sem o efeito.
+  assert.ok(!/backdrop-filter/.test(topo), 'sem blur: ele pisca no Blink');
+
+  // A metade que já quebrou este app mais de uma vez: sticky se ancora no
+  // primeiro ANCESTRAL com overflow ≠ visible, e aí acompanha o conteúdo e
+  // some. `overflow-x: hidden` sozinho também serve de armadilha — a outra
+  // direção vira `auto`. Só `clip` corta sem criar container.
+  const modo = regras(comp, '.ins-modo');
+  const over = [...modo.matchAll(/overflow(-[xy])?:\s*([a-z-]+)/g)];
+  assert.deepStrictEqual(
+    over.filter(m => m[2] !== 'visible' && m[2] !== 'clip').map(m => m[0]), [],
+    'o invólucro do modo não pode criar scroll container: ' +
+    'overflow hidden/auto/scroll aqui mata o sticky da saída');
+});
+
+test('dentro do modo o relógio para ABAIXO da saída, não por baixo dela', () => {
+  // Duas barras grudadas no mesmo topo: a saída do modo e o relógio da sessão,
+  // que fora do modo gruda em `var(--sa-top)`. Sem deslocar o segundo, ele
+  // encosta embaixo do primeiro e os dois ocupam a mesma faixa.
+  const comp = fonte('src/componentes.css');
+  const dentro = regras(comp, '.ins-modo .day-rel');
+  assert.match(dentro, /top:\s*var\(--ins-modo-topo-h\)/,
+    'o deslocamento é a ALTURA da barra, em token — somar à mão aqui ' +
+    'desencontra na primeira vez que o padding da barra mudar');
+  assert.match(regras(comp, '.ins-modo'), /--ins-modo-topo-h:/,
+    'e a altura é declarada onde a barra é montada, com as mesmas parcelas');
+});
+
 test('a barra de status tem fundo, senão o conteúdo rola por baixo dela', () => {
   // `black-translucent` deixa a página passar sob o relógio e a bateria do
   // sistema — bonito parado, ilegível rolando.

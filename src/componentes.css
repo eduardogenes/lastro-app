@@ -1459,6 +1459,12 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
    NÃO FOI FEITA — se reprovar, a saída muda de canto, não de existência. */
 .ins-modo {
   display: flex; flex-direction: column;
+  /* A altura da barra da saída, nas MESMAS parcelas com que ela é montada
+     abaixo: o padding de cima (que já embute a barra de status) mais o alvo do
+     botão. Existe porque o relógio da sessão também gruda no topo, e precisa
+     parar DEPOIS desta barra — somar à mão nos dois lugares desencontra na
+     primeira vez que o padding mudar. */
+  --ins-modo-topo-h: calc(var(--sa-top) + var(--ins-3) + var(--ins-tap));
   /* `100vh` primeiro como fallback e `100svh` por cima, nesta ordem — a rede
      pegou esta regra errada na primeira versão deste arquivo, e com razão:
      invertida, o fallback vence e volta a sobra rolável do tamanho da barra. */
@@ -1466,11 +1472,30 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
   min-height: 100svh;
 }
 
+/* GRUDADA NO TOPO, e isto é regra escrita: "a seta não some em nenhum estado do
+   modo" (frente 1, §4.3, item 5). O modo nasceu porque o dedo ficava preso numa
+   tela sem saída; uma saída que rola para fora da tela é a mesma armadilha com
+   um passo a mais.
+   `top: 0` e não `var(--sa-top)`: o padding de cima daqui já embute a barra de
+   status, então o conteúdo para abaixo dela sem que a barra descole do topo
+   real. Fundo opaco porque o conteúdo passa por baixo — e fundo chapado, não
+   `backdrop-filter`: ele pisca no Blink quando um vizinho anima ou o scroll
+   reseta.
+   A cadeia acima desta barra (`.ins-modo`) não pode ter `overflow` ≠ visible:
+   sticky se ancora no primeiro ancestral com overflow, e aí acompanha o
+   conteúdo e some. Há um caso em `tests/dominio/estilo.test.ts` cobrando isso. */
 .ins-modo-topo {
+  position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center;
   padding: var(--ins-3) var(--ins-8) 0;
   padding-top: calc(var(--ins-3) + var(--sa-top));
+  background: var(--ins-fundo);
 }
+
+/* O relógio da sessão gruda abaixo da barra da saída, não embaixo dela. Fora do
+   modo ele para em `var(--sa-top)` (`src/treino.css`), que aqui seria dentro
+   da barra: as duas faixas ocupariam a mesma. */
+.ins-modo .day-rel { top: var(--ins-modo-topo-h); }
 
 .ins-modo-sair {
   min-width: var(--ins-tap); min-height: var(--ins-tap);

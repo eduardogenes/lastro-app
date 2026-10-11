@@ -478,7 +478,7 @@ async function load() {
   // suada. Se a sessão venceu, `encerraSePreciso` já a fechou e nada disto vale.
   const diaAberto = diaDaSessaoAberta();
   view.day = diaAberto || nextDay();
-  if (diaAberto) view.aba = 'treino';
+  if (diaAberto) { view.aba = 'treino'; abreModo(); }
   render();
   abrePromoGuardada();
   // O descanso que estava correndo. Depois do render, porque ele pinta na barra
@@ -7746,6 +7746,7 @@ CTX.voltaAoTreino = function () {
   view.aba = 'treino';
   view.swapOpen = null;
   view.open = ondeEleEstava(estadosDoDia(s.day));
+  abreModo();                          // a faixa entra NO modo, não na aba atrás dele
   render();
   if (view.open != null) mostraExercicio(view.open);
   else window.scrollTo(0, 0);
@@ -7811,12 +7812,21 @@ const scrollDoDestino = {};
    (`src/ui/navegacao.js`), então ligar a flag já faz o Voltar do sistema fechar
    o modo em vez de sair do app. `view.aba` fica intocada — o modo cobre a aba
    em que o dedo estava, e fechá-lo devolve o dedo lá. */
-CTX.abreModoDeSessao = function () {
-  if (view.modoSessao) return;
+/**
+ * Abre o modo SEM pintar, e diz se abriu.
+ *
+ * Três portas levam ao modo (frente 1, §4.4) e duas delas já arrumam a tela
+ * antes de entrar — a faixa mexe em aba, dia e exercício aberto; o pouso do app
+ * mexe em aba e dia. Essas duas querem um render só, no fim, e não o do meio.
+ */
+function abreModo() {
+  if (view.modoSessao) return false;
   view.modoSessao = true;
   entraNoDestino('modoSessao');
-  render();
-};
+  return true;
+}
+
+CTX.abreModoDeSessao = function () { if (abreModo()) render(); };
 
 CTX.fechaModoDeSessao = function () {
   if (!view.modoSessao) return;

@@ -236,6 +236,33 @@ test('abrir o app com treino em andamento cai no treino, não em HOJE', async ()
   a.fechar();
 });
 
+test('abrir o app com treino em andamento cai NO MODO, não na aba', async () => {
+  // Porta 3 do modo (frente 1, §4.4). O pouso já achava a aba certa; agora o
+  // que ele acha é o modo, porque reabrir o app no meio de uma série é a
+  // reabertura mais comum que existe aqui — e quem volta assim está com o
+  // celular na mão suada, não escolhendo onde navegar.
+  const agora = agoraEstavel();
+  const a = abrirApp({ agora: agora, estado: emTreino('B', agora) });
+  await a.pronto();
+
+  assert.strictEqual(a.vista().modoSessao, true, 'o boot entrou no modo');
+  assert.ok(a.$('[data-a="sai-do-modo"]'),
+    'e desenhou a saída: sem ela o modo é uma tela sem porta');
+  assert.ok(!a.$('.ins-tabbar'), 'e sem barra de abas');
+  a.fechar();
+});
+
+test('sem sessão, o pouso não inventa modo nenhum', async () => {
+  // A quebra espelhada: um modo aberto sem sessão poria a pessoa numa tela de
+  // treino em andamento que não está em andamento, e com a barra de abas fora.
+  const a = abrirApp({ agora: agoraEstavel(), estado: { logs: {}, done: [] } });
+  await a.pronto();
+
+  assert.strictEqual(a.S().sessao, null, 'pré-condição: nenhuma sessão');
+  assert.strictEqual(a.vista().modoSessao, false, 'e nenhum modo');
+  a.fechar();
+});
+
 test('sem sessão, o app continua abrindo em HOJE', async () => {
   const a = abrirApp({ agora: agoraEstavel(), estado: { logs: {}, done: [] } });
   await a.pronto();
@@ -296,6 +323,27 @@ test('o relógio da sessão é filho direto do main, senão o sticky descola', a
   assert.strictEqual(rel.parentElement.tagName, 'MAIN',
     'saiu para o <main>: dentro da <section> o sticky se prenderia a ela');
   assert.ok(a.$('.ins-secao.continua'), 'e a seção partida não desenha fio');
+  a.fechar();
+});
+
+test('dentro do modo o relógio continua filho direto de um main', async () => {
+  // O modo devolve a tela cheia ANTES da casca (`app.jsx`: `if
+  // (ctx.emTelaCheia()) return ctx.telaCheia()`), então o `<main>` da casca não
+  // entra — e sem um `<main>` do modo o relógio passava a ser filho do
+  // invólucro, que é um flex column. O sticky se prende ao bloco que o contém:
+  // trocar o pai é trocar a âncora dele, exatamente a quebra que o caso de cima
+  // segura para a aba. E o `<main>` também é o marco da página: no modo, o modo
+  // É a página.
+  const agora = agoraEstavel();
+  const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
+  assert.strictEqual(a.vista().modoSessao, true, 'pré-condição: o boot entrou no modo');
+
+  const rel = a.$('.day-rel');
+  assert.ok(rel, 'o relógio está na tela do modo');
+  assert.strictEqual(rel.parentElement.tagName, 'MAIN',
+    'e é filho direto de um <main>, como na aba');
+  assert.strictEqual(a.$$('main').length, 1,
+    'de UM só: dois <main> na mesma página não é marco, é ruído');
   a.fechar();
 });
 
