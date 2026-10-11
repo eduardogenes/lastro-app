@@ -6,7 +6,7 @@ import {
 import {
   fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca,
   DIAS_CURTOS, DIAS_LONGOS, MESES, PERIODOS, periodoDe,
-  fmtHora, fmtDur, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
+  fmtHora, fmtDur, semanasDesde, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
   escapeHTML, escAttr
 } from './dominio/formato';
 import {
@@ -45,7 +45,7 @@ import {
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
-import { alvoDoPrograma, seriesDeGrupo, impacto,
+import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
 import { MARCAS_DO_CORPO, MEDIDAS_DO_CORPO, mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
@@ -2286,11 +2286,7 @@ function telaCheia() {
   return null;
 }
 
-function semanasDe(t) {
-  const sem = Math.floor((Date.now() - t) / (7 * 86400000));
-  if (sem < 1) return 'menos de 1 semana';
-  return sem + (sem === 1 ? ' semana' : ' semanas');
-}
+function semanasDe(t) { return semanasDesde(t, Date.now()); }
 
 // ---------- impacto no volume ----------
 // O treinador definiu um alvo por músculo. Mexer nas séries mostra na hora
@@ -2678,48 +2674,28 @@ const MOTIVOS = [
   { k:'decisao', t:'decisão de programa' }
 ];
 
-// O impacto que importa é o do programa DEPOIS da promoção, não o de hoje.
+/**
+ * O que uma mudança do dia faria no programa — o invólucro que resolve o `S`.
+ *
+ * A conta e a prosa moram em `dominio/volume.ts`, com os dez casos que as
+ * quatro ramificações nunca tiveram (três delas não tinham asserção em lugar
+ * nenhum). Aqui fica só o que depende de estado: a rotação oficial, o alvo, o
+ * catálogo, o slot original daquele dia e o relógio.
+ */
 function impactoDoMod(d, m) {
-  if (m.k === 'sets') {
-    const g = exDe(m.slot).g;
-    if (!g) return null;
-    const oficial = seriesOficiais(g);
-    const depois = oficial - m.de + m.para;
-    const alvo = ALVO[g];
-    if (alvo == null) return { txt: g + ': ' + oficial + ' → ' + depois + ' séries na rotação', acima: 0 };
-    return { txt: g + ': ' + oficial + ' → ' + depois + ' na rotação · o treinador prescreveu ' + alvo,
-             acima: depois > alvo ? 1 : 0 };
-  }
-  if (m.k === 'add') {
-    const g = exDe(m.id).g;
-    if (!g) return null;
-    const depois = seriesOficiais(g) + m.s;
-    const alvo = ALVO[g];
-    return { txt: g + ': ' + seriesOficiais(g) + ' → ' + depois + ' na rotação'
-                  + (alvo != null ? ' · o treinador prescreveu ' + alvo : ''),
-             acima: alvo != null && depois > alvo ? 1 : 0 };
-  }
-  if (m.k === 'rm') {
-    const g = exDe(m.slot).g;
-    const sl = slotOriginal(d, m.slot);
-    if (!g || !sl) return null;
-    const depois = seriesOficiais(g) - sl.s;
-    const alvo = ALVO[g];
-    return { txt: g + ': ' + seriesOficiais(g) + ' → ' + depois + ' na rotação'
-                  + (alvo != null ? ' · o treinador prescreveu ' + alvo : ''),
-             acima: 0 };
-  }
-  if (m.k === 'troca') {
-    const sl = slotOriginal(d, m.slot);
-    if (!sl) return null;
-    const sem = semanasNoPrograma(sl);
-    if (sem != null && sem < 6) {
-      return { txt: nomeEx(m.slot) + ' está no programa há ' + semanasDe(sl.desde)
-                    + '. O treinador pede 6 a 8 semanas antes de trocar os principais.', acima: 1 };
-    }
-    return null;
-  }
-  return null;
+  return _impactoDoMod(m, {
+    rotacao: rot().map(function (dia) {
+      const pr = S.prog && S.prog[dia];
+      if (!pr) return null;
+      return { name: pr.name, tag: pr.tag,
+               ex: pr.ex.map(function (sl) { return { g: exDe(sl.id).g, s: sl.s }; }) };
+    }),
+    alvo: ALVO,
+    grupoDe: function (id) { return exDe(id).g; },
+    nomeDe: nomeEx,
+    oficialDe: function (slot) { return slotOriginal(d, slot); },
+    agora: Date.now()
+  });
 }
 
 // Séries de um músculo no programa OFICIAL, sem os mods de hoje.
