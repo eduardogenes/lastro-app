@@ -1057,3 +1057,81 @@ test('reduzir movimento desliga animação por estrutura, não por nome', () => 
       'é mais específica e ganha, então o movimento continua rodando');
   }
 });
+
+test('a paleta atende contraste nos dois temas, medido do que está na folha', () => {
+  // A frente 4 mediu o contraste da paleta que ela DESENHOU. Nada garantia que
+  // a paleta EMBARCADA atendesse, nem que continuasse atendendo quando alguém
+  // encostasse numa cor — e encostar numa cor é a coisa mais fácil de fazer num
+  // sistema de design.
+  //
+  // Os hexadecimais são lidos da FOLHA, não transcritos aqui: transcrever
+  // faria este caso testar a minha transcrição em vez do produto.
+  //
+  // A medida é a da norma: luminância relativa linearizada, e o contraste é
+  // `(claro + .05) / (escuro + .05)`.
+  const tokens = fonte('src/tokens.css');
+
+  function paletaDe(dentro: string): Record<string, string> {
+    const p: Record<string, string> = {};
+    for (const m of dentro.matchAll(/--(ins-[a-z0-9-]+)\s*:\s*(#[0-9A-Fa-f]{6})/g)) {
+      if (!(m[1] in p)) p[m[1]] = m[2];
+    }
+    return p;
+  }
+  // o `:root` de abertura é o CLARO; o primeiro bloco de `prefers-color-scheme:
+  // dark` é o ESCURO. A terceira cópia (`[data-theme="dark"]`) existe para a
+  // troca manual e repete os mesmos valores — há caso próprio cobrando isso.
+  const iEscuro = tokens.indexOf('prefers-color-scheme: dark');
+  assert.ok(iEscuro > 0, 'não achei o bloco do tema escuro');
+  const claro = paletaDe(tokens.slice(0, iEscuro));
+  const escuro = paletaDe(tokens.slice(iEscuro));
+
+  function lum(hex: string): number {
+    const c = [1, 3, 5].map(i => parseInt(hex.substr(i, 2), 16) / 255)
+      .map(x => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4));
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  function contraste(a: string, b: string): number {
+    const la = lum(a), lb = lum(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+
+  // 4,5 para texto; 3,0 para o que é FORMA e não letra — fio de controle e anel
+  // de foco, que a norma mede como componente de interface.
+  const pares: [string, string, string, number][] = [
+    ['ins-tinta', 'ins-tela', 'texto principal', 4.5],
+    ['ins-tinta-2', 'ins-tela', 'prosa', 4.5],
+    ['ins-tinta-3', 'ins-tela', 'texto de apoio', 4.5],
+    ['ins-acento-tinta', 'ins-tela', 'acento como texto', 4.5],
+    ['ins-sobre-acento', 'ins-acento', 'texto sobre acento', 4.5],
+    ['ins-pare-tinta', 'ins-pare-fundo', 'o painel de pare', 4.5],
+    ['ins-atencao-tinta', 'ins-atencao-fundo', 'o painel de atenção', 4.5],
+    ['ins-fio-controle', 'ins-tela', 'fio de controle', 3.0],
+    ['ins-foco', 'ins-tela', 'anel de foco', 3.0]
+  ];
+
+  const falhas: string[] = [];
+  for (const [tema, pal] of [['claro', claro], ['escuro', escuro]] as const) {
+    for (const [a, b, rotulo, minimo] of pares) {
+      // `--ins-foco` aponta para o acento por `var()`, então resolve-se o apelido
+      const hexA = pal[a] || pal[a === 'ins-foco' ? 'ins-acento' : a];
+      const hexB = pal[b];
+      assert.ok(hexA && hexB, 'token sem valor no tema ' + tema + ': ' + a + ' / ' + b);
+      const v = contraste(hexA, hexB);
+      if (v < minimo) falhas.push(
+        tema + ' · ' + rotulo + ': ' + v.toFixed(2) + ':1, mínimo ' + minimo);
+    }
+  }
+  assert.deepStrictEqual(falhas, [],
+    'par de cores abaixo do contraste mínimo — e isto não se vê olhando: ' +
+    'uma cor encostada em outra parece bem e mede mal');
+
+  // E o mais apertado fica nomeado, porque é o que quebra primeiro: o fio de
+  // controle no claro tem 3,26:1 contra um mínimo de 3,0 — 0,26 de folga.
+  const fio = contraste(claro['ins-fio-controle'], claro['ins-tela']);
+  assert.ok(fio >= 3.0 && fio < 3.6,
+    'o fio de controle no claro saiu da faixa conhecida (' + fio.toFixed(2) +
+    ':1). Se subiu, ótimo — atualize esta asserção. Se desceu abaixo de 3, ' +
+    'a asserção de cima já pegou. Ela existe para que a folga de 0,26 não ' +
+    'desapareça sem ninguém notar.');
+});
