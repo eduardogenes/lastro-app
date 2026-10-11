@@ -1472,6 +1472,17 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
   min-height: 100svh;
 }
 
+/* A RESERVA DO RODAPÉ, no modo.
+   `--ins-tabbar` não é a altura da barra: a barra se mede sozinha, e o token
+   existe "para quem precisa reservar espaço embaixo" (`tokens.css`, literal).
+   São quatro consumidores — o fim da página (`#app`), o toast, o cronômetro e a
+   faixa da sessão — e todos ancoram NELA. No modo a barra não é desenhada, e
+   sem isto sobrava a altura dela de espaço morto no fim do treino, com a faixa
+   e o cronômetro flutuando acima de nada.
+   Fica `var(--sa-bottom)` e não `0`: o que sai é a barra, não o espaço do
+   indicador de home — sem ele o último cartão encosta nele. */
+#app:has(.ins-modo) { --ins-tabbar: var(--sa-bottom); }
+
 /* GRUDADA NO TOPO, e isto é regra escrita: "a seta não some em nenhum estado do
    modo" (frente 1, §4.3, item 5). O modo nasceu porque o dedo ficava preso numa
    tela sem saída; uma saída que rola para fora da tela é a mesma armadilha com

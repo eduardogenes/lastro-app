@@ -7710,7 +7710,10 @@ CTX.faixaDaSessao = function () {
              txt: 'Treino ' + s.day + ' sem série nova há ' + fmtDur(paradaDaSessao(s)) + '.' };
   }
 
-  if (view.aba === 'treino') return null;
+  // O atalho leva ao treino em andamento. Dentro do modo a pessoa JÁ está nele,
+  // e o botão ocuparia a faixa com um caminho para onde ela está. A pergunta
+  // acima continua, que é o item 1 da lista do que não some no modo.
+  if (view.aba === 'treino' || view.modoSessao) return null;
   const i = ondeEleEstava(estadosDoDia(s.day));
   return {
     tipo: 'atalho', dia: s.day,

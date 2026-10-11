@@ -112,6 +112,49 @@ test('na abertura: dentro da graça a sessão vive, além dela fecha', async () 
   morta.fechar();
 });
 
+test('dentro do modo a pergunta de 1h30 continua na tela', async () => {
+  // Item 1 da lista do que NÃO some dentro do modo (frente 1, §4.3): "dentro
+  // do modo, a pergunta continua". A razão é a mesma de ela aparecer em todas
+  // as abas — quem esqueceu de finalizar costuma ter esquecido olhando
+  // justamente para o treino. E o modo é onde ele fica olhando.
+  //
+  // A quebra que isto segura é silenciosa e foi real: a casca devolve a tela
+  // cheia ANTES de desenhar a faixa (`app.jsx`), então o modo nascia sem ela —
+  // e a sessão esquecida passava a só ser perguntada se ele SAÍSSE do modo.
+  const a = await comSessao();
+  parada(a, 95);
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.vista().modoSessao, true, 'pré-condição: dentro do modo');
+
+  assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'pergunta', 'o modelo pergunta');
+  assert.ok(a.$('.ins-faixa-p'), 'e a pergunta está NA TELA do modo');
+  assert.ok(a.texto('.ins-faixa-q').includes('sem série nova'), a.texto('.ins-faixa-q'));
+  a.fechar();
+});
+
+test('dentro do modo o atalho de voltar ao treino não aparece', async () => {
+  // A outra metade: a faixa tem dois tipos, e só a pergunta continua. O atalho
+  // leva ao treino em andamento — dentro do modo ele é um botão para onde a
+  // pessoa já está, e ocuparia a faixa de cima da tela com isso.
+  //
+  // E a prova é feita de OUTRA aba de propósito. O atalho é calado por
+  // `view.aba === 'treino'`, e as duas portas do modo arrumam a aba antes de
+  // entrar — então entrar pela aba do treino esconderia o atalho por acidente,
+  // e o caso ficaria verde sem o modo ter nada a ver com isso.
+  const a = await comSessao();
+  a.v('ctx.vaiPara', 'comida');
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.vista().aba, 'comida', 'pré-condição: a aba por baixo NÃO é treino');
+
+  assert.strictEqual(a.vJ('ctx.faixaDaSessao'), null,
+    'sem pergunta pendente, a faixa não tem o que dizer aqui: quem está no ' +
+    'modo já está no treino para onde o atalho levaria');
+  assert.ok(!a.$('.ins-faixa'), 'e nada de faixa na tela');
+  a.fechar();
+});
+
 // ---------------------------------------------------------------------------
 // `ctx.voltaAoTreino` — a porta de volta que a FAIXA oferece
 // ---------------------------------------------------------------------------

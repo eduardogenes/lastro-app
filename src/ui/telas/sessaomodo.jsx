@@ -23,6 +23,7 @@
 // no meio de uma série, custa um toque de teste para descobrir.
 
 import { Treino } from './treino.jsx';
+import { FaixaDaSessao } from '../instrumento/faixasessao.jsx';
 
 export function SessaoModo({ ctx }) {
   return (
@@ -42,6 +43,20 @@ export function SessaoModo({ ctx }) {
       <main>
         <Treino ctx={ctx} />
       </main>
+
+      {/* A pergunta de 1h30 continua aqui — item 1 da lista do que não some no
+          modo (frente 1, §4.3), pela mesma razão de ela aparecer em todas as
+          abas: quem esqueceu de finalizar costuma ter esquecido olhando para o
+          treino, e o modo é onde ele fica olhando. A casca devolve a tela cheia
+          antes de desenhar a faixa, então sem esta linha a sessão esquecida só
+          seria perguntada se ele SAÍSSE do modo.
+          O `tipo` é decidido pelo modelo: dentro do modo só vem `pergunta`. */}
+      <FaixaDaSessao
+        faixa={ctx.faixaDaSessao()}
+        onVolta={ctx.voltaAoTreino}
+        onContinua={ctx.continuaSessao}
+        onEncerra={ctx.encerraSessaoEsquecida}
+      />
     </div>
   );
 }

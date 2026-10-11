@@ -643,6 +643,22 @@ test('o relógio da sessão gruda no topo enquanto o treino corre', () => {
   assert.ok(!/top:\s*0\s*;/.test(rel), 'top: 0 põe o número embaixo do relógio do sistema');
 });
 
+test('no modo, a reserva do rodapé perde a barra de abas mas guarda a área segura', () => {
+  // `--ins-tabbar` é a RESERVA que o rodapé fixo precisa vencer — não a altura
+  // da barra, que se mede sozinha (`tokens.css` diz isso literalmente). Quatro
+  // consumidores ancoram nela: o fim da página, o toast, o cronômetro e a faixa
+  // da sessão. No modo a barra não é desenhada, e sem o ajuste sobra a altura
+  // dela de espaço morto no fim do treino.
+  const comp = fonte('src/componentes.css');
+  const no_modo = regras(comp, '#app:has(.ins-modo)');
+  const valor = no_modo.match(/--ins-tabbar:\s*([^;]+);/);
+  assert.ok(valor, 'o modo precisa redefinir a reserva do rodapé');
+  // `0` tiraria junto o espaço do indicador de home, e o último cartão
+  // encostaria nele. O que sai é a barra, não a área segura.
+  assert.strictEqual(valor![1].trim(), 'var(--sa-bottom)',
+    'guarda a área segura: zerar a reserva encosta o conteúdo no indicador');
+});
+
 test('a saída do modo gruda no topo, e a cadeia acima dela não cria scroll', () => {
   // A frente 1 escreveu a regra com todas as letras: "a seta não some em nenhum
   // estado do modo" (§4.3, item 5). Barra não-sticky some ao rolar — e o modo
