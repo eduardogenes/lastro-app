@@ -367,3 +367,28 @@ saber o que isso cobrou.
 **Nada disto foi visto.** Contraste calculado é contraste contra um vidro limpo
 num quarto neutro — a luz da academia, o sol, a luva e o magnésio não entram na
 conta, e a auditoria de acesso já havia declarado isso.
+
+
+---
+
+## 15 · O dono olhou — a primeira confirmação visual
+
+**11/10, palavras dele: "já abri e parece ok".**
+
+Vale registrar pelo que é, e não por mais do que é. **O que isso confirma:** a
+inversão da paleta — de um conjunto escuro com acento ácido para papel claro com
+acento azul-violeta, atravessando seis folhas e mais de mil linhas de CSS — **não
+quebrou o app visualmente.** Para uma mudança desse tamanho, feita inteira contra
+teste em memória, isso é mais do que parece.
+
+**O que isso NÃO confirma**, e segue na lista de não medido:
+
+- o contraste na **luz da academia**, no sol, com luva e magnésio — a conta é
+  contra um vidro limpo num quarto neutro;
+- o **anel de foco**, que só aparece com teclado e não com o dedo;
+- a **adjacência dos onze alvos pequenos**, que é o que decide se podem crescer;
+- as cinco medições de alcance e de toque engolido;
+- o app **instalado**, que é o único jeito como ele é usado de verdade.
+
+Um olhar diz que nada está visivelmente quebrado. É um sinal real, e é diferente
+de uma medida.
