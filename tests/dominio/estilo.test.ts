@@ -924,3 +924,39 @@ test('nada entre a folha e a janela cria bloco de contenção', () => {
   assert.deepStrictEqual(culpadas, [],
     'ancestral da folha com bloco de contenção: a folha para de ser fixa');
 });
+
+test('todo controle tem anel de foco próprio, e o anel não encosta no botão', () => {
+  // O contrato manda "foco sempre visível". O sistema anterior não tinha UMA
+  // regra de `:focus-visible` para botão: todo botão dependia do anel padrão do
+  // navegador, num canvas quase preto, onde ele tem menos chance de aparecer.
+  // E nenhum caso dizia uma palavra sobre isso — então a ausência nunca ficou
+  // vermelha. Este caso nasceu vermelho em 11/10, com os tokens de foco já
+  // definidos e sem um único consumidor.
+  //
+  // Três coisas são cobradas, e a terceira é a que se perde primeiro:
+  //
+  // 1. a regra existe e alcança os quatro tipos de controle;
+  // 2. a cor vem do TOKEN, não de um literal — senão o anel não segue o tema,
+  //    e no escuro um anel escuro sobre fundo escuro é o mesmo que nenhum;
+  // 3. há FOLGA entre o anel e o botão. Num botão preenchido de acento, um anel
+  //    de acento encostado no preenchimento é invisível; com a folga, o que
+  //    aparece entre os dois é a PÁGINA, e página contra acento mede 6,16:1 nos
+  //    dois lados. Sem ela o anel desaparece justamente no botão mais
+  //    importante da tela.
+  const alvos = ['button', 'a', '[role="button"]', '[tabindex]'];
+
+  const comAnel = blocos(fonte('src/base.css')).filter(b =>
+    b.sels.some(s => /:focus-visible\s*$/.test(s.trim())) &&
+    /outline:[^;]*var\(--ins-foco\)/.test(b.corpo) &&
+    /outline-offset:[^;]*var\(--ins-foco-folga\)/.test(b.corpo));
+
+  assert.ok(comAnel.length > 0,
+    'nenhuma regra de `:focus-visible` em base.css desenha o anel com ' +
+    '`var(--ins-foco)` E `var(--ins-foco-folga)` — sem os dois o anel não ' +
+    'segue o tema ou desaparece no botão de acento');
+
+  const semAnel = alvos.filter(a =>
+    !comAnel.some(b => b.sels.some(s => s.trim().startsWith(a + ':focus-visible'))));
+  assert.deepStrictEqual(semAnel, [],
+    'controle que fica sem anel de foco próprio, dependendo do navegador');
+});

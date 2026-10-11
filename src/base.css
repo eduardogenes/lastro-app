@@ -156,6 +156,31 @@ input:focus, textarea:focus, select:focus {
   border-color: var(--ins-acento);
 }
 
+/* ---- O anel de foco ----
+   O contrato manda "foco sempre visível". O sistema anterior não tinha UMA
+   regra de `:focus-visible` para botão: todo botão dependia do anel padrão do
+   navegador, num canvas quase preto, onde ele tem menos chance de aparecer. E
+   nenhum caso de teste dizia uma palavra sobre isso, então a ausência nunca
+   ficou vermelha — a dívida era invisível para a rede, não só para o olho.
+
+   `:focus-visible` e não `:focus`: no toque o anel apareceria a cada dedo na
+   tela, sem nada a dizer para quem está vendo.
+
+   A FOLGA não é estética. Num botão preenchido de acento, um anel de acento
+   encostado no preenchimento é invisível; com a folga, o que aparece entre os
+   dois é a PÁGINA, e página contra acento mede 6,16:1 nos dois lados. Sem ela
+   o anel desaparece justamente no botão mais importante da tela.
+
+   O campo fica FORA desta lista de propósito: ele perde o `outline` logo acima
+   e ganha borda de acento, que é sinal no lugar onde o olho já está. */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--ins-foco-largura) solid var(--ins-foco);
+  outline-offset: var(--ins-foco-folga);
+}
+
 /* Nível 4 e não 5: no campo de busca da biblioteca o placeholder é o ÚNICO
    rótulo que existe — não há label acima dele —, e a 16px o nível 5 dá 3,2:1.
    Continua muito abaixo do valor digitado, que é branco. */
