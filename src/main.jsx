@@ -951,7 +951,7 @@ async function finalizarSessao() {
   const feitas = p.feito.length;
 
   if (!feitas && !p.parcial.length) {
-    if (!confirm('Nenhuma série registrada neste treino. Descartar a sessão?')) return;
+    if (!confirm('Descartar esta sessão?\n\nNenhuma série foi registrada nela.')) return;
     lapide(chaveDeSessao({ sid: s.sid }));
     S.done = S.done.filter(function (x) { return x.sid !== s.sid; });
     S.sessao = null; S.draft = null; S.mods = null;
@@ -2320,7 +2320,7 @@ async function removerEx(i) {
   const d = view.day;
   const ex = treino(d).ex[i];
   const slot = ex.orig || ex.id;
-  if (temRegistro(d, i) && !confirm('Este exercício já tem série registrada hoje. Remover apaga o registro desta sessão. Continuar?')) return;
+  if (temRegistro(d, i) && !confirm('Remover este exercício do treino de hoje?\n\nApaga também a série já registrada nele nesta sessão.')) return;
   removeProjecao(logKey(d, i), slotDe(d, i));
   poeMod(d, { k:'rm', slot: slot });
   view.open = null; view.swapOpen = null;
@@ -2955,8 +2955,8 @@ async function progSetTroca(d, i, idEx) {
   const de = sl.id;
   const sem = semanasNoPrograma(sl);
   if (sem != null && sem < 6 &&
-      !confirm(nomeEx(de) + ' está no programa há ' + semanasDe(sl.desde) +
-               '.\n\nO treinador pede 6 a 8 semanas antes de trocar os principais. Trocar mesmo assim?')) return;
+      !confirm('Trocar ' + nomeEx(de) + ' mesmo assim?\n\nEle está no programa há ' +
+               semanasDe(sl.desde) + ', e o treinador pede 6 a 8 semanas antes de trocar os principais.')) return;
   sl.id = idEx;
   sl.desde = Date.now();
   logProg(d, nomeEx(de) + ' → ' + nomeEx(idEx));
@@ -3017,7 +3017,7 @@ async function criarTreino() {
 
 async function restaurarDia(d) {
   if (!PROGRAMA[d]) {
-    if (!confirm('O treino ' + d + ' não existe no programa atual do treinador. Apagar o treino?')) return;
+    if (!confirm('Apagar o treino ' + d + '?\n\nEle não existe no programa atual do treinador.')) return;
     delete S.prog[d];
     S.rot = rot().filter(function (x) { return x !== d; });
     logProg(d, 'treino ' + d + ' apagado');
@@ -4536,9 +4536,11 @@ async function apagaRegistroDeTreino(t) {
   // o aviso diz o que vai junto: apagar o dia e apagar as séries é uma
   // decisão só, e ela não pode ser tomada sem o número na frente
   const oQue = series
-    ? 'Apagar este treino e as ' + series + (series === 1 ? ' série registrada' : ' séries registradas') + ' nele?'
-    : 'Apagar este registro de treino?';
-  if (!confirm(oQue + '\n\nIsso não tem volta, e vale para os outros aparelhos.')) return;
+    ? 'este treino e as ' + series + (series === 1 ? ' série registrada' : ' séries registradas') + ' nele'
+    : 'este registro de treino';
+  // O verbo fica na CHAMADA, não na variável: é a primeira palavra que se lê de
+  // relance, e ela tem de estar legível aqui, no ponto onde o aviso é dado.
+  if (!confirm('Apagar ' + oQue + '?\n\nIsso não tem volta, e vale para os outros aparelhos.')) return;
 
   lapide(chaveDeSessao(m));
   linhas.forEach(function (x) { lapide(chaveDeLog(x.idEx, x.l)); });

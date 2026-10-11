@@ -976,3 +976,50 @@ test('ctx.abreSessaoDoDia sem célula não abre nada', async () => {
   assert.strictEqual(a.vista().aba, 'treino', 'e nem trocou de aba');
   a.fechar();
 });
+
+test('todo aviso que para o dedo diz o que acontece, e diz na primeira palavra', () => {
+  // A decisão 13 trocou o significado do terceiro sinal de "destrói dado" para
+  // "pare". Com isso a gravação que falhou e a ação que vai destruir passaram a
+  // usar o MESMO painel, com a mesma moldura — e **o que as distingue é a
+  // palavra**. A cor deixou de dizer o que dizia, e a palavra ainda não tinha
+  // assumido: este caso é o que impede a lacuna de voltar.
+  //
+  // De relance ninguém lê a frase inteira: lê-se a PRIMEIRA PALAVRA e o botão.
+  // Daí as duas regras mecânicas que este caso cobra, as duas da frente 3 §3.1.
+  const avisos = [];
+  const re = /\bconfirm\(\s*([\s\S]{0,40})/g;
+  let m;
+  while ((m = re.exec(FONTE))) avisos.push(m[1]);
+  assert.ok(avisos.length > 15, 'o varredor achou avisos: ' + avisos.length);
+
+  // G3 · a primeira palavra é a única que se lê de relance, e ela tem de ser o
+  // VERBO do que vai acontecer. A regra é morfológica em vez de uma lista de
+  // verbos autorizados, e por isso se mantém sozinha: infinitivo em português
+  // termina em -ar, -er ou -ir.
+  //
+  // E a regra fica SIMPLES de propósito: o primeiro argumento do aviso abre com
+  // literal, e a primeira palavra dele é o verbo. Houve uma versão deste caso
+  // que resolvia uma indireção, para aceitar um aviso que abria por um `const`
+  // montado de literais — e ela foi jogada fora. Teste esperto o bastante para
+  // entender código esperto é o caminho errado: o código mudou para abrir com
+  // literal, e o verbo passou a ficar legível no ponto onde o aviso é dado.
+  const INFINITIVO = /^[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+(?:ar|er|ir)\b/;
+
+  const semVerbo = avisos
+    .map(a => ({ a, lit: (a.trim().match(/^['"`]([^'"`]{2,})/) || [])[1] }))
+    .filter(x => !x.lit || !INFINITIVO.test(x.lit))
+    .map(x => x.a.trim().slice(0, 46));
+  assert.deepStrictEqual(semVerbo, [],
+    'aviso cuja primeira palavra não é o verbo do que vai acontecer: de ' +
+    'relance quem lê não sabe o que o toque faz — abra pelo infinitivo e ponha ' +
+    'o resto depois');
+
+  // E a lista do que nunca se escreve, da frente 3 §3.1: rótulo que não diz o
+  // que acontece ao tocar, e pergunta que empurra a decisão sem nomear o
+  // estrago.
+  const proibidas = ['Tem certeza', 'Continuar?', 'Atenção!', 'Erro inesperado',
+    'Ops', 'Confirmar?'];
+  const usadas = proibidas.filter(p => new RegExp(p.replace('?', '\\?')).test(FONTE));
+  assert.deepStrictEqual(usadas, [],
+    'frase que a voz do produto recusa: ela não diz o que acontece ao tocar');
+});
