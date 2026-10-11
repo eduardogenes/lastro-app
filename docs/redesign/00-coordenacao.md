@@ -2089,9 +2089,86 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       **reseta o dia**, apagando as marcas que o caso semeou. De manhã passa, à
       noite não.
 
-- [ ] **6.j A próxima peça da reescrita** — as outras telas, pela ordem do
-      plano, com os repontes de expressão composta junto de cada uma (uma visita
-      só por arquivo, decisão do dono). A
+- [x] **6.j O aviso de que nada vai ficar** (`b48a608`) — §5.0, a parte do Agora
+      que **não é cartão**: não disputa o topo porque não é uma ação, é a
+      condição de validade de todas as outras.
+      **O buraco era perda de dado em silêncio.** `src/infra/db.ts` sonda o
+      armazenamento no boot e cai para memória em aba privada — e **ninguém lia
+      o resultado da sonda**. O app abria inteiro, marcava refeição, registrava
+      série, e perdia tudo ao fechar a aba sem dizer uma palavra.
+      As palavras são as do protótipo, literais, e **as duas metades importam**:
+      diz até quando vale o que ele tocar, e que aquele dia **não entra na conta
+      dos 14 dias** — que é o que a regra do corte lê.
+      O harness ganhou `semArmazenamento`, que faz o **acesso** a `localStorage`
+      estourar e não só a escrita, porque é assim que a condição se apresenta.
+
+- [x] **6.k O vencimento por posição, e a lista virando a chamadora da conta**
+      (`4683225`) — peça 2 da ordem amarrada pelo §6.3. A decisão do dono é que
+      a mudança vence **quando aquele treino voltar** (5.a' P1), não em N dias.
+      **A armadilha que a regra evita:** contar em dias corridos. A sequência é
+      sequência — A, B, C, D, E, HX —, e um domingo de descanso **não gasta
+      posição nenhuma**. `null` em vez de data inventada quando o alvo não cabe
+      no horizonte.
+      **Um defeito pré-existente achado ao escrever o caso da ordem:**
+      `promoPendente` não entrava ordenada pela **importação**. O escritor
+      ordena e a fusão ordena, mas a importação copia a chave como ela vem no
+      arquivo — e os **dois** leitores confiam na ordem (`abrePromoGuardada`
+      pega `[0]` como "a mais antiga, a única ordem que ele reconhece"). Fora de
+      ordem, o app perguntava primeiro pela mudança **mais nova**, o contrário do
+      que está escrito no comentário dele. Consertado em `normalizaEstado`, por
+      onde todo estado entra.
+      **Onze mutações, e duas acharam furo meu:** o caso do domingo não
+      discriminava começando numa segunda (dali o alcance da rotação é o sábado,
+      e a caminhada nem chega ao domingo), e o caso do deslocamento somava dois
+      efeitos — gravar a sessão de hoje também muda `proximoTreino`. Refeitos
+      para isolar a variável.
+
+### O que a Prescrição ainda precisa, e por que paro aqui
+
+A lista existe no MODELO e não tem tela, e isso é sequência e não dívida: a
+tela dela é o **lugar Prescrição**, que hoje está repartido entre `comida.jsx`,
+`guia.jsx`, `programa.jsx` e `historico.jsx`. Construir a lista dentro da
+estrutura de abas velha seria construí-la duas vezes.
+
+**O que está bloqueado atrás disso, na ordem:**
+
+1. **O lugar Prescrição** (§1.5) — e com ele a tela da lista;
+2. **`decisao.jsx` sai** (D1), que é o passo 3 do §6.3. Ele **não pode sair
+   antes** da tela, senão a conta de volume desaparece entre uma coisa e outra;
+3. **O carregador nos DOIS fechos.** A retificação do §3.6 é explícita: no fecho
+   **manual** não existe carregador — `fechaSessao` só copia a mudança no fecho
+   automático, e `finalizarSessao` faz `S.promoPendente = null` de propósito,
+   porque hoje ele PERGUNTA ali. Tirada a pergunta sem escrever o carregador, o
+   fecho manual **descarta a mudança em silêncio** (o F280 nominal). Por isso o
+   carregador tem de entrar na MESMA passada que remove a pergunta — escrevê-lo
+   agora faria a mudança ser perguntada e enfileirada ao mesmo tempo;
+4. **Os passos 5 e 6 do fluxo do vencimento** (§8.1) — vencer vira "só daquele
+   dia", **dito** e **desfazível**, e a linha sai da fila **deixando lápide**.
+   Isso é campo persistido novo, e portanto os seis portões (tipo, migração com
+   fixture, regra de fusão com chave/lápide/teto, as duas listas de cópia, `tsc`
+   e o total congelado);
+5. **A linha do Agora** (§5.6, passo 4) — "Para decidir com calma", uma vez e
+   nunca durante a sessão. Ela só faz sentido depois de 2 e 4: avisar sobre algo
+   que não vence, e sem lugar para decidir, é aviso sem saída.
+
+- [ ] **6.l A estrutura dos cinco lugares** — a barra passa a ser Agora · Dias ·
+      Corpo · Semana · Prescrição. **Medido antes de propor:** no FONTE a troca
+      é pequena (1 `vaiPara('treino')`, 2 leituras de `view.aba === 'treino'`),
+      e a capacidade de olhar a prescrição de outro dia **não se perde** — o
+      strip de rotação do `Treino` navega entre dias (`ctx.vaiParaDia`) e o modo
+      desenha o `Treino`. Nos TESTES são 29 referências explícitas em 26 dos 36
+      arquivos, mais o padrão `'treino'` do harness; é a reescrita em bloco que
+      a decisão D13 autorizou, com a rede antes.
+      **Não fiz a remoção isolada de propósito:** sem Prescrição, "navegar
+      prescrição" cairia dentro do modo de sessão, que é um estado sabidamente
+      errado. A aba sai na mesma passada que dá à navegação de prescrição a casa
+      dela.
+
+- [ ] **6.m `Dias`** — o único dos cinco lugares **sem desenho nenhum** nos nove
+      HTML (achado 6 da frente 1). Precisa de decisão de desenho antes de código.
+
+- [ ] **6.n As outras telas**, pela ordem do plano, com os repontes de expressão
+      composta junto de cada uma (uma visita só por arquivo, decisão do dono). A
       decisão do dono é que **os 168 repontes de expressão composta sejam feitos
       junto com a reescrita de cada tela**, numa visita só por arquivo. O defeito
       do `ajustaRelogio` já foi pago na frente da porta 1.
