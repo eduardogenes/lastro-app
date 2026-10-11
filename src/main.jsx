@@ -19,6 +19,7 @@ import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui
 import { ehBancada } from './palco.js';
 import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
+import { cartaoDeCima } from './dominio/agora';
 import { leAula } from './dominio/aula';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
@@ -40,7 +41,7 @@ import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from '
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
 import {
   aplicaAjusteNoArroz, tiraMarcaDeArroz, listaDeCompras, totalDaRefeicao, totalDoDia,
-  refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao,
+  refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao, minutosDe,
   fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis,
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
 } from './dominio/nutricao/calculo';
@@ -7696,6 +7697,105 @@ CTX.setGordura = function (v) {
  * boota e a suíte inteira responde `__escopo is not a function`.
  */
 CTX.horaDeParede = function () { return fmtHora(Date.now()); };
+
+/**
+ * Os fatos do dia que a regra do cartão de cima lê, resolvidos do `S`.
+ *
+ * A REGRA mora em `dominio/agora.ts`, é pura e está provada por mutação, degrau
+ * por degrau. Aqui fica só o que depende de estado — e cada linha deste
+ * invólucro é uma decisão de ONDE o fato já estava:
+ *
+ * - **a janela do treino** termina quando a sessão terminaria: o minuto da
+ *   refeição `treino` do dia (que `refeicoesDeHoje` já desloca pelo turno) mais
+ *   `duracaoDoTreino()`, que é a mediana medida das sessões dele e não uma
+ *   constante. Nenhum número novo: é o mesmo cálculo com que o plano já move as
+ *   refeições em volta do treino;
+ * - **palpite** é `previsto` de `diaDeHoje`, que já distingue sessão
+ *   registrada, sessão aberta e escolha manual do palpite do padrão semanal;
+ * - **feito** é `origem === 'registrado'`: já há sessão registrada hoje;
+ * - **a aula** é o dia ABERTO da rotação (`HX`, `aberto: 1`), porque a aula É a
+ *   sessão daquele dia;
+ * - **as refeições presas à sessão não disputam o topo.** São as de
+ *   `quando: 'treino'` — o pré e o intra —, e é a razão escrita da frente 1: o
+ *   pré "desce para a linha de baixo e reaparece dentro do descanso, que é onde
+ *   ele de fato é marcado". Cartão mandando beber água no meio da série seria a
+ *   mesma classe de erro.
+ *
+ * **A confirmação do fim aproximado** é derivada, e de propósito sem campo
+ * novo: a sessão mais recente fechada SOZINHA (`fim: 'auto'`, que
+ * `fechaSessao('auto')` carimba) e de um dia anterior a hoje. Enquanto ele não
+ * responde, o número escrito continua aproximado e a pergunta continua
+ * legítima; responder de qualquer um dos dois lados passa o `fim` a `'manual'`
+ * e a pergunta sai sozinha. Campo novo aqui custaria migração, regra de fusão e
+ * duas listas de cópia — por um fato que o dado já carrega.
+ */
+CTX.fatosDoDia = function () {
+  const h = diaResolvido();
+  const dia = diaDeComida();
+  const plano = planoDeComida();
+  const treinando = h.cadencia === 'treino';
+  const refs = refeicoesDeHoje(plano, treinando, !!dia.alta, dia.turno, duracaoDoTreino());
+  const agora = Date.now();
+  const agoraMin = new Date(agora).getHours() * 60 + new Date(agora).getMinutes();
+
+  // a sessão aberta, com a contagem de séries. A aritmética espelha
+  // `estadoEx`, deload incluído, para as duas leituras não divergirem.
+  let sessao = null;
+  const s = S.sessao;
+  if (s) {
+    const t = treino(s.day);
+    let guardadas = 0, prescritas = 0;
+    (t ? t.ex : []).forEach(function (ex, i) {
+      const e = entradaDaSessao(s.day, i, s.sid);
+      prescritas += (e && e.dl) ? Math.ceil(ex.s / 2) : ex.s;
+      if (e) guardadas += e.sets.filter(Boolean).length;
+    });
+    sessao = { dia: s.day, guardadas: guardadas, prescritas: prescritas,
+               esquecida: sessaoEsquecida(s) };
+  }
+
+  // a sessão que fechou sozinha e ainda não teve o fim confirmado
+  let confirmar = null;
+  for (let i = S.done.length - 1; i >= 0; i--) {
+    const m = S.done[i];
+    if (!m || m.livre) continue;
+    if (m.fim === 'auto' && !sameDay(m.t, agora) && m.dur) {
+      confirmar = { dia: m.day, inicio: m.t - m.dur, fim: m.t };
+    }
+    break;                               // só a MAIS RECENTE responde
+  }
+
+  // o treino previsto e a janela dele
+  let treinoDoDia = null;
+  if (treinando && h.treino) {
+    const doPlano = refs.filter(function (r) { return r.id === 'treino'; })[0];
+    const ini = doPlano ? minutosDe(doPlano.t) : null;
+    treinoDoDia = {
+      dia: h.treino,
+      // sem a refeição do treino no plano do dia não há janela a respeitar, e
+      // o dia inteiro seria dela: o treino passa a não disputar.
+      fimDaJanela: ini == null ? -1 : ini + duracaoDoTreino(),
+      palpite: !!h.previsto,
+      feito: h.origem === 'registrado',
+      aula: diaAberto(h.treino)
+    };
+  }
+
+  return {
+    sessao: sessao,
+    confirmar: confirmar,
+    treino: treinoDoDia,
+    refeicoes: refs
+      .filter(function (r) { return r.quando !== 'treino'; })
+      .map(function (r) {
+        return { id: r.id, hora: minutosDe(r.t), marcada: !!dia.done[r.id] };
+      }),
+    agora: agoraMin
+  };
+};
+
+/** A próxima coisa a fazer. A regra é `dominio/agora.ts`; os fatos, acima. */
+CTX.cartaoDeCima = function () { return cartaoDeCima(CTX.fatosDoDia()); };
 
 CTX.faixaDaSessao = function () {
   const s = S.sessao;
