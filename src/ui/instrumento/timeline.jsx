@@ -4,7 +4,7 @@
 // mesma forma no mesmo eixo — o pré-treino das 5h45 e a sessão das 6h15 são
 // uma sequência só, e a tela precisa dizer isso sem que ninguém explique.
 //
-// Anatomia (DESIGN_SYSTEM §3.6):
+// Anatomia (DESIGN.md § Componentes):
 //   [ 46px calha de hora, mono 12px, à direita ]
 //   [ espinha de 1px + ponto de 9px ]
 //   [ conteúdo, flex:1 ]

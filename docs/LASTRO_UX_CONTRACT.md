@@ -234,7 +234,15 @@ Antes de considerar pronta:
 - [ ] todo controle com nome acessível
 - [ ] alvos conforme §11
 - [ ] contraste conforme DESIGN.md
-- [ ] 320 px de largura sem overflow horizontal
+- [x] **320 px deixou de ser alvo em 08/10, por decisão do dono** — e o que
+      fica no lugar é a invariante barata: **nada com largura fixa maior que a
+      tela, e a página nunca rola na horizontal.** O contexto da decisão:
+      o aparelho dele tem 414 px, o segundo usuário não existe no dado, e a
+      frente 3 calculou que o nome "Prescrição" já transborda a fatia da aba a
+      320 px — atender obrigaria a renomear um dos cinco lugares por um usuário
+      que ainda não existe. **Declarado fora, não esquecido:** se um segundo
+      usuário chegar num telefone pequeno, a lista do que quebra está escrita
+      (medição G da frente 4).
 - [ ] 390 e 430 px conferidos
 - [ ] deitado não quebra nem reinicia
 - [ ] Voltar do sistema conferido

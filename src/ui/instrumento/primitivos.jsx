@@ -1,6 +1,6 @@
 // As primitivas do Instrumento.
 //
-// Cada uma tem anatomia exata — as medidas vêm do DESIGN_SYSTEM §3 e não são
+// Cada uma tem anatomia exata — as medidas vêm do DESIGN.md § Componentes e não são
 // sugestão. Se uma tela precisar de algo que não está aqui, o certo é
 // adicionar a primitiva, não improvisar no lugar: foi assim que o sistema
 // antigo acumulou nove hexadecimais soltos no meio das regras.
