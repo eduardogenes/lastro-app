@@ -1878,9 +1878,93 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       a **exatidão** da lista, que foi quem pegou que o meu padrão de detecção
       discordava da própria lista que eu escrevi.
 
-- [ ] **6.b A próxima peça da reescrita** — as telas, pela ordem do plano. A
+- [x] **6.b A sessão como MODO** (`13192e7`, `740e0d9`) — a primeira peça de
+      ESTRUTURA da reescrita, e a primeira que mexe em navegação. **Nasceu de um
+      defeito que nenhum documento tinha e que o protótipo achou:** instalado na
+      tela de início não há barra de navegador, e com a sessão ocupando a tela o
+      dedo ficava **preso** dentro do treino, sem caminho para a comida. A sessão
+      deixou de ser aba e passou a ser **modo**, com saída própria.
+      O modo entrou como a **camada mais funda** das telas cheias (`navegacao.js`
+      deriva a pilha de `view`, nunca escreve nela), então tudo que se abre de
+      dentro dele fica por cima e o Voltar do sistema fecha na ordem certa.
+      **A barra de abas sai, e isto derruba cláusula de contrato vigente** —
+      `LASTRO_UX_CONTRACT.md` manda que ela "continua visível durante o treino
+      ativo". Cai porque **a seta paga por ela**: a razão escrita da cláusula era
+      "sair para conferir a comida e voltar é um caminho legítimo", e o caminho
+      continua existindo com um toque de cada lado. O rótulo da seta diz o que
+      ela FAZ — "Voltar ao Agora, deixando a sessão aberta" —, porque o efeito
+      não é óbvio: sair do modo **não** encerra o treino.
+
+- [x] **6.c As duas primeiras portas de entrada** (`08b1a5c`) — a faixa
+      (`ctx.voltaAoTreino`) e o pouso do app com treino em andamento passam a
+      entrar **no modo**, não na aba atrás dele. A porta 1, o cartão do topo do
+      Agora, espera o lugar Agora. As duas arrumam a tela antes de entrar, e por
+      isso a abertura foi separada em `abreModo()`, que **não pinta**: render só
+      no fim, uma vez.
+      **E a peça expôs dois defeitos meus da anterior**, os dois de mobile, os
+      dois na cadeia de ancestrais do `sticky` — exatamente a regra que o dono
+      mantém escrita no `CLAUDE.md`:
+      1. a tela cheia é devolvida **antes** da casca (`app.jsx`), então o
+         `<main>` dela não entrava e o relógio da sessão virava filho do
+         invólucro. Sticky se prende ao bloco que o contém: **trocar o pai é
+         trocar a âncora**. O modo ganhou o seu `<main>`, que também é o marco da
+         página — e um caso cobra que haja **exatamente um**;
+      2. **a barra da saída não era sticky e rolava para fora da tela.** A frente
+         1 escreveu o contrário com todas as letras ("a seta não some em nenhum
+         estado do modo", §4.3 item 5), e o modo existe **justamente** porque o
+         dedo ficava preso numa tela sem saída. Uma saída que rola para fora é a
+         mesma armadilha com um passo a mais.
+      O guarda de CSS que nasceu daí cobra a **cadeia inteira**: `.ins-modo` não
+      pode ter `overflow` ≠ `visible`/`clip`. **Provei vermelho com
+      `overflow-x: hidden` sozinho**, que é a armadilha da regra do dono — a
+      outra direção vira `auto` e mata o sticky do mesmo jeito.
+
+- [x] **6.d A pergunta de 1h30 dentro do modo, e a reserva do rodapé**
+      (`3e13793`) — item 1 da lista do que **não some** no modo. A casca devolve
+      a tela cheia antes de desenhar a faixa, então **o modo nascia sem ela**: a
+      sessão esquecida só seria perguntada se ele SAÍSSE do modo, que é o lugar
+      onde ele fica olhando. É o terceiro defeito de "a tela cheia volta antes da
+      casca" na mesma passada — o padrão já se vê, e vale olhar por ele nas
+      próximas telas cheias.
+      **Um caso meu passava por acidente e eu peguei:** o atalho da faixa era
+      calado por `view.aba === 'treino'`, e as duas portas arrumam a aba antes de
+      entrar. Reescrevi o caso para entrar de **outra aba**, ficou vermelho, e o
+      modelo passou a calar pelo modo.
+      **A reserva do rodapé:** `--ins-tabbar` não é a altura da barra — é a
+      reserva que o rodapé fixo precisa vencer, com **quatro** consumidores (o
+      fim da página, o toast, o cronômetro e a faixa). No modo a barra não é
+      desenhada, e sobrava a altura dela de **espaço morto** no fim do treino.
+      Vira `var(--sa-bottom)` e **não `0`**: o que sai é a barra, não o espaço do
+      indicador de home.
+
+- [x] **6.e A hora de parede no cabeçalho** (`a0ae945`) — item 3 da mesma lista.
+      **O protótipo achou que o app não tem relógio NENHUM**, e que a projeção de
+      fim do treino não se confere sem ele: "acabo às 19h10" não diz nada a quem
+      não sabe que horas são. Segue o padrão que já existia para o decorrido —
+      desenhada uma vez e mantida fresca **por fora do Preact**, porque
+      re-renderizar a cada minuto roubaria o foco do campo que ele preenche no
+      meio da série.
+      **E achou um defeito que ia mentir o treino inteiro:** `ajustaRelogio`
+      ligava o motor só com `view.aba === 'treino'`. As portas 2 e 3 arrumam a
+      aba antes de entrar, então nada aparecia — mas **a porta 1 entra do
+      Agora**, e o relógio pararia na hora da entrada. Achado antes de a porta 1
+      existir, o que é o valor de construir as portas na ordem.
+      **Um erro meu, caro e rápido:** pus a leitura nova junto do `tickRelogio`,
+      **acima de onde `CTX` nasce** — TDZ no carregamento, o app não bootou e a
+      suíte respondeu **633 vermelhos** com `__escopo is not a function`. Capturei
+      a saída inteira num arquivo antes de filtrar (a regra que estabeleci nesta
+      sessão depois de perder duas vezes o nome de uma falha no `grep`), e o erro
+      estava na primeira linha. A razão está escrita no código, onde a próxima
+      leitura vai ser escrita.
+      **Este é o único caso da suíte que espera tempo real** (1,2 s), e está
+      dito no caso: o harness congela `Date.now` quando recebe `agora`, e com ele
+      congelado nenhum motor de relógio tem o que mostrar.
+
+- [ ] **6.f A próxima peça da reescrita** — as telas, pela ordem do plano. A
       decisão do dono é que **os 168 repontes de expressão composta sejam feitos
       junto com a reescrita de cada tela**, numa visita só por arquivo.
+      **A porta 1 do modo** (o cartão do topo do Agora) entra junto com o lugar
+      Agora, e o defeito do `ajustaRelogio` já foi pago na frente dela.
 
 ---
 
