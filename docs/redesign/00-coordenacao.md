@@ -2052,9 +2052,46 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       **Sem tela ainda.** `ctx.cartaoDeCima()` responde; quem desenha é a peça
       seguinte, e ela precisa de UI para os seis tipos de cartão.
 
-- [ ] **6.i A próxima peça da reescrita** — a tela do Agora, consumindo
-      `ctx.cartaoDeCima()`, e com ela a **porta 1 do modo** (o cartão do topo).
-      Depois, as outras telas pela ordem do plano. A
+- [x] **6.i A tela do Agora, e a porta 1 do modo** (`7aa215d`) — `hoje.jsx`
+      para de escolher o cartão e passa a desenhar o que a regra escolheu, nos
+      seis tipos. **O que sai é o motivo da peça:** uma cascata de três recursos
+      que olhava **noventa minutos para trás**, a regra da direção D que o
+      protótipo pegou se virando contra si mesma.
+      **A porta 1 do modo ficou de pé.** O cartão do treino e o da aula abrem o
+      modo no dia de **hoje** (resolvido, não `view.day` — o dedo pode ter
+      deixado a letra em outro dia), e entrar no modo **não** começa a sessão.
+      As três portas da §4.4 estão construídas.
+      **A decisão de desenho que o cartão forçou:** "Está certo" e "Corrigir o
+      fim" são respostas **opostas**, e esconder uma atrás do toque no cartão
+      escolheria por ele. `CartaoFoco` ganhou uma segunda forma — com duas ações
+      ele deixa de ser `<button>` e vira moldura com botões dentro, porque botão
+      dentro de botão não existe em HTML.
+      **E a consequência que eu não tinha visto antes de construir:** no Agora a
+      tira de baixo não é mais desenhada (o cartão a substitui, com a contagem de
+      séries que ela não tem) — e isso faria o Agora **perder a resposta "já
+      parei"** da pergunta de 1h30. As duas respostas vieram para o cartão, com
+      as palavras da própria tira e a frase do modelo. A tira fica **montada com
+      `faixa={null}`** em vez de removida da árvore: o efeito de layout dela
+      publica `--ins-faixa-h`, e fora da árvore a variável ficaria com a altura
+      da aba anterior — o mecanismo de pilha do rodapé que o contrato descreve
+      segue inteiro.
+      **Sete mutações, e duas acharam furo meu:** a ação de "Corrigir o fim"
+      apontava para `ctx.abrirSessao`, que **não existe** em `CTX` (é verbo nu da
+      tabela) e quebraria no toque — nenhum caso teria pegado; e a asserção do
+      dia da porta 1 **não discriminava**, porque `view.day` já valia o dia de
+      hoje no fixture.
+      **Dois consertos de prova, e os dois são sobre a rede:**
+      `fusao.test.js > o cartão-foco responde "e agora?"` passou a depender da
+      **hora e do dia da semana** em que a suíte rodasse, porque o `null` da
+      regra é resposta legítima — relógio e cadência fixados; e
+      `toISOString().slice(0, 10)` num fixture é armadilha: às 23h em UTC−3 o
+      UTC já virou, o carimbo não bate com `hojeISO()` e `diaDeComida()`
+      **reseta o dia**, apagando as marcas que o caso semeou. De manhã passa, à
+      noite não.
+
+- [ ] **6.j A próxima peça da reescrita** — as outras telas, pela ordem do
+      plano, com os repontes de expressão composta junto de cada uma (uma visita
+      só por arquivo, decisão do dono). A
       decisão do dono é que **os 168 repontes de expressão composta sejam feitos
       junto com a reescrita de cada tela**, numa visita só por arquivo. O defeito
       do `ajustaRelogio` já foi pago na frente da porta 1.
