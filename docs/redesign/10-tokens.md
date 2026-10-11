@@ -173,3 +173,70 @@ Fonte restaurado e conferido limpo nas duas. **1.108 passando.**
 viu este anel em tela nenhuma**, e em particular ninguém verificou a parte do
 contrato que diz *"nunca escondido atrás de sticky"*: `outline` não é cortado por
 `overflow` a menos que um ancestral corte, e **isso não foi medido.**
+
+---
+
+## 12 · As palavras do aviso — a dívida que os tokens criaram
+
+**Feita pelo coordenador em 11/10**, e ela existe por causa da peça anterior.
+
+Quando os tokens entraram, **a cor do terceiro sinal mudou de "destrói dado"
+para "pare"**, pela decisão 13. A partir daí a gravação que falhou e a ação que
+vai destruir passaram a usar **a mesma moldura**, e o que as distingue é a
+palavra. A frente 4 declarou o custo com estas palavras: *"quem olhar só a cor
+não sabe se falhou ou se vai destruir."*
+
+**A cor mudou e a palavra não tinha assumido.** Era uma lacuna que eu mesmo abri
+ao embarcar os tokens, e ela durou um commit.
+
+### De relance ninguém lê a frase inteira
+
+Lê-se **a primeira palavra** e o botão. Cinco avisos não abriam pelo verbo:
+
+| o que abria | o problema |
+|---|---|
+| *"Nenhuma série registrada neste treino. Descartar a sessão?"* | abre por um **fato**; o verbo chega na quinta palavra |
+| *"Este exercício já tem série registrada hoje… Continuar?"* | abre por um fato **e** termina em "Continuar?", que a voz recusa porque não diz o que o toque faz |
+| *`nomeEx(de) + ' está no programa há…'`* | abre pelo **nome do exercício**: de relance se sabe de quem se fala, não o que vai acontecer |
+| *`'O treino ' + d + ' não existe…'`* | abre pelo nome do treino |
+| *`oQue + '…'`* | abre por **variável**: o verbo estava legível na declaração, não no ponto do aviso |
+
+Os cinco foram reescritos abrindo pelo infinitivo, com o resto depois.
+
+### A regra virou caso, e é morfológica
+
+**Infinitivo em português termina em `-ar`, `-er` ou `-ir`.** A guarda usa isso em
+vez de uma lista de verbos autorizados, e **por isso se mantém sozinha**: um
+verbo novo passa sem ninguém precisar atualizar o caso.
+
+Mais a lista do que a voz recusa — *"Tem certeza"*, *"Continuar?"*, *"Atenção!"*,
+*"Erro inesperado"*, *"Ops"*, *"Confirmar?"* — porque nenhuma delas diz o que
+acontece ao tocar.
+
+### Um erro meu de método, e a correção vale mais que o caso
+
+A primeira versão do caso flagrou `oQue` e **estava errada**: ela checava a forma
+sintática (abre com variável) em vez da propriedade (a primeira palavra é um
+verbo). O `oQue` era montado por um ternário cujos dois braços abriam com
+"Apagar" — **o código estava certo e o teste estava errado.**
+
+Eu então fiz o teste **resolver uma indireção** para entender o código. Funcionou
+e **joguei fora**: teste esperto o bastante para entender código esperto é o
+caminho errado — ele passa a ter heurística, e heurística em teste é lugar onde
+um defeito se esconde.
+
+**O código mudou para abrir com literal**, e o verbo passou a ficar legível no
+ponto onde o aviso é dado. A regra ficou de duas linhas.
+
+### A prova
+
+Devolvi um aviso a abrir por um fato: **vermelho, nomeando a frase ofensora.**
+Fonte restaurado e conferido limpo. **1.109 passando.**
+
+### O que não foi medido
+
+Nenhum destes avisos foi **visto**. O `confirm()` do sistema não recebe a moldura
+do produto — então a frase é tudo que existe ali, e é exatamente por isso que a
+primeira palavra carrega tanto. **A família "falhou" — a do painel de gravação
+que não deu — não foi escrita nesta passada:** ela não vive em `confirm()`, e
+entra com os sete estados ruins.
