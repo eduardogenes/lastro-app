@@ -2011,11 +2011,53 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       tirar qualquer um dos dois deixava a suíte verde. Dois guardas de que
       nenhum é demonstrável é pior que um.
 
-- [ ] **6.h A próxima peça da reescrita** — as telas, pela ordem do plano. A
+- [x] **6.h A regra do cartão de cima, e os fatos que ela lê** (`9430c93`,
+      `c2f6910`) — a espinha do lugar **Agora**, e a primeira peça dele. O Agora
+      responde "e agora?" com UM cartão, e qual cartão é a §5 inteira da frente
+      1, com a decisão do dono (D4) de que o treino ganha da refeição no degrau
+      3.
+      **Veio antes da tela de propósito:** a regra é uma CASCATA, e um degrau que
+      vence quando não devia é um defeito que a tela não denuncia — ela mostra um
+      cartão, e o cartão errado parece certo.
+      **Doze mutações, doze vermelhas** na regra pura: cada degrau e cada
+      fronteira de minuto sustenta peso. 21 casos, um por linha escrita da §5, e
+      os de colisão dizem qual colisão.
+      **O que o app já tinha e eu não precisei inventar:** a janela do treino
+      termina quando a sessão terminaria — o minuto da refeição `treino`
+      deslocado pelo turno mais `duracaoDoTreino()`, que é a **mediana medida**
+      das sessões dele; "palpite" é o `previsto` de `diaDeHoje`; a aula é o dia
+      **aberto** da rotação; e a confirmação do fim aproximado sai de
+      `fim: 'auto'`, que `fechaSessao('auto')` já carimba. **Nenhum campo novo** —
+      e campo novo ali custaria migração, regra de fusão e duas listas de cópia
+      por um fato que o dado já carrega.
+      **O que a peça corrige, com razão escrita:** o cartão de hoje
+      (`hoje.jsx`) olha **90 minutos para trás** (`agoraMin - 90`), que é
+      exatamente a regra da direção D que o protótipo pegou se virando contra si
+      mesma — marcado o lanche das 16h, o almoço das 12h30 voltava ao topo como
+      se fosse agora. A regra nova só olha para frente.
+      **Uma leitura minha, declarada no fonte e no caso:** o degrau 5 (nada na
+      janela, mas algo à frente → o cartão é a próxima coisa do dia). A §5 manda
+      que a tela não fique muda e dá o exemplo das 5h20; generalizar é o que
+      mantém as duas metades de pé ao meio-dia e quarenta com o almoço sem marca.
+      **Duas mutações acharam furo meu no invólucro:** o `break` do laço da
+      confirmação não estava provado — uma sessão `auto` de nove dias atrás
+      ressuscitaria a pergunta —, e o `feito` não estava coberto. O caso novo é
+      feito para **discriminar**, com o relógio DENTRO da janela: fora dela a
+      refeição ganharia pelo degrau seguinte e o verde não provaria nada.
+      **E dois tropeços de fixture que valem registro:** `day: 'E'` semeado como
+      plano 2 chega como `'D'`, porque a migração 4→5 **troca** as letras de
+      propósito (rótulo trocado é migração de dado, senão o histórico mente); e a
+      aula às 9h perdia o cartão porque a janela dela já havia passado — era a
+      regra funcionando, não um defeito.
+      **Sem tela ainda.** `ctx.cartaoDeCima()` responde; quem desenha é a peça
+      seguinte, e ela precisa de UI para os seis tipos de cartão.
+
+- [ ] **6.i A próxima peça da reescrita** — a tela do Agora, consumindo
+      `ctx.cartaoDeCima()`, e com ela a **porta 1 do modo** (o cartão do topo).
+      Depois, as outras telas pela ordem do plano. A
       decisão do dono é que **os 168 repontes de expressão composta sejam feitos
-      junto com a reescrita de cada tela**, numa visita só por arquivo.
-      **A porta 1 do modo** (o cartão do topo do Agora) entra junto com o lugar
-      Agora, e o defeito do `ajustaRelogio` já foi pago na frente dela.
+      junto com a reescrita de cada tela**, numa visita só por arquivo. O defeito
+      do `ajustaRelogio` já foi pago na frente da porta 1.
 
 ---
 
