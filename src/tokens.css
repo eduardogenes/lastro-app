@@ -4,62 +4,333 @@
 
    Não invente cor. Se precisar de uma nova, ela nasce aqui.
 
-   Os seis inegociáveis, para quem for mexer:
-     1. Raio zero. Só ponto de status, thumb do slider e a
-        miniatura do aparelho (10px) são redondos.
-     2. Número em mono, prosa em display. Nunca misturar dentro
-        de uma mesma string: "250 g arroz" é mono só quando é
-        dado numa coluna de valores.
+   Esta folha é o SUBSTRATO do redesenho: ela vem antes de
+   qualquer tela, porque tela construída antes dos tokens é tela
+   construída duas vezes. A especificação é
+   `docs/redesign/09-frente4-sistema.md`; o que esta passada
+   decidiu, e o que ela custou, está em
+   `docs/redesign/10-tokens.md`.
+
+   Os seis inegociáveis, para quem for mexer. TRÊS deles caíram
+   em 06/10, por decisão do dono (decisão 12 das quinze), com a
+   nota literal "sem herancas": caem limpos, sem meia-medida do
+   sistema velho. O que está escrito abaixo é o que VALE.
+
+     1. Raio em seis degraus, e o degrau diz o que a coisa é:
+        4 marca, 8 valor, 14 controle, 20 bloco, 26 só a folha,
+        pílula o chip. `50%` continua literal onde é círculo —
+        ponto de status, thumb do slider. Raio solto no meio das
+        regras não entra: ele nasce nomeado, como cor.
+        (CAIU: "raio zero". A direção escolhida arredonda.)
+
+     2. Uma família, e o dígito tabular no lugar da
+        monoespaçada. `--ins-fonte` em tudo; `font-variant-
+        numeric: tabular-nums` é o que faz o número não dançar na
+        coluna enquanto conta. `--ins-fonte-quadro` existe para
+        UMA coisa: o quadro do box transcrito, onde o
+        monoespaçado é o conteúdo.
+        (CAIU: "número em mono, prosa em display".)
+
      3. Fio de 1px, não cartão. Caixa com borda é LISTA FECHADA:
-        veredito, formulário, resumo.
-        Nunca sombra. Nunca preenchimento para "agrupar".
-     4. Um acento, e ele significa. Ácido = agora / feito / seu /
-        aperte aqui. Âmbar = preste atenção. Coral = destrói dado.
-        No máximo um elemento ácido COMPETINDO em cada região da
-        tela, e nunca ácido por comparação favorável: "melhor que
-        antes" é elogio, e o app não comemora por cor.
-     5. Rótulo mono em caixa alta é estrutura, nunca ênfase: abre
-        seção, nomeia valor, ou é rótulo de ação em botão.
-     6. Quase nenhum movimento, e nenhum que comemore. Ele só
-        interpola grandeza contínua, diz que a tela está viva ou
-        mostra para onde se andou. Os que existem estão na tabela
-        de DESIGN.md — são quatro, não dois.
+        veredito, formulário, resumo. `inset` que desenha fio
+        continua permitido; sombra PROJETADA entra num lugar só —
+        a folha, porque ali ela diz onde a camada acaba.
+        Nunca preenchimento para "agrupar": `--ins-superficie-2`
+        difere de `--ins-tela` por 1,08:1 no claro, então onde o
+        preenchimento é o ÚNICO canal de um controle ele vem com
+        `--ins-fio-controle` de 1,5px.
+
+     4. Um acento, e ele significa. Acento = agora / feito / seu /
+        aperte aqui. Atenção = preste atenção. PARE = falhou, ou
+        vai destruir — e o que distingue os dois é a PALAVRA, não
+        a cor (decisão 13). No máximo um elemento de acento
+        COMPETINDO em cada região da tela, e nunca acento por
+        comparação favorável: "melhor que antes" é elogio, e o
+        app não comemora por cor.
+
+     5. O rótulo não é mais forma: é palavra e tamanho. Rótulo de
+        seção só existe quando a seção tem mais de uma linha e a
+        primeira não a nomeia; o que fica é 15px, peso 600, CAIXA
+        DE FRASE, frase nominal com artigo ("O que tem dentro").
+        NUNCA caixa alta com tracking — isso é o rótulo mono sem
+        a mono, e a decisão é "sem herancas".
+        (CAIU: "rótulo mono em caixa alta é estrutura".)
+
+     6. Quase nenhum movimento, e nenhum que comemore. Quatro
+        funções autorizadas: interpolar grandeza contínua
+        amostrada; dizer que a tela está viva agora; dizer de
+        onde uma camada veio; dizer para onde um valor foi. O
+        portão é por ADESÃO — todo movimento mora dentro de
+        `@media (prefers-reduced-motion: no-preference)` —,
+        porque assim ele falha fechado.
+   ============================================================ */
+
+/* ============================================================
+   AS CORES, NOS DOIS TEMAS
+
+   Vinte tokens, e todos são cor. O tema segue o aparelho, com
+   troca manual — e por três blocos, não por um:
+
+     :root                                  os valores CLAROS
+     @media dark + :root:not([data-theme=light])   os ESCUROS
+     :root[data-theme="dark"]                      os ESCUROS
+
+   O `:not([data-theme="light"])` é o que faz a troca manual para
+   claro vencer o aparelho escuro; o terceiro bloco é o que faz a
+   troca manual para escuro vencer o aparelho claro. Os dois
+   blocos escuros carregam os MESMOS valores, e a repetição é de
+   propósito: uma camada de indireção daria um terceiro lugar
+   para o valor divergir.
+
+   O contraste de cada par está medido em
+   `docs/redesign/10-tokens.md` §2, pela luminância relativa da
+   WCAG 2.x, nos dois temas, sobre os quatro fundos. O que a
+   conta NÃO cobre: composição real (texto sobre fundo
+   semitransparente sobre outro), e a luz da academia — essa
+   ninguém mediu, em nenhum dos dois sistemas.
    ============================================================ */
 
 :root {
+  color-scheme: light;
+
   /* ---- Superfícies (mais escura → mais clara) ---- */
-  --ins-canvas:        #0C0E0C;  /* fundo da página e da folha */
-  --ins-surface-low:   #0F120F;  /* linha de opção dentro de folha */
-  --ins-surface:       #111411;  /* elevado: input, selo, opção */
-  --ins-surface-acid:  #161B12;  /* linha selecionada / dia atual */
-  --ins-surface-acid2: #1C2416;  /* micro-toggle ativo */
-  --ins-surface-warn:  #101408;  /* fundo do cartão de veredito */
+  --ins-fundo:         #E7E3DB;  /* `html` e `body`: o que aparece atrás de
+                                    tudo, na área segura e no rubber-band */
+  --ins-tela:          #F5F3EE;  /* `#app` e cada tela: o fundo de leitura */
+  --ins-superficie:    #FFFFFF;  /* o elevado: lista fechada, folha, barra de
+                                    lugares, cabeçalho */
+  --ins-superficie-2:  #EDEAE3;  /* preenchimento de controle e de linha de
+                                    opção. 1,08:1 contra a tela — nunca o
+                                    único canal de um controle */
 
-  /* ---- Linhas: são quatro, e a escolha é semântica ---- */
-  --ins-hairline:      #161A15;  /* entre linhas DENTRO de uma lista */
-  --ins-rule:          #22271F;  /* entre seções; o vão de 1px da grade */
-  --ins-border:        #2B302A;  /* borda em repouso: input, chip inativo */
-  --ins-border-strong: #3A4137;  /* borda interativa: stepper, botão secundário */
+  /* ---- Texto: três níveis, e os três passam em AA ----
+     Eram cinco. O quinto media 3,22:1 sobre o canvas, abaixo dos 4,5 de AA, e
+     existia um caso de teste com cinco seletores presos nele só para proibi-lo
+     em texto tocável. Com três níveis, o pior caso é `tinta-3` sobre `fundo`:
+     4,87:1. Não há mais nível a proibir. */
+  --ins-tinta:         #15171A;  /* nome, valor, título */
+  --ins-tinta-2:       #474C54;  /* prosa de apoio sob um título */
+  --ins-tinta-3:       #5C6169;  /* rótulo, meta, PROCEDÊNCIA */
 
-  /* ---- Texto: cinco níveis, nunca mais ---- */
-  --ins-text:          #F2F4EF;  /* nome, valor, título */
-  --ins-text-2:        #D6DAD0;  /* prosa dentro de cartão */
-  --ins-text-3:        #A8AFA1;  /* frase de apoio sob um título */
-  --ins-text-4:        #7C8478;  /* rótulo, sobrancelha, meta em mono */
-  --ins-text-5:        #5E655A;  /* dica, procedência, aba inativa */
+  /* ---- Linhas: são duas, e a escolha é de ACESSO, não de gosto ----
+     Eram quatro degraus de linha. A separação que vale é outra: a linha que
+     DIVIDE contra a linha que IDENTIFICA UM CONTROLE. A segunda tem de passar
+     os 3:1 de 1.4.11; a primeira não, porque não identifica nada.
+     É o conserto de um defeito que o sistema velho tinha e ninguém mediu:
+     `--ins-border-strong`, documentado como "borda interativa: stepper, botão
+     secundário", media 1,84:1 sobre o canvas. */
+  --ins-fio:           #DCD7CD;  /* divisória DENTRO de lista; borda de cartão.
+                                    NUNCA identifica controle (1,29:1) */
+  --ins-fio-controle:  #8C867A;  /* a borda que diz "isto é um controle"
+                                    (3,26:1 sobre a tela) */
 
   /* ---- Sinal: cor é significado, nunca decoração ---- */
-  --ins-acid:          #CBF35E;  /* você / agora / feito / a única ação */
-  --ins-acid-hover:    #E4FF9B;
-  --ins-amber:         #FFC46B;  /* atenção, cautela, "observar" */
-  --ins-coral:         #FF8A6B;  /* destrutivo */
-  --ins-on-acid:       #0C0E0C;  /* texto sobre qualquer preenchimento ácido */
+  --ins-acento:        #3833DB;  /* você / agora / feito / a única ação */
+  --ins-acento-tinta:  #2C28BE;  /* o acento como TEXTO sobre fundo de leitura.
+                                    Dentro de `--ins-acento-suave`, texto é
+                                    SEMPRE este, nunca `--ins-acento` */
+  --ins-acento-suave:  #E9E8FD;  /* preenchimento de selecionado */
+  --ins-sobre-acento:  #FFFFFF;  /* texto sobre preenchimento de acento */
 
-  /* ---- Tipografia ---- */
-  --ins-font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
-  --ins-font-mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  --ins-atencao-fundo: #FBEFD6;  /* fundo do painel de atenção */
+  --ins-atencao-tinta: #5E3B00;  /* texto do painel de atenção */
+  --ins-atencao-fio:   #D9A955;  /* moldura DECORATIVA do painel, e o estado
+                                    "vence agora". 1,89:1 contra o próprio
+                                    fundo: onde a borda é o ÚNICO canal de um
+                                    estado, use `--ins-fio-controle` */
 
-  /* ---- Espaço: base 4; só estes degraus aparecem ---- */
+  /* O TERCEIRO SINAL diz uma coisa só: PARE. As duas situações que param o
+     dedo — gravação que falhou, ação que destrói dado — usam o mesmo painel,
+     com a mesma moldura e a mesma tinta, e o que as distingue é a PALAVRA
+     (decisão 13). Dois vermelhos com significados diferentes na mesma tela
+     seriam dois acentos; um vermelho que significa "pare" é um. O custo está
+     declarado: quem olhar só a cor não sabe se falhou ou se vai destruir — e a
+     cor nunca foi suficiente para isso, nem com o coral de antes. */
+  --ins-pare-fundo:    #FBE4E1;
+  --ins-pare-tinta:    #7F1A12;
+  --ins-pare-fio:      #D98A80;  /* mesma ressalva do `atencao-fio`: 2,19:1 */
+
+  --ins-veu:           rgba(18, 18, 30, .42);  /* o véu atrás da folha */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --ins-fundo:         #08090A;
+    --ins-tela:          #111214;
+    --ins-superficie:    #1B1D21;
+    --ins-superficie-2:  #25282D;
+
+    --ins-tinta:         #F2F1EE;
+    --ins-tinta-2:       #BCC0C7;
+    --ins-tinta-3:       #A2A6AE;
+
+    --ins-fio:           #33363C;
+    --ins-fio-controle:  #7C818A;
+
+    --ins-acento:        #9E9BFF;
+    --ins-acento-tinta:  #B6B4FF;
+    --ins-acento-suave:  #272550;
+    --ins-sobre-acento:  #14123F;
+
+    --ins-atencao-fundo: #33270F;
+    --ins-atencao-tinta: #F3CF85;
+    --ins-atencao-fio:   #7A5A1E;
+
+    --ins-pare-fundo:    #3A1714;
+    --ins-pare-tinta:    #FFADA3;
+    --ins-pare-fio:      #7E3129;
+
+    --ins-veu:           rgba(0, 0, 0, .6);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ins-fundo:         #08090A;
+  --ins-tela:          #111214;
+  --ins-superficie:    #1B1D21;
+  --ins-superficie-2:  #25282D;
+
+  --ins-tinta:         #F2F1EE;
+  --ins-tinta-2:       #BCC0C7;
+  --ins-tinta-3:       #A2A6AE;
+
+  --ins-fio:           #33363C;
+  --ins-fio-controle:  #7C818A;
+
+  --ins-acento:        #9E9BFF;
+  --ins-acento-tinta:  #B6B4FF;
+  --ins-acento-suave:  #272550;
+  --ins-sobre-acento:  #14123F;
+
+  --ins-atencao-fundo: #33270F;
+  --ins-atencao-tinta: #F3CF85;
+  --ins-atencao-fio:   #7A5A1E;
+
+  --ins-pare-fundo:    #3A1714;
+  --ins-pare-tinta:    #FFADA3;
+  --ins-pare-fio:      #7E3129;
+
+  --ins-veu:           rgba(0, 0, 0, .6);
+}
+
+/* ============================================================
+   A CÂMERA É UM TEMA, não um punhado de cores soltas.
+
+   A região de foto em tela cheia — câmera, enquadramento,
+   comparador — é SEMPRE escura, nos dois temas, porque o assunto
+   é a imagem e qualquer luz em volta falseia o que se vê. É a
+   mesma razão pela qual o visualizador de fotos de qualquer
+   sistema não segue o tema.
+
+   Por isso estes tokens estão FORA dos três blocos de tema, e
+   não têm par claro. Nomeados porque, soltos, três deles
+   repetiriam o valor de um token do tema escuro — "dois nomes
+   para a mesma cor", que é a porta pela qual uma segunda paleta
+   volta a entrar.
+
+   A igualdade com o tema escuro é COINCIDÊNCIA DE PROJETO, não
+   dependência: se o acento mudar, `--ins-foto-marca` não muda
+   com ele.
+   ============================================================ */
+
+:root {
+  --ins-foto-fundo:  #0C0B0A;  /* o fundo da tela cheia de foto */
+  --ins-foto-vazio:  #15161A;  /* o quadro antes de haver foto */
+  --ins-foto-chapa:  #CFC8BA;  /* o cinza do lugar da foto */
+  --ins-foto-tinta:  #FFFFFF;  /* o branco em cima da imagem; e o clarão */
+  --ins-foto-marca:  #9E9BFF;  /* o acento em cima da imagem */
+  --ins-foto-fora:   #FFADA3;  /* o hachurado de "fora de enquadramento" */
+  /* O sétimo é meu, e não está na frente 4: o véu sobre a foto no protocolo de
+     pose. Ele existia como `rgba(12, 14, 12, .35)` solto na folha — um valor
+     do canvas aposentado com alfa. O alfa fica (é o conteúdo da declaração); a
+     base vira preto neutro, porque o fundo da foto não é mais o canvas. */
+  --ins-foto-veu:    rgba(0, 0, 0, .35);
+}
+
+/* ============================================================
+   O RESTO DO SISTEMA
+
+   A direção escolhida entrega VINTE cores e mais nada: zero
+   token de espaço, de tipo, de alvo, de raio, de duração, de
+   curva, de área segura. Todo o resto do CSS dela é número
+   literal na regra. Então o que vem abaixo é DECISÃO, não
+   extração, e cada família diz de onde o valor veio.
+   ============================================================ */
+
+/* ---- Tipografia: a família ----
+   Uma só, do sistema. O app baixava Space Grotesk e IBM Plex Mono do Google
+   Fonts; com o par mono/display fora, os três `<link>` saíram do `index.html`
+   e o artefato voltou a não buscar nada na rede para funcionar.
+   O dígito tabular é o que substitui a monoespaçada: ele entrega a parte que
+   importava — largura fixa, para o número não dançar na coluna enquanto
+   conta — e perde a parte que era identidade. */
+:root {
+  --ins-fonte: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI',
+               Roboto, 'Helvetica Neue', Arial, system-ui, sans-serif;
+  /* UMA coisa: o quadro do box transcrito, onde o monoespaçado é o CONTEÚDO —
+     a reprodução de uma lousa escrita à mão, com colunas alinhadas por espaço.
+     Não é reserva de rótulo: não há exceção de mono para rótulo. */
+  --ins-fonte-quadro: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ---- Tipografia: a escala ----
+     Onze papéis mais três de foto, derivados da distribuição medida da direção
+     (28 tamanhos distintos, incluindo meio pixel). Cada degrau nasceu do
+     aglomerado maior da sua faixa, e o número de usos está na frente 4 §3.2.
+
+     TIPO EM `rem`, GEOMETRIA EM `px`. A raiz é 16px, então em 100% a tela é
+     pixel por pixel o que a direção desenhou. O texto cresce com o controle de
+     tamanho; o alvo não encolhe e a área segura não se move.
+
+     O teto do controle é 125%, e FICA ESCRITO QUE ISSO NÃO CUMPRE 1.4.4: o
+     critério pede 200% sem perda de função, e a 200% a régua de repetições
+     mostra 2 de 12 valores em vez de 6. Dois de doze não é "texto maior": é a
+     ação mais frequente do produto deixando de funcionar. Custo declarado,
+     não esquecimento.
+
+     O PISO É 11px. Uma exceção, declarada: texto dentro de `<svg>` de gráfico
+     pode ir a 9px, porque ali o texto é eixo — lido de perto, sentado, com o
+     número grande ao lado dizendo a mesma coisa. */
+  --ins-t-rotulo:      0.6875rem;  /* 11px — o rótulo da barra, a etiqueta de foto */
+  --ins-t-meta:        0.75rem;    /* 12px — meta, unidade e PROCEDÊNCIA */
+  --ins-t-apoio:       0.8125rem;  /* 13px — prosa de apoio */
+  --ins-t-corpo:       0.875rem;   /* 14px — o degrau mais usado da direção */
+  --ins-t-corpo-forte: 0.9375rem;  /* 15px — e é o RÓTULO DE SEÇÃO (peso 600,
+                                      caixa de frase, sem tracking) */
+  --ins-t-nome:        1.0625rem;  /* 17px — nome tocável, célula de valor */
+  --ins-t-titulo:      1.25rem;    /* 20px — título de folha e de seção */
+  --ins-t-tela:        1.5rem;     /* 24px — o título da tela */
+
+  /* Os NÚMEROS são `px`, e a exceção é nomeada.
+     `--ins-n-m` é o número da régua e o do RIR: crescer o número força crescer
+     o botão, que encolhe a janela de valores alcançáveis, que piora
+     exatamente o defeito que o redesenho está consertando. E 26px não é texto
+     pequeno — é o maior numeral de um controle no app. Os outros três pela
+     mesma razão: já são grandes e vivem em caixa de altura fixa. */
+  --ins-n-m:  26px;
+  --ins-n-l:  34px;
+  --ins-n-xl: 40px;
+
+  /* A família da foto em tela cheia tem escada própria porque é lida A TRÊS
+     METROS (ele monta o aparelho, se afasta e posa). Nenhum destes encolhe:
+     encolher o número que ele lê de longe é a única mudança da escala que
+     teria custo conhecido. Se ele LÊ a tela a essa distância, ninguém mediu. */
+  --ins-n-foto-1: 32px;
+  --ins-n-foto-2: 44px;
+  --ins-n-foto-3: 76px;  /* o número no meio do anel de contagem */
+}
+
+/* ---- Espaço: base 4; só estes degraus aparecem ----
+   Fica exatamente como estava, e isto é a melhor notícia do redesenho: medidos
+   os 2.599 valores de `padding`, `margin` e `gap` da direção, 2.410 (93%) já
+   caem nesta escala. Nove valores em 2.599 separam as duas.
+   Valor solto no meio não quebra nada visivelmente; só vai afrouxando o ritmo
+   até a tela ficar 20% mais alta sem ninguém saber por quê. Foi o que
+   aconteceu uma vez. */
+:root {
   --ins-1:  4px;
   --ins-2:  6px;
   --ins-3:  8px;
@@ -71,25 +342,44 @@
   --ins-9:  24px;   /* entre seções */
   --ins-10: 26px;   /* entre seções maiores */
   --ins-11: 34px;
+}
 
-  /* ---- Geometria ---- */
-  --ins-radius: 0;
-  /* A miniatura do aparelho é a terceira exceção ao raio zero, ao lado do
-     ponto de status e do thumb do slider. Fotografia com canto reto no meio de
-     uma lista de fios lê como recorte colado; com canto suave ela se assenta.
-     10px em 44 é raio de foto, não de cartão — não é convite a arredondar
-     mais nada. */
-  --ins-raio-foto: 10px;
-  --ins-border-width: 1px;
+/* ---- Geometria: o raio, em seis degraus ----
+   Derivado de medir os 84 seletores com raio dentro do telefone nos nove
+   arquivos da direção: 20 valores distintos viram 6 degraus, com cobertura de
+   84 de 84 e custo de no máximo 2px por declaração. Se 2px de diferença
+   aparecem, ninguém mediu — é olho em tela, não aritmética. */
+:root {
+  --ins-raio-1: 4px;    /* marca pequena: barra do descanso, puxador, listra */
+  --ins-raio-2: 8px;    /* pílula de valor: célula, etiqueta de foto, selo,
+                           miniatura do aparelho */
+  --ins-raio-3: 14px;   /* controle: botão, tecla do teclado próprio, campo */
+  --ins-raio-4: 20px;   /* bloco: cartão, painel, faixa, o quadro da foto */
+  --ins-raio-5: 26px;   /* SÓ a folha, e só as duas quinas de cima */
+  --ins-raio-pil: 999px; /* o chip, que é pílula de verdade */
+  /* `50%` continua LITERAL onde é círculo e não raio: ponto de status, ponto
+     ao vivo, thumb do slider, puxador da cortina. */
+
+  /* A direção usa 1,5px em 64 lugares, e 2px no selecionado. O 1,5 é o fio
+     que identifica controle sem engordar a linha. */
+  --ins-fio-largura:   1px;
+  --ins-fio-largura-2: 1.5px;
+
   --ins-rail: 3px;
-  --ins-indicator: 2px;
+  --ins-indicator: 2px;  /* o indicador de aba, que é outra coisa que o foco */
 
   /* Recuo da coluna de valores no histórico: a data ocupa 46px e o vão é 10.
      As séries alinham SOB o número, não sob a data, porque é a coluna de
-     números que o olho desce para comparar. Derivado, não arbitrário. */
+     números que o olho desce para comparar. Derivado, não arbitrário.
+     A frente 4 manda este token SAIR, porque é medida de um componente do
+     sistema velho e a direção redesenha aquela tela. Ele fica até a tela ser
+     reescrita: aposentá-lo agora obrigaria a inlinar 56px numa folha que vai
+     embora, e 56 não está na escala de espaço. */
   --ins-recuo-valor: 56px;
+}
 
-  /* ---- Toque ---- */
+/* ---- Toque ---- */
+:root {
   --ins-tap: 46px;        /* controle numérico repetido; 46 e não 44 de propósito:
                              ele usa de pé, suado, com uma mão */
   /* 28px é DESENHO, não alvo: controle secundário dentro de linha cheia — caixa
@@ -97,34 +387,92 @@
      usa este degrau estende a ÁREA por ::after até 44 no mínimo; onde o vão
      entre fileiras não permite, o quanto deu está escrito na própria regra. */
   --ins-tap-dense: 28px;
+}
 
-  /* ---- Movimento: a curva e a duração que os quatro usam ---- */
+/* ---- Foco ----
+   O sistema velho não tinha anel de foco para botão NENHUM: zero regras de
+   `:focus-visible` para `button`, `a`, `[role]` ou `[tabindex]`. Todo botão
+   dependia do anel padrão do navegador, num canvas quase preto — onde ele tem
+   menos chance de aparecer. O contrato manda o contrário ("foco sempre
+   visível, e nunca escondido atrás de sticky") e nenhum caso de teste dizia
+   uma palavra sobre isso.
+
+   3px e não os 2px do indicador de aba: é o valor da direção, e o acento mede
+   6,16 a 7,88:1 no claro e 6,05 a 8,15:1 no escuro — muito acima dos 3:1.
+
+   A FOLGA DE 2px não é estética. Num botão preenchido de acento, um anel de
+   acento encostado no preenchimento seria invisível; com a folga, o que
+   aparece entre o anel e o botão é a PÁGINA, e página contra acento é 6,16:1
+   nos dois lados da folga. Sem ela o anel desaparece no botão mais importante
+   da tela. */
+:root {
+  --ins-foco: var(--ins-acento);
+  --ins-foco-largura: 3px;
+  --ins-foco-folga: 2px;
+}
+
+/* ---- Movimento: a curva e as durações ----
+   `--ins-ease` é saída suave SEM ultrapassagem: nenhum ponto de controle acima
+   de 1. É o que mantém de pé a proibição de "folha com elasticidade", que não
+   caiu — a folha chega e para. */
+:root {
   --ins-ease: cubic-bezier(.2, .8, .2, 1);
   --ins-dur: 220ms;
+  /* O toque que afunda acontece dezenas de vezes por sessão — a régua é tocada
+     48 vezes por semana — e é o único movimento que o dono tocou e aprovou. */
+  --ins-dur-toque: 120ms;
+}
 
-  /* ---- Áreas seguras do iPhone, com piso ----
-     Em Safari fora de tela cheia o inset vem 0; o piso garante que o conteúdo
-     nunca encoste na borda física nem suma sob a barra de gestos. */
+/* ---- Áreas seguras do iPhone, com piso ----
+   Em Safari fora de tela cheia o inset vem 0; o piso garante que o conteúdo
+   nunca encoste na borda física nem suma sob a barra de gestos. `px` por
+   natureza, e por isso fora do `rem`: o entalhe não cresce com o texto. */
+:root {
   --sa-top:    max(env(safe-area-inset-top), 0px);
   --sa-bottom: max(env(safe-area-inset-bottom), 0px);
   --sa-left:   max(env(safe-area-inset-left), 0px);
   --sa-right:  max(env(safe-area-inset-right), 0px);
+}
 
+/* ---- Alturas derivadas ---- */
+:root {
   /* Altura da tab bar, para quem precisa reservar espaço embaixo. */
   --ins-tabbar: calc(52px + var(--sa-bottom));
   /* Altura do cronômetro de descanso quando ele está na tela; 0 quando não
      está. Escrito pelo casco em `alturaDoTimer()`, e lido pelo toast, que se
      empilha acima dele em vez de nascer atrás. */
   --ins-timer-h: 0px;
-
   /* Altura da faixa da sessão (atalho ou pergunta); 0 quando não há treino
      aberto. Escrita pelo componente, e lida pelo toast e pelo fim da página,
      que se empilham acima dela — mesmo motivo do cronômetro. */
   --ins-faixa-h: 0px;
-
   /* Altura do relógio da sessão, que gruda no topo enquanto o treino corre.
      Existe como token porque quem ROLA precisa parar abaixo dele: sem isto o
      exercício aberto encosta o próprio nome embaixo do relógio. `.day-rel`
      cobra a altura, para que os dois não possam divergir. */
   --ins-relogio: 40px;
+}
+
+/* ============================================================
+   QUARENTENA — o último nome do Instrumento vivo, e por quê.
+
+   A paleta do Instrumento foi aposentada inteira nesta passada,
+   e o caso *a paleta antiga não existe mais, nem por apelido*
+   passou a vigiar as DUAS paletas mortas. Um nome ficou fora
+   dessa lista, e a razão não é de design: o caso *a marca de
+   recorde não pinta ácido sobre ácido* afirma, LITERALMENTE,
+   `color: var(--ins-acid)` dentro de `.tc-res-sets .rec` — e
+   esse caso não é um dos três que esta passada podia mudar.
+
+   Então `--ins-acid` sobrevive com UM consumidor, apontando para
+   o acento como texto, para que o selo de recorde leia na paleta
+   nova. Não use este nome em mais nada.
+
+   A dívida está nomeada: quando a tela cheia do histórico for
+   reescrita, aquele caso muda de seletor (é um dos doze que a
+   frente 4 §11.2 manda renomear) e `--ins-acid` entra na lista
+   de proibidos junto com os outros dezenove.
+   ============================================================ */
+:root {
+  --ins-acid: var(--ins-acento-tinta);
 }

@@ -14,9 +14,15 @@
      menor que 16px) é a regra de 16px nos campos, em base.css. Essa funciona, e
      é ela que atende o que ele recusa. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0C0E0C">
+<!-- Duas linhas, uma por tema. Um valor só deixaria a barra de status do
+     sistema escura por cima de uma tela clara, no PWA instalado. -->
+<meta name="theme-color" content="#E7E3DB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08090A" media="(prefers-color-scheme: dark)">
 <meta name="description" content="Registro de treino e comida que freia a carga no ritmo que o tendão aguenta.">
-<meta name="color-scheme" content="dark">
+<!-- "light dark" e não "dark": com `dark` sozinho o navegador pinta controle
+     nativo e barra de rolagem em escuro mesmo no tema claro. O app passou a
+     ter os dois temas, e o padrão é o do aparelho. -->
+<meta name="color-scheme" content="light dark">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">

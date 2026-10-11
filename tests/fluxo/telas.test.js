@@ -47,10 +47,15 @@ test('a nuvem não é pré-condição para o app abrir', async () => {
 });
 
 test('paleta e tom preservados', async () => {
-  // A paleta é a do Instrumento desde a fusão; a antiga foi aposentada e os
-  // nomes dela agora só apontam para estes valores.
-  ['#0C0E0C', '#111411', '#22271F', '#2B302A', '#3A4137',
-   '#F2F4EF', '#D6DAD0', '#A8AFA1', '#7C8478', '#CBF35E', '#FFC46B', '#FF8A6B']
+  // A paleta foi substituída inteira em 11/10 pela decisão 12 do dono ("sem
+  // herancas"): saiu o conjunto escuro com acento ácido, entrou o de papel
+  // claro com acento azul-violeta, e o escuro virou o espelho dele. Os valores
+  // abaixo são os dois temas — o build carrega os dois, e é no build que este
+  // caso olha.
+  ['#E7E3DB', '#F5F3EE', '#EDEAE3', '#15171A', '#474C54', '#5C6169',
+   '#DCD7CD', '#8C867A', '#3833DB', '#2C28BE', '#E9E8FD',
+   '#FBEFD6', '#5E3B00', '#FBE4E1', '#7F1A12',
+   '#08090A', '#111214', '#1B1D21', '#F2F1EE', '#9E9BFF']
     .forEach(function (cor) { assert.ok(HTML.includes(cor), 'sumiu da paleta: ' + cor); });
   // Regra 5: sem emoji. A única exceção autorizada são os marcadores de
   // período do calendário, declarados em PERIODOS. Verificado no FONTE, não no

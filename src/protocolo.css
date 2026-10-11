@@ -29,10 +29,10 @@
 .pr-ponto::after {
   content: ""; position: absolute; left: 0; right: 0; top: 50%;
   height: var(--ins-indicator); transform: translateY(-50%);
-  background: var(--ins-border);
+  background: var(--ins-fio-controle);
 }
-.pr-ponto.feita::after { background: var(--ins-text-4); }
-.pr-ponto.atual::after { background: var(--ins-acid); height: var(--ins-rail); }
+.pr-ponto.feita::after { background: var(--ins-tinta-3); }
+.pr-ponto.atual::after { background: var(--ins-acento); height: var(--ins-rail); }
 
 /* ---------- as fotos ---------- */
 .pr-fotos { display: grid; gap: var(--ins-3); }
@@ -46,8 +46,8 @@
 .fa {
   position: relative; overflow: hidden;
   aspect-ratio: 3 / 4;
-  background: var(--ins-surface);
-  border: 1px solid var(--ins-border);
+  background: var(--ins-superficie-2);
+  border: 1px solid var(--ins-fio-controle);
 }
 .fa-img {
   position: absolute; left: 50%; top: 50%;
@@ -61,8 +61,8 @@
 /* Âmbar: é aviso, não ação desejada. O alvo chega aos 46px pela altura própria,
    porque aqui há espaço — ao contrário do "ajustar" da legenda. */
 .fa-retomar {
-  background: none; border: 1px solid var(--ins-amber); color: var(--ins-amber);
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
+  background: none; border: 1px solid var(--ins-atencao-fio); color: var(--ins-atencao-tinta);
+  font: 400 11px/1 var(--ins-fonte); letter-spacing: .14em; text-transform: uppercase;
   min-height: var(--ins-tap); padding: 0 var(--ins-5);
 }
 /* ---------- execução ---------- */
@@ -85,12 +85,12 @@
 .pr-sobre button { flex: 1 1 0; }
 
 /* ---------- a montagem ---------- */
-.pr-setup { display: grid; gap: 1px; background: var(--ins-rule); }
+.pr-setup { display: grid; gap: 1px; background: var(--ins-fio); }
 .pr-setup-l {
-  background: var(--ins-canvas); padding: var(--ins-5) 0;
+  background: var(--ins-tela); padding: var(--ins-5) 0;
   display: flex; flex-direction: column; gap: var(--ins-1);
 }
-.pr-setup-v { color: var(--ins-text); }
+.pr-setup-v { color: var(--ins-tinta); }
 .pr-setup-p { margin: 0; }
 .pr-comecar { display: block; width: 100%; margin-top: var(--ins-9); }
 
@@ -107,12 +107,12 @@
 
 /* A pergunta da régua calórica, separada do que está acima por uma régua: ela
    não é leitura da foto, é o que se faz com a leitura. */
-.cp-gordura { margin-top: var(--ins-7); padding-top: var(--ins-5); border-top: 1px solid var(--ins-rule); }
+.cp-gordura { margin-top: var(--ins-7); padding-top: var(--ins-5); border-top: 1px solid var(--ins-fio); }
 .cp-gordura .ins-label { display: block; margin-bottom: var(--ins-3); }
 .cp-lado { margin: 0; display: flex; flex-direction: column; gap: var(--ins-2); }
 .cp-lado figcaption { display: flex; flex-direction: column; gap: var(--ins-1); }
-.cp-num { color: var(--ins-text-3); }
-.cp-num2 { color: var(--ins-text-4); }
+.cp-num { color: var(--ins-tinta-3); }
+.cp-num2 { color: var(--ins-tinta-3); }
 
 /* Sobrepor: as duas na mesma caixa, a de cima com opacidade variável. É o que
    revela desvio de ENQUADRAMENTO — se os pés andaram, as silhuetas não se
@@ -127,9 +127,9 @@
 .dd-fotos-pontos { display: flex; gap: var(--ins-2); }
 .dd-fotos-p {
   flex: 1 1 0; height: var(--ins-rail);
-  background: var(--ins-border);
+  background: var(--ins-fio-controle);
 }
-.dd-fotos-p.feita { background: var(--ins-acid); }
+.dd-fotos-p.feita { background: var(--ins-acento); }
 .dd-fotos-b { display: flex; gap: var(--ins-3); }
 .dd-fotos-b button { flex: 1 1 0; }
 
@@ -142,9 +142,9 @@
 
 .aj-salvar {
   min-height: var(--ins-tap); padding: 0 0 0 var(--ins-4);
-  font: 400 11px/1 var(--ins-font-mono);
+  font: 400 11px/1 var(--ins-fonte);
   letter-spacing: .14em; text-transform: uppercase;
-  color: var(--ins-acid); background: none; border: 0;
+  color: var(--ins-acento-tinta); background: none; border: 0;
 }
 .aj-salvar:active { opacity: .6; }
 
@@ -159,7 +159,7 @@
    subiu ou desceu entre duas sessões, e o eixo central é contra o que se
    endireita um ombro. Fica em cima da foto e não recebe toque. */
 .aj-grade { position: absolute; inset: 0; pointer-events: none; }
-.aj-grade i { position: absolute; background: var(--ins-acid); opacity: .35; }
+.aj-grade i { position: absolute; background: var(--ins-acento); opacity: .35; }
 .aj-grade .aj-v1, .aj-grade .aj-v2 { top: 0; bottom: 0; width: var(--ins-indicator); }
 .aj-grade .aj-h1, .aj-grade .aj-h2 { left: 0; right: 0; height: var(--ins-indicator); }
 .aj-grade .aj-v1 { left: 33.333%; }
@@ -185,7 +185,7 @@
 .aj-ctrl { display: flex; flex-direction: column; gap: var(--ins-2); }
 .aj-ctrl + .aj-ctrl { margin-top: var(--ins-5); }
 .aj-ctrl-t { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3); }
-.aj-ctrl-v { color: var(--ins-text); }
+.aj-ctrl-v { color: var(--ins-tinta); }
 .aj-ctrl input { width: 100%; }
 
 .aj-zerar { display: block; width: 100%; margin-top: var(--ins-7); }
@@ -195,15 +195,15 @@
 .cp-ajustar {
   align-self: flex-start; margin-top: var(--ins-2);
   padding: 0; background: none; border: 0; position: relative;
-  font: 400 11px/1 var(--ins-font-mono);
+  font: 400 11px/1 var(--ins-fonte);
   letter-spacing: .14em; text-transform: uppercase;
-  color: var(--ins-text-4); text-decoration: underline;
+  color: var(--ins-tinta-3); text-decoration: underline;
 }
 /* 11px de desenho, 47px de área: o `::after` estende o alvo sem engordar o
    rótulo, que é discreto de propósito. O vizinho de cima é texto, não outro
    toque, então a expansão não rouba nada. */
 .cp-ajustar::after { content: ""; position: absolute; inset: -18px -10px; }
-.cp-ajustar:active { color: var(--ins-text); }
+.cp-ajustar:active { color: var(--ins-tinta); }
 
 
 /* ============================================================
@@ -216,12 +216,12 @@
 .cam-quadro {
   position: relative; overflow: hidden;
   aspect-ratio: 3 / 4;
-  background: var(--ins-canvas);
-  border: 1px solid var(--ins-border);
+  background: var(--ins-foto-vazio);
+  border: 1px solid var(--ins-fio-controle);
 }
 .cam-video {
   display: block; width: 100%; height: 100%;
-  object-fit: cover; background: var(--ins-canvas);
+  object-fit: cover; background: var(--ins-foto-fundo);
 }
 .cam-ghost { position: absolute; inset: 0; border: 0; pointer-events: none; }
 
@@ -230,11 +230,11 @@
 .cam-contagem {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(12, 14, 12, .35);
+  background: var(--ins-foto-veu);
 }
 .cam-contagem span {
-  font: 400 96px/1 var(--ins-font-mono);
-  color: var(--ins-acid);
+  font: 400 96px/1 var(--ins-fonte);
+  color: var(--ins-acento-tinta);
 }
 
 .cam-op { display: flex; align-items: center; gap: var(--ins-3); margin-top: var(--ins-3); }

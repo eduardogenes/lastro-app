@@ -109,18 +109,40 @@ test('toda custom property usada tem dono', () => {
 
 test('a paleta do Instrumento está inteira e mora nos tokens', () => {
   const tokens = fonte('src/tokens.css');
+  // A paleta foi substituída inteira em 11/10, por decisão do dono — a 12 das
+  // quinze, com a nota literal "sem herancas". Era um conjunto escuro com
+  // acento ácido; é um conjunto de papel claro com acento azul-violeta, e o
+  // escuro passou a ser o espelho dele em vez da origem.
+  //
+  // E o caso ficou MAIS FORTE, não só atualizado: a paleta nova vive nos DOIS
+  // temas, então cada nome é cobrado nos dois valores. Antes um nome definido
+  // só num tema passava; agora não passa.
   const paleta = {
-    '--ins-canvas': '#0C0E0C', '--ins-surface-low': '#0F120F',
-    '--ins-surface': '#111411', '--ins-hairline': '#161A15',
-    '--ins-rule': '#22271F', '--ins-border': '#2B302A',
-    '--ins-border-strong': '#3A4137', '--ins-text': '#F2F4EF',
-    '--ins-text-2': '#D6DAD0', '--ins-text-3': '#A8AFA1',
-    '--ins-text-4': '#7C8478', '--ins-text-5': '#5E655A',
-    '--ins-acid': '#CBF35E', '--ins-amber': '#FFC46B', '--ins-coral': '#FF8A6B'
+    '--ins-fundo':         ['#E7E3DB', '#08090A'],
+    '--ins-tela':          ['#F5F3EE', '#111214'],
+    '--ins-superficie':    ['#FFFFFF', '#1B1D21'],
+    '--ins-superficie-2':  ['#EDEAE3', '#25282D'],
+    '--ins-tinta':         ['#15171A', '#F2F1EE'],
+    '--ins-tinta-2':       ['#474C54', '#BCC0C7'],
+    '--ins-tinta-3':       ['#5C6169', '#A2A6AE'],
+    '--ins-fio':           ['#DCD7CD', '#33363C'],
+    '--ins-fio-controle':  ['#8C867A', '#7C818A'],
+    '--ins-acento':        ['#3833DB', '#9E9BFF'],
+    '--ins-acento-tinta':  ['#2C28BE', '#B6B4FF'],
+    '--ins-acento-suave':  ['#E9E8FD', '#272550'],
+    '--ins-sobre-acento':  ['#FFFFFF', '#14123F'],
+    '--ins-atencao-fundo': ['#FBEFD6', '#33270F'],
+    '--ins-atencao-tinta': ['#5E3B00', '#F3CF85'],
+    '--ins-atencao-fio':   ['#D9A955', '#7A5A1E'],
+    '--ins-pare-fundo':    ['#FBE4E1', '#3A1714'],
+    '--ins-pare-tinta':    ['#7F1A12', '#FFADA3'],
+    '--ins-pare-fio':      ['#D98A80', '#7E3129']
   };
-  Object.entries(paleta).forEach(([nome, hex]) => {
-    assert.ok(new RegExp(nome + ':\\s*' + hex, 'i').test(tokens),
-      'sumiu ou mudou na paleta: ' + nome + ' deveria ser ' + hex);
+  Object.entries(paleta).forEach(([nome, [claro, escuro]]) => {
+    assert.ok(new RegExp(nome + ':\\s*' + claro, 'i').test(tokens),
+      'sumiu ou mudou no CLARO: ' + nome + ' deveria ser ' + claro);
+    assert.ok(new RegExp(nome + ':\\s*' + escuro, 'i').test(tokens),
+      'sumiu ou mudou no ESCURO: ' + nome + ' deveria ser ' + escuro);
   });
 });
 
@@ -156,9 +178,27 @@ test('a paleta antiga não existe mais, nem por apelido', () => {
   // Instrumento — remapear era o que fazia a superfície legada inteira falar a
   // língua nova de imediato. Com a última convertida, o atalho sai: dois nomes
   // para a mesma cor é a porta pela qual uma segunda paleta volta a entrar.
+  // DUAS paletas mortas desde 11/10: a pré-Instrumento (nomes em inglês) e a
+  // do Instrumento, aposentada pela decisão 12. Esta lista é a única guarda
+  // contra qualquer das duas voltar por um canto.
+  //
+  // `ins-acid` fica FORA da lista de propósito, e a razão não é de design: o
+  // caso *a marca de recorde não pinta ácido sobre ácido* afirma
+  // `color: var(--ins-acid)` LITERALMENTE, e ele não era um dos três casos que
+  // a passada dos tokens podia mudar. O nome sobrevive em quarentena com UM
+  // consumidor, apontando para o acento novo — a razão inteira está em
+  // `tokens.css`. Quando a tela cheia do histórico for reescrita, aquele caso
+  // muda de seletor e `ins-acid` entra aqui junto com os outros.
   const antigos = ['night', 'dusk', 'raise', 'line', 'paper', 'mist', 'dim',
     'dawn', 'dawn-soft', 'on-dawn', 'ember', 'ember-soft', 'ember-line',
-    'ok', 'ok-line', 'info', 'info-line', 'f-m', 'f-d'];
+    'ok', 'ok-line', 'info', 'info-line', 'f-m', 'f-d',
+    // a paleta do Instrumento, aposentada — menos `ins-acid`, em quarentena
+    'ins-canvas', 'ins-surface', 'ins-surface-low', 'ins-surface-acid',
+    'ins-surface-acid2', 'ins-surface-warn', 'ins-hairline', 'ins-rule',
+    'ins-border', 'ins-border-strong', 'ins-border-width', 'ins-text',
+    'ins-text-2', 'ins-text-3', 'ins-text-4', 'ins-text-5', 'ins-acid-hover',
+    'ins-amber', 'ins-coral', 'ins-on-acid', 'ins-radius', 'ins-raio-foto',
+    'ins-font-display', 'ins-font-mono'];
   const vivos = antigos.filter(n => new RegExp('var\\(--' + n + '\\)').test(css()));
   assert.deepStrictEqual(vivos, [], 'nome da paleta antiga ainda em uso');
 });
