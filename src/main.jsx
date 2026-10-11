@@ -31,6 +31,7 @@ import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
 import { Camera } from './ui/telas/camera.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
+import { SessaoModo } from './ui/telas/sessaomodo.jsx';
 import { Decisao } from './ui/telas/decisao.jsx';
 import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { Retroativo } from './ui/telas/retroativo.jsx';
@@ -2091,7 +2092,8 @@ const CTX = {
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
     return !!(view.promo || view.prog || view.retro || view.add || view.sessao || view.hist ||
-              view.protocolo || view.comparar || view.ajuste || view.camera);
+              view.protocolo || view.comparar || view.ajuste || view.camera ||
+              view.modoSessao);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -2268,6 +2270,9 @@ function telaCheia() {
   if (view.add) return <Retroativo ctx={CTX} />;
   if (view.sessao) return <Sessao ctx={CTX} />;
   if (view.hist) return <Historico ctx={CTX} />;
+  // O modo é o ÚLTIMO: camada mais funda, tudo que se abre de dentro dele fica
+  // por cima. A ordem aqui é a inversa da pilha de `camadasAbertas`.
+  if (view.modoSessao) return <SessaoModo ctx={CTX} />;
   return null;
 }
 

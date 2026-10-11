@@ -364,3 +364,32 @@ test('de dentro do modo, o Voltar fecha o que está por cima antes do modo', asy
   assert.strictEqual(a.vista().modoSessao, false, 'o segundo Voltar fechou o modo');
   a.fechar();
 });
+
+test('o modo desenha a saída visível, e tira a barra de abas', async () => {
+  // A seta é a ÚNICA saída visível do modo, e o rótulo dela diz o que ela faz
+  // com todas as letras — porque o que ela faz não é obvio: fecha o modo e
+  // DEIXA A SESSÃO ABERTA. Um "voltar" genérico aqui deixaria a dúvida de se
+  // sair do treino encerra o treino.
+  //
+  // E a barra de abas sai. O contrato vigente mandava o contrário — que ela
+  // continuasse visível durante o treino —, e a razão escrita dela era "sair
+  // para conferir a comida e voltar é um caminho legítimo". A cláusula cai
+  // porque a seta paga por ela: o caminho continua existindo, com um toque de
+  // cada lado.
+  const a = await app();
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+
+  const seta = a.$('[data-a="sai-do-modo"]');
+  assert.ok(seta, 'a seta de saída existe');
+  assert.strictEqual(seta.getAttribute('aria-label'),
+    'Voltar ao Agora, deixando a sessão aberta',
+    'e o rótulo diz o que ela faz, não só que ela volta');
+  assert.ok(!a.$('.ins-tabbar'), 'a barra de abas saiu');
+
+  seta.click();
+  await a.esperar();
+  assert.strictEqual(a.vista().modoSessao, false, 'tocar na seta fecha o modo');
+  assert.ok(a.$('.ins-tabbar'), 'e devolve a casca');
+  a.fechar();
+});

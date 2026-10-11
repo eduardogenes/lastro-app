@@ -1444,3 +1444,37 @@
    necessária: nenhuma regra do projeto declara raio. */
 .ins-live-dot, .ins-tl-ponto,
 input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
+
+
+/* ---- O modo de sessão ----
+   O invólucro do treino em tela cheia. Ele desenha UMA coisa: a saída.
+
+   O alvo vem de `--ins-tap` e não de um número: é controle que se toca de pé,
+   suado, e é a única saída visível do modo — errar nele é ficar preso. Por isso
+   ele é o alvo cheio e não o degrau denso, mesmo sendo uma seta pequena na
+   tela: o desenho é pequeno, a área não é.
+
+   A posição é a da direção, e a frente 1 mediu o que ela custa: o centro fica a
+   92% da diagonal da tela a partir do pivô do polegar. É a medição E, e ela
+   NÃO FOI FEITA — se reprovar, a saída muda de canto, não de existência. */
+.ins-modo {
+  display: flex; flex-direction: column;
+  /* `100vh` primeiro como fallback e `100svh` por cima, nesta ordem — a rede
+     pegou esta regra errada na primeira versão deste arquivo, e com razão:
+     invertida, o fallback vence e volta a sobra rolável do tamanho da barra. */
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.ins-modo-topo {
+  display: flex; align-items: center;
+  padding: var(--ins-3) var(--ins-8) 0;
+  padding-top: calc(var(--ins-3) + var(--sa-top));
+}
+
+.ins-modo-sair {
+  min-width: var(--ins-tap); min-height: var(--ins-tap);
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: var(--ins-tinta-2);
+  font: 400 26px/1 var(--ins-fonte);
+}
