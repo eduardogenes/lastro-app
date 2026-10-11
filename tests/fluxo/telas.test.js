@@ -1023,3 +1023,26 @@ test('todo aviso que para o dedo diz o que acontece, e diz na primeira palavra',
   assert.deepStrictEqual(usadas, [],
     'frase que a voz do produto recusa: ela não diz o que acontece ao tocar');
 });
+
+test('botão que mostra só um símbolo tem nome acessível', () => {
+  // Já havia guarda para isto, e ela cobria UM cartão (`serie.test.js` :: todo
+  // controle do cartão de exercício tem nome acessível). O app inteiro não
+  // tinha: um `···` ou um `×` novo em qualquer outra tela nasceria sem nome, e
+  // quem usa leitor de tela ouviria "botão" — sem nada que diga o que ele faz.
+  //
+  // Hoje os três que existem têm `aria-label`. Este caso é o que mantém isso
+  // verdade quando nascer o quarto.
+  const SIMBOLO = /^[\s·•×✕✓＋+−—–…·…{}'"`]*$/;
+  const sem = [];
+  const re = /<button\b([^>]*)>([\s\S]{0,60}?)<\/button>/g;
+  let m;
+  while ((m = re.exec(FONTE))) {
+    const [, attrs, corpo] = m;
+    if (!SIMBOLO.test(corpo)) continue;              // tem texto: o texto é o nome
+    if (/aria-label|aria-labelledby/.test(attrs)) continue;
+    sem.push((corpo.trim() || '(vazio)') + '  ←  ' + attrs.trim().slice(0, 50));
+  }
+  assert.deepStrictEqual(sem, [],
+    'botão cujo conteúdo visível é só símbolo e que não tem nome acessível: ' +
+    'quem usa leitor de tela ouve "botão" e nada mais');
+});
