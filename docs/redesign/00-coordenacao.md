@@ -426,10 +426,23 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         se comparam a um número menor, comparam-se à tarefa não existir.
       - **A divisão dos testes confere**: 372 de domínio e 513 de fluxo, 885 ao
         todo. Rodei as duas pastas em separado.
-- [!] 4.e Transitório observado: uma rodada isolada de `tests/fluxo` acusou 1
-      falha e as duas seguintes passaram 513/513. Combina com as 4 rejeições
-      soltas já registradas (render que aterrissa depois de a janela fechar).
-      Não bloqueia; fica anotado para não virar surpresa.
+- [x] 4.e **FECHADO em 11/10, com nome e com causa.** Era: "uma rodada isolada de
+      `tests/fluxo` acusou 1 falha e as duas seguintes passaram 513/513".
+      **O nome é `navegacao.test.js > o Escape fecha uma folha por vez, mesmo
+      com três abertas`**, e ele reapareceu numa rodada da onda 6 — desta vez eu
+      capturei a saída inteira num arquivo antes de filtrar, que é a regra que
+      estabeleci nesta sessão depois de perder duas vezes o nome de uma falha no
+      `grep`. Doze rodadas do arquivo sozinho passaram; só sob carga da suíte
+      inteira ele perde.
+      **A causa era uma corrida de verdade, não um teste mal escrito:** cada
+      folha montava o seu ouvinte de Esc no `document`, e entre a folha nova
+      aparecer e o efeito dela montar o ouvinte há uma janela em que o DOM já tem
+      a folha e **ninguém a escuta** — os ouvintes antigos veem uma folha mais
+      alta que eles e se calam, a nova ainda não escuta, e o Esc cai no vazio.
+      **Não combinava com as 4 rejeições soltas**, como eu havia suposto aqui.
+      Consertado em `19270f5` tirando o mecanismo, não as chances (ver 6.h).
+      A nota sobre render que aterrissa depois de a janela fechar continua
+      valendo por si; o que sai é a associação entre as duas coisas.
 
 ### ═══ PARADA 3 · o dono decide ═══ — FECHADA em 05/10
 
@@ -1960,7 +1973,45 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       dito no caso: o harness congela `Date.now` quando recebe `agora`, e com ele
       congelado nenhum motor de relógio tem o que mostrar.
 
-- [ ] **6.f A próxima peça da reescrita** — as telas, pela ordem do plano. A
+- [x] **6.f `impactoDoMod` vira função de domínio** (`3791d52`) — a peça 3 do
+      §3.3 do plano, na ordem que a **retificação** do próprio plano manda:
+      função de domínio com teste **antes** de a Prescrição virar a chamadora, e
+      só depois disso `decisao.jsx` sai.
+      **Era a maior dívida de prova da reescrita.** Das quatro ramificações que
+      produzem número, **uma** tinha asserção (`troca`) — as três que escrevem o
+      número de volume não tinham nenhuma, **em lugar nenhum**, e é o número que
+      ele lê para decidir o que vira permanente.
+      **E as três já tinham divergido entre si:** `add` e `rm` diziam "peito: 12
+      → 15 na rotação", sem nenhuma palavra dizendo de que eram os 15. Unificado
+      na convenção que o módulo já tinha em `impacto()`. **A suíte inteira ficou
+      verde com a mudança de texto** — o que confirma o achado do plano: ninguém
+      afirmava aquelas frases.
+      **A varredura de mutação reprovou um guarda meu.** Oito mutações, sete
+      vermelhas; a oitava mostrou que `if (!sl.desde) return null` não muda
+      resposta nenhuma, porque zero é o começo do tempo e a conta das 6 semanas
+      chega sozinha na mesma resposta. O guarda saiu, o comportamento continua
+      cobrado, e **o caso diz que é consequência e não ramo** — para ninguém
+      pensar que ele prova um ramo que não existe.
+
+- [x] **6.g O Esc passa a ser o mesmo caminho do Voltar** (`19270f5`) —
+      conformidade com cláusula vigente, não decisão nova. O contrato manda numa
+      lista só que o `‹ voltar`, o `×`, o véu, o **Esc** e o Voltar do sistema
+      "todos passam pelo mesmo caminho" (`LASTRO_UX_CONTRACT.md` §2). **O Esc era
+      o único que não passava**, e com isso não cumpria a outra metade da regra:
+      com destino de tela cheia aberto e nenhuma folha, a tecla não tinha quem a
+      escutasse.
+      **É o conserto do 4.e**, e ele tira o mecanismo e não as chances: um
+      ouvinte só, no boot, chamando o mesmo verbo. Cinco rodadas da suíte inteira
+      depois da troca, 1144/1144 — mas o que sustenta a afirmação é a corrida ter
+      saído, não a contagem de rodadas.
+      **Dois achados de prova, e os dois são sobre o meu próprio trabalho:**
+      o despacho do caso antigo era `keydown` no `document` **sem `bubbles`**, e
+      tecla real borbulha — era o arranjo antigo fixado no teste; e eu escrevi um
+      guarda que **mascarava** o que já existia em `voltarUmaCamada`, de modo que
+      tirar qualquer um dos dois deixava a suíte verde. Dois guardas de que
+      nenhum é demonstrável é pior que um.
+
+- [ ] **6.h A próxima peça da reescrita** — as telas, pela ordem do plano. A
       decisão do dono é que **os 168 repontes de expressão composta sejam feitos
       junto com a reescrita de cada tela**, numa visita só por arquivo.
       **A porta 1 do modo** (o cartão do topo do Agora) entra junto com o lugar
