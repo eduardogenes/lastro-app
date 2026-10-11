@@ -1839,6 +1839,20 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
       Tudo é CSS lido por teste e build em jsdom. A divisão por peça que o agente
       planejou se perdeu com a interrupção.
 
+- [x] **6.a' O anel de foco** (`11/10`, feito por mim) → §11 do `10-tokens.md`.
+      **Zero regras de `:focus-visible` para botão em folha nenhuma**, contra um
+      contrato que manda "foco sempre visível" — e **nenhum dos 38 casos de CSS
+      dizia uma palavra**, então a dívida era invisível **para a rede**, não só
+      para o olho. Os tokens de foco já existiam da passada anterior, **com zero
+      consumidores**.
+      O caso cobra três coisas, e provei as duas que importam: tirar a **folga**
+      deixa vermelho (sem ela o anel de acento desaparece no botão preenchido de
+      acento, porque o que some é a página entre os dois), e tirar `button` da
+      lista deixa vermelho **nomeando `button`** — diz qual controle passou a
+      depender do navegador. **1.108 passando.**
+      **Não medido:** nenhum olho viu este anel. E a parte do contrato que diz
+      "nunca escondido atrás de sticky" segue sem medição.
+
 - [ ] **6.b A próxima peça da reescrita** — as telas, pela ordem do plano. A
       decisão do dono é que **os 168 repontes de expressão composta sejam feitos
       junto com a reescrita de cada tela**, numa visita só por arquivo.

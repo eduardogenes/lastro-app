@@ -120,3 +120,56 @@ vermelho que se entende e um que se investiga.**
   alinhada, `sticky` morrendo com `overflow` no ancestral, `backdrop-filter` que
   pisca no Blink e não no WebKit, `translateX` positivo) **não foram violadas** —
   os casos que as cobram estão verdes. Mas verde em jsdom não é olho em tela.
+
+---
+
+## 11 · O anel de foco — a segunda peça, e uma dívida que a rede não via
+
+**Feita pelo coordenador em 11/10.** Os tokens de foco entraram na passada
+anterior **com zero consumidores**: estavam definidos, com a razão escrita, e
+nenhuma regra os usava.
+
+### A dívida, e por que ela era pior do que parecia
+
+**Zero regras de `:focus-visible` para `button`, `a`, `[role]` ou
+`[tabindex]`** — em folha nenhuma. Todo botão do app dependia do anel padrão do
+navegador, **num canvas quase preto**, onde ele tem menos chance de aparecer.
+
+O contrato de UX manda o contrário: *"foco sempre visível, e nunca escondido
+atrás de sticky"*.
+
+**E nenhum dos 38 casos de CSS dizia uma palavra sobre isso.** É essa a parte que
+importa: a dívida era invisível **para a rede**, não só para o olho. Não havia
+como ela ficar vermelha, então não havia como alguém descobri-la sem ir olhar.
+
+**Os campos já estavam cobertos** e ficaram fora da regra nova, de propósito:
+eles perdem o `outline` e ganham **borda de acento**, que é sinal no lugar onde o
+olho já está.
+
+### O caso cobra três coisas, e a terceira é a que se perde primeiro
+
+1. **A regra existe e alcança os quatro tipos de controle.**
+2. **A cor vem do token, não de um literal** — senão o anel não segue o tema, e
+   no escuro um anel escuro sobre fundo escuro é o mesmo que nenhum.
+3. **Há folga entre o anel e o botão.** Num botão preenchido de acento, um anel
+   de acento **encostado** no preenchimento é invisível; com a folga, o que
+   aparece entre os dois é a **página**, e página contra acento mede 6,16:1 nos
+   dois lados. **Sem ela o anel desaparece justamente no botão mais importante
+   da tela.**
+
+### A prova: duas quebras, e a segunda diz qual controle perdeu o anel
+
+| quebra | o que ficou vermelho |
+|---|---|
+| **A folga removida** | A primeira asserção, com a mensagem explicando por que a folga carrega peso. |
+| **`button` fora da lista de seletores** | A segunda, **nomeando `button`** — o caso não só detecta, diz **qual** controle passou a depender do navegador. |
+
+Fonte restaurado e conferido limpo nas duas. **1.108 passando.**
+
+### O que não foi medido
+
+**O anel não foi visto.** A largura de 3px, a folga de 2px e os contrastes de
+6,16 a 8,15:1 vêm da especificação da frente 4 e da aritmética — **nenhum olho
+viu este anel em tela nenhuma**, e em particular ninguém verificou a parte do
+contrato que diz *"nunca escondido atrás de sticky"*: `outline` não é cortado por
+`overflow` a menos que um ancestral corte, e **isso não foi medido.**
