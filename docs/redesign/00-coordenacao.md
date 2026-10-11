@@ -1796,6 +1796,55 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
 - [x] R2 · O A2 lê `git log`, que carrega vocabulário de forma → conferência
   dos `02-*` com o mesmo rigor do `01-fatos.md`. **Aconteceu** no 02-uso (L1–L3 e
   `dadd3e4`); corrigido.
+## ONDA 6 · A REESCRITA — começou em 11/10
+
+- [x] **6.a A primeira peça construída: os tokens** (`239774e`, `c45c010`) →
+      `10-tokens.md`. **Escolhida primeiro com razão:** os tokens são o
+      substrato em que toda tela é desenhada, e tela feita antes deles é tela
+      feita duas vezes. **E é a única peça da reescrita que não quebra os 294
+      casos que dependem de tela**, porque é CSS e token, não estrutura.
+      **Procedência separada, e está marcada assim no documento:** o CSS é do
+      agente `a9b5d0397e3159d3a`, que foi **interrompido quando a sessão
+      anterior terminou** — deixou as seis folhas e o `index.html` modificados,
+      **sem nenhum commit** e sem o documento. Salvei o diff antes de tocar em
+      nada. As três guardas atualizadas, a prova de vermelho e o documento são
+      meus.
+      **O estado em que o trabalho interrompido foi encontrado diz muito:**
+      exatamente **dois vermelhos**, e eram dois dos três que o briefing nomeou
+      como "vão quebrar de propósito" (1.105 de 1.107). Ele respeitou o escopo, e
+      **o terceiro que eu nomeei ficou verde** — a paleta nova não reintroduziu
+      cor velha em canto nenhum.
+      **Os três inegociáveis caíram com `(CAIU: …)` marcado em cada regra** no
+      cabeçalho da folha: o argumento derrubado fica visível, não apagado. A
+      paleta inverteu — saiu o escuro com acento ácido, entrou papel claro com
+      acento azul-violeta, e o escuro virou espelho. E ele resolveu **no token**
+      o contraste que a frente 4 havia medido: onde o preenchimento é o único
+      canal de um controle, ele vem com fio de 1,5px.
+      **A quarentena é a melhor parte.** Um nome da paleta aposentada sobreviveu
+      de propósito, porque um caso de teste o afirma **literalmente** e esse caso
+      **não era um dos três que ele podia mudar**. Em vez de atravessar o limite
+      ou quebrar o caso em silêncio, pôs numa seção **QUARENTENA**, com um
+      consumidor só, apontando para o acento novo, e **nomeou onde a dívida
+      vence**. Comportamento certo diante de um limite.
+      **Duas das três guardas ficaram MAIS FORTES:** a da paleta nova cobra cada
+      nome **nos dois temas** (antes, nome definido só num tema passava); e a da
+      paleta antiga **cresceu em vez de sumir** — vigia as duas paletas mortas,
+      com os 24 nomes aposentados acrescentados e um excetuado em quarentena.
+      **Prova, com duas quebras deliberadas: QUATRO vermelhos, não dois.** E o
+      nome aposentado que eu ressuscitei foi pego por **duas guardas
+      independentes** — a que eu cresci dá falha **nomeada**, a de órfãs dá
+      genérica. **Não é redundância: é a diferença entre um vermelho que se
+      entende e um que se investiga.**
+      **Não medido, e dito:** nenhum olho viu nenhuma dessas cores numa tela.
+      Tudo é CSS lido por teste e build em jsdom. A divisão por peça que o agente
+      planejou se perdeu com a interrupção.
+
+- [ ] **6.b A próxima peça da reescrita** — as telas, pela ordem do plano. A
+      decisão do dono é que **os 168 repontes de expressão composta sejam feitos
+      junto com a reescrita de cada tela**, numa visita só por arquivo.
+
+---
+
 - [ ] R3 · O briefing não diz onde ficam as respostas do dono; ficam em
   `02-perguntas.md`, embaixo de cada pergunta (P1.d).
 - [~] R8 · **Novo em 02/10, por minha causa:** o dono pediu para gravar na
