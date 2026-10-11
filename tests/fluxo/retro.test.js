@@ -133,8 +133,7 @@ test('sessão retroativa esquecida encerra na virada do dia de uso', async () =>
 
 test('dia vazio do calendário é atalho para lançar', async () => {
   const a = await app();
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
   const vazios = a.$$('.cal-d:not(.feito):not(.futuro)');
   assert.ok(vazios.length > 0);
   a.clicar(vazios[0]);

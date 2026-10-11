@@ -11,35 +11,53 @@
 
 import { TabBar } from './instrumento/tabbar.jsx';
 import { FaixaDaSessao } from './instrumento/faixasessao.jsx';
-import { Hoje } from './telas/hoje.jsx';
-import { Treino } from './telas/treino.jsx';
-import { Comida } from './telas/comida.jsx';
-import { Dados } from './telas/dados.jsx';
-import { Guia } from './telas/guia.jsx';
+import { Agora } from './telas/agora.jsx';
+import { Dias } from './telas/dias.jsx';
+import { Corpo } from './telas/corpo.jsx';
+import { Semana } from './telas/semana.jsx';
+import { Prescricao } from './telas/prescricao.jsx';
 import { Cabecalho } from './instrumento/primitivos.jsx';
 
-const TELAS = { hoje: Hoje, treino: Treino, comida: Comida, dados: Dados, guia: Guia };
+const TELAS = { agora: Agora, dias: Dias, corpo: Corpo, semana: Semana, prescricao: Prescricao };
 
 export function App({ ctx }) {
   // Tela cheia toma o lugar de tudo, tab bar inclusive: histórico, programa,
-  // sessão, retrospectiva e a decisão de fim de treino são destinos, não abas.
-  if (ctx.emTelaCheia()) return ctx.telaCheia();
+  // sessão, retrospectiva e a decisão de fim de treino são destinos, não lugares.
+  //
+  // MENOS as folhas, e isto é conserto. O retorno aqui era `ctx.telaCheia()`
+  // seco, e portanto uma folha aberta de DENTRO de um destino simplesmente não
+  // era desenhada: a pilha existia em `view.pilha`, `camadasAbertas` já a
+  // contava por cima do destino, o Voltar já a fechava — e a tela não mostrava
+  // nada. O buraco era antigo e estava fora de alcance porque a tela do treino
+  // era uma ABA; com ela virando modo, a foto do aparelho, o histórico do
+  // exercício, a nota e o seletor de troca passaram todos a abrir no vazio.
+  if (ctx.emTelaCheia()) return <>{ctx.telaCheia()}{ctx.folhas()}</>;
 
   const aba = ctx.abaAtual();
-  const Tela = TELAS[aba] || Hoje;
+  const Tela = TELAS[aba] || Agora;
   const h = ctx.cabecalhoDeHoje();
 
   return (
     <>
-      {aba === 'hoje' && (
+      {/* O cabeçalho do AGORA mora aqui e não na tela, porque o botão de estado
+          do dia é o único lugar onde o tipo do dia e o turno se trocam — e ele
+          precisa estar acima do aviso de perda e do cartão.
+          Os AJUSTES são o botão do canto, e não um lugar: a decisão é da §1.6 —
+          conta, sincronia e backup não respondem nenhuma das cinco perguntas. */}
+      {aba === 'agora' && (
         <Cabecalho
           olho={h.olho}
-          titulo="Hoje"
+          titulo="Agora"
           acao={
-            <button class="ins-estado" onClick={ctx.abreSeletorDeDia}>
-              <span class="ins-label-sm">{h.rotulo}</span>
-              <span class="ins-estado-v">{h.valor}</span>
-            </button>
+            <div class="ins-cab-acoes">
+              <button class="ins-estado" onClick={ctx.abreSeletorDeDia}>
+                <span class="ins-label-sm">{h.rotulo}</span>
+                <span class="ins-estado-v">{h.valor}</span>
+              </button>
+              <button class="ins-cab-ajustes" data-a="ajustes"
+                      aria-label="Ajustes deste aparelho"
+                      onClick={ctx.abreAjustes}>⚙</button>
+            </div>
           }
         />
       )}
@@ -58,7 +76,7 @@ export function App({ ctx }) {
           leem. Fora da árvore, o efeito não roda e a variável fica com a altura
           da ABA ANTERIOR — espaço reservado para uma tira que não está ali. */}
       <FaixaDaSessao
-        faixa={aba === 'hoje' ? null : ctx.faixaDaSessao()}
+        faixa={aba === 'agora' ? null : ctx.faixaDaSessao()}
         onVolta={ctx.voltaAoTreino}
         onContinua={ctx.continuaSessao}
         onEncerra={ctx.encerraSessaoEsquecida}

@@ -210,7 +210,7 @@ test('estado do plano 1 atravessa as duas migrações sem perder nada', async ()
     a.aba(x);
     assert.ok(a.doc.getElementById('app').innerHTML.length > 600, 'aba vazia: ' + x);
   });
-  a.aba('dados');
+  a.aba('semana');
   a.v('abrirSessao', t1);
   const txt = a.doc.getElementById('app').textContent;
   assert.ok(txt.includes('Supino inclinado com halteres'), 'o detalhe da sessão antiga abre');

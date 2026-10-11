@@ -6,7 +6,7 @@ import { app, agoraEstavel, DIA } from './harness.js';
 
 async function noHoje() {
   const a = await app({ agora: agoraEstavel(8) });
-  a.aba('hoje');
+  a.aba('agora');
   await a.esperar();
   return a;
 }
@@ -85,8 +85,7 @@ test('o histórico atravessa o backup', async () => {
   a.viajar(DIA);
   a.v('diaDeComida');
   await a.esperar();
-  a.aba('guia');
-  await a.modo('o app');
+  a.aba('ajustes');
   a.v('showJSON');
   const bkp = JSON.parse(a.doc.getElementById('jout').value);
   assert.strictEqual(bkp.data.comidaHist.length, 1,

@@ -73,7 +73,7 @@ test('a montagem vem antes da primeira foto e sai do caminho depois', async () =
   // Distância, altura da lente e luz mudam a silhueta mais do que duas semanas
   // de treino. Mas são fixas por definição: perguntar de novo a cada sessão
   // seria o oposto de não perguntar o que já se sabe.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
 
   a.clicar(a.$('.dd-fotos-b .ins-btn-primary'));
@@ -87,7 +87,7 @@ test('a montagem vem antes da primeira foto e sai do caminho depois', async () =
 });
 
 test('quem já tem foto de hoje não vê a montagem de novo', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('render');
@@ -99,7 +99,7 @@ test('quem já tem foto de hoje não vê a montagem de novo', async () => {
 });
 
 test('a sessão nasce na primeira foto: referência no estado, bytes no cache', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
@@ -126,7 +126,7 @@ test('o byte não entra no estado, que é reserializado a cada série', async ()
   // O teto do Safari para este armazenamento é 5 MiB, e o estado inteiro é
   // regravado a cada série registrada. Nove fotos por sessão aqui dentro
   // matariam o app em duas semanas.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
@@ -143,7 +143,7 @@ test('a foto de corpo é gravada maior que a do aparelho', async () => {
   // A miniatura do aparelho é olhada a 350 px. Esta é olhada lado a lado com
   // outra de dois meses atrás, em tela cheia, e é sobre ela que se decide se o
   // ombro mudou — é o mesmo caminho de redução, com outro teto.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
@@ -159,7 +159,7 @@ test('a foto de corpo é gravada maior que a do aparelho', async () => {
 test('a sessão avança sozinha para a pose que falta', async () => {
   // São nove poses em sequência. Pedir um toque a mais entre duas é pedir um
   // toque a mais nove vezes.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
@@ -180,7 +180,7 @@ test('a sessão avança sozinha para a pose que falta', async () => {
 test('a foto anterior da mesma pose aparece antes do disparo', async () => {
   // É a diferença entre esta tela e um botão de câmera. Enquadrar contra a
   // anterior evita o desvio; alinhar depois só o conserta, e mal.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [diasAtras(14)], 'frente-relaxado');
   await semear(a, diasAtras(14), 'frente-relaxado');
@@ -197,7 +197,7 @@ test('a foto anterior da mesma pose aparece antes do disparo', async () => {
 });
 
 test('na primeira vez a tela diz que não há referência, sem quadro quebrado', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
@@ -211,7 +211,7 @@ test('na primeira vez a tela diz que não há referência, sem quadro quebrado',
 // ---------- apagar ----------
 
 test('refazer uma pose deixa lápide, senão o outro aparelho traz a velha de volta', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
@@ -230,7 +230,7 @@ test('refazer uma pose deixa lápide, senão o outro aparelho traz a velha de vo
 
 test('apagar a única foto apaga a sessão junto', async () => {
   // A sessão nasce na primeira foto e não tem por que sobreviver à última.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
@@ -249,7 +249,7 @@ test('apagar a única foto apaga a sessão junto', async () => {
 });
 
 test('apagar uma de duas mantém a sessão viva', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
@@ -270,7 +270,7 @@ test('apagar uma de duas mantém a sessão viva', async () => {
 // ---------- a réplica no bucket ----------
 
 test('a foto tirada aqui sobe para o bucket do corpo', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
   a.v('ctx.abreProtocolo');
@@ -289,7 +289,7 @@ test('a foto tirada aqui sobe para o bucket do corpo', async () => {
 });
 
 test('sem rede, a foto fica aqui e não é dada como enviada', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
   a.E(`NUVEM.subirCorpo = async () => ({ ok: false, erro: 'rede', msg: 'sem conexão' })`);
@@ -312,7 +312,7 @@ test('sem rede, a foto fica aqui e não é dada como enviada', async () => {
 test('a poda deixa no aparelho só as sessões recentes', async () => {
   // São 35 MB no primeiro ano, num Cache Storage que o iOS despeja sob pressão
   // de disco. Aqui o cache é cache de verdade: a fonte é o bucket.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
 
@@ -335,7 +335,7 @@ test('foto que ainda não subiu segura a poda do cache inteiro', async () => {
   // O erro mais caro que este caminho pode cometer é apagar daqui o byte que
   // ainda não está lá. A poda espera todo mundo confirmado, e uma foto que
   // falta segura o ciclo — que é exatamente o que se quer.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
 
@@ -368,7 +368,7 @@ test('apagar o histórico poda os bytes de corpo, e não os do aparelho', async 
   // tela tem botão ligado nele.
   const datas = [70, 56].map(diasAtras);
   const a = await app({
-    aba: 'dados',
+    aba: 'corpo',
     estado: {
       fotos: { A0: { v: 1, ext: 'webp' } },
       protocolo: { poses: null, sessoes: datas.map(function (d, i) {
@@ -398,7 +398,7 @@ test('apagar o histórico poda os bytes de corpo, e não os do aparelho', async 
 
 test('abrir uma sessão podada traz os bytes de volta do bucket', async () => {
   // É o caminho de volta da poda. Sem ele, podar seria perder.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const antiga = diasAtras(70);
   nuvemComBucket(a, {}, { [antiga + '/frente-relaxado.webp']: 1 });
@@ -420,7 +420,7 @@ test('abrir uma sessão podada traz os bytes de volta do bucket', async () => {
 test('referência sem bytes em lugar nenhum não quebra a tela', async () => {
   // Foto que o outro aparelho registrou e ainda não subiu: a referência existe,
   // o byte não. Nada de quadro quebrado — a tela avisa e segue.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
   comSessoes(a, [diasAtras(14)], 'frente-relaxado');
@@ -444,7 +444,7 @@ test('a foto que a nuvem não devolveu diz isso, e tentar de novo traz', async (
   // O quarto estado da tela que faz E/S. O bucket responde sem os bytes — foto
   // que o outro aparelho ainda não subiu, ou rede caindo no meio — e a
   // recuperação mora no quadro que falhou.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const antes = diasAtras(14);
   nuvemComBucket(a, {}, {});
@@ -472,7 +472,7 @@ test('a foto que a nuvem não devolveu diz isso, e tentar de novo traz', async (
 test('sem conta na nuvem a foto do outro aparelho não oferece tentar de novo', async () => {
   // Tentar de novo daria exatamente na mesma: a porta é entrar na conta, e
   // oferecer um botão que não resolve é pior que não oferecer nenhum.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
 
@@ -489,7 +489,7 @@ test('sem conta na nuvem a foto do outro aparelho não oferece tentar de novo', 
 // ---------- o resumo em DADOS ----------
 
 test('sem sessão nenhuma, o resumo convida e não oferece comparação', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   const f = a.vJ('ctx.protocoloFotos');
   assert.strictEqual(f.tem, false);
   assert.strictEqual(f.nota, 'nenhuma sessão ainda');
@@ -503,7 +503,7 @@ test('sem sessão nenhuma, o resumo convida e não oferece comparação', async 
 test('o atraso é informação, não cobrança', async () => {
   // Passar da cadência põe o número em âmbar e para por aí. Não há sequência,
   // não há medalha e não há tela de parabéns em lugar nenhum deste produto.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   comSessoes(a, [diasAtras(20)], 'frente-relaxado');
   a.v('render');
 
@@ -519,7 +519,7 @@ test('o atraso é informação, não cobrança', async () => {
 });
 
 test('sessão de hoje pela metade convida a continuar de onde parou', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('render');
   assert.strictEqual(a.vJ('ctx.protocoloFotos').cta, 'continuar · 1 de 9');
@@ -527,7 +527,7 @@ test('sessão de hoje pela metade convida a continuar de onde parou', async () =
 });
 
 test('comparar só aparece quando há duas sessões na mesma pose', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   comSessoes(a, [diasAtras(14)], 'frente-relaxado');
   a.v('render');
   assert.strictEqual(a.$('.dd-fotos-b .ins-btn-secondary'), null, 'uma sessão não compara');
@@ -543,7 +543,7 @@ test('comparar só aparece quando há duas sessões na mesma pose', async () => 
 test('o par padrão é a mais nova contra a MAIS ANTIGA', async () => {
   // Contra a anterior, duas semanas são quase só água e sono — e é assim que se
   // desiste de um plano que estava funcionando.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
   const datas = [56, 28, 14].map(diasAtras);
@@ -557,7 +557,7 @@ test('o par padrão é a mais nova contra a MAIS ANTIGA', async () => {
 });
 
 test('comparar abre numa pose que tem par, não num vazio', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
   // só a segunda pose tem duas sessões
@@ -578,7 +578,7 @@ test('comparar abre numa pose que tem par, não num vazio', async () => {
 test('o peso ao lado da foto é a média da semana, e vem do registro corporal', async () => {
   // A sessão de fotos não pede número nenhum: o protocolo manda fotografar de
   // manhã em jejum, que é o mesmo momento da pesagem.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
   const velha = diasAtras(28), nova = diasAtras(14);
@@ -601,7 +601,7 @@ test('o peso ao lado da foto é a média da semana, e vem do registro corporal',
 });
 
 test('sem pesagem naquela semana, o lugar do número fica vazio em vez de zero', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
   comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
@@ -618,7 +618,7 @@ test('sem pesagem naquela semana, o lugar do número fica vazio em vez de zero',
 
 test('a nota da sessão reaparece na comparação, que é onde ela serve', async () => {
   // É o que explica, três meses depois, o mês que parece fora da curva.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
   const velha = diasAtras(28);
@@ -639,7 +639,7 @@ test('backup antigo, sem protocolo nenhum, entra sem quebrar', async () => {
   // Campo novo entra como opcional e recebe padrão em normalizaEstado(), que
   // roda no boot E na importação — não há migração porque não há dado a
   // reformatar.
-  const a = await app({ estado: { logs: {}, done: [] }, aba: 'dados' });
+  const a = await app({ estado: { logs: {}, done: [] }, aba: 'corpo' });
   assert.deepStrictEqual(a.S().protocolo, { poses: null, sessoes: [] });
   assert.ok(a.$('.dd-fotos'), 'e a seção desenha');
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
@@ -649,7 +649,7 @@ test('backup antigo, sem protocolo nenhum, entra sem quebrar', async () => {
 });
 
 test('ordem de poses vazia cai na do código, sem sumir com a tela', async () => {
-  const a = await app({ estado: { logs: {}, done: [], protocolo: { poses: [], sessoes: [] } }, aba: 'dados' });
+  const a = await app({ estado: { logs: {}, done: [], protocolo: { poses: [], sessoes: [] } }, aba: 'corpo' });
   assert.strictEqual(a.S().protocolo.poses, null, 'normalizada para "a do código"');
   assert.strictEqual(a.vJ('ctx.protocoloFotos').pontos.length, 9);
   a.fechar();
@@ -660,7 +660,7 @@ test('ordem de poses vazia cai na do código, sem sumir com a tela', async () =>
 // câmera. É o que permite reeditar sem acumular perda e desfazer sempre.
 
 test('ajustar grava o recorte no estado e não toca nos bytes', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
@@ -683,7 +683,7 @@ test('ajustar grava o recorte no estado e não toca nos bytes', async () => {
 });
 
 test('girar sobe o zoom sozinho, para não abrir borda vazia', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
@@ -696,7 +696,7 @@ test('girar sobe o zoom sozinho, para não abrir borda vazia', async () => {
 });
 
 test('o ajuste que não faz nada sai do estado em vez de virar zeros', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
 
@@ -716,7 +716,7 @@ test('o ajuste que não faz nada sai do estado em vez de virar zeros', async () 
 });
 
 test('sair sem salvar descarta: o original nunca foi tocado', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
 
@@ -731,7 +731,7 @@ test('sair sem salvar descarta: o original nunca foi tocado', async () => {
 test('o mesmo recorte é aplicado na captura e na comparação', async () => {
   // duas contas do mesmo ajuste divergiriam, e a divergência apareceria como
   // uma diferença no corpo que não existe
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
   const velha = diasAtras(28), nova = diasAtras(14);
@@ -769,7 +769,7 @@ test('o mesmo recorte é aplicado na captura e na comparação', async () => {
 test('a foto sobreposta pode ser trocada para qualquer outra data', async () => {
   // o padrão é a vizinha, mas quando uma sessão antiga tem a geometria boa é
   // contra ELA que se quer alinhar as seguintes — e o app não sabe qual é
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const datas = [56, 28, 14].map(diasAtras);
   comSessoes(a, datas, 'frente-relaxado');
@@ -795,7 +795,7 @@ test('a foto sobreposta pode ser trocada para qualquer outra data', async () => 
 test('a sessão mais antiga alinha contra a SEGUINTE, e não fica sem fantasma', async () => {
   // ela é a que ancora a série: deixá-la sem nada contra o que alinhar seria
   // deixar justamente a mais importante de fora
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const datas = [28, 14].map(diasAtras);
   comSessoes(a, datas, 'frente-relaxado');
@@ -809,7 +809,7 @@ test('a sessão mais antiga alinha contra a SEGUINTE, e não fica sem fantasma',
 });
 
 test('pose que só existe numa sessão não oferece contra o que alinhar', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const so = diasAtras(14);
   comSessoes(a, [so], 'frente-relaxado');
@@ -824,7 +824,7 @@ test('pose que só existe numa sessão não oferece contra o que alinhar', async
 
 test('a tela de ajuste abre com o fantasma da sessão anterior', async () => {
   // alinhar contra a foto anterior é o motivo desta tela existir
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const velha = diasAtras(28), nova = diasAtras(14);
   comSessoes(a, [velha, nova], 'frente-relaxado');
@@ -840,7 +840,7 @@ test('a tela de ajuste abre com o fantasma da sessão anterior', async () => {
 });
 
 test('na primeira sessão não há fantasma, e a tela não quebra', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const so = diasAtras(14);
   comSessoes(a, [so], 'frente-relaxado');
@@ -854,7 +854,7 @@ test('na primeira sessão não há fantasma, e a tela não quebra', async () => 
 });
 
 test('ajustar não é oferecido onde não há foto', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   a.v('ctx.comecaSessaoDeFotos');
@@ -876,7 +876,7 @@ test('ajuste guardado sobrevive à ida e volta pelo estado', async () => {
       d: '2026-08-24', t: 1, m: 1,
       fotos: { 'frente-relaxado': { v: 1, ext: 'webp', enq: { r: 2.5, z: 1.3, cx: 0.4, cy: 0.6, m: 9 } } }
     }] }
-  }, aba: 'dados' });
+  }, aba: 'corpo' });
   const enq = a.S().protocolo.sessoes[0].fotos["frente-relaxado"].enq;
   assert.deepStrictEqual(enq, { r: 2.5, z: 1.3, cx: 0.4, cy: 0.6, m: 9 });
   a.fechar();
@@ -888,7 +888,7 @@ test('ajuste guardado sobrevive à ida e volta pelo estado', async () => {
 // ficar ligada depois que a tela some.
 
 test('a tela da pose oferece os dois caminhos de captura', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
@@ -901,7 +901,7 @@ test('a tela da pose oferece os dois caminhos de captura', async () => {
 });
 
 test('sem getUserMedia, a câmera do sistema volta a ser a principal', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.E('delete navigator.mediaDevices');
   a.v('ctx.abreProtocolo');
@@ -916,7 +916,7 @@ test('sem getUserMedia, a câmera do sistema volta a ser a principal', async () 
 });
 
 test('abrir a câmera pede a traseira, e em retrato', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
@@ -937,7 +937,7 @@ test('abrir a câmera pede a traseira, e em retrato', async () => {
 
 test('sair da tela DESLIGA a câmera', async () => {
   // faixa viva mantém o indicador do iOS aceso e a câmera consumindo
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
@@ -953,7 +953,7 @@ test('sair da tela DESLIGA a câmera', async () => {
 });
 
 test('permissão negada não vira tela quebrada, vira o que fazer a respeito', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a, { erro: 'NotAllowedError' });
   a.v('ctx.abreProtocolo');
@@ -969,7 +969,7 @@ test('permissão negada não vira tela quebrada, vira o que fazer a respeito', a
 });
 
 test('disparo sem temporizador guarda a foto e avança a pose', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
@@ -991,7 +991,7 @@ test('disparo sem temporizador guarda a foto e avança a pose', async () => {
 });
 
 test('a contagem pode ser cancelada antes de disparar', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
@@ -1012,7 +1012,7 @@ test('a contagem pode ser cancelada antes de disparar', async () => {
 });
 
 test('o temporizador padrão dá tempo de andar os três metros', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
@@ -1024,7 +1024,7 @@ test('o temporizador padrão dá tempo de andar os três metros', async () => {
 });
 
 test('sem quadro ainda, a captura recusa em vez de gravar preto', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a, { semQuadro: true });
   a.v('ctx.abreProtocolo');
@@ -1041,7 +1041,7 @@ test('sem quadro ainda, a captura recusa em vez de gravar preto', async () => {
 });
 
 test('a câmera abre com a sobreposta da sessão vizinha', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   const velha = diasAtras(28), nova = diasAtras(14);
@@ -1064,7 +1064,7 @@ test('a câmera abre com a sobreposta da sessão vizinha', async () => {
 test('depois do disparo a sobreposta acompanha a nova pose', async () => {
   // são nove poses seguidas: a referência tem que trocar sozinha, senão a
   // segunda foto seria enquadrada contra a pose errada
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   const velha = diasAtras(14);
@@ -1091,7 +1091,7 @@ test('depois do disparo a sobreposta acompanha a nova pose', async () => {
 
 test('a foto da câmera interna entra pelo mesmo caminho da do sistema', async () => {
   // reduzida no mesmo teto, guardada no mesmo cache, com referência igual
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   a.v('ctx.abreProtocolo');
@@ -1111,7 +1111,7 @@ test('a foto da câmera interna entra pelo mesmo caminho da do sistema', async (
 });
 
 test('refazer pela câmera deixa lápide, como pelo sistema', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
@@ -1131,7 +1131,7 @@ test('refazer pela câmera deixa lápide, como pelo sistema', async () => {
 test('apagar a foto pergunta antes, e recusar cancela', async () => {
   // é a única ação destrutiva que passava direto; e a lápide viaja na
   // sincronização, então não apaga só deste aparelho
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('ctx.abreProtocolo');
@@ -1155,7 +1155,7 @@ test('apagar a foto pergunta antes, e recusar cancela', async () => {
 test('sair de uma tela cheia devolve a posição de leitura', async () => {
   // as folhas já faziam isso; as telas cheias jogavam para o topo e você
   // perdia a linha de onde veio
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
   a.v('render');
@@ -1172,7 +1172,7 @@ test('sair de uma tela cheia devolve a posição de leitura', async () => {
 test('andar entre poses não joga a sessão de fotos para o topo', async () => {
   // `‹ anterior` e `próxima ›` ficam no meio da página e são tocados nove vezes
   // seguidas: o topo tirava o botão de baixo do polegar a cada pose.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   await a.esperar();
@@ -1217,7 +1217,7 @@ test('andar entre poses não joga a sessão de fotos para o topo', async () => {
 // MODELO, não que o dedo a alcança.
 
 test('ctx.setNotaDaSessao escreve na sessão do dia, com o debounce do rascunho', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('ctx.abreProtocolo');
@@ -1261,7 +1261,7 @@ test('ctx.setNotaDaSessao sem foto no dia não inventa sessão para anotar', asy
   // A sessão de fotos nasce na PRIMEIRA FOTO, como a de treino nasce na
   // primeira série. Deixar a nota criá-la poria no histórico um dia de fotos
   // que nunca teve foto.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   await a.esperar(40);
@@ -1296,7 +1296,7 @@ test('ctx.setNotaDaSessao sem foto no dia não inventa sessão para anotar', asy
 // a alcança.
 
 test('ctx.tentaFotos limpa a falha daquela data e traz os bytes de novo', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const velha = diasAtras(28), nova = diasAtras(14);
   nuvemComBucket(a, {}, {});                 // com conta, e o bucket vazio
@@ -1326,7 +1326,7 @@ test('ctx.tentaFotos não limpa a falha das OUTRAS datas', async () => {
   // faria o quadro que continua falhando dizer "buscando a foto…" para sempre
   // — a tela afirmando que ainda tenta depois de já ter desistido, que é
   // exatamente o defeito que `falhaDeFoto` nasceu para consertar.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const velha = diasAtras(28), nova = diasAtras(14);
   nuvemComBucket(a, {}, {});
@@ -1355,7 +1355,7 @@ test('ctx.setDataComparada troca um lado do par e busca os bytes da data nova', 
   // O par padrão é a mais nova contra a mais antiga; trocar um lado é o gesto
   // que responde "e contra a do meio?". Sem a busca de bytes aqui, a data nova
   // entraria no estado e o quadro dela abriria vazio.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const datas = [56, 28, 14].map(diasAtras);
   nuvemComBucket(a, {}, Object.fromEntries(datas.map(d => [d + '/frente-relaxado.webp', 1])));
@@ -1384,7 +1384,7 @@ test('ctx.setPoseComparada troca a pose e remonta o par padrão dela', async () 
   // Cada pose tem seu próprio conjunto de sessões: trocar a pose sem remontar
   // o par deixaria as duas datas da pose anterior apontando para quadros que
   // não existem naquela.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const todas = [56, 28, 14].map(diasAtras);
   nuvemComBucket(a, {}, Object.fromEntries(
@@ -1420,7 +1420,7 @@ test('ctx.setDataDoFantasmaDaCamera troca a sobreposição e busca os bytes dela
   // Alinhar ANTES do disparo é o motivo da câmera de dentro do app existir, e
   // o fantasma é COM o que se alinha. Trocá-lo sem buscar os bytes deixaria a
   // câmera sobrepondo nada.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   const datas = [56, 28, 14].map(diasAtras);
@@ -1463,7 +1463,7 @@ test('ctx.setDataDoFantasmaDaCamera troca a sobreposição e busca os bytes dela
 // no MODELO, não que o dedo a alcança.
 
 test('ctx.setZoomDoAjuste põe o zoom no recorte, dentro do que dá para desenhar', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
@@ -1496,7 +1496,7 @@ test('ctx.arrastaAjuste move o centro do recorte, e o zoom encolhe o passo', asy
   // `dx`/`dy` vêm em fração do QUADRO e são divididos pelo zoom: quanto mais
   // perto, menos foto um centímetro de dedo atravessa. Se o zoom não entrasse
   // na conta, arrastar com zoom alto saltaria a foto inteira.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
@@ -1533,7 +1533,7 @@ test('ctx.streamDaCamera entrega a faixa viva, e nada depois de fechar', async (
   // É a única porta para a faixa de vídeo. O que ela devolve é o que o
   // `<video>` recebe, e por isso ela também é a prova de que sair da tela
   // desligou de verdade: faixa viva mantém o indicador do iOS aceso.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
@@ -1571,7 +1571,7 @@ test('ctx.streamDaCamera entrega a faixa viva, e nada depois de fechar', async (
 // capacidade existe no MODELO.
 
 test('ctx.setGradeDoAjuste e ctx.setFantasmaDoAjuste ligam e desligam na leitura', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const velha = diasAtras(28), nova = diasAtras(14);
   comSessoes(a, [velha, nova], 'frente-relaxado');
@@ -1602,7 +1602,7 @@ test('ctx.setGradeDoAjuste e ctx.setFantasmaDoAjuste ligam e desligam na leitura
 });
 
 test('ctx.setSobrepor e ctx.setOpacidade comandam a comparação sobreposta', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   const datas = [28, 14].map(diasAtras);
   nuvemComBucket(a, {}, Object.fromEntries(datas.map(d => [d + '/frente-relaxado.webp', 1])));
@@ -1627,7 +1627,7 @@ test('ctx.setSobrepor e ctx.setOpacidade comandam a comparação sobreposta', as
 });
 
 test('ctx.setGradeDaCamera, setFantasmaDaCamera e setOpacidadeDaCamera comandam o quadro vivo', async () => {
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   cameraFalsa(a);
   const datas = [28, 14].map(diasAtras);
@@ -1662,7 +1662,7 @@ test('ctx.posAnterior anda uma pose para trás, e na primeira não anda', async 
   // Nove poses em ordem, e a navegação é só para os lados. Passar do começo
   // daria a volta e faria a sessão parecer terminada quando ela acabou de
   // começar.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   a.v('ctx.abreProtocolo');
   await a.esperar(60);
@@ -1689,7 +1689,7 @@ test('ctx.fechaProtocolo fecha a tela e devolve a posição de leitura', async (
   // `saiDoDestino` é o par de `entraNoDestino`: abrir guardou onde ele estava
   // na página, e fechar tem de devolvê-lo ali. Sem isso, sair da sessão de
   // fotos joga ao topo de DADOS, longe do cartão que ele tocou.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [diasAtras(14)], 'frente-relaxado');
 

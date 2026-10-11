@@ -243,8 +243,7 @@ test('o descanso aparece nas duas telas, e do mesmo jeito', async () => {
   assert.ok(cel.className.includes('descanso'));
   assert.ok(!cel.className.includes('feito'), 'e nunca com o peso de dia treinado');
 
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
   assert.strictEqual(a.$$('.cal-d.descanso').length, 1, 'o mês diz a mesma coisa');
   a.fechar();
 });
@@ -282,7 +281,7 @@ function portaFalsa(a, resposta) {
 const porta = a => a.J('globalThis.__porta');
 
 test('ctx.entrarNaNuvem cobra os dois campos antes de falar com a rede', async () => {
-  const a = await app({ aba: 'guia' });
+  const a = await app({ aba: 'ajustes' });
   portaFalsa(a, { ok: true, v: { email: 'eu@exemplo.com', uid: 'u1' } });
 
   await a.v('ctx.entrarNaNuvem');
@@ -302,7 +301,7 @@ test('ctx.entrarNaNuvem cobra os dois campos antes de falar com a rede', async (
 });
 
 test('ctx.entrarNaNuvem entra, apara o e-mail e não deixa a senha na memória da tela', async () => {
-  const a = await app({ aba: 'guia' });
+  const a = await app({ aba: 'ajustes' });
   portaFalsa(a, { ok: true, v: { email: 'eu@exemplo.com', uid: 'u1' } });
 
   a.v('ctx.nuvemCampo', 'email', '  eu@exemplo.com  ');
@@ -333,7 +332,7 @@ test('ctx.entrarNaNuvem entra, apara o e-mail e não deixa a senha na memória d
 });
 
 test('ctx.entrarNaNuvem com senha errada mostra o motivo e não entra', async () => {
-  const a = await app({ aba: 'guia' });
+  const a = await app({ aba: 'ajustes' });
   portaFalsa(a, { ok: false, erro: 'auth', msg: 'e-mail ou senha não conferem' });
 
   a.v('ctx.nuvemCampo', 'email', 'eu@exemplo.com');
@@ -353,7 +352,7 @@ test('ctx.sairDaNuvem pergunta, e o histórico continua no aparelho', async () =
   // Sair é o gesto mais fácil de confundir com apagar. O aviso promete que o
   // histórico fica — e o que ele promete é o que este caso cobra.
   const t = Date.now() - 2 * 86400000;
-  const a = await app({ aba: 'guia', estado: {
+  const a = await app({ aba: 'ajustes', estado: {
     logs: { A0: [{ t: t, sid: t, sets: [[70, 8]] }] }, done: [{ day: 'A', t: t, sid: t }]
   } });
   portaFalsa(a, { ok: true, v: { email: 'eu@exemplo.com', uid: 'u1' } });
@@ -568,9 +567,9 @@ test('a refeição marcada HOJE não volta; a água volta, porque é contador', 
   // em vez de deixar a surpresa para depois.
   const nuvem = nuvemDeDois(null);
 
-  const cel = await app({ estado: { logs: {}, done: [] }, aba: 'comida' });
+  const cel = await app({ estado: { logs: {}, done: [] }, aba: 'agora' });
   nuvem.liga(cel);
-  const note = await app({ estado: { logs: {}, done: [] }, aba: 'comida' });
+  const note = await app({ estado: { logs: {}, done: [] }, aba: 'agora' });
   nuvem.liga(note);
 
   await cel.v('ctx.marcaRefeicao', 'almoco');

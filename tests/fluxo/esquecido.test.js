@@ -35,16 +35,19 @@ function parada(a, minutos) {
 test('antes de 1h30 a faixa é atalho, não pergunta', async () => {
   const a = await comSessao();
   parada(a, 80);
-  a.aba('comida');
+  a.aba('prescricao');
   assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'atalho');
   a.fechar();
 });
 
-test('passando de 1h30 a faixa pergunta, e pergunta até na aba de treino', async () => {
+test('passando de 1h30 a faixa pergunta, e pergunta até dentro do modo', async () => {
   // Quem esquece de finalizar costuma ter esquecido olhando justamente para ela.
+  // O nome do caso trocou "aba de treino" por "modo": a aba deixou de existir, e
+  // o lugar onde ele fica olhando passou a ser o modo.
   const a = await comSessao();
   parada(a, 95);
   a.aba('treino');
+  await a.pintar();                    // `parada` escreve por E(), que não pinta
   const f = a.vJ('ctx.faixaDaSessao');
   assert.strictEqual(f.tipo, 'pergunta');
   assert.ok(a.$('.ins-faixa-p'), 'e está na tela');
@@ -58,7 +61,7 @@ test('pausado não conta como esquecido: pausar é aviso, não ausência', async
   const a = await comSessao();
   await a.v('pausarSessao');
   a.E(`S.sessao.pausadoEm = Date.now() - 200 * ${MIN}`);
-  a.aba('comida');
+  a.aba('prescricao');
   assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'atalho',
     'cobrar inatividade de quem avisou que parou seria punir o aviso');
   a.fechar();
@@ -67,7 +70,7 @@ test('pausado não conta como esquecido: pausar é aviso, não ausência', async
 test('"continuo treinando" zera o relógio e devolve o atalho', async () => {
   const a = await comSessao();
   parada(a, 95);
-  a.aba('comida');
+  a.aba('prescricao');
   assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'pergunta');
 
   await a.v('ctx.continuaSessao');
@@ -124,7 +127,7 @@ test('dentro do modo a pergunta de 1h30 continua na tela', async () => {
   const a = await comSessao();
   parada(a, 95);
   a.v('ctx.abreModoDeSessao');
-  await a.esperar();
+  await a.pintar();
   assert.strictEqual(a.vista().modoSessao, true, 'pré-condição: dentro do modo');
 
   assert.strictEqual(a.vJ('ctx.faixaDaSessao').tipo, 'pergunta', 'o modelo pergunta');
@@ -172,18 +175,24 @@ test('dentro do modo o atalho de voltar ao treino não aparece', async () => {
 test('ctx.voltaAoTreino leva à aba, ao DIA da sessão e ao exercício onde ele parou', async () => {
   const a = await comSessao();
   // sai da sessão: outra aba, e a letra do dia mexida por outro caminho
-  a.v('ctx.vaiPara', 'dados');
+  a.v('ctx.vaiPara', 'semana');
   a.v('go', 'E');
   a.v('ctx.fechaTudo');
-  assert.strictEqual(a.vista().aba, 'dados', 'pré-condição: longe do treino');
+  assert.strictEqual(a.vista().aba, 'semana', 'pré-condição: longe do treino');
   assert.strictEqual(a.vista().day, 'E', 'e em outro dia');
   assert.strictEqual(a.S().sessao.day, 'A', 'a sessão aberta é do A');
 
   a.v('ctx.voltaAoTreino');
   await a.esperar();
 
-  assert.strictEqual(a.vista().aba, 'treino', 'voltou para a aba do treino');
-  assert.strictEqual(a.vista().day, 'A', 'e para o dia DA SESSÃO, não o último visitado');
+  // A ABA não muda, e esta asserção foi reescrita de propósito: ela dizia
+  // "voltou para a aba do treino", e a aba de treino deixou de existir. O modo
+  // é camada POR CIMA do lugar, e trocar o lugar por baixo faria fechá-lo
+  // devolver a pessoa a outro lugar que não o de onde ela entrou.
+  assert.strictEqual(a.vista().modoSessao, true, 'entrou no MODO');
+  assert.strictEqual(a.vista().aba, 'semana',
+    'e o lugar por baixo é o de onde ela veio, intacto');
+  assert.strictEqual(a.vista().day, 'A', 'e o dia é o DA SESSÃO, não o último visitado');
   assert.strictEqual(a.vista().open, 0,
     'e ABERTO onde ele parou: `ondeEleEstava` devolve o primeiro PARCIAL, que é o ' +
     '0 — uma série registrada de várias prescritas');
@@ -195,7 +204,7 @@ test('ctx.voltaAoTreino sem sessão aberta não mexe na tela', async () => {
   // A faixa só existe com sessão aberta, mas o verbo é alcançável sem ela —
   // e inventar uma volta para um treino que ninguém abriu trocaria a aba e a
   // letra do dia dele sem nada ter acontecido.
-  const a = await app({ aba: 'dados' });
+  const a = await app({ aba: 'semana' });
   assert.strictEqual(a.S().sessao, null, 'pré-condição: nenhuma sessão');
   const foto = () => JSON.stringify(
     [a.vista().aba, a.vista().day, a.vista().open, a.vista().modoSessao]);
@@ -216,7 +225,7 @@ test('ctx.voltaAoTreino abre o MODO, e não só a aba atrás dele', async () => 
   // olhar o treino passaram a ser duas coisas diferentes, e a faixa pertence à
   // primeira: quem a toca está com a mão na barra, não navegando.
   const a = await comSessao();
-  a.v('ctx.vaiPara', 'dados');
+  a.v('ctx.vaiPara', 'semana');
   a.v('ctx.fechaTudo');
   assert.strictEqual(a.vista().modoSessao, false, 'pré-condição: fora do modo');
 
@@ -226,9 +235,9 @@ test('ctx.voltaAoTreino abre o MODO, e não só a aba atrás dele', async () => 
   assert.strictEqual(a.vista().modoSessao, true, 'a faixa entrou NO MODO');
   assert.deepStrictEqual(camadasAbertas(a.vista()), ['modoSessao'],
     'e o modo é a única camada: a faixa não deixa nada pendurado por cima');
-  // A aba e o dia continuam arrumados por baixo — é o que fecha o modo de
-  // volta no lugar certo, sem este caso dizer de novo o que o de cima já diz.
-  assert.strictEqual(a.vista().aba, 'treino', 'com a aba certa por baixo');
+  // O lugar por baixo fica INTACTO, e o dia é o da sessão: é o que faz fechar
+  // o modo devolver o dedo onde ele estava.
+  assert.strictEqual(a.vista().aba, 'semana', 'o lugar de onde ela veio, intacto');
   assert.strictEqual(a.vista().day, 'A', 'e o dia da sessão');
   a.fechar();
 });

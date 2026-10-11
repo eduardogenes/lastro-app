@@ -67,8 +67,7 @@ test('calendário marca cardio sem competir com a letra do treino', async () => 
     logs: {}, done: [{ day: 'A', t: dia, sid: dia, dur: 50 * 60000 }],
     cardio: [{ t: dia + 3600000, m: 'bike', min: 20, i: 'leve' }]
   } });
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
 
   const cel = a.$$('.cal-d').find(function (c) {
     return c.querySelector('em') && c.querySelector('em').textContent === '2';
@@ -85,8 +84,7 @@ test('dia só de cardio fica marcado mesmo sem treino', async () => {
   const dia = new Date(hoje.getFullYear(), hoje.getMonth(), 3, 8).getTime();
   const a = await app({ estado: { logs: {}, done: [],
     cardio: [{ t: dia, m: 'esteira inclinada', min: 25, i: 'moderado' }] } });
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
 
   const cel = a.$$('.cal-d').find(function (c) {
     return c.querySelector('em') && c.querySelector('em').textContent === '3';
@@ -108,8 +106,7 @@ test('lista do mês e total de cardio', async () => {
       { t: d2, m: 'remo', min: 30, i: 'leve' }
     ]
   } });
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
 
   assert.strictEqual(a.$$('.sessrow .tag.card-t').length, 1, 'a sessão do dia 4 teve cardio junto');
   const totais = a.$$('.mediasem').map(function (x) { return x.textContent.replace(/\s+/g, ' '); });
@@ -139,21 +136,33 @@ test('detalhe da sessão mostra o cardio do mesmo dia', async () => {
   a.fechar();
 });
 
-test('o DADOS separa corpo e treino, e nenhuma regra se perde na divisão', async () => {
-  // A tela somava quase cinco telas de rolagem e passou a ter dois modos. O que
-  // este teste guarda não é o layout: é que a divisão não ENGOLIU nada. Cada
-  // regra continua existindo, no modo a que ela pertence.
+test('a divisão do DADOS em três lugares não engoliu regra nenhuma', async () => {
+  // Reescrito, e o que ele guarda é o MESMO: a divisão não ENGOLIU nada. O que
+  // mudou é a divisão — eram dois modos de uma tela só; agora são três lugares,
+  // porque "como está o corpo", "a semana andou para onde" e "o que aconteceu
+  // em cada dia" são três perguntas e não duas.
+  //
+  // Cada regra continua existindo, no lugar a que ela pertence — e a conferência
+  // é por PROCEDÊNCIA, que é onde as regras do nutricionista e do treinador
+  // moram na tela.
   const proc = a => a.$$('.ins-provenance').map(function (x) { return x.textContent; }).join(' | ');
 
-  const a = await app();
-  a.aba('dados');
-
-  assert.strictEqual(a.modo(), 'corpo', 'abre no corpo, que é onde mora o veredito');
+  const a = await app({ aba: 'corpo' });
+  await a.esperar();
   assert.ok(/mesmo ponto, em jejum/.test(proc(a)), 'regra de posicionamento da cintura');
-  assert.ok(a.$('.ins-veredito'), 'e o veredito continua sendo a primeira coisa');
+  assert.strictEqual(a.$('.ins-veredito'), null,
+    'e o veredito NÃO está aqui: ele responde "dá para mexer na comida?", que é da semana');
 
+  a.aba('semana');
+  await a.esperar();
+  assert.ok(a.$('.ins-veredito'), 'o veredito é a primeira coisa da SEMANA');
   await a.modo('treino');
-  assert.ok(/nunca antes do treino/.test(proc(a)), 'regra de quando fazer cardio');
-  assert.ok(a.$$('.ins-label').some(function (x) { return x.textContent === 'cardio'; }));
+  assert.ok(a.$$('.ins-label').some(function (x) { return x.textContent === 'cardio'; }),
+    'o placar do cardio é da semana');
+
+  a.aba('agora');
+  await a.esperar();
+  assert.ok(/nunca antes do treino/.test(proc(a)),
+    'e a regra de quando fazer cardio está onde ele se registra: ' + proc(a));
   a.fechar();
 });

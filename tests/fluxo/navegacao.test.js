@@ -40,7 +40,7 @@ test('a pilha de camadas é derivada de view, de baixo para cima', () => {
 });
 
 test('abrir camada empurra uma entrada no histórico', async () => {
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   await a.pronto();
   const antes = a.window.history.length;
 
@@ -54,7 +54,7 @@ test('abrir camada empurra uma entrada no histórico', async () => {
 });
 
 test('o Voltar do sistema fecha a folha em vez de sair do app', async () => {
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   await a.pronto();
   a.v('ctx.abreFolha', { k: 'dia' });
   await a.esperar();
@@ -68,7 +68,7 @@ test('o Voltar do sistema fecha a folha em vez de sair do app', async () => {
 });
 
 test('folhas empilhadas fecham uma por Voltar', async () => {
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   await a.pronto();
   a.v('ctx.abreFolha', { k: 'editaRefeicao', id: null });
   await a.esperar();
@@ -104,7 +104,7 @@ test('o Escape fecha uma folha por vez, mesmo com três abertas', async () => {
   // Voltar. Com a pilha cheia, um Escape já fechou duas de uma vez.
   // Refeição e o editor dela dividem o nível 50, então um desempate por
   // z-index dependia da ordem de desenho — e hoje quem decide é a pilha.
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   await a.pronto();
   a.v('ctx.abreFolha', { k: 'editaRefeicao', id: null });
   await a.esperar();
@@ -137,7 +137,7 @@ test('o Escape sai de um destino de tela cheia, como o Voltar', async () => {
   // O destino aqui é o modo de sessão porque ele abre sem argumento nenhum, e
   // qualquer um serve: `camadasAbertas` trata os onze destinos igual, e o Esc
   // agora chama o MESMO verbo do Voltar, que já tem caso para cada um.
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   a.v('ctx.abreModoDeSessao');
   await a.esperar();
   assert.deepStrictEqual(camadasAbertas(a.vista()), ['modoSessao'], 'pré-condição: destino aberto');
@@ -153,7 +153,7 @@ test('o Escape na raiz de uma aba não faz nada', async () => {
   // Voltar do sistema: ele não tem para onde sair, e uma camada a menos que
   // zero não existe. O ouvinte único agora recebe TODA tecla do app, e sem esta
   // guarda ele chamaria o verbo de fechar sobre nada.
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   assert.deepStrictEqual(camadasAbertas(a.vista()), [], 'pré-condição: nada aberto');
   const antes = JSON.stringify([a.vista().aba, a.vista().day]);
 
@@ -168,7 +168,7 @@ test('o Escape na raiz de uma aba não faz nada', async () => {
 });
 
 test('o Voltar sai de um destino de tela cheia', async () => {
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   await a.pronto();
   a.v('abrirPrograma', null);
   await a.esperar();
@@ -184,7 +184,7 @@ test('o Voltar sai de um destino de tela cheia', async () => {
 test('fechar pelo botão do app não deixa entrada órfã no histórico', async () => {
   // Se a entrada continuasse lá, o Voltar seguinte não faria nada visível — o
   // usuário apertaria duas vezes para sair de uma tela que já tinha fechado.
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   await a.pronto();
   a.v('ctx.abreFolha', { k: 'dia' });
   await a.esperar();
@@ -202,9 +202,9 @@ test('voltar de um destino devolve a posição de leitura', async () => {
   // Guia é a tela mais longa do app: cair no topo dela ao voltar é perder o
   // lugar toda vez. O mecanismo já existia e estava ligado em 4 dos 10
   // destinos; este teste segura o Programa, que era um dos seis de fora.
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   await a.pronto();
-  a.aba('guia');
+  a.aba('ajustes');
   await a.esperar();
 
   // jsdom não tem layout, então `scrollY` não anda sozinho: o que se cobra aqui
@@ -233,9 +233,9 @@ test('a folha entra em foco, isola o fundo e devolve o foco ao sair', async () =
   // `aria-modal="true"` já estava declarado, e sozinho ele não faz nada: quem
   // impede o foco de vazar é o `inert`. Medido antes da correção: 39 elementos
   // continuavam tabuláveis atrás da folha e o foco ficava no botão que a abriu.
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   await a.pronto();
-  a.aba('hoje');
+  a.aba('agora');
   await a.esperar();
 
   const acionador = a.$('.ins-estado');
@@ -243,7 +243,12 @@ test('a folha entra em foco, isola o fundo e devolve o foco ao sair', async () =
   acionador.focus();
 
   a.v('ctx.abreFolha', { k: 'dia' });
-  await a.esperar();
+  // 60 ms e não os 20 do padrão: o foco entra num `useLayoutEffect` que corre
+  // depois do commit, e a cadeia de render ficou um passo mais longa quando a
+  // casca passou a desenhar as folhas também sobre destino de tela cheia. Vinte
+  // milissegundos pegavam o quadro anterior — e o caso falhava dizendo que o
+  // foco não entrou, quando ele entrava um tique depois.
+  await a.esperar(60);
 
   const folha = a.$('.ins-folha');
   assert.ok(folha, 'a folha abriu');
@@ -284,7 +289,7 @@ test('a folha entra em foco, isola o fundo e devolve o foco ao sair', async () =
 // fechar volta uma camada, não duas.
 
 test('ctx.trocaFolha substitui o topo, e o Voltar devolve uma camada só', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   a.v('ctx.abreFolha', { k: 'editaRefeicao', id: null });
   a.v('ctx.abreFolha', { k: 'seletor', ref: null, idx: 0 });
   await a.esperar(60);
@@ -341,7 +346,7 @@ test('o modo de sessão é a camada mais funda das telas cheias', () => {
 });
 
 test('entrar no modo não começa a sessão, e sair do modo não a encerra', async () => {
-  const a = await app();
+  const a = await app({ aba: 'agora' });
 
   // entrar no modo com nenhuma sessão viva: o modo abre e nada é gravado.
   // "Abre PRONTO, não INICIADO" — a sessão nasce na primeira série completa, e
@@ -365,13 +370,13 @@ test('entrar no modo não começa a sessão, e sair do modo não a encerra', asy
 });
 
 test('fechar o modo devolve a aba de onde se entrou', async () => {
-  const a = await app();
-  a.aba('dados');
+  const a = await app({ aba: 'agora' });
+  a.aba('semana');
   a.v('ctx.abreModoDeSessao');
   await a.esperar();
   a.v('ctx.fechaModoDeSessao');
   await a.esperar();
-  assert.strictEqual(a.vista().aba, 'dados',
+  assert.strictEqual(a.vista().aba, 'semana',
     'o modo é camada: fechá-la devolve onde o dedo estava, como todo destino');
   a.fechar();
 });
@@ -381,7 +386,7 @@ test('o Voltar do sistema fecha o modo em vez de sair do app', async () => {
   // barra de navegador: se o modo não empurrar uma entrada no histórico, o
   // primeiro Voltar dentro do treino fecha o app — que é o defeito que
   // `navegacao.js` nasceu para consertar, chegando por uma porta nova.
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   await a.pronto();
   a.v('ctx.abreModoDeSessao');
   await a.esperar();
@@ -398,7 +403,7 @@ test('de dentro do modo, o Voltar fecha o que está por cima antes do modo', asy
   // A ordem importa e é a razão de o modo ser a camada mais FUNDA: quem abre o
   // programa de dentro do treino espera que o Voltar feche o programa, não que
   // o jogue fora do treino inteiro.
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   await a.pronto();
   a.v('ctx.abreModoDeSessao');
   await a.esperar();
@@ -426,7 +431,7 @@ test('o modo desenha a saída visível, e tira a barra de abas', async () => {
   // para conferir a comida e voltar é um caminho legítimo". A cláusula cai
   // porque a seta paga por ela: o caminho continua existindo, com um toque de
   // cada lado.
-  const a = await app();
+  const a = await app({ aba: 'agora' });
   a.v('ctx.abreModoDeSessao');
   await a.esperar();
 
@@ -441,5 +446,69 @@ test('o modo desenha a saída visível, e tira a barra de abas', async () => {
   await a.esperar();
   assert.strictEqual(a.vista().modoSessao, false, 'tocar na seta fecha o modo');
   assert.ok(a.$('.ins-tabbar'), 'e devolve a casca');
+  a.fechar();
+});
+
+test('folha aberta de DENTRO de um destino é desenhada', async () => {
+  // O conserto de um buraco antigo que a reestruturação trouxe para o alcance.
+  // A casca devolvia `ctx.telaCheia()` seco, então uma folha aberta de dentro
+  // de um destino simplesmente NÃO era desenhada: a pilha existia em
+  // `view.pilha`, `camadasAbertas` já a contava por cima do destino, o Voltar já
+  // a fechava — e a tela não mostrava nada.
+  //
+  // Estava fora de alcance porque a tela do treino era uma ABA. Com ela virando
+  // modo, a foto do aparelho, o histórico do exercício, a nota e o seletor de
+  // troca passaram todos a abrir no vazio: quatro capacidades mudas.
+  const a = await app({ aba: 'agora' });
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.deepStrictEqual(camadasAbertas(a.vista()), ['modoSessao'], 'pré-condição: no modo');
+
+  a.v('ctx.abreFolha', { k: 'dia' });
+  await a.esperar(60);
+
+  assert.deepStrictEqual(camadasAbertas(a.vista()), ['modoSessao', 'folha:0'],
+    'a pilha diz que há folha por cima do modo');
+  assert.ok(a.$('.ins-folha'), 'e a TELA concorda: a folha está desenhada');
+  assert.ok(a.$('.ins-veu'), 'com o véu, que é o que diz que o resto não responde');
+
+  // E a seta do modo não pode ficar tocável por cima do véu: ela fecharia o
+  // modo por baixo de uma folha aberta. Quem garante isso é o NÍVEL da folha,
+  // escrito inline por `Folha` — e ele tem de ficar acima dos três que a casca
+  // tem no rodapé e no topo: a barra de abas (40), o cronômetro (35) e a barra
+  // da saída do modo (30).
+  const seta = a.$('[data-a="sai-do-modo"]');
+  const folha = a.$('.ins-folha-w');
+  assert.ok(seta, 'a seta continua no DOM, atrás');
+  assert.ok(Number(folha.style.zIndex) > 40,
+    'a folha pinta acima de tudo o que a casca tem: z-index ' + folha.style.zIndex);
+
+  await voltar(a);
+  assert.deepStrictEqual(camadasAbertas(a.vista()), ['modoSessao'],
+    'o Voltar fecha a folha e deixa o modo de pé');
+  a.fechar();
+});
+
+test('os Ajustes são destino: abrem do canto do Agora e fecham pelo Voltar', async () => {
+  // Ajustes não é lugar — é um botão no canto do Agora (§1.6). Entrou como
+  // CAMADA, e é isso que faz o Voltar do sistema e o Esc fecharem por ele em
+  // vez de saírem do app: conta, sincronia e backup não respondem nenhuma das
+  // cinco perguntas, mas também não são um beco sem saída.
+  const a = await app({ aba: 'agora' });
+  const botao = a.$('[data-a="ajustes"]');
+  assert.ok(botao, 'o botão está no canto do Agora');
+  assert.ok(botao.getAttribute('aria-label'),
+    'com nome acessível: um ⚙ sozinho não é nome');
+
+  botao.click();
+  await a.esperar();
+  assert.deepStrictEqual(camadasAbertas(a.vista()), ['ajustes'], 'abriu como camada');
+  assert.ok(a.$('.gu-apagar'), 'e a máquina do app está lá dentro');
+  assert.ok(!a.$('.ins-tabbar'), 'sem barra de abas: é destino, não lugar');
+
+  await voltar(a);
+  assert.deepStrictEqual(camadasAbertas(a.vista()), [], 'o Voltar fechou');
+  assert.strictEqual(a.vista().aba, 'agora', 'e devolveu o lugar de onde se entrou');
+  assert.ok(a.$('.ins-tabbar'), 'com a casca de volta');
   a.fechar();
 });

@@ -277,6 +277,14 @@
 
 /* ---- Folha de baixo --------------------------------------------------- */
 
+/* SEM z-index aqui, e de propósito. Eu escrevi um (45) pensando que a folha
+   precisava subir para ficar acima da barra de abas (40), do cronômetro (35) e
+   da barra da saída do modo (30) agora que ela é desenhada sobre destino de tela
+   cheia. A varredura de mutação mostrou que tirá-lo não muda nada: `Folha`
+   escreve o z-index INLINE, do nível dela (`nivel = 50` por padrão, 70 no
+   seletor, 80 no editor), e inline vence a classe. Os três estão abaixo de 50,
+   então a folha já estava por cima — e um valor morto aqui seria uma segunda
+   fonte de verdade esperando divergir da primeira. */
 .ins-folha-w { position: fixed; inset: 0; display: flex; align-items: flex-end; }
 .ins-veu { position: absolute; inset: 0; background: var(--ins-veu); }
 
@@ -592,14 +600,17 @@
 .ed-macros { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-5); }
 .ed-macros .ed-campo { margin-bottom: 0; }
 
-/* ---- GUIA: regras e área de dados -------------------------------------- */
+/* ---- As regras do treinador, na Prescrição ----------------------------- */
+/*
+   O prefixo `gu-` é a marca do GUIA, a tela que se partiu nesta passada: a
+   prescrição foi para Prescrição e a máquina do app para Ajustes. Os nomes
+   ficaram — renomear doze seletores é a dívida que a frente 4 §11.2 já nomeia,
+   e fazê-la no meio desta troca misturaria duas mudanças numa.
 
-.gu-cobra {
-  margin-top: var(--ins-7); padding: var(--ins-5);
-  border: 1px solid var(--ins-atencao-fio);
-}
-.gu-cobra p { margin: var(--ins-3) 0 var(--ins-5); }
-.gu-cobra b { color: var(--ins-atencao-tinta); font-weight: 500; }
+   `.gu-cobra` SAIU: a cobrança de backup mudou de endereço para o topo do Agora
+   e usa `.ins-aviso-perda`, a mesma moldura do aviso de aparelho que não está
+   guardando. As duas dizem "o que você fizer pode não ficar", com causas
+   diferentes, e duas molduras para a mesma coisa seriam duas linguagens. */
 
 /* A regra virou linha que abre no lugar: quem desenha o fio de baixo e o alvo
    de 46px é o `.ins-lx` de dentro, então a casca não repete nem um nem outro. */
@@ -1538,4 +1549,15 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
   display: flex; align-items: center; justify-content: center;
   background: none; border: 0; color: var(--ins-tinta-2);
   font: 400 26px/1 var(--ins-fonte);
+}
+
+/* O cabeçalho do AGORA tem duas ações: o estado do dia e os ajustes. O de
+   estado é o largo — é onde o tipo do dia e o turno se trocam, e é tocado todo
+   dia; os ajustes são um alvo de ícone, visitados quando algo quebra. */
+.ins-cab-acoes { display: flex; align-items: flex-start; gap: var(--ins-4); }
+.ins-cab-ajustes {
+  min-width: var(--ins-tap); min-height: var(--ins-tap);
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: var(--ins-tinta-3);
+  font: 400 18px/1 var(--ins-fonte);
 }

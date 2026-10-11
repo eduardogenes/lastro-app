@@ -85,39 +85,52 @@ test('nenhum handler inline sobrou no fonte', async () => {
   assert.deepStrictEqual(achados, [], 'handler inline de volta no fonte');
 });
 
-test('as cinco abas da shell renderizam', async () => {
-  // A fusão trocou quatro abas por cinco: treino e comida são metades do mesmo
-  // dia, e HOJE é a tela que junta as duas numa timeline só.
-  const a = await app();
+test('os cinco LUGARES da shell renderizam, e nenhum é a sessão', async () => {
+  // Reescrito de propósito: esta asserção dizia `['hoje','treino','comida',
+  // 'dados','guia']`, e a frente 1 avisou que ela mudaria. Os cinco lugares
+  // respondem cinco perguntas e nenhuma repetida; a SESSÃO não é um deles —
+  // virou modo, porque ela não é um lugar entre lugares, é um estado em que o
+  // resto sai da frente.
+  //
+  // E monta no AGORA e não no padrão do harness: dentro do modo a barra não é
+  // desenhada, e um caso sobre a barra que a lê de dentro do modo leria vazio.
+  const a = await app({ aba: 'agora' });
+  const nomes = ['agora', 'dias', 'corpo', 'semana', 'prescrição'];
   assert.deepStrictEqual(
-    a.$$('.ins-tab').map(function (b) { return b.textContent; }),
-    ['hoje', 'treino', 'comida', 'dados', 'guia']
-  );
-  ['hoje', 'treino', 'comida', 'dados', 'guia'].forEach(function (t) {
+    a.$$('.ins-tab').map(function (b) { return b.textContent; }), nomes);
+  assert.ok(nomes.indexOf('treino') < 0, 'a sessão não é lugar: é modo, e tem três portas');
+
+  ['agora', 'dias', 'corpo', 'semana', 'prescricao'].forEach(function (t) {
     a.aba(t);
-    assert.ok(a.doc.getElementById('app').innerHTML.length > 600, 'aba vazia: ' + t);
+    assert.ok(a.doc.getElementById('app').innerHTML.length > 600, 'lugar vazio: ' + t);
   });
   a.fechar();
 });
 
-test('o app abre em HOJE, não no treino', async () => {
-  // O harness abre no treino porque quase todo teste desta pasta é sobre ele.
-  // O padrão de verdade é HOJE: é o que responde "e agora?" ao acordar.
-  const a = await app({ aba: 'hoje' });
-  assert.ok(a.$('.ins-foco') || a.$('.ins-tl'), 'HOJE mostra o foco ou a timeline');
-  assert.strictEqual(a.vista().aba, 'hoje');
+test('o app abre no AGORA, não na sessão', async () => {
+  // O harness abre na tela do treino porque quase todo caso desta pasta é sobre
+  // ela. O padrão de verdade é o AGORA: é o que responde "e agora?" ao acordar.
+  const a = await app({ aba: 'agora' });
+  assert.ok(a.$('.ins-foco') || a.$('.ins-tl'), 'o AGORA mostra o cartão ou a linha do dia');
+  assert.strictEqual(a.vista().aba, 'agora');
+  assert.strictEqual(a.vista().modoSessao, false, 'e sem o modo por cima');
   a.fechar();
 });
 
-test('o contexto do treino só aparece na aba de treino', async () => {
-  // Rotação, faixa da semana e o botão do dia são contexto de sessão. Fora do
-  // TREINO eles competiriam com o assunto da tela sem servir para nada.
+test('o contexto do treino existe DENTRO do modo, e em nenhum lugar', async () => {
+  // Reescrito de propósito, e a frente 1 avisou (achado 5): a regra era "o
+  // contexto do treino só aparece na aba de treino", e com a aba virando modo
+  // ela não tem como ser reescrita igual. O que a substitui é mais forte — a
+  // rotação e a faixa da semana existem dentro do MODO, e fora dele não existem
+  // em lugar NENHUM dos cinco, nem no que herdou a tela de onde elas vinham.
   const a = await app();
-  assert.ok(a.$('.tr-rot') && a.$('.semana') && a.$('.ins-estado-v'));
-  ['dados', 'guia'].forEach(function (t) {
+  assert.ok(a.vista().modoSessao, 'pré-condição: o harness entra pelo modo');
+  assert.ok(a.$('.tr-rot') && a.$('.semana'), 'dentro do modo o contexto está lá');
+
+  ['agora', 'dias', 'corpo', 'semana', 'prescricao'].forEach(function (t) {
     a.aba(t);
-    assert.strictEqual(a.$('.tr-rot'), null, 'rotação competindo na aba ' + t);
-    assert.strictEqual(a.$('.semana'), null);
+    assert.strictEqual(a.$('.tr-rot'), null, 'rotação competindo no lugar ' + t);
+    assert.strictEqual(a.$('.semana'), null, 'faixa da semana competindo em ' + t);
   });
   a.fechar();
 });
@@ -131,8 +144,7 @@ test('faixa da semana marca os dias e abre atalho nos vazios', async () => {
 
   // Numa segunda-feira não existe dia passado e vazio na semana; o calendário
   // do mês sempre tem, então o atalho é verificado lá.
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
   const vazio = a.$$('.cal-d').find(function (c) {
     return !c.className.includes('feito') && !c.className.includes('futuro');
   });
@@ -153,8 +165,7 @@ test('acompanhamento soma dias, tempo e volume do mês', async () => {
     logs.A0.push({ t: t, sid: t, sets: [[40, 10], [40, 10]] });
   }
   const a = await app({ agora: agora, estado: { logs: logs, done: done } });
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
 
   const stats = a.$$('.ins-grade-c .ins-metric-m').map(function (x) { return x.textContent; });
   assert.ok(stats.includes('3'), 'três dias treinados: ' + stats.join(','));
@@ -166,7 +177,7 @@ test('acompanhamento soma dias, tempo e volume do mês', async () => {
 
 test('acompanhamento não avança para o futuro', async () => {
   const a = await app();
-  a.aba('dados');
+  a.aba('dias');
   a.v('mudaMes', 1);
   assert.strictEqual(a.vista().mes, 0);
   a.v('mudaMes', -1);
@@ -176,7 +187,7 @@ test('acompanhamento não avança para o futuro', async () => {
 
 test('média semanal, não sequência de dias', async () => {
   const a = await app();
-  a.aba('dados');
+  a.aba('semana');
   const txt = a.doc.getElementById('app').textContent.toLowerCase();
   assert.ok(!/sequ[eê]ncia|streak|dias seguidos/.test(txt),
     'sequência puniria a quebra: quem treina 5 a 6 vezes quebra todo domingo');
@@ -295,7 +306,7 @@ test('séries por músculo compara com o mesmo ponto das semanas anteriores', as
   assert.strictEqual(tudo[g], 4, 'a semana inteira conta as duas sessões');
   assert.strictEqual(cedo[g], 2, 'cortada no primeiro dia, conta só a primeira');
 
-  a.aba('dados');
+  a.aba('semana');
   assert.ok(a.doc.getElementById('app').textContent.includes('mesmo ponto'));
   a.fechar();
 });
@@ -305,7 +316,7 @@ test('painel de músculos avisa quando há treino avulso no período', async () 
   const a = await app({ estado: { logs: {}, done: [
     { t: seg + 3600000, sid: seg, livre: 1, grupos: ['peito', 'tríceps'] }
   ] } });
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
   const nota = a.$$('.ins-provenance').find(function (x) { return /avuls/.test(x.textContent); });
   assert.ok(nota, 'sem o aviso o número pareceria completo quando não é');
@@ -527,8 +538,7 @@ test('dia com dois treinos leva à lista, em vez de abrir um deles em silêncio'
       { day: 'B', t: tB, sid: tB, dur: 40 * 60000, fim: 'manual' },
       { day: 'D', t: tD, sid: tD, dur: 90 * 60000, fim: 'manual' }
     ]
-  }, aba: 'dados' });
-  await a.modo('treino');
+  }, aba: 'dias' });
 
   const cel = a.$('.cal-d.hoje');
   assert.ok(cel.textContent.includes('B') && cel.textContent.includes('D'),
@@ -552,8 +562,7 @@ test('dia com um treino só continua abrindo direto', async () => {
   const a = await app({ agora: agora, estado: {
     plano: 6, logs: {},
     done: [{ day: 'B', t: d.getTime(), sid: d.getTime(), dur: 40 * 60000, fim: 'manual' }]
-  }, aba: 'dados' });
-  await a.modo('treino');
+  }, aba: 'dias' });
 
   a.clicar(a.$('.cal-d.hoje'));
   await a.esperar(60);
@@ -602,7 +611,7 @@ test('as regras de execução nascem fechadas e abrem uma por vez', async () => 
   // telas de rolagem só delas. São material de REFERÊNCIA: lê-se uma vez e
   // depois se volta procurando UMA regra.
   const a = await app();
-  a.aba('guia');
+  a.aba('prescricao');
   await a.esperar();
 
   const regras = a.$$('.gu-regra');
@@ -628,28 +637,38 @@ test('as regras de execução nascem fechadas e abrem uma por vez', async () => 
   a.fechar();
 });
 
-test('o GUIA separa a prescrição da máquina do app', async () => {
-  // A tela juntava três naturezas sob um nome só — o que foi prescrito, a
-  // máquina do app e atalhos para outros destinos — e somava 4,3 telas de
-  // rolagem, com um índice interno para se navegar dentro dela mesma.
+test('a prescrição e a máquina do app são LUGARES diferentes', async () => {
+  // Reescrito de propósito, e a propriedade ficou mais forte. O GUIA juntava
+  // três naturezas sob um nome só — o que foi prescrito, a máquina do app e
+  // atalhos para outros destinos — e a separação era por CHIP, dentro da mesma
+  // tela. Agora é por lugar: Prescrição responde "o que foi prescrito, e o que
+  // eu mudo?"; Ajustes não é lugar nenhum, é o botão do canto do Agora, e
+  // "não possui nenhuma decisão de treino ou de comida" (§1.6).
   const a = await app();
-  a.aba('guia');
+
+  a.aba('prescricao');
   await a.esperar();
-
-  assert.strictEqual(a.modo(), 'prescrição', 'abre no que a tela promete pelo nome');
-  assert.ok(a.$$('.gu-regra').length >= 10, 'as regras do treinador estão aqui');
+  assert.ok(a.$$('.gu-regra').length >= 10, 'as regras do treinador estão na prescrição');
   assert.ok(a.$$('.ins-label').some(function (x) { return x.textContent === 'alvo por tipo de dia'; }));
-
   // A máquina não fica no caminho de quem só queria conferir uma regra.
   assert.strictEqual(a.$('.gu-apagar'), null, 'apagar histórico não mora na prescrição');
   assert.strictEqual(a.$('#nvemail'), null, 'nem o login da nuvem');
-  assert.strictEqual(a.$$('.gu-dia').length, 0, 'nem a cadência, que é ajuste');
 
-  await a.modo('o app');
-  assert.ok(a.$('.gu-apagar'), 'e no outro modo está tudo lá');
+  // A CADÊNCIA mudou de lado, e isto é decisão registrada: o GUIA a punha na
+  // máquina do app com a razão "a cadência é AJUSTE, não referência". A frente
+  // 1 a lista como posse de Prescrição, e a razão que vence é a pergunta — em
+  // que dias costumo treinar é prescrição de rotina, e é contra ela que o
+  // palpite do dia se calcula. Ela fica tocável, num chip próprio.
+  await a.modo('semana');
+  assert.strictEqual(a.$$('.gu-dia').length, 7, 'a semana inteira, na prescrição');
+  assert.strictEqual(a.$$('.gu-regra').length, 0, 'e as regras não vazam para o chip dela');
+
+  a.aba('ajustes');
+  await a.esperar();
+  assert.ok(a.$('.gu-apagar'), 'a máquina está toda nos Ajustes');
   assert.ok(a.$('#nvemail'));
-  assert.strictEqual(a.$$('.gu-dia').length, 7, 'a semana inteira');
   assert.strictEqual(a.$$('.gu-regra').length, 0, 'e a prescrição não vaza para cá');
+  assert.strictEqual(a.$$('.gu-dia').length, 0, 'nem a cadência');
   a.fechar();
 });
 
@@ -661,15 +680,16 @@ test('a porta do programa some do guia, e as outras duas ficam', async () => {
   }).length;
 
   const a = await app();
-  a.aba('guia');
+  a.aba('prescricao');
   await a.esperar();
-  assert.strictEqual(abre(a), 0, 'não há mais porta para o programa no guia');
-  await a.modo('o app');
-  assert.strictEqual(abre(a), 0, 'em nenhum dos dois modos');
+  assert.strictEqual(abre(a), 0, 'não há porta para o programa na prescrição');
+  a.aba('ajustes');
+  await a.esperar();
+  assert.strictEqual(abre(a), 0, 'nem nos ajustes');
 
   a.aba('treino');
-  await a.esperar();
-  assert.strictEqual(abre(a), 1, 'a do treino continua');
+  await a.pintar();
+  assert.strictEqual(abre(a), 1, 'a da sessão continua');
   a.fechar();
 });
 
@@ -677,12 +697,12 @@ test('a retrospectiva mudou de casa e continua abrindo', async () => {
   // Era um botão órfão numa tela de referência; agora mora junto do resto do
   // que é olhar para trás.
   const a = await app();
-  a.aba('guia');
-  await a.modo('o app');
+  a.aba('prescricao');
+  await a.esperar();
   assert.ok(!a.$$('button').some(function (b) { return /retrospectiva/.test(b.textContent); }),
-    'saiu do guia');
+    'saiu da referência');
 
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
   const botao = a.$$('button').filter(function (b) {
     return /abrir retrospectiva/.test(b.textContent);
@@ -817,14 +837,21 @@ test('acoesDia e acoesProg mexem em programas diferentes — o do dia e o oficia
 test('ctx.emTelaCheia diz quando um destino tomou a tela toda', async () => {
   // Quem pergunta é a shell, para esconder a tabbar: errar aqui é a barra de
   // abas aparecendo em cima da câmera, ou desaparecendo na tela de treino.
-  const a = await app();
-  assert.strictEqual(a.v('ctx.emTelaCheia'), false, 'a aba de treino não é tela cheia');
+  const a = await app({ aba: 'agora' });
+  assert.strictEqual(a.v('ctx.emTelaCheia'), false, 'um LUGAR não é tela cheia');
 
   a.v('ctx.abrePrograma');
   assert.strictEqual(a.v('ctx.emTelaCheia'), true, 'o programa é');
   a.v('ctx.fechaFolha');
-  a.aba('treino');
+  a.v('ctx.vaiPara', 'agora');
   assert.strictEqual(a.v('ctx.emTelaCheia'), false, 'e sair devolve a shell');
+
+  // E o MODO é tela cheia, o que mudou de propósito: a aba de treino virou
+  // modo, e é esse o ponto — a sessão é o estado em que o resto sai da frente.
+  a.aba('treino');
+  assert.strictEqual(a.v('ctx.emTelaCheia'), true, 'a sessão é tela cheia agora');
+  a.v('ctx.fechaModoDeSessao');
+  assert.strictEqual(a.v('ctx.emTelaCheia'), false, 'e fechar o modo devolve a shell');
 
   a.v('openHist', 0);
   assert.strictEqual(a.v('ctx.emTelaCheia'), true, 'o histórico de um exercício também é');
@@ -871,7 +898,7 @@ test('ctx.ehLinhaDeTreino separa a linha de treino das de comida na timeline', a
   // A timeline de HOJE mistura comida e treino em ordem de relógio. Esta é a
   // pergunta que decide qual cromo cada linha recebe — e ela é sobre o `id` da
   // linha, não sobre a letra do dia.
-  const a = await app({ aba: 'hoje' });
+  const a = await app({ aba: 'agora' });
   assert.strictEqual(a.v('ctx.ehLinhaDeTreino', { id: 'treino' }), true);
   assert.strictEqual(a.v('ctx.ehLinhaDeTreino', { id: 'almoco' }), false);
   assert.strictEqual(a.v('ctx.ehLinhaDeTreino', { id: 'pre' }), false,
@@ -934,7 +961,7 @@ test('ctx.abreSessaoDoDia despacha pelos três tipos de célula que a leitura d�
   // (1) `k: 'dia'` — vai à lista do mês em DADOS, e NÃO escolhe uma das duas
   a.v('ctx.abreSessaoDoDia', hoje.abre);
   await a.esperar(60);
-  assert.strictEqual(a.vista().aba, 'dados', 'é lá que existe lista de dia');
+  assert.strictEqual(a.vista().aba, 'dias', 'é lá que existe lista de dia');
   assert.strictEqual(a.vista().mes, 0, 'no mês do dia tocado');
   assert.strictEqual(a.vista().sessao, null, 'e sem escolher nenhuma das duas por ele');
   assert.ok(a.vista().destacaDia, 'com o dia apontado na lista');
@@ -969,11 +996,13 @@ test('ctx.abreSessaoDoDia sem célula não abre nada', async () => {
   assert.strictEqual(futuras.length, 3, 'quinta, sexta e sábado estão no futuro');
   assert.strictEqual(futuras[0].abre, null, 'e a leitura não dá ação para o futuro');
 
+  const lugarAntes = a.vista().aba;
   a.v('ctx.abreSessaoDoDia', null);
   await a.esperar(60);
   assert.strictEqual(a.vista().add, null, 'nada de lançamento retroativo');
   assert.strictEqual(a.vista().sessao, null, 'nada de sessão aberta');
-  assert.strictEqual(a.vista().aba, 'treino', 'e nem trocou de aba');
+  assert.strictEqual(a.vista().aba, lugarAntes, 'e nem trocou de lugar');
+  assert.strictEqual(a.vista().modoSessao, true, 'nem fechou o modo por onde ele entrou');
   a.fechar();
 });
 

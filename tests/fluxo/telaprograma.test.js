@@ -281,7 +281,7 @@ test('exercício cadastrado por ele conta no painel', async () => {
   a.preencher(i, 0, 50, 10);
 
   assert.strictEqual(a.J('seriesPorMusculo(0, Date.now() + 1)')['dorsal'], 1);
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
   assert.ok(a.doc.getElementById('app').textContent.includes('dorsal'));
   a.fechar();
@@ -289,7 +289,7 @@ test('exercício cadastrado por ele conta no painel', async () => {
 
 test('o painel de corpo avisa quando o programa saiu do alvo do treinador', async () => {
   const a = await app();
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
   assert.strictEqual(a.$('.dd-fora'), null, 'programa igual ao dele: nada a dizer');
 
@@ -297,7 +297,7 @@ test('o painel de corpo avisa quando o programa saiu do alvo do treinador', asyn
   await a.v('progSeries', 'A', 4, 1);
   await a.esperar();
   a.v('fecharPrograma');
-  a.aba('dados');
+  a.aba('semana');
   // Voltar ao DADOS remonta a tela e o modo cai no padrão: séries por músculo
   // mora no de treino.
   await a.modo('treino');
@@ -316,7 +316,7 @@ test('músculo que saiu do programa mas foi treinado continua aparecendo', async
   a.v('toggle', 4);
   a.v('setAlt', 4, 'tibial-anterior');
   a.preencher(4, 0, 20, 15);
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
   const musculos = a.$$('.dd-mus-n').map(function (x) { return x.textContent; });
   assert.ok(musculos.some(function (x) { return /tibial/.test(x); }),

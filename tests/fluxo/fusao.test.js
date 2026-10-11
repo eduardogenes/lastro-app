@@ -26,8 +26,7 @@ test('o backup leva a metade de comida e devolve ela igual', async () => {
   a.E('S.comida.plano[0].itens[0].q = 321');
   a.E('S.compras.dias = 30');
 
-  a.aba('guia');
-  await a.modo('o app');
+  a.aba('ajustes');
   a.v('showJSON');
   const json = a.doc.getElementById('jout').value;
   const bkp = JSON.parse(json);
@@ -64,7 +63,7 @@ test('HOJE mostra comida e treino na MESMA timeline, em ordem de relógio', asyn
   // domingo (`CADENCIA_PADRAO`, índice 0), e no domingo esta tela não tem linha
   // de treino nenhuma — o teste passava seis dias por semana e quebrava no
   // sétimo. Quem afirma "treino e comida na mesma lista" semeia o treino.
-  const a = await app({ aba: 'hoje', estado: { cadencia: ['treino','treino','treino','treino','treino','treino','treino'] } });
+  const a = await app({ aba: 'agora', estado: { cadencia: ['treino','treino','treino','treino','treino','treino','treino'] } });
   const linhas = a.$$('.ins-tl');
   assert.ok(linhas.length >= 5, 'as refeições do dia estão na tela: ' + linhas.length);
 
@@ -88,7 +87,7 @@ test('o cartão-foco responde "e agora?" antes de qualquer resumo', async () => 
   // há cartão, sempre.
   const agora = agoraEstavel(12, 10);
   const a = await app({
-    aba: 'hoje', agora: agora,
+    aba: 'agora', agora: agora,
     estado: { logs: {}, done: [],
               dia: { data: new Date(agora).toISOString().slice(0, 10), done: {}, agua: 0,
                      escala: {}, cadencia: 'treino', alta: 0 } }
@@ -105,7 +104,7 @@ test('o cartão-foco responde "e agora?" antes de qualquer resumo', async () => 
 });
 
 test('marcar uma refeição soma no registrado e persiste', async () => {
-  const a = await app({ aba: 'hoje' });
+  const a = await app({ aba: 'agora' });
   const antes = a.texto('.ins-metric-xl');
   a.clicar('.ins-tl .ins-caixa');
   await a.esperar();
@@ -118,7 +117,7 @@ test('marcar uma refeição soma no registrado e persiste', async () => {
 });
 
 test('a água sobe e desce no toque', async () => {
-  const a = await app({ aba: 'hoje' });
+  const a = await app({ aba: 'agora' });
   const ticks = a.$$('.ins-tick');
   assert.strictEqual(ticks.length, 14, '14 copos de 250 ml');
   a.clicar(ticks[2]);
@@ -135,7 +134,7 @@ test('a água sobe e desce no toque', async () => {
 });
 
 test('abrir uma refeição mostra o que tem dentro e o ajuste só de hoje', async () => {
-  const a = await app({ aba: 'hoje' });
+  const a = await app({ aba: 'agora' });
   a.clicar('.ins-tl .ins-tl-toque');
   // efeito do Preact roda depois do paint; 20 ms não bastam no jsdom
   await a.esperar(150);
@@ -156,7 +155,7 @@ test('abrir uma refeição mostra o que tem dentro e o ajuste só de hoje', asyn
 test('o dia previsto se identifica como previsão, e confirmar muda o alvo', async () => {
   // Mesma semeadura da timeline, pelo mesmo motivo: o teste tira o treino do dia
   // e cobra que o alvo caia. No domingo não há treino para tirar.
-  const a = await app({ aba: 'hoje', estado: { cadencia: ['treino','treino','treino','treino','treino','treino','treino'] } });
+  const a = await app({ aba: 'agora', estado: { cadencia: ['treino','treino','treino','treino','treino','treino','treino'] } });
   const previsto = a.vJ('ctx.hoje').diaHoje.previsto;
   if (previsto) {
     assert.ok(a.texto('.ins-secao-nota') || a.texto('.ins-provenance'),
@@ -175,7 +174,7 @@ test('o dia de comida zera sozinho na virada da data', async () => {
   const ontem = new Date(Date.now() - DIA);
   const iso = ontem.getFullYear() + '-' + String(ontem.getMonth() + 1).padStart(2, '0') + '-' +
               String(ontem.getDate()).padStart(2, '0');
-  const a = await app({ aba: 'hoje', estado: {
+  const a = await app({ aba: 'agora', estado: {
     logs: {}, done: [],
     dia: { data: iso, done: { almoco: 1 }, agua: 9, escala: {} }
   } });
@@ -187,7 +186,7 @@ test('o dia de comida zera sozinho na virada da data', async () => {
 test('apagar o histórico não apaga o plano nutricional', async () => {
   // Simetria com o programa de treino: apagar o que foi REGISTRADO nunca apaga
   // o que foi PRESCRITO. Já quebrou uma vez, deixando a nutrição sem catálogo.
-  const a = await app({ aba: 'guia' });
+  const a = await app({ aba: 'prescricao' });
   a.E('S.comida.plano[0].itens[0].q = 777');
   a.E('S.cadencia = ["treino","treino","treino","treino","treino","treino","treino"]');
   a.aceitar();
@@ -202,9 +201,12 @@ test('apagar o histórico não apaga o plano nutricional', async () => {
 });
 
 test('a cadência da semana é editável e só fala de cadência', async () => {
-  const a = await app({ aba: 'guia' });
-  // a cadência é ajuste, não prescrição: mora no modo "o app"
-  await a.modo('o app');
+  const a = await app({ aba: 'prescricao' });
+  // A cadência MUDOU DE LADO nesta passada, e a razão está registrada: o GUIA a
+  // punha na máquina do app ("a cadência é ajuste, não referência"), e a frente
+  // 1 a lista como posse de Prescrição — em que dias costumo treinar é
+  // prescrição de rotina, e é contra ela que o palpite do dia se calcula.
+  await a.modo('semana');
   const dias = a.$$('.gu-dia');
   assert.strictEqual(dias.length, 7);
 
@@ -221,7 +223,7 @@ test('a cadência da semana é editável e só fala de cadência', async () => {
 });
 
 test('o alvo calórico sai do plano, não de um número escrito à parte', async () => {
-  const a = await app({ aba: 'guia' });
+  const a = await app({ aba: 'prescricao' });
   const antes = a.texto('.ins-linha-v');
   a.E('S.comida.plano.filter(function(r){return r.id==="almoco";})[0].itens[0].q += 500');
   a.v('render');
@@ -257,7 +259,7 @@ test('o placeholder de carregamento some quando o app monta', async () => {
   // ele não tem árvore antiga para comparar e só insere a dele. O "Carregando
   // seu histórico…" ficava no topo da tela para sempre, e resíduo de troca de
   // módulo pelo HMR ficava junto.
-  const a = await app({ aba: 'hoje' });
+  const a = await app({ aba: 'agora' });
   const app_ = a.doc.getElementById('app');
   assert.strictEqual(app_.querySelector('.msg'), null, 'placeholder ficou na tela');
   assert.ok(!app_.textContent.includes('Carregando'), app_.textContent.slice(0, 80));
@@ -276,7 +278,7 @@ test('editar a quantidade de um item muda o plano para todo dia', async () => {
   // A distinção que separa este app de um rastreador genérico: aqui é o PLANO,
   // e vale amanhã também. O controle de porção da folha de refeição é o outro
   // lado — "só de hoje" — e os dois dizem qual é na tela.
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   a.v('ctx.editaRefeicao', 'almoco');
   await a.esperar(150);
   assert.ok(a.$('.ins-folha'), 'a folha de edição abriu');
@@ -292,7 +294,7 @@ test('editar a quantidade de um item muda o plano para todo dia', async () => {
 });
 
 test('as folhas empilham em três níveis e voltam uma a uma', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   a.v('ctx.editaRefeicao', 'almoco');
   a.E('CTX.abreFolha({ k: "seletor", ref: "almoco", idx: null })');
   a.E('CTX.abreFolha({ k: "editaAlimento", id: null })');
@@ -312,7 +314,7 @@ test('as folhas empilham em três níveis e voltam uma a uma', async () => {
 });
 
 test('adicionar alimento a uma refeição entra no plano e no total do dia', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const antes = a.E('Math.round(CTX.hoje().alvo.kcal)');
   a.v('ctx.editaRefeicao', 'almoco');
   a.v('ctx.adicionaItem', 'almoco', 'aveia');
@@ -325,7 +327,7 @@ test('adicionar alimento a uma refeição entra no plano e no total do dia', asy
 });
 
 test('cadastrar alimento cria id próprio e aparece na biblioteca', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   a.v('ctx.novoAlimento');
   const id = a.E(`CTX.salvaAlimento(null, { n: "Pasta de castanha", cat: "mercearia",
                     u: "g", kcal: 600, p: 18, c: 12, g: 55, cru: 0 })`);
@@ -341,7 +343,7 @@ test('escolher um alimento na busca põe ele na refeição', async () => {
   // direto. A folha recebia a refeição de destino numa prop chamada `ref` —
   // reservada do Preact, que nunca chega ao componente —, então escolher na
   // lista não fazia nada. Sem erro, sem toast, sem nada (`9914199`).
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   a.v('ctx.editaRefeicao', 'almoco');
   a.E('CTX.abreFolha({ k: "seletor", ref: "almoco", idx: null })');
   await a.esperar(150);
@@ -364,7 +366,7 @@ test('cadastrar a partir da busca não abre a quarta folha, e já põe na refei�
   // cadastro TOMA o lugar da busca que não achou, e salvar põe o alimento na
   // refeição — antes ele era criado e ficava em lugar nenhum, e quem pediu
   // "trocar" ainda tinha que achar na lista o que acabou de digitar.
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   a.v('ctx.editaRefeicao', 'almoco');
   a.E('CTX.abreFolha({ k: "seletor", ref: "almoco", idx: null })');
   await a.esperar(150);
@@ -396,7 +398,7 @@ test('cadastrar a partir da busca não abre a quarta folha, e já põe na refei�
 test('remover alimento em uso tira ele das refeições que o citam', async () => {
   // Sem isto o plano ficaria apontando para um id órfão e o total do dia
   // mudaria sem explicação.
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   a.aceitar();
   const usava = a.E('S.comida.plano.filter(function(r){return r.itens.some(function(i){return i.f==="arroz";});}).length');
   assert.ok(usava > 0, 'o arroz está no plano');
@@ -413,7 +415,7 @@ test('remover alimento em uso tira ele das refeições que o citam', async () =>
 });
 
 test('alimento da prescrição é editável mas não some do código', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   a.E('CTX.salvaAlimento("arroz", { n: "Arroz integral cozido", cat: "mercearia", u: "g", kcal: 111, p: 2.6, c: 23, g: 0.9, cru: 0.36 })');
   await a.esperar();
   assert.strictEqual(a.vJ('ctx.alimentoParaEditar', 'arroz').n, 'Arroz integral cozido');
@@ -425,7 +427,7 @@ test('alimento da prescrição é editável mas não some do código', async () 
 });
 
 test('remover uma refeição limpa o que era do dia junto', async () => {
-  const a = await app({ aba: 'hoje' });
+  const a = await app({ aba: 'agora' });
   a.v('ctx.marcaRefeicao', 'lanche');
   a.v('ctx.setEscala', 'lanche', 0.5);
   await a.esperar();
@@ -464,7 +466,7 @@ test('remover uma refeição limpa o que era do dia junto', async () => {
 // por `a.E('…')`: é o que os faz sobreviver à reescrita das telas.
 
 test('ctx.removeItem pergunta antes, diz o que muda, e recusar não tira nada', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const antes = a.vJ('ctx.refeicaoParaEditar', 'almoco').itens.map(function (i) { return i.f; });
   assert.strictEqual(antes[2], 'frango', 'o terceiro item do almoço é o frango');
   const versaoAntes = a.S().comida.v;
@@ -491,7 +493,7 @@ test('ctx.removeItem pergunta antes, diz o que muda, e recusar não tira nada', 
 test('ctx.removeItem tira UM item, e nada além daquele item', async () => {
   // O caso do escopo. `frango` está no almoço E no café da manhã, e o almoço
   // tem outros cinco itens: as três coisas que um apagamento largo levaria.
-  const a = await app({ aba: 'hoje' });
+  const a = await app({ aba: 'agora' });
   a.v('ctx.marcaRefeicao', 'almoco');
   a.v('ctx.setEscala', 'almoco', 0.5);
   await a.esperar();
@@ -528,7 +530,7 @@ test('ctx.removeItem tira UM item, e nada além daquele item', async () => {
 });
 
 test('ctx.trocaItem troca o alimento, preserva a quantidade e não mexe em mais nada', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const noCafe = a.vJ('ctx.refeicaoParaEditar', 'pos').itens.map(function (i) { return i.f; });
   const versaoAntes = a.S().comida.v;
 
@@ -571,7 +573,7 @@ test('ctx.trocaItem derruba a marca do arroz e preserva a de alta demanda', asyn
   //   ajuste para algo que não é arroz, em silêncio.
   // - `i.alta` diz QUANDO o item aparece (só em dia de alta demanda). Descreve
   //   o lugar no plano, e o lugar não mudou. Então ela FICA.
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const arrozAntes = a.v('arrozAtual');
   assert.strictEqual(arrozAntes, 500,
     'o plano tem arroz em duas refeições, 250 g cada — pré-condição');
@@ -609,7 +611,7 @@ test('ctx.trocaItem não decide sobre a marca de cafeína — ela sobrevive, por
   // Ela não aparece em `refeicaoParaEditar`, então nenhuma tela a mostra e só
   // o estado a revela. Se alguém decidir que ela também cai, este caso fica
   // vermelho e aponta a linha.
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const cafeDoPre = function () {
     return a.S().comida.plano.filter(function (r) { return r.id === 'pre'; })[0].itens[3];
   };
@@ -629,7 +631,7 @@ test('removeItem e trocaItem com refeição ou índice que não existe não perg
   // A guarda `if (!r || !r.itens[idx]) return` — e a ordem dela importa:
   // `removeItem` só pergunta DEPOIS de achar o item, então um índice fora da
   // lista não produz um `confirm` sobre "este item".
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const antes = JSON.stringify(a.S().comida.plano);
   const perguntasAntes = a.perguntas().length;
 
@@ -664,7 +666,7 @@ test('removeItem e trocaItem com refeição ou índice que não existe não perg
 // verde.
 
 test('ctx.abreRefeicao e ctx.novaRefeicao empilham a folha certa, e nada mais', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   assert.ok(!a.vista().pilha || a.vista().pilha.length === 0, 'nasce sem folha');
 
   a.v('ctx.abreRefeicao', 'almoco');
@@ -685,7 +687,7 @@ test('ctx.abreRefeicao e ctx.novaRefeicao empilham a folha certa, e nada mais', 
 });
 
 test('ctx.refeicaoParaEditar traduz a refeição para o editor, e acusa o alimento sumido', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const vazia = a.vJ('ctx.refeicaoParaEditar', null);
   assert.strictEqual(vazia.novo, true, 'sem id é refeição nova');
   assert.deepStrictEqual([vazia.id, vazia.n, vazia.t, vazia.quando, vazia.itens.length],
@@ -713,7 +715,7 @@ test('ctx.refeicaoParaEditar traduz a refeição para o editor, e acusa o alimen
 });
 
 test('ctx.salvaRefeicao cria sem id e corrige com id, sem tocar nos itens', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
 
   a.v('ctx.salvaRefeicao', 'almoco', { n: 'Almoço no trabalho', t: '13:15' });
   await a.esperar();
@@ -741,7 +743,7 @@ test('ctx.salvaRefeicao cria sem id e corrige com id, sem tocar nos itens', asyn
 });
 
 test('ctx.duplicaRefeicao copia o conteúdo, e a cópia é independente do original', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   a.v('ctx.abreRefeicao', 'ceia');
   await a.esperar(150);
   assert.strictEqual(a.$$('.ins-folha').length, 1, 'uma folha aberta — pré-condição');
@@ -780,7 +782,7 @@ test('duas duplicações no mesmo milissegundo ganham ids diferentes, e as duas 
   // caem no mesmo milissegundo, que é o único jeito de exercitar o laço de
   // propósito. Dois ids iguais no plano não davam erro: `achaRefeicao` devolvia
   // sempre a primeira, e a segunda somava no total do dia sem poder ser editada.
-  const a = await app({ aba: 'comida', agora: agoraEstavel(8) });
+  const a = await app({ aba: 'prescricao', agora: agoraEstavel(8) });
   a.v('ctx.duplicaRefeicao', 'ceia');
   a.v('ctx.duplicaRefeicao', 'ceia');
   await a.esperar();
@@ -805,7 +807,7 @@ test('a criação de refeição tem a MESMA guarda de id da duplicação', async
   // São duas portas, e só uma estar guardada seria a assimetria de volta num
   // lugar diferente: `ctx.salvaRefeicao` sem id cria, `ctx.duplicaRefeicao`
   // copia, e as duas carimbavam `'r' + Date.now()` nu.
-  const a = await app({ aba: 'comida', agora: agoraEstavel(8) });
+  const a = await app({ aba: 'prescricao', agora: agoraEstavel(8) });
   a.v('ctx.salvaRefeicao', null, { t: '10:00', n: 'Uma' });
   a.v('ctx.salvaRefeicao', null, { t: '10:30', n: 'Outra' });
   await a.esperar();
@@ -828,7 +830,7 @@ test('a criação de refeição tem a MESMA guarda de id da duplicação', async
 });
 
 test('ctx.alternaAlta liga e desliga a marca do item, apagando a chave em vez de gravar false', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const cru = function (i) { return a.S().comida.plano.filter(function (r) { return r.id === 'almoco'; })[0].itens[i]; };
   assert.strictEqual(cru(5).alta, undefined, 'o kiwi não é item de alta demanda — pré-condição');
 
@@ -850,7 +852,7 @@ test('ctx.alternaAlta liga e desliga a marca do item, apagando a chave em vez de
 });
 
 test('ctx.alimentosParaSeletor acha por pedaço do nome, sem acento, e em ordem', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const todos = a.vJ('ctx.alimentosParaSeletor', '');
   assert.ok(todos.length > 20, 'busca vazia é a biblioteca inteira: ' + todos.length);
   const nomes = todos.map(function (x) { return x.n; });
@@ -888,7 +890,7 @@ test('ctx.alimentosParaSeletor acha por pedaço do nome, sem acento, e em ordem'
 // totais existe para evitar. Nada aqui conta elementos na tela.
 
 test('ctx.planoCompleto devolve o plano em ordem de relógio, com o kcal de cada refeição', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const plano = a.vJ('ctx.planoCompleto');
   const horas = plano.map(function (r) { return r.t; });
   assert.deepStrictEqual(horas, horas.slice().sort(), 'ordenado pelo relógio');
@@ -908,7 +910,7 @@ test('ctx.planoCompleto devolve o plano em ordem de relógio, com o kcal de cada
 });
 
 test('ctx.resumoDoPlano fecha a conta nos dois tipos de dia, e não num só', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const num = function (s) { return Number(String(s).replace(/\./g, '')); };
   const antes = a.vJ('ctx.resumoDoPlano');
   assert.strictEqual(antes.refeicoes, 7, 'conta as refeições do plano');
@@ -931,7 +933,7 @@ test('ctx.resumoDoPlano fecha a conta nos dois tipos de dia, e não num só', as
 });
 
 test('ctx.alternaCadencia vira um dia da semana, e só aquele dia', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const antes = a.S().cadencia.slice();
   assert.strictEqual(antes.length, 7, 'sete posições — pré-condição');
 
@@ -952,7 +954,7 @@ test('ctx.alternaCadencia vira um dia da semana, e só aquele dia', async () => 
 });
 
 test('ctx.marcaCompra liga e desliga o comprado item por item, sem tirar a linha da lista', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const linhas = a.vJ('ctx.compras').linhas.length;
   assert.ok(linhas > 5, 'a lista de compras tem linhas: ' + linhas);
   assert.deepStrictEqual(a.S().compras.comprado, {}, 'nada comprado — pré-condição');
@@ -974,7 +976,7 @@ test('ctx.marcaCompra liga e desliga o comprado item por item, sem tirar a linha
 });
 
 test('ctx.setHorizonteCompras muda o horizonte e a lista recalcula em cima dele', async () => {
-  const a = await app({ aba: 'comida' });
+  const a = await app({ aba: 'prescricao' });
   const antes = a.vJ('ctx.compras');
   assert.strictEqual(antes.dias, 7, 'o horizonte nasce em uma semana');
   assert.strictEqual(antes.previsao.treino + antes.previsao.descanso, 7,

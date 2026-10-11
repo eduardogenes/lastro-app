@@ -317,7 +317,7 @@ function diaDe(agora, cadencia) {
 
 test('no Agora, o cartão da sessão aberta conta as séries e volta para ela', async () => {
   const a = await comSessao();
-  a.v('ctx.vaiPara', 'hoje');
+  a.v('ctx.vaiPara', 'agora');
   await a.esperar();
 
   const foco = a.$('.ins-foco');
@@ -338,7 +338,7 @@ test('no Agora a tira de baixo não é desenhada; em outra aba, é', async () =>
   // Duas peças para o mesmo trabalho na mesma tela é o oposto da regra de UM
   // cartão. Fora do Agora a tira continua sendo o único caminho de volta.
   const a = await comSessao();
-  a.v('ctx.vaiPara', 'hoje');
+  a.v('ctx.vaiPara', 'agora');
   await a.esperar();
   assert.ok(!a.$('.ins-faixa'), 'no Agora, não: o cartão de cima já é a sessão');
   assert.ok(a.$('.ins-foco'), 'e o cartão está lá no lugar dela');
@@ -355,7 +355,7 @@ test('no Agora, a pergunta de 1h30 mantém o topo COM as duas respostas', async 
   // parei" — e quem esqueceu o treino aberto está olhando justamente para cá.
   const a = await comSessao();
   a.E(`S.sessao.ultima = Date.now() - 95 * ${MIN}`);
-  a.v('ctx.vaiPara', 'hoje');
+  a.v('ctx.vaiPara', 'agora');
   await a.esperar();
 
   const txt = a.texto('.ins-foco');
@@ -375,7 +375,7 @@ test('no Agora, a pergunta de 1h30 mantém o topo COM as duas respostas', async 
 test('no Agora, o cartão do fim aproximado tem as duas respostas, e "está certo" fecha o assunto', async () => {
   const agora = agoraEstavel(6, 15);
   const a = await app({
-    aba: 'hoje', agora: agora,
+    aba: 'agora', agora: agora,
     estado: {
       plano: 7,
       logs: {}, done: [
@@ -405,7 +405,7 @@ test('no Agora, o cartão do treino abre o MODO no dia de hoje — a porta 1', a
   // NÃO começa a sessão: ela nasce na primeira série completa.
   const agora = agoraEstavel(6, 30);
   const a = await app({
-    aba: 'hoje', agora: agora,
+    aba: 'agora', agora: agora,
     estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino') }
   });
 
@@ -436,7 +436,7 @@ test('no Agora, o cartão da refeição longe diz "mais tarde", não "faltam"', 
   // minutos.
   const agora = agoraEstavel(10, 0);
   const a = await app({
-    aba: 'hoje', agora: agora,
+    aba: 'agora', agora: agora,
     estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino') }
   });
 
@@ -445,7 +445,7 @@ test('no Agora, o cartão da refeição longe diz "mais tarde", não "faltam"', 
 
   // e dentro da janela volta a ser a contagem normal
   const b = await app({
-    aba: 'hoje', agora: agoraEstavel(12, 10),
+    aba: 'agora', agora: agoraEstavel(12, 10),
     estado: { plano: 7, logs: {}, done: [], dia: diaDe(agoraEstavel(12, 10), 'treino') }
   });
   assert.strictEqual(b.vJ('ctx.cartaoDeCima').janela, true);
@@ -459,7 +459,7 @@ test('a linha acesa da timeline é o assunto do cartão', async () => {
   // propósito, porque duas regras divergiriam e a tela diria duas coisas.
   const agora = agoraEstavel(10, 0);
   const a = await app({
-    aba: 'hoje', agora: agora,
+    aba: 'agora', agora: agora,
     estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino') }
   });
 
@@ -479,7 +479,7 @@ test('no Agora, o cartão da aula é um botão só e leva ao modo', async () => 
   // nota da sessão, e é a única chance de ele ficar em algum lugar.
   const agora = agoraEstavel(6, 45);
   const a = await app({
-    aba: 'hoje', agora: agora,
+    aba: 'agora', agora: agora,
     estado: {
       plano: 7,
       logs: {}, done: [
@@ -507,7 +507,7 @@ test('no Agora, com o dia fechado o topo confirma em vez de ficar mudo', async (
   // relógio, não a de marcação mais recente: o cartão confirma o fim do dia.
   const agora = agoraEstavel(23, 0);
   const a = await app({
-    aba: 'hoje', agora: agora,
+    aba: 'agora', agora: agora,
     estado: {
       plano: 7, logs: {}, done: [],
       dia: { data: dataLocal(agora), agua: 0, escala: {},
@@ -537,7 +537,7 @@ test('aparelho que não está guardando avisa ACIMA do cartão', async () => {
   // NINGUÉM lia o resultado da sonda: o app abria inteiro, marcava refeição,
   // registrava série, e perdia tudo ao fechar a aba sem dizer uma palavra.
   const agora = agoraEstavel(12, 10);
-  const a = await app({ aba: 'hoje', agora: agora, semArmazenamento: true });
+  const a = await app({ aba: 'agora', agora: agora, semArmazenamento: true });
 
   assert.strictEqual(a.v('ctx.guardando'), false, 'o app sabe que não está guardando');
   const aviso = a.$('.ins-aviso-perda');
@@ -559,7 +559,7 @@ test('aparelho que guarda não mostra aviso nenhum', async () => {
   // A quebra espelhada: um aviso de perda num aparelho que guarda é alarme
   // falso, e alarme falso ensina a ignorar o verdadeiro.
   const agora = agoraEstavel(12, 10);
-  const a = await app({ aba: 'hoje', agora: agora, estado: { logs: {}, done: [] } });
+  const a = await app({ aba: 'agora', agora: agora, estado: { logs: {}, done: [] } });
   assert.strictEqual(a.v('ctx.guardando'), true);
   assert.ok(!a.$('.ins-aviso-perda'), 'nada de aviso');
   a.fechar();

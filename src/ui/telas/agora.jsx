@@ -32,7 +32,7 @@ function contagem(alvoMin, agoraMs) {
   return { txt, atrasado: dif < 0, rotulo: dif < 0 ? 'atrás' : 'faltam' };
 }
 
-export function Hoje({ ctx }) {
+export function Agora({ ctx }) {
   const agora = useAgora();
   const {
     dia, plano, catalogo, diaHoje, comidaDoDia, alta, alvo, sessao, cadenciaTxt,
@@ -53,6 +53,8 @@ export function Hoje({ ctx }) {
   // descanso fora de qualquer janela não tem cartão, e o que passou sem marca é
   // linha, nunca cartão.
   const topo = ctx.cartaoDeCima();
+  const cardio = ctx.corpo().cardio;
+  const app = ctx.dadosDoApp();
   const refDe = id => refs.filter(r => r.id === id)[0] || null;
   const linhaDoTreino = refs.filter(r => ctx.ehLinhaDeTreino(r))[0] || null;
 
@@ -190,6 +192,22 @@ export function Hoje({ ctx }) {
         </div>
       )}
 
+      {/* A COBRANÇA DE BACKUP, pela mesma razão do aviso de cima e com causa
+          diferente: lá o aparelho não está guardando; aqui está, e a cópia que
+          não depende deste navegador está velha. Vinha do GUIA, onde ficava
+          numa tela de referência que ninguém abre sem motivo — e aviso de perda
+          de dado que depende de alguém ir olhar é aviso que não se lê. Os
+          Ajustes herdaram todo o resto daquela tela, menos este. */}
+      {app.cobraBackup && (
+        <div class="ins-aviso-perda" role="status">
+          <b class="ins-label">Cópia de segurança atrasada</b>
+          <p class="ins-body-sm">
+            {app.backupTxt} Baixe o JSON nos ajustes. É a única cópia que não
+            depende deste navegador.
+          </p>
+        </div>
+      )}
+
       {f && <CartaoFoco agora={hhmm} {...f} />}
 
       <Secao rotulo="energia" nota={diaHoje.previsto ? 'previsão · confirme no topo' : null}>
@@ -249,6 +267,28 @@ export function Hoje({ ctx }) {
           })}
         </div>
         <button class="ins-btn-add" onClick={ctx.novaRefeicao}>+ adicionar refeição</button>
+      </Secao>
+
+      {/* O CARDIO nasce aqui: o Agora é o dono do dado, porque é onde se
+          registra (§1.7). É LINHA e não cartão — cada um tem um dia em que é
+          previsto, e nenhum deles é "a próxima coisa a fazer" no sentido que o
+          cartão responde (§5.5).
+          O aviso de perna no mesmo dia é do treinador e sinaliza em vez de
+          bloquear: a regra é não pôr cardio no mesmo período de treino de
+          perna, e quem decide se ainda dá é ele. */}
+      <Secao rotulo="cardio" nota={`${cardio.semana} de ${cardio.alvo} nesta semana`}>
+        <button class="ins-btn-add" onClick={ctx.abreCardio}>+ registrar cardio</button>
+        {cardio.perna && cardio.perna.length > 0 && (
+          <Procedencia>
+            você salvou o treino {cardio.perna.join(' e ')} hoje. A regra é não
+            pôr cardio no mesmo período de treino de perna — se ainda der, deixe
+            para outro dia.
+          </Procedencia>
+        )}
+        {/* A regra do treinador sobre QUANDO fazer: guia do registro, e por isso
+            fica junto dele e não no placar. Quem está decidindo se registra é
+            quem precisa dela. */}
+        <Procedencia>{cardio.regra}</Procedencia>
       </Secao>
 
       <Secao rotulo="água">

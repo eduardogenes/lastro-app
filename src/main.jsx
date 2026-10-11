@@ -31,6 +31,7 @@ import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
 import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
 import { Camera } from './ui/telas/camera.jsx';
+import { Ajustes } from './ui/telas/ajustes.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
 import { SessaoModo } from './ui/telas/sessaomodo.jsx';
@@ -329,7 +330,7 @@ function corpoDoBackup(body) {
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] }, promoPendente:[] };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, modoSessao:false, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null, aulas:false, rapido:false,
-  protocolo:null, comparar:null, ajuste:null, camera:null };
+  protocolo:null, comparar:null, ajuste:null, camera:null, ajustes:false };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -490,7 +491,7 @@ async function load() {
   // suada. Se a sessão venceu, `encerraSePreciso` já a fechou e nada disto vale.
   const diaAberto = diaDaSessaoAberta();
   view.day = diaAberto || nextDay();
-  if (diaAberto) { view.aba = 'treino'; abreModo(); }
+  if (diaAberto) { view.aba = 'agora'; abreModo(); }
   render();
   abrePromoGuardada();
   // O descanso que estava correndo. Depois do render, porque ele pinta na barra
@@ -1710,8 +1711,10 @@ function ajustaRelogio() {
   // entra DE LÁ — o motor ficava desligado e o relógio parava na hora da
   // entrada. Dentro do modo ele anda de onde quer que se tenha entrado, e
   // anda também sem sessão, porque a HORA é o que o cabeçalho mostra.
-  const ativo = view.modoSessao ||
-    !!(S.sessao && !S.sessao.pausadoEm && !S.sessao.retro && view.aba === 'treino');
+  // A aba de treino não existe mais: quem define "está na tela do treino" é o
+  // MODO. Antes eram as duas, e a razão de a aba estar ali caiu com ela.
+  const ativo = !!(view.modoSessao && S.sessao && !S.sessao.pausadoEm && !S.sessao.retro)
+    || !!(view.modoSessao && !S.sessao);
   if (ativo && !relogioT) relogioT = setInterval(tickRelogio, 1000);
   else if (!ativo && relogioT) { clearInterval(relogioT); relogioT = null; }
 }
@@ -2089,7 +2092,7 @@ function seriesFeitasHoje(d) {
 
 const CTX = {
   // ---------- rota ----------
-  abaAtual: function () { return view.aba || 'hoje'; },
+  abaAtual: function () { return view.aba || 'agora'; },
   // Uma rota só. `view.tab` existia em paralelo a `view.aba` durante a
   // migração — duas fontes de verdade para a mesma pergunta, e o app já
   // trocava de conteúdo sem trocar a aba acesa por causa disso.
@@ -2098,24 +2101,34 @@ const CTX = {
     view.aba = a;
     view.prog = null; view.hist = null; view.retro = false;
     view.sessao = null; view.add = null; view.mes = 0;
+    // Ir para um LUGAR fecha o que está em tela cheia — o modo de sessão e os
+    // ajustes inclusive. Sem isto `vaiPara` troca `view.aba` POR BAIXO de um
+    // destino que continua desenhado (`emTelaCheia()` ganha da aba em
+    // `app.jsx`), e o lugar pedido nunca aparece.
+    //
+    // Pelos verbos e não pela flag: os dois guardam a posição de leitura em
+    // `saiDoDestino`, e zerar a flag na mão deixaria a entrada órfã. As cinco
+    // linhas acima fazem isso há mais tempo e têm a mesma dívida; não é razão
+    // para repeti-la em duas novas.
+    if (view.modoSessao) CTX.fechaModoDeSessao();
+    if (view.ajustes) CTX.fechaAjustes();
 
-    // Chegar em TREINO com sessão aberta cai no dia DELA. Era aqui que o app
-    // abria "um treino qualquer": `view.day` ficava no último dia visitado, que
-    // depois de um `finalizarSessao` já é o PRÓXIMO da rotação.
-    const diaAberto = a === 'treino' && vindoDeFora ? diaDaSessaoAberta() : null;
-    const trocou = diaAberto && diaAberto !== view.day;
-    if (trocou) { view.day = diaAberto; view.open = null; view.nota = null; }
+    // A correção de "chegar em TREINO abria um treino qualquer" saiu daqui com
+    // a aba: quem entra na sessão agora é o MODO, e as três portas dele já
+    // resolvem o dia — `voltaAoTreino` cai no dia da sessão, `abreTreinoDeHoje`
+    // no dia resolvido de hoje. `vindoDeFora` fica porque o render e o scroll
+    // ainda dependem de ter havido troca de lugar.
 
     render();
     window.scrollTo(0, 0);
-    if (trocou) carregaFotosDoDia();
+    if (vindoDeFora) carregaFotosDoDia();
   },
   telaCheia: telaCheia,
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
     return !!(view.promo || view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.ajuste || view.camera ||
-              view.modoSessao);
+              view.ajustes || view.modoSessao);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -2282,6 +2295,7 @@ const CTX = {
 // Não são abas — em cada uma o assunto é uma coisa só, e a tab bar convidaria
 // a sair no meio. O voltar é o único caminho de saída.
 function telaCheia() {
+  if (view.ajustes) return <Ajustes ctx={CTX} />;
   if (view.camera) return <Camera ctx={CTX} />;
   if (view.ajuste) return <AjusteFoto ctx={CTX} />;
   if (view.protocolo) return <Protocolo ctx={CTX} />;
@@ -3347,7 +3361,7 @@ async function gravarRetro(detalhar) {
     if (S.sessao) { fechou = S.sessao.day; fechaSessao('manual'); }
     S.sessao = { day: a.tipo, inicio: quando, ultima: quando, sid: sid, retro: 1, tocado: Date.now(), pausas: [], pulados: [] };
     S.draft = null;
-    view.aba = 'treino'; view.day = a.tipo; view.open = 0;
+    view.day = a.tipo; view.open = 0; abreModo();
     await save();
     render(); window.scrollTo(0,0);
     toast(fechou
@@ -3355,7 +3369,7 @@ async function gravarRetro(detalhar) {
       : 'Preenchendo o treino de ' + fmtDate(a.t) + '. Some sozinho quando você sair.');
     return;
   }
-  view.aba = 'dados';
+  view.aba = 'dias';
   render(); window.scrollTo(0,0);
   toast(a.tipo === 'livre' ? 'Treino avulso registrado.' : 'Treino ' + a.tipo + ' registrado em ' + fmtDate(a.t) + '.');
 }
@@ -4768,7 +4782,7 @@ async function wipe() {
   // faz rede nenhuma é política que ninguém escreveu. Ver `09-superficie.md`.
   try { await CORPO.poda([]); } catch (e) {}
 
-  view.day='A'; view.aba='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
+  view.day='A'; view.aba='agora'; view.open=null; view.hist=null; view.json=null; view.paste=false;
   view.swapOpen=null;
   render();
   toast('Histórico apagado.');
@@ -5401,6 +5415,7 @@ function render() {
 // botão deixem o app no mesmo estado.
 const FECHA_CAMADA = {
   camera:    function () { CTX.fechaCamera(); },
+  ajustes:   function () { CTX.fechaAjustes(); },
   ajuste:    function () { CTX.fechaAjuste(); },
   protocolo: function () { CTX.fechaProtocolo(); },
   comparar:  function () { CTX.fechaComparar(); },
@@ -6534,7 +6549,7 @@ CTX.abreSessaoDoDia = function (a) {
  */
 function levaAsSessoesDoDia(t) {
   const d = new Date(t), agora = new Date(Date.now());
-  view.aba = 'dados';
+  view.aba = 'dias';
   view.mes = (d.getFullYear() - agora.getFullYear()) * 12 + (d.getMonth() - agora.getMonth());
   view.destacaDia = t;
   render();
@@ -7914,7 +7929,10 @@ CTX.faixaDaSessao = function () {
   // O atalho leva ao treino em andamento. Dentro do modo a pessoa JÁ está nele,
   // e o botão ocuparia a faixa com um caminho para onde ela está. A pergunta
   // acima continua, que é o item 1 da lista do que não some no modo.
-  if (view.aba === 'treino' || view.modoSessao) return null;
+  //
+  // A metade `view.aba === 'treino'` saiu com a aba: ela dizia a mesma coisa
+  // que o modo diz agora, e era de onde o modo herdou a regra por acidente.
+  if (view.modoSessao) return null;
   const i = ondeEleEstava(estadosDoDia(s.day));
   return {
     tipo: 'atalho', dia: s.day,
@@ -7947,7 +7965,8 @@ CTX.voltaAoTreino = function () {
   const s = S.sessao;
   if (!s) return;
   view.day = s.day;
-  view.aba = 'treino';
+  // Sem mexer em `view.aba`: ver a nota de `abreTreinoDeHoje`. O modo é camada
+  // por cima do lugar, e fechá-lo devolve a pessoa de onde ela entrou.
   view.swapOpen = null;
   view.open = ondeEleEstava(estadosDoDia(s.day));
   abreModo();                          // a faixa entra NO modo, não na aba atrás dele
@@ -8033,6 +8052,26 @@ function abreModo() {
 CTX.abreModoDeSessao = function () { if (abreModo()) render(); };
 
 /**
+ * Os AJUSTES: a conta, o aparelho e a cópia de segurança.
+ *
+ * Destino de tela cheia e não lugar — um botão no canto do Agora (§1.6). Entrou
+ * como camada, então o Voltar do sistema e o Esc fecham por ele como por
+ * qualquer outra.
+ */
+CTX.abreAjustes = function () {
+  if (view.ajustes) return;
+  view.ajustes = true;
+  entraNoDestino('ajustes');
+  render();
+};
+CTX.fechaAjustes = function () {
+  if (!view.ajustes) return;
+  view.ajustes = false;
+  saiDoDestino('ajustes');
+  render();
+};
+
+/**
  * A PORTA 1 do modo: o cartão de cima do Agora.
  *
  * As outras duas portas devolvem alguém a uma sessão que já existe (a faixa) ou
@@ -8042,12 +8081,16 @@ CTX.abreModoDeSessao = function () { if (abreModo()) render(); };
  *
  * O dia vem resolvido, e não de `view.day`: o cartão fala do treino de HOJE, e
  * o dedo pode ter deixado a letra em outro dia por outro caminho.
+ *
+ * E ela NÃO mexe em `view.aba`. Com a aba de treino, mexer era obrigatório — a
+ * tela do treino era uma aba. Agora o modo é camada POR CIMA do lugar, e trocar
+ * o lugar por baixo faria fechar o modo devolver a pessoa a outro lugar que não
+ * o de onde ela entrou.
  */
 CTX.abreTreinoDeHoje = function () {
   const h = diaResolvido();
   if (!h.treino) return;               // dia de descanso: não há treino a abrir
   view.day = h.treino;
-  view.aba = 'treino';
   view.swapOpen = null;
   abreModo();
   render();

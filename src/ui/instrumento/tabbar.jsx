@@ -14,12 +14,30 @@
 
 import { useEffect, useState } from 'preact/hooks';
 
+// OS CINCO LUGARES, cada um com uma pergunta e nenhuma repetida:
+//
+//   agora      · e agora?
+//   dias       · o que aconteceu em cada dia, e o que falta dizer?
+//   corpo      · como está o corpo, e o que eu registro hoje?
+//   semana     · a semana andou para onde, e dá para mexer na comida?
+//   prescrição · o que foi prescrito, e o que eu mudo?
+//
+// O que SAIU: a aba de treino. A sessão virou MODO — tela cheia com saída
+// própria —, e ela se alcança por três portas (o cartão do Agora, a faixa e o
+// pouso do app com treino em andamento). Uma aba para o mesmo lugar seria uma
+// quarta porta competindo com as três, e a razão de o modo existir é justamente
+// que a sessão não é um lugar entre lugares: é um estado em que o resto sai da
+// frente.
+//
+// E `guia` saiu como nome: metade dele era prescrição e foi para Prescrição; a
+// outra metade — conta, sincronia, backup — é AJUSTES, que não é lugar, é um
+// botão no canto do Agora.
 export const ABAS = [
-  { k: 'hoje',   t: 'hoje' },
-  { k: 'treino', t: 'treino' },
-  { k: 'comida', t: 'comida' },
-  { k: 'dados',  t: 'dados' },
-  { k: 'guia',   t: 'guia' }
+  { k: 'agora',      t: 'agora' },
+  { k: 'dias',       t: 'dias' },
+  { k: 'corpo',      t: 'corpo' },
+  { k: 'semana',     t: 'semana' },
+  { k: 'prescricao', t: 'prescrição' }
 ];
 
 /**

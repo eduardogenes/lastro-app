@@ -6,7 +6,7 @@ import { app } from './harness.js';
 
 async function noHoje(estado) {
   const a = await app(estado ? { estado: estado } : {});
-  a.aba('hoje');
+  a.aba('agora');
   await a.esperar();
   return a;
 }

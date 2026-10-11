@@ -49,7 +49,7 @@ function comPeso(medias) {
 
 test('dois passos no mesmo sentido somam, e a tela diz que são dois', async () => {
   const a = await comPeso([73.0, 73.05, 73.10]);
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer mais');
   const base = a.v('arrozAtual');
 
@@ -70,7 +70,7 @@ test('observar não oferece desfazer o corte', async () => {
   // que nascia o convite a devolver as 150 kcal.
   const a = await comPeso([73.0, 73.20, 73.55]);
   a.E('S.ajuste = -1');
-  a.aba('dados');
+  a.aba('semana');
   const v = a.vJ('ctx.dados').veredito;
   assert.strictEqual(v.t, 'Observar');
   assert.strictEqual(v.podeAplicar, false, 'nada a aplicar: observar não é decisão');
@@ -81,7 +81,7 @@ test('observar não oferece desfazer o corte', async () => {
 
 test('cada passo guarda de onde veio', async () => {
   const a = await comPeso([73.0, 73.05, 73.10]);
-  a.aba('dados');
+  a.aba('semana');
   await a.v('ctx.aplicaAjuste'); await a.esperar();
 
   const h = a.S().ajusteHist;
@@ -98,7 +98,7 @@ test('cada passo guarda de onde veio', async () => {
 
 test('manter não mexe no saldo nem no ledger', async () => {
   const a = await comPeso([73.0, 73.25, 73.5]);
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Manter como está');
   await a.v('ctx.aplicaAjuste'); await a.esperar();
   assert.strictEqual(a.S().ajuste, 0);
@@ -116,8 +116,7 @@ test('o backup leva o saldo e o ledger', async () => {
   const a = await app();
   a.E('S.ajuste = -2');
   a.E("S.ajusteHist = [{ t: 1, de: -1, para: -2, k: 'menos', p: 'texto', reg: 13 }]");
-  a.aba('guia');
-  await a.modo('o app');
+  a.aba('ajustes');
   a.v('showJSON');
   const bkp = JSON.parse(a.doc.getElementById('jout').value);
   assert.strictEqual(bkp.data.ajuste, -2);
@@ -160,7 +159,7 @@ test('a leitura das fotos destrava o corte que o peso sozinho não dá', async (
   cacheFalso(a);
   comFotos(a, [iso(14), iso(0)]);
 
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Observar',
     'sem a leitura, o peso abre revisão e não corta');
 
@@ -174,7 +173,7 @@ test('a leitura das fotos destrava o corte que o peso sozinho não dá', async (
   assert.strictEqual(a.S().gordura[0].v, 'sim');
   assert.strictEqual(a.S().gordura[0].d, iso(0), 'a chave é a sessão mais nova');
 
-  a.aba('dados');
+  a.aba('semana');
   const v = a.vJ('ctx.dados').veredito;
   assert.strictEqual(v.t, 'Comer menos');
   assert.strictEqual(v.podeAplicar, true, 'e agora há o que aplicar');
@@ -188,7 +187,7 @@ test('fotos sem piora mandam manter, e não cortam', async () => {
   a.v('ctx.abreComparar');
   await a.v('ctx.setGordura', 'nao'); await a.esperar();
 
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Manter como está',
     'ganho acima da faixa não é ruim por si: está comprando músculo');
   a.fechar();
@@ -204,7 +203,7 @@ test('responder de novo substitui, em vez de empilhar opinião', async () => {
 
   assert.strictEqual(a.S().gordura.length, 1, 'uma leitura por par');
   assert.strictEqual(a.S().gordura[0].v, 'incerto');
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Observar', 'incerto não corta');
   assert.strictEqual(a.vJ('ctx.dados').veredito.podeAplicar, false);
   a.fechar();
@@ -234,7 +233,7 @@ async function comDieta(aderencia) {
   comFotos(a, [iso(14), iso(0)]);
   a.v('ctx.abreComparar');
   await a.v('ctx.setGordura', 'sim'); await a.esperar();
-  a.aba('dados');
+  a.aba('semana');
   return a;
 }
 
@@ -255,7 +254,7 @@ test('sair do plano sabendo o que comeu não trava', async () => {
 
 test('a folha do dia oferece os três estados, e a escolha persiste', async () => {
   const a = await app();
-  a.aba('comida');
+  a.aba('prescricao');
   a.v('ctx.abreSeletorDeDia');
 
   await a.v('ctx.setAderencia', 'perdido'); await a.esperar();
@@ -292,14 +291,14 @@ async function viraParaMenos(a) {
   comFotos(a, [iso(14), iso(0)]);
   a.v('ctx.abreComparar');
   await a.v('ctx.setGordura', 'sim'); await a.esperar();
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer menos');
 }
 
 test('trocar o arroz de um prato não tira comida do outro', async () => {
   const a = await comPeso([73.0, 73.05, 73.10]);
   cacheFalso(a);
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(itemDe(a, 'almoco').q, 250, 'a prescrição do almoço');
   assert.strictEqual(itemDe(a, 'jantar').q, 250, 'e a do jantar');
 
@@ -326,7 +325,7 @@ test('perder a marca do arroz devolve a parte daquele item', async () => {
   // a marca caiu e o desfazer não o alcança mais. Como o número é do dono, o
   // app devolve exatamente o que tomou — o item volta à prescrição.
   const a = await comPeso([73.0, 73.05, 73.10]);
-  a.aba('dados');
+  a.aba('semana');
   await a.v('ctx.aplicaAjuste'); await a.esperar();
   assert.strictEqual(itemDe(a, 'almoco').q, 310);
 
@@ -342,7 +341,7 @@ test('perder a marca do arroz devolve a parte daquele item', async () => {
 test('remover o arroz de um prato não tira comida do outro', async () => {
   const a = await comPeso([73.0, 73.05, 73.10]);
   cacheFalso(a);
-  a.aba('dados');
+  a.aba('semana');
 
   await a.v('ctx.aplicaAjuste'); await a.esperar();
   assert.strictEqual(itemDe(a, 'jantar').q, 310);
@@ -366,7 +365,7 @@ test('remover a refeição inteira não tira comida da outra', async () => {
   // `removeItem`.
   const a = await comPeso([73.0, 73.05, 73.10]);
   cacheFalso(a);
-  a.aba('dados');
+  a.aba('semana');
   await a.v('ctx.aplicaAjuste'); await a.esperar();
 
   await a.v('ctx.removeRefeicao', 'almoco'); await a.esperar();
@@ -384,7 +383,7 @@ test('duplicar a refeição com arroz não tira comida de ninguém', async () =>
   // que o plano prescreve —, e o de desfazer continua exato.
   const a = await comPeso([73.0, 73.05, 73.10]);
   cacheFalso(a);
-  a.aba('dados');
+  a.aba('semana');
   await a.v('ctx.aplicaAjuste'); await a.esperar();
   assert.strictEqual(itemDe(a, 'jantar').q, 310);
 
@@ -414,7 +413,7 @@ test('duplicar a refeição com arroz não tira comida de ninguém', async () =>
 
 test('aplicar o passo carimba a versão do plano, porque ele mexe no arroz', async () => {
   const a = await comPeso([73.0, 73.05, 73.10]);
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer mais');
 
   // `versaoDoPlano` não está na superfície, e não deve estar: é leitura

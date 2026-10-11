@@ -64,7 +64,7 @@ test('restaurar o programa novo preserva o histórico do antigo', async () => {
     'carga, repetição e RIR na mesma série');
 
   // sessão antiga do F continua abrindo sem quebrar
-  a.aba('dados');
+  a.aba('semana');
   assert.ok(a.doc.getElementById('app').innerHTML.length > 600);
   a.fechar();
 });

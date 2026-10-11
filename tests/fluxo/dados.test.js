@@ -55,8 +55,7 @@ test('exportar carrega todos os campos do estado', async () => {
   const a = await app();
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  a.aba('guia');
-  await a.modo('o app');
+  a.aba('ajustes');
   a.v('showJSON');
 
   const bkp = JSON.parse(a.doc.getElementById('jout').value);
@@ -105,8 +104,7 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
   await a.v('gravarRetro', false);
   await a.esperar();
 
-  a.aba('guia');
-  await a.modo('o app');
+  a.aba('ajustes');
   a.v('showJSON');
   const bkp = a.doc.getElementById('jout').value;
   const antes = JSON.parse(bkp).data;
@@ -115,7 +113,7 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
   await a.esperar();
   assert.strictEqual(a.S().done.length, 0);
 
-  a.aba('guia');
+  a.aba('ajustes');
   await a.v('importText', bkp);
   await a.esperar(60);
 
@@ -131,7 +129,7 @@ test('importar lixo não toca no estado', async () => {
   a.preencher(0, 0, 40, 10);
   const antes = a.S().logs;
 
-  a.aba('guia');
+  a.aba('ajustes');
   await a.v('importText', '{ isso nao e json');
   assert.ok(a.toast().includes('JSON inválido'));
 
@@ -145,7 +143,7 @@ test('importar lixo não toca no estado', async () => {
 test('importar aceita o objeto cru, sem envelope', async () => {
   const a = await app();
   const cru = JSON.stringify({ logs: ANTIGO.logs, done: ANTIGO.done });
-  a.aba('guia');
+  a.aba('ajustes');
   await a.v('importText', cru);
   await a.esperar(60);
   assert.strictEqual(a.S().done.length, 1);
@@ -169,14 +167,19 @@ test('histórico longo não é truncado', async () => {
 test('abrir o JSON conta como backup', async () => {
   const a = await app({ estado: { logs: {}, done: [{ day: 'A', t: Date.now() - 60 * DIA }] } });
   assert.ok(a.v('diasSemBackup') > 30);
-  a.aba('guia');
-  assert.ok(a.$('.gu-cobra'), 'o GUIA cobra o backup quando passou de 30 dias');
-  assert.match(a.texto('.gu-cobra'), /backup|exportou/);
+  // A cobrança mudou de endereço: vinha do GUIA, uma tela de referência que
+  // ninguém abre sem motivo, e aviso de perda que depende de alguém ir olhar é
+  // aviso que não se lê. Agora é o topo do AGORA, junto do aviso de aparelho
+  // que não está guardando — a mesma natureza, causas diferentes.
+  a.aba('agora');
+  await a.esperar();
+  assert.ok(a.$('.ins-aviso-perda'), 'o AGORA cobra o backup quando passou de 30 dias');
+  assert.match(a.texto('.ins-aviso-perda'), /backup|exportou|segurança/);
 
   a.v('showJSON');
   await a.esperar();
   assert.ok(a.S().export > 0, 'quem copia o texto na mão também fez backup');
-  a.aba('guia');
+  a.aba('ajustes');
   assert.strictEqual(a.$('.gu-cobra'), null, 'e para de cobrar depois que ele exporta');
   a.fechar();
 });
@@ -291,7 +294,7 @@ test('sessão anterior à troca continua abrindo no calendário', async () => {
     done: [{ day: 'A', t: t, sid: t, dur: 50 * 60000 }]
   } });
   await a.esperar();
-  a.aba('dados');
+  a.aba('semana');
   a.v('abrirSessao', t);
   const txt = a.doc.getElementById('app').textContent;
   assert.ok(txt.includes('Supino inclinado com halteres'), txt.slice(0, 300));
@@ -382,15 +385,14 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
         resumoMods: ['Pushdown: 2 → 3 séries'] }]`);
   await a.v('save');
 
-  a.aba('guia');
-  await a.modo('o app');
+  a.aba('ajustes');
   a.v('showJSON');
   const bkp = a.doc.getElementById('jout').value;
   const antes = JSON.parse(bkp).data;
 
   await a.v('wipe');
   await a.esperar();
-  a.aba('guia');
+  a.aba('ajustes');
   await a.v('importText', bkp);
   await a.esperar(60);
 
@@ -448,8 +450,7 @@ test('o que o ajuste deu a cada prato sai e volta nas duas listas brancas', asyn
       ".itens.filter(function (i) { return i.arroz; })[0].q = 310");
   await a.v('save');
 
-  a.aba('guia');
-  await a.modo('o app');
+  a.aba('ajustes');
   a.v('showJSON');
   const bkp = a.doc.getElementById('jout').value;
   assert.ok(/"ajq":\s*60/.test(bkp), 'a exportação leva o estado inteiro');
@@ -462,7 +463,7 @@ test('o que o ajuste deu a cada prato sai e volta nas duas listas brancas', asyn
   // e o caminho de volta: o plano vai embora e a importação o traz inteiro
   a.E('S.comida.plano = null');
   await a.v('save');
-  a.aba('guia');
+  a.aba('ajustes');
   await a.v('importText', bkp);
   await a.esperar(60);
   assert.strictEqual(arroz().q, 310, 'o prato voltou');
@@ -488,8 +489,7 @@ test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
   });
   await a.v('save');
 
-  a.aba('guia');
-  await a.modo('o app');
+  a.aba('ajustes');
   a.v('showJSON');
   const bkp = a.doc.getElementById('jout').value;
   assert.deepStrictEqual(Object.keys(JSON.parse(bkp).data.body).sort(), chaves.slice().sort(),
@@ -497,7 +497,7 @@ test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
 
   await a.v('wipe');
   await a.esperar();
-  a.aba('guia');
+  a.aba('ajustes');
   await a.v('importText', bkp);
   await a.esperar(60);
 
@@ -580,7 +580,7 @@ test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async ()
   assert.deepStrictEqual(a.S().comida.alimentos, {}, 'e o estado não guarda a biblioteca');
 
   // a ceia aparece na timeline de HOJE, no relógio dela
-  a.aba('hoje');
+  a.aba('agora');
   await a.esperar();
   const ordem = a.J('CTX.hoje().refs.map(function(r){return r.t+" "+r.id})');
   assert.strictEqual(ordem[ordem.length - 1], '21:30 ceia', 'última do relógio');
@@ -591,7 +591,7 @@ test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async ()
 
   // a importação é o OUTRO caminho pelo qual a migração tem que rodar: um
   // backup do plano 10 entra aqui e também sai com a ceia
-  a.aba('guia');
+  a.aba('ajustes');
   await a.v('importText', JSON.stringify({ app: 'lastro', data: era }));
   await a.esperar(60);
   assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'), 'a cadeia roda na importação também');
@@ -824,8 +824,7 @@ const UMA_SESSAO = (function () {
 })();
 
 test('ctx.mostraJSON abre o backup na tela, conta como backup e fecha no segundo toque', async () => {
-  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
-  await a.modo('o app');
+  const a = await app({ estado: UMA_SESSAO, aba: 'ajustes' });
   assert.strictEqual(a.vJ('ctx.dadosDoApp').json, null, 'fechado por padrão');
 
   a.v('ctx.mostraJSON');
@@ -842,7 +841,7 @@ test('ctx.mostraJSON abre o backup na tela, conta como backup e fecha no segundo
 });
 
 test('ctx.copiaJSON leva o backup inteiro para a área de transferência', async () => {
-  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  const a = await app({ estado: UMA_SESSAO, aba: 'ajustes' });
   plataformaDeBackup(a);
 
   await a.v('ctx.copiaJSON');
@@ -862,7 +861,7 @@ test('ctx.exportar gera o arquivo, e sem download cai no texto sem fingir que sa
   // Os dois caminhos importam. O do arquivo é o dele no iPhone; o do texto é a
   // rede de segurança — e ela NÃO pode carimbar o backup, porque nada foi
   // baixado. Carimbar ali faria o app parar de cobrar um backup que não existe.
-  const semDownload = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  const semDownload = await app({ estado: UMA_SESSAO, aba: 'ajustes' });
   semDownload.v('ctx.exportar');
   await semDownload.esperar(40);
   assert.match(semDownload.toast(), /não funciona aqui/, 'avisa que o download falhou');
@@ -872,7 +871,7 @@ test('ctx.exportar gera o arquivo, e sem download cai no texto sem fingir que sa
     'sem arquivo gerado, não há backup para carimbar');
   semDownload.fechar();
 
-  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  const a = await app({ estado: UMA_SESSAO, aba: 'ajustes' });
   plataformaDeBackup(a);
   a.v('ctx.exportar');
   await a.esperar(40);
@@ -885,7 +884,7 @@ test('ctx.exportar gera o arquivo, e sem download cai no texto sem fingir que sa
 test('ctx.importaTexto diz o que vai substituir, e recusar não troca nada', async () => {
   // O confirm da importação é a última porta antes de o histórico ser trocado.
   // Nenhum caso o lia: os outros aqui entram com o harness aceitando por padrão.
-  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  const a = await app({ estado: UMA_SESSAO, aba: 'ajustes' });
   const bkp = JSON.stringify({ app: 'lastro', v: 1, data: {
     logs: { A0: [{ t: Date.now(), sid: Date.now(), sets: [[100, 5]] }] },
     done: [{ day: 'B', t: Date.now(), sid: Date.now() }, { day: 'C', t: Date.now(), sid: 1 }]
@@ -917,8 +916,7 @@ test('ctx.importaArquivo lê o arquivo, importa e esvazia o campo', async () => 
   //
   // Esvaziar `input.value` não é detalhe: sem isso, escolher o MESMO arquivo de
   // novo não dispara `change`, e a segunda importação não acontece.
-  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
-  await a.modo('o app');
+  const a = await app({ estado: UMA_SESSAO, aba: 'ajustes' });
   a.v('ctx.mostraJSON');
   const bkp = a.doc.getElementById('jout').value;
 
@@ -943,7 +941,7 @@ test('ctx.importaArquivo lê o arquivo, importa e esvazia o campo', async () => 
 });
 
 test('ctx.alternaColar abre e fecha a área de colar, e ctx.dadosDoApp conta o acervo', async () => {
-  const a = await app({ estado: UMA_SESSAO, aba: 'guia' });
+  const a = await app({ estado: UMA_SESSAO, aba: 'ajustes' });
 
   assert.strictEqual(a.vJ('ctx.dadosDoApp').colando, false, 'fechada por padrão');
   a.v('ctx.alternaColar');

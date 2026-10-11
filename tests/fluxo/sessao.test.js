@@ -223,19 +223,6 @@ function emTreino(dia, agora) {
   };
 }
 
-test('abrir o app com treino em andamento cai no treino, não em HOJE', async () => {
-  // sair e voltar no meio de uma série é a reabertura mais comum que existe
-  // neste app, e devolvê-lo a HOJE cobrava dois toques com a mão suada
-  const agora = agoraEstavel();
-  const a = abrirApp({ agora: agora, estado: emTreino('B', agora) });
-  await a.pronto();                    // sem a.aba(): é o boot que tem que decidir
-
-  assert.strictEqual(a.v('ctx.abaAtual'), 'treino');
-  assert.strictEqual(a.vista().day, 'B', 'e no dia da sessão');
-  assert.strictEqual((a.S().sessao || {}).day, 'B', 'a sessão sobreviveu ao boot');
-  a.fechar();
-});
-
 test('abrir o app com treino em andamento cai NO MODO, não na aba', async () => {
   // Porta 3 do modo (frente 1, §4.4). O pouso já achava a aba certa; agora o
   // que ele acha é o modo, porque reabrir o app no meio de uma série é a
@@ -246,6 +233,11 @@ test('abrir o app com treino em andamento cai NO MODO, não na aba', async () =>
   await a.pronto();
 
   assert.strictEqual(a.vista().modoSessao, true, 'o boot entrou no modo');
+  // Herdado do caso que este substituiu ("cai no treino, não em HOJE"): ele
+  // afirmava a ABA do treino, que deixou de existir. O dia da sessão e a
+  // sobrevivência dela ao boot eram asserções dele, e continuam aqui.
+  assert.strictEqual(a.vista().day, 'B', 'no dia da sessão');
+  assert.strictEqual((a.S().sessao || {}).day, 'B', 'e a sessão sobreviveu ao boot');
   assert.ok(a.$('[data-a="sai-do-modo"]'),
     'e desenhou a saída: sem ela o modo é uma tela sem porta');
   assert.ok(!a.$('.ins-tabbar'), 'e sem barra de abas');
@@ -263,10 +255,11 @@ test('sem sessão, o pouso não inventa modo nenhum', async () => {
   a.fechar();
 });
 
-test('sem sessão, o app continua abrindo em HOJE', async () => {
+test('sem sessão, o app continua abrindo no AGORA', async () => {
   const a = abrirApp({ agora: agoraEstavel(), estado: { logs: {}, done: [] } });
   await a.pronto();
-  assert.strictEqual(a.v('ctx.abaAtual'), 'hoje');
+  assert.strictEqual(a.v('ctx.abaAtual'), 'agora');
+  assert.strictEqual(a.vista().modoSessao, false, 'e sem o modo por cima');
   a.fechar();
 });
 
@@ -277,20 +270,28 @@ test('sessão vencida não sequestra a abertura', async () => {
   const a = abrirApp({ agora: agora, estado: emTreino('B', agora - 2 * DIA) });
   await a.pronto();
   assert.strictEqual(a.S().sessao, null, 'foi encerrada no boot');
-  assert.strictEqual(a.v('ctx.abaAtual'), 'hoje');
+  assert.strictEqual(a.v('ctx.abaAtual'), 'agora');
+  assert.strictEqual(a.vista().modoSessao, false, 'e o modo não abriu por ela');
   a.fechar();
 });
 
-test('chegar na aba TREINO cai no dia da sessão, venha de onde vier', async () => {
+test('voltar à sessão cai no dia DELA, venha de onde vier', async () => {
+  // Reescrito: a correção morava em `vaiPara`, que consertava "chegar na aba
+  // TREINO abria um treino qualquer". A aba saiu, e a correção passou para as
+  // PORTAS do modo — `voltaAoTreino` cai no dia da sessão, e é por ela que a
+  // faixa leva de qualquer lugar.
   const agora = agoraEstavel();
   const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
 
   a.v('go', 'C');
-  assert.strictEqual(a.vista().day, 'C', 'dentro da aba, o dia é livre');
+  assert.strictEqual(a.vista().day, 'C', 'dentro do modo, o dia é livre');
 
-  a.aba('comida');
-  a.aba('treino');
+  a.v('ctx.vaiPara', 'prescricao');
+  await a.esperar();
+  a.v('ctx.voltaAoTreino');
+  await a.esperar();
   assert.strictEqual(a.vista().day, 'B', 'voltando de fora, cai na sessão de novo');
+  assert.strictEqual(a.vista().modoSessao, true, 'e no modo');
   a.fechar();
 });
 
@@ -307,7 +308,7 @@ test('mas não congela: dentro da aba o dia continua livre', async () => {
 test('sem sessão, trocar de aba não mexe no dia escolhido', async () => {
   const a = await app({ agora: agoraEstavel(), estado: { logs: {}, done: [] }, aba: 'treino' });
   a.v('go', 'C');
-  a.aba('comida');
+  a.aba('prescricao');
   a.aba('treino');
   assert.strictEqual(a.vista().day, 'C', 'nada a priorizar, nada muda');
   a.fechar();
@@ -425,7 +426,7 @@ function comTreinoRegistrado(agora) {
 test('o detalhe de um treino do plano oferece corrigir e apagar', async () => {
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
   a.v('abrirSessao', f.t);
 
   const d = a.vJ('ctx.detalheDaSessao');
@@ -441,7 +442,7 @@ test('corrigir o tempo torna a duração declarada, e o aproximado some', async 
   // esquecer de finalizar deixa o tempo correndo até a última série
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
   a.v('abrirSessao', f.t);
   assert.strictEqual(a.vJ('ctx.detalheDaSessao').exato, false, 'nasce aproximado');
 
@@ -459,7 +460,7 @@ test('corrigir o tempo torna a duração declarada, e o aproximado some', async 
 test('a correção é presa a limites, e não aceita lixo', async () => {
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
 
   await a.v('ctx.corrigeDuracao', f.t, 0);
   await a.esperar(40);
@@ -476,7 +477,7 @@ test('apagar o treino leva as séries dele junto, com lápide nas duas coisas', 
   // contando volume, ainda puxando progressão, sem dia a que pertencer
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
   assert.strictEqual(a.S().done.length, 1);
   const comHistorico = () => a.J('Object.keys(S.logs)').length;
   assert.strictEqual(comHistorico(), 2, 'dois exercícios com histórico');
@@ -497,7 +498,7 @@ test('apagar o treino leva as séries dele junto, com lápide nas duas coisas', 
 test('o aviso diz quantas séries vão junto antes de apagar', async () => {
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
   a.v('abrirSessao', f.t);
 
   a.recusar();
@@ -516,7 +517,7 @@ test('o treino EM ANDAMENTO não se apaga por aqui', async () => {
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
   f.sessao = { day: 'A', inicio: f.t, ultima: agora, sid: f.t, manual: 1, pausas: [], pulados: [] };
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
 
   await a.v('ctx.editaSessao', f.t);
   await a.esperar(60);

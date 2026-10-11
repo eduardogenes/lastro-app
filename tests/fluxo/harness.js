@@ -293,15 +293,47 @@ function abrirApp(opcoes) {
     /** espera o boot assíncrono do app (load() é async) */
     pronto: function () { return app.esperar(60); },
     /**
-     * Abre uma aba da shell. Depois da fusão o app cai em HOJE, que é a tela
-     * certa para quem acorda e olha o telefone — mas quase todo teste desta
-     * pasta é sobre o TREINO, e por isso o harness abre lá por padrão. Quem
-     * testa a fusão passa `aba` explicitamente.
+     * Abre um dos cinco lugares da shell — ou o MODO DE SESSÃO, que não é
+     * lugar.
+     *
+     * `'treino'` continua aceito e virou o nome do modo. A aba de treino deixou
+     * de existir na reestruturação dos cinco lugares: a sessão é um estado em
+     * que o resto sai da frente, não um lugar entre lugares. Mas "levar o teste
+     * à tela do treino" continua sendo exatamente o que vinte e um casos desta
+     * pasta querem dizer, e o modo DESENHA o mesmo `Treino` — então a palavra
+     * fica e o destino muda, em um lugar só.
+     *
+     * `abreModoDeSessao` e NÃO `abreTreinoDeHoje`, e a diferença me custou 80
+     * vermelhos: a porta 1 recusa em dia de descanso — corretamente, não há
+     * treino a abrir —, e o padrão semanal decide isso pelo DIA DA SEMANA em
+     * que a suíte roda. Entrar no modo é navegação e não depende de haver
+     * treino nenhum, que é a regra escrita da frente 1. A letra do dia continua
+     * sendo `view.day`, que nasce em 'A' e cada caso move com `go` se precisar.
      */
-    aba: function (nome) { w.__escopo('CTX.vaiPara(' + JSON.stringify(nome) + ')'); },
+    aba: function (nome) {
+      // `vaiPara` do lugar atual ANTES de abrir: ele é quem fecha o que estiver
+      // em tela cheia, e sem isso entrar no modo a partir de outro destino
+      // (os Ajustes, por exemplo) empilha o modo POR BAIXO dele — `telaCheia()`
+      // tem ordem de precedência, e quem estava já ganha.
+      if (nome === 'treino') {
+        w.__escopo('CTX.vaiPara(CTX.abaAtual()); CTX.abreModoDeSessao()');
+        return;
+      }
+      // `'ajustes'` também não é lugar: é o botão do canto do Agora, e abre um
+      // destino de tela cheia. Fica aqui pela mesma razão do modo — "leva o
+      // teste à tela de X" continua sendo o que o caso quer dizer.
+      if (nome === 'ajustes') { w.__escopo('CTX.abreAjustes()'); return; }
+      w.__escopo('CTX.vaiPara(' + JSON.stringify(nome) + ')');
+    },
 
     /**
-     * Escolhe o modo interno do DADOS ('corpo' | 'treino') ou da COMIDA.
+     * Escolhe o chip interno de um lugar — SEMANA ('treino' | 'comida') ou
+     * PRESCRIÇÃO ('programa' | 'comida' | 'alimentos' | 'semana').
+     *
+     * Os chips existem porque a altura obriga: sem eles a tela da Semana somava
+     * quase cinco telas de rolagem, não por estar mal organizada, mas por fazer
+     * oito coisas legítimas de uma vez. Corpo, Dias e Ajustes não têm chip —
+     * cada um é um assunto só.
      *
      * O modo é estado do componente, não de `view`, então não dá para alcançá-lo
      * pelo `__escopo` — e é bom que não dê: o caminho é o mesmo do usuário,
@@ -325,6 +357,20 @@ function abrirApp(opcoes) {
       alvo.dispatchEvent(new w.Event('click', { bubbles: true }));
       return app.esperar();
     },
+    /**
+     * Força um render.
+     *
+     * Existe por causa do `E()`: ele escreve no estado pela porta velha, sem
+     * passar por verbo nenhum, e portanto sem pintar. Antes isso passava
+     * despercebido porque o caso logo chamava `aba('treino')`, que trocava de
+     * aba e pintava de tabela. Com a aba de treino virando MODO, entrar nele
+     * quando já se está dentro é — corretamente — um no-op, e a tela ficava
+     * velha: o modelo dizia "pergunta" e a tela mostrava o atalho de antes.
+     *
+     * O app pinta sozinho na batida de 30 s; o teste não espera 30 s.
+     */
+    pintar: function () { w.__modelo.chama('render'); return app.esperar(); },
+
     esperar: function (ms) { return new Promise(function (r) { setTimeout(r, ms == null ? 20 : ms); }); },
 
     /** preenche uma série; null em qualquer campo deixa o campo intocado */
@@ -395,6 +441,9 @@ function abrirApp(opcoes) {
 async function app(opcoes) {
   const a = abrirApp(opcoes);
   await a.pronto();
+  // O padrão continua sendo a tela do TREINO — quase todo caso desta pasta é
+  // sobre ela —, e agora chega lá pelo modo. Quem testa a casca das abas passa
+  // `aba` explicitamente.
   a.aba((opcoes && opcoes.aba) || 'treino');
   return a;
 }

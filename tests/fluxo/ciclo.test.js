@@ -254,8 +254,10 @@ test('acompanhamento mostra média de duração e marca o aproximado', async () 
     logs.A0.push({ t: t, sid: t, sets: [[40, 10]] });
   });
   const a = await app({ agora: agora, estado: { logs: logs, done: done } });
-  a.aba('dados');
-  await a.modo('treino');
+  // A média de duração e a marca de aproximado estão na lista do mês, que é de
+  // DIAS: "o que aconteceu em cada dia" — e Dias não tem chip.
+  a.aba('dias');
+  await a.esperar();
 
   const rotulo = a.$$('.ins-grade-c').map(function (x) { return x.textContent; }).join(' ');
   assert.ok(/méd/.test(rotulo), rotulo);
@@ -294,7 +296,7 @@ test('o relógio para de ticar fora da aba de hoje', async () => {
   const a = await app();
   await a.v('iniciarSessao');
   assert.ok(a.E('relogioT !== null'));
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(a.dado('relogioT'), null, 'sem intervalo rodando à toa');
   a.aba('treino');
   assert.ok(a.E('relogioT !== null'));

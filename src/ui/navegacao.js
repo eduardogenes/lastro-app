@@ -66,6 +66,8 @@ export function camadasAbertas(view) {
   if (view.protocolo) c.push('protocolo');
   if (view.ajuste) c.push('ajuste');
   if (view.camera) c.push('camera');
+  // Ajustes é destino e não lugar: um botão no canto do Agora.
+  if (view.ajustes) c.push('ajustes');
   // As folhas ficam por cima de qualquer destino: elas cobrem o que houver.
   (view.pilha || []).forEach(function (f, i) { c.push('folha:' + i); });
   return c;

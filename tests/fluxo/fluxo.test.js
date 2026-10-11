@@ -32,7 +32,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   assert.strictEqual(a.vista().day, 'B', 'a rotação avançou');
 
   // cardio depois do A, como o treinador pediu
-  a.aba('dados');
+  a.aba('semana');
   a.v('cardioSet', 'min', 30);
   await a.v('addCardio');
   await a.esperar();
@@ -98,7 +98,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
     'e entrou no programa porque ele quis');
 
   // ---- quinta: esqueceu de registrar, lança retroativo ----
-  a.aba('dados');
+  a.aba('semana');
   a.v('abrirAdicionar', (Date.now() - 1 * DIA));
   a.v('addSet', 'tipo', 'E');
   a.v('addSet', 'dur', 55);
@@ -174,7 +174,7 @@ test('exercício removido do programa continua abrindo no histórico antigo', as
   await a.esperar();
   a.v('fecharPrograma');
 
-  a.aba('dados');
+  a.aba('semana');
   a.v('abrirSessao', t);
   const txt = a.doc.getElementById('app').textContent;
   assert.ok(txt.includes('Chest press inclinado convergente'), 'a sessão de cinco dias atrás abre igual');
@@ -220,7 +220,7 @@ test('importar um backup do formato antigo reconstrói tudo', async () => {
   });
 
   const a = await app();
-  a.aba('guia');
+  a.aba('ajustes');
   await a.v('importText', antigo);
   await a.esperar(60);
 

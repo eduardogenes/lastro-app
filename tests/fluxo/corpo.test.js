@@ -47,7 +47,7 @@ function medidas(pares) {   // [{diasAtras, valor}]
 
 async function veredito(peso, cintura) {
   const a = await app({ estado: { logs: {}, done: [], body: { peso: peso || [], cintura: cintura || [] } } });
-  a.aba('dados');
+  a.aba('semana');
   const r = { titulo: a.texto('.verdict-t'), texto: a.texto('.verdict p'), classe: a.$('.verdict').className };
   a.fechar();
   return r;
@@ -59,7 +59,7 @@ async function veredito(peso, cintura) {
 test('o veredito da regra é o que aparece na aba corpo', async () => {
   const a = await app({ estado: { logs: [], done: [], comidaHist: comidaRegistrada(14),
     body: { peso: pesagens([73.0, 73.05, 73.10]), cintura: [] } } });
-  a.aba('dados');
+  a.aba('semana');
   // o veredito é o cartão do Instrumento; o legado saiu de DADOS para não
   // aparecer duas vezes na mesma tela
   assert.strictEqual(a.texto('.ins-veredito-t'), 'Comer mais');
@@ -76,7 +76,7 @@ test('cintura alta não sobrepõe mais o peso na faixa', async () => {
     peso: pesagens([73.0, 73.25, 73.5]),
     cintura: medidas([{ d: 28, v: 80.0 }, { d: 21, v: 80.6 }, { d: 7, v: 81.4 }, { d: 0, v: 82.0 }])
   } } });
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(a.texto('.ins-veredito-t'), 'Manter como está');
   a.fechar();
 });
@@ -86,7 +86,7 @@ test('sem registro de comida, a tela manda registrar em vez de cortar', async ()
   // saída dela, tirar comida do plano puniria os dias em que ele seguiu.
   const a = await app({ estado: { logs: [], done: [], comidaHist: [],
     body: { peso: pesagens([73.0, 73.6, 74.2]), cintura: [] } } });
-  a.aba('dados');
+  a.aba('semana');
   assert.strictEqual(a.texto('.ins-veredito-t'), 'Registrar antes de mexer');
   assert.ok(a.texto('.ins-veredito-p').includes('saídas'), a.texto('.ins-veredito-p'));
   a.fechar();
@@ -94,7 +94,7 @@ test('sem registro de comida, a tela manda registrar em vez de cortar', async ()
 
 test('registro aceita vírgula e substitui a medida do mesmo dia', async () => {
   const a = await app();
-  a.aba('dados');
+  a.aba('corpo');
   a.E('view.bodyForm = { peso: "73,4" }');
   await a.v('addBody', 'peso');
   await a.esperar();
@@ -110,7 +110,7 @@ test('registro aceita vírgula e substitui a medida do mesmo dia', async () => {
 
 test('entrada inválida não grava', async () => {
   const a = await app();
-  a.aba('dados');
+  a.aba('semana');
   a.E('view.bodyForm = { peso: "abc" }');
   await a.v('addBody', 'peso');
   await a.esperar();
@@ -125,7 +125,7 @@ test('cardio conta a semana e reseta na segunda', async () => {
     { t: seg - 3 * DIA, m: 'bike', min: 20, i: 'leve' },      // semana passada
     { t: seg + 3600000, m: 'bike', min: 20, i: 'leve' }       // esta semana
   ] } });
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
   assert.strictEqual(a.vJ('cardioSemana').length, 1, 'a da semana passada não conta');
   assert.strictEqual(a.vJ('ctx.corpo').cardio.semana, 1, 'e a tela conta o mesmo');
@@ -135,9 +135,12 @@ test('cardio conta a semana e reseta na segunda', async () => {
 });
 
 test('cardio avisa quando houve treino de perna no mesmo dia', async () => {
+  // O cardio mudou de endereço: o dono dele é o AGORA, porque é onde se
+  // REGISTRA (§1.7 da frente 1). A Semana ficou com o placar e Dias com a lista
+  // do que foi feito — e o aviso de perna é do registro, não da leitura.
   const a = await app({ estado: { logs: {}, done: [{ day: 'B', t: Date.now(), sid: Date.now() }] } });
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('agora');
+  await a.esperar();
   const aviso = a.$$('.ins-provenance').map(function (x) { return x.textContent; }).join(' | ');
   assert.ok(/treino B/.test(aviso), 'deve sinalizar sem bloquear: ' + aviso);
   assert.strictEqual(a.$('.ins-btn-add[disabled]'), null, 'sinaliza, não bloqueia');
@@ -146,7 +149,7 @@ test('cardio avisa quando houve treino de perna no mesmo dia', async () => {
 
 test('nada na interface de cardio fala em caloria', async () => {
   const a = await app();
-  a.aba('dados');
+  a.aba('corpo');
   const txt = a.doc.getElementById('app').textContent.toLowerCase();
   assert.ok(!/calor|gasto energ|queima|hiit/.test(txt), 'ele está em superávit; cardio não é queima');
   a.fechar();
@@ -160,7 +163,7 @@ test('pesagem errada pode ser apagada', async () => {
   const a = await app();
   await a.E('S.body.peso.push({ t: Date.now(), v: 743 }); save()');
   await a.esperar();
-  a.aba('dados');
+  a.aba('corpo');
 
   const linha = a.$$('.crow').find(function (x) { return /743/.test(x.textContent); });
   assert.ok(linha, 'a medida aparece na lista de correção');
@@ -175,8 +178,7 @@ test('sessão de cardio registrada por engano pode ser apagada', async () => {
   const a = await app();
   await a.E('S.cardio.push({ t: Date.now(), m: "bike", min: 25, i: "moderado" }); save()');
   await a.esperar();
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
 
   const linha = a.$$('.crow').find(function (x) { return /bike/.test(x.textContent); });
   assert.ok(linha, 'a sessão da semana aparece com a porta de saída');
@@ -212,7 +214,7 @@ test('célula de métrica sem medida mostra traço, não a primeira palavra da f
   // painel exibia a palavra `faltam` no lugar do número, em mono, como se
   // fosse um valor medido.
   const a = await app({ estado: { body: { peso: [], cintura: [] } } });
-  a.aba('dados');
+  a.aba('corpo');
 
   const celulas = a.$$('.ins-metrica-v, .ins-celula b, .stats b')
     .map(function (x) { return x.textContent.trim(); });
@@ -231,7 +233,7 @@ test('célula de métrica sem medida mostra traço, não a primeira palavra da f
 
 test('registrar peso grava o número que o stepper mostra', async () => {
   const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
-  a.aba('dados');
+  a.aba('corpo');
 
   // sem nenhuma medida, o stepper parte do padrão e o botão grava ELE
   assert.strictEqual(a.vJ('ctx.corpo').peso.valor, 75);
@@ -244,7 +246,7 @@ test('registrar peso grava o número que o stepper mostra', async () => {
 
 test('mexer no stepper antes de registrar não quebra a tela', async () => {
   const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
-  a.aba('dados');
+  a.aba('corpo');
 
   // o stepper entrega NÚMERO, não string: é o que fazia o .replace estourar
   a.v('ctx.setPeso', 73.4);
@@ -261,7 +263,7 @@ test('mexer no stepper antes de registrar não quebra a tela', async () => {
 test('o botão de registrar na tela chega até o histórico', async () => {
   // pelo caminho real: o clique no botão, não a função por dentro
   const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
-  a.aba('dados');
+  a.aba('corpo');
   const botoes = a.$$('.dd-registro .ins-btn-secondary');
   assert.ok(botoes.length >= 2, 'peso e cintura têm botão de registrar');
 
@@ -279,7 +281,7 @@ test('o botão de registrar na tela chega até o histórico', async () => {
 test('cintura usa o stepper dela, não o do peso', async () => {
   const a = await app({ estado: { logs: {}, done: [],
     body: { peso: [{ t: Date.now(), v: 73 }], cintura: [] } } });
-  a.aba('dados');
+  a.aba('corpo');
   a.v('ctx.setCintura', 84.5);
   await a.v('addBody', 'cintura');
   await a.esperar();
@@ -302,7 +304,7 @@ const vazio = { logs: {}, done: [], body: { peso: [], cintura: [] } };
 
 test('o padrão continua sendo hoje, num toque', async () => {
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
   const d = a.vJ('ctx.corpo').peso.dia;
   assert.strictEqual(d.hoje, true, 'abre em hoje, sem pedir data');
   assert.strictEqual(d.aberto, false, 'e o seletor fica fechado');
@@ -313,7 +315,7 @@ test('o padrão continua sendo hoje, num toque', async () => {
 
 test('dá para registrar numa data bem anterior, não só nos últimos dias', async () => {
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
 
   const antigo = Date.now() - 23 * DIA;
   a.E('CTX.setDiaCorpo("peso", "' + iso(antigo) + '")');
@@ -331,7 +333,7 @@ test('dá para registrar numa data bem anterior, não só nos últimos dias', as
 
 test('escolher ontem grava no dia certo, não em hoje', async () => {
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
 
   const ontem = Date.now() - DIA;
   a.E('CTX.setDiaCorpo("peso", "' + iso(ontem) + '")');
@@ -349,7 +351,7 @@ test('escolher ontem grava no dia certo, não em hoje', async () => {
 
 test('data no futuro é recusada', async () => {
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
   a.E('CTX.setDiaCorpo("peso", "' + iso(Date.now() + 3 * DIA) + '")');
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, true, 'continua em hoje');
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.max, iso(Date.now()),
@@ -360,7 +362,7 @@ test('data no futuro é recusada', async () => {
 test('depois de gravar, a data volta para hoje sozinha', async () => {
   // deixar uma data passada armada faria a próxima pesagem cair no dia errado
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
   a.E('CTX.setDiaCorpo("peso", "' + iso(Date.now() - DIA) + '")');
   await a.v('addBody', 'peso');
   await a.esperar();
@@ -373,7 +375,7 @@ test('o seletor diz o que o dia escolhido já tem', async () => {
   const ontem = Date.now() - DIA;
   const a = await app({ estado: { logs: {}, done: [],
     body: { peso: [{ t: ontem, v: 73.4 }], cintura: [] } } });
-  a.aba('dados');
+  a.aba('corpo');
   assert.match(a.vJ('ctx.corpo').peso.dia.jaTem, /nenhuma medida/, 'hoje ainda está vazio');
 
   a.E('CTX.setDiaCorpo("peso", "' + iso(ontem) + '")');
@@ -387,7 +389,7 @@ test('escolher um dia já medido parte do valor daquele dia', async () => {
   const ontem = Date.now() - DIA;
   const a = await app({ estado: { logs: {}, done: [],
     body: { peso: [{ t: ontem, v: 73.4 }, { t: Date.now(), v: 75 }], cintura: [] } } });
-  a.aba('dados');
+  a.aba('corpo');
   assert.strictEqual(a.vJ('ctx.corpo').peso.valor, 75, 'em hoje, mostra o de hoje');
 
   a.E('CTX.setDiaCorpo("peso", "' + iso(ontem) + '")');
@@ -403,7 +405,7 @@ test('escolher um dia já medido parte do valor daquele dia', async () => {
 
 test('a data é por medida: peso e cintura não se misturam', async () => {
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
   a.E('CTX.setDiaCorpo("peso", "' + iso(Date.now() - DIA) + '")');
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, false);
   assert.strictEqual(a.vJ('ctx.corpo').cintura.dia.hoje, true, 'a cintura continua em hoje');
@@ -412,7 +414,7 @@ test('a data é por medida: peso e cintura não se misturam', async () => {
 
 test('o seletor de data abre pelo link e aceita o campo nativo', async () => {
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
   assert.strictEqual(a.$$('.dd-dia').length, 0, 'fechado por padrão: não custa espaço');
   assert.ok(a.$('.dd-diabtn'), 'mas existe o caminho');
 
@@ -521,7 +523,7 @@ test('ctx.apagaCardio sai da contagem da semana e não mexe no treino do dia', a
 
 test('ctx.registraPeso e ctx.registraCintura gravam cada um na própria série', async () => {
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
 
   a.v('ctx.setPeso', 78.6);
   a.v('ctx.setCintura', 86.4);
@@ -542,7 +544,7 @@ test('ctx.registraPeso e ctx.registraCintura gravam cada um na própria série',
 
 test('ctx.registraPeso recusa o que não é número, e não grava meia medida', async () => {
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
 
   a.v('ctx.setPeso', 'abc');
   await a.v('ctx.registraPeso');
@@ -564,7 +566,7 @@ test('ctx.registraPeso recusa o que não é número, e não grava meia medida', 
 
 test('ctx.abreDiaCorpo abre o seletor de data de UMA grandeza e fecha no segundo toque', async () => {
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.aberto, false, 'fechado por padrão');
 
   a.v('ctx.abreDiaCorpo', 'peso');
@@ -586,7 +588,7 @@ test('ctx.setPerfManual deixa ele contradizer o sinal de força que o app calcul
   // com carga subindo é recomposição. Esta chave é a palavra final dele sobre
   // isso, e a tela precisa dizer de onde o sinal veio.
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('semana');
 
   const auto = a.vJ('ctx.dados').forca;
   assert.strictEqual(auto.opcoes[0].on, true, 'o padrão é o app decidir');
@@ -659,7 +661,7 @@ test('ctx.abreCardio abre e fecha o registro rápido, no cromo do treino', async
 
 test('as cinco da bioimpedância seguem sem valor de partida, e a porta delas é ctx.registraBio', async () => {
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
 
   const bio = a.dado('MARCAS_DO_CORPO').filter(function (k) { return /^bio/.test(k); });
   assert.deepStrictEqual(bio, ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua'],
@@ -828,7 +830,7 @@ test('o peso da bioimpedância é registro SEPARADO da pesagem da manhã', async
   // hora. As duas séries convivem de propósito, e o veredito da dieta — que lê
   // média semanal e ritmo — continua lendo só a da manhã.
   const a = await app({ estado: vazio });
-  a.aba('dados');
+  a.aba('corpo');
   a.v('ctx.setPeso', 80.5);
   await a.v('ctx.registraPeso');
   await a.esperar();
@@ -919,7 +921,7 @@ test('a leitura que registraBio grava atravessa a cópia de segurança e volta p
   await a.esperar();
   assert.strictEqual(a.S().body.bioPeso.length, 0, 'apagou tudo — pré-condição');
 
-  a.aba('guia');
+  a.aba('ajustes');
   await a.v('importText', bkp);
   await a.esperar(60);
 
