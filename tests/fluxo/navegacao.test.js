@@ -85,12 +85,25 @@ test('folhas empilhadas fecham uma por Voltar', async () => {
   a.fechar();
 });
 
+/**
+ * Um Escape como o navegador entrega: no `document` e BORBULHANDO.
+ *
+ * `bubbles: true` não é detalhe de teste. Tecla real nasce no elemento com foco
+ * e sobe até a janela; evento sem borbulha só alcança quem escuta exatamente no
+ * alvo, e por isso ele passava com o arranjo antigo — um ouvinte POR FOLHA,
+ * montado no próprio `document`. Despachar sem borbulhar era fixar esse
+ * arranjo no teste.
+ */
+function escape(a) {
+  a.doc.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  return a.esperar();
+}
+
 test('o Escape fecha uma folha por vez, mesmo com três abertas', async () => {
-  // Cada folha monta o seu ouvinte no `document`, e todos recebem a mesma
-  // tecla: com a pilha cheia, um Escape fechava duas de uma vez — Voltar
-  // desfazendo duas camadas, que é justamente o que o contrato proíbe.
-  // Refeição e o editor dela dividem o nível 50, então o desempate é a ordem
-  // de desenho, e não só o z-index.
+  // O contrato manda que o Esc desfaça UMA camada, pelo mesmo caminho do
+  // Voltar. Com a pilha cheia, um Escape já fechou duas de uma vez.
+  // Refeição e o editor dela dividem o nível 50, então um desempate por
+  // z-index dependia da ordem de desenho — e hoje quem decide é a pilha.
   const a = await app();
   await a.pronto();
   a.v('ctx.abreFolha', { k: 'editaRefeicao', id: null });
@@ -99,13 +112,9 @@ test('o Escape fecha uma folha por vez, mesmo com três abertas', async () => {
   await a.esperar();
   a.v('ctx.abreFolha', { k: 'editaAlimento', id: null });
   await a.esperar();
-  await a.esperar();        // o ouvinte da folha nova entra no efeito, um tick depois
   assert.strictEqual((a.vista().pilha || []).length, 3);
 
-  const esc = () => {
-    a.doc.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape' }));
-    return a.esperar();
-  };
+  const esc = () => escape(a);
 
   await esc();
   assert.strictEqual((a.vista().pilha || []).length, 2, 'fechou só a de cima');
@@ -113,6 +122,47 @@ test('o Escape fecha uma folha por vez, mesmo com três abertas', async () => {
   assert.strictEqual((a.vista().pilha || []).length, 1);
   await esc();
   assert.strictEqual((a.vista().pilha || []).length, 0);
+  assert.ok(a.$('.ins-tabbar'), 'o app continua de pé');
+  a.fechar();
+});
+
+test('o Escape sai de um destino de tela cheia, como o Voltar', async () => {
+  // A metade do contrato que o Esc NÃO cumpria. O texto é uma lista só —
+  // "vale para o `‹ voltar`, para o `×` da folha, para o toque no véu, para o
+  // Esc e para o Voltar do sistema, todos pelo mesmo caminho" — e o Voltar, com
+  // destino aberto, "volta à aba". O Esc não voltava: o único ouvinte dele
+  // morava dentro da folha, então em tela cheia sem folha nenhuma a tecla não
+  // tinha quem a escutasse.
+  //
+  // O destino aqui é o modo de sessão porque ele abre sem argumento nenhum, e
+  // qualquer um serve: `camadasAbertas` trata os onze destinos igual, e o Esc
+  // agora chama o MESMO verbo do Voltar, que já tem caso para cada um.
+  const a = await app();
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.deepStrictEqual(camadasAbertas(a.vista()), ['modoSessao'], 'pré-condição: destino aberto');
+
+  await escape(a);
+  assert.deepStrictEqual(camadasAbertas(a.vista()), [], 'o Esc fechou o destino');
+  assert.ok(a.$('.ins-tabbar'), 'e devolveu a casca das abas');
+  a.fechar();
+});
+
+test('o Escape na raiz de uma aba não faz nada', async () => {
+  // "Raiz de uma aba → sai do app. Não se intercepta isso" — mas o Esc não é o
+  // Voltar do sistema: ele não tem para onde sair, e uma camada a menos que
+  // zero não existe. O ouvinte único agora recebe TODA tecla do app, e sem esta
+  // guarda ele chamaria o verbo de fechar sobre nada.
+  const a = await app();
+  assert.deepStrictEqual(camadasAbertas(a.vista()), [], 'pré-condição: nada aberto');
+  const antes = JSON.stringify([a.vista().aba, a.vista().day]);
+
+  await escape(a);
+  await escape(a);
+
+  assert.deepStrictEqual(camadasAbertas(a.vista()), [], 'continua sem camada');
+  assert.strictEqual(JSON.stringify([a.vista().aba, a.vista().day]), antes,
+    'e sem mexer na aba nem no dia: ' + antes);
   assert.ok(a.$('.ins-tabbar'), 'o app continua de pé');
   a.fechar();
 });

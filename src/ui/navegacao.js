@@ -116,7 +116,7 @@ export function sincronizaHistorico(n) {
 }
 
 /**
- * Liga o Voltar do sistema.
+ * Liga o Voltar do sistema — e o Escape, que é o mesmo caminho.
  *
  * @param {object} p
  * @param {Function} p.camadas   devolve o número de camadas abertas agora
@@ -140,6 +140,40 @@ export function liga(p) {
   try {
     if (history.replaceState) history.replaceState({ lastro: 0 }, '');
   } catch (e) {}
+
+  // ---- O Escape, por este mesmo caminho ----
+  //
+  // O contrato manda: "Voltar desfaz exatamente uma camada. Vale para o botão
+  // `‹ voltar`, para o `×` da folha, para o toque no véu, para o Esc e para o
+  // Voltar do sistema — TODOS passam pelo mesmo caminho"
+  // (`docs/LASTRO_UX_CONTRACT.md`). O Esc era o único que não passava: cada
+  // folha montava o SEU ouvinte no `document`, e todas recebiam a tecla. Para
+  // uma não fechar as outras, cada ouvinte perguntava ao DOM qual folha tinha o
+  // maior z-index e só a de cima agia.
+  //
+  // Isso tinha dois preços. O primeiro é que a regra do contrato ficava
+  // sustentada por uma consulta de z-index em vez da pilha de camadas, que é a
+  // fonte de verdade — e empate de nível era resolvido por ordem de desenho.
+  // O segundo era uma CORRIDA: entre a folha nova aparecer e o efeito dela
+  // montar o ouvinte há uma janela em que o DOM já tem a folha mas ninguém a
+  // escuta; aí um Escape caía no vazio, porque os ouvintes antigos viam uma
+  // folha mais alta que eles e se calavam, e a nova ainda não escutava. Dedo
+  // humano não acerta essa janela; a suíte sob carga acertava, e foi o
+  // intermitente que o risco 4.e do `00-coordenacao.md` registrava sem nome.
+  //
+  // Um ouvinte só, montado no boot, fechando a camada do topo. Mesmo verbo do
+  // Voltar, mesma contagem, mesma sincronia de histórico depois do render.
+  // Sem guarda de "tem camada aberta?" aqui: quem fecha já pergunta, e a
+  // varredura de mutação mostrou que os dois guardas se MASCARAVAM — tirar
+  // qualquer um deixava a suíte verde, porque o outro atendia. Dois guardas de
+  // que nenhum é demonstrável é pior que um: a próxima pessoa muda o lado
+  // errado e nada fica vermelho. Fica o de `voltarUmaCamada`, que é o caminho
+  // compartilhado com o Voltar do sistema e precisa dele de todo modo.
+  window.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (e.isComposing) return;              // Esc fechando o IME não é Esc do app
+    aoVoltar();
+  });
 
   window.addEventListener('popstate', function () {
     const k = profundidadeDoHistorico();
