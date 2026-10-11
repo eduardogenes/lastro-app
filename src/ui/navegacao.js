@@ -51,6 +51,11 @@ export function camadasAbertas(view) {
   if (!view) return [];
   const c = [];
   // De baixo para cima. Espelha `telaCheia()` de trás para frente.
+  //
+  // O MODO DE SESSÃO é a camada mais funda: tudo que se abre de dentro dele
+  // fica por cima. Ele não é `view.sessao` — esse é o DETALHE de uma sessão
+  // passada, e a frente 1 apontou que confundir os dois era o erro provável.
+  if (view.modoSessao) c.push('modoSessao');
   if (view.hist) c.push('hist');
   if (view.sessao) c.push('sessao');
   if (view.add) c.push('add');

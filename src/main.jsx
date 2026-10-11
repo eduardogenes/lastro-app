@@ -324,7 +324,7 @@ function corpoDoBackup(body) {
 
 
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] }, promoPendente:[] };
-let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
+let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, modoSessao:false, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null, aulas:false, rapido:false,
   protocolo:null, comparar:null, ajuste:null, camera:null };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
@@ -5384,7 +5384,11 @@ const FECHA_CAMADA = {
   retro:     function () { fecharRetro(); },
   add:       function () { fecharAdicionar(); },
   sessao:    function () { fecharSessao(); },
-  hist:      function () { closeHist(); }
+  hist:      function () { closeHist(); },
+  // O modo de sessão fecha pela MESMA porta da seta do cabeçalho, e isso é
+  // deliberado: as duas saídas têm de deixar a sessão aberta. Se o Voltar
+  // encerrasse, o gesto de borda do Safari passaria a matar o treino.
+  modoSessao: function () { CTX.fechaModoDeSessao(); }
 };
 
 function voltarUmaCamada() {
@@ -7785,6 +7789,37 @@ const scrollDoDestino = {};
  * do destino — curta — e o `scrollY` do navegador já veio grampeado nela. A
  * posição que se queria guardar teria sumido meio quadro antes.
  */
+/* ---- O modo de sessão ----
+   A sessão deixa de ser aba e passa a ser MODO, com saída própria. O protótipo
+   achou o defeito que isto conserta: instalado no iPhone não existe barra de
+   navegador, e o dedo ficava preso dentro do treino, sem caminho para a comida.
+
+   Entrar no modo NÃO é começar a sessão, e são coisas independentes de
+   propósito: a sessão nasce na primeira série completa e o botão nunca foi
+   pré-condição para gravar. O modo abre PRONTO, não iniciado.
+
+   E sair do modo não encerra nada. A seta do cabeçalho fecha o modo e deixa a
+   sessão aberta — é a saída que o protótipo não tinha. Encerrar é outra coisa,
+   e mata a sessão, não o modo.
+
+   A flag é tudo que estes dois fazem: a pilha de camadas é DERIVADA de `view`
+   (`src/ui/navegacao.js`), então ligar a flag já faz o Voltar do sistema fechar
+   o modo em vez de sair do app. `view.aba` fica intocada — o modo cobre a aba
+   em que o dedo estava, e fechá-lo devolve o dedo lá. */
+CTX.abreModoDeSessao = function () {
+  if (view.modoSessao) return;
+  view.modoSessao = true;
+  entraNoDestino('modoSessao');
+  render();
+};
+
+CTX.fechaModoDeSessao = function () {
+  if (!view.modoSessao) return;
+  view.modoSessao = false;
+  saiDoDestino('modoSessao');
+  render();
+};
+
 function entraNoDestino(chave) {
   scrollDoDestino[chave] = window.scrollY;
   window.scrollTo(0, 0);

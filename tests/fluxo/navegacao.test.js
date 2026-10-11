@@ -259,3 +259,108 @@ test('ctx.trocaFolha substitui o topo, e o Voltar devolve uma camada só', async
     'e fechar volta para a refeição, que é a camada de baixo');
   a.fechar();
 });
+
+// ---------- a sessão como MODO ----------
+//
+// O protótipo achou o defeito mais básico do redesenho: instalado no iPhone não
+// existe barra de navegador, e o dedo ficava preso dentro do treino, sem caminho
+// para a comida. A sessão deixa de ser aba e passa a ser MODO, com saída própria.
+//
+// O modo é camada NOVA, e a mais funda das telas cheias. Não confundir com
+// `view.sessao`, que já existia e é o DETALHE de uma sessão passada — foi a
+// frente 1 que apontou a confusão, e é por isso que a flag tem outro nome.
+
+test('o modo de sessão é a camada mais funda das telas cheias', () => {
+  assert.deepStrictEqual(camadasAbertas({ modoSessao: true }), ['modoSessao']);
+  assert.deepStrictEqual(
+    camadasAbertas({ modoSessao: true, prog: {} }),
+    ['modoSessao', 'prog'],
+    'um destino aberto de dentro do modo fica POR CIMA dele'
+  );
+  assert.deepStrictEqual(
+    camadasAbertas({ modoSessao: true, pilha: [{ k: 'dia' }] }),
+    ['modoSessao', 'folha:0'],
+    'e a folha por cima de tudo'
+  );
+  // E o detalhe de sessão passada continua sendo outra coisa, no lugar dele
+  assert.deepStrictEqual(
+    camadasAbertas({ modoSessao: true, sessao: {} }),
+    ['modoSessao', 'sessao'],
+    'o modo e o detalhe de uma sessão passada coexistem, e não são o mesmo'
+  );
+});
+
+test('entrar no modo não começa a sessão, e sair do modo não a encerra', async () => {
+  const a = await app();
+
+  // entrar no modo com nenhuma sessão viva: o modo abre e nada é gravado.
+  // "Abre PRONTO, não INICIADO" — a sessão nasce na primeira série completa, e
+  // o botão nunca foi pré-condição para gravar.
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.vista().modoSessao, true, 'o modo abriu');
+  assert.strictEqual(a.S().sessao, null, 'e nenhuma sessão foi criada');
+
+  // agora com sessão viva: sair do modo deixa a sessão de pé
+  a.E('toggle(0)');
+  a.preencher(0, 0, 40, 10);
+  await a.esperar();
+  assert.ok(a.S().sessao, 'a série completa abriu a sessão');
+
+  a.v('ctx.fechaModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.vista().modoSessao, false, 'o modo fechou');
+  assert.ok(a.S().sessao, 'e a sessão continua aberta — a seta não encerra nada');
+  a.fechar();
+});
+
+test('fechar o modo devolve a aba de onde se entrou', async () => {
+  const a = await app();
+  a.aba('dados');
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  a.v('ctx.fechaModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.vista().aba, 'dados',
+    'o modo é camada: fechá-la devolve onde o dedo estava, como todo destino');
+  a.fechar();
+});
+
+test('o Voltar do sistema fecha o modo em vez de sair do app', async () => {
+  // É o ponto todo de o modo ser CAMADA. Instalado na tela de início não há
+  // barra de navegador: se o modo não empurrar uma entrada no histórico, o
+  // primeiro Voltar dentro do treino fecha o app — que é o defeito que
+  // `navegacao.js` nasceu para consertar, chegando por uma porta nova.
+  const a = await app();
+  await a.pronto();
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.vista().modoSessao, true, 'o modo abriu');
+
+  await voltar(a);
+
+  assert.strictEqual(a.vista().modoSessao, false, 'o Voltar fechou o modo');
+  assert.ok(a.$('.ins-tabbar'), 'e devolveu a casca com a barra de abas');
+  a.fechar();
+});
+
+test('de dentro do modo, o Voltar fecha o que está por cima antes do modo', async () => {
+  // A ordem importa e é a razão de o modo ser a camada mais FUNDA: quem abre o
+  // programa de dentro do treino espera que o Voltar feche o programa, não que
+  // o jogue fora do treino inteiro.
+  const a = await app();
+  await a.pronto();
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  a.v('abrirPrograma', null);
+  await a.esperar();
+  assert.ok(a.vista().prog, 'o programa abriu por cima do modo');
+
+  await voltar(a);
+  assert.ok(!a.vista().prog, 'o primeiro Voltar fechou o programa');
+  assert.strictEqual(a.vista().modoSessao, true, 'e o modo continuou de pé');
+
+  await voltar(a);
+  assert.strictEqual(a.vista().modoSessao, false, 'o segundo Voltar fechou o modo');
+  a.fechar();
+});
