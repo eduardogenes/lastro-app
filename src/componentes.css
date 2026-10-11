@@ -1432,7 +1432,9 @@
    escreveu. */
 #tmenos, #tmais { min-width: var(--ins-tap); min-height: var(--ins-tap); }
 
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* O portão de movimento reduzido mora em `base.css`, e alcança por `*` com
+   `!important` — esta folha tinha uma segunda cópia só da parte de transição,
+   que virou ruído depois que o portão passou a ser estrutural. */
 
 /* O que é redondo por decisão: ponto de status, ponto ao vivo e thumb do
    slider — os três pontos contam como um na lista do DESIGN.md, que fecha com a

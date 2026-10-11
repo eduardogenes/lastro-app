@@ -1012,3 +1012,48 @@ test('controle menor que o alvo estende a área, ou está na lista de dívida', 
     'nome na lista de dívida que já não corresponde a um controle pequeno: ' +
     'se ele foi consertado, tire-o da lista — ela só serve se for exata');
 });
+
+test('reduzir movimento desliga animação por estrutura, não por nome', () => {
+  // O portão existe e hoje funciona — mas por COINCIDÊNCIA: há exactly uma
+  // animação no app (`ins-pulse`, no ponto ao vivo), e o bloco de
+  // `prefers-reduced-motion` a desliga **pelo nome do seletor**. A próxima
+  // animação que nascer em qualquer outro lugar não será desligada, e ninguém
+  // vai notar: quem pede movimento reduzido não está aqui para reclamar.
+  //
+  // Então a regra é sobre a GRAMÁTICA do portão, não sobre a lista de hoje: ele
+  // tem de alcançar por seletor universal. Transição já era assim; animação
+  // não era.
+  //
+  // `animation-duration` quase zero com uma iteração, e não `animation: none`:
+  // zerar a animação deixa o elemento no estado INICIAL, e uma animação com
+  // `both` que termina visível ficaria invisível. Pular para o último quadro é
+  // o que respeita a intenção de quem pediu menos movimento sem apagar
+  // conteúdo.
+  const todo = juntos(FOLHAS.map(f => 'src/' + f));
+
+  const portoes = [...todo.matchAll(
+    /@media[^{]*prefers-reduced-motion[^{]*\{([\s\S]*?)\n\}/g)].map(m => m[1]);
+  assert.ok(portoes.length > 0, 'nenhum bloco de `prefers-reduced-motion`');
+
+  // A REGRA do `*`, não o bloco: uma primeira versão deste caso perguntava se o
+  // bloco tinha `*` em algum lugar E a palavra `animation` em outro, e passava
+  // por acidente — havia `.ins-live-dot { animation: none }` ao lado de
+  // `* { transition: none }`. Duas regras diferentes, nenhuma universal sobre
+  // animação. O que se cobra é a regra universal declarando animação.
+  const regraUniversal = portoes.flatMap(p =>
+    [...p.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+      .filter(r => r[1].split(',').some(s => s.trim() === '*' ||
+                                             /^\*::?[a-z-]+$/.test(s.trim())))
+      .map(r => r[2]));
+
+  assert.ok(regraUniversal.some(c => /animation/.test(c)),
+    'o portão de movimento reduzido não desliga ANIMAÇÃO por seletor ' +
+    'universal: desligar por nome funciona só para as animações que já ' +
+    'existem, e a próxima nasce fora do portão');
+
+  if (/@keyframes/.test(todo)) {
+    assert.ok(regraUniversal.some(c => /animation[^;]*!important/.test(c)),
+      'o portão alcança por `*` mas sem `!important`: a regra do componente ' +
+      'é mais específica e ganha, então o movimento continua rodando');
+  }
+});

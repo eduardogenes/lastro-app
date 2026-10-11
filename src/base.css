@@ -366,9 +366,26 @@ p, .ins-prosa, input, textarea {
   animation: ins-pulse 2.4s infinite;
 }
 
+/* O portão de movimento reduzido, e ele alcança por ESTRUTURA e não por nome.
+   Antes desligava a animação do ponto ao vivo pelo seletor dela — funcionava,
+   mas por coincidência: havia uma animação só no app. A próxima a nascer em
+   qualquer outro lugar ficaria rodando, e ninguém notaria, porque quem pede
+   movimento reduzido não está aqui para reclamar.
+
+   `animation-duration` quase zero com UMA iteração, e não `animation: none`:
+   zerar a animação deixa o elemento no estado INICIAL, e uma animação com
+   `both` que termina visível ficaria invisível. Pular para o último quadro
+   respeita quem pediu menos movimento sem apagar conteúdo. No pulso do ponto
+   ao vivo, o último quadro é opacidade 1 — o ponto fica visível e parado.
+
+   `!important` não é força bruta aqui: sem ele a regra do componente é mais
+   específica e ganha, e o portão não faz nada. */
 @media (prefers-reduced-motion: reduce) {
-  .ins-live-dot { animation: none; }
-  * { transition: none !important; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition: none !important;
+  }
 }
 
 
