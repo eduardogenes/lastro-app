@@ -2151,21 +2151,64 @@ estrutura de abas velha seria construí-la duas vezes.
    nunca durante a sessão. Ela só faz sentido depois de 2 e 4: avisar sobre algo
    que não vence, e sem lugar para decidir, é aviso sem saída.
 
-- [ ] **6.l A estrutura dos cinco lugares** — a barra passa a ser Agora · Dias ·
-      Corpo · Semana · Prescrição. **Medido antes de propor:** no FONTE a troca
-      é pequena (1 `vaiPara('treino')`, 2 leituras de `view.aba === 'treino'`),
-      e a capacidade de olhar a prescrição de outro dia **não se perde** — o
-      strip de rotação do `Treino` navega entre dias (`ctx.vaiParaDia`) e o modo
-      desenha o `Treino`. Nos TESTES são 29 referências explícitas em 26 dos 36
-      arquivos, mais o padrão `'treino'` do harness; é a reescrita em bloco que
-      a decisão D13 autorizou, com a rede antes.
-      **Não fiz a remoção isolada de propósito:** sem Prescrição, "navegar
-      prescrição" cairia dentro do modo de sessão, que é um estado sabidamente
-      errado. A aba sai na mesma passada que dá à navegação de prescrição a casa
-      dela.
+- [x] **6.l A estrutura dos cinco lugares, e a sessão deixa de ser aba**
+      (`9e6a04b`) — a barra passa a ser **agora · dias · corpo · semana ·
+      prescrição**, um lugar por pergunta e nenhuma repetida. É a reescrita em
+      bloco que a decisão D13 autorizou, e esta passada é o que ela custa: 38
+      arquivos, +1889/−1537.
+      **O que saiu:** a aba de treino. A capacidade de olhar a prescrição de
+      outro dia **não se perde** — o strip de rotação navega entre dias e o modo
+      desenha o mesmo `Treino`. Eu havia escrito aqui que não removeria a aba
+      antes de Prescrição existir, para não criar um estado sabidamente errado; e
+      é isto que esta passada faz — Prescrição nasceu na mesma mudança.
+      **As mudanças de endereço, cada uma pela §1 da frente 1:** `dados.jsx`
+      racha em **três** (Corpo, Semana e o calendário, que é de Dias) porque eram
+      dois chips de uma tela só e são três perguntas; o **veredito** sai de Corpo
+      para Semana, que é regra escrita (§1.3, "Não possui"); `comida.jsx` mais a
+      metade de prescrição do `guia.jsx` viram **Prescrição**; a outra metade
+      vira **Ajustes**, que não é lugar.
+      **Duas decisões com razão escrita, e as duas vão contra o lugar onde a
+      coisa estava:** a **cadência** sai da máquina do app (que a punha lá com a
+      razão "a cadência é ajuste, não referência") e vai para Prescrição, porque
+      em que dias costumo treinar é prescrição de rotina e é contra ela que o
+      palpite do dia se calcula — o argumento antigo fica escrito no código; e a
+      **cobrança de backup** sai do guia para o topo do Agora, porque aviso de
+      perda de dado atrás de um botão de canto é aviso que não se lê.
+      **O cardio se reparte em três** pela §1.7: o dono é o Agora, porque é onde
+      se registra; Semana fica com o placar; Dias, com a lista do que foi feito.
+      **Três defeitos achados, e o primeiro é grave:**
+      1. **folha aberta de DENTRO de um destino não era desenhada.** A casca
+         devolvia `ctx.telaCheia()` seco: a pilha existia em `view.pilha`,
+         `camadasAbertas` já a contava por cima do destino, o Voltar já a fechava
+         — e a tela não mostrava nada. Estava **fora de alcance** porque a tela
+         do treino era uma aba; com ela virando modo, a foto do aparelho, o
+         histórico do exercício, a nota e o seletor de troca passaram todos a
+         abrir no vazio. **Quatro capacidades mudas**;
+      2. **`vaiPara` não fechava o que estava em tela cheia** — trocava
+         `view.aba` por baixo de um destino que continuava desenhado;
+      3. os verbos do modo mexiam em `view.aba`, herança de quando a tela do
+         treino era aba. O modo é camada: trocar o lugar por baixo faz fechá-lo
+         devolver a pessoa a outro lugar que não o de onde entrou.
+      **Três casos trocaram de asserção de propósito, os três nomeados pela
+      frente 1** (as cinco abas, "o contexto do treino só na aba de treino" —
+      achado 5 — e a separação prescrição/máquina, que era por chip e virou por
+      lugar). Mais **um caso superado**, cujas asserções únicas foram dobradas no
+      sucessor: o total cai de 1202 para 1201 por isso, e sobe a 1203 com os dois
+      casos novos.
+      **Duas mutações reprovaram trabalho meu:** o padrão do harness apontava
+      para `abreTreinoDeHoje`, que recusa em dia de descanso — e o padrão semanal
+      decide isso pelo **dia da semana em que a suíte roda**, 80 vermelhos
+      dependentes de calendário; e eu escrevi um `z-index: 45` na folha que não
+      muda nada, porque `Folha` escreve o nível **inline** e inline vence a
+      classe.
 
-- [ ] **6.m `Dias`** — o único dos cinco lugares **sem desenho nenhum** nos nove
-      HTML (achado 6 da frente 1). Precisa de decisão de desenho antes de código.
+- [~] **6.m `Dias`** — nasceu com o calendário, a lista de sessões e a lista de
+      cardio, que é a capacidade que ele recebe pronta. **Falta o resto da §1.2:**
+      os dias de comida já fechados, marcar um dia passado como descanso, a faixa
+      da semana com a marca de cardio, e o lugar da folha de pôr o dia em dia.
+      É o único dos cinco **sem desenho nenhum** nos nove HTML (achado 6), mas
+      tem as nove capacidades especificadas — o que falta é construção, não
+      decisão.
 
 - [ ] **6.n As outras telas**, pela ordem do plano, com os repontes de expressão
       composta junto de cada uma (uma visita só por arquivo, decisão do dono). A
