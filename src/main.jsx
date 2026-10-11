@@ -1684,12 +1684,22 @@ function relogioTexto(s) {
 
 let relogioT = null;
 function tickRelogio() {
+  // A hora primeiro, e FORA do `if` da sessão: ela não depende de haver treino
+  // aberto, e o modo tem estado vazio (a sessão nasce na primeira série).
+  const h = document.getElementById('hora');
+  if (h) h.textContent = fmtHora(Date.now());
   const el = document.getElementById('relogio');
   if (!el || !S.sessao) return;
   el.textContent = relogioTexto(S.sessao);
 }
 function ajustaRelogio() {
-  const ativo = !!(S.sessao && !S.sessao.pausadoEm && !S.sessao.retro && view.aba === 'treino');
+  // `view.modoSessao` e não só a aba: as portas 2 e 3 arrumam a aba para
+  // 'treino' antes de entrar, mas a porta 1 é o cartão do topo do Agora e
+  // entra DE LÁ — o motor ficava desligado e o relógio parava na hora da
+  // entrada. Dentro do modo ele anda de onde quer que se tenha entrado, e
+  // anda também sem sessão, porque a HORA é o que o cabeçalho mostra.
+  const ativo = view.modoSessao ||
+    !!(S.sessao && !S.sessao.pausadoEm && !S.sessao.retro && view.aba === 'treino');
   if (ativo && !relogioT) relogioT = setInterval(tickRelogio, 1000);
   else if (!ativo && relogioT) { clearInterval(relogioT); relogioT = null; }
 }
@@ -5116,7 +5126,7 @@ const SUPERFICIE = {
   // Sobe quando uma chave muda de significado ou sai. Acrescentar não mexe.
   contrato: 1,
 
-  // As 181 chaves da ponte com a shell do Instrumento, alcançáveis sem `eval`.
+  // As chaves da ponte com a shell do Instrumento, alcançáveis sem `eval`.
   ctx: CTX,
   nuvem: NUVEM,
 
@@ -7697,6 +7707,20 @@ CTX.setGordura = function (v) {
  * de destino porque um atalho que não diz para onde vai obriga a tocar para
  * descobrir, e o toque é o que ele existe para economizar.
  */
+/**
+ * A hora de parede, para o cabeçalho do modo.
+ *
+ * O protótipo achou que o app não tem relógio NENHUM, e que a projeção de fim
+ * do treino não se confere sem ele: "acabo às 19h10" não diz nada a quem não
+ * sabe que horas são. Fica aqui e não na vista porque `Date.now()` dentro de um
+ * componente é estado escondido — a vista desenha o que o modelo diz.
+ *
+ * E aqui embaixo, e não junto de `tickRelogio` lá em cima: `CTX` só nasce
+ * depois dele, e atribuir antes é TDZ no carregamento do módulo — o app não
+ * boota e a suíte inteira responde `__escopo is not a function`.
+ */
+CTX.horaDeParede = function () { return fmtHora(Date.now()); };
+
 CTX.faixaDaSessao = function () {
   const s = S.sessao;
   if (!s) return null;

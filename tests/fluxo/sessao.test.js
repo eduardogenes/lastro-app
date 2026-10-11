@@ -347,6 +347,65 @@ test('dentro do modo o relógio continua filho direto de um main', async () => {
   a.fechar();
 });
 
+test('o cabeçalho do modo mostra a hora de parede', async () => {
+  // Item 3 da lista do que não some no modo (frente 1, §4.3): "dentro do modo,
+  // a hora fica no cabeçalho". O protótipo achou que o app não tem relógio
+  // NENHUM — e a projeção de fim do treino não se confere sem ele: "acabo às
+  // 19h10" não diz nada a quem não sabe que horas são.
+  const a = await app({ agora: agoraEstavel(14, 37), estado: emTreino('B', agoraEstavel(14, 37)), aba: 'treino' });
+  assert.strictEqual(a.vista().modoSessao, true, 'pré-condição: dentro do modo');
+
+  const hora = a.$('#hora');
+  assert.ok(hora, 'a hora está no cabeçalho do modo');
+  assert.strictEqual(hora.textContent, '14:37', 'e é a hora de agora, em HH:MM');
+  assert.strictEqual(hora.tagName, 'TIME', 'em <time>: é hora, não um número qualquer');
+  // Sem `aria-live`: o leitor de tela anunciando a virada de cada minuto no
+  // meio de uma série é interrupção, não informação.
+  assert.ok(!hora.getAttribute('aria-live'), 'e não se anuncia a cada minuto');
+  a.fechar();
+});
+
+test('a hora de parede aparece no modo mesmo SEM sessão aberta', async () => {
+  // Entrar no modo é navegação, e a sessão nasce na primeira série — então o
+  // modo tem um estado vazio (M1‑7). A hora não depende de haver treino
+  // aberto: ela é a hora, e é justamente antes de começar que se pergunta se
+  // dá tempo.
+  const a = await app({ agora: agoraEstavel(6, 5), estado: { logs: {}, done: [] } });
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.S().sessao, null, 'pré-condição: nenhuma sessão');
+
+  assert.strictEqual((a.$('#hora') || {}).textContent, '06:05',
+    'a hora está lá, com o zero à esquerda');
+  assert.ok(!a.$('#relogio'), 'e o relógio DA SESSÃO não, porque não há sessão');
+  a.fechar();
+});
+
+test('entrar no modo de outra aba não congela o relógio da sessão', async () => {
+  // O relógio decorrido anda por fora do Preact (`tickRelogio`), e o motor dele
+  // era ligado só com `view.aba === 'treino'`. As portas 2 e 3 arrumam a aba
+  // antes de entrar, então o congelamento não aparecia — mas a porta 1 é o
+  // cartão do topo do Agora, e entra DE LÁ. O relógio pararia no meio do
+  // treino, mostrando a hora da entrada para sempre.
+  //
+  // Este caso espera tempo de verdade, 1,2 s, e é o único da suíte que faz
+  // isso: o harness congela `Date.now` quando recebe `agora`, e com ele
+  // congelado nenhum motor de relógio tem o que mostrar. Sem `agora`, o
+  // decorrido vira de segundo em segundo e 1,2 s garante a virada.
+  const a = await app({ estado: emTreino('B', Date.now()) });
+  a.v('ctx.vaiPara', 'comida');
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.vista().aba, 'comida', 'pré-condição: a aba por baixo NÃO é treino');
+
+  const antes = a.$('#relogio').textContent;
+  await a.esperar(1200);
+  assert.notStrictEqual(a.$('#relogio').textContent, antes,
+    'o decorrido virou: o motor ficou ligado dentro do modo, de onde quer ' +
+    'que se tenha entrado (parado em ' + antes + ')');
+  a.fechar();
+});
+
 // ---------- corrigir e apagar um treino registrado ----------
 // Registrar o treino errado e esquecer de finalizar são os dois enganos que
 // este app deixa acontecer sem atrito — e até aqui nenhum dos dois tinha saída:
