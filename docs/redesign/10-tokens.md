@@ -299,3 +299,71 @@ não é exata é pior que nenhuma, porque passa a acobertar.
 **A adjacência dos onze.** É a única coisa que decide se eles podem crescer, e
 ela depende de ver a tela. **E nada nesta seção foi visto** — as duas guardas
 leem fonte, não pixel.
+
+---
+
+## 14 · O portão de movimento e o contraste — duas regras que passaram a ser cobradas
+
+**Feitas pelo coordenador em 11/10.**
+
+### 14.1 · O portão de movimento reduzido alcançava por nome
+
+Ele desligava a animação do ponto ao vivo **pelo seletor dela**. Funcionava — e
+**por coincidência**: há uma animação só no app. A próxima a nascer em qualquer
+outro lugar ficaria rodando, e **ninguém notaria, porque quem pede movimento
+reduzido não está aqui para reclamar.**
+
+Agora alcança por `*, *::before, *::after` com `!important` — sem o `!important`
+a regra do componente é mais específica e ganha, e o portão não faz nada.
+
+**E `animation-duration` quase zero em vez de `animation: none`:** zerar a
+animação deixa o elemento no **estado inicial**, e uma animação com `both` que
+termina visível ficaria **invisível**. Pular para o último quadro respeita quem
+pediu menos movimento **sem apagar conteúdo**. No pulso do ponto ao vivo, o
+último quadro é opacidade 1 — o ponto fica visível e parado.
+
+**O caso teve uma primeira versão que passava por acidente.** Ela perguntava se o
+bloco tinha `*` em algum lugar **e** a palavra `animation` em outro — e havia
+duas regras diferentes, nenhuma universal sobre animação. O que se cobra agora é
+**a regra do `*` declarando animação**. É o mesmo erro da §12: checar a forma em
+vez da propriedade.
+
+### 14.2 · O contraste da paleta embarcada
+
+A frente 4 mediu a paleta que **desenhou**. Nada garantia que a **embarcada**
+atendesse, nem que continuasse atendendo quando alguém encostasse numa cor — e
+encostar numa cor é a coisa mais fácil de fazer num sistema de design.
+
+Os hexadecimais são lidos **da folha**, não transcritos no caso: transcrever
+faria o caso testar a transcrição em vez do produto.
+
+**Nove pares, nos dois temas, todos passam:**
+
+| | claro | escuro |
+|---|---:|---:|
+| texto principal | 16,19:1 | 16,59:1 |
+| prosa | 7,79:1 | 10,27:1 |
+| texto de apoio | 5,62:1 | 7,68:1 |
+| acento como texto | 8,79:1 | 9,78:1 |
+| texto sobre acento | 7,88:1 | 7,23:1 |
+| o painel de pare | 8,40:1 | 8,96:1 |
+| o painel de atenção | 8,76:1 | 9,79:1 |
+| **fio de controle** | **3,26:1** | 4,79:1 |
+| anel de foco | 7,11:1 | 7,66:1 |
+
+**O mais apertado ficou nomeado numa asserção própria**, porque é o que quebra
+primeiro: o fio de controle no claro tem **0,26 de folga** sobre o mínimo. Se
+subir, ótimo — a asserção pede que se atualize. Se descer, a de cima pega. Ela
+existe para que a folga não desapareça sem ninguém notar.
+
+**A prova, e o que ela revelou sobre as três guardas juntas.** Clareando o fio,
+**três casos caem** — e eles dizem coisas diferentes. As duas guardas de paleta
+dizem *"um valor mudou"*; a de contraste diz **"e a mudança custou 2,43:1 contra
+um mínimo de 3"**. Não é redundância: é a diferença entre saber que algo mexeu e
+saber o que isso cobrou.
+
+### O que não foi medido
+
+**Nada disto foi visto.** Contraste calculado é contraste contra um vidro limpo
+num quarto neutro — a luz da academia, o sol, a luva e o magnésio não entram na
+conta, e a auditoria de acesso já havia declarado isso.
