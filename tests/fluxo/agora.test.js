@@ -564,3 +564,147 @@ test('aparelho que guarda não mostra aviso nenhum', async () => {
   assert.ok(!a.$('.ins-aviso-perda'), 'nada de aviso');
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// A LISTA DAS MUDANÇAS QUE ESPERAM — a Prescrição virando a chamadora
+// ---------------------------------------------------------------------------
+//
+// Peça 2 da ordem que o plano amarrou (§6.3): a conta de volume saiu do
+// `main.jsx` para o domínio, esta lista passa a ser a chamadora dela, e só
+// então a tela de decisão sai. Fora dessa ordem a conta desaparece entre uma
+// coisa e outra.
+
+const SLOT = 'elevacao-lateral-na-maquina';     // dia A, 3 séries, delt lateral
+
+/** Uma mudança esperando decisão, na forma que o estado guarda. */
+function esperando(agora, extra) {
+  return Object.assign({
+    sid: agora - 3 * DIA, day: 'A', t: agora - 3 * DIA,
+    mods: [{ k: 'sets', slot: SLOT, de: 3, para: 5 }],
+    resumoMods: ['Elevação lateral na máquina: 3 → 5 séries'],
+    m: agora - 3 * DIA
+  }, extra || {});
+}
+
+test('sem fila, a lista é vazia', async () => {
+  const a = await app({ estado: { logs: {}, done: [] } });
+  assert.deepStrictEqual(a.vJ('ctx.mudancasQueEsperam'), []);
+  a.fechar();
+});
+
+test('cada linha diz o que mudou, de onde veio, quando vence e a conta de volume', async () => {
+  // As quatro coisas do passo 3 do fluxo do vencimento, numa linha.
+  const agora = agoraEstavel(9, 0);
+  const a = await app({
+    agora: agora,
+    estado: { plano: 7, logs: {}, done: [], promoPendente: [esperando(agora)] }
+  });
+  a.v('ctx.fechaTudo');                 // a tela de decisão guardada abre no boot
+  await a.esperar();
+
+  const lista = a.vJ('ctx.mudancasQueEsperam');
+  assert.strictEqual(lista.length, 1);
+  const l = lista[0];
+  assert.strictEqual(l.dia, 'A', 'de que sessão veio');
+  assert.strictEqual(l.quando, agora - 3 * DIA, 'e quando ela aconteceu');
+  assert.strictEqual(l.mudancas.length, 1);
+  assert.ok(/3 → 5/.test(l.mudancas[0].txt), 'o que mudou: ' + l.mudancas[0].txt);
+
+  // A CONTA, e ela tem que ser TRANSIÇÃO — "de 12 para 13" —, que é a forma que
+  // o dono pediu e a única que `impactoDoMod` produz. `impacto()` afirma o
+  // número de agora e não serviria aqui.
+  assert.ok(l.mudancas[0].impacto, 'há conta de volume');
+  assert.ok(/\d+ → \d+/.test(l.mudancas[0].impacto),
+    'e ela é transição, não o número de agora: ' + l.mudancas[0].impacto);
+  assert.ok(l.mudancas[0].impacto.indexOf('delt lateral') >= 0,
+    'no músculo da mudança: ' + l.mudancas[0].impacto);
+
+  // O VENCIMENTO: o dia em que aquele treino volta.
+  assert.ok(typeof l.vence === 'number', 'há data de vencimento: ' + l.vence);
+  assert.ok(l.vence >= agora, 'e ela não está no passado');
+  a.fechar();
+});
+
+test('a conta de volume avisa quando a mudança passa do alvo do treinador', async () => {
+  // `acima` é o que pinta o aviso, e ele tem que vir da conta e não de palpite.
+  // Subir a lateral de 3 para 8 estoura qualquer alvo.
+  const agora = agoraEstavel(9, 0);
+  const a = await app({
+    agora: agora,
+    estado: { plano: 7, logs: {}, done: [], promoPendente: [esperando(agora, {
+      mods: [{ k: 'sets', slot: SLOT, de: 3, para: 8 }]
+    })] }
+  });
+  a.v('ctx.fechaTudo');
+  await a.esperar();
+
+  const m = a.vJ('ctx.mudancasQueEsperam')[0].mudancas[0];
+  assert.strictEqual(m.acima, true, 'passou do alvo: ' + m.impacto);
+  a.fechar();
+});
+
+test('com treino já registrado hoje, o vencimento começa a contar de AMANHÃ', async () => {
+  // A única decisão deste invólucro. A posição de hoje já foi gasta: contar a
+  // partir de hoje daria a letra de hoje a um dia que já aconteceu, e tudo
+  // venceria um dia cedo.
+  //
+  // As duas montagens têm a MESMA sessão do A — uma ontem, outra hoje —, e isso
+  // é o que faz o caso discriminar: `proximoTreino` é o B nas duas, porque a
+  // última registrada é o A de qualquer forma. Se a diferença fosse "sem sessão
+  // nenhuma" contra "sessão hoje", os dois efeitos se somariam e o verde viria
+  // mesmo sem o deslocamento — foi o que a varredura de mutação mostrou.
+  const agora = agoraEstavel(9, 0);
+  const sessaoDoA = function (t) {
+    return [{ sid: t, day: 'A', t: t, dur: 70 * MIN, fim: 'manual', sets: [] }];
+  };
+  const monta = async function (quando) {
+    const x = await app({ agora: agora, estado: {
+      plano: 7, logs: {}, done: sessaoDoA(quando), promoPendente: [esperando(agora)]
+    } });
+    x.v('ctx.fechaTudo');
+    await x.esperar();
+    return x;
+  };
+
+  const ontem = await monta(agora - DIA);
+  const hoje = await monta(agora - 60 * MIN);
+  assert.strictEqual(ontem.vJ('ctx.hoje').diaHoje.origem, 'previsto',
+    'pré-condição: na primeira, o treino de hoje ainda não aconteceu');
+  assert.strictEqual(hoje.vJ('ctx.hoje').diaHoje.origem, 'registrado',
+    'e na segunda, aconteceu');
+
+  const a1 = ontem.vJ('ctx.mudancasQueEsperam')[0].vence;
+  const a2 = hoje.vJ('ctx.mudancasQueEsperam')[0].vence;
+  assert.ok(a1 != null && a2 != null, 'as duas têm data: ' + a1 + ' / ' + a2);
+  assert.ok(a2 > a1,
+    'com o treino de hoje já registrado, a volta do A é mais tarde — e só o ' +
+    'deslocamento explica isso, porque a letra da frente é a mesma (' + a1 + ' → ' + a2 + ')');
+  ontem.fechar(); hoje.fechar();
+});
+
+test('a fila entra ordenada, mesmo chegando fora de ordem', async () => {
+  // A mais antiga primeiro: é a única ordem que ele reconhece, e é a mesma
+  // ordem que a abertura guardada já usava.
+  //
+  // O caso semeia FORA DE ORDEM de propósito, e isso é um caminho real: o
+  // escritor ordena e a fusão ordena, mas a IMPORTAÇÃO copia a chave como ela
+  // vem no arquivo. Fora de ordem, o app perguntaria primeiro pela mudança mais
+  // nova — o contrário do que o próprio comentário de `abrePromoGuardada` diz.
+  // Quem ordena agora é `normalizaEstado`, por onde todo estado entra.
+  const agora = agoraEstavel(9, 0);
+  const a = await app({
+    agora: agora,
+    estado: { plano: 7, logs: {}, done: [], promoPendente: [
+      esperando(agora, { sid: 2, t: agora - 1 * DIA, day: 'A' }),
+      esperando(agora, { sid: 1, t: agora - 9 * DIA, day: 'A' })
+    ] }
+  });
+  a.v('ctx.fechaTudo');
+  await a.esperar();
+
+  const lista = a.vJ('ctx.mudancasQueEsperam');
+  assert.strictEqual(lista.length, 2);
+  assert.ok(lista[0].quando < lista[1].quando,
+    'a mais antiga primeiro: ' + lista.map(l => l.quando).join(' · '));
+  a.fechar();
+});

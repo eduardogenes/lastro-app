@@ -20,6 +20,7 @@ import { ehBancada } from './palco.js';
 import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
+import { quandoAquelaVolta } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
@@ -403,6 +404,16 @@ function normalizaEstado() {
   // objeto vira lista vazia.
   if (!Array.isArray(S.promoPendente) && !(S.promoPendente && typeof S.promoPendente === 'object')) {
     S.promoPendente = [];
+  }
+  // Já sendo lista, ela entra ORDENADA por tempo. O escritor ordena
+  // (`guardaPromo`) e a fusão ordena (`porTempo` em `dominio/sincronia.ts`),
+  // mas a IMPORTAÇÃO copia a chave como ela vem no arquivo — e os DOIS leitores
+  // confiam na ordem: `abrePromoGuardada` pega `[0]` como "a mais antiga, que é
+  // a única ordem que ele reconhece", e a lista de Prescrição apresenta na
+  // ordem em que as sessões fecharam. Fora de ordem, o app pergunta primeiro
+  // pela mudança mais nova, que é o contrário do que está escrito.
+  if (Array.isArray(S.promoPendente)) {
+    S.promoPendente.sort(function (a, b) { return ((a && a.t) || 0) - ((b && b.t) || 0); });
   }
 }
 
@@ -6924,6 +6935,54 @@ CTX.editDor = function (k) { editDor(k); };
 CTX.limpaNum = function (el, dec) { limpaNum(el, dec); };
 
 // ---------- tela cheia: decisão de fim de sessão ----------
+/**
+ * A lista das mudanças do dia que esperam decisão — e que vencem.
+ *
+ * É a peça 2 da ordem que o plano amarrou (§6.3 da frente 1): a conta de volume
+ * sai de `main.jsx` para o domínio (feito), **esta lista passa a ser a
+ * chamadora dela**, e só então a tela de decisão sai. Fora dessa ordem a conta
+ * desaparece entre uma coisa e outra, que é o que o §3.6 do plano avisa.
+ *
+ * Cada linha diz as quatro coisas do passo 3 do fluxo: o que mudou, de que
+ * sessão veio, **quando vence** e **a conta de volume se virar permanente**. A
+ * conta é por mudança e na forma de TRANSIÇÃO — "o posterior passa de 7 para 8
+ * contra 7 prescritas" —, que é a forma que o dono pediu e a única que
+ * `impactoDoMod` produz; `impacto()` afirma o número de agora e não serve aqui.
+ *
+ * **De onde a conta começa a andar**, e é a única decisão deste invólucro: o
+ * vencimento percorre os dias à frente e precisa saber que letra o PRÓXIMO
+ * treino vai ter. Quando o dia de hoje já tem treino registrado ou sessão
+ * aberta, a posição de hoje já foi gasta — a caminhada começa AMANHÃ, senão ela
+ * daria a letra de hoje a um dia que já aconteceu e venceria tudo um dia cedo.
+ */
+CTX.mudancasQueEsperam = function () {
+  const fila = Array.isArray(S.promoPendente) ? S.promoPendente : [];
+  if (!fila.length) return [];
+  const h = diaResolvido();
+  const hojeJaFoi = h.origem === 'registrado' || h.origem === 'aberta';
+  const de = Date.now() + (hojeJaFoi ? 86400000 : 0);
+  const proxima = proximoTreino(S, ROT_BASE);
+
+  return fila.map(function (g) {
+    const mods = Array.isArray(g.mods) ? g.mods : [];
+    return {
+      // a chave é a mesma da fila, para decidir e para a lápide depois
+      sid: typeof g.sid === 'number' ? g.sid : g.t,
+      dia: g.day,
+      quando: g.t,
+      vence: quandoAquelaVolta(g.day, rot(), proxima, cadenciaDaSemana(), de),
+      mudancas: mods.map(function (m) {
+        const imp = impactoDoMod(g.day, m);
+        return {
+          txt: textoMod(g.day, m),
+          impacto: imp ? imp.txt : null,
+          acima: !!(imp && imp.acima)
+        };
+      })
+    };
+  });
+};
+
 CTX.decisao = function () {
   const P = view.promo;
   if (!P) return null;
