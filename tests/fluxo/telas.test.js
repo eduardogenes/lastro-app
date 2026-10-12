@@ -1081,15 +1081,32 @@ test('botão que mostra só um símbolo tem nome acessível', () => {
   // tinha: um `···` ou um `×` novo em qualquer outra tela nasceria sem nome, e
   // quem usa leitor de tela ouviria "botão" — sem nada que diga o que ele faz.
   //
-  // Hoje os três que existem têm `aria-label`. Este caso é o que mantém isso
-  // verdade quando nascer o quarto.
-  const SIMBOLO = /^[\s·•×✕✓＋+−—–…·…{}'"`]*$/;
+  // Hoje os que existem têm `aria-label`. Este caso é o que mantém isso verdade
+  // quando nascer o próximo.
+  //
+  // REESCRITO, e o motivo é que a versão anterior ENVELHECEU em silêncio. Ela
+  // enumerava os símbolos conhecidos — `· • × ✕ ✓ + − …` — e eu acrescentei dois
+  // que não estavam na lista: o `⚙` dos Ajustes e o `‹` da saída do modo. Os
+  // dois têm rótulo, mas a guarda não saberia se não tivessem: uma lista de
+  // símbolos é um inventário, e inventário é o que fica velho.
+  //
+  // A pergunta certa é a inversa e não envelhece: o conteúdo visível tem alguma
+  // LETRA OU DÍGITO? Se não tem, não há nome a tirar dele, e o botão precisa de
+  // `aria-label` qualquer que seja o símbolo — inclusive um que ninguém ainda
+  // inventou.
+  //
+  // LIMITE DECLARADO: isto é leitura de FONTE. Um botão cujo corpo é uma
+  // expressão (`{x.t}`) tem letras no código e passa por "tem texto", mesmo que
+  // o valor em tempo de execução seja um símbolo. Casos de DOM cobrem os que
+  // importam um a um; este cobre a classe.
+  const TEM_PALAVRA = /[\p{L}\p{N}]/u;
   const sem = [];
   const re = /<button\b([^>]*)>([\s\S]{0,60}?)<\/button>/g;
   let m;
   while ((m = re.exec(FONTE))) {
     const [, attrs, corpo] = m;
-    if (!SIMBOLO.test(corpo)) continue;              // tem texto: o texto é o nome
+    if (TEM_PALAVRA.test(corpo)) continue;           // tem texto: o texto é o nome
+    if (!corpo.trim()) continue;                     // vazio: não é botão de símbolo
     if (/aria-label|aria-labelledby/.test(attrs)) continue;
     sem.push((corpo.trim() || '(vazio)') + '  ←  ' + attrs.trim().slice(0, 50));
   }
