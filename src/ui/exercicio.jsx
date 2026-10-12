@@ -82,13 +82,19 @@ function Linha({ i, k, linha, vm, acoes }) {
       ) : (
         <div class="setant">–</div>
       )}
+      {/* A CARGA: botão, e o toque abre o teclado próprio. §6.1 manda próprio
+          aqui, e era o último campo da sessão a abrir o teclado do sistema.
+          Não há placeholder porque não havia: a referência tem UMA casa, que é
+          a coluna ANTERIOR, e ela não some quando ele começa a digitar. */}
       <div class="f">
-        <input
-          type="text" inputmode="decimal" id={`w${i}_${k}`}
-          aria-label={`carga da série ${k + 1}, ${vm.unidade}`}
-          value={linha.valor[0] != null ? linha.valor[0] : ''}
-          onInput={e => acoes.inp(e.currentTarget, i, k, 0)}
-        />
+        <button
+          class={'repbtn' + (linha.valor[0] == null ? ' vazio' : '')}
+          id={`w${i}_${k}`}
+          aria-label={linha.valor[0] != null
+            ? `carga da série ${k + 1}, ${vm.unidade}: ${linha.valor[0]}`
+            : `registrar carga da série ${k + 1}, ${vm.unidade}`}
+          onClick={() => acoes.abreTecladoDeCarga(i, k)}
+        >{linha.valor[0] != null ? linha.valor[0] : '·'}</button>
       </div>
       {/* A REPETIÇÃO: botão e não campo, quando a grandeza é repetição.
           É a decisão 8 do dono — registrar repetição é tocar num número — e o

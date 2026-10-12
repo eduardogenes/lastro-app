@@ -60,7 +60,7 @@ test('a repetição é botão, e o toque abre a régua', async () => {
 
 test('tocar num número registra a série e fecha a régua', async () => {
   const a = await abreCartao();
-  a.digitar('w0_0', 60);
+  a.v('anotaSerie', 0, 0, 0, 60);   // a carga é botão: entra pela porta por valor
   await a.regua(0, 0, 9);
 
   assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), 9, 'a repetição entrou');
@@ -183,7 +183,7 @@ test('tocar de novo no valor escolhido apaga', async () => {
   // de continuar existindo". A régua não tem campo para esvaziar, então o gesto
   // passa a ser o segundo toque — o mesmo desenho do RIR.
   const a = await abreCartao();
-  a.digitar('w0_0', 60);
+  a.v('anotaSerie', 0, 0, 0, 60);   // a carga é botão: entra pela porta por valor
   await a.regua(0, 0, 9);
   assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), 9);
 
@@ -196,7 +196,7 @@ test('tocar de novo no valor escolhido apaga', async () => {
 
 test('o valor registrado aparece escolhido na régua', async () => {
   const a = await abreCartao();
-  a.digitar('w0_0', 60);
+  a.v('anotaSerie', 0, 0, 0, 60);   // a carga é botão: entra pela porta por valor
   await a.regua(0, 0, 9);
 
   a.clicar(a.doc.getElementById('r0_0'));
@@ -226,7 +226,7 @@ test('a porta "outro valor" abre o teclado próprio', async () => {
     'repetição é inteira: a tecla de vírgula não existe, porque tecla que não ' +
     'faz nada é falso sucesso');
 
-  a.digitar('w0_0', 60);
+  a.v('anotaSerie', 0, 0, 0, 60);   // a carga é botão: entra pela porta por valor
   a.clicar(a.$('[data-a="tcl-2"]'));
   await a.esperar();
   a.clicar(a.$('[data-a="tcl-7"]'));

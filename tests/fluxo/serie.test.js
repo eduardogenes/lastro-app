@@ -100,7 +100,7 @@ test('tocar na coluna ANTERIOR registra a série inteira', async () => {
   a.clicar(botao);
   await a.esperar();
 
-  assert.strictEqual(a.doc.getElementById('w0_0').value, '60', 'carga preenchida');
+  assert.strictEqual(a.doc.getElementById('w0_0').textContent, '60', 'carga preenchida');
   // A repetição deixou de ser campo: o valor é o TEXTO do botão que abre a
   // régua. O `id` é o mesmo de propósito, para quem procura o lugar.
   assert.strictEqual(a.doc.getElementById('r0_0').textContent, '8', 'repetição preenchida');
@@ -141,7 +141,9 @@ test('todo controle do cartão de exercício tem nome acessível', async () => {
     'nenhum controle sem nome'
   );
   assert.strictEqual(
-    a.doc.getElementById('w0_0').getAttribute('aria-label'), 'carga da série 1, kg');
+    a.doc.getElementById('w0_0').getAttribute('aria-label'),
+    'registrar carga da série 1, kg',
+    'vazio o botão diz o verbo; preenchido ele diz o valor');
   // O botão da régua diz MAIS do que o campo dizia: vazio ele diz o verbo
   // ("registrar"), porque um botão sem valor não anuncia nada ao ser lido;
   // preenchido ele diz o valor, que é o que o campo ecoava por ser campo.

@@ -52,7 +52,7 @@ test('o teclado FÍSICO digita, e era o único defeito nomeado do próprio', asy
   // notebook "bastante" (P8, P11) e ninguém contou quanto, então o requisito não
   // se justifica por volume: se justifica por não haver razão para não o fazer.
   const a = await abreTeclado();
-  a.digitar('w0_0', 60);
+  a.v('anotaSerie', 0, 0, 0, 60);   // a carga é botão: entra pela porta por valor
   const painel = a.$('.tcl');
 
   const tecla = function (k) {
@@ -134,7 +134,7 @@ test('as teclas que não são dígito têm nome acessível', async () => {
 test('o visor nasce com o valor que já estava, e não do zero', async () => {
   // Corrigir 27 para 28 não deve começar de novo: o texto nasce do registrado.
   const a = await abreTeclado();
-  a.digitar('w0_0', 60);
+  a.v('anotaSerie', 0, 0, 0, 60);   // a carga é botão: entra pela porta por valor
   a.clicar(a.$('[data-a="tcl-2"]'));
   await a.esperar();
   a.clicar(a.$('[data-a="tcl-7"]'));
@@ -154,12 +154,94 @@ test('o pronto fecha, e o que foi digitado fica', async () => {
   // Um estado sem saída é defeito (§7), e o painel abre embaixo da linha: sem o
   // "pronto" a única saída seria tocar noutra coisa.
   const a = await abreTeclado();
-  a.digitar('w0_0', 60);
+  a.v('anotaSerie', 0, 0, 0, 60);   // a carga é botão: entra pela porta por valor
   a.clicar(a.$('[data-a="tcl-3"]'));
   await a.esperar();
   a.clicar(a.$('[data-a="tcl-pronto"]'));
   await a.esperar();
   assert.strictEqual(a.$('.tcl-grade'), null, 'fechou');
   assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), 3, 'e o valor ficou');
+  a.fechar();
+});
+
+// ---------- a CARGA, que é o campo com vírgula ----------
+
+/** Abre o cartão e o teclado da carga da série 1. */
+async function abreCarga() {
+  const a = await app(comHistorico());
+  await a.pronto();
+  a.v('iniciarSessao');
+  await a.esperar();
+  a.v('toggle', 0);
+  await a.esperar();
+  a.clicar(a.doc.getElementById('w0_0'));
+  await a.esperar();
+  assert.ok(a.$('.tcl-grade'), 'pré-condição: o teclado da carga abriu');
+  return a;
+}
+
+test('a carga é botão, e o toque abre o teclado próprio', async () => {
+  // Era o último campo da sessão a abrir o teclado do sistema — o que cobre
+  // metade da tela no meio de uma série. §6.1 manda próprio aqui.
+  const a = await app(comHistorico());
+  await a.pronto();
+  a.v('iniciarSessao');
+  await a.esperar();
+  a.v('toggle', 0);
+  await a.esperar();
+
+  const alvo = a.doc.getElementById('w0_0');
+  assert.strictEqual(alvo.tagName, 'BUTTON', 'a carga deixou de ser campo');
+  a.clicar(alvo);
+  await a.esperar();
+  assert.ok(a.$('.tcl-grade'), 'e o toque abre o teclado próprio');
+  a.fechar();
+});
+
+test('a vírgula existe na carga, e o visor diz a unidade', async () => {
+  const a = await abreCarga();
+  assert.ok(a.$('[data-a="tcl-virgula"]'), 'na carga a vírgula é tecla de verdade');
+  assert.ok(/kg/i.test(a.texto('.tcl-visor')), 'o visor diz de que grandeza é o número');
+  a.fechar();
+});
+
+test('a carga com vírgula entra como número', async () => {
+  // F63: no teclado do iPhone a vírgula é o separador decimal, e um campo
+  // `number` a descarta e entrega vazio. Aqui o teclado digita o próprio
+  // caractere e faz a própria conversão, então o caminho do defeito não existe.
+  const a = await abreCarga();
+  ['2', '2', 'virgula', '5'].forEach(function (t) {
+    a.clicar(a.$('[data-a="tcl-' + t + '"]'));
+  });
+  await a.esperar();
+  assert.ok(a.texto('.tcl-visor').includes('22,5'), 'o visor mostra a vírgula');
+  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[0]'), 22.5,
+    'e o modelo guarda o número, com ponto');
+  a.fechar();
+});
+
+test('a segunda casa decimal não entra', async () => {
+  // O 22,55 que o dedo produz sem querer entraria no histórico que alimenta a
+  // leitura de força, e carga de academia não tem centésimo.
+  const a = await abreCarga();
+  ['2', '2', 'virgula', '5', '5'].forEach(function (t) {
+    a.clicar(a.$('[data-a="tcl-' + t + '"]'));
+  });
+  await a.esperar();
+  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[0]'), 22.5, 'ficou em 22,5');
+  a.fechar();
+});
+
+test('o teclado da carga e a régua não ficam abertos juntos', async () => {
+  const a = await abreCarga();
+  a.clicar(a.doc.getElementById('r0_0'));
+  await a.esperar();
+  assert.ok(a.$('.regua-faixa'), 'a régua abriu');
+  assert.strictEqual(a.$('.tcl-grade'), null, 'e o teclado da carga saiu');
+
+  a.clicar(a.doc.getElementById('w0_0'));
+  await a.esperar();
+  assert.ok(a.$('.tcl-grade'), 'o teclado voltou');
+  assert.strictEqual(a.$('.regua-faixa'), null, 'e agora é a régua que sai');
   a.fechar();
 });

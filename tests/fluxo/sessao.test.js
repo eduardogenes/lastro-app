@@ -56,7 +56,8 @@ test('a sessão aberta não vira referência de si mesma', async () => {
 
   // placeholder da série 2 não pode repetir o que acabou de ser digitado.
   // Vazio é o estado de 'sem referência': a unidade mora no rótulo ao lado.
-  assert.strictEqual(a.doc.getElementById('w0_1').placeholder, '');
+  assert.strictEqual(a.doc.getElementById('w0_1').textContent, '·',
+    'a célula da carga é botão, e vazia mostra o ponto');
   assert.ok(a.texto('.ex.open .lastline').includes('primeira vez'));
   assert.deepStrictEqual(a.vJ('historico', 'A0'), []);
   a.fechar();
@@ -111,7 +112,8 @@ test('trocar de dia no meio do treino não perde nem sobrescreve série', async 
   a.v('go', 'A');
   a.v('toggle', 0);
 
-  assert.strictEqual(a.doc.getElementById('w0_0').value, '40', 'campo deveria voltar preenchido');
+  assert.strictEqual(a.doc.getElementById('w0_0').textContent, '40',
+    'a carga deveria voltar preenchida');
   assert.strictEqual(a.doc.getElementById('r0_2').textContent, '9',
     'a repetição é botão desde a régua, e o valor é o texto dele');
 

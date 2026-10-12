@@ -161,7 +161,10 @@ const TEXTO: Record<string, string> = {
 // depende do registro acima: é a §6.1 escrita como asserção, e é ela que sobra
 // se alguém reescrever o registro sem ler a tabela.
 const NUMERO: Record<string, 'decimal' | 'numeric'> = {
-  'src/ui/exercicio.jsx · w*_*': 'decimal',        // carga da série
+  // A CARGA DA SÉRIE SAIU DAQUI, e é o veredito da §6.1 sendo cumprido: ela é
+  // teclado PRÓPRIO, não "do sistema com painel decimal". O campo virou botão
+  // que abre o teclado de doze teclas, então não há `inputmode` a cobrar — e a
+  // linha sai do registro em vez de mentir sobre um campo que não existe.
   'src/ui/exercicio.jsx · r*_*': 'numeric',        // repetições da série
   'src/ui/exercicio.jsx · q*': 'decimal',        // quantidade de alimento
   'src/ui/instrumento/edicao.jsx · fw*': 'decimal',   // carga na lista rápida da aula

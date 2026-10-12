@@ -1974,6 +1974,7 @@ const ACOES = {
   andaRegua: function (dir) { andaRegua(dir); },
   poeRep: function (i, k, v) { poeRep(i, k, v); },
   abreOutroValor: function () { abreOutroValor(); },
+  abreTecladoDeCarga: function (i, k) { abreTecladoDeCarga(i, k); },
   tecla: function (t) { teclaDoTeclado(t); },
   fechaTeclado: function () { fechaTeclado(); },
   abreFoto: function (i) { abreFoto(i); },
@@ -4564,6 +4565,27 @@ function teclaDoTeclado(t) {
 }
 
 function fechaTeclado() { view.teclado = null; render(); }
+
+/**
+ * O teclado da CARGA, aberto pelo botão da célula.
+ *
+ * §6.1: a carga da série é teclado PRÓPRIO. Era o último campo da sessão a abrir
+ * o teclado do sistema — o que cobre metade da tela no meio de uma série, que é
+ * a razão escrita no fonte desde que o RIR virou botão.
+ *
+ * O texto nasce do valor registrado, e `fmtNum` não entra aqui: o visor mostra o
+ * que foi DIGITADO, com vírgula, e quem converte é `anotaSerie`.
+ */
+function abreTecladoDeCarga(i, k) {
+  const aberto = view.teclado && view.teclado.i === i && view.teclado.k === k &&
+                 view.teclado.pos === 0;
+  if (aberto) { view.teclado = null; render(); return; }
+  const dr = draftPeek(i);
+  const v = dr && dr.s[k] ? dr.s[k][0] : null;
+  view.regua = null; view.rir = null;
+  view.teclado = { i: i, k: k, pos: 0, texto: v != null ? String(v).replace('.', ',') : '' };
+  render();
+}
 
 function abreRir(i, k) {
   const aberto = view.rir && view.rir.i === i && view.rir.k === k;

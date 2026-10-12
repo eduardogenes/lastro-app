@@ -446,8 +446,12 @@ test('cada série tem carga, repetição e RIR, com o anterior ao lado', async (
   const antes = a.$$('.ex.open .setrow .setant').map(x => x.textContent.trim());
   assert.deepStrictEqual(antes, ['55 × 10 @ 2', '55 × 9 @ 1', '55 × 8 @ 0']);
 
-  // e os campos ficam limpos: a referência tem uma casa só, e é a coluna
-  assert.strictEqual(a.doc.getElementById('w0_0').placeholder, '');
+  // e as células ficam limpas: a referência tem uma casa só, e é a coluna.
+  // A carga virou BOTÃO (teclado próprio), então não há placeholder a esvaziar —
+  // o que se cobra é que a célula vazia mostre o ponto, e não a última carga.
+  const carga = a.doc.getElementById('w0_0');
+  assert.ok(!carga.hasAttribute('placeholder'), 'botão não tem placeholder a herdar');
+  assert.strictEqual(carga.textContent, '·', 'vazia é vazia: a referência é a coluna');
   a.fechar();
 });
 
@@ -538,8 +542,18 @@ test('o RIR vazio não desenha fio: o ponto já ocupa o lugar', async () => {
   const rir = a.doc.getElementById('q0_0');
   assert.ok(rir.className.includes('vazio'));
   assert.strictEqual(st(rir).boxShadow, '', 'sem linha de escrita: não é campo de texto');
-  assert.strictEqual(a.doc.getElementById('w0_0').tagName, 'INPUT',
-    'os vizinhos continuam campos, e esses sim precisam da linha');
+  // REESCRITO: a asserção dizia "os vizinhos continuam campos, e esses sim
+  // precisam da linha" — e eles deixaram de ser campos. A régua trocou a
+  // repetição por botão e o teclado próprio trocou a carga; a linha da série
+  // inteira é de botões agora, e nenhum deles desenha fio de escrita.
+  //
+  // O contraste que o caso media mudou de lugar, não desapareceu: quem ainda é
+  // campo é a MEDIDA de exercício cronometrado, e é lá que o fio tem sentido.
+  ['w0_0', 'r0_0'].forEach(function (id) {
+    const el = a.doc.getElementById(id);
+    assert.strictEqual(el.tagName, 'BUTTON', id + ' deixou de ser campo');
+    assert.strictEqual(st(el).boxShadow, '', id + ' não desenha fio de escrita');
+  });
   a.fechar();
 });
 
@@ -866,7 +880,7 @@ const TABELAS_DE_ACAO = {
             // estes os quatro toques possíveis nela.
             'abreRegua', 'andaRegua', 'poeRep', 'abreOutroValor',
             // O teclado próprio, que a porta "outro valor" abre.
-            'tecla', 'fechaTeclado'],
+            'tecla', 'fechaTeclado', 'abreTecladoDeCarga'],
   acoesDia: ['subir', 'descer', 'menos', 'mais', 'trocar', 'remover', 'escolheTroca',
              'fechaTroca', 'desfaz', 'pronto'],
   acoesRapido: ['abre', 'inp'],

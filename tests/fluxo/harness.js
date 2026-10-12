@@ -377,11 +377,11 @@ function abrirApp(opcoes) {
     /**
      * Preenche a série `k` do exercício `i`.
      *
-     * A CARGA entra pelo campo, porque carga ainda é campo. A REPETIÇÃO entra
-     * pela porta POR VALOR (`anotaSerie`), porque ela deixou de ser campo: a
-     * régua da frente 2 a transformou em botão, e `digitar` num botão escreve
-     * `.value` num nó que não tem `.value` — não estouraria, e a série
-     * simplesmente não seria registrada. Falha silenciosa em 90 casos.
+     * As DUAS entram pela porta POR VALOR (`anotaSerie`), porque nenhuma das
+     * duas é campo: a régua transformou a repetição em botão e o teclado próprio
+     * fez o mesmo com a carga. `digitar` num botão escreve `.value` num nó que
+     * não tem `.value` — não estouraria, e a série simplesmente não seria
+     * registrada. Falha silenciosa em 90 casos, na primeira das duas trocas.
      *
      * Usar o modelo aqui é o desenho do modelo, não um atalho: `anotaSerie`
      * existe com a razão escrita de que "nenhum teste conseguia registrar uma
@@ -389,7 +389,7 @@ function abrirApp(opcoes) {
      * que tocam nos botões dela.
      */
     preencher: function (i, k, peso, reps) {
-      if (peso !== null && peso !== undefined) app.digitar('w' + i + '_' + k, peso);
+      if (peso !== null && peso !== undefined) app.v('anotaSerie', i, k, 0, peso);
       if (reps !== null && reps !== undefined) app.v('anotaSerie', i, k, 1, reps);
     },
     /**
@@ -431,6 +431,16 @@ function abrirApp(opcoes) {
     digitar: function (id, valor) {
       const el = d.getElementById(id);
       if (!el) throw new Error('campo ' + id + ' não existe na tela');
+      // Escrever `.value` num botão não estoura: o nó aceita a propriedade e
+      // ninguém a lê. A linha do caso fica MORTA e verde, que é o pior resultado
+      // possível. Aconteceu de verdade quando a régua trocou a repetição por
+      // botão, e de novo quando o teclado próprio trocou a carga — nos dois
+      // casos a série simplesmente não era registrada.
+      if (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA' && el.tagName !== 'SELECT') {
+        throw new Error('o ' + id + ' é um <' + el.tagName.toLowerCase() + '>, não um campo: ' +
+          'digitar nele não faz nada. Se o controle virou botão, use o toque dele ' +
+          '(a régua, o teclado próprio) ou a porta por valor do modelo.');
+      }
       el.value = String(valor);
       el.dispatchEvent(new w.Event('input', { bubbles: true }));
       return el;
