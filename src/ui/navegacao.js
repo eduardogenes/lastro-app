@@ -56,11 +56,17 @@ export function camadasAbertas(view) {
   // fica por cima. Ele não é `view.sessao` — esse é o DETALHE de uma sessão
   // passada, e a frente 1 apontou que confundir os dois era o erro provável.
   if (view.modoSessao) c.push('modoSessao');
-  if (view.hist) c.push('hist');
+
   if (view.sessao) c.push('sessao');
   if (view.add) c.push('add');
   if (view.retro) c.push('retro');
   if (view.prog) c.push('prog');
+  // O HISTÓRICO fica ACIMA do programa, e isto mudou quando a Prescrição ganhou
+  // a porta do histórico em cada linha do programa (achado 1 da frente 1):
+  // abrindo de lá, ele é a camada de cima, e o Voltar tem de devolver o
+  // programa — não o lugar. Antes a ordem era a inversa, e com os dois abertos
+  // o programa ganhava e o histórico não aparecia.
+  if (view.hist) c.push('hist');
   if (view.comparar) c.push('comparar');
   if (view.protocolo) c.push('protocolo');
   if (view.ajuste) c.push('ajuste');

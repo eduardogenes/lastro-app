@@ -2308,11 +2308,15 @@ function telaCheia() {
   if (view.ajuste) return <AjusteFoto ctx={CTX} />;
   if (view.protocolo) return <Protocolo ctx={CTX} />;
   if (view.comparar) return <Comparar ctx={CTX} />;
-  if (view.prog) return <Programa ctx={CTX} />;
+
   if (view.retro) return <Retrospectiva ctx={CTX} />;
   if (view.add) return <Retroativo ctx={CTX} />;
   if (view.sessao) return <Sessao ctx={CTX} />;
+  // O histórico ANTES do programa: `telaCheia` desenha o primeiro que casa, e
+  // quem casa primeiro está por cima. Abrindo o histórico de dentro do programa
+  // — que é a porta nova da Prescrição —, ele é a camada de cima.
   if (view.hist) return <Historico ctx={CTX} />;
+  if (view.prog) return <Programa ctx={CTX} />;
   // O modo é o ÚLTIMO: camada mais funda, tudo que se abre de dentro dele fica
   // por cima. A ordem aqui é a inversa da pilha de `camadasAbertas`.
   if (view.modoSessao) return <SessaoModo ctx={CTX} />;
@@ -8218,6 +8222,25 @@ CTX.fechaAjustes = function () {
  * casa vazia — é o que faz as catorze lerem como presença e ausência em vez de
  * um gráfico de zero e um.
  */
+/**
+ * O histórico de um exercício, a partir de uma linha do PROGRAMA.
+ *
+ * A porta que o achado 1 da frente 1 pede. `openHist(i)` indexa pelo
+ * `view.day`, e no editor de programa o dia é o de `view.prog` — podia ser
+ * outro. Aqui o dia vem explícito, e `view.day` o acompanha porque é dele que a
+ * tela do histórico lê a prescrição da posição.
+ *
+ * As QUATRO capacidades que moravam só no cartão do exercício chegam por aqui:
+ * o gráfico do "estou ficando mais forte nisto", a correção de uma série de
+ * semanas atrás, o renome do exercício e o tipo de carga. Com a aba de treino
+ * fora, o cartão só existe dentro do modo — e corrigir a série de três semanas
+ * atrás não é tarefa de quem está treinando.
+ */
+CTX.abreHistoricoDaPrescricao = function (dia, i) {
+  view.day = dia;
+  openHist(i);
+};
+
 CTX.quatorzeDias = function () {
   const hoje = hojeISO();
   const porData = {};

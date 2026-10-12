@@ -189,6 +189,23 @@ export function Prescricao({ ctx }) {
 
       {modo === 'programa' && <>
 
+      {/* A PORTA DO PROGRAMA. A §1.5 lista "o programa dele e a rotação" como
+          posse de Prescrição, e ela não tinha porta para o editor: as duas que
+          existiam eram a tela do treino (hoje dentro do modo) e o painel de
+          volume da Semana, que leva lá quando o volume sai do alvo. Nenhuma das
+          duas é "quero mexer no meu programa" — uma é no meio do treino, a outra
+          é consequência de um número.
+          Ele fica no topo do chip porque é a ação do lugar; o que vem abaixo é
+          referência. */}
+      <Secao primeira>
+        <button class="ins-btn-primary" data-a="abre-programa"
+                onClick={ctx.abrePrograma}>abrir o programa</button>
+        <Procedencia>
+          o que o treinador prescreveu, o que você mudou, e o histórico de cada
+          mudança com o motivo
+        </Procedencia>
+      </Secao>
+
       {/* A FILA DAS MUDANÇAS QUE ESPERAM, e ela vem antes da referência de
           propósito: aqui há decisão pendente, e abaixo há consulta. A lei 1 do
           sistema é "e agora?" antes de "como está?".

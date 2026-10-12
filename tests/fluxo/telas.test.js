@@ -683,20 +683,31 @@ test('a prescrição e a máquina do app são LUGARES diferentes', async () => {
   a.fechar();
 });
 
-test('a porta do programa some do guia, e as outras duas ficam', async () => {
-  // `abrir o programa` existia em TREINO, DADOS e GUIA. A do guia era a
-  // terceira, e a única embrulhada num parágrafo explicando o que ela faz.
+test('as portas do programa são três, e cada uma responde outra pergunta', async () => {
+  // Reescrito. Ele dizia "a porta do programa some do GUIA, e as outras duas
+  // ficam": `abrir o programa` existia em TREINO, DADOS e GUIA, e a do guia era
+  // a terceira — a única embrulhada num parágrafo explicando o que ela faz.
+  //
+  // A reestruturação mudou o mapa. As três que existem agora não são
+  // redundância: cada uma responde outra pergunta, e é por isso que elas podem
+  // conviver.
+  //
+  //   PRESCRIÇÃO · "quero mexer no meu programa" — a porta do lugar que o POSSUI
+  //                (§1.5), e a que faltava;
+  //   a SESSÃO   · "preciso mudar isto agora, de pé" — contexto do treino;
+  //   SEMANA     · "o volume saiu do alvo do treinador" — consequência de um
+  //                número, e a porta leva ao lugar de consertar.
   const abre = a => a.$$('button').filter(function (b) {
     return /abrir o programa/.test(b.textContent);
   }).length;
 
-  const a = await app();
-  a.aba('prescricao');
+  const a = await app({ aba: 'prescricao' });
   await a.esperar();
-  assert.strictEqual(abre(a), 0, 'não há porta para o programa na prescrição');
+  assert.strictEqual(abre(a), 1, 'a Prescrição tem a porta do dono');
+
   a.aba('ajustes');
   await a.esperar();
-  assert.strictEqual(abre(a), 0, 'nem nos ajustes');
+  assert.strictEqual(abre(a), 0, 'os Ajustes não: lá não há decisão de treino');
 
   a.aba('treino');
   await a.pintar();

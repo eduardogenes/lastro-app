@@ -3,6 +3,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { app } from './harness.js';
+import { camadasAbertas } from '../../src/ui/navegacao.js';
 
 async function noPrograma(d) {
   const a = await app();
@@ -399,5 +400,86 @@ test('ctx.restauraPrograma sem diferença nenhuma não pergunta e não mexe', as
   assert.strictEqual(JSON.stringify(a.S().prog), antes, 'e não mexeu no programa');
   assert.strictEqual(a.toast(), 'Seu programa já é o do treinador.', 'só diz que não havia o que fazer');
   assert.deepStrictEqual(a.S().progLog || [], [], 'nem registrou o que não aconteceu');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// O ACHADO 1: as quatro capacidades do cartão do exercício ganham porta
+// ---------------------------------------------------------------------------
+//
+// Com a aba de treino fora, o cartão do exercício só existe DENTRO do modo — e
+// quatro coisas moravam só nele, sem segunda porta: o gráfico do "estou ficando
+// mais forte nisto", a correção de uma série de semanas atrás, o renome do
+// exercício e o tipo de carga.
+//
+// A perda não apareceria no dia: apareceria quando ele fosse corrigir. E
+// corrigir a série de três semanas atrás não é tarefa de quem está treinando.
+
+test('a Prescrição abre o programa — o lugar que o possui tem a porta', async () => {
+  // A §1.5 lista "o programa dele e a rotação" como posse de Prescrição, e as
+  // duas portas que existiam eram a tela do treino (hoje dentro do modo) e o
+  // painel de volume da Semana. Nenhuma das duas é "quero mexer no meu
+  // programa": uma é no meio do treino, a outra é consequência de um número.
+  const a = await app({ aba: 'prescricao' });
+  await a.esperar();
+
+  const porta = a.$('[data-a="abre-programa"]');
+  assert.ok(porta, 'a porta está no chip do programa');
+  porta.click();
+  await a.esperar(60);
+  assert.ok(a.vista().prog, 'e abre o editor');
+  a.fechar();
+});
+
+test('cada linha do programa abre o histórico daquele exercício', async () => {
+  const a = await app({ aba: 'prescricao' });
+  await a.esperar();
+  a.clicar('[data-a="abre-programa"]');
+  await a.esperar(60);
+  a.v('abrirPrograma', 'B');            // abre o dia B no editor
+  await a.esperar(60);
+
+  const portas = a.$$('[data-a="hist-prescricao"]');
+  assert.ok(portas.length > 0, 'as linhas têm a porta do histórico');
+  assert.ok(portas[0].getAttribute('aria-label'),
+    'com nome acessível: "histórico" sozinho não diz de quê');
+
+  portas[0].click();
+  await a.esperar(60);
+  assert.ok(a.vista().hist, 'abriu o histórico');
+  assert.strictEqual(a.vista().hist.day, 'B',
+    'do dia que a LINHA mostra, e não do último dia visitado');
+  a.fechar();
+});
+
+test('o histórico abre POR CIMA do programa, e o Voltar devolve o programa', async () => {
+  // A ordem das camadas mudou para isto, e o caso é o que a segura: abrindo de
+  // dentro do programa, o histórico é a camada de cima. Com a ordem antiga o
+  // programa ganhava e o histórico simplesmente não aparecia.
+  const a = await app({ aba: 'prescricao' });
+  await a.esperar();
+  a.clicar('[data-a="abre-programa"]');
+  await a.esperar(60);
+  a.v('abrirPrograma', 'B');            // abre o dia B no editor
+  await a.esperar(60);
+  a.clicar('[data-a="hist-prescricao"]');
+  await a.esperar(60);
+
+  assert.deepStrictEqual(camadasAbertas(a.vista()), ['prog', 'hist'],
+    'o histórico é a camada de CIMA');
+  // `.hwrap` NÃO serve de prova: o editor de programa usa a mesma classe de
+  // corpo, e com a ordem invertida o caso ficava verde desenhando a tela errada.
+  // Quem distingue é o título — o do histórico é o nome do exercício.
+  const titulo = a.texto('.tc-titulo');
+  assert.ok(!/[Pp]rograma/.test(titulo),
+    'e é o histórico que está desenhado, não o programa: ' + titulo);
+  assert.ok(a.$('.hgraf') || a.$('.hvazio') || /registrad|sessão/i.test(
+    a.doc.getElementById('app').textContent),
+    'com o conteúdo do histórico na tela');
+
+  a.window.history.back();
+  await a.esperar(80);
+  assert.strictEqual(a.vista().hist, null, 'o Voltar fechou o histórico');
+  assert.ok(a.vista().prog, 'e devolveu o programa, não o lugar');
   a.fechar();
 });
