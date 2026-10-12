@@ -107,6 +107,63 @@ test('os cinco LUGARES da shell renderizam, e nenhum é a sessão', async () => 
   a.fechar();
 });
 
+test('todo chip de um lugar abre, e não só os que algum caso visita', async () => {
+  // Este caso nasce de um defeito que a suíte inteira deixou passar, e o modo
+  // de falha é o que importa guardar.
+  //
+  // Na reescrita dos cinco lugares eu renomeei o estado do seletor de
+  // Prescrição de `aba` para `modo` e deixei QUATRO referências a `aba` dentro
+  // dos ramos — `{aba === 'plano' && …}`, `{aba === 'alimentos' && …}`,
+  // `{aba === 'compras' && …}`. Em JSX isso é `ReferenceError` no render: dois
+  // dos quatro chips de Prescrição quebravam a tela.
+  //
+  // E a suíte ficou VERDE com 1256 casos, porque o estouro acontece dentro do
+  // rerender que a mudança de estado agenda, cai como `unhandled rejection` e
+  // o Vitest só o conta no rodapé — com o aviso literal "this might cause
+  // false positive tests". Nenhum caso clicava naqueles dois chips.
+  //
+  // Então a asserção não é "a tela tem conteúdo": é **o chip ficou ligado**.
+  // Render que estoura não comita o DOM, e a classe `on` não chega — é o sinal
+  // que distingue "abriu" de "não abriu" sem depender de saber o que cada chip
+  // desenha.
+  const a = await app({ aba: 'agora' });
+  let vistos = 0;
+  const chips = function () {
+    return a.$$('.ins-chips button').map(function (b) { return b.textContent; });
+  };
+  const chip = function (rot) {
+    return a.$$('.ins-chips button').filter(function (b) { return b.textContent === rot; })[0];
+  };
+  for (const t of ['agora', 'dias', 'corpo', 'semana', 'prescricao']) {
+    a.aba(t);
+    await a.esperar();
+    // Varredura por PONTO FIXO, e não sobre uma lista tirada antes: há grupo de
+    // chip DENTRO de ramo, então abrir um chip muda quais chips existem. Minha
+    // primeira versão lia os rótulos uma vez e estourava no chip que o clique
+    // anterior tinha tirado da tela. Visitar enquanto houver não visitado cobre
+    // os aninhados também, que é o que "toda porta abre" quer dizer.
+    const visitados = new Set();
+    for (let volta = 0; volta < 40; volta++) {
+      const falta = chips().filter(function (r) { return !visitados.has(r); });
+      if (!falta.length) break;
+      const rot = falta[0];
+      visitados.add(rot);
+      a.clicar(chip(rot));
+      // Esperar é parte da asserção: o Preact agenda o rerender, e sem isto o
+      // caso só aprovaria o chip que já estava ligado.
+      await a.esperar();
+      const depois = chip(rot);
+      assert.ok(depois && depois.className.includes('on'),
+        'o chip "' + rot + '" de ' + t + ' não ligou: o render estourou');
+      assert.ok(a.doc.getElementById('app').innerHTML.length > 600,
+        'o chip "' + rot + '" de ' + t + ' deixou o lugar vazio');
+      vistos++;
+    }
+  }
+  assert.ok(vistos >= 4, 'achei só ' + vistos + ' chips nos cinco lugares: o leitor quebrou');
+  a.fechar();
+});
+
 test('o app abre no AGORA, não na sessão', async () => {
   // O harness abre na tela do treino porque quase todo caso desta pasta é sobre
   // ela. O padrão de verdade é o AGORA: é o que responde "e agora?" ao acordar.

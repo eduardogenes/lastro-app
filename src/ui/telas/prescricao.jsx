@@ -369,26 +369,24 @@ export function Prescricao({ ctx }) {
       </>}
 
       {modo === 'comida' && <>
-      {aba === 'plano' && (
-        <Secao rotulo="refeições" nota="a edição vale para todo dia">
-          <div class="ins-lista">
-            {plano.map(r => (
-              <button key={r.id} class="ins-linha" onClick={() => ctx.editaRefeicao(r.id)}>
-                <span class="ins-linha-n">
-                  <span class="ins-linha-t">{r.n}</span>
-                  <span class="ins-linha-s">
-                    {r.t} · {r.quando === 'sempre' ? 'todo dia'
-                      : r.quando === 'treino' ? 'só em dia de treino' : 'só em dia de alta'}
-                    {' · '}{r.itens.length} {r.itens.length === 1 ? 'item' : 'itens'}
-                  </span>
+      <Secao rotulo="refeições" nota="a edição vale para todo dia">
+        <div class="ins-lista">
+          {plano.map(r => (
+            <button key={r.id} class="ins-linha" onClick={() => ctx.editaRefeicao(r.id)}>
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">{r.n}</span>
+                <span class="ins-linha-s">
+                  {r.t} · {r.quando === 'sempre' ? 'todo dia'
+                    : r.quando === 'treino' ? 'só em dia de treino' : 'só em dia de alta'}
+                  {' · '}{r.itens.length} {r.itens.length === 1 ? 'item' : 'itens'}
                 </span>
-                <span class="ins-linha-v">{r.kcal} kcal</span>
-              </button>
-            ))}
-          </div>
-          <button class="ins-btn-add" onClick={ctx.novaRefeicao}>+ adicionar refeição</button>
-        </Secao>
-      )}
+              </span>
+              <span class="ins-linha-v">{r.kcal} kcal</span>
+            </button>
+          ))}
+        </div>
+        <button class="ins-btn-add" onClick={ctx.novaRefeicao}>+ adicionar refeição</button>
+      </Secao>
 
       {/* O que o plano soma. DOIS totais e não um: pré-treino e treino só
           entram em dia de treino, então um número só estaria errado metade da
@@ -397,41 +395,35 @@ export function Prescricao({ ctx }) {
           Fecha a tela também no sentido literal: sem isto o plano acabava no
           botão tracejado e sobravam 220px de vazio até a tab bar, enquanto toda
           outra tela do app termina a 29px dela. */}
-      {aba === 'plano' && (
-        <Secao rotulo="o dia fecha em" nota={resumo.refeicoes + ' refeições no plano'}>
-          <GradeMetricas
-            colunas={2}
-            celulas={[
-              { k: 't', rotulo: 'dia de treino', valor: resumo.treino.kcal, nota: resumo.treino.macros },
-              { k: 'd', rotulo: 'dia sem treino', valor: resumo.descanso.kcal, nota: resumo.descanso.macros }
-            ]}
-          />
-          <Procedencia>
-            somado do plano, não do que foi comido — o registrado do dia fica em HOJE
-          </Procedencia>
-        </Secao>
-      )}
+      <Secao rotulo="o dia fecha em" nota={resumo.refeicoes + ' refeições no plano'}>
+        <GradeMetricas
+          colunas={2}
+          celulas={[
+            { k: 't', rotulo: 'dia de treino', valor: resumo.treino.kcal, nota: resumo.treino.macros },
+            { k: 'd', rotulo: 'dia sem treino', valor: resumo.descanso.kcal, nota: resumo.descanso.macros }
+          ]}
+        />
+        <Procedencia>
+          somado do plano, não do que foi comido — o registrado do dia fica em HOJE
+        </Procedencia>
+      </Secao>
       </>}
 
       {modo === 'alimentos' && <>
-      {aba === 'alimentos' && (
-        <Secao rotulo="biblioteca" nota="o que você cadastrou aparece em ácido">
-          <input
-            class="ins-input" type="search" inputmode="search"
-            placeholder="buscar alimento" value={busca}
-            onInput={e => setBusca(e.currentTarget.value)}
-          />
-          <div class="cm-espaco" />
-          <button class="ins-btn-add" onClick={ctx.novoAlimento}>+ cadastrar alimento</button>
-          <div class="cm-espaco" />
-          <Biblioteca ctx={ctx} busca={busca} />
-        </Secao>
-      )}
-      {aba === 'compras' && (
-        <Secao rotulo="lista" nota="derivada do plano · nada aqui é digitado">
-          <Compras ctx={ctx} />
-        </Secao>
-      )}
+      <Secao rotulo="biblioteca" nota="o que você cadastrou aparece em ácido">
+        <input
+          class="ins-input" type="search" inputmode="search"
+          placeholder="buscar alimento" value={busca}
+          onInput={e => setBusca(e.currentTarget.value)}
+        />
+        <div class="cm-espaco" />
+        <button class="ins-btn-add" onClick={ctx.novoAlimento}>+ cadastrar alimento</button>
+        <div class="cm-espaco" />
+        <Biblioteca ctx={ctx} busca={busca} />
+      </Secao>
+      <Secao rotulo="lista" nota="derivada do plano · nada aqui é digitado">
+        <Compras ctx={ctx} />
+      </Secao>
       </>}
 
       {modo === 'semana' && <>
