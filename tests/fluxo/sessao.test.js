@@ -112,7 +112,8 @@ test('trocar de dia no meio do treino não perde nem sobrescreve série', async 
   a.v('toggle', 0);
 
   assert.strictEqual(a.doc.getElementById('w0_0').value, '40', 'campo deveria voltar preenchido');
-  assert.strictEqual(a.doc.getElementById('r0_2').value, '9');
+  assert.strictEqual(a.doc.getElementById('r0_2').textContent, '9',
+    'a repetição é botão desde a régua, e o valor é o texto dele');
 
   a.preencher(0, 0, 45, 10);
   assert.strictEqual(a.log('A',0)[0].sets.filter(Boolean).length, 3, 'as outras séries continuam');

@@ -374,9 +374,59 @@ function abrirApp(opcoes) {
     esperar: function (ms) { return new Promise(function (r) { setTimeout(r, ms == null ? 20 : ms); }); },
 
     /** preenche uma série; null em qualquer campo deixa o campo intocado */
+    /**
+     * Preenche a série `k` do exercício `i`.
+     *
+     * A CARGA entra pelo campo, porque carga ainda é campo. A REPETIÇÃO entra
+     * pela porta POR VALOR (`anotaSerie`), porque ela deixou de ser campo: a
+     * régua da frente 2 a transformou em botão, e `digitar` num botão escreve
+     * `.value` num nó que não tem `.value` — não estouraria, e a série
+     * simplesmente não seria registrada. Falha silenciosa em 90 casos.
+     *
+     * Usar o modelo aqui é o desenho do modelo, não um atalho: `anotaSerie`
+     * existe com a razão escrita de que "nenhum teste conseguia registrar uma
+     * série sem a tela de hoje". Quem exercita a RÉGUA são os casos da régua,
+     * que tocam nos botões dela.
+     */
     preencher: function (i, k, peso, reps) {
       if (peso !== null && peso !== undefined) app.digitar('w' + i + '_' + k, peso);
-      if (reps !== null && reps !== undefined) app.digitar('r' + i + '_' + k, reps);
+      if (reps !== null && reps !== undefined) app.v('anotaSerie', i, k, 1, reps);
+    },
+    /**
+     * Registra `v` repetições na série `k` do exercício `i` TOCANDO na régua.
+     *
+     * Abre a régua, anda até a página em que `v` aparece e toca no número — o
+     * caminho do dedo, e não a porta do modelo. É o que `preencher` deixou de
+     * fazer: lá a repetição entra por `anotaSerie` porque os casos de lá são
+     * sobre outra coisa; aqui o assunto é a régua.
+     *
+     * Estoura se não alcançar, e isso é de propósito: o domínio promete no
+     * máximo três toques, e um caso que não alcança é a promessa quebrada.
+     */
+    regua: async function (i, k, v) {
+      const abre = d.getElementById('r' + i + '_' + k);
+      if (!abre) throw new Error('não há botão de repetição em r' + i + '_' + k);
+      if (!d.querySelector('[data-a="regua-' + v + '"]')) {
+        app.clicar(abre);
+        await app.esperar();
+      }
+      for (let volta = 0; volta < 6; volta++) {
+        const alvo = d.querySelector('[data-a="regua-' + v + '"]');
+        if (alvo) { app.clicar(alvo); await app.esperar(); return volta; }
+        const visiveis = Array.from(d.querySelectorAll('[data-a^="regua-"]'))
+          .map(function (b) { return Number(String(b.getAttribute('data-a')).slice(6)); })
+          .filter(function (n) { return Number.isFinite(n); });
+        if (!visiveis.length) throw new Error('a régua não está aberta em r' + i + '_' + k);
+        const dir = v < Math.min.apply(null, visiveis) ? 'menos' : 'mais';
+        const seta = d.querySelector('[data-a="regua-' + dir + '"]');
+        if (!seta) {
+          throw new Error('a régua não alcança ' + v + ': ela mostra ' + visiveis.join(', ') +
+            ' e não há seta para ' + dir);
+        }
+        app.clicar(seta);
+        await app.esperar();
+      }
+      throw new Error('a régua não chegou a ' + v + ' em seis voltas');
     },
     digitar: function (id, valor) {
       const el = d.getElementById(id);

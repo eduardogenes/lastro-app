@@ -12,7 +12,9 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { regua, pagina, anda, escolhiveis, SLOTS, TETO_DE_VALORES } from '../../src/dominio/regua.js';
+import {
+  regua, pagina, anda, escolhiveis, faixaDoTexto, SLOTS, TETO_DE_VALORES
+} from '../../src/dominio/regua.js';
 import type { Faixa } from '../../src/dominio/regua.js';
 
 test('a régua abre mais para cima do que para baixo', () => {
@@ -212,4 +214,33 @@ test('os vizinhos da referência também custam um toque', () => {
   assert.strictEqual(custo.get(13), 1);
   assert.strictEqual(custo.get(15), 1);
   assert.ok(custo.get(10)! <= 2, 'o 10 custa ' + custo.get(10));
+});
+
+// ---------- a faixa, lida do texto do programa ----------
+
+test('a faixa prescrita é lida com meia-risca, que é o que o programa usa', () => {
+  // O programa real escreve `'6–10'` com meia-risca (conferi `programa.ts`), e
+  // quem digita à mão escreve hífen. Ler só o hífen deixaria a régua sem faixa
+  // nos 48 exercícios do programa — e sem reprovar, porque régua sem faixa
+  // funciona: ela só fica estreita demais, em silêncio.
+  assert.deepStrictEqual(faixaDoTexto('6–10'), [6, 10]);
+  assert.deepStrictEqual(faixaDoTexto('8-12'), [8, 12]);
+  assert.deepStrictEqual(faixaDoTexto('12 – 20'), [12, 20]);
+  assert.deepStrictEqual(faixaDoTexto('10'), [10, 10], 'número sozinho é faixa de um valor');
+  assert.deepStrictEqual(faixaDoTexto('15—25'), [15, 25], 'travessão também');
+});
+
+test('sem faixa é ausência, e não faixa de zero', () => {
+  // Exercício medido por tempo ou metro tem `r: ''`, e aí a régua é a vizinhança
+  // da referência e nada mais.
+  assert.strictEqual(faixaDoTexto(''), null);
+  assert.strictEqual(faixaDoTexto(null), null);
+  assert.strictEqual(faixaDoTexto(undefined), null);
+  assert.strictEqual(faixaDoTexto('livre'), null);
+  assert.strictEqual(faixaDoTexto('0'), null, 'zero repetição não prescreve nada');
+});
+
+test('a faixa fora de ordem é lida na ordem certa', () => {
+  assert.deepStrictEqual(faixaDoTexto('12–8'), [8, 12],
+    'quem digita invertido não merece régua vazia');
 });

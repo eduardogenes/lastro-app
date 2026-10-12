@@ -65,16 +65,18 @@ test('apagar o campo rearma o disparo daquela série, e só dela', async () => {
   a.v('stopTimer');
 
   // mexer de novo na MESMA série não redispara
-  a.digitar('r0_0', 9);
-  await a.esperar();
+  await a.regua(0, 0, 9);
   assert.ok(!a.E("document.getElementById('timer').classList.contains('on')"),
     'corrigir a repetição não redispara o descanso');
 
-  // esvaziar e completar de novo dispara
-  a.digitar('r0_0', '');
-  await a.esperar();
-  a.digitar('r0_0', 8);
-  await a.esperar();
+  // REESCRITO: o gesto de apagar mudou de forma, não de existência. O campo
+  // apagava com `''`; a régua não tem campo para esvaziar, então apagar é tocar
+  // DE NOVO no valor que já está lá — o mesmo desenho do RIR, que o app já fazia
+  // assim. O comportamento que este caso protege é o outro, e ele não mudou:
+  // apagar REARMA o disparo daquela série.
+  await a.regua(0, 0, 9);                       // o mesmo valor: apaga
+  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), null, 'a repetição saiu');
+  await a.regua(0, 0, 8);
   assert.ok(a.E("document.getElementById('timer').classList.contains('on')"),
     'completar de novo depois de apagar dispara');
   a.fechar();
@@ -99,7 +101,9 @@ test('tocar na coluna ANTERIOR registra a série inteira', async () => {
   await a.esperar();
 
   assert.strictEqual(a.doc.getElementById('w0_0').value, '60', 'carga preenchida');
-  assert.strictEqual(a.doc.getElementById('r0_0').value, '8', 'repetição preenchida');
+  // A repetição deixou de ser campo: o valor é o TEXTO do botão que abre a
+  // régua. O `id` é o mesmo de propósito, para quem procura o lugar.
+  assert.strictEqual(a.doc.getElementById('r0_0').textContent, '8', 'repetição preenchida');
   const log = a.log('A', 0);
   assert.deepStrictEqual(log[log.length - 1].sets[0], [60, 8], 'a série entrou no histórico');
   assert.ok(a.E("document.getElementById('timer').classList.contains('on')"),
@@ -138,8 +142,16 @@ test('todo controle do cartão de exercício tem nome acessível', async () => {
   );
   assert.strictEqual(
     a.doc.getElementById('w0_0').getAttribute('aria-label'), 'carga da série 1, kg');
+  // O botão da régua diz MAIS do que o campo dizia: vazio ele diz o verbo
+  // ("registrar"), porque um botão sem valor não anuncia nada ao ser lido;
+  // preenchido ele diz o valor, que é o que o campo ecoava por ser campo.
   assert.strictEqual(
-    a.doc.getElementById('r0_0').getAttribute('aria-label'), 'repetições da série 1');
+    a.doc.getElementById('r0_0').getAttribute('aria-label'),
+    'registrar repetições da série 1');
+  await a.regua(0, 0, 8);
+  assert.strictEqual(
+    a.doc.getElementById('r0_0').getAttribute('aria-label'),
+    'repetições da série 1: 8');
   a.fechar();
 });
 
@@ -230,11 +242,10 @@ test('corrigir uma série depois de reabrir o app não inicia descanso', async (
   assert.strictEqual(b.E('S.sessao && S.sessao.day'), 'A', 'a sessão continua aberta');
   b.E('toggle(0)');
   await b.esperar();
-  assert.strictEqual(b.doc.getElementById('r0_0').value, '9',
+  assert.strictEqual(b.doc.getElementById('r0_0').textContent, '9',
     'a série registrada antes de fechar está na tela');
 
-  b.digitar('r0_0', 8);
-  await b.esperar();
+  await b.regua(0, 0, 8);
   assert.ok(!b.E("document.getElementById('timer').classList.contains('on')"),
     'corrigir 9 para 8 não começa descanso para uma série que acabou há quinze minutos');
   const log = b.log('A', 0);

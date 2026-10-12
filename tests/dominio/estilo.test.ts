@@ -604,6 +604,44 @@ test('o alvo do tick cresce só na vertical', () => {
   assert.match(alvo, /inset:\s*-[\d.]+px\s+0(?![\d.])/, 'o segundo valor tem que ser 0');
 });
 
+test('a régua toma o gesto horizontal, em vez de disputá-lo', () => {
+  // R1 da frente 2, e o precedente está logo acima: a barra deslizante declara
+  // `touch-action: none` com a mesma razão. A raiz do app diz `pan-x pan-y` —
+  // "o gesto desta página é rolar" —, e num contêiner que role na horizontal
+  // qualquer deslocamento do dedo durante o toque vira pan: o `click` não
+  // dispara, e o toque é ENGOLIDO. É a causa 2 da §1.2.
+  //
+  // A régua de hoje não rola (a janela mostra só os slots da página), então a
+  // declaração é cinto além do suspensório. Ela fica porque é de graça e porque
+  // é o que impede que uma mudança de layout devolva o arrasto em silêncio.
+  const comp = trechoDeComponente(fonte('src/ui/instrumento/regua.jsx'), 'Regua');
+  const faixa = comp.match(/<div class="([a-z-]+)" role="group"/);
+  assert.ok(faixa, 'a faixa da régua mudou de forma: o caso tem de mudar junto');
+  const r = regras(css(), '.' + faixa![1]);
+  assert.match(r, /display:\s*flex/, 'os valores ficam em LINHA, que é a premissa de R1 e R3');
+  assert.match(r, /touch-action:\s*pan-y/,
+    'sem isto, um arrasto horizontal volta a competir com o toque');
+});
+
+test('o alvo da régua cresce só na vertical, e tem 46px', () => {
+  // Mesma geometria e mesmo risco do tick, e aqui vale com mais força: o vizinho
+  // horizontal é a repetição seguinte, e erro de alvo tem tolerância ZERO na
+  // medição A da frente 2. Então `inset: -Npx 0`, com o segundo valor em zero, e
+  // nunca o contrário.
+  //
+  // E 46px porque a régua é o primeiro nome da lista de "controle repetido" da
+  // §8.2 da frente 4 — o `.rirop` vizinho ainda está em 44, e isso é da passada
+  // dela, não desta.
+  const comp = trechoDeComponente(fonte('src/ui/instrumento/regua.jsx'), 'Regua');
+  const valor = comp.match(/class=\{'([a-z-]+)' \+ \(s\.naFaixa/);
+  assert.ok(valor, 'o botão de valor da régua mudou de forma');
+  const alvo = regras(css(), '.' + valor![1] + '::after');
+  assert.ok(alvo, '.' + valor![1] + '::after perdeu a área de toque estendida');
+  assert.match(alvo, /inset:\s*-[\d.]+px\s+0(?![\d.])/, 'o segundo valor tem que ser 0');
+  assert.match(regras(css(), '.' + valor![1]), /min-height:\s*4[6-9]px|min-height:\s*5\dpx/,
+    'o alvo visível não pode ficar abaixo de 46px');
+});
+
 test('o toast é anunciado por leitor de tela', () => {
   const html = indexHtml();
   const m = html.match(/<div id="toast"[^>]*>/);

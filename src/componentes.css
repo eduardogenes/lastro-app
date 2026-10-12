@@ -1649,3 +1649,54 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
   margin-top: var(--ins-6); padding-top: var(--ins-5);
   border-top: 1px solid var(--ins-fio); color: var(--ins-tinta-2);
 }
+
+/* ---- A régua de repetições ---------------------------------------------- */
+/* O painel abre embaixo da linha da série e fecha na escolha — o molde é o da
+   escala de RIR. Aqui o desenho PODE crescer, porque é painel e não linha de
+   lista: 46 px é o alvo que a §8.2 pede para controle repetido, e a régua é o
+   primeiro nome da lista dela. */
+.regua { margin: 0 0 var(--ins-3); }
+.regua-faixa {
+  display: flex; gap: var(--ins-2);
+  /* R1 da frente 2. Não há contêiner rolável aqui — a janela mostra só os
+     slots da página —, então não existe pan horizontal para o toque virar.
+     A declaração fica de graça: se um dia o layout voltar a rolar na
+     horizontal, o arrasto não volta junto sem alguém mexer nesta linha. */
+  touch-action: pan-y;
+}
+.regua-v, .regua-anda {
+  flex: 1; min-height: 46px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  background: transparent; color: var(--ins-tinta-2);
+  border: 1px solid var(--ins-fio-controle);
+  font: 500 var(--ins-n-m)/1 var(--ins-fonte);
+  font-variant-numeric: tabular-nums;
+}
+/* O alvo cresce só na VERTICAL, e nunca para o lado: o vizinho horizontal é a
+   repetição seguinte, e crescer para o lado faria um toque na borda registrar o
+   número errado. É a mesma restrição do `.ins-tick`, e aqui ela vale com mais
+   força — erro de alvo na régua tem tolerância zero na medição. */
+.regua-v::after, .regua-anda::after { content: ""; position: absolute; inset: -4px 0; }
+.regua-v:active, .regua-anda:active { background: var(--ins-superficie-2); }
+/* Dentro da faixa prescrita: fio mais firme, sem cor de estado. A faixa é
+   referência do treinador, não escolha dele. */
+.regua-v.na-faixa { border-color: var(--ins-fio-controle); color: var(--ins-tinta); }
+.regua-v.on {
+  background: var(--ins-acento); color: var(--ins-sobre-acento);
+  border-color: var(--ins-acento);
+}
+.regua-anda { color: var(--ins-tinta-3); font-size: 18px; }
+.regua-marca {
+  position: absolute; left: 0; right: 0; bottom: 2px;
+  font: 400 8px/1 var(--ins-fonte);
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ins-tinta-3);
+}
+.regua-v.on .regua-marca { color: var(--ins-sobre-acento); opacity: .8; }
+.regua-outro {
+  display: block; margin-top: var(--ins-2);
+  background: transparent; border: 0; padding: var(--ins-2) 0;
+  font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3);
+  text-decoration: underline; text-underline-offset: 3px;
+}

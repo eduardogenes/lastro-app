@@ -1,4 +1,5 @@
 import { Fragment } from 'preact';
+import { Regua } from './instrumento/regua.jsx';
 
 // O nome por extenso de cada medida, para o `aria-label` do campo. Os campos
 // não têm rótulo visível — quem rotula é o cabeçalho, que é desenho e não
@@ -88,13 +89,32 @@ function Linha({ i, k, linha, vm, acoes }) {
           onInput={e => acoes.inp(e.currentTarget, i, k, 0)}
         />
       </div>
+      {/* A REPETIÇÃO: botão e não campo, quando a grandeza é repetição.
+          É a decisão 8 do dono — registrar repetição é tocar num número — e o
+          que o toque abre é a régua, embaixo da linha. O campo continua nos
+          exercícios medidos por tempo, metro ou caloria: 500 m não cabe numa
+          régua de onze valores.
+          A porta "outro valor" devolve o campo nesta mesma célula, e é por isso
+          que o `id` é o mesmo nos dois desenhos: quem corrige pelo campo
+          continua achando o lugar. */}
       <div class="f">
-        <input
-          type="text" inputmode="numeric" id={`r${i}_${k}`}
-          aria-label={`${unidade} da série ${k + 1}`}
-          value={linha.valor[1] != null ? linha.valor[1] : ''}
-          onInput={e => acoes.inp(e.currentTarget, i, k, 1)}
-        />
+        {vm.temRegua && !linha.reguaOutro ? (
+          <button
+            class={'repbtn' + (linha.valor[1] == null ? ' vazio' : '')}
+            id={`r${i}_${k}`}
+            aria-label={linha.valor[1] != null
+              ? `${unidade} da série ${k + 1}: ${linha.valor[1]}`
+              : `registrar ${unidade} da série ${k + 1}`}
+            onClick={() => acoes.abreRegua(i, k)}
+          >{linha.valor[1] != null ? linha.valor[1] : '·'}</button>
+        ) : (
+          <input
+            type="text" inputmode="numeric" id={`r${i}_${k}`}
+            aria-label={`${unidade} da série ${k + 1}`}
+            value={linha.valor[1] != null ? linha.valor[1] : ''}
+            onInput={e => acoes.inp(e.currentTarget, i, k, 1)}
+          />
+        )}
       </div>
       {/* Botão e não campo: um dígito não vale abrir o teclado numérico, que
           cobre metade da tela no meio da série. */}
@@ -388,6 +408,17 @@ export function Exercicio({ vm, acoes }) {
         {vm.linhas.map((linha, k) => (
           <Fragment key={k}>
             <Linha i={i} k={k} linha={linha} vm={vm} acoes={acoes} />
+            {linha.regua && (
+              <Regua
+                slots={linha.regua.slots}
+                valor={linha.valor[1]}
+                marca={linha.regua.marca}
+                rotulo={`repetições da série ${k + 1}`}
+                aoEscolher={v => acoes.poeRep(i, k, v)}
+                aoAndar={dir => acoes.andaRegua(dir)}
+                aoOutro={() => acoes.abreOutroValor()}
+              />
+            )}
             {linha.rirAberto && <EscalaRir i={i} k={k} linha={linha} acoes={acoes} />}
           </Fragment>
         ))}

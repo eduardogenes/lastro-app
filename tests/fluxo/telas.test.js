@@ -861,7 +861,10 @@ const TABELAS_DE_ACAO = {
   acoesEx: ['toggle', 'inp', 'startTimer', 'proximoDoBiset', 'setAlt', 'toggleSwap',
             'abrirSubstituicao', 'pularEx', 'openHist', 'toggleAq', 'abrirCarga', 'setCarga',
             'abrirMedida', 'setUnidade', 'setQ', 'abrirNota', 'obsIn', 'toggleDor', 'abreRir',
-            'abreFoto', 'poeRir', 'usaAnterior'],
+            'abreFoto', 'poeRir', 'usaAnterior',
+            // A régua da frente 2: o campo de repetição virou botão, e são
+            // estes os quatro toques possíveis nela.
+            'abreRegua', 'andaRegua', 'poeRep', 'abreOutroValor'],
   acoesDia: ['subir', 'descer', 'menos', 'mais', 'trocar', 'remover', 'escolheTroca',
              'fechaTroca', 'desfaz', 'pronto'],
   acoesRapido: ['abre', 'inp'],

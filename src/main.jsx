@@ -22,6 +22,7 @@ import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
 import { quandoAquelaVolta, venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
+import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
@@ -1798,6 +1799,12 @@ function vmExercicio(d, i, ex) {
       // não havia histórico: o campo mostrava "kg" com um "KG" grudado na
       // direita. Sem histórico, o campo fica vazio e só a unidade fala.
       rirAberto: !!(view.rir && view.rir.i === i && view.rir.k === k),
+      // A RÉGUA da linha. Montada aqui, no modelo de apresentação, e a página é
+      // função do foco — é o R4 da frente 2: não há `scrollLeft` guardado para
+      // um re-render perder. Reconstruir com o mesmo foco dá a mesma página.
+      regua: reguaDaLinha(i, k, ex, p),
+      // A porta "outro valor", aberta: a régua sai e o campo volta nesta linha.
+      reguaOutro: !!(view.regua && view.regua.i === i && view.regua.k === k && view.regua.outro),
       rirEscala: RIR_ESCALA.map(function (v) { return { v: v, on: (dr && dr.s[k]) ? dr.s[k][2] === v : false }; }),
       // Não há placeholder nos campos: a referência tem UMA casa, e é a coluna
       // ANTERIOR. Ela diz as três coisas numa linha só e, ao contrário do
@@ -1835,6 +1842,10 @@ function vmExercicio(d, i, ex) {
     // RIR é linguagem de hipertrofia. Numa aula de box eram 25 botões sem
     // sentido na tela, um por linha de série.
     temRir: !seg,
+    // A RÉGUA é de REPETIÇÃO. Em metro, caloria ou segundo o valor não é um
+    // número curto de faixa conhecida — 500 m não cabe numa régua de onze
+    // valores —, e ali o campo continua sendo o certo.
+    temRegua: !seg,
     // Aproximação é preparo para carga pesada. Num remo ou numa corrida a
     // frase "2 a 3 séries subindo carga antes da primeira valendo" é ruído.
     unidadeRotulo: un ? ROTULO_UNIDADE[un] : '',
@@ -1955,6 +1966,10 @@ const ACOES = {
   obsIn: function (el, i) { obsIn(el, i); },
   toggleDor: function (i, k) { toggleDor(i, k); },
   abreRir: function (i, k) { abreRir(i, k); },
+  abreRegua: function (i, k) { abreRegua(i, k); },
+  andaRegua: function (dir) { andaRegua(dir); },
+  poeRep: function (i, k, v) { poeRep(i, k, v); },
+  abreOutroValor: function () { abreOutroValor(); },
   abreFoto: function (i) { abreFoto(i); },
   poeRir: function (i, k, v) { poeRir(i, k, v); },
   usaAnterior: function (i, k) { usaAnterior(i, k); }
@@ -3930,6 +3945,13 @@ function toggle(i){
   const abrindo = view.open !== i;
   view.open = abrindo ? i : null;
   view.swapOpen = null; view.nota = null; view.carga = null; view.medida = null;
+  // A RÉGUA e a escala de RIR também fecham. Para a régua isso é requisito — o
+  // R5 da frente 2 proíbe posição que sobreviva à desmontagem, "se guardar, a
+  // próxima montagem herda a janela de uma sessão que acabou" —, e sem isto o
+  // toque seguinte no botão ALTERNAVA para fechado em vez de abrir, porque
+  // `view.regua` continuava apontando a mesma série. A escala de RIR entra na
+  // mesma linha: ela já devia fechar e não fechava.
+  view.regua = null; view.rir = null;
   render();
   if (abrindo) mostraExercicio(i);
 }
@@ -4415,6 +4437,99 @@ async function apagaFoto() {
 // esconde as opções até abrir. Aqui a faixa aparece embaixo da própria linha,
 // mostra tudo de uma vez, e o segundo toque grava e fecha.
 const RIR_ESCALA = [0, 1, 2, 3, 4];
+
+/**
+ * A régua da série `k`, quando ela está aberta — e `null` quando não está.
+ *
+ * A REFERÊNCIA é o que ele fez nesta MESMA série da última vez. Sem histórico
+ * não há "última vez": aí a régua abre na base da faixa prescrita, que é onde o
+ * treinador manda recomeçar (F95, "recomeçar perto da base"), e a marca não
+ * aparece — dizer "última" sobre um número que ele nunca fez seria inventar.
+ */
+function reguaDaLinha(i, k, ex, anterior) {
+  const r = view.regua;
+  if (!r || r.i !== i || r.k !== k || r.outro) return null;
+  const fx = faixaDoTexto(ex.r);
+  const tem = !!(anterior && anterior[1] != null);
+  const ref = tem ? anterior[1] : (fx ? fx[0] : 10);
+  const reg = regua(ref, fx);
+  return {
+    slots: pagina(reg, r.foco != null ? r.foco : ref),
+    marca: tem ? 'última' : null,
+    referencia: ref
+  };
+}
+
+/**
+ * Abre ou fecha a régua da série.
+ *
+ * O foco nasce do valor já registrado, ou da referência — **sempre recalculado
+ * na abertura, nunca herdado**. É o R5 da frente 2: posição que sobrevive à
+ * desmontagem faz a próxima montagem herdar a janela de uma sessão que acabou.
+ */
+function abreRegua(i, k) {
+  const aberta = view.regua && view.regua.i === i && view.regua.k === k;
+  if (aberta) { view.regua = null; render(); return; }
+  const dr = draftPeek(i);
+  const v = dr && dr.s[k] ? dr.s[k][1] : null;
+  view.rir = null;                      // uma coisa aberta por vez embaixo da linha
+  view.regua = { i: i, k: k, foco: v != null ? v : null, outro: false };
+  render();
+}
+
+/** Anda a janela da régua: uma JANELA por toque, e o domínio explica por quê. */
+function andaRegua(dir) {
+  const r = view.regua;
+  if (!r) return;
+  const ex = treino(view.day).ex[r.i];
+  if (!ex) return;
+  const fx = faixaDoTexto(ex.r);
+  const p = lastSet(logKey(view.day, r.i), r.k);
+  const tem = !!(p && p[1] != null);
+  const ref = tem ? p[1] : (fx ? fx[0] : 10);
+  const reg = regua(ref, fx);
+  view.regua = Object.assign({}, r, { foco: anda(reg, r.foco != null ? r.foco : ref, dir) });
+  render();
+}
+
+/**
+ * O toque num número da régua: grava e fecha.
+ *
+ * Grava por `anotaSerie`, que é a porta POR VALOR — e com ela vêm de graça o
+ * cronômetro de descanso, o avanço de exercício e o anúncio da série (R6), que
+ * é justamente o que a régua tira do campo ao substituí-lo.
+ *
+ * **Tocar de novo no valor que já está lá APAGA.** O campo apagava com `''`, e
+ * `anotaSerie` diz por escrito que isso "é o gesto de 'digitei errado' e tem de
+ * continuar existindo" — a régua não tem campo para esvaziar, então o gesto
+ * passa a ser o segundo toque. É o mesmo desenho do RIR, que já faz assim com a
+ * razão escrita: "sem isso um toque errado não teria volta".
+ *
+ * E apagar REARMA o disparo do descanso daquela série, porque ela deixou de
+ * estar registrada — comportamento que o campo tinha e que não pode sair junto
+ * com ele.
+ */
+function poeRep(i, k, v) {
+  const dr = draftPeek(i);
+  const atual = dr && dr.s[k] ? dr.s[k][1] : null;
+  view.regua = null;
+  anotaSerie(i, k, 1, atual === v ? '' : v);
+  render();
+}
+
+/**
+ * A porta "outro valor": a repetição que não está na régua.
+ *
+ * §6.1 manda teclado PRÓPRIO aqui, e ele não existe ainda. Até existir, a porta
+ * revela o campo com o teclado numérico do sistema — **desvio declarado**. O
+ * caminho é raro por construção: a régua carrega a vizinhança da última vez e a
+ * faixa do treinador inteira.
+ */
+function abreOutroValor() {
+  if (!view.regua) return;
+  view.regua = Object.assign({}, view.regua, { outro: true });
+  render();
+}
 
 function abreRir(i, k) {
   const aberto = view.rir && view.rir.i === i && view.rir.k === k;

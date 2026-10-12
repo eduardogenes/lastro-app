@@ -211,3 +211,23 @@ export function anda(r: Regua, foco: number, dir: -1 | 1, slots: number = SLOTS)
 export function escolhiveis(slots: readonly Slot[]): number[] {
   return slots.filter(s => s.tipo === 'valor').map(s => (s as { v: number }).v);
 }
+
+/**
+ * A faixa prescrita, lida do texto do programa.
+ *
+ * `ex.r` é TEXTO de propósito — "é texto para ler ('6–10')", diz o comentário do
+ * tipo — e no programa real ele vem sempre com **meia-risca**, não hífen:
+ * `'6–10'`, `'10–15'`, `'12–20'`. Quem escreve à mão digita hífen, então os dois
+ * valem. Um número sozinho é faixa de um valor; vazio é ausência de faixa, que é
+ * o que exercício medido por tempo ou metro tem.
+ */
+export function faixaDoTexto(r: string | null | undefined): Faixa | null {
+  if (!r) return null;
+  const partes = String(r).split(/[–—-]/).map(t => t.trim()).filter(t => t !== '');
+  if (!partes.length) return null;
+  const nums = partes.map(t => Number(t));
+  if (nums.some(n => !Number.isFinite(n) || n <= 0)) return null;
+  const lo = Math.min(...nums);
+  const hi = Math.max(...nums);
+  return [Math.round(lo), Math.round(hi)] as Faixa;
+}
