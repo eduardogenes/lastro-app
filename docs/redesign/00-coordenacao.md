@@ -2373,7 +2373,52 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - **a bancada e a superfície de conflito** (achado 9) não têm lugar, e a frente
   declarou isso.
 
-- [ ] **6.v O reponte das expressões compostas** — 400 entradas de ponte (325
+- [x] **6.v Encerrar o treino INFORMA** (`b6fd506`) — requisito do §9.2 da frente
+      2, e ele nomeia o dano: "a mudança some da vista dele no mesmo instante em
+      que o app passa a guardá-la — e 'guardado em silêncio' é tão ruim quanto
+      'descartado em silêncio'". Era o buraco que sobrava da D1: eu tirei a
+      pergunta e enfileirei, mas o Agora só falava da mudança na manhã em que ela
+      vencia — **uma rotação inteira de invisibilidade**.
+      **Duas frentes pediram coisas diferentes, e a reconciliação está declarada
+      no verbo:** a linha PERSISTE enquanto algo espera e MUDA DE PALAVRA no dia
+      em que vence. O "uma vez" da frente 1 lê como **uma linha** e não uma lista.
+      **Uma propriedade minha virou de lado:** eu havia escrito um caso afirmando
+      que o Agora **se cala** quando nada vence hoje.
+
+- [x] **6.w A guarda do nome acessível para de envelhecer** (`ac1f383`) — o §8 da
+      frente 2 chama o acesso de **portão**. A guarda enumerava os símbolos
+      conhecidos, e **eu acrescentei dois que não estavam na lista** (o `⚙` dos
+      Ajustes e o `‹` da saída do modo). Lista de símbolos é inventário, e
+      inventário envelhece. A pergunta certa é a inversa: o conteúdo visível tem
+      alguma **letra ou dígito**?
+      **E uma conferência contra o §8.1:** os 178 svg mudos eram dos HTML das
+      **direções**, não do app. O app tem **três**, e o único que precisa de nome
+      já o tem, com o número dentro — o padrão de ouro que o parecer nomeia.
+
+- [x] **6.x O modelo de pôr um dia em dia** (`449dd7f`) — a metade de modelo da
+      folha do §4, com as cinco decisões dele de 06/10 (três passaram, duas
+      caíram). **O quinto botão, "Não comi", é o que destrava o portão:** declarar
+      com um toque produz dia **contado** em vez de silêncio, e silêncio não conta
+      para o 11 em 14. Até aqui `'nao'` existia no domínio e não tinha porta.
+      **Dois defeitos meus, os dois achados pela rede:** eu sugeria "tudo" para
+      toda linha sem marca **inclusive num dia já gravado**, e o dia não convergia;
+      e inventei uma marca `'vazia'` para TIRAR a refeição do registro, que o chão
+      **não permite** — `poeComidaNoDia` completa e não substitui, e a frente 2
+      escreveu que a folha "não pode" oferecer limpar. Especifiquei comportamento
+      que a função não permite, que é exatamente a disciplina que aquela seção
+      manda seguir. O limite virou caso.
+
+- [ ] **6.y A FOLHA de pôr o dia em dia** — a tela. O modelo está provado; falta
+      o desenho da frente 2 (§4.2 a §4.5): cinco botões por linha, a frase de
+      leitura de volta com `aria-live="polite"` dizendo as sete refeições, o "por
+      vir" na própria linha, sem "Cancelar", e a porta em Dias.
+
+- [ ] **6.z A régua de repetições** (§1 da frente 2, "o item mais caro"). Sete
+      requisitos escritos, e **a medição A é de aparelho** — se ela reprovar, três
+      opções sobem à mesa dele. A régua é a escolha dele; os sete requisitos são
+      o conserto.
+
+- [ ] **6.v' O reponte das expressões compostas** — 400 entradas de ponte (325
       `a.E`, 75 `a.J`) em 36 arquivos. **Medido e declarado como higiene:** elas
       alcançam o MODELO e não nomes de tela, e sobreviveram à troca dos cinco
       lugares sem um vermelho. O valor é a estabilidade do contrato, não a
