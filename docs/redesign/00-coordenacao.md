@@ -2428,6 +2428,61 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       primeiro toque o dia está gravado, porque não existe lote.
       Nove mutações, nove vermelhas.
 
+- [x] **6.w' A série guardada é anunciada, com o valor dentro** (`23e773e`) — R6
+      dos sete requisitos da régua (§1.3 da frente 2). A confirmação visual já
+      era boa — `voa()` leva o valor até a tabela —; faltava a metade auditiva,
+      e nenhuma chamada de `toast` é da gravação de série. O campo ecoava o
+      valor **por ser campo**, o que deixa de valer no dia em que a régua
+      substituir o campo: é dívida que vence junto com 6.z.
+      Região própria e invisível (`#serie-dita`, `role="status"`), e não o
+      toast: 48 toasts por semana competindo com o cronômetro de descanso — que
+      começa no mesmo instante — seriam ruído. `.ins-so-leitor` esconde com
+      `clip-path: inset(50%)` e **nunca** `display: none`, porque o que sai da
+      árvore de acessibilidade não é lido.
+
+- [x] **6.x' O teclado misto, campo por campo, e o portão do `inputmode`**
+      (`4d98c96`) — §6 da frente 2. **A tabela do §6.1 tem vinte linhas e eu
+      conferi uma por uma contra o fonte: as linhas "do sistema" estão todas
+      honradas, e não havia conserto a fazer.** Os dez campos de número têm o
+      painel que ela manda (carga `decimal`, repetições `numeric`, hora do
+      retroativo `numeric`, os cinco da bioimpedância `decimal`), e os de texto
+      — busca, nome, motivo, nota — são texto porque é isso que a tabela manda.
+      As linhas "próprio" dependem do teclado de doze teclas, que não existe e
+      nasce com a régua (6.z): até lá a lista rápida da aula segue no do
+      sistema, que é o certo provisório.
+      **O que faltava era portão.** Campo numérico novo nascia sem `inputmode`,
+      abria o teclado alfabético e nada ficava vermelho — custa um toque a mais
+      por campo, de pé, e passa na revisão porque a tela parece certa. A
+      assinatura seria o lugar ("a assinatura não permite omitir a escolha",
+      §8) e o primitivo existe — `Campo` recebe `modo` —, mas `modo` é opcional
+      e sem padrão, e o `tsc` não vê `.jsx` (`checkJs: false`; o casco migra na
+      fase 3). Então quem cobra é fonte: quatro casos, quatro mutações, quatro
+      vermelhas, incluindo o sentido inverso (linha declarada que não tem mais
+      campo).
+      **Dois erros meus na medição, e os dois viraram parte do analisador:**
+      `<input[^>]*>` para no `=>` do `onInput`, e minha primeira varredura só
+      não errou por sorte de ordem dos atributos — agora a tag fecha contando
+      chaves; e `inputMode` em camelCase acusou os cinco campos de
+      bioimpedância de falta, e eu quase "consertei" campo certo.
+
+- [x] **6.y' Dois chips da Prescrição voltam a renderizar** (`e22bde8`) —
+      **defeito meu da reescrita dos cinco lugares** (`9e6a04b`): o seletor da
+      tela virou `modo` e sobraram quatro referências a `aba` dentro dos ramos,
+      que em JSX é `ReferenceError` no render. Comida e alimentos derrubavam a
+      tela inteira, não a seção.
+      **E a suíte ficou verde com 1256 casos.** O estouro acontece no rerender
+      que a mudança de estado agenda, cai como promessa não tratada e o Vitest
+      só o conta no rodapé — com o aviso literal "this might cause false
+      positive tests". Nenhum caso clicava naqueles dois chips. Eu achei porque
+      o rodapé de uma rodada trouxe "Errors 2 errors" onde eu esperava limpo:
+      **vale ler o rodapé, não só a contagem.**
+      O caso que fecha o buraco varre os chips dos cinco lugares por **ponto
+      fixo** — abrir um chip muda quais chips existem, e a primeira versão
+      estourou clicando num rótulo que o clique anterior tinha tirado da tela —
+      e cobra a classe `on` em vez de "a tela tem conteúdo": render que estoura
+      não comita o DOM. Reintroduzi a referência e ele ficou vermelho nomeando
+      o chip e o lugar.
+
 - [ ] **6.z A régua de repetições** (§1 da frente 2, "o item mais caro"). Sete
       requisitos escritos, e **a medição A é de aparelho** — se ela reprovar, três
       opções sobem à mesa dele. A régua é a escolha dele; os sete requisitos são
