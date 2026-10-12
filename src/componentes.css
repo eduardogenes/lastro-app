@@ -1624,3 +1624,28 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 .ms-item { align-items: flex-start; }
 .ms-item .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-2); }
 .ms-detalhe { display: block; }
+
+/* ---- A folha de pôr o dia em dia -------------------------------------- */
+/*
+   Cada refeição é um bloco com hora, nome, procedência e as cinco marcas. O
+   bloco da SUGESTÃO se distingue do declarado por mais que cor — a palavra
+   "marcada pelo horário" está na própria linha —, e o fio da esquerda é o
+   reforço visual, nunca o único sinal.
+*/
+.pd-linha { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-fio); }
+.pd-linha:last-child { border-bottom: 0; }
+.pd-linha.sugerida { border-left: 2px solid var(--ins-fio); padding-left: var(--ins-5); }
+.pd-topo { display: flex; align-items: baseline; gap: var(--ins-4); }
+.pd-hora { flex: 0 0 auto; }
+.pd-proc, .pd-resumo { margin-top: var(--ins-2); }
+/* As cinco marcas quebram linha em tela estreita: cinco alvos de 46px não cabem
+   em 382px, e encolhê-los abaixo do token seria trocar o alvo pela aparência. */
+.pd-marcas { display: flex; flex-wrap: wrap; gap: var(--ins-3); margin-top: var(--ins-4); }
+.pd-marca { min-height: var(--ins-tap); }
+.pd-porcao { margin-top: var(--ins-4); }
+.pd-regua { margin-top: var(--ins-3); }
+/* A frase é região viva, e fica depois das linhas: ela diz o que foi gravado. */
+.pd-frase {
+  margin-top: var(--ins-6); padding-top: var(--ins-5);
+  border-top: 1px solid var(--ins-fio); color: var(--ins-tinta-2);
+}

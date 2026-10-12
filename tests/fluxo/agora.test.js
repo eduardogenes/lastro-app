@@ -1381,3 +1381,145 @@ test('o dia mudo é inalcançável PELA FOLHA, e o chão é quem guarda isso', a
   }
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// A FOLHA de pôr o dia em dia — a tela
+// ---------------------------------------------------------------------------
+
+test('Dias lista os dias e abre a folha de pôr em dia', async () => {
+  // Dias é "o LUGAR" da folha (§1.2), e o que o lugar oferece é a lista do que
+  // aconteceu com a porta para corrigir cada dia. Os dias SEM registro aparecem
+  // também: um dia sem registro é o caso de uso inteiro da peça.
+  const agora = agoraEstavel(9, 0);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+  await a.esperar();
+
+  const dias = a.vJ('ctx.diasDeComidaFechados');
+  assert.strictEqual(dias.length, 14, 'catorze dias, a mesma janela do portão');
+  assert.ok(dias.every(function (d) { return d.tem === false; }), 'nenhum tem registro ainda');
+  assert.ok(dias.every(function (d) { return d.txt === 'sem registro'; }),
+    'e a tela diz isso, em vez de um zero que seria nota');
+
+  const porta = a.$('[data-a="poe-' + dias[0].data + '"]');
+  assert.ok(porta, 'cada dia é uma porta');
+  porta.click();
+  await a.esperar(60);
+  assert.ok(a.$('.pd-linhas'), 'a folha abriu');
+  a.fechar();
+});
+
+test('a folha oferece as CINCO marcas por linha, e "Não comi" é uma delas', async () => {
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 5);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+  a.v('ctx.abrePoeODia', data);
+  await a.esperar(60);
+
+  const marcas = a.$$('[data-a^="marca-almoco-"]').map(function (b) { return b.textContent; });
+  assert.deepStrictEqual(marcas, ['Tudo', 'Metade', 'Fora', 'Não sei', 'Não comi'],
+    'as cinco, e o quinto é o que destrava o portão');
+  // `aria-pressed` e não só a classe: o estado de um chip tem de chegar a quem
+  // usa leitor de tela.
+  const ligado = a.$$('[data-a^="marca-almoco-"]').filter(function (b) {
+    return b.getAttribute('aria-pressed') === 'true';
+  });
+  assert.strictEqual(ligado.length, 1, 'uma marca ligada por linha');
+  assert.strictEqual(ligado[0].textContent, 'Tudo', 'e a sugestão é "tudo"');
+  a.fechar();
+});
+
+test('a folha diz que nada está gravado, e nomeia a CAUSA da marca', async () => {
+  // Decisão 5 do dono: a última refeição continua pré-marcada por passagem de
+  // horário. O que paga essa decisão é palavra — o texto nomeia a causa da marca
+  // em vez de nomear a marca, porque a folha aberta às 22h sugere que ele já
+  // tomou a ceia e um toque grava a sugestão inteira.
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 5);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+  a.v('ctx.abrePoeODia', data);
+  await a.esperar(60);
+
+  const txt = a.$('.ins-folha').textContent;
+  assert.ok(/nada aqui está registrado até você tocar/.test(txt), txt.slice(0, 200));
+  assert.ok(/pelo horário do plano, não porque o app sabe/.test(txt),
+    'nomeia a CAUSA da marca');
+  // E a procedência linha por linha, em palavra: a distinção entre sugerido e
+  // declarado não pode ser só de cor (1.4.1).
+  assert.ok(a.$$('.pd-proc').length >= 4, 'cada linha carrega a procedência dela');
+  assert.ok(/marcada pelo horário/.test(a.texto('.pd-proc')), a.texto('.pd-proc'));
+  a.fechar();
+});
+
+test('a frase de leitura de volta diz as SETE, e é região viva', async () => {
+  // Se um toque grava sete refeições, a tela tem de dizer as sete — com as
+  // palavras que foram gravadas. O nó é `aria-live="polite"` porque a gravação
+  // acontece no toque: sem região viva, quem usa leitor de tela não ouve nada.
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 5);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+  a.v('ctx.abrePoeODia', data);
+  await a.esperar(60);
+
+  const frase = a.$('.pd-frase');
+  assert.ok(frase, 'a frase está na tela');
+  assert.strictEqual(frase.getAttribute('aria-live'), 'polite');
+  assert.match(frase.textContent, /nada gravado ainda/,
+    'antes do toque ela não diz "gravado": ' + frase.textContent);
+
+  a.clicar('[data-a="marca-jantar-nao"]');
+  await a.esperar(80);
+  const depois = a.$('.pd-frase').textContent;
+  assert.match(depois, /^Gravado:/, depois);
+  assert.ok(/não comi em jantar/.test(depois), 'com as palavras do botão: ' + depois);
+  assert.ok(/tudo em /.test(depois), 'e o resto do dia, que o mesmo toque gravou: ' + depois);
+  a.fechar();
+});
+
+test('a porção acima de 1 se alcança pela folha, sem abrir folha nova', async () => {
+  // Decisão 3, e a restrição de camada: folhas empilham três níveis e esta é
+  // nível 1 — a régua abre DENTRO dela. "Na quarta ninguém mais sabe o que
+  // fechar leva de volta para onde."
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 5);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+  a.v('ctx.abrePoeODia', data);
+  await a.esperar(60);
+  assert.strictEqual(a.vista().pilha.length, 1, 'pré-condição: uma folha só');
+
+  a.clicar('[data-a="porcao-almoco"]');
+  await a.esperar(60);
+  assert.ok(a.$('.pd-regua'), 'a régua abriu');
+  assert.strictEqual(a.vista().pilha.length, 1, 'e DENTRO da folha: nada de nível 2');
+  assert.strictEqual(a.$$('.pd-regua .ins-chip').length, 5, 'os cinco valores');
+
+  a.clicar('[data-a="porcao-almoco-1.5"]');
+  await a.esperar(80);
+  const h = a.S().comidaHist.filter(function (x) { return x.d === data; })[0];
+  assert.strictEqual(h.escala.almoco, 1.5, 'uma vez e meia o almoço, num dia passado');
+  a.fechar();
+});
+
+test('a folha não tem "Cancelar", e fechar sem tocar não grava', async () => {
+  // Fechar sem tocar não grava nada — e se ele tocou, o dia está gravado e
+  // fechar não desfaz: não existe lote. Oferecer um cancelar que não cancela é
+  // falso, e por isso ele não existe.
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 5);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+  a.v('ctx.abrePoeODia', data);
+  await a.esperar(60);
+
+  const cancelar = a.$$('button').filter(function (b) { return /cancelar/i.test(b.textContent); });
+  assert.deepStrictEqual(cancelar, [], 'não há "Cancelar"');
+
+  a.v('ctx.fechaFolha');
+  await a.esperar(60);
+  assert.deepStrictEqual(a.S().comidaHist, [], 'fechar sem tocar não gravou nada');
+  a.fechar();
+});

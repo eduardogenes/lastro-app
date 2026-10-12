@@ -146,6 +146,23 @@ export function Dias({ ctx }) {
 
       <Mes m={ctx.mes()} ctx={ctx} />
 
+      {/* OS DIAS DE COMIDA, e a porta de pôr cada um em dia. Dias é "o LUGAR"
+          da folha (§1.2 da frente 1), e a folha é da frente 2 — o que o lugar
+          oferece é a lista do que aconteceu com a porta para corrigir.
+          Os dias SEM registro aparecem também, e são justamente os que ele pode
+          pôr em dia: um dia sem registro é o caso de uso inteiro da peça. */}
+      <Secao rotulo="os dias" nota="toque para pôr em dia">
+        <div class="ins-lista">
+          {ctx.diasDeComidaFechados().map(d => (
+            <button key={d.data} class="ins-linha" data-a={'poe-' + d.data}
+                    onClick={() => ctx.abrePoeODia(d.data)}>
+              <span class="ins-linha-n"><span class="ins-linha-t">{d.rotulo}</span></span>
+              <span class={'ins-linha-v' + (d.tem ? '' : ' ins-t3')}>{d.txt}</span>
+            </button>
+          ))}
+        </div>
+      </Secao>
+
       {/* As sessões de cardio JÁ FEITAS. O dono do cardio é o Agora, que é onde
           se registra (§1.7); aqui ele é VISTA — o que aconteceu em cada dia —, e
           por isso esta lista mostra e apaga, mas não cria. Apagar é a porta de

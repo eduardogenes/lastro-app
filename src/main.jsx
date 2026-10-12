@@ -28,6 +28,7 @@ import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { FolhaFoto } from './ui/folhas/foto.jsx';
 import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
+import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
 import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
@@ -5310,6 +5311,7 @@ function folhaAberta() {
     if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'menuSessao') return <FolhaMenuDaSessao key={i} ctx={CTX} />;
+    if (f.k === 'poeODia') return <FolhaPoeODia key={i} ctx={CTX} data={f.data} />;
     return null;
   });
 }
@@ -8023,6 +8025,47 @@ const PORCOES_DO_DIA = [0.5, 0.75, 1, 1.25, 1.5];
  * `null` quando a data não serve: futura, ilegível. A folha não abre para um dia
  * que não aconteceu.
  */
+/**
+ * Os dias de comida JÁ FECHADOS — a lista que Dias possui (§1.2).
+ *
+ * É daqui que a folha de pôr em dia é alcançada: Dias é "o LUGAR" dela, e o que
+ * o lugar oferece é a lista do que aconteceu, com a porta para corrigir cada
+ * dia. Os dias SEM linha aparecem também, e são justamente os que ele pode pôr
+ * em dia — um dia sem registro é o caso de uso inteiro desta peça.
+ *
+ * Catorze dias, a mesma janela do portão: é o recorte em que pôr um dia em dia
+ * ainda muda a conta que a regra lê. Mais que isso é arqueologia.
+ */
+CTX.diasDeComidaFechados = function () {
+  const hoje = hojeISO();
+  const porData = {};
+  (Array.isArray(S.comidaHist) ? S.comidaHist : []).forEach(function (h) {
+    if (h && h.d) porData[h.d] = h;
+  });
+
+  const dias = [];
+  for (let k = 1; k <= 14; k++) {
+    const dt = new Date(hoje + 'T12:00:00');
+    dt.setDate(dt.getDate() - k);
+    const iso = hojeISO(dt.getTime());
+    const h = porData[iso];
+    const marcas = h ? Object.keys(h.done || {}).length : 0;
+    dias.push({
+      data: iso,
+      rotulo: fmtDate(dt.getTime()),
+      // Contagem, nunca percentual: um número contra 100% implícito funciona
+      // como nota, e registro não leva nota.
+      txt: h
+        ? marcas + (marcas === 1 ? ' refeição marcada' : ' refeições marcadas')
+        : 'sem registro',
+      tem: !!h
+    });
+  }
+  return dias;
+};
+
+CTX.abrePoeODia = function (data) { CTX.abreFolha({ k: 'poeODia', data: data }); };
+
 CTX.poeODiaEmDia = function (data) {
   if (typeof data !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return null;
   const hoje = hojeISO();
@@ -8076,9 +8119,55 @@ CTX.poeODiaEmDia = function (data) {
     // `aderencia` sem resposta é `'plano'`, e `'plano'` é o padrão de quem não
     // respondeu. A pergunta do "fora do plano" NÃO bloqueia (decisão 4): ela
     // aparece depois da gravação, e o que a resposta muda é se o dia conta.
-    aderencia: (linha && linha.aderencia) || 'plano'
+    aderencia: (linha && linha.aderencia) || 'plano',
+    frase: fraseDoDia(refs, linha)
   };
 };
+
+/**
+ * A FRASE DE LEITURA DE VOLTA, e ela é obrigatória — não ornamento.
+ *
+ * Se um toque grava sete refeições, a tela tem de dizer **as sete**, com as
+ * palavras que foram gravadas (frente 2, §4.3). E tem de dizer inclusive o que
+ * NÃO foi marcado, porque "fica sem marca" é um resultado e não um silêncio.
+ *
+ * Agrupa por marca em vez de listar linha por linha: sete frases dizendo a mesma
+ * coisa viram ruído e ninguém lê a sétima. E usa as PALAVRAS do botão, não os
+ * valores do dado — quem lê a frase é quem acabou de tocar, e ele reconhece o
+ * que tocou.
+ *
+ * O nó que a mostra é `aria-live="polite"`: a gravação acontece no toque, e sem
+ * região viva quem usa leitor de tela não ouve o que foi gravado.
+ */
+const PALAVRA_DA_MARCA = {
+  tudo: 'tudo', metade: 'metade', fora: 'fora do plano',
+  nsei: 'não sei quanto', nao: 'não comi', vazia: 'fica sem marca'
+};
+function fraseDoDia(refs, linha) {
+  const grupos = {};
+  refs.forEach(function (r) {
+    const marcada = !!(linha && linha.done && linha.done[r.id] != null);
+    const como = (linha && linha.como && linha.como[r.id]) || null;
+    const escala = (linha && linha.escala && linha.escala[r.id] != null)
+      ? linha.escala[r.id] : 1;
+    const m = marcada ? (como || (escala === 0.5 ? 'metade' : 'tudo'))
+            : linha ? 'vazia' : 'tudo';
+    (grupos[m] = grupos[m] || []).push(r.n.toLowerCase());
+  });
+  const partes = Object.keys(PALAVRA_DA_MARCA)
+    .filter(function (m) { return grupos[m]; })
+    .map(function (m) {
+      const ns = grupos[m];
+      const lista = ns.length === 1 ? ns[0]
+        : ns.slice(0, -1).join(', ') + ' e ' + ns[ns.length - 1];
+      return PALAVRA_DA_MARCA[m] + ' em ' + lista;
+    });
+  if (!partes.length) return '';
+  const corpo = partes.join('; ');
+  // O verbo diz o ESTADO: antes do primeiro toque nada está gravado, e a frase
+  // não pode dizer "gravado" sobre uma sugestão.
+  return (linha ? 'Gravado: ' : 'Sugerido, e nada gravado ainda: ') + corpo + '.';
+}
 
 /**
  * Grava UMA linha de um dia passado — e com ela o dia inteiro como está sugerido.
