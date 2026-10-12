@@ -2330,8 +2330,54 @@ exatamente o que "nada é descartado em silêncio" proíbe.
       posse de Prescrição. A regra e o interruptor têm nomes parecidos e naturezas
       opostas.
 
-- [ ] **6.t As outras telas**, pela ordem do plano, com os repontes de expressão
-      composta junto de cada uma (uma visita só por arquivo, decisão do dono).
+- [x] **6.t Os 14 dias que a regra lê, e o ciclo muda de lugar** (`c8e3f1b`) —
+      a §1.1 lista os 14 dias como posse do Agora e o §5.7 os nomeia no estado
+      mais mudo da tela. **Faltavam — e pior:** o aviso de aparelho sem
+      armazenamento que **eu** escrevi diz "não entra na conta dos 14 dias",
+      citando uma conta que não estava em tela nenhuma.
+      **A janela é a MESMA que o portão lê**, e é por isso que ela inclui a casa
+      de hoje sabendo que ela estará vazia: mostrar treze casas e contar sobre
+      catorze faria a tela e a regra discordarem, e a tela perderia. A casa vazia
+      é informação: o dia não fechou.
+      O **ciclo** saiu do cabeçalho da sessão (achado 7) para junto da
+      retrospectiva — mesma pergunta. O **volume** fica, e a distinção importa:
+      durante a sessão ele é devolutiva ao vivo, não resumo do dia.
+      **Uma mutação reprovou o meu caso:** eu afirmava a FRASE da contagem e não
+      as casas, então apagar as catorze da tela ficava verde.
+
+- [x] **6.u As quatro capacidades do cartão do exercício ganham porta**
+      (`3693007`) — o **achado 1**, e ele estava VIVO: com a aba de treino fora,
+      o cartão só existe dentro do modo, e quatro coisas moravam só nele sem
+      segunda porta. **A perda não apareceria no dia — apareceria quando ele
+      fosse corrigir.**
+      Cada linha do programa ganhou a porta do histórico, e **a Prescrição passou
+      a abrir o programa**: a §1.5 a lista como dona dele e ela não tinha porta.
+      As três que existem agora convivem porque cada uma responde outra pergunta.
+      **A ordem das camadas mudou:** o histórico abre por cima do programa. Com a
+      ordem antiga ele **não aparecia**.
+      **Duas mutações reprovaram prova minha:** `.hwrap` não distingue o
+      histórico do editor de programa (os dois usam a mesma classe de corpo), e
+      `hidden` não quebra nada — `$$` acha elemento escondido e `.click()`
+      dispara nele.
+
+### O que resta do §9, e por quê
+
+Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenhum
+é construção:
+
+- **a regra do palpite que vira buraco** (§5.2) é **proposta** desta frente, e o
+  `07-plano.md` §1.2 manda que volte ao dono como proposta — não como pergunta;
+- **o destrutivo** (achado 8) fica como está, e **fica dito**: os três endereços
+  existem nos cinco lugares — Corpo (a medida), Dias e a sessão (o registro),
+  Ajustes (tudo). Conferi os três depois da reestruturação;
+- **a bancada e a superfície de conflito** (achado 9) não têm lugar, e a frente
+  declarou isso.
+
+- [ ] **6.v O reponte das expressões compostas** — 400 entradas de ponte (325
+      `a.E`, 75 `a.J`) em 36 arquivos. **Medido e declarado como higiene:** elas
+      alcançam o MODELO e não nomes de tela, e sobreviveram à troca dos cinco
+      lugares sem um vermelho. O valor é a estabilidade do contrato, não a
+      correção de hoje.
       **Medido:** 400 entradas de ponte (325 `a.E`, 75 `a.J`) em 36 arquivos.
       Elas alcançam o MODELO e não nomes de tela — sobreviveram à troca dos cinco
       lugares sem um vermelho —, então o reponte é higiene e não bloqueio. A
