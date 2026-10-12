@@ -2,7 +2,7 @@
 // O peso do dia não decide nada; quem decide é a média e o ritmo entre semanas.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app, inicioDaSemana, DIA } from './harness.js';
+import { app, inicioDaSemana, DIA, agoraEstavel } from './harness.js';
 
 // Gera pesagens dentro de cada semana alvo, com ruído que se anula na média.
 // Âncora na última semana FECHADA, nunca na semana em curso: rodando numa
@@ -675,15 +675,24 @@ test('as cinco da bioimpedância seguem sem valor de partida, e a porta delas é
       k + ' recusa pela porta da manhã, que lê rascunho e referência que elas não têm');
   }
 
-  // e UMA chave de `CTX` as alcança: a torneira, e nenhuma outra
-  const chaves = Object.keys(a.m.ctx).filter(function (k) { return /bio/i.test(k); });
-  assert.deepStrictEqual(chaves, ['registraBio'],
-    'a bioimpedância tem uma porta de escrita, e só uma');
-  assert.strictEqual(typeof a.m.ctx.registraBio, 'function');
+  // As chaves de `CTX` que as alcançam, enumeradas: UMA escreve e uma lê. A
+  // lista é explícita de propósito — uma terceira chave aparecendo deixa isto
+  // vermelho e obriga quem a criou a dizer o que ela é. Era a propriedade do
+  // caso original, e ela não mudou; o que mudou é que a bioimpedância ganhou
+  // TELA, e tela precisa de leitura.
+  const chaves = Object.keys(a.m.ctx).filter(function (k) { return /bio/i.test(k); }).sort();
+  assert.deepStrictEqual(chaves, ['bioimpedancia', 'registraBio'],
+    'uma porta de escrita e uma de leitura, e nada mais');
+  assert.strictEqual(typeof a.m.ctx.registraBio, 'function', 'a de escrita');
+  assert.strictEqual(typeof a.m.ctx.bioimpedancia, 'function', 'e a de leitura');
 
-  // o resumo do acervo AINDA não as conta — ver o comentário acima
-  assert.ok(!/bio/i.test(a.vJ('ctx.dadosDoApp').resumo),
-    'o resumo do que ele tem a perder conta peso e cintura, e não as cinco');
+  // E O RESUMO DO ACERVO PASSOU A CONTÁ-LAS. O caso original gravava a omissão
+  // e previu este momento com todas as letras: "enquanto não havia torneira
+  // isso era coerente; agora é omissão real — o resumo diz ao dono o tamanho do
+  // que ele tem a perder". Com a tela construída, ele pode ter leituras, e o
+  // resumo que as ignora mente sobre o estrago de um apagamento.
+  assert.match(a.vJ('ctx.dadosDoApp').resumo, /leitura[s]? de bioimpedância/,
+    'o resumo conta as leituras: ' + a.vJ('ctx.dadosDoApp').resumo);
   a.fechar();
 });
 
@@ -998,5 +1007,156 @@ test('ctx.apagaMedida nomeia a grandeza certa, na unidade certa, nas sete', asyn
     'e a cintura — que o aviso velho nomeava no lugar dela — ficou onde estava');
   assert.ok(a.S().apagados['bioGorduraPct:' + t] > 0,
     'com lápide própria, senão a fusão do outro aparelho a ressuscita');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// A TELA da bioimpedância — a porta que faltava
+// ---------------------------------------------------------------------------
+//
+// O modelo existia desde a migração da frente 0: cinco marcas declaradas, verbo
+// próprio, casos de teste. O que não existia era TELA — capacidade sem porta, e
+// o tipo de coisa que passa um ano sem ninguém notar porque o teste do modelo
+// fica verde. Estes casos cobram a porta.
+
+test('a tela da bioimpedância tem os cinco campos, e diz qual é opcional', async () => {
+  const a = await app({ aba: 'corpo' });
+  await a.esperar();
+
+  ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua'].forEach(function (k) {
+    assert.ok(a.doc.getElementById('bio-' + k), 'o campo de ' + k + ' está na tela');
+  });
+  // A água é a única opcional: a balança dele a dá, mas nem toda balança dá, e
+  // recusar a leitura inteira por falta dela perderia as quatro que ele mediu.
+  const agua = a.doc.getElementById('bio-bioAgua').closest('label');
+  assert.ok(/opcional/.test(agua.textContent), 'a água está marcada como opcional');
+  const musculo = a.doc.getElementById('bio-bioMusculo').closest('label');
+  assert.ok(!/opcional/.test(musculo.textContent),
+    'e a massa muscular esquelética NÃO: é a que ele pediu para gravar');
+  a.fechar();
+});
+
+test('registrar a leitura grava as cinco com o MESMO instante', async () => {
+  // É o que as torna UMA leitura, e é por esse instante que a fusão casa o
+  // mesmo dia vindo de dois aparelhos. Cinco instantes diferentes seriam cinco
+  // medidas soltas que por acaso caíram no mesmo dia.
+  const a = await app({ aba: 'corpo' });
+  await a.esperar();
+
+  a.digitar('bio-bioPeso', '96,2');
+  a.digitar('bio-bioMusculo', '41,8');
+  a.digitar('bio-bioGordura', '22,4');
+  a.digitar('bio-bioGorduraPct', '23,3');
+  a.digitar('bio-bioAgua', '52,1');
+  await a.esperar();
+
+  a.clicar('[data-a="registra-bio"]');
+  await a.esperar(60);
+
+  const b = a.S().body;
+  assert.strictEqual(b.bioPeso.length, 1, 'gravou');
+  assert.strictEqual(b.bioMusculo[0].v, 41.8, 'e a vírgula entra como decimal');
+  const instantes = ['bioPeso', 'bioMusculo', 'bioGordura', 'bioGorduraPct', 'bioAgua']
+    .map(function (k) { return b[k][0].t; });
+  assert.strictEqual(new Set(instantes).size, 1,
+    'um instante só para as cinco: ' + instantes.join(' · '));
+  a.fechar();
+});
+
+test('leitura incompleta é RECUSADA inteira, e não pela metade', async () => {
+  // Metade de uma leitura não é meia leitura: é uma leitura errada. Gravar o
+  // que deu poria no histórico um dia em que a gordura existe e a massa
+  // muscular não, e a comparação entre leituras passaria a mentir.
+  const a = await app({ aba: 'corpo' });
+  await a.esperar();
+
+  a.digitar('bio-bioPeso', '96,2');
+  a.digitar('bio-bioMusculo', '41,8');
+  await a.esperar();
+  a.clicar('[data-a="registra-bio"]');
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().body.bioPeso.length, 0, 'nada entrou');
+  assert.strictEqual(a.S().body.bioMusculo.length, 0, 'nem o que ele digitou');
+  assert.ok(/[Ff]alta/.test(a.toast() || ''), 'e o app diz o que falta: ' + a.toast());
+  a.fechar();
+});
+
+test('a água em branco não impede a leitura', async () => {
+  // A outra metade da regra do opcional: recusar por falta dela perderia as
+  // quatro que ele mediu.
+  const a = await app({ aba: 'corpo' });
+  await a.esperar();
+
+  a.digitar('bio-bioPeso', '96,2');
+  a.digitar('bio-bioMusculo', '41,8');
+  a.digitar('bio-bioGordura', '22,4');
+  a.digitar('bio-bioGorduraPct', '23,3');
+  await a.esperar();
+  a.clicar('[data-a="registra-bio"]');
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().body.bioPeso.length, 1, 'as quatro entraram');
+  assert.strictEqual(a.S().body.bioAgua.length, 0, 'e a água, que ele não mediu, não');
+  a.fechar();
+});
+
+test('a tela oferece a data e nunca o futuro', async () => {
+  // Registrar no dia é o caso de todo dia; retroativo é exceção, e por isso a
+  // data fica num campo em vez de uma escolha a cada vez. `max` é hoje — o
+  // verbo também recusa o futuro, e a tela evita o toque.
+  const a = await app({ aba: 'corpo' });
+  await a.esperar();
+  const campo = a.doc.getElementById('bio-dia');
+  assert.ok(campo, 'a data está na tela');
+  assert.strictEqual(campo.getAttribute('max'), a.v('hojeISO'),
+    'e não deixa escolher o futuro');
+  a.fechar();
+});
+
+test('a tela diz quando foi a última leitura, e se não houve', async () => {
+  const vazia = await app({ aba: 'corpo' });
+  await vazia.esperar();
+  assert.ok(/nenhuma leitura ainda/.test(vazia.doc.getElementById('app').textContent),
+    'sem leitura, a tela diz que não há — e não mostra um zero que seria mentira');
+  vazia.fechar();
+
+  const t = Date.now();
+  const a = await app({ aba: 'corpo', estado: { logs: {}, done: [], body: {
+    peso: [], cintura: [],
+    bioPeso: [{ t: t, v: 96.2 }], bioMusculo: [{ t: t, v: 41.8 }],
+    bioGordura: [{ t: t, v: 22.4 }], bioGorduraPct: [{ t: t, v: 23.3 }], bioAgua: []
+  } } });
+  await a.esperar();
+  assert.ok(/última leitura hoje/.test(a.doc.getElementById('app').textContent),
+    'com leitura, diz quando foi');
+  a.fechar();
+});
+
+test('registrar DE MANHÃ funciona — o instante de hoje é agora, não meio-dia', async () => {
+  // Caso de relógio fixo, e ele existe por um defeito meu: eu havia escrito o
+  // instante da leitura como meio-dia do dia escolhido, para TODOS os dias.
+  // Antes do meio-dia, o meio-dia de hoje está no FUTURO, e o verbo recusa —
+  // corretamente, porque leitura no futuro não é leitura. O app simplesmente
+  // não gravava nada entre 00h e 12h.
+  //
+  // E o caso de cima não pegava: rodando de tarde, o meio-dia já passou e as
+  // duas versões gravam igual. Sem o relógio fixo aqui, o defeito voltaria a
+  // passar metade do dia.
+  const a = await app({ aba: 'corpo', agora: agoraEstavel(7, 0),
+                        estado: { logs: {}, done: [] } });
+  await a.esperar();
+
+  a.digitar('bio-bioPeso', '96,2');
+  a.digitar('bio-bioMusculo', '41,8');
+  a.digitar('bio-bioGordura', '22,4');
+  a.digitar('bio-bioGorduraPct', '23,3');
+  await a.esperar();
+  a.clicar('[data-a="registra-bio"]');
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().body.bioPeso.length, 1,
+    'gravou às 7h da manhã: ' + (a.toast() || ''));
+  assert.ok(!/futuro/i.test(a.toast() || ''), 'e não falou de futuro: ' + a.toast());
   a.fechar();
 });

@@ -19,6 +19,7 @@ import {
   Cabecalho, GradeMetricas, Procedencia, Secao, Sparkline, Stepper, Vazio
 } from '../instrumento/primitivos.jsx';
 import { fmtDec } from '../../dominio/formato';
+import { useState } from 'preact/hooks';
 
 /** Uma medida corporal: stepper, botão e a curva das últimas 14 semanas. */
 function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira }) {
@@ -127,7 +128,12 @@ function Fotos({ f, ctx }) {
 }
 
 export function Corpo({ ctx }) {
+  // Rascunho local: nada é registro até o toque em "registrar a leitura", e é a
+  // mesma regra da folha de pôr o dia em dia. Fechar a tela sem tocar não grava.
+  const [rascunho, setRascunho] = useState({});
+  const [dia, setDia] = useState(null);
   const c = ctx.corpo();
+  const bio = ctx.bioimpedancia();
 
   return (
     <>
@@ -168,6 +174,81 @@ export function Corpo({ ctx }) {
           mal posicionada erra mais do que a balança varia de água.
         </Procedencia>
       </Medida>
+
+      {/* A BIOIMPEDÂNCIA — cinco campos, decisão do dono (5.a' P3).
+          Existia no modelo desde a migração da frente 0, com verbo próprio e
+          casos de teste, e NÃO TINHA TELA: era capacidade sem porta. Esta é a
+          porta.
+
+          O peso dela é registro SEPARADO da pesagem da manhã, e é a razão de
+          ele aparecer aqui como um campo entre os cinco em vez de somar à
+          balança de cima: são duas balanças, medidas em momentos diferentes, e
+          misturá-las faria a média semanal do peso — o número que a regra
+          calórica lê — pular conforme qual balança ele usou.
+
+          As CINCO de uma vez, e não uma por uma: `registraBio` grava com um
+          instante só, e é isso que as torna UMA leitura — é por ele que a fusão
+          casa o mesmo dia vindo de dois aparelhos. Por isso a tela recusa a
+          leitura incompleta em vez de gravar o que deu: metade de uma leitura
+          não é meia leitura, é uma leitura errada. */}
+      <Secao rotulo="bioimpedância"
+             nota={bio.tem ? 'última leitura ' + bio.ultima : 'nenhuma leitura ainda'}>
+        <div class="co-bio">
+          {bio.campos.map(c => (
+            <label key={c.k} class="co-bio-c">
+              <span class="ins-label-sm">
+                {c.n}{!c.obrigatorio && <em class="co-bio-op"> · opcional</em>}
+              </span>
+              <input
+                class="ins-input"
+                id={'bio-' + c.k}
+                type="text"
+                inputMode="decimal"
+                placeholder={c.txt}
+                aria-label={c.n + ' em ' + c.u}
+                value={rascunho[c.k] || ''}
+                /* Atualizador FUNCIONAL, e não `Object.assign` sobre o
+                   `rascunho` do render. Os cinco campos são controlados pelo
+                   mesmo objeto, e a versão por closure lia o estado do ÚLTIMO
+                   render: dois campos preenchidos antes de o Preact repintar
+                   e o segundo apagava o primeiro. Com `prev` cada campo soma ao
+                   que já estava, qualquer que seja a ordem dos eventos. */
+                onInput={e => {
+                  const v = e.currentTarget.value;
+                  setRascunho(prev => Object.assign({}, prev, { [c.k]: v }));
+                }}
+              />
+            </label>
+          ))}
+        </div>
+
+        {/* A data fica atrás de um campo porque registrar no dia é o caso de
+            todo dia; retroativo é exceção. `max` é hoje: leitura no futuro não
+            é leitura, e o verbo também recusa — a tela só evita o toque. */}
+        <label class="co-bio-dia">
+          <span class="ins-label-sm">em</span>
+          <input class="ins-input" type="date" id="bio-dia"
+                 max={bio.maxISO} value={dia || bio.maxISO}
+                 aria-label="data da leitura"
+                 onInput={e => setDia(e.currentTarget.value)} />
+        </label>
+
+        {/* HOJE é `Date.now()`, e não meio-dia de hoje. Eu havia escrito meio-dia
+            para todos os dias, e o verbo recusou a leitura: antes do meio-dia,
+            o meio-dia de hoje está no FUTURO, e leitura no futuro não é leitura.
+            Para um dia PASSADO o meio-dia é a escolha certa — a hora não foi
+            medida, e meio-dia não encosta em nenhuma borda de fuso. */}
+        <button class="ins-btn-primary" data-a="registra-bio" onClick={() => {
+          const d = dia || bio.maxISO;
+          ctx.registraBio(rascunho, d === bio.maxISO ? Date.now() : Date.parse(d + 'T12:00:00'));
+          setRascunho({});
+        }}>registrar a leitura</button>
+
+        <Procedencia>
+          as cinco entram com o MESMO instante, e é isso que as torna uma
+          leitura só · o peso daqui não entra na média da pesagem da manhã
+        </Procedencia>
+      </Secao>
 
       <Fotos f={ctx.protocoloFotos()} ctx={ctx} />
     </>

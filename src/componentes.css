@@ -1595,3 +1595,18 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
    perdeu — o que aconteceu é que o tempo decidiu pelo lado conservador, e a
    porta de volta está ali. Âmbar aqui leria como cobrança. */
 .pr-espera.venceu .pr-mud-t { color: var(--ins-tinta-2); }
+
+/* ---- Corpo: a bioimpedância ------------------------------------------- */
+/*
+   Cinco campos em duas colunas. O rótulo em cima e não ao lado: "massa muscular
+   esquelética" não cabe à esquerda de um campo numa tela de telefone, e cortá-lo
+   tiraria justamente a palavra que distingue um campo do outro.
+*/
+.co-bio { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-5); }
+.co-bio-c { display: flex; flex-direction: column; gap: var(--ins-2); }
+.co-bio-c .ins-input { width: 100%; }
+.co-bio-op { color: var(--ins-tinta-3); font-style: normal; }
+.co-bio-dia {
+  display: flex; align-items: center; gap: var(--ins-4);
+  margin: var(--ins-6) 0 var(--ins-5);
+}

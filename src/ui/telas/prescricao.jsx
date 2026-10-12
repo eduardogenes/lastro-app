@@ -237,8 +237,13 @@ export function Prescricao({ ctx }) {
                 placeholder="por quê? (opcional)"
                 aria-label={'Motivo da decisão sobre o treino ' + g.dia}
                 value={motivos[g.sid] || ''}
-                onInput={e => setMotivos(Object.assign({}, motivos,
-                  { [g.sid]: e.currentTarget.value }))}
+                /* Atualizador funcional, pela mesma razão do rascunho da
+                   bioimpedância: com duas sessões na fila, a versão por closure
+                   lia o mapa do último render e um motivo apagava o outro. */
+                onInput={e => {
+                  const v = e.currentTarget.value;
+                  setMotivos(prev => Object.assign({}, prev, { [g.sid]: v }));
+                }}
               />
             </div>
           ))}
@@ -290,8 +295,13 @@ export function Prescricao({ ctx }) {
                 placeholder="por quê? (opcional)"
                 aria-label={'Motivo de tornar permanente a mudança do treino ' + g.dia}
                 value={motivos[g.sid] || ''}
-                onInput={e => setMotivos(Object.assign({}, motivos,
-                  { [g.sid]: e.currentTarget.value }))}
+                /* Atualizador funcional, pela mesma razão do rascunho da
+                   bioimpedância: com duas sessões na fila, a versão por closure
+                   lia o mapa do último render e um motivo apagava o outro. */
+                onInput={e => {
+                  const v = e.currentTarget.value;
+                  setMotivos(prev => Object.assign({}, prev, { [g.sid]: v }));
+                }}
               />
             </div>
           ))}

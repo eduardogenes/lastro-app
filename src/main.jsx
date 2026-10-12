@@ -49,7 +49,7 @@ import {
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
-import { MARCAS_DO_CORPO, MEDIDAS_DO_CORPO, mediasSemanais, pesoRitmo as _pesoRitmo,
+import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
@@ -6039,6 +6039,45 @@ CTX.registraCintura = function () { addBody('cintura'); };
  * rascunho da tela; aqui o valor vem por argumento, e a resposta volta por
  * retorno.
  */
+/**
+ * A bioimpedancia: as cinco medidas da balanca, e a ultima leitura delas.
+ *
+ * Cinco campos, decisao do dono (5.a' P3), e o PESO DELA e registro separado da
+ * pesagem da manha: sao duas balancas, medidas em momentos diferentes, e
+ * mistura-las faria a media semanal do peso — que e o numero que a regra
+ * calorica le — pular de acordo com qual balanca ele usou.
+ *
+ * UMA LEITURA, e e o que o instante compartilhado garante: `registraBio` grava
+ * as cinco com o mesmo `t`, e e por ele que a fusao casa o mesmo dia vindo de
+ * dois aparelhos. A tela mostra esse instante como "a ultima leitura" em vez de
+ * cinco datas, porque cinco datas iguais nao informam nada.
+ *
+ * `bioAgua` e a unica opcional: a balanca dele a da, mas nem toda balanca da, e
+ * recusar a leitura inteira por falta dela perderia as quatro que ele mediu.
+ */
+CTX.bioimpedancia = function () {
+  const campos = MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).map(function (m) {
+    const serie = S.body[m.k] || [];
+    const ultima = serie[serie.length - 1] || null;
+    return {
+      k: m.k, n: m.n, u: m.u, obrigatorio: !!m.obrigatorio,
+      valor: ultima ? ultima.v : null,
+      txt: ultima ? fmtDec(ultima.v) + ' ' + m.u : '—'
+    };
+  });
+  const quandos = MARCAS_DA_BIO.map(function (k) {
+    const serie = S.body[k] || [];
+    const u = serie[serie.length - 1];
+    return u ? u.t : null;
+  }).filter(function (t) { return t != null; });
+  return {
+    campos: campos,
+    tem: quandos.length > 0,
+    ultima: quandos.length ? rotuloDoDia(Math.max.apply(null, quandos)) : null,
+    maxISO: hojeISO()
+  };
+};
+
 CTX.registraBio = function (leitura, quando) { return registraBio(leitura, quando); };
 CTX.apagaMedida = function (k, t) { delBody(k, t); };
 CTX.apagaCardio = function (t) { delCardio(t); };
@@ -6420,7 +6459,18 @@ CTX.dadosDoApp = function () {
       plural(nEx, 'exercício com histórico', 'exercícios com histórico'),
       plural(S.cardio.length, 'sessão de cardio', 'sessões de cardio'),
       plural(S.body.peso.length, 'pesagem', 'pesagens'),
-      plural(S.body.cintura.length, 'medida de cintura', 'medidas de cintura')
+      plural(S.body.cintura.length, 'medida de cintura', 'medidas de cintura'),
+      // As LEITURAS de bioimpedância, e não as medidas: as cinco entram com o
+      // mesmo instante e são UMA leitura — contá-las em cinco diria que ele tem
+      // cinco vezes mais do que tem. O `bioPeso` é a obrigatória que sempre
+      // existe quando a leitura existe, então a série dele é a contagem.
+      //
+      // Esta linha faltava, e o caso de `corpo.test.js` previu o momento: "o
+      // resumo diz ao dono o tamanho do que ele tem a perder, e a partir daqui
+      // ele pode ter leituras de bioimpedância que o resumo ignora". Enquanto a
+      // bioimpedância não tinha tela, a omissão era coerente; com a tela, é
+      // omissão real sobre o que se perde num apagamento.
+      plural(S.body.bioPeso.length, 'leitura de bioimpedância', 'leituras de bioimpedância')
     ].join(' · ')
   };
 };
