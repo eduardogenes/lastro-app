@@ -1,19 +1,27 @@
 // Cardio: obrigação semanal, fácil de esquecer, e que vivia enterrada na
-// terceira seção de outra aba. Placar na tela de hoje e marca no histórico.
+// terceira seção de outra aba.
+//
+// O nome destes casos dizia "tela de hoje" e o código dizia outra coisa: o
+// placar e o registro rápido estavam na aba TREINO, e os casos passavam porque
+// o padrão do harness era justamente ela (achado 4 da frente 1). Com a
+// reestruturação dos cinco lugares o cardio se repartiu pela posse (§1.7) — o
+// dono é o AGORA, porque é onde ele se REGISTRA; a Semana tem o placar como
+// leitura; Dias tem a marca no calendário e na faixa. Então os nomes passam a
+// falar a verdade pela primeira vez, e os casos montam no lugar que eles dizem.
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { app, agoraEstavel, inicioDaSemana, DIA } from './harness.js';
 
-test('placar da semana aparece na tela de hoje', async () => {
-  const a = await app();
+test('placar da semana aparece no AGORA', async () => {
+  const a = await app({ aba: 'agora' });
   const linha = a.texto('.cardl');
   assert.ok(/cardio/.test(linha), linha);
   assert.ok(/0 de 2 nesta semana/.test(linha), linha);
   a.fechar();
 });
 
-test('registro rápido sem sair da tela de hoje', async () => {
-  const a = await app();
+test('registro rápido sem sair do AGORA', async () => {
+  const a = await app({ aba: 'agora' });
   assert.strictEqual(a.$('.cardq'), null, 'fechado por padrão, para não ocupar espaço');
 
   a.v('abrirCardioRapido');
@@ -34,7 +42,7 @@ test('registro rápido sem sair da tela de hoje', async () => {
 });
 
 test('feito hoje muda o estado da linha', async () => {
-  const a = await app({ estado: { logs: {}, done: [],
+  const a = await app({ aba: 'agora', estado: { logs: {}, done: [],
     cardio: [{ t: Date.now(), m: 'bike', min: 20, i: 'leve' }] } });
   assert.ok(a.$('.cardl').className.includes('feito'));
   assert.ok(a.texto('.cardl').includes('20 min de bike'));
@@ -42,16 +50,20 @@ test('feito hoje muda o estado da linha', async () => {
 });
 
 test('aviso de dia de perna aparece no momento em que importa', async () => {
-  const a = await app({ estado: { logs: {}, done: [{ day: 'B', t: Date.now(), sid: Date.now() }] } });
+  const a = await app({ aba: 'agora',
+    estado: { logs: {}, done: [{ day: 'B', t: Date.now(), sid: Date.now() }] } });
   a.v('abrirCardioRapido');
   assert.ok(a.texto('.cardq .cwarn').includes('treinou B'), 'sinaliza sem bloquear');
   assert.strictEqual(a.$('.cardq .dbtn[disabled]'), null);
   a.fechar();
 });
 
-test('faixa da semana marca os dias com cardio', async () => {
+test('faixa da semana marca os dias com cardio, em DIAS', async () => {
+  // A faixa mudou de endereço: vinha da tela do treino, onde o comentário dela
+  // já dizia "contexto de ADESÃO, não da sessão", e o modo esconde placares de
+  // propósito (§4.2). Agora é de Dias, que é "o que aconteceu em cada dia".
   const seg = inicioDaSemana(Date.now());
-  const a = await app({ estado: { logs: {}, done: [],
+  const a = await app({ aba: 'dias', estado: { logs: {}, done: [],
     cardio: [{ t: seg + 8 * 3600000, m: 'bike', min: 20, i: 'leve' }] } });
 
   const cels = a.$$('.wd');

@@ -117,34 +117,45 @@ test('o app abre no AGORA, não na sessão', async () => {
   a.fechar();
 });
 
-test('o contexto do treino existe DENTRO do modo, e em nenhum lugar', async () => {
-  // Reescrito de propósito, e a frente 1 avisou (achado 5): a regra era "o
-  // contexto do treino só aparece na aba de treino", e com a aba virando modo
-  // ela não tem como ser reescrita igual. O que a substitui é mais forte — a
-  // rotação e a faixa da semana existem dentro do MODO, e fora dele não existem
-  // em lugar NENHUM dos cinco, nem no que herdou a tela de onde elas vinham.
+test('o modo tem a ROTAÇÃO e não tem placar nenhum', async () => {
+  // Reescrito duas vezes, e a segunda corrige a primeira. A regra original era
+  // "o contexto do treino só aparece na aba de treino" (achado 5: com a aba
+  // virando modo ela não tem como ser reescrita igual). Na primeira reescrita eu
+  // afirmei que a FAIXA DA SEMANA estava dentro do modo — e isso cristalizava o
+  // contrário da regra: o §4.2 diz que a sessão esconde "o resumo do dia, as
+  // médias, os placares", porque isso é "como está?" e o modo responde "e
+  // agora?". A faixa era placar, e estava ali porque a aba a mantinha.
+  //
+  // O que o modo tem é a ROTAÇÃO — qual dia é este e qual vem depois, que é
+  // contexto da sessão. O que ele não tem é placar de nenhum tipo.
   const a = await app();
   assert.ok(a.vista().modoSessao, 'pré-condição: o harness entra pelo modo');
-  assert.ok(a.$('.tr-rot') && a.$('.semana'), 'dentro do modo o contexto está lá');
+  assert.ok(a.$('.tr-rot'), 'a rotação é contexto da sessão, e está no modo');
+  assert.strictEqual(a.$('.semana'), null, 'a faixa da semana é placar: saiu');
+  assert.strictEqual(a.$('.cardl'), null, 'e o placar do cardio também');
 
   ['agora', 'dias', 'corpo', 'semana', 'prescricao'].forEach(function (t) {
     a.aba(t);
     assert.strictEqual(a.$('.tr-rot'), null, 'rotação competindo no lugar ' + t);
-    assert.strictEqual(a.$('.semana'), null, 'faixa da semana competindo em ' + t);
   });
   a.fechar();
 });
 
 test('faixa da semana marca os dias e abre atalho nos vazios', async () => {
+  // A faixa e o calendário do mês moram no MESMO lugar agora — Dias —, e isso é
+  // melhoria de contrato: eles mostram a mesma semana, e divergir seria o app
+  // contando duas histórias sobre o mesmo domingo. Antes estavam em telas
+  // diferentes e a comparação dependia de navegar.
   const seg = inicioDaSemana(Date.now());
-  const a = await app({ estado: { logs: {}, done: [{ day: 'A', t: seg + 7 * 3600000, sid: seg }] } });
+  const a = await app({ aba: 'dias',
+    estado: { logs: {}, done: [{ day: 'A', t: seg + 7 * 3600000, sid: seg }] } });
   const cels = a.$$('.wd');
   assert.strictEqual(cels.length, 7);
   assert.strictEqual(cels[0].querySelector('.wd-v').textContent, 'A');
 
   // Numa segunda-feira não existe dia passado e vazio na semana; o calendário
-  // do mês sempre tem, então o atalho é verificado lá.
-  a.aba('dias');
+  // do mês sempre tem, então o atalho é verificado lá — e os dois estão na
+  // mesma tela, sem navegar.
   const vazio = a.$$('.cal-d').find(function (c) {
     return !c.className.includes('feito') && !c.className.includes('futuro');
   });

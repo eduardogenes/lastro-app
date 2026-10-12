@@ -54,6 +54,7 @@ export function Agora({ ctx }) {
   // linha, nunca cartão.
   const topo = ctx.cartaoDeCima();
   const cardio = ctx.corpo().cardio;
+  const cromo = ctx.cromoDoTreino();
   const app = ctx.dadosDoApp();
   const refDe = id => refs.filter(r => r.id === id)[0] || null;
   const linhaDoTreino = refs.filter(r => ctx.ehLinhaDeTreino(r))[0] || null;
@@ -277,7 +278,40 @@ export function Agora({ ctx }) {
           bloquear: a regra é não pôr cardio no mesmo período de treino de
           perna, e quem decide se ainda dá é ele. */}
       <Secao rotulo="cardio" nota={`${cardio.semana} de ${cardio.alvo} nesta semana`}>
-        <button class="ins-btn-add" onClick={ctx.abreCardio}>+ registrar cardio</button>
+      <div class={'cardl' + (cromo.cardio.feito ? ' feito' : '')}>
+        <span class="cardl-t">cardio</span>
+        <span class="cardl-n">{cromo.cardio.resumo}</span>
+        <button class="cardl-b" onClick={ctx.abreCardio}>
+          {cromo.cardio.aberto ? 'fechar' : 'registrar'}
+        </button>
+      </div>
+
+      {/* Registro rápido no lugar: sair da tela para anotar 25 min de bike
+          seria mais atrito que a própria bike. */}
+      {cromo.cardio.aberto && (
+        <div class="cardq">
+          <div class="chips">
+            {cromo.cardio.modais.map(m => (
+              <button key={m.k} class={'chip' + (m.on ? ' sel' : '')}
+                      onClick={() => ctx.cardioSet('m', m.k)}>{m.t}</button>
+            ))}
+          </div>
+          <div class="chips cardq-2">
+            {cromo.cardio.minutos.map(v => (
+              <button key={v.k} class={'chip' + (v.on ? ' sel' : '')}
+                      onClick={() => ctx.cardioSet('min', v.k)}>{v.t}</button>
+            ))}
+            {cromo.cardio.intensidades.map(v => (
+              <button key={v.k} class={'chip' + (v.on ? ' sel' : '')}
+                      onClick={() => ctx.cardioSet('i', v.k)}>{v.t}</button>
+            ))}
+          </div>
+          {cromo.cardio.aviso && <div class="cwarn">{cromo.cardio.aviso}</div>}
+          <button class="ins-btn-primary dbtn cardq-b" onClick={ctx.addCardio}>
+            {cromo.cardio.acao}
+          </button>
+        </div>
+      )}
         {cardio.perna && cardio.perna.length > 0 && (
           <Procedencia>
             você salvou o treino {cardio.perna.join(' e ')} hoje. A regra é não

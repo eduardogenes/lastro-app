@@ -229,7 +229,9 @@ test('o descanso aparece nas duas telas, e do mesmo jeito', async () => {
   // seria o app contando duas histórias sobre o mesmo domingo
   // relógio fixo: o domingo da semana corrente precisa cair no MÊS corrente,
   // senão o calendário do mês — corretamente — não tem onde mostrá-lo
-  const a = await app({ agora: agoraEstavel(), estado: { logs: {}, done: [] } });
+  // Os dois moram em DIAS agora, e a comparação ficou literal: a faixa e o
+  // calendário na mesma tela, sem navegar entre elas.
+  const a = await app({ aba: 'dias', agora: agoraEstavel(), estado: { logs: {}, done: [] } });
   const dom = a.E('weekStart(Date.now())');
 
   const antes = a.$$('.wd .wd-v').map(x => x.textContent);

@@ -115,9 +115,35 @@ export function Mes({ m, ctx }) {
 
 export function Dias({ ctx }) {
   const c = ctx.corpo();
+  const cromo = ctx.cromoDoTreino();
   return (
     <>
       <Cabecalho olho="o que aconteceu" titulo="Dias" />
+
+      {/* A FAIXA DA SEMANA. Veio da tela do treino, onde o próprio comentário
+          dela já dizia o que ela é: "contexto de ADESÃO, não da sessão". Era a
+          aba que a mantinha lá, e o modo esconde placares de propósito (§4.2).
+          Aqui ela é a resposta curta da pergunta do lugar — o que aconteceu em
+          cada dia —, com o atalho para abrir a sessão de um dia. */}
+      <Secao rotulo="a semana" nota="toque num dia para abrir" primeira>
+      <div class="semana">
+        {cromo.semana.map(d => (
+          <button
+            key={d.d}
+            class={'wd' + (d.hoje ? ' hoje' : '') + (d.feito ? ' feito' : '') +
+                   (d.livre ? ' livre' : '') + (d.futuro ? ' futuro' : '') +
+                   (d.descanso ? ' descanso' : '')}
+            disabled={!d.abre}
+            onClick={() => ctx.abreSessaoDoDia(d.abre)}
+          >
+            <span class="wd-d">{d.d}</span>
+            <span class="wd-v">{d.v}</span>
+            {d.cardio && <span class="barra-cardio" />}
+          </button>
+        ))}
+      </div>
+      </Secao>
+
       <Mes m={ctx.mes()} ctx={ctx} />
 
       {/* As sessões de cardio JÁ FEITAS. O dono do cardio é o Agora, que é onde
