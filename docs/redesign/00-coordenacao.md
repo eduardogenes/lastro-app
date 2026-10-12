@@ -2293,8 +2293,48 @@ contraditórias. O que a mantém limitada é o teto de 60 da própria coleção;
 há remoção automática, porque remover um registro desfazível em silêncio é
 exatamente o que "nada é descartado em silêncio" proíbe.
 
-- [ ] **6.p As outras telas**, pela ordem do plano, com os repontes de expressão
-      composta junto de cada uma (uma visita só por arquivo, decisão do dono). A
+- [x] **6.r A bioimpedância ganha tela — a capacidade que não tinha porta**
+      (`7c30014`) — e o modo de achá-la vale registro: **varri as 191 chaves de
+      `CTX` procurando as que nenhuma tela consome.** Sete apareceram, cinco
+      eram legítimas (teardown, verbo genérico, leitura interna), e uma era buraco
+      de verdade.
+      O modelo existia desde a migração da frente 0 — cinco marcas declaradas,
+      verbo próprio, casos de teste — e **não tinha tela**. É o tipo de coisa que
+      passa um ano sem ninguém notar, porque o teste do modelo fica verde. Só dei
+      por isso conferindo a §1.3 item por item.
+      **O resumo do acervo passou a contá-las**, e o caso de `corpo.test.js`
+      previu este momento com todas as letras: "enquanto não havia torneira isso
+      era coerente; agora é omissão real — o resumo diz ao dono o tamanho do que
+      ele tem a perder".
+      **Dois defeitos meus, achados pela rede:** o instante de hoje era
+      **meio-dia de hoje**, e antes do meio-dia isso está no futuro — o app não
+      gravava nada entre 00h e 12h, e o primeiro caso **não pegava** porque
+      rodando de tarde as duas versões gravam igual (tem caso com relógio fixo às
+      7h agora); e os cinco campos controlados pelo mesmo objeto liam o estado do
+      **último render**, então o segundo campo apagava o primeiro.
+
+- [x] **6.s O deload muda de lugar, e o freio passa do lugar para a palavra**
+      (`be921b7`) — decisão 6, e ela tem história: o interruptor morava em
+      Ajustes com a razão escrita no fonte, **o lugar ERA o freio**, e ele foi
+      perguntado duas vezes na mesma noite — a segunda depois de eu corrigir o
+      cartão que subestimava o que ele decidia — e manteve.
+      O item do menu `···` **não é um interruptor com nome**: diz o corte em
+      número antes do toque, com os números do dado. A tabela da frente 3 tem uma
+      linha "nunca", e ela é exatamente "um interruptor com o nome sozinho".
+      **E a folha só é desenhada porque o conserto de 6.l existe** — folha aberta
+      de dentro de um destino não era desenhada, e o modo é destino. Sem aquele
+      conserto, este menu abriria no vazio.
+      **Um achado sobre a minha asserção:** procurei a palavra "deload" fora da
+      sessão e o caso ficou vermelho — uma das catorze regras do treinador se
+      chama "Deload por evidência, não por calendário", e ela é **referência**,
+      posse de Prescrição. A regra e o interruptor têm nomes parecidos e naturezas
+      opostas.
+
+- [ ] **6.t As outras telas**, pela ordem do plano, com os repontes de expressão
+      composta junto de cada uma (uma visita só por arquivo, decisão do dono).
+      **Medido:** 400 entradas de ponte (325 `a.E`, 75 `a.J`) em 36 arquivos.
+      Elas alcançam o MODELO e não nomes de tela — sobreviveram à troca dos cinco
+      lugares sem um vermelho —, então o reponte é higiene e não bloqueio. A
       decisão do dono é que **os 168 repontes de expressão composta sejam feitos
       junto com a reescrita de cada tela**, numa visita só por arquivo. O defeito
       do `ajustaRelogio` já foi pago na frente da porta 1.
