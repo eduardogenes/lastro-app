@@ -4089,6 +4089,39 @@ function serieJaRegistrada(i, k) {
 // `jaRegistrada` vem do CHAMADOR, medido antes da escrita (`serieJaRegistrada`):
 // é o que separa registrar de corrigir, e é por isso que corrigir não reinicia
 // o descanso.
+/**
+ * Anuncia a série, com o valor dentro do anúncio.
+ *
+ * "55 kg × 9, série 3 guardada" — e o valor dentro é o ponto: um anúncio que
+ * diga só "guardado" obriga quem usa leitor de tela a ir conferir o que foi
+ * guardado, que é justamente o trabalho que o anúncio existe para poupar.
+ *
+ * Hoje a confirmação visual já existe e é boa (`voa()` leva o valor até a
+ * tabela). O que faltava era a metade auditiva: nenhuma das chamadas de `toast`
+ * é da gravação de série, e o `<input>` ecoava o valor por ser campo — o que
+ * deixa de valer no dia em que a régua substituir o campo.
+ *
+ * Região própria e invisível, e não o toast: 48 toasts por semana competindo com
+ * o cronômetro de descanso — que começa no mesmo instante — seriam ruído para
+ * quem vê, para resolver um problema de quem não vê.
+ */
+function dizSerie(i, k, e, jaRegistrada) {
+  const el = document.getElementById('serie-dita');
+  if (!el) return;
+  const s = e.s[k] || [];
+  const ex = treino(view.day).ex[i];
+  const un = unidadeDe(ex);
+  // "55" e não "55,0": o anúncio diz o que ele DIGITOU, e a casa decimal vazia
+  // lida em voz alta vira "cinquenta e cinco vírgula zero". Inteiro sai inteiro;
+  // decimal sai com vírgula, porque ponto em português se lê como outra coisa.
+  const num = function (v) { return v % 1 === 0 ? String(v) : fmtDec(v); };
+  const peso = s[0] == null ? null : num(s[0]) + (un ? ' ' + ROTULO_UNIDADE[un] : ' kg');
+  const reps = s[1] == null ? null : String(s[1]);
+  const valor = peso && reps ? peso + ' × ' + reps : (peso || reps || '');
+  el.textContent = valor + ', série ' + (k + 1) +
+    (jaRegistrada ? ' corrigida' : ' guardada') + '.';
+}
+
 function autoTimer(i, k, e, jaRegistrada) {
   const ex = treino(view.day).ex[i];
   const ult = setsFor(ex) - 1;
@@ -4098,6 +4131,13 @@ function autoTimer(i, k, e, jaRegistrada) {
   // de apagar o campo REARMA o disparo daquela série, porque aí ela deixou de
   // estar registrada
   if (!cheia) return;
+  // A SÉRIE GUARDADA É ANUNCIADA, com o valor dentro (frente 2, R6). Fica aqui
+  // porque é aqui que o app sabe que a série ficou COMPLETA e é NOVA — as duas
+  // coisas que fazem dela uma gravação e não uma correção.
+  //
+  // Antes do `return` do `jaRegistrada`: corrigir também merece anúncio, e com
+  // palavra diferente, porque o que mudou foi o valor e não o registro.
+  dizSerie(i, k, e, jaRegistrada);
   // corrigir não reinicia o descanso: o valor muda, o instante não
   if (jaRegistrada) return;
 

@@ -241,3 +241,74 @@ test('corrigir uma série depois de reabrir o app não inicia descanso', async (
   assert.deepStrictEqual(log[log.length - 1].sets[0], [60, 8], 'e a correção foi gravada');
   b.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// A SÉRIE GUARDADA É ANUNCIADA — R6 da frente 2
+// ---------------------------------------------------------------------------
+//
+// A confirmação visual já existia e é boa: `voa()` anima o valor até a tabela.
+// O que faltava era a metade auditiva — nenhuma das 94 chamadas de `toast()` é
+// da gravação de série, e o `<input>` ecoava o valor por SER campo, o que deixa
+// de valer no dia em que a régua de repetições substituir o campo.
+
+test('gravar uma série anuncia o VALOR, não só "guardado"', async () => {
+  // O valor dentro do anúncio é o ponto: um anúncio que diga só "guardado"
+  // obriga quem usa leitor de tela a ir conferir o que foi guardado — que é
+  // justamente o trabalho que o anúncio existe para poupar.
+  const a = await app();
+  a.v('toggle', 0);
+  a.preencher(0, 0, 55, 9);
+  await a.esperar();
+
+  const dito = a.doc.getElementById('serie-dita');
+  assert.ok(dito, 'a região viva existe');
+  assert.strictEqual(dito.getAttribute('aria-live'), 'polite',
+    'informa, não interrompe — a mesma razão escrita do toast');
+  assert.strictEqual(dito.getAttribute('role'), 'status');
+  assert.match(dito.textContent, /55 kg × 9, série 1 guardada/, dito.textContent);
+  a.fechar();
+});
+
+test('o anúncio é invisível, e isso é decisão e não descuido', async () => {
+  // Região própria e fora da tela: 48 toasts por semana competindo com o
+  // cronômetro de descanso — que começa no mesmo instante — seriam ruído para
+  // quem vê, para resolver um problema de quem não vê.
+  //
+  // E nunca `display: none` nem `visibility: hidden`: os dois tiram o nó da
+  // árvore de acessibilidade, e com ele o anúncio.
+  const a = await app();
+  const regras = a.window.getComputedStyle(a.doc.getElementById('serie-dita'));
+  assert.notStrictEqual(regras.display, 'none', 'display none tiraria o anúncio');
+  assert.notStrictEqual(regras.visibility, 'hidden', 'visibility hidden também');
+  assert.ok(a.doc.getElementById('serie-dita').className.includes('ins-so-leitor'),
+    'usa a classe de só-leitor, que sai da tela sem sair da árvore');
+  a.fechar();
+});
+
+test('corrigir uma série anuncia com palavra DIFERENTE de gravar', async () => {
+  // O que mudou foi o valor, não o registro — e dizer "guardada" de novo faria
+  // a correção soar como uma série a mais.
+  const a = await app();
+  a.v('toggle', 0);
+  a.preencher(0, 0, 55, 9);
+  await a.esperar();
+  assert.match(a.doc.getElementById('serie-dita').textContent, /guardada/);
+
+  a.preencher(0, 0, 60, null);
+  await a.esperar();
+  assert.match(a.doc.getElementById('serie-dita').textContent, /60 kg × 9, série 1 corrigida/,
+    a.doc.getElementById('serie-dita').textContent);
+  a.fechar();
+});
+
+test('série incompleta não anuncia nada', async () => {
+  // Meia série não é série: anunciar "55 kg, série 1 guardada" com a repetição
+  // em branco diria que algo foi registrado quando o registro é a dupla.
+  const a = await app();
+  a.v('toggle', 0);
+  a.preencher(0, 0, 55, null);
+  await a.esperar();
+  assert.strictEqual(a.doc.getElementById('serie-dita').textContent, '',
+    'nada anunciado: a série não ficou completa');
+  a.fechar();
+});

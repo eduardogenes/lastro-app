@@ -57,6 +57,19 @@
      toast informa, nunca interrompe. -->
 <div id="toast" role="status" aria-live="polite"></div>
 
+<!-- A SÉRIE GUARDADA, anunciada e não mostrada.
+     Hoje a confirmação de uma série é VISUAL e é boa: `voa()` anima o valor até
+     a tabela, e o número aparece lá. O que falta é a metade auditiva — as 94
+     chamadas de `toast()` do app não incluem nenhuma da gravação de série, e com
+     a régua de repetições o `<input>` que ecoava o valor por ser campo deixa de
+     existir (frente 2, R6).
+     Região PRÓPRIA, e não o toast: um toast visual a cada série seriam 48
+     interrupções por semana competindo com o cronômetro de descanso, que começa
+     no mesmo instante. Como a confirmação visual já existe, o que falta é só o
+     anúncio — então ele é invisível de propósito.
+     `polite` e não `assertive`: informa, não interrompe. -->
+<div id="serie-dita" role="status" aria-live="polite" class="ins-so-leitor"></div>
+
 <!-- O aviso de telefone deitado. Fica no HTML e não no Preact porque não
      depende de estado nenhum: quem o liga e desliga é a media query, e assim
      ele aparece mesmo antes de o app terminar de carregar. -->

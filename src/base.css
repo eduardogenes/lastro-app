@@ -423,3 +423,12 @@ p, .ins-prosa, input, textarea {
     font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-3);
   }
 }
+
+/* Só para leitor de tela: sai da tela sem sair da árvore de acessibilidade.
+   `clip-path: inset(50%)` e 1px de caixa — e NUNCA `display: none` nem
+   `visibility: hidden`, que tiram o nó da árvore e com ele o anúncio. */
+.ins-so-leitor {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+}
