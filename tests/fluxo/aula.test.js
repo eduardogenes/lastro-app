@@ -281,8 +281,11 @@ test('e a aula encerrada no toque também não — os dois fechos concordam', as
   await a.v('finalizarSessao');
   await a.esperar();
 
-  assert.strictEqual(a.vista().promo, null, 'nenhuma pergunta de programa');
-  assert.deepStrictEqual(a.S().promoPendente, [], 'e nada ficou esperando decisão');
+  // A primeira asserção falava de `view.promo`, que saiu com a tela de decisão.
+  // A segunda é a que vale, e é mais forte: num dia ABERTO o que foi
+  // acrescentado É o dia, não uma emenda a ele — não há conteúdo permanente
+  // para aquilo virar, e por isso nada é enfileirado.
+  assert.deepStrictEqual(a.S().promoPendente, [], 'nada ficou esperando decisão');
   assert.strictEqual(a.S().sessao, null, 'a sessão encerrou');
   a.fechar();
 });

@@ -1,18 +1,29 @@
 // "Isto fica no programa?"
 //
 // O plano vem do treinador, mas a academia tem as máquinas que tem, e alguns
-// exercícios ele não quer fazer. A tela de decisão é onde uma mudança do dia
-// vira — ou não — mudança permanente.
+// exercícios ele não quer fazer. Uma mudança do dia vira — ou não — mudança
+// permanente, e estes casos guardam o MECANISMO que a carrega até a decisão.
 //
-// O buraco que estes testes fecham: a pergunta só existia para quem tocava em
-// FINALIZAR. A sessão nasce e morre sozinha por decisão do produto, e quando
-// morria sozinha com mudança pendente, a resposta era decidida em silêncio,
-// sempre para o mesmo lado.
+// A PERGUNTA SAIU DO FIM DO TREINO (decisão D1). A tela de decisão existia e
+// interrompia o fecho: finalizar abria uma tela cheia perguntando sobre o
+// PROGRAMA, que é a pergunta menos urgente que existe neste produto, no momento
+// em que ele acabou de treinar. Agora a mudança é CARREGADA para a fila de
+// Prescrição, com a conta de volume e o vencimento ao lado, e lá ela é
+// respondida com calma.
+//
+// O que estes casos passam a guardar é o carregador, nos DOIS fechos — e é o
+// ponto que o §3.6 do plano nomeia: `fechaSessao` só copiava a mudança no fecho
+// automático, então tirar a pergunta sem escrever o carregador no fecho manual
+// faria finalizar no toque DESCARTAR a mudança em silêncio. O F280 nominal.
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { app, DIA } from './harness.js';
 
-test('finalizar pela porta da frente pergunta sobre a troca', async () => {
+test('finalizar pela porta da frente CARREGA a troca, sem interromper', async () => {
+  // Reescrito pela D1, e é a asserção mais importante deste arquivo: ela dizia
+  // "a decisão aparece", e o que a substitui é que a mudança NÃO SE PERDE.
+  // Finalizar no toque deixou de abrir tela e passou a enfileirar — e sem esta
+  // linha no fonte, a mudança seria descartada em silêncio.
   const a = await app();
   a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
@@ -20,29 +31,40 @@ test('finalizar pela porta da frente pergunta sobre a troca', async () => {
   await a.esperar();
 
   await a.v('finalizarSessao');
-  assert.ok(a.vista().promo, 'a decisão aparece');
-  assert.match(a.texto('.htitle'), /programa/i);
-  assert.ok(a.doc.getElementById('app').textContent.includes('Supino inclinado no Smith'),
-    'e diz qual foi a mudança');
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().sessao, null, 'a sessão encerrou de verdade, sem escala');
+  const g = (a.S().promoPendente || [])[0];
+  assert.ok(g, 'e a mudança ficou na fila');
+  assert.strictEqual(g.day, 'A');
+  assert.strictEqual(g.mods.length, 1);
+  assert.ok(g.resumoMods.some(function (t) { return /Supino inclinado no Smith/.test(t); }),
+    'dizendo qual foi: ' + g.resumoMods.join(' · '));
   a.fechar();
 });
 
-test('série a mais também vira pergunta', async () => {
+test('série a mais também é carregada, e o oficial fica intacto até a resposta', async () => {
   const a = await app();
+  const antes = a.S().prog.A.ex[0].s;
   a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   a.v('mudaSeries', 0, 1);
   await a.esperar();
   await a.v('finalizarSessao');
+  await a.esperar(60);
 
-  const P = a.vista().promo;
-  assert.strictEqual(P.mods.length, 1);
-  assert.strictEqual(P.mods[0].k, 'sets');
-  assert.strictEqual(P.dec[0], 'hoje', 'o padrão é conservador: não mexe no oficial');
+  const g = (a.S().promoPendente || [])[0];
+  assert.ok(g, 'a mudança está na fila');
+  assert.strictEqual(g.mods.length, 1);
+  assert.strictEqual(g.mods[0].k, 'sets');
+  // O padrão continua conservador, e agora ele é o ESTADO e não um `dec` na
+  // tela: enquanto ninguém responde, o oficial não mexeu.
+  assert.strictEqual(a.S().prog.A.ex[0].s, antes,
+    'o padrão é conservador: o oficial não muda sem resposta');
   a.fechar();
 });
 
-test('levar para o oficial muda o programa; só hoje não muda', async () => {
+test('responder "virou permanente" muda o programa; não responder não muda', async () => {
   const a = await app();
   const antes = a.S().prog.A.ex[0].s;
 
@@ -51,9 +73,11 @@ test('levar para o oficial muda o programa; só hoje não muda', async () => {
   a.v('mudaSeries', 0, 1);
   await a.esperar();
   await a.v('finalizarSessao');
-  a.v('decidePromo', 0, 'oficial');
-  await a.v('concluirPromo');
-  await a.esperar();
+  await a.esperar(60);
+  // A resposta é de Prescrição agora, por mudança, e com o motivo opcional.
+  const sid = a.S().promoPendente[0].sid;
+  await a.v('ctx.respondeMudanca', sid, 0, true, null);
+  await a.esperar(60);
 
   assert.strictEqual(a.S().prog.A.ex[0].s, antes + 1, 'o programa mudou');
   // coleção desde o plano 10; era documento, e "nada pendente" era `null`
@@ -100,7 +124,8 @@ test('a mudança guardada ESPERA em Prescrição, e o boot não interrompe', asy
   } });
   await a.esperar();
 
-  assert.strictEqual(a.vista().promo, null, 'o boot NÃO abre a decisão');
+  assert.strictEqual(a.v('ctx.emTelaCheia'), false,
+    'o boot NÃO abre tela cheia nenhuma — e a tela de decisão nem existe mais');
   const fila = a.vJ('ctx.mudancasQueEsperam');
   assert.strictEqual(fila.length, 1, 'e a mudança está na fila, não perdida');
   assert.ok(/Pushdown|pushdown/.test(fila[0].mudancas[0].txt), fila[0].mudancas[0].txt);
@@ -158,20 +183,27 @@ test('sair da lista sem responder deixa a mudança ESPERANDO', async () => {
   assert.strictEqual((a.S().prog.A.ex[7] || { s: 0 }).s, antes, 'e o oficial não mudou');
   a.fechar();
 });
+// ---------------------------------------------------------------------------
+// O QUE SAIU COM A TELA DE DECISÃO, e onde cada propriedade foi parar
+// ---------------------------------------------------------------------------
+//
+// Quatro casos moravam aqui e foram embora com a tela (decisão D1). Nenhum
+// deles cobria capacidade que desapareceu — cobriam a MECÂNICA da tela:
+//
+//  · "a decisão é um destino: entra no topo e devolve a posição ao voltar" e
+//    "responder a decisão é fim de fluxo": eram o par `entraNoDestino` /
+//    `saiDoDestino` daquele destino. Sem destino, não há posição a guardar — e
+//    o caso abaixo cobra que finalizar não deixa resíduo nenhum;
+//  · "ctx.concluiPromo leva ao oficial só o que foi marcado oficial" e
+//    "ctx.voltaDoPromo sai sem responder": eram as duas portas da tela. A
+//    propriedade que elas guardavam — que SÓ o que foi respondido chega ao
+//    oficial — está nos dois casos abaixo, agora por `ctx.respondeMudanca`, que
+//    é a porta da fila.
 
-// A metade "sair da tela de decisão sem responder mantém o conservador" NÃO
-// está aqui, e não é esquecimento: ela já é cobrada em
-// `ctx.voltaDoPromo sai sem responder e o oficial fica como estava`, mais
-// abaixo, e por ela cobrada pelo caminho REAL — `finalizarSessao` abrindo a
-// pergunta no fecho manual. Eu havia escrito um caso para isso aqui chamando
-// `abrePromoGuardada`, e descobri assim que aquela função tinha ficado SEM
-// CHAMADOR quando o boot parou de interromper: o caso testaria código morto.
-// A função saiu; `finalizarSessao` monta `view.promo` por conta própria.
-
-test('a decisão é um destino: entra no topo e devolve a posição ao voltar', async () => {
-  // Ela abre no meio de um treino rolado até o sétimo exercício. Sem o par
-  // entra/sai, voltar sem responder caía na rolagem da tela da decisão — que é
-  // curta — e o exercício em que ele tinha parado sumia.
+test('finalizar é fim de fluxo: nada de destino, nada de resíduo', async () => {
+  // Antes finalizar abria um destino e guardava a posição de leitura para
+  // devolvê-la a quem saísse sem responder. Sem a tela não há escala: a sessão
+  // encerra, o dia gira, e a posição do treino de ontem não é mais a dele.
   const a = await app();
   a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
@@ -180,53 +212,19 @@ test('a decisão é um destino: entra no topo e devolve a posição ao voltar', 
 
   a.E('window.scrollY = 980');            // jsdom não rola sozinho
   await a.v('finalizarSessao');
-  assert.strictEqual(a.dado('scrollDoDestino')['promo'], 980, 'guardou antes de trocar a tela');
+  await a.esperar(60);
 
-  a.v('voltarDoPromo');
-  await a.esperar();
-  assert.strictEqual(a.dado('scrollDoDestino')['promo'], undefined, 'devolveu, sem deixar lixo');
+  assert.strictEqual(a.S().sessao, null, 'encerrou');
+  assert.strictEqual(a.dado('scrollDoDestino')['promo'], undefined,
+    'e não guardou posição de um destino que não existe mais');
+  assert.ok((a.S().promoPendente || []).length, 'com a mudança na fila');
   a.fechar();
 });
 
-test('responder a decisão é fim de fluxo: não devolve posição nenhuma', async () => {
-  const a = await app();
-  a.v('toggle', 0);
-  a.preencher(0, 0, 60, 8);
-  a.v('setAlt', 0, 'supino-inclinado-no-smith');
-  await a.esperar();
-
-  a.E('window.scrollY = 980');
-  await a.v('finalizarSessao');
-  a.v('decidePromo', 0, 'oficial');
-  a.v('motivoPromo', 'decisao');
-  await a.v('concluirPromo');
-  await a.esperar();
-
-  // O dia girou e a sessão encerrou: a posição do treino de ontem não é a dele.
-  assert.strictEqual(a.dado('scrollDoDestino')['promo'], undefined);
-  a.fechar();
-});
-
-// ---------------------------------------------------------------------------
-// As duas portas da decisão: `ctx.concluiPromo` e `ctx.voltaDoPromo`
-// ---------------------------------------------------------------------------
-//
-// Por que estas duas primeiro, dentro do assunto: são as únicas chaves daqui
-// que ESCREVEM no programa oficial. Uma regressão nelas não aparece no dia —
-// aparece semanas depois, como um programa que mudou sem ninguém ter decidido,
-// ou como uma decisão respondida que não valeu.
-//
-// O QUE ESTE GRUPO PROVA: que a chave `ctx.concluiPromo` leva ao oficial o que
-// foi marcado 'oficial' e **só** isso, e que `ctx.voltaDoPromo` sai mantendo o
-// conservador. Os casos acima provam o mesmo das funções de módulo
-// (`concluirPromo`, `voltarDoPromo`); o que falta a eles é a CHAVE. Uma
-// `CTX.concluiPromo` ligada na função errada — ou sumida — passa por todos
-// eles e tira a decisão da tela sem um teste vermelho.
-//
-// O QUE ESTE GRUPO NÃO COBRE: que o botão da tela esteja ligado nelas. Chamar
-// o verbo prova que a capacidade existe no MODELO, não que o dedo a alcança.
-
-test('ctx.concluiPromo leva ao oficial só o que foi marcado oficial', async () => {
+test('responder uma mudança leva ao oficial SÓ ela', async () => {
+  // A propriedade que `ctx.concluiPromo` guardava, e ela é a que importa: uma
+  // regressão aqui não aparece no dia — aparece semanas depois, como um programa
+  // que mudou sem ninguém ter decidido.
   const a = await app();
   const antes = a.S().prog.A.ex.map(function (x) { return x.s; });
 
@@ -236,59 +234,37 @@ test('ctx.concluiPromo leva ao oficial só o que foi marcado oficial', async () 
   a.v('mudaSeries', 1, 1);
   await a.esperar();
   await a.v('finalizarSessao');
+  await a.esperar(60);
 
-  const P = a.vista().promo;
-  assert.strictEqual(P.mods.length, 2, 'duas mudanças pendentes — pré-condição');
-  assert.deepStrictEqual(P.dec, ['hoje', 'hoje'], 'e as duas no padrão conservador');
+  const g = a.S().promoPendente[0];
+  assert.strictEqual(g.mods.length, 2, 'duas mudanças na fila — pré-condição');
 
-  a.v('decidePromo', 0, 'oficial');          // a primeira vai; a segunda fica
-  a.v('ctx.concluiPromo');
+  await a.v('ctx.respondeMudanca', g.sid, 0, true, null);
   await a.esperar(60);
 
   const depois = a.S().prog.A.ex.map(function (x) { return x.s; });
-  assert.strictEqual(depois[0], antes[0] + 1, 'a marcada subiu no oficial');
-  assert.strictEqual(depois[1], antes[1],
-    'e a que ficou em "hoje" NÃO subiu: a decisão é por mudança, não por sessão');
-  assert.deepStrictEqual(depois.slice(2), antes.slice(2), 'o resto do dia intocado');
-
-  assert.strictEqual(a.vista().promo, null, 'a pergunta fechou');
-  assert.deepStrictEqual(a.S().promoPendente, [], 'e não ficou guardada para depois');
-  assert.strictEqual(a.S().progLog.length, 1,
-    'uma linha de log, para responder "por que isso mudou?" daqui a dois meses');
-  // RESPONDER encerra o treino. É o que separa esta chave da outra: sem esta
-  // asserção, trocar `concluiPromo` por `voltaDoPromo` no fonte deixa o caso
-  // verde — com uma mudança marcada 'hoje' as duas chaves terminam no mesmo
-  // lugar, e foi uma quebra deliberada que mostrou isso.
-  assert.strictEqual(a.S().sessao, null, 'a sessão encerrou junto: responder é fim de fluxo');
-  assert.ok(/mudança levada/.test(a.toast()), 'e o app diz o que levou: ' + a.toast());
+  assert.strictEqual(depois[0], antes[0] + 1, 'a respondida subiu no oficial');
+  assert.strictEqual(depois[1], antes[1], 'e a OUTRA não: só o que foi respondido chega lá');
+  assert.strictEqual(a.S().promoPendente[0].mods.length, 1, 'a outra continua esperando');
   a.fechar();
 });
 
-test('ctx.voltaDoPromo sai sem responder e o oficial fica como estava', async () => {
+test('não responder mantém o conservador: o oficial fica como estava', async () => {
+  // A propriedade que `ctx.voltaDoPromo` guardava. Sem a tela, "não responder" é
+  // o estado natural — e é o que tem de não mexer em nada.
   const a = await app();
-  const antes = a.S().prog.A.ex[0].s;
+  const antes = a.S().prog.A.ex.map(function (x) { return x.s; });
 
   a.v('toggle', 0);
   a.preencher(0, 0, 60, 8);
   a.v('mudaSeries', 0, 1);
   await a.esperar();
   await a.v('finalizarSessao');
-  assert.ok(a.vista().promo, 'a pergunta abriu — pré-condição');
-
-  a.v('ctx.voltaDoPromo');
   await a.esperar(60);
 
-  assert.strictEqual(a.vista().promo, null, 'a tela fechou');
-  assert.strictEqual(a.S().prog.A.ex[0].s, antes,
-    'sair sem responder mantém o conservador: o oficial não muda');
-  assert.deepStrictEqual(a.S().promoPendente, [],
-    'e a pergunta não fica reaparecendo para sempre');
+  assert.deepStrictEqual(a.S().prog.A.ex.map(function (x) { return x.s; }), antes,
+    'o oficial não mudou um byte');
   assert.strictEqual((a.S().progLog || []).length, 0, 'nada a registrar: nada mudou');
-  // SAIR não encerra o treino: o fonte diz "a sessão continua aberta até ele
-  // decidir". É esta asserção que distingue esta chave de `ctx.concluiPromo` —
-  // sem ela, as duas passam o caso, e foi a quebra deliberada que mostrou.
-  assert.ok(a.S().sessao, 'a sessão continua ABERTA: sair da pergunta não é finalizar');
-  assert.strictEqual(a.S().sessao.day, 'A');
-  assert.ok(!/encerrado/.test(a.toast() || ''), 'e o app não diz que encerrou: ' + a.toast());
+  assert.ok((a.S().promoPendente || []).length, 'e a mudança continua esperando resposta');
   a.fechar();
 });

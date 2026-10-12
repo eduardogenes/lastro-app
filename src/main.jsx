@@ -35,7 +35,6 @@ import { Ajustes } from './ui/telas/ajustes.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
 import { SessaoModo } from './ui/telas/sessaomodo.jsx';
-import { Decisao } from './ui/telas/decisao.jsx';
 import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { Retroativo } from './ui/telas/retroativo.jsx';
 import { Programa } from './ui/telas/programa.jsx';
@@ -329,7 +328,7 @@ function corpoDoBackup(body) {
 
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] }, promoPendente:[] };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, modoSessao:false, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
-  editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null, aulas:false, rapido:false,
+  editProg:false, addEx:false, addQ:'', novoEx:false, prog:null, medida:null, aulas:false, rapido:false,
   protocolo:null, comparar:null, ajuste:null, camera:null, ajustes:false };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
@@ -502,11 +501,11 @@ async function load() {
   // manhã do dia em que aquele treino volta (passo 4). O mecanismo que carrega
   // a mudança continua inteiro — é ele que o §3.6 do plano manda não apagar.
   //
-  // E `abrePromoGuardada` SAIU com ela: era o único chamador, e `finalizarSessao`
-  // monta `view.promo` por conta própria. O fecho MANUAL continua perguntando na
-  // hora; tirar essa pergunta é a decisão D1, e ela não pode vir antes de o
-  // carregador existir nos DOIS fechos — hoje o manual não tem nenhum, e tirar a
-  // pergunta sem escrevê-lo descartaria a mudança em silêncio (o F280 nominal).
+  // E `abrePromoGuardada` SAIU com ela, por ter ficado sem chamador. A TELA
+  // inteira saiu depois, com a decisão D1 — e junto dela entrou o carregador no
+  // fecho MANUAL, que não existia: `fechaSessao` só copiava a mudança no fecho
+  // automático, e tirar a pergunta sem escrever o carregador faria finalizar no
+  // toque descartar a mudança em silêncio (o F280 nominal, não o risco dele).
   // O descanso que estava correndo. Depois do render, porque ele pinta na barra
   // que vive fora da árvore do Preact e precisa dela já montada.
   await retomaDescanso();
@@ -1002,27 +1001,22 @@ async function finalizarSessao() {
   // Num dia ABERTO o que foi adicionado É o dia, não uma emenda a ele: não há
   // conteúdo permanente para aquilo virar, e perguntar "isto fica no programa?"
   // a cada movimento do box seria uma pergunta por semana sem resposta certa.
-  if (mods.length && !diaAberto(s.day)) {
-    // fechando pela porta da frente: a pergunta é agora, e não fica guardada.
-    // Tira só a DESTA sessão: enquanto era documento, esta linha apagava
-    // qualquer pergunta guardada de outra sessão junto — a da terça sumia
-    // porque ele finalizou a quinta.
-    soltaPromo(s.sid);
-    // a sessão continua aberta até ele decidir: sair sem responder mantém o
-    // padrão conservador, que é não mexer no oficial
-    view.promo = { sid: s.sid, day: s.day, mods: mods.slice(), dec: mods.map(function () { return 'hoje'; }),
-                   motivo: null, feitas: feitas,
-                   resumoMods: mods.map(function (m) { return textoMod(s.day, m); }) };
-    view.editProg = false;
-    // A decisão é um destino como os outros: entra no topo e, se ele sair sem
-    // responder, devolve o treino onde ele estava. Sem isto, voltar caía na
-    // rolagem da tela da decisão — que é curta — e o exercício em que ele
-    // tinha parado sumia.
-    entraNoDestino('promo');
-    render();
-    return;
-  }
-  await encerraDeVerdade(s.day, feitas, null);
+  //
+  // A PERGUNTA SAIU DAQUI — decisão D1 — e no lugar dela entrou o CARREGADOR.
+  //
+  // Esta era a metade do mecanismo que não existia, e era o furo que o §3.6 do
+  // plano nomeia: `fechaSessao` só copiava a mudança no fecho AUTOMÁTICO, com a
+  // razão escrita "pela porta da frente quem pergunta é `finalizarSessao`". Com
+  // a pergunta fora e sem esta linha, finalizar no toque DESCARTARIA a mudança
+  // em silêncio — o F280 nominal, e não o risco dele. Por isso a pergunta e o
+  // carregador têm de entrar na mesma passada: um sem o outro perde dado.
+  //
+  // `guardaPromo` chaveia pelo `sid`, então fechar a mesma sessão duas vezes
+  // atualiza em vez de duplicar — e não toca na mudança de outra sessão, que é
+  // o defeito que o `soltaPromo(s.sid)` daqui existia para evitar.
+  const resumoMods = mods.map(function (m) { return textoMod(s.day, m); });
+  if (mods.length && !diaAberto(s.day)) guardaPromo(s, mods);
+  await encerraDeVerdade(s.day, feitas, resumoMods);
 }
 
 async function encerraDeVerdade(dia, feitas, resumoMods) {
@@ -2139,7 +2133,7 @@ const CTX = {
   telaCheia: telaCheia,
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
-    return !!(view.promo || view.prog || view.retro || view.add || view.sessao || view.hist ||
+    return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.ajuste || view.camera ||
               view.ajustes || view.modoSessao);
   },
@@ -2313,7 +2307,6 @@ function telaCheia() {
   if (view.ajuste) return <AjusteFoto ctx={CTX} />;
   if (view.protocolo) return <Protocolo ctx={CTX} />;
   if (view.comparar) return <Comparar ctx={CTX} />;
-  if (view.promo) return <Decisao ctx={CTX} />;
   if (view.prog) return <Programa ctx={CTX} />;
   if (view.retro) return <Retrospectiva ctx={CTX} />;
   if (view.add) return <Retroativo ctx={CTX} />;
@@ -2752,16 +2745,26 @@ function semanasNoPrograma(sl) {
   return Math.floor((Date.now() - sl.desde) / (7 * 86400000));
 }
 
-function decidePromo(j, v) { view.promo.dec[j] = v; render(); }
-function motivoPromo(k) { view.promo.motivo = view.promo.motivo === k ? null : k; render(); }
-function voltarDoPromo() {
-  // sair sem responder mantém o padrão conservador — e não deixa a pergunta
-  // reaparecendo para sempre
-  if (view.promo && view.promo.guardada) { soltaPromo(view.promo.sid); queueSave(); }
-  view.promo = null;
-  render();
-  saiDoDestino('promo');
-}
+// A TELA DE DECISÃO SAIU (decisão D1), e com ela estas quatro funções:
+// `decidePromo`, `motivoPromo`, `voltarDoPromo` e `concluirPromo`. Elas eram a
+// mecânica de uma tela cheia que interrompia o fecho do treino para perguntar
+// sobre o PROGRAMA — a pergunta menos urgente que existe neste produto, feita
+// no momento em que ele acabou de treinar.
+//
+// O que ficou no lugar delas, e é mais e não menos: o carregador nos DOIS
+// fechos (`fechaSessao` e `finalizarSessao`), a fila em Prescrição com a conta
+// de volume e o vencimento ao lado de cada mudança, e `CTX.respondeMudanca`,
+// que responde UMA mudança por vez — o que o `dec[]` daquela tela fazia para um
+// conjunto, e sem obrigar a decidir tudo de uma vez.
+//
+// `S.promoPendente` NÃO saiu, e é o ponto do §3.6 do plano: ele é o mecanismo,
+// e apagá-lo com a tela é como o F280 volta.
+//
+// E `aplicaAoOficial` FICA, obviamente: ela é quem escreve no programa, e
+// `CTX.respondeMudanca` a chama. Ela morava no meio das quatro que saíram, e eu
+// a apaguei junto — o app parou de bootar e 669 casos responderam
+// `__escopo is not a function`, que é o modo de falha de um módulo que não
+// termina de carregar.
 
 // Aplica ao programa oficial as mudanças escolhidas, na ordem em que foram
 // feitas, e registra a decisão para dar resposta a "por que isso mudou?".
@@ -2796,25 +2799,6 @@ function aplicaAoOficial(d, mods, motivo) {
     if (S.progLog.length > 300) S.progLog = S.progLog.slice(-300);
   }
   return n;
-}
-
-async function concluirPromo() {
-  const P = view.promo;
-  const escolhidos = P.mods.filter(function (m, j) { return P.dec[j] === 'oficial'; });
-  const n = escolhidos.length ? aplicaAoOficial(P.day, escolhidos, P.motivo) : 0;
-  view.promo = null;
-  soltaPromo(P.sid);
-  // Fim de fluxo: a sessão encerra, o dia gira, e a posição que ele tinha no
-  // treino de ontem não é mais a dele. Topo, como manda o contrato.
-  esqueceDestino('promo');
-
-  if (P.guardada) {
-    // a sessão já tinha fechado sozinha: só a decisão faltava
-    await save(); render(); window.scrollTo(0, 0);
-  } else {
-    await encerraDeVerdade(P.day, P.feitas, P.resumoMods);
-  }
-  if (n) toast(n + (n === 1 ? ' mudança levada' : ' mudanças levadas') + ' para o programa oficial.');
 }
 
 
@@ -5156,13 +5140,13 @@ const SUPERFICIE = {
     abrirNota, abrirNovoEx, abrirPrograma, abrirRapido, abrirSessao, addBody, addCardio,
     addExercicio, addSet, ajustaTimer, altList, altOf, alternaDescanso, apagaFoto,
     apagarModeloDeAula, apagarSessao, aplicaAoOficial, aplicarModeloDeAula, arrozAtual,
-    cardioSemana, cardioSet, cargaTipo, catalogoAlimentos, catalogoDeAdicao, concluirPromo,
-    concluirRetro, criarTreino, decidePromo, delBody, descOf, desfazMod, diaAberto,
+    cardioSemana, cardioSet, cargaTipo, catalogoAlimentos, catalogoDeAdicao,
+    concluirRetro, criarTreino, delBody, descOf, desfazMod, diaAberto,
     diaDeComida, diasSemBackup, difDoDia, difTotal, duracaoAtual, editarSessao, ehDescanso,
     encerraSePreciso, estadoEx, exDe, fechaSessao, fecharPrograma, finalizarSessao,
     garanteBytesDoCorpo, go, gravarRetro, historico, hojeISO, id, impactoDoMod,
     impactoOficial, impactoSeries, importText, importaAulaColada, iniciarSessao, logKey,
-    modoEdicao, modoPrograma, modsDoDia, montaCatalogo, motivoPromo, moverDia, moverEx,
+    modoEdicao, modoPrograma, modsDoDia, montaCatalogo, moverDia, moverEx,
     moverProg, mudaMes, mudaSeries, nextDay, nomeEx, openHist, ordemDePoses, pausarSessao,
     payload, pendencias, pintaTimer, planoDeComida, poeMedida, progDesc, progRemove,
     progSeries, progSetTroca, programaDia, pularEx, reconciliaCorpo, reconciliaFotos,
@@ -5171,7 +5155,7 @@ const SUPERFICIE = {
     seriesPorMusculo, sessoesDeTrabalho, setAlt, setCarga, setDeload, setsFor, showJSON,
     sincroniza, soltarTela, startTimer, stopTimer, temHora, tickRelogio, tiraFoto,
     tiraFotoDoCorpo, toggle, toggleDor, toggleSwap, treino, trocaDoDia, veredito,
-    voltarDoPromo, wipe,
+    wipe,
 
     // ---- regra pura de `src/dominio/`, que o app já importa ----
     // Entram pela superfície em vez de o teste de fluxo importar o fonte: o que
@@ -5410,7 +5394,6 @@ const FECHA_CAMADA = {
   ajuste:    function () { CTX.fechaAjuste(); },
   protocolo: function () { CTX.fechaProtocolo(); },
   comparar:  function () { CTX.fechaComparar(); },
-  promo:     function () { voltarDoPromo(); },
   prog:      function () { fecharPrograma(); },
   retro:     function () { fecharRetro(); },
   add:       function () { fecharAdicionar(); },
@@ -7037,37 +7020,6 @@ CTX.mudancasQueEsperam = function () {
     };
   });
 };
-
-CTX.decisao = function () {
-  const P = view.promo;
-  if (!P) return null;
-  const n = P.dec.filter(function (x) { return x === 'oficial'; }).length;
-  return {
-    dia: P.day,
-    olho: 'treino ' + P.day,
-    meta: P.mods.length + (P.mods.length === 1 ? ' mudança' : ' mudanças'),
-    mods: P.mods.map(function (m, j) {
-      const imp = impactoDoMod(P.day, m);
-      return {
-        j: j,
-        txt: textoMod(P.day, m),
-        impacto: imp ? imp.txt : null,
-        acima: !!(imp && imp.acima),
-        oficial: P.dec[j] === 'oficial'
-      };
-    }),
-    motivos: MOTIVOS.map(function (x) {
-      return { k: x.k, t: x.t, on: P.motivo === x.k };
-    }),
-    acao: n
-      ? 'Encerrar e levar ' + n + (n === 1 ? ' mudança' : ' mudanças') + ' para o oficial'
-      : 'Encerrar mantendo o programa como está'
-  };
-};
-CTX.decidePromo = function (j, v) { decidePromo(j, v); };
-CTX.motivoPromo = function (k) { motivoPromo(k); };
-CTX.concluiPromo = function () { concluirPromo(); };
-CTX.voltaDoPromo = function () { voltarDoPromo(); };
 
 // ---------- tela cheia: retrospectiva de bloco ----------
 CTX.retrospectiva = function () {

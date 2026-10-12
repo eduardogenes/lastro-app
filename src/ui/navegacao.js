@@ -61,7 +61,6 @@ export function camadasAbertas(view) {
   if (view.add) c.push('add');
   if (view.retro) c.push('retro');
   if (view.prog) c.push('prog');
-  if (view.promo) c.push('promo');
   if (view.comparar) c.push('comparar');
   if (view.protocolo) c.push('protocolo');
   if (view.ajuste) c.push('ajuste');

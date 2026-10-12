@@ -136,7 +136,7 @@ test('desfazer uma mudança volta o dia ao programa', async () => {
   a.fechar();
 });
 
-test('finalizar com mudanças abre a decisão, e o padrão é só hoje', async () => {
+test('finalizar com mudanças encerra e carrega, com o padrão conservador', async () => {
   const a = await app();
   a.v('toggle', 0);
   for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
@@ -146,17 +146,16 @@ test('finalizar com mudanças abre a decisão, e o padrão é só hoje', async (
 
   const oficial = a.S().prog.A.ex[4].s;
   await a.v('finalizarSessao');
-  await a.esperar();
+  await a.esperar(60);
 
-  assert.ok(a.$('.promo'), 'a tela de decisão aparece antes de encerrar');
-  assert.ok(!!a.S().sessao, 'e a sessão continua aberta até ele responder');
-  assert.deepStrictEqual(a.vista().promo.dec, ['hoje'], 'o padrão é o conservador');
-
-  await a.v('concluirPromo');
-  await a.esperar();
-  assert.strictEqual(a.S().sessao, null, 'agora sim encerrou');
-  assert.strictEqual(a.S().prog.A.ex[4].s, oficial, 'e o oficial não mudou');
+  // Reescrito pela D1: ele afirmava "a tela de decisão aparece antes de
+  // encerrar" e "a sessão continua aberta até ele responder". Finalizar deixou
+  // de ter escala — encerra, e a mudança vai para a fila de Prescrição.
+  assert.strictEqual(a.S().sessao, null, 'encerrou, sem tela no caminho');
+  assert.strictEqual(a.S().prog.A.ex[4].s, oficial,
+    'e o padrão continua o conservador: o oficial não mudou');
   assert.strictEqual(a.S().mods, null, 'as mudanças do dia morrem com a sessão');
+  assert.ok((a.S().promoPendente || []).length, 'mas não se perdem: ficam na fila');
   a.fechar();
 });
 
@@ -170,11 +169,10 @@ test('levar para o oficial muda o programa e fica registrado', async () => {
 
   const oficial = a.S().prog.A.ex[4].s;
   await a.v('finalizarSessao');
-  await a.esperar();
-  a.v('decidePromo', 0, 'oficial');
-  a.v('motivoPromo', 'decisao');
-  await a.v('concluirPromo');
-  await a.esperar();
+  await a.esperar(60);
+  const sid = a.S().promoPendente[0].sid;
+  await a.v('ctx.respondeMudanca', sid, 0, true, 'decisao');
+  await a.esperar(60);
 
   assert.strictEqual(a.S().prog.A.ex[4].s, oficial + 1, 'o programa de amanhã mudou');
   const log = a.S().progLog;
@@ -195,16 +193,25 @@ test('decidir cada mudança separadamente', async () => {
 
   const series = a.S().prog.A.ex[4].s;
   await a.v('finalizarSessao');
-  await a.esperar();
-  assert.strictEqual(a.vista().promo.mods.length, 2);
+  await a.esperar(60);
+  const g = a.S().promoPendente[0];
+  assert.strictEqual(g.mods.length, 2);
 
-  // aceita a série, recusa a troca: são decisões sem relação nenhuma
-  a.v('decidePromo', 0, 'oficial');
-  await a.v('concluirPromo');
-  await a.esperar();
+  // Aceita a série, recusa a troca: são decisões sem relação nenhuma, e agora
+  // cada uma tem a sua própria linha com as duas respostas ao lado — o que
+  // antes era um `dec[]` dentro de uma tela só.
+  const iSeries = g.mods.findIndex(function (m) { return m.k === 'sets'; });
+  const iTroca = g.mods.findIndex(function (m) { return m.k === 'troca'; });
+  assert.ok(iSeries >= 0 && iTroca >= 0, 'as duas mudanças estão na fila');
+
+  await a.v('ctx.respondeMudanca', g.sid, iSeries, true, null);
+  await a.esperar(60);
+  await a.v('ctx.respondeMudanca', a.S().promoPendente[0].sid, 0, false, null);
+  await a.esperar(60);
 
   assert.strictEqual(a.S().prog.A.ex[4].s, series + 1);
   assert.strictEqual(a.S().prog.A.ex[4].id, 'elevacao-lateral-na-maquina', 'a troca era só de hoje');
+  assert.deepStrictEqual(a.S().promoPendente, [], 'e as duas saíram da fila');
   a.fechar();
 });
 
@@ -217,9 +224,7 @@ test('o que mudou fica no registro do dia mesmo sem virar permanente', async () 
   a.v('modoEdicao', false);
 
   await a.v('finalizarSessao');
-  await a.esperar();
-  await a.v('concluirPromo');
-  await a.esperar();
+  await a.esperar(60);
 
   const m = a.S().done[a.S().done.length - 1];
   assert.ok(Array.isArray(m.mods) && m.mods.length === 1, 'daqui a um mês, o dia se explica');
@@ -227,14 +232,22 @@ test('o que mudou fica no registro do dia mesmo sem virar permanente', async () 
   a.fechar();
 });
 
-test('finalizar sem mudanças não mostra a tela de decisão', async () => {
+test('finalizar sem mudanças não enfileira nada', async () => {
+  // A asserção falava de `view.promo`, e essa chave saiu com a tela de decisão
+  // (D1). O que importa é o mesmo: sem mudança, não há o que decidir depois.
   const a = await app();
   a.v('toggle', 0);
   for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
   await a.v('finalizarSessao');
-  await a.esperar();
-  assert.strictEqual(a.vista().promo, null);
-  assert.strictEqual(a.S().sessao, null);
+  await a.esperar(60);
+  assert.deepStrictEqual(a.S().promoPendente || [], [], 'nada a decidir depois');
+  assert.strictEqual(a.S().sessao, null, 'e a sessão encerrou');
+  // ENCERRAR MATA A SESSÃO, NÃO O MODO, e é regra escrita (§4.5, a tabela das
+  // três saídas). Eu havia afirmado o contrário aqui por reflexo — que nada
+  // tomaria a tela — e a regra diz que o modo fica: depois de finalizar ele
+  // pode querer conferir o que registrou, e a tela do treino é onde isso se vê.
+  // Quem fecha o modo é a seta, o Voltar do sistema, ou um dos lugares.
+  assert.strictEqual(a.vista().modoSessao, true, 'o modo fica: encerrar não é sair');
   a.fechar();
 });
 

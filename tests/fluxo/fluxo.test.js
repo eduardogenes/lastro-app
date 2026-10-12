@@ -20,11 +20,12 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
     'a série foi para o histórico do que ele de fato usou');
 
   await a.v('finalizarSessao');
-  await a.esperar();
-  assert.ok(a.$('.promo'), 'houve mudança: pergunta antes de encerrar');
-  a.v('motivoPromo', 'ocupada');
-  await a.v('concluirPromo');           // padrão: só hoje
-  await a.esperar();
+  await a.esperar(60);
+  // Finalizar não pergunta mais (D1): encerra e CARREGA a mudança para a fila
+  // de Prescrição. Não responder mantém o conservador, que é o padrão.
+  assert.ok((a.S().promoPendente || []).length, 'houve mudança: foi para a fila');
+  await a.v('ctx.respondeMudanca', a.S().promoPendente[0].sid, 0, false, 'ocupada');
+  await a.esperar(60);
 
   assert.strictEqual(a.S().prog.A.ex[0].id, 'chest-press-inclinado-convergente',
     'máquina ocupada não muda o programa');
@@ -62,11 +63,9 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   a.v('mudaSeries', 4, 1);
   a.v('modoEdicao', false);
   await a.v('finalizarSessao');
-  await a.esperar();
-  a.v('decidePromo', 0, 'oficial');
-  a.v('motivoPromo', 'decisao');
-  await a.v('concluirPromo');
-  await a.esperar();
+  await a.esperar(60);
+  await a.v('ctx.respondeMudanca', a.S().promoPendente[0].sid, 0, true, 'decisao');
+  await a.esperar(60);
 
   assert.strictEqual(a.S().prog.B.ex[4].s, antesDoSlot4 + 1, 'essa ele quis para valer');
   assert.strictEqual(a.S().progLog.length, 1);
@@ -90,10 +89,9 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
     'equipamento novo já tem histórico próprio');
 
   await a.v('finalizarSessao');
-  await a.esperar();
-  a.v('decidePromo', 0, 'oficial');
-  await a.v('concluirPromo');
-  await a.esperar();
+  await a.esperar(60);
+  await a.v('ctx.respondeMudanca', a.S().promoPendente[0].sid, 0, true, null);
+  await a.esperar(60);
   assert.ok(a.S().prog.C.ex.some(function (x) { return x.id === 'pendulum-da-unidade-nova'; }),
     'e entrou no programa porque ele quis');
 
