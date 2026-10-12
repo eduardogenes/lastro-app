@@ -1561,3 +1561,32 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
   background: none; border: 0; color: var(--ins-tinta-3);
   font: 400 18px/1 var(--ins-fonte);
 }
+
+/* ---- Prescrição: a fila das mudanças que esperam ----------------------- */
+/*
+   Uma sessão por bloco, as mudanças dela empilhadas dentro. O fio da esquerda
+   é de ATENÇÃO e não de perigo: há decisão esperando, não estrago feito.
+*/
+.pr-espera {
+  padding: var(--ins-5) 0 var(--ins-6);
+  border-bottom: 1px solid var(--ins-fio);
+}
+.pr-espera:last-of-type { border-bottom: 0; }
+.pr-espera-h { display: flex; align-items: baseline; gap: var(--ins-4); }
+/* O vencimento é o que dá urgência à linha, e por isso é o único em âmbar. */
+.pr-vence { color: var(--ins-atencao-tinta); font-style: normal; }
+
+.pr-mud { margin-top: var(--ins-5); }
+.pr-mud-t { color: var(--ins-tinta); }
+.pr-mud-i { margin-top: var(--ins-2); color: var(--ins-tinta-3); }
+.pr-mud-i.acima { color: var(--ins-atencao-tinta); }
+/* Lado a lado e do MESMO tamanho: não há resposta padrão, e dar mais área a uma
+   delas é escolher por ele. */
+.pr-mud-b { display: flex; gap: var(--ins-4); margin-top: var(--ins-4); }
+.pr-mud-b > * { flex: 1; }
+.pr-motivo { margin-top: var(--ins-5); width: 100%; }
+
+/* A linha do vencimento no Agora. Sem moldura de atenção: nada quebrou e nada
+   se perde hoje — é um convite a decidir com calma, e é o que o rótulo diz. */
+.ag-vence { align-items: center; gap: var(--ins-5); }
+.ag-vence .ins-btn-secondary { flex: 0 0 auto; }

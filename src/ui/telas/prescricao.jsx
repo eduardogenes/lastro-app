@@ -26,6 +26,7 @@ import {
 } from '../instrumento/primitivos.jsx';
 import { LinhaExpansivel } from '../instrumento/folha.jsx';
 import { useState } from 'preact/hooks';
+import { fmtDate } from '../../dominio/formato';
 import { CATEGORIAS } from '../../dominio/nutricao/alimentos';
 import { fmtKg } from '../../dominio/nutricao/calculo';
 
@@ -163,6 +164,8 @@ export function Prescricao({ ctx }) {
   const [regraAberta, setRegraAberta] = useState(null);
   const [modo, setModo] = useState('programa');
   const [busca, setBusca] = useState('');
+  const [motivos, setMotivos] = useState({});
+  const fila = ctx.mudancasQueEsperam();
   const g = ctx.guia();
   const d = ctx.dadosDoApp();
   const plano = ctx.planoCompleto();
@@ -177,6 +180,73 @@ export function Prescricao({ ctx }) {
       </Secao>
 
       {modo === 'programa' && <>
+
+      {/* A FILA DAS MUDANÇAS QUE ESPERAM, e ela vem antes da referência de
+          propósito: aqui há decisão pendente, e abaixo há consulta. A lei 1 do
+          sistema é "e agora?" antes de "como está?".
+
+          Cada linha diz as quatro coisas do passo 3 do fluxo do vencimento: o
+          que mudou, de que sessão veio, quando VENCE — o dia em que aquele
+          treino volta — e a conta de volume se virar permanente. A conta é
+          TRANSIÇÃO ("passa de 12 para 13 contra 12 prescritas"), que é a forma
+          que o dono pediu e a única que `impactoDoMod` produz.
+
+          As duas respostas ficam lado a lado e do mesmo tamanho: não há resposta
+          padrão, e dar mais área a uma delas é escolher por ele. E são por
+          MUDANÇA, não por sessão — uma sessão pode ter subido uma série que ele
+          quer manter e trocado um exercício que ele não quer. */}
+      {fila.length > 0 && (
+        <Secao rotulo="esperando decisão"
+               nota={fila.length === 1 ? '1 sessão' : fila.length + ' sessões'}>
+          {fila.map(g => (
+            <div key={g.sid} class="pr-espera">
+              <div class="ins-label pr-espera-h">
+                treino {g.dia} · {fmtDate(g.quando)}
+                {g.vence != null && <em class="pr-vence">vence em {fmtDate(g.vence)}</em>}
+              </div>
+
+              {g.mudancas.map((m, i) => (
+                <div key={m.txt} class="pr-mud">
+                  <div class="ins-body-sm pr-mud-t">{m.txt}</div>
+                  {m.impacto && (
+                    <div class={'ins-body-xs pr-mud-i' + (m.acima ? ' acima' : '')}>
+                      {m.impacto}
+                    </div>
+                  )}
+                  <div class="pr-mud-b">
+                    <button class="ins-btn-secondary" data-a="so-naquele-dia"
+                            onClick={() => ctx.respondeMudanca(g.sid, i, false, motivos[g.sid])}>
+                      Foi só naquele dia
+                    </button>
+                    <button class="ins-btn-primary" data-a="virou-permanente"
+                            onClick={() => ctx.respondeMudanca(g.sid, i, true, motivos[g.sid])}>
+                      Virou permanente
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* O motivo é opcional e é texto, porque ele está sentado quando
+                  decide isto. Vai para o histórico do programa junto da
+                  mudança: é a resposta de "mudei isso quando, e por quê?". */}
+              <input
+                class="ins-input pr-motivo"
+                type="text"
+                placeholder="por quê? (opcional)"
+                aria-label={'Motivo da decisão sobre o treino ' + g.dia}
+                value={motivos[g.sid] || ''}
+                onInput={e => setMotivos(Object.assign({}, motivos,
+                  { [g.sid]: e.currentTarget.value }))}
+              />
+            </div>
+          ))}
+          <Procedencia>
+            sem resposta até o dia em que aquele treino volta, a mudança fica
+            como só daquele dia — dito, e desfazível. Nada entra no programa em
+            silêncio, e nada é descartado em silêncio.
+          </Procedencia>
+        </Secao>
+      )}
       <Secao rotulo="alvo por tipo de dia" nota="calculado do plano">
         <div class="ins-lista">
           {g.alvos.map(a => (

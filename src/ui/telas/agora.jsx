@@ -56,6 +56,7 @@ export function Agora({ ctx }) {
   const cardio = ctx.corpo().cardio;
   const cromo = ctx.cromoDoTreino();
   const app = ctx.dadosDoApp();
+  const vence = ctx.vencendoHoje();
   const refDe = id => refs.filter(r => r.id === id)[0] || null;
   const linhaDoTreino = refs.filter(r => ctx.ehLinhaDeTreino(r))[0] || null;
 
@@ -209,6 +210,13 @@ export function Agora({ ctx }) {
         </div>
       )}
 
+      {/* "Para decidir com calma": o vencimento da mudança do dia é AVISO e não
+          cartão (§5.6), e aparece na manhã do dia em que aquele treino volta.
+          UMA linha, não a lista — o Agora não possui a lista das mudanças que
+          esperam (§1.1), e o dono dela é Prescrição. O que o Agora faz é
+          apontar, e o "Ver" leva até lá.
+          Fica ABAIXO do cartão de propósito: é para decidir com calma, e a
+          próxima coisa a fazer vem antes do que pode esperar. */}
       {f && <CartaoFoco agora={hhmm} {...f} />}
 
       <Secao rotulo="energia" nota={diaHoje.previsto ? 'previsão · confirme no topo' : null}>
@@ -277,6 +285,16 @@ export function Agora({ ctx }) {
           O aviso de perna no mesmo dia é do treinador e sinaliza em vez de
           bloquear: a regra é não pôr cardio no mesmo período de treino de
           perna, e quem decide se ainda dá é ele. */}
+      {vence && (
+        <Secao rotulo="para decidir com calma">
+          <div class="ins-linha ag-vence">
+            <span class="ins-linha-n"><span class="ins-linha-t">{vence.txt}</span></span>
+            <button class="ins-btn-secondary" data-a="ver-mudancas"
+                    onClick={() => ctx.vaiPara('prescricao')}>Ver</button>
+          </div>
+        </Secao>
+      )}
+
       <Secao rotulo="cardio" nota={`${cardio.semana} de ${cardio.alvo} nesta semana`}>
       <div class={'cardl' + (cromo.cardio.feito ? ' feito' : '')}>
         <span class="cardl-t">cardio</span>

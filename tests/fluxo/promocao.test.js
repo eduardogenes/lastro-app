@@ -83,17 +83,33 @@ test('sessão que morre sozinha guarda a pergunta para a próxima abertura', asy
   a.fechar();
 });
 
-test('a pergunta guardada aparece ao abrir o app de novo', async () => {
+test('a mudança guardada ESPERA em Prescrição, e o boot não interrompe', async () => {
+  // Reescrito de propósito, e a frente 1 nomeou este caso. Ele dizia "a decisão
+  // abre sozinha" e afirmava `view.promo` no boot — uma tela cheia em cima de
+  // quem acabou de abrir o app, para perguntar sobre o PROGRAMA, que é a
+  // pergunta menos urgente que existe neste produto.
+  //
+  // O que substitui é mais forte: a mudança não se perde, ela ESPERA, com a
+  // conta de volume e o vencimento ao lado (§8.1, passo 3). O mecanismo que a
+  // carrega continua inteiro — é ele que o §3.6 do plano manda não apagar.
   const t = Date.now() - 2 * 3600 * 1000;
-  const a = await app({ estado: {
+  const a = await app({ aba: 'agora', estado: {
     logs: {}, done: [],
     promoPendente: { day: 'A', t: t, mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }],
                      resumoMods: ['Pushdown: 2 → 3 séries'] }
   } });
   await a.esperar();
-  assert.ok(a.vista().promo, 'a decisão abre sozinha');
-  assert.strictEqual(a.vista().promo.guardada, true);
-  assert.ok(a.doc.getElementById('app').textContent.includes('Pushdown'));
+
+  assert.strictEqual(a.vista().promo, null, 'o boot NÃO abre a decisão');
+  const fila = a.vJ('ctx.mudancasQueEsperam');
+  assert.strictEqual(fila.length, 1, 'e a mudança está na fila, não perdida');
+  assert.ok(/Pushdown|pushdown/.test(fila[0].mudancas[0].txt), fila[0].mudancas[0].txt);
+  assert.ok(fila[0].vence != null, 'com o dia em que aquele treino volta');
+
+  a.aba('prescricao');
+  await a.esperar();
+  assert.ok(a.doc.getElementById('app').textContent.includes('Pushdown'),
+    'e ela está na tela de Prescrição, que é o dono da lista');
   a.fechar();
 });
 
@@ -113,23 +129,44 @@ test('a pergunta guardada não interrompe um treino em andamento', async () => {
   a.fechar();
 });
 
-test('sair sem responder mantém o conservador e não repete a pergunta', async () => {
+test('sair da lista sem responder deixa a mudança ESPERANDO', async () => {
+  // Reescrito, e a propriedade virou de lado por uma razão. Ele dizia "não fica
+  // reaparecendo para sempre": a tela abria sozinha a cada boot, então SOLTAR a
+  // fila ao sair era a válvula de escape — sem ela a pergunta voltava toda vez
+  // que o app abria.
+  //
+  // Sem a interrupção, a válvula não é mais necessária e passa a ser dano: a
+  // mudança tem de esperar até ser respondida ou VENCER (§8.1, passo 5), e
+  // "nada é descartado em silêncio". Navegar não é responder.
   const t = Date.now() - 2 * 3600 * 1000;
-  const a = await app({ estado: {
+  const a = await app({ aba: 'prescricao', estado: {
     logs: {}, done: [],
     promoPendente: { day: 'A', t: t, mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }],
                      resumoMods: ['Pushdown: 2 → 3 séries'] }
   } });
   await a.esperar();
   const antes = (a.S().prog.A.ex[7] || { s: 0 }).s;
+  assert.strictEqual(a.vJ('ctx.mudancasQueEsperam').length, 1, 'pré-condição: na fila');
 
-  a.v('voltarDoPromo');
+  a.aba('corpo');
   await a.esperar();
-  assert.strictEqual(a.vista().promo, null);
-  assert.deepStrictEqual(a.S().promoPendente, [], 'não fica reaparecendo para sempre');
+  a.aba('prescricao');
+  await a.esperar();
+
+  assert.strictEqual(a.vJ('ctx.mudancasQueEsperam').length, 1,
+    'sair e voltar não responde nada: ela continua esperando');
   assert.strictEqual((a.S().prog.A.ex[7] || { s: 0 }).s, antes, 'e o oficial não mudou');
   a.fechar();
 });
+
+// A metade "sair da tela de decisão sem responder mantém o conservador" NÃO
+// está aqui, e não é esquecimento: ela já é cobrada em
+// `ctx.voltaDoPromo sai sem responder e o oficial fica como estava`, mais
+// abaixo, e por ela cobrada pelo caminho REAL — `finalizarSessao` abrindo a
+// pergunta no fecho manual. Eu havia escrito um caso para isso aqui chamando
+// `abrePromoGuardada`, e descobri assim que aquela função tinha ficado SEM
+// CHAMADOR quando o boot parou de interromper: o caso testaria código morto.
+// A função saiu; `finalizarSessao` monta `view.promo` por conta própria.
 
 test('a decisão é um destino: entra no topo e devolve a posição ao voltar', async () => {
   // Ela abre no meio de um treino rolado até o sétimo exercício. Sem o par

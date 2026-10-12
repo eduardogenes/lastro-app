@@ -708,3 +708,190 @@ test('a fila entra ordenada, mesmo chegando fora de ordem', async () => {
     'a mais antiga primeiro: ' + lista.map(l => l.quando).join(' · '));
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// A FILA NA TELA — e as duas respostas
+// ---------------------------------------------------------------------------
+
+/** A Prescrição com uma sessão esperando decisão, no chip do programa. */
+async function comFila(agora, mods) {
+  const a = await app({
+    aba: 'prescricao', agora: agora,
+    estado: {
+      plano: 7, logs: {}, done: [],
+      promoPendente: [{
+        sid: agora - 3 * DIA, day: 'A', t: agora - 3 * DIA, m: agora - 3 * DIA,
+        mods: mods, resumoMods: mods.map(function () { return ''; })
+      }]
+    }
+  });
+  // `vaiPara` e não `fechaTudo`: a decisão guardada abre no boot como TELA
+  // CHEIA, e `fechaTudo` só limpa folhas. Quem fecha destino é `vaiPara`, que
+  // zera `view.promo` junto com os outros — e é por isso que o lugar pedido
+  // aparece. (Enquanto `decisao.jsx` não sair, este é o caminho.)
+  a.v('ctx.vaiPara', 'prescricao');
+  await a.esperar();
+  return a;
+}
+
+test('a fila aparece na Prescrição com as quatro coisas da linha', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await comFila(agora, [{ k: 'sets', slot: SLOT, de: 3, para: 5 }]);
+
+  const bloco = a.$('.pr-espera');
+  assert.ok(bloco, 'a fila está na tela');
+  const txt = bloco.textContent;
+  assert.ok(/treino A/.test(txt), 'de que sessão veio: ' + txt);
+  assert.ok(/vence em/.test(txt), 'e quando vence: ' + txt);
+  assert.ok(/3 → 5/.test(a.texto('.pr-mud-t')), 'o que mudou: ' + a.texto('.pr-mud-t'));
+  assert.ok(/\d+ → \d+/.test(a.texto('.pr-mud-i')),
+    'e a conta de volume, em TRANSIÇÃO: ' + a.texto('.pr-mud-i'));
+
+  // As duas respostas, lado a lado e sem padrão.
+  assert.ok(a.$('[data-a="so-naquele-dia"]'), 'a resposta de "só naquele dia"');
+  assert.ok(a.$('[data-a="virou-permanente"]'), 'e a de "virou permanente"');
+  a.fechar();
+});
+
+test('"virou permanente" entra no programa oficial, com o motivo', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await comFila(agora, [{ k: 'sets', slot: SLOT, de: 3, para: 5 }]);
+  const antes = a.S().prog.A.ex.filter(function (x) { return x.id === SLOT; })[0].s;
+  assert.strictEqual(antes, 3, 'pré-condição: o oficial prescreve 3');
+
+  // o motivo é opcional, e quando vem vai para o histórico do programa
+  const campo = a.$('.pr-motivo');
+  assert.ok(campo, 'o campo do motivo está lá');
+  campo.value = 'a máquina nova permite mais série';
+  campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  await a.esperar();
+
+  a.$('[data-a="virou-permanente"]').click();
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().prog.A.ex.filter(function (x) { return x.id === SLOT; })[0].s, 5,
+    'o programa oficial passou a prescrever 5');
+  const linha = (a.S().progLog || []).slice(-1)[0];
+  assert.ok(linha, 'e o histórico do programa ganhou linha');
+  assert.strictEqual(linha.motivo, 'a máquina nova permite mais série',
+    'com o motivo, que é a resposta de "mudei isso quando, e por quê?"');
+  assert.deepStrictEqual(a.vJ('ctx.mudancasQueEsperam'), [], 'e a fila esvaziou');
+  a.fechar();
+});
+
+test('"foi só naquele dia" tira da fila e NÃO toca no programa', async () => {
+  // A resposta não desfaz nada: a sessão onde a mudança aconteceu continua com o
+  // que foi registrado. O que ela decide é o PROGRAMA, que é o que vem depois.
+  const agora = agoraEstavel(9, 0);
+  const a = await comFila(agora, [{ k: 'sets', slot: SLOT, de: 3, para: 5 }]);
+  const antes = JSON.stringify(a.S().prog.A.ex);
+
+  a.$('[data-a="so-naquele-dia"]').click();
+  await a.esperar(60);
+
+  assert.strictEqual(JSON.stringify(a.S().prog.A.ex), antes,
+    'o programa oficial não mudou um byte');
+  assert.deepStrictEqual(a.S().progLog || [], [], 'e nada entrou no histórico do programa');
+  assert.deepStrictEqual(a.vJ('ctx.mudancasQueEsperam'), [], 'mas saiu da fila');
+  a.fechar();
+});
+
+test('responder UMA mudança deixa a outra esperando', async () => {
+  // Por mudança e não por sessão: uma sessão pode ter subido uma série que ele
+  // quer manter e trocado um exercício que ele não quer. Responder as duas
+  // juntas forçaria a escolha errada numa delas.
+  const agora = agoraEstavel(9, 0);
+  const a = await comFila(agora, [
+    { k: 'sets', slot: SLOT, de: 3, para: 5 },
+    { k: 'sets', slot: 'pushdown', de: 2, para: 4 }
+  ]);
+  assert.strictEqual(a.$$('.pr-mud').length, 2, 'pré-condição: duas linhas');
+
+  a.$$('[data-a="so-naquele-dia"]')[0].click();
+  await a.esperar(60);
+
+  const fila = a.vJ('ctx.mudancasQueEsperam');
+  assert.strictEqual(fila.length, 1, 'a sessão continua na fila');
+  assert.strictEqual(fila[0].mudancas.length, 1, 'com a mudança que falta responder');
+  assert.ok(/pushdown|Pushdown/.test(fila[0].mudancas[0].txt),
+    'e é a outra: ' + fila[0].mudancas[0].txt);
+  a.fechar();
+});
+
+test('a última mudança respondida tira a sessão da fila DEIXANDO LÁPIDE', async () => {
+  // Passo 6 do fluxo: a linha sai da fila e deixa lápide, para a fusão não a
+  // ressuscitar do outro aparelho — a mesma disciplina das outras coleções com
+  // chave natural. Sem ela, sincronizar traria de volta uma pergunta respondida.
+  const agora = agoraEstavel(9, 0);
+  const a = await comFila(agora, [{ k: 'sets', slot: SLOT, de: 3, para: 5 }]);
+  const sid = a.S().promoPendente[0].sid;
+
+  a.$('[data-a="so-naquele-dia"]').click();
+  await a.esperar(60);
+
+  assert.deepStrictEqual(a.S().promoPendente, [], 'saiu da fila');
+  const lapides = a.S().apagados || {};
+  assert.ok(Object.keys(lapides).some(function (k) { return k === 'promo:' + sid; }),
+    'e deixou lápide: ' + JSON.stringify(Object.keys(lapides)));
+  a.fechar();
+});
+
+test('o Agora avisa UMA LINHA na manhã em que a mudança vence', async () => {
+  // §5.6: o vencimento é AVISO, não cartão — "uma vez, no Agora da manhã daquele
+  // treino". Uma LINHA e não a lista: o Agora não possui a lista das mudanças
+  // que esperam (§1.1), e o dono dela é Prescrição. O que o Agora faz é apontar.
+  //
+  // Para a mudança vencer HOJE, ela tem de ser do treino que volta hoje. Sem
+  // sessão registrada, `proximoTreino` devolve o primeiro da rotação — o A —, e
+  // uma mudança do A vence hoje se hoje for dia de treino. A cadência é
+  // declarada no fixture para o caso não depender do dia da semana.
+  const agora = agoraEstavel(6, 30);
+  const a = await app({
+    aba: 'agora', agora: agora,
+    estado: {
+      plano: 7, logs: {}, done: [],
+      dia: diaDe(agora, 'treino'),
+      promoPendente: [{
+        sid: agora - 3 * DIA, day: 'A', t: agora - 3 * DIA, m: agora - 3 * DIA,
+        mods: [{ k: 'sets', slot: SLOT, de: 3, para: 5 }], resumoMods: ['']
+      }]
+    }
+  });
+
+  const v = a.vJ('ctx.vencendoHoje');
+  assert.ok(v, 'o modelo diz que há mudança vencendo hoje');
+  assert.strictEqual(v.n, 1);
+  assert.ok(/vence hoje/.test(v.txt), v.txt);
+
+  const linha = a.$('.ag-vence');
+  assert.ok(linha, 'e a linha está no Agora');
+  assert.ok(/vence hoje/.test(linha.textContent), linha.textContent);
+  assert.ok(a.$('[data-a="ver-mudancas"]'), 'com o "Ver", que leva ao dono da lista');
+
+  a.$('[data-a="ver-mudancas"]').click();
+  await a.esperar();
+  assert.strictEqual(a.vista().aba, 'prescricao', 'o "Ver" leva à Prescrição');
+  a.fechar();
+});
+
+test('sem nada vencendo hoje, o Agora se cala', async () => {
+  // A quebra espelhada, e o silêncio é o caso comum: a mudança nasceu hoje, e o
+  // treino dela só volta depois de a rotação inteira passar.
+  const agora = agoraEstavel(6, 30);
+  const a = await app({
+    aba: 'agora', agora: agora,
+    estado: {
+      plano: 7, logs: {}, done: [],
+      dia: diaDe(agora, 'treino'),
+      promoPendente: [{
+        sid: agora, day: 'B', t: agora, m: agora,
+        mods: [{ k: 'sets', slot: SLOT, de: 3, para: 5 }], resumoMods: ['']
+      }]
+    }
+  });
+
+  assert.ok(a.vJ('ctx.mudancasQueEsperam').length, 'pré-condição: há mudança na fila');
+  assert.strictEqual(a.vJ('ctx.vencendoHoje'), null, 'mas nenhuma vence hoje');
+  assert.strictEqual(a.$('.ag-vence'), null, 'e o Agora não diz nada');
+  a.fechar();
+});

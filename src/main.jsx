@@ -409,10 +409,10 @@ function normalizaEstado() {
   // Já sendo lista, ela entra ORDENADA por tempo. O escritor ordena
   // (`guardaPromo`) e a fusão ordena (`porTempo` em `dominio/sincronia.ts`),
   // mas a IMPORTAÇÃO copia a chave como ela vem no arquivo — e os DOIS leitores
-  // confiam na ordem: `abrePromoGuardada` pega `[0]` como "a mais antiga, que é
-  // a única ordem que ele reconhece", e a lista de Prescrição apresenta na
-  // ordem em que as sessões fecharam. Fora de ordem, o app pergunta primeiro
-  // pela mudança mais nova, que é o contrário do que está escrito.
+  // confia na ordem: a lista de Prescrição apresenta na ordem em que as sessões
+  // fecharam, que é "a mais antiga primeiro — a única ordem que ele reconhece",
+  // escrito desde que a pergunta era uma tela só. Fora de ordem, a lista mostra
+  // a mudança mais nova na frente, o contrário do que está escrito.
   if (Array.isArray(S.promoPendente)) {
     S.promoPendente.sort(function (a, b) { return ((a && a.t) || 0) - ((b && b.t) || 0); });
   }
@@ -493,7 +493,20 @@ async function load() {
   view.day = diaAberto || nextDay();
   if (diaAberto) { view.aba = 'agora'; abreModo(); }
   render();
-  abrePromoGuardada();
+  // O BOOT NÃO INTERROMPE MAIS. Aqui havia `abrePromoGuardada()`, que abria a
+  // tela de decisão em cima de quem acabou de abrir o app — para perguntar
+  // sobre o programa, que é a pergunta menos urgente que existe neste produto.
+  //
+  // A fila agora mora em Prescrição, com a conta de volume e o vencimento ao
+  // lado de cada mudança (§8.1, passo 3), e o Agora avisa com UMA LINHA na
+  // manhã do dia em que aquele treino volta (passo 4). O mecanismo que carrega
+  // a mudança continua inteiro — é ele que o §3.6 do plano manda não apagar.
+  //
+  // E `abrePromoGuardada` SAIU com ela: era o único chamador, e `finalizarSessao`
+  // monta `view.promo` por conta própria. O fecho MANUAL continua perguntando na
+  // hora; tirar essa pergunta é a decisão D1, e ela não pode vir antes de o
+  // carregador existir nos DOIS fechos — hoje o manual não tem nenhum, e tirar a
+  // pergunta sem escrevê-lo descartaria a mudança em silêncio (o F280 nominal).
   // O descanso que estava correndo. Depois do render, porque ele pinta na barra
   // que vive fora da árvore do Preact e precisa dela já montada.
   await retomaDescanso();
@@ -2804,28 +2817,6 @@ async function concluirPromo() {
   if (n) toast(n + (n === 1 ? ' mudança levada' : ' mudanças levadas') + ' para o programa oficial.');
 }
 
-/**
- * A pergunta que ficou de uma sessão encerrada sozinha.
- *
- * Aparece na abertura seguinte, e nunca no meio de um treino novo: perguntar
- * sobre o programa enquanto ele registra série é interromper a única coisa que
- * o app existe para não atrapalhar.
- */
-function abrePromoGuardada() {
-  // A MAIS ANTIGA primeiro: a lista é ordenada por tempo, e perguntar na ordem
-  // em que as sessões fecharam é a única ordem que ele reconhece. As outras
-  // continuam esperando, e aparecem nas aberturas seguintes.
-  const g = (Array.isArray(S.promoPendente) ? S.promoPendente : [])[0];
-  if (!g || !Array.isArray(g.mods) || !g.mods.length || S.sessao) return false;
-  view.promo = {
-    sid: typeof g.sid === 'number' ? g.sid : g.t,
-    day: g.day, mods: g.mods.slice(), dec: g.mods.map(function () { return 'hoje'; }),
-    motivo: null, feitas: 0, resumoMods: g.resumoMods || [], guardada: true, quando: g.t
-  };
-  entraNoDestino('promo');
-  render();
-  return true;
-}
 
 
 // ---------- tela de programa ----------
@@ -6970,6 +6961,50 @@ CTX.limpaNum = function (el, dec) { limpaNum(el, dec); };
  * aberta, a posição de hoje já foi gasta — a caminhada começa AMANHÃ, senão ela
  * daria a letra de hoje a um dia que já aconteceu e venceria tudo um dia cedo.
  */
+/**
+ * Responde UMA mudança da fila: ela virou permanente, ou foi só daquele dia.
+ *
+ * Por mudança e não por sessão, e é o que a frente 1 desenhou: cada linha diz o
+ * que mudou e tem as duas respostas do tamanho do polegar ao lado. Uma sessão
+ * pode ter subido uma série de lateral — que ele quer manter — e trocado o
+ * agachamento porque a máquina estava ocupada — que ele não quer. Responder as
+ * duas juntas forçaria a escolha errada numa das duas.
+ *
+ * O MOTIVO é opcional e é texto, porque ele está sentado quando decide isto
+ * (§8.1, passo 3). Vai para o histórico do programa junto da mudança: é a
+ * resposta de "mudei isso quando, e por quê?".
+ *
+ * Mudança respondida sai da lista da sessão; esvaziada a lista, a sessão sai da
+ * fila DEIXANDO LÁPIDE, para a fusão não a ressuscitar do outro aparelho — a
+ * mesma disciplina das outras coleções com chave natural (§8.1, passo 6).
+ *
+ * "Foi só daquele dia" NÃO desfaz nada: a sessão onde a mudança aconteceu
+ * continua com o que foi registrado. O que ela decide é o PROGRAMA, e o
+ * programa é o que vem depois.
+ */
+CTX.respondeMudanca = async function (sid, i, permanente, motivo) {
+  if (!Array.isArray(S.promoPendente)) S.promoPendente = listaDePromo(S.promoPendente);
+  const chave = chaveDePromo({ sid: sid, t: sid });
+  const g = S.promoPendente.filter(function (x) { return chaveDePromo(x) === chave; })[0];
+  if (!g || !Array.isArray(g.mods)) return;
+  const m = g.mods[i];
+  if (!m) return;
+
+  const n = permanente ? aplicaAoOficial(g.day, [m], motivo || null) : 0;
+
+  g.mods = g.mods.filter(function (_, j) { return j !== i; });
+  if (Array.isArray(g.resumoMods)) {
+    g.resumoMods = g.resumoMods.filter(function (_, j) { return j !== i; });
+  }
+  g.m = Date.now();                    // carimbo: é ele que a fusão compara
+  if (!g.mods.length) soltaPromo(sid);
+
+  await save(); render();
+  toast(permanente
+    ? (n ? 'Mudança no programa oficial.' : 'A posição não existe mais no programa.')
+    : 'Ficou como só daquele dia. O treino registrado não muda.');
+};
+
 CTX.mudancasQueEsperam = function () {
   const fila = Array.isArray(S.promoPendente) ? S.promoPendente : [];
   if (!fila.length) return [];
@@ -7909,6 +7944,35 @@ CTX.fatosDoDia = function () {
  * saber seria alarme falso, e alarme falso ensina a ignorar o verdadeiro.
  */
 CTX.guardando = function () { return DB.mode !== 'mem'; };
+
+/**
+ * As mudanças que vencem HOJE — a linha "Para decidir com calma" do Agora.
+ *
+ * §5.6: o vencimento da mudança do dia é AVISO, não cartão, e aparece "uma vez,
+ * no Agora da manhã daquele treino, e nunca durante a sessão". A manhã daquele
+ * treino é literal agora que o vencimento é calculado: é o dia em que a volta
+ * daquele treino cai.
+ *
+ * Uma LINHA e não a lista: o Agora "não possui a lista das mudanças que
+ * esperam" (§1.1), e o dono dela é Prescrição. O que o Agora faz é apontar.
+ *
+ * `null` quando não há nada vencendo hoje — e o silêncio é o caso comum.
+ */
+CTX.vencendoHoje = function () {
+  const hoje = hojeISO();
+  const vencendo = CTX.mudancasQueEsperam().filter(function (g) {
+    return g.vence != null && hojeISO(g.vence) === hoje;
+  });
+  if (!vencendo.length) return null;
+  const n = vencendo.reduce(function (k, g) { return k + g.mudancas.length; }, 0);
+  return {
+    n: n,
+    txt: n === 1
+      ? 'Uma mudança do treino ' + vencendo[0].dia + ' vence hoje.'
+      : n + ' mudanças vencem hoje.',
+    dias: vencendo.map(function (g) { return g.dia; })
+  };
+};
 
 /** A próxima coisa a fazer. A regra é `dominio/agora.ts`; os fatos, acima. */
 CTX.cartaoDeCima = function () { return cartaoDeCima(CTX.fatosDoDia()); };
