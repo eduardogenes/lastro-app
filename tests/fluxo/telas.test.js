@@ -108,21 +108,29 @@ test('os cinco LUGARES da shell renderizam, e nenhum é a sessão', async () => 
 });
 
 test('todo chip de um lugar abre, e não só os que algum caso visita', async () => {
-  // Este caso nasce de um defeito que a suíte inteira deixou passar, e o modo
-  // de falha é o que importa guardar.
+  // Este caso nasce de um defeito que viveu muitas rodadas sem ser nomeado, e
+  // o modo de falha é o que importa guardar.
   //
   // Na reescrita dos cinco lugares eu renomeei o estado do seletor de
   // Prescrição de `aba` para `modo` e deixei QUATRO referências a `aba` dentro
   // dos ramos — `{aba === 'plano' && …}`, `{aba === 'alimentos' && …}`,
   // `{aba === 'compras' && …}`. Em JSX isso é `ReferenceError` no render: dois
-  // dos quatro chips de Prescrição quebravam a tela.
+  // dos quatro chips de Prescrição quebravam a tela inteira, não a seção.
   //
-  // E a suíte ficou VERDE com 1256 casos, porque o estouro acontece dentro do
-  // rerender que a mudança de estado agenda, cai como `unhandled rejection` e
-  // o Vitest só o conta no rodapé — com o aviso literal "this might cause
-  // false positive tests". Nenhum caso clicava naqueles dois chips.
+  // E nenhum caso clicava naqueles dois chips. O estouro acontece dentro do
+  // rerender que a mudança de estado agenda, então chega como `unhandled
+  // rejection`: o Vitest o conta no rodapé, com o aviso "this might cause
+  // false positive tests", **e sai com código 1** — medi provocando uma
+  // rejeição sozinha, sem caso vermelho, e deu `Tests 1261 passed` com saída
+  // 1. Ou seja: a suíte dizia vermelho, e quem leu a CONTAGEM em vez do status
+  // fui eu, porque minhas rodadas passam por `| grep` e o cano devolve o
+  // status do último comando.
   //
-  // Então a asserção não é "a tela tem conteúdo": é **o chip ficou ligado**.
+  // Então o que este caso acrescenta não é ver o defeito — é NOMEÁ-LO: o
+  // rodapé diz "the latest test that might've caused it", e o caso diz qual
+  // chip, de qual lugar.
+  //
+  // E a asserção não é "a tela tem conteúdo": é **o chip ficou ligado**.
   // Render que estoura não comita o DOM, e a classe `on` não chega — é o sinal
   // que distingue "abriu" de "não abriu" sem depender de saber o que cada chip
   // desenha.

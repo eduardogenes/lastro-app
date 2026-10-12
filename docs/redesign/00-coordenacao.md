@@ -2470,12 +2470,19 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       tela virou `modo` e sobraram quatro referências a `aba` dentro dos ramos,
       que em JSX é `ReferenceError` no render. Comida e alimentos derrubavam a
       tela inteira, não a seção.
-      **E a suíte ficou verde com 1256 casos.** O estouro acontece no rerender
-      que a mudança de estado agenda, cai como promessa não tratada e o Vitest
-      só o conta no rodapé — com o aviso literal "this might cause false
-      positive tests". Nenhum caso clicava naqueles dois chips. Eu achei porque
-      o rodapé de uma rodada trouxe "Errors 2 errors" onde eu esperava limpo:
-      **vale ler o rodapé, não só a contagem.**
+      **Corrigido depois de medir, porque eu havia escrito o contrário:** a
+      suíte NÃO ficava verde. O estouro acontece no rerender que a mudança de
+      estado agenda e cai como promessa não tratada; o Vitest conta isso no
+      rodapé, com o aviso literal "this might cause false positive tests", **e
+      sai com código 1** — conferi provocando uma rejeição sozinha, sem caso
+      vermelho: `Tests 1261 passed` e saída 1. Quem não viu foi eu: eu li a
+      CONTAGEM, porque minhas rodadas passam por `| grep` e `| tail`, e o cano
+      devolve o status do último comando. **É o mesmo risco que já está escrito
+      neste arquivo** — commit feito com caso vermelho porque `npm test | grep`
+      retorna 0 — e ele cobrou duas vezes.
+      O que o caso novo acrescenta, então, não é "a suíte passa a ver": é NOMEAR.
+      O rodapé dizia `ReferenceError: aba is not defined` e "the latest test
+      that might've caused it"; o caso diz qual chip, de qual lugar.
       O caso que fecha o buraco varre os chips dos cinco lugares por **ponto
       fixo** — abrir um chip muda quais chips existem, e a primeira versão
       estourou clicando num rótulo que o clique anterior tinha tirado da tela —
