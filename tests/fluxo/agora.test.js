@@ -1008,3 +1008,79 @@ test('o Agora não avisa sobre o que já venceu, nem quando o dia volta de novo'
   assert.strictEqual(a.$('.ag-vence'), null, 'e não desenha a linha');
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// OS CATORZE DIAS — a conta que a regra do corte lê
+// ---------------------------------------------------------------------------
+
+test('o Agora mostra os 14 dias, e a janela é a MESMA que o portão lê', async () => {
+  // §1.1 os lista como posse do Agora, e o §5.7 os nomeia no estado mais mudo
+  // da tela. Faltavam — e pior: o aviso de aparelho sem armazenamento que eu
+  // escrevi diz "não entra na conta dos 14 dias", citando uma conta que não
+  // estava em tela nenhuma.
+  const agora = agoraEstavel(9, 0);
+  const diaDe14 = function (k) {
+    const d = new Date(agora);
+    d.setDate(d.getDate() - k);
+    return dataLocal(d.getTime());
+  };
+  // doze dias fechados COM registro, e dois sem: a conta tem de dar doze.
+  const hist = [];
+  for (let k = 1; k <= 13; k++) {
+    if (k === 4 || k === 9) continue;                 // dois buracos de propósito
+    hist.push({ d: diaDe14(k), done: { almoco: agora }, agua: 0, escala: {}, tot: {}, pv: 1, m: agora });
+  }
+
+  const a = await app({
+    aba: 'agora', agora: agora,
+    estado: { plano: 7, logs: {}, done: [], comidaHist: hist, dia: diaDe(agora, 'treino') }
+  });
+  await a.esperar();
+
+  const q = a.vJ('ctx.quatorzeDias');
+  assert.strictEqual(q.fatias.length, 14, 'catorze casas, sempre');
+  assert.strictEqual(q.registrados, 11,
+    'e a contagem é a do portão: ' + q.registrados + ' — ' + q.txt);
+  assert.strictEqual(q.pede, 11, 'o limiar é do nutricionista, 11 em 14');
+
+  // A casa de HOJE fica vazia: o dia corrente só entra na conta quando a data
+  // vira, e mostrar treze casas contando sobre catorze faria a tela e a regra
+  // discordarem.
+  assert.strictEqual(q.fatias[13], null, 'a casa de hoje está vazia: o dia não fechou');
+  assert.strictEqual(q.fatias[12], 1, 'e a de ontem, cheia');
+
+  assert.ok(/11 de 14 dias com registro/.test(a.doc.getElementById('app').textContent),
+    'a tela diz a contagem, e não um percentual');
+
+  // E AS CASAS ESTÃO DESENHADAS. Sem esta asserção o caso passava só com a
+  // frase: uma mutação que apagava as catorze casas da tela ficava verde,
+  // porque a contagem é texto e as casas são o desenho dela.
+  const secao = a.$$('.ins-secao').filter(function (x) {
+    return /os 14 dias/.test(x.textContent);
+  })[0];
+  assert.ok(secao, 'a seção dos 14 dias está na tela');
+  const casas = Array.from(secao.querySelectorAll('.ins-spark-s'));
+  assert.strictEqual(casas.length, 14, 'catorze casas desenhadas');
+  const cheias = casas.filter(function (c) { return c.querySelector('.ins-spark-b'); }).length;
+  assert.strictEqual(cheias, 11, 'e onze cheias, como a contagem diz');
+  a.fechar();
+});
+
+test('a nota dos 14 dias diz onde o portão está, sem virar nota de prova', async () => {
+  // Contagem, e nunca percentual: um número contra 100% implícito funciona como
+  // nota, e feedback que dirige a atenção para a autoavaliação piora o
+  // desempenho. A nota diz o limiar e para aí.
+  const agora = agoraEstavel(9, 0);
+  const a = await app({
+    aba: 'agora', agora: agora,
+    estado: { plano: 7, logs: {}, done: [], comidaHist: [], dia: diaDe(agora, 'treino') }
+  });
+  await a.esperar();
+
+  const q = a.vJ('ctx.quatorzeDias');
+  assert.strictEqual(q.registrados, 0);
+  assert.strictEqual(q.aberto, false);
+  assert.match(q.nota, /a regra pede 11 para mexer nas calorias/);
+  assert.ok(!/%/.test(q.txt + q.nota), 'sem percentual em lugar nenhum: ' + q.txt + ' · ' + q.nota);
+  a.fechar();
+});

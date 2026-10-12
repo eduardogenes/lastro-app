@@ -134,6 +134,7 @@ export function Semana({ ctx }) {
   const [modo, setModo] = useState('treino');
   const d = ctx.dados();
   const c = ctx.corpo();
+  const ciclo = ctx.cicloDoBloco();
 
   return (
     <>
@@ -208,6 +209,20 @@ export function Semana({ ctx }) {
           músculo e o mês —, que é onde se vem quando a pergunta é "e desde que
           isso começou?". */}
       <Secao rotulo="retrospectiva" nota="o bloco de 48 sessões">
+        {/* O CICLO veio do cabeçalho do TREINO (achado 7): ele responde "em que
+            ponto do bloco eu estou", que é a mesma pergunta que a retrospectiva
+            responde em prosa — e por isso os dois ficam juntos.
+            Lá ele era a terceira célula de um cabeçalho que se lê de pé, no meio
+            de uma série, e nenhum dos nove HTML das direções o desenhou. */}
+        <GradeMetricas
+          colunas={2}
+          celulas={[
+            { k: 'c', rotulo: 'ciclo', valor: ciclo.ciclo,
+              nota: ciclo.sessoes === 1 ? '1 sessão' : ciclo.sessoes + ' sessões' },
+            { k: 'r', rotulo: 'a rotação tem', valor: String(ciclo.treinos),
+              nota: 'treinos por volta' }
+          ]}
+        />
         <p class="ins-body-sm ins-t3 dd-retro-p">
           O que evoluiu, o que ficou parado e onde a dor apareceu desde o começo
           deste bloco.

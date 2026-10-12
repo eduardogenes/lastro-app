@@ -10,7 +10,7 @@
 // de energia depois e a lista por último.
 
 import {
-  CartaoFoco, GradeMetricas, HeroMetrica, Procedencia, Secao, Ticks, useAgora
+  CartaoFoco, GradeMetricas, HeroMetrica, Procedencia, Secao, Sparkline, Ticks, useAgora
 } from '../instrumento/primitivos.jsx';
 import { LinhaTimeline } from '../instrumento/timeline.jsx';
 import { fmtDur, fmtHora, fmtInt, fmtLitros } from '../../dominio/formato';
@@ -57,6 +57,7 @@ export function Agora({ ctx }) {
   const cromo = ctx.cromoDoTreino();
   const app = ctx.dadosDoApp();
   const vence = ctx.vencendoHoje();
+  const dias = ctx.quatorzeDias();
   const refDe = id => refs.filter(r => r.id === id)[0] || null;
   const linhaDoTreino = refs.filter(r => ctx.ehLinhaDeTreino(r))[0] || null;
 
@@ -341,6 +342,20 @@ export function Agora({ ctx }) {
             fica junto dele e não no placar. Quem está decidindo se registra é
             quem precisa dela. */}
         <Procedencia>{cardio.regra}</Procedencia>
+      </Secao>
+
+      {/* OS CATORZE DIAS que a regra do corte lê. §1.1 os lista como posse do
+          Agora, e o §5.7 os nomeia no estado mais mudo que esta tela tem: num
+          dia de descanso fora de qualquer janela "ficam a linha do dia, a água e
+          a contagem dos 14 dias, e não há cartão".
+          Contagem, e NUNCA percentual: os dois são a mesma matemática e o oposto
+          na cabeça — um número contra 100% implícito funciona como nota, e é a
+          mesma razão por que a adesão por refeição se conta em dias.
+          A casa de HOJE fica vazia de propósito: o dia corrente só entra na
+          conta quando a data vira, e é a mesma janela que o portão lê. */}
+      <Secao rotulo="os 14 dias" nota={dias.txt}>
+        <div class="dd-spark"><Sparkline valores={dias.fatias} /></div>
+        <Procedencia>{dias.nota}</Procedencia>
       </Secao>
 
       <Secao rotulo="água">

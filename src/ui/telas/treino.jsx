@@ -33,7 +33,7 @@ export function Treino({ ctx }) {
 
       <Secao primeira>
         <GradeMetricas
-          colunas={3}
+          colunas={2}
           celulas={[
             // id=daymeta: atualizaEstado() escreve aqui a cada tecla, sem
             // re-render — o porquê está em main.jsx.
@@ -46,8 +46,16 @@ export function Treino({ ctx }) {
                   cor: t.feitas > 0 ? 'ins-acid' : '' }
               : { k: 's', id: 'daymeta', rotulo: 'séries', valor: `${t.feitas}/${t.prescritas}`,
                   cor: t.feitas >= t.prescritas && t.prescritas > 0 ? 'ins-acid' : '' },
-            { k: 'v', rotulo: 'volume', valor: t.volume },
-            { k: 'c', rotulo: 'ciclo', valor: t.ciclo, nota: `${t.sessoes} sessões` }
+            // O VOLUME fica: durante a sessão ele é devolutiva ao vivo do que
+            // entrou, e não resumo do dia. A cópia que Dias guarda no detalhe
+            // da sessão é o REGISTRO, que é outra coisa.
+            //
+            // O CICLO saiu (achado 7 da frente 1): ele responde "em que ponto
+            // do bloco eu estou", que é a mesma pergunta da retrospectiva — e a
+            // retrospectiva é de Semana. Aqui ele era a terceira célula de um
+            // cabeçalho que se lê de pé, no meio de uma série, e nenhum dos nove
+            // HTML das direções o desenhou em lugar nenhum.
+            { k: 'v', rotulo: 'volume', valor: t.volume }
           ]}
         />
 

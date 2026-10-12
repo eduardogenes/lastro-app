@@ -1203,3 +1203,44 @@ test('o INTERRUPTOR do deload não está mais em Prescrição nem em Ajustes', a
     'a regra do treinador sobre deload continua na Prescrição');
   a.fechar();
 });
+
+test('o ciclo saiu do cabeçalho da sessão e mora em Semana, ao lado da retrospectiva', async () => {
+  // Achado 7 da frente 1: o ciclo responde "em que ponto do bloco eu estou",
+  // que é a mesma pergunta que a retrospectiva responde em prosa. No cabeçalho
+  // do treino ele era a terceira célula de uma linha que se lê de pé, no meio
+  // de uma série — e nenhum dos nove HTML das direções o desenhou em lugar
+  // nenhum.
+  const a = await app();
+  assert.ok(a.vista().modoSessao, 'pré-condição: dentro do modo');
+  const celulas = a.$$('.ins-grade-c').map(function (x) { return x.textContent; }).join(' | ');
+  assert.ok(!/ciclo/i.test(celulas), 'o ciclo não está no cabeçalho da sessão: ' + celulas);
+  // E o VOLUME fica: durante a sessão ele é devolutiva ao vivo do que entrou, e
+  // não resumo do dia — a cópia que Dias guarda no detalhe é o registro.
+  assert.ok(/volume/i.test(celulas), 'o volume continua, que é outra natureza: ' + celulas);
+
+  a.aba('semana');
+  await a.esperar();
+  await a.modo('treino');
+  const naSemana = a.$$('.ins-grade-c').map(function (x) { return x.textContent; }).join(' | ');
+  assert.ok(/ciclo/i.test(naSemana), 'e está em Semana: ' + naSemana);
+  a.fechar();
+});
+
+test('o ciclo conta VOLTAS DA ROTAÇÃO, não semanas', async () => {
+  // Conferência independente: a conta é `sessões / tamanho da rotação`, e o
+  // tamanho é o da rotação DELE. Contar em semanas daria o número errado toda
+  // vez que ele treinasse mais ou menos que a rotação pede.
+  const seis = [];
+  for (let k = 0; k < 6; k++) {
+    const t = Date.now() - (6 - k) * DIA;
+    seis.push({ day: 'ABCDE'[k] || 'HX', t: t, sid: t, dur: 60 * 60000 });
+  }
+  const a = await app({ aba: 'semana', estado: { logs: {}, done: seis } });
+  await a.esperar();
+
+  const c = a.vJ('ctx.cicloDoBloco');
+  assert.strictEqual(c.sessoes, 6);
+  assert.strictEqual(c.treinos, 6, 'a rotação base tem seis: A, B, C, D, E e HX');
+  assert.strictEqual(c.ciclo, '2', 'uma volta inteira fechada: ele está no segundo ciclo');
+  a.fechar();
+});

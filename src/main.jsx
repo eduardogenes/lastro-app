@@ -17,7 +17,7 @@ import {
 import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
-import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX } from './dominio/corpo';
+import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
 import { quandoAquelaVolta, venceuPorPosicao } from './dominio/prescricao';
@@ -44,7 +44,7 @@ import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos
 import {
   aplicaAjusteNoArroz, tiraMarcaDeArroz, listaDeCompras, totalDaRefeicao, totalDoDia,
   refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao, minutosDe,
-  fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis,
+  fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis, diaInterpretavel,
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
@@ -5620,8 +5620,9 @@ CTX.treino = function () {
     // depois de virar a nota dela.
     quadro: (S.quadro && S.quadro.day === d) ? S.quadro.texto : null,
     volume: fmtK(volumeDoDia(d)),
-    ciclo: String(Math.floor(S.done.length / rot().length) + 1),
-    sessoes: S.done.length,
+    // `ciclo` e `sessoes` saíram desta leitura com a célula que os mostrava: o
+    // ciclo foi para `CTX.cicloDoBloco`, que a Semana lê. Deixá-los aqui seria
+    // uma segunda fonte da mesma conta, esperando divergir da primeira.
     sessaoAberta: !!s,
     pausada: !!(s && s.pausadoEm),
     podeEditar: podeEditar(d),
@@ -8184,6 +8185,78 @@ CTX.fechaAjustes = function () {
  *
  * `null` sem treino no dia: não há séries a cortar.
  */
+/**
+ * Em que ponto do bloco ele está.
+ *
+ * Veio do cabeçalho do TREINO (achado 7 da frente 1): o ciclo responde "em que
+ * ponto do bloco eu estou", que é a mesma pergunta que a retrospectiva responde
+ * em prosa — e a retrospectiva é de Semana. No cabeçalho da sessão ele era a
+ * terceira célula de uma linha que se lê de pé, no meio de uma série.
+ *
+ * A conta é por VOLTAS DA ROTAÇÃO e não por semanas: o ciclo é quantas vezes a
+ * sequência inteira já passou, e por isso ele depende do tamanho dela — cinco
+ * dias mais o HYROX, ou o que a rotação dele tiver. Contar em semanas daria o
+ * número errado toda vez que ele treinasse mais ou menos que a rotação pede.
+ */
+/**
+ * Os catorze dias que a regra do corte lê — as fatias e a contagem.
+ *
+ * §1.1 lista isto como posse do Agora, e o §5.7 o nomeia no estado mais mudo
+ * que a tela tem: num dia de descanso fora de qualquer janela "ficam a linha do
+ * dia, a água e A CONTAGEM DOS 14 DIAS, e não há cartão". Faltava — e pior, o
+ * aviso de aparelho sem armazenamento que eu escrevi diz "não entra na conta
+ * dos 14 dias", citando uma conta que não estava em tela nenhuma.
+ *
+ * **A janela é a mesma que o portão lê**, e é por isso que ela inclui a casa de
+ * HOJE mesmo sabendo que ela vai estar vazia: `diasInterpretaveis` conta sobre
+ * `S.comidaHist`, e o dia corrente só entra lá quando a data vira
+ * (`fechaDiaDeComida`). Mostrar treze casas e contar sobre catorze faria a tela
+ * e a regra discordarem — e a tela perderia, porque quem decide o corte é a
+ * regra. A casa de hoje vazia é informação: o dia não fechou.
+ *
+ * `null` numa fatia é dia sem registro interpretável, e o primitivo desenha
+ * casa vazia — é o que faz as catorze lerem como presença e ausência em vez de
+ * um gráfico de zero e um.
+ */
+CTX.quatorzeDias = function () {
+  const hoje = hojeISO();
+  const porData = {};
+  (Array.isArray(S.comidaHist) ? S.comidaHist : []).forEach(function (h) {
+    if (h && h.d) porData[h.d] = h;
+  });
+
+  const fatias = [];
+  for (let k = 13; k >= 0; k--) {
+    const d = new Date(hoje + 'T12:00:00');
+    d.setDate(d.getDate() - k);
+    const h = porData[hojeISO(d.getTime())];
+    fatias.push(h && diaInterpretavel(h) ? 1 : null);
+  }
+
+  const n = diasRegistrados();
+  return {
+    fatias: fatias,
+    registrados: n,
+    pede: MIN_REGISTRADOS,
+    // O portão é do nutricionista e o número não é negociável. A tela diz onde
+    // ele está sem transformar isso em nota: contagem, nunca percentual.
+    txt: n + ' de 14 dias com registro',
+    nota: n >= MIN_REGISTRADOS
+      ? 'a regra pede ' + MIN_REGISTRADOS + ' · o portão da adesão está aberto'
+      : 'a regra pede ' + MIN_REGISTRADOS + ' para mexer nas calorias',
+    aberto: n >= MIN_REGISTRADOS
+  };
+};
+
+CTX.cicloDoBloco = function () {
+  const treinos = rot().length;
+  return {
+    sessoes: S.done.length,
+    treinos: treinos,
+    ciclo: String(Math.floor(S.done.length / treinos) + 1)
+  };
+};
+
 CTX.menuDaSessao = function () {
   const d = view.day;
   const t = treino(d);
