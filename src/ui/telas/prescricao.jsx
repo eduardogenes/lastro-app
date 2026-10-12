@@ -2,8 +2,14 @@
 //
 // O quinto dos cinco lugares, e o que recebe mais endereços de uma vez: o plano
 // alimentar e a biblioteca de alimentos vinham da aba COMIDA; o alvo por tipo de
-// dia, as regras de execução do treinador, a cadência da semana e o deload
-// vinham do GUIA, modo "prescrição" e modo "o app".
+// dia, as regras de execução do treinador e a cadência da semana vinham do
+// GUIA, modo "prescrição" e modo "o app".
+//
+// O INTERRUPTOR do deload NÃO veio: ele foi para o menu `···` da sessão por
+// decisão do dono. O que ficou aqui é a REGRA do treinador sobre deload
+// ("Deload por evidência, não por calendário"), que é referência — e referência
+// é posse de Prescrição. A regra e o interruptor têm nomes parecidos e naturezas
+// opostas.
 //
 // O que ficou FORA, e foi para Ajustes: sincronizar, backup, restaurar e "onde
 // ficam seus dados". Prescrição "não possui nenhum registro" (§1.5) — e
@@ -436,26 +442,15 @@ export function Prescricao({ ctx }) {
         </Procedencia>
       </Secao>
 
-      {/* O deload ganhou seção própria porque a antiga, "o programa", virou uma
-          seção com um item só: "Seus treinos" saiu — `abrir o programa` já
-          existe no TREINO e no DADOS, e esta era a terceira porta para o mesmo
-          destino, a única embrulhada num parágrafo — e a retrospectiva foi para
-          o DADOS, onde mora o resto do que é olhar para trás.
-
-          Fica AQUI, e não no TREINO, de propósito: um interruptor que corta
-          metade das séries não deve estar a um toque no meio de uma sessão. O
-          app existe em parte para frear, e o caminho de menor esforço tem que
-          ser o conservador. O estado dele já aparece no TREINO quando ligado. */}
-      <Secao rotulo="deload">
-        <Bloco
-          titulo="Modo deload"
-          texto="Mostra metade das séries de cada exercício mantendo as mesmas cargas. As sessões salvas nesse modo ficam marcadas no histórico, para a queda de volume não parecer regressão."
-        >
-          <button class="ins-btn-secondary" onClick={() => ctx.setDeload(!d.deload)}>
-            {d.deload ? 'desativar o deload' : 'ativar o deload'}
-          </button>
-        </Bloco>
-      </Secao>
+      {/* O DELOAD SAIU DAQUI, e é decisão do dono (a 6 das quinze): ele foi
+          para o menu `···` da sessão. O argumento que caiu era bom e fica
+          escrito, porque é o que ninguém pode esquecer ao implementar — "um
+          interruptor que corta metade das séries não deve estar a um toque no
+          meio de uma sessão. O app existe em parte para frear, e o caminho de
+          menor esforço tem que ser o conservador".
+          O LUGAR era o freio, e ele decidiu mover sabendo disso. Então o freio
+          virou a PALAVRA: o item do menu diz o corte em número antes do toque,
+          e nunca é um interruptor com o nome sozinho (frente 3, §7.6). */}
       </>}
     </>
   );

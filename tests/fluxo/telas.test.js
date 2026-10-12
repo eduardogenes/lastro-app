@@ -1086,3 +1086,120 @@ test('botão que mostra só um símbolo tem nome acessível', () => {
     'botão cujo conteúdo visível é só símbolo e que não tem nome acessível: ' +
     'quem usa leitor de tela ouve "botão" e nada mais');
 });
+
+// ---------------------------------------------------------------------------
+// O DELOAD mudou de lugar, e o freio virou a palavra
+// ---------------------------------------------------------------------------
+//
+// Decisão 6 do dono: o interruptor sai de Ajustes e vai para o menu `···` da
+// sessão. O argumento que caiu era bom e fica escrito, porque é o que ninguém
+// pode esquecer ao implementar — "um interruptor que corta metade das séries não
+// deve estar a um toque no meio de uma sessão. O app existe em parte para frear,
+// e o caminho de menor esforço tem que ser o conservador".
+//
+// O LUGAR era o freio. Ele decidiu mover sabendo disso — foi perguntado duas
+// vezes na mesma noite e manteve, depois de o cartão ser corrigido. Então o
+// freio passa do lugar para a PALAVRA, e é isso que estes casos cobram.
+
+test('o menu ··· da sessão diz o corte em NÚMERO antes do toque', async () => {
+  const a = await app();
+  assert.ok(a.vista().modoSessao, 'pré-condição: dentro do modo');
+  const mais = a.$('[data-a="menu-sessao"]');
+  assert.ok(mais, 'o ··· está no cabeçalho do modo');
+  assert.ok(mais.getAttribute('aria-label'), 'com nome acessível: três pontos não é nome');
+
+  mais.click();
+  await a.esperar(60);
+
+  const item = a.$('[data-a="deload"]');
+  assert.ok(item, 'o deload é o item do menu');
+  const txt = item.textContent;
+  assert.ok(/Deload hoje/.test(txt), txt);
+  // Os números são do DADO e não de exemplo: o prescrito do dia e a conta do
+  // deload, calculados na hora de abrir.
+  assert.match(txt, /corta \d+ séries para \d+, nas mesmas cargas/,
+    'diz o corte em número, antes do toque: ' + txt);
+
+  // E NUNCA um interruptor com o nome sozinho — é a linha "nunca" da tabela da
+  // frente 3. Sem o número, o freio não existe em lugar nenhum.
+  assert.ok(!/[Aa]tivar deload/.test(txt), 'não é "ativar deload": ' + txt);
+  a.fechar();
+});
+
+test('os números do corte são os do dia, conferidos à mão', async () => {
+  // Conferência independente: soma o prescrito do dia sem passar pela leitura
+  // que está sob teste. Se a conta do deload mudar, o caso diz.
+  const a = await app();
+  const ex = a.vJ('treino', a.vista().day).ex;
+  const cheio = ex.reduce(function (n, x) { return n + x.s; }, 0);
+  const cortado = ex.reduce(function (n, x) { return n + Math.ceil(x.s / 2); }, 0);
+  assert.ok(cheio > cortado, 'pré-condição: o deload corta mesmo (' + cheio + ' → ' + cortado + ')');
+
+  const m = a.vJ('ctx.menuDaSessao');
+  assert.strictEqual(m.deload.detalhe,
+    'corta ' + cheio + ' séries para ' + cortado + ', nas mesmas cargas');
+  a.fechar();
+});
+
+test('com o deload ligado, a palavra diz o que o toque DEVOLVE', async () => {
+  // A segunda metade, e é a que impede o susto: desligar no meio devolve as
+  // séries, e o que já foi registrado fica. A frase tem de dizer quanto volta.
+  const a = await app({ estado: { logs: {}, done: [], deload: true } });
+  const ex = a.vJ('treino', a.vista().day).ex;
+  const devolve = ex.reduce(function (n, x) { return n + x.s - Math.ceil(x.s / 2); }, 0);
+
+  const m = a.vJ('ctx.menuDaSessao');
+  assert.strictEqual(m.deload.ligado, true);
+  assert.strictEqual(m.deload.rotulo, 'Sair do deload');
+  assert.match(m.deload.detalhe,
+    new RegExp('devolve ' + devolve + ' séries ao Treino ' + a.vista().day + ' de hoje'),
+    m.deload.detalhe);
+  a.fechar();
+});
+
+test('tocar no item liga o deload e fecha o menu', async () => {
+  const a = await app();
+  assert.strictEqual(a.S().deload, false, 'pré-condição: desligado');
+
+  a.clicar('[data-a="menu-sessao"]');
+  await a.esperar(60);
+  a.clicar('[data-a="deload"]');
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().deload, true, 'ligou');
+  assert.strictEqual(a.$('.ins-folha'), null, 'e o menu fechou: fim de tarefa');
+  a.fechar();
+});
+
+test('o INTERRUPTOR do deload não está mais em Prescrição nem em Ajustes', async () => {
+  // A outra metade da mudança de lugar: deixá-lo em dois lugares seria duas
+  // portas para o mesmo interruptor, e uma delas sem o freio da palavra.
+  //
+  // A busca é pelo BOTÃO que liga, e não pela palavra "deload" — e a diferença
+  // me custou um vermelho: uma das catorze regras do treinador se chama "Deload
+  // por evidência, não por calendário", e ela é REFERÊNCIA, que é posse de
+  // Prescrição. Procurar a palavra confundia a regra com o interruptor.
+  const liga = x => x.$$('button').filter(function (b) {
+    return /deload/i.test(b.textContent) && !/por evidência/i.test(b.textContent);
+  });
+
+  const a = await app({ aba: 'prescricao' });
+  await a.esperar();
+  for (const chip of ['programa', 'comida', 'alimentos', 'semana']) {
+    await a.modo(chip);
+    assert.deepStrictEqual(liga(a).map(function (b) { return b.textContent.trim(); }), [],
+      'nenhum botão de deload no chip ' + chip + ' da Prescrição');
+  }
+
+  a.aba('ajustes');
+  await a.esperar();
+  assert.deepStrictEqual(liga(a).map(function (b) { return b.textContent.trim(); }), [],
+    'nem nos Ajustes, de onde ele saiu');
+
+  // E a regra do treinador CONTINUA onde deve: ela é referência, não botão.
+  a.aba('prescricao');
+  await a.modo('programa');
+  assert.ok(/[Dd]eload por evidência/.test(a.doc.getElementById('app').textContent),
+    'a regra do treinador sobre deload continua na Prescrição');
+  a.fechar();
+});

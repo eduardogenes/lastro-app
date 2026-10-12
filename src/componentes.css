@@ -1610,3 +1610,17 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
   display: flex; align-items: center; gap: var(--ins-4);
   margin: var(--ins-6) 0 var(--ins-5);
 }
+
+/* O `···` do modo, à direita da hora. Alvo cheio e ícone discreto: o que é raro
+   não deve pedir atenção, mas tem de ser alcançável com a mão suada. */
+.ins-modo-mais {
+  min-width: var(--ins-tap); min-height: var(--ins-tap);
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: var(--ins-tinta-3);
+  font: 400 20px/1 var(--ins-fonte); margin-left: var(--ins-3);
+}
+/* O item do menu tem DUAS linhas, e a de baixo é o freio — ela diz o corte em
+   número. Por isso o nome não pode ficar sozinho numa linha só. */
+.ms-item { align-items: flex-start; }
+.ms-item .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-2); }
+.ms-detalhe { display: block; }

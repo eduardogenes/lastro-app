@@ -45,6 +45,14 @@ export function SessaoModo({ ctx }) {
             Sem `aria-live`: anunciar a virada de cada minuto no meio de uma
             série é interrupção, não informação. */}
         <time id="hora" class="ins-modo-hora">{ctx.horaDeParede()}</time>
+        {/* O `···`: o que é RARO mora aqui, e hoje é o deload. Ele saiu de
+            Ajustes por decisão do dono, e o lugar antigo ERA o freio — por isso
+            o item da folha diz o corte em número antes do toque, em vez de ser
+            um interruptor com nome. */}
+        <button class="ins-modo-mais"
+                data-a="menu-sessao"
+                aria-label="O que é raro nesta sessão"
+                onClick={() => ctx.abreFolha({ k: 'menuSessao' })}>···</button>
       </div>
       {/* O `<main>` é do MODO, e precisa ser. A tela cheia é devolvida antes
           da casca (`app.jsx`), então o `<main>` dela não entra — e sem este

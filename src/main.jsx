@@ -27,6 +27,7 @@ import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { FolhaFoto } from './ui/folhas/foto.jsx';
+import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
 import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
@@ -5303,6 +5304,7 @@ function folhaAberta() {
     if (f.k === 'seletor') return <FolhaSeletor key={i} ctx={CTX} alvo={f.ref} idx={f.idx} />;
     if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
+    if (f.k === 'menuSessao') return <FolhaMenuDaSessao key={i} ctx={CTX} />;
     return null;
   });
 }
@@ -8161,6 +8163,48 @@ CTX.fechaAjustes = function () {
  * o lugar por baixo faria fechar o modo devolver a pessoa a outro lugar que não
  * o de onde ela entrou.
  */
+/**
+ * O menu `···` da sessão: o que é RARO, e por isso não fica à vista.
+ *
+ * Nasce com um item só — o deload —, e isso é por decisão e não por falta de
+ * ideia. A decisão 6 do dono mandou o interruptor sair de Ajustes para cá, e o
+ * argumento que caiu com ele era bom o bastante para ficar escrito:
+ *
+ *   "um interruptor que corta metade das séries não deve estar a um toque no
+ *    meio de uma sessão. O app existe em parte para frear, e o caminho de menor
+ *    esforço tem que ser o conservador."
+ *
+ * **O lugar ERA o freio**, e ele decidiu movê-lo sabendo disso — foi perguntado
+ * duas vezes na mesma noite e manteve. Então o freio passa do LUGAR para a
+ * PALAVRA: o item não é um interruptor com nome, é uma frase que diz **o corte
+ * em número antes do toque** (frente 3, §7.6).
+ *
+ * Os números são do dado e não de exemplo: saem do prescrito do dia e da conta
+ * do deload (`setsFor`), calculados na hora de abrir o menu.
+ *
+ * `null` sem treino no dia: não há séries a cortar.
+ */
+CTX.menuDaSessao = function () {
+  const d = view.day;
+  const t = treino(d);
+  if (!t || !t.ex.length) return null;
+  const cheio = t.ex.reduce(function (n, ex) { return n + _setsFor(ex, false); }, 0);
+  const cortado = t.ex.reduce(function (n, ex) { return n + _setsFor(ex, true); }, 0);
+  const nome = 'Treino ' + d;
+  return {
+    deload: S.deload
+      // "Sair do deload · devolve 10 séries ao Treino A de hoje" — a frente 3
+      // escreveu as duas metades, e a segunda é a que impede o susto.
+      ? { ligado: true, rotulo: 'Sair do deload',
+          detalhe: 'devolve ' + (cheio - cortado) +
+                   (cheio - cortado === 1 ? ' série' : ' séries') + ' ao ' + nome + ' de hoje' }
+      // "Deload hoje · corta 20 séries para 10, nas mesmas cargas"
+      : { ligado: false, rotulo: 'Deload hoje',
+          detalhe: 'corta ' + cheio + (cheio === 1 ? ' série' : ' séries') +
+                   ' para ' + cortado + ', nas mesmas cargas' }
+  };
+};
+
 CTX.abreTreinoDeHoje = function () {
   const h = diaResolvido();
   if (!h.treino) return;               // dia de descanso: não há treino a abrir
