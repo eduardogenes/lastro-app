@@ -20,7 +20,7 @@ import { ehBancada } from './palco.js';
 import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
-import { quandoAquelaVolta } from './dominio/prescricao';
+import { quandoAquelaVolta, venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
@@ -7021,6 +7021,11 @@ CTX.mudancasQueEsperam = function () {
       dia: g.day,
       quando: g.t,
       vence: quandoAquelaVolta(g.day, rot(), proxima, cadenciaDaSemana(), de),
+      // VENCEU: aquele treino já voltou e ele não decidiu. É fato no dado, não
+      // conta sobre o relógio — e por isso não precisa de campo, de cron nem de
+      // o app ter estado aberto no dia certo. A mudança não some: fica como "só
+      // daquele dia", dita e desfazível (§8.1, passo 5).
+      venceu: venceuPorPosicao(g.day, g.t, S.done),
       mudancas: mods.map(function (m) {
         const imp = impactoDoMod(g.day, m);
         return {
@@ -7960,8 +7965,11 @@ CTX.guardando = function () { return DB.mode !== 'mem'; };
  */
 CTX.vencendoHoje = function () {
   const hoje = hojeISO();
+  // `!g.venceu` de propósito: o aviso é um HEADS-UP do que está para vencer. O
+  // que já venceu não tem mais aviso a dar — tem o bloco "venceu sem você" em
+  // Prescrição, que é dito e desfazível.
   const vencendo = CTX.mudancasQueEsperam().filter(function (g) {
-    return g.vence != null && hojeISO(g.vence) === hoje;
+    return !g.venceu && g.vence != null && hojeISO(g.vence) === hoje;
   });
   if (!vencendo.length) return null;
   const n = vencendo.reduce(function (k, g) { return k + g.mudancas.length; }, 0);

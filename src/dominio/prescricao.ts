@@ -62,3 +62,37 @@ export function quandoAquelaVolta(
   }
   return null;
 }
+
+/** Uma sessão registrada, na medida em que o vencimento se importa com ela. */
+export interface SessaoRegistrada {
+  day: string;
+  t: number;
+  /** sessão avulsa, fora do plano: não é "aquele treino voltando" */
+  livre?: 0 | 1;
+}
+
+/**
+ * Aquele treino já voltou desde que a mudança nasceu?
+ *
+ * É o VENCIMENTO, e ele é um fato no dado em vez de uma conta sobre o relógio:
+ * a mudança vence quando aquele treino volta, e "voltou" é uma sessão daquele
+ * dia registrada DEPOIS dela. Nada aqui precisa de campo novo, de cron nem de o
+ * app ter estado aberto no dia certo — e é a diferença que importa, porque
+ * `quandoAquelaVolta` só olha para FRENTE: passado o dia, ela devolve a volta
+ * seguinte, e um vencimento perdido com o app fechado nunca seria detectado.
+ *
+ * A sessão que CRIOU a mudança não conta, e a conta exclui sozinha: a mudança é
+ * copiada para a fila no fecho, então o instante dela é posterior ao início da
+ * sessão que a gerou. Sessão AVULSA também não conta — ela não é "aquele treino
+ * voltando", é treino fora do plano.
+ */
+export function venceuPorPosicao(
+  dia: string,
+  quando: number,
+  sessoes: SessaoRegistrada[]
+): boolean {
+  if (!dia || !Array.isArray(sessoes)) return false;
+  return sessoes.some(function (x) {
+    return !!x && !x.livre && x.day === dia && x.t > quando;
+  });
+}

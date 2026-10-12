@@ -7,7 +7,7 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { quandoAquelaVolta, HORIZONTE_PADRAO } from '../../src/dominio/prescricao';
+import { quandoAquelaVolta, venceuPorPosicao, HORIZONTE_PADRAO } from '../../src/dominio/prescricao';
 import type { Cadencia } from '../../src/dominio/dia';
 
 const ROT = ['A', 'B', 'C', 'D', 'E', 'HX'];
@@ -114,4 +114,41 @@ test('o horizonte é o limite, e ele cobre uma rotação inteira com folga', () 
   const de = segunda();
   assert.strictEqual(quandoAquelaVolta('A', ROT, 'B', umPorSemana, de), de + 35 * DIA,
     'cinco semanas à frente, uma posição por semana');
+});
+
+// ---------- o vencimento como FATO, e não como conta sobre o relógio ----------
+
+test('aquele treino voltar é uma sessão daquele dia registrada DEPOIS', () => {
+  const nasceu = segunda();
+  const sessoes = [{ day: 'A', t: nasceu + 6 * DIA }];
+  assert.strictEqual(venceuPorPosicao('A', nasceu, sessoes), true);
+  assert.strictEqual(venceuPorPosicao('B', nasceu, sessoes), false,
+    'outro dia voltar não vence a mudança do A');
+});
+
+test('a sessão que criou a mudança não a vence', () => {
+  // A mudança é copiada para a fila NO FECHO, então o instante dela é posterior
+  // ao início da sessão que a gerou. Sem esta propriedade, toda mudança nasceria
+  // vencida — e o app diria "você não decidiu" no segundo em que ela apareceu.
+  const inicio = segunda();
+  const nasceu = inicio + 70 * 60000;           // o fecho, 70 min depois
+  assert.strictEqual(venceuPorPosicao('A', nasceu, [{ day: 'A', t: inicio }]), false);
+});
+
+test('sessão avulsa não é aquele treino voltando', () => {
+  // Treino fora do plano não ocupa posição na rotação, então não faz o dia
+  // "voltar" — é a mesma razão por que ele não entra na contagem de sequência.
+  const nasceu = segunda();
+  assert.strictEqual(
+    venceuPorPosicao('A', nasceu, [{ day: 'A', t: nasceu + DIA, livre: 1 }]), false);
+  assert.strictEqual(
+    venceuPorPosicao('A', nasceu, [{ day: 'A', t: nasceu + DIA, livre: 0 }]), true,
+    '`livre: 0` é sessão do plano e vence');
+});
+
+test('sem sessão nenhuma, nada vence', () => {
+  assert.strictEqual(venceuPorPosicao('A', segunda(), []), false);
+  assert.strictEqual(venceuPorPosicao('A', segunda(), null as never), false);
+  assert.strictEqual(venceuPorPosicao('', segunda(), [{ day: '', t: Date.now() }]), false,
+    'dia vazio não casa com dia vazio: não há treino sem letra');
 });

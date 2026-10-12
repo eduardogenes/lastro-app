@@ -166,6 +166,8 @@ export function Prescricao({ ctx }) {
   const [busca, setBusca] = useState('');
   const [motivos, setMotivos] = useState({});
   const fila = ctx.mudancasQueEsperam();
+  const esperando = fila.filter(g => !g.venceu);
+  const venceram = fila.filter(g => g.venceu);
   const g = ctx.guia();
   const d = ctx.dadosDoApp();
   const plano = ctx.planoCompleto();
@@ -195,10 +197,10 @@ export function Prescricao({ ctx }) {
           padrão, e dar mais área a uma delas é escolher por ele. E são por
           MUDANÇA, não por sessão — uma sessão pode ter subido uma série que ele
           quer manter e trocado um exercício que ele não quer. */}
-      {fila.length > 0 && (
+      {esperando.length > 0 && (
         <Secao rotulo="esperando decisão"
-               nota={fila.length === 1 ? '1 sessão' : fila.length + ' sessões'}>
-          {fila.map(g => (
+               nota={esperando.length === 1 ? '1 sessão' : esperando.length + ' sessões'}>
+          {esperando.map(g => (
             <div key={g.sid} class="pr-espera">
               <div class="ins-label pr-espera-h">
                 treino {g.dia} · {fmtDate(g.quando)}
@@ -245,6 +247,54 @@ export function Prescricao({ ctx }) {
             como só daquele dia — dito, e desfazível. Nada entra no programa em
             silêncio, e nada é descartado em silêncio.
           </Procedencia>
+        </Secao>
+      )}
+
+      {/* VENCEU SEM VOCÊ. A mudança não some quando ele não decide: ela fica
+          como "só daquele dia", e isso é DITO — "ficou como só daquele dia
+          quando o treino A voltou" — e DESFAZÍVEL, com "tornar permanente
+          agora" (§8.1, passo 5). Nada entra no programa em silêncio, e nada é
+          descartado em silêncio.
+
+          Uma resposta só aqui, e não duas: "só daquele dia" já é o que
+          aconteceu, e oferecê-la de novo seria pedir que ele confirmasse o que
+          o tempo já decidiu. O que falta é a porta de volta. */}
+      {venceram.length > 0 && (
+        <Secao rotulo="venceu sem você"
+               nota={venceram.length === 1 ? '1 sessão' : venceram.length + ' sessões'}>
+          {venceram.map(g => (
+            <div key={g.sid} class="pr-espera venceu">
+              <div class="ins-label pr-espera-h">treino {g.dia} · {fmtDate(g.quando)}</div>
+              {g.mudancas.map((m, i) => (
+                <div key={m.txt} class="pr-mud">
+                  <div class="ins-body-sm pr-mud-t">{m.txt}</div>
+                  <div class="ins-body-xs pr-mud-i">
+                    ficou como só daquele dia quando o treino {g.dia} voltou
+                  </div>
+                  {m.impacto && (
+                    <div class={'ins-body-xs pr-mud-i' + (m.acima ? ' acima' : '')}>
+                      {m.impacto}
+                    </div>
+                  )}
+                  <div class="pr-mud-b">
+                    <button class="ins-btn-secondary" data-a="tornar-permanente"
+                            onClick={() => ctx.respondeMudanca(g.sid, i, true, motivos[g.sid])}>
+                      Tornar permanente agora
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <input
+                class="ins-input pr-motivo"
+                type="text"
+                placeholder="por quê? (opcional)"
+                aria-label={'Motivo de tornar permanente a mudança do treino ' + g.dia}
+                value={motivos[g.sid] || ''}
+                onInput={e => setMotivos(Object.assign({}, motivos,
+                  { [g.sid]: e.currentTarget.value }))}
+              />
+            </div>
+          ))}
         </Secao>
       )}
       <Secao rotulo="alvo por tipo de dia" nota="calculado do plano">

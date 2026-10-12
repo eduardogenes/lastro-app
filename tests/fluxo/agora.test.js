@@ -895,3 +895,116 @@ test('sem nada vencendo hoje, o Agora se cala', async () => {
   assert.strictEqual(a.$('.ag-vence'), null, 'e o Agora não diz nada');
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// VENCEU SEM VOCÊ — o passo 5 do fluxo
+// ---------------------------------------------------------------------------
+
+test('a mudança cujo treino voltou aparece como vencida, e é DITO', async () => {
+  // "Se ele não decidir até lá, a mudança vence e não some: vira só daquele
+  // dia, DITO e desfazível" (§8.1, passo 5). Nada entra no programa em silêncio,
+  // e nada é descartado em silêncio.
+  //
+  // "Aquele treino voltou" é fato no dado: uma sessão do A registrada DEPOIS da
+  // mudança. Não há cron neste app, e não precisa — a conta é sobre o que
+  // aconteceu, não sobre o relógio.
+  const agora = agoraEstavel(9, 0);
+  const nasceu = agora - 9 * DIA;
+  const a = await app({
+    aba: 'prescricao', agora: agora,
+    estado: {
+      plano: 7, logs: {},
+      done: [{ sid: agora - 2 * DIA, day: 'A', t: agora - 2 * DIA,
+               dur: 70 * MIN, fim: 'manual', sets: [] }],
+      promoPendente: [{
+        sid: nasceu, day: 'A', t: nasceu, m: nasceu,
+        mods: [{ k: 'sets', slot: SLOT, de: 3, para: 5 }], resumoMods: ['']
+      }]
+    }
+  });
+
+  const g = a.vJ('ctx.mudancasQueEsperam')[0];
+  assert.strictEqual(g.venceu, true, 'o treino A voltou depois dela');
+
+  assert.strictEqual(a.$('.pr-espera:not(.venceu)'), null,
+    'e ela NÃO está mais esperando decisão');
+  const bloco = a.$('.pr-espera.venceu');
+  assert.ok(bloco, 'está no bloco do que venceu');
+  assert.ok(/ficou como só daquele dia quando o treino A voltou/.test(bloco.textContent),
+    'e está DITO, com todas as letras: ' + bloco.textContent);
+  a.fechar();
+});
+
+test('o que venceu ainda pode virar permanente — é a porta de volta', async () => {
+  // Desfazível é a outra metade do passo 5. Sem ela, "venceu" seria descarte com
+  // aviso, e o app teria decidido por ele depois de dizer que não decidiria.
+  const agora = agoraEstavel(9, 0);
+  const nasceu = agora - 9 * DIA;
+  const a = await app({
+    aba: 'prescricao', agora: agora,
+    estado: {
+      plano: 7, logs: {},
+      done: [{ sid: agora - 2 * DIA, day: 'A', t: agora - 2 * DIA,
+               dur: 70 * MIN, fim: 'manual', sets: [] }],
+      promoPendente: [{
+        sid: nasceu, day: 'A', t: nasceu, m: nasceu,
+        mods: [{ k: 'sets', slot: SLOT, de: 3, para: 5 }], resumoMods: ['']
+      }]
+    }
+  });
+  assert.strictEqual(a.S().prog.A.ex.filter(function (x) { return x.id === SLOT; })[0].s, 3,
+    'pré-condição: o oficial prescreve 3');
+
+  // Uma resposta só, e não duas: "só daquele dia" já é o que aconteceu, e
+  // oferecê-la de novo seria pedir que ele confirmasse o que o tempo decidiu.
+  assert.ok(a.$('[data-a="tornar-permanente"]'), 'a porta de volta existe');
+  assert.strictEqual(a.$('.pr-espera.venceu [data-a="so-naquele-dia"]'), null,
+    'e não há a resposta que o tempo já deu');
+
+  a.$('[data-a="tornar-permanente"]').click();
+  await a.esperar(60);
+  assert.strictEqual(a.S().prog.A.ex.filter(function (x) { return x.id === SLOT; })[0].s, 5,
+    'tornou permanente, depois de vencida');
+  assert.deepStrictEqual(a.S().promoPendente, [], 'e saiu da fila');
+  a.fechar();
+});
+
+test('o Agora não avisa sobre o que já venceu, nem quando o dia volta de novo', async () => {
+  // O aviso é heads-up do que está PARA vencer. O que já venceu não tem mais
+  // aviso a dar — tem o bloco de Prescrição, que é dito e desfazível. Avisar
+  // dos dois jeitos faria o Agora cobrar uma decisão que o tempo já tomou.
+  //
+  // O fixture é construído para DISCRIMINAR, e levou uma mutação para eu
+  // perceber: com o A voltando só uma vez, o vencimento CALCULADO não cai hoje
+  // de todo jeito, e o caso ficava verde sem a guarda. Aqui o A volta DUAS
+  // vezes — a sessão do A venceu a mudança, a do HX girou a rotação de volta
+  // para o A, e portanto `vence` é HOJE ao mesmo tempo que `venceu` é verdade.
+  // Só a guarda explica o silêncio.
+  const agora = agoraEstavel(6, 30);
+  const nasceu = agora - 20 * DIA;
+  const a = await app({
+    aba: 'agora', agora: agora,
+    estado: {
+      plano: 7, logs: {},
+      done: [
+        { sid: agora - 9 * DIA, day: 'A', t: agora - 9 * DIA,
+          dur: 70 * MIN, fim: 'manual', sets: [] },
+        { sid: agora - 2 * DIA, day: 'HX', t: agora - 2 * DIA,
+          dur: 70 * MIN, fim: 'manual', sets: [] }
+      ],
+      dia: diaDe(agora, 'treino'),
+      promoPendente: [{
+        sid: nasceu, day: 'A', t: nasceu, m: nasceu,
+        mods: [{ k: 'sets', slot: SLOT, de: 3, para: 5 }], resumoMods: ['']
+      }]
+    }
+  });
+
+  const g = a.vJ('ctx.mudancasQueEsperam')[0];
+  assert.strictEqual(g.venceu, true, 'pré-condição: o A já voltou depois dela');
+  assert.ok(g.vence != null, 'e o A volta OUTRA VEZ, com data: ' + g.vence);
+
+  assert.strictEqual(a.vJ('ctx.vencendoHoje'), null, 'o Agora não avisa de novo');
+  assert.strictEqual(a.$('.ag-vence'), null, 'e não desenha a linha');
+  a.fechar();
+});

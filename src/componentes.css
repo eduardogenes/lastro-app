@@ -1590,3 +1590,8 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
    se perde hoje — é um convite a decidir com calma, e é o que o rótulo diz. */
 .ag-vence { align-items: center; gap: var(--ins-5); }
 .ag-vence .ins-btn-secondary { flex: 0 0 auto; }
+
+/* O que venceu sem resposta. Sem âmbar: não há nada a corrigir e nada se
+   perdeu — o que aconteceu é que o tempo decidiu pelo lado conservador, e a
+   porta de volta está ali. Âmbar aqui leria como cobrança. */
+.pr-espera.venceu .pr-mud-t { color: var(--ins-tinta-2); }
