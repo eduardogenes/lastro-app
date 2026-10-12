@@ -2210,7 +2210,58 @@ estrutura de abas velha seria construí-la duas vezes.
       tem as nove capacidades especificadas — o que falta é construção, não
       decisão.
 
-- [ ] **6.n As outras telas**, pela ordem do plano, com os repontes de expressão
+- [x] **6.n A faixa da semana e o placar do cardio saem do modo** (`f70c759`) —
+      regra escrita do §4.2: a sessão esconde "o resumo do dia, as médias, os
+      **placares**", porque isso é "como está?" e o modo responde "e agora?". O
+      comentário do próprio código já dizia metade — "contexto de **adesão**, não
+      da sessão" —, e era a aba que os mantinha lá.
+      **E isto corrige uma reescrita minha:** no commit anterior eu havia
+      reescrito o caso do achado 5 afirmando que a faixa da semana estava
+      **dentro** do modo, cristalizando o contrário da regra. O caso agora diz o
+      que é verdade: o modo tem a **rotação**, que é contexto da sessão, e não
+      tem placar de tipo nenhum.
+      Os cinco casos de cardio tinham "tela de hoje" no nome e o código dizia
+      outra coisa — é o **achado 4**, e os nomes passam a falar a verdade pela
+      primeira vez.
+
+- [x] **6.o A fila ganha tela, e o boot para de interromper** (`4a36021`) —
+      passo 3 da ordem do §6.3, agora com tela. As duas respostas são **por
+      mudança** e não por sessão (uma sessão pode ter uma mudança que ele quer
+      manter e outra que não), ficam lado a lado e do mesmo tamanho (não há
+      resposta padrão), e "foi só naquele dia" **não desfaz nada** — o que a
+      resposta decide é o programa, que é o que vem depois.
+      **O boot parou de interromper.** Havia `abrePromoGuardada()` no pouso,
+      abrindo tela cheia em cima de quem acabou de abrir o app **para perguntar
+      sobre o programa** — a pergunta menos urgente que existe neste produto.
+      Agora a fila espera em Prescrição e o Agora avisa com **uma linha** na
+      manhã em que aquele treino volta (§5.6).
+      **Três achados, e os três sobre o meu próprio trabalho:**
+      `abrePromoGuardada` ficou **sem chamador** com a saída da interrupção, e eu
+      descobri escrevendo um caso que a chamava — o caso testaria código morto;
+      a propriedade "sair sem responder não repete a pergunta" **virou de lado**,
+      porque soltar a fila ao sair era a válvula de escape de uma tela que abria
+      sozinha a cada boot, e sem a interrupção a válvula é **dano**; e o caso do
+      boot em `promocao.test.js`, que a frente nomeou, trocou de asserção.
+      **Sete mutações, sete vermelhas** — inclusive a que faz o boot voltar a
+      interromper.
+
+### O que falta do fluxo do vencimento, e por quê
+
+**Passo 5:** vencer virando "só daquele dia", **dito** ("Ficou como só daquele
+dia quando o Treino B voltou") e **desfazível** ("Tornar permanente agora").
+Isso é **campo persistido novo** e portanto os seis portões: tipo, migração com
+fixture, regra de fusão com chave/lápide/teto, as duas listas de cópia, `tsc` e
+o total congelado.
+
+**A decisão D1** (a pergunta do fim do treino sai) continua atrás de uma coisa
+só, e ela é de perda de dado: **o carregador tem de existir nos DOIS fechos.**
+No fecho manual não existe nenhum — `fechaSessao` só copia a mudança no fecho
+automático, e `finalizarSessao` faz `S.promoPendente = null` de propósito,
+porque hoje ele PERGUNTA ali. Tirar a pergunta sem escrever o carregador faz o
+fecho manual descartar a mudança em silêncio (o F280 nominal). As duas coisas
+entram na mesma passada.
+
+- [ ] **6.p As outras telas**, pela ordem do plano, com os repontes de expressão
       composta junto de cada uma (uma visita só por arquivo, decisão do dono). A
       decisão do dono é que **os 168 repontes de expressão composta sejam feitos
       junto com a reescrita de cada tela**, numa visita só por arquivo. O defeito
