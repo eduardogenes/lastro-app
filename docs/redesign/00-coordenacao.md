@@ -2245,21 +2245,53 @@ estrutura de abas velha seria construí-la duas vezes.
       **Sete mutações, sete vermelhas** — inclusive a que faz o boot voltar a
       interromper.
 
-### O que falta do fluxo do vencimento, e por quê
+- [x] **6.p O vencimento acontece, e é dito e desfazível** (`0466b59`) — passo 5
+      do §8.1. **E não precisou de campo persistido**, o que derruba os seis
+      portões que eu havia escrito aqui como o preço desta peça: "aquele treino
+      voltar" é **fato no dado** — uma sessão daquele dia registrada depois da
+      mudança.
+      **E a diferença não é economia.** `quandoAquelaVolta` só olha para frente:
+      passado o dia, ela devolve a volta seguinte, e um vencimento perdido com o
+      app fechado **nunca seria detectado**. O fato no dado não pode ser perdido,
+      e não precisa de cron — que esta arquitetura não tem.
+      **Uma mutação reprovou um caso meu:** com o dia voltando uma vez só, o
+      vencimento *calculado* não cai hoje de todo jeito, e o caso do silêncio do
+      Agora ficava verde sem a guarda. Refeito com o dia voltando **duas** vezes.
 
-**Passo 5:** vencer virando "só daquele dia", **dito** ("Ficou como só daquele
-dia quando o Treino B voltou") e **desfazível** ("Tornar permanente agora").
-Isso é **campo persistido novo** e portanto os seis portões: tipo, migração com
-fixture, regra de fusão com chave/lápide/teto, as duas listas de cópia, `tsc` e
-o total congelado.
+- [x] **6.q A decisão D1: a pergunta do fim do treino sai** (`6c7ab70`) — e ela
+      não podia vir sozinha. **Tirar a pergunta sem escrever o carregador no
+      fecho manual faria finalizar no toque descartar a mudança em silêncio** —
+      o F280 nominal, não o risco dele. As duas coisas na mesma passada, que é o
+      que o §3.6 manda.
+      Saem a tela, `view.promo` e as cinco funções dela; entra `guardaPromo` no
+      fecho manual. `S.promoPendente` **não saiu**: ele é o mecanismo, e apagá-lo
+      com a tela é como o F280 volta.
+      **Oito casos reescritos, e nenhum cobria capacidade que desapareceu** —
+      três cobriam a mecânica da tela e cinco afirmavam que a pergunta aparecia.
+      Cada propriedade está dita onde foi parar, no próprio arquivo.
+      **Um erro meu, e caro:** apaguei `aplicaAoOficial` junto das quatro funções
+      mortas — ela morava no meio delas, e é quem **escreve** no programa. O app
+      parou de bootar e **669 casos** responderam `__escopo is not a function`.
+      Restaurada, com o registro no lugar onde eu a apaguei.
+      **E uma asserção minha estava contra regra escrita:** afirmei que finalizar
+      não deixaria nada tomando a tela, e a §4.5 diz o contrário — "encerrar mata
+      a **sessão**, não o modo". Depois de finalizar ele pode querer conferir o
+      que registrou.
 
-**A decisão D1** (a pergunta do fim do treino sai) continua atrás de uma coisa
-só, e ela é de perda de dado: **o carregador tem de existir nos DOIS fechos.**
-No fecho manual não existe nenhum — `fechaSessao` só copia a mudança no fecho
-automático, e `finalizarSessao` faz `S.promoPendente = null` de propósito,
-porque hoje ele PERGUNTA ali. Tirar a pergunta sem escrever o carregador faz o
-fecho manual descartar a mudança em silêncio (o F280 nominal). As duas coisas
-entram na mesma passada.
+### O fluxo do §8.1 está completo — com um desvio declarado no passo 6
+
+Os seis passos existem: a mudança nasce na sessão, é carregada nos **dois**
+fechos, espera em Prescrição com as quatro coisas da linha, o Agora avisa na
+manhã da volta, vence virando "só daquele dia" dito e desfazível, e sai da fila
+deixando lápide quando respondida.
+
+**O desvio, e a razão:** o passo 6 diz "decidida **ou vencida**, a linha sai da
+fila e deixa lápide". Aqui a **vencida fica** — porque o passo 5 manda que ela
+seja **desfazível**, e uma linha que saiu da fila não tem o que desfazer. Sair
+com lápide e continuar oferecendo "tornar permanente agora" seriam duas coisas
+contraditórias. O que a mantém limitada é o teto de 60 da própria coleção; não
+há remoção automática, porque remover um registro desfazível em silêncio é
+exatamente o que "nada é descartado em silêncio" proíbe.
 
 - [ ] **6.p As outras telas**, pela ordem do plano, com os repontes de expressão
       composta junto de cada uma (uma visita só por arquivo, decisão do dono). A
