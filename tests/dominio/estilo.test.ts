@@ -642,6 +642,36 @@ test('o alvo da régua cresce só na vertical, e tem 46px', () => {
     'o alvo visível não pode ficar abaixo de 46px');
 });
 
+test('o cursor do teclado próprio não se move', () => {
+  // T4 da §6.2. A Direção C pisca a 1 Hz, infinitamente, e é o único movimento
+  // infinito dos dois arquivos de direção — passa o critério 2.3.1 (que é 3 Hz)
+  // e mesmo assim é a única coisa no app que nunca pararia. A forma da D é um
+  // retângulo estático, e é ela que fica.
+  //
+  // Estático é mais forte que "dentro de prefers-reduced-motion": não há o que
+  // desligar. Então o caso cobra a AUSÊNCIA de animação, e não a presença da
+  // consulta de mídia.
+  const r = regras(css(), '.tcl-cursor');
+  assert.ok(r, '.tcl-cursor saiu da folha');
+  assert.doesNotMatch(r, /animation|transition/,
+    'o cursor voltou a se mover: a forma escolhida é a estática');
+});
+
+test('o limite das teclas do teclado próprio é o do sistema', () => {
+  // T3 da §6.2, e o número vem de C3: as doze teclas da Direção D têm
+  // preenchimento a **1,20:1** e borda zero — o teclado construído para ser mais
+  // seguro era o pior caso de contraste dos dois arquivos. O critério 1.4.11 pede
+  // 3:1 para limite de componente.
+  //
+  // O conserto é de token, e o valor é da frente 4: aqui se cobra que a tecla use
+  // o token de LIMITE DE CONTROLE do sistema, em vez de um valor próprio que
+  // ninguém mede depois.
+  const r = regras(css(), '.tcl-t');
+  assert.ok(r, '.tcl-t saiu da folha');
+  assert.match(r, /border:[^;]*var\(--ins-fio-controle\)/,
+    'a tecla tem de usar o token de limite de controle');
+});
+
 test('o toast é anunciado por leitor de tela', () => {
   const html = indexHtml();
   const m = html.match(/<div id="toast"[^>]*>/);

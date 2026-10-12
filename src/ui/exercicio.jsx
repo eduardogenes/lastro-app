@@ -1,5 +1,6 @@
 import { Fragment } from 'preact';
 import { Regua } from './instrumento/regua.jsx';
+import { Teclado } from './instrumento/teclado.jsx';
 
 // O nome por extenso de cada medida, para o `aria-label` do campo. Os campos
 // não têm rótulo visível — quem rotula é o cabeçalho, que é desenho e não
@@ -98,7 +99,7 @@ function Linha({ i, k, linha, vm, acoes }) {
           que o `id` é o mesmo nos dois desenhos: quem corrige pelo campo
           continua achando o lugar. */}
       <div class="f">
-        {vm.temRegua && !linha.reguaOutro ? (
+        {vm.temRegua ? (
           <button
             class={'repbtn' + (linha.valor[1] == null ? ' vazio' : '')}
             id={`r${i}_${k}`}
@@ -417,6 +418,16 @@ export function Exercicio({ vm, acoes }) {
                 aoEscolher={v => acoes.poeRep(i, k, v)}
                 aoAndar={dir => acoes.andaRegua(dir)}
                 aoOutro={() => acoes.abreOutroValor()}
+              />
+            )}
+            {linha.teclado && (
+              <Teclado
+                texto={linha.teclado.texto}
+                decimal={linha.teclado.decimal}
+                unidade={linha.teclado.unidade}
+                rotulo={`digitar ${linha.teclado.unidade} da série ${k + 1}`}
+                aoTeclar={t => acoes.tecla(t)}
+                aoFechar={() => acoes.fechaTeclado()}
               />
             )}
             {linha.rirAberto && <EscalaRir i={i} k={k} linha={linha} acoes={acoes} />}

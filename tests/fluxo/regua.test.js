@@ -209,26 +209,31 @@ test('o valor registrado aparece escolhido na régua', async () => {
   a.fechar();
 });
 
-test('a porta "outro valor" devolve o campo, com teclado numérico', async () => {
-  // §6.1 manda teclado PRÓPRIO na repetição fora da régua, e ele não existe
-  // ainda. Até existir, a porta revela o campo com o teclado do sistema —
-  // desvio declarado. O que este caso segura é que a porta EXISTA: sem ela, uma
-  // repetição fora da vizinhança não teria como ser registrada.
+test('a porta "outro valor" abre o teclado próprio', async () => {
+  // §6.1 manda teclado PRÓPRIO na repetição fora da régua, e agora ele existe
+  // (§6.2). O caminho é raro por construção — a régua carrega a vizinhança da
+  // última vez e a faixa do treinador inteira —, mas sem ele uma repetição de
+  // fora não teria como ser registrada.
   const a = await abreCartao();
   a.clicar(a.doc.getElementById('r0_0'));
   await a.esperar();
 
   a.clicar(a.$('[data-a="regua-outro"]'));
   await a.esperar();
-  const campo = a.doc.getElementById('r0_0');
-  assert.strictEqual(campo.tagName, 'INPUT', 'a porta devolveu o campo');
-  assert.strictEqual(campo.getAttribute('inputmode'), 'numeric',
-    'com o painel de número, que é o que a §6.1 manda enquanto o próprio não existe');
+  assert.ok(a.$('.tcl-grade'), 'o teclado próprio abriu');
+  assert.strictEqual(a.$('.regua-faixa'), null, 'e a régua saiu do lugar');
+  assert.strictEqual(a.$('[data-a="tcl-virgula"]'), null,
+    'repetição é inteira: a tecla de vírgula não existe, porque tecla que não ' +
+    'faz nada é falso sucesso');
 
-  a.digitar('r0_0', 27);
+  a.digitar('w0_0', 60);
+  a.clicar(a.$('[data-a="tcl-2"]'));
+  await a.esperar();
+  a.clicar(a.$('[data-a="tcl-7"]'));
   await a.esperar();
   assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), 27,
-    'e o valor de fora da régua entra');
+    'o valor de fora da régua entra');
+  assert.ok(a.texto('.tcl-visor').includes('27'), 'e o visor mostra o que foi digitado');
   a.fechar();
 });
 

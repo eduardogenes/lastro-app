@@ -1700,3 +1700,51 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
   font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3);
   text-decoration: underline; text-underline-offset: 3px;
 }
+
+/* ---- O teclado próprio, de doze teclas --------------------------------- */
+/* Abre no mesmo lugar da régua — embaixo da linha da série —, e só um painel
+   abre por vez. O limite de contraste das teclas é o `--ins-fio-controle`, que
+   é o token de limite de controle do sistema: as teclas da Direção D tinham
+   1,20:1, e o critério 1.4.11 pede 3:1 (T3 da §6.2; o valor é da frente 4). */
+.tcl { margin: 0 0 var(--ins-3); }
+.tcl:focus { outline: none; }
+.tcl:focus-visible { outline: 2px solid var(--ins-acento); outline-offset: 2px; }
+.tcl-visor {
+  display: flex; align-items: baseline; gap: var(--ins-2);
+  min-height: 44px; padding: 0 var(--ins-3);
+  border: 1px solid var(--ins-fio); background: var(--ins-superficie-2);
+}
+.tcl-n {
+  font: 500 var(--ins-n-l)/1 var(--ins-fonte); color: var(--ins-tinta);
+  font-variant-numeric: tabular-nums;
+}
+.tcl-u {
+  font: 400 10px/1 var(--ins-fonte); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ins-tinta-3);
+}
+/* Retângulo ESTÁTICO, e é a forma da D. Sem animação: não há o que pôr dentro
+   de `prefers-reduced-motion` porque não há movimento (T4). */
+.tcl-cursor {
+  width: 2px; align-self: stretch; margin: var(--ins-2) 0;
+  background: var(--ins-acento);
+}
+.tcl-grade {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--ins-2);
+  margin-top: var(--ins-2);
+}
+.tcl-t {
+  min-height: 46px;
+  background: transparent; color: var(--ins-tinta);
+  border: 1px solid var(--ins-fio-controle);
+  font: 500 var(--ins-n-m)/1 var(--ins-fonte);
+  font-variant-numeric: tabular-nums;
+}
+.tcl-t:active { background: var(--ins-superficie-2); }
+.tcl-apaga { font-size: 15px; color: var(--ins-tinta-3); }
+.tcl-vazia { min-height: 46px; }
+.tcl-pronto {
+  display: block; width: 100%; margin-top: var(--ins-2); min-height: 44px;
+  background: var(--ins-superficie-2); border: 1px solid var(--ins-fio);
+  font: 400 12px/1 var(--ins-fonte); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ins-tinta-2);
+}

@@ -864,7 +864,9 @@ const TABELAS_DE_ACAO = {
             'abreFoto', 'poeRir', 'usaAnterior',
             // A régua da frente 2: o campo de repetição virou botão, e são
             // estes os quatro toques possíveis nela.
-            'abreRegua', 'andaRegua', 'poeRep', 'abreOutroValor'],
+            'abreRegua', 'andaRegua', 'poeRep', 'abreOutroValor',
+            // O teclado próprio, que a porta "outro valor" abre.
+            'tecla', 'fechaTeclado'],
   acoesDia: ['subir', 'descer', 'menos', 'mais', 'trocar', 'remover', 'escolheTroca',
              'fechaTroca', 'desfaz', 'pronto'],
   acoesRapido: ['abre', 'inp'],

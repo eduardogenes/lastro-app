@@ -23,6 +23,7 @@ import { cartaoDeCima } from './dominio/agora';
 import { quandoAquelaVolta, venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
 import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
+import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
@@ -1803,8 +1804,11 @@ function vmExercicio(d, i, ex) {
       // função do foco — é o R4 da frente 2: não há `scrollLeft` guardado para
       // um re-render perder. Reconstruir com o mesmo foco dá a mesma página.
       regua: reguaDaLinha(i, k, ex, p),
-      // A porta "outro valor", aberta: a régua sai e o campo volta nesta linha.
-      reguaOutro: !!(view.regua && view.regua.i === i && view.regua.k === k && view.regua.outro),
+      // O TECLADO PRÓPRIO, quando a porta "outro valor" o abriu nesta linha.
+      teclado: (view.teclado && view.teclado.i === i && view.teclado.k === k)
+        ? { texto: view.teclado.texto, decimal: view.teclado.pos === 0,
+            unidade: view.teclado.pos === 0 ? (seg ? 'kg' : CARGAS[tipo].rot) : 'reps' }
+        : null,
       rirEscala: RIR_ESCALA.map(function (v) { return { v: v, on: (dr && dr.s[k]) ? dr.s[k][2] === v : false }; }),
       // Não há placeholder nos campos: a referência tem UMA casa, e é a coluna
       // ANTERIOR. Ela diz as três coisas numa linha só e, ao contrário do
@@ -1970,6 +1974,8 @@ const ACOES = {
   andaRegua: function (dir) { andaRegua(dir); },
   poeRep: function (i, k, v) { poeRep(i, k, v); },
   abreOutroValor: function () { abreOutroValor(); },
+  tecla: function (t) { teclaDoTeclado(t); },
+  fechaTeclado: function () { fechaTeclado(); },
   abreFoto: function (i) { abreFoto(i); },
   poeRir: function (i, k, v) { poeRir(i, k, v); },
   usaAnterior: function (i, k) { usaAnterior(i, k); }
@@ -3951,7 +3957,7 @@ function toggle(i){
   // toque seguinte no botão ALTERNAVA para fechado em vez de abrir, porque
   // `view.regua` continuava apontando a mesma série. A escala de RIR entra na
   // mesma linha: ela já devia fechar e não fechava.
-  view.regua = null; view.rir = null;
+  view.regua = null; view.rir = null; view.teclado = null;
   render();
   if (abrindo) mostraExercicio(i);
 }
@@ -4472,7 +4478,7 @@ function abreRegua(i, k) {
   if (aberta) { view.regua = null; render(); return; }
   const dr = draftPeek(i);
   const v = dr && dr.s[k] ? dr.s[k][1] : null;
-  view.rir = null;                      // uma coisa aberta por vez embaixo da linha
+  view.rir = null; view.teclado = null;   // uma coisa aberta por vez embaixo da linha
   view.regua = { i: i, k: k, foco: v != null ? v : null, outro: false };
   render();
 }
@@ -4520,16 +4526,44 @@ function poeRep(i, k, v) {
 /**
  * A porta "outro valor": a repetição que não está na régua.
  *
- * §6.1 manda teclado PRÓPRIO aqui, e ele não existe ainda. Até existir, a porta
- * revela o campo com o teclado numérico do sistema — **desvio declarado**. O
- * caminho é raro por construção: a régua carrega a vizinhança da última vez e a
- * faixa do treinador inteira.
+ * Abre o TECLADO PRÓPRIO, que é o que a §6.1 manda aqui — e o caminho é raro por
+ * construção, porque a régua carrega a vizinhança da última vez e a faixa do
+ * treinador inteira. O texto nasce do valor já registrado: corrigir 27 para 28
+ * não começa do zero.
  */
 function abreOutroValor() {
-  if (!view.regua) return;
-  view.regua = Object.assign({}, view.regua, { outro: true });
+  const r = view.regua;
+  if (!r) return;
+  const dr = draftPeek(r.i);
+  const v = dr && dr.s[r.k] ? dr.s[r.k][1] : null;
+  view.regua = null;
+  view.teclado = { i: r.i, k: r.k, pos: 1, texto: v != null ? String(v) : '' };
   render();
 }
+
+/**
+ * Uma tecla do teclado próprio.
+ *
+ * Escreve a cada tecla, como o campo escrevia a cada letra — é a mesma
+ * semântica, e `anotaSerie` continua sendo a porta. Vírgula vale ponto; texto
+ * que ainda não é número (`'22,'`) não apaga o que estava: `anotaSerie` só
+ * recebe o que já se lê como número.
+ */
+function teclaDoTeclado(t) {
+  const tc = view.teclado;
+  if (!tc) return;
+  const decimal = tc.pos === 0;
+  const texto = teclar(tc.texto, t, decimal);
+  view.teclado = Object.assign({}, tc, { texto: texto });
+  // `'22,'` é digitação no meio do caminho: ainda não é número, e gravar nesse
+  // instante apagaria a série por um passo. Gravar vazio, sim — é o gesto de
+  // apagar, que tem de continuar existindo.
+  const parcial = /,$/.test(texto);
+  if (!parcial) anotaSerie(tc.i, tc.k, tc.pos, texto);
+  render();
+}
+
+function fechaTeclado() { view.teclado = null; render(); }
 
 function abreRir(i, k) {
   const aberto = view.rir && view.rir.i === i && view.rir.k === k;
