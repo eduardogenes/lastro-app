@@ -158,7 +158,13 @@ const TEXTO: Record<string, string> = {
 const NUMERO: Record<string, 'decimal' | 'numeric'> = {
   'src/ui/exercicio.jsx · w*_*': 'decimal',        // carga da série
   'src/ui/exercicio.jsx · r*_*': 'numeric',        // repetições da série
-  'src/ui/exercicio.jsx · q*': 'decimal',        // quantidade de alimento
+  // "quanto, em cada passada" de um movimento de aula — NÃO é alimento, e a
+  // §6.1 erra nessa linha: ela diz que a quantidade de alimento é
+  // `atualizaPrescricao(i)` escrevendo em `#presc{i}`, e `#presc{i}` é um
+  // `<span>` de exibição que essa função escreve enquanto ele digita aqui. A
+  // quantidade de alimento passa pelo primitivo `Campo`, com `modo="decimal"`,
+  // e está coberta pelo caso do primitivo.
+  'src/ui/exercicio.jsx · q*': 'decimal',
   'src/ui/instrumento/edicao.jsx · fw*': 'decimal',   // carga na lista rápida da aula
   'src/ui/instrumento/edicao.jsx · fr*': 'numeric',   // medida na lista rápida da aula
   'src/ui/instrumento/edicao.jsx · nxq': 'decimal',   // prescrição do exercício novo

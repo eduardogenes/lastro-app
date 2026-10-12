@@ -2459,6 +2459,16 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       fase 3). Então quem cobra é fonte: quatro casos, quatro mutações, quatro
       vermelhas, incluindo o sentido inverso (linha declarada que não tem mais
       campo).
+      **Um erro de fato no §6.1, achado conferindo:** a linha "quantidade de
+      alimento" diz que ela é `atualizaPrescricao(i)` escrevendo em
+      `#presc{i}`. `#presc{i}` é um `<span>` de EXIBIÇÃO — "5 × 500 m" — que
+      essa função reescreve sem re-render; o campo numérico vizinho é `q{i}`,
+      "quanto, em cada passada", que é de movimento de AULA e não de comida. A
+      quantidade de alimento de verdade passa pelo primitivo `Campo` com
+      `modo="decimal"` (kcal, proteína, carboidrato, gordura, fator cru) e já
+      estava certa. O veredito da linha — "do sistema" — vale nos dois casos,
+      então a tabela acerta a conclusão e erra o mecanismo.
+
       **Dois erros meus na medição, e os dois viraram parte do analisador:**
       `<input[^>]*>` para no `=>` do `onInput`, e minha primeira varredura só
       não errou por sorte de ordem dos atributos — agora a tag fecha contando
