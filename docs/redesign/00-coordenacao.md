@@ -2500,10 +2500,75 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       não comita o DOM. Reintroduzi a referência e ele ficou vermelho nomeando
       o chip e o lugar.
 
-- [ ] **6.z A régua de repetições** (§1 da frente 2, "o item mais caro"). Sete
-      requisitos escritos, e **a medição A é de aparelho** — se ela reprovar, três
-      opções sobem à mesa dele. A régua é a escolha dele; os sete requisitos são
-      o conserto.
+- [~] **6.z A régua de repetições** (`125206f` o domínio, `ffba3c9` a tela) —
+      §1 da frente 2, "o item mais caro", e a decisão 8 do dono. **Construída: os
+      sete requisitos estão de pé.** O campo de repetição virou botão; o toque
+      abre a régua embaixo da linha, no molde da escala de RIR — a tabela do app
+      deixa preencher qualquer série em qualquer ordem, então não existe "a série
+      atual" a que a faixa fixa do protótipo serviria.
+      **Falta o que não é construção: as medições A, B, C e D, que são de
+      aparelho e de dedo dele.** E agora elas têm o que medir — o protocolo pede
+      "antes e depois no mesmo aparelho", o "antes" roda no protótipo e o
+      "depois" passou a existir. A decisão 9 (pré-autorizar os botões fixos da
+      Direção C se a medição A reprovar) sai de hipótese e passa a ter um objeto.
+
+      **Duas escolhas de desenho que a aritmética forçou, e não o gosto.** As
+      duas vieram do número que a medição B reprova — "mediana acima de 1 toque,
+      ou qualquer série que custe mais de 3":
+
+      1. **"Um passo" da R2 é uma JANELA, não um valor.** Andando de um valor por
+         toque, o mais distante de uma régua de 13 custa 6 toques de borda mais
+         1 = 7. Reprovado pela aritmética antes de existir. Com a janela como
+         passo, o pior caso cai para 2 ou 3.
+      2. **A régua carrega no máximo 11 valores.** Varri o alcance por tamanho e
+         por posição de abertura: 11 é o maior tamanho em que todo valor custa no
+         máximo 3 **em qualquer posição**; em 12, a régua que abre no primeiro
+         valor já custa 4. Quando a fórmula do protótipo estoura o teto, **quem
+         cede é a cortesia e não a faixa** — no caso medido (faixa 12–20, última
+         16) sai o 22, e a faixa do treinador fica inteira, que era exatamente a
+         reclamação da §1.1 ("a faixa prescrita é cortada nas duas pontas").
+
+      As duas estão presas por caso: com teto 12 ou com passo 1, a propriedade do
+      alcance fica **vermelha**.
+
+      **Três coisas que o desenho apaga em vez de consertar.** A régua não rola:
+      a janela mostra só os slots da página, e não há `overflow-x`, `scroll-snap`
+      nem `scrollLeft`. Então a causa 2 (toque engolido como arrasto) não tem pan
+      para virar, e a causa 3 (a janela perdida na virada do minuto) não tem
+      posição guardada para perder — a página é função do foco. O
+      `touch-action: pan-y` da R1 fica declarado de todo jeito, com caso de CSS,
+      porque é de graça e impede que uma mudança de layout devolva o arrasto em
+      silêncio.
+
+      **A seta não mostra número**, e a R2 escreve o contrário ("os dois valores
+      das extremidades viram dois alvos de andar"). A razão de divergir é a
+      própria medição A: erro de alvo tem **tolerância zero**, e um botão que
+      mostra `12` e não registra 12 é a definição de erro de alvo.
+
+      **Um defeito meu, achado pelo meu próprio caso:** fechar o cartão deixava
+      `view.regua` de pé, e o toque seguinte alternava para fechado em vez de
+      abrir. É o R5 cobrando o que ele existe para cobrar.
+
+      **O que a régua ainda não tem, e é desvio declarado:** a porta "outro
+      valor" devolve o CAMPO, com o teclado numérico do sistema, porque o teclado
+      próprio de doze teclas (§6.2, T1–T4) não existe. A §6.1 manda próprio ali e
+      na carga da série. Enquanto não existir, a carga segue campo.
+
+      **Seis casos reescritos de propósito**, porque o campo saiu: `preencher`
+      passa a registrar repetição pela porta por valor (`anotaSerie`), e quem
+      exercita a régua são os casos dela, tocando nos botões. Sem isso, `digitar`
+      escreveria `.value` num botão — falha **silenciosa** em 90 casos.
+      Treze casos de tela com seis mutações, quinze de domínio com cinco, dois de
+      CSS com três. A medição C está provada reintroduzindo o defeito exato do
+      protótipo.
+
+- [ ] **6.z' O teclado próprio de doze teclas** (§6.2 da frente 2, T1–T4). É o
+      que falta para a régua ficar inteira: a porta "outro valor" e a carga da
+      série dependem dele. Os quatro requisitos estão escritos, e um deles é
+      conserto de defeito medido — **T1, aceitar o teclado físico**, porque sem
+      isso quem está no notebook mira com o mouse em doze teclas (C2 nomeou; eu
+      conferi que o protótipo tem zero `keydown`). T3 é conserto de token (as
+      teclas da D têm 1,20:1 de limite, e o critério pede 3:1) e é da frente 4.
 
 - [ ] **6.v' O reponte das expressões compostas** — 400 entradas de ponte (325
       `a.E`, 75 `a.J`) em 36 arquivos. **Medido e declarado como higiene:** elas
