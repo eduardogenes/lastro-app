@@ -20,9 +20,10 @@ import {
 } from '../instrumento/primitivos.jsx';
 import { fmtDec } from '../../dominio/formato';
 import { useState } from 'preact/hooks';
+import { Teclado } from '../instrumento/teclado.jsx';
 
 /** Uma medida corporal: stepper, botão e a curva das últimas 14 semanas. */
-function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira }) {
+function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar }) {
   return (
     <Secao rotulo={rotulo} nota={nota} primeira={primeira}>
       <div class="dd-registro">
@@ -33,6 +34,21 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
         />
         <button class="ins-btn-secondary" onClick={onRegistrar}>{acao}</button>
       </div>
+
+      {/* A PORTA PARA O TECLADO PRÓPRIO. §6.1 manda próprio aqui, "com a régua
+          de 100 g na frente" — o stepper é a régua, e esta é a outra metade da
+          frase: "a régua resolve o caso comum e o próprio resolve o resto".
+          O resto tem tamanho medido: a primeira pesagem parte de 75 kg, então
+          quem pesa 73,6 chegava lá com catorze toques no menos. */}
+      {teclado
+        ? <Teclado
+            texto={teclado.texto} decimal={teclado.decimal} unidade={teclado.unidade}
+            rotulo={'digitar ' + rotulo + ' em ' + teclado.unidade}
+            aoTeclar={aoTeclar} aoFechar={aoFecharTeclado}
+          />
+        : <button class="dd-tclbtn" data-a={'tcl-abre-' + rotulo} onClick={aoAbrirTeclado}>
+            digitar o número
+          </button>}
 
       {/* A data fica atrás de um link porque registrar no dia é o caso de todo
           dia; retroativo é exceção. O seletor é o nativo do aparelho: a medida
@@ -146,6 +162,10 @@ export function Corpo({ ctx }) {
         dia={c.peso.dia} onAbrirDia={() => ctx.abreDiaCorpo('peso')}
         onDia={t => ctx.setDiaCorpo('peso', t)}
         medidas={c.peso.medidas} aoApagar={t => ctx.apagaMedida('peso', t)}
+        teclado={ctx.tecladoDoCorpo('peso')}
+        aoAbrirTeclado={() => ctx.abreTecladoDeCorpo('peso')}
+        aoFecharTeclado={ctx.fechaTeclado}
+        aoTeclar={t => ctx.tecla(t)}
         celulas={[
           { k: 'm', rotulo: 'média da semana', valor: c.peso.media },
           { k: 'r', rotulo: 'ritmo por semana', valor: c.peso.ritmo, cor: c.peso.ritmoCor }
@@ -163,6 +183,10 @@ export function Corpo({ ctx }) {
         dia={c.cintura.dia} onAbrirDia={() => ctx.abreDiaCorpo('cintura')}
         onDia={t => ctx.setDiaCorpo('cintura', t)}
         medidas={c.cintura.medidas} aoApagar={t => ctx.apagaMedida('cintura', t)}
+        teclado={ctx.tecladoDoCorpo('cintura')}
+        aoAbrirTeclado={() => ctx.abreTecladoDeCorpo('cintura')}
+        aoFecharTeclado={ctx.fechaTeclado}
+        aoTeclar={t => ctx.tecla(t)}
         celulas={[
           { k: 'a', rotulo: 'última medida', valor: c.cintura.atual },
           { k: 'm', rotulo: 'no mês · cm', valor: c.cintura.mesValor }

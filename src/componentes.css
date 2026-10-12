@@ -505,14 +505,14 @@
 .dd-registro .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
 /* A data da medida: link discreto no estado normal, chips quando aberto. Não
    compete com o botão de registrar, que é a ação de todo dia. */
-.dd-diabtn {
+.dd-diabtn, .dd-tclbtn {
   width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
   position: relative;
   font: 400 10px/1.4 var(--ins-fonte);
   letter-spacing: .08em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
-.dd-diabtn::after { content: ""; position: absolute; inset: -5px 0; }   /* 34 -> 44 */
-.dd-diabtn:active { color: var(--ins-tinta-3); }
+.dd-diabtn::after, .dd-tclbtn::after { content: ""; position: absolute; inset: -5px 0; }   /* 34 -> 44 */
+.dd-diabtn:active, .dd-tclbtn:active { color: var(--ins-tinta-3); }
 .dd-dia { margin-top: var(--ins-3); }
 
 /* Sincronização, na aba guia */

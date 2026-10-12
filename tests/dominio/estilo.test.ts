@@ -575,7 +575,13 @@ test('controle pequeno estende o ALVO sem crescer o desenho', () => {
   // todos apertados de pé, com uma mão, entre uma série e outra.
   ['.ins-caixa', '.ins-tick', '.ins-chip', '.crow-x', '.cardl-b', '.dd-diabtn',
    '.restlinha', '.notabtn', '.aqbtn', '.rirbtn', '.histbtn'].forEach(sel => {
-    const re = new RegExp('\\' + sel + '::after\\s*\\{([^}]*)\\}');
+    // O seletor pode estar numa LISTA, e a §0.1 da frente 2 nomeia este
+    // acoplamento: "a ordem e o agrupamento de uma lista de seletores não são
+    // contrato de produto". Casava `\.x::after\s*\{`, e agrupar a regra com um
+    // vizinho — o que eu fiz ao dar uma classe própria à porta do teclado em
+    // Corpo — deixava o caso vermelho sem nada ter mudado na tela.
+    const re = new RegExp('(?:^|[,{}\\n])\\s*\\' + sel +
+                          '::after\\s*(?:,[^{]*)?\\{([^}]*)\\}');
     const m = tres.match(re);
     assert.ok(m, sel + ' perdeu a área de toque estendida');
     assert.match(m![1], /position:\s*absolute/);
@@ -835,8 +841,9 @@ test('o texto que se toca não usa o nível mais apagado', () => {
   // também para o cabeçalho da tabela de série, que é o que separa a coluna
   // de kg da de repetição no meio do treino.
   const bloco = (nome: string) => {
-    const m = css().match(new RegExp('(?:^|\\n)' +
-      nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]*)\\}'));
+    // Mesma razão do caso do ::after: o seletor pode estar em lista.
+    const m = css().match(new RegExp('(?:^|[,{}\\n])\\s*' +
+      nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(?:,[^{]*)?\\{([^}]*)\\}'));
     return m ? m[1] : null;
   };
   ['.restlinha', '.notabtn', '.dd-diabtn', '.crow-x', '.sethead > *'].forEach(sel => {

@@ -1160,3 +1160,102 @@ test('registrar DE MANHÃ funciona — o instante de hoje é agora, não meio-di
   assert.ok(!/futuro/i.test(a.toast() || ''), 'e não falou de futuro: ' + a.toast());
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// A PORTA DO TECLADO PRÓPRIO — §6.1 da frente 2
+// ---------------------------------------------------------------------------
+//
+// O veredito da tabela para peso e cintura é "próprio, com a régua de 100 g na
+// frente", e a frase inteira é: *"A régua resolve o caso comum e o próprio
+// resolve o resto"*. O stepper é a régua; faltava o resto.
+//
+// E o resto tinha tamanho medido: **a primeira pesagem parte de 75 kg**
+// (`CORPO_PADRAO`), então quem pesa 73,6 chegava lá com CATORZE toques no menos.
+// A cintura parte de 85.
+
+test('peso e cintura têm porta para o teclado próprio', async () => {
+  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+  a.aba('corpo');
+  assert.ok(a.$('[data-a="tcl-abre-peso"]'), 'o peso tem porta');
+  assert.ok(a.$('[data-a="tcl-abre-cintura"]'), 'e a cintura também');
+  assert.strictEqual(a.$('.tcl-grade'), null, 'fechada por padrão: não custa espaço');
+  a.fechar();
+});
+
+test('a primeira pesagem deixa de custar catorze toques', async () => {
+  // 75 é onde o stepper parte sem medida nenhuma. 73,6 são catorze toques no
+  // menos; pelo teclado são quatro.
+  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+  a.aba('corpo');
+  a.clicar(a.$('[data-a="tcl-abre-peso"]'));
+  await a.esperar();
+  assert.ok(a.$('.tcl-grade'), 'o teclado abriu');
+  // Nasce VAZIO: pré-encher com o 75 do padrão faria ele apagar dois dígitos
+  // antes de digitar os seus — os catorze toques em miniatura.
+  assert.ok(!/7\s*5/.test(a.texto('.tcl-visor')), 'o visor não vem com o padrão dentro');
+
+  ['7', '3', 'virgula', '6'].forEach(function (t) {
+    a.clicar(a.$('[data-a="tcl-' + t + '"]'));
+  });
+  await a.esperar();
+  assert.ok(a.texto('.tcl-visor').includes('73,6'), 'o visor mostra o que foi digitado');
+
+  a.clicar(a.$('.dd-registro .ins-btn-secondary'));
+  await a.esperar();
+  const arr = a.S().body.peso;
+  assert.strictEqual(arr.length, 1, 'registrou uma medida');
+  assert.strictEqual(arr[0].v, 73.6, 'e é o número digitado, com vírgula virando ponto');
+  a.fechar();
+});
+
+test('o teclado do corpo escreve no rascunho, e quem grava é o registrar', async () => {
+  // O teclado é outra porta para o MESMO número, não outro registro: a data
+  // escolhida continua valendo e o botão de registrar continua sendo o commit.
+  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+  a.aba('corpo');
+  a.clicar(a.$('[data-a="tcl-abre-peso"]'));
+  await a.esperar();
+  a.clicar(a.$('[data-a="tcl-8"]'));
+  await a.esperar();
+
+  assert.deepStrictEqual(a.S().body.peso, [], 'nada gravado antes de registrar');
+  assert.ok(a.texto('.dd-registro').includes('8'), 'mas o stepper já mostra o 8');
+  a.fechar();
+});
+
+test('o teclado do corpo aceita vírgula, e a régua de 100 g continua ali', async () => {
+  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+  a.aba('corpo');
+  a.clicar(a.$('[data-a="tcl-abre-peso"]'));
+  await a.esperar();
+  assert.ok(a.$('[data-a="tcl-virgula"]'), 'peso é decimal: a vírgula é tecla de verdade');
+  assert.ok(a.$('.ins-stepper'), 'e o stepper não saiu: ele é a régua de 100 g');
+  a.fechar();
+});
+
+test('apagar tudo no teclado volta ao ponto de partida, e não a um pedaço', async () => {
+  // O teclado escreve RASCUNHO, não histórico. Apagar tudo é soltar o rascunho,
+  // e aí o stepper volta a se derivar da última medida — 74, aqui. Guardar o
+  // último número digitado deixaria o stepper mostrando um pedaço do que ele
+  // acabou de apagar.
+  //
+  // E apagar aqui não apaga MEDIDA nenhuma: quem remove uma medida é a porta na
+  // lista das últimas, que é o único caminho para desfazer um 743 no lugar de
+  // 74,3.
+  const a = await app({ estado: { body: { peso: [{ t: Date.now() - DIA, v: 74 }], cintura: [] } } });
+  a.aba('corpo');
+  a.clicar(a.$('[data-a="tcl-abre-peso"]'));
+  await a.esperar();
+  ['7', '3'].forEach(function (t) { a.clicar(a.$('[data-a="tcl-' + t + '"]')); });
+  await a.esperar();
+  assert.ok(a.texto('.dd-registro').includes('73'), 'pré-condição: o rascunho é 73');
+
+  a.clicar(a.$('[data-a="tcl-apaga"]'));
+  a.clicar(a.$('[data-a="tcl-apaga"]'));
+  await a.esperar();
+  assert.ok(a.texto('.dd-registro').includes('74'),
+    'voltou à última medida, e não ao "7" que sobrou no caminho: ' + a.texto('.dd-registro'));
+  assert.strictEqual(a.S().body.peso.length, 1, 'e nenhuma medida foi apagada');
+  assert.ok(a.$('.crow-x'), 'quem apaga medida é a porta da lista, que continua existindo');
+  a.fechar();
+});

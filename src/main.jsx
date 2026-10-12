@@ -1805,10 +1805,12 @@ function vmExercicio(d, i, ex) {
       // um re-render perder. Reconstruir com o mesmo foco dá a mesma página.
       regua: reguaDaLinha(i, k, ex, p),
       // O TECLADO PRÓPRIO, quando a porta "outro valor" o abriu nesta linha.
-      teclado: (view.teclado && view.teclado.i === i && view.teclado.k === k)
-        ? { texto: view.teclado.texto, decimal: view.teclado.pos === 0,
-            unidade: view.teclado.pos === 0 ? (seg ? 'kg' : CARGAS[tipo].rot) : 'reps' }
-        : null,
+      teclado: (function () {
+        const a = view.teclado && view.teclado.alvo;
+        if (!a || a.tipo !== 'serie' || a.i !== i || a.k !== k) return null;
+        return { texto: view.teclado.texto, decimal: a.pos === 0,
+                 unidade: a.pos === 0 ? (seg ? 'kg' : CARGAS[tipo].rot) : 'reps' };
+      })(),
       rirEscala: RIR_ESCALA.map(function (v) { return { v: v, on: (dr && dr.s[k]) ? dr.s[k][2] === v : false }; }),
       // Não há placeholder nos campos: a referência tem UMA casa, e é a coluna
       // ANTERIOR. Ela diz as três coisas numa linha só e, ao contrário do
@@ -4538,7 +4540,8 @@ function abreOutroValor() {
   const dr = draftPeek(r.i);
   const v = dr && dr.s[r.k] ? dr.s[r.k][1] : null;
   view.regua = null;
-  view.teclado = { i: r.i, k: r.k, pos: 1, texto: v != null ? String(v) : '' };
+  view.teclado = { alvo: { tipo: 'serie', i: r.i, k: r.k, pos: 1 },
+                   texto: v != null ? String(v) : '' };
   render();
 }
 
@@ -4553,14 +4556,29 @@ function abreOutroValor() {
 function teclaDoTeclado(t) {
   const tc = view.teclado;
   if (!tc) return;
-  const decimal = tc.pos === 0;
+  const a = tc.alvo;
+  // Qual grandeza aceita vírgula: carga e as medidas de corpo, sim; repetição,
+  // não. A tecla nem aparece onde não aceita.
+  const decimal = a.tipo === 'corpo' || a.pos === 0;
   const texto = teclar(tc.texto, t, decimal);
   view.teclado = Object.assign({}, tc, { texto: texto });
   // `'22,'` é digitação no meio do caminho: ainda não é número, e gravar nesse
-  // instante apagaria a série por um passo. Gravar vazio, sim — é o gesto de
+  // instante apagaria o valor por um passo. Gravar vazio, sim — é o gesto de
   // apagar, que tem de continuar existindo.
-  const parcial = /,$/.test(texto);
-  if (!parcial) anotaSerie(tc.i, tc.k, tc.pos, texto);
+  if (!/,$/.test(texto)) {
+    if (a.tipo === 'serie') anotaSerie(a.i, a.k, a.pos, texto);
+    else {
+      // Em corpo o vazio é "sem rascunho", e `valorDoCorpo` já lê isso caindo na
+      // última medida (ou no padrão). Guardar o último número digitado em vez de
+      // soltar deixaria o stepper mostrando um pedaço do que ele apagou.
+      //
+      // E apagar aqui NÃO apaga medida nenhuma: o teclado escreve rascunho, não
+      // histórico. Quem remove uma medida é a porta na lista das últimas, que é
+      // o único caminho para desfazer um 743 digitado no lugar de 74,3.
+      const n = numeroDoCampo(texto);
+      view.bodyForm = Object.assign({}, view.bodyForm, { [a.campo]: n == null ? null : n });
+    }
+  }
   render();
 }
 
@@ -4577,13 +4595,47 @@ function fechaTeclado() { view.teclado = null; render(); }
  * que foi DIGITADO, com vírgula, e quem converte é `anotaSerie`.
  */
 function abreTecladoDeCarga(i, k) {
-  const aberto = view.teclado && view.teclado.i === i && view.teclado.k === k &&
-                 view.teclado.pos === 0;
-  if (aberto) { view.teclado = null; render(); return; }
+  const a = view.teclado && view.teclado.alvo;
+  if (a && a.tipo === 'serie' && a.i === i && a.k === k && a.pos === 0) {
+    view.teclado = null; render(); return;
+  }
   const dr = draftPeek(i);
   const v = dr && dr.s[k] ? dr.s[k][0] : null;
   view.regua = null; view.rir = null;
-  view.teclado = { i: i, k: k, pos: 0, texto: v != null ? String(v).replace('.', ',') : '' };
+  view.teclado = { alvo: { tipo: 'serie', i: i, k: k, pos: 0 },
+                   texto: v != null ? String(v).replace('.', ',') : '' };
+  render();
+}
+
+/**
+ * O teclado próprio em CORPO, para peso e cintura.
+ *
+ * §6.1 manda próprio nos dois, "com a régua de 100 g na frente" — e é isso que o
+ * stepper é. O que faltava era a outra metade da frase: *"a régua resolve o caso
+ * comum e o próprio resolve o resto"*.
+ *
+ * O resto tem tamanho medido: **a primeira pesagem parte de 75 kg**
+ * (`CORPO_PADRAO`), então quem pesa 73,6 chega lá com **14 toques** no menos —
+ * e a cintura parte de 85. Um valor longe do último não tinha caminho nenhum
+ * além de apertar.
+ *
+ * Escreve no RASCUNHO (`view.bodyForm`), que é onde o stepper escreve: quem
+ * registra continua sendo o botão de registrar, e a data escolhida continua
+ * valendo. O teclado é outra porta para o mesmo número, não outro registro.
+ */
+function abreTecladoDeCorpo(campo) {
+  const a = view.teclado && view.teclado.alvo;
+  if (a && a.tipo === 'corpo' && a.campo === campo) {
+    view.teclado = null; render(); return;
+  }
+  // NASCE VAZIO, e aqui isso é diferente da série. Lá o teclado é o único editor
+  // do valor, então ele parte do que está registrado. Aqui o stepper já mostra o
+  // número atual logo acima, e o valor de partida pode ser o PADRÃO (75 kg para
+  // o peso, 85 cm para a cintura) — pré-encher faria ele apagar dois dígitos
+  // antes de digitar os seus, que é o mesmo defeito dos catorze toques em
+  // miniatura. A divisão da §6.1 fica limpa: o stepper para o perto, o teclado
+  // para o resto.
+  view.teclado = { alvo: { tipo: 'corpo', campo: campo }, texto: '' };
   render();
 }
 
@@ -6231,6 +6283,19 @@ CTX.musculos = function () {
     })
   };
 };
+
+/** O teclado próprio de uma medida de corpo, quando ele está aberto nela. */
+CTX.tecladoDoCorpo = function (campo) {
+  const a = view.teclado && view.teclado.alvo;
+  if (!a || a.tipo !== 'corpo' || a.campo !== campo) return null;
+  return { texto: view.teclado.texto, decimal: true,
+           unidade: campo === 'peso' ? 'kg' : 'cm' };
+};
+CTX.abreTecladoDeCorpo = function (campo) { abreTecladoDeCorpo(campo); };
+// As duas são as MESMAS de `acoesEx`: um teclado só, uma função só. O que muda
+// entre a sessão e o corpo é o ALVO, e ele mora no estado do teclado.
+CTX.tecla = function (t) { teclaDoTeclado(t); };
+CTX.fechaTeclado = function () { fechaTeclado(); };
 
 CTX.setPeso = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { peso: v }); render(); };
 CTX.setCintura = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { cintura: v }); render(); };
