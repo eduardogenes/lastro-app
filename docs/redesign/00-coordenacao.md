@@ -2408,10 +2408,25 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       que a função não permite, que é exatamente a disciplina que aquela seção
       manda seguir. O limite virou caso.
 
-- [ ] **6.y A FOLHA de pôr o dia em dia** — a tela. O modelo está provado; falta
-      o desenho da frente 2 (§4.2 a §4.5): cinco botões por linha, a frase de
-      leitura de volta com `aria-live="polite"` dizendo as sete refeições, o "por
-      vir" na própria linha, sem "Cancelar", e a porta em Dias.
+- [x] **6.y A FOLHA de pôr o dia em dia** (`cf73e5a`) — a tela do que a passada
+      anterior modelou, com as cinco decisões dele dentro. Dias é o **lugar** dela,
+      e o que o lugar oferece é a lista dos catorze dias com a porta para corrigir
+      cada um — **os sem registro inclusive**, que são justamente o caso de uso.
+      **O que ela diz em voz alta**, porque a função não mente e a tela não pode:
+      "contado contra o plano de hoje", "corrigir aqui não apaga nada", e "nada
+      aqui está registrado até você tocar".
+      **A terceira paga a decisão 5 dele.** Ele decidiu que a última refeição
+      continua pré-marcada por passagem de horário, e o risco disso está escrito:
+      a folha aberta às 22h sugere que ele já tomou a ceia, e um toque grava a
+      sugestão inteira. O freio é a palavra — e a procedência linha por linha,
+      "marcada pelo horário · 12h30", distingue sugestão de declaração **sem
+      depender de cor**.
+      **A frase de leitura de volta** diz as sete refeições com as palavras
+      gravadas, em `aria-live="polite"` — a gravação acontece NO toque. E não diz
+      "gravado" antes do primeiro toque.
+      **Não há "Cancelar"**, e a razão é que ele não cancelaria nada: depois do
+      primeiro toque o dia está gravado, porque não existe lote.
+      Nove mutações, nove vermelhas.
 
 - [ ] **6.z A régua de repetições** (§1 da frente 2, "o item mais caro"). Sete
       requisitos escritos, e **a medição A é de aparelho** — se ela reprovar, três
