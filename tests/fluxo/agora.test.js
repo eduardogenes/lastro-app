@@ -858,14 +858,23 @@ test('o Agora avisa UMA LINHA na manhã em que a mudança vence', async () => {
     }
   });
 
-  const v = a.vJ('ctx.vencendoHoje');
+  const v = a.vJ('ctx.esperandoDecisao');
   assert.ok(v, 'o modelo diz que há mudança vencendo hoje');
   assert.strictEqual(v.n, 1);
   assert.ok(/vence hoje/.test(v.txt), v.txt);
 
+  assert.strictEqual(v.vence, true, 'e é a variante de URGÊNCIA');
   const linha = a.$('.ag-vence');
   assert.ok(linha, 'e a linha está no Agora');
   assert.ok(/vence hoje/.test(linha.textContent), linha.textContent);
+  // O RÓTULO da seção muda com a urgência, e é o que separa "decide quando
+  // puder" de "decide hoje". Sem esta asserção, a distinção some sem vermelho.
+  const secao = a.$$('.ins-secao').filter(function (x) {
+    return /vence hoje/.test(x.textContent);
+  })[0];
+  assert.ok(secao, 'a seção existe');
+  assert.ok(!/para decidir com calma/.test(secao.textContent),
+    'e o rótulo NÃO é o de calma: hoje é o último dia');
   assert.ok(a.$('[data-a="ver-mudancas"]'), 'com o "Ver", que leva ao dono da lista');
 
   a.$('[data-a="ver-mudancas"]').click();
@@ -874,9 +883,20 @@ test('o Agora avisa UMA LINHA na manhã em que a mudança vence', async () => {
   a.fechar();
 });
 
-test('sem nada vencendo hoje, o Agora se cala', async () => {
-  // A quebra espelhada, e o silêncio é o caso comum: a mudança nasceu hoje, e o
-  // treino dela só volta depois de a rotação inteira passar.
+test('com algo esperando e nada vencendo, o Agora INFORMA sem urgência', async () => {
+  // A propriedade virou de lado, e é requisito da frente 2 (§9.2): encerrar o
+  // treino deixa de perguntar e passa a INFORMAR. "A mudança some da vista dele
+  // no mesmo instante em que o app passa a guardá-la — e 'guardado em silêncio'
+  // é tão ruim quanto 'descartado em silêncio', porque ele não sabe que há algo
+  // a decidir."
+  //
+  // Eu havia escrito este caso afirmando o SILÊNCIO, que era a leitura literal
+  // do "aparece uma vez" da frente 1. As duas frentes pedem coisas diferentes
+  // aqui, e a reconciliação está escrita no verbo: a linha persiste enquanto
+  // algo espera, e muda de palavra no dia em que vence.
+  //
+  // A mudança nasceu hoje e o treino dela só volta depois de a rotação inteira
+  // passar — então há o que informar, e não há urgência.
   const agora = agoraEstavel(6, 30);
   const a = await app({
     aba: 'agora', agora: agora,
@@ -891,8 +911,16 @@ test('sem nada vencendo hoje, o Agora se cala', async () => {
   });
 
   assert.ok(a.vJ('ctx.mudancasQueEsperam').length, 'pré-condição: há mudança na fila');
-  assert.strictEqual(a.vJ('ctx.vencendoHoje'), null, 'mas nenhuma vence hoje');
-  assert.strictEqual(a.$('.ag-vence'), null, 'e o Agora não diz nada');
+  const e = a.vJ('ctx.esperandoDecisao');
+  assert.ok(e, 'o Agora tem o que informar');
+  assert.strictEqual(e.vence, false, 'e não é urgência: nada vence hoje');
+  assert.match(e.txt, /está esperando decisão/, e.txt);
+  assert.ok(a.$('.ag-vence'), 'a linha está na tela');
+  const secao = a.$$('.ins-secao').filter(function (x) {
+    return /esperando decisão/.test(x.textContent);
+  })[0];
+  assert.ok(secao && /para decidir com calma/.test(secao.textContent),
+    'com o rótulo de calma, e não o de vencimento');
   a.fechar();
 });
 
@@ -1004,7 +1032,8 @@ test('o Agora não avisa sobre o que já venceu, nem quando o dia volta de novo'
   assert.strictEqual(g.venceu, true, 'pré-condição: o A já voltou depois dela');
   assert.ok(g.vence != null, 'e o A volta OUTRA VEZ, com data: ' + g.vence);
 
-  assert.strictEqual(a.vJ('ctx.vencendoHoje'), null, 'o Agora não avisa de novo');
+  assert.strictEqual(a.vJ('ctx.esperandoDecisao'), null,
+    'o Agora não avisa de novo: o vencido não tem aviso a dar, tem porta de volta');
   assert.strictEqual(a.$('.ag-vence'), null, 'e não desenha a linha');
   a.fechar();
 });
@@ -1082,5 +1111,56 @@ test('a nota dos 14 dias diz onde o portão está, sem virar nota de prova', asy
   assert.strictEqual(q.aberto, false);
   assert.match(q.nota, /a regra pede 11 para mexer nas calorias/);
   assert.ok(!/%/.test(q.txt + q.nota), 'sem percentual em lugar nenhum: ' + q.txt + ' · ' + q.nota);
+  a.fechar();
+});
+
+test('encerrar o treino com mudança INFORMA no Agora — não é guardado em silêncio', async () => {
+  // Requisito da frente 2 (§9.2), e o caminho inteiro: ele muda uma série de
+  // pé, encerra no toque, volta ao Agora — e o app diz que há algo a decidir.
+  //
+  // Sem esta linha a mudança sai da vista no mesmo instante em que o app passa a
+  // guardá-la, e "guardado em silêncio é tão ruim quanto descartado em
+  // silêncio": ele não sabe que há algo a decidir, e descobre semanas depois,
+  // quando o treino volta e a mudança já venceu.
+  const a = await app();
+  a.v('toggle', 0);
+  a.preencher(0, 0, 60, 8);
+  a.v('mudaSeries', 0, 1);
+  await a.esperar();
+  await a.v('finalizarSessao');
+  await a.esperar(60);
+
+  assert.ok((a.S().promoPendente || []).length, 'a mudança foi guardada');
+
+  a.aba('agora');
+  await a.esperar();
+  const linha = a.$('.ag-vence');
+  assert.ok(linha, 'e o AGORA diz que ela está lá');
+  assert.match(linha.textContent, /esperando decisão/, linha.textContent);
+  assert.ok(a.$('[data-a="ver-mudancas"]'), 'com o caminho até a lista');
+  a.fechar();
+});
+
+test('respondida a mudança, a linha do Agora some', async () => {
+  // A quebra espelhada: uma linha que não sai depois de respondida viraria
+  // cobrança por uma decisão já tomada — e o app pararia de ser confiável como
+  // aviso, que é a única coisa que um aviso precisa ser.
+  const a = await app();
+  a.v('toggle', 0);
+  a.preencher(0, 0, 60, 8);
+  a.v('mudaSeries', 0, 1);
+  await a.esperar();
+  await a.v('finalizarSessao');
+  await a.esperar(60);
+  const sid = a.S().promoPendente[0].sid;
+
+  a.aba('agora');
+  await a.esperar();
+  assert.ok(a.$('.ag-vence'), 'pré-condição: a linha está lá');
+
+  await a.v('ctx.respondeMudanca', sid, 0, false, null);
+  await a.esperar(60);
+  assert.strictEqual(a.vJ('ctx.esperandoDecisao'), null, 'nada mais esperando');
+  assert.strictEqual(a.$('.ag-vence'), null, 'e a linha saiu');
   a.fechar();
 });

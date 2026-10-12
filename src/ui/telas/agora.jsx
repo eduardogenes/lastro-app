@@ -56,7 +56,7 @@ export function Agora({ ctx }) {
   const cardio = ctx.corpo().cardio;
   const cromo = ctx.cromoDoTreino();
   const app = ctx.dadosDoApp();
-  const vence = ctx.vencendoHoje();
+  const vence = ctx.esperandoDecisao();
   const dias = ctx.quatorzeDias();
   const refDe = id => refs.filter(r => r.id === id)[0] || null;
   const linhaDoTreino = refs.filter(r => ctx.ehLinhaDeTreino(r))[0] || null;
@@ -287,7 +287,7 @@ export function Agora({ ctx }) {
           bloquear: a regra é não pôr cardio no mesmo período de treino de
           perna, e quem decide se ainda dá é ele. */}
       {vence && (
-        <Secao rotulo="para decidir com calma">
+        <Secao rotulo={vence.vence ? 'vence hoje' : 'para decidir com calma'}>
           <div class="ins-linha ag-vence">
             <span class="ins-linha-n"><span class="ins-linha-t">{vence.txt}</span></span>
             <button class="ins-btn-secondary" data-a="ver-mudancas"

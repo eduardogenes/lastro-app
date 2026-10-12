@@ -7960,34 +7960,58 @@ CTX.fatosDoDia = function () {
 CTX.guardando = function () { return DB.mode !== 'mem'; };
 
 /**
- * As mudanças que vencem HOJE — a linha "Para decidir com calma" do Agora.
+ * A linha do Agora sobre o que espera decisão — e sobre o que vence hoje.
  *
- * §5.6: o vencimento da mudança do dia é AVISO, não cartão, e aparece "uma vez,
- * no Agora da manhã daquele treino, e nunca durante a sessão". A manhã daquele
- * treino é literal agora que o vencimento é calculado: é o dia em que a volta
- * daquele treino cai.
+ * DUAS FRENTES PEDIRAM COISAS DIFERENTES AQUI, e a linha carrega as duas:
  *
- * Uma LINHA e não a lista: o Agora "não possui a lista das mudanças que
- * esperam" (§1.1), e o dono dela é Prescrição. O que o Agora faz é apontar.
+ * - a frente 1 (§5.6) quer o aviso do VENCIMENTO "na manhã daquele treino";
+ * - a frente 2 (§9.2) quer que encerrar o treino **informe**, e não pergunte:
+ *   "a mudança some da vista dele no mesmo instante em que o app passa a
+ *   guardá-la — e 'guardado em silêncio' é tão ruim quanto 'descartado em
+ *   silêncio', porque ele não sabe que há algo a decidir".
  *
- * `null` quando não há nada vencendo hoje — e o silêncio é o caso comum.
+ * **Reconciliação, e está declarada:** a linha PERSISTE enquanto houver algo
+ * esperando, e muda de palavra no dia em que vence. O "uma vez" da frente 1 lê
+ * como UMA LINHA e não uma lista — que é o que a §1.1 manda, "o Agora mostra uma
+ * linha; o dono da lista é Prescrição". Literalmente uma vez, a mudança ficaria
+ * invisível entre o fim do treino e a manhã da volta, que é justamente o buraco
+ * que a frente 2 nomeia.
+ *
+ * `!g.venceu` em tudo: o que já venceu não tem aviso a dar — tem o bloco
+ * "venceu sem você" em Prescrição, que é dito e desfazível. Avisar dos dois
+ * jeitos faria o Agora cobrar uma decisão que o tempo já tomou.
  */
-CTX.vencendoHoje = function () {
+CTX.esperandoDecisao = function () {
   const hoje = hojeISO();
-  // `!g.venceu` de propósito: o aviso é um HEADS-UP do que está para vencer. O
-  // que já venceu não tem mais aviso a dar — tem o bloco "venceu sem você" em
-  // Prescrição, que é dito e desfazível.
-  const vencendo = CTX.mudancasQueEsperam().filter(function (g) {
-    return !g.venceu && g.vence != null && hojeISO(g.vence) === hoje;
+  const fila = CTX.mudancasQueEsperam().filter(function (g) { return !g.venceu; });
+  if (!fila.length) return null;
+
+  const vencendo = fila.filter(function (g) {
+    return g.vence != null && hojeISO(g.vence) === hoje;
   });
-  if (!vencendo.length) return null;
-  const n = vencendo.reduce(function (k, g) { return k + g.mudancas.length; }, 0);
+  const conta = function (gs) {
+    return gs.reduce(function (k, g) { return k + g.mudancas.length; }, 0);
+  };
+
+  if (vencendo.length) {
+    const n = conta(vencendo);
+    return {
+      n: n, vence: true,
+      txt: n === 1
+        ? 'Uma mudança do treino ' + vencendo[0].dia + ' vence hoje.'
+        : n + ' mudanças vencem hoje.'
+    };
+  }
+
+  const n = conta(fila);
   return {
-    n: n,
+    n: n, vence: false,
+    // Nomeia o treino quando é uma só: é o que ele reconhece, e o que a frente 2
+    // pede ("a série a mais do Treino A está esperando decisão em Prescrição").
+    // A descrição de cada mudança é da LISTA, não daqui.
     txt: n === 1
-      ? 'Uma mudança do treino ' + vencendo[0].dia + ' vence hoje.'
-      : n + ' mudanças vencem hoje.',
-    dias: vencendo.map(function (g) { return g.dia; })
+      ? 'Uma mudança do treino ' + fila[0].dia + ' está esperando decisão.'
+      : n + ' mudanças estão esperando decisão.'
   };
 };
 
