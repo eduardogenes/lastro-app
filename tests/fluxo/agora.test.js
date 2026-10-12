@@ -1164,3 +1164,220 @@ test('respondida a mudança, a linha do Agora some', async () => {
   assert.strictEqual(a.$('.ag-vence'), null, 'e a linha saiu');
   a.fechar();
 });
+
+// ---------------------------------------------------------------------------
+// PÔR UM DIA EM DIA — a metade de modelo
+// ---------------------------------------------------------------------------
+//
+// A tarefa que o app não tinha: registrar a terça que ele esqueceu de marcar. O
+// chão é `poeComidaNoDia`, e estes casos cobram as leituras e a escrita, antes
+// de qualquer pixel.
+//
+// As cinco marcas são cinco coisas DIFERENTES no dado, e o quinto botão é o que
+// destrava o portão de adesão: declarar "não comi" com um toque produz dia
+// CONTADO, em vez de silêncio — e silêncio não conta para o 11 em 14.
+
+/** Uma data de k dias atrás, local. */
+function diasAtras(agora, k) {
+  const d = new Date(agora);
+  d.setDate(d.getDate() - k);
+  return dataLocal(d.getTime());
+}
+
+test('um dia passado sem registro abre pré-marcado, e a sugestão diz que é sugestão', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+  const d = a.vJ('ctx.poeODiaEmDia', diasAtras(agora, 3));
+
+  assert.ok(d, 'a folha abre para um dia passado');
+  assert.strictEqual(d.fechado, false, 'e diz que aquele dia não tem linha ainda');
+  assert.ok(d.linhas.length >= 4, 'com as refeições do plano: ' + d.linhas.length);
+  assert.ok(d.linhas.every(function (l) { return l.marca === 'tudo'; }),
+    'dia passado vem tudo marcado — é a sugestão');
+  // A distinção entre sugerido e registrado NÃO pode ser só de cor (1.4.1): a
+  // linha carrega a procedência em palavra.
+  assert.ok(d.linhas.every(function (l) { return l.sugerida === true; }));
+  assert.ok(/marcada pelo horário/.test(d.linhas[0].procedencia), d.linhas[0].procedencia);
+
+  // E a procedência do PLANO, porque o plano daquela data não existe em lugar
+  // nenhum: um dia posto em dia é contado contra o plano de hoje.
+  assert.match(d.plano, /contado contra o plano de hoje/);
+  a.fechar();
+});
+
+test('um dia já registrado mostra o que está registrado, não a sugestão', async () => {
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 3);
+  const a = await app({ aba: 'dias', agora: agora, estado: {
+    plano: 7, logs: {}, done: [],
+    comidaHist: [{ d: data, done: { almoco: agora - 3 * DIA }, agua: 0,
+                   escala: { almoco: 0.5 }, tot: {}, pv: 1, m: agora }]
+  } });
+  const d = a.vJ('ctx.poeODiaEmDia', data);
+
+  assert.strictEqual(d.fechado, true);
+  const almoco = d.linhas.filter(function (l) { return l.id === 'almoco'; })[0];
+  assert.strictEqual(almoco.marca, 'metade', 'a meia porção registrada aparece');
+  assert.strictEqual(almoco.sugerida, false, 'e não é sugestão: ele declarou');
+  assert.strictEqual(almoco.procedencia, null, 'então não há procedência de horário a dizer');
+
+  // E as que ele NÃO marcou num dia já gravado aparecem VAZIAS, não sugeridas:
+  // num dia declarado, linha sem marca é ausência declarada. Sugerir ali faria o
+  // dia não convergir — esvaziar uma linha a devolveria como sugestão, e o toque
+  // seguinte em outra a re-gravaria.
+  const outra = d.linhas.filter(function (l) { return l.id !== 'almoco'; })[0];
+  assert.strictEqual(outra.marca, 'vazia', 'o que ele não marcou está vazio');
+  assert.strictEqual(outra.sugerida, false, 'e não é sugestão: o dia já foi declarado');
+  a.fechar();
+});
+
+test('a folha não abre para um dia que não aconteceu', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await app({ aba: 'dias', agora: agora, estado: { plano: 7, logs: {}, done: [] } });
+  const amanha = new Date(agora);
+  amanha.setDate(amanha.getDate() + 1);
+
+  assert.strictEqual(a.vJ('ctx.poeODiaEmDia', dataLocal(amanha.getTime())), null,
+    'dia que não aconteceu não se registra');
+  assert.strictEqual(a.vJ('ctx.poeODiaEmDia', 'ontem'), null, 'nem data ilegível');
+  a.fechar();
+});
+
+test('o PRIMEIRO toque grava o dia inteiro como sugerido, com a linha tocada corrigida', async () => {
+  // Decisão P3.i.6, e a consequência precisa: não é "o toque grava aquela
+  // linha" — é "o toque transforma a sugestão inteira em registro, com a linha
+  // tocada já corrigida". Qualquer outra leitura exige um botão de guardar, e o
+  // botão está proibido.
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 3);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+  const antes = a.vJ('ctx.poeODiaEmDia', data);
+
+  await a.v('ctx.marcaNoDiaPassado', data, 'almoco', 'metade', null);
+  await a.esperar(60);
+
+  const h = a.S().comidaHist.filter(function (x) { return x.d === data; })[0];
+  assert.ok(h, 'o dia virou linha no histórico');
+  assert.strictEqual(Object.keys(h.done).length, antes.linhas.length,
+    'o dia INTEIRO foi gravado, e não só a linha tocada');
+  assert.strictEqual(h.escala.almoco, 0.5, 'com a linha tocada já corrigida');
+  a.fechar();
+});
+
+test('"não comi" produz dia CONTADO — é o que destrava o portão', async () => {
+  // Decisão 1 das quinze. Até aqui `'nao'` existia no domínio e não tinha
+  // porta: o modelo o alcançava, o dedo não. E a diferença é o portão — silêncio
+  // não conta para o 11 em 14; "não comi" dito como fato conta.
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 3);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+
+  await a.v('ctx.marcaNoDiaPassado', data, 'jantar', 'nao', null);
+  await a.esperar(60);
+
+  const h = a.S().comidaHist.filter(function (x) { return x.d === data; })[0];
+  assert.strictEqual(h.como.jantar, 'nao', '"não comi" é dito como FATO no dado');
+  // E o dia entra na conta dos 14, que é a única razão pela qual pôr um dia em
+  // dia vale a pena para a regra.
+  assert.ok(a.vJ('ctx.quatorzeDias').registrados >= 1,
+    'o dia passou a contar: ' + a.vJ('ctx.quatorzeDias').txt);
+  a.fechar();
+});
+
+test('"não sei" pesa zero e o dia CONTINUA contando', async () => {
+  // Decisão 2, e a razão é do projeto: subestimar SEGURA o corte; inflar
+  // autoriza um corte que não devia acontecer. Peso 0 DENTRO do denominador.
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 3);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+
+  await a.v('ctx.marcaNoDiaPassado', data, 'almoco', 'nsei', null);
+  await a.esperar(60);
+
+  const h = a.S().comidaHist.filter(function (x) { return x.d === data; })[0];
+  assert.strictEqual(h.como.almoco, 'nsei');
+  assert.ok(a.vJ('ctx.quatorzeDias').registrados >= 1,
+    'o dia continua interpretável: a incerteza aparece no número baixo, não na ausência');
+  a.fechar();
+});
+
+test('a folha NÃO apaga marca nenhuma, e isso é limite do chão', async () => {
+  // §4.1, limite 2: "pôr um dia em dia não apaga nada. Marca nova vence marca
+  // velha chave a chave; o resto fica. A folha não oferece limpar o dia, e NÃO
+  // PODE oferecer: apagar um dia do histórico é destrutivo e não foi desenhado".
+  //
+  // Eu havia inventado uma marca "vazia" para tirar a refeição do registro, e a
+  // rede mostrou que ela não funcionava — o merge a devolvia na chamada
+  // seguinte. O defeito era MEU, por especificar comportamento que a função não
+  // permite. Este caso é o que grava o limite, para ninguém reinventar.
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 5);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+
+  await a.v('ctx.marcaNoDiaPassado', data, 'almoco', 'tudo', null);
+  await a.esperar(60);
+  const antes = Object.keys(a.S().comidaHist.filter(function (x) { return x.d === data; })[0].done);
+  assert.ok(antes.length >= 4, 'o dia inteiro entrou: ' + antes.join(','));
+
+  // qualquer toque seguinte CORRIGE, e nenhum remove
+  await a.v('ctx.marcaNoDiaPassado', data, 'jantar', 'nao', null);
+  await a.esperar(60);
+  const h = a.S().comidaHist.filter(function (x) { return x.d === data; })[0];
+  assert.deepStrictEqual(Object.keys(h.done).sort(), antes.sort(),
+    'as mesmas refeições continuam no registro');
+  assert.strictEqual(h.como.jantar, 'nao', 'e a corrigida mudou de marca, não de existência');
+  a.fechar();
+});
+
+test('a porção acima de 1 alcança o dia passado', async () => {
+  // Decisão 3: os mesmos cinco valores que o dia corrente já tem. "Comi uma vez
+  // e meia o almoço" passa a se dizer de um dia passado.
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 3);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+
+  const d = a.vJ('ctx.poeODiaEmDia', data);
+  assert.deepStrictEqual(d.porcoes, [0.5, 0.75, 1, 1.25, 1.5],
+    'os cinco valores, e dois acima de 1');
+
+  await a.v('ctx.marcaNoDiaPassado', data, 'almoco', 'tudo', 1.5);
+  await a.esperar(60);
+  const h = a.S().comidaHist.filter(function (x) { return x.d === data; })[0];
+  assert.strictEqual(h.escala.almoco, 1.5);
+  a.fechar();
+});
+
+test('o dia mudo é inalcançável PELA FOLHA, e o chão é quem guarda isso', async () => {
+  // Eu havia escrito um caso esvaziando linha por linha até o dia ficar mudo, e
+  // ele não convergia — porque a folha não apaga (o caso acima) e porque as
+  // cinco marcas todas MARCAM. Pela folha, um dia tocado nunca fica mudo.
+  //
+  // A recusa `'mudo'` continua existindo e continua certa: ela é a guarda do
+  // CHÃO, para qualquer chamador. `tests/dominio/diario.test.ts` a cobra na
+  // função; aqui o que se grava é que a folha não tem como chegar lá — e por
+  // isso a doutrina contra falso sucesso não precisa de tela nenhuma neste
+  // caminho.
+  const agora = agoraEstavel(9, 0);
+  const data = diasAtras(agora, 5);
+  const a = await app({ aba: 'dias', agora: agora,
+                        estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
+
+  const marcas = a.vJ('ctx.poeODiaEmDia', data).linhas.map(function (l) { return l.marca; });
+  assert.ok(marcas.every(function (m) { return m !== 'vazia'; }),
+    'nenhuma linha nasce vazia num dia sem registro: a sugestão é marcar');
+
+  for (const m of ['tudo', 'metade', 'fora', 'nsei', 'nao']) {
+    await a.v('ctx.marcaNoDiaPassado', data, 'almoco', m, null);
+    await a.esperar(40);
+    const h = a.S().comidaHist.filter(function (x) { return x.d === data; })[0];
+    assert.ok(h && Object.keys(h.done).length > 0,
+      'a marca "' + m + '" mantém o dia registrado');
+  }
+  a.fechar();
+});

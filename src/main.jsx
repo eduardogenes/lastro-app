@@ -45,7 +45,8 @@ import {
   aplicaAjusteNoArroz, tiraMarcaDeArroz, listaDeCompras, totalDaRefeicao, totalDoDia,
   refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao, minutosDe,
   fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis, diaInterpretavel,
-  aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
+  aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste,
+  poeComidaNoDia, resumoDaRefeicao
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
@@ -7981,6 +7982,171 @@ CTX.guardando = function () { return DB.mode !== 'mem'; };
  * "venceu sem você" em Prescrição, que é dito e desfazível. Avisar dos dois
  * jeitos faria o Agora cobrar uma decisão que o tempo já tomou.
  */
+// ---------- pôr um dia em dia ----------
+//
+// A tarefa que o app não tinha: registrar a terça que ele esqueceu de marcar. O
+// chão é `poeComidaNoDia` (frente 0), e esta é a metade de MODELO da folha que a
+// frente 2 desenhou — as leituras e a escrita, antes de qualquer pixel.
+//
+// As CINCO marcas por refeição, e cada uma é coisa diferente no dado:
+//
+//   tudo     · comeu o que o plano diz           → `done`, sem `como`
+//   metade   · comeu menos                       → `done` + `escala: 0.5`
+//   fora     · comeu, mas não foi aquilo         → `done` + `como: 'fora'`
+//   não sei  · comeu e não sabe quanto           → `done` + `como: 'nsei'`, peso 0
+//   não comi · NÃO comeu, dito como fato         → `done` + `como: 'nao'`, peso 0
+//
+// O quinto é o que destrava o portão, e é decisão 1 das quinze: declarar "não
+// comi" com um toque produz dia CONTADO, em vez de silêncio — e silêncio não
+// conta para o `MIN_REGISTRADOS` de 11 em 14. Até aqui `'nao'` existia no
+// domínio e não tinha porta: o modelo o alcançava, o dedo não.
+//
+// "Não sei" NÃO tira o dia da conta, e isso é decisão 2: peso 0 DENTRO do
+// denominador. Subestimar segura o corte; inflar autoriza um corte que não devia
+// acontecer.
+
+/** As porções que o app oferece. Duas acima de 1 — "comi mais que o plano". */
+const PORCOES_DO_DIA = [0.5, 0.75, 1, 1.25, 1.5];
+
+/**
+ * As linhas da folha de pôr um dia em dia.
+ *
+ * ABRE PRÉ-MARCADA COMO SUGESTÃO, e a regra é a do protótipo: dia passado vem
+ * tudo marcado. Mas aqui há histórico, e o que está REGISTRADO vence a sugestão
+ * — `poeComidaNoDia` completa em vez de substituir, e a tela não pode prometer
+ * o contrário.
+ *
+ * `sugerida` separa as duas, e a separação não pode ser só de cor (1.4.1): a
+ * linha carrega a PROCEDÊNCIA da marca em palavra — "marcada pelo horário" para
+ * a sugestão, nada para o que ele declarou.
+ *
+ * `null` quando a data não serve: futura, ilegível. A folha não abre para um dia
+ * que não aconteceu.
+ */
+CTX.poeODiaEmDia = function (data) {
+  if (typeof data !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return null;
+  const hoje = hojeISO();
+  if (data > hoje) return null;
+
+  const linha = (Array.isArray(S.comidaHist) ? S.comidaHist : [])
+    .filter(function (h) { return h && h.d === data; })[0] || null;
+  const cadencia = linha && linha.cadencia ? linha.cadencia : 'descanso';
+  const plano = planoDeComida();
+  const refs = refeicoesDeHoje(plano, cadencia === 'treino',
+                               !!(linha && linha.alta), linha && linha.turno,
+                               duracaoDoTreino());
+  const cat = catalogoAlimentos();
+
+  return {
+    data: data,
+    // A PROCEDÊNCIA do plano, e ela tem de ser dita: o plano daquela data não
+    // existe em lugar nenhum — `pv` guarda QUANDO ele era aquele, não O QUE
+    // era. Um dia posto em dia é contado contra o plano de HOJE.
+    plano: refs.length + (refs.length === 1 ? ' refeição' : ' refeições') +
+           ' · contado contra o plano de hoje',
+    fechado: !!linha,
+    porcoes: PORCOES_DO_DIA.slice(),
+    linhas: refs.map(function (r) {
+      const marcada = !!(linha && linha.done && linha.done[r.id] != null);
+      const como = (linha && linha.como && linha.como[r.id]) || null;
+      const escala = (linha && linha.escala && linha.escala[r.id] != null)
+        ? linha.escala[r.id] : 1;
+      // A SUGESTÃO VALE SÓ ENQUANTO O DIA NÃO TEM REGISTRO, e isto me custou um
+      // vermelho: eu sugeria "tudo" para toda linha sem marca, inclusive num dia
+      // JÁ gravado. A consequência era que o dia não convergia — esvaziar uma
+      // linha a devolvia como sugestão, e o toque seguinte em outra linha a
+      // re-gravava. Nunca dava para deixar uma refeição sem marca.
+      //
+      // Com o dia declarado, o REGISTRO é a verdade, inclusive os vazios: linha
+      // sem marca num dia gravado é ausência DECLARADA, não ausência de resposta.
+      const vazio = !marcada && !!linha;
+      return {
+        id: r.id,
+        nome: r.n,
+        hora: r.t,
+        marca: marcada ? (como || (escala === 0.5 ? 'metade' : 'tudo'))
+             : vazio ? 'vazia' : 'tudo',
+        escala: marcada ? escala : 1,
+        // o que distingue sugestão de declaração, em PALAVRA e não em cor
+        sugerida: !marcada && !linha,
+        procedencia: (marcada || vazio) ? null : 'marcada pelo horário · ' + r.t,
+        resumo: resumoDaRefeicao(r, cat, !!(linha && linha.alta), escala)
+      };
+    }),
+    // `aderencia` sem resposta é `'plano'`, e `'plano'` é o padrão de quem não
+    // respondeu. A pergunta do "fora do plano" NÃO bloqueia (decisão 4): ela
+    // aparece depois da gravação, e o que a resposta muda é se o dia conta.
+    aderencia: (linha && linha.aderencia) || 'plano'
+  };
+};
+
+/**
+ * Grava UMA linha de um dia passado — e com ela o dia inteiro como está sugerido.
+ *
+ * É a decisão P3.i.6 do dono, e a consequência precisa está dita na frente 2
+ * (§4.3): **o primeiro toque grava o dia inteiro como está sugerido**, e cada
+ * toque seguinte corrige uma linha. Não é "o toque grava aquela linha" — é "o
+ * toque transforma a sugestão inteira em registro, com a linha tocada já
+ * corrigida". Qualquer outra leitura exige um botão de guardar, e o botão está
+ * proibido.
+ *
+ * Por isso a escrita monta o dia a partir das LINHAS da folha, não da marca
+ * isolada: o que está na tela é o que vai ao dado.
+ *
+ * **NÃO EXISTE "limpar a marca", e isso é limite do chão, não esquecimento.**
+ * `poeComidaNoDia` COMPLETA e não substitui — "marca nova vence marca velha
+ * chave a chave; o resto fica" —, e a frente 2 escreveu que a folha "não pode"
+ * oferecer limpar: apagar um dia do histórico é destrutivo e não foi desenhado.
+ *
+ * Eu havia inventado uma marca `'vazia'` para tirar a refeição do registro, e a
+ * rede mostrou que ela não funcionava: o merge a devolvia na chamada seguinte.
+ * O defeito não era do merge — era meu, por especificar comportamento que a
+ * função não permite. As cinco marcas são as cinco, e todas MARCAM; o que
+ * distingue "não comi" de silêncio é que a primeira é fato declarado.
+ */
+CTX.marcaNoDiaPassado = async function (data, id, marca, escala) {
+  const d = CTX.poeODiaEmDia(data);
+  if (!d) return { ok: false, recusa: 'data' };
+
+  const done = {}, como = {}, esc = {};
+  const agora = Date.now();
+  d.linhas.forEach(function (l) {
+    const m = l.id === id ? marca : l.marca;
+    const e = l.id === id ? (escala == null ? l.escala : escala) : l.escala;
+    // Linha que o dia declarou SEM marca fica sem marca: ela não entra, e o
+    // merge do chão preserva o que já estava. O que não existe é a volta —
+    // nenhuma marca sai daqui.
+    if (m === 'vazia') return;
+    done[l.id] = agora;
+    if (m === 'fora' || m === 'nao' || m === 'nsei') como[l.id] = m;
+    if (m === 'metade') esc[l.id] = 0.5;
+    else if (e != null && e !== 1) esc[l.id] = e;
+  });
+
+  const r = poeComidaNoDia(
+    Array.isArray(S.comidaHist) ? S.comidaHist : [],
+    data,
+    { done: done, como: como, escala: esc, aderencia: d.aderencia },
+    planoDeComida(), catalogoAlimentos(), hojeISO(),
+    versaoDoPlano(), S.ajuste || 0, agora
+  );
+  if (r.recusa) {
+    // "Nada mudou" é resultado legítimo, e o app tem doutrina contra falso
+    // sucesso: dia que fica mudo depois de ele mexer continua mudo, e a tela
+    // diz isso em vez de piscar um sucesso.
+    toast(r.recusa === 'mudo'
+      ? 'O dia ficou sem marca nenhuma, e continua como estava.'
+      : 'Esta data não serve.');
+    render();
+    return { ok: false, recusa: r.recusa };
+  }
+
+  S.comidaHist = r.hist;
+  await save();
+  render();
+  return { ok: true };
+};
+
 CTX.esperandoDecisao = function () {
   const hoje = hojeISO();
   const fila = CTX.mudancasQueEsperam().filter(function (g) { return !g.venceu; });
