@@ -2562,13 +2562,67 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       CSS com três. A medição C está provada reintroduzindo o defeito exato do
       protótipo.
 
-- [ ] **6.z' O teclado próprio de doze teclas** (§6.2 da frente 2, T1–T4). É o
-      que falta para a régua ficar inteira: a porta "outro valor" e a carga da
-      série dependem dele. Os quatro requisitos estão escritos, e um deles é
-      conserto de defeito medido — **T1, aceitar o teclado físico**, porque sem
-      isso quem está no notebook mira com o mouse em doze teclas (C2 nomeou; eu
-      conferi que o protótipo tem zero `keydown`). T3 é conserto de token (as
-      teclas da D têm 1,20:1 de limite, e o critério pede 3:1) e é da frente 4.
+- [x] **6.z' O teclado próprio de doze teclas** (`852b6e5`, e `3986991` a carga)
+      — §6.2 da frente 2, T1–T4. Abre no mesmo lugar da régua, embaixo da linha
+      da série, e só um painel por vez. **Com ele a linha da série inteira passou
+      a ser de toques:** carga pelo teclado, repetição pela régua, RIR por botão.
+      Nenhum campo da sessão abre mais o teclado do sistema.
+      **T1 · aceita o teclado físico**, e era o único defeito nomeado do próprio:
+      C2 marcou e a frente conferiu que o protótipo tem **zero `keydown`** — quem
+      está no notebook mirava com o mouse em doze teclas. O ouvinte fica na RAIZ
+      do painel, que recebe foco ao abrir, e **não** em `document`: ouvinte de
+      documento posto por efeito de componente foi a causa da intermitência que
+      custou caro neste projeto.
+      **T2** o visor é região viva (`role="status"`, `polite`) — no protótipo ele
+      muda de texto sem anunciar nada, num lugar onde o valor é a única coisa que
+      existe. **T3** o limite das teclas é o token de controle do sistema (as da
+      D têm 1,20:1; o critério pede 3:1, e o valor é da frente 4). **T4** o
+      cursor é estático, a forma da D — e estático é mais forte que dentro de
+      `prefers-reduced-motion`, porque não há o que desligar.
+
+      **Uma divergência declarada, reversível numa linha.** A §6.1 manda "próprio,
+      **com vírgula e casa decimal fixa**", e as duas metades não são a mesma
+      coisa: o parêntese de C2 (`"736" → 73,6`) é a registradora, que não tem
+      vírgula a digitar. **Implementei a vírgula.** As razões: na registradora
+      60 kg custa três toques e carga redonda é o caso comum (o programa tem 60,
+      40, 55); o erro que ela produz cai no caso COMUM, enquanto o erro do modelo
+      com vírgula cai no menos comum; e os dois fatos que ela mataria — F63 (a
+      vírgula que um campo `number` descarta) e F275 — não têm caminho aqui,
+      porque este teclado digita os próprios caracteres e faz a própria
+      conversão. O ponto de reversão é `DECIMAL_FIXA`, em
+      `src/dominio/teclado.ts`, e há caso que fica vermelho se alguém trocar sem
+      ler o argumento.
+
+      **Dois achados de rede, e os dois valem para quem escrever casos depois.**
+
+      1. **`digitar` num botão não estoura.** O nó aceita `.value` e ninguém a lê:
+         a linha do caso fica **morta e verde**. Aconteceu duas vezes nesta
+         sequência — na troca da repetição e na da carga. O harness agora
+         **recusa** o que não é campo, com a mensagem dizendo o que usar em vez
+         dele. Transforma a classe inteira de falha silenciosa em erro com nome.
+      2. **Neste jsdom `requestAnimationFrame` é `undefined`** (conferi), então o
+         Preact enfileira efeitos com `setTimeout(_, 100)` em vez de esperar o
+         quadro. `esperar()` sem argumento dá 20 ms: **qualquer caso que dependa
+         de `useEffect` não alcança o efeito com o padrão do harness.** Num
+         navegador de verdade o rAF existe e o efeito roda no quadro seguinte.
+
+      **E um erro meu, do tipo que não deixa rastro:** o registro do `inputmode`
+      campo por campo (6.x') tinha nascido com o mesmo nome de arquivo deste
+      teclado, e o segundo `cat >` apagou o primeiro. Os quatro casos voltaram do
+      git como `tests/dominio/campos.test.ts`, com a razão da separação escrita no
+      topo. A contagem da suíte foi o que denunciou.
+
+- [ ] **6.z'' As três linhas "próprio" que faltam** (§6.1). O teclado existe; o
+      que falta é levá-lo onde a tabela manda: **peso da manhã** e **cintura** em
+      Corpo (as duas "de pé, com a fita ou na balança na mão", e o peso leva a
+      régua de 100 g da §1.4 na frente), e a **lista rápida da aula** ("DEPOIS da
+      aula, ofegante, sentado, e ela é curta" — curta é o que define). As
+      **medidas com fita** são próprio para o número e sistema para o texto, e a
+      tela delas não existe ainda.
+      **A régua do peso é o caso que ninguém mediu e é pior que a de repetição**
+      (§1.4): 4 de 13 valores inteiros na janela, e ali um erro de alvo de 100 g
+      entra na média semanal que decide ±150 kcal. A aritmética do teto já está
+      pronta e vale igual — a régua do peso é a mesma função com outro passo.
 
 - [ ] **6.v' O reponte das expressões compostas** — 400 entradas de ponte (325
       `a.E`, 75 `a.J`) em 36 arquivos. **Medido e declarado como higiene:** elas
