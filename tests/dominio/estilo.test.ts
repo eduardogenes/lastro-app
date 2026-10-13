@@ -1276,3 +1276,60 @@ test('a linha da lista rápida quebra, para o teclado próprio abrir embaixo del
   assert.match(regras(t, '.rapl > .tcl'), /flex\s*:\s*1 0 100%/,
     'e o teclado ocupa a largura inteira, embaixo do nome e dos dois botões');
 });
+
+test('todo botão tem estilo de base, e não só o reset mais um modificador', () => {
+  // Achado de 13/10, MEDIDO no Chromium a 414×896: a carga e a repetição da
+  // série viraram botão (o teclado próprio e a régua), e nenhuma regra os
+  // alcançava. O botão herdou só o reset de `button` e media **5 × 18 px**
+  // vazio — o "·" e nada em volta — no controle de maior frequência do produto.
+  //
+  // A guarda de alvo de toque não podia ver: ela lê altura DECLARADA, e um
+  // botão sem regra nenhuma não declara nada. E `.vazio` existe no CSS — mas
+  // como `.rirbtn.vazio`, modificador colado em outra classe, que não estiliza
+  // um `repbtn`. Então a pergunta é de princípio, sem lista: alguma classe do
+  // botão aparece no CSS como seletor de BASE — no começo de um seletor ou
+  // depois de um combinador?
+  const seletores = (css().replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}]+(?=\{)/g) || []).join(' ');
+  const deBase = (c: string) =>
+    new RegExp('(^|[\\s,>+~(])\\.' + c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\w-])').test(seletores);
+
+  const arquivos: string[] = [path.join(RAIZ, 'src', 'main.jsx')];
+  const anda = (dir: string) => fs.readdirSync(dir, { withFileTypes: true }).forEach(e => {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) anda(p); else if (p.endsWith('.jsx')) arquivos.push(p);
+  });
+  anda(path.join(RAIZ, 'src', 'ui'));
+
+  const semBase: string[] = [];
+  for (const arq of arquivos) {
+    const fonteJsx = fs.readFileSync(arq, 'utf8');
+    for (const m of fonteJsx.matchAll(/<button\b([^>]*?)(?:>|\/>)/gs)) {
+      const c = m[1].match(/class=(?:"([^"]*)"|\{([^}]*)\})/);
+      if (!c) continue;
+      const classes = c[2] != null
+        ? [...c[2].matchAll(/['"`]\s*([a-zA-Z][\w -]*?)\s*['"`]/g)].flatMap(x => x[1].split(/\s+/))
+        : c[1].split(/\s+/);
+      if (classes.length && !classes.some(deBase)) {
+        const linha = fonteJsx.slice(0, m.index).split('\n').length;
+        semBase.push(path.relative(RAIZ, arq) + ':' + linha + ' ' + classes.join('.'));
+      }
+    }
+  }
+  assert.deepStrictEqual(semBase, [],
+    'botão sem estilo de base: ele herda só o reset — sem altura, sem alvo, do ' +
+    'tamanho do texto que carrega');
+});
+
+test('a carga e a repetição da série têm o alvo do RIR, e o fio reto', () => {
+  // Os três números do conserto de 13/10, cada um com a razão: 40px de desenho
+  // como o RIR vizinho; a área estendida só na VERTICAL, porque o vizinho
+  // horizontal é outro valor da mesma série e crescer para o lado faria um
+  // toque na borda abrir o editor errado; e raio zero, porque o estado aberto é
+  // um fio embaixo, e com raio o fio sai curvo.
+  const t = fonte('src/treino.css');
+  const r = regras(t, '.repbtn');
+  assert.match(r, /min-height\s*:\s*40px/, 'a célula inteira é alvo, com 40px de desenho');
+  assert.match(r, /border-radius\s*:\s*0/, 'raio zero: o fio do estado aberto é reto');
+  assert.match(t, /\.repbtn::after[^{]*\{[^}]*inset\s*:\s*-3px 0\s*;/,
+    'a área cresce 3px para cima e para baixo, e zero para os lados');
+});

@@ -203,24 +203,32 @@
 /* No cabeçalho a unidade é rótulo de COLUNA: sai da posição flutuante que ela
    tinha quando morava dentro do campo. */
 /* O RIR: botão com a mesma cara dos campos vizinhos — mesmo fio embaixo, mesma
-   tipografia — porque é a mesma natureza de dado. Só o gesto é outro. */
-.rirbtn {
+   tipografia — porque é a mesma natureza de dado. Só o gesto é outro.
+   A CARGA e a REPETIÇÃO (`.repbtn`) viraram botão depois — o teclado próprio e
+   a régua — e entram nas mesmas regras pelo mesmo motivo. Ficaram de fora até
+   13/10: sem regra nenhuma, herdavam só o reset de `button` e mediam 5 × 18 px
+   vazios (Chromium, 414×896), o "·" e nada em volta, no controle de maior
+   frequência do produto. Agora ocupam a célula: 40px, e 46 de alvo. */
+.rirbtn, .repbtn {
   width: 100%; min-height: 40px; padding: var(--ins-5) var(--ins-2) var(--ins-3);
-  background: transparent; color: var(--ins-tinta); border: none;
+  /* Raio zero: o estado aberto é um FIO embaixo (sombra interna), e com o raio
+     que o reset de `button` dá o fio saía curvo, como um sorriso. O campo que
+     estes botões substituíram já tinha raio zero pelo mesmo motivo. */
+  background: transparent; color: var(--ins-tinta); border: none; border-radius: 0;
   font: 600 19px/1 var(--ins-fonte); letter-spacing: -.03em; text-align: center;
   position: relative;
 }
 /* Só na vertical, como o tick: na horizontal o vizinho é o campo de repetição
    da mesma linha, e crescer para o lado faria um toque na borda abrir a escala
    em vez de pôr o cursor no número. */
-.rirbtn::after { content: ""; position: absolute; inset: -3px 0; }     /* 40 -> 46 */
+.rirbtn::after, .repbtn::after { content: ""; position: absolute; inset: -3px 0; }     /* 40 -> 46 */
 /* Sem fio embaixo, ao contrário dos campos vizinhos: eles precisam da linha de
    escrita porque vazios não mostram nada. Este mostra — o ponto já ocupa o
    lugar e já diz que há o que tocar. */
-.rirbtn.vazio { color: var(--ins-tinta-3); }
+.rirbtn.vazio, .repbtn.vazio { color: var(--ins-tinta-3); }
 /* Aberto: só enquanto a escala está na tela, para ele saber qual série está
    ajustando. */
-.rirbtn.on { color: var(--ins-acento-tinta); box-shadow: inset 0 -1px 0 var(--ins-acento); }
+.rirbtn.on, .repbtn.on { color: var(--ins-acento-tinta); box-shadow: inset 0 -1px 0 var(--ins-acento); }
 
 /* A escala, aberta embaixo da própria série. */
 .rirscale {

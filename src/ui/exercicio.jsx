@@ -88,7 +88,8 @@ function Linha({ i, k, linha, vm, acoes }) {
           a coluna ANTERIOR, e ela não some quando ele começa a digitar. */}
       <div class="f">
         <button
-          class={'repbtn' + (linha.valor[0] == null ? ' vazio' : '')}
+          class={'repbtn' + (linha.valor[0] == null ? ' vazio' : '') +
+                 (linha.teclado && linha.teclado.decimal ? ' on' : '')}
           id={`w${i}_${k}`}
           aria-label={linha.valor[0] != null
             ? `carga da série ${k + 1}, ${vm.unidade}: ${linha.valor[0]}`
@@ -107,7 +108,8 @@ function Linha({ i, k, linha, vm, acoes }) {
       <div class="f">
         {vm.temRegua ? (
           <button
-            class={'repbtn' + (linha.valor[1] == null ? ' vazio' : '')}
+            class={'repbtn' + (linha.valor[1] == null ? ' vazio' : '') +
+                   (linha.regua || (linha.teclado && !linha.teclado.decimal) ? ' on' : '')}
             id={`r${i}_${k}`}
             aria-label={linha.valor[1] != null
               ? `${unidade} da série ${k + 1}: ${linha.valor[1]}`
