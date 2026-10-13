@@ -2707,6 +2707,33 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       **Não medido:** o dedo dele. A geometria é do Chromium, não do Safari do
       iPhone — os dois concordam em caixa, mas é Blink medindo.
 
+- [~] **6.α A frente 3 aplicada — as palavras** (aberto em 13/10). **Achado por
+      medida:** dos 276 textos exatos que `09-frente3-palavras.md` escreveu nas
+      tabelas e nas citações, **68 estavam no código** (~25%; subestima um pouco,
+      porque exemplo com data e número vira molde). A frente foi entregue em 06/10
+      e aplicada aos pedaços (o deload, a folha, os avisos de 6.a''); ninguém a
+      tinha transformado em itens. Medida por script, seção por seção.
+      **Feito — §3, a decisão 13, "falhou" contra "vai destruir":**
+      - [x] **O painel de pare** (`4afd3e7`): promessa `pare({ texto, sim })`,
+            camada mais alta (Voltar, gesto e Esc = "Deixar como está"), foco
+            nasce na saída. O `confirm()` do sistema não cumpria a regra de uma
+            linha da §3.4 — os botões dele chamam-se OK e Cancelar.
+      - [x] **As nove ações que apagam sem volta** (`4afd3e7`, `99fda6e`), cada
+            frase com o número do dado. **Duas frases da frente corrigidas contra
+            o código:** a foto do equipamento apaga também a cópia remota (a
+            frente dizia que ela "continua lá"), e no histórico do exercício sai o
+            registro inteiro do dia, não "esta série".
+      - Rede: a guarda das palavras do aviso cobra os pedidos de pare (verbo na
+        frase e no botão; nunca OK/Confirmar/Sim/Cancelar); o harness responde o
+        painel pelo contrato do `confirm()`; um caso pelo dedo; cinco casos que
+        leem a frase. Dez mutações, todas vermelhas. **1.345 passando.**
+      - Visto no Chromium a 414×896 (`shots/pare-peso.png`).
+      **Falta, nesta ordem:** §3.2 a família "falhou" (a gravação que falhou —
+      hoje um toast); §7 os estados ruins (carregando, erro, pular, encerrar);
+      §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
+      bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
+      app seguem no diálogo do sistema, de propósito (§3.3).
+
 - [ ] **6.v' O reponte das expressões compostas** — 400 entradas de ponte (325
       `a.E`, 75 `a.J`) em 36 arquivos. **Medido e declarado como higiene:** elas
       alcançam o MODELO e não nomes de tela, e sobreviveram à troca dos cinco
@@ -2825,6 +2852,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 13/10 · As medidas com fita entram (`a2e2be0`): 6.z'' fechado. 1.336 passando.
 - 13/10 · 6.m fechado por conferência; entra o caso do descanso pelo dedo, a partir de Dias.
 - 13/10 · 6.z''' consertado com medida em Chromium sem janela: 5 × 18 → 90 × 40.
+- 13/10 · Frente 3 medida (68/276) e aberta como 6.α. O painel de pare e as nove ações (`4afd3e7`, `99fda6e`).
 
 ---
 
