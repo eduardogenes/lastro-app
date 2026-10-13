@@ -11,8 +11,8 @@ test('a chave do histórico é o exercício, não a posição', async () => {
   assert.notStrictEqual(a.k('A', 0), 'A0');
 
   // o mesmo exercício em dois treinos diferentes tem a mesma chave
-  const iA = a.E('treino("A").ex.findIndex(function (x) { return x.n === "Elevação lateral na máquina"; })');
-  const iD = a.E('treino("D").ex.findIndex(function (x) { return x.n === "Elevação lateral na máquina"; })');
+  const iA = a.vJ('treino', 'A').ex.findIndex(function (x) { return x.n === 'Elevação lateral na máquina'; });
+  const iD = a.vJ('treino', 'D').ex.findIndex(function (x) { return x.n === 'Elevação lateral na máquina'; });
   assert.ok(iA >= 0 && iD >= 0);
   assert.strictEqual(a.k('A', iA), a.k('D', iD), 'é o mesmo exercício, é o mesmo histórico');
   a.fechar();
@@ -24,39 +24,38 @@ test('inserir um exercício no meio não desloca o histórico dos outros', async
   a.v('toggle', 3);
   a.preencher(3, 0, 50, 10);
   const chave = a.k('A', 3);
-  const antes = a.J('S.logs[' + JSON.stringify(chave) + ']');
+  const antes = a.S().logs[chave];
   assert.strictEqual(antes.length, 1);
 
   // insere um exercício qualquer na segunda posição do treino
   a.E('S.prog.A.ex.splice(1, 0, { id:"pec-deck", s:2, r:"10–15", d:105, desde:Date.now() }); render()');
 
   assert.strictEqual(a.k('A', 4), chave, 'o exercício desceu uma posição');
-  assert.deepStrictEqual(a.J('S.logs[' + JSON.stringify(chave) + ']'), antes,
+  assert.deepStrictEqual(a.S().logs[chave], antes,
     'e levou o histórico junto, intacto');
   a.fechar();
 });
 
 test('o catálogo conhece o programa e os substitutos', async () => {
   const a = await app();
-  const n = a.E('Object.keys(CAT).length');
+  const n = Object.keys(a.dado('CAT')).length;
   assert.ok(n > 100, 'substitutos viram exercícios de verdade: ' + n);
 
   // todo exercício do programa está no catálogo
-  const faltando = a.J(`
-    rot().reduce(function (acc, d) {
-      treino(d).ex.forEach(function (ex) { if (!CAT[ex.id]) acc.push(ex.n); });
-      return acc;
-    }, [])`);
+  const CAT = a.dado('CAT');
+  const faltando = a.vJ('rot').reduce(function (acc, d) {
+    a.vJ('treino', d).ex.forEach(function (ex) { if (!CAT[ex.id]) acc.push(ex.n); });
+    return acc;
+  }, []);
   assert.deepStrictEqual(faltando, []);
 
   // e todo substituto oferecido também
-  const semCat = a.J(`
-    rot().reduce(function (acc, d) {
-      treino(d).ex.forEach(function (ex, i) {
-        altList(d, i).forEach(function (o) { if (!CAT[o.id]) acc.push(o.n); });
-      });
-      return acc;
-    }, [])`);
+  const semCat = a.vJ('rot').reduce(function (acc, d) {
+    a.vJ('treino', d).ex.forEach(function (ex, i) {
+      a.vJ('altList', d, i).forEach(function (o) { if (!CAT[o.id]) acc.push(o.n); });
+    });
+    return acc;
+  }, []);
   assert.deepStrictEqual(semCat, []);
   a.fechar();
 });
@@ -86,7 +85,7 @@ test('exercício cadastrado por ele aparece na troca e tem histórico próprio',
   a.v('setAlt', 4, 'maquina-nova-da-academia');
   a.preencher(4, 0, 25, 15);
   assert.strictEqual(a.S().logs["maquina-nova-da-academia"].length, 1);
-  assert.strictEqual(a.E('S.logs[' + JSON.stringify(original) + ']'), undefined,
+  assert.strictEqual(a.S().logs[original], undefined,
     'não contamina o exercício original');
   a.fechar();
 });
@@ -97,13 +96,13 @@ test('o programa do treinador continua congelado e comparável', async () => {
   assert.strictEqual(a.vJ('treino', 'A').ex[0].s, 9, 'o programa dele mudou');
   assert.strictEqual(a.dado('PROGRAMA').A.ex[0].s, 3, 'o do treinador não');
 
-  const alvo = a.J(`
-    ROT_BASE.reduce(function (acc, d) {
-      PROGRAMA[d].ex.forEach(function (ex) {
-        if (ex.g) acc[ex.g] = (acc[ex.g] || 0) + ex.s;
-      });
-      return acc;
-    }, {})`);
+  const PROGRAMA = a.dado('PROGRAMA');
+  const alvo = a.dado('ROT_BASE').reduce(function (acc, d) {
+    PROGRAMA[d].ex.forEach(function (ex) {
+      if (ex.g) acc[ex.g] = (acc[ex.g] || 0) + ex.s;
+    });
+    return acc;
+  }, {});
   assert.strictEqual(Object.values(alvo).reduce(function (x, y) { return x + y; }, 0), 90);
   a.fechar();
 });
@@ -162,8 +161,8 @@ test('o programa editado sobrevive a fechar e reabrir', async () => {
 
   const b = await app({ estado: bruto });
   await b.esperar();
-  assert.strictEqual(b.E('treino("A").ex[0].s'), 4);
-  assert.strictEqual(b.E('CAT["meu-aparelho"].n'), 'Meu aparelho');
+  assert.strictEqual(b.vJ('treino', 'A').ex[0].s, 4);
+  assert.strictEqual(b.dado('CAT')['meu-aparelho'].n, 'Meu aparelho');
   b.fechar();
 });
 
@@ -193,7 +192,7 @@ test('estado do plano 1 atravessa as duas migrações sem perder nada', async ()
   // mesa flexora deitada continua no programa: volta para o histórico ativo
   assert.ok(logs['mesa-flexora-deitada'], 'exercício que sobreviveu volta a ser ativo');
   assert.deepStrictEqual(logs['mesa-flexora-deitada'][0].sets, [[45, 12], [45, 12]]);
-  const iF = a.E('treino("F").ex.findIndex(function (x) { return x.n === "Mesa flexora deitada"; })');
+  const iF = a.vJ('treino', 'F').ex.findIndex(function (x) { return x.n === 'Mesa flexora deitada'; });
   assert.strictEqual(a.k('F', iF), 'mesa-flexora-deitada', 'e o app já o encontra pela chave');
 
   // os que saíram do programa continuam com histórico, sem posição
