@@ -33,7 +33,7 @@ test('done fica ordenado por data mesmo lançando para trás', async () => {
   await a.v('gravarRetro', false);
   await a.esperar();
 
-  assert.ok(a.E('S.done.every(function (x,i,arr) { return i === 0 || arr[i-1].t <= x.t; })'));
+  assert.ok(a.S().done.every(function (x, i, arr) { return i === 0 || arr[i - 1].t <= x.t; }));
   a.fechar();
 });
 
@@ -59,7 +59,7 @@ test('treino avulso é presença, não é o programa', async () => {
   await a.v('gravarRetro', false);
   await a.esperar();
 
-  const m = a.J('S.done.filter(function (x) { return x.livre; })[0]');
+  const m = a.S().done.filter(function (x) { return x.livre; })[0];
   assert.deepStrictEqual(m.grupos, ['peito', 'tríceps']);
   assert.strictEqual(m.dur, 45 * 60000);
   assert.strictEqual(m.day, undefined, 'avulso não tem letra de treino');
@@ -88,7 +88,7 @@ test('preencher os exercícios grava na data do treino, não na de hoje', async 
   await a.v('concluirRetro');
   await a.esperar();
   assert.strictEqual(a.S().sessao, null);
-  assert.strictEqual(a.E('S.done.filter(function (x) { return x.day === "B"; })[0].dur'), 50 * 60000,
+  assert.strictEqual(a.S().done.filter(function (x) { return x.day === 'B'; })[0].dur, 50 * 60000,
     'duração informada no formulário não é sobrescrita pelo encerramento');
   a.fechar();
 });
@@ -105,7 +105,7 @@ test('abrir retroativo com treino em andamento encerra o de hoje', async () => {
   await a.v('gravarRetro', true);
   await a.esperar();
 
-  const hoje = a.J('S.done.filter(function (x) { return x.day === "A"; })[0]');
+  const hoje = a.S().done.filter(function (x) { return x.day === 'A'; })[0];
   assert.ok(hoje.dur >= 49 * 60000 && hoje.dur <= 51 * 60000, 'duração de hoje foi gravada');
   assert.strictEqual(a.S().sessao.day, 'C');
   assert.strictEqual(a.log('A',0)[0].sets.filter(Boolean).length, 1, 'séries de hoje preservadas');
@@ -126,7 +126,7 @@ test('sessão retroativa esquecida encerra na virada do dia de uso', async () =>
   a.fechar();
 
   const b = await app({ estado });
-  assert.strictEqual(b.E('S.sessao'), null);
+  assert.strictEqual(b.S().sessao, null);
   assert.strictEqual(b.log('C',0)[0].sets.filter(Boolean).length, 1, 'o que foi preenchido fica');
   b.fechar();
 });
