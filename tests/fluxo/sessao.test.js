@@ -695,6 +695,16 @@ test('ctx.cancelaEdicao NÃO desfaz a dor já marcada — o escopo de hoje', asy
   a.fechar();
 });
 
+test('corrigir uma sessão de outro dia diz que não reabre aquele treino', async () => {
+  // §8.4: cada invariante da correção tem frase, e esta é a de outro dia.
+  const a = await umaLinha();
+  a.v('ctx.editaLinha', 0);
+  await a.esperar();
+  const data = a.vJ('ctx.historico').sessoes[0].data;
+  assert.strictEqual(a.texto('.ed-outrodia'), 'Esta sessão é de ' + data + '. Corrigir não reabre aquele treino.');
+  a.fechar();
+});
+
 test('ctx.salvaEdicao fecha a linha, carimba a correção e recusa deixá-la sem série', async () => {
   const a = await umaLinha();
   a.v('ctx.editaLinha', 0);

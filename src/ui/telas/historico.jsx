@@ -164,6 +164,11 @@ function Edicao({ s, ctx }) {
         <span class="hs-date">{s.data}</span>
         <span class="hs-vol ins-amber">corrigindo</span>
       </div>
+      {e.outroDia && (
+        <p class="ins-body-sm ins-t3 ed-outrodia">
+          Esta sessão é de {e.outroDia}. Corrigir não reabre aquele treino.
+        </p>
+      )}
 
       <div class="ed-sets">
         {e.sets.map((x, k) => (

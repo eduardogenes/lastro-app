@@ -153,7 +153,8 @@ test('todo controle do cartão de exercício tem nome acessível', async () => {
   await a.regua(0, 0, 8);
   assert.strictEqual(
     a.doc.getElementById('r0_0').getAttribute('aria-label'),
-    'repetições da série 1: 8');
+    'Série 1: 8 repetições. Tocar para corrigir.',
+    'preenchido, o valor E o que o toque faz (§8.1 da frente 3)');
   a.fechar();
 });
 
@@ -278,7 +279,7 @@ test('gravar uma série anuncia o VALOR, não só "guardado"', async () => {
   assert.strictEqual(dito.getAttribute('aria-live'), 'polite',
     'informa, não interrompe — a mesma razão escrita do toast');
   assert.strictEqual(dito.getAttribute('role'), 'status');
-  assert.match(dito.textContent, /55 kg × 9, série 1 guardada/, dito.textContent);
+  assert.strictEqual(dito.textContent, 'Guardei a série 1: 55 kg × 9.', 'o agente aparece, com o valor dentro');
   a.fechar();
 });
 
@@ -305,11 +306,11 @@ test('corrigir uma série anuncia com palavra DIFERENTE de gravar', async () => 
   a.v('toggle', 0);
   a.preencher(0, 0, 55, 9);
   await a.esperar();
-  assert.match(a.doc.getElementById('serie-dita').textContent, /guardada/);
+  assert.match(a.doc.getElementById('serie-dita').textContent, /^Guardei a série 1: /);
 
   a.preencher(0, 0, 60, null);
   await a.esperar();
-  assert.match(a.doc.getElementById('serie-dita').textContent, /60 kg × 9, série 1 corrigida/,
+  assert.match(a.doc.getElementById('serie-dita').textContent, /^Corrigi a série 1: 60 kg × 9/,
     a.doc.getElementById('serie-dita').textContent);
   a.fechar();
 });
@@ -323,5 +324,51 @@ test('série incompleta não anuncia nada', async () => {
   await a.esperar();
   assert.strictEqual(a.doc.getElementById('serie-dita').textContent, '',
     'nada anunciado: a série não ficou completa');
+  a.fechar();
+});
+
+test('corrigir pela régua diz que é correção: o guardado, "agora" no botão e "Corrigi" no anúncio', async () => {
+  // §8 da frente 3. No app a correção não é tela própria: tocar no número
+  // guardado abre a régua embaixo da linha, e é ali que ela tem de dizer que
+  // corrige — o que está no disco, e a invariante que o toque não quebra.
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[55, 9], [55, 8], [50, 8]] }] },
+    done: [{ day: 'A', t: t, sid: t }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.preencher(0, 0, 55, 9);
+  await a.esperar();
+  assert.strictEqual(a.$('#serie-dita').textContent, 'Guardei a série 1: 55 kg × 9.');
+
+  a.clicar(a.$('#r0_0'));
+  await a.esperar();
+  assert.strictEqual(a.$('#w0_0').getAttribute('aria-label'), 'Série 1: 55 quilos. Tocar para corrigir.',
+    'a unidade por extenso: número abreviado não se lê em voz');
+  assert.strictEqual(a.texto('.regua-corrige-t'), 'Corrigir a série 1 · guardada: 55 kg × 9');
+  assert.ok(a.texto('.regua-corrige').indexOf('O descanso continua de onde estava.') >= 0,
+    'a invariante que o toque não quebra, liberada pelo caso de reabrir o app');
+  assert.strictEqual(a.$('.regua-faixa').getAttribute('aria-label'), 'Repetições · um toque corrige');
+  // O defeito da §8.3: guardado igual à última recebia a pintura de "agora" e
+  // a palavra "última". A palavra passa a dizer o que a pintura diz.
+  assert.strictEqual(a.texto('[data-a="regua-9"] .regua-marca'), 'agora');
+
+  await a.regua(0, 0, 10);
+  assert.strictEqual(a.$('#serie-dita').textContent, 'Corrigi a série 1: 55 kg × 10.');
+  await a.regua(0, 0, 9);
+  assert.strictEqual(a.$('#serie-dita').textContent, 'Corrigi a série 1: 55 kg × 9, igual à última.',
+    'e o "igual à última" que saiu do botão vem para a frase');
+  a.fechar();
+});
+
+test('registrar pela primeira vez não diz "corrigir"', async () => {
+  const a = await app();
+  a.v('toggle', 0);
+  a.clicar(a.$('#r0_0'));
+  await a.esperar();
+  assert.strictEqual(a.$('.regua-corrige'), null, 'série vazia: o toque registra');
+  assert.strictEqual(a.$('.regua-faixa').getAttribute('aria-label'), 'repetições da série 1');
+  assert.strictEqual(a.$$('.regua-marca').filter(function (m) { return m.textContent === 'agora'; }).length, 0);
   a.fechar();
 });

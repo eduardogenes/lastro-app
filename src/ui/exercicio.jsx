@@ -9,6 +9,10 @@ const NOME_DA_MEDIDA = {
   seg: 'segundos', reps: 'repetições', m: 'metros', cal: 'calorias'
 };
 
+// A unidade da carga por extenso, para o rótulo do número guardado: "55
+// quilos", porque número abreviado não se lê em voz (§8.1 da frente 3).
+const UNIDADE_DITA = { 'kg': 'quilos', 'kg/lado': 'quilos por lado', '+kg': 'quilos a mais' };
+
 // O cartão de exercício da tela de treino.
 //
 // É a parte do app que mais merecia sair do render por string. Aqui moram os
@@ -92,7 +96,7 @@ function Linha({ i, k, linha, vm, acoes }) {
                  (linha.teclado && linha.teclado.decimal ? ' on' : '')}
           id={`w${i}_${k}`}
           aria-label={linha.valor[0] != null
-            ? `carga da série ${k + 1}, ${vm.unidade}: ${linha.valor[0]}`
+            ? `Série ${k + 1}: ${String(linha.valor[0]).replace('.', ',')} ${UNIDADE_DITA[vm.unidade] || vm.unidade}. Tocar para corrigir.`
             : `registrar carga da série ${k + 1}, ${vm.unidade}`}
           onClick={() => acoes.abreTecladoDeCarga(i, k)}
         >{linha.valor[0] != null ? linha.valor[0] : '·'}</button>
@@ -112,7 +116,7 @@ function Linha({ i, k, linha, vm, acoes }) {
                    (linha.regua || (linha.teclado && !linha.teclado.decimal) ? ' on' : '')}
             id={`r${i}_${k}`}
             aria-label={linha.valor[1] != null
-              ? `${unidade} da série ${k + 1}: ${linha.valor[1]}`
+              ? `Série ${k + 1}: ${linha.valor[1]} ${unidade}. Tocar para corrigir.`
               : `registrar ${unidade} da série ${k + 1}`}
             onClick={() => acoes.abreRegua(i, k)}
           >{linha.valor[1] != null ? linha.valor[1] : '·'}</button>
@@ -133,7 +137,7 @@ function Linha({ i, k, linha, vm, acoes }) {
                  (linha.valor[2] == null ? ' vazio' : '')}
           id={`q${i}_${k}`}
           aria-label={linha.valor[2] != null
-            ? `repetições na reserva da série ${k + 1}: ${linha.valor[2]}`
+            ? `Série ${k + 1}: ${linha.valor[2]} na reserva. Tocar para corrigir.`
             : `definir repetições na reserva da série ${k + 1}`}
           onClick={() => acoes.abreRir(i, k)}
         >{linha.valor[2] != null ? linha.valor[2] : '·'}</button>
@@ -480,6 +484,7 @@ export function Exercicio({ vm, acoes }) {
                 slots={linha.regua.slots}
                 valor={linha.valor[1]}
                 marca={linha.regua.marca}
+                corrige={linha.regua.corrige}
                 rotulo={`repetições da série ${k + 1}`}
                 aoEscolher={v => acoes.poeRep(i, k, v)}
                 aoAndar={dir => acoes.andaRegua(dir)}

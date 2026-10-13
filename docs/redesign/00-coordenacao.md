@@ -2828,7 +2828,27 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             **Para o curador:** "aparelho" em dois sentidos na mesma folha (o
             celular e a máquina); a frente escreveu assim, e a colisão já existe
             no app inteiro.
-      **Falta, nesta ordem:** §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
+      - [x] **§8 · Corrigir no lugar** (13/10). No app a correção não é tela:
+            tocar no número guardado abre a régua embaixo da linha, e é ali que
+            ela diz que corrige — "Corrigir a série 1 · guardada: 55 kg × 9" e
+            "O descanso continua de onde estava." (a frase que a frente
+            condicionou ao caso "corrigir depois de reabrir não inicia descanso",
+            que já existia: `serie.test.js`). A cabeça da régua, para o leitor de
+            tela, é "Repetições · um toque corrige". **O defeito da §8.3 estava
+            vivo na régua:** guardado igual à última = pintura de "agora" com a
+            palavra "última"; agora a palavra é a da pintura, e o "igual à
+            última" foi para o anúncio: "Corrigi a série 1: 55 kg × 9, igual à
+            última." (gravar diz "Guardei a série 1: …", V8). Rótulos dos
+            números guardados: "Série 3: 55 quilos. Tocar para corrigir." No
+            histórico, a correção de outro dia diz "Esta sessão é de 21/09.
+            Corrigir não reabre aquele treino." (sessão, porque lá se corrige a
+            sessão inteira). Visto: `shots/corrige.png`. Nove mutações. **1.369
+            passando.**
+            **Não feito:** o "às 6h52" do subtítulo (a série não guarda o próprio
+            instante, só a sessão — seria campo novo no dado); "Apagar esta
+            série" na régua (é gesto novo, não palavra); o teclado da carga não
+            ganhou a linha da correção.
+      **Falta, nesta ordem:** §5 a lista que vence; §6 os portões da semana; §10 a
       bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
       app seguem no diálogo do sistema, de propósito (§3.3).
 

@@ -1765,6 +1765,12 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
   color: var(--ins-tinta-3);
 }
 .regua-v.on .regua-marca { color: var(--ins-sobre-acento); opacity: .8; }
+/* A correção diz o que está guardado antes da faixa (§8.2). */
+.regua-corrige { margin: 0 0 var(--ins-3); }
+.regua-corrige-t { margin: 0; color: var(--ins-tinta); }
+.regua-corrige p + p { margin: var(--ins-1) 0 0; }
+/* A correção de uma sessão de outro dia diz que não reabre o treino (§8.4). */
+.ed-outrodia { margin: var(--ins-2) 0 var(--ins-3); }
 .regua-outro {
   display: block; margin-top: var(--ins-2);
   background: transparent; border: 0; padding: var(--ins-2) 0;

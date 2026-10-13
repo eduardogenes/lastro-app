@@ -39,10 +39,21 @@
  * `slots` vem de `pagina()` — o componente não calcula nada, e é isso que faz a
  * posição ser derivada do foco (R4) em vez de estado de tela.
  */
-export function Regua({ slots, valor, marca, rotulo, aoEscolher, aoAndar, aoOutro }) {
+export function Regua({ slots, valor, marca, rotulo, corrige, aoEscolher, aoAndar, aoOutro }) {
   return (
     <div class="regua">
-      <div class="regua-faixa" role="group" aria-label={rotulo}>
+      {/* CORRIGIR, e não registrar de novo (§8 da frente 3). Só aparece quando a
+          série já está guardada: o que está no disco, e a invariante que o
+          toque não quebra — o descanso sai do dado (`serieJaRegistrada`), e o
+          caso "corrigir depois de reabrir o app não inicia descanso" é o que
+          libera esta frase. */}
+      {corrige && (
+        <div class="regua-corrige">
+          <p class="ins-body-sm regua-corrige-t">{corrige}</p>
+          <p class="ins-body-xs ins-t3">O descanso continua de onde estava.</p>
+        </div>
+      )}
+      <div class="regua-faixa" role="group" aria-label={corrige ? 'Repetições · um toque corrige' : rotulo}>
         {slots.map(s => s.tipo === 'anda' ? (
           <button
             key={'anda' + s.dir}
@@ -66,8 +77,14 @@ export function Regua({ slots, valor, marca, rotulo, aoEscolher, aoAndar, aoOutr
             {s.v}
             {/* A referência é a ÚLTIMA VEZ, e dizê-la dentro do botão é o que
                 torna a régua uma régua em vez de um teclado: ele vê onde
-                estava antes de escolher onde está. */}
-            {s.referencia && marca && <small class="regua-marca">{marca}</small>}
+                estava antes de escolher onde está.
+                O valor GUARDADO diz "agora", e vence: quando ele é igual ao da
+                última vez, a pintura é a de `.on`, e a palavra tem de dizer o
+                que a pintura diz (§8.3). O "igual à última" vai para a frase
+                depois do toque, onde cabe. */}
+            {s.v === valor
+              ? <small class="regua-marca">agora</small>
+              : s.referencia && marca && <small class="regua-marca">{marca}</small>}
           </button>
         ))}
       </div>

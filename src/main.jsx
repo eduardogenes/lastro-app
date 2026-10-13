@@ -1899,7 +1899,7 @@ function vmExercicio(d, i, ex) {
       // A RÉGUA da linha. Montada aqui, no modelo de apresentação, e a página é
       // função do foco — é o R4 da frente 2: não há `scrollLeft` guardado para
       // um re-render perder. Reconstruir com o mesmo foco dá a mesma página.
-      regua: reguaDaLinha(i, k, ex, p),
+      regua: reguaDaLinha(i, k, ex, p, v, CARGAS[tipo].rot),
       // O TECLADO PRÓPRIO, quando a porta "outro valor" o abriu nesta linha.
       teclado: (function () {
         const a = view.teclado && view.teclado.alvo;
@@ -4439,8 +4439,14 @@ function dizSerie(i, k, e, jaRegistrada) {
   const peso = s[0] == null ? null : num(s[0]) + (un ? ' ' + ROTULO_UNIDADE[un] : ' kg');
   const reps = s[1] == null ? null : String(s[1]);
   const valor = peso && reps ? peso + ' × ' + reps : (peso || reps || '');
-  el.textContent = valor + ', série ' + (k + 1) +
-    (jaRegistrada ? ' corrigida' : ' guardada') + '.';
+  // "Guardei a série 3: 55 kg × 9." / "Corrigi a série 3: 55 kg × 9, igual à
+  // última." — o agente aparece (V8), e corrigir tem verbo próprio: guardar de
+  // novo soaria como série nova. O "igual à última" saiu do botão da régua
+  // (§8.3) e vem para cá, onde cabe e é lido depois do toque.
+  const p = jaRegistrada ? lastSet(logKey(view.day, i), k) : null;
+  const igual = !!(p && p[0] === s[0] && p[1] === s[1]);
+  el.textContent = (jaRegistrada ? 'Corrigi' : 'Guardei') + ' a série ' + (k + 1) + ': ' +
+    valor + (igual ? ', igual à última' : '') + '.';
 }
 
 function autoTimer(i, k, e, jaRegistrada) {
@@ -4750,7 +4756,7 @@ const RIR_ESCALA = [0, 1, 2, 3, 4];
  * treinador manda recomeçar (F95, "recomeçar perto da base"), e a marca não
  * aparece — dizer "última" sobre um número que ele nunca fez seria inventar.
  */
-function reguaDaLinha(i, k, ex, anterior) {
+function reguaDaLinha(i, k, ex, anterior, valor, un) {
   const r = view.regua;
   if (!r || r.i !== i || r.k !== k || r.outro) return null;
   const fx = faixaDoTexto(ex.r);
@@ -4760,8 +4766,21 @@ function reguaDaLinha(i, k, ex, anterior) {
   return {
     slots: pagina(reg, r.foco != null ? r.foco : ref),
     marca: tem ? 'última' : null,
-    referencia: ref
+    referencia: ref,
+    // "Corrigir a série 3 · guardada: 55 kg × 9" — só com a série já guardada,
+    // que é quando o toque CORRIGE (§8.2). O "às 6h52" do desenho não vem: a
+    // série não guarda o próprio instante, só a sessão.
+    corrige: valor && valor[1] != null
+      ? 'Corrigir a série ' + (k + 1) + ' · guardada: ' + textoDoGuardado(valor, un)
+      : null
   };
+}
+
+/** "55 kg × 9", ou "9 repetições" sem carga — o par como ele está no disco. */
+function textoDoGuardado(s, un) {
+  return s[0] != null && s[0] !== ''
+    ? fmtNum(s[0]).replace('.', ',') + ' ' + un + ' × ' + s[1]
+    : s[1] + ' repetições';
 }
 
 /**
@@ -7793,6 +7812,9 @@ CTX.historico = function () {
         obs: s.obs || null,
         editando: view.edit === base + k,
         edicao: view.edit === base + k ? {
+          // §8.4: "Esta série é de 21/09. Corrigir não reabre aquele treino." —
+          // aqui a correção é da sessão inteira, e a frase diz sessão.
+          outroDia: sameDay(s.t, Date.now()) ? null : fmtDate(s.t),
           sets: s.sets.map(function (x) {
             return { carga: x ? fmtNum(x[0]) : '', reps: x ? String(x[1]) : '' };
           }),
