@@ -172,9 +172,10 @@ test('o catálogo conhece o vocabulário do box', async () => {
   const termos = ['bike', 'box jump', 'double under', 'kettlebell', 'thruster',
                   'air squat', 'sit', 'devil press', 'clean', 'push press',
                   'snatch', 'mountain', 'burpee', 'prancha'];
+  const CAT = a.dado('CAT');
   termos.forEach(function (q) {
-    const comGrandeza = a.J(`(function(){ view.addQ=${JSON.stringify(q)};
-      return catalogoDeAdicao('HX').achados.filter(function(x){ return !!CAT[x.id].u; }); })()`);
+    a.v('setBuscaDeExercicio', q);
+    const comGrandeza = a.vJ('catalogoDeAdicao', 'HX').achados.filter(function (x) { return !!CAT[x.id].u; });
     assert.ok(comGrandeza.length > 0, 'a busca por "' + q + '" não acha movimento de box');
   });
   a.fechar();
@@ -182,10 +183,8 @@ test('o catálogo conhece o vocabulário do box', async () => {
 
 test('todo movimento de box fica fora do alvo por músculo e declara grandeza', async () => {
   const a = await app({});
-  const falhas = a.J(`(function(){
-    return MOVIMENTOS_DE_BOX.filter(function (ex) { return ex.g !== '' || !ex.u || !(ex.q > 0); })
-      .map(function (ex) { return ex.n; });
-  })()`);
+  const falhas = a.dado('MOVIMENTOS_DE_BOX').filter(function (ex) { return ex.g !== '' || !ex.u || !(ex.q > 0); })
+    .map(function (ex) { return ex.n; });
   assert.deepStrictEqual(falhas, [],
     'movimento com grupo entraria no volume; sem grandeza viraria série de musculação');
   assert.strictEqual(a.dado('ALVO_TOTAL'), 90, 'o alvo continua sendo só a musculação');
@@ -238,8 +237,8 @@ test('o cabeçalho acompanha a quantidade enquanto ele digita', async () => {
 test('no dia aberto o catálogo abre pelos movimentos de box, na ordem', async () => {
   const a = await app({});
   a.aba('treino');
-  a.E('view.addQ=""');
-  const hx = a.J(`catalogoDeAdicao('HX').achados.map(function(x){return x.n})`);
+  a.v('setBuscaDeExercicio', '');
+  const hx = a.vJ('catalogoDeAdicao', 'HX').achados.map(function (x) { return x.n; });
   assert.deepStrictEqual(hx.slice(0, 9), [
     'Corrida', 'Wall balls', 'Remo ergômetro', 'Ski erg', 'Sled push',
     'Sled pull', 'Farmers carry', 'Lunges com sandbag', 'Burpee broad jump'
@@ -255,8 +254,8 @@ test('no dia aberto o catálogo abre pelos movimentos de box, na ordem', async (
 test('a prioridade não existe nos dias de musculação', async () => {
   const a = await app({});
   a.aba('treino');
-  a.E('view.addQ=""');
-  const dia = a.J(`catalogoDeAdicao('A').achados.map(function(x){return x.n})`);
+  a.v('setBuscaDeExercicio', '');
+  const dia = a.vJ('catalogoDeAdicao', 'A').achados.map(function (x) { return x.n; });
   const ordenado = dia.slice().sort(function (x, y) { return x.localeCompare(y); });
   assert.deepStrictEqual(dia, ordenado,
     'no dia de prescrição pôr sled no topo seria oferecer o caminho errado');
@@ -266,11 +265,11 @@ test('a prioridade não existe nos dias de musculação', async () => {
 test('a prioridade também vale dentro da busca', async () => {
   const a = await app({});
   a.aba('treino');
-  a.E('view.addQ="burpee"');
-  const r = a.J(`catalogoDeAdicao('HX').achados.map(function(x){return x.n})`);
+  a.v('setBuscaDeExercicio', 'burpee');
+  const r = a.vJ('catalogoDeAdicao', 'HX').achados.map(function (x) { return x.n; });
   assert.strictEqual(r[0], 'Burpee broad jump', 'a estação da prova vem antes do burpee solto');
-  a.E('view.addQ="s"');
-  const s = a.J(`catalogoDeAdicao('HX').achados.map(function(x){return x.n}).slice(0,3)`);
+  a.v('setBuscaDeExercicio', 's');
+  const s = a.vJ('catalogoDeAdicao', 'HX').achados.map(function (x) { return x.n; }).slice(0,3);
   assert.deepStrictEqual(s, ['Wall balls', 'Ski erg', 'Sled push'],
     'digitar uma letra faz o box subir, em vez de dezenas de aparelhos');
   a.fechar();
@@ -279,26 +278,25 @@ test('a prioridade também vale dentro da busca', async () => {
 test('a linha diz a medida, não "sem grupo"', async () => {
   const a = await app({});
   a.aba('treino');
-  a.E('view.addQ="remo erg"');
-  const r = a.J(`catalogoDeAdicao('HX').achados`);
+  a.v('setBuscaDeExercicio', 'remo erg');
+  const r = a.vJ('catalogoDeAdicao', 'HX').achados;
   assert.strictEqual(r[0].sub, '1.000 m', '"sem grupo" dezesseis vezes no topo não diria nada');
-  a.E('view.addQ="wall"');
-  assert.strictEqual(a.J(`catalogoDeAdicao('HX').achados`)[0].sub, '100 reps');
-  a.E('view.addQ="assault"');
-  assert.strictEqual(a.J(`catalogoDeAdicao('HX').achados`)[0].sub, '15 cal');
+  a.v('setBuscaDeExercicio', 'wall');
+  assert.strictEqual(a.vJ('catalogoDeAdicao', 'HX').achados[0].sub, '100 reps');
+  a.v('setBuscaDeExercicio', 'assault');
+  assert.strictEqual(a.vJ('catalogoDeAdicao', 'HX').achados[0].sub, '15 cal');
   // e o exercício de musculação continua mostrando o grupo (pushdown já está
   // no treino A, e o aviso disso continua vindo junto)
-  a.E('view.addQ="pushdown"');
-  assert.strictEqual(a.J(`catalogoDeAdicao('A').achados`)[0].sub,
+  a.v('setBuscaDeExercicio', 'pushdown');
+  assert.strictEqual(a.vJ('catalogoDeAdicao', 'A').achados[0].sub,
     'tríceps · já está neste treino');
   a.fechar();
 });
 
 test('todo nome da lista de frequentes existe no catálogo', async () => {
   const a = await app({});
-  const orfaos = a.J(`(function(){
-    return FREQUENTES_NO_BOX.filter(function (n) { return !EX_BASE[slugEx(n)]; });
-  })()`);
+  const EX_BASE = a.dado('EX_BASE');
+  const orfaos = a.dado('FREQUENTES_NO_BOX').filter(function (n) { return !EX_BASE[a.v('slugEx', n)]; });
   assert.deepStrictEqual(orfaos, [],
     'um nome com erro de digitação sumiria da prioridade em silêncio');
   a.fechar();
@@ -307,8 +305,10 @@ test('todo nome da lista de frequentes existe no catálogo', async () => {
 test('a busca do catálogo ignora acento e ordem de palavra', async () => {
   const a = await app({});
   a.aba('treino');
-  const acha = q => a.J(`(function(){ view.addQ=${JSON.stringify(q)};
-    return catalogoDeAdicao('HX').achados.map(function(x){return x.n}); })()`);
+  const acha = function (q) {
+    a.v('setBuscaDeExercicio', q);
+    return a.vJ('catalogoDeAdicao', 'HX').achados.map(function (x) { return x.n; });
+  };
 
   assert.ok(acha('ergometro').indexOf('Remo ergômetro') >= 0,
     'digitar acento no iPhone custa segurar a tecla e escolher');
@@ -326,7 +326,7 @@ test('a busca do catálogo ignora acento e ordem de palavra', async () => {
 
 test('a busca de alimentos ganhou a mesma flexibilidade', async () => {
   const a = await app({});
-  const acha = q => a.J(`CTX.alimentosFiltrados(${JSON.stringify(q)}).map(function(x){return x.n})`);
+  const acha = q => a.vJ('ctx.alimentosFiltrados', q).map(function (x) { return x.n; });
   assert.ok(acha('macarrao').indexOf('Macarrão cozido') >= 0);
   assert.ok(acha('feijao').indexOf('Feijão cozido') >= 0);
   assert.ok(acha('requeijao').length > 0);

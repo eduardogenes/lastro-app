@@ -1,7 +1,8 @@
 import {
   ROT_BASE, D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO,
   PROGRAMA, RULES, ALT, slugEx, EX_BASE, FREQUENTES_NO_BOX,
-  PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, ehPriorizado, PRIO, CARGAS, DORES, MODAIS
+  PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, ehPriorizado, PRIO, CARGAS, DORES, MODAIS,
+  MOVIMENTOS_DE_BOX
 } from './dominio/programa';
 import {
   fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca, fmtHoraDita,
@@ -5900,6 +5901,7 @@ const SUPERFICIE = {
     get ALT() { return ALT; },
     get EX_BASE() { return EX_BASE; },
     get FREQUENTES_NO_BOX() { return FREQUENTES_NO_BOX; },
+    get MOVIMENTOS_DE_BOX() { return MOVIMENTOS_DE_BOX; },
     get PROGRAMA() { return PROGRAMA; },
     get ROT_BASE() { return ROT_BASE; },
     get PLANO_ATUAL() { return PLANO_ATUAL; },
