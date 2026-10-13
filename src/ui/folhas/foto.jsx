@@ -15,12 +15,15 @@ export function FolhaFoto({ ctx, id }) {
 
   return (
     <Folha titulo={f.nome} olho="o aparelho" aoFechar={ctx.fechaFolha}>
+      {/* Três estados, e cada um diz o seu (§7.8). O texto antigo dizia "Sem
+          foto" também quando a foto existe e ainda não chegou a este aparelho,
+          e dizia que "a imagem fica neste aparelho" — com conta, ela sobe para
+          a nuvem. */}
       {f.url
         ? <img class="fotoex" src={f.url} alt={'Aparelho: ' + f.nome} />
         : <p class="ins-body-sm ins-t3 foto-vazio">
-            Sem foto. Fotografe o aparelho da sua academia — é ele que responde
-            qual dos modelos parecidos é o certo. A imagem fica neste aparelho e
-            não vai para o histórico.
+            {f.tem ? 'A foto desta máquina ainda não chegou a este aparelho.'
+                   : 'Nenhuma foto desta máquina neste aparelho.'}
           </p>}
 
       {f.cue && <p class="ins-body-sm ins-t2 foto-cue">{f.cue}</p>}
@@ -28,7 +31,7 @@ export function FolhaFoto({ ctx, id }) {
       {/* `capture` abre a câmera direto no celular e é ignorado no computador,
           onde vira seletor de arquivo — os dois caminhos servem. */}
       <label class="ins-btn-primary foto-b">
-        {f.tem ? 'trocar a foto' : 'tirar foto'}
+        {f.tem ? 'trocar a foto' : 'fotografar o aparelho'}
         <input type="file" accept="image/*" capture="environment"
                onChange={e => ctx.tiraFoto(e.currentTarget)} />
       </label>

@@ -354,8 +354,24 @@ test('data no futuro é recusada', async () => {
   a.aba('corpo');
   a.E('CTX.setDiaCorpo("peso", "' + iso(Date.now() + 3 * DIA) + '")');
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, true, 'continua em hoje');
+  assert.strictEqual(a.toast(), 'Nunca uma data futura: o dia ainda não aconteceu.',
+    'e diz que recusou: recusa calada é beco (§7.8)');
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.max, iso(Date.now()),
     'e o campo nem oferece: max é hoje');
+  a.fechar();
+});
+
+test('às 6h, voltar a data para HOJE funciona — não é futuro', async () => {
+  // O dia escolhido vira 7h, e antes das 7h "hoje às 7h" estava no futuro: a
+  // volta para hoje era recusada em silêncio, na hora em que ele pesa.
+  const agora = agoraEstavel(6, 5);
+  const a = await app({ estado: vazio, agora: agora });
+  a.aba('corpo');
+  a.E('CTX.setDiaCorpo("peso", "' + iso(agora - DIA) + '")');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, false, 'pré-condição: foi para ontem');
+  a.E('CTX.setDiaCorpo("peso", "' + iso(agora) + '")');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, true, 'e voltou para hoje');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar hoje');
   a.fechar();
 });
 
@@ -417,11 +433,14 @@ test('o seletor de data abre pelo link e aceita o campo nativo', async () => {
   a.aba('corpo');
   assert.strictEqual(a.$$('.dd-dia').length, 0, 'fechado por padrão: não custa espaço');
   assert.ok(a.$('.dd-diabtn'), 'mas existe o caminho');
+  assert.strictEqual(a.texto('.dd-diabtn'), 'Peso de outro dia', 'e diz do que é o dia que ele troca (§7.8)');
 
   a.clicar(a.$('.dd-diabtn'));
   const campo = a.$('.dd-dia input[type=date]');
   assert.ok(campo, 'abre o seletor de data do aparelho');
   assert.strictEqual(campo.getAttribute('max'), iso(Date.now()), 'sem data futura');
+  assert.ok(a.$$('.dd-dia-nota').some(function (p) { return p.textContent === 'Nunca uma data futura: o dia ainda não aconteceu.'; }),
+    'e a regra dita antes do toque');
 
   a.digitar('ddia-peso', iso(Date.now() - 9 * DIA));
   await a.esperar();

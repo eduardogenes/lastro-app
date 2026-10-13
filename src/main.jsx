@@ -6833,8 +6833,19 @@ CTX.setDiaCorpo = function (k, iso) {
   const p = String(iso).split('-').map(Number);
   if (p.length !== 3 || !p[0]) return;
   const d = new Date(p[0], p[1] - 1, p[2], 7, 0, 0, 0);
-  if (isNaN(d.getTime()) || d.getTime() > Date.now()) return;
-  view.bodyDia = Object.assign({}, view.bodyDia, { [k]: d.getTime() });
+  if (isNaN(d.getTime())) return;
+  // HOJE volta ao padrão, e não às 7h: antes das 7h, hoje às 7h está no futuro,
+  // e escolher hoje de volta era recusado em silêncio — às 6h, que é a hora em
+  // que ele pesa.
+  const hoje = sameDay(d.getTime(), Date.now());
+  if (!hoje && d.getTime() > Date.now()) {
+    // A recusa diz que recusou: um seletor que ignora o toque é beco (§7.8).
+    toast('Nunca uma data futura: o dia ainda não aconteceu.');
+    return;
+  }
+  const dias = Object.assign({}, view.bodyDia);
+  if (hoje) delete dias[k]; else dias[k] = d.getTime();
+  view.bodyDia = dias;
   // trocar de dia troca a referência do stepper: o valor a corrigir é o
   // daquele dia, não o da última pesagem
   view.bodyForm = Object.assign({}, view.bodyForm);

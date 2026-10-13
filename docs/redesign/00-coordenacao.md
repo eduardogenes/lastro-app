@@ -2805,7 +2805,30 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             treinador). **Dívida visual, dos designers:** marca e botão em caixa
             alta espaçada quebram em duas linhas. Três casos, oito mutações.
             **1.364 passando.**
-      **Falta, nesta ordem:** §7.8 os becos; §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
+      - [x] **§7.8 · Os becos** (13/10). Os becos foram medidos no PROTÓTIPO; no
+            app reescrito nenhum dos cinco é botão morto. O que cabia era a
+            palavra e a regra de fechar a seção ("nenhum rótulo mente"):
+            **Corpo:** "Peso de outro dia" (e "Cintura de…", "Braço de…" pelo
+            mesmo molde); dentro, "Nunca uma data futura: o dia ainda não
+            aconteceu."; e a recusa, que era calada, diz a mesma frase.
+            **Achado: às 6h, voltar a data para HOJE era recusado** (o dia vira
+            7h, e hoje às 7h estava no futuro) — na hora em que ele pesa. Hoje
+            volta ao padrão. **Foto do aparelho:** "Nenhuma foto desta máquina
+            neste aparelho." + "fotografar o aparelho". **Achado: a folha dizia
+            "Sem foto" com a foto registrada e ainda não baixada, e dizia que "a
+            imagem fica neste aparelho"** — com conta, ela sobe. Terceiro estado,
+            escrito por mim no molde da frase da frente: "A foto desta máquina
+            ainda não chegou a este aparelho." Seis mutações. **1.366 passando.**
+            **Não feito, com razão:** "Evolução" (aceita pelo dono em 06/10) não
+            tem onde morar — o Corpo reescrito não tem o destino de leitura
+            ("Evolução · 9 semanas · 31 pesagens"); criar o destino é desenho.
+            "Dia de treino, por palpite · mudar" é frase de um cabeçalho que não
+            é o do app (o botão hoje diz "previsto · A"): vai com a §1.1. A nota
+            do treinador é prosa no cartão, não botão — não há beco.
+            **Para o curador:** "aparelho" em dois sentidos na mesma folha (o
+            celular e a máquina); a frente escreveu assim, e a colisão já existe
+            no app inteiro.
+      **Falta, nesta ordem:** §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
       bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
       app seguem no diálogo do sistema, de propósito (§3.3).
 

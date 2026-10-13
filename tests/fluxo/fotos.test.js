@@ -94,7 +94,20 @@ test('sem foto, a folha não desenha imagem nenhuma', async () => {
   a.v('toggle', 0);
   a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
   assert.strictEqual(a.$('.fotoex'), null, 'sem <img> e sem placeholder');
-  assert.ok(a.texto('.foto-vazio').includes('Sem foto'));
+  assert.strictEqual(a.texto('.foto-vazio'), 'Nenhuma foto desta máquina neste aparelho.');
+  assert.strictEqual(a.texto('.foto-b'), 'fotografar o aparelho', 'o botão diz o que faz (§7.8)');
+  a.fechar();
+});
+
+test('foto registrada que não chegou a este aparelho não diz "sem foto"', async () => {
+  // A referência existe (outro aparelho tirou, ou a nuvem ainda não devolveu),
+  // e os bytes não estão aqui. Dizer "nenhuma foto" seria mentir sobre o dado.
+  const a = await app({ estado: { logs: {}, done: [], fotos: { 'chest-press-inclinado-convergente': { v: 1, ext: 'jpg' } } } });
+  a.v('abreFoto', 0);
+  await a.esperar();
+  assert.strictEqual(a.$('.fotoex'), null, 'pré-condição: a imagem não está aqui');
+  assert.strictEqual(a.texto('.foto-vazio'), 'A foto desta máquina ainda não chegou a este aparelho.');
+  assert.strictEqual(a.texto('.foto-b'), 'trocar a foto');
   a.fechar();
 });
 

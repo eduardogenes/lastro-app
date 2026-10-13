@@ -70,9 +70,15 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
               onInput={e => onDia(e.currentTarget.value)}
             />
             <p class="ins-body-sm ins-t3 dd-dia-nota">{dia.jaTem}</p>
+            {/* A regra do seletor, dita antes do toque: o `max` do campo
+                recusa sem dizer nada, e a recusa calada é beco (§7.8). */}
+            <p class="ins-body-sm ins-t3 dd-dia-nota">Nunca uma data futura: o dia ainda não aconteceu.</p>
           </div>
         : <button class="dd-diabtn" onClick={onAbrirDia}>
-            {dia.hoje ? 'outro dia' : 'registrando em ' + dia.txt + ' · trocar'}
+            {/* "Peso de outro dia", e não "outro dia": o botão diz do que é o
+                dia que ele troca (§7.8). */}
+            {dia.hoje ? rotulo.charAt(0).toUpperCase() + rotulo.slice(1) + ' de outro dia'
+                      : 'registrando em ' + dia.txt + ' · trocar'}
           </button>)}
 
       {serie.some(x => x != null)
