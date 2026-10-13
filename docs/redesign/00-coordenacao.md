@@ -11,6 +11,35 @@ pede atenção do dono.
 
 ---
 
+## ⏸ PONTO DE PARADA — 13/10, pedido do dono ("precisa pausar")
+
+**Onde parou, exatamente:**
+- Branch `redesenho-do-zero`, tudo commitado e a suíte verde: **1.409 passando**,
+  zero "unhandled". Último commit de código: o destino **Evolução** no Corpo.
+- **Um agente em segundo plano estava trabalhando quando parou:** o desenhista da
+  D, terceira rodada (Anexo I), id `abf4ffeb29a79cc05` — desenha **Dias** e o
+  **Agora de descanso fora de janela**. Caiu uma vez por limite e foi retomado.
+  No disco, só rascunho em `03-direcao-D/_trabalho/d3/` (não commitado).
+  **Ao retomar:** conferir se existem `03-direcao-D/dias.html`,
+  `agora-descanso.html` e `direcao-3.md`. Se não, retomar o agente pelo id com
+  `SendMessage` ("retome; no disco existe X, falta Y"); se o id não responder
+  (sessão nova), novo agente com o texto do Anexo I + um parágrafo de retomada.
+  **Quando entregar:** conferir contra vazamento (nada do app de hoje, nenhum
+  nome de classe ou tela antiga) e contra o pedido; só então construir.
+- **Fila de construção minha, na ordem:**
+  1. **§2 da frente 3 — os rótulos** (R1–R4): rótulo de seção só onde a seção
+     tem mais de uma linha e a primeira não a nomeia; o que fica vira frase com
+     artigo, caixa de frase, 15 px, sem espaçamento; o olho vira procedência;
+     a unidade em caixa baixa. É a "caixa alta" das dívidas visuais. Mexe em
+     ~83 lugares de 21 arquivos — fazer por tela, com captura.
+  2. **Decidir com o dono:** depois de aplicar o passo de ±150 kcal, o veredito
+     das MESMAS semanas continua oferecendo "aplicar" (o desenho diz que a tela
+     mostra o passo aplicado até haver duas semanas novas de taxa). É mudança
+     de regra; um caso antigo aplica duas vezes de propósito.
+  3. O que o desenhista entregar (Dias, Agora de descanso).
+- **Do dono, sem mudança:** as medições A–D da régua no aparelho (6.z); a
+  promessa "a tela não vai pedir isso de novo em outro lugar" (§11.2, aberta).
+
 ## Como retomar (ler primeiro)
 
 1. Ler `00-briefing.md` inteiro. Ele manda mais que este arquivo.
@@ -3150,6 +3179,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 13/10 · Frente 3 aplicada no que tem lugar no app: dor, deload, becos, corrigir no lugar, a lista que vence, o veredito e o passo, a bioimpedância e a sobrancelha do Agora (`aa1178d` a `95d36b6`). Parados por serem desenho: os portões da Semana e os tipos de cartão que não existem. Achados de dado no caminho: o `dl` da sessão aberta não acompanhava o deload, e a data do Corpo recusava HOJE antes das 7h. 1.378 passando.
 - 13/10 · 6.v' fechado: o reponte, 485 → 188 entradas pela ponte, um commit por arquivo. A ponte tinha crescido com casos meus.
 - 13/10 · As portas: 189 de 205 funções de CTX eram acionadas; os 14 botões das que sobravam ganharam caso (`portas.test.js`).
+- 13/10 · Terceira rodada da D disparada (Anexo I). Construídos: os portões da Semana, o vazio e o Desfazer; as linhas do corpo no Agora; o botão de linha que espremia texto; o destino Evolução. Achado e consertado: a taxa exata de 0,10 caía abaixo do limite por ponto flutuante (61 de 400 sequências). **Pausa pedida pelo dono** — ver o ponto de parada no topo.
 
 ---
 
