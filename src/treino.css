@@ -768,9 +768,13 @@
 .rapido { margin-top: var(--ins-5); }
 .rapl {
   display: flex; align-items: center; gap: var(--ins-4);
+  /* Quebra para o teclado próprio abrir EMBAIXO da linha, como na série: sem
+     isto ele entrava como terceira coluna, espremido ao lado do nome. */
+  flex-wrap: wrap;
   padding: var(--ins-4) 0;
   border-bottom: 1px solid var(--ins-fio);
 }
+.rapl > .tcl { flex: 1 0 100%; margin-bottom: 0; }
 .rapl.feito { border-bottom-color: var(--ins-acento); }
 .rapl-n { flex: 1; min-width: 0; }
 .rapl-n b {
@@ -792,17 +796,21 @@
   letter-spacing: .14em; text-transform: uppercase;
   color: var(--ins-tinta-3); text-align: center;
 }
-/* 16px: abaixo disso o Safari dá zoom ao focar, e a tela fica torta no meio
-   do preenchimento. */
-.rapl-f input {
-  width: 100%; min-height: var(--ins-tap); padding: 0 var(--ins-2);
-  background: transparent; border: 0;
+/* O botão que abre o teclado próprio ocupa o lugar e a medida do campo que
+   ele substituiu: 46px de alvo, o fio embaixo e o mono de 16px em que cabe
+   "127,5". O fio fica, ao contrário do RIR: aqui não há cabeçalho de colunas,
+   e é ele que diz que a célula recebe um número. */
+.rapl-b {
+  display: block; width: 100%; min-height: var(--ins-tap); padding: 0 var(--ins-2);
+  background: transparent; border: 0; border-radius: 0;
   border-bottom: 1px solid var(--ins-fio-controle);
   font: 500 16px/1 var(--ins-fonte); color: var(--ins-tinta);
   text-align: center;
 }
-.rapl-f input:focus { outline: none; border-bottom-color: var(--ins-acento); }
-.rapl-f input.done { color: var(--ins-acento-tinta); }
+.rapl-b.vazio { color: var(--ins-tinta-3); }
+/* Aberto: só enquanto o teclado está na tela, para ele saber em qual das duas
+   grandezas está digitando. */
+.rapl-b.on { color: var(--ins-acento-tinta); border-bottom-color: var(--ins-acento); }
 
 /* Uma linha de modelo: o modelo inteiro é o alvo, e o destrutivo fica na ponta,
    em coral, com alvo próprio — nunca competindo com o toque que aplica. */

@@ -1265,3 +1265,14 @@ test('a paleta atende contraste nos dois temas, medido do que está na folha', (
     'a asserção de cima já pegou. Ela existe para que a folga de 0,26 não ' +
     'desapareça sem ninguém notar.');
 });
+
+test('a linha da lista rápida quebra, para o teclado próprio abrir embaixo dela', () => {
+  // O jsdom não calcula layout, então nenhum caso de DOM vê isto. A linha é
+  // flex: sem a quebra, o painel entrava como TERCEIRA coluna, espremido ao lado
+  // do nome do movimento — e todos os casos de fluxo continuavam verdes.
+  const t = fonte('src/treino.css');
+  assert.match(regras(t, '.rapl'), /flex-wrap\s*:\s*wrap/,
+    'a linha precisa quebrar para o teclado descer');
+  assert.match(regras(t, '.rapl > .tcl'), /flex\s*:\s*1 0 100%/,
+    'e o teclado ocupa a largura inteira, embaixo do nome e dos dois botões');
+});

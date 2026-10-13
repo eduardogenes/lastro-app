@@ -865,9 +865,9 @@ test('a pegada aparece onde há decisão, e cala onde resumir seria pior', async
 //     `"acoesDia.subir"` em `CTX` e estoura. Entram por `a.m.ctx.acoes…`, que é
 //     a porta por acesso direto — por nome e sem `eval` —, e o §4 do
 //     09-superficie.md já a documenta com a ressalva de realm.
-//  2. **`acoesRapido.inp` e `acoesEx.inp`/`obsIn` recebem elemento do DOM.**
-//     São as cascas do §2, e os pares por valor delas (`anotaSerieRapida`,
-//     `anotaSerie`, `anotaObservacao`) já estão em `verbos`. O caso confere que
+//  2. **`acoesEx.inp`/`obsIn` recebem elemento do DOM.** São as cascas do §2,
+//     e os pares por valor delas (`anotaSerie`, `anotaObservacao`) já estão em
+//     `verbos`. (`acoesRapido.inp` era a terceira, e saiu com o campo.) O caso confere que
 //     o NOME está na tabela, não que ele seja verbo.
 
 /** O inventário completo, por tabela — a lista é o que o caso protege. */
@@ -883,7 +883,11 @@ const TABELAS_DE_ACAO = {
             'tecla', 'fechaTeclado', 'abreTecladoDeCarga'],
   acoesDia: ['subir', 'descer', 'menos', 'mais', 'trocar', 'remover', 'escolheTroca',
              'fechaTroca', 'desfaz', 'pronto'],
-  acoesRapido: ['abre', 'inp'],
+  // `inp` saiu por decisão escrita: a lista rápida não tem mais campo — carga
+  // e medida abrem o teclado próprio —, e o par por valor dela,
+  // `anotaSerieRapida`, continua em `verbos`. As três que entraram são as do
+  // teclado, e duas delas são as MESMAS de `acoesEx`.
+  acoesRapido: ['abre', 'abreTeclado', 'tecla', 'fechaTeclado'],
   acoesAulas: ['abre', 'repete', 'aplica', 'salva', 'apaga', 'cola', 'importa'],
   acoesAdd: ['abre', 'fecha', 'busca', 'adiciona', 'abreNovo', 'cria'],
   acoesPrograma: ['volta', 'abreDia', 'modo', 'moveDia', 'criaTreino', 'restauraDia',

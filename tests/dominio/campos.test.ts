@@ -167,8 +167,9 @@ const NUMERO: Record<string, 'decimal' | 'numeric'> = {
   // linha sai do registro em vez de mentir sobre um campo que não existe.
   'src/ui/exercicio.jsx · r*_*': 'numeric',        // repetições da série
   'src/ui/exercicio.jsx · q*': 'decimal',        // quantidade de alimento
-  'src/ui/instrumento/edicao.jsx · fw*': 'decimal',   // carga na lista rápida da aula
-  'src/ui/instrumento/edicao.jsx · fr*': 'numeric',   // medida na lista rápida da aula
+  // A LISTA RÁPIDA DA AULA SAIU DAQUI pelo mesmo motivo da carga da série: a
+  // §6.1 manda próprio nas duas grandezas dela, e os dois campos viraram botões
+  // que abrem o teclado de doze teclas. Não há `inputmode` a cobrar.
   'src/ui/instrumento/edicao.jsx · nxq': 'decimal',   // prescrição do exercício novo
   'src/ui/telas/historico.jsx · ed*_0': 'decimal',    // correção da carga
   'src/ui/telas/historico.jsx · ed*_1': 'numeric',    // correção das reps

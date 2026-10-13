@@ -38,6 +38,22 @@ async function noSabado(opcoes) {
   return a;
 }
 
+/**
+ * Registra um valor da lista rápida pelo caminho do dedo: toca o botão e digita
+ * nas teclas do teclado próprio, que abre embaixo da linha. `digitar` não serve
+ * mais — carga e medida viraram botões, e o harness recusa escrever num botão.
+ */
+async function pelaLista(a, id, valor) {
+  a.clicar(a.doc.getElementById(id));
+  await a.esperar();
+  for (const ch of String(valor)) {
+    const tecla = a.$$('.rapl .tcl-grade > *').find(function (el) { return el.textContent.trim() === ch; });
+    if (!tecla) throw new Error('o teclado aberto por ' + id + ' não tem a tecla "' + ch + '"');
+    a.clicar(tecla);
+    await a.esperar();
+  }
+}
+
 test('repetir o sábado passado traz os movimentos com a medida de cada um', async () => {
   const a = await noSabado(comSabadoAnterior());
   assert.strictEqual(a.vJ('treino', 'HX').ex.length, 0, 'o dia aberto começa vazio');
@@ -185,13 +201,12 @@ test('a lista rápida registra a aula inteira sem abrir cartão', async () => {
   assert.strictEqual(linhas.length, 4, 'a aula inteira cabe numa tela');
   assert.strictEqual(a.$$('.ex').length, 0, 'e os cartões saem do caminho');
 
-  // 4 movimentos × 2 campos: oito toques de teclado e nada mais
-  a.digitar('fr0', 104);   // corrida 400 m
-  a.digitar('fr1', 108);   // remo 500 m
-  a.digitar('fw2', 9);     // wall balls 9 kg
-  a.digitar('fr2', 20);
-  a.digitar('fr3', 60);    // bike 15 cal
-  await a.esperar();
+  // cinco valores, cada um com um toque para abrir e um por dígito
+  await pelaLista(a, 'fr0', 104);   // corrida 400 m
+  await pelaLista(a, 'fr1', 108);   // remo 500 m
+  await pelaLista(a, 'fw2', 9);     // wall balls 9 kg
+  await pelaLista(a, 'fr2', 20);
+  await pelaLista(a, 'fr3', 60);    // bike 15 cal
 
   assert.strictEqual(a.v('seriesFeitasHoje', 'HX'), 7,
     'as passadas de cada movimento entram no histórico na hora, sem salvar');
@@ -221,6 +236,96 @@ test('a lista rápida não existe sem movimento no dia', async () => {
   a.fechar();
 });
 
+// O TECLADO PRÓPRIO na lista rápida — §6.1. A janela de registro da aula é
+// "DEPOIS da aula, ofegante, sentado, e ela é curta", e o teclado do sistema
+// cobria metade da tela, escondendo os movimentos seguintes da própria lista.
+
+/** A lista aberta, com o sábado anterior repetido: quatro linhas. */
+async function listaAberta() {
+  const a = await noSabado(comSabadoAnterior());
+  a.v('repetirUltimaAula');
+  await a.esperar(60);
+  a.v('abrirRapido');
+  await a.esperar();
+  return a;
+}
+
+test('a lista rápida não abre o teclado do sistema: carga e medida são botões', async () => {
+  const a = await listaAberta();
+  assert.strictEqual(a.$$('.rapl input').length, 0,
+    'nenhum campo na lista: qualquer um abriria o teclado do sistema por cima dela');
+
+  a.clicar(a.doc.getElementById('fw2'));
+  await a.esperar();
+  const linhas = a.$$('.rapl');
+  assert.strictEqual(a.$$('.tcl').length, 1, 'um painel só');
+  assert.ok(linhas[2].querySelector('.tcl'), 'e ele abre na linha do movimento que o pediu');
+  assert.ok(a.doc.getElementById('fw2').classList.contains('on'),
+    'o botão que abriu fica marcado: é como ele sabe em que grandeza está digitando');
+  a.fechar();
+});
+
+test('a vírgula só existe na carga, e a carga entra em todas as passadas', async () => {
+  const a = await listaAberta();
+  const grade = function () {
+    return a.$$('.rapl .tcl-grade > *').map(function (el) { return el.textContent.trim(); });
+  };
+
+  a.clicar(a.doc.getElementById('fr2'));
+  await a.esperar();
+  assert.strictEqual(grade()[9], '', 'repetição é inteira: o lugar da vírgula fica vazio');
+
+  await pelaLista(a, 'fw2', '9,5');
+  assert.strictEqual(grade()[9], ',', 'a carga tem a tecla');
+  assert.deepStrictEqual(a.J('draftPeek(2).s.map(function(s){return s[0]})'), [9.5, 9.5],
+    'o valor vale para as duas passadas, como a linha diz por extenso');
+  a.fechar();
+});
+
+test('a vírgula no meio da digitação não apaga o que já estava registrado', async () => {
+  const a = await listaAberta();
+  await pelaLista(a, 'fw2', '9');
+  assert.strictEqual(a.E('draftPeek(2).s[0][0]'), 9);
+
+  const virgula = a.$$('.rapl .tcl-grade > *').find(function (el) { return el.textContent.trim() === ','; });
+  a.clicar(virgula);
+  await a.esperar();
+  assert.strictEqual(a.E('draftPeek(2).s[0][0]'), 9,
+    '"9," ainda não é número: gravar nesse instante apagaria a carga por um passo');
+  a.fechar();
+});
+
+test('reabrir parte do valor registrado, porque o teclado é o único editor dele', async () => {
+  const a = await listaAberta();
+  await pelaLista(a, 'fr0', 104);
+  a.clicar(a.doc.getElementById('fr0'));       // o mesmo botão fecha
+  await a.esperar();
+  assert.strictEqual(a.$$('.tcl').length, 0, 'tocar no mesmo botão fecha o painel');
+
+  a.clicar(a.doc.getElementById('fr0'));
+  await a.esperar();
+  assert.ok(a.texto('.rapl .tcl-visor').includes('104'),
+    'abrir vazio faria um valor já registrado parecer ausente — aqui não há stepper mostrando o número');
+  a.fechar();
+});
+
+test('tocar noutro botão troca o painel, e fechar a lista fecha o teclado', async () => {
+  const a = await listaAberta();
+  a.clicar(a.doc.getElementById('fr0'));
+  await a.esperar();
+  a.clicar(a.doc.getElementById('fr3'));
+  await a.esperar();
+  const linhas = a.$$('.rapl');
+  assert.strictEqual(a.$$('.tcl').length, 1, 'continua um painel só');
+  assert.ok(linhas[3].querySelector('.tcl'), 'agora na linha da bike');
+
+  a.v('abrirRapido');                            // fecha a lista
+  await a.esperar();
+  assert.strictEqual(a.E('view.teclado'), null,
+    'um painel aberto sem a linha que o abriu ficaria escrevendo num movimento fora da tela');
+  a.fechar();
+});
+
 test('digitar num dia aberto não troca a métrica do topo por uma meta', async () => {
   const a = await noSabado(comSabadoAnterior());
   a.v('repetirUltimaAula');
@@ -229,8 +334,7 @@ test('digitar num dia aberto não troca a métrica do topo por uma meta', async 
 
   a.v('abrirRapido');
   await a.esperar();
-  a.digitar('fr0', 104);
-  await a.esperar();
+  await pelaLista(a, 'fr0', 104);
   assert.strictEqual(a.texto('#daymeta'), '4',
     'atualizaEstado escrevia "feitas/prescritas" por cima — meta que o box nunca prometeu');
   a.fechar();
@@ -270,12 +374,11 @@ test('e a aula encerrada no toque também não — os dois fechos concordam', as
   await a.esperar(60);
   a.v('abrirRapido');
   await a.esperar();
-  a.digitar('fr0', 104);
-  a.digitar('fr1', 108);
-  a.digitar('fw2', 9);
-  a.digitar('fr2', 20);
-  a.digitar('fr3', 60);
-  await a.esperar();
+  await pelaLista(a, 'fr0', 104);
+  await pelaLista(a, 'fr1', 108);
+  await pelaLista(a, 'fw2', 9);
+  await pelaLista(a, 'fr2', 20);
+  await pelaLista(a, 'fr3', 60);
   assert.ok(a.vJ('modsDoDia', 'HX').length > 0, 'os mods continuam lá');
 
   await a.v('finalizarSessao');

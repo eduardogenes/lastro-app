@@ -4062,16 +4062,42 @@ function anotaSerieRapida(i, pos, valor) {
   queueSave();
 }
 
-function inpRapido(el, i, pos) {
-  // A guarda fica aqui TAMBÉM: sem ela, posição sem exercício passaria a
-  // reescrever o campo e a pintar o `done` — coisa que antes não acontecia.
+/**
+ * O teclado próprio na LISTA RÁPIDA, para a carga (`pos` 0) e a medida (1) de
+ * um movimento.
+ *
+ * §6.1 manda próprio aqui, e o fonte já dizia por quê, no comentário de
+ * `anotaSerieRapida`: a janela de registro da aula é "DEPOIS da aula, ofegante,
+ * sentado, e ela é curta". Curta é o que define — o teclado do sistema cobre
+ * metade da tela e esconde os movimentos seguintes da própria lista.
+ *
+ * Parte do valor REGISTRADO, como na série e ao contrário do corpo: aqui não há
+ * stepper acima mostrando o número, então o teclado é o único editor do valor,
+ * e abrir vazio faria um valor já registrado parecer ausente.
+ *
+ * Tocar no mesmo botão fecha; tocar no outro troca. Um painel só.
+ */
+function abreTecladoRapido(i, pos) {
   if (!treino(view.day).ex[i]) return;
-  const raw = limpaNum(el, pos === 0);
-  el.classList.toggle('done', el.value !== '');
-  anotaSerieRapida(i, pos, raw);
+  const a = view.teclado && view.teclado.alvo;
+  if (a && a.tipo === 'rapida' && a.i === i && a.pos === pos) {
+    view.teclado = null; render(); return;
+  }
+  const dr = draftPeek(i);
+  const v = dr && dr.s && dr.s[0] ? dr.s[0][pos] : null;
+  view.regua = null; view.rir = null;
+  view.teclado = { alvo: { tipo: 'rapida', i: i, pos: pos },
+                   texto: v != null ? String(v).replace('.', ',') : '' };
+  render();
 }
 
-function abrirRapido() { view.rapido = !view.rapido; view.open = null; render(); }
+function abrirRapido() {
+  view.rapido = !view.rapido; view.open = null;
+  // Fechar a lista fecha o teclado dela: um painel aberto sem a linha que o
+  // abriu ficaria escrevendo num movimento que não está mais na tela.
+  if (!view.rapido && view.teclado && view.teclado.alvo.tipo === 'rapida') view.teclado = null;
+  render();
+}
 
 /** Série completa: carga E repetição. É o critério do disparo do descanso. */
 function serieCheia(e, k) {
@@ -4567,6 +4593,9 @@ function teclaDoTeclado(t) {
   // apagar, que tem de continuar existindo.
   if (!/,$/.test(texto)) {
     if (a.tipo === 'serie') anotaSerie(a.i, a.k, a.pos, texto);
+    // A lista rápida escreve em TODAS as passadas do movimento, e a linha diz
+    // isso por extenso; quem converte a vírgula é `soNumero`, lá dentro.
+    else if (a.tipo === 'rapida') anotaSerieRapida(a.i, a.pos, texto);
     else {
       // Em corpo o vazio é "sem rascunho", e `valorDoCorpo` já lê isso caindo na
       // última medida (ou no padrão). Guardar o último número digitado em vez de
@@ -5861,7 +5890,16 @@ CTX.treino = function () {
             medida: un ? (cronometrado(un) ? 'seg' : ROTULO_UNIDADE[un]) : 'reps',
             carga: v[0] != null ? String(v[0]) : '',
             valor: v[1] != null ? String(v[1]) : '',
-            feito: v[1] != null
+            feito: v[1] != null,
+            // O TECLADO PRÓPRIO, quando ele está aberto nesta linha. `pos` diz
+            // em qual das duas grandezas — é o que marca o botão que o abriu.
+            teclado: (function () {
+              const a = view.teclado && view.teclado.alvo;
+              if (!a || a.tipo !== 'rapida' || a.i !== i) return null;
+              return { texto: view.teclado.texto, pos: a.pos, decimal: a.pos === 0,
+                       unidade: a.pos === 0 ? (un ? 'kg' : CARGAS[tipo].rot)
+                                            : (un ? (cronometrado(un) ? 'seg' : ROTULO_UNIDADE[un]) : 'reps') };
+            })()
           };
         })
       };
@@ -7577,9 +7615,15 @@ CTX.acoesDia = {
   pronto: function () { modoEdicao(false); }
 };
 
+// `inp` saiu: a lista rápida não tem mais campo, e o par por valor dela
+// (`anotaSerieRapida`) continua sendo a porta do modelo. `tecla` e
+// `fechaTeclado` são as MESMAS da sessão e do corpo — um teclado só; o que muda
+// é o alvo, e ele mora no estado do teclado.
 CTX.acoesRapido = {
   abre: function () { abrirRapido(); },
-  inp: function (el, i, pos) { inpRapido(el, i, pos); }
+  abreTeclado: function (i, pos) { abreTecladoRapido(i, pos); },
+  tecla: function (t) { teclaDoTeclado(t); },
+  fechaTeclado: function () { fechaTeclado(); }
 };
 
 CTX.acoesAulas = {
