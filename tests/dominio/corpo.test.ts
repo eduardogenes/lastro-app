@@ -7,7 +7,7 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, ondeMediu, pesoRitmo, portoesDaRegra, semanasDaRegra, veredito } from '../../src/dominio/corpo';
+import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, leituraDaEvolucao, ondeMediu, pesoRitmo, portoesDaRegra, semanasDaRegra, veredito } from '../../src/dominio/corpo';
 import { medidas, naSemana, pesagens } from './ajuda';
 
 const semCintura = { peso: [] as ReturnType<typeof pesagens>, cintura: [] };
@@ -119,6 +119,14 @@ test('exatamente 0,40 não é "acima de 0,40"', () => {
 test('exatamente 0,10 não é "abaixo de 0,10"', () => {
   const v = veredito({ peso: pesagens([73.0, 73.10, 73.20]), cintura: [] }, OK);
   assert.notStrictEqual(v.k, 'mais');
+});
+
+test('exatamente 0,10 não é "abaixo de 0,10" nem quando o ponto flutuante empurra para baixo', () => {
+  // Este passava por sorte: em 73,0 → 73,1 → 73,2 o ruído cai para lados
+  // opostos e só uma das taxas fica "abaixo". Em 70,1 → 70,2 → 70,3 as duas
+  // diferenças dão 0,0999…, e a regra mandava comer mais com taxa exata de 0,10.
+  const v = veredito({ peso: pesagens([70.1, 70.2, 70.3]), cintura: [] }, OK);
+  assert.notStrictEqual(v.k, 'mais', v.t);
 });
 
 test('perdendo peso o texto não diz que subiu', () => {
@@ -306,4 +314,40 @@ test('o vazio lista as semanas com o motivo de cada uma', () => {
   assert.strictEqual(ws[0].estado, 'em curso' + (faltam > 0 ? ' · ' + (faltam === 1 ? 'falta 1 dia' : 'faltam ' + faltam + ' dias') : ''));
   assert.ok(/^\d\d\/\d\d a \d\d\/\d\d$/.test(ws[0].intervalo), ws[0].intervalo);
   assert.strictEqual(ws[2].n, 1);
+});
+
+// ---------- o destino Evolução (a D, corpo.html estado 8; §1.7 da frente 3) ----------
+
+test('a Evolução lê as médias que a regra lê, os pontos do dia e a taxa de cada semana', () => {
+  const agora = Date.now();
+  const peso = naSemana([
+    { s: 3, dow: 1, v: 73.0 }, { s: 3, dow: 3, v: 73.2 },
+    { s: 2, dow: 1, v: 73.4 }, { s: 2, dow: 3, v: 73.4 },
+    { s: 1, dow: 1, v: 73.5 },
+  ]).concat(new Date(agora).getDay() >= 2 ? naSemana([{ s: 0, dow: 0, v: 73.6 }, { s: 0, dow: 1, v: 73.6 }]) : []);
+  const L = leituraDaEvolucao(peso, agora);
+  assert.strictEqual(L.n, peso.length, 'todas as pesagens do intervalo viram ponto');
+  assert.ok(L.semanas.every(w => w.n >= 2), 'a linha só passa onde a regra lê');
+  assert.strictEqual(L.taxas.length, 4);
+  const duas = L.taxas[2];
+  assert.ok(Math.abs((duas.kg as number) - 0.3) < 1e-9, 'a de duas semanas atrás é +0,30 sobre a anterior');
+  assert.strictEqual(duas.classe, 'no alvo', '0,30 é o teto do alvo, e ainda é alvo');
+  assert.strictEqual(L.taxas[1].kg, null);
+  assert.strictEqual(L.taxas[1].classe, 'sem taxa: a semana não tem média', 'uma pesagem não é média');
+  assert.strictEqual(L.taxas[1].nota, '1 pesagem');
+  assert.ok(L.taxas[0].nota.indexOf('em curso · ') === 0);
+});
+
+test('a classe da taxa segue o alvo do nutricionista, de 0,15 a 0,30', () => {
+  const agora = Date.now();
+  const comTaxa = function (kg: number) {
+    const peso = naSemana([
+      { s: 2, dow: 1, v: 73 }, { s: 2, dow: 3, v: 73 },
+      { s: 1, dow: 1, v: 73 + kg }, { s: 1, dow: 3, v: 73 + kg },
+    ]);
+    return leituraDaEvolucao(peso, agora).taxas[1].classe;
+  };
+  assert.strictEqual(comTaxa(0.05), 'abaixo do alvo');
+  assert.strictEqual(comTaxa(0.20), 'no alvo');
+  assert.strictEqual(comTaxa(0.45), 'acima do alvo');
 });

@@ -244,6 +244,17 @@ export interface TaxaSemanal {
 }
 
 /**
+ * A diferença de duas médias SEM o ruído do ponto flutuante.
+ *
+ * Os limites da regra são exatos (F214): 0,10 não é "abaixo de 0,10". Mas
+ * 70,2 − 70,1 em ponto flutuante dá 0,0999999…, e em 61 de 400 sequências de
+ * pesagem a taxa exata de 0,10 caía abaixo do limite e a regra mandava comer
+ * mais. Arredondar a um milionésimo de quilo tira o ruído da conta sem mexer
+ * em nenhuma diferença que uma balança consiga medir.
+ */
+export function semRuido(kg: number): number { return Math.round(kg * 1e6) / 1e6; }
+
+/**
  * As taxas semana a semana — e não uma taxa média sobre duas semanas.
  *
  * Esta é a correção do primeiro erro: "por 2 semanas" é PERSISTÊNCIA, não
@@ -262,7 +273,7 @@ export function taxasSemanais(peso: Marca[], quantas: number = 2): TaxaSemanal[]
     if (Math.abs(ult[i].w - ult[i - 1].w - 7 * DIA) > 2 * 3600000) return null;
   }
   const out: TaxaSemanal[] = [];
-  for (let i = 1; i < ult.length; i++) out.push({ w: ult[i].w, kg: ult[i].v - ult[i - 1].v });
+  for (let i = 1; i < ult.length; i++) out.push({ w: ult[i].w, kg: semRuido(ult[i].v - ult[i - 1].v) });
   return out;
 }
 
@@ -480,6 +491,70 @@ export function semanasDaRegra(peso: Marca[], agora: number, quantas: number = 4
     });
   }
   return out;
+}
+
+/** Uma linha de "Taxa, semana a semana" no destino Evolução. */
+export interface TaxaDaEvolucao {
+  w: number;
+  intervalo: string;
+  /** "em curso · 3 pesagens" · "3 pesagens" */
+  nota: string;
+  /** a taxa da semana contra a anterior, quando as duas têm média; senão `null` */
+  kg: number | null;
+  /** "abaixo do alvo" · "no alvo" · "acima do alvo" · ou por que não há taxa */
+  classe: string;
+}
+
+/** O que o destino Evolução desenha: a curva, os pontos e as taxas. */
+export interface LeituraDaEvolucao {
+  /** médias das semanas que a regra lê (com `MIN_PESAGENS`), em ordem */
+  semanas: Semana[];
+  /** as pesagens do dia, no intervalo */
+  pontos: Marca[];
+  /** de onde a leitura começa e onde termina (agora) */
+  de: number;
+  ate: number;
+  /** as últimas quatro semanas, da mais recente para trás */
+  taxas: TaxaDaEvolucao[];
+  /** quantas pesagens entraram */
+  n: number;
+}
+
+/**
+ * A leitura do peso ao longo do tempo — o destino Evolução (a D, `corpo.html`,
+ * estado 8; o nome é o da §1.7 da frente 3, decidido pelo dono em 06/10).
+ *
+ * A linha é o que a regra lê: média semanal só onde a semana tem `MIN_PESAGENS`;
+ * semana sem isso não ganha ponto na linha, e a linha não atravessa o buraco
+ * fingindo continuidade. Os pontos são as pesagens do dia, para a oscilação
+ * diária ficar à vista ao lado da média — é ela que explica por que um dia não
+ * decide nada.
+ */
+export function leituraDaEvolucao(peso: Marca[], agora: number, semanas: number = 9): LeituraDaEvolucao {
+  const de = weekStart(agora) - (semanas - 1) * 7 * DIA;
+  const pontos = peso.filter(x => x.t >= de && x.t <= agora).sort((a, b) => a.t - b.t);
+  const W = mediasSemanais(pontos);
+  const por: Record<number, Semana> = {};
+  W.forEach(w => { por[w.w] = w; });
+  const esta = weekStart(agora);
+  const taxas: TaxaDaEvolucao[] = [];
+  for (let i = 0; i < 4; i++) {
+    const w = esta - i * 7 * DIA;
+    const s = por[w];
+    const ant = por[w - 7 * DIA];
+    const n = s ? s.n : 0;
+    const pes = n === 0 ? 'nenhuma pesagem' : n + (n === 1 ? ' pesagem' : ' pesagens');
+    const kg = s && ant && s.n >= MIN_PESAGENS && ant.n >= MIN_PESAGENS ? semRuido(s.v - ant.v) : null;
+    taxas.push({
+      w, intervalo: fmtDate(w) + ' a ' + fmtDate(w + 6 * DIA),
+      nota: (i === 0 ? 'em curso · ' : '') + pes,
+      kg,
+      classe: kg == null
+        ? (n < MIN_PESAGENS ? 'sem taxa: a semana não tem média' : 'sem taxa: a semana anterior não tem média')
+        : kg < ALVO_MIN ? 'abaixo do alvo' : kg > ALVO_MAX ? 'acima do alvo' : 'no alvo'
+    });
+  }
+  return { semanas: W.filter(w => w.n >= MIN_PESAGENS), pontos, de, ate: agora, taxas, n: pontos.length };
 }
 
 /** Agrupa marcas por semana e devolve a média de cada uma, em ordem. */
