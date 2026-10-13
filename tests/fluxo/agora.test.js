@@ -1533,16 +1533,16 @@ test('as mudanças falam uma gramática só: o que vale primeiro, e o que era de
   // pessoa (V8), e a flecha é tabular. O `med` não estava entre as sete e caía
   // em "mudança", que não diz nada.
   const a = await app({ estado: { plano: 7, logs: {}, done: [] } });
-  const outro = a.J('S.prog.A.ex[1].id');
-  const n = a.E('nomeEx("' + SLOT + '")'), m = a.E('nomeEx("' + outro + '")');
-  const t = function (mod) { return a.E('textoMod("A", ' + JSON.stringify(mod) + ')'); };
+  const outro = a.S().prog.A.ex[1].id;
+  const n = a.v('nomeEx', SLOT), m = a.v('nomeEx', outro);
+  const t = function (mod) { return a.v('textoMod', 'A', mod); };
   assert.strictEqual(t({ k: 'add', id: SLOT }), n + ': entrou no dia');
   assert.strictEqual(t({ k: 'rm', slot: SLOT }), n + ': saiu do dia');
   assert.strictEqual(t({ k: 'troca', slot: SLOT, por: outro }), m + ' no lugar de ' + n);
   assert.strictEqual(t({ k: 'sets', slot: SLOT, de: 3, para: 4 }), n + ': 4 séries, não 3');
   assert.strictEqual(t({ k: 'reps', slot: SLOT, de: 10, para: 8 }), n + ': 8 repetições, não 10');
   assert.strictEqual(t({ k: 'desc', slot: SLOT, de: 120, para: 90 }),
-    n + ': descanso de ' + a.E('fmtDesc(90)') + ', não ' + a.E('fmtDesc(120)'));
+    n + ': descanso de ' + a.v('fmtDesc', 90) + ', não ' + a.v('fmtDesc', 120));
   assert.strictEqual(t({ k: 'mover', slot: SLOT, de: 3, para: 1 }), n + ': feito antes, fora da ordem');
   assert.strictEqual(t({ k: 'mover', slot: SLOT, de: 1, para: 3 }), n + ': feito depois, fora da ordem');
   assert.strictEqual(t({ k: 'med', slot: SLOT, u: 'm', q: 500 }), n + ': medido em 500 m');
@@ -1555,7 +1555,7 @@ test('o vencimento diz quantos treinos faltam, e o da próxima sessão diz que �
     promoPendente: [esperando(agora), esperando(agora, { sid: agora - 2 * DIA, t: agora - 2 * DIA, day: 'B' })] } });
   a.v('ctx.fechaTudo');
   await a.esperar();
-  assert.strictEqual(a.E('proximoTreino(S, ROT_BASE)'), 'A', 'pré-condição: sem sessão, o próximo é o A');
+  assert.strictEqual(a.v('proximoTreino', a.S(), a.dado('ROT_BASE')), 'A', 'pré-condição: sem sessão, o próximo é o A');
   const l = a.vJ('ctx.mudancasQueEsperam');
   assert.strictEqual(l[0].vence, 'vence na próxima vez do Treino A — que é a próxima sessão');
   assert.strictEqual(l[1].vence, 'vence quando o Treino B voltar · falta 1 treino');
