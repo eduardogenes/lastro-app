@@ -50,7 +50,7 @@ test('escolher o turno reordena o diário', async () => {
   await a.esperar();
 
   const linhas = a.$$('.ins-tl-hora, .tl-hora').map(e => e.textContent.trim());
-  const ordem = a.J('CTX.hoje().refs.map(function(r){return r.t+" "+r.id})');
+  const ordem = a.vJ('ctx.hoje').refs.map(function (r) { return r.t + ' ' + r.id; });
   assert.deepStrictEqual(ordem, [
     '08:00 pos', '12:30 almoco', '16:00 lanche', '17:45 pre', '18:15 treino', '19:45 jantar',
     '21:30 ceia'
@@ -81,7 +81,7 @@ test('o turno é ajuste de HOJE: o plano não se move', async () => {
   a.clicar(a.$$('.fd-turno-op')[1]);          // tarde
   await a.esperar();
   assert.strictEqual(a.S().dia.turno, 'tarde', 'mora no dia, que zera com a data');
-  const plano = a.J('planoDeComida().map(function(r){return r.t+" "+r.id})');
+  const plano = a.vJ('planoDeComida').map(function (r) { return r.t + ' ' + r.id; });
   assert.deepStrictEqual(plano.slice(0, 2), ['05:45 pre', '06:15 treino'],
     'em COMIDA a edição vale para todo dia — e ela não aconteceu');
   a.fechar();
@@ -92,7 +92,7 @@ test('o almoço que não cabe no treino vai para depois dele', async () => {
   await abreFolha(a);
   a.clicar(a.$$('.fd-turno-op')[1]);          // tarde: treino 12:15
   await a.esperar();
-  assert.strictEqual(a.J('CTX.hoje().refs.filter(function(r){return r.id==="almoco"})[0].t'),
+  assert.strictEqual(a.vJ('ctx.hoje').refs.filter(function (r) { return r.id === 'almoco'; })[0].t,
     '13:45', 'não se antecipa o almoço nem se come no meio do treino');
   const nota = a.texto('.hj-conflito');
   assert.ok(nota && /Almoço foi para as 13:45/.test(nota),
@@ -142,7 +142,7 @@ test('a migração 7→8 tira o papel do nome, e só do nome que era dela', asyn
     plano: [{ id: 'pos', t: '08:00', n: 'Meu café',
               tag: '', quando: 'sempre', itens: [] }],
     alimentos: {}, ocultos: {} } } });
-  assert.strictEqual(b.J('S.comida.plano[0].n'), 'Meu café',
+  assert.strictEqual(b.S().comida.plano[0].n, 'Meu café',
     'se ele já tinha renomeado, o nome dele fica');
   b.fechar();
 });
