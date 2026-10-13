@@ -1654,7 +1654,12 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 /* A linha do vencimento no Agora. Sem moldura de atenção: nada quebrou e nada
    se perde hoje — é um convite a decidir com calma, e é o que o rótulo diz. */
 .ag-vence { align-items: center; gap: var(--ins-5); }
-.ag-vence .ins-btn-secondary { flex: 0 0 auto; }
+/* O botão ao lado do texto de uma linha tem a largura do que diz. O secundário
+   nasce com `width: 100%` (é botão de bloco), e numa linha flex isso virava a
+   base dele: o texto da linha encolhia até uma palavra por linha — no aviso
+   "Para decidir com calma" e nas linhas do corpo, visto em captura. */
+.ins-linha > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+.ins-linha > .ins-linha-n { flex: 1 1 auto; min-width: 0; }
 
 /* O que venceu sem resposta. Sem âmbar: não há nada a corrigir e nada se
    perdeu — o que aconteceu é que o tempo decidiu pelo lado conservador, e a
@@ -1852,5 +1857,4 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 /* As linhas do corpo no Agora (frente 1 §5, regra 5): nome e valor, a linha de
    apoio embaixo, e o botão à direita. */
 .ag-corpo .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-1); }
-.ag-corpo .ins-linha-n { flex: 1 1 auto; min-width: 0; }
-.ag-corpo .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+
