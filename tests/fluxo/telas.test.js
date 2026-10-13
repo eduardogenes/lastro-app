@@ -272,13 +272,13 @@ test('média semanal, não sequência de dias', async () => {
 
 test('substituição oferece alternativas para todos os exercícios', async () => {
   const a = await app();
-  const semAlt = a.J(`
-    rot().reduce(function (acc, d) {
-      treino(d).ex.forEach(function (ex) {
-        if (ex.g && (!ALT[ex.n] || ALT[ex.n].length < 2)) acc.push(d + ' ' + ex.n);
-      });
-      return acc;
-    }, [])`);
+  const ALT = a.dado('ALT');
+  const semAlt = a.vJ('rot').reduce(function (acc, d) {
+    a.vJ('treino', d).ex.forEach(function (ex) {
+      if (ex.g && (!ALT[ex.n] || ALT[ex.n].length < 2)) acc.push(d + ' ' + ex.n);
+    });
+    return acc;
+  }, []);
   assert.deepStrictEqual(semAlt, []);
   a.fechar();
 });
