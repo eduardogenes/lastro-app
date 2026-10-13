@@ -46,6 +46,7 @@ pede atenção do dono.
 | D4 · pasta D, protótipo | `a5c1301c7eaecc0ef` | [x] | entregue 04/10, roteiro inteiro rodando |
 | D3 · pasta C, 2ª rodada | `a8ffe4511162060d4` | [x] | entregue 04/10: seis telas, 51 estados, mais `direcao-2.md` |
 | D4 · pasta D, 2ª rodada | `a7336487485fa8580` | [x] | entregue 04/10: seis telas, 66 estados, mais `direcao-2.md`. Caiu uma vez e foi retomada pelo id |
+| D4 · pasta D, 3ª rodada | `abf4ffeb29a79cc05` | [~] | disparado 13/10 (Anexo I): Dias e o Agora de descanso |
 
 ---
 
@@ -2906,7 +2907,20 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             restaurar o plano inteiro; é gesto novo); a frase "Enquanto a adesão
             não chega a 11…" (a segunda metade é promessa ainda aberta na mesa
             dele, §11.2, e a frente proíbe meia-promessa).
-      - [ ] **§6.2 e §6.4 · Os portões e o vazio deles — PARADO, é desenho.** A
+      - [ ] **§6.2 e §6.4 · Os portões e o vazio deles — ERREI AO PARAR: não é
+            desenho, é construção.** Conferido em 13/10, depois de levar ao dono
+            como pergunta: a `semana.html` da D tem os sete estados — os portões
+            do ramo "comer mais" (taxa, força, adesão), os do corte (taxa,
+            adesão, avaliação visual), o ramo sem passo ("sozinha, não corta")
+            e o vazio com a lista das semanas. Eu tinha parado sem abrir o
+            arquivo. O mesmo vale para o "Desfazer" do passo (estado 4), para o
+            destino de leitura do Corpo que vira "Evolução" (`corpo.html`,
+            estado 8), para as linhas de pesagem e fotos do Agora (frente 1 §5,
+            regra 5; M1‑13) e para a caixa alta (frente 3 §2, R1–R4, que não
+            apliquei). **Tudo isso é fila de construção minha.** Desenho de
+            verdade faltam dois, e foram ao desenhista (Anexo I): Dias e o Agora
+            de descanso fora de janela.
+            **O texto antigo, para registro:** A
             Semana reescrita não tem os portões como linhas, nem a lista das
             semanas do vazio. E o material não fecha QUAIS portões: a frente 1
             (§1.4) diz três fixos — taxa, força, adesão —, e esse trio é o do
@@ -3960,6 +3974,71 @@ ALÉM DO `prototipo.html`, escreva `prototipo.md`, curto:
 Grave em etapas: o arquivo no disco cedo, e vá melhorando. Não segure para o fim.
 
 Sua pasta: docs/redesign/03-direcao-
+```
+
+## Anexo I · Terceira rodada da D: Dias e o Agora de descanso, 13/10
+
+Disparada a pedido do dono ("quero sim"), depois de eu corrigir a lista: das
+quatro "perguntas de desenho" que eu tinha levado, três já estavam desenhadas na
+D ou resolvidas pelas frentes. Sobram as duas lacunas que a frente 1 declarou
+sem desenho. Decisões de transcrição: as decisões do dono entram como requisito,
+sem citar o app; as capacidades de Dias entram como necessidade e com o número
+do fato, sem nenhuma forma de hoje; as palavras já escolhidas pela frente 3 vão
+como palavra, não como regra de onde vieram. **Sem sonda:** as notas técnicas
+voltaram ao `CLAUDE.md` global depois da onda 3, por plano (R1); o risco que a
+sonda media era o das direções, e a direção já foi escolhida.
+
+```text
+Você é o designer de produto sênior que desenhou a direção D deste aplicativo. O app existe, mas você não sabe como ele é, e o processo depende de que continue assim. Quem sabe é o coordenador, e ele não vai lhe contar nem comentar o seu trabalho.
+
+O QUE JÁ ACONTECEU. Você entregou duas rodadas e um protótipo tocável, todos na sua pasta. O dono usou os protótipos das duas direções que sobraram e **escolheu a sua**: "achei mais organizado e intuitivo". A direção está sendo construída. Na construção apareceram **duas coisas que a sua direção nunca desenhou**, e que precisam de desenho antes de serem construídas — não de invenção de quem constrói. São só estas duas. Releia a sua pasta antes de começar e continue nela.
+
+O QUE VOCÊ PODE LER — só isto:
+- a sua própria pasta, inteira (`direcao.md`, `direcao-2.md`, `prototipo.md` e os HTML);
+- docs/redesign/01-fatos.md — os fatos do produto;
+- docs/redesign/02-uso.md — o uso real medido;
+- docs/redesign/02-perguntas.md — as perguntas feitas ao dono e as respostas dele;
+- os arquivos que você mesmo escrever.
+Qualquer outro caminho do repositório — inclusive os outros arquivos e pastas de docs/redesign/ — fica fora. Se não está nesta lista, não abra. As fontes citadas dentro desses arquivos (caminhos, hashes, comandos) servem para conferência do coordenador: você não as abre nem as roda.
+
+FERRAMENTAS. Leia e escreva arquivos, e rode comandos locais sobre os seus próprios arquivos. Não invoque skills, não dispare subagentes, não use conectores e não acesse a web. Não rode o app nem nenhum servidor do projeto. Para ver os seus próprios HTML há um Chrome sem janela em /usr/bin/google-chrome (--headless, --screenshot, --window-size); abrir nele os seus arquivos é permitido, e só eles.
+
+AS DUAS LACUNAS.
+
+**1 · Dias.** Está na sua barra de baixo desde a segunda rodada — Agora, Dias, Corpo, Semana, Prescrição — e nunca foi desenhado; no protótipo ele está desabilitado. A pergunta do lugar é "o que aconteceu em cada dia". O que ele precisa permitir sai dos fatos, e não de desenho anterior nenhum:
+- ver, de cada dia passado do mês, o que aconteceu: treino da sequência, treino fora da prescrição (F155), aula, descanso marcado (F156), mais de um treino no mesmo dia (F157), cardio, e a comida — dia com marca, dia sem marca;
+- abrir uma sessão passada inteira, ler e **corrigir no lugar**, inclusive apagar;
+- registrar um treino em data passada — da sequência, fora dela, ou aula — e marcar um dia passado como descanso (F158, F156);
+- pôr em dia a comida de um dia passado: **a folha que você já desenhou** para isso entra aqui, como está (o dono a manteve, abrindo pré-marcada);
+- apagar uma sessão de cardio registrada por engano;
+- três leituras do mês, e só estas: treinos por semana em média móvel das últimas quatro semanas (nunca sequência de dias: quem treina 5 a 6 vezes por semana quebra sequência todo domingo), o cardio do mês (sessões, minutos, quantas em dia sem musculação) e o horário de início (média, mais cedo, mais tarde).
+O que Dias **não** tem: nada prescrito (o plano daquele dia aparece só como referência — é de Prescrição); nenhuma leitura de semana (é de Semana); nenhum "agora" (um dia que passou não tem).
+
+**2 · O Agora num dia de descanso, fora de qualquer janela.** Você desenhou o Agora da manhã de treino e o dia que ainda não começou. Este estado ficou sem desenho. A regra do cartão de cima, já escrita a partir dos seus desenhos, diz: num dia de descanso, longe da hora de qualquer refeição, **não há cartão** — ficam a linha do dia, a água e a contagem dos dias conhecidos nos últimos 14. Desenhe esse estado e as variações que os fatos pedirem: antes de qualquer marca, com a água já contada, no dia em que a sessão de fotos completa 14 dias, e com uma mudança do treino esperando decisão.
+
+AS DECISÕES DO DONO tomadas depois da sua segunda entrega. Valem como requisito:
+
+1. **Vai a D, com três peças da outra direção** como requisito: as linhas do dia são tocáveis; cada toque grava, sem botão de guardar no fim; e a conta de volume semanal aparece na prescrição.
+2. **A mudança do dia vence por posição:** quando aquele treino voltar na sequência. Se ele não decidir até lá, ela fica como "só daquele dia" — dito, e desfazível até a próxima vez daquele treino. O aviso dela no Agora aparece uma vez, na manhã daquele treino, nunca durante a sessão.
+3. **"Não comi" conta como dia conhecido.** A regra do nutricionista pede 11 dias conhecidos em 14 para mexer na comida, e agora isso é alcançável.
+4. **Pesagem, sessão de fotos e cardio não disputam o topo do Agora:** são linhas abaixo do cartão, como você já fez com "Peso de hoje".
+5. **"Evolução" volta como nome** do destino de leitura dentro de Corpo, no lugar de "Histórico". Não cria um sexto lugar.
+6. **O rótulo em caixa alta espaçada sai, "sem heranças".** Rótulo de seção só existe quando a seção tem mais de uma linha e a primeira não a nomeia; o que fica é frase com artigo, em caixa de frase ("O que tem dentro", "Como foi o dia"), e maior do que hoje — nunca caixa alta com espaçamento. A linha acima de um título deixa de ser rótulo e vira procedência ("da prescrição", "pose 3 de 9"). Unidade se escreve como unidade, em caixa baixa: "3.007 kcal", "81,0 cm".
+7. **A linha acima do cartão de cima é a procedência do que ele mostra:** "no plano às 16h00", "na prescrição · Treino B", "sessão aberta desde 6h20". No dia de descanso, a palavra já escolhida é **"descanso, pelo padrão semanal"** — o tipo do dia é palpite do app enquanto ele não confirmar, e a tela diz que é palpite.
+8. **O que apaga para o dedo.** Apagar passa por um painel que abre pelo infinitivo do estrago, com o número do que vai embora ("Apagar o peso de 28/09…"), o botão repete o verbo com o objeto, e a saída é "Deixar como está". Nunca "OK", "Confirmar", "Sim" ou "Cancelar".
+9. Continua valendo tudo o que já valia: tema que segue o aparelho, claro e escuro desenhados; movimento só com função; teclado próprio onde o do sistema atrapalha.
+
+O QUE ENTREGAR, na sua pasta:
+- `dias.html` — o lugar, com os estados que os fatos exigirem: o mês com dias de todos os tipos, um dia aberto, registrar um treino passado, um dia de comida a pôr em dia, apagar (com o painel), e o vazio (o primeiro mês, nada registrado);
+- `agora-descanso.html` — o estado e as variações do item 2;
+- `direcao-3.md`, curto: o que cada desenho resolve e por que assim nesta direção; o que você recusa; e as perguntas que você não tem como responder sozinho.
+Cada HTML autocontido, sem dependência de rede, em viewport de telefone, **claro e escuro**, com conteúdo real tirado dos fatos e do uso — nada de lorem ipsum, nada de imagem de placeholder.
+
+A RÉGUA, a mesma: sem moodboard; referência de mercado não é argumento; "porque é moderno" não é razão, "porque ele está com uma mão ocupada" é. Os estados ruins resolvidos, não só o caminho feliz. Diga o que você recusa fazer, e aguente a recusa. E a régua do dono, nas palavras dele: "fluxos muito dificultosos" não; "gosto das coisas visuais, mas sem exagerar e poluir demais as telas"; "prefiro o mínimo de toques necessário".
+
+Grave em etapas: escreva cada arquivo assim que ele estiver pronto, em vez de segurar tudo para o fim.
+
+Sua pasta: docs/redesign/03-direcao-D
 ```
 
 ## Anexo F · Sonda de contexto (rodar no início de cada sessão nova, antes de agente cego)
