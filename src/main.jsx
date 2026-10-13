@@ -983,7 +983,9 @@ async function finalizarSessao() {
   const feitas = p.feito.length;
 
   if (!feitas && !p.parcial.length) {
-    if (!confirm('Descartar esta sessão?\n\nNenhuma série foi registrada nela.')) return;
+    // PARE (§3.3): o horário e a duração saem e não voltam.
+    if (!(await pare({ texto: 'Descartar esta sessão apaga o horário de início e a duração. Nenhuma série foi registrada nela, então não há série para perder.',
+                       sim: 'Descartar a sessão' }))) return;
     lapide(chaveDeSessao({ sid: s.sid }));
     S.done = S.done.filter(function (x) { return x.sid !== s.sid; });
     S.sessao = null; S.draft = null; S.mods = null;
@@ -2395,7 +2397,14 @@ async function removerEx(i) {
   const d = view.day;
   const ex = treino(d).ex[i];
   const slot = ex.orig || ex.id;
-  if (temRegistro(d, i) && !confirm('Remover este exercício do treino de hoje?\n\nApaga também a série já registrada nele nesta sessão.')) return;
+  // PARE (§3.3) só quando há série dele nesta sessão: sem série, tirar do dia
+  // não apaga nada — o histórico das outras sessões fica de todo jeito.
+  if (temRegistro(d, i)) {
+    const reg = daSessao(logKey(d, i), slotDe(d, i), S.sessao.sid);
+    const n = reg && reg.sets ? reg.sets.filter(Boolean).length : 1;
+    if (!(await pare({ texto: 'Tirar este exercício agora apaga ' + (n === 1 ? 'a série que você registrou' : 'as ' + n + ' séries que você registrou') + ' nele hoje. O histórico das outras sessões fica.',
+                       sim: 'Tirar e apagar ' + (n === 1 ? 'a série' : 'as ' + n + ' séries') }))) return;
+  }
   removeProjecao(logKey(d, i), slotDe(d, i));
   poeMod(d, { k:'rm', slot: slot });
   view.open = null; view.swapOpen = null;
@@ -3138,8 +3147,15 @@ async function salvarEdicao() {
 }
 
 async function apagarSessao() {
-  if (!confirm('Apagar esta sessão do histórico? Isso não tem volta.')) return;
   const key = view.hist.key;
+  // PARE (§3.3). A frente 3 escreveu "apagar esta série", mas o que sai é o
+  // registro INTEIRO do exercício naquele dia — todas as séries dele —, e a
+  // frase diz o que acontece, não o que o desenho supôs.
+  const reg = S.logs[key] && S.logs[key][view.edit];
+  const n = reg && reg.sets ? reg.sets.filter(Boolean).length : 0;
+  const quando = reg ? fmtDate(reg.t) : '';
+  if (!(await pare({ texto: 'Apagar o registro de ' + quando + ' tira ' + (n === 1 ? '1 série' : n + ' séries') + ' do histórico de ' + nomeEx(key) + '. Isso não tem volta.',
+                     sim: 'Apagar o registro de ' + quando }))) return;
   lapide(chaveDeLog(key, S.logs[key][view.edit]));
   S.logs[key].splice(view.edit, 1);
   if (!S.logs[key].length) delete S.logs[key];
@@ -3182,8 +3198,10 @@ async function delCardio(t) {
   // Esta lista existe para desfazer um registro errado, e por isso mesmo ela
   // não pode apagar o certo num toque de passagem.
   const c = S.cardio.filter(function (x) { return x.t === t; })[0];
-  if (c && !confirm('Remover ' + c.min + ' min de ' + c.m + ' de ' + fmtDate(t) + '?\n\n' +
-      'Sai da contagem da semana. O treino do dia não muda.')) return;
+  // PARE (§3.3), com o número do que sai e o que ele mexe.
+  if (!c) return;
+  if (!(await pare({ texto: 'Apagar ' + c.min + ' min de ' + c.m + ' de ' + fmtDate(t) + ' tira ele do placar da semana. O treino do dia não muda. Isso não tem volta.',
+                     sim: 'Apagar o cardio de ' + fmtDate(t) }))) return;
   lapide(chaveDeCardio({ t: t }));
   S.cardio = S.cardio.filter(c => c.t !== t);
   await save();
@@ -4523,7 +4541,12 @@ async function tiraFoto(el) {
 async function apagaFoto() {
   const id = fotoAberta();
   if (!id) return;
-  if (!confirm('Apagar a foto deste aparelho?')) return;
+  // PARE (§3.3). A frente 3 escreveu "se houver cópia remota, ela continua lá",
+  // e o código diz o contrário: com conta, `NUVEM.apagaFoto` apaga a remota
+  // logo abaixo. A frase diz o que o código faz.
+  const remota = !!NUVEM.sessao();
+  if (!(await pare({ texto: 'Apagar a foto do equipamento de ' + nomeEx(id) + ' tira a imagem deste aparelho' + (remota ? ' e da cópia remota' : '') + '. O exercício continua; só a imagem sai. Isso não tem volta.',
+                     sim: 'Apagar a foto do equipamento' }))) return;
   const ref = S.fotos[id];
   FOTO.solta(id);
   await FOTO.esquece(id, ref ? ref.ext : 'webp');
@@ -4896,13 +4919,14 @@ async function apagaRegistroDeTreino(t) {
   }, 0);
 
   // o aviso diz o que vai junto: apagar o dia e apagar as séries é uma
-  // decisão só, e ela não pode ser tomada sem o número na frente
-  const oQue = series
-    ? 'este treino e as ' + series + (series === 1 ? ' série registrada' : ' séries registradas') + ' nele'
-    : 'este registro de treino';
-  // O verbo fica na CHAMADA, não na variável: é a primeira palavra que se lê de
-  // relance, e ela tem de estar legível aqui, no ponto onde o aviso é dado.
-  if (!confirm('Apagar ' + oQue + '?\n\nIsso não tem volta, e vale para os outros aparelhos.')) return;
+  // decisão só, e ela não pode ser tomada sem o número na frente. PARE (§3.3):
+  // o verbo abre a frase e o botão, nos dois casos.
+  const sim = await pare(series
+    ? { texto: 'Apagar este treino tira ' + (series === 1 ? 'a série registrada' : 'as ' + series + ' séries registradas') + ' nele. Isso não tem volta, e vale para os outros aparelhos.',
+        sim: 'Apagar o treino e ' + (series === 1 ? 'a série' : 'as ' + series + ' séries') }
+    : { texto: 'Apagar este registro de treino tira a marca do dia, que não tem série nenhuma. Isso não tem volta, e vale para os outros aparelhos.',
+        sim: 'Apagar o registro de treino' });
+  if (!sim) return;
 
   lapide(chaveDeSessao(m));
   linhas.forEach(function (x) { lapide(chaveDeLog(x.idEx, x.l)); });
@@ -5035,7 +5059,22 @@ async function wipe() {
   // viaja. Antes a promessa era menor do que a verdade — o apagamento era
   // desfeito pela fusão —, e dizer o alcance é o que falta para o dono decidir
   // com o que ele tem na mão.
-  if (!confirm('Apagar todo o histórico? Isso não tem volta, e vale para os outros aparelhos.')) return;
+  // PARE (§3.3), com o número de cada coisa que sai — e o que FICA, porque
+  // "todo o histórico" lido de relance soa como o app inteiro.
+  const fotosDoCorpo = ((S.protocolo && S.protocolo.sessoes) || []).reduce(function (a, x) {
+    return a + Object.keys((x && x.fotos) || {}).length;
+  }, 0);
+  const medidas = MARCAS_DO_CORPO.reduce(function (a, k) { return a + ((S.body && S.body[k]) || []).length; }, 0);
+  const sai = [
+    [S.done.length, 'sessão', 'sessões'],
+    [(S.comidaHist || []).length, 'dia de comida', 'dias de comida'],
+    [medidas, 'medida do corpo', 'medidas do corpo'],
+    [S.cardio.length, 'cardio', 'cardios'],
+    [fotosDoCorpo, 'foto do corpo', 'fotos do corpo']
+  ].filter(function (x) { return x[0] > 0; }).map(function (x) { return x[0] + ' ' + (x[0] === 1 ? x[1] : x[2]); });
+  const lista = sai.length > 1 ? sai.slice(0, -1).join(', ') + ' e ' + sai[sai.length - 1] : (sai[0] || 'nada registrado ainda');
+  if (!(await pare({ texto: 'Apagar todo o histórico tira ' + lista + ' deste aparelho. O programa, o plano alimentar e as fotos de equipamento ficam. Isso não tem volta, e vale para os outros aparelhos.',
+                     sim: 'Apagar todo o histórico' }))) return;
   const antes = S;
   const agora = Date.now();
   // apagar o histórico não apaga o programa: os exercícios que ele cadastrou
@@ -7263,7 +7302,7 @@ CTX.detalheDaSessao = function () {
   };
 };
 CTX.fechaSessao = function () { fecharSessao(); };
-CTX.editaSessao = function (t) { apagaRegistroDeTreino(t); };
+CTX.editaSessao = function (t) { return apagaRegistroDeTreino(t); };
 CTX.corrigeDuracao = function (t, min) { corrigeDuracao(t, min); };
 /* Uma porta só, e aqui: `corrigeDuracao` já mora em `CTX`, e as duas são as
    duas metades da mesma resposta. Pôr esta também na tabela de verbos nus daria
@@ -8054,8 +8093,10 @@ CTX.apagaFotoDoCorpo = async function (pose) {
   // Confirma como toda outra ação destrutiva do app. E o aviso é honesto: a
   // lápide viaja na sincronização, então isto não apaga só daqui.
   const p = poseDe(pose);
-  if (!confirm('Apagar a foto de ' + (p ? p.n.toLowerCase() : pose) + '?\n\n' +
-               'Some deste aparelho e dos outros na próxima sincronização. Não tem volta.')) return;
+  // PARE (§3.3): a lápide viaja, e a comparação perde o par.
+  const qual = p ? p.n.toLowerCase() : pose;
+  if (!(await pare({ texto: 'Apagar a foto de ' + qual + ' de ' + fmtDate(Date.parse(v.d + 'T12:00:00')) + ' tira ela deste aparelho e dos outros na próxima sincronização, e a comparação perde esse par. Isso não tem volta.',
+                     sim: 'Apagar a foto de ' + qual }))) return;
   const ext = ses.fotos[pose].ext;
   lapide(chaveDeFotoDoCorpo(v.d, pose));
   ses.fotos = Object.assign({}, ses.fotos);

@@ -1129,7 +1129,10 @@ test('todo aviso que para o dedo diz o que acontece, e diz na primeira palavra',
   const re = /\bconfirm\(\s*([\s\S]{0,40})/g;
   let m;
   while ((m = re.exec(FONTE))) avisos.push(m[1]);
-  assert.ok(avisos.length > 15, 'o varredor achou avisos: ' + avisos.length);
+  // O piso divide-se em duas famílias desde que as nove ações que apagam sem
+  // volta saíram do diálogo do sistema para o painel de pare: os que sobram no
+  // diálogo mexem em prescrição ou em conta, e os nove são cobrados lá embaixo.
+  assert.ok(avisos.length >= 10, 'o varredor achou avisos: ' + avisos.length);
 
   // G3 · a primeira palavra é a única que se lê de relance, e ela tem de ser o
   // VERBO do que vai acontecer. A regra é morfológica em vez de uma lista de
@@ -1168,7 +1171,7 @@ test('todo aviso que para o dedo diz o que acontece, e diz na primeira palavra',
   // "Cancelar" — é a asserção que impede as duas famílias de voltarem a se
   // parecer, e o diálogo do sistema não consegue cumpri-la.
   const pedidos = [...FONTE.matchAll(/\{\s*texto:\s*'([^']*)'[^{}]*?sim:\s*'([^']*)'/g)];
-  assert.ok(pedidos.length >= 1, 'o varredor achou pedidos de pare: ' + pedidos.length);
+  assert.ok(pedidos.length >= 9, 'o varredor achou os nove pedidos de pare: ' + pedidos.length);
   const tortos = pedidos
     .filter(p => !INFINITIVO.test(p[1]) || !INFINITIVO.test(p[2]) || /^(OK|Confirmar|Sim|Cancelar)\b/.test(p[2]))
     .map(p => p[1].slice(0, 30) + ' / ' + p[2]);
