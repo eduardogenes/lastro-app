@@ -1831,3 +1831,9 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 
 /* O que não volta depois do passo, dito antes do toque (§6.3). */
 .dd-naovolta { margin: var(--ins-3) 0 0; }
+
+/* A bioimpedância (§10.1): a instrução antes dos campos, o "era" embaixo de
+   cada um, a regra do obrigatório e a do "nada registrado" depois. */
+.co-bio-i { margin: 0 0 var(--ins-4); }
+.co-bio-era { display: block; }
+.co-bio-ob, .co-bio-nada { margin: var(--ins-3) 0 0; }

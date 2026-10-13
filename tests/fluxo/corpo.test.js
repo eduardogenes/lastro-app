@@ -433,7 +433,7 @@ test('o seletor de data abre pelo link e aceita o campo nativo', async () => {
   a.aba('corpo');
   assert.strictEqual(a.$$('.dd-dia').length, 0, 'fechado por padrão: não custa espaço');
   assert.ok(a.$('.dd-diabtn'), 'mas existe o caminho');
-  assert.strictEqual(a.texto('.dd-diabtn'), 'Peso de outro dia', 'e diz do que é o dia que ele troca (§7.8)');
+  assert.strictEqual(a.texto('.dd-diabtn'), 'Peso da manhã de outro dia', 'e diz do que é o dia que ele troca (§7.8, §10.2)');
 
   a.clicar(a.$('.dd-diabtn'));
   const campo = a.$('.dd-dia input[type=date]');
@@ -782,8 +782,9 @@ test('ctx.registraBio recusa a leitura incompleta, e não grava nada pela metade
   assert.strictEqual(r.ok, false, 'recusou');
   assert.deepStrictEqual(Array.prototype.slice.call(r.falta), ['bioGordura'],
     'e diz qual grandeza faltou');
-  assert.strictEqual(a.toast(), 'Falta massa de gordura.',
-    'com o NOME que a tabela do domínio dá a ela, não com a chave crua');
+  assert.strictEqual(a.toast(),
+    'Falta a massa de gordura. Os cinco números são uma medição só: com quatro, a série do mês fica sem comparação.',
+    'com o NOME que a tabela do domínio dá a ela, e com o porquê (§10.1)');
 
   const S = a.S();
   assert.deepStrictEqual(
@@ -896,7 +897,7 @@ test('registrar duas vezes no mesmo dia substitui a leitura e deixa lápide nas 
   assert.strictEqual(a.S().body.bioPeso.length, 1,
     'o dia continua com UMA leitura: a segunda substituiu, não empilhou');
   assert.strictEqual(a.S().body.bioPeso[0].v, 80.1, 'a corrigida é a que fica');
-  assert.match(a.toast(), /substituiu a leitura do dia/,
+  assert.match(a.toast(), /Substituí a leitura que havia nesse dia\./,
     'e o app diz que substituiu, em vez de deixar parecer que acrescentou');
 
   const lapides = Object.keys(a.S().apagados || {});
@@ -1057,9 +1058,9 @@ test('a tela da bioimpedância tem os cinco campos, e diz qual é opcional', asy
   // A água é a única opcional: a balança dele a dá, mas nem toda balança dá, e
   // recusar a leitura inteira por falta dela perderia as quatro que ele mediu.
   const agua = a.doc.getElementById('bio-bioAgua').closest('label');
-  assert.ok(/opcional/.test(agua.textContent), 'a água está marcada como opcional');
+  assert.ok(/pode ficar vazio/.test(agua.textContent), 'a água está marcada como a que pode ficar vazia');
   const musculo = a.doc.getElementById('bio-bioMusculo').closest('label');
-  assert.ok(!/opcional/.test(musculo.textContent),
+  assert.ok(!/pode ficar vazio/.test(musculo.textContent),
     'e a massa muscular esquelética NÃO: é a que ele pediu para gravar');
   a.fechar();
 });
@@ -1145,8 +1146,11 @@ test('a tela oferece a data e nunca o futuro', async () => {
 test('a tela diz quando foi a última leitura, e se não houve', async () => {
   const vazia = await app({ aba: 'corpo' });
   await vazia.esperar();
-  assert.ok(/nenhuma leitura ainda/.test(vazia.doc.getElementById('app').textContent),
+  assert.ok(/uma vez por mês · nenhuma leitura ainda/.test(vazia.doc.getElementById('app').textContent),
     'sem leitura, a tela diz que não há — e não mostra um zero que seria mentira');
+  assert.strictEqual(vazia.texto('.co-bio-i'),
+    'Os cinco números saem da balança de bioimpedância, não da balança de casa.',
+    'na primeira vez, de onde saem os números (§10.1)');
   vazia.fechar();
 
   const t = Date.now();
@@ -1156,8 +1160,11 @@ test('a tela diz quando foi a última leitura, e se não houve', async () => {
     bioGordura: [{ t: t, v: 22.4 }], bioGorduraPct: [{ t: t, v: 23.3 }], bioAgua: []
   } } });
   await a.esperar();
-  assert.ok(/última leitura hoje/.test(a.doc.getElementById('app').textContent),
+  assert.ok(/uma vez por mês · anterior: \d\d\/\d\d/.test(a.doc.getElementById('app').textContent),
     'com leitura, diz quando foi');
+  assert.strictEqual(a.texto('.co-bio-i'),
+    'Os quatro números do mês passado estão no lugar. Toque só no que mudou.',
+    'e nas seguintes, que os números estão no lugar — quatro, porque a água não veio');
   a.fechar();
 });
 
@@ -1426,5 +1433,54 @@ test('apagar uma medida pede pelo painel de pare, e o Esc é "Deixar como está"
   await a.esperar(60);
   assert.strictEqual(a.S().body.peso.length, 0, 'e o verbo apaga');
   assert.strictEqual(a.$('[role="alertdialog"]'), null, 'com o painel fechado');
+  a.fechar();
+});
+
+test('a bioimpedância traz o mês passado no lugar, diz "era" ao lado de cada um e guarda os cinco', async () => {
+  // §10.1. "Toque só no que mudou" só é verdade se o campo vier com o número
+  // de antes — placeholder não grava nada. E o "era" diz a diferença sem
+  // afirmar uma medida de zero quando não mudou.
+  const t = Date.now() - 30 * DIA;
+  const a = await app({ aba: 'corpo', estado: { logs: {}, done: [], body: {
+    peso: [], cintura: [],
+    bioPeso: [{ t: t, v: 96.2 }], bioMusculo: [{ t: t, v: 41.8 }],
+    bioGordura: [{ t: t, v: 22.4 }], bioGorduraPct: [{ t: t, v: 23.3 }], bioAgua: [{ t: t, v: 52.1 }]
+  } } });
+  await a.esperar();
+  assert.strictEqual(a.doc.getElementById('bio-bioMusculo').value, '41,8', 'o número de antes, no lugar');
+  assert.strictEqual(a.doc.getElementById('bio-bioPeso').closest('label').querySelector('.ins-label-sm').textContent,
+    'Peso · kg · o que esta balança mostrou');
+  assert.ok(/Água corporal total · litros · pode ficar vazio/.test(a.doc.getElementById('bio-bioAgua').closest('label').textContent),
+    '"litros" por extenso');
+
+  a.digitar('bio-bioGordura', '21,8');
+  await a.esperar();
+  const era = function (k) { return a.doc.getElementById('bio-' + k).closest('label').querySelector('.co-bio-era').textContent; };
+  assert.strictEqual(era('bioGordura'), 'era 22,4 · −0,6');
+  assert.strictEqual(era('bioMusculo'), 'era 41,8', 'sem mudança, só o "era" — nada de "sem mudança"');
+  assert.ok(/Quatro números são obrigatórios\. A água corporal total pode ficar vazia — e vazia não é zero\./
+    .test(a.texto('.co-bio-ob')));
+  assert.strictEqual(a.texto('[data-a="registra-bio"]'), 'Guardar os cinco');
+  assert.strictEqual(a.texto('.co-bio-nada'), 'Nada está registrado até você tocar em Guardar os cinco.');
+
+  a.clicar('[data-a="registra-bio"]');
+  await a.esperar(60);
+  const b = a.S().body;
+  assert.strictEqual(b.bioGordura.length, 2, 'a leitura nova entrou');
+  assert.strictEqual(b.bioGordura[1].v, 21.8, 'com o que ele mudou');
+  assert.strictEqual(b.bioMusculo[1].v, 41.8, 'e com o que ficou no lugar');
+  assert.ok(/^Guardei os cinco números de \d\d\/\d\d neste aparelho\.$/.test(a.toast()), a.toast());
+  a.fechar();
+});
+
+test('os dois pesos têm nome e procedência, e a frase diz o que cada um faz', async () => {
+  // §10.2: dois pesos do mesmo dia se leem como erro, e o reflexo é apagar um.
+  const a = await app({ aba: 'corpo' });
+  await a.esperar();
+  const txt = a.doc.getElementById('app').textContent.replace(/\s+/g, ' ');
+  assert.ok(/peso da manhã/.test(txt), 'a pesagem tem o qualificador no nome');
+  assert.ok(txt.indexOf('da balança de casa, em semi-jejum, antes do treino') >= 0, 'e a procedência dele, de P6');
+  assert.ok(txt.indexOf('O peso da manhã é o que a regra do nutricionista lê. O peso da balança de bioimpedância ' +
+    'fica com os outros quatro números dela, e não entra na média da semana.') >= 0, 'e a frase dos dois pesos');
   a.fechar();
 });

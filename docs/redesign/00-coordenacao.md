@@ -2897,8 +2897,43 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             restaurar o plano inteiro; é gesto novo); a frase "Enquanto a adesão
             não chega a 11…" (a segunda metade é promessa ainda aberta na mesa
             dele, §11.2, e a frente proíbe meia-promessa).
-      **Falta, nesta ordem:** §6.2 e §6.4 os portões e o vazio deles; §10 a
-      bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
+      - [ ] **§6.2 e §6.4 · Os portões e o vazio deles — PARADO, é desenho.** A
+            Semana reescrita não tem os portões como linhas, nem a lista das
+            semanas do vazio. E o material não fecha QUAIS portões: a frente 1
+            (§1.4) diz três fixos — taxa, força, adesão —, e esse trio é o do
+            ramo "comer mais"; no ramo do corte a força não entra e entra a
+            leitura das fotos (que a própria frente 3 lista como botão
+            "Responder"); nos ramos sem passo, nenhum portão decide nada.
+            **Pergunta para os designers, não para o dono:** quais portões cada
+            ramo mostra, e o que a tela mostra quando o ramo não tem passo. As
+            palavras de cada linha já estão escritas (§6.2) e entram quando o
+            bloco existir.
+      - [x] **§10 · A bioimpedância e os dois pesos** (13/10). O bloco do Corpo
+            diz "uma vez por mês · anterior: 13/09"; na primeira vez, "Os cinco
+            números saem da balança de bioimpedância, não da balança de casa.";
+            nas seguintes, "Os cinco números do mês passado estão no lugar.
+            Toque só no que mudou." — e **para isso ser verdade os campos passam
+            a vir preenchidos com a leitura anterior** (antes vinham vazios, com
+            o valor de placeholder: a frase mentiria). Rótulos da frente ("Peso ·
+            kg · o que esta balança mostrou", "Água corporal total · litros ·
+            pode ficar vazio"), "era 22,4 · −0,6" e só "era 41,8" sem mudança, a
+            regra do obrigatório, "Guardar os cinco", "Nada está registrado até
+            você tocar em Guardar os cinco." A falta diz o porquê ("Falta a massa
+            de gordura. Os cinco números são uma medição só: com quatro, a série
+            do mês fica sem comparação."); gravar diz "Guardei os cinco números
+            de 13/10 neste aparelho." **Dois pesos:** "peso da manhã" com a
+            procedência de P6 e a frase "O peso da manhã é o que a regra do
+            nutricionista lê. O peso da balança de bioimpedância fica com…". Os
+            ids do bloco de medida deixaram de sair do rótulo (o rótulo novo tem
+            espaços) e saem da chave. Visto: `shots/bio.png`. Dez mutações.
+            **1.376 passando.**
+            **Não feito:** o teclado próprio com vírgula nos cinco campos (seguem
+            no teclado do sistema, `inputmode="decimal"`); a linha "Peso na
+            bioimpedância · da outra balança · 01/10, 21h28" fora do bloco (não
+            há lugar no Corpo que liste a leitura); "Peso da manhã · sem marca"
+            no Agora e "4 pesagens da manhã" na Semana vão com a §1.1.
+            **Dívida visual:** rótulos longos em caixa alta.
+      **Falta, nesta ordem:** §1.1 as linhas do Agora. **As outras treze perguntas** do
       app seguem no diálogo do sistema, de propósito (§3.3).
 
 - [ ] **6.v' O reponte das expressões compostas** — 400 entradas de ponte (325

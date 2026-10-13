@@ -18,7 +18,7 @@
 import {
   Cabecalho, GradeMetricas, Procedencia, Secao, Sparkline, Stepper, Vazio
 } from '../instrumento/primitivos.jsx';
-import { fmtDec } from '../../dominio/formato';
+import { fmtDec, fmtSig } from '../../dominio/formato';
 import { useState } from 'preact/hooks';
 import { Teclado } from '../instrumento/teclado.jsx';
 
@@ -46,7 +46,7 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
             rotulo={'digitar ' + rotulo + ' em ' + teclado.unidade}
             aoTeclar={aoTeclar} aoFechar={aoFecharTeclado}
           />
-        : <button class="dd-tclbtn" data-a={'tcl-abre-' + rotulo} onClick={aoAbrirTeclado}>
+        : <button class="dd-tclbtn" data-a={'tcl-abre-' + (chave || rotulo)} onClick={aoAbrirTeclado}>
             digitar o número
           </button>}
 
@@ -65,7 +65,7 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
       {dia && (dia.aberto
         ? <div class="dd-dia">
             <input
-              class="ins-input dd-data" type="date" id={'ddia-' + rotulo}
+              class="ins-input dd-data" type="date" id={'ddia-' + (chave || rotulo)}
               value={dia.iso} max={dia.max}
               onInput={e => onDia(e.currentTarget.value)}
             />
@@ -200,7 +200,7 @@ export function Corpo({ ctx }) {
       <Cabecalho olho="como está" titulo="Corpo" />
 
       <Medida
-        rotulo="peso" nota={c.peso.nota} primeira
+        rotulo="peso da manhã" chave="peso" nota={c.peso.nota} primeira
         valor={c.peso.valor} passo={0.1} unidade="kg" serie={c.peso.serie}
         onMuda={ctx.setPeso} onRegistrar={ctx.registraPeso} acao={c.peso.acao}
         dia={c.peso.dia} onAbrirDia={() => ctx.abreDiaCorpo('peso')}
@@ -215,8 +215,12 @@ export function Corpo({ ctx }) {
           { k: 'r', rotulo: 'ritmo por semana', valor: c.peso.ritmo, cor: c.peso.ritmoCor }
         ]}
       >
+        {/* "Peso da manhã", e não "peso": com a bioimpedância há dois pesos no
+            mesmo dia, e "de hoje" deixou de separar (§10.2). A procedência é a
+            descrição dele do próprio ato (P6). */}
         <Procedencia>
-          a média da semana é o número que conta · {c.peso.alvo}
+          da balança de casa, em semi-jejum, antes do treino · a média da semana
+          é o número que conta · {c.peso.alvo}
         </Procedencia>
       </Medida>
 
@@ -302,22 +306,22 @@ export function Corpo({ ctx }) {
           casa o mesmo dia vindo de dois aparelhos. Por isso a tela recusa a
           leitura incompleta em vez de gravar o que deu: metade de uma leitura
           não é meia leitura, é uma leitura errada. */}
-      <Secao rotulo="bioimpedância"
-             nota={bio.tem ? 'última leitura ' + bio.ultima : 'nenhuma leitura ainda'}>
+      <Secao rotulo="bioimpedância" nota={bio.nota}>
+        <p class="ins-body-sm ins-t2 co-bio-i">{bio.instrucao}</p>
         <div class="co-bio">
           {bio.campos.map(c => (
             <label key={c.k} class="co-bio-c">
-              <span class="ins-label-sm">
-                {c.n}{!c.obrigatorio && <em class="co-bio-op"> · opcional</em>}
-              </span>
+              <span class="ins-label-sm">{c.rotulo}</span>
               <input
                 class="ins-input"
                 id={'bio-' + c.k}
                 type="text"
                 inputMode="decimal"
-                placeholder={c.txt}
-                aria-label={c.n + ' em ' + c.u}
-                value={rascunho[c.k] || ''}
+                aria-label={c.rotulo}
+                /* O valor do mês passado fica NO LUGAR até ele mexer: é a
+                   premissa da instrução ("toque só no que mudou"), e um
+                   placeholder não grava nada — ela mentiria. */
+                value={c.k in rascunho ? rascunho[c.k] : c.antes}
                 /* Atualizador FUNCIONAL, e não `Object.assign` sobre o
                    `rascunho` do render. Os cinco campos são controlados pelo
                    mesmo objeto, e a versão por closure lia o estado do ÚLTIMO
@@ -329,9 +333,24 @@ export function Corpo({ ctx }) {
                   setRascunho(prev => Object.assign({}, prev, { [c.k]: v }));
                 }}
               />
+              {/* "era 17,4 · −0,6", e só "era 3,1" quando não mudou: escrever
+                  "sem mudança" seria afirmar uma medida de zero (§10.1). */}
+              {c.valor != null && (
+                <span class="ins-body-xs ins-t3 co-bio-era">
+                  era {c.antes}{(function () {
+                    const v = parseFloat(String(c.k in rascunho ? rascunho[c.k] : c.antes).replace(',', '.'));
+                    const d = isNaN(v) ? 0 : Math.round((v - c.valor) * 10) / 10;
+                    return d ? ' · ' + fmtSig(d) : '';
+                  })()}
+                </span>
+              )}
             </label>
           ))}
         </div>
+        <p class="ins-body-xs ins-t3 co-bio-ob">
+          Quatro números são obrigatórios. A água corporal total pode ficar vazia — e
+          vazia não é zero.
+        </p>
 
         {/* A data fica atrás de um campo porque registrar no dia é o caso de
             todo dia; retroativo é exceção. `max` é hoje: leitura no futuro não
@@ -349,15 +368,28 @@ export function Corpo({ ctx }) {
             o meio-dia de hoje está no FUTURO, e leitura no futuro não é leitura.
             Para um dia PASSADO o meio-dia é a escolha certa — a hora não foi
             medida, e meio-dia não encosta em nenhuma borda de fuso. */}
-        <button class="ins-btn-primary" data-a="registra-bio" onClick={() => {
+        {/* "Guardar os cinco", e não "Salvar": aqui o lote É o dado — os cinco
+            saíram do mesmo visor, no mesmo minuto —, e o rótulo diz quantos e o
+            quê (§10.3). A leitura enviada é a da tela: o que está no lugar mais
+            o que ele mudou. */}
+        <button class="ins-btn-primary" data-a="registra-bio" onClick={async () => {
           const d = dia || bio.maxISO;
-          ctx.registraBio(rascunho, d === bio.maxISO ? Date.now() : Date.parse(d + 'T12:00:00'));
-          setRascunho({});
-        }}>registrar a leitura</button>
+          const leitura = {};
+          bio.campos.forEach(c => { leitura[c.k] = c.k in rascunho ? rascunho[c.k] : c.antes; });
+          const r = await ctx.registraBio(leitura, d === bio.maxISO ? Date.now() : Date.parse(d + 'T12:00:00'));
+          if (r && r.ok) setRascunho({});
+        }}>Guardar os cinco</button>
+        <p class="ins-body-xs ins-t3 co-bio-nada">
+          Nada está registrado até você tocar em Guardar os cinco.
+        </p>
 
+        {/* Dois pesos do mesmo dia, com números diferentes, se leem como erro —
+            e o reflexo é apagar um. A frase diz o que cada um FAZ (§10.2), e a
+            diferença deixa de ser problema. */}
         <Procedencia>
-          as cinco entram com o MESMO instante, e é isso que as torna uma
-          leitura só · o peso daqui não entra na média da pesagem da manhã
+          O peso da manhã é o que a regra do nutricionista lê. O peso da balança
+          de bioimpedância fica com os outros quatro números dela, e não entra na
+          média da semana.
         </Procedencia>
       </Secao>
 

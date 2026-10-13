@@ -3902,7 +3902,11 @@ async function registraBio(leitura, quando) {
     return { ok: false, falta: falta.map(m => m.k), invalidas: invalidas.map(m => m.k) };
   }
   if (falta.length) {
-    toast('Falta ' + nomes(falta) + '.');
+    // §10.1: não é "campo obrigatório". A frase diz POR QUE ele é, que é a única
+    // coisa que torna a exigência razoável num fluxo de transcrever um visor.
+    const com = vai.length ? ': com ' + POR_EXTENSO[vai.length] + ', a série do mês fica sem comparação.' : '.';
+    toast((falta.length === 1 ? 'Falta ' : 'Faltam ') + listaComE(falta.map(nomeNaFrase)) +
+          '. Os cinco números são uma medição só' + com);
     return { ok: false, falta: falta.map(m => m.k), invalidas: [] };
   }
 
@@ -3913,11 +3917,20 @@ async function registraBio(leitura, quando) {
 
   await save();
   render();
-  const rotulo = rotuloDoDia(t);
-  toast('Bioimpedância registrada ' + (rotulo === 'hoje' || rotulo === 'ontem' ? rotulo : 'em ' + rotulo) +
-        (substituiu ? ' — substituiu a leitura do dia.' : '.'));
+  // "Guardei os cinco números de 01/10 neste aparelho." (§10.3): quantos, e o
+  // que entrou — é o que impede o "Guardar" de ser o "Salvar" que V2 recusa.
+  toast('Guardei os ' + POR_EXTENSO[vai.length] + ' números de ' + fmtDate(t) + ' neste aparelho.' +
+        (substituiu ? ' Substituí a leitura que havia nesse dia.' : ''));
   return { ok: true, em: t, gravadas: vai.map(function (x) { return x.k; }) };
 }
+const POR_EXTENSO = ['nenhum', 'um', 'dois', 'três', 'quatro', 'cinco'];
+/** "a massa de gordura e o percentual de gordura": o nome com o artigo. */
+const ARTIGO_DA_BIO = { bioPeso: 'o', bioMusculo: 'a', bioGordura: 'a', bioGorduraPct: 'o', bioAgua: 'a' };
+function nomeNaFrase(m) { return (ARTIGO_DA_BIO[m.k] ? ARTIGO_DA_BIO[m.k] + ' ' : '') + m.n; }
+function listaComE(xs) {
+  return xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' e ' + xs[xs.length - 1];
+}
+
 /**
  * Valor com a unidade da grandeza, como se escreve.
  *
@@ -6747,7 +6760,7 @@ CTX.corpo = function () {
       // nutricionista prescreveu — estado contra uma regra, como "feito".
       ritmoCor: (r.ok && r.duasSemanas)
         ? (r.kgSem >= 0.15 && r.kgSem <= 0.4 ? 'ins-acid' : 'ins-amber') : '',
-      nota: naSemana + (naSemana === 1 ? ' pesagem nesta semana' : ' pesagens nesta semana'),
+      nota: naSemana + (naSemana === 1 ? ' pesagem da manhã nesta semana' : ' pesagens da manhã nesta semana'),
       alvo: 'registre 3 a 4 por semana',
       acao: acaoDaMedida('peso'),
       dia: diaDaMedidaVM('peso'),
@@ -6976,25 +6989,51 @@ CTX.setOnde = function (k, txt) {
  * `bioAgua` e a unica opcional: a balanca dele a da, mas nem toda balanca da, e
  * recusar a leitura inteira por falta dela perderia as quatro que ele mediu.
  */
+// O rótulo de cada campo DENTRO do bloco (§10.1): a palavra dele, a unidade
+// por extenso quando a abreviada se lê mal ("l" minúsculo ao lado de número), e
+// o que só aquele campo precisa dizer. "Peso" e não "peso na bioimpedância":
+// dentro do bloco, a balança já está dita.
+const CAMPO_DA_BIO = {
+  bioPeso:       { rotulo: 'Peso', un: 'kg', dica: 'o que esta balança mostrou' },
+  bioMusculo:    { rotulo: 'Massa muscular esquelética', un: 'kg' },
+  bioGordura:    { rotulo: 'Massa de gordura', un: 'kg' },
+  bioGorduraPct: { rotulo: 'Percentual de gordura', un: '%' },
+  bioAgua:       { rotulo: 'Água corporal total', un: 'litros', dica: 'pode ficar vazio' }
+};
+
 CTX.bioimpedancia = function () {
   const campos = MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).map(function (m) {
     const serie = S.body[m.k] || [];
     const ultima = serie[serie.length - 1] || null;
+    const c = CAMPO_DA_BIO[m.k] || { rotulo: m.n, un: m.u };
     return {
       k: m.k, n: m.n, u: m.u, obrigatorio: !!m.obrigatorio,
+      rotulo: c.rotulo + ' · ' + c.un + (c.dica ? ' · ' + c.dica : ''),
       valor: ultima ? ultima.v : null,
+      // o valor de antes, no lugar: é o que o campo mostra até ele mexer
+      antes: ultima ? fmtDec(ultima.v) : '',
       txt: ultima ? fmtDec(ultima.v) + ' ' + m.u : '—'
     };
   });
+  const noLugar = campos.filter(function (c) { return c.valor != null; }).length;
   const quandos = MARCAS_DA_BIO.map(function (k) {
     const serie = S.body[k] || [];
     const u = serie[serie.length - 1];
     return u ? u.t : null;
   }).filter(function (t) { return t != null; });
+  const ultimaT = quandos.length ? Math.max.apply(null, quandos) : null;
   return {
     campos: campos,
     tem: quandos.length > 0,
-    ultima: quandos.length ? rotuloDoDia(Math.max.apply(null, quandos)) : null,
+    ultima: ultimaT ? rotuloDoDia(ultimaT) : null,
+    // "uma vez por mês · anterior: 03/09" (§10.1, D2)
+    nota: 'uma vez por mês · ' + (ultimaT ? 'anterior: ' + fmtDate(ultimaT) : 'nenhuma leitura ainda'),
+    // Na primeira vez, de onde saem os números; nas seguintes, que os do mês
+    // passado já estão no lugar — composição corporal muda devagar, e redigitar
+    // tudo todo mês é o fluxo que ele recusa.
+    instrucao: noLugar
+      ? 'Os ' + POR_EXTENSO[noLugar] + ' números do mês passado estão no lugar. Toque só no que mudou.'
+      : 'Os cinco números saem da balança de bioimpedância, não da balança de casa.',
     maxISO: hojeISO()
   };
 };
