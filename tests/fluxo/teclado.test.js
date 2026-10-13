@@ -62,11 +62,11 @@ test('o teclado FÍSICO digita, e era o único defeito nomeado do próprio', asy
   tecla('7'); await a.esperar();
 
   assert.ok(a.texto('.tcl-visor').includes('27'), 'o visor recebeu o que o teclado físico digitou');
-  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), 27, 'e a série foi registrada');
+  assert.strictEqual((a.vJ('draftPeek', 0).s[0] || [])[1], 27, 'e a série foi registrada');
 
   tecla('Backspace'); await a.esperar();
   assert.ok(a.texto('.tcl-visor').includes('2'), 'o Backspace apaga');
-  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), 2);
+  assert.strictEqual((a.vJ('draftPeek', 0).s[0] || [])[1], 2);
   a.fechar();
 });
 
@@ -160,7 +160,7 @@ test('o pronto fecha, e o que foi digitado fica', async () => {
   a.clicar(a.$('[data-a="tcl-pronto"]'));
   await a.esperar();
   assert.strictEqual(a.$('.tcl-grade'), null, 'fechou');
-  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), 3, 'e o valor ficou');
+  assert.strictEqual((a.vJ('draftPeek', 0).s[0] || [])[1], 3, 'e o valor ficou');
   a.fechar();
 });
 
@@ -215,7 +215,7 @@ test('a carga com vírgula entra como número', async () => {
   });
   await a.esperar();
   assert.ok(a.texto('.tcl-visor').includes('22,5'), 'o visor mostra a vírgula');
-  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[0]'), 22.5,
+  assert.strictEqual((a.vJ('draftPeek', 0).s[0] || [])[0], 22.5,
     'e o modelo guarda o número, com ponto');
   a.fechar();
 });
@@ -228,7 +228,7 @@ test('a segunda casa decimal não entra', async () => {
     a.clicar(a.$('[data-a="tcl-' + t + '"]'));
   });
   await a.esperar();
-  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[0]'), 22.5, 'ficou em 22,5');
+  assert.strictEqual((a.vJ('draftPeek', 0).s[0] || [])[0], 22.5, 'ficou em 22,5');
   a.fechar();
 });
 
