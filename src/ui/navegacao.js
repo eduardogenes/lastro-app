@@ -67,6 +67,8 @@ export function camadasAbertas(view) {
   // programa — não o lugar. Antes a ordem era a inversa, e com os dois abertos
   // o programa ganhava e o histórico não aparecia.
   if (view.hist) c.push('hist');
+  // A Evolução ABAIXO da comparação: comparar abre de dentro dela.
+  if (view.evolucao) c.push('evolucao');
   if (view.comparar) c.push('comparar');
   if (view.protocolo) c.push('protocolo');
   if (view.ajuste) c.push('ajuste');

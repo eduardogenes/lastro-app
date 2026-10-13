@@ -18,7 +18,7 @@ import {
 import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
-import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
+import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
@@ -34,6 +34,7 @@ import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
 import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
+import { Evolucao } from './ui/telas/evolucao.jsx';
 import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
 import { Camera } from './ui/telas/camera.jsx';
 import { Ajustes } from './ui/telas/ajustes.jsx';
@@ -336,7 +337,7 @@ function corpoDoBackup(body) {
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] }, promoPendente:[] };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, modoSessao:false, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, prog:null, medida:null, aulas:false, rapido:false,
-  protocolo:null, comparar:null, ajuste:null, camera:null, ajustes:false };
+  protocolo:null, comparar:null, evolucao:null, ajuste:null, camera:null, ajustes:false };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -2280,7 +2281,7 @@ const CTX = {
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
-              view.protocolo || view.comparar || view.ajuste || view.camera ||
+              view.protocolo || view.comparar || view.evolucao || view.ajuste || view.camera ||
               view.ajustes || view.modoSessao);
   },
 
@@ -2455,6 +2456,8 @@ function telaCheia() {
   if (view.ajuste) return <AjusteFoto ctx={CTX} />;
   if (view.protocolo) return <Protocolo ctx={CTX} />;
   if (view.comparar) return <Comparar ctx={CTX} />;
+  // Depois de comparar: a comparação abre DE DENTRO da Evolução, e fica por cima.
+  if (view.evolucao) return <Evolucao ctx={CTX} />;
 
   if (view.retro) return <Retrospectiva ctx={CTX} />;
   if (view.add) return <Retroativo ctx={CTX} />;
@@ -6210,6 +6213,7 @@ const FECHA_CAMADA = {
   ajuste:    function () { CTX.fechaAjuste(); },
   protocolo: function () { CTX.fechaProtocolo(); },
   comparar:  function () { CTX.fechaComparar(); },
+  evolucao:  function () { CTX.fechaEvolucao(); },
   prog:      function () { fecharPrograma(); },
   retro:     function () { fecharRetro(); },
   add:       function () { fecharAdicionar(); },
@@ -8780,6 +8784,43 @@ CTX.abreComparar = function () {
   entraNoDestino('comparar'); render();
 };
 CTX.fechaComparar = function () { view.comparar = null; render(); saiDoDestino('comparar'); };
+
+// ---------- o destino EVOLUÇÃO ----------
+// A leitura do peso ao longo do tempo, dentro de Corpo — o estado 8 do
+// `corpo.html` da D, com o nome que o dono devolveu em 06/10 (§1.7 da frente 3):
+// "Evolução", no lugar de "Histórico". Não é um sexto lugar: é um destino que
+// abre de Corpo e volta para ele.
+CTX.abreEvolucao = function () { view.evolucao = true; entraNoDestino('evolucao'); render(); };
+CTX.fechaEvolucao = function () { view.evolucao = null; render(); saiDoDestino('evolucao'); };
+
+CTX.evolucao = function () {
+  const agora = Date.now();
+  const L = leituraDaEvolucao(S.body.peso || [], agora);
+  const semanas = {};
+  L.pontos.forEach(function (x) { semanas[weekStart(x.t)] = 1; });
+  const ns = Object.keys(semanas).length;
+  const pri = L.semanas[0], ult = L.semanas[L.semanas.length - 1];
+  const duasAbaixo = L.taxas.filter(function (x) { return x.kg != null; }).slice(0, 2);
+  return {
+    meta: L.n ? ns + (ns === 1 ? ' semana · ' : ' semanas · ') + L.n + (L.n === 1 ? ' pesagem' : ' pesagens') : 'nenhuma pesagem ainda',
+    leitura: L,
+    alvo: { min: ALVO_MIN, max: ALVO_MAX },
+    // as duas pontas da linha, ditas como o desenho diz: "02/08 · 71,5" e "hoje · 73,6"
+    inicio: pri ? fmtDate(pri.w) + ' · ' + fmtDec(pri.v) : null,
+    fim: ult ? (sameDay(ult.w, weekStart(agora)) ? 'esta semana' : fmtDate(ult.w)) + ' · ' + fmtDec(ult.v) : null,
+    taxas: L.taxas.map(function (x) {
+      return { w: x.w, intervalo: x.intervalo, nota: x.nota, classe: x.classe,
+               valor: x.kg == null ? '–' : fmtSig2(x.kg) };
+    }),
+    // A frase que aponta para onde a decisão mora. Quando as duas taxas mais
+    // recentes estão abaixo de 0,10, é exatamente o que a regra lê — a frase do
+    // desenho; nos outros casos, só o endereço.
+    frase: duasAbaixo.length === 2 && duasAbaixo.every(function (x) { return x.kg < 0.10; })
+      ? 'Duas taxas seguidas abaixo de 0,10 é exatamente o que a regra do nutricionista lê. O que ela decide está em Semana.'
+      : 'O que a regra do nutricionista decide com estas taxas está em Semana.',
+    podeComparar: posesDo(S.protocolo.poses).some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; })
+  };
+};
 
 function aplicaParPadrao() {
   const c = view.comparar;

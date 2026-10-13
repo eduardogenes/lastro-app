@@ -197,7 +197,11 @@ export function Corpo({ ctx }) {
 
   return (
     <>
-      <Cabecalho olho="como está" titulo="Corpo" />
+      {/* "Evolução", no lugar do "Histórico" do desenho (§1.7 da frente 3): a
+          palavra dele, para o destino de leitura que mora dentro de Corpo. */}
+      <Cabecalho olho="como está" titulo="Corpo"
+                 acao={<button class="ins-btn-secondary co-evolucao" data-a="abre-evolucao"
+                               onClick={ctx.abreEvolucao}>Evolução</button>} />
 
       <Medida
         rotulo="peso da manhã" chave="peso" nota={c.peso.nota} primeira

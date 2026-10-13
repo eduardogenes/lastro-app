@@ -1858,3 +1858,17 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
    apoio embaixo, e o botão à direita. */
 .ag-corpo .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-1); }
 
+
+/* EVOLUÇÃO (a D, corpo.html estado 8): uma série só — a linha no acento, os
+   pontos do dia em tinta neutra, a faixa do alvo no acento suave. Sem eixo e
+   sem grade: as duas pontas dizem onde a curva começa e termina, e a lista
+   abaixo é a tabela. */
+.co-evolucao { width: auto; padding: 0 var(--ins-5); flex: 0 0 auto; }
+.ev-curva { display: block; width: 100%; height: auto; margin: var(--ins-4) 0 var(--ins-2); }
+.ev-faixa { fill: var(--ins-acento-suave); }
+.ev-dia { fill: var(--ins-tinta-3); opacity: .55; }
+.ev-linha { fill: none; stroke: var(--ins-acento); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ev-semana { fill: var(--ins-acento); stroke: var(--ins-tela); stroke-width: 2; }
+.ev-pontas { display: flex; justify-content: space-between; color: var(--ins-tinta-2); font-size: 13px; }
+.ev-taxa-v { display: flex; flex-direction: column; align-items: flex-end; gap: var(--ins-1); }
+.ev-frase { margin: var(--ins-4) 0 var(--ins-3); }

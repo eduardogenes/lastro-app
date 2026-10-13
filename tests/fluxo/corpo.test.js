@@ -1484,3 +1484,51 @@ test('os dois pesos têm nome e procedência, e a frase diz o que cada um faz', 
     'fica com os outros quatro números dela, e não entra na média da semana.') >= 0, 'e a frase dos dois pesos');
   a.fechar();
 });
+
+// ---------- o destino Evolução (a D, corpo.html estado 8; §1.7 da frente 3) ----------
+
+test('"Evolução" no cabeçalho do Corpo abre a leitura, e o Voltar fecha', async () => {
+  const s = function (k, dow) { return inicioDaSemana(Date.now()) - k * 7 * DIA + dow * DIA + 10 * 3600000; };
+  const peso = [
+    { t: s(3, 1), v: 73.0 }, { t: s(3, 3), v: 73.2 },
+    { t: s(2, 1), v: 73.3 }, { t: s(2, 3), v: 73.5 },
+    { t: s(1, 1), v: 73.6 }
+  ];
+  const a = await app({ aba: 'corpo', estado: { logs: {}, done: [], body: { peso: peso, cintura: [] } } });
+  await a.esperar();
+  a.clicar('[data-a="abre-evolucao"]');
+  await a.esperar();
+  assert.ok(a.vista().evolucao, 'o destino abriu');
+  const txt = a.doc.getElementById('app').textContent;
+  assert.ok(txt.indexOf('Evolução') >= 0, 'com a palavra dele');
+  assert.ok(/3 semanas · 5 pesagens/.test(txt), 'e o que a leitura cobre: ' + txt.slice(0, 200));
+  assert.ok(a.$('.ev-curva'), 'a curva está lá');
+  assert.strictEqual(a.$$('.ev-curva .ev-dia').length, 5, 'um ponto por pesagem');
+  assert.strictEqual(a.$$('.ev-taxa').length, 4, 'e a taxa das quatro últimas semanas, que é a tabela da curva');
+  assert.ok(txt.indexOf('sem taxa: a semana não tem média') >= 0, 'a semana de uma pesagem diz por que não tem taxa');
+
+  a.window.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape' }));
+  await a.esperar();
+  assert.ok(!a.vista().evolucao, 'Voltar devolve ao Corpo');
+  a.fechar();
+});
+
+test('da Evolução, "Ir para Semana" leva para onde a regra decide', async () => {
+  const a = await app({ aba: 'corpo', estado: { logs: {}, done: [], body: { peso: [{ t: Date.now() - DIA, v: 73 }], cintura: [] } } });
+  a.v('ctx.abreEvolucao');
+  await a.esperar();
+  a.clicar('[data-a="evolucao-semana"]');
+  await a.esperar();
+  assert.ok(!a.vista().evolucao);
+  assert.strictEqual(a.vista().aba, 'semana');
+  a.fechar();
+});
+
+test('sem pesagem, a Evolução diz o que vai aparecer, e não desenha eixo vazio', async () => {
+  const a = await app({ aba: 'corpo', estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.v('ctx.abreEvolucao');
+  await a.esperar();
+  assert.strictEqual(a.$('.ev-curva'), null);
+  assert.ok(a.doc.getElementById('app').textContent.indexOf('Nenhuma pesagem ainda.') >= 0);
+  a.fechar();
+});
