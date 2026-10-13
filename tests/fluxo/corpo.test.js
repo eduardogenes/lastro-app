@@ -318,7 +318,7 @@ test('dá para registrar numa data bem anterior, não só nos últimos dias', as
   a.aba('corpo');
 
   const antigo = Date.now() - 23 * DIA;
-  a.E('CTX.setDiaCorpo("peso", "' + iso(antigo) + '")');
+  a.v('ctx.setDiaCorpo', 'peso', iso(antigo));
   a.v('ctx.setPeso', 71.2);
   await a.v('addBody', 'peso');
   await a.esperar();
@@ -326,7 +326,7 @@ test('dá para registrar numa data bem anterior, não só nos últimos dias', as
   const m = a.S().body.peso;
   assert.strictEqual(m.length, 1);
   assert.strictEqual(m[0].v, 71.2);
-  assert.strictEqual(a.E('sameDay(S.body.peso[0].t, ' + antigo + ')'), true,
+  assert.strictEqual(a.v('sameDay', a.S().body.peso[0].t, antigo), true,
     'caiu no dia escolhido, três semanas atrás');
   a.fechar();
 });
@@ -336,7 +336,7 @@ test('escolher ontem grava no dia certo, não em hoje', async () => {
   a.aba('corpo');
 
   const ontem = Date.now() - DIA;
-  a.E('CTX.setDiaCorpo("peso", "' + iso(ontem) + '")');
+  a.v('ctx.setDiaCorpo', 'peso', iso(ontem));
   assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar ontem',
     'o botão passa a dizer em que dia vai gravar');
 
@@ -344,15 +344,15 @@ test('escolher ontem grava no dia certo, não em hoje', async () => {
   await a.v('addBody', 'peso');
   await a.esperar();
 
-  assert.strictEqual(a.E('sameDay(S.body.peso[0].t, Date.now())'), false, 'não caiu em hoje');
-  assert.strictEqual(a.E('sameDay(S.body.peso[0].t, ' + ontem + ')'), true);
+  assert.strictEqual(a.v('sameDay', a.S().body.peso[0].t, Date.now()), false, 'não caiu em hoje');
+  assert.strictEqual(a.v('sameDay', a.S().body.peso[0].t, ontem), true);
   a.fechar();
 });
 
 test('data no futuro é recusada', async () => {
   const a = await app({ estado: vazio });
   a.aba('corpo');
-  a.E('CTX.setDiaCorpo("peso", "' + iso(Date.now() + 3 * DIA) + '")');
+  a.v('ctx.setDiaCorpo', 'peso', iso(Date.now() + 3 * DIA));
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, true, 'continua em hoje');
   assert.strictEqual(a.toast(), 'Nunca uma data futura: o dia ainda não aconteceu.',
     'e diz que recusou: recusa calada é beco (§7.8)');
@@ -367,9 +367,9 @@ test('às 6h, voltar a data para HOJE funciona — não é futuro', async () => 
   const agora = agoraEstavel(6, 5);
   const a = await app({ estado: vazio, agora: agora });
   a.aba('corpo');
-  a.E('CTX.setDiaCorpo("peso", "' + iso(agora - DIA) + '")');
+  a.v('ctx.setDiaCorpo', 'peso', iso(agora - DIA));
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, false, 'pré-condição: foi para ontem');
-  a.E('CTX.setDiaCorpo("peso", "' + iso(agora) + '")');
+  a.v('ctx.setDiaCorpo', 'peso', iso(agora));
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, true, 'e voltou para hoje');
   assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar hoje');
   a.fechar();
@@ -379,7 +379,7 @@ test('depois de gravar, a data volta para hoje sozinha', async () => {
   // deixar uma data passada armada faria a próxima pesagem cair no dia errado
   const a = await app({ estado: vazio });
   a.aba('corpo');
-  a.E('CTX.setDiaCorpo("peso", "' + iso(Date.now() - DIA) + '")');
+  a.v('ctx.setDiaCorpo', 'peso', iso(Date.now() - DIA));
   await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, true);
@@ -394,7 +394,7 @@ test('o seletor diz o que o dia escolhido já tem', async () => {
   a.aba('corpo');
   assert.match(a.vJ('ctx.corpo').peso.dia.jaTem, /nenhuma medida/, 'hoje ainda está vazio');
 
-  a.E('CTX.setDiaCorpo("peso", "' + iso(ontem) + '")');
+  a.v('ctx.setDiaCorpo', 'peso', iso(ontem));
   assert.match(a.vJ('ctx.corpo').peso.dia.jaTem, /73,4 kg · registrar substitui/);
   a.fechar();
 });
@@ -408,7 +408,7 @@ test('escolher um dia já medido parte do valor daquele dia', async () => {
   a.aba('corpo');
   assert.strictEqual(a.vJ('ctx.corpo').peso.valor, 75, 'em hoje, mostra o de hoje');
 
-  a.E('CTX.setDiaCorpo("peso", "' + iso(ontem) + '")');
+  a.v('ctx.setDiaCorpo', 'peso', iso(ontem));
   assert.strictEqual(a.vJ('ctx.corpo').peso.valor, 73.4, 'em ontem, mostra o de ontem');
 
   a.v('ctx.setPeso', 73.9);
@@ -422,7 +422,7 @@ test('escolher um dia já medido parte do valor daquele dia', async () => {
 test('a data é por medida: peso e cintura não se misturam', async () => {
   const a = await app({ estado: vazio });
   a.aba('corpo');
-  a.E('CTX.setDiaCorpo("peso", "' + iso(Date.now() - DIA) + '")');
+  a.v('ctx.setDiaCorpo', 'peso', iso(Date.now() - DIA));
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, false);
   assert.strictEqual(a.vJ('ctx.corpo').cintura.dia.hoje, true, 'a cintura continua em hoje');
   a.fechar();
@@ -1388,7 +1388,7 @@ test('as portas das medidas com fita recusam o que não é fita', async () => {
   a.m.ctx.ligaMedida('bioPeso');
   await a.esperar();
   assert.strictEqual(a.S().body.peso.length, 0, 'nenhuma pesagem entrou');
-  assert.strictEqual(a.E('view.bodyForm && view.bodyForm.peso'), undefined, 'nem como rascunho');
+  assert.strictEqual((function (f) { return f && f.peso; })(a.vista().bodyForm), undefined, 'nem como rascunho');
   a.fechar();
 });
 
