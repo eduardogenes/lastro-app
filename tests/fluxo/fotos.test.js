@@ -39,7 +39,7 @@ test('a foto entra no cache do aparelho, e só a referência no estado', async (
     'e os bytes foram para o cache, não para o estado');
 
   // o estado não pode ter engordado com imagem
-  const json = a.E('JSON.stringify(S.fotos)');
+  const json = JSON.stringify(a.S().fotos);
   assert.ok(json.length < 200, 'a referência é pequena: ' + json.length + ' bytes');
   a.fechar();
 });
@@ -188,7 +188,7 @@ test('a miniatura aparece na troca só quando há foto', async () => {
   assert.strictEqual(a.$$('.swapfoto').length, 0, 'sem foto, nem moldura');
 
   // com referência E bytes no cache, a miniatura aparece
-  const primeiro = a.E('trocaDoDia(view.day, 0).grupos[0].opcoes[0].id');
+  const primeiro = a.vJ('trocaDoDia', a.vista().day, 0).grupos[0].opcoes[0].id;
   a.E('S.fotos[' + JSON.stringify(primeiro) + '] = { v: 5, ext: "webp" }');
   await a.E('FOTO_GUARDA(' + JSON.stringify(primeiro) + ')');
   a.v('toggleSwap', 0); a.v('toggleSwap', 0);
