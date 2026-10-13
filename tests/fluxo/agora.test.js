@@ -608,20 +608,20 @@ test('cada linha diz o que mudou, de onde veio, quando vence e a conta de volume
   assert.strictEqual(l.dia, 'A', 'de que sessão veio');
   assert.strictEqual(l.quando, agora - 3 * DIA, 'e quando ela aconteceu');
   assert.strictEqual(l.mudancas.length, 1);
-  assert.ok(/3 → 5/.test(l.mudancas[0].txt), 'o que mudou: ' + l.mudancas[0].txt);
+  assert.strictEqual(l.mudancas[0].txt, 'Elevação lateral na máquina: 5 séries, não 3', 'o que mudou, o número que vale primeiro');
 
   // A CONTA, e ela tem que ser TRANSIÇÃO — "de 12 para 13" —, que é a forma que
   // o dono pediu e a única que `impactoDoMod` produz. `impacto()` afirma o
   // número de agora e não serviria aqui.
   assert.ok(l.mudancas[0].impacto, 'há conta de volume');
-  assert.ok(/\d+ → \d+/.test(l.mudancas[0].impacto),
-    'e ela é transição, não o número de agora: ' + l.mudancas[0].impacto);
+  assert.ok(/^Se entrar no Treino A: .+ passa de \d+ para \d+ séries na rotação\./.test(l.mudancas[0].impacto),
+    'e ela é transição, com o destino na frente e sem seta: ' + l.mudancas[0].impacto);
   assert.ok(l.mudancas[0].impacto.indexOf('delt lateral') >= 0,
     'no músculo da mudança: ' + l.mudancas[0].impacto);
 
-  // O VENCIMENTO: o dia em que aquele treino volta.
-  assert.ok(typeof l.vence === 'number', 'há data de vencimento: ' + l.vence);
-  assert.ok(l.vence >= agora, 'e ela não está no passado');
+  // O VENCIMENTO, em treinos e não em data: a sequência anda pela ordem.
+  assert.ok(/^vence (na próxima vez do Treino A — que é a próxima sessão|quando o Treino A voltar · faltam? \d+ treinos?)$/.test(l.vence),
+    'há vencimento, contado em treinos: ' + l.vence);
   a.fechar();
 });
 
@@ -643,16 +643,14 @@ test('a conta de volume avisa quando a mudança passa do alvo do treinador', asy
   a.fechar();
 });
 
-test('com treino já registrado hoje, o vencimento começa a contar de AMANHÃ', async () => {
-  // A única decisão deste invólucro. A posição de hoje já foi gasta: contar a
-  // partir de hoje daria a letra de hoje a um dia que já aconteceu, e tudo
-  // venceria um dia cedo.
+test('o vencimento conta TREINOS pela ordem, e o calendário não entra na conta', async () => {
+  // §5.3 da frente 3: a data era previsão do app dita como fato. A sequência
+  // anda pela ORDEM — A, B, C, D, E, HX —, e uma posição não é uma quarta-feira.
   //
-  // As duas montagens têm a MESMA sessão do A — uma ontem, outra hoje —, e isso
-  // é o que faz o caso discriminar: `proximoTreino` é o B nas duas, porque a
-  // última registrada é o A de qualquer forma. Se a diferença fosse "sem sessão
-  // nenhuma" contra "sessão hoje", os dois efeitos se somariam e o verde viria
-  // mesmo sem o deslocamento — foi o que a varredura de mutação mostrou.
+  // As duas montagens têm a MESMA sessão do A — uma ontem, outra hoje. Quando o
+  // vencimento era data, a de hoje deslocava a volta um dia; contado em treinos,
+  // as duas dizem o mesmo, porque o próximo é o B nas duas e entre ele e a volta
+  // do A passam B, C, D, E e HX.
   const agora = agoraEstavel(9, 0);
   const sessaoDoA = function (t) {
     return [{ sid: t, day: 'A', t: t, dur: 70 * MIN, fim: 'manual', sets: [] }];
@@ -675,10 +673,8 @@ test('com treino já registrado hoje, o vencimento começa a contar de AMANHÃ',
 
   const a1 = ontem.vJ('ctx.mudancasQueEsperam')[0].vence;
   const a2 = hoje.vJ('ctx.mudancasQueEsperam')[0].vence;
-  assert.ok(a1 != null && a2 != null, 'as duas têm data: ' + a1 + ' / ' + a2);
-  assert.ok(a2 > a1,
-    'com o treino de hoje já registrado, a volta do A é mais tarde — e só o ' +
-    'deslocamento explica isso, porque a letra da frente é a mesma (' + a1 + ' → ' + a2 + ')');
+  assert.strictEqual(a1, 'vence quando o Treino A voltar · faltam 5 treinos');
+  assert.strictEqual(a2, a1, 'o dia em que ele treinou não muda a conta: ela é de posição');
   ontem.fechar(); hoje.fechar();
 });
 
@@ -742,18 +738,21 @@ test('a fila aparece na Prescrição com as quatro coisas da linha', async () =>
   assert.ok(bloco, 'a fila está na tela');
   const txt = bloco.textContent;
   assert.ok(/treino A/.test(txt), 'de que sessão veio: ' + txt);
-  assert.ok(/vence em/.test(txt), 'e quando vence: ' + txt);
-  assert.ok(/3 → 5/.test(a.texto('.pr-mud-t')), 'o que mudou: ' + a.texto('.pr-mud-t'));
-  assert.ok(/\d+ → \d+/.test(a.texto('.pr-mud-i')),
+  assert.ok(/vence (na próxima vez|quando o Treino A voltar)/.test(txt), 'e quando vence: ' + txt);
+  assert.strictEqual(a.texto('.pr-mud-t'), 'Elevação lateral na máquina: 5 séries, não 3');
+  assert.ok(/passa de \d+ para \d+ séries na rotação/.test(a.texto('.pr-mud-i')),
     'e a conta de volume, em TRANSIÇÃO: ' + a.texto('.pr-mud-i'));
 
-  // As duas respostas, lado a lado e sem padrão.
-  assert.ok(a.$('[data-a="so-naquele-dia"]'), 'a resposta de "só naquele dia"');
-  assert.ok(a.$('[data-a="virou-permanente"]'), 'e a de "virou permanente"');
+  // As duas respostas, lado a lado e sem padrão — no presente, e a segunda
+  // com o destino (§5.4).
+  assert.strictEqual(a.texto('[data-a="fica-so-naquele-dia"]'), 'Fica só naquele dia');
+  assert.strictEqual(a.texto('[data-a="entra-no-treino"]'), 'Entra no Treino A');
+  assert.ok(a.texto('.pr-explica').indexOf('Nada disto foi perguntado no treino.') === 0,
+    'e a lista diz por que aparece sem ninguém ter perguntado');
   a.fechar();
 });
 
-test('"virou permanente" entra no programa oficial, com o motivo', async () => {
+test('"Entra no Treino A" grava no programa, com o motivo', async () => {
   const agora = agoraEstavel(9, 0);
   const a = await comFila(agora, [{ k: 'sets', slot: SLOT, de: 3, para: 5 }]);
   const antes = a.S().prog.A.ex.filter(function (x) { return x.id === SLOT; })[0].s;
@@ -766,11 +765,12 @@ test('"virou permanente" entra no programa oficial, com o motivo', async () => {
   campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
   await a.esperar();
 
-  a.$('[data-a="virou-permanente"]').click();
+  a.$('[data-a="entra-no-treino"]').click();
   await a.esperar(60);
 
   assert.strictEqual(a.S().prog.A.ex.filter(function (x) { return x.id === SLOT; })[0].s, 5,
     'o programa oficial passou a prescrever 5');
+  assert.strictEqual(a.toast(), 'Entrou no Treino A.', 'o destino com nome, não "o oficial"');
   const linha = (a.S().progLog || []).slice(-1)[0];
   assert.ok(linha, 'e o histórico do programa ganhou linha');
   assert.strictEqual(linha.motivo, 'a máquina nova permite mais série',
@@ -779,14 +779,14 @@ test('"virou permanente" entra no programa oficial, com o motivo', async () => {
   a.fechar();
 });
 
-test('"foi só naquele dia" tira da fila e NÃO toca no programa', async () => {
+test('"Fica só naquele dia" tira da fila e NÃO toca no programa', async () => {
   // A resposta não desfaz nada: a sessão onde a mudança aconteceu continua com o
   // que foi registrado. O que ela decide é o PROGRAMA, que é o que vem depois.
   const agora = agoraEstavel(9, 0);
   const a = await comFila(agora, [{ k: 'sets', slot: SLOT, de: 3, para: 5 }]);
   const antes = JSON.stringify(a.S().prog.A.ex);
 
-  a.$('[data-a="so-naquele-dia"]').click();
+  a.$('[data-a="fica-so-naquele-dia"]').click();
   await a.esperar(60);
 
   assert.strictEqual(JSON.stringify(a.S().prog.A.ex), antes,
@@ -807,7 +807,7 @@ test('responder UMA mudança deixa a outra esperando', async () => {
   ]);
   assert.strictEqual(a.$$('.pr-mud').length, 2, 'pré-condição: duas linhas');
 
-  a.$$('[data-a="so-naquele-dia"]')[0].click();
+  a.$$('[data-a="fica-so-naquele-dia"]')[0].click();
   await a.esperar(60);
 
   const fila = a.vJ('ctx.mudancasQueEsperam');
@@ -826,7 +826,7 @@ test('a última mudança respondida tira a sessão da fila DEIXANDO LÁPIDE', as
   const a = await comFila(agora, [{ k: 'sets', slot: SLOT, de: 3, para: 5 }]);
   const sid = a.S().promoPendente[0].sid;
 
-  a.$('[data-a="so-naquele-dia"]').click();
+  a.$('[data-a="fica-so-naquele-dia"]').click();
   await a.esperar(60);
 
   assert.deepStrictEqual(a.S().promoPendente, [], 'saiu da fila');
@@ -958,8 +958,10 @@ test('a mudança cujo treino voltou aparece como vencida, e é DITO', async () =
     'e ela NÃO está mais esperando decisão');
   const bloco = a.$('.pr-espera.venceu');
   assert.ok(bloco, 'está no bloco do que venceu');
-  assert.ok(/ficou como só daquele dia quando o treino A voltou/.test(bloco.textContent),
-    'e está DITO, com todas as letras: ' + bloco.textContent);
+  assert.ok(/Ficou como só daquele dia quando o Treino A voltou, em \d\d\/\d\d\. A sessão de \d\d\/\d\d continua como foi registrada\./.test(bloco.textContent),
+    'e está DITO, com a data da volta e a sessão intacta: ' + bloco.textContent);
+  assert.ok(bloco.textContent.indexOf('Dá para fazer entrar no Treino A até a próxima vez dele.') >= 0,
+    'e o prazo do desfazer, na mesma unidade do vencimento (decisão 8)');
   a.fechar();
 });
 
@@ -985,11 +987,11 @@ test('o que venceu ainda pode virar permanente — é a porta de volta', async (
 
   // Uma resposta só, e não duas: "só daquele dia" já é o que aconteceu, e
   // oferecê-la de novo seria pedir que ele confirmasse o que o tempo decidiu.
-  assert.ok(a.$('[data-a="tornar-permanente"]'), 'a porta de volta existe');
-  assert.strictEqual(a.$('.pr-espera.venceu [data-a="so-naquele-dia"]'), null,
+  assert.strictEqual(a.texto('[data-a="entra-agora"]'), 'Entra no Treino A agora', 'a porta de volta existe');
+  assert.strictEqual(a.$('.pr-espera.venceu [data-a="fica-so-naquele-dia"]'), null,
     'e não há a resposta que o tempo já deu');
 
-  a.$('[data-a="tornar-permanente"]').click();
+  a.$('[data-a="entra-agora"]').click();
   await a.esperar(60);
   assert.strictEqual(a.S().prog.A.ex.filter(function (x) { return x.id === SLOT; })[0].s, 5,
     'tornou permanente, depois de vencida');
@@ -1030,7 +1032,7 @@ test('o Agora não avisa sobre o que já venceu, nem quando o dia volta de novo'
 
   const g = a.vJ('ctx.mudancasQueEsperam')[0];
   assert.strictEqual(g.venceu, true, 'pré-condição: o A já voltou depois dela');
-  assert.ok(g.vence != null, 'e o A volta OUTRA VEZ, com data: ' + g.vence);
+  assert.strictEqual(g.venceHoje, true, 'e o A volta OUTRA VEZ, hoje');
 
   assert.strictEqual(a.vJ('ctx.esperandoDecisao'), null,
     'o Agora não avisa de novo: o vencido não tem aviso a dar, tem porta de volta');
@@ -1521,5 +1523,73 @@ test('a folha não tem "Cancelar", e fechar sem tocar não grava', async () => {
   a.v('ctx.fechaFolha');
   await a.esperar(60);
   assert.deepStrictEqual(a.S().comidaHist, [], 'fechar sem tocar não gravou nada');
+  a.fechar();
+});
+
+// ---------- §5 da frente 3: as palavras da lista que vence ----------
+
+test('as mudanças falam uma gramática só: o que vale primeiro, e o que era depois', async () => {
+  // §5.2: "adicionou", "removeu" e "mudou" narravam os atos dele em terceira
+  // pessoa (V8), e a flecha é tabular. O `med` não estava entre as sete e caía
+  // em "mudança", que não diz nada.
+  const a = await app({ estado: { plano: 7, logs: {}, done: [] } });
+  const outro = a.J('S.prog.A.ex[1].id');
+  const n = a.E('nomeEx("' + SLOT + '")'), m = a.E('nomeEx("' + outro + '")');
+  const t = function (mod) { return a.E('textoMod("A", ' + JSON.stringify(mod) + ')'); };
+  assert.strictEqual(t({ k: 'add', id: SLOT }), n + ': entrou no dia');
+  assert.strictEqual(t({ k: 'rm', slot: SLOT }), n + ': saiu do dia');
+  assert.strictEqual(t({ k: 'troca', slot: SLOT, por: outro }), m + ' no lugar de ' + n);
+  assert.strictEqual(t({ k: 'sets', slot: SLOT, de: 3, para: 4 }), n + ': 4 séries, não 3');
+  assert.strictEqual(t({ k: 'reps', slot: SLOT, de: 10, para: 8 }), n + ': 8 repetições, não 10');
+  assert.strictEqual(t({ k: 'desc', slot: SLOT, de: 120, para: 90 }),
+    n + ': descanso de ' + a.E('fmtDesc(90)') + ', não ' + a.E('fmtDesc(120)'));
+  assert.strictEqual(t({ k: 'mover', slot: SLOT, de: 3, para: 1 }), n + ': feito antes, fora da ordem');
+  assert.strictEqual(t({ k: 'mover', slot: SLOT, de: 1, para: 3 }), n + ': feito depois, fora da ordem');
+  assert.strictEqual(t({ k: 'med', slot: SLOT, u: 'm', q: 500 }), n + ': medido em 500 m');
+  a.fechar();
+});
+
+test('o vencimento diz quantos treinos faltam, e o da próxima sessão diz que é ela', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await app({ agora: agora, estado: { plano: 7, logs: {}, done: [],
+    promoPendente: [esperando(agora), esperando(agora, { sid: agora - 2 * DIA, t: agora - 2 * DIA, day: 'B' })] } });
+  a.v('ctx.fechaTudo');
+  await a.esperar();
+  assert.strictEqual(a.E('proximoTreino(S, ROT_BASE)'), 'A', 'pré-condição: sem sessão, o próximo é o A');
+  const l = a.vJ('ctx.mudancasQueEsperam');
+  assert.strictEqual(l[0].vence, 'vence na próxima vez do Treino A — que é a próxima sessão');
+  assert.strictEqual(l[1].vence, 'vence quando o Treino B voltar · falta 1 treino');
+  a.fechar();
+});
+
+test('o desfazer do vencido fecha quando aquele treino volta de novo, e o dado fica', async () => {
+  // Decisão 8: o desfazer vale até a próxima vez daquele treino. Na segunda
+  // volta a linha sai da lista — e só da lista: a fila guarda a entrada, e
+  // nada da sessão é tocado.
+  const agora = agoraEstavel(9, 0);
+  const nasceu = agora - 16 * DIA;
+  const volta = function (t) { return { sid: t, day: 'A', t: t, dur: 70 * MIN, fim: 'manual', sets: [] }; };
+  const fila = [{ sid: nasceu, day: 'A', t: nasceu, m: nasceu,
+                  mods: [{ k: 'sets', slot: SLOT, de: 3, para: 5 }], resumoMods: [''] }];
+  const uma = await app({ aba: 'prescricao', agora: agora,
+    estado: { plano: 7, logs: {}, done: [volta(agora - 9 * DIA)], promoPendente: fila } });
+  assert.strictEqual(uma.vJ('ctx.mudancasQueEsperam').length, 1, 'uma volta: venceu, e o desfazer vale');
+  assert.ok(uma.$('[data-a="entra-agora"]'));
+  uma.fechar();
+
+  const duas = await app({ aba: 'prescricao', agora: agora,
+    estado: { plano: 7, logs: {}, done: [volta(agora - 9 * DIA), volta(agora - 2 * DIA)], promoPendente: fila } });
+  assert.deepStrictEqual(duas.vJ('ctx.mudancasQueEsperam'), [], 'duas voltas: a decisão fechou e a linha saiu');
+  assert.strictEqual(duas.$('[data-a="entra-agora"]'), null);
+  assert.strictEqual(duas.S().promoPendente.length, 1, 'mas a entrada continua guardada');
+  duas.fechar();
+});
+
+test('sem nada esperando, a Prescrição diz o estado, sem elogio', async () => {
+  const a = await app({ aba: 'prescricao', estado: { plano: 7, logs: {}, done: [] } });
+  await a.esperar();
+  const txt = a.doc.getElementById('app').textContent;
+  assert.ok(txt.indexOf('Nenhuma mudança esperando decisão.') >= 0, 'o vazio dito');
+  assert.strictEqual(a.texto('.pr-explica'), 'O que você mudar num treino aparece aqui depois que a sessão fechar.');
   a.fechar();
 });

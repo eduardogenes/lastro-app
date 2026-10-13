@@ -221,25 +221,24 @@ test('sets: o impacto é o do programa DEPOIS da promoção, e avisa acima do al
   // Subir o supino de 3 para 5 leva peito a 7 — acima.
   const i = impactoDoMod({ k: 'sets', slot: 'supino' as IdEx, de: 3, para: 5 }, ctxDeTeste());
   assert.deepStrictEqual(i, {
-    txt: 'peito: 5 → 7 na rotação · o treinador prescreveu 6',
-    acima: 1
+    txt: 'peito passa de 5 para 7 séries na rotação. O treinador prescreveu 6.',
+    acima: 1, volume: 1
   });
 
   // e o mesmo movimento para baixo não avisa nada
   const baixo = impactoDoMod({ k: 'sets', slot: 'supino' as IdEx, de: 3, para: 2 }, ctxDeTeste());
-  assert.deepStrictEqual(baixo, { txt: 'peito: 5 → 4 na rotação · o treinador prescreveu 6', acima: 0 });
+  assert.deepStrictEqual(baixo, { txt: 'peito passa de 5 para 4 séries na rotação. O treinador prescreveu 6.', acima: 0, volume: 1 });
 
   // chegar EXATAMENTE no alvo não é acima
   const igual = impactoDoMod({ k: 'sets', slot: 'supino' as IdEx, de: 3, para: 4 }, ctxDeTeste());
   assert.strictEqual(igual!.acima, 0, 'no alvo não é acima do alvo');
 });
 
-test('sets: sem alvo do treinador, a frase diz de que são os números', () => {
-  // dorsal não tem alvo neste contexto. A palavra "séries" entra só aqui,
-  // porque sem ela a frase seria "dorsal: 4 → 6 na rotação" e nada diria o que
-  // os 6 são. Com "o treinador prescreveu N" atrás, ela sobra.
+test('sets: sem alvo do treinador, a frase acaba na conta', () => {
+  // dorsal não tem alvo neste contexto, e a segunda frase não existe: o app não
+  // inventa alvo que o treinador não deu (§5.5 da frente 3).
   const i = impactoDoMod({ k: 'sets', slot: 'remada' as IdEx, de: 4, para: 6 }, ctxDeTeste());
-  assert.deepStrictEqual(i, { txt: 'dorsal: 4 → 6 séries na rotação', acima: 0 });
+  assert.deepStrictEqual(i, { txt: 'dorsal passa de 4 para 6 séries na rotação.', acima: 0, volume: 1 });
 });
 
 test('o que não tem músculo a que atribuir não produz impacto de volume', () => {
@@ -257,25 +256,25 @@ test('add: as séries do exercício novo entram inteiras', () => {
   // peito está em 5; acrescentar crucifixo com 3 séries leva a 8, acima do 6.
   const i = impactoDoMod(
     { k: 'add', id: 'crucifixo' as IdEx, s: 3, r: '8–12', d: 90, pos: 2 }, ctxDeTeste());
-  assert.deepStrictEqual(i, { txt: 'peito: 5 → 8 na rotação · o treinador prescreveu 6', acima: 1 });
+  assert.deepStrictEqual(i, { txt: 'peito passa de 5 para 8 séries na rotação. O treinador prescreveu 6.', acima: 1, volume: 1 });
 
   // e sem alvo, a mesma convenção da frase de cima
   const sem = impactoDoMod(
     { k: 'add', id: 'puxada' as IdEx, s: 2, r: '8–12', d: 90, pos: 2 }, ctxDeTeste());
-  assert.deepStrictEqual(sem, { txt: 'dorsal: 4 → 6 séries na rotação', acima: 0 });
+  assert.deepStrictEqual(sem, { txt: 'dorsal passa de 4 para 6 séries na rotação.', acima: 0, volume: 1 });
 });
 
 test('rm: desconta as séries do slot OFICIAL, e nunca avisa', () => {
   // o supino oficial tem 3 séries: tirá-lo leva peito de 5 para 2.
   const i = impactoDoMod({ k: 'rm', slot: 'supino' as IdEx }, ctxDeTeste());
-  assert.deepStrictEqual(i, { txt: 'peito: 5 → 2 na rotação · o treinador prescreveu 6', acima: 0 });
+  assert.deepStrictEqual(i, { txt: 'peito passa de 5 para 2 séries na rotação. O treinador prescreveu 6.', acima: 0, volume: 1 });
 
   // E o caso que prova a regra: com alvo 1, remover ainda termina ACIMA — e
   // mesmo assim não avisa. `acima` pinta o aviso, e avisar quem está reduzindo
   // volume para perto do que o treinador pediu seria o sinal ao contrário.
   const ainda = impactoDoMod({ k: 'rm', slot: 'supino' as IdEx }, ctxDeTeste({ alvo: { peito: 1 } }));
   assert.strictEqual(ainda!.acima, 0, 'remoção não avisa nem terminando acima do alvo');
-  assert.ok(ainda!.txt.includes('5 → 2'), ainda!.txt);
+  assert.ok(ainda!.txt.includes('passa de 5 para 2'), ainda!.txt);
 });
 
 test('rm: posição que não é oficial não tem o que perder', () => {

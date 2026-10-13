@@ -50,7 +50,7 @@ export function seriesDeGrupo(treinos: Array<Treino<ComGrupoESeries> | null>, g:
   return n;
 }
 
-export interface Impacto { txt: string; acima: 0 | 1; }
+export interface Impacto { txt: string; acima: 0 | 1; volume?: 1; }
 
 /** Como o número atual se lê contra o que o treinador prescreveu. */
 export function impacto(g: string, agora: number, alvo: number | undefined): Impacto {
@@ -94,19 +94,24 @@ export interface ContextoDoImpacto {
 }
 
 /**
- * Uma frase de antes → depois, na MESMA convenção de `impacto()`.
+ * Uma frase de antes e depois: "deltoide lateral passa de 12 para 13 séries na
+ * rotação. O treinador prescreveu 12." (§5.5 da frente 3).
  *
- * A palavra "séries" entra só quando não há alvo, porque aí nada mais na frase
- * diz o que o número é; com "o treinador prescreveu 12" atrás, ela sobra. As
- * três ramificações de volume escreviam esta frase cada uma por si, e já tinham
- * divergido: `add` e `rm` diziam "peito: 12 → 15 na rotação", sem nenhuma
- * palavra dizendo de que são os 15. Unificado aqui para não divergirem de novo.
+ * Sem a seta, que é tabular; e "na rotação", não "na semana": a conta soma as
+ * posições, e uma rotação só é uma semana quando ele fecha todas em sete dias.
+ * Sem alvo, sem a segunda frase — o app não inventa alvo que o treinador não
+ * deu. As três ramificações de volume escreviam esta frase cada uma por si, e já
+ * tinham divergido; unificado aqui para não divergirem de novo. `volume` diz a
+ * quem mostra que esta é a conta de séries, para ele poder pôr o destino na
+ * frente ("Se entrar no Treino D: …").
  */
 function antesDepois(g: string, antes: number, depois: number, alvo: number | undefined): Impacto {
-  if (alvo == null) return { txt: g + ': ' + antes + ' → ' + depois + ' séries na rotação', acima: 0 };
+  const txt = g + ' passa de ' + antes + ' para ' + depois + ' séries na rotação.';
+  if (alvo == null) return { txt: txt, acima: 0, volume: 1 };
   return {
-    txt: g + ': ' + antes + ' → ' + depois + ' na rotação · o treinador prescreveu ' + alvo,
-    acima: depois > alvo ? 1 : 0
+    txt: txt + ' O treinador prescreveu ' + alvo + '.',
+    acima: depois > alvo ? 1 : 0,
+    volume: 1
   };
 }
 
@@ -145,7 +150,7 @@ export function impactoDoMod(mod: Mod, ctx: ContextoDoImpacto): Impacto | null {
     // `acima` NUNCA em remoção, mesmo terminando acima do alvo. Ele pinta o
     // aviso, e avisar quem está reduzindo volume para perto do que o treinador
     // pediu seria o sinal ao contrário.
-    return { txt: i.txt, acima: 0 };
+    return { txt: i.txt, acima: 0, volume: 1 };
   }
 
   if (mod.k === 'troca') {

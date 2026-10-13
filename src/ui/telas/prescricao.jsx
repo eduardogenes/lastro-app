@@ -220,14 +220,29 @@ export function Prescricao({ ctx }) {
           padrão, e dar mais área a uma delas é escolher por ele. E são por
           MUDANÇA, não por sessão — uma sessão pode ter subido uma série que ele
           quer manter e trocado um exercício que ele não quer. */}
+      {/* A lista sem ninguém ter sido perguntado parece erro, e a primeira
+          coisa que as palavras dizem é a decisão dele como fato (§5.1). E o
+          vazio é estado, não resultado: sem "tudo em ordem" (V5). */}
+      {esperando.length === 0 && venceram.length === 0 && (
+        <Secao rotulo="esperando decisão">
+          <Vazio>Nenhuma mudança esperando decisão.</Vazio>
+          <p class="ins-body-sm ins-t3 pr-explica">
+            O que você mudar num treino aparece aqui depois que a sessão fechar.
+          </p>
+        </Secao>
+      )}
       {esperando.length > 0 && (
         <Secao rotulo="esperando decisão"
                nota={esperando.length === 1 ? '1 sessão' : esperando.length + ' sessões'}>
+          <p class="ins-body-sm ins-t3 pr-explica">
+            Nada disto foi perguntado no treino. O que você mudou no dia ficou
+            registrado na sessão e esperou aqui.
+          </p>
           {esperando.map(g => (
             <div key={g.sid} class="pr-espera">
               <div class="ins-label pr-espera-h">
                 treino {g.dia} · {fmtDate(g.quando)}
-                {g.vence != null && <em class="pr-vence">vence em {fmtDate(g.vence)}</em>}
+                {g.vence && <em class="pr-vence">{g.vence}</em>}
               </div>
 
               {g.mudancas.map((m, i) => (
@@ -238,14 +253,17 @@ export function Prescricao({ ctx }) {
                       {m.impacto}
                     </div>
                   )}
+                  {/* No PRESENTE, porque o rótulo diz o que o toque grava; no
+                      passado ele afirmaria o que ainda não aconteceu. E o
+                      segundo nomeia o DESTINO, que é o que faltava (§5.4). */}
                   <div class="pr-mud-b">
-                    <button class="ins-btn-secondary" data-a="so-naquele-dia"
+                    <button class="ins-btn-secondary" data-a="fica-so-naquele-dia"
                             onClick={() => ctx.respondeMudanca(g.sid, i, false, motivos[g.sid])}>
-                      Foi só naquele dia
+                      Fica só naquele dia
                     </button>
-                    <button class="ins-btn-primary" data-a="virou-permanente"
+                    <button class="ins-btn-primary" data-a="entra-no-treino"
                             onClick={() => ctx.respondeMudanca(g.sid, i, true, motivos[g.sid])}>
-                      Virou permanente
+                      {g.entra}
                     </button>
                   </div>
                 </div>
@@ -270,10 +288,12 @@ export function Prescricao({ ctx }) {
               />
             </div>
           ))}
+          {/* A regra inteira em duas frases: o prazo, o que decide o prazo, e
+              o que acontece no fim dele (§5.3). Sem "permanente", que é a
+              palavra do dado. */}
           <Procedencia>
-            sem resposta até o dia em que aquele treino volta, a mudança fica
-            como só daquele dia — dito, e desfazível. Nada entra no programa em
-            silêncio, e nada é descartado em silêncio.
+            Cada mudança vence quando aquele treino voltar. Se você não decidir
+            até lá, ela fica como só daquele dia.
           </Procedencia>
         </Secao>
       )}
@@ -296,18 +316,19 @@ export function Prescricao({ ctx }) {
               {g.mudancas.map((m, i) => (
                 <div key={m.txt} class="pr-mud">
                   <div class="ins-body-sm pr-mud-t">{m.txt}</div>
-                  <div class="ins-body-xs pr-mud-i">
-                    ficou como só daquele dia quando o treino {g.dia} voltou
-                  </div>
+                  <div class="ins-body-xs pr-mud-i">{g.venceuTxt}</div>
                   {m.impacto && (
                     <div class={'ins-body-xs pr-mud-i' + (m.acima ? ' acima' : '')}>
                       {m.impacto}
                     </div>
                   )}
+                  {/* Decisão 8: o desfazer vale até a próxima vez daquele treino,
+                      e o prazo é dito na mesma unidade do vencimento. */}
+                  <div class="ins-body-xs pr-mud-i">{g.prazo}</div>
                   <div class="pr-mud-b">
-                    <button class="ins-btn-secondary" data-a="tornar-permanente"
+                    <button class="ins-btn-secondary" data-a="entra-agora"
                             onClick={() => ctx.respondeMudanca(g.sid, i, true, motivos[g.sid])}>
-                      Tornar permanente agora
+                      {g.entra} agora
                     </button>
                   </div>
                 </div>
@@ -316,7 +337,7 @@ export function Prescricao({ ctx }) {
                 class="ins-input pr-motivo"
                 type="text"
                 placeholder="por quê? (opcional)"
-                aria-label={'Motivo de tornar permanente a mudança do treino ' + g.dia}
+                aria-label={'Motivo de fazer a mudança entrar no treino ' + g.dia}
                 value={motivos[g.sid] || ''}
                 /* Atualizador funcional, pela mesma razão do rascunho da
                    bioimpedância: com duas sessões na fila, a versão por closure

@@ -2848,7 +2848,36 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             instante, só a sessão — seria campo novo no dado); "Apagar esta
             série" na régua (é gesto novo, não palavra); o teclado da carga não
             ganhou a linha da correção.
-      **Falta, nesta ordem:** §5 a lista que vence; §6 os portões da semana; §10 a
+      - [x] **§5 · A lista que vence** (13/10). O requisito de dado já estava
+            pago (a lista renderiza de `mods`). **Uma gramática só** nas mudanças
+            ("Elevação lateral: 4 séries, não 3", "X: entrou no dia", "Y no lugar
+            de X"), e também no histórico do programa, que o editor escrevia com
+            outra função e ainda com a seta. O `med` caía em "mudança" e passou a
+            dizer o que mudou. **Vencimento em treinos, não em data** ("vence
+            quando o Treino A voltar · faltam 4 treinos"; "…— que é a próxima
+            sessão"); o "vence hoje" do Agora passou a ser lido pela posição.
+            Botões no presente com o destino: "Fica só naquele dia" / "Entra no
+            Treino A" / "Entra no Treino B agora"; o toast diz "Entrou no Treino
+            A." (sai "o oficial", V7). Conta sem seta: "Se entrar no Treino A:
+            delt lateral passa de 12 para 13 séries na rotação. O treinador
+            prescreveu 12." A frase da regra, a explicação da lista e o vazio.
+            **Decisão 8 implementada:** o vencido diz quando voltou e que a
+            sessão continua como foi; o desfazer vale até a próxima vez daquele
+            treino e, na segunda volta, a linha sai da lista — **o dado fica**
+            (não apago a entrada da fila; o teto de 60 a contém). Por isso a
+            frase "a decisão fechou" não tem onde aparecer: as duas instruções
+            da frente se contradizem, e fiquei com "sai da lista".
+            **Adaptei:** "A sessão de 22/09 continua como foi registrada." no
+            lugar de "…com as 3 séries registradas" (o número depende de cada
+            mudança). **Não feito:** a contagem no cabeçalho de Prescrição; a
+            data "por volta de…" (opcional na frente). **Dívida visual:** o
+            vencimento em caixa alta ao lado da data (`shots/lista.png`).
+            Catorze mutações, cada uma sozinha. **1.373 passando.**
+            **Tropeço meu, registrado:** a primeira rodada de mutações empilhou
+            as catorze (no zsh, `$FS` sem aspas não se divide em palavras, e nem
+            a cópia nem a restauração rodaram). Desfiz uma a uma, conferi pelo
+            diff e refiz todas isoladas.
+      **Falta, nesta ordem:** §6 os portões da semana; §10 a
       bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
       app seguem no diálogo do sistema, de propósito (§3.3).
 

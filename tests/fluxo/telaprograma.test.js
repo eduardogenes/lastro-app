@@ -30,7 +30,7 @@ test('mudar série no programa é imediato e fica no histórico', async () => {
 
   const log = a.S().progLog;
   assert.strictEqual(log.length, 1);
-  assert.match(log[0].txt, /Agachamento no Smith: 2 → 3 séries/);
+  assert.strictEqual(log[0].txt, 'Agachamento no Smith: 3 séries, não 2');
   assert.strictEqual(log[0].day, 'B');
   a.fechar();
 });
@@ -98,7 +98,7 @@ test('a diferença lê uma troca como troca, não como duas mudanças', async ()
   const dif = a.vJ('difDoDia', 'B');
   assert.strictEqual(dif.length, 1, 'saiu um e entrou outro na mesma posição: é uma troca');
   assert.strictEqual(dif[0].k, 'troca');
-  assert.match(dif[0].txt, /Cadeira extensora → Extensora unilateral/);
+  assert.strictEqual(dif[0].txt, 'Extensora unilateral no lugar de Cadeira extensora');
   a.fechar();
 });
 

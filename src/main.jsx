@@ -20,7 +20,7 @@ import { ehBancada } from './palco.js';
 import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
-import { quandoAquelaVolta, venceuPorPosicao } from './dominio/prescricao';
+import { venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
 import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
 import { teclar } from './dominio/teclado';
@@ -2870,16 +2870,23 @@ function desfazMod(j) {
   queueSave(); render();
 }
 
-// Texto de uma mudança, em português e no passado. É o que ele lê na hora de
-// decidir se ela vira permanente.
+// Texto de uma mudança. É o que ele lê na hora de decidir se ela entra no
+// treino (§5.2 da frente 3): UMA gramática só — o nome prescrito, dois-pontos, o
+// que passou a valer, e o que era depois. "4 séries, não 3" e não "3 → 4": a
+// flecha é tabular, e o que importa primeiro é o número que vale. E os atos dele
+// não se narram em terceira pessoa ("adicionou", "removeu", "mudou"), que é V8.
 function textoMod(d, m) {
-  if (m.k === 'add')   return 'adicionou ' + nomeEx(m.id);
-  if (m.k === 'rm')    return 'removeu ' + nomeEx(m.slot);
-  if (m.k === 'troca') return nomeEx(m.slot) + ' → ' + nomeEx(m.por);
-  if (m.k === 'sets')  return nomeEx(m.slot) + ': ' + m.de + ' → ' + m.para + ' séries';
-  if (m.k === 'reps')  return nomeEx(m.slot) + ': ' + m.de + ' → ' + m.para + ' repetições';
-  if (m.k === 'desc')  return nomeEx(m.slot) + ': descanso ' + fmtDesc(m.de) + ' → ' + fmtDesc(m.para);
-  if (m.k === 'mover') return 'mudou ' + nomeEx(m.slot) + ' de posição';
+  if (m.k === 'add')   return nomeEx(m.id) + ': entrou no dia';
+  if (m.k === 'rm')    return nomeEx(m.slot) + ': saiu do dia';
+  if (m.k === 'troca') return nomeEx(m.por) + ' no lugar de ' + nomeEx(m.slot);
+  if (m.k === 'sets')  return nomeEx(m.slot) + ': ' + m.para + ' séries, não ' + m.de;
+  if (m.k === 'reps')  return nomeEx(m.slot) + ': ' + m.para + ' repetições, não ' + m.de;
+  if (m.k === 'desc')  return nomeEx(m.slot) + ': descanso de ' + fmtDesc(m.para) + ', não ' + fmtDesc(m.de);
+  if (m.k === 'mover') return nomeEx(m.slot) + ': feito ' + (m.para < m.de ? 'antes' : 'depois') + ', fora da ordem';
+  // A grandeza do movimento (5 × 500 m). Não estava entre as sete da frente e
+  // caía em "mudança", que não diz nada; a mudança não guarda o valor de antes.
+  if (m.k === 'med')   return nomeEx(m.slot) + ': medido em ' +
+                              (m.q > 0 ? fmtInt(m.q) + ' ' : '') + (ROTULO_UNIDADE[m.u] || m.u);
   return 'mudança';
 }
 
@@ -3019,13 +3026,16 @@ function difDoDia(d) {
     const b = porId[x.id];
     if (!b) {
       out.push(trocado[x.id]
-        ? { k:'troca', txt: nomeEx(trocado[x.id]) + ' → ' + nomeEx(x.id) }
+        ? { k:'troca', txt: nomeEx(x.id) + ' no lugar de ' + nomeEx(trocado[x.id]) }
         : { k:'novo', txt: nomeEx(x.id) + ' entrou · ' + x.s + ' × ' + x.r });
       return;
     }
-    if (x.s !== b.s) out.push({ k:'sets', txt: nomeEx(x.id) + ': ' + b.s + ' → ' + x.s + ' séries' });
-    if (x.r !== b.r) out.push({ k:'reps', txt: nomeEx(x.id) + ': ' + b.r + ' → ' + x.r + ' repetições' });
-    if (x.d !== b.d) out.push({ k:'desc', txt: nomeEx(x.id) + ': descanso ' + fmtDesc(b.d) + ' → ' + fmtDesc(x.d) });
+    // A mesma gramática da lista que vence (§5.2): o que vale primeiro, e o
+    // que era depois. O histórico do programa recebe as duas, e uma gramática
+    // por origem faria o mesmo registro falar de dois jeitos.
+    if (x.s !== b.s) out.push({ k:'sets', txt: nomeEx(x.id) + ': ' + x.s + ' séries, não ' + b.s });
+    if (x.r !== b.r) out.push({ k:'reps', txt: nomeEx(x.id) + ': ' + x.r + ' repetições, não ' + b.r });
+    if (x.d !== b.d) out.push({ k:'desc', txt: nomeEx(x.id) + ': descanso de ' + fmtDesc(x.d) + ', não ' + fmtDesc(b.d) });
   });
   const saiuPorTroca = {};
   Object.keys(trocado).forEach(function (k) { saiuPorTroca[trocado[k]] = 1; });
@@ -3104,7 +3114,7 @@ async function progSeries(d, i, delta) {
   if (novo < 1 || novo > 8) return;
   const de = sl.s;
   sl.s = novo;
-  logProg(d, nomeEx(sl.id) + ': ' + de + ' → ' + novo + ' séries');
+  logProg(d, nomeEx(sl.id) + ': ' + novo + ' séries, não ' + de);
   await save(); render();
 }
 
@@ -3114,7 +3124,7 @@ async function moverProg(d, i, delta) {
   if (j < 0 || j >= ex.length) return;
   const sl = ex.splice(i, 1)[0];
   ex.splice(j, 0, sl);
-  logProg(d, 'mudou ' + nomeEx(sl.id) + ' de posição');
+  logProg(d, nomeEx(sl.id) + ': ' + (delta < 0 ? 'mais cedo' : 'mais tarde') + ' no treino');
   await save(); render();
 }
 
@@ -3139,7 +3149,7 @@ async function progSetTroca(d, i, idEx) {
                semanasDe(sl.desde) + ', e o treinador pede 6 a 8 semanas antes de trocar os principais.')) return;
   sl.id = idEx;
   sl.desde = Date.now();
-  logProg(d, nomeEx(de) + ' → ' + nomeEx(idEx));
+  logProg(d, nomeEx(idEx) + ' no lugar de ' + nomeEx(de));
   view.swapOpen = null;
   await save(); render();
   toast('Trocado no programa. Vale a partir do próximo treino ' + d + '.');
@@ -3153,7 +3163,7 @@ async function progReps(d, i) {
   if (!novo) return;
   const de = sl.r;
   sl.r = novo;
-  logProg(d, nomeEx(sl.id) + ': ' + de + ' → ' + novo + ' repetições');
+  logProg(d, nomeEx(sl.id) + ': ' + novo + ' repetições, não ' + de);
   await save(); render();
 }
 
@@ -3163,7 +3173,7 @@ async function progDesc(d, i) {
   const j = (opcoes.indexOf(sl.d) + 1) % opcoes.length;
   const de = sl.d;
   sl.d = opcoes[j];
-  logProg(d, nomeEx(sl.id) + ': descanso ' + fmtDesc(de) + ' → ' + fmtDesc(sl.d));
+  logProg(d, nomeEx(sl.id) + ': descanso de ' + fmtDesc(sl.d) + ', não ' + fmtDesc(de));
   await save(); render();
 }
 
@@ -7901,43 +7911,81 @@ CTX.respondeMudanca = async function (sid, i, permanente, motivo) {
   if (!g.mods.length) soltaPromo(sid);
 
   await save(); render();
+  // "o oficial" era vocabulário interno (V7): o destino é o treino, com nome.
   toast(permanente
-    ? (n ? 'Mudança no programa oficial.' : 'A posição não existe mais no programa.')
+    ? (n ? 'Entrou no Treino ' + g.day + '.' : 'A posição não existe mais no programa.')
     : 'Ficou como só daquele dia. O treino registrado não muda.');
 };
 
 CTX.mudancasQueEsperam = function () {
   const fila = Array.isArray(S.promoPendente) ? S.promoPendente : [];
   if (!fila.length) return [];
-  const h = diaResolvido();
-  const hojeJaFoi = h.origem === 'registrado' || h.origem === 'aberta';
-  const de = Date.now() + (hojeJaFoi ? 86400000 : 0);
   const proxima = proximoTreino(S, ROT_BASE);
+  // Vence HOJE quando hoje é dia de treino, a sessão de hoje ainda não houve e
+  // o treino de hoje é aquele — "na manhã do dia em que aquele treino volta".
+  const h = diaResolvido();
+  const hojeTreina = h.cadencia === 'treino' && h.origem !== 'registrado' && h.origem !== 'aberta';
 
+  const r = rot();
   return fila.map(function (g) {
     const mods = Array.isArray(g.mods) ? g.mods : [];
+    const nome = 'Treino ' + g.day;
+    // As voltas daquele treino desde que a mudança nasceu, na ordem. A primeira
+    // é o VENCIMENTO; a segunda fecha o desfazer (decisão 8). É fato no dado,
+    // não conta sobre o relógio — e por isso não precisa de campo, de cron nem
+    // de o app ter estado aberto no dia certo.
+    const voltou = (S.done || []).filter(function (x) {
+      return x && !x.livre && x.day === g.day && x.t > g.t;
+    }).sort(function (a, b) { return a.t - b.t; });
     return {
       // a chave é a mesma da fila, para decidir e para a lápide depois
       sid: typeof g.sid === 'number' ? g.sid : g.t,
       dia: g.day,
       quando: g.t,
-      vence: quandoAquelaVolta(g.day, rot(), proxima, cadenciaDaSemana(), de),
-      // VENCEU: aquele treino já voltou e ele não decidiu. É fato no dado, não
-      // conta sobre o relógio — e por isso não precisa de campo, de cron nem de
-      // o app ter estado aberto no dia certo. A mudança não some: fica como "só
-      // daquele dia", dita e desfazível (§8.1, passo 5).
+      // Em TREINOS, não em data (§5.3): a sequência anda pela ordem, não pelo
+      // dia da semana, e uma data seria previsão do app dita como fato.
+      vence: fraseDoVencimento(nome, r.indexOf(g.day), r.indexOf(proxima), r.length),
+      venceHoje: hojeTreina && h.treino === g.day,
       venceu: venceuPorPosicao(g.day, g.t, S.done),
+      // "Ficou como só daquele dia quando o Treino B voltou, em 29/09. A sessão
+      // de 22/09 continua como foi registrada." — a mudança não some, e o
+      // desfazer vale até a próxima vez daquele treino.
+      venceuTxt: voltou.length
+        ? 'Ficou como só daquele dia quando o ' + nome + ' voltou, em ' + fmtDate(voltou[0].t) +
+          '. A sessão de ' + fmtDate(g.t) + ' continua como foi registrada.'
+        : null,
+      prazo: 'Dá para fazer entrar no ' + nome + ' até a próxima vez dele.',
+      // Decisão 8: voltou DUAS vezes, o desfazer fechou e a linha sai da lista.
+      // O dado fica — a fila não perde nada por isso, e o teto de 60 a contém.
+      fechou: voltou.length >= 2,
+      entra: 'Entra no ' + nome,
       mudancas: mods.map(function (m) {
         const imp = impactoDoMod(g.day, m);
         return {
           txt: textoMod(g.day, m),
-          impacto: imp ? imp.txt : null,
+          // "Se entrar no Treino D: deltoide lateral passa de 12 para 13 séries
+          // na rotação." — o prefixo só na conta de volume: a da troca é outra
+          // frase, sobre o tempo do exercício no programa.
+          impacto: imp ? (imp.volume ? 'Se entrar no ' + nome + ': ' + imp.txt : imp.txt) : null,
           acima: !!(imp && imp.acima)
         };
       })
     };
-  });
+  }).filter(function (g) { return !g.fechou; });
 };
+
+/**
+ * "vence quando o Treino D voltar · faltam 4 treinos" — `voltas` é a frente 2
+ * §9.3: quantos treinos passam antes de aquele voltar, pela ordem da rotação.
+ * `null` quando o treino não está mais na rotação: sem posição, não há volta.
+ */
+function fraseDoVencimento(nome, ip, iq, n) {
+  if (ip < 0 || iq < 0 || !n) return null;
+  const voltas = (ip - iq + n) % n;
+  if (voltas === 0) return 'vence na próxima vez do ' + nome + ' — que é a próxima sessão';
+  return 'vence quando o ' + nome + ' voltar · ' +
+         (voltas === 1 ? 'falta 1 treino' : 'faltam ' + voltas + ' treinos');
+}
 
 // ---------- tela cheia: retrospectiva de bloco ----------
 CTX.retrospectiva = function () {
@@ -9103,13 +9151,10 @@ CTX.marcaNoDiaPassado = async function (data, id, marca, escala) {
 };
 
 CTX.esperandoDecisao = function () {
-  const hoje = hojeISO();
   const fila = CTX.mudancasQueEsperam().filter(function (g) { return !g.venceu; });
   if (!fila.length) return null;
 
-  const vencendo = fila.filter(function (g) {
-    return g.vence != null && hojeISO(g.vence) === hoje;
-  });
+  const vencendo = fila.filter(function (g) { return g.venceHoje; });
   const conta = function (gs) {
     return gs.reduce(function (k, g) { return k + g.mudancas.length; }, 0);
   };
