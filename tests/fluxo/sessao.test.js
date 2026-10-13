@@ -17,7 +17,7 @@ test('série incompleta não abre sessão', async () => {
   a.preencher(0, 0, 40, null);          // só a carga
   assert.strictEqual(a.S().sessao, null);
   assert.strictEqual(a.S().done.length, 0);
-  assert.deepStrictEqual(a.J('Object.keys(S.logs)'), []);
+  assert.deepStrictEqual(Object.keys(a.S().logs), []);
   a.fechar();
 });
 
@@ -26,7 +26,7 @@ test('série completa abre a sessão e grava na hora', async () => {
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
 
-  assert.ok(a.E('S.sessao !== null'), 'sessão deveria estar aberta');
+  assert.ok(a.S().sessao !== null, 'sessão deveria estar aberta');
   assert.strictEqual(a.S().done.length, 1);
   assert.strictEqual(a.S().done[0].sid, a.S().sessao.sid);
 
@@ -77,9 +77,9 @@ test('sessão encerra por inatividade, grava duração e avança a rotação', a
   a.fechar();
 
   const b = await app({ estado });
-  assert.strictEqual(b.E('S.sessao'), null, 'sessão deveria ter encerrado sozinha');
-  assert.strictEqual(b.E('S.done[0].dur'), 3600 * 1000, 'uma hora de treino');
-  assert.strictEqual(b.E('S.draft'), null);
+  assert.strictEqual(b.S().sessao, null, 'sessão deveria ter encerrado sozinha');
+  assert.strictEqual(b.S().done[0].dur, 3600 * 1000, 'uma hora de treino');
+  assert.strictEqual(b.S().draft, null);
   assert.strictEqual(b.texto('.ins-estado-v'), 'B', 'rotação deveria ter avançado');
   assert.strictEqual(b.log('A',0)[0].sets.filter(Boolean).length, 1, 'histórico preservado');
   b.fechar();
@@ -94,7 +94,7 @@ test('sessão do mesmo dia com pouca pausa continua aberta', async () => {
   a.fechar();
 
   const b = await app({ estado });
-  assert.ok(b.E('S.sessao !== null'), 'não deveria encerrar por 30 minutos');
+  assert.ok(b.S().sessao !== null, 'não deveria encerrar por 30 minutos');
   assert.strictEqual(b.texto('.ins-estado-v'), 'A');
   b.fechar();
 });
@@ -169,7 +169,7 @@ test('troca de exercício move a projeção para o histórico do substituto', as
 
   const original = a.k('A',1);
   a.v('setAlt', 1, 'crossover-na-polia-baixa');
-  assert.strictEqual(a.E('S.logs[' + JSON.stringify(original) + ']'), undefined,
+  assert.strictEqual(a.S().logs[original], undefined,
     'sai do histórico do original');
   assert.strictEqual(a.k('A',1), 'crossover-na-polia-baixa', 'a posição passa a ser do substituto');
   const sub = a.log('A',1);
@@ -482,7 +482,7 @@ test('apagar o treino leva as séries dele junto, com lápide nas duas coisas', 
   const f = comTreinoRegistrado(agora);
   const a = await app({ agora: agora, estado: f, aba: 'semana' });
   assert.strictEqual(a.S().done.length, 1);
-  const comHistorico = () => a.J('Object.keys(S.logs)').length;
+  const comHistorico = () => Object.keys(a.S().logs).length;
   assert.strictEqual(comHistorico(), 2, 'dois exercícios com histórico');
 
   a.v('abrirSessao', f.t);
