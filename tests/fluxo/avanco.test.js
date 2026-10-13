@@ -8,7 +8,7 @@ import { app } from './harness.js';
 
 /** Preenche todas as séries do exercício `i` do dia aberto. */
 function completa(a, i) {
-  const n = a.E(`setsFor(treino(view.day).ex[${i}])`);
+  const n = a.v('setsFor', a.vJ('treino', a.vista().day).ex[i]);
   for (let k = 0; k < n; k++) a.preencher(i, k, 40, 10);
   return n;
 }
@@ -23,8 +23,8 @@ test('ao completar o último set, o próximo abre pronto', async () => {
   await a.esperar();
 
   assert.strictEqual(a.vista().open, 1, 'a tela andou sozinha');
-  assert.strictEqual(a.E('estadoEx(view.day, 0, S.sessao.sid, S.sessao.pulados)'), 'feito');
-  assert.strictEqual(a.E('estadoEx(view.day, 1, S.sessao.sid, S.sessao.pulados)'), 'nada',
+  assert.strictEqual(a.v('estadoEx', a.vista().day, 0, a.S().sessao.sid, a.S().sessao.pulados), 'feito');
+  assert.strictEqual(a.v('estadoEx', a.vista().day, 1, a.S().sessao.sid, a.S().sessao.pulados), 'nada',
     'aberto PRONTO, não iniciado: nada foi preenchido nele');
   a.fechar();
 });
@@ -33,7 +33,7 @@ test('com série faltando, a tela não anda', async () => {
   const a = await app();
   a.v('go', 'A');
   a.v('toggle', 0);
-  const n = a.E('setsFor(treino(view.day).ex[0])');
+  const n = a.v('setsFor', a.vJ('treino', a.vista().day).ex[0]);
   for (let k = 0; k < n - 1; k++) a.preencher(0, k, 40, 10);
   await a.esperar();
   assert.strictEqual(a.vista().open, 0, 'ainda falta uma série neste');
@@ -57,9 +57,9 @@ test('o avanço pula o que foi pulado de propósito', async () => {
 test('no último pendente, a tela fica onde está', async () => {
   const a = await app();
   a.v('go', 'A');
-  const total = a.E('treino(view.day).ex.length');
+  const total = a.vJ('treino', a.vista().day).ex.length;
   // deixa só o primeiro pendente: pula todos os outros
-  for (let j = 1; j < total; j++) await a.E(`pularEx(${j})`);
+  for (let j = 1; j < total; j++) await a.v('pularEx', j);
   await a.esperar();
 
   a.v('toggle', 0);
@@ -77,7 +77,7 @@ test('o descanso ainda começa, e diz de qual exercício é', async () => {
   const a = await app();
   a.v('go', 'A');
   a.v('toggle', 0);
-  const nome = a.E('treino(view.day).ex[0].n');
+  const nome = a.vJ('treino', a.vista().day).ex[0].n;
   completa(a, 0);
   await a.esperar();
 
@@ -152,7 +152,7 @@ test('sem exercício começado, o atalho aponta o primeiro não tocado', async (
   const a = await app();
   a.v('go', 'A');
   a.v('toggle', 0);
-  const n = a.E('setsFor(treino(view.day).ex[0])');
+  const n = a.v('setsFor', a.vJ('treino', a.vista().day).ex[0]);
   for (let k = 0; k < n; k++) a.preencher(0, k, 40, 10);
   await a.esperar();
 
