@@ -1848,3 +1848,9 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 .dd-saida { margin: var(--ins-4) 0 0; }
 .dd-pesar { display: flex; gap: var(--ins-3); flex-wrap: wrap; margin-top: var(--ins-4); }
 .dd-naoinvente { margin: var(--ins-3) 0 0; }
+
+/* As linhas do corpo no Agora (frente 1 §5, regra 5): nome e valor, a linha de
+   apoio embaixo, e o botão à direita. */
+.ag-corpo .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-1); }
+.ag-corpo .ins-linha-n { flex: 1 1 auto; min-width: 0; }
+.ag-corpo .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }

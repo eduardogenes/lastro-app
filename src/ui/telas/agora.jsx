@@ -233,6 +233,26 @@ export function Agora({ ctx }) {
           próxima coisa a fazer vem antes do que pode esperar. */}
       {f && <CartaoFoco {...f} />}
 
+      {/* A PESAGEM DA MANHÃ e, quando vence, A SESSÃO DE FOTOS: linhas com um
+          botão, abaixo do cartão, e não cartão (frente 1 §5, regra 5; o M1‑13
+          da D). Sem rótulo de seção: cada linha já se nomeia (§2, R1). */}
+      <Secao continua>
+        <div class="ins-lista ag-corpo">
+          {ctx.linhasDoCorpo().map(l => (
+            <div key={l.k} class="ins-linha" data-linha={l.k}>
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">{l.t} · {l.v}</span>
+                <span class="ins-linha-s">{l.d}</span>
+              </span>
+              {l.acao && (
+                <button class="ins-btn-secondary" data-a={'agora-' + l.k}
+                        onClick={l.k === 'peso' ? () => ctx.vaiPara('corpo') : ctx.abreProtocolo}>{l.acao}</button>
+              )}
+            </div>
+          ))}
+        </div>
+      </Secao>
+
       <Secao rotulo="energia" nota={diaHoje.previsto ? 'previsão · confirme no topo' : null}>
         <HeroMetrica
           rotulo="registrado"

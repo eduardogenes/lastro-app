@@ -2930,6 +2930,14 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             tela mostra o passo aplicado até haver duas semanas novas de taxa
             (estado 4). Um caso antigo aplica duas vezes seguidas de propósito.
             É mudança de regra; fica para decidir.
+      - [x] **As linhas do corpo no Agora** (13/10): "Peso da manhã · sem marca ·
+            antes de treinar, depois do pré · última: 73,8 em 28/09 · Anotar"
+            (o M1‑13 da D, com o nome da §10.2), e, quando faz 14 dias, "Fotos do
+            corpo · faz 16 dias · a cada 14 dias · última: 27/09 · Nova sessão".
+            Linhas e não cartão (frente 1 §5, regra 5), sem rótulo de seção.
+            Visto: `shots/agora-linhas.png` (a primeira captura pegou o botão
+            espremendo o texto; consertado com o padrão que o próprio CSS já
+            tinha). Cinco mutações. **1.403 passando.**
       - [ ] **(registro do erro, mantido)** §6.2 e §6.4 · Os portões e o vazio deles — ERREI AO PARAR: não é
             desenho, é construção. Conferido em 13/10, depois de levar ao dono
             como pergunta: a `semana.html` da D tem os sete estados — os portões

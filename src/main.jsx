@@ -9410,6 +9410,36 @@ CTX.voltaAoTreino = function () {
   else window.scrollTo(0, 0);
 };
 
+/**
+ * As linhas do corpo no Agora: a pesagem da manhã e, quando vence, a sessão de
+ * fotos. Linhas e não cartão (frente 1 §5, regra 5): cada uma tem um dia em que
+ * é prevista, e nenhuma é "a próxima coisa a fazer". O desenho é o M1‑13 da D
+ * ("Peso de hoje · antes de treinar, depois do pré · última: 73,8 · Anotar"),
+ * com o nome que a §10.2 da frente 3 deu: "Peso da manhã", porque com a
+ * bioimpedância há dois pesos no mesmo dia.
+ */
+CTX.linhasDoCorpo = function () {
+  const agora = Date.now();
+  const peso = S.body.peso || [];
+  const hoje = peso.filter(function (x) { return sameDay(x.t, agora); }).slice(-1)[0];
+  const antes = peso.filter(function (x) { return !sameDay(x.t, agora); }).slice(-1)[0];
+  const treina = diaResolvido().cadencia === 'treino';
+  const linhas = [hoje
+    ? { k: 'peso', t: 'Peso da manhã', v: comUnidade(hoje.v, 'kg'), d: 'anotado às ' + fmtHoraDita(hoje.t) }
+    : { k: 'peso', t: 'Peso da manhã', v: 'sem marca',
+        d: (treina ? 'antes de treinar, depois do pré' : 'de manhã, em semi-jejum') +
+           (antes ? ' · última: ' + fmtDec(antes.v) + ' em ' + fmtDate(antes.t) : ''),
+        acao: 'Anotar' }];
+  const dias = diasDesdeAFoto(S.protocolo.sessoes, agora);
+  const u = ultimaSessaoFoto(S.protocolo.sessoes);
+  if (dias != null && dias >= CADENCIA_DIAS && u) {
+    linhas.push({ k: 'fotos', t: 'Fotos do corpo', v: 'faz ' + dias + ' dias',
+                  d: 'a cada ' + CADENCIA_DIAS + ' dias · última: ' + fmtDate(instanteDaData(u.d)),
+                  acao: 'Nova sessão' });
+  }
+  return linhas;
+};
+
 CTX.protocoloFotos = function () {
   const lista = posesDo(S.protocolo.poses);
   const u = ultimaSessaoFoto(S.protocolo.sessoes);

@@ -1629,3 +1629,52 @@ test('a refeição que o treino empurrou não diz "no plano às": diz que veio d
   assert.strictEqual(a.texto('.ins-foco .ins-label'), 'depois do treino, às 13h45');
   a.fechar();
 });
+
+// ---------- as linhas do corpo no Agora (frente 1 §5, regra 5; M1‑13 da D) ----------
+
+test('a pesagem da manhã é linha com "Anotar" enquanto não há peso hoje, e leva ao Corpo', async () => {
+  const agora = agoraEstavel(6, 10);
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino'),
+    body: { peso: [{ t: agora - 3 * DIA, v: 73.8 }], cintura: [] } } });
+  await a.esperar();
+  assert.strictEqual(a.texto('[data-linha="peso"] .ins-linha-t'), 'Peso da manhã · sem marca');
+  assert.ok(/^antes de treinar, depois do pré · última: 73,8 em \d\d\/\d\d$/.test(a.texto('[data-linha="peso"] .ins-linha-s')),
+    a.texto('[data-linha="peso"] .ins-linha-s'));
+  a.clicar('[data-a="agora-peso"]');
+  await a.esperar();
+  assert.strictEqual(a.vista().aba, 'corpo');
+  a.fechar();
+});
+
+test('com peso hoje, a linha diz o valor e quando, e não pede nada', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino'),
+    body: { peso: [{ t: agora - 3 * 3600000, v: 73.6 }], cintura: [] } } });
+  await a.esperar();
+  assert.strictEqual(a.texto('[data-linha="peso"] .ins-linha-t'), 'Peso da manhã · 73,6 kg');
+  assert.strictEqual(a.texto('[data-linha="peso"] .ins-linha-s'), 'anotado às 6h00');
+  assert.strictEqual(a.$('[data-a="agora-peso"]'), null);
+  a.fechar();
+});
+
+test('a sessão de fotos vira linha quando faz 14 dias, e só então', async () => {
+  const agora = agoraEstavel(9, 0);
+  const sessao = function (dias) {
+    return { d: dataLocal(agora - dias * DIA), t: agora - dias * DIA, m: 1,
+             fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } };
+  };
+  const velha = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [],
+    protocolo: { poses: null, sessoes: [sessao(16)] } } });
+  await velha.esperar();
+  assert.strictEqual(velha.texto('[data-linha="fotos"] .ins-linha-t'), 'Fotos do corpo · faz 16 dias');
+  velha.clicar('[data-a="agora-fotos"]');
+  await velha.esperar();
+  assert.ok(velha.vista().protocolo, '"Nova sessão" abre a sessão de fotos');
+  velha.fechar();
+
+  const nova = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [],
+    protocolo: { poses: null, sessoes: [sessao(3)] } } });
+  await nova.esperar();
+  assert.strictEqual(nova.$('[data-linha="fotos"]'), null, 'antes dos 14 dias não há convite');
+  nova.fechar();
+});
