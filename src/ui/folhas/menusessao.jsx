@@ -27,6 +27,19 @@ export function FolhaMenuDaSessao({ ctx }) {
 
   return (
     <Folha olho="a sessão" titulo="O que é raro" aoFechar={fecha}>
+      {/* "Encerrar" e não "finalizar" (§7.7, decisão 1): uma palavra só no app
+          inteiro. A linha de baixo diz o fim que o toque grava, antes dele. */}
+      {m.encerrar && (
+        <button class="ins-linha ms-item" data-a="encerrar" onClick={() => {
+          fecha();
+          ctx.finalizarSessao();
+        }}>
+          <span class="ins-linha-n">
+            <span class="ins-linha-t">{m.encerrar.rotulo}</span>
+            <span class="ins-body-xs ins-t3 ms-detalhe">{m.encerrar.detalhe}</span>
+          </span>
+        </button>
+      )}
       {/* Duas linhas no botão, e a de baixo é o freio: ela diz o que o toque
           FAZ, em número, antes do toque. Um rótulo sozinho — "ativar deload" —
           é exatamente o que a frente 3 proíbe aqui. */}

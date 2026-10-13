@@ -310,6 +310,11 @@
 }
 .pare-sim { background: var(--ins-pare-tinta); color: var(--ins-pare-fundo); }
 .pare-nao { background: transparent; color: var(--ins-pare-tinta); border: 1px solid var(--ins-pare-fio); }
+/* A PERGUNTA neutra: a mesma forma, sem a tinta de pare — ela para o dedo sem
+   destruir nada, e pintá-la de pare gastaria o sinal (§3.3 da frente 3). */
+.pergunta-w .pare { background: var(--ins-superficie); color: var(--ins-tinta); border-top-color: var(--ins-fio-controle); }
+.pergunta-w .pare-sim { background: var(--ins-acento); color: var(--ins-sobre-acento); }
+.pergunta-w .pare-nao { color: var(--ins-tinta); border-color: var(--ins-fio-controle); }
 /* O aviso de falha fica um nível ABAIXO do pare: ele chega sozinho, e o que o
    dedo pediu fica por cima. */
 .falhou-w { z-index: 88; }

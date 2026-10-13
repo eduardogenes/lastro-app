@@ -67,6 +67,15 @@ export function periodoDe(t: number): Periodo {
   return PERIODOS[2];
 }
 
+/**
+ * A hora em PROSA: "6h20", "13h45". `fmtHora` ("06:20") é a do mostrador; numa
+ * frase a hora se escreve como se fala, sem o zero da frente (frente 3, §7.7).
+ */
+export function fmtHoraDita(t: number): string {
+  const d = new Date(t);
+  return d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0');
+}
+
 export function fmtHora(t: number): string {
   const d = new Date(t);
   return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');

@@ -4,7 +4,7 @@ import {
   PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, ehPriorizado, PRIO, CARGAS, DORES, MODAIS
 } from './dominio/programa';
 import {
-  fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca,
+  fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca, fmtHoraDita,
   DIAS_CURTOS, DIAS_LONGOS, MESES, PERIODOS, periodoDe,
   fmtHora, fmtDur, semanasDesde, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
   escapeHTML, escAttr
@@ -488,7 +488,13 @@ async function load() {
     projetaTudo();
   }
 
-  encerraSePreciso();                  // sessão vencida fecha ANTES de decidir a rota
+  // Sessão vencida fecha ANTES de decidir a rota — e DIZ que fechou (§7.7 da
+  // frente 3). Antes o retorno era ignorado: o fecho por inatividade na
+  // abertura seguinte acontecia em silêncio, e é o caminho comum — 16 das 35
+  // sessões do registro dele fecharam sem ele (P1). O lançamento retroativo
+  // fecha calado: não era uma sessão ao vivo.
+  const vencida = S.sessao;
+  if (encerraSePreciso() && vencida && !vencida.retro) toast(fraseDoFechoNaUltima(vencida, 'Fechei'));
   ligaBatida();
   // Abrir o app com treino em andamento cai no treino, não em HOJE. Sair e
   // voltar no meio de uma série é o caso mais comum de reabertura que existe
@@ -676,7 +682,7 @@ function ligaBatida() {
       fechaSessao('auto');
       faixaPerguntando = false;
       save(); render();
-      toast('Treino encerrado sozinho. A duração vai até a última série.');
+      toast(fraseDoFechoNaUltima(s, 'Fechei'));
       return;
     }
     // Só repinta na VIRADA: a faixa sai de atalho para pergunta uma vez, e
@@ -730,6 +736,24 @@ function soltaPromo(sid) {
   const chave = chaveDePromo({ sid: sid, t: sid });
   S.promoPendente = S.promoPendente.filter(function (x) { return chaveDePromo(x) !== chave; });
   lapide(chave);
+}
+
+// ---------- as palavras do fecho (§7.7 da frente 3) ----------
+// Quatro maneiras de a sessão acabar, e três gravam um fim diferente. A palavra
+// diz qual: o fecho no toque grava o instante do toque e a duração é medida; os
+// dois fechos que vão até a última série dizem "aproximada", porque ninguém
+// mediu o que houve depois dela (F152). "Encerrei" e "Fechei" na primeira
+// pessoa do app: encerrar é ato do registro, e a voz passiva escondia o agente.
+function oTreino(dia) { return diaAberto(dia) ? 'a aula' : 'o Treino ' + dia; }
+/** A frase de um fecho que foi até a última série — "já parei" ou o automático. */
+function fraseDoFechoNaUltima(s, verbo) {
+  const marca = S.done.filter(function (x) { return x.sid === s.sid; })[0];
+  const ultima = s.ultima || s.inicio;
+  // Na abertura seguinte a sessão pode ser de outro dia: "o Treino A de ontem".
+  const dia = rotuloDoDia(s.inicio);
+  return verbo + ' ' + oTreino(s.day) + (dia === 'hoje' ? '' : ' de ' + dia) +
+    ' na última série, às ' + fmtHoraDita(ultima) +
+    '. A duração vai até ela: cerca de ' + fmtDur(marca ? marca.dur : 0) + ', aproximada.';
 }
 
 function fechaSessao(comoFim) {
@@ -961,7 +985,16 @@ async function pularEx(i) {
     if (view.open === i) view.open = null;
   }
   await save(); render();
-  toast(j >= 0 ? 'Exercício de volta.' : 'Exercício pulado nesta sessão.');
+  // §7.5 da frente 3: pular é reversível a um toque, então não há pergunta
+  // antes — há a frase do que ficou guardado depois, com o nome, e o desfazer
+  // na própria linha. "Pulado" concorda com "exercício", e não com o nome: a
+  // frente escreveu "pulada" porque o exemplo era "Elevação lateral", e o nome
+  // muda de gênero de um exercício para outro.
+  const ex = treino(view.day).ex[i];
+  const nome = ex ? ex.n : 'o exercício';
+  toast(j >= 0
+    ? 'Desfeito: ' + nome + ' voltou para a fila desta sessão.'
+    : 'Guardei como pulado hoje: ' + nome + '. Não volta a ser pedido nesta sessão; desfazer põe de volta na fila.');
 }
 
 // pular antes de qualquer série também abre a sessão: é uma decisão do treino
@@ -999,10 +1032,16 @@ async function finalizarSessao() {
 
   const pend = p.parcial.concat(p.nada);
   if (pend.length) {
-    const lista = pend.slice(0, 4).map(function (x) { return '· ' + x.nome; }).join('\n');
-    const resto = pend.length > 4 ? '\ne mais ' + (pend.length - 4) : '';
-    if (!confirm('Finalizar com ' + pend.length + (pend.length === 1 ? ' exercício pendente?' : ' exercícios pendentes?')
-      + '\n\n' + lista + resto + '\n\nEles ficam marcados como não feitos no histórico.')) return;
+    // A PERGUNTA neutra, não o pare: nada se destrói — os pendentes ficam
+    // escritos como não feitos. Botões da §7.7: "Encerrar assim" e "Voltar ao
+    // treino"; o diálogo do sistema só sabe dizer OK e Cancelar.
+    const lista = pend.slice(0, 4).map(function (x) { return x.nome; }).join(', ') +
+                  (pend.length > 4 ? ' e mais ' + (pend.length - 4) : '');
+    const um = pend.length === 1;
+    if (!(await pare({ tom: 'pergunta',
+        texto: 'Encerrar com ' + (um ? '1 exercício pendente' : pend.length + ' exercícios pendentes') + ': ' + lista + '. ' +
+               (um ? 'Ele fica marcado como não feito' : 'Eles ficam marcados como não feitos') + ' no histórico.',
+        sim: 'Encerrar assim', nao: 'Voltar ao treino' }))) return;
   }
 
   const mods = modsDoDia(s.day);
@@ -1035,11 +1074,16 @@ async function encerraDeVerdade(dia, feitas, resumoMods) {
   // o que foi mudado fica no registro do dia, mesmo que não vire permanente:
   // daqui a um mês, "por que o volume desse dia foi outro?" tem resposta
   if (marca && resumoMods && resumoMods.length) marca.mods = resumoMods;
+  const inicio = s.inicio, pulados = (s.pulados || []).length;
   fechaSessao('manual');
   view.open = null; view.editProg = false;
   soltarTela();
   await save(); render(); window.scrollTo(0, 0);
-  toast('Treino ' + dia + ' encerrado · ' + fmtDur(dur) + ' · ' + feitas + (feitas === 1 ? ' exercício' : ' exercícios'));
+  // "Encerrei o Treino A · 6h20 → 7h31 · 1h11 · 8 exercícios" — o intervalo
+  // inteiro, e o pulado no resumo, que é onde a §7.5 o põe.
+  toast('Encerrei ' + oTreino(dia) + ' · ' + fmtHoraDita(inicio) + ' → ' + fmtHoraDita(Date.now()) +
+        ' · ' + fmtDur(dur) + ' · ' + feitas + (feitas === 1 ? ' exercício' : ' exercícios') +
+        (pulados ? ' · ' + pulados + (pulados === 1 ? ' pulado' : ' pulados') : ''));
 }
 
 // entradas da sessão aberta não servem de referência para elas mesmas
@@ -3837,7 +3881,11 @@ function pare(opcoes) {
   if (pareResolve) { const r = pareResolve; pareResolve = null; r(false); }
   return new Promise(function (resolve) {
     pareResolve = resolve;
-    view.pare = { id: ++pareSeq, texto: opcoes.texto, sim: opcoes.sim };
+    // `tom: 'pergunta'` é a variante NEUTRA, para a pergunta que para o dedo
+    // sem destruir nada (encerrar com pendentes, §7.7). A moldura de pare é só
+    // das duas famílias da decisão 13: "nada mais usa o painel de pare" (§3.4).
+    view.pare = { id: ++pareSeq, texto: opcoes.texto, sim: opcoes.sim,
+                  nao: opcoes.nao || null, tom: opcoes.tom || 'pare' };
     render();
   });
 }
@@ -8874,11 +8922,14 @@ CTX.continuaSessao = async function () {
 
 /** "Já parei": encerra com a duração indo até a última série registrada. */
 CTX.encerraSessaoEsquecida = async function () {
-  if (!S.sessao) return;
+  const s = S.sessao;
+  if (!s) return;
   fechaSessao('auto');
   faixaPerguntando = false;
   await save(); render(); window.scrollTo(0, 0);
-  toast('Treino encerrado. A duração vai até a última série.');
+  // "já parei" é um TOQUE que grava o fim automático — o único lugar do produto
+  // em que um toque dele grava um tempo que não é o do toque. A frase diz isso.
+  toast(fraseDoFechoNaUltima(s, 'Encerrei'));
 };
 
 CTX.voltaAoTreino = function () {
@@ -9127,6 +9178,9 @@ CTX.menuDaSessao = function () {
   const cortado = t.ex.reduce(function (n, ex) { return n + _setsFor(ex, true); }, 0);
   const nome = 'Treino ' + d;
   return {
+    // "Encerrar o treino · o fim é agora, 7h31": o que o toque grava, com o
+    // número, antes do toque (V4). Só existe com sessão aberta.
+    encerrar: S.sessao ? { rotulo: 'Encerrar o treino', detalhe: 'o fim é agora, ' + fmtHoraDita(Date.now()) } : null,
     deload: S.deload
       // "Sair do deload · devolve 10 séries ao Treino A de hoje" — a frente 3
       // escreveu as duas metades, e a segunda é a que impede o susto.

@@ -379,8 +379,12 @@ export function Exercicio({ vm, acoes }) {
 
       {vm.pulado && (
         <div class="puladobox">
-          <span>Pulado nesta sessão.</span>
-          <button class="aqbtn" onClick={() => acoes.pularEx(i)}>desfazer</button>
+          {/* Pulado não é esquecido: fica escrito e não volta a ser pedido — e o
+              caminho de volta existe, aqui onde o dedo está (§7.5 da frente 3).
+              As duas metades juntas, porque lidas separadas parecem se
+              contradizer. */}
+          <span>Pulado hoje. Fica escrito como pulado e não volta a ser pedido; desfazer põe de volta na fila.</span>
+          <button class="aqbtn" onClick={() => acoes.pularEx(i)}>Desfazer</button>
         </div>
       )}
 

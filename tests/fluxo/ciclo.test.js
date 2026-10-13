@@ -96,7 +96,10 @@ test('finalizar grava tempo exato e marca como manual', async () => {
   assert.ok(Math.abs(m.dur - 62 * 60000) < 3000, 'tempo até o toque, não até a última série');
   assert.strictEqual(a.S().sessao, null);
   assert.strictEqual(a.texto('.ins-estado-v'), 'B', 'rotação avançou');
-  assert.ok(a.toast().includes('encerrado'));
+  // §7.7 da frente 3: "Encerrei", na voz do app, com o intervalo e a duração
+  // MEDIDA — o fecho no toque não leva "aproximada".
+  assert.ok(/^Encerrei o Treino A · \d+h\d\d → \d+h\d\d · 1h02 · /.test(a.toast()), a.toast());
+  assert.ok(!/aproximada/.test(a.toast()), 'o fecho no toque é medido, não estimado');
   a.fechar();
 });
 

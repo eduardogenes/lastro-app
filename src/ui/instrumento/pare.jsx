@@ -32,14 +32,14 @@ export function Pare({ p, onResponde }) {
   }, [p && p.id]);
   if (!p) return null;
   return (
-    <div class="pare-w" data-pare={p.id}>
+    <div class={'pare-w' + (p.tom === 'pergunta' ? ' pergunta-w' : '')} data-pare={p.id}>
       <div class="ins-veu" />
       <div class="pare" role="alertdialog" aria-modal="true" aria-labelledby="pare-t">
         <p id="pare-t" class="pare-t">{p.texto}</p>
         <div class="pare-b">
           <button class="pare-sim" data-a="pare-sim" onClick={() => onResponde(true)}>{p.sim}</button>
           <button class="pare-nao" data-a="pare-nao" ref={saida} onClick={() => onResponde(false)}>
-            Deixar como está
+            {p.nao || 'Deixar como está'}
           </button>
         </div>
       </div>

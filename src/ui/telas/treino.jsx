@@ -84,7 +84,7 @@ export function Treino({ ctx }) {
             {t.pausada
               ? <button class="ctrl-b ini" onClick={ctx.retomarSessao}>retomar</button>
               : <button class="ctrl-b" onClick={ctx.pausarSessao}>pausar</button>}
-            <button class="ctrl-b fim" onClick={ctx.finalizarSessao}>finalizar</button>
+            <button class="ctrl-b fim" onClick={ctx.finalizarSessao}>encerrar</button>
           </div>
         )}
 
