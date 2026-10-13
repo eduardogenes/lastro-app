@@ -1161,6 +1161,22 @@ test('todo aviso que para o dedo diz o que acontece, e diz na primeira palavra',
   const usadas = proibidas.filter(p => new RegExp(p.replace('?', '\\?')).test(FONTE));
   assert.deepStrictEqual(usadas, [],
     'frase que a voz do produto recusa: ela não diz o que acontece ao tocar');
+
+  // O PAINEL DE PARE, e é a "regra de uma linha" da frente 3 (§3.4): a ação que
+  // apaga sem volta pede pelo painel, e a frase E O BOTÃO abrem pelo verbo do
+  // estrago. Nenhum botão de pare se chama "OK", "Confirmar", "Sim" ou
+  // "Cancelar" — é a asserção que impede as duas famílias de voltarem a se
+  // parecer, e o diálogo do sistema não consegue cumpri-la.
+  const pedidos = [...FONTE.matchAll(/\{\s*texto:\s*'([^']*)'[^{}]*?sim:\s*'([^']*)'/g)];
+  assert.ok(pedidos.length >= 1, 'o varredor achou pedidos de pare: ' + pedidos.length);
+  const tortos = pedidos
+    .filter(p => !INFINITIVO.test(p[1]) || !INFINITIVO.test(p[2]) || /^(OK|Confirmar|Sim|Cancelar)\b/.test(p[2]))
+    .map(p => p[1].slice(0, 30) + ' / ' + p[2]);
+  assert.deepStrictEqual(tortos, [],
+    'pedido de pare cuja frase ou cujo botão não abre pelo verbo do que vai acontecer');
+  const painel = (FONTE.match(/export function Pare\b[\s\S]*?\n\}/) || [''])[0];
+  assert.ok(/Deixar como está/.test(painel), 'a saída do painel é "Deixar como está"');
+  assert.ok(!/>\s*(Cancelar|OK|Sim)\s*</.test(painel), 'e nunca "Cancelar", "OK" ou "Sim"');
 });
 
 test('botão que mostra só um símbolo tem nome acessível', () => {

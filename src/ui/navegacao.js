@@ -75,6 +75,10 @@ export function camadasAbertas(view) {
   if (view.ajustes) c.push('ajustes');
   // As folhas ficam por cima de qualquer destino: elas cobrem o que houver.
   (view.pilha || []).forEach(function (f, i) { c.push('folha:' + i); });
+  // O PAINEL DE PARE é a camada mais alta de todas, porque é ele que está
+  // esperando resposta: com ele aberto, Voltar e Esc respondem "Deixar como
+  // está" e não fecham o que está por baixo (decisão 13, frente 3 §3).
+  if (view.pare) c.push('pare');
   return c;
 }
 

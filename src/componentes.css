@@ -286,6 +286,30 @@
    então a folha já estava por cima — e um valor morto aqui seria uma segunda
    fonte de verdade esperando divergir da primeira. */
 .ins-folha-w { position: fixed; inset: 0; display: flex; align-items: flex-end; }
+
+/* ---- O painel de PARE (decisão 13) ---------------------------------------
+   Acima de toda folha (50 · 70 · 80): ele é a camada que espera resposta. Na
+   base, como a folha, porque é lá que o polegar está — e a resposta é um toque.
+   A moldura é a dos três tokens de pare; o que distingue "falhou" de "vai
+   destruir" é a frase, não a cor. Sem animação de entrada (frente 4). */
+.pare-w { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; }
+.pare {
+  position: relative; width: 100%;
+  background: var(--ins-pare-fundo); color: var(--ins-pare-tinta);
+  border-top: 1px solid var(--ins-pare-fio);
+  padding: var(--ins-6) var(--ins-5) calc(var(--ins-6) + env(safe-area-inset-bottom));
+}
+.pare-t { margin: 0 0 var(--ins-6); font: 500 17px/1.45 var(--ins-fonte); }
+.pare-b { display: flex; flex-direction: column; gap: var(--ins-3); }
+/* O verbo e a saída têm o mesmo tamanho e o mesmo alvo: o painel não empurra
+   para nenhum dos dois. O verbo é preenchido na tinta de pare, e é a única
+   diferença de peso — a frase já disse o que ele faz. */
+.pare-sim, .pare-nao {
+  width: 100%; min-height: var(--ins-tap); padding: 0 var(--ins-4);
+  font: 600 16px/1.2 var(--ins-fonte); border-radius: 0;
+}
+.pare-sim { background: var(--ins-pare-tinta); color: var(--ins-pare-fundo); }
+.pare-nao { background: transparent; color: var(--ins-pare-tinta); border: 1px solid var(--ins-pare-fio); }
 .ins-veu { position: absolute; inset: 0; background: var(--ins-veu); }
 
 .ins-folha {

@@ -17,6 +17,7 @@ import { Corpo } from './telas/corpo.jsx';
 import { Semana } from './telas/semana.jsx';
 import { Prescricao } from './telas/prescricao.jsx';
 import { Cabecalho } from './instrumento/primitivos.jsx';
+import { Pare } from './instrumento/pare.jsx';
 
 const TELAS = { agora: Agora, dias: Dias, corpo: Corpo, semana: Semana, prescricao: Prescricao };
 
@@ -31,7 +32,10 @@ export function App({ ctx }) {
   // nada. O buraco era antigo e estava fora de alcance porque a tela do treino
   // era uma ABA; com ela virando modo, a foto do aparelho, o histórico do
   // exercício, a nota e o seletor de troca passaram todos a abrir no vazio.
-  if (ctx.emTelaCheia()) return <>{ctx.telaCheia()}{ctx.folhas()}</>;
+  // O painel de PARE vem por último nas duas cascas: ele é a camada mais alta,
+  // e uma ação destrutiva pode ser pedida de dentro de um destino.
+  const pare = <Pare p={ctx.pare()} onResponde={ctx.respondePare} />;
+  if (ctx.emTelaCheia()) return <>{ctx.telaCheia()}{ctx.folhas()}{pare}</>;
 
   const aba = ctx.abaAtual();
   const Tela = TELAS[aba] || Agora;
@@ -83,6 +87,7 @@ export function App({ ctx }) {
       />
 
       <TabBar ativa={aba} onMuda={ctx.vaiPara} />
+      {pare}
     </>
   );
 }

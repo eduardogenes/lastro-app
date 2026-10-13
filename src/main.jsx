@@ -3749,6 +3749,42 @@ async function registraBio(leitura, quando) {
  */
 function comUnidade(v, u) { return fmtDec(v) + (u === '%' ? '' : ' ') + u; }
 
+// ---------- o painel de PARE (decisão 13) ----------
+// A família "vai destruir" da frente 3 (§3.3), para as NOVE ações que apagam
+// dado que o aparelho não reconstrói. Promessa e não o diálogo do sistema: os
+// botões dele chamam-se "OK" e "Cancelar", e a regra escrita é que nenhum painel de
+// pare tenha esses rótulos — o botão repete o verbo com o objeto, e a saída é
+// "Deixar como está". As outras catorze perguntas do app mexem em prescrição ou
+// em conta, o registro fica, e continuam no diálogo do sistema: pintá-las de pare
+// treinaria o dono a ignorar o painel.
+let pareResolve = null;
+let pareSeq = 0;
+/**
+ * @param {{ texto: string, sim: string }} opcoes a frase inteira, aberta pelo
+ *   infinitivo do estrago e com o número do que vai embora; e o rótulo do botão,
+ *   que repete o verbo com o objeto
+ * @returns {Promise<boolean>} se ele tocou no verbo
+ */
+function pare(opcoes) {
+  // Um painel por vez. Um pedido novo com outro esperando responde ao primeiro
+  // que não — o primeiro não pode ficar pendurado para sempre.
+  if (pareResolve) { const r = pareResolve; pareResolve = null; r(false); }
+  return new Promise(function (resolve) {
+    pareResolve = resolve;
+    view.pare = { id: ++pareSeq, texto: opcoes.texto, sim: opcoes.sim };
+    render();
+  });
+}
+function respondePare(sim) {
+  const r = pareResolve;
+  pareResolve = null;
+  view.pare = null;
+  render();
+  if (r) r(!!sim);
+}
+CTX.pare = function () { return view.pare || null; };
+CTX.respondePare = function (sim) { respondePare(sim); };
+
 async function delBody(k, t) {
   // Confirma, como as outras ações destrutivas: a medida é um ponto de um dia
   // que já passou, e desfazer seria ter decorado o número. O aviso delimita o
@@ -3761,11 +3797,22 @@ async function delBody(k, t) {
   // perguntava *"Remover a cintura de 08/10 (17,8 cm)?"*. A tabela do domínio
   // sabe o nome e a unidade das sete; transcrever duas delas aqui era a única
   // razão de o aviso poder mentir.
+  //
+  // E é PARE (§3.3 da frente 3): a medida apagada não volta, e com lápide a
+  // sincronia não a ressuscita. A frase abre pelo infinitivo do estrago, diz o
+  // número que vai embora, e o botão repete o verbo com o objeto. Só o peso da
+  // manhã entra na média da semana e no ritmo — dizer isso das outras onze seria
+  // a frase mentindo sobre o que a regra lê.
   const m = S.body[k].filter(function (x) { return x.t === t; })[0];
   const med = MEDIDAS_DO_CORPO.filter(function (x) { return x.k === k; })[0];
-  if (m && !confirm('Remover ' + (med ? med.n : k) + ' de ' + fmtDate(t) +
-      ' (' + comUnidade(m.v, med ? med.u : '') + ')?\n\n' +
-      'Sai da média da semana e do ritmo. As outras medidas ficam.')) return;
+  if (!m) return;
+  const quando = fmtDate(t), valor = comUnidade(m.v, med ? med.u : '');
+  const sim = await pare(k === 'peso'
+    ? { texto: 'Apagar o peso de ' + quando + ' (' + valor + ') tira ele da média da semana e do ritmo. As outras medidas ficam.',
+        sim: 'Apagar o peso de ' + quando }
+    : { texto: 'Apagar a medida de ' + (med ? med.n : k) + ' de ' + quando + ' (' + valor + ') tira ela do histórico. As outras medidas ficam.',
+        sim: 'Apagar a medida de ' + quando });
+  if (!sim) return;
   lapide(chaveDeMarca(k, { t: t }));
   S.body[k] = S.body[k].filter(x => x.t !== t);
   await save(); render();
@@ -5714,6 +5761,9 @@ function render() {
 // que já existia, e é isso que garante que voltar pelo gesto e voltar pelo
 // botão deixem o app no mesmo estado.
 const FECHA_CAMADA = {
+  // Voltar com o painel de pare aberto é "Deixar como está": a resposta que não
+  // apaga nada, pelo mesmo caminho que fecha qualquer camada.
+  pare:      function () { respondePare(false); },
   camera:    function () { CTX.fechaCamera(); },
   ajustes:   function () { CTX.fechaAjustes(); },
   ajuste:    function () { CTX.fechaAjuste(); },

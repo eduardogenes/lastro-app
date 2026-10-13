@@ -980,8 +980,11 @@ test('ctx.apagaMedida nomeia a grandeza certa, na unidade certa, em todas', asyn
     await a.esperar();
 
     const q = a.perguntas()[a.perguntas().length - 1];
-    assert.ok(q.indexOf('Remover ' + med.n + ' de ') === 0,
-      med.k + ': o aviso abre nomeando a grandeza da tabela — ' + q);
+    // PARE (decisão 13, §3.3 da frente 3): abre pelo infinitivo do estrago. Só
+    // o peso da manhã tem a frase da média e do ritmo; as outras nomeiam a
+    // grandeza da tabela.
+    const abre = med.k === 'peso' ? 'Apagar o peso de ' : 'Apagar a medida de ' + med.n + ' de ';
+    assert.ok(q.indexOf(abre) === 0, med.k + ': o painel abre pelo verbo, nomeando a grandeza — ' + q);
     // `%` cola no número, o resto leva espaço: é como o app escreve em todo
     // lugar, e o aviso não é exceção.
     const esperado = med.u === '%'
@@ -1360,5 +1363,49 @@ test('as portas das medidas com fita recusam o que não é fita', async () => {
   await a.esperar();
   assert.strictEqual(a.S().body.peso.length, 0, 'nenhuma pesagem entrou');
   assert.strictEqual(a.E('view.bodyForm && view.bodyForm.peso'), undefined, 'nem como rascunho');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// O PAINEL DE PARE — decisão 13, §3.3 da frente 3
+// ---------------------------------------------------------------------------
+
+test('apagar uma medida pede pelo painel de pare, e o Esc é "Deixar como está"', async () => {
+  // Pelo DEDO, sem o observador do harness que responde o painel pelos outros
+  // casos (`painelManual`): a frase, os dois botões, e as três saídas.
+  const t = Date.now() - 2 * DIA;
+  const a = await app({ painelManual: true, estado: { body: { peso: [{ t: t, v: 73.8 }], cintura: [] } } });
+  a.aba('corpo');
+  a.clicar(a.$('.crow-x'));
+  await a.esperar();
+
+  assert.ok(a.$('[role="alertdialog"]'), 'o painel abriu, e não o diálogo do sistema');
+  assert.deepStrictEqual(a.perguntas(), [], 'nenhum confirm() foi chamado');
+  const frase = a.texto('.pare-t');
+  assert.strictEqual(frase.indexOf('Apagar o peso de '), 0, 'abre pelo infinitivo do estrago — ' + frase);
+  assert.ok(/\(73,8 kg\) tira ele da média da semana e do ritmo/.test(frase), 'diz o número que vai embora e o que ele mexe');
+  assert.strictEqual(a.texto('[data-a="pare-sim"]').indexOf('Apagar o peso de '), 0,
+    'o botão repete o verbo com o objeto');
+  assert.strictEqual(a.texto('[data-a="pare-nao"]').trim(), 'Deixar como está');
+
+  // Esc é o Voltar: responde "Deixar como está" e NÃO fecha o que está por baixo.
+  a.window.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape' }));
+  await a.esperar();
+  assert.strictEqual(a.$('[role="alertdialog"]'), null, 'o Esc fechou o painel');
+  assert.strictEqual(a.S().body.peso.length, 1, 'e não apagou nada');
+  assert.strictEqual(a.vista().aba, 'corpo', 'nem tirou ele do Corpo');
+
+  a.clicar(a.$('.crow-x'));
+  await a.esperar();
+  a.clicar(a.$('[data-a="pare-nao"]'));
+  await a.esperar();
+  assert.strictEqual(a.S().body.peso.length, 1, '"Deixar como está" deixa');
+
+  a.clicar(a.$('.crow-x'));
+  await a.esperar();
+  a.clicar(a.$('[data-a="pare-sim"]'));
+  await a.esperar(60);
+  assert.strictEqual(a.S().body.peso.length, 0, 'e o verbo apaga');
+  assert.strictEqual(a.$('[role="alertdialog"]'), null, 'com o painel fechado');
   a.fechar();
 });

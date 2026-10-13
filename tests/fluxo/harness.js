@@ -131,6 +131,31 @@ function abrirApp(opcoes) {
       };
       w.navigator.vibrate = function (p) { vibrou.push(p); return true; };
 
+      // O PAINEL DE PARE (decisão 13) responde pelo MESMO contrato do
+      // `confirm()`: a frase entra em `perguntas()`, e `aceitar`/`recusar` (ou
+      // `confirmar: false`) decidem qual botão é tocado. As nove ações que
+      // apagam dado sem volta saíram do `confirm()` para este painel, e sem isto
+      // cada caso que as exercita teria de aprender a tocar no painel — o que é
+      // trabalho de um caso só, e esse caso usa `painelManual`.
+      //
+      // Cada pedido tem um número (`data-pare`): o Preact reaproveita o nó entre
+      // dois pedidos seguidos, e marcar o NÓ como respondido deixaria o segundo
+      // pendurado para sempre.
+      let ultimoPare = 0;
+      w.addEventListener('DOMContentLoaded', function () {
+        if (o.painelManual) return;
+        new w.MutationObserver(function () {
+          const painel = w.document.querySelector('[data-pare]');
+          if (!painel) return;
+          const id = Number(painel.getAttribute('data-pare'));
+          if (id <= ultimoPare) return;
+          ultimoPare = id;
+          registro.confirmou.push(painel.querySelector('.pare-t').textContent);
+          const aceita = o.confirmar !== false && registro.aceita;
+          painel.querySelector(aceita ? '[data-a="pare-sim"]' : '[data-a="pare-nao"]').click();
+        }).observe(w.document.body, { childList: true, subtree: true });
+      });
+
       // jsdom reporta 'prerender'; o app testa !document.hidden
       Object.defineProperty(w.document, 'hidden', { value: false, configurable: true });
       Object.defineProperty(w.document, 'visibilityState', { value: 'visible', configurable: true });
