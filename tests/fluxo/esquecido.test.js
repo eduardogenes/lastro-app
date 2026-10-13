@@ -90,7 +90,7 @@ test('"já parei" grava a duração até a última série, não até agora', asy
   await a.esperar();
 
   assert.strictEqual(a.S().sessao, null);
-  const dur = a.E(`S.done.filter(function (x) { return x.sid === ${sid}; })[0].dur`);
+  const dur = a.S().done.filter(function (x) { return x.sid === sid; })[0].dur;
   assert.ok(dur > 4 * MIN && dur < 10 * MIN,
     'a ociosidade não pode virar treino no histórico: ' + Math.round(dur / MIN) + ' min');
   a.fechar();
