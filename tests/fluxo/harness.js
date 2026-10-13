@@ -105,7 +105,8 @@ function abrirApp(opcoes) {
   const o = opcoes || {};
   const erros = [];
   const vibrou = [];
-  const registro = { bipes: 0, wakeLock: 0, confirmou: [], respostas: [], aceita: true };
+  const registro = { bipes: 0, wakeLock: 0, confirmou: [], respostas: [], aceita: true,
+                     cotaCheia: !!o.cotaCheia };
 
   const console_ = new VirtualConsole();
   console_.on('jsdomError', function (e) { erros.push(e.message); });
@@ -130,6 +131,18 @@ function abrirApp(opcoes) {
         return registro.respostas.length ? registro.respostas.shift() : padrao;
       };
       w.navigator.vibrate = function (p) { vibrou.push(p); return true; };
+
+      // O APARELHO CHEIO: a escrita da chave do estado falha como o Safari falha
+      // no teto (~5 MiB, F53) — `QuotaExceededError`. Só a chave do estado, e não
+      // todas: a sonda do armazenamento grava uma chave descartável no boot, e
+      // ela tem de passar, senão o app cairia para memória e o caso testaria o
+      // modo privado em vez do aparelho cheio.
+      const protoStorage = Object.getPrototypeOf(w.localStorage);
+      const setItemOriginal = protoStorage.setItem;
+      protoStorage.setItem = function (k, v) {
+        if (registro.cotaCheia && k === CHAVE) throw new w.DOMException('cheio', 'QuotaExceededError');
+        return setItemOriginal.call(this, k, v);
+      };
 
       // O PAINEL DE PARE (decisão 13) responde pelo MESMO contrato do
       // `confirm()`: a frase entra em `perguntas()`, e `aceitar`/`recusar` (ou
@@ -484,6 +497,8 @@ function abrirApp(opcoes) {
 
     /** tudo que o app perguntou por confirm ou prompt */
     perguntas: function () { return registro.confirmou.slice(); },
+    /** o armazenamento enche (ou volta a ter espaço) para a chave do estado */
+    encheCota: function (cheio) { registro.cotaCheia = cheio !== false; },
     /** o próximo confirm passa a ser recusado */
     recusar: function () { registro.aceita = false; },
     aceitar: function () { registro.aceita = true; },

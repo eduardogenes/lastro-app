@@ -310,6 +310,26 @@
 }
 .pare-sim { background: var(--ins-pare-tinta); color: var(--ins-pare-fundo); }
 .pare-nao { background: transparent; color: var(--ins-pare-tinta); border: 1px solid var(--ins-pare-fio); }
+/* O aviso de falha fica um nível ABAIXO do pare: ele chega sozinho, e o que o
+   dedo pediu fica por cima. */
+.falhou-w { z-index: 88; }
+/* A marca de "não guardado", depois de o aviso ser fechado: no topo, na tinta
+   de pare, e com a porta de tentar de novo. É estado do dado — some quando uma
+   gravação der certo, não quando o aviso some. */
+.ng-faixa {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 86;
+  display: flex; align-items: center; gap: var(--ins-3);
+  padding: calc(var(--ins-2) + env(safe-area-inset-top)) var(--ins-5) var(--ins-2);
+  background: var(--ins-pare-fundo); color: var(--ins-pare-tinta);
+  border-bottom: 1px solid var(--ins-pare-fio);
+  font: 500 14px/1.3 var(--ins-fonte);
+}
+.ng-faixa span { flex: 1; min-width: 0; }
+.ng-b {
+  flex: 0 0 auto; min-height: var(--ins-tap); padding: 0 var(--ins-4);
+  color: var(--ins-pare-tinta); border: 1px solid var(--ins-pare-fio); border-radius: 0;
+  font: 600 14px/1 var(--ins-fonte);
+}
 .ins-veu { position: absolute; inset: 0; background: var(--ins-veu); }
 
 .ins-folha {

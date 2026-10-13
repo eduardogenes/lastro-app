@@ -78,6 +78,9 @@ export function camadasAbertas(view) {
   // O PAINEL DE PARE é a camada mais alta de todas, porque é ele que está
   // esperando resposta: com ele aberto, Voltar e Esc respondem "Deixar como
   // está" e não fecham o que está por baixo (decisão 13, frente 3 §3).
+  // O aviso de que uma gravação FALHOU fica logo abaixo do pare: ele chega
+  // sozinho, e o pare é pedido pelo dedo — o que o dedo pediu fica por cima.
+  if (view.falhou && view.naoGuardado) c.push('falhou');
   if (view.pare) c.push('pare');
   return c;
 }

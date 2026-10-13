@@ -1344,11 +1344,57 @@ function contaFusao(r, manual) {
   else if (manual && r.documentos === 'remoto') toast('Programa e plano vieram do outro aparelho.');
 }
 
+// ---------- a gravação que FALHOU (decisão 13, §3.2 da frente 3) ----------
+// Até aqui a falha era SILENCIOSA: `grava()` engolia o erro, e a camada de
+// armazenamento respondia "gravei" mesmo com o aparelho cheio. O estado ficava
+// só na memória e se perdia ao fechar o app, sem uma palavra a ninguém.
+//
+// Agora a falha abre o painel da família "falhou" — a mesma moldura do pare, e
+// o que a distingue é a palavra: abre por "Não guardei…", diz a causa, diz o que
+// NÃO aconteceu e até quando o valor vale. Fechar o aviso não apaga a marca:
+// "não guardado" fica na tela até a próxima gravação dar certo, porque é o
+// estado do dado, não do aviso.
+//
+// O modo privado NÃO abre o painel: ali nada nunca dura, e o Agora já diz isso
+// acima do cartão (`ctx.guardando`, §5.0 da frente 1). Um alerta a cada série
+// ensinaria o dono a ignorar o alerta.
+
+/** O que está sendo gravado agora, nas palavras da frase de falha. */
+let oQueGrava = null;
+/**
+ * Quem escreve declara o que escreve, antes de enfileirar. A gravação é
+ * represada (`queueSave`), então vale o ÚLTIMO a declarar — é o que estava na
+ * tela quando o disco recusou.
+ */
+function declaraGravacao(oQue, valor) { oQueGrava = { oQue: oQue, valor: valor || null }; }
+
 /** Escreve o estado como ele está. Não carimba: quem carimba é `save`. */
 async function grava() {
-  try { await DB.set(KEY, JSON.stringify(S)); return true; }
-  catch (e) { console.error('não salvou', e); return false; }
+  let ok;
+  try { ok = await DB.set(KEY, JSON.stringify(S)); }
+  catch (e) { console.error('não salvou', e); ok = false; }
+  if (ok) {
+    oQueGrava = null;
+    if (view.naoGuardado) { view.naoGuardado = null; view.falhou = false; render(); }
+  } else if (DB.mode !== 'mem') {
+    naoGuardou();
+  }
+  return ok;
 }
+
+function naoGuardou() {
+  const ja = !!view.naoGuardado;
+  const g = oQueGrava || { oQue: 'a última mudança', valor: null };
+  view.naoGuardado = { motivo: DB.falha || 'recusa', oQue: g.oQue, valor: g.valor };
+  // O painel abre UMA vez por episódio: com o aparelho cheio, cada série
+  // seguinte também falha, e um alerta por série é ruído que ensina a fechar sem
+  // ler. A marca, essa sim, acompanha cada uma.
+  if (!ja) view.falhou = true;
+  render();
+}
+/** Fechar este aviso: o painel sai, a marca de "não guardado" fica. */
+function dispensaFalha() { view.falhou = false; render(); }
+
 
 async function save() {
   // O carimbo do estado inteiro. É o que decide, na fusão, de que lado vêm os
@@ -3649,6 +3695,8 @@ async function addBody(k) {
   // O texto de "como eu medi" só existe nas medidas com fita, e vazio é "não
   // disse" — nunca uma frase em branco gravada por cima do lembrete.
   const onde = (view.bodyOnde && typeof view.bodyOnde[k] === 'string') ? view.bodyOnde[k].trim() : '';
+  declaraGravacao(k === 'peso' ? 'o peso de ' + (rotulo === 'hoje' ? 'hoje' : rotulo) : 'a medida de ' + (medidaDoCorpo(k) || { n: k }).n,
+                  comUnidade(v, unidadeDoCorpo(k)));
   const substituiu = gravaMarca(k, v, quando, onde || null);
 
   // Solta o rascunho: o stepper volta a se derivar da última medida, que é
@@ -3802,6 +3850,26 @@ function respondePare(sim) {
 }
 CTX.pare = function () { return view.pare || null; };
 CTX.respondePare = function (sim) { respondePare(sim); };
+
+// As portas da gravação que falhou (o mecanismo mora junto de `grava()`).
+CTX.naoGuardado = function () { return view.naoGuardado || null; };
+CTX.falhou = function () { return view.falhou && view.naoGuardado ? view.naoGuardado : null; };
+/** Tentar de novo é repetir a MESMA intenção: gravar o estado inteiro. */
+CTX.tentaGravar = function () { return save(); };
+/**
+ * Copiar o registro inteiro: o estado é regravado inteiro a cada série (F256),
+ * então a cópia é a cópia de segurança completa (F249), e não um remendo.
+ */
+CTX.copiaRegistro = async function () {
+  try {
+    await navigator.clipboard.writeText(payload());
+    toast('Copiei o registro inteiro. Cole num lugar fora deste aparelho.');
+  } catch (e) {
+    toast('Não consegui copiar. Ajustes › Cópia de segurança exporta o mesmo registro.');
+  }
+};
+CTX.dispensaFalha = function () { dispensaFalha(); };
+
 
 async function delBody(k, t) {
   // Confirma, como as outras ações destrutivas: a medida é um ponto de um dia
@@ -4102,6 +4170,8 @@ function anotaSerie(i, k, pos, valor) {
   // RIR não é grandeza aberta: acima de 5 a pessoa não está treinando perto o
   // suficiente para o número significar algo, e negativo não existe
   e.s[k][pos] = (pos === 2 && v != null) ? Math.max(0, Math.min(5, v)) : v;
+  declaraGravacao('a série ' + (k + 1),
+    (e.s[k][0] != null && e.s[k][1] != null) ? fmtNum(e.s[k][0]).replace('.', ',') + ' × ' + e.s[k][1] : null);
   segurarTela();
   projeta(i);
   atualizaEstado();
@@ -5800,6 +5870,9 @@ function render() {
 // que já existia, e é isso que garante que voltar pelo gesto e voltar pelo
 // botão deixem o app no mesmo estado.
 const FECHA_CAMADA = {
+  // Voltar com o aviso de falha aberto é "Fechar este aviso": dispensar não
+  // escolhe por ele, e a marca de não guardado continua.
+  falhou:    function () { dispensaFalha(); },
   // Voltar com o painel de pare aberto é "Deixar como está": a resposta que não
   // apaga nada, pelo mesmo caminho que fecha qualquer camada.
   pare:      function () { respondePare(false); },

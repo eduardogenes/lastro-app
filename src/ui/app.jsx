@@ -17,7 +17,7 @@ import { Corpo } from './telas/corpo.jsx';
 import { Semana } from './telas/semana.jsx';
 import { Prescricao } from './telas/prescricao.jsx';
 import { Cabecalho } from './instrumento/primitivos.jsx';
-import { Pare } from './instrumento/pare.jsx';
+import { Pare, Falhou, NaoGuardado } from './instrumento/pare.jsx';
 
 const TELAS = { agora: Agora, dias: Dias, corpo: Corpo, semana: Semana, prescricao: Prescricao };
 
@@ -34,7 +34,11 @@ export function App({ ctx }) {
   // exercício, a nota e o seletor de troca passaram todos a abrir no vazio.
   // O painel de PARE vem por último nas duas cascas: ele é a camada mais alta,
   // e uma ação destrutiva pode ser pedida de dentro de um destino.
-  const pare = <Pare p={ctx.pare()} onResponde={ctx.respondePare} />;
+  const pare = <>
+    <NaoGuardado n={ctx.naoGuardado()} aberto={!!ctx.falhou()} onTenta={ctx.tentaGravar} />
+    <Falhou f={ctx.falhou()} onTenta={ctx.tentaGravar} onCopia={ctx.copiaRegistro} onFecha={ctx.dispensaFalha} />
+    <Pare p={ctx.pare()} onResponde={ctx.respondePare} />
+  </>;
   if (ctx.emTelaCheia()) return <>{ctx.telaCheia()}{ctx.folhas()}{pare}</>;
 
   const aba = ctx.abaAtual();
