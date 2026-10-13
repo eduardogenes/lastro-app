@@ -152,7 +152,7 @@ test('esticar e encurtar o descanso mexe no instante-alvo', async () => {
   // passaria de 1 e o preenchimento vazaria da calha.
   a.v('startTimer', 60);
   a.v('ajustaTimer', 120);
-  const escala = parseFloat(a.E("document.getElementById('tfill').style.transform.match(/[\\d.]+/)[0]"));
+  const escala = parseFloat(a.$('#tfill').style.transform.match(/[\d.]+/)[0]);
   assert.ok(escala <= 1.001, 'a barra não vaza da calha ao esticar: ' + escala);
 
   a.relogioNormal();
@@ -163,7 +163,7 @@ test('encurtar abaixo de zero para o descanso em vez de deixá-lo negativo', asy
   const a = await app();
   a.v('startTimer', 10);
   a.v('ajustaTimer', -15);
-  assert.ok(!a.E("document.getElementById('timer').classList.contains('on')"),
+  assert.ok(!a.$('#timer').classList.contains('on'),
     'o cronômetro some em vez de contar para trás');
   a.relogioNormal();
   a.fechar();
