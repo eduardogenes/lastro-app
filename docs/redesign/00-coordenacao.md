@@ -1408,7 +1408,16 @@ contas 17,05 · ~76 · 34–41 · 48 · 16, refeitas pelo coordenador.
         dentro do `a.E` e esperam as telas novas; **168** são expressão composta,
         repontáveis mas pedindo remontar a expressão em JS; **62** são sobra
         simples de conserto curto.
-      - [~] **E o lance mais barato que sobrou:** ele **não escreveu um só teste **54 das 93 blindadas** em duas passadas (08/10). Restam 39, das quais 35 de trabalho real.
+      - [x] **E o lance mais barato que sobrou** — FECHADO em 13/10, com medida
+        em vez de lista. Uma rodada INSTRUMENTADA do harness (sem commit)
+        registrou cada função de `CTX` acionada: **189 de 205**. As 16 que
+        sobravam eram apelidos de verbos que já tinham caso pelo nome — a lógica
+        estava coberta; a PORTA (o botão) não. `portas.test.js`: dez casos,
+        catorze botões, **cada um provado desligando-o na tela** (14 de 14
+        vermelhos). Fora, com razão: `tiraFoto`/`tiraFotoDoCorpo` (o jsdom não
+        põe arquivo em `<input type=file>`) e `abreHistorico`, apelido que
+        nenhuma tela usa — tirá-lo é decisão escrita. **1.388 passando.**
+        (O texto antigo, de 08/10: **54 das 93 blindadas** em duas passadas. Restam 39, das quais 35 de trabalho real.)
         novo**, de propósito. As **93 chaves de `CTX` sem teste próprio** agora
         estão **alcançáveis e nomeadas** — o documento as lista por assunto. São
         as mais baratas de blindar, porque o verbo já existe e o teste novo só
@@ -3095,6 +3104,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 13/10 · Frente 3 medida (68/276) e aberta como 6.α. O painel de pare e as nove ações (`4afd3e7`, `99fda6e`).
 - 13/10 · Frente 3 aplicada no que tem lugar no app: dor, deload, becos, corrigir no lugar, a lista que vence, o veredito e o passo, a bioimpedância e a sobrancelha do Agora (`aa1178d` a `95d36b6`). Parados por serem desenho: os portões da Semana e os tipos de cartão que não existem. Achados de dado no caminho: o `dl` da sessão aberta não acompanhava o deload, e a data do Corpo recusava HOJE antes das 7h. 1.378 passando.
 - 13/10 · 6.v' fechado: o reponte, 485 → 188 entradas pela ponte, um commit por arquivo. A ponte tinha crescido com casos meus.
+- 13/10 · As portas: 189 de 205 funções de CTX eram acionadas; os 14 botões das que sobravam ganharam caso (`portas.test.js`).
 
 ---
 
