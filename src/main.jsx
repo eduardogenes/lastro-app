@@ -5865,7 +5865,7 @@ const SUPERFICIE = {
     addExercicio, addSet, ajustaTimer, altList, altOf, alternaDescanso, apagaFoto,
     apagarModeloDeAula, apagarSessao, aplicaAoOficial, aplicarModeloDeAula, arrozAtual,
     cardioSemana, cardioSet, cargaTipo, catalogoAlimentos, catalogoDeAdicao,
-    concluirRetro, criarTreino, delBody, descOf, desfazMod, diaAberto,
+    concluirRetro, criarExercicio, criarTreino, delBody, descOf, desfazMod, diaAberto,
     diaDeComida, diasSemBackup, difDoDia, difTotal, draftPeek, duracaoAtual, editarSessao, ehDescanso,
     encerraSePreciso, estadoEx, exDe, fechaSessao, fecharPrograma, finalizarSessao,
     garanteBytesDoCorpo, go, gravarRetro, historico, hojeISO, id, impactoDoMod,

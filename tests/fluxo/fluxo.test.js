@@ -49,7 +49,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   a.aba('treino');
   assert.strictEqual(a.vista().day, 'B');
   a.v('toggle', 0);
-  const setsB0 = a.E('setsFor(treino("B").ex[0])');
+  const setsB0 = a.v('setsFor', a.vJ('treino', 'B').ex[0]);
   for (let k = 0; k < setsB0; k++) a.preencher(0, k, 70, 9);
 
   a.v('go', 'D');                          // navega e volta: nada pode se perder
@@ -76,9 +76,9 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   a.v('modoEdicao', true);
   a.v('abrirNovoEx');
   a.digitar('nxn', 'Pendulum da unidade nova');
-  a.E('document.getElementById("nxg").value = "quadríceps"');
-  a.E('document.getElementById("nxk").checked = true');
-  await a.E('criarExercicio()');
+  a.$('#nxg').value = 'quadríceps';
+  a.$('#nxk').checked = true;
+  await a.v('criarExercicio');
   await a.esperar();
   a.v('modoEdicao', false);
 
@@ -103,7 +103,7 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   await a.v('gravarRetro', false);
   await a.esperar();
   // done fica ordenado por data: o lançamento de ontem não é o último
-  const retro = a.J('S.done.filter(function (x) { return x.retro; })');
+  const retro = a.S().done.filter(function (x) { return x.retro; });
   assert.strictEqual(retro.length, 1);
   assert.strictEqual(retro[0].day, 'E');
 
@@ -114,16 +114,16 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   const b = await app({ estado: bruto });
   await b.esperar();
 
-  assert.strictEqual(b.E('S.done.length'), 4, 'três treinos e o retroativo');
-  assert.strictEqual(b.E('S.prog.B.ex[4].s'), antesDoSlot4 + 1, 'a promoção sobreviveu');
-  assert.strictEqual(b.E('CAT["pendulum-da-unidade-nova"].n'), 'Pendulum da unidade nova');
-  assert.strictEqual(b.E('S.mods'), null, 'nenhum mod ficou pendurado');
-  assert.strictEqual(b.E('S.sessao'), null);
-  assert.strictEqual(b.E('S.body.peso.length'), 1);
-  assert.strictEqual(b.E('S.cardio.length'), 1);
+  assert.strictEqual(b.S().done.length, 4, 'três treinos e o retroativo');
+  assert.strictEqual(b.S().prog.B.ex[4].s, antesDoSlot4 + 1, 'a promoção sobreviveu');
+  assert.strictEqual(b.dado('CAT')['pendulum-da-unidade-nova'].n, 'Pendulum da unidade nova');
+  assert.strictEqual(b.S().mods, null, 'nenhum mod ficou pendurado');
+  assert.strictEqual(b.S().sessao, null);
+  assert.strictEqual(b.S().body.peso.length, 1);
+  assert.strictEqual(b.S().cardio.length, 1);
 
   // o painel de músculos conta o que foi feito, não o que estava prescrito
-  const mus = b.J('seriesPorMusculo(0, Date.now() + 1)');
+  const mus = b.vJ('seriesPorMusculo', 0, Date.now() + 1);
   // 3 do supino no Smith que substituiu o chest press + 2 do crucifixo inclinado
   assert.strictEqual(mus['peito superior'], 5, 'o supino no Smith contou em peito superior');
   // o agachamento da terça + 3 do aparelho novo cadastrado na quarta
@@ -134,9 +134,9 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
     b.aba(t);
     assert.ok(b.doc.getElementById('app').innerHTML.length > 600, 'aba vazia: ' + t);
   });
-  b.E('abrirPrograma(null)');
+  b.v('abrirPrograma', null);
   assert.strictEqual(b.texto('.htitle'), 'Programa');
-  b.E('modoPrograma("diff")');
+  b.v('modoPrograma', 'diff');
   assert.ok(b.doc.getElementById('app').textContent.includes('treino B'), 'a diferença aponta o que ele mudou');
   b.fechar();
 // Limite PRÓPRIO, e só deste caso: ele monta uma semana inteira de app e leva
@@ -155,7 +155,7 @@ test('deload com programa editado corta as séries pela metade do que ele prescr
   await a.esperar();
 
   assert.strictEqual(a.vJ('treino', 'A').ex[0].s, 4, 'a prescrição é a dele');
-  assert.strictEqual(a.E('setsFor(treino("A").ex[0])'), 2, 'e o deload corta essa, não a do treinador');
+  assert.strictEqual(a.v('setsFor', a.vJ('treino', 'A').ex[0]), 2, 'e o deload corta essa, não a do treinador');
   a.v('toggle', 0);
   assert.strictEqual(a.$$('.ex.open .setrow').length, 2, 'duas linhas na tela, não quatro');
   assert.ok(a.texto('.ex.open .ex-sub').includes('deload'));
@@ -181,7 +181,7 @@ test('exercício removido do programa continua abrindo no histórico antigo', as
   const txt = a.doc.getElementById('app').textContent;
   assert.ok(txt.includes('Chest press inclinado convergente'), 'a sessão de cinco dias atrás abre igual');
   assert.ok(txt.includes('fora do treino'), 'sinalizado como fora do programa de hoje');
-  assert.ok(a.J('S.logs[' + JSON.stringify(chave) + ']'), 'o histórico não foi tocado');
+  assert.ok(a.S().logs[chave], 'o histórico não foi tocado');
   a.fechar();
 });
 
