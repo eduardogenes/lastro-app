@@ -160,7 +160,7 @@ test('apagar aqui não é desfeito pelo que a nuvem ainda tem', async () => {
   await a.v('sincroniza');                     // a nuvem passa a ter a pesagem
   assert.strictEqual(nuvem(a).linha.data.body.peso.length, 1);
 
-  await a.E('delBody("peso", ' + t + ')');       // apagou aqui
+  await a.v('delBody', 'peso', t);       // apagou aqui
   await a.esperar();
   await a.v('sincroniza');
 
@@ -231,8 +231,9 @@ test('o descanso aparece nas duas telas, e do mesmo jeito', async () => {
   // senão o calendário do mês — corretamente — não tem onde mostrá-lo
   // Os dois moram em DIAS agora, e a comparação ficou literal: a faixa e o
   // calendário na mesma tela, sem navegar entre elas.
-  const a = await app({ aba: 'dias', agora: agoraEstavel(), estado: { logs: {}, done: [] } });
-  const dom = a.E('weekStart(Date.now())');
+  const agora = agoraEstavel();
+  const a = await app({ aba: 'dias', agora: agora, estado: { logs: {}, done: [] } });
+  const dom = a.v('weekStart', agora);
 
   const antes = a.$$('.wd .wd-v').map(x => x.textContent);
   assert.strictEqual(antes[0], '+', 'sem marca, o domingo convida a registrar');
