@@ -2728,8 +2728,20 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         painel pelo contrato do `confirm()`; um caso pelo dedo; cinco casos que
         leem a frase. Dez mutações, todas vermelhas. **1.345 passando.**
       - Visto no Chromium a 414×896 (`shots/pare-peso.png`).
-      **Falta, nesta ordem:** §3.2 a família "falhou" (a gravação que falhou —
-      hoje um toast); §7 os estados ruins (carregando, erro, pular, encerrar);
+      - [x] **§3.2 · A família "falhou"** (13/10). **Achado no caminho, e era
+            perda de dado em silêncio:** `src/infra/db.ts` engolia o erro do
+            `setItem` e o `set` respondia `true` sempre — com o aparelho cheio
+            (F53, F256) o estado ficava só na memória e se perdia ao fechar. Agora
+            o `set` diz se durou e por quê; a falha abre o painel "Não guardei…"
+            (`role="alert"`, três saídas), e fechar deixa a marca "não guardado"
+            até uma gravação dar certo. Modo privado fica com o aviso do Agora.
+            Cinco casos com o aparelho cheio do harness, seis mutações. **1.350
+            passando.** Visto no Chromium (`shots/falhou*.png`).
+            **Declarado:** a marca é uma faixa fixa no topo e cobre o título da
+            tela enquanto a falha dura; a marca POR CÉLULA que a frente 2 pede
+            ("45 × 10 · não guardada") não foi feita — a faixa diz o que ficou por
+            último, não cada valor.
+      **Falta, nesta ordem:** §7 os estados ruins (carregando, erro, pular, encerrar);
       §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
       bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
       app seguem no diálogo do sistema, de propósito (§3.3).
