@@ -2757,6 +2757,14 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             os 5 s UMA vez com a suíte inteira em paralelo. Sozinho leva 1,99 s
             (1,84 s antes destas peças). É carga, não regressão — mas é o caso
             mais perto do limite.
+      - [x] **§7.2 · Carregando** (13/10). Prazo de 4 s armado antes de ler o
+            registro; passado o prazo ou na rejeição, a falha dita (DOM puro, numa
+            camada que o primeiro render tira se o registro abrir atrasado). O F273
+            não tem mais caminho. **Um guarda só:** a primeira versão tinha dois
+            que se mascaravam — a mutação que tirou um deixou a suíte verde —, e
+            ficou o demonstrável. Visto no Chromium (`shots/abertura2.png`).
+            **Não feito:** a versão do build no detalhe técnico (o app não tem a
+            constante) e o vazio "Nenhum registro neste endereço" (F56).
       **Falta, nesta ordem:** §7 os estados ruins (carregando, erro, pular, encerrar);
       §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
       bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
