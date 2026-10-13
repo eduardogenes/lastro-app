@@ -40,14 +40,14 @@ test('o descanso começa em QUALQUER série, não só na última', async () => {
 
   a.preencher(0, 0, 60, 8);
   await a.esperar();
-  assert.ok(a.E("document.getElementById('timer').classList.contains('on')"),
+  assert.ok(a.$('#timer').classList.contains('on'),
     'a série 1 de 3 dispara o descanso');
   assert.notStrictEqual(a.texto('#tval'), '0:00', 'e ele está contando');
 
   a.v('stopTimer');
   a.preencher(0, 1, 60, 8);
   await a.esperar();
-  assert.ok(a.E("document.getElementById('timer').classList.contains('on')"),
+  assert.ok(a.$('#timer').classList.contains('on'),
     'a série 2 de 3 também');
   a.fechar();
 });
@@ -66,7 +66,7 @@ test('apagar o campo rearma o disparo daquela série, e só dela', async () => {
 
   // mexer de novo na MESMA série não redispara
   await a.regua(0, 0, 9);
-  assert.ok(!a.E("document.getElementById('timer').classList.contains('on')"),
+  assert.ok(!a.$('#timer').classList.contains('on'),
     'corrigir a repetição não redispara o descanso');
 
   // REESCRITO: o gesto de apagar mudou de forma, não de existência. O campo
@@ -75,9 +75,9 @@ test('apagar o campo rearma o disparo daquela série, e só dela', async () => {
   // assim. O comportamento que este caso protege é o outro, e ele não mudou:
   // apagar REARMA o disparo daquela série.
   await a.regua(0, 0, 9);                       // o mesmo valor: apaga
-  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), null, 'a repetição saiu');
+  assert.strictEqual((a.vJ('draftPeek', 0).s[0] || [])[1], null, 'a repetição saiu');
   await a.regua(0, 0, 8);
-  assert.ok(a.E("document.getElementById('timer').classList.contains('on')"),
+  assert.ok(a.$('#timer').classList.contains('on'),
     'completar de novo depois de apagar dispara');
   a.fechar();
 });
@@ -106,7 +106,7 @@ test('tocar na coluna ANTERIOR registra a série inteira', async () => {
   assert.strictEqual(a.doc.getElementById('r0_0').textContent, '8', 'repetição preenchida');
   const log = a.log('A', 0);
   assert.deepStrictEqual(log[log.length - 1].sets[0], [60, 8], 'a série entrou no histórico');
-  assert.ok(a.E("document.getElementById('timer').classList.contains('on')"),
+  assert.ok(a.$('#timer').classList.contains('on'),
     'e o descanso começou pelo caminho normal');
   a.fechar();
 });
@@ -169,7 +169,7 @@ test('o descanso sobrevive a fechar e reabrir o app', async () => {
   await a.pronto();
   await a.esperar(60);
 
-  assert.ok(a.E("document.getElementById('timer').classList.contains('on')"),
+  assert.ok(a.$('#timer').classList.contains('on'),
     'o descanso religou no boot');
   assert.strictEqual(a.texto('#tval'), '2:00', 'com o tempo que faltava, não do zero');
   a.fechar();
@@ -183,7 +183,7 @@ test('descanso já vencido não ressuscita', async () => {
   });
   await a.pronto();
   await a.esperar(60);
-  assert.ok(!a.E("document.getElementById('timer').classList.contains('on')"),
+  assert.ok(!a.$('#timer').classList.contains('on'),
     'um descanso que acabou ontem não volta à tela');
   a.fechar();
 });
@@ -229,7 +229,7 @@ test('corrigir uma série depois de reabrir o app não inicia descanso', async (
 
   a.preencher(0, 0, 60, 9);
   await a.esperar();
-  assert.ok(a.E("document.getElementById('timer').classList.contains('on')"),
+  assert.ok(a.$('#timer').classList.contains('on'),
     'registrar a série 1 dispara o descanso, como sempre');
 
   // segundo plano: descarrega o que o debounce de 700 ms represou
@@ -242,14 +242,14 @@ test('corrigir uma série depois de reabrir o app não inicia descanso', async (
   // quinze minutos depois ele reabre e corrige a repetição daquela série
   const b = await app({ estado: disco, agora: base.agora + 15 * 60000 });
   await b.pronto();
-  assert.strictEqual(b.E('S.sessao && S.sessao.day'), 'A', 'a sessão continua aberta');
-  b.E('toggle(0)');
+  assert.strictEqual((b.S().sessao || {}).day, 'A', 'a sessão continua aberta');
+  b.v('toggle', 0);
   await b.esperar();
   assert.strictEqual(b.doc.getElementById('r0_0').textContent, '9',
     'a série registrada antes de fechar está na tela');
 
   await b.regua(0, 0, 8);
-  assert.ok(!b.E("document.getElementById('timer').classList.contains('on')"),
+  assert.ok(!b.$('#timer').classList.contains('on'),
     'corrigir 9 para 8 não começa descanso para uma série que acabou há quinze minutos');
   const log = b.log('A', 0);
   assert.deepStrictEqual(log[log.length - 1].sets[0], [60, 8], 'e a correção foi gravada');
