@@ -139,7 +139,11 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   b.E('modoPrograma("diff")');
   assert.ok(b.doc.getElementById('app').textContent.includes('treino B'), 'a diferença aponta o que ele mudou');
   b.fechar();
-});
+// Limite PRÓPRIO, e só deste caso: ele monta uma semana inteira de app e leva
+// ~1,9 s sozinho; com a suíte inteira em paralelo passou dos 5 s duas vezes em
+// 13/10, sem asserção nenhuma falhando. O limite global continua 5 s, para os
+// outros casos seguirem acusando lentidão de verdade.
+}, 15000);
 
 test('deload com programa editado corta as séries pela metade do que ele prescreveu', async () => {
   const a = await app();
