@@ -2202,13 +2202,30 @@ estrutura de abas velha seria construí-la duas vezes.
       muda nada, porque `Folha` escreve o nível **inline** e inline vence a
       classe.
 
-- [~] **6.m `Dias`** — nasceu com o calendário, a lista de sessões e a lista de
+- [x] **6.m `Dias`** — nasceu com o calendário, a lista de sessões e a lista de
       cardio, que é a capacidade que ele recebe pronta. **Falta o resto da §1.2:**
       os dias de comida já fechados, marcar um dia passado como descanso, a faixa
       da semana com a marca de cardio, e o lugar da folha de pôr o dia em dia.
       É o único dos cinco **sem desenho nenhum** nos nove HTML (achado 6), mas
       tem as nove capacidades especificadas — o que falta é construção, não
       decisão.
+      **Fechado em 13/10, por conferência — o "falta" estava velho.** As peças
+      chegaram por outros itens (6.n trouxe a faixa da semana; 6.y, a lista dos
+      dias com a folha) e este não foi atualizado. As nove da §1.2, uma a uma, no
+      lugar: o calendário e o dia a dia (`Mes`); os dias de comida fechados, com
+      a porta da folha (a seção "os dias"); as sessões e o detalhe com corrigir
+      e apagar (a lista do mês → `abrirSessao`); o retroativo e **o descanso**
+      (tocar num dia vazio → o lançamento, que oferece "foi descanso"); a hora
+      de cada registro (a linha da sessão); o dia com dois treinos levando à
+      lista (`levaAsSessoesDoDia`); a faixa da semana com a marca de cardio e o
+      atalho ("a semana").
+      **O que faltava era um caso, não uma tela:** o caminho do descanso tinha
+      caso por pedaços (o toque abre o lançamento; o verbo marca), e nenhum fazia
+      o caminho inteiro pelo dedo. Entrou um, e duas mutações (o botão não marca;
+      o calendário não mostra) ficam vermelhas nele. **1.337 passando.**
+      **Limite declarado, que não é meu:** "os dias" mostra 14 — a janela do
+      portão da regra, decisão escrita no `CTX.diasDeComidaFechados` ("mais que
+      isso é arqueologia"). Dia de comida mais antigo não tem vista em Dias.
 
 - [x] **6.n A faixa da semana e o placar do cardio saem do modo** (`f70c759`) —
       regra escrita do §4.2: a sessão esconde "o resumo do dia, as médias, os
@@ -2788,6 +2805,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
   cumprido ao fim da onda 3). A lista rápida estava pela metade → completada
   (`8c61c5d`). Achado novo: o botão da série sem estilo (6.z''').
 - 13/10 · As medidas com fita entram (`a2e2be0`): 6.z'' fechado. 1.336 passando.
+- 13/10 · 6.m fechado por conferência; entra o caso do descanso pelo dedo, a partir de Dias.
 
 ---
 

@@ -141,6 +141,38 @@ test('dia vazio do calendário é atalho para lançar', async () => {
   a.fechar();
 });
 
+test('de Dias, um dia passado vira descanso pelo dedo, e o calendário mostra a marca', async () => {
+  // §1.2 da frente 1: marcar um dia passado como descanso é capacidade de Dias.
+  // Os pedaços tinham caso — o toque no dia vazio abre o lançamento (acima), e
+  // o verbo marca (`sincronia.test.js`) —, mas o caminho INTEIRO, do calendário
+  // de volta à marca no calendário, não tinha: um lugar novo que deixasse de
+  // ligar o chip ou o botão passaria verde.
+  const a = await app();
+  a.aba('dias');
+  const vazio = a.$$('.cal-d:not(.feito):not(.futuro):not(.descanso)')[0];
+  assert.ok(vazio, 'pré-condição: há um dia passado sem registro no mês');
+  const n = vazio.querySelector('em').textContent;
+  a.clicar(vazio);
+  await a.esperar();
+
+  const chip = a.$$('.chip').find(function (el) { return el.textContent.trim() === 'foi descanso'; });
+  assert.ok(chip, 'o lançamento oferece o descanso');
+  a.clicar(chip);
+  await a.esperar();
+  const botao = a.$$('.dbtn').find(function (el) { return el.textContent.trim() === 'Marcar descanso'; });
+  assert.ok(botao, 'e o botão diz o que vai fazer');
+  a.clicar(botao);
+  await a.esperar(60);
+
+  assert.strictEqual(a.vista().add, null, 'o lançamento fecha depois de marcar');
+  a.aba('dias');
+  await a.esperar();
+  const cel = a.$$('.cal-d').find(function (c) { return c.querySelector('em').textContent === n; });
+  assert.ok(cel.classList.contains('descanso'), 'o calendário mostra o dia ' + n + ' como descanso');
+  assert.strictEqual(Object.keys(a.S().descanso).length, 1, 'uma marca, e só uma');
+  a.fechar();
+});
+
 test('apagar registro avulso', async () => {
   const a = await app();
   const t = Date.now() - 2 * DIA;
