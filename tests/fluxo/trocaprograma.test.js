@@ -218,11 +218,11 @@ test('adicionar movimento no dia aberto abre o catálogo e entra sem virar troca
   a.v('go', 'HX');
   await a.esperar();
 
-  a.E('CTX.acoesAdd.abre()');
+  a.m.ctx.acoesAdd.abre();
   await a.esperar();
   assert.ok(a.$('.addex'), 'o catálogo abre a partir do dia aberto');
 
-  a.E("CTX.acoesAdd.busca('remo erg')");
+  a.m.ctx.acoesAdd.busca('remo erg');
   await a.esperar();
   const achado = a.$('.addlist .swapopt');
   assert.ok(achado, 'a busca acha');
