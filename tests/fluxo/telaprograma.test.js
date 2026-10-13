@@ -50,13 +50,13 @@ test('remover exercício do programa não toca no histórico', async () => {
   a.v('toggle', 0);
   a.preencher(0, 0, 100, 8);
   const chave = a.k('C', 0);
-  assert.ok(a.J('S.logs[' + JSON.stringify(chave) + ']'));
+  assert.ok(a.S().logs[chave]);
 
   a.v('abrirPrograma', 'C');
   await a.v('progRemove', 'C', 0);
   await a.esperar();
   assert.notStrictEqual(a.S().prog.C.ex[0].id, chave, 'saiu do programa');
-  assert.ok(a.J('S.logs[' + JSON.stringify(chave) + ']'), 'mas o histórico continua guardado');
+  assert.ok(a.S().logs[chave], 'mas o histórico continua guardado');
   a.fechar();
 });
 
@@ -213,9 +213,9 @@ test('o programa sobrevive a fechar e reabrir', async () => {
 
   const b = await app({ estado: bruto });
   await b.esperar();
-  assert.strictEqual(b.E('S.prog.C.ex[0].s'), 4);
-  assert.deepStrictEqual(b.J('rot()'), ['B', 'A', 'C', 'D', 'E', 'HX']);
-  assert.strictEqual(b.E('S.progLog.length'), 2);
+  assert.strictEqual(b.S().prog.C.ex[0].s, 4);
+  assert.deepStrictEqual(b.vJ('rot'), ['B', 'A', 'C', 'D', 'E', 'HX']);
+  assert.strictEqual(b.S().progLog.length, 2);
   b.fechar();
 });
 
@@ -241,7 +241,7 @@ test('todas as telas do programa renderizam', async () => {
   const a = await noPrograma();
   const titulos = { lista: 'Programa', diff: 'O que está diferente', historico: 'Histórico de mudanças' };
   Object.keys(titulos).forEach(function (m) {
-    a.E('modoPrograma("' + m + '")');
+    a.v('modoPrograma', m);
     assert.strictEqual(a.texto('.htitle'), titulos[m], 'tela errada: ' + m);
     assert.ok(a.$('.back'), 'sem caminho de volta em ' + m);
   });
@@ -263,7 +263,7 @@ test('o painel atribui a série ao exercício registrado, não à posição', as
   a.preencher(4, 0, 40, 12);
   a.preencher(4, 1, 40, 12);
 
-  const m = a.J('seriesPorMusculo(0, Date.now() + 1)');
+  const m = a.vJ('seriesPorMusculo', 0, Date.now() + 1);
   assert.strictEqual(m['peito'], 2, 'contou onde o trabalho aconteceu');
   assert.strictEqual(m['delt lateral'], undefined, 'e não onde ele estava prescrito');
   a.fechar();
@@ -281,7 +281,7 @@ test('exercício cadastrado por ele conta no painel', async () => {
   a.v('toggle', i);
   a.preencher(i, 0, 50, 10);
 
-  assert.strictEqual(a.J('seriesPorMusculo(0, Date.now() + 1)')['dorsal'], 1);
+  assert.strictEqual(a.vJ('seriesPorMusculo', 0, Date.now() + 1)['dorsal'], 1);
   a.aba('semana');
   await a.modo('treino');
   assert.ok(a.doc.getElementById('app').textContent.includes('dorsal'));
