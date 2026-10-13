@@ -81,10 +81,10 @@ test('backup exportado e reimportado preserva o RIR do plano e o da série', asy
   a.fechar();
 
   const b = await app();
-  await b.E('importText(' + JSON.stringify(json) + ')');
+  await b.v('importText', json);
   await b.esperar();
-  assert.strictEqual(b.E('S.prog.A.ex[0].rir'), '1–2', 'o RIR prescrito sobreviveu ao backup');
-  assert.strictEqual(b.E('S.logs["chest-press-inclinado-convergente"][0].sets[0][2]'), 1,
+  assert.strictEqual(b.S().prog.A.ex[0].rir, '1–2', 'o RIR prescrito sobreviveu ao backup');
+  assert.strictEqual(b.S().logs['chest-press-inclinado-convergente'][0].sets[0][2], 1,
     'o RIR da série sobreviveu ao backup, na terceira posição');
   b.fechar();
 });
@@ -144,7 +144,7 @@ test('o HYROX é sessão da rotação sem virar série de hipertrofia', async ()
   assert.deepStrictEqual(h[0].sets[0], [0, 252]);
 
   // e não conta como série de nenhum músculo
-  const mus = a.J('seriesPorMusculo(0, Date.now() + 1)');
+  const mus = a.vJ('seriesPorMusculo', 0, Date.now() + 1);
   assert.deepStrictEqual(mus, {}, 'corrida não é série de quadríceps');
   assert.strictEqual(a.dado('ALVO_TOTAL'), 90, 'o alvo continua sendo só a musculação');
   assert.strictEqual(a.dado('ALVO')[""], undefined);
@@ -205,7 +205,7 @@ test('as estações da prova continuam no catálogo depois de sair da prescriç�
   // senão o histórico fica órfão sob uma chave sem dono.
   const a = await app();
   ['sled-push', 'sled-pull', 'wall-balls', 'ski-erg', 'corrida'].forEach(function (k) {
-    assert.ok(a.E('!!CAT[' + JSON.stringify(k) + ']'), 'sumiu do catálogo: ' + k);
+    assert.ok(!!a.dado('CAT')[k], 'sumiu do catálogo: ' + k);
   });
   a.fechar();
 });
@@ -258,7 +258,7 @@ test('exercício por tempo não recebe linguagem de hipertrofia', async () => {
     'sem selo de RIR: o alvo de um exercício por tempo é o relógio');
 
   // e um exercício de musculação continua com o selo
-  a.E('go("A"); toggle(0)');
+  a.v('go', 'A'); a.v('toggle', 0);
   await a.esperar();
   assert.ok(a.$('[data-ex="0"] .tag'), 'na musculação o selo continua');
   a.fechar();
