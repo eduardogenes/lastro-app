@@ -1,6 +1,6 @@
 /* ============================================================
    Anatomia dos componentes do Instrumento.
-   As medidas vêm do DESIGN_SYSTEM §3 e são exatas, não sugestão.
+   As medidas vêm do DESIGN.md § Componentes e são exatas, não sugestão.
    ============================================================ */
 
 /* ---- Cabeçalho de tela ------------------------------------------------ */
@@ -17,21 +17,21 @@
 .ins-estado {
   flex: 0 0 auto; text-align: right;
   padding: 8px 10px;
-  border: 1px solid var(--ins-border);
-  background: var(--ins-surface);
+  border: 1px solid var(--ins-fio-controle);
+  background: var(--ins-superficie-2);
   display: flex; flex-direction: column; gap: 5px; align-items: flex-end;
   min-height: var(--ins-tap);
 }
 .ins-estado-v {
-  font: 500 15px/1 var(--ins-font-mono);
-  letter-spacing: -.02em; color: var(--ins-acid);
+  font: 500 15px/1 var(--ins-fonte);
+  letter-spacing: -.02em; color: var(--ins-acento-tinta);
 }
 
 /* ---- Seção ------------------------------------------------------------ */
 
 /* 12 de margem + 12 de padding = 24 no limite, que é o que o sistema pede.
    Estava 26 + 14 = 40, repetido cinco vezes por tela. */
-.ins-secao { border-top: 1px solid var(--ins-rule); padding-top: var(--ins-5); margin-top: var(--ins-5); }
+.ins-secao { border-top: 1px solid var(--ins-fio); padding-top: var(--ins-5); margin-top: var(--ins-5); }
 .ins-secao.primeira { border-top: 0; margin-top: var(--ins-7); padding-top: 0; }
 /* Continuação da seção de cima, partida ao meio para deixar um `sticky` subir
    ao <main>. Não desenha nada: o corte é estrutural, não visual. */
@@ -41,8 +41,8 @@
   gap: var(--ins-3); margin-bottom: var(--ins-4);
 }
 .ins-secao-nota {
-  font: 400 10px/1.3 var(--ins-font-mono);
-  letter-spacing: .06em; color: var(--ins-text-5); text-align: right;
+  font: 400 10px/1.3 var(--ins-fonte);
+  letter-spacing: .06em; color: var(--ins-tinta-3); text-align: right;
 }
 
 .ins-vazio { margin: 0; padding: var(--ins-3) 0 var(--ins-1); }
@@ -50,22 +50,22 @@
 /* ---- Hero métrica ----------------------------------------------------- */
 
 .ins-hero-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3); }
-.ins-hero-meta { font: 400 10px/1 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-5); }
+.ins-hero-meta { font: 400 10px/1 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-tinta-3); }
 .ins-hero-n { display: flex; align-items: baseline; gap: var(--ins-2); margin-top: var(--ins-5); }
-.ins-hero-u { font: 400 12px/1 var(--ins-font-mono); color: var(--ins-text-4); }
-.ins-rail { height: var(--ins-rail); background: var(--ins-rule); margin-top: var(--ins-5); }
-.ins-rail-fill { height: 100%; background: var(--ins-acid); }
+.ins-hero-u { font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
+.ins-rail { height: var(--ins-rail); background: var(--ins-fio); margin-top: var(--ins-5); }
+.ins-rail-fill { height: 100%; background: var(--ins-acento); }
 .ins-grade { margin-top: var(--ins-5); }
 .ins-grade-c { padding: var(--ins-4) 0; }
 .ins-grade-c.recuo { padding-left: var(--ins-5); }
 .ins-grade-c .ins-metric-m { margin-top: 5px; }
-.ins-grade-nota { font: 400 10px/1.3 var(--ins-font-mono); color: var(--ins-text-5); margin-top: 4px; }
+.ins-grade-nota { font: 400 10px/1.3 var(--ins-fonte); color: var(--ins-tinta-3); margin-top: 4px; }
 
 /* ---- Sparkline -------------------------------------------------------- */
 
 .ins-spark { display: flex; gap: 3px; height: 48px; align-items: flex-end; }
-.ins-spark-s { flex: 1; height: 100%; background: var(--ins-rule); display: flex; align-items: flex-end; }
-.ins-spark-b { width: 100%; background: var(--ins-acid); }
+.ins-spark-s { flex: 1; height: 100%; background: var(--ins-fio); display: flex; align-items: flex-end; }
+.ins-spark-b { width: 100%; background: var(--ins-acento); }
 
 /* ---- Área de toque maior que o desenho --------------------------------- */
 /* O sistema é denso de propósito, e vários controles são menores que os 44px
@@ -79,29 +79,29 @@
 .ins-ticks { display: flex; gap: var(--ins-1); }
 .ins-tick {
   flex: 1; height: 30px;
-  border: 1px solid var(--ins-border); background: transparent;
+  border: 1px solid var(--ins-fio-controle); background: transparent;
   /* 30 -> 44 de alvo. Só vertical: o vizinho é a repetição seguinte. */
   position: relative;
 }
 .ins-tick::after { content: ""; position: absolute; inset: -7px 0; }
-.ins-tick.on { background: var(--ins-acid); border-color: var(--ins-acid); }
+.ins-tick.on { background: var(--ins-acento); border-color: var(--ins-acento); }
 .ins-ticks-l {
   display: flex; justify-content: space-between; margin-top: var(--ins-3);
-  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-5);
+  font: 400 10px/1 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-tinta-3);
 }
 
 /* ---- Caixa de marcar -------------------------------------------------- */
 
 .ins-caixa {
   width: var(--ins-tap-dense); height: var(--ins-tap-dense); flex: 0 0 auto;
-  border: 1px solid var(--ins-border-strong); background: transparent;
-  font: 400 13px/1 var(--ins-font-mono); color: transparent;
+  border: 1px solid var(--ins-fio-controle); background: transparent;
+  font: 400 13px/1 var(--ins-fonte); color: transparent;
   display: flex; align-items: center; justify-content: center;
   /* 28 -> 44 nos dois eixos: ela fica sozinha na ponta da linha */
   position: relative;
 }
 .ins-caixa::after { content: ""; position: absolute; inset: -8px; }
-.ins-caixa.on { background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid); }
+.ins-caixa.on { background: var(--ins-acento); border-color: var(--ins-acento); color: var(--ins-sobre-acento); }
 
 /* ---- Cartão-foco ------------------------------------------------------ */
 
@@ -127,16 +127,32 @@
   overflow: hidden;
 }
 .ins-foco .ins-chip-cta { margin-top: var(--ins-4); }
+/* Duas respostas opostas, lado a lado e do mesmo tamanho: o fim aproximado não
+   tem resposta padrão, e dar mais área a uma delas é escolher por ele. */
+/* O aviso de que nada vai ficar. Moldura de ATENÇÃO e não de perigo: não houve
+   destruição, e o que se pede não é parar — é saber. Fica acima do cartão, com o
+   fio de atenção à esquerda, para ler-se antes de qualquer ação. */
+.ins-aviso-perda {
+  margin: var(--ins-6) 0 0;
+  padding: var(--ins-5) var(--ins-6);
+  border-left: 2px solid var(--ins-atencao-fio);
+  background: var(--ins-superficie-2);
+  color: var(--ins-atencao-tinta);
+}
+.ins-aviso-perda p { margin: var(--ins-3) 0 0; color: var(--ins-tinta-2); }
+
+.ins-foco-acoes { display: flex; gap: var(--ins-4); margin-top: var(--ins-6); }
+.ins-foco-acoes > * { flex: 1; }
 
 /* ---- Veredito --------------------------------------------------------- */
 
 .ins-veredito {
-  border: 1px solid var(--ins-acid);
-  background: var(--ins-surface-warn);
+  border: 1px solid var(--ins-acento);
+  background: var(--ins-atencao-fundo);
   padding: var(--ins-6) var(--ins-6);
 }
 .ins-veredito-t {
-  font: 700 28px/1.05 var(--ins-font-display);
+  font: 700 28px/1.05 var(--ins-fonte);
   letter-spacing: -.03em; margin-top: var(--ins-4);
 }
 .ins-veredito-p { margin: var(--ins-5) 0 0; }
@@ -148,33 +164,33 @@
 .ins-tl { display: flex; align-items: stretch; gap: 0; }
 .ins-tl-hora {
   flex: 0 0 var(--ins-tap); text-align: right; padding: var(--ins-5) var(--ins-4) 0 0;
-  font: 400 12px/1 var(--ins-font-mono); color: var(--ins-text-4);
+  font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3);
   letter-spacing: -.02em;
 }
 .ins-tl-espinha { flex: 0 0 9px; position: relative; }
 .ins-tl-espinha::before {
   content: ''; position: absolute; left: 4px; top: 0; bottom: 0;
-  width: 1px; background: var(--ins-rule);
+  width: 1px; background: var(--ins-fio);
 }
 .ins-tl.ultima .ins-tl-espinha::before { bottom: auto; height: 24px; }
 .ins-tl-ponto {
   /* alinhado com o centro da primeira linha do corpo */
   position: absolute; left: 0; top: 17px;
   width: 9px; height: 9px; border-radius: 50%;
-  background: var(--ins-text-4); border: 2px solid var(--ins-canvas);
+  background: var(--ins-tinta-3); border: 2px solid var(--ins-tela);
   box-sizing: content-box; margin-left: -2px;
 }
-.ins-tl-ponto.acid  { background: var(--ins-acid); }
-.ins-tl-ponto.amber { background: var(--ins-amber); }
-.ins-tl-ponto.coral { background: var(--ins-coral); }
+.ins-tl-ponto.acid  { background: var(--ins-acento); }
+.ins-tl-ponto.amber { background: var(--ins-atencao-tinta); }
+.ins-tl-ponto.coral { background: var(--ins-pare-tinta); }
 
 .ins-tl-corpo {
   flex: 1; min-width: 0;
   padding: var(--ins-4) 0 var(--ins-5) var(--ins-5);
-  border-bottom: 1px solid var(--ins-hairline);
+  border-bottom: 1px solid var(--ins-fio);
 }
 .ins-tl.ultima .ins-tl-corpo { border-bottom: 0; }
-.ins-tl.agora .ins-tl-corpo { background: var(--ins-surface-acid); }
+.ins-tl.agora .ins-tl-corpo { background: var(--ins-acento-suave); }
 
 .ins-tl-topo { display: flex; align-items: center; gap: var(--ins-4); }
 .ins-tl-toque {
@@ -189,8 +205,8 @@
   padding: var(--ins-1) 0;
 }
 .ins-tl-nome {
-  font: 500 17px/1.3 var(--ins-font-display); letter-spacing: -.01em;
-  color: var(--ins-text);
+  font: 500 17px/1.3 var(--ins-fonte); letter-spacing: -.01em;
+  color: var(--ins-tinta);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 /* O papel que a linha acumula hoje — "pós-treino" na refeição que o recebeu.
@@ -199,28 +215,28 @@
    não sobrevive a um corte. */
 .ins-tl-selo {
   flex: 0 0 auto;
-  font: 400 9px/1 var(--ins-font-mono);
+  font: 400 9px/1 var(--ins-fonte);
   letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-text-5); white-space: nowrap;
+  color: var(--ins-tinta-3); white-space: nowrap;
 }
 .ins-tl-valor {
   flex: 0 0 auto;
-  font: 500 14px/1 var(--ins-font-mono); color: var(--ins-text-3); letter-spacing: -.02em;
+  font: 500 14px/1 var(--ins-fonte); color: var(--ins-tinta-3); letter-spacing: -.02em;
 }
 /* Uma linha, com reticências. A linha da timeline responde "o que é isto e já
    foi feito"; o que TEM dentro é assunto da folha. Sem o corte, o almoço com
    seis itens quebrava em três linhas e a mesma lista variava de 88 a 130px de
    altura — altura imprevisível é pior que informação cortada. */
 .ins-tl-resumo {
-  font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4); margin-top: 2px;
+  font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-3); margin-top: 2px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 /* Nível 4: esta linha carrega os macros da refeição — P, C e G —, e sobre a
    superfície ácida da linha de agora o nível 5 dava 2,9:1, o pior contraste do
    app. Número não é dica. */
 .ins-tl-meta {
-  font: 400 10px/1.35 var(--ins-font-mono); letter-spacing: .06em;
-  color: var(--ins-text-4); margin-top: var(--ins-1);
+  font: 400 10px/1.35 var(--ins-fonte); letter-spacing: .06em;
+  color: var(--ins-tinta-3); margin-top: var(--ins-1);
 }
 /* Alinhado ao topo, na altura do nome: com align-self esticado ele centrava
    verticalmente e ficava flutuando ao lado do resumo, longe do objeto que
@@ -234,24 +250,24 @@
   position: relative;
   display: flex; align-items: flex-start; justify-content: center;
   padding-top: var(--ins-6);
-  color: var(--ins-text-4); font-size: 17px; line-height: 1; letter-spacing: .08em;
-  border-bottom: 1px solid var(--ins-hairline);
+  color: var(--ins-tinta-3); font-size: 17px; line-height: 1; letter-spacing: .08em;
+  border-bottom: 1px solid var(--ins-fio);
 }
 .ins-tl.ultima .ins-tl-mais { border-bottom: 0; }
 
 /* Feito: nome e ponto recuam. O dado continua legível, só para de chamar. */
-.ins-tl.feito .ins-tl-nome { color: var(--ins-text-5); }
-.ins-tl.feito .ins-tl-ponto { background: var(--ins-text-5); }
+.ins-tl.feito .ins-tl-nome { color: var(--ins-tinta-3); }
+.ins-tl.feito .ins-tl-ponto { background: var(--ins-tinta-3); }
 
 /* ---- Linha expansível ------------------------------------------------- */
 
-.ins-lx { border-bottom: 1px solid var(--ins-hairline); }
+.ins-lx { border-bottom: 1px solid var(--ins-fio); }
 .ins-lx-h {
   display: block; width: 100%; text-align: left;
   padding: var(--ins-6) 0; min-height: var(--ins-tap);
 }
 .ins-lx-c {
-  border: 1px solid var(--ins-border);
+  border: 1px solid var(--ins-fio-controle);
   padding: var(--ins-6);
   margin-bottom: var(--ins-6);
   display: flex; flex-direction: column; gap: var(--ins-5);
@@ -261,8 +277,65 @@
 
 /* ---- Folha de baixo --------------------------------------------------- */
 
+/* SEM z-index aqui, e de propósito. Eu escrevi um (45) pensando que a folha
+   precisava subir para ficar acima da barra de abas (40), do cronômetro (35) e
+   da barra da saída do modo (30) agora que ela é desenhada sobre destino de tela
+   cheia. A varredura de mutação mostrou que tirá-lo não muda nada: `Folha`
+   escreve o z-index INLINE, do nível dela (`nivel = 50` por padrão, 70 no
+   seletor, 80 no editor), e inline vence a classe. Os três estão abaixo de 50,
+   então a folha já estava por cima — e um valor morto aqui seria uma segunda
+   fonte de verdade esperando divergir da primeira. */
 .ins-folha-w { position: fixed; inset: 0; display: flex; align-items: flex-end; }
-.ins-veu { position: absolute; inset: 0; background: rgba(6, 8, 6, .72); }
+
+/* ---- O painel de PARE (decisão 13) ---------------------------------------
+   Acima de toda folha (50 · 70 · 80): ele é a camada que espera resposta. Na
+   base, como a folha, porque é lá que o polegar está — e a resposta é um toque.
+   A moldura é a dos três tokens de pare; o que distingue "falhou" de "vai
+   destruir" é a frase, não a cor. Sem animação de entrada (frente 4). */
+.pare-w { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; }
+.pare {
+  position: relative; width: 100%;
+  background: var(--ins-pare-fundo); color: var(--ins-pare-tinta);
+  border-top: 1px solid var(--ins-pare-fio);
+  padding: var(--ins-6) var(--ins-5) calc(var(--ins-6) + env(safe-area-inset-bottom));
+}
+.pare-t { margin: 0 0 var(--ins-6); font: 500 17px/1.45 var(--ins-fonte); }
+.pare-b { display: flex; flex-direction: column; gap: var(--ins-3); }
+/* O verbo e a saída têm o mesmo tamanho e o mesmo alvo: o painel não empurra
+   para nenhum dos dois. O verbo é preenchido na tinta de pare, e é a única
+   diferença de peso — a frase já disse o que ele faz. */
+.pare-sim, .pare-nao {
+  width: 100%; min-height: var(--ins-tap); padding: 0 var(--ins-4);
+  font: 600 16px/1.2 var(--ins-fonte); border-radius: 0;
+}
+.pare-sim { background: var(--ins-pare-tinta); color: var(--ins-pare-fundo); }
+.pare-nao { background: transparent; color: var(--ins-pare-tinta); border: 1px solid var(--ins-pare-fio); }
+/* A PERGUNTA neutra: a mesma forma, sem a tinta de pare — ela para o dedo sem
+   destruir nada, e pintá-la de pare gastaria o sinal (§3.3 da frente 3). */
+.pergunta-w .pare { background: var(--ins-superficie); color: var(--ins-tinta); border-top-color: var(--ins-fio-controle); }
+.pergunta-w .pare-sim { background: var(--ins-acento); color: var(--ins-sobre-acento); }
+.pergunta-w .pare-nao { color: var(--ins-tinta); border-color: var(--ins-fio-controle); }
+/* O aviso de falha fica um nível ABAIXO do pare: ele chega sozinho, e o que o
+   dedo pediu fica por cima. */
+.falhou-w { z-index: 88; }
+/* A marca de "não guardado", depois de o aviso ser fechado: no topo, na tinta
+   de pare, e com a porta de tentar de novo. É estado do dado — some quando uma
+   gravação der certo, não quando o aviso some. */
+.ng-faixa {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 86;
+  display: flex; align-items: center; gap: var(--ins-3);
+  padding: calc(var(--ins-2) + env(safe-area-inset-top)) var(--ins-5) var(--ins-2);
+  background: var(--ins-pare-fundo); color: var(--ins-pare-tinta);
+  border-bottom: 1px solid var(--ins-pare-fio);
+  font: 500 14px/1.3 var(--ins-fonte);
+}
+.ng-faixa span { flex: 1; min-width: 0; }
+.ng-b {
+  flex: 0 0 auto; min-height: var(--ins-tap); padding: 0 var(--ins-4);
+  color: var(--ins-pare-tinta); border: 1px solid var(--ins-pare-fio); border-radius: 0;
+  font: 600 14px/1 var(--ins-fonte);
+}
+.ins-veu { position: absolute; inset: 0; background: var(--ins-veu); }
 
 .ins-folha {
   position: relative; width: 100%; max-width: 460px; margin: 0 auto;
@@ -270,27 +343,29 @@
      primário — que é o último elemento — fica fora do alcance. */
   max-height: 92dvh;
   display: flex; flex-direction: column;
-  background: var(--ins-canvas);
-  /* A linha ácida de 1px é o que diz "modal". Não há sombra no sistema. */
-  border-top: 1px solid var(--ins-acid);
+  background: var(--ins-superficie);
+  /* A linha de acento de 1px é o que diz "modal", e ela some quando a folha
+     ganhar as duas quinas de cima (--ins-raio-5) e a sombra projetada que a
+     frente 4 autoriza para ela e para mais nada. */
+  border-top: 1px solid var(--ins-acento);
 }
 
 .ins-folha-h {
   display: flex; align-items: flex-start; gap: var(--ins-3);
   padding: var(--ins-7) var(--ins-8) var(--ins-5);
-  border-bottom: 1px solid var(--ins-rule);
-  background: var(--ins-canvas);
+  border-bottom: 1px solid var(--ins-fio);
+  background: var(--ins-superficie);
   flex: 0 0 auto;
 }
 .ins-folha-h-txt { flex: 1; min-width: 0; }
 .ins-folha-h-txt .ins-title { margin: var(--ins-2) 0 0; }
 .ins-folha-meta {
-  font: 400 13px/1 var(--ins-font-mono); color: var(--ins-text-4);
+  font: 400 13px/1 var(--ins-fonte); color: var(--ins-tinta-3);
   align-self: center; letter-spacing: -.02em;
 }
 .ins-folha-b {
   flex: 0 0 40px; height: 40px;
-  color: var(--ins-text-4); font-size: 19px; line-height: 1;
+  color: var(--ins-tinta-3); font-size: 19px; line-height: 1;
 }
 
 .ins-folha-c {
@@ -311,8 +386,8 @@
 .ins-tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
   display: flex;
-  background: var(--ins-canvas);
-  border-top: 1px solid var(--ins-rule);
+  background: var(--ins-superficie);
+  border-top: 1px solid var(--ins-fio);
   padding-bottom: var(--sa-bottom);
   /* Sem backdrop-filter: pisca no Blink ao rolar e o sistema não tem vidro. */
 }
@@ -320,22 +395,22 @@
 
 .ins-tab {
   flex: 1; min-height: 46px; padding: var(--ins-6) 0 var(--ins-5);
-  font: 400 9.5px/1 var(--ins-font-mono);
+  font: 400 9.5px/1 var(--ins-fonte);
   letter-spacing: .1em; text-transform: uppercase;
   /* text-4: a 9,5px o nível 5 dá 3,2:1 e reprova em AA. */
-  color: var(--ins-text-4);
+  color: var(--ins-tinta-3);
 }
-.ins-tab.on { color: var(--ins-acid); }
+.ins-tab.on { color: var(--ins-acento-tinta); }
 
 .ins-tab-ind {
   position: absolute; top: -1px; height: var(--ins-indicator);
-  background: var(--ins-acid);
+  background: var(--ins-acento);
   transition: left var(--ins-dur) var(--ins-ease);
 }
 
 /* ---- Listas de fio ---------------------------------------------------- */
 
-.ins-lista > * { border-bottom: 1px solid var(--ins-hairline); }
+.ins-lista > * { border-bottom: 1px solid var(--ins-fio); }
 .ins-lista > *:last-child { border-bottom: 0; }
 
 .ins-linha {
@@ -347,9 +422,9 @@
    "Arroz branco cozidoP 2.5 · C 28". Atingia toda lista do produto —
    biblioteca de alimentos, compras, músculos, itens da refeição. */
 .ins-linha-n { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.ins-linha-t { font: 400 15px/1.35 var(--ins-font-display); color: var(--ins-text); }
-.ins-linha-s { font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4); margin-top: 2px; }
-.ins-linha-v { flex: 0 0 auto; font: 500 14px/1 var(--ins-font-mono); color: var(--ins-text-3); letter-spacing: -.02em; }
+.ins-linha-t { font: 400 15px/1.35 var(--ins-fonte); color: var(--ins-tinta); }
+.ins-linha-s { font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-3); margin-top: 2px; }
+.ins-linha-v { flex: 0 0 auto; font: 500 14px/1 var(--ins-fonte); color: var(--ins-tinta-3); letter-spacing: -.02em; }
 
 /* ---- Telas: HOJE ------------------------------------------------------- */
 
@@ -367,15 +442,15 @@
 .fd-op {
   display: flex; flex-direction: column; gap: var(--ins-2);
   align-items: flex-start; text-align: left;
-  padding: var(--ins-6); background: var(--ins-surface-low);
-  border: 1px solid var(--ins-border);
+  padding: var(--ins-6); background: var(--ins-superficie-2);
+  border: 1px solid var(--ins-fio-controle);
 }
-.fd-op.on { background: var(--ins-surface-acid); border-color: var(--ins-acid); }
+.fd-op.on { background: var(--ins-acento-suave); border-color: var(--ins-acento); }
 /* O turno do treino: três opções lado a lado, porque são mutuamente
    exclusivas e curtas — a coluna de `fd-op` é para escolhas com explicação. */
 .fd-turno {
   margin-top: var(--ins-9); padding-top: var(--ins-6);
-  border-top: 1px solid var(--ins-rule);
+  border-top: 1px solid var(--ins-fio);
   display: flex; flex-direction: column; gap: var(--ins-4);
 }
 .fd-turno p { margin: 0; }
@@ -385,18 +460,18 @@
   display: flex; flex-direction: column; gap: var(--ins-1);
   align-items: flex-start; text-align: left;
   padding: var(--ins-4); min-height: var(--ins-tap);
-  background: var(--ins-surface-low); border: 1px solid var(--ins-border);
+  background: var(--ins-superficie-2); border: 1px solid var(--ins-fio-controle);
 }
-.fd-turno-op.on { background: var(--ins-surface-acid); border-color: var(--ins-acid); }
-.fd-turno-n { font: 500 15px/1.2 var(--ins-font-display); color: var(--ins-text); }
-.fd-turno-h { font: 500 13px/1 var(--ins-font-mono); color: var(--ins-text-3); }
+.fd-turno-op.on { background: var(--ins-acento-suave); border-color: var(--ins-acento); }
+.fd-turno-n { font: 500 15px/1.2 var(--ins-fonte); color: var(--ins-tinta); }
+.fd-turno-h { font: 500 13px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
 /* Qual refeição vira o pós-treino naquele turno: é a consequência da escolha,
    e vê-la antes de tocar é o que a torna uma decisão em vez de um palpite. */
 .fd-turno-p {
-  font: 400 9px/1.3 var(--ins-font-mono);
-  letter-spacing: .08em; color: var(--ins-text-5);
+  font: 400 9px/1.3 var(--ins-fonte);
+  letter-spacing: .08em; color: var(--ins-tinta-3);
 }
-.fd-turno-op.on .fd-turno-p { color: var(--ins-text-4); }
+.fd-turno-op.on .fd-turno-p { color: var(--ins-tinta-3); }
 
 /* O aviso de refeição caindo dentro da sessão. Âmbar: preste atenção — não é
    destrutivo, e o app não vai resolver sozinho. */
@@ -410,13 +485,13 @@
    conferindo a própria regra —, e sem cor de alerta, porque não é falha de
    ninguém. */
 .dd-auditoria {
-  padding: var(--ins-5); border: 1px solid var(--ins-border);
-  background: var(--ins-surface-low);
+  padding: var(--ins-5); border: 1px solid var(--ins-fio-controle);
+  background: var(--ins-superficie-2);
 }
 
 .fd-alta {
   margin-top: var(--ins-9); padding-top: var(--ins-6);
-  border-top: 1px solid var(--ins-rule);
+  border-top: 1px solid var(--ins-fio);
   display: flex; flex-direction: column; gap: var(--ins-4); align-items: flex-start;
 }
 .fd-alta p { margin: 0; }
@@ -425,7 +500,7 @@
    de um interruptor — não é ligar/desligar, é qual dos três. */
 .fd-aderencia {
   margin-top: var(--ins-9); padding-top: var(--ins-6);
-  border-top: 1px solid var(--ins-rule);
+  border-top: 1px solid var(--ins-fio);
   display: flex; flex-direction: column; gap: var(--ins-4); align-items: flex-start;
 }
 .fd-aderencia p { margin: 0; }
@@ -437,15 +512,15 @@
 .cm-espaco { height: var(--ins-5); }
 
 /* Comprado recua, mas continua legível: a lista é conferida no mercado. */
-.ins-linha.comprado .ins-linha-t { color: var(--ins-text-5); text-decoration: line-through; }
-.ins-linha.comprado .ins-linha-v { color: var(--ins-text-5); }
+.ins-linha.comprado .ins-linha-t { color: var(--ins-tinta-3); text-decoration: line-through; }
+.ins-linha.comprado .ins-linha-v { color: var(--ins-tinta-3); }
 
 /* ---- Tela DADOS -------------------------------------------------------- */
 
 .dd-spark { margin-bottom: var(--ins-2); }
 .dd-override {
   margin-top: var(--ins-7); padding-top: var(--ins-6);
-  border-top: 1px solid var(--ins-hairline);
+  border-top: 1px solid var(--ins-fio);
   display: flex; flex-direction: column; gap: var(--ins-5);
 }
 .dd-override p { margin: 0; }
@@ -456,20 +531,20 @@
 .gu-semana { display: flex; gap: var(--ins-1); }
 .gu-dia {
   flex: 1; min-height: 54px; padding: var(--ins-3) 2px;
-  border: 1px solid var(--ins-border);
+  border: 1px solid var(--ins-fio-controle);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: var(--ins-2);
 }
-.gu-dia.on { background: var(--ins-surface-acid); border-color: var(--ins-acid); }
+.gu-dia.on { background: var(--ins-acento-suave); border-color: var(--ins-acento); }
 .gu-dia-v {
-  font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-5);
+  font: 400 9px/1 var(--ins-fonte);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
-.gu-dia.on .gu-dia-v { color: var(--ins-acid); }
-.gu-dia.on .ins-label-sm { color: var(--ins-text-2); }
+.gu-dia.on .gu-dia-v { color: var(--ins-acento-tinta); }
+.gu-dia.on .ins-label-sm { color: var(--ins-tinta-2); }
 
 .gu-acoes { display: flex; flex-direction: column; gap: var(--ins-2); }
-.gu-acoes .ins-btn-destructive { border-color: var(--ins-coral); }
+.gu-acoes .ins-btn-destructive { border-color: var(--ins-pare-fio); }
 .gu-legado { margin-top: var(--ins-9); }
 
 /* ---- DADOS: medidas e músculos ----------------------------------------- */
@@ -479,31 +554,31 @@
 .dd-registro .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
 /* A data da medida: link discreto no estado normal, chips quando aberto. Não
    compete com o botão de registrar, que é a ação de todo dia. */
-.dd-diabtn {
+.dd-diabtn, .dd-tclbtn, .co-ondebtn {
   width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
   position: relative;
-  font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-4);
+  font: 400 10px/1.4 var(--ins-fonte);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
-.dd-diabtn::after { content: ""; position: absolute; inset: -5px 0; }   /* 34 -> 44 */
-.dd-diabtn:active { color: var(--ins-text-3); }
+.dd-diabtn::after, .dd-tclbtn::after, .co-ondebtn::after { content: ""; position: absolute; inset: -5px 0; }   /* 34 -> 44 */
+.dd-diabtn:active, .dd-tclbtn:active, .co-ondebtn:active { color: var(--ins-tinta-3); }
 .dd-dia { margin-top: var(--ins-3); }
 
 /* Sincronização, na aba guia */
-.gu-campo { margin-bottom: var(--ins-3); font: 400 16px/1 var(--ins-font-mono); }
+.gu-campo { margin-bottom: var(--ins-3); font: 400 16px/1 var(--ins-fonte); }
 .gu-sync { margin-bottom: var(--ins-4); }
 /* O seletor nativo herda a tipografia do sistema para não destoar do resto da
    tela; o desenho do calendário quem faz é o aparelho. */
 .dd-data {
-  font: 400 16px/1 var(--ins-font-mono);
-  color: var(--ins-text-2); background: transparent;
-  border: 1px solid var(--ins-border-strong); min-height: var(--ins-tap);
+  font: 400 16px/1 var(--ins-fonte);
+  color: var(--ins-tinta-2); background: transparent;
+  border: 1px solid var(--ins-fio-controle); min-height: var(--ins-tap);
 }
 .dd-dia-nota { margin-top: var(--ins-2); }
 
 .dd-fora {
   margin-bottom: var(--ins-6); padding: var(--ins-5);
-  border: 1px solid var(--ins-amber);
+  border: 1px solid var(--ins-atencao-fio);
 }
 .dd-fora-l { margin-top: var(--ins-3); }
 
@@ -511,7 +586,7 @@
    de ácido já seria opinar sobre o que descreveu. */
 .dd-leitura {
   margin-top: var(--ins-7); padding-top: var(--ins-5);
-  border-top: 1px solid var(--ins-rule);
+  border-top: 1px solid var(--ins-fio);
 }
 .dd-leitura-l { margin: var(--ins-3) 0 0; }
 .dd-fora .ins-btn-secondary { margin-top: var(--ins-5); }
@@ -521,33 +596,33 @@
 .dd-mus-l {
   display: flex; align-items: center; gap: var(--ins-3);
   padding: var(--ins-3) 0;
-  border-bottom: 1px solid var(--ins-hairline);
+  border-bottom: 1px solid var(--ins-fio);
 }
 .dd-mus-l:last-child { border-bottom: 0; }
 .dd-mus-n {
   flex: 0 0 104px; min-width: 0;
-  font: 400 12px/1.25 var(--ins-font-display); color: var(--ins-text-3);
+  font: 400 12px/1.25 var(--ins-fonte); color: var(--ins-tinta-3);
 }
-.dd-mus-l.prio .dd-mus-n { color: var(--ins-text); }
+.dd-mus-l.prio .dd-mus-n { color: var(--ins-tinta); }
 .dd-mus-n em {
   display: block; font-style: normal; margin-top: 2px;
-  font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .12em; text-transform: uppercase; color: var(--ins-text-5);
+  font: 400 9px/1 var(--ins-fonte);
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
-.dd-mus-b { flex: 1; height: 6px; background: var(--ins-rule); }
-.dd-mus-b i { display: block; height: 100%; background: var(--ins-text-3); }
-.dd-mus-l.prio .dd-mus-b i { background: var(--ins-acid); }
+.dd-mus-b { flex: 1; height: 6px; background: var(--ins-fio); }
+.dd-mus-b i { display: block; height: 100%; background: var(--ins-tinta-3); }
+.dd-mus-l.prio .dd-mus-b i { background: var(--ins-acento); }
 .dd-mus-v {
   flex: 0 0 52px; text-align: right;
-  font: 600 15px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text);
+  font: 600 15px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta);
 }
 .dd-mus-v small {
   display: block; margin-top: 2px; font-weight: 400;
-  font-size: 9px; letter-spacing: .04em; color: var(--ins-text-5);
+  font-size: 9px; letter-spacing: .04em; color: var(--ins-tinta-3);
 }
 .dd-mus-d {
   flex: 0 0 44px; text-align: right;
-  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .04em; color: var(--ins-text-4);
+  font: 400 10px/1 var(--ins-fonte); letter-spacing: .04em; color: var(--ins-tinta-3);
 }
 /* Prosa longa não cabe em mono de 10px: procedência é uma linha, o resto é
    prosa na display. */
@@ -561,7 +636,7 @@
 .ed-campo .ins-chips { margin-bottom: var(--ins-2); }
 /* 96 e não 72: as notas do plano têm três linhas e o campo cortava a última.
    Campo que esconde o próprio conteúdo é pior que campo grande. */
-.ed-nota { min-height: 96px; resize: vertical; font-family: var(--ins-font-display); }
+.ed-nota { min-height: 96px; resize: vertical; font-family: var(--ins-fonte); }
 .ed-h { margin: var(--ins-9) 0 var(--ins-4); }
 .ed-add { margin-top: var(--ins-5); }
 .ed-dup { margin-top: var(--ins-9); }
@@ -574,28 +649,31 @@
 .ed-macros { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-5); }
 .ed-macros .ed-campo { margin-bottom: 0; }
 
-/* ---- GUIA: regras e área de dados -------------------------------------- */
+/* ---- As regras do treinador, na Prescrição ----------------------------- */
+/*
+   O prefixo `gu-` é a marca do GUIA, a tela que se partiu nesta passada: a
+   prescrição foi para Prescrição e a máquina do app para Ajustes. Os nomes
+   ficaram — renomear doze seletores é a dívida que a frente 4 §11.2 já nomeia,
+   e fazê-la no meio desta troca misturaria duas mudanças numa.
 
-.gu-cobra {
-  margin-top: var(--ins-7); padding: var(--ins-5);
-  border: 1px solid var(--ins-amber);
-}
-.gu-cobra p { margin: var(--ins-3) 0 var(--ins-5); }
-.gu-cobra b { color: var(--ins-amber); font-weight: 500; }
+   `.gu-cobra` SAIU: a cobrança de backup mudou de endereço para o topo do Agora
+   e usa `.ins-aviso-perda`, a mesma moldura do aviso de aparelho que não está
+   guardando. As duas dizem "o que você fizer pode não ficar", com causas
+   diferentes, e duas molduras para a mesma coisa seriam duas linguagens. */
 
 /* A regra virou linha que abre no lugar: quem desenha o fio de baixo e o alvo
    de 46px é o `.ins-lx` de dentro, então a casca não repete nem um nem outro. */
 .gu-regra:last-child .ins-lx { border-bottom: 0; }
-.gu-regra.atencao .ins-label { color: var(--ins-amber); }
+.gu-regra.atencao .ins-label { color: var(--ins-atencao-tinta); }
 /* Os dois viram bloco para empilhar: dentro do cabeçalho da linha expansível
    eles são irmãos inline, e sem isto o rótulo e o título saem na mesma frase. */
 .gu-regra-k { display: block; }
 .gu-regra-t { display: block; margin: var(--ins-3) 0 0; }
 .gu-regra-p { margin: var(--ins-3) 0 0; }
 .gu-regra-p:first-child { margin-top: 0; }
-.gu-regra-p b { color: var(--ins-text); font-weight: 500; }
+.gu-regra-p b { color: var(--ins-tinta); font-weight: 500; }
 
-.gu-bloco { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-hairline); }
+.gu-bloco { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-fio); }
 .gu-bloco:last-child { border-bottom: 0; }
 .gu-bloco-t { margin: 0; }
 .gu-bloco-p { margin: var(--ins-3) 0 var(--ins-5); }
@@ -616,7 +694,7 @@
    de `base.css` vale para campo, não só para campo bonito. */
 .gu-json {
   width: 100%; min-height: 120px; margin-top: var(--ins-2);
-  font: 400 16px/1.5 var(--ins-font-mono); resize: vertical;
+  font: 400 16px/1.5 var(--ins-fonte); resize: vertical;
 }
 .gu-apagar { margin-top: var(--ins-5); }
 .gu-apagar + .ins-provenance { margin-top: var(--ins-3); }
@@ -629,47 +707,47 @@
 }
 .mes-b {
   flex: 0 0 var(--ins-tap); height: var(--ins-tap);
-  border: 1px solid var(--ins-border-strong); color: var(--ins-text-3); font-size: 17px;
+  border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta-3); font-size: 17px;
 }
 .mes-b:disabled { opacity: .25; }
 
 /* Sete colunas, o vão de 1px é a régua — igual à grade de métricas. */
 .cal {
   display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px;
-  background: var(--ins-rule); margin-top: var(--ins-7);
+  background: var(--ins-fio); margin-top: var(--ins-7);
 }
-.cal > * { background: var(--ins-canvas); }
+.cal > * { background: var(--ins-tela); }
 .cal-h {
   padding: var(--ins-2) 0; text-align: center;
-  font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+  font: 400 9px/1 var(--ins-fonte);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
 .cal-x { min-height: 40px; }
 .cal-d {
   min-height: 40px; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 2px;
-  font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-4);
+  font: 400 11px/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .cal-d em { font-style: normal; }
 .cal-d.futuro { opacity: .3; }
-.cal-d.hoje { background: var(--ins-surface-acid); }
-.cal-d.feito { color: var(--ins-acid); }
-.cal-d.livre { color: var(--ins-text-3); }
+.cal-d.hoje { background: var(--ins-acento-suave); }
+.cal-d.feito { color: var(--ins-acento-tinta); }
+.cal-d.livre { color: var(--ins-tinta-3); }
 /* Descanso registrado: presença discreta, para o dia não parecer buraco — mas
    nunca com o peso visual de um dia treinado. */
-.cal-d.descanso { color: var(--ins-text-5); }
-.cal-d.descanso i { color: var(--ins-text-5); font-weight: 400; }
+.cal-d.descanso { color: var(--ins-tinta-3); }
+.cal-d.descanso i { color: var(--ins-tinta-3); font-weight: 400; }
 /* Barra, não cor de fundo nem letra: a letra do treino já manda na célula. */
-.cal-d .barra-cardio { width: 10px; height: 2px; background: var(--ins-text-4); border-radius: 0; }
-.cal-d i { font-style: normal; font-weight: 500; color: var(--ins-text-2); }
-.cal-d.feito i { color: var(--ins-acid); }
-.cal-d em { font-style: normal; font-size: 9px; color: var(--ins-text-5); }
+.cal-d .barra-cardio { width: 10px; height: 2px; background: var(--ins-tinta-3); border-radius: 0; }
+.cal-d i { font-style: normal; font-weight: 500; color: var(--ins-tinta-2); }
+.cal-d.feito i { color: var(--ins-acento-tinta); }
+.cal-d em { font-style: normal; font-size: 9px; color: var(--ins-tinta-3); }
 .cal-d .per { font-size: 8px; text-decoration: none; line-height: 1; }
 
 .cal-legenda {
   display: flex; gap: var(--ins-5); margin-top: var(--ins-4);
-  font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+  font: 400 9px/1 var(--ins-fonte);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
 .cal-legenda span { display: flex; align-items: center; gap: var(--ins-1); }
 .cal-legenda .per { text-decoration: none; font-size: 10px; }
@@ -678,31 +756,31 @@
 .sessrow { gap: var(--ins-4); }
 .sess-d {
   flex: 0 0 46px;
-  font: 400 11px/1.3 var(--ins-font-mono); color: var(--ins-text-4);
+  font: 400 11px/1.3 var(--ins-fonte); color: var(--ins-tinta-3);
 }
-.sess-d em { display: block; font-style: normal; font-size: 9px; color: var(--ins-text-5); margin-top: 2px; }
+.sess-d em { display: block; font-style: normal; font-size: 9px; color: var(--ins-tinta-3); margin-top: 2px; }
 .sess-l {
   flex: 0 0 18px; text-align: center;
-  font: 500 15px/1 var(--ins-font-mono); color: var(--ins-text-2);
+  font: 500 15px/1 var(--ins-fonte); color: var(--ins-tinta-2);
 }
-.sess-l.livre { color: var(--ins-text-5); }
-.sess-n { flex: 1; font: 400 13px/1.35 var(--ins-font-display); color: var(--ins-text-3); }
+.sess-l.livre { color: var(--ins-tinta-3); }
+.sess-n { flex: 1; font: 400 13px/1.35 var(--ins-fonte); color: var(--ins-tinta-3); }
 .sess-n .aprox {
   font-style: normal; margin-left: var(--ins-2);
-  font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-5);
+  font: 400 9px/1 var(--ins-fonte);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
 .sess-o {
   flex: 0 0 auto;
-  font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-acid);
+  font: 400 9px/1 var(--ins-fonte);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-acento-tinta);
 }
 .mediasem {
   margin: var(--ins-4) 0 0;
-  font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4);
+  font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-3);
 }
-.mediasem b { color: var(--ins-text); font-weight: 500; font-family: var(--ins-font-mono); }
-.mediasem span { display: block; margin-top: 2px; font-size: 11px; color: var(--ins-text-5); }
+.mediasem b { color: var(--ins-tinta); font-weight: 500; font-family: var(--ins-fonte); }
+.mediasem span { display: block; margin-top: 2px; font-size: 11px; color: var(--ins-tinta-3); }
 
 /* ---- Telas cheias ------------------------------------------------------ */
 
@@ -723,8 +801,8 @@
   padding-bottom: var(--ins-4);
   /* opaco: o conteúdo passa POR BAIXO e precisa sumir, não borrar. Sem
      backdrop-filter, que pisca no Blink ao rolar. */
-  background: var(--ins-canvas);
-  border-bottom: 1px solid var(--ins-hairline);
+  background: var(--ins-superficie);
+  border-bottom: 1px solid var(--ins-fio);
   /* a goteira lateral do #app é vazada para a faixa tocar as bordas */
   margin-left: calc(-1 * max(var(--ins-8), var(--sa-left)));
   margin-right: calc(-1 * max(var(--ins-8), var(--sa-right)));
@@ -733,20 +811,20 @@
 }
 .tc-back {
   min-height: var(--ins-tap); padding: 0 var(--ins-4) 0 0;
-  font: 400 11px/1 var(--ins-font-mono);
-  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-text-3);
+  font: 400 11px/1 var(--ins-fonte);
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
-.tc-back:active { color: var(--ins-text); }
+.tc-back:active { color: var(--ins-tinta); }
 
 .tc-cab { margin-top: var(--ins-5); }
 .tc-olho { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3); }
-.tc-meta { color: var(--ins-text-5); text-align: right; }
+.tc-meta { color: var(--ins-tinta-3); text-align: right; }
 .tc-titulo { margin: var(--ins-3) 0 0; text-wrap: balance; }
 /* Ele recebe foco ao entrar no destino, para o leitor de tela anunciar onde
    se está. `:focus-visible` e não `:focus`: no toque o anel apareceria em
    toda abertura, sem nada a dizer para quem está vendo a tela. */
 .tc-titulo:focus { outline: none; }
-.tc-titulo:focus-visible { outline: var(--ins-indicator) solid var(--ins-acid); outline-offset: var(--ins-1); }
+.tc-titulo:focus-visible { outline: var(--ins-indicator) solid var(--ins-acento); outline-offset: var(--ins-1); }
 .tc-corpo { margin-top: var(--ins-9); }
 
 .tc-nota { margin: var(--ins-6) 0 0; }
@@ -756,66 +834,70 @@
 
 .tc-bloco {
   margin-top: var(--ins-6); padding: var(--ins-5);
-  border: 1px solid var(--ins-border);
+  border: 1px solid var(--ins-fio-controle);
 }
-.tc-bloco.atencao { border-color: var(--ins-amber); }
+.tc-bloco.atencao { border-color: var(--ins-atencao-fio); }
 .tc-bloco p { margin: var(--ins-3) 0 0; }
-.tc-bloco b { color: var(--ins-text); font-weight: 500; }
+.tc-bloco b { color: var(--ins-tinta); font-weight: 500; }
 .tc-pend { display: flex; flex-direction: column; gap: var(--ins-2); padding: var(--ins-2) 0; }
 
 /* Uma linha de exercício num resumo. */
-.tc-res { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-hairline); }
+.tc-res { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-fio); }
 .tc-res:last-child { border-bottom: 0; }
 .tc-res-topo { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3); }
 .tc-res-n {
   flex: 1; min-width: 0;
-  font: 500 15px/1.3 var(--ins-font-display); color: var(--ins-text);
+  font: 500 15px/1.3 var(--ins-fonte); color: var(--ins-tinta);
 }
-.tc-res-d { flex: 0 0 auto; font: 500 13px/1 var(--ins-font-mono); color: var(--ins-text-4); }
+.tc-res-d { flex: 0 0 auto; font: 500 13px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
 .tc-res-sets {
   display: flex; flex-wrap: wrap; gap: var(--ins-2);
   margin-top: var(--ins-3);
-  font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-3);
+  font: 400 11px/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .tc-res-sets > span {
-  padding: var(--ins-1) var(--ins-3); border: 1px solid var(--ins-border);
+  padding: var(--ins-1) var(--ins-3); border: 1px solid var(--ins-fio-controle);
 }
-.tc-res-sets .nul { color: var(--ins-text-5); border-color: var(--ins-hairline); }
-/* A marca de recorde: chip VAZADO, como todo chip do sistema — borda ácida,
-   texto ácido, fundo nenhum. Existia uma segunda regra `.rec` com
-   `background: var(--ins-acid)` sobrando do sistema antigo, e como ela era
-   menos específica que esta o resultado era ácido sobre ácido: a única coisa
-   que o app marca como conquista saía como um bloco sólido, com o texto
-   "recorde de carga" invisível dentro. Fundo é o que esta regra NÃO põe. */
+.tc-res-sets .nul { color: var(--ins-tinta-3); border-color: var(--ins-fio); }
+/* A marca de recorde: chip VAZADO, como todo chip do sistema — borda de
+   acento, texto de acento, fundo nenhum. Existia uma segunda regra `.rec` com
+   `background` na MESMA cor do texto sobrando do sistema antigo, e como ela era
+   menos específica que esta o resultado era cor sobre a mesma cor: a única
+   coisa que o app marca como conquista saía como um bloco sólido, com o texto
+   "recorde de carga" invisível dentro. Fundo é o que esta regra NÃO põe.
+
+   `--ins-acid` aqui NÃO é esquecimento: é o único nome da paleta aposentada
+   que sobrevive, e ele sobrevive porque o caso de teste deste chip o afirma
+   literalmente. A quarentena e a dívida estão escritas em `tokens.css`. */
 .tc-res-sets .rec {
-  border-color: var(--ins-acid); color: var(--ins-acid);
+  border-color: var(--ins-acento); color: var(--ins-acid);
   letter-spacing: .08em; text-transform: uppercase; font-size: 9px;
 }
 .tc-res-nota {
   margin-top: var(--ins-3);
-  font: 400 10px/1.4 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-amber);
+  font: 400 10px/1.4 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-atencao-tinta);
 }
 
 /* A faixa de números do topo das telas cheias. */
-.stats { display: grid; gap: 1px; background: var(--ins-rule); margin-top: var(--ins-2); }
-.stats > div { background: var(--ins-canvas); padding: var(--ins-4) 0; }
+.stats { display: grid; gap: 1px; background: var(--ins-fio); margin-top: var(--ins-2); }
+.stats > div { background: var(--ins-tela); padding: var(--ins-4) 0; }
 .stats > div:not(:first-child) { padding-left: var(--ins-5); }
 .stats b {
-  display: block; font: 600 22px/1.1 var(--ins-font-mono);
-  letter-spacing: -.03em; color: var(--ins-text); font-weight: 600;
+  display: block; font: 600 22px/1.1 var(--ins-fonte);
+  letter-spacing: -.03em; color: var(--ins-tinta); font-weight: 600;
 }
 .stats span {
   display: block; margin-top: 5px;
-  font: 400 9px/1.2 var(--ins-font-mono);
-  letter-spacing: .16em; text-transform: uppercase; color: var(--ins-text-4);
+  font: 400 9px/1.2 var(--ins-fonte);
+  letter-spacing: .16em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
-.horario b { color: var(--ins-text-3); font-weight: 500; }
+.horario b { color: var(--ins-tinta-3); font-weight: 500; }
 
 /* ---------- decisão de fim de sessão ---------- */
 /* Cada mudança é um bloco fechado por fio, com o par de botões dentro: a
    decisão pertence àquela linha e a nenhuma outra. Sem canto arredondado e
    sem sombra — o que separa é o fio, como em todo o resto do sistema. */
-.pmod { border: 1px solid var(--ins-hairline); padding: var(--ins-4); margin-bottom: var(--ins-3); }
+.pmod { border: 1px solid var(--ins-fio); padding: var(--ins-4); margin-bottom: var(--ins-3); }
 .pmod-t { line-height: 1.35; }
 .pmod-i { margin-top: var(--ins-2); }
 
@@ -825,17 +907,17 @@
 .pmod-b { display: flex; margin-top: var(--ins-4); }
 .pmod-b button {
   flex: 1; min-height: 48px;
-  border: 1px solid var(--ins-hairline); background: transparent; color: var(--ins-text-3);
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .1em; text-transform: uppercase;
+  border: 1px solid var(--ins-fio); background: transparent; color: var(--ins-tinta-3);
+  font: 400 11px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
 }
 .pmod-b button + button { border-left: 0; }
 .pmod-b button.on {
-  border-color: var(--ins-acid); color: var(--ins-acid);
-  background: var(--ins-surface-acid);
+  border-color: var(--ins-acento); color: var(--ins-acento-tinta);
+  background: var(--ins-acento-suave);
 }
 /* o `on` precisa do fio à esquerda de volta, senão a seleção fica vazada */
 .pmod-b button.on + button { border-left: 0; }
-.pmod-b button + button.on { border-left: 1px solid var(--ins-acid); }
+.pmod-b button + button.on { border-left: 1px solid var(--ins-acento); }
 
 .pmot { margin: var(--ins-6) 0 var(--ins-6); }
 .pmot .obs-h { margin-bottom: var(--ins-3); }
@@ -862,12 +944,12 @@
 .addrow .f { flex: 1; position: relative; min-width: 0; }
 .addrow input {
   width: 100%; padding: 14px;
-  font: 500 17px/1 var(--ins-font-mono);
-  background: var(--ins-surface); border: 1px solid var(--ins-border); color: var(--ins-text);
+  font: 500 17px/1 var(--ins-fonte);
+  background: var(--ins-superficie-2); border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta);
   appearance: none; -moz-appearance: textfield;
 }
-.addrow input::placeholder { color: var(--ins-text-5); }
-.addrow input:focus { outline: none; border-color: var(--ins-acid); }
+.addrow input::placeholder { color: var(--ins-tinta-3); }
+.addrow input:focus { outline: none; border-color: var(--ins-acento); }
 .addrow input::-webkit-outer-spin-button,
 .addrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
@@ -876,8 +958,8 @@
    Vira fio, como qualquer coisa inerte no sistema. */
 .ins-btn-primary:disabled {
   opacity: 1;
-  background: transparent; color: var(--ins-text-5);
-  border: 1px solid var(--ins-hairline);
+  background: transparent; color: var(--ins-tinta-3);
+  border: 1px solid var(--ins-fio);
 }
 
 /* ---------- superfície de edição de exercício ---------- */
@@ -890,38 +972,38 @@
 .edbar {
   display: flex; align-items: flex-start; gap: var(--ins-4);
   margin: 0 0 var(--ins-4); padding: var(--ins-4);
-  border: 1px solid var(--ins-acid); background: var(--ins-surface-acid);
-  font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-3);
+  border: 1px solid var(--ins-acento); background: var(--ins-acento-suave);
+  font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-3);
 }
-.edbar b { color: var(--ins-text); display: block; }
+.edbar b { color: var(--ins-tinta); display: block; }
 .edbar-b {
   flex: 0 0 auto; min-height: var(--ins-tap); padding: 0 var(--ins-5);
-  background: var(--ins-acid); color: var(--ins-on-acid); border: 0;
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
+  background: var(--ins-acento); color: var(--ins-sobre-acento); border: 0;
+  font: 400 11px/1 var(--ins-fonte); letter-spacing: .12em; text-transform: uppercase;
 }
 
-.edx { border-bottom: 1px solid var(--ins-hairline); padding: var(--ins-4) 0; }
+.edx { border-bottom: 1px solid var(--ins-fio); padding: var(--ins-4) 0; }
 .edx:last-of-type { border-bottom: 0; }
 /* Mexido hoje: fio ácido à esquerda, não borda inteira. A linha continua
    sendo uma linha; só ganha uma marca de margem. */
-.edx.mexido { border-left: 2px solid var(--ins-acid); padding-left: var(--ins-3); }
+.edx.mexido { border-left: 2px solid var(--ins-acento); padding-left: var(--ins-3); }
 
 .edx-h { display: flex; align-items: flex-start; gap: var(--ins-3); }
-.ord { font: 400 11px/1.4 var(--ins-font-mono); color: var(--ins-text-5); padding-top: 2px; }
-.edx-n { flex: 1; min-width: 0; font: 500 14.5px/1.3 var(--ins-font-display); color: var(--ins-text); }
-.edx-n em { display: block; font-style: normal; font-size: 11.5px; color: var(--ins-acid); margin-top: 2px; }
+.ord { font: 400 11px/1.4 var(--ins-fonte); color: var(--ins-tinta-3); padding-top: 2px; }
+.edx-n { flex: 1; min-width: 0; font: 500 14.5px/1.3 var(--ins-fonte); color: var(--ins-tinta); }
+.edx-n em { display: block; font-style: normal; font-size: 11.5px; color: var(--ins-acento-tinta); margin-top: 2px; }
 .edx-n span {
   display: block; margin-top: var(--ins-1);
-  font: 400 10.5px/1.4 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-4);
+  font: 400 10.5px/1.4 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-tinta-3);
 }
 
 .edx-mv { display: flex; flex: 0 0 auto; }
 .edx-mv button {
   width: 38px; height: 38px; font-size: 15px;
-  border: 1px solid var(--ins-hairline); background: transparent; color: var(--ins-text-3);
+  border: 1px solid var(--ins-fio); background: transparent; color: var(--ins-tinta-3);
 }
 .edx-mv button + button { border-left: 0; }
-.edx-mv button:disabled { color: var(--ins-text-5); }
+.edx-mv button:disabled { color: var(--ins-tinta-3); }
 
 .edx-c { display: flex; align-items: center; gap: var(--ins-2); margin-top: var(--ins-3); }
 
@@ -930,11 +1012,11 @@
    lista inteira deixa de caber numa tela. */
 .stepper {
   display: flex; align-items: center; flex: 0 0 auto;
-  border: 1px solid var(--ins-hairline);
+  border: 1px solid var(--ins-fio);
 }
 .stepper button {
   width: 38px; height: 38px; border: 0; background: none;
-  color: var(--ins-acid); font-size: 18px; line-height: 1;
+  color: var(--ins-acento-tinta); font-size: 18px; line-height: 1;
   position: relative;
 }
 /* 38 de desenho, 46 de alvo. Só na vertical: na horizontal os dois botões são
@@ -942,52 +1024,52 @@
    no +. O vão entre duas linhas é 8px, e cada uma leva metade — é a mesma conta
    do chip. */
 .stepper button::after { content: ""; position: absolute; inset: -4px 0; }
-.stepper button:disabled { color: var(--ins-text-5); }
-.stepper b { font: 500 15px/1 var(--ins-font-mono); min-width: 16px; text-align: center; }
+.stepper button:disabled { color: var(--ins-tinta-3); }
+.stepper b { font: 500 15px/1 var(--ins-fonte); min-width: 16px; text-align: center; }
 .stepper span {
-  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .06em;
-  color: var(--ins-text-4); padding: 0 var(--ins-2) 0 var(--ins-1);
+  font: 400 10px/1 var(--ins-fonte); letter-spacing: .06em;
+  color: var(--ins-tinta-3); padding: 0 var(--ins-2) 0 var(--ins-1);
 }
 
 .edx-b {
   min-height: 38px; padding: 0 var(--ins-3); flex: 0 0 auto;
-  border: 1px solid var(--ins-hairline); background: transparent; color: var(--ins-text-3);
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .06em;
+  border: 1px solid var(--ins-fio); background: transparent; color: var(--ins-tinta-3);
+  font: 400 11px/1 var(--ins-fonte); letter-spacing: .06em;
 }
 /* Coral: remover destrói o exercício da lista. */
-.edx-b.rm { color: var(--ins-coral); }
+.edx-b.rm { color: var(--ins-pare-tinta); }
 .edx-imp { margin-top: var(--ins-3); }
 
 .edadd {
   width: 100%; min-height: var(--ins-tap); margin-top: var(--ins-4);
-  border: 1px dashed var(--ins-border); background: none; color: var(--ins-text-3);
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .1em; text-transform: uppercase;
+  border: 1px dashed var(--ins-fio-controle); background: none; color: var(--ins-tinta-3);
+  font: 400 11px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
 }
 
-.edmods { margin-top: var(--ins-6); border-top: 1px solid var(--ins-rule); padding-top: var(--ins-4); }
+.edmods { margin-top: var(--ins-6); border-top: 1px solid var(--ins-fio); padding-top: var(--ins-4); }
 .edmods-h { margin-bottom: var(--ins-3); }
 .edmod {
   display: flex; align-items: center; gap: var(--ins-3); padding: var(--ins-3) 0;
-  border-bottom: 1px solid var(--ins-hairline);
-  font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-2);
+  border-bottom: 1px solid var(--ins-fio);
+  font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-2);
 }
 .edmod span { flex: 1; }
 .edmod button {
   flex: 0 0 auto; min-height: 34px; padding: 0 var(--ins-3);
-  background: none; border: 1px solid var(--ins-hairline); color: var(--ins-text-3);
-  font: 400 10.5px/1 var(--ins-font-mono);
+  background: none; border: 1px solid var(--ins-fio); color: var(--ins-tinta-3);
+  font: 400 10.5px/1 var(--ins-fonte);
 }
 
 /* ---------- catálogo e troca ---------- */
 .addex { margin-top: var(--ins-4); }
 .addq {
   width: 100%; margin-bottom: var(--ins-2); padding: var(--ins-3); min-height: 46px;
-  border: 1px solid var(--ins-border); background: var(--ins-surface); color: var(--ins-text);
+  border: 1px solid var(--ins-fio-controle); background: var(--ins-superficie-2); color: var(--ins-tinta);
   /* 16px é o piso: abaixo disso o Safari do iPhone dá zoom ao focar o campo,
      e sair do zoom depois é gesto que ninguém faz no meio do treino. */
-  font: 400 16px/1.2 var(--ins-font-display);
+  font: 400 16px/1.2 var(--ins-fonte);
 }
-.addq:focus { outline: none; border-color: var(--ins-acid); }
+.addq:focus { outline: none; border-color: var(--ins-acento); }
 /* Quarenta resultados: encostados, leem-se como LISTA. Soltos com respiro
    entre si, cada um vira um cartão e a busca parece um catálogo de produtos.
    A altura é travada para as ações do rodapé não irem parar embaixo de tudo. */
@@ -997,10 +1079,10 @@
 .addlist .swapopt b { font-size: 14px; }
 .addlist .swapopt span { margin-top: var(--ins-1); }
 .swapopt.novo { border-style: dashed; }
-.novoex { border: 1px solid var(--ins-hairline); padding: var(--ins-4); margin-top: var(--ins-2); }
+.novoex { border: 1px solid var(--ins-fio); padding: var(--ins-4); margin-top: var(--ins-2); }
 .nxk {
   display: flex; align-items: center; gap: var(--ins-2); margin: var(--ins-1) 0 var(--ins-4);
-  font: 400 13px/1.3 var(--ins-font-display); color: var(--ins-text-3);
+  font: 400 13px/1.3 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .nxk input { width: 20px; height: 20px; }
 .swap-g + .swap-g { margin-top: var(--ins-4); }
@@ -1017,20 +1099,22 @@
 .dd-medidas { margin-top: var(--ins-4); }
 .crow {
   display: flex; align-items: center; gap: var(--ins-3);
-  border-bottom: 1px solid var(--ins-hairline); padding: var(--ins-2) 0;
+  border-bottom: 1px solid var(--ins-fio); padding: var(--ins-2) 0;
   min-height: 40px;
 }
 .crow:last-child { border-bottom: 0; }
-.crow-d { font: 400 10.5px/1 var(--ins-font-mono); color: var(--ins-text-4); min-width: 44px; }
-.crow-m { font: 500 13px/1 var(--ins-font-mono); color: var(--ins-text); }
-.crow-n { font: 400 10.5px/1 var(--ins-font-mono); color: var(--ins-text-4); }
-.crow-x {
+.crow-d { font: 400 10.5px/1 var(--ins-fonte); color: var(--ins-tinta-3); min-width: 44px; }
+.crow-m { font: 500 13px/1 var(--ins-fonte); color: var(--ins-tinta); }
+.crow-n { font: 400 10.5px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
+/* `ligar` uma medida com fita tem a forma do `remover` ao lado: o mesmo
+   controle discreto na ponta da linha, e a mesma extensão de alvo. */
+.crow-x, .co-liga {
   margin-left: auto; flex: 0 0 auto; background: transparent;
-  border: 1px solid var(--ins-hairline); color: var(--ins-text-4);
-  font: 400 10px/1 var(--ins-font-mono); padding: 0 var(--ins-3); min-height: 32px;
+  border: 1px solid var(--ins-fio); color: var(--ins-tinta-3);
+  font: 400 10px/1 var(--ins-fonte); padding: 0 var(--ins-3); min-height: 32px;
   position: relative;
 }
-.crow-x::after { content: ""; position: absolute; inset: -6px 0; }      /* 32 -> 44 */
+.crow-x::after, .co-liga::after { content: ""; position: absolute; inset: -6px 0; }      /* 32 -> 44 */
 
 /* ===========================================================================
    O QUE VEIO DO SISTEMA ANTIGO
@@ -1049,19 +1133,19 @@
    `treino.css`, que é dono da tela onde a faixa mora. */
 .cal-d .barra-cardio {
   display: block; height: 2px; width: 52%; margin: var(--ins-1) auto 0;
-  background: var(--ins-text-4);
+  background: var(--ins-tinta-3);
 }
 
 .cardio-dia {
   display: flex; gap: var(--ins-5); align-items: baseline;
-  margin-top: var(--ins-7); border-top: 1px solid var(--ins-rule); padding-top: var(--ins-6);
+  margin-top: var(--ins-7); border-top: 1px solid var(--ins-fio); padding-top: var(--ins-6);
 }
 .cardio-dia b {
   flex: 0 0 96px;
-  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-text-4);
+  font: 400 10px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ins-tinta-3);
 }
-.cardio-dia span { font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-3); }
+.cardio-dia span { font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-3); }
 
 .crule { margin: var(--ins-7) 0 var(--ins-5); }
 
@@ -1069,49 +1153,49 @@
 .mesnav { display: flex; align-items: center; gap: var(--ins-5); margin-top: var(--ins-7); }
 .mesnav span {
   flex: 1; text-align: center; text-transform: capitalize;
-  font: 500 15px/1 var(--ins-font-display); letter-spacing: -.01em; color: var(--ins-text);
+  font: 500 15px/1 var(--ins-fonte); letter-spacing: -.01em; color: var(--ins-tinta);
 }
 .mesnav button {
-  background: transparent; border: 1px solid var(--ins-hairline); color: var(--ins-text-3);
+  background: transparent; border: 1px solid var(--ins-fio); color: var(--ins-tinta-3);
   font-size: 16px; line-height: 1; padding: var(--ins-4) var(--ins-6); min-height: 40px;
 }
-.mesnav button:disabled { color: var(--ins-text-5); }
+.mesnav button:disabled { color: var(--ins-tinta-3); }
 
-.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-top: var(--ins-7); background: var(--ins-rule); }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-top: var(--ins-7); background: var(--ins-fio); }
 .cal-h {
-  padding: var(--ins-2) 0; text-align: center; background: var(--ins-canvas);
-  font: 400 8.5px/1 var(--ins-font-mono); letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-text-4);
+  padding: var(--ins-2) 0; text-align: center; background: var(--ins-tela);
+  font: 400 8.5px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ins-tinta-3);
 }
-.cal-x { aspect-ratio: 1; background: var(--ins-canvas); }
+.cal-x { aspect-ratio: 1; background: var(--ins-tela); }
 .cal-d {
-  aspect-ratio: 1; min-width: 0; position: relative; background: var(--ins-canvas); border: 0;
+  aspect-ratio: 1; min-width: 0; position: relative; background: var(--ins-tela); border: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
 }
-.cal-d em { font: 400 10px/1 var(--ins-font-mono); font-style: normal; color: var(--ins-text-5); }
+.cal-d em { font: 400 10px/1 var(--ins-fonte); font-style: normal; color: var(--ins-tinta-3); }
 /* A LETRA é quem manda na célula: o número do dia é referência, o treino é o
    dado. Trocar a hierarquia aqui já quebrou a leitura do mês uma vez. */
-.cal-d i { font: 500 12px/1 var(--ins-font-display); font-style: normal; color: var(--ins-acid); }
-.cal-d.feito { background: var(--ins-surface-acid); }
-.cal-d.feito em { color: var(--ins-text-3); }
-.cal-d.hoje { box-shadow: inset 0 0 0 1px var(--ins-text); }
-.cal-d.livre { background: var(--ins-surface); }
-.cal-d.livre i { color: var(--ins-text-3); }
+.cal-d i { font: 500 12px/1 var(--ins-fonte); font-style: normal; color: var(--ins-acento-tinta); }
+.cal-d.feito { background: var(--ins-acento-suave); }
+.cal-d.feito em { color: var(--ins-tinta-3); }
+.cal-d.hoje { box-shadow: inset 0 0 0 1px var(--ins-tinta); }
+.cal-d.livre { background: var(--ins-superficie-2); }
+.cal-d.livre i { color: var(--ins-tinta-3); }
 .cal-d.futuro { opacity: .35; }
 
 .per { position: absolute; top: 2px; right: 3px; font-size: 11px; line-height: 1; text-decoration: none; }
 .callegenda { display: flex; gap: var(--ins-6); margin-top: var(--ins-4); }
 .callegenda .per { position: static; margin-right: var(--ins-1); font-size: 12px; }
 
-.mediasem { margin-top: var(--ins-8); font: 400 13px/1.5 var(--ins-font-mono); color: var(--ins-text-3); }
-.mediasem b { font: 600 22px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text); }
+.mediasem { margin-top: var(--ins-8); font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-3); }
+.mediasem b { font: 600 22px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta); }
 .mediasem span {
-  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-4);
+  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
 
 .sessrow {
   display: flex; align-items: center; gap: var(--ins-4);
-  border-bottom: 1px solid var(--ins-hairline); padding: var(--ins-6) 0; background: none; border-left: 0; border-right: 0; border-top: 0;
+  border-bottom: 1px solid var(--ins-fio); padding: var(--ins-6) 0; background: none; border-left: 0; border-right: 0; border-top: 0;
   width: 100%; text-align: left;
 }
 .sessrow:last-child { border-bottom: 0; }
@@ -1124,124 +1208,126 @@
 .sessrow.destacada::before {
   content: ""; position: absolute;
   left: calc(-1 * var(--ins-4)); top: 0; bottom: 0;
-  width: var(--ins-rail); background: var(--ins-acid);
+  width: var(--ins-rail); background: var(--ins-acento);
 }
-.sess-d { min-width: 44px; font: 400 11px/1.3 var(--ins-font-mono); color: var(--ins-text-3); }
-.sess-d em { display: block; font-style: normal; font-size: 10px; color: var(--ins-text-5); margin-top: 2px; }
+.sess-d { min-width: 44px; font: 400 11px/1.3 var(--ins-fonte); color: var(--ins-tinta-3); }
+.sess-d em { display: block; font-style: normal; font-size: 10px; color: var(--ins-tinta-3); margin-top: 2px; }
 /* A letra NÃO é ácida aqui. Toda linha desta lista é uma sessão feita, então
    a cor não distingue nada — vira decoração, e catorze ácidos numa tela é
    exatamente o que o §4 proíbe. No calendário ela continua ácida, porque lá
    ela separa o dia treinado do dia vazio. */
-.sess-l { min-width: 16px; font: 500 15px/1 var(--ins-font-display); color: var(--ins-text); }
-.sess-l.livre { color: var(--ins-text-3); }
-.sess-n { flex: 1; min-width: 0; font: 400 11.5px/1.4 var(--ins-font-mono); color: var(--ins-text-3); }
+.sess-l { min-width: 16px; font: 500 15px/1 var(--ins-fonte); color: var(--ins-tinta); }
+.sess-l.livre { color: var(--ins-tinta-3); }
+.sess-n { flex: 1; min-width: 0; font: 400 11.5px/1.4 var(--ins-fonte); color: var(--ins-tinta-3); }
 .sess-o {
   flex: 0 0 auto; padding: 3px var(--ins-2);
-  background: var(--ins-acid); color: var(--ins-on-acid);
-  font: 400 9px/1 var(--ins-font-mono); letter-spacing: .08em; text-transform: uppercase;
+  background: var(--ins-acento); color: var(--ins-sobre-acento);
+  font: 400 9px/1 var(--ins-fonte); letter-spacing: .08em; text-transform: uppercase;
 }
 
 /* ---- Pendências da sessão ----------------------------------------------- */
-.horario b { color: var(--ins-text-3); font-weight: 500; }
+.horario b { color: var(--ins-tinta-3); font-weight: 500; }
 
 .pend { margin-top: var(--ins-7); }
 .pend > div {
   display: flex; gap: var(--ins-4); align-items: baseline;
-  border-top: 1px solid var(--ins-hairline); padding: var(--ins-4) 0;
+  border-top: 1px solid var(--ins-fio); padding: var(--ins-4) 0;
 }
 .aprox {
   font-style: normal; padding: 2px var(--ins-2); margin-left: var(--ins-2);
-  border: 1px solid var(--ins-hairline);
-  font: 400 9px/1 var(--ins-font-mono); letter-spacing: .08em; color: var(--ins-text-4);
+  border: 1px solid var(--ins-fio);
+  font: 400 9px/1 var(--ins-fonte); letter-spacing: .08em; color: var(--ins-tinta-3);
 }
 
 /* ---- Avisos: âmbar é "preste atenção", ácido é "isto está ativo" -------- */
 .deload {
   margin-top: var(--ins-7); padding: var(--ins-5);
-  border: 1px solid var(--ins-amber); color: var(--ins-text-2);
-  font: 400 12.5px/1.5 var(--ins-font-display);
+  border: 1px solid var(--ins-atencao-fio); color: var(--ins-tinta-2);
+  font: 400 12.5px/1.5 var(--ins-fonte);
 }
-.deload b { color: var(--ins-amber); }
-.deload.on { border-color: var(--ins-acid); }
-.deload.on b { color: var(--ins-acid); }
+.deload b { color: var(--ins-atencao-tinta); }
+.deload.on { border-color: var(--ins-acento); }
+.deload.on b { color: var(--ins-acento-tinta); }
+/* O rótulo diz o corte em número (§7.6), e por isso quebra linha: altura de
+   linha para duas, e alinhado à esquerda como frase. */
 .dlbtn {
-  display: block; margin-top: var(--ins-4); padding: 0 var(--ins-6); min-height: 40px;
-  background: transparent; border: 1px solid var(--ins-amber); color: var(--ins-amber);
-  font: 400 11px/1 var(--ins-font-mono);
+  display: block; margin-top: var(--ins-4); padding: var(--ins-3) var(--ins-6); min-height: 40px;
+  background: transparent; border: 1px solid var(--ins-atencao-fio); color: var(--ins-atencao-tinta);
+  font: 400 11px/1.4 var(--ins-fonte); text-align: left;
 }
-.deload.on .dlbtn { border-color: var(--ins-acid); color: var(--ins-acid); }
+.deload.on .dlbtn { border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
 
 /* ---- Histórico do exercício -------------------------------------------- */
 .hwrap { padding: 0; }
 .htitle { margin: var(--ins-2) 0 var(--ins-3); }
 
-.stats { display: grid; gap: 1px; background: var(--ins-rule); margin-top: var(--ins-2); }
-.stats > div { background: var(--ins-canvas); padding: var(--ins-4) 0; }
+.stats { display: grid; gap: 1px; background: var(--ins-fio); margin-top: var(--ins-2); }
+.stats > div { background: var(--ins-tela); padding: var(--ins-4) 0; }
 .stats > div:not(:first-child) { padding-left: var(--ins-5); }
 .stats b {
-  display: block; font: 500 17px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text);
+  display: block; font: 500 17px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta);
 }
 .stats span {
   display: block; margin-top: var(--ins-2);
-  font: 400 9px/1.35 var(--ins-font-mono); letter-spacing: .07em; text-transform: uppercase;
-  color: var(--ins-text-4);
+  font: 400 9px/1.35 var(--ins-fonte); letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ins-tinta-3);
 }
 
 .ins-grafico { margin-top: var(--ins-7); }
 .chart { width: 100%; height: auto; display: block; overflow: visible; }
-.chart .gl { stroke: var(--ins-hairline); stroke-width: 1; }
-.chart .cl { fill: none; stroke: var(--ins-acid); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.chart .cp { fill: var(--ins-canvas); stroke: var(--ins-acid); stroke-width: 2; }
-.chart .cp.last { fill: var(--ins-acid); }
-.chart .vlline { fill: none; stroke: var(--ins-text-4); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
-.chart .vp { fill: var(--ins-canvas); stroke: var(--ins-text-4); stroke-width: 1.5; }
-.chart .vp.last { fill: var(--ins-text-4); }
-.chart .ax { font-family: var(--ins-font-mono); font-size: 9px; fill: var(--ins-text-4); }
+.chart .gl { stroke: var(--ins-fio); stroke-width: 1; }
+.chart .cl { fill: none; stroke: var(--ins-acento); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .cp { fill: var(--ins-tela); stroke: var(--ins-acento); stroke-width: 2; }
+.chart .cp.last { fill: var(--ins-acento-tinta); }
+.chart .vlline { fill: none; stroke: var(--ins-tinta-3); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart .vp { fill: var(--ins-tela); stroke: var(--ins-tinta-3); stroke-width: 1.5; }
+.chart .vp.last { fill: var(--ins-tinta-3); }
+.chart .ax { font-family: var(--ins-fonte); font-size: 9px; fill: var(--ins-tinta-3); }
 .chart .axu {
-  font-family: var(--ins-font-mono); font-size: 7.5px; fill: var(--ins-text-5);
+  font-family: var(--ins-fonte); font-size: 7.5px; fill: var(--ins-tinta-3);
   letter-spacing: .1em; text-transform: uppercase;
 }
-.chart .vl { font-family: var(--ins-font-mono); font-size: 9.5px; fill: var(--ins-text-3); }
-.chart .vl.last { fill: var(--ins-text); font-weight: 500; }
+.chart .vl { font-family: var(--ins-fonte); font-size: 9.5px; fill: var(--ins-tinta-3); }
+.chart .vl.last { fill: var(--ins-tinta); font-weight: 500; }
 
 .legend {
   display: flex; gap: var(--ins-7); margin: var(--ins-3) 0 0;
-  font: 400 9.5px/1 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-4);
+  font: 400 9.5px/1 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-tinta-3);
 }
 .legend i { display: inline-block; width: 8px; height: 8px; margin-right: var(--ins-2); font-style: normal; }
-.legend .c i { background: var(--ins-acid); }
-.legend .v i { background: var(--ins-text-4); }
+.legend .c i { background: var(--ins-acento); }
+.legend .v i { background: var(--ins-tinta-3); }
 
-.hs { border-bottom: 1px solid var(--ins-hairline); padding: var(--ins-5) 0; }
+.hs { border-bottom: 1px solid var(--ins-fio); padding: var(--ins-5) 0; }
 .hs:last-child { border-bottom: 0; }
 .hs-top { display: flex; align-items: baseline; gap: var(--ins-4); }
-.hs-date { min-width: 46px; font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-4); }
-.hs-vol { font: 500 13.5px/1 var(--ins-font-mono); color: var(--ins-text); }
-.hs-vol em { font-style: normal; font-size: 9px; letter-spacing: .06em; color: var(--ins-text-4); margin-left: 3px; }
-.hs-d { margin-left: auto; font: 400 10.5px/1 var(--ins-font-mono); color: var(--ins-text-4); }
+.hs-date { min-width: 46px; font: 400 11px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
+.hs-vol { font: 500 13.5px/1 var(--ins-fonte); color: var(--ins-tinta); }
+.hs-vol em { font-style: normal; font-size: 9px; letter-spacing: .06em; color: var(--ins-tinta-3); margin-left: 3px; }
+.hs-d { margin-left: auto; font: 400 10.5px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
 /* O recuo alinha as séries sob o valor, não sob a data: o olho desce pela
    coluna de números, que é o que ele veio comparar. */
 .hs-sets { display: flex; flex-wrap: wrap; gap: var(--ins-2); margin-top: var(--ins-3); padding-left: var(--ins-recuo-valor); }
 .hs-sets span {
-  padding: var(--ins-1) var(--ins-3); border: 1px solid var(--ins-hairline);
-  font: 400 11.5px/1 var(--ins-font-mono); color: var(--ins-text-3);
+  padding: var(--ins-1) var(--ins-3); border: 1px solid var(--ins-fio);
+  font: 400 11.5px/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
-.hs-sets span.nul { color: var(--ins-text-5); }
+.hs-sets span.nul { color: var(--ins-tinta-3); }
 .hsec { margin: var(--ins-10) 0 var(--ins-1); }
-.pain { margin-top: var(--ins-3); padding-left: var(--ins-recuo-valor); font: 400 11px/1.4 var(--ins-font-mono); }
-.hs-obs { margin-top: var(--ins-2); padding-left: var(--ins-recuo-valor); font: 400 12.5px/1.5 var(--ins-font-display); color: var(--ins-text-3); }
+.pain { margin-top: var(--ins-3); padding-left: var(--ins-recuo-valor); font: 400 11px/1.4 var(--ins-fonte); }
+.hs-obs { margin-top: var(--ins-2); padding-left: var(--ins-recuo-valor); font: 400 12.5px/1.5 var(--ins-fonte); color: var(--ins-tinta-3); }
 
 .vars { display: flex; gap: var(--ins-2); flex-wrap: wrap; margin-top: var(--ins-6); }
 .vchip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vchip.on { border-color: var(--ins-acid); color: var(--ins-acid); background: transparent; }
+.vchip.on { border-color: var(--ins-acento); color: var(--ins-acento-tinta); background: transparent; }
 
 /* ---- Correção de sessão passada ---------------------------------------- */
 .edbtn {
   margin: var(--ins-4) 0 0 var(--ins-recuo-valor); padding: 0 var(--ins-4); min-height: 34px;
-  background: transparent; border: 1px solid var(--ins-hairline); color: var(--ins-text-4);
-  font: 400 10px/1 var(--ins-font-mono);
+  background: transparent; border: 1px solid var(--ins-fio); color: var(--ins-tinta-3);
+  font: 400 10px/1 var(--ins-fonte);
 }
-.hs.editando { border: 1px solid var(--ins-acid); padding: var(--ins-6); margin: var(--ins-2) 0; }
+.hs.editando { border: 1px solid var(--ins-acento); padding: var(--ins-6); margin: var(--ins-2) 0; }
 .ed-sets { margin-top: var(--ins-4); }
 .ed-sets .setrow { margin-bottom: var(--ins-3); }
 .edrow { display: flex; gap: var(--ins-3); margin-top: var(--ins-6); }
@@ -1249,87 +1335,99 @@
 .ed-rm { width: 100%; margin-top: var(--ins-4); }
 .setrow input::-webkit-outer-spin-button,
 .setrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.note::placeholder { color: var(--ins-text-5); }
-.note:focus { outline: none; border-color: var(--ins-acid); }
+.note::placeholder { color: var(--ins-tinta-3); }
+.note:focus { outline: none; border-color: var(--ins-acento); }
 
 .painsum { margin-top: var(--ins-8); }
 
 /* ---- Rotação e atalhos de edição na tela de treino ---------------------- */
-.rot { display: flex; gap: 1px; background: var(--ins-rule); }
+.rot { display: flex; gap: 1px; background: var(--ins-fio); }
 .rot button {
-  flex: 1; padding: var(--ins-3) 0; border: 0; background: var(--ins-canvas); color: var(--ins-text-3);
-  font: 500 14px/1 var(--ins-font-display);
+  flex: 1; padding: var(--ins-3) 0; border: 0; background: var(--ins-tela); color: var(--ins-tinta-3);
+  font: 500 14px/1 var(--ins-fonte);
 }
-.rot button.on { background: var(--ins-acid); color: var(--ins-on-acid); }
+.rot button.on { background: var(--ins-acento); color: var(--ins-sobre-acento); }
 .rot button.next::after {
   content: ''; display: block; width: 4px; height: 4px; border-radius: 50%;
-  background: var(--ins-acid); margin: var(--ins-1) auto -4px;
+  background: var(--ins-acento); margin: var(--ins-1) auto -4px;
 }
-.rot button.on.next::after { background: var(--ins-on-acid); }
+.rot button.on.next::after { background: var(--ins-sobre-acento); }
 
 .edlink { display: flex; align-items: center; gap: var(--ins-4); margin-top: var(--ins-4); flex-wrap: wrap; }
 
 /* ---- Tela de programa --------------------------------------------------- */
 .progdias { margin: var(--ins-2) 0 var(--ins-5); }
-.progd { display: flex; align-items: stretch; border-bottom: 1px solid var(--ins-hairline); }
+.progd { display: flex; align-items: stretch; border-bottom: 1px solid var(--ins-fio); }
 .progd:last-of-type { border-bottom: 0; }
 .progd-b {
   flex: 1; display: flex; align-items: center; gap: var(--ins-5); text-align: left;
-  border: 0; background: transparent; padding: var(--ins-5) 0; min-height: 62px; color: var(--ins-text);
+  border: 0; background: transparent; padding: var(--ins-5) 0; min-height: 62px; color: var(--ins-tinta);
 }
 /* Largura fixa para as linhas alinharem, com folga para um rótulo de dois
    caracteres: o dia de HYROX se chama HX. */
-.progd-l { flex: 0 0 auto; width: 34px; text-align: center; font: 400 20px/1 var(--ins-font-mono); color: var(--ins-acid); }
+.progd-l { flex: 0 0 auto; width: 34px; text-align: center; font: 400 20px/1 var(--ins-fonte); color: var(--ins-acento-tinta); }
 .progd-t { flex: 1; min-width: 0; }
-.progd-t b { display: block; font: 500 14px/1.3 var(--ins-font-display); }
-.progd-t span { display: block; margin-top: 3px; font: 400 10.5px/1.3 var(--ins-font-mono); color: var(--ins-text-4); }
+.progd-t b { display: block; font: 500 14px/1.3 var(--ins-fonte); }
+.progd-t span { display: block; margin-top: 3px; font: 400 10.5px/1.3 var(--ins-fonte); color: var(--ins-tinta-3); }
 .progd-mv { display: flex; flex: 0 0 auto; align-items: center; }
 .progd-mv button {
   width: 38px; height: 38px; font-size: 14px;
-  border: 1px solid var(--ins-hairline); background: transparent; color: var(--ins-text-3);
+  border: 1px solid var(--ins-fio); background: transparent; color: var(--ins-tinta-3);
 }
 .progd-mv button + button { border-left: 0; }
-.progd-mv button:disabled { color: var(--ins-text-5); }
+.progd-mv button:disabled { color: var(--ins-tinta-3); }
 
 /* Fio ácido à esquerda: a diferença é uma marca de margem no que já existe,
    não um cartão de alerta. */
 .progdif {
-  border-left: 2px solid var(--ins-acid); padding: var(--ins-3) 0 var(--ins-3) var(--ins-5);
+  border-left: 2px solid var(--ins-acento); padding: var(--ins-3) 0 var(--ins-3) var(--ins-5);
   margin-bottom: var(--ins-5);
 }
-.progdif b { display: block; margin-bottom: var(--ins-2); font: 500 13px/1.3 var(--ins-font-display); color: var(--ins-text); }
-.progdif span { display: block; font: 400 11px/1.7 var(--ins-font-mono); color: var(--ins-text-3); }
+.progdif b { display: block; margin-bottom: var(--ins-2); font: 500 13px/1.3 var(--ins-fonte); color: var(--ins-tinta); }
+.progdif span { display: block; font: 400 11px/1.7 var(--ins-fonte); color: var(--ins-tinta-3); }
 .prog-nota { margin: var(--ins-5) 0 var(--ins-7); }
 .prog-comparar { margin-top: var(--ins-8); }
 
-.phist { border-bottom: 1px solid var(--ins-hairline); padding: var(--ins-5) 0; }
+.phist { border-bottom: 1px solid var(--ins-fio); padding: var(--ins-5) 0; }
 .phist:last-child { border-bottom: 0; }
-.phist-t { font: 400 14px/1.35 var(--ins-font-display); color: var(--ins-text-2); }
+.phist-t { font: 400 14px/1.35 var(--ins-fonte); color: var(--ins-tinta-2); }
 .phist-m { margin-top: var(--ins-1); }
 
 /* ---- Blocos de dados e botões de arquivo -------------------------------- */
-.dgroup { border-bottom: 1px solid var(--ins-rule); padding: var(--ins-8) 0; }
+.dgroup { border-bottom: 1px solid var(--ins-fio); padding: var(--ins-8) 0; }
 .dgroup:last-of-type { border-bottom: 0; }
-.dgroup h3 { margin: 0 0 var(--ins-2); font: 500 14.5px/1.2 var(--ins-font-display); letter-spacing: -.01em; color: var(--ins-text); }
-.dgroup p { margin: 0 0 var(--ins-5); font: 400 12.5px/1.55 var(--ins-font-display); color: var(--ins-text-3); }
+.dgroup h3 { margin: 0 0 var(--ins-2); font: 500 14.5px/1.2 var(--ins-fonte); letter-spacing: -.01em; color: var(--ins-tinta); }
+.dgroup p { margin: 0 0 var(--ins-5); font: 400 12.5px/1.55 var(--ins-fonte); color: var(--ins-tinta-3); }
 .dbtn {
   display: block; width: 100%; text-align: center; min-height: var(--ins-tap); padding: var(--ins-6);
-  border: 1px solid var(--ins-border-strong); background: transparent; color: var(--ins-text-2);
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
+  border: 1px solid var(--ins-fio-controle); background: transparent; color: var(--ins-tinta-2);
+  font: 400 11px/1 var(--ins-fonte); letter-spacing: .14em; text-transform: uppercase;
 }
 .dbtn + .dbtn, .dbtn + label.dbtn { margin-top: var(--ins-2); }
-.dbtn.ghost { border-color: var(--ins-hairline); color: var(--ins-text-3); }
+.dbtn.ghost { border-color: var(--ins-fio); color: var(--ins-tinta-3); }
 .dbtn input[type=file] { display: none; }
-.danger { color: var(--ins-coral); border-color: var(--ins-coral); }
+.danger { color: var(--ins-pare-tinta); border-color: var(--ins-pare-fio); }
 
 /* ---- Regras do guia e sinalizações menores ------------------------------ */
-.painbox b { display: block; margin-bottom: 3px; color: var(--ins-amber); font-weight: 500; }
-.tag.bi-t { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
-.rest.bi { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
+.painbox b { display: block; margin-bottom: 3px; color: var(--ins-atencao-tinta); font-weight: 500; }
+.tag.bi-t { border-color: var(--ins-fio-controle); color: var(--ins-tinta-3); }
+.rest.bi { border-color: var(--ins-fio-controle); color: var(--ins-tinta-3); }
 .aquec span { flex: 1; min-width: 0; }
-.aquec.on .aqbtn { border-color: var(--ins-acid); color: var(--ins-acid); }
+.aquec.on .aqbtn { border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
 .mus { margin-top: var(--ins-1); }
-.msg { padding: var(--ins-11) var(--ins-8); text-align: center; font: 400 12px/1.5 var(--ins-font-mono); color: var(--ins-text-3); }
+.msg { padding: var(--ins-11) var(--ins-8); text-align: center; font: 400 12px/1.5 var(--ins-fonte); color: var(--ins-tinta-3); }
+/* O registro não abriu (§7.2 da frente 3): família "falhou", na moldura de pare,
+   cobrindo a tela — não há app por baixo para mostrar. */
+.abertura-falhou {
+  position: fixed; inset: 0; z-index: 95; overflow-y: auto;
+  padding: calc(var(--ins-11) + env(safe-area-inset-top)) var(--ins-6) var(--ins-8);
+  background: var(--ins-pare-fundo); color: var(--ins-pare-tinta);
+  display: flex; flex-direction: column; gap: var(--ins-4);
+}
+.abertura-t { margin: 0; font: 600 20px/1.3 var(--ins-fonte); }
+.abertura-c, .abertura-r { margin: 0; font: 400 16px/1.45 var(--ins-fonte); }
+.abertura-d { margin: 0; font: 400 13px/1.4 var(--ins-fonte); }
+.abertura-b { width: 100%; }
 
 /* ---- Toast e cronômetro: ambos fixos, ambos fora da árvore do Preact ---- */
 /* O toast se apoia no que estiver embaixo dele, não numa altura chutada.
@@ -1345,8 +1443,8 @@
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-faixa-h) + var(--ins-6));
   width: calc(100% - 36px); max-width: 424px; z-index: 30;
-  background: var(--ins-surface); border: 1px solid var(--ins-border); color: var(--ins-text);
-  font: 400 11.5px/1.45 var(--ins-font-mono);
+  background: var(--ins-superficie-2); border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta);
+  font: 400 11.5px/1.45 var(--ins-fonte);
   padding: var(--ins-5) var(--ins-6); text-align: center; display: none;
 }
 #toast.on { display: block; }
@@ -1361,8 +1459,8 @@
 #timer {
   position: fixed; bottom: var(--ins-tabbar); left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 460px; z-index: 35;
-  background: var(--ins-surface-low);
-  border-top: 1px solid var(--ins-rule); border-bottom: 1px solid var(--ins-rule);
+  background: var(--ins-superficie-2);
+  border-top: 1px solid var(--ins-fio); border-bottom: 1px solid var(--ins-fio);
   padding: var(--ins-5) var(--ins-8);
   display: none; flex-direction: column; gap: var(--ins-3);
 }
@@ -1376,47 +1474,47 @@
   position: fixed; bottom: calc(var(--ins-tabbar) + var(--ins-timer-h));
   left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 460px; z-index: 34;
-  background: var(--ins-surface); color: var(--ins-text);
-  border: none; border-top: 1px solid var(--ins-rule); border-bottom: 1px solid var(--ins-rule);
+  background: var(--ins-superficie-2); color: var(--ins-tinta);
+  border: none; border-top: 1px solid var(--ins-fio); border-bottom: 1px solid var(--ins-fio);
   padding: var(--ins-4) var(--ins-8); min-height: 46px;
   display: flex; flex-direction: column; align-items: flex-start; gap: var(--ins-2);
   text-align: left;
 }
-.ins-faixa-o { font: 400 9px/1.3 var(--ins-font-mono); color: var(--ins-text-4); }
+.ins-faixa-o { font: 400 9px/1.3 var(--ins-fonte); color: var(--ins-tinta-3); }
 /* 15px: é o nome do exercício e a faixa inteira é o botão que leva de volta
    ao treino — piso de nome tocável, não de meta. */
 .ins-atalho-v {
-  font: 400 15px/1.2 var(--ins-font-display); color: var(--ins-acid);
+  font: 400 15px/1.2 var(--ins-fonte); color: var(--ins-acento-tinta);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
 }
 
 /* A pergunta é âmbar, não ácido: atenção, não ação desejada. Ela não pede que
    ele faça algo melhor — pede que diga o que já aconteceu. */
-.ins-faixa-p { border-top-color: var(--ins-amber); gap: var(--ins-4); }
-.ins-faixa-q { color: var(--ins-amber); }
+.ins-faixa-p { border-top-color: var(--ins-atencao-fio); gap: var(--ins-4); }
+.ins-faixa-q { color: var(--ins-atencao-tinta); }
 .ins-faixa-acoes { display: flex; gap: var(--ins-4); width: 100%; }
 .ins-faixa-b {
-  flex: 1; background: none; border: 1px solid var(--ins-border); color: var(--ins-text-2);
-  font: 400 11px/1 var(--ins-font-mono); min-height: 40px; padding: 0 var(--ins-4);
+  flex: 1; background: none; border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta-2);
+  font: 400 11px/1 var(--ins-fonte); min-height: 40px; padding: 0 var(--ins-4);
 }
 /* A procedência do descanso. Some quando não há o que dizer — o cronômetro
    ligado na mão pelo botão do cartão não tem série de origem. */
-#tctx { color: var(--ins-text-4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#tctx { color: var(--ins-tinta-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #tctx:empty { display: none; }
 #tlinha { display: flex; align-items: center; gap: var(--ins-6); }
-#tval { font: 600 27px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text); }
-#tval.zero { color: var(--ins-acid); }
-#tbar { flex: 1; height: var(--ins-rail); background: var(--ins-surface); overflow: hidden; }
+#tval { font: 600 27px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta); }
+#tval.zero { color: var(--ins-acento-tinta); }
+#tbar { flex: 1; height: var(--ins-rail); background: var(--ins-superficie-2); overflow: hidden; }
 /* `transform: scaleX`, não `width`: a barra é repintada 4× por segundo por até
    três minutos de descanso, e animar largura refaz o layout a cada quadro.
    A escala roda no compositor e desenha exatamente a mesma barra. */
 #tfill {
-  height: 100%; width: 100%; background: var(--ins-acid);
+  height: 100%; width: 100%; background: var(--ins-acento);
   transform-origin: left center; transition: transform .25s linear;
 }
 #timer button {
-  background: none; border: 1px solid var(--ins-hairline); color: var(--ins-text-3);
-  font: 400 10px/1 var(--ins-font-mono); padding: 0 var(--ins-4); min-height: 32px;
+  background: none; border: 1px solid var(--ins-fio); color: var(--ins-tinta-3);
+  font: 400 10px/1 var(--ins-fonte); padding: 0 var(--ins-4); min-height: 32px;
 }
 /* Os dois de ajuste são apertados no meio da série, de pé: alvo maior que o
    `parar`, que é de uma vez só. O gap de 6px entre eles é o que impede o
@@ -1426,7 +1524,9 @@
    escreveu. */
 #tmenos, #tmais { min-width: var(--ins-tap); min-height: var(--ins-tap); }
 
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* O portão de movimento reduzido mora em `base.css`, e alcança por `*` com
+   `!important` — esta folha tinha uma segunda cópia só da parte de transição,
+   que virou ruído depois que o portão passou a ser estrutural. */
 
 /* O que é redondo por decisão: ponto de status, ponto ao vivo e thumb do
    slider — os três pontos contam como um na lista do DESIGN.md, que fecha com a
@@ -1436,3 +1536,304 @@
    necessária: nenhuma regra do projeto declara raio. */
 .ins-live-dot, .ins-tl-ponto,
 input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
+
+
+/* ---- O modo de sessão ----
+   O invólucro do treino em tela cheia. Ele desenha UMA coisa: a saída.
+
+   O alvo vem de `--ins-tap` e não de um número: é controle que se toca de pé,
+   suado, e é a única saída visível do modo — errar nele é ficar preso. Por isso
+   ele é o alvo cheio e não o degrau denso, mesmo sendo uma seta pequena na
+   tela: o desenho é pequeno, a área não é.
+
+   A posição é a da direção, e a frente 1 mediu o que ela custa: o centro fica a
+   92% da diagonal da tela a partir do pivô do polegar. É a medição E, e ela
+   NÃO FOI FEITA — se reprovar, a saída muda de canto, não de existência. */
+.ins-modo {
+  display: flex; flex-direction: column;
+  /* A altura da barra da saída, nas MESMAS parcelas com que ela é montada
+     abaixo: o padding de cima (que já embute a barra de status) mais o alvo do
+     botão. Existe porque o relógio da sessão também gruda no topo, e precisa
+     parar DEPOIS desta barra — somar à mão nos dois lugares desencontra na
+     primeira vez que o padding mudar. */
+  --ins-modo-topo-h: calc(var(--sa-top) + var(--ins-3) + var(--ins-tap));
+  /* `100vh` primeiro como fallback e `100svh` por cima, nesta ordem — a rede
+     pegou esta regra errada na primeira versão deste arquivo, e com razão:
+     invertida, o fallback vence e volta a sobra rolável do tamanho da barra. */
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+/* A RESERVA DO RODAPÉ, no modo.
+   `--ins-tabbar` não é a altura da barra: a barra se mede sozinha, e o token
+   existe "para quem precisa reservar espaço embaixo" (`tokens.css`, literal).
+   São quatro consumidores — o fim da página (`#app`), o toast, o cronômetro e a
+   faixa da sessão — e todos ancoram NELA. No modo a barra não é desenhada, e
+   sem isto sobrava a altura dela de espaço morto no fim do treino, com a faixa
+   e o cronômetro flutuando acima de nada.
+   Fica `var(--sa-bottom)` e não `0`: o que sai é a barra, não o espaço do
+   indicador de home — sem ele o último cartão encosta nele. */
+#app:has(.ins-modo) { --ins-tabbar: var(--sa-bottom); }
+
+/* GRUDADA NO TOPO, e isto é regra escrita: "a seta não some em nenhum estado do
+   modo" (frente 1, §4.3, item 5). O modo nasceu porque o dedo ficava preso numa
+   tela sem saída; uma saída que rola para fora da tela é a mesma armadilha com
+   um passo a mais.
+   `top: 0` e não `var(--sa-top)`: o padding de cima daqui já embute a barra de
+   status, então o conteúdo para abaixo dela sem que a barra descole do topo
+   real. Fundo opaco porque o conteúdo passa por baixo — e fundo chapado, não
+   `backdrop-filter`: ele pisca no Blink quando um vizinho anima ou o scroll
+   reseta.
+   A cadeia acima desta barra (`.ins-modo`) não pode ter `overflow` ≠ visible:
+   sticky se ancora no primeiro ancestral com overflow, e aí acompanha o
+   conteúdo e some. Há um caso em `tests/dominio/estilo.test.ts` cobrando isso. */
+.ins-modo-topo {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center;
+  padding: var(--ins-3) var(--ins-8) 0;
+  padding-top: calc(var(--ins-3) + var(--sa-top));
+  background: var(--ins-fundo);
+}
+
+/* O relógio da sessão gruda abaixo da barra da saída, não embaixo dela. Fora do
+   modo ele para em `var(--sa-top)` (`src/treino.css`), que aqui seria dentro
+   da barra: as duas faixas ocupariam a mesma. */
+.ins-modo .day-rel { top: var(--ins-modo-topo-h); }
+
+/* A hora encosta na direita; a seta fica na esquerda. `margin-left: auto` e não
+   `justify-content: space-between` no pai: se um terceiro elemento entrar no
+   cabeçalho, a seta continua colada na esquerda em vez de ir para o meio. */
+.ins-modo-hora {
+  margin-left: auto;
+  font: 400 15px/1 var(--ins-fonte); color: var(--ins-tinta-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ins-modo-sair {
+  min-width: var(--ins-tap); min-height: var(--ins-tap);
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: var(--ins-tinta-2);
+  font: 400 26px/1 var(--ins-fonte);
+}
+
+/* O cabeçalho do AGORA tem duas ações: o estado do dia e os ajustes. O de
+   estado é o largo — é onde o tipo do dia e o turno se trocam, e é tocado todo
+   dia; os ajustes são um alvo de ícone, visitados quando algo quebra. */
+.ins-cab-acoes { display: flex; align-items: flex-start; gap: var(--ins-4); }
+.ins-cab-ajustes {
+  min-width: var(--ins-tap); min-height: var(--ins-tap);
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: var(--ins-tinta-3);
+  font: 400 18px/1 var(--ins-fonte);
+}
+
+/* ---- Prescrição: a fila das mudanças que esperam ----------------------- */
+/*
+   Uma sessão por bloco, as mudanças dela empilhadas dentro. O fio da esquerda
+   é de ATENÇÃO e não de perigo: há decisão esperando, não estrago feito.
+*/
+.pr-espera {
+  padding: var(--ins-5) 0 var(--ins-6);
+  border-bottom: 1px solid var(--ins-fio);
+}
+.pr-espera:last-of-type { border-bottom: 0; }
+.pr-espera-h { display: flex; align-items: baseline; gap: var(--ins-4); }
+/* O vencimento é o que dá urgência à linha, e por isso é o único em âmbar. */
+.pr-vence { color: var(--ins-atencao-tinta); font-style: normal; }
+
+.pr-mud { margin-top: var(--ins-5); }
+.pr-mud-t { color: var(--ins-tinta); }
+.pr-mud-i { margin-top: var(--ins-2); color: var(--ins-tinta-3); }
+.pr-mud-i.acima { color: var(--ins-atencao-tinta); }
+/* Lado a lado e do MESMO tamanho: não há resposta padrão, e dar mais área a uma
+   delas é escolher por ele. */
+.pr-mud-b { display: flex; gap: var(--ins-4); margin-top: var(--ins-4); }
+.pr-mud-b > * { flex: 1; }
+.pr-motivo { margin-top: var(--ins-5); width: 100%; }
+
+/* A linha do vencimento no Agora. Sem moldura de atenção: nada quebrou e nada
+   se perde hoje — é um convite a decidir com calma, e é o que o rótulo diz. */
+.ag-vence { align-items: center; gap: var(--ins-5); }
+.ag-vence .ins-btn-secondary { flex: 0 0 auto; }
+
+/* O que venceu sem resposta. Sem âmbar: não há nada a corrigir e nada se
+   perdeu — o que aconteceu é que o tempo decidiu pelo lado conservador, e a
+   porta de volta está ali. Âmbar aqui leria como cobrança. */
+.pr-espera.venceu .pr-mud-t { color: var(--ins-tinta-2); }
+
+/* ---- Corpo: a bioimpedância ------------------------------------------- */
+/*
+   Cinco campos em duas colunas. O rótulo em cima e não ao lado: "massa muscular
+   esquelética" não cabe à esquerda de um campo numa tela de telefone, e cortá-lo
+   tiraria justamente a palavra que distingue um campo do outro.
+*/
+/* Como eu medi: rótulo em cima, como na bioimpedância, e a frase de por que
+   embaixo — é ela que explica por que o app pede um texto numa tela de número. */
+.co-onde { display: flex; flex-direction: column; gap: var(--ins-2); margin-top: var(--ins-4); }
+.co-onde .ins-input { width: 100%; }
+.co-onde-l { color: var(--ins-tinta-2); }
+.co-bio { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-5); }
+.co-bio-c { display: flex; flex-direction: column; gap: var(--ins-2); }
+.co-bio-c .ins-input { width: 100%; }
+.co-bio-op { color: var(--ins-tinta-3); font-style: normal; }
+.co-bio-dia {
+  display: flex; align-items: center; gap: var(--ins-4);
+  margin: var(--ins-6) 0 var(--ins-5);
+}
+
+/* O `···` do modo, à direita da hora. Alvo cheio e ícone discreto: o que é raro
+   não deve pedir atenção, mas tem de ser alcançável com a mão suada. */
+.ins-modo-mais {
+  min-width: var(--ins-tap); min-height: var(--ins-tap);
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: var(--ins-tinta-3);
+  font: 400 20px/1 var(--ins-fonte); margin-left: var(--ins-3);
+}
+/* O item do menu tem DUAS linhas, e a de baixo é o freio — ela diz o corte em
+   número. Por isso o nome não pode ficar sozinho numa linha só. */
+.ms-item { align-items: flex-start; }
+.ms-item .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-2); }
+.ms-detalhe { display: block; }
+.ms-regra { margin: var(--ins-3) 0 0; color: var(--ins-tinta-2); }
+
+/* ---- A folha de pôr o dia em dia -------------------------------------- */
+/*
+   Cada refeição é um bloco com hora, nome, procedência e as cinco marcas. O
+   bloco da SUGESTÃO se distingue do declarado por mais que cor — a palavra
+   "marcada pelo horário" está na própria linha —, e o fio da esquerda é o
+   reforço visual, nunca o único sinal.
+*/
+.pd-linha { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-fio); }
+.pd-linha:last-child { border-bottom: 0; }
+.pd-linha.sugerida { border-left: 2px solid var(--ins-fio); padding-left: var(--ins-5); }
+.pd-topo { display: flex; align-items: baseline; gap: var(--ins-4); }
+.pd-hora { flex: 0 0 auto; }
+.pd-proc, .pd-resumo { margin-top: var(--ins-2); }
+/* As cinco marcas quebram linha em tela estreita: cinco alvos de 46px não cabem
+   em 382px, e encolhê-los abaixo do token seria trocar o alvo pela aparência. */
+.pd-marcas { display: flex; flex-wrap: wrap; gap: var(--ins-3); margin-top: var(--ins-4); }
+.pd-marca { min-height: var(--ins-tap); }
+.pd-porcao { margin-top: var(--ins-4); }
+.pd-regua { margin-top: var(--ins-3); }
+/* A frase é região viva, e fica depois das linhas: ela diz o que foi gravado. */
+.pd-frase {
+  margin-top: var(--ins-6); padding-top: var(--ins-5);
+  border-top: 1px solid var(--ins-fio); color: var(--ins-tinta-2);
+}
+
+/* ---- A régua de repetições ---------------------------------------------- */
+/* O painel abre embaixo da linha da série e fecha na escolha — o molde é o da
+   escala de RIR. Aqui o desenho PODE crescer, porque é painel e não linha de
+   lista: 46 px é o alvo que a §8.2 pede para controle repetido, e a régua é o
+   primeiro nome da lista dela. */
+.regua { margin: 0 0 var(--ins-3); }
+.regua-faixa {
+  display: flex; gap: var(--ins-2);
+  /* R1 da frente 2. Não há contêiner rolável aqui — a janela mostra só os
+     slots da página —, então não existe pan horizontal para o toque virar.
+     A declaração fica de graça: se um dia o layout voltar a rolar na
+     horizontal, o arrasto não volta junto sem alguém mexer nesta linha. */
+  touch-action: pan-y;
+}
+.regua-v, .regua-anda {
+  flex: 1; min-height: 46px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  background: transparent; color: var(--ins-tinta-2);
+  border: 1px solid var(--ins-fio-controle);
+  font: 500 var(--ins-n-m)/1 var(--ins-fonte);
+  font-variant-numeric: tabular-nums;
+}
+/* O alvo cresce só na VERTICAL, e nunca para o lado: o vizinho horizontal é a
+   repetição seguinte, e crescer para o lado faria um toque na borda registrar o
+   número errado. É a mesma restrição do `.ins-tick`, e aqui ela vale com mais
+   força — erro de alvo na régua tem tolerância zero na medição. */
+.regua-v::after, .regua-anda::after { content: ""; position: absolute; inset: -4px 0; }
+.regua-v:active, .regua-anda:active { background: var(--ins-superficie-2); }
+/* Dentro da faixa prescrita: fio mais firme, sem cor de estado. A faixa é
+   referência do treinador, não escolha dele. */
+.regua-v.na-faixa { border-color: var(--ins-fio-controle); color: var(--ins-tinta); }
+.regua-v.on {
+  background: var(--ins-acento); color: var(--ins-sobre-acento);
+  border-color: var(--ins-acento);
+}
+.regua-anda { color: var(--ins-tinta-3); font-size: 18px; }
+.regua-marca {
+  position: absolute; left: 0; right: 0; bottom: 2px;
+  font: 400 8px/1 var(--ins-fonte);
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ins-tinta-3);
+}
+.regua-v.on .regua-marca { color: var(--ins-sobre-acento); opacity: .8; }
+/* A correção diz o que está guardado antes da faixa (§8.2). */
+.regua-corrige { margin: 0 0 var(--ins-3); }
+.regua-corrige-t { margin: 0; color: var(--ins-tinta); }
+.regua-corrige p + p { margin: var(--ins-1) 0 0; }
+/* A correção de uma sessão de outro dia diz que não reabre o treino (§8.4). */
+.ed-outrodia { margin: var(--ins-2) 0 var(--ins-3); }
+.regua-outro {
+  display: block; margin-top: var(--ins-2);
+  background: transparent; border: 0; padding: var(--ins-2) 0;
+  font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* ---- O teclado próprio, de doze teclas --------------------------------- */
+/* Abre no mesmo lugar da régua — embaixo da linha da série —, e só um painel
+   abre por vez. O limite de contraste das teclas é o `--ins-fio-controle`, que
+   é o token de limite de controle do sistema: as teclas da Direção D tinham
+   1,20:1, e o critério 1.4.11 pede 3:1 (T3 da §6.2; o valor é da frente 4). */
+.tcl { margin: 0 0 var(--ins-3); }
+.tcl:focus { outline: none; }
+.tcl:focus-visible { outline: 2px solid var(--ins-acento); outline-offset: 2px; }
+.tcl-visor {
+  display: flex; align-items: baseline; gap: var(--ins-2);
+  min-height: 44px; padding: 0 var(--ins-3);
+  border: 1px solid var(--ins-fio); background: var(--ins-superficie-2);
+}
+.tcl-n {
+  font: 500 var(--ins-n-l)/1 var(--ins-fonte); color: var(--ins-tinta);
+  font-variant-numeric: tabular-nums;
+}
+.tcl-u {
+  font: 400 10px/1 var(--ins-fonte); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ins-tinta-3);
+}
+/* Retângulo ESTÁTICO, e é a forma da D. Sem animação: não há o que pôr dentro
+   de `prefers-reduced-motion` porque não há movimento (T4). */
+.tcl-cursor {
+  width: 2px; align-self: stretch; margin: var(--ins-2) 0;
+  background: var(--ins-acento);
+}
+.tcl-grade {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--ins-2);
+  margin-top: var(--ins-2);
+}
+.tcl-t {
+  min-height: 46px;
+  background: transparent; color: var(--ins-tinta);
+  border: 1px solid var(--ins-fio-controle);
+  font: 500 var(--ins-n-m)/1 var(--ins-fonte);
+  font-variant-numeric: tabular-nums;
+}
+.tcl-t:active { background: var(--ins-superficie-2); }
+.tcl-apaga { font-size: 15px; color: var(--ins-tinta-3); }
+.tcl-vazia { min-height: 46px; }
+.tcl-pronto {
+  display: block; width: 100%; margin-top: var(--ins-2); min-height: 44px;
+  background: var(--ins-superficie-2); border: 1px solid var(--ins-fio);
+  font: 400 12px/1 var(--ins-fonte); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ins-tinta-2);
+}
+
+/* A linha que explica a lista das mudanças, uma vez, antes delas (§5.1). */
+.pr-explica { margin: 0 0 var(--ins-4); }
+
+/* O que não volta depois do passo, dito antes do toque (§6.3). */
+.dd-naovolta { margin: var(--ins-3) 0 0; }
+
+/* A bioimpedância (§10.1): a instrução antes dos campos, o "era" embaixo de
+   cada um, a regra do obrigatório e a do "nada registrado" depois. */
+.co-bio-i { margin: 0 0 var(--ins-4); }
+.co-bio-era { display: block; }
+.co-bio-ob, .co-bio-nada { margin: var(--ins-3) 0 0; }

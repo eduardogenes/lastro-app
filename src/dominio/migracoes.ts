@@ -8,11 +8,14 @@
 // As duas migrações recebem o estado em vez de mexer num global: é o que
 // permite testar cada uma contra uma fixture, sem subir o app inteiro.
 
+import { MARCAS_DA_BIO } from './corpo';
 import { CADENCIA_PADRAO } from './dia';
 import { PLANO_BASE } from './nutricao/alimentos';
 import { EX_BASE, SIMULACAO_HYROX, slugEx } from './programa';
 import { chaveDeLog } from './sincronia';
-import type { Estado, IdEx, Log, Treino } from './tipos';
+import type { DiaComidaHist } from './nutricao/tipos';
+import type { Estado, IdEx, Log, Marca, PromoPendente, Treino } from './tipos';
+import type { Item, Refeicao } from './nutricao/tipos';
 
 // ---------- migração de plano ----------
 // As chaves do histórico são dia+posição (A0, B3...). Trocar o programa faria
@@ -21,7 +24,7 @@ import type { Estado, IdEx, Log, Treino } from './tipos';
 // apagar, arquivamos: cada chave antiga vira 'antigo~<nome do exercício>'.
 // Os dias treinados (S.done) não são tocados, o calendário fica intacto e
 // tudo continua no JSON exportado.
-export const PLANO_ATUAL = 9;
+export const PLANO_ATUAL = 12;
 
 /** O que a migração 2→3 fez, para o app poder contar ao Eduardo. */
 export interface Resultado3 {
@@ -541,5 +544,306 @@ export function migraPlano9(S: Estado): Resultado9 | null {
   }
 
   S.plano = 9;
+  return r;
+}
+
+// ---------- 9 -> 10: o corpo aberto, a hora da marca e a lista que espera ----------
+//
+// Uma migração só para cinco mudanças de dado persistido, porque o caro aqui
+// não é migrar: é esquecer um dos portões — tipo, migração com fixture, regra
+// de fusão, as duas listas brancas da cópia, `tsc` limpo. Duas migrações
+// pagariam os cinco duas vezes.
+//
+// Das cinco, **duas são reformatação de dado existente**, e é por elas que esta
+// função precisa existir:
+//
+// 1. `S.dia.done` era `Record<string, 1>` e passa a ser `Record<string,
+//    number>` — o instante da marca. Não é campo novo: é convergir o dia
+//    corrente na forma que `DiaComidaHist.done` já tinha, e pelo mesmo motivo
+//    escrito lá ("instante e não `1` porque é o que permite fundir… e desmarcar
+//    precisa de lápide").
+//
+// 2. `S.body` ganha as cinco chaves da bioimpedância. Pelo contrato de
+//    `normalizaEstado()`, campo novo e vazio receberia padrão lá e dispensaria
+//    migração; entram aqui de propósito, para o bump de versão ser a prova de
+//    que as cinco existem e para a fixture cobri-las.
+//
+// 3. `S.promoPendente` era um DOCUMENTO — uma pergunta guardada, ou `null` — e
+//    passa a ser coleção com chave natural (`sid`), lápide e teto. Ver
+//    `listaDePromo` logo abaixo, e `Estado.promoPendente` para o porquê.
+//
+// As outras duas — qual refeição saiu do plano (`dia.como`) e "não contei a
+// água" (`dia.aguaNaoContada`) — são campos OPCIONAIS cuja ausência já tem o
+// significado certo: ausente é "comeu o que estava prescrito" e "a água foi
+// contada". Não há byte a reformatar, e inventar um aqui seria afirmar sobre o
+// passado o que ninguém registrou.
+//
+// A hora que a marca antiga não tem: o literal `1` não carrega nada, e o app
+// nunca gravou a hora de cada refeição no dia corrente. Em vez de carimbar o
+// instante da migração — que faria a marca nascer mais nova que qualquer
+// lápide escrita antes dela, e ressuscitaria o que o outro aparelho desmarcou
+// —, a migração usa a MEIA-NOITE do dia, que é o instante mais antigo
+// compatível com a data. Conferido: nenhum caminho do app escreve lápide de
+// `chaveDeRefeicaoFeita` hoje, então para o dado que existe a escolha é
+// inobservável; ela vale para quando a lápide passar a ser escrita.
+
+/** O que a migração 9→10 mexeu. */
+export interface Resultado10 {
+  /** marcas do dia corrente que ganharam instante */
+  marcas: number;
+  /** dias do histórico que tinham marca sem instante */
+  dias: number;
+  /** chaves de medida criadas em `S.body` */
+  chaves: number;
+  /** perguntas de programa que viraram entrada de coleção */
+  promos: number;
+}
+
+/**
+ * A pergunta guardada, na forma de coleção.
+ *
+ * Até o plano 9 `S.promoPendente` era um documento — uma pergunta, ou `null` —
+ * e por isso não tinha chave natural nem regra de fusão. Esta função é a
+ * conversão, e vive aqui e não em `normalizaEstado()` por um motivo de ORDEM:
+ * `normalizaEstado` roda ANTES das migrações, nos dois caminhos (boot e
+ * importação), e se ele tratasse o objeto antigo como "forma inválida" a
+ * pergunta guardada seria apagada antes de alguém poder convertê-la.
+ *
+ * O `sid` que falta: a pergunta antiga não carregava o da sessão. A migração usa
+ * `t`, o instante do fecho, como identidade — ele está no dado, então os dois
+ * aparelhos derivam a MESMA chave do MESMO registro, que é tudo que a fusão
+ * pede. Se os dois tiverem perguntas diferentes guardadas, os `t` diferem e as
+ * duas sobrevivem: hoje uma das duas se perde, e é o defeito.
+ */
+export function listaDePromo(v: unknown): PromoPendente[] {
+  if (Array.isArray(v)) {
+    return (v as PromoPendente[]).filter(function (p) {
+      return p && typeof p === 'object' && Array.isArray(p.mods) && p.mods.length;
+    });
+  }
+  const g = v as PromoPendente | null;
+  if (!g || typeof g !== 'object' || !Array.isArray(g.mods) || !g.mods.length) return [];
+  return [{
+    sid: typeof g.sid === 'number' ? g.sid : g.t,
+    day: g.day, t: g.t, mods: g.mods,
+    resumoMods: Array.isArray(g.resumoMods) ? g.resumoMods : [],
+    m: typeof g.m === 'number' ? g.m : g.t
+  }];
+}
+
+/** Meia-noite local de 'AAAA-MM-DD'. `null` quando a data não é legível. */
+function meiaNoiteDe(d: string): number | null {
+  if (typeof d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+  const t = new Date(d + 'T00:00:00').getTime();
+  return isFinite(t) ? t : null;
+}
+
+/**
+ * Converte as marcas de um `done` para instante.
+ *
+ * Só toca no que não é instante: `1` e qualquer coisa que não seja número
+ * finito maior que 1. Uma marca com instante de verdade — as que `fechaDia`
+ * gravou — fica como está, porque ela é o dado e a migração não sabe mais que
+ * ela.
+ */
+function instantesDoDone(done: Record<string, number>, quando: number): number {
+  let n = 0;
+  Object.keys(done || {}).forEach(function (k) {
+    const v = done[k];
+    if (typeof v === 'number' && isFinite(v) && v > 1) return;
+    done[k] = quando;
+    n++;
+  });
+  return n;
+}
+
+export function migraPlano10(S: Estado): Resultado10 | null {
+  if (S.plano >= 10) return null;
+  const r: Resultado10 = { marcas: 0, dias: 0, chaves: 0, promos: 0 };
+
+  // 1 · o instante da marca no dia corrente
+  if (S.dia && S.dia.data) {
+    const quando = meiaNoiteDe(S.dia.data);
+    if (quando != null && S.dia.done) {
+      r.marcas = instantesDoDone(S.dia.done as Record<string, number>, quando);
+    }
+  }
+
+  // e, por garantia, no histórico: `fechaDia` sempre gravou instante, mas um
+  // backup fundido por um build antigo pode ter trazido o `1` do dia aberto
+  // para dentro de uma linha fechada, e `1` é 1970 — toda lápide o mata
+  if (Array.isArray(S.comidaHist)) {
+    (S.comidaHist as DiaComidaHist[]).forEach(function (h) {
+      if (!h || !h.d || !h.done) return;
+      const quando = meiaNoiteDe(h.d);
+      if (quando == null) return;
+      if (instantesDoDone(h.done, quando)) r.dias++;
+    });
+  }
+
+  // 2 · as cinco chaves da bioimpedância
+  if (S.body && typeof S.body === 'object') {
+    const body = S.body as unknown as Record<string, Marca[]>;
+    MARCAS_DA_BIO.forEach(function (k) {
+      if (Array.isArray(body[k])) return;
+      body[k] = [];
+      r.chaves++;
+    });
+  }
+
+  // 3 · a pergunta guardada vira coleção com chave natural
+  const antes = Array.isArray(S.promoPendente) ? -1 : (S.promoPendente ? 1 : 0);
+  S.promoPendente = listaDePromo(S.promoPendente);
+  if (antes === 1 && S.promoPendente.length) r.promos = S.promoPendente.length;
+
+  S.plano = 10;
+  return r;
+}
+
+// ---------- 10 -> 11: a ceia ----------
+//
+// O dono respondeu a ceia (14.13 era "sim, e é assunto do nutricionista"; a
+// resposta de agora diz O QUE é): copo de leite com duas colheres de Neston.
+//
+// Por que isto é migração, e não só uma linha em `PLANO_BASE`: o plano é
+// DOCUMENTO PERSISTIDO. `planoDeComida()` o semeia da base uma vez, quando o
+// estado nasce (`if (!S.comida.plano) S.comida.plano = clone(PLANO_BASE)`), e a
+// partir daí o plano é dele — editável, e divergindo conforme ele decide.
+// Mudar a base alcança aparelho novo e NÃO alcança o dele.
+//
+// Duas coisas que esta migração NÃO precisa fazer, e é bom dizer por quê:
+//
+// - **O Neston não entra aqui.** O catálogo de alimentos é DERIVADO a cada
+//   render, de `ALIMENTOS_BASE` mais o que ele cadastrou, menos o que ele
+//   escondeu (`catalogoAlimentos()` em `src/main.jsx`). Alimento do código
+//   chega ao aparelho pelo build, sem migração. Se ele tiver cadastrado um
+//   `neston` próprio, o dele vence na mesma função — e isso é o certo.
+// - **Não reconstruir o plano.** A migração INSERE uma refeição; ela não
+//   compara o plano guardado com a base, não corrige nome, horário nem item que
+//   ele tenha mexido, e não reordena nada. Presumir que o plano guardado é
+//   igual à base seria apagar as edições dele, que é o oposto da regra 2.
+//
+// A cópia congelada abaixo não referencia `PLANO_BASE` de propósito: migração lê
+// o dado da época, nunca o código de hoje — se amanhã o nutricionista revisar a
+// ceia, a revisão é uma migração nova e esta continua inserindo o que o plano 11
+// prescrevia. Um teste de domínio cobra que as duas cópias descrevam a mesma
+// ceia HOJE, que é o que impede as duas populações (aparelho migrado e aparelho
+// novo) de nascerem diferentes.
+
+/** A ceia, como o plano 11 a prescreveu. Congelada: não lê `PLANO_BASE`. */
+export const CEIA_PLANO_11: Refeicao = {
+  id: 'ceia', t: '21:30', n: 'Ceia', tag: 'ANTES DE DORMIR', quando: 'sempre',
+  nota: 'Copo de leite com duas colheres de Neston. O copo de 250 ml é a porção de leite que o resto deste plano já usa; as duas colheres saem da porção do rótulo, que declara 30 g em CINCO colheres de sopa — 6 g por colher.',
+  itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 12 }]
+};
+
+/** O que a migração 10→11 mexeu. */
+export interface Resultado11 {
+  /** 1 quando a ceia foi inserida no plano dele */
+  inseriu: 0 | 1;
+}
+
+export function migraPlano11(S: Estado): Resultado11 | null {
+  if (S.plano >= 11) return null;
+  const r: Resultado11 = { inseriu: 0 };
+
+  const plano = S.comida && S.comida.plano;
+  // Sem plano guardado não há o que migrar: `planoDeComida()` vai semear da
+  // base, que já tem a ceia. Inserir aqui criaria um plano de uma refeição só.
+  if (Array.isArray(plano)) {
+    const tem = plano.some(function (ref) { return ref && ref.id === CEIA_PLANO_11.id; });
+    if (!tem) {
+      // No fim da lista: a ceia é a última do relógio entre as refeições da
+      // base, e `refeicoesDeHoje` ordena por horário de qualquer forma.
+      plano.push(JSON.parse(JSON.stringify(CEIA_PLANO_11)));
+      r.inseriu = 1;
+    }
+    // Já tinha uma refeição com este id: não duplica E NÃO SOBRESCREVE. Pode
+    // ser a ceia que ele mesmo criou, com o horário e os itens dele, e a
+    // migração não tem autoridade sobre o que ele escreveu.
+  }
+
+  S.plano = 11;
+  return r;
+}
+
+// ---------- 11 -> 12: quanto o ajuste deu a cada prato ----------
+//
+// O passo de 120 g de arroz vale pelo DIA e se reparte entre os itens marcados
+// com `arroz`. Desfazer recalculava o passo pela contagem DE AGORA, e não pela
+// de quando somou: com um passo em vigor, trocar o arroz do almoço por cuscuz
+// fazia o desfazer achar UM item e tirar do jantar os 120 g do dia inteiro —
+// 190 g onde a prescrição é 250 —, enquanto o almoço ficava com os +60 para
+// sempre. O conserto é o item LEMBRAR quanto recebeu (`Item.ajq`), e é campo
+// persistido novo dentro de um documento que já está no aparelho dele.
+//
+// Por que isto é migração: o plano é DOCUMENTO PERSISTIDO, igual à ceia da
+// 10→11. O dado de hoje tem `q` inflado e nenhum registro de quanto — e sem
+// `ajq` o desfazer novo subtrai ZERO, o que mudaria o prato na direção errada
+// no primeiro ajuste depois do build (medido na suíte: um saldo de −1 em dois
+// pratos levaria o próximo corte a 70 g em vez de 130).
+//
+// **O que esta migração escreve é o valor que o código de hoje usaria para
+// desfazer** — o passo repartido pela contagem ATUAL de itens marcados. Com
+// isso o comportamento imediatamente depois dela é idêntico ao de hoje: nenhum
+// prato muda retroativamente, e daí para a frente todo desfazer é exato.
+//
+// O que ela NÃO faz, e é a parte decidida:
+//
+// - **Não reconstrói o passado.** Dava para inferir `ajq` comparando `q` com a
+//   quantidade do `PLANO_BASE` (310 − 250 = 60, e acertaria o jantar do caso
+//   acima). Não se faz: o plano é editável, `setQuantidade` existe, e num plano
+//   em que ele cortou o arroz para 150 à mão a inferência escreveria −100 —
+//   inventando um ajuste que nunca houve, num campo que depois sai do prato.
+//   Migração não adivinha, e aqui o dado não distingue edição dele de ajuste.
+// - **Não conserta quem já perdeu uma marca.** O item que foi trocado enquanto
+//   um passo estava em vigor levou os gramas e não tem mais marca: ele não
+//   aparece nesta conta e nada o traz de volta. O defeito é de uma vez, no
+//   primeiro desfazer depois da migração, e é exatamente o que aconteceria sem
+//   ela — ver o teste "a migração não conserta a marca que já caiu".
+//
+// Os dois números entram congelados, e não importados de `calculo.ts`: migração
+// lê o dado da época, nunca o código de hoje. Um teste de domínio cobra que as
+// cópias continuem descrevendo o mesmo passo HOJE, do mesmo jeito que a ceia.
+
+/** O passo de arroz como o plano 12 o conhecia. Congelado: não lê `PASSO_ARROZ`. */
+export const PASSO_ARROZ_PLANO_12 = 120;
+/** A grade da colher, como o plano 12 a conhecia. */
+export const GRADE_ARROZ_PLANO_12 = 15;
+
+/** O que a migração 11→12 mexeu. */
+export interface Resultado12 {
+  /** quantos itens receberam o registro do que o ajuste lhes deu */
+  itens: number;
+  /** quanto foi escrito em cada um, nas unidades do item */
+  cada: number;
+}
+
+export function migraPlano12(S: Estado): Resultado12 | null {
+  if (S.plano >= 12) return null;
+  const r: Resultado12 = { itens: 0, cada: 0 };
+
+  const plano = S.comida && S.comida.plano;
+  const bruto = S.ajuste;
+  const ajuste = (typeof bruto === 'number' && isFinite(bruto)) ? Math.round(bruto) : 0;
+
+  // Sem saldo em vigor não há nada que o ajuste tenha dado: `ajq` ausente JÁ
+  // quer dizer zero, e escrever zero seria gravar o padrão.
+  if (ajuste && Array.isArray(plano)) {
+    const itens: Item[] = [];
+    plano.forEach(function (ref) {
+      if (!ref || !Array.isArray(ref.itens)) return;
+      ref.itens.forEach(function (i) { if (i && i.arroz) itens.push(i); });
+    });
+    const cada = Math.round(
+      (ajuste * PASSO_ARROZ_PLANO_12) / Math.max(1, itens.length) / GRADE_ARROZ_PLANO_12
+    ) * GRADE_ARROZ_PLANO_12;
+    if (cada) {
+      itens.forEach(function (i) { i.ajq = cada; r.itens++; });
+      r.cada = cada;
+    }
+  }
+
+  S.plano = 12;
   return r;
 }

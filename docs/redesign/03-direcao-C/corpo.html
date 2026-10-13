@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corpo · Direção C</title>
+<style>
+:root{color-scheme:light;--page:#E7E2D8;--paper:#F5F2EB;--card:#FFFFFF;--text:#1B1A17;--muted:#5D594F;--line:#D6CFC2;--ghost:#857F74;--ink:#1F3B67;--on-ink:#FFFFFF;--ink-soft:#E3E9F3;--ink-text:#1F3B67;--now:#B0420D;--now-soft:#FAE6D8;--warn:#7A4A00;--warn-soft:#FAEDD3;--err:#A3241A;--err-soft:#FBE6E2;--ok:#1E5B3A;--ok-soft:#E0EFE4;--hatch-c:rgba(120,113,100,.32);--frame:#141414;--scrim:rgba(20,18,14,.42);--hatch:repeating-linear-gradient(135deg,var(--hatch-c) 0 1.5px,transparent 1.5px 7px)}
+.phone[data-tema="escuro"]{color-scheme:dark;--paper:#161512;--card:#211F1B;--text:#F2EEE6;--muted:#ADA79A;--line:#3A3731;--ghost:#8F897D;--ink:#A9C3EE;--on-ink:#0D1A30;--ink-soft:#1F2B3F;--ink-text:#C3D6F6;--now:#F59A5F;--now-soft:#3A2416;--warn:#F3C277;--warn-soft:#33270F;--err:#F4978C;--err-soft:#3B1D19;--ok:#8FD3AA;--ok-soft:#16301F;--hatch-c:rgba(210,200,180,.22);--frame:#2B2B2B;--scrim:rgba(0,0,0,.55)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--page);color:var(--text);overflow-x:clip}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:3px solid var(--now);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.doc{padding-bottom:80px}
+.intro{max-width:620px;margin:0 auto;padding:28px 16px 4px}
+.kicker{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intro h1{font-size:26px;line-height:1.2;margin:6px 0 12px;letter-spacing:-.01em}
+.intro p{margin:0 0 10px}
+.theme{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:14px 0 0}
+.theme>span{font-size:14px;color:var(--muted);margin-right:4px}
+.theme button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:22px;font-size:14px;background:var(--card)}
+.theme button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.toc{max-width:620px;margin:14px auto 0;padding:0 16px}
+.toc ol{list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.toc a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--text);text-decoration:none;font-size:14px}
+.state{margin:46px auto 0}
+.cap{max-width:620px;margin:0 auto 14px;padding:0 16px}
+.cap .tag{font-size:13px;font-weight:700;color:var(--now);letter-spacing:.05em;text-transform:uppercase}
+.cap h2{font-size:21px;line-height:1.25;margin:4px 0 6px}
+.cap p{font-size:15px;color:var(--muted);margin:0 0 6px}
+.cap p b{color:var(--text)}
+.cap .refs{font-size:13px}
+.cap .no{border-left:3px solid var(--line);padding-left:10px;color:var(--text);font-size:14px}
+.phone{position:relative;width:100%;max-width:414px;height:896px;margin:0 auto;background:var(--paper);color:var(--text);display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
+@media (min-width:480px){.phone{border-radius:48px;box-shadow:0 0 0 10px var(--frame),0 30px 60px rgba(0,0,0,.22)}.state{margin-top:72px}}
+.sb{flex:none;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font-size:15px;font-weight:600;position:relative;z-index:9}
+.sb::before{content:"";position:absolute;left:50%;top:0;width:209px;height:30px;transform:translateX(-50%);background:#000;border-radius:0 0 22px 22px}
+.sig{display:flex;align-items:flex-end;gap:2px;height:12px}
+.sig i{width:3px;background:currentColor;opacity:.25;border-radius:1px}
+.sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:6px}.sig i:nth-child(3){height:9px}.sig i:nth-child(4){height:12px}
+.sig i.on{opacity:1}
+.bat{width:25px;height:12px;border:1.5px solid currentColor;border-radius:4px;margin-left:7px;position:relative;opacity:.9}
+.bat::after{content:"";position:absolute;top:1.5px;bottom:1.5px;left:1.5px;width:55%;background:currentColor;border-radius:1.5px}
+.hi{flex:none;height:34px;display:flex;align-items:center;justify-content:center;position:relative;z-index:9}
+.hi::after{content:"";width:134px;height:5px;border-radius:3px;background:var(--text);opacity:.85}
+.hi.oncard{background:var(--card)}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--card)}
+.tabs a{min-height:50px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;position:relative}
+.tabs a.on{color:var(--ink-text)}
+.tabs a.on::before{content:"";position:absolute;top:0;width:22px;height:3px;border-radius:2px;background:var(--ink-text)}
+.d-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:2px 6px;min-height:50px}
+.d-head .ttl{text-align:center;line-height:1.2}
+.d-head .ttl strong{display:block;font-size:17px}
+.d-head .ttl span{font-size:13px;color:var(--muted)}
+.back{min-width:72px;min-height:44px;font-size:17px;font-weight:600;color:var(--ink-text);text-align:left;padding:0 8px}
+.pillb{min-height:44px;min-width:60px;padding:0 13px;border-radius:22px;border:1.5px solid var(--line);background:var(--card);font-size:15px;font-weight:600}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:0 16px 10px}
+.scroll::-webkit-scrollbar{display:none}
+.over{font-size:13px;color:var(--muted);font-weight:600}
+.primary{width:100%;min-height:56px;border-radius:16px;background:var(--ink);color:var(--on-ink);font-size:18px;font-weight:700}
+.secondary{min-height:48px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:16px;padding:0 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.note{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.35}
+.duo{max-width:680px;margin:0 auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:28px;justify-items:center}
+@media (min-width:700px){.duo{grid-template-columns:1fr 1fr}}
+.frame{width:290px}
+.shrink{width:290px;height:628px;position:relative;overflow:hidden;border-radius:30px;box-shadow:0 0 0 7px var(--frame),0 16px 34px rgba(0,0,0,.2)}
+.shrink .phone{position:absolute;top:0;left:0;width:414px;max-width:414px;height:896px;transform:scale(.6996);transform-origin:top left;border-radius:0;box-shadow:none}
+.frame p{text-align:center;font-size:14px;color:var(--muted);margin-top:10px}
+
+/* corpo */
+.blk{margin-top:12px;padding:13px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.blk.now{border:2px solid var(--now);background:var(--now-soft)}
+.blk-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.blk-h h3{font-size:17px}
+.blk-h span{font-size:13px;color:var(--muted)}
+.big{font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+.big small{font-size:17px;font-weight:600;color:var(--muted)}
+.sub{font-size:14px;color:var(--muted);margin-top:2px}
+.vrow{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:6px}
+.tapval{min-height:60px;padding:4px 12px;border-radius:13px;border:1.5px dashed var(--ghost);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;background:transparent}
+.tapval.ink{border:0;background:var(--ink-soft);color:var(--ink-text)}
+.tapval b{font-size:30px;font-weight:800;line-height:1}
+.tapval i{font-style:normal;font-size:12px;color:var(--muted)}
+.tapval.ink i{color:var(--ink-text)}
+.band{margin-top:10px;height:92px;position:relative;border-radius:12px;background:var(--paper);border:1px solid var(--line);overflow:hidden}
+.phone[data-tema="escuro"] .band{background:#12110F}
+.band .alvo{position:absolute;left:0;right:0;top:28%;height:30%;background:var(--ok-soft)}
+.band .ln{position:absolute;inset:0}
+.band svg{position:absolute;inset:0;width:100%;height:100%}
+.band .lab{position:absolute;right:6px;top:30%;font-size:11px;color:var(--ok);font-weight:700}
+.wk{display:flex;gap:4px;margin-top:8px}
+.wk div{flex:1;text-align:center;font-size:11px;color:var(--muted);line-height:1.25}
+.wk div b{display:block;font-size:14px;color:var(--text)}
+.wk div.bad b{color:var(--muted)}
+.wk div.bad{background-image:var(--hatch);border-radius:6px;padding:2px 0}
+.kb{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:8px 8px 12px;z-index:7;box-shadow:0 -8px 24px rgba(0,0,0,.14)}
+.kb-h{display:flex;align-items:center;justify-content:space-between;padding:2px 6px 8px;gap:10px}
+.kb-h strong{font-size:34px;font-weight:800}
+.kb-h span{font-size:13px;color:var(--muted);text-align:right;line-height:1.25}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.keys button{min-height:56px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:23px;font-weight:600}
+.keys button.go{background:var(--ink);color:var(--on-ink);border-color:var(--ink);font-size:18px;font-weight:700}
+.keys button.wide{grid-column:span 2}
+.days{display:flex;gap:6px;margin-top:8px}
+.days button{flex:1;min-height:62px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--muted)}
+.days button b{font-size:18px;color:var(--text)}
+.days button[aria-pressed="true"]{border:2px solid var(--now);background:var(--now-soft)}
+.days button:disabled{opacity:.4}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.fields button{min-height:72px;border-radius:13px;border:1.5px solid var(--line);background:var(--paper);text-align:left;padding:8px 10px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.fields button.vazio{border-style:dashed;color:var(--muted)}
+.fields button b{font-size:21px;font-weight:800}
+.fields button span{font-size:12px;color:var(--muted)}
+.fields button.cur{border:2px solid var(--now);background:var(--now-soft)}
+.seg{display:grid;grid-template-columns:1fr auto auto;gap:2px 8px;margin-top:8px;font-size:14px}
+.seg dt{padding:7px 0;border-top:1px solid var(--line)}
+.seg dd{padding:7px 0;border-top:1px solid var(--line);text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.seg dd.m{color:var(--muted);font-weight:600}
+.warnb{padding:11px 12px;border-radius:13px;background:var(--warn-soft);color:var(--warn);font-size:14px;line-height:1.35;margin-top:10px}
+.warnb strong{display:block;font-size:15px;margin-bottom:3px}
+.errb{padding:11px 12px;border-radius:13px;background:var(--err-soft);color:var(--err);border:1.5px solid var(--err);font-size:14px;line-height:1.35;margin-top:10px}
+.errb strong{display:block;font-size:15px;margin-bottom:3px}
+.okb{padding:11px 12px;border-radius:13px;background:var(--ok-soft);color:var(--ok);font-size:14px;line-height:1.35;margin-top:10px}
+.empty{text-align:center;padding:16px 10px}
+.empty .b{font-size:19px;font-weight:700;margin-bottom:6px}
+.empty p{font-size:15px;color:var(--muted);line-height:1.4}
+.toast{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-radius:14px;background:var(--ink);color:var(--on-ink);font-size:15px;line-height:1.3;margin-top:10px}
+.toast .u{margin-left:auto;font-weight:700;text-decoration:underline;min-height:44px;padding:0 10px;color:var(--on-ink);flex:none}
+@media (prefers-reduced-motion:no-preference){.tapval{transition:background .18s ease-out,border-color .18s ease-out}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="doc">
+
+<header class="intro">
+  <p class="kicker">Direção C · Previsto e feito · tela nova</p>
+  <h1>Corpo: onde se registra e se lê peso, fita, bioimpedância e fotos</h1>
+  <p>O dono decidiu que isto ganha tela própria, e que é nela que se registra também — aceitando o custo de sair de onde está. Então esta tela tem duas metades na mesma rolagem: em cima o que se mede <b>hoje</b>, embaixo o que isso <b>virou</b> ao longo das semanas.</p>
+  <p><b>A direção, aqui:</b> o número de um dia não decide nada — o peso oscila com água, sal e intestino, e a fita erra de posicionamento mais do que a balança varia de água. Quem decide é a média da semana. Por isso o valor do dia aparece grande para ser fácil de pôr, e a média da semana aparece logo abaixo para ser o que se lê.</p>
+  <p>Corrigir é a regra: <b>o valor errado continua na tela e se toca nele de novo para mudar, a qualquer hora</b>. Não há prazo, não há confirmação, não há “tem certeza?”. Registrar de novo no mesmo dia substitui.</p>
+  <div class="theme" role="group" aria-label="Tema das telas">
+    <span>Tema das telas:</span>
+    <button data-t="claro" aria-pressed="true">Claro</button><button data-t="escuro" aria-pressed="false">Escuro</button>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Estados desta tela">
+  <ol>
+    <li><a href="#b1">1 · A pesagem</a></li>
+    <li><a href="#b2">2 · Corrigir no lugar</a></li>
+    <li><a href="#b3">3 · Dia passado</a></li>
+    <li><a href="#b4">4 · A fita</a></li>
+    <li><a href="#b5">5 · Bioimpedância</a></li>
+    <li><a href="#b6">6 · A leitura</a></li>
+    <li><a href="#b7">7 · Vazio</a></li>
+    <li><a href="#b8">8 · Erro</a></li>
+    <li><a href="#b9">9 · Claro e escuro</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section class="state" id="b1" aria-labelledby="b1h">
+  <div class="cap">
+    <p class="tag">Estado 1 · caso base · funciona ao toque</p>
+    <h2 id="b1h">6:40, em semi-jejum, antes de treinar</h2>
+    <p>Ele se pesa sempre de manhã, antes de treinar, com a mesma roupa. O número da balança precisa virar registro em dois ou três toques, sem sair de perto. <b>Toque no valor para abrir o teclado e gravar.</b></p>
+    <p>O teclado é o do app: tem vírgula de verdade — um campo numérico do iPhone descarta a vírgula e entrega vazio —, tem teclas grandes, não dá zoom e não cobre o que importa. O valor já vem com a última pesagem a lápis, porque entre uma pesagem e outra ele muda pouco: quase sempre são dois toques, a casa decimal e gravar.</p>
+    <p>Logo abaixo, o que o número vira: a média da semana, quantas pesagens ela tem (a regra precisa de duas) e a variação contra a semana anterior, dentro ou fora da faixa-alvo de +0,15 a +0,30 kg por semana.</p>
+    <p class="refs">F13 · F14 · F42 · F63 · F65 · F208 · F211 · F275 · P6 · U8 · K6</p>
+  </div>
+  <div class="phone" id="live" role="group" aria-label="Tela do corpo, interativa">
+    <div class="sb"><span class="num">6:40</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Corpo</strong><span>quinta, 02/10</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="blk now">
+          <div class="blk-h"><h3>Peso de hoje</h3><span>uma por dia</span></div>
+          <div class="vrow">
+            <button class="tapval" data-abrir aria-label="Registrar o peso de hoje. A última foi 73,8 quilos"><b class="num" data-val>73,8</b><i>a última, de 30/09 · toque para pôr o de hoje</i></button>
+            <span class="sub" style="text-align:right">a regra pede<br>3 a 4 por semana</span>
+          </div>
+          <div data-ok hidden><div class="toast">Gravado neste aparelho · 02/10<button class="u">Desfazer</button></div></div>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>A semana</h3><span>domingo a sábado</span></div>
+          <p class="big num" style="margin-top:4px" data-media>73,9 <small>kg de média</small></p>
+          <p class="sub" data-pes>2 pesagens nesta semana · a regra precisa de 2 · <b style="color:var(--text)">+0,30 kg</b> sobre a semana anterior</p>
+          <div class="wk">
+            <div><b class="num">72,4</b>08–13/09</div>
+            <div class="bad"><b class="num">—</b>14–20/09<br>1 pesagem</div>
+            <div><b class="num">73,2</b>21–27/09</div>
+            <div><b class="num">73,6</b>28/09–04/10</div>
+            <div><b class="num">73,9</b>esta<br>semana</div>
+          </div>
+          <p class="note">Uma semana com uma pesagem só não entra na conta e quebra a sequência que a regra do nutricionista precisa. Isso aparece aqui, hachurado, e não some.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Fita</h3><span>cintura, braço</span></div>
+          <div class="fields">
+            <button class="vazio"><b>— cm</b><span>cintura · nunca medida</span></button>
+            <button class="vazio"><b>— cm</b><span>braço · nunca medido</span></button>
+          </div>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Bioimpedância</h3><span>uma vez por mês</span></div>
+          <p class="sub" style="margin-top:4px">Nenhum registro ainda. São 13 números, todos opcionais.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#b1">Hoje</a><a href="#b1">Semanas</a><a href="#b1">Prescrição</a></nav>
+      <div class="kb" data-kb hidden role="group" aria-label="Teclado do app para o peso">
+        <div class="kb-h"><strong class="num" data-kbv>73,8</strong><span>quilos, uma casa decimal<br>a última foi 73,8 em 30/09</span></div>
+        <div class="keys">
+          <button>1</button><button>2</button><button>3</button>
+          <button>4</button><button>5</button><button>6</button>
+          <button>7</button><button>8</button><button>9</button>
+          <button>,</button><button>0</button><button aria-label="Apagar">⌫</button>
+          <button class="go wide" data-gravar>Gravar em 02/10</button><button class="secondary" style="border-radius:12px" data-outro>Outro dia</button>
+        </div>
+      </div>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="state" id="b2" aria-labelledby="b2h">
+  <div class="cap">
+    <p class="tag">Estado 2 · corrigir no lugar, sem prazo</p>
+    <h2 id="b2h">Digitou 78,3 em vez de 73,8</h2>
+    <p>O valor errado <b>continua na tela</b>, do jeito que foi gravado, e se toca nele de novo para mudar. Não existe modo de edição, não existe lixeira, não existe janela de arrependimento: tocar abre o mesmo teclado com o mesmo número, e gravar substitui.</p>
+    <p>O app não esconde que percebeu: 4,5 kg em dois dias é água demais para ser verdade, e ele diz isso em uma linha, <b>sem bloquear</b>. Um número estranho pode ser real — balança trocada, roupa diferente — e recusar número válido já aconteceu neste produto.</p>
+    <p>Apagar também existe, e fica longe do teclado: a pesagem some, a média da semana se refaz e a marca de apagado vale também no outro aparelho.</p>
+    <p class="refs">F208 · F211 · F245 · F275 · F301 · U12 · decisão 3 do dono</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">6:41</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Corpo</strong><span>quinta, 02/10</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="blk">
+          <div class="blk-h"><h3>Peso de hoje</h3><span>gravado às 6:40</span></div>
+          <div class="vrow">
+            <button class="tapval ink" aria-label="Peso de hoje: 78,3 quilos. Tocar para corrigir"><b class="num">78,3</b><i>toque para corrigir</i></button>
+            <button class="secondary" style="min-height:44px">Apagar</button>
+          </div>
+          <div class="warnb">
+            <strong>4,5 kg em dois dias</strong>
+            De 30/09 para hoje. Pode ser real — balança diferente, roupa diferente —, e por isso está gravado. Se foi engano, toque no número.
+          </div>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>A semana</h3><span>com este valor</span></div>
+          <p class="big num" style="margin-top:4px">76,1 <small>kg de média</small></p>
+          <p class="sub">2 pesagens · <b style="color:var(--text)">+2,50 kg</b> sobre a semana anterior · muito acima da faixa</p>
+        </div>
+        <div class="blk" style="border-style:dashed">
+          <div class="blk-h"><h3>Isto é uma correção, não um erro do passado</h3></div>
+          <p class="sub" style="margin-top:4px">Não há prazo para corrigir. Esta pesagem pode ser mudada hoje, amanhã ou daqui a seis meses, e tudo que depende dela — média da semana, taxa, regra do nutricionista — se refaz sozinho.</p>
+        </div>
+        <p class="note">O mesmo vale em toda parte: na série do treino, na comida, na fita. Nada se fecha com o dia.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#b2">Hoje</a><a href="#b2">Semanas</a><a href="#b2">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="state" id="b3" aria-labelledby="b3h">
+  <div class="cap">
+    <p class="tag">Estado 3 · a pesagem que ficou para trás</p>
+    <h2 id="b3h">De 36% a 50% das pesagens chegam com data passada</h2>
+    <p>Não é exceção: é um terço a metade delas. E a descoberta pode acontecer semanas depois, não só no dia seguinte. Então o dia passado se escolhe numa <b>fileira de dias</b>, com o que já existe escrito em cada um — a roda de dia-mês-ano do sistema é lenta e esconde justamente isso.</p>
+    <p>Os dias que já têm pesagem aparecem com o valor: registrar de novo no mesmo dia substitui, e a tela diz isso antes. Dia futuro não existe aqui.</p>
+    <p>Abaixo, a consequência: a semana em que aquele número cai, e se ela passa a ter as duas pesagens de que a regra precisa. É o motivo de pôr em dia valer a pena, dito no momento em que ele está pondo.</p>
+    <p class="refs">F208 · F209 · F211 · F67 · U8 · U11 · P1 (4 de 11 com data passada)</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">15:10</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Peso em outro dia</strong><span>nunca no futuro</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <p class="over">Que dia?</p>
+        <div class="days" role="group" aria-label="Escolher o dia">
+          <button aria-pressed="false"><span>sáb</span><b class="num">27</b><span class="num">73,4</span></button>
+          <button aria-pressed="false"><span>dom</span><b class="num">28</b></button>
+          <button aria-pressed="true"><span>seg</span><b class="num">29</b></button>
+          <button aria-pressed="false"><span>ter</span><b class="num">30</b><span class="num">73,8</span></button>
+          <button aria-pressed="false"><span>hoje</span><b class="num">02</b></button>
+        </div>
+        <p class="note">Os dias com valor já têm pesagem: pôr outra ali substitui a que está lá. 01/10 não aparece porque a fileira mostra cinco por vez — deslize para ver mais.</p>
+        <div class="blk now" style="margin-top:14px">
+          <div class="blk-h"><h3>Segunda, 29/09</h3><span>sem pesagem</span></div>
+          <div class="vrow"><button class="tapval"><b class="num">73,6</b><i>toque e ponha o número que você lembra</i></button></div>
+        </div>
+        <div class="okb">
+          <b>Esta pesagem completa a semana de 28/09 a 04/10.</b> Com ela a semana passa a ter 2 pesagens e volta a contar para a regra do nutricionista, que hoje está parada por falta de sequência.
+        </div>
+        <p class="note">Se o número for um palpite, melhor não pôr: a regra prefere uma semana sem média a uma média inventada. A tela não tem nenhum campo de “mais ou menos”.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#b3">Hoje</a><a href="#b3">Semanas</a><a href="#b3">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="state" id="b4" aria-labelledby="b4h">
+  <div class="cap">
+    <p class="tag">Estado 4 · a fita, que ele acabou de comprar</p>
+    <h2 id="b4h">A primeira medida de cintura do produto inteiro</h2>
+    <p>Até 01/10 a cintura nunca foi medida, porque ele não tinha fita. Comprou uma, e quer medir a cintura, o braço e “as coisas principais que dá para medir sozinho”. Então o bloco começa vazio e aceita medidas novas sem pedir nada: o que ele consegue medir sozinho é ele quem sabe.</p>
+    <p>A fita <b>erra de posicionamento mais do que a balança varia de água</b>, e esse é o fato que governa o desenho: o app guarda, junto da primeira medida, <b>onde</b> ela foi tirada, com as palavras dele, e mostra essa anotação em toda medida seguinte. Sem o mesmo ponto, a série de números não quer dizer nada.</p>
+    <p>A tela também diz o que a cintura não é mais: ela saiu da regra do nutricionista em 21/09, e hoje é informação complementar. Medir é dele, não da regra — e a variação mensal só aparece quando houver médias semanais cobrindo 21 dias ou mais.</p>
+    <p class="refs">F43 · F44 · F210 · F221 · D1 · P6 · P1 (0 medidas)</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">6:44</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Fita</strong><span>quinta, 02/10</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="blk now">
+          <div class="blk-h"><h3>Cintura</h3><span>primeira medida</span></div>
+          <div class="vrow"><button class="tapval"><b class="num">84,0</b><i>centímetros · uma casa decimal</i></button><button class="secondary" style="min-height:44px">Gravar</button></div>
+          <div class="warnb">
+            <strong>Onde você mediu?</strong>
+            A fita erra de lugar mais do que a balança varia de água. Escreva em uma linha onde você passou a fita — e esta linha volta toda vez que você medir de novo.
+            <button class="secondary" style="width:100%;margin-top:8px;text-align:left;min-height:48px">“na altura do umbigo, expirando” …</button>
+          </div>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Braço</h3><span>primeira medida</span></div>
+          <div class="vrow"><button class="tapval"><b class="num">—</b><i>toque para pôr</i></button><span class="sub" style="text-align:right">direito, contraído<br>ou relaxado: escolha uma<br>e repita sempre</span></div>
+        </div>
+        <div class="blk" style="border-style:dashed">
+          <div class="blk-h"><h3>Outra medida</h3></div>
+          <p class="sub" style="margin-top:4px">O que você conseguir medir sozinho: coxa, panturrilha, peito, quadril. Cada uma ganha nome, centímetros e a sua linha de “onde”.</p>
+          <button class="secondary" style="width:100%;margin-top:9px">+ Criar uma medida</button>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>O que a cintura decide hoje</h3><span>nada</span></div>
+          <p class="sub" style="margin-top:4px">Ela saiu da regra do nutricionista em 21/09, porque medir parou de acontecer e as fotos respondem melhor à mesma pergunta. Fica como acompanhamento. A variação do mês só aparece quando houver três semanas de medidas.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#b4">Hoje</a><a href="#b4">Semanas</a><a href="#b4">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="state" id="b5" aria-labelledby="b5h">
+  <div class="cap">
+    <p class="tag">Estado 5 · bioimpedância, uma vez por mês</p>
+    <h2 id="b5h">Treze números de uma vez, e nenhum obrigatório</h2>
+    <p>A balança de bioimpedância entrega muitos números de uma vez, uma vez por mês, e o dono listou quais quer: percentual e massa de gordura (inclusive visceral), massa magra, água intra e extracelular, taxa metabólica basal e idade metabólica, massa óssea, IMC ajustado e a distribuição por segmento.</p>
+    <p>Isto não é registro no meio do treino: é transcrição, sentado, de uma tela para outra. Então o desenho é uma <b>grade de campos na mesma ordem em que a balança costuma mostrar</b>, com o teclado do app embaixo e um “próximo” que anda de campo em campo sem fechar nada. Balança que não dá algum número deixa o campo vazio — e vazio fica vazio, nunca zero.</p>
+    <p>A distribuição por segmento é a única parte com estrutura própria: cinco segmentos, dois números cada. Ela entra como tabela, porque é assim que a balança a entrega e é assim que ele vai conferir.</p>
+    <p class="no">O que esta tela recusa: calcular qualquer um desses números a partir dos outros, e desenhar tendência de bioimpedância com dois pontos. Um ponto por mês é o que existe; a comparação começa a valer quando houver três.</p>
+    <p class="refs">D2 · P6 · decisão 8 do dono · F63 · F208</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">20:18</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Bioimpedância</strong><span>02/10 · 1ª do mês</span></div><button class="pillb">···</button></div>
+      <div class="scroll" style="padding-bottom:0">
+        <p class="over">Gordura</p>
+        <div class="fields">
+          <button class="cur"><b class="num">14,2 %</b><span>percentual de gordura</span></button>
+          <button><b class="num">10,5 kg</b><span>massa de gordura</span></button>
+          <button><b class="num">4</b><span>gordura visceral (nível)</span></button>
+          <button class="vazio"><b>—</b><span>IMC ajustado</span></button>
+        </div>
+        <p class="over" style="margin-top:14px">Massa e água</p>
+        <div class="fields">
+          <button><b class="num">63,6 kg</b><span>massa magra</span></button>
+          <button><b class="num">3,1 kg</b><span>massa óssea</span></button>
+          <button><b class="num">25,4 l</b><span>água intracelular</span></button>
+          <button class="vazio"><b>—</b><span>água extracelular</span></button>
+        </div>
+        <p class="over" style="margin-top:14px">Metabolismo</p>
+        <div class="fields">
+          <button><b class="num">1.712</b><span>taxa basal (kcal)</span></button>
+          <button><b class="num">21</b><span>idade metabólica</span></button>
+        </div>
+        <p class="over" style="margin-top:14px">Por segmento · opcional</p>
+        <dl class="seg">
+          <dt>Braço direito</dt><dd class="num">3,4 kg</dd><dd class="m num">12,8 %</dd>
+          <dt>Braço esquerdo</dt><dd class="num">3,3 kg</dd><dd class="m num">13,1 %</dd>
+          <dt>Tronco</dt><dd class="num">29,8 kg</dd><dd class="m num">15,9 %</dd>
+          <dt>Perna direita</dt><dd class="num">10,6 kg</dd><dd class="m num">11,4 %</dd>
+          <dt>Perna esquerda</dt><dd class="num">10,5 kg</dd><dd class="m">—</dd>
+        </dl>
+      </div>
+      <div class="kb" role="group" aria-label="Teclado do app">
+        <div class="kb-h"><strong class="num">14,2</strong><span>percentual de gordura<br>o campo seguinte é massa de gordura</span></div>
+        <div class="keys">
+          <button>1</button><button>2</button><button>3</button>
+          <button>4</button><button>5</button><button>6</button>
+          <button>7</button><button>8</button><button>9</button>
+          <button>,</button><button>0</button><button aria-label="Apagar">⌫</button>
+          <button class="go wide">Próximo campo</button><button class="secondary" style="border-radius:12px">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="state" id="b6" aria-labelledby="b6h">
+  <div class="cap">
+    <p class="tag">Estado 6 · a metade de baixo: o que os números viraram</p>
+    <h2 id="b6h">A leitura: semanas, não dias</h2>
+    <p>Ninguém decide nada olhando um peso. A leitura mostra <b>as médias semanais</b>, a faixa-alvo do nutricionista (+0,15 a +0,30 kg por semana) desenhada no fundo, e as semanas que não valem — menos de duas pesagens — hachuradas, porque um buraco no meio quebra a sequência de que a regra precisa.</p>
+    <p>Essa é a ligação com a tela da semana: aqui se vê o peso; lá se decide o que fazer com ele. O cartão do fim diz, em uma linha, o que a regra está esperando hoje.</p>
+    <p>O ritmo de ganho só aparece com 12 dias ou mais de base. Antes disso, o espaço dele fica dizendo quanto falta, em vez de mostrar um número que não existe.</p>
+    <p class="refs">F14 · F211 · F212 · F213 · F215 · F221 · F222 · F233 · P8 · D3</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:02</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Corpo</button><div class="ttl"><strong>Corpo · leitura</strong><span>5 semanas</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="blk">
+          <div class="blk-h"><h3>Peso médio por semana</h3><span>domingo a sábado</span></div>
+          <div class="band">
+            <div class="alvo"></div><span class="lab">faixa-alvo</span>
+            <svg viewBox="0 0 320 92" preserveAspectRatio="none" aria-label="Médias semanais: 72,4 · sem média · 73,2 · 73,6 · 73,9">
+              <polyline points="26,74 90,74 154,52 218,34 282,22" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-dasharray="0" stroke-linejoin="round"/>
+              <line x1="26" y1="74" x2="154" y2="52" stroke="var(--ghost)" stroke-width="2.5" stroke-dasharray="4 4"/>
+              <circle cx="26" cy="74" r="5" fill="var(--ink)"/><circle cx="154" cy="52" r="5" fill="var(--ink)"/>
+              <circle cx="218" cy="34" r="5" fill="var(--ink)"/><circle cx="282" cy="22" r="5" fill="var(--ink)"/>
+              <circle cx="90" cy="74" r="5" fill="none" stroke="var(--ghost)" stroke-width="2" stroke-dasharray="3 3"/>
+            </svg>
+          </div>
+          <div class="wk">
+            <div><b class="num">72,4</b>08–13/09</div>
+            <div class="bad"><b>—</b>14–20/09</div>
+            <div><b class="num">73,2</b>21–27/09</div>
+            <div><b class="num">73,6</b>28/09–04/10</div>
+            <div><b class="num">73,9</b>esta</div>
+          </div>
+          <p class="note">O traço pontilhado atravessa a semana sem média: ela não foi interpolada, só não existe. Duas pesagens é o mínimo.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Taxas entre semanas</h3><span>é o que a regra lê</span></div>
+          <div class="fields">
+            <button style="pointer-events:none"><b class="num">+0,40</b><span>21–27/09 → 28/09–04/10</span></button>
+            <button style="pointer-events:none"><b class="num">+0,30</b><span>28/09–04/10 → esta</span></button>
+          </div>
+          <p class="note">A regra olha as <b>duas taxas separadas</b>, nunca a média delas. Somar duas semanas já fez este produto cortar comida por causa de uma só.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Cintura</h3><span>sem dados</span></div>
+          <p class="sub" style="margin-top:4px">A variação do mês precisa de médias semanais cobrindo 21 dias ou mais. Faltam 3 semanas de medidas.</p>
+        </div>
+        <button class="primary" style="margin-top:12px">O que a regra diz hoje</button>
+        <p class="note">Hoje ela diz: <b>não mexer e registrar mais</b> — falta adesão da comida, não falta peso.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#b6">Hoje</a><a class="on" href="#b6">Semanas</a><a href="#b6">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="state" id="b7" aria-labelledby="b7h">
+  <div class="cap">
+    <p class="tag">Estado 7 · vazio</p>
+    <h2 id="b7h">Nada registrado: a tela pede o que a regra pede, e nada mais</h2>
+    <p>Sem pesagem não há média, sem média não há taxa, e a regra do nutricionista tem uma saída própria para isso: <b>pedir pesagens, 3 a 4 por semana</b>. É essa frase, e não um gráfico vazio, que ocupa a tela.</p>
+    <p>Os outros três blocos ficam visíveis, vazios e sem cobrança, porque fazem parte do mesmo lugar: a fita, a bioimpedância e as fotos. Nenhum deles é pré-requisito do outro.</p>
+    <p class="refs">F212 · F42 · F198 (dia sem marca é desconhecido, não zero)</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">6:38</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Corpo</strong><span>quinta, 02/10</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="blk now">
+          <div class="blk-h"><h3>Peso de hoje</h3><span>nenhuma pesagem ainda</span></div>
+          <div class="vrow"><button class="tapval"><b class="num">—</b><i>toque e ponha o primeiro</i></button></div>
+        </div>
+        <div class="empty">
+          <p class="b">A regra está esperando pesagens</p>
+          <p>“Sem semanas suficientes: pedir pesagens, 3 a 4 por semana.” São as palavras da regra do nutricionista, e é tudo o que falta para ela começar a dizer alguma coisa.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Fita</h3><span>vazia</span></div>
+          <p class="sub" style="margin-top:4px">Cintura e braço, quando você quiser. Não é pré-requisito de nada.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Bioimpedância</h3><span>vazia</span></div>
+          <p class="sub" style="margin-top:4px">Uma vez por mês, se você fizer.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Fotos</h3><span>nenhuma sessão</span></div>
+          <p class="sub" style="margin-top:4px">A cada 14 dias, 9 poses, menos de 5 minutos.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#b7">Hoje</a><a href="#b7">Semanas</a><a href="#b7">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="state" id="b8" aria-labelledby="b8h">
+  <div class="cap">
+    <p class="tag">Estado 8 · erro · o número não foi gravado</p>
+    <h2 id="b8h">O que não gravou continua na tela</h2>
+    <p>Registrar peso já recusou número válido e já travou com erro neste produto. Aqui, a falha de gravação tem três regras: <b>o número digitado não some</b>, a linha diz a causa em português, e a tentativa fica até dar certo.</p>
+    <p>As causas que o aparelho produz são poucas e cada uma tem saída própria: sem espaço no armazenamento do navegador (perto de 5 MiB no Safari), modo privado — onde nada sobrevive ao fechar —, ou endereço novo, onde o app abre vazio porque os dados pertencem ao endereço de onde ele é servido.</p>
+    <p class="no">O que esta tela recusa: um aviso que some sozinho. Um erro de gravação que desaparece em três segundos é indistinguível de ter dado certo.</p>
+    <p class="refs">F53 · F55 · F56 · F275 · F294 · F296</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">6:42</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Corpo</strong><span>quinta, 02/10</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="blk" style="border:2px solid var(--err)">
+          <div class="blk-h"><h3>Peso de hoje</h3><span style="color:var(--err);font-weight:700">não gravado</span></div>
+          <div class="vrow"><button class="tapval" style="border-color:var(--err)"><b class="num">73,8</b><i style="color:var(--err)">digitado às 6:42 · ainda não está salvo</i></button><button class="secondary" style="min-height:44px">Tentar</button></div>
+          <div class="errb">
+            <strong>O armazenamento deste navegador está cheio</strong>
+            O Safari guarda cerca de 5 MiB por site. Nada foi perdido do que já estava salvo, mas nada novo entra até liberar espaço.
+            <button class="secondary" style="width:100%;margin-top:8px">Ver o que ocupa espaço</button>
+          </div>
+        </div>
+        <p class="note">O número continua na tela. Ele não vai sumir sozinho, e o aviso não fecha sozinho: enquanto estiver assim, está assim.</p>
+        <div class="blk">
+          <div class="blk-h"><h3>As outras duas causas</h3></div>
+          <p class="sub" style="margin-top:6px"><b style="color:var(--text)">Modo privado:</b> o armazenamento é recusado pelo Safari. O app roda, mas nada sobrevive ao fechar. Sair do modo privado resolve.</p>
+          <p class="sub" style="margin-top:6px"><b style="color:var(--text)">Endereço novo:</b> os dados pertencem ao endereço de onde o app é servido. Um endereço novo abre vazio, e o ícone antigo continua apontando para o velho.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a class="on" href="#b8">Hoje</a><a href="#b8">Semanas</a><a href="#b8">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="state" id="b9" aria-labelledby="b9h">
+  <div class="cap">
+    <p class="tag">Estado 9 · claro e escuro</p>
+    <h2 id="b9h">Os dois temas, desenhados</h2>
+    <p>No escuro, o bloco de registro continua sendo o mais claro da tela, porque é o que recebe o toque. A faixa-alvo do gráfico vira verde escuro em vez de verde claro, e a linha das médias usa o azul claro da tinta. A hachura da semana sem média é listrada nos dois.</p>
+    <p class="refs">decisão 5 do dono</p>
+  </div>
+  <div class="duo">
+    <div class="frame">
+      <div class="shrink"><div class="phone">
+        <div class="sb"><span class="num">6:40</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+        <div class="app">
+          <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Corpo</strong><span>quinta, 02/10</span></div><button class="pillb">···</button></div>
+          <div class="scroll">
+            <div class="blk now"><div class="blk-h"><h3>Peso de hoje</h3><span>uma por dia</span></div>
+              <div class="vrow"><button class="tapval"><b class="num">73,8</b><i>a última, de 30/09</i></button><span class="sub" style="text-align:right">3 a 4<br>por semana</span></div>
+            </div>
+            <div class="blk"><div class="blk-h"><h3>A semana</h3><span>dom a sáb</span></div>
+              <p class="big num" style="margin-top:4px">73,9 <small>kg de média</small></p>
+              <div class="band"><div class="alvo"></div><span class="lab">faixa-alvo</span>
+                <svg viewBox="0 0 320 92" preserveAspectRatio="none"><polyline points="26,74 90,74 154,52 218,34 282,22" fill="none" stroke="var(--ink)" stroke-width="2.5"/><circle cx="26" cy="74" r="5" fill="var(--ink)"/><circle cx="154" cy="52" r="5" fill="var(--ink)"/><circle cx="218" cy="34" r="5" fill="var(--ink)"/><circle cx="282" cy="22" r="5" fill="var(--ink)"/></svg>
+              </div>
+              <div class="wk"><div><b class="num">72,4</b>08/09</div><div class="bad"><b>—</b>14/09</div><div><b class="num">73,2</b>21/09</div><div><b class="num">73,6</b>28/09</div><div><b class="num">73,9</b>esta</div></div>
+            </div>
+            <div class="blk"><div class="blk-h"><h3>Fita</h3><span>cintura, braço</span></div>
+              <div class="fields"><button class="vazio"><b>— cm</b><span>cintura</span></button><button class="vazio"><b>— cm</b><span>braço</span></button></div>
+            </div>
+          </div>
+          <nav class="tabs"><a class="on" href="#b9">Hoje</a><a href="#b9">Semanas</a><a href="#b9">Prescrição</a></nav>
+        </div>
+        <div class="hi oncard"></div>
+      </div></div>
+      <p>Claro</p>
+    </div>
+    <div class="frame">
+      <div class="shrink"><div class="phone" data-tema="escuro" data-fixo>
+        <div class="sb"><span class="num">6:40</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+        <div class="app">
+          <div class="d-head"><button class="back">‹ Hoje</button><div class="ttl"><strong>Corpo</strong><span>quinta, 02/10</span></div><button class="pillb">···</button></div>
+          <div class="scroll">
+            <div class="blk now"><div class="blk-h"><h3>Peso de hoje</h3><span>uma por dia</span></div>
+              <div class="vrow"><button class="tapval"><b class="num">73,8</b><i>a última, de 30/09</i></button><span class="sub" style="text-align:right">3 a 4<br>por semana</span></div>
+            </div>
+            <div class="blk"><div class="blk-h"><h3>A semana</h3><span>dom a sáb</span></div>
+              <p class="big num" style="margin-top:4px">73,9 <small>kg de média</small></p>
+              <div class="band"><div class="alvo"></div><span class="lab">faixa-alvo</span>
+                <svg viewBox="0 0 320 92" preserveAspectRatio="none"><polyline points="26,74 90,74 154,52 218,34 282,22" fill="none" stroke="var(--ink)" stroke-width="2.5"/><circle cx="26" cy="74" r="5" fill="var(--ink)"/><circle cx="154" cy="52" r="5" fill="var(--ink)"/><circle cx="218" cy="34" r="5" fill="var(--ink)"/><circle cx="282" cy="22" r="5" fill="var(--ink)"/></svg>
+              </div>
+              <div class="wk"><div><b class="num">72,4</b>08/09</div><div class="bad"><b>—</b>14/09</div><div><b class="num">73,2</b>21/09</div><div><b class="num">73,6</b>28/09</div><div><b class="num">73,9</b>esta</div></div>
+            </div>
+            <div class="blk"><div class="blk-h"><h3>Fita</h3><span>cintura, braço</span></div>
+              <div class="fields"><button class="vazio"><b>— cm</b><span>cintura</span></button><button class="vazio"><b>— cm</b><span>braço</span></button></div>
+            </div>
+          </div>
+          <nav class="tabs"><a class="on" href="#b9">Hoje</a><a href="#b9">Semanas</a><a href="#b9">Prescrição</a></nav>
+        </div>
+        <div class="hi oncard"></div>
+      </div></div>
+      <p>Escuro</p>
+    </div>
+  </div>
+</section>
+
+</main>
+<script>
+(function(){
+  var btns=document.querySelectorAll('.theme button');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    btns.forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+    var t=b.dataset.t;
+    document.querySelectorAll('.phone').forEach(function(p){
+      if(p.hasAttribute('data-fixo'))return;
+      if(t==='escuro')p.setAttribute('data-tema','escuro');else p.removeAttribute('data-tema');
+    });
+  })});
+  var live=document.getElementById('live');if(!live)return;
+  var abrir=live.querySelector('[data-abrir]'),kb=live.querySelector('[data-kb]'),val=live.querySelector('[data-val]'),
+      kbv=live.querySelector('[data-kbv]'),gravar=live.querySelector('[data-gravar]'),ok=live.querySelector('[data-ok]'),
+      media=live.querySelector('[data-media]'),pes=live.querySelector('[data-pes]'),buf='73,8';
+  function paint(){kbv.textContent=buf||'—';}
+  abrir.addEventListener('click',function(){kb.hidden=false;buf='';paint();});
+  kb.querySelectorAll('.keys button').forEach(function(b){
+    var t=b.textContent.trim();
+    if(/^[0-9]$/.test(t)||t===','){b.addEventListener('click',function(){if(buf.length<5){buf+=t;paint();}});}
+    if(t==='⌫'){b.addEventListener('click',function(){buf=buf.slice(0,-1);paint();});}
+  });
+  gravar.addEventListener('click',function(){
+    var v=buf||'73,8';
+    val.textContent=v;val.parentElement.classList.add('ink');
+    val.nextElementSibling.textContent='hoje, 02/10 · toque para corrigir';
+    kb.hidden=true;ok.hidden=false;
+    media.innerHTML='73,9 <small>kg de média</small>';
+    pes.innerHTML='3 pesagens nesta semana · a regra pede 2 · <b style="color:var(--text)">+0,30 kg</b> sobre a semana anterior';
+  });
+  ok.querySelector('.u').addEventListener('click',function(){
+    val.textContent='73,8';val.parentElement.classList.remove('ink');
+    val.nextElementSibling.textContent='a última, de 30/09 · toque para pôr o de hoje';
+    ok.hidden=true;
+    media.innerHTML='73,9 <small>kg de média</small>';
+    pes.innerHTML='2 pesagens nesta semana · a regra precisa de 2 · <b style="color:var(--text)">+0,30 kg</b> sobre a semana anterior';
+  });
+})();
+</script>
+</body>
+</html>

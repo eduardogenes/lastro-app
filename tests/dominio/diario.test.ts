@@ -10,11 +10,28 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { ALIMENTOS_BASE, PLANO_BASE } from '../../src/dominio/nutricao/alimentos';
 import {
-  aderenciaDoDia, fechaDia, janelaDoHistorico, padraoPorRefeicao, refeicoesDeHoje
+  aderenciaDoDia, diaInterpretavel, diasInterpretaveis, excessoDoDia, fechaDia, janelaDoHistorico,
+  padraoPorRefeicao, poeComidaNoDia, refeicoesDeHoje
 } from '../../src/dominio/nutricao/calculo';
 import type { DiaComida, DiaComidaHist } from '../../src/dominio/nutricao/tipos';
 
 const cat = ALIMENTOS_BASE;
+
+/**
+ * Todas as refeições do plano marcadas, derivado do PLANO.
+ *
+ * Escrito à mão, o "dia cheio" destes testes envelhecia a cada refeição nova —
+ * e envelheceu: a ceia do plano 11 fez `{ pre, treino, pos, almoco, lanche,
+ * jantar }` passar a descrever um dia com uma refeição faltando, enquanto o
+ * teste continuava chamando aquilo de "comeu tudo".
+ */
+function todoOPlano(treino: boolean): Record<string, number> {
+  const out: Record<string, number> = {};
+  PLANO_BASE.filter(function (r) { return r.quando === 'sempre' || (treino && r.quando === 'treino'); })
+            .forEach(function (r) { out[r.id] = 1; });
+  return out;
+}
+
 const dia = (extra: Partial<DiaComida> = {}): DiaComida => Object.assign({
   data: '2026-01-14', done: {}, agua: 0, escala: {}, cadencia: 'treino' as const, alta: 0 as const
 }, extra);
@@ -35,12 +52,12 @@ test('o total é congelado no fechamento, contra o plano daquele dia', () => {
 
 test('a aderência é ponderada pela escala, não pela contagem crua', () => {
   const refs = refeicoesDeHoje(PLANO_BASE, true, false);
-  const cheio = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 } }),
-                         PLANO_BASE, cat, 1, 0, 1000);
+  const todas = todoOPlano(true);
+  const cheio = fechaDia(dia({ done: todas }), PLANO_BASE, cat, 1, 0, 1000);
   assert.strictEqual(aderenciaDoDia(cheio, refs), 1);
 
-  const meio = fechaDia(dia({ done: { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 },
-                              escala: { jantar: 0.5 } }), PLANO_BASE, cat, 1, 0, 1000);
+  const meio = fechaDia(dia({ done: todas, escala: { jantar: 0.5 } }),
+                        PLANO_BASE, cat, 1, 0, 1000);
   const a = aderenciaDoDia(meio, refs)!;
   assert.ok(a < 1 && a > 0.9,
     '"marcou feito com metade" não é igual a "comeu tudo" — o app já tem esse dado');
@@ -106,7 +123,11 @@ import {
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
 } from '../../src/dominio/nutricao/calculo';
 
-const cheio = { pre: 1, treino: 1, pos: 1, almoco: 1, lanche: 1, jantar: 1 };
+// "cheio" é TODA refeição do plano, derivado dele: escrito à mão, ele
+// envelhecia a cada refeição nova — a ceia do plano 11 deixou estes testes
+// afirmando "dia inteiro" sobre um dia com uma refeição faltando.
+const cheio: Record<string, 1> = {};
+PLANO_BASE.forEach(function (r) { cheio[r.id] = 1; });
 const hist = (dias: Array<[string, Record<string, 1>, Partial<DiaComida>?]>) =>
   dias.map(([d, done, extra]) =>
     fechaDia(dia(Object.assign({ data: d, done }, extra || {})), PLANO_BASE, cat, 1, 0, 1));
@@ -159,4 +180,419 @@ test('a auditoria acha a troca de ajuste e a aderência da semana anterior', () 
 test('sem troca de ajuste não há auditoria a fazer', () => {
   const h = hist([['2026-01-10', cheio], ['2026-01-11', cheio]]);
   assert.deepStrictEqual(trocasDeAjuste(h, PLANO_BASE), []);
+});
+
+// ---------- o que a migração 9 → 10 pôs no fechamento ----------
+
+test('o instante de cada marca atravessa o fechamento', () => {
+  // A fixture do plano 9 registra o defeito: `fechaDia` carimbava TODAS as
+  // marcas com a hora do fechamento, porque o dia corrente não tinha a hora de
+  // cada uma. Um dia inteiro aparecia marcado na mesma hora.
+  const manha = 1791000000000, tarde = 1791040000000;
+  const h = fechaDia(dia({ done: { pos: manha, lanche: tarde } }), PLANO_BASE, cat, 1, 0, 1791090000000);
+  assert.strictEqual(h.done.pos, manha);
+  assert.strictEqual(h.done.lanche, tarde);
+});
+
+test('marca sem instante cai para a hora do fechamento, que é o que se sabe', () => {
+  const h = fechaDia(dia({ done: { pos: 1 } }), PLANO_BASE, cat, 1, 0, 1791090000000);
+  assert.strictEqual(h.done.pos, 1791090000000,
+    'não dá para inventar a hora; a do fechamento é a única verdadeira disponível');
+});
+
+test('`como` desce ao histórico só para refeição que foi marcada', () => {
+  const h = fechaDia(dia({ done: { pos: 1791000000000 }, como: { pos: 'fora', jantar: 'nao' } }),
+                     PLANO_BASE, cat, 1, 0, 1791090000000);
+  assert.deepStrictEqual(h.como, { pos: 'fora' },
+    '`como` é atributo da marca: solto, afirmaria algo sobre uma refeição que o dia não registra');
+});
+
+test('"não contei a água" desce como fato, e cai se houver copo', () => {
+  const sem = fechaDia(dia({ done: { pos: 1791000000000 }, aguaNaoContada: 1 }),
+                       PLANO_BASE, cat, 1, 0, 1791090000000);
+  assert.strictEqual(sem.aguaNaoContada, 1, 'zero copo e "não contei" não são o mesmo dia');
+  assert.strictEqual(sem.agua, 0);
+
+  const com = fechaDia(dia({ done: { pos: 1791000000000 }, agua: 6, aguaNaoContada: 1 }),
+                       PLANO_BASE, cat, 1, 0, 1791090000000);
+  assert.strictEqual(com.aguaNaoContada, undefined, 'contou: o fato não se sustenta');
+  assert.strictEqual(com.agua, 6);
+});
+
+// ---------- as regras do nutricionista ----------
+// Três, e as três valem para trás. O que torna isso possível sem reescrever o
+// histórico é que a ADERÊNCIA é leitura derivada: ela lê `done` e `escala` do
+// dia congelado contra o PLANO DE HOJE, a cada chamada. O que está congelado é
+// `tot` — calorias e macros —, e a aderência não o usa.
+
+test('uma refeição que entra no plano muda o denominador de todo dia, sem tocar no congelado', () => {
+  // É a regra da ceia, e o motivo de ela valer para trás de graça: o dono
+  // acrescenta a refeição ao plano e a conta de ontem se refaz na leitura.
+  const h = fechaDia(dia({ done: todoOPlano(true) }), PLANO_BASE, cat, 1, 0, 1000);
+  const kcalCongelado = h.tot.kcal;
+
+  const hoje = refeicoesDeHoje(PLANO_BASE, true, false);
+  const n = hoje.length;
+  assert.strictEqual(aderenciaDoDia(h, hoje), 1, 'todas as do plano, cumpridas');
+
+  // o plano ganha uma refeição que não existe nele
+  const maior = JSON.parse(JSON.stringify(PLANO_BASE));
+  maior.push({ id: 'lanche2', t: '22:00', n: 'Outro lanche', tag: '', quando: 'sempre', itens: [] });
+  const mais = refeicoesDeHoje(maior, true, false);
+  assert.strictEqual(mais.length, n + 1);
+
+  const a = aderenciaDoDia(h, mais)!;
+  assert.ok(Math.abs(a - n / (n + 1)) < 1e-9,
+    'o MESMO dia passa a ser ' + n + ' de ' + (n + 1));
+  assert.strictEqual(h.tot.kcal, kcalCongelado,
+    'e o total congelado não é tocado: ele é o registro do que foi contado na época');
+});
+
+test('"não comi" conta o dia e vale zero naquela refeição', () => {
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const h = fechaDia(dia({ done: todoOPlano(true), como: { jantar: 'nao' } }),
+                     PLANO_BASE, cat, 1, 0, 1000);
+
+  assert.strictEqual(diaInterpretavel(h), true,
+    'dia honesto não pode valer menos que dia esquecido');
+  const n = refs.length;
+  const a = aderenciaDoDia(h, refs)!;
+  assert.ok(Math.abs(a - (n - 1) / n) < 1e-9, 'o jantar declarado não entra no numerador');
+});
+
+test('o dia em que ele não comeu nada é dia conhecido, com aderência zero', () => {
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const nada: Record<string, 'nao'> = {};
+  Object.keys(todoOPlano(true)).forEach(function (id) { nada[id] = 'nao'; });
+  const h = fechaDia(dia({ done: todoOPlano(true), como: nada }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(diaInterpretavel(h), true, 'o app sabe exatamente o que entrou: nada');
+  assert.strictEqual(aderenciaDoDia(h, refs), 0);
+  assert.strictEqual(h.tot.kcal, 0, 'e o total congelado não soma refeição que ele disse não ter comido');
+});
+
+test('"saí do plano" numa refeição conta como cumprida, com a procedência', () => {
+  // Ele comeu; só não foi aquilo. O app só tem os números do plano, e a marca é
+  // a procedência dizendo que o número é do prescrito.
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const h = fechaDia(dia({ done: todoOPlano(true), como: { almoco: 'fora' } }),
+                     PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(aderenciaDoDia(h, refs), 1);
+  assert.strictEqual(h.como!.almoco, 'fora', 'mas o dia carrega que o almoço não foi o do plano');
+  assert.ok(h.tot.kcal > 0);
+});
+
+test('a aderência não passa de 100%, e o excesso é medido à parte', () => {
+  // A régua de porções do app vai até 1½. Sem teto, comer mais que o plano
+  // aparecia como aderir MELHOR do que aderir — e `recorteDoHistorico` contava
+  // o dia como cumprido por causa do excedente, não do cumprimento.
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const n = refs.length;
+  const todas = todoOPlano(true);
+
+  const cheio = fechaDia(dia({ done: todas }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(aderenciaDoDia(cheio, refs), 1);
+  assert.strictEqual(excessoDoDia(cheio, refs), 0, 'seguiu o plano: nada acima');
+
+  const comeuMais = fechaDia(dia({ done: todas, escala: { almoco: 1.5 } }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(aderenciaDoDia(comeuMais, refs), 1,
+    'cumprir uma refeição é cumpri-la; mais que ela não é mais cumprimento');
+  const ex = excessoDoDia(comeuMais, refs)!;
+  assert.ok(Math.abs(ex - 0.5 / n) < 1e-9, 'meia porção dividida pelas refeições do dia');
+
+  // e o excesso não compensa a falta: são duas leituras, não uma soma
+  const faltouEComeuMais = fechaDia(dia({ done: todas, escala: { almoco: 1.5, jantar: 0.5 } }),
+                                    PLANO_BASE, cat, 1, 0, 1000);
+  const a = aderenciaDoDia(faltouEComeuMais, refs)!;
+  assert.ok(Math.abs(a - (n - 0.5) / n) < 1e-9, 'metade do jantar continua pesando contra');
+  assert.ok(Math.abs(excessoDoDia(faltouEComeuMais, refs)! - 0.5 / n) < 1e-9);
+});
+
+test('o excesso ignora a refeição que ele declarou não ter comido', () => {
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const h = fechaDia(dia({ done: { pos: 1, almoco: 1 }, escala: { almoco: 1.5 },
+                           como: { almoco: 'nao' } }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(excessoDoDia(h, refs), 0, 'não comeu: não há excedente a medir');
+});
+
+test('"não comi" não conta como refeição cumprida no padrão por refeição', () => {
+  // Esta leitura responde "qual refeição eu mais falho". Contar um pulo
+  // declarado como acerto a faria apontar para o lado errado.
+  const h: DiaComidaHist[] = [
+    fechaDia(dia({ data: '2026-01-10', done: { pos: 1, jantar: 1 } }), PLANO_BASE, cat, 1, 0, 1),
+    fechaDia(dia({ data: '2026-01-11', done: { pos: 1, jantar: 1 }, como: { jantar: 'nao' } }),
+             PLANO_BASE, cat, 1, 0, 2)
+  ];
+  const p = padraoPorRefeicao(h, PLANO_BASE);
+  const jantar = p.filter(x => x.id === 'jantar')[0];
+  assert.strictEqual(jantar.possiveis, 2, 'os dois dias entram no denominador');
+  assert.strictEqual(jantar.feitas, 1, 'e só um deles foi cumprido');
+});
+
+// ---------- "não sei" POR REFEIÇÃO ----------
+// O "Não sei" era do DIA (`aderencia: 'perdido'`) e passa a valer por refeição.
+// A aritmética está fechada: a refeição pesa 0 na adesão e NÃO sai do
+// denominador — a mesma razão do denominador da janela de 14 dias, e a regra de
+// que o caminho de menor esforço tem de ser o conservador. Subestimar segura o
+// corte calórico; inflar autoriza um corte que não devia acontecer.
+
+test('"não sei" numa refeição pesa zero e o dia CONTINUA contando', () => {
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const n = refs.length;
+  const h = fechaDia(dia({ done: todoOPlano(true), como: { almoco: 'nsei' } }),
+                     PLANO_BASE, cat, 1, 0, 1000);
+
+  assert.strictEqual(diaInterpretavel(h), true,
+    'a incerteza aparece no número baixo, não tirando o dia da janela de 14 dias');
+  const a = aderenciaDoDia(h, refs)!;
+  assert.ok(Math.abs(a - (n - 1) / n) < 1e-9,
+    'zero no numerador e a refeição continua no denominador');
+  assert.strictEqual(h.como!.almoco, 'nsei', 'e o registro guarda qual refeição foi');
+});
+
+test('não há limiar: o dia inteiro em "não sei" é adesão zero e ainda conta', () => {
+  // A tentação é inventar "se mais da metade for não sei, o dia cai". Não há
+  // limiar nesta decisão: o único efeito da incerteza é o número mais baixo.
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const tudoIncerto: Record<string, 'nsei'> = {};
+  Object.keys(todoOPlano(true)).forEach(function (id) { tudoIncerto[id] = 'nsei'; });
+  const h = fechaDia(dia({ done: todoOPlano(true), como: tudoIncerto }),
+                     PLANO_BASE, cat, 1, 0, 1000);
+
+  assert.strictEqual(aderenciaDoDia(h, refs), 0);
+  assert.strictEqual(diaInterpretavel(h), true, 'nenhuma quantidade de "não sei" derruba o dia');
+  assert.strictEqual(diasInterpretaveis([h], 14, '2026-01-14'), 1,
+    'o portão de 11 em 14 vê este dia');
+});
+
+test('"não sei" é distinguível de silêncio, com o mesmo número', () => {
+  // Mesmo número, registros diferentes — que é o certo. O silêncio de UMA
+  // refeição dá a mesma adesão porque o denominador é o plano; a diferença está
+  // em `done` e em `como`, e o silêncio do DIA INTEIRO dá `null`, não zero.
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const todas = todoOPlano(true);
+  const semAlmoco: Record<string, number> = Object.assign({}, todas);
+  delete semAlmoco.almoco;
+
+  const incerto = fechaDia(dia({ done: todas, como: { almoco: 'nsei' } }),
+                           PLANO_BASE, cat, 1, 0, 1000);
+  const calado = fechaDia(dia({ done: semAlmoco }), PLANO_BASE, cat, 1, 0, 1000);
+
+  assert.strictEqual(aderenciaDoDia(incerto, refs), aderenciaDoDia(calado, refs),
+    'a adesão não distingue os dois: o denominador é o plano nos dois casos');
+  assert.strictEqual(incerto.done.almoco != null, true, 'mas o registro distingue: há marca');
+  assert.strictEqual(calado.done.almoco, undefined, 'e aqui não há');
+  assert.strictEqual(calado.como, undefined, 'silêncio não tem atributo nenhum');
+
+  const mudo = fechaDia(dia({ done: {} }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(aderenciaDoDia(mudo, refs), null,
+    'ausência de registro não é aderência zero');
+  assert.strictEqual(diaInterpretavel(mudo), false);
+});
+
+test('"não sei" NÃO é "não comi": o total do dia não afirma zero kcal', () => {
+  // É a única leitura em que os dois se separam, e separar é o ponto: "não
+  // comi" é zero conhecido, "não sei" é não saber. Afirmar zero sobre uma
+  // refeição que ele não sabe descrever é a única coisa que se sabe falsa, e por
+  // isso `'nsei'` entra com os números do plano, como `'fora'`.
+  const sei = fechaDia(dia({ done: { pos: 1, almoco: 1 }, como: { almoco: 'nao' } }),
+                       PLANO_BASE, cat, 1, 0, 1000);
+  const naoSei = fechaDia(dia({ done: { pos: 1, almoco: 1 }, como: { almoco: 'nsei' } }),
+                          PLANO_BASE, cat, 1, 0, 1000);
+  const fora = fechaDia(dia({ done: { pos: 1, almoco: 1 }, como: { almoco: 'fora' } }),
+                        PLANO_BASE, cat, 1, 0, 1000);
+
+  assert.ok(naoSei.tot.kcal > sei.tot.kcal, 'o almoço desconhecido não sai do total');
+  assert.strictEqual(naoSei.tot.kcal, fora.tot.kcal, 'segue o caminho de "comi outra coisa"');
+
+  // e os dois PESAM IGUAL na adesão, que é o único que eles têm em comum
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  assert.strictEqual(aderenciaDoDia(naoSei, refs), aderenciaDoDia(sei, refs));
+});
+
+test('o excesso ignora a refeição em "não sei", como ignora a que ele não comeu', () => {
+  // Sem isto o mesmo dado diria duas coisas opostas: 0 na adesão e +meia porção
+  // no excesso, sobre uma refeição que ele declarou não saber.
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  const h = fechaDia(dia({ done: { pos: 1, almoco: 1 }, escala: { almoco: 1.5 },
+                           como: { almoco: 'nsei' } }), PLANO_BASE, cat, 1, 0, 1000);
+  assert.strictEqual(excessoDoDia(h, refs), 0, 'não se mede excedente do que não se sabe');
+});
+
+test('"não sei" não conta como cumprida em nenhuma das duas contagens por refeição', () => {
+  // As duas escrevem "feita em X dos últimos Y dias". Contar um desconhecido
+  // como acerto é inflar — e inflar adesão é o mecanismo do corte errado.
+  const h: DiaComidaHist[] = [
+    fechaDia(dia({ data: '2026-01-10', done: { pos: 1, almoco: 1 } }), PLANO_BASE, cat, 1, 0, 1),
+    fechaDia(dia({ data: '2026-01-11', done: { pos: 1, almoco: 1 }, como: { almoco: 'nsei' } }),
+             PLANO_BASE, cat, 1, 0, 2)
+  ];
+
+  const almoco = padraoPorRefeicao(h, PLANO_BASE).filter(x => x.id === 'almoco')[0];
+  assert.strictEqual(almoco.possiveis, 2, 'os dois dias entram no denominador');
+  assert.strictEqual(almoco.feitas, 1, 'e só um deles é cumprimento conhecido');
+
+  const c = contagemDaRefeicao(h, PLANO_BASE, 'almoco', 20, '2026-01-14');
+  assert.strictEqual(c.possiveis, 2);
+  assert.strictEqual(c.feitas, 1, 'a mesma régua nas duas leituras');
+});
+
+// ---------- pôr comida num dia de data arbitrária ----------
+// A tarefa que o app não tinha: `diaDeComida()` carimba o dia com a data,
+// `fechaDiaDeComida` congela o dia velho na virada e `marcaRefeicao` escreve
+// sempre no dia corrente. Não havia caminho para a terça que ele esqueceu.
+
+const HOJE = '2026-01-14';
+const AGORA = new Date('2026-01-14T21:00:00').getTime();
+
+function poe(hist: DiaComidaHist[], data: string, c: Parameters<typeof poeComidaNoDia>[2],
+             ajuste: number | null = 0) {
+  return poeComidaNoDia(hist, data, c, PLANO_BASE, cat, HOJE, 777, ajuste, AGORA);
+}
+
+test('um dia passado ganha linha, com o total congelado e o carimbo do plano', () => {
+  const r = poe([], '2026-01-11', { done: { pos: 1, almoco: 1 }, agua: 6, cadencia: 'descanso' });
+  assert.strictEqual(r.recusa, null);
+  assert.strictEqual(r.hist.length, 1);
+  assert.strictEqual(r.dia!.d, '2026-01-11');
+  assert.strictEqual(r.dia!.agua, 6);
+  assert.strictEqual(r.dia!.cadencia, 'descanso');
+  assert.ok(r.dia!.tot.kcal > 0, 'o total é congelado agora, como em qualquer fechamento');
+  assert.strictEqual(r.dia!.pv, 777, 'e carrega a procedência do plano com que foi contado');
+  assert.strictEqual(r.dia!.m, AGORA, 'o carimbo de alteração é o instante de quem chamou');
+});
+
+test('o instante da marca é de quem chama: a função não lê relógio', () => {
+  const marcado = new Date('2026-01-11T12:40:00').getTime();
+  const r = poe([], '2026-01-11', { done: { almoco: marcado } });
+  assert.strictEqual(r.dia!.done.almoco, marcado);
+
+  // sem instante aproveitável, cai para o `agora` recebido — nunca para
+  // `Date.now()`, que escaparia da porta pela qual o teste viaja no tempo
+  const sem = poe([], '2026-01-11', { done: { almoco: 1 } });
+  assert.strictEqual(sem.dia!.done.almoco, AGORA);
+});
+
+test('hoje também é data arbitrária', () => {
+  const r = poe([], HOJE, { done: { pos: 1 } });
+  assert.strictEqual(r.recusa, null);
+  assert.strictEqual(r.dia!.d, HOJE);
+});
+
+test('data futura é recusada: dia que não aconteceu não se registra', () => {
+  const r = poe([], '2026-01-15', { done: { pos: 1 } });
+  assert.strictEqual(r.recusa, 'futuro');
+  assert.strictEqual(r.dia, null);
+  assert.deepStrictEqual(r.hist, [], 'e nada é gravado');
+});
+
+test('data ilegível é recusada em vez de virar linha com chave torta', () => {
+  // `d` é a chave natural do histórico e a chave da fusão. Uma linha com data
+  // inválida nunca mais seria alcançada por lápide nenhuma.
+  ['ontem', '2026-1-4', '', '2026-01-14T10:00'].forEach(function (d) {
+    const r = poe([], d, { done: { pos: 1 } });
+    assert.strictEqual(r.recusa, 'data', d + ' devia ser recusada');
+    assert.deepStrictEqual(r.hist, []);
+  });
+});
+
+test('pôr em dia COMPLETA a linha que existe, em vez de apagar o resto dela', () => {
+  // "marquei o jantar que esqueci" não pode virar "apaguei o resto da terça".
+  const antes = poe([], '2026-01-11', { done: { pos: 1, almoco: 1 }, agua: 5, turno: 'noite' }).hist;
+  const r = poe(antes, '2026-01-11', { done: { jantar: 1 }, escala: { jantar: 0.5 } });
+
+  assert.strictEqual(r.hist.length, 1, 'não duplica: a data é a chave natural');
+  assert.deepStrictEqual(Object.keys(r.dia!.done).sort(), ['almoco', 'jantar', 'pos']);
+  assert.strictEqual(r.dia!.agua, 5, 'a água que já estava lá fica');
+  assert.strictEqual(r.dia!.turno, 'noite', 'e o turno também');
+  assert.strictEqual(r.dia!.escala.jantar, 0.5);
+});
+
+test('o que vem agora vence o que estava, chave a chave', () => {
+  const antes = poe([], '2026-01-11', { done: { almoco: 1 }, escala: { almoco: 1 }, agua: 2 }).hist;
+  const r = poe(antes, '2026-01-11', { escala: { almoco: 0.5 }, agua: 9, como: { almoco: 'fora' } });
+  assert.strictEqual(r.dia!.escala.almoco, 0.5, 'corrigir a porção de um dia passado é o caso de uso');
+  assert.strictEqual(r.dia!.agua, 9);
+  assert.strictEqual(r.dia!.como!.almoco, 'fora');
+});
+
+test('pôr "não sei" num dia passado é o caso de uso, e o dia continua contando', () => {
+  // É aqui que o "não sei" mais tem sentido: ele volta à terça e declara que
+  // não sabe o que foi o almoço. O dia tem marca, então continua na janela.
+  const antes = poe([], '2026-01-11', { done: { pos: 1, almoco: 1 } }).hist;
+  const r = poe(antes, '2026-01-11', { como: { almoco: 'nsei' } });
+  assert.strictEqual(r.dia!.como!.almoco, 'nsei');
+  assert.strictEqual(diaInterpretavel(r.dia!), true);
+  assert.ok(r.dia!.tot.kcal > 0, 'e o total não passa a afirmar que ele não comeu');
+});
+
+test('o total é recontado quando as marcas mudam — e só por isso', () => {
+  // O congelamento protege o passado de mudança no PLANO, não de mudança nas
+  // MARCAS: elas mudaram agora, de propósito.
+  const antes = poe([], '2026-01-11', { done: { pos: 1 } }).hist;
+  const so = antes[0].tot.kcal;
+  const r = poe(antes, '2026-01-11', { done: { almoco: 1 } });
+  assert.ok(r.dia!.tot.kcal > so, 'duas refeições somam mais que uma');
+});
+
+test('dia que continua mudo não vira linha', () => {
+  const r = poe([], '2026-01-11', {});
+  assert.strictEqual(r.recusa, 'mudo');
+  assert.deepStrictEqual(r.hist, [],
+    'guardar um dia vazio como zero seria dizer que ele não comeu');
+
+  // água declarada como não contada JÁ é informação sobre o dia
+  const comFato = poe([], '2026-01-11', { aguaNaoContada: 1 });
+  assert.strictEqual(comFato.recusa, null);
+  assert.strictEqual(comFato.dia!.aguaNaoContada, 1);
+});
+
+test('chamada que não muda nada não reescreve a linha nem adianta o carimbo', () => {
+  // Apagar um dia do histórico é destrutivo e não foi desenhado: esta função
+  // acrescenta, não remove. E bumpar `m` sem mudança faria este aparelho
+  // afirmar ser a cópia mais nova de um dia que ele não tocou.
+  const antes = poe([], '2026-01-11', { done: { pos: 1 } }).hist;
+  const r = poe(antes, '2026-01-11', {});
+  assert.strictEqual(r.recusa, null);
+  assert.strictEqual(r.hist.length, 1);
+  assert.deepStrictEqual(r.hist[0], antes[0], 'a linha fica exatamente como estava');
+  assert.strictEqual(r.dia, antes[0]);
+});
+
+test('o histórico de entrada não é tocado, e o de saída sai em ordem de data', () => {
+  const original: DiaComidaHist[] = [];
+  const um = poe(original, '2026-01-12', { done: { pos: 1 } }).hist;
+  assert.deepStrictEqual(original, [], 'função pura: devolve outro array');
+
+  const dois = poe(um, '2026-01-09', { done: { pos: 1 } }).hist;
+  const tres = poe(dois, '2026-01-11', { done: { pos: 1 } }).hist;
+  assert.deepStrictEqual(tres.map(x => x.d), ['2026-01-09', '2026-01-11', '2026-01-12']);
+  assert.strictEqual(um.length, 1, 'e as chamadas anteriores continuam com o que tinham');
+});
+
+test('o ajuste em vigor naquele dia é de quem chama; `null` preserva o que havia', () => {
+  const antes = poe([], '2026-01-11', { done: { pos: 1 } }, -2).hist;
+  assert.strictEqual(antes[0].aj, -2);
+  const mantem = poe(antes, '2026-01-11', { done: { almoco: 1 } }, null);
+  assert.strictEqual(mantem.dia!.aj, -2, 'o passo da época não é sobrescrito pelo de hoje');
+  const troca = poe(antes, '2026-01-11', { done: { almoco: 1 } }, 1);
+  assert.strictEqual(troca.dia!.aj, 1);
+});
+
+test('o dia posto em dia entra nas leituras como qualquer outro', () => {
+  // É o ponto: pôr o dia em dia tem que mover o portão de 11 em 14 e a
+  // aderência da semana, senão registrar o passado não serve para nada.
+  let hist: DiaComidaHist[] = [];
+  ['2026-01-10', '2026-01-11', '2026-01-12'].forEach(function (d) {
+    hist = poe(hist, d, { done: todoOPlano(true), cadencia: 'treino' }).hist;
+  });
+  assert.strictEqual(diasInterpretaveis(hist, 14, HOJE), 3);
+
+  const refs = refeicoesDeHoje(PLANO_BASE, true, false);
+  assert.strictEqual(aderenciaDoDia(hist[0], refs), 1);
+
+  // e um dia honesto de "não comi" conta igual
+  hist = poe(hist, '2026-01-13', { done: { pos: 1, almoco: 1 }, como: { almoco: 'nao' },
+                                   cadencia: 'descanso' }).hist;
+  assert.strictEqual(diasInterpretaveis(hist, 14, HOJE), 4);
+  assert.strictEqual(hist[3].como!.almoco, 'nao');
 });

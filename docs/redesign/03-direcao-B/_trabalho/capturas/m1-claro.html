@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visto · Momento 1</title>
+<meta name="description" content="Direção B (Visto), momento 1: entre duas séries, na academia, com o relógio contra.">
+<style>
+:root{
+  --fundo:#E6E1D7; --papel:#F3EFE7; --folha:#FBF9F4; --grafite:#22201C; --prescrito:#625C53;
+  --borda:#857E72; --linha:#DDD6CA; --tinta:#1D4ED0; --tinta-fundo:#E4EAFB; --sobre-tinta:#FFFFFF;
+  --alerta:#8A4B00; --alerta-fundo:#FBEBD3; --erro:#A8231B; --erro-fundo:#FBE3E0;
+  --moldura:#1E1D1A; --sistema:#000; --teclado:#E4DED3; --veu:rgba(20,18,14,.42);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-tema="claro"]){
+    --fundo:#0B0A08; --papel:#12110E; --folha:#1C1A16; --grafite:#EFEAE1; --prescrito:#A69F93;
+    --borda:#7A7366; --linha:#34302A; --tinta:#8FB0FF; --tinta-fundo:#1B2645; --sobre-tinta:#0E0D0B;
+    --alerta:#F2B45A; --alerta-fundo:#33260F; --erro:#FF8F86; --erro-fundo:#3A1715;
+    --moldura:#2A2824; --sistema:#000; --teclado:#24221D; --veu:rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-tema="escuro"]{
+  --fundo:#0B0A08; --papel:#12110E; --folha:#1C1A16; --grafite:#EFEAE1; --prescrito:#A69F93;
+  --borda:#7A7366; --linha:#34302A; --tinta:#8FB0FF; --tinta-fundo:#1B2645; --sobre-tinta:#0E0D0B;
+  --alerta:#F2B45A; --alerta-fundo:#33260F; --erro:#FF8F86; --erro-fundo:#3A1715;
+  --moldura:#2A2824; --sistema:#000; --teclado:#24221D; --veu:rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--fundo);color:var(--grafite);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","Segoe UI",Roboto,Arial,sans-serif;
+  font-size:17px;line-height:1.35;overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;text-align:inherit}
+:focus-visible{outline:3px solid var(--tinta);outline-offset:2px}
+.tab,.tela table,.rep,.rir button,.valor{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+.ic.p{width:14px;height:14px}
+
+/* página */
+.capa{max-width:920px;margin:0 auto;padding:28px 16px 4px}
+.capa .sobre{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--prescrito);margin:0}
+.capa h1{font-size:28px;line-height:1.15;margin:6px 0 10px;letter-spacing:-.01em}
+.capa p{margin:8px 0;max-width:70ch}
+.capa .chave{display:flex;flex-wrap:wrap;gap:10px 18px;margin:14px 0 4px;font-size:15px}
+.capa .chave span{display:inline-flex;gap:8px;align-items:center}
+.amostra{display:inline-block;width:14px;height:14px;border-radius:4px}
+.tema{margin-top:10px;display:inline-flex;gap:0;border:1.5px solid var(--borda);border-radius:12px;overflow:hidden}
+.tema button{min-height:44px;padding:0 14px;font-size:15px}
+.tema button[aria-pressed="true"]{background:var(--grafite);color:var(--papel)}
+.indice{display:flex;flex-wrap:wrap;gap:6px 8px;margin:14px 0 0;padding:0;list-style:none;font-size:15px}
+.indice a{color:var(--grafite);display:inline-flex;min-height:44px;align-items:center;padding:0 10px;border-radius:10px;border:1px solid var(--borda);text-decoration:none}
+.estados{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:56px 40px;padding:28px 16px 96px;max-width:1460px;margin:0 auto}
+.estado{width:414px;max-width:100%;display:flex;flex-direction:column;gap:14px}
+.estado.largo{width:896px}
+.legenda .rot{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--prescrito);margin:0}
+.legenda h2{font-size:20px;line-height:1.25;margin:4px 0 6px}
+.legenda p{font-size:15px;margin:0 0 6px}
+.legenda .fatos{font-size:13px;color:var(--prescrito)}
+
+/* tela de telefone, 414 x 896 pt (F49) */
+.tela{position:relative;width:414px;max-width:100%;height:896px;background:var(--papel);color:var(--grafite);
+  border-radius:48px;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 0 0 10px var(--moldura),0 22px 60px rgba(0,0,0,.22)}
+.tela.alta{height:auto;min-height:896px}
+.tela.recorte{height:auto;border-radius:26px;box-shadow:0 0 0 1px var(--linha),0 10px 30px rgba(0,0,0,.10)}
+.sis-topo{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 36px;font-size:15px;font-weight:600;position:relative}
+.sis-topo .entalhe{position:absolute;left:50%;top:0;width:208px;height:30px;transform:translateX(-50%);background:var(--sistema);border-radius:0 0 20px 20px}
+.sis-topo .ics{display:flex;gap:6px;align-items:center}
+.sinal{display:inline-flex;gap:2px;align-items:flex-end;height:12px}
+.sinal i{width:3px;background:var(--grafite);border-radius:1px;opacity:.25}
+.sinal i:nth-child(1){height:4px;opacity:1}.sinal i:nth-child(2){height:6px}.sinal i:nth-child(3){height:9px}.sinal i:nth-child(4){height:12px}
+.bat{width:25px;height:12px;border:1.5px solid var(--grafite);border-radius:4px;position:relative;opacity:.9}
+.bat::after{content:"";position:absolute;inset:1.5px;right:35%;background:var(--grafite);border-radius:1.5px}
+.sis-base{height:34px;flex:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px}
+.sis-base i{width:134px;height:5px;border-radius:3px;background:var(--grafite);opacity:.85}
+.conteudo{flex:1;display:flex;flex-direction:column;padding:0 16px;min-height:0;position:relative}
+.dobra{position:absolute;left:0;right:0;top:896px;border-top:2px dashed var(--borda);pointer-events:none}
+.dobra span{position:absolute;right:12px;top:-24px;font-size:12px;font-weight:600;color:var(--prescrito);background:var(--papel);padding:2px 6px;border-radius:6px}
+
+@media (max-width:480px){
+  .estados{padding:20px 0 72px;gap:44px}
+  .estado,.estado.largo{width:100%}
+  .legenda{padding:0 16px}
+  .tela{border-radius:0;box-shadow:0 -1px 0 var(--linha),0 1px 0 var(--linha);width:100%}
+  .tela.recorte{border-radius:0}
+  .sis-topo .entalhe{display:none}
+}
+
+/* comuns */
+.rot{font-size:13px;font-weight:700;letter-spacing:.03em;color:var(--prescrito);margin:0}
+.rot span{font-weight:500;letter-spacing:0}
+.pilula{min-height:44px;padding:0 12px;border-radius:12px;background:var(--folha);border:1.5px solid var(--borda);font-size:15px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.pilula b{font-weight:700}
+.pilula .mais{color:var(--tinta);font-weight:700}
+.botao-sec{min-height:44px;padding:0 14px;border-radius:12px;border:1.5px solid var(--borda);font-size:16px;font-weight:600;background:var(--folha);display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.botao-tinta{min-height:52px;padding:0 16px;border-radius:14px;background:var(--tinta);color:var(--sobre-tinta);font-size:17px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.link{min-height:44px;padding:0 6px;font-size:15px;font-weight:600;color:var(--tinta);display:inline-flex;align-items:center}
+.aviso{border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.35;display:flex;gap:10px;align-items:flex-start}
+.aviso p{margin:0}
+.aviso p+p{margin-top:4px}
+.aviso .ic{margin-top:1px}
+.aviso.erro{background:var(--erro-fundo);border:1.5px solid var(--erro)}
+.aviso.erro .ic,.aviso.erro strong{color:var(--erro)}
+.aviso.alerta{background:var(--alerta-fundo);border:1.5px solid var(--alerta)}
+.aviso.alerta .ic,.aviso.alerta strong{color:var(--alerta)}
+.aviso.neutro{background:var(--folha);border:1px solid var(--linha)}
+.aviso .acoes-aviso{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.veu{position:absolute;inset:0;background:var(--veu)}
+.folha-baixo{position:absolute;left:0;right:0;bottom:0;background:var(--papel);border-radius:24px 24px 0 0;padding:6px 16px 0;display:flex;flex-direction:column;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+.alca{width:40px;height:5px;border-radius:3px;background:var(--borda);margin:4px auto 10px}
+.esqueleto{background:linear-gradient(90deg,var(--linha),var(--folha),var(--linha));background-size:300% 100%;border-radius:10px;animation:brilho 1.4s ease-in-out infinite}
+@keyframes brilho{0%{background-position:100% 0}100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.esqueleto{animation:none}*{transition:none!important;animation:none!important}}
+.marca-visto{color:var(--tinta)}
+.teclado{background:var(--teclado);padding:10px 10px 0;border-radius:22px 22px 0 0;position:absolute;left:0;right:0;bottom:0;box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+.teclado .visor{display:flex;align-items:baseline;gap:8px;padding:6px 8px 10px}
+.teclado .visor .rot{flex:1}
+.teclado .visor b{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--tinta)}
+.teclado .visor .cursor{display:inline-block;width:2px;height:30px;background:var(--tinta);margin-left:2px;vertical-align:-4px;animation:pisca 1s steps(1) infinite}
+@keyframes pisca{50%{opacity:0}}
+.teclado .teclas{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.teclado .teclas button{height:54px;border-radius:12px;background:var(--folha);border:1px solid var(--linha);font-size:26px;font-weight:600;text-align:center}
+.teclado .teclas button.ok{background:var(--tinta);color:var(--sobre-tinta);border-color:var(--tinta);font-size:19px;font-weight:700}
+.teclado .linha-ok{display:grid;grid-template-columns:1fr 2fr;gap:7px;margin-top:7px}
+.teclado .linha-ok button{height:52px;border-radius:12px;font-size:17px;font-weight:700;text-align:center}
+.teclado .linha-ok .cancela{background:transparent;border:1.5px solid var(--borda)}
+.teclado .linha-ok .ok{background:var(--tinta);color:var(--sobre-tinta)}
+.teclado .nota-tec{font-size:13px;color:var(--grafite);padding:8px 4px 0}
+
+/* ---------- instrumento de série ---------- */
+.sessao{display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 8px;padding:2px 0 8px}
+.sessao-nome{font-size:22px;font-weight:800;display:inline-flex;align-items:center;gap:6px;min-height:44px;letter-spacing:-.01em}
+.sessao-dir{display:flex;gap:6px}
+.sessao-meta{grid-column:1/-1;margin:0;font-size:15px;color:var(--prescrito)}
+.sessao-meta b{color:var(--grafite);font-weight:700}
+.trilho{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:2px 0 10px}
+.seg{min-height:46px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:13px;font-weight:700;color:var(--prescrito);border:1.5px solid transparent;text-align:center}
+.seg .pts{display:flex;gap:3px}
+.seg .pts i{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--borda)}
+.seg .pts i.f{background:var(--tinta);border-color:var(--tinta)}
+.seg .pts i.x{border-color:var(--prescrito);background:linear-gradient(45deg,transparent 42%,var(--prescrito) 42%,var(--prescrito) 58%,transparent 58%)}
+.seg.feito{color:var(--grafite)}
+.seg.atual{border-color:var(--tinta);color:var(--tinta);background:var(--tinta-fundo)}
+.exercicio{background:var(--folha);border-radius:18px;padding:12px 14px 6px;border:1px solid var(--linha)}
+.exercicio h3{font-size:22px;line-height:1.15;margin:0 0 3px;display:flex;gap:8px;align-items:baseline;letter-spacing:-.01em}
+.exercicio h3 .pos{font-size:15px;color:var(--prescrito);font-weight:700;min-width:12px}
+.exercicio .troca{margin:0 0 2px;font-size:14px;font-weight:600;color:var(--tinta)}
+.presc{margin:0;font-size:15px;color:var(--prescrito);display:flex;flex-wrap:wrap;align-items:center;gap:0 6px}
+.presc .link{min-height:30px;padding:0;font-size:15px}
+.series{width:100%;border-collapse:collapse;margin-top:6px}
+.series th,.series td{text-align:left;padding:6px 0;border-top:1px solid var(--linha);font-size:18px;font-weight:600;height:36px}
+.series thead th{font-size:12px;color:var(--prescrito);font-weight:700;border-top:0;padding:2px 0;height:auto;letter-spacing:.03em;text-transform:uppercase}
+.series tbody th{width:44px;color:var(--prescrito);font-size:15px}
+.series tbody th small{display:block;font-size:10px;font-weight:700;color:var(--tinta);letter-spacing:.03em;text-transform:uppercase;margin-top:-2px}
+.series td.ref{color:var(--prescrito);font-weight:500;width:44%}
+.series td.hoje{color:var(--tinta);font-weight:800}
+.series td.hoje .ic{stroke-width:3;margin-left:4px}
+.series tr.agora td.hoje span.agora{display:inline-block;font-size:13px;font-weight:800;color:var(--tinta);border:1.5px dashed var(--tinta);border-radius:8px;padding:2px 8px;letter-spacing:.03em;text-transform:uppercase}
+.series td.falhou{color:var(--erro);font-weight:800}
+.series td.falhou small{display:block;font-size:12px;font-weight:700}
+.delta{font-size:12px;font-weight:800;color:var(--tinta);background:var(--tinta-fundo);border-radius:6px;padding:1px 5px;margin-left:4px;vertical-align:2px}
+
+.acabou{margin-top:10px;border-radius:18px;padding:10px 12px 10px;background:var(--tinta-fundo)}
+.acabou-topo{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:30px}
+.recibo{margin:0;font-size:15px;display:flex;align-items:center;gap:6px;color:var(--grafite)}
+.recibo .ic{color:var(--tinta);stroke-width:3}
+.recibo b{color:var(--tinta)}
+.acabou .link{min-height:30px;font-size:14px}
+.relogio{display:flex;align-items:baseline;gap:6px;margin:2px 0 4px;font-size:14px;color:var(--prescrito)}
+.relogio b{font-size:20px;color:var(--grafite);font-weight:800}
+.relogio .nota{font-size:12px;font-weight:600;color:var(--grafite)}
+.barra{height:5px;border-radius:3px;background:var(--linha);overflow:hidden;margin-bottom:8px}
+.barra i{display:block;height:100%;background:var(--grafite);transition:width .6s linear}
+.linha-op{display:grid;grid-template-columns:40px 1fr;gap:6px;align-items:center;margin-top:6px}
+.linha-op .rot{font-size:12px;line-height:1.1}
+.rir{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.rir button,.dor button{height:46px;border-radius:12px;border:1.5px solid var(--borda);background:var(--folha);font-size:20px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;text-align:center}
+.rir button small{font-size:10px;font-weight:700;color:var(--prescrito);margin-top:2px;letter-spacing:.02em}
+.rir button.alvo{border-color:var(--grafite)}
+.dor{display:grid;grid-template-columns:.8fr 1fr 1fr;gap:6px}
+.dor button{font-size:13px;font-weight:700;line-height:1.1;padding:0 4px}
+.rir button[aria-pressed="true"],.dor button[aria-pressed="true"]{background:var(--tinta);color:var(--sobre-tinta);border-color:var(--tinta)}
+.rir button[aria-pressed="true"] small{color:var(--sobre-tinta)}
+.extra{margin-top:8px;width:100%;min-height:44px;border-radius:12px;border:1.5px dashed var(--tinta);color:var(--tinta);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--folha)}
+.extra span{font-weight:500;color:var(--grafite);font-size:13px}
+
+.entrada{margin-top:auto;padding:10px 0 4px}
+.entrada-topo{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.entrada-titulo{margin:0;font-size:17px;font-weight:800}
+.entrada-ref{margin:0;font-size:14px;color:var(--prescrito);text-align:right}
+.entrada-nota{margin:-2px 0 6px;font-size:13px;color:var(--grafite);display:flex;justify-content:space-between;align-items:center;gap:6px}
+.entrada-nota .link{min-height:32px;font-size:13px}
+.carga{display:flex;align-items:center;gap:10px;min-height:54px;border-radius:14px;background:var(--folha);border:1px solid var(--linha);padding:0 5px 0 14px}
+.carga .valor{font-size:30px;font-weight:800;letter-spacing:-.01em}
+.carga .valor.vazio{color:var(--prescrito)}
+.carga .unid{font-size:14px;color:var(--prescrito);flex:1;line-height:1.2}
+.rot-reps{margin:10px 0 6px}
+.reps{display:grid;grid-template-columns:repeat(6,1fr) .75fr;gap:6px;position:relative}
+.rep{height:64px;border-radius:16px;border:1.5px solid var(--borda);background:var(--folha);font-size:28px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;text-align:center;transition:background .12s,color .12s,transform .12s}
+.rep small{font-size:10px;font-weight:700;color:var(--prescrito);margin-top:4px;letter-spacing:.02em;text-transform:uppercase}
+.rep.fora{border-style:dashed}
+.rep.ultima{border-color:var(--grafite);border-width:2px}
+.rep.outro{font-size:20px;color:var(--prescrito)}
+.rep:active,.rep.tocado{background:var(--tinta);color:var(--sobre-tinta);border-color:var(--tinta);transform:scale(.96)}
+.rep.tocado small{color:var(--sobre-tinta)}
+.rep.falhou{border-color:var(--erro);border-width:2px;color:var(--erro)}
+.rep.falhou small{color:var(--erro)}
+.faixa-rep{display:grid;grid-template-columns:repeat(6,1fr) .75fr;gap:6px;margin-top:4px;height:18px}
+.faixa-rep span{border-top:2px solid var(--grafite);font-size:11px;font-weight:700;color:var(--prescrito);text-align:center;padding-top:1px;border-radius:2px}
+.acoes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.acoes button{min-height:44px;border-radius:12px;border:1.5px solid var(--borda);font-size:15px;font-weight:700;text-align:center;background:transparent}
+.desabilitado{opacity:.45;pointer-events:none}
+
+/* folha de troca */
+.troca-lista{list-style:none;margin:0;padding:0;overflow:auto}
+.troca-lista li{border-top:1px solid var(--linha)}
+.troca-lista button{width:100%;min-height:64px;padding:10px 2px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.troca-lista .t{font-weight:700;font-size:17px}
+.troca-lista .s{grid-column:1/2;font-size:14px;color:var(--prescrito)}
+.troca-lista .frase{grid-column:1/2;font-size:15px;color:var(--grafite);font-style:italic}
+.troca-lista .seta{grid-row:1/4;grid-column:2;color:var(--prescrito)}
+.selo-tr{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--tinta);border:1.5px solid var(--tinta);border-radius:6px;padding:0 5px;margin-left:6px;vertical-align:2px;font-style:normal}
+.foto-vazia{display:flex;align-items:center;gap:10px;border:1.5px dashed var(--borda);border-radius:14px;padding:10px 12px;margin:8px 0 2px;font-size:14px}
+.foto-vazia .ic{width:22px;height:22px}
+
+/* telas próprias */
+.manha h3{font-size:24px;margin:4px 0 2px}
+.manha .sub{margin:0 0 10px;color:var(--prescrito);font-size:15px}
+.lista-ex{list-style:none;margin:8px 0 0;padding:0;background:var(--folha);border:1px solid var(--linha);border-radius:16px}
+.lista-ex li{display:grid;grid-template-columns:24px 1fr auto;gap:2px 8px;padding:9px 12px;border-top:1px solid var(--linha);font-size:15px;align-items:baseline}
+.lista-ex li:first-child{border-top:0}
+.lista-ex .n{color:var(--prescrito);font-weight:700}
+.lista-ex .x{font-weight:600}
+.lista-ex .u{font-size:13px;color:var(--prescrito);grid-column:2/3}
+.lista-ex .e{font-size:13px;color:var(--prescrito);text-align:right}
+.estado-ex{font-size:12px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
+.estado-ex.feito{color:var(--tinta)}
+.estado-ex.nao{color:var(--prescrito)}
+.mesa-btn{min-height:44px;padding:0 12px;border-radius:12px;border:1.5px solid var(--borda);font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:8px;background:var(--folha)}
+.cont{background:var(--grafite);color:var(--papel);border-radius:999px;min-width:22px;height:22px;padding:0 6px;font-size:13px;font-weight:800;display:inline-grid;place-items:center}
+
+.carregando .linha-esq{height:16px;margin:10px 0}
+.carregando .bloco-esq{height:200px;border-radius:18px;margin:10px 0}
+
+.recortes{padding:16px;display:flex;flex-direction:column;gap:14px}
+.recortes h4{margin:0 0 6px;font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--prescrito)}
+.recortes .caixa{background:var(--papel);border-radius:16px;padding:12px;border:1px solid var(--linha)}
+.leg-trilho{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.leg-trilho div{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;text-align:center}
+.leg-trilho .seg{width:100%}
+
+/* paisagem */
+.paisagem-escala{width:100%;overflow:hidden}
+.tela.deitada{width:896px;height:414px;max-width:none;flex-direction:row;transform-origin:0 0}
+.deitada .lado-sis{width:44px;flex:none;position:relative}
+.deitada .lado-sis .entalhe-v{position:absolute;top:50%;left:0;width:30px;height:208px;transform:translateY(-50%);background:var(--sistema);border-radius:0 20px 20px 0}
+.deitada .col{flex:1;padding:14px 10px 21px;display:flex;flex-direction:column;min-width:0}
+.deitada .col + .col{padding-left:14px}
+.deitada .base-h{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:200px;height:5px;border-radius:3px;background:var(--grafite);opacity:.85}
+
+/* mesa */
+.mesa h3{font-size:26px;margin:4px 0 0;letter-spacing:-.01em}
+.mesa .sub{margin:2px 0 12px;color:var(--prescrito);font-size:15px}
+.decisao{background:var(--folha);border:1px solid var(--linha);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.decisao .q{font-size:13px;font-weight:700;color:var(--prescrito);margin:0 0 2px}
+.decisao h4{font-size:17px;margin:0 0 4px;line-height:1.25}
+.decisao p{font-size:14px;margin:0 0 8px;color:var(--grafite)}
+.decisao .bts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.decisao .bts button{min-height:44px;border-radius:12px;font-weight:700;font-size:15px;text-align:center}
+.decisao .bts .a{border:1.5px solid var(--borda)}
+.decisao .bts .b{border:1.5px solid var(--tinta);color:var(--tinta)}
+.secoes-mesa{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.secoes-mesa button{min-height:56px;border-radius:14px;border:1px solid var(--linha);background:var(--folha);padding:8px 12px;font-size:15px;font-weight:700;text-align:left;display:flex;flex-direction:column;justify-content:center}
+.secoes-mesa button span{font-size:12px;font-weight:500;color:var(--prescrito)}
+
+/* ajuste de orçamento vertical: tudo cabe em 818 pt úteis */
+.sessao{padding:0 0 6px}
+.trilho{margin:0 0 8px}
+.seg{min-height:44px}
+.exercicio{padding:10px 12px 4px}
+.exercicio h3{align-items:center}
+.exercicio h3 .nm{flex:1}
+.orient{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--borda);font-size:15px;font-weight:800;font-style:italic;font-family:Georgia,serif;color:var(--prescrito);display:grid;place-items:center;position:relative}
+.orient::after{content:"";position:absolute;inset:-8px}
+.series th,.series td{height:32px;padding:4px 0;font-size:17px}
+.acabou{margin-top:8px;padding:8px 10px 8px}
+.recibo{min-width:0;flex:1;white-space:nowrap;overflow:hidden;gap:5px}
+.recibo .rc-g{font-size:14px}
+.recibo .rc-n{overflow:hidden;text-overflow:ellipsis;font-size:13px;color:var(--prescrito)}
+.recibo .delta{flex:none}
+.relogio{margin:0 0 4px}
+.linha-op{margin-top:4px}
+.rir button,.dor button{height:44px}
+.entrada{padding:6px 0 2px}
+.entrada-topo{margin-bottom:5px}
+.carga{min-height:50px}
+.reps{margin-top:8px}
+.rep{height:60px}
+.faixa-rep{height:16px;margin-top:3px}
+.acoes{margin-top:6px}
+.relogio{align-items:center}
+.relogio .link{margin-left:auto;min-height:32px;font-size:14px;padding:0 2px}
+.recibo .rc-n{font-size:14px}
+.lista-ex li{padding:6px 12px}
+.manha h3{margin-top:2px}
+.secoes-mesa{grid-template-columns:1fr 1fr 1fr;gap:6px}
+.secoes-mesa button{min-height:52px;padding:6px 9px;font-size:14px}
+.secoes-mesa button span{font-size:11px;line-height:1.2}
+
+.deitada .acabou .linha-op + .linha-op{display:none}
+.deitada .rot-reps{display:none}
+.deitada .rep{height:56px}
+.deitada .entrada{margin-top:8px;padding-top:0}
+.deitada .entrada .acoes{margin-top:6px}
+.deitada .sessao{padding-bottom:2px}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></symbol>
+<symbol id="i-baixo" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-dir" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="i-esq" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="i-aviso" viewBox="0 0 24 24"><path d="M12 3.5L22 20.5H2z"/><path d="M12 10v4.5M12 17.6v.1"/></symbol>
+<symbol id="i-erro" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="i-relogio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-mesa" viewBox="0 0 24 24"><path d="M3 9h18M5 9v11M19 9v11M3 9l3-5h12l3 5"/></symbol>
+</svg>
+<header class="capa">
+<p class="sobre">Direção B · Visto</p>
+<h1>Momento 1 — entre duas séries, na academia, com o relógio contra</h1>
+<p>O caso do 02-uso: a décima série de uma sessão começada às 6:22. São 6:55, o descanso prescrito é de 2 minutos, o celular está bloqueado na mão com música, o sinal é fraco, e a série saiu com a mesma carga da última vez e uma repetição a mais.</p>
+<p><b>A tese:</b> registrar é dar visto na prescrição. O que saiu como previsto custa um toque; só o desvio custa digitação; e nada que exija decidir é perguntado a quem está em pé.</p>
+<div class="chave">
+<span><i class="amostra" style="background:var(--tinta)"></i>tinta azul: o que você fez hoje</span>
+<span><i class="amostra" style="background:var(--prescrito)"></i>grafite: o previsto — a prescrição e a última vez</span>
+<span><i class="amostra" style="border:2px dashed var(--borda)"></i>tracejado: fora da faixa, extra, ou à espera</span>
+</div>
+<div class="tema" role="group" aria-label="Tema"><button data-v="auto">Do sistema</button><button data-v="claro">Claro</button><button data-v="escuro">Escuro</button></div>
+<ul class="indice"><li><a href="#e1">1 · o caso</a></li><li><a href="#e2">2 · depois do toque</a></li><li><a href="#e3">3 · voltou de outro app</a></li><li><a href="#e4">4 · série extra</a></li><li><a href="#e5">5 · máquina ocupada</a></li><li><a href="#e6">6 · vazio</a></li><li><a href="#e7">7 · carregando</a></li><li><a href="#e8">8 · erro ao abrir</a></li><li><a href="#e9">9 · erro ao gravar</a></li><li><a href="#e10">10 · manhã seguinte</a></li><li><a href="#e11">11 · paisagem</a></li><li><a href="#e12">12 · outros estados</a></li><li><a href="#e13">13 · mesa</a></li></ul>
+</header>
+<main class="estados">
+<section class="estado" id="e1" aria-labelledby="e1-t">
+<div class="legenda"><p class="rot">Estado 1 · o caso · tocável</p><h2 id="e1-t">6:55. A série 9 acabou há 1:24; a 10 está pronta para um toque.</h2><p>Ao desbloquear, a tela já está na próxima série, com a carga da última vez (35 kg) e as repetições da última vez marcadas (9). Saiu uma a mais: toque no 10. É o único toque obrigatório — a série grava no toque, sem botão de salvar (F171, F95).</p><p>Em cima, a série que acabou (a 9) aceita RIR e dor, os dois opcionais. Embaixo, ao alcance do polegar, a próxima.</p><p class="fatos">Toque para experimentar: repetições, RIR, dor, “mudar” (teclado do app), “+ série”, “Trocar”, o trilho, Peso, Água e o nome do treino. Cargas são exemplo; nomes, faixas, RIR alvo e descansos são os do Treino A (F84). O chest press repete o exemplo do treinador: 9/8/7 na última, 10/9/8 hoje (F95).</p></div>
+<div class="tela" data-proto aria-label="Protótipo tocável do instrumento de série"><div class="sis-topo" aria-hidden="true"><span class="tab">6:55</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><header class="sessao"><button class="sessao-nome" data-acao="treino" aria-label="Treino A, trocar de treino">Treino A <svg class="ic" aria-hidden="true"><use href="#i-baixo"/></svg></button><div class="sessao-dir"><button class="pilula" data-acao="peso">Peso <b>anotar</b></button><button class="pilula" data-acao="agua" aria-label="Água: 1 copos de 14. Somar um copo.">Água <b>1</b><span class="mais">+1</span></button></div><p class="sessao-meta"><b>9</b> de 20 séries · 33 min · <span>no ritmo de hoje, <b>~7:35</b></span></p></header><nav class="trilho" aria-label="Exercícios do treino A"><button class="seg feito" data-acao="ir" data-e="0" aria-label="1. Chest press inclinado convergente: feito"><span>1</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="1" aria-label="2. Pulldown convergente: feito"><span>2</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="2" aria-label="3. Crucifixo inclinado no cabo: feito"><span>3</span><span class="pts"><i class="f"></i><i class="f"></i></span></button><button class="seg parcial atual" data-acao="ir" data-e="3" aria-label="4. Pulldown unilateral: 1 de 2 séries, em curso" aria-current="step"><span>4</span><span class="pts"><i class="f"></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="4" aria-label="5. Elevação lateral na máquina: ainda não"><span>5</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="5" aria-label="6. Elevação lateral unilateral no cabo: ainda não"><span>6</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="6" aria-label="7. Extensão de tríceps acima da cabeça no cabo: ainda não"><span>7</span><span class="pts"><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="7" aria-label="8. Pushdown: ainda não"><span>8</span><span class="pts"><i class=""></i><i class=""></i></span></button></nav><article class="exercicio" aria-label="Exercício em curso"><h3><span class="pos">4</span><span class="nm">Pulldown unilateral</span><button class="orient" data-acao="mais" aria-label="Orientação do treinador">i</button></h3><p class="presc">dorsal · 2 × 8–12 · RIR 1 · descanso 2:00</p><table class="series"><thead><tr><th scope="col"><span class="sr">Série</span></th><th scope="col">última · seg 21/9</th><th scope="col">hoje</th></tr></thead><tbody><tr class=""><th scope="row">1</th><td class="ref">35 × 10</td><td class="hoje">35 × 11<svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg><span class="delta">+1</span></td></tr><tr class="agora"><th scope="row">2</th><td class="ref">35 × 9</td><td class="hoje"><span class="agora">agora</span></td></tr></tbody></table></article><section class="acabou" aria-label="A série que acabou"><div class="acabou-topo"><p class="recibo"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><b>35 × 11</b><span class="rc-g">gravada 6:53</span> <span class="delta">+1 rep</span><span class="rc-n">· s1 Pulldown unilateral</span></p></div><div class="relogio"><span>desde ela</span><b class="tab" data-relogio>1:24</b><span data-lembrete>lembrete 2:00</span><button class="link" data-acao="corrigir">corrigir</button></div><div class="barra" aria-hidden="true"><i data-barra style="width:70.0%"></i></div><div class="linha-op"><span class="rot">RIR<br><span>opcional</span></span><div class="rir" role="group" aria-label="RIR desta série, opcional"><button data-acao="rir" data-r="0" aria-pressed="false" class="" aria-label="RIR 0">0</button><button data-acao="rir" data-r="1" aria-pressed="true" class="alvo" aria-label="RIR 1, alvo do treinador">1<small>alvo</small></button><button data-acao="rir" data-r="2" aria-pressed="false" class="" aria-label="RIR 2">2</button><button data-acao="rir" data-r="3" aria-pressed="false" class="" aria-label="RIR 3">3</button><button data-acao="rir" data-r="4" aria-pressed="false" class="" aria-label="RIR 4">4</button></div></div><div class="linha-op"><span class="rot">Dor<br><span>ponto</span></span><div class="dor" role="group" aria-label="Ponto doendo neste exercício"><button data-acao="dor" data-p="Cotovelo" aria-pressed="false">Cotovelo</button><button data-acao="dor" data-p="Ombro da frente" aria-pressed="false">Ombro da frente</button><button data-acao="dor" data-p="Abaixo da patela" aria-pressed="false">Abaixo da patela</button></div></div></section><section class="entrada" aria-label="Próxima série"><div class="entrada-topo"><p class="entrada-titulo">Série 2 de 2</p><p class="entrada-ref">última: 35 × 9</p></div><div class="carga"><span class="rot">Carga</span><b class="valor">35</b><span class="unid">kg no pino<br>igual à última</span><button class="botao-sec" data-acao="carga">mudar</button></div><div class="reps"><button class="rep fora" data-acao="rep" data-r="7" aria-label="7 repetições (fora da faixa 8–12): gravar a série 2">7</button><button class="rep" data-acao="rep" data-r="8" aria-label="8 repetições: gravar a série 2">8</button><button class="rep ultima" data-acao="rep" data-r="9" aria-label="9 repetições (igual à última): gravar a série 2">9<small>última</small></button><button class="rep" data-acao="rep" data-r="10" aria-label="10 repetições: gravar a série 2">10</button><button class="rep" data-acao="rep" data-r="11" aria-label="11 repetições: gravar a série 2">11</button><button class="rep" data-acao="rep" data-r="12" aria-label="12 repetições: gravar a série 2">12</button><button class="rep outro" data-acao="outro" aria-label="Outro número de repetições">…</button></div><div class="faixa-rep" aria-hidden="true"><span style="grid-column:2/7">faixa 8–12</span></div><div class="acoes"><button data-acao="extra-aqui">+ série</button><button data-acao="trocar">Trocar</button><button data-acao="pular">Pular</button><button data-acao="mais">Mais</button></div></section></div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+<section class="estado" id="e2" aria-labelledby="e2-t">
+<div class="legenda"><p class="rot">Estado 2 · depois do toque</p><h2 id="e2-t">Gravou. O recibo diz o que ficou guardado, e a próxima série já está sob o polegar.</h2><p>Pulldown unilateral fechou 2 de 2, com “+1 rep” marcado contra a última vez. O próximo é a Elevação lateral na máquina: 25 kg e 13 repetições na última. O relógio do descanso começa no instante da gravação.</p><p>Se ele quiser uma terceira série, o botão tracejado está ali mesmo, sem menu (P12).</p><p class="fatos">O recibo vem do que foi lido de volta do aparelho: um toque que não gravou nunca parece gravado (F296, F294).</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">6:55</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><header class="sessao"><button class="sessao-nome" data-acao="treino" aria-label="Treino A, trocar de treino">Treino A <svg class="ic" aria-hidden="true"><use href="#i-baixo"/></svg></button><div class="sessao-dir"><button class="pilula" data-acao="peso">Peso <b>anotar</b></button><button class="pilula" data-acao="agua" aria-label="Água: 1 copos de 14. Somar um copo.">Água <b>1</b><span class="mais">+1</span></button></div><p class="sessao-meta"><b>10</b> de 20 séries · 33 min · <span>no ritmo de hoje, <b>~7:28</b></span></p></header><nav class="trilho" aria-label="Exercícios do treino A"><button class="seg feito" data-acao="ir" data-e="0" aria-label="1. Chest press inclinado convergente: feito"><span>1</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="1" aria-label="2. Pulldown convergente: feito"><span>2</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="2" aria-label="3. Crucifixo inclinado no cabo: feito"><span>3</span><span class="pts"><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="3" aria-label="4. Pulldown unilateral: feito"><span>4</span><span class="pts"><i class="f"></i><i class="f"></i></span></button><button class="seg nao atual" data-acao="ir" data-e="4" aria-label="5. Elevação lateral na máquina: ainda não, em curso" aria-current="step"><span>5</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="5" aria-label="6. Elevação lateral unilateral no cabo: ainda não"><span>6</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="6" aria-label="7. Extensão de tríceps acima da cabeça no cabo: ainda não"><span>7</span><span class="pts"><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="7" aria-label="8. Pushdown: ainda não"><span>8</span><span class="pts"><i class=""></i><i class=""></i></span></button></nav><article class="exercicio" aria-label="Exercício em curso"><h3><span class="pos">5</span><span class="nm">Elevação lateral na máquina</span><button class="orient" data-acao="mais" aria-label="Orientação do treinador">i</button></h3><p class="presc">deltoide lateral · 3 × 10–15 · RIR 1 · descanso 1:45</p><table class="series"><thead><tr><th scope="col"><span class="sr">Série</span></th><th scope="col">última · seg 21/9</th><th scope="col">hoje</th></tr></thead><tbody><tr class="agora"><th scope="row">1</th><td class="ref">25 × 13</td><td class="hoje"><span class="agora">agora</span></td></tr><tr class=""><th scope="row">2</th><td class="ref">25 × 12</td><td class="ref">—</td></tr><tr class=""><th scope="row">3</th><td class="ref">25 × 11</td><td class="ref">—</td></tr></tbody></table></article><section class="acabou" aria-label="A série que acabou"><div class="acabou-topo"><p class="recibo"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><b>35 × 10</b><span class="rc-g">gravada 6:55</span> <span class="delta">+1 rep</span><span class="rc-n">· s2 Pulldown unilateral</span></p></div><div class="relogio"><span>desde ela</span><b class="tab" data-relogio>0:04</b><span data-lembrete>lembrete 2:00</span><button class="link" data-acao="corrigir">corrigir</button></div><div class="barra" aria-hidden="true"><i data-barra style="width:3.3%"></i></div><div class="linha-op"><span class="rot">RIR<br><span>opcional</span></span><div class="rir" role="group" aria-label="RIR desta série, opcional"><button data-acao="rir" data-r="0" aria-pressed="false" class="" aria-label="RIR 0">0</button><button data-acao="rir" data-r="1" aria-pressed="false" class="alvo" aria-label="RIR 1, alvo do treinador">1<small>alvo</small></button><button data-acao="rir" data-r="2" aria-pressed="false" class="" aria-label="RIR 2">2</button><button data-acao="rir" data-r="3" aria-pressed="false" class="" aria-label="RIR 3">3</button><button data-acao="rir" data-r="4" aria-pressed="false" class="" aria-label="RIR 4">4</button></div></div><div class="linha-op"><span class="rot">Dor<br><span>ponto</span></span><div class="dor" role="group" aria-label="Ponto doendo neste exercício"><button data-acao="dor" data-p="Cotovelo" aria-pressed="false">Cotovelo</button><button data-acao="dor" data-p="Ombro da frente" aria-pressed="false">Ombro da frente</button><button data-acao="dor" data-p="Abaixo da patela" aria-pressed="false">Abaixo da patela</button></div></div><button class="extra" data-acao="extra" data-e="3">+ 3ª série de Pulldown unilateral <span>além da prescrição</span></button></section><section class="entrada" aria-label="Próxima série"><div class="entrada-topo"><p class="entrada-titulo">Série 1 de 3</p><p class="entrada-ref">última: 25 × 13</p></div><div class="carga"><span class="rot">Carga</span><b class="valor">25</b><span class="unid">kg no pino<br>igual à última</span><button class="botao-sec" data-acao="carga">mudar</button></div><div class="reps"><button class="rep" data-acao="rep" data-r="11" aria-label="11 repetições: gravar a série 1">11</button><button class="rep" data-acao="rep" data-r="12" aria-label="12 repetições: gravar a série 1">12</button><button class="rep ultima" data-acao="rep" data-r="13" aria-label="13 repetições (igual à última): gravar a série 1">13<small>última</small></button><button class="rep" data-acao="rep" data-r="14" aria-label="14 repetições: gravar a série 1">14</button><button class="rep" data-acao="rep" data-r="15" aria-label="15 repetições: gravar a série 1">15</button><button class="rep fora" data-acao="rep" data-r="16" aria-label="16 repetições (fora da faixa 10–15): gravar a série 1">16</button><button class="rep outro" data-acao="outro" aria-label="Outro número de repetições">…</button></div><div class="faixa-rep" aria-hidden="true"><span style="grid-column:1/6">faixa 10–15</span></div><div class="acoes"><button data-acao="extra-aqui">+ série</button><button data-acao="trocar">Trocar</button><button data-acao="pular">Pular</button><button data-acao="mais">Mais</button></div></section></div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+<section class="estado" id="e3" aria-labelledby="e3-t">
+<div class="legenda"><p class="rot">Estado 3 · variação do caso</p><h2 id="e3-t">Voltou de um aplicativo de conversa: o descanso foi contado pelo relógio.</h2><p>Com outro app na frente, este fica suspenso (F57). Ao voltar, a conta é feita pela hora de parede: 2:48 desde a série. Passou do lembrete e nada pisca nem fica vermelho — o tempo prescrito é lembrete, não ordem; o critério do treinador é voltar quando der para outra série boa (F97, F29).</p><p>O RIR da série que acabou continua oferecido, sem cobrar.</p><p class="fatos">Nenhum alarme: com o aparelho bloqueado o app não roda, o Safari não vibra, e som só toca depois de um toque (F57, F58). Um aviso que falha calado seria pior que nenhum.</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">6:57</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><header class="sessao"><button class="sessao-nome" data-acao="treino" aria-label="Treino A, trocar de treino">Treino A <svg class="ic" aria-hidden="true"><use href="#i-baixo"/></svg></button><div class="sessao-dir"><button class="pilula" data-acao="peso">Peso <b>anotar</b></button><button class="pilula" data-acao="agua" aria-label="Água: 1 copos de 14. Somar um copo.">Água <b>1</b><span class="mais">+1</span></button></div><p class="sessao-meta"><b>10</b> de 20 séries · 36 min · <span>no ritmo de hoje, <b>~7:33</b></span></p></header><nav class="trilho" aria-label="Exercícios do treino A"><button class="seg feito" data-acao="ir" data-e="0" aria-label="1. Chest press inclinado convergente: feito"><span>1</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="1" aria-label="2. Pulldown convergente: feito"><span>2</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="2" aria-label="3. Crucifixo inclinado no cabo: feito"><span>3</span><span class="pts"><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="3" aria-label="4. Pulldown unilateral: feito"><span>4</span><span class="pts"><i class="f"></i><i class="f"></i></span></button><button class="seg nao atual" data-acao="ir" data-e="4" aria-label="5. Elevação lateral na máquina: ainda não, em curso" aria-current="step"><span>5</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="5" aria-label="6. Elevação lateral unilateral no cabo: ainda não"><span>6</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="6" aria-label="7. Extensão de tríceps acima da cabeça no cabo: ainda não"><span>7</span><span class="pts"><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="7" aria-label="8. Pushdown: ainda não"><span>8</span><span class="pts"><i class=""></i><i class=""></i></span></button></nav><article class="exercicio" aria-label="Exercício em curso"><h3><span class="pos">5</span><span class="nm">Elevação lateral na máquina</span><button class="orient" data-acao="mais" aria-label="Orientação do treinador">i</button></h3><p class="presc">deltoide lateral · 3 × 10–15 · RIR 1 · descanso 1:45</p><table class="series"><thead><tr><th scope="col"><span class="sr">Série</span></th><th scope="col">última · seg 21/9</th><th scope="col">hoje</th></tr></thead><tbody><tr class="agora"><th scope="row">1</th><td class="ref">25 × 13</td><td class="hoje"><span class="agora">agora</span></td></tr><tr class=""><th scope="row">2</th><td class="ref">25 × 12</td><td class="ref">—</td></tr><tr class=""><th scope="row">3</th><td class="ref">25 × 11</td><td class="ref">—</td></tr></tbody></table></article><section class="acabou" aria-label="A série que acabou"><div class="acabou-topo"><p class="recibo"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><b>35 × 10</b><span class="rc-g">gravada 6:55</span> <span class="delta">+1 rep</span><span class="rc-n">· s2 Pulldown unilateral</span></p></div><div class="relogio"><span>pelo relógio:</span><b class="tab" data-relogio>2:48</b><span data-lembrete>lembrete 2:00 · passou 0:48</span><button class="link" data-acao="corrigir">corrigir</button></div><div class="barra" aria-hidden="true"><i data-barra style="width:100.0%"></i></div><div class="linha-op"><span class="rot">RIR<br><span>opcional</span></span><div class="rir" role="group" aria-label="RIR desta série, opcional"><button data-acao="rir" data-r="0" aria-pressed="false" class="" aria-label="RIR 0">0</button><button data-acao="rir" data-r="1" aria-pressed="false" class="alvo" aria-label="RIR 1, alvo do treinador">1<small>alvo</small></button><button data-acao="rir" data-r="2" aria-pressed="false" class="" aria-label="RIR 2">2</button><button data-acao="rir" data-r="3" aria-pressed="false" class="" aria-label="RIR 3">3</button><button data-acao="rir" data-r="4" aria-pressed="false" class="" aria-label="RIR 4">4</button></div></div><div class="linha-op"><span class="rot">Dor<br><span>ponto</span></span><div class="dor" role="group" aria-label="Ponto doendo neste exercício"><button data-acao="dor" data-p="Cotovelo" aria-pressed="false">Cotovelo</button><button data-acao="dor" data-p="Ombro da frente" aria-pressed="false">Ombro da frente</button><button data-acao="dor" data-p="Abaixo da patela" aria-pressed="false">Abaixo da patela</button></div></div><button class="extra" data-acao="extra" data-e="3">+ 3ª série de Pulldown unilateral <span>além da prescrição</span></button></section><section class="entrada" aria-label="Próxima série"><div class="entrada-topo"><p class="entrada-titulo">Série 1 de 3</p><p class="entrada-ref">última: 25 × 13</p></div><div class="carga"><span class="rot">Carga</span><b class="valor">25</b><span class="unid">kg no pino<br>igual à última</span><button class="botao-sec" data-acao="carga">mudar</button></div><div class="reps"><button class="rep" data-acao="rep" data-r="11" aria-label="11 repetições: gravar a série 1">11</button><button class="rep" data-acao="rep" data-r="12" aria-label="12 repetições: gravar a série 1">12</button><button class="rep ultima" data-acao="rep" data-r="13" aria-label="13 repetições (igual à última): gravar a série 1">13<small>última</small></button><button class="rep" data-acao="rep" data-r="14" aria-label="14 repetições: gravar a série 1">14</button><button class="rep" data-acao="rep" data-r="15" aria-label="15 repetições: gravar a série 1">15</button><button class="rep fora" data-acao="rep" data-r="16" aria-label="16 repetições (fora da faixa 10–15): gravar a série 1">16</button><button class="rep outro" data-acao="outro" aria-label="Outro número de repetições">…</button></div><div class="faixa-rep" aria-hidden="true"><span style="grid-column:1/6">faixa 10–15</span></div><div class="acoes"><button data-acao="extra-aqui">+ série</button><button data-acao="trocar">Trocar</button><button data-acao="pular">Pular</button><button data-acao="mais">Mais</button></div></section></div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+<section class="estado" id="e4" aria-labelledby="e4-t">
+<div class="legenda"><p class="rot">Estado 4 · variação do caso</p><h2 id="e4-t">Uma série além das prescritas, por ali mesmo.</h2><p>O “+ 3ª série” do estado 2 abriu uma terceira linha na tabela, marcada como extra. A guia é a série 2 de hoje, porque não existe série 3 na última vez (F170).</p><p>Ela fica só neste dia. Se vai virar programa, quem pergunta é a mesa, depois, sentado (F159).</p><p class="fatos">O dono pediu: “deveria ser mais fácil, direto… por ali já” (P12).</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">6:55</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><header class="sessao"><button class="sessao-nome" data-acao="treino" aria-label="Treino A, trocar de treino">Treino A <svg class="ic" aria-hidden="true"><use href="#i-baixo"/></svg></button><div class="sessao-dir"><button class="pilula" data-acao="peso">Peso <b>anotar</b></button><button class="pilula" data-acao="agua" aria-label="Água: 1 copos de 14. Somar um copo.">Água <b>1</b><span class="mais">+1</span></button></div><p class="sessao-meta"><b>10</b> de 21 séries · 33 min · <span>no ritmo de hoje, <b>~7:31</b></span></p></header><nav class="trilho" aria-label="Exercícios do treino A"><button class="seg feito" data-acao="ir" data-e="0" aria-label="1. Chest press inclinado convergente: feito"><span>1</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="1" aria-label="2. Pulldown convergente: feito"><span>2</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="2" aria-label="3. Crucifixo inclinado no cabo: feito"><span>3</span><span class="pts"><i class="f"></i><i class="f"></i></span></button><button class="seg parcial atual" data-acao="ir" data-e="3" aria-label="4. Pulldown unilateral: 2 de 3 séries, em curso" aria-current="step"><span>4</span><span class="pts"><i class="f"></i><i class="f"></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="4" aria-label="5. Elevação lateral na máquina: ainda não"><span>5</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="5" aria-label="6. Elevação lateral unilateral no cabo: ainda não"><span>6</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="6" aria-label="7. Extensão de tríceps acima da cabeça no cabo: ainda não"><span>7</span><span class="pts"><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="7" aria-label="8. Pushdown: ainda não"><span>8</span><span class="pts"><i class=""></i><i class=""></i></span></button></nav><article class="exercicio" aria-label="Exercício em curso"><h3><span class="pos">4</span><span class="nm">Pulldown unilateral</span><button class="orient" data-acao="mais" aria-label="Orientação do treinador">i</button></h3><p class="presc">dorsal · 2 × 8–12 · RIR 1 · descanso 2:00</p><table class="series"><thead><tr><th scope="col"><span class="sr">Série</span></th><th scope="col">última · seg 21/9</th><th scope="col">hoje</th></tr></thead><tbody><tr class=""><th scope="row">1</th><td class="ref">35 × 10</td><td class="hoje">35 × 11<svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg><span class="delta">+1</span></td></tr><tr class=""><th scope="row">2</th><td class="ref">35 × 9</td><td class="hoje">35 × 10<svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg><span class="delta">+1</span></td></tr><tr class="agora"><th scope="row">3<small>extra</small></th><td class="ref">—</td><td class="hoje"><span class="agora">agora</span></td></tr></tbody></table></article><section class="acabou" aria-label="A série que acabou"><div class="acabou-topo"><p class="recibo"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><b>35 × 10</b><span class="rc-g">gravada 6:55</span> <span class="delta">+1 rep</span><span class="rc-n">· s2 Pulldown unilateral</span></p></div><div class="relogio"><span>desde ela</span><b class="tab" data-relogio>0:09</b><span data-lembrete>lembrete 2:00</span><button class="link" data-acao="corrigir">corrigir</button></div><div class="barra" aria-hidden="true"><i data-barra style="width:7.5%"></i></div><div class="linha-op"><span class="rot">RIR<br><span>opcional</span></span><div class="rir" role="group" aria-label="RIR desta série, opcional"><button data-acao="rir" data-r="0" aria-pressed="false" class="" aria-label="RIR 0">0</button><button data-acao="rir" data-r="1" aria-pressed="false" class="alvo" aria-label="RIR 1, alvo do treinador">1<small>alvo</small></button><button data-acao="rir" data-r="2" aria-pressed="false" class="" aria-label="RIR 2">2</button><button data-acao="rir" data-r="3" aria-pressed="false" class="" aria-label="RIR 3">3</button><button data-acao="rir" data-r="4" aria-pressed="false" class="" aria-label="RIR 4">4</button></div></div><div class="linha-op"><span class="rot">Dor<br><span>ponto</span></span><div class="dor" role="group" aria-label="Ponto doendo neste exercício"><button data-acao="dor" data-p="Cotovelo" aria-pressed="false">Cotovelo</button><button data-acao="dor" data-p="Ombro da frente" aria-pressed="false">Ombro da frente</button><button data-acao="dor" data-p="Abaixo da patela" aria-pressed="false">Abaixo da patela</button></div></div></section><section class="entrada" aria-label="Próxima série"><div class="entrada-topo"><p class="entrada-titulo">Série 3 de 2 <span class="delta">extra</span></p><p class="entrada-ref">série 2 hoje: 35 × 10</p></div><p class="entrada-nota"><span>Fica só neste dia. Virar programa é decisão da mesa.</span><button class="link" data-acao="desiste">desistir</button></p><div class="carga"><span class="rot">Carga</span><b class="valor">35</b><span class="unid">kg no pino</span><button class="botao-sec" data-acao="carga">mudar</button></div><div class="reps"><button class="rep" data-acao="rep" data-r="8" aria-label="8 repetições: gravar a série 3">8</button><button class="rep" data-acao="rep" data-r="9" aria-label="9 repetições: gravar a série 3">9</button><button class="rep ultima" data-acao="rep" data-r="10" aria-label="10 repetições: gravar a série 3">10<small>s2 hoje</small></button><button class="rep" data-acao="rep" data-r="11" aria-label="11 repetições: gravar a série 3">11</button><button class="rep" data-acao="rep" data-r="12" aria-label="12 repetições: gravar a série 3">12</button><button class="rep fora" data-acao="rep" data-r="13" aria-label="13 repetições (fora da faixa 8–12): gravar a série 3">13</button><button class="rep outro" data-acao="outro" aria-label="Outro número de repetições">…</button></div><div class="faixa-rep" aria-hidden="true"><span style="grid-column:1/6">faixa 8–12</span></div><div class="acoes"><button data-acao="extra-aqui">+ série</button><button data-acao="trocar">Trocar</button><button data-acao="pular">Pular</button><button data-acao="mais">Mais</button></div></section></div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+<section class="estado" id="e5" aria-labelledby="e5-t">
+<div class="legenda"><p class="rot">Estado 5 · máquina ocupada</p><h2 id="e5-t">A primeira saída é fazer outro antes; a segunda, o substituto.</h2><p>Máquina ocupada é comum numa academia grande (F26), e muitas vezes ela libera em dois minutos: por isso a primeira opção é ir ao próximo e voltar pelo trilho, sem mexer em nada.</p><p>Depois vêm os substitutos do treinador, com o indicado por ele marcado, a frase do que muda e se ele já fez aquilo — quase nunca fez (F106, F107, F109).</p><p class="fatos">As três frases são exemplos reais do treinador (F108); qual frase pertence a qual substituto, este desenho não sabe. Datas e cargas são exemplo.</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">6:47</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><header class="sessao"><button class="sessao-nome" data-acao="treino" aria-label="Treino A, trocar de treino">Treino A <svg class="ic" aria-hidden="true"><use href="#i-baixo"/></svg></button><div class="sessao-dir"><button class="pilula" data-acao="peso">Peso <b>anotar</b></button><button class="pilula" data-acao="agua" aria-label="Água: 1 copos de 14. Somar um copo.">Água <b>1</b><span class="mais">+1</span></button></div><p class="sessao-meta"><b>8</b> de 20 séries · 25 min · <span>no ritmo de hoje, <b>~7:24</b></span></p></header><nav class="trilho" aria-label="Exercícios do treino A"><button class="seg feito" data-acao="ir" data-e="0" aria-label="1. Chest press inclinado convergente: feito"><span>1</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="1" aria-label="2. Pulldown convergente: feito"><span>2</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="2" aria-label="3. Crucifixo inclinado no cabo: feito"><span>3</span><span class="pts"><i class="f"></i><i class="f"></i></span></button><button class="seg nao atual" data-acao="ir" data-e="3" aria-label="4. Pulldown unilateral: ainda não, em curso" aria-current="step"><span>4</span><span class="pts"><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="4" aria-label="5. Elevação lateral na máquina: ainda não"><span>5</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="5" aria-label="6. Elevação lateral unilateral no cabo: ainda não"><span>6</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="6" aria-label="7. Extensão de tríceps acima da cabeça no cabo: ainda não"><span>7</span><span class="pts"><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="7" aria-label="8. Pushdown: ainda não"><span>8</span><span class="pts"><i class=""></i><i class=""></i></span></button></nav><article class="exercicio" aria-label="Exercício em curso"><h3><span class="pos">4</span><span class="nm">Pulldown unilateral</span><button class="orient" data-acao="mais" aria-label="Orientação do treinador">i</button></h3><p class="presc">dorsal · 2 × 8–12 · RIR 1 · descanso 2:00</p><table class="series"><thead><tr><th scope="col"><span class="sr">Série</span></th><th scope="col">última · seg 21/9</th><th scope="col">hoje</th></tr></thead><tbody><tr class="agora"><th scope="row">1</th><td class="ref">35 × 10</td><td class="hoje"><span class="agora">agora</span></td></tr><tr class=""><th scope="row">2</th><td class="ref">35 × 9</td><td class="ref">—</td></tr></tbody></table></article><section class="acabou" aria-label="A série que acabou"><div class="acabou-topo"><p class="recibo"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><b>15 × 12</b><span class="rc-g">gravada 6:45</span><span class="rc-n">· s2 Crucifixo inclinado no cabo</span></p></div><div class="relogio"><span>desde ela</span><b class="tab" data-relogio>1:40</b><span data-lembrete>lembrete 2:00</span><button class="link" data-acao="corrigir">corrigir</button></div><div class="barra" aria-hidden="true"><i data-barra style="width:83.3%"></i></div><div class="linha-op"><span class="rot">RIR<br><span>opcional</span></span><div class="rir" role="group" aria-label="RIR desta série, opcional"><button data-acao="rir" data-r="0" aria-pressed="false" class="" aria-label="RIR 0">0</button><button data-acao="rir" data-r="1" aria-pressed="true" class="alvo" aria-label="RIR 1, alvo do treinador">1<small>alvo</small></button><button data-acao="rir" data-r="2" aria-pressed="false" class="" aria-label="RIR 2">2</button><button data-acao="rir" data-r="3" aria-pressed="false" class="" aria-label="RIR 3">3</button><button data-acao="rir" data-r="4" aria-pressed="false" class="" aria-label="RIR 4">4</button></div></div><div class="linha-op"><span class="rot">Dor<br><span>ponto</span></span><div class="dor" role="group" aria-label="Ponto doendo neste exercício"><button data-acao="dor" data-p="Cotovelo" aria-pressed="false">Cotovelo</button><button data-acao="dor" data-p="Ombro da frente" aria-pressed="false">Ombro da frente</button><button data-acao="dor" data-p="Abaixo da patela" aria-pressed="false">Abaixo da patela</button></div></div><button class="extra" data-acao="extra" data-e="2">+ 3ª série de Crucifixo inclinado no… <span>além da prescrição</span></button></section><section class="entrada" aria-label="Próxima série"><div class="entrada-topo"><p class="entrada-titulo">Série 1 de 2</p><p class="entrada-ref">última: 35 × 10</p></div><div class="carga"><span class="rot">Carga</span><b class="valor">35</b><span class="unid">kg no pino<br>igual à última</span><button class="botao-sec" data-acao="carga">mudar</button></div><div class="reps"><button class="rep" data-acao="rep" data-r="8" aria-label="8 repetições: gravar a série 1">8</button><button class="rep" data-acao="rep" data-r="9" aria-label="9 repetições: gravar a série 1">9</button><button class="rep ultima" data-acao="rep" data-r="10" aria-label="10 repetições (igual à última): gravar a série 1">10<small>última</small></button><button class="rep" data-acao="rep" data-r="11" aria-label="11 repetições: gravar a série 1">11</button><button class="rep" data-acao="rep" data-r="12" aria-label="12 repetições: gravar a série 1">12</button><button class="rep fora" data-acao="rep" data-r="13" aria-label="13 repetições (fora da faixa 8–12): gravar a série 1">13</button><button class="rep outro" data-acao="outro" aria-label="Outro número de repetições">…</button></div><div class="faixa-rep" aria-hidden="true"><span style="grid-column:1/6">faixa 8–12</span></div><div class="acoes"><button data-acao="extra-aqui">+ série</button><button data-acao="trocar">Trocar</button><button data-acao="pular">Pular</button><button data-acao="mais">Mais</button></div></section></div><div class="sis-base" aria-hidden="true"><i></i></div><div class="veu"></div><div class="folha-baixo" role="dialog" aria-label="Trocar exercício" style="max-height:80%">
+<div class="alca"></div>
+<h3 style="margin:0 0 2px;font-size:20px">Trocar Pulldown unilateral</h3>
+<p style="margin:0 0 8px;font-size:14px;color:var(--prescrito)">Só hoje. O histórico vai para o exercício que você fizer (F151). Substituto não é equivalente: mantém alvo e função com a mecânica mais próxima (F106).</p>
+<ul class="troca-lista">
+<li><button><span class="t">Fazer o 5 agora e voltar a este</span><span class="s">Elevação lateral na máquina · nada muda no programa</span><span class="seta"><svg class="ic" aria-hidden="true"><use href="#i-dir"/></svg></span></button></li>
+<li><button><span class="t">Puxada neutra unilateral<i class="selo-tr">treinador</i></span><span class="frase">“Mesmo ângulo, trajetória travada.”</span><span class="s">nunca feito aqui · sem foto da máquina</span><span class="seta"><svg class="ic" aria-hidden="true"><use href="#i-dir"/></svg></span></button></li>
+<li><button><span class="t">Puxada unilateral na polia alta</span><span class="frase">“Perde tensão embaixo, ganha no topo.”</span><span class="s">feito 1 vez, em 12/8 · com foto da máquina</span><span class="seta"><svg class="ic" aria-hidden="true"><use href="#i-dir"/></svg></span></button></li>
+<li><button><span class="t">Remada unilateral na polia alta ajoelhado</span><span class="frase">“Sem apoio: lombar entra na conta.”</span><span class="s">nunca feito aqui</span><span class="seta"><svg class="ic" aria-hidden="true"><use href="#i-dir"/></svg></span></button></li>
+</ul>
+<button class="link" style="align-self:center">Cancelar</button><div class="sis-base" aria-hidden="true"><i></i></div></div></div>
+</section>
+<section class="estado" id="e6" aria-labelledby="e6-t">
+<div class="legenda"><p class="rot">Estado 6 · vazio</p><h2 id="e6-t">Primeira vez no substituto: sem referência, e o teclado é do app.</h2><p>Não existe última vez para Puxada neutra unilateral: a carga começa vazia e as repetições só destravam depois dela. A série de hoje vira a referência da próxima.</p><p>O teclado numérico é desenhado pelo app: tem vírgula decimal (32,5), não provoca zoom, ocupa uma área fixa e não empurra nada (F63, F61, F65, F66). Sem foto desta máquina, o cartão convida a fotografar a etiqueta e o pino (F224, F110).</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">6:48</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><header class="sessao"><button class="sessao-nome" data-acao="treino" aria-label="Treino A, trocar de treino">Treino A <svg class="ic" aria-hidden="true"><use href="#i-baixo"/></svg></button><div class="sessao-dir"><button class="pilula" data-acao="peso">Peso <b>anotar</b></button><button class="pilula" data-acao="agua" aria-label="Água: 1 copos de 14. Somar um copo.">Água <b>1</b><span class="mais">+1</span></button></div><p class="sessao-meta"><b>8</b> de 20 séries · 26 min · <span>no ritmo de hoje, <b>~7:27</b></span></p></header><nav class="trilho" aria-label="Exercícios do treino A"><button class="seg feito" data-acao="ir" data-e="0" aria-label="1. Chest press inclinado convergente: feito"><span>1</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="1" aria-label="2. Pulldown convergente: feito"><span>2</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="2" aria-label="3. Crucifixo inclinado no cabo: feito"><span>3</span><span class="pts"><i class="f"></i><i class="f"></i></span></button><button class="seg nao atual" data-acao="ir" data-e="3" aria-label="4. Puxada neutra unilateral: ainda não, em curso" aria-current="step"><span>4</span><span class="pts"><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="4" aria-label="5. Elevação lateral na máquina: ainda não"><span>5</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="5" aria-label="6. Elevação lateral unilateral no cabo: ainda não"><span>6</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="6" aria-label="7. Extensão de tríceps acima da cabeça no cabo: ainda não"><span>7</span><span class="pts"><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="7" aria-label="8. Pushdown: ainda não"><span>8</span><span class="pts"><i class=""></i><i class=""></i></span></button></nav><article class="exercicio" aria-label="Exercício em curso"><h3><span class="pos">4</span><span class="nm">Puxada neutra unilateral</span><button class="orient" data-acao="mais" aria-label="Orientação do treinador">i</button></h3><p class="troca">no lugar de Pulldown unilateral · só hoje</p><p class="presc">dorsal · 2 × 8–12 · RIR 1 · descanso 2:00</p><div class="foto-vazia"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg><span>Sem foto desta máquina. <b>Fotografar</b> a etiqueta e o pino ajuda na próxima vez (F224).</span></div><table class="series"><thead><tr><th scope="col"><span class="sr">Série</span></th><th scope="col">última · nunca feito</th><th scope="col">hoje</th></tr></thead><tbody><tr class="agora"><th scope="row">1</th><td class="ref">—</td><td class="hoje"><span class="agora">agora</span></td></tr><tr class=""><th scope="row">2</th><td class="ref">—</td><td class="ref">—</td></tr></tbody></table></article><section class="acabou" aria-label="A série que acabou"><div class="acabou-topo"><p class="recibo"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><b>15 × 12</b><span class="rc-g">gravada 6:45</span><span class="rc-n">· s2 Crucifixo inclinado no cabo</span></p></div><div class="relogio"><span>desde ela</span><b class="tab" data-relogio>2:50</b><span data-lembrete>lembrete 2:00 · passou 0:50</span><button class="link" data-acao="corrigir">corrigir</button></div><div class="barra" aria-hidden="true"><i data-barra style="width:100.0%"></i></div><div class="linha-op"><span class="rot">RIR<br><span>opcional</span></span><div class="rir" role="group" aria-label="RIR desta série, opcional"><button data-acao="rir" data-r="0" aria-pressed="false" class="" aria-label="RIR 0">0</button><button data-acao="rir" data-r="1" aria-pressed="true" class="alvo" aria-label="RIR 1, alvo do treinador">1<small>alvo</small></button><button data-acao="rir" data-r="2" aria-pressed="false" class="" aria-label="RIR 2">2</button><button data-acao="rir" data-r="3" aria-pressed="false" class="" aria-label="RIR 3">3</button><button data-acao="rir" data-r="4" aria-pressed="false" class="" aria-label="RIR 4">4</button></div></div><div class="linha-op"><span class="rot">Dor<br><span>ponto</span></span><div class="dor" role="group" aria-label="Ponto doendo neste exercício"><button data-acao="dor" data-p="Cotovelo" aria-pressed="false">Cotovelo</button><button data-acao="dor" data-p="Ombro da frente" aria-pressed="false">Ombro da frente</button><button data-acao="dor" data-p="Abaixo da patela" aria-pressed="false">Abaixo da patela</button></div></div><button class="extra" data-acao="extra" data-e="2">+ 3ª série de Crucifixo inclinado no… <span>além da prescrição</span></button></section><section class="entrada" aria-label="Próxima série"><div class="entrada-topo"><p class="entrada-titulo">Série 1 de 2</p><p class="entrada-ref">sem referência</p></div><div class="carga"><span class="rot">Carga</span><b class="valor vazio">—</b><span class="unid">kg no pino<br>anote antes da série</span><button class="botao-sec" data-acao="carga">anotar</button></div><div class="reps desabilitado"><button class="rep" data-acao="rep" data-r="8" aria-label="8 repetições: gravar a série 1">8</button><button class="rep" data-acao="rep" data-r="9" aria-label="9 repetições: gravar a série 1">9</button><button class="rep" data-acao="rep" data-r="10" aria-label="10 repetições: gravar a série 1">10</button><button class="rep" data-acao="rep" data-r="11" aria-label="11 repetições: gravar a série 1">11</button><button class="rep" data-acao="rep" data-r="12" aria-label="12 repetições: gravar a série 1">12</button><button class="rep fora" data-acao="rep" data-r="13" aria-label="13 repetições (fora da faixa 8–12): gravar a série 1">13</button><button class="rep outro" data-acao="outro" aria-label="Outro número de repetições">…</button></div><div class="faixa-rep" aria-hidden="true"><span style="grid-column:1/6">faixa 8–12</span></div><div class="acoes"><button data-acao="extra-aqui">+ série</button><button data-acao="trocar">Trocar</button><button data-acao="pular">Pular</button><button data-acao="mais">Mais</button></div></section></div><div class="sis-base" aria-hidden="true"><i></i></div><div class="veu"></div><div class="teclado" role="dialog" aria-label="Carga · Puxada neutra unilateral"><div class="visor"><span class="rot">Carga · Puxada neutra unilateral</span><b data-visor>32,5</b><span class="cursor" aria-hidden="true"></span><span class="rot">kg</span></div><div class="teclas"><button data-tecla="1" aria-label="1">1</button><button data-tecla="2" aria-label="2">2</button><button data-tecla="3" aria-label="3">3</button><button data-tecla="4" aria-label="4">4</button><button data-tecla="5" aria-label="5">5</button><button data-tecla="6" aria-label="6">6</button><button data-tecla="7" aria-label="7">7</button><button data-tecla="8" aria-label="8">8</button><button data-tecla="9" aria-label="9">9</button><button data-tecla="," aria-label="vírgula">,</button><button data-tecla="0" aria-label="0">0</button><button data-tecla="⌫" aria-label="apagar">⌫</button></div><div class="linha-ok"><button class="cancela" data-tecla="cancela">Cancelar</button><button class="ok" data-tecla="ok">Pronto</button></div><p class="nota-tec">Primeira vez: sem referência. Tipo de carga: no pino — corrigível em “Mais” (F140).</p><div class="sis-base" aria-hidden="true"><i></i></div></div></div>
+</section>
+<section class="estado" id="e7" aria-labelledby="e7-t">
+<div class="legenda"><p class="rot">Estado 7 · carregando</p><h2 id="e7-t">Reabrindo às 6:55: o iOS tinha fechado o app enquanto ele estava bloqueado.</h2><p>Tudo vem do aparelho; abrir não depende de sinal (F72). O esqueleto tem o desenho exato do instrumento, para nada pular de lugar quando os dados chegam.</p><p class="fatos">Orçamento declarado de abertura no subsolo (F73).</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">6:55</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo carregando" aria-busy="true">
+  <header class="sessao"><span class="sessao-nome">Treino A</span><span class="pilula" style="opacity:.5">Peso</span>
+  <p class="sessao-meta">reabrindo · lendo o registro deste aparelho · não precisa de sinal</p></header>
+  <div class="esqueleto" style="height:46px;border-radius:12px;margin:2px 0 10px"></div>
+  <div class="esqueleto bloco-esq" style="height:190px"></div>
+  <div class="esqueleto" style="height:150px;border-radius:18px;margin-top:10px"></div>
+  <div style="margin-top:auto;padding-bottom:6px">
+    <div class="esqueleto" style="height:54px;border-radius:14px"></div>
+    <div class="reps" style="margin-top:34px"><div class="esqueleto" style="height:64px;border-radius:16px"></div><div class="esqueleto" style="height:64px;border-radius:16px"></div><div class="esqueleto" style="height:64px;border-radius:16px"></div><div class="esqueleto" style="height:64px;border-radius:16px"></div><div class="esqueleto" style="height:64px;border-radius:16px"></div><div class="esqueleto" style="height:64px;border-radius:16px"></div><div class="esqueleto" style="height:64px;border-radius:16px"></div></div>
+    <p role="status" style="font-size:14px;text-align:center;margin:18px 0 4px">Volta exatamente na série 10. Se a leitura passar de 4 segundos, o motivo aparece (estado 8).</p>
+  </div></div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+<section class="estado" id="e8" aria-labelledby="e8-t">
+<div class="legenda"><p class="rot">Estado 8 · erro ao abrir</p><h2 id="e8-t">Não abriu: o erro diz o que pode ser e o que fazer.</h2><p>Nada foi apagado. As causas que o app consegue reconhecer estão escritas em português, não em código; para quem mantém o código (F5), os detalhes ficam a um toque.</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">6:55</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo">
+  <header class="sessao"><span class="sessao-nome">Não abriu</span></header>
+  <div class="aviso erro" role="alert"><svg class="ic" aria-hidden="true"><use href="#i-erro"/></svg><div>
+    <p><strong>Não consegui ler o registro deste aparelho.</strong></p>
+    <p>Nada foi apagado. Costuma ser uma destas duas coisas:</p>
+    <p>• o app foi aberto pelo Safari em navegação privada, e não pelo ícone da Tela de Início — aí o Safari não deixa guardar nada (F55);</p>
+    <p>• o endereço mudou: os dados ficam no endereço antigo, e o ícone antigo continua levando a eles (F56).</p>
+    <div class="acoes-aviso"><button class="botao-tinta">Tentar de novo</button><button class="botao-sec">Detalhes técnicos</button></div>
+  </div></div>
+  <div class="aviso neutro" style="margin-top:12px"><svg class="ic" aria-hidden="true"><use href="#i-relogio"/></svg><div><p>A leitura parou às 6:55:05, depois de 4 segundos. Nenhuma tela de “carregando” fica girando para sempre (F273).</p></div></div>
+  </div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+<section class="estado" id="e9" aria-labelledby="e9-t">
+<div class="legenda"><p class="rot">Estado 9 · erro ao gravar</p><h2 id="e9-t">Não gravou: a série fica na tela, marcada como não gravada.</h2><p>Navegação privada recusa guardar (F55); armazenamento cheio também (F53). Em vez de recibo, a célula da série fica vermelha com “não gravou”, o 10 pede “de novo”, e o aviso diz o caminho.</p><p>É a lição dos 48 dias em que escolher um alimento não fazia nada e ninguém viu (F296).</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">6:55</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><div class="aviso erro" role="alert" style="margin:2px 0 8px"><svg class="ic" aria-hidden="true"><use href="#i-erro"/></svg><div><p><strong>Não gravou.</strong> Navegação privada: o Safari recusa guardar, e 35 × 10 está só na tela. Abra pelo ícone da Tela de Início e toque de novo.</p></div></div><nav class="trilho" aria-label="Exercícios do treino A"><button class="seg feito" data-acao="ir" data-e="0" aria-label="1. Chest press inclinado convergente: feito"><span>1</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="1" aria-label="2. Pulldown convergente: feito"><span>2</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="2" aria-label="3. Crucifixo inclinado no cabo: feito"><span>3</span><span class="pts"><i class="f"></i><i class="f"></i></span></button><button class="seg parcial atual" data-acao="ir" data-e="3" aria-label="4. Pulldown unilateral: 1 de 2 séries, em curso" aria-current="step"><span>4</span><span class="pts"><i class="f"></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="4" aria-label="5. Elevação lateral na máquina: ainda não"><span>5</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="5" aria-label="6. Elevação lateral unilateral no cabo: ainda não"><span>6</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="6" aria-label="7. Extensão de tríceps acima da cabeça no cabo: ainda não"><span>7</span><span class="pts"><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="7" aria-label="8. Pushdown: ainda não"><span>8</span><span class="pts"><i class=""></i><i class=""></i></span></button></nav><article class="exercicio" aria-label="Exercício em curso"><h3><span class="pos">4</span><span class="nm">Pulldown unilateral</span><button class="orient" data-acao="mais" aria-label="Orientação do treinador">i</button></h3><p class="presc">dorsal · 2 × 8–12 · RIR 1 · descanso 2:00</p><table class="series"><thead><tr><th scope="col"><span class="sr">Série</span></th><th scope="col">última · seg 21/9</th><th scope="col">hoje</th></tr></thead><tbody><tr class=""><th scope="row">1</th><td class="ref">35 × 10</td><td class="hoje">35 × 11<svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg><span class="delta">+1</span></td></tr><tr class="agora"><th scope="row">2</th><td class="ref">35 × 9</td><td class="falhou">35 × 10<small>não gravou</small></td></tr></tbody></table></article><section class="acabou" aria-label="A série que acabou"><div class="acabou-topo"><p class="recibo"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><b>35 × 11</b><span class="rc-g">gravada 6:53</span> <span class="delta">+1 rep</span><span class="rc-n">· s1 Pulldown unilateral</span></p></div><div class="relogio"><span>desde ela</span><b class="tab" data-relogio>1:24</b><span data-lembrete>lembrete 2:00</span><button class="link" data-acao="corrigir">corrigir</button></div><div class="barra" aria-hidden="true"><i data-barra style="width:70.0%"></i></div><div class="linha-op"><span class="rot">RIR<br><span>opcional</span></span><div class="rir" role="group" aria-label="RIR desta série, opcional"><button data-acao="rir" data-r="0" aria-pressed="false" class="" aria-label="RIR 0">0</button><button data-acao="rir" data-r="1" aria-pressed="true" class="alvo" aria-label="RIR 1, alvo do treinador">1<small>alvo</small></button><button data-acao="rir" data-r="2" aria-pressed="false" class="" aria-label="RIR 2">2</button><button data-acao="rir" data-r="3" aria-pressed="false" class="" aria-label="RIR 3">3</button><button data-acao="rir" data-r="4" aria-pressed="false" class="" aria-label="RIR 4">4</button></div></div><div class="linha-op"><span class="rot">Dor<br><span>ponto</span></span><div class="dor" role="group" aria-label="Ponto doendo neste exercício"><button data-acao="dor" data-p="Cotovelo" aria-pressed="false">Cotovelo</button><button data-acao="dor" data-p="Ombro da frente" aria-pressed="false">Ombro da frente</button><button data-acao="dor" data-p="Abaixo da patela" aria-pressed="false">Abaixo da patela</button></div></div></section><section class="entrada" aria-label="Próxima série"><div class="entrada-topo"><p class="entrada-titulo">Série 2 de 2</p><p class="entrada-ref">última: 35 × 9</p></div><div class="carga"><span class="rot">Carga</span><b class="valor">35</b><span class="unid">kg no pino<br>igual à última</span><button class="botao-sec" data-acao="carga">mudar</button></div><div class="reps"><button class="rep fora" data-acao="rep" data-r="7" aria-label="7 repetições (fora da faixa 8–12): gravar a série 2">7</button><button class="rep" data-acao="rep" data-r="8" aria-label="8 repetições: gravar a série 2">8</button><button class="rep ultima" data-acao="rep" data-r="9" aria-label="9 repetições (igual à última): gravar a série 2">9<small>última</small></button><button class="rep falhou" data-acao="rep" data-r="10" aria-label="10 repetições: gravar a série 2">10<small>de novo</small></button><button class="rep" data-acao="rep" data-r="11" aria-label="11 repetições: gravar a série 2">11</button><button class="rep" data-acao="rep" data-r="12" aria-label="12 repetições: gravar a série 2">12</button><button class="rep outro" data-acao="outro" aria-label="Outro número de repetições">…</button></div><div class="faixa-rep" aria-hidden="true"><span style="grid-column:2/7">faixa 8–12</span></div><div class="acoes"><button data-acao="extra-aqui">+ série</button><button data-acao="trocar">Trocar</button><button data-acao="pular">Pular</button><button data-acao="mais">Mais</button></div></section></div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+<section class="estado" id="e10" aria-labelledby="e10-t">
+<div class="legenda"><p class="rot">Estado 10 · o caso ruim</p><h2 id="e10-t">Na manhã seguinte: a sessão de ontem ficou aberta, e ninguém cobra.</h2><p>Fechar a sessão falha em 42% a 59% das vezes (P1). Esta direção não depende disso: a sessão aberta fecha sozinha na última série, com duração aproximada (F152), e o app mostra um recibo com “corrigir” — não uma pergunta.</p><p>Os exercícios 7 e 8, cortados pela hora (P2), aparecem como não feitos, sem culpa. As duas decisões do dia esperam na mesa (estado 13).</p><p class="fatos">Hoje é o Treino B porque a sequência anda pela ordem, não pelo dia (F81). Carga em máquina de anilha aparece “por lado”, com o total ao lado (F140, F141). Cargas são exemplo.</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">6:02</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo manha">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-top:2px"><span class="rot" style="font-size:15px">Terça, 29 de setembro</span><button class="mesa-btn"><svg class="ic" aria-hidden="true"><use href="#i-mesa"/></svg>Mesa <span class="cont">2</span></button></div>
+  <div class="aviso neutro" style="margin-top:8px"><svg class="ic" aria-hidden="true"><use href="#i-relogio"/></svg><div>
+    <p><strong>Ontem, o Treino A ficou aberto.</strong> Fechou sozinho na última série, às 7:31: 1h09, duração aproximada.</p>
+    <p style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="estado-ex feito">1–6 feitos</span> · <span class="estado-ex nao">7 e 8 não feitos</span> <button class="link" style="min-height:32px">corrigir o fim</button></p>
+  </div></div>
+  <h3>Treino B</h3>
+  <p class="sub">Pernas completas + panturrilhas · 9 exercícios · 22 séries</p>
+  <div style="display:flex;gap:8px"><button class="botao-tinta" style="flex:1">Começar agora</button><button class="pilula">Peso <b>anotar</b></button></div>
+  <p style="font-size:13px;margin:6px 2px 0">Começar agora conta o aquecimento. Ou só registre a primeira série: a sessão começa nela (F152).</p>
+  <ul class="lista-ex"><li><span class="n">1</span><span class="x">Agachamento no Smith</span><span class="e">2 × 6–10</span><span class="u">última: 40 kg por lado · 80 total</span></li><li><span class="n">2</span><span class="x">Cadeira flexora sentada</span><span class="e">4 × 8–12</span><span class="u">última: 45 kg no pino</span></li><li><span class="n">3</span><span class="x">Terra romeno no Smith</span><span class="e">3 × 6–10</span><span class="u">última: 30 kg por lado · 60 total</span></li><li><span class="n">4</span><span class="x">Leg press</span><span class="e">2 × 10–15</span><span class="u">última: 60 kg por lado · 120 total</span></li><li><span class="n">5</span><span class="x">Cadeira extensora</span><span class="e">1 × 10–15</span><span class="u">última: 50 kg no pino</span></li><li><span class="n">6</span><span class="x">Elevação pélvica na máquina</span><span class="e">3 × 8–12</span><span class="u">última: 40 kg por lado · 80 total</span></li><li><span class="n">7</span><span class="x">Adutora</span><span class="e">2 × 10–15</span><span class="u">última: 55 kg no pino</span></li><li><span class="n">8</span><span class="x">Panturrilha em pé</span><span class="e">3 × 6–10</span><span class="u">última: 80 kg no pino</span></li><li><span class="n">9</span><span class="x">Panturrilha sentada</span><span class="e">2 × 10–15</span><span class="u">última: 20 kg por lado · 40 total</span></li></ul>
+  </div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+<section class="estado largo" id="e11" aria-labelledby="e11-t">
+<div class="legenda"><p class="rot">Estado 11 · telefone deitado</p><h2 id="e11-t">No banco, em paisagem: a tela gira e continua gravando.</h2><p>O iOS não deixa o app travar a orientação (F60). Em paisagem, o essencial continua a um toque: repetições, RIR e o relógio. Dor e troca ficam em “Mais”.</p></div>
+<div class="paisagem-escala"><div class="tela deitada" aria-label="Instrumento em paisagem">
+  <div class="lado-sis" aria-hidden="true"><span class="entalhe-v"></span></div>
+  <div class="col"><header class="sessao"><button class="sessao-nome" data-acao="treino" aria-label="Treino A, trocar de treino">Treino A <svg class="ic" aria-hidden="true"><use href="#i-baixo"/></svg></button><div class="sessao-dir"><button class="pilula" data-acao="peso">Peso <b>anotar</b></button><button class="pilula" data-acao="agua" aria-label="Água: 1 copos de 14. Somar um copo.">Água <b>1</b><span class="mais">+1</span></button></div><p class="sessao-meta"><b>9</b> de 20 séries · 33 min · <span>no ritmo de hoje, <b>~7:35</b></span></p></header><nav class="trilho" aria-label="Exercícios do treino A"><button class="seg feito" data-acao="ir" data-e="0" aria-label="1. Chest press inclinado convergente: feito"><span>1</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="1" aria-label="2. Pulldown convergente: feito"><span>2</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></button><button class="seg feito" data-acao="ir" data-e="2" aria-label="3. Crucifixo inclinado no cabo: feito"><span>3</span><span class="pts"><i class="f"></i><i class="f"></i></span></button><button class="seg parcial atual" data-acao="ir" data-e="3" aria-label="4. Pulldown unilateral: 1 de 2 séries, em curso" aria-current="step"><span>4</span><span class="pts"><i class="f"></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="4" aria-label="5. Elevação lateral na máquina: ainda não"><span>5</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="5" aria-label="6. Elevação lateral unilateral no cabo: ainda não"><span>6</span><span class="pts"><i class=""></i><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="6" aria-label="7. Extensão de tríceps acima da cabeça no cabo: ainda não"><span>7</span><span class="pts"><i class=""></i><i class=""></i></span></button><button class="seg nao" data-acao="ir" data-e="7" aria-label="8. Pushdown: ainda não"><span>8</span><span class="pts"><i class=""></i><i class=""></i></span></button></nav><article class="exercicio" aria-label="Exercício em curso"><h3><span class="pos">4</span><span class="nm">Pulldown unilateral</span><button class="orient" data-acao="mais" aria-label="Orientação do treinador">i</button></h3><p class="presc">dorsal · 2 × 8–12 · RIR 1 · descanso 2:00</p><table class="series"><thead><tr><th scope="col"><span class="sr">Série</span></th><th scope="col">última · seg 21/9</th><th scope="col">hoje</th></tr></thead><tbody><tr class=""><th scope="row">1</th><td class="ref">35 × 10</td><td class="hoje">35 × 11<svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg><span class="delta">+1</span></td></tr><tr class="agora"><th scope="row">2</th><td class="ref">35 × 9</td><td class="hoje"><span class="agora">agora</span></td></tr></tbody></table></article></div>
+  <div class="col"><section class="acabou" aria-label="A série que acabou"><div class="acabou-topo"><p class="recibo"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><b>35 × 11</b><span class="rc-g">gravada 6:53</span> <span class="delta">+1 rep</span><span class="rc-n">· s1 Pulldown unilateral</span></p></div><div class="relogio"><span>desde ela</span><b class="tab" data-relogio>1:24</b><span data-lembrete>lembrete 2:00</span><button class="link" data-acao="corrigir">corrigir</button></div><div class="barra" aria-hidden="true"><i data-barra style="width:70.0%"></i></div><div class="linha-op"><span class="rot">RIR<br><span>opcional</span></span><div class="rir" role="group" aria-label="RIR desta série, opcional"><button data-acao="rir" data-r="0" aria-pressed="false" class="" aria-label="RIR 0">0</button><button data-acao="rir" data-r="1" aria-pressed="true" class="alvo" aria-label="RIR 1, alvo do treinador">1<small>alvo</small></button><button data-acao="rir" data-r="2" aria-pressed="false" class="" aria-label="RIR 2">2</button><button data-acao="rir" data-r="3" aria-pressed="false" class="" aria-label="RIR 3">3</button><button data-acao="rir" data-r="4" aria-pressed="false" class="" aria-label="RIR 4">4</button></div></div><div class="linha-op"><span class="rot">Dor<br><span>ponto</span></span><div class="dor" role="group" aria-label="Ponto doendo neste exercício"><button data-acao="dor" data-p="Cotovelo" aria-pressed="false">Cotovelo</button><button data-acao="dor" data-p="Ombro da frente" aria-pressed="false">Ombro da frente</button><button data-acao="dor" data-p="Abaixo da patela" aria-pressed="false">Abaixo da patela</button></div></div></section><section class="entrada" aria-label="Próxima série"><div class="entrada-topo"><p class="entrada-titulo">Série 2 de 2</p><p class="entrada-ref">última: 35 × 9</p></div><div class="carga"><span class="rot">Carga</span><b class="valor">35</b><span class="unid">kg no pino<br>igual à última</span><button class="botao-sec" data-acao="carga">mudar</button></div><div class="reps"><button class="rep fora" data-acao="rep" data-r="7" aria-label="7 repetições (fora da faixa 8–12): gravar a série 2">7</button><button class="rep" data-acao="rep" data-r="8" aria-label="8 repetições: gravar a série 2">8</button><button class="rep ultima" data-acao="rep" data-r="9" aria-label="9 repetições (igual à última): gravar a série 2">9<small>última</small></button><button class="rep" data-acao="rep" data-r="10" aria-label="10 repetições: gravar a série 2">10</button><button class="rep" data-acao="rep" data-r="11" aria-label="11 repetições: gravar a série 2">11</button><button class="rep" data-acao="rep" data-r="12" aria-label="12 repetições: gravar a série 2">12</button><button class="rep outro" data-acao="outro" aria-label="Outro número de repetições">…</button></div><div class="faixa-rep" aria-hidden="true"><span style="grid-column:2/7">faixa 8–12</span></div><div class="acoes"><button data-acao="extra-aqui">+ série</button><button data-acao="trocar">Trocar</button><button data-acao="pular">Pular</button><button data-acao="mais">Mais</button></div></section></div>
+  <div class="lado-sis" aria-hidden="true"></div><span class="base-h" aria-hidden="true"></span>
+  </div></div>
+</section>
+<section class="estado" id="e12" aria-labelledby="e12-t">
+<div class="legenda"><p class="rot">Estado 12 · outros estados do instrumento</p><h2 id="e12-t">O que mais o instrumento precisa mostrar, recortado.</h2><p>Os estados de exercício, a indicação de subir carga, a dor repetida, o deload, a volta de pausa, o peso anotado entre séries e o que acontece com a rede.</p></div>
+<div class="tela recorte"><div class="recortes">
+  <div><h4>Trilho: os quatro estados de um exercício (F153)</h4><div class="caixa leg-trilho">
+    <div><span class="seg feito"><span>1</span><span class="pts"><i class="f"></i><i class="f"></i><i class="f"></i></span></span>feito</div>
+    <div><span class="seg parcial"><span>4</span><span class="pts"><i class="f"></i><i></i></span></span>parcial</div>
+    <div><span class="seg pulado"><span>7</span><span class="pts"><i class="x"></i><i class="x"></i></span></span>pulado — decisão declarada (F154)</div>
+    <div><span class="seg nao"><span>8</span><span class="pts"><i></i><i></i></span></span>não feito — deduzido, não gravado</div>
+  </div></div>
+  <div><h4>Topo da faixa na última vez (F168, F95)</h4><div class="caixa">
+    <div class="entrada-topo"><p class="entrada-titulo">Série 1 de 3</p><p class="entrada-ref">última: 25 × 15 · 15 · 15</p></div>
+    <div class="carga" style="border-color:var(--tinta);border-width:2px"><span class="rot">Carga</span><b class="valor">25</b><span class="unid">kg no pino<br>igual à última</span><button class="botao-sec">mudar</button></div>
+    <p style="font-size:14px;margin:8px 2px 0"><b>Topo da faixa nas 3 séries.</b> Pela dupla progressão do treinador, é hora de subir no menor incremento da máquina e recomeçar perto da base — se a técnica e o RIR planejado se mantiveram. A carga não muda sozinha: o app não sabe o incremento desta máquina.</p>
+  </div></div>
+  <div><h4>Dor no mesmo exercício nas duas últimas sessões (F172, F102)</h4>
+    <div class="aviso alerta"><svg class="ic" aria-hidden="true"><use href="#i-aviso"/></svg><div><p><strong>Cotovelo marcado nas 2 últimas sessões</strong> de Extensão de tríceps acima da cabeça no cabo.</p><p>Regra do treinador: tirar por 2 semanas e trocar o ângulo; nunca empurrar por cima.</p>
+    <div class="acoes-aviso"><button class="botao-sec">Ver substitutos</button><button class="botao-sec">Fazer hoje mesmo assim</button></div></div></div></div>
+  <div><h4>Deload (F173, F104)</h4><div class="caixa"><header class="sessao" style="padding:0"><span class="sessao-nome">Treino C <span class="delta" style="font-size:13px">deload</span></span>
+    <p class="sessao-meta">metade das séries, mesmas cargas, RIR 3–4, sem falha · <b>4</b> de 10 séries</p></header></div></div>
+  <div><h4>Volta de pausa (F168)</h4><div class="caixa"><div class="entrada-topo" style="margin:0"><p class="entrada-titulo">Série 1 de 2</p><p class="entrada-ref">última: 15/9, há 15 dias</p></div>
+    <p style="font-size:14px;margin:6px 2px 0">Mais de 14 dias sem este exercício: sem indicação de subir carga.</p></div></div>
+  <div><h4>Peso da manhã, anotado entre séries (02-uso, K6)</h4><div class="caixa" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <span class="pilula">Peso <b style="color:var(--tinta)">73,8</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></span><span class="pilula">Água <b>3</b><span class="mais">+1</span></span>
+    <p style="font-size:14px;margin:0;flex-basis:100%">7 de 11 pesagens do mês entraram no registro entre 6h28 e 7h52, na janela do treino. O peso fica a um toque do instrumento, com o teclado próprio.</p></div></div>
+  <div><h4>Rede</h4><div class="caixa"><p style="font-size:14px;margin:0">Nenhum indicador de rede no treino. Gravar não depende dela (F72) e “sem rede” é o normal do subsolo (F25, F248). A sincronia aparece só na mesa, onde dá para agir sobre ela.</p></div></div>
+  </div></div>
+</section>
+<section class="estado" id="e13" aria-labelledby="e13-t">
+<div class="legenda"><p class="rot">Estado 13 · para onde vão as decisões</p><h2 id="e13-t">Depois, sentado: a mesa recebe o que o treino deixou.</h2><p>Tudo que é decisão sobre o programa sai da academia e espera aqui, com os números que cada decisão pede (F159, F179, F98, F162). A mesa é o mesmo app, aberto sentado — no telefone ou no notebook (F50).</p><p class="fatos">É a recusa desta direção em ação: nada disso foi perguntado em pé.</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">20:40</span><span class="entalhe"></span><span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div><div class="conteudo mesa">
+  <button class="link" style="padding-left:0"><svg class="ic" aria-hidden="true"><use href="#i-esq"/></svg> Dia</button>
+  <h3>Mesa</h3>
+  <p class="sub">Sentado, com tempo. O que ficou para decidir.</p>
+  <div class="decisao"><p class="q">Treino A · seg 28/9</p><h4>Série a mais em Pulldown unilateral: 3 em vez de 2</h4>
+    <p>Se virar programa, dorsal passa de 10 para 11 séries por semana, contra 10 do treinador (F179). Ele pede extrair progresso das 90 antes de somar séries (F99).</p>
+    <div class="bts"><button class="a">Só naquele dia</button><button class="b">Mudar o programa</button></div></div>
+  <div class="decisao"><p class="q">Treino E · qui 24/9</p><h4>Supino inclinado com halteres no lugar de Supino inclinado no Smith</h4>
+    <p>Smith ocupado. Trocar no programa recomeça a conta de 6 a 8 semanas daquela posição (F98, F162).</p>
+    <div class="bts"><button class="a">Só naquele dia</button><button class="b">Trocar no programa</button></div></div>
+  <div class="decisao"><p class="q">Treino A · seg 28/9</p><h4>A sessão fechou sem você às 7:31</h4>
+    <p>Duração aproximada de 1h09, até a última série (F152). Se você saiu em outra hora, corrija.</p>
+    <div class="bts"><button class="a">Está certo</button><button class="b">Corrigir o fim</button></div></div>
+  <div class="secoes-mesa">
+    <button>Semanas<span>peso, comida, força, séries</span></button>
+    <button>Fotos e medidas<span>comparar, avaliar</span></button>
+    <button>Programa<span>o seu × o do treinador</span></button>
+    <button>Comida<span>plano, alimentos, compras</span></button>
+    <button>Aula de HYROX<span>pesos usados, lousas</span></button>
+    <button>Aparelho<span>sincronizado 20:38 · cópias</span></button>
+  </div>
+  </div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+</main>
+<p id="anuncio" class="sr" aria-live="polite"></p>
+<script>
+/* Visto · Momento 1 — o mesmo código desenha os estados fixos e o protótipo tocável. */
+function fmt(n){ return String(n).replace('.', ','); }
+function mmss(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function hhmm(s){ s=Math.round(s); var h=Math.floor(s/3600), m=Math.floor((s%3600)/60); return h+':'+String(m).padStart(2,'0'); }
+function seg(h,m,s){ return h*3600+m*60+(s||0); }
+function ic(id,cl){ return '<svg class="ic'+(cl?' '+cl:'')+'" aria-hidden="true"><use href="#'+id+'"/></svg>'; }
+
+function treinoA(){
+  return {
+    letra:'A', titulo:'Peito superior + dorsais + lateral + tríceps', ultData:'seg 21/9',
+    inicio:seg(6,22), agora:seg(6,55),
+    ex:[
+      {n:'Chest press inclinado convergente', m:'peito superior', s:3, r:[6,10], rir:[1,2], d:180, carga:'no pino', ult:[[55,9],[55,8],[55,7]],
+        subs:[['Supino inclinado no Smith',1],['Máquina de supino inclinado',1],['Supino inclinado com halteres',0]]},
+      {n:'Pulldown convergente', m:'dorsal', s:3, r:[6,10], rir:[1,2], d:150, carga:'no pino', ult:[[60,10],[60,9],[60,8]],
+        subs:[['Puxada neutra no cabo',1],['Puxada neutra na máquina',0],['Barra fixa assistida pegada neutra',0]]},
+      {n:'Crucifixo inclinado no cabo', m:'peito superior', s:2, r:[10,15], rir:[1], d:120, carga:'no pino', ult:[[15,14],[15,12]],
+        subs:[['Pec deck',1],['Crossover de baixo para cima',0],['Crucifixo inclinado com halteres',0]]},
+      {n:'Pulldown unilateral', m:'dorsal', s:2, r:[8,12], rir:[1], d:120, carga:'no pino', ult:[[35,10],[35,9]],
+        subs:[['Puxada neutra unilateral',1],['Puxada unilateral na polia alta',0],['Remada unilateral na polia alta ajoelhado',0]]},
+      {n:'Elevação lateral na máquina', m:'deltoide lateral', s:3, r:[10,15], rir:[1], d:105, carga:'no pino', ult:[[25,13],[25,12],[25,11]],
+        subs:[['Elevação lateral unilateral no cabo',1],['Elevação lateral no cabo',0],['Elevação lateral com halteres',0]]},
+      {n:'Elevação lateral unilateral no cabo', m:'deltoide lateral', s:3, r:[12,20], rir:[0,1], d:90, carga:'no pino', ult:[[7.5,16],[7.5,15],[7.5,14]],
+        subs:[['Elevação lateral na máquina',1],['Elevação lateral com halteres',0],['Elevação lateral deitado no banco inclinado',0]]},
+      {n:'Extensão de tríceps acima da cabeça no cabo', m:'tríceps', s:2, r:[8,12], rir:[1], d:120, carga:'no pino', ult:[[22.5,11],[22.5,10]],
+        subs:[['Extensão acima da cabeça ou máquina de tríceps',1],['Tríceps francês com halter',0],['Tríceps testa com barra W',0]]},
+      {n:'Pushdown', m:'tríceps', s:2, r:[10,15], rir:[0,1], d:105, carga:'no pino', ult:[[30,14],[30,13]],
+        subs:[['Tríceps corda na polia',0],['Tríceps barra reta na polia',0],['Mergulho na máquina assistida',0]]}
+    ],
+    /* hoje: [carga, reps, rir] — o chest press repete o exemplo do treinador: 55 kg em 9/8/7, depois 10/9/8 (F95) */
+    hoje:[[[55,10,2],[55,9,1],[55,8,1]],[[60,10,2],[60,9,1],[60,9,1]],[[15,15,1],[15,12,1]],[[35,11,1]],[],[],[],[]],
+    last:{e:3,s:0,t:seg(6,53,36)},
+    cur:{e:3,s:1},
+    extras:{}, pulados:[], troca:{}, dor:{}, peso:null, agua:1, carga:null
+  };
+}
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function nSer(st,i){ return st.ex[i].s + (st.extras[i]||0); }
+function nomeEx(st,i){ return st.troca[i] || st.ex[i].n; }
+function feitas(st){ var c=0; st.hoje.forEach(function(h){ h.forEach(function(v){ if(v) c++; }); }); return c; }
+function totalSer(st){ var c=0; for(var i=0;i<st.ex.length;i++){ if(st.pulados.indexOf(i)<0) c+=nSer(st,i); } return c; }
+function rirTxt(r){ return r.length>1 ? r[0]+'–'+r[1] : String(r[0]); }
+function refDe(st,i,k){ if(st.troca[i]) return null; return st.ex[i].ult[k]||null; }
+
+function proxima(st){
+  /* a próxima série não feita, na ordem; respeita pulados */
+  for(var i=0;i<st.ex.length;i++){
+    if(st.pulados.indexOf(i)>=0) continue;
+    var h=st.hoje[i]; for(var k=0;k<nSer(st,i);k++){ if(!h[k]) return {e:i,s:k}; }
+  }
+  return null;
+}
+
+function statusBar(st){
+  return '<div class="sis-topo" aria-hidden="true"><span class="tab">'+hhmm(st.agora)+'</span><span class="entalhe"></span>'+
+    '<span class="ics"><span class="sinal"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div>';
+}
+
+function cabecalho(st){
+  var f=feitas(st), t=totalSer(st), dec=st.agora-st.inicio;
+  var ritmo = f>0 ? '<span>no ritmo de hoje, <b>~'+hhmm(st.agora + dec/f*(t-f))+'</b></span>' : '<span>começa na primeira série</span>';
+  return '<header class="sessao">'+
+    '<button class="sessao-nome" data-acao="treino" aria-label="Treino '+st.letra+', trocar de treino">Treino '+st.letra+' '+ic('i-baixo')+'</button>'+
+    '<div class="sessao-dir">'+
+      '<button class="pilula" data-acao="peso">'+(st.peso? 'Peso <b>'+fmt(st.peso)+'</b>' : 'Peso <b>anotar</b>')+'</button>'+
+      '<button class="pilula" data-acao="agua" aria-label="Água: '+st.agua+' copos de 14. Somar um copo.">Água <b>'+st.agua+'</b><span class="mais">+1</span></button>'+
+    '</div>'+
+    '<p class="sessao-meta"><b>'+f+'</b> de '+t+' séries · '+Math.round(dec/60)+' min · '+ritmo+'</p>'+
+  '</header>';
+}
+
+function trilho(st){
+  var h='<nav class="trilho" aria-label="Exercícios do treino '+st.letra+'">';
+  st.ex.forEach(function(e,i){
+    var n=nSer(st,i), feitos=st.hoje[i].filter(Boolean).length, pul=st.pulados.indexOf(i)>=0;
+    var est = pul?'pulado' : feitos>=n?'feito' : feitos>0?'parcial':'nao';
+    var rotulo = {pulado:'pulado',feito:'feito',parcial:feitos+' de '+n+' séries',nao:'ainda não'}[est];
+    var atual = st.cur && st.cur.e===i;
+    var pts=''; for(var k=0;k<n;k++){ pts+='<i class="'+(pul?'x':st.hoje[i][k]?'f':'')+'"></i>'; }
+    h+='<button class="seg '+est+(atual?' atual':'')+'" data-acao="ir" data-e="'+i+'" aria-label="'+(i+1)+'. '+nomeEx(st,i)+': '+rotulo+(atual?', em curso':'')+'"'+(atual?' aria-current="step"':'')+'><span>'+(i+1)+'</span><span class="pts">'+pts+'</span></button>';
+  });
+  return h+'</nav>';
+}
+
+function cartao(st,o){
+  o=o||{};
+  var i=st.cur.e, e=st.ex[i], n=nSer(st,i);
+  var linhas='';
+  for(var k=0;k<n;k++){
+    var ref=refDe(st,i,k), v=st.hoje[i][k], agora=(k===st.cur.s);
+    var cel;
+    if(o.falhou && agora){ cel='<td class="falhou">'+fmt(o.falhou[0])+' × '+o.falhou[1]+'<small>não gravou</small></td>'; }
+    else if(v){
+      var d=(ref && v[0]===ref[0] && v[1]>ref[1]) ? '<span class="delta">+'+(v[1]-ref[1])+'</span>' : '';
+      cel='<td class="hoje">'+fmt(v[0])+' × '+v[1]+ic('i-check','p')+d+'</td>';
+    }
+    else if(agora){ cel='<td class="hoje"><span class="agora">agora</span></td>'; }
+    else cel='<td class="ref">—</td>';
+    linhas+='<tr class="'+(agora?'agora':'')+'"><th scope="row">'+(k+1)+(k>=e.s?'<small>extra</small>':'')+'</th><td class="ref">'+(ref? fmt(ref[0])+' × '+ref[1] : '—')+'</td>'+cel+'</tr>';
+  }
+  return '<article class="exercicio" aria-label="Exercício em curso">'+
+    '<h3><span class="pos">'+(i+1)+'</span><span class="nm">'+nomeEx(st,i)+'</span><button class="orient" data-acao="mais" aria-label="Orientação do treinador">i</button></h3>'+
+    (st.troca[i]? '<p class="troca">no lugar de '+e.n+' · só hoje</p>':'')+
+    '<p class="presc">'+e.m+' · '+e.s+' × '+e.r[0]+'–'+e.r[1]+' · RIR '+rirTxt(e.rir)+' · descanso '+mmss(e.d)+'</p>'+
+    (o.fotoVazia? '<div class="foto-vazia">'+ic('i-camera')+'<span>Sem foto desta máquina. <b>Fotografar</b> a etiqueta e o pino ajuda na próxima vez (F224).</span></div>' : '')+
+    '<table class="series"><thead><tr><th scope="col"><span class="sr">Série</span></th><th scope="col">última · '+(st.troca[i]?'nunca feito':st.ultData)+'</th><th scope="col">hoje</th></tr></thead><tbody>'+linhas+'</tbody></table>'+
+  '</article>';
+}
+
+function painel(st,o){
+  o=o||{};
+  if(!st.last) return '';
+  var L=st.last, e=st.ex[L.e], v=st.hoje[L.e][L.s];
+  if(!v) return '';
+  var dec=st.agora-L.t, alvo=st.ex[L.e].d, pct=Math.min(1,dec/alvo), passou=dec-alvo;
+  var ref=refDe(st,L.e,L.s);
+  var d=(ref && v[0]===ref[0] && v[1]>ref[1]) ? ' <span class="delta">+'+(v[1]-ref[1])+' rep</span>' : '';
+  var completo = st.hoje[L.e].filter(Boolean).length>=nSer(st,L.e) && !(st.cur && st.cur.e===L.e);
+  var rir=''; for(var r=0;r<=4;r++){ var a=e.rir.indexOf(r)>=0;
+    rir+='<button data-acao="rir" data-r="'+r+'" aria-pressed="'+(v[2]===r)+'" class="'+(a?'alvo':'')+'" aria-label="RIR '+r+(a?', alvo do treinador':'')+'">'+r+(a?'<small>alvo</small>':'')+'</button>'; }
+  var pontos=['Cotovelo','Ombro da frente','Abaixo da patela'], dores=st.dor[L.e]||[];
+  var dor=pontos.map(function(p){ return '<button data-acao="dor" data-p="'+p+'" aria-pressed="'+(dores.indexOf(p)>=0)+'">'+p+'</button>'; }).join('');
+  return '<section class="acabou" aria-label="A série que acabou">'+
+    '<div class="acabou-topo"><p class="recibo">'+ic('i-check')+'<b>'+fmt(v[0])+' × '+v[1]+'</b><span class="rc-g">gravada '+hhmm(L.t)+'</span>'+d+'<span class="rc-n">· s'+(L.s+1)+' '+nomeEx(st,L.e)+'</span></p></div>'+
+    '<div class="relogio"><span>'+(o.notaRelogio||'desde ela')+'</span><b class="tab" data-relogio>'+mmss(dec)+'</b><span data-lembrete>lembrete '+mmss(alvo)+(passou>0? ' · passou '+mmss(passou):'')+'</span><button class="link" data-acao="corrigir">corrigir</button></div>'+
+    '<div class="barra" aria-hidden="true"><i data-barra style="width:'+(pct*100).toFixed(1)+'%"></i></div>'+
+    '<div class="linha-op"><span class="rot">RIR<br><span>opcional</span></span><div class="rir" role="group" aria-label="RIR desta série, opcional">'+rir+'</div></div>'+
+    '<div class="linha-op"><span class="rot">Dor<br><span>ponto</span></span><div class="dor" role="group" aria-label="Ponto doendo neste exercício">'+dor+'</div></div>'+
+    (completo? '<button class="extra" data-acao="extra" data-e="'+L.e+'">+ '+(nSer(st,L.e)+1)+'ª série de '+nomeCurto(nomeEx(st,L.e))+' <span>além da prescrição</span></button>':'')+
+  '</section>';
+}
+function nomeCurto(n){ return n.length>26 ? n.slice(0,24).replace(/\s+\S*$/,'')+'…' : n; }
+
+function entrada(st,o){
+  o=o||{};
+  var i=st.cur.e, k=st.cur.s, e=st.ex[i];
+  var ref=refDe(st,i,k), extra=k>=e.s;
+  var anterior = k>0 ? st.hoje[i][k-1] : null;
+  var guia = ref || anterior;
+  /* carga: a de hoje na série anterior, senão a da última sessão (F170, F171) */
+  var carga = st.carga!=null ? st.carga : (anterior? anterior[0] : ref? ref[0] : null);
+  var centro = guia ? guia[1] : Math.round((e.r[0]+e.r[1])/2);
+  var ini = Math.max(1, centro-2), reps=[];
+  for(var r=ini;r<ini+6;r++) reps.push(r);
+  var chips = reps.map(function(r){
+    var fora = r<e.r[0]||r>e.r[1], ult = ref && r===ref[1], ant = !ref && anterior && r===anterior[1];
+    var cls='rep'+(fora?' fora':'')+(ult||ant?' ultima':'')+(o.tocado===r?' tocado':'')+(o.falhou && o.falhou[1]===r?' falhou':'');
+    var sm = ult? '<small>última</small>' : ant? '<small>s'+k+' hoje</small>' : (o.falhou && o.falhou[1]===r)? '<small>de novo</small>' : '';
+    return '<button class="'+cls+'" data-acao="rep" data-r="'+r+'" aria-label="'+r+' repetições'+(ult?' (igual à última)':'')+(fora?' (fora da faixa '+e.r[0]+'–'+e.r[1]+')':'')+': gravar a série '+(k+1)+'">'+r+sm+'</button>';
+  }).join('') + '<button class="rep outro" data-acao="outro" aria-label="Outro número de repetições">…</button>';
+  /* um só rótulo sob as repetições que caem na faixa prescrita */
+  var a=reps.findIndex(function(r){return r>=e.r[0]&&r<=e.r[1];}), b=-1; reps.forEach(function(r,ix){ if(r>=e.r[0]&&r<=e.r[1]) b=ix; });
+  var faixaHtml = a>=0 ? '<div class="faixa-rep" aria-hidden="true"><span style="grid-column:'+(a+1)+'/'+(b+2)+'">faixa '+e.r[0]+'–'+e.r[1]+'</span></div>' : '<div class="faixa-rep"></div>';
+  var igual = ref && carga===ref[0];
+  var refTxt = ref ? 'última: '+fmt(ref[0])+' × '+ref[1] : extra && anterior ? 'série '+k+' hoje: '+fmt(anterior[0])+' × '+anterior[1] : 'sem referência';
+  return '<section class="entrada" aria-label="Próxima série">'+
+    '<div class="entrada-topo"><p class="entrada-titulo">Série '+(k+1)+' de '+e.s+(extra?' <span class="delta">extra</span>':'')+'</p><p class="entrada-ref">'+refTxt+'</p></div>'+
+    (extra? '<p class="entrada-nota"><span>Fica só neste dia. Virar programa é decisão da mesa.</span><button class="link" data-acao="desiste">desistir</button></p>':'')+
+    (o.notaEntrada? '<p class="entrada-nota"><span>'+o.notaEntrada+'</span></p>':'')+
+    '<div class="carga"><span class="rot">Carga</span><b class="valor'+(carga==null?' vazio':'')+'">'+(carga==null?'—':fmt(carga))+'</b><span class="unid">kg '+e.carga+(igual?'<br>igual à última':carga==null?'<br>anote antes da série':'')+'</span><button class="botao-sec" data-acao="carga">'+(carga==null?'anotar':'mudar')+'</button></div>'+
+    '<div class="reps'+(carga==null?' desabilitado':'')+'">'+chips+'</div>'+faixaHtml+
+    '<div class="acoes"><button data-acao="extra-aqui">+ série</button><button data-acao="trocar">Trocar</button><button data-acao="pular">Pular</button><button data-acao="mais">Mais</button></div>'+
+  '</section>';
+}
+
+function instrumento(st,o){
+  o=o||{};
+  return statusBar(st)+
+    '<div class="conteudo">'+
+      (o.banner||'')+
+      (o.semCabecalho?'':cabecalho(st))+trilho(st)+cartao(st,o)+painel(st,o)+entrada(st,o)+
+    '</div>'+
+    '<div class="sis-base" aria-hidden="true"><i></i></div>'+
+    (o.overlay||'');
+}
+
+function teclado(rotulo,valor,nota){
+  var t=['1','2','3','4','5','6','7','8','9',',','0','⌫'];
+  return '<div class="teclado" role="dialog" aria-label="'+rotulo+'">'+
+    '<div class="visor"><span class="rot">'+rotulo+'</span><b data-visor>'+valor+'</b><span class="cursor" aria-hidden="true"></span><span class="rot">'+(/Repeti/.test(rotulo)?'reps':'kg')+'</span></div>'+
+    '<div class="teclas">'+t.map(function(x){ return '<button data-tecla="'+x+'" aria-label="'+(x==='⌫'?'apagar':x===','?'vírgula':x)+'">'+x+'</button>'; }).join('')+'</div>'+
+    '<div class="linha-ok"><button class="cancela" data-tecla="cancela">Cancelar</button><button class="ok" data-tecla="ok">Pronto</button></div>'+
+    (nota? '<p class="nota-tec">'+nota+'</p>':'')+
+    '<div class="sis-base" aria-hidden="true"><i></i></div>'+
+  '</div>';
+}
+
+/* protótipo tocável do estado 1 — só roda no navegador */
+(function(){
+  var raiz=document.querySelector('[data-proto]');
+  if(!raiz) return;
+  var vivo=document.getElementById('anuncio');
+  var base=Date.now(), st0=treinoA(), st=clone(st0), modal=null, buf='', erroTec='', subAlvo=null;
+  function agoraMock(){ return st0.agora+(Date.now()-base)/1000; }
+  function anunciar(t){ if(vivo){ vivo.textContent=''; setTimeout(function(){ vivo.textContent=t; },30); } }
+
+  function folhaTroca(){
+    var i=st.cur.e, e=st.ex[i];
+    var li='<li><button data-acao="depois"><span class="t">Fazer outro antes e voltar a este</span><span class="s">a máquina pode liberar; nada muda no programa</span><span class="seta">›</span></button></li>';
+    e.subs.forEach(function(s){
+      li+='<li><button data-acao="sub" data-nome="'+s[0]+'"><span class="t">'+s[0]+(s[1]?'<i class="selo-tr">treinador</i>':'')+'</span><span class="s">nunca feito aqui · sem foto da máquina</span><span class="seta">›</span></button></li>';
+    });
+    return '<div class="veu" data-acao="fechar"></div><div class="folha-baixo" role="dialog" aria-label="Trocar exercício" style="max-height:78%">'+
+      '<div class="alca"></div><h3 style="margin:0 0 2px;font-size:20px">Trocar '+e.n+'</h3>'+
+      '<p style="margin:0 0 8px;font-size:14px;color:var(--prescrito)">Só hoje. O histórico vai para o exercício que você fizer (F151).</p>'+
+      '<ul class="troca-lista">'+li+'</ul><button class="link" data-acao="fechar" style="align-self:center">Cancelar</button><div class="sis-base"><i></i></div></div>';
+  }
+  function folhaLista(titulo,itens){
+    return '<div class="veu" data-acao="fechar"></div><div class="folha-baixo" role="dialog" aria-label="'+titulo+'">'+
+      '<div class="alca"></div><h3 style="margin:0 0 6px;font-size:20px">'+titulo+'</h3><ul class="troca-lista">'+
+      itens.map(function(x){ return '<li><button data-acao="'+(x[2]||'fechar')+'"'+(x[3]?' data-l="'+x[3]+'"':'')+'><span class="t">'+x[0]+'</span><span class="s">'+x[1]+'</span><span class="seta">›</span></button></li>'; }).join('')+
+      '</ul><button class="link" data-acao="fechar" style="align-self:center">Fechar</button><div class="sis-base"><i></i></div></div>';
+  }
+  function render(){
+    st.agora=agoraMock();
+    if(!st.cur){
+      raiz.innerHTML=statusBar(st)+'<div class="conteudo">'+cabecalho(st)+trilho({ex:st.ex,hoje:st.hoje,extras:st.extras,pulados:st.pulados,troca:st.troca,letra:st.letra,cur:null})+
+        '<div class="aviso neutro" style="margin-top:8px">'+ic('i-check')+'<div><p><strong>Tudo registrado.</strong> Pode sair: a sessão fecha sozinha na última série se você não tocar em nada.</p><p>As mudanças do dia esperam na mesa; ninguém pergunta nada agora.</p></div></div>'+
+        '<div style="margin-top:auto;display:grid;gap:8px;padding-bottom:8px"><button class="botao-tinta" data-acao="reinicia">Terminar a sessão</button><button class="botao-sec" data-acao="reinicia">Recomeçar o protótipo</button></div></div><div class="sis-base"><i></i></div>';
+      return;
+    }
+    var o={};
+    var rot={carga:'Carga · '+nomeCurto(nomeEx(st,st.cur.e)),peso:'Peso de hoje',reps:'Repetições'}[modal];
+    if(rot) o.overlay='<div class="veu" data-tecla="cancela"></div>'+teclado(rot,buf, erroTec || (modal==='peso'?'Uma casa decimal. A data é hoje; outra data, na mesa.':modal==='reps'?'Número inteiro.':'Teclado do próprio app: vírgula no lugar, sem zoom, não empurra a tela.'));
+    if(modal==='trocar') o.overlay=folhaTroca();
+    if(modal==='mais') o.overlay=folhaLista('Mais sobre este exercício',[['Orientação do treinador','na voz dele (F93)'],['Pegada ou posição do pé','onde existe (F113)'],['Observação','texto livre do registro'],['Fiz aproximação','não conta como série (F103)'],['Foto da máquina','para achar o aparelho certo (F224)']]);
+    if(modal==='treino') o.overlay=folhaLista('Treino '+st.letra,[['Terminar a sessão agora','sem perguntas; o resto vai para a mesa','fim'],['Estou no treino errado','trocar para B, C, D ou E; as séries feitas ficam com os exercícios delas'],['Apagar esta sessão','pede confirmação']]);
+    raiz.innerHTML=instrumento(st,o);
+    if(modal==='trocar'||modal==='mais'||modal==='treino'){ var f=raiz.querySelector('.folha-baixo button'); if(f) f.focus(); }
+  }
+  function abrir(m){ modal=m; erroTec=''; buf = m==='carga' ? '' : ''; render(); }
+  function fechar(){ modal=null; buf=''; erroTec=''; render(); }
+  function cargaGuia(){ var i=st.cur.e,k=st.cur.s, ant=k>0?st.hoje[i][k-1]:null, ref=refDe(st,i,k); return st.carga!=null?st.carga:(ant?ant[0]:ref?ref[0]:null); }
+  function gravar(r){
+    var i=st.cur.e,k=st.cur.s, c=cargaGuia();
+    if(c==null){ abrir('carga'); return; }
+    st.hoje[i][k]=[c,r,null]; st.last={e:i,s:k,t:agoraMock()}; st.carga=null;
+    var prox=null; for(var j=k+1;j<nSer(st,i);j++){ if(!st.hoje[i][j]){ prox={e:i,s:j}; break; } }
+    st.cur=prox||proxima(st);
+    anunciar('Gravada: série '+(k+1)+' de '+nomeEx(st,i)+', '+fmt(c)+' quilos, '+r+' repetições.');
+    render();
+    var b=raiz.querySelector('.recibo'); if(b){ b.animate && b.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:180,easing:'ease-out'}); }
+  }
+  function tecla(t){
+    if(t==='cancela'){ fechar(); return; }
+    if(t==='ok'){
+      var v=parseFloat(buf.replace(',','.'));
+      if(modal==='carga'){ if(!(v>=0&&v<=500)||/,\d{3}/.test(buf)){ erroTec='Carga fora do esperado (0 a 500, até duas casas).'; render(); return; } st.carga=v; modal=null; anunciar('Carga: '+fmt(v)+' quilos'); render(); return; }
+      if(modal==='peso'){ if(!(v>=30&&v<=250)||/,\d{2}/.test(buf)){ erroTec='Peso fora do esperado (uma casa decimal).'; render(); return; } st.peso=v; modal=null; anunciar('Peso de hoje gravado: '+fmt(v)+' quilos'); render(); return; }
+      if(modal==='reps'){ v=parseInt(buf,10); if(!(v>=1&&v<=200)){ erroTec='Repetições: número inteiro de 1 a 200.'; render(); return; } modal=null; gravar(v); return; }
+    }
+    if(t==='⌫'){ buf=buf.slice(0,-1); }
+    else if(t===','){ if(modal==='reps') return; if(buf.indexOf(',')<0) buf=(buf||'0')+','; }
+    else if(buf.length<6){ buf+=t; }
+    erroTec=''; var vis=raiz.querySelector('[data-visor]'); if(vis) vis.textContent=buf; var n=raiz.querySelector('.nota-tec'); if(n && n.dataset.e) n.textContent='';
+  }
+  raiz.addEventListener('click',function(ev){
+    var b=ev.target.closest('[data-acao],[data-tecla]'); if(!b||!raiz.contains(b)) return;
+    var t=b.getAttribute('data-tecla'); if(t){ tecla(t); return; }
+    var a=b.getAttribute('data-acao'), i=st.cur?st.cur.e:null;
+    switch(a){
+      case 'rep': b.classList.add('tocado'); gravar(+b.getAttribute('data-r')); return;
+      case 'outro': abrir('reps'); return;
+      case 'carga': abrir('carga'); return;
+      case 'peso': abrir('peso'); return;
+      case 'agua': st.agua=Math.min(14,st.agua+1); anunciar('Água: '+st.agua+' copos de 14'); break;
+      case 'rir': var L=st.last, v=st.hoje[L.e][L.s], r=+b.getAttribute('data-r'); v[2]=(v[2]===r?null:r); anunciar(v[2]==null?'RIR apagado':'RIR '+r+' na série '+(L.s+1)); break;
+      case 'dor': var p=b.getAttribute('data-p'), d=st.dor[st.last.e]||(st.dor[st.last.e]=[]), ix=d.indexOf(p); if(ix>=0) d.splice(ix,1); else d.push(p); anunciar((ix>=0?'Desmarcado: ':'Marcado: ')+p); break;
+      case 'corrigir': var L2=st.last; st.hoje[L2.e][L2.s]=null; st.cur={e:L2.e,s:L2.s}; st.last=null;
+        for(var e=0;e<st.hoje.length;e++){ for(var k=0;k<st.hoje[e].length;k++){ } } anunciar('Série apagada; toque de novo para gravar.'); break;
+      case 'extra': var e2=+b.getAttribute('data-e'); st.extras[e2]=(st.extras[e2]||0)+1; st.cur={e:e2,s:nSer(st,e2)-1}; anunciar('Série extra aberta'); break;
+      case 'extra-aqui': st.extras[i]=(st.extras[i]||0)+1; anunciar('Mais uma série hoje neste exercício'); break;
+      case 'desiste': st.extras[i]=Math.max(0,(st.extras[i]||0)-1); st.hoje[i]=st.hoje[i].slice(0,nSer(st,i)); st.cur=proxima(st); break;
+      case 'pular': st.pulados.push(i); st.cur=proxima(st); anunciar('Exercício pulado'); break;
+      case 'ir': var e3=+b.getAttribute('data-e'); if(st.pulados.indexOf(e3)>=0) st.pulados.splice(st.pulados.indexOf(e3),1);
+        for(var k3=0;k3<nSer(st,e3);k3++){ if(!st.hoje[e3][k3]){ st.cur={e:e3,s:k3}; break; } } break;
+      case 'trocar': abrir('trocar'); return;
+      case 'mais': abrir('mais'); return;
+      case 'treino': abrir('treino'); return;
+      case 'fim': modal=null; st.cur=null; break;
+      case 'depois': modal=null; var at=st.cur.e; for(var j=1;j<st.ex.length;j++){ var c=(at+j)%st.ex.length; if(st.pulados.indexOf(c)<0 && st.hoje[c].filter(Boolean).length<nSer(st,c)){ for(var k4=0;k4<nSer(st,c);k4++){ if(!st.hoje[c][k4]){ st.cur={e:c,s:k4}; break; } } break; } } anunciar('Fazendo outro antes; volte pelo trilho'); break;
+      case 'sub': st.troca[i]=b.getAttribute('data-nome'); st.carga=null; modal=null; anunciar('Hoje: '+st.troca[i]+'. Sem referência; anote a carga.'); break;
+      case 'fechar': modal=null; break;
+      case 'reinicia': st=clone(st0); base=Date.now(); modal=null; break;
+    }
+    render();
+  });
+  function tick(){
+    if(!st.cur||modal) return;
+    st.agora=agoraMock();
+    var r=raiz.querySelector('[data-relogio]'), br=raiz.querySelector('[data-barra]'), lb=raiz.querySelector('[data-lembrete]'), hs=raiz.querySelector('.sis-topo .tab');
+    if(st.last){ var dec=st.agora-st.last.t, alvo=st.ex[st.last.e].d;
+      if(r) r.textContent=mmss(dec); if(br) br.style.width=(Math.min(1,dec/alvo)*100).toFixed(1)+'%';
+      if(lb) lb.textContent='lembrete '+mmss(alvo)+(dec>alvo?' · passou '+mmss(dec-alvo):''); }
+    if(hs) hs.textContent=hhmm(st.agora);
+  }
+  setInterval(tick,1000);
+  document.addEventListener('visibilitychange',tick);
+  render();
+})();
+
+(function(){var h=document.documentElement,bs=document.querySelectorAll('.tema button');
+function set(v){ if(v==='auto') h.removeAttribute('data-tema'); else h.setAttribute('data-tema',v); bs.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.v===v));}); try{localStorage.setItem('visto-tema',v);}catch(e){} }
+var v=h.getAttribute('data-tema')||'auto'; try{v=localStorage.getItem('visto-tema')||v;}catch(e){} set(v);
+bs.forEach(function(b){b.addEventListener('click',function(){set(b.dataset.v);});});})();
+(function(){function escala(){document.querySelectorAll('.paisagem-escala').forEach(function(w){var t=w.firstElementChild,s=Math.min(1,w.clientWidth/896);t.style.transform='scale('+s+')';w.style.height=(414*s)+'px';});}
+addEventListener('resize',escala);escala();})();
+</script>
+</body>
+</html>

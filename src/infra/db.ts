@@ -14,11 +14,23 @@ export interface Armazenamento {
   readonly mode: Modo | null;
   ready(): Promise<Modo>;
   get(k: string): Promise<{ value: string } | null>;
+  /**
+   * Grava, e devolve se a escrita DUROU — `false` quando o valor ficou só na
+   * memória (armazenamento cheio, escrita recusada, ou não há armazenamento).
+   */
   set(k: string, v: string): Promise<boolean>;
+  /** Por que a última escrita não durou, ou `null` se a última durou. */
+  readonly falha: MotivoDeFalha | null;
   delete(k: string): Promise<boolean>;
 }
 
 export type Modo = 'host' | 'local' | 'mem';
+/**
+ * `cota`: o armazenamento está cheio (o teto do Safari é de cerca de 5 MiB, F53,
+ * e o estado inteiro é regravado a cada série, F256). `recusa`: qualquer outra
+ * escrita negada — inclusive não haver armazenamento nenhum.
+ */
+export type MotivoDeFalha = 'cota' | 'recusa';
 
 declare global {
   interface Window {
@@ -40,6 +52,7 @@ export const DB: Armazenamento = (function () {
   // existência dele em cada método, e é a mesma referência de qualquer forma
   let host: Window['storage'] | null = null;
   const mem = Object.create(null);
+  let falha: MotivoDeFalha | null = null;
 
   const hasLocal = (function () {
     try {
@@ -54,9 +67,19 @@ export const DB: Armazenamento = (function () {
     if (hasLocal) { try { return localStorage.getItem(k); } catch (e) {} }
     return k in mem ? mem[k] : null;
   }
-  function localSet(k: string, v: string): void {
+  // DEVOLVE se a escrita durou. Antes ela engolia o erro do `setItem` e o `set`
+  // respondia `true` sempre: com o armazenamento cheio, o estado ficava só na
+  // memória e se perdia ao fechar o app — sem uma palavra a ninguém. Quem decide
+  // o que dizer é o app; esta camada só tem de não mentir.
+  function localSet(k: string, v: string): boolean {
     mem[k] = v;
-    if (hasLocal) { try { localStorage.setItem(k, v); } catch (e) {} }
+    if (!hasLocal) { falha = 'recusa'; return false; }
+    try { localStorage.setItem(k, v); return true; }
+    catch (e) {
+      const n = e && (e as { name?: string }).name;
+      falha = (n === 'QuotaExceededError' || n === 'NS_ERROR_DOM_QUOTA_REACHED') ? 'cota' : 'recusa';
+      return false;
+    }
   }
   function localDel(k: string): void {
     delete mem[k];
@@ -77,6 +100,7 @@ export const DB: Armazenamento = (function () {
 
   return {
     get mode() { return mode; },
+    get falha() { return falha; },
     ready: probe,
 
     async get(k: string) {
@@ -96,12 +120,14 @@ export const DB: Armazenamento = (function () {
 
     async set(k: string, v: string) {
       await probe();
-      localSet(k, v);                                // espelho primeiro, sempre
+      const local = localSet(k, v);                  // espelho primeiro, sempre
       if (mode === 'host') {
-        try { await host!.set(k, v); }
+        // No host, a escrita dura se o host aceitou, mesmo que o espelho não.
+        try { await host!.set(k, v); falha = null; return true; }
         catch (e) { mode = hasLocal ? 'local' : 'mem'; }
       }
-      return true;
+      if (local) falha = null;
+      return local;
     },
 
     async delete(k: string) {

@@ -33,7 +33,7 @@ export function Treino({ ctx }) {
 
       <Secao primeira>
         <GradeMetricas
-          colunas={3}
+          colunas={2}
           celulas={[
             // id=daymeta: atualizaEstado() escreve aqui a cada tecla, sem
             // re-render — o porquê está em main.jsx.
@@ -46,8 +46,16 @@ export function Treino({ ctx }) {
                   cor: t.feitas > 0 ? 'ins-acid' : '' }
               : { k: 's', id: 'daymeta', rotulo: 'séries', valor: `${t.feitas}/${t.prescritas}`,
                   cor: t.feitas >= t.prescritas && t.prescritas > 0 ? 'ins-acid' : '' },
-            { k: 'v', rotulo: 'volume', valor: t.volume },
-            { k: 'c', rotulo: 'ciclo', valor: t.ciclo, nota: `${t.sessoes} sessões` }
+            // O VOLUME fica: durante a sessão ele é devolutiva ao vivo do que
+            // entrou, e não resumo do dia. A cópia que Dias guarda no detalhe
+            // da sessão é o REGISTRO, que é outra coisa.
+            //
+            // O CICLO saiu (achado 7 da frente 1): ele responde "em que ponto
+            // do bloco eu estou", que é a mesma pergunta da retrospectiva — e a
+            // retrospectiva é de Semana. Aqui ele era a terceira célula de um
+            // cabeçalho que se lê de pé, no meio de uma série, e nenhum dos nove
+            // HTML das direções o desenhou em lugar nenhum.
+            { k: 'v', rotulo: 'volume', valor: t.volume }
           ]}
         />
 
@@ -76,7 +84,7 @@ export function Treino({ ctx }) {
             {t.pausada
               ? <button class="ctrl-b ini" onClick={ctx.retomarSessao}>retomar</button>
               : <button class="ctrl-b" onClick={ctx.pausarSessao}>pausar</button>}
-            <button class="ctrl-b fim" onClick={ctx.finalizarSessao}>finalizar</button>
+            <button class="ctrl-b fim" onClick={ctx.finalizarSessao}>encerrar</button>
           </div>
         )}
 
@@ -93,59 +101,14 @@ export function Treino({ ctx }) {
         </div>
       </Secao>
 
-      {/* A semana e o cardio: contexto de adesão, não da sessão. */}
-      <div class="semana">
-        {c.semana.map(d => (
-          <button
-            key={d.d}
-            class={'wd' + (d.hoje ? ' hoje' : '') + (d.feito ? ' feito' : '') +
-                   (d.livre ? ' livre' : '') + (d.futuro ? ' futuro' : '') +
-                   (d.descanso ? ' descanso' : '')}
-            disabled={!d.abre}
-            onClick={() => ctx.abreSessaoDoDia(d.abre)}
-          >
-            <span class="wd-d">{d.d}</span>
-            <span class="wd-v">{d.v}</span>
-            {d.cardio && <span class="barra-cardio" />}
-          </button>
-        ))}
-      </div>
-
-      <div class={'cardl' + (c.cardio.feito ? ' feito' : '')}>
-        <span class="cardl-t">cardio</span>
-        <span class="cardl-n">{c.cardio.resumo}</span>
-        <button class="cardl-b" onClick={ctx.abreCardio}>
-          {c.cardio.aberto ? 'fechar' : 'registrar'}
-        </button>
-      </div>
-
-      {/* Registro rápido no lugar: sair da tela para anotar 25 min de bike
-          seria mais atrito que a própria bike. */}
-      {c.cardio.aberto && (
-        <div class="cardq">
-          <div class="chips">
-            {c.cardio.modais.map(m => (
-              <button key={m.k} class={'chip' + (m.on ? ' sel' : '')}
-                      onClick={() => ctx.cardioSet('m', m.k)}>{m.t}</button>
-            ))}
-          </div>
-          <div class="chips cardq-2">
-            {c.cardio.minutos.map(v => (
-              <button key={v.k} class={'chip' + (v.on ? ' sel' : '')}
-                      onClick={() => ctx.cardioSet('min', v.k)}>{v.t}</button>
-            ))}
-            {c.cardio.intensidades.map(v => (
-              <button key={v.k} class={'chip' + (v.on ? ' sel' : '')}
-                      onClick={() => ctx.cardioSet('i', v.k)}>{v.t}</button>
-            ))}
-          </div>
-          {c.cardio.aviso && <div class="cwarn">{c.cardio.aviso}</div>}
-          <button class="ins-btn-primary dbtn cardq-b" onClick={ctx.addCardio}>
-            {c.cardio.acao}
-          </button>
-        </div>
-      )}
-
+      {/* A FAIXA DA SEMANA e o PLACAR DO CARDIO saíram daqui, e é regra escrita:
+          o modo esconde "o resumo do dia, as médias, os placares", porque isso é
+          "como está?" e o modo responde "e agora?" (frente 1, §4.2). O
+          comentário que estava nesta linha já dizia metade — "contexto de
+          ADESÃO, não da sessão" —, e era a aba que os mantinha aqui.
+          A faixa foi para DIAS, que é "o que aconteceu em cada dia" (§1.2); o
+          placar e o registro rápido, para o AGORA, que é o dono do cardio
+          porque é onde ele se registra (§1.7). */}
       {t.avisos.map(a => (
         <div key={a.k} class={'tr-aviso deload ' + (a.cor || '')}>
           <div class="ins-label">{a.rotulo}</div>

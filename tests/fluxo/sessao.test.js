@@ -13,32 +13,32 @@ test('não existe mais função de salvar', async () => {
 
 test('série incompleta não abre sessão', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, null);          // só a carga
-  assert.strictEqual(a.E('S.sessao'), null);
-  assert.strictEqual(a.E('S.done.length'), 0);
-  assert.deepStrictEqual(a.J('Object.keys(S.logs)'), []);
+  assert.strictEqual(a.S().sessao, null);
+  assert.strictEqual(a.S().done.length, 0);
+  assert.deepStrictEqual(Object.keys(a.S().logs), []);
   a.fechar();
 });
 
 test('série completa abre a sessão e grava na hora', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
 
-  assert.ok(a.E('S.sessao !== null'), 'sessão deveria estar aberta');
-  assert.strictEqual(a.E('S.done.length'), 1);
-  assert.strictEqual(a.E('S.done[0].sid'), a.E('S.sessao.sid'));
+  assert.ok(a.S().sessao !== null, 'sessão deveria estar aberta');
+  assert.strictEqual(a.S().done.length, 1);
+  assert.strictEqual(a.S().done[0].sid, a.S().sessao.sid);
 
   const log = a.log('A',0)[0];
   assert.deepStrictEqual(log.sets[0], [40, 10]);
-  assert.strictEqual(log.sid, a.E('S.sessao.sid'));
+  assert.strictEqual(log.sid, a.S().sessao.sid);
   a.fechar();
 });
 
 test('apagar o campo remove a série do histórico', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   a.preencher(0, 1, 40, 9);
   assert.strictEqual(a.log('A',0)[0].sets.filter(Boolean).length, 2);
@@ -50,23 +50,24 @@ test('apagar o campo remove a série do histórico', async () => {
 
 test('a sessão aberta não vira referência de si mesma', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  a.E('render()');
+  a.v('render');
 
   // placeholder da série 2 não pode repetir o que acabou de ser digitado.
   // Vazio é o estado de 'sem referência': a unidade mora no rótulo ao lado.
-  assert.strictEqual(a.doc.getElementById('w0_1').placeholder, '');
+  assert.strictEqual(a.doc.getElementById('w0_1').textContent, '·',
+    'a célula da carga é botão, e vazia mostra o ponto');
   assert.ok(a.texto('.ex.open .lastline').includes('primeira vez'));
-  assert.deepStrictEqual(a.J('historico("A0")'), []);
+  assert.deepStrictEqual(a.vJ('historico', 'A0'), []);
   a.fechar();
 });
 
 test('sessão encerra por inatividade, grava duração e avança a rotação', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  const estado = a.J('S');
+  const estado = a.S();
 
   // seis horas atrás, última série cinco horas atrás
   const agora = Date.now();
@@ -76,9 +77,9 @@ test('sessão encerra por inatividade, grava duração e avança a rotação', a
   a.fechar();
 
   const b = await app({ estado });
-  assert.strictEqual(b.E('S.sessao'), null, 'sessão deveria ter encerrado sozinha');
-  assert.strictEqual(b.E('S.done[0].dur'), 3600 * 1000, 'uma hora de treino');
-  assert.strictEqual(b.E('S.draft'), null);
+  assert.strictEqual(b.S().sessao, null, 'sessão deveria ter encerrado sozinha');
+  assert.strictEqual(b.S().done[0].dur, 3600 * 1000, 'uma hora de treino');
+  assert.strictEqual(b.S().draft, null);
   assert.strictEqual(b.texto('.ins-estado-v'), 'B', 'rotação deveria ter avançado');
   assert.strictEqual(b.log('A',0)[0].sets.filter(Boolean).length, 1, 'histórico preservado');
   b.fechar();
@@ -86,14 +87,14 @@ test('sessão encerra por inatividade, grava duração e avança a rotação', a
 
 test('sessão do mesmo dia com pouca pausa continua aberta', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
-  const estado = a.J('S');
+  const estado = a.S();
   estado.sessao.ultima = Date.now() - 30 * 60 * 1000;   // 30 min de descanso
   a.fechar();
 
   const b = await app({ estado });
-  assert.ok(b.E('S.sessao !== null'), 'não deveria encerrar por 30 minutos');
+  assert.ok(b.S().sessao !== null, 'não deveria encerrar por 30 minutos');
   assert.strictEqual(b.texto('.ins-estado-v'), 'A');
   b.fechar();
 });
@@ -102,17 +103,19 @@ test('trocar de dia no meio do treino não perde nem sobrescreve série', async 
   // Regressão: o rascunho é zerado ao trocar de dia. Sem hidratação, os campos
   // voltavam em branco com as séries gravadas, e digitar por cima apagava o resto.
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   a.preencher(0, 1, 40, 10);
   a.preencher(0, 2, 40, 9);
 
-  a.E('go("D")');
-  a.E('go("A")');
-  a.E('toggle(0)');
+  a.v('go', 'D');
+  a.v('go', 'A');
+  a.v('toggle', 0);
 
-  assert.strictEqual(a.doc.getElementById('w0_0').value, '40', 'campo deveria voltar preenchido');
-  assert.strictEqual(a.doc.getElementById('r0_2').value, '9');
+  assert.strictEqual(a.doc.getElementById('w0_0').textContent, '40',
+    'a carga deveria voltar preenchida');
+  assert.strictEqual(a.doc.getElementById('r0_2').textContent, '9',
+    'a repetição é botão desde a régua, e o valor é o texto dele');
 
   a.preencher(0, 0, 45, 10);
   assert.strictEqual(a.log('A',0)[0].sets.filter(Boolean).length, 3, 'as outras séries continuam');
@@ -122,19 +125,19 @@ test('trocar de dia no meio do treino não perde nem sobrescreve série', async 
 
 test('hidratação recupera observação, dor e substituto', async () => {
   const a = await app();
-  a.E('toggle(1)');
-  a.E('setAlt(1,"crucifixo-inclinado-no-cabo")');
-  a.E('abrirNota(1)');
+  a.v('toggle', 1);
+  a.v('setAlt', 1, 'crucifixo-inclinado-no-cabo');
+  a.v('abrirNota', 1);
   a.digitar('o1', 'ombro ok hoje');
-  a.E('toggleDor(1,"ombro")');
+  a.v('toggleDor', 1, 'ombro');
   a.preencher(1, 0, 32, 10);
 
-  a.E('go("E")');
-  a.E('go("A")');
-  a.E('toggle(1)');
+  a.v('go', 'E');
+  a.v('go', 'A');
+  a.v('toggle', 1);
 
-  assert.strictEqual(a.E('altOf(1)'), 'crucifixo-inclinado-no-cabo');
-  assert.strictEqual(a.E('logKey("A",1)'), 'crucifixo-inclinado-no-cabo',
+  assert.strictEqual(a.v('altOf', 1), 'crucifixo-inclinado-no-cabo');
+  assert.strictEqual(a.v('logKey', 'A', 1), 'crucifixo-inclinado-no-cabo',
     'o registro vai para o histórico do substituto, não para uma chave derivada');
   assert.strictEqual(a.doc.getElementById('o1').value, 'ombro ok hoje');
   assert.strictEqual(a.texto('.ex.open .chip.on'), 'ombro anterior');
@@ -149,7 +152,7 @@ test('o contador de séries acompanha a digitação sem re-render', async () => 
   const a = await app();
   assert.match(a.texto('#daymeta'), /^0\/\d+$/, a.texto('#daymeta'));
 
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   assert.match(a.texto('#daymeta'), /^1\//, a.texto('#daymeta'));
 
@@ -160,13 +163,13 @@ test('o contador de séries acompanha a digitação sem re-render', async () => 
 
 test('troca de exercício move a projeção para o histórico do substituto', async () => {
   const a = await app();
-  a.E('toggle(1)');
+  a.v('toggle', 1);
   a.preencher(1, 0, 60, 12);
   assert.ok(a.log('A',1), 'gravou no exercício original');
 
   const original = a.k('A',1);
-  a.E('setAlt(1,"crossover-na-polia-baixa")');
-  assert.strictEqual(a.E('S.logs[' + JSON.stringify(original) + ']'), undefined,
+  a.v('setAlt', 1, 'crossover-na-polia-baixa');
+  assert.strictEqual(a.S().logs[original], undefined,
     'sai do histórico do original');
   assert.strictEqual(a.k('A',1), 'crossover-na-polia-baixa', 'a posição passa a ser do substituto');
   const sub = a.log('A',1);
@@ -179,16 +182,16 @@ test('substituto acumula histórico próprio entre treinos', async () => {
   // O ganho de indexar por exercício: usar o mesmo aparelho como substituto em
   // dias diferentes vira uma série histórica só, não duas chaves órfãs.
   const a = await app();
-  a.E('toggle(1)');
-  a.E('setAlt(1,"crossover-na-polia-baixa")');
+  a.v('toggle', 1);
+  a.v('setAlt', 1, 'crossover-na-polia-baixa');
   a.preencher(1, 0, 20, 12);
-  assert.strictEqual(a.J('S.logs["crossover-na-polia-baixa"]').length, 1);
+  assert.strictEqual(a.S().logs["crossover-na-polia-baixa"].length, 1);
 
-  a.E('go("E")');
-  a.E('toggle(3)');
-  a.E('setAlt(3,"crossover-na-polia-baixa")');
+  a.v('go', 'E');
+  a.v('toggle', 3);
+  a.v('setAlt', 3, 'crossover-na-polia-baixa');
   a.preencher(3, 0, 22, 12);
-  const h = a.J('S.logs["crossover-na-polia-baixa"]');
+  const h = a.S().logs["crossover-na-polia-baixa"];
   assert.strictEqual(h.length, 2, 'mesma chave, dois dias diferentes');
   assert.notStrictEqual(h[0].sl, h[1].sl, 'cada um sabe de que posição veio');
   a.fechar();
@@ -196,17 +199,17 @@ test('substituto acumula histórico próprio entre treinos', async () => {
 
 test('deload corta as séries pela metade e marca a sessão', async () => {
   const a = await app();
-  await a.E('setDeload(true)');
-  a.E('go("A")');
-  a.E('toggle(0)');
+  await a.v('setDeload', true);
+  a.v('go', 'A');
+  a.v('toggle', 0);
 
   assert.strictEqual(a.$$('.ex.open .setrow').length, 2, 'quatro séries viram duas');
   assert.strictEqual(a.$('.up'), null, 'selo de subir carga fica suspenso');
 
   a.preencher(0, 0, 40, 10);
   assert.strictEqual(a.log('A',0)[0].dl, 1);
-  assert.strictEqual(a.E('S.done[0].dl'), 1);
-  assert.strictEqual(a.E('sessoesDeTrabalho()'), 0, 'deload não conta para as 48');
+  assert.strictEqual(a.S().done[0].dl, 1);
+  assert.strictEqual(a.v('sessoesDeTrabalho'), 0, 'deload não conta para as 48');
   a.fechar();
 });
 
@@ -223,23 +226,43 @@ function emTreino(dia, agora) {
   };
 }
 
-test('abrir o app com treino em andamento cai no treino, não em HOJE', async () => {
-  // sair e voltar no meio de uma série é a reabertura mais comum que existe
-  // neste app, e devolvê-lo a HOJE cobrava dois toques com a mão suada
+test('abrir o app com treino em andamento cai NO MODO, não na aba', async () => {
+  // Porta 3 do modo (frente 1, §4.4). O pouso já achava a aba certa; agora o
+  // que ele acha é o modo, porque reabrir o app no meio de uma série é a
+  // reabertura mais comum que existe aqui — e quem volta assim está com o
+  // celular na mão suada, não escolhendo onde navegar.
   const agora = agoraEstavel();
   const a = abrirApp({ agora: agora, estado: emTreino('B', agora) });
-  await a.pronto();                    // sem a.aba(): é o boot que tem que decidir
+  await a.pronto();
 
-  assert.strictEqual(a.E('CTX.abaAtual()'), 'treino');
-  assert.strictEqual(a.E('view.day'), 'B', 'e no dia da sessão');
-  assert.strictEqual(a.E('S.sessao && S.sessao.day'), 'B', 'a sessão sobreviveu ao boot');
+  assert.strictEqual(a.vista().modoSessao, true, 'o boot entrou no modo');
+  // Herdado do caso que este substituiu ("cai no treino, não em HOJE"): ele
+  // afirmava a ABA do treino, que deixou de existir. O dia da sessão e a
+  // sobrevivência dela ao boot eram asserções dele, e continuam aqui.
+  assert.strictEqual(a.vista().day, 'B', 'no dia da sessão');
+  assert.strictEqual((a.S().sessao || {}).day, 'B', 'e a sessão sobreviveu ao boot');
+  assert.ok(a.$('[data-a="sai-do-modo"]'),
+    'e desenhou a saída: sem ela o modo é uma tela sem porta');
+  assert.ok(!a.$('.ins-tabbar'), 'e sem barra de abas');
   a.fechar();
 });
 
-test('sem sessão, o app continua abrindo em HOJE', async () => {
+test('sem sessão, o pouso não inventa modo nenhum', async () => {
+  // A quebra espelhada: um modo aberto sem sessão poria a pessoa numa tela de
+  // treino em andamento que não está em andamento, e com a barra de abas fora.
   const a = abrirApp({ agora: agoraEstavel(), estado: { logs: {}, done: [] } });
   await a.pronto();
-  assert.strictEqual(a.E('CTX.abaAtual()'), 'hoje');
+
+  assert.strictEqual(a.S().sessao, null, 'pré-condição: nenhuma sessão');
+  assert.strictEqual(a.vista().modoSessao, false, 'e nenhum modo');
+  a.fechar();
+});
+
+test('sem sessão, o app continua abrindo no AGORA', async () => {
+  const a = abrirApp({ agora: agoraEstavel(), estado: { logs: {}, done: [] } });
+  await a.pronto();
+  assert.strictEqual(a.v('ctx.abaAtual'), 'agora');
+  assert.strictEqual(a.vista().modoSessao, false, 'e sem o modo por cima');
   a.fechar();
 });
 
@@ -249,40 +272,48 @@ test('sessão vencida não sequestra a abertura', async () => {
   const agora = agoraEstavel();
   const a = abrirApp({ agora: agora, estado: emTreino('B', agora - 2 * DIA) });
   await a.pronto();
-  assert.strictEqual(a.E('S.sessao'), null, 'foi encerrada no boot');
-  assert.strictEqual(a.E('CTX.abaAtual()'), 'hoje');
+  assert.strictEqual(a.S().sessao, null, 'foi encerrada no boot');
+  assert.strictEqual(a.v('ctx.abaAtual'), 'agora');
+  assert.strictEqual(a.vista().modoSessao, false, 'e o modo não abriu por ela');
   a.fechar();
 });
 
-test('chegar na aba TREINO cai no dia da sessão, venha de onde vier', async () => {
+test('voltar à sessão cai no dia DELA, venha de onde vier', async () => {
+  // Reescrito: a correção morava em `vaiPara`, que consertava "chegar na aba
+  // TREINO abria um treino qualquer". A aba saiu, e a correção passou para as
+  // PORTAS do modo — `voltaAoTreino` cai no dia da sessão, e é por ela que a
+  // faixa leva de qualquer lugar.
   const agora = agoraEstavel();
   const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
 
-  a.E(`go('C')`);
-  assert.strictEqual(a.E('view.day'), 'C', 'dentro da aba, o dia é livre');
+  a.v('go', 'C');
+  assert.strictEqual(a.vista().day, 'C', 'dentro do modo, o dia é livre');
 
-  a.aba('comida');
-  a.aba('treino');
-  assert.strictEqual(a.E('view.day'), 'B', 'voltando de fora, cai na sessão de novo');
+  a.v('ctx.vaiPara', 'prescricao');
+  await a.esperar();
+  a.v('ctx.voltaAoTreino');
+  await a.esperar();
+  assert.strictEqual(a.vista().day, 'B', 'voltando de fora, cai na sessão de novo');
+  assert.strictEqual(a.vista().modoSessao, true, 'e no modo');
   a.fechar();
 });
 
 test('mas não congela: dentro da aba o dia continua livre', async () => {
   const agora = agoraEstavel();
   const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
-  a.E(`go('D')`);
-  assert.strictEqual(a.E('view.day'), 'D');
-  a.E('render()');
-  assert.strictEqual(a.E('view.day'), 'D', 'redesenhar não puxa de volta');
+  a.v('go', 'D');
+  assert.strictEqual(a.vista().day, 'D');
+  a.v('render');
+  assert.strictEqual(a.vista().day, 'D', 'redesenhar não puxa de volta');
   a.fechar();
 });
 
 test('sem sessão, trocar de aba não mexe no dia escolhido', async () => {
   const a = await app({ agora: agoraEstavel(), estado: { logs: {}, done: [] }, aba: 'treino' });
-  a.E(`go('C')`);
-  a.aba('comida');
+  a.v('go', 'C');
+  a.aba('prescricao');
   a.aba('treino');
-  assert.strictEqual(a.E('view.day'), 'C', 'nada a priorizar, nada muda');
+  assert.strictEqual(a.vista().day, 'C', 'nada a priorizar, nada muda');
   a.fechar();
 });
 
@@ -296,6 +327,86 @@ test('o relógio da sessão é filho direto do main, senão o sticky descola', a
   assert.strictEqual(rel.parentElement.tagName, 'MAIN',
     'saiu para o <main>: dentro da <section> o sticky se prenderia a ela');
   assert.ok(a.$('.ins-secao.continua'), 'e a seção partida não desenha fio');
+  a.fechar();
+});
+
+test('dentro do modo o relógio continua filho direto de um main', async () => {
+  // O modo devolve a tela cheia ANTES da casca (`app.jsx`: `if
+  // (ctx.emTelaCheia()) return ctx.telaCheia()`), então o `<main>` da casca não
+  // entra — e sem um `<main>` do modo o relógio passava a ser filho do
+  // invólucro, que é um flex column. O sticky se prende ao bloco que o contém:
+  // trocar o pai é trocar a âncora dele, exatamente a quebra que o caso de cima
+  // segura para a aba. E o `<main>` também é o marco da página: no modo, o modo
+  // É a página.
+  const agora = agoraEstavel();
+  const a = await app({ agora: agora, estado: emTreino('B', agora), aba: 'treino' });
+  assert.strictEqual(a.vista().modoSessao, true, 'pré-condição: o boot entrou no modo');
+
+  const rel = a.$('.day-rel');
+  assert.ok(rel, 'o relógio está na tela do modo');
+  assert.strictEqual(rel.parentElement.tagName, 'MAIN',
+    'e é filho direto de um <main>, como na aba');
+  assert.strictEqual(a.$$('main').length, 1,
+    'de UM só: dois <main> na mesma página não é marco, é ruído');
+  a.fechar();
+});
+
+test('o cabeçalho do modo mostra a hora de parede', async () => {
+  // Item 3 da lista do que não some no modo (frente 1, §4.3): "dentro do modo,
+  // a hora fica no cabeçalho". O protótipo achou que o app não tem relógio
+  // NENHUM — e a projeção de fim do treino não se confere sem ele: "acabo às
+  // 19h10" não diz nada a quem não sabe que horas são.
+  const a = await app({ agora: agoraEstavel(14, 37), estado: emTreino('B', agoraEstavel(14, 37)), aba: 'treino' });
+  assert.strictEqual(a.vista().modoSessao, true, 'pré-condição: dentro do modo');
+
+  const hora = a.$('#hora');
+  assert.ok(hora, 'a hora está no cabeçalho do modo');
+  assert.strictEqual(hora.textContent, '14:37', 'e é a hora de agora, em HH:MM');
+  assert.strictEqual(hora.tagName, 'TIME', 'em <time>: é hora, não um número qualquer');
+  // Sem `aria-live`: o leitor de tela anunciando a virada de cada minuto no
+  // meio de uma série é interrupção, não informação.
+  assert.ok(!hora.getAttribute('aria-live'), 'e não se anuncia a cada minuto');
+  a.fechar();
+});
+
+test('a hora de parede aparece no modo mesmo SEM sessão aberta', async () => {
+  // Entrar no modo é navegação, e a sessão nasce na primeira série — então o
+  // modo tem um estado vazio (M1‑7). A hora não depende de haver treino
+  // aberto: ela é a hora, e é justamente antes de começar que se pergunta se
+  // dá tempo.
+  const a = await app({ agora: agoraEstavel(6, 5), estado: { logs: {}, done: [] } });
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.S().sessao, null, 'pré-condição: nenhuma sessão');
+
+  assert.strictEqual((a.$('#hora') || {}).textContent, '06:05',
+    'a hora está lá, com o zero à esquerda');
+  assert.ok(!a.$('#relogio'), 'e o relógio DA SESSÃO não, porque não há sessão');
+  a.fechar();
+});
+
+test('entrar no modo de outra aba não congela o relógio da sessão', async () => {
+  // O relógio decorrido anda por fora do Preact (`tickRelogio`), e o motor dele
+  // era ligado só com `view.aba === 'treino'`. As portas 2 e 3 arrumam a aba
+  // antes de entrar, então o congelamento não aparecia — mas a porta 1 é o
+  // cartão do topo do Agora, e entra DE LÁ. O relógio pararia no meio do
+  // treino, mostrando a hora da entrada para sempre.
+  //
+  // Este caso espera tempo de verdade, 1,2 s, e é o único da suíte que faz
+  // isso: o harness congela `Date.now` quando recebe `agora`, e com ele
+  // congelado nenhum motor de relógio tem o que mostrar. Sem `agora`, o
+  // decorrido vira de segundo em segundo e 1,2 s garante a virada.
+  const a = await app({ estado: emTreino('B', Date.now()) });
+  a.v('ctx.vaiPara', 'comida');
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.vista().aba, 'comida', 'pré-condição: a aba por baixo NÃO é treino');
+
+  const antes = a.$('#relogio').textContent;
+  await a.esperar(1200);
+  assert.notStrictEqual(a.$('#relogio').textContent, antes,
+    'o decorrido virou: o motor ficou ligado dentro do modo, de onde quer ' +
+    'que se tenha entrado (parado em ' + antes + ')');
   a.fechar();
 });
 
@@ -318,10 +429,10 @@ function comTreinoRegistrado(agora) {
 test('o detalhe de um treino do plano oferece corrigir e apagar', async () => {
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
-  a.E('abrirSessao(' + f.t + ')');
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
+  a.v('abrirSessao', f.t);
 
-  const d = a.J('CTX.detalheDaSessao()');
+  const d = a.vJ('ctx.detalheDaSessao');
   assert.strictEqual(d.livre, false, 'é treino do plano, não avulso');
   assert.strictEqual(d.corrigivel, true);
   assert.ok(d.duracoes.length >= 4, 'os degraus de duração estão lá');
@@ -334,33 +445,33 @@ test('corrigir o tempo torna a duração declarada, e o aproximado some', async 
   // esquecer de finalizar deixa o tempo correndo até a última série
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
-  a.E('abrirSessao(' + f.t + ')');
-  assert.strictEqual(a.J('CTX.detalheDaSessao()').exato, false, 'nasce aproximado');
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
+  a.v('abrirSessao', f.t);
+  assert.strictEqual(a.vJ('ctx.detalheDaSessao').exato, false, 'nasce aproximado');
 
-  await a.E('CTX.corrigeDuracao(' + f.t + ', 45)');
+  await a.v('ctx.corrigeDuracao', f.t, 45);
   await a.esperar(60);
 
-  const m = a.J('S.done[0]');
+  const m = a.S().done[0];
   assert.strictEqual(m.dur, 45 * 60000);
   assert.strictEqual(m.fim, 'manual', 'passa a ser declarado, não estimado');
   assert.ok(m.m > 0, 'com carimbo, senão a fusão devolve o valor velho');
-  assert.strictEqual(a.J('CTX.detalheDaSessao()').exato, true);
+  assert.strictEqual(a.vJ('ctx.detalheDaSessao').exato, true);
   a.fechar();
 });
 
 test('a correção é presa a limites, e não aceita lixo', async () => {
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
 
-  await a.E('CTX.corrigeDuracao(' + f.t + ', 0)');
+  await a.v('ctx.corrigeDuracao', f.t, 0);
   await a.esperar(40);
-  assert.strictEqual(a.J('S.done[0]').dur, 60000, 'piso de um minuto');
+  assert.strictEqual(a.S().done[0].dur, 60000, 'piso de um minuto');
 
-  await a.E('CTX.corrigeDuracao(' + f.t + ', 9999)');
+  await a.v('ctx.corrigeDuracao', f.t, 9999);
   await a.esperar(40);
-  assert.strictEqual(a.J('S.done[0]').dur, 600 * 60000, 'teto de dez horas');
+  assert.strictEqual(a.S().done[0].dur, 600 * 60000, 'teto de dez horas');
   a.fechar();
 });
 
@@ -369,34 +480,34 @@ test('apagar o treino leva as séries dele junto, com lápide nas duas coisas', 
   // contando volume, ainda puxando progressão, sem dia a que pertencer
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
-  assert.strictEqual(a.J('S.done').length, 1);
-  const comHistorico = () => a.J('Object.keys(S.logs)').length;
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
+  assert.strictEqual(a.S().done.length, 1);
+  const comHistorico = () => Object.keys(a.S().logs).length;
   assert.strictEqual(comHistorico(), 2, 'dois exercícios com histórico');
 
-  a.E('abrirSessao(' + f.t + ')');
-  await a.E('CTX.editaSessao(' + f.t + ')');
+  a.v('abrirSessao', f.t);
+  await a.v('ctx.editaSessao', f.t);
   await a.esperar(80);
 
-  assert.deepStrictEqual(a.J('S.done'), [], 'a marca do dia saiu');
+  assert.deepStrictEqual(a.S().done, [], 'a marca do dia saiu');
   assert.strictEqual(comHistorico(), 0, 'e os exercícios ficaram sem histórico nenhum');
-  const mortos = a.J('S.apagados');
+  const mortos = a.S().apagados;
   assert.ok(mortos['done:' + f.t], 'lápide da sessão');
   assert.ok(Object.keys(mortos).some(k => k.indexOf('log:') === 0), 'e das séries');
-  assert.strictEqual(a.E('view.sessao'), null, 'a tela fechou sozinha');
+  assert.strictEqual(a.vista().sessao, null, 'a tela fechou sozinha');
   a.fechar();
 });
 
 test('o aviso diz quantas séries vão junto antes de apagar', async () => {
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
-  a.E('abrirSessao(' + f.t + ')');
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
+  a.v('abrirSessao', f.t);
 
   a.recusar();
-  await a.E('CTX.editaSessao(' + f.t + ')');
+  await a.v('ctx.editaSessao', f.t);
   await a.esperar(60);
-  assert.strictEqual(a.J('S.done').length, 1, 'recusou: nada foi apagado');
+  assert.strictEqual(a.S().done.length, 1, 'recusou: nada foi apagado');
   const p = a.perguntas().join(' ');
   assert.ok(/5 séries/.test(p), 'a conta das séries aparece: ' + p);
   assert.ok(/outros aparelhos/.test(p), 'e que vale para os outros: ' + p);
@@ -409,11 +520,257 @@ test('o treino EM ANDAMENTO não se apaga por aqui', async () => {
   const agora = agoraEstavel();
   const f = comTreinoRegistrado(agora);
   f.sessao = { day: 'A', inicio: f.t, ultima: agora, sid: f.t, manual: 1, pausas: [], pulados: [] };
-  const a = await app({ agora: agora, estado: f, aba: 'dados' });
+  const a = await app({ agora: agora, estado: f, aba: 'semana' });
 
-  await a.E('CTX.editaSessao(' + f.t + ')');
+  await a.v('ctx.editaSessao', f.t);
   await a.esperar(60);
-  assert.strictEqual(a.J('S.done').length, 1, 'continua lá');
+  assert.strictEqual(a.S().done.length, 1, 'continua lá');
   assert.ok(/em andamento/.test(a.toast()), a.toast());
+  a.fechar();
+});
+
+// ===========================================================================
+// `ctx.apagaLinha` — o apagamento ESTREITO, que não é o do detalhe do mês
+// ===========================================================================
+//
+// O app tem dois apagamentos de sessão passada, e eles têm alcances
+// diferentes de propósito:
+//
+//   - o do DETALHE DO MÊS leva a marca do dia e TODAS as séries daquele `sid`,
+//     em todos os exercícios. É o caso *apagar o treino leva as séries dele
+//     junto* , logo acima.
+//   - `ctx.apagaLinha`, aqui, leva UMA linha do histórico de UM exercício. A
+//     marca do dia fica, e as séries do mesmo treino nos outros exercícios
+//     ficam.
+//
+// O segundo alcance não tinha nenhuma asserção. `telas` :: *correção de sessão
+// passada altera e apaga* chama `apagarSessao` e confere que a linha sumiu —
+// não que **só** ela sumiu. Um apagamento que crescesse do exercício para o
+// treino passaria naquele caso. Daí este.
+//
+// Cobre o modelo, não a fiação: prova que a capacidade existe e onde ela para,
+// e nada sobre a tela nova ter um botão ligado em `ctx.apagaLinha`.
+
+test('ctx.apagaLinha avisa antes, e recusar deixa a linha onde estava', async () => {
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[400, 10]] }] },
+    done: [{ day: 'A', t: t, sid: t }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
+  a.v('ctx.editaLinha', 0);
+
+  a.recusar();
+  await a.v('ctx.apagaLinha');
+  await a.esperar();
+
+  assert.strictEqual(a.log('A', 0).length, 1, 'recusar não apaga');
+  const q = a.perguntas().join(' | ');
+  assert.ok(/não tem volta/.test(q), 'e o aviso diz que não tem volta: ' + q);
+  a.fechar();
+});
+
+test('ctx.apagaLinha leva uma linha só — o dia e os outros exercícios ficam', async () => {
+  const velho = Date.now() - 9 * DIA, novo = Date.now() - 2 * DIA;
+  const a = await app({ estado: {
+    logs: {
+      // duas sessões no MESMO exercício, e uma terceira em outro exercício
+      // dentro do MESMO treino da sessão nova
+      A0: [{ t: velho, sid: velho, sets: [[60, 10]] },
+           { t: novo, sid: novo, sets: [[400, 10]] }],
+      A1: [{ t: novo, sid: novo, sets: [[20, 12]] }]
+    },
+    done: [{ day: 'A', t: velho, sid: velho }, { day: 'A', t: novo, sid: novo }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
+
+  const antes = a.log('A', 0);
+  const alvo = antes.findIndex(function (l) { return l.sid === novo; });
+  assert.ok(alvo >= 0, 'a sessão nova está no histórico da posição 0');
+
+  a.v('ctx.editaLinha', alvo);
+  await a.v('ctx.apagaLinha');
+  await a.esperar();
+
+  assert.deepStrictEqual(a.log('A', 0).map(function (l) { return l.sid; }), [velho],
+    'a linha nomeada saiu, e a outra sessão do MESMO exercício ficou');
+  assert.strictEqual(a.log('A', 1).length, 1,
+    'e o mesmo treino no exercício VIZINHO ficou: o alcance é a linha, não o `sid`');
+  assert.strictEqual(a.S().done.length, 2,
+    'a marca do dia fica — quem leva o dia junto é o detalhe do mês, não esta porta');
+
+  assert.ok(a.S().apagados['log:' + a.k('A', 0) + ':' + novo + ':' + a.k('A', 0)] > 0,
+    'com lápide da linha, senão a fusão do outro aparelho a devolve');
+  assert.strictEqual(a.S().apagados['done:' + novo], undefined,
+    'e sem lápide do dia, que não foi apagado');
+  a.fechar();
+});
+
+// ===========================================================================
+// A correção de uma linha do histórico, pelas chaves de `CTX`
+// ===========================================================================
+//
+// `editaLinha`, `cancelaEdicao`, `salvaEdicao`, `editDor` e `histKey` não
+// tinham caso próprio. `telas` :: *correção de sessão passada altera e apaga*
+// aciona as funções de módulo e confere o valor corrigido; o que falta é o
+// contorno — o que a edição alcança, o que o cancelar desfaz (e o que não
+// desfaz) e o que trocar de chave faz com uma edição aberta.
+//
+// Cobrem o modelo, não a fiação. Uma ressalva de contrato: `salvaEdicao` e
+// `editDor` LEEM O DOM por dentro (`guardaCamposEdicao`, os ids `ed{k}_0`), e
+// por isso são os únicos desta entrega que não sobrevivem sozinhos ao
+// redesenho. O par por valor deles é `guardaEdicaoCom`, que já está na
+// superfície — e o §2 do 09-superficie.md explica por quê.
+
+/** Uma sessão de três séries no histórico da posição 0 do treino A. */
+async function umaLinha() {
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[60, 10], [60, 8], [55, 8]] }] },
+    done: [{ day: 'A', t: t, sid: t }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
+  return a;
+}
+
+test('ctx.editaLinha abre a edição de UMA linha, e ctx.cancelaEdicao a fecha', async () => {
+  const a = await umaLinha();
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, false, 'fechada por padrão');
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].edicao, null,
+    'e o formulário não existe até ela abrir');
+
+  a.v('ctx.editaLinha', 0);
+  const s = a.vJ('ctx.historico').sessoes[0];
+  assert.strictEqual(s.editando, true, 'abre');
+  assert.deepStrictEqual(s.edicao.sets, [{ carga: '60', reps: '10' },
+                                         { carga: '60', reps: '8' },
+                                         { carga: '55', reps: '8' }],
+    'o formulário parte do que foi registrado, série por série');
+  assert.strictEqual(s.edicao.dores.length, 3, 'com os três marcadores de dor');
+
+  a.v('ctx.cancelaEdicao');
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, false, 'e fecha');
+  a.fechar();
+});
+
+test('ctx.editDor marca e desmarca cada dor por conta própria', async () => {
+  const a = await umaLinha();
+  a.v('ctx.editaLinha', 0);
+  const ligadas = function () {
+    return a.vJ('ctx.historico').sessoes[0].edicao.dores
+            .filter(function (d) { return d.on; }).map(function (d) { return d.k; });
+  };
+  assert.deepStrictEqual(ligadas(), [], 'nenhuma por padrão');
+
+  a.v('ctx.editDor', 'ombro');
+  assert.deepStrictEqual(ligadas(), ['ombro'], 'marca a nomeada');
+  a.v('ctx.editDor', 'patelar');
+  assert.deepStrictEqual(ligadas(), ['ombro', 'patelar'], 'e acumula, sem trocar a anterior');
+  a.v('ctx.editDor', 'ombro');
+  assert.deepStrictEqual(ligadas(), ['patelar'], 'o mesmo verbo desmarca só aquela');
+  assert.deepStrictEqual(a.log('A', 0)[0].dor, ['patelar'],
+    'e a dor vai para o registro, não só para o formulário');
+  a.fechar();
+});
+
+test('ctx.cancelaEdicao NÃO desfaz a dor já marcada — o escopo de hoje', async () => {
+  // ESTE CASO NÃO AFIRMA QUE ESTÁ CERTO. `editDor` escreve direto no registro
+  // e `cancelarEdicao` só fecha o formulário (`view.edit = null`): não há
+  // rascunho para descartar. Então marcar uma dor e cancelar deixa a dor.
+  // Registrado para o escopo não mudar em silêncio nos dois sentidos — se
+  // alguém der rascunho ao cancelar, este caso fica vermelho e aponta onde.
+  const a = await umaLinha();
+  a.v('ctx.editaLinha', 0);
+  a.v('ctx.editDor', 'cotovelo');
+  a.v('ctx.cancelaEdicao');
+
+  assert.deepStrictEqual(a.log('A', 0)[0].dor, ['cotovelo'],
+    'cancelar fecha o formulário e deixa a dor marcada');
+  a.fechar();
+});
+
+test('corrigir uma sessão de outro dia diz que não reabre aquele treino', async () => {
+  // §8.4: cada invariante da correção tem frase, e esta é a de outro dia.
+  const a = await umaLinha();
+  a.v('ctx.editaLinha', 0);
+  await a.esperar();
+  const data = a.vJ('ctx.historico').sessoes[0].data;
+  assert.strictEqual(a.texto('.ed-outrodia'), 'Esta sessão é de ' + data + '. Corrigir não reabre aquele treino.');
+  a.fechar();
+});
+
+test('ctx.salvaEdicao fecha a linha, carimba a correção e recusa deixá-la sem série', async () => {
+  const a = await umaLinha();
+  a.v('ctx.editaLinha', 0);
+  const antes = a.log('A', 0)[0].m;
+  assert.strictEqual(antes, undefined, 'a sessão original não tem carimbo de correção');
+
+  await a.v('ctx.salvaEdicao');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, false, 'salvar fecha a linha');
+  assert.ok(a.log('A', 0)[0].m > 0, 'e carimba quando foi corrigida, que é o que a fusão compara');
+  assert.strictEqual(a.toast(), 'Sessão corrigida.');
+
+  // A guarda do fim: uma sessão sem nenhuma série não é correção, é engano.
+  // Alcançada pelos campos porque `salvaEdicao` relê o DOM por dentro — sem
+  // isso o verbo restauraria os valores da tela e a guarda nunca dispararia.
+  a.v('ctx.editaLinha', 0);
+  a.digitar('ed0_1', '');
+  a.digitar('ed1_1', '');
+  a.digitar('ed2_1', '');
+  await a.v('ctx.salvaEdicao');
+  await a.esperar();
+
+  assert.match(a.toast(), /sem nenhuma série\. Use apagar/,
+    'manda apagar em vez de guardar um fantasma: ' + a.toast());
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, true,
+    'e a linha fica aberta, para ele desfazer o que digitou');
+  assert.strictEqual(a.log('A', 0).length, 1, 'sem apagar nada por conta própria');
+  a.fechar();
+});
+
+test('ctx.histKey troca para o histórico do substituto e fecha a edição aberta', async () => {
+  // Fechar a edição ao trocar de chave não é cosmético: `view.edit` é índice
+  // na lista DAQUELA chave. Levá-lo para a outra lista apontaria para a linha
+  // errada — ou para nenhuma —, e o próximo salvar escreveria em cima de uma
+  // sessão que ele não estava editando.
+  const t = Date.now() - 4 * DIA, t2 = Date.now() - 2 * DIA;
+  const a = await app({ estado: {
+    logs: {
+      'chest-press-inclinado-convergente': [{ t: t, sid: t, sets: [[60, 10]] }],
+      'crucifixo-maquina': [{ t: t2, sid: t2, sets: [[20, 12]],
+                              sl: 'chest-press-inclinado-convergente' }]
+    },
+    done: [{ day: 'A', t: t, sid: t }, { day: 'A', t: t2, sid: t2 }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
+
+  const h = a.vJ('ctx.historico');
+  assert.deepStrictEqual(h.variantes.map(function (v) { return v.on; }), [true, false],
+    'abre no exercício do programa, não no substituto');
+  assert.ok(!h.marcas.some(function (m) { return m.k === 'sub'; }), 'e sem o selo de substituto');
+
+  a.v('ctx.editaLinha', 0);
+  assert.strictEqual(a.vJ('ctx.historico').sessoes[0].editando, true, 'uma edição aberta');
+
+  a.v('ctx.histKey', 'crucifixo-maquina');
+  const h2 = a.vJ('ctx.historico');
+
+  assert.deepStrictEqual(h2.variantes.map(function (v) { return v.on; }), [false, true],
+    'a troca acende a outra chave');
+  assert.strictEqual(h2.titulo, 'crucifixo-maquina', 'e o título passa a ser o do substituto');
+  assert.ok(h2.marcas.some(function (m) { return m.k === 'sub'; }),
+    'com o selo dizendo que não é o exercício do programa');
+  assert.strictEqual(h2.sessoes.length, 1, 'mostrando a sessão DELE');
+  assert.strictEqual(h2.sessoes[0].editando, false,
+    'e a edição que estava aberta fecha: o índice não atravessa de uma lista para a outra');
   a.fechar();
 });

@@ -51,18 +51,37 @@ export function camadasAbertas(view) {
   if (!view) return [];
   const c = [];
   // De baixo para cima. Espelha `telaCheia()` de trás para frente.
-  if (view.hist) c.push('hist');
+  //
+  // O MODO DE SESSÃO é a camada mais funda: tudo que se abre de dentro dele
+  // fica por cima. Ele não é `view.sessao` — esse é o DETALHE de uma sessão
+  // passada, e a frente 1 apontou que confundir os dois era o erro provável.
+  if (view.modoSessao) c.push('modoSessao');
+
   if (view.sessao) c.push('sessao');
   if (view.add) c.push('add');
   if (view.retro) c.push('retro');
   if (view.prog) c.push('prog');
-  if (view.promo) c.push('promo');
+  // O HISTÓRICO fica ACIMA do programa, e isto mudou quando a Prescrição ganhou
+  // a porta do histórico em cada linha do programa (achado 1 da frente 1):
+  // abrindo de lá, ele é a camada de cima, e o Voltar tem de devolver o
+  // programa — não o lugar. Antes a ordem era a inversa, e com os dois abertos
+  // o programa ganhava e o histórico não aparecia.
+  if (view.hist) c.push('hist');
   if (view.comparar) c.push('comparar');
   if (view.protocolo) c.push('protocolo');
   if (view.ajuste) c.push('ajuste');
   if (view.camera) c.push('camera');
+  // Ajustes é destino e não lugar: um botão no canto do Agora.
+  if (view.ajustes) c.push('ajustes');
   // As folhas ficam por cima de qualquer destino: elas cobrem o que houver.
   (view.pilha || []).forEach(function (f, i) { c.push('folha:' + i); });
+  // O PAINEL DE PARE é a camada mais alta de todas, porque é ele que está
+  // esperando resposta: com ele aberto, Voltar e Esc respondem "Deixar como
+  // está" e não fecham o que está por baixo (decisão 13, frente 3 §3).
+  // O aviso de que uma gravação FALHOU fica logo abaixo do pare: ele chega
+  // sozinho, e o pare é pedido pelo dedo — o que o dedo pediu fica por cima.
+  if (view.falhou && view.naoGuardado) c.push('falhou');
+  if (view.pare) c.push('pare');
   return c;
 }
 
@@ -111,7 +130,7 @@ export function sincronizaHistorico(n) {
 }
 
 /**
- * Liga o Voltar do sistema.
+ * Liga o Voltar do sistema — e o Escape, que é o mesmo caminho.
  *
  * @param {object} p
  * @param {Function} p.camadas   devolve o número de camadas abertas agora
@@ -135,6 +154,40 @@ export function liga(p) {
   try {
     if (history.replaceState) history.replaceState({ lastro: 0 }, '');
   } catch (e) {}
+
+  // ---- O Escape, por este mesmo caminho ----
+  //
+  // O contrato manda: "Voltar desfaz exatamente uma camada. Vale para o botão
+  // `‹ voltar`, para o `×` da folha, para o toque no véu, para o Esc e para o
+  // Voltar do sistema — TODOS passam pelo mesmo caminho"
+  // (`docs/LASTRO_UX_CONTRACT.md`). O Esc era o único que não passava: cada
+  // folha montava o SEU ouvinte no `document`, e todas recebiam a tecla. Para
+  // uma não fechar as outras, cada ouvinte perguntava ao DOM qual folha tinha o
+  // maior z-index e só a de cima agia.
+  //
+  // Isso tinha dois preços. O primeiro é que a regra do contrato ficava
+  // sustentada por uma consulta de z-index em vez da pilha de camadas, que é a
+  // fonte de verdade — e empate de nível era resolvido por ordem de desenho.
+  // O segundo era uma CORRIDA: entre a folha nova aparecer e o efeito dela
+  // montar o ouvinte há uma janela em que o DOM já tem a folha mas ninguém a
+  // escuta; aí um Escape caía no vazio, porque os ouvintes antigos viam uma
+  // folha mais alta que eles e se calavam, e a nova ainda não escutava. Dedo
+  // humano não acerta essa janela; a suíte sob carga acertava, e foi o
+  // intermitente que o risco 4.e do `00-coordenacao.md` registrava sem nome.
+  //
+  // Um ouvinte só, montado no boot, fechando a camada do topo. Mesmo verbo do
+  // Voltar, mesma contagem, mesma sincronia de histórico depois do render.
+  // Sem guarda de "tem camada aberta?" aqui: quem fecha já pergunta, e a
+  // varredura de mutação mostrou que os dois guardas se MASCARAVAM — tirar
+  // qualquer um deixava a suíte verde, porque o outro atendia. Dois guardas de
+  // que nenhum é demonstrável é pior que um: a próxima pessoa muda o lado
+  // errado e nada fica vermelho. Fica o de `voltarUmaCamada`, que é o caminho
+  // compartilhado com o Voltar do sistema e precisa dele de todo modo.
+  window.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (e.isComposing) return;              // Esc fechando o IME não é Esc do app
+    aoVoltar();
+  });
 
   window.addEventListener('popstate', function () {
     const k = profundidadeDoHistorico();

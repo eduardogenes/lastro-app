@@ -122,7 +122,7 @@ html[data-palco="bancada"] #deitado { display: none; }
 .pl-horizonte {
   position: absolute; bottom: 0; left: -100vw; right: -100vw; height: 1px;
   background: linear-gradient(90deg,
-              transparent, var(--ins-rule) 22%, var(--ins-rule) 78%, transparent);
+              transparent, var(--ins-fio) 22%, var(--ins-fio) 78%, transparent);
 }
 
 /* ---- O aparelho ------------------------------------------------------- */
@@ -185,7 +185,7 @@ html[data-palco="bancada"] #deitado { display: none; }
   transform: scale(var(--pl-k));
   transform-origin: top left;
 }
-.pl-tela { border: 0; display: block; background: var(--ins-canvas); }
+.pl-tela { border: 0; display: block; background: var(--ins-fundo); }
 
 /* ---- A camada do sistema ---------------------------------------------
    Ilha, relógio e barra de gestos são desenhados por cima do app,
@@ -332,17 +332,17 @@ html[data-palco="bancada"] #deitado { display: none; }
    responder — e o projeto inteiro é feito de número que diz de onde
    veio. Traço a cada 50, número a cada 100 (200 na vertical), e a
    medida final sempre, mesmo fora do passo. */
-.pl-regua { position: absolute; color: var(--ins-text-4); }
+.pl-regua { position: absolute; color: var(--ins-tinta-3); }
 .pl-regua-x { top: 0; left: 34px; right: 0; height: 26px; }
 .pl-regua-y { top: 26px; left: 0; bottom: 0; width: 34px; }
 
-.pl-tick { position: absolute; display: block; background: var(--ins-border); }
+.pl-tick { position: absolute; display: block; background: var(--ins-fio-controle); }
 
 .pl-regua-x .pl-tick {
   bottom: 0; left: calc(var(--pl-t) * var(--pl-k));
   width: 1px; height: 5px;
 }
-.pl-regua-x .pl-tick[data-r="1"] { height: 9px; background: var(--ins-border-strong); }
+.pl-regua-x .pl-tick[data-r="1"] { height: 9px; background: var(--ins-fio-controle); }
 .pl-regua-x .pl-tick > b {
   position: absolute; bottom: 12px; left: 0; transform: translateX(-50%);
 }
@@ -351,7 +351,7 @@ html[data-palco="bancada"] #deitado { display: none; }
   right: 0; top: calc(var(--pl-t) * var(--pl-k));
   height: 1px; width: 5px;
 }
-.pl-regua-y .pl-tick[data-r="1"] { width: 9px; background: var(--ins-border-strong); }
+.pl-regua-y .pl-tick[data-r="1"] { width: 9px; background: var(--ins-fio-controle); }
 .pl-regua-y .pl-tick > b {
   position: absolute; right: 12px; top: 0; transform: translateY(-50%);
   text-align: right; white-space: nowrap;
@@ -359,11 +359,11 @@ html[data-palco="bancada"] #deitado { display: none; }
 
 .pl-tick > b {
   display: block;
-  font: 400 10px/1 var(--ins-font-mono);
-  letter-spacing: .04em; color: var(--ins-text-4);
+  font: 400 10px/1 var(--ins-fonte);
+  letter-spacing: .04em; color: var(--ins-tinta-3);
 }
-.pl-tick[data-fim="1"] { background: var(--ins-text-5); }
-.pl-tick[data-fim="1"] > b { color: var(--ins-text-3); }
+.pl-tick[data-fim="1"] { background: var(--ins-tinta-3); }
+.pl-tick[data-fim="1"] > b { color: var(--ins-tinta-3); }
 
 /* ---- O painel --------------------------------------------------------- */
 
@@ -375,15 +375,15 @@ html[data-palco="bancada"] #deitado { display: none; }
 .pl-id { display: flex; flex-direction: column; gap: 8px; }
 .pl-nome {
   margin: 0;
-  font: 700 24px/1.05 var(--ins-font-display); letter-spacing: -.03em;
-  color: var(--ins-text);
+  font: 700 24px/1.05 var(--ins-fonte); letter-spacing: -.03em;
+  color: var(--ins-tinta);
 }
 
 .pl-leitura { grid-template-columns: 1fr 1fr; }
 .pl-cel { display: flex; flex-direction: column; gap: 6px; padding: 10px 0 12px; }
 .pl-val {
-  font: 600 16px/1 var(--ins-font-mono); letter-spacing: -.03em;
-  color: var(--ins-text-2);
+  font: 600 16px/1 var(--ins-fonte); letter-spacing: -.03em;
+  color: var(--ins-tinta-2);
 }
 
 .pl-secao { display: flex; flex-direction: column; gap: 10px; }
@@ -395,48 +395,48 @@ html[data-palco="bancada"] #deitado { display: none; }
   display: grid; grid-template-columns: 8px 1fr auto;
   align-items: center; gap: 10px;
   width: 100%; min-height: 34px; padding: 6px 0;
-  border-bottom: 1px solid var(--ins-hairline);
+  border-bottom: 1px solid var(--ins-fio);
   text-align: left; cursor: pointer;
 }
-.pl-item:first-child { border-top: 1px solid var(--ins-hairline); }
+.pl-item:first-child { border-top: 1px solid var(--ins-fio); }
 
 /* O ponto de status do sistema, reusado: a bancada não inventa um
    símbolo novo para dizer "este é o de agora". */
-.pl-marca { width: 7px; height: 7px; border-radius: 50%; background: var(--ins-rule); }
-.pl-item.on .pl-marca { background: var(--ins-acid); }
+.pl-marca { width: 7px; height: 7px; border-radius: 50%; background: var(--ins-fio); }
+.pl-item.on .pl-marca { background: var(--ins-acento); }
 
-.pl-item-n { font: 500 14px/1.2 var(--ins-font-display); color: var(--ins-text-4); }
+.pl-item-n { font: 500 14px/1.2 var(--ins-fonte); color: var(--ins-tinta-3); }
 /* text-4, não text-5: a medida ao lado do nome é o que se ESCOLHE nesta lista,
    e a 11px o nível 5 dá 3,2:1 — reprova em AA. O nível 5 fica para o
    redundante, que aqui não é o caso. */
-.pl-item-d { font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-4); letter-spacing: -.02em; }
-.pl-item.on .pl-item-n { color: var(--ins-text); }
-.pl-item.on .pl-item-d { color: var(--ins-text-3); }
-.pl-item:hover .pl-item-n { color: var(--ins-text-2); }
+.pl-item-d { font: 400 11px/1 var(--ins-fonte); color: var(--ins-tinta-3); letter-spacing: -.02em; }
+.pl-item.on .pl-item-n { color: var(--ins-tinta); }
+.pl-item.on .pl-item-d { color: var(--ins-tinta-3); }
+.pl-item:hover .pl-item-n { color: var(--ins-tinta-2); }
 
 .pl-tecla {
-  font: 400 9px/1 var(--ins-font-mono); letter-spacing: .04em;
+  font: 400 9px/1 var(--ins-fonte); letter-spacing: .04em;
   /* minúscula sempre: dentro do .pl-acao herdaria o caixa-alta do botão, e o
      mesmo atalho apareceria escrito de dois jeitos em duas linhas vizinhas */
   text-transform: none;
-  color: var(--ins-text-5); border: 1px solid var(--ins-hairline);
+  color: var(--ins-tinta-3); border: 1px solid var(--ins-fio);
   padding: 3px 4px; min-width: 16px; text-align: center;
 }
 
 .pl-acao {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   width: 100%; min-height: 40px; padding: 0 12px;
-  border: 1px solid var(--ins-border);
-  font: 400 11px/1 var(--ins-font-mono);
-  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-text-3);
+  border: 1px solid var(--ins-fio-controle);
+  font: 400 11px/1 var(--ins-fonte);
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-tinta-3);
   cursor: pointer;
 }
-.pl-acao:hover { border-color: var(--ins-border-strong); color: var(--ins-text); }
-.pl-acao[aria-pressed="true"] { border-color: var(--ins-border-strong); color: var(--ins-text); }
+.pl-acao:hover { border-color: var(--ins-fio-controle); color: var(--ins-tinta); }
+.pl-acao[aria-pressed="true"] { border-color: var(--ins-fio-controle); color: var(--ins-tinta); }
 
 .pl-nota {
   margin: 0; max-width: 34ch;
-  font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-4);
+  font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-3);
   text-wrap: pretty;
 }
 
@@ -444,7 +444,7 @@ html[data-palco="bancada"] #deitado { display: none; }
    porque lá o foco é desenhado pela borda ácida; aqui não há esse
    desenho, então o anel volta. */
 .pl :focus-visible {
-  outline: 1px solid var(--ins-acid); outline-offset: 3px;
+  outline: 1px solid var(--ins-acento); outline-offset: 3px;
 }
 
 /* ---- Janela estreita: cai a legenda, fica o objeto -------------------- */

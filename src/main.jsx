@@ -1,12 +1,13 @@
 import {
   ROT_BASE, D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO,
   PROGRAMA, RULES, ALT, slugEx, EX_BASE, FREQUENTES_NO_BOX,
-  PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, ehPriorizado, PRIO, CARGAS, DORES, MODAIS
+  PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, ehPriorizado, PRIO, CARGAS, DORES, MODAIS,
+  MOVIMENTOS_DE_BOX
 } from './dominio/programa';
 import {
-  fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca,
+  fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca, fmtHoraDita,
   DIAS_CURTOS, DIAS_LONGOS, MESES, PERIODOS, periodoDe,
-  fmtHora, fmtDur, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
+  fmtHora, fmtDur, semanasDesde, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
   escapeHTML, escAttr
 } from './dominio/formato';
 import {
@@ -14,49 +15,59 @@ import {
   unidadeDe, temUnidade, cronometrado, menosEhMelhor, ritmoDe,
   ROTULO_UNIDADE, ESCALA_RITMO
 } from './dominio/carga';
-import { montaNoApp } from './ui/raiz.jsx';
+import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
-import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX } from './dominio/corpo';
+import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
+import { cartaoDeCima } from './dominio/agora';
+import { venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
+import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
+import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
 import { App } from './ui/app.jsx';
 import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { FolhaFoto } from './ui/folhas/foto.jsx';
+import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
+import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
 import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
 import { Camera } from './ui/telas/camera.jsx';
+import { Ajustes } from './ui/telas/ajustes.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
-import { Decisao } from './ui/telas/decisao.jsx';
+import { SessaoModo } from './ui/telas/sessaomodo.jsx';
 import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { Retroativo } from './ui/telas/retroativo.jsx';
 import { Programa } from './ui/telas/programa.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
 import {
-  arrozDoAjuste, listaDeCompras, totalDaRefeicao, totalDoDia,
-  refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao,
-  fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis,
-  aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste
+  aplicaAjusteNoArroz, tiraMarcaDeArroz, listaDeCompras, totalDaRefeicao, totalDoDia,
+  refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao, minutosDe,
+  fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis, diaInterpretavel,
+  aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste,
+  poeComidaNoDia, resumoDaRefeicao
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
-import { alvoDoPrograma, seriesDeGrupo, impacto,
+import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
-import { mediasSemanais, pesoRitmo as _pesoRitmo,
+import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, medidaDoCorpo, ondeMediu,
+         mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
          setsFor as _setsFor } from './dominio/progressao';
-import { PLANO_ATUAL, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9 } from './dominio/migracoes';
+import { PLANO_ATUAL, listaDePromo, migraPlano, migraPlano3, migraPlano4, migraPlano5, migraPlano6, migraPlano7, migraPlano8, migraPlano9, migraPlano10, migraPlano11, migraPlano12 } from './dominio/migracoes';
 import { semeiaProg, montaCatalogo as _montaCatalogo, exercicioFantasma } from './dominio/programa';
 import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
-  chaveDeMarca, chaveDeSessaoFoto, chaveDeSessao, funde
+  chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde,
+  lapidesDoApagamento, uneLapides
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -72,6 +83,16 @@ import {
   IDENTIDADE, arrasta as arrastaRecorte, ehIdentidade,
   normaliza as normalizaEnq, zoomMinimo
 } from './dominio/enquadramento';
+
+// O app já foi desligado? Toda continuação `async` deste arquivo pergunta isto
+// depois de um `await`, e `render()` pergunta antes de pintar. Quem desliga é
+// `CTX.desliga()`, lá embaixo, junto com a explicação.
+//
+// Declarada AQUI, antes de tudo, e não ao lado de quem a escreve: `load()` pode
+// rodar ainda na avaliação deste módulo — script de módulo é diferido, e aí
+// `document.readyState` já é 'interactive' — e o boot pinta a primeira tela.
+// Um `let` mais abaixo faria dessa primeira pintura um erro de TDZ.
+let desligado = false;
 
 // A chave de hoje e a de ontem.
 //
@@ -284,17 +305,38 @@ function treino(d) {
   }) };
 }
 
+// ---------- as medidas do corpo ----------
+// `S.body` tem uma coleção por grandeza, e a lista delas vive em
+// `MARCAS_DO_CORPO` (`src/dominio/corpo.ts`). Estas duas funções existem para
+// que NENHUM lugar do app escreva essa lista à mão: o estado inicial, o
+// `normalizaEstado`, o apagar tudo e a lista branca da importação passam todos
+// por aqui. Enquanto era `{ peso, cintura }` havia quatro cópias da forma, e
+// foi por uma lista escrita à mão que a importação derrubou seis campos de topo
+// em silêncio.
+
+/** Um `S.body` vazio, com todas as séries de medida. */
+function corpoVazio() {
+  const b = {};
+  MARCAS_DO_CORPO.forEach(function (k) { b[k] = []; });
+  return b;
+}
+
+/** O `S.body` de um backup, chave por chave. O que não for lista vira lista. */
+function corpoDoBackup(body) {
+  const b = corpoVazio();
+  if (!body || typeof body !== 'object') return b;
+  MARCAS_DO_CORPO.forEach(function (k) { if (Array.isArray(body[k])) b[k] = body[k]; });
+  return b;
+}
 
 
 
 
 
-
-
-let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:{ peso:[], cintura:[] }, carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] } };
-let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, fired:{}, sessao:null, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
-  editProg:false, addEx:false, addQ:'', novoEx:false, promo:null, prog:null, medida:null, aulas:false, rapido:false,
-  protocolo:null, comparar:null, ajuste:null, camera:null };
+let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] }, promoPendente:[] };
+let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, modoSessao:false, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
+  editProg:false, addEx:false, addQ:'', novoEx:false, prog:null, medida:null, aulas:false, rapido:false,
+  protocolo:null, comparar:null, ajuste:null, camera:null, ajustes:false };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -336,9 +378,11 @@ function normalizaEstado() {
   if (!Array.isArray(S.cardio)) S.cardio = [];
   if (typeof S.export !== 'number') S.export = 0;
   if (!S.carga || typeof S.carga !== 'object') S.carga = {};
-  if (!S.body || typeof S.body !== 'object') S.body = { peso:[], cintura:[] };
-  if (!Array.isArray(S.body.peso)) S.body.peso = [];
-  if (!Array.isArray(S.body.cintura)) S.body.cintura = [];
+  // As SETE séries de medida, enumeradas de `MARCAS_DO_CORPO`: peso e cintura,
+  // mais as cinco da bioimpedância que a migração 9→10 abriu. Lista escrita à
+  // mão aqui era o que deixava uma grandeza nova sem padrão no aparelho novo.
+  if (!S.body || typeof S.body !== 'object') S.body = corpoVazio();
+  MARCAS_DO_CORPO.forEach(function (k) { if (!Array.isArray(S.body[k])) S.body[k] = []; });
   if (typeof S.plano !== 'number') S.plano = 1;   // estado anterior à troca de programa
   if (!S.ex || typeof S.ex !== 'object') S.ex = {};
   if (!S.mods || typeof S.mods !== 'object' || !S.mods.day || !Array.isArray(S.mods.list)) S.mods = null;
@@ -360,7 +404,24 @@ function normalizaEstado() {
   if (!Array.isArray(S.protocolo.sessoes)) S.protocolo.sessoes = [];
   if (!Array.isArray(S.protocolo.poses) || !S.protocolo.poses.length) S.protocolo.poses = null;
   S.protocolo.sessoes.forEach(function (x) { if (!x.fotos || typeof x.fotos !== 'object') x.fotos = {}; });
-  if (!S.promoPendente || typeof S.promoPendente !== 'object') S.promoPendente = null;
+  // Coleção desde o plano 10. O OBJETO antigo fica INTACTO aqui para
+  // `migraPlano10` convertê-lo: `normalizaEstado` roda ANTES das migrações, nos
+  // dois caminhos, e tratar a pergunta guardada como "forma inválida" a
+  // apagaria antes de alguém poder convertê-la. Só o que não é nem lista nem
+  // objeto vira lista vazia.
+  if (!Array.isArray(S.promoPendente) && !(S.promoPendente && typeof S.promoPendente === 'object')) {
+    S.promoPendente = [];
+  }
+  // Já sendo lista, ela entra ORDENADA por tempo. O escritor ordena
+  // (`guardaPromo`) e a fusão ordena (`porTempo` em `dominio/sincronia.ts`),
+  // mas a IMPORTAÇÃO copia a chave como ela vem no arquivo — e os DOIS leitores
+  // confia na ordem: a lista de Prescrição apresenta na ordem em que as sessões
+  // fecharam, que é "a mais antiga primeiro — a única ordem que ele reconhece",
+  // escrito desde que a pergunta era uma tela só. Fora de ordem, a lista mostra
+  // a mudança mais nova na frente, o contrário do que está escrito.
+  if (Array.isArray(S.promoPendente)) {
+    S.promoPendente.sort(function (a, b) { return ((a && a.t) || 0) - ((b && b.t) || 0); });
+  }
 }
 
 /** Lê uma chave crua do storage. null quando não há nada lá. */
@@ -408,6 +469,9 @@ async function load() {
   const m7 = migraPlano7(S);
   migraPlano8(S);
   migraPlano9(S);
+  migraPlano10(S);
+  migraPlano11(S);
+  migraPlano12(S);
   garanteProgramaERotacao();
   montaCatalogo();
 
@@ -425,7 +489,13 @@ async function load() {
     projetaTudo();
   }
 
-  encerraSePreciso();                  // sessão vencida fecha ANTES de decidir a rota
+  // Sessão vencida fecha ANTES de decidir a rota — e DIZ que fechou (§7.7 da
+  // frente 3). Antes o retorno era ignorado: o fecho por inatividade na
+  // abertura seguinte acontecia em silêncio, e é o caminho comum — 16 das 35
+  // sessões do registro dele fecharam sem ele (P1). O lançamento retroativo
+  // fecha calado: não era uma sessão ao vivo.
+  const vencida = S.sessao;
+  if (encerraSePreciso() && vencida && !vencida.retro) toast(fraseDoFechoNaUltima(vencida, 'Fechei'));
   ligaBatida();
   // Abrir o app com treino em andamento cai no treino, não em HOJE. Sair e
   // voltar no meio de uma série é o caso mais comum de reabertura que existe
@@ -433,9 +503,22 @@ async function load() {
   // suada. Se a sessão venceu, `encerraSePreciso` já a fechou e nada disto vale.
   const diaAberto = diaDaSessaoAberta();
   view.day = diaAberto || nextDay();
-  if (diaAberto) view.aba = 'treino';
+  if (diaAberto) { view.aba = 'agora'; abreModo(); }
   render();
-  abrePromoGuardada();
+  // O BOOT NÃO INTERROMPE MAIS. Aqui havia `abrePromoGuardada()`, que abria a
+  // tela de decisão em cima de quem acabou de abrir o app — para perguntar
+  // sobre o programa, que é a pergunta menos urgente que existe neste produto.
+  //
+  // A fila agora mora em Prescrição, com a conta de volume e o vencimento ao
+  // lado de cada mudança (§8.1, passo 3), e o Agora avisa com UMA LINHA na
+  // manhã do dia em que aquele treino volta (passo 4). O mecanismo que carrega
+  // a mudança continua inteiro — é ele que o §3.6 do plano manda não apagar.
+  //
+  // E `abrePromoGuardada` SAIU com ela, por ter ficado sem chamador. A TELA
+  // inteira saiu depois, com a decisão D1 — e junto dela entrou o carregador no
+  // fecho MANUAL, que não existia: `fechaSessao` só copiava a mudança no fecho
+  // automático, e tirar a pergunta sem escrever o carregador faria finalizar no
+  // toque descartar a mudança em silêncio (o F280 nominal, não o risco dele).
   // O descanso que estava correndo. Depois do render, porque ele pinta na barra
   // que vive fora da árvore do Preact e precisa dela já montada.
   await retomaDescanso();
@@ -600,7 +683,7 @@ function ligaBatida() {
       fechaSessao('auto');
       faixaPerguntando = false;
       save(); render();
-      toast('Treino encerrado sozinho. A duração vai até a última série.');
+      toast(fraseDoFechoNaUltima(s, 'Fechei'));
       return;
     }
     // Só repinta na VIRADA: a faixa sai de atalho para pergunta uma vez, e
@@ -608,6 +691,70 @@ function ligaBatida() {
     const agora = parada >= SESSAO_LIMITE;
     if (agora !== faixaPerguntando) { faixaPerguntando = agora; render(); }
   }, 30000);
+}
+
+// ---------- as perguntas de programa que esperam ----------
+// Coleção com chave natural, lápide e teto, como o resto do estado que dois
+// aparelhos tocam. Era um documento — uma pergunta, ou `null` —, e a escrita era
+// atribuição direta: o fecho seguinte sobrescrevia o anterior, e a fusão trazia
+// o campo inteiro do lado com `mtime` mais novo.
+//
+// As duas funções recebem a SESSÃO e o `sid`, não o modo de fecho: nenhuma
+// delas sabe se o fecho foi manual ou automático, e é de propósito. Hoje só o
+// fecho automático guarda (`fechaSessao`, logo abaixo) porque pela porta da
+// frente quem pergunta é `finalizarSessao`; quando a pergunta do fim do treino
+// sair, o fecho manual passa a guardar pelo mesmo caminho, sem mexer na forma
+// do dado.
+
+/** Guarda a decisão de uma sessão para a próxima abertura. */
+function guardaPromo(s, pendentes) {
+  if (!Array.isArray(S.promoPendente)) S.promoPendente = listaDePromo(S.promoPendente);
+  const agora = Date.now();
+  const p = {
+    sid: s.sid, day: s.day, t: agora,
+    mods: JSON.parse(JSON.stringify(pendentes)),
+    resumoMods: pendentes.map(function (m) { return textoMod(s.day, m); }),
+    m: agora
+  };
+  // a chave é o `sid`: fechar a mesma sessão duas vezes atualiza, não duplica
+  const j = S.promoPendente.findIndex(function (x) { return chaveDePromo(x) === chaveDePromo(p); });
+  if (j >= 0) S.promoPendente[j] = p; else S.promoPendente.push(p);
+  S.promoPendente.sort(function (a, b) { return (a.t || 0) - (b.t || 0); });
+  if (S.promoPendente.length > 60) S.promoPendente = S.promoPendente.slice(-60);
+}
+
+/**
+ * Resolve a pergunta de UMA sessão: ela sai da lista e ganha lápide.
+ *
+ * A lápide é o que impede o outro aparelho de trazer de volta a pergunta que ele
+ * acabou de responder — é a mesma regra das outras coleções. E tirar só a desta
+ * sessão é o que impede o contrário: responder uma apagava todas as outras,
+ * porque o campo era um documento só.
+ */
+function soltaPromo(sid) {
+  if (!Array.isArray(S.promoPendente)) S.promoPendente = listaDePromo(S.promoPendente);
+  if (sid == null) return;
+  const chave = chaveDePromo({ sid: sid, t: sid });
+  S.promoPendente = S.promoPendente.filter(function (x) { return chaveDePromo(x) !== chave; });
+  lapide(chave);
+}
+
+// ---------- as palavras do fecho (§7.7 da frente 3) ----------
+// Quatro maneiras de a sessão acabar, e três gravam um fim diferente. A palavra
+// diz qual: o fecho no toque grava o instante do toque e a duração é medida; os
+// dois fechos que vão até a última série dizem "aproximada", porque ninguém
+// mediu o que houve depois dela (F152). "Encerrei" e "Fechei" na primeira
+// pessoa do app: encerrar é ato do registro, e a voz passiva escondia o agente.
+function oTreino(dia) { return diaAberto(dia) ? 'a aula' : 'o Treino ' + dia; }
+/** A frase de um fecho que foi até a última série — "já parei" ou o automático. */
+function fraseDoFechoNaUltima(s, verbo) {
+  const marca = S.done.filter(function (x) { return x.sid === s.sid; })[0];
+  const ultima = s.ultima || s.inicio;
+  // Na abertura seguinte a sessão pode ser de outro dia: "o Treino A de ontem".
+  const dia = rotuloDoDia(s.inicio);
+  return verbo + ' ' + oTreino(s.day) + (dia === 'hoje' ? '' : ' de ' + dia) +
+    ' na última série, às ' + fmtHoraDita(ultima) +
+    '. A duração vai até ela: cerca de ' + fmtDur(marca ? marca.dur : 0) + ', aproximada.';
 }
 
 function fechaSessao(comoFim) {
@@ -622,6 +769,9 @@ function fechaSessao(comoFim) {
     const pausado = somaPausas(s);
     if (pausado > 60000) marca.pausado = pausado;
     if (s.pulados && s.pulados.length) marca.pulados = s.pulados.slice();
+    // A outra escolha diante da dor repetida (§7.4 da frente 3): "fazer mesmo
+    // assim" também fica escrito no dia, como o pulado.
+    if (s.dorMesmoAssim && s.dorMesmoAssim.length) marca.dorMesmoAssim = s.dorMesmoAssim.slice();
     marca.m = Date.now();
   }
   // A pergunta "isto fica no programa?" não pode depender de ele ter tocado em
@@ -632,14 +782,16 @@ function fechaSessao(comoFim) {
   // Só no fecho AUTOMÁTICO. Pela porta da frente quem pergunta é
   // `finalizarSessao`, e reagendar aqui faria a mesma pergunta voltar logo
   // depois de respondida.
-  const pendentes = comoFim === 'auto' ? modsDoDia(s.day) : [];
-  if (pendentes.length) {
-    S.promoPendente = {
-      day: s.day, t: Date.now(),
-      mods: JSON.parse(JSON.stringify(pendentes)),
-      resumoMods: pendentes.map(function (m) { return textoMod(s.day, m); })
-    };
-  }
+  //
+  // E só em dia de PRESCRIÇÃO, pela mesma razão escrita em `finalizarSessao`:
+  // num dia ABERTO o que foi adicionado É o dia, não uma emenda a ele — não há
+  // conteúdo permanente para aquilo virar. A razão não fala do modo de fecho, e
+  // por isso vale para os dois. Sem esta metade, a aula de box que fechava
+  // SOZINHA enfileirava os movimentos como mudança esperando decisão e a
+  // encerrada no toque não: mesma situação, dois resultados, e uma pergunta por
+  // semana sem resposta certa.
+  const pendentes = (comoFim === 'auto' && !diaAberto(s.day)) ? modsDoDia(s.day) : [];
+  if (pendentes.length) guardaPromo(s, pendentes);
 
   // O quadro do box vira a nota da sessão. É a única chance: ele não se
   // reconstrói depois a partir da prescrição, como o treino de musculação se
@@ -654,7 +806,6 @@ function fechaSessao(comoFim) {
   S.sessao = null;
   S.draft = null;
   S.mods = null;   // as mudanças do dia não sobrevivem ao fim da sessão
-  view.fired = {};
   view.day = nextDay();
 }
 
@@ -838,7 +989,16 @@ async function pularEx(i) {
     if (view.open === i) view.open = null;
   }
   await save(); render();
-  toast(j >= 0 ? 'Exercício de volta.' : 'Exercício pulado nesta sessão.');
+  // §7.5 da frente 3: pular é reversível a um toque, então não há pergunta
+  // antes — há a frase do que ficou guardado depois, com o nome, e o desfazer
+  // na própria linha. "Pulado" concorda com "exercício", e não com o nome: a
+  // frente escreveu "pulada" porque o exemplo era "Elevação lateral", e o nome
+  // muda de gênero de um exercício para outro.
+  const ex = treino(view.day).ex[i];
+  const nome = ex ? ex.n : 'o exercício';
+  toast(j >= 0
+    ? 'Desfeito: ' + nome + ' voltou para a fila desta sessão.'
+    : 'Guardei como pulado hoje: ' + nome + '. Não volta a ser pedido nesta sessão; desfazer põe de volta na fila.');
 }
 
 // pular antes de qualquer série também abre a sessão: é uma decisão do treino
@@ -860,11 +1020,13 @@ async function finalizarSessao() {
   const feitas = p.feito.length;
 
   if (!feitas && !p.parcial.length) {
-    if (!confirm('Nenhuma série registrada neste treino. Descartar a sessão?')) return;
+    // PARE (§3.3): o horário e a duração saem e não voltam.
+    if (!(await pare({ texto: 'Descartar esta sessão apaga o horário de início e a duração. Nenhuma série foi registrada nela, então não há série para perder.',
+                       sim: 'Descartar a sessão' }))) return;
     lapide(chaveDeSessao({ sid: s.sid }));
     S.done = S.done.filter(function (x) { return x.sid !== s.sid; });
     S.sessao = null; S.draft = null; S.mods = null;
-    view.open = null; view.fired = {}; view.editProg = false;
+    view.open = null; view.editProg = false;
     view.day = nextDay();
     soltarTela();
     await save(); render(); window.scrollTo(0, 0);
@@ -874,34 +1036,38 @@ async function finalizarSessao() {
 
   const pend = p.parcial.concat(p.nada);
   if (pend.length) {
-    const lista = pend.slice(0, 4).map(function (x) { return '· ' + x.nome; }).join('\n');
-    const resto = pend.length > 4 ? '\ne mais ' + (pend.length - 4) : '';
-    if (!confirm('Finalizar com ' + pend.length + (pend.length === 1 ? ' exercício pendente?' : ' exercícios pendentes?')
-      + '\n\n' + lista + resto + '\n\nEles ficam marcados como não feitos no histórico.')) return;
+    // A PERGUNTA neutra, não o pare: nada se destrói — os pendentes ficam
+    // escritos como não feitos. Botões da §7.7: "Encerrar assim" e "Voltar ao
+    // treino"; o diálogo do sistema só sabe dizer OK e Cancelar.
+    const lista = pend.slice(0, 4).map(function (x) { return x.nome; }).join(', ') +
+                  (pend.length > 4 ? ' e mais ' + (pend.length - 4) : '');
+    const um = pend.length === 1;
+    if (!(await pare({ tom: 'pergunta',
+        texto: 'Encerrar com ' + (um ? '1 exercício pendente' : pend.length + ' exercícios pendentes') + ': ' + lista + '. ' +
+               (um ? 'Ele fica marcado como não feito' : 'Eles ficam marcados como não feitos') + ' no histórico.',
+        sim: 'Encerrar assim', nao: 'Voltar ao treino' }))) return;
   }
 
   const mods = modsDoDia(s.day);
   // Num dia ABERTO o que foi adicionado É o dia, não uma emenda a ele: não há
   // conteúdo permanente para aquilo virar, e perguntar "isto fica no programa?"
   // a cada movimento do box seria uma pergunta por semana sem resposta certa.
-  if (mods.length && !diaAberto(s.day)) {
-    // fechando pela porta da frente: a pergunta é agora, e não fica guardada
-    S.promoPendente = null;
-    // a sessão continua aberta até ele decidir: sair sem responder mantém o
-    // padrão conservador, que é não mexer no oficial
-    view.promo = { day: s.day, mods: mods.slice(), dec: mods.map(function () { return 'hoje'; }),
-                   motivo: null, feitas: feitas,
-                   resumoMods: mods.map(function (m) { return textoMod(s.day, m); }) };
-    view.editProg = false;
-    // A decisão é um destino como os outros: entra no topo e, se ele sair sem
-    // responder, devolve o treino onde ele estava. Sem isto, voltar caía na
-    // rolagem da tela da decisão — que é curta — e o exercício em que ele
-    // tinha parado sumia.
-    entraNoDestino('promo');
-    render();
-    return;
-  }
-  await encerraDeVerdade(s.day, feitas, null);
+  //
+  // A PERGUNTA SAIU DAQUI — decisão D1 — e no lugar dela entrou o CARREGADOR.
+  //
+  // Esta era a metade do mecanismo que não existia, e era o furo que o §3.6 do
+  // plano nomeia: `fechaSessao` só copiava a mudança no fecho AUTOMÁTICO, com a
+  // razão escrita "pela porta da frente quem pergunta é `finalizarSessao`". Com
+  // a pergunta fora e sem esta linha, finalizar no toque DESCARTARIA a mudança
+  // em silêncio — o F280 nominal, e não o risco dele. Por isso a pergunta e o
+  // carregador têm de entrar na mesma passada: um sem o outro perde dado.
+  //
+  // `guardaPromo` chaveia pelo `sid`, então fechar a mesma sessão duas vezes
+  // atualiza em vez de duplicar — e não toca na mudança de outra sessão, que é
+  // o defeito que o `soltaPromo(s.sid)` daqui existia para evitar.
+  const resumoMods = mods.map(function (m) { return textoMod(s.day, m); });
+  if (mods.length && !diaAberto(s.day)) guardaPromo(s, mods);
+  await encerraDeVerdade(s.day, feitas, resumoMods);
 }
 
 async function encerraDeVerdade(dia, feitas, resumoMods) {
@@ -912,11 +1078,16 @@ async function encerraDeVerdade(dia, feitas, resumoMods) {
   // o que foi mudado fica no registro do dia, mesmo que não vire permanente:
   // daqui a um mês, "por que o volume desse dia foi outro?" tem resposta
   if (marca && resumoMods && resumoMods.length) marca.mods = resumoMods;
+  const inicio = s.inicio, pulados = (s.pulados || []).length;
   fechaSessao('manual');
   view.open = null; view.editProg = false;
   soltarTela();
   await save(); render(); window.scrollTo(0, 0);
-  toast('Treino ' + dia + ' encerrado · ' + fmtDur(dur) + ' · ' + feitas + (feitas === 1 ? ' exercício' : ' exercícios'));
+  // "Encerrei o Treino A · 6h20 → 7h31 · 1h11 · 8 exercícios" — o intervalo
+  // inteiro, e o pulado no resumo, que é onde a §7.5 o põe.
+  toast('Encerrei ' + oTreino(dia) + ' · ' + fmtHoraDita(inicio) + ' → ' + fmtHoraDita(Date.now()) +
+        ' · ' + fmtDur(dur) + ' · ' + feitas + (feitas === 1 ? ' exercício' : ' exercícios') +
+        (pulados ? ' · ' + pulados + (pulados === 1 ? ' pulado' : ' pulados') : ''));
 }
 
 // entradas da sessão aberta não servem de referência para elas mesmas
@@ -1174,8 +1345,16 @@ async function garanteBytesDoCorpo(datas) {
       const ref = ses.fotos[pose];
       if (!ref || !ref.v) continue;
       const k = chaveDaFalha(d, pose);
-      if (await CORPO.tem(d, pose, ref.ext)) {
+      // Depois de CADA await, a mesma pergunta: ainda tem alguém aí? O
+      // IndexedDB e a rede levam tempo, e o que vem depois daqui mexe no cache
+      // de URL de blob e termina em `render()`. Esta função é chamada sem
+      // `await` — os bytes vão por fora —, então um erro aqui não cai em
+      // nenhum `try` do app: vira rejeição não tratada e contamina a suíte.
+      const aqui = await CORPO.tem(d, pose, ref.ext);
+      if (desligado) return;
+      if (aqui) {
         if (await CORPO.carrega(d, pose, ref)) mudou = true;
+        if (desligado) return;
         if (limpaFalha(k)) mudou = true;
         continue;
       }
@@ -1183,10 +1362,13 @@ async function garanteBytesDoCorpo(datas) {
       // o caminho para ela é entrar na nuvem — não tentar de novo.
       if (!NUVEM.sessao()) { if (marcaFalha(k, 'semconta')) mudou = true; continue; }
       const r = await NUVEM.baixaCorpo(d, pose, ref.ext);
+      if (desligado) return;
       if (!r.ok || !r.v) { if (marcaFalha(k, 'nuvem')) mudou = true; continue; }
       await CORPO.guarda(d, pose, r.v, ref.ext);
+      if (desligado) return;
       if (limpaFalha(k)) mudou = true;
       if (await CORPO.carrega(d, pose, ref)) mudou = true;
+      if (desligado) return;
     }
   }
   if (mudou) render();
@@ -1210,11 +1392,57 @@ function contaFusao(r, manual) {
   else if (manual && r.documentos === 'remoto') toast('Programa e plano vieram do outro aparelho.');
 }
 
+// ---------- a gravação que FALHOU (decisão 13, §3.2 da frente 3) ----------
+// Até aqui a falha era SILENCIOSA: `grava()` engolia o erro, e a camada de
+// armazenamento respondia "gravei" mesmo com o aparelho cheio. O estado ficava
+// só na memória e se perdia ao fechar o app, sem uma palavra a ninguém.
+//
+// Agora a falha abre o painel da família "falhou" — a mesma moldura do pare, e
+// o que a distingue é a palavra: abre por "Não guardei…", diz a causa, diz o que
+// NÃO aconteceu e até quando o valor vale. Fechar o aviso não apaga a marca:
+// "não guardado" fica na tela até a próxima gravação dar certo, porque é o
+// estado do dado, não do aviso.
+//
+// O modo privado NÃO abre o painel: ali nada nunca dura, e o Agora já diz isso
+// acima do cartão (`ctx.guardando`, §5.0 da frente 1). Um alerta a cada série
+// ensinaria o dono a ignorar o alerta.
+
+/** O que está sendo gravado agora, nas palavras da frase de falha. */
+let oQueGrava = null;
+/**
+ * Quem escreve declara o que escreve, antes de enfileirar. A gravação é
+ * represada (`queueSave`), então vale o ÚLTIMO a declarar — é o que estava na
+ * tela quando o disco recusou.
+ */
+function declaraGravacao(oQue, valor) { oQueGrava = { oQue: oQue, valor: valor || null }; }
+
 /** Escreve o estado como ele está. Não carimba: quem carimba é `save`. */
 async function grava() {
-  try { await DB.set(KEY, JSON.stringify(S)); return true; }
-  catch (e) { console.error('não salvou', e); return false; }
+  let ok;
+  try { ok = await DB.set(KEY, JSON.stringify(S)); }
+  catch (e) { console.error('não salvou', e); ok = false; }
+  if (ok) {
+    oQueGrava = null;
+    if (view.naoGuardado) { view.naoGuardado = null; view.falhou = false; render(); }
+  } else if (DB.mode !== 'mem') {
+    naoGuardou();
+  }
+  return ok;
 }
+
+function naoGuardou() {
+  const ja = !!view.naoGuardado;
+  const g = oQueGrava || { oQue: 'a última mudança', valor: null };
+  view.naoGuardado = { motivo: DB.falha || 'recusa', oQue: g.oQue, valor: g.valor };
+  // O painel abre UMA vez por episódio: com o aparelho cheio, cada série
+  // seguinte também falha, e um alerta por série é ruído que ensina a fechar sem
+  // ler. A marca, essa sim, acompanha cada uma.
+  if (!ja) view.falhou = true;
+  render();
+}
+/** Fechar este aviso: o painel sai, a marca de "não guardado" fica. */
+function dispensaFalha() { view.falhou = false; render(); }
+
 
 async function save() {
   // O carimbo do estado inteiro. É o que decide, na fusão, de que lado vêm os
@@ -1578,12 +1806,24 @@ function relogioTexto(s) {
 
 let relogioT = null;
 function tickRelogio() {
+  // A hora primeiro, e FORA do `if` da sessão: ela não depende de haver treino
+  // aberto, e o modo tem estado vazio (a sessão nasce na primeira série).
+  const h = document.getElementById('hora');
+  if (h) h.textContent = fmtHora(Date.now());
   const el = document.getElementById('relogio');
   if (!el || !S.sessao) return;
   el.textContent = relogioTexto(S.sessao);
 }
 function ajustaRelogio() {
-  const ativo = !!(S.sessao && !S.sessao.pausadoEm && !S.sessao.retro && view.aba === 'treino');
+  // `view.modoSessao` e não só a aba: as portas 2 e 3 arrumam a aba para
+  // 'treino' antes de entrar, mas a porta 1 é o cartão do topo do Agora e
+  // entra DE LÁ — o motor ficava desligado e o relógio parava na hora da
+  // entrada. Dentro do modo ele anda de onde quer que se tenha entrado, e
+  // anda também sem sessão, porque a HORA é o que o cabeçalho mostra.
+  // A aba de treino não existe mais: quem define "está na tela do treino" é o
+  // MODO. Antes eram as duas, e a razão de a aba estar ali caiu com ela.
+  const ativo = !!(view.modoSessao && S.sessao && !S.sessao.pausadoEm && !S.sessao.retro)
+    || !!(view.modoSessao && !S.sessao);
   if (ativo && !relogioT) relogioT = setInterval(tickRelogio, 1000);
   else if (!ativo && relogioT) { clearInterval(relogioT); relogioT = null; }
 }
@@ -1657,6 +1897,17 @@ function vmExercicio(d, i, ex) {
       // não havia histórico: o campo mostrava "kg" com um "KG" grudado na
       // direita. Sem histórico, o campo fica vazio e só a unidade fala.
       rirAberto: !!(view.rir && view.rir.i === i && view.rir.k === k),
+      // A RÉGUA da linha. Montada aqui, no modelo de apresentação, e a página é
+      // função do foco — é o R4 da frente 2: não há `scrollLeft` guardado para
+      // um re-render perder. Reconstruir com o mesmo foco dá a mesma página.
+      regua: reguaDaLinha(i, k, ex, p, v, CARGAS[tipo].rot),
+      // O TECLADO PRÓPRIO, quando a porta "outro valor" o abriu nesta linha.
+      teclado: (function () {
+        const a = view.teclado && view.teclado.alvo;
+        if (!a || a.tipo !== 'serie' || a.i !== i || a.k !== k) return null;
+        return { texto: view.teclado.texto, decimal: a.pos === 0,
+                 unidade: a.pos === 0 ? (seg ? 'kg' : CARGAS[tipo].rot) : 'reps' };
+      })(),
       rirEscala: RIR_ESCALA.map(function (v) { return { v: v, on: (dr && dr.s[k]) ? dr.s[k][2] === v : false }; }),
       // Não há placeholder nos campos: a referência tem UMA casa, e é a coluna
       // ANTERIOR. Ela diz as três coisas numa linha só e, ao contrário do
@@ -1675,6 +1926,9 @@ function vmExercicio(d, i, ex) {
     i: i,
     nome: ex.n,
     nomeOriginal: alt ? nomeEx(ex.orig) : null,
+    // "Fazer antes o próximo" (§7.3): a saída mais barata da máquina ocupada,
+    // e só existe se há um próximo para trazer.
+    proximo: treino(d).ex[i + 1] ? treino(d).ex[i + 1].n : null,
     alt: alt,
     grupo: ex.g,
     cue: ex.cue,
@@ -1694,6 +1948,10 @@ function vmExercicio(d, i, ex) {
     // RIR é linguagem de hipertrofia. Numa aula de box eram 25 botões sem
     // sentido na tela, um por linha de série.
     temRir: !seg,
+    // A RÉGUA é de REPETIÇÃO. Em metro, caloria ou segundo o valor não é um
+    // número curto de faixa conhecida — 500 m não cabe numa régua de onze
+    // valores —, e ali o campo continua sendo o certo.
+    temRegua: !seg,
     // Aproximação é preparo para carga pesada. Num remo ou numa corrida a
     // frase "2 a 3 séries subindo carga antes da primeira valendo" é ruído.
     unidadeRotulo: un ? ROTULO_UNIDADE[un] : '',
@@ -1730,6 +1988,15 @@ function vmExercicio(d, i, ex) {
     } : null,
 
     dorRep: dorRep ? dorRep.map(dorName).join(' e ') : null,
+    // A dor repetida PARA a régua até ele escolher (§7.4): substituir, pular ou
+    // fazer mesmo assim. As duas datas dizem de onde veio a detecção.
+    dorDatas: dorRep ? (function () {
+      const h = historico(key);
+      return fmtDate(h[h.length - 2].t) + ' e ' + fmtDate(h[h.length - 1].t);
+    })() : null,
+    dorAceita: !!(dorRep && S.sessao && (S.sessao.dorMesmoAssim || []).indexOf(slotDe(d, i)) >= 0),
+    dorBloqueia: !!(dorRep && !pulado && !(S.sessao && (S.sessao.dorMesmoAssim || []).indexOf(slotDe(d, i)) >= 0)),
+    nSubs: lista.filter(function (a) { return a.ind; }).length,
     dorLast: dorLast ? dorLast.map(dorName).join(' e ') : null,
     pausaTxt: (!dorRep && parado >= PAUSA_DIAS && !alt)
       ? Math.round(parado) + ' dias sem este exercício' : null,
@@ -1779,8 +2046,16 @@ function vmExercicio(d, i, ex) {
 // ele já usou aquele aparelho e o número é a referência real.
 function opcaoDeTroca(a) {
   const u = ultimoDe(a.id);
+  // §7.3 da frente 3: o ★ do treinador ganha a PALAVRA ("indicado pelo
+  // treinador") — em lugar nenhum dizia —, e a última carga não apaga mais o que
+  // muda ao trocar: antes era uma coisa OU a outra na mesma linha.
+  const ind = /^Indicad[oa] pelo treinador[.:]?\s*/;
   return {
     id: a.id, n: a.n,
+    indicado: ind.test(a.w || ''),
+    nota: (a.w || '').replace(ind, ''),
+    ultima: (u && u.sets && u.sets[0])
+      ? 'última vez: ' + fmtNum(u.sets[0][0]).replace('.', ',') + ' × ' + u.sets[0][1] : null,
     // Aqui a foto paga mais que em qualquer outro lugar: são substitutos que
     // ele quase nunca executou, escolhidos sob pressão com a máquina ocupada.
     // Reconhecer o aparelho pela imagem é mais rápido que ler o nome.
@@ -1803,6 +2078,8 @@ const ACOES = {
   toggleSwap: function (i) { toggleSwap(i); },
   abrirSubstituicao: function (i) { abrirSubstituicao(i); },
   pularEx: function (i) { pularEx(i); },
+  fazAntesOProximo: function (i) { fazAntesOProximo(i); },
+  aceitaDor: function (i) { aceitaDor(i); },
   openHist: function (i) { openHist(i); },
   toggleAq: function (i) { toggleAq(i); },
   abrirCarga: function (i) { abrirCarga(i); },
@@ -1814,6 +2091,13 @@ const ACOES = {
   obsIn: function (el, i) { obsIn(el, i); },
   toggleDor: function (i, k) { toggleDor(i, k); },
   abreRir: function (i, k) { abreRir(i, k); },
+  abreRegua: function (i, k) { abreRegua(i, k); },
+  andaRegua: function (dir) { andaRegua(dir); },
+  poeRep: function (i, k, v) { poeRep(i, k, v); },
+  abreOutroValor: function () { abreOutroValor(); },
+  abreTecladoDeCarga: function (i, k) { abreTecladoDeCarga(i, k); },
+  tecla: function (t) { teclaDoTeclado(t); },
+  fechaTeclado: function () { fechaTeclado(); },
   abreFoto: function (i) { abreFoto(i); },
   poeRir: function (i, k, v) { poeRir(i, k, v); },
   usaAnterior: function (i, k) { usaAnterior(i, k); }
@@ -1961,7 +2245,7 @@ function seriesFeitasHoje(d) {
 
 const CTX = {
   // ---------- rota ----------
-  abaAtual: function () { return view.aba || 'hoje'; },
+  abaAtual: function () { return view.aba || 'agora'; },
   // Uma rota só. `view.tab` existia em paralelo a `view.aba` durante a
   // migração — duas fontes de verdade para a mesma pergunta, e o app já
   // trocava de conteúdo sem trocar a aba acesa por causa disso.
@@ -1970,23 +2254,34 @@ const CTX = {
     view.aba = a;
     view.prog = null; view.hist = null; view.retro = false;
     view.sessao = null; view.add = null; view.mes = 0;
+    // Ir para um LUGAR fecha o que está em tela cheia — o modo de sessão e os
+    // ajustes inclusive. Sem isto `vaiPara` troca `view.aba` POR BAIXO de um
+    // destino que continua desenhado (`emTelaCheia()` ganha da aba em
+    // `app.jsx`), e o lugar pedido nunca aparece.
+    //
+    // Pelos verbos e não pela flag: os dois guardam a posição de leitura em
+    // `saiDoDestino`, e zerar a flag na mão deixaria a entrada órfã. As cinco
+    // linhas acima fazem isso há mais tempo e têm a mesma dívida; não é razão
+    // para repeti-la em duas novas.
+    if (view.modoSessao) CTX.fechaModoDeSessao();
+    if (view.ajustes) CTX.fechaAjustes();
 
-    // Chegar em TREINO com sessão aberta cai no dia DELA. Era aqui que o app
-    // abria "um treino qualquer": `view.day` ficava no último dia visitado, que
-    // depois de um `finalizarSessao` já é o PRÓXIMO da rotação.
-    const diaAberto = a === 'treino' && vindoDeFora ? diaDaSessaoAberta() : null;
-    const trocou = diaAberto && diaAberto !== view.day;
-    if (trocou) { view.day = diaAberto; view.open = null; view.nota = null; }
+    // A correção de "chegar em TREINO abria um treino qualquer" saiu daqui com
+    // a aba: quem entra na sessão agora é o MODO, e as três portas dele já
+    // resolvem o dia — `voltaAoTreino` cai no dia da sessão, `abreTreinoDeHoje`
+    // no dia resolvido de hoje. `vindoDeFora` fica porque o render e o scroll
+    // ainda dependem de ter havido troca de lugar.
 
     render();
     window.scrollTo(0, 0);
-    if (trocou) carregaFotosDoDia();
+    if (vindoDeFora) carregaFotosDoDia();
   },
   telaCheia: telaCheia,
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
-    return !!(view.promo || view.prog || view.retro || view.add || view.sessao || view.hist ||
-              view.protocolo || view.comparar || view.ajuste || view.camera);
+    return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
+              view.protocolo || view.comparar || view.ajuste || view.camera ||
+              view.ajustes || view.modoSessao);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -2045,19 +2340,68 @@ const CTX = {
         feita: prescritas > 0 && feitas >= prescritas,
         valor: P ? feitas + '/' + prescritas + ' séries' : null,
         resumo: P ? P.ex.slice(0, 3).map(function (e) { return e.n; }).join(' · ') : 'Dia de descanso.',
-        meta: S.sessao ? 'sessão aberta' : (feitas ? 'registrado' : 'não começou')
+        meta: S.sessao ? 'sessão aberta' : (feitas ? 'registrado' : 'não começou'),
+        // "sessão aberta desde 6h20": a procedência do cartão de cima (§1.1)
+        desde: S.sessao ? fmtHoraDita(S.sessao.inicio) : null
       }
     };
   },
   ehLinhaDeTreino: ehLinhaDeTreino,
 
   // ---------- ações do dia ----------
-  marcaRefeicao: function (id) {
+  /**
+   * Marca ou desmarca uma refeição de HOJE.
+   *
+   * Grava o INSTANTE, e não `1`: é a forma convergida com o histórico desde a
+   * migração 9→10, e é o que a lápide compara. `como` é opcional — ausente é
+   * "comeu o que estava prescrito", que é o caso dominante e por isso não se
+   * grava; `'fora'` é "comi, mas não foi isto", `'nao'` é "não comi esta
+   * refeição", que é diferente de não ter marcado nada, e `'nsei'` é "não sei o
+   * que foi esta refeição". A fonte da verdade dos três é
+   * `ComoFoiARefeicao` (`src/dominio/nutricao/tipos.ts`), com a aritmética de
+   * cada um escrita lá; a lista aqui é a recusa de gravar valor que o domínio
+   * não conhece.
+   *
+   * Desmarcar deixa LÁPIDE. `chaveDeRefeicaoFeita` existia na fusão desde que o
+   * dia aberto passou a fundir campo a campo, e ninguém a escrevia: desmarcar
+   * aqui era desfeito pelo outro aparelho, que ainda tinha a marca.
+   */
+  marcaRefeicao: function (id, como) {
     const d = diaDeComida();
-    if (d.done[id]) delete d.done[id]; else d.done[id] = 1;
+    if (d.done[id]) {
+      delete d.done[id];
+      if (d.como) {
+        delete d.como[id];
+        if (!Object.keys(d.como).length) delete d.como;
+      }
+      lapide(chaveDeRefeicaoFeita(d.data, id));
+    } else {
+      // Nunca igual nem anterior à lápide daquela refeição: marcar, desmarcar e
+      // marcar de novo dentro do mesmo milissegundo daria `quando <= morto`, e a
+      // fusão apagaria a marca que ele acabou de fazer.
+      const morta = (S.apagados || {})[chaveDeRefeicaoFeita(d.data, id)] || 0;
+      d.done[id] = Math.max(Date.now(), morta + 1);
+      if (como === 'fora' || como === 'nao' || como === 'nsei') {
+        if (!d.como) d.como = {};
+        d.como[id] = como;
+      }
+    }
     queueSave(); render();
   },
-  setAgua: function (n) { diaDeComida().agua = Math.max(0, n); queueSave(); render(); },
+  /**
+   * Os copos de água de hoje — ou o fato de que ele não contou.
+   *
+   * `null` declara "não contei a água", que não é zero copo: `agua: 0` juntava
+   * o dia em que ele não bebeu nada com o dia em que ele não contou, e um zero
+   * lido como abandono de registro é erro de medição. Contar de novo derruba o
+   * fato, porque contar tem dado por trás.
+   */
+  setAgua: function (n) {
+    const d = diaDeComida();
+    if (n == null) { d.aguaNaoContada = 1; }
+    else { d.agua = Math.max(0, n); delete d.aguaNaoContada; }
+    queueSave(); render();
+  },
   abreRefeicao: function (id) { CTX.abreFolha({ k: 'refeicao', id: id }); },
   editaRefeicao: function (id) { CTX.abreFolha({ k: 'editaRefeicao', id: id }); },
   novaRefeicao: function () { CTX.abreFolha({ k: 'editaRefeicao', id: null }); },
@@ -2106,24 +2450,27 @@ const CTX = {
 // Não são abas — em cada uma o assunto é uma coisa só, e a tab bar convidaria
 // a sair no meio. O voltar é o único caminho de saída.
 function telaCheia() {
+  if (view.ajustes) return <Ajustes ctx={CTX} />;
   if (view.camera) return <Camera ctx={CTX} />;
   if (view.ajuste) return <AjusteFoto ctx={CTX} />;
   if (view.protocolo) return <Protocolo ctx={CTX} />;
   if (view.comparar) return <Comparar ctx={CTX} />;
-  if (view.promo) return <Decisao ctx={CTX} />;
-  if (view.prog) return <Programa ctx={CTX} />;
+
   if (view.retro) return <Retrospectiva ctx={CTX} />;
   if (view.add) return <Retroativo ctx={CTX} />;
   if (view.sessao) return <Sessao ctx={CTX} />;
+  // O histórico ANTES do programa: `telaCheia` desenha o primeiro que casa, e
+  // quem casa primeiro está por cima. Abrindo o histórico de dentro do programa
+  // — que é a porta nova da Prescrição —, ele é a camada de cima.
   if (view.hist) return <Historico ctx={CTX} />;
+  if (view.prog) return <Programa ctx={CTX} />;
+  // O modo é o ÚLTIMO: camada mais funda, tudo que se abre de dentro dele fica
+  // por cima. A ordem aqui é a inversa da pilha de `camadasAbertas`.
+  if (view.modoSessao) return <SessaoModo ctx={CTX} />;
   return null;
 }
 
-function semanasDe(t) {
-  const sem = Math.floor((Date.now() - t) / (7 * 86400000));
-  if (sem < 1) return 'menos de 1 semana';
-  return sem + (sem === 1 ? ' semana' : ' semanas');
-}
+function semanasDe(t) { return semanasDesde(t, Date.now()); }
 
 // ---------- impacto no volume ----------
 // O treinador definiu um alvo por músculo. Mexer nas séries mostra na hora
@@ -2155,6 +2502,38 @@ function mudaSeries(i, delta) {
   queueSave(); render();
 }
 
+/**
+ * "Fazer mesmo assim" diante da dor repetida (§7.4 da frente 3). É ESCOLHA, e
+ * fica registrada no dia como o pulado fica: a régua volta, e a marca do dia
+ * guarda que ele treinou por cima de um sinal de tendão — a regra do treinador
+ * diz para não fazer, e ele decidiu fazer, e as duas coisas ficam escritas.
+ */
+async function aceitaDor(i) {
+  const s = S.sessao || abreSessaoVazia();
+  if (!s.dorMesmoAssim) s.dorMesmoAssim = [];
+  const chave = slotDe(view.day, i);
+  if (s.dorMesmoAssim.indexOf(chave) < 0) s.dorMesmoAssim.push(chave);
+  await save(); render();
+  const ex = treino(view.day).ex[i];
+  toast('Guardei: ' + (ex ? ex.n : 'o exercício') + ' feito mesmo assim, com a dor repetida. Fica registrado no dia.');
+}
+
+/**
+ * Máquina ocupada: faz antes o próximo, e esta volta logo depois. É a saída mais
+ * barata (§7.4 da frente 2 ordena as saídas por preço): não troca exercício,
+ * só a ordem — e só HOJE, pela mesma mudança do dia que mover já usa.
+ */
+function fazAntesOProximo(i) {
+  const t = treino(view.day);
+  if (!t.ex[i + 1]) return;
+  const este = t.ex[i].n, prox = t.ex[i + 1].n;
+  moverEx(i, 1);
+  view.swapOpen = null;
+  view.open = i;                       // o próximo agora mora aqui
+  render();
+  toast('Só hoje: ' + prox + ' agora, e ' + este + ' logo depois. O programa não muda.');
+}
+
 function moverEx(i, delta) {
   const d = view.day;
   const t = treino(d);
@@ -2168,7 +2547,14 @@ async function removerEx(i) {
   const d = view.day;
   const ex = treino(d).ex[i];
   const slot = ex.orig || ex.id;
-  if (temRegistro(d, i) && !confirm('Este exercício já tem série registrada hoje. Remover apaga o registro desta sessão. Continuar?')) return;
+  // PARE (§3.3) só quando há série dele nesta sessão: sem série, tirar do dia
+  // não apaga nada — o histórico das outras sessões fica de todo jeito.
+  if (temRegistro(d, i)) {
+    const reg = daSessao(logKey(d, i), slotDe(d, i), S.sessao.sid);
+    const n = reg && reg.sets ? reg.sets.filter(Boolean).length : 1;
+    if (!(await pare({ texto: 'Tirar este exercício agora apaga ' + (n === 1 ? 'a série que você registrou' : 'as ' + n + ' séries que você registrou') + ' nele hoje. O histórico das outras sessões fica.',
+                       sim: 'Tirar e apagar ' + (n === 1 ? 'a série' : 'as ' + n + ' séries') }))) return;
+  }
   removeProjecao(logKey(d, i), slotDe(d, i));
   poeMod(d, { k:'rm', slot: slot });
   view.open = null; view.swapOpen = null;
@@ -2375,12 +2761,21 @@ function abrirAulas() { view.aulas = !view.aulas; render(); }
 
 function abrirAddEx() { view.addEx = true; view.addQ = ''; render(); }
 function fecharAddEx() { view.addEx = false; view.addQ = ''; view.novoEx = false; render(); }
+/**
+ * O texto da busca do catálogo de adição. **Por valor**, e só dado.
+ *
+ * Quem devolve o foco é a casca (`buscaEx`): manter o teclado aberto é
+ * capacidade de tela, e é o que o teste da busca cobra lendo
+ * `document.activeElement`. O filtro em si é `catalogoDeAdicao()`, que lê
+ * `view.addQ` — e por isso a busca passou a ser conferível sem campo nenhum.
+ */
+function setBuscaDeExercicio(q) { view.addQ = q; render(); }
+
 function buscaEx(q) {
-  view.addQ = q;
   // render() reescreve o innerHTML: sem devolver o foco, o teclado fecha a
   // cada letra digitada
   const foco = document.activeElement && document.activeElement.id;
-  render();
+  setBuscaDeExercicio(q);
   if (foco) { const n = document.getElementById(foco); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }
 }
 
@@ -2416,16 +2811,28 @@ async function addExercicio(idEx) {
 
 function abrirNovoEx() { view.novoEx = true; view.addEx = true; render(); }
 
-async function criarExercicio() {
-  const nome = (document.getElementById('nxn') || {}).value || '';
-  const g = (document.getElementById('nxg') || {}).value || '';
-  const car = (document.getElementById('nxc') || {}).value || 'pino';
-  const comp = !!(document.getElementById('nxk') || {}).checked;
+/**
+ * Cadastra um exercício no catálogo dele e já o põe no treino. **Por valor.**
+ *
+ * Os seis campos (`#nxn`, `#nxg`, `#nxc`, `#nxk`, `#nxu`, `#nxq`) eram lidos
+ * aqui dentro, e por isso `edicao`, `fluxo` e `ritmo` precisavam escrever
+ * `document.getElementById("nxg").value = …` antes de chamar o verbo — três
+ * arquivos acoplados ao id de um campo para exercitar uma regra de catálogo.
+ *
+ * `carga` cai em `'pino'` e `unidade` em `''` quando vêm vazias, como o
+ * formulário já fazia: o padrão é o do campo, não do chamador.
+ */
+async function criarExercicioCom(c) {
+  const d = c || {};
+  const nome = d.nome == null ? '' : String(d.nome);
+  const g = d.grupo == null ? '' : String(d.grupo);
+  const car = d.carga || 'pino';
+  const comp = !!d.composto;
   // A grandeza no cadastro. Sem ela, um movimento que ele criasse nascia como
   // série de musculação — "Burpee" entrava 3 × 10–15, com coluna de kg e selo
   // de RIR — e não havia caminho nenhum para corrigir isso no catálogo.
-  const un = (document.getElementById('nxu') || {}).value || '';
-  const q = numeroDoCampo((document.getElementById('nxq') || {}).value);
+  const un = d.unidade || '';
+  const q = numeroDoCampo(d.q);
   if (nome.trim().length < 3) { toast('Dê um nome ao exercício.'); return; }
   const k = slugEx(nome);
   if (CAT[k] && !CAT[k].arq) { toast('Já existe um exercício com esse nome.'); return; }
@@ -2438,6 +2845,19 @@ async function criarExercicio() {
   view.novoEx = false;
   await save();
   await addExercicio(k);
+}
+
+/** A casca: lê os seis campos do formulário e chama o verbo. */
+async function criarExercicio() {
+  const campo = function (id) { return (document.getElementById(id) || {}).value; };
+  return criarExercicioCom({
+    nome: campo('nxn') || '',
+    grupo: campo('nxg') || '',
+    carga: campo('nxc') || 'pino',
+    composto: !!(document.getElementById('nxk') || {}).checked,
+    unidade: campo('nxu') || '',
+    q: campo('nxq')
+  });
 }
 
 function desfazMod(j) {
@@ -2453,16 +2873,23 @@ function desfazMod(j) {
   queueSave(); render();
 }
 
-// Texto de uma mudança, em português e no passado. É o que ele lê na hora de
-// decidir se ela vira permanente.
+// Texto de uma mudança. É o que ele lê na hora de decidir se ela entra no
+// treino (§5.2 da frente 3): UMA gramática só — o nome prescrito, dois-pontos, o
+// que passou a valer, e o que era depois. "4 séries, não 3" e não "3 → 4": a
+// flecha é tabular, e o que importa primeiro é o número que vale. E os atos dele
+// não se narram em terceira pessoa ("adicionou", "removeu", "mudou"), que é V8.
 function textoMod(d, m) {
-  if (m.k === 'add')   return 'adicionou ' + nomeEx(m.id);
-  if (m.k === 'rm')    return 'removeu ' + nomeEx(m.slot);
-  if (m.k === 'troca') return nomeEx(m.slot) + ' → ' + nomeEx(m.por);
-  if (m.k === 'sets')  return nomeEx(m.slot) + ': ' + m.de + ' → ' + m.para + ' séries';
-  if (m.k === 'reps')  return nomeEx(m.slot) + ': ' + m.de + ' → ' + m.para + ' repetições';
-  if (m.k === 'desc')  return nomeEx(m.slot) + ': descanso ' + fmtDesc(m.de) + ' → ' + fmtDesc(m.para);
-  if (m.k === 'mover') return 'mudou ' + nomeEx(m.slot) + ' de posição';
+  if (m.k === 'add')   return nomeEx(m.id) + ': entrou no dia';
+  if (m.k === 'rm')    return nomeEx(m.slot) + ': saiu do dia';
+  if (m.k === 'troca') return nomeEx(m.por) + ' no lugar de ' + nomeEx(m.slot);
+  if (m.k === 'sets')  return nomeEx(m.slot) + ': ' + m.para + ' séries, não ' + m.de;
+  if (m.k === 'reps')  return nomeEx(m.slot) + ': ' + m.para + ' repetições, não ' + m.de;
+  if (m.k === 'desc')  return nomeEx(m.slot) + ': descanso de ' + fmtDesc(m.para) + ', não ' + fmtDesc(m.de);
+  if (m.k === 'mover') return nomeEx(m.slot) + ': feito ' + (m.para < m.de ? 'antes' : 'depois') + ', fora da ordem';
+  // A grandeza do movimento (5 × 500 m). Não estava entre as sete da frente e
+  // caía em "mudança", que não diz nada; a mudança não guarda o valor de antes.
+  if (m.k === 'med')   return nomeEx(m.slot) + ': medido em ' +
+                              (m.q > 0 ? fmtInt(m.q) + ' ' : '') + (ROTULO_UNIDADE[m.u] || m.u);
   return 'mudança';
 }
 
@@ -2477,48 +2904,28 @@ const MOTIVOS = [
   { k:'decisao', t:'decisão de programa' }
 ];
 
-// O impacto que importa é o do programa DEPOIS da promoção, não o de hoje.
+/**
+ * O que uma mudança do dia faria no programa — o invólucro que resolve o `S`.
+ *
+ * A conta e a prosa moram em `dominio/volume.ts`, com os dez casos que as
+ * quatro ramificações nunca tiveram (três delas não tinham asserção em lugar
+ * nenhum). Aqui fica só o que depende de estado: a rotação oficial, o alvo, o
+ * catálogo, o slot original daquele dia e o relógio.
+ */
 function impactoDoMod(d, m) {
-  if (m.k === 'sets') {
-    const g = exDe(m.slot).g;
-    if (!g) return null;
-    const oficial = seriesOficiais(g);
-    const depois = oficial - m.de + m.para;
-    const alvo = ALVO[g];
-    if (alvo == null) return { txt: g + ': ' + oficial + ' → ' + depois + ' séries na rotação', acima: 0 };
-    return { txt: g + ': ' + oficial + ' → ' + depois + ' na rotação · o treinador prescreveu ' + alvo,
-             acima: depois > alvo ? 1 : 0 };
-  }
-  if (m.k === 'add') {
-    const g = exDe(m.id).g;
-    if (!g) return null;
-    const depois = seriesOficiais(g) + m.s;
-    const alvo = ALVO[g];
-    return { txt: g + ': ' + seriesOficiais(g) + ' → ' + depois + ' na rotação'
-                  + (alvo != null ? ' · o treinador prescreveu ' + alvo : ''),
-             acima: alvo != null && depois > alvo ? 1 : 0 };
-  }
-  if (m.k === 'rm') {
-    const g = exDe(m.slot).g;
-    const sl = slotOriginal(d, m.slot);
-    if (!g || !sl) return null;
-    const depois = seriesOficiais(g) - sl.s;
-    const alvo = ALVO[g];
-    return { txt: g + ': ' + seriesOficiais(g) + ' → ' + depois + ' na rotação'
-                  + (alvo != null ? ' · o treinador prescreveu ' + alvo : ''),
-             acima: 0 };
-  }
-  if (m.k === 'troca') {
-    const sl = slotOriginal(d, m.slot);
-    if (!sl) return null;
-    const sem = semanasNoPrograma(sl);
-    if (sem != null && sem < 6) {
-      return { txt: nomeEx(m.slot) + ' está no programa há ' + semanasDe(sl.desde)
-                    + '. O treinador pede 6 a 8 semanas antes de trocar os principais.', acima: 1 };
-    }
-    return null;
-  }
-  return null;
+  return _impactoDoMod(m, {
+    rotacao: rot().map(function (dia) {
+      const pr = S.prog && S.prog[dia];
+      if (!pr) return null;
+      return { name: pr.name, tag: pr.tag,
+               ex: pr.ex.map(function (sl) { return { g: exDe(sl.id).g, s: sl.s }; }) };
+    }),
+    alvo: ALVO,
+    grupoDe: function (id) { return exDe(id).g; },
+    nomeDe: nomeEx,
+    oficialDe: function (slot) { return slotOriginal(d, slot); },
+    agora: Date.now()
+  });
 }
 
 // Séries de um músculo no programa OFICIAL, sem os mods de hoje.
@@ -2536,16 +2943,26 @@ function semanasNoPrograma(sl) {
   return Math.floor((Date.now() - sl.desde) / (7 * 86400000));
 }
 
-function decidePromo(j, v) { view.promo.dec[j] = v; render(); }
-function motivoPromo(k) { view.promo.motivo = view.promo.motivo === k ? null : k; render(); }
-function voltarDoPromo() {
-  // sair sem responder mantém o padrão conservador — e não deixa a pergunta
-  // reaparecendo para sempre
-  if (view.promo && view.promo.guardada) { S.promoPendente = null; queueSave(); }
-  view.promo = null;
-  render();
-  saiDoDestino('promo');
-}
+// A TELA DE DECISÃO SAIU (decisão D1), e com ela estas quatro funções:
+// `decidePromo`, `motivoPromo`, `voltarDoPromo` e `concluirPromo`. Elas eram a
+// mecânica de uma tela cheia que interrompia o fecho do treino para perguntar
+// sobre o PROGRAMA — a pergunta menos urgente que existe neste produto, feita
+// no momento em que ele acabou de treinar.
+//
+// O que ficou no lugar delas, e é mais e não menos: o carregador nos DOIS
+// fechos (`fechaSessao` e `finalizarSessao`), a fila em Prescrição com a conta
+// de volume e o vencimento ao lado de cada mudança, e `CTX.respondeMudanca`,
+// que responde UMA mudança por vez — o que o `dec[]` daquela tela fazia para um
+// conjunto, e sem obrigar a decidir tudo de uma vez.
+//
+// `S.promoPendente` NÃO saiu, e é o ponto do §3.6 do plano: ele é o mecanismo,
+// e apagá-lo com a tela é como o F280 volta.
+//
+// E `aplicaAoOficial` FICA, obviamente: ela é quem escreve no programa, e
+// `CTX.respondeMudanca` a chama. Ela morava no meio das quatro que saíram, e eu
+// a apaguei junto — o app parou de bootar e 669 casos responderam
+// `__escopo is not a function`, que é o modo de falha de um módulo que não
+// termina de carregar.
 
 // Aplica ao programa oficial as mudanças escolhidas, na ordem em que foram
 // feitas, e registra a decisão para dar resposta a "por que isso mudou?".
@@ -2582,43 +2999,6 @@ function aplicaAoOficial(d, mods, motivo) {
   return n;
 }
 
-async function concluirPromo() {
-  const P = view.promo;
-  const escolhidos = P.mods.filter(function (m, j) { return P.dec[j] === 'oficial'; });
-  const n = escolhidos.length ? aplicaAoOficial(P.day, escolhidos, P.motivo) : 0;
-  view.promo = null;
-  S.promoPendente = null;
-  // Fim de fluxo: a sessão encerra, o dia gira, e a posição que ele tinha no
-  // treino de ontem não é mais a dele. Topo, como manda o contrato.
-  esqueceDestino('promo');
-
-  if (P.guardada) {
-    // a sessão já tinha fechado sozinha: só a decisão faltava
-    await save(); render(); window.scrollTo(0, 0);
-  } else {
-    await encerraDeVerdade(P.day, P.feitas, P.resumoMods);
-  }
-  if (n) toast(n + (n === 1 ? ' mudança levada' : ' mudanças levadas') + ' para o programa oficial.');
-}
-
-/**
- * A pergunta que ficou de uma sessão encerrada sozinha.
- *
- * Aparece na abertura seguinte, e nunca no meio de um treino novo: perguntar
- * sobre o programa enquanto ele registra série é interromper a única coisa que
- * o app existe para não atrapalhar.
- */
-function abrePromoGuardada() {
-  const g = S.promoPendente;
-  if (!g || !Array.isArray(g.mods) || !g.mods.length || S.sessao) return false;
-  view.promo = {
-    day: g.day, mods: g.mods.slice(), dec: g.mods.map(function () { return 'hoje'; }),
-    motivo: null, feitas: 0, resumoMods: g.resumoMods || [], guardada: true, quando: g.t
-  };
-  entraNoDestino('promo');
-  render();
-  return true;
-}
 
 
 // ---------- tela de programa ----------
@@ -2649,13 +3029,16 @@ function difDoDia(d) {
     const b = porId[x.id];
     if (!b) {
       out.push(trocado[x.id]
-        ? { k:'troca', txt: nomeEx(trocado[x.id]) + ' → ' + nomeEx(x.id) }
+        ? { k:'troca', txt: nomeEx(x.id) + ' no lugar de ' + nomeEx(trocado[x.id]) }
         : { k:'novo', txt: nomeEx(x.id) + ' entrou · ' + x.s + ' × ' + x.r });
       return;
     }
-    if (x.s !== b.s) out.push({ k:'sets', txt: nomeEx(x.id) + ': ' + b.s + ' → ' + x.s + ' séries' });
-    if (x.r !== b.r) out.push({ k:'reps', txt: nomeEx(x.id) + ': ' + b.r + ' → ' + x.r + ' repetições' });
-    if (x.d !== b.d) out.push({ k:'desc', txt: nomeEx(x.id) + ': descanso ' + fmtDesc(b.d) + ' → ' + fmtDesc(x.d) });
+    // A mesma gramática da lista que vence (§5.2): o que vale primeiro, e o
+    // que era depois. O histórico do programa recebe as duas, e uma gramática
+    // por origem faria o mesmo registro falar de dois jeitos.
+    if (x.s !== b.s) out.push({ k:'sets', txt: nomeEx(x.id) + ': ' + x.s + ' séries, não ' + b.s });
+    if (x.r !== b.r) out.push({ k:'reps', txt: nomeEx(x.id) + ': ' + x.r + ' repetições, não ' + b.r });
+    if (x.d !== b.d) out.push({ k:'desc', txt: nomeEx(x.id) + ': descanso de ' + fmtDesc(x.d) + ', não ' + fmtDesc(b.d) });
   });
   const saiuPorTroca = {};
   Object.keys(trocado).forEach(function (k) { saiuPorTroca[trocado[k]] = 1; });
@@ -2734,7 +3117,7 @@ async function progSeries(d, i, delta) {
   if (novo < 1 || novo > 8) return;
   const de = sl.s;
   sl.s = novo;
-  logProg(d, nomeEx(sl.id) + ': ' + de + ' → ' + novo + ' séries');
+  logProg(d, nomeEx(sl.id) + ': ' + novo + ' séries, não ' + de);
   await save(); render();
 }
 
@@ -2744,7 +3127,7 @@ async function moverProg(d, i, delta) {
   if (j < 0 || j >= ex.length) return;
   const sl = ex.splice(i, 1)[0];
   ex.splice(j, 0, sl);
-  logProg(d, 'mudou ' + nomeEx(sl.id) + ' de posição');
+  logProg(d, nomeEx(sl.id) + ': ' + (delta < 0 ? 'mais cedo' : 'mais tarde') + ' no treino');
   await save(); render();
 }
 
@@ -2765,11 +3148,11 @@ async function progSetTroca(d, i, idEx) {
   const de = sl.id;
   const sem = semanasNoPrograma(sl);
   if (sem != null && sem < 6 &&
-      !confirm(nomeEx(de) + ' está no programa há ' + semanasDe(sl.desde) +
-               '.\n\nO treinador pede 6 a 8 semanas antes de trocar os principais. Trocar mesmo assim?')) return;
+      !confirm('Trocar ' + nomeEx(de) + ' mesmo assim?\n\nEle está no programa há ' +
+               semanasDe(sl.desde) + ', e o treinador pede 6 a 8 semanas antes de trocar os principais.')) return;
   sl.id = idEx;
   sl.desde = Date.now();
-  logProg(d, nomeEx(de) + ' → ' + nomeEx(idEx));
+  logProg(d, nomeEx(idEx) + ' no lugar de ' + nomeEx(de));
   view.swapOpen = null;
   await save(); render();
   toast('Trocado no programa. Vale a partir do próximo treino ' + d + '.');
@@ -2783,7 +3166,7 @@ async function progReps(d, i) {
   if (!novo) return;
   const de = sl.r;
   sl.r = novo;
-  logProg(d, nomeEx(sl.id) + ': ' + de + ' → ' + novo + ' repetições');
+  logProg(d, nomeEx(sl.id) + ': ' + novo + ' repetições, não ' + de);
   await save(); render();
 }
 
@@ -2793,7 +3176,7 @@ async function progDesc(d, i) {
   const j = (opcoes.indexOf(sl.d) + 1) % opcoes.length;
   const de = sl.d;
   sl.d = opcoes[j];
-  logProg(d, nomeEx(sl.id) + ': descanso ' + fmtDesc(de) + ' → ' + fmtDesc(sl.d));
+  logProg(d, nomeEx(sl.id) + ': descanso de ' + fmtDesc(sl.d) + ', não ' + fmtDesc(de));
   await save(); render();
 }
 
@@ -2827,7 +3210,7 @@ async function criarTreino() {
 
 async function restaurarDia(d) {
   if (!PROGRAMA[d]) {
-    if (!confirm('O treino ' + d + ' não existe no programa atual do treinador. Apagar o treino?')) return;
+    if (!confirm('Apagar o treino ' + d + '?\n\nEle não existe no programa atual do treinador.')) return;
     delete S.prog[d];
     S.rot = rot().filter(function (x) { return x !== d; });
     logProg(d, 'treino ' + d + ' apagado');
@@ -2874,17 +3257,39 @@ function editDor(k) {
   render();
 }
 
+/**
+ * Grava na sessão em correção as séries e a observação. **Por valor.**
+ *
+ * `sets` é a lista NA ORDEM das séries da sessão: cada item é `[carga, reps]`
+ * (número ou texto, vírgula vale ponto). Item `null` ou ausente **não mexe**
+ * naquela série — é o `if (!a || !b) return` da leitura por id, que existia
+ * para o re-render dos chips não apagar o que ainda não estava na tela.
+ *
+ * `obs` ausente (`undefined`) também não mexe na observação; `''` a apaga.
+ */
+function guardaEdicaoCom(sets, obs) {
+  const e = S.logs[view.hist.key][view.edit];
+  e.sets.forEach(function (x, k) {
+    const par = sets && sets[k];
+    if (par == null) return;
+    const w = parseFloat(String(par[0]).replace(',','.')), r = parseInt(par[1],10);
+    e.sets[k] = isNaN(r) ? null : [isNaN(w) ? 0 : w, r];
+  });
+  if (obs !== undefined) {
+    const t = String(obs == null ? '' : obs).trim();
+    if (t) e.obs = t; else delete e.obs;
+  }
+}
+
 // preserva o que já foi digitado quando os chips forçam re-render
 function guardaCamposEdicao() {
   const e = S.logs[view.hist.key][view.edit];
-  e.sets.forEach(function (x, k) {
+  const sets = e.sets.map(function (x, k) {
     const a = document.getElementById('ed'+k+'_0'), b = document.getElementById('ed'+k+'_1');
-    if (!a || !b) return;
-    const w = parseFloat(a.value.replace(',','.')), r = parseInt(b.value,10);
-    e.sets[k] = isNaN(r) ? null : [isNaN(w) ? 0 : w, r];
+    return (a && b) ? [a.value, b.value] : null;
   });
   const o = document.getElementById('edobs');
-  if (o) { const t = o.value.trim(); if (t) e.obs = t; else delete e.obs; }
+  guardaEdicaoCom(sets, o ? o.value : undefined);
 }
 
 async function salvarEdicao() {
@@ -2902,8 +3307,15 @@ async function salvarEdicao() {
 }
 
 async function apagarSessao() {
-  if (!confirm('Apagar esta sessão do histórico? Isso não tem volta.')) return;
   const key = view.hist.key;
+  // PARE (§3.3). A frente 3 escreveu "apagar esta série", mas o que sai é o
+  // registro INTEIRO do exercício naquele dia — todas as séries dele —, e a
+  // frase diz o que acontece, não o que o desenho supôs.
+  const reg = S.logs[key] && S.logs[key][view.edit];
+  const n = reg && reg.sets ? reg.sets.filter(Boolean).length : 0;
+  const quando = reg ? fmtDate(reg.t) : '';
+  if (!(await pare({ texto: 'Apagar o registro de ' + quando + ' tira ' + (n === 1 ? '1 série' : n + ' séries') + ' do histórico de ' + nomeEx(key) + '. Isso não tem volta.',
+                     sim: 'Apagar o registro de ' + quando }))) return;
   lapide(chaveDeLog(key, S.logs[key][view.edit]));
   S.logs[key].splice(view.edit, 1);
   if (!S.logs[key].length) delete S.logs[key];
@@ -2946,8 +3358,10 @@ async function delCardio(t) {
   // Esta lista existe para desfazer um registro errado, e por isso mesmo ela
   // não pode apagar o certo num toque de passagem.
   const c = S.cardio.filter(function (x) { return x.t === t; })[0];
-  if (c && !confirm('Remover ' + c.min + ' min de ' + c.m + ' de ' + fmtDate(t) + '?\n\n' +
-      'Sai da contagem da semana. O treino do dia não muda.')) return;
+  // PARE (§3.3), com o número do que sai e o que ele mexe.
+  if (!c) return;
+  if (!(await pare({ texto: 'Apagar ' + c.min + ' min de ' + c.m + ' de ' + fmtDate(t) + ' tira ele do placar da semana. O treino do dia não muda. Isso não tem volta.',
+                     sim: 'Apagar o cardio de ' + fmtDate(t) }))) return;
   lapide(chaveDeCardio({ t: t }));
   S.cardio = S.cardio.filter(c => c.t !== t);
   await save();
@@ -3065,10 +3479,24 @@ function addSet(campo, valor) {
   }
   render();
 }
-function addNome(el){ view.add.nome = el.value; }
+function anotaNomeAvulso(nome) { view.add.nome = nome; }
+function addNome(el){ anotaNomeAvulso(el.value); }
+
+/**
+ * A máscara do horário: só dígito e `:`, e os dois-pontos entram sozinhos.
+ *
+ * `digitando` é o que separa "ele acabou de escrever o segundo dígito" de
+ * "alguém está passando um horário inteiro": só no primeiro caso o `:` nasce,
+ * porque a máscara existe para poupar uma tecla de quem digita, não para
+ * reinterpretar `'06'` vindo por valor.
+ */
+function mascaraDeHora(txt, digitando) {
+  const v = (txt == null ? '' : String(txt)).replace(/[^0-9:]/g, '');
+  return (digitando && v.length === 2 && v.indexOf(':') < 0) ? v + ':' : v;
+}
+function anotaHoraAvulsa(txt) { view.add.hora = mascaraDeHora(txt, false); }
 function addHora(el) {
-  let v = el.value.replace(/[^0-9:]/g, '');
-  if (v.length === 2 && el.value.length === 2 && v.indexOf(':') < 0) v += ':';
+  const v = mascaraDeHora(el.value, el.value.length === 2);
   if (v !== el.value) el.value = v;
   view.add.hora = v;
 }
@@ -3118,7 +3546,7 @@ async function gravarRetro(detalhar) {
     if (S.sessao) { fechou = S.sessao.day; fechaSessao('manual'); }
     S.sessao = { day: a.tipo, inicio: quando, ultima: quando, sid: sid, retro: 1, tocado: Date.now(), pausas: [], pulados: [] };
     S.draft = null;
-    view.aba = 'treino'; view.day = a.tipo; view.open = 0;
+    view.day = a.tipo; view.open = 0; abreModo();
     await save();
     render(); window.scrollTo(0,0);
     toast(fechou
@@ -3126,7 +3554,7 @@ async function gravarRetro(detalhar) {
       : 'Preenchendo o treino de ' + fmtDate(a.t) + '. Some sozinho quando você sair.');
     return;
   }
-  view.aba = 'dados';
+  view.aba = 'dias';
   render(); window.scrollTo(0,0);
   toast(a.tipo === 'livre' ? 'Treino avulso registrado.' : 'Treino ' + a.tipo + ' registrado em ' + fmtDate(a.t) + '.');
 }
@@ -3210,21 +3638,23 @@ function arrozAtual() {
  * Aplica o ajuste calórico onde o plano manda aplicar: no arroz.
  * O veredito DECIDE, isto EXECUTA — é a divisão de trabalho entre as duas
  * metades do produto.
+ *
+ * Adaptador: a regra vive em `aplicaAjusteNoArroz` (dominio/nutricao/calculo);
+ * aqui só se junta a lista de itens marcados. Não recebe mais o saldo ANTERIOR
+ * porque não precisa dele: o que cada item recebeu está no item (`ajq`), e era
+ * recalcular isso pela contagem de agora que tirava comida do prato quando o
+ * plano mudava no meio.
  */
-function aplicaArroz(ajusteAntes) {
-  const plano = planoDeComida();
+function aplicaArroz() {
   const itens = [];
-  plano.forEach(function (r) {
+  planoDeComida().forEach(function (r) {
     r.itens.forEach(function (i) { if (i.arroz) itens.push(i); });
   });
-  if (!itens.length) return;
-  // O passo é diário e se reparte entre as refeições com arroz — ver
-  // arrozDoAjuste. Desfaz o saldo anterior antes de aplicar o novo, senão os
-  // dois somam; com o passo na grade de 15 g, ida e volta são exatas.
-  itens.forEach(function (i) {
-    const base = arrozDoAjuste(i.q, -ajusteAntes, itens.length);
-    i.q = arrozDoAjuste(base, S.ajuste || 0, itens.length);
-  });
+  // Quem muda o plano CARIMBA. `aplicaArroz` reescreve a quantidade de arroz
+  // em dado PERSISTIDO, e não carimbava: `comida.v` ficava igual ao `pv` que o
+  // dia fechado guardou ANTES do passo, então o app não conseguia dizer que
+  // aquele dia foi calculado contra outro plano. Sub-relatava divergência.
+  if (aplicaAjusteNoArroz(itens, S.ajuste || 0)) planoMudou();
 }
 
 // Adaptador: a regra vive em dominio/volume.ts; aqui só entram os dados.
@@ -3236,8 +3666,16 @@ function seriesPorMusculo(de, ate, corte) {
  * @param {boolean} [semVeredito] omite o cartão de veredito, que a tela DADOS já
  *   desenha no Instrumento logo acima — sem isso ele aparece duas vezes.
  */
-/** Onde o stepper começa quando ainda não há nenhuma medida registrada. */
-const CORPO_PADRAO = { peso: 75, cintura: 85 };
+/**
+ * Onde o stepper começa quando ainda não há nenhuma medida registrada. Sai da
+ * coluna `partida` de `MEDIDAS_DO_CORPO`: com as medidas com fita, transcrever
+ * os valores aqui seria a segunda lista que diverge da tabela.
+ */
+const CORPO_PADRAO = {};
+MEDIDAS_DO_CORPO.forEach(function (m) { if (m.partida != null) CORPO_PADRAO[m.k] = m.partida; });
+
+/** A unidade de uma grandeza, pela tabela. */
+function unidadeDoCorpo(k) { const m = medidaDoCorpo(k); return m ? m.u : ''; }
 
 // ---------- a data da medida ----------
 // Pesagem esquecida ontem não pode entrar como hoje. O veredito da dieta lê
@@ -3288,7 +3726,7 @@ function acaoDaMedida(k) {
 function diaDaMedidaVM(k) {
   const d = diaDaMedida(k);
   const j = medidaDoDia(k);
-  const un = k === 'peso' ? 'kg' : 'cm';
+  const un = unidadeDoCorpo(k);
   return {
     aberto: view.bodyDiaAberto === k,
     iso: hojeISO(d),
@@ -3335,20 +3773,45 @@ function valorDoCorpo(k) {
   return typeof f[k] === 'number' ? f[k] : parseFloat(String(f[k]).replace(',', '.'));
 }
 
+/**
+ * Põe uma marca na série daquela grandeza, no instante dado.
+ *
+ * A medida do MESMO DIA é substituída, e a substituída ganha lápide: o registro
+ * novo tem outro instante, e sem a lápide a fusão traria os dois de volta e o
+ * dia teria duas medidas.
+ *
+ * @returns {number} quantas medidas daquele dia foram substituídas
+ */
+function gravaMarca(k, v, quando, onde) {
+  if (!Array.isArray(S.body[k])) S.body[k] = [];
+  const arr = S.body[k];
+  const noDia = arr.filter(x => sameDay(x.t, quando));
+  // O "como eu medi" de uma medida com fita é guardado na primeira vez e não
+  // volta a ser digitado. Corrigir o valor do MESMO dia sem texto novo não pode
+  // levá-lo junto com a marca substituída — senão a correção de um número
+  // apagaria o lembrete que existe para o ponto não mudar.
+  if (!onde) onde = noDia.map(x => x.onde).filter(Boolean)[0] || null;
+  noDia.forEach(x => { lapide(chaveDeMarca(k, x)); arr.splice(arr.indexOf(x), 1); });
+  const nova = { t: quando, v, m: Date.now() };
+  if (onde) nova.onde = onde;
+  arr.push(nova);
+  arr.sort((a,b) => a.t - b.t);
+  if (arr.length > 400) S.body[k] = arr.slice(-400);
+  return noDia.length;
+}
+
 async function addBody(k) {
   const v = valorDoCorpo(k);
   if (isNaN(v) || v <= 0) { toast('Digite um número válido.'); return; }
 
   const quando = instanteDaMedida(k);
   const rotulo = rotuloDoDia(quando);
-  const arr = S.body[k];
-  const noDia = arr.filter(x => sameDay(x.t, quando));
-  // a substituída ganha lápide: o registro novo tem outro instante, e sem isso
-  // a fusão traria os dois de volta e o dia teria duas medidas
-  noDia.forEach(x => { lapide(chaveDeMarca(k, x)); arr.splice(arr.indexOf(x), 1); });
-  arr.push({ t: quando, v, m: Date.now() });
-  arr.sort((a,b) => a.t - b.t);
-  if (arr.length > 400) S.body[k] = arr.slice(-400);
+  // O texto de "como eu medi" só existe nas medidas com fita, e vazio é "não
+  // disse" — nunca uma frase em branco gravada por cima do lembrete.
+  const onde = (view.bodyOnde && typeof view.bodyOnde[k] === 'string') ? view.bodyOnde[k].trim() : '';
+  declaraGravacao(k === 'peso' ? 'o peso de ' + (rotulo === 'hoje' ? 'hoje' : rotulo) : 'a medida de ' + (medidaDoCorpo(k) || { n: k }).n,
+                  comUnidade(v, unidadeDoCorpo(k)));
+  const substituiu = gravaMarca(k, v, quando, onde || null);
 
   // Solta o rascunho: o stepper volta a se derivar da última medida, que é
   // justamente a que acabou de ser gravada. E a data volta para hoje — deixar
@@ -3359,24 +3822,214 @@ async function addBody(k) {
   view.bodyDia = Object.assign({}, view.bodyDia);
   delete view.bodyDia[k];
   if (view.bodyDiaAberto === k) view.bodyDiaAberto = null;
+  view.bodyOnde = Object.assign({}, view.bodyOnde);
+  delete view.bodyOnde[k];
   await save();
   render();
-  const nome = k === 'peso' ? 'Peso' : 'Cintura';
-  const un = k === 'peso' ? 'kg' : 'cm';
-  toast(noDia.length
+  // Nome e unidade pela tabela, como no aviso de remover: com as medidas com
+  // fita, um ternário em `k === 'peso'` daria "Cintura" a um braço.
+  const med = medidaDoCorpo(k);
+  const nome = med ? med.n.charAt(0).toUpperCase() + med.n.slice(1) : k;
+  const un = unidadeDoCorpo(k);
+  toast(substituiu
     ? `${nome} de ${rotulo} atualizado para ${fmtDec(v)} ${un}.`
     : `${fmtDec(v)} ${un} registrado ${rotulo === 'hoje' ? 'hoje' : 'em ' + rotulo}.`);
 }
+
+/**
+ * A TORNEIRA DA BIOIMPEDÂNCIA: registra uma leitura da balança.
+ *
+ * Toda a tubulação das cinco grandezas já existia — `MEDIDAS_DO_CORPO` as
+ * declara, a migração 9 → 10 criou as chaves em `S.body`, a lista branca da
+ * cópia de segurança as preserva, `chaveDeMarca` tem lápide para cada uma e a
+ * fusão as soma. **Faltava a porta de escrita.** Nada no app gravava a
+ * primeira leitura, e `addBody('bioPeso')` recusava com "Digite um número
+ * válido" porque não há (nem deve haver) valor de partida para elas.
+ *
+ * **Recebe a LEITURA INTEIRA, não uma grandeza por vez.** As cinco saem da
+ * mesma pesagem, e a tabela do domínio diz isso em letras (`bio` é *"sai da
+ * balança de bioimpedância, na mesma leitura das outras `bio`"*). Gravar três
+ * de quatro deixaria uma leitura que não fecha — massa de gordura sem
+ * percentual, percentual sem peso — e é dela que a média semanal depois lê.
+ * Por isso a recusa é ATÔMICA: nada entra pela metade.
+ *
+ * **`bioAgua` é a única opcional**, e isso não é leniência do app: é
+ * `MEDIDAS_DO_CORPO[].obrigatorio`, consultado aqui em vez de transcrito.
+ * Vazia, ela não entra — e não vira zero, que seria medição inventada.
+ *
+ * **O peso daqui é registro SEPARADO de `S.body.peso`.** Ele pesa na balança
+ * do banheiro de manhã e mede na de bioimpedância em outra hora; as duas
+ * séries convivem de propósito, e unificá-las perderia a diferença entre as
+ * duas balanças. O veredito da dieta continua lendo só a da manhã.
+ *
+ * **Não há valor de partida para as cinco em `CORPO_PADRAO`, e não deve
+ * haver**: um padrão de `bioGorduraPct: 18` seria o app inventando leitura de
+ * balança. Campo de bioimpedância nasce vazio, e esta é a única porta que o
+ * enche.
+ *
+ * **ESTE VERBO EXISTE E A TELA NÃO.** A capacidade está no modelo, alcançável
+ * e testável por aqui; nenhuma tela do app a oferece ao dedo ainda, e o resumo
+ * do acervo (`CTX.dadosDoApp`) continua não contando as cinco. A tela é de
+ * outra frente.
+ *
+ * @param {object} leitura valores por chave de grandeza. Texto com vírgula
+ *   decimal é aceito, porque é o que um campo de aparelho entrega.
+ * @param {number} [quando] o instante da leitura; o padrão é agora. Data no
+ *   futuro é recusada, como em `CTX.setDiaCorpo`.
+ * @returns {Promise<object>} `{ ok: true, em, gravadas }` ou
+ *   `{ ok: false, falta, invalidas }` — sempre por valor, nunca um elemento.
+ */
+async function registraBio(leitura, quando) {
+  const L = (leitura && typeof leitura === 'object') ? leitura : {};
+  const t = quando == null ? Date.now() : Number(quando);
+  if (!t || isNaN(t) || t > Date.now()) {
+    toast('Data no futuro: a leitura não foi registrada.');
+    return { ok: false, falta: [], invalidas: [], futuro: true };
+  }
+
+  const falta = [], invalidas = [], vai = [];
+  MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).forEach(function (m) {
+    const bruto = L[m.k];
+    if (bruto == null || bruto === '') { if (m.obrigatorio) falta.push(m); return; }
+    const v = typeof bruto === 'number' ? bruto : parseFloat(String(bruto).replace(',', '.'));
+    // Opcional preenchida com lixo também recusa: deixar passar em silêncio
+    // perderia uma medida que ele digitou, e um erro de digitação não é
+    // "não medi".
+    if (isNaN(v) || v <= 0) { invalidas.push(m); return; }
+    vai.push({ k: m.k, v: v });
+  });
+
+  const nomes = function (ms) { return ms.map(function (m) { return m.n; }).join(', '); };
+  if (invalidas.length) {
+    toast('Número inválido em ' + nomes(invalidas) + '.');
+    return { ok: false, falta: falta.map(m => m.k), invalidas: invalidas.map(m => m.k) };
+  }
+  if (falta.length) {
+    // §10.1: não é "campo obrigatório". A frase diz POR QUE ele é, que é a única
+    // coisa que torna a exigência razoável num fluxo de transcrever um visor.
+    const com = vai.length ? ': com ' + POR_EXTENSO[vai.length] + ', a série do mês fica sem comparação.' : '.';
+    toast((falta.length === 1 ? 'Falta ' : 'Faltam ') + listaComE(falta.map(nomeNaFrase)) +
+          '. Os cinco números são uma medição só' + com);
+    return { ok: false, falta: falta.map(m => m.k), invalidas: [] };
+  }
+
+  // Um instante só para as cinco: é o que as torna UMA leitura, e é o que a
+  // fusão usa para casar o mesmo dia vindo de dois aparelhos.
+  let substituiu = 0;
+  vai.forEach(function (x) { substituiu += gravaMarca(x.k, x.v, t); });
+
+  await save();
+  render();
+  // "Guardei os cinco números de 01/10 neste aparelho." (§10.3): quantos, e o
+  // que entrou — é o que impede o "Guardar" de ser o "Salvar" que V2 recusa.
+  toast('Guardei os ' + POR_EXTENSO[vai.length] + ' números de ' + fmtDate(t) + ' neste aparelho.' +
+        (substituiu ? ' Substituí a leitura que havia nesse dia.' : ''));
+  return { ok: true, em: t, gravadas: vai.map(function (x) { return x.k; }) };
+}
+const POR_EXTENSO = ['nenhum', 'um', 'dois', 'três', 'quatro', 'cinco'];
+/** "a massa de gordura e o percentual de gordura": o nome com o artigo. */
+const ARTIGO_DA_BIO = { bioPeso: 'o', bioMusculo: 'a', bioGordura: 'a', bioGorduraPct: 'o', bioAgua: 'a' };
+function nomeNaFrase(m) { return (ARTIGO_DA_BIO[m.k] ? ARTIGO_DA_BIO[m.k] + ' ' : '') + m.n; }
+function listaComE(xs) {
+  return xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' e ' + xs[xs.length - 1];
+}
+
+/**
+ * Valor com a unidade da grandeza, como se escreve.
+ *
+ * O `%` cola no número e as outras levam espaço — é a regra que o resto do app
+ * já segue (`+2,3%`, `81,2 kg`), e ela mora aqui para a frase não a decidir.
+ */
+function comUnidade(v, u) { return fmtDec(v) + (u === '%' ? '' : ' ') + u; }
+
+// ---------- o painel de PARE (decisão 13) ----------
+// A família "vai destruir" da frente 3 (§3.3), para as NOVE ações que apagam
+// dado que o aparelho não reconstrói. Promessa e não o diálogo do sistema: os
+// botões dele chamam-se "OK" e "Cancelar", e a regra escrita é que nenhum painel de
+// pare tenha esses rótulos — o botão repete o verbo com o objeto, e a saída é
+// "Deixar como está". As outras catorze perguntas do app mexem em prescrição ou
+// em conta, o registro fica, e continuam no diálogo do sistema: pintá-las de pare
+// treinaria o dono a ignorar o painel.
+let pareResolve = null;
+let pareSeq = 0;
+/**
+ * @param {{ texto: string, sim: string }} opcoes a frase inteira, aberta pelo
+ *   infinitivo do estrago e com o número do que vai embora; e o rótulo do botão,
+ *   que repete o verbo com o objeto
+ * @returns {Promise<boolean>} se ele tocou no verbo
+ */
+function pare(opcoes) {
+  // Um painel por vez. Um pedido novo com outro esperando responde ao primeiro
+  // que não — o primeiro não pode ficar pendurado para sempre.
+  if (pareResolve) { const r = pareResolve; pareResolve = null; r(false); }
+  return new Promise(function (resolve) {
+    pareResolve = resolve;
+    // `tom: 'pergunta'` é a variante NEUTRA, para a pergunta que para o dedo
+    // sem destruir nada (encerrar com pendentes, §7.7). A moldura de pare é só
+    // das duas famílias da decisão 13: "nada mais usa o painel de pare" (§3.4).
+    view.pare = { id: ++pareSeq, texto: opcoes.texto, sim: opcoes.sim,
+                  nao: opcoes.nao || null, tom: opcoes.tom || 'pare' };
+    render();
+  });
+}
+function respondePare(sim) {
+  const r = pareResolve;
+  pareResolve = null;
+  view.pare = null;
+  render();
+  if (r) r(!!sim);
+}
+CTX.pare = function () { return view.pare || null; };
+CTX.respondePare = function (sim) { respondePare(sim); };
+
+// As portas da gravação que falhou (o mecanismo mora junto de `grava()`).
+CTX.naoGuardado = function () { return view.naoGuardado || null; };
+CTX.falhou = function () { return view.falhou && view.naoGuardado ? view.naoGuardado : null; };
+/** Tentar de novo é repetir a MESMA intenção: gravar o estado inteiro. */
+CTX.tentaGravar = function () { return save(); };
+/**
+ * Copiar o registro inteiro: o estado é regravado inteiro a cada série (F256),
+ * então a cópia é a cópia de segurança completa (F249), e não um remendo.
+ */
+CTX.copiaRegistro = async function () {
+  try {
+    await navigator.clipboard.writeText(payload());
+    toast('Copiei o registro inteiro. Cole num lugar fora deste aparelho.');
+  } catch (e) {
+    toast('Não consegui copiar. Ajustes › Cópia de segurança exporta o mesmo registro.');
+  }
+};
+CTX.dispensaFalha = function () { dispensaFalha(); };
+
+
 async function delBody(k, t) {
   // Confirma, como as outras ações destrutivas: a medida é um ponto de um dia
   // que já passou, e desfazer seria ter decorado o número. O aviso delimita o
   // estrago em vez de dramatizar.
+  //
+  // Nome e unidade saem de `MEDIDAS_DO_CORPO`, e nunca de um ternário em
+  // `k === 'peso'`. Com as cinco grandezas da bioimpedância em `S.body` desde a
+  // migração 9 → 10, o ternário fazia este aviso DESTRUTIVO perguntar pela
+  // grandeza errada na unidade errada: remover uma leitura de `bioGorduraPct`
+  // perguntava *"Remover a cintura de 08/10 (17,8 cm)?"*. A tabela do domínio
+  // sabe o nome e a unidade das sete; transcrever duas delas aqui era a única
+  // razão de o aviso poder mentir.
+  //
+  // E é PARE (§3.3 da frente 3): a medida apagada não volta, e com lápide a
+  // sincronia não a ressuscita. A frase abre pelo infinitivo do estrago, diz o
+  // número que vai embora, e o botão repete o verbo com o objeto. Só o peso da
+  // manhã entra na média da semana e no ritmo — dizer isso das outras onze seria
+  // a frase mentindo sobre o que a regra lê.
   const m = S.body[k].filter(function (x) { return x.t === t; })[0];
-  const alvo = k === 'peso' ? 'o peso' : 'a cintura';
-  const un = k === 'peso' ? ' kg' : ' cm';
-  if (m && !confirm('Remover ' + alvo + ' de ' + fmtDate(t) +
-      ' (' + fmtDec(m.v) + un + ')?\n\n' +
-      'Sai da média da semana e do ritmo. As outras medidas ficam.')) return;
+  const med = MEDIDAS_DO_CORPO.filter(function (x) { return x.k === k; })[0];
+  if (!m) return;
+  const quando = fmtDate(t), valor = comUnidade(m.v, med ? med.u : '');
+  const sim = await pare(k === 'peso'
+    ? { texto: 'Apagar o peso de ' + quando + ' (' + valor + ') tira ele da média da semana e do ritmo. As outras medidas ficam.',
+        sim: 'Apagar o peso de ' + quando }
+    : { texto: 'Apagar a medida de ' + (med ? med.n : k) + ' de ' + quando + ' (' + valor + ') tira ela do histórico. As outras medidas ficam.',
+        sim: 'Apagar a medida de ' + quando });
+  if (!sim) return;
   lapide(chaveDeMarca(k, { t: t }));
   S.body[k] = S.body[k].filter(x => x.t !== t);
   await save(); render();
@@ -3458,8 +4111,11 @@ async function importText(txt) {
 
   S = { logs: d.logs, done: d.done, deload: !!d.deload, draft: d.draft || null,
         cardio: Array.isArray(d.cardio) ? d.cardio : [],
-        body: { peso: (d.body && Array.isArray(d.body.peso)) ? d.body.peso : [],
-                cintura: (d.body && Array.isArray(d.body.cintura)) ? d.body.cintura : [] },
+        // A lista branca das medidas do corpo também é por chave, e também
+        // enumera `MARCAS_DO_CORPO`: escrita à mão, ela derrubaria em silêncio
+        // as cinco da bioimpedância — que é exatamente como os seis campos de
+        // topo tinham sido perdidos.
+        body: corpoDoBackup(d.body),
         sessao: d.sessao || null,
         carga: (d.carga && typeof d.carga === 'object') ? d.carga : {},
         export: typeof d.export === 'number' ? d.export : 0,
@@ -3469,12 +4125,30 @@ async function importText(txt) {
         mods: d.mods || null, progLog: Array.isArray(d.progLog) ? d.progLog : [],
         // A metade de comida entra pelo mesmo caminho. Whitelist e não spread
         // de propósito: um backup adulterado não pode injetar campo que o app
-        // não conhece. O preço é este — campo novo tem que ser listado aqui,
-        // e um teste cobra que a lista bata com o que é exportado.
+        // não conhece. O preço é este — campo novo tem que ser listado aqui.
+        // O teste que cobra a paridade com a exportação é
+        // "reimportar devolve TODOS os campos" em `tests/fluxo/dados.test.js`:
+        // ele escreve em cada campo, exporta, apaga, importa e compara tudo.
+        // Antes dele, a promessa deste comentário não existia em teste nenhum,
+        // e seis campos tinham ficado para trás.
         cadencia: Array.isArray(d.cadencia) && d.cadencia.length === 7 ? d.cadencia : null,
         comida: (d.comida && typeof d.comida === 'object') ? d.comida : null,
         dia: (d.dia && typeof d.dia === 'object') ? d.dia : null,
-        ajuste: (d.ajuste === -1 || d.ajuste === 1) ? d.ajuste : 0,
+        // `ajuste` é SALDO acumulado de passos de ±150 kcal, não estado
+        // ternário — o comentário do tipo diz, com estas palavras, que "dois
+        // cortes seguidos são −300 kcal, não outro −150" e que isso "não cabe
+        // em `-1 | 0 | 1`, que descreve um destino e não um saldo".
+        //
+        // Esta linha clampava a −1|0|1 e era a única no app a fazê-lo: o tipo
+        // diz `number`, quem escreve faz `antes + passo` sem teto, e
+        // `normalizaEstado()` aceita qualquer número finito. Então um backup de
+        // quem estava em dois passos voltava com saldo ZERO, calado — e zero não
+        // parece dado perdido, parece "nenhum ajuste em vigor". Mesma família do
+        // bug dos seis campos: perda muda no único caminho de volta que ele tem.
+        //
+        // Passa número finito e deixa `normalizaEstado()` arredondar: é ele o
+        // único lugar que sabe o padrão de cada campo.
+        ajuste: (typeof d.ajuste === 'number' && isFinite(d.ajuste)) ? d.ajuste : 0,
         perfManual: (d.perfManual === true || d.perfManual === false) ? d.perfManual : null,
         compras: (d.compras && typeof d.compras === 'object') ? d.compras : null,
         // a sincronização: sem estes, importar um backup zeraria o carimbo do
@@ -3483,7 +4157,19 @@ async function importText(txt) {
         apagados: (d.apagados && typeof d.apagados === 'object') ? d.apagados : {},
         descanso: (d.descanso && typeof d.descanso === 'object') ? d.descanso : {},
         fotos: (d.fotos && typeof d.fotos === 'object') ? d.fotos : {},
-        promoPendente: (d.promoPendente && typeof d.promoPendente === 'object') ? d.promoPendente : null };
+        // Coleção desde o plano 10, e o backup pode ser de antes: o documento
+        // antigo entra como está e `migraPlano10` o converte, logo abaixo.
+        promoPendente: (d.promoPendente && typeof d.promoPendente === 'object') ? d.promoPendente : [],
+        // Estes seis ficaram para trás quando nasceram, e a perda era MUDA:
+        // `normalizaEstado()` roda logo abaixo e devolve todos vazios, então o
+        // app abria limpo sem avisar nada — com o backup intacto no disco e
+        // inútil. É o caminho de volta dele que estava quebrado.
+        ajusteHist: Array.isArray(d.ajusteHist) ? d.ajusteHist : [],
+        gordura: Array.isArray(d.gordura) ? d.gordura : [],
+        aulas: Array.isArray(d.aulas) ? d.aulas : [],
+        comidaHist: Array.isArray(d.comidaHist) ? d.comidaHist : [],
+        protocolo: (d.protocolo && typeof d.protocolo === 'object') ? d.protocolo : null,
+        quadro: (d.quadro && typeof d.quadro === 'object') ? d.quadro : null };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();
@@ -3498,6 +4184,9 @@ async function importText(txt) {
   migraPlano7(S);
   migraPlano8(S);
   migraPlano9(S);
+  migraPlano10(S);
+  migraPlano11(S);
+  migraPlano12(S);
   montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;
@@ -3553,6 +4242,13 @@ function toggle(i){
   const abrindo = view.open !== i;
   view.open = abrindo ? i : null;
   view.swapOpen = null; view.nota = null; view.carga = null; view.medida = null;
+  // A RÉGUA e a escala de RIR também fecham. Para a régua isso é requisito — o
+  // R5 da frente 2 proíbe posição que sobreviva à desmontagem, "se guardar, a
+  // próxima montagem herda a janela de uma sessão que acabou" —, e sem isto o
+  // toque seguinte no botão ALTERNAVA para fechado em vez de abrir, porque
+  // `view.regua` continuava apontando a mesma série. A escala de RIR entra na
+  // mesma linha: ela já devia fechar e não fechava.
+  view.regua = null; view.rir = null; view.teclado = null;
   render();
   if (abrindo) mostraExercicio(i);
 }
@@ -3562,29 +4258,63 @@ function dorName(k){ const x = DORES.filter(y=>y.k===k)[0]; return x ? x.t : k; 
 // e nada se perde ao abrir outro exercício ou fechar o app no meio do treino.
 // type="number" recusa vírgula: no teclado pt-BR "73,4" chegava aqui como string
 // vazia. Os campos são type="text" e a limpeza é feita na mão.
-function limpaNum(el, dec) {
-  const antes = el.value;
-  const depois = antes.replace(dec ? /[^0-9.,]/g : /[^0-9]/g, '');
-  if (depois !== antes) el.value = depois;
-  return depois.replace(',', '.');
+/** O que um campo numérico deixa ficar: dígito, e separador decimal quando couber. */
+function filtroNum(dec) { return dec ? /[^0-9.,]/g : /[^0-9]/g; }
+
+/**
+ * O número que há num texto, normalizado: vírgula vale ponto, o resto cai fora.
+ *
+ * É a metade POR VALOR de `limpaNum`. A outra metade — reescrever o campo com o
+ * que sobrou — é da casca, e é a única parte que precisa de um elemento.
+ */
+function soNumero(v, dec) {
+  return (v == null ? '' : String(v)).replace(filtroNum(dec), '').replace(',', '.');
 }
 
-function inp(el, i, k, pos) {
+function limpaNum(el, dec) {
+  const limpo = el.value.replace(filtroNum(dec), '');
+  if (limpo !== el.value) el.value = limpo;
+  return limpo.replace(',', '.');
+}
+
+/**
+ * Registra um valor de série — carga (`pos` 0), repetição (1) ou RIR (2) — na
+ * posição `i` do dia aberto, série `k`. **Por valor.**
+ *
+ * Esta é a interação de maior frequência do produto, e até aqui a única porta
+ * para ela era pôr texto num campo e disparar `input`: `inp` recebia o
+ * elemento, e nenhum teste conseguia registrar uma série sem a tela de hoje.
+ * Agora `inp` é a casca — lê o campo, reescreve o que o campo aceita, pinta o
+ * `done` — e tudo que é modelo mora aqui.
+ *
+ * `valor` aceita número ou texto, com vírgula ou ponto; `''` e `null` apagam a
+ * série, que é o gesto de "digitei errado" e tem de continuar existindo.
+ */
+function anotaSerie(i, k, pos, valor) {
   const e = draftOf(i);
   if (!e.s[k]) e.s[k] = [null,null];
-  const raw = limpaNum(el, pos === 0);
+  // antes da escrita, senão registrar e corrigir ficam indistinguíveis
+  const jaRegistrada = serieJaRegistrada(i, k);
+  const raw = soNumero(valor, pos === 0);
   const num = pos === 0 ? parseFloat(raw) : parseInt(raw,10);
   const v = (raw === '' || isNaN(num)) ? null : num;
   // RIR não é grandeza aberta: acima de 5 a pessoa não está treinando perto o
   // suficiente para o número significar algo, e negativo não existe
   e.s[k][pos] = (pos === 2 && v != null) ? Math.max(0, Math.min(5, v)) : v;
-  el.classList.toggle('done', el.value !== '');
+  declaraGravacao('a série ' + (k + 1),
+    (e.s[k][0] != null && e.s[k][1] != null) ? fmtNum(e.s[k][0]).replace('.', ',') + ' × ' + e.s[k][1] : null);
   segurarTela();
   projeta(i);
   atualizaEstado();
   atualizaAnilhas(i);
   queueSave();
-  autoTimer(i, k, e);
+  autoTimer(i, k, e, jaRegistrada);
+}
+
+function inp(el, i, k, pos) {
+  const raw = limpaNum(el, pos === 0);
+  el.classList.toggle('done', el.value !== '');
+  anotaSerie(i, k, pos, raw);
 }
 
 /**
@@ -3605,25 +4335,91 @@ function inp(el, i, k, pos) {
  * Não dispara o cronômetro de descanso: quem preenche isto está com a aula
  * terminada, e um contador de descanso começando aí não serve a ninguém.
  */
-function inpRapido(el, i, pos) {
+function anotaSerieRapida(i, pos, valor) {
   const ex = treino(view.day).ex[i];
   if (!ex) return;
   const e = draftOf(i);
-  const raw = limpaNum(el, pos === 0);
+  const raw = soNumero(valor, pos === 0);
   const num = pos === 0 ? parseFloat(raw) : parseInt(raw, 10);
   const v = (raw === '' || isNaN(num)) ? null : num;
   for (let k = 0; k < setsFor(ex); k++) {
     if (!e.s[k]) e.s[k] = [null, null];
     e.s[k][pos] = v;
   }
-  el.classList.toggle('done', el.value !== '');
   segurarTela();
   projeta(i);
   atualizaEstado();
   queueSave();
 }
 
-function abrirRapido() { view.rapido = !view.rapido; view.open = null; render(); }
+/**
+ * O teclado próprio na LISTA RÁPIDA, para a carga (`pos` 0) e a medida (1) de
+ * um movimento.
+ *
+ * §6.1 manda próprio aqui, e o fonte já dizia por quê, no comentário de
+ * `anotaSerieRapida`: a janela de registro da aula é "DEPOIS da aula, ofegante,
+ * sentado, e ela é curta". Curta é o que define — o teclado do sistema cobre
+ * metade da tela e esconde os movimentos seguintes da própria lista.
+ *
+ * Parte do valor REGISTRADO, como na série e ao contrário do corpo: aqui não há
+ * stepper acima mostrando o número, então o teclado é o único editor do valor,
+ * e abrir vazio faria um valor já registrado parecer ausente.
+ *
+ * Tocar no mesmo botão fecha; tocar no outro troca. Um painel só.
+ */
+function abreTecladoRapido(i, pos) {
+  if (!treino(view.day).ex[i]) return;
+  const a = view.teclado && view.teclado.alvo;
+  if (a && a.tipo === 'rapida' && a.i === i && a.pos === pos) {
+    view.teclado = null; render(); return;
+  }
+  const dr = draftPeek(i);
+  const v = dr && dr.s && dr.s[0] ? dr.s[0][pos] : null;
+  view.regua = null; view.rir = null;
+  view.teclado = { alvo: { tipo: 'rapida', i: i, pos: pos },
+                   texto: v != null ? String(v).replace('.', ',') : '' };
+  render();
+}
+
+function abrirRapido() {
+  view.rapido = !view.rapido; view.open = null;
+  // Fechar a lista fecha o teclado dela: um painel aberto sem a linha que o
+  // abriu ficaria escrevendo num movimento que não está mais na tela.
+  if (!view.rapido && view.teclado && view.teclado.alvo.tipo === 'rapida') view.teclado = null;
+  render();
+}
+
+/** Série completa: carga E repetição. É o critério do disparo do descanso. */
+function serieCheia(e, k) {
+  return !!(e && e.s && e.s[k] && e.s[k][0] != null && e.s[k][1] != null);
+}
+
+/**
+ * Esta série já estava registrada ANTES deste toque?
+ *
+ * É a pergunta que separa REGISTRAR de CORRIGIR, e é ela que decide se o
+ * descanso começa. Tem de ser feita antes da escrita: depois dela os dois atos
+ * são indistinguíveis.
+ *
+ * A marca era `view.fired[dia + i + ':' + k]` — campo de `view`, MEMÓRIA e
+ * nunca disco. O iOS fecha o app em segundo plano no meio do treino; ao reabrir
+ * a marca nascia vazia, e corrigir uma série registrada quinze minutos antes
+ * disparava um descanso de dois minutos para uma série que já tinha acabado.
+ *
+ * A resposta agora vem do DADO, que sobrevive ao processo: o rascunho, que vai
+ * a disco, e — como segunda fonte, para quando o rascunho daquela posição ainda
+ * não foi hidratado — a série já escrita no histórico desta sessão. As duas
+ * espelham a mesma verdade, porque `projeta` reescreve o histórico a partir do
+ * rascunho; a segunda só cobre a janela em que a primeira está vazia.
+ */
+function serieJaRegistrada(i, k) {
+  if (serieCheia(draftPeek(i), k)) return true;
+  const s = S.sessao;
+  if (!s) return false;
+  const entry = entradaDaSessao(view.day, i, s.sid);
+  const set = entry && entry.sets && entry.sets[k];
+  return !!(set && set[0] != null && set[1] != null);
+}
 
 // O cronômetro começa sozinho quando QUALQUER série fica completa.
 //
@@ -3633,18 +4429,70 @@ function abrirRapido() { view.rapido = !view.rapido; view.open = null; render();
 // a mais por série, de pé, com uma mão, que é o contexto que este app existe
 // para respeitar.
 //
-// A marca de "já disparou" passou a ser POR SÉRIE (`dia + exercício : série`).
-// Com uma marca por exercício, a série 2 não dispararia depois da 1. Apagar o
-// campo rearma aquela série e só ela.
-function autoTimer(i, k, e) {
+// A pergunta é POR SÉRIE, não por exercício: com uma marca por exercício, a
+// série 2 não dispararia depois da 1. E apagar o campo rearma aquela série e só
+// ela.
+//
+// `jaRegistrada` vem do CHAMADOR, medido antes da escrita (`serieJaRegistrada`):
+// é o que separa registrar de corrigir, e é por isso que corrigir não reinicia
+// o descanso.
+/**
+ * Anuncia a série, com o valor dentro do anúncio.
+ *
+ * "55 kg × 9, série 3 guardada" — e o valor dentro é o ponto: um anúncio que
+ * diga só "guardado" obriga quem usa leitor de tela a ir conferir o que foi
+ * guardado, que é justamente o trabalho que o anúncio existe para poupar.
+ *
+ * Hoje a confirmação visual já existe e é boa (`voa()` leva o valor até a
+ * tabela). O que faltava era a metade auditiva: nenhuma das chamadas de `toast`
+ * é da gravação de série, e o `<input>` ecoava o valor por ser campo — o que
+ * deixa de valer no dia em que a régua substituir o campo.
+ *
+ * Região própria e invisível, e não o toast: 48 toasts por semana competindo com
+ * o cronômetro de descanso — que começa no mesmo instante — seriam ruído para
+ * quem vê, para resolver um problema de quem não vê.
+ */
+function dizSerie(i, k, e, jaRegistrada) {
+  const el = document.getElementById('serie-dita');
+  if (!el) return;
+  const s = e.s[k] || [];
+  const ex = treino(view.day).ex[i];
+  const un = unidadeDe(ex);
+  // "55" e não "55,0": o anúncio diz o que ele DIGITOU, e a casa decimal vazia
+  // lida em voz alta vira "cinquenta e cinco vírgula zero". Inteiro sai inteiro;
+  // decimal sai com vírgula, porque ponto em português se lê como outra coisa.
+  const num = function (v) { return v % 1 === 0 ? String(v) : fmtDec(v); };
+  const peso = s[0] == null ? null : num(s[0]) + (un ? ' ' + ROTULO_UNIDADE[un] : ' kg');
+  const reps = s[1] == null ? null : String(s[1]);
+  const valor = peso && reps ? peso + ' × ' + reps : (peso || reps || '');
+  // "Guardei a série 3: 55 kg × 9." / "Corrigi a série 3: 55 kg × 9, igual à
+  // última." — o agente aparece (V8), e corrigir tem verbo próprio: guardar de
+  // novo soaria como série nova. O "igual à última" saiu do botão da régua
+  // (§8.3) e vem para cá, onde cabe e é lido depois do toque.
+  const p = jaRegistrada ? lastSet(logKey(view.day, i), k) : null;
+  const igual = !!(p && p[0] === s[0] && p[1] === s[1]);
+  el.textContent = (jaRegistrada ? 'Corrigi' : 'Guardei') + ' a série ' + (k + 1) + ': ' +
+    valor + (igual ? ', igual à última' : '') + '.';
+}
+
+function autoTimer(i, k, e, jaRegistrada) {
   const ex = treino(view.day).ex[i];
   const ult = setsFor(ex) - 1;
-  const tag = view.day + i + ':' + k;
-  const cheia = e.s[k] && e.s[k][0] != null && e.s[k][1] != null;
+  const cheia = serieCheia(e, k);
 
-  if (!cheia) { view.fired[tag] = false; return; }
-  if (view.fired[tag]) return;
-  view.fired[tag] = true;
+  // série incompleta não tem descanso a começar — e completá-la de novo depois
+  // de apagar o campo REARMA o disparo daquela série, porque aí ela deixou de
+  // estar registrada
+  if (!cheia) return;
+  // A SÉRIE GUARDADA É ANUNCIADA, com o valor dentro (frente 2, R6). Fica aqui
+  // porque é aqui que o app sabe que a série ficou COMPLETA e é NOVA — as duas
+  // coisas que fazem dela uma gravação e não uma correção.
+  //
+  // Antes do `return` do `jaRegistrada`: corrigir também merece anúncio, e com
+  // palavra diferente, porque o que mudou foi o valor e não o registro.
+  dizSerie(i, k, e, jaRegistrada);
+  // corrigir não reinicia o descanso: o valor muda, o instante não
+  if (jaRegistrada) return;
 
   // O bi-set não descansa entre as suas séries — é essa a definição. O primeiro
   // encadeia direto no segundo, e só quando o exercício acabou; nas séries do
@@ -3713,6 +4561,7 @@ function usaAnterior(i, k) {
   if (!p) return;
   const e = draftOf(i);
   if (!e.s[k]) e.s[k] = [null, null];
+  const jaRegistrada = serieJaRegistrada(i, k);
   e.s[k][0] = p[0];
   e.s[k][1] = p[1];
   segurarTela();
@@ -3721,10 +4570,11 @@ function usaAnterior(i, k) {
   atualizaAnilhas(i);
   queueSave();
   render();
-  autoTimer(i, k, e);
+  autoTimer(i, k, e, jaRegistrada);
 }
 
-function obsIn(el, i) { draftOf(i).obs = el.value; projeta(i); queueSave(); }
+function anotaObservacao(i, texto) { draftOf(i).obs = texto; projeta(i); queueSave(); }
+function obsIn(el, i) { anotaObservacao(i, el.value); }
 function toggleAq(i) { const e = draftOf(i); e.aq = !e.aq; projeta(i); queueSave(); render(); }
 // A anotação e os marcadores de dor ficam atrás de um link: na maioria das
 // sessões não há nada a registrar, e ocupavam espaço em todo exercício aberto.
@@ -3786,16 +4636,28 @@ function poeMedida(i, u, qTexto) {
  * ser escrito. Sem isto o cabeçalho dizia `1 × 20 reps` enquanto o campo já
  * mostrava 30, e as duas coisas ficavam na tela ao mesmo tempo.
  */
+/**
+ * A prescrição de uma posição do dia, em texto: `3 × 10–15`, `5 × 400 m`.
+ *
+ * É a metade POR VALOR de `atualizaPrescricao`: o que o cabeçalho tem de dizer,
+ * sem precisar de cabeçalho para dizê-lo. `null` quando não há exercício ali.
+ */
+function textoDaPrescricao(i) {
+  const ex = treino(view.day).ex[i];
+  if (!ex) return null;
+  const un = unidadeDe(ex);
+  const ns = setsFor(ex);
+  return un && ex.q > 0
+    ? ns + ' × ' + fmtInt(ex.q) + ' ' + ROTULO_UNIDADE[un]
+    : ns + (ex.r ? ' × ' + ex.r : '');
+}
+
 function atualizaPrescricao(i) {
   const el = document.getElementById('presc' + i);
   if (!el) return;
-  const ex = treino(view.day).ex[i];
-  if (!ex) return;
-  const un = unidadeDe(ex);
-  const ns = setsFor(ex);
-  el.textContent = un && ex.q > 0
-    ? ns + ' × ' + fmtInt(ex.q) + ' ' + ROTULO_UNIDADE[un]
-    : ns + (ex.r ? ' × ' + ex.r : '');
+  const txt = textoDaPrescricao(i);
+  if (txt == null) return;
+  el.textContent = txt;
 }
 
 /** Número de um campo livre: vírgula vale ponto, e vazio é ausência. */
@@ -3886,7 +4748,12 @@ async function tiraFoto(el) {
 async function apagaFoto() {
   const id = fotoAberta();
   if (!id) return;
-  if (!confirm('Apagar a foto deste aparelho?')) return;
+  // PARE (§3.3). A frente 3 escreveu "se houver cópia remota, ela continua lá",
+  // e o código diz o contrário: com conta, `NUVEM.apagaFoto` apaga a remota
+  // logo abaixo. A frase diz o que o código faz.
+  const remota = !!NUVEM.sessao();
+  if (!(await pare({ texto: 'Apagar a foto do equipamento de ' + nomeEx(id) + ' tira a imagem deste aparelho' + (remota ? ' e da cópia remota' : '') + '. O exercício continua; só a imagem sai. Isso não tem volta.',
+                     sim: 'Apagar a foto do equipamento' }))) return;
   const ref = S.fotos[id];
   FOTO.solta(id);
   await FOTO.esquece(id, ref ? ref.ext : 'webp');
@@ -3906,6 +4773,214 @@ async function apagaFoto() {
 // esconde as opções até abrir. Aqui a faixa aparece embaixo da própria linha,
 // mostra tudo de uma vez, e o segundo toque grava e fecha.
 const RIR_ESCALA = [0, 1, 2, 3, 4];
+
+/**
+ * A régua da série `k`, quando ela está aberta — e `null` quando não está.
+ *
+ * A REFERÊNCIA é o que ele fez nesta MESMA série da última vez. Sem histórico
+ * não há "última vez": aí a régua abre na base da faixa prescrita, que é onde o
+ * treinador manda recomeçar (F95, "recomeçar perto da base"), e a marca não
+ * aparece — dizer "última" sobre um número que ele nunca fez seria inventar.
+ */
+function reguaDaLinha(i, k, ex, anterior, valor, un) {
+  const r = view.regua;
+  if (!r || r.i !== i || r.k !== k || r.outro) return null;
+  const fx = faixaDoTexto(ex.r);
+  const tem = !!(anterior && anterior[1] != null);
+  const ref = tem ? anterior[1] : (fx ? fx[0] : 10);
+  const reg = regua(ref, fx);
+  return {
+    slots: pagina(reg, r.foco != null ? r.foco : ref),
+    marca: tem ? 'última' : null,
+    referencia: ref,
+    // "Corrigir a série 3 · guardada: 55 kg × 9" — só com a série já guardada,
+    // que é quando o toque CORRIGE (§8.2). O "às 6h52" do desenho não vem: a
+    // série não guarda o próprio instante, só a sessão.
+    corrige: valor && valor[1] != null
+      ? 'Corrigir a série ' + (k + 1) + ' · guardada: ' + textoDoGuardado(valor, un)
+      : null
+  };
+}
+
+/** "55 kg × 9", ou "9 repetições" sem carga — o par como ele está no disco. */
+function textoDoGuardado(s, un) {
+  return s[0] != null && s[0] !== ''
+    ? fmtNum(s[0]).replace('.', ',') + ' ' + un + ' × ' + s[1]
+    : s[1] + ' repetições';
+}
+
+/**
+ * Abre ou fecha a régua da série.
+ *
+ * O foco nasce do valor já registrado, ou da referência — **sempre recalculado
+ * na abertura, nunca herdado**. É o R5 da frente 2: posição que sobrevive à
+ * desmontagem faz a próxima montagem herdar a janela de uma sessão que acabou.
+ */
+function abreRegua(i, k) {
+  const aberta = view.regua && view.regua.i === i && view.regua.k === k;
+  if (aberta) { view.regua = null; render(); return; }
+  const dr = draftPeek(i);
+  const v = dr && dr.s[k] ? dr.s[k][1] : null;
+  view.rir = null; view.teclado = null;   // uma coisa aberta por vez embaixo da linha
+  view.regua = { i: i, k: k, foco: v != null ? v : null, outro: false };
+  render();
+}
+
+/** Anda a janela da régua: uma JANELA por toque, e o domínio explica por quê. */
+function andaRegua(dir) {
+  const r = view.regua;
+  if (!r) return;
+  const ex = treino(view.day).ex[r.i];
+  if (!ex) return;
+  const fx = faixaDoTexto(ex.r);
+  const p = lastSet(logKey(view.day, r.i), r.k);
+  const tem = !!(p && p[1] != null);
+  const ref = tem ? p[1] : (fx ? fx[0] : 10);
+  const reg = regua(ref, fx);
+  view.regua = Object.assign({}, r, { foco: anda(reg, r.foco != null ? r.foco : ref, dir) });
+  render();
+}
+
+/**
+ * O toque num número da régua: grava e fecha.
+ *
+ * Grava por `anotaSerie`, que é a porta POR VALOR — e com ela vêm de graça o
+ * cronômetro de descanso, o avanço de exercício e o anúncio da série (R6), que
+ * é justamente o que a régua tira do campo ao substituí-lo.
+ *
+ * **Tocar de novo no valor que já está lá APAGA.** O campo apagava com `''`, e
+ * `anotaSerie` diz por escrito que isso "é o gesto de 'digitei errado' e tem de
+ * continuar existindo" — a régua não tem campo para esvaziar, então o gesto
+ * passa a ser o segundo toque. É o mesmo desenho do RIR, que já faz assim com a
+ * razão escrita: "sem isso um toque errado não teria volta".
+ *
+ * E apagar REARMA o disparo do descanso daquela série, porque ela deixou de
+ * estar registrada — comportamento que o campo tinha e que não pode sair junto
+ * com ele.
+ */
+function poeRep(i, k, v) {
+  const dr = draftPeek(i);
+  const atual = dr && dr.s[k] ? dr.s[k][1] : null;
+  view.regua = null;
+  anotaSerie(i, k, 1, atual === v ? '' : v);
+  render();
+}
+
+/**
+ * A porta "outro valor": a repetição que não está na régua.
+ *
+ * Abre o TECLADO PRÓPRIO, que é o que a §6.1 manda aqui — e o caminho é raro por
+ * construção, porque a régua carrega a vizinhança da última vez e a faixa do
+ * treinador inteira. O texto nasce do valor já registrado: corrigir 27 para 28
+ * não começa do zero.
+ */
+function abreOutroValor() {
+  const r = view.regua;
+  if (!r) return;
+  const dr = draftPeek(r.i);
+  const v = dr && dr.s[r.k] ? dr.s[r.k][1] : null;
+  view.regua = null;
+  view.teclado = { alvo: { tipo: 'serie', i: r.i, k: r.k, pos: 1 },
+                   texto: v != null ? String(v) : '' };
+  render();
+}
+
+/**
+ * Uma tecla do teclado próprio.
+ *
+ * Escreve a cada tecla, como o campo escrevia a cada letra — é a mesma
+ * semântica, e `anotaSerie` continua sendo a porta. Vírgula vale ponto; texto
+ * que ainda não é número (`'22,'`) não apaga o que estava: `anotaSerie` só
+ * recebe o que já se lê como número.
+ */
+function teclaDoTeclado(t) {
+  const tc = view.teclado;
+  if (!tc) return;
+  const a = tc.alvo;
+  // Qual grandeza aceita vírgula: carga e as medidas de corpo, sim; repetição,
+  // não. A tecla nem aparece onde não aceita.
+  const decimal = a.tipo === 'corpo' || a.pos === 0;
+  const texto = teclar(tc.texto, t, decimal);
+  view.teclado = Object.assign({}, tc, { texto: texto });
+  // `'22,'` é digitação no meio do caminho: ainda não é número, e gravar nesse
+  // instante apagaria o valor por um passo. Gravar vazio, sim — é o gesto de
+  // apagar, que tem de continuar existindo.
+  if (!/,$/.test(texto)) {
+    if (a.tipo === 'serie') anotaSerie(a.i, a.k, a.pos, texto);
+    // A lista rápida escreve em TODAS as passadas do movimento, e a linha diz
+    // isso por extenso; quem converte a vírgula é `soNumero`, lá dentro.
+    else if (a.tipo === 'rapida') anotaSerieRapida(a.i, a.pos, texto);
+    else {
+      // Em corpo o vazio é "sem rascunho", e `valorDoCorpo` já lê isso caindo na
+      // última medida (ou no padrão). Guardar o último número digitado em vez de
+      // soltar deixaria o stepper mostrando um pedaço do que ele apagou.
+      //
+      // E apagar aqui NÃO apaga medida nenhuma: o teclado escreve rascunho, não
+      // histórico. Quem remove uma medida é a porta na lista das últimas, que é
+      // o único caminho para desfazer um 743 digitado no lugar de 74,3.
+      const n = numeroDoCampo(texto);
+      view.bodyForm = Object.assign({}, view.bodyForm, { [a.campo]: n == null ? null : n });
+    }
+  }
+  render();
+}
+
+function fechaTeclado() { view.teclado = null; render(); }
+
+/**
+ * O teclado da CARGA, aberto pelo botão da célula.
+ *
+ * §6.1: a carga da série é teclado PRÓPRIO. Era o último campo da sessão a abrir
+ * o teclado do sistema — o que cobre metade da tela no meio de uma série, que é
+ * a razão escrita no fonte desde que o RIR virou botão.
+ *
+ * O texto nasce do valor registrado, e `fmtNum` não entra aqui: o visor mostra o
+ * que foi DIGITADO, com vírgula, e quem converte é `anotaSerie`.
+ */
+function abreTecladoDeCarga(i, k) {
+  const a = view.teclado && view.teclado.alvo;
+  if (a && a.tipo === 'serie' && a.i === i && a.k === k && a.pos === 0) {
+    view.teclado = null; render(); return;
+  }
+  const dr = draftPeek(i);
+  const v = dr && dr.s[k] ? dr.s[k][0] : null;
+  view.regua = null; view.rir = null;
+  view.teclado = { alvo: { tipo: 'serie', i: i, k: k, pos: 0 },
+                   texto: v != null ? String(v).replace('.', ',') : '' };
+  render();
+}
+
+/**
+ * O teclado próprio em CORPO, para peso e cintura.
+ *
+ * §6.1 manda próprio nos dois, "com a régua de 100 g na frente" — e é isso que o
+ * stepper é. O que faltava era a outra metade da frase: *"a régua resolve o caso
+ * comum e o próprio resolve o resto"*.
+ *
+ * O resto tem tamanho medido: **a primeira pesagem parte de 75 kg**
+ * (`CORPO_PADRAO`), então quem pesa 73,6 chega lá com **14 toques** no menos —
+ * e a cintura parte de 85. Um valor longe do último não tinha caminho nenhum
+ * além de apertar.
+ *
+ * Escreve no RASCUNHO (`view.bodyForm`), que é onde o stepper escreve: quem
+ * registra continua sendo o botão de registrar, e a data escolhida continua
+ * valendo. O teclado é outra porta para o mesmo número, não outro registro.
+ */
+function abreTecladoDeCorpo(campo) {
+  const a = view.teclado && view.teclado.alvo;
+  if (a && a.tipo === 'corpo' && a.campo === campo) {
+    view.teclado = null; render(); return;
+  }
+  // NASCE VAZIO, e aqui isso é diferente da série. Lá o teclado é o único editor
+  // do valor, então ele parte do que está registrado. Aqui o stepper já mostra o
+  // número atual logo acima, e o valor de partida pode ser o PADRÃO (75 kg para
+  // o peso, 85 cm para a cintura) — pré-encher faria ele apagar dois dígitos
+  // antes de digitar os seus, que é o mesmo defeito dos catorze toques em
+  // miniatura. A divisão da §6.1 fica limpa: o stepper para o perto, o teclado
+  // para o resto.
+  view.teclado = { alvo: { tipo: 'corpo', campo: campo }, texto: '' };
+  render();
+}
 
 function abreRir(i, k) {
   const aberto = view.rir && view.rir.i === i && view.rir.k === k;
@@ -3957,11 +5032,107 @@ function setAlt(i, idEx) {
     ? 'Trocado por ' + nomeEx(idEx) + ' só para hoje. No fim do treino você decide se fica.'
     : 'De volta ao exercício original.');
 }
+// ---------- deload: o freio passou do lugar para a palavra (§7.6) ----------
+
+// A regra do treinador sobre deload, LITERAL: o parágrafo do programa que diz
+// quando e o quê. Vai entre aspas e com o autor, e por isso não pode ser
+// paráfrase — a frente escreveu uma, e o app não põe assinatura em frase que o
+// treinador não escreveu (o mesmo critério da dor e da máquina ocupada).
+const REGRA_DO_DELOAD = (function () {
+  const r = RULES.filter(function (x) { return x.k === 'deload'; })[0];
+  const p = r && r.p.filter(function (x) { return /evidência clara/.test(x); })[0];
+  return p ? p.replace(/<[^>]+>/g, '') : null;
+})();
+
+function nSeries(n) { return n + (n === 1 ? ' série' : ' séries'); }
+
+/** Quanto o prescrito do dia pede e quanto o deload deixa — a conta de `setsFor`. */
+function corteDoDeload(d) {
+  const t = treino(d);
+  if (!t || !t.ex.length) return null;
+  return {
+    nome: 'Treino ' + d,
+    cheio: t.ex.reduce(function (n, ex) { return n + _setsFor(ex, false); }, 0),
+    cortado: t.ex.reduce(function (n, ex) { return n + _setsFor(ex, true); }, 0)
+  };
+}
+
+/**
+ * As palavras de quem liga ou desliga o deload, com o número antes do toque.
+ * O menu da sessão e os avisos do treino leem daqui: duas portas para o mesmo
+ * interruptor, e nenhuma delas sem o freio da palavra.
+ */
+function itemDoDeload(d) {
+  const c = corteDoDeload(d);
+  if (!c) return null;
+  return S.deload
+    // "Sair do deload · devolve 10 séries ao Treino A de hoje"
+    ? { ligado: true, rotulo: 'Sair do deload',
+        detalhe: 'devolve ' + nSeries(c.cheio - c.cortado) + ' ao ' + c.nome + ' de hoje' }
+    // "Deload hoje · corta 20 séries para 10, nas mesmas cargas"
+    : { ligado: false, rotulo: 'Deload hoje',
+        detalhe: 'corta ' + nSeries(c.cheio) + ' para ' + c.cortado + ', nas mesmas cargas',
+        regra: REGRA_DO_DELOAD };
+}
+
+/**
+ * "Deload desligado. As 10 séries voltaram: Pulldown unilateral volta a pedir 4,
+ * e as 2 que você já registrou ficam." — a decisão 7 inteira numa frase. O
+ * exercício nomeado é o último em que ele registrou e que agora pede mais do que
+ * tem: é ali que o susto mora. Sem o "o" do desenho antes do nome, porque metade
+ * dos exercícios é feminina e o app não sabe o gênero de nenhum.
+ */
+function fraseDoDesligar(s) {
+  const c = corteDoDeload(s.day);
+  const volta = c ? c.cheio - c.cortado : 0;
+  if (!volta) return 'Deload desligado. Séries completas de volta.';
+  const abre = 'Deload desligado. ' + (volta === 1 ? 'A 1 série voltou' : 'As ' + volta + ' séries voltaram');
+  const ficam = function (n) { return n === 1 ? 'a 1 que você já registrou fica.' : 'as ' + n + ' que você já registrou ficam.'; };
+  let alvo = null, total = 0;
+  treino(s.day).ex.forEach(function (ex, i) {
+    const e = entradaDaSessao(s.day, i, s.sid);
+    if (!e) return;
+    const feitas = e.sets.filter(Boolean).length;
+    const pede = _setsFor(ex, false);
+    total += feitas;
+    if (feitas > 0 && feitas < pede && (!alvo || (e.m || 0) >= alvo.m)) {
+      alvo = { n: ex.n, pede: pede, feitas: feitas, m: e.m || 0 };
+    }
+  });
+  if (alvo) return abre + ': ' + alvo.n + ' volta a pedir ' + alvo.pede + ', e ' + ficam(alvo.feitas);
+  if (total) return abre + ', e ' + ficam(total);
+  return abre + '.';
+}
+
+/**
+ * O modo vale para a sessão INTEIRA, e o registro dela tem de dizer o mesmo que
+ * a tela. O `dl` de cada entrada é o que `estadoEx` lê para saber quantas séries
+ * o exercício pede: sem isto, desligar no meio deixava "feito" o exercício de 2
+ * séries enquanto a frase dizia que ele voltou a pedir 4, e a sessão saía
+ * marcada como deload — fora da conta das 48 — sem estar. Nenhuma série muda,
+ * só a marca do modo, com carimbo novo para a outra ponta da sincronia aceitar.
+ */
+function remarcaSessao(s) {
+  const agora = Date.now();
+  const remarca = function (x) {
+    if (x.sid !== s.sid || !!x.dl === S.deload) return;
+    if (S.deload) x.dl = 1; else delete x.dl;
+    x.m = agora;
+  };
+  Object.keys(S.logs).forEach(function (k) { S.logs[k].forEach(remarca); });
+  S.done.forEach(remarca);
+}
+
 async function setDeload(on) {
+  const s = S.sessao;
+  const frase = on
+    ? 'Deload ligado. Metade das séries, mesmas cargas. As sessões deste modo ficam marcadas, para a queda de volume não parecer regressão.'
+    : s ? fraseDoDesligar(s) : 'Deload desligado. Séries completas de volta.';
   S.deload = !!on;
+  if (s) remarcaSessao(s);
   await save();
   view.open = null; render();
-  toast(on ? 'Deload ativo: metade das séries, mesmas cargas.' : 'Deload desligado. Séries completas de volta.');
+  toast(frase);
 }
 
 // ---------- detalhe de uma sessão ----------
@@ -4064,11 +5235,14 @@ async function apagaRegistroDeTreino(t) {
   }, 0);
 
   // o aviso diz o que vai junto: apagar o dia e apagar as séries é uma
-  // decisão só, e ela não pode ser tomada sem o número na frente
-  const oQue = series
-    ? 'Apagar este treino e as ' + series + (series === 1 ? ' série registrada' : ' séries registradas') + ' nele?'
-    : 'Apagar este registro de treino?';
-  if (!confirm(oQue + '\n\nIsso não tem volta, e vale para os outros aparelhos.')) return;
+  // decisão só, e ela não pode ser tomada sem o número na frente. PARE (§3.3):
+  // o verbo abre a frase e o botão, nos dois casos.
+  const sim = await pare(series
+    ? { texto: 'Apagar este treino tira ' + (series === 1 ? 'a série registrada' : 'as ' + series + ' séries registradas') + ' nele. Isso não tem volta, e vale para os outros aparelhos.',
+        sim: 'Apagar o treino e ' + (series === 1 ? 'a série' : 'as ' + series + ' séries') }
+    : { texto: 'Apagar este registro de treino tira a marca do dia, que não tem série nenhuma. Isso não tem volta, e vale para os outros aparelhos.',
+        sim: 'Apagar o registro de treino' });
+  if (!sim) return;
 
   lapide(chaveDeSessao(m));
   linhas.forEach(function (x) { lapide(chaveDeLog(x.idEx, x.l)); });
@@ -4101,6 +5275,28 @@ async function corrigeDuracao(t, minutos) {
   view.sessao = m;
   await save(); render();
   toast('Tempo corrigido.');
+}
+
+/**
+ * "Está certo": o tempo aproximado passa a ser declarado, sem mudar o número.
+ *
+ * É a outra metade de `corrigeDuracao`, e a resposta mais comum — o app fechou
+ * na última série e quase sempre a última série É quando ele parou. Sem este
+ * verbo, aceitar custaria entrar na tela da sessão e redigitar o mesmo número,
+ * e o cartão do Agora ficaria para sempre perguntando o que ele já respondeu.
+ *
+ * `fim: 'manual'` é o MESMO carimbo que a correção escreve, e é de propósito:
+ * o que o carimbo significa é "este tempo é declarado", não "este tempo foi
+ * mudado". É ele que tira o "aproximado" da tela e que faz a pergunta sair do
+ * cartão de cima, sem precisar de uma marca de "já respondi".
+ */
+async function confirmaDuracao(t) {
+  const m = S.done.filter(function (x) { return x.t === t; })[0];
+  if (!m || m.fim === 'manual') return;
+  m.fim = 'manual';
+  m.m = Date.now();                    // carimbo: é ele que a fusão compara
+  await save(); render();
+  toast('Tempo confirmado.');
 }
 
 function abrirSessao(t){ view.sessao = S.done.filter(function (x) { return x.t === t; })[0]; if (view.sessao) { entraNoDestino('sessao'); render(); } }
@@ -4174,27 +5370,120 @@ function abrirRetro(){ view.retro = true; view.sessao = null; entraNoDestino('re
 function fecharRetro(){ view.retro = false; render(); saiDoDestino('retro'); }
 
 async function wipe() {
-  if (!confirm('Apagar todo o histórico? Isso não tem volta.')) return;
+  // "e vale para os outros aparelhos" é a frase que `apagaRegistroDeTreino` já
+  // usava, e agora ela é verdade aqui também: o gesto deixa lápide, e lápide
+  // viaja. Antes a promessa era menor do que a verdade — o apagamento era
+  // desfeito pela fusão —, e dizer o alcance é o que falta para o dono decidir
+  // com o que ele tem na mão.
+  // PARE (§3.3), com o número de cada coisa que sai — e o que FICA, porque
+  // "todo o histórico" lido de relance soa como o app inteiro.
+  const fotosDoCorpo = ((S.protocolo && S.protocolo.sessoes) || []).reduce(function (a, x) {
+    return a + Object.keys((x && x.fotos) || {}).length;
+  }, 0);
+  const medidas = MARCAS_DO_CORPO.reduce(function (a, k) { return a + ((S.body && S.body[k]) || []).length; }, 0);
+  const sai = [
+    [S.done.length, 'sessão', 'sessões'],
+    [(S.comidaHist || []).length, 'dia de comida', 'dias de comida'],
+    [medidas, 'medida do corpo', 'medidas do corpo'],
+    [S.cardio.length, 'cardio', 'cardios'],
+    [fotosDoCorpo, 'foto do corpo', 'fotos do corpo']
+  ].filter(function (x) { return x[0] > 0; }).map(function (x) { return x[0] + ' ' + (x[0] === 1 ? x[1] : x[2]); });
+  const lista = sai.length > 1 ? sai.slice(0, -1).join(', ') + ' e ' + sai[sai.length - 1] : (sai[0] || 'nada registrado ainda');
+  if (!(await pare({ texto: 'Apagar todo o histórico tira ' + lista + ' deste aparelho. O programa, o plano alimentar e as fotos de equipamento ficam. Isso não tem volta, e vale para os outros aparelhos.',
+                     sim: 'Apagar todo o histórico' }))) return;
+  const antes = S;
+  const agora = Date.now();
   // apagar o histórico não apaga o programa: os exercícios que ele cadastrou
   // e as mudanças que promoveu ao oficial sobrevivem
   S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
-        body:{ peso:[], cintura:[] }, carga:{}, export:0,
+        body:corpoVazio(), carga:{}, export:0,
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
         cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura, quadro:S.quadro,
-        perfManual:S.perfManual, compras:S.compras };
+        perfManual:S.perfManual, compras:S.compras,
+        // BIBLIOTECA e CATÁLOGO, pela mesma razão de `S.ex` acima — decisão do
+        // dono, 08/10. `aulas` são os modelos de aula que ELE salvou, e `fotos`
+        // são as fotos dos aparelhos, uma por exercício, para reconhecer a
+        // máquina na academia: atributo do catálogo, não registro de treino.
+        aulas:S.aulas, fotos:S.fotos,
+        // `protocolo` é PARTIDO: `poses` é a ordem das poses do protocolo —
+        // prescrição, e fica —, e `sessoes` são as sessões de foto de corpo —
+        // registro, e vão.
+        //
+        // Só `poses` é nomeada aqui de propósito: `normalizaEstado` logo abaixo
+        // é o único lugar que sabe o padrão de cada campo (`sessoes` vira `[]`,
+        // `poses` inválida vira `null`), e reconstruir a forma à mão já deixou a
+        // nutrição sem catálogo uma vez.
+        protocolo:{ poses: S.protocolo && S.protocolo.poses } };
   // Passa pela mesma normalização do boot: é o único lugar que sabe o padrão de
   // cada campo, e reconstruir o estado à mão aqui já deixou a nutrição sem
   // catálogo uma vez.
   normalizaEstado();
   montaCatalogo();
+
+  // A LÁPIDE de cada registro que acabou de sair — a outra porta da mesma
+  // ressurreição que a linha de baixo blinda.
+  //
+  // Preservar as lápides velhas não bastaria: elas falam dos registros apagados
+  // ANTES, e este gesto esvaziou as coleções em bloco, sem passar por `lapide()`
+  // em nenhum registro. Sem lápide nova, a fusão lê o que sobrou no outro
+  // aparelho como registro que este simplesmente não tem, e o traz de volta —
+  // contra um aviso que acabou de prometer que não tem volta.
+  //
+  // As velhas entram junto, por `uneLapides`: lápide de um registro que ESTE
+  // gesto não apagou continua sendo a única coisa que impede o outro aparelho
+  // de ressuscitá-lo, e jogá-la fora aqui era um apagamento desfeito de graça.
+  // Vem de lá, de quebra, a poda dos 90 dias.
+  S.apagados = uneLapides(antes.apagados || {}, lapidesDoApagamento(antes, S, agora), agora);
+
   try { await DB.delete(KEY); } catch(e){}
   // A velha vai junto. Deixá-la seria a migração do boot ressuscitar amanhã
   // exatamente o histórico que ele acabou de mandar apagar.
   try { await DB.delete(KEY_LEGADO); } catch(e){}
-  view.day='A'; view.aba='treino'; view.open=null; view.hist=null; view.json=null; view.paste=false;
-  view.swapOpen=null; view.fired={};
+  // E GRAVA — `save`, não `grava`.
+  //
+  // Apagar e não escrever deixava o apagamento só na memória: fechar o app
+  // antes do próximo toque perdia as lápides E a prescrição preservada, porque
+  // a chave tinha acabado de ser removida. O carimbo importa pelo mesmo motivo
+  // que nas outras escritas: é ele que decide de que lado vêm os DOCUMENTOS, e
+  // sem ele os que este gesto zerou (o dia de comida aberto, o rascunho)
+  // voltariam do outro aparelho. E `save` marca a sujeira: apagamento que não
+  // marca sujeira só sobe quando um toque sem relação com ele resolve subir.
+  //
+  // A ordem é deliberada: a remoção vem primeiro, e por isso uma escrita que
+  // falhe não pode deixar o histórico velho de pé na chave.
+  await save();
+
+  // Os BYTES das fotos de corpo que acabaram de perder a referência.
+  //
+  // `reconciliaCorpo` não alcança a poda depois deste gesto: ela termina em
+  // `if (recentes.length === sessoes.length) return;`, e com as sessões
+  // apagadas as duas contagens são ZERO — a igualdade é verdadeira e
+  // `CORPO.poda` nunca roda. Sem isto, o cache fica com todas as fotos de
+  // corpo para sempre, sem nada no estado que as referencie: o único índice
+  // delas era `S.protocolo.sessoes`, e ele acabou de sair.
+  //
+  // `[]` é a lista do que fica, e depois deste gesto o que fica é nada. Não é
+  // política nova: é a mesma porta que a reconciliação usa, com a lista que o
+  // resultado do apagamento dita. O que a lápide deixa voltar do outro
+  // aparelho volta do BUCKET, por `garanteBytes` — a poda já é o caminho
+  // normal das sessões antigas, e tem volta por lá.
+  //
+  // Depois do `save()`, e em `try`: uma falha de cache não pode impedir a
+  // escrita do estado apagado, que é a parte sem volta. E as fotos de APARELHO
+  // (`S.fotos`) não entram aqui — elas sobrevivem ao gesto, então os bytes
+  // delas continuam referenciados.
+  //
+  // O BUCKET das fotos de corpo NÃO é podado, e isto é limite conhecido, não
+  // esquecimento: `NUVEM.apagaCorpo` não tem um único chamador em `src/` — nem
+  // `CTX.apagaFotoDoCorpo`, que apaga UMA, o chama —, e decidir o que fazer
+  // quando uma das N chamadas de rede falha no meio de um gesto que hoje não
+  // faz rede nenhuma é política que ninguém escreveu. Ver `09-superficie.md`.
+  try { await CORPO.poda([]); } catch (e) {}
+
+  view.day='A'; view.aba='agora'; view.open=null; view.hist=null; view.json=null; view.paste=false;
+  view.swapOpen=null;
   render();
   toast('Histórico apagado.');
 }
@@ -4488,7 +5777,204 @@ window.addEventListener('online', function () { sincroniza(); });
 });
 
 // ---------------------------------------------------------------------------
-// A única porta que o app abre para fora de si.
+// ---------- desligamento ----------
+// O app não tinha fim. Tinha boot, e depois trabalhava até a página morrer — e
+// quando a página morria primeiro, o trabalho em voo acordava sem documento.
+//
+// A rotina que busca os bytes da foto de corpo espera o IndexedDB e espera a
+// rede; nesse intervalo a página pode já ter ido, e ela volta para pintar de
+// qualquer jeito. Era essa a origem das quatro rejeições não tratadas da suíte
+// de fluxo: `createElementNS` e `addEventListener` sobre um `document` que
+// deixou de existir.
+//
+/**
+ * Encerra o app de propósito, em ordem: primeiro ninguém mais renderiza, depois
+ * os relógios param, por último a árvore sai.
+ *
+ * A ordem importa. Desmontar antes de travar o render deixaria uma janela em que
+ * uma continuação remontaria a árvore inteira — e o desligamento teria
+ * desligado nada.
+ *
+ * Quem chama hoje é o harness dos testes de fluxo, antes de fechar a janela do
+ * jsdom. Mas o verbo é do app, não do teste: a disciplina que falta aqui é a
+ * mesma que vai faltar em qualquer tela que espere algo e volte para pintar.
+ */
+CTX.desliga = function () {
+  if (desligado) return;
+  desligado = true;
+  stopTimer();
+  if (relogioT) { clearInterval(relogioT); relogioT = null; }
+  if (batida) { clearInterval(batida); batida = null; }
+  desmontaDoApp();
+};
+
+// ===========================================================================
+// A SUPERFÍCIE — os verbos do modelo, com nome, contrato e porta própria.
+// ===========================================================================
+//
+// A interface inteira do app vai ser reescrita. A suíte de fluxo é a rede de
+// segurança dessa reescrita, e ela entra no app por `window.__escopo` logo
+// abaixo: uma `eval` dentro deste escopo. Isso funciona e é frágil por três
+// razões que não se consertam com cuidado:
+//
+// 1. **O alcance não é este arquivo — é o bundle inteiro.** Depois do rollup
+//    todos os módulos de `src/` ficam num escopo de topo só, e a `eval` vê
+//    todos. `a.E('migraCache()')` chama `src/infra/fotos.js` sem pedir licença.
+//    Nenhuma dessas 341 funções prometeu nada a ninguém.
+// 2. **Nada é alcançado por referência, então nada é verificável.** Um nome
+//    errado só aparece como `ReferenceError` na hora, e renomear uma função
+//    interna quebra testes sem um único aviso do compilador ou do bundler.
+// 3. **`treeshake: true` apaga o que só a string alcança.** Já aconteceu aqui:
+//    a função sumiu do build e a medição saiu invertida, com os dois builds
+//    saindo com hash idêntico. Esta superfície existe por REFERÊNCIA — as
+//    chaves abaixo são o próprio nome da função, e é isso que a mantém viva.
+//
+// O CONTRATO, que é o que a torna reusável depois da reescrita:
+//
+// - **Nenhuma chave recebe elemento do DOM, nem devolve um.** Todo argumento é
+//   valor: número, texto, booleano ou dado puro. Quem lê campo é casca da
+//   interface, e casca não entra aqui. Duas exceções declaradas: `tiraFoto` e
+//   `tiraFotoDoCorpo` recebem um pato `{ files, value }` — era convenção dos
+//   testes, e está escrito aqui para virar contrato.
+// - **Chamar um verbo daqui faz o que o dedo faz.** A interface não tem rota
+//   paralela: ela lê o campo e chama o mesmo verbo.
+// - **`verbos` é verbo, `dado` é leitura.** `dado` é tudo getter, porque `S`,
+//   `view` e `CAT` são RELIGADOS em tempo de execução (importar um backup troca
+//   `S` inteiro) — uma cópia por valor aqui apontaria para o estado de antes.
+// - **Acrescentar chave é livre; tirar e renomear, não.** Quem depende disto é
+//   uma suíte que a reescrita não pode reescrever.
+// - **A superfície não escreve no estado.** Semear `S` no meio de um teste
+//   continua sendo `__escopo`, e de propósito: isso é cirurgia de fixture, não
+//   verbo, e dar-lhe nome estável seria prometer o formato interno do estado.
+const SUPERFICIE = {
+  // Sobe quando uma chave muda de significado ou sai. Acrescentar não mexe.
+  contrato: 1,
+
+  // As chaves da ponte com a shell do Instrumento, alcançáveis sem `eval`.
+  ctx: CTX,
+  nuvem: NUVEM,
+
+  verbos: {
+    // ---- por valor, onde antes só havia elemento ou campo na tela ----
+    anotaSerie, anotaSerieRapida, anotaObservacao, anotaNomeAvulso, anotaHoraAvulsa,
+    mascaraDeHora, soNumero, criarExercicioCom, guardaEdicaoCom, textoDaPrescricao,
+    setBuscaDeExercicio,
+
+    // ---- os verbos do módulo que a suíte aciona pelo nome nu ----
+    abreFoto, abrirAddEx, abrirAdicionar, abrirCardioRapido, abrirCarga, abrirMedida,
+    abrirNota, abrirNovoEx, abrirPrograma, abrirRapido, abrirSessao, addBody, addCardio,
+    addExercicio, addSet, ajustaTimer, altList, altOf, alternaDescanso, apagaFoto,
+    apagarModeloDeAula, apagarSessao, aplicaAoOficial, aplicarModeloDeAula, arrozAtual,
+    cardioSemana, cardioSet, cargaTipo, catalogoAlimentos, catalogoDeAdicao,
+    concluirRetro, criarExercicio, criarTreino, delBody, descOf, desfazMod, diaAberto,
+    diaDeComida, diasSemBackup, difDoDia, difTotal, draftPeek, duracaoAtual, editarSessao, ehDescanso,
+    encerraSePreciso, estadoEx, exDe, fechaSessao, fecharPrograma, finalizarSessao,
+    garanteBytesDoCorpo, go, gravarRetro, historico, hojeISO, id, impactoDoMod,
+    impactoOficial, impactoSeries, importText, importaAulaColada, iniciarSessao, logKey,
+    modoEdicao, modoPrograma, modsDoDia, montaCatalogo, moverDia, moverEx,
+    moverProg, mudaMes, mudaSeries, nextDay, nomeEx, openHist, ordemDePoses, pausarSessao,
+    payload, pendencias, pintaTimer, planoDeComida, poeMedida, progDesc, progRemove,
+    progSeries, progSetTroca, programaDia, pularEx, reconciliaCorpo, reconciliaFotos,
+    removerEx, render, repetirUltimaAula, restaurarDia, restaurarTudo, retomarSessao,
+    retro, rot, salvarAulaComoModelo, salvarEdicao, save, seriesDe, seriesFeitasHoje,
+    seriesPorMusculo, sessoesDeTrabalho, setAlt, setCarga, setDeload, setsFor, showJSON,
+    sincroniza, soltarTela, startTimer, stopTimer, temHora, tickRelogio, tiraFoto,
+    textoMod, tiraFotoDoCorpo, toggle, toggleDor, toggleSwap, treino, trocaDoDia, unidadeDe,
+    veredito, vmExercicio, wipe,
+
+    // ---- regra pura de `src/dominio/`, que o app já importa ----
+    // Entram pela superfície em vez de o teste de fluxo importar o fonte: o que
+    // esta suíte cobra é o BUILD, e importar o módulo ao lado o contornaria.
+    fmtDesc, funde, migraPlano, migraPlano3, periodoDe, proximoTreino, sameDay, slugEx, weekStart,
+
+    // ---- o cache de fotos, que mora em src/infra/fotos.js ----
+    migraCache: FOTO.migraCache
+  },
+
+  dado: {
+    get S() { return S; },
+    get view() { return view; },
+    get CAT() { return CAT; },
+    get CARGAS() { return CARGAS; },
+    get ALVO() { return ALVO; },
+    get ALVO_TOTAL() { return ALVO_TOTAL; },
+    get ALT() { return ALT; },
+    get EX_BASE() { return EX_BASE; },
+    get FREQUENTES_NO_BOX() { return FREQUENTES_NO_BOX; },
+    get MOVIMENTOS_DE_BOX() { return MOVIMENTOS_DE_BOX; },
+    get PROGRAMA() { return PROGRAMA; },
+    get ROT_BASE() { return ROT_BASE; },
+    get PLANO_ATUAL() { return PLANO_ATUAL; },
+    get PLANO_BASE() { return PLANO_BASE; },
+    get ALIMENTOS_BASE() { return ALIMENTOS_BASE; },
+    get MARCAS_DO_CORPO() { return MARCAS_DO_CORPO; },
+    // A tabela inteira, com nome, unidade e obrigatoriedade. `MARCAS_DO_CORPO`
+    // só dá as chaves, e quem precisa saber que `bioAgua` é a única opcional
+    // teria de transcrever a tabela — que é o defeito que ela existe para
+    // evitar.
+    get MEDIDAS_DO_CORPO() { return MEDIDAS_DO_CORPO; },
+    // O relógio do descanso e a tela acesa: variáveis de módulo, e a única
+    // forma de observá-las de fora era ler o nome nu pela `eval`.
+    get timer() { return timer; },
+    get timerFim() { return timerFim; },
+    get timerCtx() { return timerCtx; },
+    get audioCtx() { return audioCtx; },
+    get querSegurar() { return querSegurar; },
+    get relogioT() { return relogioT; },
+    get sync() { return sync; },
+    get scrollDoDestino() { return scrollDoDestino; }
+  },
+
+  /**
+   * Chama um verbo pelo nome, com os argumentos atravessando o realm.
+   *
+   * O nome é `'toggle'`, `'ctx.hoje'` ou `'nuvem.sessao'`. Nome fora da
+   * superfície estoura aqui, com o nome no erro — o contrário da `eval`, onde
+   * um `ReferenceError` nu não diz de quem é a culpa.
+   *
+   * Os argumentos passam por `JSON` porque um objeto criado no realm do Node
+   * tem outro `Object.prototype`, e o app o receberia como forasteiro. O
+   * primitivo passa direto, inclusive `undefined` — que `JSON` apagaria, e há
+   * verbo que distingue `undefined` de `null` (`poeMedida`, `guardaEdicaoCom`).
+   */
+  chama: function (nome, args) {
+    const ponto = String(nome).indexOf('.');
+    const dono = ponto < 0 ? SUPERFICIE.verbos : SUPERFICIE[String(nome).slice(0, ponto)];
+    const chave = ponto < 0 ? String(nome) : String(nome).slice(ponto + 1);
+    const f = dono && dono[chave];
+    if (typeof f !== 'function') throw new Error('verbo fora da superfície: ' + nome);
+    const vs = [];
+    for (let i = 0; i < (args ? args.length : 0); i++) {
+      const v = args[i];
+      vs.push((v === null || typeof v !== 'object') ? v : JSON.parse(JSON.stringify(v)));
+    }
+    return f.apply(ponto < 0 ? null : dono, vs);
+  },
+
+  /**
+   * O mesmo, devolvendo o resultado serializado.
+   *
+   * Embrulhado em `{ v: … }` de propósito: `JSON.stringify(undefined)` devolve
+   * `undefined` em vez de texto, e o chamador perderia a diferença entre "o
+   * verbo não devolveu nada" e "o verbo falhou".
+   */
+  chamaJSON: function (nome, args) {
+    return JSON.stringify({ v: SUPERFICIE.chama(nome, args) });
+  },
+
+  /** Uma leitura de `dado`, serializada para atravessar o realm. */
+  leJSON: function (chave) {
+    return JSON.stringify({ v: SUPERFICIE.dado[chave] });
+  }
+};
+
+// Publicada em `window` e não só em `CTX` porque o ponto é entrar SEM `eval` —
+// e a atribuição em si é efeito colateral de topo, que é o que faz o rollup
+// manter a tabela e, com ela, cada função que ela nomeia.
+window.__modelo = SUPERFICIE;
+
+// ---------------------------------------------------------------------------
+// A porta velha, que a superfície ainda não substitui.
 //
 // `eval` direto neste escopo enxerga tudo o que está declarado aqui, e é o que
 // os testes de fluxo usam para chegar em `S`, `view` e nas funções internas.
@@ -4497,6 +5983,10 @@ window.addEventListener('online', function () { sincroniza(); });
 //
 // A ponte de 91 handlers globais que morava aqui ao lado morreu junto com o
 // último `onclick=` do fonte: todo evento hoje é função passada por prop.
+//
+// O que ainda só passa por aqui: escrever em `S` no meio de um teste, instalar
+// dublê em `globalThis`, e ler nome que a superfície não nomeia. Cada caso de
+// teste que deixa de usá-la é um pedaço de rede que sobrevive ao redesenho.
 window.__escopo = function (codigo) { return eval(codigo); };
 
 // Arranca quando o DOM existir, tanto embutido no Claude.ai
@@ -4506,12 +5996,68 @@ window.__escopo = function (codigo) { return eval(codigo); };
 // janela é a mesa, e quem roda o app é o iframe em cima dela. Montar aqui
 // TAMBÉM daria dois apps vivos sobre o mesmo estado — duas sincronizações
 // disputando a nuvem, dois wake locks, dois cronômetros. Um app por documento.
+// ---------- a abertura com PRAZO (§7.2 da frente 3) ----------
+// "Carregando…" sem fim já aconteceu (F273): se `load()` trava ou rejeita, a
+// frase do `index.html` fica para sempre e não diz nada. Agora a abertura tem
+// prazo de 4 s, e passado o prazo — ou na primeira rejeição — a tela diz o que
+// aconteceu, o que NÃO aconteceu, e o que fazer.
+//
+// Em DOM puro e numa camada à parte, e não no `#app`: o Preact não chegou a
+// montar, e se o registro abrir atrasado o app tem de aparecer por cima do
+// aviso — o primeiro `render` tira a camada.
+const PRAZO_ABERTURA = 4000;
+let abriu = false;
+let vigiaAbertura = null;
+const inicioDaAbertura = Date.now();
+
+function naoAbriu(erro) {
+  if (abriu || desligado) return;
+  if (vigiaAbertura) { clearTimeout(vigiaAbertura); vigiaAbertura = null; }
+  if (document.getElementById('abertura-falhou')) return;
+  const seg = Math.round((Date.now() - inicioDaAbertura) / 1000);
+  const el = function (tag, cls, txt) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (txt != null) n.textContent = txt;      // texto, nunca HTML: o erro vem de fora
+    return n;
+  };
+  const caixa = el('div', 'abertura-falhou');
+  caixa.id = 'abertura-falhou';
+  caixa.setAttribute('role', 'alert');
+  caixa.appendChild(el('p', 'abertura-t', 'O registro deste aparelho não abriu.'));
+  caixa.appendChild(el('p', 'abertura-c',
+    (erro ? '' : 'Esperei ' + Math.round(PRAZO_ABERTURA / 1000) + ' s. ') +
+    'Nada foi apagado e nada saiu do aparelho. A rede não é a causa: o registro mora aqui.'));
+  const tenta = el('button', 'abertura-b pare-sim', 'Tentar de novo');
+  tenta.setAttribute('data-a', 'abertura-tenta');
+  tenta.addEventListener('click', function () { location.reload(); });
+  const ver = el('button', 'abertura-b pare-nao', 'Ver o detalhe técnico');
+  ver.setAttribute('data-a', 'abertura-detalhe');
+  const detalhe = el('p', 'abertura-d',
+    (erro ? 'a leitura falhou: ' + ((erro && erro.message) || String(erro))
+          : 'leitura local sem resposta há ' + seg + ' s') +
+    ' · armazenamento: ' + (DB.mode || 'sem resposta da sonda'));
+  detalhe.hidden = true;
+  ver.addEventListener('click', function () { detalhe.hidden = !detalhe.hidden; });
+  caixa.appendChild(tenta);
+  caixa.appendChild(ver);
+  caixa.appendChild(detalhe);
+  caixa.appendChild(el('p', 'abertura-r',
+    'Se acontecer de novo: Ajustes › Cópia de segurança, a partir de outro aparelho com a conta.'));
+  document.body.appendChild(caixa);
+}
+
+function arranca() {
+  vigiaAbertura = setTimeout(function () { naoAbriu(null); }, PRAZO_ABERTURA);
+  Promise.resolve().then(load).catch(function (e) { console.error('a abertura falhou', e); naoAbriu(e); });
+}
+
 if (ehBancada()) {
   // nada: quem monta é o aparelho
 } else if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', load);
+  document.addEventListener('DOMContentLoaded', arranca);
 } else {
-  load();
+  arranca();
 }
 
 // Service worker: funciona sem internet na academia. Falha em silêncio
@@ -4539,6 +6085,8 @@ function folhaAberta() {
     if (f.k === 'seletor') return <FolhaSeletor key={i} ctx={CTX} alvo={f.ref} idx={f.idx} />;
     if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
+    if (f.k === 'menuSessao') return <FolhaMenuDaSessao key={i} ctx={CTX} />;
+    if (f.k === 'poeODia') return <FolhaPoeODia key={i} ctx={CTX} data={f.data} />;
     return null;
   });
 }
@@ -4611,7 +6159,18 @@ CTX.seletorDeDia = function () {
 // Monta a shell do Instrumento. As cinco abas são componentes; as telas cheias
 // tomam o lugar da shell inteira, tab bar inclusive.
 function render() {
+  if (desligado) return;
   montaNoApp(<App ctx={CTX} />);
+  // A primeira montagem é a prova de que o registro abriu: `abriu` cala o prazo
+  // (`naoAbriu` não faz nada depois dela), e se o aviso de que não abriu chegou
+  // a aparecer, o app atrasado passa na frente. UM guarda só, e sem cancelar o
+  // timer aqui também: os dois juntos se mascaravam — tirar qualquer um deixava
+  // a suíte verde, porque o outro atendia.
+  if (!abriu) {
+    abriu = true;
+    const aviso = document.getElementById('abertura-falhou');
+    if (aviso) aviso.remove();
+  }
   ajustaRelogio();
   // Depois de montar, e não antes: aqui `view` já é o que está na tela, e a
   // profundidade do histórico passa a ser a mesma da pilha de camadas.
@@ -4624,16 +6183,26 @@ function render() {
 // que já existia, e é isso que garante que voltar pelo gesto e voltar pelo
 // botão deixem o app no mesmo estado.
 const FECHA_CAMADA = {
+  // Voltar com o aviso de falha aberto é "Fechar este aviso": dispensar não
+  // escolhe por ele, e a marca de não guardado continua.
+  falhou:    function () { dispensaFalha(); },
+  // Voltar com o painel de pare aberto é "Deixar como está": a resposta que não
+  // apaga nada, pelo mesmo caminho que fecha qualquer camada.
+  pare:      function () { respondePare(false); },
   camera:    function () { CTX.fechaCamera(); },
+  ajustes:   function () { CTX.fechaAjustes(); },
   ajuste:    function () { CTX.fechaAjuste(); },
   protocolo: function () { CTX.fechaProtocolo(); },
   comparar:  function () { CTX.fechaComparar(); },
-  promo:     function () { voltarDoPromo(); },
   prog:      function () { fecharPrograma(); },
   retro:     function () { fecharRetro(); },
   add:       function () { fecharAdicionar(); },
   sessao:    function () { fecharSessao(); },
-  hist:      function () { closeHist(); }
+  hist:      function () { closeHist(); },
+  // O modo de sessão fecha pela MESMA porta da seta do cabeçalho, e isso é
+  // deliberado: as duas saídas têm de deixar a sessão aberta. Se o Voltar
+  // encerrasse, o gesto de borda do Safari passaria a matar o treino.
+  modoSessao: function () { CTX.fechaModoDeSessao(); }
 };
 
 function voltarUmaCamada() {
@@ -4751,17 +6320,23 @@ CTX.treino = function () {
   const avisos = [];
   const trabalho = sessoesDeTrabalho();
   const faltam = 48 - (trabalho % 48);
+  // O botão destes avisos é a segunda porta do interruptor, e diz as mesmas
+  // palavras do menu: "entrar em deload" sozinho era o nome sem o freio.
+  const dl = itemDoDeload(d);
+  const porta = function (on) {
+    return dl ? { t: dl.rotulo + ' · ' + dl.detalhe, onClick: function () { setDeload(on); } } : null;
+  };
   if (S.deload) {
     avisos.push({ k: 'dl', rotulo: 'deload ativo', cor: 'amber',
       txt: 'Metade das séries, mesmas cargas. Os placeholders continuam mostrando a carga da última semana normal.',
-      acao: { t: 'sair do deload', onClick: function () { setDeload(false); } } });
+      acao: porta(false) });
   } else if (trabalho > 0 && faltam <= 6) {
     // Não é contagem regressiva para um deload obrigatório: o treinador tirou a
     // semana fixa do programa. O bloco de 48 sessões continua sendo o momento de
     // OLHAR, e quem decide é a evidência de fadiga, não o calendário.
     avisos.push({ k: 'dl2', rotulo: 'fim de bloco chegando', cor: '',
       txt: 'Faltam ' + faltam + ' sessões para fechar o bloco. Deload só se houver evidência de fadiga: força caindo por 2 a 3 sessões, dor que não passa em 72 h, RIR difícil de manter. Progredindo bem, siga treinando.',
-      acao: { t: 'entrar em deload', onClick: function () { setDeload(true); } } });
+      acao: porta(true) });
   }
   // Preenchendo um treino de outra data: o aviso é o único lugar que diz para
   // onde as séries digitadas estão indo, e carrega a porta de saída. Sem ele o
@@ -4820,7 +6395,16 @@ CTX.treino = function () {
             medida: un ? (cronometrado(un) ? 'seg' : ROTULO_UNIDADE[un]) : 'reps',
             carga: v[0] != null ? String(v[0]) : '',
             valor: v[1] != null ? String(v[1]) : '',
-            feito: v[1] != null
+            feito: v[1] != null,
+            // O TECLADO PRÓPRIO, quando ele está aberto nesta linha. `pos` diz
+            // em qual das duas grandezas — é o que marca o botão que o abriu.
+            teclado: (function () {
+              const a = view.teclado && view.teclado.alvo;
+              if (!a || a.tipo !== 'rapida' || a.i !== i) return null;
+              return { texto: view.teclado.texto, pos: a.pos, decimal: a.pos === 0,
+                       unidade: a.pos === 0 ? (un ? 'kg' : CARGAS[tipo].rot)
+                                            : (un ? (cronometrado(un) ? 'seg' : ROTULO_UNIDADE[un]) : 'reps') };
+            })()
           };
         })
       };
@@ -4849,8 +6433,9 @@ CTX.treino = function () {
     // depois de virar a nota dela.
     quadro: (S.quadro && S.quadro.day === d) ? S.quadro.texto : null,
     volume: fmtK(volumeDoDia(d)),
-    ciclo: String(Math.floor(S.done.length / rot().length) + 1),
-    sessoes: S.done.length,
+    // `ciclo` e `sessoes` saíram desta leitura com a célula que os mostrava: o
+    // ciclo foi para `CTX.cicloDoBloco`, que a Semana lê. Deixá-los aqui seria
+    // uma segunda fonte da mesma conta, esperando divergir da primeira.
     sessaoAberta: !!s,
     pausada: !!(s && s.pausadoEm),
     podeEditar: podeEditar(d),
@@ -5013,7 +6598,13 @@ CTX.dados = function () {
       // para dentro e com confirmação.
       podeAplicar: v.k === 'mais' || v.k === 'menos',
       acaoTxt: alvo > 0 ? 'aplicar +150 kcal' : alvo < 0 ? 'aplicar −150 kcal' : null,
-      estado: rotuloDoAjuste() + ' · arroz ' + arrozAtual() + ' g'
+      // A frase do que não volta, ANTES do toque e em número (V4, §6.3): é a
+      // que impede ler o passo como empréstimo que se devolve sozinho.
+      naoVolta: (v.k === 'mais' || v.k === 'menos') && alvo
+        ? 'Depois de aplicado, ' + fmtInt(kcalDeTreinoCom((S.ajuste || 0) + alvo)) +
+          ' kcal vira a nova base. Se o peso voltar ao alvo, o passo não é devolvido sozinho.'
+        : null,
+      estado: linhaDoAjuste()
     },
     comida: dadosDeComida(),
     forca: {
@@ -5040,14 +6631,54 @@ CTX.aplicaAjuste = function () {
   const passo = ajusteDoVeredito(v);
   if (!passo) return;                   // observar e manter não propõem passo
   const antes = S.ajuste || 0;
+  const kde = kcalDeTreinoCom(antes);
   S.ajuste = antes + passo;
   if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
+  aplicaArroz();
+  // As kcal do dia de treino antes e depois vão junto: é o que a linha do passo
+  // diz depois ("3.007 → 3.157 kcal em dia de treino"), e o plano muda — lidas
+  // depois, dariam o número de outro dia.
   S.ajusteHist.push({ t: Date.now(), de: antes, para: S.ajuste,
-                      k: v.k, p: v.p, reg: diasRegistrados() });
-  aplicaArroz(antes);
+                      k: v.k, p: v.p, reg: diasRegistrados(),
+                      kde: Math.round(kde), kpara: Math.round(kcalDeTreinoCom(S.ajuste)) });
   queueSave(); render();
-  toast('Ajuste aplicado. O arroz do plano foi para ' + arrozAtual() + ' g.');
+  // "Apliquei", e não "Ajuste aplicado": aplicar é ato do registro, e o agente
+  // é o app (V8).
+  toast('Apliquei ' + sinalDoPasso(passo) + ' kcal. O arroz do plano foi para ' + arrozAtual() + ' g.');
 };
+
+/** "+150" / "−300": o passo em kcal, com o sinal de verdade. */
+function sinalDoPasso(passos) { return (passos > 0 ? '+' : '−') + Math.abs(passos) * 150; }
+
+/**
+ * As kcal do dia de treino com um saldo de ajuste qualquer, SEM tocar no plano.
+ * É o que deixa a consequência ser dita antes do toque, em número (V4): o
+ * ajuste aterrissa no arroz em gramas inteiros, então o total não é "atual +
+ * 150" — é o que a conta do arroz der.
+ */
+function kcalDeTreinoCom(ajuste) {
+  const plano = JSON.parse(JSON.stringify(planoDeComida()));
+  const itens = [];
+  plano.forEach(function (r) { r.itens.forEach(function (i) { if (i.arroz) itens.push(i); }); });
+  aplicaAjusteNoArroz(itens, ajuste);
+  return totalDoDia(plano, catalogoAlimentos(), true, false).kcal;
+}
+
+/**
+ * "Apliquei +150 kcal em 01/10, às 21h34 · 3.007 → 3.157 kcal em dia de treino"
+ * (§6.3) — só enquanto aquele passo é o que está em vigor. Antes dele, ou com o
+ * plano restaurado, a linha volta a ser o estado: "plano base · arroz 250 g".
+ */
+function linhaDoAjuste() {
+  const estado = rotuloDoAjuste() + ' · arroz ' + arrozAtual() + ' g';
+  const h = Array.isArray(S.ajusteHist) ? S.ajusteHist : [];
+  const u = h[h.length - 1];
+  if (!u || u.para === u.de || u.para !== (S.ajuste || 0)) return estado;
+  return 'Apliquei ' + sinalDoPasso(u.para - u.de) + ' kcal em ' + fmtDate(u.t) + ', às ' + fmtHoraDita(u.t) +
+    (u.kde != null && u.kpara != null
+      ? ' · ' + fmtInt(u.kde) + ' → ' + fmtInt(u.kpara) + ' kcal em dia de treino' : '') +
+    ' · ' + estado;
+}
 
 // ---------- GUIA ----------
 CTX.guia = function () {
@@ -5077,8 +6708,12 @@ CTX.alternaCadencia = function (i) {
 
 CTX.restauraPrograma = function () { restaurarTudo(); };
 CTX.restauraPlano = function () {
-  planoMudou();
   if (!confirm('Restaurar o plano do nutricionista?\n\nSeus alimentos cadastrados e todo o histórico ficam. Volta só a prescrição.')) return;
+  // O carimbo vem DEPOIS da pergunta, e por isso: ele estava antes, então
+  // cancelar subia a versão do plano sem o plano mudar, e o app passava a
+  // relatar divergência em dias que não divergiram. É o erro espelhado do que
+  // `aplicaArroz` fazia — carimbar sem mudar, em vez de mudar sem carimbar.
+  planoMudou();
   S.comida.plano = JSON.parse(JSON.stringify(PLANO_BASE));
   S.ajuste = 0;
   queueSave(); render();
@@ -5129,7 +6764,7 @@ CTX.corpo = function () {
       // nutricionista prescreveu — estado contra uma regra, como "feito".
       ritmoCor: (r.ok && r.duasSemanas)
         ? (r.kgSem >= 0.15 && r.kgSem <= 0.4 ? 'ins-acid' : 'ins-amber') : '',
-      nota: naSemana + (naSemana === 1 ? ' pesagem nesta semana' : ' pesagens nesta semana'),
+      nota: naSemana + (naSemana === 1 ? ' pesagem da manhã nesta semana' : ' pesagens da manhã nesta semana'),
       alvo: 'registre 3 a 4 por semana',
       acao: acaoDaMedida('peso'),
       dia: diaDaMedidaVM('peso'),
@@ -5147,8 +6782,38 @@ CTX.corpo = function () {
       mes: c ? fmtSig2(c.mes) + ' cm no mês' : 'faltam 3 semanas de medida para concluir',
       acao: acaoDaMedida('cintura'),
       dia: diaDaMedidaVM('cintura'),
-      medidas: medidasRecentes('cintura', 'cm')
+      medidas: medidasRecentes('cintura', 'cm'),
+      onde: ondeMediu(S.body.cintura),
+      ondeRascunho: (view.bodyOnde && view.bodyOnde.cintura) || ''
     },
+    // AS MEDIDAS COM FITA além da cintura, que tem seção própria logo acima.
+    // Leitura, e nenhuma decide nada (Direção D, pergunta 8): não há média,
+    // ritmo nem cor de estado — a última medida e quanto ela andou desde a
+    // primeira.
+    //
+    // LIGADA é derivado, não guardado: o ponto que a tabela liga, o que já tem
+    // medida, ou o que ele ligou nesta visita. Ponto ligado e nunca medido não
+    // tem nada a lembrar, então não paga um campo novo no estado — e um campo
+    // de topo esquecido na lista branca da restauração foi o defeito F251.
+    fita: MEDIDAS_DE_FITA.filter(function (m) { return m.k !== 'cintura'; }).map(function (m) {
+      const k = m.k;
+      const serie = S.body[k] || [];
+      const v = valorDoCorpo(k);
+      const ult = serie[serie.length - 1], pri = serie[0];
+      return {
+        k: k, n: m.n, u: m.u,
+        ligada: m.fita === 'ligada' || serie.length > 0 || !!(view.fitaLigadas && view.fitaLigadas[k]),
+        valor: isNaN(v) ? baseDoCorpo(k) : v,
+        serie: serieSemanal(serie, 14),
+        atual: ult ? fmtDec(ult.v) + ' ' + m.u : '–',
+        desde: serie.length > 1 ? fmtSig2(ult.v - pri.v) : '–',
+        acao: acaoDaMedida(k),
+        dia: diaDaMedidaVM(k),
+        medidas: medidasRecentes(k, m.u),
+        onde: ondeMediu(serie),
+        ondeRascunho: (view.bodyOnde && view.bodyOnde[k]) || ''
+      };
+    }),
     cardio: {
       semana: cardioSemana().length,
       alvo: CARDIO_ALVO,
@@ -5238,6 +6903,19 @@ CTX.musculos = function () {
   };
 };
 
+/** O teclado próprio de uma medida de corpo, quando ele está aberto nela. */
+CTX.tecladoDoCorpo = function (campo) {
+  const a = view.teclado && view.teclado.alvo;
+  if (!a || a.tipo !== 'corpo' || a.campo !== campo) return null;
+  return { texto: view.teclado.texto, decimal: true,
+           unidade: unidadeDoCorpo(campo) };
+};
+CTX.abreTecladoDeCorpo = function (campo) { abreTecladoDeCorpo(campo); };
+// As duas são as MESMAS de `acoesEx`: um teclado só, uma função só. O que muda
+// entre a sessão e o corpo é o ALVO, e ele mora no estado do teclado.
+CTX.tecla = function (t) { teclaDoTeclado(t); };
+CTX.fechaTeclado = function () { fechaTeclado(); };
+
 CTX.setPeso = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { peso: v }); render(); };
 CTX.setCintura = function (v) { view.bodyForm = Object.assign({}, view.bodyForm, { cintura: v }); render(); };
 CTX.abreDiaCorpo = function (k) { view.bodyDiaAberto = view.bodyDiaAberto === k ? null : k; render(); };
@@ -5247,8 +6925,19 @@ CTX.setDiaCorpo = function (k, iso) {
   const p = String(iso).split('-').map(Number);
   if (p.length !== 3 || !p[0]) return;
   const d = new Date(p[0], p[1] - 1, p[2], 7, 0, 0, 0);
-  if (isNaN(d.getTime()) || d.getTime() > Date.now()) return;
-  view.bodyDia = Object.assign({}, view.bodyDia, { [k]: d.getTime() });
+  if (isNaN(d.getTime())) return;
+  // HOJE volta ao padrão, e não às 7h: antes das 7h, hoje às 7h está no futuro,
+  // e escolher hoje de volta era recusado em silêncio — às 6h, que é a hora em
+  // que ele pesa.
+  const hoje = sameDay(d.getTime(), Date.now());
+  if (!hoje && d.getTime() > Date.now()) {
+    // A recusa diz que recusou: um seletor que ignora o toque é beco (§7.8).
+    toast('Nunca uma data futura: o dia ainda não aconteceu.');
+    return;
+  }
+  const dias = Object.assign({}, view.bodyDia);
+  if (hoje) delete dias[k]; else dias[k] = d.getTime();
+  view.bodyDia = dias;
   // trocar de dia troca a referência do stepper: o valor a corrigir é o
   // daquele dia, não o da última pesagem
   view.bodyForm = Object.assign({}, view.bodyForm);
@@ -5257,6 +6946,103 @@ CTX.setDiaCorpo = function (k, iso) {
 };
 CTX.registraPeso = function () { addBody('peso'); };
 CTX.registraCintura = function () { addBody('cintura'); };
+// As medidas com fita, pela grandeza: a mesma porta da cintura, sem uma função
+// por ponto. Só aceitam o que a tabela diz que é fita — o peso e a balança da
+// bioimpedância têm as portas deles.
+function ehFita(k) { const m = medidaDoCorpo(k); return !!(m && m.fita); }
+CTX.setMedida = function (k, v) {
+  if (!ehFita(k)) return;
+  view.bodyForm = Object.assign({}, view.bodyForm, { [k]: v }); render();
+};
+CTX.registraMedida = function (k) { return ehFita(k) ? addBody(k) : undefined; };
+CTX.ligaMedida = function (k) {
+  if (!ehFita(k)) return;
+  view.fitaLigadas = Object.assign({}, view.fitaLigadas, { [k]: true }); render();
+};
+/**
+ * O "como eu medi" em rascunho. Vai para a medida no registro, e só nela:
+ * escrever aqui não grava nada sozinho. Sem `render` a cada tecla — o campo é
+ * texto do teclado do sistema, e repintar no meio da frase não serve a nada.
+ */
+CTX.setOnde = function (k, txt) {
+  if (!ehFita(k)) return;
+  view.bodyOnde = Object.assign({}, view.bodyOnde, { [k]: String(txt) });
+};
+/**
+ * A porta de escrita das cinco grandezas da bioimpedância — ver `registraBio`.
+ *
+ * Devolve a PROMESSA de propósito: o verbo grava e só então responde se a
+ * leitura entrou, e quem chama precisa dessa resposta para dizer ao dono o
+ * que faltou. `CTX.registraPeso` não devolve nada porque a casca dele lê o
+ * rascunho da tela; aqui o valor vem por argumento, e a resposta volta por
+ * retorno.
+ */
+/**
+ * A bioimpedancia: as cinco medidas da balanca, e a ultima leitura delas.
+ *
+ * Cinco campos, decisao do dono (5.a' P3), e o PESO DELA e registro separado da
+ * pesagem da manha: sao duas balancas, medidas em momentos diferentes, e
+ * mistura-las faria a media semanal do peso — que e o numero que a regra
+ * calorica le — pular de acordo com qual balanca ele usou.
+ *
+ * UMA LEITURA, e e o que o instante compartilhado garante: `registraBio` grava
+ * as cinco com o mesmo `t`, e e por ele que a fusao casa o mesmo dia vindo de
+ * dois aparelhos. A tela mostra esse instante como "a ultima leitura" em vez de
+ * cinco datas, porque cinco datas iguais nao informam nada.
+ *
+ * `bioAgua` e a unica opcional: a balanca dele a da, mas nem toda balanca da, e
+ * recusar a leitura inteira por falta dela perderia as quatro que ele mediu.
+ */
+// O rótulo de cada campo DENTRO do bloco (§10.1): a palavra dele, a unidade
+// por extenso quando a abreviada se lê mal ("l" minúsculo ao lado de número), e
+// o que só aquele campo precisa dizer. "Peso" e não "peso na bioimpedância":
+// dentro do bloco, a balança já está dita.
+const CAMPO_DA_BIO = {
+  bioPeso:       { rotulo: 'Peso', un: 'kg', dica: 'o que esta balança mostrou' },
+  bioMusculo:    { rotulo: 'Massa muscular esquelética', un: 'kg' },
+  bioGordura:    { rotulo: 'Massa de gordura', un: 'kg' },
+  bioGorduraPct: { rotulo: 'Percentual de gordura', un: '%' },
+  bioAgua:       { rotulo: 'Água corporal total', un: 'litros', dica: 'pode ficar vazio' }
+};
+
+CTX.bioimpedancia = function () {
+  const campos = MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).map(function (m) {
+    const serie = S.body[m.k] || [];
+    const ultima = serie[serie.length - 1] || null;
+    const c = CAMPO_DA_BIO[m.k] || { rotulo: m.n, un: m.u };
+    return {
+      k: m.k, n: m.n, u: m.u, obrigatorio: !!m.obrigatorio,
+      rotulo: c.rotulo + ' · ' + c.un + (c.dica ? ' · ' + c.dica : ''),
+      valor: ultima ? ultima.v : null,
+      // o valor de antes, no lugar: é o que o campo mostra até ele mexer
+      antes: ultima ? fmtDec(ultima.v) : '',
+      txt: ultima ? fmtDec(ultima.v) + ' ' + m.u : '—'
+    };
+  });
+  const noLugar = campos.filter(function (c) { return c.valor != null; }).length;
+  const quandos = MARCAS_DA_BIO.map(function (k) {
+    const serie = S.body[k] || [];
+    const u = serie[serie.length - 1];
+    return u ? u.t : null;
+  }).filter(function (t) { return t != null; });
+  const ultimaT = quandos.length ? Math.max.apply(null, quandos) : null;
+  return {
+    campos: campos,
+    tem: quandos.length > 0,
+    ultima: ultimaT ? rotuloDoDia(ultimaT) : null,
+    // "uma vez por mês · anterior: 03/09" (§10.1, D2)
+    nota: 'uma vez por mês · ' + (ultimaT ? 'anterior: ' + fmtDate(ultimaT) : 'nenhuma leitura ainda'),
+    // Na primeira vez, de onde saem os números; nas seguintes, que os do mês
+    // passado já estão no lugar — composição corporal muda devagar, e redigitar
+    // tudo todo mês é o fluxo que ele recusa.
+    instrucao: noLugar
+      ? 'Os ' + POR_EXTENSO[noLugar] + ' números do mês passado estão no lugar. Toque só no que mudou.'
+      : 'Os cinco números saem da balança de bioimpedância, não da balança de casa.',
+    maxISO: hojeISO()
+  };
+};
+
+CTX.registraBio = function (leitura, quando) { return registraBio(leitura, quando); };
 CTX.apagaMedida = function (k, t) { delBody(k, t); };
 CTX.apagaCardio = function (t) { delCardio(t); };
 CTX.abreCardio = function () { abrirCardioRapido(); };
@@ -5301,6 +7087,28 @@ function achaRefeicao(id) {
   return planoDeComida().filter(function (r) { return r.id === id; })[0] || null;
 }
 
+/**
+ * Um id de refeição livre, com a mesma guarda de colisão de `idAlimento`.
+ *
+ * Era `'r' + Date.now()` nu, em duas portas — a criação e a duplicação. Dois
+ * ids iguais no plano não dão erro: `achaRefeicao` devolve sempre a primeira, e
+ * a segunda refeição fica no plano somando no total do dia e **ineditável**,
+ * sem nada na tela dizendo por quê. Ninguém mediu caminho realista até a
+ * colisão; o que não havia era razão escrita para um id ter guarda e o outro
+ * não. O laço é o mesmo de `idAlimento`, e um id já carimbado do relógio
+ * raramente entra nele.
+ */
+function idRefeicao() {
+  const base = 'r' + Date.now();
+  const plano = planoDeComida();
+  const ocupado = function (id) {
+    return plano.filter(function (r) { return r.id === id; }).length > 0;
+  };
+  let id = base, n = 2;
+  while (ocupado(id)) id = base + '-' + n++;
+  return id;
+}
+
 // ---- refeição ----
 
 CTX.refeicaoParaEditar = function (id) {
@@ -5329,7 +7137,7 @@ CTX.salvaRefeicao = function (id, campos) {
   const plano = planoDeComida();
   let r = id ? achaRefeicao(id) : null;
   if (!r) {
-    r = { id: 'r' + Date.now(), t: '12:00', n: '', tag: '', quando: 'sempre', nota: '', itens: [] };
+    r = { id: idRefeicao(), t: '12:00', n: '', tag: '', quando: 'sempre', nota: '', itens: [] };
     plano.push(r);
   }
   Object.assign(r, campos);
@@ -5342,7 +7150,7 @@ CTX.duplicaRefeicao = function (id) {
   const r = achaRefeicao(id);
   if (!r) return;
   const copia = JSON.parse(JSON.stringify(r));
-  copia.id = 'r' + Date.now();
+  copia.id = idRefeicao();
   copia.n = r.n + ' (cópia)';
   planoDeComida().push(copia);
   CTX.fechaFolha();
@@ -5385,6 +7193,11 @@ CTX.removeItem = function (refId, idx) {
       'Muda o plano de todos os dias, não só o de hoje. ' +
       'O alimento continua na biblioteca.')) return;
   planoMudou();
+  // Não há o que devolver aqui, e é diferente da troca de propósito: o item SAI
+  // do plano, e com ele os gramas que o ajuste lhe deu. O que o defeito tirava
+  // era comida dos OUTROS pratos, por recalcular o desfazer pela contagem que
+  // sobrou — e isso agora não acontece porque cada um guarda o que recebeu.
+  // Vale igual para `removeRefeicao`, que leva o item junto sem passar por aqui.
   r.itens.splice(idx, 1);
   queueSave(); render();
 };
@@ -5411,6 +7224,25 @@ CTX.trocaItem = function (refId, idx, foodId) {
   const r = achaRefeicao(refId);
   if (!r || !r.itens[idx]) return;
   r.itens[idx].f = foodId;
+  // O corte é pela NATUREZA da marca, não por uma lista:
+  //
+  // - `arroz` diz QUAL ALIMENTO o item é — é onde o ajuste calórico aterra
+  //   (`arrozAtual`, `aplicaArroz`). A troca torna a marca falsa: sem isto,
+  //   trocar o arroz do almoço por cuscuz movia a alavanca do ajuste para algo
+  //   que não é arroz, em silêncio, e a tela passava a chamar de arroz o que
+  //   não é. Então ela CAI.
+  // - `alta` diz QUANDO o item aparece (só em dia de alta demanda). Descreve o
+  //   lugar no plano, e o lugar não mudou com a troca. Então ela FICA.
+  //
+  // `caf` (fonte de cafeína, que `refeicoesDeHoje` corta quando o pré cai na
+  // tarde) é da mesma natureza de `arroz` — diz qual alimento é —, mas o dono
+  // não a decidiu e ela não entra em nenhuma tela: `refeicaoParaEditar` não a
+  // devolve. Fica como está, de propósito, até haver decisão.
+  //
+  // A marca cai DEVOLVENDO: o que o ajuste tinha somado a este item volta com
+  // ela. Sem isso o alimento trocado ficava com os gramas para sempre — o
+  // desfazer não passa mais por um item sem marca —, e o número é do dono.
+  tiraMarcaDeArroz(r.itens[idx]);
   CTX.fechaFolha();
   queueSave(); render();
 };
@@ -5591,7 +7423,18 @@ CTX.dadosDoApp = function () {
       plural(nEx, 'exercício com histórico', 'exercícios com histórico'),
       plural(S.cardio.length, 'sessão de cardio', 'sessões de cardio'),
       plural(S.body.peso.length, 'pesagem', 'pesagens'),
-      plural(S.body.cintura.length, 'medida de cintura', 'medidas de cintura')
+      plural(S.body.cintura.length, 'medida de cintura', 'medidas de cintura'),
+      // As LEITURAS de bioimpedância, e não as medidas: as cinco entram com o
+      // mesmo instante e são UMA leitura — contá-las em cinco diria que ele tem
+      // cinco vezes mais do que tem. O `bioPeso` é a obrigatória que sempre
+      // existe quando a leitura existe, então a série dele é a contagem.
+      //
+      // Esta linha faltava, e o caso de `corpo.test.js` previu o momento: "o
+      // resumo diz ao dono o tamanho do que ele tem a perder, e a partir daqui
+      // ele pode ter leituras de bioimpedância que o resumo ignora". Enquanto a
+      // bioimpedância não tinha tela, a omissão era coerente; com a tela, é
+      // omissão real sobre o que se perde num apagamento.
+      plural(S.body.bioPeso.length, 'leitura de bioimpedância', 'leituras de bioimpedância')
     ].join(' · ')
   };
 };
@@ -5694,7 +7537,7 @@ CTX.abreSessaoDoDia = function (a) {
  */
 function levaAsSessoesDoDia(t) {
   const d = new Date(t), agora = new Date(Date.now());
-  view.aba = 'dados';
+  view.aba = 'dias';
   view.mes = (d.getFullYear() - agora.getFullYear()) * 12 + (d.getMonth() - agora.getMonth());
   view.destacaDia = t;
   render();
@@ -5934,8 +7777,13 @@ CTX.detalheDaSessao = function () {
   };
 };
 CTX.fechaSessao = function () { fecharSessao(); };
-CTX.editaSessao = function (t) { apagaRegistroDeTreino(t); };
+CTX.editaSessao = function (t) { return apagaRegistroDeTreino(t); };
 CTX.corrigeDuracao = function (t, min) { corrigeDuracao(t, min); };
+/* Uma porta só, e aqui: `corrigeDuracao` já mora em `CTX`, e as duas são as
+   duas metades da mesma resposta. Pôr esta também na tabela de verbos nus daria
+   dois caminhos para o mesmo verbo, que é o que a superfície existe para não
+   ter. */
+CTX.confirmaDuracao = function (t) { confirmaDuracao(t); };
 
 // ---------- tela cheia: histórico do exercício ----------
 CTX.renomeiaExercicio = function (idEx, nome) { renomeiaExercicio(idEx, nome); };
@@ -6063,6 +7911,9 @@ CTX.historico = function () {
         obs: s.obs || null,
         editando: view.edit === base + k,
         edicao: view.edit === base + k ? {
+          // §8.4: "Esta série é de 21/09. Corrigir não reabre aquele treino." —
+          // aqui a correção é da sessão inteira, e a frase diz sessão.
+          outroDia: sameDay(s.t, Date.now()) ? null : fmtDate(s.t),
           sets: s.sets.map(function (x) {
             return { carga: x ? fmtNum(x[0]) : '', reps: x ? String(x[1]) : '' };
           }),
@@ -6090,36 +7941,140 @@ CTX.editDor = function (k) { editDor(k); };
 CTX.limpaNum = function (el, dec) { limpaNum(el, dec); };
 
 // ---------- tela cheia: decisão de fim de sessão ----------
-CTX.decisao = function () {
-  const P = view.promo;
-  if (!P) return null;
-  const n = P.dec.filter(function (x) { return x === 'oficial'; }).length;
-  return {
-    dia: P.day,
-    olho: 'treino ' + P.day,
-    meta: P.mods.length + (P.mods.length === 1 ? ' mudança' : ' mudanças'),
-    mods: P.mods.map(function (m, j) {
-      const imp = impactoDoMod(P.day, m);
-      return {
-        j: j,
-        txt: textoMod(P.day, m),
-        impacto: imp ? imp.txt : null,
-        acima: !!(imp && imp.acima),
-        oficial: P.dec[j] === 'oficial'
-      };
-    }),
-    motivos: MOTIVOS.map(function (x) {
-      return { k: x.k, t: x.t, on: P.motivo === x.k };
-    }),
-    acao: n
-      ? 'Encerrar e levar ' + n + (n === 1 ? ' mudança' : ' mudanças') + ' para o oficial'
-      : 'Encerrar mantendo o programa como está'
-  };
+/**
+ * A lista das mudanças do dia que esperam decisão — e que vencem.
+ *
+ * É a peça 2 da ordem que o plano amarrou (§6.3 da frente 1): a conta de volume
+ * sai de `main.jsx` para o domínio (feito), **esta lista passa a ser a
+ * chamadora dela**, e só então a tela de decisão sai. Fora dessa ordem a conta
+ * desaparece entre uma coisa e outra, que é o que o §3.6 do plano avisa.
+ *
+ * Cada linha diz as quatro coisas do passo 3 do fluxo: o que mudou, de que
+ * sessão veio, **quando vence** e **a conta de volume se virar permanente**. A
+ * conta é por mudança e na forma de TRANSIÇÃO — "o posterior passa de 7 para 8
+ * contra 7 prescritas" —, que é a forma que o dono pediu e a única que
+ * `impactoDoMod` produz; `impacto()` afirma o número de agora e não serve aqui.
+ *
+ * **De onde a conta começa a andar**, e é a única decisão deste invólucro: o
+ * vencimento percorre os dias à frente e precisa saber que letra o PRÓXIMO
+ * treino vai ter. Quando o dia de hoje já tem treino registrado ou sessão
+ * aberta, a posição de hoje já foi gasta — a caminhada começa AMANHÃ, senão ela
+ * daria a letra de hoje a um dia que já aconteceu e venceria tudo um dia cedo.
+ */
+/**
+ * Responde UMA mudança da fila: ela virou permanente, ou foi só daquele dia.
+ *
+ * Por mudança e não por sessão, e é o que a frente 1 desenhou: cada linha diz o
+ * que mudou e tem as duas respostas do tamanho do polegar ao lado. Uma sessão
+ * pode ter subido uma série de lateral — que ele quer manter — e trocado o
+ * agachamento porque a máquina estava ocupada — que ele não quer. Responder as
+ * duas juntas forçaria a escolha errada numa das duas.
+ *
+ * O MOTIVO é opcional e é texto, porque ele está sentado quando decide isto
+ * (§8.1, passo 3). Vai para o histórico do programa junto da mudança: é a
+ * resposta de "mudei isso quando, e por quê?".
+ *
+ * Mudança respondida sai da lista da sessão; esvaziada a lista, a sessão sai da
+ * fila DEIXANDO LÁPIDE, para a fusão não a ressuscitar do outro aparelho — a
+ * mesma disciplina das outras coleções com chave natural (§8.1, passo 6).
+ *
+ * "Foi só daquele dia" NÃO desfaz nada: a sessão onde a mudança aconteceu
+ * continua com o que foi registrado. O que ela decide é o PROGRAMA, e o
+ * programa é o que vem depois.
+ */
+CTX.respondeMudanca = async function (sid, i, permanente, motivo) {
+  if (!Array.isArray(S.promoPendente)) S.promoPendente = listaDePromo(S.promoPendente);
+  const chave = chaveDePromo({ sid: sid, t: sid });
+  const g = S.promoPendente.filter(function (x) { return chaveDePromo(x) === chave; })[0];
+  if (!g || !Array.isArray(g.mods)) return;
+  const m = g.mods[i];
+  if (!m) return;
+
+  const n = permanente ? aplicaAoOficial(g.day, [m], motivo || null) : 0;
+
+  g.mods = g.mods.filter(function (_, j) { return j !== i; });
+  if (Array.isArray(g.resumoMods)) {
+    g.resumoMods = g.resumoMods.filter(function (_, j) { return j !== i; });
+  }
+  g.m = Date.now();                    // carimbo: é ele que a fusão compara
+  if (!g.mods.length) soltaPromo(sid);
+
+  await save(); render();
+  // "o oficial" era vocabulário interno (V7): o destino é o treino, com nome.
+  toast(permanente
+    ? (n ? 'Entrou no Treino ' + g.day + '.' : 'A posição não existe mais no programa.')
+    : 'Ficou como só daquele dia. O treino registrado não muda.');
 };
-CTX.decidePromo = function (j, v) { decidePromo(j, v); };
-CTX.motivoPromo = function (k) { motivoPromo(k); };
-CTX.concluiPromo = function () { concluirPromo(); };
-CTX.voltaDoPromo = function () { voltarDoPromo(); };
+
+CTX.mudancasQueEsperam = function () {
+  const fila = Array.isArray(S.promoPendente) ? S.promoPendente : [];
+  if (!fila.length) return [];
+  const proxima = proximoTreino(S, ROT_BASE);
+  // Vence HOJE quando hoje é dia de treino, a sessão de hoje ainda não houve e
+  // o treino de hoje é aquele — "na manhã do dia em que aquele treino volta".
+  const h = diaResolvido();
+  const hojeTreina = h.cadencia === 'treino' && h.origem !== 'registrado' && h.origem !== 'aberta';
+
+  const r = rot();
+  return fila.map(function (g) {
+    const mods = Array.isArray(g.mods) ? g.mods : [];
+    const nome = 'Treino ' + g.day;
+    // As voltas daquele treino desde que a mudança nasceu, na ordem. A primeira
+    // é o VENCIMENTO; a segunda fecha o desfazer (decisão 8). É fato no dado,
+    // não conta sobre o relógio — e por isso não precisa de campo, de cron nem
+    // de o app ter estado aberto no dia certo.
+    const voltou = (S.done || []).filter(function (x) {
+      return x && !x.livre && x.day === g.day && x.t > g.t;
+    }).sort(function (a, b) { return a.t - b.t; });
+    return {
+      // a chave é a mesma da fila, para decidir e para a lápide depois
+      sid: typeof g.sid === 'number' ? g.sid : g.t,
+      dia: g.day,
+      quando: g.t,
+      // Em TREINOS, não em data (§5.3): a sequência anda pela ordem, não pelo
+      // dia da semana, e uma data seria previsão do app dita como fato.
+      vence: fraseDoVencimento(nome, r.indexOf(g.day), r.indexOf(proxima), r.length),
+      venceHoje: hojeTreina && h.treino === g.day,
+      venceu: venceuPorPosicao(g.day, g.t, S.done),
+      // "Ficou como só daquele dia quando o Treino B voltou, em 29/09. A sessão
+      // de 22/09 continua como foi registrada." — a mudança não some, e o
+      // desfazer vale até a próxima vez daquele treino.
+      venceuTxt: voltou.length
+        ? 'Ficou como só daquele dia quando o ' + nome + ' voltou, em ' + fmtDate(voltou[0].t) +
+          '. A sessão de ' + fmtDate(g.t) + ' continua como foi registrada.'
+        : null,
+      prazo: 'Dá para fazer entrar no ' + nome + ' até a próxima vez dele.',
+      // Decisão 8: voltou DUAS vezes, o desfazer fechou e a linha sai da lista.
+      // O dado fica — a fila não perde nada por isso, e o teto de 60 a contém.
+      fechou: voltou.length >= 2,
+      entra: 'Entra no ' + nome,
+      mudancas: mods.map(function (m) {
+        const imp = impactoDoMod(g.day, m);
+        return {
+          txt: textoMod(g.day, m),
+          // "Se entrar no Treino D: deltoide lateral passa de 12 para 13 séries
+          // na rotação." — o prefixo só na conta de volume: a da troca é outra
+          // frase, sobre o tempo do exercício no programa.
+          impacto: imp ? (imp.volume ? 'Se entrar no ' + nome + ': ' + imp.txt : imp.txt) : null,
+          acima: !!(imp && imp.acima)
+        };
+      })
+    };
+  }).filter(function (g) { return !g.fechou; });
+};
+
+/**
+ * "vence quando o Treino D voltar · faltam 4 treinos" — `voltas` é a frente 2
+ * §9.3: quantos treinos passam antes de aquele voltar, pela ordem da rotação.
+ * `null` quando o treino não está mais na rotação: sem posição, não há volta.
+ */
+function fraseDoVencimento(nome, ip, iq, n) {
+  if (ip < 0 || iq < 0 || !n) return null;
+  const voltas = (ip - iq + n) % n;
+  if (voltas === 0) return 'vence na próxima vez do ' + nome + ' — que é a próxima sessão';
+  return 'vence quando o ' + nome + ' voltar · ' +
+         (voltas === 1 ? 'falta 1 treino' : 'faltam ' + voltas + ' treinos');
+}
 
 // ---------- tela cheia: retrospectiva de bloco ----------
 CTX.retrospectiva = function () {
@@ -6341,9 +8296,15 @@ CTX.acoesDia = {
   pronto: function () { modoEdicao(false); }
 };
 
+// `inp` saiu: a lista rápida não tem mais campo, e o par por valor dela
+// (`anotaSerieRapida`) continua sendo a porta do modelo. `tecla` e
+// `fechaTeclado` são as MESMAS da sessão e do corpo — um teclado só; o que muda
+// é o alvo, e ele mora no estado do teclado.
 CTX.acoesRapido = {
   abre: function () { abrirRapido(); },
-  inp: function (el, i, pos) { inpRapido(el, i, pos); }
+  abreTeclado: function (i, pos) { abreTecladoRapido(i, pos); },
+  tecla: function (t) { teclaDoTeclado(t); },
+  fechaTeclado: function () { fechaTeclado(); }
 };
 
 CTX.acoesAulas = {
@@ -6648,8 +8609,10 @@ CTX.apagaFotoDoCorpo = async function (pose) {
   // Confirma como toda outra ação destrutiva do app. E o aviso é honesto: a
   // lápide viaja na sincronização, então isto não apaga só daqui.
   const p = poseDe(pose);
-  if (!confirm('Apagar a foto de ' + (p ? p.n.toLowerCase() : pose) + '?\n\n' +
-               'Some deste aparelho e dos outros na próxima sincronização. Não tem volta.')) return;
+  // PARE (§3.3): a lápide viaja, e a comparação perde o par.
+  const qual = p ? p.n.toLowerCase() : pose;
+  if (!(await pare({ texto: 'Apagar a foto de ' + qual + ' de ' + fmtDate(Date.parse(v.d + 'T12:00:00')) + ' tira ela deste aparelho e dos outros na próxima sincronização, e a comparação perde esse par. Isso não tem volta.',
+                     sim: 'Apagar a foto de ' + qual }))) return;
   const ext = ses.fotos[pose].ext;
   lapide(chaveDeFotoDoCorpo(v.d, pose));
   ses.fotos = Object.assign({}, ses.fotos);
@@ -6877,6 +8840,439 @@ CTX.setGordura = function (v) {
  * de destino porque um atalho que não diz para onde vai obriga a tocar para
  * descobrir, e o toque é o que ele existe para economizar.
  */
+/**
+ * A hora de parede, para o cabeçalho do modo.
+ *
+ * O protótipo achou que o app não tem relógio NENHUM, e que a projeção de fim
+ * do treino não se confere sem ele: "acabo às 19h10" não diz nada a quem não
+ * sabe que horas são. Fica aqui e não na vista porque `Date.now()` dentro de um
+ * componente é estado escondido — a vista desenha o que o modelo diz.
+ *
+ * E aqui embaixo, e não junto de `tickRelogio` lá em cima: `CTX` só nasce
+ * depois dele, e atribuir antes é TDZ no carregamento do módulo — o app não
+ * boota e a suíte inteira responde `__escopo is not a function`.
+ */
+CTX.horaDeParede = function () { return fmtHora(Date.now()); };
+
+/**
+ * Os fatos do dia que a regra do cartão de cima lê, resolvidos do `S`.
+ *
+ * A REGRA mora em `dominio/agora.ts`, é pura e está provada por mutação, degrau
+ * por degrau. Aqui fica só o que depende de estado — e cada linha deste
+ * invólucro é uma decisão de ONDE o fato já estava:
+ *
+ * - **a janela do treino** termina quando a sessão terminaria: o minuto da
+ *   refeição `treino` do dia (que `refeicoesDeHoje` já desloca pelo turno) mais
+ *   `duracaoDoTreino()`, que é a mediana medida das sessões dele e não uma
+ *   constante. Nenhum número novo: é o mesmo cálculo com que o plano já move as
+ *   refeições em volta do treino;
+ * - **palpite** é `previsto` de `diaDeHoje`, que já distingue sessão
+ *   registrada, sessão aberta e escolha manual do palpite do padrão semanal;
+ * - **feito** é `origem === 'registrado'`: já há sessão registrada hoje;
+ * - **a aula** é o dia ABERTO da rotação (`HX`, `aberto: 1`), porque a aula É a
+ *   sessão daquele dia;
+ * - **as refeições presas à sessão não disputam o topo.** São as de
+ *   `quando: 'treino'` — o pré e o intra —, e é a razão escrita da frente 1: o
+ *   pré "desce para a linha de baixo e reaparece dentro do descanso, que é onde
+ *   ele de fato é marcado". Cartão mandando beber água no meio da série seria a
+ *   mesma classe de erro.
+ *
+ * **A confirmação do fim aproximado** é derivada, e de propósito sem campo
+ * novo: a sessão mais recente fechada SOZINHA (`fim: 'auto'`, que
+ * `fechaSessao('auto')` carimba) e de um dia anterior a hoje. Enquanto ele não
+ * responde, o número escrito continua aproximado e a pergunta continua
+ * legítima; responder de qualquer um dos dois lados passa o `fim` a `'manual'`
+ * e a pergunta sai sozinha. Campo novo aqui custaria migração, regra de fusão e
+ * duas listas de cópia — por um fato que o dado já carrega.
+ */
+CTX.fatosDoDia = function () {
+  const h = diaResolvido();
+  const dia = diaDeComida();
+  const plano = planoDeComida();
+  const treinando = h.cadencia === 'treino';
+  const refs = refeicoesDeHoje(plano, treinando, !!dia.alta, dia.turno, duracaoDoTreino());
+  const agora = Date.now();
+  const agoraMin = new Date(agora).getHours() * 60 + new Date(agora).getMinutes();
+
+  // a sessão aberta, com a contagem de séries. A aritmética espelha
+  // `estadoEx`, deload incluído, para as duas leituras não divergirem.
+  let sessao = null;
+  const s = S.sessao;
+  if (s) {
+    const t = treino(s.day);
+    let guardadas = 0, prescritas = 0;
+    (t ? t.ex : []).forEach(function (ex, i) {
+      const e = entradaDaSessao(s.day, i, s.sid);
+      prescritas += (e && e.dl) ? Math.ceil(ex.s / 2) : ex.s;
+      if (e) guardadas += e.sets.filter(Boolean).length;
+    });
+    sessao = { dia: s.day, guardadas: guardadas, prescritas: prescritas,
+               esquecida: sessaoEsquecida(s) };
+  }
+
+  // a sessão que fechou sozinha e ainda não teve o fim confirmado
+  let confirmar = null;
+  for (let i = S.done.length - 1; i >= 0; i--) {
+    const m = S.done[i];
+    if (!m || m.livre) continue;
+    if (m.fim === 'auto' && !sameDay(m.t, agora) && m.dur) {
+      confirmar = { dia: m.day, inicio: m.t - m.dur, fim: m.t };
+    }
+    break;                               // só a MAIS RECENTE responde
+  }
+
+  // o treino previsto e a janela dele
+  let treinoDoDia = null;
+  if (treinando && h.treino) {
+    const doPlano = refs.filter(function (r) { return r.id === 'treino'; })[0];
+    const ini = doPlano ? minutosDe(doPlano.t) : null;
+    treinoDoDia = {
+      dia: h.treino,
+      // sem a refeição do treino no plano do dia não há janela a respeitar, e
+      // o dia inteiro seria dela: o treino passa a não disputar.
+      fimDaJanela: ini == null ? -1 : ini + duracaoDoTreino(),
+      palpite: !!h.previsto,
+      feito: h.origem === 'registrado',
+      aula: diaAberto(h.treino)
+    };
+  }
+
+  return {
+    sessao: sessao,
+    confirmar: confirmar,
+    treino: treinoDoDia,
+    refeicoes: refs
+      .filter(function (r) { return r.quando !== 'treino'; })
+      .map(function (r) {
+        return { id: r.id, hora: minutosDe(r.t), marcada: !!dia.done[r.id] };
+      }),
+    agora: agoraMin
+  };
+};
+
+/**
+ * O aparelho está guardando?
+ *
+ * `src/infra/db.ts` sonda o armazenamento no boot e cai para memória quando o
+ * acesso estoura — aba privada, armazenamento bloqueado por política, `file://`
+ * travado. Até esta passada **ninguém lia o resultado da sonda**: o app abria
+ * inteiro, marcava refeição, registrava série, e perdia tudo ao fechar a aba
+ * sem dizer uma palavra. É a §5.0 da frente 1, e o aviso dela fica ACIMA do
+ * cartão porque não é uma ação — é a condição de validade de todas as outras.
+ *
+ * `null` antes de a sonda responder conta como guardando: avisar perda antes de
+ * saber seria alarme falso, e alarme falso ensina a ignorar o verdadeiro.
+ */
+CTX.guardando = function () { return DB.mode !== 'mem'; };
+
+/**
+ * A linha do Agora sobre o que espera decisão — e sobre o que vence hoje.
+ *
+ * DUAS FRENTES PEDIRAM COISAS DIFERENTES AQUI, e a linha carrega as duas:
+ *
+ * - a frente 1 (§5.6) quer o aviso do VENCIMENTO "na manhã daquele treino";
+ * - a frente 2 (§9.2) quer que encerrar o treino **informe**, e não pergunte:
+ *   "a mudança some da vista dele no mesmo instante em que o app passa a
+ *   guardá-la — e 'guardado em silêncio' é tão ruim quanto 'descartado em
+ *   silêncio', porque ele não sabe que há algo a decidir".
+ *
+ * **Reconciliação, e está declarada:** a linha PERSISTE enquanto houver algo
+ * esperando, e muda de palavra no dia em que vence. O "uma vez" da frente 1 lê
+ * como UMA LINHA e não uma lista — que é o que a §1.1 manda, "o Agora mostra uma
+ * linha; o dono da lista é Prescrição". Literalmente uma vez, a mudança ficaria
+ * invisível entre o fim do treino e a manhã da volta, que é justamente o buraco
+ * que a frente 2 nomeia.
+ *
+ * `!g.venceu` em tudo: o que já venceu não tem aviso a dar — tem o bloco
+ * "venceu sem você" em Prescrição, que é dito e desfazível. Avisar dos dois
+ * jeitos faria o Agora cobrar uma decisão que o tempo já tomou.
+ */
+// ---------- pôr um dia em dia ----------
+//
+// A tarefa que o app não tinha: registrar a terça que ele esqueceu de marcar. O
+// chão é `poeComidaNoDia` (frente 0), e esta é a metade de MODELO da folha que a
+// frente 2 desenhou — as leituras e a escrita, antes de qualquer pixel.
+//
+// As CINCO marcas por refeição, e cada uma é coisa diferente no dado:
+//
+//   tudo     · comeu o que o plano diz           → `done`, sem `como`
+//   metade   · comeu menos                       → `done` + `escala: 0.5`
+//   fora     · comeu, mas não foi aquilo         → `done` + `como: 'fora'`
+//   não sei  · comeu e não sabe quanto           → `done` + `como: 'nsei'`, peso 0
+//   não comi · NÃO comeu, dito como fato         → `done` + `como: 'nao'`, peso 0
+//
+// O quinto é o que destrava o portão, e é decisão 1 das quinze: declarar "não
+// comi" com um toque produz dia CONTADO, em vez de silêncio — e silêncio não
+// conta para o `MIN_REGISTRADOS` de 11 em 14. Até aqui `'nao'` existia no
+// domínio e não tinha porta: o modelo o alcançava, o dedo não.
+//
+// "Não sei" NÃO tira o dia da conta, e isso é decisão 2: peso 0 DENTRO do
+// denominador. Subestimar segura o corte; inflar autoriza um corte que não devia
+// acontecer.
+
+/** As porções que o app oferece. Duas acima de 1 — "comi mais que o plano". */
+const PORCOES_DO_DIA = [0.5, 0.75, 1, 1.25, 1.5];
+
+/**
+ * As linhas da folha de pôr um dia em dia.
+ *
+ * ABRE PRÉ-MARCADA COMO SUGESTÃO, e a regra é a do protótipo: dia passado vem
+ * tudo marcado. Mas aqui há histórico, e o que está REGISTRADO vence a sugestão
+ * — `poeComidaNoDia` completa em vez de substituir, e a tela não pode prometer
+ * o contrário.
+ *
+ * `sugerida` separa as duas, e a separação não pode ser só de cor (1.4.1): a
+ * linha carrega a PROCEDÊNCIA da marca em palavra — "marcada pelo horário" para
+ * a sugestão, nada para o que ele declarou.
+ *
+ * `null` quando a data não serve: futura, ilegível. A folha não abre para um dia
+ * que não aconteceu.
+ */
+/**
+ * Os dias de comida JÁ FECHADOS — a lista que Dias possui (§1.2).
+ *
+ * É daqui que a folha de pôr em dia é alcançada: Dias é "o LUGAR" dela, e o que
+ * o lugar oferece é a lista do que aconteceu, com a porta para corrigir cada
+ * dia. Os dias SEM linha aparecem também, e são justamente os que ele pode pôr
+ * em dia — um dia sem registro é o caso de uso inteiro desta peça.
+ *
+ * Catorze dias, a mesma janela do portão: é o recorte em que pôr um dia em dia
+ * ainda muda a conta que a regra lê. Mais que isso é arqueologia.
+ */
+CTX.diasDeComidaFechados = function () {
+  const hoje = hojeISO();
+  const porData = {};
+  (Array.isArray(S.comidaHist) ? S.comidaHist : []).forEach(function (h) {
+    if (h && h.d) porData[h.d] = h;
+  });
+
+  const dias = [];
+  for (let k = 1; k <= 14; k++) {
+    const dt = new Date(hoje + 'T12:00:00');
+    dt.setDate(dt.getDate() - k);
+    const iso = hojeISO(dt.getTime());
+    const h = porData[iso];
+    const marcas = h ? Object.keys(h.done || {}).length : 0;
+    dias.push({
+      data: iso,
+      rotulo: fmtDate(dt.getTime()),
+      // Contagem, nunca percentual: um número contra 100% implícito funciona
+      // como nota, e registro não leva nota.
+      txt: h
+        ? marcas + (marcas === 1 ? ' refeição marcada' : ' refeições marcadas')
+        : 'sem registro',
+      tem: !!h
+    });
+  }
+  return dias;
+};
+
+CTX.abrePoeODia = function (data) { CTX.abreFolha({ k: 'poeODia', data: data }); };
+
+CTX.poeODiaEmDia = function (data) {
+  if (typeof data !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return null;
+  const hoje = hojeISO();
+  if (data > hoje) return null;
+
+  const linha = (Array.isArray(S.comidaHist) ? S.comidaHist : [])
+    .filter(function (h) { return h && h.d === data; })[0] || null;
+  const cadencia = linha && linha.cadencia ? linha.cadencia : 'descanso';
+  const plano = planoDeComida();
+  const refs = refeicoesDeHoje(plano, cadencia === 'treino',
+                               !!(linha && linha.alta), linha && linha.turno,
+                               duracaoDoTreino());
+  const cat = catalogoAlimentos();
+
+  return {
+    data: data,
+    // A PROCEDÊNCIA do plano, e ela tem de ser dita: o plano daquela data não
+    // existe em lugar nenhum — `pv` guarda QUANDO ele era aquele, não O QUE
+    // era. Um dia posto em dia é contado contra o plano de HOJE.
+    plano: refs.length + (refs.length === 1 ? ' refeição' : ' refeições') +
+           ' · contado contra o plano de hoje',
+    fechado: !!linha,
+    porcoes: PORCOES_DO_DIA.slice(),
+    linhas: refs.map(function (r) {
+      const marcada = !!(linha && linha.done && linha.done[r.id] != null);
+      const como = (linha && linha.como && linha.como[r.id]) || null;
+      const escala = (linha && linha.escala && linha.escala[r.id] != null)
+        ? linha.escala[r.id] : 1;
+      // A SUGESTÃO VALE SÓ ENQUANTO O DIA NÃO TEM REGISTRO, e isto me custou um
+      // vermelho: eu sugeria "tudo" para toda linha sem marca, inclusive num dia
+      // JÁ gravado. A consequência era que o dia não convergia — esvaziar uma
+      // linha a devolvia como sugestão, e o toque seguinte em outra linha a
+      // re-gravava. Nunca dava para deixar uma refeição sem marca.
+      //
+      // Com o dia declarado, o REGISTRO é a verdade, inclusive os vazios: linha
+      // sem marca num dia gravado é ausência DECLARADA, não ausência de resposta.
+      const vazio = !marcada && !!linha;
+      return {
+        id: r.id,
+        nome: r.n,
+        hora: r.t,
+        marca: marcada ? (como || (escala === 0.5 ? 'metade' : 'tudo'))
+             : vazio ? 'vazia' : 'tudo',
+        escala: marcada ? escala : 1,
+        // o que distingue sugestão de declaração, em PALAVRA e não em cor
+        sugerida: !marcada && !linha,
+        procedencia: (marcada || vazio) ? null : 'marcada pelo horário · ' + r.t,
+        resumo: resumoDaRefeicao(r, cat, !!(linha && linha.alta), escala)
+      };
+    }),
+    // `aderencia` sem resposta é `'plano'`, e `'plano'` é o padrão de quem não
+    // respondeu. A pergunta do "fora do plano" NÃO bloqueia (decisão 4): ela
+    // aparece depois da gravação, e o que a resposta muda é se o dia conta.
+    aderencia: (linha && linha.aderencia) || 'plano',
+    frase: fraseDoDia(refs, linha)
+  };
+};
+
+/**
+ * A FRASE DE LEITURA DE VOLTA, e ela é obrigatória — não ornamento.
+ *
+ * Se um toque grava sete refeições, a tela tem de dizer **as sete**, com as
+ * palavras que foram gravadas (frente 2, §4.3). E tem de dizer inclusive o que
+ * NÃO foi marcado, porque "fica sem marca" é um resultado e não um silêncio.
+ *
+ * Agrupa por marca em vez de listar linha por linha: sete frases dizendo a mesma
+ * coisa viram ruído e ninguém lê a sétima. E usa as PALAVRAS do botão, não os
+ * valores do dado — quem lê a frase é quem acabou de tocar, e ele reconhece o
+ * que tocou.
+ *
+ * O nó que a mostra é `aria-live="polite"`: a gravação acontece no toque, e sem
+ * região viva quem usa leitor de tela não ouve o que foi gravado.
+ */
+const PALAVRA_DA_MARCA = {
+  tudo: 'tudo', metade: 'metade', fora: 'fora do plano',
+  nsei: 'não sei quanto', nao: 'não comi', vazia: 'fica sem marca'
+};
+function fraseDoDia(refs, linha) {
+  const grupos = {};
+  refs.forEach(function (r) {
+    const marcada = !!(linha && linha.done && linha.done[r.id] != null);
+    const como = (linha && linha.como && linha.como[r.id]) || null;
+    const escala = (linha && linha.escala && linha.escala[r.id] != null)
+      ? linha.escala[r.id] : 1;
+    const m = marcada ? (como || (escala === 0.5 ? 'metade' : 'tudo'))
+            : linha ? 'vazia' : 'tudo';
+    (grupos[m] = grupos[m] || []).push(r.n.toLowerCase());
+  });
+  const partes = Object.keys(PALAVRA_DA_MARCA)
+    .filter(function (m) { return grupos[m]; })
+    .map(function (m) {
+      const ns = grupos[m];
+      const lista = ns.length === 1 ? ns[0]
+        : ns.slice(0, -1).join(', ') + ' e ' + ns[ns.length - 1];
+      return PALAVRA_DA_MARCA[m] + ' em ' + lista;
+    });
+  if (!partes.length) return '';
+  const corpo = partes.join('; ');
+  // O verbo diz o ESTADO: antes do primeiro toque nada está gravado, e a frase
+  // não pode dizer "gravado" sobre uma sugestão.
+  return (linha ? 'Gravado: ' : 'Sugerido, e nada gravado ainda: ') + corpo + '.';
+}
+
+/**
+ * Grava UMA linha de um dia passado — e com ela o dia inteiro como está sugerido.
+ *
+ * É a decisão P3.i.6 do dono, e a consequência precisa está dita na frente 2
+ * (§4.3): **o primeiro toque grava o dia inteiro como está sugerido**, e cada
+ * toque seguinte corrige uma linha. Não é "o toque grava aquela linha" — é "o
+ * toque transforma a sugestão inteira em registro, com a linha tocada já
+ * corrigida". Qualquer outra leitura exige um botão de guardar, e o botão está
+ * proibido.
+ *
+ * Por isso a escrita monta o dia a partir das LINHAS da folha, não da marca
+ * isolada: o que está na tela é o que vai ao dado.
+ *
+ * **NÃO EXISTE "limpar a marca", e isso é limite do chão, não esquecimento.**
+ * `poeComidaNoDia` COMPLETA e não substitui — "marca nova vence marca velha
+ * chave a chave; o resto fica" —, e a frente 2 escreveu que a folha "não pode"
+ * oferecer limpar: apagar um dia do histórico é destrutivo e não foi desenhado.
+ *
+ * Eu havia inventado uma marca `'vazia'` para tirar a refeição do registro, e a
+ * rede mostrou que ela não funcionava: o merge a devolvia na chamada seguinte.
+ * O defeito não era do merge — era meu, por especificar comportamento que a
+ * função não permite. As cinco marcas são as cinco, e todas MARCAM; o que
+ * distingue "não comi" de silêncio é que a primeira é fato declarado.
+ */
+CTX.marcaNoDiaPassado = async function (data, id, marca, escala) {
+  const d = CTX.poeODiaEmDia(data);
+  if (!d) return { ok: false, recusa: 'data' };
+
+  const done = {}, como = {}, esc = {};
+  const agora = Date.now();
+  d.linhas.forEach(function (l) {
+    const m = l.id === id ? marca : l.marca;
+    const e = l.id === id ? (escala == null ? l.escala : escala) : l.escala;
+    // Linha que o dia declarou SEM marca fica sem marca: ela não entra, e o
+    // merge do chão preserva o que já estava. O que não existe é a volta —
+    // nenhuma marca sai daqui.
+    if (m === 'vazia') return;
+    done[l.id] = agora;
+    if (m === 'fora' || m === 'nao' || m === 'nsei') como[l.id] = m;
+    if (m === 'metade') esc[l.id] = 0.5;
+    else if (e != null && e !== 1) esc[l.id] = e;
+  });
+
+  const r = poeComidaNoDia(
+    Array.isArray(S.comidaHist) ? S.comidaHist : [],
+    data,
+    { done: done, como: como, escala: esc, aderencia: d.aderencia },
+    planoDeComida(), catalogoAlimentos(), hojeISO(),
+    versaoDoPlano(), S.ajuste || 0, agora
+  );
+  if (r.recusa) {
+    // "Nada mudou" é resultado legítimo, e o app tem doutrina contra falso
+    // sucesso: dia que fica mudo depois de ele mexer continua mudo, e a tela
+    // diz isso em vez de piscar um sucesso.
+    toast(r.recusa === 'mudo'
+      ? 'O dia ficou sem marca nenhuma, e continua como estava.'
+      : 'Esta data não serve.');
+    render();
+    return { ok: false, recusa: r.recusa };
+  }
+
+  S.comidaHist = r.hist;
+  await save();
+  render();
+  return { ok: true };
+};
+
+CTX.esperandoDecisao = function () {
+  const fila = CTX.mudancasQueEsperam().filter(function (g) { return !g.venceu; });
+  if (!fila.length) return null;
+
+  const vencendo = fila.filter(function (g) { return g.venceHoje; });
+  const conta = function (gs) {
+    return gs.reduce(function (k, g) { return k + g.mudancas.length; }, 0);
+  };
+
+  if (vencendo.length) {
+    const n = conta(vencendo);
+    return {
+      n: n, vence: true,
+      txt: n === 1
+        ? 'Uma mudança do treino ' + vencendo[0].dia + ' vence hoje.'
+        : n + ' mudanças vencem hoje.'
+    };
+  }
+
+  const n = conta(fila);
+  return {
+    n: n, vence: false,
+    // Nomeia o treino quando é uma só: é o que ele reconhece, e o que a frente 2
+    // pede ("a série a mais do Treino A está esperando decisão em Prescrição").
+    // A descrição de cada mudança é da LISTA, não daqui.
+    txt: n === 1
+      ? 'Uma mudança do treino ' + fila[0].dia + ' está esperando decisão.'
+      : n + ' mudanças estão esperando decisão.'
+  };
+};
+
+/** A próxima coisa a fazer. A regra é `dominio/agora.ts`; os fatos, acima. */
+CTX.cartaoDeCima = function () { return cartaoDeCima(CTX.fatosDoDia()); };
+
 CTX.faixaDaSessao = function () {
   const s = S.sessao;
   if (!s) return null;
@@ -6890,7 +9286,13 @@ CTX.faixaDaSessao = function () {
              txt: 'Treino ' + s.day + ' sem série nova há ' + fmtDur(paradaDaSessao(s)) + '.' };
   }
 
-  if (view.aba === 'treino') return null;
+  // O atalho leva ao treino em andamento. Dentro do modo a pessoa JÁ está nele,
+  // e o botão ocuparia a faixa com um caminho para onde ela está. A pergunta
+  // acima continua, que é o item 1 da lista do que não some no modo.
+  //
+  // A metade `view.aba === 'treino'` saiu com a aba: ela dizia a mesma coisa
+  // que o modo diz agora, e era de onde o modo herdou a regra por acidente.
+  if (view.modoSessao) return null;
   const i = ondeEleEstava(estadosDoDia(s.day));
   return {
     tipo: 'atalho', dia: s.day,
@@ -6912,20 +9314,25 @@ CTX.continuaSessao = async function () {
 
 /** "Já parei": encerra com a duração indo até a última série registrada. */
 CTX.encerraSessaoEsquecida = async function () {
-  if (!S.sessao) return;
+  const s = S.sessao;
+  if (!s) return;
   fechaSessao('auto');
   faixaPerguntando = false;
   await save(); render(); window.scrollTo(0, 0);
-  toast('Treino encerrado. A duração vai até a última série.');
+  // "já parei" é um TOQUE que grava o fim automático — o único lugar do produto
+  // em que um toque dele grava um tempo que não é o do toque. A frase diz isso.
+  toast(fraseDoFechoNaUltima(s, 'Encerrei'));
 };
 
 CTX.voltaAoTreino = function () {
   const s = S.sessao;
   if (!s) return;
   view.day = s.day;
-  view.aba = 'treino';
+  // Sem mexer em `view.aba`: ver a nota de `abreTreinoDeHoje`. O modo é camada
+  // por cima do lugar, e fechá-lo devolve a pessoa de onde ela entrou.
   view.swapOpen = null;
   view.open = ondeEleEstava(estadosDoDia(s.day));
+  abreModo();                          // a faixa entra NO modo, não na aba atrás dele
   render();
   if (view.open != null) mostraExercicio(view.open);
   else window.scrollTo(0, 0);
@@ -6974,6 +9381,215 @@ const scrollDoDestino = {};
  * do destino — curta — e o `scrollY` do navegador já veio grampeado nela. A
  * posição que se queria guardar teria sumido meio quadro antes.
  */
+/* ---- O modo de sessão ----
+   A sessão deixa de ser aba e passa a ser MODO, com saída própria. O protótipo
+   achou o defeito que isto conserta: instalado no iPhone não existe barra de
+   navegador, e o dedo ficava preso dentro do treino, sem caminho para a comida.
+
+   Entrar no modo NÃO é começar a sessão, e são coisas independentes de
+   propósito: a sessão nasce na primeira série completa e o botão nunca foi
+   pré-condição para gravar. O modo abre PRONTO, não iniciado.
+
+   E sair do modo não encerra nada. A seta do cabeçalho fecha o modo e deixa a
+   sessão aberta — é a saída que o protótipo não tinha. Encerrar é outra coisa,
+   e mata a sessão, não o modo.
+
+   A flag é tudo que estes dois fazem: a pilha de camadas é DERIVADA de `view`
+   (`src/ui/navegacao.js`), então ligar a flag já faz o Voltar do sistema fechar
+   o modo em vez de sair do app. `view.aba` fica intocada — o modo cobre a aba
+   em que o dedo estava, e fechá-lo devolve o dedo lá. */
+/**
+ * Abre o modo SEM pintar, e diz se abriu.
+ *
+ * Três portas levam ao modo (frente 1, §4.4) e duas delas já arrumam a tela
+ * antes de entrar — a faixa mexe em aba, dia e exercício aberto; o pouso do app
+ * mexe em aba e dia. Essas duas querem um render só, no fim, e não o do meio.
+ */
+function abreModo() {
+  if (view.modoSessao) return false;
+  view.modoSessao = true;
+  entraNoDestino('modoSessao');
+  return true;
+}
+
+CTX.abreModoDeSessao = function () { if (abreModo()) render(); };
+
+/**
+ * Os AJUSTES: a conta, o aparelho e a cópia de segurança.
+ *
+ * Destino de tela cheia e não lugar — um botão no canto do Agora (§1.6). Entrou
+ * como camada, então o Voltar do sistema e o Esc fecham por ele como por
+ * qualquer outra.
+ */
+CTX.abreAjustes = function () {
+  if (view.ajustes) return;
+  view.ajustes = true;
+  entraNoDestino('ajustes');
+  render();
+};
+CTX.fechaAjustes = function () {
+  if (!view.ajustes) return;
+  view.ajustes = false;
+  saiDoDestino('ajustes');
+  render();
+};
+
+/**
+ * A PORTA 1 do modo: o cartão de cima do Agora.
+ *
+ * As outras duas portas devolvem alguém a uma sessão que já existe (a faixa) ou
+ * a reabrem no pouso do app. Esta é a que COMEÇA — e começar não é abrir
+ * sessão: "entrar no modo é navegação", e a sessão nasce na primeira série
+ * completa (frente 1, §4.4). Por isso aqui não há `abreSessao` nenhuma.
+ *
+ * O dia vem resolvido, e não de `view.day`: o cartão fala do treino de HOJE, e
+ * o dedo pode ter deixado a letra em outro dia por outro caminho.
+ *
+ * E ela NÃO mexe em `view.aba`. Com a aba de treino, mexer era obrigatório — a
+ * tela do treino era uma aba. Agora o modo é camada POR CIMA do lugar, e trocar
+ * o lugar por baixo faria fechar o modo devolver a pessoa a outro lugar que não
+ * o de onde ela entrou.
+ */
+/**
+ * O menu `···` da sessão: o que é RARO, e por isso não fica à vista.
+ *
+ * Nasce com um item só — o deload —, e isso é por decisão e não por falta de
+ * ideia. A decisão 6 do dono mandou o interruptor sair de Ajustes para cá, e o
+ * argumento que caiu com ele era bom o bastante para ficar escrito:
+ *
+ *   "um interruptor que corta metade das séries não deve estar a um toque no
+ *    meio de uma sessão. O app existe em parte para frear, e o caminho de menor
+ *    esforço tem que ser o conservador."
+ *
+ * **O lugar ERA o freio**, e ele decidiu movê-lo sabendo disso — foi perguntado
+ * duas vezes na mesma noite e manteve. Então o freio passa do LUGAR para a
+ * PALAVRA: o item não é um interruptor com nome, é uma frase que diz **o corte
+ * em número antes do toque** (frente 3, §7.6).
+ *
+ * Os números são do dado e não de exemplo: saem do prescrito do dia e da conta
+ * do deload (`setsFor`), calculados na hora de abrir o menu.
+ *
+ * `null` sem treino no dia: não há séries a cortar.
+ */
+/**
+ * Em que ponto do bloco ele está.
+ *
+ * Veio do cabeçalho do TREINO (achado 7 da frente 1): o ciclo responde "em que
+ * ponto do bloco eu estou", que é a mesma pergunta que a retrospectiva responde
+ * em prosa — e a retrospectiva é de Semana. No cabeçalho da sessão ele era a
+ * terceira célula de uma linha que se lê de pé, no meio de uma série.
+ *
+ * A conta é por VOLTAS DA ROTAÇÃO e não por semanas: o ciclo é quantas vezes a
+ * sequência inteira já passou, e por isso ele depende do tamanho dela — cinco
+ * dias mais o HYROX, ou o que a rotação dele tiver. Contar em semanas daria o
+ * número errado toda vez que ele treinasse mais ou menos que a rotação pede.
+ */
+/**
+ * Os catorze dias que a regra do corte lê — as fatias e a contagem.
+ *
+ * §1.1 lista isto como posse do Agora, e o §5.7 o nomeia no estado mais mudo
+ * que a tela tem: num dia de descanso fora de qualquer janela "ficam a linha do
+ * dia, a água e A CONTAGEM DOS 14 DIAS, e não há cartão". Faltava — e pior, o
+ * aviso de aparelho sem armazenamento que eu escrevi diz "não entra na conta
+ * dos 14 dias", citando uma conta que não estava em tela nenhuma.
+ *
+ * **A janela é a mesma que o portão lê**, e é por isso que ela inclui a casa de
+ * HOJE mesmo sabendo que ela vai estar vazia: `diasInterpretaveis` conta sobre
+ * `S.comidaHist`, e o dia corrente só entra lá quando a data vira
+ * (`fechaDiaDeComida`). Mostrar treze casas e contar sobre catorze faria a tela
+ * e a regra discordarem — e a tela perderia, porque quem decide o corte é a
+ * regra. A casa de hoje vazia é informação: o dia não fechou.
+ *
+ * `null` numa fatia é dia sem registro interpretável, e o primitivo desenha
+ * casa vazia — é o que faz as catorze lerem como presença e ausência em vez de
+ * um gráfico de zero e um.
+ */
+/**
+ * O histórico de um exercício, a partir de uma linha do PROGRAMA.
+ *
+ * A porta que o achado 1 da frente 1 pede. `openHist(i)` indexa pelo
+ * `view.day`, e no editor de programa o dia é o de `view.prog` — podia ser
+ * outro. Aqui o dia vem explícito, e `view.day` o acompanha porque é dele que a
+ * tela do histórico lê a prescrição da posição.
+ *
+ * As QUATRO capacidades que moravam só no cartão do exercício chegam por aqui:
+ * o gráfico do "estou ficando mais forte nisto", a correção de uma série de
+ * semanas atrás, o renome do exercício e o tipo de carga. Com a aba de treino
+ * fora, o cartão só existe dentro do modo — e corrigir a série de três semanas
+ * atrás não é tarefa de quem está treinando.
+ */
+CTX.abreHistoricoDaPrescricao = function (dia, i) {
+  view.day = dia;
+  openHist(i);
+};
+
+CTX.quatorzeDias = function () {
+  const hoje = hojeISO();
+  const porData = {};
+  (Array.isArray(S.comidaHist) ? S.comidaHist : []).forEach(function (h) {
+    if (h && h.d) porData[h.d] = h;
+  });
+
+  const fatias = [];
+  for (let k = 13; k >= 0; k--) {
+    const d = new Date(hoje + 'T12:00:00');
+    d.setDate(d.getDate() - k);
+    const h = porData[hojeISO(d.getTime())];
+    fatias.push(h && diaInterpretavel(h) ? 1 : null);
+  }
+
+  const n = diasRegistrados();
+  return {
+    fatias: fatias,
+    registrados: n,
+    pede: MIN_REGISTRADOS,
+    // O portão é do nutricionista e o número não é negociável. A tela diz onde
+    // ele está sem transformar isso em nota: contagem, nunca percentual.
+    txt: n + ' de 14 dias com registro',
+    nota: n >= MIN_REGISTRADOS
+      ? 'a regra pede ' + MIN_REGISTRADOS + ' · o portão da adesão está aberto'
+      : 'a regra pede ' + MIN_REGISTRADOS + ' para mexer nas calorias',
+    aberto: n >= MIN_REGISTRADOS
+  };
+};
+
+CTX.cicloDoBloco = function () {
+  const treinos = rot().length;
+  return {
+    sessoes: S.done.length,
+    treinos: treinos,
+    ciclo: String(Math.floor(S.done.length / treinos) + 1)
+  };
+};
+
+CTX.menuDaSessao = function () {
+  const d = view.day;
+  const deload = itemDoDeload(d);
+  if (!deload) return null;
+  return {
+    // "Encerrar o treino · o fim é agora, 7h31": o que o toque grava, com o
+    // número, antes do toque (V4). Só existe com sessão aberta.
+    encerrar: S.sessao ? { rotulo: 'Encerrar o treino', detalhe: 'o fim é agora, ' + fmtHoraDita(Date.now()) } : null,
+    deload: deload
+  };
+};
+
+CTX.abreTreinoDeHoje = function () {
+  const h = diaResolvido();
+  if (!h.treino) return;               // dia de descanso: não há treino a abrir
+  view.day = h.treino;
+  view.swapOpen = null;
+  abreModo();
+  render();
+};
+
+CTX.fechaModoDeSessao = function () {
+  if (!view.modoSessao) return;
+  view.modoSessao = false;
+  saiDoDestino('modoSessao');
+  render();
+};
+
 function entraNoDestino(chave) {
   scrollDoDestino[chave] = window.scrollY;
   window.scrollTo(0, 0);

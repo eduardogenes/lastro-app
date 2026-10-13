@@ -12,9 +12,9 @@ function emHoje(h, m) {
 
 test('o relógio diz desde que horas', async () => {
   const a = await app();
-  await a.E('iniciarSessao()');
+  await a.v('iniciarSessao');
   a.E('S.sessao.inicio = ' + emHoje(6, 22));
-  a.E('render()');
+  a.v('render');
   assert.strictEqual(a.texto('.day-rel em'), 'desde 06:22');
   a.fechar();
 });
@@ -25,7 +25,7 @@ test('detalhe da sessão mostra início e fim', async () => {
     logs: { A0: [{ t: t, sid: t, sets: [[40, 10]] }] },
     done: [{ day: 'A', t: t, sid: t, dur: 69 * 60000, fim: 'manual' }]
   } });
-  a.E('abrirSessao(' + t + ')');
+  a.v('abrirSessao', t);
   const linha = a.texto('.horario');
   assert.ok(/06:22/.test(linha), linha);
   assert.ok(/07:31/.test(linha), 'fim derivado da duração: ' + linha);
@@ -34,11 +34,11 @@ test('detalhe da sessão mostra início e fim', async () => {
 
 test('sessão em andamento mostra só o começo', async () => {
   const a = await app();
-  await a.E('iniciarSessao()');
+  await a.v('iniciarSessao');
   a.E('S.sessao.inicio = ' + emHoje(6, 5));
   a.E('S.done[0].t = ' + emHoje(6, 5));
-  const t = a.E('S.done[0].t');
-  a.E('abrirSessao(' + t + ')');
+  const t = a.S().done[0].t;
+  a.v('abrirSessao', t);
   const linha = a.texto('.horario');
   assert.ok(/começou às/.test(linha), linha);
   assert.ok(/06:05/.test(linha));
@@ -53,8 +53,7 @@ test('lista do mês mostra a hora embaixo da data', async () => {
   const a = await app({ agora: agora, estado: {
     logs: {}, done: [{ day: 'A', t: t, sid: t, dur: 50 * 60000, fim: 'manual' }]
   } });
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
   assert.ok(a.texto('.sess-d').includes('06:40'), a.texto('.sess-d'));
   a.fechar();
 });
@@ -70,8 +69,7 @@ test('horário típico do mês, com o mais cedo e o mais tarde', async () => {
     { day: 'C', t: dia(4, 7, 0), sid: 3, dur: 50 * 60000 }
   ];
   const a = await app({ estado: { logs: {}, done: done } });
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
 
   const linha = a.$$('.mediasem').map(function (x) { return x.textContent.replace(/\s+/g, ' '); })
     .find(function (x) { return /em média/.test(x); });
@@ -84,18 +82,18 @@ test('horário típico do mês, com o mais cedo e o mais tarde', async () => {
 
 test('retroativo sem horário não inventa hora', async () => {
   const a = await app();
-  a.E('abrirAdicionar(' + (Date.now() - DIA) + ')');
-  a.E('addSet("tipo","B")');
-  await a.E('gravarRetro(false)');
+  a.v('abrirAdicionar', (Date.now() - DIA));
+  a.v('addSet', 'tipo', 'B');
+  await a.v('gravarRetro', false);
   await a.esperar();
 
-  const m = a.J('S.done[0]');
+  const m = a.S().done[0];
   assert.strictEqual(m.hora, undefined);
-  assert.strictEqual(a.E('temHora(S.done[0])'), false);
+  assert.strictEqual(a.v('temHora', a.S().done[0]), false);
 
-  a.aba('dados');
+  a.aba('semana');
   assert.ok(!/\d{2}:\d{2}/.test(a.texto('.sess-d')), 'nada de 07:00 fantasma: ' + a.texto('.sess-d'));
-  a.E('abrirSessao(' + m.t + ')');
+  a.v('abrirSessao', m.t);
   assert.strictEqual(a.$('.horario'), null);
   a.fechar();
 });
@@ -105,44 +103,44 @@ test('retroativo com horário informado registra a hora', async () => {
   const agora = agoraEstavel();
   const a = await app({ agora: agora });
   const ontem = agora - DIA;
-  a.E('abrirAdicionar(' + ontem + ')');
-  a.E('addSet("tipo","B")');
+  a.v('abrirAdicionar', ontem);
+  a.v('addSet', 'tipo', 'B');
   a.digitar('ahora', '05:50');
-  await a.E('gravarRetro(false)');
+  await a.v('gravarRetro', false);
   await a.esperar();
 
-  const m = a.J('S.done[0]');
+  const m = a.S().done[0];
   assert.strictEqual(m.hora, 1);
   const d = new Date(m.t);
   assert.strictEqual(d.getHours(), 5);
   assert.strictEqual(d.getMinutes(), 50);
   assert.strictEqual(new Date(m.t).toDateString(), new Date(ontem).toDateString(), 'continua ontem');
 
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
+  await a.esperar();
   assert.ok(a.texto('.sess-d').includes('05:50'));
   a.fechar();
 });
 
 test('horário inválido é ignorado sem quebrar', async () => {
   const a = await app();
-  a.E('abrirAdicionar(' + (Date.now() - DIA) + ')');
-  a.E('addSet("tipo","B")');
+  a.v('abrirAdicionar', (Date.now() - DIA));
+  a.v('addSet', 'tipo', 'B');
   a.digitar('ahora', '99:99');
-  await a.E('gravarRetro(false)');
+  await a.v('gravarRetro', false);
   await a.esperar();
-  assert.strictEqual(a.E('S.done[0].hora'), undefined, 'cai para sem horário em vez de gravar lixo');
+  assert.strictEqual(a.S().done[0].hora, undefined, 'cai para sem horário em vez de gravar lixo');
   a.fechar();
 });
 
 test('treino avulso não entra na conta de horário', async () => {
   const a = await app();
-  a.E('abrirAdicionar(' + (Date.now() - DIA) + ')');
-  a.E('addSet("tipo","livre")');
-  a.E('addSet("grupo","peito")');
-  await a.E('gravarRetro(false)');
+  a.v('abrirAdicionar', (Date.now() - DIA));
+  a.v('addSet', 'tipo', 'livre');
+  a.v('addSet', 'grupo', 'peito');
+  await a.v('gravarRetro', false);
   await a.esperar();
-  assert.strictEqual(a.E('temHora(S.done[0])'), false);
+  assert.strictEqual(a.v('temHora', a.S().done[0]), false);
   a.fechar();
 });
 
@@ -157,8 +155,7 @@ test('calendário marca o período do dia', async () => {
     { day: 'C', t: dia(4, 20), sid: 3, dur: 50 * 60000 }    // noite
   ];
   const a = await app({ estado: { logs: {}, done: done } });
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
 
   const marca = function (n) {
     const cel = a.$$('.cal-d').find(function (c) {
@@ -177,23 +174,23 @@ test('calendário marca o período do dia', async () => {
 test('limites das faixas de período', async () => {
   const a = await app();
   const emH = function (h) { const d = new Date(); d.setHours(h, 0, 0, 0); return d.getTime(); };
-  assert.strictEqual(a.E('periodoDe(' + emH(5) + ').k'), 'manha');
-  assert.strictEqual(a.E('periodoDe(' + emH(11) + ').k'), 'manha');
-  assert.strictEqual(a.E('periodoDe(' + emH(12) + ').k'), 'tarde');
-  assert.strictEqual(a.E('periodoDe(' + emH(17) + ').k'), 'tarde');
-  assert.strictEqual(a.E('periodoDe(' + emH(18) + ').k'), 'noite');
-  assert.strictEqual(a.E('periodoDe(' + emH(4) + ').k'), 'noite', 'madrugada é noite');
+  assert.strictEqual(a.vJ('periodoDe', emH(5)).k, 'manha');
+  assert.strictEqual(a.vJ('periodoDe', emH(11)).k, 'manha');
+  assert.strictEqual(a.vJ('periodoDe', emH(12)).k, 'tarde');
+  assert.strictEqual(a.vJ('periodoDe', emH(17)).k, 'tarde');
+  assert.strictEqual(a.vJ('periodoDe', emH(18)).k, 'noite');
+  assert.strictEqual(a.vJ('periodoDe', emH(4)).k, 'noite', 'madrugada é noite');
   a.fechar();
 });
 
 test('sem horário medido não há marcador de período', async () => {
   const a = await app();
-  a.E('abrirAdicionar(' + (Date.now() - DIA) + ')');
-  a.E('addSet("tipo","B")');
-  await a.E('gravarRetro(false)');
+  a.v('abrirAdicionar', (Date.now() - DIA));
+  a.v('addSet', 'tipo', 'B');
+  await a.v('gravarRetro', false);
   await a.esperar();
 
-  a.aba('dados');
+  a.aba('dias');
   assert.strictEqual(a.$('.cal-d .per'), null, 'não marca período de hora que ninguém mediu');
   a.fechar();
 });
@@ -204,22 +201,21 @@ test('trocar de mês não mexe na posição de leitura', async () => {
   // custava três rolagens. Trocar de mês é atualizar o dado da mesma tela, não
   // entrar em lugar nenhum (§3 do contrato de UX).
   const a = await app();
-  a.aba('dados');
-  await a.modo('treino');
+  a.aba('dias');
 
   const pedidos = [];
   a.window.scrollTo = function (x, top) {
     pedidos.push(x && typeof x === 'object' ? x.top : top);
   };
 
-  a.E('mudaMes(-1)');
+  a.v('mudaMes', -1);
   await a.esperar();
-  assert.strictEqual(a.E('view.mes'), -1, 'andou um mês para trás');
+  assert.strictEqual(a.vista().mes, -1, 'andou um mês para trás');
   assert.deepStrictEqual(pedidos, [], 'e não pediu rolagem nenhuma');
 
-  a.E('mudaMes(1)');
+  a.v('mudaMes', 1);
   await a.esperar();
-  assert.strictEqual(a.E('view.mes'), 0, 'e volta sem rolar também');
+  assert.strictEqual(a.vista().mes, 0, 'e volta sem rolar também');
   assert.deepStrictEqual(pedidos, []);
   a.fechar();
 });
@@ -235,8 +231,8 @@ test('recorde não é pintado de ácido: o app não comemora por cor', async () 
     done: [{ day: 'A', t: antes, sid: antes, dur: 60 * 60000, fim: 'manual' },
            { day: 'A', t: t, sid: t, dur: 60 * 60000, fim: 'manual' }]
   } });
-  a.E('abrirSessao(' + t + ')');
-  const v = a.J('CTX.detalheDaSessao()');
+  a.v('abrirSessao', t);
+  const v = a.vJ('ctx.detalheDaSessao');
   const rec = v.stats.filter(function (x) { return /recorde/.test(x.rotulo); })[0];
   assert.ok(rec, 'a linha de recordes existe');
   assert.strictEqual(rec.valor, '1', '40 kg para 50 kg é recorde de carga');

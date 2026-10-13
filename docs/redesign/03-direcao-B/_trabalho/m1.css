@@ -1,0 +1,179 @@
+/* ---------- instrumento de série ---------- */
+.sessao{display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 8px;padding:2px 0 8px}
+.sessao-nome{font-size:22px;font-weight:800;display:inline-flex;align-items:center;gap:6px;min-height:44px;letter-spacing:-.01em}
+.sessao-dir{display:flex;gap:6px}
+.sessao-meta{grid-column:1/-1;margin:0;font-size:15px;color:var(--prescrito)}
+.sessao-meta b{color:var(--grafite);font-weight:700}
+.trilho{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:2px 0 10px}
+.seg{min-height:46px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:13px;font-weight:700;color:var(--prescrito);border:1.5px solid transparent;text-align:center}
+.seg .pts{display:flex;gap:3px}
+.seg .pts i{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--borda)}
+.seg .pts i.f{background:var(--tinta);border-color:var(--tinta)}
+.seg .pts i.x{border-color:var(--prescrito);background:linear-gradient(45deg,transparent 42%,var(--prescrito) 42%,var(--prescrito) 58%,transparent 58%)}
+.seg.feito{color:var(--grafite)}
+.seg.atual{border-color:var(--tinta);color:var(--tinta);background:var(--tinta-fundo)}
+.exercicio{background:var(--folha);border-radius:18px;padding:12px 14px 6px;border:1px solid var(--linha)}
+.exercicio h3{font-size:22px;line-height:1.15;margin:0 0 3px;display:flex;gap:8px;align-items:baseline;letter-spacing:-.01em}
+.exercicio h3 .pos{font-size:15px;color:var(--prescrito);font-weight:700;min-width:12px}
+.exercicio .troca{margin:0 0 2px;font-size:14px;font-weight:600;color:var(--tinta)}
+.presc{margin:0;font-size:15px;color:var(--prescrito);display:flex;flex-wrap:wrap;align-items:center;gap:0 6px}
+.presc .link{min-height:30px;padding:0;font-size:15px}
+.series{width:100%;border-collapse:collapse;margin-top:6px}
+.series th,.series td{text-align:left;padding:6px 0;border-top:1px solid var(--linha);font-size:18px;font-weight:600;height:36px}
+.series thead th{font-size:12px;color:var(--prescrito);font-weight:700;border-top:0;padding:2px 0;height:auto;letter-spacing:.03em;text-transform:uppercase}
+.series tbody th{width:44px;color:var(--prescrito);font-size:15px}
+.series tbody th small{display:block;font-size:10px;font-weight:700;color:var(--tinta);letter-spacing:.03em;text-transform:uppercase;margin-top:-2px}
+.series td.ref{color:var(--prescrito);font-weight:500;width:44%}
+.series td.hoje{color:var(--tinta);font-weight:800}
+.series td.hoje .ic{stroke-width:3;margin-left:4px}
+.series tr.agora td.hoje span.agora{display:inline-block;font-size:13px;font-weight:800;color:var(--tinta);border:1.5px dashed var(--tinta);border-radius:8px;padding:2px 8px;letter-spacing:.03em;text-transform:uppercase}
+.series td.falhou{color:var(--erro);font-weight:800}
+.series td.falhou small{display:block;font-size:12px;font-weight:700}
+.delta{font-size:12px;font-weight:800;color:var(--tinta);background:var(--tinta-fundo);border-radius:6px;padding:1px 5px;margin-left:4px;vertical-align:2px}
+
+.acabou{margin-top:10px;border-radius:18px;padding:10px 12px 10px;background:var(--tinta-fundo)}
+.acabou-topo{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:30px}
+.recibo{margin:0;font-size:15px;display:flex;align-items:center;gap:6px;color:var(--grafite)}
+.recibo .ic{color:var(--tinta);stroke-width:3}
+.recibo b{color:var(--tinta)}
+.acabou .link{min-height:30px;font-size:14px}
+.relogio{display:flex;align-items:baseline;gap:6px;margin:2px 0 4px;font-size:14px;color:var(--prescrito)}
+.relogio b{font-size:20px;color:var(--grafite);font-weight:800}
+.relogio .nota{font-size:12px;font-weight:600;color:var(--grafite)}
+.barra{height:5px;border-radius:3px;background:var(--linha);overflow:hidden;margin-bottom:8px}
+.barra i{display:block;height:100%;background:var(--grafite);transition:width .6s linear}
+.linha-op{display:grid;grid-template-columns:40px 1fr;gap:6px;align-items:center;margin-top:6px}
+.linha-op .rot{font-size:12px;line-height:1.1}
+.rir{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.rir button,.dor button{height:46px;border-radius:12px;border:1.5px solid var(--borda);background:var(--folha);font-size:20px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;text-align:center}
+.rir button small{font-size:10px;font-weight:700;color:var(--prescrito);margin-top:2px;letter-spacing:.02em}
+.rir button.alvo{border-color:var(--grafite)}
+.dor{display:grid;grid-template-columns:.8fr 1fr 1fr;gap:6px}
+.dor button{font-size:13px;font-weight:700;line-height:1.1;padding:0 4px}
+.rir button[aria-pressed="true"],.dor button[aria-pressed="true"]{background:var(--tinta);color:var(--sobre-tinta);border-color:var(--tinta)}
+.rir button[aria-pressed="true"] small{color:var(--sobre-tinta)}
+.extra{margin-top:8px;width:100%;min-height:44px;border-radius:12px;border:1.5px dashed var(--tinta);color:var(--tinta);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--folha)}
+.extra span{font-weight:500;color:var(--grafite);font-size:13px}
+
+.entrada{margin-top:auto;padding:10px 0 4px}
+.entrada-topo{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.entrada-titulo{margin:0;font-size:17px;font-weight:800}
+.entrada-ref{margin:0;font-size:14px;color:var(--prescrito);text-align:right}
+.entrada-nota{margin:-2px 0 6px;font-size:13px;color:var(--grafite);display:flex;justify-content:space-between;align-items:center;gap:6px}
+.entrada-nota .link{min-height:32px;font-size:13px}
+.carga{display:flex;align-items:center;gap:10px;min-height:54px;border-radius:14px;background:var(--folha);border:1px solid var(--linha);padding:0 5px 0 14px}
+.carga .valor{font-size:30px;font-weight:800;letter-spacing:-.01em}
+.carga .valor.vazio{color:var(--prescrito)}
+.carga .unid{font-size:14px;color:var(--prescrito);flex:1;line-height:1.2}
+.rot-reps{margin:10px 0 6px}
+.reps{display:grid;grid-template-columns:repeat(6,1fr) .75fr;gap:6px;position:relative}
+.rep{height:64px;border-radius:16px;border:1.5px solid var(--borda);background:var(--folha);font-size:28px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;text-align:center;transition:background .12s,color .12s,transform .12s}
+.rep small{font-size:10px;font-weight:700;color:var(--prescrito);margin-top:4px;letter-spacing:.02em;text-transform:uppercase}
+.rep.fora{border-style:dashed}
+.rep.ultima{border-color:var(--grafite);border-width:2px}
+.rep.outro{font-size:20px;color:var(--prescrito)}
+.rep:active,.rep.tocado{background:var(--tinta);color:var(--sobre-tinta);border-color:var(--tinta);transform:scale(.96)}
+.rep.tocado small{color:var(--sobre-tinta)}
+.rep.falhou{border-color:var(--erro);border-width:2px;color:var(--erro)}
+.rep.falhou small{color:var(--erro)}
+.faixa-rep{display:grid;grid-template-columns:repeat(6,1fr) .75fr;gap:6px;margin-top:4px;height:18px}
+.faixa-rep span{border-top:2px solid var(--grafite);font-size:11px;font-weight:700;color:var(--prescrito);text-align:center;padding-top:1px;border-radius:2px}
+.acoes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.acoes button{min-height:44px;border-radius:12px;border:1.5px solid var(--borda);font-size:15px;font-weight:700;text-align:center;background:transparent}
+.desabilitado{opacity:.45;pointer-events:none}
+
+/* folha de troca */
+.troca-lista{list-style:none;margin:0;padding:0;overflow:auto}
+.troca-lista li{border-top:1px solid var(--linha)}
+.troca-lista button{width:100%;min-height:64px;padding:10px 2px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.troca-lista .t{font-weight:700;font-size:17px}
+.troca-lista .s{grid-column:1/2;font-size:14px;color:var(--prescrito)}
+.troca-lista .frase{grid-column:1/2;font-size:15px;color:var(--grafite);font-style:italic}
+.troca-lista .seta{grid-row:1/4;grid-column:2;color:var(--prescrito)}
+.selo-tr{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--tinta);border:1.5px solid var(--tinta);border-radius:6px;padding:0 5px;margin-left:6px;vertical-align:2px;font-style:normal}
+.foto-vazia{display:flex;align-items:center;gap:10px;border:1.5px dashed var(--borda);border-radius:14px;padding:10px 12px;margin:8px 0 2px;font-size:14px}
+.foto-vazia .ic{width:22px;height:22px}
+
+/* telas próprias */
+.manha h3{font-size:24px;margin:4px 0 2px}
+.manha .sub{margin:0 0 10px;color:var(--prescrito);font-size:15px}
+.lista-ex{list-style:none;margin:8px 0 0;padding:0;background:var(--folha);border:1px solid var(--linha);border-radius:16px}
+.lista-ex li{display:grid;grid-template-columns:24px 1fr auto;gap:2px 8px;padding:9px 12px;border-top:1px solid var(--linha);font-size:15px;align-items:baseline}
+.lista-ex li:first-child{border-top:0}
+.lista-ex .n{color:var(--prescrito);font-weight:700}
+.lista-ex .x{font-weight:600}
+.lista-ex .u{font-size:13px;color:var(--prescrito);grid-column:2/3}
+.lista-ex .e{font-size:13px;color:var(--prescrito);text-align:right}
+.estado-ex{font-size:12px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
+.estado-ex.feito{color:var(--tinta)}
+.estado-ex.nao{color:var(--prescrito)}
+.mesa-btn{min-height:44px;padding:0 12px;border-radius:12px;border:1.5px solid var(--borda);font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:8px;background:var(--folha)}
+.cont{background:var(--grafite);color:var(--papel);border-radius:999px;min-width:22px;height:22px;padding:0 6px;font-size:13px;font-weight:800;display:inline-grid;place-items:center}
+
+.carregando .linha-esq{height:16px;margin:10px 0}
+.carregando .bloco-esq{height:200px;border-radius:18px;margin:10px 0}
+
+.recortes{padding:16px;display:flex;flex-direction:column;gap:14px}
+.recortes h4{margin:0 0 6px;font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--prescrito)}
+.recortes .caixa{background:var(--papel);border-radius:16px;padding:12px;border:1px solid var(--linha)}
+.leg-trilho{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.leg-trilho div{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;text-align:center}
+.leg-trilho .seg{width:100%}
+
+/* paisagem */
+.paisagem-escala{width:100%;overflow:hidden}
+.tela.deitada{width:896px;height:414px;max-width:none;flex-direction:row;transform-origin:0 0}
+.deitada .lado-sis{width:44px;flex:none;position:relative}
+.deitada .lado-sis .entalhe-v{position:absolute;top:50%;left:0;width:30px;height:208px;transform:translateY(-50%);background:var(--sistema);border-radius:0 20px 20px 0}
+.deitada .col{flex:1;padding:14px 10px 21px;display:flex;flex-direction:column;min-width:0}
+.deitada .col + .col{padding-left:14px}
+.deitada .base-h{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:200px;height:5px;border-radius:3px;background:var(--grafite);opacity:.85}
+
+/* mesa */
+.mesa h3{font-size:26px;margin:4px 0 0;letter-spacing:-.01em}
+.mesa .sub{margin:2px 0 12px;color:var(--prescrito);font-size:15px}
+.decisao{background:var(--folha);border:1px solid var(--linha);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.decisao .q{font-size:13px;font-weight:700;color:var(--prescrito);margin:0 0 2px}
+.decisao h4{font-size:17px;margin:0 0 4px;line-height:1.25}
+.decisao p{font-size:14px;margin:0 0 8px;color:var(--grafite)}
+.decisao .bts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.decisao .bts button{min-height:44px;border-radius:12px;font-weight:700;font-size:15px;text-align:center}
+.decisao .bts .a{border:1.5px solid var(--borda)}
+.decisao .bts .b{border:1.5px solid var(--tinta);color:var(--tinta)}
+.secoes-mesa{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.secoes-mesa button{min-height:56px;border-radius:14px;border:1px solid var(--linha);background:var(--folha);padding:8px 12px;font-size:15px;font-weight:700;text-align:left;display:flex;flex-direction:column;justify-content:center}
+.secoes-mesa button span{font-size:12px;font-weight:500;color:var(--prescrito)}
+
+/* ajuste de orçamento vertical: tudo cabe em 818 pt úteis */
+.sessao{padding:0 0 6px}
+.trilho{margin:0 0 8px}
+.seg{min-height:44px}
+.exercicio{padding:10px 12px 4px}
+.exercicio h3{align-items:center}
+.exercicio h3 .nm{flex:1}
+.orient{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--borda);font-size:15px;font-weight:800;font-style:italic;font-family:Georgia,serif;color:var(--prescrito);display:grid;place-items:center;position:relative}
+.orient::after{content:"";position:absolute;inset:-8px}
+.series th,.series td{height:32px;padding:4px 0;font-size:17px}
+.acabou{margin-top:8px;padding:8px 10px 8px}
+.recibo{min-width:0;flex:1;white-space:nowrap;overflow:hidden;gap:5px}
+.recibo .rc-g{font-size:14px}
+.recibo .rc-n{overflow:hidden;text-overflow:ellipsis;font-size:13px;color:var(--prescrito)}
+.recibo .delta{flex:none}
+.relogio{margin:0 0 4px}
+.linha-op{margin-top:4px}
+.rir button,.dor button{height:44px}
+.entrada{padding:6px 0 2px}
+.entrada-topo{margin-bottom:5px}
+.carga{min-height:50px}
+.reps{margin-top:8px}
+.rep{height:60px}
+.faixa-rep{height:16px;margin-top:3px}
+.acoes{margin-top:6px}
+.relogio{align-items:center}
+.relogio .link{margin-left:auto;min-height:32px;font-size:14px;padding:0 2px}
+.recibo .rc-n{font-size:14px}
+.lista-ex li{padding:6px 12px}
+.manha h3{margin-top:2px}
+.secoes-mesa{grid-template-columns:1fr 1fr 1fr;gap:6px}
+.secoes-mesa button{min-height:52px;padding:6px 9px;font-size:14px}
+.secoes-mesa button span{font-size:11px;line-height:1.2}

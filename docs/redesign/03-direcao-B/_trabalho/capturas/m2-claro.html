@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visto · Momento 2</title>
+<meta name="description" content="Direção B (Visto), momento 2: depois de comer, no meio do dia.">
+<style>
+:root{
+  --fundo:#E6E1D7; --papel:#F3EFE7; --folha:#FBF9F4; --grafite:#22201C; --prescrito:#625C53;
+  --borda:#857E72; --linha:#DDD6CA; --tinta:#1D4ED0; --tinta-fundo:#E4EAFB; --sobre-tinta:#FFFFFF;
+  --alerta:#8A4B00; --alerta-fundo:#FBEBD3; --erro:#A8231B; --erro-fundo:#FBE3E0;
+  --moldura:#1E1D1A; --sistema:#000; --teclado:#E4DED3; --veu:rgba(20,18,14,.42);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-tema="claro"]){
+    --fundo:#0B0A08; --papel:#12110E; --folha:#1C1A16; --grafite:#EFEAE1; --prescrito:#A69F93;
+    --borda:#7A7366; --linha:#34302A; --tinta:#8FB0FF; --tinta-fundo:#1B2645; --sobre-tinta:#0E0D0B;
+    --alerta:#F2B45A; --alerta-fundo:#33260F; --erro:#FF8F86; --erro-fundo:#3A1715;
+    --moldura:#2A2824; --sistema:#000; --teclado:#24221D; --veu:rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-tema="escuro"]{
+  --fundo:#0B0A08; --papel:#12110E; --folha:#1C1A16; --grafite:#EFEAE1; --prescrito:#A69F93;
+  --borda:#7A7366; --linha:#34302A; --tinta:#8FB0FF; --tinta-fundo:#1B2645; --sobre-tinta:#0E0D0B;
+  --alerta:#F2B45A; --alerta-fundo:#33260F; --erro:#FF8F86; --erro-fundo:#3A1715;
+  --moldura:#2A2824; --sistema:#000; --teclado:#24221D; --veu:rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--fundo);color:var(--grafite);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","Segoe UI",Roboto,Arial,sans-serif;
+  font-size:17px;line-height:1.35;overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;text-align:inherit}
+:focus-visible{outline:3px solid var(--tinta);outline-offset:2px}
+.tab,.tela table,.rep,.rir button,.valor{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+.ic.p{width:14px;height:14px}
+
+/* página */
+.capa{max-width:920px;margin:0 auto;padding:28px 16px 4px}
+.capa .sobre{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--prescrito);margin:0}
+.capa h1{font-size:28px;line-height:1.15;margin:6px 0 10px;letter-spacing:-.01em}
+.capa p{margin:8px 0;max-width:70ch}
+.capa .chave{display:flex;flex-wrap:wrap;gap:10px 18px;margin:14px 0 4px;font-size:15px}
+.capa .chave span{display:inline-flex;gap:8px;align-items:center}
+.amostra{display:inline-block;width:14px;height:14px;border-radius:4px}
+.tema{margin-top:10px;display:inline-flex;gap:0;border:1.5px solid var(--borda);border-radius:12px;overflow:hidden}
+.tema button{min-height:44px;padding:0 14px;font-size:15px}
+.tema button[aria-pressed="true"]{background:var(--grafite);color:var(--papel)}
+.indice{display:flex;flex-wrap:wrap;gap:6px 8px;margin:14px 0 0;padding:0;list-style:none;font-size:15px}
+.indice a{color:var(--grafite);display:inline-flex;min-height:44px;align-items:center;padding:0 10px;border-radius:10px;border:1px solid var(--borda);text-decoration:none}
+.estados{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:56px 40px;padding:28px 16px 96px;max-width:1460px;margin:0 auto}
+.estado{width:414px;max-width:100%;display:flex;flex-direction:column;gap:14px}
+.estado.largo{width:896px}
+.legenda .rot{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--prescrito);margin:0}
+.legenda h2{font-size:20px;line-height:1.25;margin:4px 0 6px}
+.legenda p{font-size:15px;margin:0 0 6px}
+.legenda .fatos{font-size:13px;color:var(--prescrito)}
+
+/* tela de telefone, 414 x 896 pt (F49) */
+.tela{position:relative;width:414px;max-width:100%;height:896px;background:var(--papel);color:var(--grafite);
+  border-radius:48px;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 0 0 10px var(--moldura),0 22px 60px rgba(0,0,0,.22)}
+.tela.alta{height:auto;min-height:896px}
+.tela.recorte{height:auto;border-radius:26px;box-shadow:0 0 0 1px var(--linha),0 10px 30px rgba(0,0,0,.10)}
+.sis-topo{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 36px;font-size:15px;font-weight:600;position:relative}
+.sis-topo .entalhe{position:absolute;left:50%;top:0;width:208px;height:30px;transform:translateX(-50%);background:var(--sistema);border-radius:0 0 20px 20px}
+.sis-topo .ics{display:flex;gap:6px;align-items:center}
+.sinal{display:inline-flex;gap:2px;align-items:flex-end;height:12px}
+.sinal i{width:3px;background:var(--grafite);border-radius:1px;opacity:.25}
+.sinal i:nth-child(1){height:4px;opacity:1}.sinal i:nth-child(2){height:6px}.sinal i:nth-child(3){height:9px}.sinal i:nth-child(4){height:12px}
+.bat{width:25px;height:12px;border:1.5px solid var(--grafite);border-radius:4px;position:relative;opacity:.9}
+.bat::after{content:"";position:absolute;inset:1.5px;right:35%;background:var(--grafite);border-radius:1.5px}
+.sis-base{height:34px;flex:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px}
+.sis-base i{width:134px;height:5px;border-radius:3px;background:var(--grafite);opacity:.85}
+.conteudo{flex:1;display:flex;flex-direction:column;padding:0 16px;min-height:0;position:relative}
+.dobra{position:absolute;left:0;right:0;top:896px;border-top:2px dashed var(--borda);pointer-events:none}
+.dobra span{position:absolute;right:12px;top:-24px;font-size:12px;font-weight:600;color:var(--prescrito);background:var(--papel);padding:2px 6px;border-radius:6px}
+
+@media (max-width:480px){
+  .estados{padding:20px 0 72px;gap:44px}
+  .estado,.estado.largo{width:100%}
+  .legenda{padding:0 16px}
+  .tela{border-radius:0;box-shadow:0 -1px 0 var(--linha),0 1px 0 var(--linha);width:100%}
+  .tela.recorte{border-radius:0}
+  .sis-topo .entalhe{display:none}
+}
+
+/* comuns */
+.rot{font-size:13px;font-weight:700;letter-spacing:.03em;color:var(--prescrito);margin:0}
+.rot span{font-weight:500;letter-spacing:0}
+.pilula{min-height:44px;padding:0 12px;border-radius:12px;background:var(--folha);border:1.5px solid var(--borda);font-size:15px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.pilula b{font-weight:700}
+.pilula .mais{color:var(--tinta);font-weight:700}
+.botao-sec{min-height:44px;padding:0 14px;border-radius:12px;border:1.5px solid var(--borda);font-size:16px;font-weight:600;background:var(--folha);display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.botao-tinta{min-height:52px;padding:0 16px;border-radius:14px;background:var(--tinta);color:var(--sobre-tinta);font-size:17px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.link{min-height:44px;padding:0 6px;font-size:15px;font-weight:600;color:var(--tinta);display:inline-flex;align-items:center}
+.aviso{border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.35;display:flex;gap:10px;align-items:flex-start}
+.aviso p{margin:0}
+.aviso p+p{margin-top:4px}
+.aviso .ic{margin-top:1px}
+.aviso.erro{background:var(--erro-fundo);border:1.5px solid var(--erro)}
+.aviso.erro .ic,.aviso.erro strong{color:var(--erro)}
+.aviso.alerta{background:var(--alerta-fundo);border:1.5px solid var(--alerta)}
+.aviso.alerta .ic,.aviso.alerta strong{color:var(--alerta)}
+.aviso.neutro{background:var(--folha);border:1px solid var(--linha)}
+.aviso .acoes-aviso{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.veu{position:absolute;inset:0;background:var(--veu)}
+.folha-baixo{position:absolute;left:0;right:0;bottom:0;background:var(--papel);border-radius:24px 24px 0 0;padding:6px 16px 0;display:flex;flex-direction:column;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+.alca{width:40px;height:5px;border-radius:3px;background:var(--borda);margin:4px auto 10px}
+.esqueleto{background:linear-gradient(90deg,var(--linha),var(--folha),var(--linha));background-size:300% 100%;border-radius:10px;animation:brilho 1.4s ease-in-out infinite}
+@keyframes brilho{0%{background-position:100% 0}100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.esqueleto{animation:none}*{transition:none!important;animation:none!important}}
+.marca-visto{color:var(--tinta)}
+.teclado{background:var(--teclado);padding:10px 10px 0;border-radius:22px 22px 0 0;position:absolute;left:0;right:0;bottom:0;box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+.teclado .visor{display:flex;align-items:baseline;gap:8px;padding:6px 8px 10px}
+.teclado .visor .rot{flex:1}
+.teclado .visor b{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--tinta)}
+.teclado .visor .cursor{display:inline-block;width:2px;height:30px;background:var(--tinta);margin-left:2px;vertical-align:-4px;animation:pisca 1s steps(1) infinite}
+@keyframes pisca{50%{opacity:0}}
+.teclado .teclas{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.teclado .teclas button{height:54px;border-radius:12px;background:var(--folha);border:1px solid var(--linha);font-size:26px;font-weight:600;text-align:center}
+.teclado .teclas button.ok{background:var(--tinta);color:var(--sobre-tinta);border-color:var(--tinta);font-size:19px;font-weight:700}
+.teclado .linha-ok{display:grid;grid-template-columns:1fr 2fr;gap:7px;margin-top:7px}
+.teclado .linha-ok button{height:52px;border-radius:12px;font-size:17px;font-weight:700;text-align:center}
+.teclado .linha-ok .cancela{background:transparent;border:1.5px solid var(--borda)}
+.teclado .linha-ok .ok{background:var(--tinta);color:var(--sobre-tinta)}
+.teclado .nota-tec{font-size:13px;color:var(--grafite);padding:8px 4px 0}
+
+/* ---------- folha do dia ---------- */
+.dia-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:0 0 4px}
+.dia-cab h3{font-size:28px;line-height:1.1;margin:0;letter-spacing:-.015em}
+.dia-cab p{margin:2px 0 0;font-size:15px;color:var(--prescrito)}
+.voltar{min-height:36px;font-size:15px;font-weight:600;color:var(--tinta);display:inline-flex;align-items:center;gap:2px;margin:-4px 0 0 -4px}
+.mesa-btn{min-height:44px;padding:0 12px;border-radius:12px;border:1.5px solid var(--borda);font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:8px;background:var(--folha);flex:none}
+.cont{background:var(--grafite);color:var(--papel);border-radius:999px;min-width:22px;height:22px;padding:0 6px;font-size:13px;font-weight:800;display:inline-grid;place-items:center}
+.pilulas{display:flex;gap:6px;margin:6px 0 8px;flex-wrap:wrap}
+.pilula.feita b{color:var(--tinta)}
+.pilula .ic{color:var(--tinta)}
+
+.quatorze{display:block;width:100%;border-radius:16px;background:var(--folha);border:1px solid var(--linha);padding:8px 10px 8px;margin-bottom:10px}
+.q-topo{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:6px;gap:6px}
+.q-topo b{color:var(--tinta);font-size:16px}
+.q-topo .r{color:var(--prescrito);font-weight:600;white-space:nowrap}
+.q-dias{display:grid;grid-template-columns:repeat(14,1fr);gap:3px}
+.q-dias .d{display:flex;flex-direction:column;align-items:center;gap:2px}
+.q-dias .d i{width:100%;max-width:22px;height:22px;border-radius:6px;border:1.5px solid var(--borda);display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:800;color:var(--prescrito)}
+.q-dias .d.k i{background:var(--tinta);border-color:var(--tinta);color:var(--sobre-tinta)}
+.q-dias .d.h i{box-shadow:0 0 0 2px var(--papel),0 0 0 4px var(--grafite)}
+.q-dias .d small{font-size:10px;color:var(--prescrito);font-weight:600}
+
+.agora-card{background:var(--folha);border:2px solid var(--tinta);border-radius:20px;padding:12px 14px 14px;margin-bottom:10px}
+.agora-card .hora{font-size:12px;font-weight:800;color:var(--tinta);text-transform:uppercase;letter-spacing:.05em;margin:0}
+.agora-card h4{font-size:22px;margin:2px 0 4px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;letter-spacing:-.01em}
+.agora-card h4 .kcal{font-size:15px;font-weight:600;color:var(--prescrito);white-space:nowrap}
+.agora-card .itens{font-size:15px;line-height:1.35;margin:0;color:var(--grafite)}
+.agora-card .nota-nutri{font-size:14px;color:var(--prescrito);margin:6px 0 0;font-style:italic}
+.agora-card .botoes{display:grid;grid-template-columns:1fr 1.7fr;gap:8px;margin-top:12px}
+.agora-card .botoes button{min-height:58px;border-radius:16px;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn-contorno{border:1.5px solid var(--borda);background:var(--papel)}
+.agora-card.falhou{border-color:var(--erro)}
+.falha-linha{display:flex;gap:8px;align-items:flex-start;color:var(--grafite);font-size:14px;margin:10px 0 0}
+.falha-linha .ic{color:var(--erro)}
+
+.titulo-lista{display:flex;justify-content:space-between;align-items:baseline;margin:4px 2px 6px}
+.titulo-lista .rot{font-size:13px}
+.titulo-lista span:last-child{font-size:13px;color:var(--prescrito)}
+.refeicoes{list-style:none;margin:0;padding:0;background:var(--folha);border-radius:18px;border:1px solid var(--linha)}
+.ref-linha{display:grid;grid-template-columns:46px 1fr auto;gap:6px;align-items:center;padding:6px 10px 6px 12px;border-top:1px solid var(--linha);min-height:58px}
+.ref-linha:first-child{border-top:0}
+.ref-linha .h{font-size:14px;color:var(--prescrito);font-weight:600;align-self:center}
+.ref-linha .h s{display:block;text-decoration:line-through;font-size:11px;font-weight:500}
+.ref-linha .meio{min-width:0}
+.ref-linha .n{font-weight:700;font-size:16px}
+.ref-linha .tag{font-size:11px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--prescrito);border:1px solid var(--borda);border-radius:6px;padding:0 4px;margin-left:4px;vertical-align:2px;white-space:nowrap}
+.ref-linha .s{display:block;font-size:13px;color:var(--prescrito);line-height:1.25}
+.ref-linha .s.aviso-h{color:var(--grafite)}
+.par{display:flex;gap:6px}
+.par button{height:44px;min-width:44px;padding:0 10px;border-radius:12px;border:1.5px solid var(--borda);font-weight:800;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--papel)}
+.par button.tudo{min-width:74px}
+.feito{display:flex;flex-direction:column;align-items:flex-end;gap:0}
+.feito .selo-visto{display:inline-flex;align-items:center;gap:4px;color:var(--tinta);font-weight:800;font-size:15px}
+.feito .selo-visto .ic{stroke-width:3}
+.feito .quando{font-size:12px;color:var(--prescrito)}
+.feito .link{min-height:28px;font-size:13px;padding:0}
+.ref-linha.marcada .n{color:var(--grafite)}
+.ref-linha.e-agora{background:var(--tinta-fundo)}
+.seta-agora{font-size:13px;font-weight:800;color:var(--tinta);text-transform:uppercase;letter-spacing:.04em}
+.mais-tarde{font-size:13px;color:var(--prescrito);text-align:right}
+
+.agua{margin-top:10px;background:var(--folha);border:1px solid var(--linha);border-radius:18px;padding:8px 10px 10px 12px}
+.agua-topo{display:flex;align-items:center;gap:8px}
+.agua-topo .meio{flex:1}
+.agua-topo .n{font-weight:700}
+.agua-topo .s{display:block;font-size:13px;color:var(--prescrito)}
+.passo{display:flex;align-items:center;gap:6px}
+.passo button{height:44px;min-width:44px;border-radius:12px;border:1.5px solid var(--borda);font-size:20px;font-weight:800;background:var(--papel)}
+.passo button.mais{min-width:96px;font-size:16px;border-color:var(--tinta);color:var(--tinta)}
+.passo b{min-width:28px;text-align:center;font-size:22px;font-variant-numeric:tabular-nums}
+.copos{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;margin-top:8px}
+.copos i{height:8px;border-radius:3px;background:var(--linha)}
+.copos i.c{background:var(--tinta)}
+
+.comofoi{margin-top:10px;background:var(--folha);border:1px solid var(--linha);border-radius:18px;padding:10px 10px 10px 12px}
+.comofoi .leg{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 8px;font-weight:700;font-size:15px}
+.comofoi .leg span{font-size:12px;font-weight:500;color:var(--prescrito)}
+.comofoi .ops{display:grid;gap:6px}
+.comofoi .ops button{min-height:44px;border-radius:12px;border:1.5px solid var(--borda);padding:0 12px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px;background:var(--papel)}
+.comofoi .ops button i{width:18px;height:18px;border-radius:50%;border:2px solid var(--borda);flex:none}
+.comofoi .ops button[aria-checked="true"]{border-color:var(--tinta);color:var(--tinta);font-weight:800}
+.comofoi .ops button[aria-checked="true"] i{border:6px solid var(--tinta)}
+
+.resultado{margin-top:10px}
+.totais{margin:10px 2px 0;font-size:14px;color:var(--prescrito)}
+.totais b{color:var(--grafite)}
+
+/* pôr em dia */
+.dias-lista{list-style:none;margin:8px 0 0;padding:0;background:var(--folha);border:1px solid var(--linha);border-radius:18px}
+.dias-lista li{display:grid;grid-template-columns:62px 1fr;gap:2px 8px;padding:8px 10px 8px 12px;border-top:1px solid var(--linha);align-items:center}
+.dias-lista li:first-child{border-top:0}
+.dias-lista .dd{font-weight:800;font-size:15px}
+.dias-lista .dd small{display:block;font-size:12px;font-weight:600;color:var(--prescrito)}
+.dias-lista .tipo{font-size:13px;color:var(--prescrito)}
+.dias-lista .est{font-size:14px;font-weight:700}
+.dias-lista .est.k{color:var(--tinta)}
+.dias-lista .bts{grid-column:2;display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+.dias-lista .bts button{min-height:44px;padding:0 12px;border-radius:12px;border:1.5px solid var(--borda);font-size:14px;font-weight:700;background:var(--papel)}
+.dias-lista .bts button.t{border-color:var(--tinta);color:var(--tinta)}
+
+/* regra */
+.semanas{list-style:none;margin:6px 0 0;padding:0;background:var(--folha);border:1px solid var(--linha);border-radius:16px}
+.semanas li{display:grid;grid-template-columns:1fr auto auto;gap:4px 12px;padding:9px 12px;border-top:1px solid var(--linha);font-size:15px;align-items:baseline}
+.semanas li:first-child{border-top:0}
+.semanas .num{font-weight:800;font-variant-numeric:tabular-nums}
+.semanas .peq{font-size:12px;color:var(--prescrito)}
+.barras-ades{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;margin-top:6px}
+.recortes .ref-linha{border:1px solid var(--linha);border-radius:14px;background:var(--folha)}
+.pilulas .pilula{padding:0 10px;font-size:15px}
+.passo button{padding:0 10px;text-align:center;display:inline-flex;align-items:center;justify-content:center}
+.passo button[disabled]{cursor:default}
+.dobra{border-top:2px dashed var(--borda);opacity:.9}
+.dobra::before,.dobra::after{content:"";position:absolute;top:-7px;width:0;height:0;border:6px solid transparent}
+.dobra::before{left:0;border-left-color:var(--borda)}
+.dobra::after{right:0;border-right-color:var(--borda)}
+
+.lembra{font-size:14px;margin:0 2px 8px;color:var(--grafite)}
+.recortes{padding:16px;display:flex;flex-direction:column;gap:14px}
+.recortes h4{margin:0 0 6px;font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--prescrito)}
+.recortes .caixa{background:var(--papel);border-radius:16px;padding:10px;border:1px solid var(--linha)}
+.recortes .caixa p{font-size:14px;margin:6px 2px 0}
+.mesa-t h3{font-size:26px;margin:4px 0 0;letter-spacing:-.01em}
+.mesa-t .sub{margin:2px 0 10px;color:var(--prescrito);font-size:15px}
+.saida{background:var(--folha);border:2px solid var(--grafite);border-radius:18px;padding:12px 14px;margin-top:10px}
+.saida .q{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--prescrito);margin:0}
+.saida h4{font-size:22px;margin:2px 0 6px}
+.saida p{font-size:14px;margin:0 0 6px}
+.saida .bt-off{margin-top:6px;width:100%;min-height:48px;border-radius:14px;border:1.5px dashed var(--borda);font-weight:700;font-size:15px;color:var(--prescrito);text-align:center}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></symbol>
+<symbol id="i-esq" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="i-dir" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="i-aviso" viewBox="0 0 24 24"><path d="M12 3.5L22 20.5H2z"/><path d="M12 10v4.5M12 17.6v.1"/></symbol>
+<symbol id="i-erro" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/></symbol>
+<symbol id="i-relogio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-mesa" viewBox="0 0 24 24"><path d="M3 9h18M5 9v11M19 9v11M3 9l3-5h12l3 5"/></symbol>
+</svg>
+<header class="capa">
+<p class="sobre">Direção B · Visto</p>
+<h1>Momento 2 — depois de comer, no meio do dia</h1>
+<p>O caso do 02-uso: o lanche de por volta de 15h30, no trabalho, comido inteiro; e, no dia seguinte, o dia anterior reconstituído de memória — o almoço pela metade, o jantar fora do plano sabendo o que comeu, e a água sem conta.</p>
+<p>Medido: um dia com refeição marcada em 22, e as marcações daquele dia foram feitas 1 e 4 dias depois (P1). A dificuldade aqui não é o corpo nem a pressa: é o registro não acontecer. Por isso a mesma folha serve para hoje e para os dias que ficaram para trás.</p>
+<p><b>A tese:</b> registrar é dar visto na prescrição. O que saiu como previsto custa um toque; só o desvio custa digitação; e nada que exija decidir é perguntado a quem está em pé.</p>
+<div class="chave">
+<span><i class="amostra" style="background:var(--tinta)"></i>tinta azul: o que você marcou</span>
+<span><i class="amostra" style="background:var(--prescrito)"></i>grafite: o que o plano manda</span>
+<span><i class="amostra" style="border:2px dashed var(--borda)"></i>linha tracejada: onde a tela do telefone acaba</span>
+</div>
+<div class="tema" role="group" aria-label="Tema"><button data-v="auto">Do sistema</button><button data-v="claro">Claro</button><button data-v="escuro">Escuro</button></div>
+<ul class="indice"><li><a href="#e1">1 · o caso</a></li><li><a href="#e2">2 · depois do toque</a></li><li><a href="#e3">3 · ontem, de memória</a></li><li><a href="#e4">4 · não sei quanto</a></li><li><a href="#e5">5 · vazio</a></li><li><a href="#e6">6 · sem plano</a></li><li><a href="#e7">7 · carregando</a></li><li><a href="#e8">8 · erro ao gravar</a></li><li><a href="#e9">9 · treino à noite</a></li><li><a href="#e10">10 · pôr em dia</a></li><li><a href="#e11">11 · outros estados</a></li><li><a href="#e12">12 · a regra</a></li></ul>
+</header>
+<main class="estados">
+<section class="estado" id="e1" aria-labelledby="e1-t">
+<div class="legenda"><p class="rot">Estado 1 · o caso, primeira parte · tocável</p><h2 id="e1-t">15:32, no trabalho. O lanche está em cima, pronto para um toque.</h2><p>Abrir o app fora do treino cai no dia de hoje, e a refeição mais perto do relógio sobe para um cartão próprio, com o que o plano manda e a nota do nutricionista (F181, F182). Comeu tudo: um toque em “Comi tudo”. Não há tela de busca, não há quantidade a digitar.</p><p>Embaixo, o dia inteiro na ordem do relógio. O que passou sem visto fica com o mesmo par de botões: dá para marcar agora o almoço esquecido, com outro toque.</p><p class="fatos">Toque para experimentar: “Comi tudo”, “Só metade”, os ½ e “tudo” das linhas, “desfazer”, a água e “como foi o dia”. A faixa dos 14 dias muda quando o dia passa a ser conhecido. Plano, quantidades, horários e notas são os do nutricionista (F181–F183).</p></div>
+<div class="tela alta" data-proto aria-label="Protótipo tocável da folha do dia"><div class="sis-topo" aria-hidden="true"><span class="tab">15:32</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><div class="dia-cab"><div><h3>Hoje</h3><p>quinta, 1 de outubro · dia de treino</p></div><button class="mesa-btn" data-acao="mesa"><svg class="ic" aria-hidden="true"><use href="#i-mesa"/></svg>Mesa <span class="cont">2</span></button></div><div class="pilulas"><button class="pilula feita" data-acao="pilula">Peso <b>73,8</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula feita" data-acao="pilula">Treino D <b>6:18</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula" data-acao="pilula">Cardio <b>anotar</b></button></div><button class="quatorze" data-acao="14dias" aria-label="Últimos 14 dias: 1 com consumo conhecido. A regra do nutricionista pede 11. Abrir para pôr em dia."><span class="q-topo"><span>Consumo conhecido: <b data-n14>1</b> de 14 dias</span><span class="r">a regra pede 11 ›</span></span><span class="q-dias" aria-hidden="true"><span class="d"><i>?</i><small>18</small></span><span class="d"><i>?</i><small>19</small></span><span class="d"><i>?</i><small>20</small></span><span class="d"><i>?</i><small>21</small></span><span class="d"><i>?</i><small>22</small></span><span class="d"><i>?</i><small>23</small></span><span class="d"><i>?</i><small>24</small></span><span class="d"><i>?</i><small>25</small></span><span class="d"><i>?</i><small>26</small></span><span class="d"><i>?</i><small>27</small></span><span class="d"><i>?</i><small>28</small></span><span class="d"><i>?</i><small>29</small></span><span class="d"><i>?</i><small>30</small></span><span class="d k h"><i>✓</i><small>1</small></span></span></button><section class="agora-card" aria-label="Refeição de agora"><p class="hora">Agora · 16:00 no plano</p><h4><span>Lanche da tarde</span><span class="kcal">819 kcal</span></h4><p class="itens">leite 250 ml · banana 120 g · aveia 40 g · pasta de amendoim 10 g · leite em pó 10 g · whey 30 g · pão 50 g · geleia light 20 g</p><p class="nota-nutri">“Bata leite + banana + aveia + pasta + leite em pó + whey. Pão e geleia ficam separados.”</p><div class="botoes"><button class="btn-contorno" data-acao="marca" data-id="lanche" data-p="0.5" aria-label="Comi só metade: Lanche da tarde">Só metade</button><button class="botao-tinta" data-acao="marca" data-id="lanche" data-p="1" aria-label="Comi tudo: Lanche da tarde"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Comi tudo</button></div></section><div class="titulo-lista"><span class="rot">O plano de hoje</span><span>toque no que comeu</span></div><ul class="refeicoes"><li class="ref-linha"><span class="h">05:45</span><div class="meio"><span class="n">Pré-treino</span><span class="s">163 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="pre" data-p="0.5" aria-label="Comi metade: Pré-treino">½</button><button class="tudo" data-acao="marca" data-id="pre" data-p="1" aria-label="Comi tudo: Pré-treino"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha"><span class="h">06:15</span><div class="meio"><span class="n">Treino</span><span class="s">água 600 ml · sem visto</span></div><div class="par"><button data-acao="marca" data-id="intra" data-p="0.5" aria-label="Comi metade: Treino">½</button><button class="tudo" data-acao="marca" data-id="intra" data-p="1" aria-label="Comi tudo: Treino"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha marcada"><span class="h">08:00</span><div class="meio"><span class="n">Café da manhã</span><span class="tag">pós-treino</span><span class="s">629 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">8:41</span><button class="link" data-acao="desmarca" data-id="cafe" aria-label="Desfazer: Café da manhã">desfazer</button></div></li><li class="ref-linha"><span class="h">12:30</span><div class="meio"><span class="n">Almoço</span><span class="s">719 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="almoco" data-p="0.5" aria-label="Comi metade: Almoço">½</button><button class="tudo" data-acao="marca" data-id="almoco" data-p="1" aria-label="Comi tudo: Almoço"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha e-agora"><span class="h">16:00</span><div class="meio"><span class="n">Lanche da tarde</span><span class="s">819 kcal</span></div><span class="seta-agora">↑ agora</span></li><li class="ref-linha"><span class="h">19:30</span><div class="meio"><span class="n">Jantar</span><span class="s">678 kcal</span></div><span class="mais-tarde">mais tarde</span></li></ul><section class="agua" aria-label="Água"><div class="agua-topo"><div class="meio"><span class="n">Água</span><span class="s">não contada — não é zero</span></div><div class="passo"><button data-acao="agua" data-d="-1" aria-label="Um copo a menos" disabled style="opacity:.4">−</button><b>—</b><button class="mais" data-acao="agua" data-d="1">+1 copo</button></div></div><div class="copos" aria-hidden="true"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></section><section class="comofoi" aria-label="Como foi o dia"><p class="leg">Como foi o dia <span>opcional · a regra usa</span></p><div class="ops" role="radiogroup" aria-label="Como foi o dia"><button role="radio" aria-checked="false" data-acao="comofoi" data-v="seguiu"><i></i>Segui o plano</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="sabe"><i></i>Saí do plano, sei o que comi</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="naosabe"><i></i>Saí do plano, não sei quanto</button></div></section><p class="totais">Pelo plano, com visto: <b data-kcal>629</b> de 3.007 kcal · ainda hoje: lanche da tarde 16:00, jantar 19:30</p><div style="height:16px"></div></div><div class="sis-base" aria-hidden="true"><i></i></div><div class="dobra" aria-hidden="true"></div></div>
+</section>
+<section class="estado" id="e2" aria-labelledby="e2-t">
+<div class="legenda"><p class="rot">Estado 2 · depois do toque</p><h2 id="e2-t">Visto dado. A linha guarda a hora, e o desfazer fica ali mesmo.</h2><p>O lanche virou uma linha com “tudo” e 15:32 — a hora do toque, que é o que o produto guarda (F197). A conta pelo plano sobe para 1.448 kcal, e embaixo aparece o que ainda falta hoje: o jantar das 19:30. É o “conferir o que falta comer” da vida real (F30, F40).</p><p>Nada pergunta “tem certeza?”: desfazer está na própria linha, sem prazo.</p></div>
+<div class="tela alta"><div class="sis-topo" aria-hidden="true"><span class="tab">15:32</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><div class="dia-cab"><div><h3>Hoje</h3><p>quinta, 1 de outubro · dia de treino</p></div><button class="mesa-btn" data-acao="mesa"><svg class="ic" aria-hidden="true"><use href="#i-mesa"/></svg>Mesa <span class="cont">2</span></button></div><div class="pilulas"><button class="pilula feita" data-acao="pilula">Peso <b>73,8</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula feita" data-acao="pilula">Treino D <b>6:18</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula" data-acao="pilula">Cardio <b>anotar</b></button></div><button class="quatorze" data-acao="14dias" aria-label="Últimos 14 dias: 1 com consumo conhecido. A regra do nutricionista pede 11. Abrir para pôr em dia."><span class="q-topo"><span>Consumo conhecido: <b data-n14>1</b> de 14 dias</span><span class="r">a regra pede 11 ›</span></span><span class="q-dias" aria-hidden="true"><span class="d"><i>?</i><small>18</small></span><span class="d"><i>?</i><small>19</small></span><span class="d"><i>?</i><small>20</small></span><span class="d"><i>?</i><small>21</small></span><span class="d"><i>?</i><small>22</small></span><span class="d"><i>?</i><small>23</small></span><span class="d"><i>?</i><small>24</small></span><span class="d"><i>?</i><small>25</small></span><span class="d"><i>?</i><small>26</small></span><span class="d"><i>?</i><small>27</small></span><span class="d"><i>?</i><small>28</small></span><span class="d"><i>?</i><small>29</small></span><span class="d"><i>?</i><small>30</small></span><span class="d k h"><i>✓</i><small>1</small></span></span></button><p class="lembra">Pré-treino, treino e almoço passaram sem visto. Dá para marcar agora ou amanhã; o visto guarda a hora em que foi dado.</p><div class="titulo-lista"><span class="rot">O plano de hoje</span><span>toque no que comeu</span></div><ul class="refeicoes"><li class="ref-linha"><span class="h">05:45</span><div class="meio"><span class="n">Pré-treino</span><span class="s">163 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="pre" data-p="0.5" aria-label="Comi metade: Pré-treino">½</button><button class="tudo" data-acao="marca" data-id="pre" data-p="1" aria-label="Comi tudo: Pré-treino"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha"><span class="h">06:15</span><div class="meio"><span class="n">Treino</span><span class="s">água 600 ml · sem visto</span></div><div class="par"><button data-acao="marca" data-id="intra" data-p="0.5" aria-label="Comi metade: Treino">½</button><button class="tudo" data-acao="marca" data-id="intra" data-p="1" aria-label="Comi tudo: Treino"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha marcada"><span class="h">08:00</span><div class="meio"><span class="n">Café da manhã</span><span class="tag">pós-treino</span><span class="s">629 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">8:41</span><button class="link" data-acao="desmarca" data-id="cafe" aria-label="Desfazer: Café da manhã">desfazer</button></div></li><li class="ref-linha"><span class="h">12:30</span><div class="meio"><span class="n">Almoço</span><span class="s">719 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="almoco" data-p="0.5" aria-label="Comi metade: Almoço">½</button><button class="tudo" data-acao="marca" data-id="almoco" data-p="1" aria-label="Comi tudo: Almoço"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha marcada"><span class="h">16:00</span><div class="meio"><span class="n">Lanche da tarde</span><span class="s">819 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">15:32</span><button class="link" data-acao="desmarca" data-id="lanche" aria-label="Desfazer: Lanche da tarde">desfazer</button></div></li><li class="ref-linha"><span class="h">19:30</span><div class="meio"><span class="n">Jantar</span><span class="s">678 kcal</span></div><span class="mais-tarde">mais tarde</span></li></ul><section class="agua" aria-label="Água"><div class="agua-topo"><div class="meio"><span class="n">Água</span><span class="s">não contada — não é zero</span></div><div class="passo"><button data-acao="agua" data-d="-1" aria-label="Um copo a menos" disabled style="opacity:.4">−</button><b>—</b><button class="mais" data-acao="agua" data-d="1">+1 copo</button></div></div><div class="copos" aria-hidden="true"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></section><section class="comofoi" aria-label="Como foi o dia"><p class="leg">Como foi o dia <span>opcional · a regra usa</span></p><div class="ops" role="radiogroup" aria-label="Como foi o dia"><button role="radio" aria-checked="false" data-acao="comofoi" data-v="seguiu"><i></i>Segui o plano</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="sabe"><i></i>Saí do plano, sei o que comi</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="naosabe"><i></i>Saí do plano, não sei quanto</button></div></section><p class="totais">Pelo plano, com visto: <b data-kcal>1.448</b> de 3.007 kcal · ainda hoje: jantar 19:30</p><div style="height:16px"></div></div><div class="sis-base" aria-hidden="true"><i></i></div><div class="dobra" aria-hidden="true"></div></div>
+</section>
+<section class="estado" id="e3" aria-labelledby="e3-t">
+<div class="legenda"><p class="rot">Estado 3 · o caso, segunda parte · o caso ruim</p><h2 id="e3-t">No dia seguinte, 13:41: o dia de ontem, de memória.</h2><p>É a forma em que a comida chega hoje ao registro: dias depois, de memória (P1). Por isso ontem é a mesma folha de hoje, a um toque da faixa dos 14 dias, com os mesmos botões.</p><p>O almoço foi pela metade: ½. O jantar saiu do plano, e ele sabe o que comeu: o jantar fica sem visto e o dia leva “Saí do plano, sei o que comi” — é assim que o produto guarda isso (F195). A água ficou sem conta, e aparece como “não contada”, não como zero.</p><p class="fatos">Os vistos dados hoje dizem “marcado 2/10 13:41”; os do dia mesmo, só a hora. O dia é conhecido e conta para a regra (F200).</p></div>
+<div class="tela alta"><div class="sis-topo" aria-hidden="true"><span class="tab">13:41</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><div class="dia-cab"><div><button class="voltar" data-acao="voltar"><svg class="ic" aria-hidden="true"><use href="#i-esq"/></svg>Hoje</button><h3>Ontem</h3><p>quinta, 1 de outubro · dia de treino</p></div><button class="mesa-btn" data-acao="mesa"><svg class="ic" aria-hidden="true"><use href="#i-mesa"/></svg>Mesa <span class="cont">2</span></button></div><div class="pilulas"><button class="pilula feita" data-acao="pilula">Peso <b>73,8</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula feita" data-acao="pilula">Treino D <b>6:18</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button></div><div class="aviso neutro" style="margin:2px 0 8px"><svg class="ic" aria-hidden="true"><use href="#i-relogio"/></svg><div><p><b>Marcando de memória</b>, sexta 2/10 às 13:41. Cada visto guarda a hora em que foi dado (F197).</p></div></div><button class="quatorze" data-acao="14dias" aria-label="Últimos 14 dias: 1 com consumo conhecido. A regra do nutricionista pede 11. Abrir para pôr em dia."><span class="q-topo"><span>Consumo conhecido: <b data-n14>1</b> de 14 dias</span><span class="r">a regra pede 11 ›</span></span><span class="q-dias" aria-hidden="true"><span class="d"><i>?</i><small>19</small></span><span class="d"><i>?</i><small>20</small></span><span class="d"><i>?</i><small>21</small></span><span class="d"><i>?</i><small>22</small></span><span class="d"><i>?</i><small>23</small></span><span class="d"><i>?</i><small>24</small></span><span class="d"><i>?</i><small>25</small></span><span class="d"><i>?</i><small>26</small></span><span class="d"><i>?</i><small>27</small></span><span class="d"><i>?</i><small>28</small></span><span class="d"><i>?</i><small>29</small></span><span class="d"><i>?</i><small>30</small></span><span class="d k"><i>✓</i><small>1</small></span><span class="d h"><i>?</i><small>2</small></span></span></button><div class="titulo-lista"><span class="rot">O plano de ontem</span><span>toque no que comeu</span></div><ul class="refeicoes"><li class="ref-linha marcada"><span class="h">05:45</span><div class="meio"><span class="n">Pré-treino</span><span class="s">163 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">marcado 2/10 13:41</span><button class="link" data-acao="desmarca" data-id="pre" aria-label="Desfazer: Pré-treino">desfazer</button></div></li><li class="ref-linha marcada"><span class="h">06:15</span><div class="meio"><span class="n">Treino</span><span class="s">água 600 ml</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">marcado 2/10 13:41</span><button class="link" data-acao="desmarca" data-id="intra" aria-label="Desfazer: Treino">desfazer</button></div></li><li class="ref-linha marcada"><span class="h">08:00</span><div class="meio"><span class="n">Café da manhã</span><span class="tag">pós-treino</span><span class="s">629 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">8:41</span><button class="link" data-acao="desmarca" data-id="cafe" aria-label="Desfazer: Café da manhã">desfazer</button></div></li><li class="ref-linha marcada"><span class="h">12:30</span><div class="meio"><span class="n">Almoço</span><span class="s">360 de 719 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>metade</span><span class="quando">marcado 2/10 13:41</span><button class="link" data-acao="desmarca" data-id="almoco" aria-label="Desfazer: Almoço">desfazer</button></div></li><li class="ref-linha marcada"><span class="h">16:00</span><div class="meio"><span class="n">Lanche da tarde</span><span class="s">819 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">15:32</span><button class="link" data-acao="desmarca" data-id="lanche" aria-label="Desfazer: Lanche da tarde">desfazer</button></div></li><li class="ref-linha"><span class="h">19:30</span><div class="meio"><span class="n">Jantar</span><span class="s aviso-h">sem visto: comeu fora do plano — ver “como foi o dia”</span></div><div class="par"><button data-acao="marca" data-id="jantar" data-p="0.5" aria-label="Comi metade: Jantar">½</button><button class="tudo" data-acao="marca" data-id="jantar" data-p="1" aria-label="Comi tudo: Jantar"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li></ul><section class="agua" aria-label="Água"><div class="agua-topo"><div class="meio"><span class="n">Água</span><span class="s">não contada — não é zero</span></div><div class="passo"><button data-acao="agua" data-d="-1" aria-label="Um copo a menos" disabled style="opacity:.4">−</button><b>—</b><button class="mais" data-acao="agua" data-d="1">+1 copo</button></div></div><div class="copos" aria-hidden="true"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></section><section class="comofoi" aria-label="Como foi o dia"><p class="leg">Como foi o dia <span>opcional · a regra usa</span></p><div class="ops" role="radiogroup" aria-label="Como foi o dia"><button role="radio" aria-checked="false" data-acao="comofoi" data-v="seguiu"><i></i>Segui o plano</button><button role="radio" aria-checked="true" data-acao="comofoi" data-v="sabe"><i></i>Saí do plano, sei o que comi</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="naosabe"><i></i>Saí do plano, não sei quanto</button></div></section><div class="aviso neutro resultado"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><div><p><b>Quinta 1/10 conta para a regra:</b> consumo conhecido. O almoço pela metade conta metade (F199); o jantar fora do plano não entra na conta do plano.</p></div></div><p class="totais">Pelo plano, com visto: <b data-kcal>1.971</b> de 3.007 kcal</p><div style="height:16px"></div></div><div class="sis-base" aria-hidden="true"><i></i></div><div class="dobra" aria-hidden="true"></div></div>
+</section>
+<section class="estado" id="e4" aria-labelledby="e4-t">
+<div class="legenda"><p class="rot">Estado 4 · variação do caso ruim</p><h2 id="e4-t">Se ele não sabe quanto comeu, o dia fica desconhecido — e a tela diz isso.</h2><p>Mesmo dia, com “Saí do plano, não sei quanto”. Os cinco vistos continuam guardados, mas o dia sai da conta da regra, e a faixa dos 14 dias volta a mostrar “?” para quinta.</p><p>Escrito por extenso, porque já houve o contrário: esse dia contava como registro e destravava corte de comida (F292).</p></div>
+<div class="tela alta"><div class="sis-topo" aria-hidden="true"><span class="tab">13:41</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><div class="dia-cab"><div><button class="voltar" data-acao="voltar"><svg class="ic" aria-hidden="true"><use href="#i-esq"/></svg>Hoje</button><h3>Ontem</h3><p>quinta, 1 de outubro · dia de treino</p></div><button class="mesa-btn" data-acao="mesa"><svg class="ic" aria-hidden="true"><use href="#i-mesa"/></svg>Mesa <span class="cont">2</span></button></div><div class="pilulas"><button class="pilula feita" data-acao="pilula">Peso <b>73,8</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula feita" data-acao="pilula">Treino D <b>6:18</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button></div><div class="aviso neutro" style="margin:2px 0 8px"><svg class="ic" aria-hidden="true"><use href="#i-relogio"/></svg><div><p><b>Marcando de memória</b>, sexta 2/10 às 13:41.</p></div></div><button class="quatorze" data-acao="14dias" aria-label="Últimos 14 dias: 0 com consumo conhecido. A regra do nutricionista pede 11. Abrir para pôr em dia."><span class="q-topo"><span>Consumo conhecido: <b data-n14>0</b> de 14 dias</span><span class="r">a regra pede 11 ›</span></span><span class="q-dias" aria-hidden="true"><span class="d"><i>?</i><small>19</small></span><span class="d"><i>?</i><small>20</small></span><span class="d"><i>?</i><small>21</small></span><span class="d"><i>?</i><small>22</small></span><span class="d"><i>?</i><small>23</small></span><span class="d"><i>?</i><small>24</small></span><span class="d"><i>?</i><small>25</small></span><span class="d"><i>?</i><small>26</small></span><span class="d"><i>?</i><small>27</small></span><span class="d"><i>?</i><small>28</small></span><span class="d"><i>?</i><small>29</small></span><span class="d"><i>?</i><small>30</small></span><span class="d"><i>?</i><small>1</small></span><span class="d h"><i>?</i><small>2</small></span></span></button><div class="titulo-lista"><span class="rot">O plano de ontem</span><span>toque no que comeu</span></div><ul class="refeicoes"><li class="ref-linha marcada"><span class="h">05:45</span><div class="meio"><span class="n">Pré-treino</span><span class="s">163 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">marcado 2/10 13:41</span><button class="link" data-acao="desmarca" data-id="pre" aria-label="Desfazer: Pré-treino">desfazer</button></div></li><li class="ref-linha marcada"><span class="h">06:15</span><div class="meio"><span class="n">Treino</span><span class="s">água 600 ml</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">marcado 2/10 13:41</span><button class="link" data-acao="desmarca" data-id="intra" aria-label="Desfazer: Treino">desfazer</button></div></li><li class="ref-linha marcada"><span class="h">08:00</span><div class="meio"><span class="n">Café da manhã</span><span class="tag">pós-treino</span><span class="s">629 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">8:41</span><button class="link" data-acao="desmarca" data-id="cafe" aria-label="Desfazer: Café da manhã">desfazer</button></div></li><li class="ref-linha marcada"><span class="h">12:30</span><div class="meio"><span class="n">Almoço</span><span class="s">360 de 719 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>metade</span><span class="quando">marcado 2/10 13:41</span><button class="link" data-acao="desmarca" data-id="almoco" aria-label="Desfazer: Almoço">desfazer</button></div></li><li class="ref-linha marcada"><span class="h">16:00</span><div class="meio"><span class="n">Lanche da tarde</span><span class="s">819 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">15:32</span><button class="link" data-acao="desmarca" data-id="lanche" aria-label="Desfazer: Lanche da tarde">desfazer</button></div></li><li class="ref-linha"><span class="h">19:30</span><div class="meio"><span class="n">Jantar</span><span class="s aviso-h">sem visto: comeu fora do plano — ver “como foi o dia”</span></div><div class="par"><button data-acao="marca" data-id="jantar" data-p="0.5" aria-label="Comi metade: Jantar">½</button><button class="tudo" data-acao="marca" data-id="jantar" data-p="1" aria-label="Comi tudo: Jantar"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li></ul><section class="agua" aria-label="Água"><div class="agua-topo"><div class="meio"><span class="n">Água</span><span class="s">não contada — não é zero</span></div><div class="passo"><button data-acao="agua" data-d="-1" aria-label="Um copo a menos" disabled style="opacity:.4">−</button><b>—</b><button class="mais" data-acao="agua" data-d="1">+1 copo</button></div></div><div class="copos" aria-hidden="true"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></section><section class="comofoi" aria-label="Como foi o dia"><p class="leg">Como foi o dia <span>opcional · a regra usa</span></p><div class="ops" role="radiogroup" aria-label="Como foi o dia"><button role="radio" aria-checked="false" data-acao="comofoi" data-v="seguiu"><i></i>Segui o plano</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="sabe"><i></i>Saí do plano, sei o que comi</button><button role="radio" aria-checked="true" data-acao="comofoi" data-v="naosabe"><i></i>Saí do plano, não sei quanto</button></div></section><div class="aviso alerta resultado"><svg class="ic" aria-hidden="true"><use href="#i-aviso"/></svg><div><p><b>Quinta 1/10 fica desconhecido para a regra</b>, mesmo com 5 vistos: se não se sabe quanto comeu, não se sabe o dia (F200).</p></div></div><p class="totais">Pelo plano, com visto: <b data-kcal>1.971</b> de 3.007 kcal</p><div style="height:16px"></div></div><div class="sis-base" aria-hidden="true"><i></i></div><div class="dobra" aria-hidden="true"></div></div>
+</section>
+<section class="estado" id="e5" aria-labelledby="e5-t">
+<div class="legenda"><p class="rot">Estado 5 · vazio</p><h2 id="e5-t">7:50, nada marcado: o vazio é o plano esperando, não uma tela em branco.</h2><p>Um dia sem visto é desconhecido, não zero (F198), e a tela fala assim. O cartão de agora já é o café da manhã das 8:00, marcado como pós-treino porque o treino foi de manhã (F191).</p></div>
+<div class="tela alta"><div class="sis-topo" aria-hidden="true"><span class="tab">7:50</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><div class="dia-cab"><div><h3>Hoje</h3><p>quinta, 1 de outubro · dia de treino</p></div><button class="mesa-btn" data-acao="mesa"><svg class="ic" aria-hidden="true"><use href="#i-mesa"/></svg>Mesa <span class="cont">2</span></button></div><div class="pilulas"><button class="pilula feita" data-acao="pilula">Peso <b>73,8</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula feita" data-acao="pilula">Treino D <b>6:18</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula" data-acao="pilula">Cardio <b>anotar</b></button></div><div class="aviso neutro" style="margin:2px 0 8px"><svg class="ic" aria-hidden="true"><use href="#i-relogio"/></svg><div><p><b>Hoje ainda sem visto.</b> Sem nenhum, o dia fica desconhecido — um buraco nos 14 dias.</p></div></div><button class="quatorze" data-acao="14dias" aria-label="Últimos 14 dias: 0 com consumo conhecido. A regra do nutricionista pede 11. Abrir para pôr em dia."><span class="q-topo"><span>Consumo conhecido: <b data-n14>0</b> de 14 dias</span><span class="r">a regra pede 11 ›</span></span><span class="q-dias" aria-hidden="true"><span class="d"><i>?</i><small>18</small></span><span class="d"><i>?</i><small>19</small></span><span class="d"><i>?</i><small>20</small></span><span class="d"><i>?</i><small>21</small></span><span class="d"><i>?</i><small>22</small></span><span class="d"><i>?</i><small>23</small></span><span class="d"><i>?</i><small>24</small></span><span class="d"><i>?</i><small>25</small></span><span class="d"><i>?</i><small>26</small></span><span class="d"><i>?</i><small>27</small></span><span class="d"><i>?</i><small>28</small></span><span class="d"><i>?</i><small>29</small></span><span class="d"><i>?</i><small>30</small></span><span class="d h"><i>?</i><small>1</small></span></span></button><section class="agora-card" aria-label="Refeição de agora"><p class="hora">Agora · 08:00 no plano</p><h4><span>Café da manhã</span><span class="kcal">629 kcal</span></h4><p class="itens">cuscuz 200 g · frango 70 g · requeijão light 30 g · leite integral 250 ml · uva 120 g</p><div class="botoes"><button class="btn-contorno" data-acao="marca" data-id="cafe" data-p="0.5" aria-label="Comi só metade: Café da manhã">Só metade</button><button class="botao-tinta" data-acao="marca" data-id="cafe" data-p="1" aria-label="Comi tudo: Café da manhã"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Comi tudo</button></div></section><div class="titulo-lista"><span class="rot">O plano de hoje</span><span>toque no que comeu</span></div><ul class="refeicoes"><li class="ref-linha"><span class="h">05:45</span><div class="meio"><span class="n">Pré-treino</span><span class="s">163 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="pre" data-p="0.5" aria-label="Comi metade: Pré-treino">½</button><button class="tudo" data-acao="marca" data-id="pre" data-p="1" aria-label="Comi tudo: Pré-treino"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha"><span class="h">06:15</span><div class="meio"><span class="n">Treino</span><span class="s">água 600 ml · sem visto</span></div><div class="par"><button data-acao="marca" data-id="intra" data-p="0.5" aria-label="Comi metade: Treino">½</button><button class="tudo" data-acao="marca" data-id="intra" data-p="1" aria-label="Comi tudo: Treino"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha e-agora"><span class="h">08:00</span><div class="meio"><span class="n">Café da manhã</span><span class="tag">pós-treino</span><span class="s">629 kcal</span></div><span class="seta-agora">↑ agora</span></li><li class="ref-linha"><span class="h">12:30</span><div class="meio"><span class="n">Almoço</span><span class="s">719 kcal</span></div><span class="mais-tarde">mais tarde</span></li><li class="ref-linha"><span class="h">16:00</span><div class="meio"><span class="n">Lanche da tarde</span><span class="s">819 kcal</span></div><span class="mais-tarde">mais tarde</span></li><li class="ref-linha"><span class="h">19:30</span><div class="meio"><span class="n">Jantar</span><span class="s">678 kcal</span></div><span class="mais-tarde">mais tarde</span></li></ul><section class="agua" aria-label="Água"><div class="agua-topo"><div class="meio"><span class="n">Água</span><span class="s">não contada — não é zero</span></div><div class="passo"><button data-acao="agua" data-d="-1" aria-label="Um copo a menos" disabled style="opacity:.4">−</button><b>—</b><button class="mais" data-acao="agua" data-d="1">+1 copo</button></div></div><div class="copos" aria-hidden="true"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></section><section class="comofoi" aria-label="Como foi o dia"><p class="leg">Como foi o dia <span>opcional · a regra usa</span></p><div class="ops" role="radiogroup" aria-label="Como foi o dia"><button role="radio" aria-checked="false" data-acao="comofoi" data-v="seguiu"><i></i>Segui o plano</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="sabe"><i></i>Saí do plano, sei o que comi</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="naosabe"><i></i>Saí do plano, não sei quanto</button></div></section><p class="totais">Pelo plano, com visto: <b data-kcal>0</b> de 3.007 kcal · ainda hoje: café da manhã 8:00, almoço 12:30, lanche da tarde 16:00, jantar 19:30</p><div style="height:16px"></div></div><div class="sis-base" aria-hidden="true"><i></i></div><div class="dobra" aria-hidden="true"></div></div>
+</section>
+<section class="estado" id="e6" aria-labelledby="e6-t">
+<div class="legenda"><p class="rot">Estado 6 · vazio de verdade</p><h2 id="e6-t">Sem plano neste aparelho: o que fazer, e por que pode ter acontecido.</h2><p>Aparelho novo sem plano já foi um defeito real (F271). Aqui o vazio explica de onde o plano vem e oferece os dois caminhos que existem: restaurar a cópia de segurança ou trazer da conta (F249, F10). A água continua contável.</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">8:05</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo">
+  <div class="dia-cab"><div><h3>Hoje</h3><p>quinta, 1 de outubro</p></div><button class="mesa-btn"><svg class="ic" aria-hidden="true"><use href="#i-mesa"/></svg>Mesa</button></div>
+  <div class="aviso neutro" style="margin-top:8px;flex-direction:column;gap:6px">
+    <p style="font-size:19px;font-weight:800">Este aparelho não tem plano alimentar.</p>
+    <p>Sem plano, não há o que marcar. O plano vem do seu nutricionista, de fora do app (F2).</p>
+    <div class="acoes-aviso" style="flex-direction:column;align-items:stretch">
+      <button class="botao-tinta">Restaurar uma cópia de segurança</button>
+      <button class="botao-sec">Entrar na conta e trazer do outro aparelho</button>
+    </div>
+    <p style="font-size:14px;margin-top:6px">Abriu por um endereço novo? Os dados ficam no endereço antigo, e o ícone antigo continua levando a eles (F56).</p>
+  </div>
+  <section class="agua" aria-label="Água"><div class="agua-topo"><div class="meio"><span class="n">Água</span><span class="s">não contada — não é zero</span></div><div class="passo"><button data-acao="agua" data-d="-1" aria-label="Um copo a menos" disabled style="opacity:.4">−</button><b>—</b><button class="mais" data-acao="agua" data-d="1">+1 copo</button></div></div><div class="copos" aria-hidden="true"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></section>
+  <p class="totais">A água não depende do plano: dá para contar mesmo assim.</p>
+  </div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+<section class="estado" id="e7" aria-labelledby="e7-t">
+<div class="legenda"><p class="rot">Estado 7 · carregando</p><h2 id="e7-t">Abrindo: o desenho do dia, antes dos dados.</h2><p>Tudo vem do aparelho. O esqueleto tem a forma exata da folha, para nada pular de lugar; se a leitura passar de 4 segundos, o motivo aparece, como no estado 8 do momento 1 (F273).</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">15:32</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo" aria-busy="true">
+  <div class="dia-cab"><div><h3>Hoje</h3><p>quinta, 1 de outubro</p></div><span class="mesa-btn" style="opacity:.5"><svg class="ic" aria-hidden="true"><use href="#i-mesa"/></svg>Mesa</span></div>
+  <div class="esqueleto" style="height:44px;border-radius:12px;margin:6px 0 8px"></div>
+  <div class="esqueleto" style="height:62px;border-radius:16px;margin-bottom:10px"></div>
+  <div class="esqueleto" style="height:190px;border-radius:20px;margin-bottom:10px"></div>
+  <div class="esqueleto" style="height:46px;border-radius:10px;margin:6px 0"></div><div class="esqueleto" style="height:46px;border-radius:10px;margin:6px 0"></div><div class="esqueleto" style="height:46px;border-radius:10px;margin:6px 0"></div><div class="esqueleto" style="height:46px;border-radius:10px;margin:6px 0"></div><div class="esqueleto" style="height:46px;border-radius:10px;margin:6px 0"></div><div class="esqueleto" style="height:46px;border-radius:10px;margin:6px 0"></div>
+  <p role="status" style="font-size:14px;text-align:center;margin:14px 0 0">Lendo o plano e as marcas deste aparelho. Não precisa de sinal. Se passar de 4 segundos, aparece o motivo.</p>
+  </div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+<section class="estado" id="e8" aria-labelledby="e8-t">
+<div class="legenda"><p class="rot">Estado 8 · erro ao gravar</p><h2 id="e8-t">Não gravou: o botão volta a esperar, e ninguém vê um visto que não existe.</h2><p>Com o armazenamento cheio (F53), o toque em “Comi tudo” não vira visto: o cartão fica vermelho, diz o motivo e pede outro toque. O aviso no alto aponta o que ocupa espaço.</p><p>Por 48 dias, escolher um alimento não fez nada, sem erro nenhum, e ninguém notou (F296). Esta direção trata isso como regra: todo visto mostrado foi lido de volta do aparelho.</p></div>
+<div class="tela alta"><div class="sis-topo" aria-hidden="true"><span class="tab">15:32</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><div class="dia-cab"><div><h3>Hoje</h3><p>quinta, 1 de outubro · dia de treino</p></div><button class="mesa-btn" data-acao="mesa"><svg class="ic" aria-hidden="true"><use href="#i-mesa"/></svg>Mesa <span class="cont">2</span></button></div><div class="pilulas"><button class="pilula feita" data-acao="pilula">Peso <b>73,8</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula feita" data-acao="pilula">Treino D <b>6:18</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula" data-acao="pilula">Cardio <b>anotar</b></button></div><div class="aviso erro" style="margin:2px 0 8px"><svg class="ic" aria-hidden="true"><use href="#i-erro"/></svg><div><p><b>O aparelho está sem espaço para o registro.</b> O café das 8:41 está guardado; o lanche, não.</p><div class="acoes-aviso"><button class="botao-sec">Ver o que ocupa espaço</button></div></div></div><button class="quatorze" data-acao="14dias" aria-label="Últimos 14 dias: 1 com consumo conhecido. A regra do nutricionista pede 11. Abrir para pôr em dia."><span class="q-topo"><span>Consumo conhecido: <b data-n14>1</b> de 14 dias</span><span class="r">a regra pede 11 ›</span></span><span class="q-dias" aria-hidden="true"><span class="d"><i>?</i><small>18</small></span><span class="d"><i>?</i><small>19</small></span><span class="d"><i>?</i><small>20</small></span><span class="d"><i>?</i><small>21</small></span><span class="d"><i>?</i><small>22</small></span><span class="d"><i>?</i><small>23</small></span><span class="d"><i>?</i><small>24</small></span><span class="d"><i>?</i><small>25</small></span><span class="d"><i>?</i><small>26</small></span><span class="d"><i>?</i><small>27</small></span><span class="d"><i>?</i><small>28</small></span><span class="d"><i>?</i><small>29</small></span><span class="d"><i>?</i><small>30</small></span><span class="d k h"><i>✓</i><small>1</small></span></span></button><section class="agora-card falhou" aria-label="Refeição de agora"><p class="hora">Agora · 16:00 no plano</p><h4><span>Lanche da tarde</span><span class="kcal">819 kcal</span></h4><p class="itens">leite 250 ml · banana 120 g · aveia 40 g · pasta de amendoim 10 g · leite em pó 10 g · whey 30 g · pão 50 g · geleia light 20 g</p><p class="nota-nutri">“Bata leite + banana + aveia + pasta + leite em pó + whey. Pão e geleia ficam separados.”</p><p class="falha-linha"><svg class="ic" aria-hidden="true"><use href="#i-erro"/></svg><span><b>Não gravou.</b> O aparelho recusou: o espaço do navegador está cheio (F53). Nada foi marcado.</span></p><div class="botoes"><button class="btn-contorno" data-acao="marca" data-id="lanche" data-p="0.5" aria-label="Comi só metade: Lanche da tarde">Só metade</button><button class="botao-tinta" data-acao="marca" data-id="lanche" data-p="1" aria-label="Comi tudo: Lanche da tarde"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Tocar de novo</button></div></section><div class="titulo-lista"><span class="rot">O plano de hoje</span><span>toque no que comeu</span></div><ul class="refeicoes"><li class="ref-linha"><span class="h">05:45</span><div class="meio"><span class="n">Pré-treino</span><span class="s">163 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="pre" data-p="0.5" aria-label="Comi metade: Pré-treino">½</button><button class="tudo" data-acao="marca" data-id="pre" data-p="1" aria-label="Comi tudo: Pré-treino"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha"><span class="h">06:15</span><div class="meio"><span class="n">Treino</span><span class="s">água 600 ml · sem visto</span></div><div class="par"><button data-acao="marca" data-id="intra" data-p="0.5" aria-label="Comi metade: Treino">½</button><button class="tudo" data-acao="marca" data-id="intra" data-p="1" aria-label="Comi tudo: Treino"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha marcada"><span class="h">08:00</span><div class="meio"><span class="n">Café da manhã</span><span class="tag">pós-treino</span><span class="s">629 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">8:41</span><button class="link" data-acao="desmarca" data-id="cafe" aria-label="Desfazer: Café da manhã">desfazer</button></div></li><li class="ref-linha"><span class="h">12:30</span><div class="meio"><span class="n">Almoço</span><span class="s">719 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="almoco" data-p="0.5" aria-label="Comi metade: Almoço">½</button><button class="tudo" data-acao="marca" data-id="almoco" data-p="1" aria-label="Comi tudo: Almoço"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha e-agora"><span class="h">16:00</span><div class="meio"><span class="n">Lanche da tarde</span><span class="s">819 kcal</span></div><span class="seta-agora">↑ agora</span></li><li class="ref-linha"><span class="h">19:30</span><div class="meio"><span class="n">Jantar</span><span class="s">678 kcal</span></div><span class="mais-tarde">mais tarde</span></li></ul><section class="agua" aria-label="Água"><div class="agua-topo"><div class="meio"><span class="n">Água</span><span class="s">não contada — não é zero</span></div><div class="passo"><button data-acao="agua" data-d="-1" aria-label="Um copo a menos" disabled style="opacity:.4">−</button><b>—</b><button class="mais" data-acao="agua" data-d="1">+1 copo</button></div></div><div class="copos" aria-hidden="true"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></section><section class="comofoi" aria-label="Como foi o dia"><p class="leg">Como foi o dia <span>opcional · a regra usa</span></p><div class="ops" role="radiogroup" aria-label="Como foi o dia"><button role="radio" aria-checked="false" data-acao="comofoi" data-v="seguiu"><i></i>Segui o plano</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="sabe"><i></i>Saí do plano, sei o que comi</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="naosabe"><i></i>Saí do plano, não sei quanto</button></div></section><p class="totais">Pelo plano, com visto: <b data-kcal>629</b> de 3.007 kcal · ainda hoje: lanche da tarde 16:00, jantar 19:30</p><div style="height:16px"></div></div><div class="sis-base" aria-hidden="true"><i></i></div><div class="dobra" aria-hidden="true"></div></div>
+</section>
+<section class="estado" id="e9" aria-labelledby="e9-t">
+<div class="legenda"><p class="rot">Estado 9 · treino à noite</p><h2 id="e9-t">Dia com treino às 18:15: os horários andaram com a sessão.</h2><p>A regra do nutricionista move o pré, o treino e a refeição que cair dentro da sessão; nada é criado, apagado ou fundido (F189, F190). A folha mostra o horário novo e, riscado, o de antes. O jantar vira o pós-treino (F191). O pré perde o café depois das 16h (F192).</p><p class="fatos">Data hipotética, uma semana depois do caso, já com 7 dias conhecidos na faixa.</p></div>
+<div class="tela alta"><div class="sis-topo" aria-hidden="true"><span class="tab">17:20</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo"><div class="dia-cab"><div><h3>Hoje</h3><p>quarta, 7 de outubro · treino às 18:15</p></div><button class="mesa-btn" data-acao="mesa"><svg class="ic" aria-hidden="true"><use href="#i-mesa"/></svg>Mesa</button></div><div class="pilulas"><button class="pilula feita" data-acao="pilula">Peso <b>73,9</b><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg></button><button class="pilula" data-acao="pilula">Treino C <b>18:15</b></button></div><div class="aviso neutro" style="margin:2px 0 8px"><svg class="ic" aria-hidden="true"><use href="#i-relogio"/></svg><div><p>Treino hoje às 18:15: o pré, o treino e o jantar andaram juntos, como manda o nutricionista.</p></div></div><button class="quatorze" data-acao="14dias" aria-label="Últimos 14 dias: 7 com consumo conhecido. A regra do nutricionista pede 11. Abrir para pôr em dia."><span class="q-topo"><span>Consumo conhecido: <b data-n14>7</b> de 14 dias</span><span class="r">a regra pede 11 ›</span></span><span class="q-dias" aria-hidden="true"><span class="d"><i>?</i><small>24</small></span><span class="d"><i>?</i><small>25</small></span><span class="d"><i>?</i><small>26</small></span><span class="d"><i>?</i><small>27</small></span><span class="d"><i>?</i><small>28</small></span><span class="d"><i>?</i><small>29</small></span><span class="d"><i>?</i><small>30</small></span><span class="d k"><i>✓</i><small>1</small></span><span class="d k"><i>✓</i><small>2</small></span><span class="d k"><i>✓</i><small>3</small></span><span class="d k"><i>✓</i><small>4</small></span><span class="d k"><i>✓</i><small>5</small></span><span class="d k"><i>✓</i><small>6</small></span><span class="d k h"><i>✓</i><small>7</small></span></span></button><section class="agora-card" aria-label="Refeição de agora"><p class="hora">Agora · 17:45 no plano</p><h4><span>Pré-treino</span><span class="kcal">163 kcal</span></h4><p class="itens">pão Artesano 35 g · doce de leite 20 g · canela 1 g · sem o café depois das 16h (F192)</p><div class="botoes"><button class="btn-contorno" data-acao="marca" data-id="pre" data-p="0.5" aria-label="Comi só metade: Pré-treino">Só metade</button><button class="botao-tinta" data-acao="marca" data-id="pre" data-p="1" aria-label="Comi tudo: Pré-treino"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Comi tudo</button></div></section><div class="titulo-lista"><span class="rot">O plano de hoje</span><span>toque no que comeu</span></div><ul class="refeicoes"><li class="ref-linha marcada"><span class="h">08:00</span><div class="meio"><span class="n">Café da manhã</span><span class="s">629 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">8:20</span><button class="link" data-acao="desmarca" data-id="cafe" aria-label="Desfazer: Café da manhã">desfazer</button></div></li><li class="ref-linha marcada"><span class="h">12:30</span><div class="meio"><span class="n">Almoço</span><span class="s">719 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">12:58</span><button class="link" data-acao="desmarca" data-id="almoco" aria-label="Desfazer: Almoço">desfazer</button></div></li><li class="ref-linha marcada"><span class="h">16:00</span><div class="meio"><span class="n">Lanche da tarde</span><span class="s">819 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">16:05</span><button class="link" data-acao="desmarca" data-id="lanche" aria-label="Desfazer: Lanche da tarde">desfazer</button></div></li><li class="ref-linha e-agora"><span class="h">17:45<s>5:45</s></span><div class="meio"><span class="n">Pré-treino</span><span class="s">163 kcal</span></div><span class="seta-agora">↑ agora</span></li><li class="ref-linha"><span class="h">18:15<s>6:15</s></span><div class="meio"><span class="n">Treino</span><span class="s">água 600 ml</span></div><div class="par"><button data-acao="marca" data-id="intra" data-p="0.5" aria-label="Comi metade: Treino">½</button><button class="tudo" data-acao="marca" data-id="intra" data-p="1" aria-label="Comi tudo: Treino"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha"><span class="h">19:45<s>19:30</s></span><div class="meio"><span class="n">Jantar</span><span class="tag">pós-treino</span><span class="s">678 kcal</span></div><span class="mais-tarde">mais tarde</span></li></ul><section class="agua" aria-label="Água"><div class="agua-topo"><div class="meio"><span class="n">Água</span><span class="s">7 de 14 copos de 250 ml</span></div><div class="passo"><button data-acao="agua" data-d="-1" aria-label="Um copo a menos">−</button><b>7</b><button class="mais" data-acao="agua" data-d="1">+1 copo</button></div></div><div class="copos" aria-hidden="true"><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></section><section class="comofoi" aria-label="Como foi o dia"><p class="leg">Como foi o dia <span>opcional · a regra usa</span></p><div class="ops" role="radiogroup" aria-label="Como foi o dia"><button role="radio" aria-checked="false" data-acao="comofoi" data-v="seguiu"><i></i>Segui o plano</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="sabe"><i></i>Saí do plano, sei o que comi</button><button role="radio" aria-checked="false" data-acao="comofoi" data-v="naosabe"><i></i>Saí do plano, não sei quanto</button></div></section><p class="totais">Pelo plano, com visto: <b data-kcal>2.167</b> de 3.007 kcal · ainda hoje: pré-treino 17:45, treino 18:15, jantar 19:45</p><div style="height:16px"></div></div><div class="sis-base" aria-hidden="true"><i></i></div><div class="dobra" aria-hidden="true"></div></div>
+</section>
+<section class="estado" id="e10" aria-labelledby="e10-t">
+<div class="legenda"><p class="rot">Estado 10 · pôr em dia</p><h2 id="e10-t">Os 14 dias: onde estão os buracos, e o atalho para os dias recentes.</h2><p>Pôr em dia é a segunda situação mais frequente medida (02-uso, U11). A faixa dos 14 dias abre esta lista. Para os três últimos dias existe “Dia como no plano”: um toque marca todas as refeições como inteiras e o dia como “segui o plano”, com a data em que foi dado — “2 dias depois”.</p><p>Dias mais antigos só abrem para marcar o que ele lembrar: a memória de uma semana atrás não aguenta um “dia inteiro” honesto.</p><p class="fatos">O limite de 3 dias para o atalho é escolha deste desenho; está nas perguntas ao dono.</p></div>
+<div class="tela alta"><div class="sis-topo" aria-hidden="true"><span class="tab">21:14</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo">
+  <div class="dia-cab"><div><button class="voltar"><svg class="ic" aria-hidden="true"><use href="#i-esq"/></svg>Hoje</button><h3>Pôr em dia</h3><p>os últimos 14 dias de comida</p></div></div>
+  <button class="quatorze" data-acao="14dias" aria-label="Últimos 14 dias: 2 com consumo conhecido. A regra do nutricionista pede 11. Abrir para pôr em dia."><span class="q-topo"><span>Consumo conhecido: <b data-n14>2</b> de 14 dias</span><span class="r">a regra pede 11 ›</span></span><span class="q-dias" aria-hidden="true"><span class="d"><i>?</i><small>18</small></span><span class="d"><i>?</i><small>19</small></span><span class="d"><i>?</i><small>20</small></span><span class="d"><i>?</i><small>21</small></span><span class="d"><i>?</i><small>22</small></span><span class="d"><i>?</i><small>23</small></span><span class="d"><i>?</i><small>24</small></span><span class="d"><i>?</i><small>25</small></span><span class="d"><i>?</i><small>26</small></span><span class="d"><i>?</i><small>27</small></span><span class="d"><i>?</i><small>28</small></span><span class="d k"><i>✓</i><small>29</small></span><span class="d"><i>?</i><small>30</small></span><span class="d k h"><i>✓</i><small>1</small></span></span></button>
+  <p class="lembra">Marcando todo dia daqui em diante, a regra do nutricionista volta a ter adesão por volta de <b>10/10</b>. Dia que você não lembra pode ficar desconhecido: a regra só não o usa (F198). Inventar é pior que deixar em branco.</p>
+  <ul class="dias-lista"><li><span class="dd">qui<small>1/10</small></span><div><span class="est k">3 vistos · conhecido</span><br><span class="tipo">hoje · Treino D</span></div></li><li><span class="dd">qua<small>30/9</small></span><div><span class="est">sem visto</span><br><span class="tipo">dia de treino</span></div><div class="bts"><button class="t">Dia como no plano</button><button class="">Abrir</button></div></li><li><span class="dd">ter<small>29/9</small></span><div><span class="est k">✓ dia como no plano · marcado hoje 21:12, 2 dias depois</span><br><span class="tipo">dia de treino</span></div><div class="bts"><button class="">Desfazer</button><button class="">Abrir</button></div></li><li><span class="dd">seg<small>28/9</small></span><div><span class="est">sem visto</span><br><span class="tipo">dia de treino</span></div><div class="bts"><button class="t">Dia como no plano</button><button class="">Abrir</button></div></li><li><span class="dd">dom<small>27/9</small></span><div><span class="est">sem visto · mais de 3 dias: abra e marque o que lembrar</span><br><span class="tipo">descanso</span></div><div class="bts"><button class="">Abrir</button></div></li><li><span class="dd">sáb<small>26/9</small></span><div><span class="est">sem visto</span><br><span class="tipo">dia de treino</span></div><div class="bts"><button class="">Abrir</button></div></li><li><span class="dd">sex<small>25/9</small></span><div><span class="est">sem visto</span><br><span class="tipo">dia de treino</span></div><div class="bts"><button class="">Abrir</button></div></li><li><span class="dd">qui<small>24/9</small></span><div><span class="est">sem visto</span><br><span class="tipo">dia de treino</span></div><div class="bts"><button class="">Abrir</button></div></li></ul>
+  <p class="totais">… e mais 6 dias, até sex 18/9, todos sem visto.</p>
+  </div><div class="sis-base" aria-hidden="true"><i></i></div><div class="dobra" aria-hidden="true"></div></div>
+</section>
+<section class="estado" id="e11" aria-labelledby="e11-t">
+<div class="legenda"><p class="rot">Estado 11 · outros estados da folha</p><h2 id="e11-t">O que mais a folha do dia precisa mostrar, recortado.</h2><p>Dia de descanso, dia de alta demanda, refeição pela metade, água contada e a ceia, que o plano não tem.</p></div>
+<div class="tela recorte"><div class="recortes">
+  <div><h4>Dia de descanso (F186, F183)</h4><div class="caixa">
+    <div class="titulo-lista" style="margin-top:0"><span class="rot">Domingo, 4/10 · descanso</span><span>4 refeições · 2.844 kcal</span></div>
+    <ul class="refeicoes"><li class="ref-linha marcada"><span class="h">08:00</span><div class="meio"><span class="n">Café da manhã</span><span class="s">629 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</span><span class="quando">9:10</span><button class="link" data-acao="desmarca" data-id="cafe" aria-label="Desfazer: Café da manhã">desfazer</button></div></li><li class="ref-linha"><span class="h">12:30</span><div class="meio"><span class="n">Almoço</span><span class="s">719 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="almoco" data-p="0.5" aria-label="Comi metade: Almoço">½</button><button class="tudo" data-acao="marca" data-id="almoco" data-p="1" aria-label="Comi tudo: Almoço"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha"><span class="h">16:00</span><div class="meio"><span class="n">Lanche da tarde</span><span class="s">819 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="lanche" data-p="0.5" aria-label="Comi metade: Lanche da tarde">½</button><button class="tudo" data-acao="marca" data-id="lanche" data-p="1" aria-label="Comi tudo: Lanche da tarde"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li><li class="ref-linha"><span class="h">19:30</span><div class="meio"><span class="n">Jantar</span><span class="s">678 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="jantar" data-p="0.5" aria-label="Comi metade: Jantar">½</button><button class="tudo" data-acao="marca" data-id="jantar" data-p="1" aria-label="Comi tudo: Jantar"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li></ul>
+    <p>Sem pré e sem treino: só existem em dia de treino. O tipo do dia vem da sessão registrada; sem ela, do padrão da semana, que é palpite (F187).</p></div></div>
+  <div><h4>Dia de alta demanda (F181, F186)</h4><div class="caixa">
+    <ul class="refeicoes"><li class="ref-linha"><span class="h">06:15</span><div class="meio"><span class="n">Treino</span><span class="s">água 600 ml · maltodextrina 25 g · 95 kcal · sem visto</span></div><div class="par"><button data-acao="marca" data-id="intra" data-p="0.5" aria-label="Comi metade: Treino">½</button><button class="tudo" data-acao="marca" data-id="intra" data-p="1" aria-label="Comi tudo: Treino"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>tudo</button></div></li></ul>
+    <p>A maltodextrina só entra quando o dia é marcado como de alta demanda: 3.102 kcal no dia.</p></div></div>
+  <div><h4>Só metade (F195, F199)</h4><div class="caixa"><ul class="refeicoes"><li class="ref-linha marcada"><span class="h">16:00</span><div class="meio"><span class="n">Lanche da tarde</span><span class="s">410 de 819 kcal</span></div><div class="feito"><span class="selo-visto"><svg class="ic p" aria-hidden="true"><use href="#i-check"/></svg>metade</span><span class="quando">16:12</span><button class="link" data-acao="desmarca" data-id="lanche" aria-label="Desfazer: Lanche da tarde">desfazer</button></div></li></ul>
+    <p>Metade conta metade na adesão. A porção vale só para aquele dia; o plano não muda (F196).</p></div></div>
+  <div><h4>Água contada</h4><div class="caixa" style="padding:0;border:0;background:none"><section class="agua" aria-label="Água"><div class="agua-topo"><div class="meio"><span class="n">Água</span><span class="s">6 de 14 copos de 250 ml</span></div><div class="passo"><button data-acao="agua" data-d="-1" aria-label="Um copo a menos">−</button><b>6</b><button class="mais" data-acao="agua" data-d="1">+1 copo</button></div></div><div class="copos" aria-hidden="true"><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class="c"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></section></div></div>
+  <div><h4>Ceia</h4><div class="caixa"><p style="margin-top:0">O plano não tem ceia (F182). Quando ele come uma, o desenho não inventa uma linha: o dia vira “saí do plano, sei o que comi”. Se a ceia deve virar dado, é pergunta ao dono.</p></div></div>
+  </div></div>
+</section>
+<section class="estado" id="e12" aria-labelledby="e12-t">
+<div class="legenda"><p class="rot">Estado 12 · para que serve o visto</p><h2 id="e12-t">Na mesa, sentado: a regra do nutricionista, e o que falta para ela decidir.</h2><p>O passo de ±150 kcal nunca foi aplicado e a avaliação nunca rodou com adesão (P1). A tela mostra por quê, com os números da regra: o que ela diria, e o que falta — dias conhecidos. É aqui que cada visto do dia vira motivo.</p><p class="fatos">Pesos de exemplo dentro da faixa real (F13); a forma da saída é a da regra consolidada (F212, F215).</p></div>
+<div class="tela"><div class="sis-topo" aria-hidden="true"><span class="tab">21:30</span><span class="entalhe"></span><span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div><div class="conteudo mesa-t">
+  <button class="voltar" style="margin-top:2px"><svg class="ic" aria-hidden="true"><use href="#i-esq"/></svg>Mesa</button>
+  <h3>Peso e comida</h3>
+  <p class="sub">A regra do nutricionista, com os números que a produziram (F215).</p>
+  <ul class="semanas">
+    <li><span>13 a 19/9</span><span class="num">73,45 kg</span><span class="peq">2 pesagens</span></li>
+    <li><span>20 a 26/9</span><span class="num">73,50 kg</span><span class="peq">+0,05 /sem</span></li>
+    <li><span>27/9 a 3/10</span><span class="num">73,55 kg</span><span class="peq">+0,05 /sem</span></li>
+  </ul>
+  <ul class="semanas" style="margin-top:8px">
+    <li><span>Força</span><span class="num">+0,4%</span><span class="peq">ruído: não subindo</span></li>
+    <li style="grid-template-columns:1fr auto"><span>Adesão: dias com consumo conhecido</span><span class="num">1 de 14</span><span style="grid-column:1/-1" class="barras-ades"><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--linha)"></i><i style="height:10px;border-radius:3px;background:var(--tinta)"></i></span></li>
+  </ul>
+  <section class="saida" aria-label="Saída da regra">
+    <p class="q">A regra diz</p>
+    <h4>Não mexer e registrar mais.</h4>
+    <p>Ganho abaixo de 0,10 kg por semana nas duas últimas semanas e força parada: com adesão registrada, a saída seria <b>+150 kcal</b>. Falta adesão: 1 dia conhecido de 14; a regra pede 11 (F212, F213).</p>
+    <p>Marcando todo dia, ela decide por volta de 11/10.</p>
+    <button class="bt-off" disabled>Aplicar +150 kcal — só com adesão</button>
+  </section>
+  </div><div class="sis-base" aria-hidden="true"><i></i></div></div>
+</section>
+</main>
+<p id="anuncio" class="sr" aria-live="polite"></p>
+<script>
+/* Visto · Momento 2 — a folha do dia. O mesmo código desenha os estados fixos e o protótipo tocável. */
+function fmt(n){ return String(n).replace('.', ','); }
+function milhar(n){ n=Math.round(n); return n>=1000 ? Math.floor(n/1000)+'.'+String(n%1000).padStart(3,'0') : String(n); }
+function hhmm(s){ s=Math.round(s); var h=Math.floor(s/3600), m=Math.floor((s%3600)/60); return h+':'+String(m).padStart(2,'0'); }
+function hhmm0(s){ var t=hhmm(s); return t.length<5?'0'+t:t; }
+function seg(h,m,s){ return h*3600+m*60+(s||0); }
+function ic(id,cl){ return '<svg class="ic'+(cl?' '+cl:'')+'" aria-hidden="true"><use href="#'+id+'"/></svg>'; }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+/* plano do nutricionista (F181), quantidades do alimento pronto */
+var PRE={id:'pre',h:seg(5,45),n:'Pré-treino',itens:'pão Artesano 35 g · doce de leite 20 g · canela 1 g · café 200 ml',kcal:163};
+var INTRA={id:'intra',h:seg(6,15),n:'Treino',itens:'água 600 ml',kcal:0};
+var CAFE={id:'cafe',h:seg(8,0),n:'Café da manhã',itens:'cuscuz 200 g · frango 70 g · requeijão light 30 g · leite integral 250 ml · uva 120 g',kcal:629};
+var ALMOCO={id:'almoco',h:seg(12,30),n:'Almoço',itens:'arroz 250 g · feijão 50 g · frango 80 g · legumes/verduras 100 g · azeite 15 g · kiwi 100 g',kcal:719};
+var LANCHE={id:'lanche',h:seg(16,0),n:'Lanche da tarde',itens:'leite 250 ml · banana 120 g · aveia 40 g · pasta de amendoim 10 g · leite em pó 10 g · whey 30 g · pão 50 g · geleia light 20 g',nota:'Bata leite + banana + aveia + pasta + leite em pó + whey. Pão e geleia ficam separados.',kcal:819};
+var JANTAR={id:'jantar',h:seg(19,30),n:'Jantar',itens:'arroz 250 g · feijão 50 g · lombo suíno 80 g · legumes/verduras 100 g · azeite 15 g',kcal:678};
+function planoManha(){ var c=clone(CAFE); c.tag='pós-treino'; return [clone(PRE),clone(INTRA),c,clone(ALMOCO),clone(LANCHE),clone(JANTAR)]; }
+
+function quatorze(ini, conhecidos, hojeIx){
+  /* 14 dias; ini = [dia, mês] do primeiro; conhecidos = índices com consumo conhecido */
+  var d=[], dt=new Date(2026, ini[1]-1, ini[0]);
+  var sem=['d','s','t','q','q','s','s'];
+  for(var i=0;i<14;i++){ var x=new Date(dt.getTime()+i*864e5); d.push({n:x.getDate(), w:sem[x.getDay()], k:conhecidos.indexOf(i)>=0, h:i===hojeIx}); }
+  return d;
+}
+
+function diaHoje(){
+  return {
+    titulo:'Hoje', data:'quinta, 1 de outubro', tipo:'dia de treino', agora:seg(15,32), hojeReal:true,
+    pilulas:[['Peso','73,8',true],['Treino D','6:18',true],['Cardio','anotar',false]],
+    ref:planoManha(), total:3007, marcas:{cafe:{p:1,t:'8:41'}}, agua:null, comoFoi:null,
+    q:{ini:[18,9], hoje:13, alvo:13, k:[]}, mesa:2
+  };
+}
+
+function conhecido(st){
+  var algum=false; for(var k in st.marcas){ if(st.marcas[k]) algum=true; }
+  return algum && st.comoFoi!=='naosabe';
+}
+function nConhecidos(st){ var n=(st.qOutros||0); return n + (conhecido(st)?1:0); }
+
+function statusBar(st){
+  return '<div class="sis-topo" aria-hidden="true"><span class="tab">'+hhmm(st.agora)+'</span><span class="entalhe"></span>'+
+    '<span class="ics"><span class="sinal" style="--x:1"><i></i><i style="opacity:1"></i><i style="opacity:1"></i><i></i></span><span class="bat"></span></span></div>';
+}
+
+function agoraDe(st){
+  if(!st.hojeReal) return null;
+  var melhor=null;
+  st.ref.forEach(function(r){
+    if(st.marcas[r.id]) return;
+    var dif=r.h-st.agora;
+    if(dif<=60*60 && dif>=-90*60){ if(!melhor || Math.abs(dif)<Math.abs(melhor.h-st.agora)) melhor=r; }
+  });
+  return melhor;
+}
+
+function cabecalho(st){
+  return '<div class="dia-cab"><div>'+
+      (st.voltar? '<button class="voltar" data-acao="voltar">'+ic('i-esq')+st.voltar+'</button>':'')+
+      '<h3>'+st.titulo+'</h3><p>'+st.data+' · '+st.tipo+'</p></div>'+
+      '<button class="mesa-btn" data-acao="mesa">'+ic('i-mesa')+'Mesa'+(st.mesa?' <span class="cont">'+st.mesa+'</span>':'')+'</button>'+
+    '</div>'+
+    (st.pilulas? '<div class="pilulas">'+st.pilulas.map(function(p){
+      return '<button class="pilula'+(p[2]?' feita':'')+'" data-acao="pilula">'+p[0]+' <b>'+p[1]+'</b>'+(p[2]?ic('i-check','p'):'')+'</button>'; }).join('')+'</div>' : '');
+}
+
+function faixa14(st){
+  var dias=quatorze(st.q.ini, st.q.k||[], st.q.hoje);
+  var hojeK=conhecido(st);
+  var n=0;
+  var cel=dias.map(function(d,i){
+    var k = d.k || (i===st.q.alvo && hojeK);
+    if(k) n++;
+    return '<span class="d'+(k?' k':'')+(d.h?' h':'')+'"><i>'+(k?'✓':'?')+'</i><small>'+d.n+'</small></span>';
+  }).join('');
+  return '<button class="quatorze" data-acao="14dias" aria-label="Últimos 14 dias: '+n+' com consumo conhecido. A regra do nutricionista pede 11. Abrir para pôr em dia.">'+
+    '<span class="q-topo"><span>Consumo conhecido: <b data-n14>'+n+'</b> de 14 dias</span><span class="r">a regra pede 11 ›</span></span>'+
+    '<span class="q-dias" aria-hidden="true">'+cel+'</span></button>';
+}
+
+function cartaoAgora(st,r,o){
+  o=o||{};
+  return '<section class="agora-card'+(o.falhou?' falhou':'')+'" aria-label="Refeição de agora">'+
+    '<p class="hora">Agora · '+hhmm0(r.h)+' no plano</p>'+
+    '<h4><span>'+r.n+'</span><span class="kcal">'+r.kcal+' kcal</span></h4>'+
+    '<p class="itens">'+r.itens+'</p>'+
+    (r.nota? '<p class="nota-nutri">“'+r.nota+'”</p>':'')+
+    (o.falhou? '<p class="falha-linha">'+ic('i-erro')+'<span><b>Não gravou.</b> O aparelho recusou: o espaço do navegador está cheio (F53). Nada foi marcado.</span></p>':'')+
+    '<div class="botoes"><button class="btn-contorno" data-acao="marca" data-id="'+r.id+'" data-p="0.5" aria-label="Comi só metade: '+r.n+'">Só metade</button>'+
+    '<button class="botao-tinta" data-acao="marca" data-id="'+r.id+'" data-p="1" aria-label="Comi tudo: '+r.n+'">'+ic('i-check')+(o.falhou?'Tocar de novo':'Comi tudo')+'</button></div>'+
+  '</section>';
+}
+
+function linha(st,r,agoraR){
+  var m=st.marcas[r.id], h='<span class="h">'+hhmm0(r.h)+(r.antes?'<s>'+r.antes+'</s>':'')+'</span>';
+  var nome='<span class="n">'+r.n+'</span>'+(r.tag?'<span class="tag">'+r.tag+'</span>':'');
+  var kc = r.sub || (r.kcal ? r.kcal+' kcal' : r.itens);
+  if(m){
+    var q = m.p===1?'tudo':'metade';
+    return '<li class="ref-linha marcada"><span class="h">'+hhmm0(r.h)+'</span><div class="meio">'+nome+'<span class="s">'+(m.p===1?kc:Math.round(r.kcal/2)+' de '+r.kcal+' kcal')+'</span></div>'+
+      '<div class="feito"><span class="selo-visto">'+ic('i-check','p')+q+'</span><span class="quando">'+(m.d? 'marcado '+m.d+' '+m.t : m.t)+'</span><button class="link" data-acao="desmarca" data-id="'+r.id+'" aria-label="Desfazer: '+r.n+'">desfazer</button></div></li>';
+  }
+  if(agoraR && agoraR.id===r.id){
+    return '<li class="ref-linha e-agora">'+h+'<div class="meio">'+nome+'<span class="s">'+kc+'</span></div><span class="seta-agora">↑ agora</span></li>';
+  }
+  var passou = st.hojeReal ? r.h < st.agora : true;
+  var futuro = st.hojeReal && r.h - st.agora > 60*60;
+  var sub = r.obs ? '<span class="s aviso-h">'+r.obs+'</span>' : '<span class="s">'+kc+(passou?' · sem visto':'')+'</span>';
+  if(futuro) return '<li class="ref-linha">'+h+'<div class="meio">'+nome+sub+'</div><span class="mais-tarde">mais tarde</span></li>';
+  return '<li class="ref-linha">'+h+'<div class="meio">'+nome+sub+'</div>'+
+    '<div class="par"><button data-acao="marca" data-id="'+r.id+'" data-p="0.5" aria-label="Comi metade: '+r.n+'">½</button>'+
+    '<button class="tudo" data-acao="marca" data-id="'+r.id+'" data-p="1" aria-label="Comi tudo: '+r.n+'">'+ic('i-check','p')+'tudo</button></div></li>';
+}
+
+function blocoAgua(st){
+  var c=''; for(var i=0;i<14;i++) c+='<i class="'+(st.agua!=null&&i<st.agua?'c':'')+'"></i>';
+  return '<section class="agua" aria-label="Água">'+
+    '<div class="agua-topo"><div class="meio"><span class="n">Água</span><span class="s">'+(st.agua==null?'não contada — não é zero':st.agua+' de 14 copos de 250 ml')+'</span></div>'+
+    '<div class="passo"><button data-acao="agua" data-d="-1" aria-label="Um copo a menos"'+(st.agua==null?' disabled style="opacity:.4"':'')+'>−</button><b>'+(st.agua==null?'—':st.agua)+'</b><button class="mais" data-acao="agua" data-d="1">+1 copo</button></div></div>'+
+    '<div class="copos" aria-hidden="true">'+c+'</div></section>';
+}
+
+function blocoComoFoi(st){
+  var ops=[['seguiu','Segui o plano'],['sabe','Saí do plano, sei o que comi'],['naosabe','Saí do plano, não sei quanto']];
+  return '<section class="comofoi" aria-label="Como foi o dia"><p class="leg">Como foi o dia <span>opcional · a regra usa</span></p>'+
+    '<div class="ops" role="radiogroup" aria-label="Como foi o dia">'+ops.map(function(o){
+      return '<button role="radio" aria-checked="'+(st.comoFoi===o[0])+'" data-acao="comofoi" data-v="'+o[0]+'"><i></i>'+o[1]+'</button>'; }).join('')+'</div></section>';
+}
+
+function totais(st){
+  var s=0, falta=[];
+  st.ref.forEach(function(r){ var m=st.marcas[r.id]; if(m) s+=r.kcal*m.p; else if(st.hojeReal && r.h>st.agora) falta.push(r.n.toLowerCase()+' '+hhmm(r.h)); });
+  return '<p class="totais">Pelo plano, com visto: <b data-kcal>'+milhar(s)+'</b> de '+milhar(st.total)+' kcal'+(falta.length?' · ainda hoje: '+falta.join(', '):'')+'</p>';
+}
+
+function dia(st,o){
+  o=o||{};
+  var ag = o.semAgora ? null : agoraDe(st);
+  var lista = st.ref.map(function(r){ return linha(st,r,ag); }).join('');
+  return statusBar(st)+
+    '<div class="conteudo">'+
+      cabecalho(st)+(o.banner||'')+(st.q?faixa14(st):'')+
+      (ag? cartaoAgora(st,ag,o) : '')+
+      (o.antesLista||'')+
+      '<div class="titulo-lista"><span class="rot">O plano de '+(st.hojeReal?'hoje':st.curto||'ontem')+'</span><span>'+(o.subLista||'toque no que comeu')+'</span></div>'+
+      '<ul class="refeicoes">'+lista+'</ul>'+
+      blocoAgua(st)+blocoComoFoi(st)+(o.resultado||'')+totais(st)+
+      '<div style="height:16px"></div>'+
+    '</div>'+
+    '<div class="sis-base" aria-hidden="true"><i></i></div>'+
+    (o.semDobra?'':'<div class="dobra" aria-hidden="true"></div>')+(o.overlay||'');
+}
+
+/* protótipo tocável do estado 1 do momento 2 — só roda no navegador */
+(function(){
+  var raiz=document.querySelector('[data-proto]');
+  if(!raiz) return;
+  var vivo=document.getElementById('anuncio');
+  var base=Date.now(), st0=diaHoje(), st=clone(st0);
+  function agoraMock(){ return st0.agora+(Date.now()-base)/1000; }
+  function anunciar(t){ if(vivo){ vivo.textContent=''; setTimeout(function(){ vivo.textContent=t; },30); } }
+  function render(){ st.agora=agoraMock(); raiz.innerHTML=dia(st); }
+  function nomeDe(id){ var n=''; st.ref.forEach(function(r){ if(r.id===id) n=r.n; }); return n; }
+  raiz.addEventListener('click',function(ev){
+    var b=ev.target.closest('[data-acao]'); if(!b||!raiz.contains(b)) return;
+    var a=b.getAttribute('data-acao'), id=b.getAttribute('data-id');
+    switch(a){
+      case 'marca': var p=+b.getAttribute('data-p');
+        st.marcas[id]={p:p,t:hhmm(agoraMock())};
+        anunciar('Visto: '+nomeDe(id)+', '+(p===1?'tudo':'metade')+', às '+st.marcas[id].t+'.');
+        render();
+        var li=raiz.querySelectorAll('.ref-linha.marcada'); li.forEach(function(x){ if(x.querySelector('[data-id="'+id+'"]') && x.animate) x.animate([{background:'var(--tinta-fundo)'},{background:'transparent'}],{duration:700,easing:'ease-out'}); });
+        return;
+      case 'desmarca': delete st.marcas[id]; anunciar('Desfeito: '+nomeDe(id)+'.'); break;
+      case 'agua': var d=+b.getAttribute('data-d'); st.agua = st.agua==null ? (d>0?1:null) : Math.max(0,Math.min(20,st.agua+d)); anunciar('Água: '+(st.agua==null?'não contada':st.agua+' copos')); break;
+      case 'comofoi': var v=b.getAttribute('data-v'); st.comoFoi = st.comoFoi===v ? null : v;
+        anunciar(st.comoFoi==='naosabe' ? 'Marcado: saí do plano e não sei quanto. Este dia fica desconhecido para a regra.' : 'Como foi o dia: '+b.textContent); break;
+      default: return;
+    }
+    render();
+  });
+  setInterval(function(){ var hs=raiz.querySelector('.sis-topo .tab'); if(hs) hs.textContent=hhmm(agoraMock()); },5000);
+  render();
+})();
+
+(function(){var h=document.documentElement,bs=document.querySelectorAll('.tema button');
+function set(v){ if(v==='auto') h.removeAttribute('data-tema'); else h.setAttribute('data-tema',v); bs.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.v===v));}); try{localStorage.setItem('visto-tema',v);}catch(e){} }
+var v=h.getAttribute('data-tema')||'auto'; try{v=localStorage.getItem('visto-tema')||v;}catch(e){} set(v);
+bs.forEach(function(b){b.addEventListener('click',function(){set(b.dataset.v);});});})();
+</script>
+</body>
+</html>

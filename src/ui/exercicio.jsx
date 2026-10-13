@@ -1,4 +1,6 @@
 import { Fragment } from 'preact';
+import { Regua } from './instrumento/regua.jsx';
+import { Teclado } from './instrumento/teclado.jsx';
 
 // O nome por extenso de cada medida, para o `aria-label` do campo. Os campos
 // não têm rótulo visível — quem rotula é o cabeçalho, que é desenho e não
@@ -6,6 +8,10 @@ import { Fragment } from 'preact';
 const NOME_DA_MEDIDA = {
   seg: 'segundos', reps: 'repetições', m: 'metros', cal: 'calorias'
 };
+
+// A unidade da carga por extenso, para o rótulo do número guardado: "55
+// quilos", porque número abreviado não se lê em voz (§8.1 da frente 3).
+const UNIDADE_DITA = { 'kg': 'quilos', 'kg/lado': 'quilos por lado', '+kg': 'quilos a mais' };
 
 // O cartão de exercício da tela de treino.
 //
@@ -80,21 +86,48 @@ function Linha({ i, k, linha, vm, acoes }) {
       ) : (
         <div class="setant">–</div>
       )}
+      {/* A CARGA: botão, e o toque abre o teclado próprio. §6.1 manda próprio
+          aqui, e era o último campo da sessão a abrir o teclado do sistema.
+          Não há placeholder porque não havia: a referência tem UMA casa, que é
+          a coluna ANTERIOR, e ela não some quando ele começa a digitar. */}
       <div class="f">
-        <input
-          type="text" inputmode="decimal" id={`w${i}_${k}`}
-          aria-label={`carga da série ${k + 1}, ${vm.unidade}`}
-          value={linha.valor[0] != null ? linha.valor[0] : ''}
-          onInput={e => acoes.inp(e.currentTarget, i, k, 0)}
-        />
+        <button
+          class={'repbtn' + (linha.valor[0] == null ? ' vazio' : '') +
+                 (linha.teclado && linha.teclado.decimal ? ' on' : '')}
+          id={`w${i}_${k}`}
+          aria-label={linha.valor[0] != null
+            ? `Série ${k + 1}: ${String(linha.valor[0]).replace('.', ',')} ${UNIDADE_DITA[vm.unidade] || vm.unidade}. Tocar para corrigir.`
+            : `registrar carga da série ${k + 1}, ${vm.unidade}`}
+          onClick={() => acoes.abreTecladoDeCarga(i, k)}
+        >{linha.valor[0] != null ? linha.valor[0] : '·'}</button>
       </div>
+      {/* A REPETIÇÃO: botão e não campo, quando a grandeza é repetição.
+          É a decisão 8 do dono — registrar repetição é tocar num número — e o
+          que o toque abre é a régua, embaixo da linha. O campo continua nos
+          exercícios medidos por tempo, metro ou caloria: 500 m não cabe numa
+          régua de onze valores.
+          A porta "outro valor" devolve o campo nesta mesma célula, e é por isso
+          que o `id` é o mesmo nos dois desenhos: quem corrige pelo campo
+          continua achando o lugar. */}
       <div class="f">
-        <input
-          type="text" inputmode="numeric" id={`r${i}_${k}`}
-          aria-label={`${unidade} da série ${k + 1}`}
-          value={linha.valor[1] != null ? linha.valor[1] : ''}
-          onInput={e => acoes.inp(e.currentTarget, i, k, 1)}
-        />
+        {vm.temRegua ? (
+          <button
+            class={'repbtn' + (linha.valor[1] == null ? ' vazio' : '') +
+                   (linha.regua || (linha.teclado && !linha.teclado.decimal) ? ' on' : '')}
+            id={`r${i}_${k}`}
+            aria-label={linha.valor[1] != null
+              ? `Série ${k + 1}: ${linha.valor[1]} ${unidade}. Tocar para corrigir.`
+              : `registrar ${unidade} da série ${k + 1}`}
+            onClick={() => acoes.abreRegua(i, k)}
+          >{linha.valor[1] != null ? linha.valor[1] : '·'}</button>
+        ) : (
+          <input
+            type="text" inputmode="numeric" id={`r${i}_${k}`}
+            aria-label={`${unidade} da série ${k + 1}`}
+            value={linha.valor[1] != null ? linha.valor[1] : ''}
+            onInput={e => acoes.inp(e.currentTarget, i, k, 1)}
+          />
+        )}
       </div>
       {/* Botão e não campo: um dígito não vale abrir o teclado numérico, que
           cobre metade da tela no meio da série. */}
@@ -104,7 +137,7 @@ function Linha({ i, k, linha, vm, acoes }) {
                  (linha.valor[2] == null ? ' vazio' : '')}
           id={`q${i}_${k}`}
           aria-label={linha.valor[2] != null
-            ? `repetições na reserva da série ${k + 1}: ${linha.valor[2]}`
+            ? `Série ${k + 1}: ${linha.valor[2]} na reserva. Tocar para corrigir.`
             : `definir repetições na reserva da série ${k + 1}`}
           onClick={() => acoes.abreRir(i, k)}
         >{linha.valor[2] != null ? linha.valor[2] : '·'}</button>
@@ -136,7 +169,14 @@ function EscalaRir({ i, k, linha, acoes }) {
   );
 }
 
-/** O painel de substituição, quando aberto. */
+/**
+ * O painel da MÁQUINA OCUPADA, quando aberto — §7.3 da frente 3.
+ *
+ * As saídas vão por PREÇO (§7.4 da frente 2): fazer antes o próximo não troca
+ * nada; um substituto troca o exercício de hoje; pular é o último recurso. E vale
+ * só para hoje, o que o painel diz antes de tudo. A dispensa é "Fechar e fazer
+ * mesmo assim": ele não cancelou nada, ele decidiu fazer.
+ */
 function Troca({ i, vm, acoes }) {
   const opt = a => (
     <button
@@ -146,12 +186,22 @@ function Troca({ i, vm, acoes }) {
       {/* Sem foto não entra nada: nem moldura, nem espaço reservado. Uma fila
           de quadros vazios diria menos que a fila de nomes que já existe. */}
       {a.foto && <img class="swapfoto" src={a.foto} alt="" />}
-      <span class="swaptxt"><b>{a.n}</b><span>{a.antes}</span></span>
+      <span class="swaptxt">
+        <b>{a.indicado ? '★ ' : ''}{a.n}{a.indicado && <em class="swap-ind"> · indicado pelo treinador</em>}</b>
+        <span>{[a.ultima, a.nota].filter(Boolean).join(' · ')}</span>
+      </span>
     </button>
   );
   return (
     <div class="swap">
-      <div class="swap-h">Máquina ocupada? Mesmo padrão de movimento:</div>
+      <div class="swap-h">Máquina ocupada</div>
+      <div class="swap-sub">{vm.nome}</div>
+      <p class="swap-regra">Vale só para hoje. O programa não muda.</p>
+      {vm.proximo && (
+        <button class="swapopt" data-a="faz-antes" onClick={() => acoes.fazAntesOProximo(i)}>
+          <span class="swaptxt"><b>Fazer antes o próximo</b><span>{vm.proximo} agora; esta volta logo depois</span></span>
+        </button>
+      )}
       {vm.troca.indicados.map(opt)}
       {vm.troca.outros.length > 0 && (
         <>
@@ -161,10 +211,13 @@ function Troca({ i, vm, acoes }) {
       )}
       {vm.alt && (
         <button class="swapopt back-orig" onClick={() => acoes.setAlt(i, null)}>
-          <b>Voltar para {vm.nomeOriginal}</b><span>Cancela a substituição.</span>
+          <b>Voltar para {vm.nomeOriginal}</b><span>Desfaz a substituição de hoje.</span>
         </button>
       )}
-      <button class="swapopt cancel" onClick={() => acoes.toggleSwap(i)}><b>Fechar</b></button>
+      <button class="swapopt" data-a="pula-hoje" onClick={() => acoes.pularEx(i)}>
+        <span class="swaptxt"><b>Pular hoje</b><span>fica escrito como pulado; dá para desfazer na linha</span></span>
+      </button>
+      <button class="swapopt cancel" onClick={() => acoes.toggleSwap(i)}><b>Fechar e fazer mesmo assim</b></button>
     </div>
   );
 }
@@ -267,20 +320,44 @@ function Carga({ i, vm, acoes }) {
   );
 }
 
-/** O aviso de dor, que é o freio mais importante da tela. */
+/**
+ * O aviso de dor, que é o freio mais importante da tela — §7.4 da frente 3.
+ *
+ * A dor repetida é o ÚNICO estado ruim que não se dispensa sem responder: a
+ * régua só volta depois da escolha, e "fazer mesmo assim" também é escolha, e
+ * fica registrada. A regra vem nas palavras do TREINADOR, literais e atribuídas
+ * — a paráfrase que havia aqui trocava "nunca empurre" por "não empurrar".
+ */
 function Dor({ i, vm, acoes }) {
   if (vm.dorRep) {
     return (
       <div class="painbox">
-        <b>Dor em {vm.dorRep} nas duas últimas sessões deste exercício.</b>
-        {' '}A regra do programa é tirar o exercício por 2 semanas e trocar o ângulo,
-        não empurrar por cima.
-        {vm.temTroca && (
-          <button
-            class="painbtn"
-            onClick={e => { e.stopPropagation(); acoes.abrirSubstituicao(i); }}
-          >ver alternativas</button>
-        )}
+        <b>Dor em {vm.dorRep} nas duas últimas sessões deste exercício: {vm.dorDatas}.</b>
+        <p class="pain-regra">
+          Treinador: “Apareceu: tire aquele exercício por 2 semanas e substitua por
+          outro ângulo. Nunca empurre porque ‘está fraquinha’.”
+        </p>
+        {vm.dorBloqueia ? (
+          <>
+            <p class="pain-escolha">
+              Escolha uma das três para a régua voltar. “Fazer mesmo assim” também é
+              escolha, e fica registrada.
+            </p>
+            {vm.temTroca && (
+              <button class="painbtn" data-a="dor-subs"
+                      onClick={e => { e.stopPropagation(); acoes.abrirSubstituicao(i); }}>
+                Ver os {vm.nSubs} substitutos
+              </button>
+            )}
+            <button class="painbtn" data-a="dor-pula"
+                    onClick={e => { e.stopPropagation(); acoes.pularEx(i); }}>Pular hoje</button>
+            <button class="painbtn" data-a="dor-mesmo"
+                    onClick={e => { e.stopPropagation(); acoes.aceitaDor(i); }}>Fazer mesmo assim</button>
+            <p class="pain-nota">Qualquer escolha fica registrada no dia.</p>
+          </>
+        ) : vm.dorAceita ? (
+          <p class="pain-nota">Feito mesmo assim — registrado no dia.</p>
+        ) : null}
       </div>
     );
   }
@@ -336,7 +413,14 @@ export function Exercicio({ vm, acoes }) {
             {vm.bi === 1 && <span class="tag bi-t">bi-set · sem pausa até o próximo</span>}
             {vm.bi === 2 && <span class="tag bi-t">bi-set · o descanso é aqui</span>}
             {vm.alt && <span class="tag swap-t">substituído</span>}
-            {vm.deload && <span class="tag dl-t">deload</span>}
+            {/* O número de séries ali NÃO é o prescrito, e a marca diz isso
+                (§7.6): "deload" sozinho dizia o modo, não o que ele fez com a
+                linha. */}
+            {vm.deload && (
+              <span class="tag dl-t">
+                {vm.series} {vm.series === 1 ? 'série' : 'séries'} hoje · metade do prescrito, por deload
+              </span>
+            )}
             {vm.estado === 'feito' && <span class="tag ok-t">feito</span>}
             {vm.estado === 'parcial' && <span class="tag parcial-t">parcial</span>}
             {vm.pulado && <span class="tag pulado-t">pulado</span>}
@@ -350,8 +434,12 @@ export function Exercicio({ vm, acoes }) {
 
       {vm.pulado && (
         <div class="puladobox">
-          <span>Pulado nesta sessão.</span>
-          <button class="aqbtn" onClick={() => acoes.pularEx(i)}>desfazer</button>
+          {/* Pulado não é esquecido: fica escrito e não volta a ser pedido — e o
+              caminho de volta existe, aqui onde o dedo está (§7.5 da frente 3).
+              As duas metades juntas, porque lidas separadas parecem se
+              contradizer. */}
+          <span>Pulado hoje. Fica escrito como pulado e não volta a ser pedido; desfazer põe de volta na fila.</span>
+          <button class="aqbtn" onClick={() => acoes.pularEx(i)}>Desfazer</button>
         </div>
       )}
 
@@ -381,6 +469,9 @@ export function Exercicio({ vm, acoes }) {
               descanso <b>{vm.descansoTxt}</b>
             </button>}
 
+        {/* A RÉGUA ESPERA a escolha diante da dor repetida (§7.4): é o único
+            estado ruim que não se dispensa sem responder. */}
+        {!vm.dorBloqueia && <>
         <Cabecalho vm={vm} />
         {/* A chave vai no Fragment, não nos filhos: sem ela o Preact reconcilia
             a lista pela posição, e abrir a escala de uma série remonta os
@@ -388,9 +479,32 @@ export function Exercicio({ vm, acoes }) {
         {vm.linhas.map((linha, k) => (
           <Fragment key={k}>
             <Linha i={i} k={k} linha={linha} vm={vm} acoes={acoes} />
+            {linha.regua && (
+              <Regua
+                slots={linha.regua.slots}
+                valor={linha.valor[1]}
+                marca={linha.regua.marca}
+                corrige={linha.regua.corrige}
+                rotulo={`repetições da série ${k + 1}`}
+                aoEscolher={v => acoes.poeRep(i, k, v)}
+                aoAndar={dir => acoes.andaRegua(dir)}
+                aoOutro={() => acoes.abreOutroValor()}
+              />
+            )}
+            {linha.teclado && (
+              <Teclado
+                texto={linha.teclado.texto}
+                decimal={linha.teclado.decimal}
+                unidade={linha.teclado.unidade}
+                rotulo={`digitar ${linha.teclado.unidade} da série ${k + 1}`}
+                aoTeclar={t => acoes.tecla(t)}
+                aoFechar={() => acoes.fechaTeclado()}
+              />
+            )}
             {linha.rirAberto && <EscalaRir i={i} k={k} linha={linha} acoes={acoes} />}
           </Fragment>
         ))}
+        </>}
 
         {vm.cargaOpcional && (
           <div class="segnote">Carga opcional: deixe o campo vazio para só o peso do corpo.</div>

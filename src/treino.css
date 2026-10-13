@@ -17,7 +17,7 @@
 /* ---- A linha do exercício --------------------------------------------- */
 
 .ex {
-  border-bottom: 1px solid var(--ins-hairline);
+  border-bottom: 1px solid var(--ins-fio);
   padding: var(--ins-4) 0;
   /* Abrir um exercício ROLA até ele (ver `mostraExercicio` no casco). Isto diz
      onde ele para: abaixo da barra de status e do relógio grudado, nunca por
@@ -37,39 +37,39 @@
 /* A calha de 46px que na comida carrega a hora aqui carrega a posição. */
 .ord {
   flex: 0 0 34px; text-align: right;
-  font: 400 12px/1.6 var(--ins-font-mono);
-  color: var(--ins-text-5); letter-spacing: -.02em;
+  font: 400 12px/1.6 var(--ins-fonte);
+  color: var(--ins-tinta-3); letter-spacing: -.02em;
 }
 
 .ex-body { flex: 1; min-width: 0; }
 
 .ex-name {
-  font: 500 17px/1.3 var(--ins-font-display);
-  letter-spacing: -.01em; color: var(--ins-text);
+  font: 500 17px/1.3 var(--ins-fonte);
+  letter-spacing: -.01em; color: var(--ins-tinta);
 }
 
 .ex-sub {
   display: flex; flex-wrap: wrap; gap: var(--ins-2);
   align-items: center; margin-top: var(--ins-2);
-  font: 400 11px/1 var(--ins-font-mono);
-  color: var(--ins-text-4); letter-spacing: -.01em;
+  font: 400 11px/1 var(--ins-fonte);
+  color: var(--ins-tinta-3); letter-spacing: -.01em;
 }
 
 /* Selo. Sem preenchimento: fio de 1px e a cor conta a história. */
 .tag {
-  padding: var(--ins-1) var(--ins-3); border: 1px solid var(--ins-border);
-  font: 400 9px/1 var(--ins-font-mono);
+  padding: var(--ins-1) var(--ins-3); border: 1px solid var(--ins-fio-controle);
+  font: 400 9px/1 var(--ins-fonte);
   letter-spacing: .12em; text-transform: uppercase;
-  color: var(--ins-text-4);
+  color: var(--ins-tinta-3);
 }
-.tag.comp     { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
-.tag.bi-t     { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
-.tag.swap-t   { border-color: var(--ins-border-strong); color: var(--ins-text-3); }
-.tag.dl-t     { border-color: var(--ins-amber); color: var(--ins-amber); }
-.tag.ok-t     { border-color: var(--ins-acid); color: var(--ins-acid); }
-.tag.parcial-t{ border-color: var(--ins-amber); color: var(--ins-amber); }
-.tag.pulado-t { border-color: var(--ins-border); color: var(--ins-text-5); }
-.tag.card-t   { border-color: var(--ins-border); color: var(--ins-text-4); }
+.tag.comp     { border-color: var(--ins-fio-controle); color: var(--ins-tinta-3); }
+.tag.bi-t     { border-color: var(--ins-fio-controle); color: var(--ins-tinta-3); }
+.tag.swap-t   { border-color: var(--ins-fio-controle); color: var(--ins-tinta-3); }
+.tag.dl-t     { border-color: var(--ins-atencao-fio); color: var(--ins-atencao-tinta); }
+.tag.ok-t     { border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
+.tag.parcial-t{ border-color: var(--ins-atencao-fio); color: var(--ins-atencao-tinta); }
+.tag.pulado-t { border-color: var(--ins-fio-controle); color: var(--ins-tinta-3); }
+.tag.card-t   { border-color: var(--ins-fio-controle); color: var(--ins-tinta-3); }
 
 /* O único ácido do cartão: "suba a carga". Se competir com outro, some.
    Escopado no `.ex-sub` de propósito: solto, o seletor pegava também o `.up`
@@ -77,17 +77,17 @@
    `.hs-d.up`) e pintava o número de fundo ácido sobre texto ácido — bloco
    sólido, ilegível. Distintivo e cor são coisas diferentes. */
 .ex-sub .up {
-  padding: var(--ins-1) var(--ins-3); background: var(--ins-acid); color: var(--ins-on-acid);
-  font: 400 9px/1 var(--ins-font-mono);
+  padding: var(--ins-1) var(--ins-3); background: var(--ins-acento); color: var(--ins-sobre-acento);
+  font: 400 9px/1 var(--ins-fonte);
   letter-spacing: .12em; text-transform: uppercase;
 }
 
-.chev { color: var(--ins-text-5); font-size: 15px; padding-top: 2px; }
-.ex.open .chev { color: var(--ins-acid); }
+.chev { color: var(--ins-tinta-3); font-size: 15px; padding-top: 2px; }
+.ex.open .chev { color: var(--ins-acento-tinta); }
 
 .swapped {
-  font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .06em; color: var(--ins-text-5); margin-top: var(--ins-2);
+  font: 400 10px/1.4 var(--ins-fonte);
+  letter-spacing: .06em; color: var(--ins-tinta-3); margin-top: var(--ins-2);
 }
 
 /* ---- O corpo, quando aberto ------------------------------------------- */
@@ -100,12 +100,12 @@
 .sets { display: none; padding: var(--ins-4) 0 var(--ins-1); }
 .ex.open .sets { display: block; }
 .ex.pulado .sets { display: none; }
-.ex.pulado .ex-name { color: var(--ins-text-5); }
+.ex.pulado .ex-name { color: var(--ins-tinta-3); }
 .ex.pulado .chev { opacity: .3; }
 
 .cue {
-  font: 400 13px/1.4 var(--ins-font-display);
-  color: var(--ins-text-3); margin: 0 0 var(--ins-4);
+  font: 400 13px/1.4 var(--ins-fonte);
+  color: var(--ins-tinta-3); margin: 0 0 var(--ins-4);
   text-wrap: pretty;
 }
 
@@ -153,7 +153,7 @@
    agrupar é o que o inegociável 3 do sistema proíbe, e um fundo alternado
    seria exatamente isso. */
 .sets .setrow .f { min-width: 0; flex: initial; }
-.setno { font: 400 11px/1 var(--ins-font-mono); color: var(--ins-text-5); }
+.setno { font: 400 11px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
 /* O que ele fez nesta mesma série da última vez. Largura fixa para as colunas
    alinharem entre as linhas, e texto pequeno porque é referência, não campo. */
 .setant {
@@ -161,7 +161,7 @@
   /* text-4 e não text-5: o sistema reserva os dois níveis mais apagados para
      rótulo e procedência, e isto é número que ele LÊ no meio da série, de pé e
      suado. Continua bem abaixo do valor digitado, que é 19px em branco. */
-  font: 400 11px/1.3 var(--ins-font-mono); color: var(--ins-text-4);
+  font: 400 11px/1.3 var(--ins-fonte); color: var(--ins-tinta-3);
   letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 /* A coluna ANTERIOR virou botão: tocá-la copia a série para os campos.
@@ -179,7 +179,7 @@
      `.setant` por vir depois na cascata com a mesma especificidade, e a coluna
      saltava para o tamanho do texto da linha. */
 }
-.setant-b:active { color: var(--ins-acid); }
+.setant-b:active { color: var(--ins-acento-tinta); }
 
 .f { position: relative; }
 
@@ -190,8 +190,8 @@
    meio da série, de pé e suado, e é o que separa a coluna de kg da de reps.
    A 9px o nível 5 dá 3,2:1. */
 .sethead > * {
-  font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-4);
+  font: 400 9px/1 var(--ins-fonte);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
   /* sem overflow escondido aqui: rótulo que não cabe tem que APARECER cortando,
      senão o erro de largura passa despercebido como passou */
   white-space: nowrap;
@@ -203,24 +203,32 @@
 /* No cabeçalho a unidade é rótulo de COLUNA: sai da posição flutuante que ela
    tinha quando morava dentro do campo. */
 /* O RIR: botão com a mesma cara dos campos vizinhos — mesmo fio embaixo, mesma
-   tipografia — porque é a mesma natureza de dado. Só o gesto é outro. */
-.rirbtn {
+   tipografia — porque é a mesma natureza de dado. Só o gesto é outro.
+   A CARGA e a REPETIÇÃO (`.repbtn`) viraram botão depois — o teclado próprio e
+   a régua — e entram nas mesmas regras pelo mesmo motivo. Ficaram de fora até
+   13/10: sem regra nenhuma, herdavam só o reset de `button` e mediam 5 × 18 px
+   vazios (Chromium, 414×896), o "·" e nada em volta, no controle de maior
+   frequência do produto. Agora ocupam a célula: 40px, e 46 de alvo. */
+.rirbtn, .repbtn {
   width: 100%; min-height: 40px; padding: var(--ins-5) var(--ins-2) var(--ins-3);
-  background: transparent; color: var(--ins-text); border: none;
-  font: 600 19px/1 var(--ins-font-mono); letter-spacing: -.03em; text-align: center;
+  /* Raio zero: o estado aberto é um FIO embaixo (sombra interna), e com o raio
+     que o reset de `button` dá o fio saía curvo, como um sorriso. O campo que
+     estes botões substituíram já tinha raio zero pelo mesmo motivo. */
+  background: transparent; color: var(--ins-tinta); border: none; border-radius: 0;
+  font: 600 19px/1 var(--ins-fonte); letter-spacing: -.03em; text-align: center;
   position: relative;
 }
 /* Só na vertical, como o tick: na horizontal o vizinho é o campo de repetição
    da mesma linha, e crescer para o lado faria um toque na borda abrir a escala
    em vez de pôr o cursor no número. */
-.rirbtn::after { content: ""; position: absolute; inset: -3px 0; }     /* 40 -> 46 */
+.rirbtn::after, .repbtn::after { content: ""; position: absolute; inset: -3px 0; }     /* 40 -> 46 */
 /* Sem fio embaixo, ao contrário dos campos vizinhos: eles precisam da linha de
    escrita porque vazios não mostram nada. Este mostra — o ponto já ocupa o
    lugar e já diz que há o que tocar. */
-.rirbtn.vazio { color: var(--ins-text-5); }
+.rirbtn.vazio, .repbtn.vazio { color: var(--ins-tinta-3); }
 /* Aberto: só enquanto a escala está na tela, para ele saber qual série está
    ajustando. */
-.rirbtn.on { color: var(--ins-acid); box-shadow: inset 0 -1px 0 var(--ins-acid); }
+.rirbtn.on, .repbtn.on { color: var(--ins-acento-tinta); box-shadow: inset 0 -1px 0 var(--ins-acento); }
 
 /* A escala, aberta embaixo da própria série. */
 .rirscale {
@@ -229,8 +237,8 @@
 }
 .rirscale-r {
   flex: 0 0 auto;
-  font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-text-4);
+  font: 400 9px/1 var(--ins-fonte);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
 .rirscale-v { display: flex; gap: var(--ins-2); flex: 1; }
 /* 44, e não os 28 do degrau denso: aqui o desenho PODE crescer — a escala é um
@@ -238,21 +246,21 @@
    Estender área por ::after esbarraria no campo de repetição logo acima. */
 .rirop {
   flex: 1; min-height: 44px;
-  background: transparent; color: var(--ins-text-3);
-  border: 1px solid var(--ins-border);
-  font: 500 15px/1 var(--ins-font-mono);
+  background: transparent; color: var(--ins-tinta-3);
+  border: 1px solid var(--ins-fio-controle);
+  font: 500 15px/1 var(--ins-fonte);
 }
-.rirop:active { background: var(--ins-surface); }
-.rirop.on { background: var(--ins-acid); color: var(--ins-on-acid); border-color: var(--ins-acid); }
+.rirop:active { background: var(--ins-superficie-2); }
+.rirop.on { background: var(--ins-acento); color: var(--ins-sobre-acento); border-color: var(--ins-acento); }
 
 /* A unidade DENTRO de um campo: flutua na direita, sem capturar toque. Ainda
    é usada no formulário de corrigir sessão passada. O cabeçalho da tabela de
    séries NÃO a reusa — lá o rótulo é da coluna, não do campo. */
 .unit {
   position: absolute; right: var(--ins-4); top: 50%; transform: translateY(-50%);
-  font: 400 9px/1 var(--ins-font-mono);
+  font: 400 9px/1 var(--ins-fonte);
   letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-text-5); pointer-events: none;
+  color: var(--ins-tinta-3); pointer-events: none;
 }
 
 /* Descanso: um por exercício, acima da tabela. Era um botão por linha com o
@@ -265,12 +273,12 @@
 .peglinha {
   min-height: 34px; margin-bottom: var(--ins-3);
   display: flex; align-items: center; gap: var(--ins-4);
-  color: var(--ins-text-4);
-  font: 400 10px/1.3 var(--ins-font-mono);
+  color: var(--ins-tinta-3);
+  font: 400 10px/1.3 var(--ins-fonte);
   letter-spacing: .1em; text-transform: uppercase;
 }
 .peglinha b {
-  color: var(--ins-text-2); font-weight: 500;
+  color: var(--ins-tinta-2); font-weight: 500;
   letter-spacing: .02em; text-transform: none;
   font-size: 11.5px;
 }
@@ -280,18 +288,18 @@
   /* Sem caixa, como o resto: é rótulo tocável, não objeto destacado. O
      cronômetro dispara sozinho na última série — este botão é a exceção, e
      exceção não se anuncia com contorno. */
-  text-align: left; background: transparent; color: var(--ins-text-4);
+  text-align: left; background: transparent; color: var(--ins-tinta-3);
   border: none; padding: 0; position: relative;
-  font: 400 10px/1 var(--ins-font-mono);
+  font: 400 10px/1 var(--ins-fonte);
   letter-spacing: .1em; text-transform: uppercase;
 }
 /* O alvo, não o desenho: o cronômetro é apertado com o polegar entre uma série
    e outra, e 34px é menos do que o dedo acerta. Só na vertical — a linha já
    ocupa a largura toda, e o vizinho de cima é prosa, o de baixo é rótulo. */
 .restlinha::after { content: ""; position: absolute; inset: -6px 0; }   /* 34 -> 46 */
-.restlinha b { color: var(--ins-text-3); font-weight: 400; margin-left: var(--ins-2); }
-.restlinha:active b { color: var(--ins-acid); }
-.restlinha.bi { color: var(--ins-acid); }
+.restlinha b { color: var(--ins-tinta-3); font-weight: 400; margin-left: var(--ins-2); }
+.restlinha:active b { color: var(--ins-acento-tinta); }
+.restlinha.bi { color: var(--ins-acento-tinta); }
 
 .setrow input {
   width: 100%; padding: var(--ins-5) var(--ins-2) var(--ins-3); text-align: center;
@@ -300,12 +308,12 @@
      estrutura que o sistema inteiro usa. `--ins-border` é a borda em repouso.
      Por sombra e não por borda: borda mudaria a altura, e as três linhas
      pulariam ao focar. */
-  background: transparent; color: var(--ins-text);
+  background: transparent; color: var(--ins-tinta);
   border: none; border-radius: 0;
-  box-shadow: inset 0 -1px 0 var(--ins-border);
+  box-shadow: inset 0 -1px 0 var(--ins-fio-controle);
   /* 19px e mono: é dado, e é o tamanho que o Safari não tenta ampliar ao
      focar. Campo abaixo de 16px faz a tela inteira dar zoom no meio da série. */
-  font: 600 19px/1 var(--ins-font-mono); letter-spacing: -.03em;
+  font: 600 19px/1 var(--ins-fonte); letter-spacing: -.03em;
   /* 40 e não 46: os 46 do sistema são para controle que se aperta repetido
      (stepper, botão primário). Este é campo de digitar uma vez, com 19px de
      conteúdo — 40 já é alvo confortável e devolve 18px nas três séries. */
@@ -313,60 +321,60 @@
 }
 .setrow input::-webkit-outer-spin-button,
 .setrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.setrow input::placeholder { color: var(--ins-text-5); font-weight: 400; }
+.setrow input::placeholder { color: var(--ins-tinta-3); font-weight: 400; }
 /* Foco: o mesmo fio, em ácido. É o único elemento ácido da região enquanto
    dura, e é transitório — o acento continua significando "é aqui". */
 .setrow input:focus {
   outline: none;
-  background: var(--ins-surface);
-  box-shadow: inset 0 -1px 0 var(--ins-acid);
+  background: var(--ins-superficie-2);
+  box-shadow: inset 0 -1px 0 var(--ins-acento);
 }
 /* Preenchido não precisa mais de marca própria: o valor digitado sai em texto
    cheio e o vazio fica no cinza de dica. A diferença já está no número. */
 
 .unit {
   position: absolute; right: var(--ins-4); top: 50%; transform: translateY(-50%);
-  font: 400 9px/1 var(--ins-font-mono);
+  font: 400 9px/1 var(--ins-fonte);
   letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-text-5); pointer-events: none;
+  color: var(--ins-tinta-3); pointer-events: none;
 }
-.x { font: 400 12px/1 var(--ins-font-mono); color: var(--ins-text-5); }
+.x { font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
 
 .rest {
   flex: 0 0 auto; min-width: 52px; padding: 0 var(--ins-3);
-  border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .04em;
+  border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta-3);
+  font: 400 11px/1 var(--ins-fonte); letter-spacing: .04em;
   min-height: 40px;
 }
-.rest:active { background: var(--ins-surface); }
-.rest.bi { border-color: var(--ins-acid); color: var(--ins-acid); }
+.rest:active { background: var(--ins-superficie-2); }
+.rest.bi { border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
 
 .segnote, .anilhas {
-  font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .06em; color: var(--ins-text-5);
+  font: 400 10px/1.4 var(--ins-fonte);
+  letter-spacing: .06em; color: var(--ins-tinta-3);
   margin-top: var(--ins-4);
 }
-.anilhas b { color: var(--ins-text-3); font-weight: 500; }
+.anilhas b { color: var(--ins-tinta-3); font-weight: 500; }
 
 .lastline {
-  font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .06em; color: var(--ins-text-5);
+  font: 400 10px/1.4 var(--ins-fonte);
+  letter-spacing: .06em; color: var(--ins-tinta-3);
   margin-top: var(--ins-3);
 }
-.lastline b { color: var(--ins-text-2); font-weight: 500; }
+.lastline b { color: var(--ins-tinta-2); font-weight: 500; }
 
 /* ---- Ações do exercício ----------------------------------------------- */
 
 .exacoes { display: flex; gap: var(--ins-2); margin-top: var(--ins-4); }
 .histbtn {
   flex: 1; min-height: 42px;
-  border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
-  font: 400 10px/1 var(--ins-font-mono);
+  border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta-3);
+  font: 400 10px/1 var(--ins-fonte);
   letter-spacing: .14em; text-transform: uppercase;
   position: relative;
 }
 .histbtn::after { content: ""; position: absolute; inset: -2px 0; }     /* 42 -> 46 */
-.histbtn:active { background: var(--ins-surface); }
+.histbtn:active { background: var(--ins-superficie-2); }
 
 /* Lado a lado, não empilhados: são dois rótulos curtos, e empilhar custava
    108px por exercício aberto contra 58. */
@@ -379,35 +387,35 @@
    e continua bem abaixo do valor digitado, que é 19px em branco. */
 .notabtn {
   width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
-  font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-text-4);
+  font: 400 10px/1.4 var(--ins-fonte);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-tinta-3);
   position: relative;
 }
 .notabtn::after { content: ""; position: absolute; inset: -6px 0; }    /* 34 -> 46 */
-.notabtn:active { color: var(--ins-text-3); }
+.notabtn:active { color: var(--ins-tinta-3); }
 
 .aquec {
   display: flex; align-items: center; gap: var(--ins-4);
   margin-top: var(--ins-4); padding-top: var(--ins-4);
-  border-top: 1px solid var(--ins-hairline);
-  font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4);
+  border-top: 1px solid var(--ins-fio);
+  font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-3);
 }
-.aquec.on { color: var(--ins-text-3); }
-.aquec b { color: var(--ins-text-3); font-weight: 500; }
+.aquec.on { color: var(--ins-tinta-3); }
+.aquec b { color: var(--ins-tinta-3); font-weight: 500; }
 .aqbtn {
   flex: 0 0 auto; min-height: 34px; padding: 0 var(--ins-4);
-  border: 1px solid var(--ins-border-strong); color: var(--ins-text-3);
-  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
+  border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta-3);
+  font: 400 10px/1 var(--ins-fonte); letter-spacing: .12em; text-transform: uppercase;
   position: relative;
 }
 .aqbtn::after { content: ""; position: absolute; inset: -6px 0; }      /* 34 -> 46 */
-.aquec.on .aqbtn { border-color: var(--ins-acid); color: var(--ins-acid); }
+.aquec.on .aqbtn { border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
 
 .puladobox {
   display: flex; align-items: center; gap: var(--ins-4);
   margin: var(--ins-4) 0 0 34px; padding: var(--ins-4);
-  border: 1px solid var(--ins-border);
-  font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-4);
+  border: 1px solid var(--ins-fio-controle);
+  font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .puladobox span { flex: 1; }
 
@@ -415,10 +423,16 @@
 
 .swap { margin-top: var(--ins-6); }
 .swap-h {
-  font: 400 10px/1.4 var(--ins-font-mono);
+  font: 400 10px/1.4 var(--ins-fonte);
   letter-spacing: .18em; text-transform: uppercase;
-  color: var(--ins-text-4); margin: 0 0 var(--ins-4);
+  color: var(--ins-tinta-3); margin: 0 0 var(--ins-4);
 }
+/* "Máquina ocupada" e, embaixo, de qual exercício: a frente 3 separou os dois
+   porque o título de antes se lia como se a máquina tivesse nome. */
+.swap-sub { margin: calc(-1 * var(--ins-3)) 0 var(--ins-3); font: 500 15px/1.3 var(--ins-fonte); color: var(--ins-tinta); }
+.swap-regra { margin: 0 0 var(--ins-4); font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-2); }
+/* A palavra junto do ★: o símbolo sozinho não dizia, em lugar nenhum, o que é. */
+.swap-ind { font-style: normal; font-weight: 400; color: var(--ins-tinta-2); }
 .swapopt {
   /* Vira linha com foto quando há foto, e continua bloco quando não há: o
      `gap` some junto com a imagem, então uma opção sem foto não fica com um
@@ -426,7 +440,7 @@
   display: flex; align-items: center; gap: var(--ins-4);
   width: 100%; text-align: left;
   padding: var(--ins-4) var(--ins-5); margin-bottom: var(--ins-1);
-  border: 1px solid var(--ins-border); background: var(--ins-surface-low);
+  border: 1px solid var(--ins-fio-controle); background: var(--ins-superficie-2);
   min-height: var(--ins-tap);
 }
 .swaptxt { flex: 1; min-width: 0; }
@@ -434,22 +448,22 @@
    pequena o bastante para a linha não crescer além do alvo de toque. */
 .swapfoto {
   flex: 0 0 56px; width: 56px; height: 56px; object-fit: cover;
-  border: 1px solid var(--ins-border);
+  border: 1px solid var(--ins-fio-controle);
 }
 .swaptxt b {
   display: block;
-  font: 500 15px/1.3 var(--ins-font-display); letter-spacing: -.01em;
-  color: var(--ins-text);
+  font: 500 15px/1.3 var(--ins-fonte); letter-spacing: -.01em;
+  color: var(--ins-tinta);
 }
 .swaptxt > span {
   display: block; margin-top: var(--ins-2);
-  font: 400 11px/1.45 var(--ins-font-mono); color: var(--ins-text-5);
+  font: 400 11px/1.45 var(--ins-fonte); color: var(--ins-tinta-3);
 }
-.swapopt.on { border-color: var(--ins-acid); background: var(--ins-surface-acid); }
+.swapopt.on { border-color: var(--ins-acento); background: var(--ins-acento-suave); }
 .swapopt.cancel, .swapopt.back-orig { background: transparent; }
 .swapopt.cancel b {
-  font: 400 10px/1 var(--ins-font-mono);
-  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-text-4);
+  font: 400 10px/1 var(--ins-fonte);
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
 
 /* ---- Anotação e dor ---------------------------------------------------- */
@@ -457,19 +471,19 @@
 .exlinks .obs { flex: 1 0 100%; }
 .obs {
   margin-top: var(--ins-4); padding-top: var(--ins-4);
-  border-top: 1px solid var(--ins-hairline); width: 100%;
+  border-top: 1px solid var(--ins-fio); width: 100%;
 }
 .obs-h {
-  font: 400 10px/1 var(--ins-font-mono);
+  font: 400 10px/1 var(--ins-fonte);
   letter-spacing: .18em; text-transform: uppercase;
-  color: var(--ins-text-4); margin-bottom: var(--ins-4);
+  color: var(--ins-tinta-3); margin-bottom: var(--ins-4);
 }
 .chips { display: flex; gap: var(--ins-2); flex-wrap: wrap; }
 .chip {
   padding: var(--ins-4) var(--ins-5); min-height: var(--ins-tap-dense);
-  border: 1px solid var(--ins-border); background: transparent;
-  font: 400 11px/1 var(--ins-font-mono);
-  letter-spacing: .06em; color: var(--ins-text-3);
+  border: 1px solid var(--ins-fio-controle); background: transparent;
+  font: 400 11px/1 var(--ins-fonte);
+  letter-spacing: .06em; color: var(--ins-tinta-3);
   position: relative;
 }
 /* 31 de desenho, 37 de alvo: estes chips QUEBRAM linha, e o vão de 6px entre
@@ -477,7 +491,7 @@
    da de cima, que é pior que o alvo pequeno. Mesma decisão do `.ins-chip`. */
 .chip::after { content: ""; position: absolute; inset: -3px 0; }
 .chip.on, .chip.sel {
-  background: var(--ins-acid); color: var(--ins-on-acid); border-color: var(--ins-acid);
+  background: var(--ins-acento); color: var(--ins-sobre-acento); border-color: var(--ins-acento);
 }
 /* O campo de quantidade da medida do dia. 16px e não menos: abaixo disso o
    Safari dá zoom ao focar, e a tela fica torta no meio da aula. */
@@ -485,15 +499,15 @@
 .medq .obs-h { margin-bottom: var(--ins-3); }
 .medq input {
   width: 100%; min-height: var(--ins-tap); padding: 0 var(--ins-4);
-  background: var(--ins-surface); border: 1px solid var(--ins-border);
-  font: 500 16px/1 var(--ins-font-mono); color: var(--ins-text);
+  background: var(--ins-superficie-2); border: 1px solid var(--ins-fio-controle);
+  font: 500 16px/1 var(--ins-fonte); color: var(--ins-tinta);
 }
-.medq input:focus { outline: none; border-color: var(--ins-acid); }
+.medq input:focus { outline: none; border-color: var(--ins-acento); }
 
 .note {
   width: 100%; min-height: 76px; padding: var(--ins-5); resize: vertical;
-  background: var(--ins-surface); border: 1px solid var(--ins-border);
-  font: 400 16px/1.5 var(--ins-font-display); color: var(--ins-text);
+  background: var(--ins-superficie-2); border: 1px solid var(--ins-fio-controle);
+  font: 400 16px/1.5 var(--ins-fonte); color: var(--ins-tinta);
 }
 
 /* ---- Os freios: dor e pausa -------------------------------------------- */
@@ -502,22 +516,27 @@
 
 .painbox {
   margin-top: var(--ins-5); padding: var(--ins-5);
-  border: 1px solid var(--ins-amber);
-  font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-2);
+  border: 1px solid var(--ins-atencao-fio);
+  font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-2);
   text-wrap: pretty;
 }
-.painbox b { display: block; color: var(--ins-amber); font-weight: 500; margin-bottom: var(--ins-2); }
+.painbox b { display: block; color: var(--ins-atencao-tinta); font-weight: 500; margin-bottom: var(--ins-2); }
 .painbtn {
   display: block; width: 100%; margin-top: var(--ins-5); min-height: var(--ins-tap);
-  border: 1px solid var(--ins-amber); color: var(--ins-amber);
-  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .14em; text-transform: uppercase;
+  border: 1px solid var(--ins-atencao-fio); color: var(--ins-atencao-tinta);
+  font: 400 10px/1 var(--ins-fonte); letter-spacing: .14em; text-transform: uppercase;
 }
+/* A regra vem nas palavras do treinador, e a escolha diz o que destrava. */
+.pain-regra { margin: var(--ins-3) 0 0; color: var(--ins-tinta); }
+.pain-escolha { margin: var(--ins-4) 0 0; color: var(--ins-atencao-tinta); }
+.pain-nota { margin: var(--ins-3) 0 0; font-size: 12px; color: var(--ins-tinta-3); }
+.painbtn + .painbtn { margin-top: var(--ins-3); }
 .painflag, .pausaflag {
   margin-top: var(--ins-3);
-  font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .06em; color: var(--ins-amber);
+  font: 400 10px/1.4 var(--ins-fonte);
+  letter-spacing: .06em; color: var(--ins-atencao-tinta);
 }
-.pausaflag { color: var(--ins-text-5); }
+.pausaflag { color: var(--ins-tinta-3); }
 
 /* ---- A tela de treino -------------------------------------------------- */
 
@@ -525,7 +544,7 @@
   display: flex; align-items: center; gap: var(--ins-3);
   margin-top: var(--ins-5);
 }
-.tr-relogio .ins-label-sm { color: var(--ins-text-5); }
+.tr-relogio .ins-label-sm { color: var(--ins-tinta-3); }
 
 .tr-acoes { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
 .tr-acoes > * { flex: 1; }
@@ -534,21 +553,21 @@
 .tr-rot { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
 .tr-dia {
   flex: 1; min-height: var(--ins-tap);
-  border: 1px solid var(--ins-border); color: var(--ins-text-4);
-  font: 500 15px/1 var(--ins-font-mono); letter-spacing: -.02em;
+  border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta-3);
+  font: 500 15px/1 var(--ins-fonte); letter-spacing: -.02em;
 }
-.tr-dia.next { border-color: var(--ins-border-strong); color: var(--ins-text-2); }
+.tr-dia.next { border-color: var(--ins-fio-controle); color: var(--ins-tinta-2); }
 /* O dia atual é ESTADO (onde você está), não ação. Preenchimento ácido cheio
    aqui competia com o INICIAR, que é o único "aperte isto" da região — e a
    regra 4 admite um elemento ácido por região, não quatro. */
-.tr-dia.on { background: var(--ins-surface-acid); border-color: var(--ins-acid); color: var(--ins-acid); }
+.tr-dia.on { background: var(--ins-acento-suave); border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
 
 .tr-aviso {
   margin-top: var(--ins-7); padding: var(--ins-5);
-  border: 1px solid var(--ins-border);
+  border: 1px solid var(--ins-fio-controle);
 }
-.tr-aviso.amber { border-color: var(--ins-amber); }
-.tr-aviso.amber .ins-label { color: var(--ins-amber); }
+.tr-aviso.amber { border-color: var(--ins-atencao-fio); }
+.tr-aviso.amber .ins-label { color: var(--ins-atencao-tinta); }
 .tr-aviso p { margin: var(--ins-3) 0 0; }
 .tr-aviso .ins-btn-secondary { margin-top: var(--ins-5); }
 
@@ -563,22 +582,22 @@
 /* Começar o treino: ação primária da tela, e o único ácido do bloco. */
 .day-ini {
   display: block; width: 100%; min-height: var(--ins-tap); margin-top: var(--ins-5);
-  background: var(--ins-acid); color: var(--ins-on-acid); border: 0;
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .16em; text-transform: uppercase;
+  background: var(--ins-acento); color: var(--ins-sobre-acento); border: 0;
+  font: 400 11px/1 var(--ins-fonte); letter-spacing: .16em; text-transform: uppercase;
 }
-.day-ini:active { background: var(--ins-acid-hover); }
+.day-ini:active { background: var(--ins-acento-tinta); }
 
 /* Controles de sessão aberta */
 .ctrl { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
 .ctrl-b {
   flex: 1; min-height: var(--ins-tap); padding: 0 var(--ins-5);
-  background: transparent; border: 1px solid var(--ins-border-strong);
-  color: var(--ins-text-2);
-  font: 400 11px/1 var(--ins-font-mono); letter-spacing: .16em; text-transform: uppercase;
+  background: transparent; border: 1px solid var(--ins-fio-controle);
+  color: var(--ins-tinta-2);
+  font: 400 11px/1 var(--ins-fonte); letter-spacing: .16em; text-transform: uppercase;
 }
-.ctrl-b:active { background: var(--ins-surface); }
+.ctrl-b:active { background: var(--ins-superficie-2); }
 .ctrl-b.fim, .ctrl-b.ini {
-  background: var(--ins-acid); border-color: var(--ins-acid); color: var(--ins-on-acid);
+  background: var(--ins-acento); border-color: var(--ins-acento); color: var(--ins-sobre-acento);
 }
 /* GRUDADO NO TOPO enquanto a sessão está aberta.
    Quanto tempo faz que começou é a pergunta que se refaz o treino inteiro, e a
@@ -605,60 +624,60 @@
   padding: var(--ins-3) max(var(--ins-8), var(--sa-left)) var(--ins-3) max(var(--ins-8), var(--sa-left));
   margin-left: calc(-1 * max(var(--ins-8), var(--sa-left)));
   margin-right: calc(-1 * max(var(--ins-8), var(--sa-right)));
-  background: var(--ins-canvas);
-  border-bottom: 1px solid var(--ins-hairline);
+  background: var(--ins-superficie);
+  border-bottom: 1px solid var(--ins-fio);
 }
 .day-rel.pausado { opacity: .6; }
 
 #relogio, .relogio {
-  font: 500 22px/1 var(--ins-font-mono); letter-spacing: -.03em; color: var(--ins-text);
+  font: 500 22px/1 var(--ins-fonte); letter-spacing: -.03em; color: var(--ins-tinta);
 }
 .horario {
-  font: 400 10px/1.4 var(--ins-font-mono); letter-spacing: .06em; color: var(--ins-text-4);
+  font: 400 10px/1.4 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-tinta-3);
 }
 
 /* Faixa da semana */
 .semana { display: flex; gap: var(--ins-1); margin-top: var(--ins-5); }
 .wd {
   flex: 1; min-height: 52px; padding: var(--ins-3) 2px;
-  border: 1px solid var(--ins-border); background: transparent;
+  border: 1px solid var(--ins-fio-controle); background: transparent;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--ins-2);
 }
 .wd-d {
-  font: 400 9px/1 var(--ins-font-mono);
-  letter-spacing: .16em; text-transform: uppercase; color: var(--ins-text-4);
+  font: 400 9px/1 var(--ins-fonte);
+  letter-spacing: .16em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
-.wd-v { font: 500 15px/1 var(--ins-font-mono); letter-spacing: -.02em; color: var(--ins-text-5); }
-.wd.feito { border-color: var(--ins-acid); }
-.wd.feito .wd-v { color: var(--ins-acid); }
-.wd.hoje { background: var(--ins-surface-acid); }
-.wd.hoje .wd-d { color: var(--ins-text-2); }
+.wd-v { font: 500 15px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta-3); }
+.wd.feito { border-color: var(--ins-acento); }
+.wd.feito .wd-v { color: var(--ins-acento-tinta); }
+.wd.hoje { background: var(--ins-acento-suave); }
+.wd.hoje .wd-d { color: var(--ins-tinta-2); }
 .wd.futuro { opacity: .4; }
-.wd.livre { border-color: var(--ins-border-strong); }
-.wd.livre .wd-v { color: var(--ins-text-3); }
-.wd:not(.feito):not(.futuro) .wd-v { color: var(--ins-text-5); }
+.wd.livre { border-color: var(--ins-fio-controle); }
+.wd.livre .wd-v { color: var(--ins-tinta-3); }
+.wd:not(.feito):not(.futuro) .wd-v { color: var(--ins-tinta-3); }
 /* Descanso registrado: presença, não convite. Fica abaixo do dia não treinado
    na hierarquia visual — é informação, não coisa a fazer. */
-.wd.descanso .wd-v { color: var(--ins-text-4); }
-.wd.descanso .wd-d { color: var(--ins-text-5); }
+.wd.descanso .wd-v { color: var(--ins-tinta-3); }
+.wd.descanso .wd-d { color: var(--ins-tinta-3); }
 
 /* Linha de cardio */
 .cardl {
   display: flex; align-items: center; gap: var(--ins-4);
   margin-top: var(--ins-5); padding: var(--ins-5);
-  border: 1px solid var(--ins-border); background: transparent;
+  border: 1px solid var(--ins-fio-controle); background: transparent;
 }
 .cardl-t {
   flex: 0 0 auto;
-  font: 400 10px/1 var(--ins-font-mono);
-  letter-spacing: .18em; text-transform: uppercase; color: var(--ins-text-4);
+  font: 400 10px/1 var(--ins-fonte);
+  letter-spacing: .18em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
-.cardl-n { flex: 1; font: 400 13px/1.4 var(--ins-font-display); color: var(--ins-text-2); }
-.cardl.feito .cardl-n { color: var(--ins-acid); }
+.cardl-n { flex: 1; font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-2); }
+.cardl.feito .cardl-n { color: var(--ins-acento-tinta); }
 .cardl-b {
   flex: 0 0 auto; min-height: var(--ins-tap-dense); padding: 0 var(--ins-4);
-  border: 1px solid var(--ins-border-strong); background: transparent; color: var(--ins-text-3);
-  font: 400 10px/1 var(--ins-font-mono); letter-spacing: .12em; text-transform: uppercase;
+  border: 1px solid var(--ins-fio-controle); background: transparent; color: var(--ins-tinta-3);
+  font: 400 10px/1 var(--ins-fonte); letter-spacing: .12em; text-transform: uppercase;
   position: relative;
 }
 .cardl-b::after { content: ""; position: absolute; inset: -8px 0; }     /* 28 -> 44 */
@@ -666,11 +685,11 @@
 /* O ponto de cardio dentro da célula da semana: 4px, não um quadrado vazio. */
 .wd .barra-cardio {
   width: 4px; height: 4px; border-radius: 50%;
-  background: var(--ins-text-3); border: 0; padding: 0;
+  background: var(--ins-tinta-3); border: 0; padding: 0;
 }
 .cwarn {
-  font: 400 10px/1.4 var(--ins-font-mono);
-  letter-spacing: .06em; color: var(--ins-amber); margin-top: var(--ins-3);
+  font: 400 10px/1.4 var(--ins-fonte);
+  letter-spacing: .06em; color: var(--ins-atencao-tinta); margin-top: var(--ins-3);
 }
 
 /* ---- Onde o acento ficaria demais --------------------------------------
@@ -679,14 +698,14 @@
    agora, feito, seu e aperte isto. Em lista de histórico a letra é identidade,
    e identidade não é acento. */
 
-.sess-d em { color: var(--ins-text-4); }
-.sessrow .sess-d b, .sessrow .sess-d strong { color: var(--ins-text-2); }
+.sess-d em { color: var(--ins-tinta-3); }
+.sessrow .sess-d b, .sessrow .sess-d strong { color: var(--ins-tinta-2); }
 /* A média da semana é dado de leitura, não ação. */
-.week-n { color: var(--ins-text); }
-.week-n em { color: var(--ins-text-4); }
+.week-n { color: var(--ins-tinta); }
+.week-n em { color: var(--ins-tinta-3); }
 
 /* Registro rápido de cardio, expandido no lugar. */
-.cardq { margin-top: var(--ins-2); padding: var(--ins-5); border: 1px solid var(--ins-border); }
+.cardq { margin-top: var(--ins-2); padding: var(--ins-5); border: 1px solid var(--ins-fio-controle); }
 .cardq-2 { margin-top: var(--ins-2); }
 .cardq-b { margin-top: var(--ins-5); }
 .cwarn { margin-top: var(--ins-4); }
@@ -696,7 +715,7 @@
    sanciona, e não solta no cartão. */
 .fotoex {
   display: block; width: 100%; height: auto;
-  border: 1px solid var(--ins-border);
+  border: 1px solid var(--ins-fio-controle);
 }
 .foto-vazio, .foto-cue { margin-top: var(--ins-5); }
 .foto-b { display: block; margin-top: var(--ins-7); text-align: center; }
@@ -716,7 +735,7 @@
 .exfoto img,
 .exfoto-p {
   display: block; width: 44px; height: 44px;
-  border-radius: var(--ins-raio-foto);
+  border-radius: var(--ins-raio-2);
   /* Sem borda: o recorte é a própria forma. Uma moldura de 1px em volta de uma
      foto de 44px vira contorno competindo com o conteúdo. */
   border: none;
@@ -728,22 +747,22 @@
    sistema, e repeti-lo aqui faz o vazio rimar com o resto em vez de inventar
    um símbolo novo. */
 .exfoto-p {
-  background: var(--ins-surface);
+  background: var(--ins-superficie-2);
   position: relative;
 }
 .exfoto-p::after {
   content: ''; position: absolute; left: 50%; top: 50%;
   width: 4px; height: 4px; margin: -2px 0 0 -2px;
-  border-radius: 50%; background: var(--ins-text-5);
+  border-radius: 50%; background: var(--ins-tinta-3);
 }
-.exfoto.vazia:active .exfoto-p { background: var(--ins-surface-acid); }
-.exfoto.vazia:active .exfoto-p::after { background: var(--ins-acid); }
+.exfoto.vazia:active .exfoto-p { background: var(--ins-acento-suave); }
+.exfoto.vazia:active .exfoto-p::after { background: var(--ins-acento); }
 
 /* O número desce para debaixo da miniatura e encolhe: ali ele é referência de
    posição, não dado. */
 .exfoto .ord {
   flex: none; width: 100%; text-align: center;
-  font: 400 9px/1 var(--ins-font-mono); letter-spacing: .06em;
+  font: 400 9px/1 var(--ins-fonte); letter-spacing: .06em;
 }
 
 
@@ -758,8 +777,8 @@
 /* As portas rápidas ficam ACIMA do "+ adicionar movimento" e mais apagadas:
    adicionar um a um continua sendo a porta principal, e estas são o atalho de
    quem já tem sábado anterior ou modelo salvo. */
-.tr-aulas { margin-top: var(--ins-5); color: var(--ins-text-4); border-style: dashed; }
-.tr-rapido { margin-top: var(--ins-5); color: var(--ins-text-4); border-style: dashed; }
+.tr-aulas { margin-top: var(--ins-5); color: var(--ins-tinta-3); border-style: dashed; }
+.tr-rapido { margin-top: var(--ins-5); color: var(--ins-tinta-3); border-style: dashed; }
 
 /* ---- A aula inteira numa tela ------------------------------------------ */
 /* Fio e não cartão, como o resto do sistema: cada movimento é uma linha
@@ -768,19 +787,23 @@
 .rapido { margin-top: var(--ins-5); }
 .rapl {
   display: flex; align-items: center; gap: var(--ins-4);
+  /* Quebra para o teclado próprio abrir EMBAIXO da linha, como na série: sem
+     isto ele entrava como terceira coluna, espremido ao lado do nome. */
+  flex-wrap: wrap;
   padding: var(--ins-4) 0;
-  border-bottom: 1px solid var(--ins-hairline);
+  border-bottom: 1px solid var(--ins-fio);
 }
-.rapl.feito { border-bottom-color: var(--ins-acid); }
+.rapl > .tcl { flex: 1 0 100%; margin-bottom: 0; }
+.rapl.feito { border-bottom-color: var(--ins-acento); }
 .rapl-n { flex: 1; min-width: 0; }
 .rapl-n b {
   display: block;
-  font: 500 15px/1.3 var(--ins-font-display); letter-spacing: -.01em;
-  color: var(--ins-text);
+  font: 500 15px/1.3 var(--ins-fonte); letter-spacing: -.01em;
+  color: var(--ins-tinta);
 }
 .rapl-n span {
   display: block; margin-top: var(--ins-2);
-  font: 400 10px/1.4 var(--ins-font-mono); color: var(--ins-text-5);
+  font: 400 10px/1.4 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .rapl-c { display: flex; gap: var(--ins-2); flex: 0 0 auto; }
 /* 68px por campo: cabe "127,5" no mono de 16px, e os dois somam 142 — sobra
@@ -788,33 +811,37 @@
 .rapl-f { display: block; width: 68px; }
 .rapl-f > span {
   display: block; margin-bottom: var(--ins-2);
-  font: 400 9px/1 var(--ins-font-mono);
+  font: 400 9px/1 var(--ins-fonte);
   letter-spacing: .14em; text-transform: uppercase;
-  color: var(--ins-text-5); text-align: center;
+  color: var(--ins-tinta-3); text-align: center;
 }
-/* 16px: abaixo disso o Safari dá zoom ao focar, e a tela fica torta no meio
-   do preenchimento. */
-.rapl-f input {
-  width: 100%; min-height: var(--ins-tap); padding: 0 var(--ins-2);
-  background: transparent; border: 0;
-  border-bottom: 1px solid var(--ins-border);
-  font: 500 16px/1 var(--ins-font-mono); color: var(--ins-text);
+/* O botão que abre o teclado próprio ocupa o lugar e a medida do campo que
+   ele substituiu: 46px de alvo, o fio embaixo e o mono de 16px em que cabe
+   "127,5". O fio fica, ao contrário do RIR: aqui não há cabeçalho de colunas,
+   e é ele que diz que a célula recebe um número. */
+.rapl-b {
+  display: block; width: 100%; min-height: var(--ins-tap); padding: 0 var(--ins-2);
+  background: transparent; border: 0; border-radius: 0;
+  border-bottom: 1px solid var(--ins-fio-controle);
+  font: 500 16px/1 var(--ins-fonte); color: var(--ins-tinta);
   text-align: center;
 }
-.rapl-f input:focus { outline: none; border-bottom-color: var(--ins-acid); }
-.rapl-f input.done { color: var(--ins-acid); }
+.rapl-b.vazio { color: var(--ins-tinta-3); }
+/* Aberto: só enquanto o teclado está na tela, para ele saber em qual das duas
+   grandezas está digitando. */
+.rapl-b.on { color: var(--ins-acento-tinta); border-bottom-color: var(--ins-acento); }
 
 /* Uma linha de modelo: o modelo inteiro é o alvo, e o destrutivo fica na ponta,
    em coral, com alvo próprio — nunca competindo com o toque que aplica. */
 /* O quadro do box no alto do dia. Mono e `pre-line`: é transcrição, e as
    quebras de linha da lousa são a estrutura que o app não modelou. */
 .tr-quadro {
-  background: var(--ins-surface-low); border: 1px solid var(--ins-rule);
+  background: var(--ins-superficie-2); border: 1px solid var(--ins-fio);
   padding: var(--ins-5) var(--ins-6); margin-bottom: var(--ins-7);
 }
 .tr-quadro-t {
   white-space: pre-line; margin: var(--ins-3) 0 0;
-  font: 400 10px/1.6 var(--ins-font-mono); color: var(--ins-text-3);
+  font: 400 10px/1.6 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 
 .aulal { display: flex; align-items: stretch; gap: var(--ins-2); }
@@ -824,20 +851,20 @@
    porque as quebras de linha da lousa são a estrutura que o app deliberadamente
    NÃO modelou — apagá-las apagaria o que o texto existe para guardar. */
 .aulal-q {
-  white-space: pre-line; font: 400 9px/1.5 var(--ins-font-mono);
-  color: var(--ins-text-5); margin-top: var(--ins-3);
+  white-space: pre-line; font: 400 9px/1.5 var(--ins-fonte);
+  color: var(--ins-tinta-3); margin-top: var(--ins-3);
 }
 
 /* A caixa de colar a aula. */
 .aulac { display: flex; flex-direction: column; gap: var(--ins-4); }
 /* 16px pelo piso de campo (`base.css`): é uma caixa de COLAR, e o zoom do
    Safari ao focar chega justamente quando o quadro inteiro já está dentro. */
-.aulac-t { width: 100%; font: 400 16px/1.4 var(--ins-font-mono); resize: vertical; }
+.aulac-t { width: 100%; font: 400 16px/1.4 var(--ins-fonte); resize: vertical; }
 .aulac-acoes { display: flex; gap: var(--ins-4); }
 .aulac-acoes button { flex: 1; }
 .aulal-x {
   flex: 0 0 auto; padding: 0 var(--ins-4); min-height: var(--ins-tap);
-  background: transparent; border: 1px solid var(--ins-border);
-  font: 400 10px/1 var(--ins-font-mono);
-  letter-spacing: .12em; text-transform: uppercase; color: var(--ins-coral);
+  background: transparent; border: 1px solid var(--ins-fio-controle);
+  font: 400 10px/1 var(--ins-fonte);
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ins-pare-tinta);
 }

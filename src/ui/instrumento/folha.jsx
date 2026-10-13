@@ -115,27 +115,16 @@ export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao
     };
   }, []);
 
-  // Escape fecha — vale no Safari de desktop e para teclado externo no iPad.
+  // O ESCAPE NÃO MORA AQUI, e isto é de propósito.
   //
-  // Só a de cima responde. Cada folha monta o seu próprio ouvinte no
-  // `document`, e todos recebem a mesma tecla: com duas abertas, um Escape
-  // fechava as duas, e Voltar passa a desfazer duas camadas de uma vez.
-  // Quem está em cima é quem tem o maior z-index — o nível declarado — e, em
-  // empate, a última desenhada: refeição e o editor dela dividem o nível 50.
-  useEffect(() => {
-    const tecla = e => {
-      if (e.key !== 'Escape') return;
-      const eu = caixa.current && caixa.current.parentElement;
-      if (!eu) return;
-      const z = w => Number(w.style.zIndex || 0);
-      let topo = eu;
-      document.querySelectorAll('.ins-folha-w').forEach(w => { if (z(w) >= z(topo)) topo = w; });
-      if (eu !== topo) return;
-      aoFechar();
-    };
-    document.addEventListener('keydown', tecla);
-    return () => document.removeEventListener('keydown', tecla);
-  }, [aoFechar]);
+  // Morava: cada folha montava o seu ouvinte no `document`, e cada um
+  // perguntava ao DOM qual folha tinha o maior z-index para que só a de cima
+  // agisse. O contrato manda que o Esc passe pelo MESMO caminho do Voltar
+  // (`docs/LASTRO_UX_CONTRACT.md`, §2), e a pilha de camadas — não uma consulta
+  // de z-index — é quem sabe o que está em cima. Agora é um ouvinte só, em
+  // `src/ui/navegacao.js`, junto do `popstate`. A razão longa está escrita lá,
+  // inclusive a corrida que o arranjo antigo abria entre a folha aparecer e o
+  // efeito dela montar.
 
   // Sem portal de propósito: preact/compat custaria 10 kB por uma função.
   // `position: fixed` sai da árvore visualmente de qualquer lugar — desde que

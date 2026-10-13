@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A semana · Direção C</title>
+<style>
+:root{color-scheme:light;--page:#E7E2D8;--paper:#F5F2EB;--card:#FFFFFF;--text:#1B1A17;--muted:#5D594F;--line:#D6CFC2;--ghost:#857F74;--ink:#1F3B67;--on-ink:#FFFFFF;--ink-soft:#E3E9F3;--ink-text:#1F3B67;--now:#B0420D;--now-soft:#FAE6D8;--warn:#7A4A00;--warn-soft:#FAEDD3;--err:#A3241A;--err-soft:#FBE6E2;--ok:#1E5B3A;--ok-soft:#E0EFE4;--hatch-c:rgba(120,113,100,.32);--frame:#141414;--scrim:rgba(20,18,14,.42);--hatch:repeating-linear-gradient(135deg,var(--hatch-c) 0 1.5px,transparent 1.5px 7px)}
+.phone[data-tema="escuro"]{color-scheme:dark;--paper:#161512;--card:#211F1B;--text:#F2EEE6;--muted:#ADA79A;--line:#3A3731;--ghost:#8F897D;--ink:#A9C3EE;--on-ink:#0D1A30;--ink-soft:#1F2B3F;--ink-text:#C3D6F6;--now:#F59A5F;--now-soft:#3A2416;--warn:#F3C277;--warn-soft:#33270F;--err:#F4978C;--err-soft:#3B1D19;--ok:#8FD3AA;--ok-soft:#16301F;--hatch-c:rgba(210,200,180,.22);--frame:#2B2B2B;--scrim:rgba(0,0,0,.55)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--page);color:var(--text);overflow-x:clip}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:3px solid var(--now);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.doc{padding-bottom:80px}
+.intro{max-width:620px;margin:0 auto;padding:28px 16px 4px}
+.kicker{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intro h1{font-size:26px;line-height:1.2;margin:6px 0 12px;letter-spacing:-.01em}
+.intro p{margin:0 0 10px}
+.theme{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:14px 0 0}
+.theme>span{font-size:14px;color:var(--muted);margin-right:4px}
+.theme button{min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:22px;font-size:14px;background:var(--card)}
+.theme button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.toc{max-width:620px;margin:14px auto 0;padding:0 16px}
+.toc ol{list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.toc a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--text);text-decoration:none;font-size:14px}
+.state{margin:46px auto 0}
+.cap{max-width:620px;margin:0 auto 14px;padding:0 16px}
+.cap .tag{font-size:13px;font-weight:700;color:var(--now);letter-spacing:.05em;text-transform:uppercase}
+.cap h2{font-size:21px;line-height:1.25;margin:4px 0 6px}
+.cap p{font-size:15px;color:var(--muted);margin:0 0 6px}
+.cap p b{color:var(--text)}
+.cap .refs{font-size:13px}
+.cap .no{border-left:3px solid var(--line);padding-left:10px;color:var(--text);font-size:14px}
+.phone{position:relative;width:100%;max-width:414px;height:896px;margin:0 auto;background:var(--paper);color:var(--text);display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
+@media (min-width:480px){.phone{border-radius:48px;box-shadow:0 0 0 10px var(--frame),0 30px 60px rgba(0,0,0,.22)}.state{margin-top:72px}}
+.sb{flex:none;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font-size:15px;font-weight:600;position:relative;z-index:9}
+.sb::before{content:"";position:absolute;left:50%;top:0;width:209px;height:30px;transform:translateX(-50%);background:#000;border-radius:0 0 22px 22px}
+.sig{display:flex;align-items:flex-end;gap:2px;height:12px}
+.sig i{width:3px;background:currentColor;opacity:.25;border-radius:1px}
+.sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:6px}.sig i:nth-child(3){height:9px}.sig i:nth-child(4){height:12px}
+.sig i.on{opacity:1}
+.bat{width:25px;height:12px;border:1.5px solid currentColor;border-radius:4px;margin-left:7px;position:relative;opacity:.9}
+.bat::after{content:"";position:absolute;top:1.5px;bottom:1.5px;left:1.5px;width:55%;background:currentColor;border-radius:1.5px}
+.hi{flex:none;height:34px;display:flex;align-items:center;justify-content:center;position:relative;z-index:9}
+.hi::after{content:"";width:134px;height:5px;border-radius:3px;background:var(--text);opacity:.85}
+.hi.oncard{background:var(--card)}
+.app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--card)}
+.tabs a{min-height:50px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;position:relative}
+.tabs a.on{color:var(--ink-text)}
+.tabs a.on::before{content:"";position:absolute;top:0;width:22px;height:3px;border-radius:2px;background:var(--ink-text)}
+.d-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:2px 6px;min-height:50px}
+.d-head .ttl{text-align:center;line-height:1.2}
+.d-head .ttl strong{display:block;font-size:17px}
+.d-head .ttl span{font-size:13px;color:var(--muted)}
+.d-head .arrow{min-width:56px;min-height:44px;font-size:22px;color:var(--ink-text)}
+.back{min-width:72px;min-height:44px;font-size:17px;font-weight:600;color:var(--ink-text);text-align:left;padding:0 8px}
+.pillb{min-height:44px;min-width:60px;padding:0 13px;border-radius:22px;border:1.5px solid var(--line);background:var(--card);font-size:15px;font-weight:600}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:0 16px 10px}
+.scroll::-webkit-scrollbar{display:none}
+.over{font-size:13px;color:var(--muted);font-weight:600}
+.primary{width:100%;min-height:56px;border-radius:16px;background:var(--ink);color:var(--on-ink);font-size:18px;font-weight:700}
+.secondary{min-height:48px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:16px;padding:0 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.note{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.35}
+.duo{max-width:680px;margin:0 auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:28px;justify-items:center}
+@media (min-width:700px){.duo{grid-template-columns:1fr 1fr}}
+.frame{width:290px}
+.shrink{width:290px;height:628px;position:relative;overflow:hidden;border-radius:30px;box-shadow:0 0 0 7px var(--frame),0 16px 34px rgba(0,0,0,.2)}
+.shrink .phone{position:absolute;top:0;left:0;width:414px;max-width:414px;height:896px;transform:scale(.6996);transform-origin:top left;border-radius:0;box-shadow:none}
+.frame p{text-align:center;font-size:14px;color:var(--muted);margin-top:10px}
+
+/* semana */
+.verdict{margin-top:10px;padding:15px;border-radius:18px;border:2px solid var(--ink);background:var(--card)}
+.verdict.hold{border-color:var(--line)}
+.verdict.act{border-color:var(--now);background:var(--now-soft)}
+.verdict .src{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.verdict h3{font-size:25px;line-height:1.15;margin:5px 0 6px;letter-spacing:-.01em}
+.verdict p{font-size:15px;color:var(--muted);line-height:1.4}
+.why{list-style:none;margin-top:12px;border-top:1px solid var(--line)}
+.why li{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.why li span{line-height:1.25}
+.why li span i{display:block;font-style:normal;font-size:12px;color:var(--muted)}
+.why li b{font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.why li.falta b{color:var(--err)}
+.why li.ok b{color:var(--ok)}
+.step{margin-top:12px;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.step h4{font-size:17px}
+.arrowrow{display:grid;grid-template-columns:1fr 28px 1fr;align-items:center;gap:8px;margin-top:10px}
+.cellv{padding:10px;border-radius:12px;background:var(--paper);text-align:center}
+.cellv b{display:block;font-size:22px;font-weight:800}
+.cellv span{font-size:12px;color:var(--muted)}
+.cellv.to{background:var(--ink-soft);color:var(--ink-text)}
+.cellv.to span{color:var(--ink-text)}
+.ar{text-align:center;font-size:20px;color:var(--muted)}
+.mathl{font-size:13px;color:var(--muted);margin-top:9px;line-height:1.4}
+.mathl b{color:var(--text)}
+.bars{margin-top:8px}
+.bar{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:8px;padding:5px 0;font-size:14px}
+.bar .t{line-height:1.2}
+.bar .t i{display:block;font-style:normal;font-size:11px;color:var(--muted)}
+.bar .g{height:14px;border-radius:7px;background:var(--line);position:relative;overflow:hidden}
+.bar .g i{position:absolute;left:0;top:0;bottom:0;background:var(--ink);border-radius:7px}
+.bar .g i.under{background:var(--warn)}
+.bar .g u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--text);opacity:.55}
+.bar b{font-variant-numeric:tabular-nums;font-size:14px}
+.cells{display:flex;gap:3px;margin-top:8px}
+.cells i{flex:1;height:26px;border-radius:5px;background:var(--ink-soft);border:1px solid transparent}
+.cells i.u{background-image:var(--hatch);background-color:transparent;border-color:var(--line)}
+.cells i.t{outline:2px solid var(--now);outline-offset:1px}
+.cells-l{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:3px}
+.blk{margin-top:12px;padding:13px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.blk-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.blk-h h3{font-size:17px}
+.blk-h span{font-size:13px;color:var(--muted)}
+.sub{font-size:14px;color:var(--muted);margin-top:3px;line-height:1.35}
+.big{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.big small{font-size:15px;font-weight:600;color:var(--muted)}
+.warnb{padding:11px 12px;border-radius:13px;background:var(--warn-soft);color:var(--warn);font-size:14px;line-height:1.35;margin-top:10px}
+.warnb strong{display:block;font-size:15px;margin-bottom:3px}
+.errb{padding:11px 12px;border-radius:13px;background:var(--err-soft);color:var(--err);border:1.5px solid var(--err);font-size:14px;line-height:1.35;margin-top:10px}
+.okb{padding:11px 12px;border-radius:13px;background:var(--ok-soft);color:var(--ok);font-size:14px;line-height:1.35;margin-top:10px}
+.hist{list-style:none;margin-top:8px}
+.hist li{padding:10px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.35}
+.hist li b{font-size:15px}
+.hist li i{font-style:normal;color:var(--muted);display:block;font-size:13px}
+.empty{text-align:center;padding:16px 10px}
+.empty .b{font-size:19px;font-weight:700;margin-bottom:6px}
+.empty p{font-size:15px;color:var(--muted);line-height:1.4}
+.toast{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-radius:14px;background:var(--ink);color:var(--on-ink);font-size:15px;line-height:1.3;margin-top:10px}
+.toast .u{margin-left:auto;font-weight:700;text-decoration:underline;min-height:44px;padding:0 10px;color:var(--on-ink);flex:none}
+@media (prefers-reduced-motion:no-preference){.verdict,.cellv{transition:background .2s ease-out,border-color .2s ease-out}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="doc">
+
+<header class="intro">
+  <p class="kicker">Direção C · Previsto e feito · tela nova</p>
+  <h1>A semana, e a régua do nutricionista</h1>
+  <p>Esta é a decisão que <b>nunca aconteceu nenhuma vez</b> no uso medido: zero avaliações visuais, zero passos de ±150 kcal aplicados. O dono disse que não existe um momento de rever as semanas e que gostaria que existisse. E decidiu que ela fica <b>sempre disponível, sem dia fixo</b>.</p>
+  <p><b>A direção, aqui:</b> a tela começa pela saída da regra, escrita como o nutricionista escreveu, e logo abaixo põe <b>os números que a produziram</b> — as duas taxas semanais separadas, o limite que cruzou, a adesão e o que falta. Quem decide é ele; o app mostra a conta inteira e nunca aplica nada sozinho.</p>
+  <p>Quando falta alguma coisa para a regra funcionar, a tela não fica em silêncio nem inventa: ela diz exatamente o que falta e leva até lá num toque.</p>
+  <div class="theme" role="group" aria-label="Tema das telas">
+    <span>Tema das telas:</span>
+    <button data-t="claro" aria-pressed="true">Claro</button><button data-t="escuro" aria-pressed="false">Escuro</button>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Estados desta tela">
+  <ol>
+    <li><a href="#s1">1 · O estado real</a></li>
+    <li><a href="#s2">2 · O passo pronto</a></li>
+    <li><a href="#s3">3 · O corte recusado</a></li>
+    <li><a href="#s4">4 · Sequência quebrada</a></li>
+    <li><a href="#s5">5 · O resto da semana</a></li>
+    <li><a href="#s6">6 · Os passos já dados</a></li>
+    <li><a href="#s7">7 · Vazio</a></li>
+    <li><a href="#s8">8 · Claro e escuro</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section class="state" id="s1" aria-labelledby="s1h">
+  <div class="cap">
+    <p class="tag">Estado 1 · o que a régua diz hoje, de verdade</p>
+    <h2 id="s1h">“Não mexer e registrar mais”: o peso está lá, a comida não</h2>
+    <p>Com os números medidos, a regra tem uma saída só: as duas taxas semanais estão abaixo de 0,10, a força não está subindo — e a adesão registrada é de <b>1 dia em 14</b>, quando a regra precisa de 11. Então não se mexe, e o que falta é registro.</p>
+    <p>A tela não transforma isso em culpa nem em barra de progresso. Ela mostra a conta e põe o que falta como a <b>única ação da tela</b>: marcar os dias que faltam. Nada mais compete com isso aqui.</p>
+    <p>Repare no que a tela recusa esconder: a adesão aparece como 1 de 14 com os dias desenhados um a um — dia conhecido é tinta, dia sem marca é hachura. Hachura é <b>não sabido</b>, não é zero: a regra trata assim, e a tela também.</p>
+    <p class="refs">F198 · F200 · F212 · F213 · F215 · P1 (1 dia marcado em 22) · P8 · D3</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:12</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" aria-label="Semana anterior">‹</button><div class="ttl"><strong>28/09 – 04/10</strong><span>semana em curso · 4º dia</span></div><button class="arrow" aria-label="Semana seguinte" disabled>›</button></div>
+      <div class="scroll">
+        <div class="verdict hold">
+          <p class="src">Régua do nutricionista · 21/09</p>
+          <h3>Não mexer, e registrar mais</h3>
+          <p>O peso está no lugar certo para a regra decidir. A comida não está registrada o bastante para ela ter o direito de decidir.</p>
+          <ul class="why">
+            <li><span>Taxa 21–27/09 → 28/09–04/10<i>abaixo de 0,10</i></span><b class="num">+0,05</b></li>
+            <li><span>Taxa 14–20/09 → 21–27/09<i>abaixo de 0,10</i></span><b class="num">+0,08</b></li>
+            <li><span>Força<i>−0,4% em 2 semanas, 5 exercícios · abaixo de 1% é ruído</i></span><b>não sobe</b></li>
+            <li class="falta"><span>Adesão registrada<i>a regra precisa de 11 dos últimos 14 dias</i></span><b class="num">1 / 14</b></li>
+          </ul>
+          <div class="cells" role="img" aria-label="Últimos 14 dias: 1 conhecido, 13 sem marca">
+            <i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u"></i><i class="u t"></i>
+          </div>
+          <div class="cells-l"><span>21/09</span><span>hoje</span></div>
+          <button class="primary" style="margin-top:12px">Marcar os dias que faltam</button>
+          <p class="note">Com adesão registrada e estas mesmas taxas, a saída viraria <b>+150 kcal</b>. É a diferença que o registro da comida faz.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Se a adesão estivesse de pé</h3><span>simulação</span></div>
+          <p class="sub">Abaixo de 0,10 nas duas semanas, com força não subindo e adesão registrada: <b style="color:var(--text)">+150 kcal</b>. O passo nunca se aplica sozinho — ele aparece aqui com um botão, e você decide.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#s1">Hoje</a><a class="on" href="#s1">Semanas</a><a href="#s1">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="state" id="s2" aria-labelledby="s2h">
+  <div class="cap">
+    <p class="tag">Estado 2 · o passo pronto para aplicar · funciona ao toque</p>
+    <h2 id="s2h">+150 kcal, e o que isso vira no prato</h2>
+    <p>Com a adesão de pé, a mesma régua muda de saída. O passo é <b>fixo</b>: ganhar devagar demais há duas semanas dá +150 kcal, e nenhum caso dá mais. O cartão mostra o passo <b>no prato antes do toque</b>: 120 g de arroz cozido por dia, repartidos entre as refeições que têm arroz, em degraus de 15 g — 250 g viram 310 g no almoço e no jantar.</p>
+    <p>Esse detalhe existe porque já errou: um passo de +150 chegou a mover cerca de 320 kcal, e a quantidade de arroz mostrada errava por um degrau. Aqui a conta aparece inteira, com a densidade usada.</p>
+    <p><b>Toque em “Aplicar”</b> para ver o que fica guardado: quando, de quanto para quanto, qual saída da regra motivou, o texto da regra naquele momento e a adesão dos 14 dias anteriores.</p>
+    <p class="refs">F3 · F212 · F213 · F216 · F217 · F218 · F219 · F291 · U16</p>
+  </div>
+  <div class="phone" id="live" role="group" aria-label="Passo de 150 kcal, interativo">
+    <div class="sb"><span class="num">21:20</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" aria-label="Semana anterior">‹</button><div class="ttl"><strong>21/09 – 27/09</strong><span>semana fechada</span></div><button class="arrow" aria-label="Semana seguinte">›</button></div>
+      <div class="scroll">
+        <div class="verdict act" data-antes>
+          <p class="src">Régua do nutricionista · 21/09</p>
+          <h3>Aumentar 150 kcal</h3>
+          <p>Ganho abaixo de 0,10 kg por semana nas duas semanas, com a força não subindo e com adesão registrada. É a saída de aumentar.</p>
+          <ul class="why">
+            <li><span>Taxa 07–13/09 → 14–20/09</span><b class="num">+0,04</b></li>
+            <li><span>Taxa 14–20/09 → 21–27/09</span><b class="num">+0,07</b></li>
+            <li><span>Limite cruzado<i>“abaixo de 0,10 nas duas”</i></span><b class="num">0,10</b></li>
+            <li class="ok"><span>Adesão registrada<i>dias com consumo conhecido nos últimos 14</i></span><b class="num">12 / 14</b></li>
+            <li><span>Força<i>+0,6% em 2 semanas, 6 exercícios · ruído</i></span><b>não sobe</b></li>
+          </ul>
+        </div>
+        <div class="step" data-passo>
+          <h4>No prato, isto é:</h4>
+          <div class="arrowrow">
+            <div class="cellv"><b class="num">250 g</b><span>arroz no almoço</span></div>
+            <div class="ar" aria-hidden="true">→</div>
+            <div class="cellv to"><b class="num">310 g</b><span>arroz no almoço</span></div>
+          </div>
+          <div class="arrowrow" style="margin-top:6px">
+            <div class="cellv"><b class="num">250 g</b><span>arroz no jantar</span></div>
+            <div class="ar" aria-hidden="true">→</div>
+            <div class="cellv to"><b class="num">310 g</b><span>arroz no jantar</span></div>
+          </div>
+          <p class="mathl">120 g de arroz cozido por dia, a 128 kcal por 100 g, dão <b>154 kcal</b> — o passo mais próximo de 150 em degraus de 15 g. Repartido entre as duas refeições que têm arroz: 60 g em cada.</p>
+          <p class="mathl">Dia de treino: <b>3.007 → 3.161 kcal</b>. Dia de descanso: <b>2.844 → 2.998 kcal</b>.</p>
+          <button class="primary" style="margin-top:12px" data-aplicar>Aplicar o passo</button>
+          <p class="note">Depois de aplicado, esta vira a sua base. Voltar para a faixa-alvo não devolve o passo — para desfazer, é outro passo, e ele fica registrado como tal.</p>
+        </div>
+        <div data-depois hidden>
+          <div class="okb"><b>Passo aplicado em 04/10.</b> O plano alimentar já está com 310 g de arroz no almoço e no jantar.</div>
+          <div class="toast">Gravado neste aparelho<button class="u">Desfazer</button></div>
+          <div class="blk">
+            <div class="blk-h"><h3>O que ficou guardado</h3><span>para daqui a seis meses</span></div>
+            <ul class="hist">
+              <li><b>04/10/2026 · +150 kcal</b><i>de 3.007 para 3.161 kcal em dia de treino</i></li>
+              <li><b>Saída da regra</b><i>“Abaixo de 0,10 kg/semana nas duas, com força não subindo e adesão registrada: +150 kcal.”</i></li>
+              <li><b>Adesão no momento</b><i>12 dos 14 dias anteriores com consumo conhecido</i></li>
+              <li><b>Ajuste acumulado</b><i>+150 kcal · este é o primeiro passo</i></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#s2">Hoje</a><a class="on" href="#s2">Semanas</a><a href="#s2">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="state" id="s3" aria-labelledby="s3h">
+  <div class="cap">
+    <p class="tag">Estado 3 · o corte que a regra recusa</p>
+    <h2 id="s3h">Subiu demais nas duas semanas — e mesmo assim não corta</h2>
+    <p>Esta é a parte mais delicada da régua, e a que mais errou. A saída de cortar exige <b>três coisas ao mesmo tempo</b>: as duas taxas acima de 0,40, adesão registrada <b>e</b> avaliação visual dizendo que a gordura aumentou claramente. Faltando a avaliação, ou com ela incerta, não se mexe — e fotos sem piora mandam manter, porque o ganho está comprando músculo.</p>
+    <p>A tela escreve as duas taxas lado a lado e diz, em uma linha, que <b>não existe média entre elas</b>: este produto já cortou comida por causa de uma semana só, somando +0,10 com +0,75 e disparando o corte com uma média de 0,425.</p>
+    <p>O que falta tem um botão, e o botão leva à comparação de fotos, onde a pergunta mora. A avaliação nunca foi respondida nenhuma vez — é por isso que a regra nunca cortou.</p>
+    <p class="refs">F212 · F214 · F215 · F216 · F220 · F290 · F292 · P1 (0 avaliações)</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:26</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow">‹</button><div class="ttl"><strong>14/09 – 20/09</strong><span>semana fechada</span></div><button class="arrow">›</button></div>
+      <div class="scroll">
+        <div class="verdict">
+          <p class="src">Régua do nutricionista · 21/09</p>
+          <h3>Revisão aberta · não mexer ainda</h3>
+          <p>As duas semanas passaram de 0,40 kg. A regra abre revisão, e o corte de 150 kcal só acontece com adesão registrada <b>e</b> avaliação visual de “aumentou claramente”.</p>
+          <ul class="why">
+            <li><span>Taxa 31/08 → 07/09<i>acima de 0,40</i></span><b class="num">+0,55</b></li>
+            <li><span>Taxa 07/09 → 14/09<i>acima de 0,40</i></span><b class="num">+0,48</b></li>
+            <li class="ok"><span>Adesão registrada</span><b class="num">12 / 14</b></li>
+            <li class="falta"><span>Avaliação visual de gordura<i>par de 04/09 e 15/09 · 11 dias · válido</i></span><b>falta</b></li>
+          </ul>
+          <button class="primary" style="margin-top:12px">Responder olhando as fotos</button>
+          <p class="note">A pergunta é: “comparando com cerca de duas semanas atrás, a gordura visual aumentou claramente?” Sim, não ou incerto — e “incerto” mantém o plano.</p>
+        </div>
+        <div class="warnb">
+          <strong>As duas taxas, nunca a média</strong>
+          +0,55 e +0,48 cruzam o limite cada uma. Uma semana de +0,10 seguida de uma de +0,75 não cruza, mesmo que a média dê 0,425 — e já cortou comida neste produto por isso.
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>O que acontece em cada resposta</h3></div>
+          <p class="sub"><b style="color:var(--text)">Sim:</b> corta 150 kcal — 250 g de arroz viram 190 g no almoço e no jantar.</p>
+          <p class="sub"><b style="color:var(--text)">Não:</b> manter. O ganho está comprando músculo.</p>
+          <p class="sub"><b style="color:var(--text)">Incerto:</b> não mexer. Continuar observando.</p>
+          <p class="note">Um dia em que você saiu do plano e não sabe quanto comeu <b>não conta</b> como dia conhecido. Ele já contou aqui uma vez, e destravou um corte que não devia existir.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#s3">Hoje</a><a class="on" href="#s3">Semanas</a><a href="#s3">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="state" id="s4" aria-labelledby="s4h">
+  <div class="cap">
+    <p class="tag">Estado 4 · a sequência quebrada</p>
+    <h2 id="s4h">Uma semana com uma pesagem só derruba a conta inteira</h2>
+    <p>A regra exige <b>três semanas seguidas com média válida</b>, e média válida pede pelo menos duas pesagens. Uma semana com uma pesagem não conta, e o buraco quebra a sequência: não dá para pular por cima dele.</p>
+    <p>A tela mostra as quatro últimas semanas com o número de pesagens de cada uma, aponta o buraco e diz o que resolve: uma pesagem a mais naquela semana — que ainda pode ser registrada com data passada, porque não há prazo.</p>
+    <p class="no">O que esta tela recusa: estimar a média de uma semana com uma pesagem só. Seria um número bonito em cima de nada, e a regra decide comida com ele.</p>
+    <p class="refs">F208 · F209 · F211 · F212 · F222 · U8 · U11</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:30</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow">‹</button><div class="ttl"><strong>28/09 – 04/10</strong><span>semana em curso</span></div><button class="arrow" disabled>›</button></div>
+      <div class="scroll">
+        <div class="verdict hold">
+          <p class="src">Régua do nutricionista · 21/09</p>
+          <h3>Sem semanas suficientes</h3>
+          <p>A regra precisa de três semanas seguidas com média válida. A de 14 a 20/09 tem uma pesagem só, e o buraco corta a sequência no meio.</p>
+          <ul class="why">
+            <li><span>08–13/09<i>2 pesagens · média 72,4</i></span><b class="ok" style="color:var(--ok)">vale</b></li>
+            <li class="falta"><span>14–20/09<i>1 pesagem · sem média</i></span><b>não vale</b></li>
+            <li><span>21–27/09<i>3 pesagens · média 73,2</i></span><b style="color:var(--ok)">vale</b></li>
+            <li><span>28/09–04/10<i>2 pesagens · média 73,6</i></span><b style="color:var(--ok)">vale</b></li>
+          </ul>
+          <button class="primary" style="margin-top:12px">Pôr a pesagem que falta em 14–20/09</button>
+          <p class="note">Se você lembrar do número. Se não lembrar, melhor deixar vazio: a regra prefere uma semana sem média a uma média inventada.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Ritmo de ganho</h3><span>precisa de 12 dias</span></div>
+          <p class="big num" style="margin-top:4px">+0,25 <small>kg por semana</small></p>
+          <p class="sub">base de 26 dias · dentro da faixa-alvo de +0,15 a +0,30</p>
+          <p class="note">Esta conta é outra, e continua funcionando: ela usa a base inteira, não a sequência de três semanas. As duas convivem sem se confundir.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#s4">Hoje</a><a class="on" href="#s4">Semanas</a><a href="#s4">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="state" id="s5" aria-labelledby="s5h">
+  <div class="cap">
+    <p class="tag">Estado 5 · o resto da semana, abaixo da régua</p>
+    <h2 id="s5h">Força, séries por músculo, comida e treino</h2>
+    <p>Abaixo da decisão vem o que ele disse gostar de acompanhar — e só isso, sem poluir. Quatro blocos, cada um com um número que significa alguma coisa e a frase que o torna legível.</p>
+    <p><b>Força</b> é a tendência de e1RM: as últimas duas semanas contra as duas anteriores, só com exercícios presentes nas duas janelas, no mínimo três; abaixo de 1% é ruído de anilha. Quando o cálculo está cego — volta de pausa, troca de exercício, deload, doença — o sinal pode ser dito à mão, e a tela avisa que está à mão.</p>
+    <p><b>Séries por músculo</b> compara a semana em curso com o mesmo ponto das semanas anteriores, senão toda terça pareceria queda. A linha vertical é o prescrito. A comparação cruzada mostra só a maior inversão dentro de uma região do corpo: comparar peito com perna não diz nada, porque são dias diferentes do programa.</p>
+    <p class="refs">F83 · F89 · F94 · F101 · F167 · F174 · F175 · F176 · F177 · F178 · F201 · F223 · P8</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:34</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow">‹</button><div class="ttl"><strong>21/09 – 27/09</strong><span>semana fechada</span></div><button class="arrow">›</button></div>
+      <div class="scroll">
+        <div class="blk">
+          <div class="blk-h"><h3>Força</h3><span>e1RM · 2 semanas contra 2</span></div>
+          <p class="big num" style="margin-top:4px">+2,3 % <small>em 7 exercícios</small></p>
+          <p class="sub">Só exercícios presentes nas duas janelas. Abaixo de 1% seria ruído de arredondamento de anilha.</p>
+          <button class="secondary" style="width:100%;margin-top:9px">Dizer à mão que a força não está subindo</button>
+          <p class="note">Serve para quando o cálculo está cego: volta de pausa, troca de exercício, deload, doença. Enquanto estiver à mão, a régua mostra “sinal definido por você”.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Séries por músculo</h3><span>87 de 90</span></div>
+          <div class="bars">
+            <div class="bar"><span class="t">Deltoide lateral<i>prioridade máxima</i></span><span class="g"><i style="width:100%"></i><u style="left:100%"></u></span><b>12</b></div>
+            <div class="bar"><span class="t">Peito superior<i>prioridade máxima</i></span><span class="g"><i class="under" style="width:80%"></i><u style="left:100%"></u></span><b>8</b></div>
+            <div class="bar"><span class="t">Dorsal<i>secundária</i></span><span class="g"><i style="width:100%"></i><u style="left:100%"></u></span><b>10</b></div>
+            <div class="bar"><span class="t">Panturrilha<i>secundária</i></span><span class="g"><i style="width:100%"></i><u style="left:100%"></u></span><b>10</b></div>
+            <div class="bar"><span class="t">Tríceps<i>normal</i></span><span class="g"><i style="width:100%"></i><u style="left:100%"></u></span><b>6</b></div>
+          </div>
+          <div class="warnb">
+            <strong>Uma inversão nesta semana</strong>
+            No peito: peito superior (prioridade máxima) levou 8 séries e peito (normal) levou 2 — mas o peito superior ficou abaixo das 10 prescritas. Foi o exercício cortado na sexta.
+          </div>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Treino</h3><span>4 sessões de 5</span></div>
+          <p class="sub">87 séries · 66% com RIR · mediana de 51 min · 2 sessões encerradas por você, 2 fechadas sozinhas.</p>
+          <p class="note">Sessão fechada sem encerrar tem duração aproximada, até a última série. O sinal de fadiga “passando de 90 min” fica menos confiável por isso.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Comida</h3><span>por refeição</span></div>
+          <p class="sub">Café da manhã 5 de 7 · almoço 4 de 7 · lanche 2 de 7 · jantar 3 de 7 · pré-treino 4 de 5 dias de treino.</p>
+          <p class="note">O lanche das 15:30 é o que mais some. É o que acontece no trabalho, no meio da tarde.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#s5">Hoje</a><a class="on" href="#s5">Semanas</a><a href="#s5">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="state" id="s6" aria-labelledby="s6h">
+  <div class="cap">
+    <p class="tag">Estado 6 · os passos já dados</p>
+    <h2 id="s6h">O ajuste é acumulado, e precisa ser auditável</h2>
+    <p>Dois cortes somam −300 kcal, e o peso voltar à faixa-alvo não devolve nada. Por isso cada passo guarda o que o produziu, e a lista mostra isso em ordem: a data, de quanto para quanto, a saída da regra, o texto da regra <b>naquele momento</b> e a adesão dos 14 dias anteriores.</p>
+    <p>Há uma linha a mais, que o registro permite e que vale ouro aqui: <b>a adesão da semana anterior a cada mudança</b>. É como se vê se a régua mexeu na comida em cima de uma semana mal executada.</p>
+    <p>Restaurar o plano do nutricionista zera o ajuste acumulado — e isso está escrito antes do toque, não depois.</p>
+    <p class="refs">F202 · F207 · F216 · F217 · F219</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">21:40</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="back">‹ Semana</button><div class="ttl"><strong>Passos aplicados</strong><span>ajuste acumulado: +150</span></div><button class="pillb">···</button></div>
+      <div class="scroll">
+        <div class="blk">
+          <div class="blk-h"><h3>Ajuste em vigor</h3><span>desde 04/10</span></div>
+          <p class="big num" style="margin-top:4px">+150 <small>kcal sobre o plano original</small></p>
+          <p class="sub">Dia de treino: 3.161 kcal · descanso: 2.998 kcal · arroz 310 g no almoço e no jantar.</p>
+        </div>
+        <ul class="hist">
+          <li><b>04/10/2026 · +150 kcal</b><i>3.007 → 3.161 em dia de treino · saída “aumentar”</i>
+            <i>adesão no momento: 12 de 14 · adesão da semana anterior ao passo: 86%</i>
+            <i>texto da regra guardado: “Abaixo de 0,10 kg/semana nas duas, com força não subindo e adesão registrada: +150 kcal.”</i></li>
+        </ul>
+        <div class="blk">
+          <div class="blk-h"><h3>Voltar ao plano do nutricionista</h3></div>
+          <p class="sub">Devolve a prescrição original <b style="color:var(--text)">e zera o ajuste acumulado</b>: o arroz volta a 250 g e o +150 deixa de existir. O histórico dos passos continua aqui.</p>
+          <button class="secondary" style="width:100%;margin-top:9px">Restaurar o plano original</button>
+        </div>
+        <p class="note">Nenhum passo se aplica sozinho, e nenhum se desfaz sozinho. A régua propõe; quem aplica é você, e fica escrito que foi você, quando e com que números.</p>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#s6">Hoje</a><a class="on" href="#s6">Semanas</a><a href="#s6">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="state" id="s7" aria-labelledby="s7h">
+  <div class="cap">
+    <p class="tag">Estado 7 · vazio</p>
+    <h2 id="s7h">A primeira semana: a régua ainda não tem o que ler</h2>
+    <p>Sem peso, sem comida e sem força, a régua tem uma saída declarada — pedir pesagens — e a tela mostra só ela, com o que falta em cada frente. O que não existe aparece como ausência, não como zero: nem gráfico vazio, nem 0%.</p>
+    <p>O bloco do fim diz quanto tempo falta para cada coisa começar a valer: três semanas com duas pesagens para a régua, 14 dias de comida para a adesão, quatro semanas de cargas em três exercícios para a força. É o único lugar do produto onde uma espera é informação útil.</p>
+    <p class="refs">F175 · F198 · F211 · F212 · F213 · F222</p>
+  </div>
+  <div class="phone">
+    <div class="sb"><span class="num">20:05</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><b class="bat"></b></span></div>
+    <div class="app">
+      <div class="d-head"><button class="arrow" disabled>‹</button><div class="ttl"><strong>Esta semana</strong><span>primeira do registro</span></div><button class="arrow" disabled>›</button></div>
+      <div class="scroll">
+        <div class="verdict hold">
+          <p class="src">Régua do nutricionista · 21/09</p>
+          <h3>Pedir pesagens</h3>
+          <p>“Sem semanas suficientes: pedir pesagens, 3 a 4 por semana.” É a saída da regra para este caso, com as palavras dela.</p>
+        </div>
+        <div class="empty">
+          <p class="b">Nada aqui está errado</p>
+          <p>Uma semana sem registro é uma semana desconhecida, não uma semana ruim. Nenhum número desta tela vale zero.</p>
+        </div>
+        <div class="blk">
+          <div class="blk-h"><h3>Quando cada coisa começa a valer</h3></div>
+          <ul class="hist">
+            <li><b>A régua do nutricionista</b><i>3 semanas seguidas com 2 pesagens cada</i></li>
+            <li><b>A adesão da comida</b><i>14 dias de registro · a regra pede 11 conhecidos</i></li>
+            <li><b>A tendência de força</b><i>cerca de 4 semanas de cargas em pelo menos 3 exercícios</i></li>
+            <li><b>O ritmo de ganho</b><i>12 dias de base</i></li>
+            <li><b>A variação da cintura</b><i>médias semanais cobrindo 21 dias</i></li>
+          </ul>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Lugares"><a href="#s7">Hoje</a><a class="on" href="#s7">Semanas</a><a href="#s7">Prescrição</a></nav>
+    </div>
+    <div class="hi oncard"></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="state" id="s8" aria-labelledby="s8h">
+  <div class="cap">
+    <p class="tag">Estado 8 · claro e escuro</p>
+    <h2 id="s8h">Os dois temas, desenhados</h2>
+    <p>O cartão da régua é o objeto mais importante da tela e, nos dois temas, é o que tem a borda mais forte — azul quando é leitura, laranja quando há algo a aplicar. No escuro, o que falta usa o vermelho claro e continua marcado por palavra (“falta”), nunca só por cor.</p>
+    <p class="refs">decisão 5 do dono · F215</p>
+  </div>
+  <div class="duo">
+    <div class="frame">
+      <div class="shrink"><div class="phone">
+        <div class="sb"><span class="num">21:20</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+        <div class="app">
+          <div class="d-head"><button class="arrow">‹</button><div class="ttl"><strong>21/09 – 27/09</strong><span>semana fechada</span></div><button class="arrow">›</button></div>
+          <div class="scroll">
+            <div class="verdict act">
+              <p class="src">Régua do nutricionista</p>
+              <h3>Aumentar 150 kcal</h3>
+              <p>Ganho abaixo de 0,10 nas duas semanas, força não subindo, adesão registrada.</p>
+              <ul class="why">
+                <li><span>Taxa 07/09 → 14/09</span><b class="num">+0,04</b></li>
+                <li><span>Taxa 14/09 → 21/09</span><b class="num">+0,07</b></li>
+                <li class="ok"><span>Adesão registrada</span><b class="num">12 / 14</b></li>
+              </ul>
+            </div>
+            <div class="step">
+              <h4>No prato, isto é:</h4>
+              <div class="arrowrow"><div class="cellv"><b class="num">250 g</b><span>arroz no almoço</span></div><div class="ar">→</div><div class="cellv to"><b class="num">310 g</b><span>arroz no almoço</span></div></div>
+              <button class="primary" style="margin-top:12px">Aplicar o passo</button>
+            </div>
+          </div>
+          <nav class="tabs"><a href="#s8">Hoje</a><a class="on" href="#s8">Semanas</a><a href="#s8">Prescrição</a></nav>
+        </div>
+        <div class="hi oncard"></div>
+      </div></div>
+      <p>Claro</p>
+    </div>
+    <div class="frame">
+      <div class="shrink"><div class="phone" data-tema="escuro" data-fixo>
+        <div class="sb"><span class="num">21:20</span><span class="sig"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><b class="bat"></b></span></div>
+        <div class="app">
+          <div class="d-head"><button class="arrow">‹</button><div class="ttl"><strong>21/09 – 27/09</strong><span>semana fechada</span></div><button class="arrow">›</button></div>
+          <div class="scroll">
+            <div class="verdict act">
+              <p class="src">Régua do nutricionista</p>
+              <h3>Aumentar 150 kcal</h3>
+              <p>Ganho abaixo de 0,10 nas duas semanas, força não subindo, adesão registrada.</p>
+              <ul class="why">
+                <li><span>Taxa 07/09 → 14/09</span><b class="num">+0,04</b></li>
+                <li><span>Taxa 14/09 → 21/09</span><b class="num">+0,07</b></li>
+                <li class="ok"><span>Adesão registrada</span><b class="num">12 / 14</b></li>
+              </ul>
+            </div>
+            <div class="step">
+              <h4>No prato, isto é:</h4>
+              <div class="arrowrow"><div class="cellv"><b class="num">250 g</b><span>arroz no almoço</span></div><div class="ar">→</div><div class="cellv to"><b class="num">310 g</b><span>arroz no almoço</span></div></div>
+              <button class="primary" style="margin-top:12px">Aplicar o passo</button>
+            </div>
+          </div>
+          <nav class="tabs"><a href="#s8">Hoje</a><a class="on" href="#s8">Semanas</a><a href="#s8">Prescrição</a></nav>
+        </div>
+        <div class="hi oncard"></div>
+      </div></div>
+      <p>Escuro</p>
+    </div>
+  </div>
+</section>
+
+</main>
+<script>
+(function(){
+  var btns=document.querySelectorAll('.theme button');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    btns.forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+    var t=b.dataset.t;
+    document.querySelectorAll('.phone').forEach(function(p){
+      if(p.hasAttribute('data-fixo'))return;
+      if(t==='escuro')p.setAttribute('data-tema','escuro');else p.removeAttribute('data-tema');
+    });
+  })});
+  var live=document.getElementById('live');if(!live)return;
+  var ap=live.querySelector('[data-aplicar]'),passo=live.querySelector('[data-passo]'),dep=live.querySelector('[data-depois]'),
+      antes=live.querySelector('[data-antes]');
+  ap.addEventListener('click',function(){
+    passo.hidden=true;dep.hidden=false;
+    antes.classList.remove('act');antes.querySelector('h3').textContent='Aumentar 150 kcal · aplicado';
+    dep.querySelector('.toast .u').focus({preventScroll:true});
+  });
+  dep.querySelector('.toast .u').addEventListener('click',function(){
+    passo.hidden=false;dep.hidden=true;
+    antes.classList.add('act');antes.querySelector('h3').textContent='Aumentar 150 kcal';
+    ap.focus({preventScroll:true});
+  });
+})();
+</script>
+</body>
+</html>

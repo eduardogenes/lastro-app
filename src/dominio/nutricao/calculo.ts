@@ -6,7 +6,7 @@
 // um número é derivado, quem mostra tem que dizer de onde veio.
 
 import type {
-  Alimento, DiaComida, DiaComidaHist, Item, LinhaCompra, Quando, Refeicao, Totais, Turno
+  Alimento, ComoFoiARefeicao, DiaComida, DiaComidaHist, Item, LinhaCompra, Quando, Refeicao, Totais, Turno
 } from './tipos';
 
 export const VAZIO: Totais = { kcal: 0, p: 0, c: 0, g: 0 };
@@ -65,7 +65,26 @@ export function totalDoDia(
     .reduce((acc, r) => somaTotais(acc, totalDaRefeicao(r, catalogo, alta, escala[r.id] ?? 1)), VAZIO);
 }
 
-/** O que já foi comido: só as refeições marcadas. */
+/**
+ * O que já foi comido: só as refeições marcadas.
+ *
+ * Refeição marcada com `como: 'nao'` fica FORA: ele declarou que não comeu, e
+ * somar as calorias dela seria o total afirmar o contrário do que ele disse.
+ *
+ * Refeição com `como: 'fora'` entra com os números do plano, porque são os
+ * únicos que o app tem — ele comeu, só não foi isto. A marca é a procedência
+ * que diz que o número é do prescrito, não do que entrou; o app não adivinha a
+ * diferença e não finge saber.
+ *
+ * `como: 'nsei'` ENTRA, pelo mesmo caminho de `'fora'`, e esta é a leitura em
+ * que ele NÃO é `'nao'` — `semCumprimento` existe e de propósito não é usado
+ * aqui. "Não sei" é não saber a quantidade, não saber que ela foi zero: tirar a
+ * refeição daqui faria o total afirmar zero kcal, que é a única coisa que se
+ * sabe falsa. Entra com o prescrito, que é o que o app tem, e a marca fica como
+ * procedência. A adesão é que pesa 0 — ver `pesoDaRefeicao` —, e são leituras
+ * diferentes de propósito: uma mede quanto do prescrito foi cumprido, a outra
+ * estima o que entrou.
+ */
 export function totalRegistrado(
   plano: Refeicao[],
   catalogo: Record<string, Alimento>,
@@ -74,7 +93,8 @@ export function totalRegistrado(
   alta: boolean
 ): Totais {
   return plano
-    .filter(r => refeicaoEntra(r, treino, alta) && dia.done[r.id])
+    .filter(r => refeicaoEntra(r, treino, alta) && dia.done[r.id]
+                 && !(dia.como && dia.como[r.id] === 'nao'))
     .reduce((acc, r) => somaTotais(acc, totalDaRefeicao(r, catalogo, alta, dia.escala[r.id] ?? 1)), VAZIO);
 }
 
@@ -269,6 +289,71 @@ export function arrozDoAjuste(base: number, ajuste: number, refeicoes: number = 
   return Math.max(0, Math.round(base) + passo);
 }
 
+/** Quanto deste item veio do ajuste. Ausente = nada; ver `Item.ajq`. */
+export function ajusteNoItem(i: Item): number {
+  const v = i.ajq;
+  return (typeof v === 'number' && isFinite(v)) ? v : 0;
+}
+
+/**
+ * A quantidade PRESCRITA do item: o que sobra quando o ajuste é devolvido.
+ *
+ * É a invariante `q − ajq` do tipo, com as duas guardas do prato: arredonda,
+ * porque `q` é número de colher, e não desce abaixo de zero.
+ */
+export function quantidadePrescrita(i: Item): number {
+  return Math.max(0, Math.round(i.q) - ajusteNoItem(i));
+}
+
+/**
+ * Aplica o saldo de passos aos itens marcados com arroz, e grava quanto deu a
+ * cada um.
+ *
+ * O desfazer aqui NÃO é recalculado: a base de cada item é `q − ajq`, que é a
+ * prescrição dele, qualquer que seja a quantidade de pratos hoje. Era o
+ * recálculo pela contagem de agora que tirava comida em silêncio quando o plano
+ * mudava no meio — ver `Item.ajq`.
+ *
+ * Aplicar, por outro lado, CONTINUA dividindo pela contagem de agora: o passo é
+ * do dia inteiro e se reparte entre os pratos que existem hoje, que é o que o
+ * plano prescreve. O defeito era só na volta.
+ *
+ * Chamar duas vezes com o mesmo saldo não acumula: a segunda chamada parte da
+ * mesma prescrição e chega no mesmo lugar.
+ */
+export function aplicaAjusteNoArroz(itens: Item[], ajuste: number): boolean {
+  let mudou = false;
+  itens.forEach(function (i) {
+    const base = quantidadePrescrita(i);
+    const q = arrozDoAjuste(base, ajuste, itens.length);
+    if (q !== i.q) mudou = true;
+    i.q = q;
+    // O que ele DEU, não o passo que se pediu: um corte que esbarrou no zero
+    // deu menos, e é o que deu que tem de voltar. Zero não se grava.
+    const dado = q - base;
+    if (dado) { if (i.ajq !== dado) mudou = true; i.ajq = dado; }
+    else { if (i.ajq !== undefined) mudou = true; delete i.ajq; }
+  });
+  // DEVOLVE se mexeu, em vez de deixar o chamador inferir. Quem muda o plano
+  // tem de carimbar a versão, e carimbar sem mudar é o erro oposto — igual de
+  // ruim, porque faz o app relatar divergência onde não houve. A função que
+  // mexe é a única que sabe se mexeu.
+  return mudou;
+}
+
+/**
+ * Tira do item a marca de arroz — e devolve a ele o que o ajuste lhe deu.
+ *
+ * A marca é o que faz o ajuste aterrar neste item; sem ela, o desfazer nunca
+ * mais passa por aqui, e os gramas ficariam para sempre. Como o número é do
+ * dono, o app devolve exatamente o que tomou: o item volta à prescrição.
+ */
+export function tiraMarcaDeArroz(i: Item): void {
+  i.q = quantidadePrescrita(i);
+  delete i.arroz;
+  delete i.ajq;
+}
+
 /**
  * A lista de compras — derivada, nunca guardada.
  *
@@ -338,6 +423,13 @@ export function fmtKg(v: number, u: 'g' | 'ml'): string {
  * dele. É o único jeito de o passado continuar verdadeiro quando o plano muda:
  * derivar depois leria o plano de HOJE e responderia "quanto isso custaria
  * agora" fingindo responder "quanto custou naquele dia".
+ *
+ * O INSTANTE de cada marca atravessa. Antes da migração 9→10 o dia corrente não
+ * tinha a hora de cada refeição — era `Record<string, 1>` —, e esta função
+ * carimbava todas com a hora do FECHAMENTO: um dia inteiro aparecia marcado às
+ * 23h59, e a fixture do plano 9 registra isso. Com `DiaComida.done` convergido,
+ * a hora que sobrevive é a da marca; a do fechamento só entra onde não houver
+ * outra.
  */
 export function fechaDia(
   dia: DiaComida,
@@ -350,7 +442,10 @@ export function fechaDia(
   const treinando = dia.cadencia === 'treino';
   const alta = !!dia.alta;
   const done: Record<string, number> = {};
-  Object.keys(dia.done || {}).forEach(function (k) { done[k] = agora; });
+  Object.keys(dia.done || {}).forEach(function (k) {
+    const q = dia.done[k];
+    done[k] = (typeof q === 'number' && isFinite(q) && q > 1) ? q : agora;
+  });
   const h: DiaComidaHist = {
     d: dia.data,
     done: done,
@@ -360,6 +455,17 @@ export function fechaDia(
     pv: pv,
     m: agora
   };
+  // `como` é atributo da marca: só desce ao histórico para refeição que está em
+  // `done`. Solto, ele afirmaria "saiu do plano" sobre uma refeição que o dia
+  // não diz ter acontecido.
+  if (dia.como) {
+    const como: Record<string, ComoFoiARefeicao> = {};
+    Object.keys(dia.como).forEach(function (k) {
+      if (done[k] != null && dia.como![k]) como[k] = dia.como![k];
+    });
+    if (Object.keys(como).length) h.como = como;
+  }
+  if (dia.aguaNaoContada && !h.agua) h.aguaNaoContada = 1;
   if (dia.cadencia) h.cadencia = dia.cadencia;
   if (dia.alta) h.alta = 1;
   if (dia.turno) h.turno = dia.turno;
@@ -368,18 +474,213 @@ export function fechaDia(
   return h;
 }
 
+// ---------- pôr comida num dia de data arbitrária ----------
+//
+// A tarefa que o app não tem. Hoje `diaDeComida()` carimba o dia com a data,
+// `fechaDiaDeComida` congela o dia velho na virada, e `marcaRefeicao` escreve
+// SEMPRE no dia corrente: não existe caminho para registrar a terça que ele
+// esqueceu de marcar. Esta função é esse caminho, e só ela — a folha que a
+// chama é outra frente.
+//
+// Função pura: não lê relógio, não lê estado, não toca em tela, e devolve um
+// histórico NOVO em vez de mexer no que recebeu.
+
+/** O que aconteceu num dia. Só o que vier preenchido é escrito. */
+export interface ComidaDoDia {
+  /** refeição → instante da marca. O instante é de quem chama: aqui não há relógio */
+  done?: Record<string, number>;
+  /** refeição → como ela saiu do plano */
+  como?: Record<string, ComoFoiARefeicao>;
+  /** ajuste de porção por refeição */
+  escala?: Record<string, number>;
+  agua?: number;
+  aguaNaoContada?: 1;
+  cadencia?: 'treino' | 'descanso' | null;
+  alta?: 1;
+  turno?: Turno;
+  aderencia?: 'plano' | 'fora' | 'perdido';
+}
+
+export interface PostoNoDia {
+  /** o histórico novo, em ordem de data. O de entrada não é tocado */
+  hist: DiaComidaHist[];
+  /** o dia gravado, ou `null` quando nada foi gravado */
+  dia: DiaComidaHist | null;
+  /** por que nada foi gravado */
+  recusa: 'data' | 'futuro' | 'mudo' | null;
+}
+
+/**
+ * Põe comida num dia de data arbitrária, criando ou completando a linha dele.
+ *
+ * As regras, e cada uma é uma decisão:
+ *
+ * **Data futura é recusada.** Um dia que não aconteceu não pode ser
+ * registrado — é a mesma regra que a tela de corpo já aplica à pesagem em data
+ * passada (`nunca futura`, `tests/fluxo/corpo.test.js`). `hojeISO` entra por
+ * parâmetro porque nenhuma função deste módulo lê relógio.
+ *
+ * **O que já estava no dia não é apagado: é completado.** `done`, `como` e
+ * `escala` se unem chave a chave, com o que vem agora vencendo em conflito;
+ * `agua` e os campos de dia só são escritos se vierem. Pôr o dia em dia é
+ * acrescentar o que faltou, e um merge que zerasse o resto transformaria
+ * "marquei o jantar que esqueci" em "apaguei o resto da terça".
+ *
+ * **Dia que continua mudo não vira linha.** Mesma regra de
+ * `fechaDiaDeComida`: guardar um dia vazio como zero seria dizer que ele não
+ * comeu, que é o erro de medição que confunde silêncio com falha. Se a linha já
+ * existia, ela fica como está — apagar um dia do histórico é destrutivo, não
+ * foi desenhado, e não é isto que esta função faz.
+ *
+ * **O total é recongelado, com carimbo novo.** O congelamento de
+ * `DiaComidaHist.tot` protege o passado de mudanças no PLANO, não de mudanças
+ * nas MARCAS: as marcas mudaram agora, de propósito, então o total tem que
+ * mudar com elas — é o mesmo que `fechaDiaDeComida` faz ao reabrir um dia.
+ * `pv` é a procedência, e é ele que permite a tela dizer "este dia foi
+ * calculado contra um plano diferente do atual".
+ *
+ * **O limite honesto, dito:** para um dia passado, `plano` é o plano de HOJE —
+ * o plano daquela data não existe em lugar nenhum (`pv` guarda QUANDO ele era
+ * aquele, não O QUE era). Então um dia posto em dia é contado contra o plano
+ * atual, e `pv` registra isso. Não há como fazer melhor sem um snapshot por
+ * dia, que a 10 anos estoura o teto do Safari — o cálculo está no comentário de
+ * `DiaComidaHist.pv`.
+ *
+ * `ajuste` segue a mesma honestidade: quem chama passa o que estava em vigor
+ * NAQUELE dia. Com `null`, o que a linha já tinha é preservado.
+ */
+export function poeComidaNoDia(
+  hist: DiaComidaHist[],
+  data: string,
+  comida: ComidaDoDia,
+  plano: Refeicao[],
+  catalogo: Record<string, Alimento>,
+  hojeISO: string,
+  pv: number,
+  ajuste: number | null,
+  agora: number
+): PostoNoDia {
+  const lista = Array.isArray(hist) ? hist.slice() : [];
+  const nada = function (recusa: PostoNoDia['recusa']): PostoNoDia {
+    return { hist: lista, dia: null, recusa: recusa };
+  };
+
+  if (typeof data !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return nada('data');
+  if (typeof hojeISO === 'string' && data > hojeISO) return nada('futuro');
+
+  const j = lista.findIndex(function (x) { return x && x.d === data; });
+  const antes: DiaComidaHist | null = j >= 0 ? lista[j] : null;
+  const c = comida || {};
+
+  // o dia na forma do dia CORRENTE, que é o que `fechaDia` sabe congelar: uma
+  // função só decide o que é total congelado, e é a que já decidia
+  const dia: DiaComida = {
+    data: data,
+    done: Object.assign({}, antes ? antes.done : {}, c.done || {}),
+    agua: c.agua != null ? Math.max(0, c.agua) : (antes ? antes.agua || 0 : 0),
+    escala: Object.assign({}, antes ? antes.escala : {}, c.escala || {}),
+    como: Object.assign({}, antes ? antes.como : {}, c.como || {}),
+    cadencia: c.cadencia !== undefined ? c.cadencia : (antes ? antes.cadencia : null)
+  };
+  const alta = c.alta !== undefined ? c.alta : (antes ? antes.alta : undefined);
+  if (alta) dia.alta = 1;
+  const turno = c.turno !== undefined ? c.turno : (antes ? antes.turno : undefined);
+  if (turno) dia.turno = turno;
+  const aderencia = c.aderencia !== undefined ? c.aderencia : (antes ? antes.aderencia : undefined);
+  if (aderencia) dia.aderencia = aderencia;
+  const semConta = c.aguaNaoContada !== undefined
+    ? c.aguaNaoContada : (antes ? antes.aguaNaoContada : undefined);
+  if (semConta) dia.aguaNaoContada = 1;
+
+  const mudo = !Object.keys(dia.done).length && !(dia.agua > 0)
+               && !dia.cadencia && !dia.turno && !dia.aderencia && !dia.aguaNaoContada;
+  if (mudo) return nada('mudo');
+
+  const h = fechaDia(dia, plano, catalogo, pv,
+                     ajuste != null ? ajuste : (antes && antes.aj) || 0, agora);
+
+  // Chamada que não mudou nada não reescreve a linha nem adianta o carimbo de
+  // alteração: `m` é o que a fusão usa para desempatar, e bumpá-lo sem mudança
+  // faria este aparelho afirmar ser a cópia mais nova de um dia que ele não
+  // tocou. É a mesma regra do `identicos` da sincronização.
+  if (antes && JSON.stringify(Object.assign({}, h, { m: 0 }))
+            === JSON.stringify(Object.assign({}, antes, { m: 0 }))) {
+    return { hist: lista, dia: antes, recusa: null };
+  }
+
+  if (j >= 0) lista[j] = h; else lista.push(h);
+  lista.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  return { hist: lista, dia: h, recusa: null };
+}
+
+/**
+ * A marca diz que não há cumprimento a contar nesta refeição?
+ *
+ * Os DOIS valores que zeram, por razões opostas, e é o único lugar onde eles se
+ * encontram: `'nao'` é zero conhecido — ele declarou que não comeu —, e
+ * `'nsei'` é não saber. Um não pode ser lido pelo outro em nenhuma outra
+ * leitura (ver `totalRegistrado`, onde `'nsei'` segue `'fora'`), e é por isso
+ * que a condição mora numa função só: escrita à mão em cada ponto, bastava um
+ * esquecimento para o "não sei" passar a contar como refeição cumprida — que é
+ * inflar adesão, o mecanismo exato do corte errado.
+ *
+ * `'fora'` NÃO zera: ele comeu, só não foi aquilo.
+ */
+function semCumprimento(h: { como?: Record<string, ComoFoiARefeicao> }, id: string): boolean {
+  const c = h.como && h.como[id];
+  return c === 'nao' || c === 'nsei';
+}
+
+/**
+ * O peso de uma refeição na aderência do dia: de 0 a 1, nunca mais.
+ *
+ * `'nao'` é 0 — ele declarou que não comeu aquela refeição, e isso é diferente
+ * de não ter marcado nada: um é fato, o outro é silêncio. `'fora'` mantém o
+ * peso da escala, porque a marca fala do CONTEÚDO e a escala da quantidade.
+ *
+ * `'nsei'` também é 0, e NÃO sai do denominador: a decisão é a mesma do
+ * denominador da janela de 14 dias ("o denominador é a janela, não os dias
+ * registrados"), aplicada dentro do dia. Peso 1 inflaria a adesão, e inflar
+ * adesão autoriza um corte que não devia acontecer; peso 0 subestima, e
+ * subestimar só segura o corte. O caminho de menor esforço tem de ser o
+ * conservador. Sem limiar nenhum: não existe quantidade de "não sei" que mude a
+ * regra, só um número mais baixo.
+ *
+ * O TETO DE 1 é a decisão que as porções acima de 1 obrigaram. A régua de
+ * porções do app vai até 1½, e sem teto `escala: 1.5` empurrava a aderência do
+ * dia acima de 100% — ou seja, comer mais que o plano aparecia como aderir
+ * MELHOR do que aderir. Aderência responde "quanto do prescrito foi cumprido",
+ * e cumprir uma refeição é cumpri-la: mais que ela não é mais cumprimento.
+ * O excedente não é descartado, é medido à parte, em `excessoDoDia` — pelo
+ * mesmo motivo que esta função pondera em vez de contar: o dado existe e jogar
+ * fora o mais informativo seria o erro.
+ */
+function pesoDaRefeicao(h: DiaComidaHist, id: string): number {
+  if (semCumprimento(h, id)) return 0;
+  const e = h.escala && h.escala[id];
+  const peso = (typeof e === 'number' && isFinite(e) && e >= 0) ? e : 1;
+  return Math.min(1, peso);
+}
+
 /**
  * A aderência de um dia: quanto do prescrito foi de fato cumprido.
  *
  * PONDERADA pela escala, e não a contagem crua de refeições marcadas. "Marcou
  * feito com escala 0,5" e "comeu tudo" não são a mesma coisa, e o app já tem
  * esse dado — descartá-lo na hora de medir seria jogar fora justamente o mais
- * informativo.
+ * informativo. Nunca passa de 1: ver `pesoDaRefeicao`.
  *
  * `null` quando NADA foi marcado. Ausência de registro não é aderência zero:
  * ele pode ter comido perfeitamente e só não ter aberto o app, e tratar o
  * silêncio como falha é erro de medição — engana o próprio usuário sobre o que
  * aconteceu.
+ *
+ * O DENOMINADOR é `refs`, as refeições do plano naquele dia — e é por isso que
+ * a regra do nutricionista sobre a ceia vale **para trás sem reescrever byte
+ * nenhum**: `refs` sai de `refeicoesDeHoje(plano, …)` com o plano de HOJE, a
+ * cada leitura. Uma refeição que entra no plano muda o denominador de todo dia
+ * do histórico na próxima leitura. O que está congelado em `DiaComidaHist` é
+ * `tot` — as calorias e os macros —, e a aderência não o usa.
  */
 export function aderenciaDoDia(h: DiaComidaHist, refs: Refeicao[]): number | null {
   const ids = Object.keys(h.done || {});
@@ -389,8 +690,40 @@ export function aderenciaDoDia(h: DiaComidaHist, refs: Refeicao[]): number | nul
   let soma = 0;
   ids.forEach(function (id) {
     if (!noDia[id]) return;                       // refeição que não existe mais
+    soma += pesoDaRefeicao(h, id);
+  });
+  return soma / refs.length;
+}
+
+/**
+ * O que passou do plano naquele dia — a outra metade da porção acima de 1.
+ *
+ * Existe porque a aderência ganhou teto de 1 por refeição, e sem este número o
+ * "comi mais que o plano" sumiria do sistema: ninguém saberia a diferença entre
+ * o dia seguido à risca e o dia em que ele comeu uma vez e meia o almoço.
+ *
+ * É a MESMA base da aderência — somatório ponderado sobre as refeições do dia
+ * —, só que contando o excedente: `escala: 1.5` numa refeição de seis dá 0,083.
+ * Então aderência e excesso se leem juntos: 100% e +8% é um dia cumprido com
+ * sobra, e 100% sozinho é um dia cumprido.
+ *
+ * `null` nas mesmas condições da aderência: silêncio não é zero.
+ */
+export function excessoDoDia(h: DiaComidaHist, refs: Refeicao[]): number | null {
+  const ids = Object.keys(h.done || {});
+  if (!ids.length || !refs.length) return null;
+  const noDia: Record<string, 1> = {};
+  refs.forEach(function (r) { noDia[r.id] = 1; });
+  let soma = 0;
+  ids.forEach(function (id) {
+    if (!noDia[id]) return;
+    // não comeu, ou não sabe: não há excedente a medir. Se esta linha lesse só
+    // `'nao'`, uma refeição em "não sei" com a régua em 1½ pesaria 0 na adesão
+    // e +0,083 no excesso — o mesmo dado dizendo que ele não cumpriu e que
+    // comeu além. Zero nos dois, pelo mesmo motivo
+    if (semCumprimento(h, id)) return;
     const e = h.escala && h.escala[id];
-    soma += (typeof e === 'number' && e >= 0) ? e : 1;
+    if (typeof e === 'number' && isFinite(e) && e > 1) soma += e - 1;
   });
   return soma / refs.length;
 }
@@ -426,7 +759,12 @@ export function padraoPorRefeicao(
     refs.forEach(function (r) {
       if (!por[r.id]) por[r.id] = { id: r.id, feitas: 0, possiveis: 0 };
       por[r.id].possiveis++;
-      if (h.done[r.id]) por[r.id].feitas++;
+      // marcada com "não comi" não é cumprida: esta leitura responde "qual
+      // refeição eu mais falho", e contar um pulo declarado como acerto faria
+      // ela apontar justamente para o lado errado. "Não sei" também não é
+      // cumprimento — é a mesma aritmética da adesão por refeição: fica no
+      // denominador (`possiveis`) e não entra no numerador
+      if (h.done[r.id] && !semCumprimento(h, r.id)) por[r.id].feitas++;
     });
   });
   return plano.map(function (r) { return por[r.id]; }).filter(Boolean);
@@ -439,6 +777,30 @@ export function padraoPorRefeicao(
  * isso não pode embasar corte. `fora` conta: sair do plano sabendo mais ou
  * menos o que comeu ainda deixa a semana legível. `perdido` não conta, mesmo
  * com refeições marcadas: o que ele marcou não descreve o que entrou.
+ *
+ * **"Não comi" CONTA** — é posição do nutricionista, e é o que diferencia um
+ * dia honesto de um dia esquecido. Uma refeição marcada com `como: 'nao'` é
+ * consumo conhecido, e conhecido é zero: o app sabe exatamente o que entrou
+ * ali. Vem de graça da forma do dado, porque "não comi" é marca em `done` com
+ * atributo, e não ausência de marca; a alternativa — guardar o "não comi" fora
+ * de `done` — faria o dia honesto valer menos que o dia esquecido, que é
+ * exatamente o defeito que a regra existe para corrigir.
+ *
+ * **"Não sei" POR REFEIÇÃO também conta**, e esta função não precisou de uma
+ * linha para isso: `'nsei'` é marca em `done`, e uma marca qualquer basta. É
+ * decisão, não efeito colateral — a incerteza de uma refeição aparece na adesão
+ * baixa daquele dia (`pesoDaRefeicao` devolve 0), e não tirando o dia da
+ * janela. **Nenhum limiar**: um dia inteiro em "não sei" é adesão 0 e continua
+ * contando.
+ * O "não sei" DO DIA continua sendo `aderencia: 'perdido'`, e continua sendo o
+ * único valor que derruba o dia. São dois registros diferentes de propósito: um
+ * diz "não sei o que foi este almoço", o outro diz "não sei o que foi este
+ * dia".
+ *
+ * É esta função que alimenta o portão de `MIN_REGISTRADOS` (11 em 14,
+ * `src/dominio/corpo.ts`) — o portão que nunca abriu uma vez. O limiar não
+ * muda: é do nutricionista. O que muda é que declarar "não comi" com um toque
+ * passa a produzir um dia contado, em vez de silêncio.
  */
 export function diaInterpretavel(h: DiaComidaHist): boolean {
   if (h.aderencia === 'perdido') return false;
@@ -529,7 +891,10 @@ export function contagemDaRefeicao(
     const refs = refeicoesDeHoje(plano, h.cadencia === 'treino', !!h.alta, h.turno);
     if (!refs.some(function (r) { return r.id === refId; })) return;
     possiveis++;
-    if (h.done[refId]) feitas++;
+    // "não comi" e "não sei" ficam no denominador e fora do numerador; é a
+    // mesma régua de `padraoPorRefeicao`, e a frase que ela escreve na tela
+    // ("feita em X dos últimos Y dias") não pode contar um desconhecido
+    if (h.done[refId] && !semCumprimento(h, refId)) feitas++;
   });
   return { feitas: feitas, possiveis: possiveis };
 }

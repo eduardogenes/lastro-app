@@ -97,13 +97,16 @@ function estadoVazio(extra) {
  * @param {object} [opcoes]
  * @param {object|string} [opcoes.estado] estado inicial gravado no localStorage
  * @param {number} [opcoes.agora] fixa `Date.now` do app, antes do boot
+ * @param {boolean} [opcoes.semArmazenamento] o acesso a `localStorage` estoura,
+ *   como em aba privada: o app cai para memória e não guarda nada
  * @returns {object} app
  */
 function abrirApp(opcoes) {
   const o = opcoes || {};
   const erros = [];
   const vibrou = [];
-  const registro = { bipes: 0, wakeLock: 0, confirmou: [], respostas: [], aceita: true };
+  const registro = { bipes: 0, wakeLock: 0, confirmou: [], respostas: [], aceita: true,
+                     cotaCheia: !!o.cotaCheia };
 
   const console_ = new VirtualConsole();
   console_.on('jsdomError', function (e) { erros.push(e.message); });
@@ -128,6 +131,51 @@ function abrirApp(opcoes) {
         return registro.respostas.length ? registro.respostas.shift() : padrao;
       };
       w.navigator.vibrate = function (p) { vibrou.push(p); return true; };
+
+      // O APARELHO CHEIO: a escrita da chave do estado falha como o Safari falha
+      // no teto (~5 MiB, F53) — `QuotaExceededError`. Só a chave do estado, e não
+      // todas: a sonda do armazenamento grava uma chave descartável no boot, e
+      // ela tem de passar, senão o app cairia para memória e o caso testaria o
+      // modo privado em vez do aparelho cheio.
+      const protoStorage = Object.getPrototypeOf(w.localStorage);
+      const setItemOriginal = protoStorage.setItem;
+      protoStorage.setItem = function (k, v) {
+        if (registro.cotaCheia && k === CHAVE) throw new w.DOMException('cheio', 'QuotaExceededError');
+        return setItemOriginal.call(this, k, v);
+      };
+
+      // O PAINEL DE PARE (decisão 13) responde pelo MESMO contrato do
+      // `confirm()`: a frase entra em `perguntas()`, e `aceitar`/`recusar` (ou
+      // `confirmar: false`) decidem qual botão é tocado. As nove ações que
+      // apagam dado sem volta saíram do `confirm()` para este painel, e sem isto
+      // cada caso que as exercita teria de aprender a tocar no painel — o que é
+      // trabalho de um caso só, e esse caso usa `painelManual`.
+      //
+      // Cada pedido tem um número (`data-pare`): o Preact reaproveita o nó entre
+      // dois pedidos seguidos, e marcar o NÓ como respondido deixaria o segundo
+      // pendurado para sempre.
+      let ultimoPare = 0;
+      w.addEventListener('DOMContentLoaded', function () {
+        if (o.painelManual) return;
+        new w.MutationObserver(function () {
+          const painel = w.document.querySelector('[data-pare]');
+          if (!painel) return;
+          const id = Number(painel.getAttribute('data-pare'));
+          if (id <= ultimoPare) return;
+          ultimoPare = id;
+          registro.confirmou.push(painel.querySelector('.pare-t').textContent);
+          const aceita = o.confirmar !== false && registro.aceita;
+          painel.querySelector(aceita ? '[data-a="pare-sim"]' : '[data-a="pare-nao"]').click();
+        }).observe(w.document.body, { childList: true, subtree: true });
+      });
+
+      // O ARMAZENAMENTO MUDO: o do host (`window.storage`, o do Claude.ai) nunca
+      // responde. A sonda espera por ele, e a leitura do registro trava — é a
+      // "leitura local sem resposta" da §7.2 da frente 3.
+      if (o.armazenamentoMudo) {
+        const nunca = function () { return new Promise(function () {}); };
+        w.storage = { get: nunca, set: nunca, delete: nunca };
+      }
 
       // jsdom reporta 'prerender'; o app testa !document.hidden
       Object.defineProperty(w.document, 'hidden', { value: false, configurable: true });
@@ -201,6 +249,25 @@ function abrirApp(opcoes) {
           w.localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
         });
       }
+
+      // ---- O aparelho que NÃO está guardando ----
+      //
+      // Aba privada, armazenamento bloqueado por política, `file://` travado:
+      // nesses casos o ACESSO a `localStorage` estoura, e não só a escrita.
+      // `src/infra/db.ts` sonda isso e cai para memória — e até esta passada
+      // ninguém lia o resultado da sonda: o app funcionava inteiro e perdia
+      // tudo ao fechar a aba, em silêncio.
+      //
+      // Vem DEPOIS das semeaduras de propósito: com a opção ligada, o boot
+      // também não consegue LER, que é exatamente o que acontece de verdade.
+      // Semear junto é legítimo e reproduz "estava lá, e agora não dá para
+      // escrever"; o estado semeado simplesmente não chega ao app.
+      if (o.semArmazenamento) {
+        Object.defineProperty(w, 'localStorage', {
+          configurable: true,
+          get: function () { throw new Error('acesso a localStorage bloqueado'); }
+        });
+      }
     }
   });
 
@@ -216,6 +283,48 @@ function abrirApp(opcoes) {
     /** avalia e devolve já desserializado, para atravessar realms com segurança */
     J: function (codigo) { return JSON.parse(w.__escopo('JSON.stringify(' + codigo + ')')); },
 
+    // ----- a superfície: a porta por VALOR, sem `eval` e sem tocar a tela -----
+    //
+    // `a.E('toggle(0)')` e `a.v('toggle', 0)` fazem a mesma coisa, e a segunda
+    // sobrevive ao redesenho: ela entra por uma tabela de nomes que o app
+    // declara, com contrato escrito em `src/main.jsx`, em vez de por uma string
+    // avaliada no escopo de topo do bundle inteiro.
+    //
+    // O que NÃO passa por aqui, de propósito: escrever em `S` no meio do teste
+    // e instalar dublê em `globalThis`. Isso continua em `a.E`.
+
+    /** a superfície crua, no realm do jsdom — para quem precisa do objeto */
+    m: w.__modelo,
+
+    /**
+     * Chama um verbo por valor. `a.v('toggle', 0)`, `a.v('ctx.setAgua', 3)`.
+     *
+     * Devolve o que o verbo devolveu, CRU. Primitivo atravessa o realm sem
+     * ajuda; verbo `async` devolve promessa do jsdom, que `await` resolve. Para
+     * objeto ou lista use `a.vJ`, senão `deepStrictEqual` reclama de protótipo.
+     */
+    v: function (nome) {
+      return w.__modelo.chama(nome, Array.prototype.slice.call(arguments, 1));
+    },
+
+    /** o mesmo, com o resultado já desserializado no realm do Node */
+    vJ: function (nome) {
+      return JSON.parse(w.__modelo.chamaJSON(nome, Array.prototype.slice.call(arguments, 1))).v;
+    },
+
+    /** o estado inteiro, desserializado — substitui `a.J('S…')` */
+    S: function () { return JSON.parse(w.__modelo.leJSON('S')).v; },
+
+    /** `view`, desserializado — substitui `a.J('view…')` */
+    vista: function () { return JSON.parse(w.__modelo.leJSON('view')).v; },
+
+    /**
+     * Uma leitura nomeada da superfície: `a.dado('CAT')`, `a.dado('timer')`.
+     * Desserializada, menos o que não é dado — `timer` é um handle de
+     * `setInterval`, e aí o que importa é só se existe.
+     */
+    dado: function (chave) { return JSON.parse(w.__modelo.leJSON(chave)).v; },
+
     /** id do exercício que ocupa a posição i do treino d — a chave do histórico */
     k: function (dia, i) { return w.__escopo('id(' + JSON.stringify(dia) + ',' + i + ')'); },
     /** histórico daquela posição, já desserializado */
@@ -230,15 +339,47 @@ function abrirApp(opcoes) {
     /** espera o boot assíncrono do app (load() é async) */
     pronto: function () { return app.esperar(60); },
     /**
-     * Abre uma aba da shell. Depois da fusão o app cai em HOJE, que é a tela
-     * certa para quem acorda e olha o telefone — mas quase todo teste desta
-     * pasta é sobre o TREINO, e por isso o harness abre lá por padrão. Quem
-     * testa a fusão passa `aba` explicitamente.
+     * Abre um dos cinco lugares da shell — ou o MODO DE SESSÃO, que não é
+     * lugar.
+     *
+     * `'treino'` continua aceito e virou o nome do modo. A aba de treino deixou
+     * de existir na reestruturação dos cinco lugares: a sessão é um estado em
+     * que o resto sai da frente, não um lugar entre lugares. Mas "levar o teste
+     * à tela do treino" continua sendo exatamente o que vinte e um casos desta
+     * pasta querem dizer, e o modo DESENHA o mesmo `Treino` — então a palavra
+     * fica e o destino muda, em um lugar só.
+     *
+     * `abreModoDeSessao` e NÃO `abreTreinoDeHoje`, e a diferença me custou 80
+     * vermelhos: a porta 1 recusa em dia de descanso — corretamente, não há
+     * treino a abrir —, e o padrão semanal decide isso pelo DIA DA SEMANA em
+     * que a suíte roda. Entrar no modo é navegação e não depende de haver
+     * treino nenhum, que é a regra escrita da frente 1. A letra do dia continua
+     * sendo `view.day`, que nasce em 'A' e cada caso move com `go` se precisar.
      */
-    aba: function (nome) { w.__escopo('CTX.vaiPara(' + JSON.stringify(nome) + ')'); },
+    aba: function (nome) {
+      // `vaiPara` do lugar atual ANTES de abrir: ele é quem fecha o que estiver
+      // em tela cheia, e sem isso entrar no modo a partir de outro destino
+      // (os Ajustes, por exemplo) empilha o modo POR BAIXO dele — `telaCheia()`
+      // tem ordem de precedência, e quem estava já ganha.
+      if (nome === 'treino') {
+        w.__escopo('CTX.vaiPara(CTX.abaAtual()); CTX.abreModoDeSessao()');
+        return;
+      }
+      // `'ajustes'` também não é lugar: é o botão do canto do Agora, e abre um
+      // destino de tela cheia. Fica aqui pela mesma razão do modo — "leva o
+      // teste à tela de X" continua sendo o que o caso quer dizer.
+      if (nome === 'ajustes') { w.__escopo('CTX.abreAjustes()'); return; }
+      w.__escopo('CTX.vaiPara(' + JSON.stringify(nome) + ')');
+    },
 
     /**
-     * Escolhe o modo interno do DADOS ('corpo' | 'treino') ou da COMIDA.
+     * Escolhe o chip interno de um lugar — SEMANA ('treino' | 'comida') ou
+     * PRESCRIÇÃO ('programa' | 'comida' | 'alimentos' | 'semana').
+     *
+     * Os chips existem porque a altura obriga: sem eles a tela da Semana somava
+     * quase cinco telas de rolagem, não por estar mal organizada, mas por fazer
+     * oito coisas legítimas de uma vez. Corpo, Dias e Ajustes não têm chip —
+     * cada um é um assunto só.
      *
      * O modo é estado do componente, não de `view`, então não dá para alcançá-lo
      * pelo `__escopo` — e é bom que não dê: o caminho é o mesmo do usuário,
@@ -262,16 +403,90 @@ function abrirApp(opcoes) {
       alvo.dispatchEvent(new w.Event('click', { bubbles: true }));
       return app.esperar();
     },
+    /**
+     * Força um render.
+     *
+     * Existe por causa do `E()`: ele escreve no estado pela porta velha, sem
+     * passar por verbo nenhum, e portanto sem pintar. Antes isso passava
+     * despercebido porque o caso logo chamava `aba('treino')`, que trocava de
+     * aba e pintava de tabela. Com a aba de treino virando MODO, entrar nele
+     * quando já se está dentro é — corretamente — um no-op, e a tela ficava
+     * velha: o modelo dizia "pergunta" e a tela mostrava o atalho de antes.
+     *
+     * O app pinta sozinho na batida de 30 s; o teste não espera 30 s.
+     */
+    pintar: function () { w.__modelo.chama('render'); return app.esperar(); },
+
     esperar: function (ms) { return new Promise(function (r) { setTimeout(r, ms == null ? 20 : ms); }); },
 
     /** preenche uma série; null em qualquer campo deixa o campo intocado */
+    /**
+     * Preenche a série `k` do exercício `i`.
+     *
+     * As DUAS entram pela porta POR VALOR (`anotaSerie`), porque nenhuma das
+     * duas é campo: a régua transformou a repetição em botão e o teclado próprio
+     * fez o mesmo com a carga. `digitar` num botão escreve `.value` num nó que
+     * não tem `.value` — não estouraria, e a série simplesmente não seria
+     * registrada. Falha silenciosa em 90 casos, na primeira das duas trocas.
+     *
+     * Usar o modelo aqui é o desenho do modelo, não um atalho: `anotaSerie`
+     * existe com a razão escrita de que "nenhum teste conseguia registrar uma
+     * série sem a tela de hoje". Quem exercita a RÉGUA são os casos da régua,
+     * que tocam nos botões dela.
+     */
     preencher: function (i, k, peso, reps) {
-      if (peso !== null && peso !== undefined) app.digitar('w' + i + '_' + k, peso);
-      if (reps !== null && reps !== undefined) app.digitar('r' + i + '_' + k, reps);
+      if (peso !== null && peso !== undefined) app.v('anotaSerie', i, k, 0, peso);
+      if (reps !== null && reps !== undefined) app.v('anotaSerie', i, k, 1, reps);
+    },
+    /**
+     * Registra `v` repetições na série `k` do exercício `i` TOCANDO na régua.
+     *
+     * Abre a régua, anda até a página em que `v` aparece e toca no número — o
+     * caminho do dedo, e não a porta do modelo. É o que `preencher` deixou de
+     * fazer: lá a repetição entra por `anotaSerie` porque os casos de lá são
+     * sobre outra coisa; aqui o assunto é a régua.
+     *
+     * Estoura se não alcançar, e isso é de propósito: o domínio promete no
+     * máximo três toques, e um caso que não alcança é a promessa quebrada.
+     */
+    regua: async function (i, k, v) {
+      const abre = d.getElementById('r' + i + '_' + k);
+      if (!abre) throw new Error('não há botão de repetição em r' + i + '_' + k);
+      if (!d.querySelector('[data-a="regua-' + v + '"]')) {
+        app.clicar(abre);
+        await app.esperar();
+      }
+      for (let volta = 0; volta < 6; volta++) {
+        const alvo = d.querySelector('[data-a="regua-' + v + '"]');
+        if (alvo) { app.clicar(alvo); await app.esperar(); return volta; }
+        const visiveis = Array.from(d.querySelectorAll('[data-a^="regua-"]'))
+          .map(function (b) { return Number(String(b.getAttribute('data-a')).slice(6)); })
+          .filter(function (n) { return Number.isFinite(n); });
+        if (!visiveis.length) throw new Error('a régua não está aberta em r' + i + '_' + k);
+        const dir = v < Math.min.apply(null, visiveis) ? 'menos' : 'mais';
+        const seta = d.querySelector('[data-a="regua-' + dir + '"]');
+        if (!seta) {
+          throw new Error('a régua não alcança ' + v + ': ela mostra ' + visiveis.join(', ') +
+            ' e não há seta para ' + dir);
+        }
+        app.clicar(seta);
+        await app.esperar();
+      }
+      throw new Error('a régua não chegou a ' + v + ' em seis voltas');
     },
     digitar: function (id, valor) {
       const el = d.getElementById(id);
       if (!el) throw new Error('campo ' + id + ' não existe na tela');
+      // Escrever `.value` num botão não estoura: o nó aceita a propriedade e
+      // ninguém a lê. A linha do caso fica MORTA e verde, que é o pior resultado
+      // possível. Aconteceu de verdade quando a régua trocou a repetição por
+      // botão, e de novo quando o teclado próprio trocou a carga — nos dois
+      // casos a série simplesmente não era registrada.
+      if (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA' && el.tagName !== 'SELECT') {
+        throw new Error('o ' + id + ' é um <' + el.tagName.toLowerCase() + '>, não um campo: ' +
+          'digitar nele não faz nada. Se o controle virou botão, use o toque dele ' +
+          '(a régua, o teclado próprio) ou a porta por valor do modelo.');
+      }
       el.value = String(valor);
       el.dispatchEvent(new w.Event('input', { bubbles: true }));
       return el;
@@ -290,6 +505,8 @@ function abrirApp(opcoes) {
 
     /** tudo que o app perguntou por confirm ou prompt */
     perguntas: function () { return registro.confirmou.slice(); },
+    /** o armazenamento enche (ou volta a ter espaço) para a chave do estado */
+    encheCota: function (cheio) { registro.cotaCheia = cheio !== false; },
     /** o próximo confirm passa a ser recusado */
     recusar: function () { registro.aceita = false; },
     aceitar: function () { registro.aceita = true; },
@@ -305,8 +522,22 @@ function abrirApp(opcoes) {
     /** o texto cru que sobrou na chave antiga; null quando a migração a apagou */
     legado: function () { return w.localStorage.getItem(CHAVE_LEGADO); },
 
+    /**
+     * Fecha o aparelho — e DESLIGA o app antes de fechar.
+     *
+     * A ordem é o conserto. Antes daqui o harness só parava o cronômetro e
+     * chamava `w.close()`: a janela morria debaixo de um app que continuava
+     * trabalhando, e o que estava em voo acordava sem `document`. Eram as
+     * quatro rejeições não tratadas que a suíte reportava ao fim de cada
+     * execução — todas de `protocolo.test.js`, onde a busca dos bytes da foto
+     * de corpo ainda está esperando o IndexedDB quando o teste termina.
+     *
+     * `CTX.desliga()` já para os relógios (o cronômetro inclusive) e desmonta a
+     * árvore do Preact, que é o que faz o Preact DESCARTAR re-render enfileirado
+     * e efeito pendente em vez de rodá-los contra o vazio.
+     */
     fechar: function () {
-      try { w.__escopo('stopTimer()'); } catch (e) {}
+      try { w.__escopo('CTX.desliga()'); } catch (e) {}
       try { w.close(); } catch (e) {}
     }
   };
@@ -318,7 +549,12 @@ function abrirApp(opcoes) {
 async function app(opcoes) {
   const a = abrirApp(opcoes);
   await a.pronto();
-  a.aba((opcoes && opcoes.aba) || 'treino');
+  // O padrão continua sendo a tela do TREINO — quase todo caso desta pasta é
+  // sobre ela —, e agora chega lá pelo modo. Quem testa a casca das abas passa
+  // `aba` explicitamente.
+  // Com o armazenamento mudo o registro não abre, e trocar de aba renderizaria
+  // — o que desarmaria o prazo da abertura no meio do caso que o mede.
+  if (!(opcoes && opcoes.armazenamentoMudo)) a.aba((opcoes && opcoes.aba) || 'treino');
   return a;
 }
 

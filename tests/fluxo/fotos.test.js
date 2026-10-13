@@ -12,12 +12,12 @@ const guardadas = a => guardadasEm(a, 'lastro-fotos');
 
 test('o botão convida quando não há foto e mostra quando há', async () => {
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   const rotulos = () => a.$$('.ex.open .exacoes .histbtn').map(x => x.textContent.trim());
   assert.ok(rotulos().includes('foto'), rotulos().join(' | '));
 
   a.E('S.fotos["chest-press-inclinado-convergente"] = { v: 1, ext: "webp" }');
-  a.E('render()');
+  a.v('render');
   assert.ok(rotulos().includes('aparelho'), 'com foto, o rótulo muda: ' + rotulos().join(' | '));
   a.fechar();
 });
@@ -25,21 +25,21 @@ test('o botão convida quando não há foto e mostra quando há', async () => {
 test('a foto entra no cache do aparelho, e só a referência no estado', async () => {
   const a = await app();
   cacheFalso(a);
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
   assert.ok(a.$('.ins-folha'), 'a folha abriu');
 
   await a.E(`tiraFoto({ files: [new Blob(['foto'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(50);
 
-  const ref = a.J('S.fotos["chest-press-inclinado-convergente"]');
+  const ref = a.S().fotos["chest-press-inclinado-convergente"];
   assert.ok(ref && ref.v > 0, 'a referência ficou no estado');
   assert.strictEqual(ref.ext, 'webp');
   assert.deepStrictEqual(guardadas(a), ['./foto/chest-press-inclinado-convergente.webp'],
     'e os bytes foram para o cache, não para o estado');
 
   // o estado não pode ter engordado com imagem
-  const json = a.E('JSON.stringify(S.fotos)');
+  const json = JSON.stringify(a.S().fotos);
   assert.ok(json.length < 200, 'a referência é pequena: ' + json.length + ' bytes');
   a.fechar();
 });
@@ -48,16 +48,16 @@ test('apagar tira a referência e deixa lápide', async () => {
   const a = await app();
   cacheFalso(a);
   a.E('window.confirm = () => true');
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
   await a.E(`tiraFoto({ files: [new Blob(['foto'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(50);
 
-  await a.E('apagaFoto()');
+  await a.v('apagaFoto');
   await a.esperar(50);
-  assert.strictEqual(a.E('S.fotos["chest-press-inclinado-convergente"]'), undefined);
+  assert.strictEqual(a.S().fotos["chest-press-inclinado-convergente"], undefined);
   assert.deepStrictEqual(guardadas(a), [], 'os bytes saíram do cache também');
-  assert.ok(a.J('S.apagados')['foto:chest-press-inclinado-convergente'],
+  assert.ok(a.S().apagados['foto:chest-press-inclinado-convergente'],
     'a lápide impede o outro aparelho de ressuscitar a referência');
   a.fechar();
 });
@@ -68,12 +68,12 @@ test('a foto chega à tela como endereço de objeto, sem passar pela rede', asyn
   // havia quem respondesse, e a imagem quebrava.
   const a = await app();
   cacheFalso(a);
-  a.E('toggle(0)');
-  a.E('abreFoto(0)');
+  a.v('toggle', 0);
+  a.v('abreFoto', 0);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(60);
 
-  const url = a.E('CTX.foto("chest-press-inclinado-convergente").url');
+  const url = a.vJ('ctx.foto', 'chest-press-inclinado-convergente').url;
   assert.match(url, /^blob:/, 'endereço de objeto, não caminho de rede: ' + url);
   assert.ok(!/^https?:/.test(url), 'e nada de endereço externo');
   a.fechar();
@@ -84,17 +84,30 @@ test('sem os bytes lidos, a tela simplesmente não desenha a imagem', async () =
   const a = await app();
   cacheFalso(a);
   a.E('S.fotos["pendulum-squat"] = { v: 123, ext: "webp" }');
-  assert.strictEqual(a.E('CTX.foto("pendulum-squat").url'), null);
+  assert.strictEqual(a.vJ('ctx.foto', 'pendulum-squat').url, null);
   a.fechar();
 });
 
 test('sem foto, a folha não desenha imagem nenhuma', async () => {
   // quadro vazio não informa: o sistema manda não desenhar nada
   const a = await app();
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
   assert.strictEqual(a.$('.fotoex'), null, 'sem <img> e sem placeholder');
-  assert.ok(a.texto('.foto-vazio').includes('Sem foto'));
+  assert.strictEqual(a.texto('.foto-vazio'), 'Nenhuma foto desta máquina neste aparelho.');
+  assert.strictEqual(a.texto('.foto-b'), 'fotografar o aparelho', 'o botão diz o que faz (§7.8)');
+  a.fechar();
+});
+
+test('foto registrada que não chegou a este aparelho não diz "sem foto"', async () => {
+  // A referência existe (outro aparelho tirou, ou a nuvem ainda não devolveu),
+  // e os bytes não estão aqui. Dizer "nenhuma foto" seria mentir sobre o dado.
+  const a = await app({ estado: { logs: {}, done: [], fotos: { 'chest-press-inclinado-convergente': { v: 1, ext: 'jpg' } } } });
+  a.v('abreFoto', 0);
+  await a.esperar();
+  assert.strictEqual(a.$('.fotoex'), null, 'pré-condição: a imagem não está aqui');
+  assert.strictEqual(a.texto('.foto-vazio'), 'A foto desta máquina ainda não chegou a este aparelho.');
+  assert.strictEqual(a.texto('.foto-b'), 'trocar a foto');
   a.fechar();
 });
 
@@ -104,7 +117,7 @@ test('a foto tirada aqui sobe para a nuvem', async () => {
   const a = await app();
   cacheFalso(a);
   nuvemComBucket(a);
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(80);
@@ -121,7 +134,7 @@ test('referência sem bytes locais busca a foto do outro aparelho', async () => 
   nuvemComBucket(a, { 'pendulum-squat.webp': 1 });
   a.E(`S.fotos = { 'pendulum-squat': { v: 999, ext: 'webp' } }`);
 
-  await a.E('reconciliaFotos()');
+  await a.v('reconciliaFotos');
   await a.esperar(80);
 
   assert.ok(guardadas(a).includes('./foto/pendulum-squat.webp'),
@@ -134,13 +147,13 @@ test('sem rede, a reconciliação para e não perde a conta', async () => {
   cacheFalso(a);
   nuvemComBucket(a);
   a.E(`NUVEM.subirFoto = async () => ({ ok: false, erro: 'rede', msg: 'sem conexão' })`);
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(80);
 
-  assert.ok(a.J('S.fotos')['chest-press-inclinado-convergente'], 'a foto está aqui de qualquer forma');
-  assert.strictEqual(a.E('sync.fotos["chest-press-inclinado-convergente"]'), undefined,
+  assert.ok(a.S().fotos['chest-press-inclinado-convergente'], 'a foto está aqui de qualquer forma');
+  assert.strictEqual(a.dado('sync').fotos["chest-press-inclinado-convergente"], undefined,
     'e não foi marcada como enviada — a próxima sincronização tenta de novo');
   a.fechar();
 });
@@ -150,13 +163,13 @@ test('apagar tira do bucket também, para o byte não ficar órfão', async () =
   cacheFalso(a);
   nuvemComBucket(a);
   a.E('window.confirm = () => true');
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(80);
   assert.ok(a.J('globalThis.__bucket')['chest-press-inclinado-convergente.webp']);
 
-  await a.E('apagaFoto()');
+  await a.v('apagaFoto');
   await a.esperar(80);
   assert.strictEqual(a.J('globalThis.__bucket')['chest-press-inclinado-convergente.webp'], undefined);
   a.fechar();
@@ -170,15 +183,15 @@ test('a miniatura aparece na troca só quando há foto', async () => {
     const c = await caches.open('lastro-fotos');
     await c.put('./foto/' + id + '.webp', new Response(new Blob(['x'], { type: 'image/webp' })));
   }`);
-  a.E('toggle(0)');
-  a.E('toggleSwap(0)');
+  a.v('toggle', 0);
+  a.v('toggleSwap', 0);
   assert.strictEqual(a.$$('.swapfoto').length, 0, 'sem foto, nem moldura');
 
   // com referência E bytes no cache, a miniatura aparece
-  const primeiro = a.E('trocaDoDia(view.day, 0).grupos[0].opcoes[0].id');
+  const primeiro = a.vJ('trocaDoDia', a.vista().day, 0).grupos[0].opcoes[0].id;
   a.E('S.fotos[' + JSON.stringify(primeiro) + '] = { v: 5, ext: "webp" }');
   await a.E('FOTO_GUARDA(' + JSON.stringify(primeiro) + ')');
-  a.E('toggleSwap(0)'); a.E('toggleSwap(0)');
+  a.v('toggleSwap', 0); a.v('toggleSwap', 0);
   await a.esperar(60);
   assert.strictEqual(a.$$('.swapfoto').length, 1, 'com foto, uma miniatura');
   assert.match(a.$('.swapfoto').getAttribute('src'), /^blob:/, 'endereço de objeto');
@@ -192,8 +205,8 @@ test('a redução acontece em passos, não de uma vez', async () => {
   // perdeu antes de comprimir.
   const a = await app();
   cacheFalso(a);
-  a.E('toggle(0)');
-  a.E('abreFoto(0)');
+  a.v('toggle', 0);
+  a.v('abreFoto', 0);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(60);
 
@@ -233,8 +246,8 @@ test('print em pé não vira tira: o teto é do lado maior', async () => {
       return el;
     };
   `);
-  a.E('toggle(0)');
-  a.E('abreFoto(0)');
+  a.v('toggle', 0);
+  a.v('abreFoto', 0);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/png' })], value: '' })`);
   await a.esperar(60);
 
@@ -248,11 +261,11 @@ test('PNG entra e sai como WebP: nada de PNG chega ao bucket', async () => {
   // PNG de foto é enorme, e o bucket aceita só os dois formatos que o app grava
   const a = await app();
   cacheFalso(a);
-  a.E('toggle(0)');
-  a.E('abreFoto(0)');
+  a.v('toggle', 0);
+  a.v('abreFoto', 0);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/png' })], value: '' })`);
   await a.esperar(60);
-  assert.strictEqual(a.J('S.fotos["chest-press-inclinado-convergente"]').ext, 'webp');
+  assert.strictEqual(a.S().fotos["chest-press-inclinado-convergente"].ext, 'webp');
   a.fechar();
 });
 
@@ -275,9 +288,9 @@ test('tocar na miniatura não abre o exercício junto', async () => {
   // abrir o exercício e abrir a câmera são intenções diferentes; sem parar a
   // propagação, um toque faria as duas
   const a = await app();
-  assert.strictEqual(a.E('view.open'), null);
+  assert.strictEqual(a.vista().open, null);
   a.clicar(a.$('.exfoto'));
-  assert.strictEqual(a.E('view.open'), null, 'o cartão continua fechado');
+  assert.strictEqual(a.vista().open, null, 'o cartão continua fechado');
   a.fechar();
 });
 
@@ -291,7 +304,7 @@ test('o número do exercício continua visível, embaixo da miniatura', async ()
 test('a miniatura mostra a foto quando os bytes estão em memória', async () => {
   const a = await app();
   cacheFalso(a);
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(80);
@@ -314,7 +327,7 @@ test('as fotos mudam de cache junto com o nome do app', async () => {
     './foto/leg-press.webp': new Response(new Blob(['y'], { type: 'image/webp' }))
   }`);
 
-  const levadas = await a.E('migraCache()');
+  const levadas = await a.v('migraCache');
   assert.strictEqual(levadas, 2, 'as duas fotos passaram para o cache novo');
   assert.deepStrictEqual(guardadas(a).sort(),
     ['./foto/leg-press.webp', './foto/pendulum-squat.webp']);
@@ -329,7 +342,7 @@ test('sem cache antigo, a migração não cria um vazio', async () => {
   const a = await app();
   cacheFalso(a);
 
-  const levadas = await a.E('migraCache()');
+  const levadas = await a.v('migraCache');
   assert.strictEqual(levadas, 0);
   assert.strictEqual(a.E('"treino-fotos" in globalThis.__caches'), false,
     'perguntou com has() em vez de abrir');

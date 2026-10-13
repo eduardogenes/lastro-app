@@ -9,9 +9,105 @@
 // subir um DOM.
 
 import { fmtDec, fmtDec2, weekStart } from './formato';
-import type { Marca } from './tipos';
+import type { Marca, QualMarca } from './tipos';
 
 const DIA = 86400000;
+
+// ---------- o que o corpo mede ----------
+// Uma tabela só, e todo mundo a enumera daqui: a fusão (`sincronia.ts`), a
+// migração (`migracoes.ts`), o padrão do boot e a lista branca da importação
+// (`src/main.jsx`). Duas listas divergiriam no dia em que uma grandeza nova
+// entrasse — e a que ficasse para trás perderia o dado em silêncio, que é
+// exatamente o defeito que a lista branca da cópia de segurança acabou de
+// pagar.
+
+/** Uma grandeza medida do corpo, com a unidade e se a entrada pode ficar vazia. */
+export interface MedidaDoCorpo {
+  k: QualMarca;
+  /** o nome dela, para a tela não ter uma tabela própria */
+  n: string;
+  u: 'kg' | 'cm' | '%' | 'L';
+  /** sai da balança de bioimpedância, na mesma leitura das outras `bio` */
+  bio: boolean;
+  /**
+   * A entrada exige valor.
+   *
+   * Água corporal total é a única opcional das cinco da bioimpedância: foi a
+   * resposta dele, e não uma leniência do app. Aqui é declaração de domínio —
+   * a tela a obedece, não a decide.
+   */
+  obrigatorio: boolean;
+  /**
+   * Medida com FITA, e se ela já vem LIGADA na tela (`'ligada'`) ou espera ele
+   * ligar (`'desligada'`). `false` é o que não sai de fita: a balança.
+   *
+   * Os seis pontos e quais vêm ligados são da Direção D (`corpo.html`), tirados
+   * da resposta dele: "braço, cintura, essas coisas principais que dá pra eu
+   * medir sozinho" (P6). Cintura e braço, que ele nomeou, vêm ligados; coxa,
+   * panturrilha, peito e quadril esperam um toque. Ligar não cria cobrança:
+   * nenhuma delas tem frequência prescrita, e nenhuma entra em regra — são
+   * leitura.
+   */
+  fita: false | 'ligada' | 'desligada';
+  /**
+   * Onde o stepper parte quando ainda não há medida nenhuma.
+   *
+   * Peso e cintura são os valores que o app já usava (75 kg e 85 cm). Os pontos
+   * novos partem do meio da faixa comum de um adulto, como a régua da D abre
+   * "sem última medida" — é partida, não referência, e o teclado próprio está
+   * ao lado para o valor que estiver longe. Só a balança da bioimpedância não
+   * tem: a leitura dela entra digitada, sem stepper.
+   */
+  partida?: number;
+}
+
+export const MEDIDAS_DO_CORPO: MedidaDoCorpo[] = [
+  { k: 'peso',          n: 'peso',                      u: 'kg', bio: false, obrigatorio: true,  fita: false,       partida: 75 },
+  { k: 'cintura',       n: 'cintura',                   u: 'cm', bio: false, obrigatorio: true,  fita: 'ligada',    partida: 85 },
+  { k: 'bioPeso',       n: 'peso na bioimpedância',     u: 'kg', bio: true,  obrigatorio: true,  fita: false },
+  { k: 'bioMusculo',    n: 'massa muscular esquelética', u: 'kg', bio: true,  obrigatorio: true,  fita: false },
+  { k: 'bioGordura',    n: 'massa de gordura',          u: 'kg', bio: true,  obrigatorio: true,  fita: false },
+  { k: 'bioGorduraPct', n: 'percentual de gordura',     u: '%',  bio: true,  obrigatorio: true,  fita: false },
+  { k: 'bioAgua',       n: 'água corporal total',       u: 'L',  bio: true,  obrigatorio: false, fita: false },
+  // As medidas com fita além da cintura. Entram SEM migração, pelo contrato de
+  // `normalizaEstado()`: campo novo e vazio recebe padrão no boot e na
+  // importação, e a fusão e a cópia de segurança já enumeram esta tabela.
+  { k: 'braco',         n: 'braço',                     u: 'cm', bio: false, obrigatorio: true,  fita: 'ligada',    partida: 35 },
+  { k: 'coxa',          n: 'coxa',                      u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 56 },
+  { k: 'panturrilha',   n: 'panturrilha',               u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 37 },
+  { k: 'peito',         n: 'peito',                     u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 100 },
+  { k: 'quadril',       n: 'quadril',                   u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 96 }
+];
+
+/** As chaves de `S.body`, na ordem da tabela. */
+export const MARCAS_DO_CORPO: QualMarca[] = MEDIDAS_DO_CORPO.map(function (m) { return m.k; });
+
+/** Só as da balança de bioimpedância — as cinco que a migração 9 → 10 abriu. */
+export const MARCAS_DA_BIO: QualMarca[] =
+  MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).map(function (m) { return m.k; });
+
+/** As medidas com fita, na ordem da tabela — a cintura é a primeira. */
+export const MEDIDAS_DE_FITA: MedidaDoCorpo[] =
+  MEDIDAS_DO_CORPO.filter(function (m) { return m.fita !== false; });
+
+/** A linha da tabela de uma grandeza, ou `null` para chave desconhecida. */
+export function medidaDoCorpo(k: string): MedidaDoCorpo | null {
+  return MEDIDAS_DO_CORPO.filter(function (m) { return m.k === k; })[0] || null;
+}
+
+/**
+ * Como ele mediu este ponto da última vez que disse: o `onde` da medida MAIS
+ * RECENTE que tem um. Medida sem texto não apaga o lembrete — ele é guardado
+ * "na primeira vez" e volta nas seguintes, que normalmente vêm sem texto.
+ */
+export function ondeMediu(serie: Marca[] | null | undefined): string | null {
+  let melhor: Marca | null = null;
+  (Array.isArray(serie) ? serie : []).forEach(function (x) {
+    if (!x || typeof x.onde !== 'string' || !x.onde.trim()) return;
+    if (!melhor || x.t > melhor.t) melhor = x;
+  });
+  return melhor ? (melhor as Marca).onde!.trim() : null;
+}
 
 /** Uma semana de marcas, já resumida na média. */
 export interface Semana {
@@ -184,6 +280,13 @@ export function taxasSemanais(peso: Marca[], quantas: number = 2): TaxaSemanal[]
  *
  * O caso omisso é sempre `observar`: não alterar, continuar olhando. É o que
  * ele pediu em "CASO CONTRÁRIO", e é o que o app já fazia em todo o resto.
+ *
+ * **Os títulos falam uma gramática só** (§6.1 da frente 3): o veredito é o que
+ * a regra faz com a comida, e o que vem depois dos dois-pontos é por quê.
+ * "Não mexer" e não "Manter": manter é o que ele faria, não mexer é o que a
+ * regra faz — ela tem autoridade sobre o plano, não sobre o prato. E o título
+ * separa o que a prosa sozinha separava: "Observar" nomeava três situações, e
+ * só numa delas havia algo a fazer agora. A prosa `p` não muda uma palavra.
  */
 export function veredito(
   body: { peso: Marca[]; cintura: Marca[] },
@@ -191,7 +294,7 @@ export function veredito(
 ): Veredito {
   const taxas = taxasSemanais(body.peso, 2);
   if (!taxas)
-    return { k: 'faltam', t: 'Faltam dados', p: 'Registre o peso 3 a 4 vezes por semana. A regra pede duas semanas seguidas de média, e média de uma pesagem só não é média.' };
+    return { k: 'faltam', t: 'Não mexer: faltam pesagens', p: 'Registre o peso 3 a 4 vezes por semana. A regra pede duas semanas seguidas de média, e média de uma pesagem só não é média.' };
 
   const [ante, ult] = taxas;
   const reg = sinais.diasRegistrados;
@@ -202,13 +305,15 @@ export function veredito(
   if (ante.kg > ALTO && ult.kg > ALTO) {
     const mov = `A média subiu ${fmtDec2(ante.kg)} e depois ${fmtDec2(ult.kg)} kg — duas semanas seguidas acima de ${fmtDec(ALTO)}.`;
     if (semRegistro)
-      return { k: 'observar', t: 'Registrar antes de mexer', falta: 'aderencia',
+      return { k: 'observar', t: 'Não mexer: falta registro de comida', falta: 'aderencia',
                p: `${mov} Mas não há registro suficiente dos últimos 14 dias para saber se o ganho veio da dieta ou de saídas dela. Tirar comida do plano agora puniria os dias em que você seguiu.` };
     if (sinais.gorduraVisual === 'sim')
-      return { k: 'menos', t: 'Comer menos', p: `${mov} Com adesão registrada e aumento visual claro de gordura, o passo é −150 kcal.` };
+      return { k: 'menos', t: 'Comer menos 150 kcal', p: `${mov} Com adesão registrada e aumento visual claro de gordura, o passo é −150 kcal.` };
     if (sinais.gorduraVisual === 'nao')
-      return { k: 'manter', t: 'Manter como está', p: `${mov} As fotos não mostram piora, então o ganho está comprando músculo. Ganho acima da faixa não é ruim por si.` };
-    return { k: 'observar', t: 'Observar', falta: 'gordura',
+      // Fora da tabela da frente: aqui a taxa NÃO está na faixa (está acima),
+      // e o porquê é o da prosa — as fotos.
+      return { k: 'manter', t: 'Não mexer: as fotos não mostram piora', p: `${mov} As fotos não mostram piora, então o ganho está comprando músculo. Ganho acima da faixa não é ruim por si.` };
+    return { k: 'observar', t: 'Não mexer: falta a sua leitura das fotos', falta: 'gordura',
              p: `${mov} Falta a leitura das fotos contra as de duas semanas atrás. Sem ela o peso pede revisão, não corte.` };
   }
 
@@ -216,18 +321,18 @@ export function veredito(
   if (ante.kg < BAIXO && ult.kg < BAIXO) {
     const mov = `A média ficou em ${fmtDec2(ante.kg)} e ${fmtDec2(ult.kg)} kg por semana — duas seguidas abaixo de ${fmtDec(BAIXO)}.`;
     if (sinais.forcaSubindo)
-      return { k: 'observar', t: 'Observar', p: `${mov} Mas a força estimada está subindo: peso parado com carga subindo é recomposição, e mexer na comida atropelaria o que está dando certo.` };
+      return { k: 'observar', t: 'Não mexer: peso parado com carga subindo', p: `${mov} Mas a força estimada está subindo: peso parado com carga subindo é recomposição, e mexer na comida atropelaria o que está dando certo.` };
     if (!aderenciaOk)
-      return { k: 'observar', t: 'Registrar antes de mexer', falta: 'aderencia',
+      return { k: 'observar', t: 'Não mexer: falta registro de comida', falta: 'aderencia',
                p: `${mov} Sem registro suficiente dos últimos 14 dias não dá para saber se a comida prescrita está sendo comida.` };
-    return { k: 'mais', t: 'Comer mais', p: `${mov} Com a performance parada e a adesão registrada, o passo é +150 kcal.` };
+    return { k: 'mais', t: 'Comer mais 150 kcal', p: `${mov} Com a performance parada e a adesão registrada, o passo é +150 kcal.` };
   }
 
   // ---------- dentro da faixa, ou em qualquer outro lugar ----------
   if (ult.kg >= ALVO_MIN && ult.kg <= ALVO_MAX)
-    return { k: 'manter', t: 'Manter como está', p: `A média está subindo ${fmtDec2(ult.kg)} kg por semana, dentro da faixa-alvo de ${fmtDec(ALVO_MIN)} a ${fmtDec(ALVO_MAX)}.` };
+    return { k: 'manter', t: 'Não mexer: a taxa está na faixa', p: `A média está subindo ${fmtDec2(ult.kg)} kg por semana, dentro da faixa-alvo de ${fmtDec(ALVO_MIN)} a ${fmtDec(ALVO_MAX)}.` };
 
-  return { k: 'observar', t: 'Observar', p: `A média está em ${fmtDec2(ult.kg)} kg por semana. Não é motivo para mexer na comida — uma semana isolada fora da faixa é ruído, e a regra pede duas seguidas.` };
+  return { k: 'observar', t: 'Não mexer: uma semana sozinha não decide', p: `A média está em ${fmtDec2(ult.kg)} kg por semana. Não é motivo para mexer na comida — uma semana isolada fora da faixa é ruído, e a regra pede duas seguidas.` };
 }
 
 /** Agrupa marcas por semana e devolve a média de cada uma, em ordem. */

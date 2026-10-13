@@ -33,3 +33,23 @@ export function montaNoApp(arvore) {
   montar(arvore, raiz);
 }
 
+/**
+ * Desmonta a árvore: o fim do turno do Preact nesta página.
+ *
+ * Não é só higiene. O Preact não renderiza tudo na hora — um `useState` enfileira
+ * o re-render num microtask, e um `useEffect` espera a pintura. Os dois ficam
+ * PENDENTES, e quem os executa depois confere uma coisa só: se o componente
+ * ainda tem `_parentDom`. Desmontar zera esse campo em toda a árvore, e com isso
+ * o re-render enfileirado e o efeito pendente são DESCARTADOS em vez de rodarem
+ * contra um documento que já não existe.
+ *
+ * Era exatamente isso que acontecia nos testes de fluxo: a janela do jsdom
+ * fechava debaixo de um app vivo, e o que estava na fila acordava sem `document`
+ * — `createElementNS` de um lado, `addEventListener` do outro.
+ */
+export function desmontaDoApp() {
+  if (!raiz) return;
+  montar(null, raiz);
+  raiz = null;
+}
+

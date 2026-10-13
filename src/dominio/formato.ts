@@ -67,9 +67,32 @@ export function periodoDe(t: number): Periodo {
   return PERIODOS[2];
 }
 
+/**
+ * A hora em PROSA: "6h20", "13h45". `fmtHora` ("06:20") é a do mostrador; numa
+ * frase a hora se escreve como se fala, sem o zero da frente (frente 3, §7.7).
+ */
+export function fmtHoraDita(t: number): string {
+  const d = new Date(t);
+  return d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0');
+}
+
 export function fmtHora(t: number): string {
   const d = new Date(t);
   return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+/**
+ * Quanto tempo faz, em semanas, para prosa.
+ *
+ * "menos de 1 semana" e não "0 semanas": zero semanas lê como se nada tivesse
+ * acontecido, e o que aconteceu é que entrou há poucos dias. Veio de
+ * `src/main.jsx`, onde chamava `Date.now()` por dentro — com `agora` de fora ela
+ * se testa sem relógio.
+ */
+export function semanasDesde(t: number, agora: number): string {
+  const sem = Math.floor((agora - t) / (7 * 86400000));
+  if (sem < 1) return 'menos de 1 semana';
+  return sem + (sem === 1 ? ' semana' : ' semanas');
 }
 
 export function fmtDur(ms: number | null | undefined): string {

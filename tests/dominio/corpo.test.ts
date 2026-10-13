@@ -7,7 +7,7 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { cinturaMes, leituraVigente, mediasSemanais, pesoRitmo, veredito } from '../../src/dominio/corpo';
+import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, ondeMediu, pesoRitmo, veredito } from '../../src/dominio/corpo';
 import { medidas, naSemana, pesagens } from './ajuda';
 
 const semCintura = { peso: [] as ReturnType<typeof pesagens>, cintura: [] };
@@ -18,7 +18,7 @@ const OK = { diasRegistrados: 14, forcaSubindo: false };
 
 test('ganho travado por 2 semanas, com força parada, manda comer mais', () => {
   const v = veredito({ peso: pesagens([73.0, 73.05, 73.10]), cintura: [] }, OK);
-  assert.strictEqual(v.t, 'Comer mais');
+  assert.strictEqual(v.t, 'Comer mais 150 kcal');
   assert.ok(v.p.includes('+150 kcal'), v.p);
 });
 
@@ -31,7 +31,7 @@ test('ganho travado com a força subindo é recomposição: não mexe', () => {
 
 test('ganho na faixa-alvo manda manter', () => {
   const v = veredito({ peso: pesagens([73.0, 73.25, 73.5]), cintura: [] }, OK);
-  assert.strictEqual(v.t, 'Manter como está');
+  assert.strictEqual(v.t, 'Não mexer: a taxa está na faixa');
   assert.ok(v.p.includes('0,25'));
 });
 
@@ -49,7 +49,7 @@ test('uma semana aberrante NÃO corta: +0,10 e depois +0,75', () => {
 test('duas semanas seguidas acima de 0,40, com gordura visual, cortam', () => {
   const v = veredito({ peso: pesagens([73.0, 73.6, 74.2]), cintura: [] },
                       { diasRegistrados: 14, forcaSubindo: false, gorduraVisual: 'sim' });
-  assert.strictEqual(v.t, 'Comer menos');
+  assert.strictEqual(v.t, 'Comer menos 150 kcal');
   assert.ok(v.p.includes('−150 kcal'), v.p);
 });
 
@@ -104,7 +104,7 @@ test('cintura estourando não sobrepõe mais o peso na faixa', () => {
     peso: pesagens([73.0, 73.25, 73.5]),
     cintura: medidas([{ d: 28, v: 80.0 }, { d: 21, v: 80.6 }, { d: 7, v: 81.4 }, { d: 0, v: 82.0 }])
   }, OK);
-  assert.strictEqual(v.t, 'Manter como está', 'a cintura é informação, não veto: ' + v.p);
+  assert.strictEqual(v.t, 'Não mexer: a taxa está na faixa', 'a cintura é informação, não veto: ' + v.p);
 });
 
 // ---------- os limites, e o caso omisso ----------
@@ -123,7 +123,7 @@ test('exatamente 0,10 não é "abaixo de 0,10"', () => {
 
 test('perdendo peso o texto não diz que subiu', () => {
   const v = veredito({ peso: pesagens([73.5, 73.2, 73.0]), cintura: [] }, OK);
-  assert.strictEqual(v.t, 'Comer mais');
+  assert.strictEqual(v.t, 'Comer mais 150 kcal');
   assert.ok(!v.p.includes('subiu'), 'não pode dizer "subiu −0,30": ' + v.p);
 });
 
@@ -136,17 +136,17 @@ test('entre 0,30 e 0,40 o caso é omisso: observar, não mexer', () => {
 
 test('duas semanas não bastam: a regra pede duas TAXAS, logo três semanas', () => {
   const v = veredito({ peso: pesagens([73.0, 73.25]), cintura: [] }, OK);
-  assert.strictEqual(v.t, 'Faltam dados');
+  assert.strictEqual(v.t, 'Não mexer: faltam pesagens');
 });
 
 test('semana com uma pesagem só não é média', () => {
   const W = pesagens([73.0, 73.25, 73.5]);
   const magra = W.filter((_, i) => i < 8 || i === 8);   // a última semana fica com 1
-  assert.strictEqual(veredito({ peso: magra, cintura: [] }, OK).t, 'Faltam dados');
+  assert.strictEqual(veredito({ peso: magra, cintura: [] }, OK).t, 'Não mexer: faltam pesagens');
 });
 
 test('sem nada registrado pede registro', () => {
-  assert.strictEqual(veredito(semCintura, OK).t, 'Faltam dados');
+  assert.strictEqual(veredito(semCintura, OK).t, 'Não mexer: faltam pesagens');
 });
 
 test('cintura usa média semanal, não medida solta', () => {
@@ -203,4 +203,36 @@ test('a leitura velha some e o corte volta a travar', () => {
   });
   assert.strictEqual(v.k, 'observar');
   assert.strictEqual(v.falta, 'gordura', 'evidência vencida é ausência de evidência');
+});
+
+// ---------------------------------------------------------------------------
+// As medidas com fita — a decisão 2a do dono, e a lista da Direção D
+// ---------------------------------------------------------------------------
+
+test('seis pontos com fita, todos em cm, e só cintura e braço vêm ligados', () => {
+  // A lista é da D, tirada da resposta dele: "braço, cintura, essas coisas
+  // principais que dá pra eu medir sozinho" (P6). Os dois que ele nomeou vêm
+  // ligados; os outros esperam um toque, e ligar não cria cobrança.
+  assert.deepStrictEqual(MEDIDAS_DE_FITA.map(m => m.k),
+    ['cintura', 'braco', 'coxa', 'panturrilha', 'peito', 'quadril']);
+  assert.ok(MEDIDAS_DE_FITA.every(m => m.u === 'cm' && !m.bio), 'fita mede em cm, e não é balança');
+  assert.deepStrictEqual(MEDIDAS_DE_FITA.filter(m => m.fita === 'ligada').map(m => m.k),
+    ['cintura', 'braco']);
+  assert.ok(MEDIDAS_DE_FITA.every(m => typeof m.partida === 'number'),
+    'todo ponto com fita tem de onde o stepper partir');
+});
+
+test('o lembrete de como ele mediu é o texto da medida mais recente que tem um', () => {
+  // Guardado "na primeira vez" e devolvido nas seguintes, que normalmente vêm
+  // sem texto: medida sem texto NÃO apaga o lembrete.
+  const serie = [
+    { t: 1, v: 36, onde: 'no meio do bíceps' },
+    { t: 3, v: 36.5 },
+    { t: 2, v: 36.2, onde: '  dois dedos acima do cotovelo  ' },
+    { t: 4, v: 36.6, onde: '   ' }
+  ];
+  assert.strictEqual(ondeMediu(serie), 'dois dedos acima do cotovelo',
+    'o mais recente COM texto, aparado; espaço em branco não é texto');
+  assert.strictEqual(ondeMediu([{ t: 1, v: 36 }]), null, 'sem texto nenhum, não há lembrete');
+  assert.strictEqual(ondeMediu(undefined), null, 'e série ausente não estoura');
 });

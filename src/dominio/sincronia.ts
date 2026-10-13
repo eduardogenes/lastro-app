@@ -26,13 +26,15 @@
 //   antiga que T.
 
 import type {
-  Cardio, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId, Sessao, SessaoFoto
+  Cardio, Corpo, Estado, EntradaProgLog, FotoRef, IdEx, Log, Marca, ModeloDeAula, PoseId,
+  PromoPendente, QualMarca, Sessao, SessaoFoto
 } from './tipos';
-import type { DiaComida, DiaComidaHist } from './nutricao/tipos';
+import type { ComoFoiARefeicao, DiaComida, DiaComidaHist } from './nutricao/tipos';
+import { MARCAS_DO_CORPO } from './corpo';
 import type { LeituraDeGordura } from './corpo';
 
 /** Limites por coleção, iguais aos que o app aplica ao gravar. */
-const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200, aulas: 60, comida: 4000 };
+const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200, aulas: 60, comida: 4000, promo: 60 };
 
 /** Lápides mais velhas que isto são podadas: o que sumiu há meses já sumiu dos dois lados. */
 export const LAPIDE_DIAS = 90;
@@ -85,7 +87,15 @@ export function chaveDeLog(idEx: IdEx, l: Pick<Log, 'sid' | 'sl'>): string {
   return 'log:' + idEx + ':' + l.sid + ':' + (l.sl || idEx);
 }
 export function chaveDeSessao(m: Pick<Sessao, 'sid'>): string { return 'done:' + m.sid; }
-export function chaveDeMarca(qual: 'peso' | 'cintura', x: Pick<Marca, 't'>): string {
+/**
+ * Uma medida do corpo. A chave é a grandeza mais o instante.
+ *
+ * `qual` é `QualMarca` e não `'peso' | 'cintura'`: as cinco chaves da
+ * bioimpedância entraram na migração 9 → 10, e uma chave de fusão que não
+ * alcançasse `bioGordura` faria a medida nova nunca morrer por lápide — o
+ * outro aparelho a traria de volta depois de apagada.
+ */
+export function chaveDeMarca(qual: QualMarca, x: Pick<Marca, 't'>): string {
   return qual + ':' + x.t;
 }
 export function chaveDeCardio(c: Pick<Cardio, 't'>): string { return 'cardio:' + c.t; }
@@ -94,6 +104,23 @@ export function chaveDeDiaComida(h: Pick<DiaComidaHist, 'd'>): string { return '
 /** Uma refeição marcada dentro de um dia. Desmarcar precisa de lápide própria. */
 export function chaveDeRefeicaoFeita(dia: string, refId: string): string {
   return 'comida:' + dia + ':' + refId;
+}
+
+/**
+ * Uma pergunta de programa que espera decisão. A chave é o `sid` da sessão.
+ *
+ * `sid` sozinho, e não `day + sid`: `sid` já é a identidade de uma sessão neste
+ * módulo — `chaveDeSessao` usa só ele —, nasce no começo da sessão e nunca é
+ * reatribuído. `day` é editável no meio do treino, e entrar na chave faria a
+ * MESMA pergunta fundir como duas entradas se os dois aparelhos tivessem
+ * registrado letras diferentes para a mesma sessão; ele responderia duas vezes.
+ *
+ * Entrada anterior ao plano 10 não tem `sid`, e a migração o preencheu com `t`.
+ * O `|| p.t` aqui é o mesmo caminho, para o caso de um backup antigo chegar por
+ * fora da migração.
+ */
+export function chaveDePromo(p: Pick<PromoPendente, 'sid' | 't'>): string {
+  return 'promo:' + (typeof p.sid === 'number' ? p.sid : p.t);
 }
 
 /** O modelo de aula. A chave é o id, que nasce com ele e não muda ao renomear. */
@@ -114,6 +141,130 @@ export function chaveDeSessaoFoto(d: string): string { return 'corpo:' + d; }
  * a sessão continuaria existindo, então a lápide da sessão não a alcançaria.
  */
 export function chaveDeFotoDoCorpo(d: string, pose: PoseId): string { return 'corpo:' + d + ':' + pose; }
+
+/**
+ * Uma linha do diário do programa. A chave é o instante mais o dia.
+ *
+ * Estava escrita à mão dentro de `funde`, e é a única que estava: as outras
+ * todas saem daqui justamente para a lápide e a fusão não poderem divergir.
+ * `lapidesDoApagamento` precisa dela pelo mesmo motivo que as demais.
+ */
+export function chaveDeProgLog(x: Pick<EntradaProgLog, 't' | 'day'>): string {
+  return 'prog:' + x.t + ':' + x.day;
+}
+
+// ---------- o apagamento em bloco ----------
+
+/**
+ * Toda chave de fusão que um estado OCUPA, coleção por coleção.
+ *
+ * Espelha `funde` linha por linha, guardas inclusive: chave que existe aqui e
+ * não lá seria lápide que não mata nada, e chave que existe lá e não aqui é
+ * registro que o apagamento não alcança. As duas formas de errar são silenciosas,
+ * e é por isso que esta função não filtra "registro estranho" por conta própria
+ * — se a fusão o une sob uma chave, é essa chave que a lápide precisa ter.
+ */
+function chavesDoEstado(S: Partial<Estado> | null | undefined): Record<string, 1> {
+  const k: Record<string, 1> = {};
+  if (!S) return k;
+  const lista = function <T>(x: unknown): T[] { return Array.isArray(x) ? (x as T[]) : []; };
+
+  const logs = (S.logs || {}) as Record<string, Log[]>;
+  Object.keys(logs).forEach(function (idEx) {
+    lista<Log>(logs[idEx]).forEach(function (l) { if (l) k[chaveDeLog(idEx, l)] = 1; });
+  });
+  lista<Sessao>(S.done).forEach(function (x) { if (x) k[chaveDeSessao(x)] = 1; });
+  lista<Cardio>(S.cardio).forEach(function (x) { if (x) k[chaveDeCardio(x)] = 1; });
+  lista<EntradaProgLog>(S.progLog).forEach(function (x) { if (x) k[chaveDeProgLog(x)] = 1; });
+  lista<ModeloDeAula>(S.aulas).forEach(function (x) { if (x) k[chaveDeAula(x)] = 1; });
+  lista<PromoPendente>(S.promoPendente).forEach(function (x) { if (x) k[chaveDePromo(x)] = 1; });
+  lista<LeituraDeGordura>(S.gordura).forEach(function (x) { if (x) k[chaveDeLeitura(x)] = 1; });
+
+  // o dia de comida e, DENTRO dele, cada refeição marcada: a fusão tem lápide
+  // para as duas, e desmarcar uma refeição nunca foi apagar o dia
+  lista<DiaComidaHist>(S.comidaHist).forEach(function (h) {
+    if (!h || !h.d) return;
+    k[chaveDeDiaComida(h)] = 1;
+    Object.keys(h.done || {}).forEach(function (id) { k[chaveDeRefeicaoFeita(h.d, id)] = 1; });
+  });
+
+  // O dia ABERTO, só pelas MARCAS. Elas não estão em `comidaHist` — o dia só
+  // fecha lá na virada da data — e a fusão as une pela mesma chave de refeição,
+  // então sem isto a marca de hoje voltava do outro aparelho depois do
+  // apagamento. Medido: voltava.
+  //
+  // Só as marcas, e não o dia: `S.dia` é DOCUMENTO, e o que não é coleção vem
+  // do lado com `mtime` mais novo. A água é a exceção dentro da exceção — é
+  // contador que fica com o MAIOR dos dois, por desenho, e por isso não há
+  // lápide que a alcance.
+  const aberto = S.dia as DiaComida | null | undefined;
+  if (aberto && aberto.data) {
+    Object.keys(aberto.done || {}).forEach(function (id) {
+      k[chaveDeRefeicaoFeita(aberto.data, id)] = 1;
+    });
+  }
+
+  MARCAS_DO_CORPO.forEach(function (qual) {
+    lista<Marca>(S.body && S.body[qual]).forEach(function (x) {
+      if (x) k[chaveDeMarca(qual, x)] = 1;
+    });
+  });
+
+  Object.keys(S.descanso || {}).forEach(function (d) { k[chaveDeDescanso(d)] = 1; });
+  // referência sem versão a fusão descarta dos DOIS lados, e por isso ela não
+  // ressuscita: lápide para ela seria peso sem efeito
+  const fotos = (S.fotos || {}) as Record<string, FotoRef>;
+  Object.keys(fotos).forEach(function (id) {
+    const f = fotos[id];
+    if (f && typeof f.v === 'number') k[chaveDeFoto(id)] = 1;
+  });
+
+  lista<SessaoFoto>(S.protocolo && S.protocolo.sessoes).forEach(function (s) {
+    if (!s || !s.d) return;
+    k[chaveDeSessaoFoto(s.d)] = 1;
+    Object.keys(s.fotos || {}).forEach(function (pose) {
+      const ref = s.fotos[pose];
+      if (ref && typeof ref.v === 'number') k[chaveDeFotoDoCorpo(s.d, pose)] = 1;
+    });
+  });
+
+  return k;
+}
+
+/**
+ * As lápides de um apagamento em BLOCO.
+ *
+ * `wipe` não apaga registro por registro: ele monta um estado novo e esvazia as
+ * coleções de uma vez. Guardar as lápides antigas não resolveria nada — elas
+ * falam dos registros apagados ANTES —, e sem lápide nova a fusão lê o que
+ * sobrou no outro aparelho como registro que este simplesmente não tem, e o traz
+ * de volta. O aviso promete "isso não tem volta", e tinha.
+ *
+ * O conserto é fazer o apagamento em bloco virar o que a fusão já sabe ler:
+ * **uma lápide por registro que saiu**, com a mesma chave natural que a fusão
+ * usa para uni-lo. Daí a forma desta função ser um DIFERENÇA entre dois estados,
+ * e não "lápide para tudo que havia": se amanhã o apagamento decidir preservar
+ * uma coleção, ela deixa de aparecer no diff e nenhuma lápide a persegue. A
+ * decisão de escopo fica num lugar só, que é o estado novo.
+ *
+ * **O alcance é o que ESTE aparelho conhecia**, e isso é deliberado. Registro
+ * que só existe no outro lado não tem lápide e sobrevive; registro que o outro
+ * lado editar DEPOIS do apagamento sobrevive também, pela regra que a fusão já
+ * tem ("lápide só mata o que é mais velho que ela"). Apagar de menos se conserta
+ * repetindo o gesto no outro aparelho; apagar de mais não se conserta.
+ */
+export function lapidesDoApagamento(
+  antes: Partial<Estado> | null | undefined,
+  depois: Partial<Estado> | null | undefined,
+  agora: number
+): Record<string, number> {
+  const ficou = chavesDoEstado(depois);
+  const saida: Record<string, number> = {};
+  Object.keys(chavesDoEstado(antes)).forEach(function (k) {
+    if (!ficou[k]) saida[k] = agora;
+  });
+  return saida;
+}
 
 // ---------- as peças ----------
 
@@ -265,8 +416,14 @@ function uneSessoesDeFoto(
  * - `done` é PRESENÇA: união das duas chaves, com lápide para o desmarcado.
  *   É a mesma forma de `S.descanso`, e pelo mesmo motivo — união simples faria
  *   desmarcar num aparelho ser desfeito pelo outro.
+ * - `como` é ATRIBUTO da marca, e viaja com ela: o lado cuja marca entrou traz
+ *   o "fora do plano" ou o "não comi" junto, e a lápide que mata a marca mata o
+ *   atributo também. Fundido à parte, ele descreveria uma marca que não existe.
  * - `agua` é contador que só cresce ao longo do dia: fica o MAIOR. Carimbar um
  *   inteiro custaria mais que o risco, e subestimar um copo é ruído aceitável.
+ * - `aguaNaoContada` é o único campo em que CONTAR vence: declarar que não
+ *   contou e, no outro aparelho, ter contado são afirmações sobre o mesmo dia, e
+ *   a segunda tem dado por trás. Então o fato cai quando a união dá copo.
  * - `escala`, `tot`, `pv` e o enquadramento do dia vêm do lado com carimbo mais
  *   novo. São decisões tomadas uma vez, e a corrida entre dois aparelhos no
  *   mesmo dia é rara — mas quando houver, o registro mais recente é a leitura
@@ -288,26 +445,42 @@ function uneDiasDeComida(
     const meu = por[x.d];
     if (!meu) { por[x.d] = JSON.parse(JSON.stringify(x)); vindos++; return; }
 
-    // done: união, respeitando a lápide de cada refeição
+    // done: união, respeitando a lápide de cada refeição. `como` acompanha a
+    // marca que entrou: é atributo dela, não registro próprio
     Object.keys(x.done || {}).forEach(function (id) {
       const quando = x.done[id];
       if (typeof quando !== 'number') return;
       const morto = mortos[chaveDeRefeicaoFeita(x.d, id)];
       if (morto != null && quando <= morto) return;
-      if (meu.done[id] == null) { meu.done[id] = quando; vindos++; }
+      if (meu.done[id] == null) {
+        meu.done[id] = quando; vindos++;
+        const como = x.como && x.como[id];
+        if (como) { if (!meu.como) meu.como = {}; meu.como[id] = como; }
+      }
     });
     // e o que ESTE lado tem também passa pela lápide do outro
     Object.keys(meu.done || {}).forEach(function (id) {
       const morto = mortos[chaveDeRefeicaoFeita(x.d, id)];
-      if (morto != null && meu.done[id] <= morto) { delete meu.done[id]; apagados++; }
+      if (morto != null && meu.done[id] <= morto) {
+        delete meu.done[id];
+        if (meu.como) delete meu.como[id];
+        apagados++;
+      }
     });
 
     meu.agua = Math.max(meu.agua || 0, x.agua || 0);
+    // o fato "não contei" só sobrevive se NENHUM dos dois lados contou
+    if (!x.aguaNaoContada || !meu.aguaNaoContada) delete meu.aguaNaoContada;
+    if (meu.agua > 0) delete meu.aguaNaoContada;
 
     if (carimboM(x) > carimboM(meu)) {
       meu.escala = Object.assign({}, x.escala || {});
       meu.tot = x.tot; meu.pv = x.pv;
       meu.cadencia = x.cadencia; meu.alta = x.alta; meu.turno = x.turno; meu.aj = x.aj;
+      // `aderencia` faltava nesta lista, e por isso o enquadramento do dia era o
+      // do lado local sempre, mesmo quando o outro aparelho o tinha respondido
+      // depois. É decisão tomada uma vez, como a cadência e o turno
+      meu.aderencia = x.aderencia;
       meu.m = x.m;
     }
   });
@@ -316,7 +489,17 @@ function uneDiasDeComida(
   Object.keys(por).forEach(function (d) {
     const morto = mortos[chaveDeDiaComida({ d: d })];
     if (morto != null && carimboM(por[d]) <= morto) { apagados++; return; }
-    itens.push(por[d]);
+    // `como` sem marca não descreve nada: a invariante é que ele é atributo de
+    // quem está em `done`, e deixá-lo solto viraria "fora do plano" numa
+    // refeição que o dia não diz ter acontecido
+    const h = por[d];
+    if (h.como) {
+      Object.keys(h.como).forEach(function (id) {
+        if (h.done == null || h.done[id] == null) delete h.como![id];
+      });
+      if (!Object.keys(h.como).length) delete h.como;
+    }
+    itens.push(h);
   });
   itens.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
   return { itens: itens, vindos: vindos, apagados: apagados };
@@ -428,21 +611,45 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   // um dos dois sumir. É o mesmo dado dos dias fechados, então funde pela
   // mesma função — só volta à forma de `DiaComida` no fim.
   if (local.dia && remoto.dia && local.dia.data === remoto.dia.data) {
-    const comoHist = function (d: DiaComida): DiaComidaHist {
-      const done: Record<string, number> = {};
-      Object.keys(d.done || {}).forEach(function (k) { done[k] = 1; });
-      return { d: d.data, done: done, agua: d.agua || 0,
+    // Antes da migração 9 → 10 esta conversão achatava a marca em `1` nos dois
+    // sentidos, porque era a forma do dia aberto. Com `done` convergido, o
+    // INSTANTE atravessa: é ele que a lápide de `chaveDeRefeicaoFeita` compara,
+    // e achatá-lo fazia toda marca do dia aberto parecer de 1970 — qualquer
+    // lápide a mataria.
+    //
+    // O carimbo do dia aberto é o `mtime` DO ESTADO. `DiaComida` não tem campo
+    // de alteração — o dia zera com a data, e carimbá-lo custaria uma escrita a
+    // cada toque —, e sem carimbo os dois lados empatavam em 0: as decisões
+    // tomadas uma vez (escala, cadência, turno, enquadramento) vinham SEMPRE do
+    // lado local, mesmo quando o outro aparelho as havia respondido depois. O
+    // `mtime` é o mesmo sinal que já decide os documentos duas linhas acima.
+    const comoHist = function (d: DiaComida, mtime: number): DiaComidaHist {
+      return { d: d.data, done: Object.assign({}, d.done || {}), agua: d.agua || 0,
+               aguaNaoContada: d.aguaNaoContada,
                escala: Object.assign({}, d.escala || {}),
+               como: d.como ? Object.assign({}, d.como) : undefined,
+               // `aderencia` não entrava nesta conversão, e o `base.dia`
+               // reconstruído abaixo não a devolvia: fundir dois aparelhos no
+               // mesmo dia APAGAVA o enquadramento ("saí do plano", "dia
+               // perdido") sem dizer nada
+               aderencia: d.aderencia,
                cadencia: d.cadencia, alta: d.alta, turno: d.turno,
                tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 0,
-               m: (d as DiaComida & { m?: number }).m || 0 };
+               m: (d as DiaComida & { m?: number }).m || mtime };
     };
-    const j = uneDiasDeComida([comoHist(local.dia)], [comoHist(remoto.dia)], mortos).itens[0];
+    const j = uneDiasDeComida(
+      [comoHist(local.dia, mtimeDe(local))],
+      [comoHist(remoto.dia, mtimeDe(remoto))],
+      mortos
+    ).itens[0];
     if (j) {
-      const done: Record<string, 1> = {};
-      Object.keys(j.done).forEach(function (k) { done[k] = 1; });
-      base.dia = { data: j.d, done: done, agua: j.agua, escala: j.escala,
+      base.dia = { data: j.d, done: j.done, agua: j.agua, escala: j.escala,
                    cadencia: j.cadencia, alta: j.alta, turno: j.turno };
+      // `m` não volta para `base.dia`: `DiaComida` não tem o campo, e o carimbo
+      // que importa para a próxima fusão é o `mtime` do estado, logo abaixo.
+      if (j.aguaNaoContada) base.dia.aguaNaoContada = 1;
+      if (j.como) base.dia.como = j.como;
+      if (j.aderencia) base.dia.aderencia = j.aderencia;
     }
   }
 
@@ -453,6 +660,21 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   au.itens.sort(porTempo);
   base.aulas = au.itens.slice(-TETO.aulas);
   resumo.apagados += au.apagados;
+
+  // ---- as perguntas de programa que esperam ----
+  // Coleção e não documento, e a troca conserta uma perda que já existia: como
+  // `promoPendente` não era coleção, ela vinha INTEIRA do lado com `mtime` mais
+  // novo, e a pergunta guardada no celular sumia porque o notebook sincronizou
+  // depois. Lápide porque responder é resolver: sem ela, o outro aparelho
+  // traria de volta a pergunta que ele acabou de responder.
+  const pp = uneLista<PromoPendente>(
+    Array.isArray(local.promoPendente) ? local.promoPendente : [],
+    Array.isArray(remoto.promoPendente) ? remoto.promoPendente : [],
+    chaveDePromo, carimboM, mortos
+  );
+  pp.itens.sort(porTempo);
+  base.promoPendente = pp.itens.slice(-TETO.promo);
+  resumo.apagados += pp.apagados;
 
   // ---- o quadro do box de hoje ----
   // Documento e não coleção: é o quadro do dia em curso, e existe um só. Vence
@@ -471,9 +693,13 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   base.gordura = go.itens.slice(-TETO.protocolo);
   resumo.apagados += go.apagados;
 
-  // ---- peso e cintura ----
-  base.body = { peso: [], cintura: [] };
-  (['peso', 'cintura'] as const).forEach(function (qual) {
+  // ---- as medidas do corpo ----
+  // Enumera `MARCAS_DO_CORPO` e não uma lista escrita aqui: foram duas listas —
+  // esta e a do tipo — que mantiveram `S.body` fechado em `{ peso, cintura }`, e
+  // a migração 9 → 10 abriu as duas no mesmo passo. Grandeza que entrar na
+  // tabela de `corpo.ts` passa a fundir sem ninguém editar este arquivo.
+  base.body = {} as Corpo;
+  MARCAS_DO_CORPO.forEach(function (qual) {
     const r = uneLista<Marca>(
       (local.body && local.body[qual]) || [], (remoto.body && remoto.body[qual]) || [],
       function (x) { return chaveDeMarca(qual, x); }, carimboM, mortos
@@ -487,7 +713,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   // ---- histórico de mudanças do programa: só cresce ----
   const pl = uneLista<EntradaProgLog>(
     local.progLog || [], remoto.progLog || [],
-    function (x) { return 'prog:' + x.t + ':' + x.day; }, carimboM, mortos
+    chaveDeProgLog, carimboM, mortos
   );
   pl.itens.sort(porTempo);
   base.progLog = pl.itens.slice(-TETO.progLog);

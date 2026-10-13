@@ -26,19 +26,41 @@ html {
      árvore inteira, e quem precisa de menos (o quadro de ajuste, que arrasta)
      continua podendo pedir `none`.
 
-     O que se perde é a pinça para enxergar melhor. É aceitável aqui porque
-     nenhum texto do app é menor que 16px e a leitura não depende dela — e
-     porque zoom acidental no meio de uma série, com a mão suada, custa mais que
-     zoom deliberado ganha. */
+     O que se perde é a pinça para enxergar melhor, e o preço é maior do que
+     este comentário já afirmou. Duas correções medidas em 06/10:
+
+     1. TEM texto bem abaixo de 16px. Das 28 declarações de `font-size` nas
+        folhas, 22 estão abaixo de 16px, e a menor é 7,5px (o rótulo do eixo da
+        sparkline, `componentes.css`); duas ficam abaixo do piso de 9px que o
+        DESIGN.md escreve para rótulo mono (7,5px e 8px).
+        ESTES NÚMEROS CONTAM SÓ `font-size`. Contando também o tamanho dentro
+        do atalho `font:`, que é como a frente 4 contou, dá algo na casa de 200
+        declarações e 170 abaixo de 16px, e aí 8,5px entra como terceira abaixo
+        do piso. Os dois pares estão certos e medem coisas diferentes: lado a
+        lado eles parecem se desmentir. Quem citar um deles diz qual. O "nunca abaixo de
+        16px" é regra dos CAMPOS DE FORMULÁRIO, mais abaixo neste arquivo, onde
+        ela tem razão própria e correta — o Safari dá zoom ao focar campo com
+        fonte menor. Não é, e nunca foi, afirmação sobre o app inteiro.
+
+     2. No app INSTALADO na tela de início, a pinça FUNCIONA — medido no
+        aparelho. O `user-scalable=no` do `index.html` não é honrado ali, então
+        nesta configuração, que é como o app é usado, a declaração não faz
+        efeito. O que ela ainda alcança é o Safari fora da tela cheia.
+
+     O bloqueio fica, e a razão que o sustenta é esta, que não dependia de
+     nenhuma das duas: zoom acidental no meio de uma série, com a mão suada,
+     custa mais que zoom deliberado ganha. E o que de fato impede o zoom
+     automático — o que o Safari dá sozinho, sem ninguém pedir — é a regra dos
+     16px no campo, que é real e funciona. */
   touch-action: pan-x pan-y;
 }
 
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--ins-canvas);
-  color: var(--ins-text);
-  font-family: var(--ins-font-display);
+  background: var(--ins-fundo);
+  color: var(--ins-tinta);
+  font-family: var(--ins-fonte);
   /* Mata o rubber-band: puxar além do fim revelava uma faixa do fundo
      do body que não devia existir. Mata junto o puxar-para-recarregar, que
      num app instalado é só uma forma de perder o que estava na tela. */
@@ -71,7 +93,7 @@ body::before {
   content: "";
   position: fixed; top: 0; left: 0; right: 0;
   height: var(--sa-top); z-index: 90;
-  background: var(--ins-canvas);
+  background: var(--ins-fundo);
   pointer-events: none;
 }
 
@@ -94,7 +116,7 @@ body.ins-travado {
   overflow: hidden;
 }
 
-a { color: var(--ins-acid); text-decoration: none; }
+a { color: var(--ins-acento-tinta); text-decoration: none; }
 
 button {
   font: inherit;
@@ -102,7 +124,7 @@ button {
   background: none;
   border: none;
   padding: 0;
-  border-radius: var(--ins-radius);
+  border-radius: var(--ins-raio-3);
   /* Sem o flash cinza do iOS ao tocar; o estado ativo é desenhado por nós. */
   -webkit-tap-highlight-color: transparent;
   /* Elimina o atraso de 300 ms e o zoom por toque duplo. */
@@ -117,9 +139,9 @@ button:disabled { opacity: .4; }
 
 input, textarea, select {
   font-family: inherit;
-  color: var(--ins-text);
-  background: var(--ins-surface);
-  border: 1px solid var(--ins-border);
+  color: var(--ins-tinta);
+  background: var(--ins-superficie-2);
+  border: 1px solid var(--ins-fio-controle);
   border-radius: 0;
   -webkit-appearance: none;
   appearance: none;
@@ -131,18 +153,43 @@ input, textarea, select {
 
 input:focus, textarea:focus, select:focus {
   outline: none;
-  border-color: var(--ins-acid);
+  border-color: var(--ins-acento);
+}
+
+/* ---- O anel de foco ----
+   O contrato manda "foco sempre visível". O sistema anterior não tinha UMA
+   regra de `:focus-visible` para botão: todo botão dependia do anel padrão do
+   navegador, num canvas quase preto, onde ele tem menos chance de aparecer. E
+   nenhum caso de teste dizia uma palavra sobre isso, então a ausência nunca
+   ficou vermelha — a dívida era invisível para a rede, não só para o olho.
+
+   `:focus-visible` e não `:focus`: no toque o anel apareceria a cada dedo na
+   tela, sem nada a dizer para quem está vendo.
+
+   A FOLGA não é estética. Num botão preenchido de acento, um anel de acento
+   encostado no preenchimento é invisível; com a folga, o que aparece entre os
+   dois é a PÁGINA, e página contra acento mede 6,16:1 nos dois lados. Sem ela
+   o anel desaparece justamente no botão mais importante da tela.
+
+   O campo fica FORA desta lista de propósito: ele perde o `outline` logo acima
+   e ganha borda de acento, que é sinal no lugar onde o olho já está. */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--ins-foco-largura) solid var(--ins-foco);
+  outline-offset: var(--ins-foco-folga);
 }
 
 /* Nível 4 e não 5: no campo de busca da biblioteca o placeholder é o ÚNICO
    rótulo que existe — não há label acima dele —, e a 16px o nível 5 dá 3,2:1.
    Continua muito abaixo do valor digitado, que é branco. */
-input::placeholder, textarea::placeholder { color: var(--ins-text-4); }
+input::placeholder, textarea::placeholder { color: var(--ins-tinta-3); }
 
 /* Campo numérico do treino: type="text" com inputmode, porque type="number"
    descarta vírgula e no teclado pt-BR "22,5" chegava como string vazia. */
 /* Campo numérico em mono; busca é prosa e fica na display. */
-input[inputmode="decimal"], input[inputmode="numeric"] { font-family: var(--ins-font-mono); }
+input[inputmode="decimal"], input[inputmode="numeric"] { font-family: var(--ins-fonte); }
 
 /* A barra deslizante toma o gesto inteiro: arrastá-la é arrastá-la, e não
    rolar a página por baixo. Sem isto o dedo escorrega entre as duas coisas. */
@@ -163,6 +210,10 @@ p, .ins-prosa, input, textarea {
 #app {
   max-width: 460px;
   margin: 0 auto;
+  /* O fundo de LEITURA. Antes era herdado do body, porque havia um fundo so;
+     com `--ins-fundo` atras de tudo e `--ins-tela` aqui, a area segura e o
+     rubber-band deixam de ser a mesma cor da pagina. */
+  background: var(--ins-tela);
   /* Goteira de 20px + área segura lateral (iPhone deitado, notch). */
   padding-left: max(var(--ins-8), var(--sa-left));
   padding-right: max(var(--ins-8), var(--sa-right));
@@ -179,38 +230,38 @@ p, .ins-prosa, input, textarea {
 
 /* ---- Tipografia: os papéis do sistema ---------------------------------- */
 
-.ins-metric-xl { font: 600 52px/.9  var(--ins-font-mono); letter-spacing: -.05em; }
-.ins-metric-l  { font: 500 34px/1   var(--ins-font-mono); letter-spacing: -.04em; }
-.ins-metric-m  { font: 600 22px/1.1 var(--ins-font-mono); letter-spacing: -.03em; }
-.ins-metric-s  { font: 600 19px/1.1 var(--ins-font-mono); letter-spacing: -.03em; }
+.ins-metric-xl { font: 600 52px/.9  var(--ins-fonte); letter-spacing: -.05em; }
+.ins-metric-l  { font: 500 34px/1   var(--ins-fonte); letter-spacing: -.04em; }
+.ins-metric-m  { font: 600 22px/1.1 var(--ins-fonte); letter-spacing: -.03em; }
+.ins-metric-s  { font: 600 19px/1.1 var(--ins-fonte); letter-spacing: -.03em; }
 
-.ins-headline  { font: 700 34px/1.02 var(--ins-font-display); letter-spacing: -.035em; }
-.ins-display   { font: 700 30px/1.02 var(--ins-font-display); letter-spacing: -.03em; }
-.ins-title     { font: 700 24px/1.05 var(--ins-font-display); letter-spacing: -.03em; }
-.ins-subtitle  { font: 500 17px/1.35 var(--ins-font-display); letter-spacing: -.01em; }
+.ins-headline  { font: 700 34px/1.02 var(--ins-fonte); letter-spacing: -.035em; }
+.ins-display   { font: 700 30px/1.02 var(--ins-fonte); letter-spacing: -.03em; }
+.ins-title     { font: 700 24px/1.05 var(--ins-fonte); letter-spacing: -.03em; }
+.ins-subtitle  { font: 500 17px/1.35 var(--ins-fonte); letter-spacing: -.01em; }
 
-.ins-body      { font: 400 15px/1.4 var(--ins-font-display); }
-.ins-body-sm   { font: 400 14px/1.5 var(--ins-font-display); text-wrap: pretty; }
-.ins-body-xs   { font: 400 13px/1.5 var(--ins-font-display); text-wrap: pretty; }
+.ins-body      { font: 400 15px/1.4 var(--ins-fonte); }
+.ins-body-sm   { font: 400 14px/1.5 var(--ins-fonte); text-wrap: pretty; }
+.ins-body-xs   { font: 400 13px/1.5 var(--ins-fonte); text-wrap: pretty; }
 
 .ins-label {
-  font: 400 10px/1 var(--ins-font-mono);
+  font: 400 10px/1 var(--ins-fonte);
   letter-spacing: .18em; text-transform: uppercase;
-  color: var(--ins-text-4);
+  color: var(--ins-tinta-3);
 }
 .ins-label-sm {
-  font: 400 9px/1 var(--ins-font-mono);
+  font: 400 9px/1 var(--ins-fonte);
   letter-spacing: .16em; text-transform: uppercase;
-  color: var(--ins-text-4);
+  color: var(--ins-tinta-3);
 }
-.ins-data { font: 400 13px/1.2 var(--ins-font-mono); }
+.ins-data { font: 400 13px/1.2 var(--ins-fonte); }
 .ins-provenance {
-  font: 400 10px/1.4 var(--ins-font-mono);
+  font: 400 10px/1.4 var(--ins-fonte);
   /* text-4, não text-5: procedência CARREGA informação ("cru · 3,4 kg
      prontos") e a 10px o nível 5 dá 3,2:1, que reprova em AA. O nível 5 fica
      para o redundante: dica que repete o que já está na tela. A aba inativa
      saiu desta lista quando a medição subiu ela para o nível 4. */
-  letter-spacing: .06em; color: var(--ins-text-4);
+  letter-spacing: .06em; color: var(--ins-tinta-3);
 }
 
 /* Classe dobrada de propósito. Estas sete existem para SOBREPOR a cor que o
@@ -223,70 +274,70 @@ p, .ins-prosa, input, textarea {
    15 lugares — toda a prosa de Guia, Dados, histórico e do veredito saía no
    branco do título, sem erro nenhum, exatamente o modo de falha que o
    parágrafo acima descreve. */
-.ins-acid.ins-acid   { color: var(--ins-acid); }
-.ins-amber.ins-amber { color: var(--ins-amber); }
-.ins-coral.ins-coral { color: var(--ins-coral); }
-.ins-t2.ins-t2       { color: var(--ins-text-2); }
-.ins-t3.ins-t3       { color: var(--ins-text-3); }
-.ins-t4.ins-t4       { color: var(--ins-text-4); }
-.ins-t5.ins-t5       { color: var(--ins-text-5); }
+.ins-acid.ins-acid   { color: var(--ins-acento-tinta); }
+.ins-amber.ins-amber { color: var(--ins-atencao-tinta); }
+.ins-coral.ins-coral { color: var(--ins-pare-tinta); }
+.ins-t2.ins-t2       { color: var(--ins-tinta-2); }
+.ins-t3.ins-t3       { color: var(--ins-tinta-3); }
+.ins-t4.ins-t4       { color: var(--ins-tinta-3); }
+.ins-t5.ins-t5       { color: var(--ins-tinta-3); }
 
 /* ---- Grade de fios: o vão de 1px É a régua ---------------------------- */
 
-.ins-hairgrid { display: grid; gap: 1px; background: var(--ins-rule); }
-.ins-hairgrid > * { background: var(--ins-canvas); }
+.ins-hairgrid { display: grid; gap: 1px; background: var(--ins-fio); }
+.ins-hairgrid > * { background: var(--ins-tela); }
 
 /* ---- Botões ----------------------------------------------------------- */
 
 .ins-btn-primary {
   display: block; width: 100%; min-height: var(--ins-tap); padding: 16px 0;
-  background: var(--ins-acid); color: var(--ins-on-acid);
-  font: 400 11px/1 var(--ins-font-mono);
+  background: var(--ins-acento); color: var(--ins-sobre-acento);
+  font: 400 11px/1 var(--ins-fonte);
   letter-spacing: .16em; text-transform: uppercase;
 }
-.ins-btn-primary:active { background: var(--ins-acid-hover); }
+.ins-btn-primary:active { background: var(--ins-acento-tinta); }
 
 .ins-btn-secondary {
   display: block; width: 100%; min-height: var(--ins-tap); padding: var(--ins-5) 0;
-  background: transparent; color: var(--ins-text-2);
-  border: 1px solid var(--ins-border-strong);
-  font: 400 11px/1 var(--ins-font-mono);
+  background: transparent; color: var(--ins-tinta-2);
+  border: 1px solid var(--ins-fio-controle);
+  font: 400 11px/1 var(--ins-fonte);
   letter-spacing: .16em; text-transform: uppercase;
 }
-.ins-btn-secondary:active { background: var(--ins-surface); }
+.ins-btn-secondary:active { background: var(--ins-superficie-2); }
 
 /* Tracejado quer dizer: isto CRIA alguma coisa. */
 .ins-btn-add {
   display: block; width: 100%; min-height: var(--ins-tap); padding: 14px 0;
-  background: transparent; color: var(--ins-acid);
-  border: 1px dashed var(--ins-border-strong);
-  font: 400 11px/1 var(--ins-font-mono);
+  background: transparent; color: var(--ins-acento-tinta);
+  border: 1px dashed var(--ins-fio-controle);
+  font: 400 11px/1 var(--ins-fonte);
   letter-spacing: .16em; text-transform: uppercase;
 }
-.ins-btn-add:active { background: var(--ins-surface-acid); }
+.ins-btn-add:active { background: var(--ins-acento-suave); }
 
-.ins-btn-destructive { color: var(--ins-coral); }
+.ins-btn-destructive { color: var(--ins-pare-tinta); }
 
 .ins-chip-cta {
   display: inline-block; padding: 9px 12px;
-  background: var(--ins-acid); color: var(--ins-on-acid);
-  font: 400 10px/1 var(--ins-font-mono);
+  background: var(--ins-acento); color: var(--ins-sobre-acento);
+  font: 400 10px/1 var(--ins-fonte);
   letter-spacing: .14em; text-transform: uppercase;
 }
 
 .ins-chip {
   padding: 10px 12px; min-height: var(--ins-tap-dense);
-  border: 1px solid var(--ins-border);
-  font: 400 11px/1 var(--ins-font-mono);
+  border: 1px solid var(--ins-fio-controle);
+  font: 400 11px/1 var(--ins-fonte);
   letter-spacing: .09em; text-transform: uppercase;
-  color: var(--ins-text-3);
+  color: var(--ins-tinta-3);
   position: relative;
 }
 /* 33 -> 41, e não 44: chips QUEBRAM linha, e o vão entre duas fileiras é o
    limite. Crescer além dele faria a fileira de baixo roubar o toque da de
    cima — pior que o alvo pequeno. */
 .ins-chip::after { content: ""; position: absolute; inset: -4px 0; }
-.ins-chip.on { background: var(--ins-acid); color: var(--ins-on-acid); border-color: var(--ins-acid); }
+.ins-chip.on { background: var(--ins-acento); color: var(--ins-sobre-acento); border-color: var(--ins-acento); }
 .ins-chips { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
 
 /* ---- Formulário ------------------------------------------------------- */
@@ -296,13 +347,13 @@ p, .ins-prosa, input, textarea {
 .ins-stepper { display: flex; align-items: center; gap: var(--ins-2); }
 .ins-stepper-btn {
   width: var(--ins-tap); height: var(--ins-tap); flex: 0 0 auto;
-  border: 1px solid var(--ins-border-strong);
-  color: var(--ins-text); font: 400 22px/1 var(--ins-font-mono);
+  border: 1px solid var(--ins-fio-controle);
+  color: var(--ins-tinta); font: 400 22px/1 var(--ins-fonte);
 }
-.ins-stepper-btn:active { background: var(--ins-surface); }
+.ins-stepper-btn:active { background: var(--ins-superficie-2); }
 .ins-stepper-val {
   flex: 1; text-align: center;
-  font: 600 19px/1 var(--ins-font-mono); letter-spacing: -.03em;
+  font: 600 19px/1 var(--ins-fonte); letter-spacing: -.03em;
 }
 
 /* ---- Movimento: o pulso, um dos quatro que o app tem ------------------ */
@@ -311,13 +362,30 @@ p, .ins-prosa, input, textarea {
 
 .ins-live-dot {
   width: 7px; height: 7px; flex: 0 0 auto;
-  border-radius: 50%; background: var(--ins-acid);
+  border-radius: 50%; background: var(--ins-acento);
   animation: ins-pulse 2.4s infinite;
 }
 
+/* O portão de movimento reduzido, e ele alcança por ESTRUTURA e não por nome.
+   Antes desligava a animação do ponto ao vivo pelo seletor dela — funcionava,
+   mas por coincidência: havia uma animação só no app. A próxima a nascer em
+   qualquer outro lugar ficaria rodando, e ninguém notaria, porque quem pede
+   movimento reduzido não está aqui para reclamar.
+
+   `animation-duration` quase zero com UMA iteração, e não `animation: none`:
+   zerar a animação deixa o elemento no estado INICIAL, e uma animação com
+   `both` que termina visível ficaria invisível. Pular para o último quadro
+   respeita quem pediu menos movimento sem apagar conteúdo. No pulso do ponto
+   ao vivo, o último quadro é opacidade 1 — o ponto fica visível e parado.
+
+   `!important` não é força bruta aqui: sem ele a regra do componente é mais
+   específica e ganha, e o portão não faz nada. */
 @media (prefers-reduced-motion: reduce) {
-  .ins-live-dot { animation: none; }
-  * { transition: none !important; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition: none !important;
+  }
 }
 
 
@@ -343,15 +411,24 @@ p, .ins-prosa, input, textarea {
     align-items: center; justify-content: center;
     gap: var(--ins-4);
     padding: var(--ins-8) max(var(--ins-9), var(--sa-left)) var(--ins-8) max(var(--ins-9), var(--sa-right));
-    background: var(--ins-canvas);
+    background: var(--ins-fundo);
     text-align: center;
   }
   #deitado b {
-    font: 500 27px/1.1 var(--ins-font-display);
-    letter-spacing: -.02em; color: var(--ins-text);
+    font: 500 27px/1.1 var(--ins-fonte);
+    letter-spacing: -.02em; color: var(--ins-tinta);
   }
   #deitado p {
     margin: 0; max-width: 46ch;
-    font: 400 13px/1.5 var(--ins-font-display); color: var(--ins-text-4);
+    font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-3);
   }
+}
+
+/* Só para leitor de tela: sai da tela sem sair da árvore de acessibilidade.
+   `clip-path: inset(50%)` e 1px de caixa — e NUNCA `display: none` nem
+   `visibility: hidden`, que tiram o nó da árvore e com ele o anúncio. */
+.ins-so-leitor {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  clip-path: inset(50%); overflow: hidden; white-space: nowrap;
 }

@@ -56,9 +56,16 @@ como motivacional, e nunca comemora.
 6. **Quase nenhum movimento.** Movimento aqui não decora e não comemora. Ele
    faz só três coisas: interpola uma grandeza que é contínua no mundo, diz que
    a tela está viva agora, e mostra para onde se andou. Fora disso a tela troca
-   de estado sem transição. Nada de animação de entrada, nada de fade, nada de
-   esqueleto que cintila, nada de folha com mola. Os que existem estão em
-   [Movimento](#movimento).
+   de estado sem transição. Nada de fade, nada de esqueleto que cintila, nada
+   de folha com mola. Os que existem estão em [Movimento](#movimento).
+
+   **"Nada de animação de entrada" caiu em 06/10, e só para a FOLHA** (decisão
+   14 do dono). O argumento derrubado era este, e fica dito porque continua
+   valendo em todo o resto: entrada animada é a forma mais comum de movimento
+   que não diz nada — ela enfeita a chegada de algo que já ia chegar. A exceção
+   existe porque a folha é a única coisa que chega **por cima** de outra: a
+   subida é o que diz, sem texto, onde a camada começa e para onde ela volta.
+   Lista, cartão e tela continuam aparecendo sem movimento.
 
 ## Paleta
 

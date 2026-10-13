@@ -6,8 +6,23 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { funde, chaveDeLog, chaveDeSessao, chaveDeMarca, chaveDeCardio, chaveDeSessaoFoto, chaveDeFotoDoCorpo, LAPIDE_DIAS } from '../../src/dominio/sincronia';
-import type { Enquadramento, Estado, Log, SessaoFoto } from '../../src/dominio/tipos';
+import {
+  chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeDiaComida, chaveDeFoto,
+  chaveDeFotoDoCorpo, chaveDeLeitura, chaveDeLog, chaveDeMarca, chaveDeProgLog,
+  chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessao, chaveDeSessaoFoto,
+  funde, lapidesDoApagamento, LAPIDE_DIAS
+} from '../../src/dominio/sincronia';
+import type { Corpo, Enquadramento, Estado, Log, QualMarca, SessaoFoto } from '../../src/dominio/tipos';
+import type { DiaComidaHist } from '../../src/dominio/nutricao/tipos';
+import { MARCAS_DO_CORPO } from '../../src/dominio/corpo';
+import { migraPlano11, migraPlano12 } from '../../src/dominio/migracoes';
+
+/** Um `S.body` com as sete séries vazias. Os testes preenchem as que importam. */
+function corpoVazio(): Corpo {
+  const b = {} as Corpo;
+  MARCAS_DO_CORPO.forEach(function (k: QualMarca) { b[k] = []; });
+  return b;
+}
 
 const DIA = 86400000;
 const T0 = new Date(2026, 7, 24, 9, 0).getTime();
@@ -471,4 +486,479 @@ test('a mesma leitura respondida duas vezes: vence a mais recente', () => {
   assert.strictEqual(funde(antes, depois, T0).estado.gordura.length, 1, 'é a mesma leitura');
   assert.strictEqual(funde(antes, depois, T0).estado.gordura[0].v, 'incerto');
   assert.strictEqual(funde(depois, antes, T0).estado.gordura[0].v, 'incerto', 'e a ordem não muda nada');
+});
+
+// ---------- o que a migração 9 → 10 pôs na fusão ----------
+// Campo persistido novo tem que atravessar aqui, senão dois aparelhos que
+// somavam voltam a se sobrescrever. São quatro coisas: as cinco chaves do
+// corpo, o instante da marca, `como` como atributo da marca e o fato de a água
+// não ter sido contada.
+
+test('as cinco medidas da bioimpedância somam como o peso e a cintura', () => {
+  // A fusão enumerava `['peso','cintura']` escrito à mão: uma grandeza nova
+  // nunca chegaria do outro aparelho, e a tela mostraria só metade da leitura.
+  const balanca = estado({ mtime: T0, body: Object.assign(corpoVazio(), {
+    bioPeso: [{ t: T0, v: 79.2 }], bioMusculo: [{ t: T0, v: 37.4 }],
+    bioGordura: [{ t: T0, v: 14.1 }], bioGorduraPct: [{ t: T0, v: 17.8 }],
+    bioAgua: [{ t: T0, v: 45.3 }]
+  }) });
+  const outro = estado({ mtime: T0 - DIA, body: Object.assign(corpoVazio(), {
+    bioPeso: [{ t: T0 - 7 * DIA, v: 80.1 }]
+  }) });
+
+  const { estado: r, resumo } = funde(outro, balanca, T0);
+  assert.strictEqual(r.body.bioPeso.length, 2, 'duas leituras de dias diferentes');
+  assert.deepStrictEqual(r.body.bioPeso.map(x => x.v), [80.1, 79.2], 'em ordem de tempo');
+  assert.strictEqual(r.body.bioMusculo[0].v, 37.4);
+  assert.strictEqual(r.body.bioGordura[0].v, 14.1);
+  assert.strictEqual(r.body.bioGorduraPct[0].v, 17.8);
+  assert.strictEqual(r.body.bioAgua[0].v, 45.3);
+  assert.strictEqual(resumo.medidas, 5, 'cinco medidas vieram do outro lado');
+});
+
+test('a lápide alcança a medida da bioimpedância', () => {
+  // Sem `chaveDeMarca` aceitando a grandeza nova, a chave da lápide não casava
+  // com a da fusão e a medida apagada voltava do outro aparelho.
+  const aqui = estado({ mtime: T0, body: corpoVazio(), apagados: { [chaveDeMarca('bioGordura', { t: T0 - DIA })]: T0 } });
+  const nuvem = estado({ mtime: T0 - DIA, body: Object.assign(corpoVazio(), {
+    bioGordura: [{ t: T0 - DIA, v: 14.1 }]
+  }) });
+  const { estado: r } = funde(aqui, nuvem, T0);
+  assert.deepStrictEqual(r.body.bioGordura, [], 'o que ele apagou aqui não ressuscita');
+});
+
+test('o peso da manhã e o da bioimpedância não se misturam', () => {
+  // São dois aparelhos e duas horas: ele pesa numa balança e mede na outra. A
+  // chave de fusão carrega a grandeza, então o mesmo instante nas duas não
+  // colide.
+  const a = estado({ mtime: T0, body: Object.assign(corpoVazio(), {
+    peso: [{ t: T0, v: 79.4 }], bioPeso: [{ t: T0, v: 79.2 }]
+  }) });
+  const b = estado({ mtime: T0 - 1000, body: corpoVazio() });
+  const { estado: r } = funde(b, a, T0);
+  assert.strictEqual(r.body.peso[0].v, 79.4, 'a pesagem da manhã');
+  assert.strictEqual(r.body.bioPeso[0].v, 79.2, 'e a da balança de bioimpedância');
+});
+
+test('o instante da marca atravessa a fusão do dia aberto', () => {
+  // A conversão interna achatava a marca em `1` nos dois sentidos, porque era a
+  // forma do dia corrente. `1` é 1970: qualquer lápide o matava.
+  const manha = 'pos', tarde = 'lanche';
+  const a = estado({ mtime: T0, dia: { data: '2026-08-24', done: { [manha]: T0 - 3600000 }, agua: 3, escala: {} } });
+  const b = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: { [tarde]: T0 - 600000 }, agua: 1, escala: {} } });
+
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.dia!.done[manha], T0 - 3600000, 'a hora da marca da manhã');
+  assert.strictEqual(r.dia!.done[tarde], T0 - 600000, 'e a da tarde, somadas');
+  assert.strictEqual(r.dia!.agua, 3, 'a água é contador que só cresce: fica o maior');
+});
+
+test('desmarcar uma refeição num aparelho não é desfeito pelo outro', () => {
+  const chave = 'comida:2026-08-24:almoco';
+  const aqui = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} },
+                        apagados: { [chave]: T0 } });
+  const nuvem = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: { almoco: T0 - 3600000 }, agua: 0, escala: {} } });
+  const { estado: r } = funde(aqui, nuvem, T0);
+  assert.strictEqual(r.dia!.done.almoco, undefined, 'a lápide vence a cópia mais antiga');
+});
+
+test('`como` viaja com a marca, e morre com a lápide dela', () => {
+  const a = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} } });
+  const b = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: { jantar: T0 - 600000 },
+                                              como: { jantar: 'fora' }, agua: 0, escala: {} } });
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.dia!.done.jantar, T0 - 600000, 'a marca veio');
+  assert.strictEqual(r.dia!.como!.jantar, 'fora', 'e o "saí do plano" veio com ela');
+
+  // agora com lápide: a marca morre e o atributo não fica solto descrevendo
+  // uma refeição que o dia não diz ter acontecido
+  const comLapide = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} },
+                             apagados: { 'comida:2026-08-24:jantar': T0 } });
+  const { estado: r2 } = funde(comLapide, b, T0);
+  assert.strictEqual(r2.dia!.done.jantar, undefined);
+  assert.strictEqual(r2.dia!.como, undefined, 'nem o atributo sobra');
+});
+
+test('"não comi" atravessa a fusão como fato, e não como silêncio', () => {
+  const a = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} } });
+  const b = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: { ceia: T0 - 600000 },
+                                              como: { ceia: 'nao' }, agua: 0, escala: {} } });
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.dia!.como!.ceia, 'nao',
+    'é o que separa "não comi" de "esqueci de marcar", e o que faz o dia contar');
+});
+
+test('"não sei" atravessa a fusão sem regra nova, porque é valor e não campo', () => {
+  // O terceiro valor de `como` não pediu migração nem chave de lápide nova: a
+  // regra de fusão de `como` é `if (como)`, agnóstica ao valor, e a lápide é a
+  // da marca (`chaveDeRefeicaoFeita`). Este caso é o que prova que a decisão de
+  // não migrar está certa — se um dia alguém enumerar valores na fusão, aqui
+  // fica vermelho.
+  const a = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} } });
+  const b = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: { almoco: T0 - 600000 },
+                                              como: { almoco: 'nsei' }, agua: 0, escala: {} } });
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.dia!.como!.almoco, 'nsei', 'o valor novo chega inteiro do outro aparelho');
+
+  // e morre com a marca, como os outros dois: atributo solto afirmaria "não sei
+  // o que foi" sobre uma refeição que o dia não diz ter acontecido
+  const comLapide = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} },
+                             apagados: { 'comida:2026-08-24:almoco': T0 } });
+  const { estado: r2 } = funde(comLapide, b, T0);
+  assert.strictEqual(r2.dia!.como, undefined);
+});
+
+test('quem contou a água vence quem declarou não ter contado', () => {
+  // As duas são afirmações sobre o mesmo dia, e a segunda tem dado por trás.
+  const naoContou = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {}, aguaNaoContada: 1 } });
+  const contou = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: {}, agua: 5, escala: {} } });
+  const { estado: r } = funde(naoContou, contou, T0);
+  assert.strictEqual(r.dia!.agua, 5);
+  assert.strictEqual(r.dia!.aguaNaoContada, undefined, 'o fato cai quando a união dá copo');
+
+  // mas se os DOIS não contaram, o fato sobrevive — senão o dia voltaria a
+  // parecer um dia de zero copo
+  const outro = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {}, aguaNaoContada: 1 } });
+  const { estado: r2 } = funde(naoContou, outro, T0);
+  assert.strictEqual(r2.dia!.aguaNaoContada, 1);
+});
+
+test('o enquadramento do dia aberto sobrevive à fusão', () => {
+  // Achado de passagem: `aderencia` não entrava na conversão do dia e a
+  // reconstrução não a devolvia. Fundir dois aparelhos no mesmo dia APAGAVA
+  // "saí do plano" e "dia perdido", em silêncio.
+  const a = estado({ mtime: T0, dia: { data: '2026-08-24', done: { pos: T0 }, agua: 2, escala: {}, aderencia: 'fora' } });
+  const b = estado({ mtime: T0 - 1000, dia: { data: '2026-08-24', done: {}, agua: 0, escala: {} } });
+  assert.strictEqual(funde(a, b, T0).estado.dia!.aderencia, 'fora');
+  assert.strictEqual(funde(b, a, T0).estado.dia!.aderencia, 'fora', 'dos dois lados');
+});
+
+test('o enquadramento de um dia fechado vem do lado que respondeu depois', () => {
+  const dia = (extra: Partial<DiaComidaHist>): DiaComidaHist => Object.assign({
+    d: '2026-08-20', done: { pos: T0 - DIA }, agua: 4, escala: {},
+    tot: { kcal: 2000, p: 100, c: 250, g: 60 }, pv: 1
+  }, extra) as DiaComidaHist;
+  const antigo = estado({ mtime: T0, comidaHist: [dia({ m: T0 - DIA })] });
+  const novo = estado({ mtime: T0 - 1000, comidaHist: [dia({ m: T0, aderencia: 'perdido' })] });
+  const { estado: r } = funde(antigo, novo, T0);
+  assert.strictEqual(r.comidaHist[0].aderencia, 'perdido',
+    'faltava nesta lista, e o lado local vencia sempre');
+});
+
+test('o ajuste de porção do dia aberto vem do lado que tocou depois', () => {
+  // Mesmo defeito do enquadramento: sem carimbo, os dois lados empatavam em 0 e
+  // o `escala` do lado local vencia sempre.
+  const velho = estado({ mtime: T0 - DIA, dia: { data: '2026-08-24', done: { jantar: T0 - DIA }, agua: 0, escala: {} } });
+  const novo = estado({ mtime: T0, dia: { data: '2026-08-24', done: { jantar: T0 - DIA }, agua: 0, escala: { jantar: 0.5 } } });
+  assert.strictEqual(funde(velho, novo, T0).estado.dia!.escala.jantar, 0.5);
+  assert.strictEqual(funde(novo, velho, T0).estado.dia!.escala.jantar, 0.5, 'dos dois lados');
+});
+
+test('a pergunta guardada no celular não some porque o notebook sincronizou depois', () => {
+  // Enquanto `promoPendente` era documento, a fusão a trazia INTEIRA do lado
+  // com `mtime` mais novo — "tudo que não é coleção vem dele". O que o celular
+  // registrou se perdia, em silêncio.
+  const promo = (sid: number, day: string) => ({
+    sid: sid, day: day, t: sid, m: sid,
+    mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }], resumoMods: ['Pushdown: 2 → 3 séries']
+  });
+  const celular = estado({ mtime: T0 - DIA, promoPendente: [promo(T0 - DIA, 'A')] } as Partial<Estado>);
+  const notebook = estado({ mtime: T0, promoPendente: [promo(T0, 'B')] } as Partial<Estado>);
+
+  const { estado: r } = funde(notebook, celular, T0);
+  assert.strictEqual(r.promoPendente.length, 2, 'as duas perguntas esperam');
+  assert.deepStrictEqual(r.promoPendente.map(p => p.day), ['A', 'B'], 'em ordem de tempo');
+  assert.deepStrictEqual(funde(celular, notebook, T0).estado.promoPendente.map(p => p.day),
+    ['A', 'B'], 'e a ordem dos lados não muda nada');
+});
+
+test('responder uma pergunta não a ressuscita do outro aparelho', () => {
+  const promo = { sid: T0 - DIA, day: 'A', t: T0 - DIA, m: T0 - DIA,
+                  mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }], resumoMods: [] };
+  const respondeu = estado({ mtime: T0, promoPendente: [],
+                             apagados: { [chaveDePromo(promo)]: T0 } } as Partial<Estado>);
+  const nuvem = estado({ mtime: T0 - DIA, promoPendente: [promo] } as Partial<Estado>);
+  assert.deepStrictEqual(funde(respondeu, nuvem, T0).estado.promoPendente, [],
+    'sem lápide, a pergunta que ele acabou de responder voltava');
+});
+
+test('a mesma sessão fechada nos dois aparelhos é UMA pergunta', () => {
+  // Os dois tinham a sessão aberta e os dois a encerraram sozinhos: a chave é o
+  // `sid`, então vira uma entrada e ele responde uma vez.
+  const base = { sid: T0 - DIA, day: 'A', t: T0 - DIA,
+                 mods: [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }], resumoMods: [] };
+  const aqui = estado({ mtime: T0, promoPendente: [Object.assign({}, base, { m: T0 })] } as Partial<Estado>);
+  const la = estado({ mtime: T0 - 1000, promoPendente: [Object.assign({}, base, { m: T0 - 2000 })] } as Partial<Estado>);
+  const { estado: r } = funde(aqui, la, T0);
+  assert.strictEqual(r.promoPendente.length, 1);
+  assert.strictEqual(r.promoPendente[0].m, T0, 'vence o carimbo mais novo');
+});
+
+test('a chave da pergunta é o `sid`, e não o dia — que é editável no treino', () => {
+  // "Trocar de dia no meio do treino não perde nem sobrescreve": se `day`
+  // entrasse na chave, a MESMA pergunta fundiria como duas e ele responderia
+  // duas vezes.
+  const mods = [{ k: 'sets', slot: 'pushdown', de: 2, para: 3 }];
+  const comoA = { sid: T0, day: 'A', t: T0, m: T0 - 1000, mods: mods, resumoMods: [] };
+  const comoB = { sid: T0, day: 'B', t: T0, m: T0, mods: mods, resumoMods: [] };
+  assert.strictEqual(chaveDePromo(comoA), chaveDePromo(comoB));
+  const { estado: r } = funde(
+    estado({ mtime: T0, promoPendente: [comoA] } as Partial<Estado>),
+    estado({ mtime: T0 - 1, promoPendente: [comoB] } as Partial<Estado>),
+    T0
+  );
+  assert.strictEqual(r.promoPendente.length, 1, 'uma pergunta, uma resposta');
+});
+
+// ---------- a ceia atravessando dois aparelhos ----------
+// O plano de comida é DOCUMENTO: vem inteiro do lado com `mtime` mais novo. Não
+// virou coleção na migração 10 → 11, e não devia — "documento se edita
+// deliberadamente, num aparelho por vez" é a regra escrita no topo do módulo.
+// Mas isso cria uma janela durante a atualização, e ela se fecha sozinha.
+
+test('o aparelho que ainda não migrou não deixa a ceia sumir do outro', () => {
+  const planoSem = [
+    { id: 'jantar', t: '19:30', n: 'Jantar', tag: '', quando: 'sempre' as const, itens: [] }
+  ];
+  const planoCom = planoSem.concat([
+    { id: 'ceia', t: '21:30', n: 'Ceia', tag: '', quando: 'sempre' as const, itens: [] }
+  ]);
+
+  const migrado = estado({ mtime: T0 - DIA, plano: 11,
+                           comida: { plano: planoCom, alimentos: {}, ocultos: {} } } as Partial<Estado>);
+  const atrasado = estado({ mtime: T0, plano: 10,
+                            comida: { plano: planoSem, alimentos: {}, ocultos: {} } } as Partial<Estado>);
+
+  const { estado: r } = funde(migrado, atrasado, T0);
+  // o documento do lado mais novo vence, e com ele a VERSÃO do formato
+  assert.deepStrictEqual(r.comida.plano!.map(x => x.id), ['jantar'],
+    'o plano do lado que gravou por último vence, como todo documento');
+  assert.strictEqual(r.plano, 10,
+    'e `plano` vem no mesmo clone — é o que faz a janela se fechar sozinha');
+  // o boot seguinte roda a cadeia e `migraPlano11` devolve a ceia
+  migraPlano11(r);
+  assert.deepStrictEqual(r.comida.plano!.map(x => x.id), ['jantar', 'ceia']);
+  assert.strictEqual(r.plano, 11);
+});
+
+test('o registro do que o ajuste deu atravessa a janela da atualização', () => {
+  // `Item.ajq` mora DENTRO do plano, que é documento: ele não precisa de chave
+  // natural, de lápide nem de teto — vem inteiro do lado com `mtime` mais novo,
+  // junto do `plano` que diz qual formato é. A janela é a mesma da ceia, e
+  // fecha do mesmo jeito: a cadeia de migração roda no boot seguinte.
+  //
+  // O que importa é a DIREÇÃO da falha dentro da janela: sem `ajq`, o desfazer
+  // subtrai zero e o prato FICA onde está. Erra para cima, que é o lado
+  // conservador — o que o defeito fazia era o contrário, tirar comida calada.
+  // Os dois pratos de arroz da prescrição, com um passo de +150 kcal em vigor:
+  // 250 g de base mais os 60 g que cada um recebeu.
+  const prato = (id: string, t: string, ajq?: number) => ({
+    id: id, t: t, n: id, tag: '', quando: 'sempre' as const,
+    itens: [ajq == null ? { f: 'arroz', q: 310, arroz: true }
+                        : { f: 'arroz', q: 310, arroz: true, ajq: ajq }]
+  });
+  const comAjq = [prato('almoco', '12:30', 60), prato('jantar', '19:30', 60)];
+  const semAjq = [prato('almoco', '12:30'), prato('jantar', '19:30')];
+
+  const migrado = estado({ mtime: T0 - DIA, plano: 12, ajuste: 1,
+                           comida: { plano: comAjq, alimentos: {}, ocultos: {} } } as Partial<Estado>);
+  const atrasado = estado({ mtime: T0, plano: 11, ajuste: 1,
+                            comida: { plano: semAjq, alimentos: {}, ocultos: {} } } as Partial<Estado>);
+
+  const { estado: r } = funde(migrado, atrasado, T0);
+  assert.strictEqual(r.comida.plano![0].itens[0].ajq, undefined,
+    'o documento do lado atrasado vence, e o registro vai com ele');
+  assert.strictEqual(r.plano, 11, 'e a versão do formato vem no mesmo clone');
+
+  migraPlano12(r);
+  assert.strictEqual(r.comida.plano![0].itens[0].ajq, 60,
+    'o boot seguinte reescreve o registro, e a janela se fecha sozinha');
+  assert.strictEqual(r.comida.plano![0].itens[0].q, 310, 'sem mexer no prato');
+  assert.strictEqual(r.plano, 12);
+});
+
+test('a refeição marcada sobrevive à ausência temporária dela no plano', () => {
+  // Durante a janela acima, a marca da ceia já existe no dia e no histórico —
+  // que são COLEÇÕES e fundem por chave. `aderenciaDoDia` ignora id que não
+  // está no plano de hoje ("refeição que não existe mais"), então a marca não
+  // conta enquanto a ceia falta, e volta a contar quando ela volta.
+  const dia = { data: '2026-08-24', done: { ceia: T0 - 3600000 }, agua: 0, escala: {} };
+  const a = estado({ mtime: T0 - DIA, dia: dia } as Partial<Estado>);
+  const b = estado({ mtime: T0, dia: { data: '2026-08-24', done: {}, agua: 2, escala: {} } } as Partial<Estado>);
+  const { estado: r } = funde(a, b, T0);
+  assert.strictEqual(r.dia!.done.ceia, T0 - 3600000, 'a marca não se perde');
+});
+
+// ---------- o apagamento em bloco ----------
+//
+// `wipe` esvazia as coleções de uma vez, sem passar registro por registro. Sem
+// lápide nova, a fusão lê o que sobrou no outro aparelho como registro que este
+// simplesmente não tem — e o traz de volta, contra um aviso que promete "isso
+// não tem volta". `lapidesDoApagamento` é o que faz o apagamento em bloco virar
+// o que a fusão já sabe ler.
+
+/** Um estado com UM registro de cada família que a fusão sabe enterrar. */
+function cheio(t: number): Estado {
+  return estado({
+    mtime: t,
+    logs: { supino: [log(t, [[60, 8]])] },
+    done: [{ day: 'A', t: t, sid: t, dur: 0 }],
+    cardio: [{ t: t, m: 'bike', min: 25, i: 'moderado' }],
+    body: Object.assign(corpoVazio(), { peso: [{ t: t, v: 80 }] }),
+    progLog: [{ t: t, day: 'A', txt: 'subiu lateral' }],
+    aulas: [{ id: 'a1', nome: 'sábado do box', t: t, mov: [] }],
+    promoPendente: [{ sid: t, t: t, day: 'A', list: [] }],
+    gordura: [{ d: '2026-08-24', de: '2026-07-24', v: 'sim', t: t }],
+    comidaHist: [{ d: '2026-08-24', done: { almoco: t }, agua: 3, escala: {},
+                   tot: { kcal: 0, p: 0, c: 0, g: 0 }, pv: 0, m: t }],
+    descanso: { '2026-08-23': t },
+    fotos: { supino: { v: t, ext: 'webp' } },
+    protocolo: { poses: null, sessoes: [{ d: '2026-08-24', t: t, fotos: { frente: { v: t, ext: 'webp' } }, m: t }] }
+  } as Partial<Estado>);
+}
+
+/** O que `wipe` monta: coleções vazias, prescrição de pé. */
+function apagado(t: number): Estado {
+  const s = estado({ mtime: t + 1000, body: corpoVazio() } as Partial<Estado>);
+  (s as Estado & { aulas: unknown[] }).aulas = [];
+  (s as Estado & { comidaHist: unknown[] }).comidaHist = [];
+  (s as Estado & { descanso: Record<string, number> }).descanso = {};
+  (s as Estado & { fotos: Record<string, unknown> }).fotos = {};
+  (s as Estado & { gordura: unknown[] }).gordura = [];
+  (s as Estado & { promoPendente: unknown[] }).promoPendente = [];
+  (s as Estado & { protocolo: unknown }).protocolo = { poses: null, sessoes: [] };
+  return s;
+}
+
+test('o apagamento em bloco rende uma lápide por registro, na chave da fusão', () => {
+  const antes = cheio(T0);
+  const mortos = lapidesDoApagamento(antes, apagado(T0), T0 + 1000);
+
+  // as chaves são as MESMAS que `funde` usa para unir, uma a uma
+  assert.strictEqual(mortos[chaveDeLog('supino', { sid: T0 })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeSessao({ sid: T0 })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeCardio({ t: T0 })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeMarca('peso', { t: T0 })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeProgLog({ t: T0, day: 'A' })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeAula({ id: 'a1' })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDePromo({ sid: T0, t: T0 })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeLeitura({ d: '2026-08-24' })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeDiaComida({ d: '2026-08-24' })], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeRefeicaoFeita('2026-08-24', 'almoco')], T0 + 1000,
+    'a refeição marcada tem lápide própria: desmarcar nunca foi apagar o dia');
+  assert.strictEqual(mortos[chaveDeDescanso('2026-08-23')], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeFoto('supino')], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeSessaoFoto('2026-08-24')], T0 + 1000);
+  assert.strictEqual(mortos[chaveDeFotoDoCorpo('2026-08-24', 'frente')], T0 + 1000,
+    'a foto dentro da sessão também: a sessão pode sobreviver sem ela');
+});
+
+test('a lápide é a DIFERENÇA: o que o apagamento preservar não ganha lápide', () => {
+  // É o que mantém a decisão de escopo num lugar só — o estado novo. Se amanhã
+  // o apagamento decidir preservar os modelos de aula, nada aqui muda de lugar.
+  const antes = cheio(T0);
+  const depois = apagado(T0);
+  (depois as Estado & { aulas: unknown[] }).aulas =
+    JSON.parse(JSON.stringify((antes as Estado & { aulas: unknown[] }).aulas));
+
+  const mortos = lapidesDoApagamento(antes, depois, T0 + 1000);
+  assert.strictEqual(mortos[chaveDeAula({ id: 'a1' })], undefined,
+    'o modelo de aula ficou, então nenhuma lápide o persegue');
+  assert.strictEqual(mortos[chaveDeSessao({ sid: T0 })], T0 + 1000, 'e o resto continua enterrado');
+});
+
+test('estado vazio não gera lápide nenhuma, e apagar nada é apagar nada', () => {
+  assert.deepStrictEqual(lapidesDoApagamento(estado(), estado(), T0), {});
+  assert.deepStrictEqual(lapidesDoApagamento(null, null, T0), {});
+  assert.deepStrictEqual(lapidesDoApagamento(cheio(T0), cheio(T0), T0), {},
+    'fundo igual ao de partida: nada saiu, nada morre');
+});
+
+test('com as lápides, a fusão com o aparelho que não soube do apagamento não ressuscita', () => {
+  // o cenário inteiro: o celular apagou, o notebook ainda tem tudo
+  const antes = cheio(T0);
+  const celular = apagado(T0);
+  (celular as Estado & { apagados: Record<string, number> }).apagados =
+    lapidesDoApagamento(antes, celular, T0 + 1000);
+
+  const notebook = cheio(T0);
+  const { estado: r, resumo } = funde(notebook, celular, T0 + 2000);
+
+  assert.deepStrictEqual(Object.keys(r.logs), [], 'as séries não voltam');
+  assert.deepStrictEqual(r.done, [], 'as sessões não voltam');
+  assert.deepStrictEqual(r.cardio, [], 'o cardio não volta');
+  assert.deepStrictEqual(r.body.peso, [], 'a pesagem não volta');
+  assert.deepStrictEqual(r.progLog, [], 'o diário do programa não volta');
+  assert.deepStrictEqual(r.aulas, [], 'o modelo de aula não volta');
+  assert.deepStrictEqual(r.promoPendente, [], 'a pergunta pendente não volta');
+  assert.deepStrictEqual(r.gordura, [], 'a leitura de gordura não volta');
+  assert.deepStrictEqual(r.comidaHist, [], 'o dia de comida não volta');
+  assert.deepStrictEqual(r.descanso, {}, 'o dia de descanso não volta');
+  assert.deepStrictEqual(r.fotos, {}, 'a referência de foto não volta');
+  assert.deepStrictEqual(r.protocolo.sessoes, [], 'a sessão de fotos do corpo não volta');
+  assert.ok(resumo.apagados > 0, 'e a fusão CONTA o que enterrou, em vez de mudar o histórico calada');
+
+  // e fundir de novo não muda mais nada: os dois lados convergem
+  const dois = funde(r, celular, T0 + 3000).estado;
+  assert.deepStrictEqual(Object.keys(dois.logs), []);
+  assert.deepStrictEqual(dois.done, []);
+});
+
+test('o apagamento não alcança o que só existe no OUTRO aparelho', () => {
+  // O alcance é o que ESTE aparelho conhecia. Apagar de menos se conserta
+  // repetindo o gesto no outro aparelho; apagar de mais não se conserta.
+  const antes = cheio(T0);
+  const celular = apagado(T0);
+  (celular as Estado & { apagados: Record<string, number> }).apagados =
+    lapidesDoApagamento(antes, celular, T0 + 1000);
+
+  // o notebook tem o histórico comum MAIS um treino que nunca subiu
+  const soLa = T0 - 5 * DIA;
+  const notebook = cheio(T0);
+  notebook.done.push({ day: 'E', t: soLa, sid: soLa, dur: 0 });
+  notebook.logs.remada = [log(soLa, [[50, 10]])];
+
+  const { estado: r } = funde(notebook, celular, T0 + 2000);
+  assert.deepStrictEqual(r.done.map(x => x.sid), [soLa],
+    'a sessão que o celular nunca viu sobrevive');
+  assert.deepStrictEqual(Object.keys(r.logs), ['remada'], 'com as séries dela');
+});
+
+test('registro que o outro aparelho criou ou editou DEPOIS do apagamento sobrevive', () => {
+  const antes = cheio(T0);
+  const celular = apagado(T0);
+  (celular as Estado & { apagados: Record<string, number> }).apagados =
+    lapidesDoApagamento(antes, celular, T0 + 1000);
+
+  const notebook = cheio(T0);
+  // (a) registro novo: chave nova, e nenhuma lápide fala dele
+  const novo = T0 + 5000;
+  notebook.done.push({ day: 'B', t: novo, sid: novo, dur: 0 });
+  // (b) registro antigo CORRIGIDO depois: a regra da fusão já diz que lápide só
+  // mata o que é mais velho que ela, e corrigir depois é ressurreição deliberada
+  notebook.cardio[0].alt = T0 + 6000;
+
+  const { estado: r } = funde(notebook, celular, T0 + 7000);
+  assert.deepStrictEqual(r.done.map(x => x.sid), [novo], 'o treino de depois fica');
+  assert.strictEqual(r.cardio.length, 1, 'e o cardio corrigido depois do apagamento também');
+});
+
+test('o como-eu-medi viaja com a medida na fusão, e morre com a lápide dela', () => {
+  // É ATRIBUTO da marca, e não campo de topo — de propósito, para não abrir
+  // portão nenhum. Este caso prova que a fusão o carrega: `uneLista` fica com o
+  // objeto inteiro do lado que vence pelo carimbo.
+  const t = T0 - DIA;
+  const semTexto = estado({ mtime: T0 - DIA,
+    body: Object.assign(corpoVazio(), { braco: [{ t: t, v: 36, m: T0 - DIA }] }) });
+  const comTexto = estado({ mtime: T0,
+    body: Object.assign(corpoVazio(), { braco: [{ t: t, v: 36.5, m: T0, onde: 'no meio do bíceps' }] }) });
+
+  const r = funde(semTexto, comTexto, T0).estado;
+  assert.deepStrictEqual(r.body.braco, [{ t: t, v: 36.5, m: T0, onde: 'no meio do bíceps' }],
+    'venceu a marca mais nova, e o texto veio com ela');
+
+  const apagado = estado({ mtime: T0 + 1, body: corpoVazio(),
+    apagados: { [chaveDeMarca('braco', { t: t })]: T0 + 1 } });
+  assert.deepStrictEqual(funde(r, apagado, T0 + 1).estado.body.braco, [],
+    'a lápide da medida leva o texto junto: não sobra lembrete de medida apagada');
 });

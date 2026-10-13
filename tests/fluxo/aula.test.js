@@ -33,19 +33,35 @@ async function noSabado(opcoes) {
   a.aba('treino');
   a.E('S.sessao={day:"HX",inicio:Date.now(),ultima:Date.now(),sid:Date.now(),pausas:[],pulados:[]}');
   a.E('view.day="HX"');
-  a.E('render()');
+  a.v('render');
   await a.esperar();
   return a;
 }
 
+/**
+ * Registra um valor da lista rápida pelo caminho do dedo: toca o botão e digita
+ * nas teclas do teclado próprio, que abre embaixo da linha. `digitar` não serve
+ * mais — carga e medida viraram botões, e o harness recusa escrever num botão.
+ */
+async function pelaLista(a, id, valor) {
+  a.clicar(a.doc.getElementById(id));
+  await a.esperar();
+  for (const ch of String(valor)) {
+    const tecla = a.$$('.rapl .tcl-grade > *').find(function (el) { return el.textContent.trim() === ch; });
+    if (!tecla) throw new Error('o teclado aberto por ' + id + ' não tem a tecla "' + ch + '"');
+    a.clicar(tecla);
+    await a.esperar();
+  }
+}
+
 test('repetir o sábado passado traz os movimentos com a medida de cada um', async () => {
   const a = await noSabado(comSabadoAnterior());
-  assert.strictEqual(a.E('treino("HX").ex.length'), 0, 'o dia aberto começa vazio');
+  assert.strictEqual(a.vJ('treino', 'HX').ex.length, 0, 'o dia aberto começa vazio');
 
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
 
-  const ex = a.J('treino("HX").ex.map(function(x){return {id:x.id,s:x.s,u:x.u,q:x.q}})');
+  const ex = a.vJ('treino', 'HX').ex.map(function (x) { return { id: x.id, s: x.s, u: x.u, q: x.q }; });
   assert.deepStrictEqual(ex, [
     { id: 'corrida',        s: 2, u: 'm',   q: 400 },
     { id: 'remo-ergometro', s: 2, u: 'm',   q: 500 },
@@ -57,28 +73,25 @@ test('repetir o sábado passado traz os movimentos com a medida de cada um', asy
 
 test('repetir traz a prescrição, nunca o resultado', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
 
   // wall balls foi 9 kg × 20 no sábado passado. Nada disso pode aparecer como
   // registro de hoje: registro que aparece sozinho é o jeito mais rápido de
   // encher o histórico de número que ninguém fez.
-  const sid = a.J('S.sessao.sid');
-  const hoje = a.J(`(function(){
-    var n = 0;
-    Object.keys(S.logs).forEach(function (k) {
-      (S.logs[k]||[]).forEach(function (e) { if (e.sid === ${sid}) n++; });
-    });
-    return n;
-  })()`);
+  const sid = a.S().sessao.sid;
+  const logs = a.S().logs;
+  const hoje = Object.keys(logs).reduce(function (n, k) {
+    return n + (logs[k] || []).filter(function (e) { return e.sid === sid; }).length;
+  }, 0);
   assert.strictEqual(hoje, 0, 'nenhuma série foi registrada só por repetir a aula');
-  assert.strictEqual(a.E('seriesFeitasHoje("HX")'), 0);
+  assert.strictEqual(a.v('seriesFeitasHoje', 'HX'), 0);
   a.fechar();
 });
 
 test('sem sábado anterior a porta não aparece', async () => {
   const a = await noSabado({});
-  const c = a.J('CTX.treino().aulas');
+  const c = a.vJ('ctx.treino').aulas;
   assert.strictEqual(c.ultima, null, 'um botão que não faz nada é pior que a ausência dele');
   assert.deepStrictEqual(c.modelos, []);
   assert.strictEqual(c.podeSalvar, false, 'e não há dia nenhum para salvar');
@@ -87,13 +100,13 @@ test('sem sábado anterior a porta não aparece', async () => {
 
 test('salvar como modelo guarda os movimentos e não a carga', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   a.responder('circuito de sábado');
-  a.E('salvarAulaComoModelo()');
+  a.v('salvarAulaComoModelo');
   await a.esperar(60);
 
-  const aulas = a.J('S.aulas');
+  const aulas = a.S().aulas;
   assert.strictEqual(aulas.length, 1);
   assert.strictEqual(aulas[0].nome, 'circuito de sábado');
   assert.strictEqual(aulas[0].mov.length, 4);
@@ -105,60 +118,60 @@ test('salvar como modelo guarda os movimentos e não a carga', async () => {
 
 test('salvar com um nome que já existe atualiza em vez de duplicar', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   a.responder('circuito');
-  a.E('salvarAulaComoModelo()');
+  a.v('salvarAulaComoModelo');
   await a.esperar(60);
-  const id = a.J('S.aulas[0].id');
+  const id = a.S().aulas[0].id;
 
-  a.E('removerEx(0)');
+  a.v('removerEx', 0);
   await a.esperar(60);
   a.responder('Circuito');            // mesmo nome, outra caixa
-  a.E('salvarAulaComoModelo()');
+  a.v('salvarAulaComoModelo');
   await a.esperar(60);
 
-  assert.strictEqual(a.J('S.aulas').length, 1, 'uma lista com três "circuito" não diz qual é qual');
-  assert.strictEqual(a.J('S.aulas[0].id'), id, 'o id não muda: é a chave natural da fusão');
-  assert.strictEqual(a.J('S.aulas[0].mov').length, 3, 'e o conteúdo é o de agora');
+  assert.strictEqual(a.S().aulas.length, 1, 'uma lista com três "circuito" não diz qual é qual');
+  assert.strictEqual(a.S().aulas[0].id, id, 'o id não muda: é a chave natural da fusão');
+  assert.strictEqual(a.S().aulas[0].mov.length, 3, 'e o conteúdo é o de agora');
   a.fechar();
 });
 
 test('aplicar um modelo põe os movimentos no dia', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   a.responder('circuito');
-  a.E('salvarAulaComoModelo()');
+  a.v('salvarAulaComoModelo');
   await a.esperar(60);
 
   // limpa o dia e aplica o modelo
   a.E('S.mods = null');
-  a.E('render()');
+  a.v('render');
   await a.esperar();
-  assert.strictEqual(a.E('treino("HX").ex.length'), 0);
+  assert.strictEqual(a.vJ('treino', 'HX').ex.length, 0);
 
-  const id = a.J('S.aulas[0].id');
-  a.E(`aplicarModeloDeAula(${JSON.stringify(id)})`);
+  const id = a.S().aulas[0].id;
+  a.v('aplicarModeloDeAula', id);
   await a.esperar(60);
-  assert.strictEqual(a.E('treino("HX").ex.length'), 4);
-  assert.strictEqual(a.E('treino("HX").ex[3].u'), 'cal', 'a medida vem junto');
+  assert.strictEqual(a.vJ('treino', 'HX').ex.length, 4);
+  assert.strictEqual(a.vJ('treino', 'HX').ex[3].u, 'cal', 'a medida vem junto');
   a.fechar();
 });
 
 test('apagar um modelo deixa lápide, senão a sincronização o ressuscita', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   a.responder('circuito');
-  a.E('salvarAulaComoModelo()');
+  a.v('salvarAulaComoModelo');
   await a.esperar(60);
-  const id = a.J('S.aulas[0].id');
+  const id = a.S().aulas[0].id;
 
-  a.E(`apagarModeloDeAula(${JSON.stringify(id)})`);
+  a.v('apagarModeloDeAula', id);
   await a.esperar(60);
-  assert.deepStrictEqual(a.J('S.aulas'), []);
-  assert.ok(a.J('S.apagados')['aula:' + id] > 0,
+  assert.deepStrictEqual(a.S().aulas, []);
+  assert.ok(a.S().apagados['aula:' + id] > 0,
     'sem a lápide, a fusão traz de volta o que só existe do outro lado');
   a.fechar();
 });
@@ -167,33 +180,32 @@ test('as portas rápidas só existem no dia aberto', async () => {
   const a = await noSabado(comSabadoAnterior());
   a.E('S.sessao=null');
   a.E('view.day="A"');
-  a.E('render()');
+  a.v('render');
   await a.esperar();
-  assert.strictEqual(a.J('CTX.treino().aulas'), null,
+  assert.strictEqual(a.vJ('ctx.treino').aulas, null,
     'pôr uma aula inteira num dia de prescrição seria emendar o programa por atalho');
   a.fechar();
 });
 
 test('a lista rápida registra a aula inteira sem abrir cartão', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
-  a.E('abrirRapido()');
+  a.v('abrirRapido');
   await a.esperar();
 
   const linhas = a.$$('.rapl');
   assert.strictEqual(linhas.length, 4, 'a aula inteira cabe numa tela');
   assert.strictEqual(a.$$('.ex').length, 0, 'e os cartões saem do caminho');
 
-  // 4 movimentos × 2 campos: oito toques de teclado e nada mais
-  a.digitar('fr0', 104);   // corrida 400 m
-  a.digitar('fr1', 108);   // remo 500 m
-  a.digitar('fw2', 9);     // wall balls 9 kg
-  a.digitar('fr2', 20);
-  a.digitar('fr3', 60);    // bike 15 cal
-  await a.esperar();
+  // cinco valores, cada um com um toque para abrir e um por dígito
+  await pelaLista(a, 'fr0', 104);   // corrida 400 m
+  await pelaLista(a, 'fr1', 108);   // remo 500 m
+  await pelaLista(a, 'fw2', 9);     // wall balls 9 kg
+  await pelaLista(a, 'fr2', 20);
+  await pelaLista(a, 'fr3', 60);    // bike 15 cal
 
-  assert.strictEqual(a.E('seriesFeitasHoje("HX")'), 7,
+  assert.strictEqual(a.v('seriesFeitasHoje', 'HX'), 7,
     'as passadas de cada movimento entram no histórico na hora, sem salvar');
   const corrida = a.log('HX', 0);
   assert.deepStrictEqual(corrida[corrida.length - 1].sets, [[0, 104], [0, 104]],
@@ -203,9 +215,9 @@ test('a lista rápida registra a aula inteira sem abrir cartão', async () => {
 
 test('a lista rápida diz que o valor vale para todas as passadas', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
-  const c = a.J('CTX.treino().rapido');
+  const c = a.vJ('ctx.treino').rapido;
   assert.strictEqual(c.linhas[0].nota, '2 passadas · o mesmo em todas',
     'escrever o mesmo número em silêncio seria o app inventando dado');
   assert.strictEqual(c.linhas[3].nota, null, 'com uma passada só não há o que avisar');
@@ -216,22 +228,164 @@ test('a lista rápida diz que o valor vale para todas as passadas', async () => 
 
 test('a lista rápida não existe sem movimento no dia', async () => {
   const a = await noSabado({});
-  assert.strictEqual(a.J('CTX.treino().rapido'), null,
+  assert.strictEqual(a.vJ('ctx.treino').rapido, null,
     'uma lista vazia não registra nada');
+  a.fechar();
+});
+
+// O TECLADO PRÓPRIO na lista rápida — §6.1. A janela de registro da aula é
+// "DEPOIS da aula, ofegante, sentado, e ela é curta", e o teclado do sistema
+// cobria metade da tela, escondendo os movimentos seguintes da própria lista.
+
+/** A lista aberta, com o sábado anterior repetido: quatro linhas. */
+async function listaAberta() {
+  const a = await noSabado(comSabadoAnterior());
+  a.v('repetirUltimaAula');
+  await a.esperar(60);
+  a.v('abrirRapido');
+  await a.esperar();
+  return a;
+}
+
+test('a lista rápida não abre o teclado do sistema: carga e medida são botões', async () => {
+  const a = await listaAberta();
+  assert.strictEqual(a.$$('.rapl input').length, 0,
+    'nenhum campo na lista: qualquer um abriria o teclado do sistema por cima dela');
+
+  a.clicar(a.doc.getElementById('fw2'));
+  await a.esperar();
+  const linhas = a.$$('.rapl');
+  assert.strictEqual(a.$$('.tcl').length, 1, 'um painel só');
+  assert.ok(linhas[2].querySelector('.tcl'), 'e ele abre na linha do movimento que o pediu');
+  assert.ok(a.doc.getElementById('fw2').classList.contains('on'),
+    'o botão que abriu fica marcado: é como ele sabe em que grandeza está digitando');
+  a.fechar();
+});
+
+test('a vírgula só existe na carga, e a carga entra em todas as passadas', async () => {
+  const a = await listaAberta();
+  const grade = function () {
+    return a.$$('.rapl .tcl-grade > *').map(function (el) { return el.textContent.trim(); });
+  };
+
+  a.clicar(a.doc.getElementById('fr2'));
+  await a.esperar();
+  assert.strictEqual(grade()[9], '', 'repetição é inteira: o lugar da vírgula fica vazio');
+
+  await pelaLista(a, 'fw2', '9,5');
+  assert.strictEqual(grade()[9], ',', 'a carga tem a tecla');
+  assert.deepStrictEqual(a.vJ('draftPeek', 2).s.map(function (s) { return s[0]; }), [9.5, 9.5],
+    'o valor vale para as duas passadas, como a linha diz por extenso');
+  a.fechar();
+});
+
+test('a vírgula no meio da digitação não apaga o que já estava registrado', async () => {
+  const a = await listaAberta();
+  await pelaLista(a, 'fw2', '9');
+  assert.strictEqual(a.vJ('draftPeek', 2).s[0][0], 9);
+
+  const virgula = a.$$('.rapl .tcl-grade > *').find(function (el) { return el.textContent.trim() === ','; });
+  a.clicar(virgula);
+  await a.esperar();
+  assert.strictEqual(a.vJ('draftPeek', 2).s[0][0], 9,
+    '"9," ainda não é número: gravar nesse instante apagaria a carga por um passo');
+  a.fechar();
+});
+
+test('reabrir parte do valor registrado, porque o teclado é o único editor dele', async () => {
+  const a = await listaAberta();
+  await pelaLista(a, 'fr0', 104);
+  a.clicar(a.doc.getElementById('fr0'));       // o mesmo botão fecha
+  await a.esperar();
+  assert.strictEqual(a.$$('.tcl').length, 0, 'tocar no mesmo botão fecha o painel');
+
+  a.clicar(a.doc.getElementById('fr0'));
+  await a.esperar();
+  assert.ok(a.texto('.rapl .tcl-visor').includes('104'),
+    'abrir vazio faria um valor já registrado parecer ausente — aqui não há stepper mostrando o número');
+  a.fechar();
+});
+
+test('tocar noutro botão troca o painel, e fechar a lista fecha o teclado', async () => {
+  const a = await listaAberta();
+  a.clicar(a.doc.getElementById('fr0'));
+  await a.esperar();
+  a.clicar(a.doc.getElementById('fr3'));
+  await a.esperar();
+  const linhas = a.$$('.rapl');
+  assert.strictEqual(a.$$('.tcl').length, 1, 'continua um painel só');
+  assert.ok(linhas[3].querySelector('.tcl'), 'agora na linha da bike');
+
+  a.v('abrirRapido');                            // fecha a lista
+  await a.esperar();
+  assert.strictEqual(a.vista().teclado, null,
+    'um painel aberto sem a linha que o abriu ficaria escrevendo num movimento fora da tela');
   a.fechar();
 });
 
 test('digitar num dia aberto não troca a métrica do topo por uma meta', async () => {
   const a = await noSabado(comSabadoAnterior());
-  a.E('repetirUltimaAula()');
+  a.v('repetirUltimaAula');
   await a.esperar(60);
   assert.strictEqual(a.texto('#daymeta'), '4', 'o dia aberto conta movimentos');
 
-  a.E('abrirRapido()');
+  a.v('abrirRapido');
   await a.esperar();
-  a.digitar('fr0', 104);
-  await a.esperar();
+  await pelaLista(a, 'fr0', 104);
   assert.strictEqual(a.texto('#daymeta'), '4',
     'atualizaEstado escrevia "feitas/prescritas" por cima — meta que o box nunca prometeu');
+  a.fechar();
+});
+
+// Os dois fechos de sessão, no dia ABERTO.
+//
+// `finalizarSessao` tem a guarda `!diaAberto(...)` com a razão escrita ao lado:
+// num dia aberto o que foi adicionado É o dia, não uma emenda a ele — não há
+// conteúdo permanente para aquilo virar, e perguntar "isto fica no programa?"
+// a cada movimento do box seria uma pergunta por semana sem resposta certa.
+// Essa razão não fala do modo de fecho, então vale para os dois. `fechaSessao`
+// não tinha a guarda: a aula que fechava sozinha enfileirava os movimentos como
+// mudança esperando decisão, e a encerrada no toque não.
+
+test('aula que fecha sozinha não enfileira os movimentos como mudança pendente', async () => {
+  const a = await noSabado(comSabadoAnterior());
+  a.v('repetirUltimaAula');
+  await a.esperar(60);
+  assert.ok(a.vJ('modsDoDia', 'HX').length > 0,
+    'num dia aberto os movimentos do dia são mods: é o que a guarda tem de ver');
+
+  // cinco horas sem tocar em nada: o app encerra por conta própria
+  a.E('S.sessao.ultima = Date.now() - 5 * 3600 * 1000');
+  a.v('encerraSePreciso');
+  await a.esperar();
+
+  assert.strictEqual(a.S().sessao, null, 'a sessão fechou sozinha');
+  assert.deepStrictEqual(a.S().promoPendente, [],
+    'nada a decidir: no dia aberto o movimento não tem conteúdo permanente para virar');
+  a.fechar();
+});
+
+test('e a aula encerrada no toque também não — os dois fechos concordam', async () => {
+  const a = await noSabado(comSabadoAnterior());
+  a.v('repetirUltimaAula');
+  await a.esperar(60);
+  a.v('abrirRapido');
+  await a.esperar();
+  await pelaLista(a, 'fr0', 104);
+  await pelaLista(a, 'fr1', 108);
+  await pelaLista(a, 'fw2', 9);
+  await pelaLista(a, 'fr2', 20);
+  await pelaLista(a, 'fr3', 60);
+  assert.ok(a.vJ('modsDoDia', 'HX').length > 0, 'os mods continuam lá');
+
+  await a.v('finalizarSessao');
+  await a.esperar();
+
+  // A primeira asserção falava de `view.promo`, que saiu com a tela de decisão.
+  // A segunda é a que vale, e é mais forte: num dia ABERTO o que foi
+  // acrescentado É o dia, não uma emenda a ele — não há conteúdo permanente
+  // para aquilo virar, e por isso nada é enfileirado.
+  assert.deepStrictEqual(a.S().promoPendente, [], 'nada ficou esperando decisão');
+  assert.strictEqual(a.S().sessao, null, 'a sessão encerrou');
   a.fechar();
 });

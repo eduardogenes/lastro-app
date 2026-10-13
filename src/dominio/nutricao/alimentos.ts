@@ -30,6 +30,22 @@ const CRU: Array<[string, string, string, 'g' | 'ml', number, number, number, nu
   ['feijao', 'Feijão cozido', 'mercearia', 'g', 76, 4.8, 13.6, 0.5, 0.43],
   ['aveia', 'Aveia', 'mercearia', 'g', 394, 13.9, 66.6, 8.5, 0],
   ['cereal', 'Cereal de milho simples', 'mercearia', 'g', 375, 7, 84, 1, 0],
+  // Por que esta linha tem comentário: o alvo calórico é CALCULADO do plano,
+  // então um valor errado aqui contamina o alvo do dia, e por ele o ledger do
+  // ajuste calórico — que audita decisões de corte contra a ingestão da época.
+  // Nasceu com quatro números de segunda mão, marcada como pendente, e a marca
+  // valeu: os quatro estavam errados.
+  //
+  // CONFERIDO em 06/10 contra o rótulo, por pedido do dono, em duas fontes que
+  // concordam: Open Food Facts (EAN 7891000098950) e a tabela do produto no
+  // varejo. Por 100 g: 373 kcal, 13 g de proteína, 70 g de carboidrato, 2,33 g
+  // de gordura, 9,67 g de fibra (a fibra não entra aqui porque o catálogo não a
+  // guarda).
+  //
+  // Os valores anteriores vinham da memória de um agente e estavam errados nos
+  // quatro números — proteína 9,5 contra 13, gordura 4,5 contra 2,3. Era por
+  // isso que ficaram marcados como pendentes.
+  ['neston', 'Neston 3 Cereais', 'mercearia', 'g', 373, 13, 70, 2.3, 0],
   ['atum', 'Atum drenado', 'mercearia', 'g', 116, 26, 0, 1, 0],
   ['pasta', 'Pasta de amendoim', 'mercearia', 'g', 588, 25, 20, 50, 0],
   ['azeite', 'Azeite de oliva', 'mercearia', 'g', 884, 0, 0, 100, 0],
@@ -98,5 +114,17 @@ export const PLANO_BASE: Refeicao[] =[
   { id: 'pos', t: '08:00', n: 'Café da manhã', tag: 'REFEIÇÃO FORTE', quando: 'sempre', nota: 'Quatro fontes de energia e proteína sem depender de fogão no trabalho.', itens: [{ f: 'cuscuz', q: 200 }, { f: 'frango', q: 70 }, { f: 'requeijao', q: 30 }, { f: 'leite', q: 250 }, { f: 'uva', q: 120 }] },
   { id: 'almoco', t: '12:30', n: 'Almoço', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'O kiwi entra diariamente junto de feijão, aveia e vegetais para elevar fibra e ajudar a regularidade intestinal.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'frango', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }, { f: 'kiwi', q: 100 }] },
   { id: 'lanche', t: '16:00', n: 'Lanche da tarde', tag: 'GRANDE REFEIÇÃO', quando: 'sempre', nota: 'Bata leite + banana + aveia + pasta + leite em pó + whey. Pão e geleia ficam separados.', itens: [{ f: 'leite', q: 250 }, { f: 'banana', q: 120 }, { f: 'aveia', q: 40 }, { f: 'pasta', q: 10 }, { f: 'leitepo', q: 10 }, { f: 'whey', q: 30 }, { f: 'pao', q: 50 }, { f: 'geleia', q: 20 }] },
-  { id: 'jantar', t: '19:30', n: 'Jantar', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'Sem ceia obrigatória: o dia já fecha proteína e energia com quatro refeições proteicas completas.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'suino', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }] }
+  { id: 'jantar', t: '19:30', n: 'Jantar', tag: 'PRATO PRINCIPAL', quando: 'sempre', nota: 'Quatro refeições proteicas completas já fecham proteína e energia até aqui. A ceia entrou depois e é acréscimo, não substituição: nada aqui foi reduzido para ela caber.', itens: [{ f: 'arroz', q: 250, arroz: true }, { f: 'feijao', q: 50 }, { f: 'suino', q: 80 }, { f: 'legumes', q: 100 }, { f: 'azeite', q: 15 }] },
+  // A ceia. Entrou no plano 11, e a mesma refeição vai ao aparelho dele pela
+  // migração 10 → 11 (`src/dominio/migracoes.ts`), que carrega uma CÓPIA
+  // CONGELADA dela: migração lê o dado da época, nunca o código de hoje. As
+  // duas cópias não se referenciam de propósito, e um teste de domínio cobra
+  // que elas descrevam a MESMA ceia — se esta linha mudar, aquele teste fica
+  // vermelho e a mudança precisa de uma migração nova, não de um ajuste lá.
+  //
+  // `t` é SUPOSTO, não prescrito: ele disse o que come, não a que horas. 21:30
+  // põe a ceia depois do jantar das 19:30 e antes do sono de quem levanta para
+  // um pré-treino às 05:45. O horário só decide a posição da linha na timeline,
+  // que `refeicoesDeHoje` ordena por relógio.
+  { id: 'ceia', t: '21:30', n: 'Ceia', tag: 'ANTES DE DORMIR', quando: 'sempre', nota: 'Copo de leite com duas colheres de Neston. O copo de 250 ml é a porção de leite que o resto deste plano já usa; as duas colheres saem da porção do rótulo, que declara 30 g em CINCO colheres de sopa — 6 g por colher.', itens: [{ f: 'leite', q: 250 }, { f: 'neston', q: 12 }] }
 ];

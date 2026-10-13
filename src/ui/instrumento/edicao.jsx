@@ -10,6 +10,8 @@
 // esse bug: o passo de série virou 1..8 na edição do dia e continuou sem teto
 // no programa por meses.
 
+import { Teclado } from './teclado.jsx';
+
 export function LinhaEditavel({ l, acoes, children }) {
   return (
     <div class={'edx' + (l.mexido ? ' mexido' : '')}>
@@ -109,22 +111,38 @@ export function RegistroRapido({ c, acoes }) {
             <b>{l.nome}</b>
             <span>{l.prescricao}{l.nota ? ' · ' + l.nota : ''}</span>
           </div>
+          {/* BOTÃO e não campo, e a §6.1 diz por que aqui é teclado próprio: o
+              fonte já dizia quando isto acontece — "DEPOIS da aula, ofegante,
+              sentado, e ela é curta". Curta é o que define, não sentado. */}
           <div class="rapl-c">
             <label class="rapl-f">
               <span>{l.unidade}</span>
-              <input type="text" inputmode="decimal" id={`fw${l.i}`}
-                     aria-label={`carga de ${l.nome}, ${l.unidade}`}
-                     value={l.carga}
-                     onInput={e => acoes.inp(e.currentTarget, l.i, 0)} />
+              <button class={'rapl-b' + (l.carga === '' ? ' vazio' : '') + (l.teclado && l.teclado.pos === 0 ? ' on' : '')} id={`fw${l.i}`}
+                      aria-label={l.carga !== ''
+                        ? `carga de ${l.nome}, ${l.unidade}: ${l.carga}`
+                        : `registrar carga de ${l.nome}, ${l.unidade}`}
+                      onClick={() => acoes.abreTeclado(l.i, 0)}
+              >{l.carga !== '' ? l.carga : '·'}</button>
             </label>
             <label class="rapl-f">
               <span>{l.medida}</span>
-              <input type="text" inputmode="numeric" id={`fr${l.i}`}
-                     aria-label={`${l.medida} de ${l.nome}`}
-                     value={l.valor}
-                     onInput={e => acoes.inp(e.currentTarget, l.i, 1)} />
+              <button class={'rapl-b' + (l.valor === '' ? ' vazio' : '') + (l.teclado && l.teclado.pos === 1 ? ' on' : '')} id={`fr${l.i}`}
+                      aria-label={l.valor !== ''
+                        ? `${l.medida} de ${l.nome}: ${l.valor}`
+                        : `registrar ${l.medida} de ${l.nome}`}
+                      onClick={() => acoes.abreTeclado(l.i, 1)}
+              >{l.valor !== '' ? l.valor : '·'}</button>
             </label>
           </div>
+          {l.teclado && (
+            <Teclado
+              texto={l.teclado.texto} decimal={l.teclado.decimal}
+              unidade={l.teclado.unidade}
+              rotulo={`digitar ${l.teclado.unidade} de ${l.nome}`}
+              aoTeclar={t => acoes.tecla(t)}
+              aoFechar={() => acoes.fechaTeclado()}
+            />
+          )}
         </div>
       ))}
       <button class="swapopt cancel" onClick={acoes.abre}><b>Fechar</b></button>

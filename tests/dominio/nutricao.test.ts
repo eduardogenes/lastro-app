@@ -8,21 +8,22 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { ALIMENTOS_BASE, CATEGORIAS, PLANO_BASE } from '../../src/dominio/nutricao/alimentos';
 import {
-  arrozDoAjuste, diaInterpretavel, diasInterpretaveis, fechaDia, fmtKg, itemEntra,
-  listaDeCompras, minutosDe, refeicaoEntra, refeicoesDeHoje, resumoDaRefeicao,
-  totalDaRefeicao, totalDoDia, totalDoItem
+  ajusteNoItem, aplicaAjusteNoArroz, arrozDoAjuste, diaInterpretavel, diasInterpretaveis,
+  fechaDia, fmtKg, itemEntra, listaDeCompras, minutosDe, quantidadePrescrita, refeicaoEntra,
+  refeicoesDeHoje, resumoDaRefeicao, tiraMarcaDeArroz, totalDaRefeicao, totalDoDia, totalDoItem
 } from '../../src/dominio/nutricao/calculo';
 import { migraPlano4 } from '../../src/dominio/migracoes';
 import type { Estado } from '../../src/dominio/tipos';
-import type { DiaComidaHist } from '../../src/dominio/nutricao/tipos';
+import type { DiaComidaHist, Item } from '../../src/dominio/nutricao/tipos';
 
 const cat = ALIMENTOS_BASE;
 
 test('a prescrição chegou inteira do plano original', () => {
-  assert.strictEqual(Object.keys(cat).length, 36, '36 alimentos na biblioteca');
-  assert.strictEqual(PLANO_BASE.length, 6, 'seis refeições');
+  assert.strictEqual(Object.keys(cat).length, 37, '37 alimentos na biblioteca');
+  assert.strictEqual(PLANO_BASE.length, 7, 'sete refeições');
   assert.deepStrictEqual(PLANO_BASE.map(r => r.id),
-    ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar']);
+    ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar', 'ceia'],
+    'a ceia entrou no plano 11, e o Neston no catálogo com ela');
 });
 
 test('todo alimento declara categoria conhecida e unidade válida', () => {
@@ -119,6 +120,93 @@ test('desfazer o saldo devolve o prato ao que era', () => {
   assert.strictEqual(arrozDoAjuste(depois, -1, 2), 250, 'ida e volta sem deriva');
 });
 
+// ---------- o desfazer, que não recalcula ----------
+//
+// "Com o passo na grade de 15 g, ida e volta são exatas" só vale enquanto a
+// CONTAGEM de pratos com arroz for a mesma na ida e na volta. Mexer no plano é
+// normal, e aí o desfazer recalculado tirava comida em silêncio.
+
+/** Dois pratos de arroz na prescrição, como o plano os escreve. */
+function doisPratos(): Item[] {
+  return [{ f: 'arroz', q: 250, arroz: true }, { f: 'arroz', q: 250, arroz: true }];
+}
+
+test('aplicar reparte o passo e grava quanto deu a cada item', () => {
+  const itens = doisPratos();
+  aplicaAjusteNoArroz(itens, 1);
+  assert.deepStrictEqual(itens.map(i => i.q), [310, 310]);
+  assert.deepStrictEqual(itens.map(i => i.ajq), [60, 60], 'o que cada prato recebeu');
+  assert.deepStrictEqual(itens.map(quantidadePrescrita), [250, 250],
+    'e a prescrição continua legível por baixo');
+});
+
+test('o desfazer não depende da contagem de agora', () => {
+  // O defeito, em aritmética nua: somou com dois pratos, desfaz com um.
+  const itens = doisPratos();
+  aplicaAjusteNoArroz(itens, 1);
+  const sobrou = [itens[1]];                       // o outro prato perdeu a marca
+  aplicaAjusteNoArroz(sobrou, 0);
+  assert.strictEqual(sobrou[0].q, 250, 'volta à prescrição, e não a 190');
+  assert.strictEqual(sobrou[0].ajq, undefined, 'e o registro sai: zero não se grava');
+});
+
+test('aplicar o mesmo saldo duas vezes não acumula', () => {
+  const itens = doisPratos();
+  aplicaAjusteNoArroz(itens, -1);
+  aplicaAjusteNoArroz(itens, -1);
+  assert.deepStrictEqual(itens.map(i => i.q), [190, 190], 'a base é a prescrição, não o prato de agora');
+  assert.deepStrictEqual(itens.map(i => i.ajq), [-60, -60]);
+});
+
+test('o corte que esbarra no zero grava o que deu, não o que pediu', () => {
+  // Um passo de −120 num prato de 50 g só consegue tirar 50. Gravar −120 faria
+  // o desfazer devolver 120 e o prato subir acima da prescrição.
+  const itens: Item[] = [{ f: 'arroz', q: 50, arroz: true }];
+  aplicaAjusteNoArroz(itens, -1);
+  assert.strictEqual(itens[0].q, 0);
+  assert.strictEqual(itens[0].ajq, -50, 'o que ele deu');
+  aplicaAjusteNoArroz(itens, 0);
+  assert.strictEqual(itens[0].q, 50, 'e a volta é a prescrição, não 120');
+});
+
+test('perder a marca devolve a parte daquele item', () => {
+  const itens = doisPratos();
+  aplicaAjusteNoArroz(itens, 2);
+  assert.deepStrictEqual(itens.map(i => i.q), [370, 370]);
+
+  tiraMarcaDeArroz(itens[0]);
+  assert.strictEqual(itens[0].q, 250, 'devolve os 120 que recebeu');
+  assert.strictEqual(itens[0].arroz, undefined, 'e sai da alavanca do ajuste');
+  assert.strictEqual(itens[0].ajq, undefined);
+  assert.strictEqual(itens[1].q, 370, 'o outro prato não é tocado');
+  assert.strictEqual(itens[1].ajq, 120);
+});
+
+test('o registro do ajuste não entra em conta nenhuma', () => {
+  // `ajq` é contabilidade do ajuste, não comida: quem soma kcal soma `q`, e `q`
+  // já é o prato de hoje. Se ele entrasse em `totalDoItem`, o alvo calórico — e
+  // por ele o `tot` congelado de cada dia fechado — passaria a depender de um
+  // campo que existe para poder ser desfeito.
+  //
+  // QUEBRA EM SENTIDO OPOSTO para esta negativa: fazer `totalDoItem` usar
+  // `q − ajq` deixa isto vermelho na hora. Verbo inerte não passa daqui.
+  const comRegistro = totalDoItem({ f: 'arroz', q: 310, arroz: true, ajq: 60 }, cat);
+  const semRegistro = totalDoItem({ f: 'arroz', q: 310 }, cat);
+  assert.deepStrictEqual(comRegistro, semRegistro, 'o mesmo prato soma o mesmo');
+  assert.strictEqual(Math.round(comRegistro.kcal), 397, '310 g a 128 kcal/100 g');
+});
+
+test('item sem registro de ajuste é prato intocado', () => {
+  // Ausente = zero. É o caso dominante: todo item que o ajuste nunca moveu.
+  assert.strictEqual(quantidadePrescrita({ f: 'feijao', q: 50 }), 50);
+  assert.strictEqual(ajusteNoItem({ f: 'feijao', q: 50 }), 0);
+  assert.strictEqual(ajusteNoItem({ f: 'arroz', q: 310, ajq: 60 }), 60);
+  // e lixo em disco não vira NaN no prato
+  assert.strictEqual(ajusteNoItem({ f: 'arroz', q: 310, ajq: NaN }), 0);
+  assert.strictEqual(quantidadePrescrita({ f: 'arroz', q: 310, ajq: NaN }), 310);
+});
+
+
 // ---------- compras ----------
 
 test('a lista soma o plano pelas vezes que cada refeição acontece', () => {
@@ -191,9 +279,9 @@ test('3→4 é aditiva: não toca em nada do treino', () => {
 test('3→4 semeia o plano nutricional e a cadência', () => {
   const S = estado3();
   const r = migraPlano4(S)!;
-  assert.strictEqual(r.refeicoes, 6);
+  assert.strictEqual(r.refeicoes, PLANO_BASE.length, 'a semente é o plano inteiro de hoje');
   assert.strictEqual(r.cadencia, true);
-  assert.strictEqual(S.comida.plano!.length, 6);
+  assert.strictEqual(S.comida.plano!.length, PLANO_BASE.length);
   assert.strictEqual(S.cadencia!.length, 7);
   assert.strictEqual(S.cadencia![0], 'descanso', 'domingo é folga na semana típica dele');
   assert.strictEqual(S.ajuste, 0);

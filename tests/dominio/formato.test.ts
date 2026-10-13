@@ -3,7 +3,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import {
-  MESES, PERIODOS, diaExtenso, fmtDate, fmtDec, fmtDec2, fmtDesc, fmtDur, fmtHora,
+  MESES, PERIODOS, diaExtenso, fmtDate, fmtDec, fmtDec2, fmtDesc, fmtDur, fmtHora, semanasDesde,
   fmtInt, fmtK, fmtLitros, fmtNum, fmtSig, fmtSig2, escAttr, escapeHTML, periodoDe, sameDay,
   weekStart
 } from '../../src/dominio/formato';
@@ -53,6 +53,22 @@ test('duração passa a hora quando merece', () => {
   assert.strictEqual(fmtDur(90 * 60000), '1h30');
   assert.strictEqual(fmtDur(60 * 60000), '1h00');
   assert.strictEqual(fmtDur(null), '–', 'sessão sem duração medida não inventa número');
+});
+
+test('semanas no programa: zero semana é "menos de 1", não "0 semanas"', () => {
+  // A frase entra na regra das 6 a 8 semanas do treinador ("está no programa há
+  // X"). "0 semanas" lê como se nada tivesse acontecido, e o que aconteceu é
+  // que entrou há poucos dias.
+  const SEM = 7 * 86400000;
+  const agora = 1760000000000;
+  assert.strictEqual(semanasDesde(agora - 3 * 86400000, agora), 'menos de 1 semana');
+  assert.strictEqual(semanasDesde(agora, agora), 'menos de 1 semana', 'entrou agora');
+  assert.strictEqual(semanasDesde(agora - SEM, agora), '1 semana', 'singular');
+  assert.strictEqual(semanasDesde(agora - 2 * SEM, agora), '2 semanas');
+  // arredonda PARA BAIXO: 13 dias é uma semana cumprida, não duas
+  assert.strictEqual(semanasDesde(agora - 13 * 86400000, agora), '1 semana');
+  // `agora` vem de fora: a função não lê relógio, e é o que a torna testável
+  assert.strictEqual(semanasDesde(0, 6 * SEM), '6 semanas');
 });
 
 test('descanso redondo vira minuto; quebrado vira relógio', () => {

@@ -188,10 +188,11 @@ test('o override manual vence o cálculo', () => {
 
 test('peso parado com força subindo vira observar, não comer mais', () => {
   const body = { peso: pesagens([73.0, 73.05, 73.10]), cintura: [] };
-  assert.strictEqual(veredito(body, { diasRegistrados: 14 }).t, 'Comer mais',
+  assert.strictEqual(veredito(body, { diasRegistrados: 14 }).t, 'Comer mais 150 kcal',
     'sem o sinal de força, o ganho travado pede mais comida');
   const v = veredito(body, { diasRegistrados: 14, forcaSubindo: true });
   assert.strictEqual(v.k, 'observar');
+  assert.strictEqual(v.t, 'Não mexer: peso parado com carga subindo', 'o título diz qual dos três observar é');
   assert.ok(v.p.includes('recomposição'), v.p);
 });
 
@@ -199,7 +200,7 @@ test('a força subindo não salva quem está engordando rápido', () => {
   const body = { peso: pesagens([73.0, 73.6, 74.2]), cintura: [] };
   assert.strictEqual(
     veredito(body, { diasRegistrados: 14, forcaSubindo: true, gorduraVisual: 'sim' }).t,
-    'Comer menos', 'o ramo de cima não consulta o sinal de força');
+    'Comer menos 150 kcal', 'o ramo de cima não consulta o sinal de força');
 });
 
 test('o veredito decide e o ajuste executa', () => {

@@ -62,6 +62,41 @@ export interface Item {
   arroz?: boolean;
   /** só entra em dia de alta demanda */
   alta?: boolean;
+  /**
+   * Quanto de `q` veio do ajuste calórico, nas unidades do item.
+   *
+   * **É a única coisa aqui que não é marca.** `arroz`, `alta` e `caf` são
+   * MARCAS: dizem o que o item é ou quando ele aparece, são booleanas e quem as
+   * lê não faz conta com elas. `ajq` é VALOR, com sinal e unidade — soma e
+   * subtrai de `q`, e a aritmética dele é a do prato. Daí o nome não ser um
+   * adjetivo: é `aj` de ajuste mais o `q` de quantidade, a parte de `q` que o
+   * ajuste pôs lá.
+   *
+   * A invariante é uma só: **`q − ajq` é a prescrição**. Ausente = zero, que é
+   * o caso dominante (todo item que o ajuste nunca tocou) e por isso não se
+   * grava.
+   *
+   * Existe porque o desfazer era RECALCULADO. O passo de 120 g se reparte entre
+   * os itens marcados com `arroz`, e desfazer dividia pela contagem DE AGORA:
+   * trocar o arroz do almoço por cuscuz com um passo em vigor fazia o desfazer
+   * achar um item só e tirar do jantar os 120 g do dia inteiro — medido, 190 g
+   * onde a prescrição é 250 —, enquanto o almoço ficava com os +60 para sempre,
+   * porque perdeu a marca e o desfazer não passava mais por ele. Mexer no plano
+   * é normal; recalcular supõe que ninguém mexeu.
+   *
+   * O dono respondeu de quem é o número que fica no prato quando a quantidade de
+   * pratos muda (08/10): **"é meu"**. Então o app desfaz exatamente o que somou,
+   * e é isto que ele precisa lembrar para conseguir. A razão de ser essa a
+   * escolha, e não o salto para 370, é a regra escrita do projeto de o caminho
+   * de menor esforço ser o conservador: um número que volta ao que o
+   * nutricionista prescreveu é conservador; um que salta porque ele trocou um
+   * alimento, não.
+   *
+   * Por isso `ajq` é gravado como `q − base` DEPOIS do clamp em zero, e não
+   * como o passo calculado: um corte que tenha esbarrado no zero deu menos do
+   * que o passo pedia, e é o que ele deu que tem de voltar.
+   */
+  ajq?: number;
 }
 
 /** Uma refeição do plano. */
@@ -91,16 +126,87 @@ export interface Totais {
   g: number;
 }
 
+/**
+ * Como uma refeição marcada saiu do plano.
+ *
+ * Ausente é o caso dominante e por isso não se grava: marcar a refeição já diz
+ * que comeu o que estava prescrito, e um valor `'plano'` em todo dia seria
+ * byte para repetir o padrão.
+ *
+ * `'fora'` é "comi, mas não foi isto" — o total congelado do dia continua
+ * sendo o do plano, porque é o que o app sabe, e esta marca é a procedência
+ * dizendo que ele não é a refeição de verdade.
+ *
+ * `'nao'` é "não comi esta refeição", e é diferente de não ter marcado nada:
+ * um é fato declarado, o outro é silêncio. Essa diferença é o que faz o dia
+ * contar como dia de consumo conhecido (`diaInterpretavel`) em vez de ficar
+ * fora da janela de 14 dias da regra do nutricionista.
+ *
+ * `'nsei'` é "não sei o que foi esta refeição" — o "Não sei" que era do DIA
+ * inteiro (`aderencia: 'perdido'`) passando a valer por refeição. É o oposto de
+ * `'nao'`: `'nao'` é zero CONHECIDO, `'nsei'` é não saber. A aritmética está
+ * fechada e é a mesma do denominador da janela de 14 dias ("o denominador é a
+ * janela, não os dias registrados"): a refeição **pesa 0 na adesão do dia e NÃO
+ * sai do denominador**. O caminho de menor esforço tem de ser o conservador —
+ * subestimar segura o corte calórico, inflar autoriza um corte que não devia
+ * acontecer.
+ *
+ * Três consequências que são contrato, e não efeito colateral:
+ *
+ * 1. **O dia continua interpretável.** `diaInterpretavel` só exige uma marca
+ *    qualquer, e `'nsei'` é marca. A incerteza aparece no número baixo, não
+ *    tirando o dia da conta. **Não há limiar**: um dia inteiro em `'nsei'` é
+ *    adesão 0 e continua contando para o portão de 11 em 14.
+ * 2. **É distinguível de silêncio.** Silêncio não entra em `done` e dá `null`
+ *    no dia inteiro ("ausência de registro não é aderência zero"); `'nsei'` é
+ *    marca explícita que pesa 0. Mesmo número, registros diferentes.
+ * 3. **Não é `'nao'` fora da adesão.** No total do dia `'nsei'` segue o caminho
+ *    de `'fora'` — entra com os números do plano, que são os únicos que o app
+ *    tem —, porque afirmar zero kcal sobre uma refeição que ele não sabe
+ *    descrever é a única coisa que se sabe falsa. Ver `totalRegistrado`.
+ *
+ * O rótulo na tela é **"Não sei"**, escrito pela frente 3
+ * (`docs/redesign/09-frente3-palavras.md`, §4.2 e §4.5, versão A). A folha dos
+ * cinco botões que o oferece é do redesenho e ainda não existe: hoje nenhum
+ * chamador de `marcaRefeicao` passa `como`, em valor nenhum.
+ */
+export type ComoFoiARefeicao = 'fora' | 'nao' | 'nsei';
+
 /** O estado do dia de comida. Carimbado com a data, zera sozinho. */
 export interface DiaComida {
   /** 'AAAA-MM-DD' — o carimbo que faz o dia zerar sozinho */
   data: string;
-  /** refeições marcadas como feitas */
-  done: Record<string, 1>;
+  /**
+   * refeição → INSTANTE em que foi marcada.
+   *
+   * Era `Record<string, 1>`: a marca existia e a hora não. A forma é agora a
+   * mesma de `DiaComidaHist.done`, pelos dois motivos escritos lá — fundir dois
+   * aparelhos que marcaram refeições diferentes no mesmo dia, e dar à lápide de
+   * `chaveDeRefeicaoFeita` um instante contra o qual decidir. Convergir também
+   * conserta uma perda que a fixture do plano 9 registra: `fechaDia` carimbava
+   * TODAS as marcas com a hora do fechamento, porque não tinha a de cada uma.
+   */
+  done: Record<string, number>;
   /** copos de água */
   agua: number;
+  /**
+   * "Não contei a água" como FATO, e não como zero copos.
+   *
+   * `agua: 0` é ambíguo: pode ser o dia em que ele não bebeu nada e o dia em
+   * que ele não contou. Como leitura derivada não dá para separar os dois, e um
+   * zero lido como abandono de registro é o tipo de erro de medição que este
+   * app trata como mentira sobre o passado. Ausente = a conta valeu.
+   */
+  aguaNaoContada?: 1;
   /** ajuste de porção SÓ DE HOJE, por refeição: 1 = 100% */
   escala: Record<string, number>;
+  /**
+   * refeição → como ela saiu do plano. Ausente = comeu o prescrito.
+   *
+   * É atributo da MARCA, não registro próprio: só tem sentido para refeição que
+   * está em `done`, viaja com ela na fusão e morre com a lápide dela.
+   */
+  como?: Record<string, ComoFoiARefeicao>;
   /** override da cadência de hoje */
   cadencia?: 'treino' | 'descanso' | null;
   /** hoje é dia de alta demanda */
@@ -155,8 +261,12 @@ export interface DiaComidaHist {
   done: Record<string, number>;
   /** copos de água ao fechar o dia */
   agua: number;
+  /** a água daquele dia não foi contada; ver `DiaComida.aguaNaoContada` */
+  aguaNaoContada?: 1;
   /** ajuste de porção por refeição: 0,5 = comeu metade */
   escala: Record<string, number>;
+  /** refeição → como ela saiu do plano; ver `DiaComida.como` */
+  como?: Record<string, ComoFoiARefeicao>;
   cadencia?: 'treino' | 'descanso' | null;
   alta?: 1;
   turno?: Turno;

@@ -29,10 +29,10 @@ test('o painel lê as linhas juntas e diz a inversão', async () => {
   semana(logs, 'chest-press-inclinado-convergente', 3, 1);
 
   const a = await app({ estado: { logs: logs, done: [] } });
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
 
-  const leitura = a.J('CTX.musculos().leitura');
+  const leitura = a.vJ('ctx.musculos').leitura;
   const inv = leitura.filter(function (x) { return x.k === 'inversao'; })[0];
   assert.ok(inv, 'nenhuma inversão lida: ' + JSON.stringify(leitura));
   assert.ok(inv.txt.includes('peito levou 8'), inv.txt);
@@ -48,7 +48,7 @@ test('a tela carrega a ressalva do treinador', async () => {
   semana(logs, 'chest-press-horizontal-convergente', 8, 2);
   semana(logs, 'chest-press-inclinado-convergente', 3, 1);
   const a = await app({ estado: { logs: logs, done: [] } });
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
 
   const bloco = a.$('.dd-leitura').textContent.toLowerCase();
@@ -65,7 +65,7 @@ test('semana sem inversão não mostra o bloco', async () => {
   const logs = {};
   semana(logs, 'chest-press-inclinado-convergente', 9, 1);
   const a = await app({ estado: { logs: logs, done: [] } });
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
   assert.strictEqual(a.$('.dd-leitura'), null, 'sem o que dizer, cala');
   a.fechar();

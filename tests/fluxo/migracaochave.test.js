@@ -33,9 +33,10 @@ test('o histórico da chave velha entra, e a chave velha some', async () => {
     }
   });
 
-  assert.strictEqual(a.E('S.done.length'), 1, 'a sessão da chave velha chegou');
+  assert.strictEqual(a.S().done.length, 1, 'a sessão da chave velha chegou');
   assert.ok(a.gravado(), 'o estado foi regravado na chave nova');
   assert.strictEqual(a.legado(), null, 'a chave velha foi apagada depois de gravar');
+  a.fechar();
 });
 
 test('série registrada no build antigo depois da migração não se perde', async () => {
@@ -48,10 +49,11 @@ test('série registrada no build antigo depois da migração não se perde', asy
     legado: { plano: 3, done: [{ day: 'B', t: ONTEM, sid: ONTEM, dur: 50 * 60000 }] }
   });
 
-  const sids = a.J('S.done.map(function (x) { return x.sid; })').sort();
+  const sids = a.S().done.map(function (x) { return x.sid; }).sort();
   assert.deepStrictEqual(sids, [ANTEONTEM, ONTEM].sort(),
     'a fusão manteve as duas sessões, uma de cada chave');
   assert.strictEqual(a.legado(), null);
+  a.fechar();
 });
 
 test('apagar o histórico leva a chave velha junto', async () => {
@@ -62,24 +64,33 @@ test('apagar o histórico leva a chave velha junto', async () => {
     JSON.stringify({ plano: 3, done: [{ day: 'A', t: ONTEM, sid: ONTEM }] }));
 
   a.aceitar();
-  await a.E('wipe()');
+  await a.v('wipe');
 
-  assert.strictEqual(a.window.localStorage.getItem(CHAVE), null);
+  // A chave NOVA não fica vazia, e a asserção mudou de lado por isso: `wipe`
+  // GRAVA o estado apagado, com as lápides dentro. Antes ele só removia a
+  // chave, e fechar o app antes do toque seguinte perdia as duas coisas — as
+  // lápides, que são o apagamento, e a prescrição que o gesto preserva.
+  const novo = a.gravado();
+  assert.deepStrictEqual(novo.done, [], 'a chave nova ficou com o estado apagado');
+  assert.ok(Object.keys(novo.apagados).length > 0,
+    'e com a lápide da sessão que saiu, que é o que sobe para o outro aparelho');
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_LEGADO), null,
     'a chave velha ficou para trás, e o próximo boot ressuscitaria o que ele apagou');
+  a.fechar();
 });
 
 test('a sessão da nuvem é promovida da chave velha, e a velha some', async () => {
   const s = sessao('eu@exemplo.com');
   const a = await app({ chaves: { [CHAVE_NUVEM_LEGADO]: s } });
 
-  assert.strictEqual(a.E('NUVEM.sessao() && NUVEM.sessao().email'), 'eu@exemplo.com',
+  assert.strictEqual(a.vJ('nuvem.sessao').email, 'eu@exemplo.com',
     'quem já estava logado continua logado depois do rename');
   assert.deepStrictEqual(
     JSON.parse(a.window.localStorage.getItem(CHAVE_NUVEM)), s,
     'a sessão foi regravada na chave nova, inteira');
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM_LEGADO), null,
     'a chave velha só some depois de a nova estar gravada');
+  a.fechar();
 });
 
 test('com as duas chaves, a nova manda e a velha some assim mesmo', async () => {
@@ -94,17 +105,19 @@ test('com as duas chaves, a nova manda e a velha some assim mesmo', async () => 
     }
   });
 
-  assert.strictEqual(a.E('NUVEM.sessao() && NUVEM.sessao().email'), 'nova@exemplo.com');
+  assert.strictEqual(a.vJ('nuvem.sessao').email, 'nova@exemplo.com');
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM_LEGADO), null);
+  a.fechar();
 });
 
 test('sem nenhuma das duas, ninguém está logado e nada é criado', async () => {
   const a = await app();
 
-  assert.strictEqual(a.E('NUVEM.sessao()'), null);
+  assert.strictEqual(a.v('nuvem.sessao'), null);
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM), null,
     'ler a chave não pode criar a chave');
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM_LEGADO), null);
+  a.fechar();
 });
 
 test('sair apaga as duas chaves da sessão', async () => {
@@ -113,8 +126,9 @@ test('sair apaga as duas chaves da sessão', async () => {
   const a = await app({ chaves: { [CHAVE_NUVEM]: sessao('eu@exemplo.com') } });
   a.window.localStorage.setItem(CHAVE_NUVEM_LEGADO, JSON.stringify(sessao('eu@exemplo.com')));
 
-  await a.E('NUVEM.sair()');
+  await a.v('nuvem.sair');
 
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM), null);
   assert.strictEqual(a.window.localStorage.getItem(CHAVE_NUVEM_LEGADO), null);
+  a.fechar();
 });

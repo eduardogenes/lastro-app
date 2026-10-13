@@ -97,6 +97,17 @@ function Dia({ p, a, ctx }) {
           <div class="edx-c">
             <button class="edx-b" onClick={() => ctx.acoesProg.reps(l.i)}>{l.reps}</button>
             <button class="edx-b" onClick={() => ctx.acoesProg.descanso(l.i)}>{l.descanso}</button>
+            {/* A PORTA DO HISTÓRICO, e é o achado 1 da frente 1. Com a aba de
+                treino fora, o cartão do exercício só existe dentro do modo — e
+                quatro capacidades moravam só nele: o gráfico do "estou ficando
+                mais forte nisto", a correção de uma série de semanas atrás, o
+                renome do exercício e o tipo de carga.
+                Corrigir a série de três semanas atrás não é tarefa de quem está
+                treinando, e por isso a porta é daqui: a Prescrição é onde se
+                senta para mexer. */}
+            <button class="edx-b" data-a="hist-prescricao"
+                    aria-label={'histórico de ' + l.nome}
+                    onClick={() => ctx.abreHistoricoDaPrescricao(p.dia, l.i)}>histórico</button>
           </div>
         </LinhaEditavel>
       ))}

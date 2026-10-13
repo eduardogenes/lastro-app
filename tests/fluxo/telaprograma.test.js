@@ -3,10 +3,11 @@
 import { test } from 'vitest';
 import assert from 'node:assert';
 import { app } from './harness.js';
+import { camadasAbertas } from '../../src/ui/navegacao.js';
 
 async function noPrograma(d) {
   const a = await app();
-  a.E('abrirPrograma(' + (d ? JSON.stringify(d) : 'null') + ')');
+  a.v('abrirPrograma', d || null);
   return a;
 }
 
@@ -22,49 +23,49 @@ test('a lista mostra os seis dias e a conta contra o treinador', async () => {
 
 test('mudar série no programa é imediato e fica no histórico', async () => {
   const a = await noPrograma('B');
-  await a.E('progSeries("B",0,1)');
+  await a.v('progSeries', 'B', 0, 1);
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.B.ex[0].s'), 3);
-  assert.strictEqual(a.E('treino("B").ex[0].s'), 3, 'vale já no próximo treino');
+  assert.strictEqual(a.S().prog.B.ex[0].s, 3);
+  assert.strictEqual(a.vJ('treino', 'B').ex[0].s, 3, 'vale já no próximo treino');
 
-  const log = a.J('S.progLog');
+  const log = a.S().progLog;
   assert.strictEqual(log.length, 1);
-  assert.match(log[0].txt, /Agachamento no Smith: 2 → 3 séries/);
+  assert.strictEqual(log[0].txt, 'Agachamento no Smith: 3 séries, não 2');
   assert.strictEqual(log[0].day, 'B');
   a.fechar();
 });
 
 test('reordenar exercício no programa', async () => {
   const a = await noPrograma('C');
-  const segundo = a.E('S.prog.C.ex[1].id');
-  await a.E('moverProg("C",1,-1)');
+  const segundo = a.S().prog.C.ex[1].id;
+  await a.v('moverProg', 'C', 1, -1);
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.C.ex[0].id'), segundo);
+  assert.strictEqual(a.S().prog.C.ex[0].id, segundo);
   a.fechar();
 });
 
 test('remover exercício do programa não toca no histórico', async () => {
   const a = await app();
-  a.E('go("C")');
-  a.E('toggle(0)');
+  a.v('go', 'C');
+  a.v('toggle', 0);
   a.preencher(0, 0, 100, 8);
   const chave = a.k('C', 0);
-  assert.ok(a.J('S.logs[' + JSON.stringify(chave) + ']'));
+  assert.ok(a.S().logs[chave]);
 
-  a.E('abrirPrograma("C")');
-  await a.E('progRemove("C",0)');
+  a.v('abrirPrograma', 'C');
+  await a.v('progRemove', 'C', 0);
   await a.esperar();
-  assert.notStrictEqual(a.E('S.prog.C.ex[0].id'), chave, 'saiu do programa');
-  assert.ok(a.J('S.logs[' + JSON.stringify(chave) + ']'), 'mas o histórico continua guardado');
+  assert.notStrictEqual(a.S().prog.C.ex[0].id, chave, 'saiu do programa');
+  assert.ok(a.S().logs[chave], 'mas o histórico continua guardado');
   a.fechar();
 });
 
 test('trocar no programa reinicia o relógio do exercício', async () => {
   const a = await noPrograma('B');
-  await a.E('progSetTroca("B",0,"belt-squat")');
+  await a.v('progSetTroca', 'B', 0, 'belt-squat');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'belt-squat');
-  assert.ok(a.E('S.prog.B.ex[0].desde') > Date.now() - 5000);
+  assert.strictEqual(a.S().prog.B.ex[0].id, 'belt-squat');
+  assert.ok(a.S().prog.B.ex[0].desde > Date.now() - 5000);
   a.fechar();
 });
 
@@ -72,41 +73,41 @@ test('trocar exercício com menos de 6 semanas pede confirmação', async () => 
   const a = await noPrograma('B');
   a.E('S.prog.B.ex[0].desde = Date.now() - 14*86400000');
   a.recusar();
-  await a.E('progSetTroca("B",0,"belt-squat")');
+  await a.v('progSetTroca', 'B', 0, 'belt-squat');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.B.ex[0].id'), 'agachamento-no-smith', 'a regra do treinador segura a troca');
+  assert.strictEqual(a.S().prog.B.ex[0].id, 'agachamento-no-smith', 'a regra do treinador segura a troca');
   assert.match(a.perguntas().join(' '), /6 a 8 semanas/);
   a.fechar();
 });
 
 test('adicionar exercício pela tela de programa é permanente', async () => {
   const a = await noPrograma('C');
-  const antes = a.E('S.prog.C.ex.length');
-  await a.E('addExercicio("belt-squat")');
+  const antes = a.S().prog.C.ex.length;
+  await a.v('addExercicio', 'belt-squat');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.C.ex.length'), antes + 1);
-  assert.strictEqual(a.E('S.mods'), null, 'não passa pelos mods do dia');
-  assert.match(a.J('S.progLog')[0].txt, /Belt squat entrou/);
+  assert.strictEqual(a.S().prog.C.ex.length, antes + 1);
+  assert.strictEqual(a.S().mods, null, 'não passa pelos mods do dia');
+  assert.match(a.S().progLog[0].txt, /Belt squat entrou/);
   a.fechar();
 });
 
 test('a diferença lê uma troca como troca, não como duas mudanças', async () => {
   const a = await noPrograma('B');
-  await a.E('progSetTroca("B",4,"extensora-unilateral")');
+  await a.v('progSetTroca', 'B', 4, 'extensora-unilateral');
   await a.esperar();
-  const dif = a.J('difDoDia("B")');
+  const dif = a.vJ('difDoDia', 'B');
   assert.strictEqual(dif.length, 1, 'saiu um e entrou outro na mesma posição: é uma troca');
   assert.strictEqual(dif[0].k, 'troca');
-  assert.match(dif[0].txt, /Cadeira extensora → Extensora unilateral/);
+  assert.strictEqual(dif[0].txt, 'Extensora unilateral no lugar de Cadeira extensora');
   a.fechar();
 });
 
 test('a diferença separa série, repetição e descanso', async () => {
   const a = await noPrograma('C');
-  await a.E('progSeries("C",0,1)');
-  await a.E('progDesc("C",1)');
+  await a.v('progSeries', 'C', 0, 1);
+  await a.v('progDesc', 'C', 1);
   await a.esperar();
-  const dif = a.J('difDoDia("C")');
+  const dif = a.vJ('difDoDia', 'C');
   const ks = dif.map(function (x) { return x.k; }).sort();
   assert.deepStrictEqual(ks, ['desc', 'sets']);
   a.fechar();
@@ -114,41 +115,41 @@ test('a diferença separa série, repetição e descanso', async () => {
 
 test('mudar a ordem sem mudar nada mais aparece como ordem', async () => {
   const a = await noPrograma('C');
-  await a.E('moverProg("C",0,1)');
+  await a.v('moverProg', 'C', 0, 1);
   await a.esperar();
-  const dif = a.J('difDoDia("C")');
+  const dif = a.vJ('difDoDia', 'C');
   assert.deepStrictEqual(dif.map(function (x) { return x.k; }), ['ordem']);
   a.fechar();
 });
 
 test('restaurar um treino desfaz só aquele treino', async () => {
   const a = await noPrograma('C');
-  await a.E('progSeries("C",0,1)');
-  await a.E('progSeries("A",0,1)');
+  await a.v('progSeries', 'C', 0, 1);
+  await a.v('progSeries', 'A', 0, 1);
   await a.esperar();
-  assert.strictEqual(a.E('difTotal()'), 2);
+  assert.strictEqual(a.v('difTotal'), 2);
 
-  await a.E('restaurarDia("C")');
+  await a.v('restaurarDia', 'C');
   await a.esperar();
-  assert.deepStrictEqual(a.J('difDoDia("C")'), []);
-  assert.strictEqual(a.E('difDoDia("A").length'), 1, 'o A continua como ele deixou');
+  assert.deepStrictEqual(a.vJ('difDoDia', 'C'), []);
+  assert.strictEqual(a.vJ('difDoDia', 'A').length, 1, 'o A continua como ele deixou');
   a.fechar();
 });
 
 test('restaurar tudo volta programa e rotação, sem tocar no histórico nem no catálogo', async () => {
   const a = await noPrograma('C');
   a.E('S.ex["meu-aparelho"] = { n:"Meu aparelho", car:"pino", g:"peito", c:0, cue:"", meu:1 }; montaCatalogo()');
-  a.E('toggle(0)');
-  await a.E('progSeries("C",0,1)');
-  await a.E('moverDia(0,1)');
+  a.v('toggle', 0);
+  await a.v('progSeries', 'C', 0, 1);
+  await a.v('moverDia', 0, 1);
   await a.esperar();
-  assert.ok(a.E('difTotal()') >= 2);
+  assert.ok(a.v('difTotal') >= 2);
 
-  await a.E('restaurarTudo()');
+  await a.v('restaurarTudo');
   await a.esperar();
-  assert.strictEqual(a.E('difTotal()'), 0);
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'D', 'E', 'HX']);
-  assert.strictEqual(a.E('CAT["meu-aparelho"].n'), 'Meu aparelho', 'o que ele cadastrou continua lá');
+  assert.strictEqual(a.v('difTotal'), 0);
+  assert.deepStrictEqual(a.vJ('rot'), ['A', 'B', 'C', 'D', 'E', 'HX']);
+  assert.strictEqual(a.dado('CAT')["meu-aparelho"].n, 'Meu aparelho', 'o que ele cadastrou continua lá');
   a.fechar();
 });
 
@@ -156,47 +157,47 @@ test('reordenar a rotação muda a sequência dos treinos', async () => {
   const a = await noPrograma();
   // a rotação já nasce alfabética desde o plano 5; subir o quinto dia a
   // desalinha, que é justamente o que se quer testar
-  await a.E('moverDia(4,-1)');
+  await a.v('moverDia', 4, -1);
   await a.esperar();
-  assert.deepStrictEqual(a.J('rot()'), ['A', 'B', 'C', 'E', 'D', 'HX']);
-  assert.strictEqual(a.E('difTotal()'), 1, 'a rotação conta como diferença');
+  assert.deepStrictEqual(a.vJ('rot'), ['A', 'B', 'C', 'E', 'D', 'HX']);
+  assert.strictEqual(a.v('difTotal'), 1, 'a rotação conta como diferença');
   a.fechar();
 });
 
 test('criar treino novo entra na rotação e começa vazio', async () => {
   const a = await noPrograma();
   a.responder('Braço extra');
-  await a.E('criarTreino()');
+  await a.v('criarTreino');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.F.name'), 'Braço extra');
-  assert.deepStrictEqual(a.J('S.prog.F.ex'), []);
-  assert.strictEqual(a.J('rot()').indexOf('F'), 6);
+  assert.strictEqual(a.S().prog.F.name, 'Braço extra');
+  assert.deepStrictEqual(a.S().prog.F.ex, []);
+  assert.strictEqual(a.vJ('rot').indexOf('F'), 6);
 
-  await a.E('addExercicio("rosca-martelo")');
+  await a.v('addExercicio', 'rosca-martelo');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.F.ex.length'), 1);
-  assert.strictEqual(a.E('treino("F").ex[0].n'), 'Rosca martelo');
+  assert.strictEqual(a.S().prog.F.ex.length, 1);
+  assert.strictEqual(a.vJ('treino', 'F').ex[0].n, 'Rosca martelo');
   a.fechar();
 });
 
 test('apagar um treino que ele criou tira da rotação', async () => {
   const a = await noPrograma();
   a.responder('Braço extra');
-  await a.E('criarTreino()');
+  await a.v('criarTreino');
   await a.esperar();
-  await a.E('restaurarDia("F")');
+  await a.v('restaurarDia', 'F');
   await a.esperar();
-  assert.strictEqual(a.E('S.prog.F'), undefined);
-  assert.strictEqual(a.J('rot()').indexOf('F'), -1);
+  assert.strictEqual(a.S().prog.F, undefined);
+  assert.strictEqual(a.vJ('rot').indexOf('F'), -1);
   a.fechar();
 });
 
 test('o programa avisa quando um músculo sai do alvo do treinador', async () => {
   const a = await noPrograma('A');
-  assert.strictEqual(a.J('impactoOficial("delt lateral")'), null, 'dentro do alvo, nada é dito');
-  await a.E('progSeries("A",4,1)');
+  assert.strictEqual(a.vJ('impactoOficial', 'delt lateral'), null, 'dentro do alvo, nada é dito');
+  await a.v('progSeries', 'A', 4, 1);
   await a.esperar();
-  const imp = a.J('impactoOficial("delt lateral")');
+  const imp = a.vJ('impactoOficial', 'delt lateral');
   assert.match(imp.txt, /13 na rotação · o treinador prescreveu 12/);
   assert.strictEqual(imp.acima, 1);
   a.fechar();
@@ -204,35 +205,35 @@ test('o programa avisa quando um músculo sai do alvo do treinador', async () =>
 
 test('o programa sobrevive a fechar e reabrir', async () => {
   const a = await noPrograma('C');
-  await a.E('progSeries("C",0,1)');
-  await a.E('moverDia(0,1)');
+  await a.v('progSeries', 'C', 0, 1);
+  await a.v('moverDia', 0, 1);
   await a.esperar();
   const bruto = a.gravado();
   a.fechar();
 
   const b = await app({ estado: bruto });
   await b.esperar();
-  assert.strictEqual(b.E('S.prog.C.ex[0].s'), 4);
-  assert.deepStrictEqual(b.J('rot()'), ['B', 'A', 'C', 'D', 'E', 'HX']);
-  assert.strictEqual(b.E('S.progLog.length'), 2);
+  assert.strictEqual(b.S().prog.C.ex[0].s, 4);
+  assert.deepStrictEqual(b.vJ('rot'), ['B', 'A', 'C', 'D', 'E', 'HX']);
+  assert.strictEqual(b.S().progLog.length, 2);
   b.fechar();
 });
 
 test('as duas edições não se confundem', async () => {
   // mod de hoje no A, edição de programa no C: cada um no seu lugar
   const a = await app();
-  a.E('modoEdicao(true)');
-  a.E('mudaSeries(2, 1)');
-  const hoje = a.E('treino("A").ex[2].s');
-  const oficial = a.E('S.prog.A.ex[2].s');
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 2, 1);
+  const hoje = a.vJ('treino', 'A').ex[2].s;
+  const oficial = a.S().prog.A.ex[2].s;
 
-  a.E('abrirPrograma("C")');
-  await a.E('progSeries("C",0,1)');
+  a.v('abrirPrograma', 'C');
+  await a.v('progSeries', 'C', 0, 1);
   await a.esperar();
 
-  assert.strictEqual(a.E('S.prog.A.ex[2].s'), oficial, 'o mod do dia continua sendo só do dia');
-  assert.strictEqual(a.E('treino("A").ex[2].s'), hoje);
-  assert.strictEqual(a.E('S.prog.C.ex[0].s'), 4, 'e a edição de programa é permanente');
+  assert.strictEqual(a.S().prog.A.ex[2].s, oficial, 'o mod do dia continua sendo só do dia');
+  assert.strictEqual(a.vJ('treino', 'A').ex[2].s, hoje);
+  assert.strictEqual(a.S().prog.C.ex[0].s, 4, 'e a edição de programa é permanente');
   a.fechar();
 });
 
@@ -240,14 +241,14 @@ test('todas as telas do programa renderizam', async () => {
   const a = await noPrograma();
   const titulos = { lista: 'Programa', diff: 'O que está diferente', historico: 'Histórico de mudanças' };
   Object.keys(titulos).forEach(function (m) {
-    a.E('modoPrograma("' + m + '")');
+    a.v('modoPrograma', m);
     assert.strictEqual(a.texto('.htitle'), titulos[m], 'tela errada: ' + m);
     assert.ok(a.$('.back'), 'sem caminho de volta em ' + m);
   });
-  a.E('abrirPrograma("E")');
+  a.v('abrirPrograma', 'E');
   assert.ok(a.$$('.edx').length, 'o treino abre com os exercícios');
-  a.E('fecharPrograma()');
-  assert.strictEqual(a.E('view.prog'), null);
+  a.v('fecharPrograma');
+  assert.strictEqual(a.vista().prog, null);
   assert.ok(a.$('.ins-estado-v'), 'e volta para a tela de treino');
   a.fechar();
 });
@@ -257,12 +258,12 @@ test('todas as telas do programa renderizam', async () => {
 test('o painel atribui a série ao exercício registrado, não à posição', async () => {
   // Substituto de outro grupo: antes a série ia para o músculo do titular.
   const a = await app();
-  a.E('toggle(4)');                             // elevação lateral na máquina
-  a.E('setAlt(4, "pec-deck")');                 // peito
+  a.v('toggle', 4);                             // elevação lateral na máquina
+  a.v('setAlt', 4, 'pec-deck');                 // peito
   a.preencher(4, 0, 40, 12);
   a.preencher(4, 1, 40, 12);
 
-  const m = a.J('seriesPorMusculo(0, Date.now() + 1)');
+  const m = a.vJ('seriesPorMusculo', 0, Date.now() + 1);
   assert.strictEqual(m['peito'], 2, 'contou onde o trabalho aconteceu');
   assert.strictEqual(m['delt lateral'], undefined, 'e não onde ele estava prescrito');
   a.fechar();
@@ -272,16 +273,16 @@ test('exercício cadastrado por ele conta no painel', async () => {
   const a = await app();
   a.E(`S.ex["maquina-nova"] = { n:"Máquina nova", car:"pino", g:"dorsal", c:0, cue:"", meu:1 };
        montaCatalogo()`);
-  a.E('modoEdicao(true)');
-  await a.E('addExercicio("maquina-nova")');
+  a.v('modoEdicao', true);
+  await a.v('addExercicio', 'maquina-nova');
   await a.esperar();
-  a.E('modoEdicao(false)');
-  const i = a.E('treino("A").ex.length') - 1;
-  a.E('toggle(' + i + ')');
+  a.v('modoEdicao', false);
+  const i = a.vJ('treino', 'A').ex.length - 1;
+  a.v('toggle', i);
   a.preencher(i, 0, 50, 10);
 
-  assert.strictEqual(a.J('seriesPorMusculo(0, Date.now() + 1)')['dorsal'], 1);
-  a.aba('dados');
+  assert.strictEqual(a.vJ('seriesPorMusculo', 0, Date.now() + 1)['dorsal'], 1);
+  a.aba('semana');
   await a.modo('treino');
   assert.ok(a.doc.getElementById('app').textContent.includes('dorsal'));
   a.fechar();
@@ -289,15 +290,15 @@ test('exercício cadastrado por ele conta no painel', async () => {
 
 test('o painel de corpo avisa quando o programa saiu do alvo do treinador', async () => {
   const a = await app();
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
   assert.strictEqual(a.$('.dd-fora'), null, 'programa igual ao dele: nada a dizer');
 
-  a.E('abrirPrograma("A")');
-  await a.E('progSeries("A",4,1)');
+  a.v('abrirPrograma', 'A');
+  await a.v('progSeries', 'A', 4, 1);
   await a.esperar();
-  a.E('fecharPrograma()');
-  a.aba('dados');
+  a.v('fecharPrograma');
+  a.aba('semana');
   // Voltar ao DADOS remonta a tela e o modo cai no padrão: séries por músculo
   // mora no de treino.
   await a.modo('treino');
@@ -312,14 +313,173 @@ test('músculo que saiu do programa mas foi treinado continua aparecendo', async
   // Tibial anterior saiu do programa na revisão de 2026 e sobrevive no catálogo
   // como legado: continua trocável, e o trabalho feito nele continua contando.
   const a = await app();
-  a.E('go("B")');
-  a.E('toggle(4)');
-  a.E('setAlt(4, "tibial-anterior")');
+  a.v('go', 'B');
+  a.v('toggle', 4);
+  a.v('setAlt', 4, 'tibial-anterior');
   a.preencher(4, 0, 20, 15);
-  a.aba('dados');
+  a.aba('semana');
   await a.modo('treino');
   const musculos = a.$$('.dd-mus-n').map(function (x) { return x.textContent; });
   assert.ok(musculos.some(function (x) { return /tibial/.test(x); }),
     'sumir da tabela esconderia trabalho que existiu');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// `ctx.restauraPrograma`: o destrutivo desta tela
+// ---------------------------------------------------------------------------
+//
+// Por que primeiro, dentro do assunto: é a única chave daqui que APAGA — ela
+// joga fora toda diferença entre o programa dele e o do treinador, de uma vez.
+// O que se perde é a história de escolhas de semanas, e não tem desfazer.
+//
+// O QUE ESTE GRUPO PROVA: que a chave confirma antes, que recusar não apaga
+// nada, que aceitar devolve o programa ao do treinador e registra a linha no
+// log, e que chamar sem diferença nenhuma não pergunta e não mexe.
+//
+// O QUE ESTE GRUPO NÃO COBRE: que o botão da tela esteja ligado nela. Chamar o
+// verbo prova que a capacidade existe no MODELO, não que o dedo a alcança.
+
+test('ctx.restauraPrograma pergunta antes, e recusar deixa as diferenças', async () => {
+  const a = await noPrograma();
+  await a.v('progSeries', 'A', 0, 1);
+  await a.esperar();
+  const comDif = a.S().prog.A.ex[0].s;
+  assert.strictEqual(a.v('difTotal'), 1, 'uma diferença contra o treinador — pré-condição');
+
+  a.recusar();
+  await a.v('ctx.restauraPrograma');
+  await a.esperar();
+
+  const q = a.perguntas().join(' | ');
+  assert.ok(/Desfazer 1 diferença/.test(q), 'o aviso diz QUANTAS vão embora: ' + q);
+  assert.ok(/histórico e os exercícios que você cadastrou não são tocados/.test(q),
+    'e delimita o estrago, em vez de dramatizar: ' + q);
+  assert.strictEqual(a.v('difTotal'), 1, 'recusar deixa a diferença onde estava');
+  assert.strictEqual(a.S().prog.A.ex[0].s, comDif, 'e o programa como ele o tinha');
+  a.fechar();
+});
+
+test('ctx.restauraPrograma aceito devolve o programa do treinador, e registra', async () => {
+  const a = await noPrograma();
+  const doTreinador = a.S().prog.A.ex[0].s;
+  await a.v('progSeries', 'A', 0, 1);
+  await a.v('progSeries', 'B', 0, -1);
+  await a.esperar();
+  assert.strictEqual(a.v('difTotal'), 2, 'duas diferenças — pré-condição');
+  const logAntes = a.S().progLog.length;
+
+  a.aceitar();
+  await a.v('ctx.restauraPrograma');
+  await a.esperar();
+
+  assert.strictEqual(a.v('difTotal'), 0, 'nenhuma diferença sobrou');
+  assert.strictEqual(a.S().prog.A.ex[0].s, doTreinador, 'as séries voltaram às do treinador');
+  assert.deepStrictEqual(a.S().rot, a.dado('ROT_BASE'), 'e a rotação também');
+  assert.strictEqual(a.S().progLog.length, logAntes + 1,
+    'com uma linha no log: daqui a dois meses alguém vai perguntar o que aconteceu');
+  assert.strictEqual(a.S().progLog[a.S().progLog.length - 1].txt,
+    'programa restaurado para o do treinador');
+  assert.strictEqual(a.toast(), 'Programa de volta ao do treinador.');
+
+  // e o histórico não foi tocado: o aviso promete isso
+  assert.deepStrictEqual(a.S().logs, {}, 'o histórico ficou (aqui, vazio por não haver)');
+  a.fechar();
+});
+
+test('ctx.restauraPrograma sem diferença nenhuma não pergunta e não mexe', async () => {
+  // Um confirm destrutivo para não fazer nada treina o dedo a dizer sim sem ler.
+  const a = await noPrograma();
+  assert.strictEqual(a.v('difTotal'), 0, 'programa igual ao do treinador — pré-condição');
+  const antes = JSON.stringify(a.S().prog);
+
+  await a.v('ctx.restauraPrograma');
+  await a.esperar();
+
+  assert.deepStrictEqual(a.perguntas(), [], 'não perguntou nada');
+  assert.strictEqual(JSON.stringify(a.S().prog), antes, 'e não mexeu no programa');
+  assert.strictEqual(a.toast(), 'Seu programa já é o do treinador.', 'só diz que não havia o que fazer');
+  assert.deepStrictEqual(a.S().progLog || [], [], 'nem registrou o que não aconteceu');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// O ACHADO 1: as quatro capacidades do cartão do exercício ganham porta
+// ---------------------------------------------------------------------------
+//
+// Com a aba de treino fora, o cartão do exercício só existe DENTRO do modo — e
+// quatro coisas moravam só nele, sem segunda porta: o gráfico do "estou ficando
+// mais forte nisto", a correção de uma série de semanas atrás, o renome do
+// exercício e o tipo de carga.
+//
+// A perda não apareceria no dia: apareceria quando ele fosse corrigir. E
+// corrigir a série de três semanas atrás não é tarefa de quem está treinando.
+
+test('a Prescrição abre o programa — o lugar que o possui tem a porta', async () => {
+  // A §1.5 lista "o programa dele e a rotação" como posse de Prescrição, e as
+  // duas portas que existiam eram a tela do treino (hoje dentro do modo) e o
+  // painel de volume da Semana. Nenhuma das duas é "quero mexer no meu
+  // programa": uma é no meio do treino, a outra é consequência de um número.
+  const a = await app({ aba: 'prescricao' });
+  await a.esperar();
+
+  const porta = a.$('[data-a="abre-programa"]');
+  assert.ok(porta, 'a porta está no chip do programa');
+  porta.click();
+  await a.esperar(60);
+  assert.ok(a.vista().prog, 'e abre o editor');
+  a.fechar();
+});
+
+test('cada linha do programa abre o histórico daquele exercício', async () => {
+  const a = await app({ aba: 'prescricao' });
+  await a.esperar();
+  a.clicar('[data-a="abre-programa"]');
+  await a.esperar(60);
+  a.v('abrirPrograma', 'B');            // abre o dia B no editor
+  await a.esperar(60);
+
+  const portas = a.$$('[data-a="hist-prescricao"]');
+  assert.ok(portas.length > 0, 'as linhas têm a porta do histórico');
+  assert.ok(portas[0].getAttribute('aria-label'),
+    'com nome acessível: "histórico" sozinho não diz de quê');
+
+  portas[0].click();
+  await a.esperar(60);
+  assert.ok(a.vista().hist, 'abriu o histórico');
+  assert.strictEqual(a.vista().hist.day, 'B',
+    'do dia que a LINHA mostra, e não do último dia visitado');
+  a.fechar();
+});
+
+test('o histórico abre POR CIMA do programa, e o Voltar devolve o programa', async () => {
+  // A ordem das camadas mudou para isto, e o caso é o que a segura: abrindo de
+  // dentro do programa, o histórico é a camada de cima. Com a ordem antiga o
+  // programa ganhava e o histórico simplesmente não aparecia.
+  const a = await app({ aba: 'prescricao' });
+  await a.esperar();
+  a.clicar('[data-a="abre-programa"]');
+  await a.esperar(60);
+  a.v('abrirPrograma', 'B');            // abre o dia B no editor
+  await a.esperar(60);
+  a.clicar('[data-a="hist-prescricao"]');
+  await a.esperar(60);
+
+  assert.deepStrictEqual(camadasAbertas(a.vista()), ['prog', 'hist'],
+    'o histórico é a camada de CIMA');
+  // `.hwrap` NÃO serve de prova: o editor de programa usa a mesma classe de
+  // corpo, e com a ordem invertida o caso ficava verde desenhando a tela errada.
+  // Quem distingue é o título — o do histórico é o nome do exercício.
+  const titulo = a.texto('.tc-titulo');
+  assert.ok(!/[Pp]rograma/.test(titulo),
+    'e é o histórico que está desenhado, não o programa: ' + titulo);
+  assert.ok(a.$('.hgraf') || a.$('.hvazio') || /registrad|sessão/i.test(
+    a.doc.getElementById('app').textContent),
+    'com o conteúdo do histórico na tela');
+
+  a.window.history.back();
+  await a.esperar(80);
+  assert.strictEqual(a.vista().hist, null, 'o Voltar fechou o histórico');
+  assert.ok(a.vista().prog, 'e devolveu o programa, não o lugar');
   a.fechar();
 });
