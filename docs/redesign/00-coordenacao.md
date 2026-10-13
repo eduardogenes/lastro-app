@@ -2707,7 +2707,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       **Não medido:** o dedo dele. A geometria é do Chromium, não do Safari do
       iPhone — os dois concordam em caixa, mas é Blink medindo.
 
-- [~] **6.α A frente 3 aplicada — as palavras** (aberto em 13/10). **Achado por
+- [x] **6.α A frente 3 aplicada — as palavras** (aberto e fechado em 13/10; o que sobrou é desenho, registrado abaixo como parado). **Achado por
       medida:** dos 276 textos exatos que `09-frente3-palavras.md` escreveu nas
       tabelas e nas citações, **68 estavam no código** (~25%; subestima um pouco,
       porque exemplo com data e número vira molde). A frente foi entregue em 06/10
@@ -2953,7 +2953,28 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       existem. **As outras treze perguntas** do app seguem no diálogo do
       sistema, de propósito (§3.3).
 
-- [ ] **6.v' O reponte das expressões compostas** — 400 entradas de ponte (325
+- [x] **6.v' O reponte das expressões compostas** (13/10, 30 commits, um por
+      arquivo). **485 → 188 entradas pela ponte de `eval`** nos casos de fluxo.
+      **Achado contra mim:** a medição de 400 tinha CRESCIDO para 485 — parte
+      era minha, das peças da frente 3, que li o modelo por `a.E`/`a.J` em vez
+      de pela superfície. Os casos novos entram por `a.v`, `a.vJ`, `a.S()`,
+      `a.vista()` e `a.dado()`. **A superfície ganhou oito nomes** (acrescentar
+      é livre): `draftPeek`, `textoMod`, `unidadeDe`, `vmExercicio`,
+      `criarExercicio`, `fmtDesc`, `proximoTreino` e `MOVIMENTOS_DE_BOX` (este o
+      teste alcançava só porque a ponte enxerga o escopo do bundle inteiro).
+      **O que fica na ponte, e por desenho:** as escritas em `S`, `view` e no
+      relógio (fora do contrato); as falsificações e o que precisa nascer na
+      janela — `Blob`, `caches`, `globalThis.__…`, `navigator`, `URL` (55); e
+      duas sondas de escopo que o JSON não enxerga: `typeof finish` e `'turno'
+      in S.dia` (chave com valor `undefined` some no JSON, e o caso testa a
+      presença da chave). **Cuidados que mudariam sentido, todos evitados:**
+      `Date.now()` dentro da ponte é o relógio do APP (fixo em alguns casos) —
+      onde estava fixo, passei o mesmo `agora`; `a.J` apaga campo `undefined` e
+      `a.vJ` + `.map` no Node não — conferido caso a caso. **Tentei estender o
+      `chama` para nome com dois pontos e desfiz:** um caso de `telas.test.js`
+      documenta de propósito que a tabela aninhada entra por `a.m.ctx`. Nenhuma
+      asserção mudou. **1.378 passando.**
+      **Era:** 400 entradas de ponte (325
       `a.E`, 75 `a.J`) em 36 arquivos. **Medido e declarado como higiene:** elas
       alcançam o MODELO e não nomes de tela, e sobreviveram à troca dos cinco
       lugares sem um vermelho. O valor é a estabilidade do contrato, não a
@@ -3073,6 +3094,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 13/10 · 6.z''' consertado com medida em Chromium sem janela: 5 × 18 → 90 × 40.
 - 13/10 · Frente 3 medida (68/276) e aberta como 6.α. O painel de pare e as nove ações (`4afd3e7`, `99fda6e`).
 - 13/10 · Frente 3 aplicada no que tem lugar no app: dor, deload, becos, corrigir no lugar, a lista que vence, o veredito e o passo, a bioimpedância e a sobrancelha do Agora (`aa1178d` a `95d36b6`). Parados por serem desenho: os portões da Semana e os tipos de cartão que não existem. Achados de dado no caminho: o `dl` da sessão aberta não acompanhava o deload, e a data do Corpo recusava HOJE antes das 7h. 1.378 passando.
+- 13/10 · 6.v' fechado: o reponte, 485 → 188 entradas pela ponte, um commit por arquivo. A ponte tinha crescido com casos meus.
 
 ---
 
