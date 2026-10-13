@@ -4987,11 +4987,107 @@ function setAlt(i, idEx) {
     ? 'Trocado por ' + nomeEx(idEx) + ' só para hoje. No fim do treino você decide se fica.'
     : 'De volta ao exercício original.');
 }
+// ---------- deload: o freio passou do lugar para a palavra (§7.6) ----------
+
+// A regra do treinador sobre deload, LITERAL: o parágrafo do programa que diz
+// quando e o quê. Vai entre aspas e com o autor, e por isso não pode ser
+// paráfrase — a frente escreveu uma, e o app não põe assinatura em frase que o
+// treinador não escreveu (o mesmo critério da dor e da máquina ocupada).
+const REGRA_DO_DELOAD = (function () {
+  const r = RULES.filter(function (x) { return x.k === 'deload'; })[0];
+  const p = r && r.p.filter(function (x) { return /evidência clara/.test(x); })[0];
+  return p ? p.replace(/<[^>]+>/g, '') : null;
+})();
+
+function nSeries(n) { return n + (n === 1 ? ' série' : ' séries'); }
+
+/** Quanto o prescrito do dia pede e quanto o deload deixa — a conta de `setsFor`. */
+function corteDoDeload(d) {
+  const t = treino(d);
+  if (!t || !t.ex.length) return null;
+  return {
+    nome: 'Treino ' + d,
+    cheio: t.ex.reduce(function (n, ex) { return n + _setsFor(ex, false); }, 0),
+    cortado: t.ex.reduce(function (n, ex) { return n + _setsFor(ex, true); }, 0)
+  };
+}
+
+/**
+ * As palavras de quem liga ou desliga o deload, com o número antes do toque.
+ * O menu da sessão e os avisos do treino leem daqui: duas portas para o mesmo
+ * interruptor, e nenhuma delas sem o freio da palavra.
+ */
+function itemDoDeload(d) {
+  const c = corteDoDeload(d);
+  if (!c) return null;
+  return S.deload
+    // "Sair do deload · devolve 10 séries ao Treino A de hoje"
+    ? { ligado: true, rotulo: 'Sair do deload',
+        detalhe: 'devolve ' + nSeries(c.cheio - c.cortado) + ' ao ' + c.nome + ' de hoje' }
+    // "Deload hoje · corta 20 séries para 10, nas mesmas cargas"
+    : { ligado: false, rotulo: 'Deload hoje',
+        detalhe: 'corta ' + nSeries(c.cheio) + ' para ' + c.cortado + ', nas mesmas cargas',
+        regra: REGRA_DO_DELOAD };
+}
+
+/**
+ * "Deload desligado. As 10 séries voltaram: Pulldown unilateral volta a pedir 4,
+ * e as 2 que você já registrou ficam." — a decisão 7 inteira numa frase. O
+ * exercício nomeado é o último em que ele registrou e que agora pede mais do que
+ * tem: é ali que o susto mora. Sem o "o" do desenho antes do nome, porque metade
+ * dos exercícios é feminina e o app não sabe o gênero de nenhum.
+ */
+function fraseDoDesligar(s) {
+  const c = corteDoDeload(s.day);
+  const volta = c ? c.cheio - c.cortado : 0;
+  if (!volta) return 'Deload desligado. Séries completas de volta.';
+  const abre = 'Deload desligado. ' + (volta === 1 ? 'A 1 série voltou' : 'As ' + volta + ' séries voltaram');
+  const ficam = function (n) { return n === 1 ? 'a 1 que você já registrou fica.' : 'as ' + n + ' que você já registrou ficam.'; };
+  let alvo = null, total = 0;
+  treino(s.day).ex.forEach(function (ex, i) {
+    const e = entradaDaSessao(s.day, i, s.sid);
+    if (!e) return;
+    const feitas = e.sets.filter(Boolean).length;
+    const pede = _setsFor(ex, false);
+    total += feitas;
+    if (feitas > 0 && feitas < pede && (!alvo || (e.m || 0) >= alvo.m)) {
+      alvo = { n: ex.n, pede: pede, feitas: feitas, m: e.m || 0 };
+    }
+  });
+  if (alvo) return abre + ': ' + alvo.n + ' volta a pedir ' + alvo.pede + ', e ' + ficam(alvo.feitas);
+  if (total) return abre + ', e ' + ficam(total);
+  return abre + '.';
+}
+
+/**
+ * O modo vale para a sessão INTEIRA, e o registro dela tem de dizer o mesmo que
+ * a tela. O `dl` de cada entrada é o que `estadoEx` lê para saber quantas séries
+ * o exercício pede: sem isto, desligar no meio deixava "feito" o exercício de 2
+ * séries enquanto a frase dizia que ele voltou a pedir 4, e a sessão saía
+ * marcada como deload — fora da conta das 48 — sem estar. Nenhuma série muda,
+ * só a marca do modo, com carimbo novo para a outra ponta da sincronia aceitar.
+ */
+function remarcaSessao(s) {
+  const agora = Date.now();
+  const remarca = function (x) {
+    if (x.sid !== s.sid || !!x.dl === S.deload) return;
+    if (S.deload) x.dl = 1; else delete x.dl;
+    x.m = agora;
+  };
+  Object.keys(S.logs).forEach(function (k) { S.logs[k].forEach(remarca); });
+  S.done.forEach(remarca);
+}
+
 async function setDeload(on) {
+  const s = S.sessao;
+  const frase = on
+    ? 'Deload ligado. Metade das séries, mesmas cargas. As sessões deste modo ficam marcadas, para a queda de volume não parecer regressão.'
+    : s ? fraseDoDesligar(s) : 'Deload desligado. Séries completas de volta.';
   S.deload = !!on;
+  if (s) remarcaSessao(s);
   await save();
   view.open = null; render();
-  toast(on ? 'Deload ativo: metade das séries, mesmas cargas.' : 'Deload desligado. Séries completas de volta.');
+  toast(frase);
 }
 
 // ---------- detalhe de uma sessão ----------
@@ -6178,17 +6274,23 @@ CTX.treino = function () {
   const avisos = [];
   const trabalho = sessoesDeTrabalho();
   const faltam = 48 - (trabalho % 48);
+  // O botão destes avisos é a segunda porta do interruptor, e diz as mesmas
+  // palavras do menu: "entrar em deload" sozinho era o nome sem o freio.
+  const dl = itemDoDeload(d);
+  const porta = function (on) {
+    return dl ? { t: dl.rotulo + ' · ' + dl.detalhe, onClick: function () { setDeload(on); } } : null;
+  };
   if (S.deload) {
     avisos.push({ k: 'dl', rotulo: 'deload ativo', cor: 'amber',
       txt: 'Metade das séries, mesmas cargas. Os placeholders continuam mostrando a carga da última semana normal.',
-      acao: { t: 'sair do deload', onClick: function () { setDeload(false); } } });
+      acao: porta(false) });
   } else if (trabalho > 0 && faltam <= 6) {
     // Não é contagem regressiva para um deload obrigatório: o treinador tirou a
     // semana fixa do programa. O bloco de 48 sessões continua sendo o momento de
     // OLHAR, e quem decide é a evidência de fadiga, não o calendário.
     avisos.push({ k: 'dl2', rotulo: 'fim de bloco chegando', cor: '',
       txt: 'Faltam ' + faltam + ' sessões para fechar o bloco. Deload só se houver evidência de fadiga: força caindo por 2 a 3 sessões, dor que não passa em 72 h, RIR difícil de manter. Progredindo bem, siga treinando.',
-      acao: { t: 'entrar em deload', onClick: function () { setDeload(true); } } });
+      acao: porta(true) });
   }
   // Preenchendo um treino de outra data: o aviso é o único lugar que diz para
   // onde as séries digitadas estão indo, e carrega a porta de saída. Sem ele o
@@ -9295,25 +9397,13 @@ CTX.cicloDoBloco = function () {
 
 CTX.menuDaSessao = function () {
   const d = view.day;
-  const t = treino(d);
-  if (!t || !t.ex.length) return null;
-  const cheio = t.ex.reduce(function (n, ex) { return n + _setsFor(ex, false); }, 0);
-  const cortado = t.ex.reduce(function (n, ex) { return n + _setsFor(ex, true); }, 0);
-  const nome = 'Treino ' + d;
+  const deload = itemDoDeload(d);
+  if (!deload) return null;
   return {
     // "Encerrar o treino · o fim é agora, 7h31": o que o toque grava, com o
     // número, antes do toque (V4). Só existe com sessão aberta.
     encerrar: S.sessao ? { rotulo: 'Encerrar o treino', detalhe: 'o fim é agora, ' + fmtHoraDita(Date.now()) } : null,
-    deload: S.deload
-      // "Sair do deload · devolve 10 séries ao Treino A de hoje" — a frente 3
-      // escreveu as duas metades, e a segunda é a que impede o susto.
-      ? { ligado: true, rotulo: 'Sair do deload',
-          detalhe: 'devolve ' + (cheio - cortado) +
-                   (cheio - cortado === 1 ? ' série' : ' séries') + ' ao ' + nome + ' de hoje' }
-      // "Deload hoje · corta 20 séries para 10, nas mesmas cargas"
-      : { ligado: false, rotulo: 'Deload hoje',
-          detalhe: 'corta ' + cheio + (cheio === 1 ? ' série' : ' séries') +
-                   ' para ' + cortado + ', nas mesmas cargas' }
+    deload: deload
   };
 };
 

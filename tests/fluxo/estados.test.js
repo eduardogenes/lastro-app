@@ -204,3 +204,71 @@ test('dor repetida para a régua até a escolha, com as datas e a regra literal 
   assert.deepStrictEqual(marca.dorMesmoAssim, [id], 'a escolha ficou escrita no dia, como o pulado');
   a.fechar();
 });
+
+test('deload: ligar diz o corte e marca a sessão; desligar no meio devolve as séries e o registrado fica', async () => {
+  // §7.6 e a decisão 7. O freio saiu do lugar e foi para a palavra, e a frase
+  // de desligar tem as duas metades — a segunda é a que impede o susto.
+  const a = await app();
+  a.v('iniciarSessao');
+  await a.esperar();
+  const nome = a.J('treino(view.day).ex[0].n');
+  const pede = a.J('treino(view.day).ex[0].s');
+  const corta = Math.ceil(pede / 2);
+  const volta = a.J('treino(view.day).ex').reduce(function (n, x) { return n + x.s - Math.ceil(x.s / 2); }, 0);
+  assert.ok(pede > corta && corta === 2, 'pré-condição: o deload deixa 2 de um prescrito maior (' + pede + ')');
+
+  await a.v('setDeload', true);
+  await a.esperar();
+  assert.strictEqual(a.toast(),
+    'Deload ligado. Metade das séries, mesmas cargas. As sessões deste modo ficam marcadas, para a queda de volume não parecer regressão.');
+  const marca = () => a.S().done.filter(function (x) { return x.sid === a.S().sessao.sid; })[0];
+  assert.strictEqual(marca().dl, 1, 'ligar no meio marca a sessão aberta, não só as próximas');
+
+  a.v('toggle', 0);
+  await a.esperar();
+  assert.ok(a.texto('.ex.open .ex-sub').indexOf('2 séries hoje · metade do prescrito, por deload') >= 0,
+    'a linha diz que o número ali não é o prescrito — ' + a.texto('.ex.open .ex-sub'));
+  a.preencher(0, 0, 40, 10);
+  a.preencher(0, 1, 40, 10);
+  const estado = () => a.E('estadoEx(view.day, 0, S.sessao.sid, [])');
+  assert.strictEqual(estado(), 'feito', 'pré-condição: as 2 do deload fecham o exercício');
+
+  await a.v('setDeload', false);
+  await a.esperar();
+  assert.strictEqual(a.toast(),
+    'Deload desligado. As ' + volta + ' séries voltaram: ' + nome + ' volta a pedir ' + pede +
+    ', e as 2 que você já registrou ficam.');
+  assert.strictEqual(estado(), 'parcial', 'e volta a pedir mesmo: a tela não pode dizer "feito" com 2 de ' + pede);
+  const e = a.log(a.E('view.day'), 0).filter(function (x) { return x.sid === a.S().sessao.sid; })[0];
+  assert.strictEqual(e.sets.filter(Boolean).length, 2, 'o registrado fica');
+  assert.strictEqual(e.dl, undefined, 'e a entrada deixa de dizer deload');
+  assert.strictEqual(marca().dl, undefined, 'a sessão também: ela volta à conta das 48');
+  a.fechar();
+});
+
+test('deload: desligar sem nada registrado diz quantas voltaram, e fora da sessão diz só que voltaram', async () => {
+  const a = await app({ estado: { logs: {}, done: [], deload: true } });
+  await a.v('setDeload', false);
+  await a.esperar();
+  assert.strictEqual(a.toast(), 'Deload desligado. Séries completas de volta.', 'fora da sessão não há série a tranquilizar');
+
+  await a.v('setDeload', true);
+  a.v('iniciarSessao');
+  await a.esperar();
+  const volta = a.J('treino(view.day).ex').reduce(function (n, x) { return n + x.s - Math.ceil(x.s / 2); }, 0);
+  await a.v('setDeload', false);
+  await a.esperar();
+  assert.strictEqual(a.toast(), 'Deload desligado. As ' + volta + ' séries voltaram.');
+  a.fechar();
+});
+
+test('deload: o botão do aviso do treino diz as mesmas palavras do menu, com o número', async () => {
+  // A segunda porta do interruptor. "sair do deload" sozinho era o nome sem o
+  // freio — a linha "nunca" da tabela da §7.6.
+  const a = await app({ estado: { logs: {}, done: [], deload: true } });
+  await a.esperar();
+  const b = a.$('.dlbtn');
+  assert.ok(b, 'o aviso de deload ativo está no treino');
+  assert.match(b.textContent, /^Sair do deload · devolve \d+ séries ao Treino [A-Z]+ de hoje$/, b.textContent);
+  a.fechar();
+});

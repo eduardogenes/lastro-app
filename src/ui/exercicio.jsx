@@ -409,7 +409,14 @@ export function Exercicio({ vm, acoes }) {
             {vm.bi === 1 && <span class="tag bi-t">bi-set · sem pausa até o próximo</span>}
             {vm.bi === 2 && <span class="tag bi-t">bi-set · o descanso é aqui</span>}
             {vm.alt && <span class="tag swap-t">substituído</span>}
-            {vm.deload && <span class="tag dl-t">deload</span>}
+            {/* O número de séries ali NÃO é o prescrito, e a marca diz isso
+                (§7.6): "deload" sozinho dizia o modo, não o que ele fez com a
+                linha. */}
+            {vm.deload && (
+              <span class="tag dl-t">
+                {vm.series} {vm.series === 1 ? 'série' : 'séries'} hoje · metade do prescrito, por deload
+              </span>
+            )}
             {vm.estado === 'feito' && <span class="tag ok-t">feito</span>}
             {vm.estado === 'parcial' && <span class="tag parcial-t">parcial</span>}
             {vm.pulado && <span class="tag pulado-t">pulado</span>}

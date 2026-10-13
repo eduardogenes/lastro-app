@@ -1296,6 +1296,29 @@ test('com o deload ligado, a palavra diz o que o toque DEVOLVE', async () => {
   a.fechar();
 });
 
+test('antes de ligar, o menu traz a regra do treinador LITERAL e assinada', async () => {
+  // O freio que o lugar antigo dizia sem palavra. Assinada "Treinador:", então
+  // tem de ser dele palavra por palavra: o caso confere contra o programa.
+  const fs = await import('node:fs');
+  const programa = fs.readFileSync('src/dominio/programa.ts', 'utf8').replace(/<[^>]+>/g, '');
+  const a = await app();
+  a.clicar('[data-a="menu-sessao"]');
+  await a.esperar(60);
+  const r = a.texto('.ms-regra');
+  const m = /^Treinador: “(.+)”$/.exec(r);
+  assert.ok(m, 'entre aspas e com o autor: ' + r);
+  assert.ok(programa.indexOf(m[1]) >= 0, 'e é o texto do programa, não paráfrase: ' + m[1]);
+  assert.ok(/evidência clara de fadiga/.test(m[1]), 'é a parte que diz quando: ' + m[1]);
+  a.fechar();
+
+  // Ligado, o toque é o de sair, e o freio não tem o que segurar.
+  const b = await app({ estado: { logs: {}, done: [], deload: true } });
+  b.clicar('[data-a="menu-sessao"]');
+  await b.esperar(60);
+  assert.strictEqual(b.$('.ms-regra'), null);
+  b.fechar();
+});
+
 test('tocar no item liga o deload e fecha o menu', async () => {
   const a = await app();
   assert.strictEqual(a.S().deload, false, 'pré-condição: desligado');

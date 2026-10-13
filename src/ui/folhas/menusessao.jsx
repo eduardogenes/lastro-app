@@ -52,6 +52,12 @@ export function FolhaMenuDaSessao({ ctx }) {
           <span class="ins-body-xs ins-t3 ms-detalhe">{m.deload.detalhe}</span>
         </span>
       </button>
+      {/* A regra que o lugar antigo dizia sem palavra, agora dita onde o toque
+          acontece — e só antes de ligar, que é o sentido que o freio segura.
+          Literal e assinada: é a do programa, não um resumo dela (§7.6). */}
+      {m.deload.regra && (
+        <p class="ins-body-xs ms-regra">Treinador: “{m.deload.regra}”</p>
+      )}
     </Folha>
   );
 }

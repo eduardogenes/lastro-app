@@ -1248,10 +1248,12 @@
 .deload b { color: var(--ins-atencao-tinta); }
 .deload.on { border-color: var(--ins-acento); }
 .deload.on b { color: var(--ins-acento-tinta); }
+/* O rótulo diz o corte em número (§7.6), e por isso quebra linha: altura de
+   linha para duas, e alinhado à esquerda como frase. */
 .dlbtn {
-  display: block; margin-top: var(--ins-4); padding: 0 var(--ins-6); min-height: 40px;
+  display: block; margin-top: var(--ins-4); padding: var(--ins-3) var(--ins-6); min-height: 40px;
   background: transparent; border: 1px solid var(--ins-atencao-fio); color: var(--ins-atencao-tinta);
-  font: 400 11px/1 var(--ins-fonte);
+  font: 400 11px/1.4 var(--ins-fonte); text-align: left;
 }
 .deload.on .dlbtn { border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
 
@@ -1692,6 +1694,7 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 .ms-item { align-items: flex-start; }
 .ms-item .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-2); }
 .ms-detalhe { display: block; }
+.ms-regra { margin: var(--ins-3) 0 0; color: var(--ins-tinta-2); }
 
 /* ---- A folha de pôr o dia em dia -------------------------------------- */
 /*

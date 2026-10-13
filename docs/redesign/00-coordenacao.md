@@ -2783,7 +2783,29 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             registrada:** `dorMesmoAssim` na sessão e copiado para a marca do
             dia no fecho (campo opcional, viaja na fusão e na cópia de segurança
             sem migração). Um caso, quatro mutações. **1.360 passando.**
-      **Falta, nesta ordem:** §7.6 o deload; §7.8 os becos; §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
+      - [x] **§7.6 · Deload** (13/10). Ligar diz "Deload ligado. Metade das
+            séries, mesmas cargas." e que a sessão fica marcada; desligar no meio
+            diz as duas metades ("As 8 séries voltaram: X volta a pedir 3, e as 2
+            que você já registrou ficam"); fora da sessão, "Séries completas de
+            volta". A marca da linha diz "2 séries hoje · metade do prescrito, por
+            deload". Os botões dos avisos do treino ("entrar/sair do deload", o
+            nome sem o freio) dizem agora as palavras do menu, com o número.
+            **Achado de dado:** o `dl` de cada entrada e da marca do dia ficava
+            com o modo da ABERTURA — desligar no meio deixava "feito" o exercício
+            de 2 séries enquanto ele voltava a pedir 3, e a sessão saía fora da
+            conta das 48. Agora a sessão aberta acompanha o modo (nenhuma série
+            muda; carimbo novo para a sincronia). **Decisão minha, reversível:** a
+            sessão mista fica com o modo da última palavra.
+            **Recusado da frente:** a frase "O deload corta séries, não cargas…"
+            com "Treinador:" é paráfrase. No lugar, o parágrafo LITERAL da regra
+            "deload" do programa, lido do dado, só antes de ligar. E "o
+            Pulldown…" perdeu o "o": o app não sabe o gênero do exercício.
+            **Visto** (`shots/deload-menu.png`, `deload-aviso.png`): o corte real
+            é 20 → 12, não metade (arredonda para cima; dentro dos 50–60% do
+            treinador). **Dívida visual, dos designers:** marca e botão em caixa
+            alta espaçada quebram em duas linhas. Três casos, oito mutações.
+            **1.364 passando.**
+      **Falta, nesta ordem:** §7.8 os becos; §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
       bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
       app seguem no diálogo do sistema, de propósito (§3.3).
 
