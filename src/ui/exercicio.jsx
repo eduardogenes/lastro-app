@@ -316,20 +316,44 @@ function Carga({ i, vm, acoes }) {
   );
 }
 
-/** O aviso de dor, que é o freio mais importante da tela. */
+/**
+ * O aviso de dor, que é o freio mais importante da tela — §7.4 da frente 3.
+ *
+ * A dor repetida é o ÚNICO estado ruim que não se dispensa sem responder: a
+ * régua só volta depois da escolha, e "fazer mesmo assim" também é escolha, e
+ * fica registrada. A regra vem nas palavras do TREINADOR, literais e atribuídas
+ * — a paráfrase que havia aqui trocava "nunca empurre" por "não empurrar".
+ */
 function Dor({ i, vm, acoes }) {
   if (vm.dorRep) {
     return (
       <div class="painbox">
-        <b>Dor em {vm.dorRep} nas duas últimas sessões deste exercício.</b>
-        {' '}A regra do programa é tirar o exercício por 2 semanas e trocar o ângulo,
-        não empurrar por cima.
-        {vm.temTroca && (
-          <button
-            class="painbtn"
-            onClick={e => { e.stopPropagation(); acoes.abrirSubstituicao(i); }}
-          >ver alternativas</button>
-        )}
+        <b>Dor em {vm.dorRep} nas duas últimas sessões deste exercício: {vm.dorDatas}.</b>
+        <p class="pain-regra">
+          Treinador: “Apareceu: tire aquele exercício por 2 semanas e substitua por
+          outro ângulo. Nunca empurre porque ‘está fraquinha’.”
+        </p>
+        {vm.dorBloqueia ? (
+          <>
+            <p class="pain-escolha">
+              Escolha uma das três para a régua voltar. “Fazer mesmo assim” também é
+              escolha, e fica registrada.
+            </p>
+            {vm.temTroca && (
+              <button class="painbtn" data-a="dor-subs"
+                      onClick={e => { e.stopPropagation(); acoes.abrirSubstituicao(i); }}>
+                Ver os {vm.nSubs} substitutos
+              </button>
+            )}
+            <button class="painbtn" data-a="dor-pula"
+                    onClick={e => { e.stopPropagation(); acoes.pularEx(i); }}>Pular hoje</button>
+            <button class="painbtn" data-a="dor-mesmo"
+                    onClick={e => { e.stopPropagation(); acoes.aceitaDor(i); }}>Fazer mesmo assim</button>
+            <p class="pain-nota">Qualquer escolha fica registrada no dia.</p>
+          </>
+        ) : vm.dorAceita ? (
+          <p class="pain-nota">Feito mesmo assim — registrado no dia.</p>
+        ) : null}
       </div>
     );
   }
@@ -434,6 +458,9 @@ export function Exercicio({ vm, acoes }) {
               descanso <b>{vm.descansoTxt}</b>
             </button>}
 
+        {/* A RÉGUA ESPERA a escolha diante da dor repetida (§7.4): é o único
+            estado ruim que não se dispensa sem responder. */}
+        {!vm.dorBloqueia && <>
         <Cabecalho vm={vm} />
         {/* A chave vai no Fragment, não nos filhos: sem ela o Preact reconcilia
             a lista pela posição, e abrir a escala de uma série remonta os
@@ -465,6 +492,7 @@ export function Exercicio({ vm, acoes }) {
             {linha.rirAberto && <EscalaRir i={i} k={k} linha={linha} acoes={acoes} />}
           </Fragment>
         ))}
+        </>}
 
         {vm.cargaOpcional && (
           <div class="segnote">Carga opcional: deixe o campo vazio para só o peso do corpo.</div>

@@ -526,6 +526,11 @@
   border: 1px solid var(--ins-atencao-fio); color: var(--ins-atencao-tinta);
   font: 400 10px/1 var(--ins-fonte); letter-spacing: .14em; text-transform: uppercase;
 }
+/* A regra vem nas palavras do treinador, e a escolha diz o que destrava. */
+.pain-regra { margin: var(--ins-3) 0 0; color: var(--ins-tinta); }
+.pain-escolha { margin: var(--ins-4) 0 0; color: var(--ins-atencao-tinta); }
+.pain-nota { margin: var(--ins-3) 0 0; font-size: 12px; color: var(--ins-tinta-3); }
+.painbtn + .painbtn { margin-top: var(--ins-3); }
 .painflag, .pausaflag {
   margin-top: var(--ins-3);
   font: 400 10px/1.4 var(--ins-fonte);

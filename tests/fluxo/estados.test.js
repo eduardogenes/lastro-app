@@ -169,3 +169,38 @@ test('fazer antes o próximo troca a ordem só hoje, e diz isso', async () => {
   assert.strictEqual(a.toast(), 'Só hoje: ' + segundo + ' agora, e ' + primeiro + ' logo depois. O programa não muda.');
   a.fechar();
 });
+
+test('dor repetida para a régua até a escolha, com as datas e a regra literal do treinador', async () => {
+  // §7.4: o único estado ruim que não se dispensa sem responder. A régua só
+  // volta depois da escolha, e "fazer mesmo assim" fica registrado no dia.
+  const DIA = 86400000;
+  const t1 = Date.now() - 9 * DIA, t2 = Date.now() - 2 * DIA;
+  const id = 'chest-press-inclinado-convergente';
+  const a = await app({ estado: { logs: { [id]: [
+    { t: t1, sid: t1, sets: [[50, 8]], dor: ['ombro'] },
+    { t: t2, sid: t2, sets: [[50, 8]], dor: ['ombro'] }
+  ] } } });
+  a.v('iniciarSessao');
+  await a.esperar();
+  if (a.E('view.open') !== 0) { a.v('toggle', 0); await a.esperar(); }
+
+  const aviso = a.texto('.painbox');
+  assert.ok(/nas duas últimas sessões deste exercício: \d\d\/\d\d e \d\d\/\d\d\./.test(aviso), 'com as duas datas — ' + aviso);
+  assert.ok(aviso.indexOf('Treinador: “Apareceu: tire aquele exercício por 2 semanas e substitua por') >= 0,
+    'a regra nas palavras dele, atribuída');
+  assert.ok(/Escolha uma das três para a régua voltar/.test(aviso), 'e diz o que destrava');
+  assert.strictEqual(a.$$('.ex.open .setrow').length, 0, 'a régua espera a escolha');
+
+  a.clicar(a.$('[data-a="dor-mesmo"]'));
+  await a.esperar();
+  assert.ok(a.$$('.ex.open .setrow').length > 0, '"fazer mesmo assim" devolve a régua');
+  assert.ok(/registrado no dia/.test(a.toast()), a.toast());
+  assert.ok(/Feito mesmo assim/.test(a.texto('.painbox')), 'o aviso fica, dizendo a escolha');
+
+  a.preencher(0, 0, 50, 8);           // sessão sem série seria descartada, e com razão
+  await a.v('finalizarSessao');
+  await a.esperar();
+  const marca = a.S().done[a.S().done.length - 1];
+  assert.deepStrictEqual(marca.dorMesmoAssim, [id], 'a escolha ficou escrita no dia, como o pulado');
+  a.fechar();
+});

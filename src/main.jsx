@@ -768,6 +768,9 @@ function fechaSessao(comoFim) {
     const pausado = somaPausas(s);
     if (pausado > 60000) marca.pausado = pausado;
     if (s.pulados && s.pulados.length) marca.pulados = s.pulados.slice();
+    // A outra escolha diante da dor repetida (§7.4 da frente 3): "fazer mesmo
+    // assim" também fica escrito no dia, como o pulado.
+    if (s.dorMesmoAssim && s.dorMesmoAssim.length) marca.dorMesmoAssim = s.dorMesmoAssim.slice();
     marca.m = Date.now();
   }
   // A pergunta "isto fica no programa?" não pode depender de ele ter tocado em
@@ -1984,6 +1987,15 @@ function vmExercicio(d, i, ex) {
     } : null,
 
     dorRep: dorRep ? dorRep.map(dorName).join(' e ') : null,
+    // A dor repetida PARA a régua até ele escolher (§7.4): substituir, pular ou
+    // fazer mesmo assim. As duas datas dizem de onde veio a detecção.
+    dorDatas: dorRep ? (function () {
+      const h = historico(key);
+      return fmtDate(h[h.length - 2].t) + ' e ' + fmtDate(h[h.length - 1].t);
+    })() : null,
+    dorAceita: !!(dorRep && S.sessao && (S.sessao.dorMesmoAssim || []).indexOf(slotDe(d, i)) >= 0),
+    dorBloqueia: !!(dorRep && !pulado && !(S.sessao && (S.sessao.dorMesmoAssim || []).indexOf(slotDe(d, i)) >= 0)),
+    nSubs: lista.filter(function (a) { return a.ind; }).length,
     dorLast: dorLast ? dorLast.map(dorName).join(' e ') : null,
     pausaTxt: (!dorRep && parado >= PAUSA_DIAS && !alt)
       ? Math.round(parado) + ' dias sem este exercício' : null,
@@ -2066,6 +2078,7 @@ const ACOES = {
   abrirSubstituicao: function (i) { abrirSubstituicao(i); },
   pularEx: function (i) { pularEx(i); },
   fazAntesOProximo: function (i) { fazAntesOProximo(i); },
+  aceitaDor: function (i) { aceitaDor(i); },
   openHist: function (i) { openHist(i); },
   toggleAq: function (i) { toggleAq(i); },
   abrirCarga: function (i) { abrirCarga(i); },
@@ -2484,6 +2497,22 @@ function mudaSeries(i, delta) {
   const orig = slotOriginal(d, i);
   poeMod(d, { k:'sets', slot: ex.orig || ex.id, de: orig ? orig.s : ex.s, para: novo });
   queueSave(); render();
+}
+
+/**
+ * "Fazer mesmo assim" diante da dor repetida (§7.4 da frente 3). É ESCOLHA, e
+ * fica registrada no dia como o pulado fica: a régua volta, e a marca do dia
+ * guarda que ele treinou por cima de um sinal de tendão — a regra do treinador
+ * diz para não fazer, e ele decidiu fazer, e as duas coisas ficam escritas.
+ */
+async function aceitaDor(i) {
+  const s = S.sessao || abreSessaoVazia();
+  if (!s.dorMesmoAssim) s.dorMesmoAssim = [];
+  const chave = slotDe(view.day, i);
+  if (s.dorMesmoAssim.indexOf(chave) < 0) s.dorMesmoAssim.push(chave);
+  await save(); render();
+  const ex = treino(view.day).ex[i];
+  toast('Guardei: ' + (ex ? ex.n : 'o exercício') + ' feito mesmo assim, com a dor repetida. Fica registrado no dia.');
 }
 
 /**

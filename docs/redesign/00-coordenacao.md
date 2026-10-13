@@ -2775,8 +2775,15 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             DUAS vezes com a suíte em paralelo (sozinho, ~1,9 s). Ganhou limite
             próprio de 15 s, só ele; o global segue 5 s. Duas rodadas limpas
             depois. **1.359 passando.**
-      **Falta, nesta ordem:** §7 os estados ruins (carregando, erro, pular, encerrar);
-      §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
+      - [x] **§7.4 · Dor** (13/10). A dor repetida mostra as duas datas e a regra
+            do treinador LITERAL, entre aspas e com o autor (a do programa, não
+            paráfrase); a régua de séries fica escondida até a escolha; três
+            saídas por preço — "Ver os N substitutos", "Pular hoje", "Fazer
+            mesmo assim". **"Fazer mesmo assim" também é escolha e fica
+            registrada:** `dorMesmoAssim` na sessão e copiado para a marca do
+            dia no fecho (campo opcional, viaja na fusão e na cópia de segurança
+            sem migração). Um caso, quatro mutações. **1.360 passando.**
+      **Falta, nesta ordem:** §7.6 o deload; §7.8 os becos; §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
       bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
       app seguem no diálogo do sistema, de propósito (§3.3).
 

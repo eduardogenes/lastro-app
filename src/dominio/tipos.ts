@@ -210,6 +210,8 @@ export interface Sessao {
   fim?: 'manual' | 'auto';
   pausado?: number;
   pulados?: number[];
+  /** exercícios feitos MESMO ASSIM com dor repetida — a escolha fica no dia (§7.4) */
+  dorMesmoAssim?: string[];
   /** 1 quando o horário é confiável */
   hora?: 0 | 1;
   dl?: 0 | 1;
@@ -254,6 +256,8 @@ export interface SessaoAberta {
   pausadoEm?: number | null;
   pausas?: Array<{ de: number; ate?: number }>;
   pulados?: number[];
+  /** exercícios que ele decidiu fazer mesmo com dor repetida, nesta sessão */
+  dorMesmoAssim?: string[];
 }
 
 /** Uma decisão registrada sobre o programa. */

@@ -878,6 +878,8 @@ const TABELAS_DE_ACAO = {
             'abreFoto', 'poeRir', 'usaAnterior',
             // Máquina ocupada, a saída mais barata (§7.3 da frente 3).
             'fazAntesOProximo',
+            // A dor repetida para a régua até ele escolher (§7.4).
+            'aceitaDor',
             // A régua da frente 2: o campo de repetição virou botão, e são
             // estes os quatro toques possíveis nela.
             'abreRegua', 'andaRegua', 'poeRep', 'abreOutroValor',
