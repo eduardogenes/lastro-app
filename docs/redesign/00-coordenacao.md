@@ -2674,7 +2674,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       **Não medido:** nenhum olho viu a tela nova. Com os seis pontos ligados o
       Corpo fica longo — seis seções de `Medida` —, e isso só se julga na tela.
 
-- [ ] **6.z''' O botão de carga e de repetição da série não tem estilo nenhum**
+- [x] **6.z''' O botão de carga e de repetição da série não tem estilo nenhum**
       (achado de 13/10, ao estilizar o da lista rápida). `repbtn` nasceu em
       `ffba3c9` e `3986991` substituindo os campos, mas **nenhuma regra o alcança**
       — nem pelo nome, nem por `.f button`, `.setrow button` ou parecido
@@ -2688,6 +2688,24 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       19px). Mas a régua abre embaixo e o vizinho horizontal é outro botão: a
       adjacência se vê na tela, e foi por isso que as onze dívidas de alvo não
       foram consertadas às cegas. **Não consertado; pede um olho na tela.**
+      **Consertado em 13/10, com medida e não às cegas** (`git log` desta data).
+      O olho foi um Chromium sem janela a 414 × 896, densidade 3× (o 11 Pro Max
+      dele), abrindo a sessão pelo toque e medindo a linha. **Antes: 5 × 18 px
+      vazios**, o "·" e nada em volta, desalinhado do cabeçalho. **Depois: 90 × 40,
+      a célula inteira**, área estendida a 46 só na vertical. Na horizontal ficam
+      6 px entre carga e repetição, sem extensão; na vertical as áreas
+      estendidas de duas séries vizinhas se sobrepõem 2 px, exatamente como as do
+      RIR já se sobrepunham. Capturas antes, depois e com a régua aberta em
+      `coordenador-redesign/shots/serie-*.png`.
+      **Um segundo defeito, visto na captura:** o fio de acento do estado aberto
+      saía curvo (o raio do reset de `button`) — no RIR também. Raio zero nos dois.
+      **A rede:** uma guarda de PRINCÍPIO, sem lista — todo botão precisa de uma
+      classe que apareça no CSS como seletor de base (`.vazio` existia, mas só
+      colado em `.rirbtn`). Ela acusou exatamente os dois botões antes do conserto,
+      e nada mais no app. E um caso com os três números do conserto; três
+      mutações, todas vermelhas. **1.339 passando.**
+      **Não medido:** o dedo dele. A geometria é do Chromium, não do Safari do
+      iPhone — os dois concordam em caixa, mas é Blink medindo.
 
 - [ ] **6.v' O reponte das expressões compostas** — 400 entradas de ponte (325
       `a.E`, 75 `a.J`) em 36 arquivos. **Medido e declarado como higiene:** elas
@@ -2806,6 +2824,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
   (`8c61c5d`). Achado novo: o botão da série sem estilo (6.z''').
 - 13/10 · As medidas com fita entram (`a2e2be0`): 6.z'' fechado. 1.336 passando.
 - 13/10 · 6.m fechado por conferência; entra o caso do descanso pelo dedo, a partir de Dias.
+- 13/10 · 6.z''' consertado com medida em Chromium sem janela: 5 × 18 → 90 × 40.
 
 ---
 
