@@ -357,7 +357,7 @@ test('entrar no modo não começa a sessão, e sair do modo não a encerra', asy
   assert.strictEqual(a.S().sessao, null, 'e nenhuma sessão foi criada');
 
   // agora com sessão viva: sair do modo deixa a sessão de pé
-  a.E('toggle(0)');
+  a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
   await a.esperar();
   assert.ok(a.S().sessao, 'a série completa abriu a sessão');
