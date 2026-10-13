@@ -1922,6 +1922,9 @@ function vmExercicio(d, i, ex) {
     i: i,
     nome: ex.n,
     nomeOriginal: alt ? nomeEx(ex.orig) : null,
+    // "Fazer antes o próximo" (§7.3): a saída mais barata da máquina ocupada,
+    // e só existe se há um próximo para trazer.
+    proximo: treino(d).ex[i + 1] ? treino(d).ex[i + 1].n : null,
     alt: alt,
     grupo: ex.g,
     cue: ex.cue,
@@ -2030,8 +2033,16 @@ function vmExercicio(d, i, ex) {
 // ele já usou aquele aparelho e o número é a referência real.
 function opcaoDeTroca(a) {
   const u = ultimoDe(a.id);
+  // §7.3 da frente 3: o ★ do treinador ganha a PALAVRA ("indicado pelo
+  // treinador") — em lugar nenhum dizia —, e a última carga não apaga mais o que
+  // muda ao trocar: antes era uma coisa OU a outra na mesma linha.
+  const ind = /^Indicad[oa] pelo treinador[.:]?\s*/;
   return {
     id: a.id, n: a.n,
+    indicado: ind.test(a.w || ''),
+    nota: (a.w || '').replace(ind, ''),
+    ultima: (u && u.sets && u.sets[0])
+      ? 'última vez: ' + fmtNum(u.sets[0][0]).replace('.', ',') + ' × ' + u.sets[0][1] : null,
     // Aqui a foto paga mais que em qualquer outro lugar: são substitutos que
     // ele quase nunca executou, escolhidos sob pressão com a máquina ocupada.
     // Reconhecer o aparelho pela imagem é mais rápido que ler o nome.
@@ -2054,6 +2065,7 @@ const ACOES = {
   toggleSwap: function (i) { toggleSwap(i); },
   abrirSubstituicao: function (i) { abrirSubstituicao(i); },
   pularEx: function (i) { pularEx(i); },
+  fazAntesOProximo: function (i) { fazAntesOProximo(i); },
   openHist: function (i) { openHist(i); },
   toggleAq: function (i) { toggleAq(i); },
   abrirCarga: function (i) { abrirCarga(i); },
@@ -2472,6 +2484,22 @@ function mudaSeries(i, delta) {
   const orig = slotOriginal(d, i);
   poeMod(d, { k:'sets', slot: ex.orig || ex.id, de: orig ? orig.s : ex.s, para: novo });
   queueSave(); render();
+}
+
+/**
+ * Máquina ocupada: faz antes o próximo, e esta volta logo depois. É a saída mais
+ * barata (§7.4 da frente 2 ordena as saídas por preço): não troca exercício,
+ * só a ordem — e só HOJE, pela mesma mudança do dia que mover já usa.
+ */
+function fazAntesOProximo(i) {
+  const t = treino(view.day);
+  if (!t.ex[i + 1]) return;
+  const este = t.ex[i].n, prox = t.ex[i + 1].n;
+  moverEx(i, 1);
+  view.swapOpen = null;
+  view.open = i;                       // o próximo agora mora aqui
+  render();
+  toast('Só hoje: ' + prox + ' agora, e ' + este + ' logo depois. O programa não muda.');
 }
 
 function moverEx(i, delta) {

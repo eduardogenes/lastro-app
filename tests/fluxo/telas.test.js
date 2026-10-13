@@ -876,6 +876,8 @@ const TABELAS_DE_ACAO = {
             'abrirSubstituicao', 'pularEx', 'openHist', 'toggleAq', 'abrirCarga', 'setCarga',
             'abrirMedida', 'setUnidade', 'setQ', 'abrirNota', 'obsIn', 'toggleDor', 'abreRir',
             'abreFoto', 'poeRir', 'usaAnterior',
+            // Máquina ocupada, a saída mais barata (§7.3 da frente 3).
+            'fazAntesOProximo',
             // A régua da frente 2: o campo de repetição virou botão, e são
             // estes os quatro toques possíveis nela.
             'abreRegua', 'andaRegua', 'poeRep', 'abreOutroValor',

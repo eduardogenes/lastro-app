@@ -127,3 +127,45 @@ test('o app que abre a tempo nunca mostra a falha da abertura', async () => {
   assert.strictEqual(a.$('#abertura-falhou'), null, 'a primeira montagem desarma o prazo');
   a.fechar();
 }, 10000);
+
+test('máquina ocupada: vale só para hoje, o ★ tem palavra, e as saídas vão por preço', async () => {
+  // §7.3: "Fazer antes o próximo" primeiro (não troca nada), os substitutos, e
+  // "Pular hoje" por último; a dispensa é "Fechar e fazer mesmo assim".
+  const a = await app();
+  a.v('iniciarSessao');
+  await a.esperar();
+  await a.m.ctx.acoesEx.toggle(0);
+  a.v('toggleSwap', 0);
+  await a.esperar();
+
+  assert.strictEqual(a.texto('.swap .swap-h'), 'Máquina ocupada');
+  assert.strictEqual(a.texto('.swap-sub'), a.J('treino("A").ex[0].n'), 'e de qual exercício, embaixo');
+  assert.strictEqual(a.texto('.swap-regra'), 'Vale só para hoje. O programa não muda.');
+
+  const opcoes = a.$$('.swap .swapopt').map(function (b) { return b.textContent.trim(); });
+  assert.ok(/^Fazer antes o próximo/.test(opcoes[0]), 'a saída mais barata vem primeiro');
+  assert.ok(/^Pular hoje/.test(opcoes[opcoes.length - 2]), 'pular é o último recurso');
+  assert.strictEqual(opcoes[opcoes.length - 1], 'Fechar e fazer mesmo assim');
+  assert.ok(opcoes.some(function (t) { return /★ .+ · indicado pelo treinador/.test(t); }),
+    'o ★ do treinador vem com a palavra');
+  a.fechar();
+});
+
+test('fazer antes o próximo troca a ordem só hoje, e diz isso', async () => {
+  const a = await app();
+  a.v('iniciarSessao');
+  await a.esperar();
+  const primeiro = a.J('treino("A").ex[0].n'), segundo = a.J('treino("A").ex[1].n');
+  a.v('toggleSwap', 0);
+  await a.esperar();
+  a.clicar(a.$('[data-a="faz-antes"]'));
+  await a.esperar();
+  assert.strictEqual(a.J('treino("A").ex[0].n'), segundo, 'o próximo vem agora');
+  assert.strictEqual(a.J('treino("A").ex[1].n'), primeiro, 'e este logo depois');
+  assert.ok(a.vJ('modsDoDia', 'A').some(function (m) { return m.k === 'mover'; }),
+    'é uma mudança DO DIA — a mesma que mover já usa');
+  // `S.prog` é o programa; `treino()` é ele com as mudanças do dia por cima.
+  assert.strictEqual(a.E('nomeEx(S.prog.A.ex[0].id)'), primeiro, 'o programa não muda');
+  assert.strictEqual(a.toast(), 'Só hoje: ' + segundo + ' agora, e ' + primeiro + ' logo depois. O programa não muda.');
+  a.fechar();
+});

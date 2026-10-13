@@ -165,7 +165,14 @@ function EscalaRir({ i, k, linha, acoes }) {
   );
 }
 
-/** O painel de substituição, quando aberto. */
+/**
+ * O painel da MÁQUINA OCUPADA, quando aberto — §7.3 da frente 3.
+ *
+ * As saídas vão por PREÇO (§7.4 da frente 2): fazer antes o próximo não troca
+ * nada; um substituto troca o exercício de hoje; pular é o último recurso. E vale
+ * só para hoje, o que o painel diz antes de tudo. A dispensa é "Fechar e fazer
+ * mesmo assim": ele não cancelou nada, ele decidiu fazer.
+ */
 function Troca({ i, vm, acoes }) {
   const opt = a => (
     <button
@@ -175,12 +182,22 @@ function Troca({ i, vm, acoes }) {
       {/* Sem foto não entra nada: nem moldura, nem espaço reservado. Uma fila
           de quadros vazios diria menos que a fila de nomes que já existe. */}
       {a.foto && <img class="swapfoto" src={a.foto} alt="" />}
-      <span class="swaptxt"><b>{a.n}</b><span>{a.antes}</span></span>
+      <span class="swaptxt">
+        <b>{a.indicado ? '★ ' : ''}{a.n}{a.indicado && <em class="swap-ind"> · indicado pelo treinador</em>}</b>
+        <span>{[a.ultima, a.nota].filter(Boolean).join(' · ')}</span>
+      </span>
     </button>
   );
   return (
     <div class="swap">
-      <div class="swap-h">Máquina ocupada? Mesmo padrão de movimento:</div>
+      <div class="swap-h">Máquina ocupada</div>
+      <div class="swap-sub">{vm.nome}</div>
+      <p class="swap-regra">Vale só para hoje. O programa não muda.</p>
+      {vm.proximo && (
+        <button class="swapopt" data-a="faz-antes" onClick={() => acoes.fazAntesOProximo(i)}>
+          <span class="swaptxt"><b>Fazer antes o próximo</b><span>{vm.proximo} agora; esta volta logo depois</span></span>
+        </button>
+      )}
       {vm.troca.indicados.map(opt)}
       {vm.troca.outros.length > 0 && (
         <>
@@ -190,10 +207,13 @@ function Troca({ i, vm, acoes }) {
       )}
       {vm.alt && (
         <button class="swapopt back-orig" onClick={() => acoes.setAlt(i, null)}>
-          <b>Voltar para {vm.nomeOriginal}</b><span>Cancela a substituição.</span>
+          <b>Voltar para {vm.nomeOriginal}</b><span>Desfaz a substituição de hoje.</span>
         </button>
       )}
-      <button class="swapopt cancel" onClick={() => acoes.toggleSwap(i)}><b>Fechar</b></button>
+      <button class="swapopt" data-a="pula-hoje" onClick={() => acoes.pularEx(i)}>
+        <span class="swaptxt"><b>Pular hoje</b><span>fica escrito como pulado; dá para desfazer na linha</span></span>
+      </button>
+      <button class="swapopt cancel" onClick={() => acoes.toggleSwap(i)}><b>Fechar e fazer mesmo assim</b></button>
     </div>
   );
 }

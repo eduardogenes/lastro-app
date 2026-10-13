@@ -427,6 +427,12 @@
   letter-spacing: .18em; text-transform: uppercase;
   color: var(--ins-tinta-3); margin: 0 0 var(--ins-4);
 }
+/* "Máquina ocupada" e, embaixo, de qual exercício: a frente 3 separou os dois
+   porque o título de antes se lia como se a máquina tivesse nome. */
+.swap-sub { margin: calc(-1 * var(--ins-3)) 0 var(--ins-3); font: 500 15px/1.3 var(--ins-fonte); color: var(--ins-tinta); }
+.swap-regra { margin: 0 0 var(--ins-4); font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-2); }
+/* A palavra junto do ★: o símbolo sozinho não dizia, em lugar nenhum, o que é. */
+.swap-ind { font-style: normal; font-weight: 400; color: var(--ins-tinta-2); }
 .swapopt {
   /* Vira linha com foto quando há foto, e continua bloco quando não há: o
      `gap` some junto com a imagem, então uma opção sem foto não fica com um
