@@ -2765,6 +2765,16 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             ficou o demonstrável. Visto no Chromium (`shots/abertura2.png`).
             **Não feito:** a versão do build no detalhe técnico (o app não tem a
             constante) e o vazio "Nenhum registro neste endereço" (F56).
+      - [x] **§7.3 · Máquina ocupada** (13/10). "Vale só para hoje", as saídas
+            por preço ("Fazer antes o próximo" primeiro, "Pular hoje" por último),
+            o ★ com a palavra, "Fechar e fazer mesmo assim". **Recusado da frente:**
+            "Treinador: o que muda é o ângulo, não o músculo." — não é dele (é
+            comentário do código, sem atribuição), e o app não inventa nota com
+            autor. Dois casos, quatro mutações.
+      - [x] **O risco medido virou fato:** "uma semana de treino…" passou dos 5 s
+            DUAS vezes com a suíte em paralelo (sozinho, ~1,9 s). Ganhou limite
+            próprio de 15 s, só ele; o global segue 5 s. Duas rodadas limpas
+            depois. **1.359 passando.**
       **Falta, nesta ordem:** §7 os estados ruins (carregando, erro, pular, encerrar);
       §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
       bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
