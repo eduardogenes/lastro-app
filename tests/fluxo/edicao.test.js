@@ -81,16 +81,16 @@ test('remover exercício tira do dia e apaga o registro da sessão', async () =>
   a.v('toggle', 1);
   a.preencher(1, 0, 30, 12);
   const chave = a.k('A', 1);
-  assert.ok(a.J('S.logs[' + JSON.stringify(chave) + ']'));
+  assert.ok(a.S().logs[chave]);
 
   a.v('modoEdicao', true);
   await a.v('removerEx', 1);
   await a.esperar();
 
   assert.notStrictEqual(a.k('A', 1), chave, 'saiu do treino de hoje');
-  assert.strictEqual(a.E('S.logs[' + JSON.stringify(chave) + ']'), undefined,
+  assert.strictEqual(a.S().logs[chave], undefined,
     'e o registro daquela sessão foi junto');
-  assert.strictEqual(a.E('S.prog.A.ex.filter(function (x) { return x.id === ' + JSON.stringify(chave) + '; }).length'), 1,
+  assert.strictEqual(a.S().prog.A.ex.filter(function (x) { return x.id === chave; }).length, 1,
     'mas continua no programa oficial');
   a.fechar();
 });
@@ -99,9 +99,9 @@ test('cadastrar equipamento novo cria exercício com histórico próprio', async
   const a = await editando();
   a.v('abrirNovoEx');
   a.digitar('nxn', 'Chest press da academia nova');
-  a.E('document.getElementById("nxg").value = "peito superior"');
-  a.E('document.getElementById("nxk").checked = true');
-  await a.E('criarExercicio()');
+  a.$('#nxg').value = 'peito superior';
+  a.$('#nxk').checked = true;
+  await a.v('criarExercicio');
   await a.esperar();
 
   const k = 'chest-press-da-academia-nova';
@@ -296,8 +296,8 @@ test('as mudanças sobrevivem a fechar e reabrir o app', async () => {
 
   const b = await app({ estado: bruto });
   await b.esperar();
-  assert.strictEqual(b.E('S.mods.list.length'), 1);
-  assert.strictEqual(b.E('S.prog.A.ex[4].s') + 1, b.E('treino("A").ex[4].s'));
+  assert.strictEqual(b.S().mods.list.length, 1);
+  assert.strictEqual(b.S().prog.A.ex[4].s + 1, b.vJ('treino', 'A').ex[4].s);
   b.fechar();
 });
 
@@ -331,20 +331,20 @@ test('o alvo do treinador é calculado do programa, nunca transcrito', async () 
 test('trocar exercício recém-promovido avisa da regra de 6 a 8 semanas', async () => {
   const a = await app();
   a.E('S.prog.B.ex[0].desde = Date.now() - 14*86400000');
-  const imp = a.J('impactoDoMod("B", { k:"troca", slot:"agachamento-no-smith", por:"belt-squat" })');
+  const imp = a.vJ('impactoDoMod', 'B', { k: 'troca', slot: 'agachamento-no-smith', por: 'belt-squat' });
   assert.ok(imp, 'exercício com 2 semanas de casa gera aviso');
   assert.match(imp.txt, /6 a 8 semanas/);
   assert.strictEqual(imp.acima, 1);
 
   // o que veio do treinador (desde 0) não entra nessa conta
   a.E('S.prog.B.ex[0].desde = 0');
-  assert.strictEqual(a.J('impactoDoMod("B", { k:"troca", slot:"agachamento-no-smith", por:"belt-squat" })'), null);
+  assert.strictEqual(a.vJ('impactoDoMod', 'B', { k: 'troca', slot: 'agachamento-no-smith', por: 'belt-squat' }), null);
   a.fechar();
 });
 
 test('promover uma troca reinicia o relógio do exercício no programa', async () => {
   const a = await app();
-  a.E('aplicaAoOficial("B", [{ k:"troca", slot:"agachamento-no-smith", por:"belt-squat" }], "decisao")');
+  a.v('aplicaAoOficial', 'B', [{ k: 'troca', slot: 'agachamento-no-smith', por: 'belt-squat' }], 'decisao');
   assert.strictEqual(a.S().prog.B.ex[0].id, 'belt-squat');
   assert.ok(a.S().prog.B.ex[0].desde > Date.now() - 5000, 'entrou agora, conta a partir de agora');
   a.fechar();
@@ -356,25 +356,25 @@ test('promover uma troca reinicia o relógio do exercício no programa', async (
 
 /** Abre o histórico do primeiro exercício do dia e devolve o id dele. */
 function abreHistorico(a) {
-  a.E('toggle(0); openHist(0)');
+  a.v('toggle', 0); a.v('openHist', 0);
   return (function (h) { return h.key || a.k(h.day, h.i); })(a.vista().hist);
 }
 
 test('renomear não move o histórico, porque não mexe no id', async () => {
   const a = await app();
   const alvo = abreHistorico(a);
-  const series = a.E(`(S.logs[${JSON.stringify(alvo)}] || []).length`);
+  const series = (a.S().logs[alvo] || []).length;
   a.E(`S.fotos[${JSON.stringify(alvo)}] = { v: 7, ext: 'webp' }`);
 
-  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Máquina nova do canto')`);
+  await a.v('ctx.renomeiaExercicio', alvo, 'Máquina nova do canto');
   await a.esperar(60);
 
   assert.strictEqual(a.v('nomeEx', alvo), 'Máquina nova do canto');
   assert.ok(!!a.dado('CAT')[alvo], 'o id continua existindo no catálogo');
-  assert.strictEqual(a.E(`(S.logs[${JSON.stringify(alvo)}] || []).length`), series,
+  assert.strictEqual((a.S().logs[alvo] || []).length, series,
     'as séries continuam sob a MESMA chave');
   assert.ok(!!a.S().fotos[alvo], 'a foto do aparelho também');
-  assert.ok(a.E(`S.prog[view.hist.day].ex.some(function(x){return x.id === ${JSON.stringify(alvo)};})`),
+  assert.ok(a.S().prog[a.vista().hist.day].ex.some(function (x) { return x.id === alvo; }),
     'e a prescrição no programa');
   a.fechar();
 });
@@ -382,7 +382,7 @@ test('renomear não move o histórico, porque não mexe no id', async () => {
 test('o nome novo aparece no título e no cartão', async () => {
   const a = await app();
   const alvo = abreHistorico(a);
-  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Cadeira do fundo')`);
+  await a.v('ctx.renomeiaExercicio', alvo, 'Cadeira do fundo');
   await a.esperar(60);
   assert.strictEqual(a.texto('.htitle'), 'Cadeira do fundo');
 
@@ -397,7 +397,7 @@ test('renomear um exercício do código grava só o nome, sobre o mesmo id', asy
   const alvo = abreHistorico(a);
   assert.strictEqual(!!a.S().ex[alvo], false, 'vem do código, não de S.ex');
 
-  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Apelido dele')`);
+  await a.v('ctx.renomeiaExercicio', alvo, 'Apelido dele');
   await a.esperar(60);
   const marca = a.S().ex[alvo];
   assert.deepStrictEqual(Object.keys(marca), ['n'], 'só o nome vira override');
@@ -410,15 +410,15 @@ test('voltar ao nome do treinador apaga o override em vez de copiá-lo', async (
   const alvo = abreHistorico(a);
   const original = a.v('nomeEx', alvo);
 
-  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'Outro nome qualquer')`);
+  await a.v('ctx.renomeiaExercicio', alvo, 'Outro nome qualquer');
   await a.esperar(60);
   assert.strictEqual(a.vJ('ctx.historico').renome.doCodigo, original,
     'a tela oferece a volta, com o nome do código');
 
-  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, ${JSON.stringify(original)})`);
+  await a.v('ctx.renomeiaExercicio', alvo, original);
   await a.esperar(60);
   assert.strictEqual(a.v('nomeEx', alvo), original);
-  assert.strictEqual(a.E(`!!(S.ex[${JSON.stringify(alvo)}] && S.ex[${JSON.stringify(alvo)}].n)`), false,
+  assert.strictEqual(!!(a.S().ex[alvo] && a.S().ex[alvo].n), false,
     'o estado não guarda cópia do que já está no código');
   a.fechar();
 });
@@ -428,15 +428,15 @@ test('nome curto demais e nome repetido são recusados', async () => {
   const alvo = abreHistorico(a);
   const original = a.v('nomeEx', alvo);
 
-  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, 'ab')`);
+  await a.v('ctx.renomeiaExercicio', alvo, 'ab');
   await a.esperar(40);
   assert.strictEqual(a.v('nomeEx', alvo), original);
   assert.ok(/três letras/.test(a.toast()), a.toast());
 
   // o nome de OUTRO exercício do catálogo
-  const outro = a.E(`Object.keys(CAT).filter(function(k){return k !== ${JSON.stringify(alvo)} && !CAT[k].arq;})[0]`);
+  const outro = (function (CAT) { return Object.keys(CAT).filter(function (k) { return k !== alvo && !CAT[k].arq; })[0]; })(a.dado('CAT'));
   const nomeDoOutro = a.dado('CAT')[outro].n;
-  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, ${JSON.stringify(nomeDoOutro)})`);
+  await a.v('ctx.renomeiaExercicio', alvo, nomeDoOutro);
   await a.esperar(40);
   assert.strictEqual(a.v('nomeEx', alvo), original, 'não trocou');
   assert.ok(/Já existe/.test(a.toast()), a.toast());
@@ -446,7 +446,7 @@ test('nome curto demais e nome repetido são recusados', async () => {
 test('espaço em excesso não vira nome diferente', async () => {
   const a = await app();
   const alvo = abreHistorico(a);
-  await a.E(`CTX.renomeiaExercicio(${JSON.stringify(alvo)}, '   Leg    press   45   ')`);
+  await a.v('ctx.renomeiaExercicio', alvo, '   Leg    press   45   ');
   await a.esperar(60);
   assert.strictEqual(a.v('nomeEx', alvo), 'Leg press 45');
   a.fechar();
