@@ -2741,6 +2741,22 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             tela enquanto a falha dura; a marca POR CÉLULA que a frente 2 pede
             ("45 × 10 · não guardada") não foi feita — a faixa diz o que ficou por
             último, não cada valor.
+      - [x] **§7.5 · Pular** e **§7.7 · Encerrar** (13/10). As frases de cada um
+            dos quatro fechos dizem o fim que gravaram ("aproximada" só nos que
+            vão até a última série); "encerrar" no lugar de "finalizar"; o menu
+            diz "o fim é agora, 7h31"; os pendentes perguntam numa variante NEUTRA
+            do painel. **Achado: o fecho por inatividade na abertura seguinte era
+            CALADO** (o retorno de `encerraSePreciso()` era ignorado) — e 16 das
+            35 sessões dele fecharam assim. Agora diz "Fechei o Treino A de
+            ontem…". Seis casos, seis mutações. **1.355 passando.**
+            **Pendente:** os botões "Está certo / Corrigir o fim" da abertura
+            seguinte — o lugar é o cartão de cima, com precedência própria (§5 da
+            frente 1). E a variante neutra do painel está de pé para as treze
+            perguntas que seguem no diálogo do sistema, se o dono quiser.
+            **Risco medido:** "uma semana de treino…" (`fluxo.test.js`) estourou
+            os 5 s UMA vez com a suíte inteira em paralelo. Sozinho leva 1,99 s
+            (1,84 s antes destas peças). É carga, não regressão — mas é o caso
+            mais perto do limite.
       **Falta, nesta ordem:** §7 os estados ruins (carregando, erro, pular, encerrar);
       §8 corrigir no lugar; §5 a lista que vence; §6 os portões da semana; §10 a
       bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
