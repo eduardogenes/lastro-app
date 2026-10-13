@@ -133,7 +133,7 @@ test('o byte não entra no estado, que é reserializado a cada série', async ()
   await tirar(a);
   await a.esperar(60);
 
-  const json = a.E('JSON.stringify(S.protocolo)');
+  const json = JSON.stringify(a.S().protocolo);
   assert.ok(json.length < 300, 'a sessão inteira é pequena: ' + json.length + ' bytes');
   assert.ok(!/blob:|data:|base64/.test(json), 'e não carrega imagem nenhuma: ' + json);
   a.fechar();
@@ -283,7 +283,7 @@ test('a foto tirada aqui sobe para o bucket do corpo', async () => {
 
   assert.deepStrictEqual(a.J('globalThis.__subiuCorpo'), [hoje() + '/frente-relaxado']);
   assert.ok(a.J('globalThis.__bucketCorpo')[hoje() + '/frente-relaxado.webp']);
-  assert.strictEqual(a.E('sync.fotos["corpo:' + hoje() + ':frente-relaxado"]') > 0, true,
+  assert.strictEqual(a.dado('sync').fotos['corpo:' + hoje() + ':frente-relaxado'] > 0, true,
     'marcada como enviada, para a próxima sincronização não reenviar');
   a.fechar();
 });
@@ -302,7 +302,7 @@ test('sem rede, a foto fica aqui e não é dada como enviada', async () => {
   await a.esperar(60);
 
   assert.strictEqual(a.S().protocolo.sessoes.length, 1, 'a foto está aqui de qualquer forma');
-  assert.strictEqual(a.E('sync.fotos["corpo:' + hoje() + ':frente-relaxado"]'), undefined,
+  assert.strictEqual(a.dado('sync').fotos['corpo:' + hoje() + ':frente-relaxado'], undefined,
     'a próxima sincronização tenta de novo');
   a.fechar();
 });
@@ -406,7 +406,7 @@ test('abrir uma sessão podada traz os bytes de volta do bucket', async () => {
 
   assert.deepStrictEqual(guardadas(a), [], 'os bytes não estão neste aparelho');
 
-  await a.E(`garanteBytesDoCorpo([${JSON.stringify(antiga)}])`);
+  await a.v('garanteBytesDoCorpo', [antiga]);
   await a.esperar(80);
 
   assert.deepStrictEqual(guardadas(a), ['./corpo/' + antiga + '/frente-relaxado.webp'],
@@ -668,7 +668,7 @@ test('ajustar grava o recorte no estado e não toca nos bytes', async () => {
   await a.esperar(60);
   const antes = guardadas(a);
 
-  a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
   assert.ok(a.$('.aj-quadro'), 'a tela de ajuste abriu');
   a.v('ctx.setGiroDoAjuste', 2);
   await a.v('ctx.salvaAjuste');
@@ -686,7 +686,7 @@ test('girar sobe o zoom sozinho, para não abrir borda vazia', async () => {
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
-  a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
   assert.strictEqual(a.vJ('ctx.ajusteEmEdicao').enq.z, 1);
 
   a.v('ctx.setGiroDoAjuste', 6);
@@ -700,13 +700,13 @@ test('o ajuste que não faz nada sai do estado em vez de virar zeros', async () 
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
 
-  a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
   a.v('ctx.setGiroDoAjuste', 3);
   await a.v('ctx.salvaAjuste');
   await a.esperar(60);
   assert.ok(a.S().protocolo.sessoes[0].fotos["frente-relaxado"].enq);
 
-  a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
   a.v('ctx.zeraAjuste');
   await a.v('ctx.salvaAjuste');
   await a.esperar(60);
@@ -720,7 +720,7 @@ test('sair sem salvar descarta: o original nunca foi tocado', async () => {
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
 
-  a.E(`CTX.abreAjuste(${JSON.stringify(hoje())}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
   a.v('ctx.setGiroDoAjuste', 5);
   a.v('ctx.fechaAjuste');
   assert.strictEqual(a.S().protocolo.sessoes[0].fotos["frente-relaxado"].enq, undefined);
@@ -738,7 +738,7 @@ test('o mesmo recorte é aplicado na captura e na comparação', async () => {
   comSessoes(a, [velha, nova], 'frente-relaxado');
   for (const d of [velha, nova]) await semear(a, d, 'frente-relaxado');
 
-  a.E(`CTX.abreAjuste(${JSON.stringify(velha)}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', velha, 'frente-relaxado');
   a.v('ctx.setGiroDoAjuste', 3);
   await a.v('ctx.salvaAjuste');
   await a.esperar(60);
@@ -755,10 +755,8 @@ test('o mesmo recorte é aplicado na captura e na comparação', async () => {
   assert.strictEqual(ref.enq, null, 'a referência aqui é a de 14 dias, que não foi ajustada');
 
   // e a de 28 dias, quando é ela a referência, chega ajustada
-  const daVelha = a.J(`(function () {
-    const s = S.protocolo.sessoes.filter(function (x) { return x.d === ${JSON.stringify(velha)}; })[0];
-    return s.fotos['frente-relaxado'].enq;
-  })()`);
+  const daVelha = a.S().protocolo.sessoes.filter(function (x) { return x.d === velha; })[0]
+    .fotos['frente-relaxado'].enq;
   assert.strictEqual(daVelha.r, 3);
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
   // render que o aviso de falha dispara sem documento para desenhar.
@@ -775,7 +773,7 @@ test('a foto sobreposta pode ser trocada para qualquer outra data', async () => 
   comSessoes(a, datas, 'frente-relaxado');
   for (const d of datas) await semear(a, d, 'frente-relaxado');
 
-  a.E(`CTX.abreAjuste(${JSON.stringify(datas[2])}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', datas[2], 'frente-relaxado');
   await a.esperar(60);
   assert.strictEqual(a.vista().ajuste.fantasmaD, datas[1], 'abre na vizinha');
 
@@ -783,7 +781,7 @@ test('a foto sobreposta pode ser trocada para qualquer outra data', async () => 
   assert.deepStrictEqual(a.vJ('ctx.ajusteEmEdicao').datas.map(o => o.d), [datas[0], datas[1]]);
   assert.strictEqual(a.$$('.aj-fantasma option').length, 2);
 
-  a.E(`CTX.setDataDoFantasma(${JSON.stringify(datas[0])})`);
+  a.v('ctx.setDataDoFantasma', datas[0]);
   await a.esperar(60);
   const d = a.vJ('ctx.ajusteEmEdicao');
   assert.strictEqual(d.fantasmaD, datas[0]);
@@ -801,7 +799,7 @@ test('a sessão mais antiga alinha contra a SEGUINTE, e não fica sem fantasma',
   comSessoes(a, datas, 'frente-relaxado');
   for (const d of datas) await semear(a, d, 'frente-relaxado');
 
-  a.E(`CTX.abreAjuste(${JSON.stringify(datas[0])}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', datas[0], 'frente-relaxado');
   await a.esperar(60);
   assert.strictEqual(a.vista().ajuste.fantasmaD, datas[1]);
   assert.ok(a.vJ('ctx.ajusteEmEdicao').refUrl);
@@ -815,7 +813,7 @@ test('pose que só existe numa sessão não oferece contra o que alinhar', async
   comSessoes(a, [so], 'frente-relaxado');
   await semear(a, so, 'frente-relaxado');
 
-  a.E(`CTX.abreAjuste(${JSON.stringify(so)}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', so, 'frente-relaxado');
   await a.esperar(60);
   assert.deepStrictEqual(a.vJ('ctx.ajusteEmEdicao').datas, []);
   assert.strictEqual(a.$('.aj-fantasma'), null, 'sem seletor quando não há escolha');
@@ -830,7 +828,7 @@ test('a tela de ajuste abre com o fantasma da sessão anterior', async () => {
   comSessoes(a, [velha, nova], 'frente-relaxado');
   for (const d of [velha, nova]) await semear(a, d, 'frente-relaxado');
 
-  a.E(`CTX.abreAjuste(${JSON.stringify(nova)}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', nova, 'frente-relaxado');
   await a.esperar(60);
   const d = a.vJ('ctx.ajusteEmEdicao');
   assert.strictEqual(d.fantasma, true, 'já vem ligado');
@@ -846,7 +844,7 @@ test('na primeira sessão não há fantasma, e a tela não quebra', async () => 
   comSessoes(a, [so], 'frente-relaxado');
   await semear(a, so, 'frente-relaxado');
 
-  a.E(`CTX.abreAjuste(${JSON.stringify(so)}, 'frente-relaxado')`);
+  a.v('ctx.abreAjuste', so, 'frente-relaxado');
   await a.esperar(60);
   assert.strictEqual(a.vJ('ctx.ajusteEmEdicao').refUrl, null);
   assert.strictEqual(a.$$('.aj-quadro .fa').length, 1, 'uma camada só');
