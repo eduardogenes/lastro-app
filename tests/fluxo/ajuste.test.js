@@ -124,8 +124,8 @@ test('o backup leva o saldo e o ledger', async () => {
   a.fechar();
 
   const b = await app({ estado: bkp.data });
-  assert.strictEqual(b.E('S.ajuste'), -2);
-  assert.strictEqual(b.J('S.ajusteHist')[0].k, 'menos', 'a procedência voltou junto');
+  assert.strictEqual(b.S().ajuste, -2);
+  assert.strictEqual(b.S().ajusteHist[0].k, 'menos', 'a procedência voltou junto');
   b.fechar();
 });
 
