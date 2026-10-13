@@ -12,7 +12,7 @@ test('pular diz o que guardou, pelo nome, e desfazer diz que voltou para a fila'
   const a = await app();
   a.v('iniciarSessao');
   await a.esperar();
-  const nome = a.J('treino(view.day).ex[0].n');
+  const nome = a.vJ('treino', a.vista().day).ex[0].n;
 
   await a.v('pularEx', 0);
   await a.esperar();
@@ -36,7 +36,7 @@ test('"já parei" diz que o fim é a última série, e que a duração é aproxi
   a.v('iniciarSessao');
   await a.esperar();
   a.preencher(0, 0, 40, 10);
-  const ultima = a.E('S.sessao.ultima');
+  const ultima = a.S().sessao.ultima;
   const h = new Date(ultima);
   const hora = h.getHours() + 'h' + String(h.getMinutes()).padStart(2, '0');
   await a.v('ctx.encerraSessaoEsquecida');
@@ -139,7 +139,7 @@ test('máquina ocupada: vale só para hoje, o ★ tem palavra, e as saídas vão
   await a.esperar();
 
   assert.strictEqual(a.texto('.swap .swap-h'), 'Máquina ocupada');
-  assert.strictEqual(a.texto('.swap-sub'), a.J('treino("A").ex[0].n'), 'e de qual exercício, embaixo');
+  assert.strictEqual(a.texto('.swap-sub'), a.vJ('treino', 'A').ex[0].n, 'e de qual exercício, embaixo');
   assert.strictEqual(a.texto('.swap-regra'), 'Vale só para hoje. O programa não muda.');
 
   const opcoes = a.$$('.swap .swapopt').map(function (b) { return b.textContent.trim(); });
@@ -155,17 +155,17 @@ test('fazer antes o próximo troca a ordem só hoje, e diz isso', async () => {
   const a = await app();
   a.v('iniciarSessao');
   await a.esperar();
-  const primeiro = a.J('treino("A").ex[0].n'), segundo = a.J('treino("A").ex[1].n');
+  const primeiro = a.vJ('treino', 'A').ex[0].n, segundo = a.vJ('treino', 'A').ex[1].n;
   a.v('toggleSwap', 0);
   await a.esperar();
   a.clicar(a.$('[data-a="faz-antes"]'));
   await a.esperar();
-  assert.strictEqual(a.J('treino("A").ex[0].n'), segundo, 'o próximo vem agora');
-  assert.strictEqual(a.J('treino("A").ex[1].n'), primeiro, 'e este logo depois');
+  assert.strictEqual(a.vJ('treino', 'A').ex[0].n, segundo, 'o próximo vem agora');
+  assert.strictEqual(a.vJ('treino', 'A').ex[1].n, primeiro, 'e este logo depois');
   assert.ok(a.vJ('modsDoDia', 'A').some(function (m) { return m.k === 'mover'; }),
     'é uma mudança DO DIA — a mesma que mover já usa');
   // `S.prog` é o programa; `treino()` é ele com as mudanças do dia por cima.
-  assert.strictEqual(a.E('nomeEx(S.prog.A.ex[0].id)'), primeiro, 'o programa não muda');
+  assert.strictEqual(a.v('nomeEx', a.S().prog.A.ex[0].id), primeiro, 'o programa não muda');
   assert.strictEqual(a.toast(), 'Só hoje: ' + segundo + ' agora, e ' + primeiro + ' logo depois. O programa não muda.');
   a.fechar();
 });
@@ -182,7 +182,7 @@ test('dor repetida para a régua até a escolha, com as datas e a regra literal 
   ] } } });
   a.v('iniciarSessao');
   await a.esperar();
-  if (a.E('view.open') !== 0) { a.v('toggle', 0); await a.esperar(); }
+  if (a.vista().open !== 0) { a.v('toggle', 0); await a.esperar(); }
 
   const aviso = a.texto('.painbox');
   assert.ok(/nas duas últimas sessões deste exercício: \d\d\/\d\d e \d\d\/\d\d\./.test(aviso), 'com as duas datas — ' + aviso);
@@ -211,10 +211,10 @@ test('deload: ligar diz o corte e marca a sessão; desligar no meio devolve as s
   const a = await app();
   a.v('iniciarSessao');
   await a.esperar();
-  const nome = a.J('treino(view.day).ex[0].n');
-  const pede = a.J('treino(view.day).ex[0].s');
+  const nome = a.vJ('treino', a.vista().day).ex[0].n;
+  const pede = a.vJ('treino', a.vista().day).ex[0].s;
   const corta = Math.ceil(pede / 2);
-  const volta = a.J('treino(view.day).ex').reduce(function (n, x) { return n + x.s - Math.ceil(x.s / 2); }, 0);
+  const volta = a.vJ('treino', a.vista().day).ex.reduce(function (n, x) { return n + x.s - Math.ceil(x.s / 2); }, 0);
   assert.ok(pede > corta && corta === 2, 'pré-condição: o deload deixa 2 de um prescrito maior (' + pede + ')');
 
   await a.v('setDeload', true);
@@ -230,7 +230,7 @@ test('deload: ligar diz o corte e marca a sessão; desligar no meio devolve as s
     'a linha diz que o número ali não é o prescrito — ' + a.texto('.ex.open .ex-sub'));
   a.preencher(0, 0, 40, 10);
   a.preencher(0, 1, 40, 10);
-  const estado = () => a.E('estadoEx(view.day, 0, S.sessao.sid, [])');
+  const estado = () => a.v('estadoEx', a.vista().day, 0, a.S().sessao.sid, []);
   assert.strictEqual(estado(), 'feito', 'pré-condição: as 2 do deload fecham o exercício');
 
   await a.v('setDeload', false);
@@ -239,7 +239,7 @@ test('deload: ligar diz o corte e marca a sessão; desligar no meio devolve as s
     'Deload desligado. As ' + volta + ' séries voltaram: ' + nome + ' volta a pedir ' + pede +
     ', e as 2 que você já registrou ficam.');
   assert.strictEqual(estado(), 'parcial', 'e volta a pedir mesmo: a tela não pode dizer "feito" com 2 de ' + pede);
-  const e = a.log(a.E('view.day'), 0).filter(function (x) { return x.sid === a.S().sessao.sid; })[0];
+  const e = a.log(a.vista().day, 0).filter(function (x) { return x.sid === a.S().sessao.sid; })[0];
   assert.strictEqual(e.sets.filter(Boolean).length, 2, 'o registrado fica');
   assert.strictEqual(e.dl, undefined, 'e a entrada deixa de dizer deload');
   assert.strictEqual(marca().dl, undefined, 'a sessão também: ela volta à conta das 48');
@@ -255,7 +255,7 @@ test('deload: desligar sem nada registrado diz quantas voltaram, e fora da sess�
   await a.v('setDeload', true);
   a.v('iniciarSessao');
   await a.esperar();
-  const volta = a.J('treino(view.day).ex').reduce(function (n, x) { return n + x.s - Math.ceil(x.s / 2); }, 0);
+  const volta = a.vJ('treino', a.vista().day).ex.reduce(function (n, x) { return n + x.s - Math.ceil(x.s / 2); }, 0);
   await a.v('setDeload', false);
   await a.esperar();
   assert.strictEqual(a.toast(), 'Deload desligado. As ' + volta + ' séries voltaram.');

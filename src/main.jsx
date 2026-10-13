@@ -5866,7 +5866,7 @@ const SUPERFICIE = {
     apagarModeloDeAula, apagarSessao, aplicaAoOficial, aplicarModeloDeAula, arrozAtual,
     cardioSemana, cardioSet, cargaTipo, catalogoAlimentos, catalogoDeAdicao,
     concluirRetro, criarTreino, delBody, descOf, desfazMod, diaAberto,
-    diaDeComida, diasSemBackup, difDoDia, difTotal, duracaoAtual, editarSessao, ehDescanso,
+    diaDeComida, diasSemBackup, difDoDia, difTotal, draftPeek, duracaoAtual, editarSessao, ehDescanso,
     encerraSePreciso, estadoEx, exDe, fechaSessao, fecharPrograma, finalizarSessao,
     garanteBytesDoCorpo, go, gravarRetro, historico, hojeISO, id, impactoDoMod,
     impactoOficial, impactoSeries, importText, importaAulaColada, iniciarSessao, logKey,
@@ -5878,13 +5878,13 @@ const SUPERFICIE = {
     retro, rot, salvarAulaComoModelo, salvarEdicao, save, seriesDe, seriesFeitasHoje,
     seriesPorMusculo, sessoesDeTrabalho, setAlt, setCarga, setDeload, setsFor, showJSON,
     sincroniza, soltarTela, startTimer, stopTimer, temHora, tickRelogio, tiraFoto,
-    tiraFotoDoCorpo, toggle, toggleDor, toggleSwap, treino, trocaDoDia, veredito,
-    wipe,
+    textoMod, tiraFotoDoCorpo, toggle, toggleDor, toggleSwap, treino, trocaDoDia, unidadeDe,
+    veredito, vmExercicio, wipe,
 
     // ---- regra pura de `src/dominio/`, que o app já importa ----
     // Entram pela superfície em vez de o teste de fluxo importar o fonte: o que
     // esta suíte cobra é o BUILD, e importar o módulo ao lado o contornaria.
-    funde, migraPlano, migraPlano3, periodoDe, sameDay, slugEx, weekStart,
+    fmtDesc, funde, migraPlano, migraPlano3, periodoDe, proximoTreino, sameDay, slugEx, weekStart,
 
     // ---- o cache de fotos, que mora em src/infra/fotos.js ----
     migraCache: FOTO.migraCache
