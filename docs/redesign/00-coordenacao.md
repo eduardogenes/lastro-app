@@ -2612,7 +2612,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       git como `tests/dominio/campos.test.ts`, com a razão da separação escrita no
       topo. A contagem da suíte foi o que denunciou.
 
-- [ ] **6.z'' As três linhas "próprio" que faltam** (§6.1). O teclado existe; o
+- [~] **6.z'' As três linhas "próprio" que faltam** (§6.1). O teclado existe; o
       que falta é levá-lo onde a tabela manda: **peso da manhã** e **cintura** em
       Corpo (as duas "de pé, com a fita ou na balança na mão", e o peso leva a
       régua de 100 g da §1.4 na frente), e a **lista rápida da aula** ("DEPOIS da
@@ -2623,6 +2623,34 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       (§1.4): 4 de 13 valores inteiros na janela, e ali um erro de alvo de 100 g
       entra na média semanal que decide ±150 kcal. A aritmética do teto já está
       pronta e vale igual — a régua do peso é a mesma função com outro passo.
+      **Feito:** peso e cintura (`09d7fda`, 12/10 — o commit entrou depois da
+      última atualização deste arquivo) e a **lista rápida da aula** (`8c61c5d`,
+      13/10). A lista rápida tinha sido deixada pela metade: a tela escrita, sem o
+      modelo, e dois vermelhos no registro de campos. O teclado ganhou o terceiro
+      alvo, `rapida`, que parte do valor registrado (como na série, porque não há
+      stepper mostrando o número); a vírgula só existe na carga; fechar a lista
+      fecha o teclado. `acoesRapido.inp` saiu do inventário por decisão escrita.
+      Seis casos novos, cinco mutações, todas vermelhas no caso esperado. **1.328
+      passando.**
+      **Falta:** as **medidas com fita**, e a tela delas não existe — é a decisão
+      2a do dono (01/10), as medidas novas como dado do produto.
+      **Não medido:** nenhum olho viu a lista rápida com o teclado aberto; a quebra
+      da linha está cobrada por caso de estilo, não por tela.
+
+- [ ] **6.z''' O botão de carga e de repetição da série não tem estilo nenhum**
+      (achado de 13/10, ao estilizar o da lista rápida). `repbtn` nasceu em
+      `ffba3c9` e `3986991` substituindo os campos, mas **nenhuma regra o alcança**
+      — nem pelo nome, nem por `.f button`, `.setrow button` ou parecido
+      (conferido). Ele herda só o reset de `button` do `base.css`: sem altura
+      mínima, sem o fio embaixo, sem os 19px em mono que o campo tinha. O alvo
+      dele é a altura da linha do texto, **no controle de maior frequência do
+      produto**.
+      **E a rede não vê:** a guarda de alvo de toque só lê altura declarada em px,
+      então um controle sem regra nenhuma passa por ela.
+      O molde óbvio é o `.rirbtn` da mesma linha (40px, `::after` só na vertical,
+      19px). Mas a régua abre embaixo e o vizinho horizontal é outro botão: a
+      adjacência se vê na tela, e foi por isso que as onze dívidas de alvo não
+      foram consertadas às cegas. **Não consertado; pede um olho na tela.**
 
 - [ ] **6.v' O reponte das expressões compostas** — 400 entradas de ponte (325
       `a.E`, 75 `a.J`) em 36 arquivos. **Medido e declarado como higiene:** elas
@@ -2735,6 +2763,10 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
   a pergunta de entrada como binária e eliminou a C indevidamente — o dono
   apontou, e a C voltou. **Próximo: onda 3, item 3.a** — escrever os prompts
   C1–C4 com C, D, E1–E3 e M-a/M-b dentro.
+- 13/10 · Sessão retomada. Disco conferido: o processo estava na onda 6. O
+  `CLAUDE.md` global tem as notas de mobile de volta desde 02/10 14h03 (R1
+  cumprido ao fim da onda 3). A lista rápida estava pela metade → completada
+  (`8c61c5d`). Achado novo: o botão da série sem estilo (6.z''').
 
 ---
 
