@@ -1414,6 +1414,18 @@
 .aquec.on .aqbtn { border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
 .mus { margin-top: var(--ins-1); }
 .msg { padding: var(--ins-11) var(--ins-8); text-align: center; font: 400 12px/1.5 var(--ins-fonte); color: var(--ins-tinta-3); }
+/* O registro não abriu (§7.2 da frente 3): família "falhou", na moldura de pare,
+   cobrindo a tela — não há app por baixo para mostrar. */
+.abertura-falhou {
+  position: fixed; inset: 0; z-index: 95; overflow-y: auto;
+  padding: calc(var(--ins-11) + env(safe-area-inset-top)) var(--ins-6) var(--ins-8);
+  background: var(--ins-pare-fundo); color: var(--ins-pare-tinta);
+  display: flex; flex-direction: column; gap: var(--ins-4);
+}
+.abertura-t { margin: 0; font: 600 20px/1.3 var(--ins-fonte); }
+.abertura-c, .abertura-r { margin: 0; font: 400 16px/1.45 var(--ins-fonte); }
+.abertura-d { margin: 0; font: 400 13px/1.4 var(--ins-fonte); }
+.abertura-b { width: 100%; }
 
 /* ---- Toast e cronômetro: ambos fixos, ambos fora da árvore do Preact ---- */
 /* O toast se apoia no que estiver embaixo dele, não numa altura chutada.

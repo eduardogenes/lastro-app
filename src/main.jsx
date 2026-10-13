@@ -5797,12 +5797,68 @@ window.__escopo = function (codigo) { return eval(codigo); };
 // janela é a mesa, e quem roda o app é o iframe em cima dela. Montar aqui
 // TAMBÉM daria dois apps vivos sobre o mesmo estado — duas sincronizações
 // disputando a nuvem, dois wake locks, dois cronômetros. Um app por documento.
+// ---------- a abertura com PRAZO (§7.2 da frente 3) ----------
+// "Carregando…" sem fim já aconteceu (F273): se `load()` trava ou rejeita, a
+// frase do `index.html` fica para sempre e não diz nada. Agora a abertura tem
+// prazo de 4 s, e passado o prazo — ou na primeira rejeição — a tela diz o que
+// aconteceu, o que NÃO aconteceu, e o que fazer.
+//
+// Em DOM puro e numa camada à parte, e não no `#app`: o Preact não chegou a
+// montar, e se o registro abrir atrasado o app tem de aparecer por cima do
+// aviso — o primeiro `render` tira a camada.
+const PRAZO_ABERTURA = 4000;
+let abriu = false;
+let vigiaAbertura = null;
+const inicioDaAbertura = Date.now();
+
+function naoAbriu(erro) {
+  if (abriu || desligado) return;
+  if (vigiaAbertura) { clearTimeout(vigiaAbertura); vigiaAbertura = null; }
+  if (document.getElementById('abertura-falhou')) return;
+  const seg = Math.round((Date.now() - inicioDaAbertura) / 1000);
+  const el = function (tag, cls, txt) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (txt != null) n.textContent = txt;      // texto, nunca HTML: o erro vem de fora
+    return n;
+  };
+  const caixa = el('div', 'abertura-falhou');
+  caixa.id = 'abertura-falhou';
+  caixa.setAttribute('role', 'alert');
+  caixa.appendChild(el('p', 'abertura-t', 'O registro deste aparelho não abriu.'));
+  caixa.appendChild(el('p', 'abertura-c',
+    (erro ? '' : 'Esperei ' + Math.round(PRAZO_ABERTURA / 1000) + ' s. ') +
+    'Nada foi apagado e nada saiu do aparelho. A rede não é a causa: o registro mora aqui.'));
+  const tenta = el('button', 'abertura-b pare-sim', 'Tentar de novo');
+  tenta.setAttribute('data-a', 'abertura-tenta');
+  tenta.addEventListener('click', function () { location.reload(); });
+  const ver = el('button', 'abertura-b pare-nao', 'Ver o detalhe técnico');
+  ver.setAttribute('data-a', 'abertura-detalhe');
+  const detalhe = el('p', 'abertura-d',
+    (erro ? 'a leitura falhou: ' + ((erro && erro.message) || String(erro))
+          : 'leitura local sem resposta há ' + seg + ' s') +
+    ' · armazenamento: ' + (DB.mode || 'sem resposta da sonda'));
+  detalhe.hidden = true;
+  ver.addEventListener('click', function () { detalhe.hidden = !detalhe.hidden; });
+  caixa.appendChild(tenta);
+  caixa.appendChild(ver);
+  caixa.appendChild(detalhe);
+  caixa.appendChild(el('p', 'abertura-r',
+    'Se acontecer de novo: Ajustes › Cópia de segurança, a partir de outro aparelho com a conta.'));
+  document.body.appendChild(caixa);
+}
+
+function arranca() {
+  vigiaAbertura = setTimeout(function () { naoAbriu(null); }, PRAZO_ABERTURA);
+  Promise.resolve().then(load).catch(function (e) { console.error('a abertura falhou', e); naoAbriu(e); });
+}
+
 if (ehBancada()) {
   // nada: quem monta é o aparelho
 } else if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', load);
+  document.addEventListener('DOMContentLoaded', arranca);
 } else {
-  load();
+  arranca();
 }
 
 // Service worker: funciona sem internet na academia. Falha em silêncio
@@ -5906,6 +5962,16 @@ CTX.seletorDeDia = function () {
 function render() {
   if (desligado) return;
   montaNoApp(<App ctx={CTX} />);
+  // A primeira montagem é a prova de que o registro abriu: `abriu` cala o prazo
+  // (`naoAbriu` não faz nada depois dela), e se o aviso de que não abriu chegou
+  // a aparecer, o app atrasado passa na frente. UM guarda só, e sem cancelar o
+  // timer aqui também: os dois juntos se mascaravam — tirar qualquer um deixava
+  // a suíte verde, porque o outro atendia.
+  if (!abriu) {
+    abriu = true;
+    const aviso = document.getElementById('abertura-falhou');
+    if (aviso) aviso.remove();
+  }
   ajustaRelogio();
   // Depois de montar, e não antes: aqui `view` já é o que está na tela, e a
   // profundidade do histórico passa a ser a mesma da pilha de camadas.

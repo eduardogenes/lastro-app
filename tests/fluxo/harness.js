@@ -169,6 +169,14 @@ function abrirApp(opcoes) {
         }).observe(w.document.body, { childList: true, subtree: true });
       });
 
+      // O ARMAZENAMENTO MUDO: o do host (`window.storage`, o do Claude.ai) nunca
+      // responde. A sonda espera por ele, e a leitura do registro trava — é a
+      // "leitura local sem resposta" da §7.2 da frente 3.
+      if (o.armazenamentoMudo) {
+        const nunca = function () { return new Promise(function () {}); };
+        w.storage = { get: nunca, set: nunca, delete: nunca };
+      }
+
       // jsdom reporta 'prerender'; o app testa !document.hidden
       Object.defineProperty(w.document, 'hidden', { value: false, configurable: true });
       Object.defineProperty(w.document, 'visibilityState', { value: 'visible', configurable: true });
@@ -544,7 +552,9 @@ async function app(opcoes) {
   // O padrão continua sendo a tela do TREINO — quase todo caso desta pasta é
   // sobre ela —, e agora chega lá pelo modo. Quem testa a casca das abas passa
   // `aba` explicitamente.
-  a.aba((opcoes && opcoes.aba) || 'treino');
+  // Com o armazenamento mudo o registro não abre, e trocar de aba renderizaria
+  // — o que desarmaria o prazo da abertura no meio do caso que o mede.
+  if (!(opcoes && opcoes.armazenamentoMudo)) a.aba((opcoes && opcoes.aba) || 'treino');
   return a;
 }
 
