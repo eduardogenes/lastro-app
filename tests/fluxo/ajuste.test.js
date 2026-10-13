@@ -50,7 +50,7 @@ function comPeso(medias) {
 test('dois passos no mesmo sentido somam, e a tela diz que são dois', async () => {
   const a = await comPeso([73.0, 73.05, 73.10]);
   a.aba('semana');
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer mais');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer mais 150 kcal');
   const base = a.v('arrozAtual');
 
   await a.v('ctx.aplicaAjuste'); await a.esperar();
@@ -72,7 +72,7 @@ test('observar não oferece desfazer o corte', async () => {
   a.E('S.ajuste = -1');
   a.aba('semana');
   const v = a.vJ('ctx.dados').veredito;
-  assert.strictEqual(v.t, 'Observar');
+  assert.strictEqual(v.t, 'Não mexer: uma semana sozinha não decide');
   assert.strictEqual(v.podeAplicar, false, 'nada a aplicar: observar não é decisão');
   assert.strictEqual(v.acaoTxt, null);
   assert.ok(v.estado.includes('−150 kcal'), 'mas o saldo continua à vista: ' + v.estado);
@@ -99,7 +99,7 @@ test('cada passo guarda de onde veio', async () => {
 test('manter não mexe no saldo nem no ledger', async () => {
   const a = await comPeso([73.0, 73.25, 73.5]);
   a.aba('semana');
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Manter como está');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Não mexer: a taxa está na faixa');
   await a.v('ctx.aplicaAjuste'); await a.esperar();
   assert.strictEqual(a.S().ajuste, 0);
   assert.strictEqual(a.S().ajusteHist.length, 0);
@@ -160,7 +160,7 @@ test('a leitura das fotos destrava o corte que o peso sozinho não dá', async (
   comFotos(a, [iso(14), iso(0)]);
 
   a.aba('semana');
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Observar',
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Não mexer: falta a sua leitura das fotos',
     'sem a leitura, o peso abre revisão e não corta');
 
   a.v('ctx.abreComparar');
@@ -175,7 +175,7 @@ test('a leitura das fotos destrava o corte que o peso sozinho não dá', async (
 
   a.aba('semana');
   const v = a.vJ('ctx.dados').veredito;
-  assert.strictEqual(v.t, 'Comer menos');
+  assert.strictEqual(v.t, 'Comer menos 150 kcal');
   assert.strictEqual(v.podeAplicar, true, 'e agora há o que aplicar');
   a.fechar();
 });
@@ -188,7 +188,7 @@ test('fotos sem piora mandam manter, e não cortam', async () => {
   await a.v('ctx.setGordura', 'nao'); await a.esperar();
 
   a.aba('semana');
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Manter como está',
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Não mexer: as fotos não mostram piora',
     'ganho acima da faixa não é ruim por si: está comprando músculo');
   a.fechar();
 });
@@ -204,7 +204,7 @@ test('responder de novo substitui, em vez de empilhar opinião', async () => {
   assert.strictEqual(a.S().gordura.length, 1, 'uma leitura por par');
   assert.strictEqual(a.S().gordura[0].v, 'incerto');
   a.aba('semana');
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Observar', 'incerto não corta');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Não mexer: falta a sua leitura das fotos', 'incerto não corta');
   assert.strictEqual(a.vJ('ctx.dados').veredito.podeAplicar, false);
   a.fechar();
 });
@@ -240,14 +240,14 @@ async function comDieta(aderencia) {
 test('semana perdida trava o corte, mesmo com as fotos confirmando', async () => {
   const a = await comDieta('perdido');
   const v = a.vJ('ctx.dados').veredito;
-  assert.strictEqual(v.t, 'Registrar antes de mexer');
+  assert.strictEqual(v.t, 'Não mexer: falta registro de comida');
   assert.strictEqual(v.podeAplicar, false, 'não se corta o plano por comida que veio de fora dele');
   a.fechar();
 });
 
 test('sair do plano sabendo o que comeu não trava', async () => {
   const a = await comDieta('fora');
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer menos',
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer menos 150 kcal',
     'saída registrada ainda deixa a semana legível');
   a.fechar();
 });
@@ -292,7 +292,7 @@ async function viraParaMenos(a) {
   a.v('ctx.abreComparar');
   await a.v('ctx.setGordura', 'sim'); await a.esperar();
   a.aba('semana');
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer menos');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer menos 150 kcal');
 }
 
 test('trocar o arroz de um prato não tira comida do outro', async () => {
@@ -414,7 +414,7 @@ test('duplicar a refeição com arroz não tira comida de ninguém', async () =>
 test('aplicar o passo carimba a versão do plano, porque ele mexe no arroz', async () => {
   const a = await comPeso([73.0, 73.05, 73.10]);
   a.aba('semana');
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer mais');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer mais 150 kcal');
 
   // `versaoDoPlano` não está na superfície, e não deve estar: é leitura
   // preguiçosa que INICIALIZA o campo. Lê-se o estado.
@@ -444,5 +444,31 @@ test('cancelar a restauração do plano NÃO carimba a versão', async () => {
   assert.strictEqual(a.S().comida.v || 0, antes,
     'e por isso não há versão nova a carimbar: carimbar aqui faria o app ' +
     'relatar divergência de plano em dias que não divergiram');
+  a.fechar();
+});
+
+test('o passo diz antes do toque o que vira base, e depois diz quem aplicou, quando e quanto', async () => {
+  // §6.3 da frente 3. Antes: a consequência em número (V4), e o que não volta
+  // sozinho. Depois: o agente é o app (V8), com o instante e as kcal do dia de
+  // treino antes e depois — guardadas no passo, porque o plano muda.
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  a.aba('semana');
+  await a.esperar();
+  const v0 = a.vJ('ctx.dados').veredito;
+  assert.strictEqual(v0.estado.indexOf('plano base'), 0, 'pré-condição: sem passo, a linha é o estado');
+  const m = /^Depois de aplicado, ([\d.]+) kcal vira a nova base\. Se o peso voltar ao alvo, o passo não é devolvido sozinho\.$/.exec(v0.naoVolta);
+  assert.ok(m, 'a frase do que não volta, antes do toque: ' + v0.naoVolta);
+  assert.ok(a.texto('.dd-naovolta'), 'e ela está na tela, junto do botão');
+
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(a.toast(), 'Apliquei +150 kcal. O arroz do plano foi para ' + a.v('arrozAtual') + ' g.');
+  const passo = a.S().ajusteHist.slice(-1)[0];
+  assert.strictEqual(passo.kpara.toLocaleString('pt-BR'), m[1], 'o número prometido antes é o que o passo deu');
+  assert.ok(passo.kpara > passo.kde, 'e subiu');
+  // O passo seguinte é outro veredito; a linha olha só o que está em vigor.
+  const e = a.vJ('ctx.dados').veredito.estado;
+  assert.ok(new RegExp('^Apliquei \\+150 kcal em \\d\\d/\\d\\d, às \\d+h\\d\\d · ' +
+    passo.kde.toLocaleString('pt-BR').replace('.', '\\.') + ' → ' + m[1].replace('.', '\\.') +
+    ' kcal em dia de treino · ajuste \\+150 kcal · arroz \\d+ g$').test(e), e);
   a.fechar();
 });

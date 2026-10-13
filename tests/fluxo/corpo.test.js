@@ -62,7 +62,7 @@ test('o veredito da regra é o que aparece na aba corpo', async () => {
   a.aba('semana');
   // o veredito é o cartão do Instrumento; o legado saiu de DADOS para não
   // aparecer duas vezes na mesma tela
-  assert.strictEqual(a.texto('.ins-veredito-t'), 'Comer mais');
+  assert.strictEqual(a.texto('.ins-veredito-t'), 'Comer mais 150 kcal');
   assert.strictEqual(a.texto('.ins-veredito-p'), a.vJ('veredito').p, 'a tela não reescreve o texto');
   assert.ok(a.$('.ins-veredito'), 'e é um objeto destacado, com borda');
   a.fechar();
@@ -77,7 +77,7 @@ test('cintura alta não sobrepõe mais o peso na faixa', async () => {
     cintura: medidas([{ d: 28, v: 80.0 }, { d: 21, v: 80.6 }, { d: 7, v: 81.4 }, { d: 0, v: 82.0 }])
   } } });
   a.aba('semana');
-  assert.strictEqual(a.texto('.ins-veredito-t'), 'Manter como está');
+  assert.strictEqual(a.texto('.ins-veredito-t'), 'Não mexer: a taxa está na faixa');
   a.fechar();
 });
 
@@ -87,7 +87,7 @@ test('sem registro de comida, a tela manda registrar em vez de cortar', async ()
   const a = await app({ estado: { logs: [], done: [], comidaHist: [],
     body: { peso: pesagens([73.0, 73.6, 74.2]), cintura: [] } } });
   a.aba('semana');
-  assert.strictEqual(a.texto('.ins-veredito-t'), 'Registrar antes de mexer');
+  assert.strictEqual(a.texto('.ins-veredito-t'), 'Não mexer: falta registro de comida');
   assert.ok(a.texto('.ins-veredito-p').includes('saídas'), a.texto('.ins-veredito-p'));
   a.fechar();
 });

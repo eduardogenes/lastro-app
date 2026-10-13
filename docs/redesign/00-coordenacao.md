@@ -2877,7 +2877,27 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             as catorze (no zsh, `$FS` sem aspas não se divide em palavras, e nem
             a cópia nem a restauração rodaram). Desfiz uma a uma, conferi pelo
             diff e refiz todas isoladas.
-      **Falta, nesta ordem:** §6 os portões da semana; §10 a
+      - [x] **§6.1 e §6.3 · O veredito e o passo** (13/10). Títulos numa
+            gramática só: "Comer mais 150 kcal", "Não mexer: falta registro de
+            comida", "Não mexer: falta a sua leitura das fotos", "Não mexer: peso
+            parado com carga subindo", "Não mexer: uma semana sozinha não
+            decide", "Não mexer: faltam pesagens". O "Observar" juntava três
+            ramos, e agora o título diz qual. **Fora da tabela da frente:** um
+            segundo "manter" (ganho acima da faixa, fotos sem piora), em que
+            "a taxa está na faixa" seria falso — virou "Não mexer: as fotos não
+            mostram piora", com o porquê tirado da prosa. A prosa não mudou.
+            O passo: "Depois de aplicado, 3.157 kcal vira a nova base. Se o peso
+            voltar ao alvo, o passo não é devolvido sozinho." ANTES do toque, com
+            o número simulado num clone do plano (o arroz arredonda, então não é
+            "+150" exato); depois, "Apliquei +150 kcal em 01/10, às 21h34 ·
+            3.007 → 3.157 kcal em dia de treino · …", com as kcal guardadas no
+            passo (`kde`/`kpara`, opcionais, só nos novos). Nove mutações.
+            **1.374 passando.**
+            **Não feito:** o "Desfazer" do passo (o app não tem — desfazer hoje é
+            restaurar o plano inteiro; é gesto novo); a frase "Enquanto a adesão
+            não chega a 11…" (a segunda metade é promessa ainda aberta na mesa
+            dele, §11.2, e a frente proíbe meia-promessa).
+      **Falta, nesta ordem:** §6.2 e §6.4 os portões e o vazio deles; §10 a
       bioimpedância; §1.1 as linhas do Agora. **As outras treze perguntas** do
       app seguem no diálogo do sistema, de propósito (§3.3).
 

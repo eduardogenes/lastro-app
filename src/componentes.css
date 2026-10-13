@@ -1828,3 +1828,6 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 
 /* A linha que explica a lista das mudanças, uma vez, antes delas (§5.1). */
 .pr-explica { margin: 0 0 var(--ins-4); }
+
+/* O que não volta depois do passo, dito antes do toque (§6.3). */
+.dd-naovolta { margin: var(--ins-3) 0 0; }

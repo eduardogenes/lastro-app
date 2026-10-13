@@ -511,6 +511,9 @@ export interface PassoDeAjuste {
   p: string;
   /** dias com registro de comida nos 14 anteriores */
   reg: number;
+  /** kcal do dia de treino antes e depois do passo — só nos passos novos */
+  kde?: number;
+  kpara?: number;
 }
 
 export interface EstadoCompras {

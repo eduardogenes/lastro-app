@@ -6581,7 +6581,13 @@ CTX.dados = function () {
       // para dentro e com confirmação.
       podeAplicar: v.k === 'mais' || v.k === 'menos',
       acaoTxt: alvo > 0 ? 'aplicar +150 kcal' : alvo < 0 ? 'aplicar −150 kcal' : null,
-      estado: rotuloDoAjuste() + ' · arroz ' + arrozAtual() + ' g'
+      // A frase do que não volta, ANTES do toque e em número (V4, §6.3): é a
+      // que impede ler o passo como empréstimo que se devolve sozinho.
+      naoVolta: (v.k === 'mais' || v.k === 'menos') && alvo
+        ? 'Depois de aplicado, ' + fmtInt(kcalDeTreinoCom((S.ajuste || 0) + alvo)) +
+          ' kcal vira a nova base. Se o peso voltar ao alvo, o passo não é devolvido sozinho.'
+        : null,
+      estado: linhaDoAjuste()
     },
     comida: dadosDeComida(),
     forca: {
@@ -6608,14 +6614,54 @@ CTX.aplicaAjuste = function () {
   const passo = ajusteDoVeredito(v);
   if (!passo) return;                   // observar e manter não propõem passo
   const antes = S.ajuste || 0;
+  const kde = kcalDeTreinoCom(antes);
   S.ajuste = antes + passo;
   if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
-  S.ajusteHist.push({ t: Date.now(), de: antes, para: S.ajuste,
-                      k: v.k, p: v.p, reg: diasRegistrados() });
   aplicaArroz();
+  // As kcal do dia de treino antes e depois vão junto: é o que a linha do passo
+  // diz depois ("3.007 → 3.157 kcal em dia de treino"), e o plano muda — lidas
+  // depois, dariam o número de outro dia.
+  S.ajusteHist.push({ t: Date.now(), de: antes, para: S.ajuste,
+                      k: v.k, p: v.p, reg: diasRegistrados(),
+                      kde: Math.round(kde), kpara: Math.round(kcalDeTreinoCom(S.ajuste)) });
   queueSave(); render();
-  toast('Ajuste aplicado. O arroz do plano foi para ' + arrozAtual() + ' g.');
+  // "Apliquei", e não "Ajuste aplicado": aplicar é ato do registro, e o agente
+  // é o app (V8).
+  toast('Apliquei ' + sinalDoPasso(passo) + ' kcal. O arroz do plano foi para ' + arrozAtual() + ' g.');
 };
+
+/** "+150" / "−300": o passo em kcal, com o sinal de verdade. */
+function sinalDoPasso(passos) { return (passos > 0 ? '+' : '−') + Math.abs(passos) * 150; }
+
+/**
+ * As kcal do dia de treino com um saldo de ajuste qualquer, SEM tocar no plano.
+ * É o que deixa a consequência ser dita antes do toque, em número (V4): o
+ * ajuste aterrissa no arroz em gramas inteiros, então o total não é "atual +
+ * 150" — é o que a conta do arroz der.
+ */
+function kcalDeTreinoCom(ajuste) {
+  const plano = JSON.parse(JSON.stringify(planoDeComida()));
+  const itens = [];
+  plano.forEach(function (r) { r.itens.forEach(function (i) { if (i.arroz) itens.push(i); }); });
+  aplicaAjusteNoArroz(itens, ajuste);
+  return totalDoDia(plano, catalogoAlimentos(), true, false).kcal;
+}
+
+/**
+ * "Apliquei +150 kcal em 01/10, às 21h34 · 3.007 → 3.157 kcal em dia de treino"
+ * (§6.3) — só enquanto aquele passo é o que está em vigor. Antes dele, ou com o
+ * plano restaurado, a linha volta a ser o estado: "plano base · arroz 250 g".
+ */
+function linhaDoAjuste() {
+  const estado = rotuloDoAjuste() + ' · arroz ' + arrozAtual() + ' g';
+  const h = Array.isArray(S.ajusteHist) ? S.ajusteHist : [];
+  const u = h[h.length - 1];
+  if (!u || u.para === u.de || u.para !== (S.ajuste || 0)) return estado;
+  return 'Apliquei ' + sinalDoPasso(u.para - u.de) + ' kcal em ' + fmtDate(u.t) + ', às ' + fmtHoraDita(u.t) +
+    (u.kde != null && u.kpara != null
+      ? ' · ' + fmtInt(u.kde) + ' → ' + fmtInt(u.kpara) + ' kcal em dia de treino' : '') +
+    ' · ' + estado;
+}
 
 // ---------- GUIA ----------
 CTX.guia = function () {

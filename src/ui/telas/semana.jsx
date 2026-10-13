@@ -146,11 +146,14 @@ export function Semana({ ctx }) {
           veredito={d.veredito.t}
           cor={d.veredito.cor}
           explicacao={d.veredito.p}
-          acao={d.veredito.podeAplicar && (
+          acao={d.veredito.podeAplicar && <>
             <button class="ins-btn-primary" onClick={ctx.aplicaAjuste}>
               {d.veredito.acaoTxt}
             </button>
-          )}
+            {d.veredito.naoVolta && (
+              <p class="ins-body-xs ins-t3 dd-naovolta">{d.veredito.naoVolta}</p>
+            )}
+          </>}
           estado={d.veredito.estado}
         />
       </Secao>
