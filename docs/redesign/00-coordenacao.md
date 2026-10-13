@@ -2612,7 +2612,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       git como `tests/dominio/campos.test.ts`, com a razão da separação escrita no
       topo. A contagem da suíte foi o que denunciou.
 
-- [~] **6.z'' As três linhas "próprio" que faltam** (§6.1). O teclado existe; o
+- [x] **6.z'' As três linhas "próprio" que faltam** (§6.1). O teclado existe; o
       que falta é levá-lo onde a tabela manda: **peso da manhã** e **cintura** em
       Corpo (as duas "de pé, com a fita ou na balança na mão", e o peso leva a
       régua de 100 g da §1.4 na frente), e a **lista rápida da aula** ("DEPOIS da
@@ -2632,10 +2632,30 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       fecha o teclado. `acoesRapido.inp` saiu do inventário por decisão escrita.
       Seis casos novos, cinco mutações, todas vermelhas no caso esperado. **1.328
       passando.**
-      **Falta:** as **medidas com fita**, e a tela delas não existe — é a decisão
-      2a do dono (01/10), as medidas novas como dado do produto.
       **Não medido:** nenhum olho viu a lista rápida com o teclado aberto; a quebra
       da linha está cobrada por caso de estilo, não por tela.
+      **E as medidas com fita** (`a2e2be0`, 13/10) — a decisão 2a do dono, com a
+      lista da D: cintura e braço ligados; coxa, panturrilha, peito e quadril
+      esperam um toque; todas são leitura. As cinco novas entraram na tabela
+      `MEDIDAS_DO_CORPO` **sem migração**, pelo contrato escrito na 9 → 10. O
+      **como-eu-medi** é atributo da marca (`onde`), não campo de topo: viaja na
+      fusão e na cópia de segurança sem abrir portão, e morre com a lápide.
+      Corrigir o mesmo dia não o apaga. Oito casos novos, seis mutações, todas
+      vermelhas no caso esperado. **1.336 passando.**
+      **Escolhas minhas, declaradas:**
+      1. **"Ligado" não é guardado** — é derivado (o que a tabela liga, o que já
+         tem medida, o que ele ligou nesta visita). Ponto ligado e nunca medido
+         volta a pedir "ligar" na próxima abertura. Guardar custaria um campo de
+         topo, que é o portão que o F251 mostrou ser o caro.
+      2. **Os valores de partida dos pontos novos** (braço 35, coxa 56,
+         panturrilha 37, peito 100, quadril 96 cm) são meio de faixa comum de
+         adulto, como a régua da D "sem última medida". São partida, não
+         referência, e o teclado próprio está ao lado.
+      3. **O passo é o stepper de 0,5 cm da cintura**, e não a régua de chips que
+         a D desenhou: é o controle que a cintura do app já usa, e a régua de
+         chips para o corpo não foi construída.
+      **Não medido:** nenhum olho viu a tela nova. Com os seis pontos ligados o
+      Corpo fica longo — seis seções de `Medida` —, e isso só se julga na tela.
 
 - [ ] **6.z''' O botão de carga e de repetição da série não tem estilo nenhum**
       (achado de 13/10, ao estilizar o da lista rápida). `repbtn` nasceu em
@@ -2767,6 +2787,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
   `CLAUDE.md` global tem as notas de mobile de volta desde 02/10 14h03 (R1
   cumprido ao fim da onda 3). A lista rápida estava pela metade → completada
   (`8c61c5d`). Achado novo: o botão da série sem estilo (6.z''').
+- 13/10 · As medidas com fita entram (`a2e2be0`): 6.z'' fechado. 1.336 passando.
 
 ---
 
