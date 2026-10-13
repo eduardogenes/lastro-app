@@ -119,7 +119,7 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
 
   assert.deepStrictEqual(a.S().logs, antes.logs);
   assert.strictEqual(a.S().done.length, antes.done.length);
-  assert.strictEqual(a.E('S.done.filter(function (x) { return x.livre; }).length'), 1);
+  assert.strictEqual(a.S().done.filter(function (x) { return x.livre; }).length, 1);
   a.fechar();
 });
 
@@ -133,7 +133,7 @@ test('importar lixo não toca no estado', async () => {
   await a.v('importText', '{ isso nao e json');
   assert.ok(a.toast().includes('JSON inválido'));
 
-  await a.E('importText(JSON.stringify({ qualquer: 1 }))');
+  await a.v('importText', JSON.stringify({ qualquer: 1 }));
   assert.ok(a.toast().includes('não parece'));
 
   assert.deepStrictEqual(a.S().logs, antes);
@@ -218,7 +218,7 @@ test('histórico do plano antigo é reindexado, não apagado', async () => {
   } });
   await a.esperar();
 
-  const chaves = a.J('Object.keys(S.logs).sort()');
+  const chaves = Object.keys(a.S().logs).sort();
   assert.deepStrictEqual(chaves, [
     'agachamento-hack',
     'remada-unilateral-na-polia-baixa',
@@ -311,9 +311,9 @@ test('a migração roda uma vez só', async () => {
   await a.esperar();
   // As migrações recebem o estado desde que viraram módulo: dá para testá-las
   // contra uma fixture sem subir o app (ver tests/dominio/migracoes.test.js).
-  assert.strictEqual(a.E('migraPlano(S)'), 0, 'segunda passada não mexe em nada');
-  assert.strictEqual(a.E('migraPlano3(S)'), null);
-  assert.deepStrictEqual(a.J('Object.keys(S.logs)'), ['supino-inclinado-com-halteres']);
+  assert.strictEqual(a.v('migraPlano', a.S()), 0, 'segunda passada não mexe em nada');
+  assert.strictEqual(a.v('migraPlano3', a.S()), null);
+  assert.deepStrictEqual(Object.keys(a.S().logs), ['supino-inclinado-com-halteres']);
   a.fechar();
 });
 
@@ -508,11 +508,11 @@ test('as doze medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
   await a.esperar(60);
 
   chaves.forEach(function (k, i) {
-    assert.strictEqual(a.E('S.body[' + JSON.stringify(k) + '].length'), 1, k + ' voltou');
-    assert.strictEqual(a.E('S.body[' + JSON.stringify(k) + '][0].v'), 10 + i,
+    assert.strictEqual(a.S().body[k].length, 1, k + ' voltou');
+    assert.strictEqual(a.S().body[k][0].v, 10 + i,
       k + ' voltou com o valor dela, e não com o de outra grandeza');
   });
-  assert.strictEqual(a.E('S.body.braco[0].onde'), 'no meio do bíceps, braço relaxado',
+  assert.strictEqual(a.S().body.braco[0].onde, 'no meio do bíceps, braço relaxado',
     'e o como-eu-medi voltou junto com a medida');
   a.fechar();
 });
@@ -584,18 +584,18 @@ test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async ()
   await a.esperar();
 
   assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'));
-  assert.deepStrictEqual(a.J('S.comida.plano.map(function(r){return r.id})'),
+  assert.deepStrictEqual(a.S().comida.plano.map(function (r) { return r.id; }),
     ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar', 'ceia']);
-  assert.strictEqual(a.E('S.comida.plano.filter(function(r){return r.id==="ceia"})[0].t'), '21:30');
+  assert.strictEqual(a.S().comida.plano.filter(function (r) { return r.id === 'ceia'; })[0].t, '21:30');
 
   // o Neston está no catálogo sem nunca ter entrado no estado
-  assert.ok(a.E('!!catalogoAlimentos().neston'), 'o catálogo é derivado do código');
+  assert.ok(!!a.vJ('catalogoAlimentos').neston, 'o catálogo é derivado do código');
   assert.deepStrictEqual(a.S().comida.alimentos, {}, 'e o estado não guarda a biblioteca');
 
   // a ceia aparece na timeline de HOJE, no relógio dela
   a.aba('agora');
   await a.esperar();
-  const ordem = a.J('CTX.hoje().refs.map(function(r){return r.t+" "+r.id})');
+  const ordem = a.vJ('ctx.hoje').refs.map(function (r) { return r.t + ' ' + r.id; });
   assert.strictEqual(ordem[ordem.length - 1], '21:30 ceia', 'última do relógio');
 
   // e o dia já fechado não foi reescrito
@@ -608,7 +608,7 @@ test('o estado congelado do plano 10 entra pelo boot e sai com a ceia', async ()
   await a.v('importText', JSON.stringify({ app: 'lastro', data: era }));
   await a.esperar(60);
   assert.strictEqual(a.S().plano, a.dado('PLANO_ATUAL'), 'a cadeia roda na importação também');
-  assert.deepStrictEqual(a.J('S.comida.plano.map(function(r){return r.id})'),
+  assert.deepStrictEqual(a.S().comida.plano.map(function (r) { return r.id; }),
     ['pre', 'treino', 'pos', 'almoco', 'lanche', 'jantar', 'ceia'],
     'o backup do plano 10 restaurado não volta sem a ceia');
   a.fechar();
