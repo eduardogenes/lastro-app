@@ -99,11 +99,7 @@ test('a fusão soma o que dois aparelhos marcaram no mesmo dia', async () => {
                                  escala: {}, tot: { kcal: 600, p: 30, c: 80, g: 15 }, pv: 1, m: 100 }] };
   const remoto = { comidaHist: [{ d: '2026-01-14', done: { almoco: 200 }, agua: 9,
                                   escala: {}, tot: { kcal: 700, p: 35, c: 90, g: 18 }, pv: 1, m: 200 }] };
-  const r = a.J(`(function(){
-    var l = Object.assign(JSON.parse(JSON.stringify(S)), ${JSON.stringify(local)});
-    var m = Object.assign(JSON.parse(JSON.stringify(S)), ${JSON.stringify(remoto)});
-    return funde(l, m).estado.comidaHist;
-  })()`);
+  const r = a.vJ('funde', Object.assign(a.S(), local), Object.assign(a.S(), remoto)).estado.comidaHist;
   assert.strictEqual(r.length, 1, 'a data é a chave natural: um dia, um registro');
   assert.deepStrictEqual(Object.keys(r[0].done).sort(), ['almoco', 'pos'],
     'marcar o almoço no iPhone e o café no iPad tem que SOMAR, não escolher um');
@@ -126,10 +122,8 @@ test('a folha da refeição mostra o padrão dela antes de ele marcar', async ()
                           tot: {kcal:0,p:0,c:0,g:0}, pv: 1, m: 9 - i });
     }
   })()`);
-  const c = a.J(`(function(){
-    var f = CTX.refeicao('lanche');
-    return f && f.padrao;
-  })()`);
+  const f = a.vJ('ctx.refeicao', 'lanche');
+  const c = f && f.padrao;
   assert.ok(c, 'com histórico suficiente o padrão aparece');
   assert.ok(/3 dos últimos 8 dias/.test(c.txt), c.txt);
   assert.ok(!/%/.test(c.txt), 'contagem crua, nunca percentual');
@@ -145,12 +139,10 @@ test('sem histórico suficiente a folha não inventa padrão', async () => {
 
 test('a fusão do dia ABERTO também soma os dois aparelhos', async () => {
   const a = await noHoje();
-  const r = a.J(`(function(){
-    var base = JSON.parse(JSON.stringify(S));
-    var l = Object.assign({}, base, { dia: { data:'2026-01-14', done:{pos:1}, agua:4, escala:{}, cadencia:'treino' } });
-    var m = Object.assign({}, base, { dia: { data:'2026-01-14', done:{almoco:1}, agua:9, escala:{}, cadencia:'treino' } });
-    return funde(l, m).estado.dia;
-  })()`);
+  const base = a.S();
+  const l = Object.assign({}, base, { dia: { data: '2026-01-14', done: { pos: 1 }, agua: 4, escala: {}, cadencia: 'treino' } });
+  const m = Object.assign({}, base, { dia: { data: '2026-01-14', done: { almoco: 1 }, agua: 9, escala: {}, cadencia: 'treino' } });
+  const r = a.vJ('funde', l, m).estado.dia;
   assert.deepStrictEqual(Object.keys(r.done).sort(), ['almoco', 'pos'],
     'era o único que ainda vinha inteiro do lado que gravou por último');
   assert.strictEqual(r.agua, 9);
