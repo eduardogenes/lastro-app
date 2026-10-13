@@ -63,7 +63,7 @@ test('tocar num número registra a série e fecha a régua', async () => {
   a.v('anotaSerie', 0, 0, 0, 60);   // a carga é botão: entra pela porta por valor
   await a.regua(0, 0, 9);
 
-  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), 9, 'a repetição entrou');
+  assert.strictEqual((a.vJ('draftPeek', 0).s[0] || [])[1], 9, 'a repetição entrou');
   assert.strictEqual(a.$('.regua-faixa'), null, 'e a régua fechou: o segundo toque é a escolha');
   assert.strictEqual(a.doc.getElementById('r0_0').textContent, '9', 'o botão mostra o valor');
   a.fechar();
@@ -185,10 +185,10 @@ test('tocar de novo no valor escolhido apaga', async () => {
   const a = await abreCartao();
   a.v('anotaSerie', 0, 0, 0, 60);   // a carga é botão: entra pela porta por valor
   await a.regua(0, 0, 9);
-  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), 9);
+  assert.strictEqual((a.vJ('draftPeek', 0).s[0] || [])[1], 9);
 
   await a.regua(0, 0, 9);
-  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), null, 'o segundo toque apagou');
+  assert.strictEqual((a.vJ('draftPeek', 0).s[0] || [])[1], null, 'o segundo toque apagou');
   assert.strictEqual(a.doc.getElementById('r0_0').textContent, '·',
     'e o botão volta a dizer que não há valor');
   a.fechar();
@@ -231,7 +231,7 @@ test('a porta "outro valor" abre o teclado próprio', async () => {
   await a.esperar();
   a.clicar(a.$('[data-a="tcl-7"]'));
   await a.esperar();
-  assert.strictEqual(a.E('(draftPeek(0).s[0] || [])[1]'), 27,
+  assert.strictEqual((a.vJ('draftPeek', 0).s[0] || [])[1], 27,
     'o valor de fora da régua entra');
   assert.ok(a.texto('.tcl-visor').includes('27'), 'e o visor mostra o que foi digitado');
   a.fechar();
@@ -256,11 +256,11 @@ test('exercício medido por tempo continua com campo', async () => {
   // A régua é de REPETIÇÃO. Em metro, caloria ou segundo o valor não é um número
   // curto de faixa conhecida — 500 m não cabe numa régua de onze valores.
   const a = await abreCartao();
-  const comUnidade = a.E('treino(view.day).ex.findIndex(function (e) { return !!unidadeDe(e); })');
+  const comUnidade = a.vJ('treino', a.vista().day).ex.findIndex(function (e) { return !!a.v('unidadeDe', e); });
   if (comUnidade < 0) {
     // O Treino A pode não ter movimento medido: aí o caso prova o contrário —
     // que a régua está em todas as linhas dele, e não que ela nunca cede.
-    assert.ok(a.E('vmExercicio(view.day, 0, treino(view.day).ex[0]).temRegua'),
+    assert.ok(a.vJ('vmExercicio', a.vista().day, 0, a.vJ('treino', a.vista().day).ex[0]).temRegua,
       'sem movimento medido no dia, toda linha tem régua');
     a.fechar();
     return;
