@@ -89,7 +89,7 @@ test('retroativo sem horário não inventa hora', async () => {
 
   const m = a.S().done[0];
   assert.strictEqual(m.hora, undefined);
-  assert.strictEqual(a.E('temHora(S.done[0])'), false);
+  assert.strictEqual(a.v('temHora', a.S().done[0]), false);
 
   a.aba('semana');
   assert.ok(!/\d{2}:\d{2}/.test(a.texto('.sess-d')), 'nada de 07:00 fantasma: ' + a.texto('.sess-d'));
@@ -140,7 +140,7 @@ test('treino avulso não entra na conta de horário', async () => {
   a.v('addSet', 'grupo', 'peito');
   await a.v('gravarRetro', false);
   await a.esperar();
-  assert.strictEqual(a.E('temHora(S.done[0])'), false);
+  assert.strictEqual(a.v('temHora', a.S().done[0]), false);
   a.fechar();
 });
 
