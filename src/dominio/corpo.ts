@@ -37,16 +37,46 @@ export interface MedidaDoCorpo {
    * a tela a obedece, não a decide.
    */
   obrigatorio: boolean;
+  /**
+   * Medida com FITA, e se ela já vem LIGADA na tela (`'ligada'`) ou espera ele
+   * ligar (`'desligada'`). `false` é o que não sai de fita: a balança.
+   *
+   * Os seis pontos e quais vêm ligados são da Direção D (`corpo.html`), tirados
+   * da resposta dele: "braço, cintura, essas coisas principais que dá pra eu
+   * medir sozinho" (P6). Cintura e braço, que ele nomeou, vêm ligados; coxa,
+   * panturrilha, peito e quadril esperam um toque. Ligar não cria cobrança:
+   * nenhuma delas tem frequência prescrita, e nenhuma entra em regra — são
+   * leitura.
+   */
+  fita: false | 'ligada' | 'desligada';
+  /**
+   * Onde o stepper parte quando ainda não há medida nenhuma.
+   *
+   * Peso e cintura são os valores que o app já usava (75 kg e 85 cm). Os pontos
+   * novos partem do meio da faixa comum de um adulto, como a régua da D abre
+   * "sem última medida" — é partida, não referência, e o teclado próprio está
+   * ao lado para o valor que estiver longe. Só a balança da bioimpedância não
+   * tem: a leitura dela entra digitada, sem stepper.
+   */
+  partida?: number;
 }
 
 export const MEDIDAS_DO_CORPO: MedidaDoCorpo[] = [
-  { k: 'peso',          n: 'peso',                      u: 'kg', bio: false, obrigatorio: true },
-  { k: 'cintura',       n: 'cintura',                   u: 'cm', bio: false, obrigatorio: true },
-  { k: 'bioPeso',       n: 'peso na bioimpedância',     u: 'kg', bio: true,  obrigatorio: true },
-  { k: 'bioMusculo',    n: 'massa muscular esquelética', u: 'kg', bio: true,  obrigatorio: true },
-  { k: 'bioGordura',    n: 'massa de gordura',          u: 'kg', bio: true,  obrigatorio: true },
-  { k: 'bioGorduraPct', n: 'percentual de gordura',     u: '%',  bio: true,  obrigatorio: true },
-  { k: 'bioAgua',       n: 'água corporal total',       u: 'L',  bio: true,  obrigatorio: false }
+  { k: 'peso',          n: 'peso',                      u: 'kg', bio: false, obrigatorio: true,  fita: false,       partida: 75 },
+  { k: 'cintura',       n: 'cintura',                   u: 'cm', bio: false, obrigatorio: true,  fita: 'ligada',    partida: 85 },
+  { k: 'bioPeso',       n: 'peso na bioimpedância',     u: 'kg', bio: true,  obrigatorio: true,  fita: false },
+  { k: 'bioMusculo',    n: 'massa muscular esquelética', u: 'kg', bio: true,  obrigatorio: true,  fita: false },
+  { k: 'bioGordura',    n: 'massa de gordura',          u: 'kg', bio: true,  obrigatorio: true,  fita: false },
+  { k: 'bioGorduraPct', n: 'percentual de gordura',     u: '%',  bio: true,  obrigatorio: true,  fita: false },
+  { k: 'bioAgua',       n: 'água corporal total',       u: 'L',  bio: true,  obrigatorio: false, fita: false },
+  // As medidas com fita além da cintura. Entram SEM migração, pelo contrato de
+  // `normalizaEstado()`: campo novo e vazio recebe padrão no boot e na
+  // importação, e a fusão e a cópia de segurança já enumeram esta tabela.
+  { k: 'braco',         n: 'braço',                     u: 'cm', bio: false, obrigatorio: true,  fita: 'ligada',    partida: 35 },
+  { k: 'coxa',          n: 'coxa',                      u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 56 },
+  { k: 'panturrilha',   n: 'panturrilha',               u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 37 },
+  { k: 'peito',         n: 'peito',                     u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 100 },
+  { k: 'quadril',       n: 'quadril',                   u: 'cm', bio: false, obrigatorio: true,  fita: 'desligada', partida: 96 }
 ];
 
 /** As chaves de `S.body`, na ordem da tabela. */
@@ -55,6 +85,29 @@ export const MARCAS_DO_CORPO: QualMarca[] = MEDIDAS_DO_CORPO.map(function (m) { 
 /** Só as da balança de bioimpedância — as cinco que a migração 9 → 10 abriu. */
 export const MARCAS_DA_BIO: QualMarca[] =
   MEDIDAS_DO_CORPO.filter(function (m) { return m.bio; }).map(function (m) { return m.k; });
+
+/** As medidas com fita, na ordem da tabela — a cintura é a primeira. */
+export const MEDIDAS_DE_FITA: MedidaDoCorpo[] =
+  MEDIDAS_DO_CORPO.filter(function (m) { return m.fita !== false; });
+
+/** A linha da tabela de uma grandeza, ou `null` para chave desconhecida. */
+export function medidaDoCorpo(k: string): MedidaDoCorpo | null {
+  return MEDIDAS_DO_CORPO.filter(function (m) { return m.k === k; })[0] || null;
+}
+
+/**
+ * Como ele mediu este ponto da última vez que disse: o `onde` da medida MAIS
+ * RECENTE que tem um. Medida sem texto não apaga o lembrete — ele é guardado
+ * "na primeira vez" e volta nas seguintes, que normalmente vêm sem texto.
+ */
+export function ondeMediu(serie: Marca[] | null | undefined): string | null {
+  let melhor: Marca | null = null;
+  (Array.isArray(serie) ? serie : []).forEach(function (x) {
+    if (!x || typeof x.onde !== 'string' || !x.onde.trim()) return;
+    if (!melhor || x.t > melhor.t) melhor = x;
+  });
+  return melhor ? (melhor as Marca).onde!.trim() : null;
+}
 
 /** Uma semana de marcas, já resumida na média. */
 export interface Semana {

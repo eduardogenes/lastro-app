@@ -153,6 +153,8 @@ const TEXTO: Record<string, string> = {
     'nome do treino avulso — §6.1 "do sistema; é texto"',
   'src/ui/telas/protocolo.jsx · pr-obs':
     'nota da sessão de fotos — §6.1 "nota da sessão: do sistema; é texto"',
+  'src/ui/telas/corpo.jsx · onde-':
+    'como ele mediu, nas medidas com fita — §6.1 "próprio para o número, do sistema para o texto"',
   'src/ui/telas/prescricao.jsx · pr-motivo':
     'motivo da mudança do programa — §6.1 "do sistema", e a frente 1 escreveu por quê: "porque é texto e ele está sentado"'
 };

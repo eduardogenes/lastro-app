@@ -379,7 +379,26 @@ export interface SessaoFoto {
 }
 
 /** Uma marca corporal. */
-export interface Marca { t: number; v: number; /** alterada em */ m?: number; }
+export interface Marca {
+  t: number; v: number;
+  /** alterada em */
+  m?: number;
+  /**
+   * COMO ELE MEDIU, em texto dele — só nas medidas com fita.
+   *
+   * A fita erra de posicionamento mais do que a balança varia de água (F43), e
+   * repetir o ponto vale mais que o número. A primeira medida de um ponto guarda
+   * onde ele passou a fita, e o texto volta como lembrete nas seguintes (Direção
+   * D, `corpo.html`).
+   *
+   * É ATRIBUTO da marca, e não campo novo no topo do estado, de propósito: a
+   * fusão (`uneLista`) e a cópia de segurança (`corpoDoBackup`) já carregam o
+   * objeto inteiro de cada marca, então o texto viaja e morre com a lápide dela
+   * sem abrir nenhum portão. Um campo de topo seria mais um nome a lembrar na
+   * lista branca da restauração — que é exatamente o defeito F251.
+   */
+  onde?: string;
+}
 
 /**
  * Qual série de medida do corpo. Uma chave por grandeza, e cada uma é uma
@@ -399,7 +418,8 @@ export interface Marca { t: number; v: number; /** alterada em */ m?: number; }
  */
 export type QualMarca =
   | 'peso' | 'cintura'
-  | 'bioPeso' | 'bioMusculo' | 'bioGordura' | 'bioGorduraPct' | 'bioAgua';
+  | 'bioPeso' | 'bioMusculo' | 'bioGordura' | 'bioGorduraPct' | 'bioAgua'
+  | 'braco' | 'coxa' | 'panturrilha' | 'peito' | 'quadril';
 
 /** As séries de medida do corpo. A forma de `S.body`. */
 export type Corpo = Record<QualMarca, Marca[]>;

@@ -472,7 +472,7 @@ test('o que o ajuste deu a cada prato sai e volta nas duas listas brancas', asyn
   a.fechar();
 });
 
-test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => {
+test('as doze medidas do corpo saem e voltam pelo nome, uma a uma', async () => {
   // A asserção da exportação (acima) tranca as chaves de TOPO, e `body` é uma
   // só. As grandezas moram dentro dela, e a importação as copia por nome: sem
   // este teste, acrescentar a oitava medida e esquecer a lista branca não
@@ -480,14 +480,19 @@ test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
   const a = await app();
   const chaves = a.dado('MARCAS_DO_CORPO');
   assert.deepStrictEqual(chaves.slice().sort(), [
-    'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso', 'cintura', 'peso'
-  ], 'peso da manhã, cintura e as cinco da bioimpedância');
+    'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso',
+    'braco', 'cintura', 'coxa', 'panturrilha', 'peito', 'peso', 'quadril'
+  ], 'peso da manhã, cintura, as cinco da bioimpedância e as cinco com fita além da cintura');
 
   // uma medida reconhecível em cada, com valor diferente por grandeza
   chaves.forEach(function (k, i) {
     a.E('S.body[' + JSON.stringify(k) + '] = [{ t: ' + (1790000000000 + i) +
         ', v: ' + (10 + i) + ', m: 1 }]');
   });
+  // O "como eu medi" é atributo da marca, e não campo de topo: ele só volta se
+  // a lista branca copiar a marca INTEIRA. É o portão que ele não abriu, e é
+  // aqui que se prova que não precisava.
+  a.E('S.body.braco[0].onde = "no meio do bíceps, braço relaxado"');
   await a.v('save');
 
   a.aba('ajustes');
@@ -507,6 +512,8 @@ test('as sete medidas do corpo saem e voltam pelo nome, uma a uma', async () => 
     assert.strictEqual(a.E('S.body[' + JSON.stringify(k) + '][0].v'), 10 + i,
       k + ' voltou com o valor dela, e não com o de outra grandeza');
   });
+  assert.strictEqual(a.E('S.body.braco[0].onde'), 'no meio do bíceps, braço relaxado',
+    'e o como-eu-medi voltou junto com a medida');
   a.fechar();
 });
 
@@ -535,9 +542,14 @@ test('o estado congelado do plano 9 entra pelo boot e sai migrado', async () => 
     { pos: meiaNoite, almoco: meiaNoite, lanche: meiaNoite },
     'as três marcas ganharam o instante mais antigo compatível com a data');
 
+  // As cinco da bioimpedância vêm da migração 9→10; as cinco com fita, do
+  // `normalizaEstado()` — campo novo e vazio recebe padrão no boot, sem
+  // migração, que é o contrato escrito na 9→10.
   assert.deepStrictEqual(Object.keys(a.S().body).sort(), [
-    'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso', 'cintura', 'peso'
-  ], 'as cinco chaves da bioimpedância existem');
+    'bioAgua', 'bioGordura', 'bioGorduraPct', 'bioMusculo', 'bioPeso',
+    'braco', 'cintura', 'coxa', 'panturrilha', 'peito', 'peso', 'quadril'
+  ], 'as cinco chaves da bioimpedância e as cinco com fita existem');
+  assert.deepStrictEqual(a.S().body.braco, [], 'e as com fita começam vazias');
   assert.deepStrictEqual(a.S().body.peso, era.body.peso,
     'e a pesagem da manhã atravessa intocada: ela é outro registro');
   assert.deepStrictEqual(a.S().body.bioPeso, [], 'a da balança começa vazia');

@@ -505,14 +505,14 @@
 .dd-registro .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
 /* A data da medida: link discreto no estado normal, chips quando aberto. Não
    compete com o botão de registrar, que é a ação de todo dia. */
-.dd-diabtn, .dd-tclbtn {
+.dd-diabtn, .dd-tclbtn, .co-ondebtn {
   width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
   position: relative;
   font: 400 10px/1.4 var(--ins-fonte);
   letter-spacing: .08em; text-transform: uppercase; color: var(--ins-tinta-3);
 }
-.dd-diabtn::after, .dd-tclbtn::after { content: ""; position: absolute; inset: -5px 0; }   /* 34 -> 44 */
-.dd-diabtn:active, .dd-tclbtn:active { color: var(--ins-tinta-3); }
+.dd-diabtn::after, .dd-tclbtn::after, .co-ondebtn::after { content: ""; position: absolute; inset: -5px 0; }   /* 34 -> 44 */
+.dd-diabtn:active, .dd-tclbtn:active, .co-ondebtn:active { color: var(--ins-tinta-3); }
 .dd-dia { margin-top: var(--ins-3); }
 
 /* Sincronização, na aba guia */
@@ -1057,13 +1057,15 @@
 .crow-d { font: 400 10.5px/1 var(--ins-fonte); color: var(--ins-tinta-3); min-width: 44px; }
 .crow-m { font: 500 13px/1 var(--ins-fonte); color: var(--ins-tinta); }
 .crow-n { font: 400 10.5px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
-.crow-x {
+/* `ligar` uma medida com fita tem a forma do `remover` ao lado: o mesmo
+   controle discreto na ponta da linha, e a mesma extensão de alvo. */
+.crow-x, .co-liga {
   margin-left: auto; flex: 0 0 auto; background: transparent;
   border: 1px solid var(--ins-fio); color: var(--ins-tinta-3);
   font: 400 10px/1 var(--ins-fonte); padding: 0 var(--ins-3); min-height: 32px;
   position: relative;
 }
-.crow-x::after { content: ""; position: absolute; inset: -6px 0; }      /* 32 -> 44 */
+.crow-x::after, .co-liga::after { content: ""; position: absolute; inset: -6px 0; }      /* 32 -> 44 */
 
 /* ===========================================================================
    O QUE VEIO DO SISTEMA ANTIGO
@@ -1602,6 +1604,11 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
    esquelética" não cabe à esquerda de um campo numa tela de telefone, e cortá-lo
    tiraria justamente a palavra que distingue um campo do outro.
 */
+/* Como eu medi: rótulo em cima, como na bioimpedância, e a frase de por que
+   embaixo — é ela que explica por que o app pede um texto numa tela de número. */
+.co-onde { display: flex; flex-direction: column; gap: var(--ins-2); margin-top: var(--ins-4); }
+.co-onde .ins-input { width: 100%; }
+.co-onde-l { color: var(--ins-tinta-2); }
 .co-bio { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ins-5); }
 .co-bio-c { display: flex; flex-direction: column; gap: var(--ins-2); }
 .co-bio-c .ins-input { width: 100%; }

@@ -54,7 +54,8 @@ import {
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
          seriesPorMusculo as _seriesPorMusculo, leituraDaSemana } from './dominio/volume';
-import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, mediasSemanais, pesoRitmo as _pesoRitmo,
+import { MARCAS_DO_CORPO, MARCAS_DA_BIO, MEDIDAS_DO_CORPO, MEDIDAS_DE_FITA, medidaDoCorpo, ondeMediu,
+         mediasSemanais, pesoRitmo as _pesoRitmo,
          cinturaMes as _cinturaMes, veredito as _veredito } from './dominio/corpo';
 import { PAUSA_DIAS, diasDesde, historico as _historico, lastSet as _lastSet,
          pausaEx as _pausaEx, dorSeguida as _dorSeguida, shouldUp as _shouldUp,
@@ -3487,8 +3488,16 @@ function seriesPorMusculo(de, ate, corte) {
  * @param {boolean} [semVeredito] omite o cartão de veredito, que a tela DADOS já
  *   desenha no Instrumento logo acima — sem isso ele aparece duas vezes.
  */
-/** Onde o stepper começa quando ainda não há nenhuma medida registrada. */
-const CORPO_PADRAO = { peso: 75, cintura: 85 };
+/**
+ * Onde o stepper começa quando ainda não há nenhuma medida registrada. Sai da
+ * coluna `partida` de `MEDIDAS_DO_CORPO`: com as medidas com fita, transcrever
+ * os valores aqui seria a segunda lista que diverge da tabela.
+ */
+const CORPO_PADRAO = {};
+MEDIDAS_DO_CORPO.forEach(function (m) { if (m.partida != null) CORPO_PADRAO[m.k] = m.partida; });
+
+/** A unidade de uma grandeza, pela tabela. */
+function unidadeDoCorpo(k) { const m = medidaDoCorpo(k); return m ? m.u : ''; }
 
 // ---------- a data da medida ----------
 // Pesagem esquecida ontem não pode entrar como hoje. O veredito da dieta lê
@@ -3539,7 +3548,7 @@ function acaoDaMedida(k) {
 function diaDaMedidaVM(k) {
   const d = diaDaMedida(k);
   const j = medidaDoDia(k);
-  const un = k === 'peso' ? 'kg' : 'cm';
+  const un = unidadeDoCorpo(k);
   return {
     aberto: view.bodyDiaAberto === k,
     iso: hojeISO(d),
@@ -3595,12 +3604,19 @@ function valorDoCorpo(k) {
  *
  * @returns {number} quantas medidas daquele dia foram substituídas
  */
-function gravaMarca(k, v, quando) {
+function gravaMarca(k, v, quando, onde) {
   if (!Array.isArray(S.body[k])) S.body[k] = [];
   const arr = S.body[k];
   const noDia = arr.filter(x => sameDay(x.t, quando));
+  // O "como eu medi" de uma medida com fita é guardado na primeira vez e não
+  // volta a ser digitado. Corrigir o valor do MESMO dia sem texto novo não pode
+  // levá-lo junto com a marca substituída — senão a correção de um número
+  // apagaria o lembrete que existe para o ponto não mudar.
+  if (!onde) onde = noDia.map(x => x.onde).filter(Boolean)[0] || null;
   noDia.forEach(x => { lapide(chaveDeMarca(k, x)); arr.splice(arr.indexOf(x), 1); });
-  arr.push({ t: quando, v, m: Date.now() });
+  const nova = { t: quando, v, m: Date.now() };
+  if (onde) nova.onde = onde;
+  arr.push(nova);
   arr.sort((a,b) => a.t - b.t);
   if (arr.length > 400) S.body[k] = arr.slice(-400);
   return noDia.length;
@@ -3612,7 +3628,10 @@ async function addBody(k) {
 
   const quando = instanteDaMedida(k);
   const rotulo = rotuloDoDia(quando);
-  const substituiu = gravaMarca(k, v, quando);
+  // O texto de "como eu medi" só existe nas medidas com fita, e vazio é "não
+  // disse" — nunca uma frase em branco gravada por cima do lembrete.
+  const onde = (view.bodyOnde && typeof view.bodyOnde[k] === 'string') ? view.bodyOnde[k].trim() : '';
+  const substituiu = gravaMarca(k, v, quando, onde || null);
 
   // Solta o rascunho: o stepper volta a se derivar da última medida, que é
   // justamente a que acabou de ser gravada. E a data volta para hoje — deixar
@@ -3623,10 +3642,15 @@ async function addBody(k) {
   view.bodyDia = Object.assign({}, view.bodyDia);
   delete view.bodyDia[k];
   if (view.bodyDiaAberto === k) view.bodyDiaAberto = null;
+  view.bodyOnde = Object.assign({}, view.bodyOnde);
+  delete view.bodyOnde[k];
   await save();
   render();
-  const nome = k === 'peso' ? 'Peso' : 'Cintura';
-  const un = k === 'peso' ? 'kg' : 'cm';
+  // Nome e unidade pela tabela, como no aviso de remover: com as medidas com
+  // fita, um ternário em `k === 'peso'` daria "Cintura" a um braço.
+  const med = medidaDoCorpo(k);
+  const nome = med ? med.n.charAt(0).toUpperCase() + med.n.slice(1) : k;
+  const un = unidadeDoCorpo(k);
   toast(substituiu
     ? `${nome} de ${rotulo} atualizado para ${fmtDec(v)} ${un}.`
     : `${fmtDec(v)} ${un} registrado ${rotulo === 'hoje' ? 'hoje' : 'em ' + rotulo}.`);
@@ -6231,8 +6255,38 @@ CTX.corpo = function () {
       mes: c ? fmtSig2(c.mes) + ' cm no mês' : 'faltam 3 semanas de medida para concluir',
       acao: acaoDaMedida('cintura'),
       dia: diaDaMedidaVM('cintura'),
-      medidas: medidasRecentes('cintura', 'cm')
+      medidas: medidasRecentes('cintura', 'cm'),
+      onde: ondeMediu(S.body.cintura),
+      ondeRascunho: (view.bodyOnde && view.bodyOnde.cintura) || ''
     },
+    // AS MEDIDAS COM FITA além da cintura, que tem seção própria logo acima.
+    // Leitura, e nenhuma decide nada (Direção D, pergunta 8): não há média,
+    // ritmo nem cor de estado — a última medida e quanto ela andou desde a
+    // primeira.
+    //
+    // LIGADA é derivado, não guardado: o ponto que a tabela liga, o que já tem
+    // medida, ou o que ele ligou nesta visita. Ponto ligado e nunca medido não
+    // tem nada a lembrar, então não paga um campo novo no estado — e um campo
+    // de topo esquecido na lista branca da restauração foi o defeito F251.
+    fita: MEDIDAS_DE_FITA.filter(function (m) { return m.k !== 'cintura'; }).map(function (m) {
+      const k = m.k;
+      const serie = S.body[k] || [];
+      const v = valorDoCorpo(k);
+      const ult = serie[serie.length - 1], pri = serie[0];
+      return {
+        k: k, n: m.n, u: m.u,
+        ligada: m.fita === 'ligada' || serie.length > 0 || !!(view.fitaLigadas && view.fitaLigadas[k]),
+        valor: isNaN(v) ? baseDoCorpo(k) : v,
+        serie: serieSemanal(serie, 14),
+        atual: ult ? fmtDec(ult.v) + ' ' + m.u : '–',
+        desde: serie.length > 1 ? fmtSig2(ult.v - pri.v) : '–',
+        acao: acaoDaMedida(k),
+        dia: diaDaMedidaVM(k),
+        medidas: medidasRecentes(k, m.u),
+        onde: ondeMediu(serie),
+        ondeRascunho: (view.bodyOnde && view.bodyOnde[k]) || ''
+      };
+    }),
     cardio: {
       semana: cardioSemana().length,
       alvo: CARDIO_ALVO,
@@ -6327,7 +6381,7 @@ CTX.tecladoDoCorpo = function (campo) {
   const a = view.teclado && view.teclado.alvo;
   if (!a || a.tipo !== 'corpo' || a.campo !== campo) return null;
   return { texto: view.teclado.texto, decimal: true,
-           unidade: campo === 'peso' ? 'kg' : 'cm' };
+           unidade: unidadeDoCorpo(campo) };
 };
 CTX.abreTecladoDeCorpo = function (campo) { abreTecladoDeCorpo(campo); };
 // As duas são as MESMAS de `acoesEx`: um teclado só, uma função só. O que muda
@@ -6354,6 +6408,28 @@ CTX.setDiaCorpo = function (k, iso) {
 };
 CTX.registraPeso = function () { addBody('peso'); };
 CTX.registraCintura = function () { addBody('cintura'); };
+// As medidas com fita, pela grandeza: a mesma porta da cintura, sem uma função
+// por ponto. Só aceitam o que a tabela diz que é fita — o peso e a balança da
+// bioimpedância têm as portas deles.
+function ehFita(k) { const m = medidaDoCorpo(k); return !!(m && m.fita); }
+CTX.setMedida = function (k, v) {
+  if (!ehFita(k)) return;
+  view.bodyForm = Object.assign({}, view.bodyForm, { [k]: v }); render();
+};
+CTX.registraMedida = function (k) { return ehFita(k) ? addBody(k) : undefined; };
+CTX.ligaMedida = function (k) {
+  if (!ehFita(k)) return;
+  view.fitaLigadas = Object.assign({}, view.fitaLigadas, { [k]: true }); render();
+};
+/**
+ * O "como eu medi" em rascunho. Vai para a medida no registro, e só nela:
+ * escrever aqui não grava nada sozinho. Sem `render` a cada tecla — o campo é
+ * texto do teclado do sistema, e repintar no meio da frase não serve a nada.
+ */
+CTX.setOnde = function (k, txt) {
+  if (!ehFita(k)) return;
+  view.bodyOnde = Object.assign({}, view.bodyOnde, { [k]: String(txt) });
+};
 /**
  * A porta de escrita das cinco grandezas da bioimpedância — ver `registraBio`.
  *

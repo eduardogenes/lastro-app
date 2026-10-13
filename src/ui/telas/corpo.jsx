@@ -23,7 +23,7 @@ import { useState } from 'preact/hooks';
 import { Teclado } from '../instrumento/teclado.jsx';
 
 /** Uma medida corporal: stepper, botão e a curva das últimas 14 semanas. */
-function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar }) {
+function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar, chave, onde, ondeRascunho, onOnde }) {
   return (
     <Secao rotulo={rotulo} nota={nota} primeira={primeira}>
       <div class="dd-registro">
@@ -49,6 +49,14 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
         : <button class="dd-tclbtn" data-a={'tcl-abre-' + rotulo} onClick={aoAbrirTeclado}>
             digitar o número
           </button>}
+
+      {/* COMO EU MEDI — só nas medidas com fita (`onOnde` presente). A fita erra
+          de posicionamento mais do que a balança varia de água (F43), e repetir
+          o ponto vale mais que o número. Na primeira vez é um campo; depois é
+          lembrete, com a porta para mudar. Texto do teclado do sistema (§6.1:
+          "do sistema para o texto"), e só vai para o histórico junto com a
+          medida — escrever aqui não grava nada sozinho. */}
+      {onOnde && <ComoMedi chave={chave} onde={onde} rascunho={ondeRascunho} onOnde={onOnde} />}
 
       {/* A data fica atrás de um link porque registrar no dia é o caso de todo
           dia; retroativo é exceção. O seletor é o nativo do aparelho: a medida
@@ -89,6 +97,36 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
         </div>
       )}
     </Secao>
+  );
+}
+
+/** O lembrete de onde a fita passou, ou o campo para dizer isso. */
+function ComoMedi({ chave, onde, rascunho, onOnde }) {
+  const [mudando, setMudando] = useState(false);
+  if (onde && !mudando) {
+    return (
+      <div class="co-onde">
+        <p class="ins-body-sm co-onde-l">como você mediu: {onde}</p>
+        <button class="co-ondebtn" data-a={'onde-muda-' + chave} onClick={() => setMudando(true)}>
+          mudar como eu medi
+        </button>
+      </div>
+    );
+  }
+  return (
+    <label class="co-onde">
+      <span class="ins-label-sm">como eu medi</span>
+      <input
+        class="ins-input" type="text" id={'onde-' + chave}
+        placeholder={onde || 'onde você passou a fita'}
+        value={rascunho}
+        onInput={e => onOnde(e.currentTarget.value)}
+      />
+      <span class="ins-body-sm ins-t3">
+        Guarde na primeira vez onde você passou a fita. Repetir o ponto vale mais
+        que o número em si.
+      </span>
+    </label>
   );
 }
 
@@ -183,6 +221,8 @@ export function Corpo({ ctx }) {
         dia={c.cintura.dia} onAbrirDia={() => ctx.abreDiaCorpo('cintura')}
         onDia={t => ctx.setDiaCorpo('cintura', t)}
         medidas={c.cintura.medidas} aoApagar={t => ctx.apagaMedida('cintura', t)}
+        chave="cintura" onde={c.cintura.onde} ondeRascunho={c.cintura.ondeRascunho}
+        onOnde={t => ctx.setOnde('cintura', t)}
         teclado={ctx.tecladoDoCorpo('cintura')}
         aoAbrirTeclado={() => ctx.abreTecladoDeCorpo('cintura')}
         aoFecharTeclado={ctx.fechaTeclado}
@@ -198,6 +238,47 @@ export function Corpo({ ctx }) {
           mal posicionada erra mais do que a balança varia de água.
         </Procedencia>
       </Medida>
+
+      {/* AS MEDIDAS COM FITA além da cintura — a decisão 2a do dono (01/10):
+          as medidas novas entram como dado do produto. Os pontos e quais vêm
+          ligados são da Direção D, tirados da resposta dele na P6. São LEITURA:
+          nenhuma entra em regra. */}
+      {c.fita.filter(f => f.ligada).map(f => (
+        <Medida
+          key={f.k} chave={f.k}
+          rotulo={f.n} nota={f.atual === '–' ? 'nenhuma medida ainda' : null}
+          valor={f.valor} passo={0.5} unidade={f.u} serie={f.serie}
+          onMuda={v => ctx.setMedida(f.k, v)} onRegistrar={() => ctx.registraMedida(f.k)}
+          acao={f.acao}
+          dia={f.dia} onAbrirDia={() => ctx.abreDiaCorpo(f.k)}
+          onDia={t => ctx.setDiaCorpo(f.k, t)}
+          medidas={f.medidas} aoApagar={t => ctx.apagaMedida(f.k, t)}
+          onde={f.onde} ondeRascunho={f.ondeRascunho} onOnde={t => ctx.setOnde(f.k, t)}
+          teclado={ctx.tecladoDoCorpo(f.k)}
+          aoAbrirTeclado={() => ctx.abreTecladoDeCorpo(f.k)}
+          aoFecharTeclado={ctx.fechaTeclado}
+          aoTeclar={t => ctx.tecla(t)}
+          celulas={[
+            { k: 'a', rotulo: 'última medida', valor: f.atual },
+            { k: 'd', rotulo: 'desde a primeira · ' + f.u, valor: f.desde }
+          ]}
+        />
+      ))}
+      {c.fita.some(f => !f.ligada) && (
+        <Secao rotulo="outras medidas com fita" nota="ligue as que você tira sozinho">
+          {c.fita.filter(f => !f.ligada).map(f => (
+            <div class="crow" key={f.k}>
+              <span class="crow-m">{f.n}</span>
+              <span class="crow-n">sem medida</span>
+              <button class="co-liga" data-a={'liga-' + f.k} onClick={() => ctx.ligaMedida(f.k)}>ligar</button>
+            </div>
+          ))}
+          <Procedencia>
+            ligar uma medida não cria cobrança: elas não têm frequência prescrita
+            e não entram em regra nenhuma
+          </Procedencia>
+        </Secao>
+      )}
 
       {/* A BIOIMPEDÂNCIA — cinco campos, decisão do dono (5.a' P3).
           Existia no modelo desde a migração da frente 0, com verbo próprio e

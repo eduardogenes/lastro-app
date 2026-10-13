@@ -7,7 +7,7 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { cinturaMes, leituraVigente, mediasSemanais, pesoRitmo, veredito } from '../../src/dominio/corpo';
+import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, ondeMediu, pesoRitmo, veredito } from '../../src/dominio/corpo';
 import { medidas, naSemana, pesagens } from './ajuda';
 
 const semCintura = { peso: [] as ReturnType<typeof pesagens>, cintura: [] };
@@ -203,4 +203,36 @@ test('a leitura velha some e o corte volta a travar', () => {
   });
   assert.strictEqual(v.k, 'observar');
   assert.strictEqual(v.falta, 'gordura', 'evidência vencida é ausência de evidência');
+});
+
+// ---------------------------------------------------------------------------
+// As medidas com fita — a decisão 2a do dono, e a lista da Direção D
+// ---------------------------------------------------------------------------
+
+test('seis pontos com fita, todos em cm, e só cintura e braço vêm ligados', () => {
+  // A lista é da D, tirada da resposta dele: "braço, cintura, essas coisas
+  // principais que dá pra eu medir sozinho" (P6). Os dois que ele nomeou vêm
+  // ligados; os outros esperam um toque, e ligar não cria cobrança.
+  assert.deepStrictEqual(MEDIDAS_DE_FITA.map(m => m.k),
+    ['cintura', 'braco', 'coxa', 'panturrilha', 'peito', 'quadril']);
+  assert.ok(MEDIDAS_DE_FITA.every(m => m.u === 'cm' && !m.bio), 'fita mede em cm, e não é balança');
+  assert.deepStrictEqual(MEDIDAS_DE_FITA.filter(m => m.fita === 'ligada').map(m => m.k),
+    ['cintura', 'braco']);
+  assert.ok(MEDIDAS_DE_FITA.every(m => typeof m.partida === 'number'),
+    'todo ponto com fita tem de onde o stepper partir');
+});
+
+test('o lembrete de como ele mediu é o texto da medida mais recente que tem um', () => {
+  // Guardado "na primeira vez" e devolvido nas seguintes, que normalmente vêm
+  // sem texto: medida sem texto NÃO apaga o lembrete.
+  const serie = [
+    { t: 1, v: 36, onde: 'no meio do bíceps' },
+    { t: 3, v: 36.5 },
+    { t: 2, v: 36.2, onde: '  dois dedos acima do cotovelo  ' },
+    { t: 4, v: 36.6, onde: '   ' }
+  ];
+  assert.strictEqual(ondeMediu(serie), 'dois dedos acima do cotovelo',
+    'o mais recente COM texto, aparado; espaço em branco não é texto');
+  assert.strictEqual(ondeMediu([{ t: 1, v: 36 }]), null, 'sem texto nenhum, não há lembrete');
+  assert.strictEqual(ondeMediu(undefined), null, 'e série ausente não estoura');
 });

@@ -942,3 +942,23 @@ test('registro que o outro aparelho criou ou editou DEPOIS do apagamento sobrevi
   assert.deepStrictEqual(r.done.map(x => x.sid), [novo], 'o treino de depois fica');
   assert.strictEqual(r.cardio.length, 1, 'e o cardio corrigido depois do apagamento também');
 });
+
+test('o como-eu-medi viaja com a medida na fusão, e morre com a lápide dela', () => {
+  // É ATRIBUTO da marca, e não campo de topo — de propósito, para não abrir
+  // portão nenhum. Este caso prova que a fusão o carrega: `uneLista` fica com o
+  // objeto inteiro do lado que vence pelo carimbo.
+  const t = T0 - DIA;
+  const semTexto = estado({ mtime: T0 - DIA,
+    body: Object.assign(corpoVazio(), { braco: [{ t: t, v: 36, m: T0 - DIA }] }) });
+  const comTexto = estado({ mtime: T0,
+    body: Object.assign(corpoVazio(), { braco: [{ t: t, v: 36.5, m: T0, onde: 'no meio do bíceps' }] }) });
+
+  const r = funde(semTexto, comTexto, T0).estado;
+  assert.deepStrictEqual(r.body.braco, [{ t: t, v: 36.5, m: T0, onde: 'no meio do bíceps' }],
+    'venceu a marca mais nova, e o texto veio com ela');
+
+  const apagado = estado({ mtime: T0 + 1, body: corpoVazio(),
+    apagados: { [chaveDeMarca('braco', { t: t })]: T0 + 1 } });
+  assert.deepStrictEqual(funde(r, apagado, T0 + 1).estado.body.braco, [],
+    'a lápide da medida leva o texto junto: não sobra lembrete de medida apagada');
+});

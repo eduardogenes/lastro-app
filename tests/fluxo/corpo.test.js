@@ -945,7 +945,7 @@ test('a leitura que registraBio grava atravessa a cópia de segurança e volta p
 });
 
 // ---------------------------------------------------------------------------
-// O aviso destrutivo das SETE grandezas: `ctx.apagaMedida`
+// O aviso destrutivo das DOZE grandezas: `ctx.apagaMedida`
 // ---------------------------------------------------------------------------
 //
 // O QUE ESTE GRUPO PROVA: que o aviso de `delBody` nomeia a grandeza que vai
@@ -959,18 +959,20 @@ test('a leitura que registraBio grava atravessa a cópia de segurança e volta p
 // não têm tela nenhuma (nem de escrita — ver `ctx.registraBio` acima). O caso
 // chama o verbo, e o que ele garante é que a capacidade está certa no modelo.
 
-test('ctx.apagaMedida nomeia a grandeza certa, na unidade certa, nas sete', async () => {
+test('ctx.apagaMedida nomeia a grandeza certa, na unidade certa, em todas', async () => {
   const t = Date.now() - 2 * DIA;
   // Um valor por grandeza, todos diferentes: valor repetido deixaria um nome
   // trocado passar por casar com a linha do vizinho.
   const valores = { peso: 81.2, cintura: 88.4, bioPeso: 79.2, bioMusculo: 37.4,
-                    bioGordura: 14.1, bioGorduraPct: 17.8, bioAgua: 45.3 };
+                    bioGordura: 14.1, bioGorduraPct: 17.8, bioAgua: 45.3,
+                    braco: 36.5, coxa: 57.5, panturrilha: 38.5, peito: 101.5, quadril: 97.5 };
   const corpo = {};
   Object.keys(valores).forEach(function (k) { corpo[k] = [{ t: t, v: valores[k] }]; });
 
   const a = await app({ estado: { logs: {}, done: [], body: corpo } });
   const tabela = a.dado('MEDIDAS_DO_CORPO');
-  assert.strictEqual(tabela.length, 7, 'sete grandezas na tabela do domínio — pré-condição');
+  assert.deepStrictEqual(tabela.map(function (m) { return m.k; }).sort(), Object.keys(valores).sort(),
+    'um valor de teste para cada grandeza da tabela — pré-condição');
 
   for (const med of tabela) {
     a.recusar();
@@ -991,12 +993,16 @@ test('ctx.apagaMedida nomeia a grandeza certa, na unidade certa, nas sete', asyn
     assert.strictEqual(a.S().body[med.k].length, 1, med.k + ': recusar não apagou nada');
   }
 
-  // E a unidade de uma não vaza para outra: quatro são kg, uma cm, uma % e uma L.
+  // E a unidade de uma não vaza para outra: cada unidade aparece tantas vezes
+  // quantas a TABELA diz — contado dela, e não escrito aqui, para a sétima
+  // medida com fita não exigir editar este caso.
   const perguntas = a.perguntas().join('\n');
-  assert.strictEqual((perguntas.match(/ cm\)/g) || []).length, 1, 'uma só em cm');
-  assert.strictEqual((perguntas.match(/%\)/g) || []).length, 1, 'uma só em %');
-  assert.strictEqual((perguntas.match(/ L\)/g) || []).length, 1, 'uma só em L');
-  assert.strictEqual((perguntas.match(/ kg\)/g) || []).length, 4, 'e quatro em kg');
+  const quantas = function (u) { return tabela.filter(function (m) { return m.u === u; }).length; };
+  assert.strictEqual((perguntas.match(/ cm\)/g) || []).length, quantas('cm'), 'cm: cintura e as com fita');
+  assert.strictEqual((perguntas.match(/%\)/g) || []).length, quantas('%'), 'uma só em %');
+  assert.strictEqual((perguntas.match(/ L\)/g) || []).length, quantas('L'), 'uma só em L');
+  assert.strictEqual((perguntas.match(/ kg\)/g) || []).length, quantas('kg'), 'e as de kg');
+  assert.strictEqual(quantas('cm'), 6, 'seis com fita: cintura, braço, coxa, panturrilha, peito, quadril');
 
   // Aceitar apaga a nomeada, e só ela: o endereço é grandeza + instante.
   a.aceitar();
@@ -1257,5 +1263,102 @@ test('apagar tudo no teclado volta ao ponto de partida, e não a um pedaço', as
     'voltou à última medida, e não ao "7" que sobrou no caminho: ' + a.texto('.dd-registro'));
   assert.strictEqual(a.S().body.peso.length, 1, 'e nenhuma medida foi apagada');
   assert.ok(a.$('.crow-x'), 'quem apaga medida é a porta da lista, que continua existindo');
+  a.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// AS MEDIDAS COM FITA — a decisão 2a do dono (01/10) e a lista da Direção D
+// ---------------------------------------------------------------------------
+//
+// Os seis pontos e quais vêm ligados são da D, tirados da resposta dele na P6.
+// São LEITURA: nenhuma entra em regra. E cada uma guarda, na primeira vez,
+// COMO ELE MEDIU — a fita erra de posicionamento mais do que a balança varia de
+// água (F43), e repetir o ponto vale mais que o número.
+
+test('braço vem ligado; coxa, panturrilha, peito e quadril esperam um toque', async () => {
+  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+  a.aba('corpo');
+  assert.ok(a.doc.getElementById('onde-braco'), 'o braço tem a medida inteira, com o como-eu-medi');
+  assert.ok(a.doc.getElementById('onde-cintura'), 'e a cintura, que também é fita, ganhou o mesmo campo');
+  ['coxa', 'panturrilha', 'peito', 'quadril'].forEach(function (k) {
+    assert.ok(a.$('[data-a="liga-' + k + '"]'), k + ' espera ligar');
+    assert.strictEqual(a.doc.getElementById('onde-' + k), null, k + ' não ocupa a tela antes disso');
+  });
+  assert.strictEqual(a.$('[data-a="liga-braco"]'), null, 'o braço não precisa ser ligado');
+  a.fechar();
+});
+
+test('ligar abre a medida, e o ponto que tem medida fica ligado pelo dado', async () => {
+  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+  a.aba('corpo');
+  a.clicar(a.$('[data-a="liga-coxa"]'));
+  await a.esperar();
+  assert.ok(a.doc.getElementById('onde-coxa'), 'a coxa ganhou a medida');
+  assert.strictEqual(a.$('[data-a="liga-coxa"]'), null, 'e saiu da lista de ligar');
+
+  a.m.ctx.setMedida('coxa', 57.5);
+  await a.m.ctx.registraMedida('coxa');
+  await a.esperar();
+  assert.deepStrictEqual(a.S().body.coxa.map(function (x) { return x.v; }), [57.5]);
+
+  // "Ligado" não é guardado no estado: um ponto com medida está ligado porque
+  // tem medida. Esquecer o toque não pode esconder um histórico.
+  a.E('view.fitaLigadas = null');
+  a.v('render');
+  await a.esperar();
+  assert.ok(a.doc.getElementById('onde-coxa'), 'com medida, a coxa continua na tela');
+  assert.ok(a.$('[data-a="liga-peito"]'), 'e o que nunca foi medido volta a esperar');
+  a.fechar();
+});
+
+test('a primeira medida guarda como ele mediu, e o texto volta como lembrete', async () => {
+  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+  a.aba('corpo');
+  a.digitar('onde-braco', 'no meio do bíceps, braço relaxado');
+  a.m.ctx.setMedida('braco', 36.5);
+  await a.m.ctx.registraMedida('braco');
+  await a.esperar();
+
+  assert.strictEqual(a.S().body.braco[0].onde, 'no meio do bíceps, braço relaxado',
+    'o texto foi para o histórico junto com a medida');
+  assert.strictEqual(a.doc.getElementById('onde-braco'), null,
+    'depois da primeira vez o campo vira lembrete');
+  assert.ok(a.$$('.co-onde-l').some(function (el) { return el.textContent.includes('no meio do bíceps'); }),
+    'e o lembrete diz onde a fita passou');
+  assert.ok(a.$('[data-a="onde-muda-braco"]'), 'com a porta para mudar');
+  a.fechar();
+});
+
+test('corrigir o número do mesmo dia não apaga o como-eu-medi', async () => {
+  // A medida do mesmo dia é SUBSTITUÍDA. Sem cuidado, a marca nova nasceria sem
+  // texto e levaria o lembrete embora junto com a velha — a correção de um
+  // número apagando justamente o que existe para o ponto não mudar.
+  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+  a.aba('corpo');
+  a.digitar('onde-braco', 'no meio do bíceps');
+  a.m.ctx.setMedida('braco', 36.5);
+  await a.m.ctx.registraMedida('braco');
+  await a.esperar();
+
+  a.m.ctx.setMedida('braco', 37);
+  await a.m.ctx.registraMedida('braco');
+  await a.esperar();
+  assert.strictEqual(a.S().body.braco.length, 1, 'o dia continua com uma medida só');
+  assert.strictEqual(a.S().body.braco[0].v, 37, 'com o número corrigido');
+  assert.strictEqual(a.S().body.braco[0].onde, 'no meio do bíceps', 'e com o lembrete');
+  a.fechar();
+});
+
+test('as portas das medidas com fita recusam o que não é fita', async () => {
+  // O peso e a balança da bioimpedância têm as portas deles: o peso alimenta a
+  // regra do nutricionista, e uma pesagem entrando por aqui fugiria do caminho
+  // que trata a data e o rascunho dele.
+  const a = await app({ estado: { body: { peso: [], cintura: [] } } });
+  a.m.ctx.setMedida('peso', 99);
+  await a.m.ctx.registraMedida('peso');
+  a.m.ctx.ligaMedida('bioPeso');
+  await a.esperar();
+  assert.strictEqual(a.S().body.peso.length, 0, 'nenhuma pesagem entrou');
+  assert.strictEqual(a.E('view.bodyForm && view.bodyForm.peso'), undefined, 'nem como rascunho');
   a.fechar();
 });
