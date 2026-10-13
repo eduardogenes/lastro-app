@@ -265,8 +265,14 @@ test('média semanal, não sequência de dias', async () => {
   const a = await app();
   a.aba('semana');
   const txt = a.doc.getElementById('app').textContent.toLowerCase();
-  assert.ok(!/sequ[eê]ncia|streak|dias seguidos/.test(txt),
+  // A guarda é contra a sequência de DIAS DE TREINO — o placar que pune o
+  // domingo. A regra do nutricionista tem outra sequência, de SEMANAS de
+  // pesagem, e o vazio dela diz isso com todas as letras ("buraco: quebra a
+  // sequência", §6.4 da frente 3): é a condição da regra, não um placar.
+  assert.ok(!/sequ[eê]ncia de (dias|treinos?)|dias em sequ[eê]ncia|streak|dias seguidos/.test(txt),
     'sequência puniria a quebra: quem treina 5 a 6 vezes quebra todo domingo');
+  assert.ok(!/sequ[eê]ncia/.test(txt.replace(/quebra a sequ[eê]ncia|não formam sequ[eê]ncia/g, '')),
+    'e a palavra só aparece onde fala das semanas da regra');
   a.fechar();
 });
 

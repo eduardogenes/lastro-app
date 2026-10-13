@@ -7,7 +7,7 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, ondeMediu, pesoRitmo, veredito } from '../../src/dominio/corpo';
+import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, ondeMediu, pesoRitmo, portoesDaRegra, semanasDaRegra, veredito } from '../../src/dominio/corpo';
 import { medidas, naSemana, pesagens } from './ajuda';
 
 const semCintura = { peso: [] as ReturnType<typeof pesagens>, cintura: [] };
@@ -235,4 +235,75 @@ test('o lembrete de como ele mediu é o texto da medida mais recente que tem um'
     'o mais recente COM texto, aparado; espaço em branco não é texto');
   assert.strictEqual(ondeMediu([{ t: 1, v: 36 }]), null, 'sem texto nenhum, não há lembrete');
   assert.strictEqual(ondeMediu(undefined), null, 'e série ausente não estoura');
+});
+
+// ---------- os portões da regra, e o vazio dela (§6.2 e §6.4 da frente 3) ----------
+
+
+const FORCA = { forca: { delta: 0.004, base: 7, ok: true } };
+
+test('peso parado: os portões são taxa, força e adesão, com o estado na palavra', () => {
+  const p = portoesDaRegra({ peso: pesagens([73.0, 73.05, 73.10]) }, { diasRegistrados: 14, forcaSubindo: false }, FORCA)!;
+  assert.deepStrictEqual(p.map(x => x.k), ['taxa', 'forca', 'adesao']);
+  assert.strictEqual(p[0].t, 'Taxa: cumprida — +0,05 e +0,05 kg/semana');
+  assert.ok(/^duas semanas seguidas abaixo de 0,10 · três semanas com média válida \(\d\d\/\d\d, \d\d\/\d\d, \d\d\/\d\d\)$/.test(p[0].d), p[0].d);
+  assert.strictEqual(p[1].t, 'Força: cumprida — não está subindo', 'o portão se cumpre quando a força NÃO sobe');
+  assert.strictEqual(p[1].d, '+0,4% em 2 semanas, sobre 7 exercícios — abaixo de 1%, que é ruído de anilha');
+  assert.strictEqual(p[1].acao, 'ver-forca');
+  assert.strictEqual(p[2].t, 'Adesão: cumprida — 14 dias de 14');
+});
+
+test('a força subindo deixa o portão dela em falta', () => {
+  const p = portoesDaRegra({ peso: pesagens([73.0, 73.05, 73.10]) }, { diasRegistrados: 14, forcaSubindo: true }, FORCA)!;
+  assert.strictEqual(p[1].ok, false);
+  assert.strictEqual(p[1].t, 'Força: falta — está subindo');
+});
+
+test('a adesão diz quantos faltam e quantos ainda dá para preencher', () => {
+  const um = portoesDaRegra({ peso: pesagens([73.0, 73.05, 73.10]) }, { diasRegistrados: 1 }, FORCA)!;
+  const a = um.filter(x => x.k === 'adesao')[0];
+  assert.strictEqual(a.t, 'Adesão: falta — 1 dia de 14');
+  assert.strictEqual(a.d, 'a regra pede 11. Faltam 10 dias com consumo conhecido, e 13 dos 14 ainda podem ser preenchidos');
+  assert.strictEqual(a.acao, 'por-em-dia');
+  const dez = portoesDaRegra({ peso: pesagens([73.0, 73.05, 73.10]) }, { diasRegistrados: 10 }, FORCA)!;
+  assert.ok(/Falta 1 dia com consumo conhecido/.test(dez.filter(x => x.k === 'adesao')[0].d));
+  const onze = portoesDaRegra({ peso: pesagens([73.0, 73.05, 73.10]) }, { diasRegistrados: 11 }, FORCA)!;
+  assert.strictEqual(onze.filter(x => x.k === 'adesao')[0].d, 'o mínimo da regra. 10 de 14 não bastaria');
+});
+
+test('peso subindo rápido: a força não entra, e a avaliação das fotos entra', () => {
+  const par = { de: Date.now() - 16 * 86400000, ate: Date.now() };
+  const p = portoesDaRegra({ peso: pesagens([73.0, 73.5, 74.0]) }, { diasRegistrados: 12 }, { par: par })!;
+  assert.deepStrictEqual(p.map(x => x.k), ['taxa', 'adesao', 'visual']);
+  assert.ok(/acima de 0,40/.test(p[0].d), p[0].d);
+  const v = p[2];
+  assert.strictEqual(v.t, 'Avaliação visual: falta — sem resposta');
+  assert.ok(/^há par válido: \d\d\/\d\d e \d\d\/\d\d, 16 dias — a pergunta vale para pares de 10 a 28 dias$/.test(v.d), v.d);
+  assert.strictEqual(v.acao, 'responder');
+  const semPar = portoesDaRegra({ peso: pesagens([73.0, 73.5, 74.0]) }, { diasRegistrados: 12 })!;
+  assert.strictEqual(semPar[2].acao, undefined, 'sem par não há o que responder: o botão não existe');
+  const sim = portoesDaRegra({ peso: pesagens([73.0, 73.5, 74.0]) }, { diasRegistrados: 12, gorduraVisual: 'sim' }, { par: par })!;
+  assert.strictEqual(sim[2].t, 'Avaliação visual: cumprida — aumentou claramente');
+});
+
+test('fora dos dois ramos que dão passo, não há portão nenhum', () => {
+  assert.strictEqual(portoesDaRegra({ peso: pesagens([73.0, 73.1, 73.85]) }, { diasRegistrados: 14 }), null,
+    'uma semana sozinha não decide, e mostrar portão seria sugerir decisão');
+  assert.strictEqual(portoesDaRegra({ peso: pesagens([73.0, 73.2]) }, { diasRegistrados: 14 }), null, 'sem semanas, nada');
+});
+
+test('o vazio lista as semanas com o motivo de cada uma', () => {
+  const agora = Date.now();
+  const peso = naSemana([
+    { s: 3, dow: 1, v: 73 }, { s: 3, dow: 3, v: 73 },
+    { s: 2, dow: 2, v: 73 },
+    { s: 1, dow: 1, v: 73 }, { s: 1, dow: 3, v: 73 }, { s: 1, dow: 5, v: 73 },
+  ]).concat(new Date(agora).getDay() > 0 ? naSemana([{ s: 0, dow: 0, v: 73 }]) : []);
+  const ws = semanasDaRegra(peso, agora);
+  assert.strictEqual(ws.length, 4);
+  assert.deepStrictEqual(ws.slice(1).map(w => w.estado), ['média válida', 'buraco: quebra a sequência', 'média válida']);
+  const faltam = 6 - new Date(agora).getDay();
+  assert.strictEqual(ws[0].estado, 'em curso' + (faltam > 0 ? ' · ' + (faltam === 1 ? 'falta 1 dia' : 'faltam ' + faltam + ' dias') : ''));
+  assert.ok(/^\d\d\/\d\d a \d\d\/\d\d$/.test(ws[0].intervalo), ws[0].intervalo);
+  assert.strictEqual(ws[2].n, 1);
 });

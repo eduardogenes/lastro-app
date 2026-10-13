@@ -8,7 +8,7 @@
 // separação que permitiu testar os limites exatos (0,15 · 0,40 · 1,5 cm) sem
 // subir um DOM.
 
-import { fmtDec, fmtDec2, weekStart } from './formato';
+import { fmtDate, fmtDec, fmtDec2, fmtSig2, weekStart } from './formato';
 import type { Marca, QualMarca } from './tipos';
 
 const DIA = 86400000;
@@ -333,6 +333,153 @@ export function veredito(
     return { k: 'manter', t: 'Não mexer: a taxa está na faixa', p: `A média está subindo ${fmtDec2(ult.kg)} kg por semana, dentro da faixa-alvo de ${fmtDec(ALVO_MIN)} a ${fmtDec(ALVO_MAX)}.` };
 
   return { k: 'observar', t: 'Não mexer: uma semana sozinha não decide', p: `A média está em ${fmtDec2(ult.kg)} kg por semana. Não é motivo para mexer na comida — uma semana isolada fora da faixa é ruído, e a regra pede duas seguidas.` };
+}
+
+/** Um dos portões da regra, com o estado na PALAVRA (§6.2 da frente 3). */
+export interface Portao {
+  k: 'taxa' | 'forca' | 'adesao' | 'visual';
+  /** a condição da regra está satisfeita */
+  ok: boolean;
+  /** "Taxa: cumprida — +0,07 e +0,03 kg/semana" */
+  t: string;
+  /** o que produziu o estado, e o que falta */
+  d: string;
+  /** para onde o botão do portão leva, quando há botão */
+  acao?: 'por-em-dia' | 'responder' | 'ver-forca';
+}
+
+/** O que os portões leem além do peso — do treino, da comida e das fotos. */
+export interface FontesDosPortoes {
+  /** a tendência de força, quando há carga para medir */
+  forca?: { delta: number; base: number; ok: boolean } | null;
+  /** a força foi assumida na mão */
+  forcaManual?: boolean | null;
+  /** o par de fotos que a pergunta da avaliação visual compara, se há um */
+  par?: { de: number; ate: number } | null;
+}
+
+const plural = (n: number, um: string, varios: string) => n + ' ' + (n === 1 ? um : varios);
+
+/**
+ * Os portões da regra para a semana, na ordem do desenho.
+ *
+ * Só existem nos dois ramos que PODEM produzir passo, e cada ramo tem os seus:
+ * peso parado pede taxa, força e adesão; peso subindo rápido pede taxa, adesão e
+ * a avaliação visual das fotos — a força não entra no corte. Nos outros ramos
+ * nenhum portão decide nada, e mostrar portões ali seria sugerir uma decisão
+ * que a regra não tem: devolve `null`.
+ *
+ * O estado está na palavra — "cumprida", "falta" —, não no ícone. E "Força:
+ * cumprida — não está subindo" é a linha mais estranha do produto e está certa:
+ * o portão da força se cumpre quando a força NÃO sobe.
+ */
+export function portoesDaRegra(
+  body: { peso: Marca[] },
+  sinais: Sinais = {},
+  fontes: FontesDosPortoes = {}
+): Portao[] | null {
+  const taxas = taxasSemanais(body.peso, 2);
+  if (!taxas) return null;
+  const [ante, ult] = taxas;
+  const travado = ante.kg < BAIXO && ult.kg < BAIXO;
+  const rapido = ante.kg > ALTO && ult.kg > ALTO;
+  if (!travado && !rapido) return null;
+
+  const semanas = [ante.w - 7 * DIA, ante.w, ult.w].map(fmtDate).join(', ');
+  const out: Portao[] = [{
+    k: 'taxa', ok: true,
+    t: 'Taxa: cumprida — ' + fmtSig2(ante.kg) + ' e ' + fmtSig2(ult.kg) + ' kg/semana',
+    d: (travado ? 'duas semanas seguidas abaixo de ' + fmtDec2(BAIXO) : 'duas semanas seguidas acima de ' + fmtDec2(ALTO)) +
+       ' · três semanas com média válida (' + semanas + ')'
+  }];
+
+  if (travado) {
+    const f = fontes.forca;
+    const conta = f && f.ok
+      ? (f.delta >= 0 ? '+' : '−') + (Math.abs(f.delta) * 100).toFixed(1).replace('.', ',') + '% em 2 semanas, sobre ' +
+        plural(f.base, 'exercício', 'exercícios')
+      : 'sem carga registrada suficiente para medir';
+    const subindo = !!sinais.forcaSubindo;
+    out.push({
+      k: 'forca', ok: !subindo,
+      t: subindo ? 'Força: falta — está subindo' : 'Força: cumprida — não está subindo',
+      d: fontes.forcaManual != null
+        ? 'assumido na mão, porque o app estava cego para as cargas'
+        : conta + (f && f.ok && !subindo ? ' — abaixo de 1%, que é ruído de anilha' : ''),
+      acao: 'ver-forca'
+    });
+  }
+
+  const n = typeof sinais.diasRegistrados === 'number' ? sinais.diasRegistrados : 0;
+  out.push(n >= MIN_REGISTRADOS
+    ? { k: 'adesao', ok: true, t: 'Adesão: cumprida — ' + n + ' dias de 14',
+        d: n === MIN_REGISTRADOS ? 'o mínimo da regra. ' + (n - 1) + ' de 14 não bastaria' : 'a regra pede ' + MIN_REGISTRADOS }
+    : { k: 'adesao', ok: false, t: 'Adesão: falta — ' + plural(n, 'dia', 'dias') + ' de 14',
+        d: 'a regra pede ' + MIN_REGISTRADOS + '. ' +
+           (MIN_REGISTRADOS - n === 1 ? 'Falta 1 dia' : 'Faltam ' + (MIN_REGISTRADOS - n) + ' dias') +
+           ' com consumo conhecido, e ' + (14 - n) + ' dos 14 ainda podem ser preenchidos',
+        acao: 'por-em-dia' });
+
+  if (rapido) {
+    const v = sinais.gorduraVisual;
+    const par = fontes.par;
+    const sobre = par
+      ? 'há par válido: ' + fmtDate(par.de) + ' e ' + fmtDate(par.ate) + ', ' +
+        plural(Math.round(Math.abs(par.ate - par.de) / DIA), 'dia', 'dias') + ' — a pergunta vale para pares de 10 a 28 dias'
+      : 'ainda não há par de fotos de 10 a 28 dias — a pergunta precisa dele';
+    out.push(v === 'sim'
+      ? { k: 'visual', ok: true, t: 'Avaliação visual: cumprida — aumentou claramente', d: sobre }
+      : v === 'nao'
+        ? { k: 'visual', ok: false, t: 'Avaliação visual: as fotos não mostram piora',
+            d: 'o certo é manter: o ganho está comprando músculo' }
+        : v === 'incerto'
+          ? { k: 'visual', ok: false, t: 'Avaliação visual: incerto',
+              d: '"incerto" também é resposta: com ela, a regra mantém a comida como está' }
+          : { k: 'visual', ok: false, t: 'Avaliação visual: falta — sem resposta', d: sobre,
+              acao: par ? 'responder' : undefined });
+  }
+  return out;
+}
+
+/** Uma semana como a regra a lê, para o vazio dizer exatamente o que falta. */
+export interface SemanaDaRegra {
+  /** domingo 00:00 */
+  w: number;
+  n: number;
+  /** "27/09 a 03/10" */
+  intervalo: string;
+  /** "média válida" · "em curso · faltam 2 dias" · "buraco: quebra a sequência" */
+  estado: string;
+  valida: boolean;
+}
+
+/**
+ * As últimas semanas, com o motivo de cada reprovação (§6.4 da frente 3).
+ *
+ * O vazio da régua não é tela em branco: é a lista das semanas e o que faltou em
+ * cada uma. Uma semana vale com `MIN_PESAGENS`; a que está em curso ainda pode
+ * valer; a que passou sem isso quebra a sequência — e é por ela que a regra não
+ * decide.
+ */
+export function semanasDaRegra(peso: Marca[], agora: number, quantas: number = 4): SemanaDaRegra[] {
+  const por: Record<number, number> = {};
+  peso.forEach(x => { const k = weekStart(x.t); por[k] = (por[k] || 0) + 1; });
+  const esta = weekStart(agora);
+  const out: SemanaDaRegra[] = [];
+  for (let i = 0; i < quantas; i++) {
+    const w = esta - i * 7 * DIA;
+    const n = por[w] || 0;
+    const valida = n >= MIN_PESAGENS;
+    const faltam = 6 - new Date(agora).getDay();
+    out.push({
+      w, n, valida,
+      intervalo: fmtDate(w) + ' a ' + fmtDate(w + 6 * DIA),
+      estado: valida ? 'média válida'
+        : i === 0 ? 'em curso' + (faltam > 0 ? ' · ' + (faltam === 1 ? 'falta 1 dia' : 'faltam ' + faltam + ' dias') : '')
+        : 'buraco: quebra a sequência'
+    });
+  }
+  return out;
 }
 
 /** Agrupa marcas por semana e devolve a média de cada uma, em ordem. */

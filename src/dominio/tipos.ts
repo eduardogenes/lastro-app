@@ -514,6 +514,9 @@ export interface PassoDeAjuste {
   /** kcal do dia de treino antes e depois do passo — só nos passos novos */
   kde?: number;
   kpara?: number;
+  /** quando foi desfeito. O passo fica no registro: o que foi e por que foi
+   *  continua sendo a resposta de "por que a comida mudou naquela semana". */
+  desfeito?: number;
 }
 
 export interface EstadoCompras {

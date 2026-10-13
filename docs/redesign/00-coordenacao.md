@@ -2907,8 +2907,31 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             restaurar o plano inteiro; é gesto novo); a frase "Enquanto a adesão
             não chega a 11…" (a segunda metade é promessa ainda aberta na mesa
             dele, §11.2, e a frente proíbe meia-promessa).
-      - [ ] **§6.2 e §6.4 · Os portões e o vazio deles — ERREI AO PARAR: não é
-            desenho, é construção.** Conferido em 13/10, depois de levar ao dono
+      - [x] **§6.2, §6.4 e o Desfazer · CONSTRUÍDOS em 13/10**, seguindo a
+            `semana.html` da D e as palavras da frente 3. `portoesDaRegra` (domínio)
+            devolve os portões do ramo: peso parado → taxa, força, adesão; peso
+            subindo rápido → taxa, adesão, avaliação visual; fora disso, `null`.
+            Cada um com o estado na palavra e o botão do que falta ("Pôr em dia" →
+            Dias, "Responder" → comparar, só com par válido de 10 a 28 dias, "Ver
+            a força"). O vazio lista as quatro semanas com o motivo de cada uma e
+            diz a saída quando um buraco separa duas válidas; "Pesar hoje" e "Peso
+            de outro dia" levam ao Corpo; "Não invente o peso de um dia que
+            passou." O **Desfazer** volta o saldo e o arroz, e **o passo fica no
+            registro marcado `desfeito`** (campo opcional): o que foi e por que
+            foi não se perde. A sobrancelha passou a "A regra do nutricionista
+            diz". **A guarda anti-sequência foi estreitada, e está escrito
+            por quê:** ela barrava a palavra "sequência" na Semana inteira, e o
+            vazio fala da sequência de SEMANAS de pesagem que a regra exige —
+            não do placar de dias de treino que ela existe para impedir. Visto:
+            `shots/portoes.png` (a primeira captura pegou o botão espremendo o
+            texto do portão; consertado). Dez mutações. **1.400 passando.**
+            **Achado, não consertado:** depois de aplicar o passo, o veredito das
+            MESMAS semanas continua oferecendo "aplicar" — o desenho diz que a
+            tela mostra o passo aplicado até haver duas semanas novas de taxa
+            (estado 4). Um caso antigo aplica duas vezes seguidas de propósito.
+            É mudança de regra; fica para decidir.
+      - [ ] **(registro do erro, mantido)** §6.2 e §6.4 · Os portões e o vazio deles — ERREI AO PARAR: não é
+            desenho, é construção. Conferido em 13/10, depois de levar ao dono
             como pergunta: a `semana.html` da D tem os sete estados — os portões
             do ramo "comer mais" (taxa, força, adesão), os do corte (taxa,
             adesão, avaliação visual), o ramo sem passo ("sozinha, não corta")

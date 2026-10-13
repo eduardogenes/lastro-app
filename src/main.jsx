@@ -18,7 +18,7 @@ import {
 import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
-import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS } from './dominio/corpo';
+import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
@@ -3593,15 +3593,31 @@ function diasRegistrados() {
   return diasInterpretaveis(S.comidaHist, 14, iso);
 }
 
-function veredito() {
-  return _veredito(S.body, {
+function sinaisDaRegra() {
+  return {
     forcaSubindo: forcaSubindo(),
     diasRegistrados: diasRegistrados(),
     // A segunda camada de confirmação, que substituiu a cintura. Perguntada na
     // tela de comparar, onde as duas fotos estão à vista. Envelhece em 14 dias:
     // sem leitura recente o peso abre revisão e não corta.
     gorduraVisual: leituraVigente(S.gordura, Date.now())
-  });
+  };
+}
+
+function veredito() { return _veredito(S.body, sinaisDaRegra()); }
+
+/**
+ * O par de fotos sobre o qual a avaliação visual é perguntada — o mesmo que a
+ * comparação abre: a primeira pose com duas sessões, o par padrão dela, e só se
+ * ele cobrir de 10 a 28 dias, que é sobre o que a pergunta é. `null` sem par.
+ */
+function parDaAvaliacao() {
+  const pose = ordemDePoses().filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0];
+  const par = pose && parPadrao(S.protocolo.sessoes, pose);
+  if (!par) return null;
+  const de = instanteDaData(par.de.d), ate = instanteDaData(par.ate.d);
+  const dias = Math.abs(Math.round((ate - de) / 86400000));
+  return dias >= JANELA_MIN && dias <= JANELA_MAX ? { de: de, ate: ate } : null;
 }
 
 /**
@@ -6604,7 +6620,14 @@ CTX.dados = function () {
         ? 'Depois de aplicado, ' + fmtInt(kcalDeTreinoCom((S.ajuste || 0) + alvo)) +
           ' kcal vira a nova base. Se o peso voltar ao alvo, o passo não é devolvido sozinho.'
         : null,
-      estado: linhaDoAjuste()
+      estado: linhaDoAjuste(),
+      podeDesfazer: !!passoEmVigor(),
+      // Os portões da regra, cada um com o estado na palavra e o caminho do que
+      // falta (§6.2). Só nos dois ramos que podem dar passo; nos outros, `null`.
+      portoes: portoesDaRegra(S.body, sinaisDaRegra(), { forca: t, forcaManual: S.perfManual, par: parDaAvaliacao() }),
+      // O vazio da régua: as semanas e o motivo de cada reprovação (§6.4), e a
+      // saída quando um buraco separa duas semanas válidas.
+      semanas: v.k === 'faltam' ? semanasDoVazio() : null
     },
     comida: dadosDeComida(),
     forca: {
@@ -6624,6 +6647,32 @@ CTX.dados = function () {
 
   };
 };
+
+/**
+ * As semanas do vazio, com a saída escrita quando há um buraco entre duas
+ * válidas: "Com a semana de 13/09 incompleta, as de 06/09 e 20/09 não formam
+ * sequência. Uma pesagem com data passada em 13/09 ainda resolve isso — se você
+ * souber o número." (§6.4). Sem buraco assim, não há saída a dizer.
+ */
+function semanasDoVazio() {
+  const ws = semanasDaRegra(S.body.peso || [], Date.now());
+  let saida = null;
+  for (let i = 1; i < ws.length - 1; i++) {
+    if (!ws[i].valida && ws[i - 1].valida && ws[i + 1].valida) {
+      saida = 'Com a semana de ' + fmtDate(ws[i].w) + ' incompleta, as de ' + fmtDate(ws[i + 1].w) + ' e ' +
+              fmtDate(ws[i - 1].w) + ' não formam sequência. Uma pesagem com data passada em ' + fmtDate(ws[i].w) +
+              ' ainda resolve isso — se você souber o número.';
+      break;
+    }
+  }
+  return {
+    lista: ws.map(function (w) {
+      return { w: w.w, intervalo: w.intervalo, estado: w.estado, valida: w.valida,
+               n: w.n === 0 ? 'nenhuma pesagem' : w.n + (w.n === 1 ? ' pesagem' : ' pesagens') };
+    }),
+    saida: saida
+  };
+}
 
 CTX.setPerfManual = function (v) { S.perfManual = v; queueSave(); render(); };
 CTX.aplicaAjuste = function () {
@@ -6645,6 +6694,23 @@ CTX.aplicaAjuste = function () {
   // "Apliquei", e não "Ajuste aplicado": aplicar é ato do registro, e o agente
   // é o app (V8).
   toast('Apliquei ' + sinalDoPasso(passo) + ' kcal. O arroz do plano foi para ' + arrozAtual() + ' g.');
+};
+
+/**
+ * Desfaz o passo em vigor — o "Desfazer" do desenho, ao lado da linha do passo
+ * aplicado, e sem prazo: corrigir no lugar vale aqui também. O plano volta ao
+ * saldo de antes e o arroz acompanha; o passo fica no registro, marcado como
+ * desfeito. Não passa pelo pare: nada é destruído, e aplicar de novo o refaz.
+ */
+CTX.desfazAjuste = function () {
+  const u = passoEmVigor();
+  if (!u) return;
+  const passo = u.para - u.de;
+  u.desfeito = Date.now();
+  S.ajuste = u.de;
+  aplicaArroz();
+  queueSave(); render();
+  toast('Desfiz o ' + sinalDoPasso(passo) + ' kcal. O arroz do plano voltou para ' + arrozAtual() + ' g.');
 };
 
 /** "+150" / "−300": o passo em kcal, com o sinal de verdade. */
@@ -6669,11 +6735,17 @@ function kcalDeTreinoCom(ajuste) {
  * (§6.3) — só enquanto aquele passo é o que está em vigor. Antes dele, ou com o
  * plano restaurado, a linha volta a ser o estado: "plano base · arroz 250 g".
  */
+/** O último passo que ainda vale: o mais recente não desfeito, se é ele que está em vigor. */
+function passoEmVigor() {
+  const h = (Array.isArray(S.ajusteHist) ? S.ajusteHist : []).filter(function (x) { return !x.desfeito; });
+  const u = h[h.length - 1];
+  return u && u.para !== u.de && u.para === (S.ajuste || 0) ? u : null;
+}
+
 function linhaDoAjuste() {
   const estado = rotuloDoAjuste() + ' · arroz ' + arrozAtual() + ' g';
-  const h = Array.isArray(S.ajusteHist) ? S.ajusteHist : [];
-  const u = h[h.length - 1];
-  if (!u || u.para === u.de || u.para !== (S.ajuste || 0)) return estado;
+  const u = passoEmVigor();
+  if (!u) return estado;
   return 'Apliquei ' + sinalDoPasso(u.para - u.de) + ' kcal em ' + fmtDate(u.t) + ', às ' + fmtHoraDita(u.t) +
     (u.kde != null && u.kpara != null
       ? ' · ' + fmtInt(u.kde) + ' → ' + fmtInt(u.kpara) + ' kcal em dia de treino' : '') +

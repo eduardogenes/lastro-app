@@ -135,6 +135,11 @@ export function Semana({ ctx }) {
   const d = ctx.dados();
   const c = ctx.corpo();
   const ciclo = ctx.cicloDoBloco();
+  // "Ver a força": a força estimada mora no chip do treino, mais abaixo.
+  const verForca = () => {
+    setModo('treino');
+    setTimeout(() => { const e = document.getElementById('forca'); if (e) e.scrollIntoView({ block: 'start' }); }, 0);
+  };
 
   return (
     <>
@@ -142,7 +147,7 @@ export function Semana({ ctx }) {
 
       <Secao rotulo="o que fazer com a comida">
         <Veredito
-          rotulo="a regra do plano"
+          rotulo="a regra do nutricionista diz"
           veredito={d.veredito.t}
           cor={d.veredito.cor}
           explicacao={d.veredito.p}
@@ -156,6 +161,65 @@ export function Semana({ ctx }) {
           </>}
           estado={d.veredito.estado}
         />
+        {/* "Desfazer", ao lado da linha do passo aplicado e sem prazo: corrigir
+            no lugar vale aqui também (o desenho, estado 4). */}
+        {d.veredito.podeDesfazer && (
+          <button class="ins-btn-secondary dd-desfaz" data-a="desfaz-ajuste" onClick={ctx.desfazAjuste}>
+            Desfazer
+          </button>
+        )}
+
+        {/* OS PORTÕES DA REGRA (§6.2 da frente 3, e o desenho nos dois ramos):
+            cada um com o estado na palavra — "cumprida", "falta" —, o que o
+            produziu, e o caminho do que falta. Só existem nos ramos que podem
+            dar passo. */}
+        {d.veredito.portoes && (
+          <div class="ins-lista dd-portoes">
+            {d.veredito.portoes.map(g => (
+              <div key={g.k} class={'ins-linha dd-portao' + (g.ok ? '' : ' falta')} data-portao={g.k}>
+                <span class="ins-linha-n">
+                  <span class="ins-linha-t">{g.t}</span>
+                  <span class="ins-linha-s">{g.d}</span>
+                </span>
+                {g.acao === 'por-em-dia' && (
+                  <button class="ins-btn-secondary" data-a="portao-por-em-dia" onClick={() => ctx.vaiPara('dias')}>Pôr em dia</button>
+                )}
+                {g.acao === 'responder' && (
+                  <button class="ins-btn-secondary" data-a="portao-responder" onClick={ctx.abreComparar}>Responder</button>
+                )}
+                {g.acao === 'ver-forca' && (
+                  <button class="ins-btn-secondary" data-a="portao-ver-forca" onClick={verForca}>Ver a força</button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* O VAZIO DA RÉGUA (§6.4): não é tela em branco, é a lista das semanas
+            com o motivo de cada reprovação — e a saída, quando um buraco separa
+            duas semanas válidas. */}
+        {d.veredito.semanas && <>
+          <div class="ins-lista dd-semanas">
+            {d.veredito.semanas.lista.map(w => (
+              <div key={w.w} class={'ins-linha' + (w.valida ? '' : ' falta')}>
+                <span class="ins-linha-n">
+                  <span class="ins-linha-t">{w.intervalo}</span>
+                  <span class="ins-linha-s">{w.estado}</span>
+                </span>
+                <span class="ins-linha-v">{w.n}</span>
+              </div>
+            ))}
+          </div>
+          {d.veredito.semanas.saida && (
+            <p class="ins-body-sm ins-t2 dd-saida">{d.veredito.semanas.saida}</p>
+          )}
+          <div class="dd-pesar">
+            <button class="ins-btn-primary" data-a="vazio-pesar" onClick={() => ctx.vaiPara('corpo')}>Pesar hoje</button>
+            <button class="ins-btn-secondary" data-a="vazio-outro-dia"
+                    onClick={() => { ctx.vaiPara('corpo'); ctx.abreDiaCorpo('peso'); }}>Peso de outro dia</button>
+          </div>
+          <p class="ins-body-xs ins-t3 dd-naoinvente">Não invente o peso de um dia que passou.</p>
+        </>}
       </Secao>
 
       <Secao>
@@ -163,7 +227,7 @@ export function Semana({ ctx }) {
       </Secao>
 
       {modo === 'treino' && <>
-      <Secao rotulo="força estimada" nota="e1rm · fórmula de epley">
+      <Secao id="forca" rotulo="força estimada" nota="e1rm · fórmula de epley">
         {d.forca.serie.some(x => x != null)
           ? <div class="dd-spark"><Sparkline valores={d.forca.serie} /></div>
           : <Vazio>Ainda não há carga registrada suficiente para estimar.</Vazio>}

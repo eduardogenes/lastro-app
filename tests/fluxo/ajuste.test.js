@@ -472,3 +472,99 @@ test('o passo diz antes do toque o que vira base, e depois diz quem aplicou, qua
     ' kcal em dia de treino · ajuste \\+150 kcal · arroz \\d+ g$').test(e), e);
   a.fechar();
 });
+
+// ---------- os portões, o vazio e o desfazer (§6.2, §6.4, §6.3 da frente 3) ----------
+
+function comPesoEComida(medias, dias) {
+  return app({ estado: {
+    logs: {}, done: [], perfManual: false,
+    comidaHist: comidaRegistrada(dias),
+    body: { peso: pesagens(medias), cintura: [] }
+  } });
+}
+
+test('peso parado mostra os três portões, e o da adesão leva a pôr os dias em dia', async () => {
+  const a = await comPesoEComida([73.0, 73.05, 73.10], 1);
+  a.aba('semana');
+  await a.esperar();
+  const ks = a.$$('[data-portao]').map(function (x) { return x.getAttribute('data-portao'); });
+  assert.deepStrictEqual(ks, ['taxa', 'forca', 'adesao']);
+  assert.strictEqual(a.texto('[data-portao="forca"] .ins-linha-t'), 'Força: cumprida — não está subindo');
+  assert.strictEqual(a.texto('[data-portao="adesao"] .ins-linha-t'), 'Adesão: falta — 1 dia de 14');
+  assert.ok(a.$('[data-portao="forca"] [data-a="portao-ver-forca"]'), 'a força tem o "Ver a força"');
+
+  a.clicar('[data-a="portao-por-em-dia"]');
+  await a.esperar();
+  assert.strictEqual(a.vista().aba, 'dias', '"Pôr em dia" leva aos dias, onde cada um se põe em dia');
+  a.fechar();
+});
+
+test('peso subindo rápido mostra taxa, adesão e avaliação visual — sem força', async () => {
+  const a = await comPesoEComida([73.0, 73.5, 74.0], 14);
+  a.aba('semana');
+  await a.esperar();
+  const ks = a.$$('[data-portao]').map(function (x) { return x.getAttribute('data-portao'); });
+  assert.deepStrictEqual(ks, ['taxa', 'adesao', 'visual']);
+  assert.strictEqual(a.texto('[data-portao="visual"] .ins-linha-t'), 'Avaliação visual: falta — sem resposta');
+  assert.strictEqual(a.$('[data-a="portao-responder"]'), null, 'sem par de fotos, não há o que responder');
+  a.fechar();
+});
+
+test('com uma semana sozinha fora da faixa, não há portão nenhum', async () => {
+  const a = await comPesoEComida([73.0, 73.1, 73.85], 14);
+  a.aba('semana');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-portao]'), null);
+  a.fechar();
+});
+
+test('o vazio lista as semanas, e as duas saídas levam ao Corpo', async () => {
+  const a = await app({ estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.aba('semana');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Não mexer: faltam pesagens');
+  assert.strictEqual(a.$$('.dd-semanas .ins-linha').length, 4, 'as quatro últimas semanas');
+  assert.strictEqual(a.$$('.dd-semanas .ins-linha-v')[1].textContent, 'nenhuma pesagem', 'zero se diz "nenhuma", não "0 pesagens"');
+  assert.strictEqual(a.texto('.dd-naoinvente'), 'Não invente o peso de um dia que passou.');
+
+  a.clicar('[data-a="vazio-outro-dia"]');
+  await a.esperar();
+  assert.strictEqual(a.vista().aba, 'corpo');
+  assert.strictEqual(a.vista().bodyDiaAberto, 'peso', 'e com o dia do peso já aberto');
+  a.fechar();
+});
+
+test('o vazio diz a saída quando um buraco separa duas semanas válidas', async () => {
+  const s = function (k, dow) { return inicioDaSemana(Date.now()) - k * 7 * DIA + dow * DIA + 10 * 3600000; };
+  const peso = [
+    { t: s(3, 1), v: 73 }, { t: s(3, 3), v: 73 },
+    { t: s(2, 2), v: 73 },
+    { t: s(1, 1), v: 73 }, { t: s(1, 3), v: 73 }
+  ];
+  const a = await app({ estado: { logs: {}, done: [], body: { peso: peso, cintura: [] } } });
+  a.aba('semana');
+  await a.esperar();
+  assert.ok(/^Com a semana de \d\d\/\d\d incompleta, as de \d\d\/\d\d e \d\d\/\d\d não formam sequência\. Uma pesagem com data passada em \d\d\/\d\d ainda resolve isso — se você souber o número\.$/
+    .test(a.texto('.dd-saida')), a.texto('.dd-saida'));
+  a.fechar();
+});
+
+test('"Desfazer" volta o plano ao saldo de antes, e o passo fica no registro marcado', async () => {
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  a.aba('semana');
+  await a.esperar();
+  const base = a.v('arrozAtual');
+  assert.strictEqual(a.$('[data-a="desfaz-ajuste"]'), null, 'sem passo, não há o que desfazer');
+
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  a.clicar('[data-a="desfaz-ajuste"]');
+  await a.esperar();
+  assert.strictEqual(a.S().ajuste, 0, 'o saldo voltou');
+  assert.strictEqual(a.v('arrozAtual'), base, 'e o arroz junto');
+  assert.strictEqual(a.S().ajusteHist.length, 1, 'o passo não sumiu do registro');
+  assert.ok(a.S().ajusteHist[0].desfeito > 0, 'ficou marcado como desfeito');
+  assert.strictEqual(a.toast(), 'Desfiz o +150 kcal. O arroz do plano voltou para ' + base + ' g.');
+  assert.strictEqual(a.$('[data-a="desfaz-ajuste"]'), null, 'e o botão sai: não há mais passo em vigor');
+  assert.ok(a.vJ('ctx.dados').veredito.estado.indexOf('plano base') === 0, 'a linha volta ao estado');
+  a.fechar();
+});
