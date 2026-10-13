@@ -1593,3 +1593,39 @@ test('sem nada esperando, a Prescrição diz o estado, sem elogio', async () => 
   assert.strictEqual(a.texto('.pr-explica'), 'O que você mudar num treino aparece aqui depois que a sessão fechar.');
   a.fechar();
 });
+
+// ---------- §1.1 da frente 3: a sobrancelha do cartão é a procedência ----------
+
+test('o cartão do treino diz de onde vem, e o da sessão aberta diz desde quando', async () => {
+  // "agora · 6h05" repetia o nome do lugar em que ele já está. A sobrancelha
+  // passa a dizer a procedência do que o cartão mostra.
+  const agora = agoraEstavel(6, 0);
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [],
+    dia: diaDe(agora, 'treino') } });
+  await a.esperar();
+  if (a.vJ('ctx.cartaoDeCima').k === 'treino') {
+    assert.strictEqual(a.texto('.ins-foco .ins-label'), 'na prescrição · Treino ' + a.vJ('ctx.hoje').diaHoje.treino);
+  }
+  a.v('ctx.abreTreinoDeHoje');
+  a.v('iniciarSessao');
+  a.v('ctx.fechaModoDeSessao');
+  a.aba('agora');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima').k, 'sessao', 'pré-condição: a sessão aberta é o cartão');
+  assert.strictEqual(a.texto('.ins-foco .ins-label'), 'sessão aberta desde 6h00');
+  a.fechar();
+});
+
+test('a refeição que o treino empurrou não diz "no plano às": diz que veio depois do treino', async () => {
+  // O almoço do plano é 12h30; treinando à tarde ele vai para depois do treino.
+  // "no plano às 13h45" inventaria a procedência de um horário que o plano não tem.
+  const agora = agoraEstavel(13, 35);
+  const dia = Object.assign(diaDe(agora, 'treino'), { turno: 'tarde' });
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], dia: dia } });
+  await a.esperar();
+  const movida = a.vJ('ctx.hoje').movidas.filter(function (m) { return m.id === 'almoco'; })[0];
+  assert.ok(movida, 'pré-condição: o almoço foi empurrado');
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima').id, 'almoco', 'pré-condição: e é o cartão de cima');
+  assert.strictEqual(a.texto('.ins-foco .ins-label'), 'depois do treino, às 13h45');
+  a.fechar();
+});

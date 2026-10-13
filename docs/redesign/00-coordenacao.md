@@ -2749,7 +2749,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             CALADO** (o retorno de `encerraSePreciso()` era ignorado) — e 16 das
             35 sessões dele fecharam assim. Agora diz "Fechei o Treino A de
             ontem…". Seis casos, seis mutações. **1.355 passando.**
-            **Pendente:** os botões "Está certo / Corrigir o fim" da abertura
+            **Pendente (ERRADO — já existiam, ver §1.1):** os botões "Está certo / Corrigir o fim" da abertura
             seguinte — o lugar é o cartão de cima, com precedência própria (§5 da
             frente 1). E a variante neutra do painel está de pé para as treze
             perguntas que seguem no diálogo do sistema, se o dono quiser.
@@ -2933,8 +2933,25 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             há lugar no Corpo que liste a leitura); "Peso da manhã · sem marca"
             no Agora e "4 pesagens da manhã" na Semana vão com a §1.1.
             **Dívida visual:** rótulos longos em caixa alta.
-      **Falta, nesta ordem:** §1.1 as linhas do Agora. **As outras treze perguntas** do
-      app seguem no diálogo do sistema, de propósito (§3.3).
+      - [x] **§1.1 · A sobrancelha do cartão de cima** (13/10). "agora · 15:34"
+            repetia o nome do lugar; passa a ser a procedência: "no plano às
+            12h30", "na prescrição · Treino A", "sessão aberta desde 6h00". **Fora
+            da tabela da frente**, no mesmo princípio: a refeição que o treino
+            empurrou diz "depois do treino, às 13h45" ("no plano às" inventaria a
+            procedência); o fim aproximado diz "fim estimado pelo app" (V3); a
+            aula diz "na prescrição · Treino X". Cinco mutações. **1.378
+            passando.** **Correção do checklist:** os botões "Está certo /
+            Corrigir o fim", que deixei pendentes na §7.7, JÁ EXISTIAM no cartão
+            de cima (tipo `confirmar`) — eu não tinha olhado.
+            **Não feito:** a pesagem da manhã, as fotos de 14 dias e o descanso
+            fora de janela não são tipos de cartão no app reescrito (a regra
+            devolve seis tipos, e estes não estão entre eles) — as sobrancelhas
+            deles esperam o cartão existir. "Peso da manhã · sem marca" e "Dia de
+            treino, por palpite · mudar" são de um Agora que não é o do app.
+      **A frente 3 está aplicada no que tem lugar no app.** Fica parado o que é
+      desenho: os portões da Semana (§6.2/§6.4) e os tipos de cartão que não
+      existem. **As outras treze perguntas** do app seguem no diálogo do
+      sistema, de propósito (§3.3).
 
 - [ ] **6.v' O reponte das expressões compostas** — 400 entradas de ponte (325
       `a.E`, 75 `a.J`) em 36 arquivos. **Medido e declarado como higiene:** elas

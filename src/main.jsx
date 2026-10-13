@@ -2339,7 +2339,9 @@ const CTX = {
         feita: prescritas > 0 && feitas >= prescritas,
         valor: P ? feitas + '/' + prescritas + ' séries' : null,
         resumo: P ? P.ex.slice(0, 3).map(function (e) { return e.n; }).join(' · ') : 'Dia de descanso.',
-        meta: S.sessao ? 'sessão aberta' : (feitas ? 'registrado' : 'não começou')
+        meta: S.sessao ? 'sessão aberta' : (feitas ? 'registrado' : 'não começou'),
+        // "sessão aberta desde 6h20": a procedência do cartão de cima (§1.1)
+        desde: S.sessao ? fmtHoraDita(S.sessao.inicio) : null
       }
     };
   },

@@ -41,7 +41,6 @@ export function Agora({ ctx }) {
   const registrado = totalRegistrado(plano, catalogo, comidaDoDia, diaHoje.cadencia === 'treino', alta);
 
   const pctKcal = alvo.kcal ? (registrado.kcal / alvo.kcal) * 100 : 0;
-  const hhmm = new Date(agora).toTimeString().slice(0, 5);
 
   // O cartão de cima vem da REGRA (`src/dominio/agora.ts`), não daqui.
   //
@@ -84,6 +83,7 @@ export function Agora({ ctx }) {
       // só para a sentença, senão as duas divergem.
       const faixa = topo.pergunta ? ctx.faixaDaSessao() : null;
       return {
+        procedencia: 'sessão aberta desde ' + sessao.desde,
         rotulo: 'treino aberto',
         nome: 'Treino ' + topo.dia,
         contagem: String(topo.guardadas),
@@ -100,6 +100,9 @@ export function Agora({ ctx }) {
 
     if (topo.k === 'confirmar') {
       return {
+        // Fora da tabela da §1.1: a procedência aqui é a do FIM, que o app
+        // estimou na última série (V3: estimativa se diz estimativa).
+        procedencia: 'fim estimado pelo app',
         rotulo: 'o treino de antes',
         nome: 'Treino ' + topo.dia,
         resumo: 'Fechei na última série: ' + fmtHora(topo.inicio) + ' → ' + fmtHora(topo.fim)
@@ -122,6 +125,7 @@ export function Agora({ ctx }) {
       // Um botão só, e é a frente 1 literal. A aula É a sessão daquele dia, e
       // "fiz a aula" leva ao lugar onde ela se registra — o modo.
       return {
+        procedencia: 'na prescrição · Treino ' + diaHoje.treino,
         rotulo: 'no box',
         nome: 'Aula',
         resumo: 'O que o box programar. O quadro do dia vira a nota da sessão.',
@@ -133,6 +137,7 @@ export function Agora({ ctx }) {
     if (topo.k === 'treino') {
       const r = linhaDoTreino;
       return {
+        procedencia: 'na prescrição · Treino ' + diaHoje.treino,
         rotulo: r ? r.t : 'hoje',
         nome: nomeDoTreino,
         contagem: r ? contagem(minutosDe(r.t), agora).txt : null,
@@ -152,6 +157,7 @@ export function Agora({ ctx }) {
       if (!r) return null;
       const c = contagem(topo.hora, agora);
       return {
+        procedencia: doPlano(r),
         rotulo: r.id === posTreino ? r.t + ' · pós-treino' : r.t,
         nome: r.n,
         contagem: c.txt,
@@ -168,6 +174,7 @@ export function Agora({ ctx }) {
     // resolvido: o dia fechou, e o topo confirma em vez de ficar mudo
     const r = refDe(topo.id);
     return {
+      procedencia: r ? doPlano(r) : 'no plano',
       rotulo: 'dia fechado',
       nome: r ? r.n : 'tudo marcado',
       resumo: 'A última coisa marcada do dia. Se algo não foi assim, corrija.',
@@ -175,6 +182,12 @@ export function Agora({ ctx }) {
       onClick: () => ctx.editaRefeicao(topo.id)
     };
   };
+
+  // "no plano às 16h00" — e a refeição que o treino empurrou não está no plano
+  // naquele horário: dizer que está seria inventar a procedência.
+  const doPlano = r => movidas.some(m => m.id === r.id)
+    ? 'depois do treino, às ' + r.t.replace(':', 'h')
+    : 'no plano às ' + r.t.replace(':', 'h');
 
   const f = cartao();
 
@@ -218,7 +231,7 @@ export function Agora({ ctx }) {
           apontar, e o "Ver" leva até lá.
           Fica ABAIXO do cartão de propósito: é para decidir com calma, e a
           próxima coisa a fazer vem antes do que pode esperar. */}
-      {f && <CartaoFoco agora={hhmm} {...f} />}
+      {f && <CartaoFoco {...f} />}
 
       <Secao rotulo="energia" nota={diaHoje.previsto ? 'previsão · confirme no topo' : null}>
         <HeroMetrica

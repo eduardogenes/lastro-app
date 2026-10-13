@@ -95,7 +95,8 @@ test('o cartão-foco responde "e agora?" antes de qualquer resumo', async () => 
   const foco = a.$('.ins-foco');
   assert.ok(foco, 'o foco é a primeira coisa da tela');
   assert.ok(a.$('.ins-live-dot'), 'com o ponto ao vivo');
-  assert.ok(/agora · \d\d:\d\d/.test(a.texto('.ins-foco .ins-label')), a.texto('.ins-foco .ins-label'));
+  // A sobrancelha é a procedência do cartão, não "agora" de novo (§1.1).
+  assert.strictEqual(a.texto('.ins-foco .ins-label'), 'no plano às 12h30', a.texto('.ins-foco .ins-label'));
 
   // o bloco de energia vem DEPOIS do foco, nunca antes
   const html = a.doc.getElementById('app').innerHTML;

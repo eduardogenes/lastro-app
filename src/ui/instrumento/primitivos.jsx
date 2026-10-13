@@ -284,13 +284,17 @@ export function Veredito({ rotulo, veredito, cor = 'acid', explicacao, acao, est
  *   escolheria por ele. Botão dentro de botão não existe em HTML, então a
  *   moldura precisa deixar de ser `<button>` — e é o que `Fora` faz aqui.
  */
-export function CartaoFoco({ agora, rotulo, nome, contagem, contagemRotulo, resumo, cta, onClick, acoes }) {
+export function CartaoFoco({ procedencia, rotulo, nome, contagem, contagemRotulo, resumo, cta, onClick, acoes }) {
   const Fora = acoes && acoes.length ? 'div' : 'button';
   return (
     <Fora class="ins-foco" onClick={acoes && acoes.length ? undefined : onClick}>
+      {/* A sobrancelha é a PROCEDÊNCIA do que o cartão mostra — "no plano às
+          16h00", "na prescrição · Treino B" —, e não "agora": esta repetia o
+          nome do lugar em que ele já está, e era a única das quatro "agora" da
+          tela que não acrescentava nada (§1.1 da frente 3). */}
       <div class="ins-foco-agora">
         <span class="ins-live-dot" />
-        <span class="ins-label">agora · {agora}</span>
+        <span class="ins-label">{procedencia}</span>
       </div>
       <div class="ins-foco-linha">
         <div class="ins-foco-esq">
