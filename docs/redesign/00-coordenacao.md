@@ -3072,6 +3072,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 13/10 · 6.m fechado por conferência; entra o caso do descanso pelo dedo, a partir de Dias.
 - 13/10 · 6.z''' consertado com medida em Chromium sem janela: 5 × 18 → 90 × 40.
 - 13/10 · Frente 3 medida (68/276) e aberta como 6.α. O painel de pare e as nove ações (`4afd3e7`, `99fda6e`).
+- 13/10 · Frente 3 aplicada no que tem lugar no app: dor, deload, becos, corrigir no lugar, a lista que vence, o veredito e o passo, a bioimpedância e a sobrancelha do Agora (`aa1178d` a `95d36b6`). Parados por serem desenho: os portões da Semana e os tipos de cartão que não existem. Achados de dado no caminho: o `dl` da sessão aberta não acompanhava o deload, e a data do Corpo recusava HOJE antes das 7h. 1.378 passando.
 
 ---
 
