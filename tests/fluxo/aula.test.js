@@ -61,7 +61,7 @@ test('repetir o sábado passado traz os movimentos com a medida de cada um', asy
   a.v('repetirUltimaAula');
   await a.esperar(60);
 
-  const ex = a.J('treino("HX").ex.map(function(x){return {id:x.id,s:x.s,u:x.u,q:x.q}})');
+  const ex = a.vJ('treino', 'HX').ex.map(function (x) { return { id: x.id, s: x.s, u: x.u, q: x.q }; });
   assert.deepStrictEqual(ex, [
     { id: 'corrida',        s: 2, u: 'm',   q: 400 },
     { id: 'remo-ergometro', s: 2, u: 'm',   q: 500 },
@@ -80,13 +80,10 @@ test('repetir traz a prescrição, nunca o resultado', async () => {
   // registro de hoje: registro que aparece sozinho é o jeito mais rápido de
   // encher o histórico de número que ninguém fez.
   const sid = a.S().sessao.sid;
-  const hoje = a.J(`(function(){
-    var n = 0;
-    Object.keys(S.logs).forEach(function (k) {
-      (S.logs[k]||[]).forEach(function (e) { if (e.sid === ${sid}) n++; });
-    });
-    return n;
-  })()`);
+  const logs = a.S().logs;
+  const hoje = Object.keys(logs).reduce(function (n, k) {
+    return n + (logs[k] || []).filter(function (e) { return e.sid === sid; }).length;
+  }, 0);
   assert.strictEqual(hoje, 0, 'nenhuma série foi registrada só por repetir a aula');
   assert.strictEqual(a.v('seriesFeitasHoje', 'HX'), 0);
   a.fechar();
@@ -277,7 +274,7 @@ test('a vírgula só existe na carga, e a carga entra em todas as passadas', asy
 
   await pelaLista(a, 'fw2', '9,5');
   assert.strictEqual(grade()[9], ',', 'a carga tem a tecla');
-  assert.deepStrictEqual(a.J('draftPeek(2).s.map(function(s){return s[0]})'), [9.5, 9.5],
+  assert.deepStrictEqual(a.vJ('draftPeek', 2).s.map(function (s) { return s[0]; }), [9.5, 9.5],
     'o valor vale para as duas passadas, como a linha diz por extenso');
   a.fechar();
 });
@@ -285,12 +282,12 @@ test('a vírgula só existe na carga, e a carga entra em todas as passadas', asy
 test('a vírgula no meio da digitação não apaga o que já estava registrado', async () => {
   const a = await listaAberta();
   await pelaLista(a, 'fw2', '9');
-  assert.strictEqual(a.E('draftPeek(2).s[0][0]'), 9);
+  assert.strictEqual(a.vJ('draftPeek', 2).s[0][0], 9);
 
   const virgula = a.$$('.rapl .tcl-grade > *').find(function (el) { return el.textContent.trim() === ','; });
   a.clicar(virgula);
   await a.esperar();
-  assert.strictEqual(a.E('draftPeek(2).s[0][0]'), 9,
+  assert.strictEqual(a.vJ('draftPeek', 2).s[0][0], 9,
     '"9," ainda não é número: gravar nesse instante apagaria a carga por um passo');
   a.fechar();
 });
@@ -321,7 +318,7 @@ test('tocar noutro botão troca o painel, e fechar a lista fecha o teclado', asy
 
   a.v('abrirRapido');                            // fecha a lista
   await a.esperar();
-  assert.strictEqual(a.E('view.teclado'), null,
+  assert.strictEqual(a.vista().teclado, null,
     'um painel aberto sem a linha que o abriu ficaria escrevendo num movimento fora da tela');
   a.fechar();
 });
