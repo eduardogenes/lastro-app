@@ -20,7 +20,8 @@ const LOCAIS = __LOCAIS__;
  * bytes num endereço de objeto. Os nomes vivem aqui por uma razão só: poupar
  * estes caches da limpeza de ativação, logo abaixo.
  *
- * `lastro-fotos` são as dos aparelhos; `lastro-corpo`, as do corpo. Esta lista
+ * `lastro-fotos` são as dos aparelhos; `lastro-corpo`, as do corpo;
+ * `lastro-lousa`, a foto da lousa do box. Esta lista
  * esqueceu `lastro-corpo` quando o protocolo de fotos nasceu, e cada versão
  * publicada apagava a cópia local das fotos do corpo — as que ainda não tinham
  * subido se perdiam (F252). Um caso de `publicacao.test.js` cobra agora que todo
@@ -31,7 +32,7 @@ const LOCAIS = __LOCAIS__;
  * para `lastro-fotos` — a ativação do worker não espera a página, então apagar
  * aqui primeiro apagaria as fotos antes da migração.
  */
-const FOTOS = ['lastro-fotos', 'lastro-corpo', 'treino-fotos'];
+const FOTOS = ['lastro-fotos', 'lastro-corpo', 'lastro-lousa', 'treino-fotos'];
 
 /**
  * Busca em fila, não todas de uma vez.

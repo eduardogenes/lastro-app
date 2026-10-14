@@ -118,6 +118,16 @@ export function Sessao({ ctx }) {
         )}
 
       {d.notas.length > 0 && <p class="ins-body-sm ins-t3 tc-nota">{d.notas.join(' ')}</p>}
+      {/* A lousa da aula, guardada no dia (decisão do dono, 14/10). Sem os
+          bytes neste aparelho, a linha diz que a foto existiu. */}
+      {d.lousa && (
+        <figure class="ss-lousa">
+          {d.lousa.url
+            ? <img class="tr-lousa-img" src={d.lousa.url} alt="Foto da lousa desta aula" />
+            : <p class="ins-body-sm ins-t3">A foto da lousa não está neste aparelho.</p>}
+          <figcaption class="ins-body-xs ins-t3">{d.lousa.quando}</figcaption>
+        </figure>
+      )}
 
       {d.mods && (
         <div class="tc-bloco">

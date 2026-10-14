@@ -223,6 +223,8 @@ export interface Sessao {
   grupos?: string[];
   nome?: string;
   obs?: string;
+  /** a foto da lousa da aula, que vira a nota dela (os bytes ficam no cache) */
+  lousa?: { d: string; v: number; ext: string };
   /** quando foi alterada pela última vez */
   m?: number;
 }
@@ -606,6 +608,13 @@ export interface Estado {
    * prescrição, como dá com a musculação.
    */
   quadro: { day: Dia; texto: string; data?: string; t: number } | null;
+
+  /**
+   * A foto da lousa da aula em curso (a D, `aula.html`, estado 6; decisão do
+   * dono, 14/10). Como o quadro: documento do dia, e vira parte da sessão
+   * quando ela encerra. Os bytes ficam no cache `lastro-lousa`, neste aparelho.
+   */
+  lousa?: { day: Dia; d: string; v: number; ext: string; t: number } | null;
 
   // ---- o que a fusão com a nutrição trouxe ----
 

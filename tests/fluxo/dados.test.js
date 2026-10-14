@@ -76,6 +76,8 @@ test('exportar carrega todos os campos do estado', async () => {
      // o quadro do box do dia em curso: se ficar de fora, trocar de aparelho
      // no meio da aula perde a lousa antes de ela virar nota da sessão
      'quadro',
+     // a referência da foto da lousa da aula em curso (os bytes ficam no cache)
+     'lousa',
      // a sincronização: o carimbo do estado e as lápides do que foi apagado
      'mtime', 'apagados',
      // os dias que ele marcou como descanso

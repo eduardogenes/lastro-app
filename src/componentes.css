@@ -1853,3 +1853,13 @@ button.ins-linha { border-radius: 0; }
 .dia-cardio-novo { margin-top: var(--ins-5); }
 .dia-cardio-falhou { margin: 0; color: var(--ins-atencao-tinta); }
 .dd-promessa { margin: var(--ins-4) 0 0; }
+
+/* ---- A lousa do box (a D, aula, estado 6) ------------------------------ */
+.tr-lousa { display: flex; flex-direction: column; gap: var(--ins-3); margin-bottom: var(--ins-6); }
+.tr-lousa p { margin: 0; }
+.tr-lousa-img { display: block; width: 100%; max-width: 100%; border: 1px solid var(--ins-fio); }
+.tr-lousa-b { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
+.tr-lousa-arq { position: relative; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; align-self: flex-start; }
+.tr-lousa-arq input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.ss-lousa { margin: var(--ins-5) 0 0; display: flex; flex-direction: column; gap: var(--ins-2); }
+.ss-lousa p { margin: 0; }

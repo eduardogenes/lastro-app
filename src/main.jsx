@@ -78,6 +78,7 @@ import {
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
 import * as CORPO from './infra/corpo';
+import * as LOUSA from './infra/lousa';
 import * as CAM from './infra/camera';
 import {
   CADENCIA_DIAS, MONTAGEM, comAPose, completude,
@@ -398,6 +399,7 @@ function normalizaEstado() {
   // mesmo caminho.
   if (!Array.isArray(S.aulas)) S.aulas = [];
   if (!S.quadro || typeof S.quadro !== 'object') S.quadro = null;
+  if (!S.lousa || typeof S.lousa !== 'object' || !S.lousa.d || !S.lousa.v) S.lousa = null;
   if (!Array.isArray(S.comidaHist)) S.comidaHist = [];
   if (typeof S.mtime !== 'number') S.mtime = 0;
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
@@ -808,6 +810,12 @@ function fechaSessao(comoFim) {
     marca.m = Date.now();
   }
   if (S.quadro && S.quadro.day === s.day) S.quadro = null;
+  // A foto da lousa, pela mesma razão: vira parte da sessão da aula.
+  if (marca && S.lousa && S.lousa.day === s.day) {
+    marca.lousa = { d: S.lousa.d, v: S.lousa.v, ext: S.lousa.ext };
+    marca.m = Date.now();
+    S.lousa = null;
+  }
 
   S.sessao = null;
   S.draft = null;
@@ -4468,7 +4476,8 @@ async function importText(txt) {
         aulas: Array.isArray(d.aulas) ? d.aulas : [],
         comidaHist: Array.isArray(d.comidaHist) ? d.comidaHist : [],
         protocolo: (d.protocolo && typeof d.protocolo === 'object') ? d.protocolo : null,
-        quadro: (d.quadro && typeof d.quadro === 'object') ? d.quadro : null };
+        quadro: (d.quadro && typeof d.quadro === 'object') ? d.quadro : null,
+        lousa: (d.lousa && typeof d.lousa === 'object') ? d.lousa : null };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();
@@ -5021,6 +5030,80 @@ function fotoAberta() {
   const f = (view.pilha || []).filter(function (x) { return x.k === 'foto'; }).pop();
   return f ? f.id : null;
 }
+
+// ---------- a lousa do box (a D, `aula.html`, estado 6; decisão do dono, 14/10) ----------
+//
+// Foto agora, transcrição quando der. Um toque fotografa e acaba ali: nada fica
+// esperando resposta. A foto fica guardada no dia e, quando a aula termina,
+// vira parte daquela sessão. Se a aula de hoje já foi encerrada, a foto vai
+// direto para ela.
+async function tiraFotoDaLousa(el) {
+  const arquivo = el && el.files && el.files[0];
+  const day = view.day;
+  if (!arquivo || !diaAberto(day)) return;
+  el.value = '';
+  const d = hojeISO();
+  // a versão é o instante, e anda se a anterior for do mesmo milissegundo: é a
+  // chave dos bytes, e duas fotos não podem dividir uma
+  const anterior = lousaDoDia(day);
+  const v = Math.max(Date.now(), anterior ? anterior.v + 1 : 0);
+  let ext;
+  try {
+    const r = await LOUSA.reduz(arquivo);
+    ext = r.ext;
+    await LOUSA.guarda(d, v, r.blob, ext);
+  } catch (e) {
+    toast('A foto da lousa não foi guardada: o armazenamento deste aparelho recusou.');
+    return;
+  }
+  const ref = { d: d, v: v, ext: ext };
+  const encerrada = !(S.sessao && S.sessao.day === day) &&
+    S.done.filter(function (x) { return x.day === day && !x.livre && sameDay(x.t, Date.now()); }).slice(-1)[0];
+  const antes = { lousa: S.lousa, marca: encerrada ? encerrada.lousa : undefined, m: encerrada ? encerrada.m : undefined };
+  if (encerrada) { encerrada.lousa = ref; encerrada.m = Date.now(); }
+  else S.lousa = { day: day, d: d, v: v, ext: ext, t: Date.now() };
+  if ((await save()) === false) {
+    // a referência volta; os bytes novos saem do cache, para não ficar órfão
+    S.lousa = antes.lousa;
+    if (encerrada) { if (antes.marca) encerrada.lousa = antes.marca; else delete encerrada.lousa; encerrada.m = antes.m; }
+    LOUSA.esquece(d, v, ext);
+    render();
+    return;
+  }
+  // a foto que esta substitui sai do cache depois de a nova estar gravada
+  const velha = encerrada ? antes.marca : antes.lousa;
+  if (velha && velha.v !== v) LOUSA.esquece(velha.d, velha.v, velha.ext);
+  await LOUSA.carrega(d, v, ext);
+  render();
+  toast('Foto da lousa guardada neste aparelho.');
+}
+CTX.tiraFotoDaLousa = function (el) { return tiraFotoDaLousa(el); };
+
+/** A lousa do dia aberto `d`: a pendente, ou a da sessão de hoje já encerrada. */
+function lousaDoDia(d) {
+  if (S.lousa && S.lousa.day === d) return S.lousa;
+  const m = S.done.filter(function (x) { return x.day === d && !x.livre && sameDay(x.t, Date.now()) && x.lousa; }).slice(-1)[0];
+  return m ? m.lousa : null;
+}
+
+/**
+ * "Mandar para transcrever": a foto sai do app pelo compartilhar do sistema, e
+ * a transcrição volta como arquivo (estado 7). Sem compartilhar arquivo no
+ * navegador, a tela diz o caminho em vez de fingir que mandou.
+ */
+CTX.mandaLousa = async function () {
+  const l = lousaDoDia(view.day);
+  if (!l) return;
+  const b = await LOUSA.le(l.d, l.v, l.ext);
+  if (!b) { toast('A foto não está mais neste aparelho.'); return; }
+  const arq = typeof File === 'function' ? new File([b], 'lousa-' + l.d + '.' + l.ext, { type: b.type || 'image/webp' }) : null;
+  const pode = arq && navigator.canShare && navigator.canShare({ files: [arq] });
+  if (!pode || !navigator.share) {
+    toast('Este navegador não manda arquivo daqui: abra a foto e compartilhe pelo sistema.');
+    return;
+  }
+  try { await navigator.share({ files: [arq], title: 'Lousa de ' + fmtDate(instanteDaData(l.d)) }); } catch (e) {}
+};
 
 async function tiraFoto(el) {
   const arquivo = el && el.files && el.files[0];
@@ -5991,7 +6074,7 @@ async function wipe() {
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
-        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura, quadro:S.quadro,
+        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura, quadro:S.quadro, lousa:S.lousa,
         perfManual:S.perfManual, compras:S.compras,
         // BIBLIOTECA e CATÁLOGO, pela mesma razão de `S.ex` acima — decisão do
         // dono, 08/10. `aulas` são os modelos de aula que ELE salvou, e `fotos`
@@ -7124,6 +7207,16 @@ CTX.treino = function () {
     // que mais a lousa disse e o app não modela. Some quando a sessão encerra,
     // depois de virar a nota dela.
     quadro: (S.quadro && S.quadro.day === d) ? S.quadro.texto : null,
+    // a foto da lousa (estado 6): só no dia aberto
+    lousa: diaAberto(d) ? (function () {
+      const l = lousaDoDia(d);
+      if (!l) return { tem: false };
+      const url = LOUSA.urlDaLousa(l.d, l.v);
+      if (!url) LOUSA.carrega(l.d, l.v, l.ext).then(function (mudou) { if (mudou) render(); });
+      return { tem: true, url: url,
+               quando: 'foto da lousa · ' + fmtDate(l.v) + ' ' + fmtHoraDita(l.v),
+               podeMandar: typeof navigator !== 'undefined' && !!navigator.share };
+    })() : null,
     volume: fmtK(volumeDoDia(d)),
     // `ciclo` e `sessoes` saíram desta leitura com a célula que os mostrava: o
     // ciclo foi para `CTX.cicloDoBloco`, que a Semana lê. Deixá-los aqui seria
@@ -8758,6 +8851,12 @@ CTX.detalheDaSessao = function () {
     ],
     horario: hIni ? (hFim ? { de: hIni, ate: hFim } : { de: hIni, ate: null }) : null,
     notas: notas,
+    // a foto da lousa, que virou parte da aula (decisão do dono, 14/10)
+    lousa: m.lousa ? (function () {
+      const url = LOUSA.urlDaLousa(m.lousa.d, m.lousa.v);
+      if (!url) LOUSA.carrega(m.lousa.d, m.lousa.v, m.lousa.ext).then(function (mudou) { if (mudou) render(); });
+      return { url: url, quando: 'foto da lousa · ' + fmtDate(m.lousa.v) + ' ' + fmtHoraDita(m.lousa.v) };
+    })() : null,
     mods: Array.isArray(m.mods) && m.mods.length ? m.mods : null,
     pendencias: [
       { k: 'pulado', n: p.pulado.length, rotulo: p.pulado.length === 1 ? 'pulado' : 'pulados',

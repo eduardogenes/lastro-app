@@ -166,6 +166,17 @@ test('a pesagem corrigida vence a original do mesmo dia', () => {
   assert.strictEqual(r.body.peso[0].v, 74.1);
 });
 
+test('a lousa da aula em curso: vence a mais nova, venha do lado que vier', () => {
+  // sem a regra própria ela viria só do aparelho que gravou por último
+  const nova = { day: 'HX', d: '2026-10-03', v: T0 + 500, ext: 'webp', t: T0 + 500 };
+  const a = estado({ mtime: T0, lousa: nova } as never);
+  const b = estado({ mtime: T0 + 1000, lousa: null } as never);
+  assert.deepStrictEqual(funde(a, b, T0).estado.lousa, nova, 'o lado mais novo não tinha lousa, e ela não sumiu');
+  const velha = { ...nova, v: T0, t: T0 };
+  const c = estado({ mtime: T0 + 2000, lousa: velha } as never);
+  assert.deepStrictEqual(funde(a, c, T0).estado.lousa, nova, 'entre duas, a foto mais nova');
+});
+
 test('o cardio lançado depois atravessa a fusão com a marca de sem hora', () => {
   // decisão do dono, 14/10: o cardio esquecido entra num dia passado, sem hora
   const a = estado({ mtime: T0, cardio: [{ t: T0, m: 'remo', min: 30, i: 'leve', alt: T0, semHora: 1 }] });

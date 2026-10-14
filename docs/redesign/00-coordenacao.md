@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.516 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.524 passando**, zero "unhandled".
 - **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
   versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
   ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
@@ -89,7 +89,15 @@ pede atenção do dono.
      você conseguir repetir", com a nota de que manhã e noite mudam a barriga; o
      Corpo não fala mais de jejum para fotos; cada lado do comparar mostra
      "sex 07/08 · 21h40" (referência antiga, sem instante, fica sem hora).
-  9. [ ] **A lousa como foto dentro do app** (aula, estado 6).
+  9. [x] **A lousa como foto dentro do app** (aula, estado 6). Feito 14/10:
+     "Fotografar a lousa" no dia aberto; os bytes em `lastro-lousa` (o worker
+     poupa, e o caso do `src/infra` cobra), a referência em `S.lousa` (fusão
+     própria: vence a mais nova; entra no backup e no apagar histórico). Quando
+     a aula encerra, vira `lousa` na marca da sessão; foto depois de a aula de
+     hoje encerrar vai direto para ela. "Refazer a foto" tira a velha do cache;
+     "Mandar para transcrever" usa o compartilhar do sistema (sem ele, diz o
+     caminho). A sessão passada mostra a foto. Fica só neste aparelho (dito na
+     tela): o durável é a transcrição.
   10. [ ] **A revisão do treinador entra como texto colado** (prescrição,
       estado 6), com "É a mesma / É outro exercício" antes de gravar.
   11. [x] **O roteiro das medições A–D da régua** — ele faz esta semana.
@@ -3559,6 +3567,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Fila 6: o cardio esquecido num dia passado, sem hora inventada. 6 mutações, 6 mortas; fusão do `semHora` com caso no domínio. 1.514 passando.
 - 14/10 · Fila 7: a promessa da adesão entra na Semana, e o caso cobra que o Agora não cobre. 1 mutação, morta. 1.515 passando.
 - 14/10 · Fila 8: as fotos não seguem mais a refeição, e a hora de cada uma aparece no comparar. 2 mutações, 2 mortas. 1.516 passando.
+- 14/10 · Fila 9: a lousa como foto, com cache próprio, fusão própria e a marca da sessão. 8 mutações, 8 mortas; achado no caminho: duas fotos no mesmo milissegundo dividiriam a chave dos bytes — a versão anda. 1.524 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

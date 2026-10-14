@@ -137,6 +137,37 @@ export function Treino({ ctx }) {
           </div>
         )}
 
+        {/* A LOUSA (a D, aula, estado 6; decisão do dono, 14/10): foto agora,
+            transcrição quando der. Um toque fotografa e acaba ali. */}
+        {t.lousa && !t.editando && (
+          <div class="tr-lousa">
+            {t.lousa.tem ? <>
+              {t.lousa.url && <img class="tr-lousa-img" src={t.lousa.url} alt="Foto da lousa do box" />}
+              <p class="ins-body-xs ins-t3 tr-lousa-q">{t.lousa.quando}</p>
+              <div class="tr-lousa-b">
+                {t.lousa.podeMandar && (
+                  <button class="ins-btn-secondary" data-a="lousa-manda" onClick={ctx.mandaLousa}>Mandar para transcrever</button>
+                )}
+                <label class="ins-btn-secondary tr-lousa-arq">
+                  Refazer a foto
+                  <input type="file" accept="image/*" capture="environment" data-a="lousa-refaz"
+                         onChange={e => ctx.tiraFotoDaLousa(e.currentTarget)} />
+                </label>
+              </div>
+              <p class="ins-body-sm ins-t3">
+                A foto fica guardada no dia, neste aparelho. Quando a aula termina, ela passa
+                a ser parte daquela aula. Sem transcrição, a aula continua completa.
+              </p>
+            </> : (
+              <label class="ins-btn-secondary tr-lousa-arq">
+                Fotografar a lousa
+                <input type="file" accept="image/*" capture="environment" data-a="lousa-foto"
+                       onChange={e => ctx.tiraFotoDaLousa(e.currentTarget)} />
+              </label>
+            )}
+          </div>
+        )}
+
         {/* A lista rápida vem ANTES dos cartões: quem a abre está no fim da
             aula e não quer rolar cinco cartões para chegar nela. */}
         {t.rapido && !t.editando && !t.addEx && (
