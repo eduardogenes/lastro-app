@@ -616,6 +616,14 @@ export interface Estado {
    */
   lousa?: { day: Dia; d: string; v: number; ext: string; t: number } | null;
 
+  /**
+   * O programa do treinador, quando uma revisão colada o substituiu (decisão
+   * do dono, 14/10). Sem ele vale o do código (`PROGRAMA`). É o que "igual ao
+   * treinador", o alvo de séries e o restaurar leem. Documento: vem inteiro do
+   * lado que gravou por último, como `prog`.
+   */
+  progTreinador?: { em: number; data: string | null; rot: Dia[]; dias: Record<Dia, Treino> } | null;
+
   // ---- o que a fusão com a nutrição trouxe ----
 
   /**

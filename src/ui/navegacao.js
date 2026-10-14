@@ -72,6 +72,8 @@ export function camadasAbertas(view) {
   // A Evolução ABAIXO da comparação: comparar abre de dentro dela.
   if (view.evolucao) c.push('evolucao');
   if (view.comparar) c.push('comparar');
+  // A revisão do treinador abre da Prescrição, acima de qualquer lugar.
+  if (view.revisao) c.push('revisao');
   if (view.protocolo) c.push('protocolo');
   if (view.ajuste) c.push('ajuste');
   if (view.camera) c.push('camera');

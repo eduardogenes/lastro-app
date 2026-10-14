@@ -283,6 +283,9 @@ export function Prescricao({ ctx }) {
       <Secao primeira>
         <button class="ins-btn-primary" data-a="abre-programa"
                 onClick={ctx.abrePrograma}>Abrir o programa</button>
+        {/* A revisão do treinador entra colada em texto (decisão do dono, 14/10). */}
+        <button class="ins-btn-secondary pr-revisao" data-a="abre-revisao"
+                onClick={ctx.abreRevisao}>Incorporar uma revisão do treinador</button>
         <Procedencia>
           o que o treinador prescreveu, o que você mudou, e o histórico de cada
           mudança com o motivo

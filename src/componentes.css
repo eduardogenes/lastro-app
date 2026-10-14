@@ -1863,3 +1863,22 @@ button.ins-linha { border-radius: 0; }
 .tr-lousa-arq input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .ss-lousa { margin: var(--ins-5) 0 0; display: flex; flex-direction: column; gap: var(--ins-2); }
 .ss-lousa p { margin: 0; }
+
+/* ---- A revisão do treinador colada (a D, prescrição, estado 6) ---------- */
+.rv-p { margin: 0 0 var(--ins-4); }
+.rv-texto { width: 100%; min-height: 220px; resize: vertical; margin-bottom: var(--ins-4); font-size: 15px; }
+.rv-modelo { white-space: pre-wrap; overflow-x: auto; margin: 0; padding: var(--ins-4); background: var(--ins-superficie-2); font-size: 13px; line-height: 1.5; }
+.rv-linha { overflow-wrap: anywhere; }
+.rv-perg { display: flex; flex-direction: column; gap: var(--ins-3); padding: var(--ins-5) 0; border-top: 1px solid var(--ins-fio); }
+.rv-perg:first-of-type { border-top: 0; }
+.rv-perg p { margin: 0; }
+.rv-b { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
+.rv-b .on { border-color: var(--ins-acento); color: var(--ins-acento); }
+.rv-novos { margin: var(--ins-5) 0; }
+.rv-mud { margin: 0; padding-left: var(--ins-8); }
+.rv-mud li { margin-bottom: var(--ins-1); }
+.rv-suas { margin-top: var(--ins-4); }
+.rv-suas p { margin: 0 0 var(--ins-2); }
+.rv-fim { display: flex; flex-direction: column; gap: var(--ins-3); margin-top: var(--ins-8); }
+.rv-fim p { margin: 0; }
+.pr-revisao { margin-top: var(--ins-3); width: 100%; }

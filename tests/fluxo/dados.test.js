@@ -78,6 +78,9 @@ test('exportar carrega todos os campos do estado', async () => {
      'quadro',
      // a referência da foto da lousa da aula em curso (os bytes ficam no cache)
      'lousa',
+     // o programa do treinador depois de uma revisão colada: sem ele no backup,
+     // "igual ao treinador" e o restaurar voltariam ao programa antigo
+     'progTreinador',
      // a sincronização: o carimbo do estado e as lápides do que foi apagado
      'mtime', 'apagados',
      // os dias que ele marcou como descanso

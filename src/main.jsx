@@ -23,6 +23,7 @@ import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
+import { lerRevisao, casaNomes, mudancasDaRevisao, MODELO_DA_REVISAO } from './dominio/revisao';
 import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
 import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
@@ -36,6 +37,7 @@ import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { FolhaDecidir } from './ui/folhas/decidir.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
+import { Revisao } from './ui/telas/revisao.jsx';
 import { Evolucao } from './ui/telas/evolucao.jsx';
 import { Dia } from './ui/telas/dia.jsx';
 import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
@@ -400,6 +402,8 @@ function normalizaEstado() {
   if (!Array.isArray(S.aulas)) S.aulas = [];
   if (!S.quadro || typeof S.quadro !== 'object') S.quadro = null;
   if (!S.lousa || typeof S.lousa !== 'object' || !S.lousa.d || !S.lousa.v) S.lousa = null;
+  if (!S.progTreinador || typeof S.progTreinador !== 'object' || !S.progTreinador.dias ||
+      typeof S.progTreinador.dias !== 'object' || !Array.isArray(S.progTreinador.rot)) S.progTreinador = null;
   if (!Array.isArray(S.comidaHist)) S.comidaHist = [];
   if (typeof S.mtime !== 'number') S.mtime = 0;
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
@@ -2328,7 +2332,7 @@ const CTX = {
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
               view.protocolo || view.comparar || view.evolucao || view.diaAberto || view.ajuste || view.camera ||
-              view.ajustes || view.modoSessao);
+              view.ajustes || view.modoSessao || view.revisao);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -2589,6 +2593,7 @@ function telaCheia() {
   if (view.camera) return <Camera ctx={CTX} />;
   if (view.ajuste) return <AjusteFoto ctx={CTX} />;
   if (view.protocolo) return <Protocolo ctx={CTX} />;
+  if (view.revisao) return <Revisao ctx={CTX} />;
   if (view.comparar) return <Comparar ctx={CTX} />;
   // Depois de comparar: a comparação abre DE DENTRO da Evolução, e fica por cima.
   if (view.evolucao) return <Evolucao ctx={CTX} />;
@@ -2616,13 +2621,29 @@ function semanasDe(t) { return semanasDesde(t, Date.now()); }
 // O treinador definiu um alvo por músculo. Mexer nas séries mostra na hora
 // para onde o número vai, porque esse é o único momento em que dá para mudar
 // de ideia sem custo. O alvo é CALCULADO do programa, nunca transcrito.
-const ALVO = alvoDoPrograma(PROGRAMA, ROT_BASE);
-const ALVO_TOTAL = Object.keys(ALVO).reduce(function (n, k) { return n + ALVO[k]; }, 0);
+// O PROGRAMA DO TREINADOR: o do código, até uma revisão colada entrar
+// (decisão do dono, 14/10). Daí em diante é o da revisão, guardado no dado —
+// é contra ele que "igual ao treinador", o alvo de séries e o restaurar leem.
+function baseTreinador() {
+  return S.progTreinador && S.progTreinador.dias ? S.progTreinador.dias : semeiaProg();
+}
+function rotTreinador() {
+  return S.progTreinador && Array.isArray(S.progTreinador.rot) && S.progTreinador.rot.length
+    ? S.progTreinador.rot : ROT_BASE;
+}
+function alvo() {
+  const b = baseTreinador(), prog = {};
+  Object.keys(b).forEach(function (d) {
+    prog[d] = { ex: (b[d].ex || []).map(function (sl) { return { g: exDe(sl.id).g, s: sl.s }; }) };
+  });
+  return alvoDoPrograma(prog, rotTreinador().filter(function (d) { return prog[d]; }));
+}
+function alvoTotal() { const a = alvo(); return Object.keys(a).reduce(function (n, k) { return n + a[k]; }, 0); }
 
 // Séries diretas de um músculo na rotação inteira, com os mods de hoje.
 function seriesDe(g) { return seriesDeGrupo(rot().map(treino), g); }
 
-function impactoSeries(d, g) { return g ? impacto(g, seriesDe(g), ALVO[g]) : null; }
+function impactoSeries(d, g) { return g ? impacto(g, seriesDe(g), alvo()[g]) : null; }
 
 
 // ---------- ações da edição ----------
@@ -3079,7 +3100,7 @@ function impactoDoMod(d, m) {
       return { name: pr.name, tag: pr.tag,
                ex: pr.ex.map(function (sl) { return { g: exDe(sl.id).g, s: sl.s }; }) };
     }),
-    alvo: ALVO,
+    alvo: alvo(),
     grupoDe: function (id) { return exDe(id).g; },
     nomeDe: nomeEx,
     oficialDe: function (slot) { return slotOriginal(d, slot); },
@@ -3164,9 +3185,8 @@ function aplicaAoOficial(d, mods, motivo) {
 // Onde ele reorganiza sentado em casa. Aqui a edição é direta: mexeu, mudou o
 // oficial. É o oposto da edição do dia, e a tela diz isso o tempo todo.
 function difDoDia(d) {
-  const base = PROGRAMA[d] ? PROGRAMA[d].ex.map(function (ex) {
-    return { id: slugEx(ex.n), s: ex.s, r: ex.r, d: ex.d };
-  }) : null;
+  const bt = baseTreinador()[d];
+  const base = bt ? bt.ex.map(function (sl) { return { id: sl.id, s: sl.s, r: sl.r, d: sl.d }; }) : null;
   const meu = (S.prog[d] || { ex: [] }).ex;
   if (!base) return [{ k:'novo', txt:'treino criado por você' }];
 
@@ -3213,7 +3233,7 @@ function difDoDia(d) {
 function difTotal() {
   let n = 0;
   rot().forEach(function (d) { n += difDoDia(d).length; });
-  if (rot().join('|') !== ROT_BASE.join('|')) n++;
+  if (rot().join('|') !== rotTreinador().join('|')) n++;
   return n;
 }
 
@@ -3255,15 +3275,179 @@ function modoPrograma(m) { view.prog.modo = m; view.prog.day = null; render(); w
 // Impacto do programa OFICIAL contra o alvo. Só aparece quando saiu do alvo.
 function impactoOficial(g) {
   if (!g) return null;
-  const agora = seriesOficiais(g), alvo = ALVO[g];
-  if (alvo == null || agora === alvo) return null;
-  return impacto(g, agora, alvo);
+  const agora = seriesOficiais(g), alvoG = alvo()[g];
+  if (alvoG == null || agora === alvoG) return null;
+  return impacto(g, agora, alvoG);
 }
 
 
 // ---------- ações do programa ----------
 // Toda mudança aqui é imediata e registrada. O log é o que responde, daqui a
 // dois meses, "por que o pendulum virou hack squat?".
+// ---------- a revisão do treinador, colada em texto (prescrição, estado 6) ----------
+//
+// Decisão do dono, 14/10: a revisão chega como texto. O app lê, pergunta uma
+// vez por nome que não reconhece com certeza — "é a mesma / é outro exercício",
+// com as séries que aquele exercício já tem —, diz o que muda em cada treino e
+// quais mudanças dele saem, e só então grava. Errar a correspondência manda o
+// histórico para o exercício errado (F300): por isso nada é chutado.
+CTX.abreRevisao = function () {
+  view.revisao = { texto: '', lida: null, respostas: {} };
+  entraNoDestino('revisao'); render();
+};
+CTX.fechaRevisao = function () { view.revisao = null; render(); saiDoDestino('revisao'); };
+/** O texto colado: guardado sem redesenhar, para não roubar o foco do campo. */
+CTX.textoDaRevisao = function (el) { if (view.revisao) view.revisao.texto = el.value; };
+CTX.leRevisao = function () {
+  if (!view.revisao) return;
+  const lida = lerRevisao(view.revisao.texto);
+  view.revisao.lida = lida;
+  view.revisao.casa = casaNomes(lida, catalogoParaRevisao(), baseTreinador());
+  view.revisao.respostas = {};
+  render();
+};
+CTX.respondeRevisao = function (nome, r) {
+  if (!view.revisao || (r !== 'mesma' && r !== 'outro')) return;
+  view.revisao.respostas = Object.assign({}, view.revisao.respostas, { [nome]: r });
+  render();
+};
+CTX.modeloDaRevisao = function () { return MODELO_DA_REVISAO; };
+
+function catalogoParaRevisao() {
+  const c = {};
+  Object.keys(CAT).forEach(function (k) { c[k] = { n: CAT[k].n, g: CAT[k].g, arq: CAT[k].arq }; });
+  return c;
+}
+
+/** "Tem 41 séries registradas desde 06/08." — o que uma resposta errada levaria. */
+function seriesDoExercicio(id) {
+  const h = S.logs[id] || [];
+  const n = h.reduce(function (a, e) { return a + (e.sets || []).filter(Boolean).length; }, 0);
+  if (!n) return 'Não tem série registrada.';
+  const desde = Math.min.apply(null, h.map(function (e) { return e.t; }));
+  return 'Tem ' + n + (n === 1 ? ' série registrada' : ' séries registradas') + ' desde ' + fmtDate(desde) + '.';
+}
+
+/** O id final de cada nome, com as respostas dadas; `null` enquanto falta resposta. */
+function idsDaRevisao(r) {
+  const ids = {}, usados = {};
+  let falta = false;
+  r.lida.dias.forEach(function (d) {
+    d.ex.forEach(function (x) {
+      if (ids[x.n]) return;
+      const c = r.casa[x.n];
+      if (c.k === 'igual') ids[x.n] = c.id;
+      else if (c.k === 'pergunta' && r.respostas[x.n] === 'mesma') ids[x.n] = c.id;
+      else if (c.k === 'pergunta' && !r.respostas[x.n]) { falta = true; ids[x.n] = c.id; }
+      else {
+        // exercício novo: o id nasce do nome, e nunca pisa num que já existe
+        let id = slugEx(x.n), k = 2;
+        while (CAT[id] || usados[id]) id = slugEx(x.n) + '-' + k++;
+        ids[x.n] = id;
+      }
+      usados[ids[x.n]] = 1;
+    });
+  });
+  return { ids: ids, falta: falta };
+}
+
+CTX.revisao = function () {
+  const r = view.revisao;
+  if (!r) return null;
+  if (!r.lida) return { lida: false, texto: r.texto, modelo: MODELO_DA_REVISAO };
+  const L = r.lida;
+  const { ids, falta } = idsDaRevisao(r);
+  const novos = {};
+  const perguntas = [];
+  L.dias.forEach(function (d) {
+    d.ex.forEach(function (x) {
+      const c = r.casa[x.n];
+      if (c.k === 'pergunta' && !perguntas.some(function (p) { return p.nome === x.n; })) {
+        perguntas.push({ nome: x.n, candidato: exDe(c.id).n, series: seriesDoExercicio(c.id),
+                         lugar: c.por === 'lugar' ? 'Ele ocupa este lugar no Treino ' + d.dia + ' hoje.' : null,
+                         resposta: r.respostas[x.n] || null });
+      }
+      if (!CAT[ids[x.n]]) novos[x.n] = 1;
+    });
+  });
+  const nome = function (id) { return CAT[id] ? CAT[id].n : (Object.keys(ids).filter(function (n) { return ids[n] === id; })[0] || id); };
+  const mud = mudancasDaRevisao(L, ids, baseTreinador(), nome);
+  return {
+    lida: true, data: L.data,
+    problemas: L.problemas,
+    vazia: !L.dias.length,
+    perguntas: perguntas,
+    novos: Object.keys(novos),
+    dias: mud.map(function (m) {
+      const meu = S.prog[m.dia] ? difDoDia(m.dia) : [];
+      return { dia: m.dia, novo: m.novo, linhas: m.linhas,
+               series: m.antes === m.depois ? m.depois + ' séries, como antes' : m.antes + ' → ' + m.depois + ' séries',
+               suas: meu.map(function (x) { return x.txt; }) };
+    }),
+    pode: !falta && L.dias.length > 0
+  };
+};
+
+/**
+ * Grava a revisão: os exercícios novos entram no catálogo; o programa do
+ * treinador passa a ser o da revisão nos treinos que ela traz; o programa
+ * dele, nesses treinos, vira o da revisão (as mudanças dele ali saem, e a tela
+ * disse quais antes); treino novo entra no fim da sequência. Tudo volta se o
+ * aparelho recusar.
+ */
+CTX.incorporaRevisao = async function () {
+  const r = view.revisao;
+  const vm = CTX.revisao();
+  if (!r || !vm || !vm.pode) return;
+  const { ids } = idsDaRevisao(r);
+  const antes = JSON.stringify({ ex: S.ex, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog });
+
+  S.ex = Object.assign({}, S.ex);
+  r.lida.dias.forEach(function (d) {
+    d.ex.forEach(function (x) {
+      const id = ids[x.n];
+      if (CAT[id] || S.ex[id]) return;
+      S.ex[id] = { n: x.n, car: 'pino', g: x.g || '', c: 0, cue: x.cue || '' };
+    });
+  });
+  montaCatalogo();
+
+  const base = JSON.parse(JSON.stringify(baseTreinador()));
+  const rotBase = rotTreinador().slice();
+  const agora = Date.now();
+  r.lida.dias.forEach(function (d) {
+    const velho = S.prog[d.dia];
+    const slots = d.ex.map(function (x, i) {
+      const id = ids[x.n];
+      const igual = velho && velho.ex[i] && velho.ex[i].id === id;
+      const sl = { id: id, s: x.s, r: x.r, d: x.d || descansoPadrao(exDe(id)), desde: igual ? velho.ex[i].desde || 0 : agora };
+      if (x.rir) sl.rir = x.rir;
+      return sl;
+    });
+    const t = { name: d.nome || (base[d.dia] && base[d.dia].name) || ('Treino ' + d.dia),
+                tag: (base[d.dia] && base[d.dia].tag) || '', ex: slots };
+    if (d.aberto) t.aberto = 1;
+    base[d.dia] = t;
+    if (rotBase.indexOf(d.dia) < 0) rotBase.push(d.dia);
+    S.prog[d.dia] = JSON.parse(JSON.stringify(t));
+    if (rot().indexOf(d.dia) < 0) S.rot = rot().concat([d.dia]);
+    logProg(d.dia, 'revisão do treinador' + (r.lida.data ? ' de ' + r.lida.data : '') + ' incorporada no treino ' + d.dia);
+  });
+  S.progTreinador = { em: agora, data: r.lida.data, rot: rotBase, dias: base };
+
+  if ((await save()) === false) {
+    const v = JSON.parse(antes);
+    S.ex = v.ex; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog;
+    montaCatalogo();
+    render();
+    return;
+  }
+  const quais = r.lida.dias.map(function (d) { return 'Treino ' + d.dia; }).join(', ');
+  view.revisao = null; saiDoDestino('revisao');
+  render();
+  toast('Revisão' + (r.lida.data ? ' de ' + r.lida.data : '') + ' incorporada: ' + quais + '.');
+};
+
 function logProg(d, txt, motivo) {
   if (!Array.isArray(S.progLog)) S.progLog = [];
   S.progLog.push({ t: Date.now(), day: d, txt: txt, motivo: motivo || null, m: Date.now() });
@@ -3368,7 +3552,7 @@ async function criarTreino() {
 }
 
 async function restaurarDia(d) {
-  if (!PROGRAMA[d]) {
+  if (!baseTreinador()[d]) {
     if (!confirm('Apagar o treino ' + d + '?\n\nEle não existe no programa atual do treinador.')) return;
     delete S.prog[d];
     S.rot = rot().filter(function (x) { return x !== d; });
@@ -3381,7 +3565,7 @@ async function restaurarDia(d) {
   if (!n) { toast('O treino ' + d + ' já está igual ao do treinador.'); return; }
   if (!confirm('Desfazer ' + n + (n===1?' mudança':' mudanças') + ' no treino ' + d +
                ' e voltar ao que o treinador prescreveu?\n\nO histórico não é tocado.')) return;
-  S.prog[d] = semeiaProg()[d];
+  S.prog[d] = JSON.parse(JSON.stringify(baseTreinador()[d]));
   logProg(d, 'treino ' + d + ' restaurado para o do treinador');
   await save(); render();
   toast('Treino ' + d + ' de volta ao programa do treinador.');
@@ -3392,8 +3576,8 @@ async function restaurarTudo() {
   if (!n) { toast('Seu programa já é o do treinador.'); return; }
   if (!confirm('Desfazer ' + n + (n===1?' diferença':' diferenças') +
                ' e voltar ao programa do treinador?\n\nO histórico e os exercícios que você cadastrou não são tocados.')) return;
-  S.prog = semeiaProg();
-  S.rot = ROT_BASE.slice();
+  S.prog = JSON.parse(JSON.stringify(baseTreinador()));
+  S.rot = rotTreinador().slice();
   logProg('-', 'programa restaurado para o do treinador');
   await save(); render();
   toast('Programa de volta ao do treinador.');
@@ -4477,7 +4661,8 @@ async function importText(txt) {
         comidaHist: Array.isArray(d.comidaHist) ? d.comidaHist : [],
         protocolo: (d.protocolo && typeof d.protocolo === 'object') ? d.protocolo : null,
         quadro: (d.quadro && typeof d.quadro === 'object') ? d.quadro : null,
-        lousa: (d.lousa && typeof d.lousa === 'object') ? d.lousa : null };
+        lousa: (d.lousa && typeof d.lousa === 'object') ? d.lousa : null,
+        progTreinador: (d.progTreinador && typeof d.progTreinador === 'object') ? d.progTreinador : null };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();
@@ -6072,6 +6257,7 @@ async function wipe() {
   S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
         body:corpoVazio(), carga:{}, export:0,
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
+        progTreinador:S.progTreinador || null,
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
         cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura, quadro:S.quadro, lousa:S.lousa,
@@ -6576,8 +6762,8 @@ const SUPERFICIE = {
     get view() { return view; },
     get CAT() { return CAT; },
     get CARGAS() { return CARGAS; },
-    get ALVO() { return ALVO; },
-    get ALVO_TOTAL() { return ALVO_TOTAL; },
+    get ALVO() { return alvo(); },
+    get ALVO_TOTAL() { return alvoTotal(); },
     get ALT() { return ALT; },
     get EX_BASE() { return EX_BASE; },
     get FREQUENTES_NO_BOX() { return FREQUENTES_NO_BOX; },
@@ -6895,6 +7081,7 @@ const FECHA_CAMADA = {
   ajuste:    function () { CTX.fechaAjuste(); },
   protocolo: function () { CTX.fechaProtocolo(); },
   comparar:  function () { CTX.fechaComparar(); },
+  revisao:   function () { CTX.fechaRevisao(); },
   evolucao:  function () { CTX.fechaEvolucao(); },
   dia:       function () { CTX.fechaDia(); },
   prog:      function () { fecharPrograma(); },
@@ -9584,7 +9771,7 @@ function programaLista() {
     titulo: 'Programa',
     stats: [
       { k: 'a', rotulo: 'séries diretas', valor: String(totalSeries()) },
-      { k: 'b', rotulo: 'do treinador', valor: String(ALVO_TOTAL) },
+      { k: 'b', rotulo: 'do treinador', valor: String(alvoTotal()) },
       { k: 'c', rotulo: dif === 1 ? 'diferença' : 'diferenças', valor: String(dif),
         cor: dif ? 'ins-amber' : '' }
     ],
@@ -9661,9 +9848,9 @@ function trocaDoPrograma(d, i) {
 
 function programaDiff() {
   const blocos = [];
-  if (rot().join('|') !== ROT_BASE.join('|')) {
+  if (rot().join('|') !== rotTreinador().join('|')) {
     blocos.push({ k: 'rot', titulo: 'rotação',
-                  itens: [ROT_BASE.join(' → ') + ' virou ' + rot().join(' → ')], dia: null });
+                  itens: [rotTreinador().join(' → ') + ' virou ' + rot().join(' → ')], dia: null });
   }
   rot().forEach(function (d) {
     const dif = difDoDia(d);

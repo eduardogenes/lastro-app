@@ -29,3 +29,5 @@ semana: a semana sem média.
 
 `aula.mjs` abre a aula do box antes de começar ("Na última aula") e a lista de
 movimentos com a referência de cada um.
+
+`revisao.mjs` cola uma revisão do Treino B e mostra as perguntas e o que muda.

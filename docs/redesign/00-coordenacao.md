@@ -14,11 +14,11 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.524 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.540 passando**, zero "unhandled".
 - **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
   versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
   ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
-  Nenhum agente trabalhando. Último commit de código: `9150b11`.
+  Nenhum agente trabalhando. Último commit de código: (ver diário).
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -98,8 +98,20 @@ pede atenção do dono.
      "Mandar para transcrever" usa o compartilhar do sistema (sem ele, diz o
      caminho). A sessão passada mostra a foto. Fica só neste aparelho (dito na
      tela): o durável é a transcrição.
-  10. [ ] **A revisão do treinador entra como texto colado** (prescrição,
-      estado 6), com "É a mesma / É outro exercício" antes de gravar.
+  10. [x] **A revisão do treinador entra como texto colado** (prescrição,
+      estado 6), com "É a mesma / É outro exercício" antes de gravar. Feito
+      14/10: domínio em `src/dominio/revisao.ts` (ler o texto num formato que o
+      app ensina — "Treino X · nome" e uma linha por exercício com séries ×
+      repetições, RIR, descanso, grupo, "dica:" —; casar os nomes: idêntico é o
+      mesmo, parecido ou do mesmo lugar pergunta, o resto é novo; um exercício
+      nunca vai para dois nomes; o que muda por treino). O programa do treinador
+      passa a viver no dado (`S.progTreinador`; sem revisão, vale o do código):
+      "igual ao treinador", o alvo de séries e o restaurar leem dele. A tela
+      (Prescrição → "Incorporar uma revisão do treinador") mostra o modelo para o
+      treinador, as linhas não entendidas, uma pergunta por nome com as séries
+      que o exercício já tem, os exercícios novos, o que muda em cada treino e
+      as mudanças dele que saem; só grava com tudo respondido, e volta tudo se
+      o aparelho recusar. Treino novo entra no fim da sequência.
   11. [x] **O roteiro das medições A–D da régua** — ele faz esta semana.
       Página `https://claude.ai/artifact/3vYQ4TnDMfZrwoxuQ8LgiV` (14/10): os
       passos de cada medição, o que reprova, contadores para anotar entre as
@@ -3568,6 +3580,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Fila 7: a promessa da adesão entra na Semana, e o caso cobra que o Agora não cobre. 1 mutação, morta. 1.515 passando.
 - 14/10 · Fila 8: as fotos não seguem mais a refeição, e a hora de cada uma aparece no comparar. 2 mutações, 2 mortas. 1.516 passando.
 - 14/10 · Fila 9: a lousa como foto, com cache próprio, fusão própria e a marca da sessão. 8 mutações, 8 mortas; achado no caminho: duas fotos no mesmo milissegundo dividiriam a chave dos bytes — a versão anda. 1.524 passando.
+- 14/10 · Fila 10: a revisão do treinador colada em texto — domínio, programa do treinador no dado e a tela. 20 mutações, 20 mortas (o limite de parecença viveu até o caso "Rosca direta" × "Rosca martelo"). **A fila das respostas do dono está fechada.** Pedido dele no meio: commits menos fracionados (registrado na memória). 1.540 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
