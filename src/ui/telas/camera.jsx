@@ -56,7 +56,7 @@ export function Camera({ ctx }) {
 
   return (
     <TelaCheia
-      olho={'pose ' + d.indice + ' de ' + d.total} meta={d.data} titulo={d.pose}
+      olho={d.data} titulo={'Pose ' + d.indice + ' de ' + d.total + ' · ' + d.pose}
       aoVoltar={ctx.fechaCamera} corpo="hwrap"
     >
       <div class="cam-quadro">

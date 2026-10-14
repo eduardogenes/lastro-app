@@ -37,10 +37,10 @@ export function FolhaRefeicao({ ctx, id }) {
       <GradeMetricas
         colunas={4}
         celulas={[
-          { k: 'k', rotulo: 'kcal', valor: fmtInt(t.kcal) },
-          { k: 'p', rotulo: 'prot', valor: Math.round(t.p) },
-          { k: 'c', rotulo: 'carb', valor: Math.round(t.c) },
-          { k: 'g', rotulo: 'gord', valor: Math.round(t.g) }
+          { k: 'k', valor: fmtInt(t.kcal), unidade: 'kcal' },
+          { k: 'p', valor: Math.round(t.p), unidade: 'g', rotulo: 'proteína' },
+          { k: 'c', valor: Math.round(t.c), unidade: 'g', rotulo: 'carboidrato' },
+          { k: 'g', valor: Math.round(t.g), unidade: 'g', rotulo: 'gordura' }
         ]}
       />
 

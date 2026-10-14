@@ -97,8 +97,13 @@ export function GradeMetricas({ colunas = 3, celulas }) {
     <div class="ins-hairgrid ins-grade" style={`grid-template-columns:repeat(${colunas},1fr)`}>
       {celulas.map((c, i) => (
         <div key={c.k || i} class={'ins-grade-c' + (i % colunas ? ' recuo' : '')}>
-          <div class="ins-label-sm">{c.rotulo}</div>
-          <div id={c.id} class={'ins-metric-m' + (c.cor ? ' ' + c.cor : '')}>{c.valor}</div>
+          {/* R4 da frente 3: a unidade se escreve junto do número, em caixa
+              baixa, e o rótulo fica com o NOME do número. Sem número, sem
+              unidade: "– kg" diria que há uma medida. */}
+          {c.rotulo && <div class="ins-label-sm">{c.rotulo}</div>}
+          <div id={c.id} class={'ins-metric-m' + (c.cor ? ' ' + c.cor : '')}>
+            {c.valor}{c.unidade && c.valor !== '–' && <span class="ins-metric-u"> {c.unidade}</span>}
+          </div>
           {c.nota && <div class="ins-grade-nota">{c.nota}</div>}
         </div>
       ))}

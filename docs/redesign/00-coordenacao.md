@@ -14,12 +14,12 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias e o Agora pela D, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.442 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.443 passando**, zero "unhandled".
   Nenhum agente trabalhando. Último commit de código: `805c77b`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
-- **Em curso:** a §2 da frente 3. **Etapa 1 feita (o sistema):** nenhuma regra
+- **Feita:** a §2 da frente 3. **Etapa 1 feita (o sistema):** nenhuma regra
   em caixa alta com espaçamento (48 regras; "nunca caixa alta com tracking, que
   é o rótulo mono sem a mono", 10-tokens); o rótulo e a procedência a 12 px,
   botão a 15 px, chip a 14 px, aba a 12 px; o miúdo de 9–10 px sobe a 12; os
@@ -29,8 +29,11 @@ pede atenção do dono.
   artigo onde fica ("O peso da manhã", "A porção de hoje", "O turno do treino")
   e fora onde a primeira linha já nomeia (o cardio do Agora); em Dias, os nomes
   que o desenhista deu às leituras. Rótulos de campo ganham só a maiúscula
-  inicial; procedência fica a 12 px. **Falta:** R4 (a unidade junto do número
-  nas grades de métrica), com captura.
+  inicial; procedência fica a 12 px. **Etapa 3 feita (R4 e a exceção de R3):**
+  a unidade junto do número nas grades ("719 kcal", "proteína 37 g", "no mês
+  81,0 cm"), e sem número não há unidade; na sessão de fotos, "Pose 3 de 9 ·
+  frente relaxado" é o título (lido a três metros). **A §2 da frente 3 está
+  fechada.**
 - **A §2 da frente 3 — os rótulos (R1–R4):** rótulo de seção só
   onde a seção tem mais de uma linha e a primeira não a nomeia; o que fica vira
   frase com artigo, caixa de frase, 15 px, sem espaçamento; o olho vira
@@ -3329,6 +3332,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Agora pela D, etapa 8: o cardio sai do descanso e entra pela folha do tipo do dia. 2 mutações, 2 mortas. **Agora pela D fechado.** 1.442 passando.
 - 14/10 · Frente 3 §2, etapa 1: sem caixa alta no sistema inteiro (48 regras), textos de ação e abas com maiúscula inicial. 9 arquivos de caso apontados para os textos novos. 1.442 passando.
 - 14/10 · Frente 3 §2, etapa 2: os rótulos de seção viram título com artigo (R1/R2), 44 no `Secao` e 22 dentro de folhas e telas cheias; ações vindas de dado com maiúscula inicial. 1.442 passando.
+- 14/10 · Frente 3 §2, etapa 3: R4 (a unidade junto do número) e a exceção de R3 (a pose no título). 2 mutações, 2 mortas. **§2 da frente 3 fechada.** 1.443 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

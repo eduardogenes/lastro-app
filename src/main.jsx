@@ -8433,7 +8433,7 @@ CTX.detalheDaSessao = function () {
       { k: 'd', rotulo: aberta ? 'em andamento'
           : dur == null ? 'tempo não medido' : exato ? 'tempo exato' : 'tempo aproximado',
         valor: dur != null ? fmtDur(dur) : '–' },
-      { k: 'v', rotulo: 'volume · kg×reps', valor: R.vol ? fmtInt(R.vol) : '–' },
+      { k: 'v', rotulo: 'volume', valor: R.vol ? fmtInt(R.vol) : '–', unidade: 'kg×reps' },
       // Recorde é a comparação favorável mais pura que existe aqui, e pintá-lo
       // de ácido era o app dizendo "você foi bem" por cor. O número basta.
       { k: 'r', rotulo: recordes === 1 ? 'recorde' : 'recordes', valor: String(recordes) }
@@ -8567,17 +8567,17 @@ CTX.historico = function () {
   return Object.assign(cab, {
     vazio: false,
     stats: (ritmo
-      ? [{ k: 'a', rotulo: 'ritmo · ' + esc.rot, valor: fmtDec(met(last)) },
-         { k: 'b', rotulo: 'trabalho · ' + ROTULO_UNIDADE[un],
+      ? [{ k: 'a', rotulo: 'ritmo', valor: fmtDec(met(last)), unidade: esc.rot },
+         { k: 'b', rotulo: 'trabalho', unidade: ROTULO_UNIDADE[un],
            valor: fmtInt((last.q || 0) * last.sets.filter(Boolean).length) }]
       : seg
-      ? [{ k: 'a', rotulo: 'tempo da última · seg', valor: fmtInt(tutOf(last)) },
-         { k: 'b', rotulo: 'média por série · seg',
+      ? [{ k: 'a', rotulo: 'tempo da última', valor: fmtInt(tutOf(last)), unidade: 'seg' },
+         { k: 'b', rotulo: 'média por série', unidade: 'seg',
            valor: fmtInt(Math.round(tutOf(last) / Math.max(last.sets.filter(Boolean).length, 1))) }]
       : corpo
       ? [{ k: 'a', rotulo: 'repetições na última', valor: fmtInt(repsOf(last)) },
-         { k: 'b', rotulo: 'carga somada · kg', valor: maxLoad(last) ? fmtNum(maxLoad(last)) : '–' }]
-      : [{ k: 'a', rotulo: 'carga atual · ' + rotCarga, valor: fmtNum(maxLoad(last)) },
+         { k: 'b', rotulo: 'carga somada', valor: maxLoad(last) ? fmtNum(maxLoad(last)) : '–', unidade: 'kg' }]
+      : [{ k: 'a', rotulo: 'carga atual', valor: fmtNum(maxLoad(last)), unidade: rotCarga },
          { k: 'b', rotulo: 'volume da última', valor: fmtInt(volOf(last)) }]
     ).concat([{
       k: 'd',

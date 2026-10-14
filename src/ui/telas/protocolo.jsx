@@ -80,7 +80,9 @@ export function Protocolo({ ctx }) {
   const p = d.pose;
 
   return (
-    <TelaCheia olho={'pose ' + d.indice + ' de ' + d.total} meta={p.bloco} titulo={p.n}
+    // A exceção de R3 (frente 3 §2): lido a três metros, o "pose 3 de 9" não é
+    // olho de 12 px — vira título, com o nome da pose junto.
+    <TelaCheia olho={p.bloco} titulo={'Pose ' + d.indice + ' de ' + d.total + ' · ' + p.n}
                aoVoltar={ctx.fechaProtocolo} corpo="hwrap">
       <Pontos pontos={d.pontos} aoIr={ctx.vaiParaPose} />
 

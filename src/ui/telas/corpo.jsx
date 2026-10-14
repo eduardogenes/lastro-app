@@ -246,7 +246,7 @@ export function Corpo({ ctx }) {
         aoTeclar={t => ctx.tecla(t)}
         celulas={[
           { k: 'a', rotulo: 'última medida', valor: c.cintura.atual },
-          { k: 'm', rotulo: 'no mês · cm', valor: c.cintura.mesValor }
+          { k: 'm', rotulo: 'no mês', valor: c.cintura.mesValor, unidade: 'cm' }
         ]}
       >
         <Procedencia>{c.cintura.mes}</Procedencia>
@@ -277,7 +277,7 @@ export function Corpo({ ctx }) {
           aoTeclar={t => ctx.tecla(t)}
           celulas={[
             { k: 'a', rotulo: 'última medida', valor: f.atual },
-            { k: 'd', rotulo: 'desde a primeira · ' + f.u, valor: f.desde }
+            { k: 'd', rotulo: 'desde a primeira', valor: f.desde, unidade: f.u }
           ]}
         />
       ))}

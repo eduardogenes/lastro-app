@@ -56,7 +56,7 @@ export function Stats({ celulas }) {
     <div class="stats ins-hairgrid" style={`grid-template-columns:repeat(${celulas.length},1fr)`}>
       {celulas.map(c => (
         <div key={c.k}>
-          <b class={c.cor || ''}>{c.valor}</b>
+          <b class={c.cor || ''}>{c.valor}{c.unidade && c.valor !== '–' && <small class="ins-metric-u"> {c.unidade}</small>}</b>
           <span>{c.rotulo}</span>
         </div>
       ))}

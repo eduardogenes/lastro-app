@@ -1043,3 +1043,22 @@ test('o copo que não foi gravado não aparece como gravado', async () => {
   assert.strictEqual(a.$('.ag-agua-f'), null);
   a.fechar();
 });
+
+test('a unidade se escreve junto do número, e some quando não há número', async () => {
+  // R4 da frente 3 §2: "KCAL · 3.007" era a caixa alta fazendo trabalho de
+  // estrutura em cima de uma unidade. Passa a "3.007 kcal" e "37 g" com o nome
+  // do número ao lado. E "– cm" diria que há uma medida: sem número, sem unidade.
+  const a = await app({ aba: 'agora' });
+  a.v('ctx.abreRefeicao', 'almoco');
+  await a.esperar(150);
+  const celulas = a.$$('.ins-folha .ins-grade-c').map(c => c.textContent.replace(/\s+/g, ' ').trim());
+  assert.ok(/^[\d.]+ kcal$/.test(celulas[0]), 'kcal junto do número: ' + celulas[0]);
+  assert.ok(/^proteína ?\d+ g$/.test(celulas[1]), 'o nome e o número com a unidade: ' + celulas[1]);
+  a.fechar();
+
+  const b = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] } } });
+  await b.esperar();
+  const mes = b.$$('.ins-grade-c').map(c => c.textContent.replace(/\s+/g, ' ').trim()).filter(t => /^no mês/.test(t))[0];
+  assert.ok(/^no mês ?–$/.test(mes), 'sem medida no mês, só o traço: ' + mes);
+  b.fechar();
+});

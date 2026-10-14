@@ -1744,3 +1744,6 @@ button.ins-linha { border-radius: 0; }
 /* O RÓTULO DE SEÇÃO (frente 3 §2, R2; 10-tokens): 15 px, peso 600, caixa de
    frase, na tinta de leitura — nunca caixa alta com tracking. */
 .ins-rotulo { margin: 0; font: 600 var(--ins-t-corpo-forte)/1.25 var(--ins-fonte); color: var(--ins-tinta); }
+/* R4 da frente 3: a unidade junto do número, como ela se escreve (12 px,
+   caixa baixa, tinta-3) — a mesma espécie da procedência: diz o que o número é. */
+.ins-metric-u { font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3); letter-spacing: 0; }
