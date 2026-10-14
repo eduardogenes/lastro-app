@@ -3841,7 +3841,9 @@ function sinaisDaRegra() {
     // A segunda camada de confirmação, que substituiu a cintura. Perguntada na
     // tela de comparar, onde as duas fotos estão à vista. Envelhece em 14 dias:
     // sem leitura recente o peso abre revisão e não corta.
-    gorduraVisual: leituraVigente(S.gordura, Date.now())
+    gorduraVisual: leituraVigente(S.gordura, Date.now()),
+    // o passo em vigor: com ele, a regra espera duas semanas novas de peso
+    passoEm: passoEmVigor() ? passoEmVigor().t : null
   };
 }
 

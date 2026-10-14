@@ -147,6 +147,8 @@ export interface Veredito {
   p: string;
   /** o que ainda falta para o passo valer, quando o peso já pediu revisão */
   falta?: 'aderencia' | 'gordura';
+  /** o passo em vigor ainda está sendo medido: as semanas lidas são de antes dele */
+  espera?: boolean;
 }
 
 /** O passo de 150 kcal que um veredito PROPÕE. Não é o estado da dieta. */
@@ -166,6 +168,8 @@ export interface Sinais {
   diasRegistrados?: number | null;
   /** a resposta do fechamento semanal, comparando com 2 semanas atrás */
   gorduraVisual?: 'sim' | 'nao' | 'incerto' | null;
+  /** quando o passo de ±150 kcal em vigor foi aplicado; `null` sem passo */
+  passoEm?: number | null;
 }
 
 /**
@@ -300,6 +304,31 @@ export function taxasSemanais(peso: Marca[], quantas: number = 2): TaxaSemanal[]
  * só numa delas havia algo a fazer agora. A prosa `p` não muda uma palavra.
  */
 export function veredito(
+  body: { peso: Marca[]; cintura: Marca[] },
+  sinais: Sinais = {}
+): Veredito {
+  const v = vereditoDasSemanas(body, sinais);
+  if ((v.k !== 'mais' && v.k !== 'menos') || !sinais.passoEm) return v;
+  // UM PASSO POR EVIDÊNCIA (decisão do dono, 14/10). Depois de aplicado, as
+  // mesmas semanas continuariam pedindo o mesmo passo, e um segundo toque
+  // transformaria um motivo em 300 kcal. O passo seguinte só existe quando as
+  // duas semanas que a regra lê começaram depois dele.
+  const taxas = taxasSemanais(body.peso, 2);
+  const t = sinais.passoEm;
+  if (taxas && taxas[0].w >= t) return v;
+  const ini = weekStart(t) >= t ? weekStart(t) : weekStart(t) + 7 * DIA;
+  const novas = taxas ? taxas.filter(x => x.w >= t).length : 0;
+  const faltam = 2 - novas;
+  return {
+    k: 'observar', t: 'Não mexer: o passo de ' + fmtDate(t) + ' ainda está sendo medido',
+    p: 'O passo entrou em ' + fmtDate(t) + '. A regra só volta a decidir com duas semanas de peso inteiras depois dele, ' +
+       'de ' + fmtDate(ini) + ' a ' + fmtDate(ini + 13 * DIA) + ': ' +
+       (faltam === 1 ? 'falta 1 semana' : 'faltam 2 semanas') + '. Antes disso, as mesmas semanas pediriam o mesmo passo de novo.',
+    espera: true
+  };
+}
+
+function vereditoDasSemanas(
   body: { peso: Marca[]; cintura: Marca[] },
   sinais: Sinais = {}
 ): Veredito {

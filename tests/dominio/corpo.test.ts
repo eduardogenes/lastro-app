@@ -7,7 +7,7 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, leituraDaEvolucao, ondeMediu, pesoRitmo, portoesDaRegra, semanasDaRegra, semanaEmCurso, veredito } from '../../src/dominio/corpo';
+import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, leituraDaEvolucao, ondeMediu, pesoRitmo, portoesDaRegra, semanasDaRegra, semanaEmCurso, taxasSemanais, veredito } from '../../src/dominio/corpo';
 import { medidas, naSemana, pesagens } from './ajuda';
 
 const semCintura = { peso: [] as ReturnType<typeof pesagens>, cintura: [] };
@@ -404,4 +404,40 @@ test('o medido é a média das quatro semanas fechadas antes desta', () => {
   const s = semanaEmCurso(quatro.concat([em(28, 6, 40, 73.6)]), SEXTA)!;
   assert.strictEqual(s.medido, 'No medido, nas quatro semanas anteriores, foram 2,75.');
   assert.strictEqual(semanaEmCurso([em(28, 6, 40, 73.6)], SEXTA)!.medido, null, 'sem histórico, nada a medir');
+});
+
+// ---------- um passo por evidência (decisão do dono, 14/10) ----------
+
+test('com um passo aplicado depois das semanas lidas, a regra espera duas semanas novas', () => {
+  const peso = pesagens([73.0, 73.05, 73.10]);
+  const base = veredito({ peso, cintura: [] }, OK);
+  assert.strictEqual(base.k, 'mais', 'pré-condição: sem passo, a regra pede +150');
+
+  const agora = Math.max.apply(null, peso.map(x => x.t)) + 3600000;
+  const v = veredito({ peso, cintura: [] }, { ...OK, passoEm: agora });
+  assert.strictEqual(v.k, 'observar');
+  assert.strictEqual(v.espera, true);
+  assert.ok(v.t.startsWith('Não mexer: o passo de '), v.t);
+  assert.ok(/faltam 2 semanas/.test(v.p), v.p);
+});
+
+test('o passo mais velho que as duas semanas lidas não segura a regra', () => {
+  const peso = pesagens([73.0, 73.05, 73.10]);
+  const antes = Math.min.apply(null, peso.map(x => x.t)) - 86400000;
+  assert.strictEqual(veredito({ peso, cintura: [] }, { ...OK, passoEm: antes }).k, 'mais');
+});
+
+test('a espera só vale para o que daria passo: o resto da regra fala igual', () => {
+  const peso = pesagens([73.0, 73.25, 73.5]);
+  const agora = Math.max.apply(null, peso.map(x => x.t)) + 3600000;
+  assert.strictEqual(veredito({ peso, cintura: [] }, { ...OK, passoEm: agora }).t, 'Não mexer: a taxa está na faixa');
+});
+
+test('com uma das duas semanas já depois do passo, falta uma', () => {
+  const peso = pesagens([73.0, 73.05, 73.10]);
+  const tx = taxasSemanais(peso, 2)!;
+  const t = tx[1].w - 86400000;          // entre a primeira e a segunda semana lida
+  const v = veredito({ peso, cintura: [] }, { ...OK, passoEm: t });
+  assert.strictEqual(v.k, 'observar');
+  assert.ok(/falta 1 semana\./.test(v.p), v.p);
 });

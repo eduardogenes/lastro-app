@@ -57,11 +57,36 @@ test('dois passos no mesmo sentido somam, e a tela diz que são dois', async () 
   assert.strictEqual(a.S().ajuste, 1);
   assert.strictEqual(a.v('arrozAtual'), base + 120, '+150 kcal são 120 g de arroz');
 
+  semanasNovas(a);
   await a.v('ctx.aplicaAjuste'); await a.esperar();
   assert.strictEqual(a.S().ajuste, 2, 'o segundo passo soma ao primeiro');
   assert.strictEqual(a.v('arrozAtual'), base + 240, 'e o arroz anda de novo');
   assert.ok(a.vJ('ctx.dados').veredito.estado.includes('2 passos'),
     a.vJ('ctx.dados').veredito.estado);
+  a.fechar();
+});
+
+test('um passo por evidência: depois de aplicar, as mesmas semanas não pedem outro', async () => {
+  // Decisão do dono, 14/10. A Semana continuava oferecendo "aplicar" sobre as
+  // mesmas duas semanas, e um segundo toque virava 300 kcal por um motivo só.
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  a.aba('semana');
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(a.S().ajuste, 1);
+
+  const v = a.vJ('ctx.dados').veredito;
+  assert.ok(/^Não mexer: o passo de \d\d\/\d\d ainda está sendo medido$/.test(v.t), v.t);
+  assert.ok(/duas semanas de peso inteiras depois dele, de \d\d\/\d\d a \d\d\/\d\d: faltam 2 semanas\./.test(v.p), v.p);
+  assert.strictEqual(v.podeAplicar, false, 'nada a aplicar enquanto o passo é medido');
+  assert.strictEqual(v.podeDesfazer, true, 'e desfazer continua à mão');
+
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.strictEqual(a.S().ajuste, 1, 'o segundo toque não aplica nada');
+  assert.strictEqual(a.S().ajusteHist.length, 1);
+
+  // desfeito o passo, não há o que esperar: as semanas voltam a decidir
+  await a.v('ctx.desfazAjuste'); await a.esperar();
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer mais 150 kcal');
   a.fechar();
 });
 
@@ -286,7 +311,17 @@ function itemDe(a, refId) {
 }
 
 /** Põe o veredito em "comer menos", que é o caminho de volta do saldo. */
+/**
+ * As duas semanas novas de peso chegaram: o passo em vigor fica mais velho que
+ * as semanas que a regra lê, e ela pode decidir de novo (decisão do dono,
+ * 14/10 — um passo por evidência).
+ */
+function semanasNovas(a) {
+  a.E('S.ajusteHist[S.ajusteHist.length - 1].t = Date.now() - 30 * 86400000');
+}
+
 async function viraParaMenos(a) {
+  if (a.S().ajusteHist.length) semanasNovas(a);
   a.E('S.body.peso = ' + JSON.stringify(pesagens([73.0, 73.6, 74.2])));
   comFotos(a, [iso(14), iso(0)]);
   a.v('ctx.abreComparar');
