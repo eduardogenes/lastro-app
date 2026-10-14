@@ -3358,6 +3358,24 @@ async function addCardio() {
   const n = cardioSemana().length;
   toast(`${f.min} min de ${f.m} registrados · ${n} de ${CARDIO_ALVO} nesta semana`);
 }
+/**
+ * Corrige um campo do cardio já registrado, no lugar (a D, `dias.html`, estado
+ * 12): modalidade, minutos ou intensidade, cada um num toque. O instante não
+ * muda — é a chave dele na sincronia (`cardio:<t>`) —, e o carimbo `alt` sobe.
+ */
+async function corrigeCardio(t, campo, valor) {
+  const c = S.cardio.filter(function (x) { return x.t === t; })[0];
+  if (!c) return;
+  if (campo === 'm' && MODAIS.indexOf(valor) < 0) return;
+  if (campo === 'i' && ['leve', 'moderado'].indexOf(valor) < 0) return;
+  if (campo === 'min' && !(Math.round(+valor) >= 1 && Math.round(+valor) <= 300)) return;
+  if (campo !== 'm' && campo !== 'i' && campo !== 'min') return;
+  c[campo] = campo === 'min' ? Math.round(+valor) : valor;
+  c.alt = Date.now();                  // carimbo do cardio: `alt`, porque `m` é o modal
+  await save();
+  render();
+}
+
 async function delCardio(t) {
   // Esta lista existe para desfazer um registro errado, e por isso mesmo ela
   // não pode apagar o certo num toque de passagem.
@@ -7361,6 +7379,7 @@ CTX.bioimpedancia = function () {
 CTX.registraBio = function (leitura, quando) { return registraBio(leitura, quando); };
 CTX.apagaMedida = function (k, t) { delBody(k, t); };
 CTX.apagaCardio = function (t) { delCardio(t); };
+CTX.corrigeCardio = function (t, campo, valor) { return corrigeCardio(t, campo, valor); };
 CTX.abreCardio = function () { abrirCardioRapido(); };
 
 // ---------- edição de COMIDA ----------
@@ -7977,7 +7996,14 @@ CTX.diaAberto = function () {
       detalhe: [c.i, fmtHoraDita(c.t) + (depois ? ', depois do treino' : '')].filter(Boolean).join(' · ') +
                (igual ? ' · igual ao das ' + fmtHoraDita(igual.t) : ''),
       igual: !!igual,
-      aberto: view.cardioAberto === c.t
+      aberto: view.cardioAberto === c.t,
+      // aberto, o registro inteiro: cada campo corrigível no toque
+      campos: view.cardioAberto === c.t ? {
+        modais: MODAIS.map(function (x) { return { k: x, t: x, on: c.m === x }; }),
+        minutos: [20, 25, 30, 40].concat([20, 25, 30, 40].indexOf(c.min) < 0 ? [c.min] : [])
+          .sort(function (a, b) { return a - b; }).map(function (v) { return { k: v, t: v + ' min', on: c.min === v }; }),
+        intensidades: ['leve', 'moderado'].map(function (v) { return { k: v, t: v, on: c.i === v }; })
+      } : null
     };
   });
 

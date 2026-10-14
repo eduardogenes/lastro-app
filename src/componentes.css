@@ -1799,3 +1799,5 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 .ss-ed-pe { display: flex; justify-content: space-between; gap: var(--ins-3); }
 .ss-lk { min-height: var(--ins-tap); padding: 0 var(--ins-2); font-size: 14px; color: var(--ins-tinta-2); text-decoration: underline; text-underline-offset: 3px; }
 .regua-v.tocado { border-style: dashed; }
+.dia-cardio-ed { display: flex; flex-direction: column; gap: var(--ins-4); padding: var(--ins-2) 0 var(--ins-4); }
+.dia-cardio-c { display: flex; flex-direction: column; gap: var(--ins-2); }

@@ -199,6 +199,38 @@ test('sessão de cardio registrada por engano pode ser apagada', async () => {
   a.fechar();
 });
 
+test('o cardio do dia se corrige no lugar, campo a campo', async () => {
+  // A D (`dias.html`, estado 12): tocar a linha do cardio abre o registro
+  // inteiro, e cada campo se corrige num toque. O instante não muda — é a chave
+  // dele na sincronia —, e o carimbo `alt` sobe.
+  const agora = agoraEstavel();
+  const t = agora - DIA;
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [{ t: t, m: 'bike', min: 25, i: 'leve', alt: 1 }] } });
+  a.v('ctx.abreDia', t);
+  await a.esperar();
+  a.clicar('[data-a="dia-cardio"]');
+  await a.esperar();
+
+  a.clicar('[data-a="dia-cardio-min-30"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().cardio[0].min, 30, 'os minutos');
+  assert.strictEqual(a.S().cardio[0].t, t, 'o instante não muda');
+  assert.ok(a.S().cardio[0].alt > 1, 'e o carimbo sobe');
+  const outro = a.vJ('ctx.diaAberto').registros[0].campos.modais.filter(function (x) { return x.k !== 'bike'; })[0].k;
+  a.clicar('[data-a="dia-cardio-m-' + outro + '"]');
+  a.clicar('[data-a="dia-cardio-i-moderado"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().cardio[0].m, outro, 'a modalidade');
+  assert.strictEqual(a.S().cardio[0].i, 'moderado', 'a intensidade');
+  assert.strictEqual(a.gravado().cardio[0].min, 30, 'e está no disco');
+
+  await a.v('ctx.corrigeCardio', t, 'min', 0);
+  await a.v('ctx.corrigeCardio', t, 'm', 'patinete');
+  await a.v('ctx.corrigeCardio', t, 't', 5);
+  assert.deepStrictEqual([a.S().cardio[0].min, a.S().cardio[0].m, a.S().cardio[0].t], [30, outro, t], 'valor fora do que a folha oferece não grava');
+  a.fechar();
+});
+
 test('preencher treino passado avisa para onde as séries estão indo', async () => {
   const a = await app();
   const t = Date.now() - 2 * 86400000;

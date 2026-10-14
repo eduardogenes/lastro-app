@@ -2,7 +2,8 @@
 // 9 e 12).
 //
 // Os registros vêm primeiro, cada um numa linha que abre: a sessão abre
-// inteira; o cardio abre no lugar, com o apagar. Quando algo destoa, o app
+// inteira; o cardio abre no lugar, com cada campo corrigível no toque e o
+// apagar no fim. Quando algo destoa, o app
 // aponta e não corrige — dois cardios iguais ficam lado a lado, o segundo em
 // âmbar dizendo "igual ao das 7h35", e nada sai sem ele. A comida aparece num
 // olhar: os momentos do plano, cada um com a forma do seu estado, e a folha de
@@ -59,8 +60,23 @@ export function Dia({ ctx }) {
                   </span>
                 </button>
                 {r.aberto && (
-                  <button class="ins-btn-secondary dia-apaga" data-a="dia-apaga-cardio"
-                          onClick={() => ctx.apagaCardio(r.t)}>Apagar este cardio</button>
+                  <div class="dia-cardio-ed">
+                    {[['m', 'Modalidade', r.campos.modais], ['min', 'Minutos', r.campos.minutos],
+                      ['i', 'Intensidade', r.campos.intensidades]].map(([campo, rotulo, ops]) => (
+                      <div key={campo} class="dia-cardio-c">
+                        <span class="ins-body-sm ins-t2">{rotulo}</span>
+                        <div class="ins-chips">
+                          {ops.map(o => (
+                            <button key={o.k} class={'ins-chip' + (o.on ? ' on' : '')} aria-pressed={o.on ? 'true' : 'false'}
+                                    data-a={'dia-cardio-' + campo + '-' + o.k}
+                                    onClick={() => ctx.corrigeCardio(r.t, campo, o.k)}>{o.t}</button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    <button class="ins-btn-secondary dia-apaga" data-a="dia-apaga-cardio"
+                            onClick={() => ctx.apagaCardio(r.t)}>Apagar este cardio</button>
+                  </div>
                 )}
               </div>
             ))}
