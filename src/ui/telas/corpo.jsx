@@ -26,9 +26,33 @@ import { Teclado } from '../instrumento/teclado.jsx';
 function semArtigo(r) { const x = r.replace(/^(O|A|Os|As) /, ''); return x.charAt(0).toUpperCase() + x.slice(1); }
 
 /** Uma medida corporal: stepper, botão e a curva das últimas 14 semanas. */
-function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar, chave, onde, ondeRascunho, onOnde }) {
+/**
+ * A semana em curso sem média (a D, `corpo.html`, estado 9): em vez de uma
+ * média falsa, o que falta, os dias — com pesagem, sem, e os que ainda dão
+ * tempo — e a decisão que fica parada.
+ */
+function SemanaSemMedia({ s, alvo }) {
+  return (
+    <div class="co-semana" role="status">
+      <p class="ins-body ins-t1 co-semana-t"><b>Sem média</b> · {s.nota}</p>
+      <p class="ins-body-sm ins-t2">{s.falta}</p>
+      <ul class="co-semana-d">
+        {s.trechos.map(t => (
+          <li key={t.rotulo} class={'co-semana-l ' + t.k}>
+            <span class="ins-body-sm ins-t2">{t.rotulo}</span>
+            <span class="ins-body-sm">{t.hora && <span class="ins-t3">{t.hora} · </span>}{t.v}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="ins-body-xs ins-t3">A prescrição pede {alvo}.{s.medido ? ' ' + s.medido : ''}</p>
+    </div>
+  );
+}
+
+function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar, chave, onde, ondeRascunho, onOnde, topo }) {
   return (
     <Secao rotulo={rotulo} nota={nota} primeira={primeira}>
+      {topo}
       <div class="dd-registro">
         <Stepper
           valor={valor} passo={passo} min={20} max={250}
@@ -230,6 +254,7 @@ export function Corpo({ ctx }) {
 
       <Medida
         rotulo="O peso da manhã" chave="peso" nota={c.peso.nota} primeira={!vazio}
+        topo={c.peso.semana && <SemanaSemMedia s={c.peso.semana} alvo="3 a 4 pesagens por semana" />}
         valor={c.peso.valor} passo={0.1} unidade="kg" serie={c.peso.serie}
         onMuda={ctx.setPeso} onRegistrar={ctx.registraPeso} acao={c.peso.acao}
         dia={c.peso.dia} onAbrirDia={() => ctx.abreDiaCorpo('peso')}

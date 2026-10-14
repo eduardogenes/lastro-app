@@ -18,7 +18,7 @@ import {
 import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
-import { MIN_PESAGENS as MIN_PESAGENS_CORPO, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, VALIDADE_LEITURA, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
+import { MIN_PESAGENS as MIN_PESAGENS_CORPO, semanaEmCurso, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, VALIDADE_LEITURA, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
@@ -7457,19 +7457,27 @@ CTX.corpo = function () {
   const vPeso = valorDoCorpo('peso'), vCint = valorDoCorpo('cintura');
   const semana = weekStart(Date.now());
   const naSemana = S.body.peso.filter(function (x) { return x.t >= semana; }).length;
+  // A semana em curso sem média (a D, corpo, estado 9). Com ela, a média e o
+  // ritmo desta semana são "—": uma pesagem só não é média, e o ritmo contra
+  // ela seria a mesma média falsa com sinal.
+  const semMedia = S.body.peso.length ? semanaEmCurso(S.body.peso, Date.now()) : null;
+  const vale = r.ok && !semMedia;
 
   return {
     peso: {
       valor: isNaN(vPeso) ? baseDoCorpo('peso') : vPeso,
       serie: serieSemanal(S.body.peso, 14),
-      media: r.ok ? fmtDec(r.last.v) + ' kg' : '—',
-      ritmo: (r.ok && r.duasSemanas) ? fmtSig2(r.kgSem) : '—',
+      media: vale ? fmtDec(r.last.v) + ' kg' : '—',
+      ritmo: (vale && r.duasSemanas) ? fmtSig2(r.kgSem) : '—',
       // Ácido fica: não é "melhor que antes", é DENTRO DA FAIXA que o
       // nutricionista prescreveu — estado contra uma regra, como "feito".
-      ritmoCor: (r.ok && r.duasSemanas)
+      ritmoCor: (vale && r.duasSemanas)
         ? (r.kgSem >= 0.15 && r.kgSem <= 0.4 ? 'ins-acid' : 'ins-amber') : '',
       nota: naSemana + (naSemana === 1 ? ' pesagem da manhã nesta semana' : ' pesagens da manhã nesta semana'),
       alvo: 'registre 3 a 4 por semana',
+      // o que falta, e a decisão que fica parada. Sem nenhuma pesagem no
+      // histórico, quem fala é o vazio de verdade, e não esta cobrança.
+      semana: semMedia,
       acao: acaoDaMedida('peso'),
       dia: diaDaMedidaVM('peso'),
       medidas: medidasRecentes('peso', 'kg')

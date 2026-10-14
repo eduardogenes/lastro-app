@@ -8,7 +8,7 @@
 // separação que permitiu testar os limites exatos (0,15 · 0,40 · 1,5 cm) sem
 // subir um DOM.
 
-import { fmtDate, fmtDec, fmtDec2, fmtSig2, weekStart } from './formato';
+import { DIAS_CURTOS, fmtDate, fmtDec, fmtDec2, fmtHoraDita, fmtSig2, weekStart } from './formato';
 import type { Marca, QualMarca } from './tipos';
 
 const DIA = 86400000;
@@ -497,6 +497,80 @@ export function semanasDaRegra(peso: Marca[], agora: number, quantas: number = 4
     });
   }
   return out;
+}
+
+/** Um trecho da semana em curso: um dia com pesagem, ou dias seguidos sem. */
+export interface TrechoDaSemana {
+  /** "seg 28/09" · "ter 29/09 · qua 30/09 · qui 01/10" */
+  rotulo: string;
+  /** "73,6 kg" · "sem pesagem" · "ainda dá tempo" */
+  v: string;
+  /** a hora da pesagem, "6h40", quando há */
+  hora: string | null;
+  k: 'pesagem' | 'sem' | 'tempo';
+}
+
+/** A semana em curso, quando ela ainda não tem média (a D, `corpo.html`, estado 9). */
+export interface SemanaEmCurso {
+  n: number;
+  /** "esta semana · 1 pesagem" */
+  nota: string;
+  /** o que falta, e qual decisão fica parada por causa disso */
+  falta: string;
+  trechos: TrechoDaSemana[];
+  /** "No medido foram 2,75." — a média das últimas quatro semanas fechadas */
+  medido: string | null;
+}
+
+/**
+ * A semana em curso que ainda não tem média: o que falta e quantos dias restam
+ * para conseguir (a D, `corpo.html`, estado 9). Em vez de uma média falsa, a
+ * lista dos dias — com pesagem, sem, e os que ainda dão tempo — e a decisão
+ * que fica parada. É a única cobrança que a direção aceita, porque tem
+ * consequência escrita. Com a semana já valendo, `null`.
+ *
+ * Hoje conta como dia que ainda dá tempo enquanto ele não se pesou hoje.
+ */
+export function semanaEmCurso(peso: Marca[], agora: number): SemanaEmCurso | null {
+  const w = weekStart(agora);
+  const fim = w + 7 * DIA;
+  const daSemana = peso.filter(x => x.t >= w && x.t < fim && x.t <= agora).sort((a, b) => a.t - b.t);
+  const n = daSemana.length;
+  if (n >= MIN_PESAGENS) return null;
+
+  const hoje = new Date(agora).getDay();
+  const doDia = (i: number) => daSemana.filter(x => new Date(x.t).getDay() === i);
+  const rotulo = (i: number) => DIAS_CURTOS[i] + ' ' + fmtDate(w + i * DIA + 12 * 3600000);
+  const pesouHoje = doDia(hoje).length > 0;
+  const restam = 6 - hoje + (pesouHoje ? 0 : 1);
+  const faltam = MIN_PESAGENS - n;
+
+  const trechos: TrechoDaSemana[] = [];
+  for (let i = 0; i < 7; i++) {
+    const m = doDia(i).slice(-1)[0];
+    if (m) { trechos.push({ k: 'pesagem', rotulo: rotulo(i), v: fmtDec(m.v) + ' kg', hora: fmtHoraDita(m.t) }); continue; }
+    const k = i < hoje ? 'sem' : 'tempo';
+    const ult = trechos[trechos.length - 1];
+    if (ult && ult.k === k) ult.rotulo += ' · ' + rotulo(i);
+    else trechos.push({ k, rotulo: rotulo(i), v: k === 'sem' ? 'sem pesagem' : 'ainda dá tempo', hora: null });
+  }
+
+  const conseq = 'Sem ela, a sequência de três semanas se quebra e a regra do nutricionista volta a “pedir pesagens”.';
+  const pes = (x: number) => x + (x === 1 ? ' pesagem' : ' pesagens');
+  const falta = restam >= faltam
+    ? (restam === 1 ? 'Falta 1 dia' : 'Faltam ' + restam + ' dias') + ' na semana e ' + pes(faltam) +
+      ' para a média valer. ' + conseq
+    : 'Não dá mais tempo: ' + (restam === 0 ? 'a semana não tem mais dias' : 'resta 1 dia') +
+      ' e ' + (faltam === 1 ? 'falta ' : 'faltam ') + pes(faltam) + '. ' + conseq;
+
+  // o ritmo medido: as quatro semanas fechadas antes desta
+  const antes = peso.filter(x => x.t >= w - 28 * DIA && x.t < w).length;
+  const algum = peso.some(x => x.t < w);
+  const medido = algum
+    ? 'No medido, nas quatro semanas anteriores, foram ' + String(Math.round(antes / 4 * 100) / 100).replace('.', ',') + '.'
+    : null;
+
+  return { n, nota: 'esta semana · ' + pes(n), falta, trechos, medido };
 }
 
 /** Uma linha de "Taxa, semana a semana" no destino Evolução. */

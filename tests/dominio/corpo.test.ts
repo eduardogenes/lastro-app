@@ -7,7 +7,7 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, leituraDaEvolucao, ondeMediu, pesoRitmo, portoesDaRegra, semanasDaRegra, veredito } from '../../src/dominio/corpo';
+import { cinturaMes, leituraVigente, mediasSemanais, MEDIDAS_DE_FITA, leituraDaEvolucao, ondeMediu, pesoRitmo, portoesDaRegra, semanasDaRegra, semanaEmCurso, veredito } from '../../src/dominio/corpo';
 import { medidas, naSemana, pesagens } from './ajuda';
 
 const semCintura = { peso: [] as ReturnType<typeof pesagens>, cintura: [] };
@@ -357,4 +357,51 @@ test('a classe da taxa segue o alvo do nutricionista, de 0,15 a 0,30', () => {
   assert.strictEqual(comTaxa(0.05), 'abaixo do alvo');
   assert.strictEqual(comTaxa(0.20), 'no alvo');
   assert.strictEqual(comTaxa(0.45), 'acima do alvo');
+});
+
+// ---------- a semana em curso sem média (a D, corpo, estado 9) ----------
+
+/** Sexta, 2 de outubro de 2026, 21h32: a semana começa no domingo, 27/09. */
+const SEXTA = new Date(2026, 9, 2, 21, 32).getTime();
+const em = (dia: number, h: number, m: number, v: number) => ({ t: new Date(2026, 8, dia, h, m).getTime(), v });
+
+test('uma pesagem só na semana: o que falta, quantos dias restam, e o que para', () => {
+  const s = semanaEmCurso([em(28, 6, 40, 73.6)], SEXTA)!;
+  assert.ok(s, 'a semana não tem média');
+  assert.strictEqual(s.nota, 'esta semana · 1 pesagem');
+  assert.strictEqual(s.falta, 'Faltam 2 dias na semana e 1 pesagem para a média valer. ' +
+    'Sem ela, a sequência de três semanas se quebra e a regra do nutricionista volta a “pedir pesagens”.');
+  assert.deepStrictEqual(s.trechos.map(t => [t.rotulo, t.v, t.hora]), [
+    ['dom 27/09', 'sem pesagem', null],
+    ['seg 28/09', '73,6 kg', '6h40'],
+    ['ter 29/09 · qua 30/09 · qui 01/10', 'sem pesagem', null],
+    ['sex 02/10 · sáb 03/10', 'ainda dá tempo', null]
+  ]);
+});
+
+test('pesado hoje, hoje não conta mais como dia que dá tempo', () => {
+  const s = semanaEmCurso([new Date(2026, 9, 2, 7, 0).getTime()].map(t => ({ t, v: 73.2 })), SEXTA)!;
+  assert.ok(s.falta.startsWith('Falta 1 dia na semana e 1 pesagem'), s.falta);
+  assert.strictEqual(s.trechos[s.trechos.length - 1].rotulo, 'sáb 03/10');
+});
+
+test('sem dias que bastem, a semana diz que não dá mais tempo', () => {
+  const sabado = new Date(2026, 9, 3, 20, 0).getTime();
+  const s = semanaEmCurso([], sabado)!;
+  assert.ok(s.falta.startsWith('Não dá mais tempo: resta 1 dia e faltam 2 pesagens.'), s.falta);
+  const s2 = semanaEmCurso([{ t: new Date(2026, 9, 3, 7, 0).getTime(), v: 73 }], sabado)!;
+  assert.ok(s2.falta.startsWith('Não dá mais tempo: a semana não tem mais dias e falta 1 pesagem.'), s2.falta);
+});
+
+test('com a semana valendo, não há o que cobrar', () => {
+  assert.strictEqual(semanaEmCurso([em(28, 6, 40, 73.6), em(30, 6, 50, 73.4)], SEXTA), null);
+});
+
+test('o medido é a média das quatro semanas fechadas antes desta', () => {
+  // 11 pesagens nas quatro semanas anteriores: 2,75 por semana
+  const w = new Date(2026, 8, 27).getTime();
+  const quatro = Array.from({ length: 11 }, (_, i) => ({ t: w - 28 * 86400000 + i * 2.5 * 86400000 + 3600000, v: 73 }));
+  const s = semanaEmCurso(quatro.concat([em(28, 6, 40, 73.6)]), SEXTA)!;
+  assert.strictEqual(s.medido, 'No medido, nas quatro semanas anteriores, foram 2,75.');
+  assert.strictEqual(semanaEmCurso([em(28, 6, 40, 73.6)], SEXTA)!.medido, null, 'sem histórico, nada a medir');
 });

@@ -21,3 +21,6 @@ com e sem a régua.
 
 `descansa.mjs` guarda uma série pela régua no modo de sessão e mostra o
 "enquanto descansa" no cartão aberto.
+
+`semanacorpo.mjs` abre o Corpo numa sexta à noite com uma pesagem só na
+semana: a semana sem média.

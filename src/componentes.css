@@ -1807,3 +1807,13 @@ button.ins-linha { border-radius: 0; }
 .ex-descansa { display: flex; flex-direction: column; gap: var(--ins-3); margin: var(--ins-5) 0 var(--ins-3); }
 .ex-descansa-c { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
 .ex-descansa-f { margin: 0; color: var(--ins-atencao-tinta); }
+
+/* ---- A semana sem média (a D, corpo, estado 9) ---------------------------
+   O que falta, e os dias da semana em trechos. Sem cor de estado: a cobrança
+   é a frase, não o vermelho. */
+.co-semana { display: flex; flex-direction: column; gap: var(--ins-3); margin-bottom: var(--ins-6); }
+.co-semana-t { margin: 0; }
+.co-semana p { margin: 0; }
+.co-semana-d { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ins-fio); }
+.co-semana-l { display: flex; justify-content: space-between; gap: var(--ins-4); padding: var(--ins-3) 0; border-bottom: 1px solid var(--ins-fio); }
+.co-semana-l.tempo span:last-child { color: var(--ins-acento); }

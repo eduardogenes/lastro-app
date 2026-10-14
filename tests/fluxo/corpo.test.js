@@ -1590,3 +1590,39 @@ test('o vazio de verdade do Corpo diz quanto custa sair dele, com os números da
   assert.strictEqual(a.$('.co-vazio'), null, 'com o primeiro peso, o vazio sai');
   a.fechar();
 });
+
+test('a semana com uma pesagem só diz o que falta, e não mostra média falsa', async () => {
+  // A D (`corpo.html`, estado 9). Sexta às 21h32, uma pesagem na segunda: faltam
+  // sexta e sábado, e uma pesagem, para a média da semana valer.
+  const agora = new Date(2026, 9, 2, 21, 32).getTime();
+  const seg = new Date(2026, 8, 28, 6, 40).getTime();
+  // e duas semanas anteriores com média, para a média e o ritmo desta terem
+  // com o que aparecer
+  const ant = [15, 17, 22, 24].map(d => new Date(2026, 8, d, 7, 0).getTime());
+  const a = await app({ aba: 'corpo', agora: agora, estado: { body: { cintura: [],
+    peso: ant.map((t, i) => ({ t: t, v: 72.8 + i * 0.1, m: t })).concat([{ t: seg, v: 73.6, m: seg }]) } } });
+  await a.esperar();
+  assert.strictEqual(a.texto('.co-semana-t'), 'Sem média · esta semana · 1 pesagem');
+  assert.ok(a.texto('.co-semana').indexOf('Faltam 2 dias na semana e 1 pesagem para a média valer.') >= 0, a.texto('.co-semana'));
+  assert.deepStrictEqual(a.$$('.co-semana-l').map(l => l.className.split(' ')[1]), ['sem', 'pesagem', 'sem', 'tempo']);
+  const c = a.vJ('ctx.corpo').peso;
+  assert.strictEqual(c.media, '—', 'uma pesagem só não é média da semana');
+  assert.strictEqual(c.ritmo, '—', 'nem dá ritmo');
+
+  // a segunda pesagem fecha a semana, e a cobrança sai
+  a.m.ctx.setPeso(73.2);
+  a.m.ctx.registraPeso();
+  await a.esperar(60);
+  assert.strictEqual(a.$('.co-semana'), null, 'com duas pesagens a média vale');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.media, '73,4 kg', 'e a média da semana aparece');
+  assert.notStrictEqual(a.vJ('ctx.corpo').peso.ritmo, '—', 'e o ritmo também');
+  a.fechar();
+});
+
+test('sem pesagem nenhuma, quem fala é o vazio, e não a cobrança da semana', async () => {
+  const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] }, protocolo: { sessoes: [], poses: null } } });
+  await a.esperar();
+  assert.ok(a.$('.co-vazio'));
+  assert.strictEqual(a.$('.co-semana'), null);
+  a.fechar();
+});

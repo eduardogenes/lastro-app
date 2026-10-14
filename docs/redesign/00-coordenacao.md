@@ -14,8 +14,8 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.465 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `27cec34`.
+- Branch `redesenho-do-zero`, suíte verde: **1.472 passando**, zero "unhandled".
+  Nenhum agente trabalhando. Último commit de código: `b765e6f`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -3217,8 +3217,15 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         veredito continua valendo. Era falso sucesso: "Apliquei" saía antes de
         gravar.
       - **corpo:** 1 ~ (stepper de 100 g em vez da régua) · 2 ✓ · 3 ✓ · 4 ✓ ·
-        5 ✓ · 6 ~ (conferir o valor do mês passado com a variação) · 7 ✓ · 8 ✓ ·
-        9 ~ (conferir "o que falta" na semana de uma pesagem) · **10 ✓ (14/10)** —
+        5 ✓ · **6 ✓ (14/10, conferido)** — o valor do mês passado no lugar e
+        "era 17,4 · −0,6" ao lado; cinco campos e não treze, por decisão do dono
+        (5.a' P3) · 7 ✓ · 8 ✓ · **9 ✓ (14/10)** — faltava: a semana em curso
+        sem média mostrava "média da semana 73,6 kg" com uma pesagem só. Agora
+        diz "Sem média · esta semana · 1 pesagem", "Faltam 2 dias na semana e 1
+        pesagem para a média valer" e a decisão que para, os dias em trechos
+        (com pesagem, sem, "ainda dá tempo") e o medido das quatro semanas
+        anteriores; a média e o ritmo da semana viram "—". Sem tempo que baste,
+        "Não dá mais tempo". · **10 ✓ (14/10)** —
         "3 semanas até a regra poder decidir", com as pesagens vindas de
         `MIN_PESAGENS`, o que cada medida pede, e a conta para quem já tem
         histórico em outro aparelho; some com o primeiro registro. As seções de
@@ -3444,6 +3451,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Momento 1, estado 14: a sessão deitada em duas colunas, sem o aviso de girar (que segue fora do modo). 5 mutações, 5 mortas. Captura em `_medicao/deitado.mjs`. 1.458 passando.
 - 14/10 · Momento 1, estado 2: "enquanto descansa" — pré-treino, copo e peso a um toque no cartão aberto, durante o descanso. 12 mutações, 12 mortas (o limite de horário da refeição viveu até o caso do shake depois do treino). **Fim dos ✗ do levantamento.** 1.465 passando.
 - 14/10 · Conferência dos ~ começa. Semana 5: o ramo do corte com o texto do desenho; "incerto" não é mais lido como falta. 2 mutações, 2 mortas. 1.465 passando.
+- 14/10 · Corpo 6 conferido (feito). Corpo 9 construído: a semana sem média diz o que falta e não mostra média falsa (`semanaEmCurso` no domínio). 9 mutações, 9 mortas. 1.472 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
