@@ -1839,3 +1839,8 @@ button.ins-linha { border-radius: 0; }
 .dd-fotos-aqui { display: flex; flex-direction: column; gap: var(--ins-2); margin: var(--ins-5) 0; }
 .dd-fotos-aqui p { margin: 0; }
 .dd-fotos-aqui button { align-self: flex-start; margin-top: var(--ins-2); }
+
+/* ---- O par curto (a D, comparar, estado 3) ------------------------------- */
+.cp-curto { display: flex; flex-direction: column; gap: var(--ins-2); margin: var(--ins-5) 0; }
+.cp-curto p { margin: 0; }
+.cp-curto button { align-self: flex-start; margin-top: var(--ins-2); }

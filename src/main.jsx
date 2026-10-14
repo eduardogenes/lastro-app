@@ -9862,6 +9862,28 @@ CTX.setCortina = function (on) { view.comparar.cortina = !!on; if (on) view.comp
 CTX.setCorte = function (n) { view.comparar.corte = Math.max(0, Math.min(100, Number(n) || 0)); render(); };
 CTX.setOpacidade = function (n) { view.comparar.opacidade = n; render(); };
 
+/**
+ * O vazio de uma sessão só (a D, comparar, estado 11): tem data. A próxima
+ * sessão é o que falta, a cada `CADENCIA_DIAS`, e com ela nasce o par.
+ */
+function vazioDeUmaSessao(d) {
+  const t = instanteDaData(d);
+  const prox = t + CADENCIA_DIAS * 86400000;
+  // em dias de calendário, e não em horas: "daqui a 10 dias" não muda às 18h
+  const h0 = new Date(Date.now()); h0.setHours(0, 0, 0, 0);
+  const p0 = new Date(prox); p0.setHours(0, 0, 0, 0);
+  const faltam = Math.round((p0.getTime() - h0.getTime()) / 86400000);
+  const quando = sameDay(t, Date.now()) ? 'A primeira sessão foi hoje.' : 'A primeira sessão foi em ' + fmtDate(t) + '.';
+  const dp = new Date(prox);
+  return 'Ainda não há par. ' + quando + ' ' +
+    (faltam > 0
+      ? 'A segunda cai em ' + DIAS_CURTOS[dp.getDay()] + ' ' + fmtDate(prox) + ', daqui a ' + (faltam === 1 ? '1 dia' : faltam + ' dias') + '.'
+      : 'A segunda já pode ser feita: a cadência é a cada ' + CADENCIA_DIAS + ' dias.') +
+    ' Com ela nasce o primeiro par, e com ' + JANELA_MIN + ' a ' + JANELA_MAX +
+    ' dias de intervalo ele já serve para a pergunta do nutricionista.';
+}
+CTX.voltaAoParLongo = function () { aplicaParPadrao(); render(); };
+
 /** Um lado da comparação, com os números da semana daquela sessão. */
 function ladoDaComparacao(d, pose) {
   const ses = d && sessaoDe(S.protocolo.sessoes, d);
@@ -9876,8 +9898,11 @@ function ladoDaComparacao(d, pose) {
     enq: (ref && ref.enq) || null,
     aviso: avisoDaFoto(d, pose, !!ref, 'sem foto nesta pose'),
     retomar: podeTentarFoto(d, pose, !!ref),
-    peso: peso == null ? 'peso –' : fmtDec(peso) + ' kg',
-    cintura: cint == null ? 'cintura –' : fmtDec(cint) + ' cm'
+    // a média da SEMANA, dita como tal; sem medida, a palavra certa e não um
+    // zero nem um traço (a D, comparar, estado 1)
+    peso: peso == null ? 'peso: sem medida' : fmtDec(peso) + ' kg na semana',
+    cintura: cint == null ? 'cintura: sem medida' : fmtDec(cint) + ' cm na semana',
+    pesoV: peso
   };
 }
 
@@ -9895,11 +9920,36 @@ CTX.comparacao = function () {
     if (s && s.obs) notas.push(fmtDate(instanteDaData(d)) + ' · ' + s.obs);
   });
 
-  let intervalo = '';
+  let intervalo = '', curto = null, longo = false;
   if (par) {
     const dias = Math.round((instanteDaData(c.ate) - instanteDaData(c.de)) / 86400000);
-    intervalo = Math.abs(dias) + (Math.abs(dias) === 1 ? ' dia' : ' dias') + ' entre as duas · ' +
-                comFoto.length + ' sessões nesta pose';
+    const primeira = comFoto[0].d, ultima = comFoto[comFoto.length - 1].d;
+    const diasLongo = Math.round((instanteDaData(ultima) - instanteDaData(primeira)) / 86400000);
+    longo = c.de === primeira && c.ate === ultima;
+    // O par mais longo é o que abre, e diz que é (a D, comparar, estado 1), com
+    // a variação da média semanal quando as duas semanas têm peso.
+    const delta = de.pesoV != null && ate.pesoV != null ? ate.pesoV - de.pesoV : null;
+    intervalo = longo
+      ? 'Par mais longo que existe desta pose: ' + dias + ' dias' + (delta != null ? ', ' + fmtSig(Math.round(delta * 10) / 10) + ' kg' : '')
+      : Math.abs(dias) + (Math.abs(dias) === 1 ? ' dia' : ' dias') + ' entre as duas · ' +
+        comFoto.length + ' sessões nesta pose';
+    // O PAR CURTO (estado 3): a tela avisa e não impede. O aviso é o fato —
+    // o que aquele intervalo consegue mostrar — e o atalho de volta fica ao lado.
+    const absd = Math.abs(dias);
+    if (absd <= JANELA_MAX && diasLongo > absd) {
+      const pares = comFoto.slice(0, -1).map(function (x) {
+        return Math.round((instanteDaData(ultima) - instanteDaData(x.d)) / 86400000);
+      });
+      curto = {
+        titulo: absd + (absd === 1 ? ' dia mostra' : ' dias mostram') + ' pouco',
+        texto: 'Nesse intervalo a diferença é quase toda água e sono. ' + (absd >= JANELA_MIN
+          ? 'Serve para a pergunta do nutricionista; não serve para ver mudança.'
+          : 'Não serve para ver mudança.'),
+        voltar: 'Voltar ao par de ' + diasLongo + ' dias',
+        pares: 'Pares desta pose: ' + (pares.length === 1 ? pares[0]
+          : pares.slice(0, -1).join(', ') + ' e ' + pares[pares.length - 1]) + ' dias.'
+      };
+    }
   }
 
   // A pergunta do fechamento semanal, feita onde a resposta está à vista: ele
@@ -9949,7 +9999,9 @@ CTX.comparacao = function () {
     par: par,
     vazio: comFoto.length === 0
       ? 'Nenhuma foto nesta pose ainda.'
-      : 'Só uma sessão nesta pose. A comparação começa na segunda.',
+      : vazioDeUmaSessao(comFoto[0].d),
+    longo: longo,
+    curto: curto,
     datas: comFoto.map(function (s) { return { d: s.d, txt: fmtDate(instanteDaData(s.d)) }; }),
     de: de, ate: ate,
     sobrepor: c.sobrepor,

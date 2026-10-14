@@ -14,13 +14,13 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.493 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.496 passando**, zero "unhandled".
 - **⚠ Publicar logo (dado):** o service worker apagava o cache das fotos do corpo
   (`lastro-corpo`) a cada versão publicada — só poupava o das fotos de aparelho.
   Corrigido em 14/10 (o F252 do comparar, estado 10). Até a versão corrigida
   chegar ao iPhone, cada publicação nova ainda apaga as fotos do corpo que não
   subiram para a cópia remota.
-  Nenhum agente trabalhando. Último commit de código: `5a21681`.
+  Nenhum agente trabalhando. Último commit de código: `3c218f7`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -3285,9 +3285,19 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         oferece baixar a cópia. Vale também para o momento-1, estado 10.
         **Divergência:** "Liberar espaço" apagando fotos antigas não entrou — as
         fotos ficam no cache do navegador, não no armazenamento que encheu.
-      - **comparar:** 1 ~ · **2 ✓ (14/10)** — a cortina como terceiro modo: a
+      - **comparar:** **1 ✓ (14/10)** — "71,5 kg na semana", "cintura: sem
+        medida" (a palavra certa no lugar do traço), "Par mais longo que existe
+        desta pose: 55 dias, +2,0 kg" e a frase de por que o par que abre é o
+        mais longo · **2 ✓ (14/10)** — a cortina como terceiro modo: a
         foto nova por cima, recortada na divisa, que o dedo anda (um `range`
-        nativo, acessível); sem captura com foto de verdade · 3 ~ · 4 ~ · 5 ~ · 6 ~ · **7 ✓ (14/10)** — o par já recuava sozinho para a sessão mais antiga com a
+        nativo, acessível); sem captura com foto de verdade · **3 ✓ (14/10)** —
+        par de até 28 dias que não é o mais longo: "16 dias mostram pouco", o
+        que ele serve e não serve, "Voltar ao par de 42 dias" e "Pares desta
+        pose: 42 e 16 dias"; obedece, não bloqueia · 4 ~ (onde está cada arquivo
+        antes do toque: não construído — afirmaria "no aparelho" sem varrer o
+        cache) · 5 ~ (a busca já tem fim e motivo, F297; sem contagem de KB) ·
+        6 ✓ (conferido: "sem foto nesta pose", "a nuvem não devolveu" com tentar
+        de novo, "este aparelho não entrou na conta") · **7 ✓ (14/10)** — o par já recuava sozinho para a sessão mais antiga com a
         pose; agora diz "27 dias, e não 55" e quais sessões não têm a pose. (A
         lista das poses com par longo e curto, do desenho, não entrou.) · 8 ✓ · 9 ✓ · **10 ✓ (14/10)** —
         a causa era real e estava viva: o worker apagava `lastro-corpo` a cada
@@ -3296,7 +3306,9 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         só neste aparelho" (a cópia em JSON não leva fotos) com "Entrar na
         conta"; com conta, "N fotos ainda não subiram" com "Subir agora".
         (Sem a contagem de quantas sumiram depois de um despejo do navegador:
-        isso pediria varrer o cache.) · 11 ~.
+        isso pediria varrer o cache.) · **11 ✓ (14/10)** — "Ainda não há par. A
+        primeira sessão foi em 10/10. A segunda cai em sáb 24/10, daqui a 10
+        dias", e quando o par passa a servir à pergunta do nutricionista.
       - **sessao-fotos:** 1 ~ · **2 ~ (14/10)** — os nove blocos no topo da
         câmera, do tamanho de um dedo (a pose atual, as fechadas, a não
         guardada), e a pose dita em voz ao abrir a câmera e a cada pose nova
@@ -3504,6 +3516,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · A carga na tela com vírgula: `fmtCarga` na coluna anterior, no histórico, na conta de anilhas, nas grades e no campo de correção ("127,5 × 12 @ 2"). Um caso tinha o ponto como regra ("é fmtNum") — reescrito, com o porquê. 1.490 passando.
 - 14/10 · **Achado de dado, corrigido (comparar 10, F252):** a limpeza de ativação do service worker poupava `lastro-fotos` e `treino-fotos`, e não `lastro-corpo` — cada publicação apagava a cópia local das fotos do corpo. Agora poupa, e um caso compara a lista do worker com todo `CACHE_*` declarado em `src/infra`. 1 mutação, morta. 1.491 passando.
 - 14/10 · Comparar 10, a tela: o Corpo diz quantas fotos só existem neste aparelho e oferece subir (com conta) ou entrar (sem conta); a subida redesenha. 4 mutações, 4 mortas. 1.493 passando.
+- 14/10 · Comparar 1, 3 e 11 (e 6 conferido): a média "na semana" e "sem medida", o par mais longo dito com a variação, o par curto que avisa sem impedir, o vazio de uma sessão com a data da segunda. 8 mutações, 7 mortas e 1 redundância tirada. 1.496 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

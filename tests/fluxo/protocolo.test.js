@@ -589,7 +589,63 @@ test('o par padrão é a mais nova contra a MAIS ANTIGA', async () => {
   a.v('ctx.abreComparar');
   assert.strictEqual(a.vista().comparar.de, datas[0]);
   assert.strictEqual(a.vista().comparar.ate, datas[2]);
-  assert.ok(a.vJ('ctx.comparacao').intervalo.startsWith('42 dias entre as duas'));
+  const c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.intervalo, 'Par mais longo que existe desta pose: 42 dias', 'e diz que é o mais longo');
+  assert.strictEqual(c.longo, true);
+  assert.strictEqual(c.curto, null, 'o par longo não ganha o aviso de curto');
+  a.fechar();
+});
+
+test('o par curto que ele escolheu: a tela avisa, não impede, e volta ao longo num toque', async () => {
+  // a D, comparar, estado 3
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  const datas = [56, 30, 14].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  a.v('ctx.setDataComparada', 'de', datas[1]);
+  let c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.de.d, datas[1], 'obedeceu: o par é o que ele pediu');
+  assert.strictEqual(c.curto.titulo, '16 dias mostram pouco');
+  assert.ok(/Serve para a pergunta do nutricionista; não serve para ver mudança\./.test(c.curto.texto), c.curto.texto);
+  assert.strictEqual(c.curto.voltar, 'Voltar ao par de 42 dias');
+  assert.strictEqual(c.curto.pares, 'Pares desta pose: 42 e 16 dias.');
+  a.clicar('[data-a="par-longo"]');
+  await a.esperar(60);
+  c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.de.d, datas[0], 'de volta ao par mais longo');
+  assert.strictEqual(c.curto, null);
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('par longo que não é o mais longo não ganha aviso; par de menos de 10 dias não serve nem à pergunta', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  const datas = [70, 35, 6, 0].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  a.v('ctx.setDataComparada', 'de', datas[1]);
+  assert.strictEqual(a.vJ('ctx.comparacao').curto, null, '35 dias não é par curto');
+  a.v('ctx.setDataComparada', 'de', datas[2]);
+  const c = a.vJ('ctx.comparacao').curto;
+  assert.strictEqual(c.titulo, '6 dias mostram pouco');
+  assert.ok(/Não serve para ver mudança\.$/.test(c.texto) && !/pergunta/.test(c.texto), c.texto);
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('uma sessão só: o vazio tem data, e diz quando nasce o par', async () => {
+  // a D, comparar, estado 11
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  comSessoes(a, [diasAtras(4)], 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  const v = a.vJ('ctx.comparacao').vazio;
+  assert.ok(/^Ainda não há par\. A primeira sessão foi em \d\d\/\d\d\. A segunda cai em \S+ \d\d\/\d\d, daqui a 10 dias\./.test(v), v);
+  assert.ok(/com 10 a 28 dias de intervalo ele já serve para a pergunta do nutricionista\.$/.test(v), v);
   a.fechar();
 });
 
@@ -629,8 +685,9 @@ test('o peso ao lado da foto é a média da semana, e vem do registro corporal',
 
   a.v('ctx.abreComparar');
   const c = a.vJ('ctx.comparacao');
-  assert.strictEqual(c.de.peso, '91,0 kg', 'média das duas pesagens daquela semana');
-  assert.strictEqual(c.ate.peso, '88,0 kg');
+  assert.strictEqual(c.de.peso, '91,0 kg na semana', 'média das duas pesagens daquela semana');
+  assert.strictEqual(c.ate.peso, '88,0 kg na semana');
+  assert.strictEqual(c.intervalo, 'Par mais longo que existe desta pose: 14 dias, −3,0 kg', 'com a variação da média');
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
   // render que o aviso de falha dispara sem documento para desenhar.
   await a.esperar(80);
@@ -645,8 +702,8 @@ test('sem pesagem naquela semana, o lugar do número fica vazio em vez de zero',
 
   a.v('ctx.abreComparar');
   const c = a.vJ('ctx.comparacao');
-  assert.strictEqual(c.de.peso, 'peso –');
-  assert.strictEqual(c.de.cintura, 'cintura –');
+  assert.strictEqual(c.de.peso, 'peso: sem medida');
+  assert.strictEqual(c.de.cintura, 'cintura: sem medida');
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
   // render que o aviso de falha dispara sem documento para desenhar.
   await a.esperar(80);

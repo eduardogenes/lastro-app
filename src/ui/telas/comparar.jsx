@@ -151,6 +151,22 @@ export function Comparar({ ctx }) {
             )}
 
             <Procedencia>{c.intervalo}</Procedencia>
+            {c.longo && (
+              <Procedencia>
+                Comparar com a sessão anterior engana: em duas semanas a diferença
+                é quase toda água e sono. Por isso o par que abre é o mais longo.
+              </Procedencia>
+            )}
+            {/* O par curto que ele escolheu: a tela avisa e não impede (a D,
+                estado 3). Avisar e obedecer é diferente de bloquear. */}
+            {c.curto && (
+              <div class="cp-curto" role="status">
+                <b class="ins-body ins-t1">{c.curto.titulo}</b>
+                <p class="ins-body-sm ins-t2">{c.curto.texto}</p>
+                <button class="ins-btn-secondary" data-a="par-longo" onClick={ctx.voltaAoParLongo}>{c.curto.voltar}</button>
+                <p class="ins-body-xs ins-t3">{c.curto.pares}</p>
+              </div>
+            )}
             {/* O par que recuou sozinho diz que recuou (a D, estado 7). */}
             {c.recuou && (
               <div class="cp-recuou">
@@ -159,7 +175,7 @@ export function Comparar({ ctx }) {
               </div>
             )}
             <Procedencia>
-              peso e cintura são a média da SEMANA de cada sessão, tirada do
+              peso e cintura são a média da semana de cada sessão, tirada do
               registro corporal — a sessão de fotos não pede número nenhum.
             </Procedencia>
             {c.notas.map(n => <Procedencia key={n}>{n}</Procedencia>)}
