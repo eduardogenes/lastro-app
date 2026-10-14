@@ -12,8 +12,13 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { app, agoraEstavel, inicioDaSemana, DIA } from './harness.js';
 
+// A seção de cardio é do dia de TREINO: no descanso o cardio entra pela folha do
+// tipo do dia (a D, `agora-descanso.html`, estado 1). Os casos do placar e do
+// registro rápido fixam a cadência, para não dependerem do dia da semana.
+const TODO_DIA_TREINO = ['treino','treino','treino','treino','treino','treino','treino'];
+
 test('placar da semana aparece no AGORA', async () => {
-  const a = await app({ aba: 'agora' });
+  const a = await app({ aba: 'agora', estado: { cadencia: TODO_DIA_TREINO } });
   const linha = a.texto('.cardl');
   assert.ok(/cardio/.test(linha), linha);
   assert.ok(/0 de 2 nesta semana/.test(linha), linha);
@@ -21,7 +26,7 @@ test('placar da semana aparece no AGORA', async () => {
 });
 
 test('registro rápido sem sair do AGORA', async () => {
-  const a = await app({ aba: 'agora' });
+  const a = await app({ aba: 'agora', estado: { cadencia: TODO_DIA_TREINO } });
   assert.strictEqual(a.$('.cardq'), null, 'fechado por padrão, para não ocupar espaço');
 
   a.v('abrirCardioRapido');
@@ -42,7 +47,7 @@ test('registro rápido sem sair do AGORA', async () => {
 });
 
 test('feito hoje muda o estado da linha', async () => {
-  const a = await app({ aba: 'agora', estado: { logs: {}, done: [],
+  const a = await app({ aba: 'agora', estado: { logs: {}, done: [], cadencia: TODO_DIA_TREINO,
     cardio: [{ t: Date.now(), m: 'bike', min: 20, i: 'leve' }] } });
   assert.ok(a.$('.cardl').className.includes('feito'));
   assert.ok(a.texto('.cardl').includes('20 min de bike'));
@@ -179,5 +184,24 @@ test('a divisão do DADOS em três lugares não engoliu regra nenhuma', async ()
   await a.esperar();
   assert.ok(/nunca antes do treino/.test(proc(a)),
     'e a regra de quando fazer cardio está onde ele se registra: ' + proc(a));
+  a.fechar();
+});
+
+test('no descanso não há seção de cardio; ele entra pela folha do tipo do dia', async () => {
+  // A D (`agora-descanso.html`, estados 1 e 4): "não há outro cartão, faixa ou
+  // convite", e "um cardio leve num domingo é cardio em dia sem musculação, e é
+  // aqui que ele entra" — na folha.
+  const DESCANSO = ['descanso','descanso','descanso','descanso','descanso','descanso','descanso'];
+  const a = await app({ aba: 'agora', estado: { logs: {}, done: [], cardio: [], cadencia: DESCANSO } });
+  assert.strictEqual(a.$('.cardl'), null, 'sem seção, sem convite');
+  a.clicar('[data-a="tipo-do-dia"]');
+  await a.esperar(60);
+  a.clicar('[data-a="jafiz-cardio"]');
+  await a.esperar(60);
+  assert.ok(a.$('.cardq'), '"Já fiz → Cardio" abre o registro no Agora');
+  a.clicar('.cardq-b');
+  await a.esperar(60);
+  assert.strictEqual(a.S().cardio.length, 1, 'e grava');
+  assert.strictEqual(a.$('.cardl'), null, 'registrado, a seção volta a sair');
   a.fechar();
 });

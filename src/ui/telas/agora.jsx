@@ -469,6 +469,12 @@ export function Agora({ ctx }) {
           perna, e quem decide se ainda dá é ele. */}
       )}
 
+      {/* No DESCANSO não há seção de cardio (a D, `agora-descanso.html`,
+          estado 1: "não há outro cartão, faixa ou convite"): o cardio entra
+          pela folha do tipo do dia, "Já fiz alguma coisa hoje → Cardio", e é
+          ela que abre o registro aqui. No dia de treino a seção fica — o fim
+          das sessões A e D, o outro lugar do cardio na D, não tem desenho. */}
+      {(diaHoje.cadencia === 'treino' || cromo.cardio.aberto) && (
       <Secao rotulo="cardio" nota={`${cardio.semana} de ${cardio.alvo} nesta semana`}>
       <div class={'cardl' + (cromo.cardio.feito ? ' feito' : '')}>
         <span class="cardl-t">cardio</span>
@@ -516,6 +522,7 @@ export function Agora({ ctx }) {
             quem precisa dela. */}
         <Procedencia>{cardio.regra}</Procedencia>
       </Secao>
+      )}
 
       {/* OS CATORZE DIAS que a regra do corte lê. §1.1 os lista como posse do
           Agora, e o §5.7 os nomeia no estado mais mudo que esta tela tem: num
