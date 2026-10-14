@@ -14,8 +14,8 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.472 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `b765e6f`.
+- Branch `redesenho-do-zero`, suíte verde: **1.478 passando**, zero "unhandled".
+  Nenhum agente trabalhando. Último commit de código: `3c11c18`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -3231,7 +3231,13 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         histórico em outro aparelho; some com o primeiro registro. As seções de
         registro seguem abaixo (o desenho mostra só a lista). · 11 ✓.
       - **prescricao:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ~ · 5 ✓ · 6 ~ (conferir a pergunta
-        do nome antes de gravar) · 7 ~ · 8 ~ · 9 ~ (conferir o vazio sem plano) ·
+        do nome antes de gravar) · 7 ~ · 8 ~ · **9 ✓ (14/10)** — faltava: um
+        endereço novo semeava programa e plano em silêncio. Sem registro nenhum
+        e sem conta entrada, a Prescrição diz "Este endereço está vazio" e
+        oferece achar antes de começar: a conta (leva ao entrar), a cópia de
+        segurança (o arquivo ali mesmo), o ícone antigo; depois "Começar com os
+        dois", com o programa e o plano resumidos; sem rede, diz o que funciona
+        offline. Some com o primeiro registro. ·
         10 ✓ · **11 ✓ (14/10)** — o 401 derrubava a
         sessão e dali em diante a sincronia parava em silêncio, como falta de
         rede. Agora o fato fica gravado no estado da sincronia, e o Agora diz "A
@@ -3452,6 +3458,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Momento 1, estado 2: "enquanto descansa" — pré-treino, copo e peso a um toque no cartão aberto, durante o descanso. 12 mutações, 12 mortas (o limite de horário da refeição viveu até o caso do shake depois do treino). **Fim dos ✗ do levantamento.** 1.465 passando.
 - 14/10 · Conferência dos ~ começa. Semana 5: o ramo do corte com o texto do desenho; "incerto" não é mais lido como falta. 2 mutações, 2 mortas. 1.465 passando.
 - 14/10 · Corpo 6 conferido (feito). Corpo 9 construído: a semana sem média diz o que falta e não mostra média falsa (`semanaEmCurso` no domínio). 9 mutações, 9 mortas. 1.472 passando.
+- 14/10 · Prescrição 9: o endereço vazio oferece achar o que existe (conta, cópia, ícone antigo) antes de começar. 7 mutações, 7 mortas. 1.478 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

@@ -24,3 +24,5 @@ com e sem a régua.
 
 `semanacorpo.mjs` abre o Corpo numa sexta à noite com uma pesagem só na
 semana: a semana sem média.
+
+`endereco.mjs` abre a Prescrição num endereço sem dado nenhum.

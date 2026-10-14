@@ -6833,6 +6833,40 @@ CTX.resumoDoPlano = function () {
   };
 };
 
+// ---------- o endereço vazio (a D, `prescricao.html`, estado 9) ----------
+//
+// Os dados ficam presos ao endereço de onde o app é aberto (F56): um link novo
+// abre um app vazio, e o histórico continua no antigo. Aparelho novo já ficaria
+// sem plano para sempre (F271). Então o vazio de verdade não oferece começar em
+// primeiro: oferece ACHAR o que existe — a conta, a cópia de segurança, o ícone
+// antigo — e só depois começar. O programa e o plano já vêm semeados; começar é
+// só dizer que não há nada em outro lugar.
+function enderecoVazio() {
+  if (NUVEM.sessao()) return false;
+  const tem = function (x) { return Array.isArray(x) && x.length > 0; };
+  if (Object.keys(S.logs || {}).some(function (k) { return tem(S.logs[k]); })) return false;
+  if (tem(S.done) || tem(S.cardio) || tem(S.progLog) || tem(S.aulas) || tem(S.comidaHist)) return false;
+  if (S.body && Object.keys(S.body).some(function (k) { return tem(S.body[k]); })) return false;
+  if (S.protocolo && tem(S.protocolo.sessoes)) return false;
+  const d = S.dia;
+  if (S.sessao || (d && ((d.done && Object.keys(d.done).length) || d.agua))) return false;
+  return true;
+}
+CTX.enderecoVazio = function () {
+  if (view.comecouAqui || !enderecoVazio()) return null;
+  const r = rot().filter(function (k) { return !!treino(k); });
+  const series = r.reduce(function (n, k) {
+    return n + treino(k).ex.reduce(function (m, ex) { return m + setsFor(ex); }, 0);
+  }, 0);
+  const res = CTX.resumoDoPlano();
+  return {
+    programa: r.length + ' treinos na sequência · ' + series + ' séries nela inteira',
+    plano: res.refeicoes + ' momentos · ' + res.treino.kcal + ' kcal em dia de treino',
+    semRede: typeof navigator !== 'undefined' && navigator.onLine === false
+  };
+};
+CTX.comecaAqui = function () { view.comecouAqui = true; render(); };
+
 CTX.alimentosFiltrados = function (q) {
   const cat = catalogoAlimentos();
   return Object.keys(cat).map(function (k) { return cat[k]; })

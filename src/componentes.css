@@ -1817,3 +1817,10 @@ button.ins-linha { border-radius: 0; }
 .co-semana-d { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ins-fio); }
 .co-semana-l { display: flex; justify-content: space-between; gap: var(--ins-4); padding: var(--ins-3) 0; border-bottom: 1px solid var(--ins-fio); }
 .co-semana-l.tempo span:last-child { color: var(--ins-acento); }
+
+/* ---- O endereço vazio (a D, prescricao, estado 9) ------------------------ */
+.pr-vazio-p { margin: 0 0 var(--ins-6); }
+.pr-vazio-h { margin: var(--ins-6) 0 var(--ins-2); }
+.pr-vazio-arq { position: relative; cursor: pointer; }
+.pr-vazio-arq input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.pr-vazio-b { margin-top: var(--ins-5); width: 100%; }

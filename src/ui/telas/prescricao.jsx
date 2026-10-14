@@ -178,12 +178,72 @@ export function Prescricao({ ctx }) {
   const d = ctx.dadosDoApp();
   const plano = ctx.planoCompleto();
   const resumo = ctx.resumoDoPlano();
+  const vazio = ctx.enderecoVazio();
 
   return (
     <>
-      <Cabecalho olho="o que foi prescrito" titulo="Prescrição" />
+      <Cabecalho olho={vazio ? 'nada aqui ainda' : 'o que foi prescrito'} titulo="Prescrição" />
 
-      <Secao primeira>
+      {/* O ENDEREÇO VAZIO (a D, estado 9): achar o que existe vem antes de
+          começar do zero, porque começar aqui não traz o que está no outro
+          endereço — e quem abriu por um link novo acha que perdeu tudo. */}
+      {vazio && (
+        <Secao primeira rotulo="Este endereço está vazio">
+          <p class="ins-body-sm ins-t2 pr-vazio-p">
+            Os dados ficam presos ao endereço de onde o app é aberto. Se você abriu
+            por um link novo, o seu histórico continua no antigo — e o ícone da tela
+            de início aponta para ele.
+          </p>
+          <h3 class="ins-rotulo pr-vazio-h">Onde o seu programa e o seu plano podem estar</h3>
+          <div class="ins-lista">
+            <button class="ins-linha" data-a="vazio-conta" onClick={ctx.abreAjustes}>
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">Na sua conta</span>
+                <span class="ins-linha-s">entrar traz programa, plano e histórico · precisa de rede</span>
+              </span>
+            </button>
+            <label class="ins-linha pr-vazio-arq">
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">Numa cópia de segurança</span>
+                <span class="ins-linha-s">arquivo JSON que você baixou</span>
+              </span>
+              <input type="file" accept="application/json,.json,.txt" data-a="vazio-copia"
+                     onChange={e => ctx.importaArquivo(e.currentTarget)} />
+            </label>
+            <div class="ins-linha">
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">No ícone antigo da tela de início</span>
+                <span class="ins-linha-s">abra por ele e confira antes de apagar</span>
+              </span>
+            </div>
+          </div>
+          <h3 class="ins-rotulo pr-vazio-h">Se não houver nada em lugar nenhum</h3>
+          <div class="ins-lista">
+            <div class="ins-linha">
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">O programa do treinador</span>
+                <span class="ins-linha-s">{vazio.programa}</span>
+              </span>
+            </div>
+            <div class="ins-linha">
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">O plano do nutricionista</span>
+                <span class="ins-linha-s">{vazio.plano}</span>
+              </span>
+            </div>
+          </div>
+          <button class="ins-btn-secondary pr-vazio-b" data-a="vazio-comeca" onClick={ctx.comecaAqui}>
+            Começar com os dois
+          </button>
+          <Procedencia>
+            {vazio.semRede
+              ? 'Sem rede agora. Entrar na conta e baixar o histórico só funcionam quando o sinal voltar; começar do zero funciona offline — e não apaga o que está no outro endereço.'
+              : 'Começar do zero não apaga o que está no outro endereço.'}
+          </Procedencia>
+        </Secao>
+      )}
+
+      <Secao primeira={!vazio}>
         <Chips opcoes={MODOS} valor={modo} onMuda={setModo} />
       </Secao>
 
