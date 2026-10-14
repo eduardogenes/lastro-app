@@ -21,14 +21,14 @@ export function Retrospectiva({ ctx }) {
 
       {d.evol.length > 0 && (
         <>
-          <div class="ins-label hsec">o que evoluiu</div>
+          <h2 class="ins-rotulo hsec">O que evoluiu</h2>
           {d.evol.map((x, i) => <LinhaResumo key={i} {...x} />)}
         </>
       )}
 
       {d.parados.length > 0 && (
         <>
-          <div class="ins-label hsec">parados no bloco</div>
+          <h2 class="ins-rotulo hsec">Os parados no bloco</h2>
           <p class="ins-body-sm ins-t3 cue retro-nota">
             Mesma carga do começo ao fim, com 3 ou mais sessões. Não quer dizer
             que esteja errado — quer dizer que você olhou.
@@ -46,7 +46,7 @@ export function Retrospectiva({ ctx }) {
 
       {d.dores && (
         <div class="painsum tc-bloco atencao">
-          <div class="ins-label ins-amber">dor no bloco</div>
+          <h2 class="ins-rotulo ins-amber">A dor no bloco</h2>
           <p class="ins-body-sm ins-t2">
             <b>{d.dores}.</b> Vale olhar se está concentrada em algum exercício
             antes de começar o próximo.

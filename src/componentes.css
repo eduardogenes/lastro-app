@@ -1740,3 +1740,7 @@ button.ins-linha { border-radius: 0; }
 .ag-volta-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .ag-volta-t small { font-size: 13px; color: var(--ins-tinta-2); }
 .ag-volta-l > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+
+/* O RÓTULO DE SEÇÃO (frente 3 §2, R2; 10-tokens): 15 px, peso 600, caixa de
+   frase, na tinta de leitura — nunca caixa alta com tracking. */
+.ins-rotulo { margin: 0; font: 600 var(--ins-t-corpo-forte)/1.25 var(--ins-fonte); color: var(--ins-tinta); }

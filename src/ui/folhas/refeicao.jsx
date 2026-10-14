@@ -53,7 +53,7 @@ export function FolhaRefeicao({ ctx, id }) {
       {r.nota && <p class="ins-body-sm ins-t3 fr-nota">{r.nota}</p>}
 
       <div class="fr-porcao">
-        <div class="ins-label">porção · só de hoje</div>
+        <h3 class="ins-rotulo">A porção de hoje</h3>
         <div class="ins-chips">
           {PORCOES.map(p => (
             <button
@@ -68,7 +68,7 @@ export function FolhaRefeicao({ ctx, id }) {
         </Procedencia>
       </div>
 
-      <div class="ins-label fr-h">o que tem dentro</div>
+      <h3 class="ins-rotulo fr-h">O que tem dentro</h3>
       <div class="ins-lista">
         {r.itens.filter(i => !i.alta || alta).map(i => {
           const a = catalogo[i.f];
@@ -147,7 +147,7 @@ export function FolhaDia({ ctx }) {
           âncoras do relógio. Deslocar o dia em bloco poria o café às 14h. */}
       {d.cadencia === 'treino' && (
         <div class="fd-turno">
-          <div class="ins-label">turno do treino</div>
+          <h3 class="ins-rotulo">O turno do treino</h3>
           <div class="fd-turnos">
             {d.turnos.map(t => (
               <button
@@ -169,7 +169,7 @@ export function FolhaDia({ ctx }) {
       )}
 
       <div class="fd-alta">
-        <div class="ins-label">demanda alta</div>
+        <h3 class="ins-rotulo">A demanda alta</h3>
         <p class="ins-body-sm ins-t3">
           Entra o carboidrato extra do intra-treino. Use no dia de perna pesada.
         </p>
@@ -185,7 +185,7 @@ export function FolhaDia({ ctx }) {
           vieram de fora dele. Sair sabendo o que comeu não estraga a semana;
           sair sem saber, sim. */}
       <div class="fd-aderencia">
-        <div class="ins-label">como foi o dia</div>
+        <h3 class="ins-rotulo">Como foi o dia</h3>
         <div class="chips ins-chips">
           {d.aderencias.map(x => (
             <button

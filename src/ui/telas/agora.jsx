@@ -238,7 +238,7 @@ export function Agora({ ctx }) {
           marcaria o dia inteiro e descobriria depois que a adesão não mexeu. */}
       {!ctx.guardando() && (
         <div class="ins-aviso-perda" role="status">
-          <b class="ins-label">Este aparelho não está guardando</b>
+          <b class="ins-rotulo">Este aparelho não está guardando</b>
           <p class="ins-body-sm">
             Aba privada ou armazenamento bloqueado. O que você marcar vale até
             fechar esta aba — e não entra na conta dos 14 dias.
@@ -254,7 +254,7 @@ export function Agora({ ctx }) {
           Ajustes herdaram todo o resto daquela tela, menos este. */}
       {app.cobraBackup && (
         <div class="ins-aviso-perda" role="status">
-          <b class="ins-label">Cópia de segurança atrasada</b>
+          <b class="ins-rotulo">Cópia de segurança atrasada</b>
           <p class="ins-body-sm">
             {app.backupTxt} Baixe o JSON nos ajustes. É a única cópia que não
             depende deste navegador.
@@ -475,9 +475,10 @@ export function Agora({ ctx }) {
           ela que abre o registro aqui. No dia de treino a seção fica — o fim
           das sessões A e D, o outro lugar do cardio na D, não tem desenho. */}
       {(diaHoje.cadencia === 'treino' || cromo.cardio.aberto) && (
-      <Secao rotulo="cardio" nota={`${cardio.semana} de ${cardio.alvo} nesta semana`}>
+      <Secao>
+      {/* Sem rótulo (frente 3 §2, R1): a primeira linha já diz "Cardio" e o placar. */}
       <div class={'cardl' + (cromo.cardio.feito ? ' feito' : '')}>
-        <span class="cardl-t">cardio</span>
+        <span class="cardl-t">Cardio</span>
         <span class="cardl-n">{cromo.cardio.resumo}</span>
         <button class="cardl-b" onClick={ctx.abreCardio}>
           {cromo.cardio.aberto ? 'Fechar' : 'Registrar'}

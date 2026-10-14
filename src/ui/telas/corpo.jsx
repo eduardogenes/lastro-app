@@ -22,6 +22,9 @@ import { fmtDec, fmtSig } from '../../dominio/formato';
 import { useState } from 'preact/hooks';
 import { Teclado } from '../instrumento/teclado.jsx';
 
+/** "O peso da manhã" vira "Peso da manhã": o nome da medida sem o artigo do rótulo de seção. */
+function semArtigo(r) { const x = r.replace(/^(O|A|Os|As) /, ''); return x.charAt(0).toUpperCase() + x.slice(1); }
+
 /** Uma medida corporal: stepper, botão e a curva das últimas 14 semanas. */
 function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar, chave, onde, ondeRascunho, onOnde }) {
   return (
@@ -43,10 +46,10 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
       {teclado
         ? <Teclado
             texto={teclado.texto} decimal={teclado.decimal} unidade={teclado.unidade}
-            rotulo={'digitar ' + rotulo + ' em ' + teclado.unidade}
+            rotulo={'digitar ' + semArtigo(rotulo).toLowerCase() + ' em ' + teclado.unidade}
             aoTeclar={aoTeclar} aoFechar={aoFecharTeclado}
           />
-        : <button class="dd-tclbtn" data-a={'tcl-abre-' + (chave || rotulo)} onClick={aoAbrirTeclado}>
+        : <button class="dd-tclbtn" data-a={'tcl-abre-' + (chave || semArtigo(rotulo).toLowerCase())} onClick={aoAbrirTeclado}>
             Digitar o número
           </button>}
 
@@ -65,7 +68,7 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
       {dia && (dia.aberto
         ? <div class="dd-dia">
             <input
-              class="ins-input dd-data" type="date" id={'ddia-' + (chave || rotulo)}
+              class="ins-input dd-data" type="date" id={'ddia-' + (chave || semArtigo(rotulo).toLowerCase())}
               value={dia.iso} max={dia.max}
               onInput={e => onDia(e.currentTarget.value)}
             />
@@ -77,7 +80,7 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
         : <button class="dd-diabtn" onClick={onAbrirDia}>
             {/* "Peso de outro dia", e não "outro dia": o botão diz do que é o
                 dia que ele troca (§7.8). */}
-            {dia.hoje ? rotulo.charAt(0).toUpperCase() + rotulo.slice(1) + ' de outro dia'
+            {dia.hoje ? semArtigo(rotulo) + ' de outro dia'
                       : 'registrando em ' + dia.txt + ' · trocar'}
           </button>)}
 
@@ -97,7 +100,7 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
             <div class="crow" key={x.t}>
               <span class="crow-d ins-label">{x.data}</span>
               <span class="crow-m ins-data">{x.valor}</span>
-              <button class="crow-x" onClick={() => aoApagar(x.t)}>remover</button>
+              <button class="crow-x" onClick={() => aoApagar(x.t)}>Remover</button>
             </div>
           ))}
         </div>
@@ -121,7 +124,7 @@ function ComoMedi({ chave, onde, rascunho, onOnde }) {
   }
   return (
     <label class="co-onde">
-      <span class="ins-label-sm">como eu medi</span>
+      <span class="ins-label-sm">Como eu medi</span>
       <input
         class="ins-input" type="text" id={'onde-' + chave}
         placeholder={onde || 'onde você passou a fita'}
@@ -149,7 +152,7 @@ function ComoMedi({ chave, onde, rascunho, onOnde }) {
  */
 function Fotos({ f, ctx }) {
   return (
-    <Secao rotulo="fotos" nota={f.nota}>
+    <Secao rotulo="As fotos" nota={f.nota}>
       <div class="dd-fotos">
         <GradeMetricas
           colunas={2}
@@ -204,7 +207,7 @@ export function Corpo({ ctx }) {
                                onClick={ctx.abreEvolucao}>Evolução</button>} />
 
       <Medida
-        rotulo="peso da manhã" chave="peso" nota={c.peso.nota} primeira
+        rotulo="O peso da manhã" chave="peso" nota={c.peso.nota} primeira
         valor={c.peso.valor} passo={0.1} unidade="kg" serie={c.peso.serie}
         onMuda={ctx.setPeso} onRegistrar={ctx.registraPeso} acao={c.peso.acao}
         dia={c.peso.dia} onAbrirDia={() => ctx.abreDiaCorpo('peso')}
@@ -229,7 +232,7 @@ export function Corpo({ ctx }) {
       </Medida>
 
       <Medida
-        rotulo="cintura" nota="1× por semana, em jejum"
+        rotulo="A cintura" nota="1× por semana, em jejum"
         valor={c.cintura.valor} passo={0.5} unidade="cm" serie={c.cintura.serie}
         onMuda={ctx.setCintura} onRegistrar={ctx.registraCintura} acao={c.cintura.acao}
         dia={c.cintura.dia} onAbrirDia={() => ctx.abreDiaCorpo('cintura')}
@@ -279,12 +282,12 @@ export function Corpo({ ctx }) {
         />
       ))}
       {c.fita.some(f => !f.ligada) && (
-        <Secao rotulo="outras medidas com fita" nota="ligue as que você tira sozinho">
+        <Secao rotulo="As outras medidas com fita" nota="ligue as que você tira sozinho">
           {c.fita.filter(f => !f.ligada).map(f => (
             <div class="crow" key={f.k}>
               <span class="crow-m">{f.n}</span>
               <span class="crow-n">sem medida</span>
-              <button class="co-liga" data-a={'liga-' + f.k} onClick={() => ctx.ligaMedida(f.k)}>ligar</button>
+              <button class="co-liga" data-a={'liga-' + f.k} onClick={() => ctx.ligaMedida(f.k)}>Ligar</button>
             </div>
           ))}
           <Procedencia>
@@ -310,7 +313,7 @@ export function Corpo({ ctx }) {
           casa o mesmo dia vindo de dois aparelhos. Por isso a tela recusa a
           leitura incompleta em vez de gravar o que deu: metade de uma leitura
           não é meia leitura, é uma leitura errada. */}
-      <Secao rotulo="bioimpedância" nota={bio.nota}>
+      <Secao rotulo="A bioimpedância" nota={bio.nota}>
         <p class="ins-body-sm ins-t2 co-bio-i">{bio.instrucao}</p>
         <div class="co-bio">
           {bio.campos.map(c => (

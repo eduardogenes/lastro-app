@@ -34,10 +34,10 @@ const MODOS = [
 /** Séries por músculo: barra por músculo, na hierarquia do programa. */
 function Musculos({ m, ctx }) {
   return (
-    <Secao rotulo="séries por músculo" nota={`dia ${m.dia} de 7 · na semana`}>
+    <Secao rotulo="As séries por músculo" nota={`dia ${m.dia} de 7 · na semana`}>
       {m.fora.length > 0 && (
         <div class="dd-fora">
-          <div class="ins-label ins-amber">fora do alvo do treinador</div>
+          <h3 class="ins-rotulo ins-amber">Fora do alvo do treinador</h3>
           {m.fora.map(x => (
             <div key={x.txt} class="ins-body-sm ins-t2 dd-fora-l">{x.txt}</div>
           ))}
@@ -73,7 +73,7 @@ function Musculos({ m, ctx }) {
           levada ao treinador, não para o app ocupar o lugar dele. */}
       {m.leitura.length > 0 && (
         <div class="dd-leitura">
-          <div class="ins-label">a semana, lida junto</div>
+          <h3 class="ins-rotulo">A semana, lida junto</h3>
           {m.leitura.map(l => (
             <p key={l.txt} class="ins-body-sm ins-t2 dd-leitura-l">{l.txt}</p>
           ))}
@@ -145,7 +145,7 @@ export function Semana({ ctx }) {
     <>
       <Cabecalho olho="acompanhamento" titulo="Semana" />
 
-      <Secao rotulo="o que fazer com a comida">
+      <Secao rotulo="O que fazer com a comida">
         <Veredito
           rotulo="a regra do nutricionista diz"
           veredito={d.veredito.t}
@@ -227,7 +227,7 @@ export function Semana({ ctx }) {
       </Secao>
 
       {modo === 'treino' && <>
-      <Secao id="forca" rotulo="força estimada" nota="e1rm · fórmula de epley">
+      <Secao id="forca" rotulo="A força estimada" nota="e1rm · fórmula de epley">
         {d.forca.serie.some(x => x != null)
           ? <div class="dd-spark"><Sparkline valores={d.forca.serie} /></div>
           : <Vazio>Ainda não há carga registrada suficiente para estimar.</Vazio>}
@@ -265,7 +265,7 @@ export function Semana({ ctx }) {
           contra o que o treinador pede. */}
       {/* Só o PLACAR. A regra de quando fazer é guia do registro e mora no Agora,
           junto do botão; aqui a pergunta é "a semana andou para onde". */}
-      <Secao rotulo="cardio" nota={`${c.cardio.semana} de ${c.cardio.alvo} nesta semana`}>
+      <Secao rotulo="O cardio da semana" nota={`${c.cardio.semana} de ${c.cardio.alvo} nesta semana`}>
         <Procedencia>o alvo do treinador é {c.cardio.alvo} por semana</Procedencia>
       </Secao>
 
@@ -275,7 +275,7 @@ export function Semana({ ctx }) {
           junto do resto do que é olhar para trás — força estimada, séries por
           músculo e o mês —, que é onde se vem quando a pergunta é "e desde que
           isso começou?". */}
-      <Secao rotulo="retrospectiva" nota="o bloco de 48 sessões">
+      <Secao rotulo="A retrospectiva do bloco" nota="o bloco de 48 sessões">
         {/* O CICLO veio do cabeçalho do TREINO (achado 7): ele responde "em que
             ponto do bloco eu estou", que é a mesma pergunta que a retrospectiva
             responde em prosa — e por isso os dois ficam juntos.
@@ -315,7 +315,7 @@ export function Semana({ ctx }) {
               </Vazio>
             </Secao>
           : <>
-        <Secao rotulo="por refeição"
+        <Secao rotulo="Refeição por refeição"
                nota={`${d.comida.dias} dias com registro · ${d.comida.janela} dias`}>
           <div class="ins-lista">
             {d.comida.padrao.map(p => (
@@ -329,8 +329,8 @@ export function Semana({ ctx }) {
           )}
         </Secao>
 
-        <Secao rotulo="dias inteiros" nota="todas as refeições">
-          <div class="ins-label dd-rec">por dia da semana</div>
+        <Secao rotulo="Os dias inteiros" nota="todas as refeições">
+          <h3 class="ins-rotulo dd-rec">Por dia da semana</h3>
           <div class="ins-lista">
             {d.comida.porSemana.map(r => (
               <LinhaPadrao key={r.k} rotulo={r.rotulo} txt={r.txt} />
@@ -338,7 +338,7 @@ export function Semana({ ctx }) {
           </div>
 
           {d.comida.porCadencia.length > 0 && <>
-            <div class="ins-label dd-rec">treino e descanso</div>
+            <h3 class="ins-rotulo dd-rec">Treino e descanso</h3>
             <div class="ins-lista">
               {d.comida.porCadencia.map(r => (
                 <LinhaPadrao key={r.k} rotulo={r.rotulo} txt={r.txt} />
@@ -347,7 +347,7 @@ export function Semana({ ctx }) {
           </>}
 
           {d.comida.porTurno.length > 1 && <>
-            <div class="ins-label dd-rec">por turno do treino</div>
+            <h3 class="ins-rotulo dd-rec">Por turno do treino</h3>
             <div class="ins-lista">
               {d.comida.porTurno.map(r => (
                 <LinhaPadrao key={r.k} rotulo={r.rotulo} txt={r.txt} />
@@ -362,12 +362,12 @@ export function Semana({ ctx }) {
             de 1 kg, e duas séries com tendência correlacionam por definição.
             Pôr um número aqui seria fabricar confiança que o dado não sustenta. */}
         <Secao rotulo="ao longo das semanas" nota="14 semanas">
-          <div class="ins-label dd-rec">aderência · dias cumpridos por semana</div>
+          <h3 class="ins-rotulo dd-rec">A aderência, dias cumpridos por semana</h3>
           {d.comida.curvas.aderencia.some(x => x != null)
             ? <div class="dd-spark"><Sparkline valores={d.comida.curvas.aderencia} /></div>
             : <Vazio>Sem semanas fechadas o bastante.</Vazio>}
 
-          <div class="ins-label dd-rec">peso · média semanal</div>
+          <h3 class="ins-rotulo dd-rec">O peso, média semanal</h3>
           {d.comida.curvas.peso.some(x => x != null)
             ? <div class="dd-spark"><Sparkline valores={d.comida.curvas.peso} /></div>
             : <Vazio>Registre o peso 3 a 4 vezes por semana.</Vazio>}
@@ -385,7 +385,7 @@ export function Semana({ ctx }) {
             em semanas de aderência baixa, pode estar lendo adesão ruim como
             resposta metabólica. */}
         {d.comida.auditoria && (
-          <Secao rotulo="a régua calórica">
+          <Secao rotulo="A régua calórica">
             <div class="dd-auditoria ins-body-sm ins-t2">{d.comida.auditoria.txt}</div>
             <Procedencia>
               isto é o app conferindo a própria regra, não a sua semana.

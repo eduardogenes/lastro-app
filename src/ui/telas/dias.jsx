@@ -113,7 +113,7 @@ export function Dias({ ctx }) {
       )}
 
       {/* AS TRÊS LEITURAS DO MÊS, e só estas, cada uma com a conta à vista. */}
-      <Secao rotulo="dias com treino por semana">
+      <Secao rotulo="Dias com treino por semana">
         {m.treino
           ? <>
               {m.treino.valor && <p class="dm-valor">{m.treino.valor}</p>}
@@ -126,7 +126,7 @@ export function Dias({ ctx }) {
             </p>}
       </Secao>
 
-      <Secao rotulo={m.cardio.titulo.toLowerCase()}>
+      <Secao rotulo={m.cardio.titulo}>
         {m.cardio.n
           ? <div class="dm-tres">
               <span><b>{m.cardio.n}</b>{m.cardio.n === 1 ? 'sessão' : 'sessões'}</span>
@@ -136,7 +136,7 @@ export function Dias({ ctx }) {
           : <p class="ins-body-sm ins-t3">Nenhum cardio registrado.</p>}
       </Secao>
 
-      <Secao rotulo="horário de início">
+      <Secao rotulo="Horário de início">
         {m.horario
           ? <>
               <div class="dm-tres">

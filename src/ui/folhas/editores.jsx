@@ -71,7 +71,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
              dica="aparece acima do nome, em caixa alta" />
 
       <div class="ed-campo">
-        <span class="ins-label">aparece em</span>
+        <span class="ins-label">Aparece em</span>
         <Chips opcoes={QUANDO} valor={campos.quando} onMuda={v => muda('quando', v)} />
         <Procedencia>
           uma condição por refeição, não um plano por dia da semana.
@@ -79,7 +79,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
       </div>
 
       <div class="ed-campo">
-        <span class="ins-label">nota</span>
+        <span class="ins-label">Nota</span>
         <textarea
           class="ins-input ed-nota" value={campos.nota}
           placeholder="por que esta refeição é assim"
@@ -89,7 +89,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
 
       {!r.novo && (
         <>
-          <div class="ins-label ed-h">o que tem dentro · muda para todo dia</div>
+          <h3 class="ins-rotulo ed-h">O que tem dentro, para todo dia</h3>
           {r.itens.length === 0
             ? <Vazio>Nenhum alimento nesta refeição ainda.</Vazio>
             : <div class="ins-lista">
@@ -125,7 +125,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
                       <button
                         class="ins-btn-secondary ins-btn-destructive"
                         onClick={() => { ctx.removeItem(r.id, i.idx); setAberto(null); }}
-                      >remover</button>
+                      >Remover</button>
                     </div>
                   </LinhaExpansivel>
                 ))}
@@ -228,7 +228,7 @@ export function FolhaEditaAlimento({ ctx, id }) {
       <Campo rotulo="nome" valor={c.n} onMuda={v => muda('n', v)} />
 
       <div class="ed-campo">
-        <span class="ins-label">categoria</span>
+        <span class="ins-label">Categoria</span>
         <Chips
           opcoes={CATEGORIAS.map(([k, t]) => ({ k, t: t.toLowerCase() }))}
           valor={c.cat} onMuda={v => muda('cat', v)}
@@ -236,7 +236,7 @@ export function FolhaEditaAlimento({ ctx, id }) {
       </div>
 
       <div class="ed-campo">
-        <span class="ins-label">unidade</span>
+        <span class="ins-label">Unidade</span>
         <Chips
           opcoes={[{ k: 'g', t: 'gramas' }, { k: 'ml', t: 'mililitros' }]}
           valor={c.u} onMuda={v => muda('u', v)}

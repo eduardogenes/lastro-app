@@ -3908,10 +3908,10 @@ function medidaDoDia(k) {
   const d = diaDaMedida(k);
   return (S.body[k] || []).filter(function (x) { return sameDay(x.t, d); })[0] || null;
 }
-/** "registrar hoje", "registrar ontem", "registrar em ter 14". */
+/** "Registrar hoje", "Registrar ontem", "Registrar em ter 14". */
 function acaoDaMedida(k) {
   const r = rotuloDoDia(diaDaMedida(k));
-  return 'registrar ' + (r === 'hoje' || r === 'ontem' ? r : 'em ' + r);
+  return 'Registrar ' + (r === 'hoje' || r === 'ontem' ? r : 'em ' + r);
 }
 
 /** O que a tela precisa saber sobre a data escolhida. */
@@ -6829,7 +6829,7 @@ CTX.treino = function () {
   // palavras do menu: "entrar em deload" sozinho era o nome sem o freio.
   const dl = itemDoDeload(d);
   const porta = function (on) {
-    return dl ? { t: dl.rotulo + ' · ' + dl.detalhe, onClick: function () { setDeload(on); } } : null;
+    return dl ? { t: dl.rotulo.charAt(0).toUpperCase() + dl.rotulo.slice(1) + ' · ' + dl.detalhe, onClick: function () { setDeload(on); } } : null;
   };
   if (S.deload) {
     avisos.push({ k: 'dl', rotulo: 'deload ativo', cor: 'amber',
@@ -6849,7 +6849,7 @@ CTX.treino = function () {
   if (s && s.retro) {
     avisos.push({ k: 'r', rotulo: 'preenchendo treino passado', cor: 'amber',
       txt: 'As séries que você digitar entram em ' + diaExtenso(s.inicio) + ', não em hoje.',
-      acao: { t: 'concluir', onClick: function () { concluirRetro(); } } });
+      acao: { t: 'Concluir', onClick: function () { concluirRetro(); } } });
   }
 
   const parado = pausaGeral();
@@ -10268,8 +10268,8 @@ CTX.protocoloFotos = function () {
       return { id: p.id, n: p.n, feita: !!(u && u.fotos[p.id]) };
     }),
     cta: hoje && !cHoje.cheia
-      ? 'continuar · ' + cHoje.feitas + ' de ' + cHoje.total
-      : (hoje ? 'refazer alguma pose' : 'nova sessão'),
+      ? 'Continuar · ' + cHoje.feitas + ' de ' + cHoje.total
+      : (hoje ? 'Refazer alguma pose' : 'Nova sessão'),
     podeComparar: lista.some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; })
   };
 };

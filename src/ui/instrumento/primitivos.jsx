@@ -55,9 +55,13 @@ export function Secao({ rotulo, nota, children, primeira, continua, id }) {
       id={id}
       class={'ins-secao' + (primeira ? ' primeira' : '') + (continua ? ' continua' : '')}
     >
+      {/* O RÓTULO DE SEÇÃO (frente 3 §2, R2): 15 px, peso 600, caixa de frase,
+          frase nominal com artigo — e um título de verdade, `h2`, porque é
+          estrutura. A maiúscula inicial é dada aqui, para o rótulo que vem de
+          dado (o nome de uma medida) seguir a mesma forma. */}
       {(rotulo || nota) && (
         <div class="ins-secao-h">
-          <span class="ins-label">{rotulo}</span>
+          {rotulo && <h2 class="ins-rotulo">{rotulo.charAt(0).toUpperCase() + rotulo.slice(1)}</h2>}
           {nota && <span class="ins-secao-nota">{nota}</span>}
         </div>
       )}

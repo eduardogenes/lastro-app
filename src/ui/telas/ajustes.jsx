@@ -36,7 +36,7 @@ export function Ajustes({ ctx }) {
           "e se eu perder o aparelho?", e a nuvem é a resposta que não depende
           de você lembrar. O backup continua sendo a cópia que não depende de
           ninguém — nem do Supabase. */}
-      <Secao rotulo="sincronizar">
+      <Secao rotulo="A sincronia">
         {n.dentro ? (
           <Bloco titulo={n.conta} texto={n.explica}>
             <div class="gu-sync">
@@ -70,7 +70,7 @@ export function Ajustes({ ctx }) {
         )}
       </Secao>
 
-      <Secao rotulo="backup">
+      <Secao rotulo="A cópia de segurança">
         <Bloco
           titulo="Exportar"
           texto="Guarde antes de trocar de celular, limpar o navegador ou mexer no app."
@@ -118,7 +118,7 @@ export function Ajustes({ ctx }) {
         </Bloco>
       </Secao>
 
-      <Secao rotulo="restaurar" nota="os dois preservam o histórico">
+      <Secao rotulo="O que dá para restaurar" nota="os dois preservam o histórico">
         <div class="gu-acoes">
           <button class="ins-btn-secondary ins-btn-destructive" onClick={ctx.restauraPrograma}>
             Restaurar o programa do treinador

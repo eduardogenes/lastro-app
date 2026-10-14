@@ -160,8 +160,9 @@ test('abrir uma refeição mostra o que tem dentro e o ajuste só de hoje', asyn
   await a.esperar(150);
   const folha = a.$('.ins-folha');
   assert.ok(folha, 'a folha abriu');
-  assert.ok(a.texto('.ins-folha').toLowerCase().includes('só de hoje'),
-    'o rótulo diz que ajustar porção não muda o plano');
+  assert.ok(a.texto('.ins-folha .ins-rotulo').includes('A porção de hoje'),
+    'o rótulo diz que a porção é de hoje (frente 3 §2, o exemplo dela)');
+  assert.ok(a.texto('.ins-folha').includes('não muda o plano'), 'e a procedência, que não muda o plano');
   assert.ok(a.$$('.ins-folha .ins-linha').length > 0, 'lista os itens');
 
   // e o corpo fica travado enquanto ela está aberta

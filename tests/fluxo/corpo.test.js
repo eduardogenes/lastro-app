@@ -242,7 +242,7 @@ test('preencher treino passado avisa para onde as séries estão indo', async ()
   const aviso = a.texto('.tr-aviso');
   assert.ok(/não em hoje/.test(aviso), 'sem isso, a sessão retroativa fica invisível: ' + aviso);
 
-  const botao = a.$$('.tr-aviso button').find(function (x) { return /concluir/.test(x.textContent); });
+  const botao = a.$$('.tr-aviso button').find(function (x) { return /Concluir/.test(x.textContent); });
   assert.ok(botao, 'e a porta de saída fica no próprio aviso');
   await botao.click();
   await a.esperar();
@@ -351,7 +351,7 @@ test('o padrão continua sendo hoje, num toque', async () => {
   assert.strictEqual(d.hoje, true, 'abre em hoje, sem pedir data');
   assert.strictEqual(d.aberto, false, 'e o seletor fica fechado');
   assert.strictEqual(d.iso, iso(Date.now()));
-  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar hoje');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'Registrar hoje');
   a.fechar();
 });
 
@@ -379,7 +379,7 @@ test('escolher ontem grava no dia certo, não em hoje', async () => {
 
   const ontem = Date.now() - DIA;
   a.v('ctx.setDiaCorpo', 'peso', iso(ontem));
-  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar ontem',
+  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'Registrar ontem',
     'o botão passa a dizer em que dia vai gravar');
 
   a.v('ctx.setPeso', 73.4);
@@ -413,7 +413,7 @@ test('às 6h, voltar a data para HOJE funciona — não é futuro', async () => 
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, false, 'pré-condição: foi para ontem');
   a.v('ctx.setDiaCorpo', 'peso', iso(agora));
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, true, 'e voltou para hoje');
-  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar hoje');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'Registrar hoje');
   a.fechar();
 });
 
@@ -425,7 +425,7 @@ test('depois de gravar, a data volta para hoje sozinha', async () => {
   await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, true);
-  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar hoje');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'Registrar hoje');
   a.fechar();
 });
 

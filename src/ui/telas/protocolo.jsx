@@ -148,7 +148,7 @@ export function Protocolo({ ctx }) {
 
       {/* A nota é da SESSÃO, não da pose: é o que explica, três meses depois, o
           mês que parece fora da curva. Um campo, nunca um formulário. */}
-      <Secao rotulo="nota da sessão" nota="opcional">
+      <Secao rotulo="A nota da sessão" nota="opcional">
         <input
           class="ins-input pr-obs" type="text" value={d.obs}
           placeholder="voltando de gripe, outra academia, roupa diferente…"

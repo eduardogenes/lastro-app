@@ -97,14 +97,14 @@ export function Camera({ ctx }) {
       {d.fantasma && d.datas.length > 0 && (
         <>
           <div class="aj-fantasma">
-            <span class="ins-label">alinhar contra</span>
+            <span class="ins-label">Alinhar contra</span>
             <select class="ins-input aj-sel" value={d.fantasmaD || ''}
                     onChange={e => ctx.setDataDoFantasmaDaCamera(e.currentTarget.value)}>
               {d.datas.map(o => <option key={o.d} value={o.d}>{o.txt}</option>)}
             </select>
           </div>
           <div class="cam-op">
-            <span class="ins-label">mistura</span>
+            <span class="ins-label">Mistura</span>
             <input type="range" min="10" max="90" value={d.opacidade}
                    aria-label="opacidade da foto sobreposta"
                    onInput={e => ctx.setOpacidadeDaCamera(Number(e.currentTarget.value))} />
@@ -112,7 +112,7 @@ export function Camera({ ctx }) {
         </>
       )}
 
-      <Secao rotulo="temporizador" nota="a três metros ninguém alcança o botão">
+      <Secao rotulo="O temporizador" nota="a três metros ninguém alcança o botão">
         <div class="cam-tempos">
           {TEMPOS.map(t => (
             <button key={t} class={'ins-chip' + (d.timer === t ? ' on' : '')}

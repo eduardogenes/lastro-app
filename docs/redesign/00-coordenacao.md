@@ -24,9 +24,13 @@ pede atenção do dono.
   é o rótulo mono sem a mono", 10-tokens); o rótulo e a procedência a 12 px,
   botão a 15 px, chip a 14 px, aba a 12 px; o miúdo de 9–10 px sobe a 12; os
   textos de ação e os nomes das abas em maiúscula inicial (valores de chip, como
-  "bike" e "30 min", seguem como no desenho). **Falta:** R1/R2 nos rótulos de
-  seção (15 px, peso 600, frase com artigo, ou sair) e R4 (a unidade junto do
-  número), por tela, com captura.
+  "bike" e "30 min", seguem como no desenho). **Etapa 2 feita (R1/R2):** o
+  rótulo de seção é título (`h2`/`h3`, 15 px, peso 600, caixa de frase), com
+  artigo onde fica ("O peso da manhã", "A porção de hoje", "O turno do treino")
+  e fora onde a primeira linha já nomeia (o cardio do Agora); em Dias, os nomes
+  que o desenhista deu às leituras. Rótulos de campo ganham só a maiúscula
+  inicial; procedência fica a 12 px. **Falta:** R4 (a unidade junto do número
+  nas grades de métrica), com captura.
 - **A §2 da frente 3 — os rótulos (R1–R4):** rótulo de seção só
   onde a seção tem mais de uma linha e a primeira não a nomeia; o que fica vira
   frase com artigo, caixa de frase, 15 px, sem espaçamento; o olho vira
@@ -3324,6 +3328,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Agora pela D, etapa 7: o cartão da refeição grava no toque, e a leitura de volta com Desfazer. 5 mutações; 4 mortas e 1 equivalente (código redundante, tirado), depois de dois casos ganharem discriminação. 1.441 passando.
 - 14/10 · Agora pela D, etapa 8: o cardio sai do descanso e entra pela folha do tipo do dia. 2 mutações, 2 mortas. **Agora pela D fechado.** 1.442 passando.
 - 14/10 · Frente 3 §2, etapa 1: sem caixa alta no sistema inteiro (48 regras), textos de ação e abas com maiúscula inicial. 9 arquivos de caso apontados para os textos novos. 1.442 passando.
+- 14/10 · Frente 3 §2, etapa 2: os rótulos de seção viram título com artigo (R1/R2), 44 no `Secao` e 22 dentro de folhas e telas cheias; ações vindas de dado com maiúscula inicial. 1.442 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

@@ -743,7 +743,7 @@ test('a prescrição e a máquina do app são LUGARES diferentes', async () => {
   a.aba('prescricao');
   await a.esperar();
   assert.ok(a.$$('.gu-regra').length >= 10, 'as regras do treinador estão na prescrição');
-  assert.ok(a.$$('.ins-label').some(function (x) { return x.textContent === 'alvo por tipo de dia'; }));
+  assert.ok(a.$$('.ins-rotulo').some(function (x) { return x.textContent === 'O alvo por tipo de dia'; }));
   // A máquina não fica no caminho de quem só queria conferir uma regra.
   assert.strictEqual(a.$('.gu-apagar'), null, 'apagar histórico não mora na prescrição');
   assert.strictEqual(a.$('#nvemail'), null, 'nem o login da nuvem');

@@ -95,7 +95,7 @@ export function Evolucao({ ctx }) {
             </Procedencia>
           </>}
 
-      <Secao rotulo="taxa, semana a semana">
+      <Secao rotulo="A taxa, semana a semana">
         <div class="ins-lista">
           {ev.taxas.map(t => (
             <div key={t.w} class="ins-linha ev-taxa">

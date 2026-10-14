@@ -132,7 +132,7 @@ export function Treino({ ctx }) {
             sessão encerra, depois de virar a nota dela no histórico. */}
         {t.quadro && !t.editando && (
           <div class="tr-quadro">
-            <div class="ins-label">o quadro do box</div>
+            <h3 class="ins-rotulo">O quadro do box</h3>
             <p class="tr-quadro-t">{t.quadro}</p>
           </div>
         )}
@@ -177,7 +177,7 @@ export function Treino({ ctx }) {
         )}
       </Secao>
 
-      <Secao rotulo="o programa" nota={t.diffTxt}>
+      <Secao rotulo="O programa" nota={t.diffTxt}>
         <p class="ins-body-sm ins-t3 tr-nota">
           Cada série entra no histórico assim que você preenche carga e repetição.
           Não há nada para salvar. O treino se encerra sozinho e a rotação avança

@@ -494,8 +494,8 @@ test('sem sessão nenhuma, o resumo convida e não oferece comparação', async 
   assert.strictEqual(f.tem, false);
   assert.strictEqual(f.nota, 'nenhuma sessão ainda');
   assert.strictEqual(f.dias, '–');
-  assert.strictEqual(f.cta, 'nova sessão');
-  assert.strictEqual(a.texto('.dd-fotos-b .ins-btn-primary'), 'nova sessão');
+  assert.strictEqual(f.cta, 'Nova sessão');
+  assert.strictEqual(a.texto('.dd-fotos-b .ins-btn-primary'), 'Nova sessão');
   assert.strictEqual(a.$('.dd-fotos-b .ins-btn-secondary'), null, 'nada a comparar ainda');
   a.fechar();
 });
@@ -511,7 +511,7 @@ test('o atraso é informação, não cobrança', async () => {
   assert.strictEqual(f.dias, '20');
   assert.strictEqual(f.diasCor, 'ins-amber', 'passou de 14 dias');
   assert.strictEqual(f.cadencia, 'a cada 14 dias');
-  assert.strictEqual(f.cta, 'nova sessão');
+  assert.strictEqual(f.cta, 'Nova sessão');
 
   const texto = a.texto('.dd-fotos');
   assert.ok(!/parab|sequ[êe]ncia|streak|dias seguidos/i.test(texto), texto);
@@ -522,7 +522,7 @@ test('sessão de hoje pela metade convida a continuar de onde parou', async () =
   const a = await app({ aba: 'corpo' });
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('render');
-  assert.strictEqual(a.vJ('ctx.protocoloFotos').cta, 'continuar · 1 de 9');
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').cta, 'Continuar · 1 de 9');
   a.fechar();
 });
 

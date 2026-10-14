@@ -224,7 +224,7 @@ export function Prescricao({ ctx }) {
           coisa que as palavras dizem é a decisão dele como fato (§5.1). E o
           vazio é estado, não resultado: sem "tudo em ordem" (V5). */}
       {esperando.length === 0 && venceram.length === 0 && (
-        <Secao rotulo="esperando decisão">
+        <Secao rotulo="O que espera decisão">
           <Vazio>Nenhuma mudança esperando decisão.</Vazio>
           <p class="ins-body-sm ins-t3 pr-explica">
             O que você mudar num treino aparece aqui depois que a sessão fechar.
@@ -232,7 +232,7 @@ export function Prescricao({ ctx }) {
         </Secao>
       )}
       {esperando.length > 0 && (
-        <Secao rotulo="esperando decisão"
+        <Secao rotulo="O que espera decisão"
                nota={esperando.length === 1 ? '1 sessão' : esperando.length + ' sessões'}>
           <p class="ins-body-sm ins-t3 pr-explica">
             Nada disto foi perguntado no treino. O que você mudou no dia ficou
@@ -308,7 +308,7 @@ export function Prescricao({ ctx }) {
           aconteceu, e oferecê-la de novo seria pedir que ele confirmasse o que
           o tempo já decidiu. O que falta é a porta de volta. */}
       {venceram.length > 0 && (
-        <Secao rotulo="venceu sem você"
+        <Secao rotulo="O que venceu sem você"
                nota={venceram.length === 1 ? '1 sessão' : venceram.length + ' sessões'}>
           {venceram.map(g => (
             <div key={g.sid} class="pr-espera venceu">
@@ -351,7 +351,7 @@ export function Prescricao({ ctx }) {
           ))}
         </Secao>
       )}
-      <Secao rotulo="alvo por tipo de dia" nota="calculado do plano">
+      <Secao rotulo="O alvo por tipo de dia" nota="calculado do plano">
         <div class="ins-lista">
           {g.alvos.map(a => (
             <div key={a.k} class="ins-linha">
@@ -369,7 +369,7 @@ export function Prescricao({ ctx }) {
         </Procedencia>
       </Secao>
 
-      <Secao rotulo="execução" nota="toque para abrir">
+      <Secao rotulo="A execução" nota="toque para abrir">
         {g.regras.map(r => (
           <Regra
             key={r.k} r={r}
@@ -390,7 +390,7 @@ export function Prescricao({ ctx }) {
       </>}
 
       {modo === 'comida' && <>
-      <Secao rotulo="refeições" nota="a edição vale para todo dia">
+      <Secao rotulo="As refeições" nota="a edição vale para todo dia">
         <div class="ins-lista">
           {plano.map(r => (
             <button key={r.id} class="ins-linha" onClick={() => ctx.editaRefeicao(r.id)}>
@@ -431,18 +431,18 @@ export function Prescricao({ ctx }) {
       </>}
 
       {modo === 'alimentos' && <>
-      <Secao rotulo="biblioteca" nota="o que você cadastrou aparece em ácido">
+      <Secao rotulo="A biblioteca" nota="o que você cadastrou aparece em ácido">
         <input
           class="ins-input" type="search" inputmode="search"
           placeholder="buscar alimento" value={busca}
           onInput={e => setBusca(e.currentTarget.value)}
         />
         <div class="cm-espaco" />
-        <button class="ins-btn-add" onClick={ctx.novoAlimento}>+ cadastrar alimento</button>
+        <button class="ins-btn-add" onClick={ctx.novoAlimento}>+ Cadastrar alimento</button>
         <div class="cm-espaco" />
         <Biblioteca ctx={ctx} busca={busca} />
       </Secao>
-      <Secao rotulo="lista" nota="derivada do plano · nada aqui é digitado">
+      <Secao rotulo="A lista de compras" nota="derivada do plano · nada aqui é digitado">
         <Compras ctx={ctx} />
       </Secao>
       </>}

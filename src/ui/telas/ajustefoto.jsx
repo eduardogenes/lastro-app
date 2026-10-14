@@ -107,7 +107,7 @@ export function AjusteFoto({ ctx }) {
           app não tem como saber qual é essa. */}
       {d.fantasma && d.datas.length > 0 && (
         <div class="aj-fantasma">
-          <span class="ins-label">alinhar contra</span>
+          <span class="ins-label">Alinhar contra</span>
           <select
             class="ins-input aj-sel" value={d.fantasmaD || ''}
             onChange={e => ctx.setDataDoFantasma(e.currentTarget.value)}
@@ -117,7 +117,7 @@ export function AjusteFoto({ ctx }) {
         </div>
       )}
 
-      <Secao rotulo="ajuste" nota="arraste a foto para reenquadrar">
+      <Secao rotulo="O ajuste" nota="arraste a foto para reenquadrar">
         <Controle
           rotulo="girar" valor={d.enq.r.toFixed(1).replace('.', ',') + '°'}
           min={-GIRO_MAX} max={GIRO_MAX} passo={0.1} n={d.enq.r} onMuda={ctx.setGiroDoAjuste}

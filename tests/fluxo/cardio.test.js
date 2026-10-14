@@ -20,7 +20,7 @@ const TODO_DIA_TREINO = ['treino','treino','treino','treino','treino','treino','
 test('placar da semana aparece no AGORA', async () => {
   const a = await app({ aba: 'agora', estado: { cadencia: TODO_DIA_TREINO } });
   const linha = a.texto('.cardl');
-  assert.ok(/cardio/.test(linha), linha);
+  assert.ok(/Cardio/.test(linha), linha);
   assert.ok(/0 de 2 nesta semana/.test(linha), linha);
   a.fechar();
 });
@@ -177,7 +177,7 @@ test('a divisão do DADOS em três lugares não engoliu regra nenhuma', async ()
   await a.esperar();
   assert.ok(a.$('.ins-veredito'), 'o veredito é a primeira coisa da SEMANA');
   await a.modo('treino');
-  assert.ok(a.$$('.ins-label').some(function (x) { return x.textContent === 'cardio'; }),
+  assert.ok(a.$$('.ins-rotulo').some(function (x) { return x.textContent === 'O cardio da semana'; }),
     'o placar do cardio é da semana');
 
   a.aba('agora');
