@@ -482,7 +482,6 @@ export function Agora({ ctx }) {
           O aviso de perna no mesmo dia é do treinador e sinaliza em vez de
           bloquear: a regra é não pôr cardio no mesmo período de treino de
           perna, e quem decide se ainda dá é ele. */}
-      )}
 
       {/* No DESCANSO não há seção de cardio (a D, `agora-descanso.html`,
           estado 1: "não há outro cartão, faixa ou convite"): o cardio entra

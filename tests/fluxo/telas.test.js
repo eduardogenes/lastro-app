@@ -1445,3 +1445,17 @@ test('o ciclo conta VOLTAS DA ROTAÇÃO, não semanas', async () => {
   assert.strictEqual(c.ciclo, '2', 'uma volta inteira fechada: ele está no segundo ciclo');
   a.fechar();
 });
+
+test('nenhuma aba mostra resto de código como texto', async () => {
+  // Um `)}` sobrou no Agora depois de um comentário JSX, e o build o aceitou
+  // como texto: ele aparecia na tela, entre a água e o cardio. O `tsc` acusava
+  // ("tipos"), mas a suíte não. Este caso lê o texto de cada aba.
+  const a = await app({});
+  for (const aba of ['agora', 'dias', 'corpo', 'semana', 'prescricao']) {
+    a.aba(aba);
+    await a.esperar();
+    const t = a.texto('#app');
+    assert.ok(!/\)\}|\{\/\*|\*\/\}|=>/.test(t), aba + ': ' + (t.match(/.{0,30}(\)\}|\{\/\*|\*\/\}|=>).{0,30}/) || [''])[0]);
+  }
+  a.fechar();
+});
