@@ -9756,8 +9756,27 @@ CTX.comparacao = function () {
     }
   }
 
+  // O PAR QUE RECUOU (a D, `comparar.html`, estado 7): a pose não existe nas
+  // sessões mais antigas, e o par mais longo POSSÍVEL dela começa depois. O
+  // par já recuava sozinho; agora diz que recuou, com as datas — um intervalo
+  // menor muda o que a comparação consegue mostrar.
+  let recuou = null;
+  const todas = (S.protocolo.sessoes || []).slice().sort(function (x, y) { return x.d < y.d ? -1 : x.d > y.d ? 1 : 0; });
+  if (par && comFoto.length && todas.length && c.de === comFoto[0].d && todas[0].d !== comFoto[0].d) {
+    const semPose = todas.filter(function (x) { return x.d < comFoto[0].d; }).map(function (x) { return fmtDate(instanteDaData(x.d)); });
+    const diasPar = Math.round((instanteDaData(c.ate) - instanteDaData(c.de)) / 86400000);
+    const diasTodo = Math.round((instanteDaData(c.ate) - instanteDaData(todas[0].d)) / 86400000);
+    recuou = {
+      titulo: diasPar + ' dias, e não ' + diasTodo,
+      texto: (semPose.length === 1 ? 'A sessão de ' + semPose[0] + ' não tem' : 'As sessões de ' +
+              semPose.slice(0, -1).join(', ') + ' e ' + semPose[semPose.length - 1] + ' não têm') +
+             ' esta pose. O par mais longo possível dela começa em ' + fmtDate(instanteDaData(comFoto[0].d)) + '.'
+    };
+  }
+
   return {
     meta: S.protocolo.sessoes.length + (S.protocolo.sessoes.length === 1 ? ' sessão' : ' sessões'),
+    recuou: recuou,
     pergunta: pergunta,
     poses: lista.map(function (p) { return { k: p.id, t: p.n }; }),
     pose: c.pose,

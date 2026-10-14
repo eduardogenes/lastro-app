@@ -126,6 +126,13 @@ export function Comparar({ ctx }) {
             )}
 
             <Procedencia>{c.intervalo}</Procedencia>
+            {/* O par que recuou sozinho diz que recuou (a D, estado 7). */}
+            {c.recuou && (
+              <div class="cp-recuou">
+                <b class="ins-body ins-t1">{c.recuou.titulo}</b>
+                <p class="ins-body-sm ins-t2">{c.recuou.texto}</p>
+              </div>
+            )}
             <Procedencia>
               peso e cintura são a média da SEMANA de cada sessão, tirada do
               registro corporal — a sessão de fotos não pede número nenhum.

@@ -1735,3 +1735,30 @@ test('a pose que não coube para a sessão, fica marcada, e "Tentar de novo" a g
   assert.ok(a.gravado().protocolo.sessoes[0].fotos[pose2], 'e a pose 2 está no disco');
   a.fechar();
 });
+
+test('a pose que não existe lá atrás: o par recua sozinho e diz que recuou', async () => {
+  // A D (`comparar.html`, estado 7). A pose só começou a ser fotografada na
+  // terceira sessão; o par mais longo possível dela começa ali, e a tela diz
+  // quantos dias o par tem e quantos teria, com as sessões que não têm a pose.
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  const d1 = diasAtras(55), d2 = diasAtras(48), d3 = diasAtras(27), d4 = diasAtras(0);
+  a.E(`S.protocolo.sessoes = [
+    { d: '${d1}', t: 1, m: 1, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } },
+    { d: '${d2}', t: 1, m: 1, fotos: { 'frente-relaxado': { v: 2, ext: 'webp' } } },
+    { d: '${d3}', t: 1, m: 1, fotos: { 'frente-relaxado': { v: 3, ext: 'webp' }, 'costas-maos-na-cintura': { v: 3, ext: 'webp' } } },
+    { d: '${d4}', t: 1, m: 1, fotos: { 'frente-relaxado': { v: 4, ext: 'webp' }, 'costas-maos-na-cintura': { v: 4, ext: 'webp' } } }
+  ]`);
+  a.v('ctx.abreComparar');
+  a.v('ctx.setPoseComparada', 'costas-maos-na-cintura');
+  await a.esperar();
+  const c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.recuou.titulo, '27 dias, e não 55');
+  assert.ok(/As sessões de \d\d\/\d\d e \d\d\/\d\d não têm esta pose\. O par mais longo possível dela começa em \d\d\/\d\d\./.test(c.recuou.texto), c.recuou.texto);
+  assert.ok(a.$('.cp-recuou'), 'e a tela diz');
+
+  a.v('ctx.setPoseComparada', 'frente-relaxado');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.comparacao').recuou, null, 'a pose que existe desde a primeira não recua');
+  a.fechar();
+});

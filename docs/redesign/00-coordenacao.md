@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.450 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.451 passando**, zero "unhandled".
   Nenhum agente trabalhando. Último commit de código: `b91697d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
@@ -3222,8 +3222,9 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         oferece baixar a cópia. Vale também para o momento-1, estado 10.
         **Divergência:** "Liberar espaço" apagando fotos antigas não entrou — as
         fotos ficam no cache do navegador, não no armazenamento que encheu.
-      - **comparar:** 1 ~ · 2 ✗ (cortina) · 3 ~ · 4 ~ · 5 ~ · 6 ~ · 7 ✗ (o par
-        que recua sozinho, dizendo) · 8 ✓ · 9 ✓ · 10 ~ · 11 ~.
+      - **comparar:** 1 ~ · 2 ✗ (cortina) · 3 ~ · 4 ~ · 5 ~ · 6 ~ · **7 ✓ (14/10)** — o par já recuava sozinho para a sessão mais antiga com a
+        pose; agora diz "27 dias, e não 55" e quais sessões não têm a pose. (A
+        lista das poses com par longo e curto, do desenho, não entrou.) · 8 ✓ · 9 ✓ · 10 ~ · 11 ~.
       - **sessao-fotos:** 1 ~ · 2 ✗ (voz) · 3 ✗ (clarão e obturador) · 4 ~ ·
         5 ~ · 6 ~ · 7 ✓ · 8 ~ · **9 ✓ (14/10)** — a sessão
         PARA na pose que não gravou (antes, com o registro recusado, avançava
@@ -3409,6 +3410,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Prescrição 11: login expirado deixa de ser silêncio de "sem rede"; o fato fica gravado e o Agora o diz. 3 mutações, 3 mortas (duas vivas até o caso conferir a falta de rede e o disco). **Fila de dado do levantamento fechada.** 1.448 passando.
 - 14/10 · Corpo 10: o vazio de verdade diz o custo de sair dele, com os números da regra. 2 mutações, 2 mortas. 1.449 passando.
 - 14/10 · Momento 1, estado 4: "+ série" na linha do exercício. 4 mutações, 4 mortas. 1.450 passando.
+- 14/10 · Comparar 7: o par que recua diz que recuou. 2 mutações, 2 mortas. 1.451 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
