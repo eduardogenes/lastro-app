@@ -92,7 +92,12 @@ pede atenção do dono.
   9. [ ] **A lousa como foto dentro do app** (aula, estado 6).
   10. [ ] **A revisão do treinador entra como texto colado** (prescrição,
       estado 6), com "É a mesma / É outro exercício" antes de gravar.
-  11. [ ] **O roteiro das medições A–D da régua** — ele faz esta semana.
+  11. [x] **O roteiro das medições A–D da régua** — ele faz esta semana.
+      Página `https://claude.ai/artifact/3vYQ4TnDMfZrwoxuQ8LgiV` (14/10): os
+      passos de cada medição, o que reprova, contadores para anotar entre as
+      séries, veredito calculado; os números ficam salvos na coleção `medicao`.
+      Mede só o app (o "antes" no protótipo ficou de fora: os limites são
+      absolutos). D mede o − e o + de 100 g do Corpo, que é o que existe.
   - **Ficam como estão:** hoje não conta nos 14 dias (só dias fechados); os três
     contam como dia com treino; "não sei" mantém o dia conhecido; tocar em hoje
     abre o Agora.
