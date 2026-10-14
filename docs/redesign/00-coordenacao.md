@@ -14,14 +14,14 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.445 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.446 passando**, zero "unhandled".
   Nenhum agente trabalhando. Último commit de código: `b91697d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
 - **Feito em primeira passada:** o levantamento (item 6.β). **Próximo:** a
-  fila dele, dado primeiro: semana 10 feito; seguem aula 12, sessao-fotos 9 e
-  prescricao 11.
+  fila dele, dado primeiro: semana 10 e aula 12 feitos; seguem sessao-fotos 9
+  e prescricao 11.
 - **Era o próximo passo:** o levantamento estado a estado das outras sete entregas da
   D contra o app — momento-1 (14 estados), semana (10), corpo (11), prescricao
   (11), aula (12), comparar (11), sessao-fotos (11). Parte já foi construída nas
@@ -3202,8 +3202,12 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         do nome antes de gravar) · 7 ~ · 8 ~ · 9 ~ (conferir o vazio sem plano) ·
         10 ✓ · 11 ✗ (login expirado dito como sem rede).
       - **aula:** 1 ✓ · 2 ✓ · 3–5 ~ (conferir a ordem de busca e a unidade) ·
-        6 ~ (lousa) · 7 ✓ · 8 ✓ · 9 ✓ · 10 ✓ · 11 ~ · **12 ✗ (presença gravada e
-        detalhe não, separados na tela)**.
+        6 ~ (lousa) · 7 ✓ · 8 ✓ · 9 ✓ · 10 ✓ · 11 ~ · **12 ✓ (14/10)** — o aviso de
+        falha diz que a presença da sessão continua guardada, com a hora, quando
+        ela gravou antes (o app guarda o instante da última gravação aceita), e
+        oferece baixar a cópia. Vale também para o momento-1, estado 10.
+        **Divergência:** "Liberar espaço" apagando fotos antigas não entrou — as
+        fotos ficam no cache do navegador, não no armazenamento que encheu.
       - **comparar:** 1 ~ · 2 ✗ (cortina) · 3 ~ · 4 ~ · 5 ~ · 6 ~ · 7 ✗ (o par
         que recua sozinho, dizendo) · 8 ✓ · 9 ✓ · 10 ~ · 11 ~.
       - **sessao-fotos:** 1 ~ · 2 ✗ (voz) · 3 ✗ (clarão e obturador) · 4 ~ ·
@@ -3382,6 +3386,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Frente 3 §2, etapa 3: R4 (a unidade junto do número) e a exceção de R3 (a pose no título). 2 mutações, 2 mortas. **§2 da frente 3 fechada.** 1.443 passando.
 - 14/10 · **Perda:** a pasta do coordenador em `/tmp` (scripts de medição e capturas citadas neste checklist) foi apagada pelo sistema. As ferramentas passam para `docs/redesign/_medicao/`, versionadas; as capturas antigas não voltam (os scripts se refazem). Achado no levantamento: o olho do treino ainda vinha em caixa alta por `toUpperCase()`, e as etiquetas do plano de comida estão GUARDADAS em caixa alta — convertidas na tela (`caixaDeFrase`), sem migrar dado. Um caso dependia da hora (procurava a timeline que saiu). 1.444 passando.
 - 14/10 · Semana 10: o passo calórico deixa de dizer "Apliquei" antes de gravar; recusado, volta inteiro e a tela diz o que não mudou. 5 mutações, 5 mortas. 1.445 passando.
+- 14/10 · Aula 12: o aviso de falha diz que a presença continua guardada, só quando gravou antes; e oferece baixar a cópia. 3 mutações, 3 mortas. 1.446 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

@@ -43,7 +43,7 @@ export function App({ ctx }) {
   // e uma ação destrutiva pode ser pedida de dentro de um destino.
   const pare = <>
     <NaoGuardado n={ctx.naoGuardado()} aberto={!!ctx.falhou()} onTenta={ctx.tentaGravar} />
-    <Falhou f={ctx.falhou()} onTenta={ctx.tentaGravar} onCopia={ctx.copiaRegistro} onFecha={ctx.dispensaFalha} />
+    <Falhou f={ctx.falhou()} onTenta={ctx.tentaGravar} onCopia={ctx.copiaRegistro} onBaixa={ctx.exportar} onFecha={ctx.dispensaFalha} />
     <Pare p={ctx.pare()} onResponde={ctx.respondePare} />
   </>;
   if (ctx.emTelaCheia()) return <>{ctx.telaCheia()}{ctx.folhas()}{pare}</>;

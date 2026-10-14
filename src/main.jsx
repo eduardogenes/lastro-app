@@ -1414,6 +1414,10 @@ function contaFusao(r, manual) {
 
 /** O que está sendo gravado agora, nas palavras da frase de falha. */
 let oQueGrava = null;
+// O instante da última gravação que o aparelho ACEITOU. O estado lido na
+// abertura já está no disco, então nasce no boot. É o que deixa o aviso de
+// falha dizer o que continua guardado (a D, `aula.html`, estado 12).
+let ultimaGravacaoOk = Date.now();
 /**
  * Quem escreve declara o que escreve, antes de enfileirar. A gravação é
  * represada (`queueSave`), então vale o ÚLTIMO a declarar — é o que estava na
@@ -1428,6 +1432,7 @@ async function grava() {
   catch (e) { console.error('não salvou', e); ok = false; }
   if (ok) {
     oQueGrava = null;
+    ultimaGravacaoOk = Date.now();
     if (view.naoGuardado) { view.naoGuardado = null; view.falhou = false; render(); }
   } else if (DB.mode !== 'mem') {
     naoGuardou();
@@ -1438,13 +1443,28 @@ async function grava() {
 function naoGuardou() {
   const ja = !!view.naoGuardado;
   const g = oQueGrava || { oQue: 'a última mudança', valor: null };
-  view.naoGuardado = { motivo: DB.falha || 'recusa', oQue: g.oQue, valor: g.valor };
+  view.naoGuardado = { motivo: DB.falha || 'recusa', oQue: g.oQue, valor: g.valor, salvo: oQueEstaGuardado() };
   // O painel abre UMA vez por episódio: com o aparelho cheio, cada série
   // seguinte também falha, e um alerta por série é ruído que ensina a fechar sem
   // ler. A marca, essa sim, acompanha cada uma.
   if (!ja) view.falhou = true;
   render();
 }
+/**
+ * O que CONTINUA guardado quando uma gravação falha no meio de uma sessão: a
+ * presença dela, se nasceu antes da última gravação que o aparelho aceitou. É
+ * o registro que importa, e dizer que está a salvo é o contrário de falso
+ * sucesso — é verdade com hora (a D, `aula.html`, estado 12).
+ */
+function oQueEstaGuardado() {
+  const s = S.sessao;
+  if (!s) return null;
+  const m = S.done.filter(function (x) { return x.sid === s.sid; })[0];
+  if (!m || m.t > ultimaGravacaoOk) return null;
+  const nome = diaAberto(m.day) ? 'da aula' : 'do Treino ' + m.day;
+  return 'A presença ' + nome + ', guardada às ' + fmtHoraDita(m.t) + ', continua lá.';
+}
+
 /** Fechar este aviso: o painel sai, a marca de "não guardado" fica. */
 function dispensaFalha() { view.falhou = false; render(); }
 

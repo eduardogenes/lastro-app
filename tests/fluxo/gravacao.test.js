@@ -108,3 +108,31 @@ test('no modo privado o painel não abre: o Agora já diz que nada vai ficar', a
   assert.strictEqual(a.$('.ng-faixa'), null, 'nem a marca: o aviso de perda do Agora é o canal');
   a.fechar();
 });
+
+test('no meio do detalhe, o aviso diz que a presença continua guardada — só quando continua', async () => {
+  // A D (`aula.html`, estado 12; `momento-1.html`, estado 10): a tela separa o
+  // que ficou gravado do que não ficou. A presença é o registro que importa, e
+  // dizer que está a salvo é verdade com hora — mas só se ela gravou de fato.
+  const a = await app();
+  await a.v('iniciarSessao');
+  await a.esperar();
+  const inicio = a.S().sessao.inicio;
+  a.encheCota();
+  a.v('anotaSerie', 0, 0, 0, 45);
+  a.v('anotaSerie', 0, 0, 1, 10);
+  await a.esperar(800);
+  const frase = a.texto('.falhou-w .pare-t');
+  const h = new Date(inicio);
+  const hora = h.getHours() + 'h' + String(h.getMinutes()).padStart(2, '0');
+  assert.ok(new RegExp('A presença do Treino [A-Z]+, guardada às ' + hora + ', continua lá\\.').test(frase), frase);
+  assert.ok(a.$('[data-a="falhou-baixa"]'), 'e oferece baixar a cópia de segurança');
+  a.fechar();
+
+  const b = await app();
+  b.encheCota();                       // cheio desde antes de abrir a sessão
+  await b.v('iniciarSessao');
+  await b.esperar(60);
+  assert.ok(!/continua lá/.test(b.texto('.falhou-w .pare-t')),
+    'a presença não gravou, então o aviso não diz que ela está a salvo: ' + b.texto('.falhou-w .pare-t'));
+  b.fechar();
+});
