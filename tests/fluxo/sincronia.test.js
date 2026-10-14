@@ -209,18 +209,19 @@ test('dia com treino registrado recusa a marca de descanso', async () => {
   a.fechar();
 });
 
-test('a tela de lançamento aguenta a opção de descanso', async () => {
+test('a folha de lançamento não grava "descanso" como treino', async () => {
   // regressão: 'descanso' não é letra da rotação, e descrever o treino dela
-  // derrubava a tela inteira antes de qualquer mensagem
+  // derrubava a tela inteira. Pela D o descanso saiu da folha (mora no dia, com
+  // o mesmo peso de "Registrar treino"), e o verbo recusa o que não é da
+  // sequência em vez de gravar uma letra que não existe.
   const a = await app({ estado: { logs: {}, done: [] } });
   a.v('abrirAdicionar', (Date.now() - 86400000));
-  const rotulos = a.$$('.chips .ins-chip').map(x => x.textContent);
-  assert.ok(rotulos.includes('foi descanso'), rotulos.join(' | '));
+  const rotulos = a.$$('.ln-chips .ins-chip').map(x => x.textContent);
+  assert.ok(!rotulos.includes('foi descanso'), rotulos.join(' | '));
 
-  a.v('addSet', 'tipo', 'descanso');
-  assert.ok(a.$('.add-acoes .ins-btn-primary'), 'a tela continua de pé');
-  assert.match(a.$('.add-acoes .ins-btn-primary').textContent, /descanso/i);
-  assert.strictEqual(a.$('#ahora'), null, 'descanso não tem horário nem duração');
+  await a.v('lancaTreino', 'descanso');
+  assert.strictEqual(a.S().done.length, 0, 'nada gravado');
+  assert.ok(a.$('[data-a="lanca-previsto"]'), 'e a folha continua de pé');
   a.fechar();
 });
 

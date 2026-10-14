@@ -203,8 +203,8 @@ test('preencher treino passado avisa para onde as séries estão indo', async ()
   const a = await app();
   const t = Date.now() - 2 * 86400000;
   a.v('abrirAdicionar', t);
-  a.v('addSet', 'tipo', 'A');
-  await a.v('gravarRetro', true);
+  await a.v('lancaTreino', 'A');
+  await a.v('detalhaLancamento');
   await a.esperar();
 
   const aviso = a.texto('.tr-aviso');

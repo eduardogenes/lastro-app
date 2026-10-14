@@ -99,17 +99,27 @@ test('o registro rápido do cardio grava pelos chips e pelo botão', async () =>
   a.fechar();
 });
 
-test('o nome do treino avulso entra pelo campo', async () => {
+test('o nome do treino avulso entra pelo campo, e grava ao sair dele', async () => {
   const a = await app();
   a.v('abrirAdicionar', Date.now() - DIA);
-  a.v('addSet', 'tipo', 'livre');
+  a.clicar('[data-a="lanca-livre"]');
   await a.esperar();
   const campo = a.$('.add-nome');
   assert.ok(campo, 'pré-condição: o campo do nome está na tela');
   campo.value = 'pelada com os amigos';
   campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  assert.strictEqual(a.S().done[0].nome, 'pelada com os amigos', 'o nome vai para o registro gravado');
+  campo.dispatchEvent(new a.window.Event('change', { bubbles: true }));
   await a.esperar();
-  assert.strictEqual(a.vista().add.nome, 'pelada com os amigos');
+  assert.strictEqual(a.gravado().done[0].nome, 'pelada com os amigos', 'e está guardado');
+
+  // sem o `change` (o app fechou a folha antes de o campo perder o foco), sair
+  // da folha também guarda
+  campo.value = 'futevôlei';
+  campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  a.v('ctx.fechaAdicionar');
+  await a.esperar();
+  assert.strictEqual(a.gravado().done[0].nome, 'futevôlei', 'sair da folha guarda o nome');
   a.fechar();
 });
 

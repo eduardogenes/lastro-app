@@ -99,9 +99,9 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
   a.preencher(0, 0, 40, 10);
   a.preencher(0, 1, 40, 9);
   a.v('abrirAdicionar', (Date.now() - 2 * DIA));
-  a.v('addSet', 'tipo', 'livre');
-  a.v('addSet', 'grupo', 'dorsal');
-  await a.v('gravarRetro', false);
+  await a.v('lancaTreino', 'livre');
+  await a.v('grupoDoLancamento', 'costas');
+  a.v('ctx.fechaAdicionar');
   await a.esperar();
 
   a.aba('ajustes');

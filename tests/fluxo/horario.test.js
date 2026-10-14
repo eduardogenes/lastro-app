@@ -85,18 +85,21 @@ test('horário típico do mês, com o mais cedo e o mais tarde', async () => {
 });
 
 test('retroativo sem horário não inventa hora', async () => {
-  const a = await app();
-  a.v('abrirAdicionar', (Date.now() - DIA));
-  a.v('addSet', 'tipo', 'B');
-  await a.v('gravarRetro', false);
+  const agora = agoraEstavel();
+  const a = await app({ agora: agora });
+  a.v('abrirAdicionar', agora - DIA);
+  await a.v('lancaTreino', 'B');
   await a.esperar();
 
   const m = a.S().done[0];
   assert.strictEqual(m.hora, undefined);
   assert.strictEqual(a.v('temHora', a.S().done[0]), false);
 
-  a.aba('semana');
-  assert.ok(!/\d{2}:\d{2}/.test(a.texto('.sess-d')), 'nada de 07:00 fantasma: ' + a.texto('.sess-d'));
+  a.v('ctx.fechaAdicionar');
+  a.v('ctx.abreDia', agora - DIA);
+  await a.esperar();
+  assert.ok(/sem hora/.test(a.texto('[data-a="dia-sessao"]')), 'o dia diz que não tem: ' + a.texto('[data-a="dia-sessao"]'));
+  assert.ok(!/\dh\d\d/.test(a.texto('[data-a="dia-sessao"]')), 'nada de 7h00 fantasma');
   a.v('abrirSessao', m.t);
   assert.strictEqual(a.$('.horario'), null);
   a.fechar();
@@ -107,9 +110,10 @@ test('retroativo com horário informado registra a hora', async () => {
   const a = await app({ agora: agora });
   const ontem = agora - DIA;
   a.v('abrirAdicionar', ontem);
-  a.v('addSet', 'tipo', 'B');
+  await a.v('lancaTreino', 'B');
+  a.clicar('[data-a="lanca-por-hora"]');
+  await a.esperar();
   a.digitar('ahora', '05:50');
-  await a.v('gravarRetro', false);
   await a.esperar();
 
   const m = a.S().done[0];
@@ -119,6 +123,7 @@ test('retroativo com horário informado registra a hora', async () => {
   assert.strictEqual(d.getMinutes(), 50);
   assert.strictEqual(new Date(m.t).toDateString(), new Date(ontem).toDateString(), 'continua ontem');
 
+  a.v('ctx.fechaAdicionar');
   a.aba('dias');
   a.v('ctx.abreDia', ontem);
   await a.esperar();
@@ -129,22 +134,27 @@ test('retroativo com horário informado registra a hora', async () => {
 test('horário inválido é ignorado sem quebrar', async () => {
   const a = await app();
   a.v('abrirAdicionar', (Date.now() - DIA));
-  a.v('addSet', 'tipo', 'B');
-  a.digitar('ahora', '99:99');
-  await a.v('gravarRetro', false);
+  await a.v('lancaTreino', 'B');
+  a.clicar('[data-a="lanca-por-hora"]');
   await a.esperar();
-  assert.strictEqual(a.S().done[0].hora, undefined, 'cai para sem horário em vez de gravar lixo');
+  a.digitar('ahora', '99:99');
+  await a.esperar();
+  assert.strictEqual(a.S().done[0].hora, undefined, 'fica sem horário em vez de gravar lixo');
+  assert.ok(a.$('#ahora'), 'e o campo continua ali para ele consertar');
+  // e o verbo, chamado por valor, recusa sozinho — não depende do campo
+  await a.v('horaDoLancamento', '25:10');
+  assert.strictEqual(a.S().done[0].hora, undefined, 'o verbo também não grava lixo');
   a.fechar();
 });
 
 test('treino avulso não entra na conta de horário', async () => {
   const a = await app();
   a.v('abrirAdicionar', (Date.now() - DIA));
-  a.v('addSet', 'tipo', 'livre');
-  a.v('addSet', 'grupo', 'peito');
-  await a.v('gravarRetro', false);
+  await a.v('lancaTreino', 'livre');
+  await a.v('grupoDoLancamento', 'peito');
   await a.esperar();
   assert.strictEqual(a.v('temHora', a.S().done[0]), false);
+  assert.strictEqual(a.$('[data-a="lanca-por-hora"]'), null, 'e a folha nem oferece a hora');
   a.fechar();
 });
 
@@ -183,15 +193,19 @@ test('limites das faixas de período', async () => {
   a.fechar();
 });
 
-test('sem horário medido não há marcador de período', async () => {
-  const a = await app();
-  a.v('abrirAdicionar', (Date.now() - DIA));
-  a.v('addSet', 'tipo', 'B');
-  await a.v('gravarRetro', false);
+test('sem horário medido não há ponto no horário de início', async () => {
+  // O marcador de período nas células saiu pela D; o que guarda a mesma regra
+  // agora é o eixo do horário de início: hora que ninguém mediu não vira ponto.
+  const agora = agoraEstavel();
+  const a = await app({ agora: agora });
+  a.v('abrirAdicionar', agora - DIA);
+  await a.v('lancaTreino', 'B');
+  a.v('ctx.fechaAdicionar');
   await a.esperar();
 
   a.aba('dias');
-  assert.strictEqual(a.$('.cal-d .per'), null, 'não marca período de hora que ninguém mediu');
+  assert.strictEqual(a.vJ('ctx.mes').horario, null, 'sem sessão com hora, não há horário de início');
+  assert.strictEqual(a.$$('.dm-eixo-p').length, 0);
   a.fechar();
 });
 

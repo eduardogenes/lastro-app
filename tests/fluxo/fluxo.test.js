@@ -98,9 +98,8 @@ test('uma semana de treino, com edição, promoção, cardio e corpo', async () 
   // ---- quinta: esqueceu de registrar, lança retroativo ----
   a.aba('semana');
   a.v('abrirAdicionar', (Date.now() - 1 * DIA));
-  a.v('addSet', 'tipo', 'E');
-  a.v('addSet', 'dur', 55);
-  await a.v('gravarRetro', false);
+  await a.v('lancaTreino', 'E');
+  a.v('ctx.fechaAdicionar');
   await a.esperar();
   // done fica ordenado por data: o lançamento de ontem não é o último
   const retro = a.S().done.filter(function (x) { return x.retro; });

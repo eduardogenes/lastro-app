@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.415 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.417 passando**, zero "unhandled".
 - A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
   `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
@@ -23,7 +23,7 @@ pede atenção do dono.
   com os pontos) e o dia aberto (sessões, cardio que abre com o apagar, descanso
   com a saída, palpite do dia vazio, comida com a forma de cada momento e a
   folha). Domínio em `src/dominio/mes.ts`.
-- **Saídas declaradas pelo desenho** (testes reescritos, não apagados em
+- **Saídas declaradas pelo desenho, no mês** (testes reescritos, não apagados em
   silêncio): a faixa da semana em Dias; o quadro de dias, tempo e volume do mês
   e a média de duração (tempo e volume são de Semana); a marca de período nas
   células e a legenda; a lista de sessões, de dias de comida e de cardios do
@@ -33,10 +33,21 @@ pede atenção do dono.
   Agora", o cardio de HOJE lançado por engano só se apaga amanhã, em Dias — o
   Agora registra cardio mas não lista o do dia. O Agora de descanso (próximo)
   tem a linha do cardio; conferir lá se ela abre com o apagar.
+- **Lançamento de treino passado (estados 6–8), construído:** um toque grava a
+  presença; hora, séries, grupos, duração e nome corrigem o mesmo registro
+  (mesmo `sid`, carimbo `m` novo). Saídas declaradas: a escolha da data na folha
+  (o mês escolhe o dia); "foi descanso" na folha (mora no dia); a duração do
+  treino do plano na folha (fica na tela da sessão, "corrigir"); a recusa de
+  gravar fora da prescrição sem grupo (presença primeiro). Os grupos de fora da
+  prescrição passaram a ser as regiões (F178) — só aparecem como texto, nenhuma
+  conta usa. **Divergência do desenho:** "Detalhar" não abre "preenchido em
+  anil" — a sessão de hoje mostra a série anterior ao lado, tocável; a folha diz
+  isso. Achado de dado consertado: dois treinos sem hora no mesmo dia tinham o
+  mesmo `sid` (colidiam na sincronia, e apagar um levava os dois).
 - **Fila de construção, na ordem:**
-  1. Dias, o resto: registrar treino passado e "fora" (estados 5–8), a sessão
-     passada com correção no lugar (3–4), apagar sessão pelo painel (13), estado
-     ruim (14), cardio em dia passado (capacidade nova).
+  1. Dias, o resto: a sessão passada com correção no lugar (3–4), apagar
+     sessão pelo painel do desenho (13), estado ruim (14), cardio em dia
+     passado (capacidade nova).
   2. O Agora de descanso (`agora-descanso.html`).
   3. §2 da frente 3 — os rótulos (R1–R4), por tela, com captura.
 - **Levar ao dono, sem bloquear:** o "aplicar" oferecido de novo nas mesmas
@@ -3186,6 +3197,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 13/10 · **A terceira rodada da D entregou** e foi conferida: sem vazamento (nenhum termo do app de hoje), todos os estados pedidos e mais alguns. **Duas divergências, por OMISSÃO MINHA no Anexo I:** a folha de pôr o dia em dia volta a gravar linha a linha, com um botão "Os outros 5 como no plano", contra a P3.i.6 (um toque fecha o dia inteiro); e "Não comi" vira terceira resposta do "Fora", contra a decisão 1 de 06/10 (é o quinto botão). As duas decisões não estavam no recado. **Vale a decisão do dono; a folha construída fica como está**, e os estados 10–11 de `dias.html` ficam como referência só do que é de Dias (abrir a folha a partir do dia). **Adotado do desenhista, com a razão dele:** a leitura do mês conta DIAS com treino, não treinos (dois treinos no mesmo dia e a sessão aberta por engano não inflam; a prescrição fala em "seis dias ativos", F21). **Sete perguntas dele**, todas com o desenho padrão já escolhido — vou construir pelo padrão e levar as perguntas ao dono sem bloquear.
 
 - 13/10 · **Dias: o mês e o dia aberto**, pela terceira entrega da D. 20 casos que liam a estrutura antiga reescritos contra a nova, cada um com a capacidade preservada ou a saída declarada (ponto de parada). 14 mutações, 14 mortas. Achado: o cardio de hoje lançado por engano ficou sem porta de saída até amanhã (vai com a pergunta 7). 1.415 passando.
+- 13/10 · **Lançamento de treino passado** (estados 6–8 de Dias): um toque grava; o resto corrige o registro gravado. 21 casos reescritos, 5 novos (colisão de `sid`, previsto do dia, a conta "eram", o nome ao sair, hora inválida por valor). 17 mutações, 17 mortas. 1.417 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

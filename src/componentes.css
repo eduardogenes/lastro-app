@@ -418,6 +418,9 @@
   gap: var(--ins-5); padding: var(--ins-5) 0; min-height: var(--ins-tap);
   width: 100%; text-align: left;
 }
+/* Linha de lista que é botão continua LINHA: sem o canto que o reset dá a todo
+   botão, o fio de baixo não vira curva nas pontas. */
+button.ins-linha { border-radius: 0; }
 /* Empilha. Sem isto os filhos são <span> e renderizam INLINE: "Banana120 g",
    "Arroz branco cozidoP 2.5 · C 28". Atingia toda lista do produto —
    biblioteca de alimentos, compras, músculos, itens da refeição. */
@@ -856,31 +859,31 @@
 .retro-nota { margin: 0 0 var(--ins-3); }
 .retro-fim { width: 100%; margin-top: var(--ins-7); }
 
-/* ---------- registro retroativo ---------- */
-.add-dia { margin-top: var(--ins-1); }
-.add-data { text-transform: none; }
-.add-h { margin-top: var(--ins-7); }
-.add-nota { margin: var(--ins-3) 0 0; }
-.add-regra { margin: var(--ins-2) 0 0; }
-.add-nome { margin-top: var(--ins-4); }
-.add-acoes { margin-top: var(--ins-8); }
-.add-detalhe { width: 100%; margin-top: var(--ins-2); }
-.edrow .dbtn { flex: 1; }
-
-/* Campo solto de formulário (horário no registro retroativo). Mesmo desenho
-   dos campos de carga: mono, fio, canto reto. */
-.addrow { display: flex; gap: var(--ins-3); align-items: stretch; margin-top: var(--ins-3); }
-.addrow .f { flex: 1; position: relative; min-width: 0; }
-.addrow input {
-  width: 100%; padding: 14px;
-  font: 500 17px/1 var(--ins-fonte);
-  background: var(--ins-superficie-2); border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta);
-  appearance: none; -moz-appearance: textfield;
+/* ---------- registrar um treino passado (a D, dias.html, estados 6 a 8) ----------
+   O previsto é a única coisa em anil, do tamanho do polegar: é o palpite do
+   app, e a cor do palpite é a do acento suave. O resto é um toque cada. */
+.ln-prev-r { margin: var(--ins-2) 0 var(--ins-2); }
+.ln-pergunta { margin: 0 0 var(--ins-4); }
+.ins-linha.ln-previsto {
+  gap: var(--ins-4); min-height: 72px; padding: var(--ins-4);
+  background: var(--ins-acento-suave); border: 1px solid var(--ins-acento); border-radius: var(--ins-raio-3);
 }
-.addrow input::placeholder { color: var(--ins-tinta-3); }
-.addrow input:focus { outline: none; border-color: var(--ins-acento); }
-.addrow input::-webkit-outer-spin-button,
-.addrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.ln-letra {
+  flex: 0 0 auto; min-width: 40px; text-align: center;
+  font-weight: 600; font-size: 22px; color: var(--ins-acento-tinta);
+}
+.ln-outros { margin-top: var(--ins-5); display: flex; flex-direction: column; gap: var(--ins-3); }
+.ln-chips { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
+.ln-fora { margin-top: var(--ins-5); border-top: 1px solid var(--ins-fio); }
+.ln-nota { margin: var(--ins-5) 0 0; }
+.ln-gravado {
+  display: flex; flex-direction: column; gap: var(--ins-1);
+  padding: var(--ins-4) 0; border-bottom: 1px solid var(--ins-fio);
+}
+.ln-bloco { margin-top: var(--ins-6); display: flex; flex-direction: column; gap: var(--ins-3); }
+.ln-bloco p { margin: 0; }
+.ln-hora, .ln-min { max-width: 160px; font-variant-numeric: tabular-nums; }
+.add-nome { margin-top: 0; }
 
 /* Ação principal desativada não usa o ácido. Ácido é "a única coisa a fazer
    agora"; num botão que não responde ao toque, ele promete e não cumpre.

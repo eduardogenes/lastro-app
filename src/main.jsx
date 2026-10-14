@@ -1,7 +1,7 @@
 import {
   ROT_BASE, D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO,
   PROGRAMA, RULES, ALT, slugEx, EX_BASE, FREQUENTES_NO_BOX,
-  PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, ehPriorizado, PRIO, CARGAS, DORES, MODAIS,
+  PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, REGIOES, ehPriorizado, PRIO, CARGAS, DORES, MODAIS,
   MOVIMENTOS_DE_BOX
 } from './dominio/programa';
 import {
@@ -46,7 +46,7 @@ import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { Retroativo } from './ui/telas/retroativo.jsx';
 import { Programa } from './ui/telas/programa.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
-import { inicioDoDia as _inicioDoDia, iniciosDoPeriodo as _iniciosDoPeriodo, leituraDosDias as _leituraDosDias,
+import { diasComTreino as _diasComTreino, inicioDoDia as _inicioDoDia, iniciosDoPeriodo as _iniciosDoPeriodo, leituraDosDias as _leituraDosDias,
          serieDaMediaMovel as _serieDaMediaMovel } from './dominio/mes';
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
 import {
@@ -3417,14 +3417,171 @@ function gruposDoPlano() {
   });
 }
 
+/** As regiões do corpo, na ordem do mapa: peito, ombro, costas, perna, panturrilha, braço, abdômen. */
+function regioesDoCorpo() {
+  return Object.keys(REGIOES).map(function (g) { return REGIOES[g]; })
+    .filter(function (r, i, xs) { return xs.indexOf(r) === i; });
+}
+
+// ---------- o lançamento de um treino passado (a D, `dias.html`, estados 6 a 8) ----------
+//
+// Um toque grava a presença. A folha pergunta uma coisa só — que treino foi —,
+// e o toque já é o registro: hora, séries, grupos e duração vêm DEPOIS, se ele
+// quiser, e cada um corrige o registro que já existe (decisão 1: cada toque
+// grava). Treino de data passada não ganha hora inventada (F270): sem hora, ele
+// conta como dia com treino e não entra no horário de início.
+
+/** A hora neutra de um dia sem hora informada: só ordena, nunca é mostrada. */
+function horaNeutra(t) { const d = new Date(t); d.setHours(7, 0, 0, 0); return d.getTime(); }
+
+/**
+ * Um instante livre para o registro, a partir de `t`.
+ *
+ * Dois treinos sem hora no mesmo dia cairiam no mesmo instante — e o instante é
+ * o `sid` de um registro novo, que é a chave dele na sincronia (`done:<sid>`) e
+ * o que apagar e abrir procuram. Um minuto adiante, até ficar livre, e a hora
+ * neutra continua sem ser mostrada.
+ */
+function instanteLivre(t, fora) {
+  let x = t;
+  while (S.done.some(function (m) { return m !== fora && (m.t === x || m.sid === x); })) x += 60000;
+  return x;
+}
+
 function abrirAdicionar(t) {
   const base = t != null ? t : Date.now() - 86400000;
-  const d = new Date(base); d.setHours(7,0,0,0);
-  view.add = { t: d.getTime(), tipo: null, grupos: [], dur: null, nome: '', hora: '' };
+  view.add = { t: horaNeutra(base), sid: null, antes: null, horaAberta: false, hora: '', durAberta: false };
   view.sessao = null;
   entraNoDestino('add'); render();
 }
-function fecharAdicionar(){ view.add = null; render(); saiDoDestino('add'); }
+function fecharAdicionar() {
+  const tinha = view.add && view.add.sid != null;
+  view.add = null; render(); saiDoDestino('add');
+  if (tinha) save();           // o nome, que grava ao sair do campo, pode não ter saído
+}
+
+/** O registro que esta folha gravou, ou `null` antes do toque. */
+function registroDoLancamento() {
+  const a = view.add;
+  return a && a.sid != null ? S.done.filter(function (x) { return x.sid === a.sid; })[0] || null : null;
+}
+
+/** O próximo da sequência NAQUELE dia: o que vinha depois do último antes dele. */
+function previstoNoDia(t) {
+  const ini = new Date(t); ini.setHours(0, 0, 0, 0);
+  return proximoTreino(Object.assign({}, S, { done: S.done.filter(function (x) { return x.t < ini.getTime(); }) }), ROT_BASE);
+}
+
+/** Dias com treino nas últimas quatro semanas, até ontem — a conta da leitura de Dias. */
+function diasNasQuatroSemanas() { return _diasComTreino(S.done, _inicioDoDia(Date.now()) - 1, 28); }
+
+/**
+ * O toque que grava: `k` é a letra do treino, ou `'livre'` para fora da
+ * prescrição (presença, sem séries, sem mexer na sequência — F155).
+ */
+async function lancaTreino(k) {
+  const a = view.add;
+  if (!a || a.sid != null) return;
+  if (k !== 'livre' && rot().indexOf(k) < 0) return;
+  a.antes = diasNasQuatroSemanas();
+  const t = instanteLivre(a.t);
+  const marca = { t: t, sid: t, retro: 1, m: Date.now() };
+  if (k === 'livre') { marca.livre = 1; marca.grupos = []; }
+  else { marca.day = k; if (S.deload) marca.dl = 1; }
+  S.done.push(marca);
+  S.done.sort(function (x, y) { return x.t - y.t; });
+  a.sid = marca.sid;
+  a.gravadoEm = Date.now();
+  await save();
+  render();
+}
+
+/** Toda correção depois do toque passa por aqui: carimba e grava. */
+async function corrigeLancamento(muda) {
+  const m = registroDoLancamento();
+  if (!m) return;
+  muda(m);
+  m.m = Date.now();                    // carimbo: é ele que a fusão compara
+  S.done.sort(function (x, y) { return x.t - y.t; });
+  await save();
+  render();
+}
+
+function abreHoraDoLancamento() { if (view.add) { view.add.horaAberta = true; render(); } }
+
+/**
+ * A hora de início, por valor ("19:30"). Vazio é "sem hora": o registro volta à
+ * hora neutra e perde a marca de hora informada. Hora inválida não grava nada.
+ */
+async function horaDoLancamento(txt) {
+  const a = view.add;
+  if (!a) return;
+  a.hora = mascaraDeHora(txt, false);
+  if (!a.hora) {
+    a.horaAberta = false;
+    return corrigeLancamento(function (m) { delete m.hora; m.t = instanteLivre(a.t, m); });
+  }
+  const comHora = aplicaHora(a.t, a.hora);
+  if (comHora == null) { render(); return; }
+  return corrigeLancamento(function (m) { m.t = instanteLivre(comHora, m); m.hora = 1; });
+}
+/** A casca do campo: aplica a máscara enquanto ele digita, e grava quando a hora fecha. */
+function horaDoLancamentoNoCampo(el) {
+  const v = mascaraDeHora(el.value, el.value.length === 2);
+  if (v !== el.value) el.value = v;
+  if (!v || aplicaHora(view.add.t, v) != null) horaDoLancamento(v);
+  else view.add.hora = v;
+}
+
+function grupoDoLancamento(g) {
+  if (regioesDoCorpo().indexOf(g) < 0) return;
+  return corrigeLancamento(function (m) {
+    const gs = (m.grupos || []).slice();
+    const i = gs.indexOf(g);
+    if (i >= 0) gs.splice(i, 1); else gs.push(g);
+    m.grupos = gs;
+  });
+}
+/** A duração em minutos; tocar a que já está tira. `'outro'` abre o campo. */
+function duracaoDoLancamento(min) {
+  if (min === 'outro') { view.add.durAberta = true; render(); return; }
+  const v = Math.round(+min);
+  return corrigeLancamento(function (m) {
+    if (!v || v < 1) { delete m.dur; return; }
+    if (m.dur === v * 60000 && !view.add.durAberta) delete m.dur;
+    else m.dur = Math.min(600, v) * 60000;
+  });
+}
+/** O nome, o único texto livre: anota a cada tecla e grava ao sair do campo. */
+function anotaNomeDoLancamento(nome) {
+  const m = registroDoLancamento();
+  if (!m) return;
+  const v = String(nome || '').trim();
+  if (v) m.nome = v; else delete m.nome;
+  m.m = Date.now();
+}
+
+/**
+ * "Detalhar exercícios e séries": abre a sessão daquele registro, na data dele.
+ *
+ * Só pode existir uma sessão aberta. Fechar a de hoje antes grava a duração
+ * dela; sem isso ela ficaria órfã, com o tempo perdido.
+ */
+async function detalhaLancamento() {
+  const m = registroDoLancamento();
+  if (!m || m.livre) return;
+  let fechou = null;
+  if (S.sessao) { fechou = S.sessao.day; fechaSessao('manual'); }
+  S.sessao = { day: m.day, inicio: m.t, ultima: m.t, sid: m.sid, retro: 1, tocado: Date.now(), pausas: [], pulados: [] };
+  S.draft = null;
+  view.add = null; saiDoDestino('add');
+  view.day = m.day; view.open = 0; abreModo();
+  await save();
+  render(); window.scrollTo(0, 0);
+  toast(fechou
+    ? 'Treino ' + fechou + ' de hoje encerrado. Agora preenchendo ' + fmtDate(m.t) + '.'
+    : 'Preenchendo o treino de ' + fmtDate(m.t) + '. Some sozinho quando você sair.');
+}
 
 async function concluirRetro() {
   const t = S.sessao ? S.sessao.inicio : null;
@@ -3434,23 +3591,6 @@ async function concluirRetro() {
   render(); window.scrollTo(0,0);
   if (t) toast('Treino de ' + fmtDate(t) + ' concluído.');
 }
-
-function addSet(campo, valor) {
-  const a = view.add;
-  if (campo === 'grupo') {
-    const i = a.grupos.indexOf(valor);
-    if (i >= 0) a.grupos.splice(i,1); else a.grupos.push(valor);
-  } else if (campo === 'dia') {
-    const d = new Date(a.t); d.setDate(d.getDate() + valor);
-    if (d.getTime() > Date.now()) return;
-    a.t = d.getTime();
-  } else {
-    a[campo] = a[campo] === valor ? null : valor;
-  }
-  render();
-}
-function anotaNomeAvulso(nome) { view.add.nome = nome; }
-function addNome(el){ anotaNomeAvulso(el.value); }
 
 /**
  * A máscara do horário: só dígito e `:`, e os dois-pontos entram sozinhos.
@@ -3464,12 +3604,6 @@ function mascaraDeHora(txt, digitando) {
   const v = (txt == null ? '' : String(txt)).replace(/[^0-9:]/g, '');
   return (digitando && v.length === 2 && v.indexOf(':') < 0) ? v + ':' : v;
 }
-function anotaHoraAvulsa(txt) { view.add.hora = mascaraDeHora(txt, false); }
-function addHora(el) {
-  const v = mascaraDeHora(el.value, el.value.length === 2);
-  if (v !== el.value) el.value = v;
-  view.add.hora = v;
-}
 // 'HH:MM' válido vira o instante do dia escolhido
 function aplicaHora(base, txt) {
   const m = /^(\d{1,2}):(\d{2})$/.exec((txt||'').trim());
@@ -3480,56 +3614,6 @@ function aplicaHora(base, txt) {
   d.setHours(hh, mm, 0, 0);
   return d.getTime();
 }
-
-async function gravarRetro(detalhar) {
-  const a = view.add;
-  if (!a.tipo) { toast('Escolha o que foi aquele dia.'); return; }
-  // descanso não é sessão: não tem hora, nem duração, nem exercício para
-  // detalhar. Sai por outra porta, antes de qualquer coisa virar marca.
-  if (a.tipo === 'descanso') { await alternaDescanso(a.t); return; }
-  if (a.tipo === 'livre' && !a.grupos.length) { toast('Marque pelo menos um grupo muscular.'); return; }
-
-  const comHora = aplicaHora(a.t, a.hora);
-  const quando = comHora != null ? comHora : a.t;
-  const sid = quando;
-  const marca = { t: quando, sid: sid, retro: 1, m: Date.now() };
-  if (comHora != null) marca.hora = 1;
-  if (a.tipo === 'livre') {
-    marca.livre = 1;
-    marca.grupos = a.grupos.slice();
-    if (a.nome.trim()) marca.nome = a.nome.trim();
-  } else {
-    marca.day = a.tipo;
-    if (S.deload) marca.dl = 1;
-  }
-  if (a.dur) marca.dur = a.dur*60000;
-
-  S.done.push(marca);
-  S.done.sort(function (x,y) { return x.t - y.t; });
-  view.add = null;
-  await save();
-
-  if (detalhar && a.tipo !== 'livre') {
-    // Só pode existir uma sessão aberta. Fechar a de hoje antes grava a
-    // duração dela; sem isso ela ficaria órfã, com o tempo perdido.
-    let fechou = null;
-    if (S.sessao) { fechou = S.sessao.day; fechaSessao('manual'); }
-    S.sessao = { day: a.tipo, inicio: quando, ultima: quando, sid: sid, retro: 1, tocado: Date.now(), pausas: [], pulados: [] };
-    S.draft = null;
-    view.day = a.tipo; view.open = 0; abreModo();
-    await save();
-    render(); window.scrollTo(0,0);
-    toast(fechou
-      ? 'Treino ' + fechou + ' de hoje encerrado. Agora preenchendo ' + fmtDate(a.t) + '.'
-      : 'Preenchendo o treino de ' + fmtDate(a.t) + '. Some sozinho quando você sair.');
-    return;
-  }
-  view.aba = 'dias';
-  render(); window.scrollTo(0,0);
-  toast(a.tipo === 'livre' ? 'Treino avulso registrado.' : 'Treino ' + a.tipo + ' registrado em ' + fmtDate(a.t) + '.');
-}
-
-
 
 function pesoRitmo() { return _pesoRitmo(S.body.peso); }
 
@@ -5842,20 +5926,20 @@ const SUPERFICIE = {
 
   verbos: {
     // ---- por valor, onde antes só havia elemento ou campo na tela ----
-    anotaSerie, anotaSerieRapida, anotaObservacao, anotaNomeAvulso, anotaHoraAvulsa,
+    anotaSerie, anotaSerieRapida, anotaObservacao, anotaNomeDoLancamento, horaDoLancamento,
     mascaraDeHora, soNumero, criarExercicioCom, guardaEdicaoCom, textoDaPrescricao,
     setBuscaDeExercicio,
 
     // ---- os verbos do módulo que a suíte aciona pelo nome nu ----
     abreFoto, abrirAddEx, abrirAdicionar, abrirCardioRapido, abrirCarga, abrirMedida,
     abrirNota, abrirNovoEx, abrirPrograma, abrirRapido, abrirSessao, addBody, addCardio,
-    addExercicio, addSet, ajustaTimer, altList, altOf, alternaDescanso, apagaFoto,
+    addExercicio, ajustaTimer, altList, altOf, alternaDescanso, apagaFoto,
     apagarModeloDeAula, apagarSessao, aplicaAoOficial, aplicarModeloDeAula, arrozAtual,
     cardioSemana, cardioSet, cargaTipo, catalogoAlimentos, catalogoDeAdicao,
-    concluirRetro, criarExercicio, criarTreino, delBody, descOf, desfazMod, diaAberto,
+    concluirRetro, criarExercicio, lancaTreino, abreHoraDoLancamento, criarTreino, delBody, descOf, desfazMod, diaAberto,
     diaDeComida, diasSemBackup, difDoDia, difTotal, draftPeek, duracaoAtual, editarSessao, ehDescanso,
     encerraSePreciso, estadoEx, exDe, fechaSessao, fecharPrograma, finalizarSessao,
-    garanteBytesDoCorpo, go, gravarRetro, historico, hojeISO, id, impactoDoMod,
+    garanteBytesDoCorpo, go, grupoDoLancamento, duracaoDoLancamento, detalhaLancamento, historico, hojeISO, id, impactoDoMod,
     impactoOficial, impactoSeries, importText, importaAulaColada, iniciarSessao, logKey,
     modoEdicao, modoPrograma, modsDoDia, montaCatalogo, moverDia, moverEx,
     moverProg, mudaMes, mudaSeries, nextDay, nomeEx, openHist, ordemDePoses, pausarSessao,
@@ -8224,39 +8308,90 @@ CTX.fechaRetro = function () { fecharRetro(); };
 CTX.retroativo = function () {
   const a = view.add;
   if (!a) return null;
-  const jaTem = sessoesDoDia(a.t);
-  return {
-    titulo: diaExtenso(a.t),
-    data: fmtDate(a.t),
-    hoje: sameDay(a.t, Date.now()),
-    jaTem: jaTem.length
-      ? jaTem.map(function (m) { return m.livre ? 'avulso' : 'treino ' + m.day; }).join(', ')
-      : null,
-    tipos: rot().map(function (x) { return { k: x, t: x, on: a.tipo === x }; })
-      .concat([{ k: 'livre', t: 'outro treino', on: a.tipo === 'livre' },
-               { k: 'descanso', t: 'foi descanso', on: a.tipo === 'descanso' }]),
-    descanso: a.tipo === 'descanso',
-    jaEraDescanso: ehDescanso(a.t),
-    // só letra da rotação tem treino para descrever: 'livre' e 'descanso' não
-    doPlano: a.tipo && treino(a.tipo)
-      ? treino(a.tipo).name + ' · ' + treino(a.tipo).tag : null,
-    livre: a.tipo === 'livre',
-    grupos: gruposDoPlano().map(function (g) {
-      return { k: g, t: g, on: a.grupos.indexOf(g) >= 0 };
-    }),
-    nome: a.nome,
-    hora: a.hora || '',
-    duracoes: [30, 45, 60, 75].map(function (v) {
-      return { k: v, t: v + ' min', on: a.dur === v };
-    }),
-    pode: !!a.tipo
+  const d = new Date(a.t);
+  const dataCurta = fmtDate(a.t);
+  const nomeDoDia = DIAS_LONGOS[d.getDay()];
+  const m = registroDoLancamento();
+  const jaTem = sessoesDoDia(a.t).filter(function (x) { return x !== m; });
+  const descreve = function (k) {
+    const P = treino(k);
+    if (!P) return null;
+    const series = P.ex.reduce(function (n, ex) { return n + ex.s; }, 0);
+    return [P.tag || null, P.ex.length ? P.ex.length + (P.ex.length === 1 ? ' exercício, ' : ' exercícios, ') + series + ' séries' : null]
+      .filter(Boolean).join(' · ');
   };
+  const nomeDe = function (k) { return diaAberto(k) ? 'Aula' : 'Treino ' + k; };
+  const proximo = nextDay();
+  const ultimo = ultimaDoPlano();
+  const base = {
+    titulo: nomeDoDia + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()],
+    procedencia: m ? 'dia de treino, pela sessão registrada' : jaTem.length
+      ? 'já tem ' + jaTem.map(function (x) { return x.livre ? 'treino fora da prescrição' : nomeDe(x.day).toLowerCase(); }).join(' e ')
+      : 'nada registrado'
+  };
+
+  // antes do toque: a pergunta, com o previsto em destaque (estado 6)
+  if (!m) {
+    const previsto = previstoNoDia(a.t);
+    return Object.assign(base, {
+      gravado: false,
+      pergunta: 'Que treino foi ' + (d.getDay() === 0 || d.getDay() === 6 ? 'no ' : 'na ') + nomeDoDia + ', ' + dataCurta + '?',
+      previsto: { k: previsto, letra: diaAberto(previsto) ? 'aula' : previsto, titulo: nomeDe(previsto), detalhe: descreve(previsto) },
+      outros: rot().filter(function (k) { return k !== previsto; })
+        .map(function (k) { return { k: k, t: diaAberto(k) ? 'Aula' : k }; })
+    });
+  }
+
+  // depois do toque: o que ficou gravado, e o que mudou por causa dele (7 e 8)
+  const depois = diasNasQuatroSemanas();
+  const mudou = a.antes != null && depois !== a.antes
+    ? 'dias com treino nas últimas 4 semanas: ' + depois + ', eram ' + a.antes : null;
+  const comHora = temHora(m);
+  if (m.livre) {
+    return Object.assign(base, {
+      gravado: true, livre: true,
+      titulo2: 'Treino fora da prescrição · ' + dataCurta,
+      gravadoEm: 'gravado às ' + fmtHoraDita(a.gravadoEm || m.m) + ' · ' + (mudou || 'conta como dia com treino'),
+      // as regiões do corpo que o produto já conhece (F178), e não os músculos
+      // finos do plano: de um treino fora dele ninguém sabe o "delt lateral"
+      grupos: regioesDoCorpo().map(function (g) { return { k: g, t: g, on: (m.grupos || []).indexOf(g) >= 0 }; }),
+      duracoes: [30, 45, 60].map(function (v) { return { k: v, t: v + ' min', on: m.dur === v * 60000 && !a.durAberta }; })
+        .concat([{ k: 'outro', t: 'outro', on: a.durAberta || (!!m.dur && [30, 45, 60].indexOf(m.dur / 60000) < 0) }]),
+      durAberta: a.durAberta || (!!m.dur && [30, 45, 60].indexOf(m.dur / 60000) < 0),
+      durMin: m.dur ? String(Math.round(m.dur / 60000)) : '',
+      nome: m.nome || '',
+      nota: 'Sem séries. Não mexe na sequência — o próximo continua ' + (diaAberto(proximo) ? 'a aula' : 'o ' + proximo) +
+            ' — e não entra no horário de início do mês.'
+    });
+  }
+  const anda = ultimo === m;
+  return Object.assign(base, {
+    gravado: true, livre: false,
+    titulo2: nomeDe(m.day) + ' · ' + nomeDoDia + ', ' + dataCurta,
+    gravadoEm: 'gravado às ' + fmtHoraDita(a.gravadoEm || m.m) + (mudou ? ' · ' + mudou : ''),
+    comHora: comHora,
+    horaAberta: a.horaAberta || comHora,
+    hora: comHora ? fmtHora(m.t) : a.hora,
+    notaHora: comHora
+      ? 'Começou às ' + fmtHoraDita(m.t) + ', e entra no horário de início do mês.'
+      : 'Sem hora, este treino conta como dia com treino, mas não entra no horário de início do mês. Nenhuma hora é inventada.',
+    detalhar: 'abre o ' + nomeDe(m.day) + ' de ' + dataCurta + ' série a série, com o que você fez da última vez ao lado de cada uma',
+    sequencia: anda
+      ? 'A sequência anda: este é o último registrado, e o próximo passa a ser ' + (diaAberto(proximo) ? 'a aula' : 'o ' + proximo) + '.'
+      : 'A sequência não muda: ' + (ultimo ? 'o ' + nomeDe(ultimo.day) + ' de ' + (sameDay(ultimo.t, Date.now()) ? 'hoje' : fmtDate(ultimo.t)) +
+        ' continua sendo o último registrado, e ' : '') + 'o próximo continua sendo ' + (diaAberto(proximo) ? 'a aula' : 'o ' + proximo) + '.'
+  });
 };
 CTX.fechaAdicionar = function () { fecharAdicionar(); };
-CTX.addSet = function (campo, valor) { addSet(campo, valor); };
-CTX.addNome = function (el) { addNome(el); };
-CTX.addHora = function (el) { addHora(el); };
-CTX.gravaRetro = function (detalhar) { gravarRetro(detalhar); };
+CTX.lancaTreino = function (k) { return lancaTreino(k); };
+CTX.abreHoraDoLancamento = function () { abreHoraDoLancamento(); };
+CTX.semHoraNoLancamento = function () { return horaDoLancamento(''); };
+CTX.horaDoLancamento = function (el) { horaDoLancamentoNoCampo(el); };
+CTX.grupoDoLancamento = function (g) { return grupoDoLancamento(g); };
+CTX.duracaoDoLancamento = function (min) { return duracaoDoLancamento(min); };
+CTX.nomeDoLancamento = function (el) { anotaNomeDoLancamento(el.value); };
+CTX.guardaLancamento = function () { return save(); };
+CTX.detalhaLancamento = function () { return detalhaLancamento(); };
 
 // ---------- edição do treino de HOJE ----------
 // O gesto é o mesmo do editor de programa — subir, descer, mais série, menos
