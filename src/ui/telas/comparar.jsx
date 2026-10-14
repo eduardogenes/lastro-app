@@ -17,9 +17,9 @@
 // a cintura como segunda camada de confirmação — medir parou de acontecer.
 //
 // O peso e a cintura embaixo de cada foto são MÉDIA DA SEMANA e vêm de
-// `S.body` — a sessão de fotos não pede número nenhum. O protocolo manda
-// fotografar de manhã em jejum, que é o mesmo momento da pesagem: perguntar de
-// novo seria perguntar o que o app já sabe.
+// `S.body` — a sessão de fotos não pede número nenhum: perguntar de novo seria
+// perguntar o que o app já sabe. A hora de cada foto aparece ao lado da data
+// (decisão do dono, 14/10: ele tira a maioria à noite).
 
 import { FotoAjustada } from '../instrumento/fotoajustada.jsx';
 import { Chips, Procedencia, Vazio } from '../instrumento/primitivos.jsx';
@@ -32,7 +32,7 @@ function Lado({ l, aoAjustar, aoTentar }) {
       <FotoAjustada url={l.url} enq={l.enq} alt={l.pose + ' em ' + l.data} vazio={l.aviso}
                     aoTentar={l.retomar ? () => aoTentar(l.d) : null} />
       <figcaption>
-        <span class="ins-label">{l.data}</span>
+        <span class="ins-label">{l.data}{l.hora ? ' · ' + l.hora : ''}</span>
         <span class="ins-data cp-num">{l.peso}</span>
         <span class="ins-data cp-num cp-num2">{l.cintura}</span>
         {/* É aqui que o desalinhamento se percebe, então é daqui que se conserta:
@@ -95,8 +95,8 @@ export function Comparar({ ctx }) {
                                   classe="cp-cima" estilo={'clip-path: inset(0 0 0 ' + c.corte + '%)'} />
                   )}
                   <i class="cp-divisa" style={'left:' + c.corte + '%'} aria-hidden="true" />
-                  <span class="cp-lado-r cp-lado-e">{c.de.data}</span>
-                  <span class="cp-lado-r cp-lado-d">{c.ate.data}</span>
+                  <span class="cp-lado-r cp-lado-e">{c.de.data}{c.de.hora ? ' · ' + c.de.hora : ''}</span>
+                  <span class="cp-lado-r cp-lado-d">{c.ate.data}{c.ate.hora ? ' · ' + c.ate.hora : ''}</span>
                 </div>
                 <input class="cp-corte" type="range" min="0" max="100" value={c.corte}
                        aria-label={'a divisa entre ' + c.de.data + ' e ' + c.ate.data}

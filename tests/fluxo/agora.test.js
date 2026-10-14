@@ -1841,10 +1841,11 @@ test('a folha do tipo do dia diz o efeito antes do toque, e "Já fiz" leva ao re
   b.fechar();
 });
 
-test('a pesagem e as fotos seguem a hora: a pesagem some depois do café, e as fotos dizem "em jejum"', async () => {
+test('a pesagem segue a hora e some depois do café; as fotos não seguem, e dizem que a hora fica anotada', async () => {
   // A D (`agora-descanso.html`, estados 1 e 5). F42: a pesagem é de manhã, em
-  // semi-jejum; F228: as fotos, em jejum. Domingo de descanso, com a sessão de
-  // fotos vencida (16 dias).
+  // semi-jejum. As fotos deixaram de seguir a hora (decisão do dono, 14/10: "a
+  // maioria eu tiro de noite"). Domingo de descanso, com a sessão de fotos
+  // vencida (16 dias).
   const dom = function (h, m) { const d = new Date(agoraEstavel(h, m)); d.setDate(d.getDate() - d.getDay()); return d.getTime(); };
   const fotos = function (t) {
     return [{ d: dataLocal(t - 16 * DIA), t: 1, m: 1, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } }];
@@ -1852,7 +1853,7 @@ test('a pesagem e as fotos seguem a hora: a pesagem some depois do café, e as f
   const cedo = await app({ aba: 'agora', agora: dom(7, 5), estado: { plano: 7, logs: {}, done: [],
     body: { peso: [], cintura: [] }, protocolo: { sessoes: fotos(dom(7, 5)), poses: null } } });
   assert.ok(cedo.$('[data-linha="peso"]'), 'às 7h05, antes do café: a pesagem está lá');
-  assert.ok(/em jejum, antes do café das 8h00/.test(cedo.texto('[data-linha="fotos"]')), cedo.texto('[data-linha="fotos"]'));
+  assert.ok(/a cada 14 dias · a hora de cada foto fica anotada/.test(cedo.texto('[data-linha="fotos"]')), cedo.texto('[data-linha="fotos"]'));
   assert.ok(cedo.$('[data-a="agora-fotos"]'), 'e oferece a sessão');
   cedo.fechar();
 
@@ -1865,8 +1866,8 @@ test('a pesagem e as fotos seguem a hora: a pesagem some depois do café, e as f
     body: { peso: [], cintura: [] }, protocolo: { sessoes: fotos(dom(7, 50)), poses: null } } });
   comeu.v('ctx.marcaRefeicao', 'pos');
   await comeu.esperar();
-  assert.ok(/amanhã cedo/.test(comeu.texto('[data-linha="fotos"]')), 'depois do café marcado: ' + comeu.texto('[data-linha="fotos"]'));
-  assert.strictEqual(comeu.$('[data-a="agora-fotos"]'), null, 'e não oferece a sessão de hoje');
+  assert.ok(!/amanhã cedo/.test(comeu.texto('[data-linha="fotos"]')), 'depois do café marcado: ' + comeu.texto('[data-linha="fotos"]'));
+  assert.ok(comeu.$('[data-a="agora-fotos"]'), 'e continua oferecendo a sessão');
   assert.strictEqual(comeu.$('[data-linha="peso"]'), null, 'e a pesagem também saiu');
   comeu.fechar();
 });

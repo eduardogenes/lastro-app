@@ -47,8 +47,8 @@ export const MONTAGEM: ItemDeMontagem[] = [
     nota: 'Encostado, a sombra desenha um contorno falso no ombro e na cintura.' },
   { k: 'luz', rotulo: 'luz', valor: 'uma fonte, frontal',
     nota: 'Artificial é mais repetível que a do sol. Nada vindo de cima: luz de teto inventa definição abdominal.' },
-  { k: 'hora', rotulo: 'horário', valor: 'manhã, em jejum',
-    nota: 'Depois do banheiro, antes de comer e treinar — o mesmo momento da pesagem.' },
+  { k: 'hora', rotulo: 'horário', valor: 'o que você conseguir repetir',
+    nota: 'O app anota a hora de cada foto e mostra na comparação. Manhã em jejum e noite depois de comer mudam a barriga: comparar sabendo a hora evita ler água como gordura.' },
   { k: 'roupa', rotulo: 'roupa', valor: 'sempre a mesma',
     nota: 'Peça justa, de cor lisa, e sempre descalço. Meia e chinelo mudam a linha da perna e a altura.' }
 ];

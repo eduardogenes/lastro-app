@@ -215,7 +215,7 @@ function Fotos({ f, ctx }) {
       </div>
 
       <Procedencia>
-        de manhã, em jejum, junto com a pesagem · as marcas de fita no chão são
+        a hora de cada foto fica anotada · as marcas de fita no chão são
         o que faz duas sessões serem comparáveis
       </Procedencia>
       <Procedencia>

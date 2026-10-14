@@ -9966,6 +9966,10 @@ function ladoDaComparacao(d, pose) {
     d: d,
     pose: pose,
     data: ses ? fmtDate(instanteDaData(d)) : '–',
+    // a hora da foto (decisão do dono, 14/10): manhã em jejum e noite depois de
+    // comer mudam a barriga, e a comparação diz quando cada uma foi tirada.
+    // Referência antiga, sem instante de verdade, fica sem hora.
+    hora: ref && ref.v > 1577836800000 ? fmtHoraDita(ref.v) : null,
     url: ref ? CORPO.urlDaFoto(d, pose, ref) : null,
     enq: (ref && ref.enq) || null,
     aviso: avisoDaFoto(d, pose, !!ref, 'sem foto nesta pose'),
@@ -10681,15 +10685,16 @@ CTX.linhasDoCorpo = function () {
   // A HORA manda nas duas linhas (a D, `agora-descanso.html`, estados 1 e 5).
   // A pesagem é de manhã em semi-jejum (F42) — em dia de treino, antes de
   // treinar —, e passada a hora ela não aparece: aparecer à tarde seria pedir
-  // um número que não compara. As fotos são em jejum (F228): antes da primeira
-  // refeição do dia; depois dela marcada, "amanhã cedo".
+  // um número que não compara. As FOTOS não seguem a hora (decisão do dono,
+  // 14/10: "apenas indique o horário da foto — a maioria eu tiro de noite"):
+  // a sessão é oferecida quando vence, e a hora de cada foto fica anotada e
+  // aparece na comparação.
   const H = CTX.hoje();
   const refs = H.refs.filter(function (r) { return !ehLinhaDeTreino(r); });
   const primeira = refs[0] || null;
   const linhaTreino = H.refs.filter(ehLinhaDeTreino)[0] || null;
   const minAgora = new Date(agora).getHours() * 60 + new Date(agora).getMinutes();
   const comeu = !!(primeira && H.comidaDoDia.done[primeira.id]);
-  const horaDita = function (t) { return t.replace(/^0(\d)/, '$1').replace(':', 'h'); };
   const passouAHora = treina
     ? (h.origem === 'registrado' || h.origem === 'aberta' || (linhaTreino && minAgora > minutosDe(linhaTreino.t)))
     : (comeu || (primeira && minAgora > minutosDe(primeira.t)));
@@ -10709,13 +10714,8 @@ CTX.linhasDoCorpo = function () {
   const dias = diasDesdeAFoto(S.protocolo.sessoes, agora);
   const u = ultimaSessaoFoto(S.protocolo.sessoes);
   if (dias != null && dias >= CADENCIA_DIAS && u) {
-    linhas.push(comeu
-      ? { k: 'fotos', t: 'Fotos do corpo', v: 'amanhã cedo',
-          d: 'faz ' + dias + ' dias · foto depois de comer não compara com as outras' }
-      : { k: 'fotos', t: 'Fotos do corpo', v: 'faz ' + dias + ' dias',
-          d: primeira ? 'em jejum, antes do ' + primeira.n.toLowerCase().replace(/^café da manhã$/, 'café') +
-                        ' das ' + horaDita(primeira.t) : 'em jejum',
-          acao: 'Nova sessão' });
+    linhas.push({ k: 'fotos', t: 'Fotos do corpo', v: 'faz ' + dias + ' dias',
+      d: 'a cada ' + CADENCIA_DIAS + ' dias · a hora de cada foto fica anotada', acao: 'Nova sessão' });
   }
   return linhas;
 };

@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.515 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.516 passando**, zero "unhandled".
 - **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
   versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
   ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
@@ -82,8 +82,13 @@ pede atenção do dono.
      novo em outro lugar"); a cobrança da adesão fica só na Semana. Feito 14/10:
      a frase aparece embaixo dos portões quando o da adesão falta; um caso
      confere que o Agora não fala de adesão.
-  8. [ ] **Fotos do corpo: mostrar o horário de cada foto**, sem "amanhã cedo"
-     (ele tira a maioria à noite). Decisão dele no comentário da 14.
+  8. [x] **Fotos do corpo: mostrar o horário de cada foto**, sem "amanhã cedo"
+     (ele tira a maioria à noite). Decisão dele no comentário da 14. Feito
+     14/10: a linha das fotos no Agora oferece a sessão a qualquer hora ("a cada
+     14 dias · a hora de cada foto fica anotada"); a montagem diz "horário: o que
+     você conseguir repetir", com a nota de que manhã e noite mudam a barriga; o
+     Corpo não fala mais de jejum para fotos; cada lado do comparar mostra
+     "sex 07/08 · 21h40" (referência antiga, sem instante, fica sem hora).
   9. [ ] **A lousa como foto dentro do app** (aula, estado 6).
   10. [ ] **A revisão do treinador entra como texto colado** (prescrição,
       estado 6), com "É a mesma / É outro exercício" antes de gravar.
@@ -3548,6 +3553,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Fila 5: o cardio de hoje no Agora, com "Apagar". 4 mutações, 4 mortas. 1.509 passando.
 - 14/10 · Fila 6: o cardio esquecido num dia passado, sem hora inventada. 6 mutações, 6 mortas; fusão do `semHora` com caso no domínio. 1.514 passando.
 - 14/10 · Fila 7: a promessa da adesão entra na Semana, e o caso cobra que o Agora não cobre. 1 mutação, morta. 1.515 passando.
+- 14/10 · Fila 8: as fotos não seguem mais a refeição, e a hora de cada uma aparece no comparar. 2 mutações, 2 mortas. 1.516 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

@@ -694,6 +694,27 @@ test('o peso ao lado da foto é a média da semana, e vem do registro corporal',
   a.fechar();
 });
 
+test('cada lado da comparação diz a hora da foto; referência sem instante fica sem hora', async () => {
+  // Decisão do dono, 14/10: "apenas indique o horário da foto — a maioria eu
+  // tiro de noite". Manhã em jejum e noite depois de comer mudam a barriga.
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  const velha = diasAtras(28), nova = diasAtras(14);
+  const noite = new Date(); noite.setDate(noite.getDate() - 14); noite.setHours(21, 40, 0, 0);
+  a.E(`S.protocolo.sessoes = [
+    { d: ${JSON.stringify(velha)}, t: 1, m: 1, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } },
+    { d: ${JSON.stringify(nova)}, t: 2, m: 2, fotos: { 'frente-relaxado': { v: ${noite.getTime()}, ext: 'webp' } } }
+  ]`);
+  a.v('ctx.abreComparar');
+  const c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.ate.hora, '21h40');
+  assert.strictEqual(c.de.hora, null, 'a referência antiga não tem instante de verdade');
+  assert.ok(a.$$('.cp-lado .ins-label').some(e => /· 21h40$/.test(e.textContent)), 'e a tela diz');
+  await a.esperar(80);
+  a.fechar();
+});
+
 test('sem pesagem naquela semana, o lugar do número fica vazio em vez de zero', async () => {
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
