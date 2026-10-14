@@ -59,8 +59,16 @@ export function Camera({ ctx }) {
       olho={d.data} titulo={'Pose ' + d.indice + ' de ' + d.total + ' · ' + d.pose}
       aoVoltar={ctx.fechaCamera} corpo="hwrap"
     >
+      {/* Os nove blocos no topo (a D, estado 2): a pose em que está e as que
+          fecharam, do tamanho de um dedo — o que se lê a três metros. */}
+      <div class="cam-blocos" aria-hidden="true">
+        {d.pontos.map(p => (
+          <i key={p.id} class={'cam-bloco' + (p.naoGuardada ? ' nao' : p.feita ? ' feita' : '') + (p.atual ? ' atual' : '')} />
+        ))}
+      </div>
       <div class="cam-quadro">
         <video ref={video} class="cam-video" autoplay playsinline muted />
+        {d.clarao && <div class="cam-clarao" aria-hidden="true" />}
 
         {d.fantasma && d.refUrl && (
           <FotoAjustada

@@ -988,6 +988,115 @@ test('disparo sem temporizador guarda a foto e avança a pose', async () => {
   a.fechar();
 });
 
+test('o disparo é o obturador, um clarão e o bloco da pose fechando — não o alarme do descanso', async () => {
+  // a D, sessao-fotos estado 3: a três metros, três canais dizendo a mesma
+  // coisa; o bipe duplo é do fim do descanso e aqui confundiria
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+
+  let c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.pontos.length, 9);
+  assert.deepStrictEqual(c.pontos.map(p => p.feita), Array(9).fill(false));
+  assert.strictEqual(c.pontos.findIndex(p => p.atual), 0);
+  assert.strictEqual(a.$$('.cam-bloco').length, 9, 'os blocos estão na câmera');
+  assert.ok(a.$('.cam-bloco.atual') === a.$$('.cam-bloco')[0]);
+
+  a.v('ctx.setTimerDaCamera', 0);
+  const bipes = a.registro.bipes, vibrou = a.vibrou.length;
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+
+  assert.strictEqual(a.registro.obturador, 1, 'o som do obturador');
+  assert.strictEqual(a.registro.bipes, bipes, 'e não o bipe duplo do descanso');
+  assert.strictEqual(a.vibrou.length, vibrou, 'nem a vibração dele');
+  c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.clarao, true, 'o clarão');
+  assert.ok(a.$('.cam-clarao'));
+  assert.strictEqual(c.pontos[0].feita, true, 'o bloco da pose fechou');
+  assert.strictEqual(c.pontos[0].atual, false);
+  assert.strictEqual(c.pontos[1].atual, true);
+  assert.ok(a.$$('.cam-bloco')[0].classList.contains('feita'));
+
+  await a.esperar(400);
+  assert.strictEqual(a.vJ('ctx.cameraViva').clarao, false, 'curto: o clarão apaga sozinho');
+  assert.strictEqual(a.$('.cam-clarao'), null);
+  a.fechar();
+});
+
+test('a pose que não coube não ganha obturador nem clarão: o bloco dela fica marcado na câmera', async () => {
+  // o disparo diz "guardou"; se não guardou, nenhum dos três canais pode dizer
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
+  await a.esperar(400);
+  assert.strictEqual(a.registro.obturador, 1);
+
+  a.encheCota();
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.strictEqual(a.registro.obturador, 1, 'sem obturador para o que não guardou');
+  const c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.clarao, false, 'nem clarão');
+  assert.strictEqual(c.pontos[1].naoGuardada, true);
+  const bloco = a.$$('.cam-bloco')[1];
+  assert.ok(bloco.classList.contains('nao'), 'e o bloco dela tem a forma de "não guardada"');
+  assert.ok(!bloco.classList.contains('feita'), 'e não a de fechado');
+  assert.strictEqual(a.$$('.cam-bloco.nao').length, 1);
+  a.fechar();
+});
+
+test('a pose é dita em voz, ao abrir a câmera e a cada pose nova', async () => {
+  // a D, sessao-fotos estado 2: a três metros nada precisa ser lido
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+
+  assert.strictEqual(a.registro.falas.length, 1);
+  assert.strictEqual(a.registro.falas[0].lang, 'pt-BR');
+  assert.ok(/^Pose 1 de 9\. Frente relaxado\. \S/.test(a.registro.falas[0].t), a.registro.falas[0].t);
+
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.strictEqual(a.registro.falas.length, 2);
+  assert.ok(/^Pose 2 de 9\. Frente duplo bíceps\. /.test(a.registro.falas[1].t), a.registro.falas[1].t);
+  a.fechar();
+});
+
+test('sem síntese de voz no aparelho, a câmera abre e dispara igual', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.E('delete window.speechSynthesis; delete window.SpeechSynthesisUtterance');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  assert.strictEqual(a.vJ('ctx.cameraViva').pronta, true);
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.ok(a.S().protocolo.sessoes[0].fotos['frente-relaxado']);
+  assert.strictEqual(a.registro.falas.length, 0);
+  assert.deepStrictEqual(a.erros, []);
+  a.fechar();
+});
+
 test('a contagem pode ser cancelada antes de disparar', async () => {
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);

@@ -12,3 +12,6 @@ CHROME=~/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome \
 
 As capturas (`shots/`) não vão para o git. Os scripts vão: em 14/10 a pasta
 antiga, em `/tmp`, foi apagada pelo sistema, com scripts e capturas.
+
+`camera.mjs` abre a câmera da sessão de fotos com a câmera falsa do Chromium
+(`--use-fake-device-for-media-stream`): os blocos das poses e o clarão.

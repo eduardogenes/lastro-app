@@ -1770,3 +1770,14 @@ button.ins-linha { border-radius: 0; }
 .cp-lado-e { left: var(--ins-3); }
 .cp-lado-d { right: var(--ins-3); }
 .cp-corte { width: 100%; margin-top: var(--ins-4); }
+
+/* ---- A câmera a três metros (a D, sessao-fotos estados 2 e 3) ------------
+   Os blocos das poses do tamanho de um dedo; o clarão do disparo, curto. */
+.cam-blocos { display: grid; grid-template-columns: repeat(9, 1fr); gap: var(--ins-1); margin-bottom: var(--ins-3); }
+.cam-bloco { height: 22px; border-radius: var(--ins-raio-1); border: 1.5px solid var(--ins-fio-controle); }
+.cam-bloco.feita { background: var(--ins-tinta); border-color: var(--ins-tinta); }
+.cam-bloco.atual { border-color: var(--ins-acento); box-shadow: inset 0 0 0 2px var(--ins-acento); }
+.cam-bloco.nao { border: 2px dashed var(--ins-atencao-tinta); }
+.cam-clarao { position: absolute; inset: 0; background: var(--ins-foto-tinta); animation: cam-clarao 320ms ease-out forwards; pointer-events: none; }
+@keyframes cam-clarao { from { opacity: .9; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cam-clarao { animation-duration: 1ms; opacity: 0; } }

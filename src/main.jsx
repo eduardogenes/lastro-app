@@ -10909,6 +10909,7 @@ CTX.abreCamera = async function () {
   streamCamera = r.stream;
   view.camera.pronta = true;
   render();
+  falaPose(v.pose);
 };
 
 CTX.fechaCamera = function () {
@@ -10944,6 +10945,52 @@ function contaEDispara(n) {
   if (n <= 0) { contagemT = null; capturaAgora(); return; }
   bipeDaContagem(n);
   contagemT = setTimeout(function () { contaEDispara(n - 1); }, 1000);
+}
+
+/**
+ * O DISPARO, dito sem palavra nenhuma (a D, `sessao-fotos.html`, estado 3): o
+ * som do obturador, um clarão curto e o bloco da pose fechando. Os três dizem a
+ * mesma coisa por canais diferentes — se o som estiver desligado, o clarão e o
+ * bloco continuam valendo. O alarme do descanso, que tocava aqui, é de outra
+ * coisa.
+ */
+function obturador() {
+  try {
+    if (!audioCtx) preparaAudio();
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const t0 = audioCtx.currentTime, n = Math.floor(audioCtx.sampleRate * 0.09);
+    const buf = audioCtx.createBuffer(1, n, audioCtx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
+    const src = audioCtx.createBufferSource(), g = audioCtx.createGain();
+    src.buffer = buf; g.gain.setValueAtTime(0.6, t0);
+    src.connect(g); g.connect(audioCtx.destination);
+    src.start(t0);
+  } catch (e) {}
+}
+function clarao() {
+  if (!view.camera) return;
+  view.camera.clarao = Date.now();
+  setTimeout(function () { if (view.camera) { view.camera.clarao = null; render(); } }, 320);
+}
+/**
+ * A instrução por VOZ (a D, estado 2, hipótese B): a três metros nada precisa
+ * ser lido. A pose e o primeiro passo dela, em português; sem síntese de voz no
+ * aparelho, o desenho da tela segue valendo sozinho.
+ */
+function falaPose(poseId) {
+  try {
+    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return;
+    const lista = posesDo(S.protocolo.poses);
+    const i = lista.findIndex(function (p) { return p.id === poseId; });
+    const p = lista[i];
+    if (!p) return;
+    const u = new SpeechSynthesisUtterance('Pose ' + (i + 1) + ' de ' + lista.length + '. ' + p.n + '. ' +
+                                           (Array.isArray(p.como) && p.como[0] ? p.como[0] : ''));
+    u.lang = 'pt-BR';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
 }
 
 function bipeDaContagem(n) {
@@ -10991,7 +11038,8 @@ async function capturaAgora() {
       c.fantasmaD = viz ? viz.d : null;
       garanteBytesDoCorpo(viz ? [viz.d] : []);
     }
-    aviso();
+    obturador(); clarao();
+    if (prox) falaPose(prox);
     render();
     if (!prox) toast('Sessão completa. As nove poses estão registradas.');
   } catch (e) {
@@ -11055,6 +11103,13 @@ CTX.cameraViva = function () {
     refTxt: outra ? fmtDate(instanteDaData(outra.d)) : '',
     opacidade: c.opacidade,
     timer: c.timer,
-    contagem: c.contagem
+    contagem: c.contagem,
+    clarao: !!c.clarao,
+    // os blocos das poses, do tamanho de um dedo (estado 2): em que pose está,
+    // e quais já fecharam, legível a três metros
+    pontos: lista.map(function (p) {
+      return { id: p.id, n: p.n, feita: !!(ses && ses.fotos[p.id]), atual: p.id === v.pose,
+               naoGuardada: !!(v.naoGuardada && v.naoGuardada.pose === p.id) };
+    })
   };
 };

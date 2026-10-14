@@ -14,15 +14,16 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.452 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.456 passando**, zero "unhandled".
   Nenhum agente trabalhando. Último commit de código: `b91697d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
 - **Feito em primeira passada:** o levantamento (item 6.β). **Próximo:** a
   fila dele: **os quatro de dado estão feitos** (semana 10, aula 12,
-  sessao-fotos 9, prescricao 11). Seguem os ✗ de tela (corpo 10, comparar 2 e
-  7, sessão 4 e 14, sessao-fotos 2–3) e a conferência dos ~.
+  sessao-fotos 9, prescricao 11), e os ✗ de tela corpo 10, comparar 2 e 7,
+  momento-1 4 e sessao-fotos 2–3 também. Seguem momento-1 14 (paisagem) e 2
+  ("enquanto descansa"), e a conferência dos ~.
 - **Era o próximo passo:** o levantamento estado a estado das outras sete entregas da
   D contra o app — momento-1 (14 estados), semana (10), corpo (11), prescricao
   (11), aula (12), comparar (11), sessao-fotos (11). Parte já foi construída nas
@@ -3227,13 +3228,21 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         nativo, acessível); sem captura com foto de verdade · 3 ~ · 4 ~ · 5 ~ · 6 ~ · **7 ✓ (14/10)** — o par já recuava sozinho para a sessão mais antiga com a
         pose; agora diz "27 dias, e não 55" e quais sessões não têm a pose. (A
         lista das poses com par longo e curto, do desenho, não entrou.) · 8 ✓ · 9 ✓ · 10 ~ · 11 ~.
-      - **sessao-fotos:** 1 ~ · 2 ✗ (voz) · 3 ✗ (clarão e obturador) · 4 ~ ·
+      - **sessao-fotos:** 1 ~ · **2 ~ (14/10)** — os nove blocos no topo da
+        câmera, do tamanho de um dedo (a pose atual, as fechadas, a não
+        guardada), e a pose dita em voz ao abrir a câmera e a cada pose nova
+        ("Pose 2 de 9. Frente duplo bíceps." e o primeiro passo), pela síntese
+        de voz do aparelho; sem ela, a tela segue igual. Falta: a contagem em
+        anel que esvazia e falada ("três, dois, um") — segue número e bipe. ·
+        **3 ✓ (14/10)** — o disparo é o som do obturador, um clarão curto e o
+        bloco fechando; o alarme do descanso (bipe duplo e vibração), que tocava
+        ali, saiu. A pose que não guardou não ganha nenhum dos três. · 4 ~ ·
         5 ~ · 6 ~ · 7 ✓ · 8 ~ · **9 ✓ (14/10)** — a sessão
         PARA na pose que não gravou (antes, com o registro recusado, avançava
         como se tivesse gravado), a pose fica "não guardada" com forma diferente
         de "falta", e "Tentar de novo" grava: se o cache recusou, com a foto que
         ficou na memória; se o registro recusou, com a referência no estado. ·
-        10 ~ · 11 ✓. **Divergência:** a voz que avisa não existe (estado 2 é ✗).
+        10 ~ · 11 ✓.
       **A fila sai daqui, dado primeiro:** semana 10, aula 12, sessao-fotos 9,
       prescricao 11; depois os ✗ de tela (corpo 10, comparar 2 e 7, sessão 4 e
       14, sessao-fotos 2–3) e a conferência dos ~.
@@ -3414,6 +3423,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Momento 1, estado 4: "+ série" na linha do exercício. 4 mutações, 4 mortas. 1.450 passando.
 - 14/10 · Comparar 7: o par que recua diz que recuou. 2 mutações, 2 mortas. 1.451 passando.
 - 14/10 · Comparar 2: a cortina. 3 mutações, 3 mortas. 1.452 passando.
+- 14/10 · Sessão de fotos 2–3: o disparo é obturador, clarão e o bloco fechando (o alarme do descanso saiu dali); os nove blocos na câmera; a pose dita em voz. 11 mutações, 11 mortas (a marca de "não guardada" no bloco viveu até o caso da cota cheia pela câmera). Captura com câmera falsa do Chromium em `_medicao/camera.mjs`. 1.456 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
