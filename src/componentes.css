@@ -1249,6 +1249,26 @@ button.ins-linha { border-radius: 0; }
    indicador de home — sem ele o último cartão encosta nele. */
 #app:has(.ins-modo) { --ins-tabbar: var(--sa-bottom); }
 
+/* DEITADO, NO MEIO DA SESSÃO (a D, momento 1, estado 14). O iOS não trava a
+   orientação de app web (F60), e o telefone vira sozinho no banco. Fora do
+   modo, o aviso de girar continua (base.css); dentro dele, a mesma tela em duas
+   colunas: a leitura à esquerda — o nome, a dica, o descanso — e o polegar à
+   direita — as séries, a régua, as ações. A mesma condição do aviso: deitado e
+   baixo é telefone, e não janela de computador. */
+@media (orientation: landscape) and (max-height: 520px) {
+  html:has(.ins-modo) #deitado { display: none; }
+  #app:has(.ins-modo) { max-width: none; }
+  .ins-modo .ex.open {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr; column-gap: var(--ins-9); align-items: start;
+  }
+  .ins-modo .ex.open > .ex-top,
+  .ins-modo .ex.open > .puladobox { grid-column: 1; }
+  .ins-modo .ex.open > .sets { display: contents; }
+  .ins-modo .ex.open .sets-ler { grid-column: 1; }
+  .ins-modo .ex.open .sets-polegar { grid-column: 2; grid-row: 1 / span 3; padding-top: var(--ins-4); }
+}
+
 /* GRUDADA NO TOPO, e isto é regra escrita: "a seta não some em nenhum estado do
    modo" (frente 1, §4.3, item 5). O modo nasceu porque o dedo ficava preso numa
    tela sem saída; uma saída que rola para fora da tela é a mesma armadilha com

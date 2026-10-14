@@ -292,3 +292,20 @@ test('"+ série" vira mudança do dia, traz a carga de hoje e abre a régua com 
   assert.strictEqual(Number(marca[0].textContent.replace(/\D+/g, '').charAt(0)), 8 - (antes - 1), 'com a repetição dela');
   a.fechar();
 });
+
+test('o cartão aberto tem as duas metades: a leitura e o polegar', async () => {
+  // Deitado, no modo de sessão (a D, momento 1, estado 14), elas viram duas
+  // colunas pelo CSS; aqui fica o que o CSS precisa encontrar: a dica e o
+  // descanso de um lado, as séries e a régua do outro.
+  const a = await abreCartao();
+  a.clicar(a.doc.getElementById('r0_0'));
+  await a.esperar();
+  const ler = a.$('.ex.open .sets-ler'), polegar = a.$('.ex.open .sets-polegar');
+  assert.ok(ler && polegar);
+  assert.ok(ler.querySelector('.cue') && ler.querySelector('.restlinha'), 'a leitura: a dica e o descanso');
+  assert.strictEqual(ler.querySelector('.setrow, .regua'), null);
+  assert.strictEqual(polegar.querySelectorAll('.setrow').length, 3, 'o polegar: as séries');
+  assert.ok(polegar.querySelector('.regua'), 'e a régua aberta');
+  assert.ok(polegar.querySelector('.exacoes'), 'e as ações do exercício');
+  a.fechar();
+});

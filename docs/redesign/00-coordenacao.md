@@ -14,16 +14,16 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.456 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `b91697d`.
+- Branch `redesenho-do-zero`, suíte verde: **1.458 passando**, zero "unhandled".
+  Nenhum agente trabalhando. Último commit de código: `e07535c`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
 - **Feito em primeira passada:** o levantamento (item 6.β). **Próximo:** a
   fila dele: **os quatro de dado estão feitos** (semana 10, aula 12,
   sessao-fotos 9, prescricao 11), e os ✗ de tela corpo 10, comparar 2 e 7,
-  momento-1 4 e sessao-fotos 2–3 também. Seguem momento-1 14 (paisagem) e 2
-  ("enquanto descansa"), e a conferência dos ~.
+  momento-1 4 e 14 e sessao-fotos 2–3 também. Segue momento-1 2 ("enquanto
+  descansa"), e a conferência dos ~.
 - **Era o próximo passo:** o levantamento estado a estado das outras sete entregas da
   D contra o app — momento-1 (14 estados), semana (10), corpo (11), prescricao
   (11), aula (12), comparar (11), sessao-fotos (11). Parte já foi construída nas
@@ -3190,8 +3190,13 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         da série nova aberta com a repetição dela como referência ("série 3"). ·
         5 ✓ ·
         6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · 10 ~ (marca por célula não feita, declarada) ·
-        11 ✓ · 12 ✓ · 13 ✓ · 14 ✗ (paisagem em duas colunas; o app pede para
-        girar de volta desde 02/09, antes do redesenho).
+        11 ✓ · 12 ✓ · 13 ✓ · **14 ✓ (14/10)** — deitado, no modo de sessão, o
+        aviso de girar sai e o cartão aberto vira duas colunas: a leitura (nome,
+        dica, pegada, descanso) à esquerda e o polegar (séries, régua, "+ série",
+        ações) à direita; o app inteiro perde o teto de 460 px. Fora do modo o
+        aviso continua, com o texto ajustado. **Divergência:** a coluna da
+        esquerda não leva o cabeçalho da sessão nem o descanso correndo (eles
+        ficam onde estão: o relógio grudado no topo, o cronômetro no rodapé).
       - **semana:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ✓ · 5 ~ (conferir o ramo do corte
         pedindo a foto) · 6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · **10 ✓ (14/10)** — o passo
         (e o desfazer) grava na hora; se o aparelho recusa, ajuste, histórico e
@@ -3424,6 +3429,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Comparar 7: o par que recua diz que recuou. 2 mutações, 2 mortas. 1.451 passando.
 - 14/10 · Comparar 2: a cortina. 3 mutações, 3 mortas. 1.452 passando.
 - 14/10 · Sessão de fotos 2–3: o disparo é obturador, clarão e o bloco fechando (o alarme do descanso saiu dali); os nove blocos na câmera; a pose dita em voz. 11 mutações, 11 mortas (a marca de "não guardada" no bloco viveu até o caso da cota cheia pela câmera). Captura com câmera falsa do Chromium em `_medicao/camera.mjs`. 1.456 passando.
+- 14/10 · Momento 1, estado 14: a sessão deitada em duas colunas, sem o aviso de girar (que segue fora do modo). 5 mutações, 5 mortas. Captura em `_medicao/deitado.mjs`. 1.458 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

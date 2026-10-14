@@ -444,6 +444,10 @@ export function Exercicio({ vm, acoes }) {
       )}
 
       <div class="sets">
+        {/* Duas metades, e em retrato elas só se empilham. Deitado, no modo de
+            sessão (a D, momento 1, estado 14), viram duas colunas: a leitura à
+            esquerda, com o nome; o polegar à direita, com as séries e a régua. */}
+        <div class="sets-ler">
         <p class="cue">{vm.cue}</p>
 
         {/* A pegada fica ACIMA do descanso e abaixo da dica: ela é sobre fazer a
@@ -468,7 +472,9 @@ export function Exercicio({ vm, acoes }) {
           : <button class="restlinha" onClick={() => acoes.startTimer(vm.descanso, 'descanso · ' + vm.nome)}>
               descanso <b>{vm.descansoTxt}</b>
             </button>}
+        </div>
 
+        <div class="sets-polegar">
         {/* A RÉGUA ESPERA a escolha diante da dor repetida (§7.4): é o único
             estado ruim que não se dispensa sem responder. */}
         {!vm.dorBloqueia && <>
@@ -554,6 +560,7 @@ export function Exercicio({ vm, acoes }) {
           {vm.seg && <Medida i={i} vm={vm} acoes={acoes} />}
           <Carga i={i} vm={vm} acoes={acoes} />
           <Anotacao i={i} vm={vm} acoes={acoes} />
+        </div>
         </div>
       </div>
     </div>

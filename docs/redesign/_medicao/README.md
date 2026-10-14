@@ -15,3 +15,6 @@ antiga, em `/tmp`, foi apagada pelo sistema, com scripts e capturas.
 
 `camera.mjs` abre a câmera da sessão de fotos com a câmera falsa do Chromium
 (`--use-fake-device-for-media-stream`): os blocos das poses e o clarão.
+
+`deitado.mjs` abre o modo de sessão a 896×414: o cartão aberto em duas colunas,
+com e sem a régua.

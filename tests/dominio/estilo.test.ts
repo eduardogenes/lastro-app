@@ -804,6 +804,21 @@ test('a trava de retrato não pega janela de computador', () => {
     'o teto tem que ficar abaixo de uma janela de mesa: ' + teto);
 });
 
+test('deitado no meio da sessão não é aviso: é a mesma tela em duas colunas', () => {
+  // A D, momento 1, estado 14: o iOS não trava a orientação de app web (F60), e
+  // o telefone vira sozinho no banco. Fora do modo o aviso continua; dentro
+  // dele, o aviso sai e o cartão aberto vira leitura | polegar. Na MESMA
+  // condição do aviso, senão a janela de computador viraria duas colunas.
+  const c = css();
+  const blocos = [...c.matchAll(/@media\s*\(orientation:\s*landscape\)\s*and\s*\(max-height:\s*(\d+)px\)\s*\{/g)];
+  const doModo = blocos.map(m => c.slice(m.index!, m.index! + 2000)).find(t => /\.ins-modo/.test(t));
+  assert.ok(doModo, 'o bloco deitado do modo existe');
+  assert.match(doModo!, /html:has\(\.ins-modo\)\s*#deitado\s*\{\s*display:\s*none/, 'o aviso sai no modo');
+  assert.match(doModo!, /\.sets-ler\s*\{\s*grid-column:\s*1/);
+  assert.match(doModo!, /\.sets-polegar\s*\{\s*grid-column:\s*2/);
+  const alturas = blocos.map(m => m[1]);
+  assert.strictEqual(new Set(alturas).size, 1, 'o aviso e as duas colunas valem na mesma altura: ' + alturas);
+});
 
 test('a marca de recorde não pinta ácido sobre ácido', () => {
   // Ela saía como um bloco sólido e mudo. Uma regra `.rec` sobrando do sistema
