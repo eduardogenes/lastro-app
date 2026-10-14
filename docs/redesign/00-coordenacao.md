@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.448 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.449 passando**, zero "unhandled".
   Nenhum agente trabalhando. Último commit de código: `b91697d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
@@ -3197,8 +3197,11 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         gravar.
       - **corpo:** 1 ~ (stepper de 100 g em vez da régua) · 2 ✓ · 3 ✓ · 4 ✓ ·
         5 ✓ · 6 ~ (conferir o valor do mês passado com a variação) · 7 ✓ · 8 ✓ ·
-        9 ~ (conferir "o que falta" na semana de uma pesagem) · 10 ✗ (o vazio
-        que diz quanto custa sair dele) · 11 ✓.
+        9 ~ (conferir "o que falta" na semana de uma pesagem) · **10 ✓ (14/10)** —
+        "3 semanas até a regra poder decidir", com as pesagens vindas de
+        `MIN_PESAGENS`, o que cada medida pede, e a conta para quem já tem
+        histórico em outro aparelho; some com o primeiro registro. As seções de
+        registro seguem abaixo (o desenho mostra só a lista). · 11 ✓.
       - **prescricao:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ~ · 5 ✓ · 6 ~ (conferir a pergunta
         do nome antes de gravar) · 7 ~ · 8 ~ · 9 ~ (conferir o vazio sem plano) ·
         10 ✓ · **11 ✓ (14/10)** — o 401 derrubava a
@@ -3401,6 +3404,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Aula 12: o aviso de falha diz que a presença continua guardada, só quando gravou antes; e oferece baixar a cópia. 3 mutações, 3 mortas. 1.446 passando.
 - 14/10 · Sessão de fotos 9: a pose que não coube para a sessão em vez de avançar fingindo; marcada, e "Tentar de novo" grava. 3 mutações, 3 mortas. 1.447 passando.
 - 14/10 · Prescrição 11: login expirado deixa de ser silêncio de "sem rede"; o fato fica gravado e o Agora o diz. 3 mutações, 3 mortas (duas vivas até o caso conferir a falta de rede e o disco). **Fila de dado do levantamento fechada.** 1.448 passando.
+- 14/10 · Corpo 10: o vazio de verdade diz o custo de sair dele, com os números da regra. 2 mutações, 2 mortas. 1.449 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

@@ -18,7 +18,7 @@ import {
 import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
-import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
+import { MIN_PESAGENS as MIN_PESAGENS_CORPO, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
@@ -7379,6 +7379,34 @@ function medidasRecentes(k, un) {
       return { t: x.t, data: fmtDate(x.t), valor: fmtDec(x.v) + ' ' + un };
     });
 }
+
+/**
+ * O VAZIO DE VERDADE do Corpo (a D, `corpo.html`, estado 10): aparelho novo, ou
+ * histórico apagado — nenhum peso, nenhuma medida, nenhuma foto. O vazio diz
+ * quanto custa sair dele, com os números da regra e não com uma barra de
+ * progresso: duas taxas semanais seguidas são três semanas de média, e cada
+ * média pede `MIN_PESAGENS` pesagens.
+ */
+CTX.corpoVazio = function () {
+  const b = S.body || {};
+  const alguma = Object.keys(b).some(function (k) { return Array.isArray(b[k]) && b[k].length; }) ||
+    (S.protocolo && Array.isArray(S.protocolo.sessoes) && S.protocolo.sessoes.length);
+  if (alguma) return null;
+  const semanas = 3, pesagens = semanas * MIN_PESAGENS_CORPO;
+  return {
+    titulo: semanas + ' semanas até a regra poder decidir',
+    texto: 'Ela precisa de três semanas seguidas com média válida, e cada média precisa de pelo menos ' +
+      MIN_PESAGENS_CORPO + ' pesagens. São ' + pesagens + ' pesagens, em ' + semanas + ' semanas, para o primeiro veredito existir.',
+    linhas: [
+      { k: 'peso', t: 'Peso', d: 'de manhã, antes de treinar, mesma roupa' },
+      { k: 'fita', t: 'Cintura e outras medidas', d: 'sem frequência prescrita · quando você quiser' },
+      { k: 'bio', t: 'Bioimpedância', d: 'uma vez por mês' },
+      { k: 'fotos', t: 'Fotos', d: 'a cada ' + CADENCIA_DIAS + ' dias, ' + posesDo(S.protocolo && S.protocolo.poses).length + ' poses, menos de 5 min' }
+    ],
+    conta: NUVEM.sessao() ? null
+      : 'Se você já tem histórico em outro aparelho, entrar na conta traz tudo de volta antes de registrar qualquer coisa aqui.'
+  };
+};
 
 CTX.corpo = function () {
   const r = pesoRitmo();

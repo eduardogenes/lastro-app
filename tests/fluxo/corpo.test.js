@@ -1574,3 +1574,19 @@ test('sem pesagem, a Evolução diz o que vai aparecer, e não desenha eixo vazi
   assert.ok(a.doc.getElementById('app').textContent.indexOf('Nenhuma pesagem ainda.') >= 0);
   a.fechar();
 });
+
+test('o vazio de verdade do Corpo diz quanto custa sair dele, com os números da regra', async () => {
+  // A D (`corpo.html`, estado 10): nenhum peso, nenhuma medida, nenhuma foto.
+  // Sem barra de progresso nem "comece agora!": três semanas de média, duas
+  // pesagens em cada, seis no total — e some com o primeiro registro.
+  const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] }, protocolo: { sessoes: [], poses: null } } });
+  await a.esperar();
+  assert.strictEqual(a.texto('.co-vazio .ins-rotulo'), '3 semanas até a regra poder decidir');
+  assert.ok(/São 6 pesagens, em 3 semanas, para o primeiro veredito existir\./.test(a.texto('.co-vazio')), a.texto('.co-vazio'));
+  assert.strictEqual(a.$$('.co-vazio-l li').length, 4, 'peso, fita, bioimpedância e fotos');
+  a.m.ctx.setPeso(73.6);
+  a.m.ctx.registraPeso();
+  await a.esperar(60);
+  assert.strictEqual(a.$('.co-vazio'), null, 'com o primeiro peso, o vazio sai');
+  a.fechar();
+});

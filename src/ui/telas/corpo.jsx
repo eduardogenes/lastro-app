@@ -197,6 +197,7 @@ export function Corpo({ ctx }) {
   const [dia, setDia] = useState(null);
   const c = ctx.corpo();
   const bio = ctx.bioimpedancia();
+  const vazio = ctx.corpoVazio();
 
   return (
     <>
@@ -206,8 +207,29 @@ export function Corpo({ ctx }) {
                  acao={<button class="ins-btn-secondary co-evolucao" data-a="abre-evolucao"
                                onClick={ctx.abreEvolucao}>Evolução</button>} />
 
+      {/* O VAZIO DE VERDADE (a D, estado 10): o caminho, com os números da
+          regra — nenhuma barra de progresso, nenhum "comece agora!". */}
+      {vazio && (
+        <section class="ins-secao primeira co-vazio">
+          <h2 class="ins-rotulo">{vazio.titulo}</h2>
+          <p class="ins-body-sm ins-t2">{vazio.texto}</p>
+          <ul class="ins-lista co-vazio-l">
+            {vazio.linhas.map(l => (
+              <li key={l.k} class="ins-linha">
+                <span class="ins-linha-n">
+                  <span class="ins-linha-t">{l.t}</span>
+                  <span class="ins-linha-s">{l.d}</span>
+                </span>
+                <span class="ins-body-xs ins-t3">primeira</span>
+              </li>
+            ))}
+          </ul>
+          {vazio.conta && <p class="ins-body-xs ins-t3">{vazio.conta}</p>}
+        </section>
+      )}
+
       <Medida
-        rotulo="O peso da manhã" chave="peso" nota={c.peso.nota} primeira
+        rotulo="O peso da manhã" chave="peso" nota={c.peso.nota} primeira={!vazio}
         valor={c.peso.valor} passo={0.1} unidade="kg" serie={c.peso.serie}
         onMuda={ctx.setPeso} onRegistrar={ctx.registraPeso} acao={c.peso.acao}
         dia={c.peso.dia} onAbrirDia={() => ctx.abreDiaCorpo('peso')}
