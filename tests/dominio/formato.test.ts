@@ -2,11 +2,10 @@
 
 import { test } from 'vitest';
 import assert from 'node:assert';
-import {
+import { caixaDeFrase,
   MESES, PERIODOS, diaExtenso, fmtDate, fmtDec, fmtDec2, fmtDesc, fmtDur, fmtHora, semanasDesde,
   fmtInt, fmtK, fmtLitros, fmtNum, fmtSig, fmtSig2, escAttr, escapeHTML, periodoDe, sameDay,
-  weekStart
-} from '../../src/dominio/formato';
+  weekStart, fmtCarga } from '../../src/dominio/formato';
 import { DIA } from './ajuda';
 
 test('número inteiro não ganha decimal à toa', () => {
@@ -135,4 +134,23 @@ test('nome de exercício com caractere de marcação não quebra a tela', () => 
   assert.strictEqual(escapeHTML('Supino <b>reto</b> & cia'), 'Supino &lt;b&gt;reto&lt;/b&gt; &amp; cia');
   assert.strictEqual(escAttr(`Supino 45"`), 'Supino 45&quot;');
   assert.strictEqual(escAttr("Rosca do 'papai'"), "Rosca do \\'papai\\'");
+});
+
+test('caixaDeFrase: o que chega todo em maiúscula vira frase, o resto só ganha a inicial', () => {
+  // As etiquetas do plano de comida estão guardadas em caixa alta; a tela não
+  // escreve caixa alta (frente 3 §2). Sigla no meio da frase não é mexida.
+  assert.strictEqual(caixaDeFrase('RÁPIDO E FUNCIONAL'), 'Rápido e funcional');
+  assert.strictEqual(caixaDeFrase('o que o box programar'), 'O que o box programar');
+  assert.strictEqual(caixaDeFrase('treino de verdade, HYROX no sábado'), 'Treino de verdade, HYROX no sábado');
+  assert.strictEqual(caixaDeFrase('ÁGUA'), 'Água');
+  assert.strictEqual(caixaDeFrase(''), '');
+  assert.strictEqual(caixaDeFrase(null), '');
+  assert.strictEqual(caixaDeFrase('42'), '42', 'número não tem caixa');
+});
+
+test('a carga para ler sai com vírgula, e inteira sem casa', () => {
+  assert.strictEqual(fmtCarga(22.5), '22,5');
+  assert.strictEqual(fmtCarga(127.5), '127,5');
+  assert.strictEqual(fmtCarga(40), '40');
+  assert.strictEqual(fmtCarga(73.66), '73,7');
 });

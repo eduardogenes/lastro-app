@@ -175,17 +175,59 @@ test('pesagem errada pode ser apagada', async () => {
 });
 
 test('sessão de cardio registrada por engano pode ser apagada', async () => {
-  const a = await app();
-  await a.E('S.cardio.push({ t: Date.now(), m: "bike", min: 25, i: "moderado" }); save()');
-  await a.esperar();
+  // A porta de saída mora no dia aberto (a D, `dias.html` estado 12): a linha do
+  // cardio abre no lugar, e "Apagar este cardio" passa pelo painel. Hoje, tocado
+  // no mês, abre o Agora (pergunta 7 do desenhista, com o dono) — por isso o
+  // caso usa ontem.
+  const agora = agoraEstavel();
+  const t = agora - DIA;
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [{ t: t, m: 'bike', min: 25, i: 'moderado' }] } });
   a.aba('dias');
-
-  const linha = a.$$('.crow').find(function (x) { return /bike/.test(x.textContent); });
-  assert.ok(linha, 'a sessão da semana aparece com a porta de saída');
-  linha.querySelector('.crow-x').click();
+  a.clicar('[data-dia="' + a.v('hojeISO', t) + '"]');
   await a.esperar();
+
+  const linha = a.$$('[data-a="dia-cardio"]').find(function (x) { return /bike/.test(x.textContent); });
+  assert.ok(linha, 'o cardio aparece no dia');
+  assert.strictEqual(a.$('[data-a="dia-apaga-cardio"]'), null, 'o apagar só aparece com a linha aberta');
+  a.clicar(linha);
+  await a.esperar();
+  a.clicar('[data-a="dia-apaga-cardio"]');
+  await a.esperar(60);
 
   assert.strictEqual(a.S().cardio.length, 0);
+  assert.strictEqual(a.$$('[data-a="dia-cardio"]').length, 0, 'e sai do dia');
+  a.fechar();
+});
+
+test('o cardio do dia se corrige no lugar, campo a campo', async () => {
+  // A D (`dias.html`, estado 12): tocar a linha do cardio abre o registro
+  // inteiro, e cada campo se corrige num toque. O instante não muda — é a chave
+  // dele na sincronia —, e o carimbo `alt` sobe.
+  const agora = agoraEstavel();
+  const t = agora - DIA;
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [{ t: t, m: 'bike', min: 25, i: 'leve', alt: 1 }] } });
+  a.v('ctx.abreDia', t);
+  await a.esperar();
+  a.clicar('[data-a="dia-cardio"]');
+  await a.esperar();
+
+  a.clicar('[data-a="dia-cardio-min-30"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().cardio[0].min, 30, 'os minutos');
+  assert.strictEqual(a.S().cardio[0].t, t, 'o instante não muda');
+  assert.ok(a.S().cardio[0].alt > 1, 'e o carimbo sobe');
+  const outro = a.vJ('ctx.diaAberto').registros[0].campos.modais.filter(function (x) { return x.k !== 'bike'; })[0].k;
+  a.clicar('[data-a="dia-cardio-m-' + outro + '"]');
+  a.clicar('[data-a="dia-cardio-i-moderado"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().cardio[0].m, outro, 'a modalidade');
+  assert.strictEqual(a.S().cardio[0].i, 'moderado', 'a intensidade');
+  assert.strictEqual(a.gravado().cardio[0].min, 30, 'e está no disco');
+
+  await a.v('ctx.corrigeCardio', t, 'min', 0);
+  await a.v('ctx.corrigeCardio', t, 'm', 'patinete');
+  await a.v('ctx.corrigeCardio', t, 't', 5);
+  assert.deepStrictEqual([a.S().cardio[0].min, a.S().cardio[0].m, a.S().cardio[0].t], [30, outro, t], 'valor fora do que a folha oferece não grava');
   a.fechar();
 });
 
@@ -193,14 +235,14 @@ test('preencher treino passado avisa para onde as séries estão indo', async ()
   const a = await app();
   const t = Date.now() - 2 * 86400000;
   a.v('abrirAdicionar', t);
-  a.v('addSet', 'tipo', 'A');
-  await a.v('gravarRetro', true);
+  await a.v('lancaTreino', 'A');
+  await a.v('detalhaLancamento');
   await a.esperar();
 
   const aviso = a.texto('.tr-aviso');
   assert.ok(/não em hoje/.test(aviso), 'sem isso, a sessão retroativa fica invisível: ' + aviso);
 
-  const botao = a.$$('.tr-aviso button').find(function (x) { return /concluir/.test(x.textContent); });
+  const botao = a.$$('.tr-aviso button').find(function (x) { return /Concluir/.test(x.textContent); });
   assert.ok(botao, 'e a porta de saída fica no próprio aviso');
   await botao.click();
   await a.esperar();
@@ -309,7 +351,7 @@ test('o padrão continua sendo hoje, num toque', async () => {
   assert.strictEqual(d.hoje, true, 'abre em hoje, sem pedir data');
   assert.strictEqual(d.aberto, false, 'e o seletor fica fechado');
   assert.strictEqual(d.iso, iso(Date.now()));
-  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar hoje');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'Registrar hoje');
   a.fechar();
 });
 
@@ -337,7 +379,7 @@ test('escolher ontem grava no dia certo, não em hoje', async () => {
 
   const ontem = Date.now() - DIA;
   a.v('ctx.setDiaCorpo', 'peso', iso(ontem));
-  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar ontem',
+  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'Registrar ontem',
     'o botão passa a dizer em que dia vai gravar');
 
   a.v('ctx.setPeso', 73.4);
@@ -371,7 +413,7 @@ test('às 6h, voltar a data para HOJE funciona — não é futuro', async () => 
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, false, 'pré-condição: foi para ontem');
   a.v('ctx.setDiaCorpo', 'peso', iso(agora));
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, true, 'e voltou para hoje');
-  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar hoje');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'Registrar hoje');
   a.fechar();
 });
 
@@ -383,7 +425,7 @@ test('depois de gravar, a data volta para hoje sozinha', async () => {
   await a.v('addBody', 'peso');
   await a.esperar();
   assert.strictEqual(a.vJ('ctx.corpo').peso.dia.hoje, true);
-  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'registrar hoje');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.acao, 'Registrar hoje');
   a.fechar();
 });
 
@@ -1482,5 +1524,105 @@ test('os dois pesos têm nome e procedência, e a frase diz o que cada um faz', 
   assert.ok(txt.indexOf('da balança de casa, em semi-jejum, antes do treino') >= 0, 'e a procedência dele, de P6');
   assert.ok(txt.indexOf('O peso da manhã é o que a regra do nutricionista lê. O peso da balança de bioimpedância ' +
     'fica com os outros quatro números dela, e não entra na média da semana.') >= 0, 'e a frase dos dois pesos');
+  a.fechar();
+});
+
+// ---------- o destino Evolução (a D, corpo.html estado 8; §1.7 da frente 3) ----------
+
+test('"Evolução" no cabeçalho do Corpo abre a leitura, e o Voltar fecha', async () => {
+  const s = function (k, dow) { return inicioDaSemana(Date.now()) - k * 7 * DIA + dow * DIA + 10 * 3600000; };
+  const peso = [
+    { t: s(3, 1), v: 73.0 }, { t: s(3, 3), v: 73.2 },
+    { t: s(2, 1), v: 73.3 }, { t: s(2, 3), v: 73.5 },
+    { t: s(1, 1), v: 73.6 }
+  ];
+  const a = await app({ aba: 'corpo', estado: { logs: {}, done: [], body: { peso: peso, cintura: [] } } });
+  await a.esperar();
+  a.clicar('[data-a="abre-evolucao"]');
+  await a.esperar();
+  assert.ok(a.vista().evolucao, 'o destino abriu');
+  const txt = a.doc.getElementById('app').textContent;
+  assert.ok(txt.indexOf('Evolução') >= 0, 'com a palavra dele');
+  assert.ok(/3 semanas · 5 pesagens/.test(txt), 'e o que a leitura cobre: ' + txt.slice(0, 200));
+  assert.ok(a.$('.ev-curva'), 'a curva está lá');
+  assert.strictEqual(a.$$('.ev-curva .ev-dia').length, 5, 'um ponto por pesagem');
+  assert.strictEqual(a.$$('.ev-taxa').length, 4, 'e a taxa das quatro últimas semanas, que é a tabela da curva');
+  assert.ok(txt.indexOf('sem taxa: a semana não tem média') >= 0, 'a semana de uma pesagem diz por que não tem taxa');
+
+  a.window.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape' }));
+  await a.esperar();
+  assert.ok(!a.vista().evolucao, 'Voltar devolve ao Corpo');
+  a.fechar();
+});
+
+test('da Evolução, "Ir para Semana" leva para onde a regra decide', async () => {
+  const a = await app({ aba: 'corpo', estado: { logs: {}, done: [], body: { peso: [{ t: Date.now() - DIA, v: 73 }], cintura: [] } } });
+  a.v('ctx.abreEvolucao');
+  await a.esperar();
+  a.clicar('[data-a="evolucao-semana"]');
+  await a.esperar();
+  assert.ok(!a.vista().evolucao);
+  assert.strictEqual(a.vista().aba, 'semana');
+  a.fechar();
+});
+
+test('sem pesagem, a Evolução diz o que vai aparecer, e não desenha eixo vazio', async () => {
+  const a = await app({ aba: 'corpo', estado: { logs: {}, done: [], body: { peso: [], cintura: [] } } });
+  a.v('ctx.abreEvolucao');
+  await a.esperar();
+  assert.strictEqual(a.$('.ev-curva'), null);
+  assert.ok(a.doc.getElementById('app').textContent.indexOf('Nenhuma pesagem ainda.') >= 0);
+  a.fechar();
+});
+
+test('o vazio de verdade do Corpo diz quanto custa sair dele, com os números da regra', async () => {
+  // A D (`corpo.html`, estado 10): nenhum peso, nenhuma medida, nenhuma foto.
+  // Sem barra de progresso nem "comece agora!": três semanas de média, duas
+  // pesagens em cada, seis no total — e some com o primeiro registro.
+  const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] }, protocolo: { sessoes: [], poses: null } } });
+  await a.esperar();
+  assert.strictEqual(a.texto('.co-vazio .ins-rotulo'), '3 semanas até a regra poder decidir');
+  assert.ok(/São 6 pesagens, em 3 semanas, para o primeiro veredito existir\./.test(a.texto('.co-vazio')), a.texto('.co-vazio'));
+  assert.strictEqual(a.$$('.co-vazio-l li').length, 4, 'peso, fita, bioimpedância e fotos');
+  a.m.ctx.setPeso(73.6);
+  a.m.ctx.registraPeso();
+  await a.esperar(60);
+  assert.strictEqual(a.$('.co-vazio'), null, 'com o primeiro peso, o vazio sai');
+  a.fechar();
+});
+
+test('a semana com uma pesagem só diz o que falta, e não mostra média falsa', async () => {
+  // A D (`corpo.html`, estado 9). Sexta às 21h32, uma pesagem na segunda: faltam
+  // sexta e sábado, e uma pesagem, para a média da semana valer.
+  const agora = new Date(2026, 9, 2, 21, 32).getTime();
+  const seg = new Date(2026, 8, 28, 6, 40).getTime();
+  // e duas semanas anteriores com média, para a média e o ritmo desta terem
+  // com o que aparecer
+  const ant = [15, 17, 22, 24].map(d => new Date(2026, 8, d, 7, 0).getTime());
+  const a = await app({ aba: 'corpo', agora: agora, estado: { body: { cintura: [],
+    peso: ant.map((t, i) => ({ t: t, v: 72.8 + i * 0.1, m: t })).concat([{ t: seg, v: 73.6, m: seg }]) } } });
+  await a.esperar();
+  assert.strictEqual(a.texto('.co-semana-t'), 'Sem média · esta semana · 1 pesagem');
+  assert.ok(a.texto('.co-semana').indexOf('Faltam 2 dias na semana e 1 pesagem para a média valer.') >= 0, a.texto('.co-semana'));
+  assert.deepStrictEqual(a.$$('.co-semana-l').map(l => l.className.split(' ')[1]), ['sem', 'pesagem', 'sem', 'tempo']);
+  const c = a.vJ('ctx.corpo').peso;
+  assert.strictEqual(c.media, '—', 'uma pesagem só não é média da semana');
+  assert.strictEqual(c.ritmo, '—', 'nem dá ritmo');
+
+  // a segunda pesagem fecha a semana, e a cobrança sai
+  a.m.ctx.setPeso(73.2);
+  a.m.ctx.registraPeso();
+  await a.esperar(60);
+  assert.strictEqual(a.$('.co-semana'), null, 'com duas pesagens a média vale');
+  assert.strictEqual(a.vJ('ctx.corpo').peso.media, '73,4 kg', 'e a média da semana aparece');
+  assert.notStrictEqual(a.vJ('ctx.corpo').peso.ritmo, '—', 'e o ritmo também');
+  a.fechar();
+});
+
+test('sem pesagem nenhuma, quem fala é o vazio, e não a cobrança da semana', async () => {
+  const a = await app({ aba: 'corpo', estado: { body: { peso: [], cintura: [] }, protocolo: { sessoes: [], poses: null } } });
+  await a.esperar();
+  assert.ok(a.$('.co-vazio'));
+  assert.strictEqual(a.$('.co-semana'), null);
   a.fechar();
 });

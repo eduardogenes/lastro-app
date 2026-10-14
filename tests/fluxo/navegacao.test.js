@@ -238,7 +238,7 @@ test('a folha entra em foco, isola o fundo e devolve o foco ao sair', async () =
   a.aba('agora');
   await a.esperar();
 
-  const acionador = a.$('.ins-estado');
+  const acionador = a.$('[data-a="tipo-do-dia"]');
   assert.ok(acionador, 'o botão de estado do cabeçalho abre o seletor de dia');
   acionador.focus();
 
@@ -268,7 +268,7 @@ test('a folha entra em foco, isola o fundo e devolve o foco ao sair', async () =
 
   assert.ok(!a.$('.ins-folha'), 'a folha fechou');
   assert.strictEqual(a.$$('#app > [inert]').length, 0, 'o fundo voltou a ser alcançável');
-  assert.strictEqual(a.doc.activeElement, a.$('.ins-estado'),
+  assert.strictEqual(a.doc.activeElement, a.$('[data-a="tipo-do-dia"]'),
     'e o foco voltou para o botão que abriu');
   a.fechar();
 });

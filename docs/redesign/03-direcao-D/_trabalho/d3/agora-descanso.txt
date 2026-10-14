@@ -1,0 +1,210 @@
+@titulo Agora no descanso
+@h1 O Agora num dia de descanso, longe de qualquer refeição
+@lead Domingo, 11/10, 10h40. Não há treino, o café das 8h00 já passou e o almoço das 12h30 está a quase duas horas. A regra do cartão de cima diz que, aqui, <b>não há cartão</b>: o cartão só olha para a frente, até 30 min, e nada está tão perto. Ficam a linha do dia, a água e a contagem dos dias conhecidos nos últimos 14.
+@lead O que este estado resolve: <b>o cartão de cima não some, ele se fecha.</b> O cartão sempre foi uma das linhas do dia, aberta pelo relógio. Sem relógio apertando, nenhuma linha vem aberta, e qualquer uma abre no lugar com um toque do dedo — com os mesmos três botões do cartão. É assim que o café que passou sem marca se registra sem precisar de cartão nem de folha.
+@lead No topo, a procedência do dia: <b>“descanso, pelo padrão semanal”</b>. É palpite do app até ele dizer o contrário (F187, F188), e a linha tem o sublinhado pontilhado de tudo o que é palpite. Tocar nela é o único lugar onde o tipo do dia muda.
+@html
+<ul class="legend" aria-label="Formas de estado">
+  <li><svg><use href="#s-full"/></svg>comi tudo</li>
+  <li><svg><use href="#s-half"/></svg>metade</li>
+  <li><svg><use href="#s-out"/></svg>fora do plano</li>
+  <li><svg><use href="#s-none"/></svg>não comi</li>
+  <li><svg><use href="#s-nsei"/></svg>não sei</li>
+  <li class="g"><svg><use href="#s-open"/></svg>sem marca: desconhecido, não zero</li>
+  <li class="g"><svg><use href="#s-fut"/></svg>ainda por vir</li>
+</ul>
+<p class="legend-note">Cada estado tem forma e palavra, não só cor. O anil marca o que veio do plano e ainda não foi confirmado; a tinta cheia marca o que ele declarou. “Não comi” ganhou forma própria nesta entrega, porque agora conta como dia conhecido (decisão 3).</p>
+@fim
+
+=== 1 |  | Antes de qualquer marca: o dia sem cartão
+cap: É o estado do item 2, como a regra o descreve. O café das 8h00 passou sem marca e aparece como linha comum, com a palavra <b>“sem marca”</b> e o círculo tracejado — desconhecido, não zero (F198). Nada vem pré-marcado: pré-marcar é da folha de pôr em dia, onde ele lê o plano inteiro antes de mudar. A pesagem não aparece: ela é de manhã, em semi-jejum (F42), e o café já passou. A contagem diz o número, a regra, e o único atalho que ela precisa: <b>ontem ficou sem marca</b>. Não há outro cartão, faixa ou convite.
+@sb 10:40 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">10h40</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln o"><svg class="si"><use href="#s-open"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">sem marca</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">719 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água<small>nenhum copo marcado · meta: 14 copos de 250 ml</small></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell full"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell today"></i></div>
+      <div class="kl"><span>seg 28/09</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>5</b>. A regra do nutricionista precisa de 11.</p>
+      <div class="row2"><p>Ontem, sábado, ficou sem marca.</p><button class="pill">Pôr ontem em dia</button></div>
+    </section>
+  </div>
+  {{tabs agora}}
+  {{hi}}
+</div>
+
+=== 2 |  | A linha tocada abre no lugar, e é o cartão
+cap: Um toque no café abre a linha ali mesmo, com o que o cartão de cima teria: a procedência (“no plano às 8h00”), os itens, e os mesmos três botões. <b>Um toque grava</b> — “Comi tudo”, “Metade” ou “Não comi isso”, que faz a única pergunta (sabe o que comeu no lugar?). Não há “guardar” no fim (decisão 1). Tocar fora fecha a linha sem gravar nada. As outras linhas continuam fechadas: só uma abre por vez, para que o dedo nunca acerte o botão de outra refeição.
+@sb 10:40 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">10h40</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><div class="lopen enter"><div class="k">no plano às 8h00 · passou há 2h40</div><h3>Café da manhã</h3><p class="items">cuscuz 200 g · frango 70 g · requeijão light 30 g · leite integral 250 ml · uva 120 g · 629 kcal</p><button class="primary">Comi tudo</button><div class="two" style="margin-top:8px"><button class="sec">Metade</button><button class="sec">Não comi isso</button></div></div></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">719 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água<small>nenhum copo marcado · meta: 14 copos de 250 ml</small></span><button class="pill">+1 copo</button></div>
+  </div>
+  {{tabs agora}}
+  {{hi}}
+</div>
+
+=== 3 |  | Com a água já contada
+cap: 14h10: o almoço passou há 1h40 e o lanche está a 1h50 — de novo, nenhum cartão. O café entrou pela linha (10h41), o almoço pela metade. A água mostra <b>a conta e o desenho da conta</b>: 6 de 14 copos, 1.500 ml. “+1 copo” é um toque e grava; tocar no número corrige no lugar, sem prazo (o 7º copo não vira 6 sozinho, e um copo a mais não exige apagar nada). Hoje passou a contar na regra, e a contagem diz por quê, em vez de repetir a frase de sempre.
+@sb 14:10 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">14h10</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st"><b>comi tudo</b> · 10h41</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-half"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st"><b>metade</b> · 13h05</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água · <b>6</b> de 14 copos<small>1.500 ml de 3.500 ml · último às 13h50</small><span class="cups"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell full"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell part today"></i></div>
+      <div class="kl"><span>seg 28/09</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>6</b>. A regra do nutricionista precisa de 11. Hoje passou a contar, porque tem refeição marcada.</p>
+      <div class="row2"><p>Ontem, sábado, ficou sem marca.</p><button class="pill">Pôr ontem em dia</button></div>
+    </section>
+  </div>
+  {{tabs agora}}
+  {{hi}}
+</div>
+
+=== 4 |  | O palpite, tocado: o único lugar onde o tipo do dia muda
+cap: “Descanso, pelo padrão semanal” é palpite, e a tela diz (decisão 7). Um toque na linha abre esta folha. <b>“É descanso”</b> grava a definição manual (F187) e a linha passa a dizer “descanso, você confirmou às 10h41”, sem pontilhado. <b>“Vou treinar hoje”</b> troca o plano da comida — o pré e o treino entram, e andam com a hora da sessão (F189). E o dia de descanso tem o que fazer além de descansar: um cardio leve num domingo é cardio em dia sem musculação, e é aqui que ele entra, sem virar treino (F156). Confirmar não é obrigatório: ignorado, o palpite continua palpite.
+@sb 10:41 | cheio
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">10h41</span></div></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="O tipo do dia">
+    <div class="grab"></div>
+    <p class="prov2">pelo padrão semanal: domingo é descanso</p>
+    <h3>Hoje é dia de descanso?</h3>
+    <p class="sub">É um palpite até você dizer. Dizer muda o plano da comida de hoje, e mais nada.</p>
+    <button class="pick"><span class="lt"><svg width="24" height="24"><use href="#ok2"/></svg></span><span class="t"><b>É descanso</b><small>o plano fica o de descanso: 4 refeições, 2.844 kcal</small></span></button>
+    <button class="wide2"><span class="t"><b>Vou treinar hoje</b><small>o pré‑treino e o treino entram no plano e andam com a hora da sessão · na sequência, o próximo é o Treino A</small></span><svg><use href="#chev"/></svg></button>
+    <div class="q2"><b>Já fiz alguma coisa hoje</b>
+      <div class="chips"><button>Cardio</button><button>Aula</button><button>Treino fora da prescrição</button></div>
+      <p>Cardio em dia de descanso fica no descanso: não é treino, e aparece em Dias como cardio em dia sem musculação.</p>
+    </div>
+  </div>
+</div>
+
+=== 5 |  | O dia em que a sessão de fotos completa 14 dias
+cap: Quinta, 15/10, 7h05: exatos 14 dias depois da sessão de 01/10 (F226, P7). Ele avisou às 6h40 que hoje não treina, e a procedência mudou de palpite para fato: <b>“descanso, você marcou às 6h40”</b>, sem pontilhado. As fotos entram como <b>linha abaixo do lugar do cartão</b>, nunca no topo (decisão 4) — e, como não há cartão, a linha fica logo abaixo do dia. Ela diz a condição que importa, “em jejum, antes do café das 8h00” (F228): depois que o café for marcado, a linha passa a dizer “amanhã cedo”, porque foto depois de comer não compara com as outras. A pesagem vem logo abaixo, pela mesma razão de horário, e diz quantas a semana já tem. O café está a 55 min: ainda fora da janela de 30 min, então ainda sem cartão.
+@sb 7:05 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">quinta, 15 de outubro<span class="hr">7h05</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov firm"><span class="p">descanso, você marcou às 6h40</span><svg><use href="#chev"/></svg></button></div>
+    <div class="below"><svg><use href="#cams"/></svg><span class="t"><b>Fotos do corpo · hoje faz 14 dias</b><small>a última foi na quinta, 01/10 · 9 poses, em jejum, antes do café das 8h00</small></span><button class="pill">Começar</button></div>
+    <div class="below"><svg><use href="#bal"/></svg><span class="t"><b>Peso de hoje</b><small>nesta semana: 1 pesagem, seg 12/10 · a média da semana precisa de 2</small></span><button class="pill">Anotar</button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">629 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">719 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água<small>nenhum copo marcado · meta: 14 copos de 250 ml</small></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell part"></i><i class="cell"></i><i class="cell part"></i><i class="cell"></i><i class="cell today"></i></div>
+      <div class="kl"><span>sex 02/10</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>5</b>. A regra do nutricionista precisa de 11.</p>
+    </section>
+  </div>
+  {{tabs agora}}
+  {{hi}}
+</div>
+
+=== 6 |  | Com uma mudança do treino esperando decisão
+cap: Domingo, 20h40: a última refeição do plano já passou, então não há cartão até amanhã. Na sexta, no Treino D, ele fez 4 séries de elevação lateral na máquina no lugar de 3 — e não decidiu nada, porque nada é perguntado na academia. A mudança <b>vence por posição</b> (decisão 2): quando o D voltar. A linha não diz uma data, porque a data não existe ainda — diz <b>quantos treinos faltam</b>: A, B e C. Isto não é o aviso de vencimento: o aviso aparece uma vez, na manhã do D, e nunca durante a sessão. Esta linha só existe no Agora sem cartão e sem sessão — sentado, sem relógio, que é a hora de decidir.
+@sb 20:40 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">20h40</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="below"><svg><use href="#t-presc"/></svg><span class="t"><b>Uma mudança do Treino D espera você</b><small>Elevação lateral na máquina: 4 séries no lugar de 3, na sexta 09/10 · vence quando o D voltar; faltam A, B e C</small></span><button class="pill">Decidir</button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st"><b>comi tudo</b> · 10h41</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-half"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st"><b>metade</b> · 13h05</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st"><b>comi tudo</b> · 16h20</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln o"><svg class="si"><use href="#s-open"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">sem marca</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água · <b>9</b> de 14 copos<small>2.250 ml de 3.500 ml · último às 19h55</small><span class="cups"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i></span></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell full"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell part today"></i></div>
+      <div class="kl"><span>seg 28/09</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>6</b>. A regra do nutricionista precisa de 11.</p>
+    </section>
+  </div>
+  {{tabs agora}}
+  {{hi}}
+</div>
+
+=== 7 |  | O que “Decidir” abre: a decisão, com a conta do volume
+cap: O toque abre a mudança ali mesmo, numa folha — o mesmo item da lista de Prescrição, sem trocar de lugar. Como mudar séries muda o volume, <b>a conta semanal aparece antes da decisão</b> (decisão 1): deltoide lateral passaria de 12 para 13 séries, contra 12 prescritas (F179). A regra do treinador sobre séries a mais vem ao lado, na voz dele (F99). Cada botão grava no toque; o motivo é opcional e vem depois, com o teclado do sistema, porque é texto e ele está sentado. Fechar a folha não decide nada, e a frase de baixo diz o que acontece se ninguém decidir.
+@sb 20:41 | cheio
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">20h41</span></div></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Decidir a mudança">
+    <div class="grab"></div>
+    <p class="prov2">da sessão de sexta, 09/10 · Treino D</p>
+    <h3>Elevação lateral na máquina: 4 séries no lugar de 3</h3>
+    <div class="cmp2" style="margin:8px 0 0">
+      <div class="box2"><b>No programa</b><span>3 × 10–15</span><span>RIR 1 · descanso 1:45</span></div>
+      <div class="box2"><b>Na sexta</b><span><strong style="font-size:15px">4</strong> × 10–15</span><span>RIR 1 · descanso 1:45</span></div>
+    </div>
+    <div class="rb2"><span class="l">Se ficar no programa</span>Deltoide lateral passa de <b>12 para 13 séries</b> diretas na semana. O treinador prescreveu 12.</div>
+    <p class="quote" style="margin-top:10px">Não acrescentar séries agora. Considerar 1 a 2 a mais só num músculo estagnado, depois de várias exposições, com recuperação boa e sem dor.<cite>regra do treinador</cite></p>
+    <div class="two" style="margin-top:12px"><button class="sec">Foi só naquele dia</button><button class="sec">Fica no programa</button></div>
+    <p class="sub" style="margin:10px 0 0">Se ninguém decidir, quando o D voltar ela fica como <b>só daquele dia</b> — dito na lista de Prescrição, e desfazível até a vez seguinte do D. A sessão de sexta guarda as 4 séries de qualquer jeito.</p>
+  </div>
+</div>
+
+=== 8 |  | Estado ruim: o copo não foi gravado
+cap: Com “cada toque grava”, cada toque pode falhar — e a tela não finge. O 7º copo não entrou porque o armazenamento do aparelho encheu (o Safari dá cerca de 5 MiB, F53). <b>A conta fica em 6</b>, a frase diz por quê, e as duas saídas estão ao lado do toque: tentar de novo, ou baixar a cópia de segurança antes de qualquer outra coisa (F249). Nenhum “copo adicionado” aparece antes de gravar no aparelho.
+@sb 14:12 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">14h12</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st"><b>comi tudo</b> · 10h41</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-half"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st"><b>metade</b> · 13h05</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água · <b>6</b> de 14 copos<small>1.500 ml de 3.500 ml · último às 13h50</small><span class="cups"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span><button class="pill">+1 copo</button></div>
+    <div class="err inl" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>O 7º copo não foi gravado</b><p>O armazenamento deste aparelho está cheio. A conta continua em 6, que é o que está guardado.</p></div></div>
+      <div class="btns2"><button>Tentar de novo</button><button>Baixar a cópia de segurança</button></div></div>
+  </div>
+  {{tabs agora}}
+  {{hi}}
+</div>

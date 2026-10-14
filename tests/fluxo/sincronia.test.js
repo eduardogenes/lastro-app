@@ -209,45 +209,45 @@ test('dia com treino registrado recusa a marca de descanso', async () => {
   a.fechar();
 });
 
-test('a tela de lançamento aguenta a opção de descanso', async () => {
+test('a folha de lançamento não grava "descanso" como treino', async () => {
   // regressão: 'descanso' não é letra da rotação, e descrever o treino dela
-  // derrubava a tela inteira antes de qualquer mensagem
+  // derrubava a tela inteira. Pela D o descanso saiu da folha (mora no dia, com
+  // o mesmo peso de "Registrar treino"), e o verbo recusa o que não é da
+  // sequência em vez de gravar uma letra que não existe.
   const a = await app({ estado: { logs: {}, done: [] } });
   a.v('abrirAdicionar', (Date.now() - 86400000));
-  const rotulos = a.$$('.chips .ins-chip').map(x => x.textContent);
-  assert.ok(rotulos.includes('foi descanso'), rotulos.join(' | '));
+  const rotulos = a.$$('.ln-chips .ins-chip').map(x => x.textContent);
+  assert.ok(!rotulos.includes('foi descanso'), rotulos.join(' | '));
 
-  a.v('addSet', 'tipo', 'descanso');
-  assert.ok(a.$('.add-acoes .ins-btn-primary'), 'a tela continua de pé');
-  assert.match(a.$('.add-acoes .ins-btn-primary').textContent, /descanso/i);
-  assert.strictEqual(a.$('#ahora'), null, 'descanso não tem horário nem duração');
+  await a.v('lancaTreino', 'descanso');
+  assert.strictEqual(a.S().done.length, 0, 'nada gravado');
+  assert.ok(a.$('[data-a="lanca-previsto"]'), 'e a folha continua de pé');
   a.fechar();
 });
 
-test('o descanso aparece nas duas telas, e do mesmo jeito', async () => {
-  // a tira da semana e o calendário do mês mostram a MESMA semana: divergir
-  // seria o app contando duas histórias sobre o mesmo domingo
-  // relógio fixo: o domingo da semana corrente precisa cair no MÊS corrente,
-  // senão o calendário do mês — corretamente — não tem onde mostrá-lo
-  // Os dois moram em DIAS agora, e a comparação ficou literal: a faixa e o
-  // calendário na mesma tela, sem navegar entre elas.
+test('o descanso aparece no mês e no dia, e do mesmo jeito', async () => {
+  // A faixa da semana saiu de Dias (a D: o mês já mostra a semana). As duas
+  // histórias que não podem divergir agora são a célula do mês e o dia aberto.
+  // E sem marca o domingo fica VAZIO: não vira descanso sozinho.
   const agora = agoraEstavel();
   const a = await app({ aba: 'dias', agora: agora, estado: { logs: {}, done: [] } });
   const dom = a.v('weekStart', agora);
+  const iso = a.v('hojeISO', dom);
+  const cel = function () { return a.$('[data-dia="' + iso + '"]'); };
 
-  const antes = a.$$('.wd .wd-v').map(x => x.textContent);
-  assert.strictEqual(antes[0], '+', 'sem marca, o domingo convida a registrar');
+  assert.strictEqual(cel().querySelector('.dc-p'), null, 'sem marca, o domingo não diz nada');
+  assert.ok(!cel().classList.contains('desc'));
 
   await a.v('alternaDescanso', dom);
   await a.esperar();
 
-  const cel = a.$$('.wd')[0];
-  assert.strictEqual(cel.querySelector('.wd-v').textContent, '–', 'vira traço');
-  assert.ok(cel.className.includes('descanso'));
-  assert.ok(!cel.className.includes('feito'), 'e nunca com o peso de dia treinado');
-
-  a.aba('dias');
-  assert.strictEqual(a.$$('.cal-d.descanso').length, 1, 'o mês diz a mesma coisa');
+  assert.strictEqual(cel().querySelector('.dc-p').textContent, 'desc.', 'a célula diz "desc."');
+  assert.ok(cel().classList.contains('desc'));
+  assert.ok(/descanso marcado/.test(cel().getAttribute('aria-label')), 'também para o leitor de tela');
+  a.v('ctx.abreDia', dom);
+  const d = a.vJ('ctx.diaAberto');
+  assert.strictEqual(d.descanso, true, 'o dia diz a mesma coisa');
+  assert.strictEqual(d.procedencia, 'descanso, marcado por você');
   a.fechar();
 });
 
@@ -600,4 +600,32 @@ test('a refeição marcada HOJE não volta; a água volta, porque é contador', 
   assert.strictEqual(cel.S().dia.agua, 3,
     'a água do notebook chega: é contador sem carimbo, e nenhuma lápide a alcança');
   cel.fechar(); note.fechar();
+});
+
+test('login expirado não é sem rede: o Agora diz, e sem rede continua em silêncio', async () => {
+  // A D (`prescricao.html`, estado 11). Sem rede a sincronia falha calada, de
+  // propósito. O 401 derruba a sessão — e dali em diante a sincronia parava em
+  // silêncio como se fosse falta de rede, com o outro aparelho vendo o velho.
+  const a = await app({ aba: 'agora' });
+  nuvemFalsa(a, null);
+  a.E('globalThis.__nuvem.falha = "rede"');
+  await a.v('sincroniza');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="login-entra"]'), null, 'sem rede, nada aparece');
+  assert.strictEqual(a.dado('sync').expirou || 0, 0, 'e falta de rede não é sessão expirada');
+
+  a.E('globalThis.__nuvem.falha = "auth"');
+  a.v('toggle', 0);
+  a.preencher(0, 0, 60, 8);
+  await a.esperar();
+  await a.v('sincroniza');
+  a.E('NUVEM.sessao = function () { return null; }');   // o 401 derruba a sessão
+  a.aba('agora');
+  await a.esperar();
+  assert.ok(/A sua sessão de login expirou/.test(a.texto('.ins-aviso-perda')), a.texto('.ins-aviso-perda'));
+  assert.ok(/continua gravado neste aparelho/.test(a.texto('.ins-aviso-perda')), 'diz o que está a salvo');
+  assert.ok(a.$('[data-a="login-copia"]'), 'e oferece a cópia que não depende de conta');
+  const guardado = JSON.parse(a.window.localStorage.getItem('treino-sync-v1') || '{}');
+  assert.ok(guardado.expirou > 0, 'o fato fica GRAVADO, para sobreviver a fechar o app: ' + JSON.stringify(guardado));
+  a.fechar();
 });

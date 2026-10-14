@@ -22,10 +22,37 @@ import { fmtDec, fmtSig } from '../../dominio/formato';
 import { useState } from 'preact/hooks';
 import { Teclado } from '../instrumento/teclado.jsx';
 
+/** "O peso da manhã" vira "Peso da manhã": o nome da medida sem o artigo do rótulo de seção. */
+function semArtigo(r) { const x = r.replace(/^(O|A|Os|As) /, ''); return x.charAt(0).toUpperCase() + x.slice(1); }
+
 /** Uma medida corporal: stepper, botão e a curva das últimas 14 semanas. */
-function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar, chave, onde, ondeRascunho, onOnde }) {
+/**
+ * A semana em curso sem média (a D, `corpo.html`, estado 9): em vez de uma
+ * média falsa, o que falta, os dias — com pesagem, sem, e os que ainda dão
+ * tempo — e a decisão que fica parada.
+ */
+function SemanaSemMedia({ s, alvo }) {
+  return (
+    <div class="co-semana" role="status">
+      <p class="ins-body ins-t1 co-semana-t"><b>Sem média</b> · {s.nota}</p>
+      <p class="ins-body-sm ins-t2">{s.falta}</p>
+      <ul class="co-semana-d">
+        {s.trechos.map(t => (
+          <li key={t.rotulo} class={'co-semana-l ' + t.k}>
+            <span class="ins-body-sm ins-t2">{t.rotulo}</span>
+            <span class="ins-body-sm">{t.hora && <span class="ins-t3">{t.hora} · </span>}{t.v}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="ins-body-xs ins-t3">A prescrição pede {alvo}.{s.medido ? ' ' + s.medido : ''}</p>
+    </div>
+  );
+}
+
+function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, aoApagar, onMuda, onRegistrar, acao, dia, onAbrirDia, onDia, children, primeira, teclado, aoAbrirTeclado, aoFecharTeclado, aoTeclar, chave, onde, ondeRascunho, onOnde, topo }) {
   return (
     <Secao rotulo={rotulo} nota={nota} primeira={primeira}>
+      {topo}
       <div class="dd-registro">
         <Stepper
           valor={valor} passo={passo} min={20} max={250}
@@ -43,11 +70,11 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
       {teclado
         ? <Teclado
             texto={teclado.texto} decimal={teclado.decimal} unidade={teclado.unidade}
-            rotulo={'digitar ' + rotulo + ' em ' + teclado.unidade}
+            rotulo={'digitar ' + semArtigo(rotulo).toLowerCase() + ' em ' + teclado.unidade}
             aoTeclar={aoTeclar} aoFechar={aoFecharTeclado}
           />
-        : <button class="dd-tclbtn" data-a={'tcl-abre-' + (chave || rotulo)} onClick={aoAbrirTeclado}>
-            digitar o número
+        : <button class="dd-tclbtn" data-a={'tcl-abre-' + (chave || semArtigo(rotulo).toLowerCase())} onClick={aoAbrirTeclado}>
+            Digitar o número
           </button>}
 
       {/* COMO EU MEDI — só nas medidas com fita (`onOnde` presente). A fita erra
@@ -65,7 +92,7 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
       {dia && (dia.aberto
         ? <div class="dd-dia">
             <input
-              class="ins-input dd-data" type="date" id={'ddia-' + (chave || rotulo)}
+              class="ins-input dd-data" type="date" id={'ddia-' + (chave || semArtigo(rotulo).toLowerCase())}
               value={dia.iso} max={dia.max}
               onInput={e => onDia(e.currentTarget.value)}
             />
@@ -77,7 +104,7 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
         : <button class="dd-diabtn" onClick={onAbrirDia}>
             {/* "Peso de outro dia", e não "outro dia": o botão diz do que é o
                 dia que ele troca (§7.8). */}
-            {dia.hoje ? rotulo.charAt(0).toUpperCase() + rotulo.slice(1) + ' de outro dia'
+            {dia.hoje ? semArtigo(rotulo) + ' de outro dia'
                       : 'registrando em ' + dia.txt + ' · trocar'}
           </button>)}
 
@@ -97,7 +124,7 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
             <div class="crow" key={x.t}>
               <span class="crow-d ins-label">{x.data}</span>
               <span class="crow-m ins-data">{x.valor}</span>
-              <button class="crow-x" onClick={() => aoApagar(x.t)}>remover</button>
+              <button class="crow-x" onClick={() => aoApagar(x.t)}>Remover</button>
             </div>
           ))}
         </div>
@@ -114,14 +141,14 @@ function ComoMedi({ chave, onde, rascunho, onOnde }) {
       <div class="co-onde">
         <p class="ins-body-sm co-onde-l">como você mediu: {onde}</p>
         <button class="co-ondebtn" data-a={'onde-muda-' + chave} onClick={() => setMudando(true)}>
-          mudar como eu medi
+          Mudar como eu medi
         </button>
       </div>
     );
   }
   return (
     <label class="co-onde">
-      <span class="ins-label-sm">como eu medi</span>
+      <span class="ins-label-sm">Como eu medi</span>
       <input
         class="ins-input" type="text" id={'onde-' + chave}
         placeholder={onde || 'onde você passou a fita'}
@@ -149,7 +176,7 @@ function ComoMedi({ chave, onde, rascunho, onOnde }) {
  */
 function Fotos({ f, ctx }) {
   return (
-    <Secao rotulo="fotos" nota={f.nota}>
+    <Secao rotulo="As fotos" nota={f.nota}>
       <div class="dd-fotos">
         <GradeMetricas
           colunas={2}
@@ -167,16 +194,28 @@ function Fotos({ f, ctx }) {
           </div>
         )}
 
+        {/* O que só existe aqui (a D, comparar, estado 10): um despejo de
+            cache do navegador leva embora, e a cópia em JSON não leva fotos. */}
+        {f.soAqui && (
+          <div class="dd-fotos-aqui" role="status">
+            <p class="ins-body-sm ins-t1"><b>{f.soAqui.t}</b></p>
+            <p class="ins-body-sm ins-t2">{f.soAqui.p}</p>
+            {f.soAqui.conta
+              ? <button class="ins-btn-secondary" data-a="fotos-subir" onClick={ctx.sincronizaAgora}>Subir agora</button>
+              : <button class="ins-btn-secondary" data-a="fotos-conta" onClick={ctx.abreAjustes}>Entrar na conta</button>}
+          </div>
+        )}
+
         <div class="dd-fotos-b">
           <button class="ins-btn-primary" onClick={ctx.abreProtocolo}>{f.cta}</button>
           {f.podeComparar && (
-            <button class="ins-btn-secondary" onClick={ctx.abreComparar}>comparar</button>
+            <button class="ins-btn-secondary" onClick={ctx.abreComparar}>Comparar</button>
           )}
         </div>
       </div>
 
       <Procedencia>
-        de manhã, em jejum, junto com a pesagem · as marcas de fita no chão são
+        a hora de cada foto fica anotada · as marcas de fita no chão são
         o que faz duas sessões serem comparáveis
       </Procedencia>
       <Procedencia>
@@ -194,13 +233,40 @@ export function Corpo({ ctx }) {
   const [dia, setDia] = useState(null);
   const c = ctx.corpo();
   const bio = ctx.bioimpedancia();
+  const vazio = ctx.corpoVazio();
 
   return (
     <>
-      <Cabecalho olho="como está" titulo="Corpo" />
+      {/* "Evolução", no lugar do "Histórico" do desenho (§1.7 da frente 3): a
+          palavra dele, para o destino de leitura que mora dentro de Corpo. */}
+      <Cabecalho olho="como está" titulo="Corpo"
+                 acao={<button class="ins-btn-secondary co-evolucao" data-a="abre-evolucao"
+                               onClick={ctx.abreEvolucao}>Evolução</button>} />
+
+      {/* O VAZIO DE VERDADE (a D, estado 10): o caminho, com os números da
+          regra — nenhuma barra de progresso, nenhum "comece agora!". */}
+      {vazio && (
+        <section class="ins-secao primeira co-vazio">
+          <h2 class="ins-rotulo">{vazio.titulo}</h2>
+          <p class="ins-body-sm ins-t2">{vazio.texto}</p>
+          <ul class="ins-lista co-vazio-l">
+            {vazio.linhas.map(l => (
+              <li key={l.k} class="ins-linha">
+                <span class="ins-linha-n">
+                  <span class="ins-linha-t">{l.t}</span>
+                  <span class="ins-linha-s">{l.d}</span>
+                </span>
+                <span class="ins-body-xs ins-t3">primeira</span>
+              </li>
+            ))}
+          </ul>
+          {vazio.conta && <p class="ins-body-xs ins-t3">{vazio.conta}</p>}
+        </section>
+      )}
 
       <Medida
-        rotulo="peso da manhã" chave="peso" nota={c.peso.nota} primeira
+        rotulo="O peso da manhã" chave="peso" nota={c.peso.nota} primeira={!vazio}
+        topo={c.peso.semana && <SemanaSemMedia s={c.peso.semana} alvo="3 a 4 pesagens por semana" />}
         valor={c.peso.valor} passo={0.1} unidade="kg" serie={c.peso.serie}
         onMuda={ctx.setPeso} onRegistrar={ctx.registraPeso} acao={c.peso.acao}
         dia={c.peso.dia} onAbrirDia={() => ctx.abreDiaCorpo('peso')}
@@ -225,7 +291,7 @@ export function Corpo({ ctx }) {
       </Medida>
 
       <Medida
-        rotulo="cintura" nota="1× por semana, em jejum"
+        rotulo="A cintura" nota="1× por semana, em jejum"
         valor={c.cintura.valor} passo={0.5} unidade="cm" serie={c.cintura.serie}
         onMuda={ctx.setCintura} onRegistrar={ctx.registraCintura} acao={c.cintura.acao}
         dia={c.cintura.dia} onAbrirDia={() => ctx.abreDiaCorpo('cintura')}
@@ -239,7 +305,7 @@ export function Corpo({ ctx }) {
         aoTeclar={t => ctx.tecla(t)}
         celulas={[
           { k: 'a', rotulo: 'última medida', valor: c.cintura.atual },
-          { k: 'm', rotulo: 'no mês · cm', valor: c.cintura.mesValor }
+          { k: 'm', rotulo: 'no mês', valor: c.cintura.mesValor, unidade: 'cm' }
         ]}
       >
         <Procedencia>{c.cintura.mes}</Procedencia>
@@ -270,17 +336,17 @@ export function Corpo({ ctx }) {
           aoTeclar={t => ctx.tecla(t)}
           celulas={[
             { k: 'a', rotulo: 'última medida', valor: f.atual },
-            { k: 'd', rotulo: 'desde a primeira · ' + f.u, valor: f.desde }
+            { k: 'd', rotulo: 'desde a primeira', valor: f.desde, unidade: f.u }
           ]}
         />
       ))}
       {c.fita.some(f => !f.ligada) && (
-        <Secao rotulo="outras medidas com fita" nota="ligue as que você tira sozinho">
+        <Secao rotulo="As outras medidas com fita" nota="ligue as que você tira sozinho">
           {c.fita.filter(f => !f.ligada).map(f => (
             <div class="crow" key={f.k}>
               <span class="crow-m">{f.n}</span>
               <span class="crow-n">sem medida</span>
-              <button class="co-liga" data-a={'liga-' + f.k} onClick={() => ctx.ligaMedida(f.k)}>ligar</button>
+              <button class="co-liga" data-a={'liga-' + f.k} onClick={() => ctx.ligaMedida(f.k)}>Ligar</button>
             </div>
           ))}
           <Procedencia>
@@ -306,7 +372,7 @@ export function Corpo({ ctx }) {
           casa o mesmo dia vindo de dois aparelhos. Por isso a tela recusa a
           leitura incompleta em vez de gravar o que deu: metade de uma leitura
           não é meia leitura, é uma leitura errada. */}
-      <Secao rotulo="bioimpedância" nota={bio.nota}>
+      <Secao rotulo="A bioimpedância" nota={bio.nota}>
         <p class="ins-body-sm ins-t2 co-bio-i">{bio.instrucao}</p>
         <div class="co-bio">
           {bio.campos.map(c => (

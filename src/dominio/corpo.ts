@@ -8,7 +8,7 @@
 // separação que permitiu testar os limites exatos (0,15 · 0,40 · 1,5 cm) sem
 // subir um DOM.
 
-import { fmtDec, fmtDec2, weekStart } from './formato';
+import { DIAS_CURTOS, fmtDate, fmtDec, fmtDec2, fmtHoraDita, fmtSig2, weekStart } from './formato';
 import type { Marca, QualMarca } from './tipos';
 
 const DIA = 86400000;
@@ -147,6 +147,8 @@ export interface Veredito {
   p: string;
   /** o que ainda falta para o passo valer, quando o peso já pediu revisão */
   falta?: 'aderencia' | 'gordura';
+  /** o passo em vigor ainda está sendo medido: as semanas lidas são de antes dele */
+  espera?: boolean;
 }
 
 /** O passo de 150 kcal que um veredito PROPÕE. Não é o estado da dieta. */
@@ -166,6 +168,8 @@ export interface Sinais {
   diasRegistrados?: number | null;
   /** a resposta do fechamento semanal, comparando com 2 semanas atrás */
   gorduraVisual?: 'sim' | 'nao' | 'incerto' | null;
+  /** quando o passo de ±150 kcal em vigor foi aplicado; `null` sem passo */
+  passoEm?: number | null;
 }
 
 /**
@@ -244,6 +248,17 @@ export interface TaxaSemanal {
 }
 
 /**
+ * A diferença de duas médias SEM o ruído do ponto flutuante.
+ *
+ * Os limites da regra são exatos (F214): 0,10 não é "abaixo de 0,10". Mas
+ * 70,2 − 70,1 em ponto flutuante dá 0,0999999…, e em 61 de 400 sequências de
+ * pesagem a taxa exata de 0,10 caía abaixo do limite e a regra mandava comer
+ * mais. Arredondar a um milionésimo de quilo tira o ruído da conta sem mexer
+ * em nenhuma diferença que uma balança consiga medir.
+ */
+export function semRuido(kg: number): number { return Math.round(kg * 1e6) / 1e6; }
+
+/**
  * As taxas semana a semana — e não uma taxa média sobre duas semanas.
  *
  * Esta é a correção do primeiro erro: "por 2 semanas" é PERSISTÊNCIA, não
@@ -262,7 +277,7 @@ export function taxasSemanais(peso: Marca[], quantas: number = 2): TaxaSemanal[]
     if (Math.abs(ult[i].w - ult[i - 1].w - 7 * DIA) > 2 * 3600000) return null;
   }
   const out: TaxaSemanal[] = [];
-  for (let i = 1; i < ult.length; i++) out.push({ w: ult[i].w, kg: ult[i].v - ult[i - 1].v });
+  for (let i = 1; i < ult.length; i++) out.push({ w: ult[i].w, kg: semRuido(ult[i].v - ult[i - 1].v) });
   return out;
 }
 
@@ -292,6 +307,31 @@ export function veredito(
   body: { peso: Marca[]; cintura: Marca[] },
   sinais: Sinais = {}
 ): Veredito {
+  const v = vereditoDasSemanas(body, sinais);
+  if ((v.k !== 'mais' && v.k !== 'menos') || !sinais.passoEm) return v;
+  // UM PASSO POR EVIDÊNCIA (decisão do dono, 14/10). Depois de aplicado, as
+  // mesmas semanas continuariam pedindo o mesmo passo, e um segundo toque
+  // transformaria um motivo em 300 kcal. O passo seguinte só existe quando as
+  // duas semanas que a regra lê começaram depois dele.
+  const taxas = taxasSemanais(body.peso, 2);
+  const t = sinais.passoEm;
+  if (taxas && taxas[0].w >= t) return v;
+  const ini = weekStart(t) >= t ? weekStart(t) : weekStart(t) + 7 * DIA;
+  const novas = taxas ? taxas.filter(x => x.w >= t).length : 0;
+  const faltam = 2 - novas;
+  return {
+    k: 'observar', t: 'Não mexer: o passo de ' + fmtDate(t) + ' ainda está sendo medido',
+    p: 'O passo entrou em ' + fmtDate(t) + '. A regra só volta a decidir com duas semanas de peso inteiras depois dele, ' +
+       'de ' + fmtDate(ini) + ' a ' + fmtDate(ini + 13 * DIA) + ': ' +
+       (faltam === 1 ? 'falta 1 semana' : 'faltam 2 semanas') + '. Antes disso, as mesmas semanas pediriam o mesmo passo de novo.',
+    espera: true
+  };
+}
+
+function vereditoDasSemanas(
+  body: { peso: Marca[]; cintura: Marca[] },
+  sinais: Sinais = {}
+): Veredito {
   const taxas = taxasSemanais(body.peso, 2);
   if (!taxas)
     return { k: 'faltam', t: 'Não mexer: faltam pesagens', p: 'Registre o peso 3 a 4 vezes por semana. A regra pede duas semanas seguidas de média, e média de uma pesagem só não é média.' };
@@ -313,8 +353,14 @@ export function veredito(
       // Fora da tabela da frente: aqui a taxa NÃO está na faixa (está acima),
       // e o porquê é o da prosa — as fotos.
       return { k: 'manter', t: 'Não mexer: as fotos não mostram piora', p: `${mov} As fotos não mostram piora, então o ganho está comprando músculo. Ganho acima da faixa não é ruim por si.` };
-    return { k: 'observar', t: 'Não mexer: falta a sua leitura das fotos', falta: 'gordura',
-             p: `${mov} Falta a leitura das fotos contra as de duas semanas atrás. Sem ela o peso pede revisão, não corte.` };
+    // "Incerto" também é resposta (a D, `semana.html`, estado 5): com ela a
+    // regra mantém, e dizer que a leitura FALTA pediria de novo o que ele já deu.
+    if (sinais.gorduraVisual === 'incerto')
+      return { k: 'observar', t: 'Não mexer: a avaliação das fotos ficou incerta',
+               p: `${mov} A avaliação das fotos foi "incerto", e incerto também é resposta: com ela, a regra mantém a comida como está.` };
+    // A última frase está escrita porque é a parte da regra que mais surpreende.
+    return { k: 'observar', t: 'Não mexer: falta a avaliação das fotos', falta: 'gordura',
+             p: `${mov} Sem a resposta sobre a gordura visual, não há corte. Se as fotos não mostrarem piora, o certo é manter: o ganho está comprando músculo.` };
   }
 
   // ---------- ganho travado, duas semanas seguidas ----------
@@ -333,6 +379,291 @@ export function veredito(
     return { k: 'manter', t: 'Não mexer: a taxa está na faixa', p: `A média está subindo ${fmtDec2(ult.kg)} kg por semana, dentro da faixa-alvo de ${fmtDec(ALVO_MIN)} a ${fmtDec(ALVO_MAX)}.` };
 
   return { k: 'observar', t: 'Não mexer: uma semana sozinha não decide', p: `A média está em ${fmtDec2(ult.kg)} kg por semana. Não é motivo para mexer na comida — uma semana isolada fora da faixa é ruído, e a regra pede duas seguidas.` };
+}
+
+/** Um dos portões da regra, com o estado na PALAVRA (§6.2 da frente 3). */
+export interface Portao {
+  k: 'taxa' | 'forca' | 'adesao' | 'visual';
+  /** a condição da regra está satisfeita */
+  ok: boolean;
+  /** "Taxa: cumprida — +0,07 e +0,03 kg/semana" */
+  t: string;
+  /** o que produziu o estado, e o que falta */
+  d: string;
+  /** para onde o botão do portão leva, quando há botão */
+  acao?: 'por-em-dia' | 'responder' | 'ver-forca';
+}
+
+/** O que os portões leem além do peso — do treino, da comida e das fotos. */
+export interface FontesDosPortoes {
+  /** a tendência de força, quando há carga para medir */
+  forca?: { delta: number; base: number; ok: boolean } | null;
+  /** a força foi assumida na mão */
+  forcaManual?: boolean | null;
+  /** o par de fotos que a pergunta da avaliação visual compara, se há um */
+  par?: { de: number; ate: number } | null;
+}
+
+const plural = (n: number, um: string, varios: string) => n + ' ' + (n === 1 ? um : varios);
+
+/**
+ * Os portões da regra para a semana, na ordem do desenho.
+ *
+ * Só existem nos dois ramos que PODEM produzir passo, e cada ramo tem os seus:
+ * peso parado pede taxa, força e adesão; peso subindo rápido pede taxa, adesão e
+ * a avaliação visual das fotos — a força não entra no corte. Nos outros ramos
+ * nenhum portão decide nada, e mostrar portões ali seria sugerir uma decisão
+ * que a regra não tem: devolve `null`.
+ *
+ * O estado está na palavra — "cumprida", "falta" —, não no ícone. E "Força:
+ * cumprida — não está subindo" é a linha mais estranha do produto e está certa:
+ * o portão da força se cumpre quando a força NÃO sobe.
+ */
+export function portoesDaRegra(
+  body: { peso: Marca[] },
+  sinais: Sinais = {},
+  fontes: FontesDosPortoes = {}
+): Portao[] | null {
+  const taxas = taxasSemanais(body.peso, 2);
+  if (!taxas) return null;
+  const [ante, ult] = taxas;
+  const travado = ante.kg < BAIXO && ult.kg < BAIXO;
+  const rapido = ante.kg > ALTO && ult.kg > ALTO;
+  if (!travado && !rapido) return null;
+
+  const semanas = [ante.w - 7 * DIA, ante.w, ult.w].map(fmtDate).join(', ');
+  const out: Portao[] = [{
+    k: 'taxa', ok: true,
+    t: 'Taxa: cumprida — ' + fmtSig2(ante.kg) + ' e ' + fmtSig2(ult.kg) + ' kg/semana',
+    d: (travado ? 'duas semanas seguidas abaixo de ' + fmtDec2(BAIXO) : 'duas semanas seguidas acima de ' + fmtDec2(ALTO)) +
+       ' · três semanas com média válida (' + semanas + ')'
+  }];
+
+  if (travado) {
+    const f = fontes.forca;
+    const conta = f && f.ok
+      ? (f.delta >= 0 ? '+' : '−') + (Math.abs(f.delta) * 100).toFixed(1).replace('.', ',') + '% em 2 semanas, sobre ' +
+        plural(f.base, 'exercício', 'exercícios')
+      : 'sem carga registrada suficiente para medir';
+    const subindo = !!sinais.forcaSubindo;
+    out.push({
+      k: 'forca', ok: !subindo,
+      t: subindo ? 'Força: falta — está subindo' : 'Força: cumprida — não está subindo',
+      d: fontes.forcaManual != null
+        ? 'assumido na mão, porque o app estava cego para as cargas'
+        : conta + (f && f.ok && !subindo ? ' — abaixo de 1%, que é ruído de anilha' : ''),
+      acao: 'ver-forca'
+    });
+  }
+
+  const n = typeof sinais.diasRegistrados === 'number' ? sinais.diasRegistrados : 0;
+  out.push(n >= MIN_REGISTRADOS
+    ? { k: 'adesao', ok: true, t: 'Adesão: cumprida — ' + n + ' dias de 14',
+        d: n === MIN_REGISTRADOS ? 'o mínimo da regra. ' + (n - 1) + ' de 14 não bastaria' : 'a regra pede ' + MIN_REGISTRADOS }
+    : { k: 'adesao', ok: false, t: 'Adesão: falta — ' + plural(n, 'dia', 'dias') + ' de 14',
+        d: 'a regra pede ' + MIN_REGISTRADOS + '. ' +
+           (MIN_REGISTRADOS - n === 1 ? 'Falta 1 dia' : 'Faltam ' + (MIN_REGISTRADOS - n) + ' dias') +
+           ' com consumo conhecido, e ' + (14 - n) + ' dos 14 ainda podem ser preenchidos',
+        acao: 'por-em-dia' });
+
+  if (rapido) {
+    const v = sinais.gorduraVisual;
+    const par = fontes.par;
+    const sobre = par
+      ? 'há par válido: ' + fmtDate(par.de) + ' e ' + fmtDate(par.ate) + ', ' +
+        plural(Math.round(Math.abs(par.ate - par.de) / DIA), 'dia', 'dias') + ' — a pergunta vale para pares de 10 a 28 dias'
+      : 'ainda não há par de fotos de 10 a 28 dias — a pergunta precisa dele';
+    out.push(v === 'sim'
+      ? { k: 'visual', ok: true, t: 'Avaliação visual: cumprida — aumentou claramente', d: sobre }
+      : v === 'nao'
+        ? { k: 'visual', ok: false, t: 'Avaliação visual: as fotos não mostram piora',
+            d: 'o certo é manter: o ganho está comprando músculo' }
+        : v === 'incerto'
+          ? { k: 'visual', ok: false, t: 'Avaliação visual: incerto',
+              d: '"incerto" também é resposta: com ela, a regra mantém a comida como está' }
+          : { k: 'visual', ok: false, t: 'Avaliação visual: falta — sem resposta', d: sobre,
+              acao: par ? 'responder' : undefined });
+  }
+  return out;
+}
+
+/** Uma semana como a regra a lê, para o vazio dizer exatamente o que falta. */
+export interface SemanaDaRegra {
+  /** domingo 00:00 */
+  w: number;
+  n: number;
+  /** "27/09 a 03/10" */
+  intervalo: string;
+  /** "média válida" · "em curso · faltam 2 dias" · "buraco: quebra a sequência" */
+  estado: string;
+  valida: boolean;
+}
+
+/**
+ * As últimas semanas, com o motivo de cada reprovação (§6.4 da frente 3).
+ *
+ * O vazio da régua não é tela em branco: é a lista das semanas e o que faltou em
+ * cada uma. Uma semana vale com `MIN_PESAGENS`; a que está em curso ainda pode
+ * valer; a que passou sem isso quebra a sequência — e é por ela que a regra não
+ * decide.
+ */
+export function semanasDaRegra(peso: Marca[], agora: number, quantas: number = 4): SemanaDaRegra[] {
+  const por: Record<number, number> = {};
+  peso.forEach(x => { const k = weekStart(x.t); por[k] = (por[k] || 0) + 1; });
+  const esta = weekStart(agora);
+  const out: SemanaDaRegra[] = [];
+  for (let i = 0; i < quantas; i++) {
+    const w = esta - i * 7 * DIA;
+    const n = por[w] || 0;
+    const valida = n >= MIN_PESAGENS;
+    const faltam = 6 - new Date(agora).getDay();
+    out.push({
+      w, n, valida,
+      intervalo: fmtDate(w) + ' a ' + fmtDate(w + 6 * DIA),
+      estado: valida ? 'média válida'
+        : i === 0 ? 'em curso' + (faltam > 0 ? ' · ' + (faltam === 1 ? 'falta 1 dia' : 'faltam ' + faltam + ' dias') : '')
+        : 'buraco: quebra a sequência'
+    });
+  }
+  return out;
+}
+
+/** Um trecho da semana em curso: um dia com pesagem, ou dias seguidos sem. */
+export interface TrechoDaSemana {
+  /** "seg 28/09" · "ter 29/09 · qua 30/09 · qui 01/10" */
+  rotulo: string;
+  /** "73,6 kg" · "sem pesagem" · "ainda dá tempo" */
+  v: string;
+  /** a hora da pesagem, "6h40", quando há */
+  hora: string | null;
+  k: 'pesagem' | 'sem' | 'tempo';
+}
+
+/** A semana em curso, quando ela ainda não tem média (a D, `corpo.html`, estado 9). */
+export interface SemanaEmCurso {
+  n: number;
+  /** "esta semana · 1 pesagem" */
+  nota: string;
+  /** o que falta, e qual decisão fica parada por causa disso */
+  falta: string;
+  trechos: TrechoDaSemana[];
+  /** "No medido foram 2,75." — a média das últimas quatro semanas fechadas */
+  medido: string | null;
+}
+
+/**
+ * A semana em curso que ainda não tem média: o que falta e quantos dias restam
+ * para conseguir (a D, `corpo.html`, estado 9). Em vez de uma média falsa, a
+ * lista dos dias — com pesagem, sem, e os que ainda dão tempo — e a decisão
+ * que fica parada. É a única cobrança que a direção aceita, porque tem
+ * consequência escrita. Com a semana já valendo, `null`.
+ *
+ * Hoje conta como dia que ainda dá tempo enquanto ele não se pesou hoje.
+ */
+export function semanaEmCurso(peso: Marca[], agora: number): SemanaEmCurso | null {
+  const w = weekStart(agora);
+  const fim = w + 7 * DIA;
+  const daSemana = peso.filter(x => x.t >= w && x.t < fim && x.t <= agora).sort((a, b) => a.t - b.t);
+  const n = daSemana.length;
+  if (n >= MIN_PESAGENS) return null;
+
+  const hoje = new Date(agora).getDay();
+  const doDia = (i: number) => daSemana.filter(x => new Date(x.t).getDay() === i);
+  const rotulo = (i: number) => DIAS_CURTOS[i] + ' ' + fmtDate(w + i * DIA + 12 * 3600000);
+  const pesouHoje = doDia(hoje).length > 0;
+  const restam = 6 - hoje + (pesouHoje ? 0 : 1);
+  const faltam = MIN_PESAGENS - n;
+
+  const trechos: TrechoDaSemana[] = [];
+  for (let i = 0; i < 7; i++) {
+    const m = doDia(i).slice(-1)[0];
+    if (m) { trechos.push({ k: 'pesagem', rotulo: rotulo(i), v: fmtDec(m.v) + ' kg', hora: fmtHoraDita(m.t) }); continue; }
+    const k = i < hoje ? 'sem' : 'tempo';
+    const ult = trechos[trechos.length - 1];
+    if (ult && ult.k === k) ult.rotulo += ' · ' + rotulo(i);
+    else trechos.push({ k, rotulo: rotulo(i), v: k === 'sem' ? 'sem pesagem' : 'ainda dá tempo', hora: null });
+  }
+
+  const conseq = 'Sem ela, a sequência de três semanas se quebra e a regra do nutricionista volta a “pedir pesagens”.';
+  const pes = (x: number) => x + (x === 1 ? ' pesagem' : ' pesagens');
+  const falta = restam >= faltam
+    ? (restam === 1 ? 'Falta 1 dia' : 'Faltam ' + restam + ' dias') + ' na semana e ' + pes(faltam) +
+      ' para a média valer. ' + conseq
+    : 'Não dá mais tempo: ' + (restam === 0 ? 'a semana não tem mais dias' : 'resta 1 dia') +
+      ' e ' + (faltam === 1 ? 'falta ' : 'faltam ') + pes(faltam) + '. ' + conseq;
+
+  // o ritmo medido: as quatro semanas fechadas antes desta
+  const antes = peso.filter(x => x.t >= w - 28 * DIA && x.t < w).length;
+  const algum = peso.some(x => x.t < w);
+  const medido = algum
+    ? 'No medido, nas quatro semanas anteriores, foram ' + String(Math.round(antes / 4 * 100) / 100).replace('.', ',') + '.'
+    : null;
+
+  return { n, nota: 'esta semana · ' + pes(n), falta, trechos, medido };
+}
+
+/** Uma linha de "Taxa, semana a semana" no destino Evolução. */
+export interface TaxaDaEvolucao {
+  w: number;
+  intervalo: string;
+  /** "em curso · 3 pesagens" · "3 pesagens" */
+  nota: string;
+  /** a taxa da semana contra a anterior, quando as duas têm média; senão `null` */
+  kg: number | null;
+  /** "abaixo do alvo" · "no alvo" · "acima do alvo" · ou por que não há taxa */
+  classe: string;
+}
+
+/** O que o destino Evolução desenha: a curva, os pontos e as taxas. */
+export interface LeituraDaEvolucao {
+  /** médias das semanas que a regra lê (com `MIN_PESAGENS`), em ordem */
+  semanas: Semana[];
+  /** as pesagens do dia, no intervalo */
+  pontos: Marca[];
+  /** de onde a leitura começa e onde termina (agora) */
+  de: number;
+  ate: number;
+  /** as últimas quatro semanas, da mais recente para trás */
+  taxas: TaxaDaEvolucao[];
+  /** quantas pesagens entraram */
+  n: number;
+}
+
+/**
+ * A leitura do peso ao longo do tempo — o destino Evolução (a D, `corpo.html`,
+ * estado 8; o nome é o da §1.7 da frente 3, decidido pelo dono em 06/10).
+ *
+ * A linha é o que a regra lê: média semanal só onde a semana tem `MIN_PESAGENS`;
+ * semana sem isso não ganha ponto na linha, e a linha não atravessa o buraco
+ * fingindo continuidade. Os pontos são as pesagens do dia, para a oscilação
+ * diária ficar à vista ao lado da média — é ela que explica por que um dia não
+ * decide nada.
+ */
+export function leituraDaEvolucao(peso: Marca[], agora: number, semanas: number = 9): LeituraDaEvolucao {
+  const de = weekStart(agora) - (semanas - 1) * 7 * DIA;
+  const pontos = peso.filter(x => x.t >= de && x.t <= agora).sort((a, b) => a.t - b.t);
+  const W = mediasSemanais(pontos);
+  const por: Record<number, Semana> = {};
+  W.forEach(w => { por[w.w] = w; });
+  const esta = weekStart(agora);
+  const taxas: TaxaDaEvolucao[] = [];
+  for (let i = 0; i < 4; i++) {
+    const w = esta - i * 7 * DIA;
+    const s = por[w];
+    const ant = por[w - 7 * DIA];
+    const n = s ? s.n : 0;
+    const pes = n === 0 ? 'nenhuma pesagem' : n + (n === 1 ? ' pesagem' : ' pesagens');
+    const kg = s && ant && s.n >= MIN_PESAGENS && ant.n >= MIN_PESAGENS ? semRuido(s.v - ant.v) : null;
+    taxas.push({
+      w, intervalo: fmtDate(w) + ' a ' + fmtDate(w + 6 * DIA),
+      nota: (i === 0 ? 'em curso · ' : '') + pes,
+      kg,
+      classe: kg == null
+        ? (n < MIN_PESAGENS ? 'sem taxa: a semana não tem média' : 'sem taxa: a semana anterior não tem média')
+        : kg < ALVO_MIN ? 'abaixo do alvo' : kg > ALVO_MAX ? 'acima do alvo' : 'no alvo'
+    });
+  }
+  return { semanas: W.filter(w => w.n >= MIN_PESAGENS), pontos, de, ate: agora, taxas, n: pontos.length };
 }
 
 /** Agrupa marcas por semana e devolve a média de cada uma, em ordem. */

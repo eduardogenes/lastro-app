@@ -307,7 +307,9 @@ test('alvo de toque não é forçado duas vezes', () => {
   const duas = juntos(['src/componentes.css', 'src/treino.css'])
     .replace(/\/\*[\s\S]*?\*\//g, '');
 
-  ['.ins-tl-toque', '.ex-top'].forEach(sel => {
+  // A linha da timeline saiu com o corpo do Agora da D; a linha da comida que
+  // a substituiu é o alvo do mesmo jeito.
+  ['.ag-l-b', '.ex-top'].forEach(sel => {
     const bloco = duas.match(new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}'));
     assert.ok(bloco, 'sumiu do CSS: ' + sel);
     assert.ok(!/min-height/.test(bloco![1]),
@@ -573,7 +575,9 @@ test('controle pequeno estende o ALVO sem crescer o desenho', () => {
   // Os quatro últimos entraram depois de medir o cartão de exercício aberto:
   // o descanso, a anotação, o aquecimento e o RIR ficavam entre 34 e 40px —
   // todos apertados de pé, com uma mão, entre uma série e outra.
-  ['.ins-caixa', '.ins-tick', '.ins-chip', '.crow-x', '.cardl-b', '.dd-diabtn',
+  // `.ins-caixa` e `.ins-tick` saíram com a timeline e os copos antigos do
+  // Agora (a D desenhou a comida em linhas e a água em linha).
+  ['.ins-chip', '.crow-x', '.cardl-b', '.dd-diabtn',
    '.restlinha', '.notabtn', '.aqbtn', '.rirbtn', '.histbtn'].forEach(sel => {
     // O seletor pode estar numa LISTA, e a §0.1 da frente 2 nomeia este
     // acoplamento: "a ordem e o agrupamento de uma lista de seletores não são
@@ -587,27 +591,6 @@ test('controle pequeno estende o ALVO sem crescer o desenho', () => {
     assert.match(m![1], /position:\s*absolute/);
     assert.match(m![1], /inset:\s*-/, sel + ': a área tem que ser MAIOR que o desenho');
   });
-});
-
-test('o alvo do tick cresce só na vertical', () => {
-  // Na horizontal o vizinho é a célula seguinte da mesma contagem: crescer para
-  // o lado faria um toque na borda registrar o número errado.
-  //
-  // Casava `.ins-tick::after` literal. Agora as duas classes vêm do componente
-  // que desenha a contagem, e o teste cobra também a PREMISSA que torna a regra
-  // necessária: que os ticks fiquem em linha. Se um dia eles virarem coluna, é
-  // este caso que tem de ser reescrito — e ele diz isso ficando vermelho.
-  const corpoTicks = trechoDeComponente(primitivos(), 'Ticks');
-  const antesDoBotao = corpoTicks.slice(0, corpoTicks.indexOf('<button'));
-  const fila = [...antesDoBotao.matchAll(/<div[^>]*class="([^"]+)"/g)].pop();
-  const tick = corpoTicks.match(/<button[\s\S]*?class=\{'([a-z0-9-]+)'/);
-  assert.ok(fila && tick, 'o componente da contagem mudou de forma');
-
-  assert.match(regras(css(), '.' + fila![1].trim().split(/\s+/)[0]), /display:\s*flex/,
-    'os ticks ficam em LINHA: é por isso que o alvo não pode crescer para o lado');
-  const alvo = regras(css(), '.' + tick![1] + '::after');
-  assert.ok(alvo, '.' + tick![1] + '::after perdeu a área de toque estendida');
-  assert.match(alvo, /inset:\s*-[\d.]+px\s+0(?![\d.])/, 'o segundo valor tem que ser 0');
 });
 
 test('a régua toma o gesto horizontal, em vez de disputá-lo', () => {
@@ -821,6 +804,21 @@ test('a trava de retrato não pega janela de computador', () => {
     'o teto tem que ficar abaixo de uma janela de mesa: ' + teto);
 });
 
+test('deitado no meio da sessão não é aviso: é a mesma tela em duas colunas', () => {
+  // A D, momento 1, estado 14: o iOS não trava a orientação de app web (F60), e
+  // o telefone vira sozinho no banco. Fora do modo o aviso continua; dentro
+  // dele, o aviso sai e o cartão aberto vira leitura | polegar. Na MESMA
+  // condição do aviso, senão a janela de computador viraria duas colunas.
+  const c = css();
+  const blocos = [...c.matchAll(/@media\s*\(orientation:\s*landscape\)\s*and\s*\(max-height:\s*(\d+)px\)\s*\{/g)];
+  const doModo = blocos.map(m => c.slice(m.index!, m.index! + 2000)).find(t => /\.ins-modo/.test(t));
+  assert.ok(doModo, 'o bloco deitado do modo existe');
+  assert.match(doModo!, /html:has\(\.ins-modo\)\s*#deitado\s*\{\s*display:\s*none/, 'o aviso sai no modo');
+  assert.match(doModo!, /\.sets-ler\s*\{\s*grid-column:\s*1/);
+  assert.match(doModo!, /\.sets-polegar\s*\{\s*grid-column:\s*2/);
+  const alturas = blocos.map(m => m[1]);
+  assert.strictEqual(new Set(alturas).size, 1, 'o aviso e as duas colunas valem na mesma altura: ' + alturas);
+});
 
 test('a marca de recorde não pinta ácido sobre ácido', () => {
   // Ela saía como um bloco sólido e mudo. Uma regra `.rec` sobrando do sistema
@@ -1109,7 +1107,7 @@ test('controle menor que o alvo estende a área, ou está na lista de dívida', 
   // controle pequeno NOVO sem extensão reprova na hora. Quando as telas forem
   // reescritas e alguém puder olhar a adjacência, os nomes saem daqui.
   const DIVIDA = ['#timer button', '.dlbtn', '.edbtn', '.edmod button', '.edx-b',
-    '.edx-mv button', '.ins-faixa-b', '.ins-folha-b', '.mesnav button',
+    '.edx-mv button', '.ins-faixa-b', '.ins-folha-b',
     '.progd-mv button', '.setant-b'];
 
   const todo = juntos(FOLHAS.map(f => 'src/' + f)).replace(/\/\*[\s\S]*?\*\//g, '');

@@ -73,8 +73,29 @@ test('o cache de fotos sobrevive à publicação', () => {
   // essas não têm como ser refeitas por um build.
   const sw = dist('sw.js');
   assert.ok(/FOTOS\.indexOf\(k\) < 0/.test(sw), 'a limpeza precisa poupar os caches de fotos');
-  assert.ok(/const FOTOS = \['lastro-fotos', 'treino-fotos'\];/.test(sw),
+  assert.ok(/const FOTOS = \[[^\]]*'treino-fotos'[^\]]*\];/.test(sw),
     'o nome antigo tem que sobreviver até a página migrar os bytes');
+});
+
+test('todo cache de dado do app sobrevive à publicação, e não só o dos aparelhos', () => {
+  // `lastro-corpo` ficou fora da lista quando o protocolo de fotos nasceu, e
+  // cada publicação apagava a cópia local das fotos do corpo (F252). A lista do
+  // worker é escrita à mão; este caso a compara com os caches que o código de
+  // `src/infra` declara, para o próximo cache de dado não repetir o esquecimento.
+  const sw = dist('sw.js');
+  const m = sw.match(/const FOTOS = \[([^\]]*)\];/);
+  assert.ok(m, 'a lista de caches poupados existe');
+  const poupados = m[1].split(',').map(x => x.trim().replace(/^['"]|['"]$/g, ''));
+  const infra = path.join(RAIZ, 'src', 'infra');
+  const declarados = [];
+  fs.readdirSync(infra).filter(f => /\.(ts|js)$/.test(f)).forEach(f => {
+    const txt = fs.readFileSync(path.join(infra, f), 'utf8');
+    for (const d of txt.matchAll(/export const CACHE_[A-Z_]+\s*=\s*'([^']+)'/g)) declarados.push(d[1]);
+  });
+  assert.ok(declarados.indexOf('lastro-corpo') >= 0 && declarados.indexOf('lastro-fotos') >= 0,
+    'a leitura achou os caches do corpo e dos aparelhos: ' + declarados.join(', '));
+  const fora = declarados.filter(c => poupados.indexOf(c) < 0);
+  assert.deepStrictEqual(fora, [], 'caches de dado que a ativação apagaria: ' + fora.join(', '));
 });
 
 test('o precache não dispara tudo de uma vez', () => {

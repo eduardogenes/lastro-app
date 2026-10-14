@@ -62,7 +62,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
             criar refeição
           </button>
         : <button class="ins-btn-secondary ins-btn-destructive" onClick={() => ctx.removeRefeicao(r.id)}>
-            remover do plano
+            Remover do plano
           </button>}
     >
       <Campo rotulo="nome" valor={campos.n} onMuda={v => muda('n', v)} />
@@ -71,7 +71,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
              dica="aparece acima do nome, em caixa alta" />
 
       <div class="ed-campo">
-        <span class="ins-label">aparece em</span>
+        <span class="ins-label">Aparece em</span>
         <Chips opcoes={QUANDO} valor={campos.quando} onMuda={v => muda('quando', v)} />
         <Procedencia>
           uma condição por refeição, não um plano por dia da semana.
@@ -79,7 +79,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
       </div>
 
       <div class="ed-campo">
-        <span class="ins-label">nota</span>
+        <span class="ins-label">Nota</span>
         <textarea
           class="ins-input ed-nota" value={campos.nota}
           placeholder="por que esta refeição é assim"
@@ -89,7 +89,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
 
       {!r.novo && (
         <>
-          <div class="ins-label ed-h">o que tem dentro · muda para todo dia</div>
+          <h3 class="ins-rotulo ed-h">O que tem dentro, para todo dia</h3>
           {r.itens.length === 0
             ? <Vazio>Nenhum alimento nesta refeição ainda.</Vazio>
             : <div class="ins-lista">
@@ -121,11 +121,11 @@ export function FolhaEditaRefeicao({ ctx, id }) {
                       <button
                         class="ins-btn-secondary"
                         onClick={() => ctx.abreFolha({ k: 'seletor', ref: r.id, idx: i.idx })}
-                      >trocar</button>
+                      >Trocar</button>
                       <button
                         class="ins-btn-secondary ins-btn-destructive"
                         onClick={() => { ctx.removeItem(r.id, i.idx); setAberto(null); }}
-                      >remover</button>
+                      >Remover</button>
                     </div>
                   </LinhaExpansivel>
                 ))}
@@ -134,10 +134,10 @@ export function FolhaEditaRefeicao({ ctx, id }) {
           <button
             class="ins-btn-add ed-add"
             onClick={() => ctx.abreFolha({ k: 'seletor', ref: r.id, idx: null })}
-          >+ adicionar alimento</button>
+          >+ Adicionar alimento</button>
 
           <button class="ins-btn-secondary ed-dup" onClick={() => ctx.duplicaRefeicao(r.id)}>
-            duplicar refeição
+            Duplicar refeição
           </button>
         </>
       )}
@@ -166,7 +166,7 @@ export function FolhaSeletor({ ctx, alvo: refId, idx }) {
         <button class="ins-btn-add"
                 onClick={() => ctx.trocaFolha({ k: 'editaAlimento', id: null,
                                                 para: { ref: refId, idx: idx } })}>
-          + cadastrar alimento novo
+          + Cadastrar alimento novo
         </button>
       }
     >
@@ -228,7 +228,7 @@ export function FolhaEditaAlimento({ ctx, id }) {
       <Campo rotulo="nome" valor={c.n} onMuda={v => muda('n', v)} />
 
       <div class="ed-campo">
-        <span class="ins-label">categoria</span>
+        <span class="ins-label">Categoria</span>
         <Chips
           opcoes={CATEGORIAS.map(([k, t]) => ({ k, t: t.toLowerCase() }))}
           valor={c.cat} onMuda={v => muda('cat', v)}
@@ -236,7 +236,7 @@ export function FolhaEditaAlimento({ ctx, id }) {
       </div>
 
       <div class="ed-campo">
-        <span class="ins-label">unidade</span>
+        <span class="ins-label">Unidade</span>
         <Chips
           opcoes={[{ k: 'g', t: 'gramas' }, { k: 'ml', t: 'mililitros' }]}
           valor={c.u} onMuda={v => muda('u', v)}
@@ -258,7 +258,7 @@ export function FolhaEditaAlimento({ ctx, id }) {
 
       {!a.novo && (
         <button class="ins-btn-secondary ins-btn-destructive ed-rm" onClick={() => ctx.removeAlimento(a.id)}>
-          {a.daPrescricao ? 'esconder da biblioteca' : 'remover da biblioteca'}
+          {a.daPrescricao ? 'Esconder da biblioteca' : 'Remover da biblioteca'}
         </button>
       )}
       {a.daPrescricao && (

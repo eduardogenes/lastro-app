@@ -11,6 +11,245 @@ pede atenção do dono.
 
 ---
 
+## ⏸ PONTO DE PARADA — 14/10 (fila do dono fechada; levantamento sem ✗)
+
+**Onde parou, exatamente:**
+- Branch `redesenho-do-zero`, suíte verde: **1.545 passando**, zero "unhandled".
+- **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
+  versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
+  ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
+  Nenhum agente trabalhando. Último commit de código: `1acec8a`.
+- **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
+  agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
+  saídas declaradas e divergências logo abaixo e no diário.
+- **Feito: a fila das respostas do dono (abaixo), inteira, e a sessão de fotos.**
+  **Próximo: juntar o ramo na `main` e publicar** — decisão do dono: publicar
+  tudo junto no fim. O que resta "em parte" no levantamento é divergência
+  declarada (régua na linha tocada, marca por célula, stepper do peso, "o que
+  vem de fora" com datas de revisão, peso numa tela só na aula, onde está cada
+  arquivo no comparar, hipótese A da sessão de fotos). Antes disso, o levantamento
+  (item 6.β) foi feito e a fila dele: **os quatro de dado estão feitos** (semana 10, aula 12,
+  sessao-fotos 9, prescricao 11), e os ✗ de tela corpo 10, comparar 2 e 7,
+  momento-1 2, 4 e 14 e sessao-fotos 2–3 também. **Os ✗ do levantamento
+  acabaram.** Segue a conferência dos ~.
+- **Era o próximo passo:** o levantamento estado a estado das outras sete entregas da
+  D contra o app — momento-1 (14 estados), semana (10), corpo (11), prescricao
+  (11), aula (12), comparar (11), sessao-fotos (11). Parte já foi construída nas
+  peças 6.b–6.z (sessão como modo, régua, teclado, portões da Semana,
+  bioimpedância, Evolução, fila de mudanças); o resto, e os "tipos de cartão que
+  não existem" que a frente 3 deixou parados, viram a fila da onda 6.
+- **Feita:** a §2 da frente 3. **Etapa 1 feita (o sistema):** nenhuma regra
+  em caixa alta com espaçamento (48 regras; "nunca caixa alta com tracking, que
+  é o rótulo mono sem a mono", 10-tokens); o rótulo e a procedência a 12 px,
+  botão a 15 px, chip a 14 px, aba a 12 px; o miúdo de 9–10 px sobe a 12; os
+  textos de ação e os nomes das abas em maiúscula inicial (valores de chip, como
+  "bike" e "30 min", seguem como no desenho). **Etapa 2 feita (R1/R2):** o
+  rótulo de seção é título (`h2`/`h3`, 15 px, peso 600, caixa de frase), com
+  artigo onde fica ("O peso da manhã", "A porção de hoje", "O turno do treino")
+  e fora onde a primeira linha já nomeia (o cardio do Agora); em Dias, os nomes
+  que o desenhista deu às leituras. Rótulos de campo ganham só a maiúscula
+  inicial; procedência fica a 12 px. **Etapa 3 feita (R4 e a exceção de R3):**
+  a unidade junto do número nas grades ("719 kcal", "proteína 37 g", "no mês
+  81,0 cm"), e sem número não há unidade; na sessão de fotos, "Pose 3 de 9 ·
+  frente relaxado" é o título (lido a três metros). **A §2 da frente 3 está
+  fechada.**
+- **A §2 da frente 3 — os rótulos (R1–R4):** rótulo de seção só
+  onde a seção tem mais de uma linha e a primeira não a nomeia; o que fica vira
+  frase com artigo, caixa de frase, 15 px, sem espaçamento; o olho vira
+  procedência; a unidade em caixa baixa. ~83 lugares de 21 arquivos, por tela,
+  com captura.
+- **Respostas do dono, 14/10** (página `https://claude.ai/artifact/Gn91xq5ahAEj8oXjiNpg2e`,
+  17 perguntas; ele colou o resumo no chat). **Fila que elas abrem, nesta ordem:**
+  1. **Não publicar nada até o fim do redesenho** (as correções de dado ficam no
+     ramo; ele publica tudo junto). O RIR perdido: deixar como está.
+  2. [x] **Passo de ±150 kcal:** depois de aplicar, a Semana só volta a oferecer
+     com duas semanas novas de peso (mudança de regra, no domínio). Feito 14/10:
+     "Não mexer: o passo de 01/10 ainda está sendo medido", com as datas das
+     duas semanas e quantas faltam; o segundo toque não aplica nada; desfeito o
+     passo, as semanas voltam a decidir.
+  3. [x] **A aula fica fora da ordem:** registrar a aula não mexe na sequência
+     (desfaz o F81 como comportamento). Feito 14/10, no domínio
+     (`proximoTreino`): o dia aberto não move o ponteiro; na posição da aula ela
+     é oferecida se ainda não aconteceu na volta (desde o último A), senão a
+     volta fecha no A. O `nextDay` do app, que era uma cópia com a regra velha,
+     passou a chamar o domínio.
+  4. [x] **Horário de início em Dias: mediana**, não média. Feito 14/10
+     (`medianaDosInicios` no domínio; o triângulo do eixo marca a mediana).
+  5. [x] **Cardio de hoje no Agora, com "Apagar".** Feito 14/10: no dia de
+     treino, dentro da seção de cardio; no descanso, só a lista (sem placar nem
+     "Registrar", que o desenho tira). Apagar usa a mesma pergunta de Dias.
+  6. [x] **Cardio esquecido num dia passado**, pelo dia em Dias. Feito 14/10:
+     "Registrar cardio" no dia passado (modalidade, minutos, intensidade);
+     grava ao meio-dia daquele dia com `semHora: 1` (campo novo e opcional,
+     atravessa a fusão), e a tela diz "lançado depois, sem hora" em vez de
+     inventar 12h00. Se o aparelho recusa, a memória volta e o formulário fica.
+  7. [x] **A frase da promessa entra na Semana** ("A tela não vai pedir isso de
+     novo em outro lugar"); a cobrança da adesão fica só na Semana. Feito 14/10:
+     a frase aparece embaixo dos portões quando o da adesão falta; um caso
+     confere que o Agora não fala de adesão.
+  8. [x] **Fotos do corpo: mostrar o horário de cada foto**, sem "amanhã cedo"
+     (ele tira a maioria à noite). Decisão dele no comentário da 14. Feito
+     14/10: a linha das fotos no Agora oferece a sessão a qualquer hora ("a cada
+     14 dias · a hora de cada foto fica anotada"); a montagem diz "horário: o que
+     você conseguir repetir", com a nota de que manhã e noite mudam a barriga; o
+     Corpo não fala mais de jejum para fotos; cada lado do comparar mostra
+     "sex 07/08 · 21h40" (referência antiga, sem instante, fica sem hora).
+  9. [x] **A lousa como foto dentro do app** (aula, estado 6). Feito 14/10:
+     "Fotografar a lousa" no dia aberto; os bytes em `lastro-lousa` (o worker
+     poupa, e o caso do `src/infra` cobra), a referência em `S.lousa` (fusão
+     própria: vence a mais nova; entra no backup e no apagar histórico). Quando
+     a aula encerra, vira `lousa` na marca da sessão; foto depois de a aula de
+     hoje encerrar vai direto para ela. "Refazer a foto" tira a velha do cache;
+     "Mandar para transcrever" usa o compartilhar do sistema (sem ele, diz o
+     caminho). A sessão passada mostra a foto. Fica só neste aparelho (dito na
+     tela): o durável é a transcrição.
+  10. [x] **A revisão do treinador entra como texto colado** (prescrição,
+      estado 6), com "É a mesma / É outro exercício" antes de gravar. Feito
+      14/10: domínio em `src/dominio/revisao.ts` (ler o texto num formato que o
+      app ensina — "Treino X · nome" e uma linha por exercício com séries ×
+      repetições, RIR, descanso, grupo, "dica:" —; casar os nomes: idêntico é o
+      mesmo, parecido ou do mesmo lugar pergunta, o resto é novo; um exercício
+      nunca vai para dois nomes; o que muda por treino). O programa do treinador
+      passa a viver no dado (`S.progTreinador`; sem revisão, vale o do código):
+      "igual ao treinador", o alvo de séries e o restaurar leem dele. A tela
+      (Prescrição → "Incorporar uma revisão do treinador") mostra o modelo para o
+      treinador, as linhas não entendidas, uma pergunta por nome com as séries
+      que o exercício já tem, os exercícios novos, o que muda em cada treino e
+      as mudanças dele que saem; só grava com tudo respondido, e volta tudo se
+      o aparelho recusar. Treino novo entra no fim da sequência.
+  11. [x] **O roteiro das medições A–D da régua** — ele faz esta semana.
+      **Atualização 14/10: ele não vai fazer o teste manual ("pode esquecer").**
+      A régua fica como está, sem a medição; a troca pré-autorizada pelos
+      botões fixos (decisão 9) não tem mais gatilho. A página fica sem uso.
+      Página `https://claude.ai/artifact/3vYQ4TnDMfZrwoxuQ8LgiV` (14/10): os
+      passos de cada medição, o que reprova, contadores para anotar entre as
+      séries, veredito calculado; os números ficam salvos na coleção `medicao`.
+      Mede só o app (o "antes" no protótipo ficou de fora: os limites são
+      absolutos). D mede o − e o + de 100 g do Corpo, que é o que existe.
+  - **Ficam como estão:** hoje não conta nos 14 dias (só dias fechados); os três
+    contam como dia com treino; "não sei" mantém o dia conhecido; tocar em hoje
+    abre o Agora.
+  - **Delegada a mim (13, a linha da mudança pendente):** "decida sozinho, não me
+    pergunte de novo". **Decidi: fica sempre visível**, como está — o fim do
+    treino tem de dizer o que ficou pendente (frente 2), e a linha é o lugar
+    onde isso continua dito depois.
+- **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
+  coração do cardio, barra da comida; hoje abre o Agora), as três leituras
+  (dias com treino por semana em média de 4 semanas, cardio, horário de início
+  com os pontos) e o dia aberto (sessões, cardio que abre com o apagar, descanso
+  com a saída, palpite do dia vazio, comida com a forma de cada momento e a
+  folha). Domínio em `src/dominio/mes.ts`.
+- **Saídas declaradas pelo desenho, no mês** (testes reescritos, não apagados em
+  silêncio): a faixa da semana em Dias; o quadro de dias, tempo e volume do mês
+  e a média de duração (tempo e volume são de Semana); a marca de período nas
+  células e a legenda; a lista de sessões, de dias de comida e de cardios do
+  mês (moram no dia aberto). A marca do aproximado ficou: "fechou sem você" na
+  linha da sessão.
+- **Buraco de capacidade, levar ao dono com a pergunta 7:** com "hoje abre o
+  Agora", o cardio de HOJE lançado por engano só se apaga amanhã, em Dias — o
+  Agora registra cardio mas não lista o do dia. O Agora de descanso (próximo)
+  tem a linha do cardio; conferir lá se ela abre com o apagar.
+- **Lançamento de treino passado (estados 6–8), construído:** um toque grava a
+  presença; hora, séries, grupos, duração e nome corrigem o mesmo registro
+  (mesmo `sid`, carimbo `m` novo). Saídas declaradas: a escolha da data na folha
+  (o mês escolhe o dia); "foi descanso" na folha (mora no dia); a duração do
+  treino do plano na folha (fica na tela da sessão, "corrigir"); a recusa de
+  gravar fora da prescrição sem grupo (presença primeiro). Os grupos de fora da
+  prescrição passaram a ser as regiões (F178) — só aparecem como texto, nenhuma
+  conta usa. **Divergência do desenho:** "Detalhar" não abre "preenchido em
+  anil" — a sessão de hoje mostra a série anterior ao lado, tocável; a folha diz
+  isso. Achado de dado consertado: dois treinos sem hora no mesmo dia tinham o
+  mesmo `sid` (colidiam na sincronia, e apagar um levava os dois).
+- **Sessão passada com correção no lugar (estados 3, 4 e 14), construída:**
+  começo e fim (o aproximado com pontilhado e "Corrigir" ao lado), cada série
+  um botão; a régua, o teclado da carga e o RIR gravam a cada toque, achando o
+  registro pela chave da sincronia; apagar série pelo painel (vira "não feita"
+  na posição; a última leva o registro, com lápide); falha de gravação deixa a
+  série como está no disco e o toque dito "tocado", com "Tentar de novo".
+  Saídas declaradas: a grade de tempo, volume e recordes, a variação contra a
+  vez anterior (histórico do exercício e Semana) e o cardio do dia (no dia
+  aberto). **Divergência:** "guardada às 6h44" por série não existe no dado (a
+  série não guarda o instante) — a linha diz "Nada mais na sessão muda". "Não
+  feito" é tocável (a série que faltou entra pela régua — ver abaixo).
+- **Fila de construção, na ordem:**
+  1. **Dias está fechado** no que tem desenho. "Não feito" é tocável: a série
+     que faltou entra pela régua, na posição dela, com a carga da série de
+     referência; sem registro do exercício, nasce um no instante da sessão e
+     ENTRE os outros pela ordem do tempo (a lista é lida pela posição — o fim é
+     a "última vez"). Exercício de unidade própria (segundos, metros) não abre
+     a régua. **Cardio lançado num dia passado não tem caminho desenhado** (o
+     dia vazio e a folha de registrar treino não oferecem cardio; o desenho só
+     mostra um "lançado na quinta, sem hora") — vai como pergunta ao dono/D. Os painéis de apagar sessão (13) e cardio (12) já dizem o que vai,
+     o que fica e o efeito (na sequência; no mês), numa frase que abre pelo
+     verbo — o `pare()` não tem título separado, e a guarda das frases cobra o
+     infinitivo na primeira palavra.
+  2. **O Agora pela D** (`momento-2.html` + `agora-descanso.html` +
+     protótipo). O Agora de hoje só seguia a D no cartão; o corpo era anterior.
+     Por etapas:
+     - [x] A comida de hoje em linhas que abrem no lugar (estado 2): forma do
+       estado, hora, nome e o que se sabe; aberta, procedência, itens e "Comi
+       tudo / Metade / Não comi isso" (a pergunta com três saídas, decisão 1),
+       "Desfazer" com lápide. Saíram, declarados: o bloco de energia com macros
+       (nenhuma tarefa da D o pede), o "···" e o "+ adicionar refeição" (moram
+       em Prescrição). **Divergências:** "Outra porção" (¾, 1¼, 1½) ficou como
+       porta para a folha da refeição — a linha do desenho só tem a metade;
+       a frase do "Não sei" diz a regra que vale (conta como marcada e pesa
+       zero), não o "deixa de contar" do desenho.
+     - [x] O cabeçalho do dia: data, hora e a procedência tocável, com o
+       pontilhado quando é palpite; a folha do estado 4 com a procedência em
+       cima, a pergunta, o efeito de cada resposta e "Já fiz alguma coisa hoje"
+       (cardio abre o registro de cardio; aula e fora abrem o lançamento de
+       hoje). Turno, demanda alta e "como foi o dia" ficam embaixo (a tabela da
+       D os põe na linha do topo). **Divergência:** "você confirmou às 10h41" —
+       a hora da confirmação não é guardada; a linha diz "você disse".
+     - [x] A água em linha: "+1 copo" grava na hora e sabe se gravou; a conta
+       e o desenho da conta; tocar no número corrige; o estado ruim (8) com
+       "Tentar de novo" e "Baixar a cópia de segurança" (`CTX.exportar`, o
+       mesmo dos Ajustes). **Divergência:** "último às 13h50" não tem dado (a
+       água é só uma contagem) — fica de fora. Saíram `Ticks` e `Caixa`, sem
+       uso, com o CSS e o caso que vigiava o alvo dos ticks.
+     - [x] Os 14 dias como células (cheia, em parte, vazia — a regra da folha
+       de pôr em dia), hoje na dele, e "Pôr ontem em dia" quando ontem ficou sem
+       marca ou pela metade. **Divergência e pergunta ao dono:** a D diz "hoje
+       passou a contar"; o portão do nutricionista só lê dias FECHADOS (hoje
+       entra quando a data vira). Mantive a conta do portão — mudar mexeria na
+       regra calórica e faria Agora e Semana discordarem em um dia — e a frase
+       diz "entra na conta quando o dia fechar".
+     - [x] A mudança esperando decisão: a linha "Uma mudança do Treino D
+       espera você", com o que mudou, quando e o vencimento, e "Decidir" abrindo
+       a folha (estado 7): a conta do volume antes do toque, a regra do
+       treinador quando a mudança acrescenta séries (F99), "Foi só naquele dia /
+       Fica no programa", e o que acontece se ninguém decidir. Mesma leitura e
+       mesmo verbo da lista de Prescrição. **Divergências:** a linha fica
+       sempre que algo espera (a D a quer só sem cartão e sem sessão; a frente 2
+       §9.2 exige que encerrar com mudança informe — pergunta 4 do desenhista);
+       as linhas "No programa 3 × … / Na sexta 4 × …" não entraram (o texto da
+       mudança já diz); o motivo continua só em Prescrição.
+     - [x] A pesagem sem marca só aparece antes da hora dela (descanso: antes
+       do café; treino: antes de treinar — F42), e diz quantas a semana tem; as
+       fotos dizem "em jejum, antes do café das 8h00" (F228) e, depois do café
+       marcado, "amanhã cedo", sem oferecer a sessão (o padrão do desenhista na
+       pergunta 5; as fotos continuam em Corpo).
+     - [x] O cartão da refeição com os três botões (e a pergunta no lugar
+       deles), e a leitura de volta do último toque: o que ficou, quando, neste
+       aparelho, "Desfazer", o que passou sem marca antes dele e o próximo do
+       plano (momento 2, estados 1–2). **Divergência:** "Pôr hoje em dia" não
+       entrou — a folha de pôr em dia grava no histórico, e hoje ainda é o dia
+       aberto; gravar os dois lados do mesmo dia arrisca o dado. As linhas do
+       dia marcam cada uma.
+     - [x] O cardio: no descanso a seção sai ("não há outro cartão, faixa ou
+       convite") e ele entra pela folha do tipo do dia, "Já fiz → Cardio", que
+       abre o registro no Agora; no dia de treino a seção fica — o outro lugar
+       do cardio na D, o fim das sessões A e D, não tem desenho. Três casos de
+       cardio dependiam do dia da semana (quebrariam num domingo) e passaram a
+       fixar a cadência.
+     **O Agora pela D está fechado** no que tem desenho (momento 2 e
+     agora-descanso).
+  3. §2 da frente 3 — os rótulos (R1–R4), por tela, com captura.
+- **Levar ao dono, sem bloquear:** o "aplicar" oferecido de novo nas mesmas
+  semanas depois do passo de ±150 kcal; as sete perguntas do desenhista
+  (`direcao-3.md` §3); a promessa §11.2; as medições A–D da régua (6.z).
+
 ## Como retomar (ler primeiro)
 
 1. Ler `00-briefing.md` inteiro. Ele manda mais que este arquivo.
@@ -46,6 +285,7 @@ pede atenção do dono.
 | D4 · pasta D, protótipo | `a5c1301c7eaecc0ef` | [x] | entregue 04/10, roteiro inteiro rodando |
 | D3 · pasta C, 2ª rodada | `a8ffe4511162060d4` | [x] | entregue 04/10: seis telas, 51 estados, mais `direcao-2.md` |
 | D4 · pasta D, 2ª rodada | `a7336487485fa8580` | [x] | entregue 04/10: seis telas, 66 estados, mais `direcao-2.md`. Caiu uma vez e foi retomada pelo id |
+| D4 · pasta D, 3ª rodada | `abf4ffeb29a79cc05` | [x] | 13/10 (Anexo I): `dias.html` (15 estados), `agora-descanso.html` (8), `direcao-3.md`. Caiu duas vezes por limite; a entrega já estava no disco na segunda |
 
 ---
 
@@ -2906,7 +3146,51 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
             restaurar o plano inteiro; é gesto novo); a frase "Enquanto a adesão
             não chega a 11…" (a segunda metade é promessa ainda aberta na mesa
             dele, §11.2, e a frente proíbe meia-promessa).
-      - [ ] **§6.2 e §6.4 · Os portões e o vazio deles — PARADO, é desenho.** A
+      - [x] **§6.2, §6.4 e o Desfazer · CONSTRUÍDOS em 13/10**, seguindo a
+            `semana.html` da D e as palavras da frente 3. `portoesDaRegra` (domínio)
+            devolve os portões do ramo: peso parado → taxa, força, adesão; peso
+            subindo rápido → taxa, adesão, avaliação visual; fora disso, `null`.
+            Cada um com o estado na palavra e o botão do que falta ("Pôr em dia" →
+            Dias, "Responder" → comparar, só com par válido de 10 a 28 dias, "Ver
+            a força"). O vazio lista as quatro semanas com o motivo de cada uma e
+            diz a saída quando um buraco separa duas válidas; "Pesar hoje" e "Peso
+            de outro dia" levam ao Corpo; "Não invente o peso de um dia que
+            passou." O **Desfazer** volta o saldo e o arroz, e **o passo fica no
+            registro marcado `desfeito`** (campo opcional): o que foi e por que
+            foi não se perde. A sobrancelha passou a "A regra do nutricionista
+            diz". **A guarda anti-sequência foi estreitada, e está escrito
+            por quê:** ela barrava a palavra "sequência" na Semana inteira, e o
+            vazio fala da sequência de SEMANAS de pesagem que a regra exige —
+            não do placar de dias de treino que ela existe para impedir. Visto:
+            `shots/portoes.png` (a primeira captura pegou o botão espremendo o
+            texto do portão; consertado). Dez mutações. **1.400 passando.**
+            **Achado, não consertado:** depois de aplicar o passo, o veredito das
+            MESMAS semanas continua oferecendo "aplicar" — o desenho diz que a
+            tela mostra o passo aplicado até haver duas semanas novas de taxa
+            (estado 4). Um caso antigo aplica duas vezes seguidas de propósito.
+            É mudança de regra; fica para decidir.
+      - [x] **As linhas do corpo no Agora** (13/10): "Peso da manhã · sem marca ·
+            antes de treinar, depois do pré · última: 73,8 em 28/09 · Anotar"
+            (o M1‑13 da D, com o nome da §10.2), e, quando faz 14 dias, "Fotos do
+            corpo · faz 16 dias · a cada 14 dias · última: 27/09 · Nova sessão".
+            Linhas e não cartão (frente 1 §5, regra 5), sem rótulo de seção.
+            Visto: `shots/agora-linhas.png` (a primeira captura pegou o botão
+            espremendo o texto; consertado com o padrão que o próprio CSS já
+            tinha). Cinco mutações. **1.403 passando.**
+      - [ ] **(registro do erro, mantido)** §6.2 e §6.4 · Os portões e o vazio deles — ERREI AO PARAR: não é
+            desenho, é construção. Conferido em 13/10, depois de levar ao dono
+            como pergunta: a `semana.html` da D tem os sete estados — os portões
+            do ramo "comer mais" (taxa, força, adesão), os do corte (taxa,
+            adesão, avaliação visual), o ramo sem passo ("sozinha, não corta")
+            e o vazio com a lista das semanas. Eu tinha parado sem abrir o
+            arquivo. O mesmo vale para o "Desfazer" do passo (estado 4), para o
+            destino de leitura do Corpo que vira "Evolução" (`corpo.html`,
+            estado 8), para as linhas de pesagem e fotos do Agora (frente 1 §5,
+            regra 5; M1‑13) e para a caixa alta (frente 3 §2, R1–R4, que não
+            apliquei). **Tudo isso é fila de construção minha.** Desenho de
+            verdade faltam dois, e foram ao desenhista (Anexo I): Dias e o Agora
+            de descanso fora de janela.
+            **O texto antigo, para registro:** A
             Semana reescrita não tem os portões como linhas, nem a lista das
             semanas do vazio. E o material não fecha QUAIS portões: a frente 1
             (§1.4) diz três fixos — taxa, força, adesão —, e esse trio é o do
@@ -2961,6 +3245,166 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       desenho: os portões da Semana (§6.2/§6.4) e os tipos de cartão que não
       existem. **As outras treze perguntas** do app seguem no diálogo do
       sistema, de propósito (§3.3).
+
+- [~] **6.β O levantamento das outras sete entregas da D contra o app** (14/10,
+      primeira passada, por leitura das legendas, captura e sonda no código).
+      ✓ construído · ~ em parte ou com divergência declarada · ✗ falta.
+      - **momento-1 (sessão):** 1 ~ (régua abre na linha tocada, não na zona
+        fixa — divergência declarada em `regua.jsx`) · **2 ✓ (14/10)** —
+        "Enquanto descansa" no cartão aberto do modo, só com o descanso
+        contando: a refeição de antes do treino (a condicional ao treino que vem
+        antes dele; "comi" grava e lê de volta, o segundo toque desfaz), "+1"
+        copo (grava na hora; recusado, volta a conta e diz qual copo) e o peso
+        de hoje numa folha curta (a régua de 100 g e o teclado do corpo; sempre
+        HOJE, mesmo com outro dia armado na tela do corpo). Parar o descanso
+        tira os três. · 3 ✓ ·
+        **4 ✓ (14/10)** — "+ série" na linha do exercício: mudança só do dia
+        (a mesma da edição do dia), a carga da série anterior de hoje, e a régua
+        da série nova aberta com a repetição dela como referência ("série 3"). ·
+        5 ✓ ·
+        6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · 10 ~ (marca por célula não feita, declarada) ·
+        11 ✓ · 12 ✓ · 13 ✓ · **14 ✓ (14/10)** — deitado, no modo de sessão, o
+        aviso de girar sai e o cartão aberto vira duas colunas: a leitura (nome,
+        dica, pegada, descanso) à esquerda e o polegar (séries, régua, "+ série",
+        ações) à direita; o app inteiro perde o teto de 460 px. Fora do modo o
+        aviso continua, com o texto ajustado. **Divergência:** a coluna da
+        esquerda não leva o cabeçalho da sessão nem o descanso correndo (eles
+        ficam onde estão: o relógio grudado no topo, o cronômetro no rodapé).
+      - **semana:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ✓ · **5 ✓ (14/10, conferido)** — os
+        portões já estavam (taxa, adesão, avaliação visual com o par e
+        "Responder", que leva ao comparar, onde as fotos estão). Corrigido o
+        texto: "Não mexer: falta a avaliação das fotos", com "Se as fotos não
+        mostrarem piora, o certo é manter" escrito; "incerto" deixou de ser
+        lido como falta ("a avaliação das fotos ficou incerta", a regra
+        mantém); a pergunta diz que vale por 14 dias e que incerto é resposta,
+        com Sim/Não/Incerto. · 6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · **10 ✓ (14/10)** — o passo
+        (e o desfazer) grava na hora; se o aparelho recusa, ajuste, histórico e
+        arroz voltam juntos, e a tela diz "O passo não foi aplicado", o que não
+        mudou com os números de antes, "Tentar de novo / Baixar cópia" e que o
+        veredito continua valendo. Era falso sucesso: "Apliquei" saía antes de
+        gravar.
+      - **corpo:** 1 ~ (stepper de 100 g em vez da régua) · 2 ✓ · 3 ✓ · 4 ✓ ·
+        5 ✓ · **6 ✓ (14/10, conferido)** — o valor do mês passado no lugar e
+        "era 17,4 · −0,6" ao lado; cinco campos e não treze, por decisão do dono
+        (5.a' P3) · 7 ✓ · 8 ✓ · **9 ✓ (14/10)** — faltava: a semana em curso
+        sem média mostrava "média da semana 73,6 kg" com uma pesagem só. Agora
+        diz "Sem média · esta semana · 1 pesagem", "Faltam 2 dias na semana e 1
+        pesagem para a média valer" e a decisão que para, os dias em trechos
+        (com pesagem, sem, "ainda dá tempo") e o medido das quatro semanas
+        anteriores; a média e o ritmo da semana viram "—". Sem tempo que baste,
+        "Não dá mais tempo". · **10 ✓ (14/10)** —
+        "3 semanas até a regra poder decidir", com as pesagens vindas de
+        `MIN_PESAGENS`, o que cada medida pede, e a conta para quem já tem
+        histórico em outro aparelho; some com o primeiro registro. As seções de
+        registro seguem abaixo (o desenho mostra só a lista). · 11 ✓.
+      - **prescricao:** 1 ✓ · 2 ✓ · 3 ✓ · **4 ~ (14/10)** — o vazio da fila
+        ganhou "a última mudança que entrou no programa foi em 29/09" (só o que
+        entrou deixa data; "fica só naquele dia" não). **Divergência:** "O que
+        vem de fora" com a data da última revisão de cada agente não existe —
+        o app não guarda revisão do treinador nem do nutricionista; os quatro
+        chips seguem. · 5 ✓ · **6 ✗ (14/10, levar ao dono)** — não há caminho
+        de revisão do treinador dentro do app: um programa novo chega pelo
+        código, com migração que leva o histórico pelos ids (o caso de agosto).
+        Construir a importação com "É a mesma / É outro exercício" depende de
+        como a revisão chega (texto colado? arquivo?), e errar manda histórico
+        para o exercício errado (F300) — não construo às cegas. ·
+        **7 ✓ (14/10)** — cada refeição diz o que tem dentro ("pão Artesano 35 g
+        · doce de leite 20 g…", o condicional à alta demanda dito), o momento
+        criado por ele marcado "criada por você", o ajuste acumulado ("nenhum
+        passo de ±150 kcal aplicado" ou "−300 kcal · 2 passos") e a regra do
+        turno da tarde; a edição "vale daqui para a frente". (Sem "revisão de
+        21/09" nem "Restaurar" aqui: restaurar mora em Ajustes.) ·
+        **8 ✓ (14/10)** — horizonte 3, 7, 15 dias ou "outro" (1 a 60), e a tela
+        diz o que fica fora ("Dias de alta demanda não entram nesta previsão:
+        maltodextrina / dextrose não aparece aqui"). · **9 ✓ (14/10)** — faltava: um
+        endereço novo semeava programa e plano em silêncio. Sem registro nenhum
+        e sem conta entrada, a Prescrição diz "Este endereço está vazio" e
+        oferece achar antes de começar: a conta (leva ao entrar), a cópia de
+        segurança (o arquivo ali mesmo), o ícone antigo; depois "Começar com os
+        dois", com o programa e o plano resumidos; sem rede, diz o que funciona
+        offline. Some com o primeiro registro. ·
+        10 ✓ · **11 ✓ (14/10)** — o 401 derrubava a
+        sessão e dali em diante a sincronia parava em silêncio, como falta de
+        rede. Agora o fato fica gravado no estado da sincronia, e o Agora diz "A
+        sua sessão de login expirou", o que está a salvo, o que espera subir, a
+        última sincronização, "Entrar de novo / Baixar cópia". Sem rede segue
+        calado. **Divergência:** o desenho põe o aviso na Prescrição (o caso era
+        uma mudança de programa); ele mora no Agora, com os outros avisos de
+        perda, porque vale para qualquer registro.
+      - **aula:** 1 ✓ · 2 ✓ · **3 ✓ (14/10)** — a ordem já era a do que ele
+        procura (`FREQUENTES_NO_BOX`) e a unidade já aparecia; faltava a
+        referência: cada movimento diz "última: 9kg · 100 reps em 03/10" ou
+        "sem registro anterior", com o nome em cima (a linha estava apertada em
+        três colunas). · 4 ~ (o peso entra pela régua/teclado do cartão, não
+        numa tela só dele com o peso primeiro) · **5 ✓ (14/10)** — antes de
+        começar, "Na última aula, sáb 03/10" com o que entrou em cada movimento
+        e "Peso guardado é peso do dia". (Sem o ritmo s/100 m da corrida ao
+        lado.) ·
+        **6 ✓ (14/10)** — a lousa fotografada no app (fila do dono, 9) · 7 ✓ · 8 ✓ ·
+        9 ✓ · 10 ✓ · **11 ✓ (14/10, conferido)** — nada cobra o detalhe da aula;
+        as presenças vivem no mês de Dias (sem a lista própria do desenho) · **12 ✓ (14/10)** — o aviso de
+        falha diz que a presença da sessão continua guardada, com a hora, quando
+        ela gravou antes (o app guarda o instante da última gravação aceita), e
+        oferece baixar a cópia. Vale também para o momento-1, estado 10.
+        **Divergência:** "Liberar espaço" apagando fotos antigas não entrou — as
+        fotos ficam no cache do navegador, não no armazenamento que encheu.
+      - **comparar:** **1 ✓ (14/10)** — "71,5 kg na semana", "cintura: sem
+        medida" (a palavra certa no lugar do traço), "Par mais longo que existe
+        desta pose: 55 dias, +2,0 kg" e a frase de por que o par que abre é o
+        mais longo · **2 ✓ (14/10)** — a cortina como terceiro modo: a
+        foto nova por cima, recortada na divisa, que o dedo anda (um `range`
+        nativo, acessível); sem captura com foto de verdade · **3 ✓ (14/10)** —
+        par de até 28 dias que não é o mais longo: "16 dias mostram pouco", o
+        que ele serve e não serve, "Voltar ao par de 42 dias" e "Pares desta
+        pose: 42 e 16 dias"; obedece, não bloqueia · 4 ~ (onde está cada arquivo
+        antes do toque: não construído — afirmaria "no aparelho" sem varrer o
+        cache) · 5 ~ (a busca já tem fim e motivo, F297; sem contagem de KB) ·
+        6 ✓ (conferido: "sem foto nesta pose", "a nuvem não devolveu" com tentar
+        de novo, "este aparelho não entrou na conta") · **7 ✓ (14/10)** — o par já recuava sozinho para a sessão mais antiga com a
+        pose; agora diz "27 dias, e não 55" e quais sessões não têm a pose. (A
+        lista das poses com par longo e curto, do desenho, não entrou.) · 8 ✓ · 9 ✓ · **10 ✓ (14/10)** —
+        a causa era real e estava viva: o worker apagava `lastro-corpo` a cada
+        publicação (corrigido, com caso que amarra a lista ao `src/infra`). E o
+        Corpo agora diz o que só existe aqui: sem conta, "A foto do corpo existe
+        só neste aparelho" (a cópia em JSON não leva fotos) com "Entrar na
+        conta"; com conta, "N fotos ainda não subiram" com "Subir agora".
+        (Sem a contagem de quantas sumiram depois de um despejo do navegador:
+        isso pediria varrer o cache.) · **11 ✓ (14/10)** — "Ainda não há par. A
+        primeira sessão foi em 10/10. A segunda cai em sáb 24/10, daqui a 10
+        dias", e quando o par passa a servir à pergunta do nutricionista.
+      - **sessao-fotos:** **1 ✓ (14/10)** — o preparo ganhou a ordem das nove,
+        "gire sempre para o mesmo lado", e o toque em começar liga o som (F58).
+        **Divergência:** a pergunta "a 3 m você lê o telefone?" (hipóteses A/B)
+        não entrou: a câmera já mostra o título grande e a voz fala; seria um
+        ajuste guardado a mais sem efeito na tela. · **2 ✓ (14/10)** — os nove blocos no topo da
+        câmera, do tamanho de um dedo (a pose atual, as fechadas, a não
+        guardada), e a pose dita em voz ao abrir a câmera e a cada pose nova
+        ("Pose 2 de 9. Frente duplo bíceps." e o primeiro passo), pela síntese
+        de voz do aparelho; sem ela, a tela segue igual. A contagem diz "três,
+        dois, um" em voz, junto do bipe (o anel que esvazia não entrou: o número
+        grande fica). ·
+        **3 ✓ (14/10)** — o disparo é o som do obturador, um clarão curto e o
+        bloco fechando; o alarme do descanso (bipe duplo e vibração), que tocava
+        ali, saiu. A pose que não guardou não ganha nenhum dos três. ·
+        **4 ✓ (14/10)** — entre poses com giro, "↻ gire 90°" grande na câmera e
+        "Gire 90 graus." na voz, antes da pose. · 5 ~ (a camada de texto da
+        hipótese A: ver o 1) · **6 ✓ (14/10)** — foto com brilho médio abaixo de
+        12 (de 255) não é guardada nem soa como guardada; a pose volta para o fim
+        da fila, o bloco fica tracejado, a tela e a voz dizem ("A foto saiu
+        preta. Esta pose volta no fim. Siga: …"). · 7 ✓ · **8 ✓ (14/10)** — a
+        câmera negada diz o caminho ("Ajustes do iPhone › Safari › Câmera ›
+        Permitir") e que a sessão começa do zero sem perder nada. · **9 ✓ (14/10)** — a sessão
+        PARA na pose que não gravou (antes, com o registro recusado, avançava
+        como se tivesse gravado), a pose fica "não guardada" com forma diferente
+        de "falta", e "Tentar de novo" grava: se o cache recusou, com a foto que
+        ficou na memória; se o registro recusou, com a referência no estado. ·
+        **10 ✓ (14/10)** — o fim virou um bloco: "Sessão guardada · 9 de 9", o
+        tempo do primeiro ao último disparo, o que subiu (ou que fica só aqui),
+        o peso da semana, "Comparar com 07/08 · o par longo" e a pergunta do
+        nutricionista quando o par serve, e a data da próxima. · 11 ✓.
+      **A fila sai daqui, dado primeiro:** semana 10, aula 12, sessao-fotos 9,
+      prescricao 11; depois os ✗ de tela (corpo 10, comparar 2 e 7, sessão 4 e
+      14, sessao-fotos 2–3) e a conferência dos ~.
 
 - [x] **6.v' O reponte das expressões compostas** (13/10, 30 commits, um por
       arquivo). **485 → 188 entradas pela ponte de `eval`** nos casos de fluxo.
@@ -3018,7 +3462,10 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
   diretório. Se uma direção usar esse nome, a origem é o caminho: o curador
   registra, não conta como vazamento de decisão.
 - [ ] R7 · Arquivos do coordenador nunca no scratchpad da sessão (é o mesmo dos
-  subagentes). Lugar: `.../coordenador-redesign/` (ver 2.c′).
+  subagentes). ~~Lugar: `.../coordenador-redesign/` (ver 2.c′).~~ **Mudou em
+  14/10:** a pasta em `/tmp` foi apagada pelo sistema, com os scripts de medição
+  e as capturas. Lugar agora: `docs/redesign/_medicao/` no repositório — scripts
+  versionados, capturas (`shots/`) ignoradas pelo git.
 
 ## Diário
 
@@ -3105,7 +3552,61 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 13/10 · Frente 3 aplicada no que tem lugar no app: dor, deload, becos, corrigir no lugar, a lista que vence, o veredito e o passo, a bioimpedância e a sobrancelha do Agora (`aa1178d` a `95d36b6`). Parados por serem desenho: os portões da Semana e os tipos de cartão que não existem. Achados de dado no caminho: o `dl` da sessão aberta não acompanhava o deload, e a data do Corpo recusava HOJE antes das 7h. 1.378 passando.
 - 13/10 · 6.v' fechado: o reponte, 485 → 188 entradas pela ponte, um commit por arquivo. A ponte tinha crescido com casos meus.
 - 13/10 · As portas: 189 de 205 funções de CTX eram acionadas; os 14 botões das que sobravam ganharam caso (`portas.test.js`).
+- 13/10 · Terceira rodada da D disparada (Anexo I). Construídos: os portões da Semana, o vazio e o Desfazer; as linhas do corpo no Agora; o botão de linha que espremia texto; o destino Evolução. Achado e consertado: a taxa exata de 0,10 caía abaixo do limite por ponto flutuante (61 de 400 sequências). **Pausa pedida pelo dono** — ver o ponto de parada no topo.
+- 13/10 · **A terceira rodada da D entregou** e foi conferida: sem vazamento (nenhum termo do app de hoje), todos os estados pedidos e mais alguns. **Duas divergências, por OMISSÃO MINHA no Anexo I:** a folha de pôr o dia em dia volta a gravar linha a linha, com um botão "Os outros 5 como no plano", contra a P3.i.6 (um toque fecha o dia inteiro); e "Não comi" vira terceira resposta do "Fora", contra a decisão 1 de 06/10 (é o quinto botão). As duas decisões não estavam no recado. **Vale a decisão do dono; a folha construída fica como está**, e os estados 10–11 de `dias.html` ficam como referência só do que é de Dias (abrir a folha a partir do dia). **Adotado do desenhista, com a razão dele:** a leitura do mês conta DIAS com treino, não treinos (dois treinos no mesmo dia e a sessão aberta por engano não inflam; a prescrição fala em "seis dias ativos", F21). **Sete perguntas dele**, todas com o desenho padrão já escolhido — vou construir pelo padrão e levar as perguntas ao dono sem bloquear.
 
+- 13/10 · **Dias: o mês e o dia aberto**, pela terceira entrega da D. 20 casos que liam a estrutura antiga reescritos contra a nova, cada um com a capacidade preservada ou a saída declarada (ponto de parada). 14 mutações, 14 mortas. Achado: o cardio de hoje lançado por engano ficou sem porta de saída até amanhã (vai com a pergunta 7). 1.415 passando.
+- 13/10 · **Lançamento de treino passado** (estados 6–8 de Dias): um toque grava; o resto corrige o registro gravado. 21 casos reescritos, 5 novos (colisão de `sid`, previsto do dia, a conta "eram", o nome ao sair, hora inválida por valor). 17 mutações, 17 mortas. 1.417 passando.
+- 14/10 · **Sessão passada, corrigir no lugar** (estados 3, 4 e 14 de Dias). 8 casos reescritos (um deles era dependente do relógio: "26 horas atrás" cai anteontem logo depois da meia-noite), 7 novos. 17 mutações, 17 mortas. CSS e uma dívida de alvo de toque que saíram junto com o mês antigo. 1.424 passando.
+- 14/10 · Painéis de apagar sessão e cardio pelo desenho (estados 12 e 13): o que vai, o que fica, a sequência, o mês. 6 mutações, 6 mortas. 1.425 passando.
+- 14/10 · O cardio do dia se corrige no lugar (modalidade, minutos, intensidade; carimbo `alt`, instante intocado). 6 mutações, 6 mortas. 1.426 passando.
+- 14/10 · "Não feito" tocável na sessão passada: a série que faltou entra na posição, e o registro novo entra na lista pela ordem do tempo. 8 mutações, 8 mortas (uma viva até ganhar o caso da posição pulada). 1.430 passando. Dias fechado no que tem desenho.
+- 14/10 · **Regra do cartão de cima corrigida pelo desenho:** a regra 5 ("nada na janela, o cartão é a próxima coisa do dia") era leitura minha, declarada, e a entrega de descanso da D a desfez em dois casos (10h40 com almoço às 12h30; 14h10 com lanche às 16h — "nenhum cartão"). Refeição só é cartão dentro da janela de 30 min; o exemplo das 5h20 do momento 2 não precisava da generalização (pré-treino a 25 min). 10 casos reescritos, 2 mutações, 2 mortas.
+- 14/10 · **Agora pela D, etapa 1:** a comida de hoje em linhas que abrem no lugar. Energia com macros, timeline, "···" e "+ adicionar refeição" saem (o plano mora em Prescrição). 6 casos reescritos, 5 novos; 11 mutações, 11 mortas (duas vivas até ganharem caso: o verbo sobre refeição já marcada a desmarcaria, e tocar de novo não fechava a linha). Timeline, `HeroMetrica` e o CSS deles removidos. 1.435 passando.
+- 14/10 · Agora pela D, etapa 2: a água em linha, com o estado ruim. 5 mutações, 5 mortas. 1.435 passando.
+- 14/10 · Agora pela D, etapa 3: os 14 dias em células e "Pôr ontem em dia". 6 mutações, 6 mortas (uma viva até o caso do dia guardado sem marca). 1.436 passando.
+- 14/10 · Agora pela D, etapa 4: o cabeçalho com a procedência do tipo do dia e a folha do estado 4. 12 casos reapontados, 1 novo; 6 mutações, 6 mortas. 1.437 passando.
+- 14/10 · Agora pela D, etapa 5: a pesagem e as fotos seguem a hora. 4 mutações, 4 mortas. 1.438 passando.
+- 14/10 · Agora pela D, etapa 6: a mudança esperando decisão, com "Decidir" no lugar. 4 mutações, 4 mortas (duas vivas até o caso discriminar: a folha que sumia mas ficava na pilha, e a posição que não existia no treino da mudança). 1.439 passando.
+- 14/10 · Agora pela D, etapa 7: o cartão da refeição grava no toque, e a leitura de volta com Desfazer. 5 mutações; 4 mortas e 1 equivalente (código redundante, tirado), depois de dois casos ganharem discriminação. 1.441 passando.
+- 14/10 · Agora pela D, etapa 8: o cardio sai do descanso e entra pela folha do tipo do dia. 2 mutações, 2 mortas. **Agora pela D fechado.** 1.442 passando.
+- 14/10 · Frente 3 §2, etapa 1: sem caixa alta no sistema inteiro (48 regras), textos de ação e abas com maiúscula inicial. 9 arquivos de caso apontados para os textos novos. 1.442 passando.
+- 14/10 · Frente 3 §2, etapa 2: os rótulos de seção viram título com artigo (R1/R2), 44 no `Secao` e 22 dentro de folhas e telas cheias; ações vindas de dado com maiúscula inicial. 1.442 passando.
+- 14/10 · Frente 3 §2, etapa 3: R4 (a unidade junto do número) e a exceção de R3 (a pose no título). 2 mutações, 2 mortas. **§2 da frente 3 fechada.** 1.443 passando.
+- 14/10 · **Perda:** a pasta do coordenador em `/tmp` (scripts de medição e capturas citadas neste checklist) foi apagada pelo sistema. As ferramentas passam para `docs/redesign/_medicao/`, versionadas; as capturas antigas não voltam (os scripts se refazem). Achado no levantamento: o olho do treino ainda vinha em caixa alta por `toUpperCase()`, e as etiquetas do plano de comida estão GUARDADAS em caixa alta — convertidas na tela (`caixaDeFrase`), sem migrar dado. Um caso dependia da hora (procurava a timeline que saiu). 1.444 passando.
+- 14/10 · Semana 10: o passo calórico deixa de dizer "Apliquei" antes de gravar; recusado, volta inteiro e a tela diz o que não mudou. 5 mutações, 5 mortas. 1.445 passando.
+- 14/10 · Aula 12: o aviso de falha diz que a presença continua guardada, só quando gravou antes; e oferece baixar a cópia. 3 mutações, 3 mortas. 1.446 passando.
+- 14/10 · Sessão de fotos 9: a pose que não coube para a sessão em vez de avançar fingindo; marcada, e "Tentar de novo" grava. 3 mutações, 3 mortas. 1.447 passando.
+- 14/10 · Prescrição 11: login expirado deixa de ser silêncio de "sem rede"; o fato fica gravado e o Agora o diz. 3 mutações, 3 mortas (duas vivas até o caso conferir a falta de rede e o disco). **Fila de dado do levantamento fechada.** 1.448 passando.
+- 14/10 · Corpo 10: o vazio de verdade diz o custo de sair dele, com os números da regra. 2 mutações, 2 mortas. 1.449 passando.
+- 14/10 · Momento 1, estado 4: "+ série" na linha do exercício. 4 mutações, 4 mortas. 1.450 passando.
+- 14/10 · Comparar 7: o par que recua diz que recuou. 2 mutações, 2 mortas. 1.451 passando.
+- 14/10 · Comparar 2: a cortina. 3 mutações, 3 mortas. 1.452 passando.
+- 14/10 · Sessão de fotos 2–3: o disparo é obturador, clarão e o bloco fechando (o alarme do descanso saiu dali); os nove blocos na câmera; a pose dita em voz. 11 mutações, 11 mortas (a marca de "não guardada" no bloco viveu até o caso da cota cheia pela câmera). Captura com câmera falsa do Chromium em `_medicao/camera.mjs`. 1.456 passando.
+- 14/10 · Momento 1, estado 14: a sessão deitada em duas colunas, sem o aviso de girar (que segue fora do modo). 5 mutações, 5 mortas. Captura em `_medicao/deitado.mjs`. 1.458 passando.
+- 14/10 · Momento 1, estado 2: "enquanto descansa" — pré-treino, copo e peso a um toque no cartão aberto, durante o descanso. 12 mutações, 12 mortas (o limite de horário da refeição viveu até o caso do shake depois do treino). **Fim dos ✗ do levantamento.** 1.465 passando.
+- 14/10 · Conferência dos ~ começa. Semana 5: o ramo do corte com o texto do desenho; "incerto" não é mais lido como falta. 2 mutações, 2 mortas. 1.465 passando.
+- 14/10 · Corpo 6 conferido (feito). Corpo 9 construído: a semana sem média diz o que falta e não mostra média falsa (`semanaEmCurso` no domínio). 9 mutações, 9 mortas. 1.472 passando.
+- 14/10 · Prescrição 9: o endereço vazio oferece achar o que existe (conta, cópia, ícone antigo) antes de começar. 7 mutações, 7 mortas. 1.478 passando.
+- 14/10 · Prescrição 4, 7 e 8: a data da última mudança que entrou; o plano com o que tem dentro, o "criada por você" e o ajuste acumulado; as compras com 3/7/15/outro e o que fica fora. 8 mutações, 7 mortas e 1 equivalente (redundância tirada). Prescrição 6 vira pergunta ao dono. 1.485 passando.
+- 14/10 · Aula 3 e 5: a referência de cada movimento do box e "Na última aula" antes de começar. 7 mutações, 6 mortas e 1 guarda desnecessária tirada. Achado: `fmtNum` escreve carga com ponto ("22.5") em parte da tela — corrigido no texto novo; o resto vai em seguida. 1.487 passando.
+- 14/10 · **Achado de dado, corrigido:** salvar a correção de uma sessão pelo histórico regravava cada série como [carga, reps] e apagava o RIR de TODAS as séries da sessão, inclusive das não tocadas. Agora o que vem depois de carga e repetição fica. O RIR já perdido em correções antigas não volta (só por cópia de segurança anterior). 1 mutação, morta. 1.488 passando.
+- 14/10 · A carga na tela com vírgula: `fmtCarga` na coluna anterior, no histórico, na conta de anilhas, nas grades e no campo de correção ("127,5 × 12 @ 2"). Um caso tinha o ponto como regra ("é fmtNum") — reescrito, com o porquê. 1.490 passando.
+- 14/10 · **Achado de dado, corrigido (comparar 10, F252):** a limpeza de ativação do service worker poupava `lastro-fotos` e `treino-fotos`, e não `lastro-corpo` — cada publicação apagava a cópia local das fotos do corpo. Agora poupa, e um caso compara a lista do worker com todo `CACHE_*` declarado em `src/infra`. 1 mutação, morta. 1.491 passando.
+- 14/10 · Comparar 10, a tela: o Corpo diz quantas fotos só existem neste aparelho e oferece subir (com conta) ou entrar (sem conta); a subida redesenha. 4 mutações, 4 mortas. 1.493 passando.
+- 14/10 · Comparar 1, 3 e 11 (e 6 conferido): a média "na semana" e "sem medida", o par mais longo dito com a variação, o par curto que avisa sem impedir, o vazio de uma sessão com a data da segunda. 8 mutações, 7 mortas e 1 redundância tirada. 1.496 passando.
+- 14/10 · **Respostas do dono às 17 perguntas** (página de decisões). Fila de 10 construções no ponto de parada; a 13 ele delegou e decidi (a linha fica sempre). Não publicar até o fim.
+- 14/10 · Fila 2: um passo por evidência — com passo em vigor, a regra só decide de novo quando as duas semanas lidas começaram depois dele. 3 mutações, 3 mortas. Achado de passagem: um `)}` aparecia como texto no Agora (o `tsc` acusava, a suíte não); tirado, com caso que lê as cinco abas. 1.502 passando.
+- 14/10 · Fila 3: a aula fora da ordem, no domínio; a cópia da regra em `main.jsx` saiu. 3 mutações, 3 mortas. Um caso do Agora usava a aula para girar a sequência — refeito com a volta inteira. 1.506 passando.
+- 14/10 · Fila 4: a mediana no horário de início. 2 mutações, 2 mortas. 1.508 passando.
+- 14/10 · Fila 5: o cardio de hoje no Agora, com "Apagar". 4 mutações, 4 mortas. 1.509 passando.
+- 14/10 · Fila 6: o cardio esquecido num dia passado, sem hora inventada. 6 mutações, 6 mortas; fusão do `semHora` com caso no domínio. 1.514 passando.
+- 14/10 · Fila 7: a promessa da adesão entra na Semana, e o caso cobra que o Agora não cobre. 1 mutação, morta. 1.515 passando.
+- 14/10 · Fila 8: as fotos não seguem mais a refeição, e a hora de cada uma aparece no comparar. 2 mutações, 2 mortas. 1.516 passando.
+- 14/10 · Fila 9: a lousa como foto, com cache próprio, fusão própria e a marca da sessão. 8 mutações, 8 mortas; achado no caminho: duas fotos no mesmo milissegundo dividiriam a chave dos bytes — a versão anda. 1.524 passando.
+- 14/10 · Fila 10: a revisão do treinador colada em texto — domínio, programa do treinador no dado e a tela. 20 mutações, 20 mortas (o limite de parecença viveu até o caso "Rosca direta" × "Rosca martelo"). **A fila das respostas do dono está fechada.** Pedido dele no meio: commits menos fracionados (registrado na memória). 1.540 passando.
+- 14/10 · Sessão de fotos 1, 2, 4, 6, 8 e 10 conferidos e construídos numa peça: ordem das poses e som no começar, contagem falada, giro dito e mostrado, a foto preta que volta no fim, o caminho da câmera negada, o fim com resumo. 9 mutações, 8 mortas e 1 limpeza redundante tirada. 1.545 passando.
+- 14/10 · O dono não vai fazer as medições A–D da régua: a régua fica como está, e a decisão 9 perde o gatilho.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
@@ -3960,6 +4461,71 @@ ALÉM DO `prototipo.html`, escreva `prototipo.md`, curto:
 Grave em etapas: o arquivo no disco cedo, e vá melhorando. Não segure para o fim.
 
 Sua pasta: docs/redesign/03-direcao-
+```
+
+## Anexo I · Terceira rodada da D: Dias e o Agora de descanso, 13/10
+
+Disparada a pedido do dono ("quero sim"), depois de eu corrigir a lista: das
+quatro "perguntas de desenho" que eu tinha levado, três já estavam desenhadas na
+D ou resolvidas pelas frentes. Sobram as duas lacunas que a frente 1 declarou
+sem desenho. Decisões de transcrição: as decisões do dono entram como requisito,
+sem citar o app; as capacidades de Dias entram como necessidade e com o número
+do fato, sem nenhuma forma de hoje; as palavras já escolhidas pela frente 3 vão
+como palavra, não como regra de onde vieram. **Sem sonda:** as notas técnicas
+voltaram ao `CLAUDE.md` global depois da onda 3, por plano (R1); o risco que a
+sonda media era o das direções, e a direção já foi escolhida.
+
+```text
+Você é o designer de produto sênior que desenhou a direção D deste aplicativo. O app existe, mas você não sabe como ele é, e o processo depende de que continue assim. Quem sabe é o coordenador, e ele não vai lhe contar nem comentar o seu trabalho.
+
+O QUE JÁ ACONTECEU. Você entregou duas rodadas e um protótipo tocável, todos na sua pasta. O dono usou os protótipos das duas direções que sobraram e **escolheu a sua**: "achei mais organizado e intuitivo". A direção está sendo construída. Na construção apareceram **duas coisas que a sua direção nunca desenhou**, e que precisam de desenho antes de serem construídas — não de invenção de quem constrói. São só estas duas. Releia a sua pasta antes de começar e continue nela.
+
+O QUE VOCÊ PODE LER — só isto:
+- a sua própria pasta, inteira (`direcao.md`, `direcao-2.md`, `prototipo.md` e os HTML);
+- docs/redesign/01-fatos.md — os fatos do produto;
+- docs/redesign/02-uso.md — o uso real medido;
+- docs/redesign/02-perguntas.md — as perguntas feitas ao dono e as respostas dele;
+- os arquivos que você mesmo escrever.
+Qualquer outro caminho do repositório — inclusive os outros arquivos e pastas de docs/redesign/ — fica fora. Se não está nesta lista, não abra. As fontes citadas dentro desses arquivos (caminhos, hashes, comandos) servem para conferência do coordenador: você não as abre nem as roda.
+
+FERRAMENTAS. Leia e escreva arquivos, e rode comandos locais sobre os seus próprios arquivos. Não invoque skills, não dispare subagentes, não use conectores e não acesse a web. Não rode o app nem nenhum servidor do projeto. Para ver os seus próprios HTML há um Chrome sem janela em /usr/bin/google-chrome (--headless, --screenshot, --window-size); abrir nele os seus arquivos é permitido, e só eles.
+
+AS DUAS LACUNAS.
+
+**1 · Dias.** Está na sua barra de baixo desde a segunda rodada — Agora, Dias, Corpo, Semana, Prescrição — e nunca foi desenhado; no protótipo ele está desabilitado. A pergunta do lugar é "o que aconteceu em cada dia". O que ele precisa permitir sai dos fatos, e não de desenho anterior nenhum:
+- ver, de cada dia passado do mês, o que aconteceu: treino da sequência, treino fora da prescrição (F155), aula, descanso marcado (F156), mais de um treino no mesmo dia (F157), cardio, e a comida — dia com marca, dia sem marca;
+- abrir uma sessão passada inteira, ler e **corrigir no lugar**, inclusive apagar;
+- registrar um treino em data passada — da sequência, fora dela, ou aula — e marcar um dia passado como descanso (F158, F156);
+- pôr em dia a comida de um dia passado: **a folha que você já desenhou** para isso entra aqui, como está (o dono a manteve, abrindo pré-marcada);
+- apagar uma sessão de cardio registrada por engano;
+- três leituras do mês, e só estas: treinos por semana em média móvel das últimas quatro semanas (nunca sequência de dias: quem treina 5 a 6 vezes por semana quebra sequência todo domingo), o cardio do mês (sessões, minutos, quantas em dia sem musculação) e o horário de início (média, mais cedo, mais tarde).
+O que Dias **não** tem: nada prescrito (o plano daquele dia aparece só como referência — é de Prescrição); nenhuma leitura de semana (é de Semana); nenhum "agora" (um dia que passou não tem).
+
+**2 · O Agora num dia de descanso, fora de qualquer janela.** Você desenhou o Agora da manhã de treino e o dia que ainda não começou. Este estado ficou sem desenho. A regra do cartão de cima, já escrita a partir dos seus desenhos, diz: num dia de descanso, longe da hora de qualquer refeição, **não há cartão** — ficam a linha do dia, a água e a contagem dos dias conhecidos nos últimos 14. Desenhe esse estado e as variações que os fatos pedirem: antes de qualquer marca, com a água já contada, no dia em que a sessão de fotos completa 14 dias, e com uma mudança do treino esperando decisão.
+
+AS DECISÕES DO DONO tomadas depois da sua segunda entrega. Valem como requisito:
+
+1. **Vai a D, com três peças da outra direção** como requisito: as linhas do dia são tocáveis; cada toque grava, sem botão de guardar no fim; e a conta de volume semanal aparece na prescrição.
+2. **A mudança do dia vence por posição:** quando aquele treino voltar na sequência. Se ele não decidir até lá, ela fica como "só daquele dia" — dito, e desfazível até a próxima vez daquele treino. O aviso dela no Agora aparece uma vez, na manhã daquele treino, nunca durante a sessão.
+3. **"Não comi" conta como dia conhecido.** A regra do nutricionista pede 11 dias conhecidos em 14 para mexer na comida, e agora isso é alcançável.
+4. **Pesagem, sessão de fotos e cardio não disputam o topo do Agora:** são linhas abaixo do cartão, como você já fez com "Peso de hoje".
+5. **"Evolução" volta como nome** do destino de leitura dentro de Corpo, no lugar de "Histórico". Não cria um sexto lugar.
+6. **O rótulo em caixa alta espaçada sai, "sem heranças".** Rótulo de seção só existe quando a seção tem mais de uma linha e a primeira não a nomeia; o que fica é frase com artigo, em caixa de frase ("O que tem dentro", "Como foi o dia"), e maior do que hoje — nunca caixa alta com espaçamento. A linha acima de um título deixa de ser rótulo e vira procedência ("da prescrição", "pose 3 de 9"). Unidade se escreve como unidade, em caixa baixa: "3.007 kcal", "81,0 cm".
+7. **A linha acima do cartão de cima é a procedência do que ele mostra:** "no plano às 16h00", "na prescrição · Treino B", "sessão aberta desde 6h20". No dia de descanso, a palavra já escolhida é **"descanso, pelo padrão semanal"** — o tipo do dia é palpite do app enquanto ele não confirmar, e a tela diz que é palpite.
+8. **O que apaga para o dedo.** Apagar passa por um painel que abre pelo infinitivo do estrago, com o número do que vai embora ("Apagar o peso de 28/09…"), o botão repete o verbo com o objeto, e a saída é "Deixar como está". Nunca "OK", "Confirmar", "Sim" ou "Cancelar".
+9. Continua valendo tudo o que já valia: tema que segue o aparelho, claro e escuro desenhados; movimento só com função; teclado próprio onde o do sistema atrapalha.
+
+O QUE ENTREGAR, na sua pasta:
+- `dias.html` — o lugar, com os estados que os fatos exigirem: o mês com dias de todos os tipos, um dia aberto, registrar um treino passado, um dia de comida a pôr em dia, apagar (com o painel), e o vazio (o primeiro mês, nada registrado);
+- `agora-descanso.html` — o estado e as variações do item 2;
+- `direcao-3.md`, curto: o que cada desenho resolve e por que assim nesta direção; o que você recusa; e as perguntas que você não tem como responder sozinho.
+Cada HTML autocontido, sem dependência de rede, em viewport de telefone, **claro e escuro**, com conteúdo real tirado dos fatos e do uso — nada de lorem ipsum, nada de imagem de placeholder.
+
+A RÉGUA, a mesma: sem moodboard; referência de mercado não é argumento; "porque é moderno" não é razão, "porque ele está com uma mão ocupada" é. Os estados ruins resolvidos, não só o caminho feliz. Diga o que você recusa fazer, e aguente a recusa. E a régua do dono, nas palavras dele: "fluxos muito dificultosos" não; "gosto das coisas visuais, mas sem exagerar e poluir demais as telas"; "prefiro o mínimo de toques necessário".
+
+Grave em etapas: escreva cada arquivo assim que ele estiver pronto, em vez de segurar tudo para o fim.
+
+Sua pasta: docs/redesign/03-direcao-D
 ```
 
 ## Anexo F · Sonda de contexto (rodar no início de cada sessão nova, antes de agente cego)

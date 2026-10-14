@@ -16,7 +16,7 @@ async function abreFolha(a) {
   a.E('diaDeComida().cadencia = "treino"');
   a.v('render');
   await a.esperar();
-  a.clicar('.ins-estado');
+  a.clicar('[data-a="tipo-do-dia"]');
   await a.esperar();
 }
 
@@ -66,11 +66,11 @@ test('o selo de pós-treino aparece na refeição certa', async () => {
   await a.esperar();
   // O selo tem elemento próprio: colado no nome ele virava "Almoço · pós-tr…",
   // porque o nome corta com reticências e o papel é o que não pode ser cortado.
-  const comSelo = a.$$('.ins-tl').filter(function (l) { return l.querySelector('.ins-tl-selo'); });
+  const comSelo = a.$$('.ag-l').filter(function (l) { return l.querySelector('.ag-l-n small'); });
   assert.strictEqual(comSelo.length, 1, 'um papel, uma refeição');
-  assert.strictEqual(comSelo[0].querySelector('.ins-tl-nome').textContent, 'Jantar',
+  assert.strictEqual(comSelo[0].querySelector('.ag-l-n').childNodes[0].textContent, 'Jantar',
     'à noite o jantar recebe o papel');
-  assert.strictEqual(comSelo[0].querySelector('.ins-tl-selo').textContent, 'pós-treino');
+  assert.strictEqual(comSelo[0].querySelector('.ag-l-n small').textContent, 'pós-treino');
   assert.strictEqual(a.vJ('ctx.hoje').posTreino, 'jantar');
   a.fechar();
 });
@@ -122,7 +122,7 @@ test('em dia de descanso o turno não é oferecido', async () => {
   a.E('diaDeComida().cadencia = "descanso"');
   a.v('render');
   await a.esperar();
-  a.clicar('.ins-estado');
+  a.clicar('[data-a="tipo-do-dia"]');
   await a.esperar();
   assert.strictEqual(a.$$('.fd-turno-op').length, 0,
     'sem treino não há turno de treino a escolher');

@@ -57,7 +57,8 @@ export type Resultado =
 function traduz(e: unknown): { erro: ErroDeCamera; msg: string } {
   const nome = (e && typeof e === 'object' && 'name' in e) ? String((e as Error).name) : '';
   if (nome === 'NotAllowedError' || nome === 'SecurityError') {
-    return { erro: 'negada', msg: 'o acesso à câmera foi negado — libere nos ajustes do navegador' };
+    // a saída está fora do app (a D, estado 8): dita em uma frase, com o caminho
+    return { erro: 'negada', msg: 'A câmera está bloqueada para este app (acesso negado). Libere em Ajustes do iPhone › Safari › Câmera › Permitir, e volte: a sessão começa do zero, sem perder nada.' };
   }
   if (nome === 'NotReadableError' || nome === 'AbortError') {
     return { erro: 'ocupada', msg: 'a câmera está ocupada por outro app' };

@@ -7,7 +7,7 @@ import { app, agoraEstavel, DIA } from './harness.js';
 
 test('iniciar marca o tempo antes da primeira série', async () => {
   const a = await app();
-  assert.strictEqual(a.texto('.day-ini'), 'iniciar treino', 'o botão fica ao lado da letra do dia');
+  assert.strictEqual(a.texto('.day-ini'), 'Iniciar treino', 'o botão fica ao lado da letra do dia');
   assert.strictEqual(a.$('#relogio'), null, 'sem sessão não há relógio');
 
   await a.v('iniciarSessao');
@@ -118,7 +118,8 @@ test('encerramento automático fica marcado como aproximado', async () => {
   assert.strictEqual(b.S().done[0].fim, 'auto');
   assert.strictEqual(b.S().done[0].dur, 3600 * 1000, 'vai até a última série');
   b.v('abrirSessao', estado.done[0].t);
-  assert.ok(b.texto('.stats span').includes('aproximado'));
+  assert.ok(/aproximado: fechou sem você/.test(b.texto('.ss-tempo')), b.texto('.ss-tempo'));
+  assert.ok(b.$('.ss-aprox'), 'com o pontilhado do palpite');
   b.fechar();
 });
 
@@ -203,11 +204,15 @@ test('finalizar sem nenhuma série oferece descartar', async () => {
   a.fechar();
 });
 
-test('detalhe da sessão mostra pendências e pausa', async () => {
+test('detalhe da sessão mostra o que não foi feito e a pausa', async () => {
+  // Pela D (estado 3), o pulado, o parcial e o não feito viram "não feito" na
+  // POSIÇÃO de cada série — não é falha nem pendência, então não há bloco à
+  // parte com contagem.
   const a = await app();
   await a.v('iniciarSessao');
   a.v('toggle', 0);
-  for (let k = 0; k < a.v('setsFor', a.vJ('treino', 'A').ex[0]); k++) a.preencher(0, k, 40, 10);
+  const n0 = a.v('setsFor', a.vJ('treino', 'A').ex[0]);
+  for (let k = 0; k < n0; k++) a.preencher(0, k, 40, 10);
   a.v('toggle', 1);
   a.preencher(1, 0, 60, 12);
   await a.v('pularEx', 2);
@@ -218,12 +223,14 @@ test('detalhe da sessão mostra pendências e pausa', async () => {
   await a.esperar();
   a.v('abrirSessao', t);
 
-  const pend = a.texto('.pend');
-  assert.ok(/1 pulado/.test(pend), pend);
-  assert.ok(/1 parcial/.test(pend));
-  assert.ok(/não feitos/.test(pend));
-  assert.ok(a.texto('.hwrap .cue').includes('pausa'));
-  assert.ok(a.texto('.stats span').includes('exato'));
+  const d = a.vJ('ctx.detalheDaSessao');
+  const ex = d.exercicios;
+  assert.strictEqual(ex[0].series.filter(function (s) { return s.nao; }).length, 0, 'o primeiro, inteiro');
+  assert.ok(ex[1].series[0].texto && ex[1].series.slice(1).every(function (s) { return s.nao; }), 'o parcial: uma feita, o resto não feito');
+  assert.ok(ex[2].series.every(function (s) { return s.nao; }), 'o pulado: tudo não feito');
+  assert.ok(a.$$('.ss-sv.nf').length > 0, 'e a tela diz "não feito"');
+  assert.ok(a.texto('.tc-nota').includes('pausa'), a.texto('.tc-nota'));
+  assert.ok(/declarad/.test(d.fim.nota) && !/aproximad/.test(d.fim.nota), 'fim exato: ' + d.fim.nota);
   a.fechar();
 });
 
@@ -247,8 +254,10 @@ test('dois treinos no mesmo dia agora são possíveis', async () => {
   a.fechar();
 });
 
-test('acompanhamento mostra média de duração e marca o aproximado', async () => {
-  // relógio fixo pelo mesmo motivo do teste do mês em telas.test.js
+test('o dia aberto diz qual sessão o app fechou sozinho', async () => {
+  // A média de duração do mês saiu com o quadro de tempo e volume (a D: "três
+  // leituras do mês, e só estas"; tempo é de Semana). A marca do aproximado
+  // ficou, onde a sessão mora: a linha dela no dia aberto diz "fechou sem você".
   const agora = agoraEstavel();
   const done = [], logs = { A0: [] };
   [0, 1].forEach(function (k) {
@@ -257,14 +266,17 @@ test('acompanhamento mostra média de duração e marca o aproximado', async () 
     logs.A0.push({ t: t, sid: t, sets: [[40, 10]] });
   });
   const a = await app({ agora: agora, estado: { logs: logs, done: done } });
-  // A média de duração e a marca de aproximado estão na lista do mês, que é de
-  // DIAS: "o que aconteceu em cada dia" — e Dias não tem chip.
   a.aba('dias');
   await a.esperar();
 
-  const rotulo = a.$$('.ins-grade-c').map(function (x) { return x.textContent; }).join(' ');
-  assert.ok(/méd/.test(rotulo), rotulo);
-  assert.strictEqual(a.$$('.aprox').length, 1, 'só a que o app fechou sozinho');
+  const detalhe = function (t) {
+    a.v('ctx.abreDia', t);
+    const x = a.texto('[data-a="dia-sessao"]');
+    a.v('ctx.fechaDia');
+    return x;
+  };
+  assert.ok(/fechou sem você/.test(detalhe(agora - DIA)), 'a que o app fechou sozinho diz: ' + detalhe(agora - DIA));
+  assert.ok(!/fechou sem você/.test(detalhe(agora)), 'a encerrada por ele, não: ' + detalhe(agora));
   a.fechar();
 });
 

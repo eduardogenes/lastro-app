@@ -134,14 +134,13 @@ export const JANELA_REFEICAO = 30;
  * mesma um segundo depois de marcar: marcado o lanche das 15h30, ela jogava o
  * almoço das 12h30 para o topo como se fosse agora.
  *
- * **5 · Nada na janela, mas algo à frente: o cartão é a próxima coisa do dia.**
- * LEITURA MINHA, e declarada: a regra 7 manda que a tela não fique muda e dá o
- * exemplo das 5h20 ("o cartão é a primeira coisa do dia"), que é este caso no
- * começo do dia. Generalizar é o que mantém as duas metades de pé ao meio-dia e
- * quarenta com o almoço das 12h30 sem marca — sem isto, ou a tela fica muda, ou
- * o almoço que passou volta ao topo, que é exatamente o que a regra 4 proíbe. O
- * campo `janela` diz qual dos dois casos é, para a tela não dizer "agora" sobre
- * algo que é daqui a três horas.
+ * **5 · Fora da janela, não há cartão de refeição.** Aqui havia uma leitura
+ * minha, declarada: "nada na janela, mas algo à frente, o cartão é a próxima
+ * coisa do dia". A terceira entrega da D (`agora-descanso.html`, estados 1 e 3)
+ * a desfez com dois casos: às 10h40, com o almoço às 12h30, e às 14h10, com o
+ * lanche às 16h00 — "de novo, nenhum cartão". O que está à frente é linha do
+ * dia; o que passou sem marca também. O campo `janela` fica, sempre verdadeiro,
+ * para a tela não precisar mudar de forma.
  *
  * **6 · Dia resolvido: o topo confirma o que foi marcado, com "Corrigir".**
  * Para a tela não ficar muda quando tudo foi feito. O app de hoje já faz algo
@@ -178,9 +177,8 @@ export function cartaoDeCima(f: FatosDoDia): Cartao | null {
   const adiante = (f.refeicoes || [])
     .filter(function (r) { return r && !r.marcada && r.hora >= f.agora; })
     .sort(function (a, b) { return a.hora - b.hora; })[0];
-  if (adiante) {
-    return { k: 'refeicao', id: adiante.id, hora: adiante.hora,
-             janela: adiante.hora - f.agora <= JANELA_REFEICAO };
+  if (adiante && adiante.hora - f.agora <= JANELA_REFEICAO) {
+    return { k: 'refeicao', id: adiante.id, hora: adiante.hora, janela: true };
   }
 
   // 6 · o dia resolvido confirma a última marca

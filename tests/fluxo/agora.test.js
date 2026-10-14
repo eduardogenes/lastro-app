@@ -145,22 +145,22 @@ test('enquanto a janela do treino não passou, o cartão é o treino', async () 
   a.fechar();
 });
 
-test('passada a janela do treino, a refeição assume o topo', async () => {
-  // 10h: o treino das 6h15 acabaria muito antes. O cartão passa a ser a próxima
-  // refeição do plano para a FRENTE.
-  const agora = agoraEstavel(10, 0);
-  const a = await app({
-    agora: agora,
-    estado: { logs: {}, done: [],
-              dia: { data: dataLocal(agora), done: {}, agua: 0,
-                     escala: {}, cadencia: 'treino', alta: 0 } }
-  });
-
+test('passada a janela do treino, a refeição da janela assume o topo', async () => {
+  // O treino das 6h15 acabaria muito antes. Às 12h05 o cartão é o almoço das
+  // 12h30, que está na janela; às 10h, longe dela, não há cartão.
+  const ag = function (h, m) {
+    return { logs: {}, done: [],
+             dia: { data: dataLocal(agoraEstavel(h, m)), done: {}, agua: 0, escala: {}, cadencia: 'treino', alta: 0 } };
+  };
+  const a = await app({ agora: agoraEstavel(12, 5), estado: ag(12, 5) });
   const c = a.vJ('ctx.cartaoDeCima');
   assert.strictEqual(c.k, 'refeicao');
   assert.strictEqual(c.id, 'almoco', 'o almoço das 12h30 é o próximo à frente');
-  assert.strictEqual(c.janela, false, 'e está longe: a tela não pode dizer "agora"');
+  assert.strictEqual(c.janela, true);
   a.fechar();
+  const b = await app({ agora: agoraEstavel(10, 0), estado: ag(10, 0) });
+  assert.strictEqual(b.vJ('ctx.cartaoDeCima'), null, 'longe da janela: nenhum cartão');
+  b.fechar();
 });
 
 test('sessão já registrada hoje tira o treino da disputa, dentro da janela', async () => {
@@ -189,9 +189,10 @@ test('sessão já registrada hoje tira o treino da disputa, dentro da janela', a
   assert.ok(fatos.agora <= fatos.treino.fimDaJanela,
     'pré-condição que faz o caso discriminar: ainda DENTRO da janela (' +
     fatos.agora + ' <= ' + fatos.treino.fimDaJanela + ')');
-  assert.strictEqual(a.vJ('ctx.cartaoDeCima').k, 'refeicao',
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima'), null,
     'e mesmo assim o treino não disputa: dois treinos no mesmo dia são ' +
-    'possíveis, e o segundo volta a ganhar pela sessão ABERTA, que é o degrau 1');
+    'possíveis, e o segundo volta a ganhar pela sessão ABERTA, que é o degrau 1. ' +
+    'O café das 8h está fora da janela, então o topo se cala');
   a.fechar();
 });
 
@@ -430,20 +431,18 @@ test('no Agora, o cartão do treino abre o MODO no dia de hoje — a porta 1', a
   a.fechar();
 });
 
-test('no Agora, o cartão da refeição longe diz "mais tarde", não "faltam"', async () => {
-  // `janela` é o que separa "é agora" de "é a próxima coisa do dia". Sem isso o
-  // cartão falaria de algo de três horas adiante com a voz de algo de dez
-  // minutos.
+test('no Agora, a refeição longe não é cartão; dentro da janela, diz "faltam"', async () => {
+  // Pela D (`agora-descanso.html`, estados 1 e 3), fora da janela de 30 min não
+  // há cartão de refeição: o que está à frente é linha do dia. Antes o cartão
+  // aparecia com "mais tarde" — leitura minha, desfeita pelo desenho.
   const agora = agoraEstavel(10, 0);
   const a = await app({
     aba: 'agora', agora: agora,
     estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino') }
   });
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima'), null, 'às 10h, com o almoço às 12h30: nenhum cartão');
+  assert.strictEqual(a.$('.ins-foco'), null);
 
-  assert.strictEqual(a.vJ('ctx.cartaoDeCima').janela, false, 'pré-condição: fora da janela');
-  assert.ok(a.texto('.ins-foco').indexOf('mais tarde') >= 0, a.texto('.ins-foco'));
-
-  // e dentro da janela volta a ser a contagem normal
   const b = await app({
     aba: 'agora', agora: agoraEstavel(12, 10),
     estado: { plano: 7, logs: {}, done: [], dia: diaDe(agoraEstavel(12, 10), 'treino') }
@@ -457,7 +456,8 @@ test('a linha acesa da timeline é o assunto do cartão', async () => {
   // Uma regra só para a mesma pergunta. Antes a linha acesa e o cartão vinham
   // da MESMA variável por acaso; agora a linha é derivada do cartão de
   // propósito, porque duas regras divergiriam e a tela diria duas coisas.
-  const agora = agoraEstavel(10, 0);
+  // 12h10: o almoço das 12h30 está na janela, e é o cartão.
+  const agora = agoraEstavel(12, 10);
   const a = await app({
     aba: 'agora', agora: agora,
     estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino') }
@@ -465,7 +465,7 @@ test('a linha acesa da timeline é o assunto do cartão', async () => {
 
   const c = a.vJ('ctx.cartaoDeCima');
   assert.strictEqual(c.k, 'refeicao', 'pré-condição');
-  const acesas = a.$$('.ins-tl.agora');
+  const acesas = a.$$('.ag-l.agora');
   assert.strictEqual(acesas.length, 1, 'uma linha acesa, e só uma');
   assert.ok(acesas[0].textContent.indexOf(a.vJ('ctx.hoje').refs
     .filter(r => r.id === c.id)[0].n) >= 0,
@@ -491,7 +491,7 @@ test('no Agora, o cartão da aula é um botão só e leva ao modo', async () => 
 
   assert.strictEqual(a.vJ('ctx.cartaoDeCima').k, 'aula', 'pré-condição: a rotação caiu na aula');
   const txt = a.texto('.ins-foco');
-  assert.ok(txt.indexOf('fiz a aula') >= 0, txt);
+  assert.ok(txt.indexOf('Fiz a aula') >= 0, txt);
   assert.ok(!a.$('.ins-foco-acoes'), 'um botão só: nada de duas respostas aqui');
 
   a.$('.ins-foco').click();
@@ -520,7 +520,7 @@ test('no Agora, com o dia fechado o topo confirma em vez de ficar mudo', async (
   assert.strictEqual(c.k, 'resolvido', 'pré-condição: nada à frente e nada sem marca');
   const txt = a.texto('.ins-foco');
   assert.ok(txt.indexOf('dia fechado') >= 0, txt);
-  assert.ok(txt.indexOf('corrigir') >= 0, 'e oferece corrigir: ' + txt);
+  assert.ok(txt.indexOf('Corrigir') >= 0, 'e oferece corrigir: ' + txt);
   a.fechar();
 });
 
@@ -867,19 +867,13 @@ test('o Agora avisa UMA LINHA na manhã em que a mudança vence', async () => {
   const linha = a.$('.ag-vence');
   assert.ok(linha, 'e a linha está no Agora');
   assert.ok(/vence hoje/.test(linha.textContent), linha.textContent);
-  // O RÓTULO da seção muda com a urgência, e é o que separa "decide quando
-  // puder" de "decide hoje". Sem esta asserção, a distinção some sem vermelho.
-  const secao = a.$$('.ins-secao').filter(function (x) {
-    return /vence hoje/.test(x.textContent);
-  })[0];
-  assert.ok(secao, 'a seção existe');
-  assert.ok(!/para decidir com calma/.test(secao.textContent),
-    'e o rótulo NÃO é o de calma: hoje é o último dia');
-  assert.ok(a.$('[data-a="ver-mudancas"]'), 'com o "Ver", que leva ao dono da lista');
-
-  a.$('[data-a="ver-mudancas"]').click();
-  await a.esperar();
-  assert.strictEqual(a.vista().aba, 'prescricao', 'o "Ver" leva à Prescrição');
+  // A VOZ da linha muda com a urgência, e é o que separa "decide quando puder"
+  // de "decide hoje". Sem esta asserção, a distinção some sem vermelho.
+  assert.ok(linha.classList.contains('vence'), 'hoje é o último dia');
+  a.clicar('[data-a="decidir"]');
+  await a.esperar(60);
+  assert.ok(a.$('.ins-folha'), '"Decidir" abre a decisão ali mesmo, sem trocar de lugar');
+  assert.strictEqual(a.vista().aba, 'agora');
   a.fechar();
 });
 
@@ -915,12 +909,11 @@ test('com algo esperando e nada vencendo, o Agora INFORMA sem urgência', async 
   assert.ok(e, 'o Agora tem o que informar');
   assert.strictEqual(e.vence, false, 'e não é urgência: nada vence hoje');
   assert.match(e.txt, /está esperando decisão/, e.txt);
-  assert.ok(a.$('.ag-vence'), 'a linha está na tela');
-  const secao = a.$$('.ins-secao').filter(function (x) {
-    return /esperando decisão/.test(x.textContent);
-  })[0];
-  assert.ok(secao && /para decidir com calma/.test(secao.textContent),
-    'com o rótulo de calma, e não o de vencimento');
+  const linha = a.$('.ag-vence');
+  assert.ok(linha, 'a linha está na tela');
+  assert.ok(!linha.classList.contains('vence'), 'com a voz de calma, e não a de vencimento');
+  assert.ok(/Uma mudança do Treino B espera você/.test(linha.textContent), linha.textContent);
+  assert.ok(/vence quando o Treino B voltar/.test(linha.textContent), 'e diz quando vence: ' + linha.textContent);
   a.fechar();
 });
 
@@ -1007,21 +1000,22 @@ test('o Agora não avisa sobre o que já venceu, nem quando o dia volta de novo'
   // O fixture é construído para DISCRIMINAR, e levou uma mutação para eu
   // perceber: com o A voltando só uma vez, o vencimento CALCULADO não cai hoje
   // de todo jeito, e o caso ficava verde sem a guarda. Aqui o A volta DUAS
-  // vezes — a sessão do A venceu a mudança, a do HX girou a rotação de volta
-  // para o A, e portanto `vence` é HOJE ao mesmo tempo que `venceu` é verdade.
-  // Só a guarda explica o silêncio.
+  // vezes — a sessão do A venceu a mudança, a volta inteira girou até o E, e
+  // portanto `vence` é HOJE ao mesmo tempo que `venceu` é verdade. (A aula
+  // não gira mais a sequência — fica fora da ordem, decisão de 14/10 —, então
+  // a volta fecha no E.) Só a guarda explica o silêncio.
   const agora = agoraEstavel(6, 30);
   const nasceu = agora - 20 * DIA;
+  const volta = ['A', 'B', 'C', 'D', 'E'].map(function (d, i) {
+    const t = agora - (9 - i) * DIA;
+    return { sid: t, day: d, t: t, dur: 70 * MIN, fim: 'manual', sets: [] };
+  });
   const a = await app({
     aba: 'agora', agora: agora,
     estado: {
       plano: 7, logs: {},
-      done: [
-        { sid: agora - 9 * DIA, day: 'A', t: agora - 9 * DIA,
-          dur: 70 * MIN, fim: 'manual', sets: [] },
-        { sid: agora - 2 * DIA, day: 'HX', t: agora - 2 * DIA,
-          dur: 70 * MIN, fim: 'manual', sets: [] }
-      ],
+      done: volta.concat([{ sid: agora - 2 * DIA, day: 'HX', t: agora - 2 * DIA,
+                            dur: 70 * MIN, fim: 'manual', sets: [] }]),
       dia: diaDe(agora, 'treino'),
       promoPendente: [{
         sid: nasceu, day: 'A', t: nasceu, m: nasceu,
@@ -1080,20 +1074,24 @@ test('o Agora mostra os 14 dias, e a janela é a MESMA que o portão lê', async
   assert.strictEqual(q.fatias[13], null, 'a casa de hoje está vazia: o dia não fechou');
   assert.strictEqual(q.fatias[12], 1, 'e a de ontem, cheia');
 
-  assert.ok(/11 de 14 dias com registro/.test(a.doc.getElementById('app').textContent),
-    'a tela diz a contagem, e não um percentual');
+  assert.ok(/Dias conhecidos nos últimos 14: 11\. A regra do nutricionista precisa de 11\./.test(a.texto('.ag-14-t')),
+    'a tela diz a contagem, e não um percentual: ' + a.texto('.ag-14-t'));
 
   // E AS CASAS ESTÃO DESENHADAS. Sem esta asserção o caso passava só com a
   // frase: uma mutação que apagava as catorze casas da tela ficava verde,
-  // porque a contagem é texto e as casas são o desenho dela.
-  const secao = a.$$('.ins-secao').filter(function (x) {
-    return /os 14 dias/.test(x.textContent);
-  })[0];
-  assert.ok(secao, 'a seção dos 14 dias está na tela');
-  const casas = Array.from(secao.querySelectorAll('.ins-spark-s'));
+  // porque a contagem é texto e as casas são o desenho dela. Pela D, cada casa
+  // diz se o dia está cheio, em parte ou vazio — aqui, só o almoço marcado.
+  const casas = a.$$('.ag-14-d');
   assert.strictEqual(casas.length, 14, 'catorze casas desenhadas');
-  const cheias = casas.filter(function (c) { return c.querySelector('.ins-spark-b'); }).length;
-  assert.strictEqual(cheias, 11, 'e onze cheias, como a contagem diz');
+  assert.strictEqual(a.$$('.ag-14-d.parte').length, 11, 'onze em parte, como a contagem diz');
+  assert.strictEqual(a.$$('.ag-14-d.vazio').length, 2, 'e os dois buracos, vazios');
+  assert.ok(casas[13].classList.contains('hoje'), 'a última é hoje');
+
+  // ontem tem só o almoço: a linha diz e oferece pôr em dia
+  assert.ok(/Ontem, [a-zçá]+: 1 de \d+ refeições com marca\./.test(a.texto('.ag-14-o')), a.texto('.ag-14-o'));
+  a.clicar('[data-a="poe-ontem"]');
+  await a.esperar(60);
+  assert.ok(a.$('.pd-linhas'), 'a folha de pôr ontem em dia abriu');
   a.fechar();
 });
 
@@ -1138,8 +1136,8 @@ test('encerrar o treino com mudança INFORMA no Agora — não é guardado em si
   await a.esperar();
   const linha = a.$('.ag-vence');
   assert.ok(linha, 'e o AGORA diz que ela está lá');
-  assert.match(linha.textContent, /esperando decisão/, linha.textContent);
-  assert.ok(a.$('[data-a="ver-mudancas"]'), 'com o caminho até a lista');
+  assert.match(linha.textContent, /espera você/, linha.textContent);
+  assert.ok(a.$('[data-a="decidir"]'), 'com o caminho até a decisão');
   a.fechar();
 });
 
@@ -1388,10 +1386,10 @@ test('o dia mudo é inalcançável PELA FOLHA, e o chão é quem guarda isso', a
 // A FOLHA de pôr o dia em dia — a tela
 // ---------------------------------------------------------------------------
 
-test('Dias lista os dias e abre a folha de pôr em dia', async () => {
-  // Dias é "o LUGAR" da folha (§1.2), e o que o lugar oferece é a lista do que
-  // aconteceu com a porta para corrigir cada dia. Os dias SEM registro aparecem
-  // também: um dia sem registro é o caso de uso inteiro da peça.
+test('Dias mostra a comida de cada dia e abre a folha de pôr em dia', async () => {
+  // Dias é "o LUGAR" da folha (§1.2). Pela D, cada célula passada leva a barra
+  // da comida — com marca ou sem —, e o dia aberto tem "Pôr este dia em dia".
+  // Os dias SEM registro aparecem também: são o caso de uso inteiro da peça.
   const agora = agoraEstavel(9, 0);
   const a = await app({ aba: 'dias', agora: agora,
                         estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
@@ -1400,10 +1398,12 @@ test('Dias lista os dias e abre a folha de pôr em dia', async () => {
   const dias = a.vJ('ctx.diasDeComidaFechados');
   assert.strictEqual(dias.length, 14, 'catorze dias, a mesma janela do portão');
   assert.ok(dias.every(function (d) { return d.tem === false; }), 'nenhum tem registro ainda');
-  assert.ok(dias.every(function (d) { return d.txt === 'sem registro'; }),
-    'e a tela diz isso, em vez de um zero que seria nota');
+  const cel = a.$('[data-dia="' + dias[0].data + '"]');
+  assert.ok(cel.querySelector('.dc-f.sem'), 'a célula diz "sem marca", em vez de um zero que seria nota');
 
-  const porta = a.$('[data-a="poe-' + dias[0].data + '"]');
+  a.clicar(cel);
+  await a.esperar();
+  const porta = a.$('[data-a="dia-poe-em-dia"]');
   assert.ok(porta, 'cada dia é uma porta');
   porta.click();
   await a.esperar(60);
@@ -1627,5 +1627,330 @@ test('a refeição que o treino empurrou não diz "no plano às": diz que veio d
   assert.ok(movida, 'pré-condição: o almoço foi empurrado');
   assert.strictEqual(a.vJ('ctx.cartaoDeCima').id, 'almoco', 'pré-condição: e é o cartão de cima');
   assert.strictEqual(a.texto('.ins-foco .ins-label'), 'depois do treino, às 13h45');
+  a.fechar();
+});
+
+// ---------- as linhas do corpo no Agora (frente 1 §5, regra 5; M1‑13 da D) ----------
+
+test('a pesagem da manhã é linha com "Anotar" enquanto não há peso hoje, e leva ao Corpo', async () => {
+  const agora = agoraEstavel(6, 10);
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino'),
+    body: { peso: [{ t: agora - 3 * DIA, v: 73.8 }], cintura: [] } } });
+  await a.esperar();
+  assert.strictEqual(a.texto('[data-linha="peso"] .ins-linha-t'), 'Peso da manhã · sem marca');
+  assert.ok(/^antes de treinar, depois do pré · última: 73,8 em \d\d\/\d\d( · \d+ nesta semana)?$/.test(a.texto('[data-linha="peso"] .ins-linha-s')),
+    a.texto('[data-linha="peso"] .ins-linha-s'));
+  a.clicar('[data-a="agora-peso"]');
+  await a.esperar();
+  assert.strictEqual(a.vista().aba, 'corpo');
+  a.fechar();
+});
+
+test('com peso hoje, a linha diz o valor e quando, e não pede nada', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino'),
+    body: { peso: [{ t: agora - 3 * 3600000, v: 73.6 }], cintura: [] } } });
+  await a.esperar();
+  assert.strictEqual(a.texto('[data-linha="peso"] .ins-linha-t'), 'Peso da manhã · 73,6 kg');
+  assert.strictEqual(a.texto('[data-linha="peso"] .ins-linha-s'), 'anotado às 6h00 · 1 nesta semana',
+    'e quantas a semana já tem (a D, estado 5)');
+  assert.strictEqual(a.$('[data-a="agora-peso"]'), null);
+  a.fechar();
+});
+
+test('a sessão de fotos vira linha quando faz 14 dias, e só então', async () => {
+  const agora = agoraEstavel(9, 0);
+  const sessao = function (dias) {
+    return { d: dataLocal(agora - dias * DIA), t: agora - dias * DIA, m: 1,
+             fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } };
+  };
+  const velha = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [],
+    protocolo: { poses: null, sessoes: [sessao(16)] } } });
+  await velha.esperar();
+  assert.strictEqual(velha.texto('[data-linha="fotos"] .ins-linha-t'), 'Fotos do corpo · faz 16 dias');
+  velha.clicar('[data-a="agora-fotos"]');
+  await velha.esperar();
+  assert.ok(velha.vista().protocolo, '"Nova sessão" abre a sessão de fotos');
+  velha.fechar();
+
+  const nova = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [],
+    protocolo: { poses: null, sessoes: [sessao(3)] } } });
+  await nova.esperar();
+  assert.strictEqual(nova.$('[data-linha="fotos"]'), null, 'antes dos 14 dias não há convite');
+  nova.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// A comida de hoje, em linhas que abrem no lugar (a D, `agora-descanso.html`
+// estado 2; `momento-2.html` estados 1 e 5). Um toque grava.
+// ---------------------------------------------------------------------------
+
+async function agoraComLinhas(h, m) {
+  const agora = agoraEstavel(h, m);
+  return app({ aba: 'agora', agora: agora,
+               estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'descanso') } });
+}
+
+test('a linha abre no lugar, e só uma por vez', async () => {
+  const a = await agoraComLinhas(10, 40);
+  a.clicar('[data-a="linha-pos"]');
+  await a.esperar();
+  assert.ok(a.$('[data-a="tudo-pos"]'), 'o café abriu com os três botões');
+  assert.ok(/no plano às 8h00/.test(a.texto('.ag-l-proc')), a.texto('.ag-l-proc'));
+  a.clicar('[data-a="linha-almoco"]');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="tudo-pos"]'), null, 'abrir o almoço fecha o café');
+  assert.ok(a.$('[data-a="tudo-almoco"]'));
+  assert.strictEqual(Object.keys(a.S().dia.done).length, 0, 'abrir não grava nada');
+  a.clicar('[data-a="linha-almoco"]');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="tudo-almoco"]'), null, 'tocar de novo fecha');
+  a.fechar();
+});
+
+test('"Metade" grava a marca com porção ½, como a folha de pôr em dia', async () => {
+  const a = await agoraComLinhas(10, 40);
+  a.clicar('[data-a="linha-pos"]');
+  await a.esperar();
+  a.clicar('[data-a="metade-pos"]');
+  await a.esperar();
+  assert.ok(a.S().dia.done.pos > 0, 'marcado');
+  assert.strictEqual(a.S().dia.escala.pos, 0.5, 'com a porção pela metade');
+  assert.ok(!a.S().dia.como || !a.S().dia.como.pos, 'sem "como": comeu o plano, pela metade');
+  assert.ok(/metade · \d+h\d\d/.test(a.texto('[data-a="linha-pos"]')), a.texto('[data-a="linha-pos"]'));
+  assert.strictEqual(a.$('[data-a="tudo-pos"]'), null, 'e a linha fecha');
+  a.fechar();
+});
+
+test('"Não comi isso" faz a única pergunta, com as três respostas', async () => {
+  // A decisão 1 do dono (06/10): "Não comi" é resposta própria. A pergunta tem
+  // três saídas — sei o que comi (fora), não sei, não comi nada —, e só a
+  // resposta grava.
+  const casos = [['fora', 'fora'], ['nsei', 'nsei'], ['nao', 'nao']];
+  for (const [botao, como] of casos) {
+    const a = await agoraComLinhas(10, 40);
+    a.clicar('[data-a="linha-pos"]');
+    await a.esperar();
+    a.clicar('[data-a="naocomi-pos"]');
+    await a.esperar();
+    assert.strictEqual(Object.keys(a.S().dia.done).length, 0, 'a pergunta ainda não gravou');
+    assert.ok(/Sabe o que comeu no lugar\?/.test(a.texto('.ag-l-perg')));
+    a.clicar('[data-a="' + botao + '-pos"]');
+    await a.esperar();
+    assert.strictEqual(a.S().dia.como.pos, como, botao + ' grava "' + como + '"');
+    assert.ok(a.S().dia.done.pos > 0);
+    a.fechar();
+  }
+});
+
+test('"Desfazer" tira a marca, com lápide, e a linha volta a oferecer os botões', async () => {
+  const a = await agoraComLinhas(10, 40);
+  a.clicar('[data-a="linha-pos"]');
+  await a.esperar();
+  a.clicar('[data-a="metade-pos"]');
+  await a.esperar();
+  a.clicar('[data-a="linha-pos"]');
+  await a.esperar();
+  assert.ok(/marcado às/.test(a.texto('.ag-l-feita')), 'aberta, a linha marcada diz quando');
+  assert.strictEqual(a.$('[data-a="tudo-pos"]'), null, 'e não oferece marcar de novo por cima');
+  // e o verbo recusa sozinho: por baixo, marcar de novo é DESMARCAR
+  a.v('ctx.marcaLinhaDaComida', 'pos', 'tudo');
+  await a.esperar();
+  assert.ok(a.S().dia.done.pos > 0, 'marcar por cima não desfaz a marca');
+  assert.strictEqual(a.S().dia.escala.pos, 0.5, 'nem troca a porção');
+  a.clicar('[data-a="desfaz-pos"]');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.done.pos, undefined, 'a marca saiu');
+  assert.strictEqual(a.S().dia.escala.pos, undefined, 'e a porção da marca também');
+  assert.ok(Object.keys(a.S().apagados).some(k => /pos$/.test(k)), 'com lápide, para o outro aparelho não devolver');
+  assert.ok(a.$('[data-a="tudo-pos"]'), 'a linha volta a oferecer os botões');
+  a.fechar();
+});
+
+test('a linha diz o estado de cada refeição: sem marca, agora, mais tarde', async () => {
+  // 12h10: o café das 8h passou sem marca; o almoço das 12h30 está na janela,
+  // é o cartão e a linha acesa; o lanche das 16h é mais tarde.
+  const a = await agoraComLinhas(12, 10);
+  const classe = id => a.$('[data-a="linha-' + id + '"]').parentNode.className;
+  assert.ok(/\bsem\b/.test(classe('pos')), classe('pos'));
+  assert.ok(/sem marca/.test(a.texto('[data-a="linha-pos"]')), 'desconhecido, não zero');
+  assert.ok(/\bagora\b/.test(classe('almoco')), classe('almoco'));
+  assert.ok(/\bfuturo\b/.test(classe('lanche')), classe('lanche'));
+  assert.ok(/\d+ kcal/.test(a.texto('[data-a="linha-lanche"]')), 'o que vem diz quanto é');
+  a.fechar();
+});
+
+test('as casas dos 14 dias: cheia, ontem sem marca, e hoje marcado sem mexer na conta do portão', async () => {
+  const agora = agoraEstavel(13, 0);
+  const iso = function (k) { const d = new Date(agora); d.setDate(d.getDate() - k); return dataLocal(d.getTime()); };
+  const a0 = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], comidaHist: [], dia: diaDe(agora, 'descanso') } });
+  const linhas = a0.vJ('ctx.poeODiaEmDia', iso(2)).linhas.map(function (l) { return l.id; });
+  a0.fechar();
+  const todas = {}; linhas.forEach(function (id) { todas[id] = agora; });
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [],
+    comidaHist: [{ d: iso(2), done: todas, agua: 0, escala: {}, tot: {}, pv: 1, m: agora, cadencia: 'descanso' },
+                 { d: iso(3), done: {}, agua: 4, escala: {}, tot: {}, pv: 1, m: agora, cadencia: 'descanso' }],
+    dia: diaDe(agora, 'descanso') } });
+  await a.esperar();
+
+  const casas = a.$$('.ag-14-d');
+  assert.ok(casas[11].classList.contains('cheio'), 'anteontem, com tudo marcado, é casa cheia');
+  assert.ok(casas[10].classList.contains('vazio'), 'um dia guardado sem refeição marcada é desconhecido: vazio');
+  assert.ok(casas[12].classList.contains('vazio'), 'ontem, sem registro, é vazia');
+  assert.ok(/Ontem, [a-zçá]+, ficou sem marca\./.test(a.texto('.ag-14-o')), a.texto('.ag-14-o'));
+  const antes = a.vJ('ctx.quatorzeDias').registrados;
+
+  a.clicar('[data-a="linha-almoco"]');
+  await a.esperar();
+  a.clicar('[data-a="tudo-almoco"]');
+  await a.esperar();
+  assert.ok(a.$$('.ag-14-d')[13].classList.contains('parte'), 'hoje, com o almoço marcado, fica em parte');
+  assert.strictEqual(a.vJ('ctx.quatorzeDias').registrados, antes, 'mas a conta do portão só lê dias fechados');
+  assert.ok(/entra na conta quando o dia fechar/.test(a.texto('.ag-14-t')), 'e a frase diz por quê');
+  a.fechar();
+});
+
+test('a folha do tipo do dia diz o efeito antes do toque, e "Já fiz" leva ao registro', async () => {
+  // A D (`agora-descanso.html`, estado 4). Num domingo de descanso pelo padrão:
+  const agora = agoraEstavel(10, 41);
+  const dom = new Date(agora); dom.setDate(dom.getDate() - dom.getDay());
+  const t = dom.getTime();
+  const a = await app({ aba: 'agora', agora: t, estado: { plano: 7, logs: {}, done: [] } });
+  a.clicar('[data-a="tipo-do-dia"]');
+  await a.esperar(60);
+  const d = a.vJ('ctx.seletorDeDia');
+  assert.strictEqual(d.pergunta, 'Hoje é dia de descanso?');
+  assert.ok(/^o plano fica o de descanso: \d+ refeições, [\d.]+ kcal$/.test(d.efeitoDescanso), d.efeitoDescanso);
+  assert.ok(/na sequência, o próximo é o Treino A/.test(d.efeitoTreino), d.efeitoTreino);
+  const ordem = a.$$('.fd-op').map(b => b.getAttribute('data-a'));
+  assert.deepStrictEqual(ordem, ['dia-e-descanso', 'dia-e-treino'], 'a resposta do palpite vem primeiro');
+
+  a.clicar('[data-a="jafiz-cardio"]');
+  await a.esperar(60);
+  assert.strictEqual(a.$('.ins-folha'), null, 'a folha fecha');
+  assert.strictEqual(a.vJ('ctx.cromoDoTreino').cardio.aberto, true, 'e o registro de cardio abre');
+  a.fechar();
+
+  const b = await app({ aba: 'agora', agora: t, estado: { plano: 7, logs: {}, done: [] } });
+  b.clicar('[data-a="tipo-do-dia"]');
+  await b.esperar(60);
+  b.clicar('[data-a="jafiz-fora"]');
+  await b.esperar(60);
+  assert.ok(b.vista().add, 'treino fora da prescrição abre o lançamento');
+  assert.strictEqual(new Date(b.vista().add.t).toDateString(), new Date(t).toDateString(), 'de hoje');
+  b.fechar();
+});
+
+test('a pesagem segue a hora e some depois do café; as fotos não seguem, e dizem que a hora fica anotada', async () => {
+  // A D (`agora-descanso.html`, estados 1 e 5). F42: a pesagem é de manhã, em
+  // semi-jejum. As fotos deixaram de seguir a hora (decisão do dono, 14/10: "a
+  // maioria eu tiro de noite"). Domingo de descanso, com a sessão de fotos
+  // vencida (16 dias).
+  const dom = function (h, m) { const d = new Date(agoraEstavel(h, m)); d.setDate(d.getDate() - d.getDay()); return d.getTime(); };
+  const fotos = function (t) {
+    return [{ d: dataLocal(t - 16 * DIA), t: 1, m: 1, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } }];
+  };
+  const cedo = await app({ aba: 'agora', agora: dom(7, 5), estado: { plano: 7, logs: {}, done: [],
+    body: { peso: [], cintura: [] }, protocolo: { sessoes: fotos(dom(7, 5)), poses: null } } });
+  assert.ok(cedo.$('[data-linha="peso"]'), 'às 7h05, antes do café: a pesagem está lá');
+  assert.ok(/a cada 14 dias · a hora de cada foto fica anotada/.test(cedo.texto('[data-linha="fotos"]')), cedo.texto('[data-linha="fotos"]'));
+  assert.ok(cedo.$('[data-a="agora-fotos"]'), 'e oferece a sessão');
+  cedo.fechar();
+
+  const tarde = await app({ aba: 'agora', agora: dom(10, 40), estado: { plano: 7, logs: {}, done: [],
+    body: { peso: [], cintura: [] }, protocolo: { sessoes: fotos(dom(10, 40)), poses: null } } });
+  assert.strictEqual(tarde.$('[data-linha="peso"]'), null, 'às 10h40, o café já passou: a pesagem não aparece');
+  tarde.fechar();
+
+  const comeu = await app({ aba: 'agora', agora: dom(7, 50), estado: { plano: 7, logs: {}, done: [],
+    body: { peso: [], cintura: [] }, protocolo: { sessoes: fotos(dom(7, 50)), poses: null } } });
+  comeu.v('ctx.marcaRefeicao', 'pos');
+  await comeu.esperar();
+  assert.ok(!/amanhã cedo/.test(comeu.texto('[data-linha="fotos"]')), 'depois do café marcado: ' + comeu.texto('[data-linha="fotos"]'));
+  assert.ok(comeu.$('[data-a="agora-fotos"]'), 'e continua oferecendo a sessão');
+  assert.strictEqual(comeu.$('[data-linha="peso"]'), null, 'e a pesagem também saiu');
+  comeu.fechar();
+});
+
+test('"Decidir" mostra a conta do volume e a regra do treinador, e cada botão grava', async () => {
+  // A D (`agora-descanso.html`, estado 7): o mesmo item da lista de Prescrição,
+  // numa folha. A mudança ACRESCENTA séries, então a regra do treinador (F99)
+  // vem ao lado. Decidida a última, a folha fecha — e sai da pilha.
+  const agora = agoraEstavel(20, 40);
+  const comMudanca = function () {
+    return app({ aba: 'agora', agora: agora,
+      estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'descanso'),
+        promoPendente: [{ sid: agora - 2 * DIA, day: 'A', t: agora - 2 * DIA, m: agora - 2 * DIA,
+                          mods: [{ k: 'sets', slot: SLOT, de: 3, para: 4 }], resumoMods: [''] }] } });
+  };
+  const series = function (a) { return a.S().prog.A.ex.filter(function (x) { return x.id === SLOT; })[0].s; };
+
+  const a = await comMudanca();
+  a.clicar('[data-a="decidir"]');
+  await a.esperar(60);
+  const d = a.vJ('ctx.decisaoNoAgora');
+  assert.ok(/^da sessão de [a-zçá]+, \d\d\/\d\d · Treino A$/.test(d.olho), d.olho);
+  assert.ok(/passa de \d+ para \d+/.test(a.texto('.dc-imp')), 'a conta do volume antes do toque: ' + a.texto('.dc-imp'));
+  assert.ok(a.texto('.dc-regra').indexOf('Não acrescentar séries agora') === 0, 'a regra do treinador');
+  assert.ok(/Se ninguém decidir, quando o Treino A voltar/.test(a.texto('.dc-se')));
+  a.clicar('[data-a^="so-naquele-dia-"]');
+  await a.esperar(60);
+  assert.strictEqual(series(a), 3, '"Foi só naquele dia" não mexe no programa');
+  assert.strictEqual(a.vJ('ctx.mudancasQueEsperam').length, 0, 'decidido');
+  assert.strictEqual(a.$('.ins-folha'), null, 'e a folha fecha');
+  assert.strictEqual((a.vista().pilha || []).length, 0, 'e sai da pilha, sem ficar invisível por baixo do Voltar');
+  assert.strictEqual(a.$('.ag-vence'), null, 'e a linha sai do Agora');
+  a.fechar();
+
+  const b = await comMudanca();
+  b.clicar('[data-a="decidir"]');
+  await b.esperar(60);
+  b.clicar('[data-a^="fica-no-programa-"]');
+  await b.esperar(60);
+  assert.strictEqual(series(b), 4, '"Fica no programa" entra no Treino A');
+  b.fechar();
+});
+
+test('o cartão da refeição grava no toque, e a leitura de volta diz o que ficou, com Desfazer', async () => {
+  // A D (`momento-2.html`, estados 1 e 2). 15h41, o lanche das 16h na janela.
+  const agora = agoraEstavel(15, 41);
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'descanso') } });
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima').id, 'lanche', 'pré-condição: o lanche é o cartão');
+  assert.deepStrictEqual(a.$$('.ins-foco-acoes button').map(b => b.textContent), ['Comi tudo', 'Metade', 'Não comi isso']);
+  a.v('ctx.marcaRefeicao', 'almoco');                 // o almoço já tinha marca
+  await a.esperar();
+
+  a.clicar('[data-a="cartao-tudo"]');
+  await a.esperar();
+  assert.ok(a.S().dia.done.lanche > 0, 'um toque gravou');
+  const volta = a.texto('.ag-volta');
+  assert.ok(/Lanche da tarde · comi tudo/.test(volta), volta);
+  assert.ok(/marcado às 15h41, neste aparelho/.test(volta), volta);
+  assert.ok(/Antes dele, sem marca hoje: café da manhã\./.test(volta), 'só o que passou SEM marca, sem cobrança: ' + volta);
+  assert.ok(/Próximo no plano: jantar às 19h30\./.test(volta), volta);
+
+  a.clicar('[data-a="volta-desfaz"]');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.done.lanche, undefined, '"Desfazer" tira a marca');
+  assert.strictEqual(a.$('.ag-volta'), null, 'e a leitura de volta some');
+  a.fechar();
+});
+
+test('"Não comi isso" no cartão troca os botões pela pergunta, no lugar', async () => {
+  const agora = agoraEstavel(15, 41);
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'descanso') } });
+  a.clicar('[data-a="linha-pos"]');                  // uma OUTRA linha aberta
+  await a.esperar();
+  a.clicar('[data-a="cartao-naocomi"]');
+  await a.esperar();
+  assert.deepStrictEqual(a.$$('.ins-foco-acoes button').map(b => b.textContent), ['Sei o que comi', 'Não sei', 'Não comi nada']);
+  assert.ok(a.$('[data-a="tudo-pos"]'), 'a linha aberta do café continua com os botões DELA');
+  assert.strictEqual(a.$('[data-a="nao-pos"]'), null, 'e não com a pergunta do lanche');
+  assert.strictEqual(Object.keys(a.S().dia.done).length, 0, 'a pergunta não grava');
+  assert.strictEqual(a.$('[data-a="nao-lanche"]'), null, 'e a linha do lanche não abre a mesma pergunta duas vezes');
+  a.clicar('[data-a="cartao-nao"]');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.como.lanche, 'nao');
+  assert.ok(/não comi/.test(a.texto('.ag-volta')), a.texto('.ag-volta'));
   a.fechar();
 });

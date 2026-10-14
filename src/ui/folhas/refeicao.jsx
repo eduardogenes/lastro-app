@@ -8,7 +8,7 @@
 
 import { Folha } from '../instrumento/folha.jsx';
 import { GradeMetricas, Procedencia, Stepper } from '../instrumento/primitivos.jsx';
-import { fmtInt } from '../../dominio/formato';
+import { caixaDeFrase, fmtInt } from '../../dominio/formato';
 import { totalDaRefeicao, totalDoItem } from '../../dominio/nutricao/calculo';
 
 const PORCOES = [
@@ -23,7 +23,7 @@ export function FolhaRefeicao({ ctx, id }) {
 
   return (
     <Folha
-      olho={r.tag}
+      olho={caixaDeFrase(r.tag)}
       titulo={r.n}
       meta={r.t}
       aoFechar={ctx.fechaFolha}
@@ -37,10 +37,10 @@ export function FolhaRefeicao({ ctx, id }) {
       <GradeMetricas
         colunas={4}
         celulas={[
-          { k: 'k', rotulo: 'kcal', valor: fmtInt(t.kcal) },
-          { k: 'p', rotulo: 'prot', valor: Math.round(t.p) },
-          { k: 'c', rotulo: 'carb', valor: Math.round(t.c) },
-          { k: 'g', rotulo: 'gord', valor: Math.round(t.g) }
+          { k: 'k', valor: fmtInt(t.kcal), unidade: 'kcal' },
+          { k: 'p', valor: Math.round(t.p), unidade: 'g', rotulo: 'proteína' },
+          { k: 'c', valor: Math.round(t.c), unidade: 'g', rotulo: 'carboidrato' },
+          { k: 'g', valor: Math.round(t.g), unidade: 'g', rotulo: 'gordura' }
         ]}
       />
 
@@ -53,7 +53,7 @@ export function FolhaRefeicao({ ctx, id }) {
       {r.nota && <p class="ins-body-sm ins-t3 fr-nota">{r.nota}</p>}
 
       <div class="fr-porcao">
-        <div class="ins-label">porção · só de hoje</div>
+        <h3 class="ins-rotulo">A porção de hoje</h3>
         <div class="ins-chips">
           {PORCOES.map(p => (
             <button
@@ -68,7 +68,7 @@ export function FolhaRefeicao({ ctx, id }) {
         </Procedencia>
       </div>
 
-      <div class="ins-label fr-h">o que tem dentro</div>
+      <h3 class="ins-rotulo fr-h">O que tem dentro</h3>
       <div class="ins-lista">
         {r.itens.filter(i => !i.alta || alta).map(i => {
           const a = catalogo[i.f];
@@ -106,27 +106,38 @@ export function FolhaRefeicao({ ctx, id }) {
 export function FolhaDia({ ctx }) {
   const d = ctx.seletorDeDia();
   return (
-    <Folha olho="hoje é" titulo={d.titulo} meta={d.treino || ''} aoFechar={ctx.fechaFolha}>
-      <div class="fd-ops">
-        <button
-          class={'fd-op' + (d.cadencia === 'treino' ? ' on' : '')}
-          onClick={() => ctx.setCadenciaDeHoje('treino')}
-        >
-          <span class="ins-subtitle">Dia de treino</span>
-          <span class="ins-body-sm ins-t3">
-            {d.treino ? `A rotação diz que vem o treino ${d.treino}.` : 'Entra a próxima sessão da rotação.'}
-          </span>
-        </button>
-        <button
-          class={'fd-op' + (d.cadencia === 'descanso' ? ' on' : '')}
-          onClick={() => ctx.setCadenciaDeHoje('descanso')}
-        >
-          <span class="ins-subtitle">Descanso</span>
-          <span class="ins-body-sm ins-t3">
-            Sai o pré-treino e o intra-treino. A rotação não anda.
-          </span>
-        </button>
-      </div>
+    <Folha olho={d.olho} titulo={d.pergunta} aoFechar={ctx.fechaFolha}>
+      {/* A folha da D (`agora-descanso.html`, estado 4): o único lugar onde o
+          tipo do dia muda. A resposta que o palpite já dá vem primeiro, e cada
+          uma diz o efeito ANTES do toque. Confirmar não é obrigatório: ignorado,
+          o palpite continua palpite. */}
+      <p class="ins-body-sm ins-t2 fd-sub">{d.sub}</p>
+      {!d.fato && (
+        <div class="fd-ops">
+          {(d.cadencia === 'descanso' ? ['descanso', 'treino'] : ['treino', 'descanso']).map(k => (
+            <button key={k} data-a={'dia-e-' + k}
+                    class={'fd-op' + (d.cadencia === k ? ' on' : '')}
+                    onClick={() => ctx.setCadenciaDeHoje(k)}>
+              <span class="ins-subtitle">{k === 'descanso' ? 'É descanso' : 'Vou treinar hoje'}</span>
+              <span class="ins-body-sm ins-t3">{k === 'descanso' ? d.efeitoDescanso : d.efeitoTreino}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {d.cadencia === 'descanso' && (
+        <div class="fd-jafiz">
+          <div class="ins-body-sm ins-t1"><b>Já fiz alguma coisa hoje</b></div>
+          <div class="ins-chips">
+            <button class="ins-chip" data-a="jafiz-cardio" onClick={() => ctx.jaFizHoje('cardio')}>Cardio</button>
+            <button class="ins-chip" data-a="jafiz-aula" onClick={() => ctx.jaFizHoje('aula')}>Aula</button>
+            <button class="ins-chip" data-a="jafiz-fora" onClick={() => ctx.jaFizHoje('fora')}>Treino fora da prescrição</button>
+          </div>
+          <p class="ins-body-sm ins-t3">
+            Cardio em dia de descanso fica no descanso: não é treino, e aparece em Dias como cardio em dia sem musculação.
+          </p>
+        </div>
+      )}
 
       {/* O turno do treino. Existe porque o plano foi desenhado em cima de
           treino às 6h15 e ele nem sempre treina de manhã — e a refeição que
@@ -136,7 +147,7 @@ export function FolhaDia({ ctx }) {
           âncoras do relógio. Deslocar o dia em bloco poria o café às 14h. */}
       {d.cadencia === 'treino' && (
         <div class="fd-turno">
-          <div class="ins-label">turno do treino</div>
+          <h3 class="ins-rotulo">O turno do treino</h3>
           <div class="fd-turnos">
             {d.turnos.map(t => (
               <button
@@ -158,7 +169,7 @@ export function FolhaDia({ ctx }) {
       )}
 
       <div class="fd-alta">
-        <div class="ins-label">demanda alta</div>
+        <h3 class="ins-rotulo">A demanda alta</h3>
         <p class="ins-body-sm ins-t3">
           Entra o carboidrato extra do intra-treino. Use no dia de perna pesada.
         </p>
@@ -174,7 +185,7 @@ export function FolhaDia({ ctx }) {
           vieram de fora dele. Sair sabendo o que comeu não estraga a semana;
           sair sem saber, sim. */}
       <div class="fd-aderencia">
-        <div class="ins-label">como foi o dia</div>
+        <h3 class="ins-rotulo">Como foi o dia</h3>
         <div class="chips ins-chips">
           {d.aderencias.map(x => (
             <button
@@ -190,7 +201,6 @@ export function FolhaDia({ ctx }) {
         </p>
       </div>
 
-      <Procedencia>{d.procedencia}</Procedencia>
     </Folha>
   );
 }

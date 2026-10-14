@@ -36,7 +36,7 @@ export function Ajustes({ ctx }) {
           "e se eu perder o aparelho?", e a nuvem é a resposta que não depende
           de você lembrar. O backup continua sendo a cópia que não depende de
           ninguém — nem do Supabase. */}
-      <Secao rotulo="sincronizar">
+      <Secao rotulo="A sincronia">
         {n.dentro ? (
           <Bloco titulo={n.conta} texto={n.explica}>
             <div class="gu-sync">
@@ -45,7 +45,7 @@ export function Ajustes({ ctx }) {
             <button class="ins-btn-primary" disabled={n.rodando} onClick={ctx.sincronizaAgora}>
               {n.rodando ? 'sincronizando...' : 'sincronizar agora'}
             </button>
-            <button class="ins-btn-secondary gu-b2" onClick={ctx.sairDaNuvem}>sair desta conta</button>
+            <button class="ins-btn-secondary gu-b2" onClick={ctx.sairDaNuvem}>Sair desta conta</button>
           </Bloco>
         ) : (
           <Bloco
@@ -70,12 +70,12 @@ export function Ajustes({ ctx }) {
         )}
       </Secao>
 
-      <Secao rotulo="backup">
+      <Secao rotulo="A cópia de segurança">
         <Bloco
           titulo="Exportar"
           texto="Guarde antes de trocar de celular, limpar o navegador ou mexer no app."
         >
-          <button class="ins-btn-primary" onClick={ctx.exportar}>baixar arquivo json</button>
+          <button class="ins-btn-primary" onClick={ctx.exportar}>Baixar arquivo JSON</button>
           <button class="ins-btn-secondary gu-b2" onClick={ctx.mostraJSON}>
             {d.json ? 'esconder o texto' : 'mostrar o json para copiar'}
           </button>
@@ -86,7 +86,7 @@ export function Ajustes({ ctx }) {
                 onClick={e => e.currentTarget.select()}
               />
               <button class="ins-btn-secondary gu-b2" onClick={ctx.copiaJSON}>
-                copiar para a área de transferência
+                Copiar para a área de transferência
               </button>
             </>
           )}
@@ -104,7 +104,7 @@ export function Ajustes({ ctx }) {
             />
           </label>
           <button class="ins-btn-secondary gu-b2" onClick={ctx.alternaColar}>
-            colar o texto do backup
+            Colar o texto do backup
           </button>
           {d.colando && (
             <>
@@ -112,19 +112,19 @@ export function Ajustes({ ctx }) {
               <button
                 class="ins-btn-primary gu-b2"
                 onClick={() => ctx.importaTexto(document.getElementById('jin').value)}
-              >importar do texto</button>
+              >Importar do texto</button>
             </>
           )}
         </Bloco>
       </Secao>
 
-      <Secao rotulo="restaurar" nota="os dois preservam o histórico">
+      <Secao rotulo="O que dá para restaurar" nota="os dois preservam o histórico">
         <div class="gu-acoes">
           <button class="ins-btn-secondary ins-btn-destructive" onClick={ctx.restauraPrograma}>
-            restaurar o programa do treinador
+            Restaurar o programa do treinador
           </button>
           <button class="ins-btn-secondary ins-btn-destructive" onClick={ctx.restauraPlano}>
-            restaurar o plano do nutricionista
+            Restaurar o plano do nutricionista
           </button>
         </div>
         <Procedencia>
@@ -142,7 +142,7 @@ export function Ajustes({ ctx }) {
         </div>
         <Procedencia>{d.resumo}</Procedencia>
         <button class="ins-btn-secondary ins-btn-destructive gu-apagar" onClick={ctx.apagaTudo}>
-          apagar todo o histórico
+          Apagar todo o histórico
         </button>
         <Procedencia>
           isto não tem volta, e não apaga o programa nem o plano — só o que você

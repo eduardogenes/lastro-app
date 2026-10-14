@@ -28,18 +28,18 @@ import { Procedencia, Secao, Vazio } from '../instrumento/primitivos.jsx';
  */
 function Renome({ r, ctx }) {
   return (
-    <Secao rotulo="nome do exercício" nota="o histórico não se move">
+    <Secao rotulo="O nome do exercício" nota="o histórico não se move">
       <input class="ins-input hx-nome" type="text" id="exnome"
              defaultValue={r.nome} maxLength={60} aria-label="nome do exercício" />
       <div class="hx-acoes">
         <button class="ins-btn-secondary"
                 onClick={() => ctx.renomeiaExercicio(r.id, document.getElementById('exnome').value)}>
-          salvar
+          Salvar
         </button>
         {r.doCodigo && (
           <button class="ins-btn-secondary"
                   onClick={() => ctx.renomeiaExercicio(r.id, r.doCodigo)}>
-            voltar a "{r.doCodigo}"
+            Voltar a "{r.doCodigo}"
           </button>
         )}
       </div>
@@ -93,7 +93,7 @@ export function Historico({ ctx }) {
             ))}
           </div>
 
-          <div class="ins-label hsec">sessão a sessão</div>
+          <h2 class="ins-rotulo hsec">Sessão a sessão</h2>
           {d.sessoes.map(s => (
             s.editando
               ? <Edicao key={s.real} s={s} ctx={ctx} />
@@ -143,7 +143,7 @@ function Sessao({ s, ctx }) {
       </div>
       {s.dor && <div class="pain ins-amber">{s.dor}</div>}
       {s.obs && <div class="hs-obs">{s.obs}</div>}
-      <button class="edbtn" onClick={() => ctx.editaLinha(s.real)}>corrigir esta sessão</button>
+      <button class="edbtn" onClick={() => ctx.editaLinha(s.real)}>Corrigir esta sessão</button>
     </div>
   );
 }
@@ -191,7 +191,7 @@ function Edicao({ s, ctx }) {
         ))}
       </div>
 
-      <div class="ins-label obs-h">dor de tendão</div>
+      <h3 class="ins-rotulo obs-h">A dor de tendão</h3>
       <div class="chips ins-chips">
         {e.dores.map(x => (
           <button key={x.k} class={'chip ins-chip' + (x.on ? ' on' : '')}
@@ -204,10 +204,10 @@ function Edicao({ s, ctx }) {
 
       <div class="edrow">
         <button class="ins-btn-primary dbtn" onClick={ctx.salvaEdicao}>Salvar correção</button>
-        <button class="ins-btn-secondary dbtn ghost" onClick={ctx.cancelaEdicao}>cancelar</button>
+        <button class="ins-btn-secondary dbtn ghost" onClick={ctx.cancelaEdicao}>Cancelar</button>
       </div>
       <button class="ins-btn-secondary ins-btn-destructive danger ed-rm"
-              onClick={ctx.apagaLinha}>apagar esta sessão</button>
+              onClick={ctx.apagaLinha}>Apagar esta sessão</button>
     </div>
   );
 }

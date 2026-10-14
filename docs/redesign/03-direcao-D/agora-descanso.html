@@ -1,0 +1,1226 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agora no descanso</title>
+<style>
+
+:root{
+  color-scheme:light;
+  --page:#E7E3DB;--bg:#F5F3EE;--surface:#FFFFFF;--surface-2:#EDEAE3;
+  --ink:#15171A;--ink-2:#474C54;--ink-3:#5C6169;
+  --line:#DCD7CD;--line-2:#8C867A;
+  --accent:#3833DB;--accent-ink:#2C28BE;--accent-soft:#E9E8FD;--on-accent:#FFFFFF;
+  --warn-bg:#FBEFD6;--warn-ink:#5E3B00;--warn-line:#D9A955;
+  --err-bg:#FBE4E1;--err-ink:#7F1A12;--err-line:#D98A80;
+  --scrim:rgba(18,18,30,.42);
+}
+.phone.dark{
+  color-scheme:dark;
+  --page:#08090A;--bg:#111214;--surface:#1B1D21;--surface-2:#25282D;
+  --ink:#F2F1EE;--ink-2:#BCC0C7;--ink-3:#A2A6AE;
+  --line:#33363C;--line-2:#7C818A;
+  --accent:#9E9BFF;--accent-ink:#B6B4FF;--accent-soft:#272550;--on-accent:#14123F;
+  --warn-bg:#33270F;--warn-ink:#F3CF85;--warn-line:#7A5A1E;
+  --err-bg:#3A1714;--err-ink:#FFADA3;--err-line:#7E3129;
+  --scrim:rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;background:var(--page)}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;text-align:inherit;-webkit-user-select:none;user-select:none}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button[disabled]{cursor:default}
+.num{font-variant-numeric:tabular-nums}
+svg{display:block}
+
+/* página */
+.doc{max-width:1400px;margin:0 auto;padding:28px 16px 4px}
+.eyebrow{font-size:13px;;color:var(--ink-2);margin:0 0 6px;font-weight:600}
+h1{font-size:30px;line-height:1.12;margin:0 0 12px;letter-spacing:-.02em}
+.lead{max-width:68ch;margin:0 0 8px;color:var(--ink-2);font-size:16px}
+.lead b{color:var(--ink)}
+.themes{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:14px 0 0;font-size:14px;color:var(--ink-2)}
+.themes button{border:1.5px solid var(--line-2);border-radius:999px;padding:0 14px;min-height:44px;font-size:14px;font-weight:600;color:var(--ink)}
+.themes button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.states{max-width:1400px;margin:0 auto;padding:20px 16px 56px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:40px 28px;align-items:start}
+.state{margin:0;min-width:0}
+.state.wide{grid-column:1/-1}
+.state figcaption{margin:0 0 12px;max-width:414px}
+.state.wide figcaption{max-width:70ch}
+.state h2{font-size:17px;line-height:1.25;margin:0 0 4px}
+.state h2 .n{display:inline-block;min-width:28px;height:28px;line-height:28px;text-align:center;border-radius:8px;background:var(--ink);color:var(--bg);font-size:14px;margin-right:6px;vertical-align:1px}
+.state p.cap{font-size:14px;color:var(--ink-2);margin:0}
+.wrap{width:100%;max-width:414px}
+.wrap.land{max-width:896px}
+
+/* telefone */
+.phone{width:414px;height:896px;transform-origin:0 0;border-radius:52px;background:var(--bg);color:var(--ink);box-shadow:0 0 0 1.5px var(--line-2),0 26px 50px -30px rgba(20,15,0,.55);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.phone.land{width:896px;height:414px;display:block}
+.sb{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 40px;font-size:15px;font-weight:600;position:relative}
+.sb .notch{position:absolute;left:50%;top:0;width:210px;height:30px;margin-left:-105px;background:#000;border-radius:0 0 20px 20px}
+.sb .ic{display:flex;gap:6px;align-items:center}
+.hi{height:34px;flex:none;display:flex;align-items:center;justify-content:center}
+.hi i{width:134px;height:5px;border-radius:3px;background:var(--ink);opacity:.85}
+.scr{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* sessão: cabeçalho */
+.sh{padding:4px 16px 10px;border-bottom:1px solid var(--line);flex:none}
+.sh-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.sh-t{font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.sh-t .sh-d{font-size:14px;font-weight:600;color:var(--ink-2);margin-left:4px}
+.sh-sub{font-size:14px;color:var(--ink-2);line-height:1.3}
+.sh-m{font-size:14px;color:var(--ink-2);font-variant-numeric:tabular-nums;line-height:1.35}
+.ib{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin:-6px -10px 0 0;flex:none;color:var(--ink)}
+.map{display:flex;gap:6px;margin-top:8px;align-items:center;min-height:30px}
+.map .g{display:flex;gap:3px;padding:5px 6px;border-radius:8px;background:var(--surface-2);position:relative}
+.map .d{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--ink-3)}
+.map .d.f{background:var(--ink);border-color:var(--ink)}
+.map .d.c{border:2px solid var(--accent);background:var(--accent-soft)}
+.map .d.x{border-style:dashed}
+.map .g.mx::after{content:"";position:absolute;left:5px;right:5px;bottom:-5px;height:2px;border-radius:2px;background:var(--ink-2)}
+.sh-r{font-size:13px;color:var(--ink-2);margin-top:8px}
+
+/* cartão do exercício */
+.card{margin:10px 16px 0;padding:12px 14px 12px;background:var(--surface);border-radius:20px;border:1px solid var(--line);flex:none}
+.kick{font-size:13px;color:var(--ink-2);font-weight:600}
+.ex{font-size:25px;line-height:1.12;font-weight:750;font-weight:700;margin:2px 0 4px;letter-spacing:-.015em}
+.presc{font-size:15px;color:var(--ink-2)}
+.presc b{color:var(--ink)}
+table.ref{width:100%;border-collapse:collapse;margin-top:10px;font-variant-numeric:tabular-nums}
+.ref th,.ref td{text-align:left;padding:6px 4px 6px 0;border-top:1px solid var(--line);vertical-align:top}
+.ref thead th{font-size:12px;color:var(--ink-3);font-weight:600;border-top:0;padding-bottom:2px}
+.ref tbody th{font-size:13px;color:var(--ink-2);font-weight:600;width:70px;line-height:1.2}
+.ref tbody th small{display:block;font-weight:500;font-size:12px}
+.ref td{font-weight:700;font-size:17px;line-height:1.2}
+.ref td small{display:block;font-weight:500;color:var(--ink-2);font-size:12px}
+.ref td.pend span{display:inline-block;min-width:44px;text-align:center;border:1.5px dashed var(--accent);color:var(--accent-ink);border-radius:8px;padding:0 6px}
+.ref td.new span{display:inline-block;background:var(--ink);color:var(--bg);border-radius:8px;padding:0 6px}
+.ref td.hl{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:var(--accent)}
+.ref td.dim{color:var(--ink-3);font-weight:500}
+.links{display:flex;gap:4px;margin-top:4px}
+.lk{min-height:44px;padding:0 6px;display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--accent-ink)}
+.lk svg{flex:none}
+.info{margin-top:10px;padding:10px 12px;border-radius:14px;background:var(--accent-soft);font-size:14px;line-height:1.4}
+.info p{margin:0}
+.info p+p{margin-top:4px}
+.quote{margin:10px 0 0;padding:0 0 0 12px;border-left:3px solid var(--line-2);font-size:15px;line-height:1.38}
+.quote cite{display:block;font-style:normal;font-size:12px;color:var(--ink-2);margin-top:3px;font-weight:600}
+.appr{margin-top:10px;font-size:14px;color:var(--ink-2)}
+.appr b{color:var(--ink)}
+.appr ol{margin:3px 0 0;padding-left:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+.toggle{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;font-weight:600;width:100%}
+.box{width:26px;height:26px;border-radius:8px;border:2px solid var(--line-2);flex:none}
+.small{font-size:13px;color:var(--ink-2);margin:6px 16px 0}
+
+/* descanso */
+.rest{margin:10px 16px 0;padding:10px 14px 10px;border-radius:18px;background:var(--surface-2);flex:none}
+.rest-top{display:flex;align-items:baseline;gap:10px}
+.rest-l{font-size:13px;font-weight:700;color:var(--ink-2)}
+.rest-t{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
+.rest-r{font-size:14px;color:var(--ink-2);margin-left:auto;text-align:right}
+.bar{height:6px;border-radius:3px;background:var(--line);position:relative;margin:9px 0 6px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--ink)}
+.bar b{position:absolute;top:-4px;width:2px;height:14px;background:var(--ink-2);left:66.66%}
+.hint{font-size:13px;color:var(--ink-2)}
+
+.also-l{font-size:12px;font-weight:700;color:var(--ink-2);margin:10px 16px 4px;}
+.also{display:flex;gap:8px;padding:0 16px;overflow-x:auto;scrollbar-width:none;flex:none}
+.also::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line-2);font-size:14px;display:inline-flex;align-items:center;gap:6px;background:var(--surface);white-space:nowrap}
+.chip b{font-weight:700}
+.chip.ok{border-color:var(--ink)}
+.next{margin:10px 16px 0;font-size:14px;color:var(--ink-2)}
+.next b{color:var(--ink)}
+.prev{display:flex;align-items:center;gap:8px;margin:10px 16px 0;font-size:14px;color:var(--ink-2);flex:none}
+.prev .t{flex:1;min-width:0;line-height:1.3}
+.prev .t b{color:var(--ink)}
+.pill{min-height:44px;padding:0 12px;border-radius:12px;border:1.5px solid var(--line-2);font-weight:700;color:var(--ink);display:inline-flex;align-items:center;font-size:14px;background:var(--surface);flex:none}
+
+/* zona do polegar */
+.ctl{margin-top:auto;padding:8px 16px 4px;flex:none}
+.load-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lbl{font-size:13px;color:var(--ink-2);font-weight:700}
+.load{min-height:48px;padding:0 14px;border-radius:14px;border:1.5px solid var(--line-2);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;display:inline-flex;align-items:baseline;gap:5px;background:var(--surface)}
+.load span{font-size:14px;font-weight:600;color:var(--ink-2)}
+.load.need{border:2px solid var(--accent);color:var(--accent-ink);font-size:17px;align-items:center}
+.same{font-size:13px;color:var(--ink-2)}
+.strip-lbl{font-size:13px;color:var(--ink-2);margin:0 0 6px;font-weight:700}
+.strip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 14px;scroll-snap-type:x proximity}
+.strip::-webkit-scrollbar{display:none}
+.rep{flex:none;width:54px;height:64px;border-radius:16px;background:var(--surface);border:1.5px solid var(--line-2);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;scroll-snap-align:start;text-align:center}
+.rep small{font-size:11px;font-weight:600;color:var(--accent-ink);margin-top:3px}
+.rep.in::after{content:"";position:absolute;left:-4px;right:-4px;bottom:-10px;height:3px;background:var(--ink-3)}
+.rep.last{border:2px solid var(--accent);background:var(--accent-soft)}
+.rep.hit{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.strip.off .rep{opacity:.38}
+.range{font-size:12px;color:var(--ink-2);margin:0 0 6px}
+.acts{display:flex;gap:8px}
+.acts button{flex:1;min-height:44px;border-radius:12px;font-size:14px;font-weight:600;color:var(--ink);background:var(--surface-2);text-align:center}
+.saved{display:flex;align-items:center;gap:8px;font-size:15px;margin-bottom:6px;min-height:44px}
+.saved .t{flex:1;min-width:0;line-height:1.3}
+.saved em{font-style:normal;font-weight:700;color:var(--accent-ink)}
+.ico{width:22px;height:22px;flex:none;color:var(--ink)}
+.rir{display:flex;gap:6px;margin-bottom:8px}
+.rir button{flex:none;width:52px;height:56px;border-radius:14px;border:1.5px solid var(--line-2);background:var(--surface);font-size:22px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.rir button small{font-size:11px;font-weight:600;color:var(--accent-ink);margin-top:3px}
+.rir .tgt{border:2px solid var(--accent);background:var(--accent-soft)}
+.rir .skip{flex:1;width:auto;font-size:15px}
+.extra{width:100%;min-height:48px;border-radius:14px;border:1.5px dashed var(--line-2);font-weight:700;font-size:15px;text-align:center}
+
+/* folhas, avisos */
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:26px 26px 0 0;padding:8px 16px 40px;box-shadow:0 -12px 40px rgba(0,0,0,.22)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line-2);margin:0 auto 12px;opacity:.7}
+.sheet h3{font-size:20px;margin:0 0 2px;line-height:1.2}
+.sheet .sub{font-size:14px;color:var(--ink-2);margin:0 0 10px}
+.disp{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:16px;border:2px solid var(--accent);margin-bottom:8px}
+.disp b{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.1}
+.disp .caret{width:2px;height:34px;background:var(--accent)}
+.disp span{font-size:15px;color:var(--ink-2);margin-left:auto;text-align:right;line-height:1.25}
+.used{display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:13px;color:var(--ink-2)}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.kp button{height:54px;border-radius:14px;background:var(--surface-2);font-size:24px;font-weight:600;text-align:center;font-variant-numeric:tabular-nums}
+.two{display:flex;gap:8px}
+.two>*{flex:1}
+.primary{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;border-radius:16px;background:var(--accent);color:var(--on-accent);font-size:18px;font-weight:700;text-align:center}
+.sec{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:14px;border:1.5px solid var(--line-2);font-weight:700;font-size:15px;background:var(--surface);text-align:center;padding:0 10px;line-height:1.2}
+.opt{display:flex;gap:10px;align-items:flex-start;width:100%;padding:11px 2px;border-top:1px solid var(--line);min-height:56px}
+.opt .tx{flex:1;min-width:0}
+.opt b{display:block;font-size:16px;line-height:1.25}
+.opt span{display:block;font-size:13px;color:var(--ink-2);line-height:1.35;margin-top:2px}
+.opt .q{font-style:italic;color:var(--ink)}
+.opt .star{width:18px;height:18px;flex:none;margin-top:2px;color:var(--ink)}
+.opt .sp{width:18px;flex:none}
+.grp{font-size:12px;font-weight:700;color:var(--ink-2);margin:12px 0 4px;}
+.warn{background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--warn-line);border-radius:16px;padding:11px 13px;font-size:14px;line-height:1.4}
+.warn b,.err b{display:block;font-size:15px;margin-bottom:2px}
+.warn p,.err p{margin:0}
+.warn p+p,.err p+p{margin-top:4px}
+.err{background:var(--err-bg);color:var(--err-ink);border:1px solid var(--err-line);border-radius:16px;padding:11px 13px;font-size:14px;line-height:1.4}
+.wh{display:flex;gap:8px;align-items:flex-start}
+.wh svg{flex:none;margin-top:1px}
+.btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+
+/* esqueleto */
+.sk{background:var(--surface-2);border-radius:8px}
+@media (prefers-reduced-motion:no-preference){
+  .sk{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .rep,.rir button,.chip,.sec,.primary{transition:transform .12s ease,background-color .15s ease}
+  .rep:active,.rir button:active,.chip:active,.sec:active,.primary:active{transform:scale(.95)}
+  .enter{animation:enter .24s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .bar i{transition:width 1s linear}
+}
+
+/* hoje (Agora) */
+.ag-h{display:flex;justify-content:space-between;align-items:flex-start;padding:4px 16px 4px;flex:none}
+.ag-d{font-size:23px;font-weight:700;letter-spacing:-.015em;line-height:1.2}
+.daytype{min-height:36px;display:inline-flex;align-items:center;font-size:14px;color:var(--ink-2);font-weight:600}
+.band{margin:8px 16px 0;padding:12px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);flex:none}
+.band>b{display:block;font-size:16px;line-height:1.25}
+.band>p{margin:3px 0 10px;font-size:14px;color:var(--ink-2)}
+.row{display:flex;align-items:center;gap:10px;margin:8px 16px 0;padding:6px 6px 6px 14px;border-radius:16px;background:var(--surface-2);font-size:15px;min-height:56px;flex:none}
+.row .t{flex:1;min-width:0;line-height:1.3}
+.row .t small{display:block;font-size:13px;color:var(--ink-2)}
+.now{margin:10px 16px 0;padding:14px 16px 16px;border-radius:22px;background:var(--surface);border:2px solid var(--accent);flex:none}
+.now-k{font-size:13px;color:var(--accent-ink);font-weight:700}
+.now h3{font-size:25px;margin:2px 0 4px;line-height:1.15;letter-spacing:-.015em}
+.now .items{font-size:14px;color:var(--ink-2);margin:0 0 12px}
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:var(--surface);padding-top:4px;margin-top:auto}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;min-height:50px;color:var(--ink-2);font-weight:600;text-align:center}
+.tab.on{color:var(--accent-ink)}
+.tabwrap{flex:none;background:var(--surface);margin-top:auto}
+
+/* paisagem */
+.land .notch-v{position:absolute;left:0;top:50%;width:30px;height:210px;margin-top:-105px;background:#000;border-radius:0 20px 20px 0}
+.land .hi{position:absolute;left:0;right:0;bottom:0;height:21px}
+.land-body{position:absolute;left:48px;right:44px;top:10px;bottom:24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.land-body .col{display:flex;flex-direction:column;min-height:0}
+.land-body .sh{padding:0 0 8px}
+.land-body .card,.land-body .rest,.land-body .prev{margin-left:0;margin-right:0}
+.land-body .ctl{padding:0;margin-top:0}
+
+/* ======== parada 4: página com os dois temas lado a lado ======== */
+.states{grid-template-columns:repeat(auto-fill,minmax(min(100%,700px),1fr))}
+.pair{display:flex;gap:14px;align-items:flex-start}
+.pair>div{flex:1 1 0;min-width:0}
+.tl{font-size:12px;font-weight:700;;color:var(--ink-2);margin:0 0 5px}
+.state figcaption{max-width:74ch}
+.phone{box-shadow:0 0 0 1.5px var(--line-2),0 18px 36px -24px rgba(20,15,0,.5)}
+.doc h1{max-width:30ch}
+.doc .lead+.lead{margin-top:8px}
+.idx{max-width:1400px;margin:0 auto;padding:4px 16px 0;font-size:14px;color:var(--ink-2)}
+.idx a{color:var(--accent-ink)}
+
+.phone:has(.cheia) .sb{color:#fff}
+/* ======== telas comuns (não-sessão) ======== */
+.nav{display:flex;align-items:center;gap:6px;padding:0 10px 4px;flex:none}
+.nav .bk{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;flex:none;color:var(--ink)}
+.nav h2{font-size:21px;font-weight:700;letter-spacing:-.015em;flex:1;margin:0;line-height:1.15;min-width:0}
+.nav h2 small{display:block;font-size:13px;font-weight:600;color:var(--ink-2)}
+.nav .act{min-height:44px;padding:0 8px;font-size:14px;font-weight:700;color:var(--accent-ink);flex:none;text-align:right;line-height:1.2}
+.lead-p{margin:0 16px 2px;font-size:14px;color:var(--ink-2);line-height:1.4}
+.lead-p b{color:var(--ink)}
+.sec-l{font-size:12px;font-weight:700;color:var(--ink-2);margin:14px 16px 4px;}
+.sec-l.t0{margin-top:8px}
+.big{margin:8px 16px 0;padding:11px 14px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.big .n1{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px}
+.big .n1 span{font-size:15px;font-weight:600;color:var(--ink-2);letter-spacing:0}
+.big .cx{font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.35}
+.big .cx b{color:var(--ink)}
+.tabbar.five{grid-template-columns:repeat(5,1fr)}
+.tab svg{width:24px;height:24px}
+.fab{margin:10px 16px 0;display:flex;gap:8px}
+.fab>*{flex:1}
+.note-f{margin:8px 16px 0;padding:9px 12px;border-radius:14px;border:1.5px dashed var(--line-2);font-size:14px;color:var(--ink-2);line-height:1.35}
+.fin{margin:10px 16px 0;padding:0;border-radius:18px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+.fin .fr{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--line);min-height:56px}
+.fin .fr:first-child{border-top:0}
+.fin .fr .t{flex:1;min-width:0;line-height:1.3;font-size:15px}
+.fin .fr .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.fin .fr .v{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;line-height:1.1}
+.fin .fr .v small{display:block;font-size:12px;font-weight:600;color:var(--ink-2)}
+.fin .fr .v.todo{font-size:14px;font-weight:700;color:var(--accent-ink);border:1.5px dashed var(--accent);border-radius:10px;padding:5px 8px}
+.rep.w{width:76px;font-size:23px}
+.rep.w small{font-size:10.5px}
+.rep.cm{width:64px;font-size:21px}
+
+/* medidas / bioimpedância */
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:6px 16px 0}
+.fld{border:1.5px solid var(--line-2);border-radius:14px;padding:6px 9px;background:var(--surface);min-height:60px;display:flex;flex-direction:column;justify-content:center}
+.fld .l{font-size:11.5px;color:var(--ink-2);font-weight:700;line-height:1.15}
+.fld .v{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:3px}
+.fld .v span{font-size:12px;font-weight:600;color:var(--ink-2)}
+.fld .d{font-size:11.5px;color:var(--ink-2);line-height:1.2;margin-top:1px}
+.fld.vazio .v{color:var(--ink-3);font-weight:600;font-size:15px}
+.fld.wide{grid-column:1/-1}
+.fld.cur{border:2px solid var(--accent)}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 16px 0}
+.seg3 button{min-height:44px;border-radius:12px;border:1.5px solid var(--line-2);background:var(--surface);font-size:14px;font-weight:700;text-align:center;padding:0 4px;line-height:1.15}
+.seg3 button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg3.g2{grid-template-columns:1fr 1fr}
+.seg3.g4{grid-template-columns:repeat(4,1fr)}
+
+/* gráfico */
+.chart{margin:8px 16px 0}
+.chart svg{width:100%;height:auto;overflow:visible}
+.cl{font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;margin-top:3px}
+.ckey{font-size:12.5px;color:var(--ink-2);margin:5px 16px 0;line-height:1.35}
+
+/* fotos */
+.foto{position:relative;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:#CFC8BA}
+.foto svg{position:absolute;inset:0;width:100%;height:100%}
+.foto .tag{position:absolute;left:6px;bottom:5px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 6px;font-variant-numeric:tabular-nums}
+.foto.falta{background:var(--surface-2);display:grid;place-items:center;text-align:center;padding:10px}
+.foto.falta p{font-size:13px;color:var(--ink-2);margin:0;line-height:1.35;position:relative}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 16px 0}
+.duo .cp{font-size:12.5px;color:var(--ink-2);margin:4px 0 0;line-height:1.3;font-variant-numeric:tabular-nums}
+.duo .cp b{color:var(--ink);font-size:14px;display:block}
+.cort{position:relative;margin:6px 16px 0;border-radius:14px;overflow:hidden;aspect-ratio:3/4}
+.cort .lay{position:absolute;inset:0}
+.cort .lay.nova{clip-path:inset(0 0 0 54%)}
+.cort .hd{position:absolute;top:0;bottom:0;left:54%;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.cort .hd i{position:absolute;top:50%;left:50%;margin:-22px 0 0 -22px;width:44px;height:44px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:block}
+.cort .hd i::before,.cort .hd i::after{content:"";position:absolute;top:16px;width:0;height:0;border:6px solid transparent}
+.cort .hd i::before{left:6px;border-right-color:#15171A}
+.cort .hd i::after{right:6px;border-left-color:#15171A}
+.cort .mk{position:absolute;top:6px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 6px}
+.cort .mk.l{left:6px}.cort .mk.r{right:6px}
+.poses{display:flex;gap:4px;margin:8px 16px 0}
+.poses i{flex:1;height:9px;border-radius:3px;background:var(--surface-2);border:1px solid var(--line-2)}
+.poses i.f{background:var(--ink);border-color:var(--ink)}
+.poses i.c{background:var(--accent);border-color:var(--accent)}
+.poses i.x{background:repeating-linear-gradient(45deg,var(--err-line) 0 3px,transparent 3px 6px);border-color:var(--err-line)}
+
+/* sessão de fotos, modo 3 metros */
+.cheia{position:absolute;inset:0;display:flex;flex-direction:column;background:#0C0B0A;color:#fff;overflow:hidden}
+.cheia .top{flex:1;min-height:0;display:flex;flex-direction:column;padding:36px 12px 6px}
+.cheia .frame{position:relative;width:100%;aspect-ratio:3/4;flex:none;overflow:hidden;background:#CFC8BA}
+.cheia .frame>svg{position:absolute;inset:0;width:100%;height:100%}
+.cheia .frame.vazio{background:#15161A}
+.cheia .guia{position:absolute;inset:12px 26px;border:2px dashed rgba(255,255,255,.7);border-radius:6px}
+.cheia .bot{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;padding:6px 12px 2px;gap:8px}
+.cheia .nine{display:flex;gap:5px;flex:none}
+.cheia .nine i{flex:1;height:24px;border-radius:5px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 2px rgba(255,255,255,.8)}
+.cheia .nine i.f{background:#fff;box-shadow:none}
+.cheia .nine i.c{background:#9E9BFF;box-shadow:none}
+.cheia .nine i.x{background:repeating-linear-gradient(45deg,#FFADA3 0 4px,transparent 4px 8px);box-shadow:inset 0 0 0 2px #FFADA3}
+.cheia .ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:190px;height:190px}
+.cheia .ring svg{width:190px;height:190px}
+.cheia .ring b{position:absolute;font-size:76px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.55)}
+.cheia .giant{font-size:44px;font-weight:800;line-height:1;letter-spacing:-.03em;margin:14px 0 0;text-align:center}
+.cheia .giant.sm{font-size:32px;line-height:1.08}
+.cheia .inst{font-size:20px;font-weight:600;line-height:1.3;margin:0;text-align:center}
+.cheia .linha{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cheia .vz{font-size:15px;font-weight:700;background:rgba(255,255,255,.14);border-radius:12px;padding:8px 11px;display:flex;align-items:center;gap:7px;line-height:1.25}
+.cheia .vz svg{flex:none}
+.cheia .flash{position:absolute;inset:0;background:#fff}
+.cheia .giro{position:absolute;inset:0;display:grid;place-items:center}
+.hip{position:absolute;left:10px;top:10px;font-size:11px;font-weight:800;;background:#15171A;color:#fff;border:1.5px dashed #fff;border-radius:8px;padding:3px 8px;z-index:3}
+/* listas de pendência / prescrição */
+.item{margin:8px 16px 0;padding:11px 13px 12px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+.item.due{border:2px solid var(--warn-line);background:var(--warn-bg);color:var(--warn-ink)}
+.item.gone{border-style:dashed;color:var(--ink-2)}
+.item .hd2{display:flex;align-items:baseline;gap:8px}
+.item .hd2 b{font-size:15.5px;line-height:1.25;flex:1;min-width:0}
+.item .hd2 .pz{font-size:12px;font-weight:700;white-space:nowrap}
+.item .de{font-size:13.5px;color:var(--ink-2);margin:3px 0 0;line-height:1.35}
+.item.due .de{color:var(--warn-ink)}
+.item .two{margin-top:9px}
+.item .sec{min-height:48px}
+.diff{display:flex;gap:9px;align-items:flex-start;margin:0 16px;padding:9px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.35}
+.diff .mk2{font-size:11px;font-weight:800;border-radius:6px;padding:2px 5px;flex:none;margin-top:1px;}
+.diff .mk2.tr{background:var(--accent-soft);color:var(--accent-ink)}
+.diff .mk2.eu{background:var(--ink);color:var(--bg)}
+.diff .t{flex:1;min-width:0}
+.diff .t b{display:block;font-weight:700}
+.diff .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.meal{display:flex;gap:9px;align-items:flex-start;margin:0 16px;padding:9px 0;border-top:1px solid var(--line)}
+.meal time{font-size:13px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums;width:44px;flex:none;padding-top:2px}
+.meal .t{flex:1;min-width:0}
+.meal .t b{font-size:15px;display:block;line-height:1.2}
+.meal .t small{font-size:12.5px;color:var(--ink-2);display:block;line-height:1.35;margin-top:1px}
+.meal .kc{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink-2);flex:none;padding-top:2px}
+.meal.mine .t b::after{content:" · você";font-size:11px;font-weight:700;color:var(--accent-ink);}
+.tot{display:flex;justify-content:space-between;margin:9px 16px 0;padding-top:8px;border-top:2px solid var(--line);font-size:14px;font-weight:700}
+.tot span{color:var(--ink-2);font-weight:600}
+
+/* ---- vindo do momento 2 ---- */
+/* ---- momento 2 ---- */
+.body{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.body>*{flex:none}
+.day{margin:12px 16px 0}
+.day h4{font-size:13px;color:var(--ink-2);margin:0 0 2px;font-weight:700;line-height:1.3}
+.dl{list-style:none;margin:0;padding:0}
+.dl li{display:grid;grid-template-columns:20px 44px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:36px;border-top:1px solid var(--line);font-size:15px;padding:2px 0}
+.dl .si{width:20px;height:20px;color:var(--ink)}
+.dl li.o .si,.dl li.f .si{color:var(--ink-3)}
+.dl li.nw .si{color:var(--accent)}
+.dl time{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:14px}
+.dl .nm{font-weight:600;line-height:1.25}
+.dl .nm small{display:block;font-weight:500;font-size:12px;color:var(--ink-2)}
+.dl .st{font-size:13px;color:var(--ink-2);text-align:right;line-height:1.25}
+.dl li.nw .st{color:var(--accent-ink);font-weight:700}
+.dl li.o .st{font-style:italic}
+.known{margin:12px 16px 0}
+.cells{display:grid;grid-template-columns:repeat(14,1fr);gap:4px}
+.cell{height:22px;border-radius:5px;border:1.5px dashed var(--ink-3)}
+.cell.cheia{background:var(--ink);border:1.5px solid var(--ink)}
+.cell.part{border:1.5px solid var(--ink);background:linear-gradient(to top,var(--ink) 50%,transparent 50%)}
+.cell.today{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.kl{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:4px}
+.known p{font-size:13px;color:var(--ink-2);margin:4px 0 0;line-height:1.4}
+.known p b{color:var(--ink)}
+.kr{display:flex;align-items:flex-start;gap:8px}
+.kr p{flex:1}
+.done{margin:10px 16px 0;padding:12px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.done .h{display:flex;align-items:center;gap:10px}
+.done .h .t{flex:1;min-width:0}
+.done .h b{display:block;font-size:17px;line-height:1.25}
+.done .h small{display:block;font-size:13px;color:var(--ink-2)}
+.done .ico{width:26px;height:26px}
+.done .more{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:14px;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+.done .more .t{flex:1}
+.done .more b{color:var(--ink)}
+.ask{margin:10px 0 2px;padding:10px 12px;border-radius:14px;background:var(--surface-2)}
+.ask>b{display:block;font-size:15px;margin-bottom:8px;line-height:1.3}
+.ask p{font-size:13px;color:var(--ink-2);margin:8px 0 0;line-height:1.4}
+.sheet.cheia{top:50px;padding:8px 16px 28px;display:flex;flex-direction:column;overflow:hidden}
+.rr{display:grid;grid-template-columns:90px minmax(0,1fr);gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line)}
+.rr .nm{font-size:14px;font-weight:700;line-height:1.2}
+.rr .nm small{display:block;font-weight:500;color:var(--ink-2);font-size:12px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.seg.two2{grid-template-columns:1fr 1fr}
+.seg button{min-height:44px;border-radius:11px;border:1.5px solid var(--line-2);font-size:13px;font-weight:700;text-align:center;background:var(--surface);padding:0 2px;line-height:1.1}
+.seg button[aria-checked="true"].pv{background:var(--accent-soft);border:2px solid var(--accent);color:var(--accent-ink)}
+.seg button[aria-checked="true"].me{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.seg button[aria-checked="true"].nn{border:2px solid var(--ink)}
+.rb{margin-top:10px;padding:10px 12px;border-radius:14px;border:1.5px solid var(--line-2);font-size:14px;line-height:1.4}
+.rb .l{font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:2px;}
+.rb .c{display:block;margin-top:4px;color:var(--ink-2);font-size:13px}
+.primary[disabled]{background:var(--surface-2);color:var(--ink-2);border:1.5px dashed var(--line-2)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;list-style:none;padding:0;margin:12px 0 0;font-size:14px;color:var(--ink-2)}
+.legend li{display:flex;align-items:center;gap:6px}
+.legend svg{width:20px;height:20px;color:var(--ink)}
+.legend .a svg{color:var(--accent)}
+.legend .g svg{color:var(--ink-3)}
+.wk{font-size:12px;font-weight:700;color:var(--ink-2);margin:12px 16px 0;}
+.dr{display:flex;align-items:center;gap:10px;margin:0 16px;padding:7px 0;border-top:1px solid var(--line);min-height:58px}
+.dr:first-of-type{border-top:0}
+.dr .si{width:20px;height:20px;color:var(--ink);flex:none}
+.dr.o .si{color:var(--ink-3)}
+.dr .t{flex:1;min-width:0;line-height:1.3}
+.dr .t b{display:block;font-size:15px}
+.dr .t small{display:block;font-size:13px;color:var(--ink-2)}
+.dr .t small.ok{color:var(--ink)}
+.dr .lk{padding:0 4px}
+.legend-note{font-size:13px;color:var(--ink-2);margin:6px 0 0;max-width:68ch}
+
+/* ======== terceira entrega ======== */
+/* decisão 6: nenhum rótulo em caixa alta espaçada, dentro ou fora do telefone */
+.eyebrow,.tl,.sec-l,.grp,.wk,.rb .l,.also-l,.olbl,.cmp2 .box2 b{text-transform:none!important;letter-spacing:0!important}
+.eyebrow{font-size:14px}
+.tl{font-size:13px}
+.sec-l{font-size:16px;font-weight:700;color:var(--ink);margin:18px 16px 2px;line-height:1.25}
+.sec-l small{font-size:13px;font-weight:600;color:var(--ink-2);margin-left:6px}
+.sec-l.t0{margin-top:10px}
+.cell.full{background:var(--ink);border:1.5px solid var(--ink)}
+.phone{font-size:16px}
+
+/* cabeçalho do dia (Agora e Dias) */
+.dayh{padding:2px 16px 6px;flex:none}
+.dayh .r1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.dayh .d{font-size:24px;font-weight:700;letter-spacing:-.015em;line-height:1.2}
+.dayh .hr{font-size:16px;font-weight:600;color:var(--ink-2);margin-left:8px;font-variant-numeric:tabular-nums;letter-spacing:0}
+.prov{display:inline-flex;align-items:center;gap:2px;min-height:44px;font-size:15.5px;font-weight:600;color:var(--ink-2);margin-top:-4px}
+.prov svg{width:18px;height:18px;color:var(--ink-3)}
+.prov .p{border-bottom:1.5px dotted var(--ink-3);line-height:1.25}
+.prov.firm .p{border-bottom:0}
+.ib.r{margin:0 -10px 0 0}
+
+/* linhas do dia, tocáveis */
+.lines{list-style:none;margin:0 16px;padding:0}
+.lines>li{border-top:1px solid var(--line)}
+.lines>li:first-child{border-top:0}
+.ln{display:grid;grid-template-columns:22px 48px minmax(0,1fr) auto 16px;align-items:center;gap:8px;width:100%;min-height:52px;padding:4px 0;font-size:15.5px;text-align:left}
+.ln .si{width:21px;height:21px;color:var(--ink)}
+.ln time{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:14.5px}
+.ln .nm{font-weight:600;line-height:1.25;min-width:0}
+.ln .nm small{display:block;font-weight:500;font-size:12.5px;color:var(--ink-2);line-height:1.3}
+.ln .st{font-size:14px;color:var(--ink-2);text-align:right;line-height:1.25;font-variant-numeric:tabular-nums}
+.ln .st b{color:var(--ink);font-weight:700}
+.ln .cv{width:16px;height:16px;color:var(--ink-3)}
+.ln.o .si{color:var(--ink-3)}
+.ln.o .st{font-style:italic}
+.ln.f .si{color:var(--ink-3)}
+.ln.f .nm{font-weight:500;color:var(--ink-2)}
+.ln.pv .si{color:var(--accent)}
+.ln.pv .st{color:var(--accent-ink);font-weight:700}
+/* a linha aberta é o cartão, aberto no lugar */
+.lopen{margin:4px -8px 8px;padding:10px 12px 12px;border-radius:20px;border:2px solid var(--accent);background:var(--surface)}
+.lopen .k{font-size:13.5px;color:var(--accent-ink);font-weight:700}
+.lopen h3{font-size:22px;margin:1px 0 3px;line-height:1.15;letter-spacing:-.01em}
+.lopen .items{font-size:13.5px;color:var(--ink-2);margin:0 0 10px;line-height:1.35}
+.lopen .primary{min-height:52px}
+.lopen .two .sec{min-height:48px}
+
+.secl{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:16px 16px 2px}
+.secl b{font-size:16px;line-height:1.25}
+.secl span{font-size:13.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;text-align:right}
+
+/* água */
+.agua{display:flex;align-items:center;gap:10px;margin:10px 16px 0;padding:6px 6px 6px 12px;border-radius:16px;background:var(--surface-2);min-height:58px}
+.agua svg.dr{width:22px;height:22px;color:var(--ink-2);flex:none}
+.agua .t{flex:1;min-width:0;line-height:1.3;font-size:15.5px}
+.agua .t b{font-variant-numeric:tabular-nums}
+.agua .t small{display:block;font-size:13px;color:var(--ink-2)}
+.agua .cups{display:flex;gap:3px;margin-top:4px}
+.agua .cups i{width:12px;height:14px;border-radius:2px 2px 4px 4px;border:1.5px solid var(--ink-3)}
+.agua .cups i.f{background:var(--ink);border-color:var(--ink)}
+
+/* linhas abaixo do cartão (pesagem, fotos, cardio, decisão) */
+.below{display:flex;align-items:center;gap:10px;margin:8px 16px 0;padding:8px 6px 8px 12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);min-height:62px}
+.below>svg{width:24px;height:24px;color:var(--ink);flex:none}
+.below .t{flex:1;min-width:0;line-height:1.3;font-size:15.5px}
+.below .t b{display:block;font-weight:700}
+.below .t small{display:block;font-size:13px;color:var(--ink-2);line-height:1.35}
+
+/* contagem dos 14 */
+.known .cnt{font-size:15px;color:var(--ink);margin:6px 0 0;line-height:1.4}
+.known .cnt b{font-variant-numeric:tabular-nums}
+.known .row2{display:flex;align-items:center;gap:8px;margin-top:4px}
+.known .row2 p{flex:1;margin:0}
+
+/* folhas (comum) */
+.sheet h3{font-size:21px}
+.sheet .prov2{font-size:13.5px;color:var(--ink-2);font-weight:600;margin:0 0 1px}
+.lk.dn{color:var(--ink);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
+
+/* ======== Dias: o mês ======== */
+.mh{display:flex;align-items:center;gap:4px;padding:0 6px 2px 16px;flex:none}
+.mh h2{flex:1;margin:0;font-size:24px;font-weight:700;letter-spacing:-.015em;line-height:1.15}
+.mh h2 small{display:block;font-size:13.5px;font-weight:600;color:var(--ink-2);letter-spacing:0}
+.mh .ib{margin:0}
+.wds{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:6px 12px 2px}
+.wds span{font-size:12px;color:var(--ink-2);text-align:center;font-weight:600}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 12px}
+.dc{position:relative;height:64px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 1px 10px;text-align:center;min-width:0}
+.dc .dn{position:absolute;left:6px;top:4px;font-size:12px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums;line-height:1}
+.dc .hz{position:absolute;right:5px;top:4px;width:11px;height:11px;color:var(--ink)}
+.dc .hz2{position:absolute;right:4px;top:3px;font-size:10px;font-weight:800;color:var(--ink);display:flex;gap:1px;align-items:center;line-height:1}
+.dc .hz2 svg{width:10px;height:10px}
+.dc .tr{font-size:19px;font-weight:800;line-height:1;letter-spacing:-.01em}
+.dc .tr.two{font-size:15px;letter-spacing:.04em}
+.dc .tw{font-size:12px;font-weight:700;line-height:1.1}
+.dc .tw.dsc{font-weight:600;color:var(--ink-2);font-style:italic}
+.dc .stk{display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1}
+.dc .stk .tr{font-size:16px}
+.dc .stk .tw{font-size:11px}
+.dc .fd{position:absolute;left:11px;right:11px;bottom:6px;height:6px;border-radius:3px}
+.dc .fd.m{background:var(--ink)}
+.dc .fd.s{border:1.5px dashed var(--ink-3)}
+.dc.fut{background:transparent;border:1px dashed var(--line)}
+.dc.fut .dn{color:var(--ink-3)}
+.dc.hoje{border:2px solid var(--accent)}
+.dc.hoje .dn{color:var(--accent-ink);font-weight:800}
+.dc.nada{background:var(--surface)}
+.dc.x{visibility:hidden}
+.dc.sel{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+.calk{display:flex;flex-wrap:wrap;gap:3px 12px;margin:8px 16px 0;font-size:12.5px;color:var(--ink-2);line-height:1.3}
+.calk span{display:inline-flex;align-items:center;gap:5px}
+.calk b{color:var(--ink);font-weight:800}
+.calk .k1{display:inline-block;width:18px;height:6px;border-radius:3px;background:var(--ink)}
+.calk .k2{display:inline-block;width:18px;height:6px;border-radius:3px;border:1.5px dashed var(--ink-3)}
+.calk svg{width:11px;height:11px;color:var(--ink)}
+
+/* leituras do mês */
+.rd{margin:0 16px;padding:11px 0 10px;border-top:1px solid var(--line)}
+.rd:first-of-type{border-top:0}
+.rd .h{font-size:15px;font-weight:700;line-height:1.25}
+.rd .row3{display:flex;align-items:center;gap:12px;margin-top:3px}
+.rd .v{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rd .v span{font-size:14px;font-weight:600;color:var(--ink-2);letter-spacing:0;margin-left:3px}
+.rd .c{font-size:13px;color:var(--ink-2);line-height:1.35;margin-top:3px}
+.rd .c b{color:var(--ink)}
+.rd .sp{flex:1;min-width:0}
+.rd .sp svg{width:100%;height:44px;overflow:visible}
+.rd .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
+.rd .trio div{line-height:1.2}
+.rd .trio b{display:block;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.rd .trio small{display:block;font-size:12px;color:var(--ink-2)}
+.rd .axis svg{width:100%;height:34px;overflow:visible;margin-top:6px}
+
+/* um dia aberto */
+.nav2{display:flex;align-items:flex-start;gap:2px;padding:0 10px 0 6px;flex:none}
+.nav2 .bk{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;flex:none;color:var(--ink)}
+.nav2 .tt{flex:1;min-width:0;padding-top:4px}
+.nav2 .tt h2{margin:0;font-size:23px;font-weight:700;letter-spacing:-.015em;line-height:1.15}
+.nav2 .tt .pv2{font-size:14.5px;color:var(--ink-2);font-weight:600;margin-top:2px;line-height:1.3}
+.recs{margin:6px 16px 0;border-radius:18px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+.rec{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px 8px 12px;border-top:1px solid var(--line);min-height:60px;text-align:left}
+.rec:first-child{border-top:0}
+.rec .ic{width:38px;height:38px;border-radius:11px;background:var(--surface-2);display:grid;place-items:center;flex:none;font-size:17px;font-weight:800}
+.rec .ic svg{width:18px;height:18px}
+.rec .t{flex:1;min-width:0;line-height:1.3}
+.rec .t b{display:block;font-size:16px}
+.rec .t small{display:block;font-size:13px;color:var(--ink-2)}
+.rec .cv{width:18px;height:18px;color:var(--ink-3);flex:none}
+.rec.dup{background:var(--warn-bg)}
+.rec.dup .t small{color:var(--warn-ink)}
+.adds{display:flex;gap:8px;margin:8px 16px 0}
+.adds button{flex:1;min-height:46px;border-radius:13px;border:1.5px dashed var(--line-2);font-size:14.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;text-align:center}
+.adds svg{width:18px;height:18px}
+.hint2{font-size:13px;color:var(--ink-2);margin:6px 16px 0;line-height:1.4}
+.ref2{margin:8px 16px 0;font-size:13px;color:var(--ink-2);line-height:1.4;padding-left:10px;border-left:3px solid var(--line-2)}
+.ref2 b{color:var(--ink)}
+.big2{margin:8px 16px 0;padding:12px 14px;border-radius:18px;background:var(--surface-2);font-size:14.5px;line-height:1.4}
+.big2 b{display:block;font-size:16px;margin-bottom:2px}
+
+/* sessão passada */
+.facts{margin:6px 16px 0;border-radius:16px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+.facts .fr2{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 12px;border-top:1px solid var(--line);min-height:48px;font-size:14.5px}
+.facts .fr2:first-child{border-top:0}
+.facts .fr2 .l{width:64px;color:var(--ink-2);font-weight:600;flex:none}
+.facts .fr2 .t{flex:1;min-width:0;line-height:1.3}
+.facts .fr2 .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.facts .fr2 .v{font-weight:700;font-variant-numeric:tabular-nums;font-size:16px}
+.facts .fr2 .v.apx{border-bottom:1.5px dotted var(--ink-3)}
+.exs{list-style:none;margin:4px 16px 0;padding:0}
+.exs>li{border-top:1px solid var(--line);padding:7px 0 6px}
+.exs>li:first-child{border-top:0}
+.exs .en{display:flex;align-items:baseline;gap:6px;font-size:14.5px;font-weight:700;line-height:1.25}
+.exs .en span{font-size:12.5px;font-weight:600;color:var(--ink-2);white-space:nowrap;margin-left:auto;font-variant-numeric:tabular-nums}
+.exs .ss{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
+.sv{min-height:40px;min-width:62px;padding:2px 9px;border-radius:11px;border:1.5px solid var(--line-2);background:var(--surface);font-size:15.5px;font-weight:700;font-variant-numeric:tabular-nums;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.sv small{font-size:10.5px;font-weight:600;color:var(--ink-2)}
+.sv.on{border:2px solid var(--ink);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.sv.nf{border-style:dashed;color:var(--ink-2);font-weight:600;font-size:13.5px}
+.edit{margin:8px -4px 2px;padding:10px 10px 10px;border-radius:16px;background:var(--surface-2)}
+.edit .eh{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2);margin-bottom:6px}
+.edit .eh b{color:var(--ink);font-size:15px}
+.edit .strip{padding-bottom:8px}
+.edit .ok{display:flex;align-items:center;gap:8px;font-size:14px;line-height:1.35;padding:6px 2px 2px}
+.edit .ok svg{width:20px;height:20px;flex:none;color:var(--ink)}
+.rep.was{border-style:dashed}
+.rep.was small{color:var(--ink-2)}
+.del{display:flex;align-items:center;justify-content:center;width:calc(100% - 32px);margin:12px 16px 0;min-height:48px;border-radius:14px;border:1.5px solid var(--line-2);font-weight:700;font-size:15px;color:var(--ink);background:var(--surface)}
+
+/* painel de apagar (decisão 8) */
+.panel{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:26px 26px 0 0;padding:8px 16px 38px;box-shadow:0 -12px 40px rgba(0,0,0,.25)}
+.panel h3{font-size:22px;margin:0 0 4px;line-height:1.2;letter-spacing:-.01em}
+.panel .gone{margin:8px 0 0;padding:10px 12px;border-radius:14px;background:var(--surface-2);font-size:14.5px;line-height:1.4}
+.panel .gone b{font-variant-numeric:tabular-nums}
+.panel .gone ul{margin:4px 0 0;padding-left:18px}
+.panel .stays{margin:8px 0 0;font-size:14px;color:var(--ink-2);line-height:1.4}
+.panel .stays b{color:var(--ink)}
+.panel .kill{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;border-radius:16px;background:var(--ink);color:var(--bg);font-size:17px;font-weight:700;margin-top:14px;text-align:center;padding:0 12px;line-height:1.2}
+.panel .keep{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;border-radius:16px;border:1.5px solid var(--line-2);font-size:17px;font-weight:700;margin-top:8px;background:var(--surface)}
+
+/* registrar treino passado */
+.pick{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:18px;border:2px solid var(--accent);background:var(--accent-soft);text-align:left;margin-top:6px}
+.pick .lt{width:46px;height:46px;border-radius:13px;background:var(--surface);display:grid;place-items:center;font-size:24px;font-weight:800;color:var(--accent-ink);flex:none}
+.pick .t{flex:1;min-width:0;line-height:1.3}
+.pick .t b{display:block;font-size:17px;color:var(--accent-ink)}
+.pick .t small{display:block;font-size:13px;color:var(--ink-2)}
+.pick.me{border-color:var(--ink);background:var(--surface)}
+.pick.me .lt{background:var(--ink);color:var(--bg)}
+.pick.me .t b{color:var(--ink)}
+.others{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.others button{min-height:48px;border-radius:12px;border:1.5px solid var(--line-2);background:var(--surface);font-size:17px;font-weight:800;text-align:center}
+.others button.w{font-size:14px;font-weight:700}
+.wide2{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;margin-top:8px;padding:6px 12px;border-radius:14px;border:1.5px solid var(--line-2);background:var(--surface);text-align:left}
+.wide2 .t{flex:1;min-width:0;line-height:1.3}
+.wide2 .t b{display:block;font-size:15.5px}
+.wide2 .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.wide2 svg{width:18px;height:18px;color:var(--ink-3);flex:none}
+.saved2{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:var(--surface-2);margin-top:6px}
+.saved2 svg{width:24px;height:24px;flex:none}
+.saved2 .t{flex:1;min-width:0;line-height:1.3}
+.saved2 .t b{display:block;font-size:16px}
+.saved2 .t small{display:block;font-size:13px;color:var(--ink-2)}
+.q2{margin-top:12px}
+.q2>b{display:block;font-size:15.5px;margin-bottom:6px}
+.q2>p{font-size:13px;color:var(--ink-2);margin:6px 0 0;line-height:1.4}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{min-height:44px;padding:0 13px;border-radius:999px;border:1.5px solid var(--line-2);background:var(--surface);font-size:14.5px;font-weight:600}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.field{display:flex;align-items:center;min-height:50px;padding:0 12px;border-radius:13px;border:1.5px solid var(--line-2);background:var(--surface);font-size:16px;color:var(--ink-3)}
+.field.has{color:var(--ink)}
+
+/* folha "pôr em dia", com a gravação a cada toque */
+.rr{grid-template-columns:96px minmax(0,1fr)}
+.seg button[aria-checked="true"].pv{background:var(--accent-soft);border:2px solid var(--accent);color:var(--accent-ink)}
+.seg button.me[aria-checked="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.seg button[disabled]{opacity:.38}
+.rb2{margin-top:10px;padding:10px 12px;border-radius:14px;border:1.5px solid var(--line-2);font-size:14px;line-height:1.4}
+.rb2 .l{display:block;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.rb2 .a{color:var(--accent-ink)}
+.ask3{margin:6px 0 2px;padding:10px 12px;border-radius:14px;background:var(--surface-2)}
+.ask3>b{display:block;font-size:15px;margin-bottom:8px;line-height:1.3}
+.ask3 .three{display:grid;grid-template-columns:1fr;gap:6px}
+.ask3 .three .sec{min-height:46px;font-size:15px}
+.ask3 p{font-size:13px;color:var(--ink-2);margin:8px 0 0;line-height:1.4}
+.sheet.tall{top:46px;padding:8px 16px 26px;display:flex;flex-direction:column;overflow:hidden}
+
+/* erro de gravação, ao lado do toque */
+.err.inl{margin-top:8px}
+.err .btns2{display:flex;gap:6px;margin-top:8px}
+.err .btns2 button{flex:1;min-height:44px;border-radius:12px;border:1.5px solid var(--err-line);background:var(--surface);color:var(--ink);font-weight:700;font-size:14px;text-align:center;padding:0 6px;line-height:1.15}
+
+/* vazio */
+.empty{margin:10px 16px 0;padding:14px 14px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.empty b{display:block;font-size:17px;line-height:1.3;margin-bottom:4px}
+.empty p{margin:0 0 10px;font-size:14px;color:var(--ink-2);line-height:1.45}
+.rd .nil{font-size:14px;color:var(--ink-2);line-height:1.4;margin-top:3px}
+.rd .nil b{color:var(--ink)}
+
+@media (prefers-reduced-motion:no-preference){
+  .sv,.ln,.rec,.dc,.pick,.others button,.chips button,.kill,.keep{transition:transform .12s ease}
+  .sv:active,.ln:active,.rec:active,.dc:active,.pick:active,.others button:active,.chips button:active,.kill:active,.keep:active{transform:scale(.97)}
+}
+.cmp2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 16px 0;font-size:13.5px}
+.cmp2 .box2{border:1px solid var(--line);border-radius:14px;padding:9px 10px;background:var(--surface)}
+.cmp2 .box2>b{display:block;font-size:13px;color:var(--ink-2);margin-bottom:3px;font-weight:700}
+.cmp2 .box2 span{display:block;line-height:1.35;font-variant-numeric:tabular-nums}
+.sheet .cmp2{margin:8px 0 0}
+.dc.cmp{height:30px;padding:0}
+.dc.cmp .dn{top:9px}
+/* a comida do dia, num olhar */
+.mstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin:6px 16px 0;padding:10px 4px 9px;border-radius:16px;background:var(--surface);border:1px solid var(--line);width:calc(100% - 32px);text-align:center}
+.mstrip.m4{grid-template-columns:repeat(4,1fr)}
+.mstrip>span{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;color:var(--ink-2);line-height:1.15;min-width:0}
+.mstrip svg{width:24px;height:24px;color:var(--ink);margin-bottom:2px}
+.mstrip .o svg{color:var(--ink-3)}
+.mstrip b{font-size:12.5px;color:var(--ink);font-weight:700}
+.mstrip i{font-style:normal;font-variant-numeric:tabular-nums}
+.foodl{display:flex;align-items:center;gap:8px;margin:8px 16px 0;font-size:14px;color:var(--ink-2);line-height:1.35}
+.foodl .t{flex:1;min-width:0}
+.foodl .t b{color:var(--ink)}
+/* sessão passada: exercício em linha */
+.exr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.exr .nm{font-size:14px;font-weight:700;line-height:1.22}
+.exr .nm small{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-top:1px;font-variant-numeric:tabular-nums}
+.exr .ss{display:flex;gap:4px;margin:0}
+.exs>li{padding:6px 0}
+.sv{min-width:60px;min-height:44px;padding:1px 5px;font-size:14.5px;border-radius:11px}
+
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<linearGradient id="gw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4DED1"/><stop offset=".62" stop-color="#D3CBBB"/><stop offset=".63" stop-color="#C2B9A7"/><stop offset="1" stop-color="#B5AB97"/></linearGradient>
+</defs>
+<symbol id="p1" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L37 90 L35 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L83 90 L85 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p2" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L26 72 L34 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L94 72 L86 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="34" cy="44" r="5" fill="#3A352D"/><circle cx="86" cy="44" r="5" fill="#3A352D"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p3" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 60 L30 44 L48 33" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 60 L90 44 L72 33" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p4" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M86 144 L86 156 L94 150 Z" fill="rgba(0,0,0,.42)"/><path d="M51 58 L69 58 L67 112 L49 112 Z" fill="#3A352D"/><path d="M62 108 L64 147" stroke="#6E6558" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M57 108 L55 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M58 63 L84 71 L102 71" stroke="#6E6558" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M58 62 L86 66 L104 66" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="59" cy="33" r="11.5" fill="#3A352D"/><path d="M59 44 L59 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p5" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M86 144 L86 156 L94 150 Z" fill="rgba(0,0,0,.42)"/><path d="M51 58 L69 58 L67 112 L49 112 Z" fill="#3A352D"/><path d="M62 108 L64 147" stroke="#6E6558" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M57 108 L55 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M58 62 L63 88 L61 107" stroke="#6E6558" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M57 62 L62 90 L60 108" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="59" cy="33" r="11.5" fill="#3A352D"/><path d="M59 44 L59 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p6" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L37 90 L35 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L83 90 L85 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p7" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L26 72 L34 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L94 72 L86 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="34" cy="44" r="5" fill="#3A352D"/><circle cx="86" cy="44" r="5" fill="#3A352D"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p8" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L28 82 L48 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L92 82 L72 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p9" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M34 144 L34 156 L26 150 Z" fill="rgba(0,0,0,.42)"/><path d="M51 58 L69 58 L67 112 L49 112 Z" fill="#3A352D"/><path d="M62 108 L64 147" stroke="#6E6558" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M57 108 L55 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M62 62 L57 88 L59 107" stroke="#6E6558" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M63 62 L58 90 L60 108" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="59" cy="33" r="11.5" fill="#3A352D"/><path d="M59 44 L59 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="bk" viewBox="0 0 24 24"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="fw" viewBox="0 0 24 24"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="undo" viewBox="0 0 24 24"><path d="M7 9h8a4.5 4.5 0 110 9H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 5.5L6.5 9l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="down" viewBox="0 0 24 24"><path d="M12 4v11M7.5 11L12 15.5 16.5 11M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="som" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" fill="currentColor"/><path d="M15 9a4.5 4.5 0 010 6M17.8 6.5a8 8 0 010 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="fita" viewBox="0 0 24 24"><path d="M3.5 7.5h17v9h-17z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 7.5v3M10.5 7.5v4.5M14 7.5v3M17.5 7.5v4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="bal" viewBox="0 0 24 24"><path d="M4 5.5h16v13H4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 9.5a4 4 0 018 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 9.5l2.5-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="lousa" viewBox="0 0 24 24"><path d="M3.5 4.5h17v12h-17z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 19.5l1.6-3M16 19.5l-1.6-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6.5 8h7M6.5 11h5M6.5 13.8h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="run" viewBox="0 0 24 24"><circle cx="14.5" cy="4.8" r="2.1" fill="currentColor"/><path d="M13 8.2l-3.4 2.2 1.6 3.1-2.6 4.4M11.2 13.5l3.6 1.3 1 4.3M13.6 9.6l3.4 1.6 2.4-.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="t-corpo" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8.2v6.3M7.5 10.3h9M9.6 14.5L8.4 21M14.4 14.5L15.6 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="t-sem" viewBox="0 0 24 24"><path d="M4 19.5h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="5" y="12" width="3.4" height="5" rx="1.2" fill="currentColor"/><rect x="10.3" y="8.5" width="3.4" height="8.5" rx="1.2" fill="currentColor"/><rect x="15.6" y="4.5" width="3.4" height="12.5" rx="1.2" fill="currentColor"/></symbol>
+<symbol id="ok2" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="rel" viewBox="0 0 24 24"><circle cx="12" cy="12.5" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4.5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 2.5h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="pen" viewBox="0 0 24 24"><path d="M4 20l1-4.2L16.2 4.6l3.2 3.2L8.2 19 4 20z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+<symbol id="nuv" viewBox="0 0 24 24"><path d="M7 17.5h9.5a3.5 3.5 0 00.2-7 5 5 0 00-9.6 1.3A3 3 0 007 17.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+
+  <symbol id="sig" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor" opacity=".28"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor" opacity=".28"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor" opacity=".28"/></symbol>
+  <symbol id="bat" viewBox="0 0 27 12"><rect x=".75" y=".75" width="22" height="10.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/><rect x="2.5" y="2.5" width="13" height="7" rx="1.5" fill="currentColor"/><rect x="24" y="4" width="1.8" height="4" rx=".9" fill="currentColor" opacity=".5"/></symbol>
+  <symbol id="dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.1" fill="currentColor"/><circle cx="12" cy="12" r="2.1" fill="currentColor"/><circle cx="19" cy="12" r="2.1" fill="currentColor"/></symbol>
+  <symbol id="ck" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.5" fill="currentColor"/><path d="M5.8 10.4l2.8 2.8 5.6-5.8" fill="none" style="stroke:var(--surface)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="cam" viewBox="0 0 20 20"><path d="M3 6.5h3l1.4-2h5.2l1.4 2h3v9H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="10" cy="11" r="2.8" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="note" viewBox="0 0 20 20"><path d="M4 3.5h12v13H4z M7 7.5h6 M7 10.5h6 M7 13.5h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="star" viewBox="0 0 20 20"><path d="M10 2.2l2.3 4.9 5.3.6-3.9 3.6 1.1 5.3L10 13.9l-4.8 2.7 1.1-5.3-3.9-3.6 5.3-.6z" fill="currentColor"/></symbol>
+  <symbol id="warn" viewBox="0 0 20 20"><path d="M10 2.5l8 14H2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 8v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14.4" r="1.05" fill="currentColor"/></symbol>
+  <symbol id="gear" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="t-agora" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="t-dias" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="t-evo" viewBox="0 0 24 24"><path d="M3.5 18l5-6 4 3 7-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 20.5h17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="t-presc" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 3.5h6v3H9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+
+<symbol id="sig-c" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor"/></symbol><symbol id="p1b" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M38.5 57 L81.5 57 L72.5 112 L47.5 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M43 61 L34 90 L32 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M77 61 L86 90 L88 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol><symbol id="p8b" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M38.5 57 L81.5 57 L72.5 112 L47.5 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M43 61 L26 82 L47 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M77 61 L94 82 L73 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol><symbol id="s-full" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.5" fill="currentColor"/><path d="M5.8 10.4l2.8 2.8 5.6-5.8" fill="none" style="stroke:var(--surface)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="s-half" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 1.4A8.6 8.6 0 0 0 10 18.6Z" fill="currentColor"/></symbol>
+<symbol id="s-out" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 16L16 4" stroke="currentColor" stroke-width="1.8"/></symbol>
+<symbol id="s-none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.6 10h8.8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+<symbol id="s-nsei" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3.2 2.6"/><path d="M7.6 7.6a2.5 2.5 0 1 1 2.5 2.9v1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="10.1" cy="14.2" r="1" fill="currentColor"/></symbol>
+<symbol id="s-open" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3.2 2.6"/></symbol>
+<symbol id="s-now" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="10" r="4" fill="currentColor"/></symbol>
+<symbol id="s-fut" viewBox="0 0 20 20"><circle cx="10" cy="10" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+<symbol id="hz" viewBox="0 0 20 20"><path d="M10 17.2S2.6 12.6 2.6 7.4A3.9 3.9 0 0 1 10 5.6a3.9 3.9 0 0 1 7.4 1.8c0 5.2-7.4 9.8-7.4 9.8z" fill="currentColor"/></symbol>
+<symbol id="drop" viewBox="0 0 20 20"><path d="M10 2.5s5.6 6.2 5.6 10a5.6 5.6 0 0 1-11.2 0c0-3.8 5.6-10 5.6-10z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+<symbol id="chev" viewBox="0 0 20 20"><path d="M7.5 4.5L13 10l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="cams" viewBox="0 0 24 24"><path d="M3.5 7.5h4l1.8-2.5h5.4l1.8 2.5h4v11h-17z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+</svg>
+
+<header class="doc">
+  <p class="eyebrow">Direção D · terceira entrega</p>
+  <h1>O Agora num dia de descanso, longe de qualquer refeição</h1>
+  <p class="lead">Domingo, 11/10, 10h40. Não há treino, o café das 8h00 já passou e o almoço das 12h30 está a quase duas horas. A regra do cartão de cima diz que, aqui, <b>não há cartão</b>: o cartão só olha para a frente, até 30 min, e nada está tão perto. Ficam a linha do dia, a água e a contagem dos dias conhecidos nos últimos 14.</p>
+  <p class="lead">O que este estado resolve: <b>o cartão de cima não some, ele se fecha.</b> O cartão sempre foi uma das linhas do dia, aberta pelo relógio. Sem relógio apertando, nenhuma linha vem aberta, e qualquer uma abre no lugar com um toque do dedo — com os mesmos três botões do cartão. É assim que o café que passou sem marca se registra sem precisar de cartão nem de folha.</p>
+  <p class="lead">No topo, a procedência do dia: <b>“descanso, pelo padrão semanal”</b>. É palpite do app até ele dizer o contrário (F187, F188), e a linha tem o sublinhado pontilhado de tudo o que é palpite. Tocar nela é o único lugar onde o tipo do dia muda.</p>
+  <ul class="legend" aria-label="Formas de estado">
+  <li><svg><use href="#s-full"/></svg>comi tudo</li>
+  <li><svg><use href="#s-half"/></svg>metade</li>
+  <li><svg><use href="#s-out"/></svg>fora do plano</li>
+  <li><svg><use href="#s-none"/></svg>não comi</li>
+  <li><svg><use href="#s-nsei"/></svg>não sei</li>
+  <li class="g"><svg><use href="#s-open"/></svg>sem marca: desconhecido, não zero</li>
+  <li class="g"><svg><use href="#s-fut"/></svg>ainda por vir</li>
+</ul>
+<p class="legend-note">Cada estado tem forma e palavra, não só cor. O anil marca o que veio do plano e ainda não foi confirmado; a tinta cheia marca o que ele declarou. “Não comi” ganhou forma própria nesta entrega, porque agora conta como dia conhecido (decisão 3).</p>
+
+  <p class="lead" style="font-size:14px">Cada estado aparece duas vezes, <b>claro</b> e <b>escuro</b>: o tema segue o aparelho, com troca manual. Viewport de iPhone 11 Pro Max, 414 × 896 pt. Nada aqui usa rede.</p>
+</header>
+
+<main class="states">
+
+<figure class="state" id="e1">
+<figcaption><h2><span class="n">1</span>Antes de qualquer marca: o dia sem cartão</h2><p class="cap">É o estado do item 2, como a regra o descreve. O café das 8h00 passou sem marca e aparece como linha comum, com a palavra <b>“sem marca”</b> e o círculo tracejado — desconhecido, não zero (F198). Nada vem pré-marcado: pré-marcar é da folha de pôr em dia, onde ele lê o plano inteiro antes de mudar. A pesagem não aparece: ela é de manhã, em semi-jejum (F42), e o café já passou. A contagem diz o número, a regra, e o único atalho que ela precisa: <b>ontem ficou sem marca</b>. Não há outro cartão, faixa ou convite.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">10:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">10h40</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln o"><svg class="si"><use href="#s-open"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">sem marca</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">719 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água<small>nenhum copo marcado · meta: 14 copos de 250 ml</small></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell full"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell today"></i></div>
+      <div class="kl"><span>seg 28/09</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>5</b>. A regra do nutricionista precisa de 11.</p>
+      <div class="row2"><p>Ontem, sábado, ficou sem marca.</p><button class="pill">Pôr ontem em dia</button></div>
+    </section>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">10:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">10h40</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln o"><svg class="si"><use href="#s-open"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">sem marca</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">719 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água<small>nenhum copo marcado · meta: 14 copos de 250 ml</small></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell full"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell today"></i></div>
+      <div class="kl"><span>seg 28/09</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>5</b>. A regra do nutricionista precisa de 11.</p>
+      <div class="row2"><p>Ontem, sábado, ficou sem marca.</p><button class="pill">Pôr ontem em dia</button></div>
+    </section>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e2">
+<figcaption><h2><span class="n">2</span>A linha tocada abre no lugar, e é o cartão</h2><p class="cap">Um toque no café abre a linha ali mesmo, com o que o cartão de cima teria: a procedência (“no plano às 8h00”), os itens, e os mesmos três botões. <b>Um toque grava</b> — “Comi tudo”, “Metade” ou “Não comi isso”, que faz a única pergunta (sabe o que comeu no lugar?). Não há “guardar” no fim (decisão 1). Tocar fora fecha a linha sem gravar nada. As outras linhas continuam fechadas: só uma abre por vez, para que o dedo nunca acerte o botão de outra refeição.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">10:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">10h40</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><div class="lopen enter"><div class="k">no plano às 8h00 · passou há 2h40</div><h3>Café da manhã</h3><p class="items">cuscuz 200 g · frango 70 g · requeijão light 30 g · leite integral 250 ml · uva 120 g · 629 kcal</p><button class="primary">Comi tudo</button><div class="two" style="margin-top:8px"><button class="sec">Metade</button><button class="sec">Não comi isso</button></div></div></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">719 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água<small>nenhum copo marcado · meta: 14 copos de 250 ml</small></span><button class="pill">+1 copo</button></div>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">10:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">10h40</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><div class="lopen enter"><div class="k">no plano às 8h00 · passou há 2h40</div><h3>Café da manhã</h3><p class="items">cuscuz 200 g · frango 70 g · requeijão light 30 g · leite integral 250 ml · uva 120 g · 629 kcal</p><button class="primary">Comi tudo</button><div class="two" style="margin-top:8px"><button class="sec">Metade</button><button class="sec">Não comi isso</button></div></div></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">719 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água<small>nenhum copo marcado · meta: 14 copos de 250 ml</small></span><button class="pill">+1 copo</button></div>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e3">
+<figcaption><h2><span class="n">3</span>Com a água já contada</h2><p class="cap">14h10: o almoço passou há 1h40 e o lanche está a 1h50 — de novo, nenhum cartão. O café entrou pela linha (10h41), o almoço pela metade. A água mostra <b>a conta e o desenho da conta</b>: 6 de 14 copos, 1.500 ml. “+1 copo” é um toque e grava; tocar no número corrige no lugar, sem prazo (o 7º copo não vira 6 sozinho, e um copo a mais não exige apagar nada). Hoje passou a contar na regra, e a contagem diz por quê, em vez de repetir a frase de sempre.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">14:10</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">14h10</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st"><b>comi tudo</b> · 10h41</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-half"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st"><b>metade</b> · 13h05</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água · <b>6</b> de 14 copos<small>1.500 ml de 3.500 ml · último às 13h50</small><span class="cups"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell full"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell part today"></i></div>
+      <div class="kl"><span>seg 28/09</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>6</b>. A regra do nutricionista precisa de 11. Hoje passou a contar, porque tem refeição marcada.</p>
+      <div class="row2"><p>Ontem, sábado, ficou sem marca.</p><button class="pill">Pôr ontem em dia</button></div>
+    </section>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">14:10</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">14h10</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st"><b>comi tudo</b> · 10h41</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-half"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st"><b>metade</b> · 13h05</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água · <b>6</b> de 14 copos<small>1.500 ml de 3.500 ml · último às 13h50</small><span class="cups"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell full"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell part today"></i></div>
+      <div class="kl"><span>seg 28/09</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>6</b>. A regra do nutricionista precisa de 11. Hoje passou a contar, porque tem refeição marcada.</p>
+      <div class="row2"><p>Ontem, sábado, ficou sem marca.</p><button class="pill">Pôr ontem em dia</button></div>
+    </section>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e4">
+<figcaption><h2><span class="n">4</span>O palpite, tocado: o único lugar onde o tipo do dia muda</h2><p class="cap">“Descanso, pelo padrão semanal” é palpite, e a tela diz (decisão 7). Um toque na linha abre esta folha. <b>“É descanso”</b> grava a definição manual (F187) e a linha passa a dizer “descanso, você confirmou às 10h41”, sem pontilhado. <b>“Vou treinar hoje”</b> troca o plano da comida — o pré e o treino entram, e andam com a hora da sessão (F189). E o dia de descanso tem o que fazer além de descansar: um cardio leve num domingo é cardio em dia sem musculação, e é aqui que ele entra, sem virar treino (F156). Confirmar não é obrigatório: ignorado, o palpite continua palpite.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">10:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">10h41</span></div></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="O tipo do dia">
+    <div class="grab"></div>
+    <p class="prov2">pelo padrão semanal: domingo é descanso</p>
+    <h3>Hoje é dia de descanso?</h3>
+    <p class="sub">É um palpite até você dizer. Dizer muda o plano da comida de hoje, e mais nada.</p>
+    <button class="pick"><span class="lt"><svg width="24" height="24"><use href="#ok2"/></svg></span><span class="t"><b>É descanso</b><small>o plano fica o de descanso: 4 refeições, 2.844 kcal</small></span></button>
+    <button class="wide2"><span class="t"><b>Vou treinar hoje</b><small>o pré‑treino e o treino entram no plano e andam com a hora da sessão · na sequência, o próximo é o Treino A</small></span><svg><use href="#chev"/></svg></button>
+    <div class="q2"><b>Já fiz alguma coisa hoje</b>
+      <div class="chips"><button>Cardio</button><button>Aula</button><button>Treino fora da prescrição</button></div>
+      <p>Cardio em dia de descanso fica no descanso: não é treino, e aparece em Dias como cardio em dia sem musculação.</p>
+    </div>
+  </div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">10:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">10h41</span></div></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="O tipo do dia">
+    <div class="grab"></div>
+    <p class="prov2">pelo padrão semanal: domingo é descanso</p>
+    <h3>Hoje é dia de descanso?</h3>
+    <p class="sub">É um palpite até você dizer. Dizer muda o plano da comida de hoje, e mais nada.</p>
+    <button class="pick"><span class="lt"><svg width="24" height="24"><use href="#ok2"/></svg></span><span class="t"><b>É descanso</b><small>o plano fica o de descanso: 4 refeições, 2.844 kcal</small></span></button>
+    <button class="wide2"><span class="t"><b>Vou treinar hoje</b><small>o pré‑treino e o treino entram no plano e andam com a hora da sessão · na sequência, o próximo é o Treino A</small></span><svg><use href="#chev"/></svg></button>
+    <div class="q2"><b>Já fiz alguma coisa hoje</b>
+      <div class="chips"><button>Cardio</button><button>Aula</button><button>Treino fora da prescrição</button></div>
+      <p>Cardio em dia de descanso fica no descanso: não é treino, e aparece em Dias como cardio em dia sem musculação.</p>
+    </div>
+  </div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e5">
+<figcaption><h2><span class="n">5</span>O dia em que a sessão de fotos completa 14 dias</h2><p class="cap">Quinta, 15/10, 7h05: exatos 14 dias depois da sessão de 01/10 (F226, P7). Ele avisou às 6h40 que hoje não treina, e a procedência mudou de palpite para fato: <b>“descanso, você marcou às 6h40”</b>, sem pontilhado. As fotos entram como <b>linha abaixo do lugar do cartão</b>, nunca no topo (decisão 4) — e, como não há cartão, a linha fica logo abaixo do dia. Ela diz a condição que importa, “em jejum, antes do café das 8h00” (F228): depois que o café for marcado, a linha passa a dizer “amanhã cedo”, porque foto depois de comer não compara com as outras. A pesagem vem logo abaixo, pela mesma razão de horário, e diz quantas a semana já tem. O café está a 55 min: ainda fora da janela de 30 min, então ainda sem cartão.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">7:05</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">quinta, 15 de outubro<span class="hr">7h05</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov firm"><span class="p">descanso, você marcou às 6h40</span><svg><use href="#chev"/></svg></button></div>
+    <div class="below"><svg><use href="#cams"/></svg><span class="t"><b>Fotos do corpo · hoje faz 14 dias</b><small>a última foi na quinta, 01/10 · 9 poses, em jejum, antes do café das 8h00</small></span><button class="pill">Começar</button></div>
+    <div class="below"><svg><use href="#bal"/></svg><span class="t"><b>Peso de hoje</b><small>nesta semana: 1 pesagem, seg 12/10 · a média da semana precisa de 2</small></span><button class="pill">Anotar</button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">629 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">719 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água<small>nenhum copo marcado · meta: 14 copos de 250 ml</small></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell part"></i><i class="cell"></i><i class="cell part"></i><i class="cell"></i><i class="cell today"></i></div>
+      <div class="kl"><span>sex 02/10</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>5</b>. A regra do nutricionista precisa de 11.</p>
+    </section>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">7:05</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">quinta, 15 de outubro<span class="hr">7h05</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov firm"><span class="p">descanso, você marcou às 6h40</span><svg><use href="#chev"/></svg></button></div>
+    <div class="below"><svg><use href="#cams"/></svg><span class="t"><b>Fotos do corpo · hoje faz 14 dias</b><small>a última foi na quinta, 01/10 · 9 poses, em jejum, antes do café das 8h00</small></span><button class="pill">Começar</button></div>
+    <div class="below"><svg><use href="#bal"/></svg><span class="t"><b>Peso de hoje</b><small>nesta semana: 1 pesagem, seg 12/10 · a média da semana precisa de 2</small></span><button class="pill">Anotar</button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st">629 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st">719 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água<small>nenhum copo marcado · meta: 14 copos de 250 ml</small></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell part"></i><i class="cell"></i><i class="cell part"></i><i class="cell"></i><i class="cell today"></i></div>
+      <div class="kl"><span>sex 02/10</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>5</b>. A regra do nutricionista precisa de 11.</p>
+    </section>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e6">
+<figcaption><h2><span class="n">6</span>Com uma mudança do treino esperando decisão</h2><p class="cap">Domingo, 20h40: a última refeição do plano já passou, então não há cartão até amanhã. Na sexta, no Treino D, ele fez 4 séries de elevação lateral na máquina no lugar de 3 — e não decidiu nada, porque nada é perguntado na academia. A mudança <b>vence por posição</b> (decisão 2): quando o D voltar. A linha não diz uma data, porque a data não existe ainda — diz <b>quantos treinos faltam</b>: A, B e C. Isto não é o aviso de vencimento: o aviso aparece uma vez, na manhã do D, e nunca durante a sessão. Esta linha só existe no Agora sem cartão e sem sessão — sentado, sem relógio, que é a hora de decidir.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">20:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">20h40</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="below"><svg><use href="#t-presc"/></svg><span class="t"><b>Uma mudança do Treino D espera você</b><small>Elevação lateral na máquina: 4 séries no lugar de 3, na sexta 09/10 · vence quando o D voltar; faltam A, B e C</small></span><button class="pill">Decidir</button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st"><b>comi tudo</b> · 10h41</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-half"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st"><b>metade</b> · 13h05</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st"><b>comi tudo</b> · 16h20</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln o"><svg class="si"><use href="#s-open"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">sem marca</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água · <b>9</b> de 14 copos<small>2.250 ml de 3.500 ml · último às 19h55</small><span class="cups"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i></span></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell full"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell part today"></i></div>
+      <div class="kl"><span>seg 28/09</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>6</b>. A regra do nutricionista precisa de 11.</p>
+    </section>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">20:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">20h40</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="below"><svg><use href="#t-presc"/></svg><span class="t"><b>Uma mudança do Treino D espera você</b><small>Elevação lateral na máquina: 4 séries no lugar de 3, na sexta 09/10 · vence quando o D voltar; faltam A, B e C</small></span><button class="pill">Decidir</button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st"><b>comi tudo</b> · 10h41</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-half"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st"><b>metade</b> · 13h05</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st"><b>comi tudo</b> · 16h20</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln o"><svg class="si"><use href="#s-open"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">sem marca</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água · <b>9</b> de 14 copos<small>2.250 ml de 3.500 ml · último às 19h55</small><span class="cups"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i></span></span><button class="pill">+1 copo</button></div>
+    <section class="known">
+      <div class="cells"><i class="cell full"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell full"></i><i class="cell part"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell part today"></i></div>
+      <div class="kl"><span>seg 28/09</span><span>hoje</span></div>
+      <p class="cnt">Dias conhecidos nos últimos 14: <b>6</b>. A regra do nutricionista precisa de 11.</p>
+    </section>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e7">
+<figcaption><h2><span class="n">7</span>O que “Decidir” abre: a decisão, com a conta do volume</h2><p class="cap">O toque abre a mudança ali mesmo, numa folha — o mesmo item da lista de Prescrição, sem trocar de lugar. Como mudar séries muda o volume, <b>a conta semanal aparece antes da decisão</b> (decisão 1): deltoide lateral passaria de 12 para 13 séries, contra 12 prescritas (F179). A regra do treinador sobre séries a mais vem ao lado, na voz dele (F99). Cada botão grava no toque; o motivo é opcional e vem depois, com o teclado do sistema, porque é texto e ele está sentado. Fechar a folha não decide nada, e a frase de baixo diz o que acontece se ninguém decidir.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">20:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">20h41</span></div></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Decidir a mudança">
+    <div class="grab"></div>
+    <p class="prov2">da sessão de sexta, 09/10 · Treino D</p>
+    <h3>Elevação lateral na máquina: 4 séries no lugar de 3</h3>
+    <div class="cmp2" style="margin:8px 0 0">
+      <div class="box2"><b>No programa</b><span>3 × 10–15</span><span>RIR 1 · descanso 1:45</span></div>
+      <div class="box2"><b>Na sexta</b><span><strong style="font-size:15px">4</strong> × 10–15</span><span>RIR 1 · descanso 1:45</span></div>
+    </div>
+    <div class="rb2"><span class="l">Se ficar no programa</span>Deltoide lateral passa de <b>12 para 13 séries</b> diretas na semana. O treinador prescreveu 12.</div>
+    <p class="quote" style="margin-top:10px">Não acrescentar séries agora. Considerar 1 a 2 a mais só num músculo estagnado, depois de várias exposições, com recuperação boa e sem dor.<cite>regra do treinador</cite></p>
+    <div class="two" style="margin-top:12px"><button class="sec">Foi só naquele dia</button><button class="sec">Fica no programa</button></div>
+    <p class="sub" style="margin:10px 0 0">Se ninguém decidir, quando o D voltar ela fica como <b>só daquele dia</b> — dito na lista de Prescrição, e desfazível até a vez seguinte do D. A sessão de sexta guarda as 4 séries de qualquer jeito.</p>
+  </div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">20:41</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">20h41</span></div></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Decidir a mudança">
+    <div class="grab"></div>
+    <p class="prov2">da sessão de sexta, 09/10 · Treino D</p>
+    <h3>Elevação lateral na máquina: 4 séries no lugar de 3</h3>
+    <div class="cmp2" style="margin:8px 0 0">
+      <div class="box2"><b>No programa</b><span>3 × 10–15</span><span>RIR 1 · descanso 1:45</span></div>
+      <div class="box2"><b>Na sexta</b><span><strong style="font-size:15px">4</strong> × 10–15</span><span>RIR 1 · descanso 1:45</span></div>
+    </div>
+    <div class="rb2"><span class="l">Se ficar no programa</span>Deltoide lateral passa de <b>12 para 13 séries</b> diretas na semana. O treinador prescreveu 12.</div>
+    <p class="quote" style="margin-top:10px">Não acrescentar séries agora. Considerar 1 a 2 a mais só num músculo estagnado, depois de várias exposições, com recuperação boa e sem dor.<cite>regra do treinador</cite></p>
+    <div class="two" style="margin-top:12px"><button class="sec">Foi só naquele dia</button><button class="sec">Fica no programa</button></div>
+    <p class="sub" style="margin:10px 0 0">Se ninguém decidir, quando o D voltar ela fica como <b>só daquele dia</b> — dito na lista de Prescrição, e desfazível até a vez seguinte do D. A sessão de sexta guarda as 4 séries de qualquer jeito.</p>
+  </div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e8">
+<figcaption><h2><span class="n">8</span>Estado ruim: o copo não foi gravado</h2><p class="cap">Com “cada toque grava”, cada toque pode falhar — e a tela não finge. O 7º copo não entrou porque o armazenamento do aparelho encheu (o Safari dá cerca de 5 MiB, F53). <b>A conta fica em 6</b>, a frase diz por quê, e as duas saídas estão ao lado do toque: tentar de novo, ou baixar a cópia de segurança antes de qualquer outra coisa (F249). Nenhum “copo adicionado” aparece antes de gravar no aparelho.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">14:12</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">14h12</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st"><b>comi tudo</b> · 10h41</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-half"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st"><b>metade</b> · 13h05</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água · <b>6</b> de 14 copos<small>1.500 ml de 3.500 ml · último às 13h50</small><span class="cups"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span><button class="pill">+1 copo</button></div>
+    <div class="err inl" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>O 7º copo não foi gravado</b><p>O armazenamento deste aparelho está cheio. A conta continua em 6, que é o que está guardado.</p></div></div>
+      <div class="btns2"><button>Tentar de novo</button><button>Baixar a cópia de segurança</button></div></div>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">14:12</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="dayh"><div class="r1"><div class="d">domingo, 11 de outubro<span class="hr">14h12</span></div><button class="ib r" aria-label="Ajustes"><svg width="24" height="24"><use href="#gear"/></svg></button></div>
+      <button class="prov"><span class="p">descanso, pelo padrão semanal</span><svg><use href="#chev"/></svg></button></div>
+    <div class="secl"><b>A comida de hoje</b><span>2.844 kcal no plano de descanso</span></div>
+    <ul class="lines">
+      <li><button class="ln"><svg class="si"><use href="#s-full"/></svg><time>8h00</time><span class="nm">Café da manhã</span><span class="st"><b>comi tudo</b> · 10h41</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln"><svg class="si"><use href="#s-half"/></svg><time>12h30</time><span class="nm">Almoço</span><span class="st"><b>metade</b> · 13h05</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>16h00</time><span class="nm">Lanche da tarde</span><span class="st">819 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+      <li><button class="ln f"><svg class="si"><use href="#s-fut"/></svg><time>19h30</time><span class="nm">Jantar</span><span class="st">678 kcal</span><svg class="cv"><use href="#chev"/></svg></button></li>
+    </ul>
+    <div class="agua"><svg class="dr"><use href="#drop"/></svg><span class="t">Água · <b>6</b> de 14 copos<small>1.500 ml de 3.500 ml · último às 13h50</small><span class="cups"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span><button class="pill">+1 copo</button></div>
+    <div class="err inl" style="margin:8px 16px 0"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>O 7º copo não foi gravado</b><p>O armazenamento deste aparelho está cheio. A conta continua em 6, que é o que está guardado.</p></div></div>
+      <div class="btns2"><button>Tentar de novo</button><button>Baixar a cópia de segurança</button></div></div>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab on" aria-current="page"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+
+</main>
+
+<script>
+(function(){
+  function fit(){
+    document.querySelectorAll('.wrap').forEach(function(w){
+      var p=w.querySelector('.phone'); if(!p) return;
+      var W=414,H=896, s=Math.min(1,w.clientWidth/W);
+      p.style.transform='scale('+s+')'; w.style.height=(H*s)+'px';
+    });
+  }
+  window.addEventListener('resize',fit); fit();
+  document.querySelectorAll('.strip[data-start]').forEach(function(st){
+    var n=st.getAttribute('data-start'), t=null;
+    st.querySelectorAll('.rep').forEach(function(r){ if(!t && r.getAttribute('data-n')===n) t=r; });
+    if(t) st.scrollLeft=t.offsetLeft-st.offsetLeft-(st.clientWidth/2-t.offsetWidth/2);
+  });
+})();
+</script>
+</body>
+</html>

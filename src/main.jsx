@@ -1,12 +1,12 @@
 import {
   ROT_BASE, D_COMPOSTO, D_MAQUINA, D_MEDIO, D_ISOLADOR, D_CURTO,
   PROGRAMA, RULES, ALT, slugEx, EX_BASE, FREQUENTES_NO_BOX,
-  PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, ehPriorizado, PRIO, CARGAS, DORES, MODAIS,
+  PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, REGIOES, ehPriorizado, PRIO, CARGAS, DORES, MODAIS,
   MOVIMENTOS_DE_BOX
 } from './dominio/programa';
-import {
-  fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca, fmtHoraDita,
-  DIAS_CURTOS, DIAS_LONGOS, MESES, PERIODOS, periodoDe,
+import { caixaDeFrase as _caixaDeFrase,
+  fmtNum, fmtCarga, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca, fmtHoraDita,
+  DIAS_CURTOS, DIAS_LONGOS, MESES, periodoDe,
   fmtHora, fmtDur, semanasDesde, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
   escapeHTML, escAttr
 } from './dominio/formato';
@@ -18,11 +18,12 @@ import {
 import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
-import { ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS } from './dominio/corpo';
+import { MIN_PESAGENS as MIN_PESAGENS_CORPO, semanaEmCurso, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, VALIDADE_LEITURA, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
 import { leAula } from './dominio/aula';
+import { lerRevisao, casaNomes, mudancasDaRevisao, MODELO_DA_REVISAO } from './dominio/revisao';
 import { regua, pagina, anda, faixaDoTexto } from './dominio/regua';
 import { teclar } from './dominio/teclado';
 import { e1rmPorSemana, sinalDeForca, tendenciaDeForca, textoDaTendencia } from './dominio/forca';
@@ -31,9 +32,14 @@ import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { FolhaFoto } from './ui/folhas/foto.jsx';
 import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
+import { FolhaPesoRapido } from './ui/folhas/pesorapido.jsx';
 import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
+import { FolhaDecidir } from './ui/folhas/decidir.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
+import { Revisao } from './ui/telas/revisao.jsx';
+import { Evolucao } from './ui/telas/evolucao.jsx';
+import { Dia } from './ui/telas/dia.jsx';
 import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
 import { Camera } from './ui/telas/camera.jsx';
 import { Ajustes } from './ui/telas/ajustes.jsx';
@@ -44,13 +50,15 @@ import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { Retroativo } from './ui/telas/retroativo.jsx';
 import { Programa } from './ui/telas/programa.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
+import { diasComTreino as _diasComTreino, inicioDoDia as _inicioDoDia, iniciosDoPeriodo as _iniciosDoPeriodo, medianaDosInicios as _medianaDosInicios, leituraDosDias as _leituraDosDias,
+         serieDaMediaMovel as _serieDaMediaMovel } from './dominio/mes';
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
 import {
   aplicaAjusteNoArroz, tiraMarcaDeArroz, listaDeCompras, totalDaRefeicao, totalDoDia,
   refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao, minutosDe,
   fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis, diaInterpretavel,
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste,
-  poeComidaNoDia, resumoDaRefeicao
+  poeComidaNoDia, resumoDaRefeicao, FOLGA_POS
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
@@ -72,11 +80,12 @@ import {
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
 import * as CORPO from './infra/corpo';
+import * as LOUSA from './infra/lousa';
 import * as CAM from './infra/camera';
 import {
   CADENCIA_DIAS, MONTAGEM, comAPose, completude,
   diasDesde as diasDesdeAFoto, instanteDaData, mediaDaSemana, parPadrao,
-  poseDe, poses as posesDo, proximaPose, referencia, sessaoDe,
+  poseDe, poses as posesDo, proximaPose, quaseTodoPreto, referencia, sessaoDe,
   ultima as ultimaSessaoFoto, vizinhaComAPose
 } from './dominio/protocolo';
 import {
@@ -336,7 +345,7 @@ function corpoDoBackup(body) {
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] }, promoPendente:[] };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, modoSessao:false, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, prog:null, medida:null, aulas:false, rapido:false,
-  protocolo:null, comparar:null, ajuste:null, camera:null, ajustes:false };
+  protocolo:null, comparar:null, evolucao:null, diaAberto:null, ajuste:null, camera:null, ajustes:false };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -392,6 +401,9 @@ function normalizaEstado() {
   // mesmo caminho.
   if (!Array.isArray(S.aulas)) S.aulas = [];
   if (!S.quadro || typeof S.quadro !== 'object') S.quadro = null;
+  if (!S.lousa || typeof S.lousa !== 'object' || !S.lousa.d || !S.lousa.v) S.lousa = null;
+  if (!S.progTreinador || typeof S.progTreinador !== 'object' || !S.progTreinador.dias ||
+      typeof S.progTreinador.dias !== 'object' || !Array.isArray(S.progTreinador.rot)) S.progTreinador = null;
   if (!Array.isArray(S.comidaHist)) S.comidaHist = [];
   if (typeof S.mtime !== 'number') S.mtime = 0;
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
@@ -802,6 +814,12 @@ function fechaSessao(comoFim) {
     marca.m = Date.now();
   }
   if (S.quadro && S.quadro.day === s.day) S.quadro = null;
+  // A foto da lousa, pela mesma razão: vira parte da sessão da aula.
+  if (marca && S.lousa && S.lousa.day === s.day) {
+    marca.lousa = { d: S.lousa.d, v: S.lousa.v, ext: S.lousa.ext };
+    marca.m = Date.now();
+    S.lousa = null;
+  }
 
   S.sessao = null;
   S.draft = null;
@@ -1104,7 +1122,9 @@ const CHAVE_SYNC = 'treino-sync-v1';
 // `fotos` guarda a versão de cada foto que ESTE aparelho já confirmou no
 // servidor. É contabilidade local: se viajasse no estado, um aparelho diria ao
 // outro que já subiu o que só ele tem.
-let sync = { v: null, em: 0, sujo: false, rodando: false, erro: null, forcar: false, fotos: {} };
+// `expirou`: o instante em que a sessão de login caiu (401). Fica gravado: o
+// aviso tem de sobreviver a fechar e abrir o app, até ele entrar de novo.
+let sync = { v: null, em: 0, sujo: false, rodando: false, erro: null, forcar: false, fotos: {}, expirou: 0 };
 
 async function carregaSync() {
   try {
@@ -1115,7 +1135,8 @@ async function carregaSync() {
 }
 function gravaSync() {
   DB.set(CHAVE_SYNC, JSON.stringify({
-    v: sync.v, em: sync.em, sujo: sync.sujo, forcar: sync.forcar, fotos: sync.fotos || {}
+    v: sync.v, em: sync.em, sujo: sync.sujo, forcar: sync.forcar, fotos: sync.fotos || {},
+    expirou: sync.expirou || 0
   }));
 }
 
@@ -1158,7 +1179,7 @@ async function sincroniza(opcoes) {
   try {
     for (let tentativa = 0; tentativa < 3; tentativa++) {
       const lida = await NUVEM.puxa();
-      if (!lida.ok) { sync.erro = lida.msg; if (manual) toast(lida.msg); return; }
+      if (!lida.ok) { sync.erro = lida.msg; if (lida.erro === 'auth') sync.expirou = Date.now(); if (manual) toast(lida.msg); return; }
 
       const linha = lida.v;
       let deV = linha ? linha.v : null;
@@ -1196,6 +1217,7 @@ async function sincroniza(opcoes) {
       }
       if (escrita.erro === 'conflito') continue;   // outro gravou: relê e refaz
       sync.erro = escrita.msg;
+      if (escrita.erro === 'auth') sync.expirou = Date.now();
       if (manual) toast(escrita.msg);
       return;
     }
@@ -1269,7 +1291,10 @@ async function reconciliaCorpo() {
   if (!NUVEM.sessao() || !S.protocolo) return;
   const sessoes = S.protocolo.sessoes || [];
 
-  let todasNoBucket = true;
+  let todasNoBucket = true, subiu = 0;
+  // o aviso de "fotos só neste aparelho" (Corpo) lê o que subiu: redesenha
+  // quando alguma subiu, inclusive se a rede caiu no meio
+  const conta = function () { if (subiu) render(); };
   for (let i = sessoes.length - 1; i >= 0; i--) {
     const ses = sessoes[i];
     const poses = Object.keys(ses.fotos || {});
@@ -1282,10 +1307,11 @@ async function reconciliaCorpo() {
       const bytes = await CORPO.le(ses.d, pose, ref.ext);
       if (!bytes) { todasNoBucket = false; continue; }   // não está aqui: nada a subir
       const r = await NUVEM.subirCorpo(ses.d, pose, bytes, ref.ext);
-      if (!r.ok) return;                                  // sem rede: para e tenta depois
-      sync.fotos[k] = ref.v; gravaSync();
+      if (!r.ok) { conta(); return; }                     // sem rede: para e tenta depois
+      sync.fotos[k] = ref.v; gravaSync(); subiu++;
     }
   }
+  conta();
 
   // A poda espera todo mundo confirmado. Uma foto que não subiu segura o cache
   // inteiro por um ciclo, e é exatamente isso que se quer.
@@ -1409,6 +1435,10 @@ function contaFusao(r, manual) {
 
 /** O que está sendo gravado agora, nas palavras da frase de falha. */
 let oQueGrava = null;
+// O instante da última gravação que o aparelho ACEITOU. O estado lido na
+// abertura já está no disco, então nasce no boot. É o que deixa o aviso de
+// falha dizer o que continua guardado (a D, `aula.html`, estado 12).
+let ultimaGravacaoOk = Date.now();
 /**
  * Quem escreve declara o que escreve, antes de enfileirar. A gravação é
  * represada (`queueSave`), então vale o ÚLTIMO a declarar — é o que estava na
@@ -1423,6 +1453,7 @@ async function grava() {
   catch (e) { console.error('não salvou', e); ok = false; }
   if (ok) {
     oQueGrava = null;
+    ultimaGravacaoOk = Date.now();
     if (view.naoGuardado) { view.naoGuardado = null; view.falhou = false; render(); }
   } else if (DB.mode !== 'mem') {
     naoGuardou();
@@ -1433,13 +1464,28 @@ async function grava() {
 function naoGuardou() {
   const ja = !!view.naoGuardado;
   const g = oQueGrava || { oQue: 'a última mudança', valor: null };
-  view.naoGuardado = { motivo: DB.falha || 'recusa', oQue: g.oQue, valor: g.valor };
+  view.naoGuardado = { motivo: DB.falha || 'recusa', oQue: g.oQue, valor: g.valor, salvo: oQueEstaGuardado() };
   // O painel abre UMA vez por episódio: com o aparelho cheio, cada série
   // seguinte também falha, e um alerta por série é ruído que ensina a fechar sem
   // ler. A marca, essa sim, acompanha cada uma.
   if (!ja) view.falhou = true;
   render();
 }
+/**
+ * O que CONTINUA guardado quando uma gravação falha no meio de uma sessão: a
+ * presença dela, se nasceu antes da última gravação que o aparelho aceitou. É
+ * o registro que importa, e dizer que está a salvo é o contrário de falso
+ * sucesso — é verdade com hora (a D, `aula.html`, estado 12).
+ */
+function oQueEstaGuardado() {
+  const s = S.sessao;
+  if (!s) return null;
+  const m = S.done.filter(function (x) { return x.sid === s.sid; })[0];
+  if (!m || m.t > ultimaGravacaoOk) return null;
+  const nome = diaAberto(m.day) ? 'da aula' : 'do Treino ' + m.day;
+  return 'A presença ' + nome + ', guardada às ' + fmtHoraDita(m.t) + ', continua lá.';
+}
+
 /** Fechar este aviso: o painel sai, a marca de "não guardado" fica. */
 function dispensaFalha() { view.falhou = false; render(); }
 
@@ -1461,12 +1507,9 @@ function ultimaDoPlano() {
   for (let i = S.done.length-1; i >= 0; i--) if (S.done[i].day && !S.done[i].livre) return S.done[i];
   return null;
 }
-function nextDay() {
-  const u = ultimaDoPlano();
-  if (!u) return 'A';
-  const i = rot().indexOf(u.day);
-  return rot()[(i+1) % rot().length];
-}
+// Uma autoridade só sobre qual treino vem: a do domínio, com a aula fora da
+// ordem. Esta cópia local ainda contava a aula como posição.
+function nextDay() { return proximoTreino(S, ROT_BASE); }
 // Identidade de um exercício numa posição do treino. Devolve o id do
 // exercício, não a posição: é essa linha que desprende o histórico do lugar.
 function id(d,i){ const t = treino(d); return (t && t.ex[i]) ? t.ex[i].id : d + i; }
@@ -1641,7 +1684,7 @@ function shouldUp(d, i, ex) { return _shouldUp(lastOf(d, i), ex, pausaEx(id(d, i
  */
 function textoDaSerie(x, u, q) {
   if (!x) return null;
-  const carga = x[0] ? fmtNum(x[0]) + 'kg · ' : '';
+  const carga = x[0] ? fmtCarga(x[0]) + 'kg · ' : '';
   if (cronometrado(u)) {
     return carga + (q > 0 ? fmtInt(q) + ' ' + ROTULO_UNIDADE[u] + ' · ' : '') + x[1] + 's';
   }
@@ -1651,12 +1694,8 @@ function textoDaSerie(x, u, q) {
 function fmtLast(l, seg) {
   if (!l) return null;
   if (seg) return l.sets.map(s => textoDaSerie(s, l.u, l.q) || '–').join('  ');
-  return l.sets.map(s => s ? fmtNum(s[0])+'×'+s[1] : '–').join('  ');
+  return l.sets.map(s => s ? fmtCarga(s[0])+'×'+s[1] : '–').join('  ');
 }
-
-
-// só marca o que foi medido de verdade
-function periodoDaSessao(m) { return temHora(m) ? periodoDe(m.t) : null; }
 
 // Sessão retroativa sem hora informada não tem horário de verdade: o app
 // guarda um valor neutro só para ordenar, e não finge que mediu.
@@ -1665,7 +1704,6 @@ function horaDaSessao(m) { return temHora(m) ? fmtHora(m.t) : null; }
 function fimDaSessao(m) { return temHora(m) && m.dur ? fmtHora(m.t + m.dur + (m.pausado||0)) : null; }
 
 function sessoesDoDia(t) { return S.done.filter(function (x) { return sameDay(x.t, t); }); }
-function marcaDe(m) { return m.livre ? '•' : m.day; }
 
 /** Aquele dia foi descanso? */
 function ehDescanso(t) { return !!(S.descanso && S.descanso[hojeISO(t)]); }
@@ -1781,7 +1819,7 @@ function textoTotal(i, key, ex) {
   if (dr) for (let k = setsFor(ex)-1; k >= 0; k--) if (dr.s[k] && dr.s[k][0] != null) { v = dr.s[k][0]; break; }
   if (v == null) { const p = lastSet(key, 0); if (p) v = p[0]; }
   if (!v) return '';
-  return `${fmtNum(v)} ${c.cada} · <b>${fmtNum(totalAnilhas(v, c.barra))} kg ${c.total}</b>${c.obs}`;
+  return `${fmtCarga(v)} ${c.cada} · <b>${fmtCarga(totalAnilhas(v, c.barra))} kg ${c.total}</b>${c.obs}`;
 }
 
 function atualizaAnilhas(i) {
@@ -1889,8 +1927,8 @@ function vmExercicio(d, i, ex) {
             // no cartão a prescrição já está no cabeçalho: repeti-la na coluna
             // ANTERIOR gastaria a calha mais estreita da linha para dizer duas
             // vezes a mesma coisa
-            ? (p[0] ? fmtNum(p[0]) + 'kg · ' : '') + p[1] + (relogio ? 's' : '')
-            : (p[0] ? fmtNum(p[0]) + ' × ' : '') + p[1] + (p[2] != null ? ' @ ' + p[2] : ''))
+            ? (p[0] ? fmtCarga(p[0]) + 'kg · ' : '') + p[1] + (relogio ? 's' : '')
+            : (p[0] ? fmtCarga(p[0]) + ' × ' : '') + p[1] + (p[2] != null ? ' @ ' + p[2] : ''))
         : null,
       // O placeholder é DADO — a carga da última vez. A unidade é ESTRUTURA e
       // fica sempre visível ao lado. Antes os dois diziam a mesma coisa quando
@@ -1900,7 +1938,10 @@ function vmExercicio(d, i, ex) {
       // A RÉGUA da linha. Montada aqui, no modelo de apresentação, e a página é
       // função do foco — é o R4 da frente 2: não há `scrollLeft` guardado para
       // um re-render perder. Reconstruir com o mesmo foco dá a mesma página.
-      regua: reguaDaLinha(i, k, ex, p, v, CARGAS[tipo].rot),
+      // Sem "última" nesta posição (a série a mais de hoje), a referência é a
+      // série anterior DE HOJE — a D, momento 1, estado 4.
+      regua: reguaDaLinha(i, k, ex, p, v, CARGAS[tipo].rot,
+                          !p && k > 0 && dr && dr.s[k - 1] && dr.s[k - 1][1] != null ? dr.s[k - 1] : null),
       // O TECLADO PRÓPRIO, quando a porta "outro valor" o abriu nesta linha.
       teclado: (function () {
         const a = view.teclado && view.teclado.alvo;
@@ -1925,6 +1966,9 @@ function vmExercicio(d, i, ex) {
   return {
     i: i,
     nome: ex.n,
+    // "+ série" só onde a série a mais é mudança do dia possível: no treino que
+    // dá para editar hoje, de repetição, e não no exercício pulado
+    podeMaisSerie: podeEditar(d) && !seg && !diaAberto(d) && ns < 8 && !pulado,
     nomeOriginal: alt ? nomeEx(ex.orig) : null,
     // "Fazer antes o próximo" (§7.3): a saída mais barata da máquina ocupada,
     // e só existe se há um próximo para trazer.
@@ -1964,6 +2008,9 @@ function vmExercicio(d, i, ex) {
     cargaOpcional: seg || corpo,
 
     aberto: view.open === i,
+    // o que se faz no descanso, a um toque cada (momento 1, estado 2): só no
+    // cartão aberto, que é onde o polegar está
+    descansa: view.open === i ? CTX.enquantoDescansa() : null,
     pulado: pulado,
     deload: S.deload,
     estado: S.sessao ? estadoEx(d, i, S.sessao.sid, S.sessao.pulados) : null,
@@ -2061,7 +2108,7 @@ function opcaoDeTroca(a) {
     // Reconhecer o aparelho pela imagem é mais rápido que ler o nome.
     foto: FOTO.urlDaFoto(a.id, S.fotos[a.id]),
     antes: (u && u.sets && u.sets[0])
-      ? 'última vez: ' + fmtNum(u.sets[0][0]) + ' × ' + u.sets[0][1]
+      ? 'última vez: ' + fmtCarga(u.sets[0][0]) + ' × ' + u.sets[0][1]
       : a.w
   };
 }
@@ -2100,7 +2147,11 @@ const ACOES = {
   fechaTeclado: function () { fechaTeclado(); },
   abreFoto: function (i) { abreFoto(i); },
   poeRir: function (i, k, v) { poeRir(i, k, v); },
-  usaAnterior: function (i, k) { usaAnterior(i, k); }
+  usaAnterior: function (i, k) { usaAnterior(i, k); },
+  maisUmaSerie: function (i) { maisUmaSerie(i); },
+  preNoDescanso: function () { CTX.preNoDescanso(); },
+  copoNoDescanso: function () { CTX.maisUmCopo(); },
+  pesoNoDescanso: function () { CTX.abrePesoNoDescanso(); }
 };
 
 
@@ -2280,8 +2331,8 @@ const CTX = {
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
-              view.protocolo || view.comparar || view.ajuste || view.camera ||
-              view.ajustes || view.modoSessao);
+              view.protocolo || view.comparar || view.evolucao || view.diaAberto || view.ajuste || view.camera ||
+              view.ajustes || view.modoSessao || view.revisao);
   },
 
   // ---------- cabeçalho de HOJE ----------
@@ -2292,10 +2343,18 @@ const CTX = {
     // solto escapa dessa porta e lê o relógio de verdade — a tela passaria a
     // discordar do resto do app no meio de um teste que viajou no tempo.
     const d = new Date(Date.now());
+    // A PROCEDÊNCIA do tipo do dia, e é ela a linha tocável (a D,
+    // `agora-descanso.html`, estados 1, 4 e 5): o palpite diz que é palpite, com
+    // o pontilhado; o que ele disse e a sessão registrada são fato.
+    const treinoTxt = h.treino ? (diaAberto(h.treino) ? ' · aula' : ' · Treino ' + h.treino) : '';
+    const procedencia = h.origem === 'registrado' ? 'dia de treino, pela sessão registrada' + treinoTxt
+      : h.origem === 'aberta' ? 'dia de treino, com a sessão aberta' + treinoTxt
+      : h.origem === 'manual' ? (h.cadencia === 'descanso' ? 'descanso, você disse' : 'dia de treino, você disse' + treinoTxt)
+      : (h.cadencia === 'descanso' ? 'descanso, pelo padrão semanal' : 'dia de treino, pelo padrão semanal' + treinoTxt);
     return {
-      olho: (DIAS_LONGOS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()]).toUpperCase(),
-      rotulo: h.previsto ? 'previsto' : 'hoje',
-      valor: h.cadencia === 'descanso' ? 'folga' : (h.treino || '—')
+      data: DIAS_LONGOS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()],
+      procedencia: procedencia,
+      palpite: !!h.previsto
     };
   },
 
@@ -2403,6 +2462,76 @@ const CTX = {
     queueSave(); render();
   },
   abreRefeicao: function (id) { CTX.abreFolha({ k: 'refeicao', id: id }); },
+
+  // ---------- a água em linha (a D, `agora-descanso.html`, estados 3 e 8) ----------
+  //
+  // "+1 copo" é um toque e grava NA HORA, sabendo se gravou: com cada toque
+  // gravando, cada toque pode falhar, e a tela não finge (estado 8). Se o
+  // aparelho recusa, a conta volta ao que está guardado e a linha diz qual copo
+  // não entrou. Tocar no número corrige no lugar, sem prazo.
+  agua: function () {
+    const d = diaDeComida();
+    return { n: d.aguaNaoContada ? 0 : (d.agua || 0), naoContada: !!d.aguaNaoContada,
+             corrigindo: !!view.aguaCorrige, falhou: view.aguaFalhou || null };
+  },
+  maisUmCopo: async function () {
+    const d = diaDeComida();
+    const antes = d.agua, nc = d.aguaNaoContada;
+    d.agua = (d.aguaNaoContada ? 0 : (d.agua || 0)) + 1;
+    delete d.aguaNaoContada;
+    const n = d.agua;
+    view.aguaFalhou = null;
+    const ok = await save();
+    if (ok === false) {
+      d.agua = antes;
+      if (nc) d.aguaNaoContada = nc;
+      view.aguaFalhou = n;
+    }
+    render();
+  },
+  abreCorrecaoDaAgua: function () { view.aguaCorrige = !view.aguaCorrige; render(); },
+
+  // ---------- a linha da comida, aberta no lugar (a D, `agora-descanso.html`
+  // estado 2; `momento-2.html` estados 1 e 5) ----------
+  //
+  // A linha tocada abre ali mesmo com o que o cartão teria: a procedência, os
+  // itens e os três botões. Um toque grava — não há "guardar". Só uma linha
+  // abre por vez, para o dedo nunca acertar o botão de outra refeição.
+  linhaDaComida: function () {
+    const u = view.ultimaMarca;
+    const d = diaDeComida();
+    return { aberta: view.linhaComida || null, pergunta: view.perguntaDe || null,
+             // a leitura de volta do último toque (momento 2, estado 2): fica
+             // enquanto a marca existir e for de hoje
+             ultima: u && u.data === d.data && d.done[u.id] ? u : null };
+  },
+  abreLinhaDaComida: function (id) {
+    view.linhaComida = view.linhaComida === id ? null : id;
+    view.perguntaDe = null;
+    render();
+  },
+  /**
+   * `k`: `'tudo'`, `'metade'` (a marca com porção ½, como na folha de pôr o dia
+   * em dia), `'fora'`, `'nsei'`, `'nao'` — ou `'pergunta'`, que abre a única
+   * pergunta do "Não comi isso", e `'desfaz'`, que tira a marca.
+   */
+  marcaLinhaDaComida: function (id, k) {
+    const d = diaDeComida();
+    if (k === 'pergunta') { view.perguntaDe = id; render(); return; }
+    if (k === 'desfaz') {
+      if (!d.done[id]) return;
+      if (d.escala[id] != null) delete d.escala[id];
+      CTX.marcaRefeicao(id);
+      return;
+    }
+    if (d.done[id]) return;                 // marcada: só "Desfazer" muda
+    if (['tudo', 'metade', 'fora', 'nsei', 'nao'].indexOf(k) < 0) return;
+    if (k === 'metade') d.escala[id] = 0.5;
+    else if (d.escala[id] != null && k === 'tudo') delete d.escala[id];
+    view.linhaComida = null; view.perguntaDe = null;
+    view.ultimaMarca = { id: id, k: k, data: d.data };
+    CTX.marcaRefeicao(id, k === 'tudo' || k === 'metade' ? undefined : k);
+  },
   editaRefeicao: function (id) { CTX.abreFolha({ k: 'editaRefeicao', id: id }); },
   novaRefeicao: function () { CTX.abreFolha({ k: 'editaRefeicao', id: null }); },
 
@@ -2422,6 +2551,16 @@ const CTX = {
     queueSave(); render();
   },
   setAlta: function (v) { diaDeComida().alta = v ? 1 : 0; queueSave(); render(); },
+  /**
+   * "Já fiz alguma coisa hoje" (a D, estado 4): o cardio abre o registro de
+   * cardio do Agora; a aula e o treino fora da prescrição abrem o lançamento de
+   * hoje, que oferece os dois.
+   */
+  jaFizHoje: function (k) {
+    pilha().pop();
+    if (k === 'cardio') { view.cardioRapido = true; render(); return; }
+    abrirAdicionar(Date.now());
+  },
   /**
    * Como o dia foi. Ajuste de hoje, como a escala e o turno: zera com a data,
    * e é congelado no histórico por `fechaDia`.
@@ -2454,11 +2593,17 @@ function telaCheia() {
   if (view.camera) return <Camera ctx={CTX} />;
   if (view.ajuste) return <AjusteFoto ctx={CTX} />;
   if (view.protocolo) return <Protocolo ctx={CTX} />;
+  if (view.revisao) return <Revisao ctx={CTX} />;
   if (view.comparar) return <Comparar ctx={CTX} />;
+  // Depois de comparar: a comparação abre DE DENTRO da Evolução, e fica por cima.
+  if (view.evolucao) return <Evolucao ctx={CTX} />;
 
   if (view.retro) return <Retrospectiva ctx={CTX} />;
   if (view.add) return <Retroativo ctx={CTX} />;
   if (view.sessao) return <Sessao ctx={CTX} />;
+  // O DIA aberto fica ABAIXO da sessão e do registro de treino passado: os
+  // dois abrem de dentro dele, e Voltar devolve ao dia.
+  if (view.diaAberto) return <Dia ctx={CTX} />;
   // O histórico ANTES do programa: `telaCheia` desenha o primeiro que casa, e
   // quem casa primeiro está por cima. Abrindo o histórico de dentro do programa
   // — que é a porta nova da Prescrição —, ele é a camada de cima.
@@ -2476,13 +2621,29 @@ function semanasDe(t) { return semanasDesde(t, Date.now()); }
 // O treinador definiu um alvo por músculo. Mexer nas séries mostra na hora
 // para onde o número vai, porque esse é o único momento em que dá para mudar
 // de ideia sem custo. O alvo é CALCULADO do programa, nunca transcrito.
-const ALVO = alvoDoPrograma(PROGRAMA, ROT_BASE);
-const ALVO_TOTAL = Object.keys(ALVO).reduce(function (n, k) { return n + ALVO[k]; }, 0);
+// O PROGRAMA DO TREINADOR: o do código, até uma revisão colada entrar
+// (decisão do dono, 14/10). Daí em diante é o da revisão, guardado no dado —
+// é contra ele que "igual ao treinador", o alvo de séries e o restaurar leem.
+function baseTreinador() {
+  return S.progTreinador && S.progTreinador.dias ? S.progTreinador.dias : semeiaProg();
+}
+function rotTreinador() {
+  return S.progTreinador && Array.isArray(S.progTreinador.rot) && S.progTreinador.rot.length
+    ? S.progTreinador.rot : ROT_BASE;
+}
+function alvo() {
+  const b = baseTreinador(), prog = {};
+  Object.keys(b).forEach(function (d) {
+    prog[d] = { ex: (b[d].ex || []).map(function (sl) { return { g: exDe(sl.id).g, s: sl.s }; }) };
+  });
+  return alvoDoPrograma(prog, rotTreinador().filter(function (d) { return prog[d]; }));
+}
+function alvoTotal() { const a = alvo(); return Object.keys(a).reduce(function (n, k) { return n + a[k]; }, 0); }
 
 // Séries diretas de um músculo na rotação inteira, com os mods de hoje.
 function seriesDe(g) { return seriesDeGrupo(rot().map(treino), g); }
 
-function impactoSeries(d, g) { return g ? impacto(g, seriesDe(g), ALVO[g]) : null; }
+function impactoSeries(d, g) { return g ? impacto(g, seriesDe(g), alvo()[g]) : null; }
 
 
 // ---------- ações da edição ----------
@@ -2500,6 +2661,25 @@ function mudaSeries(i, delta) {
   const orig = slotOriginal(d, i);
   poeMod(d, { k:'sets', slot: ex.orig || ex.id, de: orig ? orig.s : ex.s, para: novo });
   queueSave(); render();
+}
+
+/**
+ * "+ série", na linha do exercício (a D, momento 1, estado 4: "deveria ser mais
+ * fácil, direto, por ali já", P12). Vira mudança SÓ DO DIA (F159) — a mesma que
+ * a edição do dia faria —, a carga vem igual à da série anterior de hoje, e a
+ * régua da série nova abre com a repetição dela como referência. Se fica
+ * permanente, decide-se depois, sentado.
+ */
+function maisUmaSerie(i) {
+  const d = view.day;
+  const ex = treino(d).ex[i];
+  if (!ex || setsFor(ex) >= 8) return;
+  mudaSeries(i, 1);
+  const k = setsFor(treino(d).ex[i]) - 1;
+  const dr = draftPeek(i);
+  const ant = dr && dr.s[k - 1];
+  if (ant && ant[0] != null && !(dr.s[k] && dr.s[k][0] != null)) anotaSerie(i, k, 0, String(ant[0]));
+  abreRegua(i, k);
 }
 
 /**
@@ -2920,7 +3100,7 @@ function impactoDoMod(d, m) {
       return { name: pr.name, tag: pr.tag,
                ex: pr.ex.map(function (sl) { return { g: exDe(sl.id).g, s: sl.s }; }) };
     }),
-    alvo: ALVO,
+    alvo: alvo(),
     grupoDe: function (id) { return exDe(id).g; },
     nomeDe: nomeEx,
     oficialDe: function (slot) { return slotOriginal(d, slot); },
@@ -3005,9 +3185,8 @@ function aplicaAoOficial(d, mods, motivo) {
 // Onde ele reorganiza sentado em casa. Aqui a edição é direta: mexeu, mudou o
 // oficial. É o oposto da edição do dia, e a tela diz isso o tempo todo.
 function difDoDia(d) {
-  const base = PROGRAMA[d] ? PROGRAMA[d].ex.map(function (ex) {
-    return { id: slugEx(ex.n), s: ex.s, r: ex.r, d: ex.d };
-  }) : null;
+  const bt = baseTreinador()[d];
+  const base = bt ? bt.ex.map(function (sl) { return { id: sl.id, s: sl.s, r: sl.r, d: sl.d }; }) : null;
   const meu = (S.prog[d] || { ex: [] }).ex;
   if (!base) return [{ k:'novo', txt:'treino criado por você' }];
 
@@ -3054,7 +3233,7 @@ function difDoDia(d) {
 function difTotal() {
   let n = 0;
   rot().forEach(function (d) { n += difDoDia(d).length; });
-  if (rot().join('|') !== ROT_BASE.join('|')) n++;
+  if (rot().join('|') !== rotTreinador().join('|')) n++;
   return n;
 }
 
@@ -3096,15 +3275,179 @@ function modoPrograma(m) { view.prog.modo = m; view.prog.day = null; render(); w
 // Impacto do programa OFICIAL contra o alvo. Só aparece quando saiu do alvo.
 function impactoOficial(g) {
   if (!g) return null;
-  const agora = seriesOficiais(g), alvo = ALVO[g];
-  if (alvo == null || agora === alvo) return null;
-  return impacto(g, agora, alvo);
+  const agora = seriesOficiais(g), alvoG = alvo()[g];
+  if (alvoG == null || agora === alvoG) return null;
+  return impacto(g, agora, alvoG);
 }
 
 
 // ---------- ações do programa ----------
 // Toda mudança aqui é imediata e registrada. O log é o que responde, daqui a
 // dois meses, "por que o pendulum virou hack squat?".
+// ---------- a revisão do treinador, colada em texto (prescrição, estado 6) ----------
+//
+// Decisão do dono, 14/10: a revisão chega como texto. O app lê, pergunta uma
+// vez por nome que não reconhece com certeza — "é a mesma / é outro exercício",
+// com as séries que aquele exercício já tem —, diz o que muda em cada treino e
+// quais mudanças dele saem, e só então grava. Errar a correspondência manda o
+// histórico para o exercício errado (F300): por isso nada é chutado.
+CTX.abreRevisao = function () {
+  view.revisao = { texto: '', lida: null, respostas: {} };
+  entraNoDestino('revisao'); render();
+};
+CTX.fechaRevisao = function () { view.revisao = null; render(); saiDoDestino('revisao'); };
+/** O texto colado: guardado sem redesenhar, para não roubar o foco do campo. */
+CTX.textoDaRevisao = function (el) { if (view.revisao) view.revisao.texto = el.value; };
+CTX.leRevisao = function () {
+  if (!view.revisao) return;
+  const lida = lerRevisao(view.revisao.texto);
+  view.revisao.lida = lida;
+  view.revisao.casa = casaNomes(lida, catalogoParaRevisao(), baseTreinador());
+  view.revisao.respostas = {};
+  render();
+};
+CTX.respondeRevisao = function (nome, r) {
+  if (!view.revisao || (r !== 'mesma' && r !== 'outro')) return;
+  view.revisao.respostas = Object.assign({}, view.revisao.respostas, { [nome]: r });
+  render();
+};
+CTX.modeloDaRevisao = function () { return MODELO_DA_REVISAO; };
+
+function catalogoParaRevisao() {
+  const c = {};
+  Object.keys(CAT).forEach(function (k) { c[k] = { n: CAT[k].n, g: CAT[k].g, arq: CAT[k].arq }; });
+  return c;
+}
+
+/** "Tem 41 séries registradas desde 06/08." — o que uma resposta errada levaria. */
+function seriesDoExercicio(id) {
+  const h = S.logs[id] || [];
+  const n = h.reduce(function (a, e) { return a + (e.sets || []).filter(Boolean).length; }, 0);
+  if (!n) return 'Não tem série registrada.';
+  const desde = Math.min.apply(null, h.map(function (e) { return e.t; }));
+  return 'Tem ' + n + (n === 1 ? ' série registrada' : ' séries registradas') + ' desde ' + fmtDate(desde) + '.';
+}
+
+/** O id final de cada nome, com as respostas dadas; `null` enquanto falta resposta. */
+function idsDaRevisao(r) {
+  const ids = {}, usados = {};
+  let falta = false;
+  r.lida.dias.forEach(function (d) {
+    d.ex.forEach(function (x) {
+      if (ids[x.n]) return;
+      const c = r.casa[x.n];
+      if (c.k === 'igual') ids[x.n] = c.id;
+      else if (c.k === 'pergunta' && r.respostas[x.n] === 'mesma') ids[x.n] = c.id;
+      else if (c.k === 'pergunta' && !r.respostas[x.n]) { falta = true; ids[x.n] = c.id; }
+      else {
+        // exercício novo: o id nasce do nome, e nunca pisa num que já existe
+        let id = slugEx(x.n), k = 2;
+        while (CAT[id] || usados[id]) id = slugEx(x.n) + '-' + k++;
+        ids[x.n] = id;
+      }
+      usados[ids[x.n]] = 1;
+    });
+  });
+  return { ids: ids, falta: falta };
+}
+
+CTX.revisao = function () {
+  const r = view.revisao;
+  if (!r) return null;
+  if (!r.lida) return { lida: false, texto: r.texto, modelo: MODELO_DA_REVISAO };
+  const L = r.lida;
+  const { ids, falta } = idsDaRevisao(r);
+  const novos = {};
+  const perguntas = [];
+  L.dias.forEach(function (d) {
+    d.ex.forEach(function (x) {
+      const c = r.casa[x.n];
+      if (c.k === 'pergunta' && !perguntas.some(function (p) { return p.nome === x.n; })) {
+        perguntas.push({ nome: x.n, candidato: exDe(c.id).n, series: seriesDoExercicio(c.id),
+                         lugar: c.por === 'lugar' ? 'Ele ocupa este lugar no Treino ' + d.dia + ' hoje.' : null,
+                         resposta: r.respostas[x.n] || null });
+      }
+      if (!CAT[ids[x.n]]) novos[x.n] = 1;
+    });
+  });
+  const nome = function (id) { return CAT[id] ? CAT[id].n : (Object.keys(ids).filter(function (n) { return ids[n] === id; })[0] || id); };
+  const mud = mudancasDaRevisao(L, ids, baseTreinador(), nome);
+  return {
+    lida: true, data: L.data,
+    problemas: L.problemas,
+    vazia: !L.dias.length,
+    perguntas: perguntas,
+    novos: Object.keys(novos),
+    dias: mud.map(function (m) {
+      const meu = S.prog[m.dia] ? difDoDia(m.dia) : [];
+      return { dia: m.dia, novo: m.novo, linhas: m.linhas,
+               series: m.antes === m.depois ? m.depois + ' séries, como antes' : m.antes + ' → ' + m.depois + ' séries',
+               suas: meu.map(function (x) { return x.txt; }) };
+    }),
+    pode: !falta && L.dias.length > 0
+  };
+};
+
+/**
+ * Grava a revisão: os exercícios novos entram no catálogo; o programa do
+ * treinador passa a ser o da revisão nos treinos que ela traz; o programa
+ * dele, nesses treinos, vira o da revisão (as mudanças dele ali saem, e a tela
+ * disse quais antes); treino novo entra no fim da sequência. Tudo volta se o
+ * aparelho recusar.
+ */
+CTX.incorporaRevisao = async function () {
+  const r = view.revisao;
+  const vm = CTX.revisao();
+  if (!r || !vm || !vm.pode) return;
+  const { ids } = idsDaRevisao(r);
+  const antes = JSON.stringify({ ex: S.ex, prog: S.prog, rot: S.rot, progTreinador: S.progTreinador, progLog: S.progLog });
+
+  S.ex = Object.assign({}, S.ex);
+  r.lida.dias.forEach(function (d) {
+    d.ex.forEach(function (x) {
+      const id = ids[x.n];
+      if (CAT[id] || S.ex[id]) return;
+      S.ex[id] = { n: x.n, car: 'pino', g: x.g || '', c: 0, cue: x.cue || '' };
+    });
+  });
+  montaCatalogo();
+
+  const base = JSON.parse(JSON.stringify(baseTreinador()));
+  const rotBase = rotTreinador().slice();
+  const agora = Date.now();
+  r.lida.dias.forEach(function (d) {
+    const velho = S.prog[d.dia];
+    const slots = d.ex.map(function (x, i) {
+      const id = ids[x.n];
+      const igual = velho && velho.ex[i] && velho.ex[i].id === id;
+      const sl = { id: id, s: x.s, r: x.r, d: x.d || descansoPadrao(exDe(id)), desde: igual ? velho.ex[i].desde || 0 : agora };
+      if (x.rir) sl.rir = x.rir;
+      return sl;
+    });
+    const t = { name: d.nome || (base[d.dia] && base[d.dia].name) || ('Treino ' + d.dia),
+                tag: (base[d.dia] && base[d.dia].tag) || '', ex: slots };
+    if (d.aberto) t.aberto = 1;
+    base[d.dia] = t;
+    if (rotBase.indexOf(d.dia) < 0) rotBase.push(d.dia);
+    S.prog[d.dia] = JSON.parse(JSON.stringify(t));
+    if (rot().indexOf(d.dia) < 0) S.rot = rot().concat([d.dia]);
+    logProg(d.dia, 'revisão do treinador' + (r.lida.data ? ' de ' + r.lida.data : '') + ' incorporada no treino ' + d.dia);
+  });
+  S.progTreinador = { em: agora, data: r.lida.data, rot: rotBase, dias: base };
+
+  if ((await save()) === false) {
+    const v = JSON.parse(antes);
+    S.ex = v.ex; S.prog = v.prog; S.rot = v.rot; S.progTreinador = v.progTreinador; S.progLog = v.progLog;
+    montaCatalogo();
+    render();
+    return;
+  }
+  const quais = r.lida.dias.map(function (d) { return 'Treino ' + d.dia; }).join(', ');
+  view.revisao = null; saiDoDestino('revisao');
+  render();
+  toast('Revisão' + (r.lida.data ? ' de ' + r.lida.data : '') + ' incorporada: ' + quais + '.');
+};
+
 function logProg(d, txt, motivo) {
   if (!Array.isArray(S.progLog)) S.progLog = [];
   S.progLog.push({ t: Date.now(), day: d, txt: txt, motivo: motivo || null, m: Date.now() });
@@ -3209,7 +3552,7 @@ async function criarTreino() {
 }
 
 async function restaurarDia(d) {
-  if (!PROGRAMA[d]) {
+  if (!baseTreinador()[d]) {
     if (!confirm('Apagar o treino ' + d + '?\n\nEle não existe no programa atual do treinador.')) return;
     delete S.prog[d];
     S.rot = rot().filter(function (x) { return x !== d; });
@@ -3222,7 +3565,7 @@ async function restaurarDia(d) {
   if (!n) { toast('O treino ' + d + ' já está igual ao do treinador.'); return; }
   if (!confirm('Desfazer ' + n + (n===1?' mudança':' mudanças') + ' no treino ' + d +
                ' e voltar ao que o treinador prescreveu?\n\nO histórico não é tocado.')) return;
-  S.prog[d] = semeiaProg()[d];
+  S.prog[d] = JSON.parse(JSON.stringify(baseTreinador()[d]));
   logProg(d, 'treino ' + d + ' restaurado para o do treinador');
   await save(); render();
   toast('Treino ' + d + ' de volta ao programa do treinador.');
@@ -3233,8 +3576,8 @@ async function restaurarTudo() {
   if (!n) { toast('Seu programa já é o do treinador.'); return; }
   if (!confirm('Desfazer ' + n + (n===1?' diferença':' diferenças') +
                ' e voltar ao programa do treinador?\n\nO histórico e os exercícios que você cadastrou não são tocados.')) return;
-  S.prog = semeiaProg();
-  S.rot = ROT_BASE.slice();
+  S.prog = JSON.parse(JSON.stringify(baseTreinador()));
+  S.rot = rotTreinador().slice();
   logProg('-', 'programa restaurado para o do treinador');
   await save(); render();
   toast('Programa de volta ao do treinador.');
@@ -3273,7 +3616,11 @@ function guardaEdicaoCom(sets, obs) {
     const par = sets && sets[k];
     if (par == null) return;
     const w = parseFloat(String(par[0]).replace(',','.')), r = parseInt(par[1],10);
-    e.sets[k] = isNaN(r) ? null : [isNaN(w) ? 0 : w, r];
+    // O que vem depois de carga e repetição — o RIR — não está no formulário e
+    // fica onde estava. Regravar só [carga, reps] apagava o RIR de todas as
+    // séries da sessão, inclusive das que ninguém tocou.
+    const resto = Array.isArray(x) ? x.slice(2) : [];
+    e.sets[k] = isNaN(r) ? null : [isNaN(w) ? 0 : w, r].concat(resto);
   });
   if (obs !== undefined) {
     const t = String(obs == null ? '' : obs).trim();
@@ -3354,14 +3701,90 @@ async function addCardio() {
   const n = cardioSemana().length;
   toast(`${f.min} min de ${f.m} registrados · ${n} de ${CARDIO_ALVO} nesta semana`);
 }
+/**
+ * Corrige um campo do cardio já registrado, no lugar (a D, `dias.html`, estado
+ * 12): modalidade, minutos ou intensidade, cada um num toque. O instante não
+ * muda — é a chave dele na sincronia (`cardio:<t>`) —, e o carimbo `alt` sobe.
+ */
+async function corrigeCardio(t, campo, valor) {
+  const c = S.cardio.filter(function (x) { return x.t === t; })[0];
+  if (!c) return;
+  if (campo === 'm' && MODAIS.indexOf(valor) < 0) return;
+  if (campo === 'i' && ['leve', 'moderado'].indexOf(valor) < 0) return;
+  if (campo === 'min' && !(Math.round(+valor) >= 1 && Math.round(+valor) <= 300)) return;
+  if (campo !== 'm' && campo !== 'i' && campo !== 'min') return;
+  c[campo] = campo === 'min' ? Math.round(+valor) : valor;
+  c.alt = Date.now();                  // carimbo do cardio: `alt`, porque `m` é o modal
+  await save();
+  render();
+}
+
+/** A hora do cardio, em prosa; o lançado depois não tem hora medida. */
+function horaDoCardio(c) { return c && !c.semHora ? fmtHoraDita(c.t) : null; }
+
+/**
+ * O CARDIO ESQUECIDO, lançado num dia passado pelo dia aberto em Dias (decisão
+ * do dono, 14/10). O instante é o meio-dia daquele dia — a semana e o mês o
+ * contam onde ele aconteceu — e a hora não foi medida, então fica marcada como
+ * tal e a tela não a inventa. Um segundo cardio no mesmo dia anda um
+ * milissegundo: o instante é a chave dele na sincronia.
+ */
+CTX.abreCardioNoDia = function () {
+  view.cardioNoDia = view.cardioNoDia ? null : { m: 'bike', min: 25, i: 'moderado' };
+  view.cardioNoDiaFalhou = null;
+  render();
+};
+CTX.cardioNoDiaSet = function (campo, v) {
+  if (!view.cardioNoDia) return;
+  view.cardioNoDia = Object.assign({}, view.cardioNoDia, { [campo]: campo === 'min' ? Number(v) : v });
+  render();
+};
+CTX.gravaCardioNoDia = async function () {
+  const f = view.cardioNoDia, dia = view.diaAberto;
+  if (!f || !dia) return;
+  const d = new Date(dia);
+  if (sameDay(d.getTime(), Date.now()) || d.getTime() > Date.now()) return;   // hoje é pelo Agora
+  let t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0).getTime();
+  while (S.cardio.some(function (x) { return x.t === t; })) t++;
+  const novo = { t: t, m: f.m, min: f.min, i: f.i, alt: Date.now(), semHora: 1 };
+  S.cardio.push(novo);
+  S.cardio.sort(function (a, b) { return a.t - b.t; });
+  if (S.cardio.length > 200) S.cardio = S.cardio.slice(-200);
+  const ok = await save();
+  if (ok === false) {
+    S.cardio = S.cardio.filter(function (x) { return x !== novo; });
+    view.cardioNoDiaFalhou = 'O cardio não foi gravado: o armazenamento deste aparelho recusou. O dia continua como estava.';
+    render();
+    return;
+  }
+  view.cardioNoDia = null; view.cardioNoDiaFalhou = null;
+  render();
+  toast(f.min + ' min de ' + f.m + ' registrados em ' + fmtDate(t) + '.');
+};
+
 async function delCardio(t) {
   // Esta lista existe para desfazer um registro errado, e por isso mesmo ela
   // não pode apagar o certo num toque de passagem.
   const c = S.cardio.filter(function (x) { return x.t === t; })[0];
-  // PARE (§3.3), com o número do que sai e o que ele mexe.
   if (!c) return;
-  if (!(await pare({ texto: 'Apagar ' + c.min + ' min de ' + c.m + ' de ' + fmtDate(t) + ' tira ele do placar da semana. O treino do dia não muda. Isso não tem volta.',
-                     sim: 'Apagar o cardio de ' + fmtDate(t) }))) return;
+  // O painel do desenho (a D, `dias.html`, estado 12): o que vai embora, o que
+  // fica no dia — com o "igual a este" quando é igual —, e o efeito na leitura
+  // do mês, com os números de antes e de depois.
+  const mesmoDia = cardioDoDia(t).filter(function (x) { return x !== c; });
+  const fica = mesmoDia.length
+    ? ' Fica ' + mesmoDia.map(function (x) {
+        return (horaDoCardio(x) ? 'o cardio das ' + horaDoCardio(x) : 'o outro cardio do dia') + (x.m === c.m && x.min === c.min && x.i === c.i ? ', igual a este' : ', ' + x.min + ' min de ' + x.m);
+      }).join(' e ') + '.'
+    : '';
+  const treinoFica = sessoesDoDia(t).length ? ' O treino do dia não muda.' : '';
+  const d0 = new Date(t), ini = new Date(d0.getFullYear(), d0.getMonth(), 1).getTime(), fim = new Date(d0.getFullYear(), d0.getMonth() + 1, 1).getTime();
+  const doMes = S.cardio.filter(function (x) { return x.t >= ini && x.t < fim; });
+  const minMes = doMes.reduce(function (a, x) { return a + x.min; }, 0);
+  const efeito = ' O cardio de ' + MESES[d0.getMonth()] + ' passa de ' + doMes.length + ' para ' + (doMes.length - 1) +
+    (doMes.length - 1 === 1 ? ' sessão' : ' sessões') + ' e de ' + minMes + ' para ' + (minMes - c.min) + ' min.';
+  if (!(await pare({ texto: 'Apagar o cardio de ' + DIAS_CURTOS[d0.getDay()] + ' ' + fmtDate(t) + ' tira 1 sessão de cardio: ' +
+                             c.min + ' min de ' + c.m + ', ' + c.i + '.' + fica + treinoFica + efeito + ' Isso não tem volta.',
+                     sim: 'Apagar o cardio' }))) return;
   lapide(chaveDeCardio({ t: t }));
   S.cardio = S.cardio.filter(c => c.t !== t);
   await save();
@@ -3379,42 +3802,8 @@ function mesRef() {
   return d;
 }
 
-function totaisDoPeriodo(de, ate) {
-  const marcas = S.done.filter(function (x) { return x.t >= de && x.t < ate; });
-  let vol = 0, tempo = 0, series = 0;
-  marcas.forEach(function (m) {
-    const r = resumoDaSessao(m);
-    vol += r.vol; series += r.series;
-    tempo += m.dur || (S.sessao && S.sessao.sid === m.sid ? S.sessao.ultima - S.sessao.inicio : 0);
-  });
-  const dias = {};
-  marcas.forEach(function (m) { dias[new Date(m.t).toDateString()] = 1; });
-  const comTempo = marcas.filter(function (m) { return m.dur; }).length;
-  return { marcas: marcas, vol: vol, tempo: tempo, series: series, comTempo: comTempo, dias: Object.keys(dias).length };
-}
-
-// média móvel de treinos por semana nas últimas 4 semanas fechadas.
-// Deliberadamente não é sequência: você treina 5 a 6 vezes por semana, então
-// sequência quebraria todo domingo e viraria cobrança em vez de informação.
-function mediaSemanal() {
-  const fim = weekStart(Date.now());
-  const de = fim - 4*7*86400000;
-  const n = S.done.filter(function (x) { return x.t >= de && x.t < fim; }).length;
-  const temSemanas = S.done.some(function (x) { return x.t < fim; });
-  return temSemanas ? n/4 : null;
-}
-
-// um só marcador por dia: se houve mais de um treino, vale o primeiro medido
-function periodoNaCelula(marcas) {
-  for (let i = 0; i < marcas.length; i++) {
-    const p = periodoDaSessao(marcas[i]);
-    if (p) return '<u class="per ' + p.k + '">' + p.rot + '</u>';
-  }
-  return '';
-}
-
 /**
- * Anda um mês no calendário do acompanhamento.
+ * Anda um mês em Dias.
  *
  * **Não mexe na rolagem**, e isso é o ponto: trocar de mês é ATUALIZAR O DADO
  * DA MESMA TELA, não entrar em lugar nenhum. Ela subia ao topo a cada toque, e
@@ -3447,14 +3836,171 @@ function gruposDoPlano() {
   });
 }
 
+/** As regiões do corpo, na ordem do mapa: peito, ombro, costas, perna, panturrilha, braço, abdômen. */
+function regioesDoCorpo() {
+  return Object.keys(REGIOES).map(function (g) { return REGIOES[g]; })
+    .filter(function (r, i, xs) { return xs.indexOf(r) === i; });
+}
+
+// ---------- o lançamento de um treino passado (a D, `dias.html`, estados 6 a 8) ----------
+//
+// Um toque grava a presença. A folha pergunta uma coisa só — que treino foi —,
+// e o toque já é o registro: hora, séries, grupos e duração vêm DEPOIS, se ele
+// quiser, e cada um corrige o registro que já existe (decisão 1: cada toque
+// grava). Treino de data passada não ganha hora inventada (F270): sem hora, ele
+// conta como dia com treino e não entra no horário de início.
+
+/** A hora neutra de um dia sem hora informada: só ordena, nunca é mostrada. */
+function horaNeutra(t) { const d = new Date(t); d.setHours(7, 0, 0, 0); return d.getTime(); }
+
+/**
+ * Um instante livre para o registro, a partir de `t`.
+ *
+ * Dois treinos sem hora no mesmo dia cairiam no mesmo instante — e o instante é
+ * o `sid` de um registro novo, que é a chave dele na sincronia (`done:<sid>`) e
+ * o que apagar e abrir procuram. Um minuto adiante, até ficar livre, e a hora
+ * neutra continua sem ser mostrada.
+ */
+function instanteLivre(t, fora) {
+  let x = t;
+  while (S.done.some(function (m) { return m !== fora && (m.t === x || m.sid === x); })) x += 60000;
+  return x;
+}
+
 function abrirAdicionar(t) {
   const base = t != null ? t : Date.now() - 86400000;
-  const d = new Date(base); d.setHours(7,0,0,0);
-  view.add = { t: d.getTime(), tipo: null, grupos: [], dur: null, nome: '', hora: '' };
+  view.add = { t: horaNeutra(base), sid: null, antes: null, horaAberta: false, hora: '', durAberta: false };
   view.sessao = null;
   entraNoDestino('add'); render();
 }
-function fecharAdicionar(){ view.add = null; render(); saiDoDestino('add'); }
+function fecharAdicionar() {
+  const tinha = view.add && view.add.sid != null;
+  view.add = null; render(); saiDoDestino('add');
+  if (tinha) save();           // o nome, que grava ao sair do campo, pode não ter saído
+}
+
+/** O registro que esta folha gravou, ou `null` antes do toque. */
+function registroDoLancamento() {
+  const a = view.add;
+  return a && a.sid != null ? S.done.filter(function (x) { return x.sid === a.sid; })[0] || null : null;
+}
+
+/** O próximo da sequência NAQUELE dia: o que vinha depois do último antes dele. */
+function previstoNoDia(t) {
+  const ini = new Date(t); ini.setHours(0, 0, 0, 0);
+  return proximoTreino(Object.assign({}, S, { done: S.done.filter(function (x) { return x.t < ini.getTime(); }) }), ROT_BASE);
+}
+
+/** Dias com treino nas últimas quatro semanas, até ontem — a conta da leitura de Dias. */
+function diasNasQuatroSemanas() { return _diasComTreino(S.done, _inicioDoDia(Date.now()) - 1, 28); }
+
+/**
+ * O toque que grava: `k` é a letra do treino, ou `'livre'` para fora da
+ * prescrição (presença, sem séries, sem mexer na sequência — F155).
+ */
+async function lancaTreino(k) {
+  const a = view.add;
+  if (!a || a.sid != null) return;
+  if (k !== 'livre' && rot().indexOf(k) < 0) return;
+  a.antes = diasNasQuatroSemanas();
+  const t = instanteLivre(a.t);
+  const marca = { t: t, sid: t, retro: 1, m: Date.now() };
+  if (k === 'livre') { marca.livre = 1; marca.grupos = []; }
+  else { marca.day = k; if (S.deload) marca.dl = 1; }
+  S.done.push(marca);
+  S.done.sort(function (x, y) { return x.t - y.t; });
+  a.sid = marca.sid;
+  a.gravadoEm = Date.now();
+  await save();
+  render();
+}
+
+/** Toda correção depois do toque passa por aqui: carimba e grava. */
+async function corrigeLancamento(muda) {
+  const m = registroDoLancamento();
+  if (!m) return;
+  muda(m);
+  m.m = Date.now();                    // carimbo: é ele que a fusão compara
+  S.done.sort(function (x, y) { return x.t - y.t; });
+  await save();
+  render();
+}
+
+function abreHoraDoLancamento() { if (view.add) { view.add.horaAberta = true; render(); } }
+
+/**
+ * A hora de início, por valor ("19:30"). Vazio é "sem hora": o registro volta à
+ * hora neutra e perde a marca de hora informada. Hora inválida não grava nada.
+ */
+async function horaDoLancamento(txt) {
+  const a = view.add;
+  if (!a) return;
+  a.hora = mascaraDeHora(txt, false);
+  if (!a.hora) {
+    a.horaAberta = false;
+    return corrigeLancamento(function (m) { delete m.hora; m.t = instanteLivre(a.t, m); });
+  }
+  const comHora = aplicaHora(a.t, a.hora);
+  if (comHora == null) { render(); return; }
+  return corrigeLancamento(function (m) { m.t = instanteLivre(comHora, m); m.hora = 1; });
+}
+/** A casca do campo: aplica a máscara enquanto ele digita, e grava quando a hora fecha. */
+function horaDoLancamentoNoCampo(el) {
+  const v = mascaraDeHora(el.value, el.value.length === 2);
+  if (v !== el.value) el.value = v;
+  if (!v || aplicaHora(view.add.t, v) != null) horaDoLancamento(v);
+  else view.add.hora = v;
+}
+
+function grupoDoLancamento(g) {
+  if (regioesDoCorpo().indexOf(g) < 0) return;
+  return corrigeLancamento(function (m) {
+    const gs = (m.grupos || []).slice();
+    const i = gs.indexOf(g);
+    if (i >= 0) gs.splice(i, 1); else gs.push(g);
+    m.grupos = gs;
+  });
+}
+/** A duração em minutos; tocar a que já está tira. `'outro'` abre o campo. */
+function duracaoDoLancamento(min) {
+  if (min === 'outro') { view.add.durAberta = true; render(); return; }
+  const v = Math.round(+min);
+  return corrigeLancamento(function (m) {
+    if (!v || v < 1) { delete m.dur; return; }
+    if (m.dur === v * 60000 && !view.add.durAberta) delete m.dur;
+    else m.dur = Math.min(600, v) * 60000;
+  });
+}
+/** O nome, o único texto livre: anota a cada tecla e grava ao sair do campo. */
+function anotaNomeDoLancamento(nome) {
+  const m = registroDoLancamento();
+  if (!m) return;
+  const v = String(nome || '').trim();
+  if (v) m.nome = v; else delete m.nome;
+  m.m = Date.now();
+}
+
+/**
+ * "Detalhar exercícios e séries": abre a sessão daquele registro, na data dele.
+ *
+ * Só pode existir uma sessão aberta. Fechar a de hoje antes grava a duração
+ * dela; sem isso ela ficaria órfã, com o tempo perdido.
+ */
+async function detalhaLancamento() {
+  const m = registroDoLancamento();
+  if (!m || m.livre) return;
+  let fechou = null;
+  if (S.sessao) { fechou = S.sessao.day; fechaSessao('manual'); }
+  S.sessao = { day: m.day, inicio: m.t, ultima: m.t, sid: m.sid, retro: 1, tocado: Date.now(), pausas: [], pulados: [] };
+  S.draft = null;
+  view.add = null; saiDoDestino('add');
+  view.day = m.day; view.open = 0; abreModo();
+  await save();
+  render(); window.scrollTo(0, 0);
+  toast(fechou
+    ? 'Treino ' + fechou + ' de hoje encerrado. Agora preenchendo ' + fmtDate(m.t) + '.'
+    : 'Preenchendo o treino de ' + fmtDate(m.t) + '. Some sozinho quando você sair.');
+}
 
 async function concluirRetro() {
   const t = S.sessao ? S.sessao.inicio : null;
@@ -3464,23 +4010,6 @@ async function concluirRetro() {
   render(); window.scrollTo(0,0);
   if (t) toast('Treino de ' + fmtDate(t) + ' concluído.');
 }
-
-function addSet(campo, valor) {
-  const a = view.add;
-  if (campo === 'grupo') {
-    const i = a.grupos.indexOf(valor);
-    if (i >= 0) a.grupos.splice(i,1); else a.grupos.push(valor);
-  } else if (campo === 'dia') {
-    const d = new Date(a.t); d.setDate(d.getDate() + valor);
-    if (d.getTime() > Date.now()) return;
-    a.t = d.getTime();
-  } else {
-    a[campo] = a[campo] === valor ? null : valor;
-  }
-  render();
-}
-function anotaNomeAvulso(nome) { view.add.nome = nome; }
-function addNome(el){ anotaNomeAvulso(el.value); }
 
 /**
  * A máscara do horário: só dígito e `:`, e os dois-pontos entram sozinhos.
@@ -3494,12 +4023,6 @@ function mascaraDeHora(txt, digitando) {
   const v = (txt == null ? '' : String(txt)).replace(/[^0-9:]/g, '');
   return (digitando && v.length === 2 && v.indexOf(':') < 0) ? v + ':' : v;
 }
-function anotaHoraAvulsa(txt) { view.add.hora = mascaraDeHora(txt, false); }
-function addHora(el) {
-  const v = mascaraDeHora(el.value, el.value.length === 2);
-  if (v !== el.value) el.value = v;
-  view.add.hora = v;
-}
 // 'HH:MM' válido vira o instante do dia escolhido
 function aplicaHora(base, txt) {
   const m = /^(\d{1,2}):(\d{2})$/.exec((txt||'').trim());
@@ -3510,56 +4033,6 @@ function aplicaHora(base, txt) {
   d.setHours(hh, mm, 0, 0);
   return d.getTime();
 }
-
-async function gravarRetro(detalhar) {
-  const a = view.add;
-  if (!a.tipo) { toast('Escolha o que foi aquele dia.'); return; }
-  // descanso não é sessão: não tem hora, nem duração, nem exercício para
-  // detalhar. Sai por outra porta, antes de qualquer coisa virar marca.
-  if (a.tipo === 'descanso') { await alternaDescanso(a.t); return; }
-  if (a.tipo === 'livre' && !a.grupos.length) { toast('Marque pelo menos um grupo muscular.'); return; }
-
-  const comHora = aplicaHora(a.t, a.hora);
-  const quando = comHora != null ? comHora : a.t;
-  const sid = quando;
-  const marca = { t: quando, sid: sid, retro: 1, m: Date.now() };
-  if (comHora != null) marca.hora = 1;
-  if (a.tipo === 'livre') {
-    marca.livre = 1;
-    marca.grupos = a.grupos.slice();
-    if (a.nome.trim()) marca.nome = a.nome.trim();
-  } else {
-    marca.day = a.tipo;
-    if (S.deload) marca.dl = 1;
-  }
-  if (a.dur) marca.dur = a.dur*60000;
-
-  S.done.push(marca);
-  S.done.sort(function (x,y) { return x.t - y.t; });
-  view.add = null;
-  await save();
-
-  if (detalhar && a.tipo !== 'livre') {
-    // Só pode existir uma sessão aberta. Fechar a de hoje antes grava a
-    // duração dela; sem isso ela ficaria órfã, com o tempo perdido.
-    let fechou = null;
-    if (S.sessao) { fechou = S.sessao.day; fechaSessao('manual'); }
-    S.sessao = { day: a.tipo, inicio: quando, ultima: quando, sid: sid, retro: 1, tocado: Date.now(), pausas: [], pulados: [] };
-    S.draft = null;
-    view.day = a.tipo; view.open = 0; abreModo();
-    await save();
-    render(); window.scrollTo(0,0);
-    toast(fechou
-      ? 'Treino ' + fechou + ' de hoje encerrado. Agora preenchendo ' + fmtDate(a.t) + '.'
-      : 'Preenchendo o treino de ' + fmtDate(a.t) + '. Some sozinho quando você sair.');
-    return;
-  }
-  view.aba = 'dias';
-  render(); window.scrollTo(0,0);
-  toast(a.tipo === 'livre' ? 'Treino avulso registrado.' : 'Treino ' + a.tipo + ' registrado em ' + fmtDate(a.t) + '.');
-}
-
-
 
 function pesoRitmo() { return _pesoRitmo(S.body.peso); }
 
@@ -3593,15 +4066,33 @@ function diasRegistrados() {
   return diasInterpretaveis(S.comidaHist, 14, iso);
 }
 
-function veredito() {
-  return _veredito(S.body, {
+function sinaisDaRegra() {
+  return {
     forcaSubindo: forcaSubindo(),
     diasRegistrados: diasRegistrados(),
     // A segunda camada de confirmação, que substituiu a cintura. Perguntada na
     // tela de comparar, onde as duas fotos estão à vista. Envelhece em 14 dias:
     // sem leitura recente o peso abre revisão e não corta.
-    gorduraVisual: leituraVigente(S.gordura, Date.now())
-  });
+    gorduraVisual: leituraVigente(S.gordura, Date.now()),
+    // o passo em vigor: com ele, a regra espera duas semanas novas de peso
+    passoEm: passoEmVigor() ? passoEmVigor().t : null
+  };
+}
+
+function veredito() { return _veredito(S.body, sinaisDaRegra()); }
+
+/**
+ * O par de fotos sobre o qual a avaliação visual é perguntada — o mesmo que a
+ * comparação abre: a primeira pose com duas sessões, o par padrão dela, e só se
+ * ele cobrir de 10 a 28 dias, que é sobre o que a pergunta é. `null` sem par.
+ */
+function parDaAvaliacao() {
+  const pose = ordemDePoses().filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0];
+  const par = pose && parPadrao(S.protocolo.sessoes, pose);
+  if (!par) return null;
+  const de = instanteDaData(par.de.d), ate = instanteDaData(par.ate.d);
+  const dias = Math.abs(Math.round((ate - de) / 86400000));
+  return dias >= JANELA_MIN && dias <= JANELA_MAX ? { de: de, ate: ate } : null;
 }
 
 /**
@@ -3716,10 +4207,10 @@ function medidaDoDia(k) {
   const d = diaDaMedida(k);
   return (S.body[k] || []).filter(function (x) { return sameDay(x.t, d); })[0] || null;
 }
-/** "registrar hoje", "registrar ontem", "registrar em ter 14". */
+/** "Registrar hoje", "Registrar ontem", "Registrar em ter 14". */
 function acaoDaMedida(k) {
   const r = rotuloDoDia(diaDaMedida(k));
-  return 'registrar ' + (r === 'hoje' || r === 'ontem' ? r : 'em ' + r);
+  return 'Registrar ' + (r === 'hoje' || r === 'ontem' ? r : 'em ' + r);
 }
 
 /** O que a tela precisa saber sobre a data escolhida. */
@@ -4169,7 +4660,9 @@ async function importText(txt) {
         aulas: Array.isArray(d.aulas) ? d.aulas : [],
         comidaHist: Array.isArray(d.comidaHist) ? d.comidaHist : [],
         protocolo: (d.protocolo && typeof d.protocolo === 'object') ? d.protocolo : null,
-        quadro: (d.quadro && typeof d.quadro === 'object') ? d.quadro : null };
+        quadro: (d.quadro && typeof d.quadro === 'object') ? d.quadro : null,
+        lousa: (d.lousa && typeof d.lousa === 'object') ? d.lousa : null,
+        progTreinador: (d.progTreinador && typeof d.progTreinador === 'object') ? d.progTreinador : null };
   // um backup de qualquer versão anterior passa pelas mesmas migrações que o
   // estado do disco: sem isso o app abre com o programa nulo
   normalizaEstado();
@@ -4723,6 +5216,80 @@ function fotoAberta() {
   return f ? f.id : null;
 }
 
+// ---------- a lousa do box (a D, `aula.html`, estado 6; decisão do dono, 14/10) ----------
+//
+// Foto agora, transcrição quando der. Um toque fotografa e acaba ali: nada fica
+// esperando resposta. A foto fica guardada no dia e, quando a aula termina,
+// vira parte daquela sessão. Se a aula de hoje já foi encerrada, a foto vai
+// direto para ela.
+async function tiraFotoDaLousa(el) {
+  const arquivo = el && el.files && el.files[0];
+  const day = view.day;
+  if (!arquivo || !diaAberto(day)) return;
+  el.value = '';
+  const d = hojeISO();
+  // a versão é o instante, e anda se a anterior for do mesmo milissegundo: é a
+  // chave dos bytes, e duas fotos não podem dividir uma
+  const anterior = lousaDoDia(day);
+  const v = Math.max(Date.now(), anterior ? anterior.v + 1 : 0);
+  let ext;
+  try {
+    const r = await LOUSA.reduz(arquivo);
+    ext = r.ext;
+    await LOUSA.guarda(d, v, r.blob, ext);
+  } catch (e) {
+    toast('A foto da lousa não foi guardada: o armazenamento deste aparelho recusou.');
+    return;
+  }
+  const ref = { d: d, v: v, ext: ext };
+  const encerrada = !(S.sessao && S.sessao.day === day) &&
+    S.done.filter(function (x) { return x.day === day && !x.livre && sameDay(x.t, Date.now()); }).slice(-1)[0];
+  const antes = { lousa: S.lousa, marca: encerrada ? encerrada.lousa : undefined, m: encerrada ? encerrada.m : undefined };
+  if (encerrada) { encerrada.lousa = ref; encerrada.m = Date.now(); }
+  else S.lousa = { day: day, d: d, v: v, ext: ext, t: Date.now() };
+  if ((await save()) === false) {
+    // a referência volta; os bytes novos saem do cache, para não ficar órfão
+    S.lousa = antes.lousa;
+    if (encerrada) { if (antes.marca) encerrada.lousa = antes.marca; else delete encerrada.lousa; encerrada.m = antes.m; }
+    LOUSA.esquece(d, v, ext);
+    render();
+    return;
+  }
+  // a foto que esta substitui sai do cache depois de a nova estar gravada
+  const velha = encerrada ? antes.marca : antes.lousa;
+  if (velha && velha.v !== v) LOUSA.esquece(velha.d, velha.v, velha.ext);
+  await LOUSA.carrega(d, v, ext);
+  render();
+  toast('Foto da lousa guardada neste aparelho.');
+}
+CTX.tiraFotoDaLousa = function (el) { return tiraFotoDaLousa(el); };
+
+/** A lousa do dia aberto `d`: a pendente, ou a da sessão de hoje já encerrada. */
+function lousaDoDia(d) {
+  if (S.lousa && S.lousa.day === d) return S.lousa;
+  const m = S.done.filter(function (x) { return x.day === d && !x.livre && sameDay(x.t, Date.now()) && x.lousa; }).slice(-1)[0];
+  return m ? m.lousa : null;
+}
+
+/**
+ * "Mandar para transcrever": a foto sai do app pelo compartilhar do sistema, e
+ * a transcrição volta como arquivo (estado 7). Sem compartilhar arquivo no
+ * navegador, a tela diz o caminho em vez de fingir que mandou.
+ */
+CTX.mandaLousa = async function () {
+  const l = lousaDoDia(view.day);
+  if (!l) return;
+  const b = await LOUSA.le(l.d, l.v, l.ext);
+  if (!b) { toast('A foto não está mais neste aparelho.'); return; }
+  const arq = typeof File === 'function' ? new File([b], 'lousa-' + l.d + '.' + l.ext, { type: b.type || 'image/webp' }) : null;
+  const pode = arq && navigator.canShare && navigator.canShare({ files: [arq] });
+  if (!pode || !navigator.share) {
+    toast('Este navegador não manda arquivo daqui: abra a foto e compartilhe pelo sistema.');
+    return;
+  }
+  try { await navigator.share({ files: [arq], title: 'Lousa de ' + fmtDate(instanteDaData(l.d)) }); } catch (e) {}
+};
+
 async function tiraFoto(el) {
   const arquivo = el && el.files && el.files[0];
   const id = fotoAberta();
@@ -4782,16 +5349,17 @@ const RIR_ESCALA = [0, 1, 2, 3, 4];
  * treinador manda recomeçar (F95, "recomeçar perto da base"), e a marca não
  * aparece — dizer "última" sobre um número que ele nunca fez seria inventar.
  */
-function reguaDaLinha(i, k, ex, anterior, valor, un) {
+function reguaDaLinha(i, k, ex, anterior, valor, un, deHoje) {
   const r = view.regua;
   if (!r || r.i !== i || r.k !== k || r.outro) return null;
   const fx = faixaDoTexto(ex.r);
   const tem = !!(anterior && anterior[1] != null);
-  const ref = tem ? anterior[1] : (fx ? fx[0] : 10);
+  const hoje = !tem && !!deHoje;
+  const ref = tem ? anterior[1] : hoje ? deHoje[1] : (fx ? fx[0] : 10);
   const reg = regua(ref, fx);
   return {
     slots: pagina(reg, r.foco != null ? r.foco : ref),
-    marca: tem ? 'última' : null,
+    marca: tem ? 'última' : hoje ? 'série ' + k : null,
     referencia: ref,
     // "Corrigir a série 3 · guardada: 55 kg × 9" — só com a série já guardada,
     // que é quando o toque CORRIGE (§8.2). O "às 6h52" do desenho não vem: a
@@ -4907,6 +5475,7 @@ function teclaDoTeclado(t) {
   // apagar, que tem de continuar existindo.
   if (!/,$/.test(texto)) {
     if (a.tipo === 'serie') anotaSerie(a.i, a.k, a.pos, texto);
+    else if (a.tipo === 'passada') cargaDaPassada(texto);
     // A lista rápida escreve em TODAS as passadas do movimento, e a linha diz
     // isso por extenso; quem converte a vírgula é `soNumero`, lá dentro.
     else if (a.tipo === 'rapida') anotaSerieRapida(a.i, a.pos, texto);
@@ -5234,14 +5803,44 @@ async function apagaRegistroDeTreino(t) {
     return a + x.l.sets.filter(Boolean).length;
   }, 0);
 
-  // o aviso diz o que vai junto: apagar o dia e apagar as séries é uma
-  // decisão só, e ela não pode ser tomada sem o número na frente. PARE (§3.3):
-  // o verbo abre a frase e o botão, nos dois casos.
-  const sim = await pare(series
-    ? { texto: 'Apagar este treino tira ' + (series === 1 ? 'a série registrada' : 'as ' + series + ' séries registradas') + ' nele. Isso não tem volta, e vale para os outros aparelhos.',
-        sim: 'Apagar o treino e ' + (series === 1 ? 'a série' : 'as ' + series + ' séries') }
-    : { texto: 'Apagar este registro de treino tira a marca do dia, que não tem série nenhuma. Isso não tem volta, e vale para os outros aparelhos.',
-        sim: 'Apagar o registro de treino' });
+  // O painel do desenho (a D, `dias.html`, estado 13): o que vai embora, com o
+  // número; o que FICA, com o número também, para ele conferir que está
+  // apagando a de cima e não a de baixo; e a resposta que um apagar de treino
+  // sempre levanta — o que acontece com a sequência. Apagar a presença e deixar
+  // as séries deixaria séries órfãs contando volume (F295): vão juntas.
+  const nomeDe = function (x) {
+    return x.livre ? 'o treino fora da prescrição' : diaAberto(x.day) ? 'a aula' : 'o Treino ' + x.day;
+  };
+  const seriesDe = function (x) {
+    return Object.keys(S.logs).reduce(function (n, k) {
+      return n + (S.logs[k] || []).filter(function (l) { return l.sid === x.sid; })
+        .reduce(function (a, l) { return a + l.sets.filter(Boolean).length; }, 0);
+    }, 0);
+  };
+  const dia = DIAS_LONGOS[new Date(m.t).getDay()] + ', ' + fmtDate(m.t);
+  const vai = '1 sessão' + (temHora(m) ? ', aberta às ' + fmtHoraDita(m.t) : '') +
+    ', com ' + (series === 1 ? '1 série' : series + ' séries');
+  const outras = sessoesDoDia(m.t).filter(function (x) { return x !== m; });
+  const fica = outras.length
+    ? ' Fica ' + outras.map(function (x) {
+        const n = seriesDe(x);
+        return nomeDe(x) + (temHora(x) ? ' das ' + fmtHoraDita(x.t) : '') + ', com ' + (n === 1 ? '1 série' : n + ' séries');
+      }).join(' e ') + '.'
+    : '';
+  const ultimo = ultimaDoPlano();
+  const antesDele = S.done.filter(function (x) { return x !== m && x.day && !x.livre; });
+  const novoUltimo = antesDele.length ? antesDele[antesDele.length - 1] : null;
+  const quandoDe = function (x) { return sameDay(x.t, Date.now()) ? 'de hoje' : 'de ' + fmtDate(x.t); };
+  const seq = m.livre
+    ? ' A sequência não muda: treino fora da prescrição não conta nela.'
+    : ultimo === m
+      ? ' A sequência volta um passo: ' + (novoUltimo
+          ? 'o último registrado passa a ser ' + nomeDe(novoUltimo) + ' ' + quandoDe(novoUltimo) + '.'
+          : 'não sobra treino registrado, e o próximo volta a ser o primeiro.')
+      : ' A sequência não muda: o último registrado continua sendo ' + nomeDe(ultimo) + ' ' + quandoDe(ultimo) + '.';
+  const sim = await pare({ texto: 'Apagar ' + nomeDe(m) + ' de ' + dia + ' tira ' + vai + '.' + fica + seq +
+                             ' Isso não tem volta, e vale para os outros aparelhos.',
+                           sim: 'Apagar ' + nomeDe(m) });
   if (!sim) return;
 
   lapide(chaveDeSessao(m));
@@ -5299,8 +5898,268 @@ async function confirmaDuracao(t) {
   toast('Tempo confirmado.');
 }
 
+// ---------- corrigir no lugar, na sessão passada (a D, `dias.html`, estados 3, 4 e 14) ----------
+//
+// Cada série é um botão. Ao tocar, abre ali mesmo a régua de repetições da
+// academia, porque o dado é o mesmo; a carga abre o teclado do app, com vírgula
+// (F63); o RIR, a escala. CADA TOQUE GRAVA, e a linha diz o que foi gravado.
+// Se a gravação falha, o número guardado fica como estava e o toque fica à
+// parte, dito como tocado — a tela não finge que gravou (estado 14).
+//
+// O registro é achado pela CHAVE da sincronia, não pela posição na lista: a
+// lista do exercício pode ganhar uma entrada vinda do outro aparelho entre o
+// toque que abriu e o que grava.
+
+/** O registro de um exercício numa sessão, pela chave `log:<id>:<sid>:<sl>`. */
+function registroPorChave(idEx, chave) {
+  return (S.logs[idEx] || []).filter(function (l) { return chaveDeLog(idEx, l) === chave; })[0] || null;
+}
+
+function serieDaPassada() {
+  const p = view.passada;
+  if (!p) return null;
+  const e = registroPorChave(p.idEx, p.chave);
+  return e ? { p: p, e: e, s: e.sets[p.k] || null } : null;
+}
+
+/** Abre (ou fecha) a série `k` do exercício `idEx` na sessão passada. */
+function abreSerieDaPassada(idEx, chave, k) {
+  const p = view.passada;
+  if (p && p.idEx === idEx && p.chave === chave && p.k === k) { view.passada = null; render(); return; }
+  const e = chave ? registroPorChave(idEx, chave) : null;
+  view.teclado = null;
+  if (e && e.sets[k] && !e.u) {
+    view.passada = { idEx: idEx, chave: chave, k: k, foco: null, era: e.sets[k].slice(),
+                     gravado: null, tocado: null, rir: false, teclado: null };
+    render();
+    return;
+  }
+  // "não feito": se ele fez e não registrou, a série entra aqui (estado 3)
+  const m = view.sessao;
+  if (!m || m.livre || (e && e.u) || (!e && unidadeDoPrescrito(m, idEx))) return;
+  const ref = referenciaDaSerie(idEx, e, k, m);
+  view.passada = { idEx: idEx, chave: chave, k: k, foco: null, era: null, novo: true,
+                   carga: ref ? ref[0] : 0, ref: ref, gravado: null, tocado: null, rir: false, teclado: null };
+  render();
+}
+
+/** A unidade própria do exercício prescrito (segundos, metros…), que a régua de repetições não atende. */
+function unidadeDoPrescrito(m, idEx) {
+  const P = m.day ? treino(m.day) : null;
+  const ex = P ? P.ex.filter(function (x) { return x.id === idEx; })[0] : null;
+  return !!(ex && ex.u);
+}
+
+/**
+ * A referência de uma série que não foi registrada: a série anterior do mesmo
+ * registro, ou a mesma posição na última vez ANTES desta sessão. Sem nenhuma,
+ * `null` — e a régua abre na base da faixa, sem marca de "última".
+ */
+function referenciaDaSerie(idEx, e, k, m) {
+  if (e) for (let j = k - 1; j >= 0; j--) if (e.sets[j]) return e.sets[j];
+  const antes = (S.logs[idEx] || []).filter(function (l) { return l.t < m.t && l.sid !== m.sid; });
+  for (let j = antes.length - 1; j >= 0; j--) {
+    const sets = antes[j].sets || [];
+    if (sets[k]) return sets[k];
+    for (let q = sets.length - 1; q >= 0; q--) if (sets[q]) return sets[q];
+  }
+  return null;
+}
+
+/**
+ * Lança a série que faltou, com `reps` repetições e a carga proposta.
+ *
+ * Sem registro do exercício nesta sessão, nasce um — no instante da sessão, e
+ * ENTRE os outros pela ordem do tempo: a lista é lida pela posição (o fim é a
+ * "última vez" que a próxima sessão usa), e uma entrada antiga no fim viraria a
+ * referência de amanhã.
+ */
+async function lancaSerieDaPassada(reps) {
+  const p = view.passada, m = view.sessao;
+  if (!p || !p.novo || !m) return;
+  let e = p.chave ? registroPorChave(p.idEx, p.chave) : null;
+  const nasceu = !e;
+  if (nasceu) {
+    e = { t: m.t, sid: m.sid, sets: [] };
+    if (m.dl) e.dl = 1;
+    const lista = S.logs[p.idEx] = (S.logs[p.idEx] || []).slice();
+    let i = lista.length;
+    while (i > 0 && lista[i - 1].t > e.t) i--;
+    lista.splice(i, 0, e);
+  }
+  const antes = e.sets.slice(), mAntes = e.m;
+  while (e.sets.length < p.k) e.sets.push(null);
+  e.sets[p.k] = [p.carga != null ? p.carga : 0, reps];
+  e.m = Date.now();
+  const ok = await save();
+  if (ok === false) {
+    if (nasceu) {
+      S.logs[p.idEx] = S.logs[p.idEx].filter(function (l) { return l !== e; });
+      if (!S.logs[p.idEx].length) delete S.logs[p.idEx];
+    } else { e.sets = antes; if (mAntes == null) delete e.m; else e.m = mAntes; }
+    p.tocado = { k: 'reps', v: reps };
+    render();
+    return;
+  }
+  view.passada = { idEx: p.idEx, chave: chaveDeLog(p.idEx, e), k: p.k, foco: null, era: e.sets[p.k].slice(),
+                   gravado: 'Lançada às ' + fmtHoraDita(Date.now()) + ': ' + textoDaSerieDaPassada(p.idEx, e.sets[p.k]) +
+                     '. Entra no volume e no histórico deste dia.',
+                   tocado: null, rir: false, teclado: null };
+  render();
+}
+
+/**
+ * Escreve na série aberta e grava. `muda` recebe a série (`[carga, reps, rir?]`)
+ * e a altera no lugar; `tocado` é o que a tela mostra se a gravação falhar.
+ */
+async function gravaNaPassada(muda, tocado) {
+  const x = serieDaPassada();
+  if (!x) return;
+  const antes = x.s.slice(), mAntes = x.e.m;
+  muda(x.s);
+  x.e.m = Date.now();                  // carimbo: é ele que a fusão compara
+  const ok = await save();
+  if (ok === false) {
+    // a série volta ao que está no disco, e o toque fica dito como tocado
+    x.e.sets[x.p.k] = antes;
+    if (mAntes == null) delete x.e.m; else x.e.m = mAntes;
+    view.passada.tocado = tocado;
+    view.passada.gravado = null;
+  } else {
+    view.passada.tocado = null;
+    view.passada.gravado = 'Gravado às ' + fmtHoraDita(Date.now()) + ': ' + textoDaSerieDaPassada(x.p.idEx, x.e.sets[x.p.k]) +
+      '. Nada mais na sessão muda.';
+  }
+  render();
+}
+
+function textoDaSerieDaPassada(idEx, s) {
+  if (!s) return 'não feita';
+  return s[0] != null && s[0] !== '' ? fmtNum(s[0]).replace('.', ',') + ' × ' + s[1] : s[1] + ' repetições';
+}
+
+function repsDaPassada(v) {
+  const n = Math.round(+v);
+  if (!(n >= 0) || n > 200) return;
+  if (view.passada && view.passada.novo) return lancaSerieDaPassada(n);
+  return gravaNaPassada(function (s) { s[1] = n; }, { k: 'reps', v: n });
+}
+function andaReguaDaPassada(dir) {
+  const pn = view.passada;
+  if (pn && pn.novo) {
+    const P = view.sessao && view.sessao.day ? treino(view.sessao.day) : null;
+    const ex = P ? P.ex.filter(function (x) { return x.id === pn.idEx || x.orig === pn.idEx; })[0] : null;
+    const fx = faixaDoTexto(ex ? ex.r : null);
+    const base = pn.ref ? pn.ref[1] : (fx ? fx[0] : 10);
+    view.passada.foco = anda(regua(base, fx), pn.foco != null ? pn.foco : base, dir);
+    render();
+    return;
+  }
+  const x = serieDaPassada();
+  if (!x) return;
+  const fx = faixaDoTexto((exDoRegistro(x.p.idEx, x.e) || {}).r);
+  const reg = regua(x.p.era[1], fx);
+  view.passada.foco = anda(reg, view.passada.foco != null ? view.passada.foco : x.s[1], dir);
+  render();
+}
+function rirDaPassada(v) {
+  if (v === 'abre') { view.passada.rir = !view.passada.rir; view.teclado = null; render(); return; }
+  view.passada.rir = false;
+  return gravaNaPassada(function (s) {
+    if (v == null || s[2] === v) s.length = 2; else s[2] = Math.max(0, Math.min(5, v));
+  }, { k: 'rir', v: v });
+}
+
+/** O teclado da carga, na sessão passada: escreve no visor, grava quando o número fecha. */
+function abreCargaDaPassada() {
+  const p = view.passada;
+  if (p && p.novo) {
+    const a0 = view.teclado && view.teclado.alvo;
+    if (a0 && a0.tipo === 'passada') { view.teclado = null; render(); return; }
+    view.teclado = { alvo: { tipo: 'passada', pos: 0 }, texto: p.carga != null ? String(p.carga).replace('.', ',') : '' };
+    render();
+    return;
+  }
+  const x = serieDaPassada();
+  if (!x) return;
+  const a = view.teclado && view.teclado.alvo;
+  if (a && a.tipo === 'passada') { view.teclado = null; render(); return; }
+  view.passada.rir = false;
+  view.teclado = { alvo: { tipo: 'passada', pos: 0 }, texto: x.s[0] != null ? String(x.s[0]).replace('.', ',') : '' };
+  render();
+}
+function cargaDaPassada(texto) {
+  const n = numeroDoCampo(texto);
+  if (n == null || n < 0) return;
+  // a série ainda não existe: a carga fica proposta, e grava junto com a repetição
+  if (view.passada && view.passada.novo) { view.passada.carga = n; render(); return; }
+  return gravaNaPassada(function (s) { s[0] = n; }, { k: 'carga', v: n });
+}
+
+/**
+ * Apagar uma série passa pelo painel, como todo apagar (decisão 8). A série
+ * vira "não feita" na posição dela — as outras não mudam de número. A última
+ * série do exercício leva o registro inteiro, com lápide.
+ */
+async function apagaSerieDaPassada() {
+  const x = serieDaPassada();
+  if (!x) return;
+  const restam = x.e.sets.filter(Boolean).length - 1;
+  const texto = textoDaSerieDaPassada(x.p.idEx, x.s);
+  const quando = fmtDate(x.e.t);
+  const nome = nomeEx(x.p.idEx);
+  if (!(await pare({
+    texto: 'Apagar a série ' + (x.p.k + 1) + ' de ' + nome + ' de ' + quando + ' tira ' + texto + ' do histórico. ' +
+      (restam ? (restam === 1 ? 'A outra série fica.' : 'As outras ' + restam + ' séries ficam.')
+              : 'Era a única: o exercício sai desta sessão.') + ' Isso não tem volta.',
+    sim: 'Apagar a série ' + (x.p.k + 1) }))) return;
+  if (!restam) {
+    lapide(chaveDeLog(x.p.idEx, x.e));
+    S.logs[x.p.idEx] = S.logs[x.p.idEx].filter(function (l) { return l !== x.e; });
+    if (!S.logs[x.p.idEx].length) delete S.logs[x.p.idEx];
+  } else {
+    x.e.sets[x.p.k] = null;
+    x.e.m = Date.now();
+  }
+  view.passada = null; view.teclado = null;
+  await save(); render();
+  toast('Série apagada.');
+}
+
+/** O exercício da prescrição daquele registro, para a faixa e o RIR prescritos. */
+function exDoRegistro(idEx, e) {
+  const m = S.done.filter(function (x) { return x.sid === e.sid; })[0];
+  const P = m && m.day ? treino(m.day) : null;
+  return P ? P.ex.filter(function (ex) { return ex.id === idEx || ex.id === e.sl || ex.orig === idEx; })[0] || null : null;
+}
+
+/** O editor da série que não foi feita: carga proposta, régua sem valor, e nada a apagar. */
+function editorDoNovo(idEx, ex) {
+  const pa = view.passada;
+  const fx = faixaDoTexto(ex ? ex.r : null);
+  const base = pa.ref ? pa.ref[1] : (fx ? fx[0] : 10);
+  const un = CARGAS[cargaTipo(idEx, ex || exDe(idEx))].rot;
+  const tc = view.teclado && view.teclado.alvo.tipo === 'passada' ? view.teclado : null;
+  return {
+    novo: true,
+    titulo: 'Série ' + (pa.k + 1),
+    guardada: 'não registrada · ' + (pa.ref ? 'a carga vem da série de referência' : 'sem referência'),
+    carga: fmtNum(pa.carga != null ? pa.carga : 0).replace('.', ','),
+    un: un,
+    faixa: fx ? 'repetições · faixa ' + ex.r + ' · um toque lança' : 'repetições · um toque lança',
+    regua: { slots: pagina(regua(base, fx), pa.foco != null ? pa.foco : base), valor: null,
+             marca: pa.ref ? 'última' : null, tocado: pa.tocado && pa.tocado.k === 'reps' ? pa.tocado.v : null },
+    gravado: null,
+    falhou: pa.tocado ? 'Não foi gravado: o aparelho recusou. A série continua não feita.' : null,
+    rir: null,
+    teclado: tc ? { texto: tc.texto, unidade: un } : null
+  };
+}
+
+function abreCorrecaoDoTempo(t) { view.corrigeTempo = view.corrigeTempo === t ? null : t; render(); }
+
 function abrirSessao(t){ view.sessao = S.done.filter(function (x) { return x.t === t; })[0]; if (view.sessao) { entraNoDestino('sessao'); render(); } }
-function fecharSessao(){ view.sessao = null; render(); saiDoDestino('sessao'); }
+function fecharSessao(){ view.sessao = null; view.passada = null; view.corrigeTempo = null; if (view.teclado && view.teclado.alvo.tipo === 'passada') view.teclado = null; render(); saiDoDestino('sessao'); }
 
 // ---------- retrospectiva de bloco ----------
 // 48 sessões de trabalho é o ciclo do programa. Até aqui, completá-lo não
@@ -5398,9 +6257,10 @@ async function wipe() {
   S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[],
         body:corpoVazio(), carga:{}, export:0,
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
+        progTreinador:S.progTreinador || null,
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
-        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura, quadro:S.quadro,
+        cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura, quadro:S.quadro, lousa:S.lousa,
         perfManual:S.perfManual, compras:S.compras,
         // BIBLIOTECA e CATÁLOGO, pela mesma razão de `S.ex` acima — decisão do
         // dono, 08/10. `aulas` são os modelos de aula que ELE salvou, e `fotos`
@@ -5642,9 +6502,15 @@ function pintaTimer() {
 // último `onclick=` do projeto; agora é `addEventListener`, como todo o resto.
 function ligaBotaoDoTimer() {
   const b = document.getElementById('tstop');
-  if (b) b.addEventListener('click', function () { stopTimer(); });
+  // parar redesenha: o que só existe enquanto o descanso conta ("enquanto
+  // descansa", no cartão aberto) sai junto com ele
+  if (b) b.addEventListener('click', function () { stopTimer(); render(); });
   const menos = document.getElementById('tmenos');
-  if (menos) menos.addEventListener('click', function () { ajustaTimer(-15); });
+  if (menos) menos.addEventListener('click', function () {
+    const contava = !!timerFim;
+    ajustaTimer(-15);
+    if (contava && !timerFim) render();
+  });
   const mais = document.getElementById('tmais');
   if (mais) mais.addEventListener('click', function () { ajustaTimer(15); });
 }
@@ -5856,20 +6722,20 @@ const SUPERFICIE = {
 
   verbos: {
     // ---- por valor, onde antes só havia elemento ou campo na tela ----
-    anotaSerie, anotaSerieRapida, anotaObservacao, anotaNomeAvulso, anotaHoraAvulsa,
+    anotaSerie, anotaSerieRapida, anotaObservacao, anotaNomeDoLancamento, horaDoLancamento,
     mascaraDeHora, soNumero, criarExercicioCom, guardaEdicaoCom, textoDaPrescricao,
     setBuscaDeExercicio,
 
     // ---- os verbos do módulo que a suíte aciona pelo nome nu ----
     abreFoto, abrirAddEx, abrirAdicionar, abrirCardioRapido, abrirCarga, abrirMedida,
     abrirNota, abrirNovoEx, abrirPrograma, abrirRapido, abrirSessao, addBody, addCardio,
-    addExercicio, addSet, ajustaTimer, altList, altOf, alternaDescanso, apagaFoto,
+    addExercicio, ajustaTimer, altList, altOf, alternaDescanso, apagaFoto,
     apagarModeloDeAula, apagarSessao, aplicaAoOficial, aplicarModeloDeAula, arrozAtual,
     cardioSemana, cardioSet, cargaTipo, catalogoAlimentos, catalogoDeAdicao,
-    concluirRetro, criarExercicio, criarTreino, delBody, descOf, desfazMod, diaAberto,
+    concluirRetro, criarExercicio, lancaTreino, abreHoraDoLancamento, criarTreino, delBody, descOf, desfazMod, diaAberto,
     diaDeComida, diasSemBackup, difDoDia, difTotal, draftPeek, duracaoAtual, editarSessao, ehDescanso,
     encerraSePreciso, estadoEx, exDe, fechaSessao, fecharPrograma, finalizarSessao,
-    garanteBytesDoCorpo, go, gravarRetro, historico, hojeISO, id, impactoDoMod,
+    garanteBytesDoCorpo, go, grupoDoLancamento, duracaoDoLancamento, detalhaLancamento, historico, hojeISO, id, impactoDoMod,
     impactoOficial, impactoSeries, importText, importaAulaColada, iniciarSessao, logKey,
     modoEdicao, modoPrograma, modsDoDia, montaCatalogo, moverDia, moverEx,
     moverProg, mudaMes, mudaSeries, nextDay, nomeEx, openHist, ordemDePoses, pausarSessao,
@@ -5896,8 +6762,8 @@ const SUPERFICIE = {
     get view() { return view; },
     get CAT() { return CAT; },
     get CARGAS() { return CARGAS; },
-    get ALVO() { return ALVO; },
-    get ALVO_TOTAL() { return ALVO_TOTAL; },
+    get ALVO() { return alvo(); },
+    get ALVO_TOTAL() { return alvoTotal(); },
     get ALT() { return ALT; },
     get EX_BASE() { return EX_BASE; },
     get FREQUENTES_NO_BOX() { return FREQUENTES_NO_BOX; },
@@ -6077,6 +6943,7 @@ function folhaAberta() {
   return (view.pilha || []).map(function (f, i) {
     if (f.k === 'refeicao') return <FolhaRefeicao key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'dia') return <FolhaDia key={i} ctx={CTX} />;
+    if (f.k === 'decidir') return <FolhaDecidir key={i} ctx={CTX} />;
     if (f.k === 'editaRefeicao') return <FolhaEditaRefeicao key={i} ctx={CTX} id={f.id} />;
     // `alvo`, e nunca `ref`: `ref` é prop reservada do Preact e NÃO chega ao
     // componente. A folha recebia `undefined` como refeição de destino, e
@@ -6086,6 +6953,7 @@ function folhaAberta() {
     if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'menuSessao') return <FolhaMenuDaSessao key={i} ctx={CTX} />;
+    if (f.k === 'pesoRapido') return <FolhaPesoRapido key={i} ctx={CTX} />;
     if (f.k === 'poeODia') return <FolhaPoeODia key={i} ctx={CTX} data={f.data} />;
     return null;
   });
@@ -6124,7 +6992,26 @@ CTX.seletorDeDia = function () {
     const r = refs.filter(function (x) { return x.id === id; })[0];
     return r ? r.n : null;
   };
+  const cat = catalogoAlimentos();
+  const kcalDe = function (treinando) { return Math.round(totalDoDia(plano, cat, treinando, !!dia.alta, {}).kcal); };
+  const refsDesc = refeicoesDeHoje(plano, false, !!dia.alta, dia.turno, duracaoDoTreino());
+  const proximo = h.treino || nextDay();
+  const diaNome = DIAS_LONGOS[new Date(Date.now()).getDay()];
+  const fato = h.origem === 'registrado' || h.origem === 'aberta';
   return {
+    // a folha da D (`agora-descanso.html`, estado 4): a procedência em cima, a
+    // pergunta, e o efeito de cada resposta antes do toque
+    olho: h.origem === 'previsto' || h.previsto
+      ? 'pelo padrão semanal: ' + diaNome + ' é ' + (h.cadencia === 'descanso' ? 'descanso' : 'dia de treino')
+      : h.origem === 'manual' ? 'você disse que hoje é ' + (h.cadencia === 'descanso' ? 'descanso' : 'dia de treino')
+      : 'hoje tem sessão registrada',
+    pergunta: fato ? 'Hoje é dia de treino' : 'Hoje é dia de ' + (h.cadencia === 'descanso' ? 'descanso' : 'treino') + '?',
+    sub: fato ? 'A sessão registrada manda no tipo do dia.'
+              : 'É um palpite até você dizer. Dizer muda o plano da comida de hoje, e mais nada.',
+    efeitoDescanso: 'o plano fica o de descanso: ' + refsDesc.length + ' refeições, ' + fmtInt(kcalDe(false)) + ' kcal',
+    efeitoTreino: 'o pré-treino e o treino entram no plano e andam com a hora da sessão · na sequência, o próximo é ' +
+                  (diaAberto(proximo) ? 'a aula' : 'o Treino ' + proximo),
+    fato: fato,
     titulo: h.cadencia === 'descanso' ? 'Descanso' : 'Dia de treino',
     treino: h.treino,
     cadencia: h.cadencia,
@@ -6194,6 +7081,9 @@ const FECHA_CAMADA = {
   ajuste:    function () { CTX.fechaAjuste(); },
   protocolo: function () { CTX.fechaProtocolo(); },
   comparar:  function () { CTX.fechaComparar(); },
+  revisao:   function () { CTX.fechaRevisao(); },
+  evolucao:  function () { CTX.fechaEvolucao(); },
+  dia:       function () { CTX.fechaDia(); },
   prog:      function () { fecharPrograma(); },
   retro:     function () { fecharRetro(); },
   add:       function () { fecharAdicionar(); },
@@ -6225,10 +7115,24 @@ ligaNavegacao({
 // A biblioteca e o plano. Compras é derivada: some do estado, aparece na tela.
 CTX.planoCompleto = function () {
   const cat = catalogoAlimentos();
+  const doNutri = {};
+  PLANO_BASE.forEach(function (r) { doNutri[r.id] = true; });
   return planoDeComida().slice()
     .sort(function (a, b) { return a.t.localeCompare(b.t); })
     .map(function (r) {
-      return Object.assign({}, r, { kcal: Math.round(totalDaRefeicao(r, cat, true).kcal) });
+      return Object.assign({}, r, {
+        kcal: Math.round(totalDaRefeicao(r, cat, true).kcal),
+        // o que tem dentro, como se lê no prato (a D, prescrição, estado 7):
+        // "pão 35 g · doce de leite 20 g · café 200 ml"
+        itensTxt: (r.itens || []).map(function (it) {
+          const a = cat[it.f];
+          const n = a ? a.n.charAt(0).toLowerCase() + a.n.slice(1) : it.f;
+          return n + ' ' + fmtNum(it.q).replace('.', ',') + ' ' + (a ? a.u : 'g') + (it.alta ? ' só em dia de alta demanda' : '');
+        }).join(' · '),
+        // o momento criado por ele fica marcado como dele, ao lado do que o
+        // nutricionista escreveu: as duas coisas são verdade (F182)
+        meu: !doNutri[r.id]
+      });
     });
 };
 
@@ -6245,6 +7149,7 @@ CTX.planoCompleto = function () {
  */
 CTX.resumoDoPlano = function () {
   const cat = catalogoAlimentos();
+  const n = S.ajuste || 0;
   const plano = planoDeComida();
   const comTreino = totalDoDia(plano, cat, true, false, {});
   const semTreino = totalDoDia(plano, cat, false, false, {});
@@ -6259,9 +7164,46 @@ CTX.resumoDoPlano = function () {
       macros: Math.round(semTreino.p) + ' P · ' + Math.round(semTreino.c) + ' C · ' +
               Math.round(semTreino.g) + ' G'
     },
-    refeicoes: plano.length
+    refeicoes: plano.length,
+    // o saldo dos passos de ±150 kcal que a Semana aplicou
+    ajuste: n ? rotuloDoAjuste().replace(/^ajuste /, '') : 'nenhum passo de ±150 kcal aplicado',
+    folga: FOLGA_POS
   };
 };
+
+// ---------- o endereço vazio (a D, `prescricao.html`, estado 9) ----------
+//
+// Os dados ficam presos ao endereço de onde o app é aberto (F56): um link novo
+// abre um app vazio, e o histórico continua no antigo. Aparelho novo já ficaria
+// sem plano para sempre (F271). Então o vazio de verdade não oferece começar em
+// primeiro: oferece ACHAR o que existe — a conta, a cópia de segurança, o ícone
+// antigo — e só depois começar. O programa e o plano já vêm semeados; começar é
+// só dizer que não há nada em outro lugar.
+function enderecoVazio() {
+  if (NUVEM.sessao()) return false;
+  const tem = function (x) { return Array.isArray(x) && x.length > 0; };
+  if (Object.keys(S.logs || {}).some(function (k) { return tem(S.logs[k]); })) return false;
+  if (tem(S.done) || tem(S.cardio) || tem(S.progLog) || tem(S.aulas) || tem(S.comidaHist)) return false;
+  if (S.body && Object.keys(S.body).some(function (k) { return tem(S.body[k]); })) return false;
+  if (S.protocolo && tem(S.protocolo.sessoes)) return false;
+  const d = S.dia;
+  if (S.sessao || (d && ((d.done && Object.keys(d.done).length) || d.agua))) return false;
+  return true;
+}
+CTX.enderecoVazio = function () {
+  if (view.comecouAqui || !enderecoVazio()) return null;
+  const r = rot().filter(function (k) { return !!treino(k); });
+  const series = r.reduce(function (n, k) {
+    return n + treino(k).ex.reduce(function (m, ex) { return m + setsFor(ex); }, 0);
+  }, 0);
+  const res = CTX.resumoDoPlano();
+  return {
+    programa: r.length + ' treinos na sequência · ' + series + ' séries nela inteira',
+    plano: res.refeicoes + ' momentos · ' + res.treino.kcal + ' kcal em dia de treino',
+    semRede: typeof navigator !== 'undefined' && navigator.onLine === false
+  };
+};
+CTX.comecaAqui = function () { view.comecouAqui = true; render(); };
 
 CTX.alimentosFiltrados = function (q) {
   const cat = catalogoAlimentos();
@@ -6277,10 +7219,28 @@ CTX.compras = function () {
       .filter(function (l) { return !S.compras.removidas[l.f]; }),
     previsao: prev,
     dias: S.compras.dias,
-    comprado: S.compras.comprado
+    comprado: S.compras.comprado,
+    // o que a previsão deixa de fora, dito (a D, prescrição, estado 8): os
+    // dias de alta demanda não se preveem, e o que só entra neles não aparece
+    foraDaPrevisao: (function () {
+      const cat = catalogoAlimentos(), vistos = {};
+      planoDeComida().forEach(function (r) {
+        (r.itens || []).forEach(function (it) { if (it.alta && cat[it.f]) vistos[it.f] = cat[it.f].n.toLowerCase(); });
+      });
+      return Object.keys(vistos).map(function (k) { return vistos[k]; });
+    })()
   };
 };
-CTX.setHorizonteCompras = function (d) { S.compras.dias = d; queueSave(); render(); };
+/**
+ * O horizonte das compras: quantos dias até a próxima. A frequência dele não é
+ * conhecida, então a tela pergunta em vez de supor; "outro" aceita qualquer
+ * número de 1 a 60.
+ */
+CTX.setHorizonteCompras = function (d) {
+  const n = parseInt(d, 10);
+  if (!(n >= 1 && n <= 60)) return;
+  S.compras.dias = n; queueSave(); render();
+};
 CTX.marcaCompra = function (f) {
   if (S.compras.comprado[f]) delete S.compras.comprado[f]; else S.compras.comprado[f] = 1;
   queueSave(); render();
@@ -6324,7 +7284,7 @@ CTX.treino = function () {
   // palavras do menu: "entrar em deload" sozinho era o nome sem o freio.
   const dl = itemDoDeload(d);
   const porta = function (on) {
-    return dl ? { t: dl.rotulo + ' · ' + dl.detalhe, onClick: function () { setDeload(on); } } : null;
+    return dl ? { t: dl.rotulo.charAt(0).toUpperCase() + dl.rotulo.slice(1) + ' · ' + dl.detalhe, onClick: function () { setDeload(on); } } : null;
   };
   if (S.deload) {
     avisos.push({ k: 'dl', rotulo: 'deload ativo', cor: 'amber',
@@ -6344,7 +7304,7 @@ CTX.treino = function () {
   if (s && s.retro) {
     avisos.push({ k: 'r', rotulo: 'preenchendo treino passado', cor: 'amber',
       txt: 'As séries que você digitar entram em ' + diaExtenso(s.inicio) + ', não em hoje.',
-      acao: { t: 'concluir', onClick: function () { concluirRetro(); } } });
+      acao: { t: 'Concluir', onClick: function () { concluirRetro(); } } });
   }
 
   const parado = pausaGeral();
@@ -6357,7 +7317,7 @@ CTX.treino = function () {
   return {
     dia: d,
     nome: P ? P.name : '—',
-    olho: P ? P.tag.toUpperCase() : '',
+    olho: P ? _caixaDeFrase(P.tag) : '',
     feitas: feitas,
     prescritas: prescritas,
     // Num dia aberto não existe "prescritas": a meta 0/16 do sábado era uma
@@ -6370,6 +7330,8 @@ CTX.treino = function () {
     // uma emenda ao programa. Fica preso ao dia aberto fora do modo de edição
     // para as duas superfícies nunca desenharem o mesmo painel ao mesmo tempo.
     addEx: (diaAberto(d) && !view.editProg && view.addEx) ? catalogoDeAdicao(d) : null,
+    // antes de começar a aula, o que entrou na última (estado 5)
+    ultimaAula: (diaAberto(d) && P && !P.ex.length) ? referenciaDaUltimaAula(d) : null,
     // A lista rápida: um campo por movimento, para o fim da aula. Só no dia
     // aberto e só com movimento dentro — uma lista vazia não registra nada.
     rapido: (diaAberto(d) && !view.editProg && P && P.ex.length) ? (function () {
@@ -6432,6 +7394,16 @@ CTX.treino = function () {
     // que mais a lousa disse e o app não modela. Some quando a sessão encerra,
     // depois de virar a nota dela.
     quadro: (S.quadro && S.quadro.day === d) ? S.quadro.texto : null,
+    // a foto da lousa (estado 6): só no dia aberto
+    lousa: diaAberto(d) ? (function () {
+      const l = lousaDoDia(d);
+      if (!l) return { tem: false };
+      const url = LOUSA.urlDaLousa(l.d, l.v);
+      if (!url) LOUSA.carrega(l.d, l.v, l.ext).then(function (mudou) { if (mudou) render(); });
+      return { tem: true, url: url,
+               quando: 'foto da lousa · ' + fmtDate(l.v) + ' ' + fmtHoraDita(l.v),
+               podeMandar: typeof navigator !== 'undefined' && !!navigator.share };
+    })() : null,
     volume: fmtK(volumeDoDia(d)),
     // `ciclo` e `sessoes` saíram desta leitura com a célula que os mostrava: o
     // ciclo foi para `CTX.cicloDoBloco`, que a Semana lê. Deixá-los aqui seria
@@ -6564,6 +7536,7 @@ CTX.dados = function () {
   const t = tendenciaDeForca(S.logs, function (k) { return temUnidade(exDe(k)); });
   const v = veredito();
   const alvo = ajusteDoVeredito(v);
+  const portoes = portoesDaRegra(S.body, sinaisDaRegra(), { forca: t, forcaManual: S.perfManual, par: parDaAvaliacao() });
 
   // e1RM da semana, somando o melhor de cada exercício: é a curva que responde
   // "estou ficando mais forte", e não a de um exercício só — que oscila com
@@ -6604,7 +7577,21 @@ CTX.dados = function () {
         ? 'Depois de aplicado, ' + fmtInt(kcalDeTreinoCom((S.ajuste || 0) + alvo)) +
           ' kcal vira a nova base. Se o peso voltar ao alvo, o passo não é devolvido sozinho.'
         : null,
-      estado: linhaDoAjuste()
+      estado: linhaDoAjuste(),
+      podeDesfazer: !!passoEmVigor(),
+      // Os portões da regra, cada um com o estado na palavra e o caminho do que
+      // falta (§6.2). Só nos dois ramos que podem dar passo; nos outros, `null`.
+      portoes: portoes,
+      // A PROMESSA (decisão do dono, 14/10): a cobrança da adesão fica só aqui.
+      // A frase só existe porque ela é cumprida — o Agora mostra a conta dos 14
+      // dias como número, sem cobrar, e nenhuma outra tela pede os dias.
+      promessa: portoes && portoes.some(function (g) { return g.k === 'adesao' && !g.ok; })
+        ? 'Enquanto a adesão não chega a ' + MIN_REGISTRADOS + ', o veredito não muda, por mais pesagem que entre. ' +
+          'A tela não vai pedir isso de novo em outro lugar.'
+        : null,
+      // O vazio da régua: as semanas e o motivo de cada reprovação (§6.4), e a
+      // saída quando um buraco separa duas semanas válidas.
+      semanas: v.k === 'faltam' ? semanasDoVazio() : null
     },
     comida: dadosDeComida(),
     forca: {
@@ -6625,27 +7612,120 @@ CTX.dados = function () {
   };
 };
 
+/**
+ * As semanas do vazio, com a saída escrita quando há um buraco entre duas
+ * válidas: "Com a semana de 13/09 incompleta, as de 06/09 e 20/09 não formam
+ * sequência. Uma pesagem com data passada em 13/09 ainda resolve isso — se você
+ * souber o número." (§6.4). Sem buraco assim, não há saída a dizer.
+ */
+function semanasDoVazio() {
+  const ws = semanasDaRegra(S.body.peso || [], Date.now());
+  let saida = null;
+  for (let i = 1; i < ws.length - 1; i++) {
+    if (!ws[i].valida && ws[i - 1].valida && ws[i + 1].valida) {
+      saida = 'Com a semana de ' + fmtDate(ws[i].w) + ' incompleta, as de ' + fmtDate(ws[i + 1].w) + ' e ' +
+              fmtDate(ws[i - 1].w) + ' não formam sequência. Uma pesagem com data passada em ' + fmtDate(ws[i].w) +
+              ' ainda resolve isso — se você souber o número.';
+      break;
+    }
+  }
+  return {
+    lista: ws.map(function (w) {
+      return { w: w.w, intervalo: w.intervalo, estado: w.estado, valida: w.valida,
+               n: w.n === 0 ? 'nenhuma pesagem' : w.n + (w.n === 1 ? ' pesagem' : ' pesagens') };
+    }),
+    saida: saida
+  };
+}
+
 CTX.setPerfManual = function (v) { S.perfManual = v; queueSave(); render(); };
-CTX.aplicaAjuste = function () {
+/**
+ * Muda o passo e GRAVA NA HORA, e se o aparelho recusa, volta inteiro (a D,
+ * `semana.html`, estado 10: "nada entra pela metade"). O passo mexe no ajuste,
+ * no histórico dele e no arroz de duas refeições; os três voltam juntos, e a
+ * tela diz o que não mudou, com os números de antes, em vez de "Apliquei".
+ */
+async function gravaOPasso(muda, oQue) {
+  const antes = JSON.stringify({ a: S.ajuste, h: S.ajusteHist, p: planoDeComida(), v: S.comida.v });
+  const kcalAntes = Math.round(kcalDeTreinoCom(S.ajuste || 0));
+  const arrozAntes = planoDeComida().map(function (r) {
+    const i = r.itens.filter(function (x) { return x.arroz; })[0];
+    return i ? { refeicao: r.n, q: i.q } : null;
+  }).filter(Boolean);
+  const ajusteAntes = S.ajuste || 0;
+  muda();
+  view.passoFalhou = null;
+  const ok = await save();
+  if (ok === false) {
+    const v = JSON.parse(antes);
+    S.ajuste = v.a; S.ajusteHist = v.h; S.comida.plano = v.p; S.comida.v = v.v;
+    view.passoFalhou = { oQue: oQue, kcal: kcalAntes, arroz: arrozAntes, ajuste: ajusteAntes };
+    render();
+    return false;
+  }
+  render();
+  return true;
+}
+
+CTX.aplicaAjuste = async function () {
   const v = veredito();
   const passo = ajusteDoVeredito(v);
   if (!passo) return;                   // observar e manter não propõem passo
-  const antes = S.ajuste || 0;
-  const kde = kcalDeTreinoCom(antes);
-  S.ajuste = antes + passo;
-  if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
-  aplicaArroz();
-  // As kcal do dia de treino antes e depois vão junto: é o que a linha do passo
-  // diz depois ("3.007 → 3.157 kcal em dia de treino"), e o plano muda — lidas
-  // depois, dariam o número de outro dia.
-  S.ajusteHist.push({ t: Date.now(), de: antes, para: S.ajuste,
-                      k: v.k, p: v.p, reg: diasRegistrados(),
-                      kde: Math.round(kde), kpara: Math.round(kcalDeTreinoCom(S.ajuste)) });
-  queueSave(); render();
+  const ok = await gravaOPasso(function () {
+    const antes = S.ajuste || 0;
+    const kde = kcalDeTreinoCom(antes);
+    S.ajuste = antes + passo;
+    if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
+    aplicaArroz();
+    // As kcal do dia de treino antes e depois vão junto: é o que a linha do passo
+    // diz depois ("3.007 → 3.157 kcal em dia de treino"), e o plano muda — lidas
+    // depois, dariam o número de outro dia.
+    S.ajusteHist.push({ t: Date.now(), de: antes, para: S.ajuste,
+                        k: v.k, p: v.p, reg: diasRegistrados(),
+                        kde: Math.round(kde), kpara: Math.round(kcalDeTreinoCom(S.ajuste)) });
+  }, { verbo: 'aplicado', passo: passo });
   // "Apliquei", e não "Ajuste aplicado": aplicar é ato do registro, e o agente
-  // é o app (V8).
-  toast('Apliquei ' + sinalDoPasso(passo) + ' kcal. O arroz do plano foi para ' + arrozAtual() + ' g.');
+  // é o app (V8). Só depois de o aparelho aceitar.
+  if (ok) toast('Apliquei ' + sinalDoPasso(passo) + ' kcal. O arroz do plano foi para ' + arrozAtual() + ' g.');
 };
+
+/**
+ * Desfaz o passo em vigor — o "Desfazer" do desenho, ao lado da linha do passo
+ * aplicado, e sem prazo: corrigir no lugar vale aqui também. O plano volta ao
+ * saldo de antes e o arroz acompanha; o passo fica no registro, marcado como
+ * desfeito. Não passa pelo pare: nada é destruído, e aplicar de novo o refaz.
+ */
+CTX.desfazAjuste = async function () {
+  const u = passoEmVigor();
+  if (!u) return;
+  const passo = u.para - u.de;
+  const ok = await gravaOPasso(function () {
+    const w = passoEmVigor();
+    w.desfeito = Date.now();
+    S.ajuste = w.de;
+    aplicaArroz();
+  }, { verbo: 'desfeito', passo: passo });
+  if (ok) toast('Desfiz o ' + sinalDoPasso(passo) + ' kcal. O arroz do plano voltou para ' + arrozAtual() + ' g.');
+};
+
+/** O passo que o aparelho recusou, para a tela dizer o que não mudou. */
+CTX.passoFalhou = function () {
+  const f = view.passoFalhou;
+  if (!f) return null;
+  return {
+    titulo: 'O passo não foi ' + f.oQue.verbo,
+    texto: 'O armazenamento deste aparelho recusou a gravação. O plano continua em ' + fmtInt(f.kcal) +
+      ' kcal no dia de treino' + (f.arroz.length ? ', com arroz ' + f.arroz.map(function (x) { return fmtInt(x.q) + ' g no ' + x.refeicao.toLowerCase(); }).join(' e ') : '') +
+      ', e o ajuste acumulado continua em ' + (f.ajuste ? sinalDoPasso(f.ajuste) + ' kcal' : '0') + '.',
+    linhas: f.arroz.map(function (x) { return x.refeicao + ' · arroz cozido ' + fmtInt(x.q) + ' g'; })
+      .concat(['Dia de treino ' + fmtInt(f.kcal) + ' kcal']),
+    veredito: f.oQue.verbo === 'aplicado'
+      ? 'O veredito continua valendo: ' + sinalDoPasso(f.oQue.passo) + ' kcal. Ele não vence e não some.'
+      : null,
+    tenta: f.oQue.verbo === 'aplicado' ? 'aplicar' : 'desfazer'
+  };
+};
+CTX.dispensaPassoFalhou = function () { view.passoFalhou = null; render(); };
 
 /** "+150" / "−300": o passo em kcal, com o sinal de verdade. */
 function sinalDoPasso(passos) { return (passos > 0 ? '+' : '−') + Math.abs(passos) * 150; }
@@ -6669,11 +7749,17 @@ function kcalDeTreinoCom(ajuste) {
  * (§6.3) — só enquanto aquele passo é o que está em vigor. Antes dele, ou com o
  * plano restaurado, a linha volta a ser o estado: "plano base · arroz 250 g".
  */
+/** O último passo que ainda vale: o mais recente não desfeito, se é ele que está em vigor. */
+function passoEmVigor() {
+  const h = (Array.isArray(S.ajusteHist) ? S.ajusteHist : []).filter(function (x) { return !x.desfeito; });
+  const u = h[h.length - 1];
+  return u && u.para !== u.de && u.para === (S.ajuste || 0) ? u : null;
+}
+
 function linhaDoAjuste() {
   const estado = rotuloDoAjuste() + ' · arroz ' + arrozAtual() + ' g';
-  const h = Array.isArray(S.ajusteHist) ? S.ajusteHist : [];
-  const u = h[h.length - 1];
-  if (!u || u.para === u.de || u.para !== (S.ajuste || 0)) return estado;
+  const u = passoEmVigor();
+  if (!u) return estado;
   return 'Apliquei ' + sinalDoPasso(u.para - u.de) + ' kcal em ' + fmtDate(u.t) + ', às ' + fmtHoraDita(u.t) +
     (u.kde != null && u.kpara != null
       ? ' · ' + fmtInt(u.kde) + ' → ' + fmtInt(u.kpara) + ' kcal em dia de treino' : '') +
@@ -6745,6 +7831,34 @@ function medidasRecentes(k, un) {
     });
 }
 
+/**
+ * O VAZIO DE VERDADE do Corpo (a D, `corpo.html`, estado 10): aparelho novo, ou
+ * histórico apagado — nenhum peso, nenhuma medida, nenhuma foto. O vazio diz
+ * quanto custa sair dele, com os números da regra e não com uma barra de
+ * progresso: duas taxas semanais seguidas são três semanas de média, e cada
+ * média pede `MIN_PESAGENS` pesagens.
+ */
+CTX.corpoVazio = function () {
+  const b = S.body || {};
+  const alguma = Object.keys(b).some(function (k) { return Array.isArray(b[k]) && b[k].length; }) ||
+    (S.protocolo && Array.isArray(S.protocolo.sessoes) && S.protocolo.sessoes.length);
+  if (alguma) return null;
+  const semanas = 3, pesagens = semanas * MIN_PESAGENS_CORPO;
+  return {
+    titulo: semanas + ' semanas até a regra poder decidir',
+    texto: 'Ela precisa de três semanas seguidas com média válida, e cada média precisa de pelo menos ' +
+      MIN_PESAGENS_CORPO + ' pesagens. São ' + pesagens + ' pesagens, em ' + semanas + ' semanas, para o primeiro veredito existir.',
+    linhas: [
+      { k: 'peso', t: 'Peso', d: 'de manhã, antes de treinar, mesma roupa' },
+      { k: 'fita', t: 'Cintura e outras medidas', d: 'sem frequência prescrita · quando você quiser' },
+      { k: 'bio', t: 'Bioimpedância', d: 'uma vez por mês' },
+      { k: 'fotos', t: 'Fotos', d: 'a cada ' + CADENCIA_DIAS + ' dias, ' + posesDo(S.protocolo && S.protocolo.poses).length + ' poses, menos de 5 min' }
+    ],
+    conta: NUVEM.sessao() ? null
+      : 'Se você já tem histórico em outro aparelho, entrar na conta traz tudo de volta antes de registrar qualquer coisa aqui.'
+  };
+};
+
 CTX.corpo = function () {
   const r = pesoRitmo();
   const c = cinturaMes();
@@ -6753,19 +7867,27 @@ CTX.corpo = function () {
   const vPeso = valorDoCorpo('peso'), vCint = valorDoCorpo('cintura');
   const semana = weekStart(Date.now());
   const naSemana = S.body.peso.filter(function (x) { return x.t >= semana; }).length;
+  // A semana em curso sem média (a D, corpo, estado 9). Com ela, a média e o
+  // ritmo desta semana são "—": uma pesagem só não é média, e o ritmo contra
+  // ela seria a mesma média falsa com sinal.
+  const semMedia = S.body.peso.length ? semanaEmCurso(S.body.peso, Date.now()) : null;
+  const vale = r.ok && !semMedia;
 
   return {
     peso: {
       valor: isNaN(vPeso) ? baseDoCorpo('peso') : vPeso,
       serie: serieSemanal(S.body.peso, 14),
-      media: r.ok ? fmtDec(r.last.v) + ' kg' : '—',
-      ritmo: (r.ok && r.duasSemanas) ? fmtSig2(r.kgSem) : '—',
+      media: vale ? fmtDec(r.last.v) + ' kg' : '—',
+      ritmo: (vale && r.duasSemanas) ? fmtSig2(r.kgSem) : '—',
       // Ácido fica: não é "melhor que antes", é DENTRO DA FAIXA que o
       // nutricionista prescreveu — estado contra uma regra, como "feito".
-      ritmoCor: (r.ok && r.duasSemanas)
+      ritmoCor: (vale && r.duasSemanas)
         ? (r.kgSem >= 0.15 && r.kgSem <= 0.4 ? 'ins-acid' : 'ins-amber') : '',
       nota: naSemana + (naSemana === 1 ? ' pesagem da manhã nesta semana' : ' pesagens da manhã nesta semana'),
       alvo: 'registre 3 a 4 por semana',
+      // o que falta, e a decisão que fica parada. Sem nenhuma pesagem no
+      // histórico, quem fala é o vazio de verdade, e não esta cobrança.
+      semana: semMedia,
       acao: acaoDaMedida('peso'),
       dia: diaDaMedidaVM('peso'),
       medidas: medidasRecentes('peso', 'kg')
@@ -6828,6 +7950,19 @@ CTX.corpo = function () {
     },
     musculos: CTX.musculos()
   };
+};
+
+/**
+ * O cardio de HOJE, no Agora (decisão do dono, 14/10): o lugar onde se lança é
+ * o lugar onde se desfaz. Antes, o lançado por engano só se apagava amanhã, em
+ * Dias — tocar em hoje abre o Agora, e o Agora não listava o do dia.
+ */
+CTX.cardioDeHoje = function () {
+  return S.cardio.filter(function (x) { return sameDay(x.t, Date.now()); })
+    .sort(function (a, b) { return a.t - b.t; })
+    .map(function (x) {
+      return { t: x.t, txt: fmtHoraDita(x.t) + ' · ' + x.min + ' min de ' + x.m + ', ' + x.i };
+    });
 };
 
 CTX.musculos = function () {
@@ -7045,6 +8180,7 @@ CTX.bioimpedancia = function () {
 CTX.registraBio = function (leitura, quando) { return registraBio(leitura, quando); };
 CTX.apagaMedida = function (k, t) { delBody(k, t); };
 CTX.apagaCardio = function (t) { delCardio(t); };
+CTX.corrigeCardio = function (t, campo, valor) { return corrigeCardio(t, campo, valor); };
 CTX.abreCardio = function () { abrirCardioRapido(); };
 
 // ---------- edição de COMIDA ----------
@@ -7375,6 +8511,21 @@ CTX.nuvemCampo = function (k, v) {
   render();
 };
 
+/**
+ * A sessão de login que expirou (a D, `prescricao.html`, estado 11). Sem rede a
+ * sincronia falha em silêncio, de propósito — o subsolo é o lugar normal de uso.
+ * Login expirado NÃO é sem rede, e virar uma coisa só seria mentir: o que ele
+ * registra continua gravado no aparelho, e o que falta é a réplica.
+ */
+CTX.loginExpirou = function () {
+  if (!sync.expirou || NUVEM.sessao()) return null;
+  return {
+    texto: 'O que você registra continua gravado neste aparelho. Só não vai para a cópia remota, e os outros aparelhos não veem o que mudou aqui.',
+    esperando: sync.sujo ? 'Há mudanças deste aparelho esperando subir.' : null,
+    ultima: sync.em ? 'Última sincronização: ' + (sameDay(sync.em, Date.now()) ? 'hoje' : fmtDate(sync.em)) + ', ' + fmtHoraDita(sync.em) + '.' : null
+  };
+};
+
 CTX.entrarNaNuvem = async function () {
   const f = view.nuvemForm || {};
   const email = String(f.email || '').trim();
@@ -7386,7 +8537,7 @@ CTX.entrarNaNuvem = async function () {
   // a senha não fica pendurada na memória da tela depois de usada
   view.nuvemForm = null;
   // primeiro login neste aparelho: nada foi visto ainda, então tudo se funde
-  sync.v = null; sync.sujo = true;
+  sync.v = null; sync.sujo = true; sync.expirou = 0;
   gravaSync(); render();
   toast('Conectado como ' + r.v.email + '.');
   sincroniza({ manual: true });
@@ -7452,36 +8603,6 @@ CTX.apagaTudo = function () { wipe(); };
 
 CTX.cromoDoTreino = function () {
   const s = S.sessao;
-  const ini = weekStart(Date.now());
-  const semana = [];
-  for (let i = 0; i < 7; i++) {
-    const dia = ini + i * 86400000;
-    const marcas = sessoesDoDia(dia);
-    const hoje = sameDay(dia, Date.now());
-    const futuro = dia > Date.now() && !hoje;
-    const folga = !marcas.length && ehDescanso(dia);
-    semana.push({
-      d: DIAS_CURTOS[i],
-      // '+' é convite: "registre aqui". Em dia de descanso ele mentiria, porque
-      // não há o que registrar — o traço diz vazio DE PROPÓSITO.
-      v: marcas.length ? marcas.map(marcaDe).join('') : (folga ? '–' : '+'),
-      descanso: folga,
-      feito: marcas.length > 0,
-      livre: marcas.length > 0 && marcas.every(function (m) { return m.livre; }),
-      hoje: hoje,
-      futuro: futuro,
-      cardio: cardioDoDia(dia).length > 0,
-      // sem ação no futuro: lançar treino que ainda não aconteceu não faz sentido
-      // Um dia pode ter DUAS sessões — registrar o treino errado e depois o
-      // certo é o jeito mais comum de chegar nisso, e a célula já mostra as
-      // duas letras. Abrir a última em silêncio deixava a outra inalcançável:
-      // com mais de uma, a célula leva à LISTA, onde elas estão lado a lado.
-      abre: marcas.length > 1 ? { k: 'dia', t: dia }
-           : marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
-           : futuro ? null : { k: 'lancar', t: dia }
-    });
-  }
-
   const hojeCardio = cardioDoDia(Date.now());
   return {
     sessao: s && !s.retro ? {
@@ -7489,7 +8610,6 @@ CTX.cromoDoTreino = function () {
       pausada: !!s.pausadoEm,
       desde: s.pausadoEm ? 'pausado' : 'desde ' + fmtHora(s.inicio)
     } : null,
-    semana: semana,
     cardio: (function () {
       const f = Object.assign({ m: 'bike', min: 25, i: 'moderado' }, view.cardioForm);
       const perna = pernaHoje();
@@ -7507,167 +8627,256 @@ CTX.cromoDoTreino = function () {
         aviso: perna.length
           ? 'Você treinou ' + perna.join(' e ') + ' hoje. A regra é não pôr cardio no mesmo período de treino de perna.'
           : null,
-        acao: 'registrar ' + f.min + ' min de ' + f.m
+        acao: 'Registrar ' + f.min + ' min de ' + f.m
       };
     })()
   };
 };
 
-let destaqueT = null;
-
 CTX.abreSessaoDoDia = function (a) {
   if (!a) return;
   if (a.k === 'sessao') { abrirSessao(a.t); return; }
-  if (a.k === 'dia') { levaAsSessoesDoDia(a.t); return; }
   abrirAdicionar(a.t);
 };
 
-/**
- * Leva às sessões daquele dia, na lista do mês.
- *
- * NÃO abre nenhuma: com duas no mesmo dia, escolher por ele seria escolher
- * errado metade das vezes. A lista já traz as duas com data, horário e letra —
- * o que faltava era chegar nela sabendo quais linhas olhar.
- *
- * Vai para DADOS porque é lá que existe lista de dia; a tira da semana do
- * treino mostra o dia, mas não o desdobra. E leva o mês junto, senão a lista
- * mostraria outro mês que não o do dia tocado.
- *
- * O destaque se apaga sozinho: é empurrão de atenção, não estado.
- */
-function levaAsSessoesDoDia(t) {
-  const d = new Date(t), agora = new Date(Date.now());
-  view.aba = 'dias';
-  view.mes = (d.getFullYear() - agora.getFullYear()) * 12 + (d.getMonth() - agora.getMonth());
-  view.destacaDia = t;
-  render();
-
-  const alvo = document.querySelector('.sessrow.destacada');
-  if (alvo) {
-    const parado = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    alvo.scrollIntoView({ behavior: parado ? 'auto' : 'smooth', block: 'center' });
-  }
-  clearTimeout(destaqueT);
-  destaqueT = setTimeout(function () { view.destacaDia = null; render(); }, 2600);
-}
 CTX.cardioSet = function (k, v) { cardioSet(k, v); };
 CTX.addCardio = function () { addCardio(); };
 
-// ---------- DADOS: o calendário do mês ----------
-// Grade de fios por natureza: sete colunas, uma célula por dia. O marcador de
-// período é a ÚNICA exceção autorizada à regra de não usar emoji, e por isso
-// vive isolado em PERIODOS — inclusive fora deste comentário, que citá-lo
-// aqui já bastou para reprovar o teste que guarda a regra.
+// ---------- o MÊS em Dias (a D, `dias.html`, estado 1) ----------
+//
+// O mês é a entrada, e o dia é o lugar. Cada célula diz o que o dia teve por
+// forma e palavra — a letra do treino, "aula", "fora", "desc.", o coração do
+// cardio, a barra da comida — e um toque abre o dia. Dia sem nada fica sem
+// nada: o domingo não vira descanso sozinho, e a segunda sem registro não vira
+// treino. Embaixo, três leituras do mês, e só estas.
+//
+// Saíram daqui, pelo desenho: a faixa da semana (o mês já mostra a semana), o
+// quadro de dias, tempo e volume (volume é leitura de Semana), a marca de
+// período nas células (o horário de início diz quando ele treina, com os
+// pontos à vista) e a lista de sessões, dos dias de comida e dos cardios — que
+// moram agora no dia aberto.
+
+const DIA_MS = 86400000;
+function maiuscula(x) { return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; }
+/** "7h56", de minutos desde a meia-noite */
+function horaDeMinutos(min) { const m = Math.round(min); return Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0'); }
+/** "4,75", "4,5", "5": a média em quartos, sem casa vazia */
+function numeroCurto(v) { return String(Math.round(v * 100) / 100).replace('.', ','); }
+
+/** O que um registro de treino é, em palavra curta: a letra, "aula" ou "fora". */
+function letraDoRegistro(m) { return m.livre ? 'fora' : diaAberto(m.day) ? 'aula' : m.day; }
 
 CTX.mes = function () {
   const ref = mesRef();
-  const ini = new Date(ref.getFullYear(), ref.getMonth(), 1);
-  const fim = new Date(ref.getFullYear(), ref.getMonth() + 1, 1);
-  const offset = ini.getDay();                        // domingo como primeira coluna
-  const dias = Math.round((fim - ini) / 86400000);
-  const t = totaisDoPeriodo(ini.getTime(), fim.getTime());
-  const med = mediaSemanal();
-  const cardMes = S.cardio.filter(function (c) { return c.t >= ini.getTime() && c.t < fim.getTime(); });
+  const ano = ref.getFullYear(), mesN = ref.getMonth();
+  const ini = new Date(ano, mesN, 1).getTime();
+  const fim = new Date(ano, mesN + 1, 1).getTime();
+  const nDias = new Date(ano, mesN + 1, 0).getDate();
+  const agora = Date.now();
+  const ontem = _inicioDoDia(agora) - 1;
+  const corrente = !view.mes;
+  // as leituras vão até ONTEM no mês corrente: hoje ainda está acontecendo, e é do Agora
+  const ate = Math.min(fim - 1, ontem);
+  const porData = {};
+  (Array.isArray(S.comidaHist) ? S.comidaHist : []).forEach(function (h) { if (h && h.d) porData[h.d] = h; });
 
   const celulas = [];
-  for (let i = 0; i < dias; i++) {
-    const dia = ini.getTime() + i * 86400000;
-    const marcas = sessoesDoDia(dia);
-    const hoje = sameDay(dia, Date.now());
-    const futuro = dia > Date.now() && !hoje;
-    const livre = marcas.length > 0 && marcas.every(function (m) { return m.livre; });
-    // periodoNaCelula devolve HTML para o render antigo; aqui o componente
-    // precisa do objeto, então a busca é feita direto.
-    let per = null;
-    for (let j = 0; j < marcas.length && !per; j++) per = periodoDaSessao(marcas[j]);
+  for (let i = 1; i <= nDias; i++) {
+    const dia = new Date(ano, mesN, i, 12).getTime();
+    const hoje = sameDay(dia, agora);
+    const futuro = !hoje && dia > agora;
+    const marcas = futuro ? [] : sessoesDoDia(dia).slice().sort(function (a, b) { return a.t - b.t; });
+    const letras = marcas.filter(function (m) { return !m.livre; }).map(letraDoRegistro);
+    const fora = marcas.some(function (m) { return m.livre; });
+    const desc = !marcas.length && !futuro && ehDescanso(dia);
+    const cardio = futuro ? 0 : cardioDoDia(dia).length;
+    const h = porData[hojeISO(dia)];
+    const comida = futuro || hoje ? null : (h && diaInterpretavel(h) ? 'com' : 'sem');
+    const partes = [];
+    marcas.forEach(function (m) {
+      partes.push(m.livre ? 'treino fora da prescrição' : diaAberto(m.day) ? 'aula' : 'treino ' + m.day);
+    });
+    const desc0 = partes.length > 1 ? [partes.slice(0, -1).join(', ') + ' e ' + partes[partes.length - 1]] : partes;
+    const ditos = desc0.slice();
+    if (desc) ditos.push('descanso marcado');
+    if (cardio) ditos.push(cardio === 1 ? 'cardio' : cardio + ' cardios');
+    if (comida) ditos.push(comida === 'com' ? 'comida com marca' : 'comida sem marca');
+    if (hoje) ditos.push('hoje: abre o Agora');
+    const d = new Date(dia);
     celulas.push({
-      n: i + 1,
-      // a letra do treino manda na célula; o número do dia é contexto
-      marca: marcas.length ? marcas.map(marcaDe).join('') : (ehDescanso(dia) ? '–' : null),
-      feito: marcas.length > 0, livre: livre, hoje: hoje, futuro: futuro,
-      descanso: !marcas.length && ehDescanso(dia),
-      cardio: cardioDoDia(dia).length > 0,
-      periodo: per ? { k: per.k, rot: per.rot } : null,
-      // Um dia pode ter DUAS sessões — registrar o treino errado e depois o
-      // certo é o jeito mais comum de chegar nisso, e a célula já mostra as
-      // duas letras. Abrir a última em silêncio deixava a outra inalcançável:
-      // com mais de uma, a célula leva à LISTA, onde elas estão lado a lado.
-      abre: marcas.length > 1 ? { k: 'dia', t: dia }
-           : marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
-           : futuro ? null : { k: 'lancar', t: dia }
+      n: i, iso: hojeISO(dia), hoje: hoje, futuro: futuro,
+      principal: letras.length ? letras.join(' ') : fora ? 'fora' : desc ? 'desc.' : '',
+      extra: letras.length && fora ? '+fora' : null,
+      descanso: desc, cardio: cardio, comida: comida,
+      rotulo: DIAS_LONGOS[d.getDay()] + ', ' + i + ' de ' + MESES[mesN] + (ditos.length ? ': ' + ditos.join(', ') : ''),
+      abre: hoje ? 'agora' : futuro ? null : dia
     });
   }
 
-  const sessoes = S.done
-    .filter(function (m) { return m.t >= ini.getTime() && m.t < fim.getTime(); })
-    .slice().reverse()
-    .map(function (m) {
-      const nSets = m.livre ? 0 : Object.keys(S.logs).reduce(function (n, k) {
-        return n + (S.logs[k] || []).filter(function (e) { return e.sid === m.sid; })
-                    .reduce(function (x, e) { return x + e.sets.filter(Boolean).length; }, 0);
-      }, 0);
-      return {
-        t: m.t,
-        destacada: view.destacaDia != null && sameDay(m.t, view.destacaDia),
-        data: fmtDate(m.t),
-        hora: horaDaSessao(m),
-        marca: marcaDe(m),
-        livre: !!m.livre,
-        desc: m.livre
-          ? ((m.grupos || []).join(', ') || 'treino avulso')
-          : [m.dur ? fmtDur(m.dur) : null, nSets ? nSets + ' séries' : null].filter(Boolean).join(' · '),
-        aprox: !m.livre && !!m.dur && m.fim !== 'manual',
-        aberta: !!(S.sessao && S.sessao.sid === m.sid),
-        cardio: cardioDoDia(m.t).length > 0
-      };
-    });
+  // As três leituras, cada uma com a conta à vista.
+  const L = ate >= ini ? _leituraDosDias(S.done, ate) : null;
+  const cardMes = S.cardio.filter(function (c) { return c.t >= ini && c.t <= ate; });
+  const ins = _iniciosDoPeriodo(S.done, ini, ate, temHora, function (x) { return diaAberto(x.day); });
+  const n = ins.inicios.length;
+  const mediana = _medianaDosInicios(ins.inicios);
+  const fora = [];
+  if (ins.aulasSemHora) fora.push(ins.aulasSemHora === 1 ? 'a aula, sem hora de início' : 'as ' + ins.aulasSemHora + ' aulas, sem hora de início');
+  if (ins.semHora) fora.push(ins.semHora === 1 ? 'o treino registrado sem hora' : 'os ' + ins.semHora + ' treinos registrados sem hora');
+  if (ins.fora) fora.push(ins.fora === 1 ? 'o treino fora da prescrição' : 'os ' + ins.fora + ' treinos fora da prescrição');
+  const diaCurto = function (t) { return DIAS_CURTOS[new Date(t).getDay()] + ' ' + fmtDate(t); };
+  const temAlgo = S.done.length > 0 || S.cardio.length > 0 ||
+    (Array.isArray(S.comidaHist) && S.comidaHist.some(diaInterpretavel));
 
   return {
-    titulo: MESES[ref.getMonth()] + ' ' + ref.getFullYear(),
+    titulo: MESES[mesN] + ' de ' + ano + (corrente && ate >= ini ? ' · até ontem, ' + fmtDate(ontem) : ''),
+    anterior: maiuscula(MESES[(mesN + 11) % 12]),
+    proximo: maiuscula(MESES[(mesN + 1) % 12]),
     podeAvancar: view.mes < 0,
-    offset: offset,
+    offset: new Date(ini).getDay(),
     dias: DIAS_CURTOS,
     celulas: celulas,
-    periodos: PERIODOS.map(function (p) { return { k: p.k, rot: p.rot, nome: p.nome }; }),
-    stats: [
-      { k: 'd', rotulo: 'dias', valor: String(t.dias) },
-      // a média de duração vinha no rótulo do total; sem ela, 7h48 não diz se
-      // foram sessões longas ou muitas sessões
-      { k: 't', rotulo: 'tempo total', valor: t.tempo ? fmtDur(t.tempo) : '–',
-        nota: t.comTempo ? 'méd ' + fmtDur(t.tempo / t.comTempo) : null },
-      { k: 'v', rotulo: 'volume', valor: fmtK(t.vol) }
-    ],
-    media: med !== null ? fmtDec(med) : null,
-    cardio: cardMes.length ? (function () {
-      // Cardio em dia sem musculação conta separado: é o que o plano pede
-      // (não competir com a recuperação), e some se for só um número total.
-      const so = cardMes.filter(function (c) { return sessoesDoDia(c.t).length === 0; }).length;
-      return {
-        n: cardMes.length,
-        min: fmtInt(cardMes.reduce(function (a, c) { return a + c.min; }, 0)),
-        soCardio: so
-      };
-    })() : null,
-    // Horário típico: só conta sessão com hora medida — retroativo sem hora
-    // informada não inventa horário, e entrar na média seria inventar.
-    horarios: (function () {
-      const h = S.done.filter(function (x) {
-        return x.t >= ini.getTime() && x.t < fim.getTime() && temHora(x);
-      }).map(function (x) { return new Date(x.t).getHours() * 60 + new Date(x.t).getMinutes(); });
-      if (!h.length) return null;
-      const fmt = function (min) {
-        return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(Math.round(min % 60)).padStart(2, '0');
-      };
-      return {
-        n: h.length,
-        media: fmt(h.reduce(function (a, b) { return a + b; }, 0) / h.length),
-        min: fmt(Math.min.apply(null, h)),
-        max: fmt(Math.max.apply(null, h))
-      };
-    })(),
-    sessoes: sessoes
+    vazio: !temAlgo,
+    treino: L
+      ? (L.porSemana != null
+          ? { valor: numeroCurto(L.porSemana),
+              conta: L.dias + ' dias com treino nos últimos 28, divididos por 4. Dois treinos no mesmo dia contam um dia. Descanso não conta.',
+              serie: _serieDaMediaMovel(S.done, ini, ate), prescricao: rot().length,
+              de: fmtDate(ini), ate: fmtDate(ate) }
+          : { valor: null,
+              conta: L.dias + (L.dias === 1 ? ' dia com treino em ' : ' dias com treino em ') + L.janela +
+                     '. A média usa as últimas 4 semanas, e ainda não há 4.' })
+      : null,
+    cardio: { titulo: 'Cardio em ' + MESES[mesN], n: cardMes.length,
+              min: cardMes.reduce(function (a, c) { return a + c.min; }, 0),
+              so: cardMes.filter(function (c) { return sessoesDoDia(c.t).length === 0; }).length },
+    horario: n ? {
+      mediana: horaDeMinutos(Math.round(mediana)),
+      cedo: horaDeMinutos(ins.inicios[0].min), cedoDia: diaCurto(ins.inicios[0].t),
+      tarde: horaDeMinutos(ins.inicios[n - 1].min), tardeDia: diaCurto(ins.inicios[n - 1].t),
+      pontos: ins.inicios.map(function (x) { return x.min; }), medianaMin: mediana,
+      nota: n + (n === 1 ? ' sessão com hora.' : ' sessões com hora.') +
+            (fora.length ? ' Não entram ' + fora.join(', nem ') + '.' : '')
+    } : null
   };
 };
+
+// ---------- o DIA aberto (a D, `dias.html`, estados 2, 5 e 9) ----------
+//
+// Os registros vêm primeiro, cada um numa linha que abre. A comida aparece num
+// olhar: os momentos do plano, cada um com a forma do seu estado. Quando algo
+// destoa, o app aponta e não corrige: dois cardios iguais no mesmo dia ficam
+// lado a lado, o segundo dizendo "igual ao das 7h35", e nada sai sem ele.
+CTX.abreDia = function (t) {
+  if (t === 'agora') { CTX.vaiPara('agora'); return; }
+  view.diaAberto = t; view.cardioAberto = null; view.cardioNoDia = null; entraNoDestino('dia'); render();
+};
+CTX.fechaDia = function () { view.diaAberto = null; view.cardioAberto = null; view.cardioNoDia = null; render(); saiDoDestino('dia'); };
+CTX.abreCardioDoDia = function (t) { view.cardioAberto = view.cardioAberto === t ? null : t; render(); };
+CTX.alternaDescansoDoDia = function (t) { return alternaDescanso(t); };
+
+CTX.diaAberto = function () {
+  const t = view.diaAberto;
+  if (!t) return null;
+  const d = new Date(t);
+  const iso = hojeISO(t);
+  const marcas = sessoesDoDia(t).slice().sort(function (a, b) { return a.t - b.t; });
+  const cardios = cardioDoDia(t).slice().sort(function (a, b) { return a.t - b.t; });
+  const desc = !marcas.length && ehDescanso(t);
+
+  const sessoes = marcas.map(function (m) {
+    const feitas = m.livre ? 0 : Object.keys(S.logs).reduce(function (n, k) {
+      return n + (S.logs[k] || []).filter(function (e) { return e.sid === m.sid; })
+        .reduce(function (x, e) { return x + e.sets.filter(Boolean).length; }, 0);
+    }, 0);
+    const P = !m.livre && treino(m.day);
+    const prescritas = P ? P.ex.reduce(function (n, ex) { return n + ex.s; }, 0) : 0;
+    const hora = temHora(m) ? fmtHoraDita(m.t) : null;
+    const fim = hora && m.dur ? fmtHoraDita(m.t + m.dur + (m.pausado || 0)) : null;
+    const detalhe = m.livre
+      ? [(m.grupos || []).join(', ') || null, m.dur ? fmtDur(m.dur) : null].filter(Boolean)
+      : [hora ? hora + (fim ? ' → ' + fim : '') : 'sem hora',
+         m.dur && m.fim !== 'manual' ? 'fechou sem você' : null,
+         prescritas ? feitas + ' de ' + prescritas + ' séries' : (feitas ? feitas + ' séries' : null)].filter(Boolean);
+    return {
+      k: 'sessao', t: m.t, letra: letraDoRegistro(m),
+      titulo: m.livre ? (m.nome || 'Treino fora da prescrição') : diaAberto(m.day) ? 'Aula' : 'Treino ' + m.day,
+      detalhe: detalhe.join(' · ')
+    };
+  });
+  const listaCardio = cardios.map(function (c, i) {
+    const igual = cardios.slice(0, i).filter(function (o) { return o.m === c.m && o.min === c.min && o.i === c.i; })[0];
+    const depois = !c.semHora && marcas.some(function (m) { return !m.livre && temHora(m) && m.t < c.t; });
+    return {
+      k: 'cardio', t: c.t,
+      titulo: 'Cardio · ' + c.min + ' min de ' + c.m,
+      detalhe: [c.i, horaDoCardio(c) ? horaDoCardio(c) + (depois ? ', depois do treino' : '') : 'lançado depois, sem hora']
+                 .filter(Boolean).join(' · ') +
+               (igual ? (horaDoCardio(igual) ? ' · igual ao das ' + horaDoCardio(igual) : ' · igual a outro deste dia') : ''),
+      igual: !!igual,
+      aberto: view.cardioAberto === c.t,
+      // aberto, o registro inteiro: cada campo corrigível no toque
+      campos: view.cardioAberto === c.t ? {
+        modais: MODAIS.map(function (x) { return { k: x, t: x, on: c.m === x }; }),
+        minutos: [20, 25, 30, 40].concat([20, 25, 30, 40].indexOf(c.min) < 0 ? [c.min] : [])
+          .sort(function (a, b) { return a - b; }).map(function (v) { return { k: v, t: v + ' min', on: c.min === v }; }),
+        intensidades: ['leve', 'moderado'].map(function (v) { return { k: v, t: v, on: c.i === v }; })
+      } : null
+    };
+  });
+
+  // a comida do dia: a verdade do registro, nunca a sugestão da folha
+  const passado = iso < hojeISO();
+  const folha = passado ? CTX.poeODiaEmDia(iso) : null;
+  const h = (Array.isArray(S.comidaHist) ? S.comidaHist : []).filter(function (x) { return x.d === iso; })[0] || null;
+  const momentos = folha ? folha.linhas.map(function (l) {
+    return { id: l.id, nome: l.nome, hora: l.hora.replace(/^0(\d)/, '$1').replace(':', 'h'), marca: l.sugerida || l.marca === 'vazia' ? 'sem' : l.marca };
+  }) : [];
+  const comMarca = momentos.filter(function (x) { return x.marca !== 'sem'; }).length;
+  const conta = h && diaInterpretavel(h);
+
+  return {
+    titulo: DIAS_LONGOS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()],
+    volta: 'Voltar para ' + MESES[d.getMonth()],
+    procedencia: marcas.length ? 'dia de treino, pela sessão registrada'
+               : desc ? 'descanso, marcado por você' : 'nada registrado',
+    registros: sessoes.concat(listaCardio).sort(function (a, b) { return a.t - b.t; }),
+    vazio: !marcas.length && !desc && !cardios.length,
+    descanso: desc,
+    // "marcado agora, às 21h22 · não conta como treino em nenhuma conta" (estado 9)
+    descansoDetalhe: desc ? (function () {
+      const tm = S.descanso[iso];
+      const quando = typeof tm === 'number' && tm > 1
+        ? 'marcado ' + (sameDay(tm, Date.now()) ? 'hoje' : 'em ' + fmtDate(tm)) + ', às ' + fmtHoraDita(tm) + ' · ' : '';
+      return quando + 'não conta como treino em nenhuma conta';
+    })() : null,
+    // o palpite do dia vazio, dito como palpite (estado 5)
+    palpite: !marcas.length && !desc
+      ? 'Pelo padrão semanal, ' + DIAS_LONGOS[d.getDay()] + ' é dia de ' +
+        (cadenciaDaSemana()[d.getDay()] === 'treino' ? 'treino' : 'descanso') + ' — é palpite.'
+      : null,
+    // um dia com treino não aceita a marca de descanso, e diz por quê (F156)
+    podeDescanso: !marcas.length,
+    // o cardio esquecido entra pelo dia passado (decisão do dono, 14/10)
+    podeCardio: passado,
+    cardioNovo: passado && view.cardioNoDia ? {
+      modais: MODAIS.map(function (x) { return { k: x, t: x, on: view.cardioNoDia.m === x }; }),
+      minutos: [20, 25, 30, 40].map(function (v) { return { k: v, t: v + ' min', on: view.cardioNoDia.min === v }; }),
+      intensidades: ['leve', 'moderado'].map(function (v) { return { k: v, t: v, on: view.cardioNoDia.i === v }; }),
+      falhou: view.cardioNoDiaFalhou || null
+    } : null,
+    data: iso,
+    comida: passado ? {
+      resumo: !momentos.length ? null : comMarca === 0 ? 'nenhuma com marca' : comMarca + ' de ' + momentos.length + ' com marca',
+      momentos: momentos,
+      agua: h ? (h.aguaNaoContada ? 'não contei' : h.agua + (h.agua === 1 ? ' copo' : ' copos')) : 'não contei',
+      regra: conta ? 'Conta para a regra dos 14 dias, porque tem refeição marcada.'
+                   : 'Sem marca, o dia não conta para a regra: é desconhecido, não zero.',
+      plano: folha ? 'Plano ' + (h && h.cadencia === 'treino' ? 'de dia de treino' : h && h.cadencia === 'descanso' ? 'de descanso' : 'do dia') +
+                     ', ' + folha.plano + '. É referência — o plano mora em Prescrição.' : null
+    } : null
+  };
+};
+
 CTX.mudaMes = function (n) { mudaMes(n); };
 
 // ---------- tela cheia: detalhe da sessão ----------
@@ -7700,20 +8909,113 @@ CTX.detalheDaSessao = function () {
   const card = cardioDoDia(m.t);
 
   const notas = [];
-  if (!aberta && dur != null && !exato) {
-    notas.push('Você não encerrou este treino; o app fechou sozinho e o tempo vai até a última série registrada.');
-  }
+  // o aproximado e o início marcado moram nas linhas de começo e fim
   if (m.pausado) notas.push(fmtDur(m.pausado) + ' de pausa, fora da conta.');
-  if (m.ini === 'manual') notas.push('Início marcado por você, antes do aquecimento.');
 
   const hIni = horaDaSessao(m), hFim = aberta ? null : fimDaSessao(m);
 
   // A correção não é oferecida no treino em andamento: o tempo dele ainda está
   // correndo, e escrever por cima seria discutir com o relógio.
   const corrigivel = !aberta;
+  // ---- a sessão como foi (a D, `dias.html`, estado 3) ----
+  const P = treino(m.day);
+  const naSessao = function (k, e) {
+    return m.sid != null ? e.sid === m.sid
+      : (sameDay(e.t, m.t) && e.sid == null && P && P.ex.some(function (ex) { return ex.id === k || ex.id === e.sl; }));
+  };
+  const registros = [];
+  Object.keys(S.logs).forEach(function (k) {
+    (S.logs[k] || []).forEach(function (e) { if (naSessao(k, e)) registros.push({ idEx: k, e: e }); });
+  });
+  const posicao = function (r) {
+    const i = P ? P.ex.findIndex(function (ex) { return ex.id === r.idEx || ex.id === r.e.sl || ex.orig === r.idEx; }) : -1;
+    return i < 0 ? 1000 + r.e.t / 1e13 : i;
+  };
+  registros.sort(function (a, b) { return posicao(a) - posicao(b); });
+  const pa = view.passada;
+  const linhaDe = function (idEx, e, ex) {
+    const chave = chaveDeLog(idEx, e);
+    const prescritas = ex ? ex.s : 0;
+    const n = Math.max(e.sets.length, prescritas);
+    const series = [];
+    for (let k = 0; k < n; k++) {
+      const s = e.sets[k];
+      const aberta = !!(pa && pa.idEx === idEx && pa.chave === chave && pa.k === k);
+      series.push(s
+        ? { k: k, texto: e.u ? textoDaSerie(s, e.u, e.q) : textoDaSerieDaPassada(idEx, s),
+            rir: s[2] != null ? 'RIR ' + s[2] : null, editavel: !e.u, aberta: aberta }
+        : { k: k, nao: true, lanca: !e.u, aberta: aberta });
+    }
+    let editor = null;
+    const s = pa && !pa.novo && pa.idEx === idEx && pa.chave === chave ? e.sets[pa.k] : null;
+    if (pa && pa.novo && pa.idEx === idEx && pa.chave === chave) editor = editorDoNovo(idEx, ex);
+    if (s) {
+      const fx = faixaDoTexto(ex ? ex.r : null);
+      const reg = regua(pa.era[1], fx);
+      const un = CARGAS[cargaTipo(idEx, ex || exDe(idEx))].rot;
+      const tc = view.teclado && view.teclado.alvo.tipo === 'passada' ? view.teclado : null;
+      editor = {
+        titulo: 'Série ' + (pa.k + 1),
+        guardada: 'guardada: ' + textoDaSerieDaPassada(idEx, pa.era),
+        carga: s[0] != null && s[0] !== '' ? fmtNum(s[0]).replace('.', ',') : '–',
+        un: un,
+        faixa: fx ? 'repetições · faixa ' + ex.r : 'repetições',
+        regua: { slots: pagina(reg, pa.foco != null ? pa.foco : s[1]), valor: s[1], marca: 'era',
+                 tocado: pa.tocado && pa.tocado.k === 'reps' ? pa.tocado.v : null },
+        gravado: pa.gravado,
+        falhou: pa.tocado ? 'Não foi gravado: o aparelho recusou. A série continua ' + textoDaSerieDaPassada(idEx, s) + ', que é o que está guardado.' : null,
+        rir: { texto: s[2] != null ? 'RIR: ' + s[2] + ' · mudar' : 'RIR: nenhum · marcar', aberto: pa.rir,
+               escala: RIR_ESCALA.map(function (v) { return { v: v, on: s[2] === v }; }) },
+        teclado: tc ? { texto: tc.texto, unidade: un } : null
+      };
+    }
+    return {
+      idEx: idEx, chave: chave, nome: exDe(idEx).n,
+      presc: ex ? ex.s + ' × ' + ex.r + (ex.rir ? ' · RIR ' + ex.rir : '') : 'fora do treino',
+      series: series, editor: editor,
+      nota: (e.dor && e.dor.length ? 'dor em ' + e.dor.map(dorName).join(' e ') : '') + (e.obs ? (e.dor && e.dor.length ? ' · ' : '') + e.obs : '') || null
+    };
+  };
+  const feitos = {};
+  const exercicios = registros.map(function (r) {
+    const ex = P ? P.ex.filter(function (x) { return x.id === r.idEx || x.id === r.e.sl || x.orig === r.idEx; })[0] : null;
+    if (ex) feitos[ex.id] = 1;
+    return linhaDe(r.idEx, r.e, ex);
+  });
+  // o que estava prescrito e não tem registro nenhum: "não feito", e isso não
+  // é falha nem pendência (P2) — fica na posição dele, sem cor de alarme
+  if (P && !aberta) P.ex.forEach(function (ex, i) {
+    if (feitos[ex.id]) return;
+    const series = [];
+    for (let k = 0; k < ex.s; k++) {
+      series.push({ k: k, nao: true, lanca: !ex.u,
+                    aberta: !!(pa && pa.novo && pa.idEx === ex.id && pa.chave == null && pa.k === k) });
+    }
+    exercicios.splice(Math.min(i, exercicios.length), 0,
+      { idEx: ex.id, chave: null, nome: ex.n, presc: ex.s + ' × ' + ex.r + (ex.rir ? ' · RIR ' + ex.rir : ''), series: series,
+        editor: pa && pa.novo && pa.idEx === ex.id && pa.chave == null ? editorDoNovo(ex.id, ex) : null, nota: null });
+  });
+
+  const fimT = !aberta && hFim ? m.t + m.dur + (m.pausado || 0) : null;
+  const cab = {
+    titulo: diaAberto(m.day) ? 'Aula' : 'Treino ' + m.day,
+    meta: [diaAberto(m.day) ? 'aula' : 'da sequência', DIAS_LONGOS[new Date(m.t).getDay()] + ', ' + fmtDate(m.t),
+           P && P.tag ? P.tag : null].filter(Boolean).join(' · ')
+  };
+  const comeco = hIni
+    ? { hora: fmtHoraDita(m.t), nota: m.ini === 'manual' ? 'marcado antes do aquecimento' : null }
+    : { hora: 'sem hora', nota: 'registrado depois, sem a hora de início' };
+  const fim = aberta ? null : fimT
+    ? { hora: fmtHoraDita(fimT), aprox: !exato,
+        nota: (exato ? 'declarado por você' : 'aproximado: fechou sem você, na última série') + ' · ' + fmtDur(dur) }
+    : { hora: dur != null ? fmtDur(dur) : 'não medido', aprox: false,
+        nota: dur != null ? (exato ? 'duração declarada por você' : 'duração aproximada') : 'a duração não foi medida' };
+
   return {
     livre: false,
     t: m.t,
+    cab: cab, comeco: comeco, fim: fim, exercicios: exercicios,
+    corrigindoTempo: view.corrigeTempo === m.t,
     corrigivel: corrigivel,
     exato: exato,
     duracoes: corrigivel
@@ -7729,13 +9031,19 @@ CTX.detalheDaSessao = function () {
       { k: 'd', rotulo: aberta ? 'em andamento'
           : dur == null ? 'tempo não medido' : exato ? 'tempo exato' : 'tempo aproximado',
         valor: dur != null ? fmtDur(dur) : '–' },
-      { k: 'v', rotulo: 'volume · kg×reps', valor: R.vol ? fmtInt(R.vol) : '–' },
+      { k: 'v', rotulo: 'volume', valor: R.vol ? fmtInt(R.vol) : '–', unidade: 'kg×reps' },
       // Recorde é a comparação favorável mais pura que existe aqui, e pintá-lo
       // de ácido era o app dizendo "você foi bem" por cor. O número basta.
       { k: 'r', rotulo: recordes === 1 ? 'recorde' : 'recordes', valor: String(recordes) }
     ],
     horario: hIni ? (hFim ? { de: hIni, ate: hFim } : { de: hIni, ate: null }) : null,
     notas: notas,
+    // a foto da lousa, que virou parte da aula (decisão do dono, 14/10)
+    lousa: m.lousa ? (function () {
+      const url = LOUSA.urlDaLousa(m.lousa.d, m.lousa.v);
+      if (!url) LOUSA.carrega(m.lousa.d, m.lousa.v, m.lousa.ext).then(function (mudou) { if (mudou) render(); });
+      return { url: url, quando: 'foto da lousa · ' + fmtDate(m.lousa.v) + ' ' + fmtHoraDita(m.lousa.v) };
+    })() : null,
     mods: Array.isArray(m.mods) && m.mods.length ? m.mods : null,
     pendencias: [
       { k: 'pulado', n: p.pulado.length, rotulo: p.pulado.length === 1 ? 'pulado' : 'pulados',
@@ -7764,7 +9072,7 @@ CTX.detalheDaSessao = function () {
         deltaCor: '',
         series: x.sets.map(function (y) {
           if (!y) return null;
-          return x.seg ? textoDaSerie(y, x.un, x.q) : fmtNum(y[0]) + '×' + y[1];
+          return x.seg ? textoDaSerie(y, x.un, x.q) : fmtCarga(y[0]) + '×' + y[1];
         }),
         meta: x.ritmo
           ? fmtDec(x.met * (ESCALA_RITMO[x.un] || { fator: 1 }).fator) + ' ' +
@@ -7777,6 +9085,13 @@ CTX.detalheDaSessao = function () {
   };
 };
 CTX.fechaSessao = function () { fecharSessao(); };
+CTX.abreSerieDaPassada = function (idEx, chave, k) { abreSerieDaPassada(idEx, chave, k); };
+CTX.repsDaPassada = function (v) { return repsDaPassada(v); };
+CTX.andaReguaDaPassada = function (dir) { andaReguaDaPassada(dir); };
+CTX.rirDaPassada = function (v) { return rirDaPassada(v); };
+CTX.abreCargaDaPassada = function () { abreCargaDaPassada(); };
+CTX.apagaSerieDaPassada = function () { return apagaSerieDaPassada(); };
+CTX.abreCorrecaoDoTempo = function (t) { abreCorrecaoDoTempo(t); };
 CTX.editaSessao = function (t) { return apagaRegistroDeTreino(t); };
 CTX.corrigeDuracao = function (t, min) { corrigeDuracao(t, min); };
 /* Uma porta só, e aqui: `corrigeDuracao` já mora em `CTX`, e as duas são as
@@ -7856,17 +9171,17 @@ CTX.historico = function () {
   return Object.assign(cab, {
     vazio: false,
     stats: (ritmo
-      ? [{ k: 'a', rotulo: 'ritmo · ' + esc.rot, valor: fmtDec(met(last)) },
-         { k: 'b', rotulo: 'trabalho · ' + ROTULO_UNIDADE[un],
+      ? [{ k: 'a', rotulo: 'ritmo', valor: fmtDec(met(last)), unidade: esc.rot },
+         { k: 'b', rotulo: 'trabalho', unidade: ROTULO_UNIDADE[un],
            valor: fmtInt((last.q || 0) * last.sets.filter(Boolean).length) }]
       : seg
-      ? [{ k: 'a', rotulo: 'tempo da última · seg', valor: fmtInt(tutOf(last)) },
-         { k: 'b', rotulo: 'média por série · seg',
+      ? [{ k: 'a', rotulo: 'tempo da última', valor: fmtInt(tutOf(last)), unidade: 'seg' },
+         { k: 'b', rotulo: 'média por série', unidade: 'seg',
            valor: fmtInt(Math.round(tutOf(last) / Math.max(last.sets.filter(Boolean).length, 1))) }]
       : corpo
       ? [{ k: 'a', rotulo: 'repetições na última', valor: fmtInt(repsOf(last)) },
-         { k: 'b', rotulo: 'carga somada · kg', valor: maxLoad(last) ? fmtNum(maxLoad(last)) : '–' }]
-      : [{ k: 'a', rotulo: 'carga atual · ' + rotCarga, valor: fmtNum(maxLoad(last)) },
+         { k: 'b', rotulo: 'carga somada', valor: maxLoad(last) ? fmtCarga(maxLoad(last)) : '–', unidade: 'kg' }]
+      : [{ k: 'a', rotulo: 'carga atual', valor: fmtCarga(maxLoad(last)), unidade: rotCarga },
          { k: 'b', rotulo: 'volume da última', valor: fmtInt(volOf(last)) }]
     ).concat([{
       k: 'd',
@@ -7901,11 +9216,11 @@ CTX.historico = function () {
         series: s.sets.map(function (x) {
           if (!x) return null;
           return seg ? textoDaSerie(x, s.u, s.q)
-                     : (corpo && !x[0] ? x[1] + ' reps' : fmtNum(x[0]) + '×' + x[1]);
+                     : (corpo && !x[0] ? x[1] + ' reps' : fmtCarga(x[0]) + '×' + x[1]);
         }),
         reps: (seg || corpo) ? null : repsOf(s) + ' reps',
         anilhas: (!seg && CARGAS[tipo].dobra && maxLoad(s))
-          ? fmtNum(totalAnilhas(maxLoad(s), CARGAS[tipo].barra)) + ' kg ' + CARGAS[tipo].total : null,
+          ? fmtCarga(totalAnilhas(maxLoad(s), CARGAS[tipo].barra)) + ' kg ' + CARGAS[tipo].total : null,
         dor: s.dor && s.dor.length ? 'dor em ' + s.dor.map(dorName).join(' e ') : null,
         rir: s.rir ? 'última série a ' + s.rir + ' da falha' : null,
         obs: s.obs || null,
@@ -7915,7 +9230,7 @@ CTX.historico = function () {
           // aqui a correção é da sessão inteira, e a frase diz sessão.
           outroDia: sameDay(s.t, Date.now()) ? null : fmtDate(s.t),
           sets: s.sets.map(function (x) {
-            return { carga: x ? fmtNum(x[0]) : '', reps: x ? String(x[1]) : '' };
+            return { carga: x ? fmtCarga(x[0]) : '', reps: x ? String(x[1]) : '' };
           }),
           seg: seg,
           dores: DORES.map(function (x) {
@@ -8006,6 +9321,18 @@ CTX.respondeMudanca = async function (sid, i, permanente, motivo) {
     : 'Ficou como só daquele dia. O treino registrado não muda.');
 };
 
+/**
+ * A procedência do vazio da fila (a D, prescrição, estado 4): quando foi a
+ * última mudança que entrou no programa. "Fica só naquele dia" não deixa
+ * registro com data, então a frase fala só do que entrou.
+ */
+CTX.ultimaQueEntrou = function () {
+  const log = Array.isArray(S.progLog) ? S.progLog : [];
+  if (!log.length) return null;
+  const t = Math.max.apply(null, log.map(function (x) { return x.t || 0; }));
+  return t ? 'a última mudança que entrou no programa foi em ' + fmtDate(t) : null;
+};
+
 CTX.mudancasQueEsperam = function () {
   const fila = Array.isArray(S.promoPendente) ? S.promoPendente : [];
   if (!fila.length) return [];
@@ -8052,6 +9379,8 @@ CTX.mudancasQueEsperam = function () {
         const imp = impactoDoMod(g.day, m);
         return {
           txt: textoMod(g.day, m),
+          // a mudança ACRESCENTA séries: é sobre ela que a regra do treinador fala (F99)
+          acrescenta: (m.k === 'sets' && m.para > m.de) || m.k === 'add',
           // "Se entrar no Treino D: deltoide lateral passa de 12 para 13 séries
           // na rotação." — o prefixo só na conta de volume: a da troca é outra
           // frase, sobre o tempo do exercício no programa.
@@ -8087,7 +9416,7 @@ CTX.retrospectiva = function () {
     return x.ritmo ? ' ' + (ESCALA_RITMO[x.un] || { rot: 's' }).rot : x.seg ? 's' : 'kg';
   };
   const val = function (x, v) {
-    return x.ritmo ? fmtDec(v * (ESCALA_RITMO[x.un] || { fator: 1 }).fator) : fmtNum(v);
+    return x.ritmo ? fmtDec(v * (ESCALA_RITMO[x.un] || { fator: 1 }).fator) : fmtCarga(v);
   };
   return {
     olho: 'retrospectiva de bloco',
@@ -8138,39 +9467,90 @@ CTX.fechaRetro = function () { fecharRetro(); };
 CTX.retroativo = function () {
   const a = view.add;
   if (!a) return null;
-  const jaTem = sessoesDoDia(a.t);
-  return {
-    titulo: diaExtenso(a.t),
-    data: fmtDate(a.t),
-    hoje: sameDay(a.t, Date.now()),
-    jaTem: jaTem.length
-      ? jaTem.map(function (m) { return m.livre ? 'avulso' : 'treino ' + m.day; }).join(', ')
-      : null,
-    tipos: rot().map(function (x) { return { k: x, t: x, on: a.tipo === x }; })
-      .concat([{ k: 'livre', t: 'outro treino', on: a.tipo === 'livre' },
-               { k: 'descanso', t: 'foi descanso', on: a.tipo === 'descanso' }]),
-    descanso: a.tipo === 'descanso',
-    jaEraDescanso: ehDescanso(a.t),
-    // só letra da rotação tem treino para descrever: 'livre' e 'descanso' não
-    doPlano: a.tipo && treino(a.tipo)
-      ? treino(a.tipo).name + ' · ' + treino(a.tipo).tag : null,
-    livre: a.tipo === 'livre',
-    grupos: gruposDoPlano().map(function (g) {
-      return { k: g, t: g, on: a.grupos.indexOf(g) >= 0 };
-    }),
-    nome: a.nome,
-    hora: a.hora || '',
-    duracoes: [30, 45, 60, 75].map(function (v) {
-      return { k: v, t: v + ' min', on: a.dur === v };
-    }),
-    pode: !!a.tipo
+  const d = new Date(a.t);
+  const dataCurta = fmtDate(a.t);
+  const nomeDoDia = DIAS_LONGOS[d.getDay()];
+  const m = registroDoLancamento();
+  const jaTem = sessoesDoDia(a.t).filter(function (x) { return x !== m; });
+  const descreve = function (k) {
+    const P = treino(k);
+    if (!P) return null;
+    const series = P.ex.reduce(function (n, ex) { return n + ex.s; }, 0);
+    return [P.tag || null, P.ex.length ? P.ex.length + (P.ex.length === 1 ? ' exercício, ' : ' exercícios, ') + series + ' séries' : null]
+      .filter(Boolean).join(' · ');
   };
+  const nomeDe = function (k) { return diaAberto(k) ? 'Aula' : 'Treino ' + k; };
+  const proximo = nextDay();
+  const ultimo = ultimaDoPlano();
+  const base = {
+    titulo: nomeDoDia + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()],
+    procedencia: m ? 'dia de treino, pela sessão registrada' : jaTem.length
+      ? 'já tem ' + jaTem.map(function (x) { return x.livre ? 'treino fora da prescrição' : nomeDe(x.day).toLowerCase(); }).join(' e ')
+      : 'nada registrado'
+  };
+
+  // antes do toque: a pergunta, com o previsto em destaque (estado 6)
+  if (!m) {
+    const previsto = previstoNoDia(a.t);
+    return Object.assign(base, {
+      gravado: false,
+      pergunta: 'Que treino foi ' + (d.getDay() === 0 || d.getDay() === 6 ? 'no ' : 'na ') + nomeDoDia + ', ' + dataCurta + '?',
+      previsto: { k: previsto, letra: diaAberto(previsto) ? 'aula' : previsto, titulo: nomeDe(previsto), detalhe: descreve(previsto) },
+      outros: rot().filter(function (k) { return k !== previsto; })
+        .map(function (k) { return { k: k, t: diaAberto(k) ? 'Aula' : k }; })
+    });
+  }
+
+  // depois do toque: o que ficou gravado, e o que mudou por causa dele (7 e 8)
+  const depois = diasNasQuatroSemanas();
+  const mudou = a.antes != null && depois !== a.antes
+    ? 'dias com treino nas últimas 4 semanas: ' + depois + ', eram ' + a.antes : null;
+  const comHora = temHora(m);
+  if (m.livre) {
+    return Object.assign(base, {
+      gravado: true, livre: true,
+      titulo2: 'Treino fora da prescrição · ' + dataCurta,
+      gravadoEm: 'gravado às ' + fmtHoraDita(a.gravadoEm || m.m) + ' · ' + (mudou || 'conta como dia com treino'),
+      // as regiões do corpo que o produto já conhece (F178), e não os músculos
+      // finos do plano: de um treino fora dele ninguém sabe o "delt lateral"
+      grupos: regioesDoCorpo().map(function (g) { return { k: g, t: g, on: (m.grupos || []).indexOf(g) >= 0 }; }),
+      duracoes: [30, 45, 60].map(function (v) { return { k: v, t: v + ' min', on: m.dur === v * 60000 && !a.durAberta }; })
+        .concat([{ k: 'outro', t: 'outro', on: a.durAberta || (!!m.dur && [30, 45, 60].indexOf(m.dur / 60000) < 0) }]),
+      durAberta: a.durAberta || (!!m.dur && [30, 45, 60].indexOf(m.dur / 60000) < 0),
+      durMin: m.dur ? String(Math.round(m.dur / 60000)) : '',
+      nome: m.nome || '',
+      nota: 'Sem séries. Não mexe na sequência — o próximo continua ' + (diaAberto(proximo) ? 'a aula' : 'o ' + proximo) +
+            ' — e não entra no horário de início do mês.'
+    });
+  }
+  const anda = ultimo === m;
+  return Object.assign(base, {
+    gravado: true, livre: false,
+    titulo2: nomeDe(m.day) + ' · ' + nomeDoDia + ', ' + dataCurta,
+    gravadoEm: 'gravado às ' + fmtHoraDita(a.gravadoEm || m.m) + (mudou ? ' · ' + mudou : ''),
+    comHora: comHora,
+    horaAberta: a.horaAberta || comHora,
+    hora: comHora ? fmtHora(m.t) : a.hora,
+    notaHora: comHora
+      ? 'Começou às ' + fmtHoraDita(m.t) + ', e entra no horário de início do mês.'
+      : 'Sem hora, este treino conta como dia com treino, mas não entra no horário de início do mês. Nenhuma hora é inventada.',
+    detalhar: 'abre o ' + nomeDe(m.day) + ' de ' + dataCurta + ' série a série, com o que você fez da última vez ao lado de cada uma',
+    sequencia: anda
+      ? 'A sequência anda: este é o último registrado, e o próximo passa a ser ' + (diaAberto(proximo) ? 'a aula' : 'o ' + proximo) + '.'
+      : 'A sequência não muda: ' + (ultimo ? 'o ' + nomeDe(ultimo.day) + ' de ' + (sameDay(ultimo.t, Date.now()) ? 'hoje' : fmtDate(ultimo.t)) +
+        ' continua sendo o último registrado, e ' : '') + 'o próximo continua sendo ' + (diaAberto(proximo) ? 'a aula' : 'o ' + proximo) + '.'
+  });
 };
 CTX.fechaAdicionar = function () { fecharAdicionar(); };
-CTX.addSet = function (campo, valor) { addSet(campo, valor); };
-CTX.addNome = function (el) { addNome(el); };
-CTX.addHora = function (el) { addHora(el); };
-CTX.gravaRetro = function (detalhar) { gravarRetro(detalhar); };
+CTX.lancaTreino = function (k) { return lancaTreino(k); };
+CTX.abreHoraDoLancamento = function () { abreHoraDoLancamento(); };
+CTX.semHoraNoLancamento = function () { return horaDoLancamento(''); };
+CTX.horaDoLancamento = function (el) { horaDoLancamentoNoCampo(el); };
+CTX.grupoDoLancamento = function (g) { return grupoDoLancamento(g); };
+CTX.duracaoDoLancamento = function (min) { return duracaoDoLancamento(min); };
+CTX.nomeDoLancamento = function (el) { anotaNomeDoLancamento(el.value); };
+CTX.guardaLancamento = function () { return save(); };
+CTX.detalhaLancamento = function () { return detalhaLancamento(); };
 
 // ---------- edição do treino de HOJE ----------
 // O gesto é o mesmo do editor de programa — subir, descer, mais série, menos
@@ -8230,6 +9610,48 @@ function trocaDoDia(d, i) {
 
 // O catálogo inteiro, com busca, e a porta para cadastrar equipamento que o
 // app ainda não conhece.
+/**
+ * A referência de um movimento do box: o que entrou da última vez, com a data,
+ * ou "sem registro anterior" — a tela diz que não sabe em vez de fingir (a D,
+ * aula, estado 3). Peso guardado é peso do dia: a lousa muda toda semana.
+ */
+function referenciaDoBox(k) {
+  const h = historico(k);
+  const u = h.length ? h[h.length - 1] : null;
+  if (!u) return 'sem registro anterior';
+  const un = unidadeDe(CAT[k] || {});
+  return 'última: ' + fmtLast(u, !!un).replace(/  /g, ' · ') + ' em ' + fmtDate(u.t);
+}
+
+/**
+ * A ÚLTIMA AULA, antes de começar a de hoje (a D, aula, estado 5): "quando eu
+ * chegar lá, saber qual é o wall ball que eu costumo pegar" (P4). Os movimentos
+ * que entraram na última sessão daquele dia aberto, com o que entrou. Sem
+ * sessão anterior com movimento, nada.
+ */
+function referenciaDaUltimaAula(d) {
+  const ses = (S.done || []).filter(function (x) { return x && x.day === d; })
+    .sort(function (a, b) { return b.t - a.t; });
+  for (let j = 0; j < ses.length; j++) {
+    const sid = typeof ses[j].sid === 'number' ? ses[j].sid : ses[j].t;
+    const linhas = [];
+    Object.keys(S.logs || {}).forEach(function (k) {
+      (S.logs[k] || []).forEach(function (e) {
+        if (e && e.sid === sid && Array.isArray(e.sets) && e.sets.some(Boolean)) {
+          linhas.push({ k: k, n: CAT[k] ? CAT[k].n : k, t: e.t,
+                        v: fmtLast(e, !!unidadeDe(CAT[k] || {})).replace(/  /g, ' · ') });
+        }
+      });
+    });
+    if (linhas.length) {
+      linhas.sort(function (a, b) { return a.t - b.t; });
+      const dt = new Date(ses[j].t);
+      return { quando: DIAS_CURTOS[dt.getDay()] + ' ' + fmtDate(ses[j].t), linhas: linhas };
+    }
+  }
+  return null;
+}
+
 function catalogoDeAdicao(d) {
   const q = view.addQ || '';
   const nodia = {};
@@ -8271,7 +9693,9 @@ function catalogoDeAdicao(d) {
           ? (CAT[k].q > 0 ? fmtInt(CAT[k].q) + ' ' + ROTULO_UNIDADE[un] : ROTULO_UNIDADE[un])
           : (CAT[k].g || 'sem grupo');
         return { id: k, n: CAT[k].n,
-                 sub: medida + (nodia[k] ? ' · já está neste treino' : '') };
+                 sub: medida + (nodia[k] ? ' · já está neste treino' : ''),
+                 // no box, a referência de cada movimento (estado 3)
+                 ref: diaAberto(d) ? referenciaDoBox(k) : null };
       }),
     novo: view.novoEx
       ? { grupos: gruposDoPlano(),
@@ -8347,7 +9771,7 @@ function programaLista() {
     titulo: 'Programa',
     stats: [
       { k: 'a', rotulo: 'séries diretas', valor: String(totalSeries()) },
-      { k: 'b', rotulo: 'do treinador', valor: String(ALVO_TOTAL) },
+      { k: 'b', rotulo: 'do treinador', valor: String(alvoTotal()) },
       { k: 'c', rotulo: dif === 1 ? 'diferença' : 'diferenças', valor: String(dif),
         cor: dif ? 'ins-amber' : '' }
     ],
@@ -8424,9 +9848,9 @@ function trocaDoPrograma(d, i) {
 
 function programaDiff() {
   const blocos = [];
-  if (rot().join('|') !== ROT_BASE.join('|')) {
+  if (rot().join('|') !== rotTreinador().join('|')) {
     blocos.push({ k: 'rot', titulo: 'rotação',
-                  itens: [ROT_BASE.join(' → ') + ' virou ' + rot().join(' → ')], dia: null });
+                  itens: [rotTreinador().join(' → ') + ' virou ' + rot().join(' → ')], dia: null });
   }
   rot().forEach(function (d) {
     const dif = difDoDia(d);
@@ -8534,7 +9958,9 @@ CTX.abreProtocolo = function () {
 };
 
 CTX.fechaProtocolo = function () { view.protocolo = null; render(); saiDoDestino('protocolo'); };
-CTX.comecaSessaoDeFotos = function () { view.protocolo.montagem = false; render(); window.scrollTo(0, 0); };
+// O toque em começar é também o que libera o som (a D, estado 1): no Safari do
+// iOS, áudio só existe dentro de um toque (F58).
+CTX.comecaSessaoDeFotos = function () { preparaAudio(); view.protocolo.montagem = false; render(); window.scrollTo(0, 0); };
 CTX.vaiParaPose = function (id) { view.protocolo.pose = id; render(); window.scrollTo(0, 0); };
 
 function andaPose(delta) {
@@ -8565,9 +9991,32 @@ CTX.posProxima = function () { andaPose(1); };
  * guardar, lapidar a anterior, avançar) é o mesmo, e ter um lugar só é o que
  * impede as duas de divergirem no que gravam.
  */
+/**
+ * A pose que não coube no aparelho (a D, `sessao-fotos.html`, estado 9): a
+ * sessão PARA em vez de seguir fingindo, e o bloco da pose fica "não guardada",
+ * diferente de "falta". Se foi o cache que recusou a foto, a foto reduzida fica
+ * na memória para tentar de novo; se foi o registro, a referência fica no
+ * estado e a próxima gravação aceita a leva.
+ */
+function marcaPoseNaoGuardada(pose, motivo, reduzida) {
+  if (view.protocolo) view.protocolo.naoGuardada = { pose: pose, motivo: motivo, reduzida: reduzida || null };
+}
+
+/**
+ * A próxima pose que falta, deixando para o fim as que voltaram por foto preta
+ * (a D, estado 6): elas só vêm quando não sobra outra.
+ */
+function proximaComAdiadas(ses) {
+  const ordem = posesDo(S.protocolo.poses).map(function (p) { return p.id; });
+  const faltam = ordem.filter(function (id) { return !(ses && ses.fotos && ses.fotos[id]); });
+  const ad = (view.protocolo && view.protocolo.adiadas) || {};
+  return faltam.filter(function (id) { return !ad[id]; })[0] || faltam[0] || null;
+}
+
 async function guardaFotoDaPose(d, pose, reduzida) {
   const { blob, ext } = reduzida;
-  await CORPO.guarda(d, pose, blob, ext);
+  try { await CORPO.guarda(d, pose, blob, ext); }
+  catch (e) { marcaPoseNaoGuardada(pose, 'foto', reduzida); return { parou: true }; }
 
   const ses = sessaoFotoOuCria(d);
   const antiga = ses.fotos[pose];
@@ -8580,10 +10029,11 @@ async function guardaFotoDaPose(d, pose, reduzida) {
   CORPO.solta(d, pose);                // a versão anterior sai da memória
   await CORPO.carrega(d, pose, ses.fotos[pose]);
 
-  await save();
+  if ((await save()) === false) { marcaPoseNaoGuardada(pose, 'registro', null); return { parou: true }; }
+  if (view.protocolo) view.protocolo.naoGuardada = null;
   // avança sozinho para a próxima que falta: a sessão é uma sequência, e
   // pedir um toque a mais entre duas poses é pedir um toque a mais nove vezes
-  const prox = proximaPose(sessaoDe(S.protocolo.sessoes, d), S.protocolo.poses);
+  const prox = proximaComAdiadas(sessaoDe(S.protocolo.sessoes, d));
   if (prox && view.protocolo) view.protocolo.pose = prox;
   return prox;
 }
@@ -8594,8 +10044,9 @@ async function tiraFotoDoCorpo(el) {
   if (!arquivo || !v) return;
   el.value = '';                       // permite repetir a mesma foto
   try {
-    await guardaFotoDaPose(v.d, v.pose, await CORPO.reduz(arquivo));
-    render(); window.scrollTo(0, 0);
+    const r = await guardaFotoDaPose(v.d, v.pose, await CORPO.reduz(arquivo));
+    render();
+    if (!(r && r.parou)) window.scrollTo(0, 0);
   } catch (e) {
     toast('Não deu para guardar a foto.');
   }
@@ -8642,6 +10093,48 @@ CTX.setNotaDaSessao = function (txt) {
 };
 
 /** O que a tela de captura consome. */
+/**
+ * O FIM DA SESSÃO (a D, estado 10): o tempo real do primeiro ao último disparo,
+ * o que já subiu para a cópia remota, o peso daquela semana, e o que se pode
+ * fazer agora — comparar com o par longo, responder a pergunta do
+ * nutricionista. A próxima sessão tem data, e nada aqui vence.
+ */
+function fimDaSessaoDeFotos(ses) {
+  const lista = posesDo(S.protocolo.poses);
+  const vs = lista.map(function (p) { return ses.fotos[p.id] && ses.fotos[p.id].v; })
+    .filter(function (v) { return v > 1577836800000; });
+  let tempo = null;
+  if (vs.length === lista.length) {
+    const seg = Math.round((Math.max.apply(null, vs) - Math.min.apply(null, vs)) / 1000);
+    tempo = (seg >= 60 ? Math.floor(seg / 60) + ' min ' : '') + (seg % 60) + ' s do primeiro ao último disparo';
+  }
+  const subiram = lista.filter(function (p) {
+    const r = ses.fotos[p.id];
+    return r && sync.fotos['corpo:' + ses.d + ':' + p.id] === r.v;
+  }).length;
+  const peso = mediaDaSemana(S.body.peso, ses.d);
+  const prox = instanteDaData(ses.d) + CADENCIA_DIAS * 86400000;
+  const dp = new Date(prox);
+  const pose = ordemDePoses().filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0];
+  const par = pose ? parPadrao(S.protocolo.sessoes, pose) : null;
+  const longo = par && par.ate.d === ses.d ? par : null;
+  const aval = parDaAvaliacao();
+  return {
+    poses: lista.length + ' de ' + lista.length + ' poses',
+    tempo: tempo,
+    subida: !NUVEM.sessao()
+      ? 'As fotos ficam neste aparelho: sem a conta, elas não sobem.'
+      : subiram === lista.length ? 'Todas na cópia remota.'
+      : 'Subindo para a cópia remota: ' + subiram + ' de ' + lista.length + '. Pode fechar o app; continua depois.',
+    peso: peso == null ? null : fmtDec(peso) + ' kg, a média da semana',
+    comparar: longo ? 'Comparar com ' + fmtDate(instanteDaData(longo.de.d)) + ' · mesma pose, ' +
+      Math.round((instanteDaData(longo.ate.d) - instanteDaData(longo.de.d)) / 86400000) + ' dias, o par longo' : null,
+    pergunta: aval ? 'Responder a pergunta do nutricionista · par de ' +
+      Math.round((aval.ate - aval.de) / 86400000) + ' dias' : null,
+    proxima: 'A próxima sessão cai em ' + DIAS_CURTOS[dp.getDay()] + ' ' + fmtDate(prox) + '. Nada aqui vence.'
+  };
+}
+
 CTX.sessaoDeFotos = function () {
   const v = view.protocolo;
   if (!v) return null;
@@ -8650,7 +10143,10 @@ CTX.sessaoDeFotos = function () {
   const c = completude(ses, S.protocolo.poses);
 
   if (v.montagem) {
-    return { passo: 'montagem', meta: fmtDate(instanteDaData(v.d)), montagem: { itens: MONTAGEM } };
+    return { passo: 'montagem', meta: fmtDate(instanteDaData(v.d)), montagem: { itens: MONTAGEM,
+      // a ordem das nove, numa linha (a D, estado 1): a rotação é contínua,
+      // sempre para o mesmo lado
+      ordem: lista.map(function (p, k) { return (k + 1) + ' ' + p.n.toLowerCase(); }).join(' · ') } };
   }
 
   const i = Math.max(0, lista.findIndex(function (p) { return p.id === v.pose; }));
@@ -8671,8 +10167,12 @@ CTX.sessaoDeFotos = function () {
     anterior: i > 0,
     proxima: i < lista.length - 1,
     pontos: lista.map(function (p) {
-      return { id: p.id, n: p.n, feita: !!(ses && ses.fotos[p.id]), atual: p.id === v.pose };
+      return { id: p.id, n: p.n, feita: !!(ses && ses.fotos[p.id]), atual: p.id === v.pose,
+               naoGuardada: !!(v.naoGuardada && v.naoGuardada.pose === p.id),
+               adiada: !!(v.adiadas && v.adiadas[p.id] && !(ses && ses.fotos[p.id])) };
     }),
+    naoGuardada: avisoDaPoseNaoGuardada(lista),
+    fim: (ses && !c.faltando.length) ? fimDaSessaoDeFotos(ses) : null,
     pose: {
       id: pose.id, n: pose.n, bloco: pose.bloco, giro: pose.giro, bracos: pose.bracos,
       como: pose.como, revela: pose.revela, erro: pose.erro,
@@ -8709,6 +10209,43 @@ CTX.abreComparar = function () {
 };
 CTX.fechaComparar = function () { view.comparar = null; render(); saiDoDestino('comparar'); };
 
+// ---------- o destino EVOLUÇÃO ----------
+// A leitura do peso ao longo do tempo, dentro de Corpo — o estado 8 do
+// `corpo.html` da D, com o nome que o dono devolveu em 06/10 (§1.7 da frente 3):
+// "Evolução", no lugar de "Histórico". Não é um sexto lugar: é um destino que
+// abre de Corpo e volta para ele.
+CTX.abreEvolucao = function () { view.evolucao = true; entraNoDestino('evolucao'); render(); };
+CTX.fechaEvolucao = function () { view.evolucao = null; render(); saiDoDestino('evolucao'); };
+
+CTX.evolucao = function () {
+  const agora = Date.now();
+  const L = leituraDaEvolucao(S.body.peso || [], agora);
+  const semanas = {};
+  L.pontos.forEach(function (x) { semanas[weekStart(x.t)] = 1; });
+  const ns = Object.keys(semanas).length;
+  const pri = L.semanas[0], ult = L.semanas[L.semanas.length - 1];
+  const duasAbaixo = L.taxas.filter(function (x) { return x.kg != null; }).slice(0, 2);
+  return {
+    meta: L.n ? ns + (ns === 1 ? ' semana · ' : ' semanas · ') + L.n + (L.n === 1 ? ' pesagem' : ' pesagens') : 'nenhuma pesagem ainda',
+    leitura: L,
+    alvo: { min: ALVO_MIN, max: ALVO_MAX },
+    // as duas pontas da linha, ditas como o desenho diz: "02/08 · 71,5" e "hoje · 73,6"
+    inicio: pri ? fmtDate(pri.w) + ' · ' + fmtDec(pri.v) : null,
+    fim: ult ? (sameDay(ult.w, weekStart(agora)) ? 'esta semana' : fmtDate(ult.w)) + ' · ' + fmtDec(ult.v) : null,
+    taxas: L.taxas.map(function (x) {
+      return { w: x.w, intervalo: x.intervalo, nota: x.nota, classe: x.classe,
+               valor: x.kg == null ? '–' : fmtSig2(x.kg) };
+    }),
+    // A frase que aponta para onde a decisão mora. Quando as duas taxas mais
+    // recentes estão abaixo de 0,10, é exatamente o que a regra lê — a frase do
+    // desenho; nos outros casos, só o endereço.
+    frase: duasAbaixo.length === 2 && duasAbaixo.every(function (x) { return x.kg < 0.10; })
+      ? 'Duas taxas seguidas abaixo de 0,10 é exatamente o que a regra do nutricionista lê. O que ela decide está em Semana.'
+      : 'O que a regra do nutricionista decide com estas taxas está em Semana.',
+    podeComparar: posesDo(S.protocolo.poses).some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; })
+  };
+};
+
 function aplicaParPadrao() {
   const c = view.comparar;
   const par = parPadrao(S.protocolo.sessoes, c.pose);
@@ -8732,8 +10269,38 @@ CTX.setDataComparada = function (qual, d) {
   garanteBytesDoCorpo([d]);
   render();
 };
-CTX.setSobrepor = function (on) { view.comparar.sobrepor = !!on; render(); };
+CTX.setSobrepor = function (on) { view.comparar.sobrepor = !!on; if (on) view.comparar.cortina = false; render(); };
+/**
+ * A CORTINA (a D, `comparar.html`, estado 2): uma foto por cima da outra, e a
+ * divisa diz onde uma termina e a outra começa. É a leitura que a geometria
+ * permite — mesma pose, mesma distância, mesmas marcas —, de pé, com um dedo,
+ * sem depender de ler nada.
+ */
+CTX.setCortina = function (on) { view.comparar.cortina = !!on; if (on) view.comparar.sobrepor = false; render(); };
+CTX.setCorte = function (n) { view.comparar.corte = Math.max(0, Math.min(100, Number(n) || 0)); render(); };
 CTX.setOpacidade = function (n) { view.comparar.opacidade = n; render(); };
+
+/**
+ * O vazio de uma sessão só (a D, comparar, estado 11): tem data. A próxima
+ * sessão é o que falta, a cada `CADENCIA_DIAS`, e com ela nasce o par.
+ */
+function vazioDeUmaSessao(d) {
+  const t = instanteDaData(d);
+  const prox = t + CADENCIA_DIAS * 86400000;
+  // em dias de calendário, e não em horas: "daqui a 10 dias" não muda às 18h
+  const h0 = new Date(Date.now()); h0.setHours(0, 0, 0, 0);
+  const p0 = new Date(prox); p0.setHours(0, 0, 0, 0);
+  const faltam = Math.round((p0.getTime() - h0.getTime()) / 86400000);
+  const quando = sameDay(t, Date.now()) ? 'A primeira sessão foi hoje.' : 'A primeira sessão foi em ' + fmtDate(t) + '.';
+  const dp = new Date(prox);
+  return 'Ainda não há par. ' + quando + ' ' +
+    (faltam > 0
+      ? 'A segunda cai em ' + DIAS_CURTOS[dp.getDay()] + ' ' + fmtDate(prox) + ', daqui a ' + (faltam === 1 ? '1 dia' : faltam + ' dias') + '.'
+      : 'A segunda já pode ser feita: a cadência é a cada ' + CADENCIA_DIAS + ' dias.') +
+    ' Com ela nasce o primeiro par, e com ' + JANELA_MIN + ' a ' + JANELA_MAX +
+    ' dias de intervalo ele já serve para a pergunta do nutricionista.';
+}
+CTX.voltaAoParLongo = function () { aplicaParPadrao(); render(); };
 
 /** Um lado da comparação, com os números da semana daquela sessão. */
 function ladoDaComparacao(d, pose) {
@@ -8745,12 +10312,19 @@ function ladoDaComparacao(d, pose) {
     d: d,
     pose: pose,
     data: ses ? fmtDate(instanteDaData(d)) : '–',
+    // a hora da foto (decisão do dono, 14/10): manhã em jejum e noite depois de
+    // comer mudam a barriga, e a comparação diz quando cada uma foi tirada.
+    // Referência antiga, sem instante de verdade, fica sem hora.
+    hora: ref && ref.v > 1577836800000 ? fmtHoraDita(ref.v) : null,
     url: ref ? CORPO.urlDaFoto(d, pose, ref) : null,
     enq: (ref && ref.enq) || null,
     aviso: avisoDaFoto(d, pose, !!ref, 'sem foto nesta pose'),
     retomar: podeTentarFoto(d, pose, !!ref),
-    peso: peso == null ? 'peso –' : fmtDec(peso) + ' kg',
-    cintura: cint == null ? 'cintura –' : fmtDec(cint) + ' cm'
+    // a média da SEMANA, dita como tal; sem medida, a palavra certa e não um
+    // zero nem um traço (a D, comparar, estado 1)
+    peso: peso == null ? 'peso: sem medida' : fmtDec(peso) + ' kg na semana',
+    cintura: cint == null ? 'cintura: sem medida' : fmtDec(cint) + ' cm na semana',
+    pesoV: peso
   };
 }
 
@@ -8768,11 +10342,36 @@ CTX.comparacao = function () {
     if (s && s.obs) notas.push(fmtDate(instanteDaData(d)) + ' · ' + s.obs);
   });
 
-  let intervalo = '';
+  let intervalo = '', curto = null, longo = false;
   if (par) {
     const dias = Math.round((instanteDaData(c.ate) - instanteDaData(c.de)) / 86400000);
-    intervalo = Math.abs(dias) + (Math.abs(dias) === 1 ? ' dia' : ' dias') + ' entre as duas · ' +
-                comFoto.length + ' sessões nesta pose';
+    const primeira = comFoto[0].d, ultima = comFoto[comFoto.length - 1].d;
+    const diasLongo = Math.round((instanteDaData(ultima) - instanteDaData(primeira)) / 86400000);
+    longo = c.de === primeira && c.ate === ultima;
+    // O par mais longo é o que abre, e diz que é (a D, comparar, estado 1), com
+    // a variação da média semanal quando as duas semanas têm peso.
+    const delta = de.pesoV != null && ate.pesoV != null ? ate.pesoV - de.pesoV : null;
+    intervalo = longo
+      ? 'Par mais longo que existe desta pose: ' + dias + ' dias' + (delta != null ? ', ' + fmtSig(Math.round(delta * 10) / 10) + ' kg' : '')
+      : Math.abs(dias) + (Math.abs(dias) === 1 ? ' dia' : ' dias') + ' entre as duas · ' +
+        comFoto.length + ' sessões nesta pose';
+    // O PAR CURTO (estado 3): a tela avisa e não impede. O aviso é o fato —
+    // o que aquele intervalo consegue mostrar — e o atalho de volta fica ao lado.
+    const absd = Math.abs(dias);
+    if (absd <= JANELA_MAX && diasLongo > absd) {
+      const pares = comFoto.slice(0, -1).map(function (x) {
+        return Math.round((instanteDaData(ultima) - instanteDaData(x.d)) / 86400000);
+      });
+      curto = {
+        titulo: absd + (absd === 1 ? ' dia mostra' : ' dias mostram') + ' pouco',
+        texto: 'Nesse intervalo a diferença é quase toda água e sono. ' + (absd >= JANELA_MIN
+          ? 'Serve para a pergunta do nutricionista; não serve para ver mudança.'
+          : 'Não serve para ver mudança.'),
+        voltar: 'Voltar ao par de ' + diasLongo + ' dias',
+        pares: 'Pares desta pose: ' + (pares.length === 1 ? pares[0]
+          : pares.slice(0, -1).join(', ') + ' e ' + pares[pares.length - 1]) + ' dias.'
+      };
+    }
   }
 
   // A pergunta do fechamento semanal, feita onde a resposta está à vista: ele
@@ -8788,26 +10387,49 @@ CTX.comparacao = function () {
       pergunta = {
         t: 'Comparando com ' + dias + ' dias atrás: a gordura visual aumentou claramente?',
         valor: ja ? ja.v : null,
-        opcoes: [{ k: 'sim', t: 'sim' }, { k: 'nao', t: 'não' }, { k: 'incerto', t: 'incerto' }],
-        nota: 'Entra na régua calórica: o peso sozinho não corta, e sem esta leitura ' +
-              'ele abre revisão em vez de tirar comida do plano.'
+        opcoes: [{ k: 'sim', t: 'Sim' }, { k: 'nao', t: 'Não' }, { k: 'incerto', t: 'Incerto' }],
+        nota: 'A resposta vale por ' + VALIDADE_LEITURA + ' dias e entra na régua calórica: o peso sozinho não corta. ' +
+              '"Incerto" também é resposta: com ela, a regra mantém a comida como está.'
       };
     }
   }
 
+  // O PAR QUE RECUOU (a D, `comparar.html`, estado 7): a pose não existe nas
+  // sessões mais antigas, e o par mais longo POSSÍVEL dela começa depois. O
+  // par já recuava sozinho; agora diz que recuou, com as datas — um intervalo
+  // menor muda o que a comparação consegue mostrar.
+  let recuou = null;
+  const todas = (S.protocolo.sessoes || []).slice().sort(function (x, y) { return x.d < y.d ? -1 : x.d > y.d ? 1 : 0; });
+  if (par && comFoto.length && todas.length && c.de === comFoto[0].d && todas[0].d !== comFoto[0].d) {
+    const semPose = todas.filter(function (x) { return x.d < comFoto[0].d; }).map(function (x) { return fmtDate(instanteDaData(x.d)); });
+    const diasPar = Math.round((instanteDaData(c.ate) - instanteDaData(c.de)) / 86400000);
+    const diasTodo = Math.round((instanteDaData(c.ate) - instanteDaData(todas[0].d)) / 86400000);
+    recuou = {
+      titulo: diasPar + ' dias, e não ' + diasTodo,
+      texto: (semPose.length === 1 ? 'A sessão de ' + semPose[0] + ' não tem' : 'As sessões de ' +
+              semPose.slice(0, -1).join(', ') + ' e ' + semPose[semPose.length - 1] + ' não têm') +
+             ' esta pose. O par mais longo possível dela começa em ' + fmtDate(instanteDaData(comFoto[0].d)) + '.'
+    };
+  }
+
   return {
     meta: S.protocolo.sessoes.length + (S.protocolo.sessoes.length === 1 ? ' sessão' : ' sessões'),
+    recuou: recuou,
     pergunta: pergunta,
     poses: lista.map(function (p) { return { k: p.id, t: p.n }; }),
     pose: c.pose,
     par: par,
     vazio: comFoto.length === 0
       ? 'Nenhuma foto nesta pose ainda.'
-      : 'Só uma sessão nesta pose. A comparação começa na segunda.',
+      : vazioDeUmaSessao(comFoto[0].d),
+    longo: longo,
+    curto: curto,
     datas: comFoto.map(function (s) { return { d: s.d, txt: fmtDate(instanteDaData(s.d)) }; }),
     de: de, ate: ate,
     sobrepor: c.sobrepor,
     opacidade: c.opacidade,
+    cortina: !!c.cortina,
+    corte: c.corte == null ? 50 : c.corte,
     intervalo: intervalo,
     notas: notas
   };
@@ -9239,6 +10861,58 @@ CTX.marcaNoDiaPassado = async function (data, id, marca, escala) {
   return { ok: true };
 };
 
+// A regra do treinador sobre séries a mais (F99, o guia em
+// `src/dominio/programa.ts`), condensada pela D para caber ao lado da decisão.
+const REGRA_DAS_SERIES = 'Não acrescentar séries agora. Considerar 1 a 2 a mais só num músculo estagnado, ' +
+  'depois de várias exposições, com recuperação boa e sem dor.';
+
+/**
+ * A linha e a folha da mudança que espera decisão, no Agora (a D,
+ * `agora-descanso.html`, estados 6 e 7). A leitura é a mesma da lista de
+ * Prescrição (`mudancasQueEsperam`), e o verbo também (`respondeMudanca`): é o
+ * mesmo item, sem trocar de lugar.
+ */
+CTX.decisaoNoAgora = function () {
+  const fila = CTX.mudancasQueEsperam().filter(function (g) { return !g.venceu; });
+  if (!fila.length) return null;
+  const n = fila.reduce(function (k, g) { return k + g.mudancas.length; }, 0);
+  const origem = function (g) {
+    return 'da sessão de ' + DIAS_LONGOS[new Date(g.quando).getDay()] + ', ' + fmtDate(g.quando) + ' · Treino ' + g.dia;
+  };
+  const so = n === 1 ? fila[0] : null;
+  return {
+    olho: so ? origem(so) : 'esperando decisão',
+    titulo: so ? so.mudancas[0].txt : n + ' mudanças esperam você',
+    // a linha do Agora: "Uma mudança do Treino D espera você"
+    linha: {
+      titulo: so ? 'Uma mudança do Treino ' + so.dia + ' espera você' : n + ' mudanças esperam você',
+      detalhe: so
+        ? so.mudancas[0].txt + ', na ' + DIAS_LONGOS[new Date(so.quando).getDay()] + ' ' + fmtDate(so.quando) +
+          (so.vence ? ' · ' + so.vence : '')
+        : fila.map(function (g) { return 'Treino ' + g.dia; }).filter(function (x, i, xs) { return xs.indexOf(x) === i; }).join(', ')
+    },
+    grupos: fila.map(function (g) {
+      const nome = 'Treino ' + g.dia;
+      return {
+        sid: g.sid, origem: origem(g),
+        mudancas: g.mudancas.map(function (m, i) {
+          return { i: i, txt: m.txt, impacto: m.impacto ? m.impacto.replace(/^Se entrar no [^:]+: /, '') : null,
+                   acima: m.acima, regra: m.acrescenta ? REGRA_DAS_SERIES : null };
+        }),
+        seNinguem: 'Se ninguém decidir, quando o ' + nome + ' voltar ela fica como só daquele dia — dito na lista de ' +
+          'Prescrição, e desfazível até a vez seguinte do ' + nome + '. A sessão de ' + fmtDate(g.quando) +
+          ' guarda o que foi feito de qualquer jeito.'
+      };
+    })
+  };
+};
+CTX.abreDecisao = function () { CTX.abreFolha({ k: 'decidir' }); };
+/** Decide pela folha do Agora, e a fecha quando não sobra mudança nenhuma. */
+CTX.decideNoAgora = async function (sid, i, permanente) {
+  await CTX.respondeMudanca(sid, i, permanente);
+  if (!CTX.decisaoNoAgora() && (view.pilha || []).some(function (f) { return f.k === 'decidir'; })) CTX.fechaFolha();
+};
+
 CTX.esperandoDecisao = function () {
   const fila = CTX.mudancasQueEsperam().filter(function (g) { return !g.venceu; });
   if (!fila.length) return null;
@@ -9338,6 +11012,60 @@ CTX.voltaAoTreino = function () {
   else window.scrollTo(0, 0);
 };
 
+/**
+ * As linhas do corpo no Agora: a pesagem da manhã e, quando vence, a sessão de
+ * fotos. Linhas e não cartão (frente 1 §5, regra 5): cada uma tem um dia em que
+ * é prevista, e nenhuma é "a próxima coisa a fazer". O desenho é o M1‑13 da D
+ * ("Peso de hoje · antes de treinar, depois do pré · última: 73,8 · Anotar"),
+ * com o nome que a §10.2 da frente 3 deu: "Peso da manhã", porque com a
+ * bioimpedância há dois pesos no mesmo dia.
+ */
+CTX.linhasDoCorpo = function () {
+  const agora = Date.now();
+  const peso = S.body.peso || [];
+  const hoje = peso.filter(function (x) { return sameDay(x.t, agora); }).slice(-1)[0];
+  const antes = peso.filter(function (x) { return !sameDay(x.t, agora); }).slice(-1)[0];
+  const h = diaResolvido();
+  const treina = h.cadencia === 'treino';
+
+  // A HORA manda nas duas linhas (a D, `agora-descanso.html`, estados 1 e 5).
+  // A pesagem é de manhã em semi-jejum (F42) — em dia de treino, antes de
+  // treinar —, e passada a hora ela não aparece: aparecer à tarde seria pedir
+  // um número que não compara. As FOTOS não seguem a hora (decisão do dono,
+  // 14/10: "apenas indique o horário da foto — a maioria eu tiro de noite"):
+  // a sessão é oferecida quando vence, e a hora de cada foto fica anotada e
+  // aparece na comparação.
+  const H = CTX.hoje();
+  const refs = H.refs.filter(function (r) { return !ehLinhaDeTreino(r); });
+  const primeira = refs[0] || null;
+  const linhaTreino = H.refs.filter(ehLinhaDeTreino)[0] || null;
+  const minAgora = new Date(agora).getHours() * 60 + new Date(agora).getMinutes();
+  const comeu = !!(primeira && H.comidaDoDia.done[primeira.id]);
+  const passouAHora = treina
+    ? (h.origem === 'registrado' || h.origem === 'aberta' || (linhaTreino && minAgora > minutosDe(linhaTreino.t)))
+    : (comeu || (primeira && minAgora > minutosDe(primeira.t)));
+  const semana = peso.filter(function (x) { return x.t >= weekStart(agora); }).length;
+
+  const linhas = [];
+  if (hoje) {
+    linhas.push({ k: 'peso', t: 'Peso da manhã', v: comUnidade(hoje.v, 'kg'),
+                  d: 'anotado às ' + fmtHoraDita(hoje.t) + ' · ' + semana + (semana === 1 ? ' nesta semana' : ' nesta semana') });
+  } else if (!passouAHora) {
+    linhas.push({ k: 'peso', t: 'Peso da manhã', v: 'sem marca',
+      d: (treina ? 'antes de treinar, depois do pré' : 'de manhã, em semi-jejum') +
+         (antes ? ' · última: ' + fmtDec(antes.v) + ' em ' + fmtDate(antes.t) : '') +
+         (semana ? ' · ' + semana + ' nesta semana' : ''),
+      acao: 'Anotar' });
+  }
+  const dias = diasDesdeAFoto(S.protocolo.sessoes, agora);
+  const u = ultimaSessaoFoto(S.protocolo.sessoes);
+  if (dias != null && dias >= CADENCIA_DIAS && u) {
+    linhas.push({ k: 'fotos', t: 'Fotos do corpo', v: 'faz ' + dias + ' dias',
+      d: 'a cada ' + CADENCIA_DIAS + ' dias · a hora de cada foto fica anotada', acao: 'Nova sessão' });
+  }
+  return linhas;
+};
+
 CTX.protocoloFotos = function () {
   const lista = posesDo(S.protocolo.poses);
   const u = ultimaSessaoFoto(S.protocolo.sessoes);
@@ -9357,11 +11085,42 @@ CTX.protocoloFotos = function () {
       return { id: p.id, n: p.n, feita: !!(u && u.fotos[p.id]) };
     }),
     cta: hoje && !cHoje.cheia
-      ? 'continuar · ' + cHoje.feitas + ' de ' + cHoje.total
-      : (hoje ? 'refazer alguma pose' : 'nova sessão'),
-    podeComparar: lista.some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; })
+      ? 'Continuar · ' + cHoje.feitas + ' de ' + cHoje.total
+      : (hoje ? 'Refazer alguma pose' : 'Nova sessão'),
+    podeComparar: lista.some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; }),
+    soAqui: fotosSoAqui()
   };
 };
+
+/**
+ * As fotos do corpo que só existem neste aparelho (a D, comparar, estado 10).
+ * Enquanto um byte só existe aqui, ele está a um despejo de cache de sumir — e
+ * a cópia de segurança em JSON leva as referências, não as fotos. Com conta, o
+ * que não subiu é contado e sobe num toque; sem conta, a tela diz que tudo está
+ * só aqui. Sem foto nenhuma, nada.
+ */
+function fotosSoAqui() {
+  let total = 0, fora = 0;
+  (S.protocolo.sessoes || []).forEach(function (ses) {
+    Object.keys(ses.fotos || {}).forEach(function (pose) {
+      const ref = ses.fotos[pose];
+      if (!ref || !ref.v) return;
+      total++;
+      if (sync.fotos['corpo:' + ses.d + ':' + pose] !== ref.v) fora++;
+    });
+  });
+  if (!total) return null;
+  const n = function (x) { return x + (x === 1 ? ' foto' : ' fotos'); };
+  if (!NUVEM.sessao()) {
+    return { conta: false,
+      t: total === 1 ? 'A foto do corpo existe só neste aparelho' : 'As ' + n(total) + ' do corpo existem só neste aparelho',
+      p: 'A cópia de segurança leva as referências, não as fotos. Com a conta, elas sobem para a cópia remota.' };
+  }
+  if (!fora) return null;
+  return { conta: true,
+    t: (fora === 1 ? '1 foto ainda não subiu' : fora + ' fotos ainda não subiram') + ' para a cópia remota',
+    p: (fora === 1 ? 'Ela não existe' : 'Elas não existem') + ' em outro lugar até subir.' };
+}
 
 
 // ---------- a posição de leitura ----------
@@ -9539,7 +11298,49 @@ CTX.quatorzeDias = function () {
   }
 
   const n = diasRegistrados();
+
+  // AS CÉLULAS DA D (`agora-descanso.html`, estado 1): uma por dia, cheia quando
+  // todas as refeições têm marca, em parte quando só algumas, vazia quando o dia
+  // é desconhecido. A classificação é a da folha de pôr o dia em dia — a mesma
+  // regra nos dois lugares. HOJE aparece na célula dele, mas a conta é a do
+  // portão do nutricionista, que só lê dias fechados: hoje entra quando a data
+  // vira (a D diz "hoje passou a contar"; ver a pergunta ao dono no checklist).
+  const celulas = [];
+  for (let k = 13; k >= 1; k--) {
+    const d = new Date(hoje + 'T12:00:00');
+    d.setDate(d.getDate() - k);
+    const iso = hojeISO(d.getTime());
+    const h = porData[iso];
+    if (!h || !diaInterpretavel(h)) { celulas.push({ iso: iso, estado: 'vazio' }); continue; }
+    const f = CTX.poeODiaEmDia(iso);
+    const marcadas = f ? f.linhas.filter(function (l) { return !l.sugerida && l.marca !== 'vazia'; }).length : 0;
+    celulas.push({ iso: iso, estado: f && marcadas >= f.linhas.length ? 'cheio' : 'parte' });
+  }
+  const hojeDia = diaDeComida();
+  const marcadasHoje = Object.keys(hojeDia.done || {}).length;
+  const H = CTX.hoje();
+  celulas.push({ iso: hoje, estado: 'hoje' + (marcadasHoje ? (marcadasHoje >= H.refs.length ? ' cheio' : ' parte') : '') });
+
+  const d0 = new Date(hoje + 'T12:00:00'); d0.setDate(d0.getDate() - 13);
+  const dOntem = new Date(hoje + 'T12:00:00'); dOntem.setDate(dOntem.getDate() - 1);
+  const isoOntem = hojeISO(dOntem.getTime());
+  const cOntem = celulas[12];
+  const nomeOntem = DIAS_LONGOS[dOntem.getDay()];
+  let ontem = null;
+  if (cOntem.estado === 'vazio') ontem = { iso: isoOntem, txt: 'Ontem, ' + nomeOntem + ', ficou sem marca.' };
+  else if (cOntem.estado === 'parte') {
+    const f = CTX.poeODiaEmDia(isoOntem);
+    const m = f.linhas.filter(function (l) { return !l.sugerida && l.marca !== 'vazia'; }).length;
+    ontem = { iso: isoOntem, txt: 'Ontem, ' + nomeOntem + ': ' + m + ' de ' + f.linhas.length + ' refeições com marca.' };
+  }
+
   return {
+    celulas: celulas,
+    primeiro: DIAS_CURTOS[d0.getDay()] + ' ' + fmtDate(d0.getTime()),
+    conta: 'Dias conhecidos nos últimos 14: ',
+    regra: 'A regra do nutricionista precisa de ' + MIN_REGISTRADOS + '.',
+    hojeExplica: marcadasHoje ? 'Hoje tem refeição marcada, e entra na conta quando o dia fechar.' : null,
+    ontem: ontem,
     fatias: fatias,
     registrados: n,
     pede: MIN_REGISTRADOS,
@@ -9581,6 +11382,60 @@ CTX.abreTreinoDeHoje = function () {
   view.swapOpen = null;
   abreModo();
   render();
+};
+
+// ---------- enquanto descansa (a D, momento 1, estado 2) ----------
+//
+// No descanso, dentro da sessão, o que se faz a um toque cada: a refeição de
+// antes do treino, um copo de água e o peso de hoje (F30: 7 de 11 pesagens
+// entraram entre 6h28 e 7h52 — no meio do treino). Só enquanto o descanso
+// conta, e só no modo: fora dele, o Agora já tem as três linhas.
+const COPOS_DO_DIA = 14;
+CTX.enquantoDescansa = function () {
+  if (!view.modoSessao || !timerFim) return null;
+  const H = CTX.hoje();
+  const d = H.comidaDoDia;
+  // A refeição de antes do treino é a condicional ao treino que vem antes dele:
+  // antes da linha do treino no plano, ou, sem ela, antes do início da sessão.
+  const linha = H.refs.filter(ehLinhaDeTreino)[0] || null;
+  const limite = linha ? minutosDe(linha.t)
+    : S.sessao ? new Date(S.sessao.inicio).getHours() * 60 + new Date(S.sessao.inicio).getMinutes() : -1;
+  const pre = H.refs.filter(function (r) {
+    return !ehLinhaDeTreino(r) && r.quando === 'treino' && minutosDe(r.t) <= limite;
+  }).slice(-1)[0] || null;
+  const ag = CTX.agua();
+  const pesoHoje = (S.body.peso || []).filter(function (x) { return sameDay(x.t, Date.now()); }).slice(-1)[0];
+  return {
+    pre: pre ? { id: pre.id, n: pre.n, comeu: !!d.done[pre.id] } : null,
+    agua: { n: ag.n, meta: COPOS_DO_DIA, falhou: ag.falhou },
+    peso: pesoHoje ? comUnidade(pesoHoje.v, 'kg') : null
+  };
+};
+/** O toque na refeição de antes do treino: marca "comi tudo"; marcada, desfaz. */
+CTX.preNoDescanso = function () {
+  const e = CTX.enquantoDescansa();
+  if (!e || !e.pre) return;
+  CTX.marcaLinhaDaComida(e.pre.id, e.pre.comeu ? 'desfaz' : 'tudo');
+};
+CTX.abrePesoNoDescanso = function () {
+  // "Peso de HOJE": uma data passada armada na tela do corpo não vale aqui
+  if (view.bodyDia && view.bodyDia.peso) {
+    view.bodyDia = Object.assign({}, view.bodyDia);
+    delete view.bodyDia.peso;
+  }
+  CTX.abreFolha({ k: 'pesoRapido' });
+};
+CTX.pesoRapido = function () {
+  const c = CTX.corpo().peso;
+  return { valor: c.valor, teclado: CTX.tecladoDoCorpo('peso') };
+};
+CTX.registraPesoRapido = async function () {
+  const m = Date.now();
+  await addBody('peso');
+  // só fecha se gravou: valor inválido deixa a folha aberta, com o aviso dito
+  const gravou = (S.body.peso || []).some(function (x) { return x.m >= m && sameDay(x.t, m); });
+  const p = view.pilha || [];
+  if (gravou && p.length && p[p.length - 1].k === 'pesoRapido') { pilha().pop(); render(); }
 };
 
 CTX.fechaModoDeSessao = function () {
@@ -9767,6 +11622,7 @@ CTX.abreCamera = async function () {
   streamCamera = r.stream;
   view.camera.pronta = true;
   render();
+  falaPose(v.pose);
 };
 
 CTX.fechaCamera = function () {
@@ -9801,7 +11657,70 @@ function contaEDispara(n) {
   render();
   if (n <= 0) { contagemT = null; capturaAgora(); return; }
   bipeDaContagem(n);
+  // os três últimos também em voz (a D, estado 2: "três, dois, um")
+  if (n <= 3) falaTexto(['um', 'dois', 'três'][n - 1]);
   contagemT = setTimeout(function () { contaEDispara(n - 1); }, 1000);
+}
+
+/**
+ * O DISPARO, dito sem palavra nenhuma (a D, `sessao-fotos.html`, estado 3): o
+ * som do obturador, um clarão curto e o bloco da pose fechando. Os três dizem a
+ * mesma coisa por canais diferentes — se o som estiver desligado, o clarão e o
+ * bloco continuam valendo. O alarme do descanso, que tocava aqui, é de outra
+ * coisa.
+ */
+function obturador() {
+  try {
+    if (!audioCtx) preparaAudio();
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const t0 = audioCtx.currentTime, n = Math.floor(audioCtx.sampleRate * 0.09);
+    const buf = audioCtx.createBuffer(1, n, audioCtx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
+    const src = audioCtx.createBufferSource(), g = audioCtx.createGain();
+    src.buffer = buf; g.gain.setValueAtTime(0.6, t0);
+    src.connect(g); g.connect(audioCtx.destination);
+    src.start(t0);
+  } catch (e) {}
+}
+function clarao() {
+  if (!view.camera) return;
+  view.camera.clarao = Date.now();
+  setTimeout(function () { if (view.camera) { view.camera.clarao = null; render(); } }, 320);
+}
+/**
+ * A instrução por VOZ (a D, estado 2, hipótese B): a três metros nada precisa
+ * ser lido. A pose e o primeiro passo dela, em português; sem síntese de voz no
+ * aparelho, o desenho da tela segue valendo sozinho.
+ */
+function falaTexto(texto, junto) {
+  try {
+    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return;
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'pt-BR';
+    if (!junto) window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+/**
+ * O giro entre duas poses, em graus, sempre para o mesmo lado (a D, estado 4:
+ * "girar é desenho, não frase" — e a voz diz junto). 0 quando não há giro.
+ */
+function giroEntre(deId, paraId) {
+  const lista = posesDo(S.protocolo.poses);
+  const de = lista.filter(function (p) { return p.id === deId; })[0];
+  const para = lista.filter(function (p) { return p.id === paraId; })[0];
+  if (!de || !para) return 0;
+  return (((para.giro || 0) - (de.giro || 0)) % 360 + 360) % 360;
+}
+function falaPose(poseId, deId) {
+  const lista = posesDo(S.protocolo.poses);
+  const i = lista.findIndex(function (p) { return p.id === poseId; });
+  const p = lista[i];
+  if (!p) return;
+  const giro = deId ? giroEntre(deId, poseId) : 0;
+  falaTexto((giro ? 'Gire ' + giro + ' graus. ' : '') + 'Pose ' + (i + 1) + ' de ' + lista.length + '. ' + p.n + '. ' +
+            (Array.isArray(p.como) && p.como[0] ? p.como[0] : ''));
 }
 
 function bipeDaContagem(n) {
@@ -9837,8 +11756,33 @@ async function capturaAgora() {
   if (!CAM.pronto(el)) { c.contagem = null; toast('A câmera ainda não está pronta.'); render(); return; }
   try {
     const reduzida = await CORPO.reduzDoVideo(el);
-    const prox = await guardaFotoDaPose(v.d, v.pose, reduzida);
+    // O QUADRO PRETO (a D, estado 6; F78): a foto não é guardada, a pose volta
+    // para o fim da fila, e a voz diz — ele está a três metros e não vê a tela.
+    if (quaseTodoPreto(reduzida.brilho)) {
+      c.contagem = null;
+      const era = v.pose;
+      v.adiadas = Object.assign({}, v.adiadas, { [era]: 1 });
+      const prox = proximaComAdiadas(sessaoDe(S.protocolo.sessoes, v.d));
+      const lista = posesDo(S.protocolo.poses);
+      const nome = function (id) { const p = lista.filter(function (x) { return x.id === id; })[0]; return p ? p.n : id; };
+      if (prox && prox !== era) {
+        v.pose = prox;
+        c.giro = giroEntre(era, prox) || null;
+        falaTexto('A foto saiu preta. Esta pose volta no fim. Siga: ' + nome(prox) + '.');
+      } else {
+        c.giro = null;
+        falaTexto('A foto saiu preta. Vamos de novo.');
+      }
+      c.preta = era;
+      render();
+      return;
+    }
+    const era = v.pose;
+    const r = await guardaFotoDaPose(v.d, v.pose, reduzida);
     c.contagem = null;
+    // não coube: a sessão para aqui, e a tela diz (estado 9)
+    if (r && r.parou) { aviso(); render(); return; }
+    const prox = r;
     // a sessão continua AQUI: são nove poses, e sair e voltar nove vezes seria
     // pior que o problema que esta tela resolve
     const viz = prox ? vizinhaComAPose(S.protocolo.sessoes, prox, v.d) : null;
@@ -9846,7 +11790,11 @@ async function capturaAgora() {
       c.fantasmaD = viz ? viz.d : null;
       garanteBytesDoCorpo(viz ? [viz.d] : []);
     }
-    aviso();
+    obturador(); clarao();
+    c.preta = null;
+    // o giro até a pose nova, grande na tela e dito junto (a D, estado 4)
+    c.giro = prox ? (giroEntre(era, prox) || null) : null;
+    if (prox) falaPose(prox, era);
     render();
     if (!prox) toast('Sessão completa. As nove poses estão registradas.');
   } catch (e) {
@@ -9855,6 +11803,32 @@ async function capturaAgora() {
     render();
   }
 }
+
+/** "A pose 6, perfil esquerdo, não foi guardada" — o que a tela diz quando a sessão parou. */
+function avisoDaPoseNaoGuardada(lista) {
+  const ng = view.protocolo && view.protocolo.naoGuardada;
+  if (!ng) return null;
+  const i = lista.findIndex(function (p) { return p.id === ng.pose; });
+  const p = lista[i];
+  return {
+    titulo: 'A pose ' + (i + 1) + (p ? ', ' + p.n.toLowerCase() + ',' : '') + ' não foi guardada',
+    texto: ng.motivo === 'foto'
+      ? 'O aparelho recusou a foto: o espaço dele está cheio. Ela está na memória enquanto o app estiver aberto, e a sessão parou aqui.'
+      : 'A foto entrou no aparelho, mas o registro dela não gravou. A sessão parou aqui, e nada do que já foi guardado saiu.',
+    copia: ng.motivo === 'registro'
+  };
+}
+CTX.tentaFotoDaPose = async function () {
+  const v = view.protocolo, ng = v && v.naoGuardada;
+  if (!ng) return;
+  if (ng.motivo === 'foto' && ng.reduzida) {
+    const r = await guardaFotoDaPose(v.d, ng.pose, ng.reduzida);
+    if (!(r && r.parou) && r) v.pose = r;
+  } else if ((await save()) !== false) {
+    v.naoGuardada = null;
+  }
+  render();
+};
 
 /** O que a tela da câmera consome. */
 CTX.cameraViva = function () {
@@ -9867,6 +11841,7 @@ CTX.cameraViva = function () {
   const refOutra = outra ? outra.fotos[v.pose] : null;
 
   return {
+    naoGuardada: avisoDaPoseNaoGuardada(lista),
     pose: lista[i].n,
     indice: i + 1,
     total: lista.length,
@@ -9883,6 +11858,16 @@ CTX.cameraViva = function () {
     refTxt: outra ? fmtDate(instanteDaData(outra.d)) : '',
     opacidade: c.opacidade,
     timer: c.timer,
-    contagem: c.contagem
+    contagem: c.contagem,
+    clarao: !!c.clarao,
+    giro: c.giro || null,
+    preta: c.preta ? (lista.filter(function (p) { return p.id === c.preta; })[0] || {}).n || null : null,
+    // os blocos das poses, do tamanho de um dedo (estado 2): em que pose está,
+    // e quais já fecharam, legível a três metros
+    pontos: lista.map(function (p) {
+      return { id: p.id, n: p.n, feita: !!(ses && ses.fotos[p.id]), atual: p.id === v.pose,
+               naoGuardada: !!(v.naoGuardada && v.naoGuardada.pose === p.id),
+               adiada: !!(v.adiadas && v.adiadas[p.id] && !(ses && ses.fotos[p.id])) };
+    })
   };
 };

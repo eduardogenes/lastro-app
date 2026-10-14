@@ -98,7 +98,7 @@ export function RegistroRapido({ c, acoes }) {
   if (!c.ativo) {
     return (
       <button class="ins-btn-add tr-rapido" onClick={acoes.abre}>
-        registrar a aula toda de uma vez
+        Registrar a aula toda de uma vez
       </button>
     );
   }
@@ -169,7 +169,7 @@ export function Aulas({ c, acoes }) {
     if (!c.ultima && !c.modelos.length && !c.podeSalvar) return null;
     return (
       <button class="ins-btn-add tr-aulas" onClick={acoes.abre}>
-        aulas salvas e o sábado passado
+        Aulas salvas e o sábado passado
       </button>
     );
   }
@@ -240,9 +240,9 @@ export function Aulas({ c, acoes }) {
           <div class="aulac-acoes">
             <button class="ins-btn-primary"
                     onClick={() => acoes.importa(document.getElementById('aulacol').value)}>
-              importar
+              Importar
             </button>
-            <button class="ins-btn-secondary" onClick={acoes.cola}>cancelar</button>
+            <button class="ins-btn-secondary" onClick={acoes.cola}>Cancelar</button>
           </div>
           <p class="crule ins-provenance">
             Entra no dia de hoje, sem carga. Movimento que o app não conhece só
@@ -282,7 +282,7 @@ export function AddEx({ c, acoes }) {
           ? <p class="cue ins-body-sm ins-t3">Nada com esse nome no catálogo.</p>
           : c.achados.map(x => (
               <button class="swapopt" key={x.id} onClick={() => acoes.adiciona(x.id)}>
-                <b>{x.n}</b><span>{x.sub}</span>
+                <span class="swaptxt"><b>{x.n}</b><span>{x.sub}{x.ref ? ' · ' + x.ref : ''}</span></span>
               </button>
             ))}
       </div>
@@ -313,8 +313,10 @@ export function AddEx({ c, acoes }) {
         </div>
       ) : (
         <button class="swapopt novo" onClick={acoes.abreNovo}>
-          <b>Cadastrar exercício novo</b>
-          <span>Equipamento que o app ainda não conhece. Ele passa a ter histórico próprio.</span>
+          <span class="swaptxt">
+            <b>Cadastrar exercício novo</b>
+            <span>Equipamento que o app ainda não conhece. Ele passa a ter histórico próprio.</span>
+          </span>
         </button>
       )}
 

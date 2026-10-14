@@ -1,0 +1,308 @@
+@titulo Dias
+@h1 Dias · o que aconteceu em cada dia
+@lead Terça, 13/10, 21h10, sentado. É o lugar da pergunta “o que aconteceu em cada dia”, e só dela. Não há nada prescrito aqui — o plano de um dia passado aparece só como referência, em cinza, porque mora em Prescrição. Não há leitura de semana, porque é de Semana. E não há “agora”: hoje, tocado no mês, abre o Agora.
+@lead <b>O mês é a entrada, e o dia é o lugar.</b> No mês, cada dia diz o que teve por forma e palavra — letra do treino, “aula”, “fora”, “desc.”, coração do cardio, barra da comida. Um toque abre o dia; no dia, cada registro abre inteiro e se corrige ali mesmo, e cada toque grava (decisão 1). Apagar passa sempre pelo painel que diz o que vai embora (decisão 8).
+@lead Três leituras do mês, e só estas: dias com treino por semana, em média móvel de quatro semanas e nunca em sequência de dias (F22); o cardio do mês; e o horário de início. <b>O calendário é ilustrativo</b> e continua o dos desenhos anteriores: Treino A na segunda 28/09, D na quinta 01/10, aula no sábado 03/10, A na terça 06/10.
+@html
+<ul class="legend" aria-label="Como ler o mês">
+  <li><b style="color:var(--ink);font-size:16px">A–E</b>&nbsp;treino da sequência</li>
+  <li><b style="color:var(--ink)">aula</b>&nbsp;aula de HYROX</li>
+  <li><b style="color:var(--ink)">fora</b>&nbsp;treino fora da prescrição</li>
+  <li><i style="color:var(--ink-2)">desc.</i>&nbsp;descanso marcado</li>
+  <li><svg><use href="#hz"/></svg>cardio</li>
+  <li><span style="display:inline-block;width:18px;height:6px;border-radius:3px;background:var(--ink)"></span>comida com marca</li>
+  <li class="g"><span style="display:inline-block;width:18px;height:6px;border-radius:3px;border:1.5px dashed var(--ink-3)"></span>sem marca</li>
+</ul>
+<p class="legend-note">Dois registros no mesmo dia aparecem os dois. Dia sem nada fica sem nada: nem treino, nem descanso, até ele dizer. Os dias que ainda não chegaram ficam finos e vazios.</p>
+@fim
+
+=== 1 |  | O mês, com dias de todos os tipos
+cap: Outubro até ontem: treinos da sequência (A a E), duas aulas, um treino fora da prescrição no mesmo dia do C, um dia com dois treinos da sequência (o E aberto por engano antes do D, F35, F157), um descanso marcado (F156), cardio depois do treino e num domingo, e a comida com marca em quatro dias. Os dias 11 e 12 não têm treino nem descanso: <b>ficam vazios, e não viram descanso sozinhos</b>. As semanas que ainda não chegaram encolhem, porque não têm o que mostrar. Embaixo, as três leituras, cada uma com a conta à vista.
+@sb 21:10 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="mh"><h2>Dias<small>outubro de 2026 · até ontem, 12/10</small></h2><button class="ib" aria-label="Setembro"><svg width="24" height="24"><use href="#bk"/></svg></button><button class="ib" aria-label="Novembro" disabled style="opacity:.3"><svg width="24" height="24"><use href="#fw"/></svg></button></div>
+    {{inc cal-out}}
+    <div class="rd" style="margin-top:10px"><div class="h">Dias com treino por semana</div>
+      <div class="row3"><div class="v">4,75</div><div class="sp">{{inc spark}}</div></div>
+      <div class="c" style="margin-top:14px"><b>19 dias com treino nos últimos 28</b>, divididos por 4. Dois treinos no mesmo dia contam um dia. Descanso não conta.</div></div>
+    <div class="rd"><div class="h">Cardio em outubro</div>
+      <div class="trio"><div><b>4</b><small>sessões</small></div><div><b>85 min</b><small>no total</small></div><div><b>1</b><small>em dia sem musculação</small></div></div></div>
+    <div class="rd"><div class="h">Horário de início</div>
+      <div class="trio"><div><b>7h56</b><small>média</small></div><div><b>6h05</b><small>mais cedo · qui 08/10</small></div><div><b>18h15</b><small>mais tarde · qua 07/10</small></div></div>
+      <div class="axis">{{inc eixo}}</div>
+      <div class="c">7 sessões com hora. Não entram as 2 aulas, sem hora de início, nem o treino fora da prescrição.</div></div>
+  </div>
+  {{tabs dias}}
+  {{hi}}
+</div>
+
+=== 2 |  | Um dia aberto: tudo o que aconteceu, e o que destoa
+cap: Terça, 06/10. Os registros vêm primeiro, cada um numa linha que abre inteira. O que o mês resumiu em dois corações aqui tem nome: <b>dois cardios iguais</b>, um às 7h35 e outro lançado dois dias depois, sem hora. O app não apaga nada sozinho — só põe os dois lado a lado, com o segundo em âmbar, a cor do aviso, dizendo “igual ao das 7h35”. A comida aparece num olhar: seis momentos, com a forma de cada estado; tocar abre a folha de pôr em dia. Descanso não é oferecido, e a tela diz por quê (F156). O plano daquele dia é só referência.
+@sb 21:12 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para outubro"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>terça, 6 de outubro</h2><div class="pv2">dia de treino, pela sessão registrada</div></div></div>
+    <div class="recs">
+      <button class="rec"><span class="ic">A</span><span class="t"><b>Treino A</b><small>6h20 → 7h27 · fechou sem você · 18 de 20 séries</small></span><svg class="cv"><use href="#chev"/></svg></button>
+      <button class="rec"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · 7h35, depois do treino</small></span><svg class="cv"><use href="#chev"/></svg></button>
+      <button class="rec dup"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · lançado na quinta, 08/10, sem hora · igual ao das 7h35</small></span><svg class="cv"><use href="#chev"/></svg></button>
+    </div>
+    <div class="adds"><button><svg><use href="#plus"/></svg>Outro treino</button><button><svg><use href="#plus"/></svg>Cardio</button></div>
+    <p class="hint2">Este dia tem treino, então não aceita a marca de descanso.</p>
+    <div class="secl"><b>A comida do dia</b><span>3 de 6 com marca</span></div>
+    <button class="mstrip"><span><svg><use href="#s-full"/></svg><b>pré</b><i>5h45</i></span><span><svg><use href="#s-full"/></svg><b>treino</b><i>6h15</i></span><span class="o"><svg><use href="#s-open"/></svg><b>café</b><i>8h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>almoço</b><i>12h30</i></span><span><svg><use href="#s-full"/></svg><b>lanche</b><i>16h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>jantar</b><i>19h30</i></span></button>
+    <div class="foodl"><span class="t">Água: <b>não contei</b>. Conta para a regra dos 14 dias, porque tem refeição marcada.</span></div>
+    <button class="sec" style="margin:10px 16px 0;width:calc(100% - 32px)">Pôr este dia em dia</button>
+    <p class="ref2">No plano daquele dia: treino de manhã, 3.007 kcal. É referência — o plano mora em Prescrição.</p>
+  </div>
+  {{tabs dias}}
+  {{hi}}
+</div>
+
+=== 3 |  | A sessão passada, inteira
+cap: O Treino A de 06/10 abre como foi: cada série é um número tocável, na ordem em que aconteceu, com o RIR quando houve. A sessão <b>fechou sem ele</b> (F34) — então o fim, 7h27, é a hora da última série, e a tela diz que é aproximado, com o pontilhado do palpite e “corrigir” ao lado (F152, F295). O Pushdown ficou “não feito”: ele cortou o que não era prioridade naquele dia (P2), e isso não é falha nem pendência; se ele fez e não registrou, as duas séries podem entrar aqui. No fim da lista: a nota, as mudanças do dia e “Apagar este treino”.
+@sb 21:13 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para terça, 06/10"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>Treino A</h2><div class="pv2">da sequência · terça, 06/10 · peito superior, dorsais, lateral, tríceps</div></div></div>
+    <div class="facts">
+      <div class="fr2"><span class="l">Começo</span><span class="t"><span class="v">6h20</span><small>marcado antes do aquecimento</small></span></div>
+      <div class="fr2"><span class="l">Fim</span><span class="t"><span class="v apx">7h27</span><small>aproximado: fechou sem você, na última série · 67 min</small></span><button class="lk">Corrigir</button></div>
+    </div>
+    {{inc sess-a}}
+  </div>
+  {{tabs dias}}
+  {{hi}}
+</div>
+
+=== 4 |  | Corrigir no lugar: um toque, e está gravado
+cap: A série 3 do Pulldown convergente foi 9, não 8. Ele toca o número errado e a régua de repetições do treino abre ali mesmo, no exercício — a mesma régua do momento 1, porque é o mesmo dado. <b>Tocar 9 grava</b>; não há “guardar”. A linha de baixo diz o que foi gravado e o que não mudou: a série continua às 6h44, e o descanso depois dela também (F57, F294). A carga abre o teclado do app, com vírgula (F63). Apagar uma série passa pelo painel, como todo apagar.
+@sb 21:16 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para terça, 06/10"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>Treino A</h2><div class="pv2">da sequência · terça, 06/10 · peito superior, dorsais, lateral, tríceps</div></div></div>
+    {{inc sess-a-ok}}
+  </div>
+  {{tabs dias}}
+  {{hi}}
+</div>
+
+=== 5 |  | Registrar um treino passado: o dia vazio
+cap: Segunda, 12/10: ele treinou e não registrou — como 29% das sessões medidas, que chegaram depois do dia (P1). O dia vazio diz que está vazio, e diz <b>o que o app achava</b>, como referência e com a palavra palpite: pelo padrão, segunda é dia de treino; pela sequência, o próximo era o A (F81, F188). As duas respostas têm o mesmo peso, porque nenhuma é presumida: “Registrar treino” e “Foi descanso”. A comida segue o tipo do dia; enquanto ele não disser, a folha abre com o plano de treino.
+@sb 21:19 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para outubro"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2><div class="pv2">nada registrado</div></div></div>
+    <div class="big2"><b>Nenhum treino, nenhum descanso</b>Pelo padrão semanal, segunda é dia de treino — é palpite. Pela sequência, o próximo naquele dia era o Treino A.</div>
+    <div class="two" style="margin:10px 16px 0"><button class="sec">Registrar treino</button><button class="sec">Foi descanso</button></div>
+    <div class="adds"><button><svg><use href="#plus"/></svg>Cardio</button></div>
+    <div class="secl"><b>A comida do dia</b><span>nenhuma com marca</span></div>
+    <button class="mstrip"><span class="o"><svg><use href="#s-open"/></svg><b>pré</b><i>5h45</i></span><span class="o"><svg><use href="#s-open"/></svg><b>treino</b><i>6h15</i></span><span class="o"><svg><use href="#s-open"/></svg><b>café</b><i>8h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>almoço</b><i>12h30</i></span><span class="o"><svg><use href="#s-open"/></svg><b>lanche</b><i>16h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>jantar</b><i>19h30</i></span></button>
+    <div class="foodl"><span class="t">Água: <b>não contei</b>. Sem marca, a segunda não conta para a regra: é desconhecida, não zero.</span></div>
+    <button class="sec" style="margin:10px 16px 0;width:calc(100% - 32px)">Pôr este dia em dia</button>
+    <p class="ref2">Plano de treino de manhã, pelo palpite do padrão. Se a segunda for marcada como descanso, a folha passa a abrir com o plano de descanso, de quatro refeições.</p>
+  </div>
+  {{tabs dias}}
+  {{hi}}
+</div>
+
+=== 6 |  | … que treino foi: o previsto em anil, um toque grava
+cap: A folha pergunta uma coisa só. O previsto é o próximo da sequência naquele dia, em anil, do tamanho do polegar. Os outros da sequência e a aula estão logo abaixo, um toque cada; escolher outro também é um toque e grava igual. <b>Fora da prescrição</b> é uma linha à parte, porque grava outra coisa — presença, grupos e duração, sem séries — e não mexe na sequência (F155). Hora e séries não são perguntadas aqui: vêm depois, se ele quiser (F158).
+@sb 21:20 | cheio
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2><div class="pv2">nada registrado</div></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Registrar treino">
+    <div class="grab"></div>
+    <p class="prov2">o próximo da sequência naquele dia</p>
+    <h3>Que treino foi na segunda, 12/10?</h3>
+    <button class="pick"><span class="lt">A</span><span class="t"><b>Treino A</b><small>peito superior, dorsais, lateral, tríceps · 8 exercícios, 20 séries</small></span></button>
+    <div class="q2"><b>Outro da sequência</b>
+      <div class="others"><button>B</button><button>C</button><button>D</button><button>E</button><button class="w">Aula</button></div></div>
+    <button class="wide2" style="margin-top:10px"><span class="t"><b>Fora da prescrição</b><small>presença, grupos trabalhados e duração · não mexe na sequência</small></span><svg><use href="#chev"/></svg></button>
+    <p class="sub" style="margin:12px 0 0">Um toque grava a presença. A hora e as séries vêm depois, se você quiser.</p>
+  </div>
+</div>
+
+=== 7 |  | … depois do toque: já está gravado; hora e séries, só se ele quiser
+cap: O toque no A gravou a presença, e a folha diz isso no topo, em tinta cheia — e o que mudou por causa dele: <b>19 para 20 dias com treino</b> nas últimas quatro semanas. A hora não vem preenchida: treino de data passada ganhava 07:00 inventado e sujava a média (F270). Sem hora, ele não entra no horário de início, e a tela diz isso em vez de esconder. Detalhar as séries abre a sessão com o último Treino A em anil, para confirmar ou mudar série a série. E a sequência não anda para trás: o B de hoje continua sendo o último.
+@sb 21:20 | cheio
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Treino A, segunda 12/10">
+    <div class="grab"></div>
+    <div class="saved2 enter"><svg><use href="#s-full"/></svg><span class="t"><b>Treino A · segunda, 12/10</b><small>gravado às 21h20 · dias com treino nas últimas 4 semanas: 20, eram 19</small></span></div>
+    <div class="q2"><b>A hora de início</b>
+      <div class="chips"><button aria-pressed="true">Sem hora</button><button>Pôr a hora</button></div>
+      <p>Sem hora, este treino conta como dia com treino, mas não entra no horário de início do mês. Nenhuma hora é inventada.</p></div>
+    <div class="q2"><b>As séries</b>
+      <button class="wide2" style="margin-top:0"><span class="t"><b>Detalhar exercícios e séries</b><small>vem preenchido em anil com o Treino A de 06/10; cada toque confirma ou muda uma série</small></span><svg><use href="#chev"/></svg></button>
+      <p>Só a presença também vale: o treino conta como dia com treino do mesmo jeito, e a sequência anda igual.</p></div>
+    <p class="ref2" style="margin:12px 0 0">A sequência não muda: o Treino B de hoje continua sendo o último registrado, e o próximo continua sendo o C.</p>
+  </div>
+</div>
+
+=== 8 |  | … ou fora da prescrição: presença, grupos e duração
+cap: Se a segunda tivesse sido outra coisa — um futevôlei, uma academia de hotel sem o aparelho do programa —, “Fora da prescrição” grava a presença no toque, e o resto é opcional, um toque por campo: os grupos trabalhados (as regiões do corpo que o produto já conhece, F178), a duração, e um nome, que é o único texto livre e por isso usa o teclado do sistema. Não tem séries, não move a sequência e não entra no horário de início (F155) — e a folha diz as três coisas.
+@sb 21:21 | cheio
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Treino fora da prescrição">
+    <div class="grab"></div>
+    <div class="saved2"><svg><use href="#s-full"/></svg><span class="t"><b>Treino fora da prescrição · 12/10</b><small>gravado às 21h21 · conta como dia com treino</small></span></div>
+    <div class="q2"><b>O que trabalhou</b>
+      <div class="chips"><button>peito</button><button aria-pressed="true">ombro</button><button>costas</button><button aria-pressed="true">perna</button><button>panturrilha</button><button>braço</button><button>abdômen</button></div></div>
+    <div class="q2"><b>Quanto tempo</b>
+      <div class="chips"><button>30 min</button><button>45 min</button><button aria-pressed="true">60 min</button><button>outro</button></div></div>
+    <div class="q2"><b>Um nome, se quiser</b>
+      <div class="field has">Futevôlei</div></div>
+    <p class="ref2" style="margin:12px 0 0">Sem séries. Não mexe na sequência — o próximo continua o C — e não entra no horário de início do mês.</p>
+  </div>
+</div>
+
+=== 9 |  | Marcar um dia passado como descanso: um toque
+cap: Domingo, 11/10. “Foi descanso” grava no toque, e o dia passa a dizer de onde veio a palavra: <b>marcado por ele</b>, não pelo padrão (F156). A marca é dado à parte dos treinos e não conta como treino em conta nenhuma — e a tela diz isso, porque é a pergunta natural de quem acabou de tocar. Tirar a marca é corrigir no lugar, sem painel: não apaga nada que ele tenha feito. A comida desse domingo já tinha marcas (do Agora daquele dia), e agora segue o plano de descanso, de quatro refeições.
+@sb 21:22 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para outubro"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>domingo, 11 de outubro</h2><div class="pv2">descanso, marcado por você</div></div></div>
+    <div class="recs">
+      <div class="rec"><span class="ic"><svg><use href="#ok2"/></svg></span><span class="t"><b>Descanso</b><small>marcado agora, às 21h22 · não conta como treino em nenhuma conta</small></span><button class="lk">Tirar a marca</button></div>
+    </div>
+    <div class="adds"><button><svg><use href="#plus"/></svg>Cardio</button></div>
+    <div class="secl"><b>A comida do dia</b><span>3 de 4 com marca</span></div>
+    <button class="mstrip m4"><span><svg><use href="#s-full"/></svg><b>café</b><i>8h00</i></span><span><svg><use href="#s-half"/></svg><b>almoço</b><i>12h30</i></span><span><svg><use href="#s-full"/></svg><b>lanche</b><i>16h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>jantar</b><i>19h30</i></span></button>
+    <div class="foodl"><span class="t">Água: <b>9 copos</b>, 2.250 ml. Conta para a regra dos 14 dias.</span></div>
+    <button class="sec" style="margin:10px 16px 0;width:calc(100% - 32px)">Pôr este dia em dia</button>
+    <p class="ref2">No plano daquele dia: descanso, 2.844 kcal. É referência — o plano mora em Prescrição.</p>
+  </div>
+  {{tabs dias}}
+  {{hi}}
+</div>
+
+=== 10 |  | Pôr a comida em dia: a mesma folha, gravando a cada toque
+cap: Quarta, 07/10, foi treino à noite, às 18h15 — então o plano daquele dia não é o da manhã: o pré e o treino andaram junto com a sessão, o pré perdeu o café porque passou das 16h, e o jantar foi para 19h45 e virou pós-treino (F189, F190, F192). A folha é a mesma que o dono manteve: abre com o plano daquele dia em anil, quatro saídas por refeição, a água sem conta. <b>Mudou uma coisa, por causa da decisão 1</b>: não há “guardar”. O almoço tocado em “Metade” já está gravado, em tinta cheia. O botão de baixo não guarda a folha — ele grava só o que ainda está em anil, e diz quantos são. Fechar sem tocar nele deixa esses sem marca — e o quadro “Já está registrado” diz isso antes, com os nomes.
+@sb 21:31 | cheio
+<div class="scr">
+  <div class="scrim"></div>
+  <div class="sheet tall" role="dialog" aria-label="A comida de quarta, 07/10">
+    <div class="grab"></div>
+    <p class="prov2">quarta, 07/10 · Treino B às 18h15</p>
+    <h3>A comida de quarta</h3>
+    <p class="sub">O plano daquele dia vem em anil. Cada toque grava o que foi de verdade; o que você não lembra, marque “não sei”.</p>
+    <div class="rr"><span class="nm">Café<small>8h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Almoço<small>12h30 · gravado</small></span><div class="seg"><button>Tudo</button><button class="me" aria-checked="true">Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Lanche<small>16h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Pré‑treino<small>17h45 · sem o café</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Treino<small>18h15</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Jantar<small>19h45 · pós‑treino</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Água</span><div class="seg two2"><button class="nn" aria-checked="true">Não contei</button><button>Contar copos</button></div></div>
+    <div class="rb2"><span class="l">Já está registrado</span>Almoço pela metade, às 21h31. <span class="a">Em anil, ainda sem marca: café, lanche, pré‑treino, treino e jantar.</span></div>
+    <button class="primary" style="margin-top:10px">Os outros 5 como no plano</button>
+  </div>
+</div>
+
+=== 11 |  | … o jantar saiu do plano: a única pergunta, agora com “não comi”
+cap: “Fora” no jantar não grava sozinho: abre a pergunta que sempre existiu, e <b>a resposta é o toque que grava</b>. A pergunta ganhou uma terceira resposta, porque não comer passou a contar como dia conhecido (decisão 3) e precisa de forma e palavra próprias: <b>“Não comi”</b>. As três saídas dizem a consequência para a regra, sem esconder a que derruba o dia. O botão de baixo encolheu para 4, porque o jantar já não está em anil.
+@sb 21:32 | cheio
+<div class="scr">
+  <div class="scrim"></div>
+  <div class="sheet tall" role="dialog" aria-label="A comida de quarta, 07/10">
+    <div class="grab"></div>
+    <p class="prov2">quarta, 07/10 · Treino B às 18h15</p>
+    <h3>A comida de quarta</h3>
+    <div class="rr"><span class="nm">Café<small>8h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Almoço<small>12h30 · gravado</small></span><div class="seg"><button>Tudo</button><button class="me" aria-checked="true">Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Lanche<small>16h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Pré‑treino<small>17h45 · sem o café</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Treino<small>18h15</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Jantar<small>19h45 · pós‑treino</small></span><div class="seg"><button>Tudo</button><button>Metade</button><button class="nn" aria-checked="true">Fora</button><button>Não sei</button></div></div>
+    <div class="ask3"><b>Jantar fora do plano. O que aconteceu?</b>
+      <div class="three"><button class="sec">Não comi</button><button class="sec">Comi outra coisa, e sei o quê</button><button class="sec">Comi, mas não sei quanto</button></div>
+      <p>As duas primeiras mantêm quarta contando para a regra do nutricionista. A terceira tira quarta da conta — e é melhor assim do que um número inventado.</p></div>
+    <button class="primary" style="margin-top:10px">Os outros 4 como no plano</button>
+  </div>
+</div>
+
+=== 12 |  | Apagar o cardio lançado por engano: o painel diz o que vai embora
+cap: Tocar a linha do cardio abre o registro inteiro — modalidade, minutos e intensidade, cada um corrigível no toque — e, no fim dele, “Apagar este cardio”. O painel abre pelo verbo e pelo estrago: <b>“Apagar o cardio de ter 06/10”</b> (decisão 8). Diz o que vai embora com o número, diz o que fica — o outro cardio do dia, igual a este — e diz o efeito na leitura do mês: de 4 para 3 sessões, de 85 para 65 min. O botão repete o verbo e o objeto. A saída é “Deixar como está”, no lugar mais fácil para o polegar. O botão de apagar é tinta cheia, não tijolo: o tijolo é só para erro de gravação, e o perigo está nas palavras.
+@sb 21:24 | cheio
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>terça, 6 de outubro</h2><div class="pv2">dia de treino, pela sessão registrada</div></div></div>
+    <div class="recs">
+      <div class="rec"><span class="ic">A</span><span class="t"><b>Treino A</b><small>6h20 → 7h27 · fechou sem você · 18 de 20 séries</small></span></div>
+      <div class="rec"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · 7h35, depois do treino</small></span></div>
+      <div class="rec dup"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · lançado na quinta, 08/10, sem hora</small></span></div>
+    </div>
+  </div>
+  <div class="scrim"></div>
+  <div class="panel" role="dialog" aria-label="Apagar o cardio de terça, 06/10">
+    <div class="grab"></div>
+    <h3>Apagar o cardio de ter 06/10</h3>
+    <p class="sub" style="font-size:14px;color:var(--ink-2);margin:0">o que foi lançado na quinta, 08/10, sem hora</p>
+    <div class="gone">Vai embora: <b>1 sessão de cardio</b> — 20 min de esteira inclinada, leve.</div>
+    <p class="stays">Fica o cardio das <b>7h35</b>, igual a este. O cardio de outubro passa de <b>4 para 3 sessões</b> e de <b>85 para 65 min</b>. Apagado, não volta.</p>
+    <button class="kill">Apagar o cardio</button>
+    <button class="keep">Deixar como está</button>
+  </div>
+</div>
+
+=== 13 |  | Apagar a sessão aberta por engano: o que vai, e o que fica
+cap: Sexta, 09/10: às 6h12 ele abriu o Treino E por engano e, dois minutos depois, o D, o certo (F35). O painel dá o número do que vai embora — uma sessão, nenhuma série — e o que fica, com o número também, para que ele confira que está apagando a de cima e não a de baixo. Se houvesse séries, elas iriam junto e entrariam na mesma conta: <b>apagar a presença e deixar as séries</b> deixaria séries órfãs contando volume (F295). E o painel responde a pergunta que um apagar de treino sempre levanta: a sequência não muda.
+@sb 21:26 | cheio
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>sexta, 9 de outubro</h2><div class="pv2">dia de treino, pela sessão registrada</div></div></div>
+    <div class="recs">
+      <div class="rec"><span class="ic">E</span><span class="t"><b>Treino E</b><small>aberto às 6h12 · nenhuma série</small></span></div>
+      <div class="rec"><span class="ic">D</span><span class="t"><b>Treino D</b><small>6h14 → 7h10 · 17 de 17 séries · uma mudança esperando decisão</small></span></div>
+    </div>
+  </div>
+  <div class="scrim"></div>
+  <div class="panel" role="dialog" aria-label="Apagar o Treino E de sexta, 09/10">
+    <div class="grab"></div>
+    <h3>Apagar o Treino E de sex 09/10</h3>
+    <div class="gone">Vai embora: <b>1 sessão</b>, aberta às 6h12, com <b>0 séries</b>.</div>
+    <p class="stays">Fica o <b>Treino D das 6h14</b>, com 17 séries. A sequência não muda: o último registrado continua sendo o Treino B de hoje. Apagado, não volta.</p>
+    <button class="kill">Apagar o Treino E</button>
+    <button class="keep">Deixar como está</button>
+  </div>
+</div>
+
+=== 14 |  | Estado ruim: a correção não foi gravada
+cap: Cada toque grava — e cada toque pode falhar. Aqui o armazenamento do aparelho está cheio (F53). A régua não finge: o 9 fica marcado como “tocado”, tracejado, e o número da série continua <b>75 × 8, que é o que está guardado</b>. As saídas ficam ao lado do toque: tentar de novo, ou baixar a cópia de segurança antes de qualquer outra coisa (F249). É o mesmo desenho do erro de gravação da academia (momento 1, estado 10), sentado.
+@sb 21:16 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para terça, 06/10"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>Treino A</h2><div class="pv2">da sequência · terça, 06/10 · peito superior, dorsais, lateral, tríceps</div></div></div>
+    {{inc sess-a-err}}
+  </div>
+  {{tabs dias}}
+  {{hi}}
+</div>
+
+=== 15 |  | Vazio: o primeiro mês, nada registrado
+cap: Quinta, 06/08/2026, o primeiro dia de uso (F8). O mês existe, os dias passados existem e estão vazios, e a tela não inventa nada sobre eles: <b>nenhuma leitura vira zero</b>. “0 dias com treino por semana” diria que ele não treinou, e o que se sabe é só que nada foi registrado. Cada leitura diz quando passa a existir. A única oferta é a que o primeiro dia pede: treinos de antes também entram, com a data deles (F158).
+@sb 7:40 | cheio
+<div class="scr">
+  <div class="body">
+    <div class="mh"><h2>Dias<small>agosto de 2026</small></h2><button class="ib" aria-label="Julho" disabled style="opacity:.3"><svg width="24" height="24"><use href="#bk"/></svg></button><button class="ib" aria-label="Setembro" disabled style="opacity:.3"><svg width="24" height="24"><use href="#fw"/></svg></button></div>
+    {{inc cal-ago}}
+    <div class="empty"><b>Ainda não há dias para ler</b><p>Cada treino, descanso, cardio e refeição que você registrar aparece no dia dele. Treinos de antes de hoje também podem entrar, com a data deles.</p><button class="sec" style="width:100%">Registrar um treino passado</button></div>
+    <div class="rd" style="margin-top:6px"><div class="h">Dias com treino por semana</div><p class="nil">Aparece com o primeiro treino. A média usa as últimas 4 semanas; até completar 4, a conta vem sem média: “3 dias com treino em 9”.</p></div>
+    <div class="rd"><div class="h">Cardio em agosto</div><p class="nil">Nenhum cardio registrado.</p></div>
+    <div class="rd"><div class="h">Horário de início</div><p class="nil">Aparece com a primeira sessão que tiver hora.</p></div>
+  </div>
+  {{tabs dias}}
+  {{hi}}
+</div>

@@ -47,14 +47,7 @@
 
 .ins-vazio { margin: 0; padding: var(--ins-3) 0 var(--ins-1); }
 
-/* ---- Hero métrica ----------------------------------------------------- */
-
-.ins-hero-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3); }
-.ins-hero-meta { font: 400 10px/1 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-tinta-3); }
-.ins-hero-n { display: flex; align-items: baseline; gap: var(--ins-2); margin-top: var(--ins-5); }
-.ins-hero-u { font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
-.ins-rail { height: var(--ins-rail); background: var(--ins-fio); margin-top: var(--ins-5); }
-.ins-rail-fill { height: 100%; background: var(--ins-acento); }
+/* ---- Grade de métricas ------------------------------------------------ */
 .ins-grade { margin-top: var(--ins-5); }
 .ins-grade-c { padding: var(--ins-4) 0; }
 .ins-grade-c.recuo { padding-left: var(--ins-5); }
@@ -72,37 +65,7 @@
    que um dedo pede. Aumentá-los engordaria telas inteiras; o `::after` estende
    só o ALVO, sem mexer em um pixel do desenho.
    A regra é uma: a expansão nunca passa do vão até o vizinho, senão dois
-   controles disputam o mesmo pixel e o toque vira sorteio. É por isso que os
-   ticks crescem só na vertical — na horizontal o vizinho é OUTRO valor. */
-/* ---- Ticks ------------------------------------------------------------ */
-
-.ins-ticks { display: flex; gap: var(--ins-1); }
-.ins-tick {
-  flex: 1; height: 30px;
-  border: 1px solid var(--ins-fio-controle); background: transparent;
-  /* 30 -> 44 de alvo. Só vertical: o vizinho é a repetição seguinte. */
-  position: relative;
-}
-.ins-tick::after { content: ""; position: absolute; inset: -7px 0; }
-.ins-tick.on { background: var(--ins-acento); border-color: var(--ins-acento); }
-.ins-ticks-l {
-  display: flex; justify-content: space-between; margin-top: var(--ins-3);
-  font: 400 10px/1 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-tinta-3);
-}
-
-/* ---- Caixa de marcar -------------------------------------------------- */
-
-.ins-caixa {
-  width: var(--ins-tap-dense); height: var(--ins-tap-dense); flex: 0 0 auto;
-  border: 1px solid var(--ins-fio-controle); background: transparent;
-  font: 400 13px/1 var(--ins-fonte); color: transparent;
-  display: flex; align-items: center; justify-content: center;
-  /* 28 -> 44 nos dois eixos: ela fica sozinha na ponta da linha */
-  position: relative;
-}
-.ins-caixa::after { content: ""; position: absolute; inset: -8px; }
-.ins-caixa.on { background: var(--ins-acento); border-color: var(--ins-acento); color: var(--ins-sobre-acento); }
-
+   controles disputam o mesmo pixel e o toque vira sorteio. */
 /* ---- Cartão-foco ------------------------------------------------------ */
 
 .ins-foco {
@@ -158,106 +121,6 @@
 .ins-veredito-p { margin: var(--ins-5) 0 0; }
 .ins-veredito .ins-btn-primary { margin-top: var(--ins-6); }
 .ins-veredito-e { margin-top: var(--ins-4); }
-
-/* ---- Linha de timeline ------------------------------------------------ */
-
-.ins-tl { display: flex; align-items: stretch; gap: 0; }
-.ins-tl-hora {
-  flex: 0 0 var(--ins-tap); text-align: right; padding: var(--ins-5) var(--ins-4) 0 0;
-  font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3);
-  letter-spacing: -.02em;
-}
-.ins-tl-espinha { flex: 0 0 9px; position: relative; }
-.ins-tl-espinha::before {
-  content: ''; position: absolute; left: 4px; top: 0; bottom: 0;
-  width: 1px; background: var(--ins-fio);
-}
-.ins-tl.ultima .ins-tl-espinha::before { bottom: auto; height: 24px; }
-.ins-tl-ponto {
-  /* alinhado com o centro da primeira linha do corpo */
-  position: absolute; left: 0; top: 17px;
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--ins-tinta-3); border: 2px solid var(--ins-tela);
-  box-sizing: content-box; margin-left: -2px;
-}
-.ins-tl-ponto.acid  { background: var(--ins-acento); }
-.ins-tl-ponto.amber { background: var(--ins-atencao-tinta); }
-.ins-tl-ponto.coral { background: var(--ins-pare-tinta); }
-
-.ins-tl-corpo {
-  flex: 1; min-width: 0;
-  padding: var(--ins-4) 0 var(--ins-5) var(--ins-5);
-  border-bottom: 1px solid var(--ins-fio);
-}
-.ins-tl.ultima .ins-tl-corpo { border-bottom: 0; }
-.ins-tl.agora .ins-tl-corpo { background: var(--ins-acento-suave); }
-
-.ins-tl-topo { display: flex; align-items: center; gap: var(--ins-4); }
-.ins-tl-toque {
-  flex: 1; min-width: 0; text-align: left;
-  display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3);
-  position: relative;
-  /* SEM min-height de propósito. A linha inteira já mede 80px e é ela o alvo —
-     forçar 46 aqui dentro empilhava 16px de ar em cima de um conteúdo de 30.
-     O ::after abaixo resolve o alvo sem repetir aquele erro: estende a área,
-     não a altura.
-     Alvo pequeno é problema real; alvo grande duas vezes é só altura perdida. */
-  padding: var(--ins-1) 0;
-}
-.ins-tl-nome {
-  font: 500 17px/1.3 var(--ins-fonte); letter-spacing: -.01em;
-  color: var(--ins-tinta);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-/* O papel que a linha acumula hoje — "pós-treino" na refeição que o recebeu.
-   Mono e apagado: é rótulo de estrutura, não parte do nome. `flex: 0 0 auto`
-   para o nome ceder primeiro, porque o selo é a informação mais curta e a que
-   não sobrevive a um corte. */
-.ins-tl-selo {
-  flex: 0 0 auto;
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-tinta-3); white-space: nowrap;
-}
-.ins-tl-valor {
-  flex: 0 0 auto;
-  font: 500 14px/1 var(--ins-fonte); color: var(--ins-tinta-3); letter-spacing: -.02em;
-}
-/* Uma linha, com reticências. A linha da timeline responde "o que é isto e já
-   foi feito"; o que TEM dentro é assunto da folha. Sem o corte, o almoço com
-   seis itens quebrava em três linhas e a mesma lista variava de 88 a 130px de
-   altura — altura imprevisível é pior que informação cortada. */
-.ins-tl-resumo {
-  font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-3); margin-top: 2px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-/* Nível 4: esta linha carrega os macros da refeição — P, C e G —, e sobre a
-   superfície ácida da linha de agora o nível 5 dava 2,9:1, o pior contraste do
-   app. Número não é dica. */
-.ins-tl-meta {
-  font: 400 10px/1.35 var(--ins-fonte); letter-spacing: .06em;
-  color: var(--ins-tinta-3); margin-top: var(--ins-1);
-}
-/* Alinhado ao topo, na altura do nome: com align-self esticado ele centrava
-   verticalmente e ficava flutuando ao lado do resumo, longe do objeto que
-   edita. */
-/* 30 -> 44 de alvo, crescendo para os lados. Os 7px da esquerda saem do
-   `.ins-tl-toque`, que tem 227 — 3% dele por 47% deste é troca boa. */
-.ins-tl-toque::after { content: ""; position: absolute; inset: -7px 0; }   /* 30 -> 44 */
-.ins-tl-mais::after { content: ""; position: absolute; inset: 0 -7px; }
-.ins-tl-mais {
-  flex: 0 0 30px; align-self: stretch;
-  position: relative;
-  display: flex; align-items: flex-start; justify-content: center;
-  padding-top: var(--ins-6);
-  color: var(--ins-tinta-3); font-size: 17px; line-height: 1; letter-spacing: .08em;
-  border-bottom: 1px solid var(--ins-fio);
-}
-.ins-tl.ultima .ins-tl-mais { border-bottom: 0; }
-
-/* Feito: nome e ponto recuam. O dado continua legível, só para de chamar. */
-.ins-tl.feito .ins-tl-nome { color: var(--ins-tinta-3); }
-.ins-tl.feito .ins-tl-ponto { background: var(--ins-tinta-3); }
 
 /* ---- Linha expansível ------------------------------------------------- */
 
@@ -395,8 +258,7 @@
 
 .ins-tab {
   flex: 1; min-height: 46px; padding: var(--ins-6) 0 var(--ins-5);
-  font: 400 9.5px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase;
+  font: 500 var(--ins-t-meta)/1 var(--ins-fonte);
   /* text-4: a 9,5px o nível 5 dá 3,2:1 e reprova em AA. */
   color: var(--ins-tinta-3);
 }
@@ -418,6 +280,9 @@
   gap: var(--ins-5); padding: var(--ins-5) 0; min-height: var(--ins-tap);
   width: 100%; text-align: left;
 }
+/* Linha de lista que é botão continua LINHA: sem o canto que o reset dá a todo
+   botão, o fio de baixo não vira curva nas pontas. */
+button.ins-linha { border-radius: 0; }
 /* Empilha. Sem isto os filhos são <span> e renderizam INLINE: "Banana120 g",
    "Arroz branco cozidoP 2.5 · C 28". Atingia toda lista do produto —
    biblioteca de alimentos, compras, músculos, itens da refeição. */
@@ -537,8 +402,7 @@
 }
 .gu-dia.on { background: var(--ins-acento-suave); border-color: var(--ins-acento); }
 .gu-dia-v {
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .gu-dia.on .gu-dia-v { color: var(--ins-acento-tinta); }
 .gu-dia.on .ins-label-sm { color: var(--ins-tinta-2); }
@@ -557,8 +421,7 @@
 .dd-diabtn, .dd-tclbtn, .co-ondebtn {
   width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
   position: relative;
-  font: 400 10px/1.4 var(--ins-fonte);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1.4 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .dd-diabtn::after, .dd-tclbtn::after, .co-ondebtn::after { content: ""; position: absolute; inset: -5px 0; }   /* 34 -> 44 */
 .dd-diabtn:active, .dd-tclbtn:active, .co-ondebtn:active { color: var(--ins-tinta-3); }
@@ -606,8 +469,7 @@
 .dd-mus-l.prio .dd-mus-n { color: var(--ins-tinta); }
 .dd-mus-n em {
   display: block; font-style: normal; margin-top: 2px;
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .12em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .dd-mus-b { flex: 1; height: 6px; background: var(--ins-fio); }
 .dd-mus-b i { display: block; height: 100%; background: var(--ins-tinta-3); }
@@ -711,77 +573,6 @@
 }
 .mes-b:disabled { opacity: .25; }
 
-/* Sete colunas, o vão de 1px é a régua — igual à grade de métricas. */
-.cal {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px;
-  background: var(--ins-fio); margin-top: var(--ins-7);
-}
-.cal > * { background: var(--ins-tela); }
-.cal-h {
-  padding: var(--ins-2) 0; text-align: center;
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
-}
-.cal-x { min-height: 40px; }
-.cal-d {
-  min-height: 40px; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 2px;
-  font: 400 11px/1 var(--ins-fonte); color: var(--ins-tinta-3);
-}
-.cal-d em { font-style: normal; }
-.cal-d.futuro { opacity: .3; }
-.cal-d.hoje { background: var(--ins-acento-suave); }
-.cal-d.feito { color: var(--ins-acento-tinta); }
-.cal-d.livre { color: var(--ins-tinta-3); }
-/* Descanso registrado: presença discreta, para o dia não parecer buraco — mas
-   nunca com o peso visual de um dia treinado. */
-.cal-d.descanso { color: var(--ins-tinta-3); }
-.cal-d.descanso i { color: var(--ins-tinta-3); font-weight: 400; }
-/* Barra, não cor de fundo nem letra: a letra do treino já manda na célula. */
-.cal-d .barra-cardio { width: 10px; height: 2px; background: var(--ins-tinta-3); border-radius: 0; }
-.cal-d i { font-style: normal; font-weight: 500; color: var(--ins-tinta-2); }
-.cal-d.feito i { color: var(--ins-acento-tinta); }
-.cal-d em { font-style: normal; font-size: 9px; color: var(--ins-tinta-3); }
-.cal-d .per { font-size: 8px; text-decoration: none; line-height: 1; }
-
-.cal-legenda {
-  display: flex; gap: var(--ins-5); margin-top: var(--ins-4);
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
-}
-.cal-legenda span { display: flex; align-items: center; gap: var(--ins-1); }
-.cal-legenda .per { text-decoration: none; font-size: 10px; }
-
-.mes-sessoes { margin-top: var(--ins-7); }
-.sessrow { gap: var(--ins-4); }
-.sess-d {
-  flex: 0 0 46px;
-  font: 400 11px/1.3 var(--ins-fonte); color: var(--ins-tinta-3);
-}
-.sess-d em { display: block; font-style: normal; font-size: 9px; color: var(--ins-tinta-3); margin-top: 2px; }
-.sess-l {
-  flex: 0 0 18px; text-align: center;
-  font: 500 15px/1 var(--ins-fonte); color: var(--ins-tinta-2);
-}
-.sess-l.livre { color: var(--ins-tinta-3); }
-.sess-n { flex: 1; font: 400 13px/1.35 var(--ins-fonte); color: var(--ins-tinta-3); }
-.sess-n .aprox {
-  font-style: normal; margin-left: var(--ins-2);
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
-}
-.sess-o {
-  flex: 0 0 auto;
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-acento-tinta);
-}
-.mediasem {
-  margin: var(--ins-4) 0 0;
-  font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-3);
-}
-.mediasem b { color: var(--ins-tinta); font-weight: 500; font-family: var(--ins-fonte); }
-.mediasem span { display: block; margin-top: 2px; font-size: 11px; color: var(--ins-tinta-3); }
-
 /* ---- Telas cheias ------------------------------------------------------ */
 
 /* GRUDADO NO TOPO, e isto não é enfeite.
@@ -811,8 +602,7 @@
 }
 .tc-back {
   min-height: var(--ins-tap); padding: 0 var(--ins-4) 0 0;
-  font: 400 11px/1 var(--ins-fonte);
-  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 500 var(--ins-t-corpo-forte)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .tc-back:active { color: var(--ins-tinta); }
 
@@ -830,7 +620,6 @@
 .tc-nota { margin: var(--ins-6) 0 0; }
 .tc-grupos { margin-top: var(--ins-7); }
 .tc-rm { margin-top: var(--ins-10); }
-.tc-h { display: block; margin: var(--ins-10) 0 var(--ins-4); }
 
 .tc-bloco {
   margin-top: var(--ins-6); padding: var(--ins-5);
@@ -839,7 +628,6 @@
 .tc-bloco.atencao { border-color: var(--ins-atencao-fio); }
 .tc-bloco p { margin: var(--ins-3) 0 0; }
 .tc-bloco b { color: var(--ins-tinta); font-weight: 500; }
-.tc-pend { display: flex; flex-direction: column; gap: var(--ins-2); padding: var(--ins-2) 0; }
 
 /* Uma linha de exercício num resumo. */
 .tc-res { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-fio); }
@@ -870,8 +658,7 @@
    que sobrevive, e ele sobrevive porque o caso de teste deste chip o afirma
    literalmente. A quarentena e a dívida estão escritas em `tokens.css`. */
 .tc-res-sets .rec {
-  border-color: var(--ins-acento); color: var(--ins-acid);
-  letter-spacing: .08em; text-transform: uppercase; font-size: 9px;
+  border-color: var(--ins-acento); color: var(--ins-acid); font-size: var(--ins-t-meta);
 }
 .tc-res-nota {
   margin-top: var(--ins-3);
@@ -888,8 +675,7 @@
 }
 .stats span {
   display: block; margin-top: 5px;
-  font: 400 9px/1.2 var(--ins-fonte);
-  letter-spacing: .16em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1.2 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .horario b { color: var(--ins-tinta-3); font-weight: 500; }
 
@@ -908,7 +694,7 @@
 .pmod-b button {
   flex: 1; min-height: 48px;
   border: 1px solid var(--ins-fio); background: transparent; color: var(--ins-tinta-3);
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 .pmod-b button + button { border-left: 0; }
 .pmod-b button.on {
@@ -927,31 +713,31 @@
 .retro-nota { margin: 0 0 var(--ins-3); }
 .retro-fim { width: 100%; margin-top: var(--ins-7); }
 
-/* ---------- registro retroativo ---------- */
-.add-dia { margin-top: var(--ins-1); }
-.add-data { text-transform: none; }
-.add-h { margin-top: var(--ins-7); }
-.add-nota { margin: var(--ins-3) 0 0; }
-.add-regra { margin: var(--ins-2) 0 0; }
-.add-nome { margin-top: var(--ins-4); }
-.add-acoes { margin-top: var(--ins-8); }
-.add-detalhe { width: 100%; margin-top: var(--ins-2); }
-.edrow .dbtn { flex: 1; }
-
-/* Campo solto de formulário (horário no registro retroativo). Mesmo desenho
-   dos campos de carga: mono, fio, canto reto. */
-.addrow { display: flex; gap: var(--ins-3); align-items: stretch; margin-top: var(--ins-3); }
-.addrow .f { flex: 1; position: relative; min-width: 0; }
-.addrow input {
-  width: 100%; padding: 14px;
-  font: 500 17px/1 var(--ins-fonte);
-  background: var(--ins-superficie-2); border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta);
-  appearance: none; -moz-appearance: textfield;
+/* ---------- registrar um treino passado (a D, dias.html, estados 6 a 8) ----------
+   O previsto é a única coisa em anil, do tamanho do polegar: é o palpite do
+   app, e a cor do palpite é a do acento suave. O resto é um toque cada. */
+.ln-prev-r { margin: var(--ins-2) 0 var(--ins-2); }
+.ln-pergunta { margin: 0 0 var(--ins-4); }
+.ins-linha.ln-previsto {
+  gap: var(--ins-4); min-height: 72px; padding: var(--ins-4);
+  background: var(--ins-acento-suave); border: 1px solid var(--ins-acento); border-radius: var(--ins-raio-3);
 }
-.addrow input::placeholder { color: var(--ins-tinta-3); }
-.addrow input:focus { outline: none; border-color: var(--ins-acento); }
-.addrow input::-webkit-outer-spin-button,
-.addrow input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.ln-letra {
+  flex: 0 0 auto; min-width: 40px; text-align: center;
+  font-weight: 600; font-size: 22px; color: var(--ins-acento-tinta);
+}
+.ln-outros { margin-top: var(--ins-5); display: flex; flex-direction: column; gap: var(--ins-3); }
+.ln-chips { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
+.ln-fora { margin-top: var(--ins-5); border-top: 1px solid var(--ins-fio); }
+.ln-nota { margin: var(--ins-5) 0 0; }
+.ln-gravado {
+  display: flex; flex-direction: column; gap: var(--ins-1);
+  padding: var(--ins-4) 0; border-bottom: 1px solid var(--ins-fio);
+}
+.ln-bloco { margin-top: var(--ins-6); display: flex; flex-direction: column; gap: var(--ins-3); }
+.ln-bloco p { margin: 0; }
+.ln-hora, .ln-min { max-width: 160px; font-variant-numeric: tabular-nums; }
+.add-nome { margin-top: 0; }
 
 /* Ação principal desativada não usa o ácido. Ácido é "a única coisa a fazer
    agora"; num botão que não responde ao toque, ele promete e não cumpre.
@@ -979,7 +765,7 @@
 .edbar-b {
   flex: 0 0 auto; min-height: var(--ins-tap); padding: 0 var(--ins-5);
   background: var(--ins-acento); color: var(--ins-sobre-acento); border: 0;
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .12em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 
 .edx { border-bottom: 1px solid var(--ins-fio); padding: var(--ins-4) 0; }
@@ -1043,7 +829,7 @@
 .edadd {
   width: 100%; min-height: var(--ins-tap); margin-top: var(--ins-4);
   border: 1px dashed var(--ins-fio-controle); background: none; color: var(--ins-tinta-3);
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 
 .edmods { margin-top: var(--ins-6); border-top: 1px solid var(--ins-fio); padding-top: var(--ins-4); }
@@ -1128,116 +914,7 @@
    existir: nenhum nome da paleta antiga sobrevive no projeto.
    =========================================================================== */
 
-/* Marca de cardio no calendário: barra discreta, para não competir com a
-   letra do treino. Na faixa da semana ela é um ponto — quem manda lá é
-   `treino.css`, que é dono da tela onde a faixa mora. */
-.cal-d .barra-cardio {
-  display: block; height: 2px; width: 52%; margin: var(--ins-1) auto 0;
-  background: var(--ins-tinta-3);
-}
-
-.cardio-dia {
-  display: flex; gap: var(--ins-5); align-items: baseline;
-  margin-top: var(--ins-7); border-top: 1px solid var(--ins-fio); padding-top: var(--ins-6);
-}
-.cardio-dia b {
-  flex: 0 0 96px;
-  font: 400 10px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-tinta-3);
-}
-.cardio-dia span { font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-3); }
-
 .crule { margin: var(--ins-7) 0 var(--ins-5); }
-
-/* ---- Calendário do mês -------------------------------------------------- */
-.mesnav { display: flex; align-items: center; gap: var(--ins-5); margin-top: var(--ins-7); }
-.mesnav span {
-  flex: 1; text-align: center; text-transform: capitalize;
-  font: 500 15px/1 var(--ins-fonte); letter-spacing: -.01em; color: var(--ins-tinta);
-}
-.mesnav button {
-  background: transparent; border: 1px solid var(--ins-fio); color: var(--ins-tinta-3);
-  font-size: 16px; line-height: 1; padding: var(--ins-4) var(--ins-6); min-height: 40px;
-}
-.mesnav button:disabled { color: var(--ins-tinta-3); }
-
-.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-top: var(--ins-7); background: var(--ins-fio); }
-.cal-h {
-  padding: var(--ins-2) 0; text-align: center; background: var(--ins-tela);
-  font: 400 8.5px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-tinta-3);
-}
-.cal-x { aspect-ratio: 1; background: var(--ins-tela); }
-.cal-d {
-  aspect-ratio: 1; min-width: 0; position: relative; background: var(--ins-tela); border: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-}
-.cal-d em { font: 400 10px/1 var(--ins-fonte); font-style: normal; color: var(--ins-tinta-3); }
-/* A LETRA é quem manda na célula: o número do dia é referência, o treino é o
-   dado. Trocar a hierarquia aqui já quebrou a leitura do mês uma vez. */
-.cal-d i { font: 500 12px/1 var(--ins-fonte); font-style: normal; color: var(--ins-acento-tinta); }
-.cal-d.feito { background: var(--ins-acento-suave); }
-.cal-d.feito em { color: var(--ins-tinta-3); }
-.cal-d.hoje { box-shadow: inset 0 0 0 1px var(--ins-tinta); }
-.cal-d.livre { background: var(--ins-superficie-2); }
-.cal-d.livre i { color: var(--ins-tinta-3); }
-.cal-d.futuro { opacity: .35; }
-
-.per { position: absolute; top: 2px; right: 3px; font-size: 11px; line-height: 1; text-decoration: none; }
-.callegenda { display: flex; gap: var(--ins-6); margin-top: var(--ins-4); }
-.callegenda .per { position: static; margin-right: var(--ins-1); font-size: 12px; }
-
-.mediasem { margin-top: var(--ins-8); font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-3); }
-.mediasem b { font: 600 22px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta); }
-.mediasem span {
-  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
-}
-
-.sessrow {
-  display: flex; align-items: center; gap: var(--ins-4);
-  border-bottom: 1px solid var(--ins-fio); padding: var(--ins-6) 0; background: none; border-left: 0; border-right: 0; border-top: 0;
-  width: 100%; text-align: left;
-}
-.sessrow:last-child { border-bottom: 0; }
-/* Empurrão de atenção ao chegar de uma célula com mais de uma sessão: diz
-   QUAIS linhas são daquele dia, e se apaga sozinho. Fio à esquerda, não fundo:
-   o sistema marca com fio.
-   O fio vai para a GOTEIRA, fora da caixa: desenhado por dentro ele cobria o
-   primeiro dígito da data. */
-.sessrow { position: relative; }
-.sessrow.destacada::before {
-  content: ""; position: absolute;
-  left: calc(-1 * var(--ins-4)); top: 0; bottom: 0;
-  width: var(--ins-rail); background: var(--ins-acento);
-}
-.sess-d { min-width: 44px; font: 400 11px/1.3 var(--ins-fonte); color: var(--ins-tinta-3); }
-.sess-d em { display: block; font-style: normal; font-size: 10px; color: var(--ins-tinta-3); margin-top: 2px; }
-/* A letra NÃO é ácida aqui. Toda linha desta lista é uma sessão feita, então
-   a cor não distingue nada — vira decoração, e catorze ácidos numa tela é
-   exatamente o que o §4 proíbe. No calendário ela continua ácida, porque lá
-   ela separa o dia treinado do dia vazio. */
-.sess-l { min-width: 16px; font: 500 15px/1 var(--ins-fonte); color: var(--ins-tinta); }
-.sess-l.livre { color: var(--ins-tinta-3); }
-.sess-n { flex: 1; min-width: 0; font: 400 11.5px/1.4 var(--ins-fonte); color: var(--ins-tinta-3); }
-.sess-o {
-  flex: 0 0 auto; padding: 3px var(--ins-2);
-  background: var(--ins-acento); color: var(--ins-sobre-acento);
-  font: 400 9px/1 var(--ins-fonte); letter-spacing: .08em; text-transform: uppercase;
-}
-
-/* ---- Pendências da sessão ----------------------------------------------- */
-.horario b { color: var(--ins-tinta-3); font-weight: 500; }
-
-.pend { margin-top: var(--ins-7); }
-.pend > div {
-  display: flex; gap: var(--ins-4); align-items: baseline;
-  border-top: 1px solid var(--ins-fio); padding: var(--ins-4) 0;
-}
-.aprox {
-  font-style: normal; padding: 2px var(--ins-2); margin-left: var(--ins-2);
-  border: 1px solid var(--ins-fio);
-  font: 400 9px/1 var(--ins-fonte); letter-spacing: .08em; color: var(--ins-tinta-3);
-}
 
 /* ---- Avisos: âmbar é "preste atenção", ácido é "isto está ativo" -------- */
 .deload {
@@ -1269,7 +946,7 @@
 }
 .stats span {
   display: block; margin-top: var(--ins-2);
-  font: 400 9px/1.35 var(--ins-fonte); letter-spacing: .07em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1.35 var(--ins-fonte);
   color: var(--ins-tinta-3);
 }
 
@@ -1285,7 +962,6 @@
 .chart .ax { font-family: var(--ins-fonte); font-size: 9px; fill: var(--ins-tinta-3); }
 .chart .axu {
   font-family: var(--ins-fonte); font-size: 7.5px; fill: var(--ins-tinta-3);
-  letter-spacing: .1em; text-transform: uppercase;
 }
 .chart .vl { font-family: var(--ins-fonte); font-size: 9.5px; fill: var(--ins-tinta-3); }
 .chart .vl.last { fill: var(--ins-tinta); font-weight: 500; }
@@ -1401,7 +1077,7 @@
 .dbtn {
   display: block; width: 100%; text-align: center; min-height: var(--ins-tap); padding: var(--ins-6);
   border: 1px solid var(--ins-fio-controle); background: transparent; color: var(--ins-tinta-2);
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .14em; text-transform: uppercase;
+  font: 500 var(--ins-t-corpo-forte)/1.2 var(--ins-fonte);
 }
 .dbtn + .dbtn, .dbtn + label.dbtn { margin-top: var(--ins-2); }
 .dbtn.ghost { border-color: var(--ins-fio); color: var(--ins-tinta-3); }
@@ -1534,9 +1210,7 @@
    Antes havia uma regra que zerava o raio de TUDO dentro de #app —
    muleta enquanto as telas em string nasciam com 2 a 12px. Não é mais
    necessária: nenhuma regra do projeto declara raio. */
-.ins-live-dot, .ins-tl-ponto,
-input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
-
+.ins-live-dot, input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 
 /* ---- O modo de sessão ----
    O invólucro do treino em tela cheia. Ele desenha UMA coisa: a saída.
@@ -1574,6 +1248,26 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
    Fica `var(--sa-bottom)` e não `0`: o que sai é a barra, não o espaço do
    indicador de home — sem ele o último cartão encosta nele. */
 #app:has(.ins-modo) { --ins-tabbar: var(--sa-bottom); }
+
+/* DEITADO, NO MEIO DA SESSÃO (a D, momento 1, estado 14). O iOS não trava a
+   orientação de app web (F60), e o telefone vira sozinho no banco. Fora do
+   modo, o aviso de girar continua (base.css); dentro dele, a mesma tela em duas
+   colunas: a leitura à esquerda — o nome, a dica, o descanso — e o polegar à
+   direita — as séries, a régua, as ações. A mesma condição do aviso: deitado e
+   baixo é telefone, e não janela de computador. */
+@media (orientation: landscape) and (max-height: 520px) {
+  html:has(.ins-modo) #deitado { display: none; }
+  #app:has(.ins-modo) { max-width: none; }
+  .ins-modo .ex.open {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr; column-gap: var(--ins-9); align-items: start;
+  }
+  .ins-modo .ex.open > .ex-top,
+  .ins-modo .ex.open > .puladobox { grid-column: 1; }
+  .ins-modo .ex.open > .sets { display: contents; }
+  .ins-modo .ex.open .sets-ler { grid-column: 1; }
+  .ins-modo .ex.open .sets-polegar { grid-column: 2; grid-row: 1 / span 3; padding-top: var(--ins-4); }
+}
 
 /* GRUDADA NO TOPO, e isto é regra escrita: "a seta não some em nenhum estado do
    modo" (frente 1, §4.3, item 5). O modo nasceu porque o dedo ficava preso numa
@@ -1654,7 +1348,12 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 /* A linha do vencimento no Agora. Sem moldura de atenção: nada quebrou e nada
    se perde hoje — é um convite a decidir com calma, e é o que o rótulo diz. */
 .ag-vence { align-items: center; gap: var(--ins-5); }
-.ag-vence .ins-btn-secondary { flex: 0 0 auto; }
+/* O botão ao lado do texto de uma linha tem a largura do que diz. O secundário
+   nasce com `width: 100%` (é botão de bloco), e numa linha flex isso virava a
+   base dele: o texto da linha encolhia até uma palavra por linha — no aviso
+   "Para decidir com calma" e nas linhas do corpo, visto em captura. */
+.ins-linha > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+.ins-linha > .ins-linha-n { flex: 1 1 auto; min-width: 0; }
 
 /* O que venceu sem resposta. Sem âmbar: não há nada a corrigir e nada se
    perdeu — o que aconteceu é que o tempo decidiu pelo lado conservador, e a
@@ -1746,8 +1445,7 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 }
 /* O alvo cresce só na VERTICAL, e nunca para o lado: o vizinho horizontal é a
    repetição seguinte, e crescer para o lado faria um toque na borda registrar o
-   número errado. É a mesma restrição do `.ins-tick`, e aqui ela vale com mais
-   força — erro de alvo na régua tem tolerância zero na medição. */
+   número errado. Erro de alvo na régua tem tolerância zero na medição. */
 .regua-v::after, .regua-anda::after { content: ""; position: absolute; inset: -4px 0; }
 .regua-v:active, .regua-anda:active { background: var(--ins-superficie-2); }
 /* Dentro da faixa prescrita: fio mais firme, sem cor de estado. A faixa é
@@ -1760,8 +1458,7 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 .regua-anda { color: var(--ins-tinta-3); font-size: 18px; }
 .regua-marca {
   position: absolute; left: 0; right: 0; bottom: 2px;
-  font: 400 8px/1 var(--ins-fonte);
-  letter-spacing: .08em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   color: var(--ins-tinta-3);
 }
 .regua-v.on .regua-marca { color: var(--ins-sobre-acento); opacity: .8; }
@@ -1796,8 +1493,7 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
   font-variant-numeric: tabular-nums;
 }
 .tcl-u {
-  font: 400 10px/1 var(--ins-fonte); letter-spacing: .1em;
-  text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 /* Retângulo ESTÁTICO, e é a forma da D. Sem animação: não há o que pôr dentro
    de `prefers-reduced-motion` porque não há movimento (T4). */
@@ -1822,8 +1518,7 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 .tcl-pronto {
   display: block; width: 100%; margin-top: var(--ins-2); min-height: 44px;
   background: var(--ins-superficie-2); border: 1px solid var(--ins-fio);
-  font: 400 12px/1 var(--ins-fonte); letter-spacing: .08em;
-  text-transform: uppercase; color: var(--ins-tinta-2);
+  font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-2);
 }
 
 /* A linha que explica a lista das mudanças, uma vez, antes delas (§5.1). */
@@ -1837,3 +1532,364 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 .co-bio-i { margin: 0 0 var(--ins-4); }
 .co-bio-era { display: block; }
 .co-bio-ob, .co-bio-nada { margin: var(--ins-3) 0 0; }
+
+/* Os portões e o vazio da régua, embaixo do veredito (§6.2, §6.4). O estado
+   está na palavra; a cor de "falta" só acompanha. */
+.dd-desfaz { margin-top: var(--ins-3); }
+.dd-portoes, .dd-semanas { margin-top: var(--ins-5); }
+.dd-portao { flex-direction: column; align-items: stretch; gap: var(--ins-3); }
+.dd-portao .ins-linha-n, .dd-semanas .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-1); }
+.dd-portao.falta .ins-linha-t { color: var(--ins-atencao-tinta); }
+.dd-saida { margin: var(--ins-4) 0 0; }
+.dd-pesar { display: flex; gap: var(--ins-3); flex-wrap: wrap; margin-top: var(--ins-4); }
+.dd-naoinvente { margin: var(--ins-3) 0 0; }
+
+/* As linhas do corpo no Agora (frente 1 §5, regra 5): nome e valor, a linha de
+   apoio embaixo, e o botão à direita. */
+.ag-corpo .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-1); }
+
+/* EVOLUÇÃO (a D, corpo.html estado 8): uma série só — a linha no acento, os
+   pontos do dia em tinta neutra, a faixa do alvo no acento suave. Sem eixo e
+   sem grade: as duas pontas dizem onde a curva começa e termina, e a lista
+   abaixo é a tabela. */
+.co-evolucao { width: auto; padding: 0 var(--ins-5); flex: 0 0 auto; }
+.ev-curva { display: block; width: 100%; height: auto; margin: var(--ins-4) 0 var(--ins-2); }
+.ev-faixa { fill: var(--ins-acento-suave); }
+.ev-dia { fill: var(--ins-tinta-3); opacity: .55; }
+.ev-linha { fill: none; stroke: var(--ins-acento); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ev-semana { fill: var(--ins-acento); stroke: var(--ins-tela); stroke-width: 2; }
+.ev-pontas { display: flex; justify-content: space-between; color: var(--ins-tinta-2); font-size: 13px; }
+.ev-taxa-v { display: flex; flex-direction: column; align-items: flex-end; gap: var(--ins-1); }
+.ev-frase { margin: var(--ins-4) 0 var(--ins-3); }
+
+/* ---- DIAS: o mês (a D, dias.html estado 1) ---------------------------- */
+/* Cada célula diz o que o dia teve por forma e palavra; os dias que ainda não
+   chegaram encolhem, porque não têm o que mostrar. */
+.mes-t { flex: 1 1 auto; text-align: center; color: var(--ins-tinta-2); font-size: 14px; }
+.dc-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: var(--ins-3); }
+.dc-h { text-align: center; font-size: 11px; color: var(--ins-tinta-3); padding-bottom: 2px; }
+.dc {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 58px; padding: 14px 2px 8px; background: var(--ins-superficie);
+  border: 1px solid var(--ins-fio); border-radius: 8px; color: var(--ins-tinta); font: inherit;
+}
+.dc.futuro { min-height: 30px; padding: 6px 2px; background: transparent; border-style: dashed; }
+.dc.hoje { border: 2px solid var(--ins-acento); }
+.dc:disabled { cursor: default; }
+.dc-n { position: absolute; top: 4px; left: 6px; font-size: 11px; color: var(--ins-tinta-3); }
+.dc-p { font-size: 17px; font-weight: 600; line-height: 1.1; }
+.dc.desc .dc-p { font-size: 13px; font-weight: 400; font-style: italic; color: var(--ins-tinta-2); }
+.dc-x { font-size: 10px; color: var(--ins-tinta-2); }
+.dc-c { position: absolute; top: 3px; right: 5px; font-size: 10px; color: var(--ins-tinta-2); }
+.dc-f { position: absolute; bottom: 5px; left: 22%; right: 22%; height: 0; border-top: 3px solid var(--ins-tinta); border-radius: 2px; }
+.dc-f.sem { border-top: 2px dashed var(--ins-fio-controle); }
+/* As três leituras. */
+.dm-valor { margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.01em; }
+.dm-linha svg { display: block; width: 100%; height: auto; }
+.dm-presc { stroke: var(--ins-fio-controle); stroke-width: 1; stroke-dasharray: 3 3; }
+.dm-serie { fill: none; stroke: var(--ins-tinta); stroke-width: 2; stroke-linejoin: round; }
+.dm-fim { fill: var(--ins-tinta); }
+.dm-legenda { display: flex; justify-content: space-between; font-size: 11px; color: var(--ins-tinta-3); }
+.dm-conta { margin: var(--ins-2) 0 0; }
+.dm-tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--ins-3); }
+.dm-tres span { display: flex; flex-direction: column; font-size: 12px; color: var(--ins-tinta-2); }
+.dm-tres b { font-size: 20px; font-weight: 600; color: var(--ins-tinta); }
+.dm-eixo { display: block; width: 100%; height: auto; margin-top: var(--ins-3); }
+.dm-eixo-l { stroke: var(--ins-fio-controle); stroke-width: 1; }
+.dm-eixo-t { font-size: 9px; fill: var(--ins-tinta-3); }
+.dm-eixo-p { fill: var(--ins-tinta-2); stroke: var(--ins-tela); stroke-width: 1.5; }
+.dm-eixo-m { fill: var(--ins-acento); }
+.dm-vazio-t { margin: 0 0 var(--ins-2); font-weight: 600; }
+.dm-vazio-b { margin-top: var(--ins-4); }
+
+/* ---- DIAS: o dia aberto (estados 2, 5, 9, 12) ------------------------- */
+.dia-reg { margin-top: var(--ins-3); }
+.dia-linha { gap: var(--ins-4); }
+.dia-letra {
+  flex: 0 0 auto; min-width: 40px; text-align: center; font-weight: 600; font-size: 15px;
+  color: var(--ins-tinta-2);
+}
+.dia-cardio.igual .ins-linha-s { color: var(--ins-atencao-tinta); }
+.dia-apaga { margin: 0 0 var(--ins-4); }
+.dia-vazio { margin: var(--ins-4) 0; }
+.dia-vazio p { margin: 0 0 var(--ins-2); }
+.dia-acoes { display: flex; gap: var(--ins-3); flex-wrap: wrap; margin-top: var(--ins-4); }
+.dia-acoes .ins-btn-secondary { width: auto; padding: 0 var(--ins-5); }
+.dia-nota { margin: var(--ins-2) 0 0; }
+.dia-momentos { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: var(--ins-3); margin: var(--ins-2) 0 var(--ins-4); }
+.dia-momento { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--ins-tinta-2); }
+.dia-momento-h { color: var(--ins-tinta-3); }
+.df { width: 22px; height: 22px; }
+.df-cheio { fill: var(--ins-tinta); }
+.df-tinta { fill: none; stroke: var(--ins-tela); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.df-fio { fill: none; stroke: var(--ins-tinta); stroke-width: 1.5; }
+.df-traco { stroke: var(--ins-tinta); stroke-width: 1.8; stroke-linecap: round; }
+.df-trac { fill: none; stroke: var(--ins-fio-controle); stroke-width: 1.5; stroke-dasharray: 2.5 2.5; }
+.df-q { font-size: 11px; fill: var(--ins-tinta-2); }
+.dia-agua { margin: 0 0 var(--ins-4); }
+
+/* ---- A SESSÃO PASSADA, como foi (a D, dias.html, estados 3, 4 e 14) ------
+   Cada série é um botão com o par e o RIR embaixo; a aberta ganha o fio do
+   acento. O fim aproximado leva o pontilhado do palpite. "Não feito" é texto
+   na posição da série, em tinta fraca: não é alarme. */
+.ss-tempo { display: flex; flex-direction: column; gap: var(--ins-3); padding-bottom: var(--ins-4); border-bottom: 1px solid var(--ins-fio); }
+.ss-tempo-l { display: flex; align-items: center; gap: var(--ins-4); }
+.ss-tempo-r { flex: 0 0 64px; }
+.ss-tempo-v { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ss-aprox { text-decoration: underline dotted var(--ins-tinta-3); text-underline-offset: 4px; align-self: flex-start; }
+.ss-tempo-l > .ss-corrige { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+.ss-tempo-c { display: flex; flex-direction: column; gap: var(--ins-3); }
+.ss-lista { list-style: none; margin: 0; padding: 0; }
+.ss-ex { padding: var(--ins-4) 0; border-bottom: 1px solid var(--ins-fio); }
+.ss-ex-l { display: flex; flex-direction: column; gap: var(--ins-3); }
+.ss-ex-n { display: flex; flex-direction: column; gap: 2px; }
+.ss-series { display: flex; flex-wrap: wrap; gap: var(--ins-2); }
+.ss-sv {
+  min-width: 72px; min-height: var(--ins-tap); padding: var(--ins-2) var(--ins-3);
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 1px solid var(--ins-fio-controle); border-radius: var(--ins-raio-2);
+  font: 500 15px/1.1 var(--ins-fonte); font-variant-numeric: tabular-nums; color: var(--ins-tinta);
+}
+.ss-sv small { font-size: 11px; font-weight: 400; color: var(--ins-tinta-3); }
+.ss-sv.on { border-color: var(--ins-acento); box-shadow: inset 0 0 0 1px var(--ins-acento); }
+.ss-sv:disabled { opacity: 1; }
+.ss-sv.nf { border-style: dashed; color: var(--ins-tinta-3); font-weight: 400; font-size: 13px; }
+.ss-ex-nota { margin: var(--ins-2) 0 0; }
+.ss-ed { margin-top: var(--ins-4); padding: var(--ins-4); border: 1px solid var(--ins-fio); border-radius: var(--ins-raio-4); display: flex; flex-direction: column; gap: var(--ins-3); }
+.ss-ed-h { display: flex; align-items: center; justify-content: space-between; gap: var(--ins-3); }
+.ss-carga {
+  flex: 0 0 auto; min-height: var(--ins-tap); padding: 0 var(--ins-4);
+  border: 1px solid var(--ins-fio-controle); font: 600 19px/1 var(--ins-fonte); font-variant-numeric: tabular-nums;
+}
+.ss-carga span { margin-left: 4px; font-size: 12px; font-weight: 400; color: var(--ins-tinta-3); }
+.ss-ed-faixa { margin: 0; }
+.ss-ed-ok { margin: 0; }
+.ss-ed-falhou { display: flex; flex-direction: column; gap: var(--ins-3); padding: var(--ins-3); border: 1px solid var(--ins-atencao-fio); color: var(--ins-atencao-tinta); border-radius: var(--ins-raio-2); }
+.ss-ed-falhou p { margin: 0; }
+.ss-ed-pe { display: flex; justify-content: space-between; gap: var(--ins-3); }
+.ss-lk { min-height: var(--ins-tap); padding: 0 var(--ins-2); font-size: 14px; color: var(--ins-tinta-2); text-decoration: underline; text-underline-offset: 3px; }
+.regua-v.tocado { border-style: dashed; }
+.dia-cardio-ed { display: flex; flex-direction: column; gap: var(--ins-4); padding: var(--ins-2) 0 var(--ins-4); }
+.dia-cardio-c { display: flex; flex-direction: column; gap: var(--ins-2); }
+.df-fut { fill: none; stroke: var(--ins-fio-controle); stroke-width: 1.5; }
+.df-agora { fill: none; stroke: var(--ins-acento); stroke-width: 2.5; }
+
+/* ---- A COMIDA DE HOJE, em linhas (a D, momento-2 e agora-descanso) -------
+   Cada linha: a forma do estado, a hora, o nome e, à direita, o que se sabe
+   dela. A da janela leva o anel do acento; a que passou sem marca, o círculo
+   tracejado — desconhecido, não zero. Aberta, ela é o cartão. */
+.ag-linhas { list-style: none; margin: 0; padding: 0; }
+.ag-l { border-bottom: 1px solid var(--ins-fio); }
+.ag-l:last-child { border-bottom: 0; }
+/* A linha inteira é o alvo: 12 + 22 + 12 passa dos 44 px sem forçar altura. */
+.ag-l-b {
+  width: 100%; padding: var(--ins-5) 0; border-radius: 0;
+  display: grid; grid-template-columns: 22px 48px 1fr auto; align-items: center; gap: var(--ins-3); text-align: left;
+}
+.ag-l-h { font-size: 14px; font-variant-numeric: tabular-nums; color: var(--ins-tinta-2); }
+.ag-l-n { display: flex; flex-direction: column; gap: 1px; font-size: 16px; color: var(--ins-tinta); min-width: 0; }
+.ag-l-n small { font-size: 12px; color: var(--ins-tinta-3); }
+.ag-l-s { font-size: 14px; color: var(--ins-tinta-2); text-align: right; }
+.ag-l.futuro .ag-l-n, .ag-l.futuro .ag-l-s { color: var(--ins-tinta-3); }
+.ag-l.sem .ag-l-s { color: var(--ins-tinta-3); }
+.ag-l.agora .ag-l-s { color: var(--ins-acento-tinta); font-weight: 600; }
+.ag-l-ab { display: flex; flex-direction: column; gap: var(--ins-3); padding: 0 0 var(--ins-5) var(--ins-11); }
+.ag-l-ab p { margin: 0; }
+.ag-l-btns { display: flex; gap: var(--ins-3); flex-wrap: wrap; }
+.ag-l-btns > .ins-btn-secondary { flex: 1 1 0; width: auto; min-width: 0; padding: 0 var(--ins-3); }
+.ag-l-perg { display: flex; flex-direction: column; gap: var(--ins-3); }
+.ag-l-feita { display: flex; align-items: center; gap: var(--ins-3); }
+.ag-l-feita > span { flex: 1 1 auto; min-width: 0; }
+.ag-l-feita > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+.ag-l-lk { align-self: flex-start; min-height: var(--ins-tap); font-size: 14px; color: var(--ins-tinta-2); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- A ÁGUA, em linha (a D, agora-descanso estados 3 e 8) ---------------
+   A conta e o desenho da conta: catorze copos pequenos, cheios até onde ele
+   bebeu. O número é tocável e corrige no lugar. */
+.ag-agua { margin-top: var(--ins-7); padding: var(--ins-3) var(--ins-3) var(--ins-3) var(--ins-5); border-radius: var(--ins-raio-4); background: var(--ins-superficie-2); }
+.ag-agua-l { display: flex; align-items: center; gap: var(--ins-4); }
+.ag-agua-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; border-radius: var(--ins-raio-2); }
+.ag-agua-t b { font-variant-numeric: tabular-nums; }
+.ag-copos { display: flex; gap: 3px; margin-top: var(--ins-1); }
+.ag-copos i { width: 12px; height: 14px; border-radius: 2px 2px 4px 4px; border: 1.5px solid var(--ins-tinta-3); }
+.ag-copos i.f { background: var(--ins-tinta); border-color: var(--ins-tinta); }
+.ag-agua-l > .ag-agua-b { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+.ag-agua-c { margin-top: var(--ins-3); }
+.ag-agua-f { margin-top: var(--ins-3); display: flex; flex-direction: column; gap: var(--ins-2); color: var(--ins-atencao-tinta); }
+.ag-agua-f p { margin: 0; color: var(--ins-tinta-2); }
+
+/* ---- Os dias conhecidos dos últimos 14 (a D, agora-descanso estado 1) -----
+   Uma célula por dia: cheia, em parte, vazia. Contagem, nunca percentual. */
+.ag-14 { margin-top: var(--ins-9); padding-top: var(--ins-7); border-top: 1px solid var(--ins-fio); }
+.ag-14-c { display: grid; grid-template-columns: repeat(14, 1fr); gap: 3px; }
+.ag-14-d { height: 22px; border-radius: var(--ins-raio-1); border: 1.5px solid var(--ins-fio-controle); }
+.ag-14-d.cheio { background: var(--ins-tinta); border-color: var(--ins-tinta); }
+.ag-14-d.parte { background: linear-gradient(to top, var(--ins-tinta) 50%, transparent 50%); border-color: var(--ins-tinta); }
+.ag-14-d.hoje { border-style: dashed; border-color: var(--ins-acento); }
+.ag-14-l { display: flex; justify-content: space-between; margin-top: var(--ins-2); font-size: 12px; color: var(--ins-tinta-3); }
+.ag-14-t { margin: var(--ins-4) 0 0; }
+.ag-14-t b { font-variant-numeric: tabular-nums; color: var(--ins-tinta); }
+.ag-14-o { display: flex; align-items: center; gap: var(--ins-4); margin-top: var(--ins-4); }
+.ag-14-o p { flex: 1 1 auto; min-width: 0; margin: 0; }
+.ag-14-o > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+
+/* ---- O cabeçalho do Agora (a D, agora-descanso estados 1, 4 e 5) ----------
+   O dia e a hora; embaixo, a procedência do tipo do dia, tocável. O palpite
+   leva o pontilhado do palpite — a mesma marca do fim aproximado. */
+.ag-cab-r1 { display: flex; align-items: center; justify-content: space-between; gap: var(--ins-4); }
+.ag-cab-d { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.01em; color: var(--ins-tinta); }
+.ag-cab-h { margin-left: var(--ins-3); font-size: 15px; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--ins-tinta-3); }
+.ag-prov { margin-top: var(--ins-2); min-height: var(--ins-tap); padding: 0; border-radius: 0; text-align: left; font-size: 15px; color: var(--ins-tinta-2); }
+.ag-prov.palpite { text-decoration: underline dotted var(--ins-tinta-3); text-underline-offset: 5px; }
+.fd-sub { margin: 0 0 var(--ins-5); }
+.fd-jafiz { display: flex; flex-direction: column; gap: var(--ins-3); margin-top: var(--ins-7); }
+.fd-jafiz p { margin: 0; }
+
+/* ---- A decisão no Agora (a D, agora-descanso estados 6 e 7) ------------- */
+.ag-vence { margin-top: var(--ins-5); }
+.dc-g { display: flex; flex-direction: column; gap: var(--ins-5); }
+.dc-m { display: flex; flex-direction: column; gap: var(--ins-3); }
+.dc-m p, .dc-g p { margin: 0; }
+.dc-imp.acima { color: var(--ins-atencao-tinta); }
+.dc-regra { padding-left: var(--ins-4); border-left: 2px solid var(--ins-fio-controle); }
+
+/* ---- A leitura de volta do último toque (a D, momento-2 estado 2) -------- */
+.ag-volta { margin-top: var(--ins-5); padding: var(--ins-4) var(--ins-5); border-radius: var(--ins-raio-4); background: var(--ins-superficie-2); display: flex; flex-direction: column; gap: var(--ins-3); }
+.ag-volta p { margin: 0; }
+.ag-volta-l { display: flex; align-items: center; gap: var(--ins-4); }
+.ag-volta-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ag-volta-t small { font-size: 13px; color: var(--ins-tinta-2); }
+.ag-volta-l > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+
+/* O RÓTULO DE SEÇÃO (frente 3 §2, R2; 10-tokens): 15 px, peso 600, caixa de
+   frase, na tinta de leitura — nunca caixa alta com tracking. */
+.ins-rotulo { margin: 0; font: 600 var(--ins-t-corpo-forte)/1.25 var(--ins-fonte); color: var(--ins-tinta); }
+/* R4 da frente 3: a unidade junto do número, como ela se escreve (12 px,
+   caixa baixa, tinta-3) — a mesma espécie da procedência: diz o que o número é. */
+.ins-metric-u { font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3); letter-spacing: 0; }
+
+/* O passo que não gravou (a D, semana estado 10): tão explícito quanto o sucesso. */
+.dd-passo-falhou { margin-top: var(--ins-5); padding: var(--ins-5); border: 1px solid var(--ins-atencao-fio); border-radius: var(--ins-raio-4); display: flex; flex-direction: column; gap: var(--ins-3); }
+.dd-passo-falhou p { margin: 0; }
+.dd-passo-l { margin: 0; padding-left: var(--ins-7); }
+
+/* A pose que não coube (a D, sessao-fotos estado 9): forma e cor diferentes
+   de "ainda não feita" — o fio de atenção e o tracejado. */
+.pr-ponto.nao { border: 2px dashed var(--ins-atencao-tinta); background: transparent; }
+.pr-naoguardada { margin: var(--ins-5) 0; padding: var(--ins-5); border: 1px solid var(--ins-atencao-fio); border-radius: var(--ins-raio-4); display: flex; flex-direction: column; gap: var(--ins-3); }
+.pr-naoguardada p { margin: 0; }
+.co-vazio { display: flex; flex-direction: column; gap: var(--ins-3); }
+.co-vazio p { margin: 0; }
+.cp-recuou { margin: var(--ins-4) 0; display: flex; flex-direction: column; gap: var(--ins-2); }
+.cp-recuou p { margin: 0; }
+
+/* ---- A cortina do Comparar (a D, comparar estado 2) ---------------------- */
+.cp-cortina { position: relative; }
+.cp-divisa { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ins-tela); box-shadow: 0 0 0 1px var(--ins-tinta); pointer-events: none; }
+.cp-lado-r { position: absolute; bottom: var(--ins-3); padding: 2px var(--ins-2); border-radius: var(--ins-raio-1); background: var(--ins-tela); font-size: 12px; color: var(--ins-tinta-2); }
+.cp-lado-e { left: var(--ins-3); }
+.cp-lado-d { right: var(--ins-3); }
+.cp-corte { width: 100%; margin-top: var(--ins-4); }
+
+/* ---- A câmera a três metros (a D, sessao-fotos estados 2 e 3) ------------
+   Os blocos das poses do tamanho de um dedo; o clarão do disparo, curto. */
+.cam-blocos { display: grid; grid-template-columns: repeat(9, 1fr); gap: var(--ins-1); margin-bottom: var(--ins-3); }
+.cam-bloco { height: 22px; border-radius: var(--ins-raio-1); border: 1.5px solid var(--ins-fio-controle); }
+.cam-bloco.feita { background: var(--ins-tinta); border-color: var(--ins-tinta); }
+.cam-bloco.atual { border-color: var(--ins-acento); box-shadow: inset 0 0 0 2px var(--ins-acento); }
+.cam-bloco.nao { border: 2px dashed var(--ins-atencao-tinta); }
+.cam-clarao { position: absolute; inset: 0; background: var(--ins-foto-tinta); animation: cam-clarao 320ms ease-out forwards; pointer-events: none; }
+@keyframes cam-clarao { from { opacity: .9; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cam-clarao { animation-duration: 1ms; opacity: 0; } }
+
+/* ---- Enquanto descansa (a D, momento 1, estado 2) ----------------------
+   No cartão aberto da sessão, só enquanto o descanso conta. */
+.ex-descansa { display: flex; flex-direction: column; gap: var(--ins-3); margin: var(--ins-5) 0 var(--ins-3); }
+.ex-descansa-c { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
+.ex-descansa-f { margin: 0; color: var(--ins-atencao-tinta); }
+
+/* ---- A semana sem média (a D, corpo, estado 9) ---------------------------
+   O que falta, e os dias da semana em trechos. Sem cor de estado: a cobrança
+   é a frase, não o vermelho. */
+.co-semana { display: flex; flex-direction: column; gap: var(--ins-3); margin-bottom: var(--ins-6); }
+.co-semana-t { margin: 0; }
+.co-semana p { margin: 0; }
+.co-semana-d { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ins-fio); }
+.co-semana-l { display: flex; justify-content: space-between; gap: var(--ins-4); padding: var(--ins-3) 0; border-bottom: 1px solid var(--ins-fio); }
+.co-semana-l.tempo span:last-child { color: var(--ins-acento); }
+
+/* ---- O endereço vazio (a D, prescricao, estado 9) ------------------------ */
+.pr-vazio-p { margin: 0 0 var(--ins-6); }
+.pr-vazio-h { margin: var(--ins-6) 0 var(--ins-2); }
+.pr-vazio-arq { position: relative; cursor: pointer; }
+.pr-vazio-arq input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.pr-vazio-b { margin-top: var(--ins-5); width: 100%; }
+
+/* ---- O plano alimentar (a D, prescricao, estado 7) ----------------------- */
+.pr-meu { font-weight: 600; color: var(--ins-acento); }
+.pr-plano-fim { margin-top: var(--ins-6); }
+.pr-horizonte { display: flex; align-items: center; gap: var(--ins-4); margin-top: var(--ins-4); }
+.pr-horizonte input { width: 88px; }
+
+/* ---- A última aula, antes de começar (a D, aula, estado 5) -------------- */
+.tr-ultima { margin-top: var(--ins-6); display: flex; flex-direction: column; gap: var(--ins-3); }
+.tr-ultima p { margin: 0; }
+
+/* ---- As fotos que só existem aqui (a D, comparar, estado 10) ------------- */
+.dd-fotos-aqui { display: flex; flex-direction: column; gap: var(--ins-2); margin: var(--ins-5) 0; }
+.dd-fotos-aqui p { margin: 0; }
+.dd-fotos-aqui button { align-self: flex-start; margin-top: var(--ins-2); }
+
+/* ---- O par curto (a D, comparar, estado 3) ------------------------------- */
+.cp-curto { display: flex; flex-direction: column; gap: var(--ins-2); margin: var(--ins-5) 0; }
+.cp-curto p { margin: 0; }
+.cp-curto button { align-self: flex-start; margin-top: var(--ins-2); }
+
+/* ---- O cardio de hoje no Agora (decisão do dono, 14/10) ----------------- */
+.ag-cardio-hoje { margin: var(--ins-3) 0 0; padding: 0; list-style: none; }
+.ag-cardio-hoje .ins-linha { align-items: center; }
+
+/* ---- O cardio esquecido, lançado no dia passado (decisão do dono, 14/10) -- */
+.dia-cardio-novo { margin-top: var(--ins-5); }
+.dia-cardio-falhou { margin: 0; color: var(--ins-atencao-tinta); }
+.dd-promessa { margin: var(--ins-4) 0 0; }
+
+/* ---- A lousa do box (a D, aula, estado 6) ------------------------------ */
+.tr-lousa { display: flex; flex-direction: column; gap: var(--ins-3); margin-bottom: var(--ins-6); }
+.tr-lousa p { margin: 0; }
+.tr-lousa-img { display: block; width: 100%; max-width: 100%; border: 1px solid var(--ins-fio); }
+.tr-lousa-b { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
+.tr-lousa-arq { position: relative; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; align-self: flex-start; }
+.tr-lousa-arq input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.ss-lousa { margin: var(--ins-5) 0 0; display: flex; flex-direction: column; gap: var(--ins-2); }
+.ss-lousa p { margin: 0; }
+
+/* ---- A revisão do treinador colada (a D, prescrição, estado 6) ---------- */
+.rv-p { margin: 0 0 var(--ins-4); }
+.rv-texto { width: 100%; min-height: 220px; resize: vertical; margin-bottom: var(--ins-4); font-size: 15px; }
+.rv-modelo { white-space: pre-wrap; overflow-x: auto; margin: 0; padding: var(--ins-4); background: var(--ins-superficie-2); font-size: 13px; line-height: 1.5; }
+.rv-linha { overflow-wrap: anywhere; }
+.rv-perg { display: flex; flex-direction: column; gap: var(--ins-3); padding: var(--ins-5) 0; border-top: 1px solid var(--ins-fio); }
+.rv-perg:first-of-type { border-top: 0; }
+.rv-perg p { margin: 0; }
+.rv-b { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
+.rv-b .on { border-color: var(--ins-acento); color: var(--ins-acento); }
+.rv-novos { margin: var(--ins-5) 0; }
+.rv-mud { margin: 0; padding-left: var(--ins-8); }
+.rv-mud li { margin-bottom: var(--ins-1); }
+.rv-suas { margin-top: var(--ins-4); }
+.rv-suas p { margin: 0 0 var(--ins-2); }
+.rv-fim { display: flex; flex-direction: column; gap: var(--ins-3); margin-top: var(--ins-8); }
+.rv-fim p { margin: 0; }
+.pr-revisao { margin-top: var(--ins-3); width: 100%; }
+
+/* ---- A sessão de fotos: a ordem, o fim, o giro e a foto preta (a D) ----- */
+.pr-ordem { margin: 0 0 var(--ins-2); }
+.pr-som { margin: var(--ins-3) 0 0; }
+.pr-fim { display: flex; flex-direction: column; gap: var(--ins-2); margin: var(--ins-5) 0; padding: var(--ins-5); background: var(--ins-superficie); border: 1px solid var(--ins-fio); border-radius: var(--ins-raio-2); }
+.pr-fim p { margin: 0; }
+.pr-fim-b { display: flex; flex-direction: column; gap: var(--ins-3); margin: var(--ins-3) 0; }
+.pr-ponto.adiada { border-style: dashed; }
+.cam-bloco.adiada { border: 2px dashed var(--ins-tinta-3); }
+.cam-giro { margin: 0 0 var(--ins-3); font: 600 40px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta); text-align: center; }
+.cam-preta { margin: 0 0 var(--ins-3); color: var(--ins-atencao-tinta); }

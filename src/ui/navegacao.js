@@ -57,6 +57,8 @@ export function camadasAbertas(view) {
   // passada, e a frente 1 apontou que confundir os dois era o erro provável.
   if (view.modoSessao) c.push('modoSessao');
 
+  // O dia aberto, abaixo da sessão e do registro de treino passado, que abrem dele.
+  if (view.diaAberto) c.push('dia');
   if (view.sessao) c.push('sessao');
   if (view.add) c.push('add');
   if (view.retro) c.push('retro');
@@ -67,7 +69,11 @@ export function camadasAbertas(view) {
   // programa — não o lugar. Antes a ordem era a inversa, e com os dois abertos
   // o programa ganhava e o histórico não aparecia.
   if (view.hist) c.push('hist');
+  // A Evolução ABAIXO da comparação: comparar abre de dentro dela.
+  if (view.evolucao) c.push('evolucao');
   if (view.comparar) c.push('comparar');
+  // A revisão do treinador abre da Prescrição, acima de qualquer lugar.
+  if (view.revisao) c.push('revisao');
   if (view.protocolo) c.push('protocolo');
   if (view.ajuste) c.push('ajuste');
   if (view.camera) c.push('camera');

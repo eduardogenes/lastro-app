@@ -1,22 +1,21 @@
-// O detalhe de uma sessão passada.
+// O detalhe de uma sessão passada — a terceira entrega da D (`dias.html`,
+// estados 3, 4 e 14).
 //
-// É tela de LEITURA primeiro: responde "o que aconteceu naquele dia" com o
-// número que importa no topo e o exercício a exercício embaixo.
+// A sessão abre COMO FOI: o começo e o fim, e cada série na ordem em que
+// aconteceu, com o RIR quando houve. Corrigir é tocar o número errado: a régua
+// de repetições da academia abre ali mesmo, porque o dado é o mesmo, e o toque
+// grava. O fim de uma sessão que fechou sozinha aparece como aproximado, com
+// "Corrigir" ao lado (F152, F295). O que estava prescrito e não foi feito fica
+// "não feito", na posição dele — não é falha nem pendência.
 //
-// As duas edições que existem ficam no fim, depois disso, porque são o que se
-// faz DEPOIS de olhar e ver que está errado: corrigir o tempo e apagar o
-// treino. Antes elas não existiam aqui — apagar só era oferecido no treino
-// avulso, e um treino do plano registrado por engano não tinha saída nenhuma.
-// Corrigir carga ou repetição continua sendo outro caminho, pelo histórico do
-// exercício: ali a unidade é a série, aqui é o dia.
-//
-// A distinção entre tempo EXATO e APROXIMADO aparece no rótulo e não é
-// decoração: sessão que o app fechou sozinho tem o tempo indo até a última
-// série, não até quando ele saiu da academia. Apresentar os dois como iguais
-// seria inventar precisão.
+// Saíram daqui, pelo desenho: a grade de tempo, volume e recordes e a variação
+// de cada exercício contra a vez anterior (são leitura de Semana e do histórico
+// do exercício), e o cardio do dia (mora no dia aberto).
 
-import { Procedencia, Secao, Vazio } from '../instrumento/primitivos.jsx';
-import { LinhaResumo, Stats, TelaCheia } from '../instrumento/telacheia.jsx';
+import { Procedencia, Vazio } from '../instrumento/primitivos.jsx';
+import { Stats, TelaCheia } from '../instrumento/telacheia.jsx';
+import { Regua } from '../instrumento/regua.jsx';
+import { Teclado } from '../instrumento/teclado.jsx';
 
 export function Sessao({ ctx }) {
   const d = ctx.detalheDaSessao();
@@ -36,100 +35,162 @@ export function Sessao({ ctx }) {
           semanal, mas não tem carga nem série registrada e não move a rotação.
         </p>
         <button class="ins-btn-secondary ins-btn-destructive tc-rm" onClick={() => ctx.editaSessao(d.t)}>
-          apagar este registro
+          Apagar este registro
         </button>
       </TelaCheia>
     );
   }
 
   return (
-    <TelaCheia olho={d.olho} meta={d.meta} titulo={d.titulo} aoVoltar={ctx.fechaSessao} corpo="hwrap">
-      <Stats celulas={d.stats} />
+    <TelaCheia olho={d.cab.meta} titulo={d.cab.titulo} aoVoltar={ctx.fechaSessao} corpo="hwrap">
+      <div class="ss-tempo">
+        <div class="ss-tempo-l">
+          <span class="ins-body-sm ins-t2 ss-tempo-r">Começo</span>
+          <span class="ss-tempo-v">
+            <span class="ins-body ins-t1">{d.comeco.hora}</span>
+            {d.comeco.nota && <small class="ins-body-xs ins-t3">{d.comeco.nota}</small>}
+          </span>
+        </div>
+        {d.fim && (
+          <div class="ss-tempo-l">
+            <span class="ins-body-sm ins-t2 ss-tempo-r">Fim</span>
+            <span class="ss-tempo-v">
+              <span class={'ins-body ins-t1' + (d.fim.aprox ? ' ss-aprox' : '')}>{d.fim.hora}</span>
+              <small class="ins-body-xs ins-t3">{d.fim.nota}</small>
+            </span>
+            {d.corrigivel && (
+              <button class="ins-btn-secondary ss-corrige" data-a="sessao-corrige-tempo"
+                      aria-expanded={d.corrigindoTempo ? 'true' : 'false'}
+                      onClick={() => ctx.abreCorrecaoDoTempo(d.t)}>Corrigir</button>
+            )}
+          </div>
+        )}
+        {d.corrigindoTempo && (
+          <div class="ss-tempo-c">
+            <div class="ins-chips">
+              {d.duracoes.map(v => (
+                <button key={v.k} class={'ins-chip' + (v.on ? ' on' : '')} aria-pressed={v.on ? 'true' : 'false'}
+                        onClick={() => ctx.corrigeDuracao(d.t, v.k)}>{v.t}</button>
+              ))}
+            </div>
+            <Procedencia>
+              Hoje está {d.duracaoTxt}. Corrigir torna o tempo declarado, e o "aproximado" some.
+            </Procedencia>
+          </div>
+        )}
+      </div>
 
-      {d.horario && (
-        <p class="ins-provenance horario">
-          {d.horario.ate
-            ? <>das <b>{d.horario.de}</b> às <b>{d.horario.ate}</b></>
-            : <>começou às <b>{d.horario.de}</b></>}
-        </p>
-      )}
+      {d.exercicios.length === 0
+        ? <Vazio>Nenhuma série registrada neste dia. Só a presença.</Vazio>
+        : (
+          <ul class="ss-lista">
+            {d.exercicios.map(x => (
+              <li key={x.idEx + (x.chave || '')} class="ss-ex">
+                <div class="ss-ex-l">
+                  <span class="ss-ex-n">
+                    <span class="ins-body ins-t1">{x.nome}</span>
+                    <small class="ins-body-xs ins-t3">{x.presc}</small>
+                  </span>
+                  <span class="ss-series">
+                    {x.series.map(sr => sr.nao
+                      ? (sr.lanca
+                          ? <button key={sr.k} class={'ss-sv nf' + (sr.aberta ? ' on' : '')}
+                                    data-a={'serie-' + x.idEx + '-' + sr.k} aria-expanded={sr.aberta ? 'true' : 'false'}
+                                    aria-label={'série ' + (sr.k + 1) + ': não feita. Tocar lança, se você fez.'}
+                                    onClick={() => ctx.abreSerieDaPassada(x.idEx, x.chave, sr.k)}>não feito</button>
+                          : <span key={sr.k} class="ss-sv nf">não feito</span>)
+                      : (
+                        <button key={sr.k} class={'ss-sv' + (sr.aberta ? ' on' : '')} disabled={!sr.editavel}
+                                data-a={'serie-' + x.idEx + '-' + sr.k} aria-expanded={sr.aberta ? 'true' : 'false'}
+                                aria-label={'série ' + (sr.k + 1) + ': ' + sr.texto + (sr.rir ? ', ' + sr.rir : '') + (sr.editavel ? '. Tocar corrige.' : '')}
+                                onClick={() => ctx.abreSerieDaPassada(x.idEx, x.chave, sr.k)}>
+                          {sr.texto}
+                          <small>{sr.rir || '\u00a0'}</small>
+                        </button>
+                      ))}
+                  </span>
+                </div>
+                {x.nota && <p class="ins-body-xs ins-t3 ss-ex-nota">{x.nota}</p>}
+                {x.editor && <Editor e={x.editor} ctx={ctx} />}
+              </li>
+            ))}
+          </ul>
+        )}
 
-      {d.notas.length > 0 && (
-        <p class="ins-body-sm ins-t3 tc-nota cue">{d.notas.join(' ')}</p>
+      {d.notas.length > 0 && <p class="ins-body-sm ins-t3 tc-nota">{d.notas.join(' ')}</p>}
+      {/* A lousa da aula, guardada no dia (decisão do dono, 14/10). Sem os
+          bytes neste aparelho, a linha diz que a foto existiu. */}
+      {d.lousa && (
+        <figure class="ss-lousa">
+          {d.lousa.url
+            ? <img class="tr-lousa-img" src={d.lousa.url} alt="Foto da lousa desta aula" />
+            : <p class="ins-body-sm ins-t3">A foto da lousa não está neste aparelho.</p>}
+          <figcaption class="ins-body-xs ins-t3">{d.lousa.quando}</figcaption>
+        </figure>
       )}
 
       {d.mods && (
         <div class="tc-bloco">
-          <div class="ins-label">
-            {d.mods.length === 1 ? '1 mudança no dia' : d.mods.length + ' mudanças no dia'}
+          <div class="ins-body-sm ins-t2">
+            {d.mods.length === 1 ? 'A mudança do dia' : 'As ' + d.mods.length + ' mudanças do dia'}
           </div>
           <p class="ins-body-sm ins-t2">{d.mods.join(' · ')}</p>
         </div>
       )}
 
-      {d.pendencias.length > 0 && (
-        <div class="tc-bloco pend">
-          {d.pendencias.map(p => (
-            <div key={p.k} class="tc-pend">
-              <span class="ins-label">{p.n} {p.rotulo}</span>
-              <span class="ins-body-sm ins-t3">{p.nomes}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {d.cardio && (
-        <div class="tc-bloco cardio-dia">
-          <div class="ins-label">cardio no mesmo dia</div>
-          {d.cardio.map(c => <p key={c} class="ins-body-sm ins-t2">{c}</p>)}
-        </div>
-      )}
-
-      {d.tempo && (
-        <Procedencia>
-          mais {d.tempo} segundos de prancha, contados à parte do volume
-        </Procedencia>
-      )}
-
-      {d.dores && (
-        <div class="tc-bloco atencao">
-          <div class="ins-label ins-amber">dor marcada</div>
-          <p class="ins-body-sm ins-t2">
-            <b>{d.dores}.</b> Se repetir na próxima sessão, o app sugere a troca
-            de ângulo.
-          </p>
-        </div>
-      )}
-
-      <div class="ins-label tc-h">exercício a exercício</div>
-      {d.itens.length === 0
-        ? <Vazio>Nenhuma série registrada neste dia.</Vazio>
-        : d.itens.map((x, i) => <LinhaResumo key={i} {...x} />)}
-
-      {/* Corrigir e apagar ficam no FIM, depois do que aconteceu no dia.
-          São as duas coisas que se faz aqui depois de olhar e ver que está
-          errado — e nenhuma delas deve estar no caminho de quem só veio ler. */}
-      {d.corrigivel && (
-        <Secao rotulo="corrigir o tempo"
-               nota={d.exato ? 'declarado por você' : 'o app fechou sozinho'}>
-          <div class="ins-chips">
-            {d.duracoes.map(v => (
-              <button key={v.k} class={'ins-chip' + (v.on ? ' on' : '')}
-                      onClick={() => ctx.corrigeDuracao(d.t, v.k)}>{v.t}</button>
-            ))}
-          </div>
-          <Procedencia>
-            hoje marcado como {d.duracaoTxt}. Esquecer de finalizar deixa o tempo
-            correndo até a última série — corrigir aqui o torna declarado, e o
-            "aproximado" some.
-          </Procedencia>
-        </Secao>
-      )}
-
-      <button class="ins-btn-secondary ins-btn-destructive tc-rm"
+      <button class="ins-btn-secondary ins-btn-destructive tc-rm" data-a="sessao-apaga"
               onClick={() => ctx.editaSessao(d.t)}>
-        apagar este treino
+        Apagar este treino
       </button>
     </TelaCheia>
+  );
+}
+
+/** A série aberta: carga, régua de repetições, RIR e o apagar. Cada toque grava. */
+function Editor({ e, ctx }) {
+  return (
+    <div class="ss-ed">
+      <div class="ss-ed-h">
+        <span class="ins-body-sm ins-t2"><b>{e.titulo}</b> · {e.guardada}</span>
+        <button class="ss-carga" data-a="sessao-carga" aria-label={'carga: ' + e.carga + ' ' + e.un + '. Tocar abre o teclado.'}
+                onClick={() => ctx.abreCargaDaPassada()}>
+          {e.carga}<span>{e.un}</span>
+        </button>
+      </div>
+      {e.teclado && (
+        <Teclado texto={e.teclado.texto} decimal unidade={e.teclado.unidade}
+                 rotulo={'digitar a carga da ' + e.titulo.toLowerCase()}
+                 aoTeclar={t => ctx.tecla(t)} aoFechar={() => ctx.fechaTeclado()} />
+      )}
+      <p class="ins-body-xs ins-t3 ss-ed-faixa">{e.faixa}</p>
+      <Regua slots={e.regua.slots} valor={e.regua.valor} marca={e.regua.marca} tocado={e.regua.tocado}
+             rotulo="Repetições · um toque corrige"
+             aoEscolher={v => ctx.repsDaPassada(v)} aoAndar={dir => ctx.andaReguaDaPassada(dir)} />
+      {e.gravado && <p class="ins-body-sm ins-t2 ss-ed-ok" role="status">{e.gravado}</p>}
+      {e.falhou && (
+        <div class="ss-ed-falhou" role="alert">
+          <p class="ins-body-sm">{e.falhou}</p>
+          <button class="ins-btn-secondary" data-a="sessao-tenta" onClick={() => ctx.repsDaPassada(e.regua.tocado)}>
+            Tentar de novo
+          </button>
+        </div>
+      )}
+      {e.rir && <div class="ss-ed-pe">
+        <button class="ss-lk" data-a="sessao-rir" aria-expanded={e.rir.aberto ? 'true' : 'false'}
+                onClick={() => ctx.rirDaPassada('abre')}>{e.rir.texto}</button>
+        <button class="ss-lk dn" data-a="sessao-apaga-serie" onClick={() => ctx.apagaSerieDaPassada()}>
+          Apagar esta série
+        </button>
+      </div>}
+      {e.rir && e.rir.aberto && (
+        <div class="ins-chips ss-rir">
+          {e.rir.escala.map(r => (
+            <button key={r.v} class={'ins-chip' + (r.on ? ' on' : '')} aria-pressed={r.on ? 'true' : 'false'}
+                    data-a={'sessao-rir-' + r.v} onClick={() => ctx.rirDaPassada(r.v)}>{'RIR ' + r.v}</button>
+          ))}
+          <button class="ins-chip" data-a="sessao-rir-nenhum" onClick={() => ctx.rirDaPassada(null)}>nenhum</button>
+        </div>
+      )}
+    </div>
   );
 }

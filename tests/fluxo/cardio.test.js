@@ -12,16 +12,21 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { app, agoraEstavel, inicioDaSemana, DIA } from './harness.js';
 
+// A seção de cardio é do dia de TREINO: no descanso o cardio entra pela folha do
+// tipo do dia (a D, `agora-descanso.html`, estado 1). Os casos do placar e do
+// registro rápido fixam a cadência, para não dependerem do dia da semana.
+const TODO_DIA_TREINO = ['treino','treino','treino','treino','treino','treino','treino'];
+
 test('placar da semana aparece no AGORA', async () => {
-  const a = await app({ aba: 'agora' });
+  const a = await app({ aba: 'agora', estado: { cadencia: TODO_DIA_TREINO } });
   const linha = a.texto('.cardl');
-  assert.ok(/cardio/.test(linha), linha);
+  assert.ok(/Cardio/.test(linha), linha);
   assert.ok(/0 de 2 nesta semana/.test(linha), linha);
   a.fechar();
 });
 
 test('registro rápido sem sair do AGORA', async () => {
-  const a = await app({ aba: 'agora' });
+  const a = await app({ aba: 'agora', estado: { cadencia: TODO_DIA_TREINO } });
   assert.strictEqual(a.$('.cardq'), null, 'fechado por padrão, para não ocupar espaço');
 
   a.v('abrirCardioRapido');
@@ -42,7 +47,7 @@ test('registro rápido sem sair do AGORA', async () => {
 });
 
 test('feito hoje muda o estado da linha', async () => {
-  const a = await app({ aba: 'agora', estado: { logs: {}, done: [],
+  const a = await app({ aba: 'agora', estado: { logs: {}, done: [], cadencia: TODO_DIA_TREINO,
     cardio: [{ t: Date.now(), m: 'bike', min: 20, i: 'leve' }] } });
   assert.ok(a.$('.cardl').className.includes('feito'));
   assert.ok(a.texto('.cardl').includes('20 min de bike'));
@@ -58,60 +63,57 @@ test('aviso de dia de perna aparece no momento em que importa', async () => {
   a.fechar();
 });
 
-test('faixa da semana marca os dias com cardio, em DIAS', async () => {
-  // A faixa mudou de endereço: vinha da tela do treino, onde o comentário dela
-  // já dizia "contexto de ADESÃO, não da sessão", e o modo esconde placares de
-  // propósito (§4.2). Agora é de Dias, que é "o que aconteceu em cada dia".
-  const seg = inicioDaSemana(Date.now());
-  const a = await app({ aba: 'dias', estado: { logs: {}, done: [],
-    cardio: [{ t: seg + 8 * 3600000, m: 'bike', min: 20, i: 'leve' }] } });
+test('o mês marca os dias com cardio, em DIAS', async () => {
+  // A faixa da semana saiu de Dias (a D: o mês já mostra a semana). O cardio é
+  // o coração na célula do dia.
+  const agora = agoraEstavel();
+  const t = agora - 2 * DIA;
+  const a = await app({ aba: 'dias', agora: agora, estado: { logs: {}, done: [],
+    cardio: [{ t: t, m: 'bike', min: 20, i: 'leve' }] } });
 
-  const cels = a.$$('.wd');
-  assert.strictEqual(cels[0].querySelectorAll('.barra-cardio').length, 1, 'segunda tem cardio');
-  assert.strictEqual(cels[1].querySelectorAll('.barra-cardio').length, 0);
+  const cel = function (x) { return a.$('[data-dia="' + a.v('hojeISO', x) + '"]'); };
+  assert.ok(cel(t).querySelector('.dc-c'), 'o dia tem cardio');
+  assert.strictEqual(cel(t - DIA).querySelector('.dc-c'), null, 'o da véspera, não');
+  assert.ok(/cardio/.test(cel(t).getAttribute('aria-label')), 'e o nome acessível diz');
   a.fechar();
 });
 
-test('calendário marca cardio sem competir com a letra do treino', async () => {
-  const hoje = new Date();
+test('o mês marca cardio sem competir com a letra do treino', async () => {
+  const agora = agoraEstavel();
+  const hoje = new Date(agora);
   const dia = new Date(hoje.getFullYear(), hoje.getMonth(), 2, 8).getTime();
-  const a = await app({ estado: {
+  const a = await app({ agora: agora, estado: {
     logs: {}, done: [{ day: 'A', t: dia, sid: dia, dur: 50 * 60000 }],
     cardio: [{ t: dia + 3600000, m: 'bike', min: 20, i: 'leve' }]
   } });
   a.aba('dias');
 
-  const cel = a.$$('.cal-d').find(function (c) {
-    return c.querySelector('em') && c.querySelector('em').textContent === '2';
-  });
-  assert.ok(cel.className.includes('feito'), 'ainda é dia de treino');
-  // a letra vem primeiro; o marcador de período é um sobrescrito dentro do mesmo <i>
-  assert.strictEqual(cel.querySelector('i').childNodes[0].textContent, 'A', 'a letra continua mandando');
-  assert.ok(cel.querySelector('.barra-cardio'), 'e a barra diz que teve cardio');
+  const cel = a.$('[data-dia="' + a.v('hojeISO', dia) + '"]');
+  assert.strictEqual(cel.querySelector('.dc-p').textContent, 'A', 'a letra continua mandando');
+  assert.ok(cel.querySelector('.dc-c'), 'e o coração diz que teve cardio');
   a.fechar();
 });
 
 test('dia só de cardio fica marcado mesmo sem treino', async () => {
-  const hoje = new Date();
+  const agora = agoraEstavel();
+  const hoje = new Date(agora);
   const dia = new Date(hoje.getFullYear(), hoje.getMonth(), 3, 8).getTime();
-  const a = await app({ estado: { logs: {}, done: [],
+  const a = await app({ agora: agora, estado: { logs: {}, done: [],
     cardio: [{ t: dia, m: 'esteira inclinada', min: 25, i: 'moderado' }] } });
   a.aba('dias');
 
-  const cel = a.$$('.cal-d').find(function (c) {
-    return c.querySelector('em') && c.querySelector('em').textContent === '3';
-  });
-  assert.ok(cel.className.includes('com-cardio'));
-  assert.ok(cel.querySelector('.barra-cardio'));
-  assert.ok(!cel.className.includes('feito'), 'não é dia treinado');
+  const cel = a.$('[data-dia="' + a.v('hojeISO', dia) + '"]');
+  assert.ok(cel.querySelector('.dc-c'));
+  assert.strictEqual(cel.querySelector('.dc-p'), null, 'não é dia treinado');
   a.fechar();
 });
 
-test('lista do mês e total de cardio', async () => {
-  const hoje = new Date();
+test('o dia mostra o cardio junto do treino, e o mês soma o cardio', async () => {
+  const agora = agoraEstavel();
+  const hoje = new Date(agora);
   const d1 = new Date(hoje.getFullYear(), hoje.getMonth(), 4, 7).getTime();
   const d2 = new Date(hoje.getFullYear(), hoje.getMonth(), 5, 7).getTime();
-  const a = await app({ estado: {
+  const a = await app({ agora: agora, estado: {
     logs: {}, done: [{ day: 'A', t: d1, sid: d1, dur: 50 * 60000 }],
     cardio: [
       { t: d1 + 3600000, m: 'bike', min: 20, i: 'leve' },
@@ -120,20 +122,24 @@ test('lista do mês e total de cardio', async () => {
   } });
   a.aba('dias');
 
-  assert.strictEqual(a.$$('.sessrow .tag.card-t').length, 1, 'a sessão do dia 4 teve cardio junto');
-  const totais = a.$$('.mediasem').map(function (x) { return x.textContent.replace(/\s+/g, ' '); });
-  const linha = totais.find(function (x) { return /cardio/.test(x); });
-  assert.ok(linha, totais.join(' | '));
-  assert.ok(/2 sessões de cardio/.test(linha), linha);
-  assert.ok(/50 minutos no mês/.test(linha), linha);
-  assert.ok(/1 em dia sem musculação/.test(linha), linha);
+  const c = a.vJ('ctx.mes').cardio;
+  assert.strictEqual(c.n, 2, 'duas sessões de cardio');
+  assert.strictEqual(c.min, 50, '50 minutos no mês');
+  assert.strictEqual(c.so, 1, 'uma em dia sem musculação');
+  const tela = a.$$('.dm-tres').map(function (x) { return x.textContent; }).join(' | ');
+  assert.ok(/2sessões/.test(tela) && /50 min/.test(tela) && /1em dia sem musculação/.test(tela), tela);
+
+  a.v('ctx.abreDia', d1);
+  await a.esperar();
+  assert.strictEqual(a.$$('[data-a="dia-sessao"]').length, 1, 'o dia 4 tem o treino');
+  assert.ok(/depois do treino/.test(a.texto('[data-a="dia-cardio"]')), 'e o cardio, dito depois do treino');
   a.fechar();
 });
 
-test('detalhe da sessão mostra o cardio do mesmo dia', async () => {
-  // relógio fixo às 8h: o cardio entra uma hora DEPOIS da sessão, e rodando
-  // perto da meia-noite essa hora atravessa o dia — os dois cairiam em datas
-  // diferentes e o bloco do "mesmo dia" ficaria vazio, corretamente
+test('o cardio do mesmo dia mora no dia, não na sessão', async () => {
+  // Saída declarada pela D (`dias.html`, estado 3): a sessão passada abre como
+  // foi, e o cardio daquele dia está no dia aberto, ao lado dela — dito como
+  // "depois do treino". Repetir na sessão seria o mesmo dado em dois lugares.
   const agora = agoraEstavel();
   const t = agora - 2 * DIA;
   const a = await app({ agora: agora, estado: {
@@ -141,10 +147,12 @@ test('detalhe da sessão mostra o cardio do mesmo dia', async () => {
     done: [{ day: 'A', t: t, sid: t, dur: 50 * 60000, fim: 'manual' }],
     cardio: [{ t: t + 3600000, m: 'bike', min: 20, i: 'leve' }]
   } });
+  a.v('ctx.abreDia', t);
+  await a.esperar();
+  assert.ok(/20 min de bike/.test(a.texto('[data-a="dia-cardio"]')), a.texto('[data-a="dia-cardio"]'));
+  assert.ok(/leve/.test(a.texto('[data-a="dia-cardio"]')));
   a.v('abrirSessao', t);
-  const bloco = a.texto('.cardio-dia');
-  assert.ok(/20 min de bike/.test(bloco), bloco);
-  assert.ok(/leve/.test(bloco));
+  assert.strictEqual(a.$('.cardio-dia'), null, 'e a sessão não o repete');
   a.fechar();
 });
 
@@ -169,12 +177,129 @@ test('a divisão do DADOS em três lugares não engoliu regra nenhuma', async ()
   await a.esperar();
   assert.ok(a.$('.ins-veredito'), 'o veredito é a primeira coisa da SEMANA');
   await a.modo('treino');
-  assert.ok(a.$$('.ins-label').some(function (x) { return x.textContent === 'cardio'; }),
+  assert.ok(a.$$('.ins-rotulo').some(function (x) { return x.textContent === 'O cardio da semana'; }),
     'o placar do cardio é da semana');
 
   a.aba('agora');
   await a.esperar();
   assert.ok(/nunca antes do treino/.test(proc(a)),
     'e a regra de quando fazer cardio está onde ele se registra: ' + proc(a));
+  a.fechar();
+});
+
+test('no descanso não há seção de cardio; ele entra pela folha do tipo do dia', async () => {
+  // A D (`agora-descanso.html`, estados 1 e 4): "não há outro cartão, faixa ou
+  // convite", e "um cardio leve num domingo é cardio em dia sem musculação, e é
+  // aqui que ele entra" — na folha.
+  const DESCANSO = ['descanso','descanso','descanso','descanso','descanso','descanso','descanso'];
+  const a = await app({ aba: 'agora', estado: { logs: {}, done: [], cardio: [], cadencia: DESCANSO } });
+  assert.strictEqual(a.$('.cardl'), null, 'sem seção, sem convite');
+  a.clicar('[data-a="tipo-do-dia"]');
+  await a.esperar(60);
+  a.clicar('[data-a="jafiz-cardio"]');
+  await a.esperar(60);
+  assert.ok(a.$('.cardq'), '"Já fiz → Cardio" abre o registro no Agora');
+  a.clicar('.cardq-b');
+  await a.esperar(60);
+  assert.strictEqual(a.S().cardio.length, 1, 'e grava');
+  assert.strictEqual(a.$('.cardl'), null, 'registrado, a seção volta a sair');
+  assert.strictEqual(a.$$('.ag-cardio-hoje li').length, 1,
+    'mas o que foi feito hoje fica, para poder desfazer — sem placar nem convite');
+  a.fechar();
+});
+
+test('o cardio de hoje aparece no Agora e se apaga ali, com a pergunta antes', async () => {
+  // Decisão do dono, 14/10: o lançado por engano se desfaz onde foi lançado.
+  // Antes, só amanhã, em Dias.
+  const agora = agoraEstavel(9, 0);
+  const t1 = agora - 2 * 3600000, t2 = agora - 3600000, ontem = agora - 86400000;
+  const TREINO = ['treino','treino','treino','treino','treino','treino','treino'];
+  const a = await app({ aba: 'agora', agora: agora, estado: { logs: {}, done: [], cadencia: TREINO,
+    cardio: [{ t: ontem, m: 'bike', min: 30, i: 'leve' },
+             { t: t1, m: 'bike', min: 25, i: 'leve' }, { t: t2, m: 'bike', min: 25, i: 'leve' }] } });
+  const linhas = a.$$('.ag-cardio-hoje li').map(li => li.textContent);
+  assert.strictEqual(linhas.length, 2, 'só os de hoje: ' + linhas.join(' | '));
+  assert.ok(/^7h00 · 25 min de bike, leve/.test(linhas[0]), linhas[0]);
+
+  a.recusar();
+  a.clicar('[data-a="cardio-apaga-' + t2 + '"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().cardio.length, 3, 'recusar a pergunta não apaga');
+
+  a.aceitar();
+  a.clicar('[data-a="cardio-apaga-' + t2 + '"]');
+  await a.esperar(60);
+  assert.deepStrictEqual(a.gravado().cardio.map(c => c.t).sort(), [ontem, t1].sort(), 'apagou o de 8h, no disco');
+  assert.strictEqual(a.$$('.ag-cardio-hoje li').length, 1);
+  a.fechar();
+});
+
+// ---------- o cardio esquecido, num dia passado (decisão do dono, 14/10) ----------
+
+test('o cardio esquecido entra pelo dia passado, sem hora, e conta no dia certo', async () => {
+  const agora = agoraEstavel(9, 0);
+  const tres = agora - 3 * DIA;
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [] } });
+  a.aba('dias');
+  a.v('ctx.abreDia', tres);
+  await a.esperar();
+  a.clicar('[data-a="dia-cardio-novo"]');
+  await a.esperar();
+  a.clicar('[data-a="dia-cardio-novo-m-remo"]');
+  a.clicar('[data-a="dia-cardio-novo-min-30"]');
+  a.clicar('[data-a="dia-cardio-novo-i-leve"]');
+  a.clicar('[data-a="dia-cardio-grava"]');
+  await a.esperar(60);
+
+  const c = a.gravado().cardio;
+  assert.strictEqual(c.length, 1, 'gravado');
+  assert.deepStrictEqual([c[0].m, c[0].min, c[0].i, c[0].semHora], ['remo', 30, 'leve', 1]);
+  const d = new Date(c[0].t), d3 = new Date(tres);
+  assert.deepStrictEqual([d.getDate(), d.getHours()], [d3.getDate(), 12], 'no dia escolhido, ao meio-dia');
+  assert.strictEqual(a.$('.dia-cardio-novo'), null, 'o formulário fecha');
+  const linha = a.texto('[data-a="dia-cardio"]');
+  assert.ok(/lançado depois, sem hora/.test(linha) && !/12h00/.test(linha), 'a hora não é inventada: ' + linha);
+  a.fechar();
+});
+
+test('dois cardios esquecidos no mesmo dia não colidem na chave, e o segundo não cita hora', async () => {
+  const agora = agoraEstavel(9, 0);
+  const tres = agora - 3 * DIA;
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [] } });
+  a.v('ctx.abreDia', tres);
+  for (let i = 0; i < 2; i++) {
+    a.v('ctx.abreCardioNoDia');
+    await a.v('ctx.gravaCardioNoDia');
+    await a.esperar(30);
+  }
+  const ts = a.gravado().cardio.map(x => x.t);
+  assert.strictEqual(new Set(ts).size, 2, 'dois instantes, duas chaves');
+  assert.ok(/igual a outro deste dia/.test(a.$$('[data-a="dia-cardio"]')[1].textContent));
+  a.fechar();
+});
+
+test('se o aparelho recusa, o cardio esquecido não fica fingindo que gravou', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [] } });
+  a.v('ctx.abreDia', agora - 3 * DIA);
+  a.v('ctx.abreCardioNoDia');
+  a.encheCota();
+  await a.v('ctx.gravaCardioNoDia');
+  await a.esperar(60);
+  assert.strictEqual(a.S().cardio.length, 0, 'a memória volta ao que está guardado');
+  assert.ok(/não foi gravado/.test(a.texto('.dia-cardio-falhou')));
+  assert.ok(a.$('.dia-cardio-novo'), 'e o formulário fica, para tentar de novo');
+  a.fechar();
+});
+
+test('hoje e o futuro não ganham o lançamento: hoje é pelo Agora', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [] } });
+  a.v('ctx.abreDia', agora + 2 * DIA);
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="dia-cardio-novo"]'), null);
+  a.v('ctx.abreCardioNoDia');
+  await a.v('ctx.gravaCardioNoDia');
+  assert.strictEqual(a.S().cardio.length, 0);
   a.fechar();
 });

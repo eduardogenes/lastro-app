@@ -39,7 +39,7 @@
  * `slots` vem de `pagina()` — o componente não calcula nada, e é isso que faz a
  * posição ser derivada do foco (R4) em vez de estado de tela.
  */
-export function Regua({ slots, valor, marca, rotulo, corrige, aoEscolher, aoAndar, aoOutro }) {
+export function Regua({ slots, valor, marca, rotulo, corrige, tocado, aoEscolher, aoAndar, aoOutro }) {
   return (
     <div class="regua">
       {/* CORRIGIR, e não registrar de novo (§8 da frente 3). Só aparece quando a
@@ -68,7 +68,7 @@ export function Regua({ slots, valor, marca, rotulo, corrige, aoEscolher, aoAnda
           <button
             key={s.v}
             class={'regua-v' + (s.naFaixa ? ' na-faixa' : '') +
-                   (s.v === valor ? ' on' : '')}
+                   (s.v === valor ? ' on' : '') + (s.v === tocado ? ' tocado' : '')}
             data-a={'regua-' + s.v}
             aria-label={`${s.v} repetições`}
             aria-pressed={s.v === valor ? 'true' : 'false'}
@@ -82,15 +82,21 @@ export function Regua({ slots, valor, marca, rotulo, corrige, aoEscolher, aoAnda
                 última vez, a pintura é a de `.on`, e a palavra tem de dizer o
                 que a pintura diz (§8.3). O "igual à última" vai para a frase
                 depois do toque, onde cabe. */}
+            {/* TOCADO é o toque que não foi gravado (a gravação falhou): fica
+                à parte, tracejado, e o "agora" continua no que está no disco. */}
             {s.v === valor
               ? <small class="regua-marca">agora</small>
-              : s.referencia && marca && <small class="regua-marca">{marca}</small>}
+              : s.v === tocado
+                ? <small class="regua-marca">tocado</small>
+                : s.referencia && marca && <small class="regua-marca">{marca}</small>}
           </button>
         ))}
       </div>
-      <button class="regua-outro" data-a="regua-outro" onClick={aoOutro}>
-        outro valor
-      </button>
+      {aoOutro && (
+        <button class="regua-outro" data-a="regua-outro" onClick={aoOutro}>
+          outro valor
+        </button>
+      )}
     </div>
   );
 }

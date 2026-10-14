@@ -38,7 +38,7 @@ export function FolhaFoto({ ctx, id }) {
 
       {f.tem && (
         <button class="ins-btn-secondary ins-btn-destructive foto-b2"
-                onClick={ctx.apagaFoto}>apagar a foto</button>
+                onClick={ctx.apagaFoto}>Apagar a foto</button>
       )}
     </Folha>
   );

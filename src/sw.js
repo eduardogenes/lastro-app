@@ -20,12 +20,19 @@ const LOCAIS = __LOCAIS__;
  * bytes num endereço de objeto. Os nomes vivem aqui por uma razão só: poupar
  * estes caches da limpeza de ativação, logo abaixo.
  *
- * São DOIS durante uma versão. `treino-fotos` é como o cache se chamava antes
- * de o app virar Lastro, e ele precisa sobreviver à limpeza até a página ter
- * copiado os bytes para `lastro-fotos` — a ativação do worker não espera a
- * página, então apagar aqui primeiro apagaria as fotos antes da migração.
+ * `lastro-fotos` são as dos aparelhos; `lastro-corpo`, as do corpo;
+ * `lastro-lousa`, a foto da lousa do box. Esta lista
+ * esqueceu `lastro-corpo` quando o protocolo de fotos nasceu, e cada versão
+ * publicada apagava a cópia local das fotos do corpo — as que ainda não tinham
+ * subido se perdiam (F252). Um caso de `publicacao.test.js` cobra agora que todo
+ * cache de dado declarado em `src/infra` esteja aqui.
+ *
+ * `treino-fotos` é como o cache dos aparelhos se chamava antes de o app virar
+ * Lastro, e ele precisa sobreviver à limpeza até a página ter copiado os bytes
+ * para `lastro-fotos` — a ativação do worker não espera a página, então apagar
+ * aqui primeiro apagaria as fotos antes da migração.
  */
-const FOTOS = ['lastro-fotos', 'treino-fotos'];
+const FOTOS = ['lastro-fotos', 'lastro-corpo', 'lastro-lousa', 'treino-fotos'];
 
 /**
  * Busca em fila, não todas de uma vez.

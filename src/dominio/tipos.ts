@@ -223,6 +223,8 @@ export interface Sessao {
   grupos?: string[];
   nome?: string;
   obs?: string;
+  /** a foto da lousa da aula, que vira a nota dela (os bytes ficam no cache) */
+  lousa?: { d: string; v: number; ext: string };
   /** quando foi alterada pela última vez */
   m?: number;
 }
@@ -438,6 +440,9 @@ export interface Cardio {
   i: string;
   /** quando foi alterada pela última vez. `m` já era o modal, então aqui é `alt` */
   alt?: number;
+  /** lançado depois, num dia passado: o instante é o meio-dia daquele dia, e a
+   *  hora não foi medida — a tela não a mostra (F270: hora inventada suja). */
+  semHora?: 1;
 }
 
 /** O que está sendo digitado numa posição da sessão aberta. */
@@ -514,6 +519,9 @@ export interface PassoDeAjuste {
   /** kcal do dia de treino antes e depois do passo — só nos passos novos */
   kde?: number;
   kpara?: number;
+  /** quando foi desfeito. O passo fica no registro: o que foi e por que foi
+   *  continua sendo a resposta de "por que a comida mudou naquela semana". */
+  desfeito?: number;
 }
 
 export interface EstadoCompras {
@@ -600,6 +608,21 @@ export interface Estado {
    * prescrição, como dá com a musculação.
    */
   quadro: { day: Dia; texto: string; data?: string; t: number } | null;
+
+  /**
+   * A foto da lousa da aula em curso (a D, `aula.html`, estado 6; decisão do
+   * dono, 14/10). Como o quadro: documento do dia, e vira parte da sessão
+   * quando ela encerra. Os bytes ficam no cache `lastro-lousa`, neste aparelho.
+   */
+  lousa?: { day: Dia; d: string; v: number; ext: string; t: number } | null;
+
+  /**
+   * O programa do treinador, quando uma revisão colada o substituiu (decisão
+   * do dono, 14/10). Sem ele vale o do código (`PROGRAMA`). É o que "igual ao
+   * treinador", o alvo de séries e o restaurar leem. Documento: vem inteiro do
+   * lado que gravou por último, como `prog`.
+   */
+  progTreinador?: { em: number; data: string | null; rot: Dia[]; dias: Record<Dia, Treino> } | null;
 
   // ---- o que a fusão com a nutrição trouxe ----
 

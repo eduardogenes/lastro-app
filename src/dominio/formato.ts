@@ -10,6 +10,9 @@ export interface Periodo { k: string; de: number; ate: number; rot: string; nome
 // ---------- números e volume ----------
 export function fmtNum(n: number): string { return n % 1 === 0 ? String(n) : String(Math.round(n*10)/10); }
 
+/** `fmtNum` para LER na tela, em português: "22,5", e não "22.5". */
+export function fmtCarga(n: number): string { return fmtNum(n).replace('.', ','); }
+
 export function fmtInt(n: number): string { return Math.round(n).toLocaleString('pt-BR'); }
 
 // ---------- água ----------
@@ -192,4 +195,20 @@ export function casaBusca(alvo: unknown, consulta: unknown): boolean {
   if (!q) return true;
   const a = normalizaBusca(alvo);
   return q.split(' ').every(function (palavra) { return a.indexOf(palavra) >= 0; });
+}
+
+/**
+ * Caixa de frase para mostrar (frente 3 §2; 10-tokens: "nunca caixa alta").
+ *
+ * Texto que chega TODO em maiúscula — as etiquetas do plano de comida estão
+ * guardadas assim, "RÁPIDO E FUNCIONAL" — vira "Rápido e funcional". O resto só
+ * ganha a maiúscula inicial, sem mexer em sigla no meio da frase. É conversão de
+ * TELA: o dado guardado não muda.
+ */
+export function caixaDeFrase(x: string | null | undefined): string {
+  const s = String(x == null ? '' : x).trim();
+  if (!s) return s;
+  const tudoMaiusculo = s === s.toLocaleUpperCase('pt-BR') && s !== s.toLocaleLowerCase('pt-BR');
+  const base = tudoMaiusculo ? s.toLocaleLowerCase('pt-BR') : s;
+  return base.charAt(0).toLocaleUpperCase('pt-BR') + base.slice(1);
 }

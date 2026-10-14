@@ -84,7 +84,10 @@ test('a sessão fechada por inatividade é dita na abertura seguinte, com o dia'
   await a.esperar();
   a.preencher(0, 0, 40, 10);
   const estado = a.S();
-  const ontem = Date.now() - 26 * 3600 * 1000;
+  // ontem às 10h, e não "26 horas atrás": rodando logo depois da meia-noite,
+  // 26 horas atrás é ANTEONTEM, e o toast diz a data em vez de "ontem"
+  const d0 = new Date(); d0.setDate(d0.getDate() - 1); d0.setHours(10, 0, 0, 0);
+  const ontem = d0.getTime();
   estado.sessao.inicio = ontem;
   estado.sessao.ultima = ontem + 40 * 60000;
   estado.done[estado.done.length - 1].t = ontem;

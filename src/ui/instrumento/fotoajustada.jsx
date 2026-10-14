@@ -29,7 +29,7 @@ export function FotoAjustada({ url, enq, alt, classe, vazio, estilo, aoTentar })
             é aqui que se percebe que a foto não veio. Quem decide se existe
             o que tentar é quem sabe o motivo — sem conta na nuvem, tentar de
             novo daria na mesma. */}
-        {aoTentar && <button class="fa-retomar" onClick={aoTentar}>tentar de novo</button>}
+        {aoTentar && <button class="fa-retomar" onClick={aoTentar}>Tentar de novo</button>}
       </div>
     );
   }

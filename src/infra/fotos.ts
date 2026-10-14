@@ -214,9 +214,26 @@ function desenha(
  * caminho de redução, a escolha WebP/JPEG e o achatamento da transparência são
  * os mesmos, e continuar tendo UM só é o que impede as duas de divergirem.
  */
+/**
+ * O brilho médio do que foi desenhado, de 0 a 255, numa amostra espalhada.
+ * Serve para uma coisa: perceber o quadro preto que a câmera entrega quando a
+ * captura sai antes do primeiro quadro do vídeo (F78) — a três metros, ele não
+ * tem como ver. `null` quando o navegador não deixa ler os pixels.
+ */
+function brilhoMedio(ctx: CanvasRenderingContext2D, l: number, a: number): number | null {
+  if (!ctx || typeof ctx.getImageData !== 'function' || !l || !a) return null;
+  try {
+    const d = ctx.getImageData(0, 0, l, a).data;
+    const passo = 4 * 97;
+    let soma = 0, n = 0;
+    for (let i = 0; i + 2 < d.length; i += passo) { soma += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++; }
+    return n ? soma / n : null;
+  } catch (e) { return null; }
+}
+
 export async function reduzPara(
   fonte: ImageBitmapSource, ladoMaior: number
-): Promise<{ blob: Blob; ext: string }> {
+): Promise<{ blob: Blob; ext: string; brilho?: number | null }> {
   // `ImageBitmapSource` e não `Blob`: a câmera interna entrega um <video>, e
   // deixá-la passar direto evita uma codificação a mais só para virar arquivo.
   // O resto do caminho — passos de redução, WebP/JPEG, achatamento — é o mesmo.
@@ -227,14 +244,15 @@ export async function reduzPara(
 
   const tela = document.createElement('canvas');
   const ctx = desenha(tela, bitmap, l, a);
+  const brilho = brilhoMedio(ctx, l, a);
 
-  const saida = await new Promise<{ blob: Blob; ext: string } | null>(function (ok) {
+  const saida = await new Promise<{ blob: Blob; ext: string; brilho?: number | null } | null>(function (ok) {
     tela.toBlob(function (b) {
       // `toBlob` devolve PNG quando não sabe o tipo pedido, e PNG de foto é
       // enorme: conferir o tipo do que voltou é o que evita guardar 200 KB
       // achando que são 6. WebP também é o que preserva transparência, que é
       // comum em print recortado.
-      if (b && b.type === 'image/webp') ok({ blob: b, ext: 'webp' });
+      if (b && b.type === 'image/webp') ok({ blob: b, ext: 'webp', brilho: brilho });
       else ok(null);
     }, 'image/webp', QUALIDADE);
   });
@@ -250,7 +268,7 @@ export async function reduzPara(
     tela.toBlob(function (b) { ok(b); }, 'image/jpeg', QUALIDADE);
   });
   if (!jpeg) throw new Error('não deu para codificar a imagem');
-  return { blob: jpeg, ext: 'jpeg' };
+  return { blob: jpeg, ext: 'jpeg', brilho: brilho };
 }
 
 /** A foto do aparelho: teto de 1080, que é o que a miniatura precisa. */

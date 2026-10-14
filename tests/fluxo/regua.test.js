@@ -271,3 +271,41 @@ test('exercício medido por tempo continua com campo', async () => {
   assert.strictEqual(campo.tagName, 'INPUT', 'medido por tempo ou metro: campo');
   a.fechar();
 });
+
+test('"+ série" vira mudança do dia, traz a carga de hoje e abre a régua com a série anterior', async () => {
+  // A D (momento 1, estado 4; P12: "deveria ser mais fácil, direto, por ali já").
+  const a = await abreCartao();
+  const dia = a.vista().day;
+  const antes = a.vJ('treino', dia).ex[0].s;
+  for (let k = 0; k < antes; k++) { a.v('anotaSerie', 0, k, 0, 60); await a.regua(0, k, 8 - k); }
+  a.clicar('[data-a="mais-serie-0"]');
+  await a.esperar();
+
+  assert.strictEqual(a.vJ('treino', dia).ex[0].s, antes + 1, 'uma série a mais no treino de hoje');
+  assert.ok(a.vJ('modsDoDia', dia).some(function (m) { return m.k === 'sets' && m.para === antes + 1; }),
+    'como mudança SÓ DO DIA, a mesma da edição do dia');
+  assert.strictEqual(a.vJ('draftPeek', 0).s[antes][0], 60, 'a carga vem igual à da série anterior de hoje');
+  assert.ok(a.$('.regua-faixa'), 'e a régua da série nova já está aberta');
+  const marca = a.$$('.regua-v').filter(function (b) { return b.querySelector('.regua-marca'); });
+  assert.strictEqual(marca.length, 1);
+  assert.ok(/série \d/.test(marca[0].textContent), 'a referência é a série anterior de HOJE: ' + marca[0].textContent);
+  assert.strictEqual(Number(marca[0].textContent.replace(/\D+/g, '').charAt(0)), 8 - (antes - 1), 'com a repetição dela');
+  a.fechar();
+});
+
+test('o cartão aberto tem as duas metades: a leitura e o polegar', async () => {
+  // Deitado, no modo de sessão (a D, momento 1, estado 14), elas viram duas
+  // colunas pelo CSS; aqui fica o que o CSS precisa encontrar: a dica e o
+  // descanso de um lado, as séries e a régua do outro.
+  const a = await abreCartao();
+  a.clicar(a.doc.getElementById('r0_0'));
+  await a.esperar();
+  const ler = a.$('.ex.open .sets-ler'), polegar = a.$('.ex.open .sets-polegar');
+  assert.ok(ler && polegar);
+  assert.ok(ler.querySelector('.cue') && ler.querySelector('.restlinha'), 'a leitura: a dica e o descanso');
+  assert.strictEqual(ler.querySelector('.setrow, .regua'), null);
+  assert.strictEqual(polegar.querySelectorAll('.setrow').length, 3, 'o polegar: as séries');
+  assert.ok(polegar.querySelector('.regua'), 'e a régua aberta');
+  assert.ok(polegar.querySelector('.exacoes'), 'e as ações do exercício');
+  a.fechar();
+});

@@ -226,7 +226,7 @@ function Troca({ i, vm, acoes }) {
 function Anotacao({ i, vm, acoes }) {
   if (!vm.notaAberta) {
     return (
-      <button class="notabtn" onClick={() => acoes.abrirNota(i)}>anotar algo</button>
+      <button class="notabtn" onClick={() => acoes.abrirNota(i)}>Anotar algo</button>
     );
   }
   return (
@@ -263,7 +263,7 @@ function Medida({ i, vm, acoes }) {
   if (!vm.medidaAberta) {
     return (
       <button class="notabtn" onClick={() => acoes.abrirMedida(i)}>
-        medida: {vm.medidaResumo}
+        Medida: {vm.medidaResumo}
       </button>
     );
   }
@@ -300,7 +300,7 @@ function Carga({ i, vm, acoes }) {
   if (!vm.cargaAberta) {
     return (
       <button class="notabtn" onClick={() => acoes.abrirCarga(i)}>
-        carga: {vm.tipoNome}
+        Carga: {vm.tipoNome}
       </button>
     );
   }
@@ -365,6 +365,39 @@ function Dor({ i, vm, acoes }) {
     return <div class="painflag">dor em {vm.dorLast} na última sessão deste exercício</div>;
   }
   return null;
+}
+
+/**
+ * ENQUANTO DESCANSA (a D, momento 1, estado 2): a refeição de antes do treino,
+ * um copo de água e o peso de hoje, um toque cada, só enquanto o descanso conta.
+ * Cada chip lê de volta o que gravou — "comi", o copo novo, o peso —, e o copo
+ * que o aparelho recusou é dito ali mesmo.
+ */
+function Descansa({ d, acoes }) {
+  return (
+    <div class="ex-descansa">
+      <span class="ins-body-sm ins-t2">Enquanto descansa</span>
+      <div class="ex-descansa-c">
+        {d.pre && (
+          <button class={'chip ins-chip' + (d.pre.comeu ? ' on' : '')} aria-pressed={d.pre.comeu ? 'true' : 'false'}
+                  data-a="descansa-pre" onClick={acoes.preNoDescanso}>
+            {d.pre.n}: <b>{d.pre.comeu ? 'comi ✓' : 'comi'}</b>
+          </button>
+        )}
+        <button class="chip ins-chip" data-a="descansa-agua" onClick={acoes.copoNoDescanso}>
+          Água {d.agua.n}/{d.agua.meta} · <b>+1</b>
+        </button>
+        <button class={'chip ins-chip' + (d.peso ? ' on' : '')} data-a="descansa-peso" onClick={acoes.pesoNoDescanso}>
+          {d.peso ? <>Peso de hoje: <b>{d.peso}</b></> : 'Peso de hoje'}
+        </button>
+      </div>
+      {d.agua.falhou && (
+        <p class="ins-body-sm ex-descansa-f" role="alert">
+          O {d.agua.falhou}º copo não foi gravado: o aparelho recusou, e a conta continua em {d.agua.falhou - 1}.
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function Exercicio({ vm, acoes }) {
@@ -444,6 +477,10 @@ export function Exercicio({ vm, acoes }) {
       )}
 
       <div class="sets">
+        {/* Duas metades, e em retrato elas só se empilham. Deitado, no modo de
+            sessão (a D, momento 1, estado 14), viram duas colunas: a leitura à
+            esquerda, com o nome; o polegar à direita, com as séries e a régua. */}
+        <div class="sets-ler">
         <p class="cue">{vm.cue}</p>
 
         {/* A pegada fica ACIMA do descanso e abaixo da dica: ela é sobre fazer a
@@ -468,7 +505,9 @@ export function Exercicio({ vm, acoes }) {
           : <button class="restlinha" onClick={() => acoes.startTimer(vm.descanso, 'descanso · ' + vm.nome)}>
               descanso <b>{vm.descansoTxt}</b>
             </button>}
+        </div>
 
+        <div class="sets-polegar">
         {/* A RÉGUA ESPERA a escolha diante da dor repetida (§7.4): é o único
             estado ruim que não se dispensa sem responder. */}
         {!vm.dorBloqueia && <>
@@ -506,6 +545,14 @@ export function Exercicio({ vm, acoes }) {
         ))}
         </>}
 
+        {/* "+ série", na linha do exercício (a D, momento 1, estado 4): vira
+            mudança só de hoje, e a régua abre na série nova. */}
+        {vm.podeMaisSerie && (
+          <button class="ins-btn-add ex-mais" data-a={'mais-serie-' + i} onClick={() => acoes.maisUmaSerie(i)}>
+            + série
+          </button>
+        )}
+        {vm.descansa && <Descansa d={vm.descansa} acoes={acoes} />}
         {vm.cargaOpcional && (
           <div class="segnote">Carga opcional: deixe o campo vazio para só o peso do corpo.</div>
         )}
@@ -522,22 +569,22 @@ export function Exercicio({ vm, acoes }) {
         {vm.mostraAquecimento && (
           <div class={'aquec' + (vm.aq ? ' on' : '')}>
             <span><b>Aproximação:</b> 2 a 3 séries subindo carga antes da primeira valendo.</span>
-            <button class="aqbtn" onClick={() => acoes.toggleAq(0)}>{vm.aq ? 'feito' : 'marcar'}</button>
+            <button class="aqbtn" onClick={() => acoes.toggleAq(0)}>{vm.aq ? 'Feito' : 'Marcar'}</button>
           </div>
         )}
 
         <div class="exacoes">
           {vm.temTroca && (
             <button class="histbtn" onClick={() => acoes.toggleSwap(i)}>
-              {vm.trocaAberta ? 'fechar' : 'trocar'}
+              {vm.trocaAberta ? 'Fechar' : 'Trocar'}
             </button>
           )}
-          <button class="histbtn" onClick={() => acoes.pularEx(i)}>pular</button>
-          <button class="histbtn" onClick={() => acoes.openHist(i)}>histórico</button>
+          <button class="histbtn" onClick={() => acoes.pularEx(i)}>Pular</button>
+          <button class="histbtn" onClick={() => acoes.openHist(i)}>Histórico</button>
           {/* O rótulo muda com o estado: sem foto ele CONVIDA, com foto ele
               MOSTRA. Um botão só, e nenhuma linha nova no cartão. */}
           <button class="histbtn" onClick={() => acoes.abreFoto(i)}>
-            {vm.temFoto ? 'aparelho' : 'foto'}
+            {vm.temFoto ? 'Aparelho' : 'Foto'}
           </button>
         </div>
 
@@ -547,6 +594,7 @@ export function Exercicio({ vm, acoes }) {
           {vm.seg && <Medida i={i} vm={vm} acoes={acoes} />}
           <Carga i={i} vm={vm} acoes={acoes} />
           <Anotacao i={i} vm={vm} acoes={acoes} />
+        </div>
         </div>
       </div>
     </div>

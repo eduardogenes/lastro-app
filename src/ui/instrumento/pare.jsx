@@ -66,7 +66,7 @@ const CAUSA = {
  * @param {object} p
  * @param {{ motivo: string, oQue: string, valor: string | null } | null} p.f
  */
-export function Falhou({ f, onTenta, onCopia, onFecha }) {
+export function Falhou({ f, onTenta, onCopia, onBaixa, onFecha }) {
   const primeiro = useRef(null);
   useEffect(function () {
     if (f && primeiro.current) primeiro.current.focus();
@@ -80,9 +80,11 @@ export function Falhou({ f, onTenta, onCopia, onFecha }) {
           Não guardei {f.oQue}. {CAUSA[f.motivo] || CAUSA.recusa} Nada foi apagado e nada saiu do
           aparelho. {f.valor ? 'O valor continua aqui, ' + f.valor + ', enquanto o app estiver aberto.'
                              : 'O que foi registrado continua aqui enquanto o app estiver aberto.'}
+          {f.salvo ? ' ' + f.salvo : ''}
         </p>
         <div class="pare-b">
           <button class="pare-sim" data-a="falhou-tenta" ref={primeiro} onClick={onTenta}>Tentar de novo</button>
+          {onBaixa && <button class="pare-nao" data-a="falhou-baixa" onClick={onBaixa}>Baixar uma cópia de segurança</button>}
           <button class="pare-nao" data-a="falhou-copia" onClick={onCopia}>Copiar o registro inteiro</button>
           <button class="pare-nao" data-a="falhou-fecha" onClick={onFecha}>Fechar este aviso</button>
         </div>

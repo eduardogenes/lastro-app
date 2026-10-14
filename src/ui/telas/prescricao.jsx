@@ -43,8 +43,10 @@ const SEMANA = [
   { rot: 'sáb', i: 6 }
 ];
 
+// A frequência das compras não é conhecida: a tela pergunta o horizonte em vez
+// de supor (a D, estado 8), e "outro" aceita o número que for.
 const HORIZONTES = [
-  { k: 7, t: '7 dias' }, { k: 14, t: '14 dias' }, { k: 30, t: '30 dias' }
+  { k: 3, t: '3 dias' }, { k: 7, t: '7 dias' }, { k: 15, t: '15 dias' }, { k: 'outro', t: 'outro' }
 ];
 
 function Regra({ r, aberta, aoAbrir }) {
@@ -113,7 +115,9 @@ function Biblioteca({ ctx, busca }) {
 }
 
 function Compras({ ctx }) {
-  const { linhas, previsao, dias, comprado } = ctx.compras();
+  const { linhas, previsao, dias, comprado, foraDaPrevisao } = ctx.compras();
+  const fixo = HORIZONTES.some(h => h.k === dias);
+  const [outro, setOutro] = useState(false);
   const porCat = CATEGORIAS
     .map(([k, rotulo]) => [rotulo, linhas.filter(l => l.cat === k)])
     .filter(([, l]) => l.length);
@@ -122,9 +126,21 @@ function Compras({ ctx }) {
     <>
       <Chips
         opcoes={HORIZONTES}
-        valor={dias}
-        onMuda={ctx.setHorizonteCompras}
+        valor={outro || !fixo ? 'outro' : dias}
+        onMuda={k => {
+          if (k === 'outro') { setOutro(true); return; }
+          setOutro(false);
+          ctx.setHorizonteCompras(k);
+        }}
       />
+      {(outro || !fixo) && (
+        <label class="pr-horizonte">
+          <input class="ins-input" type="text" inputmode="numeric" data-a="compras-dias"
+                 value={dias} aria-label="dias até a próxima compra"
+                 onChange={e => ctx.setHorizonteCompras(e.currentTarget.value)} />
+          <span class="ins-body-sm ins-t2">dias até a próxima compra</span>
+        </label>
+      )}
       <Procedencia>
         previsão pela semana típica · {previsao.treino} de treino e {previsao.descanso} de
         descanso em {dias} dias. A rotação decide qual treino vem; a cadência só
@@ -153,6 +169,12 @@ function Compras({ ctx }) {
           </div>
         </div>
       ))}
+
+      <Procedencia>
+        {foraDaPrevisao.length > 0 && <>Dias de alta demanda não entram nesta previsão: {
+          foraDaPrevisao.join(', ')} {foraDaPrevisao.length === 1 ? 'não aparece' : 'não aparecem'} aqui. </>}
+        O que você marca como comprado fica guardado.
+      </Procedencia>
     </>
   );
 }
@@ -178,12 +200,73 @@ export function Prescricao({ ctx }) {
   const d = ctx.dadosDoApp();
   const plano = ctx.planoCompleto();
   const resumo = ctx.resumoDoPlano();
+  const vazio = ctx.enderecoVazio();
+  const ultima = ctx.ultimaQueEntrou();
 
   return (
     <>
-      <Cabecalho olho="o que foi prescrito" titulo="Prescrição" />
+      <Cabecalho olho={vazio ? 'nada aqui ainda' : 'o que foi prescrito'} titulo="Prescrição" />
 
-      <Secao primeira>
+      {/* O ENDEREÇO VAZIO (a D, estado 9): achar o que existe vem antes de
+          começar do zero, porque começar aqui não traz o que está no outro
+          endereço — e quem abriu por um link novo acha que perdeu tudo. */}
+      {vazio && (
+        <Secao primeira rotulo="Este endereço está vazio">
+          <p class="ins-body-sm ins-t2 pr-vazio-p">
+            Os dados ficam presos ao endereço de onde o app é aberto. Se você abriu
+            por um link novo, o seu histórico continua no antigo — e o ícone da tela
+            de início aponta para ele.
+          </p>
+          <h3 class="ins-rotulo pr-vazio-h">Onde o seu programa e o seu plano podem estar</h3>
+          <div class="ins-lista">
+            <button class="ins-linha" data-a="vazio-conta" onClick={ctx.abreAjustes}>
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">Na sua conta</span>
+                <span class="ins-linha-s">entrar traz programa, plano e histórico · precisa de rede</span>
+              </span>
+            </button>
+            <label class="ins-linha pr-vazio-arq">
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">Numa cópia de segurança</span>
+                <span class="ins-linha-s">arquivo JSON que você baixou</span>
+              </span>
+              <input type="file" accept="application/json,.json,.txt" data-a="vazio-copia"
+                     onChange={e => ctx.importaArquivo(e.currentTarget)} />
+            </label>
+            <div class="ins-linha">
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">No ícone antigo da tela de início</span>
+                <span class="ins-linha-s">abra por ele e confira antes de apagar</span>
+              </span>
+            </div>
+          </div>
+          <h3 class="ins-rotulo pr-vazio-h">Se não houver nada em lugar nenhum</h3>
+          <div class="ins-lista">
+            <div class="ins-linha">
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">O programa do treinador</span>
+                <span class="ins-linha-s">{vazio.programa}</span>
+              </span>
+            </div>
+            <div class="ins-linha">
+              <span class="ins-linha-n">
+                <span class="ins-linha-t">O plano do nutricionista</span>
+                <span class="ins-linha-s">{vazio.plano}</span>
+              </span>
+            </div>
+          </div>
+          <button class="ins-btn-secondary pr-vazio-b" data-a="vazio-comeca" onClick={ctx.comecaAqui}>
+            Começar com os dois
+          </button>
+          <Procedencia>
+            {vazio.semRede
+              ? 'Sem rede agora. Entrar na conta e baixar o histórico só funcionam quando o sinal voltar; começar do zero funciona offline — e não apaga o que está no outro endereço.'
+              : 'Começar do zero não apaga o que está no outro endereço.'}
+          </Procedencia>
+        </Secao>
+      )}
+
+      <Secao primeira={!vazio}>
         <Chips opcoes={MODOS} valor={modo} onMuda={setModo} />
       </Secao>
 
@@ -199,7 +282,10 @@ export function Prescricao({ ctx }) {
           referência. */}
       <Secao primeira>
         <button class="ins-btn-primary" data-a="abre-programa"
-                onClick={ctx.abrePrograma}>abrir o programa</button>
+                onClick={ctx.abrePrograma}>Abrir o programa</button>
+        {/* A revisão do treinador entra colada em texto (decisão do dono, 14/10). */}
+        <button class="ins-btn-secondary pr-revisao" data-a="abre-revisao"
+                onClick={ctx.abreRevisao}>Incorporar uma revisão do treinador</button>
         <Procedencia>
           o que o treinador prescreveu, o que você mudou, e o histórico de cada
           mudança com o motivo
@@ -224,15 +310,16 @@ export function Prescricao({ ctx }) {
           coisa que as palavras dizem é a decisão dele como fato (§5.1). E o
           vazio é estado, não resultado: sem "tudo em ordem" (V5). */}
       {esperando.length === 0 && venceram.length === 0 && (
-        <Secao rotulo="esperando decisão">
+        <Secao rotulo="O que espera decisão">
           <Vazio>Nenhuma mudança esperando decisão.</Vazio>
+          {ultima && <p class="ins-body-sm ins-t2 pr-explica" data-a="ultima-que-entrou">{ultima}</p>}
           <p class="ins-body-sm ins-t3 pr-explica">
             O que você mudar num treino aparece aqui depois que a sessão fechar.
           </p>
         </Secao>
       )}
       {esperando.length > 0 && (
-        <Secao rotulo="esperando decisão"
+        <Secao rotulo="O que espera decisão"
                nota={esperando.length === 1 ? '1 sessão' : esperando.length + ' sessões'}>
           <p class="ins-body-sm ins-t3 pr-explica">
             Nada disto foi perguntado no treino. O que você mudou no dia ficou
@@ -308,7 +395,7 @@ export function Prescricao({ ctx }) {
           aconteceu, e oferecê-la de novo seria pedir que ele confirmasse o que
           o tempo já decidiu. O que falta é a porta de volta. */}
       {venceram.length > 0 && (
-        <Secao rotulo="venceu sem você"
+        <Secao rotulo="O que venceu sem você"
                nota={venceram.length === 1 ? '1 sessão' : venceram.length + ' sessões'}>
           {venceram.map(g => (
             <div key={g.sid} class="pr-espera venceu">
@@ -351,7 +438,7 @@ export function Prescricao({ ctx }) {
           ))}
         </Secao>
       )}
-      <Secao rotulo="alvo por tipo de dia" nota="calculado do plano">
+      <Secao rotulo="O alvo por tipo de dia" nota="calculado do plano">
         <div class="ins-lista">
           {g.alvos.map(a => (
             <div key={a.k} class="ins-linha">
@@ -369,7 +456,7 @@ export function Prescricao({ ctx }) {
         </Procedencia>
       </Secao>
 
-      <Secao rotulo="execução" nota="toque para abrir">
+      <Secao rotulo="A execução" nota="toque para abrir">
         {g.regras.map(r => (
           <Regra
             key={r.k} r={r}
@@ -390,23 +477,28 @@ export function Prescricao({ ctx }) {
       </>}
 
       {modo === 'comida' && <>
-      <Secao rotulo="refeições" nota="a edição vale para todo dia">
+      {/* Os horários são os DO PLANO, não os que ele costuma comer: o previsto
+          é a prescrição, e o mundo dele aparece no registro do dia (a D,
+          estado 7). Mudar uma quantidade vale daqui para a frente e nunca
+          reescreve dia passado (F288). */}
+      <Secao rotulo="As refeições" nota="a edição vale daqui para a frente">
         <div class="ins-lista">
           {plano.map(r => (
-            <button key={r.id} class="ins-linha" onClick={() => ctx.editaRefeicao(r.id)}>
+            <button key={r.id} class="ins-linha" data-a={'refeicao-' + r.id} onClick={() => ctx.editaRefeicao(r.id)}>
               <span class="ins-linha-n">
-                <span class="ins-linha-t">{r.n}</span>
+                <span class="ins-linha-t">{r.t} · {r.n}</span>
+                {r.itensTxt && <span class="ins-linha-s pr-itens">{r.itensTxt}</span>}
                 <span class="ins-linha-s">
-                  {r.t} · {r.quando === 'sempre' ? 'todo dia'
+                  {r.quando === 'sempre' ? 'todo dia'
                     : r.quando === 'treino' ? 'só em dia de treino' : 'só em dia de alta'}
-                  {' · '}{r.itens.length} {r.itens.length === 1 ? 'item' : 'itens'}
+                  {r.meu && <> · <b class="pr-meu">criada por você</b></>}
                 </span>
               </span>
               <span class="ins-linha-v">{r.kcal} kcal</span>
             </button>
           ))}
         </div>
-        <button class="ins-btn-add" onClick={ctx.novaRefeicao}>+ adicionar refeição</button>
+        <button class="ins-btn-add" onClick={ctx.novaRefeicao}>+ Adicionar refeição</button>
       </Secao>
 
       {/* O que o plano soma. DOIS totais e não um: pré-treino e treino só
@@ -427,22 +519,39 @@ export function Prescricao({ ctx }) {
         <Procedencia>
           somado do plano, não do que foi comido — o registrado do dia fica em HOJE
         </Procedencia>
+        <div class="ins-lista pr-plano-fim">
+          <div class="ins-linha">
+            <span class="ins-linha-n">
+              <span class="ins-linha-t">Ajuste acumulado</span>
+              <span class="ins-linha-s" data-a="ajuste-acumulado">{resumo.ajuste}</span>
+            </span>
+          </div>
+          <div class="ins-linha">
+            <span class="ins-linha-n">
+              <span class="ins-linha-t">Em dia de treino à tarde ou à noite</span>
+              <span class="ins-linha-s">
+                o pré e o treino andam junto; a refeição que cai dentro do treino vai
+                para {resumo.folga} min depois
+              </span>
+            </span>
+          </div>
+        </div>
       </Secao>
       </>}
 
       {modo === 'alimentos' && <>
-      <Secao rotulo="biblioteca" nota="o que você cadastrou aparece em ácido">
+      <Secao rotulo="A biblioteca" nota="o que você cadastrou aparece em ácido">
         <input
           class="ins-input" type="search" inputmode="search"
           placeholder="buscar alimento" value={busca}
           onInput={e => setBusca(e.currentTarget.value)}
         />
         <div class="cm-espaco" />
-        <button class="ins-btn-add" onClick={ctx.novoAlimento}>+ cadastrar alimento</button>
+        <button class="ins-btn-add" onClick={ctx.novoAlimento}>+ Cadastrar alimento</button>
         <div class="cm-espaco" />
         <Biblioteca ctx={ctx} busca={busca} />
       </Secao>
-      <Secao rotulo="lista" nota="derivada do plano · nada aqui é digitado">
+      <Secao rotulo="A lista de compras" nota="derivada do plano · nada aqui é digitado">
         <Compras ctx={ctx} />
       </Secao>
       </>}

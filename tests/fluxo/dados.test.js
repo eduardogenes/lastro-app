@@ -38,8 +38,8 @@ test('todas as telas renderizam com estado antigo', async () => {
 test('sessão sem sid abre no detalhe e mostra traço na duração', async () => {
   const a = await app({ estado: ANTIGO });
   a.v('abrirSessao', ANTIGO.done[0].t);
-  assert.ok(a.$$('.hs').length > 0, 'exercícios do dia aparecem');
-  assert.strictEqual(a.$$('.stats b')[0].textContent, '–', 'aquele tempo nunca foi medido');
+  assert.ok(a.$$('.ss-ex').length > 0, 'exercícios do dia aparecem');
+  assert.strictEqual(a.vJ('ctx.detalheDaSessao').fim.hora, 'não medido', 'aquele tempo nunca foi medido');
   a.fechar();
 });
 
@@ -76,6 +76,11 @@ test('exportar carrega todos os campos do estado', async () => {
      // o quadro do box do dia em curso: se ficar de fora, trocar de aparelho
      // no meio da aula perde a lousa antes de ela virar nota da sessão
      'quadro',
+     // a referência da foto da lousa da aula em curso (os bytes ficam no cache)
+     'lousa',
+     // o programa do treinador depois de uma revisão colada: sem ele no backup,
+     // "igual ao treinador" e o restaurar voltariam ao programa antigo
+     'progTreinador',
      // a sincronização: o carimbo do estado e as lápides do que foi apagado
      'mtime', 'apagados',
      // os dias que ele marcou como descanso
@@ -99,9 +104,9 @@ test('apagar e reimportar devolve os dados idênticos', async () => {
   a.preencher(0, 0, 40, 10);
   a.preencher(0, 1, 40, 9);
   a.v('abrirAdicionar', (Date.now() - 2 * DIA));
-  a.v('addSet', 'tipo', 'livre');
-  a.v('addSet', 'grupo', 'dorsal');
-  await a.v('gravarRetro', false);
+  await a.v('lancaTreino', 'livre');
+  await a.v('grupoDoLancamento', 'costas');
+  a.v('ctx.fechaAdicionar');
   await a.esperar();
 
   a.aba('ajustes');

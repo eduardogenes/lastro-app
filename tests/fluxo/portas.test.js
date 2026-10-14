@@ -57,7 +57,7 @@ test('o "Encerrar o treino" do menu ··· encerra', async () => {
 
 test('"editar treino de hoje" entra na edição', async () => {
   const a = await app();
-  const b = a.$$('.tr-links button').filter(function (x) { return /editar treino de hoje/.test(x.textContent); })[0];
+  const b = a.$$('.tr-links button').filter(function (x) { return /Editar treino de hoje/.test(x.textContent); })[0];
   assert.ok(b, 'a porta está na tela');
   a.clicar(b);
   await a.esperar();
@@ -68,16 +68,17 @@ test('"editar treino de hoje" entra na edição', async () => {
 test('os botões do mês andam o calendário, e o de frente não passa de hoje', async () => {
   const a = await app({ aba: 'dias' });
   await a.esperar();
-  const titulo = () => a.texto('.mes-nav .ins-subtitle');
+  const titulo = () => a.texto('.mes-nav .mes-t');
   const agora = titulo();
-  assert.ok(a.$('[aria-label="próximo mês"]').disabled, 'no mês corrente, não há mês à frente');
+  const [antes, depois] = a.$$('.mes-nav .mes-b');
+  assert.ok(depois.disabled, 'no mês corrente, não há mês à frente');
 
-  a.clicar('[aria-label="mês anterior"]');
+  a.clicar(antes);
   await a.esperar();
   assert.notStrictEqual(titulo(), agora, 'voltou um mês');
   assert.strictEqual(a.vista().mes, -1);
 
-  a.clicar('[aria-label="próximo mês"]');
+  a.clicar(a.$$('.mes-nav .mes-b')[1]);
   await a.esperar();
   assert.strictEqual(titulo(), agora, 'e voltou ao corrente');
   a.fechar();
@@ -98,17 +99,27 @@ test('o registro rápido do cardio grava pelos chips e pelo botão', async () =>
   a.fechar();
 });
 
-test('o nome do treino avulso entra pelo campo', async () => {
+test('o nome do treino avulso entra pelo campo, e grava ao sair dele', async () => {
   const a = await app();
   a.v('abrirAdicionar', Date.now() - DIA);
-  a.v('addSet', 'tipo', 'livre');
+  a.clicar('[data-a="lanca-livre"]');
   await a.esperar();
   const campo = a.$('.add-nome');
   assert.ok(campo, 'pré-condição: o campo do nome está na tela');
   campo.value = 'pelada com os amigos';
   campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  assert.strictEqual(a.S().done[0].nome, 'pelada com os amigos', 'o nome vai para o registro gravado');
+  campo.dispatchEvent(new a.window.Event('change', { bubbles: true }));
   await a.esperar();
-  assert.strictEqual(a.vista().add.nome, 'pelada com os amigos');
+  assert.strictEqual(a.gravado().done[0].nome, 'pelada com os amigos', 'e está guardado');
+
+  // sem o `change` (o app fechou a folha antes de o campo perder o foco), sair
+  // da folha também guarda
+  campo.value = 'futevôlei';
+  campo.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  a.v('ctx.fechaAdicionar');
+  await a.esperar();
+  assert.strictEqual(a.gravado().done[0].nome, 'futevôlei', 'sair da folha guarda o nome');
   a.fechar();
 });
 

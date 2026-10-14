@@ -105,7 +105,7 @@ function abrirApp(opcoes) {
   const o = opcoes || {};
   const erros = [];
   const vibrou = [];
-  const registro = { bipes: 0, wakeLock: 0, confirmou: [], respostas: [], aceita: true,
+  const registro = { bipes: 0, obturador: 0, falas: [], wakeLock: 0, confirmou: [], respostas: [], aceita: true,
                      cotaCheia: !!o.cotaCheia };
 
   const console_ = new VirtualConsole();
@@ -190,11 +190,22 @@ function abrirApp(opcoes) {
           return { gain: { setValueAtTime: function () {}, exponentialRampToValueAtTime: function () {} },
                    connect: function () {} };
         };
+        this.sampleRate = 8000;
+        this.createBuffer = function (c, n) {
+          return { getChannelData: function () { return new Float32Array(n); } };
+        };
+        this.createBufferSource = function () {
+          return { buffer: null, connect: function () {}, start: function () { registro.obturador++; } };
+        };
         this.createOscillator = function () {
           return { type: '', frequency: { setValueAtTime: function () {} },
                    connect: function () {}, start: function () { registro.bipes++; }, stop: function () {} };
         };
       };
+
+      // a voz da sessão de fotos: o que seria dito fica no registro
+      w.SpeechSynthesisUtterance = function (t) { this.text = t; this.lang = ''; };
+      w.speechSynthesis = { cancel: function () {}, speak: function (u) { registro.falas.push({ t: u.text, lang: u.lang }); } };
 
       Object.defineProperty(w.navigator, 'wakeLock', {
         configurable: true,

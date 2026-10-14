@@ -76,15 +76,15 @@ export function Treino({ ctx }) {
             <span id="relogio" class="ins-metric-m">{c.sessao.relogio}</span>
             <em class="ins-label-sm">{c.sessao.desde}</em>
           </div>
-        : <button class="day-ini" onClick={ctx.iniciarSessao}>iniciar treino</button>}
+        : <button class="day-ini" onClick={ctx.iniciarSessao}>Iniciar treino</button>}
 
       <Secao continua>
         {t.sessaoAberta && (
           <div class="ctrl">
             {t.pausada
-              ? <button class="ctrl-b ini" onClick={ctx.retomarSessao}>retomar</button>
-              : <button class="ctrl-b" onClick={ctx.pausarSessao}>pausar</button>}
-            <button class="ctrl-b fim" onClick={ctx.finalizarSessao}>encerrar</button>
+              ? <button class="ctrl-b ini" onClick={ctx.retomarSessao}>Retomar</button>
+              : <button class="ctrl-b" onClick={ctx.pausarSessao}>Pausar</button>}
+            <button class="ctrl-b fim" onClick={ctx.finalizarSessao}>Encerrar</button>
           </div>
         )}
 
@@ -132,8 +132,39 @@ export function Treino({ ctx }) {
             sessão encerra, depois de virar a nota dela no histórico. */}
         {t.quadro && !t.editando && (
           <div class="tr-quadro">
-            <div class="ins-label">o quadro do box</div>
+            <h3 class="ins-rotulo">O quadro do box</h3>
             <p class="tr-quadro-t">{t.quadro}</p>
+          </div>
+        )}
+
+        {/* A LOUSA (a D, aula, estado 6; decisão do dono, 14/10): foto agora,
+            transcrição quando der. Um toque fotografa e acaba ali. */}
+        {t.lousa && !t.editando && (
+          <div class="tr-lousa">
+            {t.lousa.tem ? <>
+              {t.lousa.url && <img class="tr-lousa-img" src={t.lousa.url} alt="Foto da lousa do box" />}
+              <p class="ins-body-xs ins-t3 tr-lousa-q">{t.lousa.quando}</p>
+              <div class="tr-lousa-b">
+                {t.lousa.podeMandar && (
+                  <button class="ins-btn-secondary" data-a="lousa-manda" onClick={ctx.mandaLousa}>Mandar para transcrever</button>
+                )}
+                <label class="ins-btn-secondary tr-lousa-arq">
+                  Refazer a foto
+                  <input type="file" accept="image/*" capture="environment" data-a="lousa-refaz"
+                         onChange={e => ctx.tiraFotoDaLousa(e.currentTarget)} />
+                </label>
+              </div>
+              <p class="ins-body-sm ins-t3">
+                A foto fica guardada no dia, neste aparelho. Quando a aula termina, ela passa
+                a ser parte daquela aula. Sem transcrição, a aula continua completa.
+              </p>
+            </> : (
+              <label class="ins-btn-secondary tr-lousa-arq">
+                Fotografar a lousa
+                <input type="file" accept="image/*" capture="environment" data-a="lousa-foto"
+                       onChange={e => ctx.tiraFotoDaLousa(e.currentTarget)} />
+              </label>
+            )}
           </div>
         )}
 
@@ -155,10 +186,29 @@ export function Treino({ ctx }) {
                    Não cita mais a "prova inteira": o atalho que punha as nove
                    estações de uma vez saiu, e o vazio continuou oferecendo um
                    caminho que não existe mais. */
-                ? <Vazio>
-                    Sábado é o que o box programar. Adicione o que entrou na aula,
-                    repita o sábado passado ou aplique um modelo.
-                  </Vazio>
+                ? <>
+                    <Vazio>
+                      Sábado é o que o box programar. Adicione o que entrou na aula,
+                      repita o sábado passado ou aplique um modelo.
+                    </Vazio>
+                    {/* Antes de começar, a referência (a D, aula, estado 5):
+                        o que entrou na última aula, para saber o peso que se
+                        costuma pegar. */}
+                    {t.ultimaAula && (
+                      <div class="tr-ultima">
+                        <h3 class="ins-rotulo">Na última aula, {t.ultimaAula.quando}</h3>
+                        <div class="ins-lista">
+                          {t.ultimaAula.linhas.map(l => (
+                            <div key={l.k} class="ins-linha">
+                              <span class="ins-linha-n"><span class="ins-linha-t">{l.n}</span></span>
+                              <span class="ins-linha-v">{l.v}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <p class="ins-body-xs ins-t3">Peso guardado é peso do dia: a lousa muda toda semana.</p>
+                      </div>
+                    )}
+                  </>
                 : <Vazio>Este treino ainda não tem exercício nenhum.</Vazio>)
             : t.exercicios.map(vm => (
                 <Exercicio key={vm.id} vm={vm} acoes={ctx.acoesEx} />
@@ -172,12 +222,12 @@ export function Treino({ ctx }) {
 
         {t.aberto && !t.editando && !t.addEx && (
           <button class="ins-btn-add tr-aberto" onClick={ctx.acoesAdd.abre}>
-            + adicionar movimento
+            + Adicionar movimento
           </button>
         )}
       </Secao>
 
-      <Secao rotulo="o programa" nota={t.diffTxt}>
+      <Secao rotulo="O programa" nota={t.diffTxt}>
         <p class="ins-body-sm ins-t3 tr-nota">
           Cada série entra no histórico assim que você preenche carga e repetição.
           Não há nada para salvar. O treino se encerra sozinho e a rotação avança
@@ -190,9 +240,9 @@ export function Treino({ ctx }) {
               "pronto" da barra, e oferecer "editar" de novo é oferecer o
               lugar onde ele já está. */}
           {t.podeEditar && !t.editando && (
-            <button class="ins-btn-secondary" onClick={ctx.modoEdicao}>editar treino de hoje</button>
+            <button class="ins-btn-secondary" onClick={ctx.modoEdicao}>Editar treino de hoje</button>
           )}
-          <button class="ins-btn-secondary" onClick={ctx.abrePrograma}>abrir o programa</button>
+          <button class="ins-btn-secondary" onClick={ctx.abrePrograma}>Abrir o programa</button>
         </div>
       </Secao>
     </>

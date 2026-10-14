@@ -269,6 +269,43 @@ test('apagar uma de duas mantém a sessão viva', async () => {
 
 // ---------- a réplica no bucket ----------
 
+test('sem conta, as fotos do corpo dizem que existem só neste aparelho', async () => {
+  // a D, comparar, estado 10: a cópia em JSON leva as referências, não as fotos
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').soAqui, null, 'sem foto nenhuma, nada a dizer');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await tirar(a);
+  await a.esperar(60);
+  a.v('ctx.fechaProtocolo');
+  await a.esperar();
+  const s = a.vJ('ctx.protocoloFotos').soAqui;
+  assert.strictEqual(s.conta, false);
+  assert.strictEqual(s.t, 'A foto do corpo existe só neste aparelho');
+  assert.ok(a.$('[data-a="fotos-conta"]'), 'a saída é entrar na conta');
+  a.fechar();
+});
+
+test('com conta, o que não subiu é contado, sobe num toque, e o aviso sai', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await tirar(a);
+  await a.esperar(60);
+  a.v('ctx.fechaProtocolo');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').soAqui.t, '1 foto ainda não subiu para a cópia remota');
+  a.clicar('[data-a="fotos-subir"]');
+  await a.esperar(150);
+  assert.deepStrictEqual(a.J('globalThis.__subiuCorpo'), [hoje() + '/frente-relaxado']);
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').soAqui, null, 'subiu tudo: nada só aqui');
+  assert.strictEqual(a.$('[data-a="fotos-subir"]'), null);
+  a.fechar();
+});
+
 test('a foto tirada aqui sobe para o bucket do corpo', async () => {
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
@@ -494,8 +531,8 @@ test('sem sessão nenhuma, o resumo convida e não oferece comparação', async 
   assert.strictEqual(f.tem, false);
   assert.strictEqual(f.nota, 'nenhuma sessão ainda');
   assert.strictEqual(f.dias, '–');
-  assert.strictEqual(f.cta, 'nova sessão');
-  assert.strictEqual(a.texto('.dd-fotos-b .ins-btn-primary'), 'nova sessão');
+  assert.strictEqual(f.cta, 'Nova sessão');
+  assert.strictEqual(a.texto('.dd-fotos-b .ins-btn-primary'), 'Nova sessão');
   assert.strictEqual(a.$('.dd-fotos-b .ins-btn-secondary'), null, 'nada a comparar ainda');
   a.fechar();
 });
@@ -511,7 +548,7 @@ test('o atraso é informação, não cobrança', async () => {
   assert.strictEqual(f.dias, '20');
   assert.strictEqual(f.diasCor, 'ins-amber', 'passou de 14 dias');
   assert.strictEqual(f.cadencia, 'a cada 14 dias');
-  assert.strictEqual(f.cta, 'nova sessão');
+  assert.strictEqual(f.cta, 'Nova sessão');
 
   const texto = a.texto('.dd-fotos');
   assert.ok(!/parab|sequ[êe]ncia|streak|dias seguidos/i.test(texto), texto);
@@ -522,7 +559,7 @@ test('sessão de hoje pela metade convida a continuar de onde parou', async () =
   const a = await app({ aba: 'corpo' });
   comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('render');
-  assert.strictEqual(a.vJ('ctx.protocoloFotos').cta, 'continuar · 1 de 9');
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').cta, 'Continuar · 1 de 9');
   a.fechar();
 });
 
@@ -534,7 +571,7 @@ test('comparar só aparece quando há duas sessões na mesma pose', async () => 
 
   comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
   a.v('render');
-  assert.strictEqual(a.texto('.dd-fotos-b .ins-btn-secondary'), 'comparar');
+  assert.strictEqual(a.texto('.dd-fotos-b .ins-btn-secondary'), 'Comparar');
   a.fechar();
 });
 
@@ -552,7 +589,63 @@ test('o par padrão é a mais nova contra a MAIS ANTIGA', async () => {
   a.v('ctx.abreComparar');
   assert.strictEqual(a.vista().comparar.de, datas[0]);
   assert.strictEqual(a.vista().comparar.ate, datas[2]);
-  assert.ok(a.vJ('ctx.comparacao').intervalo.startsWith('42 dias entre as duas'));
+  const c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.intervalo, 'Par mais longo que existe desta pose: 42 dias', 'e diz que é o mais longo');
+  assert.strictEqual(c.longo, true);
+  assert.strictEqual(c.curto, null, 'o par longo não ganha o aviso de curto');
+  a.fechar();
+});
+
+test('o par curto que ele escolheu: a tela avisa, não impede, e volta ao longo num toque', async () => {
+  // a D, comparar, estado 3
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  const datas = [56, 30, 14].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  a.v('ctx.setDataComparada', 'de', datas[1]);
+  let c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.de.d, datas[1], 'obedeceu: o par é o que ele pediu');
+  assert.strictEqual(c.curto.titulo, '16 dias mostram pouco');
+  assert.ok(/Serve para a pergunta do nutricionista; não serve para ver mudança\./.test(c.curto.texto), c.curto.texto);
+  assert.strictEqual(c.curto.voltar, 'Voltar ao par de 42 dias');
+  assert.strictEqual(c.curto.pares, 'Pares desta pose: 42 e 16 dias.');
+  a.clicar('[data-a="par-longo"]');
+  await a.esperar(60);
+  c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.de.d, datas[0], 'de volta ao par mais longo');
+  assert.strictEqual(c.curto, null);
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('par longo que não é o mais longo não ganha aviso; par de menos de 10 dias não serve nem à pergunta', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  const datas = [70, 35, 6, 0].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  a.v('ctx.setDataComparada', 'de', datas[1]);
+  assert.strictEqual(a.vJ('ctx.comparacao').curto, null, '35 dias não é par curto');
+  a.v('ctx.setDataComparada', 'de', datas[2]);
+  const c = a.vJ('ctx.comparacao').curto;
+  assert.strictEqual(c.titulo, '6 dias mostram pouco');
+  assert.ok(/Não serve para ver mudança\.$/.test(c.texto) && !/pergunta/.test(c.texto), c.texto);
+  await a.esperar(60);
+  a.fechar();
+});
+
+test('uma sessão só: o vazio tem data, e diz quando nasce o par', async () => {
+  // a D, comparar, estado 11
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  comSessoes(a, [diasAtras(4)], 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  const v = a.vJ('ctx.comparacao').vazio;
+  assert.ok(/^Ainda não há par\. A primeira sessão foi em \d\d\/\d\d\. A segunda cai em \S+ \d\d\/\d\d, daqui a 10 dias\./.test(v), v);
+  assert.ok(/com 10 a 28 dias de intervalo ele já serve para a pergunta do nutricionista\.$/.test(v), v);
   a.fechar();
 });
 
@@ -592,10 +685,32 @@ test('o peso ao lado da foto é a média da semana, e vem do registro corporal',
 
   a.v('ctx.abreComparar');
   const c = a.vJ('ctx.comparacao');
-  assert.strictEqual(c.de.peso, '91,0 kg', 'média das duas pesagens daquela semana');
-  assert.strictEqual(c.ate.peso, '88,0 kg');
+  assert.strictEqual(c.de.peso, '91,0 kg na semana', 'média das duas pesagens daquela semana');
+  assert.strictEqual(c.ate.peso, '88,0 kg na semana');
+  assert.strictEqual(c.intervalo, 'Par mais longo que existe desta pose: 14 dias, −3,0 kg', 'com a variação da média');
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
   // render que o aviso de falha dispara sem documento para desenhar.
+  await a.esperar(80);
+  a.fechar();
+});
+
+test('cada lado da comparação diz a hora da foto; referência sem instante fica sem hora', async () => {
+  // Decisão do dono, 14/10: "apenas indique o horário da foto — a maioria eu
+  // tiro de noite". Manhã em jejum e noite depois de comer mudam a barriga.
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  const velha = diasAtras(28), nova = diasAtras(14);
+  const noite = new Date(); noite.setDate(noite.getDate() - 14); noite.setHours(21, 40, 0, 0);
+  a.E(`S.protocolo.sessoes = [
+    { d: ${JSON.stringify(velha)}, t: 1, m: 1, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } },
+    { d: ${JSON.stringify(nova)}, t: 2, m: 2, fotos: { 'frente-relaxado': { v: ${noite.getTime()}, ext: 'webp' } } }
+  ]`);
+  a.v('ctx.abreComparar');
+  const c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.ate.hora, '21h40');
+  assert.strictEqual(c.de.hora, null, 'a referência antiga não tem instante de verdade');
+  assert.ok(a.$$('.cp-lado .ins-label').some(e => /· 21h40$/.test(e.textContent)), 'e a tela diz');
   await a.esperar(80);
   a.fechar();
 });
@@ -608,8 +723,8 @@ test('sem pesagem naquela semana, o lugar do número fica vazio em vez de zero',
 
   a.v('ctx.abreComparar');
   const c = a.vJ('ctx.comparacao');
-  assert.strictEqual(c.de.peso, 'peso –');
-  assert.strictEqual(c.de.cintura, 'cintura –');
+  assert.strictEqual(c.de.peso, 'peso: sem medida');
+  assert.strictEqual(c.de.cintura, 'cintura: sem medida');
   // A busca de bytes continua em voo: fechar a janela no meio dela deixa o
   // render que o aviso de falha dispara sem documento para desenhar.
   await a.esperar(80);
@@ -863,7 +978,7 @@ test('ajustar não é oferecido onde não há foto', async () => {
   a.v('ctx.vaiParaPose', 'frente-relaxado');
   assert.ok(a.$('.pr-sobre'), 'com foto, os dois aparecem');
   assert.deepStrictEqual(
-    a.$$('.pr-sobre button').map(b => b.textContent.trim()), ['ajustar', 'apagar']);
+    a.$$('.pr-sobre button').map(b => b.textContent.trim()), ['Ajustar', 'Apagar']);
   a.fechar();
 });
 
@@ -961,7 +1076,8 @@ test('permissão negada não vira tela quebrada, vira o que fazer a respeito', a
 
   const erro = a.vJ('ctx.cameraViva').erro;
   assert.ok(/negado/.test(erro), erro);
-  assert.ok(/ajustes/.test(erro), 'e diz onde resolver: ' + erro);
+  assert.ok(/Ajustes do iPhone › Safari › Câmera › Permitir/.test(erro), 'e diz onde resolver, com o caminho: ' + erro);
+  assert.ok(/a sessão começa do zero, sem perder nada/.test(erro), 'e que nada se perde: ' + erro);
   assert.strictEqual(a.E('globalThis.__faixasVivas'), 0);
   a.fechar();
 });
@@ -985,6 +1101,240 @@ test('disparo sem temporizador guarda a foto e avança a pose', async () => {
   assert.deepStrictEqual(guardadas(a), ['./corpo/' + hoje() + '/frente-relaxado.webp']);
   assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'avançou sem sair');
   assert.ok(a.vista().camera, 'e a câmera continua aberta: são nove poses');
+  a.fechar();
+});
+
+test('o disparo é o obturador, um clarão e o bloco da pose fechando — não o alarme do descanso', async () => {
+  // a D, sessao-fotos estado 3: a três metros, três canais dizendo a mesma
+  // coisa; o bipe duplo é do fim do descanso e aqui confundiria
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+
+  let c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.pontos.length, 9);
+  assert.deepStrictEqual(c.pontos.map(p => p.feita), Array(9).fill(false));
+  assert.strictEqual(c.pontos.findIndex(p => p.atual), 0);
+  assert.strictEqual(a.$$('.cam-bloco').length, 9, 'os blocos estão na câmera');
+  assert.ok(a.$('.cam-bloco.atual') === a.$$('.cam-bloco')[0]);
+
+  a.v('ctx.setTimerDaCamera', 0);
+  const bipes = a.registro.bipes, vibrou = a.vibrou.length;
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+
+  assert.strictEqual(a.registro.obturador, 1, 'o som do obturador');
+  assert.strictEqual(a.registro.bipes, bipes, 'e não o bipe duplo do descanso');
+  assert.strictEqual(a.vibrou.length, vibrou, 'nem a vibração dele');
+  c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.clarao, true, 'o clarão');
+  assert.ok(a.$('.cam-clarao'));
+  assert.strictEqual(c.pontos[0].feita, true, 'o bloco da pose fechou');
+  assert.strictEqual(c.pontos[0].atual, false);
+  assert.strictEqual(c.pontos[1].atual, true);
+  assert.ok(a.$$('.cam-bloco')[0].classList.contains('feita'));
+
+  await a.esperar(400);
+  assert.strictEqual(a.vJ('ctx.cameraViva').clarao, false, 'curto: o clarão apaga sozinho');
+  assert.strictEqual(a.$('.cam-clarao'), null);
+  a.fechar();
+});
+
+test('a pose que não coube não ganha obturador nem clarão: o bloco dela fica marcado na câmera', async () => {
+  // o disparo diz "guardou"; se não guardou, nenhum dos três canais pode dizer
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
+  await a.esperar(400);
+  assert.strictEqual(a.registro.obturador, 1);
+
+  a.encheCota();
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.strictEqual(a.registro.obturador, 1, 'sem obturador para o que não guardou');
+  const c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.clarao, false, 'nem clarão');
+  assert.strictEqual(c.pontos[1].naoGuardada, true);
+  const bloco = a.$$('.cam-bloco')[1];
+  assert.ok(bloco.classList.contains('nao'), 'e o bloco dela tem a forma de "não guardada"');
+  assert.ok(!bloco.classList.contains('feita'), 'e não a de fechado');
+  assert.strictEqual(a.$$('.cam-bloco.nao').length, 1);
+  a.fechar();
+});
+
+test('a foto preta não é guardada: a pose volta no fim da fila, e a voz diz', async () => {
+  // a D, sessao-fotos estado 6 (F78): capturar antes do primeiro quadro do
+  // vídeo dá imagem preta, e ele está a três metros sem como perceber
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  a.v('ctx.setTimerDaCamera', 0);
+  a.E('globalThis.__brilho = 3');
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+
+  assert.strictEqual(a.S().protocolo.sessoes.length, 0, 'nada foi guardado');
+  assert.strictEqual(a.registro.obturador, 0, 'e nem soou como guardada');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'a sessão seguiu para a próxima');
+  const c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.preta, 'Frente relaxado');
+  assert.strictEqual(c.pontos[0].adiada, true);
+  assert.ok(a.$('.cam-bloco.adiada'), 'o bloco dela marcado, sem contar como feita');
+  assert.ok(/^A foto saiu preta\. Esta pose volta no fim\. Siga: Frente duplo bíceps\.$/.test(a.registro.falas.slice(-1)[0].t),
+    a.registro.falas.slice(-1)[0].t);
+
+  // a próxima foto boa não traz a preta de volta antes da hora
+  a.E('globalThis.__brilho = 128');
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-abdomen-coxa', 'segue a ordem, e a adiada fica para o fim');
+
+  // com todas as outras feitas, ela volta
+  a.E(`const s = S.protocolo.sessoes[0];
+       ['frente-abdomen-coxa','perfil-direito','perfil-direito-postura','costas-relaxado','costas-duplo-biceps','costas-maos-na-cintura']
+         .forEach(function (id, i) { s.fotos[id] = { v: Date.now() + i, ext: 'webp' }; });
+       view.protocolo.pose = 'perfil-esquerdo';`);
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-relaxado', 'no fim, a que saiu preta');
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  assert.ok(a.S().protocolo.sessoes[0].fotos['frente-relaxado'], 'e agora ela é guardada');
+  assert.strictEqual(a.vJ('ctx.cameraViva').pontos[0].adiada, false);
+  a.fechar();
+});
+
+test('entre duas poses com giro, a tela mostra o giro grande e a voz diz', async () => {
+  // a D, sessao-fotos estado 4: "girar é desenho, não frase"
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  a.E(`view.protocolo.pose = 'frente-abdomen-coxa'`);
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-relaxado', 'pré-condição: as anteriores faltam, a próxima é a 1');
+  a.E(`const s = S.protocolo.sessoes[0];
+       s.fotos['frente-relaxado'] = { v: 1, ext: 'webp' }; s.fotos['frente-duplo-biceps'] = { v: 2, ext: 'webp' };
+       view.protocolo.pose = 'frente-abdomen-coxa'; delete s.fotos['frente-abdomen-coxa'];`);
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  assert.strictEqual(a.vista().protocolo.pose, 'perfil-direito');
+  assert.strictEqual(a.vJ('ctx.cameraViva').giro, 90);
+  assert.strictEqual(a.texto('.cam-giro'), '↻ gire 90°');
+  assert.ok(/^Gire 90 graus\. Pose 4 de 9\. Perfil direito\. /.test(a.registro.falas.slice(-1)[0].t), a.registro.falas.slice(-1)[0].t);
+  a.fechar();
+});
+
+test('a contagem diz os três últimos em voz', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  a.v('ctx.setTimerDaCamera', 3);
+  a.v('ctx.disparaCamera');
+  await a.esperar(3300);
+  const ditas = a.registro.falas.map(f => f.t);
+  assert.ok(['três', 'dois', 'um'].every(n => ditas.indexOf(n) >= 0), ditas.join(' | '));
+  a.fechar();
+});
+
+test('o preparo mostra a ordem das nove e liga o som no toque de começar', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  a.v('ctx.abreProtocolo');
+  await a.esperar();
+  assert.ok(/^1 frente relaxado · 2 frente duplo bíceps · 3 abdômen e coxa · 4 perfil direito/.test(a.vJ('ctx.sessaoDeFotos').montagem.ordem));
+  assert.ok(/Gire sempre para o mesmo lado/.test(a.texto('#app') + a.doc.body.textContent));
+  assert.strictEqual(a.dado('audioCtx'), null, 'antes do toque, sem som');
+  a.v('ctx.comecaSessaoDeFotos');
+  assert.ok(a.dado('audioCtx'), 'o toque em começar liga o som');
+  a.fechar();
+});
+
+test('o fim da sessão diz o que ficou guardado, o tempo real e a próxima data', async () => {
+  // a D, sessao-fotos estado 10
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  const ini = Date.now() - 60000;
+  const velha = diasAtras(55);
+  a.E(`const f = {};
+       CTX.protocoloFotos().pontos.forEach(function (p, i) { f[p.id] = { v: ${ini} + i * 11000, ext: 'webp' }; });
+       S.protocolo.sessoes = [{ d: ${JSON.stringify(velha)}, t: 1, m: 1, fotos: { 'frente-relaxado': { v: 5, ext: 'webp' } } },
+                              { d: hojeISO(), t: 2, m: 2, fotos: f }];`);
+  a.v('ctx.abreProtocolo');
+  a.E('view.protocolo.montagem = false');
+  a.v('render');
+  await a.esperar();
+  const f = a.vJ('ctx.sessaoDeFotos').fim;
+  assert.strictEqual(f.poses, '9 de 9 poses');
+  assert.strictEqual(f.tempo, '1 min 28 s do primeiro ao último disparo');
+  assert.strictEqual(f.subida, 'As fotos ficam neste aparelho: sem a conta, elas não sobem.');
+  assert.ok(/^Comparar com \d\d\/\d\d · mesma pose, 55 dias, o par longo$/.test(f.comparar), f.comparar);
+  assert.ok(/^A próxima sessão cai em \S+ \d\d\/\d\d\. Nada aqui vence\.$/.test(f.proxima), f.proxima);
+  assert.ok(a.$('.pr-fim'), 'e a tela mostra');
+  a.fechar();
+});
+
+test('a pose é dita em voz, ao abrir a câmera e a cada pose nova', async () => {
+  // a D, sessao-fotos estado 2: a três metros nada precisa ser lido
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+
+  assert.strictEqual(a.registro.falas.length, 1);
+  assert.strictEqual(a.registro.falas[0].lang, 'pt-BR');
+  assert.ok(/^Pose 1 de 9\. Frente relaxado\. \S/.test(a.registro.falas[0].t), a.registro.falas[0].t);
+
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.strictEqual(a.registro.falas.length, 2);
+  assert.ok(/^Pose 2 de 9\. Frente duplo bíceps\. /.test(a.registro.falas[1].t), a.registro.falas[1].t);
+  a.fechar();
+});
+
+test('sem síntese de voz no aparelho, a câmera abre e dispara igual', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.E('delete window.speechSynthesis; delete window.SpeechSynthesisUtterance');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  assert.strictEqual(a.vJ('ctx.cameraViva').pronta, true);
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.ok(a.S().protocolo.sessoes[0].fotos['frente-relaxado']);
+  assert.strictEqual(a.registro.falas.length, 0);
+  assert.deepStrictEqual(a.erros, []);
   a.fechar();
 });
 
@@ -1704,5 +2054,82 @@ test('ctx.fechaProtocolo fecha a tela e devolve a posição de leitura', async (
   await a.esperar(60);
   assert.strictEqual(a.vista().protocolo, null, 'a tela fechou');
   assert.strictEqual(y, 640, 'e devolveu a posição de leitura de onde ele veio');
+  a.fechar();
+});
+
+test('a pose que não coube para a sessão, fica marcada, e "Tentar de novo" a guarda', async () => {
+  // A D (`sessao-fotos.html`, estado 9). Antes, com o registro recusado, a
+  // sessão AVANÇAVA para a próxima pose como se tivesse gravado.
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await tirar(a);                                   // a pose 1 grava
+  await a.esperar(60);
+  const pose2 = a.vista().protocolo.pose;
+  a.encheCota();
+  await tirar(a);                                   // a pose 2 não cabe no registro
+  await a.esperar(60);
+
+  assert.strictEqual(a.vista().protocolo.pose, pose2, 'a sessão parou na pose 2, não seguiu fingindo');
+  const d = a.vJ('ctx.sessaoDeFotos');
+  assert.ok(d.pontos.filter(p => p.naoGuardada).length === 1, 'uma pose marcada como não guardada');
+  assert.ok(/^A pose 2, .+, não foi guardada$/.test(d.naoGuardada.titulo), d.naoGuardada.titulo);
+  assert.ok(a.$('.pr-ponto.nao'), 'com forma diferente de "falta"');
+  assert.ok(a.$('[data-a="pose-copia"]'), 'e a cópia oferecida, porque o que falhou foi o registro');
+
+  a.encheCota(false);
+  a.clicar('[data-a="pose-tenta"]');
+  await a.esperar(60);
+  assert.strictEqual(a.$('.pr-naoguardada'), null, '"Tentar de novo" grava');
+  assert.ok(a.gravado().protocolo.sessoes[0].fotos[pose2], 'e a pose 2 está no disco');
+  a.fechar();
+});
+
+test('a pose que não existe lá atrás: o par recua sozinho e diz que recuou', async () => {
+  // A D (`comparar.html`, estado 7). A pose só começou a ser fotografada na
+  // terceira sessão; o par mais longo possível dela começa ali, e a tela diz
+  // quantos dias o par tem e quantos teria, com as sessões que não têm a pose.
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  const d1 = diasAtras(55), d2 = diasAtras(48), d3 = diasAtras(27), d4 = diasAtras(0);
+  a.E(`S.protocolo.sessoes = [
+    { d: '${d1}', t: 1, m: 1, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } },
+    { d: '${d2}', t: 1, m: 1, fotos: { 'frente-relaxado': { v: 2, ext: 'webp' } } },
+    { d: '${d3}', t: 1, m: 1, fotos: { 'frente-relaxado': { v: 3, ext: 'webp' }, 'costas-maos-na-cintura': { v: 3, ext: 'webp' } } },
+    { d: '${d4}', t: 1, m: 1, fotos: { 'frente-relaxado': { v: 4, ext: 'webp' }, 'costas-maos-na-cintura': { v: 4, ext: 'webp' } } }
+  ]`);
+  a.v('ctx.abreComparar');
+  a.v('ctx.setPoseComparada', 'costas-maos-na-cintura');
+  await a.esperar();
+  const c = a.vJ('ctx.comparacao');
+  assert.strictEqual(c.recuou.titulo, '27 dias, e não 55');
+  assert.ok(/As sessões de \d\d\/\d\d e \d\d\/\d\d não têm esta pose\. O par mais longo possível dela começa em \d\d\/\d\d\./.test(c.recuou.texto), c.recuou.texto);
+  assert.ok(a.$('.cp-recuou'), 'e a tela diz');
+
+  a.v('ctx.setPoseComparada', 'frente-relaxado');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.comparacao').recuou, null, 'a pose que existe desde a primeira não recua');
+  a.fechar();
+});
+
+test('a cortina: uma foto por cima da outra, e o dedo anda a divisa', async () => {
+  // A D (`comparar.html`, estado 2).
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  comSessoes(a, [diasAtras(28), diasAtras(0)], 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  await a.esperar();
+  a.clicar('[data-a="modo-cortina"]');
+  await a.esperar();
+  assert.ok(a.$('.cp-cortina'), 'a cortina está na tela');
+  assert.strictEqual(a.vJ('ctx.comparacao').corte, 50, 'a divisa nasce no meio');
+  const r = a.$('[data-a="cortina-divisa"]');
+  r.value = '30';
+  r.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.comparacao').corte, 30, 'o dedo andou a divisa');
+  assert.ok(/left:\s*30%/.test(a.$('.cp-divisa').getAttribute('style')), a.$('.cp-divisa').getAttribute('style'));
+  assert.strictEqual(a.vJ('ctx.comparacao').sobrepor, false, 'cortina e sobrepor não se misturam');
   a.fechar();
 });

@@ -55,9 +55,13 @@ export function Secao({ rotulo, nota, children, primeira, continua, id }) {
       id={id}
       class={'ins-secao' + (primeira ? ' primeira' : '') + (continua ? ' continua' : '')}
     >
+      {/* O RÓTULO DE SEÇÃO (frente 3 §2, R2): 15 px, peso 600, caixa de frase,
+          frase nominal com artigo — e um título de verdade, `h2`, porque é
+          estrutura. A maiúscula inicial é dada aqui, para o rótulo que vem de
+          dado (o nome de uma medida) seguir a mesma forma. */}
       {(rotulo || nota) && (
         <div class="ins-secao-h">
-          <span class="ins-label">{rotulo}</span>
+          {rotulo && <h2 class="ins-rotulo">{rotulo.charAt(0).toUpperCase() + rotulo.slice(1)}</h2>}
           {nota && <span class="ins-secao-nota">{nota}</span>}
         </div>
       )}
@@ -85,30 +89,6 @@ export function Procedencia({ children }) {
 /* ---------- números ---------- */
 
 /**
- * A métrica que a tela é sobre. Número de 52px, trilho de 3px, e a grade
- * de métricas logo abaixo.
- */
-export function HeroMetrica({ rotulo, meta, valor, unidade, progresso, children }) {
-  const pct = Math.max(0, Math.min(100, progresso == null ? 0 : progresso));
-  return (
-    <div class="ins-hero">
-      <div class="ins-hero-h">
-        <span class="ins-label">{rotulo}</span>
-        {meta && <span class="ins-hero-meta">{meta}</span>}
-      </div>
-      <div class="ins-hero-n">
-        <span class="ins-metric-xl">{valor}</span>
-        {unidade && <span class="ins-hero-u">{unidade}</span>}
-      </div>
-      {progresso != null && (
-        <div class="ins-rail"><div class="ins-rail-fill" style={`width:${pct}%`} /></div>
-      )}
-      {children}
-    </div>
-  );
-}
-
-/**
  * Grade de fios com 2, 3 ou 4 colunas. As células depois da primeira ganham
  * recuo à esquerda para os números alinharem opticamente na própria coluna.
  */
@@ -117,8 +97,13 @@ export function GradeMetricas({ colunas = 3, celulas }) {
     <div class="ins-hairgrid ins-grade" style={`grid-template-columns:repeat(${colunas},1fr)`}>
       {celulas.map((c, i) => (
         <div key={c.k || i} class={'ins-grade-c' + (i % colunas ? ' recuo' : '')}>
-          <div class="ins-label-sm">{c.rotulo}</div>
-          <div id={c.id} class={'ins-metric-m' + (c.cor ? ' ' + c.cor : '')}>{c.valor}</div>
+          {/* R4 da frente 3: a unidade se escreve junto do número, em caixa
+              baixa, e o rótulo fica com o NOME do número. Sem número, sem
+              unidade: "– kg" diria que há uma medida. */}
+          {c.rotulo && <div class="ins-label-sm">{c.rotulo}</div>}
+          <div id={c.id} class={'ins-metric-m' + (c.cor ? ' ' + c.cor : '')}>
+            {c.valor}{c.unidade && c.valor !== '–' && <span class="ins-metric-u"> {c.unidade}</span>}
+          </div>
           {c.nota && <div class="ins-grade-nota">{c.nota}</div>}
         </div>
       ))}
@@ -169,48 +154,7 @@ export function Sparkline({ valores, fatias = 14, piso = 2 }) {
   );
 }
 
-/**
- * Quantidade que se toca para cima e para baixo. Tocar na última célula cheia
- * remove ela — é como se desfaz sem botão de desfazer.
- *
- * Os dois rótulos embaixo são texto pronto e o componente não conhece unidade
- * nenhuma: `unidade` diz quanto vale um toque e `medida` diz onde a contagem
- * está. Contar célula cheia é trabalho do olho; traduzir para litro é de quem
- * chama.
- */
-export function Ticks({ n, total, onMuda, unidade, medida }) {
-  return (
-    <div class="ins-ticks-w">
-      <div class="ins-ticks">
-        {Array.from({ length: total }).map((_, i) => (
-          <button
-            key={i}
-            class={'ins-tick' + (i < n ? ' on' : '')}
-            aria-label={`${i + 1} de ${total}`}
-            onClick={() => onMuda(i === n - 1 ? i : i + 1)}
-          />
-        ))}
-      </div>
-      <div class="ins-ticks-l">
-        <span>{unidade}</span><span>{medida}</span>
-      </div>
-    </div>
-  );
-}
-
 /* ---------- controles ---------- */
-
-/** 28×28, quadrado. Marcado: preenchimento ácido. Sem animação. */
-export function Caixa({ marcada, onClick, rotulo }) {
-  return (
-    <button
-      class={'ins-caixa' + (marcada ? ' on' : '')}
-      aria-pressed={marcada ? 'true' : 'false'}
-      aria-label={rotulo}
-      onClick={onClick}
-    >{marcada ? '✓' : ''}</button>
-  );
-}
 
 /** − valor + com alvos de 46px. Para qualquer número que se aperta repetido. */
 export function Stepper({ valor, passo = 1, onMuda, fmt, min, max }) {

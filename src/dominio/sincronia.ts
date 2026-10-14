@@ -682,6 +682,13 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   const ql = local.quadro, qr = remoto.quadro;
   base.quadro = (qr && (!ql || (qr.t || 0) > (ql.t || 0))) ? qr : (ql || null);
 
+  // ---- a foto da lousa da aula em curso ----
+  // A mesma regra do quadro: documento do dia, vence o mais novo. Sem esta
+  // linha ela viria só do lado que gravou por último, e sumiria se fosse o
+  // outro aparelho.
+  const ll = local.lousa, lr = remoto.lousa;
+  base.lousa = (lr && (!ll || (lr.t || 0) > (ll.t || 0))) ? lr : (ll || null);
+
   // ---- leituras de gordura visual ----
   // Coleção como as outras: a resposta dada no computador não pode sumir
   // porque o iPhone gravou outra coisa depois.
