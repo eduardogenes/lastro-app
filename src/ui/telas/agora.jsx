@@ -15,7 +15,7 @@
 // Prescrição, onde os dois continuam).
 
 import {
-  CartaoFoco, Procedencia, Secao, Sparkline, Stepper, useAgora
+  CartaoFoco, Procedencia, Secao, Stepper, useAgora
 } from '../instrumento/primitivos.jsx';
 import { Forma, NOME_DA_MARCA } from '../instrumento/forma.jsx';
 import { fmtDur, fmtHora, fmtHoraDita, fmtInt } from '../../dominio/formato';
@@ -464,10 +464,23 @@ export function Agora({ ctx }) {
           mesma razão por que a adesão por refeição se conta em dias.
           A casa de HOJE fica vazia de propósito: o dia corrente só entra na
           conta quando a data vira, e é a mesma janela que o portão lê. */}
-      <Secao rotulo="os 14 dias" nota={dias.txt}>
-        <div class="dd-spark"><Sparkline valores={dias.fatias} /></div>
-        <Procedencia>{dias.nota}</Procedencia>
-      </Secao>
+      <section class="ag-14" aria-label="os dias conhecidos dos últimos 14">
+        <div class="ag-14-c" aria-hidden="true">
+          {dias.celulas.map(c => <i key={c.iso} class={'ag-14-d ' + c.estado} />)}
+        </div>
+        <div class="ag-14-l" aria-hidden="true"><span>{dias.primeiro}</span><span>hoje</span></div>
+        <p class="ins-body-sm ins-t2 ag-14-t">
+          {dias.conta}<b>{dias.registrados}</b>. {dias.regra}{dias.hojeExplica ? ' ' + dias.hojeExplica : ''}
+        </p>
+        {dias.ontem && (
+          <div class="ag-14-o">
+            <p class="ins-body-sm ins-t2">{dias.ontem.txt}</p>
+            <button class="ins-btn-secondary" data-a="poe-ontem" onClick={() => ctx.abrePoeODia(dias.ontem.iso)}>
+              Pôr ontem em dia
+            </button>
+          </div>
+        )}
+      </section>
 
 
     </>

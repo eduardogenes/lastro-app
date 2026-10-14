@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.435 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.436 passando**, zero "unhandled".
 - A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
   `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
@@ -89,7 +89,13 @@ pede atenção do dono.
        mesmo dos Ajustes). **Divergência:** "último às 13h50" não tem dado (a
        água é só uma contagem) — fica de fora. Saíram `Ticks` e `Caixa`, sem
        uso, com o CSS e o caso que vigiava o alvo dos ticks.
-     - [ ] Os 14 dias como células, com "Pôr ontem em dia" (estado 1).
+     - [x] Os 14 dias como células (cheia, em parte, vazia — a regra da folha
+       de pôr em dia), hoje na dele, e "Pôr ontem em dia" quando ontem ficou sem
+       marca ou pela metade. **Divergência e pergunta ao dono:** a D diz "hoje
+       passou a contar"; o portão do nutricionista só lê dias FECHADOS (hoje
+       entra quando a data vira). Mantive a conta do portão — mudar mexeria na
+       regra calórica e faria Agora e Semana discordarem em um dia — e a frase
+       diz "entra na conta quando o dia fechar".
      - [ ] A mudança esperando decisão: linha "Decidir" que abre a folha com a
        conta do volume (estados 6–7).
      - [ ] A pesagem some depois do café (F42); as fotos em jejum (estado 5).
@@ -3253,6 +3259,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · **Regra do cartão de cima corrigida pelo desenho:** a regra 5 ("nada na janela, o cartão é a próxima coisa do dia") era leitura minha, declarada, e a entrega de descanso da D a desfez em dois casos (10h40 com almoço às 12h30; 14h10 com lanche às 16h — "nenhum cartão"). Refeição só é cartão dentro da janela de 30 min; o exemplo das 5h20 do momento 2 não precisava da generalização (pré-treino a 25 min). 10 casos reescritos, 2 mutações, 2 mortas.
 - 14/10 · **Agora pela D, etapa 1:** a comida de hoje em linhas que abrem no lugar. Energia com macros, timeline, "···" e "+ adicionar refeição" saem (o plano mora em Prescrição). 6 casos reescritos, 5 novos; 11 mutações, 11 mortas (duas vivas até ganharem caso: o verbo sobre refeição já marcada a desmarcaria, e tocar de novo não fechava a linha). Timeline, `HeroMetrica` e o CSS deles removidos. 1.435 passando.
 - 14/10 · Agora pela D, etapa 2: a água em linha, com o estado ruim. 5 mutações, 5 mortas. 1.435 passando.
+- 14/10 · Agora pela D, etapa 3: os 14 dias em células e "Pôr ontem em dia". 6 mutações, 6 mortas (uma viva até o caso do dia guardado sem marca). 1.436 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

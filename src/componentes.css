@@ -1708,3 +1708,18 @@ button.ins-linha { border-radius: 0; }
 .ag-agua-c { margin-top: var(--ins-3); }
 .ag-agua-f { margin-top: var(--ins-3); display: flex; flex-direction: column; gap: var(--ins-2); color: var(--ins-atencao-tinta); }
 .ag-agua-f p { margin: 0; color: var(--ins-tinta-2); }
+
+/* ---- Os dias conhecidos dos últimos 14 (a D, agora-descanso estado 1) -----
+   Uma célula por dia: cheia, em parte, vazia. Contagem, nunca percentual. */
+.ag-14 { margin-top: var(--ins-9); padding-top: var(--ins-7); border-top: 1px solid var(--ins-fio); }
+.ag-14-c { display: grid; grid-template-columns: repeat(14, 1fr); gap: 3px; }
+.ag-14-d { height: 22px; border-radius: var(--ins-raio-1); border: 1.5px solid var(--ins-fio-controle); }
+.ag-14-d.cheio { background: var(--ins-tinta); border-color: var(--ins-tinta); }
+.ag-14-d.parte { background: linear-gradient(to top, var(--ins-tinta) 50%, transparent 50%); border-color: var(--ins-tinta); }
+.ag-14-d.hoje { border-style: dashed; border-color: var(--ins-acento); }
+.ag-14-l { display: flex; justify-content: space-between; margin-top: var(--ins-2); font-size: 12px; color: var(--ins-tinta-3); }
+.ag-14-t { margin: var(--ins-4) 0 0; }
+.ag-14-t b { font-variant-numeric: tabular-nums; color: var(--ins-tinta); }
+.ag-14-o { display: flex; align-items: center; gap: var(--ins-4); margin-top: var(--ins-4); }
+.ag-14-o p { flex: 1 1 auto; min-width: 0; margin: 0; }
+.ag-14-o > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }

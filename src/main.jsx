@@ -10321,7 +10321,49 @@ CTX.quatorzeDias = function () {
   }
 
   const n = diasRegistrados();
+
+  // AS CÉLULAS DA D (`agora-descanso.html`, estado 1): uma por dia, cheia quando
+  // todas as refeições têm marca, em parte quando só algumas, vazia quando o dia
+  // é desconhecido. A classificação é a da folha de pôr o dia em dia — a mesma
+  // regra nos dois lugares. HOJE aparece na célula dele, mas a conta é a do
+  // portão do nutricionista, que só lê dias fechados: hoje entra quando a data
+  // vira (a D diz "hoje passou a contar"; ver a pergunta ao dono no checklist).
+  const celulas = [];
+  for (let k = 13; k >= 1; k--) {
+    const d = new Date(hoje + 'T12:00:00');
+    d.setDate(d.getDate() - k);
+    const iso = hojeISO(d.getTime());
+    const h = porData[iso];
+    if (!h || !diaInterpretavel(h)) { celulas.push({ iso: iso, estado: 'vazio' }); continue; }
+    const f = CTX.poeODiaEmDia(iso);
+    const marcadas = f ? f.linhas.filter(function (l) { return !l.sugerida && l.marca !== 'vazia'; }).length : 0;
+    celulas.push({ iso: iso, estado: f && marcadas >= f.linhas.length ? 'cheio' : 'parte' });
+  }
+  const hojeDia = diaDeComida();
+  const marcadasHoje = Object.keys(hojeDia.done || {}).length;
+  const H = CTX.hoje();
+  celulas.push({ iso: hoje, estado: 'hoje' + (marcadasHoje ? (marcadasHoje >= H.refs.length ? ' cheio' : ' parte') : '') });
+
+  const d0 = new Date(hoje + 'T12:00:00'); d0.setDate(d0.getDate() - 13);
+  const dOntem = new Date(hoje + 'T12:00:00'); dOntem.setDate(dOntem.getDate() - 1);
+  const isoOntem = hojeISO(dOntem.getTime());
+  const cOntem = celulas[12];
+  const nomeOntem = DIAS_LONGOS[dOntem.getDay()];
+  let ontem = null;
+  if (cOntem.estado === 'vazio') ontem = { iso: isoOntem, txt: 'Ontem, ' + nomeOntem + ', ficou sem marca.' };
+  else if (cOntem.estado === 'parte') {
+    const f = CTX.poeODiaEmDia(isoOntem);
+    const m = f.linhas.filter(function (l) { return !l.sugerida && l.marca !== 'vazia'; }).length;
+    ontem = { iso: isoOntem, txt: 'Ontem, ' + nomeOntem + ': ' + m + ' de ' + f.linhas.length + ' refeições com marca.' };
+  }
+
   return {
+    celulas: celulas,
+    primeiro: DIAS_CURTOS[d0.getDay()] + ' ' + fmtDate(d0.getTime()),
+    conta: 'Dias conhecidos nos últimos 14: ',
+    regra: 'A regra do nutricionista precisa de ' + MIN_REGISTRADOS + '.',
+    hojeExplica: marcadasHoje ? 'Hoje tem refeição marcada, e entra na conta quando o dia fechar.' : null,
+    ontem: ontem,
     fatias: fatias,
     registrados: n,
     pede: MIN_REGISTRADOS,

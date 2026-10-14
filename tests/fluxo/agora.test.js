@@ -1080,20 +1080,24 @@ test('o Agora mostra os 14 dias, e a janela é a MESMA que o portão lê', async
   assert.strictEqual(q.fatias[13], null, 'a casa de hoje está vazia: o dia não fechou');
   assert.strictEqual(q.fatias[12], 1, 'e a de ontem, cheia');
 
-  assert.ok(/11 de 14 dias com registro/.test(a.doc.getElementById('app').textContent),
-    'a tela diz a contagem, e não um percentual');
+  assert.ok(/Dias conhecidos nos últimos 14: 11\. A regra do nutricionista precisa de 11\./.test(a.texto('.ag-14-t')),
+    'a tela diz a contagem, e não um percentual: ' + a.texto('.ag-14-t'));
 
   // E AS CASAS ESTÃO DESENHADAS. Sem esta asserção o caso passava só com a
   // frase: uma mutação que apagava as catorze casas da tela ficava verde,
-  // porque a contagem é texto e as casas são o desenho dela.
-  const secao = a.$$('.ins-secao').filter(function (x) {
-    return /os 14 dias/.test(x.textContent);
-  })[0];
-  assert.ok(secao, 'a seção dos 14 dias está na tela');
-  const casas = Array.from(secao.querySelectorAll('.ins-spark-s'));
+  // porque a contagem é texto e as casas são o desenho dela. Pela D, cada casa
+  // diz se o dia está cheio, em parte ou vazio — aqui, só o almoço marcado.
+  const casas = a.$$('.ag-14-d');
   assert.strictEqual(casas.length, 14, 'catorze casas desenhadas');
-  const cheias = casas.filter(function (c) { return c.querySelector('.ins-spark-b'); }).length;
-  assert.strictEqual(cheias, 11, 'e onze cheias, como a contagem diz');
+  assert.strictEqual(a.$$('.ag-14-d.parte').length, 11, 'onze em parte, como a contagem diz');
+  assert.strictEqual(a.$$('.ag-14-d.vazio').length, 2, 'e os dois buracos, vazios');
+  assert.ok(casas[13].classList.contains('hoje'), 'a última é hoje');
+
+  // ontem tem só o almoço: a linha diz e oferece pôr em dia
+  assert.ok(/Ontem, [a-zçá]+: 1 de \d+ refeições com marca\./.test(a.texto('.ag-14-o')), a.texto('.ag-14-o'));
+  a.clicar('[data-a="poe-ontem"]');
+  await a.esperar(60);
+  assert.ok(a.$('.pd-linhas'), 'a folha de pôr ontem em dia abriu');
   a.fechar();
 });
 
@@ -1778,5 +1782,35 @@ test('a linha diz o estado de cada refeição: sem marca, agora, mais tarde', as
   assert.ok(/\bagora\b/.test(classe('almoco')), classe('almoco'));
   assert.ok(/\bfuturo\b/.test(classe('lanche')), classe('lanche'));
   assert.ok(/\d+ kcal/.test(a.texto('[data-a="linha-lanche"]')), 'o que vem diz quanto é');
+  a.fechar();
+});
+
+test('as casas dos 14 dias: cheia, ontem sem marca, e hoje marcado sem mexer na conta do portão', async () => {
+  const agora = agoraEstavel(13, 0);
+  const iso = function (k) { const d = new Date(agora); d.setDate(d.getDate() - k); return dataLocal(d.getTime()); };
+  const a0 = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], comidaHist: [], dia: diaDe(agora, 'descanso') } });
+  const linhas = a0.vJ('ctx.poeODiaEmDia', iso(2)).linhas.map(function (l) { return l.id; });
+  a0.fechar();
+  const todas = {}; linhas.forEach(function (id) { todas[id] = agora; });
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [],
+    comidaHist: [{ d: iso(2), done: todas, agua: 0, escala: {}, tot: {}, pv: 1, m: agora, cadencia: 'descanso' },
+                 { d: iso(3), done: {}, agua: 4, escala: {}, tot: {}, pv: 1, m: agora, cadencia: 'descanso' }],
+    dia: diaDe(agora, 'descanso') } });
+  await a.esperar();
+
+  const casas = a.$$('.ag-14-d');
+  assert.ok(casas[11].classList.contains('cheio'), 'anteontem, com tudo marcado, é casa cheia');
+  assert.ok(casas[10].classList.contains('vazio'), 'um dia guardado sem refeição marcada é desconhecido: vazio');
+  assert.ok(casas[12].classList.contains('vazio'), 'ontem, sem registro, é vazia');
+  assert.ok(/Ontem, [a-zçá]+, ficou sem marca\./.test(a.texto('.ag-14-o')), a.texto('.ag-14-o'));
+  const antes = a.vJ('ctx.quatorzeDias').registrados;
+
+  a.clicar('[data-a="linha-almoco"]');
+  await a.esperar();
+  a.clicar('[data-a="tudo-almoco"]');
+  await a.esperar();
+  assert.ok(a.$$('.ag-14-d')[13].classList.contains('parte'), 'hoje, com o almoço marcado, fica em parte');
+  assert.strictEqual(a.vJ('ctx.quatorzeDias').registrados, antes, 'mas a conta do portão só lê dias fechados');
+  assert.ok(/entra na conta quando o dia fechar/.test(a.texto('.ag-14-t')), 'e a frase diz por quê');
   a.fechar();
 });
