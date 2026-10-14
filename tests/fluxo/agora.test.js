@@ -1908,3 +1908,47 @@ test('"Decidir" mostra a conta do volume e a regra do treinador, e cada botão g
   assert.strictEqual(series(b), 4, '"Fica no programa" entra no Treino A');
   b.fechar();
 });
+
+test('o cartão da refeição grava no toque, e a leitura de volta diz o que ficou, com Desfazer', async () => {
+  // A D (`momento-2.html`, estados 1 e 2). 15h41, o lanche das 16h na janela.
+  const agora = agoraEstavel(15, 41);
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'descanso') } });
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima').id, 'lanche', 'pré-condição: o lanche é o cartão');
+  assert.deepStrictEqual(a.$$('.ins-foco-acoes button').map(b => b.textContent), ['Comi tudo', 'Metade', 'Não comi isso']);
+  a.v('ctx.marcaRefeicao', 'almoco');                 // o almoço já tinha marca
+  await a.esperar();
+
+  a.clicar('[data-a="cartao-tudo"]');
+  await a.esperar();
+  assert.ok(a.S().dia.done.lanche > 0, 'um toque gravou');
+  const volta = a.texto('.ag-volta');
+  assert.ok(/Lanche da tarde · comi tudo/.test(volta), volta);
+  assert.ok(/marcado às 15h41, neste aparelho/.test(volta), volta);
+  assert.ok(/Antes dele, sem marca hoje: café da manhã\./.test(volta), 'só o que passou SEM marca, sem cobrança: ' + volta);
+  assert.ok(/Próximo no plano: jantar às 19h30\./.test(volta), volta);
+
+  a.clicar('[data-a="volta-desfaz"]');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.done.lanche, undefined, '"Desfazer" tira a marca');
+  assert.strictEqual(a.$('.ag-volta'), null, 'e a leitura de volta some');
+  a.fechar();
+});
+
+test('"Não comi isso" no cartão troca os botões pela pergunta, no lugar', async () => {
+  const agora = agoraEstavel(15, 41);
+  const a = await app({ aba: 'agora', agora: agora, estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'descanso') } });
+  a.clicar('[data-a="linha-pos"]');                  // uma OUTRA linha aberta
+  await a.esperar();
+  a.clicar('[data-a="cartao-naocomi"]');
+  await a.esperar();
+  assert.deepStrictEqual(a.$$('.ins-foco-acoes button').map(b => b.textContent), ['Sei o que comi', 'Não sei', 'Não comi nada']);
+  assert.ok(a.$('[data-a="tudo-pos"]'), 'a linha aberta do café continua com os botões DELA');
+  assert.strictEqual(a.$('[data-a="nao-pos"]'), null, 'e não com a pergunta do lanche');
+  assert.strictEqual(Object.keys(a.S().dia.done).length, 0, 'a pergunta não grava');
+  assert.strictEqual(a.$('[data-a="nao-lanche"]'), null, 'e a linha do lanche não abre a mesma pergunta duas vezes');
+  a.clicar('[data-a="cartao-nao"]');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.como.lanche, 'nao');
+  assert.ok(/não comi/.test(a.texto('.ag-volta')), a.texto('.ag-volta'));
+  a.fechar();
+});

@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.439 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.441 passando**, zero "unhandled".
 - A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
   `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
@@ -115,8 +115,13 @@ pede atenção do dono.
        fotos dizem "em jejum, antes do café das 8h00" (F228) e, depois do café
        marcado, "amanhã cedo", sem oferecer a sessão (o padrão do desenhista na
        pergunta 5; as fotos continuam em Corpo).
-     - [ ] O cartão com os três botões no lugar do "abrir e marcar", e a leitura
-       de volta com "Desfazer" (momento 2, estados 1–2).
+     - [x] O cartão da refeição com os três botões (e a pergunta no lugar
+       deles), e a leitura de volta do último toque: o que ficou, quando, neste
+       aparelho, "Desfazer", o que passou sem marca antes dele e o próximo do
+       plano (momento 2, estados 1–2). **Divergência:** "Pôr hoje em dia" não
+       entrou — a folha de pôr em dia grava no histórico, e hoje ainda é o dia
+       aberto; gravar os dois lados do mesmo dia arrisca o dado. As linhas do
+       dia marcam cada uma.
      - [ ] O cardio: hoje é seção própria; na D é a folha do palpite (descanso)
        e o fim das sessões A e D.
   3. §2 da frente 3 — os rótulos (R1–R4), por tela, com captura.
@@ -3279,6 +3284,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Agora pela D, etapa 4: o cabeçalho com a procedência do tipo do dia e a folha do estado 4. 12 casos reapontados, 1 novo; 6 mutações, 6 mortas. 1.437 passando.
 - 14/10 · Agora pela D, etapa 5: a pesagem e as fotos seguem a hora. 4 mutações, 4 mortas. 1.438 passando.
 - 14/10 · Agora pela D, etapa 6: a mudança esperando decisão, com "Decidir" no lugar. 4 mutações, 4 mortas (duas vivas até o caso discriminar: a folha que sumia mas ficava na pilha, e a posição que não existia no treino da mudança). 1.439 passando.
+- 14/10 · Agora pela D, etapa 7: o cartão da refeição grava no toque, e a leitura de volta com Desfazer. 5 mutações; 4 mortas e 1 equivalente (código redundante, tirado), depois de dois casos ganharem discriminação. 1.441 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

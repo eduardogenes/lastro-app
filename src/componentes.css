@@ -1743,3 +1743,11 @@ button.ins-linha { border-radius: 0; }
 .dc-m p, .dc-g p { margin: 0; }
 .dc-imp.acima { color: var(--ins-atencao-tinta); }
 .dc-regra { padding-left: var(--ins-4); border-left: 2px solid var(--ins-fio-controle); }
+
+/* ---- A leitura de volta do último toque (a D, momento-2 estado 2) -------- */
+.ag-volta { margin-top: var(--ins-5); padding: var(--ins-4) var(--ins-5); border-radius: var(--ins-raio-4); background: var(--ins-superficie-2); display: flex; flex-direction: column; gap: var(--ins-3); }
+.ag-volta p { margin: 0; }
+.ag-volta-l { display: flex; align-items: center; gap: var(--ins-4); }
+.ag-volta-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ag-volta-t small { font-size: 13px; color: var(--ins-tinta-2); }
+.ag-volta-l > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }

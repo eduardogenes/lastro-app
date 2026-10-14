@@ -23,6 +23,9 @@ import {
   minutosDe, resumoDaRefeicao, totalDaRefeicao
 } from '../../dominio/nutricao/calculo';
 
+/** "8h00", de "08:00": a hora em prosa, sem o zero da frente. */
+function horaDitaDe(t) { return t.replace(/^0(\d)/, '$1').replace(':', 'h'); }
+
 /** Minutos desde a meia-noite, do relógio que a tela recebe. */
 function minutosDoDia(t) { const d = new Date(t); return d.getHours() * 60 + d.getMinutes(); }
 
@@ -65,6 +68,24 @@ export function Agora({ ctx }) {
   const dias = ctx.quatorzeDias();
   const refDe = id => refs.filter(r => r.id === id)[0] || null;
   const linha = ctx.linhaDaComida();
+  // a leitura de volta: o último toque, o que passou sem marca antes dele e o próximo
+  const volta = (function () {
+    const u = linha.ultima;
+    if (!u) return null;
+    const r = refs.filter(x => x.id === u.id)[0];
+    if (!r) return null;
+    const esc = comidaDoDia.escala[r.id] ?? 1;
+    const como = comidaDoDia.como && comidaDoDia.como[r.id];
+    const minU = minutosDe(r.t);
+    const refeicoes = refs.filter(x => !ctx.ehLinhaDeTreino(x));
+    const prox = refeicoes.filter(x => minutosDe(x.t) > minutosDoDia(agora) && !comidaDoDia.done[x.id])[0];
+    return {
+      id: r.id, nome: r.n, quando: comidaDoDia.done[r.id],
+      estado: como || (esc === 0.5 ? 'metade' : 'tudo'),
+      antes: refeicoes.filter(x => minutosDe(x.t) < minU && !comidaDoDia.done[x.id]).map(x => x.n.toLowerCase()),
+      proximo: prox ? prox.n.toLowerCase() + ' às ' + horaDitaDe(prox.t) : null
+    };
+  })();
   const ag = ctx.agua();
   const linhaDoTreino = refs.filter(r => ctx.ehLinhaDeTreino(r))[0] || null;
 
@@ -173,8 +194,17 @@ export function Agora({ ctx }) {
         // `src/dominio/agora.ts`): a contagem é sempre a de "é agora"
         contagemRotulo: c.rotulo,
         resumo: resumoDaRefeicao(r, catalogo, alta, comidaDoDia.escala[r.id] ?? 1),
-        cta: 'abrir e marcar →',
-        onClick: () => ctx.abreRefeicao(topo.id)
+        // Os três botões NO cartão (a D, `momento-2.html`, estado 1): um toque
+        // grava, e "Não comi isso" faz a única pergunta no lugar deles.
+        acoes: linha.pergunta === r.id ? [
+          { t: 'Sei o que comi', a: 'cartao-fora', onClick: () => ctx.marcaLinhaDaComida(r.id, 'fora') },
+          { t: 'Não sei', a: 'cartao-nsei', onClick: () => ctx.marcaLinhaDaComida(r.id, 'nsei') },
+          { t: 'Não comi nada', a: 'cartao-nao', onClick: () => ctx.marcaLinhaDaComida(r.id, 'nao') }
+        ] : [
+          { t: 'Comi tudo', a: 'cartao-tudo', onClick: () => ctx.marcaLinhaDaComida(r.id, 'tudo') },
+          { t: 'Metade', a: 'cartao-metade', onClick: () => ctx.marcaLinhaDaComida(r.id, 'metade') },
+          { t: 'Não comi isso', a: 'cartao-naocomi', onClick: () => ctx.marcaLinhaDaComida(r.id, 'pergunta') }
+        ]
       };
     }
 
@@ -240,6 +270,27 @@ export function Agora({ ctx }) {
           Fica ABAIXO do cartão de propósito: é para decidir com calma, e a
           próxima coisa a fazer vem antes do que pode esperar. */}
       {f && <CartaoFoco {...f} />}
+
+      {/* A LEITURA DE VOLTA do último toque (a D, `momento-2.html`, estado 2):
+          o que ficou marcado, quando, neste aparelho, com "Desfazer"; o que
+          passou sem marca antes dele; e o próximo do plano. Sem cobrança. */}
+      {volta && (
+        <div class="ag-volta" role="status">
+          <div class="ag-volta-l">
+            <Forma marca={volta.estado} />
+            <span class="ag-volta-t">
+              <b>{volta.nome} · {NOME_DA_MARCA[volta.estado]}</b>
+              <small>marcado às {fmtHoraDita(volta.quando)}, neste aparelho</small>
+            </span>
+            <button class="ins-btn-secondary" data-a="volta-desfaz"
+                    onClick={() => ctx.marcaLinhaDaComida(volta.id, 'desfaz')}>Desfazer</button>
+          </div>
+          {volta.antes.length > 0 && (
+            <p class="ins-body-sm ins-t2">Antes dele, sem marca hoje: <b>{volta.antes.join(', ')}</b>.</p>
+          )}
+          {volta.proximo && <p class="ins-body-sm ins-t2">Próximo no plano: <b>{volta.proximo}</b>.</p>}
+        </div>
+      )}
 
       {/* A PESAGEM DA MANHÃ e, quando vence, A SESSÃO DE FOTOS: linhas com um
           botão, abaixo do cartão, e não cartão (frente 1 §5, regra 5; o M1‑13
@@ -328,7 +379,7 @@ export function Agora({ ctx }) {
                         <button class="ins-btn-secondary" data-a={'desfaz-' + r.id}
                                 onClick={() => ctx.marcaLinhaDaComida(r.id, 'desfaz')}>Desfazer</button>
                       </div>
-                    ) : linha.pergunta ? (
+                    ) : linha.pergunta === r.id ? (
                       <div class="ag-l-perg">
                         <p class="ins-body ins-t1">Sabe o que comeu no lugar?</p>
                         <div class="ag-l-btns">

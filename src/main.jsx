@@ -2446,10 +2446,17 @@ const CTX = {
   // A linha tocada abre ali mesmo com o que o cartão teria: a procedência, os
   // itens e os três botões. Um toque grava — não há "guardar". Só uma linha
   // abre por vez, para o dedo nunca acertar o botão de outra refeição.
-  linhaDaComida: function () { return { aberta: view.linhaComida || null, pergunta: !!view.linhaPergunta }; },
+  linhaDaComida: function () {
+    const u = view.ultimaMarca;
+    const d = diaDeComida();
+    return { aberta: view.linhaComida || null, pergunta: view.perguntaDe || null,
+             // a leitura de volta do último toque (momento 2, estado 2): fica
+             // enquanto a marca existir e for de hoje
+             ultima: u && u.data === d.data && d.done[u.id] ? u : null };
+  },
   abreLinhaDaComida: function (id) {
     view.linhaComida = view.linhaComida === id ? null : id;
-    view.linhaPergunta = false;
+    view.perguntaDe = null;
     render();
   },
   /**
@@ -2459,7 +2466,7 @@ const CTX = {
    */
   marcaLinhaDaComida: function (id, k) {
     const d = diaDeComida();
-    if (k === 'pergunta') { view.linhaPergunta = true; render(); return; }
+    if (k === 'pergunta') { view.perguntaDe = id; render(); return; }
     if (k === 'desfaz') {
       if (!d.done[id]) return;
       if (d.escala[id] != null) delete d.escala[id];
@@ -2470,7 +2477,8 @@ const CTX = {
     if (['tudo', 'metade', 'fora', 'nsei', 'nao'].indexOf(k) < 0) return;
     if (k === 'metade') d.escala[id] = 0.5;
     else if (d.escala[id] != null && k === 'tudo') delete d.escala[id];
-    view.linhaComida = null; view.linhaPergunta = false;
+    view.linhaComida = null; view.perguntaDe = null;
+    view.ultimaMarca = { id: id, k: k, data: d.data };
     CTX.marcaRefeicao(id, k === 'tudo' || k === 'metade' ? undefined : k);
   },
   editaRefeicao: function (id) { CTX.abreFolha({ k: 'editaRefeicao', id: id }); },
