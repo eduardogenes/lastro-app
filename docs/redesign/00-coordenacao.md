@@ -3222,6 +3222,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Painéis de apagar sessão e cardio pelo desenho (estados 12 e 13): o que vai, o que fica, a sequência, o mês. 6 mutações, 6 mortas. 1.425 passando.
 - 14/10 · O cardio do dia se corrige no lugar (modalidade, minutos, intensidade; carimbo `alt`, instante intocado). 6 mutações, 6 mortas. 1.426 passando.
 - 14/10 · "Não feito" tocável na sessão passada: a série que faltou entra na posição, e o registro novo entra na lista pela ordem do tempo. 8 mutações, 8 mortas (uma viva até ganhar o caso da posição pulada). 1.430 passando. Dias fechado no que tem desenho.
+- 14/10 · **Regra do cartão de cima corrigida pelo desenho:** a regra 5 ("nada na janela, o cartão é a próxima coisa do dia") era leitura minha, declarada, e a entrega de descanso da D a desfez em dois casos (10h40 com almoço às 12h30; 14h10 com lanche às 16h — "nenhum cartão"). Refeição só é cartão dentro da janela de 30 min; o exemplo das 5h20 do momento 2 não precisava da generalização (pré-treino a 25 min). 10 casos reescritos, 2 mutações, 2 mortas.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

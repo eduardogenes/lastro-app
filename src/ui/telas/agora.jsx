@@ -161,10 +161,9 @@ export function Agora({ ctx }) {
         rotulo: r.id === posTreino ? r.t + ' · pós-treino' : r.t,
         nome: r.n,
         contagem: c.txt,
-        // `janela` é o que separa "é agora" de "é a próxima coisa do dia". Sem
-        // isso o cartão diria "faltam" sobre algo de três horas adiante com a
-        // mesma voz de algo de dez minutos.
-        contagemRotulo: topo.janela ? c.rotulo : 'mais tarde',
+        // só existe cartão de refeição dentro da janela de 30 min (a regra,
+        // `src/dominio/agora.ts`): a contagem é sempre a de "é agora"
+        contagemRotulo: c.rotulo,
         resumo: resumoDaRefeicao(r, catalogo, alta, comidaDoDia.escala[r.id] ?? 1),
         cta: 'abrir e marcar →',
         onClick: () => ctx.abreRefeicao(topo.id)

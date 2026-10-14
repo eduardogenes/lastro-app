@@ -145,22 +145,22 @@ test('enquanto a janela do treino não passou, o cartão é o treino', async () 
   a.fechar();
 });
 
-test('passada a janela do treino, a refeição assume o topo', async () => {
-  // 10h: o treino das 6h15 acabaria muito antes. O cartão passa a ser a próxima
-  // refeição do plano para a FRENTE.
-  const agora = agoraEstavel(10, 0);
-  const a = await app({
-    agora: agora,
-    estado: { logs: {}, done: [],
-              dia: { data: dataLocal(agora), done: {}, agua: 0,
-                     escala: {}, cadencia: 'treino', alta: 0 } }
-  });
-
+test('passada a janela do treino, a refeição da janela assume o topo', async () => {
+  // O treino das 6h15 acabaria muito antes. Às 12h05 o cartão é o almoço das
+  // 12h30, que está na janela; às 10h, longe dela, não há cartão.
+  const ag = function (h, m) {
+    return { logs: {}, done: [],
+             dia: { data: dataLocal(agoraEstavel(h, m)), done: {}, agua: 0, escala: {}, cadencia: 'treino', alta: 0 } };
+  };
+  const a = await app({ agora: agoraEstavel(12, 5), estado: ag(12, 5) });
   const c = a.vJ('ctx.cartaoDeCima');
   assert.strictEqual(c.k, 'refeicao');
   assert.strictEqual(c.id, 'almoco', 'o almoço das 12h30 é o próximo à frente');
-  assert.strictEqual(c.janela, false, 'e está longe: a tela não pode dizer "agora"');
+  assert.strictEqual(c.janela, true);
   a.fechar();
+  const b = await app({ agora: agoraEstavel(10, 0), estado: ag(10, 0) });
+  assert.strictEqual(b.vJ('ctx.cartaoDeCima'), null, 'longe da janela: nenhum cartão');
+  b.fechar();
 });
 
 test('sessão já registrada hoje tira o treino da disputa, dentro da janela', async () => {
@@ -189,9 +189,10 @@ test('sessão já registrada hoje tira o treino da disputa, dentro da janela', a
   assert.ok(fatos.agora <= fatos.treino.fimDaJanela,
     'pré-condição que faz o caso discriminar: ainda DENTRO da janela (' +
     fatos.agora + ' <= ' + fatos.treino.fimDaJanela + ')');
-  assert.strictEqual(a.vJ('ctx.cartaoDeCima').k, 'refeicao',
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima'), null,
     'e mesmo assim o treino não disputa: dois treinos no mesmo dia são ' +
-    'possíveis, e o segundo volta a ganhar pela sessão ABERTA, que é o degrau 1');
+    'possíveis, e o segundo volta a ganhar pela sessão ABERTA, que é o degrau 1. ' +
+    'O café das 8h está fora da janela, então o topo se cala');
   a.fechar();
 });
 
@@ -430,20 +431,18 @@ test('no Agora, o cartão do treino abre o MODO no dia de hoje — a porta 1', a
   a.fechar();
 });
 
-test('no Agora, o cartão da refeição longe diz "mais tarde", não "faltam"', async () => {
-  // `janela` é o que separa "é agora" de "é a próxima coisa do dia". Sem isso o
-  // cartão falaria de algo de três horas adiante com a voz de algo de dez
-  // minutos.
+test('no Agora, a refeição longe não é cartão; dentro da janela, diz "faltam"', async () => {
+  // Pela D (`agora-descanso.html`, estados 1 e 3), fora da janela de 30 min não
+  // há cartão de refeição: o que está à frente é linha do dia. Antes o cartão
+  // aparecia com "mais tarde" — leitura minha, desfeita pelo desenho.
   const agora = agoraEstavel(10, 0);
   const a = await app({
     aba: 'agora', agora: agora,
     estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino') }
   });
+  assert.strictEqual(a.vJ('ctx.cartaoDeCima'), null, 'às 10h, com o almoço às 12h30: nenhum cartão');
+  assert.strictEqual(a.$('.ins-foco'), null);
 
-  assert.strictEqual(a.vJ('ctx.cartaoDeCima').janela, false, 'pré-condição: fora da janela');
-  assert.ok(a.texto('.ins-foco').indexOf('mais tarde') >= 0, a.texto('.ins-foco'));
-
-  // e dentro da janela volta a ser a contagem normal
   const b = await app({
     aba: 'agora', agora: agoraEstavel(12, 10),
     estado: { plano: 7, logs: {}, done: [], dia: diaDe(agoraEstavel(12, 10), 'treino') }
@@ -457,7 +456,8 @@ test('a linha acesa da timeline é o assunto do cartão', async () => {
   // Uma regra só para a mesma pergunta. Antes a linha acesa e o cartão vinham
   // da MESMA variável por acaso; agora a linha é derivada do cartão de
   // propósito, porque duas regras divergiriam e a tela diria duas coisas.
-  const agora = agoraEstavel(10, 0);
+  // 12h10: o almoço das 12h30 está na janela, e é o cartão.
+  const agora = agoraEstavel(12, 10);
   const a = await app({
     aba: 'agora', agora: agora,
     estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'treino') }
