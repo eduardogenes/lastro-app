@@ -14,8 +14,13 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.490 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `da9a75f`.
+- Branch `redesenho-do-zero`, suíte verde: **1.491 passando**, zero "unhandled".
+- **⚠ Publicar logo (dado):** o service worker apagava o cache das fotos do corpo
+  (`lastro-corpo`) a cada versão publicada — só poupava o das fotos de aparelho.
+  Corrigido em 14/10 (o F252 do comparar, estado 10). Até a versão corrigida
+  chegar ao iPhone, cada publicação nova ainda apaga as fotos do corpo que não
+  subiram para a cópia remota.
+  Nenhum agente trabalhando. Último commit de código: `547361d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -3490,6 +3495,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Aula 3 e 5: a referência de cada movimento do box e "Na última aula" antes de começar. 7 mutações, 6 mortas e 1 guarda desnecessária tirada. Achado: `fmtNum` escreve carga com ponto ("22.5") em parte da tela — corrigido no texto novo; o resto vai em seguida. 1.487 passando.
 - 14/10 · **Achado de dado, corrigido:** salvar a correção de uma sessão pelo histórico regravava cada série como [carga, reps] e apagava o RIR de TODAS as séries da sessão, inclusive das não tocadas. Agora o que vem depois de carga e repetição fica. O RIR já perdido em correções antigas não volta (só por cópia de segurança anterior). 1 mutação, morta. 1.488 passando.
 - 14/10 · A carga na tela com vírgula: `fmtCarga` na coluna anterior, no histórico, na conta de anilhas, nas grades e no campo de correção ("127,5 × 12 @ 2"). Um caso tinha o ponto como regra ("é fmtNum") — reescrito, com o porquê. 1.490 passando.
+- 14/10 · **Achado de dado, corrigido (comparar 10, F252):** a limpeza de ativação do service worker poupava `lastro-fotos` e `treino-fotos`, e não `lastro-corpo` — cada publicação apagava a cópia local das fotos do corpo. Agora poupa, e um caso compara a lista do worker com todo `CACHE_*` declarado em `src/infra`. 1 mutação, morta. 1.491 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
