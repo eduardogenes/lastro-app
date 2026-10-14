@@ -19,7 +19,10 @@ pede atenção do dono.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
-- **Próximo passo:** o levantamento estado a estado das outras sete entregas da
+- **Feito em primeira passada:** o levantamento (item 6.β). **Próximo:** a
+  fila dele, dado primeiro — o passo calórico que diz "Apliquei" antes de
+  gravar (semana 10).
+- **Era o próximo passo:** o levantamento estado a estado das outras sete entregas da
   D contra o app — momento-1 (14 estados), semana (10), corpo (11), prescricao
   (11), aula (12), comparar (11), sessao-fotos (11). Parte já foi construída nas
   peças 6.b–6.z (sessão como modo, régua, teclado, portões da Semana,
@@ -3173,6 +3176,39 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       desenho: os portões da Semana (§6.2/§6.4) e os tipos de cartão que não
       existem. **As outras treze perguntas** do app seguem no diálogo do
       sistema, de propósito (§3.3).
+
+- [~] **6.β O levantamento das outras sete entregas da D contra o app** (14/10,
+      primeira passada, por leitura das legendas, captura e sonda no código).
+      ✓ construído · ~ em parte ou com divergência declarada · ✗ falta.
+      - **momento-1 (sessão):** 1 ~ (régua abre na linha tocada, não na zona
+        fixa — divergência declarada em `regua.jsx`) · 2 ~ (falta "enquanto
+        descansa": pré-treino, água e peso a um toque dentro da sessão) · 3 ✓ ·
+        4 ✗ ("+ série" na linha do exercício; hoje só pela edição do dia) · 5 ✓ ·
+        6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · 10 ~ (marca por célula não feita, declarada) ·
+        11 ✓ · 12 ✓ · 13 ✓ · 14 ✗ (paisagem em duas colunas; o app pede para
+        girar de volta desde 02/09, antes do redesenho).
+      - **semana:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ✓ · 5 ~ (conferir o ramo do corte
+        pedindo a foto) · 6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · **10 ✗ — o passo diz
+        "Apliquei" antes de saber se gravou** (o disco não fica pela metade, mas
+        a tela afirma o que pode não ter durado).
+      - **corpo:** 1 ~ (stepper de 100 g em vez da régua) · 2 ✓ · 3 ✓ · 4 ✓ ·
+        5 ✓ · 6 ~ (conferir o valor do mês passado com a variação) · 7 ✓ · 8 ✓ ·
+        9 ~ (conferir "o que falta" na semana de uma pesagem) · 10 ✗ (o vazio
+        que diz quanto custa sair dele) · 11 ✓.
+      - **prescricao:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ~ · 5 ✓ · 6 ~ (conferir a pergunta
+        do nome antes de gravar) · 7 ~ · 8 ~ · 9 ~ (conferir o vazio sem plano) ·
+        10 ✓ · 11 ✗ (login expirado dito como sem rede).
+      - **aula:** 1 ✓ · 2 ✓ · 3–5 ~ (conferir a ordem de busca e a unidade) ·
+        6 ~ (lousa) · 7 ✓ · 8 ✓ · 9 ✓ · 10 ✓ · 11 ~ · **12 ✗ (presença gravada e
+        detalhe não, separados na tela)**.
+      - **comparar:** 1 ~ · 2 ✗ (cortina) · 3 ~ · 4 ~ · 5 ~ · 6 ~ · 7 ✗ (o par
+        que recua sozinho, dizendo) · 8 ✓ · 9 ✓ · 10 ~ · 11 ~.
+      - **sessao-fotos:** 1 ~ · 2 ✗ (voz) · 3 ✗ (clarão e obturador) · 4 ~ ·
+        5 ~ · 6 ~ · 7 ✓ · 8 ~ · **9 ✗ (a pose que não coube no aparelho)** · 10 ~ ·
+        11 ✓.
+      **A fila sai daqui, dado primeiro:** semana 10, aula 12, sessao-fotos 9,
+      prescricao 11; depois os ✗ de tela (corpo 10, comparar 2 e 7, sessão 4 e
+      14, sessao-fotos 2–3) e a conferência dos ~.
 
 - [x] **6.v' O reponte das expressões compostas** (13/10, 30 commits, um por
       arquivo). **485 → 188 entradas pela ponte de `eval`** nos casos de fluxo.

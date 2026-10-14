@@ -11,7 +11,7 @@ await p.evaluate(() => window.__escopo(`
   const DIA = 86400000, t = Date.now() - 7*DIA;
   const P = treino('A'); S.logs = {};
   P.ex.forEach(function (ex, i) { const sets=[]; for (let k=0;k<ex.s;k++) sets.push([40+5*i, 9-k, 1]); S.logs[ex.id]=[{ t:t+i*600000, sid:t, sets:sets }]; });
-  S.done = [{ day:'A', t:t, sid:t, dur:3600000, fim:'manual' }, { day:'E', t:t+5*DIA, sid:t+5*DIA, dur:3600000, fim:'manual' }];
+  S.done = [{ day:'A', t:t, sid:t, dur:3600000, fim:'manual' }, { day:'HX', t:t+5*DIA, sid:t+5*DIA, dur:3600000, fim:'manual' }];
   CTX.vaiPara('agora'); render();
 `));
 await p.waitForTimeout(300);
