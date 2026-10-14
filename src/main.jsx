@@ -2403,6 +2403,34 @@ const CTX = {
   },
   abreRefeicao: function (id) { CTX.abreFolha({ k: 'refeicao', id: id }); },
 
+  // ---------- a água em linha (a D, `agora-descanso.html`, estados 3 e 8) ----------
+  //
+  // "+1 copo" é um toque e grava NA HORA, sabendo se gravou: com cada toque
+  // gravando, cada toque pode falhar, e a tela não finge (estado 8). Se o
+  // aparelho recusa, a conta volta ao que está guardado e a linha diz qual copo
+  // não entrou. Tocar no número corrige no lugar, sem prazo.
+  agua: function () {
+    const d = diaDeComida();
+    return { n: d.aguaNaoContada ? 0 : (d.agua || 0), naoContada: !!d.aguaNaoContada,
+             corrigindo: !!view.aguaCorrige, falhou: view.aguaFalhou || null };
+  },
+  maisUmCopo: async function () {
+    const d = diaDeComida();
+    const antes = d.agua, nc = d.aguaNaoContada;
+    d.agua = (d.aguaNaoContada ? 0 : (d.agua || 0)) + 1;
+    delete d.aguaNaoContada;
+    const n = d.agua;
+    view.aguaFalhou = null;
+    const ok = await save();
+    if (ok === false) {
+      d.agua = antes;
+      if (nc) d.aguaNaoContada = nc;
+      view.aguaFalhou = n;
+    }
+    render();
+  },
+  abreCorrecaoDaAgua: function () { view.aguaCorrige = !view.aguaCorrige; render(); },
+
   // ---------- a linha da comida, aberta no lugar (a D, `agora-descanso.html`
   // estado 2; `momento-2.html` estados 1 e 5) ----------
   //

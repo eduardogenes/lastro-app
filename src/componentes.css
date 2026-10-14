@@ -65,37 +65,7 @@
    que um dedo pede. Aumentá-los engordaria telas inteiras; o `::after` estende
    só o ALVO, sem mexer em um pixel do desenho.
    A regra é uma: a expansão nunca passa do vão até o vizinho, senão dois
-   controles disputam o mesmo pixel e o toque vira sorteio. É por isso que os
-   ticks crescem só na vertical — na horizontal o vizinho é OUTRO valor. */
-/* ---- Ticks ------------------------------------------------------------ */
-
-.ins-ticks { display: flex; gap: var(--ins-1); }
-.ins-tick {
-  flex: 1; height: 30px;
-  border: 1px solid var(--ins-fio-controle); background: transparent;
-  /* 30 -> 44 de alvo. Só vertical: o vizinho é a repetição seguinte. */
-  position: relative;
-}
-.ins-tick::after { content: ""; position: absolute; inset: -7px 0; }
-.ins-tick.on { background: var(--ins-acento); border-color: var(--ins-acento); }
-.ins-ticks-l {
-  display: flex; justify-content: space-between; margin-top: var(--ins-3);
-  font: 400 10px/1 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-tinta-3);
-}
-
-/* ---- Caixa de marcar -------------------------------------------------- */
-
-.ins-caixa {
-  width: var(--ins-tap-dense); height: var(--ins-tap-dense); flex: 0 0 auto;
-  border: 1px solid var(--ins-fio-controle); background: transparent;
-  font: 400 13px/1 var(--ins-fonte); color: transparent;
-  display: flex; align-items: center; justify-content: center;
-  /* 28 -> 44 nos dois eixos: ela fica sozinha na ponta da linha */
-  position: relative;
-}
-.ins-caixa::after { content: ""; position: absolute; inset: -8px; }
-.ins-caixa.on { background: var(--ins-acento); border-color: var(--ins-acento); color: var(--ins-sobre-acento); }
-
+   controles disputam o mesmo pixel e o toque vira sorteio. */
 /* ---- Cartão-foco ------------------------------------------------------ */
 
 .ins-foco {
@@ -1463,8 +1433,7 @@ button.ins-linha { border-radius: 0; }
 }
 /* O alvo cresce só na VERTICAL, e nunca para o lado: o vizinho horizontal é a
    repetição seguinte, e crescer para o lado faria um toque na borda registrar o
-   número errado. É a mesma restrição do `.ins-tick`, e aqui ela vale com mais
-   força — erro de alvo na régua tem tolerância zero na medição. */
+   número errado. Erro de alvo na régua tem tolerância zero na medição. */
 .regua-v::after, .regua-anda::after { content: ""; position: absolute; inset: -4px 0; }
 .regua-v:active, .regua-anda:active { background: var(--ins-superficie-2); }
 /* Dentro da faixa prescrita: fio mais firme, sem cor de estado. A faixa é
@@ -1724,3 +1693,18 @@ button.ins-linha { border-radius: 0; }
 .ag-l-feita > span { flex: 1 1 auto; min-width: 0; }
 .ag-l-feita > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
 .ag-l-lk { align-self: flex-start; min-height: var(--ins-tap); font-size: 14px; color: var(--ins-tinta-2); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- A ÁGUA, em linha (a D, agora-descanso estados 3 e 8) ---------------
+   A conta e o desenho da conta: catorze copos pequenos, cheios até onde ele
+   bebeu. O número é tocável e corrige no lugar. */
+.ag-agua { margin-top: var(--ins-7); padding: var(--ins-3) var(--ins-3) var(--ins-3) var(--ins-5); border-radius: var(--ins-raio-4); background: var(--ins-superficie-2); }
+.ag-agua-l { display: flex; align-items: center; gap: var(--ins-4); }
+.ag-agua-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; border-radius: var(--ins-raio-2); }
+.ag-agua-t b { font-variant-numeric: tabular-nums; }
+.ag-copos { display: flex; gap: 3px; margin-top: var(--ins-1); }
+.ag-copos i { width: 12px; height: 14px; border-radius: 2px 2px 4px 4px; border: 1.5px solid var(--ins-tinta-3); }
+.ag-copos i.f { background: var(--ins-tinta); border-color: var(--ins-tinta); }
+.ag-agua-l > .ag-agua-b { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+.ag-agua-c { margin-top: var(--ins-3); }
+.ag-agua-f { margin-top: var(--ins-3); display: flex; flex-direction: column; gap: var(--ins-2); color: var(--ins-atencao-tinta); }
+.ag-agua-f p { margin: 0; color: var(--ins-tinta-2); }

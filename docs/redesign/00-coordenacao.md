@@ -83,8 +83,12 @@ pede atenção do dono.
      - [ ] O cabeçalho do dia: data, hora e a procedência tocável (palpite →
        folha "É descanso / Vou treinar hoje / Cardio…", estado 4); o seletor
        "previsto · folga" sai.
-     - [ ] A água em linha: "+1 copo", a conta e o desenho da conta, tocar o
-       número corrige; estado ruim (8).
+     - [x] A água em linha: "+1 copo" grava na hora e sabe se gravou; a conta
+       e o desenho da conta; tocar no número corrige; o estado ruim (8) com
+       "Tentar de novo" e "Baixar a cópia de segurança" (`CTX.exportar`, o
+       mesmo dos Ajustes). **Divergência:** "último às 13h50" não tem dado (a
+       água é só uma contagem) — fica de fora. Saíram `Ticks` e `Caixa`, sem
+       uso, com o CSS e o caso que vigiava o alvo dos ticks.
      - [ ] Os 14 dias como células, com "Pôr ontem em dia" (estado 1).
      - [ ] A mudança esperando decisão: linha "Decidir" que abre a folha com a
        conta do volume (estados 6–7).
@@ -3248,6 +3252,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · "Não feito" tocável na sessão passada: a série que faltou entra na posição, e o registro novo entra na lista pela ordem do tempo. 8 mutações, 8 mortas (uma viva até ganhar o caso da posição pulada). 1.430 passando. Dias fechado no que tem desenho.
 - 14/10 · **Regra do cartão de cima corrigida pelo desenho:** a regra 5 ("nada na janela, o cartão é a próxima coisa do dia") era leitura minha, declarada, e a entrega de descanso da D a desfez em dois casos (10h40 com almoço às 12h30; 14h10 com lanche às 16h — "nenhum cartão"). Refeição só é cartão dentro da janela de 30 min; o exemplo das 5h20 do momento 2 não precisava da generalização (pré-treino a 25 min). 10 casos reescritos, 2 mutações, 2 mortas.
 - 14/10 · **Agora pela D, etapa 1:** a comida de hoje em linhas que abrem no lugar. Energia com macros, timeline, "···" e "+ adicionar refeição" saem (o plano mora em Prescrição). 6 casos reescritos, 5 novos; 11 mutações, 11 mortas (duas vivas até ganharem caso: o verbo sobre refeição já marcada a desmarcaria, e tocar de novo não fechava a linha). Timeline, `HeroMetrica` e o CSS deles removidos. 1.435 passando.
+- 14/10 · Agora pela D, etapa 2: a água em linha, com o estado ruim. 5 mutações, 5 mortas. 1.435 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

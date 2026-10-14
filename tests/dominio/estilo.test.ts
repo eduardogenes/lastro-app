@@ -575,7 +575,9 @@ test('controle pequeno estende o ALVO sem crescer o desenho', () => {
   // Os quatro últimos entraram depois de medir o cartão de exercício aberto:
   // o descanso, a anotação, o aquecimento e o RIR ficavam entre 34 e 40px —
   // todos apertados de pé, com uma mão, entre uma série e outra.
-  ['.ins-caixa', '.ins-tick', '.ins-chip', '.crow-x', '.cardl-b', '.dd-diabtn',
+  // `.ins-caixa` e `.ins-tick` saíram com a timeline e os copos antigos do
+  // Agora (a D desenhou a comida em linhas e a água em linha).
+  ['.ins-chip', '.crow-x', '.cardl-b', '.dd-diabtn',
    '.restlinha', '.notabtn', '.aqbtn', '.rirbtn', '.histbtn'].forEach(sel => {
     // O seletor pode estar numa LISTA, e a §0.1 da frente 2 nomeia este
     // acoplamento: "a ordem e o agrupamento de uma lista de seletores não são
@@ -589,27 +591,6 @@ test('controle pequeno estende o ALVO sem crescer o desenho', () => {
     assert.match(m![1], /position:\s*absolute/);
     assert.match(m![1], /inset:\s*-/, sel + ': a área tem que ser MAIOR que o desenho');
   });
-});
-
-test('o alvo do tick cresce só na vertical', () => {
-  // Na horizontal o vizinho é a célula seguinte da mesma contagem: crescer para
-  // o lado faria um toque na borda registrar o número errado.
-  //
-  // Casava `.ins-tick::after` literal. Agora as duas classes vêm do componente
-  // que desenha a contagem, e o teste cobra também a PREMISSA que torna a regra
-  // necessária: que os ticks fiquem em linha. Se um dia eles virarem coluna, é
-  // este caso que tem de ser reescrito — e ele diz isso ficando vermelho.
-  const corpoTicks = trechoDeComponente(primitivos(), 'Ticks');
-  const antesDoBotao = corpoTicks.slice(0, corpoTicks.indexOf('<button'));
-  const fila = [...antesDoBotao.matchAll(/<div[^>]*class="([^"]+)"/g)].pop();
-  const tick = corpoTicks.match(/<button[\s\S]*?class=\{'([a-z0-9-]+)'/);
-  assert.ok(fila && tick, 'o componente da contagem mudou de forma');
-
-  assert.match(regras(css(), '.' + fila![1].trim().split(/\s+/)[0]), /display:\s*flex/,
-    'os ticks ficam em LINHA: é por isso que o alvo não pode crescer para o lado');
-  const alvo = regras(css(), '.' + tick![1] + '::after');
-  assert.ok(alvo, '.' + tick![1] + '::after perdeu a área de toque estendida');
-  assert.match(alvo, /inset:\s*-[\d.]+px\s+0(?![\d.])/, 'o segundo valor tem que ser 0');
 });
 
 test('a régua toma o gesto horizontal, em vez de disputá-lo', () => {

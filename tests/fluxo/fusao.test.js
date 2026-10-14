@@ -126,20 +126,24 @@ test('marcar uma refeição pela linha grava e persiste', async () => {
   a.fechar();
 });
 
-test('a água sobe e desce no toque', async () => {
+test('a água sobe no toque e se corrige tocando o número', async () => {
+  // A D (`agora-descanso.html`, estado 3): "+1 copo" é um toque e grava; tocar
+  // no número corrige no lugar, sem prazo — o 7º copo não vira 6 sozinho, e um
+  // copo a mais não exige apagar nada.
   const a = await app({ aba: 'agora' });
-  const ticks = a.$$('.ins-tick');
-  assert.strictEqual(ticks.length, 14, '14 copos de 250 ml');
-  a.clicar(ticks[2]);
-  await a.esperar();
+  assert.strictEqual(a.$$('.ag-copos i').length, 14, '14 copos de 250 ml');
+  ['agua-mais', 'agua-mais', 'agua-mais'].forEach(function (x) { a.clicar('[data-a="' + x + '"]'); });
+  await a.esperar(60);
   assert.strictEqual(a.S().dia.agua, 3);
-  assert.strictEqual(a.texto('.ins-ticks-l'), '250 ml por toque0,75 / 3,5 l',
-    'o rótulo diz quanto já foi, não só quanto é a meta');
-  // tocar na última cheia remove ela: é o desfazer sem botão de desfazer
-  a.clicar(a.$$('.ins-tick')[2]);
+  assert.ok(/Água · 3 de 14 copos/.test(a.texto('.ag-agua-t')), a.texto('.ag-agua-t'));
+  assert.ok(/750 ml de 3\.500 ml/.test(a.texto('.ag-agua-t')), 'a conta diz quanto já foi');
+  assert.strictEqual(a.$$('.ag-copos i.f').length, 3, 'e o desenho da conta também');
+
+  a.clicar('[data-a="agua-corrige"]');
   await a.esperar();
-  assert.strictEqual(a.S().dia.agua, 2);
-  assert.strictEqual(a.texto('.ins-ticks-l'), '250 ml por toque0,5 / 3,5 l');
+  a.clicar('.ag-agua-c [aria-label="diminuir"]');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.agua, 2, 'tocar no número corrige para baixo');
   a.fechar();
 });
 
@@ -1014,5 +1018,27 @@ test('ctx.setHorizonteCompras muda o horizonte e a lista recalcula em cima dele'
 
   assert.strictEqual(a.S().compras.comprado.arroz, 1,
     'o que ele já marcou como comprado sobrevive à troca de horizonte');
+  a.fechar();
+});
+
+test('o copo que não foi gravado não aparece como gravado', async () => {
+  // O estado ruim da D (`agora-descanso.html`, estado 8): com o armazenamento
+  // cheio, a conta fica no que está guardado e a linha diz qual copo não entrou,
+  // com as duas saídas ao lado do toque.
+  const a = await app({ aba: 'agora' });
+  a.clicar('[data-a="agua-mais"]');
+  await a.esperar(60);
+  a.encheCota();
+  a.clicar('[data-a="agua-mais"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().dia.agua, 1, 'a conta continua no que está guardado');
+  assert.ok(/O 2º copo não foi gravado/.test(a.texto('.ag-agua-f')), a.texto('.ag-agua-f'));
+  assert.ok(/continua em 1/.test(a.texto('.ag-agua-f')));
+  assert.ok(a.$('[data-a="agua-copia"]'), 'e oferece baixar a cópia');
+  a.encheCota(false);
+  a.clicar('[data-a="agua-tenta"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().dia.agua, 2, '"Tentar de novo" grava o copo');
+  assert.strictEqual(a.$('.ag-agua-f'), null);
   a.fechar();
 });

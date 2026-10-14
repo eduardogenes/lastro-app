@@ -15,10 +15,10 @@
 // Prescrição, onde os dois continuam).
 
 import {
-  CartaoFoco, Procedencia, Secao, Sparkline, Ticks, useAgora
+  CartaoFoco, Procedencia, Secao, Sparkline, Stepper, useAgora
 } from '../instrumento/primitivos.jsx';
 import { Forma, NOME_DA_MARCA } from '../instrumento/forma.jsx';
-import { fmtDur, fmtHora, fmtHoraDita, fmtInt, fmtLitros } from '../../dominio/formato';
+import { fmtDur, fmtHora, fmtHoraDita, fmtInt } from '../../dominio/formato';
 import {
   minutosDe, resumoDaRefeicao, totalDaRefeicao
 } from '../../dominio/nutricao/calculo';
@@ -64,6 +64,7 @@ export function Agora({ ctx }) {
   const dias = ctx.quatorzeDias();
   const refDe = id => refs.filter(r => r.id === id)[0] || null;
   const linha = ctx.linhaDaComida();
+  const ag = ctx.agua();
   const linhaDoTreino = refs.filter(r => ctx.ehLinhaDeTreino(r))[0] || null;
 
   // A linha acesa da timeline é o ASSUNTO do cartão, e não uma segunda escolha:
@@ -352,6 +353,43 @@ export function Agora({ ctx }) {
         <Procedencia>{cadenciaTxt}</Procedencia>
       </Secao>
 
+      {/* A ÁGUA, em linha: a conta e o desenho da conta. "+1 copo" grava no
+          toque; tocar no número corrige no lugar. Não vem preenchida, e "não
+          contei" não é zero (F194). */}
+      <div class="ag-agua">
+        <div class="ag-agua-l">
+          <button class="ag-agua-t" data-a="agua-corrige" aria-expanded={ag.corrigindo ? 'true' : 'false'}
+                  aria-label={'água: ' + ag.n + ' de ' + COPOS + ' copos. Tocar corrige.'}
+                  onClick={ctx.abreCorrecaoDaAgua}>
+            <span class="ins-body ins-t1">{ag.n ? <>Água · <b>{ag.n}</b> de {COPOS} copos</> : 'Água'}</span>
+            <small class="ins-body-sm ins-t2">
+              {ag.n
+                ? fmtInt(ag.n * COPO) + ' ml de ' + fmtInt(COPOS * COPO) + ' ml'
+                : (ag.naoContada ? 'marcada como não contada' : 'nenhum copo marcado') + ' · meta: ' + COPOS + ' copos de ' + COPO + ' ml'}
+            </small>
+            <span class="ag-copos" aria-hidden="true">
+              {Array.from({ length: COPOS }).map((_, i) => <i key={i} class={i < ag.n ? 'f' : ''} />)}
+            </span>
+          </button>
+          <button class="ins-btn-secondary ag-agua-b" data-a="agua-mais" onClick={ctx.maisUmCopo}>+1 copo</button>
+        </div>
+        {ag.corrigindo && (
+          <div class="ag-agua-c">
+            <Stepper valor={ag.n} min={0} max={30} onMuda={ctx.setAgua} fmt={v => v + (v === 1 ? ' copo' : ' copos')} />
+          </div>
+        )}
+        {ag.falhou && (
+          <div class="ag-agua-f" role="alert">
+            <b class="ins-body-sm">O {ag.falhou}º copo não foi gravado</b>
+            <p class="ins-body-sm">O armazenamento deste aparelho recusou. A conta continua em {ag.falhou - 1}, que é o que está guardado.</p>
+            <div class="ag-l-btns">
+              <button class="ins-btn-secondary" data-a="agua-tenta" onClick={ctx.maisUmCopo}>Tentar de novo</button>
+              <button class="ins-btn-secondary" data-a="agua-copia" onClick={ctx.exportar}>Baixar a cópia de segurança</button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* O CARDIO nasce aqui: o Agora é o dono do dado, porque é onde se
           registra (§1.7). É LINHA e não cartão — cada um tem um dia em que é
           previsto, e nenhum deles é "a próxima coisa a fazer" no sentido que o
@@ -431,15 +469,7 @@ export function Agora({ ctx }) {
         <Procedencia>{dias.nota}</Procedencia>
       </Secao>
 
-      <Secao rotulo="água">
-        <Ticks
-          n={comidaDoDia.agua}
-          total={COPOS}
-          onMuda={ctx.setAgua}
-          unidade={`${COPO} ml por toque`}
-          medida={`${fmtLitros(comidaDoDia.agua * COPO)} / ${fmtLitros(COPOS * COPO)} l`}
-        />
-      </Secao>
+
     </>
   );
 }

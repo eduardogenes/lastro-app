@@ -145,48 +145,7 @@ export function Sparkline({ valores, fatias = 14, piso = 2 }) {
   );
 }
 
-/**
- * Quantidade que se toca para cima e para baixo. Tocar na última célula cheia
- * remove ela — é como se desfaz sem botão de desfazer.
- *
- * Os dois rótulos embaixo são texto pronto e o componente não conhece unidade
- * nenhuma: `unidade` diz quanto vale um toque e `medida` diz onde a contagem
- * está. Contar célula cheia é trabalho do olho; traduzir para litro é de quem
- * chama.
- */
-export function Ticks({ n, total, onMuda, unidade, medida }) {
-  return (
-    <div class="ins-ticks-w">
-      <div class="ins-ticks">
-        {Array.from({ length: total }).map((_, i) => (
-          <button
-            key={i}
-            class={'ins-tick' + (i < n ? ' on' : '')}
-            aria-label={`${i + 1} de ${total}`}
-            onClick={() => onMuda(i === n - 1 ? i : i + 1)}
-          />
-        ))}
-      </div>
-      <div class="ins-ticks-l">
-        <span>{unidade}</span><span>{medida}</span>
-      </div>
-    </div>
-  );
-}
-
 /* ---------- controles ---------- */
-
-/** 28×28, quadrado. Marcado: preenchimento ácido. Sem animação. */
-export function Caixa({ marcada, onClick, rotulo }) {
-  return (
-    <button
-      class={'ins-caixa' + (marcada ? ' on' : '')}
-      aria-pressed={marcada ? 'true' : 'false'}
-      aria-label={rotulo}
-      onClick={onClick}
-    >{marcada ? '✓' : ''}</button>
-  );
-}
 
 /** − valor + com alvos de 46px. Para qualquer número que se aperta repetido. */
 export function Stepper({ valor, passo = 1, onMuda, fmt, min, max }) {
