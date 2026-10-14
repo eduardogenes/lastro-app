@@ -1834,3 +1834,8 @@ button.ins-linha { border-radius: 0; }
 /* ---- A última aula, antes de começar (a D, aula, estado 5) -------------- */
 .tr-ultima { margin-top: var(--ins-6); display: flex; flex-direction: column; gap: var(--ins-3); }
 .tr-ultima p { margin: 0; }
+
+/* ---- As fotos que só existem aqui (a D, comparar, estado 10) ------------- */
+.dd-fotos-aqui { display: flex; flex-direction: column; gap: var(--ins-2); margin: var(--ins-5) 0; }
+.dd-fotos-aqui p { margin: 0; }
+.dd-fotos-aqui button { align-self: flex-start; margin-top: var(--ins-2); }

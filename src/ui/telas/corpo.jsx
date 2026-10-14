@@ -194,6 +194,18 @@ function Fotos({ f, ctx }) {
           </div>
         )}
 
+        {/* O que só existe aqui (a D, comparar, estado 10): um despejo de
+            cache do navegador leva embora, e a cópia em JSON não leva fotos. */}
+        {f.soAqui && (
+          <div class="dd-fotos-aqui" role="status">
+            <p class="ins-body-sm ins-t1"><b>{f.soAqui.t}</b></p>
+            <p class="ins-body-sm ins-t2">{f.soAqui.p}</p>
+            {f.soAqui.conta
+              ? <button class="ins-btn-secondary" data-a="fotos-subir" onClick={ctx.sincronizaAgora}>Subir agora</button>
+              : <button class="ins-btn-secondary" data-a="fotos-conta" onClick={ctx.abreAjustes}>Entrar na conta</button>}
+          </div>
+        )}
+
         <div class="dd-fotos-b">
           <button class="ins-btn-primary" onClick={ctx.abreProtocolo}>{f.cta}</button>
           {f.podeComparar && (

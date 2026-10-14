@@ -269,6 +269,43 @@ test('apagar uma de duas mantém a sessão viva', async () => {
 
 // ---------- a réplica no bucket ----------
 
+test('sem conta, as fotos do corpo dizem que existem só neste aparelho', async () => {
+  // a D, comparar, estado 10: a cópia em JSON leva as referências, não as fotos
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').soAqui, null, 'sem foto nenhuma, nada a dizer');
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await tirar(a);
+  await a.esperar(60);
+  a.v('ctx.fechaProtocolo');
+  await a.esperar();
+  const s = a.vJ('ctx.protocoloFotos').soAqui;
+  assert.strictEqual(s.conta, false);
+  assert.strictEqual(s.t, 'A foto do corpo existe só neste aparelho');
+  assert.ok(a.$('[data-a="fotos-conta"]'), 'a saída é entrar na conta');
+  a.fechar();
+});
+
+test('com conta, o que não subiu é contado, sobe num toque, e o aviso sai', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await tirar(a);
+  await a.esperar(60);
+  a.v('ctx.fechaProtocolo');
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').soAqui.t, '1 foto ainda não subiu para a cópia remota');
+  a.clicar('[data-a="fotos-subir"]');
+  await a.esperar(150);
+  assert.deepStrictEqual(a.J('globalThis.__subiuCorpo'), [hoje() + '/frente-relaxado']);
+  assert.strictEqual(a.vJ('ctx.protocoloFotos').soAqui, null, 'subiu tudo: nada só aqui');
+  assert.strictEqual(a.$('[data-a="fotos-subir"]'), null);
+  a.fechar();
+});
+
 test('a foto tirada aqui sobe para o bucket do corpo', async () => {
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);

@@ -1279,7 +1279,10 @@ async function reconciliaCorpo() {
   if (!NUVEM.sessao() || !S.protocolo) return;
   const sessoes = S.protocolo.sessoes || [];
 
-  let todasNoBucket = true;
+  let todasNoBucket = true, subiu = 0;
+  // o aviso de "fotos só neste aparelho" (Corpo) lê o que subiu: redesenha
+  // quando alguma subiu, inclusive se a rede caiu no meio
+  const conta = function () { if (subiu) render(); };
   for (let i = sessoes.length - 1; i >= 0; i--) {
     const ses = sessoes[i];
     const poses = Object.keys(ses.fotos || {});
@@ -1292,10 +1295,11 @@ async function reconciliaCorpo() {
       const bytes = await CORPO.le(ses.d, pose, ref.ext);
       if (!bytes) { todasNoBucket = false; continue; }   // não está aqui: nada a subir
       const r = await NUVEM.subirCorpo(ses.d, pose, bytes, ref.ext);
-      if (!r.ok) return;                                  // sem rede: para e tenta depois
-      sync.fotos[k] = ref.v; gravaSync();
+      if (!r.ok) { conta(); return; }                     // sem rede: para e tenta depois
+      sync.fotos[k] = ref.v; gravaSync(); subiu++;
     }
   }
+  conta();
 
   // A poda espera todo mundo confirmado. Uma foto que não subiu segura o cache
   // inteiro por um ciclo, e é exatamente isso que se quer.
@@ -10613,9 +10617,40 @@ CTX.protocoloFotos = function () {
     cta: hoje && !cHoje.cheia
       ? 'Continuar · ' + cHoje.feitas + ' de ' + cHoje.total
       : (hoje ? 'Refazer alguma pose' : 'Nova sessão'),
-    podeComparar: lista.some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; })
+    podeComparar: lista.some(function (p) { return comAPose(S.protocolo.sessoes, p.id).length >= 2; }),
+    soAqui: fotosSoAqui()
   };
 };
+
+/**
+ * As fotos do corpo que só existem neste aparelho (a D, comparar, estado 10).
+ * Enquanto um byte só existe aqui, ele está a um despejo de cache de sumir — e
+ * a cópia de segurança em JSON leva as referências, não as fotos. Com conta, o
+ * que não subiu é contado e sobe num toque; sem conta, a tela diz que tudo está
+ * só aqui. Sem foto nenhuma, nada.
+ */
+function fotosSoAqui() {
+  let total = 0, fora = 0;
+  (S.protocolo.sessoes || []).forEach(function (ses) {
+    Object.keys(ses.fotos || {}).forEach(function (pose) {
+      const ref = ses.fotos[pose];
+      if (!ref || !ref.v) return;
+      total++;
+      if (sync.fotos['corpo:' + ses.d + ':' + pose] !== ref.v) fora++;
+    });
+  });
+  if (!total) return null;
+  const n = function (x) { return x + (x === 1 ? ' foto' : ' fotos'); };
+  if (!NUVEM.sessao()) {
+    return { conta: false,
+      t: total === 1 ? 'A foto do corpo existe só neste aparelho' : 'As ' + n(total) + ' do corpo existem só neste aparelho',
+      p: 'A cópia de segurança leva as referências, não as fotos. Com a conta, elas sobem para a cópia remota.' };
+  }
+  if (!fora) return null;
+  return { conta: true,
+    t: (fora === 1 ? '1 foto ainda não subiu' : fora + ' fotos ainda não subiram') + ' para a cópia remota',
+    p: (fora === 1 ? 'Ela não existe' : 'Elas não existem') + ' em outro lugar até subir.' };
+}
 
 
 // ---------- a posição de leitura ----------

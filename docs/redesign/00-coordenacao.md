@@ -14,13 +14,13 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.491 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.493 passando**, zero "unhandled".
 - **⚠ Publicar logo (dado):** o service worker apagava o cache das fotos do corpo
   (`lastro-corpo`) a cada versão publicada — só poupava o das fotos de aparelho.
   Corrigido em 14/10 (o F252 do comparar, estado 10). Até a versão corrigida
   chegar ao iPhone, cada publicação nova ainda apaga as fotos do corpo que não
   subiram para a cópia remota.
-  Nenhum agente trabalhando. Último commit de código: `547361d`.
+  Nenhum agente trabalhando. Último commit de código: `5a21681`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -3289,7 +3289,14 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         foto nova por cima, recortada na divisa, que o dedo anda (um `range`
         nativo, acessível); sem captura com foto de verdade · 3 ~ · 4 ~ · 5 ~ · 6 ~ · **7 ✓ (14/10)** — o par já recuava sozinho para a sessão mais antiga com a
         pose; agora diz "27 dias, e não 55" e quais sessões não têm a pose. (A
-        lista das poses com par longo e curto, do desenho, não entrou.) · 8 ✓ · 9 ✓ · 10 ~ · 11 ~.
+        lista das poses com par longo e curto, do desenho, não entrou.) · 8 ✓ · 9 ✓ · **10 ✓ (14/10)** —
+        a causa era real e estava viva: o worker apagava `lastro-corpo` a cada
+        publicação (corrigido, com caso que amarra a lista ao `src/infra`). E o
+        Corpo agora diz o que só existe aqui: sem conta, "A foto do corpo existe
+        só neste aparelho" (a cópia em JSON não leva fotos) com "Entrar na
+        conta"; com conta, "N fotos ainda não subiram" com "Subir agora".
+        (Sem a contagem de quantas sumiram depois de um despejo do navegador:
+        isso pediria varrer o cache.) · 11 ~.
       - **sessao-fotos:** 1 ~ · **2 ~ (14/10)** — os nove blocos no topo da
         câmera, do tamanho de um dedo (a pose atual, as fechadas, a não
         guardada), e a pose dita em voz ao abrir a câmera e a cada pose nova
@@ -3496,6 +3503,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · **Achado de dado, corrigido:** salvar a correção de uma sessão pelo histórico regravava cada série como [carga, reps] e apagava o RIR de TODAS as séries da sessão, inclusive das não tocadas. Agora o que vem depois de carga e repetição fica. O RIR já perdido em correções antigas não volta (só por cópia de segurança anterior). 1 mutação, morta. 1.488 passando.
 - 14/10 · A carga na tela com vírgula: `fmtCarga` na coluna anterior, no histórico, na conta de anilhas, nas grades e no campo de correção ("127,5 × 12 @ 2"). Um caso tinha o ponto como regra ("é fmtNum") — reescrito, com o porquê. 1.490 passando.
 - 14/10 · **Achado de dado, corrigido (comparar 10, F252):** a limpeza de ativação do service worker poupava `lastro-fotos` e `treino-fotos`, e não `lastro-corpo` — cada publicação apagava a cópia local das fotos do corpo. Agora poupa, e um caso compara a lista do worker com todo `CACHE_*` declarado em `src/infra`. 1 mutação, morta. 1.491 passando.
+- 14/10 · Comparar 10, a tela: o Corpo diz quantas fotos só existem neste aparelho e oferece subir (com conta) ou entrar (sem conta); a subida redesenha. 4 mutações, 4 mortas. 1.493 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
