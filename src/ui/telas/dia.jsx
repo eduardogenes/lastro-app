@@ -96,7 +96,34 @@ export function Dia({ ctx }) {
           <button class="ins-btn-secondary" data-a="dia-descanso"
                   onClick={() => ctx.alternaDescansoDoDia(new Date(d.data + 'T12:00:00').getTime())}>Foi descanso</button>
         )}
+        {d.podeCardio && (
+          <button class="ins-btn-secondary" data-a="dia-cardio-novo" aria-expanded={d.cardioNovo ? 'true' : 'false'}
+                  onClick={ctx.abreCardioNoDia}>{d.cardioNovo ? 'Fechar o cardio' : 'Registrar cardio'}</button>
+        )}
       </div>
+
+      {/* O CARDIO ESQUECIDO (decisão do dono, 14/10): entra no dia, sem hora —
+          a hora não foi medida, e a tela não a inventa. */}
+      {d.cardioNovo && (
+        <div class="dia-cardio-ed dia-cardio-novo">
+          {[['m', 'Modalidade', d.cardioNovo.modais], ['min', 'Minutos', d.cardioNovo.minutos],
+            ['i', 'Intensidade', d.cardioNovo.intensidades]].map(([campo, rotulo, ops]) => (
+            <div key={campo} class="dia-cardio-c">
+              <span class="ins-body-sm ins-t2">{rotulo}</span>
+              <div class="ins-chips">
+                {ops.map(o => (
+                  <button key={o.k} class={'ins-chip' + (o.on ? ' on' : '')} aria-pressed={o.on ? 'true' : 'false'}
+                          data-a={'dia-cardio-novo-' + campo + '-' + o.k}
+                          onClick={() => ctx.cardioNoDiaSet(campo, o.k)}>{o.t}</button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button class="ins-btn-primary" data-a="dia-cardio-grava" onClick={ctx.gravaCardioNoDia}>Gravar o cardio neste dia</button>
+          <p class="ins-body-xs ins-t3">Entra sem hora: o dia é este, a hora não foi anotada.</p>
+          {d.cardioNovo.falhou && <p class="ins-body-sm dia-cardio-falhou" role="alert">{d.cardioNovo.falhou}</p>}
+        </div>
+      )}
       {!d.podeDescanso && (
         <p class="ins-body-xs ins-t3 dia-nota">Este dia tem treino, então não aceita a marca de descanso.</p>
       )}

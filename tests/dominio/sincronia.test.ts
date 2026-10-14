@@ -166,6 +166,14 @@ test('a pesagem corrigida vence a original do mesmo dia', () => {
   assert.strictEqual(r.body.peso[0].v, 74.1);
 });
 
+test('o cardio lançado depois atravessa a fusão com a marca de sem hora', () => {
+  // decisão do dono, 14/10: o cardio esquecido entra num dia passado, sem hora
+  const a = estado({ mtime: T0, cardio: [{ t: T0, m: 'remo', min: 30, i: 'leve', alt: T0, semHora: 1 }] });
+  const b = estado({ mtime: T0 - 1000, cardio: [] });
+  assert.strictEqual(funde(a, b, T0).estado.cardio[0].semHora, 1);
+  assert.strictEqual(funde(b, a, T0).estado.cardio[0].semHora, 1, 'dos dois lados');
+});
+
 test('cardio usa o próprio carimbo, porque m já é o modal', () => {
   const a = estado({ mtime: T0, cardio: [{ t: T0, m: 'bike', min: 20, i: 'leve' }] });
   const b = estado({ mtime: T0 - 1000, cardio: [{ t: T0, m: 'bike', min: 30, i: 'moderado', alt: T0 + 1000 }] });

@@ -233,3 +233,73 @@ test('o cardio de hoje aparece no Agora e se apaga ali, com a pergunta antes', a
   assert.strictEqual(a.$$('.ag-cardio-hoje li').length, 1);
   a.fechar();
 });
+
+// ---------- o cardio esquecido, num dia passado (decisão do dono, 14/10) ----------
+
+test('o cardio esquecido entra pelo dia passado, sem hora, e conta no dia certo', async () => {
+  const agora = agoraEstavel(9, 0);
+  const tres = agora - 3 * DIA;
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [] } });
+  a.aba('dias');
+  a.v('ctx.abreDia', tres);
+  await a.esperar();
+  a.clicar('[data-a="dia-cardio-novo"]');
+  await a.esperar();
+  a.clicar('[data-a="dia-cardio-novo-m-remo"]');
+  a.clicar('[data-a="dia-cardio-novo-min-30"]');
+  a.clicar('[data-a="dia-cardio-novo-i-leve"]');
+  a.clicar('[data-a="dia-cardio-grava"]');
+  await a.esperar(60);
+
+  const c = a.gravado().cardio;
+  assert.strictEqual(c.length, 1, 'gravado');
+  assert.deepStrictEqual([c[0].m, c[0].min, c[0].i, c[0].semHora], ['remo', 30, 'leve', 1]);
+  const d = new Date(c[0].t), d3 = new Date(tres);
+  assert.deepStrictEqual([d.getDate(), d.getHours()], [d3.getDate(), 12], 'no dia escolhido, ao meio-dia');
+  assert.strictEqual(a.$('.dia-cardio-novo'), null, 'o formulário fecha');
+  const linha = a.texto('[data-a="dia-cardio"]');
+  assert.ok(/lançado depois, sem hora/.test(linha) && !/12h00/.test(linha), 'a hora não é inventada: ' + linha);
+  a.fechar();
+});
+
+test('dois cardios esquecidos no mesmo dia não colidem na chave, e o segundo não cita hora', async () => {
+  const agora = agoraEstavel(9, 0);
+  const tres = agora - 3 * DIA;
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [] } });
+  a.v('ctx.abreDia', tres);
+  for (let i = 0; i < 2; i++) {
+    a.v('ctx.abreCardioNoDia');
+    await a.v('ctx.gravaCardioNoDia');
+    await a.esperar(30);
+  }
+  const ts = a.gravado().cardio.map(x => x.t);
+  assert.strictEqual(new Set(ts).size, 2, 'dois instantes, duas chaves');
+  assert.ok(/igual a outro deste dia/.test(a.$$('[data-a="dia-cardio"]')[1].textContent));
+  a.fechar();
+});
+
+test('se o aparelho recusa, o cardio esquecido não fica fingindo que gravou', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [] } });
+  a.v('ctx.abreDia', agora - 3 * DIA);
+  a.v('ctx.abreCardioNoDia');
+  a.encheCota();
+  await a.v('ctx.gravaCardioNoDia');
+  await a.esperar(60);
+  assert.strictEqual(a.S().cardio.length, 0, 'a memória volta ao que está guardado');
+  assert.ok(/não foi gravado/.test(a.texto('.dia-cardio-falhou')));
+  assert.ok(a.$('.dia-cardio-novo'), 'e o formulário fica, para tentar de novo');
+  a.fechar();
+});
+
+test('hoje e o futuro não ganham o lançamento: hoje é pelo Agora', async () => {
+  const agora = agoraEstavel(9, 0);
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [] } });
+  a.v('ctx.abreDia', agora + 2 * DIA);
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="dia-cardio-novo"]'), null);
+  a.v('ctx.abreCardioNoDia');
+  await a.v('ctx.gravaCardioNoDia');
+  assert.strictEqual(a.S().cardio.length, 0);
+  a.fechar();
+});

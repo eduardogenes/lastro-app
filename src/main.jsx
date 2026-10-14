@@ -3527,6 +3527,49 @@ async function corrigeCardio(t, campo, valor) {
   render();
 }
 
+/** A hora do cardio, em prosa; o lançado depois não tem hora medida. */
+function horaDoCardio(c) { return c && !c.semHora ? fmtHoraDita(c.t) : null; }
+
+/**
+ * O CARDIO ESQUECIDO, lançado num dia passado pelo dia aberto em Dias (decisão
+ * do dono, 14/10). O instante é o meio-dia daquele dia — a semana e o mês o
+ * contam onde ele aconteceu — e a hora não foi medida, então fica marcada como
+ * tal e a tela não a inventa. Um segundo cardio no mesmo dia anda um
+ * milissegundo: o instante é a chave dele na sincronia.
+ */
+CTX.abreCardioNoDia = function () {
+  view.cardioNoDia = view.cardioNoDia ? null : { m: 'bike', min: 25, i: 'moderado' };
+  view.cardioNoDiaFalhou = null;
+  render();
+};
+CTX.cardioNoDiaSet = function (campo, v) {
+  if (!view.cardioNoDia) return;
+  view.cardioNoDia = Object.assign({}, view.cardioNoDia, { [campo]: campo === 'min' ? Number(v) : v });
+  render();
+};
+CTX.gravaCardioNoDia = async function () {
+  const f = view.cardioNoDia, dia = view.diaAberto;
+  if (!f || !dia) return;
+  const d = new Date(dia);
+  if (sameDay(d.getTime(), Date.now()) || d.getTime() > Date.now()) return;   // hoje é pelo Agora
+  let t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0).getTime();
+  while (S.cardio.some(function (x) { return x.t === t; })) t++;
+  const novo = { t: t, m: f.m, min: f.min, i: f.i, alt: Date.now(), semHora: 1 };
+  S.cardio.push(novo);
+  S.cardio.sort(function (a, b) { return a.t - b.t; });
+  if (S.cardio.length > 200) S.cardio = S.cardio.slice(-200);
+  const ok = await save();
+  if (ok === false) {
+    S.cardio = S.cardio.filter(function (x) { return x !== novo; });
+    view.cardioNoDiaFalhou = 'O cardio não foi gravado: o armazenamento deste aparelho recusou. O dia continua como estava.';
+    render();
+    return;
+  }
+  view.cardioNoDia = null; view.cardioNoDiaFalhou = null;
+  render();
+  toast(f.min + ' min de ' + f.m + ' registrados em ' + fmtDate(t) + '.');
+};
+
 async function delCardio(t) {
   // Esta lista existe para desfazer um registro errado, e por isso mesmo ela
   // não pode apagar o certo num toque de passagem.
@@ -3538,7 +3581,7 @@ async function delCardio(t) {
   const mesmoDia = cardioDoDia(t).filter(function (x) { return x !== c; });
   const fica = mesmoDia.length
     ? ' Fica ' + mesmoDia.map(function (x) {
-        return 'o cardio das ' + fmtHoraDita(x.t) + (x.m === c.m && x.min === c.min && x.i === c.i ? ', igual a este' : ', ' + x.min + ' min de ' + x.m);
+        return (horaDoCardio(x) ? 'o cardio das ' + horaDoCardio(x) : 'o outro cardio do dia') + (x.m === c.m && x.min === c.min && x.i === c.i ? ', igual a este' : ', ' + x.min + ' min de ' + x.m);
       }).join(' e ') + '.'
     : '';
   const treinoFica = sessoesDoDia(t).length ? ' O treino do dia não muda.' : '';
@@ -8437,9 +8480,9 @@ CTX.mes = function () {
 // lado a lado, o segundo dizendo "igual ao das 7h35", e nada sai sem ele.
 CTX.abreDia = function (t) {
   if (t === 'agora') { CTX.vaiPara('agora'); return; }
-  view.diaAberto = t; view.cardioAberto = null; entraNoDestino('dia'); render();
+  view.diaAberto = t; view.cardioAberto = null; view.cardioNoDia = null; entraNoDestino('dia'); render();
 };
-CTX.fechaDia = function () { view.diaAberto = null; view.cardioAberto = null; render(); saiDoDestino('dia'); };
+CTX.fechaDia = function () { view.diaAberto = null; view.cardioAberto = null; view.cardioNoDia = null; render(); saiDoDestino('dia'); };
 CTX.abreCardioDoDia = function (t) { view.cardioAberto = view.cardioAberto === t ? null : t; render(); };
 CTX.alternaDescansoDoDia = function (t) { return alternaDescanso(t); };
 
@@ -8474,12 +8517,13 @@ CTX.diaAberto = function () {
   });
   const listaCardio = cardios.map(function (c, i) {
     const igual = cardios.slice(0, i).filter(function (o) { return o.m === c.m && o.min === c.min && o.i === c.i; })[0];
-    const depois = marcas.some(function (m) { return !m.livre && temHora(m) && m.t < c.t; });
+    const depois = !c.semHora && marcas.some(function (m) { return !m.livre && temHora(m) && m.t < c.t; });
     return {
       k: 'cardio', t: c.t,
       titulo: 'Cardio · ' + c.min + ' min de ' + c.m,
-      detalhe: [c.i, fmtHoraDita(c.t) + (depois ? ', depois do treino' : '')].filter(Boolean).join(' · ') +
-               (igual ? ' · igual ao das ' + fmtHoraDita(igual.t) : ''),
+      detalhe: [c.i, horaDoCardio(c) ? horaDoCardio(c) + (depois ? ', depois do treino' : '') : 'lançado depois, sem hora']
+                 .filter(Boolean).join(' · ') +
+               (igual ? (horaDoCardio(igual) ? ' · igual ao das ' + horaDoCardio(igual) : ' · igual a outro deste dia') : ''),
       igual: !!igual,
       aberto: view.cardioAberto === c.t,
       // aberto, o registro inteiro: cada campo corrigível no toque
@@ -8524,6 +8568,14 @@ CTX.diaAberto = function () {
       : null,
     // um dia com treino não aceita a marca de descanso, e diz por quê (F156)
     podeDescanso: !marcas.length,
+    // o cardio esquecido entra pelo dia passado (decisão do dono, 14/10)
+    podeCardio: passado,
+    cardioNovo: passado && view.cardioNoDia ? {
+      modais: MODAIS.map(function (x) { return { k: x, t: x, on: view.cardioNoDia.m === x }; }),
+      minutos: [20, 25, 30, 40].map(function (v) { return { k: v, t: v + ' min', on: view.cardioNoDia.min === v }; }),
+      intensidades: ['leve', 'moderado'].map(function (v) { return { k: v, t: v, on: view.cardioNoDia.i === v }; }),
+      falhou: view.cardioNoDiaFalhou || null
+    } : null,
     data: iso,
     comida: passado ? {
       resumo: !momentos.length ? null : comMarca === 0 ? 'nenhuma com marca' : comMarca + ' de ' + momentos.length + ' com marca',

@@ -1848,3 +1848,7 @@ button.ins-linha { border-radius: 0; }
 /* ---- O cardio de hoje no Agora (decisão do dono, 14/10) ----------------- */
 .ag-cardio-hoje { margin: var(--ins-3) 0 0; padding: 0; list-style: none; }
 .ag-cardio-hoje .ins-linha { align-items: center; }
+
+/* ---- O cardio esquecido, lançado no dia passado (decisão do dono, 14/10) -- */
+.dia-cardio-novo { margin-top: var(--ins-5); }
+.dia-cardio-falhou { margin: 0; color: var(--ins-atencao-tinta); }

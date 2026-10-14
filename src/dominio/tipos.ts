@@ -438,6 +438,9 @@ export interface Cardio {
   i: string;
   /** quando foi alterada pela última vez. `m` já era o modal, então aqui é `alt` */
   alt?: number;
+  /** lançado depois, num dia passado: o instante é o meio-dia daquele dia, e a
+   *  hora não foi medida — a tela não a mostra (F270: hora inventada suja). */
+  semHora?: 1;
 }
 
 /** O que está sendo digitado numa posição da sessão aberta. */
