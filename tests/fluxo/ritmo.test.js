@@ -333,3 +333,47 @@ test('a busca de alimentos ganhou a mesma flexibilidade', async () => {
   assert.ok(acha('tilapia').length > 0);
   a.fechar();
 });
+
+// ---------- a referência do box (a D, aula, estados 3 e 5) ----------
+
+test('no box, cada movimento diz o que entrou da última vez, ou que não há registro', async () => {
+  const a = await app({});
+  a.aba('treino');
+  a.v('setBuscaDeExercicio', 'wall');
+  let r = a.vJ('catalogoDeAdicao', 'HX').achados[0];
+  assert.strictEqual(r.sub, '100 reps', 'a medida continua onde estava');
+  assert.strictEqual(r.ref, 'sem registro anterior', 'a tela diz que não sabe em vez de fingir');
+  a.fechar();
+
+  const t = new Date(2026, 9, 3, 9, 40).getTime();
+  const id = 'wall-balls';
+  const b = await app({ estado: { plano: 7, logs: { [id]: [{ t: t, sid: t, u: 'rep', q: 100, sets: [[9, 100]] }] },
+                                  done: [{ day: 'HX', t: t, sid: t }] } });
+  b.aba('treino');
+  b.v('setBuscaDeExercicio', 'wall');
+  r = b.vJ('catalogoDeAdicao', 'HX').achados[0];
+  assert.strictEqual(r.ref, 'última: 9kg · 100 reps em 03/10');
+  // fora do box a lista não ganha referência: lá o cartão já tem a coluna anterior
+  b.v('setBuscaDeExercicio', 'pushdown');
+  assert.strictEqual(b.vJ('catalogoDeAdicao', 'A').achados[0].ref, null);
+  b.fechar();
+});
+
+test('antes da aula, a última aula com o que entrou em cada movimento', async () => {
+  // a aula de 03/10 é a última; a de 26/09, mais velha, não aparece — e a
+  // ordem é a da aula, não a do registro guardado
+  const t = new Date(2026, 9, 3, 9, 40).getTime(), antes = new Date(2026, 8, 26, 9, 40).getTime();
+  const a = await app({ estado: { plano: 7, logs: {
+    'farmers-carry': [{ t: t + 120000, sid: t, u: 'm', q: 200, sets: [[22.5, 95]] }],
+    'wall-balls': [{ t: antes + 60000, sid: antes, u: 'rep', q: 100, sets: [[6, 100]] },
+                   { t: t + 60000, sid: t, u: 'rep', q: 100, sets: [[9, 100]] }]
+  }, done: [{ day: 'HX', t: antes, sid: antes }, { day: 'HX', t: t, sid: t }] } });
+  a.E(`view.day = 'HX'`);
+  const u = a.vJ('ctx.treino').ultimaAula;
+  assert.strictEqual(u.quando, 'sáb 03/10');
+  assert.deepStrictEqual(u.linhas.map(l => [l.n, l.v]), [
+    ['Wall balls', '9kg · 100 reps'],
+    ['Farmers carry', '22,5kg · 200 m · 95s']
+  ]);
+  a.fechar();
+});

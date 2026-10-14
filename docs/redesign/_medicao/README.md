@@ -26,3 +26,6 @@ com e sem a régua.
 semana: a semana sem média.
 
 `endereco.mjs` abre a Prescrição num endereço sem dado nenhum.
+
+`aula.mjs` abre a aula do box antes de começar ("Na última aula") e a lista de
+movimentos com a referência de cada um.

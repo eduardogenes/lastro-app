@@ -155,10 +155,29 @@ export function Treino({ ctx }) {
                    Não cita mais a "prova inteira": o atalho que punha as nove
                    estações de uma vez saiu, e o vazio continuou oferecendo um
                    caminho que não existe mais. */
-                ? <Vazio>
-                    Sábado é o que o box programar. Adicione o que entrou na aula,
-                    repita o sábado passado ou aplique um modelo.
-                  </Vazio>
+                ? <>
+                    <Vazio>
+                      Sábado é o que o box programar. Adicione o que entrou na aula,
+                      repita o sábado passado ou aplique um modelo.
+                    </Vazio>
+                    {/* Antes de começar, a referência (a D, aula, estado 5):
+                        o que entrou na última aula, para saber o peso que se
+                        costuma pegar. */}
+                    {t.ultimaAula && (
+                      <div class="tr-ultima">
+                        <h3 class="ins-rotulo">Na última aula, {t.ultimaAula.quando}</h3>
+                        <div class="ins-lista">
+                          {t.ultimaAula.linhas.map(l => (
+                            <div key={l.k} class="ins-linha">
+                              <span class="ins-linha-n"><span class="ins-linha-t">{l.n}</span></span>
+                              <span class="ins-linha-v">{l.v}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <p class="ins-body-xs ins-t3">Peso guardado é peso do dia: a lousa muda toda semana.</p>
+                      </div>
+                    )}
+                  </>
                 : <Vazio>Este treino ainda não tem exercício nenhum.</Vazio>)
             : t.exercicios.map(vm => (
                 <Exercicio key={vm.id} vm={vm} acoes={ctx.acoesEx} />

@@ -1830,3 +1830,7 @@ button.ins-linha { border-radius: 0; }
 .pr-plano-fim { margin-top: var(--ins-6); }
 .pr-horizonte { display: flex; align-items: center; gap: var(--ins-4); margin-top: var(--ins-4); }
 .pr-horizonte input { width: 88px; }
+
+/* ---- A última aula, antes de começar (a D, aula, estado 5) -------------- */
+.tr-ultima { margin-top: var(--ins-6); display: flex; flex-direction: column; gap: var(--ins-3); }
+.tr-ultima p { margin: 0; }

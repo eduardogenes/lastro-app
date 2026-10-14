@@ -282,7 +282,7 @@ export function AddEx({ c, acoes }) {
           ? <p class="cue ins-body-sm ins-t3">Nada com esse nome no catálogo.</p>
           : c.achados.map(x => (
               <button class="swapopt" key={x.id} onClick={() => acoes.adiciona(x.id)}>
-                <b>{x.n}</b><span>{x.sub}</span>
+                <span class="swaptxt"><b>{x.n}</b><span>{x.sub}{x.ref ? ' · ' + x.ref : ''}</span></span>
               </button>
             ))}
       </div>
@@ -313,8 +313,10 @@ export function AddEx({ c, acoes }) {
         </div>
       ) : (
         <button class="swapopt novo" onClick={acoes.abreNovo}>
-          <b>Cadastrar exercício novo</b>
-          <span>Equipamento que o app ainda não conhece. Ele passa a ter histórico próprio.</span>
+          <span class="swaptxt">
+            <b>Cadastrar exercício novo</b>
+            <span>Equipamento que o app ainda não conhece. Ele passa a ter histórico próprio.</span>
+          </span>
         </button>
       )}
 

@@ -14,8 +14,8 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.485 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `b85e861`.
+- Branch `redesenho-do-zero`, suíte verde: **1.487 passando**, zero "unhandled".
+  Nenhum agente trabalhando. Último commit de código: `1de9d29`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -3264,7 +3264,15 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         calado. **Divergência:** o desenho põe o aviso na Prescrição (o caso era
         uma mudança de programa); ele mora no Agora, com os outros avisos de
         perda, porque vale para qualquer registro.
-      - **aula:** 1 ✓ · 2 ✓ · 3–5 ~ (conferir a ordem de busca e a unidade) ·
+      - **aula:** 1 ✓ · 2 ✓ · **3 ✓ (14/10)** — a ordem já era a do que ele
+        procura (`FREQUENTES_NO_BOX`) e a unidade já aparecia; faltava a
+        referência: cada movimento diz "última: 9kg · 100 reps em 03/10" ou
+        "sem registro anterior", com o nome em cima (a linha estava apertada em
+        três colunas). · 4 ~ (o peso entra pela régua/teclado do cartão, não
+        numa tela só dele com o peso primeiro) · **5 ✓ (14/10)** — antes de
+        começar, "Na última aula, sáb 03/10" com o que entrou em cada movimento
+        e "Peso guardado é peso do dia". (Sem o ritmo s/100 m da corrida ao
+        lado.) ·
         6 ~ (lousa) · 7 ✓ · 8 ✓ · 9 ✓ · 10 ✓ · 11 ~ · **12 ✓ (14/10)** — o aviso de
         falha diz que a presença da sessão continua guardada, com a hora, quando
         ela gravou antes (o app guarda o instante da última gravação aceita), e
@@ -3478,6 +3486,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Corpo 6 conferido (feito). Corpo 9 construído: a semana sem média diz o que falta e não mostra média falsa (`semanaEmCurso` no domínio). 9 mutações, 9 mortas. 1.472 passando.
 - 14/10 · Prescrição 9: o endereço vazio oferece achar o que existe (conta, cópia, ícone antigo) antes de começar. 7 mutações, 7 mortas. 1.478 passando.
 - 14/10 · Prescrição 4, 7 e 8: a data da última mudança que entrou; o plano com o que tem dentro, o "criada por você" e o ajuste acumulado; as compras com 3/7/15/outro e o que fica fora. 8 mutações, 7 mortas e 1 equivalente (redundância tirada). Prescrição 6 vira pergunta ao dono. 1.485 passando.
+- 14/10 · Aula 3 e 5: a referência de cada movimento do box e "Na última aula" antes de começar. 7 mutações, 6 mortas e 1 guarda desnecessária tirada. Achado: `fmtNum` escreve carga com ponto ("22.5") em parte da tela — corrigido no texto novo; o resto vai em seguida. 1.487 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

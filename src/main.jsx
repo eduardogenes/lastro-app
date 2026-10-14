@@ -7010,6 +7010,8 @@ CTX.treino = function () {
     // uma emenda ao programa. Fica preso ao dia aberto fora do modo de edição
     // para as duas superfícies nunca desenharem o mesmo painel ao mesmo tempo.
     addEx: (diaAberto(d) && !view.editProg && view.addEx) ? catalogoDeAdicao(d) : null,
+    // antes de começar a aula, o que entrou na última (estado 5)
+    ultimaAula: (diaAberto(d) && P && !P.ex.length) ? referenciaDaUltimaAula(d) : null,
     // A lista rápida: um campo por movimento, para o fim da aula. Só no dia
     // aberto e só com movimento dentro — uma lista vazia não registra nada.
     rapido: (diaAberto(d) && !view.editProg && P && P.ex.length) ? (function () {
@@ -9242,6 +9244,51 @@ function trocaDoDia(d, i) {
 
 // O catálogo inteiro, com busca, e a porta para cadastrar equipamento que o
 // app ainda não conhece.
+/**
+ * A referência de um movimento do box: o que entrou da última vez, com a data,
+ * ou "sem registro anterior" — a tela diz que não sabe em vez de fingir (a D,
+ * aula, estado 3). Peso guardado é peso do dia: a lousa muda toda semana.
+ */
+/** "22.5kg" → "22,5kg": o texto de série que vai para a tela, em português. */
+function comVirgula(t) { return t == null ? t : String(t).replace(/(\d)\.(\d)/g, '$1,$2'); }
+
+function referenciaDoBox(k) {
+  const h = historico(k);
+  const u = h.length ? h[h.length - 1] : null;
+  if (!u) return 'sem registro anterior';
+  const un = unidadeDe(CAT[k] || {});
+  return 'última: ' + comVirgula(fmtLast(u, !!un).replace(/  /g, ' · ')) + ' em ' + fmtDate(u.t);
+}
+
+/**
+ * A ÚLTIMA AULA, antes de começar a de hoje (a D, aula, estado 5): "quando eu
+ * chegar lá, saber qual é o wall ball que eu costumo pegar" (P4). Os movimentos
+ * que entraram na última sessão daquele dia aberto, com o que entrou. Sem
+ * sessão anterior com movimento, nada.
+ */
+function referenciaDaUltimaAula(d) {
+  const ses = (S.done || []).filter(function (x) { return x && x.day === d; })
+    .sort(function (a, b) { return b.t - a.t; });
+  for (let j = 0; j < ses.length; j++) {
+    const sid = typeof ses[j].sid === 'number' ? ses[j].sid : ses[j].t;
+    const linhas = [];
+    Object.keys(S.logs || {}).forEach(function (k) {
+      (S.logs[k] || []).forEach(function (e) {
+        if (e && e.sid === sid && Array.isArray(e.sets) && e.sets.some(Boolean)) {
+          linhas.push({ k: k, n: CAT[k] ? CAT[k].n : k, t: e.t,
+                        v: comVirgula(fmtLast(e, !!unidadeDe(CAT[k] || {})).replace(/  /g, ' · ')) });
+        }
+      });
+    });
+    if (linhas.length) {
+      linhas.sort(function (a, b) { return a.t - b.t; });
+      const dt = new Date(ses[j].t);
+      return { quando: DIAS_CURTOS[dt.getDay()] + ' ' + fmtDate(ses[j].t), linhas: linhas };
+    }
+  }
+  return null;
+}
+
 function catalogoDeAdicao(d) {
   const q = view.addQ || '';
   const nodia = {};
@@ -9283,7 +9330,9 @@ function catalogoDeAdicao(d) {
           ? (CAT[k].q > 0 ? fmtInt(CAT[k].q) + ' ' + ROTULO_UNIDADE[un] : ROTULO_UNIDADE[un])
           : (CAT[k].g || 'sem grupo');
         return { id: k, n: CAT[k].n,
-                 sub: medida + (nodia[k] ? ' · já está neste treino' : '') };
+                 sub: medida + (nodia[k] ? ' · já está neste treino' : ''),
+                 // no box, a referência de cada movimento (estado 3)
+                 ref: diaAberto(d) ? referenciaDoBox(k) : null };
       }),
     novo: view.novoEx
       ? { grupos: gruposDoPlano(),
