@@ -90,10 +90,9 @@ pede atenção do dono.
   série como está no disco e o toque dito "tocado", com "Tentar de novo".
   Saídas declaradas: a grade de tempo, volume e recordes, a variação contra a
   vez anterior (histórico do exercício e Semana) e o cardio do dia (no dia
-  aberto). **Divergências:** "guardada às 6h44" por série não existe no dado (a
-  série não guarda o instante) — a linha diz "Nada mais na sessão muda"; "não
-  feito" ainda não é tocável para lançar a série que faltou (capacidade nova,
-  fica na fila).
+  aberto). **Divergência:** "guardada às 6h44" por série não existe no dado (a
+  série não guarda o instante) — a linha diz "Nada mais na sessão muda". "Não
+  feito" é tocável (a série que faltou entra pela régua — ver abaixo).
 - **Fila de construção, na ordem:**
   1. **Dias está fechado** no que tem desenho. "Não feito" é tocável: a série
      que faltou entra pela régua, na posição dela, com a carga da série de
