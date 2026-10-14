@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.426 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.430 passando**, zero "unhandled".
 - A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
   `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
@@ -57,11 +57,14 @@ pede atenção do dono.
   feito" ainda não é tocável para lançar a série que faltou (capacidade nova,
   fica na fila).
 - **Fila de construção, na ordem:**
-  1. Dias, o resto: "não feito" tocável (lançar a série que faltou numa
-     sessão passada). O cardio do dia já se corrige no lugar (estado 12).
-     **Cardio lançado num dia passado não tem caminho desenhado** (o dia vazio
-     e a folha de registrar treino não oferecem cardio; o desenho só mostra um
-     "lançado na quinta, sem hora") — vai como pergunta, não construo. Os painéis de apagar sessão (13) e cardio (12) já dizem o que vai,
+  1. **Dias está fechado** no que tem desenho. "Não feito" é tocável: a série
+     que faltou entra pela régua, na posição dela, com a carga da série de
+     referência; sem registro do exercício, nasce um no instante da sessão e
+     ENTRE os outros pela ordem do tempo (a lista é lida pela posição — o fim é
+     a "última vez"). Exercício de unidade própria (segundos, metros) não abre
+     a régua. **Cardio lançado num dia passado não tem caminho desenhado** (o
+     dia vazio e a folha de registrar treino não oferecem cardio; o desenho só
+     mostra um "lançado na quinta, sem hora") — vai como pergunta ao dono/D. Os painéis de apagar sessão (13) e cardio (12) já dizem o que vai,
      o que fica e o efeito (na sequência; no mês), numa frase que abre pelo
      verbo — o `pare()` não tem título separado, e a guarda das frases cobra o
      infinitivo na primeira palavra.
@@ -3218,6 +3221,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · **Sessão passada, corrigir no lugar** (estados 3, 4 e 14 de Dias). 8 casos reescritos (um deles era dependente do relógio: "26 horas atrás" cai anteontem logo depois da meia-noite), 7 novos. 17 mutações, 17 mortas. CSS e uma dívida de alvo de toque que saíram junto com o mês antigo. 1.424 passando.
 - 14/10 · Painéis de apagar sessão e cardio pelo desenho (estados 12 e 13): o que vai, o que fica, a sequência, o mês. 6 mutações, 6 mortas. 1.425 passando.
 - 14/10 · O cardio do dia se corrige no lugar (modalidade, minutos, intensidade; carimbo `alt`, instante intocado). 6 mutações, 6 mortas. 1.426 passando.
+- 14/10 · "Não feito" tocável na sessão passada: a série que faltou entra na posição, e o registro novo entra na lista pela ordem do tempo. 8 mutações, 8 mortas (uma viva até ganhar o caso da posição pulada). 1.430 passando. Dias fechado no que tem desenho.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

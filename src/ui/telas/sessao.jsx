@@ -93,7 +93,12 @@ export function Sessao({ ctx }) {
                   </span>
                   <span class="ss-series">
                     {x.series.map(sr => sr.nao
-                      ? <span key={sr.k} class="ss-sv nf">não feito</span>
+                      ? (sr.lanca
+                          ? <button key={sr.k} class={'ss-sv nf' + (sr.aberta ? ' on' : '')}
+                                    data-a={'serie-' + x.idEx + '-' + sr.k} aria-expanded={sr.aberta ? 'true' : 'false'}
+                                    aria-label={'série ' + (sr.k + 1) + ': não feita. Tocar lança, se você fez.'}
+                                    onClick={() => ctx.abreSerieDaPassada(x.idEx, x.chave, sr.k)}>não feito</button>
+                          : <span key={sr.k} class="ss-sv nf">não feito</span>)
                       : (
                         <button key={sr.k} class={'ss-sv' + (sr.aberta ? ' on' : '')} disabled={!sr.editavel}
                                 data-a={'serie-' + x.idEx + '-' + sr.k} aria-expanded={sr.aberta ? 'true' : 'false'}
@@ -160,14 +165,14 @@ function Editor({ e, ctx }) {
           </button>
         </div>
       )}
-      <div class="ss-ed-pe">
+      {e.rir && <div class="ss-ed-pe">
         <button class="ss-lk" data-a="sessao-rir" aria-expanded={e.rir.aberto ? 'true' : 'false'}
                 onClick={() => ctx.rirDaPassada('abre')}>{e.rir.texto}</button>
         <button class="ss-lk dn" data-a="sessao-apaga-serie" onClick={() => ctx.apagaSerieDaPassada()}>
           Apagar esta série
         </button>
-      </div>
-      {e.rir.aberto && (
+      </div>}
+      {e.rir && e.rir.aberto && (
         <div class="ins-chips ss-rir">
           {e.rir.escala.map(r => (
             <button key={r.v} class={'ins-chip' + (r.on ? ' on' : '')} aria-pressed={r.on ? 'true' : 'false'}

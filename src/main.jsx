@@ -5461,11 +5461,85 @@ function serieDaPassada() {
 function abreSerieDaPassada(idEx, chave, k) {
   const p = view.passada;
   if (p && p.idEx === idEx && p.chave === chave && p.k === k) { view.passada = null; render(); return; }
-  const e = registroPorChave(idEx, chave);
-  if (!e || !e.sets[k] || e.u) return;
-  view.passada = { idEx: idEx, chave: chave, k: k, foco: null, era: e.sets[k].slice(),
-                   gravado: null, tocado: null, rir: false, teclado: null };
+  const e = chave ? registroPorChave(idEx, chave) : null;
   view.teclado = null;
+  if (e && e.sets[k] && !e.u) {
+    view.passada = { idEx: idEx, chave: chave, k: k, foco: null, era: e.sets[k].slice(),
+                     gravado: null, tocado: null, rir: false, teclado: null };
+    render();
+    return;
+  }
+  // "não feito": se ele fez e não registrou, a série entra aqui (estado 3)
+  const m = view.sessao;
+  if (!m || m.livre || (e && e.u) || (!e && unidadeDoPrescrito(m, idEx))) return;
+  const ref = referenciaDaSerie(idEx, e, k, m);
+  view.passada = { idEx: idEx, chave: chave, k: k, foco: null, era: null, novo: true,
+                   carga: ref ? ref[0] : 0, ref: ref, gravado: null, tocado: null, rir: false, teclado: null };
+  render();
+}
+
+/** A unidade própria do exercício prescrito (segundos, metros…), que a régua de repetições não atende. */
+function unidadeDoPrescrito(m, idEx) {
+  const P = m.day ? treino(m.day) : null;
+  const ex = P ? P.ex.filter(function (x) { return x.id === idEx; })[0] : null;
+  return !!(ex && ex.u);
+}
+
+/**
+ * A referência de uma série que não foi registrada: a série anterior do mesmo
+ * registro, ou a mesma posição na última vez ANTES desta sessão. Sem nenhuma,
+ * `null` — e a régua abre na base da faixa, sem marca de "última".
+ */
+function referenciaDaSerie(idEx, e, k, m) {
+  if (e) for (let j = k - 1; j >= 0; j--) if (e.sets[j]) return e.sets[j];
+  const antes = (S.logs[idEx] || []).filter(function (l) { return l.t < m.t && l.sid !== m.sid; });
+  for (let j = antes.length - 1; j >= 0; j--) {
+    const sets = antes[j].sets || [];
+    if (sets[k]) return sets[k];
+    for (let q = sets.length - 1; q >= 0; q--) if (sets[q]) return sets[q];
+  }
+  return null;
+}
+
+/**
+ * Lança a série que faltou, com `reps` repetições e a carga proposta.
+ *
+ * Sem registro do exercício nesta sessão, nasce um — no instante da sessão, e
+ * ENTRE os outros pela ordem do tempo: a lista é lida pela posição (o fim é a
+ * "última vez" que a próxima sessão usa), e uma entrada antiga no fim viraria a
+ * referência de amanhã.
+ */
+async function lancaSerieDaPassada(reps) {
+  const p = view.passada, m = view.sessao;
+  if (!p || !p.novo || !m) return;
+  let e = p.chave ? registroPorChave(p.idEx, p.chave) : null;
+  const nasceu = !e;
+  if (nasceu) {
+    e = { t: m.t, sid: m.sid, sets: [] };
+    if (m.dl) e.dl = 1;
+    const lista = S.logs[p.idEx] = (S.logs[p.idEx] || []).slice();
+    let i = lista.length;
+    while (i > 0 && lista[i - 1].t > e.t) i--;
+    lista.splice(i, 0, e);
+  }
+  const antes = e.sets.slice(), mAntes = e.m;
+  while (e.sets.length < p.k) e.sets.push(null);
+  e.sets[p.k] = [p.carga != null ? p.carga : 0, reps];
+  e.m = Date.now();
+  const ok = await save();
+  if (ok === false) {
+    if (nasceu) {
+      S.logs[p.idEx] = S.logs[p.idEx].filter(function (l) { return l !== e; });
+      if (!S.logs[p.idEx].length) delete S.logs[p.idEx];
+    } else { e.sets = antes; if (mAntes == null) delete e.m; else e.m = mAntes; }
+    p.tocado = { k: 'reps', v: reps };
+    render();
+    return;
+  }
+  view.passada = { idEx: p.idEx, chave: chaveDeLog(p.idEx, e), k: p.k, foco: null, era: e.sets[p.k].slice(),
+                   gravado: 'Lançada às ' + fmtHoraDita(Date.now()) + ': ' + textoDaSerieDaPassada(p.idEx, e.sets[p.k]) +
+                     '. Entra no volume e no histórico deste dia.',
+                   tocado: null, rir: false, teclado: null };
   render();
 }
 
@@ -5502,9 +5576,20 @@ function textoDaSerieDaPassada(idEx, s) {
 function repsDaPassada(v) {
   const n = Math.round(+v);
   if (!(n >= 0) || n > 200) return;
+  if (view.passada && view.passada.novo) return lancaSerieDaPassada(n);
   return gravaNaPassada(function (s) { s[1] = n; }, { k: 'reps', v: n });
 }
 function andaReguaDaPassada(dir) {
+  const pn = view.passada;
+  if (pn && pn.novo) {
+    const P = view.sessao && view.sessao.day ? treino(view.sessao.day) : null;
+    const ex = P ? P.ex.filter(function (x) { return x.id === pn.idEx || x.orig === pn.idEx; })[0] : null;
+    const fx = faixaDoTexto(ex ? ex.r : null);
+    const base = pn.ref ? pn.ref[1] : (fx ? fx[0] : 10);
+    view.passada.foco = anda(regua(base, fx), pn.foco != null ? pn.foco : base, dir);
+    render();
+    return;
+  }
   const x = serieDaPassada();
   if (!x) return;
   const fx = faixaDoTexto((exDoRegistro(x.p.idEx, x.e) || {}).r);
@@ -5522,6 +5607,14 @@ function rirDaPassada(v) {
 
 /** O teclado da carga, na sessão passada: escreve no visor, grava quando o número fecha. */
 function abreCargaDaPassada() {
+  const p = view.passada;
+  if (p && p.novo) {
+    const a0 = view.teclado && view.teclado.alvo;
+    if (a0 && a0.tipo === 'passada') { view.teclado = null; render(); return; }
+    view.teclado = { alvo: { tipo: 'passada', pos: 0 }, texto: p.carga != null ? String(p.carga).replace('.', ',') : '' };
+    render();
+    return;
+  }
   const x = serieDaPassada();
   if (!x) return;
   const a = view.teclado && view.teclado.alvo;
@@ -5533,6 +5626,8 @@ function abreCargaDaPassada() {
 function cargaDaPassada(texto) {
   const n = numeroDoCampo(texto);
   if (n == null || n < 0) return;
+  // a série ainda não existe: a carga fica proposta, e grava junto com a repetição
+  if (view.passada && view.passada.novo) { view.passada.carga = n; render(); return; }
   return gravaNaPassada(function (s) { s[0] = n; }, { k: 'carga', v: n });
 }
 
@@ -5571,6 +5666,29 @@ function exDoRegistro(idEx, e) {
   const m = S.done.filter(function (x) { return x.sid === e.sid; })[0];
   const P = m && m.day ? treino(m.day) : null;
   return P ? P.ex.filter(function (ex) { return ex.id === idEx || ex.id === e.sl || ex.orig === idEx; })[0] || null : null;
+}
+
+/** O editor da série que não foi feita: carga proposta, régua sem valor, e nada a apagar. */
+function editorDoNovo(idEx, ex) {
+  const pa = view.passada;
+  const fx = faixaDoTexto(ex ? ex.r : null);
+  const base = pa.ref ? pa.ref[1] : (fx ? fx[0] : 10);
+  const un = CARGAS[cargaTipo(idEx, ex || exDe(idEx))].rot;
+  const tc = view.teclado && view.teclado.alvo.tipo === 'passada' ? view.teclado : null;
+  return {
+    novo: true,
+    titulo: 'Série ' + (pa.k + 1),
+    guardada: 'não registrada · ' + (pa.ref ? 'a carga vem da série de referência' : 'sem referência'),
+    carga: fmtNum(pa.carga != null ? pa.carga : 0).replace('.', ','),
+    un: un,
+    faixa: fx ? 'repetições · faixa ' + ex.r + ' · um toque lança' : 'repetições · um toque lança',
+    regua: { slots: pagina(regua(base, fx), pa.foco != null ? pa.foco : base), valor: null,
+             marca: pa.ref ? 'última' : null, tocado: pa.tocado && pa.tocado.k === 'reps' ? pa.tocado.v : null },
+    gravado: null,
+    falhou: pa.tocado ? 'Não foi gravado: o aparelho recusou. A série continua não feita.' : null,
+    rir: null,
+    teclado: tc ? { texto: tc.texto, unidade: un } : null
+  };
 }
 
 function abreCorrecaoDoTempo(t) { view.corrigeTempo = view.corrigeTempo === t ? null : t; render(); }
@@ -8119,10 +8237,11 @@ CTX.detalheDaSessao = function () {
       series.push(s
         ? { k: k, texto: e.u ? textoDaSerie(s, e.u, e.q) : textoDaSerieDaPassada(idEx, s),
             rir: s[2] != null ? 'RIR ' + s[2] : null, editavel: !e.u, aberta: aberta }
-        : { k: k, nao: true });
+        : { k: k, nao: true, lanca: !e.u, aberta: aberta });
     }
     let editor = null;
-    const s = pa && pa.idEx === idEx && pa.chave === chave ? e.sets[pa.k] : null;
+    const s = pa && !pa.novo && pa.idEx === idEx && pa.chave === chave ? e.sets[pa.k] : null;
+    if (pa && pa.novo && pa.idEx === idEx && pa.chave === chave) editor = editorDoNovo(idEx, ex);
     if (s) {
       const fx = faixaDoTexto(ex ? ex.r : null);
       const reg = regua(pa.era[1], fx);
@@ -8161,9 +8280,13 @@ CTX.detalheDaSessao = function () {
   if (P && !aberta) P.ex.forEach(function (ex, i) {
     if (feitos[ex.id]) return;
     const series = [];
-    for (let k = 0; k < ex.s; k++) series.push({ k: k, nao: true });
+    for (let k = 0; k < ex.s; k++) {
+      series.push({ k: k, nao: true, lanca: !ex.u,
+                    aberta: !!(pa && pa.novo && pa.idEx === ex.id && pa.chave == null && pa.k === k) });
+    }
     exercicios.splice(Math.min(i, exercicios.length), 0,
-      { idEx: ex.id, chave: null, nome: ex.n, presc: ex.s + ' × ' + ex.r + (ex.rir ? ' · RIR ' + ex.rir : ''), series: series, editor: null, nota: null });
+      { idEx: ex.id, chave: null, nome: ex.n, presc: ex.s + ' × ' + ex.r + (ex.rir ? ' · RIR ' + ex.rir : ''), series: series,
+        editor: pa && pa.novo && pa.idEx === ex.id && pa.chave == null ? editorDoNovo(ex.id, ex) : null, nota: null });
   });
 
   const fimT = !aberta && hFim ? m.t + m.dur + (m.pausado || 0) : null;

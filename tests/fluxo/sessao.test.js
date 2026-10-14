@@ -917,3 +917,105 @@ test('a correção acha o registro pela chave, mesmo com a lista do exercício m
   assert.deepStrictEqual(lista[1].sets[2], [40, 9], 'a da sessão aberta foi');
   a.fechar();
 });
+
+// "Não feito" tocável: se ele fez e não registrou, a série entra ali (estado 3).
+
+test('a série não feita entra pela régua, na posição dela, com a carga da anterior', async () => {
+  const agora = agoraEstavel();
+  const t = agora - 2 * DIA;
+  const a = await app({ agora: agora, aba: 'dias', estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[40, 10], [40, 10]] }] },
+    done: [{ day: 'A', t: t, sid: t, dur: 3600000, fim: 'manual' }]
+  } });
+  a.v('abrirSessao', t);
+  const ex = a.vJ('ctx.detalheDaSessao').exercicios[0];
+  assert.ok(ex.series[2].nao && ex.series[2].lanca, 'a série 3 está "não feito", e é tocável');
+  a.clicar('[data-a="serie-' + ex.idEx + '-2"]');
+  await a.esperar();
+  assert.ok(/não registrada/.test(a.texto('.ss-ed-h')), a.texto('.ss-ed-h'));
+  a.clicar('[data-a="regua-9"]');
+  await a.esperar(60);
+
+  const reg = a.S().logs[ex.idEx];
+  assert.strictEqual(reg.length, 1, 'no mesmo registro, sem criar outro');
+  assert.deepStrictEqual(reg[0].sets, [[40, 10], [40, 10], [40, 9]], 'na posição 3, com a carga da série anterior');
+  assert.ok(reg[0].m > 0, 'carimbado');
+  assert.ok(/Lançada às \d+h\d\d: 40 × 9\./.test(a.texto('.ss-ed-ok')), a.texto('.ss-ed-ok'));
+  assert.deepStrictEqual(a.gravado().logs[ex.idEx][0].sets[2], [40, 9], 'e está no disco');
+  a.fechar();
+});
+
+test('exercício inteiro não feito ganha registro, entre os outros pela ordem do tempo', async () => {
+  // A lista do exercício é lida pela POSIÇÃO: o fim é a "última vez" que a
+  // próxima sessão usa. A entrada de um dia passado não pode ir para o fim.
+  const agora = agoraEstavel();
+  const t = agora - 3 * DIA, hoje = agora - 3600000;
+  const a = await app({ agora: agora, aba: 'dias', estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[40, 10]] }], A1: [{ t: hoje, sid: hoje, sets: [[20, 12]] }] },
+    done: [{ day: 'A', t: t, sid: t, dur: 3600000, fim: 'manual' }, { day: 'A', t: hoje, sid: hoje, dur: 3600000, fim: 'manual' }]
+  } });
+  const id1 = a.vJ('treino', 'A').ex[1].id;
+  a.v('abrirSessao', t);
+  a.clicar('[data-a="serie-' + id1 + '-0"]');
+  await a.esperar();
+  assert.ok(/sem referência/.test(a.texto('.ss-ed-h')), 'nada antes daquele dia para servir de referência');
+  a.clicar('[data-a="sessao-carga"]');
+  await a.esperar();
+  ['⌫', '⌫', '1', '8'].forEach(function (k) { a.v('ctx.tecla', k); });
+  assert.strictEqual(a.S().logs[id1].length, 1, 'a carga sozinha não lança nada');
+  const alvo = a.$$('.regua-v')[1];
+  const reps = +alvo.getAttribute('data-a').replace('regua-', '');
+  a.clicar(alvo);
+  await a.esperar(60);
+
+  const lista = a.S().logs[id1];
+  assert.strictEqual(lista.length, 2, 'um registro novo');
+  assert.strictEqual(lista[0].sid, t, 'o do dia passado vem PRIMEIRO');
+  assert.deepStrictEqual(lista[0].sets, [[18, reps]], 'com a carga do teclado e a repetição da régua');
+  assert.strictEqual(lista[1].sid, hoje, 'e o de hoje continua sendo o último');
+  const h = a.vJ('historico', id1);
+  assert.strictEqual(h[h.length - 1].sid, hoje, 'a "última vez" da próxima sessão não muda');
+  a.fechar();
+});
+
+test('se lançar a série falha, ela continua não feita', async () => {
+  const agora = agoraEstavel();
+  const t = agora - 2 * DIA;
+  const a = await app({ agora: agora, aba: 'dias', estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[40, 10]] }] },
+    done: [{ day: 'A', t: t, sid: t, dur: 3600000, fim: 'manual' }]
+  } });
+  const id1 = a.vJ('treino', 'A').ex[1].id;
+  a.v('abrirSessao', t);
+  a.clicar('[data-a="serie-' + id1 + '-0"]');
+  await a.esperar();
+  a.encheCota();
+  a.clicar(a.$$('.regua-v')[1]);
+  await a.esperar(60);
+  assert.strictEqual(a.S().logs[id1], undefined, 'nenhum registro ficou na memória sem estar no disco');
+  assert.ok(a.$('.regua-v.tocado'), 'o toque fica dito como tocado');
+  assert.ok(/continua não feita/.test(a.texto('.ss-ed-falhou')));
+  a.encheCota(false);
+  a.clicar('[data-a="sessao-tenta"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().logs[id1].length, 1, '"Tentar de novo" lança');
+  a.fechar();
+});
+
+test('lançar a série 3 com a 2 não feita deixa a 2 não feita', async () => {
+  const agora = agoraEstavel();
+  const t = agora - 2 * DIA;
+  const a = await app({ agora: agora, aba: 'dias', estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[40, 10]] }] },
+    done: [{ day: 'A', t: t, sid: t, dur: 3600000, fim: 'manual' }]
+  } });
+  a.v('abrirSessao', t);
+  const ex = a.vJ('ctx.detalheDaSessao').exercicios[0];
+  a.clicar('[data-a="serie-' + ex.idEx + '-2"]');
+  await a.esperar();
+  a.clicar('[data-a="regua-9"]');
+  await a.esperar(60);
+  assert.deepStrictEqual(a.S().logs[ex.idEx][0].sets, [[40, 10], null, [40, 9]], 'cada série na posição dela');
+  assert.ok(a.vJ('ctx.detalheDaSessao').exercicios[0].series[1].nao, 'e a 2 continua "não feito"');
+  a.fechar();
+});
