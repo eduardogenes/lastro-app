@@ -1723,3 +1723,15 @@ button.ins-linha { border-radius: 0; }
 .ag-14-o { display: flex; align-items: center; gap: var(--ins-4); margin-top: var(--ins-4); }
 .ag-14-o p { flex: 1 1 auto; min-width: 0; margin: 0; }
 .ag-14-o > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+
+/* ---- O cabeçalho do Agora (a D, agora-descanso estados 1, 4 e 5) ----------
+   O dia e a hora; embaixo, a procedência do tipo do dia, tocável. O palpite
+   leva o pontilhado do palpite — a mesma marca do fim aproximado. */
+.ag-cab-r1 { display: flex; align-items: center; justify-content: space-between; gap: var(--ins-4); }
+.ag-cab-d { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.01em; color: var(--ins-tinta); }
+.ag-cab-h { margin-left: var(--ins-3); font-size: 15px; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--ins-tinta-3); }
+.ag-prov { margin-top: var(--ins-2); min-height: var(--ins-tap); padding: 0; border-radius: 0; text-align: left; font-size: 15px; color: var(--ins-tinta-2); }
+.ag-prov.palpite { text-decoration: underline dotted var(--ins-tinta-3); text-underline-offset: 5px; }
+.fd-sub { margin: 0 0 var(--ins-5); }
+.fd-jafiz { display: flex; flex-direction: column; gap: var(--ins-3); margin-top: var(--ins-7); }
+.fd-jafiz p { margin: 0; }

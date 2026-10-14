@@ -2291,10 +2291,18 @@ const CTX = {
     // solto escapa dessa porta e lê o relógio de verdade — a tela passaria a
     // discordar do resto do app no meio de um teste que viajou no tempo.
     const d = new Date(Date.now());
+    // A PROCEDÊNCIA do tipo do dia, e é ela a linha tocável (a D,
+    // `agora-descanso.html`, estados 1, 4 e 5): o palpite diz que é palpite, com
+    // o pontilhado; o que ele disse e a sessão registrada são fato.
+    const treinoTxt = h.treino ? (diaAberto(h.treino) ? ' · aula' : ' · Treino ' + h.treino) : '';
+    const procedencia = h.origem === 'registrado' ? 'dia de treino, pela sessão registrada' + treinoTxt
+      : h.origem === 'aberta' ? 'dia de treino, com a sessão aberta' + treinoTxt
+      : h.origem === 'manual' ? (h.cadencia === 'descanso' ? 'descanso, você disse' : 'dia de treino, você disse' + treinoTxt)
+      : (h.cadencia === 'descanso' ? 'descanso, pelo padrão semanal' : 'dia de treino, pelo padrão semanal' + treinoTxt);
     return {
-      olho: (DIAS_LONGOS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()]).toUpperCase(),
-      rotulo: h.previsto ? 'previsto' : 'hoje',
-      valor: h.cadencia === 'descanso' ? 'folga' : (h.treino || '—')
+      data: DIAS_LONGOS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()],
+      procedencia: procedencia,
+      palpite: !!h.previsto
     };
   },
 
@@ -2483,6 +2491,16 @@ const CTX = {
     queueSave(); render();
   },
   setAlta: function (v) { diaDeComida().alta = v ? 1 : 0; queueSave(); render(); },
+  /**
+   * "Já fiz alguma coisa hoje" (a D, estado 4): o cardio abre o registro de
+   * cardio do Agora; a aula e o treino fora da prescrição abrem o lançamento de
+   * hoje, que oferece os dois.
+   */
+  jaFizHoje: function (k) {
+    pilha().pop();
+    if (k === 'cardio') { view.cardioRapido = true; render(); return; }
+    abrirAdicionar(Date.now());
+  },
   /**
    * Como o dia foi. Ajuste de hoje, como a escala e o turno: zera com a data,
    * e é congelado no histórico por `fechaDia`.
@@ -6580,7 +6598,26 @@ CTX.seletorDeDia = function () {
     const r = refs.filter(function (x) { return x.id === id; })[0];
     return r ? r.n : null;
   };
+  const cat = catalogoAlimentos();
+  const kcalDe = function (treinando) { return Math.round(totalDoDia(plano, cat, treinando, !!dia.alta, {}).kcal); };
+  const refsDesc = refeicoesDeHoje(plano, false, !!dia.alta, dia.turno, duracaoDoTreino());
+  const proximo = h.treino || nextDay();
+  const diaNome = DIAS_LONGOS[new Date(Date.now()).getDay()];
+  const fato = h.origem === 'registrado' || h.origem === 'aberta';
   return {
+    // a folha da D (`agora-descanso.html`, estado 4): a procedência em cima, a
+    // pergunta, e o efeito de cada resposta antes do toque
+    olho: h.origem === 'previsto' || h.previsto
+      ? 'pelo padrão semanal: ' + diaNome + ' é ' + (h.cadencia === 'descanso' ? 'descanso' : 'dia de treino')
+      : h.origem === 'manual' ? 'você disse que hoje é ' + (h.cadencia === 'descanso' ? 'descanso' : 'dia de treino')
+      : 'hoje tem sessão registrada',
+    pergunta: fato ? 'Hoje é dia de treino' : 'Hoje é dia de ' + (h.cadencia === 'descanso' ? 'descanso' : 'treino') + '?',
+    sub: fato ? 'A sessão registrada manda no tipo do dia.'
+              : 'É um palpite até você dizer. Dizer muda o plano da comida de hoje, e mais nada.',
+    efeitoDescanso: 'o plano fica o de descanso: ' + refsDesc.length + ' refeições, ' + fmtInt(kcalDe(false)) + ' kcal',
+    efeitoTreino: 'o pré-treino e o treino entram no plano e andam com a hora da sessão · na sequência, o próximo é ' +
+                  (diaAberto(proximo) ? 'a aula' : 'o Treino ' + proximo),
+    fato: fato,
     titulo: h.cadencia === 'descanso' ? 'Descanso' : 'Dia de treino',
     treino: h.treino,
     cadencia: h.cadencia,

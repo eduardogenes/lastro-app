@@ -106,27 +106,38 @@ export function FolhaRefeicao({ ctx, id }) {
 export function FolhaDia({ ctx }) {
   const d = ctx.seletorDeDia();
   return (
-    <Folha olho="hoje é" titulo={d.titulo} meta={d.treino || ''} aoFechar={ctx.fechaFolha}>
-      <div class="fd-ops">
-        <button
-          class={'fd-op' + (d.cadencia === 'treino' ? ' on' : '')}
-          onClick={() => ctx.setCadenciaDeHoje('treino')}
-        >
-          <span class="ins-subtitle">Dia de treino</span>
-          <span class="ins-body-sm ins-t3">
-            {d.treino ? `A rotação diz que vem o treino ${d.treino}.` : 'Entra a próxima sessão da rotação.'}
-          </span>
-        </button>
-        <button
-          class={'fd-op' + (d.cadencia === 'descanso' ? ' on' : '')}
-          onClick={() => ctx.setCadenciaDeHoje('descanso')}
-        >
-          <span class="ins-subtitle">Descanso</span>
-          <span class="ins-body-sm ins-t3">
-            Sai o pré-treino e o intra-treino. A rotação não anda.
-          </span>
-        </button>
-      </div>
+    <Folha olho={d.olho} titulo={d.pergunta} aoFechar={ctx.fechaFolha}>
+      {/* A folha da D (`agora-descanso.html`, estado 4): o único lugar onde o
+          tipo do dia muda. A resposta que o palpite já dá vem primeiro, e cada
+          uma diz o efeito ANTES do toque. Confirmar não é obrigatório: ignorado,
+          o palpite continua palpite. */}
+      <p class="ins-body-sm ins-t2 fd-sub">{d.sub}</p>
+      {!d.fato && (
+        <div class="fd-ops">
+          {(d.cadencia === 'descanso' ? ['descanso', 'treino'] : ['treino', 'descanso']).map(k => (
+            <button key={k} data-a={'dia-e-' + k}
+                    class={'fd-op' + (d.cadencia === k ? ' on' : '')}
+                    onClick={() => ctx.setCadenciaDeHoje(k)}>
+              <span class="ins-subtitle">{k === 'descanso' ? 'É descanso' : 'Vou treinar hoje'}</span>
+              <span class="ins-body-sm ins-t3">{k === 'descanso' ? d.efeitoDescanso : d.efeitoTreino}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {d.cadencia === 'descanso' && (
+        <div class="fd-jafiz">
+          <div class="ins-body-sm ins-t1"><b>Já fiz alguma coisa hoje</b></div>
+          <div class="ins-chips">
+            <button class="ins-chip" data-a="jafiz-cardio" onClick={() => ctx.jaFizHoje('cardio')}>Cardio</button>
+            <button class="ins-chip" data-a="jafiz-aula" onClick={() => ctx.jaFizHoje('aula')}>Aula</button>
+            <button class="ins-chip" data-a="jafiz-fora" onClick={() => ctx.jaFizHoje('fora')}>Treino fora da prescrição</button>
+          </div>
+          <p class="ins-body-sm ins-t3">
+            Cardio em dia de descanso fica no descanso: não é treino, e aparece em Dias como cardio em dia sem musculação.
+          </p>
+        </div>
+      )}
 
       {/* O turno do treino. Existe porque o plano foi desenhado em cima de
           treino às 6h15 e ele nem sempre treina de manhã — e a refeição que
@@ -190,7 +201,6 @@ export function FolhaDia({ ctx }) {
         </p>
       </div>
 
-      <Procedencia>{d.procedencia}</Procedencia>
     </Folha>
   );
 }

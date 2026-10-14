@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.436 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.437 passando**, zero "unhandled".
 - A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
   `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
@@ -80,9 +80,13 @@ pede atenção do dono.
        porta para a folha da refeição — a linha do desenho só tem a metade;
        a frase do "Não sei" diz a regra que vale (conta como marcada e pesa
        zero), não o "deixa de contar" do desenho.
-     - [ ] O cabeçalho do dia: data, hora e a procedência tocável (palpite →
-       folha "É descanso / Vou treinar hoje / Cardio…", estado 4); o seletor
-       "previsto · folga" sai.
+     - [x] O cabeçalho do dia: data, hora e a procedência tocável, com o
+       pontilhado quando é palpite; a folha do estado 4 com a procedência em
+       cima, a pergunta, o efeito de cada resposta e "Já fiz alguma coisa hoje"
+       (cardio abre o registro de cardio; aula e fora abrem o lançamento de
+       hoje). Turno, demanda alta e "como foi o dia" ficam embaixo (a tabela da
+       D os põe na linha do topo). **Divergência:** "você confirmou às 10h41" —
+       a hora da confirmação não é guardada; a linha diz "você disse".
      - [x] A água em linha: "+1 copo" grava na hora e sabe se gravou; a conta
        e o desenho da conta; tocar no número corrige; o estado ruim (8) com
        "Tentar de novo" e "Baixar a cópia de segurança" (`CTX.exportar`, o
@@ -3260,6 +3264,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · **Agora pela D, etapa 1:** a comida de hoje em linhas que abrem no lugar. Energia com macros, timeline, "···" e "+ adicionar refeição" saem (o plano mora em Prescrição). 6 casos reescritos, 5 novos; 11 mutações, 11 mortas (duas vivas até ganharem caso: o verbo sobre refeição já marcada a desmarcaria, e tocar de novo não fechava a linha). Timeline, `HeroMetrica` e o CSS deles removidos. 1.435 passando.
 - 14/10 · Agora pela D, etapa 2: a água em linha, com o estado ruim. 5 mutações, 5 mortas. 1.435 passando.
 - 14/10 · Agora pela D, etapa 3: os 14 dias em células e "Pôr ontem em dia". 6 mutações, 6 mortas (uma viva até o caso do dia guardado sem marca). 1.436 passando.
+- 14/10 · Agora pela D, etapa 4: o cabeçalho com a procedência do tipo do dia e a folha do estado 4. 12 casos reapontados, 1 novo; 6 mutações, 6 mortas. 1.437 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

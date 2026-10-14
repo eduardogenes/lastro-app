@@ -16,8 +16,15 @@ import { Dias } from './telas/dias.jsx';
 import { Corpo } from './telas/corpo.jsx';
 import { Semana } from './telas/semana.jsx';
 import { Prescricao } from './telas/prescricao.jsx';
-import { Cabecalho } from './instrumento/primitivos.jsx';
+import { useAgora } from './instrumento/primitivos.jsx';
+import { fmtHoraDita } from '../dominio/formato';
 import { Pare, Falhou, NaoGuardado } from './instrumento/pare.jsx';
+
+/** A hora de parede no cabeçalho do Agora, andando com o relógio. */
+function HoraDoCabecalho() {
+  const t = useAgora();
+  return <span class="ag-cab-h">{fmtHoraDita(t)}</span>;
+}
 
 const TELAS = { agora: Agora, dias: Dias, corpo: Corpo, semana: Semana, prescricao: Prescricao };
 
@@ -47,27 +54,26 @@ export function App({ ctx }) {
 
   return (
     <>
-      {/* O cabeçalho do AGORA mora aqui e não na tela, porque o botão de estado
-          do dia é o único lugar onde o tipo do dia e o turno se trocam — e ele
+      {/* O cabeçalho do AGORA mora aqui e não na tela, porque a linha do tipo
+          do dia é o único lugar onde o tipo do dia e o turno se trocam — e ela
           precisa estar acima do aviso de perda e do cartão.
+          Pela D (`agora-descanso.html`, estados 1, 4 e 5): o dia e a hora, e
+          embaixo a PROCEDÊNCIA do tipo do dia, tocável. O palpite leva o
+          pontilhado do palpite; o que ele disse e a sessão registrada, não.
           Os AJUSTES são o botão do canto, e não um lugar: a decisão é da §1.6 —
           conta, sincronia e backup não respondem nenhuma das cinco perguntas. */}
       {aba === 'agora' && (
-        <Cabecalho
-          olho={h.olho}
-          titulo="Agora"
-          acao={
-            <div class="ins-cab-acoes">
-              <button class="ins-estado" onClick={ctx.abreSeletorDeDia}>
-                <span class="ins-label-sm">{h.rotulo}</span>
-                <span class="ins-estado-v">{h.valor}</span>
-              </button>
-              <button class="ins-cab-ajustes" data-a="ajustes"
-                      aria-label="Ajustes deste aparelho"
-                      onClick={ctx.abreAjustes}>⚙</button>
-            </div>
-          }
-        />
+        <header class="ins-cab ag-cab">
+          <div class="ag-cab-r1">
+            <h1 class="ag-cab-d">{h.data}<HoraDoCabecalho /></h1>
+            <button class="ins-cab-ajustes" data-a="ajustes"
+                    aria-label="Ajustes deste aparelho"
+                    onClick={ctx.abreAjustes}>⚙</button>
+          </div>
+          <button class={'ag-prov' + (h.palpite ? ' palpite' : '')} data-a="tipo-do-dia"
+                  aria-label={h.procedencia + '. Tocar muda o tipo do dia.'}
+                  onClick={ctx.abreSeletorDeDia}>{h.procedencia}</button>
+        </header>
       )}
 
       <main>

@@ -16,7 +16,7 @@ async function abreFolha(a) {
   a.E('diaDeComida().cadencia = "treino"');
   a.v('render');
   await a.esperar();
-  a.clicar('.ins-estado');
+  a.clicar('[data-a="tipo-do-dia"]');
   await a.esperar();
 }
 
@@ -122,7 +122,7 @@ test('em dia de descanso o turno não é oferecido', async () => {
   a.E('diaDeComida().cadencia = "descanso"');
   a.v('render');
   await a.esperar();
-  a.clicar('.ins-estado');
+  a.clicar('[data-a="tipo-do-dia"]');
   await a.esperar();
   assert.strictEqual(a.$$('.fd-turno-op').length, 0,
     'sem treino não há turno de treino a escolher');

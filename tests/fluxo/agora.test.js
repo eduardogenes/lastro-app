@@ -1814,3 +1814,34 @@ test('as casas dos 14 dias: cheia, ontem sem marca, e hoje marcado sem mexer na 
   assert.ok(/entra na conta quando o dia fechar/.test(a.texto('.ag-14-t')), 'e a frase diz por quê');
   a.fechar();
 });
+
+test('a folha do tipo do dia diz o efeito antes do toque, e "Já fiz" leva ao registro', async () => {
+  // A D (`agora-descanso.html`, estado 4). Num domingo de descanso pelo padrão:
+  const agora = agoraEstavel(10, 41);
+  const dom = new Date(agora); dom.setDate(dom.getDate() - dom.getDay());
+  const t = dom.getTime();
+  const a = await app({ aba: 'agora', agora: t, estado: { plano: 7, logs: {}, done: [] } });
+  a.clicar('[data-a="tipo-do-dia"]');
+  await a.esperar(60);
+  const d = a.vJ('ctx.seletorDeDia');
+  assert.strictEqual(d.pergunta, 'Hoje é dia de descanso?');
+  assert.ok(/^o plano fica o de descanso: \d+ refeições, [\d.]+ kcal$/.test(d.efeitoDescanso), d.efeitoDescanso);
+  assert.ok(/na sequência, o próximo é o Treino A/.test(d.efeitoTreino), d.efeitoTreino);
+  const ordem = a.$$('.fd-op').map(b => b.getAttribute('data-a'));
+  assert.deepStrictEqual(ordem, ['dia-e-descanso', 'dia-e-treino'], 'a resposta do palpite vem primeiro');
+
+  a.clicar('[data-a="jafiz-cardio"]');
+  await a.esperar(60);
+  assert.strictEqual(a.$('.ins-folha'), null, 'a folha fecha');
+  assert.strictEqual(a.vJ('ctx.cromoDoTreino').cardio.aberto, true, 'e o registro de cardio abre');
+  a.fechar();
+
+  const b = await app({ aba: 'agora', agora: t, estado: { plano: 7, logs: {}, done: [] } });
+  b.clicar('[data-a="tipo-do-dia"]');
+  await b.esperar(60);
+  b.clicar('[data-a="jafiz-fora"]');
+  await b.esperar(60);
+  assert.ok(b.vista().add, 'treino fora da prescrição abre o lançamento');
+  assert.strictEqual(new Date(b.vista().add.t).toDateString(), new Date(t).toDateString(), 'de hoje');
+  b.fechar();
+});

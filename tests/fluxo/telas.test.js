@@ -976,16 +976,31 @@ test('ctx.emTelaCheia diz quando um destino tomou a tela toda', async () => {
   a.fechar();
 });
 
-test('ctx.cabecalhoDeHoje nomeia o dia e o treino previsto, sem inventar', async () => {
-  const a = await app({ agora: agoraEstavel(), estado: { logs: {}, done: [] } });
+test('ctx.cabecalhoDeHoje nomeia o dia e diz de onde vem o tipo do dia, sem inventar', async () => {
+  // A D (`agora-descanso.html`, estados 1, 4 e 5): o dia, e embaixo a
+  // procedência do tipo do dia. Enquanto nada foi registrado nem dito, é
+  // PALPITE do padrão semanal — e a linha diz isso, com o pontilhado.
+  const a = await app({ aba: 'agora', agora: agoraEstavel(), estado: { logs: {}, done: [] } });
   const h = a.vJ('ctx.cabecalhoDeHoje');
-
   const d = new Date(agoraEstavel());
-  assert.ok(h.olho.includes(String(d.getDate())), 'o olho traz o dia do mês: ' + h.olho);
-  assert.strictEqual(h.olho, h.olho.toUpperCase(), 'em caixa alta, como a tela pede');
-  assert.strictEqual(h.rotulo, 'previsto',
-    'e o treino do dia é PREVISTO enquanto nada foi registrado — o app não afirma o que não mediu');
-  assert.ok(a.dado('ROT_BASE').includes(h.valor), 'o valor é uma letra da rotação: ' + h.valor);
+  assert.ok(h.data.includes(String(d.getDate())), 'traz o dia do mês: ' + h.data);
+  assert.strictEqual(h.palpite, true, 'o app não afirma o que não mediu');
+  assert.ok(/pelo padrão semanal/.test(h.procedencia), h.procedencia);
+  if (/treino/.test(h.procedencia)) {
+    const letra = (h.procedencia.match(/Treino (\w+)/) || [])[1];
+    assert.ok(!letra || a.dado('ROT_BASE').includes(letra), 'o treino é uma letra da rotação: ' + h.procedencia);
+  }
+  assert.ok(a.$('[data-a="tipo-do-dia"].palpite'), 'e a linha leva o pontilhado do palpite');
+
+  // dito por ele, deixa de ser palpite
+  a.v('ctx.abreSeletorDeDia');
+  await a.esperar(60);
+  a.clicar('[data-a="dia-e-descanso"]');
+  await a.esperar(60);
+  const h2 = a.vJ('ctx.cabecalhoDeHoje');
+  assert.strictEqual(h2.procedencia, 'descanso, você disse');
+  assert.strictEqual(h2.palpite, false);
+  assert.strictEqual(a.$('[data-a="tipo-do-dia"].palpite'), null, 'sem o pontilhado');
   a.fechar();
 });
 
