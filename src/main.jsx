@@ -1924,7 +1924,10 @@ function vmExercicio(d, i, ex) {
       // A RÉGUA da linha. Montada aqui, no modelo de apresentação, e a página é
       // função do foco — é o R4 da frente 2: não há `scrollLeft` guardado para
       // um re-render perder. Reconstruir com o mesmo foco dá a mesma página.
-      regua: reguaDaLinha(i, k, ex, p, v, CARGAS[tipo].rot),
+      // Sem "última" nesta posição (a série a mais de hoje), a referência é a
+      // série anterior DE HOJE — a D, momento 1, estado 4.
+      regua: reguaDaLinha(i, k, ex, p, v, CARGAS[tipo].rot,
+                          !p && k > 0 && dr && dr.s[k - 1] && dr.s[k - 1][1] != null ? dr.s[k - 1] : null),
       // O TECLADO PRÓPRIO, quando a porta "outro valor" o abriu nesta linha.
       teclado: (function () {
         const a = view.teclado && view.teclado.alvo;
@@ -1949,6 +1952,9 @@ function vmExercicio(d, i, ex) {
   return {
     i: i,
     nome: ex.n,
+    // "+ série" só onde a série a mais é mudança do dia possível: no treino que
+    // dá para editar hoje, de repetição, e não no exercício pulado
+    podeMaisSerie: podeEditar(d) && !seg && !diaAberto(d) && ns < 8 && !pulado,
     nomeOriginal: alt ? nomeEx(ex.orig) : null,
     // "Fazer antes o próximo" (§7.3): a saída mais barata da máquina ocupada,
     // e só existe se há um próximo para trazer.
@@ -2124,7 +2130,8 @@ const ACOES = {
   fechaTeclado: function () { fechaTeclado(); },
   abreFoto: function (i) { abreFoto(i); },
   poeRir: function (i, k, v) { poeRir(i, k, v); },
-  usaAnterior: function (i, k) { usaAnterior(i, k); }
+  usaAnterior: function (i, k) { usaAnterior(i, k); },
+  maisUmaSerie: function (i) { maisUmaSerie(i); }
 };
 
 
@@ -2617,6 +2624,25 @@ function mudaSeries(i, delta) {
   const orig = slotOriginal(d, i);
   poeMod(d, { k:'sets', slot: ex.orig || ex.id, de: orig ? orig.s : ex.s, para: novo });
   queueSave(); render();
+}
+
+/**
+ * "+ série", na linha do exercício (a D, momento 1, estado 4: "deveria ser mais
+ * fácil, direto, por ali já", P12). Vira mudança SÓ DO DIA (F159) — a mesma que
+ * a edição do dia faria —, a carga vem igual à da série anterior de hoje, e a
+ * régua da série nova abre com a repetição dela como referência. Se fica
+ * permanente, decide-se depois, sentado.
+ */
+function maisUmaSerie(i) {
+  const d = view.day;
+  const ex = treino(d).ex[i];
+  if (!ex || setsFor(ex) >= 8) return;
+  mudaSeries(i, 1);
+  const k = setsFor(treino(d).ex[i]) - 1;
+  const dr = draftPeek(i);
+  const ant = dr && dr.s[k - 1];
+  if (ant && ant[0] != null && !(dr.s[k] && dr.s[k][0] != null)) anotaSerie(i, k, 0, String(ant[0]));
+  abreRegua(i, k);
 }
 
 /**
@@ -4998,16 +5024,17 @@ const RIR_ESCALA = [0, 1, 2, 3, 4];
  * treinador manda recomeçar (F95, "recomeçar perto da base"), e a marca não
  * aparece — dizer "última" sobre um número que ele nunca fez seria inventar.
  */
-function reguaDaLinha(i, k, ex, anterior, valor, un) {
+function reguaDaLinha(i, k, ex, anterior, valor, un, deHoje) {
   const r = view.regua;
   if (!r || r.i !== i || r.k !== k || r.outro) return null;
   const fx = faixaDoTexto(ex.r);
   const tem = !!(anterior && anterior[1] != null);
-  const ref = tem ? anterior[1] : (fx ? fx[0] : 10);
+  const hoje = !tem && !!deHoje;
+  const ref = tem ? anterior[1] : hoje ? deHoje[1] : (fx ? fx[0] : 10);
   const reg = regua(ref, fx);
   return {
     slots: pagina(reg, r.foco != null ? r.foco : ref),
-    marca: tem ? 'última' : null,
+    marca: tem ? 'última' : hoje ? 'série ' + k : null,
     referencia: ref,
     // "Corrigir a série 3 · guardada: 55 kg × 9" — só com a série já guardada,
     // que é quando o toque CORRIGE (§8.2). O "às 6h52" do desenho não vem: a

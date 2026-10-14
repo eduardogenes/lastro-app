@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.449 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.450 passando**, zero "unhandled".
   Nenhum agente trabalhando. Último commit de código: `b91697d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
@@ -3184,7 +3184,10 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       - **momento-1 (sessão):** 1 ~ (régua abre na linha tocada, não na zona
         fixa — divergência declarada em `regua.jsx`) · 2 ~ (falta "enquanto
         descansa": pré-treino, água e peso a um toque dentro da sessão) · 3 ✓ ·
-        4 ✗ ("+ série" na linha do exercício; hoje só pela edição do dia) · 5 ✓ ·
+        **4 ✓ (14/10)** — "+ série" na linha do exercício: mudança só do dia
+        (a mesma da edição do dia), a carga da série anterior de hoje, e a régua
+        da série nova aberta com a repetição dela como referência ("série 3"). ·
+        5 ✓ ·
         6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · 10 ~ (marca por célula não feita, declarada) ·
         11 ✓ · 12 ✓ · 13 ✓ · 14 ✗ (paisagem em duas colunas; o app pede para
         girar de volta desde 02/09, antes do redesenho).
@@ -3405,6 +3408,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Sessão de fotos 9: a pose que não coube para a sessão em vez de avançar fingindo; marcada, e "Tentar de novo" grava. 3 mutações, 3 mortas. 1.447 passando.
 - 14/10 · Prescrição 11: login expirado deixa de ser silêncio de "sem rede"; o fato fica gravado e o Agora o diz. 3 mutações, 3 mortas (duas vivas até o caso conferir a falta de rede e o disco). **Fila de dado do levantamento fechada.** 1.448 passando.
 - 14/10 · Corpo 10: o vazio de verdade diz o custo de sair dele, com os números da regra. 2 mutações, 2 mortas. 1.449 passando.
+- 14/10 · Momento 1, estado 4: "+ série" na linha do exercício. 4 mutações, 4 mortas. 1.450 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

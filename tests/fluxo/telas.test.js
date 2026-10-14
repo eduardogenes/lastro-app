@@ -888,7 +888,9 @@ const TABELAS_DE_ACAO = {
             // estes os quatro toques possíveis nela.
             'abreRegua', 'andaRegua', 'poeRep', 'abreOutroValor',
             // O teclado próprio, que a porta "outro valor" abre.
-            'tecla', 'fechaTeclado', 'abreTecladoDeCarga'],
+            'tecla', 'fechaTeclado', 'abreTecladoDeCarga',
+            // "+ série" na linha do exercício (a D, momento 1, estado 4).
+            'maisUmaSerie'],
   acoesDia: ['subir', 'descer', 'menos', 'mais', 'trocar', 'remover', 'escolheTroca',
              'fechaTroca', 'desfaz', 'pronto'],
   // `inp` saiu por decisão escrita: a lista rápida não tem mais campo — carga

@@ -506,6 +506,13 @@ export function Exercicio({ vm, acoes }) {
         ))}
         </>}
 
+        {/* "+ série", na linha do exercício (a D, momento 1, estado 4): vira
+            mudança só de hoje, e a régua abre na série nova. */}
+        {vm.podeMaisSerie && (
+          <button class="ins-btn-add ex-mais" data-a={'mais-serie-' + i} onClick={() => acoes.maisUmaSerie(i)}>
+            + série
+          </button>
+        )}
         {vm.cargaOpcional && (
           <div class="segnote">Carga opcional: deixe o campo vazio para só o peso do corpo.</div>
         )}
