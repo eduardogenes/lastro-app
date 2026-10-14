@@ -568,3 +568,32 @@ test('"Desfazer" volta o plano ao saldo de antes, e o passo fica no registro mar
   assert.ok(a.vJ('ctx.dados').veredito.estado.indexOf('plano base') === 0, 'a linha volta ao estado');
   a.fechar();
 });
+
+test('se o aparelho recusa, o passo não entra pela metade e a tela diz o que não mudou', async () => {
+  // A D (`semana.html`, estado 10). O passo mexe no ajuste, no histórico dele e
+  // no arroz de duas refeições — e antes dizia "Apliquei" sem saber se tinha
+  // gravado. Agora grava na hora; se o aparelho recusa, os três voltam juntos.
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  a.aba('semana');
+  const base = a.v('arrozAtual');
+  const plano = JSON.stringify(a.S().comida.plano);
+  a.encheCota();
+  await a.v('ctx.aplicaAjuste'); await a.esperar(60);
+
+  assert.strictEqual(a.S().ajuste || 0, 0, 'o ajuste não mudou');
+  assert.strictEqual((a.S().ajusteHist || []).length, 0, 'o histórico do passo não ganhou linha');
+  assert.strictEqual(a.v('arrozAtual'), base, 'e o arroz continua onde estava');
+  assert.strictEqual(JSON.stringify(a.S().comida.plano), plano, 'o plano inteiro, igual');
+  assert.ok(!/Apliquei/.test(a.toast() || ''), 'nenhum "Apliquei" antes de gravar');
+  assert.ok(/O passo não foi aplicado/.test(a.texto('.dd-passo-falhou')), a.texto('.dd-passo-falhou'));
+  assert.ok(/O veredito continua valendo: \+150 kcal/.test(a.texto('.dd-passo-falhou')));
+
+  a.encheCota(false);
+  a.clicar('[data-a="passo-tenta"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().ajuste, 1, '"Tentar de novo" aplica');
+  assert.strictEqual(a.v('arrozAtual'), base + 120);
+  assert.strictEqual(a.$('.dd-passo-falhou'), null);
+  assert.ok(/Apliquei \+150 kcal/.test(a.toast()), a.toast());
+  a.fechar();
+});

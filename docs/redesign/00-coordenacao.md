@@ -14,14 +14,14 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.444 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.445 passando**, zero "unhandled".
   Nenhum agente trabalhando. Último commit de código: `b91697d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
 - **Feito em primeira passada:** o levantamento (item 6.β). **Próximo:** a
-  fila dele, dado primeiro — o passo calórico que diz "Apliquei" antes de
-  gravar (semana 10).
+  fila dele, dado primeiro: semana 10 feito; seguem aula 12, sessao-fotos 9 e
+  prescricao 11.
 - **Era o próximo passo:** o levantamento estado a estado das outras sete entregas da
   D contra o app — momento-1 (14 estados), semana (10), corpo (11), prescricao
   (11), aula (12), comparar (11), sessao-fotos (11). Parte já foi construída nas
@@ -3188,9 +3188,12 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         11 ✓ · 12 ✓ · 13 ✓ · 14 ✗ (paisagem em duas colunas; o app pede para
         girar de volta desde 02/09, antes do redesenho).
       - **semana:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ✓ · 5 ~ (conferir o ramo do corte
-        pedindo a foto) · 6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · **10 ✗ — o passo diz
-        "Apliquei" antes de saber se gravou** (o disco não fica pela metade, mas
-        a tela afirma o que pode não ter durado).
+        pedindo a foto) · 6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · **10 ✓ (14/10)** — o passo
+        (e o desfazer) grava na hora; se o aparelho recusa, ajuste, histórico e
+        arroz voltam juntos, e a tela diz "O passo não foi aplicado", o que não
+        mudou com os números de antes, "Tentar de novo / Baixar cópia" e que o
+        veredito continua valendo. Era falso sucesso: "Apliquei" saía antes de
+        gravar.
       - **corpo:** 1 ~ (stepper de 100 g em vez da régua) · 2 ✓ · 3 ✓ · 4 ✓ ·
         5 ✓ · 6 ~ (conferir o valor do mês passado com a variação) · 7 ✓ · 8 ✓ ·
         9 ~ (conferir "o que falta" na semana de uma pesagem) · 10 ✗ (o vazio
@@ -3378,6 +3381,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Frente 3 §2, etapa 2: os rótulos de seção viram título com artigo (R1/R2), 44 no `Secao` e 22 dentro de folhas e telas cheias; ações vindas de dado com maiúscula inicial. 1.442 passando.
 - 14/10 · Frente 3 §2, etapa 3: R4 (a unidade junto do número) e a exceção de R3 (a pose no título). 2 mutações, 2 mortas. **§2 da frente 3 fechada.** 1.443 passando.
 - 14/10 · **Perda:** a pasta do coordenador em `/tmp` (scripts de medição e capturas citadas neste checklist) foi apagada pelo sistema. As ferramentas passam para `docs/redesign/_medicao/`, versionadas; as capturas antigas não voltam (os scripts se refazem). Achado no levantamento: o olho do treino ainda vinha em caixa alta por `toUpperCase()`, e as etiquetas do plano de comida estão GUARDADAS em caixa alta — convertidas na tela (`caixaDeFrase`), sem migrar dado. Um caso dependia da hora (procurava a timeline que saiu). 1.444 passando.
+- 14/10 · Semana 10: o passo calórico deixa de dizer "Apliquei" antes de gravar; recusado, volta inteiro e a tela diz o que não mudou. 5 mutações, 5 mortas. 1.445 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

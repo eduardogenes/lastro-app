@@ -7164,25 +7164,54 @@ function semanasDoVazio() {
 }
 
 CTX.setPerfManual = function (v) { S.perfManual = v; queueSave(); render(); };
-CTX.aplicaAjuste = function () {
+/**
+ * Muda o passo e GRAVA NA HORA, e se o aparelho recusa, volta inteiro (a D,
+ * `semana.html`, estado 10: "nada entra pela metade"). O passo mexe no ajuste,
+ * no histórico dele e no arroz de duas refeições; os três voltam juntos, e a
+ * tela diz o que não mudou, com os números de antes, em vez de "Apliquei".
+ */
+async function gravaOPasso(muda, oQue) {
+  const antes = JSON.stringify({ a: S.ajuste, h: S.ajusteHist, p: planoDeComida(), v: S.comida.v });
+  const kcalAntes = Math.round(kcalDeTreinoCom(S.ajuste || 0));
+  const arrozAntes = planoDeComida().map(function (r) {
+    const i = r.itens.filter(function (x) { return x.arroz; })[0];
+    return i ? { refeicao: r.n, q: i.q } : null;
+  }).filter(Boolean);
+  const ajusteAntes = S.ajuste || 0;
+  muda();
+  view.passoFalhou = null;
+  const ok = await save();
+  if (ok === false) {
+    const v = JSON.parse(antes);
+    S.ajuste = v.a; S.ajusteHist = v.h; S.comida.plano = v.p; S.comida.v = v.v;
+    view.passoFalhou = { oQue: oQue, kcal: kcalAntes, arroz: arrozAntes, ajuste: ajusteAntes };
+    render();
+    return false;
+  }
+  render();
+  return true;
+}
+
+CTX.aplicaAjuste = async function () {
   const v = veredito();
   const passo = ajusteDoVeredito(v);
   if (!passo) return;                   // observar e manter não propõem passo
-  const antes = S.ajuste || 0;
-  const kde = kcalDeTreinoCom(antes);
-  S.ajuste = antes + passo;
-  if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
-  aplicaArroz();
-  // As kcal do dia de treino antes e depois vão junto: é o que a linha do passo
-  // diz depois ("3.007 → 3.157 kcal em dia de treino"), e o plano muda — lidas
-  // depois, dariam o número de outro dia.
-  S.ajusteHist.push({ t: Date.now(), de: antes, para: S.ajuste,
-                      k: v.k, p: v.p, reg: diasRegistrados(),
-                      kde: Math.round(kde), kpara: Math.round(kcalDeTreinoCom(S.ajuste)) });
-  queueSave(); render();
+  const ok = await gravaOPasso(function () {
+    const antes = S.ajuste || 0;
+    const kde = kcalDeTreinoCom(antes);
+    S.ajuste = antes + passo;
+    if (!Array.isArray(S.ajusteHist)) S.ajusteHist = [];
+    aplicaArroz();
+    // As kcal do dia de treino antes e depois vão junto: é o que a linha do passo
+    // diz depois ("3.007 → 3.157 kcal em dia de treino"), e o plano muda — lidas
+    // depois, dariam o número de outro dia.
+    S.ajusteHist.push({ t: Date.now(), de: antes, para: S.ajuste,
+                        k: v.k, p: v.p, reg: diasRegistrados(),
+                        kde: Math.round(kde), kpara: Math.round(kcalDeTreinoCom(S.ajuste)) });
+  }, { verbo: 'aplicado', passo: passo });
   // "Apliquei", e não "Ajuste aplicado": aplicar é ato do registro, e o agente
-  // é o app (V8).
-  toast('Apliquei ' + sinalDoPasso(passo) + ' kcal. O arroz do plano foi para ' + arrozAtual() + ' g.');
+  // é o app (V8). Só depois de o aparelho aceitar.
+  if (ok) toast('Apliquei ' + sinalDoPasso(passo) + ' kcal. O arroz do plano foi para ' + arrozAtual() + ' g.');
 };
 
 /**
@@ -7191,16 +7220,37 @@ CTX.aplicaAjuste = function () {
  * saldo de antes e o arroz acompanha; o passo fica no registro, marcado como
  * desfeito. Não passa pelo pare: nada é destruído, e aplicar de novo o refaz.
  */
-CTX.desfazAjuste = function () {
+CTX.desfazAjuste = async function () {
   const u = passoEmVigor();
   if (!u) return;
   const passo = u.para - u.de;
-  u.desfeito = Date.now();
-  S.ajuste = u.de;
-  aplicaArroz();
-  queueSave(); render();
-  toast('Desfiz o ' + sinalDoPasso(passo) + ' kcal. O arroz do plano voltou para ' + arrozAtual() + ' g.');
+  const ok = await gravaOPasso(function () {
+    const w = passoEmVigor();
+    w.desfeito = Date.now();
+    S.ajuste = w.de;
+    aplicaArroz();
+  }, { verbo: 'desfeito', passo: passo });
+  if (ok) toast('Desfiz o ' + sinalDoPasso(passo) + ' kcal. O arroz do plano voltou para ' + arrozAtual() + ' g.');
 };
+
+/** O passo que o aparelho recusou, para a tela dizer o que não mudou. */
+CTX.passoFalhou = function () {
+  const f = view.passoFalhou;
+  if (!f) return null;
+  return {
+    titulo: 'O passo não foi ' + f.oQue.verbo,
+    texto: 'O armazenamento deste aparelho recusou a gravação. O plano continua em ' + fmtInt(f.kcal) +
+      ' kcal no dia de treino' + (f.arroz.length ? ', com arroz ' + f.arroz.map(function (x) { return fmtInt(x.q) + ' g no ' + x.refeicao.toLowerCase(); }).join(' e ') : '') +
+      ', e o ajuste acumulado continua em ' + (f.ajuste ? sinalDoPasso(f.ajuste) + ' kcal' : '0') + '.',
+    linhas: f.arroz.map(function (x) { return x.refeicao + ' · arroz cozido ' + fmtInt(x.q) + ' g'; })
+      .concat(['Dia de treino ' + fmtInt(f.kcal) + ' kcal']),
+    veredito: f.oQue.verbo === 'aplicado'
+      ? 'O veredito continua valendo: ' + sinalDoPasso(f.oQue.passo) + ' kcal. Ele não vence e não some.'
+      : null,
+    tenta: f.oQue.verbo === 'aplicado' ? 'aplicar' : 'desfazer'
+  };
+};
+CTX.dispensaPassoFalhou = function () { view.passoFalhou = null; render(); };
 
 /** "+150" / "−300": o passo em kcal, com o sinal de verdade. */
 function sinalDoPasso(passos) { return (passos > 0 ? '+' : '−') + Math.abs(passos) * 150; }

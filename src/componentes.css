@@ -1747,3 +1747,8 @@ button.ins-linha { border-radius: 0; }
 /* R4 da frente 3: a unidade junto do número, como ela se escreve (12 px,
    caixa baixa, tinta-3) — a mesma espécie da procedência: diz o que o número é. */
 .ins-metric-u { font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3); letter-spacing: 0; }
+
+/* O passo que não gravou (a D, semana estado 10): tão explícito quanto o sucesso. */
+.dd-passo-falhou { margin-top: var(--ins-5); padding: var(--ins-5); border: 1px solid var(--ins-atencao-fio); border-radius: var(--ins-raio-4); display: flex; flex-direction: column; gap: var(--ins-3); }
+.dd-passo-falhou p { margin: 0; }
+.dd-passo-l { margin: 0; padding-left: var(--ins-7); }

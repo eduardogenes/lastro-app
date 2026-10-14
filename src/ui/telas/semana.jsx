@@ -141,6 +141,7 @@ export function Semana({ ctx }) {
     setTimeout(() => { const e = document.getElementById('forca'); if (e) e.scrollIntoView({ block: 'start' }); }, 0);
   };
 
+  const pf = ctx.passoFalhou();
   return (
     <>
       <Cabecalho olho="acompanhamento" titulo="Semana" />
@@ -161,6 +162,23 @@ export function Semana({ ctx }) {
           </>}
           estado={d.veredito.estado}
         />
+        {/* O PASSO QUE O APARELHO RECUSOU (o desenho, estado 10): o erro é tão
+            explícito quanto o sucesso — o que não mudou, com os números de
+            antes, e as duas saídas ao lado. Nada entrou pela metade. */}
+        {pf && (
+          <div class="dd-passo-falhou" role="alert">
+            <b class="ins-rotulo">{pf.titulo}</b>
+            <p class="ins-body-sm ins-t2">{pf.texto}</p>
+            <p class="ins-body-sm ins-t1"><b>O que ia mudar, e não mudou</b></p>
+            <ul class="dd-passo-l">{pf.linhas.map(l => <li key={l} class="ins-body-sm ins-t2">{l}</li>)}</ul>
+            <div class="ag-l-btns">
+              <button class="ins-btn-secondary" data-a="passo-tenta"
+                      onClick={pf.tenta === 'aplicar' ? ctx.aplicaAjuste : ctx.desfazAjuste}>Tentar de novo</button>
+              <button class="ins-btn-secondary" data-a="passo-copia" onClick={ctx.exportar}>Baixar cópia</button>
+            </div>
+            {pf.veredito && <p class="ins-body-xs ins-t3">{pf.veredito}</p>}
+          </div>
+        )}
         {/* "Desfazer", ao lado da linha do passo aplicado e sem prazo: corrigir
             no lugar vale aqui também (o desenho, estado 4). */}
         {d.veredito.podeDesfazer && (
