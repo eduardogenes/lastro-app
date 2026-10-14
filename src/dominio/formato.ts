@@ -10,6 +10,9 @@ export interface Periodo { k: string; de: number; ate: number; rot: string; nome
 // ---------- números e volume ----------
 export function fmtNum(n: number): string { return n % 1 === 0 ? String(n) : String(Math.round(n*10)/10); }
 
+/** `fmtNum` para LER na tela, em português: "22,5", e não "22.5". */
+export function fmtCarga(n: number): string { return fmtNum(n).replace('.', ','); }
+
 export function fmtInt(n: number): string { return Math.round(n).toLocaleString('pt-BR'); }
 
 // ---------- água ----------

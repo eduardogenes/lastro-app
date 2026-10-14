@@ -382,6 +382,23 @@ test('corrigir uma série pelo histórico não apaga o RIR de nenhuma série da 
   a.fechar();
 });
 
+test('a carga com vírgula no campo de correção volta igual ao salvar', async () => {
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[22.5, 10, 1]] }] },
+    done: [{ day: 'F', t: t, sid: t }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
+  a.v('editarSessao', 0);
+  assert.strictEqual(a.doc.getElementById('ed0_0').value, '22,5', 'o campo mostra como se escreve');
+  await a.v('salvarEdicao');
+  await a.esperar();
+  assert.deepStrictEqual(a.log('A', 0)[0].sets, [[22.5, 10, 1]], 'e salvar sem mexer não muda nada');
+  a.fechar();
+});
+
 test('séries por músculo compara com o mesmo ponto das semanas anteriores', async () => {
   // Contra semanas CHEIAS, toda terça o painel inteiro apareceria despencando:
   // dois dias de treino contra sete. A comparação tem que cortar as semanas
@@ -620,9 +637,9 @@ test('o pior caso do "anterior" cabe sem cortar', async () => {
   a.v('go', 'A');
   a.v('toggle', 0);
   const txt = a.texto('.ex.open .setrow .setant');
-  // ponto e não vírgula: é `fmtNum`, a mesma formatação de carga que a conta de
-  // anilhas e os rótulos do gráfico usam no app inteiro
-  assert.strictEqual(txt, '127.5 × 12 @ 2');
+  // vírgula, como o resto da tela em português: `fmtCarga`, a mesma da conta de
+  // anilhas e dos rótulos do gráfico
+  assert.strictEqual(txt, '127,5 × 12 @ 2');
   // 14 caracteres em mono 11px ≈ 92px; a coluna tem 96
   assert.ok(txt.length * 6.6 < 96, 'largura estimada ' + Math.round(txt.length * 6.6) + 'px');
   a.fechar();

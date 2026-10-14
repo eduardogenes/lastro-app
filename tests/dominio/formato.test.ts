@@ -5,8 +5,7 @@ import assert from 'node:assert';
 import { caixaDeFrase,
   MESES, PERIODOS, diaExtenso, fmtDate, fmtDec, fmtDec2, fmtDesc, fmtDur, fmtHora, semanasDesde,
   fmtInt, fmtK, fmtLitros, fmtNum, fmtSig, fmtSig2, escAttr, escapeHTML, periodoDe, sameDay,
-  weekStart
-} from '../../src/dominio/formato';
+  weekStart, fmtCarga } from '../../src/dominio/formato';
 import { DIA } from './ajuda';
 
 test('número inteiro não ganha decimal à toa', () => {
@@ -147,4 +146,11 @@ test('caixaDeFrase: o que chega todo em maiúscula vira frase, o resto só ganha
   assert.strictEqual(caixaDeFrase(''), '');
   assert.strictEqual(caixaDeFrase(null), '');
   assert.strictEqual(caixaDeFrase('42'), '42', 'número não tem caixa');
+});
+
+test('a carga para ler sai com vírgula, e inteira sem casa', () => {
+  assert.strictEqual(fmtCarga(22.5), '22,5');
+  assert.strictEqual(fmtCarga(127.5), '127,5');
+  assert.strictEqual(fmtCarga(40), '40');
+  assert.strictEqual(fmtCarga(73.66), '73,7');
 });

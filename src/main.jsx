@@ -5,7 +5,7 @@ import {
   MOVIMENTOS_DE_BOX
 } from './dominio/programa';
 import { caixaDeFrase as _caixaDeFrase,
-  fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca, fmtHoraDita,
+  fmtNum, fmtCarga, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca, fmtHoraDita,
   DIAS_CURTOS, DIAS_LONGOS, MESES, periodoDe,
   fmtHora, fmtDur, semanasDesde, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
   escapeHTML, escAttr
@@ -1671,7 +1671,7 @@ function shouldUp(d, i, ex) { return _shouldUp(lastOf(d, i), ex, pausaEx(id(d, i
  */
 function textoDaSerie(x, u, q) {
   if (!x) return null;
-  const carga = x[0] ? fmtNum(x[0]) + 'kg · ' : '';
+  const carga = x[0] ? fmtCarga(x[0]) + 'kg · ' : '';
   if (cronometrado(u)) {
     return carga + (q > 0 ? fmtInt(q) + ' ' + ROTULO_UNIDADE[u] + ' · ' : '') + x[1] + 's';
   }
@@ -1681,7 +1681,7 @@ function textoDaSerie(x, u, q) {
 function fmtLast(l, seg) {
   if (!l) return null;
   if (seg) return l.sets.map(s => textoDaSerie(s, l.u, l.q) || '–').join('  ');
-  return l.sets.map(s => s ? fmtNum(s[0])+'×'+s[1] : '–').join('  ');
+  return l.sets.map(s => s ? fmtCarga(s[0])+'×'+s[1] : '–').join('  ');
 }
 
 // Sessão retroativa sem hora informada não tem horário de verdade: o app
@@ -1806,7 +1806,7 @@ function textoTotal(i, key, ex) {
   if (dr) for (let k = setsFor(ex)-1; k >= 0; k--) if (dr.s[k] && dr.s[k][0] != null) { v = dr.s[k][0]; break; }
   if (v == null) { const p = lastSet(key, 0); if (p) v = p[0]; }
   if (!v) return '';
-  return `${fmtNum(v)} ${c.cada} · <b>${fmtNum(totalAnilhas(v, c.barra))} kg ${c.total}</b>${c.obs}`;
+  return `${fmtCarga(v)} ${c.cada} · <b>${fmtCarga(totalAnilhas(v, c.barra))} kg ${c.total}</b>${c.obs}`;
 }
 
 function atualizaAnilhas(i) {
@@ -1914,8 +1914,8 @@ function vmExercicio(d, i, ex) {
             // no cartão a prescrição já está no cabeçalho: repeti-la na coluna
             // ANTERIOR gastaria a calha mais estreita da linha para dizer duas
             // vezes a mesma coisa
-            ? (p[0] ? fmtNum(p[0]) + 'kg · ' : '') + p[1] + (relogio ? 's' : '')
-            : (p[0] ? fmtNum(p[0]) + ' × ' : '') + p[1] + (p[2] != null ? ' @ ' + p[2] : ''))
+            ? (p[0] ? fmtCarga(p[0]) + 'kg · ' : '') + p[1] + (relogio ? 's' : '')
+            : (p[0] ? fmtCarga(p[0]) + ' × ' : '') + p[1] + (p[2] != null ? ' @ ' + p[2] : ''))
         : null,
       // O placeholder é DADO — a carga da última vez. A unidade é ESTRUTURA e
       // fica sempre visível ao lado. Antes os dois diziam a mesma coisa quando
@@ -2095,7 +2095,7 @@ function opcaoDeTroca(a) {
     // Reconhecer o aparelho pela imagem é mais rápido que ler o nome.
     foto: FOTO.urlDaFoto(a.id, S.fotos[a.id]),
     antes: (u && u.sets && u.sets[0])
-      ? 'última vez: ' + fmtNum(u.sets[0][0]) + ' × ' + u.sets[0][1]
+      ? 'última vez: ' + fmtCarga(u.sets[0][0]) + ' × ' + u.sets[0][1]
       : a.w
   };
 }
@@ -8710,7 +8710,7 @@ CTX.detalheDaSessao = function () {
         deltaCor: '',
         series: x.sets.map(function (y) {
           if (!y) return null;
-          return x.seg ? textoDaSerie(y, x.un, x.q) : fmtNum(y[0]) + '×' + y[1];
+          return x.seg ? textoDaSerie(y, x.un, x.q) : fmtCarga(y[0]) + '×' + y[1];
         }),
         meta: x.ritmo
           ? fmtDec(x.met * (ESCALA_RITMO[x.un] || { fator: 1 }).fator) + ' ' +
@@ -8818,8 +8818,8 @@ CTX.historico = function () {
            valor: fmtInt(Math.round(tutOf(last) / Math.max(last.sets.filter(Boolean).length, 1))) }]
       : corpo
       ? [{ k: 'a', rotulo: 'repetições na última', valor: fmtInt(repsOf(last)) },
-         { k: 'b', rotulo: 'carga somada', valor: maxLoad(last) ? fmtNum(maxLoad(last)) : '–', unidade: 'kg' }]
-      : [{ k: 'a', rotulo: 'carga atual', valor: fmtNum(maxLoad(last)), unidade: rotCarga },
+         { k: 'b', rotulo: 'carga somada', valor: maxLoad(last) ? fmtCarga(maxLoad(last)) : '–', unidade: 'kg' }]
+      : [{ k: 'a', rotulo: 'carga atual', valor: fmtCarga(maxLoad(last)), unidade: rotCarga },
          { k: 'b', rotulo: 'volume da última', valor: fmtInt(volOf(last)) }]
     ).concat([{
       k: 'd',
@@ -8854,11 +8854,11 @@ CTX.historico = function () {
         series: s.sets.map(function (x) {
           if (!x) return null;
           return seg ? textoDaSerie(x, s.u, s.q)
-                     : (corpo && !x[0] ? x[1] + ' reps' : fmtNum(x[0]) + '×' + x[1]);
+                     : (corpo && !x[0] ? x[1] + ' reps' : fmtCarga(x[0]) + '×' + x[1]);
         }),
         reps: (seg || corpo) ? null : repsOf(s) + ' reps',
         anilhas: (!seg && CARGAS[tipo].dobra && maxLoad(s))
-          ? fmtNum(totalAnilhas(maxLoad(s), CARGAS[tipo].barra)) + ' kg ' + CARGAS[tipo].total : null,
+          ? fmtCarga(totalAnilhas(maxLoad(s), CARGAS[tipo].barra)) + ' kg ' + CARGAS[tipo].total : null,
         dor: s.dor && s.dor.length ? 'dor em ' + s.dor.map(dorName).join(' e ') : null,
         rir: s.rir ? 'última série a ' + s.rir + ' da falha' : null,
         obs: s.obs || null,
@@ -8868,7 +8868,7 @@ CTX.historico = function () {
           // aqui a correção é da sessão inteira, e a frase diz sessão.
           outroDia: sameDay(s.t, Date.now()) ? null : fmtDate(s.t),
           sets: s.sets.map(function (x) {
-            return { carga: x ? fmtNum(x[0]) : '', reps: x ? String(x[1]) : '' };
+            return { carga: x ? fmtCarga(x[0]) : '', reps: x ? String(x[1]) : '' };
           }),
           seg: seg,
           dores: DORES.map(function (x) {
@@ -9054,7 +9054,7 @@ CTX.retrospectiva = function () {
     return x.ritmo ? ' ' + (ESCALA_RITMO[x.un] || { rot: 's' }).rot : x.seg ? 's' : 'kg';
   };
   const val = function (x, v) {
-    return x.ritmo ? fmtDec(v * (ESCALA_RITMO[x.un] || { fator: 1 }).fator) : fmtNum(v);
+    return x.ritmo ? fmtDec(v * (ESCALA_RITMO[x.un] || { fator: 1 }).fator) : fmtCarga(v);
   };
   return {
     olho: 'retrospectiva de bloco',
@@ -9253,15 +9253,12 @@ function trocaDoDia(d, i) {
  * ou "sem registro anterior" — a tela diz que não sabe em vez de fingir (a D,
  * aula, estado 3). Peso guardado é peso do dia: a lousa muda toda semana.
  */
-/** "22.5kg" → "22,5kg": o texto de série que vai para a tela, em português. */
-function comVirgula(t) { return t == null ? t : String(t).replace(/(\d)\.(\d)/g, '$1,$2'); }
-
 function referenciaDoBox(k) {
   const h = historico(k);
   const u = h.length ? h[h.length - 1] : null;
   if (!u) return 'sem registro anterior';
   const un = unidadeDe(CAT[k] || {});
-  return 'última: ' + comVirgula(fmtLast(u, !!un).replace(/  /g, ' · ')) + ' em ' + fmtDate(u.t);
+  return 'última: ' + fmtLast(u, !!un).replace(/  /g, ' · ') + ' em ' + fmtDate(u.t);
 }
 
 /**
@@ -9280,7 +9277,7 @@ function referenciaDaUltimaAula(d) {
       (S.logs[k] || []).forEach(function (e) {
         if (e && e.sid === sid && Array.isArray(e.sets) && e.sets.some(Boolean)) {
           linhas.push({ k: k, n: CAT[k] ? CAT[k].n : k, t: e.t,
-                        v: comVirgula(fmtLast(e, !!unidadeDe(CAT[k] || {})).replace(/  /g, ' · ')) });
+                        v: fmtLast(e, !!unidadeDe(CAT[k] || {})).replace(/  /g, ' · ') });
         }
       });
     });

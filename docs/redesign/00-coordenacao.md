@@ -14,8 +14,8 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.488 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `9bbeb94`.
+- Branch `redesenho-do-zero`, suíte verde: **1.490 passando**, zero "unhandled".
+  Nenhum agente trabalhando. Último commit de código: `da9a75f`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -3489,6 +3489,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Prescrição 4, 7 e 8: a data da última mudança que entrou; o plano com o que tem dentro, o "criada por você" e o ajuste acumulado; as compras com 3/7/15/outro e o que fica fora. 8 mutações, 7 mortas e 1 equivalente (redundância tirada). Prescrição 6 vira pergunta ao dono. 1.485 passando.
 - 14/10 · Aula 3 e 5: a referência de cada movimento do box e "Na última aula" antes de começar. 7 mutações, 6 mortas e 1 guarda desnecessária tirada. Achado: `fmtNum` escreve carga com ponto ("22.5") em parte da tela — corrigido no texto novo; o resto vai em seguida. 1.487 passando.
 - 14/10 · **Achado de dado, corrigido:** salvar a correção de uma sessão pelo histórico regravava cada série como [carga, reps] e apagava o RIR de TODAS as séries da sessão, inclusive das não tocadas. Agora o que vem depois de carga e repetição fica. O RIR já perdido em correções antigas não volta (só por cópia de segurança anterior). 1 mutação, morta. 1.488 passando.
+- 14/10 · A carga na tela com vírgula: `fmtCarga` na coluna anterior, no histórico, na conta de anilhas, nas grades e no campo de correção ("127,5 × 12 @ 2"). Um caso tinha o ponto como regra ("é fmtNum") — reescrito, com o porquê. 1.490 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
