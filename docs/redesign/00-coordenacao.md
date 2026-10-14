@@ -11,18 +11,23 @@ pede atenção do dono.
 
 ---
 
-## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
+## ⏸ PONTO DE PARADA — 14/10 (fila do dono fechada; levantamento sem ✗)
 
 **Onde parou, exatamente:**
 - Branch `redesenho-do-zero`, suíte verde: **1.545 passando**, zero "unhandled".
 - **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
   versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
   ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
-  Nenhum agente trabalhando. Último commit de código: (ver diário).
+  Nenhum agente trabalhando. Último commit de código: `1acec8a`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
-- **Próximo: a fila das respostas do dono (abaixo).** Antes disso, o levantamento
+- **Feito: a fila das respostas do dono (abaixo), inteira, e a sessão de fotos.**
+  **Próximo: juntar o ramo na `main` e publicar** — decisão do dono: publicar
+  tudo junto no fim. O que resta "em parte" no levantamento é divergência
+  declarada (régua na linha tocada, marca por célula, stepper do peso, "o que
+  vem de fora" com datas de revisão, peso numa tela só na aula, onde está cada
+  arquivo no comparar, hipótese A da sessão de fotos). Antes disso, o levantamento
   (item 6.β) foi feito e a fila dele: **os quatro de dado estão feitos** (semana 10, aula 12,
   sessao-fotos 9, prescricao 11), e os ✗ de tela corpo 10, comparar 2 e 7,
   momento-1 2, 4 e 14 e sessao-fotos 2–3 também. **Os ✗ do levantamento
@@ -3332,8 +3337,9 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         começar, "Na última aula, sáb 03/10" com o que entrou em cada movimento
         e "Peso guardado é peso do dia". (Sem o ritmo s/100 m da corrida ao
         lado.) ·
-        6 ~ (lousa: entra como texto da transcrição; a foto dentro do app vira
-        pergunta ao dono, 10) · 7 ✓ · 8 ✓ · 9 ✓ · 10 ✓ · 11 ~ · **12 ✓ (14/10)** — o aviso de
+        **6 ✓ (14/10)** — a lousa fotografada no app (fila do dono, 9) · 7 ✓ · 8 ✓ ·
+        9 ✓ · 10 ✓ · **11 ✓ (14/10, conferido)** — nada cobra o detalhe da aula;
+        as presenças vivem no mês de Dias (sem a lista própria do desenho) · **12 ✓ (14/10)** — o aviso de
         falha diz que a presença da sessão continua guardada, com a hora, quando
         ela gravou antes (o app guarda o instante da última gravação aceita), e
         oferece baixar a cópia. Vale também para o momento-1, estado 10.
