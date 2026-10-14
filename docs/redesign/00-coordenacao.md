@@ -15,17 +15,15 @@ pede atenção do dono.
 
 **Onde parou, exatamente:**
 - Branch `redesenho-do-zero`, suíte verde: **1.496 passando**, zero "unhandled".
-- **⚠ Publicar logo (dado):** o service worker apagava o cache das fotos do corpo
-  (`lastro-corpo`) a cada versão publicada — só poupava o das fotos de aparelho.
-  Corrigido em 14/10 (o F252 do comparar, estado 10). Até a versão corrigida
-  chegar ao iPhone, cada publicação nova ainda apaga as fotos do corpo que não
-  subiram para a cópia remota.
-  Nenhum agente trabalhando. Último commit de código: `3c218f7`.
+- **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
+  versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
+  ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
+  Nenhum agente trabalhando. Último commit de código: `9150b11`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
-- **Feito em primeira passada:** o levantamento (item 6.β). **Próximo:** a
-  fila dele: **os quatro de dado estão feitos** (semana 10, aula 12,
+- **Próximo: a fila das respostas do dono (abaixo).** Antes disso, o levantamento
+  (item 6.β) foi feito e a fila dele: **os quatro de dado estão feitos** (semana 10, aula 12,
   sessao-fotos 9, prescricao 11), e os ✗ de tela corpo 10, comparar 2 e 7,
   momento-1 2, 4 e 14 e sessao-fotos 2–3 também. **Os ✗ do levantamento
   acabaram.** Segue a conferência dos ~.
@@ -55,24 +53,32 @@ pede atenção do dono.
   frase com artigo, caixa de frase, 15 px, sem espaçamento; o olho vira
   procedência; a unidade em caixa baixa. ~83 lugares de 21 arquivos, por tela,
   com captura.
-- **Levar ao dono, sem bloquear** (objetivo, uma linha cada):
-  1. Depois de aplicar o passo de ±150 kcal, o veredito das mesmas semanas
-     continua oferecendo "aplicar" (o desenho diz que não, até duas semanas
-     novas). É mudança de regra.
-  2. As sete perguntas do desenhista (`direcao-3.md` §3) — construí pelo padrão
-     dele em todas.
-  3. Hoje conta nos 14 dias? A D diz "hoje passou a contar"; o portão só lê dias
-     fechados. Mantive o portão.
-  4. A linha da mudança pendente: a D a quer só sem cartão; a frente 2 exige que
-     encerrar informe. Mantive sempre (é a pergunta 4 dele).
-  5. Cardio: o de HOJE lançado por engano só se apaga amanhã, em Dias (hoje abre
-     o Agora, que não lista o cardio do dia — pergunta 7 dele); e cardio num dia
-     passado não tem caminho desenhado.
-  6. A promessa §11.2 ("a tela não vai pedir isso de novo em outro lugar").
-  7. As medições A–D da régua no aparelho (6.z).
-  8. A revisão do treinador dentro do app (prescrição, estado 6): como ela chega — texto colado, arquivo, outro? Sem isso não construo a importação com "É a mesma / É outro exercício", porque errar manda histórico para o exercício errado.
-  9. Correções feitas pelo histórico antes de 14/10 apagaram o RIR das séries daquela sessão (corrigido). Se importar, uma cópia de segurança anterior a cada correção tem o RIR original.
-  10. A lousa como FOTO dentro do app (aula, estado 6): hoje ela entra como texto da transcrição. A foto pede um campo novo sincronizado e a foto no cache. Quer?
+- **Respostas do dono, 14/10** (página `https://claude.ai/artifact/Gn91xq5ahAEj8oXjiNpg2e`,
+  17 perguntas; ele colou o resumo no chat). **Fila que elas abrem, nesta ordem:**
+  1. **Não publicar nada até o fim do redesenho** (as correções de dado ficam no
+     ramo; ele publica tudo junto). O RIR perdido: deixar como está.
+  2. [ ] **Passo de ±150 kcal:** depois de aplicar, a Semana só volta a oferecer
+     com duas semanas novas de peso (mudança de regra, no domínio).
+  3. [ ] **A aula fica fora da ordem:** registrar a aula não mexe na sequência
+     (desfaz o F81 como comportamento).
+  4. [ ] **Horário de início em Dias: mediana**, não média.
+  5. [ ] **Cardio de hoje no Agora, com "Apagar".**
+  6. [ ] **Cardio esquecido num dia passado**, pelo dia em Dias.
+  7. [ ] **A frase da promessa entra na Semana** ("A tela não vai pedir isso de
+     novo em outro lugar"); a cobrança da adesão fica só na Semana.
+  8. [ ] **Fotos do corpo: mostrar o horário de cada foto**, sem "amanhã cedo"
+     (ele tira a maioria à noite). Decisão dele no comentário da 14.
+  9. [ ] **A lousa como foto dentro do app** (aula, estado 6).
+  10. [ ] **A revisão do treinador entra como texto colado** (prescrição,
+      estado 6), com "É a mesma / É outro exercício" antes de gravar.
+  11. [ ] **O roteiro das medições A–D da régua** — ele faz esta semana.
+  - **Ficam como estão:** hoje não conta nos 14 dias (só dias fechados); os três
+    contam como dia com treino; "não sei" mantém o dia conhecido; tocar em hoje
+    abre o Agora.
+  - **Delegada a mim (13, a linha da mudança pendente):** "decida sozinho, não me
+    pergunte de novo". **Decidi: fica sempre visível**, como está — o fim do
+    treino tem de dizer o que ficou pendente (frente 2), e a linha é o lugar
+    onde isso continua dito depois.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
   coração do cardio, barra da comida; hoje abre o Agora), as três leituras
   (dias com treino por semana em média de 4 semanas, cardio, horário de início
@@ -3519,6 +3525,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · **Achado de dado, corrigido (comparar 10, F252):** a limpeza de ativação do service worker poupava `lastro-fotos` e `treino-fotos`, e não `lastro-corpo` — cada publicação apagava a cópia local das fotos do corpo. Agora poupa, e um caso compara a lista do worker com todo `CACHE_*` declarado em `src/infra`. 1 mutação, morta. 1.491 passando.
 - 14/10 · Comparar 10, a tela: o Corpo diz quantas fotos só existem neste aparelho e oferece subir (com conta) ou entrar (sem conta); a subida redesenha. 4 mutações, 4 mortas. 1.493 passando.
 - 14/10 · Comparar 1, 3 e 11 (e 6 conferido): a média "na semana" e "sem medida", o par mais longo dito com a variação, o par curto que avisa sem impedir, o vazio de uma sessão com a data da segunda. 8 mutações, 7 mortas e 1 redundância tirada. 1.496 passando.
+- 14/10 · **Respostas do dono às 17 perguntas** (página de decisões). Fila de 10 construções no ponto de parada; a 13 ele delegou e decidi (a linha fica sempre). Não publicar até o fim.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
