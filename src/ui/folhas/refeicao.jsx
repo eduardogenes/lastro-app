@@ -8,7 +8,7 @@
 
 import { Folha } from '../instrumento/folha.jsx';
 import { GradeMetricas, Procedencia, Stepper } from '../instrumento/primitivos.jsx';
-import { fmtInt } from '../../dominio/formato';
+import { caixaDeFrase, fmtInt } from '../../dominio/formato';
 import { totalDaRefeicao, totalDoItem } from '../../dominio/nutricao/calculo';
 
 const PORCOES = [
@@ -23,7 +23,7 @@ export function FolhaRefeicao({ ctx, id }) {
 
   return (
     <Folha
-      olho={r.tag}
+      olho={caixaDeFrase(r.tag)}
       titulo={r.n}
       meta={r.t}
       aoFechar={ctx.fechaFolha}

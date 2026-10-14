@@ -193,3 +193,19 @@ export function casaBusca(alvo: unknown, consulta: unknown): boolean {
   const a = normalizaBusca(alvo);
   return q.split(' ').every(function (palavra) { return a.indexOf(palavra) >= 0; });
 }
+
+/**
+ * Caixa de frase para mostrar (frente 3 §2; 10-tokens: "nunca caixa alta").
+ *
+ * Texto que chega TODO em maiúscula — as etiquetas do plano de comida estão
+ * guardadas assim, "RÁPIDO E FUNCIONAL" — vira "Rápido e funcional". O resto só
+ * ganha a maiúscula inicial, sem mexer em sigla no meio da frase. É conversão de
+ * TELA: o dado guardado não muda.
+ */
+export function caixaDeFrase(x: string | null | undefined): string {
+  const s = String(x == null ? '' : x).trim();
+  if (!s) return s;
+  const tudoMaiusculo = s === s.toLocaleUpperCase('pt-BR') && s !== s.toLocaleLowerCase('pt-BR');
+  const base = tudoMaiusculo ? s.toLocaleLowerCase('pt-BR') : s;
+  return base.charAt(0).toLocaleUpperCase('pt-BR') + base.slice(1);
+}

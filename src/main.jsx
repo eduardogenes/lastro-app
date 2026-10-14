@@ -4,7 +4,7 @@ import {
   PRIORIDADES, NIVEIS, nivelDe, ordemDe, regiaoDe, REGIOES, ehPriorizado, PRIO, CARGAS, DORES, MODAIS,
   MOVIMENTOS_DE_BOX
 } from './dominio/programa';
-import {
+import { caixaDeFrase as _caixaDeFrase,
   fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca, fmtHoraDita,
   DIAS_CURTOS, DIAS_LONGOS, MESES, periodoDe,
   fmtHora, fmtDur, semanasDesde, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
@@ -6862,7 +6862,7 @@ CTX.treino = function () {
   return {
     dia: d,
     nome: P ? P.name : '—',
-    olho: P ? P.tag.toUpperCase() : '',
+    olho: P ? _caixaDeFrase(P.tag) : '',
     feitas: feitas,
     prescritas: prescritas,
     // Num dia aberto não existe "prescritas": a meta 0/16 do sábado era uma

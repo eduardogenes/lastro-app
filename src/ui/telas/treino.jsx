@@ -76,7 +76,7 @@ export function Treino({ ctx }) {
             <span id="relogio" class="ins-metric-m">{c.sessao.relogio}</span>
             <em class="ins-label-sm">{c.sessao.desde}</em>
           </div>
-        : <button class="day-ini" onClick={ctx.iniciarSessao}>iniciar treino</button>}
+        : <button class="day-ini" onClick={ctx.iniciarSessao}>Iniciar treino</button>}
 
       <Secao continua>
         {t.sessaoAberta && (

@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.443 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.444 passando**, zero "unhandled".
   Nenhum agente trabalhando. Último commit de código: `b91697d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
@@ -3230,7 +3230,10 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
   diretório. Se uma direção usar esse nome, a origem é o caminho: o curador
   registra, não conta como vazamento de decisão.
 - [ ] R7 · Arquivos do coordenador nunca no scratchpad da sessão (é o mesmo dos
-  subagentes). Lugar: `.../coordenador-redesign/` (ver 2.c′).
+  subagentes). ~~Lugar: `.../coordenador-redesign/` (ver 2.c′).~~ **Mudou em
+  14/10:** a pasta em `/tmp` foi apagada pelo sistema, com os scripts de medição
+  e as capturas. Lugar agora: `docs/redesign/_medicao/` no repositório — scripts
+  versionados, capturas (`shots/`) ignoradas pelo git.
 
 ## Diário
 
@@ -3338,6 +3341,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Frente 3 §2, etapa 1: sem caixa alta no sistema inteiro (48 regras), textos de ação e abas com maiúscula inicial. 9 arquivos de caso apontados para os textos novos. 1.442 passando.
 - 14/10 · Frente 3 §2, etapa 2: os rótulos de seção viram título com artigo (R1/R2), 44 no `Secao` e 22 dentro de folhas e telas cheias; ações vindas de dado com maiúscula inicial. 1.442 passando.
 - 14/10 · Frente 3 §2, etapa 3: R4 (a unidade junto do número) e a exceção de R3 (a pose no título). 2 mutações, 2 mortas. **§2 da frente 3 fechada.** 1.443 passando.
+- 14/10 · **Perda:** a pasta do coordenador em `/tmp` (scripts de medição e capturas citadas neste checklist) foi apagada pelo sistema. As ferramentas passam para `docs/redesign/_medicao/`, versionadas; as capturas antigas não voltam (os scripts se refazem). Achado no levantamento: o olho do treino ainda vinha em caixa alta por `toUpperCase()`, e as etiquetas do plano de comida estão GUARDADAS em caixa alta — convertidas na tela (`caixaDeFrase`), sem migrar dado. Um caso dependia da hora (procurava a timeline que saiu). 1.444 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

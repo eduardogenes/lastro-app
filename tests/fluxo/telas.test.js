@@ -176,7 +176,7 @@ test('o app abre no AGORA, não na sessão', async () => {
   // O harness abre na tela do treino porque quase todo caso desta pasta é sobre
   // ela. O padrão de verdade é o AGORA: é o que responde "e agora?" ao acordar.
   const a = await app({ aba: 'agora' });
-  assert.ok(a.$('.ins-foco') || a.$('.ins-tl'), 'o AGORA mostra o cartão ou a linha do dia');
+  assert.ok(a.$('.ins-foco') || a.$('.ag-l'), 'o AGORA mostra o cartão ou as linhas do dia');
   assert.strictEqual(a.vista().aba, 'agora');
   assert.strictEqual(a.vista().modoSessao, false, 'e sem o modo por cima');
   a.fechar();

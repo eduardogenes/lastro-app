@@ -9,3 +9,6 @@ Thumbs.db
 .netlify
 .idea/
 .vscode/
+
+# capturas da medição do coordenador (os scripts ficam versionados)
+docs/redesign/_medicao/shots/
