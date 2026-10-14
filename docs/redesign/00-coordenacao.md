@@ -14,8 +14,8 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.487 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `1de9d29`.
+- Branch `redesenho-do-zero`, suíte verde: **1.488 passando**, zero "unhandled".
+  Nenhum agente trabalhando. Último commit de código: `9bbeb94`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -66,6 +66,7 @@ pede atenção do dono.
   6. A promessa §11.2 ("a tela não vai pedir isso de novo em outro lugar").
   7. As medições A–D da régua no aparelho (6.z).
   8. A revisão do treinador dentro do app (prescrição, estado 6): como ela chega — texto colado, arquivo, outro? Sem isso não construo a importação com "É a mesma / É outro exercício", porque errar manda histórico para o exercício errado.
+  9. Correções feitas pelo histórico antes de 14/10 apagaram o RIR das séries daquela sessão (corrigido). Se importar, uma cópia de segurança anterior a cada correção tem o RIR original.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
   coração do cardio, barra da comida; hoje abre o Agora), as três leituras
   (dias com treino por semana em média de 4 semanas, cardio, horário de início
@@ -3487,6 +3488,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Prescrição 9: o endereço vazio oferece achar o que existe (conta, cópia, ícone antigo) antes de começar. 7 mutações, 7 mortas. 1.478 passando.
 - 14/10 · Prescrição 4, 7 e 8: a data da última mudança que entrou; o plano com o que tem dentro, o "criada por você" e o ajuste acumulado; as compras com 3/7/15/outro e o que fica fora. 8 mutações, 7 mortas e 1 equivalente (redundância tirada). Prescrição 6 vira pergunta ao dono. 1.485 passando.
 - 14/10 · Aula 3 e 5: a referência de cada movimento do box e "Na última aula" antes de começar. 7 mutações, 6 mortas e 1 guarda desnecessária tirada. Achado: `fmtNum` escreve carga com ponto ("22.5") em parte da tela — corrigido no texto novo; o resto vai em seguida. 1.487 passando.
+- 14/10 · **Achado de dado, corrigido:** salvar a correção de uma sessão pelo histórico regravava cada série como [carga, reps] e apagava o RIR de TODAS as séries da sessão, inclusive das não tocadas. Agora o que vem depois de carga e repetição fica. O RIR já perdido em correções antigas não volta (só por cópia de segurança anterior). 1 mutação, morta. 1.488 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

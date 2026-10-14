@@ -3423,7 +3423,11 @@ function guardaEdicaoCom(sets, obs) {
     const par = sets && sets[k];
     if (par == null) return;
     const w = parseFloat(String(par[0]).replace(',','.')), r = parseInt(par[1],10);
-    e.sets[k] = isNaN(r) ? null : [isNaN(w) ? 0 : w, r];
+    // O que vem depois de carga e repetição — o RIR — não está no formulário e
+    // fica onde estava. Regravar só [carga, reps] apagava o RIR de todas as
+    // séries da sessão, inclusive das que ninguém tocou.
+    const resto = Array.isArray(x) ? x.slice(2) : [];
+    e.sets[k] = isNaN(r) ? null : [isNaN(w) ? 0 : w, r].concat(resto);
   });
   if (obs !== undefined) {
     const t = String(obs == null ? '' : obs).trim();

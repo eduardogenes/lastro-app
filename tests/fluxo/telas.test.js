@@ -360,6 +360,28 @@ test('correção de sessão passada altera e apaga', async () => {
   a.fechar();
 });
 
+test('corrigir uma série pelo histórico não apaga o RIR de nenhuma série da sessão', async () => {
+  // A correção relia carga e repetição de cada campo e regravava a série como
+  // [carga, reps]: o RIR, terceira posição, sumia de TODAS as séries da sessão,
+  // inclusive das que ninguém tocou — e com ele o "@ 1" da coluna anterior.
+  const t = Date.now() - 3 * DIA;
+  const a = await app({ estado: {
+    logs: { A0: [{ t: t, sid: t, sets: [[400, 10, 2], [40, 9, 1], [40, 8, 0]] }] },
+    done: [{ day: 'F', t: t, sid: t }]
+  } });
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  a.v('openHist', 0);
+  a.v('editarSessao', 0);
+  a.digitar('ed0_0', '40');
+  await a.v('salvarEdicao');
+  await a.esperar();
+  assert.deepStrictEqual(a.log('A', 0)[0].sets, [[40, 10, 2], [40, 9, 1], [40, 8, 0]],
+    'a carga corrigida, e o RIR de cada série onde estava');
+  assert.deepStrictEqual(a.gravado().logs[a.k('A', 0)][0].sets, [[40, 10, 2], [40, 9, 1], [40, 8, 0]], 'e no disco');
+  a.fechar();
+});
+
 test('séries por músculo compara com o mesmo ponto das semanas anteriores', async () => {
   // Contra semanas CHEIAS, toda terça o painel inteiro apareceria despencando:
   // dois dias de treino contra sete. A comparação tem que cortar as semanas
