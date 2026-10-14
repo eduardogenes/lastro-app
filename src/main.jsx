@@ -6,7 +6,7 @@ import {
 } from './dominio/programa';
 import {
   fmtNum, fmtInt, fmtDec, fmtSig, fmtDec2, fmtSig2, fmtK, casaBusca, fmtHoraDita,
-  DIAS_CURTOS, DIAS_LONGOS, MESES, PERIODOS, periodoDe,
+  DIAS_CURTOS, DIAS_LONGOS, MESES, periodoDe,
   fmtHora, fmtDur, semanasDesde, diaExtenso, fmtDate, weekStart, sameDay, fmtDesc,
   escapeHTML, escAttr
 } from './dominio/formato';
@@ -35,6 +35,7 @@ import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
 import { Evolucao } from './ui/telas/evolucao.jsx';
+import { Dia } from './ui/telas/dia.jsx';
 import { AjusteFoto } from './ui/telas/ajustefoto.jsx';
 import { Camera } from './ui/telas/camera.jsx';
 import { Ajustes } from './ui/telas/ajustes.jsx';
@@ -45,6 +46,8 @@ import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { Retroativo } from './ui/telas/retroativo.jsx';
 import { Programa } from './ui/telas/programa.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
+import { inicioDoDia as _inicioDoDia, iniciosDoPeriodo as _iniciosDoPeriodo, leituraDosDias as _leituraDosDias,
+         serieDaMediaMovel as _serieDaMediaMovel } from './dominio/mes';
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
 import {
   aplicaAjusteNoArroz, tiraMarcaDeArroz, listaDeCompras, totalDaRefeicao, totalDoDia,
@@ -337,7 +340,7 @@ function corpoDoBackup(body) {
 let S = { logs:{}, done:[], deload:false, draft:null, sessao:null, cardio:[], body:corpoVazio(), carga:{}, export:0, plano:PLANO_ATUAL, prog:null, rot:null, ex:{}, mods:null, progLog:[], aulas:[], protocolo:{ poses:null, sessoes:[] }, promoPendente:[] };
 let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:null, sessao:null, modoSessao:false, edit:null, retro:false, nota:null, carga:null, mes:0, add:null, cardioRapido:false,
   editProg:false, addEx:false, addQ:'', novoEx:false, prog:null, medida:null, aulas:false, rapido:false,
-  protocolo:null, comparar:null, evolucao:null, ajuste:null, camera:null, ajustes:false };
+  protocolo:null, comparar:null, evolucao:null, diaAberto:null, ajuste:null, camera:null, ajustes:false };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
 
@@ -1655,10 +1658,6 @@ function fmtLast(l, seg) {
   return l.sets.map(s => s ? fmtNum(s[0])+'×'+s[1] : '–').join('  ');
 }
 
-
-// só marca o que foi medido de verdade
-function periodoDaSessao(m) { return temHora(m) ? periodoDe(m.t) : null; }
-
 // Sessão retroativa sem hora informada não tem horário de verdade: o app
 // guarda um valor neutro só para ordenar, e não finge que mediu.
 function temHora(m) { return !!m && (!m.retro || m.hora === 1) && !m.livre; }
@@ -2281,7 +2280,7 @@ const CTX = {
   /** true quando uma tela cheia do sistema antigo tomou a tela toda. */
   emTelaCheia: function () {
     return !!(view.prog || view.retro || view.add || view.sessao || view.hist ||
-              view.protocolo || view.comparar || view.evolucao || view.ajuste || view.camera ||
+              view.protocolo || view.comparar || view.evolucao || view.diaAberto || view.ajuste || view.camera ||
               view.ajustes || view.modoSessao);
   },
 
@@ -2462,6 +2461,9 @@ function telaCheia() {
   if (view.retro) return <Retrospectiva ctx={CTX} />;
   if (view.add) return <Retroativo ctx={CTX} />;
   if (view.sessao) return <Sessao ctx={CTX} />;
+  // O DIA aberto fica ABAIXO da sessão e do registro de treino passado: os
+  // dois abrem de dentro dele, e Voltar devolve ao dia.
+  if (view.diaAberto) return <Dia ctx={CTX} />;
   // O histórico ANTES do programa: `telaCheia` desenha o primeiro que casa, e
   // quem casa primeiro está por cima. Abrindo o histórico de dentro do programa
   // — que é a porta nova da Prescrição —, ele é a camada de cima.
@@ -3382,42 +3384,8 @@ function mesRef() {
   return d;
 }
 
-function totaisDoPeriodo(de, ate) {
-  const marcas = S.done.filter(function (x) { return x.t >= de && x.t < ate; });
-  let vol = 0, tempo = 0, series = 0;
-  marcas.forEach(function (m) {
-    const r = resumoDaSessao(m);
-    vol += r.vol; series += r.series;
-    tempo += m.dur || (S.sessao && S.sessao.sid === m.sid ? S.sessao.ultima - S.sessao.inicio : 0);
-  });
-  const dias = {};
-  marcas.forEach(function (m) { dias[new Date(m.t).toDateString()] = 1; });
-  const comTempo = marcas.filter(function (m) { return m.dur; }).length;
-  return { marcas: marcas, vol: vol, tempo: tempo, series: series, comTempo: comTempo, dias: Object.keys(dias).length };
-}
-
-// média móvel de treinos por semana nas últimas 4 semanas fechadas.
-// Deliberadamente não é sequência: você treina 5 a 6 vezes por semana, então
-// sequência quebraria todo domingo e viraria cobrança em vez de informação.
-function mediaSemanal() {
-  const fim = weekStart(Date.now());
-  const de = fim - 4*7*86400000;
-  const n = S.done.filter(function (x) { return x.t >= de && x.t < fim; }).length;
-  const temSemanas = S.done.some(function (x) { return x.t < fim; });
-  return temSemanas ? n/4 : null;
-}
-
-// um só marcador por dia: se houve mais de um treino, vale o primeiro medido
-function periodoNaCelula(marcas) {
-  for (let i = 0; i < marcas.length; i++) {
-    const p = periodoDaSessao(marcas[i]);
-    if (p) return '<u class="per ' + p.k + '">' + p.rot + '</u>';
-  }
-  return '';
-}
-
 /**
- * Anda um mês no calendário do acompanhamento.
+ * Anda um mês em Dias.
  *
  * **Não mexe na rolagem**, e isso é o ponto: trocar de mês é ATUALIZAR O DADO
  * DA MESMA TELA, não entrar em lugar nenhum. Ela subia ao topo a cada toque, e
@@ -6214,6 +6182,7 @@ const FECHA_CAMADA = {
   protocolo: function () { CTX.fechaProtocolo(); },
   comparar:  function () { CTX.fechaComparar(); },
   evolucao:  function () { CTX.fechaEvolucao(); },
+  dia:       function () { CTX.fechaDia(); },
   prog:      function () { fecharPrograma(); },
   retro:     function () { fecharRetro(); },
   add:       function () { fecharAdicionar(); },
@@ -7599,151 +7568,241 @@ CTX.abreSessaoDoDia = function (a) {
 };
 
 /**
- * Leva às sessões daquele dia, na lista do mês.
+ * Leva ao DIA aberto, em Dias — onde as sessões daquele dia estão lado a lado.
  *
- * NÃO abre nenhuma: com duas no mesmo dia, escolher por ele seria escolher
- * errado metade das vezes. A lista já traz as duas com data, horário e letra —
- * o que faltava era chegar nela sabendo quais linhas olhar.
- *
- * Vai para DADOS porque é lá que existe lista de dia; a tira da semana do
- * treino mostra o dia, mas não o desdobra. E leva o mês junto, senão a lista
- * mostraria outro mês que não o do dia tocado.
- *
- * O destaque se apaga sozinho: é empurrão de atenção, não estado.
+ * NÃO abre nenhuma sessão: com duas no mesmo dia, escolher por ele seria
+ * escolher errado metade das vezes. O dia aberto mostra as duas, cada uma com
+ * hora, letra e séries, e cada uma abre a sua. Leva o mês junto, para o Voltar
+ * do dia devolver o mês daquele dia.
  */
 function levaAsSessoesDoDia(t) {
   const d = new Date(t), agora = new Date(Date.now());
   view.aba = 'dias';
   view.mes = (d.getFullYear() - agora.getFullYear()) * 12 + (d.getMonth() - agora.getMonth());
-  view.destacaDia = t;
-  render();
-
-  const alvo = document.querySelector('.sessrow.destacada');
-  if (alvo) {
-    const parado = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    alvo.scrollIntoView({ behavior: parado ? 'auto' : 'smooth', block: 'center' });
-  }
-  clearTimeout(destaqueT);
-  destaqueT = setTimeout(function () { view.destacaDia = null; render(); }, 2600);
+  CTX.abreDia(t);
 }
 CTX.cardioSet = function (k, v) { cardioSet(k, v); };
 CTX.addCardio = function () { addCardio(); };
 
-// ---------- DADOS: o calendário do mês ----------
-// Grade de fios por natureza: sete colunas, uma célula por dia. O marcador de
-// período é a ÚNICA exceção autorizada à regra de não usar emoji, e por isso
-// vive isolado em PERIODOS — inclusive fora deste comentário, que citá-lo
-// aqui já bastou para reprovar o teste que guarda a regra.
+// ---------- o MÊS em Dias (a D, `dias.html`, estado 1) ----------
+//
+// O mês é a entrada, e o dia é o lugar. Cada célula diz o que o dia teve por
+// forma e palavra — a letra do treino, "aula", "fora", "desc.", o coração do
+// cardio, a barra da comida — e um toque abre o dia. Dia sem nada fica sem
+// nada: o domingo não vira descanso sozinho, e a segunda sem registro não vira
+// treino. Embaixo, três leituras do mês, e só estas.
+//
+// Saíram daqui, pelo desenho: a faixa da semana (o mês já mostra a semana), o
+// quadro de dias, tempo e volume (volume é leitura de Semana), a marca de
+// período nas células (o horário de início diz quando ele treina, com os
+// pontos à vista) e a lista de sessões, dos dias de comida e dos cardios — que
+// moram agora no dia aberto.
+
+const DIA_MS = 86400000;
+function maiuscula(x) { return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; }
+/** "7h56", de minutos desde a meia-noite */
+function horaDeMinutos(min) { const m = Math.round(min); return Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0'); }
+/** "4,75", "4,5", "5": a média em quartos, sem casa vazia */
+function numeroCurto(v) { return String(Math.round(v * 100) / 100).replace('.', ','); }
+
+/** O que um registro de treino é, em palavra curta: a letra, "aula" ou "fora". */
+function letraDoRegistro(m) { return m.livre ? 'fora' : diaAberto(m.day) ? 'aula' : m.day; }
 
 CTX.mes = function () {
   const ref = mesRef();
-  const ini = new Date(ref.getFullYear(), ref.getMonth(), 1);
-  const fim = new Date(ref.getFullYear(), ref.getMonth() + 1, 1);
-  const offset = ini.getDay();                        // domingo como primeira coluna
-  const dias = Math.round((fim - ini) / 86400000);
-  const t = totaisDoPeriodo(ini.getTime(), fim.getTime());
-  const med = mediaSemanal();
-  const cardMes = S.cardio.filter(function (c) { return c.t >= ini.getTime() && c.t < fim.getTime(); });
+  const ano = ref.getFullYear(), mesN = ref.getMonth();
+  const ini = new Date(ano, mesN, 1).getTime();
+  const fim = new Date(ano, mesN + 1, 1).getTime();
+  const nDias = new Date(ano, mesN + 1, 0).getDate();
+  const agora = Date.now();
+  const ontem = _inicioDoDia(agora) - 1;
+  const corrente = !view.mes;
+  // as leituras vão até ONTEM no mês corrente: hoje ainda está acontecendo, e é do Agora
+  const ate = Math.min(fim - 1, ontem);
+  const porData = {};
+  (Array.isArray(S.comidaHist) ? S.comidaHist : []).forEach(function (h) { if (h && h.d) porData[h.d] = h; });
 
   const celulas = [];
-  for (let i = 0; i < dias; i++) {
-    const dia = ini.getTime() + i * 86400000;
-    const marcas = sessoesDoDia(dia);
-    const hoje = sameDay(dia, Date.now());
-    const futuro = dia > Date.now() && !hoje;
-    const livre = marcas.length > 0 && marcas.every(function (m) { return m.livre; });
-    // periodoNaCelula devolve HTML para o render antigo; aqui o componente
-    // precisa do objeto, então a busca é feita direto.
-    let per = null;
-    for (let j = 0; j < marcas.length && !per; j++) per = periodoDaSessao(marcas[j]);
+  for (let i = 1; i <= nDias; i++) {
+    const dia = new Date(ano, mesN, i, 12).getTime();
+    const hoje = sameDay(dia, agora);
+    const futuro = !hoje && dia > agora;
+    const marcas = futuro ? [] : sessoesDoDia(dia).slice().sort(function (a, b) { return a.t - b.t; });
+    const letras = marcas.filter(function (m) { return !m.livre; }).map(letraDoRegistro);
+    const fora = marcas.some(function (m) { return m.livre; });
+    const desc = !marcas.length && !futuro && ehDescanso(dia);
+    const cardio = futuro ? 0 : cardioDoDia(dia).length;
+    const h = porData[hojeISO(dia)];
+    const comida = futuro || hoje ? null : (h && diaInterpretavel(h) ? 'com' : 'sem');
+    const partes = [];
+    marcas.forEach(function (m) {
+      partes.push(m.livre ? 'treino fora da prescrição' : diaAberto(m.day) ? 'aula' : 'treino ' + m.day);
+    });
+    const desc0 = partes.length > 1 ? [partes.slice(0, -1).join(', ') + ' e ' + partes[partes.length - 1]] : partes;
+    const ditos = desc0.slice();
+    if (desc) ditos.push('descanso marcado');
+    if (cardio) ditos.push(cardio === 1 ? 'cardio' : cardio + ' cardios');
+    if (comida) ditos.push(comida === 'com' ? 'comida com marca' : 'comida sem marca');
+    if (hoje) ditos.push('hoje: abre o Agora');
+    const d = new Date(dia);
     celulas.push({
-      n: i + 1,
-      // a letra do treino manda na célula; o número do dia é contexto
-      marca: marcas.length ? marcas.map(marcaDe).join('') : (ehDescanso(dia) ? '–' : null),
-      feito: marcas.length > 0, livre: livre, hoje: hoje, futuro: futuro,
-      descanso: !marcas.length && ehDescanso(dia),
-      cardio: cardioDoDia(dia).length > 0,
-      periodo: per ? { k: per.k, rot: per.rot } : null,
-      // Um dia pode ter DUAS sessões — registrar o treino errado e depois o
-      // certo é o jeito mais comum de chegar nisso, e a célula já mostra as
-      // duas letras. Abrir a última em silêncio deixava a outra inalcançável:
-      // com mais de uma, a célula leva à LISTA, onde elas estão lado a lado.
-      abre: marcas.length > 1 ? { k: 'dia', t: dia }
-           : marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
-           : futuro ? null : { k: 'lancar', t: dia }
+      n: i, iso: hojeISO(dia), hoje: hoje, futuro: futuro,
+      principal: letras.length ? letras.join(' ') : fora ? 'fora' : desc ? 'desc.' : '',
+      extra: letras.length && fora ? '+fora' : null,
+      descanso: desc, cardio: cardio, comida: comida,
+      rotulo: DIAS_LONGOS[d.getDay()] + ', ' + i + ' de ' + MESES[mesN] + (ditos.length ? ': ' + ditos.join(', ') : ''),
+      abre: hoje ? 'agora' : futuro ? null : dia
     });
   }
 
-  const sessoes = S.done
-    .filter(function (m) { return m.t >= ini.getTime() && m.t < fim.getTime(); })
-    .slice().reverse()
-    .map(function (m) {
-      const nSets = m.livre ? 0 : Object.keys(S.logs).reduce(function (n, k) {
-        return n + (S.logs[k] || []).filter(function (e) { return e.sid === m.sid; })
-                    .reduce(function (x, e) { return x + e.sets.filter(Boolean).length; }, 0);
-      }, 0);
-      return {
-        t: m.t,
-        destacada: view.destacaDia != null && sameDay(m.t, view.destacaDia),
-        data: fmtDate(m.t),
-        hora: horaDaSessao(m),
-        marca: marcaDe(m),
-        livre: !!m.livre,
-        desc: m.livre
-          ? ((m.grupos || []).join(', ') || 'treino avulso')
-          : [m.dur ? fmtDur(m.dur) : null, nSets ? nSets + ' séries' : null].filter(Boolean).join(' · '),
-        aprox: !m.livre && !!m.dur && m.fim !== 'manual',
-        aberta: !!(S.sessao && S.sessao.sid === m.sid),
-        cardio: cardioDoDia(m.t).length > 0
-      };
-    });
+  // As três leituras, cada uma com a conta à vista.
+  const L = ate >= ini ? _leituraDosDias(S.done, ate) : null;
+  const cardMes = S.cardio.filter(function (c) { return c.t >= ini && c.t <= ate; });
+  const ins = _iniciosDoPeriodo(S.done, ini, ate, temHora, function (x) { return diaAberto(x.day); });
+  const n = ins.inicios.length;
+  const media = n ? ins.inicios.reduce(function (a, x) { return a + x.min; }, 0) / n : null;
+  const fora = [];
+  if (ins.aulasSemHora) fora.push(ins.aulasSemHora === 1 ? 'a aula, sem hora de início' : 'as ' + ins.aulasSemHora + ' aulas, sem hora de início');
+  if (ins.semHora) fora.push(ins.semHora === 1 ? 'o treino registrado sem hora' : 'os ' + ins.semHora + ' treinos registrados sem hora');
+  if (ins.fora) fora.push(ins.fora === 1 ? 'o treino fora da prescrição' : 'os ' + ins.fora + ' treinos fora da prescrição');
+  const diaCurto = function (t) { return DIAS_CURTOS[new Date(t).getDay()] + ' ' + fmtDate(t); };
+  const temAlgo = S.done.length > 0 || S.cardio.length > 0 ||
+    (Array.isArray(S.comidaHist) && S.comidaHist.some(diaInterpretavel));
 
   return {
-    titulo: MESES[ref.getMonth()] + ' ' + ref.getFullYear(),
+    titulo: MESES[mesN] + ' de ' + ano + (corrente && ate >= ini ? ' · até ontem, ' + fmtDate(ontem) : ''),
+    anterior: maiuscula(MESES[(mesN + 11) % 12]),
+    proximo: maiuscula(MESES[(mesN + 1) % 12]),
     podeAvancar: view.mes < 0,
-    offset: offset,
+    offset: new Date(ini).getDay(),
     dias: DIAS_CURTOS,
     celulas: celulas,
-    periodos: PERIODOS.map(function (p) { return { k: p.k, rot: p.rot, nome: p.nome }; }),
-    stats: [
-      { k: 'd', rotulo: 'dias', valor: String(t.dias) },
-      // a média de duração vinha no rótulo do total; sem ela, 7h48 não diz se
-      // foram sessões longas ou muitas sessões
-      { k: 't', rotulo: 'tempo total', valor: t.tempo ? fmtDur(t.tempo) : '–',
-        nota: t.comTempo ? 'méd ' + fmtDur(t.tempo / t.comTempo) : null },
-      { k: 'v', rotulo: 'volume', valor: fmtK(t.vol) }
-    ],
-    media: med !== null ? fmtDec(med) : null,
-    cardio: cardMes.length ? (function () {
-      // Cardio em dia sem musculação conta separado: é o que o plano pede
-      // (não competir com a recuperação), e some se for só um número total.
-      const so = cardMes.filter(function (c) { return sessoesDoDia(c.t).length === 0; }).length;
-      return {
-        n: cardMes.length,
-        min: fmtInt(cardMes.reduce(function (a, c) { return a + c.min; }, 0)),
-        soCardio: so
-      };
-    })() : null,
-    // Horário típico: só conta sessão com hora medida — retroativo sem hora
-    // informada não inventa horário, e entrar na média seria inventar.
-    horarios: (function () {
-      const h = S.done.filter(function (x) {
-        return x.t >= ini.getTime() && x.t < fim.getTime() && temHora(x);
-      }).map(function (x) { return new Date(x.t).getHours() * 60 + new Date(x.t).getMinutes(); });
-      if (!h.length) return null;
-      const fmt = function (min) {
-        return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(Math.round(min % 60)).padStart(2, '0');
-      };
-      return {
-        n: h.length,
-        media: fmt(h.reduce(function (a, b) { return a + b; }, 0) / h.length),
-        min: fmt(Math.min.apply(null, h)),
-        max: fmt(Math.max.apply(null, h))
-      };
-    })(),
-    sessoes: sessoes
+    vazio: !temAlgo,
+    treino: L
+      ? (L.porSemana != null
+          ? { valor: numeroCurto(L.porSemana),
+              conta: L.dias + ' dias com treino nos últimos 28, divididos por 4. Dois treinos no mesmo dia contam um dia. Descanso não conta.',
+              serie: _serieDaMediaMovel(S.done, ini, ate), prescricao: rot().length,
+              de: fmtDate(ini), ate: fmtDate(ate) }
+          : { valor: null,
+              conta: L.dias + (L.dias === 1 ? ' dia com treino em ' : ' dias com treino em ') + L.janela +
+                     '. A média usa as últimas 4 semanas, e ainda não há 4.' })
+      : null,
+    cardio: { titulo: 'Cardio em ' + MESES[mesN], n: cardMes.length,
+              min: cardMes.reduce(function (a, c) { return a + c.min; }, 0),
+              so: cardMes.filter(function (c) { return sessoesDoDia(c.t).length === 0; }).length },
+    horario: n ? {
+      media: horaDeMinutos(media),
+      cedo: horaDeMinutos(ins.inicios[0].min), cedoDia: diaCurto(ins.inicios[0].t),
+      tarde: horaDeMinutos(ins.inicios[n - 1].min), tardeDia: diaCurto(ins.inicios[n - 1].t),
+      pontos: ins.inicios.map(function (x) { return x.min; }), mediaMin: media,
+      nota: n + (n === 1 ? ' sessão com hora.' : ' sessões com hora.') +
+            (fora.length ? ' Não entram ' + fora.join(', nem ') + '.' : '')
+    } : null
   };
 };
+
+// ---------- o DIA aberto (a D, `dias.html`, estados 2, 5 e 9) ----------
+//
+// Os registros vêm primeiro, cada um numa linha que abre. A comida aparece num
+// olhar: os momentos do plano, cada um com a forma do seu estado. Quando algo
+// destoa, o app aponta e não corrige: dois cardios iguais no mesmo dia ficam
+// lado a lado, o segundo dizendo "igual ao das 7h35", e nada sai sem ele.
+CTX.abreDia = function (t) {
+  if (t === 'agora') { CTX.vaiPara('agora'); return; }
+  view.diaAberto = t; view.cardioAberto = null; entraNoDestino('dia'); render();
+};
+CTX.fechaDia = function () { view.diaAberto = null; view.cardioAberto = null; render(); saiDoDestino('dia'); };
+CTX.abreCardioDoDia = function (t) { view.cardioAberto = view.cardioAberto === t ? null : t; render(); };
+CTX.alternaDescansoDoDia = function (t) { return alternaDescanso(t); };
+
+CTX.diaAberto = function () {
+  const t = view.diaAberto;
+  if (!t) return null;
+  const d = new Date(t);
+  const iso = hojeISO(t);
+  const marcas = sessoesDoDia(t).slice().sort(function (a, b) { return a.t - b.t; });
+  const cardios = cardioDoDia(t).slice().sort(function (a, b) { return a.t - b.t; });
+  const desc = !marcas.length && ehDescanso(t);
+
+  const sessoes = marcas.map(function (m) {
+    const feitas = m.livre ? 0 : Object.keys(S.logs).reduce(function (n, k) {
+      return n + (S.logs[k] || []).filter(function (e) { return e.sid === m.sid; })
+        .reduce(function (x, e) { return x + e.sets.filter(Boolean).length; }, 0);
+    }, 0);
+    const P = !m.livre && treino(m.day);
+    const prescritas = P ? P.ex.reduce(function (n, ex) { return n + ex.s; }, 0) : 0;
+    const hora = temHora(m) ? fmtHoraDita(m.t) : null;
+    const fim = hora && m.dur ? fmtHoraDita(m.t + m.dur + (m.pausado || 0)) : null;
+    const detalhe = m.livre
+      ? [(m.grupos || []).join(', ') || null, m.dur ? fmtDur(m.dur) : null].filter(Boolean)
+      : [hora ? hora + (fim ? ' → ' + fim : '') : 'sem hora',
+         m.dur && m.fim !== 'manual' ? 'fechou sem você' : null,
+         prescritas ? feitas + ' de ' + prescritas + ' séries' : (feitas ? feitas + ' séries' : null)].filter(Boolean);
+    return {
+      k: 'sessao', t: m.t, letra: letraDoRegistro(m),
+      titulo: m.livre ? (m.nome || 'Treino fora da prescrição') : diaAberto(m.day) ? 'Aula' : 'Treino ' + m.day,
+      detalhe: detalhe.join(' · ')
+    };
+  });
+  const listaCardio = cardios.map(function (c, i) {
+    const igual = cardios.slice(0, i).filter(function (o) { return o.m === c.m && o.min === c.min && o.i === c.i; })[0];
+    const depois = marcas.some(function (m) { return !m.livre && temHora(m) && m.t < c.t; });
+    return {
+      k: 'cardio', t: c.t,
+      titulo: 'Cardio · ' + c.min + ' min de ' + c.m,
+      detalhe: [c.i, fmtHoraDita(c.t) + (depois ? ', depois do treino' : '')].filter(Boolean).join(' · ') +
+               (igual ? ' · igual ao das ' + fmtHoraDita(igual.t) : ''),
+      igual: !!igual,
+      aberto: view.cardioAberto === c.t
+    };
+  });
+
+  // a comida do dia: a verdade do registro, nunca a sugestão da folha
+  const passado = iso < hojeISO();
+  const folha = passado ? CTX.poeODiaEmDia(iso) : null;
+  const h = (Array.isArray(S.comidaHist) ? S.comidaHist : []).filter(function (x) { return x.d === iso; })[0] || null;
+  const momentos = folha ? folha.linhas.map(function (l) {
+    return { id: l.id, nome: l.nome, hora: l.hora.replace(/^0(\d)/, '$1').replace(':', 'h'), marca: l.sugerida || l.marca === 'vazia' ? 'sem' : l.marca };
+  }) : [];
+  const comMarca = momentos.filter(function (x) { return x.marca !== 'sem'; }).length;
+  const conta = h && diaInterpretavel(h);
+
+  return {
+    titulo: DIAS_LONGOS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()],
+    volta: 'Voltar para ' + MESES[d.getMonth()],
+    procedencia: marcas.length ? 'dia de treino, pela sessão registrada'
+               : desc ? 'descanso, marcado por você' : 'nada registrado',
+    registros: sessoes.concat(listaCardio).sort(function (a, b) { return a.t - b.t; }),
+    vazio: !marcas.length && !desc && !cardios.length,
+    descanso: desc,
+    // "marcado agora, às 21h22 · não conta como treino em nenhuma conta" (estado 9)
+    descansoDetalhe: desc ? (function () {
+      const tm = S.descanso[iso];
+      const quando = typeof tm === 'number' && tm > 1
+        ? 'marcado ' + (sameDay(tm, Date.now()) ? 'hoje' : 'em ' + fmtDate(tm)) + ', às ' + fmtHoraDita(tm) + ' · ' : '';
+      return quando + 'não conta como treino em nenhuma conta';
+    })() : null,
+    // o palpite do dia vazio, dito como palpite (estado 5)
+    palpite: !marcas.length && !desc
+      ? 'Pelo padrão semanal, ' + DIAS_LONGOS[d.getDay()] + ' é dia de ' +
+        (cadenciaDaSemana()[d.getDay()] === 'treino' ? 'treino' : 'descanso') + ' — é palpite.'
+      : null,
+    // um dia com treino não aceita a marca de descanso, e diz por quê (F156)
+    podeDescanso: !marcas.length,
+    data: iso,
+    comida: passado ? {
+      resumo: !momentos.length ? null : comMarca === 0 ? 'nenhuma com marca' : comMarca + ' de ' + momentos.length + ' com marca',
+      momentos: momentos,
+      agua: h ? (h.aguaNaoContada ? 'não contei' : h.agua + (h.agua === 1 ? ' copo' : ' copos')) : 'não contei',
+      regra: conta ? 'Conta para a regra dos 14 dias, porque tem refeição marcada.'
+                   : 'Sem marca, o dia não conta para a regra: é desconhecido, não zero.',
+      plano: folha ? 'Plano ' + (h && h.cadencia === 'treino' ? 'de dia de treino' : h && h.cadencia === 'descanso' ? 'de descanso' : 'do dia') +
+                     ', ' + folha.plano + '. É referência — o plano mora em Prescrição.' : null
+    } : null
+  };
+};
+
 CTX.mudaMes = function (n) { mudaMes(n); };
 
 // ---------- tela cheia: detalhe da sessão ----------

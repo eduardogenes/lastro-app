@@ -11,34 +11,37 @@ pede atenção do dono.
 
 ---
 
-## ⏸ PONTO DE PARADA — 13/10, pedido do dono ("precisa pausar")
+## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, tudo commitado e a suíte verde: **1.409 passando**,
-  zero "unhandled". Último commit de código: o destino **Evolução** no Corpo.
-- **Um agente em segundo plano estava trabalhando quando parou:** o desenhista da
-  D, terceira rodada (Anexo I), id `abf4ffeb29a79cc05` — desenha **Dias** e o
-  **Agora de descanso fora de janela**. Caiu uma vez por limite e foi retomado.
-  No disco, só rascunho em `03-direcao-D/_trabalho/d3/` (não commitado).
-  **Ao retomar:** conferir se existem `03-direcao-D/dias.html`,
-  `agora-descanso.html` e `direcao-3.md`. Se não, retomar o agente pelo id com
-  `SendMessage` ("retome; no disco existe X, falta Y"); se o id não responder
-  (sessão nova), novo agente com o texto do Anexo I + um parágrafo de retomada.
-  **Quando entregar:** conferir contra vazamento (nada do app de hoje, nenhum
-  nome de classe ou tela antiga) e contra o pedido; só então construir.
-- **Fila de construção minha, na ordem:**
-  1. **§2 da frente 3 — os rótulos** (R1–R4): rótulo de seção só onde a seção
-     tem mais de uma linha e a primeira não a nomeia; o que fica vira frase com
-     artigo, caixa de frase, 15 px, sem espaçamento; o olho vira procedência;
-     a unidade em caixa baixa. É a "caixa alta" das dívidas visuais. Mexe em
-     ~83 lugares de 21 arquivos — fazer por tela, com captura.
-  2. **Decidir com o dono:** depois de aplicar o passo de ±150 kcal, o veredito
-     das MESMAS semanas continua oferecendo "aplicar" (o desenho diz que a tela
-     mostra o passo aplicado até haver duas semanas novas de taxa). É mudança
-     de regra; um caso antigo aplica duas vezes de propósito.
-  3. O que o desenhista entregar (Dias, Agora de descanso).
-- **Do dono, sem mudança:** as medições A–D da régua no aparelho (6.z); a
-  promessa "a tela não vai pedir isso de novo em outro lugar" (§11.2, aberta).
+- Branch `redesenho-do-zero`, suíte verde: **1.415 passando**, zero "unhandled".
+- A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
+  `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
+- **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
+  coração do cardio, barra da comida; hoje abre o Agora), as três leituras
+  (dias com treino por semana em média de 4 semanas, cardio, horário de início
+  com os pontos) e o dia aberto (sessões, cardio que abre com o apagar, descanso
+  com a saída, palpite do dia vazio, comida com a forma de cada momento e a
+  folha). Domínio em `src/dominio/mes.ts`.
+- **Saídas declaradas pelo desenho** (testes reescritos, não apagados em
+  silêncio): a faixa da semana em Dias; o quadro de dias, tempo e volume do mês
+  e a média de duração (tempo e volume são de Semana); a marca de período nas
+  células e a legenda; a lista de sessões, de dias de comida e de cardios do
+  mês (moram no dia aberto). A marca do aproximado ficou: "fechou sem você" na
+  linha da sessão.
+- **Buraco de capacidade, levar ao dono com a pergunta 7:** com "hoje abre o
+  Agora", o cardio de HOJE lançado por engano só se apaga amanhã, em Dias — o
+  Agora registra cardio mas não lista o do dia. O Agora de descanso (próximo)
+  tem a linha do cardio; conferir lá se ela abre com o apagar.
+- **Fila de construção, na ordem:**
+  1. Dias, o resto: registrar treino passado e "fora" (estados 5–8), a sessão
+     passada com correção no lugar (3–4), apagar sessão pelo painel (13), estado
+     ruim (14), cardio em dia passado (capacidade nova).
+  2. O Agora de descanso (`agora-descanso.html`).
+  3. §2 da frente 3 — os rótulos (R1–R4), por tela, com captura.
+- **Levar ao dono, sem bloquear:** o "aplicar" oferecido de novo nas mesmas
+  semanas depois do passo de ±150 kcal; as sete perguntas do desenhista
+  (`direcao-3.md` §3); a promessa §11.2; as medições A–D da régua (6.z).
 
 ## Como retomar (ler primeiro)
 
@@ -3182,6 +3185,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 13/10 · Terceira rodada da D disparada (Anexo I). Construídos: os portões da Semana, o vazio e o Desfazer; as linhas do corpo no Agora; o botão de linha que espremia texto; o destino Evolução. Achado e consertado: a taxa exata de 0,10 caía abaixo do limite por ponto flutuante (61 de 400 sequências). **Pausa pedida pelo dono** — ver o ponto de parada no topo.
 - 13/10 · **A terceira rodada da D entregou** e foi conferida: sem vazamento (nenhum termo do app de hoje), todos os estados pedidos e mais alguns. **Duas divergências, por OMISSÃO MINHA no Anexo I:** a folha de pôr o dia em dia volta a gravar linha a linha, com um botão "Os outros 5 como no plano", contra a P3.i.6 (um toque fecha o dia inteiro); e "Não comi" vira terceira resposta do "Fora", contra a decisão 1 de 06/10 (é o quinto botão). As duas decisões não estavam no recado. **Vale a decisão do dono; a folha construída fica como está**, e os estados 10–11 de `dias.html` ficam como referência só do que é de Dias (abrir a folha a partir do dia). **Adotado do desenhista, com a razão dele:** a leitura do mês conta DIAS com treino, não treinos (dois treinos no mesmo dia e a sessão aberta por engano não inflam; a prescrição fala em "seis dias ativos", F21). **Sete perguntas dele**, todas com o desenho padrão já escolhido — vou construir pelo padrão e levar as perguntas ao dono sem bloquear.
 
+- 13/10 · **Dias: o mês e o dia aberto**, pela terceira entrega da D. 20 casos que liam a estrutura antiga reescritos contra a nova, cada um com a capacidade preservada ou a saída declarada (ponto de parada). 14 mutações, 14 mortas. Achado: o cardio de hoje lançado por engano ficou sem porta de saída até amanhã (vai com a pergunta 7). 1.415 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

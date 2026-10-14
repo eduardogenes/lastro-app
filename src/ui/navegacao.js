@@ -57,6 +57,8 @@ export function camadasAbertas(view) {
   // passada, e a frente 1 apontou que confundir os dois era o erro provável.
   if (view.modoSessao) c.push('modoSessao');
 
+  // O dia aberto, abaixo da sessão e do registro de treino passado, que abrem dele.
+  if (view.diaAberto) c.push('dia');
   if (view.sessao) c.push('sessao');
   if (view.add) c.push('add');
   if (view.retro) c.push('retro');

@@ -711,77 +711,6 @@
 }
 .mes-b:disabled { opacity: .25; }
 
-/* Sete colunas, o vão de 1px é a régua — igual à grade de métricas. */
-.cal {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px;
-  background: var(--ins-fio); margin-top: var(--ins-7);
-}
-.cal > * { background: var(--ins-tela); }
-.cal-h {
-  padding: var(--ins-2) 0; text-align: center;
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
-}
-.cal-x { min-height: 40px; }
-.cal-d {
-  min-height: 40px; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 2px;
-  font: 400 11px/1 var(--ins-fonte); color: var(--ins-tinta-3);
-}
-.cal-d em { font-style: normal; }
-.cal-d.futuro { opacity: .3; }
-.cal-d.hoje { background: var(--ins-acento-suave); }
-.cal-d.feito { color: var(--ins-acento-tinta); }
-.cal-d.livre { color: var(--ins-tinta-3); }
-/* Descanso registrado: presença discreta, para o dia não parecer buraco — mas
-   nunca com o peso visual de um dia treinado. */
-.cal-d.descanso { color: var(--ins-tinta-3); }
-.cal-d.descanso i { color: var(--ins-tinta-3); font-weight: 400; }
-/* Barra, não cor de fundo nem letra: a letra do treino já manda na célula. */
-.cal-d .barra-cardio { width: 10px; height: 2px; background: var(--ins-tinta-3); border-radius: 0; }
-.cal-d i { font-style: normal; font-weight: 500; color: var(--ins-tinta-2); }
-.cal-d.feito i { color: var(--ins-acento-tinta); }
-.cal-d em { font-style: normal; font-size: 9px; color: var(--ins-tinta-3); }
-.cal-d .per { font-size: 8px; text-decoration: none; line-height: 1; }
-
-.cal-legenda {
-  display: flex; gap: var(--ins-5); margin-top: var(--ins-4);
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
-}
-.cal-legenda span { display: flex; align-items: center; gap: var(--ins-1); }
-.cal-legenda .per { text-decoration: none; font-size: 10px; }
-
-.mes-sessoes { margin-top: var(--ins-7); }
-.sessrow { gap: var(--ins-4); }
-.sess-d {
-  flex: 0 0 46px;
-  font: 400 11px/1.3 var(--ins-fonte); color: var(--ins-tinta-3);
-}
-.sess-d em { display: block; font-style: normal; font-size: 9px; color: var(--ins-tinta-3); margin-top: 2px; }
-.sess-l {
-  flex: 0 0 18px; text-align: center;
-  font: 500 15px/1 var(--ins-fonte); color: var(--ins-tinta-2);
-}
-.sess-l.livre { color: var(--ins-tinta-3); }
-.sess-n { flex: 1; font: 400 13px/1.35 var(--ins-fonte); color: var(--ins-tinta-3); }
-.sess-n .aprox {
-  font-style: normal; margin-left: var(--ins-2);
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
-}
-.sess-o {
-  flex: 0 0 auto;
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-acento-tinta);
-}
-.mediasem {
-  margin: var(--ins-4) 0 0;
-  font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-3);
-}
-.mediasem b { color: var(--ins-tinta); font-weight: 500; font-family: var(--ins-fonte); }
-.mediasem span { display: block; margin-top: 2px; font-size: 11px; color: var(--ins-tinta-3); }
-
 /* ---- Telas cheias ------------------------------------------------------ */
 
 /* GRUDADO NO TOPO, e isto não é enfeite.
@@ -1128,14 +1057,6 @@
    existir: nenhum nome da paleta antiga sobrevive no projeto.
    =========================================================================== */
 
-/* Marca de cardio no calendário: barra discreta, para não competir com a
-   letra do treino. Na faixa da semana ela é um ponto — quem manda lá é
-   `treino.css`, que é dono da tela onde a faixa mora. */
-.cal-d .barra-cardio {
-  display: block; height: 2px; width: 52%; margin: var(--ins-1) auto 0;
-  background: var(--ins-tinta-3);
-}
-
 .cardio-dia {
   display: flex; gap: var(--ins-5); align-items: baseline;
   margin-top: var(--ins-7); border-top: 1px solid var(--ins-fio); padding-top: var(--ins-6);
@@ -1161,70 +1082,6 @@
 }
 .mesnav button:disabled { color: var(--ins-tinta-3); }
 
-.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-top: var(--ins-7); background: var(--ins-fio); }
-.cal-h {
-  padding: var(--ins-2) 0; text-align: center; background: var(--ins-tela);
-  font: 400 8.5px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-tinta-3);
-}
-.cal-x { aspect-ratio: 1; background: var(--ins-tela); }
-.cal-d {
-  aspect-ratio: 1; min-width: 0; position: relative; background: var(--ins-tela); border: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-}
-.cal-d em { font: 400 10px/1 var(--ins-fonte); font-style: normal; color: var(--ins-tinta-3); }
-/* A LETRA é quem manda na célula: o número do dia é referência, o treino é o
-   dado. Trocar a hierarquia aqui já quebrou a leitura do mês uma vez. */
-.cal-d i { font: 500 12px/1 var(--ins-fonte); font-style: normal; color: var(--ins-acento-tinta); }
-.cal-d.feito { background: var(--ins-acento-suave); }
-.cal-d.feito em { color: var(--ins-tinta-3); }
-.cal-d.hoje { box-shadow: inset 0 0 0 1px var(--ins-tinta); }
-.cal-d.livre { background: var(--ins-superficie-2); }
-.cal-d.livre i { color: var(--ins-tinta-3); }
-.cal-d.futuro { opacity: .35; }
-
-.per { position: absolute; top: 2px; right: 3px; font-size: 11px; line-height: 1; text-decoration: none; }
-.callegenda { display: flex; gap: var(--ins-6); margin-top: var(--ins-4); }
-.callegenda .per { position: static; margin-right: var(--ins-1); font-size: 12px; }
-
-.mediasem { margin-top: var(--ins-8); font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-3); }
-.mediasem b { font: 600 22px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta); }
-.mediasem span {
-  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
-}
-
-.sessrow {
-  display: flex; align-items: center; gap: var(--ins-4);
-  border-bottom: 1px solid var(--ins-fio); padding: var(--ins-6) 0; background: none; border-left: 0; border-right: 0; border-top: 0;
-  width: 100%; text-align: left;
-}
-.sessrow:last-child { border-bottom: 0; }
-/* Empurrão de atenção ao chegar de uma célula com mais de uma sessão: diz
-   QUAIS linhas são daquele dia, e se apaga sozinho. Fio à esquerda, não fundo:
-   o sistema marca com fio.
-   O fio vai para a GOTEIRA, fora da caixa: desenhado por dentro ele cobria o
-   primeiro dígito da data. */
-.sessrow { position: relative; }
-.sessrow.destacada::before {
-  content: ""; position: absolute;
-  left: calc(-1 * var(--ins-4)); top: 0; bottom: 0;
-  width: var(--ins-rail); background: var(--ins-acento);
-}
-.sess-d { min-width: 44px; font: 400 11px/1.3 var(--ins-fonte); color: var(--ins-tinta-3); }
-.sess-d em { display: block; font-style: normal; font-size: 10px; color: var(--ins-tinta-3); margin-top: 2px; }
-/* A letra NÃO é ácida aqui. Toda linha desta lista é uma sessão feita, então
-   a cor não distingue nada — vira decoração, e catorze ácidos numa tela é
-   exatamente o que o §4 proíbe. No calendário ela continua ácida, porque lá
-   ela separa o dia treinado do dia vazio. */
-.sess-l { min-width: 16px; font: 500 15px/1 var(--ins-fonte); color: var(--ins-tinta); }
-.sess-l.livre { color: var(--ins-tinta-3); }
-.sess-n { flex: 1; min-width: 0; font: 400 11.5px/1.4 var(--ins-fonte); color: var(--ins-tinta-3); }
-.sess-o {
-  flex: 0 0 auto; padding: 3px var(--ins-2);
-  background: var(--ins-acento); color: var(--ins-sobre-acento);
-  font: 400 9px/1 var(--ins-fonte); letter-spacing: .08em; text-transform: uppercase;
-}
-
 /* ---- Pendências da sessão ----------------------------------------------- */
 .horario b { color: var(--ins-tinta-3); font-weight: 500; }
 
@@ -1232,11 +1089,6 @@
 .pend > div {
   display: flex; gap: var(--ins-4); align-items: baseline;
   border-top: 1px solid var(--ins-fio); padding: var(--ins-4) 0;
-}
-.aprox {
-  font-style: normal; padding: 2px var(--ins-2); margin-left: var(--ins-2);
-  border: 1px solid var(--ins-fio);
-  font: 400 9px/1 var(--ins-fonte); letter-spacing: .08em; color: var(--ins-tinta-3);
 }
 
 /* ---- Avisos: âmbar é "preste atenção", ácido é "isto está ativo" -------- */
@@ -1536,7 +1388,6 @@
    necessária: nenhuma regra do projeto declara raio. */
 .ins-live-dot, .ins-tl-ponto,
 input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
-
 
 /* ---- O modo de sessão ----
    O invólucro do treino em tela cheia. Ele desenha UMA coisa: a saída.
@@ -1858,7 +1709,6 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
    apoio embaixo, e o botão à direita. */
 .ag-corpo .ins-linha-n { display: flex; flex-direction: column; gap: var(--ins-1); }
 
-
 /* EVOLUÇÃO (a D, corpo.html estado 8): uma série só — a linha no acento, os
    pontos do dia em tinta neutra, a faixa do alvo no acento suave. Sem eixo e
    sem grade: as duas pontas dizem onde a curva começa e termina, e a lista
@@ -1872,3 +1722,69 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 .ev-pontas { display: flex; justify-content: space-between; color: var(--ins-tinta-2); font-size: 13px; }
 .ev-taxa-v { display: flex; flex-direction: column; align-items: flex-end; gap: var(--ins-1); }
 .ev-frase { margin: var(--ins-4) 0 var(--ins-3); }
+
+/* ---- DIAS: o mês (a D, dias.html estado 1) ---------------------------- */
+/* Cada célula diz o que o dia teve por forma e palavra; os dias que ainda não
+   chegaram encolhem, porque não têm o que mostrar. */
+.mes-t { flex: 1 1 auto; text-align: center; color: var(--ins-tinta-2); font-size: 14px; }
+.dc-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: var(--ins-3); }
+.dc-h { text-align: center; font-size: 11px; color: var(--ins-tinta-3); padding-bottom: 2px; }
+.dc {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 58px; padding: 14px 2px 8px; background: var(--ins-superficie);
+  border: 1px solid var(--ins-fio); border-radius: 8px; color: var(--ins-tinta); font: inherit;
+}
+.dc.futuro { min-height: 30px; padding: 6px 2px; background: transparent; border-style: dashed; }
+.dc.hoje { border: 2px solid var(--ins-acento); }
+.dc:disabled { cursor: default; }
+.dc-n { position: absolute; top: 4px; left: 6px; font-size: 11px; color: var(--ins-tinta-3); }
+.dc-p { font-size: 17px; font-weight: 600; line-height: 1.1; }
+.dc.desc .dc-p { font-size: 13px; font-weight: 400; font-style: italic; color: var(--ins-tinta-2); }
+.dc-x { font-size: 10px; color: var(--ins-tinta-2); }
+.dc-c { position: absolute; top: 3px; right: 5px; font-size: 10px; color: var(--ins-tinta-2); }
+.dc-f { position: absolute; bottom: 5px; left: 22%; right: 22%; height: 0; border-top: 3px solid var(--ins-tinta); border-radius: 2px; }
+.dc-f.sem { border-top: 2px dashed var(--ins-fio-controle); }
+/* As três leituras. */
+.dm-valor { margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.01em; }
+.dm-linha svg { display: block; width: 100%; height: auto; }
+.dm-presc { stroke: var(--ins-fio-controle); stroke-width: 1; stroke-dasharray: 3 3; }
+.dm-serie { fill: none; stroke: var(--ins-tinta); stroke-width: 2; stroke-linejoin: round; }
+.dm-fim { fill: var(--ins-tinta); }
+.dm-legenda { display: flex; justify-content: space-between; font-size: 11px; color: var(--ins-tinta-3); }
+.dm-conta { margin: var(--ins-2) 0 0; }
+.dm-tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--ins-3); }
+.dm-tres span { display: flex; flex-direction: column; font-size: 12px; color: var(--ins-tinta-2); }
+.dm-tres b { font-size: 20px; font-weight: 600; color: var(--ins-tinta); }
+.dm-eixo { display: block; width: 100%; height: auto; margin-top: var(--ins-3); }
+.dm-eixo-l { stroke: var(--ins-fio-controle); stroke-width: 1; }
+.dm-eixo-t { font-size: 9px; fill: var(--ins-tinta-3); }
+.dm-eixo-p { fill: var(--ins-tinta-2); stroke: var(--ins-tela); stroke-width: 1.5; }
+.dm-eixo-m { fill: var(--ins-acento); }
+.dm-vazio-t { margin: 0 0 var(--ins-2); font-weight: 600; }
+.dm-vazio-b { margin-top: var(--ins-4); }
+
+/* ---- DIAS: o dia aberto (estados 2, 5, 9, 12) ------------------------- */
+.dia-reg { margin-top: var(--ins-3); }
+.dia-linha { gap: var(--ins-4); }
+.dia-letra {
+  flex: 0 0 auto; min-width: 40px; text-align: center; font-weight: 600; font-size: 15px;
+  color: var(--ins-tinta-2);
+}
+.dia-cardio.igual .ins-linha-s { color: var(--ins-atencao-tinta); }
+.dia-apaga { margin: 0 0 var(--ins-4); }
+.dia-vazio { margin: var(--ins-4) 0; }
+.dia-vazio p { margin: 0 0 var(--ins-2); }
+.dia-acoes { display: flex; gap: var(--ins-3); flex-wrap: wrap; margin-top: var(--ins-4); }
+.dia-acoes .ins-btn-secondary { width: auto; padding: 0 var(--ins-5); }
+.dia-nota { margin: var(--ins-2) 0 0; }
+.dia-momentos { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: var(--ins-3); margin: var(--ins-2) 0 var(--ins-4); }
+.dia-momento { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--ins-tinta-2); }
+.dia-momento-h { color: var(--ins-tinta-3); }
+.df { width: 22px; height: 22px; }
+.df-cheio { fill: var(--ins-tinta); }
+.df-tinta { fill: none; stroke: var(--ins-tela); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.df-fio { fill: none; stroke: var(--ins-tinta); stroke-width: 1.5; }
+.df-traco { stroke: var(--ins-tinta); stroke-width: 1.8; stroke-linecap: round; }
+.df-trac { fill: none; stroke: var(--ins-fio-controle); stroke-width: 1.5; stroke-dasharray: 2.5 2.5; }
+.df-q { font-size: 11px; fill: var(--ins-tinta-2); }
+.dia-agua { margin: 0 0 var(--ins-4); }

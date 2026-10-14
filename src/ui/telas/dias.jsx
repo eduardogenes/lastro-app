@@ -1,187 +1,154 @@
-// DIAS — o que aconteceu em cada dia, e o que falta dizer.
+// DIAS — o que aconteceu em cada dia.
 //
-// O terceiro dos cinco lugares, e o único que não tinha desenho nenhum: a
-// frente 1 abriu os nove HTML das direções e nenhum deles é a tela de Dias
-// (achado 6). O que ela tem, em compensação, é a maior quantidade de capacidade
-// JÁ PRONTA do app de hoje — o calendário, a lista de sessões, o detalhe de uma
-// sessão, o registro retroativo, marcar um dia passado como descanso.
-//
-// Por isso este arquivo nasce por MUDANÇA DE ENDEREÇO e não por desenho novo: o
-// calendário vinha dentro do modo "treino" da tela de Dados, atrás de um chip,
-// junto da força estimada e das séries por músculo — que são leitura de SEMANA,
-// não de dia. Separar os dois é a razão de o lugar existir.
+// O desenho é a terceira entrega da D (`dias.html`): o lugar nasceu por mudança
+// de endereço e não tinha desenho nenhum; agora tem. O mês é a entrada, e o dia
+// é o lugar. Cada célula diz o que o dia teve por forma e palavra — a letra do
+// treino, "aula", "fora", "desc.", o coração do cardio, a barra da comida —, e
+// um toque abre o dia (`dia.jsx`). Embaixo, três leituras do mês, e só estas.
 //
 // O que ele NÃO tem, e está declarado:
-//
-// - **nada prescrito.** O que o plano diz daquele dia aparece como referência; o
-//   plano é de Prescrição.
-// - **nenhuma média.** Dias é por dia, por definição. A média móvel de treinos
-//   por semana que o calendário mostra é a exceção que o próprio calendário
-//   carrega, e ela está aqui porque é a leitura do MÊS desenhado — não um
-//   indicador de semana.
-// - **o cartão de agora.** Um dia que passou não tem "agora".
+// - **nada prescrito.** O plano de um dia passado aparece no dia, como
+//   referência; o plano é de Prescrição.
+// - **nenhuma leitura de semana.** Volume e séries por músculo são de Semana.
+// - **o "agora".** Um dia que passou não tem; tocar em hoje abre o Agora.
+// - **presunção.** Dia sem registro fica vazio: o domingo não vira descanso
+//   sozinho, e a segunda sem registro não vira treino.
 
-import { Cabecalho, GradeMetricas, Secao } from '../instrumento/primitivos.jsx';
+import { Cabecalho, Secao } from '../instrumento/primitivos.jsx';
 
-/**
- * O calendário do mês e a lista de sessões.
- *
- * A média é MÓVEL, de treinos por semana — nunca sequência de dias. Quem treina
- * 5 a 6 vezes por semana quebra sequência todo domingo, e transformar isso em
- * número faria o app cobrar o descanso que o próprio programa manda tirar.
- */
+function Celula({ c, ctx }) {
+  return (
+    <button
+      class={'dc' + (c.hoje ? ' hoje' : '') + (c.futuro ? ' futuro' : '') + (c.descanso ? ' desc' : '')}
+      data-dia={c.iso}
+      aria-label={c.rotulo}
+      disabled={!c.abre}
+      onClick={() => ctx.abreDia(c.abre)}
+    >
+      <span class="dc-n" aria-hidden="true">{c.n}</span>
+      {c.principal && <span class="dc-p" aria-hidden="true">{c.principal}</span>}
+      {c.extra && <span class="dc-x" aria-hidden="true">{c.extra}</span>}
+      {c.cardio > 0 && <span class="dc-c" aria-hidden="true">♥{c.cardio > 1 ? c.cardio : ''}</span>}
+      {c.comida && <i class={'dc-f ' + c.comida} aria-hidden="true" />}
+    </button>
+  );
+}
+
+/** A média móvel do mês, com a linha da prescrição tracejada como referência. */
+function LinhaDaMedia({ t }) {
+  const L = 240, A = 44, s = t.serie;
+  if (!s || s.length < 2) return null;
+  const hi = Math.max(t.prescricao, Math.max.apply(null, s)) + 0.5, lo = 0;
+  const x = i => 4 + i / (s.length - 1) * (L - 8);
+  const y = v => 4 + (hi - v) / (hi - lo) * (A - 8);
+  return (
+    <div class="dm-linha">
+      <svg viewBox={`0 0 ${L} ${A}`} aria-hidden="true">
+        <line class="dm-presc" x1="4" x2={L - 4} y1={y(t.prescricao)} y2={y(t.prescricao)} />
+        <polyline class="dm-serie" points={s.map((v, i) => x(i) + ',' + y(v)).join(' ')} />
+        <circle class="dm-fim" cx={x(s.length - 1)} cy={y(s[s.length - 1])} r="3" />
+      </svg>
+      <div class="dm-legenda"><span>{t.de}</span><span>{t.prescricao} na prescrição</span><span>{t.ate}</span></div>
+    </div>
+  );
+}
+
+/** Os inícios num eixo de 5h a 22h: a média engana, e os pontos dizem por quê. */
+function EixoDosInicios({ h }) {
+  const L = 300, A = 30, de = 5 * 60, ate = 22 * 60;
+  const x = m => 6 + (Math.min(Math.max(m, de), ate) - de) / (ate - de) * (L - 12);
+  return (
+    <svg class="dm-eixo" viewBox={`0 0 ${L} ${A}`} aria-hidden="true">
+      <line class="dm-eixo-l" x1="6" x2={L - 6} y1="18" y2="18" />
+      {[6, 9, 12, 15, 18, 21].map(hh => (
+        <text key={hh} class="dm-eixo-t" x={x(hh * 60)} y="29" text-anchor="middle">{hh}h</text>
+      ))}
+      {h.pontos.map((m, i) => <circle key={i} class="dm-eixo-p" cx={x(m)} cy="18" r="3.5" />)}
+      <path class="dm-eixo-m" d={`M${x(h.mediaMin) - 4},6 L${x(h.mediaMin) + 4},6 L${x(h.mediaMin)},12 Z`} />
+    </svg>
+  );
+}
+
 export function Mes({ m, ctx }) {
   return (
-    <Secao rotulo="o mês" nota={m.titulo} primeira>
+    <>
       <div class="mes-nav">
-        <button class="mes-b" aria-label="mês anterior" onClick={() => ctx.mudaMes(-1)}>‹</button>
-        <span class="ins-subtitle">{m.titulo}</span>
-        <button class="mes-b" aria-label="próximo mês" disabled={!m.podeAvancar}
-                onClick={() => ctx.mudaMes(1)}>›</button>
+        <button class="mes-b" aria-label={m.anterior} onClick={() => ctx.mudaMes(-1)}>‹</button>
+        <span class="mes-t">{m.titulo}</span>
+        <button class="mes-b" aria-label={m.proximo} disabled={!m.podeAvancar} onClick={() => ctx.mudaMes(1)}>›</button>
       </div>
-
-      <GradeMetricas colunas={3} celulas={m.stats} />
-
-      <div class="cal">
-        {m.dias.map(d => <span key={d} class="cal-h">{d}</span>)}
-        {Array.from({ length: m.offset }).map((_, i) => <span key={'x' + i} class="cal-x" />)}
-        {m.celulas.map(c => (
-          <button
-            key={c.n}
-            class={'cal-d' + (c.feito ? ' feito' : '') + (c.livre ? ' livre' : '') +
-                   (c.hoje ? ' hoje' : '') + (c.futuro ? ' futuro' : '') +
-                   (c.descanso ? ' descanso' : '') +
-                   (c.cardio ? ' com-cardio' : '')}
-            disabled={!c.abre}
-            onClick={() => ctx.abreSessaoDoDia(c.abre)}
-          >
-            <em>{c.n}</em>
-            {c.marca && <i>{c.marca}</i>}
-            {c.periodo && <u class={'per ' + c.periodo.k}>{c.periodo.rot}</u>}
-            {c.cardio && <span class="barra-cardio" />}
-          </button>
-        ))}
+      <div class="dc-grade">
+        {m.dias.map(d => <span key={d} class="dc-h">{d}</span>)}
+        {Array.from({ length: m.offset }).map((_, i) => <span key={'x' + i} class="dc-x0" />)}
+        {m.celulas.map(c => <Celula key={c.n} c={c} ctx={ctx} />)}
       </div>
-
-      <div class="cal-legenda callegenda">
-        {m.periodos.map(p => (
-          <span key={p.k}><u class={'per ' + p.k}>{p.rot}</u>{p.nome}</span>
-        ))}
-      </div>
-
-      {m.media && (
-        <p class="mediasem">
-          <b>{m.media}</b> treinos por semana
-          <span>média móvel das últimas 4 semanas, não sequência de dias</span>
-        </p>
-      )}
-      {m.cardio && (
-        <p class="mediasem">
-          <b>{m.cardio.n}</b> {m.cardio.n === 1 ? 'sessão de cardio' : 'sessões de cardio'}
-          <span>
-            {m.cardio.min} minutos no mês
-            {m.cardio.soCardio > 0 &&
-              ` · ${m.cardio.soCardio} em ${m.cardio.soCardio === 1 ? 'dia sem musculação' : 'dias sem musculação'}`}
-          </span>
-        </p>
-      )}
-      {m.horarios && (
-        <p class="mediasem">
-          <b>{m.horarios.media}</b> em média
-          <span>horário de início · mais cedo {m.horarios.min} · mais tarde {m.horarios.max}</span>
-        </p>
-      )}
-
-      {m.sessoes.length > 0 && (
-        <div class="ins-lista mes-sessoes">
-          {m.sessoes.map(x => (
-            <button key={x.t} class={'ins-linha sessrow' + (x.destacada ? ' destacada' : '')}
-                    onClick={() => ctx.abreSessaoDoDia({ k: 'sessao', t: x.t })}>
-              <span class="sess-d">{x.data}{x.hora && <em>{x.hora}</em>}</span>
-              <span class={'sess-l' + (x.livre ? ' livre' : '')}>{x.marca}</span>
-              <span class="sess-n">
-                {x.desc}
-                {x.aprox && <em class="aprox">aprox</em>}
-                {x.cardio && <span class="tag card-t">cardio</span>}
-              </span>
-              {x.aberta && <span class="sess-o">em andamento</span>}
-            </button>
-          ))}
-        </div>
-      )}
-    </Secao>
+    </>
   );
 }
 
 export function Dias({ ctx }) {
-  const c = ctx.corpo();
-  const cromo = ctx.cromoDoTreino();
+  const m = ctx.mes();
   return (
     <>
       <Cabecalho olho="o que aconteceu" titulo="Dias" />
 
-      {/* A FAIXA DA SEMANA. Veio da tela do treino, onde o próprio comentário
-          dela já dizia o que ela é: "contexto de ADESÃO, não da sessão". Era a
-          aba que a mantinha lá, e o modo esconde placares de propósito (§4.2).
-          Aqui ela é a resposta curta da pergunta do lugar — o que aconteceu em
-          cada dia —, com o atalho para abrir a sessão de um dia. */}
-      <Secao rotulo="a semana" nota="toque num dia para abrir" primeira>
-      <div class="semana">
-        {cromo.semana.map(d => (
-          <button
-            key={d.d}
-            class={'wd' + (d.hoje ? ' hoje' : '') + (d.feito ? ' feito' : '') +
-                   (d.livre ? ' livre' : '') + (d.futuro ? ' futuro' : '') +
-                   (d.descanso ? ' descanso' : '')}
-            disabled={!d.abre}
-            onClick={() => ctx.abreSessaoDoDia(d.abre)}
-          >
-            <span class="wd-d">{d.d}</span>
-            <span class="wd-v">{d.v}</span>
-            {d.cardio && <span class="barra-cardio" />}
+      <Secao primeira>
+        <Mes m={m} ctx={ctx} />
+      </Secao>
+
+      {/* O vazio do primeiro mês: nada aqui vira zero, e a única oferta é a
+          que o primeiro dia pede (estado 15). */}
+      {m.vazio && (
+        <Secao>
+          <p class="ins-body ins-t1 dm-vazio-t">Ainda não há dias para ler</p>
+          <p class="ins-body-sm ins-t2">
+            Cada treino, descanso, cardio e refeição que você registrar aparece no dia dele. Treinos de antes de
+            hoje também podem entrar, com a data deles.
+          </p>
+          <button class="ins-btn-secondary dm-vazio-b" data-a="registrar-passado"
+                  onClick={() => ctx.abreSessaoDoDia({ k: 'lancar', t: Date.now() - 86400000 })}>
+            Registrar um treino passado
           </button>
-        ))}
-      </div>
-      </Secao>
-
-      <Mes m={ctx.mes()} ctx={ctx} />
-
-      {/* OS DIAS DE COMIDA, e a porta de pôr cada um em dia. Dias é "o LUGAR"
-          da folha (§1.2 da frente 1), e a folha é da frente 2 — o que o lugar
-          oferece é a lista do que aconteceu com a porta para corrigir.
-          Os dias SEM registro aparecem também, e são justamente os que ele pode
-          pôr em dia: um dia sem registro é o caso de uso inteiro da peça. */}
-      <Secao rotulo="os dias" nota="toque para pôr em dia">
-        <div class="ins-lista">
-          {ctx.diasDeComidaFechados().map(d => (
-            <button key={d.data} class="ins-linha" data-a={'poe-' + d.data}
-                    onClick={() => ctx.abrePoeODia(d.data)}>
-              <span class="ins-linha-n"><span class="ins-linha-t">{d.rotulo}</span></span>
-              <span class={'ins-linha-v' + (d.tem ? '' : ' ins-t3')}>{d.txt}</span>
-            </button>
-          ))}
-        </div>
-      </Secao>
-
-      {/* As sessões de cardio JÁ FEITAS. O dono do cardio é o Agora, que é onde
-          se registra (§1.7); aqui ele é VISTA — o que aconteceu em cada dia —, e
-          por isso esta lista mostra e apaga, mas não cria. Apagar é a porta de
-          saída de um registro errado, e sem ela o engano entra na conta da
-          semana e não sai. */}
-      {c.cardio.sessoes.length > 0 && (
-        <Secao rotulo="cardio" nota="o que foi feito">
-          <div class="dd-medidas">
-            {c.cardio.sessoes.map(x => (
-              <div class="crow" key={x.t}>
-                <span class="crow-d ins-label">{x.data}</span>
-                <span class="crow-m">{x.modal}</span>
-                <span class="crow-n ins-data">{x.resumo}</span>
-                <button class="crow-x" onClick={() => ctx.apagaCardio(x.t)}>remover</button>
-              </div>
-            ))}
-          </div>
         </Secao>
       )}
+
+      {/* AS TRÊS LEITURAS DO MÊS, e só estas, cada uma com a conta à vista. */}
+      <Secao rotulo="dias com treino por semana">
+        {m.treino
+          ? <>
+              {m.treino.valor && <p class="dm-valor">{m.treino.valor}</p>}
+              {m.treino.valor && <LinhaDaMedia t={m.treino} />}
+              <p class="ins-body-sm ins-t2 dm-conta">{m.treino.conta}</p>
+            </>
+          : <p class="ins-body-sm ins-t3">
+              Aparece com o primeiro treino. A média usa as últimas 4 semanas; até completar 4, a conta vem sem
+              média: “3 dias com treino em 9”.
+            </p>}
+      </Secao>
+
+      <Secao rotulo={m.cardio.titulo.toLowerCase()}>
+        {m.cardio.n
+          ? <div class="dm-tres">
+              <span><b>{m.cardio.n}</b>{m.cardio.n === 1 ? 'sessão' : 'sessões'}</span>
+              <span><b>{m.cardio.min} min</b>no total</span>
+              <span><b>{m.cardio.so}</b>em dia sem musculação</span>
+            </div>
+          : <p class="ins-body-sm ins-t3">Nenhum cardio registrado.</p>}
+      </Secao>
+
+      <Secao rotulo="horário de início">
+        {m.horario
+          ? <>
+              <div class="dm-tres">
+                <span><b>{m.horario.media}</b>média</span>
+                <span><b>{m.horario.cedo}</b>mais cedo · {m.horario.cedoDia}</span>
+                <span><b>{m.horario.tarde}</b>mais tarde · {m.horario.tardeDia}</span>
+              </div>
+              <EixoDosInicios h={m.horario} />
+              <p class="ins-body-sm ins-t2 dm-conta">{m.horario.nota}</p>
+            </>
+          : <p class="ins-body-sm ins-t3">Aparece com a primeira sessão que tiver hora.</p>}
+      </Secao>
     </>
   );
 }

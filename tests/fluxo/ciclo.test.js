@@ -247,8 +247,10 @@ test('dois treinos no mesmo dia agora são possíveis', async () => {
   a.fechar();
 });
 
-test('acompanhamento mostra média de duração e marca o aproximado', async () => {
-  // relógio fixo pelo mesmo motivo do teste do mês em telas.test.js
+test('o dia aberto diz qual sessão o app fechou sozinho', async () => {
+  // A média de duração do mês saiu com o quadro de tempo e volume (a D: "três
+  // leituras do mês, e só estas"; tempo é de Semana). A marca do aproximado
+  // ficou, onde a sessão mora: a linha dela no dia aberto diz "fechou sem você".
   const agora = agoraEstavel();
   const done = [], logs = { A0: [] };
   [0, 1].forEach(function (k) {
@@ -257,14 +259,17 @@ test('acompanhamento mostra média de duração e marca o aproximado', async () 
     logs.A0.push({ t: t, sid: t, sets: [[40, 10]] });
   });
   const a = await app({ agora: agora, estado: { logs: logs, done: done } });
-  // A média de duração e a marca de aproximado estão na lista do mês, que é de
-  // DIAS: "o que aconteceu em cada dia" — e Dias não tem chip.
   a.aba('dias');
   await a.esperar();
 
-  const rotulo = a.$$('.ins-grade-c').map(function (x) { return x.textContent; }).join(' ');
-  assert.ok(/méd/.test(rotulo), rotulo);
-  assert.strictEqual(a.$$('.aprox').length, 1, 'só a que o app fechou sozinho');
+  const detalhe = function (t) {
+    a.v('ctx.abreDia', t);
+    const x = a.texto('[data-a="dia-sessao"]');
+    a.v('ctx.fechaDia');
+    return x;
+  };
+  assert.ok(/fechou sem você/.test(detalhe(agora - DIA)), 'a que o app fechou sozinho diz: ' + detalhe(agora - DIA));
+  assert.ok(!/fechou sem você/.test(detalhe(agora)), 'a encerrada por ele, não: ' + detalhe(agora));
   a.fechar();
 });
 

@@ -175,17 +175,27 @@ test('pesagem errada pode ser apagada', async () => {
 });
 
 test('sessão de cardio registrada por engano pode ser apagada', async () => {
-  const a = await app();
-  await a.E('S.cardio.push({ t: Date.now(), m: "bike", min: 25, i: "moderado" }); save()');
-  await a.esperar();
+  // A porta de saída mora no dia aberto (a D, `dias.html` estado 12): a linha do
+  // cardio abre no lugar, e "Apagar este cardio" passa pelo painel. Hoje, tocado
+  // no mês, abre o Agora (pergunta 7 do desenhista, com o dono) — por isso o
+  // caso usa ontem.
+  const agora = agoraEstavel();
+  const t = agora - DIA;
+  const a = await app({ agora: agora, estado: { logs: {}, done: [], cardio: [{ t: t, m: 'bike', min: 25, i: 'moderado' }] } });
   a.aba('dias');
-
-  const linha = a.$$('.crow').find(function (x) { return /bike/.test(x.textContent); });
-  assert.ok(linha, 'a sessão da semana aparece com a porta de saída');
-  linha.querySelector('.crow-x').click();
+  a.clicar('[data-dia="' + a.v('hojeISO', t) + '"]');
   await a.esperar();
+
+  const linha = a.$$('[data-a="dia-cardio"]').find(function (x) { return /bike/.test(x.textContent); });
+  assert.ok(linha, 'o cardio aparece no dia');
+  assert.strictEqual(a.$('[data-a="dia-apaga-cardio"]'), null, 'o apagar só aparece com a linha aberta');
+  a.clicar(linha);
+  await a.esperar();
+  a.clicar('[data-a="dia-apaga-cardio"]');
+  await a.esperar(60);
 
   assert.strictEqual(a.S().cardio.length, 0);
+  assert.strictEqual(a.$$('[data-a="dia-cardio"]').length, 0, 'e sai do dia');
   a.fechar();
 });
 

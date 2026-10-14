@@ -206,48 +206,45 @@ test('o modo tem a ROTAÇÃO e não tem placar nenhum', async () => {
   a.fechar();
 });
 
-test('faixa da semana marca os dias e abre atalho nos vazios', async () => {
-  // A faixa e o calendário do mês moram no MESMO lugar agora — Dias —, e isso é
-  // melhoria de contrato: eles mostram a mesma semana, e divergir seria o app
-  // contando duas histórias sobre o mesmo domingo. Antes estavam em telas
-  // diferentes e a comparação dependia de navegar.
-  const seg = inicioDaSemana(Date.now());
-  const a = await app({ aba: 'dias',
-    estado: { logs: {}, done: [{ day: 'A', t: seg + 7 * 3600000, sid: seg }] } });
-  const cels = a.$$('.wd');
-  assert.strictEqual(cels.length, 7);
-  assert.strictEqual(cels[0].querySelector('.wd-v').textContent, 'A');
+test('o mês marca os dias, e um dia vazio abre o dia com "Registrar treino"', async () => {
+  // A D (dias.html, estados 1 e 5): o mês é a entrada e o dia é o lugar. A
+  // faixa da semana saiu — o mês já mostra a semana —, e o dia passado vazio
+  // continua sendo atalho para lançar, agora pelo dia aberto.
+  const agora = agoraEstavel();
+  const t = agora - 2 * DIA;
+  const a = await app({ aba: 'dias', agora: agora, estado: { logs: {}, done: [{ day: 'A', t: t, sid: t }] } });
+  const n = new Date(t).getDate();
+  const comA = a.$$('.dc').find(function (c) { return c.querySelector('.dc-n').textContent === String(n); });
+  assert.strictEqual(comA.querySelector('.dc-p').textContent, 'A', 'a letra do treino na célula');
+  assert.ok(/treino A/.test(comA.getAttribute('aria-label')), 'e no nome acessível: ' + comA.getAttribute('aria-label'));
 
-  // Numa segunda-feira não existe dia passado e vazio na semana; o calendário
-  // do mês sempre tem, então o atalho é verificado lá — e os dois estão na
-  // mesma tela, sem navegar.
-  const vazio = a.$$('.cal-d').find(function (c) {
-    return !c.className.includes('feito') && !c.className.includes('futuro');
+  const vazio = a.$$('.dc').find(function (c) {
+    return !c.disabled && !c.classList.contains('hoje') && !c.querySelector('.dc-p');
   });
-  assert.ok(vazio, 'o mês sempre tem algum dia passado sem treino');
+  assert.ok(vazio, 'o mês sempre tem algum dia passado sem registro');
   a.clicar(vazio);
-  assert.ok(a.vista().add, 'tocar num dia vazio abre o lançamento retroativo');
+  await a.esperar();
+  assert.ok(a.vista().diaAberto, 'um toque abre o dia');
+  a.clicar('[data-a="dia-registrar"]');
+  await a.esperar();
+  assert.ok(a.vista().add, 'e "Registrar treino" abre o lançamento retroativo');
   a.fechar();
 });
 
-test('acompanhamento soma dias, tempo e volume do mês', async () => {
-  // relógio fixo: a tela lê o MÊS, e três dias para trás a partir do dia 1º
-  // caem no mês anterior — a asserção falharia sem nada ter quebrado
+test('as leituras do mês contam DIAS com treino; tempo e volume saíram (são de Semana)', async () => {
+  // A D: "três leituras do mês, e só estas". A unidade é o dia — dois treinos
+  // no mesmo dia contam um —, e com menos de quatro semanas desde o primeiro
+  // treino a conta vem sem média.
   const agora = agoraEstavel();
-  const done = [], logs = { A0: [] };
-  for (let k = 0; k < 3; k++) {
-    const t = agora - k * DIA;
-    done.push({ day: 'A', t: t, sid: t, dur: 50 * 60000 });
-    logs.A0.push({ t: t, sid: t, sets: [[40, 10], [40, 10]] });
-  }
-  const a = await app({ agora: agora, estado: { logs: logs, done: done } });
+  const done = [];
+  for (let k = 1; k <= 3; k++) done.push({ day: 'A', t: agora - k * DIA, sid: agora - k * DIA, dur: 50 * 60000 });
+  done.push({ day: 'B', t: agora - DIA + 3600000, sid: agora - DIA + 3600000, dur: 40 * 60000 });
+  const a = await app({ agora: agora, estado: { logs: {}, done: done } });
   a.aba('dias');
-
-  const stats = a.$$('.ins-grade-c .ins-metric-m').map(function (x) { return x.textContent; });
-  assert.ok(stats.includes('3'), 'três dias treinados: ' + stats.join(','));
-  assert.ok(stats.includes('2h30'), 'três sessões de 50 min: ' + stats.join(','));
-  assert.strictEqual(a.$$('.sessrow').length, 3);
-  assert.ok(a.$$('.cal-d.feito').length >= 1);
+  const m = a.vJ('ctx.mes');
+  assert.ok(/^3 dias com treino em 3\./.test(m.treino.conta), 'quatro sessões em três dias são três dias: ' + m.treino.conta);
+  assert.strictEqual(m.treino.valor, null, 'sem média antes de quatro semanas');
+  assert.strictEqual(a.$('.ins-grade-c'), null, 'sem o quadro de dias, tempo e volume');
   a.fechar();
 });
 
@@ -621,14 +618,13 @@ test('um asset servido do Storage não passa despercebido', () => {
   assert.ok(!passa('https://cdn.jsdelivr.net/qualquer.js'), 'e qualquer CDN também');
 });
 
-test('dia com dois treinos leva à lista, em vez de abrir um deles em silêncio', async () => {
+test('dia com dois treinos abre o dia com os dois, em vez de abrir um deles em silêncio', async () => {
   // Registrar o treino errado e depois o certo põe dois no mesmo dia. A célula
-  // mostra as duas letras e abria só a última: a outra ficava inalcançável.
+  // mostra as duas letras, e o dia aberto mostra as duas sessões; cada uma abre
+  // a SUA.
   const agora = agoraEstavel();
-  const d = new Date(agora); d.setHours(8, 0, 0, 0);
+  const d = new Date(agora - DIA); d.setHours(8, 0, 0, 0);
   const tB = d.getTime(), tD = tB + 3 * 60 * 60000;
-  // `plano` declarado: sem ele o harness entra como plano 2 e a migração
-  // reindexa as fixtures, trocando a letra do treino que este teste lê
   const a = await app({ agora: agora, estado: {
     plano: 6, logs: {}, done: [
       { day: 'B', t: tB, sid: tB, dur: 40 * 60000, fim: 'manual' },
@@ -636,33 +632,35 @@ test('dia com dois treinos leva à lista, em vez de abrir um deles em silêncio'
     ]
   }, aba: 'dias' });
 
-  const cel = a.$('.cal-d.hoje');
-  assert.ok(cel.textContent.includes('B') && cel.textContent.includes('D'),
-    'a célula anuncia os dois: ' + cel.textContent.trim());
-
+  const cel = a.$$('.dc').find(function (c) { return c.querySelector('.dc-n').textContent === String(d.getDate()); });
+  assert.strictEqual(cel.querySelector('.dc-p').textContent, 'B D', 'a célula anuncia os dois');
   a.clicar(cel);
   await a.esperar(60);
   assert.strictEqual(a.vista().sessao, null, 'não escolheu por ele');
-  assert.strictEqual(a.$$('.sessrow.destacada').length, 2, 'apontou as duas linhas');
-
-  // e cada linha abre a SUA
-  a.clicar(a.$$('.sessrow.destacada')[1]);
+  const linhas = a.$$('[data-a="dia-sessao"]');
+  assert.strictEqual(linhas.length, 2, 'o dia mostra as duas');
+  a.clicar(linhas[1]);
   await a.esperar(60);
-  assert.strictEqual(a.vista().sessao.day, 'B', 'a de baixo é o B, o mais cedo');
+  assert.strictEqual(a.vista().sessao.day, 'D', 'a de baixo é o D, o mais tarde');
   a.fechar();
 });
 
-test('dia com um treino só continua abrindo direto', async () => {
+test('dia com um treino só abre o dia, e a linha abre a sessão', async () => {
+  // Mudou de propósito, pela D: um toque abre o DIA, onde a sessão divide o
+  // lugar com o cardio, o descanso e a comida. Abrir a sessão custa um toque a
+  // mais do que antes.
   const agora = agoraEstavel();
-  const d = new Date(agora); d.setHours(8, 0, 0, 0);
+  const d = new Date(agora - DIA); d.setHours(8, 0, 0, 0);
   const a = await app({ agora: agora, estado: {
     plano: 6, logs: {},
     done: [{ day: 'B', t: d.getTime(), sid: d.getTime(), dur: 40 * 60000, fim: 'manual' }]
   }, aba: 'dias' });
-
-  a.clicar(a.$('.cal-d.hoje'));
+  a.clicar(a.$$('.dc').find(function (c) { return c.querySelector('.dc-n').textContent === String(d.getDate()); }));
   await a.esperar(60);
-  assert.strictEqual(a.vista().sessao.day, 'B', 'sem escolha a fazer, abre logo');
+  assert.ok(a.vista().diaAberto);
+  a.clicar('[data-a="dia-sessao"]');
+  await a.esperar(60);
+  assert.strictEqual(a.vista().sessao.day, 'B');
   a.fechar();
 });
 
@@ -1078,13 +1076,14 @@ test('ctx.abreSessaoDoDia despacha pelos três tipos de célula que a leitura d�
   const hoje = semana.filter(function (x) { return x.hoje; })[0];
   assert.strictEqual(hoje.abre.k, 'dia', 'hoje tem DUAS sessões, então a célula leva à lista');
 
-  // (1) `k: 'dia'` — vai à lista do mês em DADOS, e NÃO escolhe uma das duas
+  // (1) `k: 'dia'` — abre o DIA em Dias, e NÃO escolhe uma das duas
   a.v('ctx.abreSessaoDoDia', hoje.abre);
   await a.esperar(60);
-  assert.strictEqual(a.vista().aba, 'dias', 'é lá que existe lista de dia');
+  assert.strictEqual(a.vista().aba, 'dias', 'é lá que o dia mora');
   assert.strictEqual(a.vista().mes, 0, 'no mês do dia tocado');
   assert.strictEqual(a.vista().sessao, null, 'e sem escolher nenhuma das duas por ele');
-  assert.ok(a.vista().destacaDia, 'com o dia apontado na lista');
+  assert.ok(a.vista().diaAberto, 'com o dia aberto, onde as duas estão lado a lado');
+  a.v('ctx.fechaDia');
 
   // (2) `k: 'sessao'` — abre aquela sessão
   a.v('ctx.abreSessaoDoDia', { k: 'sessao', t: tB });

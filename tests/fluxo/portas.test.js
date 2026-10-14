@@ -68,16 +68,17 @@ test('"editar treino de hoje" entra na edição', async () => {
 test('os botões do mês andam o calendário, e o de frente não passa de hoje', async () => {
   const a = await app({ aba: 'dias' });
   await a.esperar();
-  const titulo = () => a.texto('.mes-nav .ins-subtitle');
+  const titulo = () => a.texto('.mes-nav .mes-t');
   const agora = titulo();
-  assert.ok(a.$('[aria-label="próximo mês"]').disabled, 'no mês corrente, não há mês à frente');
+  const [antes, depois] = a.$$('.mes-nav .mes-b');
+  assert.ok(depois.disabled, 'no mês corrente, não há mês à frente');
 
-  a.clicar('[aria-label="mês anterior"]');
+  a.clicar(antes);
   await a.esperar();
   assert.notStrictEqual(titulo(), agora, 'voltou um mês');
   assert.strictEqual(a.vista().mes, -1);
 
-  a.clicar('[aria-label="próximo mês"]');
+  a.clicar(a.$$('.mes-nav .mes-b')[1]);
   await a.esperar();
   assert.strictEqual(titulo(), agora, 'e voltou ao corrente');
   a.fechar();

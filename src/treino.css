@@ -69,7 +69,6 @@
 .tag.ok-t     { border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
 .tag.parcial-t{ border-color: var(--ins-atencao-fio); color: var(--ins-atencao-tinta); }
 .tag.pulado-t { border-color: var(--ins-fio-controle); color: var(--ins-tinta-3); }
-.tag.card-t   { border-color: var(--ins-fio-controle); color: var(--ins-tinta-3); }
 
 /* O único ácido do cartão: "suba a carga". Se competir com outro, some.
    Escopado no `.ex-sub` de propósito: solto, o seletor pegava também o `.up`
@@ -636,31 +635,6 @@
   font: 400 10px/1.4 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-tinta-3);
 }
 
-/* Faixa da semana */
-.semana { display: flex; gap: var(--ins-1); margin-top: var(--ins-5); }
-.wd {
-  flex: 1; min-height: 52px; padding: var(--ins-3) 2px;
-  border: 1px solid var(--ins-fio-controle); background: transparent;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--ins-2);
-}
-.wd-d {
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .16em; text-transform: uppercase; color: var(--ins-tinta-3);
-}
-.wd-v { font: 500 15px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta-3); }
-.wd.feito { border-color: var(--ins-acento); }
-.wd.feito .wd-v { color: var(--ins-acento-tinta); }
-.wd.hoje { background: var(--ins-acento-suave); }
-.wd.hoje .wd-d { color: var(--ins-tinta-2); }
-.wd.futuro { opacity: .4; }
-.wd.livre { border-color: var(--ins-fio-controle); }
-.wd.livre .wd-v { color: var(--ins-tinta-3); }
-.wd:not(.feito):not(.futuro) .wd-v { color: var(--ins-tinta-3); }
-/* Descanso registrado: presença, não convite. Fica abaixo do dia não treinado
-   na hierarquia visual — é informação, não coisa a fazer. */
-.wd.descanso .wd-v { color: var(--ins-tinta-3); }
-.wd.descanso .wd-d { color: var(--ins-tinta-3); }
-
 /* Linha de cardio */
 .cardl {
   display: flex; align-items: center; gap: var(--ins-4);
@@ -682,24 +656,11 @@
 }
 .cardl-b::after { content: ""; position: absolute; inset: -8px 0; }     /* 28 -> 44 */
 
-/* O ponto de cardio dentro da célula da semana: 4px, não um quadrado vazio. */
-.wd .barra-cardio {
-  width: 4px; height: 4px; border-radius: 50%;
-  background: var(--ins-tinta-3); border: 0; padding: 0;
-}
 .cwarn {
   font: 400 10px/1.4 var(--ins-fonte);
   letter-spacing: .06em; color: var(--ins-atencao-tinta); margin-top: var(--ins-3);
 }
 
-/* ---- Onde o acento ficaria demais --------------------------------------
-   Em lista longa, acento repetido vira parede acesa: nove letras de sessão
-   passada em ácido dizem "agora" nove vezes, e o sistema reserva o ácido para
-   agora, feito, seu e aperte isto. Em lista de histórico a letra é identidade,
-   e identidade não é acento. */
-
-.sess-d em { color: var(--ins-tinta-3); }
-.sessrow .sess-d b, .sessrow .sess-d strong { color: var(--ins-tinta-2); }
 /* A média da semana é dado de leitura, não ação. */
 .week-n { color: var(--ins-tinta); }
 .week-n em { color: var(--ins-tinta-3); }
@@ -764,7 +725,6 @@
   flex: none; width: 100%; text-align: center;
   font: 400 9px/1 var(--ins-fonte); letter-spacing: .06em;
 }
-
 
 /* ---------- trocar o nome do exercício ---------- */
 .hx-nome { width: 100%; }

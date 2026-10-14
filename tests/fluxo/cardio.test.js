@@ -58,60 +58,57 @@ test('aviso de dia de perna aparece no momento em que importa', async () => {
   a.fechar();
 });
 
-test('faixa da semana marca os dias com cardio, em DIAS', async () => {
-  // A faixa mudou de endereço: vinha da tela do treino, onde o comentário dela
-  // já dizia "contexto de ADESÃO, não da sessão", e o modo esconde placares de
-  // propósito (§4.2). Agora é de Dias, que é "o que aconteceu em cada dia".
-  const seg = inicioDaSemana(Date.now());
-  const a = await app({ aba: 'dias', estado: { logs: {}, done: [],
-    cardio: [{ t: seg + 8 * 3600000, m: 'bike', min: 20, i: 'leve' }] } });
+test('o mês marca os dias com cardio, em DIAS', async () => {
+  // A faixa da semana saiu de Dias (a D: o mês já mostra a semana). O cardio é
+  // o coração na célula do dia.
+  const agora = agoraEstavel();
+  const t = agora - 2 * DIA;
+  const a = await app({ aba: 'dias', agora: agora, estado: { logs: {}, done: [],
+    cardio: [{ t: t, m: 'bike', min: 20, i: 'leve' }] } });
 
-  const cels = a.$$('.wd');
-  assert.strictEqual(cels[0].querySelectorAll('.barra-cardio').length, 1, 'segunda tem cardio');
-  assert.strictEqual(cels[1].querySelectorAll('.barra-cardio').length, 0);
+  const cel = function (x) { return a.$('[data-dia="' + a.v('hojeISO', x) + '"]'); };
+  assert.ok(cel(t).querySelector('.dc-c'), 'o dia tem cardio');
+  assert.strictEqual(cel(t - DIA).querySelector('.dc-c'), null, 'o da véspera, não');
+  assert.ok(/cardio/.test(cel(t).getAttribute('aria-label')), 'e o nome acessível diz');
   a.fechar();
 });
 
-test('calendário marca cardio sem competir com a letra do treino', async () => {
-  const hoje = new Date();
+test('o mês marca cardio sem competir com a letra do treino', async () => {
+  const agora = agoraEstavel();
+  const hoje = new Date(agora);
   const dia = new Date(hoje.getFullYear(), hoje.getMonth(), 2, 8).getTime();
-  const a = await app({ estado: {
+  const a = await app({ agora: agora, estado: {
     logs: {}, done: [{ day: 'A', t: dia, sid: dia, dur: 50 * 60000 }],
     cardio: [{ t: dia + 3600000, m: 'bike', min: 20, i: 'leve' }]
   } });
   a.aba('dias');
 
-  const cel = a.$$('.cal-d').find(function (c) {
-    return c.querySelector('em') && c.querySelector('em').textContent === '2';
-  });
-  assert.ok(cel.className.includes('feito'), 'ainda é dia de treino');
-  // a letra vem primeiro; o marcador de período é um sobrescrito dentro do mesmo <i>
-  assert.strictEqual(cel.querySelector('i').childNodes[0].textContent, 'A', 'a letra continua mandando');
-  assert.ok(cel.querySelector('.barra-cardio'), 'e a barra diz que teve cardio');
+  const cel = a.$('[data-dia="' + a.v('hojeISO', dia) + '"]');
+  assert.strictEqual(cel.querySelector('.dc-p').textContent, 'A', 'a letra continua mandando');
+  assert.ok(cel.querySelector('.dc-c'), 'e o coração diz que teve cardio');
   a.fechar();
 });
 
 test('dia só de cardio fica marcado mesmo sem treino', async () => {
-  const hoje = new Date();
+  const agora = agoraEstavel();
+  const hoje = new Date(agora);
   const dia = new Date(hoje.getFullYear(), hoje.getMonth(), 3, 8).getTime();
-  const a = await app({ estado: { logs: {}, done: [],
+  const a = await app({ agora: agora, estado: { logs: {}, done: [],
     cardio: [{ t: dia, m: 'esteira inclinada', min: 25, i: 'moderado' }] } });
   a.aba('dias');
 
-  const cel = a.$$('.cal-d').find(function (c) {
-    return c.querySelector('em') && c.querySelector('em').textContent === '3';
-  });
-  assert.ok(cel.className.includes('com-cardio'));
-  assert.ok(cel.querySelector('.barra-cardio'));
-  assert.ok(!cel.className.includes('feito'), 'não é dia treinado');
+  const cel = a.$('[data-dia="' + a.v('hojeISO', dia) + '"]');
+  assert.ok(cel.querySelector('.dc-c'));
+  assert.strictEqual(cel.querySelector('.dc-p'), null, 'não é dia treinado');
   a.fechar();
 });
 
-test('lista do mês e total de cardio', async () => {
-  const hoje = new Date();
+test('o dia mostra o cardio junto do treino, e o mês soma o cardio', async () => {
+  const agora = agoraEstavel();
+  const hoje = new Date(agora);
   const d1 = new Date(hoje.getFullYear(), hoje.getMonth(), 4, 7).getTime();
   const d2 = new Date(hoje.getFullYear(), hoje.getMonth(), 5, 7).getTime();
-  const a = await app({ estado: {
+  const a = await app({ agora: agora, estado: {
     logs: {}, done: [{ day: 'A', t: d1, sid: d1, dur: 50 * 60000 }],
     cardio: [
       { t: d1 + 3600000, m: 'bike', min: 20, i: 'leve' },
@@ -120,13 +117,17 @@ test('lista do mês e total de cardio', async () => {
   } });
   a.aba('dias');
 
-  assert.strictEqual(a.$$('.sessrow .tag.card-t').length, 1, 'a sessão do dia 4 teve cardio junto');
-  const totais = a.$$('.mediasem').map(function (x) { return x.textContent.replace(/\s+/g, ' '); });
-  const linha = totais.find(function (x) { return /cardio/.test(x); });
-  assert.ok(linha, totais.join(' | '));
-  assert.ok(/2 sessões de cardio/.test(linha), linha);
-  assert.ok(/50 minutos no mês/.test(linha), linha);
-  assert.ok(/1 em dia sem musculação/.test(linha), linha);
+  const c = a.vJ('ctx.mes').cardio;
+  assert.strictEqual(c.n, 2, 'duas sessões de cardio');
+  assert.strictEqual(c.min, 50, '50 minutos no mês');
+  assert.strictEqual(c.so, 1, 'uma em dia sem musculação');
+  const tela = a.$$('.dm-tres').map(function (x) { return x.textContent; }).join(' | ');
+  assert.ok(/2sessões/.test(tela) && /50 min/.test(tela) && /1em dia sem musculação/.test(tela), tela);
+
+  a.v('ctx.abreDia', d1);
+  await a.esperar();
+  assert.strictEqual(a.$$('[data-a="dia-sessao"]').length, 1, 'o dia 4 tem o treino');
+  assert.ok(/depois do treino/.test(a.texto('[data-a="dia-cardio"]')), 'e o cardio, dito depois do treino');
   a.fechar();
 });
 

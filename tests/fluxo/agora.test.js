@@ -1388,10 +1388,10 @@ test('o dia mudo é inalcançável PELA FOLHA, e o chão é quem guarda isso', a
 // A FOLHA de pôr o dia em dia — a tela
 // ---------------------------------------------------------------------------
 
-test('Dias lista os dias e abre a folha de pôr em dia', async () => {
-  // Dias é "o LUGAR" da folha (§1.2), e o que o lugar oferece é a lista do que
-  // aconteceu com a porta para corrigir cada dia. Os dias SEM registro aparecem
-  // também: um dia sem registro é o caso de uso inteiro da peça.
+test('Dias mostra a comida de cada dia e abre a folha de pôr em dia', async () => {
+  // Dias é "o LUGAR" da folha (§1.2). Pela D, cada célula passada leva a barra
+  // da comida — com marca ou sem —, e o dia aberto tem "Pôr este dia em dia".
+  // Os dias SEM registro aparecem também: são o caso de uso inteiro da peça.
   const agora = agoraEstavel(9, 0);
   const a = await app({ aba: 'dias', agora: agora,
                         estado: { plano: 7, logs: {}, done: [], comidaHist: [] } });
@@ -1400,10 +1400,12 @@ test('Dias lista os dias e abre a folha de pôr em dia', async () => {
   const dias = a.vJ('ctx.diasDeComidaFechados');
   assert.strictEqual(dias.length, 14, 'catorze dias, a mesma janela do portão');
   assert.ok(dias.every(function (d) { return d.tem === false; }), 'nenhum tem registro ainda');
-  assert.ok(dias.every(function (d) { return d.txt === 'sem registro'; }),
-    'e a tela diz isso, em vez de um zero que seria nota');
+  const cel = a.$('[data-dia="' + dias[0].data + '"]');
+  assert.ok(cel.querySelector('.dc-f.sem'), 'a célula diz "sem marca", em vez de um zero que seria nota');
 
-  const porta = a.$('[data-a="poe-' + dias[0].data + '"]');
+  a.clicar(cel);
+  await a.esperar();
+  const porta = a.$('[data-a="dia-poe-em-dia"]');
   assert.ok(porta, 'cada dia é uma porta');
   porta.click();
   await a.esperar(60);
