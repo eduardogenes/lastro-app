@@ -1,22 +1,30 @@
 // HOJE — a tela da fusão.
 //
 // É o argumento inteiro do merge numa tela só: o pré-treino das 5h45 e a
-// sessão das 6h15 são a MESMA sequência, e ver as duas coisas em eixos
-// separados era o que fazia parecerem dois apps. Aqui há uma timeline, ordenada
-// por relógio, com refeição e treino na mesma espinha.
+// sessão das 6h15 são a MESMA sequência. A comida de hoje é uma lista de
+// linhas, ordenada por relógio, com refeição e treino na mesma espinha (a D,
+// `momento-2.html` e `agora-descanso.html`).
 //
 // A ordem das perguntas é lei 1 do sistema: "e agora?" antes de "como está o
-// dia?" antes de "o que falta?". Por isso o cartão-foco vem primeiro, o bloco
-// de energia depois e a lista por último.
+// dia?". Por isso o cartão vem primeiro e as linhas depois. Cada linha abre no
+// lugar com o que o cartão teria, e um toque grava.
+//
+// Saíram daqui, pelo desenho: o bloco de energia com os macros (nenhuma tarefa
+// da D o pede; a adesão se conta em dias e marcas, não em kcal registradas), o
+// "···" de editar a refeição e o "+ adicionar refeição" (o plano mora em
+// Prescrição, onde os dois continuam).
 
 import {
-  CartaoFoco, GradeMetricas, HeroMetrica, Procedencia, Secao, Sparkline, Ticks, useAgora
+  CartaoFoco, Procedencia, Secao, Sparkline, Ticks, useAgora
 } from '../instrumento/primitivos.jsx';
-import { LinhaTimeline } from '../instrumento/timeline.jsx';
-import { fmtDur, fmtHora, fmtInt, fmtLitros } from '../../dominio/formato';
+import { Forma, NOME_DA_MARCA } from '../instrumento/forma.jsx';
+import { fmtDur, fmtHora, fmtHoraDita, fmtInt, fmtLitros } from '../../dominio/formato';
 import {
-  minutosDe, resumoDaRefeicao, totalDaRefeicao, totalDoDia, totalRegistrado
+  minutosDe, resumoDaRefeicao, totalDaRefeicao
 } from '../../dominio/nutricao/calculo';
+
+/** Minutos desde a meia-noite, do relógio que a tela recebe. */
+function minutosDoDia(t) { const d = new Date(t); return d.getHours() * 60 + d.getMinutes(); }
 
 const COPO = 250;
 const COPOS = 14;
@@ -38,9 +46,6 @@ export function Agora({ ctx }) {
     dia, plano, catalogo, diaHoje, comidaDoDia, alta, alvo, sessao, cadenciaTxt,
     refs, posTreino, movidas
   } = ctx.hoje();
-  const registrado = totalRegistrado(plano, catalogo, comidaDoDia, diaHoje.cadencia === 'treino', alta);
-
-  const pctKcal = alvo.kcal ? (registrado.kcal / alvo.kcal) * 100 : 0;
 
   // O cartão de cima vem da REGRA (`src/dominio/agora.ts`), não daqui.
   //
@@ -58,6 +63,7 @@ export function Agora({ ctx }) {
   const vence = ctx.esperandoDecisao();
   const dias = ctx.quatorzeDias();
   const refDe = id => refs.filter(r => r.id === id)[0] || null;
+  const linha = ctx.linhaDaComida();
   const linhaDoTreino = refs.filter(r => ctx.ehLinhaDeTreino(r))[0] || null;
 
   // A linha acesa da timeline é o ASSUNTO do cartão, e não uma segunda escolha:
@@ -184,9 +190,10 @@ export function Agora({ ctx }) {
 
   // "no plano às 16h00" — e a refeição que o treino empurrou não está no plano
   // naquele horário: dizer que está seria inventar a procedência.
+  const horaDita = t => t.replace(/^0(\d)/, '$1').replace(':', 'h');
   const doPlano = r => movidas.some(m => m.id === r.id)
-    ? 'depois do treino, às ' + r.t.replace(':', 'h')
-    : 'no plano às ' + r.t.replace(':', 'h');
+    ? 'depois do treino, às ' + horaDita(r.t)
+    : 'no plano às ' + horaDita(r.t);
 
   const f = cartao();
 
@@ -252,63 +259,97 @@ export function Agora({ ctx }) {
         </div>
       </Secao>
 
-      <Secao rotulo="energia" nota={diaHoje.previsto ? 'previsão · confirme no topo' : null}>
-        <HeroMetrica
-          rotulo="registrado"
-          meta={`alvo ${fmtInt(alvo.kcal)} kcal`}
-          valor={fmtInt(registrado.kcal)}
-          unidade="kcal"
-          progresso={pctKcal}
-        >
-          <GradeMetricas
-            colunas={3}
-            celulas={[
-              { k: 'p', rotulo: 'proteína', valor: `${Math.round(registrado.p)}`, nota: `de ${Math.round(alvo.p)} g` },
-              { k: 'c', rotulo: 'carboidrato', valor: `${Math.round(registrado.c)}`, nota: `de ${Math.round(alvo.c)} g` },
-              { k: 'g', rotulo: 'gordura', valor: `${Math.round(registrado.g)}`, nota: `de ${Math.round(alvo.g)} g` }
-            ]}
-          />
-        </HeroMetrica>
-        <Procedencia>{cadenciaTxt}</Procedencia>
-      </Secao>
-
-      <Secao rotulo="o dia" nota="toque em ··· para editar">
+      <Secao rotulo="A comida de hoje"
+             nota={fmtInt(alvo.kcal) + ' kcal no plano de ' + (diaHoje.cadencia === 'treino' ? 'treino' : 'descanso')}>
         {/* Não é aviso: é a procedência de um horário que não bate com o
             plano. A refeição que não cabia dentro do treino foi para depois
             dele, e a tela diz isso em vez de deixar o número sem explicação. */}
         {movidas.map(c => (
           <div key={c.id} class="hj-conflito ins-provenance">{c.txt}</div>
         ))}
-        <div>
-          {refs.map((r, i) => {
+        <ul class="ag-linhas">
+          {refs.map(r => {
             const treino = ctx.ehLinhaDeTreino(r);
-            const feito = treino ? sessao.feita : !!comidaDoDia.done[r.id];
-            const t = totalDaRefeicao(r, catalogo, alta, comidaDoDia.escala[r.id] ?? 1);
+            const quando = comidaDoDia.done[r.id];
+            const esc = comidaDoDia.escala[r.id] ?? 1;
+            const como = comidaDoDia.como && comidaDoDia.como[r.id];
+            const estado = treino
+              ? (sessao.feita ? 'tudo' : minutosDe(r.t) > minutosDoDia(agora) ? 'futuro' : 'sem')
+              : quando ? (como || (esc === 0.5 ? 'metade' : 'tudo'))
+              : emFoco != null && r.id === emFoco ? 'agora'
+              : minutosDe(r.t) > minutosDoDia(agora) ? 'futuro' : 'sem';
+            const t = treino ? null : totalDaRefeicao(r, catalogo, alta, esc);
+            const dir = treino ? (sessao.valor || sessao.meta)
+              : quando ? NOME_DA_MARCA[estado] + ' · ' + fmtHoraDita(quando)
+              : estado === 'futuro' ? fmtInt(t.kcal) + ' kcal'
+              : NOME_DA_MARCA[estado];
+            const aberta = !treino && linha.aberta === r.id;
             return (
-              <LinhaTimeline
-                key={r.id}
-                hora={r.t}
-                nome={treino ? (sessao.nome || 'Treino ' + diaHoje.treino) : r.n}
-                /* "pós-treino" não é uma refeição, é um PAPEL que uma refeição
-                   de relógio acumula — de manhã o café, à tarde o almoço, à
-                   noite o jantar. Por isso é selo, e não nome. */
-                selo={r.id === posTreino ? 'pós-treino' : null}
-                valor={treino ? sessao.valor : fmtInt(t.kcal) + ' kcal'}
-                resumo={treino ? sessao.resumo : resumoDaRefeicao(r, catalogo, alta, comidaDoDia.escala[r.id] ?? 1)}
-                meta={treino ? sessao.meta
-                  : `P ${Math.round(t.p)} · C ${Math.round(t.c)} · G ${Math.round(t.g)}`}
-                feito={feito}
-                agora={emFoco != null && r.id === emFoco}
-                cor={emFoco != null && r.id === emFoco ? 'acid' : null}
-                aoMarcar={treino ? null : () => ctx.marcaRefeicao(r.id)}
-                aoAbrir={() => treino ? ctx.vaiPara('treino') : ctx.abreRefeicao(r.id)}
-                aoEditar={treino ? null : () => ctx.editaRefeicao(r.id)}
-                ultima={i === refs.length - 1}
-              />
+              <li key={r.id} class={'ag-l ' + estado + (aberta ? ' aberta' : '')}>
+                <button class="ag-l-b" data-a={'linha-' + r.id} aria-expanded={treino ? undefined : (aberta ? 'true' : 'false')}
+                        onClick={() => treino ? ctx.vaiPara('treino') : ctx.abreLinhaDaComida(r.id)}>
+                  <Forma marca={estado} />
+                  <span class="ag-l-h">{r.t.replace(/^0(\d)/, '$1').replace(':', 'h')}</span>
+                  <span class="ag-l-n">
+                    {treino ? (sessao.nome || 'Treino ' + diaHoje.treino) : r.n}
+                    {r.id === posTreino && <small>pós-treino</small>}
+                  </span>
+                  <span class="ag-l-s">{dir}</span>
+                </button>
+                {aberta && (
+                  <div class="ag-l-ab">
+                    <p class="ins-body-xs ins-t3 ag-l-proc">{doPlano(r)}</p>
+                    <p class="ins-body-sm ins-t2 ag-l-itens">
+                      {resumoDaRefeicao(r, catalogo, alta, esc)} · {fmtInt(t.kcal)} kcal
+                    </p>
+                    {quando ? (
+                      <div class="ag-l-feita">
+                        <span class="ins-body-sm ins-t2">{NOME_DA_MARCA[estado]}, marcado às {fmtHoraDita(quando)}, neste aparelho</span>
+                        <button class="ins-btn-secondary" data-a={'desfaz-' + r.id}
+                                onClick={() => ctx.marcaLinhaDaComida(r.id, 'desfaz')}>Desfazer</button>
+                      </div>
+                    ) : linha.pergunta ? (
+                      <div class="ag-l-perg">
+                        <p class="ins-body ins-t1">Sabe o que comeu no lugar?</p>
+                        <div class="ag-l-btns">
+                          <button class="ins-btn-secondary" data-a={'fora-' + r.id}
+                                  onClick={() => ctx.marcaLinhaDaComida(r.id, 'fora')}>Sei o que comi</button>
+                          <button class="ins-btn-secondary" data-a={'nsei-' + r.id}
+                                  onClick={() => ctx.marcaLinhaDaComida(r.id, 'nsei')}>Não sei</button>
+                          <button class="ins-btn-secondary" data-a={'nao-' + r.id}
+                                  onClick={() => ctx.marcaLinhaDaComida(r.id, 'nao')}>Não comi nada</button>
+                        </div>
+                        <p class="ins-body-xs ins-t3">
+                          Sem saber, a refeição conta como marcada e pesa zero na adesão — melhor que um número inventado.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <button class="ins-btn-primary ag-l-tudo" data-a={'tudo-' + r.id}
+                                onClick={() => ctx.marcaLinhaDaComida(r.id, 'tudo')}>Comi tudo</button>
+                        <div class="ag-l-btns">
+                          <button class="ins-btn-secondary" data-a={'metade-' + r.id}
+                                  onClick={() => ctx.marcaLinhaDaComida(r.id, 'metade')}>Metade</button>
+                          <button class="ins-btn-secondary" data-a={'naocomi-' + r.id}
+                                  onClick={() => ctx.marcaLinhaDaComida(r.id, 'pergunta')}>Não comi isso</button>
+                        </div>
+                      </>
+                    )}
+                    {/* As outras porções (¾, 1¼, 1½) moram na folha da refeição:
+                        a linha do desenho só tem a metade. Porta mantida para
+                        não perder a capacidade — registrada como divergência. */}
+                    {!quando && (
+                      <button class="ag-l-lk" data-a={'porcao-' + r.id} onClick={() => ctx.abreRefeicao(r.id)}>
+                        Outra porção
+                      </button>
+                    )}
+                  </div>
+                )}
+              </li>
             );
           })}
-        </div>
-        <button class="ins-btn-add" onClick={ctx.novaRefeicao}>+ adicionar refeição</button>
+        </ul>
+        <Procedencia>{cadenciaTxt}</Procedencia>
       </Secao>
 
       {/* O CARDIO nasce aqui: o Agora é o dono do dado, porque é onde se

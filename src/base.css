@@ -229,8 +229,6 @@ p, .ins-prosa, input, textarea {
 }
 
 /* ---- Tipografia: os papéis do sistema ---------------------------------- */
-
-.ins-metric-xl { font: 600 52px/.9  var(--ins-fonte); letter-spacing: -.05em; }
 .ins-metric-l  { font: 500 34px/1   var(--ins-fonte); letter-spacing: -.04em; }
 .ins-metric-m  { font: 600 22px/1.1 var(--ins-fonte); letter-spacing: -.03em; }
 .ins-metric-s  { font: 600 19px/1.1 var(--ins-fonte); letter-spacing: -.03em; }
@@ -387,7 +385,6 @@ p, .ins-prosa, input, textarea {
     transition: none !important;
   }
 }
-
 
 /* ============================================================
    SÓ RETRATO

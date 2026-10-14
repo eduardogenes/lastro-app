@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.430 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.435 passando**, zero "unhandled".
 - A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
   `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
@@ -68,7 +68,31 @@ pede atenção do dono.
      o que fica e o efeito (na sequência; no mês), numa frase que abre pelo
      verbo — o `pare()` não tem título separado, e a guarda das frases cobra o
      infinitivo na primeira palavra.
-  2. O Agora de descanso (`agora-descanso.html`).
+  2. **O Agora pela D** (`momento-2.html` + `agora-descanso.html` +
+     protótipo). O Agora de hoje só seguia a D no cartão; o corpo era anterior.
+     Por etapas:
+     - [x] A comida de hoje em linhas que abrem no lugar (estado 2): forma do
+       estado, hora, nome e o que se sabe; aberta, procedência, itens e "Comi
+       tudo / Metade / Não comi isso" (a pergunta com três saídas, decisão 1),
+       "Desfazer" com lápide. Saíram, declarados: o bloco de energia com macros
+       (nenhuma tarefa da D o pede), o "···" e o "+ adicionar refeição" (moram
+       em Prescrição). **Divergências:** "Outra porção" (¾, 1¼, 1½) ficou como
+       porta para a folha da refeição — a linha do desenho só tem a metade;
+       a frase do "Não sei" diz a regra que vale (conta como marcada e pesa
+       zero), não o "deixa de contar" do desenho.
+     - [ ] O cabeçalho do dia: data, hora e a procedência tocável (palpite →
+       folha "É descanso / Vou treinar hoje / Cardio…", estado 4); o seletor
+       "previsto · folga" sai.
+     - [ ] A água em linha: "+1 copo", a conta e o desenho da conta, tocar o
+       número corrige; estado ruim (8).
+     - [ ] Os 14 dias como células, com "Pôr ontem em dia" (estado 1).
+     - [ ] A mudança esperando decisão: linha "Decidir" que abre a folha com a
+       conta do volume (estados 6–7).
+     - [ ] A pesagem some depois do café (F42); as fotos em jejum (estado 5).
+     - [ ] O cartão com os três botões no lugar do "abrir e marcar", e a leitura
+       de volta com "Desfazer" (momento 2, estados 1–2).
+     - [ ] O cardio: hoje é seção própria; na D é a folha do palpite (descanso)
+       e o fim das sessões A e D.
   3. §2 da frente 3 — os rótulos (R1–R4), por tela, com captura.
 - **Levar ao dono, sem bloquear:** o "aplicar" oferecido de novo nas mesmas
   semanas depois do passo de ±150 kcal; as sete perguntas do desenhista
@@ -3223,6 +3247,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · O cardio do dia se corrige no lugar (modalidade, minutos, intensidade; carimbo `alt`, instante intocado). 6 mutações, 6 mortas. 1.426 passando.
 - 14/10 · "Não feito" tocável na sessão passada: a série que faltou entra na posição, e o registro novo entra na lista pela ordem do tempo. 8 mutações, 8 mortas (uma viva até ganhar o caso da posição pulada). 1.430 passando. Dias fechado no que tem desenho.
 - 14/10 · **Regra do cartão de cima corrigida pelo desenho:** a regra 5 ("nada na janela, o cartão é a próxima coisa do dia") era leitura minha, declarada, e a entrega de descanso da D a desfez em dois casos (10h40 com almoço às 12h30; 14h10 com lanche às 16h — "nenhum cartão"). Refeição só é cartão dentro da janela de 30 min; o exemplo das 5h20 do momento 2 não precisava da generalização (pré-treino a 25 min). 10 casos reescritos, 2 mutações, 2 mortas.
+- 14/10 · **Agora pela D, etapa 1:** a comida de hoje em linhas que abrem no lugar. Energia com macros, timeline, "···" e "+ adicionar refeição" saem (o plano mora em Prescrição). 6 casos reescritos, 5 novos; 11 mutações, 11 mortas (duas vivas até ganharem caso: o verbo sobre refeição já marcada a desmarcaria, e tocar de novo não fechava a linha). Timeline, `HeroMetrica` e o CSS deles removidos. 1.435 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

@@ -64,13 +64,16 @@ test('HOJE mostra comida e treino na MESMA timeline, em ordem de relógio', asyn
   // de treino nenhuma — o teste passava seis dias por semana e quebrava no
   // sétimo. Quem afirma "treino e comida na mesma lista" semeia o treino.
   const a = await app({ aba: 'agora', estado: { cadencia: ['treino','treino','treino','treino','treino','treino','treino'] } });
-  const linhas = a.$$('.ins-tl');
+  const linhas = a.$$('.ag-l');
   assert.ok(linhas.length >= 5, 'as refeições do dia estão na tela: ' + linhas.length);
 
-  const horas = linhas.map(l => l.querySelector('.ins-tl-hora').textContent);
-  assert.deepStrictEqual(horas, horas.slice().sort(), 'ordenadas por relógio');
+  const minutos = linhas.map(l => {
+    const [h, m] = l.querySelector('.ag-l-h').textContent.split('h');
+    return +h * 60 + +m;
+  });
+  assert.deepStrictEqual(minutos, minutos.slice().sort((x, y) => x - y), 'ordenadas por relógio');
 
-  const nomes = linhas.map(l => l.querySelector('.ins-tl-nome').textContent);
+  const nomes = linhas.map(l => l.querySelector('.ag-l-n').textContent);
   assert.ok(nomes.some(n => /pré-treino/i.test(n)), 'a refeição está lá: ' + nomes.join(' · '));
   assert.ok(nomes.some(n => /peito|dorsais|quadríceps|espessura|deltoides|posterior/i.test(n)),
     'e o treino está na mesma lista, pelo nome da sessão: ' + nomes.join(' · '));
@@ -98,19 +101,25 @@ test('o cartão-foco responde "e agora?" antes de qualquer resumo', async () => 
   // A sobrancelha é a procedência do cartão, não "agora" de novo (§1.1).
   assert.strictEqual(a.texto('.ins-foco .ins-label'), 'no plano às 12h30', a.texto('.ins-foco .ins-label'));
 
-  // o bloco de energia vem DEPOIS do foco, nunca antes
+  // as linhas do dia vêm DEPOIS do foco, nunca antes
   const html = a.doc.getElementById('app').innerHTML;
-  assert.ok(html.indexOf('ins-foco') < html.indexOf('ins-hero'), 'resumo não pode vir antes da próxima ação');
+  assert.ok(html.indexOf('ins-foco') < html.indexOf('ag-linhas'), 'a lista não pode vir antes da próxima ação');
   a.fechar();
 });
 
-test('marcar uma refeição soma no registrado e persiste', async () => {
+test('marcar uma refeição pela linha grava e persiste', async () => {
+  // O bloco de energia saiu pela D (a adesão se conta em marcas e dias). O que
+  // este caso guarda é o dado: o toque na linha aberta grava no dia, e o dia
+  // vai para o disco carimbado com a data.
   const a = await app({ aba: 'agora' });
-  const antes = a.texto('.ins-metric-xl');
-  a.clicar('.ins-tl .ins-caixa');
+  const linha = a.$$('.ag-l').filter(function (l) { return l.querySelector('.ag-l-b').getAttribute('data-a') !== 'linha-treino'; })[0];
+  const id = linha.querySelector('.ag-l-b').getAttribute('data-a').replace('linha-', '');
+  a.clicar(linha.querySelector('.ag-l-b'));
   await a.esperar();
-  assert.notStrictEqual(a.texto('.ins-metric-xl'), antes, 'o kcal registrado subiu');
+  a.clicar('[data-a="tudo-' + id + '"]');
+  await a.esperar();
   assert.ok(Object.keys(a.S().dia.done).length === 1, 'ficou gravado no dia');
+  assert.ok(/comi tudo/.test(a.texto('[data-a="linha-' + id + '"]')), 'e a linha diz: ' + a.texto('[data-a="linha-' + id + '"]'));
   // o salvamento é debounced em 700 ms: sem esperar, o disco ainda está vazio
   await a.esperar(800);
   assert.strictEqual(a.gravado().dia.data, a.S().dia.data, 'e foi para o disco carimbado com a data');
@@ -135,8 +144,14 @@ test('a água sobe e desce no toque', async () => {
 });
 
 test('abrir uma refeição mostra o que tem dentro e o ajuste só de hoje', async () => {
+  // A linha abre no lugar (a D); as outras porções — ¾, 1¼, 1½ — continuam na
+  // folha da refeição, pela porta "Outra porção" da linha aberta.
   const a = await app({ aba: 'agora' });
-  a.clicar('.ins-tl .ins-tl-toque');
+  const linha = a.$$('.ag-l').filter(function (l) { return !l.classList.contains('tudo') && l.querySelector('[data-a^="linha-"]').getAttribute('data-a') !== 'linha-treino'; })[0];
+  a.clicar(linha.querySelector('.ag-l-b'));
+  await a.esperar();
+  assert.ok(a.$('.ag-l-itens'), 'a linha aberta mostra os itens');
+  a.clicar('[data-a^="porcao-"]');
   // efeito do Preact roda depois do paint; 20 ms não bastam no jsdom
   await a.esperar(150);
   const folha = a.$('.ins-folha');

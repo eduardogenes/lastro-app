@@ -85,30 +85,6 @@ export function Procedencia({ children }) {
 /* ---------- números ---------- */
 
 /**
- * A métrica que a tela é sobre. Número de 52px, trilho de 3px, e a grade
- * de métricas logo abaixo.
- */
-export function HeroMetrica({ rotulo, meta, valor, unidade, progresso, children }) {
-  const pct = Math.max(0, Math.min(100, progresso == null ? 0 : progresso));
-  return (
-    <div class="ins-hero">
-      <div class="ins-hero-h">
-        <span class="ins-label">{rotulo}</span>
-        {meta && <span class="ins-hero-meta">{meta}</span>}
-      </div>
-      <div class="ins-hero-n">
-        <span class="ins-metric-xl">{valor}</span>
-        {unidade && <span class="ins-hero-u">{unidade}</span>}
-      </div>
-      {progresso != null && (
-        <div class="ins-rail"><div class="ins-rail-fill" style={`width:${pct}%`} /></div>
-      )}
-      {children}
-    </div>
-  );
-}
-
-/**
  * Grade de fios com 2, 3 ou 4 colunas. As células depois da primeira ganham
  * recuo à esquerda para os números alinharem opticamente na própria coluna.
  */

@@ -307,7 +307,9 @@ test('alvo de toque não é forçado duas vezes', () => {
   const duas = juntos(['src/componentes.css', 'src/treino.css'])
     .replace(/\/\*[\s\S]*?\*\//g, '');
 
-  ['.ins-tl-toque', '.ex-top'].forEach(sel => {
+  // A linha da timeline saiu com o corpo do Agora da D; a linha da comida que
+  // a substituiu é o alvo do mesmo jeito.
+  ['.ag-l-b', '.ex-top'].forEach(sel => {
     const bloco = duas.match(new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}'));
     assert.ok(bloco, 'sumiu do CSS: ' + sel);
     assert.ok(!/min-height/.test(bloco![1]),

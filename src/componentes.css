@@ -47,14 +47,7 @@
 
 .ins-vazio { margin: 0; padding: var(--ins-3) 0 var(--ins-1); }
 
-/* ---- Hero métrica ----------------------------------------------------- */
-
-.ins-hero-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3); }
-.ins-hero-meta { font: 400 10px/1 var(--ins-fonte); letter-spacing: .06em; color: var(--ins-tinta-3); }
-.ins-hero-n { display: flex; align-items: baseline; gap: var(--ins-2); margin-top: var(--ins-5); }
-.ins-hero-u { font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
-.ins-rail { height: var(--ins-rail); background: var(--ins-fio); margin-top: var(--ins-5); }
-.ins-rail-fill { height: 100%; background: var(--ins-acento); }
+/* ---- Grade de métricas ------------------------------------------------ */
 .ins-grade { margin-top: var(--ins-5); }
 .ins-grade-c { padding: var(--ins-4) 0; }
 .ins-grade-c.recuo { padding-left: var(--ins-5); }
@@ -158,106 +151,6 @@
 .ins-veredito-p { margin: var(--ins-5) 0 0; }
 .ins-veredito .ins-btn-primary { margin-top: var(--ins-6); }
 .ins-veredito-e { margin-top: var(--ins-4); }
-
-/* ---- Linha de timeline ------------------------------------------------ */
-
-.ins-tl { display: flex; align-items: stretch; gap: 0; }
-.ins-tl-hora {
-  flex: 0 0 var(--ins-tap); text-align: right; padding: var(--ins-5) var(--ins-4) 0 0;
-  font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3);
-  letter-spacing: -.02em;
-}
-.ins-tl-espinha { flex: 0 0 9px; position: relative; }
-.ins-tl-espinha::before {
-  content: ''; position: absolute; left: 4px; top: 0; bottom: 0;
-  width: 1px; background: var(--ins-fio);
-}
-.ins-tl.ultima .ins-tl-espinha::before { bottom: auto; height: 24px; }
-.ins-tl-ponto {
-  /* alinhado com o centro da primeira linha do corpo */
-  position: absolute; left: 0; top: 17px;
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--ins-tinta-3); border: 2px solid var(--ins-tela);
-  box-sizing: content-box; margin-left: -2px;
-}
-.ins-tl-ponto.acid  { background: var(--ins-acento); }
-.ins-tl-ponto.amber { background: var(--ins-atencao-tinta); }
-.ins-tl-ponto.coral { background: var(--ins-pare-tinta); }
-
-.ins-tl-corpo {
-  flex: 1; min-width: 0;
-  padding: var(--ins-4) 0 var(--ins-5) var(--ins-5);
-  border-bottom: 1px solid var(--ins-fio);
-}
-.ins-tl.ultima .ins-tl-corpo { border-bottom: 0; }
-.ins-tl.agora .ins-tl-corpo { background: var(--ins-acento-suave); }
-
-.ins-tl-topo { display: flex; align-items: center; gap: var(--ins-4); }
-.ins-tl-toque {
-  flex: 1; min-width: 0; text-align: left;
-  display: flex; align-items: baseline; justify-content: space-between; gap: var(--ins-3);
-  position: relative;
-  /* SEM min-height de propósito. A linha inteira já mede 80px e é ela o alvo —
-     forçar 46 aqui dentro empilhava 16px de ar em cima de um conteúdo de 30.
-     O ::after abaixo resolve o alvo sem repetir aquele erro: estende a área,
-     não a altura.
-     Alvo pequeno é problema real; alvo grande duas vezes é só altura perdida. */
-  padding: var(--ins-1) 0;
-}
-.ins-tl-nome {
-  font: 500 17px/1.3 var(--ins-fonte); letter-spacing: -.01em;
-  color: var(--ins-tinta);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-/* O papel que a linha acumula hoje — "pós-treino" na refeição que o recebeu.
-   Mono e apagado: é rótulo de estrutura, não parte do nome. `flex: 0 0 auto`
-   para o nome ceder primeiro, porque o selo é a informação mais curta e a que
-   não sobrevive a um corte. */
-.ins-tl-selo {
-  flex: 0 0 auto;
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-tinta-3); white-space: nowrap;
-}
-.ins-tl-valor {
-  flex: 0 0 auto;
-  font: 500 14px/1 var(--ins-fonte); color: var(--ins-tinta-3); letter-spacing: -.02em;
-}
-/* Uma linha, com reticências. A linha da timeline responde "o que é isto e já
-   foi feito"; o que TEM dentro é assunto da folha. Sem o corte, o almoço com
-   seis itens quebrava em três linhas e a mesma lista variava de 88 a 130px de
-   altura — altura imprevisível é pior que informação cortada. */
-.ins-tl-resumo {
-  font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-3); margin-top: 2px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-/* Nível 4: esta linha carrega os macros da refeição — P, C e G —, e sobre a
-   superfície ácida da linha de agora o nível 5 dava 2,9:1, o pior contraste do
-   app. Número não é dica. */
-.ins-tl-meta {
-  font: 400 10px/1.35 var(--ins-fonte); letter-spacing: .06em;
-  color: var(--ins-tinta-3); margin-top: var(--ins-1);
-}
-/* Alinhado ao topo, na altura do nome: com align-self esticado ele centrava
-   verticalmente e ficava flutuando ao lado do resumo, longe do objeto que
-   edita. */
-/* 30 -> 44 de alvo, crescendo para os lados. Os 7px da esquerda saem do
-   `.ins-tl-toque`, que tem 227 — 3% dele por 47% deste é troca boa. */
-.ins-tl-toque::after { content: ""; position: absolute; inset: -7px 0; }   /* 30 -> 44 */
-.ins-tl-mais::after { content: ""; position: absolute; inset: 0 -7px; }
-.ins-tl-mais {
-  flex: 0 0 30px; align-self: stretch;
-  position: relative;
-  display: flex; align-items: flex-start; justify-content: center;
-  padding-top: var(--ins-6);
-  color: var(--ins-tinta-3); font-size: 17px; line-height: 1; letter-spacing: .08em;
-  border-bottom: 1px solid var(--ins-fio);
-}
-.ins-tl.ultima .ins-tl-mais { border-bottom: 0; }
-
-/* Feito: nome e ponto recuam. O dado continua legível, só para de chamar. */
-.ins-tl.feito .ins-tl-nome { color: var(--ins-tinta-3); }
-.ins-tl.feito .ins-tl-ponto { background: var(--ins-tinta-3); }
 
 /* ---- Linha expansível ------------------------------------------------- */
 
@@ -1355,8 +1248,7 @@ button.ins-linha { border-radius: 0; }
    Antes havia uma regra que zerava o raio de TUDO dentro de #app —
    muleta enquanto as telas em string nasciam com 2 a 12px. Não é mais
    necessária: nenhuma regra do projeto declara raio. */
-.ins-live-dot, .ins-tl-ponto,
-input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
+.ins-live-dot, input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 
 /* ---- O modo de sessão ----
    O invólucro do treino em tela cheia. Ele desenha UMA coisa: a saída.
@@ -1801,3 +1693,34 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 .regua-v.tocado { border-style: dashed; }
 .dia-cardio-ed { display: flex; flex-direction: column; gap: var(--ins-4); padding: var(--ins-2) 0 var(--ins-4); }
 .dia-cardio-c { display: flex; flex-direction: column; gap: var(--ins-2); }
+.df-fut { fill: none; stroke: var(--ins-fio-controle); stroke-width: 1.5; }
+.df-agora { fill: none; stroke: var(--ins-acento); stroke-width: 2.5; }
+
+/* ---- A COMIDA DE HOJE, em linhas (a D, momento-2 e agora-descanso) -------
+   Cada linha: a forma do estado, a hora, o nome e, à direita, o que se sabe
+   dela. A da janela leva o anel do acento; a que passou sem marca, o círculo
+   tracejado — desconhecido, não zero. Aberta, ela é o cartão. */
+.ag-linhas { list-style: none; margin: 0; padding: 0; }
+.ag-l { border-bottom: 1px solid var(--ins-fio); }
+.ag-l:last-child { border-bottom: 0; }
+/* A linha inteira é o alvo: 12 + 22 + 12 passa dos 44 px sem forçar altura. */
+.ag-l-b {
+  width: 100%; padding: var(--ins-5) 0; border-radius: 0;
+  display: grid; grid-template-columns: 22px 48px 1fr auto; align-items: center; gap: var(--ins-3); text-align: left;
+}
+.ag-l-h { font-size: 14px; font-variant-numeric: tabular-nums; color: var(--ins-tinta-2); }
+.ag-l-n { display: flex; flex-direction: column; gap: 1px; font-size: 16px; color: var(--ins-tinta); min-width: 0; }
+.ag-l-n small { font-size: 12px; color: var(--ins-tinta-3); }
+.ag-l-s { font-size: 14px; color: var(--ins-tinta-2); text-align: right; }
+.ag-l.futuro .ag-l-n, .ag-l.futuro .ag-l-s { color: var(--ins-tinta-3); }
+.ag-l.sem .ag-l-s { color: var(--ins-tinta-3); }
+.ag-l.agora .ag-l-s { color: var(--ins-acento-tinta); font-weight: 600; }
+.ag-l-ab { display: flex; flex-direction: column; gap: var(--ins-3); padding: 0 0 var(--ins-5) var(--ins-11); }
+.ag-l-ab p { margin: 0; }
+.ag-l-btns { display: flex; gap: var(--ins-3); flex-wrap: wrap; }
+.ag-l-btns > .ins-btn-secondary { flex: 1 1 0; width: auto; min-width: 0; padding: 0 var(--ins-3); }
+.ag-l-perg { display: flex; flex-direction: column; gap: var(--ins-3); }
+.ag-l-feita { display: flex; align-items: center; gap: var(--ins-3); }
+.ag-l-feita > span { flex: 1 1 auto; min-width: 0; }
+.ag-l-feita > .ins-btn-secondary { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+.ag-l-lk { align-self: flex-start; min-height: var(--ins-tap); font-size: 14px; color: var(--ins-tinta-2); text-decoration: underline; text-underline-offset: 3px; }

@@ -465,7 +465,7 @@ test('a linha acesa da timeline é o assunto do cartão', async () => {
 
   const c = a.vJ('ctx.cartaoDeCima');
   assert.strictEqual(c.k, 'refeicao', 'pré-condição');
-  const acesas = a.$$('.ins-tl.agora');
+  const acesas = a.$$('.ag-l.agora');
   assert.strictEqual(acesas.length, 1, 'uma linha acesa, e só uma');
   assert.ok(acesas[0].textContent.indexOf(a.vJ('ctx.hoje').refs
     .filter(r => r.id === c.id)[0].n) >= 0,
@@ -1679,4 +1679,104 @@ test('a sessão de fotos vira linha quando faz 14 dias, e só então', async () 
   await nova.esperar();
   assert.strictEqual(nova.$('[data-linha="fotos"]'), null, 'antes dos 14 dias não há convite');
   nova.fechar();
+});
+
+// ---------------------------------------------------------------------------
+// A comida de hoje, em linhas que abrem no lugar (a D, `agora-descanso.html`
+// estado 2; `momento-2.html` estados 1 e 5). Um toque grava.
+// ---------------------------------------------------------------------------
+
+async function agoraComLinhas(h, m) {
+  const agora = agoraEstavel(h, m);
+  return app({ aba: 'agora', agora: agora,
+               estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'descanso') } });
+}
+
+test('a linha abre no lugar, e só uma por vez', async () => {
+  const a = await agoraComLinhas(10, 40);
+  a.clicar('[data-a="linha-pos"]');
+  await a.esperar();
+  assert.ok(a.$('[data-a="tudo-pos"]'), 'o café abriu com os três botões');
+  assert.ok(/no plano às 8h00/.test(a.texto('.ag-l-proc')), a.texto('.ag-l-proc'));
+  a.clicar('[data-a="linha-almoco"]');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="tudo-pos"]'), null, 'abrir o almoço fecha o café');
+  assert.ok(a.$('[data-a="tudo-almoco"]'));
+  assert.strictEqual(Object.keys(a.S().dia.done).length, 0, 'abrir não grava nada');
+  a.clicar('[data-a="linha-almoco"]');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="tudo-almoco"]'), null, 'tocar de novo fecha');
+  a.fechar();
+});
+
+test('"Metade" grava a marca com porção ½, como a folha de pôr em dia', async () => {
+  const a = await agoraComLinhas(10, 40);
+  a.clicar('[data-a="linha-pos"]');
+  await a.esperar();
+  a.clicar('[data-a="metade-pos"]');
+  await a.esperar();
+  assert.ok(a.S().dia.done.pos > 0, 'marcado');
+  assert.strictEqual(a.S().dia.escala.pos, 0.5, 'com a porção pela metade');
+  assert.ok(!a.S().dia.como || !a.S().dia.como.pos, 'sem "como": comeu o plano, pela metade');
+  assert.ok(/metade · \d+h\d\d/.test(a.texto('[data-a="linha-pos"]')), a.texto('[data-a="linha-pos"]'));
+  assert.strictEqual(a.$('[data-a="tudo-pos"]'), null, 'e a linha fecha');
+  a.fechar();
+});
+
+test('"Não comi isso" faz a única pergunta, com as três respostas', async () => {
+  // A decisão 1 do dono (06/10): "Não comi" é resposta própria. A pergunta tem
+  // três saídas — sei o que comi (fora), não sei, não comi nada —, e só a
+  // resposta grava.
+  const casos = [['fora', 'fora'], ['nsei', 'nsei'], ['nao', 'nao']];
+  for (const [botao, como] of casos) {
+    const a = await agoraComLinhas(10, 40);
+    a.clicar('[data-a="linha-pos"]');
+    await a.esperar();
+    a.clicar('[data-a="naocomi-pos"]');
+    await a.esperar();
+    assert.strictEqual(Object.keys(a.S().dia.done).length, 0, 'a pergunta ainda não gravou');
+    assert.ok(/Sabe o que comeu no lugar\?/.test(a.texto('.ag-l-perg')));
+    a.clicar('[data-a="' + botao + '-pos"]');
+    await a.esperar();
+    assert.strictEqual(a.S().dia.como.pos, como, botao + ' grava "' + como + '"');
+    assert.ok(a.S().dia.done.pos > 0);
+    a.fechar();
+  }
+});
+
+test('"Desfazer" tira a marca, com lápide, e a linha volta a oferecer os botões', async () => {
+  const a = await agoraComLinhas(10, 40);
+  a.clicar('[data-a="linha-pos"]');
+  await a.esperar();
+  a.clicar('[data-a="metade-pos"]');
+  await a.esperar();
+  a.clicar('[data-a="linha-pos"]');
+  await a.esperar();
+  assert.ok(/marcado às/.test(a.texto('.ag-l-feita')), 'aberta, a linha marcada diz quando');
+  assert.strictEqual(a.$('[data-a="tudo-pos"]'), null, 'e não oferece marcar de novo por cima');
+  // e o verbo recusa sozinho: por baixo, marcar de novo é DESMARCAR
+  a.v('ctx.marcaLinhaDaComida', 'pos', 'tudo');
+  await a.esperar();
+  assert.ok(a.S().dia.done.pos > 0, 'marcar por cima não desfaz a marca');
+  assert.strictEqual(a.S().dia.escala.pos, 0.5, 'nem troca a porção');
+  a.clicar('[data-a="desfaz-pos"]');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.done.pos, undefined, 'a marca saiu');
+  assert.strictEqual(a.S().dia.escala.pos, undefined, 'e a porção da marca também');
+  assert.ok(Object.keys(a.S().apagados).some(k => /pos$/.test(k)), 'com lápide, para o outro aparelho não devolver');
+  assert.ok(a.$('[data-a="tudo-pos"]'), 'a linha volta a oferecer os botões');
+  a.fechar();
+});
+
+test('a linha diz o estado de cada refeição: sem marca, agora, mais tarde', async () => {
+  // 12h10: o café das 8h passou sem marca; o almoço das 12h30 está na janela,
+  // é o cartão e a linha acesa; o lanche das 16h é mais tarde.
+  const a = await agoraComLinhas(12, 10);
+  const classe = id => a.$('[data-a="linha-' + id + '"]').parentNode.className;
+  assert.ok(/\bsem\b/.test(classe('pos')), classe('pos'));
+  assert.ok(/sem marca/.test(a.texto('[data-a="linha-pos"]')), 'desconhecido, não zero');
+  assert.ok(/\bagora\b/.test(classe('almoco')), classe('almoco'));
+  assert.ok(/\bfuturo\b/.test(classe('lanche')), classe('lanche'));
+  assert.ok(/\d+ kcal/.test(a.texto('[data-a="linha-lanche"]')), 'o que vem diz quanto é');
+  a.fechar();
 });

@@ -2402,6 +2402,40 @@ const CTX = {
     queueSave(); render();
   },
   abreRefeicao: function (id) { CTX.abreFolha({ k: 'refeicao', id: id }); },
+
+  // ---------- a linha da comida, aberta no lugar (a D, `agora-descanso.html`
+  // estado 2; `momento-2.html` estados 1 e 5) ----------
+  //
+  // A linha tocada abre ali mesmo com o que o cartão teria: a procedência, os
+  // itens e os três botões. Um toque grava — não há "guardar". Só uma linha
+  // abre por vez, para o dedo nunca acertar o botão de outra refeição.
+  linhaDaComida: function () { return { aberta: view.linhaComida || null, pergunta: !!view.linhaPergunta }; },
+  abreLinhaDaComida: function (id) {
+    view.linhaComida = view.linhaComida === id ? null : id;
+    view.linhaPergunta = false;
+    render();
+  },
+  /**
+   * `k`: `'tudo'`, `'metade'` (a marca com porção ½, como na folha de pôr o dia
+   * em dia), `'fora'`, `'nsei'`, `'nao'` — ou `'pergunta'`, que abre a única
+   * pergunta do "Não comi isso", e `'desfaz'`, que tira a marca.
+   */
+  marcaLinhaDaComida: function (id, k) {
+    const d = diaDeComida();
+    if (k === 'pergunta') { view.linhaPergunta = true; render(); return; }
+    if (k === 'desfaz') {
+      if (!d.done[id]) return;
+      if (d.escala[id] != null) delete d.escala[id];
+      CTX.marcaRefeicao(id);
+      return;
+    }
+    if (d.done[id]) return;                 // marcada: só "Desfazer" muda
+    if (['tudo', 'metade', 'fora', 'nsei', 'nao'].indexOf(k) < 0) return;
+    if (k === 'metade') d.escala[id] = 0.5;
+    else if (d.escala[id] != null && k === 'tudo') delete d.escala[id];
+    view.linhaComida = null; view.linhaPergunta = false;
+    CTX.marcaRefeicao(id, k === 'tudo' || k === 'metade' ? undefined : k);
+  },
   editaRefeicao: function (id) { CTX.abreFolha({ k: 'editaRefeicao', id: id }); },
   novaRefeicao: function () { CTX.abreFolha({ k: 'editaRefeicao', id: null }); },
 

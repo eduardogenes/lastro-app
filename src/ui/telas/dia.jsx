@@ -11,25 +11,7 @@
 
 import { TelaCheia } from '../instrumento/telacheia.jsx';
 import { Procedencia, Secao } from '../instrumento/primitivos.jsx';
-
-const NOME_DA_MARCA = {
-  tudo: 'comi tudo', metade: 'metade', fora: 'fora do plano', nao: 'não comi',
-  nsei: 'não sei', sem: 'sem marca'
-};
-
-/** A forma de cada estado da comida: forma e palavra, não só cor (a legenda da D). */
-function Forma({ marca }) {
-  return (
-    <svg class={'df ' + marca} viewBox="0 0 20 20" aria-hidden="true">
-      {marca === 'tudo' && <><circle cx="10" cy="10" r="8" class="df-cheio" /><path d="M6 10.5l3 3 5-6" class="df-tinta" /></>}
-      {marca === 'metade' && <><circle cx="10" cy="10" r="8" class="df-fio" /><path d="M10 2a8 8 0 0 1 0 16z" class="df-cheio" /></>}
-      {marca === 'fora' && <><circle cx="10" cy="10" r="8" class="df-fio" /><path d="M4.5 15.5l11-11" class="df-traco" /></>}
-      {marca === 'nao' && <><circle cx="10" cy="10" r="8" class="df-fio" /><path d="M5.5 10h9" class="df-traco" /></>}
-      {marca === 'nsei' && <><circle cx="10" cy="10" r="8" class="df-trac" /><text x="10" y="14" text-anchor="middle" class="df-q">?</text></>}
-      {marca === 'sem' && <circle cx="10" cy="10" r="8" class="df-trac" />}
-    </svg>
-  );
-}
+import { Forma, NOME_DA_MARCA } from '../instrumento/forma.jsx';
 
 export function Dia({ ctx }) {
   const d = ctx.diaAberto();
