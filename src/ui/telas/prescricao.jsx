@@ -43,8 +43,10 @@ const SEMANA = [
   { rot: 'sáb', i: 6 }
 ];
 
+// A frequência das compras não é conhecida: a tela pergunta o horizonte em vez
+// de supor (a D, estado 8), e "outro" aceita o número que for.
 const HORIZONTES = [
-  { k: 7, t: '7 dias' }, { k: 14, t: '14 dias' }, { k: 30, t: '30 dias' }
+  { k: 3, t: '3 dias' }, { k: 7, t: '7 dias' }, { k: 15, t: '15 dias' }, { k: 'outro', t: 'outro' }
 ];
 
 function Regra({ r, aberta, aoAbrir }) {
@@ -113,7 +115,9 @@ function Biblioteca({ ctx, busca }) {
 }
 
 function Compras({ ctx }) {
-  const { linhas, previsao, dias, comprado } = ctx.compras();
+  const { linhas, previsao, dias, comprado, foraDaPrevisao } = ctx.compras();
+  const fixo = HORIZONTES.some(h => h.k === dias);
+  const [outro, setOutro] = useState(false);
   const porCat = CATEGORIAS
     .map(([k, rotulo]) => [rotulo, linhas.filter(l => l.cat === k)])
     .filter(([, l]) => l.length);
@@ -122,9 +126,21 @@ function Compras({ ctx }) {
     <>
       <Chips
         opcoes={HORIZONTES}
-        valor={dias}
-        onMuda={ctx.setHorizonteCompras}
+        valor={outro || !fixo ? 'outro' : dias}
+        onMuda={k => {
+          if (k === 'outro') { setOutro(true); return; }
+          setOutro(false);
+          ctx.setHorizonteCompras(k);
+        }}
       />
+      {(outro || !fixo) && (
+        <label class="pr-horizonte">
+          <input class="ins-input" type="text" inputmode="numeric" data-a="compras-dias"
+                 value={dias} aria-label="dias até a próxima compra"
+                 onChange={e => ctx.setHorizonteCompras(e.currentTarget.value)} />
+          <span class="ins-body-sm ins-t2">dias até a próxima compra</span>
+        </label>
+      )}
       <Procedencia>
         previsão pela semana típica · {previsao.treino} de treino e {previsao.descanso} de
         descanso em {dias} dias. A rotação decide qual treino vem; a cadência só
@@ -153,6 +169,12 @@ function Compras({ ctx }) {
           </div>
         </div>
       ))}
+
+      <Procedencia>
+        {foraDaPrevisao.length > 0 && <>Dias de alta demanda não entram nesta previsão: {
+          foraDaPrevisao.join(', ')} {foraDaPrevisao.length === 1 ? 'não aparece' : 'não aparecem'} aqui. </>}
+        O que você marca como comprado fica guardado.
+      </Procedencia>
     </>
   );
 }
@@ -179,6 +201,7 @@ export function Prescricao({ ctx }) {
   const plano = ctx.planoCompleto();
   const resumo = ctx.resumoDoPlano();
   const vazio = ctx.enderecoVazio();
+  const ultima = ctx.ultimaQueEntrou();
 
   return (
     <>
@@ -286,6 +309,7 @@ export function Prescricao({ ctx }) {
       {esperando.length === 0 && venceram.length === 0 && (
         <Secao rotulo="O que espera decisão">
           <Vazio>Nenhuma mudança esperando decisão.</Vazio>
+          {ultima && <p class="ins-body-sm ins-t2 pr-explica" data-a="ultima-que-entrou">{ultima}</p>}
           <p class="ins-body-sm ins-t3 pr-explica">
             O que você mudar num treino aparece aqui depois que a sessão fechar.
           </p>
@@ -450,16 +474,21 @@ export function Prescricao({ ctx }) {
       </>}
 
       {modo === 'comida' && <>
-      <Secao rotulo="As refeições" nota="a edição vale para todo dia">
+      {/* Os horários são os DO PLANO, não os que ele costuma comer: o previsto
+          é a prescrição, e o mundo dele aparece no registro do dia (a D,
+          estado 7). Mudar uma quantidade vale daqui para a frente e nunca
+          reescreve dia passado (F288). */}
+      <Secao rotulo="As refeições" nota="a edição vale daqui para a frente">
         <div class="ins-lista">
           {plano.map(r => (
-            <button key={r.id} class="ins-linha" onClick={() => ctx.editaRefeicao(r.id)}>
+            <button key={r.id} class="ins-linha" data-a={'refeicao-' + r.id} onClick={() => ctx.editaRefeicao(r.id)}>
               <span class="ins-linha-n">
-                <span class="ins-linha-t">{r.n}</span>
+                <span class="ins-linha-t">{r.t} · {r.n}</span>
+                {r.itensTxt && <span class="ins-linha-s pr-itens">{r.itensTxt}</span>}
                 <span class="ins-linha-s">
-                  {r.t} · {r.quando === 'sempre' ? 'todo dia'
+                  {r.quando === 'sempre' ? 'todo dia'
                     : r.quando === 'treino' ? 'só em dia de treino' : 'só em dia de alta'}
-                  {' · '}{r.itens.length} {r.itens.length === 1 ? 'item' : 'itens'}
+                  {r.meu && <> · <b class="pr-meu">criada por você</b></>}
                 </span>
               </span>
               <span class="ins-linha-v">{r.kcal} kcal</span>
@@ -487,6 +516,23 @@ export function Prescricao({ ctx }) {
         <Procedencia>
           somado do plano, não do que foi comido — o registrado do dia fica em HOJE
         </Procedencia>
+        <div class="ins-lista pr-plano-fim">
+          <div class="ins-linha">
+            <span class="ins-linha-n">
+              <span class="ins-linha-t">Ajuste acumulado</span>
+              <span class="ins-linha-s" data-a="ajuste-acumulado">{resumo.ajuste}</span>
+            </span>
+          </div>
+          <div class="ins-linha">
+            <span class="ins-linha-n">
+              <span class="ins-linha-t">Em dia de treino à tarde ou à noite</span>
+              <span class="ins-linha-s">
+                o pré e o treino andam junto; a refeição que cai dentro do treino vai
+                para {resumo.folga} min depois
+              </span>
+            </span>
+          </div>
+        </div>
       </Secao>
       </>}
 

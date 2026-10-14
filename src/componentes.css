@@ -1824,3 +1824,9 @@ button.ins-linha { border-radius: 0; }
 .pr-vazio-arq { position: relative; cursor: pointer; }
 .pr-vazio-arq input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .pr-vazio-b { margin-top: var(--ins-5); width: 100%; }
+
+/* ---- O plano alimentar (a D, prescricao, estado 7) ----------------------- */
+.pr-meu { font-weight: 600; color: var(--ins-acento); }
+.pr-plano-fim { margin-top: var(--ins-6); }
+.pr-horizonte { display: flex; align-items: center; gap: var(--ins-4); margin-top: var(--ins-4); }
+.pr-horizonte input { width: 88px; }

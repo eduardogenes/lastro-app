@@ -56,7 +56,7 @@ import {
   refeicoesDeHoje, posTreinoDe, refeicoesMovidas, duracaoDaSessao, minutosDe,
   fechaDia, aderenciaDoDia, padraoPorRefeicao, janelaDoHistorico, diasInterpretaveis, diaInterpretavel,
   aderenciaPorSemana, contagemDaRefeicao, recorteDoHistorico, trocasDeAjuste,
-  poeComidaNoDia, resumoDaRefeicao
+  poeComidaNoDia, resumoDaRefeicao, FOLGA_POS
 } from './dominio/nutricao/calculo';
 import { Exercicio } from './ui/exercicio.jsx';
 import { alvoDoPrograma, seriesDeGrupo, impacto, impactoDoMod as _impactoDoMod,
@@ -6795,10 +6795,24 @@ ligaNavegacao({
 // A biblioteca e o plano. Compras é derivada: some do estado, aparece na tela.
 CTX.planoCompleto = function () {
   const cat = catalogoAlimentos();
+  const doNutri = {};
+  PLANO_BASE.forEach(function (r) { doNutri[r.id] = true; });
   return planoDeComida().slice()
     .sort(function (a, b) { return a.t.localeCompare(b.t); })
     .map(function (r) {
-      return Object.assign({}, r, { kcal: Math.round(totalDaRefeicao(r, cat, true).kcal) });
+      return Object.assign({}, r, {
+        kcal: Math.round(totalDaRefeicao(r, cat, true).kcal),
+        // o que tem dentro, como se lê no prato (a D, prescrição, estado 7):
+        // "pão 35 g · doce de leite 20 g · café 200 ml"
+        itensTxt: (r.itens || []).map(function (it) {
+          const a = cat[it.f];
+          const n = a ? a.n.charAt(0).toLowerCase() + a.n.slice(1) : it.f;
+          return n + ' ' + fmtNum(it.q).replace('.', ',') + ' ' + (a ? a.u : 'g') + (it.alta ? ' só em dia de alta demanda' : '');
+        }).join(' · '),
+        // o momento criado por ele fica marcado como dele, ao lado do que o
+        // nutricionista escreveu: as duas coisas são verdade (F182)
+        meu: !doNutri[r.id]
+      });
     });
 };
 
@@ -6815,6 +6829,7 @@ CTX.planoCompleto = function () {
  */
 CTX.resumoDoPlano = function () {
   const cat = catalogoAlimentos();
+  const n = S.ajuste || 0;
   const plano = planoDeComida();
   const comTreino = totalDoDia(plano, cat, true, false, {});
   const semTreino = totalDoDia(plano, cat, false, false, {});
@@ -6829,7 +6844,10 @@ CTX.resumoDoPlano = function () {
       macros: Math.round(semTreino.p) + ' P · ' + Math.round(semTreino.c) + ' C · ' +
               Math.round(semTreino.g) + ' G'
     },
-    refeicoes: plano.length
+    refeicoes: plano.length,
+    // o saldo dos passos de ±150 kcal que a Semana aplicou
+    ajuste: n ? rotuloDoAjuste().replace(/^ajuste /, '') : 'nenhum passo de ±150 kcal aplicado',
+    folga: FOLGA_POS
   };
 };
 
@@ -6881,10 +6899,28 @@ CTX.compras = function () {
       .filter(function (l) { return !S.compras.removidas[l.f]; }),
     previsao: prev,
     dias: S.compras.dias,
-    comprado: S.compras.comprado
+    comprado: S.compras.comprado,
+    // o que a previsão deixa de fora, dito (a D, prescrição, estado 8): os
+    // dias de alta demanda não se preveem, e o que só entra neles não aparece
+    foraDaPrevisao: (function () {
+      const cat = catalogoAlimentos(), vistos = {};
+      planoDeComida().forEach(function (r) {
+        (r.itens || []).forEach(function (it) { if (it.alta && cat[it.f]) vistos[it.f] = cat[it.f].n.toLowerCase(); });
+      });
+      return Object.keys(vistos).map(function (k) { return vistos[k]; });
+    })()
   };
 };
-CTX.setHorizonteCompras = function (d) { S.compras.dias = d; queueSave(); render(); };
+/**
+ * O horizonte das compras: quantos dias até a próxima. A frequência dele não é
+ * conhecida, então a tela pergunta em vez de supor; "outro" aceita qualquer
+ * número de 1 a 60.
+ */
+CTX.setHorizonteCompras = function (d) {
+  const n = parseInt(d, 10);
+  if (!(n >= 1 && n <= 60)) return;
+  S.compras.dias = n; queueSave(); render();
+};
 CTX.marcaCompra = function (f) {
   if (S.compras.comprado[f]) delete S.compras.comprado[f]; else S.compras.comprado[f] = 1;
   queueSave(); render();
@@ -8915,6 +8951,18 @@ CTX.respondeMudanca = async function (sid, i, permanente, motivo) {
   toast(permanente
     ? (n ? 'Entrou no Treino ' + g.day + '.' : 'A posição não existe mais no programa.')
     : 'Ficou como só daquele dia. O treino registrado não muda.');
+};
+
+/**
+ * A procedência do vazio da fila (a D, prescrição, estado 4): quando foi a
+ * última mudança que entrou no programa. "Fica só naquele dia" não deixa
+ * registro com data, então a frase fala só do que entrou.
+ */
+CTX.ultimaQueEntrou = function () {
+  const log = Array.isArray(S.progLog) ? S.progLog : [];
+  if (!log.length) return null;
+  const t = Math.max.apply(null, log.map(function (x) { return x.t || 0; }));
+  return t ? 'a última mudança que entrou no programa foi em ' + fmtDate(t) : null;
 };
 
 CTX.mudancasQueEsperam = function () {

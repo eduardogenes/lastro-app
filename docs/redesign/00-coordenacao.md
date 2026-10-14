@@ -14,8 +14,8 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.478 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `3c11c18`.
+- Branch `redesenho-do-zero`, suíte verde: **1.485 passando**, zero "unhandled".
+  Nenhum agente trabalhando. Último commit de código: `b85e861`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -65,7 +65,7 @@ pede atenção do dono.
      passado não tem caminho desenhado.
   6. A promessa §11.2 ("a tela não vai pedir isso de novo em outro lugar").
   7. As medições A–D da régua no aparelho (6.z).
-
+  8. A revisão do treinador dentro do app (prescrição, estado 6): como ela chega — texto colado, arquivo, outro? Sem isso não construo a importação com "É a mesma / É outro exercício", porque errar manda histórico para o exercício errado.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
   coração do cardio, barra da comida; hoje abre o Agora), as três leituras
   (dias com treino por semana em média de 4 semanas, cardio, horário de início
@@ -3230,8 +3230,26 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         `MIN_PESAGENS`, o que cada medida pede, e a conta para quem já tem
         histórico em outro aparelho; some com o primeiro registro. As seções de
         registro seguem abaixo (o desenho mostra só a lista). · 11 ✓.
-      - **prescricao:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ~ · 5 ✓ · 6 ~ (conferir a pergunta
-        do nome antes de gravar) · 7 ~ · 8 ~ · **9 ✓ (14/10)** — faltava: um
+      - **prescricao:** 1 ✓ · 2 ✓ · 3 ✓ · **4 ~ (14/10)** — o vazio da fila
+        ganhou "a última mudança que entrou no programa foi em 29/09" (só o que
+        entrou deixa data; "fica só naquele dia" não). **Divergência:** "O que
+        vem de fora" com a data da última revisão de cada agente não existe —
+        o app não guarda revisão do treinador nem do nutricionista; os quatro
+        chips seguem. · 5 ✓ · **6 ✗ (14/10, levar ao dono)** — não há caminho
+        de revisão do treinador dentro do app: um programa novo chega pelo
+        código, com migração que leva o histórico pelos ids (o caso de agosto).
+        Construir a importação com "É a mesma / É outro exercício" depende de
+        como a revisão chega (texto colado? arquivo?), e errar manda histórico
+        para o exercício errado (F300) — não construo às cegas. ·
+        **7 ✓ (14/10)** — cada refeição diz o que tem dentro ("pão Artesano 35 g
+        · doce de leite 20 g…", o condicional à alta demanda dito), o momento
+        criado por ele marcado "criada por você", o ajuste acumulado ("nenhum
+        passo de ±150 kcal aplicado" ou "−300 kcal · 2 passos") e a regra do
+        turno da tarde; a edição "vale daqui para a frente". (Sem "revisão de
+        21/09" nem "Restaurar" aqui: restaurar mora em Ajustes.) ·
+        **8 ✓ (14/10)** — horizonte 3, 7, 15 dias ou "outro" (1 a 60), e a tela
+        diz o que fica fora ("Dias de alta demanda não entram nesta previsão:
+        maltodextrina / dextrose não aparece aqui"). · **9 ✓ (14/10)** — faltava: um
         endereço novo semeava programa e plano em silêncio. Sem registro nenhum
         e sem conta entrada, a Prescrição diz "Este endereço está vazio" e
         oferece achar antes de começar: a conta (leva ao entrar), a cópia de
@@ -3459,6 +3477,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Conferência dos ~ começa. Semana 5: o ramo do corte com o texto do desenho; "incerto" não é mais lido como falta. 2 mutações, 2 mortas. 1.465 passando.
 - 14/10 · Corpo 6 conferido (feito). Corpo 9 construído: a semana sem média diz o que falta e não mostra média falsa (`semanaEmCurso` no domínio). 9 mutações, 9 mortas. 1.472 passando.
 - 14/10 · Prescrição 9: o endereço vazio oferece achar o que existe (conta, cópia, ícone antigo) antes de começar. 7 mutações, 7 mortas. 1.478 passando.
+- 14/10 · Prescrição 4, 7 e 8: a data da última mudança que entrou; o plano com o que tem dentro, o "criada por você" e o ajuste acumulado; as compras com 3/7/15/outro e o que fica fora. 8 mutações, 7 mortas e 1 equivalente (redundância tirada). Prescrição 6 vira pergunta ao dono. 1.485 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
