@@ -3362,10 +3362,25 @@ async function delCardio(t) {
   // Esta lista existe para desfazer um registro errado, e por isso mesmo ela
   // não pode apagar o certo num toque de passagem.
   const c = S.cardio.filter(function (x) { return x.t === t; })[0];
-  // PARE (§3.3), com o número do que sai e o que ele mexe.
   if (!c) return;
-  if (!(await pare({ texto: 'Apagar ' + c.min + ' min de ' + c.m + ' de ' + fmtDate(t) + ' tira ele do placar da semana. O treino do dia não muda. Isso não tem volta.',
-                     sim: 'Apagar o cardio de ' + fmtDate(t) }))) return;
+  // O painel do desenho (a D, `dias.html`, estado 12): o que vai embora, o que
+  // fica no dia — com o "igual a este" quando é igual —, e o efeito na leitura
+  // do mês, com os números de antes e de depois.
+  const mesmoDia = cardioDoDia(t).filter(function (x) { return x !== c; });
+  const fica = mesmoDia.length
+    ? ' Fica ' + mesmoDia.map(function (x) {
+        return 'o cardio das ' + fmtHoraDita(x.t) + (x.m === c.m && x.min === c.min && x.i === c.i ? ', igual a este' : ', ' + x.min + ' min de ' + x.m);
+      }).join(' e ') + '.'
+    : '';
+  const treinoFica = sessoesDoDia(t).length ? ' O treino do dia não muda.' : '';
+  const d0 = new Date(t), ini = new Date(d0.getFullYear(), d0.getMonth(), 1).getTime(), fim = new Date(d0.getFullYear(), d0.getMonth() + 1, 1).getTime();
+  const doMes = S.cardio.filter(function (x) { return x.t >= ini && x.t < fim; });
+  const minMes = doMes.reduce(function (a, x) { return a + x.min; }, 0);
+  const efeito = ' O cardio de ' + MESES[d0.getMonth()] + ' passa de ' + doMes.length + ' para ' + (doMes.length - 1) +
+    (doMes.length - 1 === 1 ? ' sessão' : ' sessões') + ' e de ' + minMes + ' para ' + (minMes - c.min) + ' min.';
+  if (!(await pare({ texto: 'Apagar o cardio de ' + DIAS_CURTOS[d0.getDay()] + ' ' + fmtDate(t) + ' tira 1 sessão de cardio: ' +
+                             c.min + ' min de ' + c.m + ', ' + c.i + '.' + fica + treinoFica + efeito + ' Isso não tem volta.',
+                     sim: 'Apagar o cardio' }))) return;
   lapide(chaveDeCardio({ t: t }));
   S.cardio = S.cardio.filter(c => c.t !== t);
   await save();
@@ -5305,14 +5320,44 @@ async function apagaRegistroDeTreino(t) {
     return a + x.l.sets.filter(Boolean).length;
   }, 0);
 
-  // o aviso diz o que vai junto: apagar o dia e apagar as séries é uma
-  // decisão só, e ela não pode ser tomada sem o número na frente. PARE (§3.3):
-  // o verbo abre a frase e o botão, nos dois casos.
-  const sim = await pare(series
-    ? { texto: 'Apagar este treino tira ' + (series === 1 ? 'a série registrada' : 'as ' + series + ' séries registradas') + ' nele. Isso não tem volta, e vale para os outros aparelhos.',
-        sim: 'Apagar o treino e ' + (series === 1 ? 'a série' : 'as ' + series + ' séries') }
-    : { texto: 'Apagar este registro de treino tira a marca do dia, que não tem série nenhuma. Isso não tem volta, e vale para os outros aparelhos.',
-        sim: 'Apagar o registro de treino' });
+  // O painel do desenho (a D, `dias.html`, estado 13): o que vai embora, com o
+  // número; o que FICA, com o número também, para ele conferir que está
+  // apagando a de cima e não a de baixo; e a resposta que um apagar de treino
+  // sempre levanta — o que acontece com a sequência. Apagar a presença e deixar
+  // as séries deixaria séries órfãs contando volume (F295): vão juntas.
+  const nomeDe = function (x) {
+    return x.livre ? 'o treino fora da prescrição' : diaAberto(x.day) ? 'a aula' : 'o Treino ' + x.day;
+  };
+  const seriesDe = function (x) {
+    return Object.keys(S.logs).reduce(function (n, k) {
+      return n + (S.logs[k] || []).filter(function (l) { return l.sid === x.sid; })
+        .reduce(function (a, l) { return a + l.sets.filter(Boolean).length; }, 0);
+    }, 0);
+  };
+  const dia = DIAS_LONGOS[new Date(m.t).getDay()] + ', ' + fmtDate(m.t);
+  const vai = '1 sessão' + (temHora(m) ? ', aberta às ' + fmtHoraDita(m.t) : '') +
+    ', com ' + (series === 1 ? '1 série' : series + ' séries');
+  const outras = sessoesDoDia(m.t).filter(function (x) { return x !== m; });
+  const fica = outras.length
+    ? ' Fica ' + outras.map(function (x) {
+        const n = seriesDe(x);
+        return nomeDe(x) + (temHora(x) ? ' das ' + fmtHoraDita(x.t) : '') + ', com ' + (n === 1 ? '1 série' : n + ' séries');
+      }).join(' e ') + '.'
+    : '';
+  const ultimo = ultimaDoPlano();
+  const antesDele = S.done.filter(function (x) { return x !== m && x.day && !x.livre; });
+  const novoUltimo = antesDele.length ? antesDele[antesDele.length - 1] : null;
+  const quandoDe = function (x) { return sameDay(x.t, Date.now()) ? 'de hoje' : 'de ' + fmtDate(x.t); };
+  const seq = m.livre
+    ? ' A sequência não muda: treino fora da prescrição não conta nela.'
+    : ultimo === m
+      ? ' A sequência volta um passo: ' + (novoUltimo
+          ? 'o último registrado passa a ser ' + nomeDe(novoUltimo) + ' ' + quandoDe(novoUltimo) + '.'
+          : 'não sobra treino registrado, e o próximo volta a ser o primeiro.')
+      : ' A sequência não muda: o último registrado continua sendo ' + nomeDe(ultimo) + ' ' + quandoDe(ultimo) + '.';
+  const sim = await pare({ texto: 'Apagar ' + nomeDe(m) + ' de ' + dia + ' tira ' + vai + '.' + fica + seq +
+                             ' Isso não tem volta, e vale para os outros aparelhos.',
+                           sim: 'Apagar ' + nomeDe(m) });
   if (!sim) return;
 
   lapide(chaveDeSessao(m));

@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.424 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.425 passando**, zero "unhandled".
 - A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
   `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
@@ -57,8 +57,11 @@ pede atenção do dono.
   feito" ainda não é tocável para lançar a série que faltou (capacidade nova,
   fica na fila).
 - **Fila de construção, na ordem:**
-  1. Dias, o resto: o painel de apagar sessão no texto do desenho (13), "não
-     feito" tocável, cardio em dia passado (capacidades novas).
+  1. Dias, o resto: "não feito" tocável e cardio em dia passado (capacidades
+     novas). Os painéis de apagar sessão (13) e cardio (12) já dizem o que vai,
+     o que fica e o efeito (na sequência; no mês), numa frase que abre pelo
+     verbo — o `pare()` não tem título separado, e a guarda das frases cobra o
+     infinitivo na primeira palavra.
   2. O Agora de descanso (`agora-descanso.html`).
   3. §2 da frente 3 — os rótulos (R1–R4), por tela, com captura.
 - **Levar ao dono, sem bloquear:** o "aplicar" oferecido de novo nas mesmas
@@ -3210,6 +3213,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 13/10 · **Dias: o mês e o dia aberto**, pela terceira entrega da D. 20 casos que liam a estrutura antiga reescritos contra a nova, cada um com a capacidade preservada ou a saída declarada (ponto de parada). 14 mutações, 14 mortas. Achado: o cardio de hoje lançado por engano ficou sem porta de saída até amanhã (vai com a pergunta 7). 1.415 passando.
 - 13/10 · **Lançamento de treino passado** (estados 6–8 de Dias): um toque grava; o resto corrige o registro gravado. 21 casos reescritos, 5 novos (colisão de `sid`, previsto do dia, a conta "eram", o nome ao sair, hora inválida por valor). 17 mutações, 17 mortas. 1.417 passando.
 - 14/10 · **Sessão passada, corrigir no lugar** (estados 3, 4 e 14 de Dias). 8 casos reescritos (um deles era dependente do relógio: "26 horas atrás" cai anteontem logo depois da meia-noite), 7 novos. 17 mutações, 17 mortas. CSS e uma dívida de alvo de toque que saíram junto com o mês antigo. 1.424 passando.
+- 14/10 · Painéis de apagar sessão e cardio pelo desenho (estados 12 e 13): o que vai, o que fica, a sequência, o mês. 6 mutações, 6 mortas. 1.425 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
