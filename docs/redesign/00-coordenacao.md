@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.417 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.424 passando**, zero "unhandled".
 - A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
   `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
@@ -44,10 +44,21 @@ pede atenção do dono.
   anil" — a sessão de hoje mostra a série anterior ao lado, tocável; a folha diz
   isso. Achado de dado consertado: dois treinos sem hora no mesmo dia tinham o
   mesmo `sid` (colidiam na sincronia, e apagar um levava os dois).
+- **Sessão passada com correção no lugar (estados 3, 4 e 14), construída:**
+  começo e fim (o aproximado com pontilhado e "Corrigir" ao lado), cada série
+  um botão; a régua, o teclado da carga e o RIR gravam a cada toque, achando o
+  registro pela chave da sincronia; apagar série pelo painel (vira "não feita"
+  na posição; a última leva o registro, com lápide); falha de gravação deixa a
+  série como está no disco e o toque dito "tocado", com "Tentar de novo".
+  Saídas declaradas: a grade de tempo, volume e recordes, a variação contra a
+  vez anterior (histórico do exercício e Semana) e o cardio do dia (no dia
+  aberto). **Divergências:** "guardada às 6h44" por série não existe no dado (a
+  série não guarda o instante) — a linha diz "Nada mais na sessão muda"; "não
+  feito" ainda não é tocável para lançar a série que faltou (capacidade nova,
+  fica na fila).
 - **Fila de construção, na ordem:**
-  1. Dias, o resto: a sessão passada com correção no lugar (3–4), apagar
-     sessão pelo painel do desenho (13), estado ruim (14), cardio em dia
-     passado (capacidade nova).
+  1. Dias, o resto: o painel de apagar sessão no texto do desenho (13), "não
+     feito" tocável, cardio em dia passado (capacidades novas).
   2. O Agora de descanso (`agora-descanso.html`).
   3. §2 da frente 3 — os rótulos (R1–R4), por tela, com captura.
 - **Levar ao dono, sem bloquear:** o "aplicar" oferecido de novo nas mesmas
@@ -3198,6 +3209,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 
 - 13/10 · **Dias: o mês e o dia aberto**, pela terceira entrega da D. 20 casos que liam a estrutura antiga reescritos contra a nova, cada um com a capacidade preservada ou a saída declarada (ponto de parada). 14 mutações, 14 mortas. Achado: o cardio de hoje lançado por engano ficou sem porta de saída até amanhã (vai com a pergunta 7). 1.415 passando.
 - 13/10 · **Lançamento de treino passado** (estados 6–8 de Dias): um toque grava; o resto corrige o registro gravado. 21 casos reescritos, 5 novos (colisão de `sid`, previsto do dia, a conta "eram", o nome ao sair, hora inválida por valor). 17 mutações, 17 mortas. 1.417 passando.
+- 14/10 · **Sessão passada, corrigir no lugar** (estados 3, 4 e 14 de Dias). 8 casos reescritos (um deles era dependente do relógio: "26 horas atrás" cai anteontem logo depois da meia-noite), 7 novos. 17 mutações, 17 mortas. CSS e uma dívida de alvo de toque que saíram junto com o mês antigo. 1.424 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

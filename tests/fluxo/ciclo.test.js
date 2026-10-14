@@ -118,7 +118,8 @@ test('encerramento automático fica marcado como aproximado', async () => {
   assert.strictEqual(b.S().done[0].fim, 'auto');
   assert.strictEqual(b.S().done[0].dur, 3600 * 1000, 'vai até a última série');
   b.v('abrirSessao', estado.done[0].t);
-  assert.ok(b.texto('.stats span').includes('aproximado'));
+  assert.ok(/aproximado: fechou sem você/.test(b.texto('.ss-tempo')), b.texto('.ss-tempo'));
+  assert.ok(b.$('.ss-aprox'), 'com o pontilhado do palpite');
   b.fechar();
 });
 
@@ -203,11 +204,15 @@ test('finalizar sem nenhuma série oferece descartar', async () => {
   a.fechar();
 });
 
-test('detalhe da sessão mostra pendências e pausa', async () => {
+test('detalhe da sessão mostra o que não foi feito e a pausa', async () => {
+  // Pela D (estado 3), o pulado, o parcial e o não feito viram "não feito" na
+  // POSIÇÃO de cada série — não é falha nem pendência, então não há bloco à
+  // parte com contagem.
   const a = await app();
   await a.v('iniciarSessao');
   a.v('toggle', 0);
-  for (let k = 0; k < a.v('setsFor', a.vJ('treino', 'A').ex[0]); k++) a.preencher(0, k, 40, 10);
+  const n0 = a.v('setsFor', a.vJ('treino', 'A').ex[0]);
+  for (let k = 0; k < n0; k++) a.preencher(0, k, 40, 10);
   a.v('toggle', 1);
   a.preencher(1, 0, 60, 12);
   await a.v('pularEx', 2);
@@ -218,12 +223,14 @@ test('detalhe da sessão mostra pendências e pausa', async () => {
   await a.esperar();
   a.v('abrirSessao', t);
 
-  const pend = a.texto('.pend');
-  assert.ok(/1 pulado/.test(pend), pend);
-  assert.ok(/1 parcial/.test(pend));
-  assert.ok(/não feitos/.test(pend));
-  assert.ok(a.texto('.hwrap .cue').includes('pausa'));
-  assert.ok(a.texto('.stats span').includes('exato'));
+  const d = a.vJ('ctx.detalheDaSessao');
+  const ex = d.exercicios;
+  assert.strictEqual(ex[0].series.filter(function (s) { return s.nao; }).length, 0, 'o primeiro, inteiro');
+  assert.ok(ex[1].series[0].texto && ex[1].series.slice(1).every(function (s) { return s.nao; }), 'o parcial: uma feita, o resto não feito');
+  assert.ok(ex[2].series.every(function (s) { return s.nao; }), 'o pulado: tudo não feito');
+  assert.ok(a.$$('.ss-sv.nf').length > 0, 'e a tela diz "não feito"');
+  assert.ok(a.texto('.tc-nota').includes('pausa'), a.texto('.tc-nota'));
+  assert.ok(/declarad/.test(d.fim.nota) && !/aproximad/.test(d.fim.nota), 'fim exato: ' + d.fim.nota);
   a.fechar();
 });
 

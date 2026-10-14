@@ -762,7 +762,6 @@ button.ins-linha { border-radius: 0; }
 .tc-nota { margin: var(--ins-6) 0 0; }
 .tc-grupos { margin-top: var(--ins-7); }
 .tc-rm { margin-top: var(--ins-10); }
-.tc-h { display: block; margin: var(--ins-10) 0 var(--ins-4); }
 
 .tc-bloco {
   margin-top: var(--ins-6); padding: var(--ins-5);
@@ -771,7 +770,6 @@ button.ins-linha { border-radius: 0; }
 .tc-bloco.atencao { border-color: var(--ins-atencao-fio); }
 .tc-bloco p { margin: var(--ins-3) 0 0; }
 .tc-bloco b { color: var(--ins-tinta); font-weight: 500; }
-.tc-pend { display: flex; flex-direction: column; gap: var(--ins-2); padding: var(--ins-2) 0; }
 
 /* Uma linha de exercício num resumo. */
 .tc-res { padding: var(--ins-5) 0; border-bottom: 1px solid var(--ins-fio); }
@@ -1060,39 +1058,7 @@ button.ins-linha { border-radius: 0; }
    existir: nenhum nome da paleta antiga sobrevive no projeto.
    =========================================================================== */
 
-.cardio-dia {
-  display: flex; gap: var(--ins-5); align-items: baseline;
-  margin-top: var(--ins-7); border-top: 1px solid var(--ins-fio); padding-top: var(--ins-6);
-}
-.cardio-dia b {
-  flex: 0 0 96px;
-  font: 400 10px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ins-tinta-3);
-}
-.cardio-dia span { font: 400 13px/1.5 var(--ins-fonte); color: var(--ins-tinta-3); }
-
 .crule { margin: var(--ins-7) 0 var(--ins-5); }
-
-/* ---- Calendário do mês -------------------------------------------------- */
-.mesnav { display: flex; align-items: center; gap: var(--ins-5); margin-top: var(--ins-7); }
-.mesnav span {
-  flex: 1; text-align: center; text-transform: capitalize;
-  font: 500 15px/1 var(--ins-fonte); letter-spacing: -.01em; color: var(--ins-tinta);
-}
-.mesnav button {
-  background: transparent; border: 1px solid var(--ins-fio); color: var(--ins-tinta-3);
-  font-size: 16px; line-height: 1; padding: var(--ins-4) var(--ins-6); min-height: 40px;
-}
-.mesnav button:disabled { color: var(--ins-tinta-3); }
-
-/* ---- Pendências da sessão ----------------------------------------------- */
-.horario b { color: var(--ins-tinta-3); font-weight: 500; }
-
-.pend { margin-top: var(--ins-7); }
-.pend > div {
-  display: flex; gap: var(--ins-4); align-items: baseline;
-  border-top: 1px solid var(--ins-fio); padding: var(--ins-4) 0;
-}
 
 /* ---- Avisos: âmbar é "preste atenção", ácido é "isto está ativo" -------- */
 .deload {
@@ -1791,3 +1757,45 @@ input[type=range]::-webkit-slider-thumb { border-radius: 50%; }
 .df-trac { fill: none; stroke: var(--ins-fio-controle); stroke-width: 1.5; stroke-dasharray: 2.5 2.5; }
 .df-q { font-size: 11px; fill: var(--ins-tinta-2); }
 .dia-agua { margin: 0 0 var(--ins-4); }
+
+/* ---- A SESSÃO PASSADA, como foi (a D, dias.html, estados 3, 4 e 14) ------
+   Cada série é um botão com o par e o RIR embaixo; a aberta ganha o fio do
+   acento. O fim aproximado leva o pontilhado do palpite. "Não feito" é texto
+   na posição da série, em tinta fraca: não é alarme. */
+.ss-tempo { display: flex; flex-direction: column; gap: var(--ins-3); padding-bottom: var(--ins-4); border-bottom: 1px solid var(--ins-fio); }
+.ss-tempo-l { display: flex; align-items: center; gap: var(--ins-4); }
+.ss-tempo-r { flex: 0 0 64px; }
+.ss-tempo-v { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ss-aprox { text-decoration: underline dotted var(--ins-tinta-3); text-underline-offset: 4px; align-self: flex-start; }
+.ss-tempo-l > .ss-corrige { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
+.ss-tempo-c { display: flex; flex-direction: column; gap: var(--ins-3); }
+.ss-lista { list-style: none; margin: 0; padding: 0; }
+.ss-ex { padding: var(--ins-4) 0; border-bottom: 1px solid var(--ins-fio); }
+.ss-ex-l { display: flex; flex-direction: column; gap: var(--ins-3); }
+.ss-ex-n { display: flex; flex-direction: column; gap: 2px; }
+.ss-series { display: flex; flex-wrap: wrap; gap: var(--ins-2); }
+.ss-sv {
+  min-width: 72px; min-height: var(--ins-tap); padding: var(--ins-2) var(--ins-3);
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 1px solid var(--ins-fio-controle); border-radius: var(--ins-raio-2);
+  font: 500 15px/1.1 var(--ins-fonte); font-variant-numeric: tabular-nums; color: var(--ins-tinta);
+}
+.ss-sv small { font-size: 11px; font-weight: 400; color: var(--ins-tinta-3); }
+.ss-sv.on { border-color: var(--ins-acento); box-shadow: inset 0 0 0 1px var(--ins-acento); }
+.ss-sv:disabled { opacity: 1; }
+.ss-sv.nf { border-style: dashed; color: var(--ins-tinta-3); font-weight: 400; font-size: 13px; }
+.ss-ex-nota { margin: var(--ins-2) 0 0; }
+.ss-ed { margin-top: var(--ins-4); padding: var(--ins-4); border: 1px solid var(--ins-fio); border-radius: var(--ins-raio-4); display: flex; flex-direction: column; gap: var(--ins-3); }
+.ss-ed-h { display: flex; align-items: center; justify-content: space-between; gap: var(--ins-3); }
+.ss-carga {
+  flex: 0 0 auto; min-height: var(--ins-tap); padding: 0 var(--ins-4);
+  border: 1px solid var(--ins-fio-controle); font: 600 19px/1 var(--ins-fonte); font-variant-numeric: tabular-nums;
+}
+.ss-carga span { margin-left: 4px; font-size: 12px; font-weight: 400; color: var(--ins-tinta-3); }
+.ss-ed-faixa { margin: 0; }
+.ss-ed-ok { margin: 0; }
+.ss-ed-falhou { display: flex; flex-direction: column; gap: var(--ins-3); padding: var(--ins-3); border: 1px solid var(--ins-atencao-fio); color: var(--ins-atencao-tinta); border-radius: var(--ins-raio-2); }
+.ss-ed-falhou p { margin: 0; }
+.ss-ed-pe { display: flex; justify-content: space-between; gap: var(--ins-3); }
+.ss-lk { min-height: var(--ins-tap); padding: 0 var(--ins-2); font-size: 14px; color: var(--ins-tinta-2); text-decoration: underline; text-underline-offset: 3px; }
+.regua-v.tocado { border-style: dashed; }

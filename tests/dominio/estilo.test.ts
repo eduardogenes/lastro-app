@@ -1109,7 +1109,7 @@ test('controle menor que o alvo estende a área, ou está na lista de dívida', 
   // controle pequeno NOVO sem extensão reprova na hora. Quando as telas forem
   // reescritas e alguém puder olhar a adjacência, os nomes saem daqui.
   const DIVIDA = ['#timer button', '.dlbtn', '.edbtn', '.edmod button', '.edx-b',
-    '.edx-mv button', '.ins-faixa-b', '.ins-folha-b', '.mesnav button',
+    '.edx-mv button', '.ins-faixa-b', '.ins-folha-b',
     '.progd-mv button', '.setant-b'];
 
   const todo = juntos(FOLHAS.map(f => 'src/' + f)).replace(/\/\*[\s\S]*?\*\//g, '');

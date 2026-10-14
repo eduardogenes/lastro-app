@@ -131,10 +131,10 @@ test('o dia mostra o cardio junto do treino, e o mês soma o cardio', async () =
   a.fechar();
 });
 
-test('detalhe da sessão mostra o cardio do mesmo dia', async () => {
-  // relógio fixo às 8h: o cardio entra uma hora DEPOIS da sessão, e rodando
-  // perto da meia-noite essa hora atravessa o dia — os dois cairiam em datas
-  // diferentes e o bloco do "mesmo dia" ficaria vazio, corretamente
+test('o cardio do mesmo dia mora no dia, não na sessão', async () => {
+  // Saída declarada pela D (`dias.html`, estado 3): a sessão passada abre como
+  // foi, e o cardio daquele dia está no dia aberto, ao lado dela — dito como
+  // "depois do treino". Repetir na sessão seria o mesmo dado em dois lugares.
   const agora = agoraEstavel();
   const t = agora - 2 * DIA;
   const a = await app({ agora: agora, estado: {
@@ -142,10 +142,12 @@ test('detalhe da sessão mostra o cardio do mesmo dia', async () => {
     done: [{ day: 'A', t: t, sid: t, dur: 50 * 60000, fim: 'manual' }],
     cardio: [{ t: t + 3600000, m: 'bike', min: 20, i: 'leve' }]
   } });
+  a.v('ctx.abreDia', t);
+  await a.esperar();
+  assert.ok(/20 min de bike/.test(a.texto('[data-a="dia-cardio"]')), a.texto('[data-a="dia-cardio"]'));
+  assert.ok(/leve/.test(a.texto('[data-a="dia-cardio"]')));
   a.v('abrirSessao', t);
-  const bloco = a.texto('.cardio-dia');
-  assert.ok(/20 min de bike/.test(bloco), bloco);
-  assert.ok(/leve/.test(bloco));
+  assert.strictEqual(a.$('.cardio-dia'), null, 'e a sessão não o repete');
   a.fechar();
 });
 

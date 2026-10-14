@@ -26,9 +26,9 @@ test('detalhe da sessão mostra início e fim', async () => {
     done: [{ day: 'A', t: t, sid: t, dur: 69 * 60000, fim: 'manual' }]
   } });
   a.v('abrirSessao', t);
-  const linha = a.texto('.horario');
-  assert.ok(/06:22/.test(linha), linha);
-  assert.ok(/07:31/.test(linha), 'fim derivado da duração: ' + linha);
+  const linha = a.texto('.ss-tempo');
+  assert.ok(/6h22/.test(linha), linha);
+  assert.ok(/7h31/.test(linha), 'fim derivado da duração: ' + linha);
   a.fechar();
 });
 
@@ -39,9 +39,9 @@ test('sessão em andamento mostra só o começo', async () => {
   a.E('S.done[0].t = ' + emHoje(6, 5));
   const t = a.S().done[0].t;
   a.v('abrirSessao', t);
-  const linha = a.texto('.horario');
-  assert.ok(/começou às/.test(linha), linha);
-  assert.ok(/06:05/.test(linha));
+  const linha = a.texto('.ss-tempo');
+  assert.ok(/Começo/.test(linha) && /6h05/.test(linha), linha);
+  assert.strictEqual(a.vJ('ctx.detalheDaSessao').fim, null, 'em andamento não tem fim');
   a.fechar();
 });
 

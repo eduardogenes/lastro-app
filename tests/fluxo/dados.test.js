@@ -38,8 +38,8 @@ test('todas as telas renderizam com estado antigo', async () => {
 test('sessão sem sid abre no detalhe e mostra traço na duração', async () => {
   const a = await app({ estado: ANTIGO });
   a.v('abrirSessao', ANTIGO.done[0].t);
-  assert.ok(a.$$('.hs').length > 0, 'exercícios do dia aparecem');
-  assert.strictEqual(a.$$('.stats b')[0].textContent, '–', 'aquele tempo nunca foi medido');
+  assert.ok(a.$$('.ss-ex').length > 0, 'exercícios do dia aparecem');
+  assert.strictEqual(a.vJ('ctx.detalheDaSessao').fim.hora, 'não medido', 'aquele tempo nunca foi medido');
   a.fechar();
 });
 
