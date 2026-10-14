@@ -266,6 +266,16 @@ export function completude(
 }
 
 /** A primeira pose sem foto — por onde a sessão continua. Null quando está cheia. */
+/**
+ * O quadro preto (F78): capturar antes de o vídeo ter o primeiro quadro produz
+ * imagem preta, e ele está a três metros. Abaixo deste brilho médio (0 a 255) a
+ * foto não é guardada: a pose volta para o fim da fila.
+ */
+export const BRILHO_DO_PRETO = 12;
+export function quaseTodoPreto(brilho: number | null | undefined): boolean {
+  return typeof brilho === 'number' && brilho < BRILHO_DO_PRETO;
+}
+
 export function proximaPose(
   sessao: SessaoFoto | null | undefined, ordem: PoseId[] | null | undefined
 ): PoseId | null {

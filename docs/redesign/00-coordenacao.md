@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.540 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.545 passando**, zero "unhandled".
 - **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
   versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
   ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
@@ -3363,21 +3363,36 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         isso pediria varrer o cache.) · **11 ✓ (14/10)** — "Ainda não há par. A
         primeira sessão foi em 10/10. A segunda cai em sáb 24/10, daqui a 10
         dias", e quando o par passa a servir à pergunta do nutricionista.
-      - **sessao-fotos:** 1 ~ · **2 ~ (14/10)** — os nove blocos no topo da
+      - **sessao-fotos:** **1 ✓ (14/10)** — o preparo ganhou a ordem das nove,
+        "gire sempre para o mesmo lado", e o toque em começar liga o som (F58).
+        **Divergência:** a pergunta "a 3 m você lê o telefone?" (hipóteses A/B)
+        não entrou: a câmera já mostra o título grande e a voz fala; seria um
+        ajuste guardado a mais sem efeito na tela. · **2 ✓ (14/10)** — os nove blocos no topo da
         câmera, do tamanho de um dedo (a pose atual, as fechadas, a não
         guardada), e a pose dita em voz ao abrir a câmera e a cada pose nova
         ("Pose 2 de 9. Frente duplo bíceps." e o primeiro passo), pela síntese
-        de voz do aparelho; sem ela, a tela segue igual. Falta: a contagem em
-        anel que esvazia e falada ("três, dois, um") — segue número e bipe. ·
+        de voz do aparelho; sem ela, a tela segue igual. A contagem diz "três,
+        dois, um" em voz, junto do bipe (o anel que esvazia não entrou: o número
+        grande fica). ·
         **3 ✓ (14/10)** — o disparo é o som do obturador, um clarão curto e o
         bloco fechando; o alarme do descanso (bipe duplo e vibração), que tocava
-        ali, saiu. A pose que não guardou não ganha nenhum dos três. · 4 ~ ·
-        5 ~ · 6 ~ · 7 ✓ · 8 ~ · **9 ✓ (14/10)** — a sessão
+        ali, saiu. A pose que não guardou não ganha nenhum dos três. ·
+        **4 ✓ (14/10)** — entre poses com giro, "↻ gire 90°" grande na câmera e
+        "Gire 90 graus." na voz, antes da pose. · 5 ~ (a camada de texto da
+        hipótese A: ver o 1) · **6 ✓ (14/10)** — foto com brilho médio abaixo de
+        12 (de 255) não é guardada nem soa como guardada; a pose volta para o fim
+        da fila, o bloco fica tracejado, a tela e a voz dizem ("A foto saiu
+        preta. Esta pose volta no fim. Siga: …"). · 7 ✓ · **8 ✓ (14/10)** — a
+        câmera negada diz o caminho ("Ajustes do iPhone › Safari › Câmera ›
+        Permitir") e que a sessão começa do zero sem perder nada. · **9 ✓ (14/10)** — a sessão
         PARA na pose que não gravou (antes, com o registro recusado, avançava
         como se tivesse gravado), a pose fica "não guardada" com forma diferente
         de "falta", e "Tentar de novo" grava: se o cache recusou, com a foto que
         ficou na memória; se o registro recusou, com a referência no estado. ·
-        10 ~ · 11 ✓.
+        **10 ✓ (14/10)** — o fim virou um bloco: "Sessão guardada · 9 de 9", o
+        tempo do primeiro ao último disparo, o que subiu (ou que fica só aqui),
+        o peso da semana, "Comparar com 07/08 · o par longo" e a pergunta do
+        nutricionista quando o par serve, e a data da próxima. · 11 ✓.
       **A fila sai daqui, dado primeiro:** semana 10, aula 12, sessao-fotos 9,
       prescricao 11; depois os ✗ de tela (corpo 10, comparar 2 e 7, sessão 4 e
       14, sessao-fotos 2–3) e a conferência dos ~.
@@ -3581,6 +3596,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Fila 8: as fotos não seguem mais a refeição, e a hora de cada uma aparece no comparar. 2 mutações, 2 mortas. 1.516 passando.
 - 14/10 · Fila 9: a lousa como foto, com cache próprio, fusão própria e a marca da sessão. 8 mutações, 8 mortas; achado no caminho: duas fotos no mesmo milissegundo dividiriam a chave dos bytes — a versão anda. 1.524 passando.
 - 14/10 · Fila 10: a revisão do treinador colada em texto — domínio, programa do treinador no dado e a tela. 20 mutações, 20 mortas (o limite de parecença viveu até o caso "Rosca direta" × "Rosca martelo"). **A fila das respostas do dono está fechada.** Pedido dele no meio: commits menos fracionados (registrado na memória). 1.540 passando.
+- 14/10 · Sessão de fotos 1, 2, 4, 6, 8 e 10 conferidos e construídos numa peça: ordem das poses e som no começar, contagem falada, giro dito e mostrado, a foto preta que volta no fim, o caminho da câmera negada, o fim com resumo. 9 mutações, 8 mortas e 1 limpeza redundante tirada. 1.545 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

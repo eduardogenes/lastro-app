@@ -59,12 +59,12 @@ function temCache(): boolean {
 }
 
 /** Reduz o que veio da câmera do sistema, no teto do corpo. */
-export function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }> {
+export function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string; brilho?: number | null }> {
   return reduzPara(arquivo, LADO_MAIOR);
 }
 
 /** O mesmo, a partir do quadro vivo da câmera interna. */
-export function reduzDoVideo(v: CanvasImageSource): Promise<{ blob: Blob; ext: string }> {
+export function reduzDoVideo(v: CanvasImageSource): Promise<{ blob: Blob; ext: string; brilho?: number | null }> {
   return reduzPara(v as ImageBitmapSource, LADO_MAIOR);
 }
 

@@ -63,9 +63,14 @@ export function Camera({ ctx }) {
           fecharam, do tamanho de um dedo — o que se lê a três metros. */}
       <div class="cam-blocos" aria-hidden="true">
         {d.pontos.map(p => (
-          <i key={p.id} class={'cam-bloco' + (p.naoGuardada ? ' nao' : p.feita ? ' feita' : '') + (p.atual ? ' atual' : '')} />
+          <i key={p.id} class={'cam-bloco' + (p.naoGuardada ? ' nao' : p.feita ? ' feita' : p.adiada ? ' adiada' : '') + (p.atual ? ' atual' : '')} />
         ))}
       </div>
+      {/* A FOTO PRETA (a D, estado 6): a pose volta no fim, e a voz diz.
+          O GIRO até a pose nova (estado 4): a maior coisa da tela, lida a três
+          metros. */}
+      {d.preta && <p class="cam-preta" role="status">A {d.preta.toLowerCase()} saiu preta. Ela volta no fim.</p>}
+      {d.giro && <p class="cam-giro" aria-live="polite">↻ gire {d.giro}°</p>}
       <div class="cam-quadro">
         <video ref={video} class="cam-video" autoplay playsinline muted />
         {d.clarao && <div class="cam-clarao" aria-hidden="true" />}

@@ -1076,7 +1076,8 @@ test('permissão negada não vira tela quebrada, vira o que fazer a respeito', a
 
   const erro = a.vJ('ctx.cameraViva').erro;
   assert.ok(/negado/.test(erro), erro);
-  assert.ok(/ajustes/.test(erro), 'e diz onde resolver: ' + erro);
+  assert.ok(/Ajustes do iPhone › Safari › Câmera › Permitir/.test(erro), 'e diz onde resolver, com o caminho: ' + erro);
+  assert.ok(/a sessão começa do zero, sem perder nada/.test(erro), 'e que nada se perde: ' + erro);
   assert.strictEqual(a.E('globalThis.__faixasVivas'), 0);
   a.fechar();
 });
@@ -1168,6 +1169,131 @@ test('a pose que não coube não ganha obturador nem clarão: o bloco dela fica 
   assert.ok(bloco.classList.contains('nao'), 'e o bloco dela tem a forma de "não guardada"');
   assert.ok(!bloco.classList.contains('feita'), 'e não a de fechado');
   assert.strictEqual(a.$$('.cam-bloco.nao').length, 1);
+  a.fechar();
+});
+
+test('a foto preta não é guardada: a pose volta no fim da fila, e a voz diz', async () => {
+  // a D, sessao-fotos estado 6 (F78): capturar antes do primeiro quadro do
+  // vídeo dá imagem preta, e ele está a três metros sem como perceber
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  a.v('ctx.setTimerDaCamera', 0);
+  a.E('globalThis.__brilho = 3');
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+
+  assert.strictEqual(a.S().protocolo.sessoes.length, 0, 'nada foi guardado');
+  assert.strictEqual(a.registro.obturador, 0, 'e nem soou como guardada');
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-duplo-biceps', 'a sessão seguiu para a próxima');
+  const c = a.vJ('ctx.cameraViva');
+  assert.strictEqual(c.preta, 'Frente relaxado');
+  assert.strictEqual(c.pontos[0].adiada, true);
+  assert.ok(a.$('.cam-bloco.adiada'), 'o bloco dela marcado, sem contar como feita');
+  assert.ok(/^A foto saiu preta\. Esta pose volta no fim\. Siga: Frente duplo bíceps\.$/.test(a.registro.falas.slice(-1)[0].t),
+    a.registro.falas.slice(-1)[0].t);
+
+  // a próxima foto boa não traz a preta de volta antes da hora
+  a.E('globalThis.__brilho = 128');
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-abdomen-coxa', 'segue a ordem, e a adiada fica para o fim');
+
+  // com todas as outras feitas, ela volta
+  a.E(`const s = S.protocolo.sessoes[0];
+       ['frente-abdomen-coxa','perfil-direito','perfil-direito-postura','costas-relaxado','costas-duplo-biceps','costas-maos-na-cintura']
+         .forEach(function (id, i) { s.fotos[id] = { v: Date.now() + i, ext: 'webp' }; });
+       view.protocolo.pose = 'perfil-esquerdo';`);
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-relaxado', 'no fim, a que saiu preta');
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  assert.ok(a.S().protocolo.sessoes[0].fotos['frente-relaxado'], 'e agora ela é guardada');
+  assert.strictEqual(a.vJ('ctx.cameraViva').pontos[0].adiada, false);
+  a.fechar();
+});
+
+test('entre duas poses com giro, a tela mostra o giro grande e a voz diz', async () => {
+  // a D, sessao-fotos estado 4: "girar é desenho, não frase"
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  a.E(`view.protocolo.pose = 'frente-abdomen-coxa'`);
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  a.v('ctx.setTimerDaCamera', 0);
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  assert.strictEqual(a.vista().protocolo.pose, 'frente-relaxado', 'pré-condição: as anteriores faltam, a próxima é a 1');
+  a.E(`const s = S.protocolo.sessoes[0];
+       s.fotos['frente-relaxado'] = { v: 1, ext: 'webp' }; s.fotos['frente-duplo-biceps'] = { v: 2, ext: 'webp' };
+       view.protocolo.pose = 'frente-abdomen-coxa'; delete s.fotos['frente-abdomen-coxa'];`);
+  a.v('ctx.disparaCamera');
+  await a.esperar(150);
+  assert.strictEqual(a.vista().protocolo.pose, 'perfil-direito');
+  assert.strictEqual(a.vJ('ctx.cameraViva').giro, 90);
+  assert.strictEqual(a.texto('.cam-giro'), '↻ gire 90°');
+  assert.ok(/^Gire 90 graus\. Pose 4 de 9\. Perfil direito\. /.test(a.registro.falas.slice(-1)[0].t), a.registro.falas.slice(-1)[0].t);
+  a.fechar();
+});
+
+test('a contagem diz os três últimos em voz', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  cameraFalsa(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await a.v('ctx.abreCamera');
+  await a.esperar(60);
+  a.v('ctx.setTimerDaCamera', 3);
+  a.v('ctx.disparaCamera');
+  await a.esperar(3300);
+  const ditas = a.registro.falas.map(f => f.t);
+  assert.ok(['três', 'dois', 'um'].every(n => ditas.indexOf(n) >= 0), ditas.join(' | '));
+  a.fechar();
+});
+
+test('o preparo mostra a ordem das nove e liga o som no toque de começar', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  a.v('ctx.abreProtocolo');
+  await a.esperar();
+  assert.ok(/^1 frente relaxado · 2 frente duplo bíceps · 3 abdômen e coxa · 4 perfil direito/.test(a.vJ('ctx.sessaoDeFotos').montagem.ordem));
+  assert.ok(/Gire sempre para o mesmo lado/.test(a.texto('#app') + a.doc.body.textContent));
+  assert.strictEqual(a.dado('audioCtx'), null, 'antes do toque, sem som');
+  a.v('ctx.comecaSessaoDeFotos');
+  assert.ok(a.dado('audioCtx'), 'o toque em começar liga o som');
+  a.fechar();
+});
+
+test('o fim da sessão diz o que ficou guardado, o tempo real e a próxima data', async () => {
+  // a D, sessao-fotos estado 10
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  const ini = Date.now() - 60000;
+  const velha = diasAtras(55);
+  a.E(`const f = {};
+       CTX.protocoloFotos().pontos.forEach(function (p, i) { f[p.id] = { v: ${ini} + i * 11000, ext: 'webp' }; });
+       S.protocolo.sessoes = [{ d: ${JSON.stringify(velha)}, t: 1, m: 1, fotos: { 'frente-relaxado': { v: 5, ext: 'webp' } } },
+                              { d: hojeISO(), t: 2, m: 2, fotos: f }];`);
+  a.v('ctx.abreProtocolo');
+  a.E('view.protocolo.montagem = false');
+  a.v('render');
+  await a.esperar();
+  const f = a.vJ('ctx.sessaoDeFotos').fim;
+  assert.strictEqual(f.poses, '9 de 9 poses');
+  assert.strictEqual(f.tempo, '1 min 28 s do primeiro ao último disparo');
+  assert.strictEqual(f.subida, 'As fotos ficam neste aparelho: sem a conta, elas não sobem.');
+  assert.ok(/^Comparar com \d\d\/\d\d · mesma pose, 55 dias, o par longo$/.test(f.comparar), f.comparar);
+  assert.ok(/^A próxima sessão cai em \S+ \d\d\/\d\d\. Nada aqui vence\.$/.test(f.proxima), f.proxima);
+  assert.ok(a.$('.pr-fim'), 'e a tela mostra');
   a.fechar();
 });
 

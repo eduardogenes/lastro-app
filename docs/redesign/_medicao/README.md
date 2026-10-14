@@ -31,3 +31,5 @@ semana: a semana sem média.
 movimentos com a referência de cada um.
 
 `revisao.mjs` cola uma revisão do Treino B e mostra as perguntas e o que muda.
+
+`protocolo.mjs` abre o preparo da sessão de fotos e o fim de uma sessão completa.

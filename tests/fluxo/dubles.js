@@ -67,6 +67,12 @@ export function cacheFalso(a) {
           return {
             drawImage: function () { globalThis.__passos.push(el.width + 'x' + el.height); },
             fillRect: function () {},
+            // o brilho que a foto "tem": 128 por padrão; um teste põe 3 para
+            // simular o quadro preto da câmera
+            getImageData: function (x, y, l, a) {
+              const v = globalThis.__brilho == null ? 128 : globalThis.__brilho;
+              return { data: new Uint8ClampedArray(Math.max(4, Math.min(l * a, 4096)) * 4).fill(v) };
+            },
             set fillStyle(v) {},
             set imageSmoothingEnabled(v) { globalThis.__suave = v; },
             set imageSmoothingQuality(v) { globalThis.__qual = v; }

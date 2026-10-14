@@ -1882,3 +1882,14 @@ button.ins-linha { border-radius: 0; }
 .rv-fim { display: flex; flex-direction: column; gap: var(--ins-3); margin-top: var(--ins-8); }
 .rv-fim p { margin: 0; }
 .pr-revisao { margin-top: var(--ins-3); width: 100%; }
+
+/* ---- A sessão de fotos: a ordem, o fim, o giro e a foto preta (a D) ----- */
+.pr-ordem { margin: 0 0 var(--ins-2); }
+.pr-som { margin: var(--ins-3) 0 0; }
+.pr-fim { display: flex; flex-direction: column; gap: var(--ins-2); margin: var(--ins-5) 0; padding: var(--ins-5); background: var(--ins-superficie); border: 1px solid var(--ins-fio); border-radius: var(--ins-raio-2); }
+.pr-fim p { margin: 0; }
+.pr-fim-b { display: flex; flex-direction: column; gap: var(--ins-3); margin: var(--ins-3) 0; }
+.pr-ponto.adiada { border-style: dashed; }
+.cam-bloco.adiada { border: 2px dashed var(--ins-tinta-3); }
+.cam-giro { margin: 0 0 var(--ins-3); font: 600 40px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta); text-align: center; }
+.cam-preta { margin: 0 0 var(--ins-3); color: var(--ins-atencao-tinta); }

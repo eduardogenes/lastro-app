@@ -13,7 +13,7 @@
 // primeira foto e continua de onde parou se ele sair no meio.
 
 import { FotoAjustada } from '../instrumento/fotoajustada.jsx';
-import { Procedencia, Secao, Vazio } from '../instrumento/primitivos.jsx';
+import { Procedencia, Secao } from '../instrumento/primitivos.jsx';
 import { TelaCheia } from '../instrumento/telacheia.jsx';
 
 /** A régua de nove pontos. Diz onde ele está e o que falta, sem ocupar linha. */
@@ -23,8 +23,8 @@ function Pontos({ pontos, aoIr }) {
       {pontos.map(p => (
         <button
           key={p.id} role="listitem"
-          class={'pr-ponto' + (p.naoGuardada ? ' nao' : p.feita ? ' feita' : '') + (p.atual ? ' atual' : '')}
-          aria-label={p.n + (p.naoGuardada ? ' · não guardada' : p.feita ? ' · feita' : ' · falta')}
+          class={'pr-ponto' + (p.naoGuardada ? ' nao' : p.feita ? ' feita' : p.adiada ? ' adiada' : '') + (p.atual ? ' atual' : '')}
+          aria-label={p.n + (p.naoGuardada ? ' · não guardada' : p.feita ? ' · feita' : p.adiada ? ' · volta no fim' : ' · falta')}
           aria-current={p.atual ? 'step' : undefined}
           onClick={() => aoIr(p.id)}
         />
@@ -59,7 +59,14 @@ function Montagem({ m, aoComecar }) {
           repita as marcas depois.
         </Procedencia>
       </Secao>
+      {/* A ordem das nove (a D, estado 1): uma rotação contínua, sempre para o
+          mesmo lado, sem sair da marca. */}
+      <Secao rotulo="A ordem das nove poses">
+        <p class="ins-body-sm ins-t2 pr-ordem">{m.ordem}.</p>
+        <p class="ins-body-sm ins-t1 pr-ordem"><b>Gire sempre para o mesmo lado</b>, sem sair da marca.</p>
+      </Secao>
       <button class="ins-btn-primary pr-comecar" onClick={aoComecar}>Começar a sessão</button>
+      <p class="ins-body-xs ins-t3 pr-som">Este toque também liga o som: no iPhone, ele só existe depois de um toque.</p>
     </>
   );
 }
@@ -85,6 +92,23 @@ export function Protocolo({ ctx }) {
     <TelaCheia olho={p.bloco} titulo={'Pose ' + d.indice + ' de ' + d.total + ' · ' + p.n}
                aoVoltar={ctx.fechaProtocolo} corpo="hwrap">
       <Pontos pontos={d.pontos} aoIr={ctx.vaiParaPose} />
+      {/* O FIM (a D, estado 10): o que a sessão deixa guardado, e o que se pode
+          fazer agora. A comparação é oferta, não pergunta. */}
+      {d.fim && (
+        <section class="pr-fim" aria-label="sessão guardada">
+          <b class="ins-body ins-t1">Sessão guardada · {d.fim.poses}</b>
+          {d.fim.tempo && <p class="ins-body-sm ins-t2">{d.fim.tempo}</p>}
+          <p class="ins-body-sm ins-t2" data-a="fim-subida">{d.fim.subida}</p>
+          {d.fim.peso && <p class="ins-body-sm ins-t2">Peso desta sessão: {d.fim.peso}</p>}
+          {(d.fim.comparar || d.fim.pergunta) && (
+            <div class="pr-fim-b">
+              {d.fim.comparar && <button class="ins-btn-secondary" data-a="fim-comparar" onClick={ctx.abreComparar}>{d.fim.comparar}</button>}
+              {d.fim.pergunta && <button class="ins-btn-secondary" data-a="fim-pergunta" onClick={ctx.abreComparar}>{d.fim.pergunta}</button>}
+            </div>
+          )}
+          <p class="ins-body-sm ins-t3">{d.fim.proxima}</p>
+        </section>
+      )}
       {/* A POSE QUE NÃO COUBE (a D, `sessao-fotos.html`, estado 9): a sessão
           parou, e a tela diz qual e por quê, com a saída ao lado. */}
       {d.naoGuardada && (
@@ -184,9 +208,7 @@ export function Protocolo({ ctx }) {
         </div>
       )}
 
-      {d.faltando > 0
-        ? <Procedencia>faltam {d.faltando} de {d.total} · a sessão fica salva como está</Procedencia>
-        : <Vazio>Sessão completa. As nove poses estão registradas.</Vazio>}
+      {d.faltando > 0 && <Procedencia>faltam {d.faltando} de {d.total} · a sessão fica salva como está</Procedencia>}
     </TelaCheia>
   );
 }

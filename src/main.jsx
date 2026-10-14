@@ -85,7 +85,7 @@ import * as CAM from './infra/camera';
 import {
   CADENCIA_DIAS, MONTAGEM, comAPose, completude,
   diasDesde as diasDesdeAFoto, instanteDaData, mediaDaSemana, parPadrao,
-  poseDe, poses as posesDo, proximaPose, referencia, sessaoDe,
+  poseDe, poses as posesDo, proximaPose, quaseTodoPreto, referencia, sessaoDe,
   ultima as ultimaSessaoFoto, vizinhaComAPose
 } from './dominio/protocolo';
 import {
@@ -9958,7 +9958,9 @@ CTX.abreProtocolo = function () {
 };
 
 CTX.fechaProtocolo = function () { view.protocolo = null; render(); saiDoDestino('protocolo'); };
-CTX.comecaSessaoDeFotos = function () { view.protocolo.montagem = false; render(); window.scrollTo(0, 0); };
+// O toque em começar é também o que libera o som (a D, estado 1): no Safari do
+// iOS, áudio só existe dentro de um toque (F58).
+CTX.comecaSessaoDeFotos = function () { preparaAudio(); view.protocolo.montagem = false; render(); window.scrollTo(0, 0); };
 CTX.vaiParaPose = function (id) { view.protocolo.pose = id; render(); window.scrollTo(0, 0); };
 
 function andaPose(delta) {
@@ -10000,6 +10002,17 @@ function marcaPoseNaoGuardada(pose, motivo, reduzida) {
   if (view.protocolo) view.protocolo.naoGuardada = { pose: pose, motivo: motivo, reduzida: reduzida || null };
 }
 
+/**
+ * A próxima pose que falta, deixando para o fim as que voltaram por foto preta
+ * (a D, estado 6): elas só vêm quando não sobra outra.
+ */
+function proximaComAdiadas(ses) {
+  const ordem = posesDo(S.protocolo.poses).map(function (p) { return p.id; });
+  const faltam = ordem.filter(function (id) { return !(ses && ses.fotos && ses.fotos[id]); });
+  const ad = (view.protocolo && view.protocolo.adiadas) || {};
+  return faltam.filter(function (id) { return !ad[id]; })[0] || faltam[0] || null;
+}
+
 async function guardaFotoDaPose(d, pose, reduzida) {
   const { blob, ext } = reduzida;
   try { await CORPO.guarda(d, pose, blob, ext); }
@@ -10020,7 +10033,7 @@ async function guardaFotoDaPose(d, pose, reduzida) {
   if (view.protocolo) view.protocolo.naoGuardada = null;
   // avança sozinho para a próxima que falta: a sessão é uma sequência, e
   // pedir um toque a mais entre duas poses é pedir um toque a mais nove vezes
-  const prox = proximaPose(sessaoDe(S.protocolo.sessoes, d), S.protocolo.poses);
+  const prox = proximaComAdiadas(sessaoDe(S.protocolo.sessoes, d));
   if (prox && view.protocolo) view.protocolo.pose = prox;
   return prox;
 }
@@ -10080,6 +10093,48 @@ CTX.setNotaDaSessao = function (txt) {
 };
 
 /** O que a tela de captura consome. */
+/**
+ * O FIM DA SESSÃO (a D, estado 10): o tempo real do primeiro ao último disparo,
+ * o que já subiu para a cópia remota, o peso daquela semana, e o que se pode
+ * fazer agora — comparar com o par longo, responder a pergunta do
+ * nutricionista. A próxima sessão tem data, e nada aqui vence.
+ */
+function fimDaSessaoDeFotos(ses) {
+  const lista = posesDo(S.protocolo.poses);
+  const vs = lista.map(function (p) { return ses.fotos[p.id] && ses.fotos[p.id].v; })
+    .filter(function (v) { return v > 1577836800000; });
+  let tempo = null;
+  if (vs.length === lista.length) {
+    const seg = Math.round((Math.max.apply(null, vs) - Math.min.apply(null, vs)) / 1000);
+    tempo = (seg >= 60 ? Math.floor(seg / 60) + ' min ' : '') + (seg % 60) + ' s do primeiro ao último disparo';
+  }
+  const subiram = lista.filter(function (p) {
+    const r = ses.fotos[p.id];
+    return r && sync.fotos['corpo:' + ses.d + ':' + p.id] === r.v;
+  }).length;
+  const peso = mediaDaSemana(S.body.peso, ses.d);
+  const prox = instanteDaData(ses.d) + CADENCIA_DIAS * 86400000;
+  const dp = new Date(prox);
+  const pose = ordemDePoses().filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0];
+  const par = pose ? parPadrao(S.protocolo.sessoes, pose) : null;
+  const longo = par && par.ate.d === ses.d ? par : null;
+  const aval = parDaAvaliacao();
+  return {
+    poses: lista.length + ' de ' + lista.length + ' poses',
+    tempo: tempo,
+    subida: !NUVEM.sessao()
+      ? 'As fotos ficam neste aparelho: sem a conta, elas não sobem.'
+      : subiram === lista.length ? 'Todas na cópia remota.'
+      : 'Subindo para a cópia remota: ' + subiram + ' de ' + lista.length + '. Pode fechar o app; continua depois.',
+    peso: peso == null ? null : fmtDec(peso) + ' kg, a média da semana',
+    comparar: longo ? 'Comparar com ' + fmtDate(instanteDaData(longo.de.d)) + ' · mesma pose, ' +
+      Math.round((instanteDaData(longo.ate.d) - instanteDaData(longo.de.d)) / 86400000) + ' dias, o par longo' : null,
+    pergunta: aval ? 'Responder a pergunta do nutricionista · par de ' +
+      Math.round((aval.ate - aval.de) / 86400000) + ' dias' : null,
+    proxima: 'A próxima sessão cai em ' + DIAS_CURTOS[dp.getDay()] + ' ' + fmtDate(prox) + '. Nada aqui vence.'
+  };
+}
+
 CTX.sessaoDeFotos = function () {
   const v = view.protocolo;
   if (!v) return null;
@@ -10088,7 +10143,10 @@ CTX.sessaoDeFotos = function () {
   const c = completude(ses, S.protocolo.poses);
 
   if (v.montagem) {
-    return { passo: 'montagem', meta: fmtDate(instanteDaData(v.d)), montagem: { itens: MONTAGEM } };
+    return { passo: 'montagem', meta: fmtDate(instanteDaData(v.d)), montagem: { itens: MONTAGEM,
+      // a ordem das nove, numa linha (a D, estado 1): a rotação é contínua,
+      // sempre para o mesmo lado
+      ordem: lista.map(function (p, k) { return (k + 1) + ' ' + p.n.toLowerCase(); }).join(' · ') } };
   }
 
   const i = Math.max(0, lista.findIndex(function (p) { return p.id === v.pose; }));
@@ -10110,9 +10168,11 @@ CTX.sessaoDeFotos = function () {
     proxima: i < lista.length - 1,
     pontos: lista.map(function (p) {
       return { id: p.id, n: p.n, feita: !!(ses && ses.fotos[p.id]), atual: p.id === v.pose,
-               naoGuardada: !!(v.naoGuardada && v.naoGuardada.pose === p.id) };
+               naoGuardada: !!(v.naoGuardada && v.naoGuardada.pose === p.id),
+               adiada: !!(v.adiadas && v.adiadas[p.id] && !(ses && ses.fotos[p.id])) };
     }),
     naoGuardada: avisoDaPoseNaoGuardada(lista),
+    fim: (ses && !c.faltando.length) ? fimDaSessaoDeFotos(ses) : null,
     pose: {
       id: pose.id, n: pose.n, bloco: pose.bloco, giro: pose.giro, bracos: pose.bracos,
       como: pose.como, revela: pose.revela, erro: pose.erro,
@@ -11597,6 +11657,8 @@ function contaEDispara(n) {
   render();
   if (n <= 0) { contagemT = null; capturaAgora(); return; }
   bipeDaContagem(n);
+  // os três últimos também em voz (a D, estado 2: "três, dois, um")
+  if (n <= 3) falaTexto(['um', 'dois', 'três'][n - 1]);
   contagemT = setTimeout(function () { contaEDispara(n - 1); }, 1000);
 }
 
@@ -11631,19 +11693,34 @@ function clarao() {
  * ser lido. A pose e o primeiro passo dela, em português; sem síntese de voz no
  * aparelho, o desenho da tela segue valendo sozinho.
  */
-function falaPose(poseId) {
+function falaTexto(texto, junto) {
   try {
     if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return;
-    const lista = posesDo(S.protocolo.poses);
-    const i = lista.findIndex(function (p) { return p.id === poseId; });
-    const p = lista[i];
-    if (!p) return;
-    const u = new SpeechSynthesisUtterance('Pose ' + (i + 1) + ' de ' + lista.length + '. ' + p.n + '. ' +
-                                           (Array.isArray(p.como) && p.como[0] ? p.como[0] : ''));
+    const u = new SpeechSynthesisUtterance(texto);
     u.lang = 'pt-BR';
-    window.speechSynthesis.cancel();
+    if (!junto) window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
   } catch (e) {}
+}
+/**
+ * O giro entre duas poses, em graus, sempre para o mesmo lado (a D, estado 4:
+ * "girar é desenho, não frase" — e a voz diz junto). 0 quando não há giro.
+ */
+function giroEntre(deId, paraId) {
+  const lista = posesDo(S.protocolo.poses);
+  const de = lista.filter(function (p) { return p.id === deId; })[0];
+  const para = lista.filter(function (p) { return p.id === paraId; })[0];
+  if (!de || !para) return 0;
+  return (((para.giro || 0) - (de.giro || 0)) % 360 + 360) % 360;
+}
+function falaPose(poseId, deId) {
+  const lista = posesDo(S.protocolo.poses);
+  const i = lista.findIndex(function (p) { return p.id === poseId; });
+  const p = lista[i];
+  if (!p) return;
+  const giro = deId ? giroEntre(deId, poseId) : 0;
+  falaTexto((giro ? 'Gire ' + giro + ' graus. ' : '') + 'Pose ' + (i + 1) + ' de ' + lista.length + '. ' + p.n + '. ' +
+            (Array.isArray(p.como) && p.como[0] ? p.como[0] : ''));
 }
 
 function bipeDaContagem(n) {
@@ -11679,6 +11756,28 @@ async function capturaAgora() {
   if (!CAM.pronto(el)) { c.contagem = null; toast('A câmera ainda não está pronta.'); render(); return; }
   try {
     const reduzida = await CORPO.reduzDoVideo(el);
+    // O QUADRO PRETO (a D, estado 6; F78): a foto não é guardada, a pose volta
+    // para o fim da fila, e a voz diz — ele está a três metros e não vê a tela.
+    if (quaseTodoPreto(reduzida.brilho)) {
+      c.contagem = null;
+      const era = v.pose;
+      v.adiadas = Object.assign({}, v.adiadas, { [era]: 1 });
+      const prox = proximaComAdiadas(sessaoDe(S.protocolo.sessoes, v.d));
+      const lista = posesDo(S.protocolo.poses);
+      const nome = function (id) { const p = lista.filter(function (x) { return x.id === id; })[0]; return p ? p.n : id; };
+      if (prox && prox !== era) {
+        v.pose = prox;
+        c.giro = giroEntre(era, prox) || null;
+        falaTexto('A foto saiu preta. Esta pose volta no fim. Siga: ' + nome(prox) + '.');
+      } else {
+        c.giro = null;
+        falaTexto('A foto saiu preta. Vamos de novo.');
+      }
+      c.preta = era;
+      render();
+      return;
+    }
+    const era = v.pose;
     const r = await guardaFotoDaPose(v.d, v.pose, reduzida);
     c.contagem = null;
     // não coube: a sessão para aqui, e a tela diz (estado 9)
@@ -11692,7 +11791,10 @@ async function capturaAgora() {
       garanteBytesDoCorpo(viz ? [viz.d] : []);
     }
     obturador(); clarao();
-    if (prox) falaPose(prox);
+    c.preta = null;
+    // o giro até a pose nova, grande na tela e dito junto (a D, estado 4)
+    c.giro = prox ? (giroEntre(era, prox) || null) : null;
+    if (prox) falaPose(prox, era);
     render();
     if (!prox) toast('Sessão completa. As nove poses estão registradas.');
   } catch (e) {
@@ -11758,11 +11860,14 @@ CTX.cameraViva = function () {
     timer: c.timer,
     contagem: c.contagem,
     clarao: !!c.clarao,
+    giro: c.giro || null,
+    preta: c.preta ? (lista.filter(function (p) { return p.id === c.preta; })[0] || {}).n || null : null,
     // os blocos das poses, do tamanho de um dedo (estado 2): em que pose está,
     // e quais já fecharam, legível a três metros
     pontos: lista.map(function (p) {
       return { id: p.id, n: p.n, feita: !!(ses && ses.fotos[p.id]), atual: p.id === v.pose,
-               naoGuardada: !!(v.naoGuardada && v.naoGuardada.pose === p.id) };
+               naoGuardada: !!(v.naoGuardada && v.naoGuardada.pose === p.id),
+               adiada: !!(v.adiadas && v.adiadas[p.id] && !(ses && ses.fotos[p.id])) };
     })
   };
 };
