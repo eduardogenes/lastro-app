@@ -11,12 +11,35 @@ pede atenção do dono.
 
 ---
 
-## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
+## ⏸ PONTO DE PARADA — 14/10 (Dias e o Agora pela D, fechados)
 
 **Onde parou, exatamente:**
 - Branch `redesenho-do-zero`, suíte verde: **1.442 passando**, zero "unhandled".
-- A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
-  `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
+  Nenhum agente trabalhando. Último commit de código: `805c77b`.
+- **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
+  agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
+  saídas declaradas e divergências logo abaixo e no diário.
+- **Próximo na fila:** a §2 da frente 3 — os rótulos (R1–R4): rótulo de seção só
+  onde a seção tem mais de uma linha e a primeira não a nomeia; o que fica vira
+  frase com artigo, caixa de frase, 15 px, sem espaçamento; o olho vira
+  procedência; a unidade em caixa baixa. ~83 lugares de 21 arquivos, por tela,
+  com captura.
+- **Levar ao dono, sem bloquear** (objetivo, uma linha cada):
+  1. Depois de aplicar o passo de ±150 kcal, o veredito das mesmas semanas
+     continua oferecendo "aplicar" (o desenho diz que não, até duas semanas
+     novas). É mudança de regra.
+  2. As sete perguntas do desenhista (`direcao-3.md` §3) — construí pelo padrão
+     dele em todas.
+  3. Hoje conta nos 14 dias? A D diz "hoje passou a contar"; o portão só lê dias
+     fechados. Mantive o portão.
+  4. A linha da mudança pendente: a D a quer só sem cartão; a frente 2 exige que
+     encerrar informe. Mantive sempre (é a pergunta 4 dele).
+  5. Cardio: o de HOJE lançado por engano só se apaga amanhã, em Dias (hoje abre
+     o Agora, que não lista o cardio do dia — pergunta 7 dele); e cardio num dia
+     passado não tem caminho desenhado.
+  6. A promessa §11.2 ("a tela não vai pedir isso de novo em outro lugar").
+  7. As medições A–D da régua no aparelho (6.z).
+
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
   coração do cardio, barra da comida; hoje abre o Agora), as três leituras
   (dias com treino por semana em média de 4 semanas, cardio, horário de início
