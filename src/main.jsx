@@ -1665,7 +1665,6 @@ function horaDaSessao(m) { return temHora(m) ? fmtHora(m.t) : null; }
 function fimDaSessao(m) { return temHora(m) && m.dur ? fmtHora(m.t + m.dur + (m.pausado||0)) : null; }
 
 function sessoesDoDia(t) { return S.done.filter(function (x) { return sameDay(x.t, t); }); }
-function marcaDe(m) { return m.livre ? '•' : m.day; }
 
 /** Aquele dia foi descanso? */
 function ehDescanso(t) { return !!(S.descanso && S.descanso[hojeISO(t)]); }
@@ -7497,36 +7496,6 @@ CTX.apagaTudo = function () { wipe(); };
 
 CTX.cromoDoTreino = function () {
   const s = S.sessao;
-  const ini = weekStart(Date.now());
-  const semana = [];
-  for (let i = 0; i < 7; i++) {
-    const dia = ini + i * 86400000;
-    const marcas = sessoesDoDia(dia);
-    const hoje = sameDay(dia, Date.now());
-    const futuro = dia > Date.now() && !hoje;
-    const folga = !marcas.length && ehDescanso(dia);
-    semana.push({
-      d: DIAS_CURTOS[i],
-      // '+' é convite: "registre aqui". Em dia de descanso ele mentiria, porque
-      // não há o que registrar — o traço diz vazio DE PROPÓSITO.
-      v: marcas.length ? marcas.map(marcaDe).join('') : (folga ? '–' : '+'),
-      descanso: folga,
-      feito: marcas.length > 0,
-      livre: marcas.length > 0 && marcas.every(function (m) { return m.livre; }),
-      hoje: hoje,
-      futuro: futuro,
-      cardio: cardioDoDia(dia).length > 0,
-      // sem ação no futuro: lançar treino que ainda não aconteceu não faz sentido
-      // Um dia pode ter DUAS sessões — registrar o treino errado e depois o
-      // certo é o jeito mais comum de chegar nisso, e a célula já mostra as
-      // duas letras. Abrir a última em silêncio deixava a outra inalcançável:
-      // com mais de uma, a célula leva à LISTA, onde elas estão lado a lado.
-      abre: marcas.length > 1 ? { k: 'dia', t: dia }
-           : marcas.length ? { k: 'sessao', t: marcas[marcas.length - 1].t }
-           : futuro ? null : { k: 'lancar', t: dia }
-    });
-  }
-
   const hojeCardio = cardioDoDia(Date.now());
   return {
     sessao: s && !s.retro ? {
@@ -7534,7 +7503,6 @@ CTX.cromoDoTreino = function () {
       pausada: !!s.pausadoEm,
       desde: s.pausadoEm ? 'pausado' : 'desde ' + fmtHora(s.inicio)
     } : null,
-    semana: semana,
     cardio: (function () {
       const f = Object.assign({ m: 'bike', min: 25, i: 'moderado' }, view.cardioForm);
       const perna = pernaHoje();
@@ -7558,29 +7526,12 @@ CTX.cromoDoTreino = function () {
   };
 };
 
-let destaqueT = null;
-
 CTX.abreSessaoDoDia = function (a) {
   if (!a) return;
   if (a.k === 'sessao') { abrirSessao(a.t); return; }
-  if (a.k === 'dia') { levaAsSessoesDoDia(a.t); return; }
   abrirAdicionar(a.t);
 };
 
-/**
- * Leva ao DIA aberto, em Dias — onde as sessões daquele dia estão lado a lado.
- *
- * NÃO abre nenhuma sessão: com duas no mesmo dia, escolher por ele seria
- * escolher errado metade das vezes. O dia aberto mostra as duas, cada uma com
- * hora, letra e séries, e cada uma abre a sua. Leva o mês junto, para o Voltar
- * do dia devolver o mês daquele dia.
- */
-function levaAsSessoesDoDia(t) {
-  const d = new Date(t), agora = new Date(Date.now());
-  view.aba = 'dias';
-  view.mes = (d.getFullYear() - agora.getFullYear()) * 12 + (d.getMonth() - agora.getMonth());
-  CTX.abreDia(t);
-}
 CTX.cardioSet = function (k, v) { cardioSet(k, v); };
 CTX.addCardio = function () { addCardio(); };
 

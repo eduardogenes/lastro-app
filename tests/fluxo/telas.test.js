@@ -1057,45 +1057,26 @@ test('ctx.vaiParaDia troca o dia do treino e larga o que estava aberto nele', as
   a.fechar();
 });
 
-test('ctx.abreSessaoDoDia despacha pelos três tipos de célula que a leitura dá', async () => {
-  // A leitura `ctx.cromoDoTreino` monta o `abre` de cada célula da semana, e
-  // este verbo é o que o consome. O caso pega o objeto da própria leitura em
-  // vez de escrevê-lo à mão: o par é que importa, e um `k` que a leitura
-  // deixasse de produzir passaria batido numa constante de teste.
+test('ctx.abreSessaoDoDia despacha pelos dois tipos que o dia aberto dá', async () => {
+  // O dia aberto é quem produz o `abre` agora (a faixa da semana saiu, e com
+  // ela o `k: 'dia'`: o mês já leva ao dia). O caso pega o objeto do próprio
+  // dia, pelo botão, em vez de escrevê-lo à mão.
   const agora = agoraEstavel();
-  const d = new Date(agora); d.setHours(8, 0, 0, 0);
-  const tB = d.getTime(), tD = tB + 3 * 60 * 60000;
+  const d = new Date(agora - DIA); d.setHours(8, 0, 0, 0);
+  const tB = d.getTime();
   const a = await app({ agora: agora, estado: {
-    plano: 6, logs: {}, done: [
-      { day: 'B', t: tB, sid: tB, dur: 40 * 60000, fim: 'manual' },
-      { day: 'D', t: tD, sid: tD, dur: 90 * 60000, fim: 'manual' }
-    ]
-  }, aba: 'treino' });
+    plano: 6, logs: {}, done: [{ day: 'B', t: tB, sid: tB, dur: 40 * 60000, fim: 'manual' }]
+  }, aba: 'dias' });
+  a.v('ctx.abreDia', tB);
+  await a.esperar();
 
-  const semana = a.vJ('ctx.cromoDoTreino').semana;
-  const hoje = semana.filter(function (x) { return x.hoje; })[0];
-  assert.strictEqual(hoje.abre.k, 'dia', 'hoje tem DUAS sessões, então a célula leva à lista');
-
-  // (1) `k: 'dia'` — abre o DIA em Dias, e NÃO escolhe uma das duas
-  a.v('ctx.abreSessaoDoDia', hoje.abre);
-  await a.esperar(60);
-  assert.strictEqual(a.vista().aba, 'dias', 'é lá que o dia mora');
-  assert.strictEqual(a.vista().mes, 0, 'no mês do dia tocado');
-  assert.strictEqual(a.vista().sessao, null, 'e sem escolher nenhuma das duas por ele');
-  assert.ok(a.vista().diaAberto, 'com o dia aberto, onde as duas estão lado a lado');
-  a.v('ctx.fechaDia');
-
-  // (2) `k: 'sessao'` — abre aquela sessão
-  a.v('ctx.abreSessaoDoDia', { k: 'sessao', t: tB });
+  // (1) `k: 'sessao'` — abre aquela sessão
+  a.clicar('[data-a="dia-sessao"]');
   await a.esperar(60);
   assert.strictEqual(a.vista().sessao.day, 'B', 'abriu a sessão daquele instante, e só ela');
 
-  // (3) qualquer outro `k` cai no lançamento retroativo — é o `k: 'lancar'`
-  // das células passadas e vazias
-  a.v('ctx.fechaSessao');
-  const vazia = semana.filter(function (x) { return x.abre && x.abre.k === 'lancar'; })[0];
-  assert.ok(vazia, 'a semana tem alguma célula passada e vazia');
-  a.v('ctx.abreSessaoDoDia', vazia.abre);
+  // (2) `k: 'lancar'` — o lançamento retroativo, e a sessão sai da tela
+  a.v('ctx.abreSessaoDoDia', { k: 'lancar', t: tB });
   await a.esperar(60);
   assert.ok(a.vista().add, 'abriu o lançamento retroativo');
   assert.strictEqual(a.vista().sessao, null, 'e fechou a sessão que estava na tela');
@@ -1103,25 +1084,22 @@ test('ctx.abreSessaoDoDia despacha pelos três tipos de célula que a leitura d�
 });
 
 test('ctx.abreSessaoDoDia sem célula não abre nada', async () => {
-  // Célula no FUTURO tem `abre: null` — lançar treino que ainda não aconteceu
-  // não faz sentido. O verbo recebe esse `null` e tem de sair pela porta, em
-  // vez de abrir o lançamento retroativo num dia que ainda não chegou.
-  // Quarta-feira às 8h, para a semana ter sempre dia futuro E dia passado —
-  // num sábado não haveria futuro, e a asserção viraria condicional.
-  const quarta = inicioDaSemana(Date.now()) + 3 * DIA + 8 * 3600000;
-  const a = await app({ agora: quarta, aba: 'treino' });
-  const semana = a.vJ('ctx.cromoDoTreino').semana;
-  const futuras = semana.filter(function (x) { return x.futuro; });
-  assert.strictEqual(futuras.length, 3, 'quinta, sexta e sábado estão no futuro');
-  assert.strictEqual(futuras[0].abre, null, 'e a leitura não dá ação para o futuro');
+  // Célula no FUTURO não abre — lançar treino que ainda não aconteceu não faz
+  // sentido. A leitura dá `abre: null`, o botão fica desligado, e o verbo que
+  // recebe `null` sai pela porta em vez de abrir o lançamento num dia que
+  // ainda não chegou.
+  const agora = agoraEstavel();
+  const a = await app({ agora: agora, aba: 'dias' });
+  const futuras = a.vJ('ctx.mes').celulas.filter(function (x) { return x.futuro; });
+  assert.ok(futuras.length > 0, 'o dia 15 tem futuro no mês');
+  assert.ok(futuras.every(function (x) { return x.abre === null; }), 'e a leitura não dá ação para o futuro');
+  assert.ok(a.$('[data-dia="' + futuras[0].iso + '"]').disabled, 'nem o botão');
 
-  const lugarAntes = a.vista().aba;
   a.v('ctx.abreSessaoDoDia', null);
   await a.esperar(60);
   assert.strictEqual(a.vista().add, null, 'nada de lançamento retroativo');
   assert.strictEqual(a.vista().sessao, null, 'nada de sessão aberta');
-  assert.strictEqual(a.vista().aba, lugarAntes, 'e nem trocou de lugar');
-  assert.strictEqual(a.vista().modoSessao, true, 'nem fechou o modo por onde ele entrou');
+  assert.strictEqual(a.vista().aba, 'dias', 'e nem trocou de lugar');
   a.fechar();
 });
 
