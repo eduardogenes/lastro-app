@@ -75,7 +75,7 @@ pede atenção do dono.
 | D4 · pasta D, protótipo | `a5c1301c7eaecc0ef` | [x] | entregue 04/10, roteiro inteiro rodando |
 | D3 · pasta C, 2ª rodada | `a8ffe4511162060d4` | [x] | entregue 04/10: seis telas, 51 estados, mais `direcao-2.md` |
 | D4 · pasta D, 2ª rodada | `a7336487485fa8580` | [x] | entregue 04/10: seis telas, 66 estados, mais `direcao-2.md`. Caiu uma vez e foi retomada pelo id |
-| D4 · pasta D, 3ª rodada | `abf4ffeb29a79cc05` | [~] | disparado 13/10 (Anexo I): Dias e o Agora de descanso |
+| D4 · pasta D, 3ª rodada | `abf4ffeb29a79cc05` | [x] | 13/10 (Anexo I): `dias.html` (15 estados), `agora-descanso.html` (8), `direcao-3.md`. Caiu duas vezes por limite; a entrega já estava no disco na segunda |
 
 ---
 
@@ -3180,6 +3180,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 13/10 · 6.v' fechado: o reponte, 485 → 188 entradas pela ponte, um commit por arquivo. A ponte tinha crescido com casos meus.
 - 13/10 · As portas: 189 de 205 funções de CTX eram acionadas; os 14 botões das que sobravam ganharam caso (`portas.test.js`).
 - 13/10 · Terceira rodada da D disparada (Anexo I). Construídos: os portões da Semana, o vazio e o Desfazer; as linhas do corpo no Agora; o botão de linha que espremia texto; o destino Evolução. Achado e consertado: a taxa exata de 0,10 caía abaixo do limite por ponto flutuante (61 de 400 sequências). **Pausa pedida pelo dono** — ver o ponto de parada no topo.
+- 13/10 · **A terceira rodada da D entregou** e foi conferida: sem vazamento (nenhum termo do app de hoje), todos os estados pedidos e mais alguns. **Duas divergências, por OMISSÃO MINHA no Anexo I:** a folha de pôr o dia em dia volta a gravar linha a linha, com um botão "Os outros 5 como no plano", contra a P3.i.6 (um toque fecha o dia inteiro); e "Não comi" vira terceira resposta do "Fora", contra a decisão 1 de 06/10 (é o quinto botão). As duas decisões não estavam no recado. **Vale a decisão do dono; a folha construída fica como está**, e os estados 10–11 de `dias.html` ficam como referência só do que é de Dias (abrir a folha a partir do dia). **Adotado do desenhista, com a razão dele:** a leitura do mês conta DIAS com treino, não treinos (dois treinos no mesmo dia e a sessão aberta por engano não inflam; a prescrição fala em "seis dias ativos", F21). **Sete perguntas dele**, todas com o desenho padrão já escolhido — vou construir pelo padrão e levar as perguntas ao dono sem bloquear.
 
 ---
 

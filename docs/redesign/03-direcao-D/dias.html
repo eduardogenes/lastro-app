@@ -1,0 +1,1570 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dias</title>
+<style>
+
+:root{
+  color-scheme:light;
+  --page:#E7E3DB;--bg:#F5F3EE;--surface:#FFFFFF;--surface-2:#EDEAE3;
+  --ink:#15171A;--ink-2:#474C54;--ink-3:#5C6169;
+  --line:#DCD7CD;--line-2:#8C867A;
+  --accent:#3833DB;--accent-ink:#2C28BE;--accent-soft:#E9E8FD;--on-accent:#FFFFFF;
+  --warn-bg:#FBEFD6;--warn-ink:#5E3B00;--warn-line:#D9A955;
+  --err-bg:#FBE4E1;--err-ink:#7F1A12;--err-line:#D98A80;
+  --scrim:rgba(18,18,30,.42);
+}
+.phone.dark{
+  color-scheme:dark;
+  --page:#08090A;--bg:#111214;--surface:#1B1D21;--surface-2:#25282D;
+  --ink:#F2F1EE;--ink-2:#BCC0C7;--ink-3:#A2A6AE;
+  --line:#33363C;--line-2:#7C818A;
+  --accent:#9E9BFF;--accent-ink:#B6B4FF;--accent-soft:#272550;--on-accent:#14123F;
+  --warn-bg:#33270F;--warn-ink:#F3CF85;--warn-line:#7A5A1E;
+  --err-bg:#3A1714;--err-ink:#FFADA3;--err-line:#7E3129;
+  --scrim:rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;background:var(--page)}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;text-align:inherit;-webkit-user-select:none;user-select:none}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button[disabled]{cursor:default}
+.num{font-variant-numeric:tabular-nums}
+svg{display:block}
+
+/* página */
+.doc{max-width:1400px;margin:0 auto;padding:28px 16px 4px}
+.eyebrow{font-size:13px;;color:var(--ink-2);margin:0 0 6px;font-weight:600}
+h1{font-size:30px;line-height:1.12;margin:0 0 12px;letter-spacing:-.02em}
+.lead{max-width:68ch;margin:0 0 8px;color:var(--ink-2);font-size:16px}
+.lead b{color:var(--ink)}
+.themes{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:14px 0 0;font-size:14px;color:var(--ink-2)}
+.themes button{border:1.5px solid var(--line-2);border-radius:999px;padding:0 14px;min-height:44px;font-size:14px;font-weight:600;color:var(--ink)}
+.themes button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.states{max-width:1400px;margin:0 auto;padding:20px 16px 56px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:40px 28px;align-items:start}
+.state{margin:0;min-width:0}
+.state.wide{grid-column:1/-1}
+.state figcaption{margin:0 0 12px;max-width:414px}
+.state.wide figcaption{max-width:70ch}
+.state h2{font-size:17px;line-height:1.25;margin:0 0 4px}
+.state h2 .n{display:inline-block;min-width:28px;height:28px;line-height:28px;text-align:center;border-radius:8px;background:var(--ink);color:var(--bg);font-size:14px;margin-right:6px;vertical-align:1px}
+.state p.cap{font-size:14px;color:var(--ink-2);margin:0}
+.wrap{width:100%;max-width:414px}
+.wrap.land{max-width:896px}
+
+/* telefone */
+.phone{width:414px;height:896px;transform-origin:0 0;border-radius:52px;background:var(--bg);color:var(--ink);box-shadow:0 0 0 1.5px var(--line-2),0 26px 50px -30px rgba(20,15,0,.55);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.phone.land{width:896px;height:414px;display:block}
+.sb{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 40px;font-size:15px;font-weight:600;position:relative}
+.sb .notch{position:absolute;left:50%;top:0;width:210px;height:30px;margin-left:-105px;background:#000;border-radius:0 0 20px 20px}
+.sb .ic{display:flex;gap:6px;align-items:center}
+.hi{height:34px;flex:none;display:flex;align-items:center;justify-content:center}
+.hi i{width:134px;height:5px;border-radius:3px;background:var(--ink);opacity:.85}
+.scr{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* sessão: cabeçalho */
+.sh{padding:4px 16px 10px;border-bottom:1px solid var(--line);flex:none}
+.sh-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.sh-t{font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.sh-t .sh-d{font-size:14px;font-weight:600;color:var(--ink-2);margin-left:4px}
+.sh-sub{font-size:14px;color:var(--ink-2);line-height:1.3}
+.sh-m{font-size:14px;color:var(--ink-2);font-variant-numeric:tabular-nums;line-height:1.35}
+.ib{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin:-6px -10px 0 0;flex:none;color:var(--ink)}
+.map{display:flex;gap:6px;margin-top:8px;align-items:center;min-height:30px}
+.map .g{display:flex;gap:3px;padding:5px 6px;border-radius:8px;background:var(--surface-2);position:relative}
+.map .d{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--ink-3)}
+.map .d.f{background:var(--ink);border-color:var(--ink)}
+.map .d.c{border:2px solid var(--accent);background:var(--accent-soft)}
+.map .d.x{border-style:dashed}
+.map .g.mx::after{content:"";position:absolute;left:5px;right:5px;bottom:-5px;height:2px;border-radius:2px;background:var(--ink-2)}
+.sh-r{font-size:13px;color:var(--ink-2);margin-top:8px}
+
+/* cartão do exercício */
+.card{margin:10px 16px 0;padding:12px 14px 12px;background:var(--surface);border-radius:20px;border:1px solid var(--line);flex:none}
+.kick{font-size:13px;color:var(--ink-2);font-weight:600}
+.ex{font-size:25px;line-height:1.12;font-weight:750;font-weight:700;margin:2px 0 4px;letter-spacing:-.015em}
+.presc{font-size:15px;color:var(--ink-2)}
+.presc b{color:var(--ink)}
+table.ref{width:100%;border-collapse:collapse;margin-top:10px;font-variant-numeric:tabular-nums}
+.ref th,.ref td{text-align:left;padding:6px 4px 6px 0;border-top:1px solid var(--line);vertical-align:top}
+.ref thead th{font-size:12px;color:var(--ink-3);font-weight:600;border-top:0;padding-bottom:2px}
+.ref tbody th{font-size:13px;color:var(--ink-2);font-weight:600;width:70px;line-height:1.2}
+.ref tbody th small{display:block;font-weight:500;font-size:12px}
+.ref td{font-weight:700;font-size:17px;line-height:1.2}
+.ref td small{display:block;font-weight:500;color:var(--ink-2);font-size:12px}
+.ref td.pend span{display:inline-block;min-width:44px;text-align:center;border:1.5px dashed var(--accent);color:var(--accent-ink);border-radius:8px;padding:0 6px}
+.ref td.new span{display:inline-block;background:var(--ink);color:var(--bg);border-radius:8px;padding:0 6px}
+.ref td.hl{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:var(--accent)}
+.ref td.dim{color:var(--ink-3);font-weight:500}
+.links{display:flex;gap:4px;margin-top:4px}
+.lk{min-height:44px;padding:0 6px;display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--accent-ink)}
+.lk svg{flex:none}
+.info{margin-top:10px;padding:10px 12px;border-radius:14px;background:var(--accent-soft);font-size:14px;line-height:1.4}
+.info p{margin:0}
+.info p+p{margin-top:4px}
+.quote{margin:10px 0 0;padding:0 0 0 12px;border-left:3px solid var(--line-2);font-size:15px;line-height:1.38}
+.quote cite{display:block;font-style:normal;font-size:12px;color:var(--ink-2);margin-top:3px;font-weight:600}
+.appr{margin-top:10px;font-size:14px;color:var(--ink-2)}
+.appr b{color:var(--ink)}
+.appr ol{margin:3px 0 0;padding-left:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+.toggle{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;font-weight:600;width:100%}
+.box{width:26px;height:26px;border-radius:8px;border:2px solid var(--line-2);flex:none}
+.small{font-size:13px;color:var(--ink-2);margin:6px 16px 0}
+
+/* descanso */
+.rest{margin:10px 16px 0;padding:10px 14px 10px;border-radius:18px;background:var(--surface-2);flex:none}
+.rest-top{display:flex;align-items:baseline;gap:10px}
+.rest-l{font-size:13px;font-weight:700;color:var(--ink-2)}
+.rest-t{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
+.rest-r{font-size:14px;color:var(--ink-2);margin-left:auto;text-align:right}
+.bar{height:6px;border-radius:3px;background:var(--line);position:relative;margin:9px 0 6px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--ink)}
+.bar b{position:absolute;top:-4px;width:2px;height:14px;background:var(--ink-2);left:66.66%}
+.hint{font-size:13px;color:var(--ink-2)}
+
+.also-l{font-size:12px;font-weight:700;color:var(--ink-2);margin:10px 16px 4px;}
+.also{display:flex;gap:8px;padding:0 16px;overflow-x:auto;scrollbar-width:none;flex:none}
+.also::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line-2);font-size:14px;display:inline-flex;align-items:center;gap:6px;background:var(--surface);white-space:nowrap}
+.chip b{font-weight:700}
+.chip.ok{border-color:var(--ink)}
+.next{margin:10px 16px 0;font-size:14px;color:var(--ink-2)}
+.next b{color:var(--ink)}
+.prev{display:flex;align-items:center;gap:8px;margin:10px 16px 0;font-size:14px;color:var(--ink-2);flex:none}
+.prev .t{flex:1;min-width:0;line-height:1.3}
+.prev .t b{color:var(--ink)}
+.pill{min-height:44px;padding:0 12px;border-radius:12px;border:1.5px solid var(--line-2);font-weight:700;color:var(--ink);display:inline-flex;align-items:center;font-size:14px;background:var(--surface);flex:none}
+
+/* zona do polegar */
+.ctl{margin-top:auto;padding:8px 16px 4px;flex:none}
+.load-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lbl{font-size:13px;color:var(--ink-2);font-weight:700}
+.load{min-height:48px;padding:0 14px;border-radius:14px;border:1.5px solid var(--line-2);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;display:inline-flex;align-items:baseline;gap:5px;background:var(--surface)}
+.load span{font-size:14px;font-weight:600;color:var(--ink-2)}
+.load.need{border:2px solid var(--accent);color:var(--accent-ink);font-size:17px;align-items:center}
+.same{font-size:13px;color:var(--ink-2)}
+.strip-lbl{font-size:13px;color:var(--ink-2);margin:0 0 6px;font-weight:700}
+.strip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 14px;scroll-snap-type:x proximity}
+.strip::-webkit-scrollbar{display:none}
+.rep{flex:none;width:54px;height:64px;border-radius:16px;background:var(--surface);border:1.5px solid var(--line-2);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;scroll-snap-align:start;text-align:center}
+.rep small{font-size:11px;font-weight:600;color:var(--accent-ink);margin-top:3px}
+.rep.in::after{content:"";position:absolute;left:-4px;right:-4px;bottom:-10px;height:3px;background:var(--ink-3)}
+.rep.last{border:2px solid var(--accent);background:var(--accent-soft)}
+.rep.hit{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.strip.off .rep{opacity:.38}
+.range{font-size:12px;color:var(--ink-2);margin:0 0 6px}
+.acts{display:flex;gap:8px}
+.acts button{flex:1;min-height:44px;border-radius:12px;font-size:14px;font-weight:600;color:var(--ink);background:var(--surface-2);text-align:center}
+.saved{display:flex;align-items:center;gap:8px;font-size:15px;margin-bottom:6px;min-height:44px}
+.saved .t{flex:1;min-width:0;line-height:1.3}
+.saved em{font-style:normal;font-weight:700;color:var(--accent-ink)}
+.ico{width:22px;height:22px;flex:none;color:var(--ink)}
+.rir{display:flex;gap:6px;margin-bottom:8px}
+.rir button{flex:none;width:52px;height:56px;border-radius:14px;border:1.5px solid var(--line-2);background:var(--surface);font-size:22px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.rir button small{font-size:11px;font-weight:600;color:var(--accent-ink);margin-top:3px}
+.rir .tgt{border:2px solid var(--accent);background:var(--accent-soft)}
+.rir .skip{flex:1;width:auto;font-size:15px}
+.extra{width:100%;min-height:48px;border-radius:14px;border:1.5px dashed var(--line-2);font-weight:700;font-size:15px;text-align:center}
+
+/* folhas, avisos */
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:26px 26px 0 0;padding:8px 16px 40px;box-shadow:0 -12px 40px rgba(0,0,0,.22)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line-2);margin:0 auto 12px;opacity:.7}
+.sheet h3{font-size:20px;margin:0 0 2px;line-height:1.2}
+.sheet .sub{font-size:14px;color:var(--ink-2);margin:0 0 10px}
+.disp{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:16px;border:2px solid var(--accent);margin-bottom:8px}
+.disp b{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.1}
+.disp .caret{width:2px;height:34px;background:var(--accent)}
+.disp span{font-size:15px;color:var(--ink-2);margin-left:auto;text-align:right;line-height:1.25}
+.used{display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:13px;color:var(--ink-2)}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.kp button{height:54px;border-radius:14px;background:var(--surface-2);font-size:24px;font-weight:600;text-align:center;font-variant-numeric:tabular-nums}
+.two{display:flex;gap:8px}
+.two>*{flex:1}
+.primary{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;border-radius:16px;background:var(--accent);color:var(--on-accent);font-size:18px;font-weight:700;text-align:center}
+.sec{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:14px;border:1.5px solid var(--line-2);font-weight:700;font-size:15px;background:var(--surface);text-align:center;padding:0 10px;line-height:1.2}
+.opt{display:flex;gap:10px;align-items:flex-start;width:100%;padding:11px 2px;border-top:1px solid var(--line);min-height:56px}
+.opt .tx{flex:1;min-width:0}
+.opt b{display:block;font-size:16px;line-height:1.25}
+.opt span{display:block;font-size:13px;color:var(--ink-2);line-height:1.35;margin-top:2px}
+.opt .q{font-style:italic;color:var(--ink)}
+.opt .star{width:18px;height:18px;flex:none;margin-top:2px;color:var(--ink)}
+.opt .sp{width:18px;flex:none}
+.grp{font-size:12px;font-weight:700;color:var(--ink-2);margin:12px 0 4px;}
+.warn{background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--warn-line);border-radius:16px;padding:11px 13px;font-size:14px;line-height:1.4}
+.warn b,.err b{display:block;font-size:15px;margin-bottom:2px}
+.warn p,.err p{margin:0}
+.warn p+p,.err p+p{margin-top:4px}
+.err{background:var(--err-bg);color:var(--err-ink);border:1px solid var(--err-line);border-radius:16px;padding:11px 13px;font-size:14px;line-height:1.4}
+.wh{display:flex;gap:8px;align-items:flex-start}
+.wh svg{flex:none;margin-top:1px}
+.btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+
+/* esqueleto */
+.sk{background:var(--surface-2);border-radius:8px}
+@media (prefers-reduced-motion:no-preference){
+  .sk{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .rep,.rir button,.chip,.sec,.primary{transition:transform .12s ease,background-color .15s ease}
+  .rep:active,.rir button:active,.chip:active,.sec:active,.primary:active{transform:scale(.95)}
+  .enter{animation:enter .24s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .bar i{transition:width 1s linear}
+}
+
+/* hoje (Agora) */
+.ag-h{display:flex;justify-content:space-between;align-items:flex-start;padding:4px 16px 4px;flex:none}
+.ag-d{font-size:23px;font-weight:700;letter-spacing:-.015em;line-height:1.2}
+.daytype{min-height:36px;display:inline-flex;align-items:center;font-size:14px;color:var(--ink-2);font-weight:600}
+.band{margin:8px 16px 0;padding:12px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);flex:none}
+.band>b{display:block;font-size:16px;line-height:1.25}
+.band>p{margin:3px 0 10px;font-size:14px;color:var(--ink-2)}
+.row{display:flex;align-items:center;gap:10px;margin:8px 16px 0;padding:6px 6px 6px 14px;border-radius:16px;background:var(--surface-2);font-size:15px;min-height:56px;flex:none}
+.row .t{flex:1;min-width:0;line-height:1.3}
+.row .t small{display:block;font-size:13px;color:var(--ink-2)}
+.now{margin:10px 16px 0;padding:14px 16px 16px;border-radius:22px;background:var(--surface);border:2px solid var(--accent);flex:none}
+.now-k{font-size:13px;color:var(--accent-ink);font-weight:700}
+.now h3{font-size:25px;margin:2px 0 4px;line-height:1.15;letter-spacing:-.015em}
+.now .items{font-size:14px;color:var(--ink-2);margin:0 0 12px}
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:var(--surface);padding-top:4px;margin-top:auto}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;min-height:50px;color:var(--ink-2);font-weight:600;text-align:center}
+.tab.on{color:var(--accent-ink)}
+.tabwrap{flex:none;background:var(--surface);margin-top:auto}
+
+/* paisagem */
+.land .notch-v{position:absolute;left:0;top:50%;width:30px;height:210px;margin-top:-105px;background:#000;border-radius:0 20px 20px 0}
+.land .hi{position:absolute;left:0;right:0;bottom:0;height:21px}
+.land-body{position:absolute;left:48px;right:44px;top:10px;bottom:24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.land-body .col{display:flex;flex-direction:column;min-height:0}
+.land-body .sh{padding:0 0 8px}
+.land-body .card,.land-body .rest,.land-body .prev{margin-left:0;margin-right:0}
+.land-body .ctl{padding:0;margin-top:0}
+
+/* ======== parada 4: página com os dois temas lado a lado ======== */
+.states{grid-template-columns:repeat(auto-fill,minmax(min(100%,700px),1fr))}
+.pair{display:flex;gap:14px;align-items:flex-start}
+.pair>div{flex:1 1 0;min-width:0}
+.tl{font-size:12px;font-weight:700;;color:var(--ink-2);margin:0 0 5px}
+.state figcaption{max-width:74ch}
+.phone{box-shadow:0 0 0 1.5px var(--line-2),0 18px 36px -24px rgba(20,15,0,.5)}
+.doc h1{max-width:30ch}
+.doc .lead+.lead{margin-top:8px}
+.idx{max-width:1400px;margin:0 auto;padding:4px 16px 0;font-size:14px;color:var(--ink-2)}
+.idx a{color:var(--accent-ink)}
+
+.phone:has(.cheia) .sb{color:#fff}
+/* ======== telas comuns (não-sessão) ======== */
+.nav{display:flex;align-items:center;gap:6px;padding:0 10px 4px;flex:none}
+.nav .bk{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;flex:none;color:var(--ink)}
+.nav h2{font-size:21px;font-weight:700;letter-spacing:-.015em;flex:1;margin:0;line-height:1.15;min-width:0}
+.nav h2 small{display:block;font-size:13px;font-weight:600;color:var(--ink-2)}
+.nav .act{min-height:44px;padding:0 8px;font-size:14px;font-weight:700;color:var(--accent-ink);flex:none;text-align:right;line-height:1.2}
+.lead-p{margin:0 16px 2px;font-size:14px;color:var(--ink-2);line-height:1.4}
+.lead-p b{color:var(--ink)}
+.sec-l{font-size:12px;font-weight:700;color:var(--ink-2);margin:14px 16px 4px;}
+.sec-l.t0{margin-top:8px}
+.big{margin:8px 16px 0;padding:11px 14px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.big .n1{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px}
+.big .n1 span{font-size:15px;font-weight:600;color:var(--ink-2);letter-spacing:0}
+.big .cx{font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.35}
+.big .cx b{color:var(--ink)}
+.tabbar.five{grid-template-columns:repeat(5,1fr)}
+.tab svg{width:24px;height:24px}
+.fab{margin:10px 16px 0;display:flex;gap:8px}
+.fab>*{flex:1}
+.note-f{margin:8px 16px 0;padding:9px 12px;border-radius:14px;border:1.5px dashed var(--line-2);font-size:14px;color:var(--ink-2);line-height:1.35}
+.fin{margin:10px 16px 0;padding:0;border-radius:18px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+.fin .fr{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--line);min-height:56px}
+.fin .fr:first-child{border-top:0}
+.fin .fr .t{flex:1;min-width:0;line-height:1.3;font-size:15px}
+.fin .fr .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.fin .fr .v{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;line-height:1.1}
+.fin .fr .v small{display:block;font-size:12px;font-weight:600;color:var(--ink-2)}
+.fin .fr .v.todo{font-size:14px;font-weight:700;color:var(--accent-ink);border:1.5px dashed var(--accent);border-radius:10px;padding:5px 8px}
+.rep.w{width:76px;font-size:23px}
+.rep.w small{font-size:10.5px}
+.rep.cm{width:64px;font-size:21px}
+
+/* medidas / bioimpedância */
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:6px 16px 0}
+.fld{border:1.5px solid var(--line-2);border-radius:14px;padding:6px 9px;background:var(--surface);min-height:60px;display:flex;flex-direction:column;justify-content:center}
+.fld .l{font-size:11.5px;color:var(--ink-2);font-weight:700;line-height:1.15}
+.fld .v{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:3px}
+.fld .v span{font-size:12px;font-weight:600;color:var(--ink-2)}
+.fld .d{font-size:11.5px;color:var(--ink-2);line-height:1.2;margin-top:1px}
+.fld.vazio .v{color:var(--ink-3);font-weight:600;font-size:15px}
+.fld.wide{grid-column:1/-1}
+.fld.cur{border:2px solid var(--accent)}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 16px 0}
+.seg3 button{min-height:44px;border-radius:12px;border:1.5px solid var(--line-2);background:var(--surface);font-size:14px;font-weight:700;text-align:center;padding:0 4px;line-height:1.15}
+.seg3 button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg3.g2{grid-template-columns:1fr 1fr}
+.seg3.g4{grid-template-columns:repeat(4,1fr)}
+
+/* gráfico */
+.chart{margin:8px 16px 0}
+.chart svg{width:100%;height:auto;overflow:visible}
+.cl{font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;margin-top:3px}
+.ckey{font-size:12.5px;color:var(--ink-2);margin:5px 16px 0;line-height:1.35}
+
+/* fotos */
+.foto{position:relative;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:#CFC8BA}
+.foto svg{position:absolute;inset:0;width:100%;height:100%}
+.foto .tag{position:absolute;left:6px;bottom:5px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 6px;font-variant-numeric:tabular-nums}
+.foto.falta{background:var(--surface-2);display:grid;place-items:center;text-align:center;padding:10px}
+.foto.falta p{font-size:13px;color:var(--ink-2);margin:0;line-height:1.35;position:relative}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 16px 0}
+.duo .cp{font-size:12.5px;color:var(--ink-2);margin:4px 0 0;line-height:1.3;font-variant-numeric:tabular-nums}
+.duo .cp b{color:var(--ink);font-size:14px;display:block}
+.cort{position:relative;margin:6px 16px 0;border-radius:14px;overflow:hidden;aspect-ratio:3/4}
+.cort .lay{position:absolute;inset:0}
+.cort .lay.nova{clip-path:inset(0 0 0 54%)}
+.cort .hd{position:absolute;top:0;bottom:0;left:54%;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.cort .hd i{position:absolute;top:50%;left:50%;margin:-22px 0 0 -22px;width:44px;height:44px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:block}
+.cort .hd i::before,.cort .hd i::after{content:"";position:absolute;top:16px;width:0;height:0;border:6px solid transparent}
+.cort .hd i::before{left:6px;border-right-color:#15171A}
+.cort .hd i::after{right:6px;border-left-color:#15171A}
+.cort .mk{position:absolute;top:6px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 6px}
+.cort .mk.l{left:6px}.cort .mk.r{right:6px}
+.poses{display:flex;gap:4px;margin:8px 16px 0}
+.poses i{flex:1;height:9px;border-radius:3px;background:var(--surface-2);border:1px solid var(--line-2)}
+.poses i.f{background:var(--ink);border-color:var(--ink)}
+.poses i.c{background:var(--accent);border-color:var(--accent)}
+.poses i.x{background:repeating-linear-gradient(45deg,var(--err-line) 0 3px,transparent 3px 6px);border-color:var(--err-line)}
+
+/* sessão de fotos, modo 3 metros */
+.cheia{position:absolute;inset:0;display:flex;flex-direction:column;background:#0C0B0A;color:#fff;overflow:hidden}
+.cheia .top{flex:1;min-height:0;display:flex;flex-direction:column;padding:36px 12px 6px}
+.cheia .frame{position:relative;width:100%;aspect-ratio:3/4;flex:none;overflow:hidden;background:#CFC8BA}
+.cheia .frame>svg{position:absolute;inset:0;width:100%;height:100%}
+.cheia .frame.vazio{background:#15161A}
+.cheia .guia{position:absolute;inset:12px 26px;border:2px dashed rgba(255,255,255,.7);border-radius:6px}
+.cheia .bot{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;padding:6px 12px 2px;gap:8px}
+.cheia .nine{display:flex;gap:5px;flex:none}
+.cheia .nine i{flex:1;height:24px;border-radius:5px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 2px rgba(255,255,255,.8)}
+.cheia .nine i.f{background:#fff;box-shadow:none}
+.cheia .nine i.c{background:#9E9BFF;box-shadow:none}
+.cheia .nine i.x{background:repeating-linear-gradient(45deg,#FFADA3 0 4px,transparent 4px 8px);box-shadow:inset 0 0 0 2px #FFADA3}
+.cheia .ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:190px;height:190px}
+.cheia .ring svg{width:190px;height:190px}
+.cheia .ring b{position:absolute;font-size:76px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.55)}
+.cheia .giant{font-size:44px;font-weight:800;line-height:1;letter-spacing:-.03em;margin:14px 0 0;text-align:center}
+.cheia .giant.sm{font-size:32px;line-height:1.08}
+.cheia .inst{font-size:20px;font-weight:600;line-height:1.3;margin:0;text-align:center}
+.cheia .linha{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cheia .vz{font-size:15px;font-weight:700;background:rgba(255,255,255,.14);border-radius:12px;padding:8px 11px;display:flex;align-items:center;gap:7px;line-height:1.25}
+.cheia .vz svg{flex:none}
+.cheia .flash{position:absolute;inset:0;background:#fff}
+.cheia .giro{position:absolute;inset:0;display:grid;place-items:center}
+.hip{position:absolute;left:10px;top:10px;font-size:11px;font-weight:800;;background:#15171A;color:#fff;border:1.5px dashed #fff;border-radius:8px;padding:3px 8px;z-index:3}
+/* listas de pendência / prescrição */
+.item{margin:8px 16px 0;padding:11px 13px 12px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+.item.due{border:2px solid var(--warn-line);background:var(--warn-bg);color:var(--warn-ink)}
+.item.gone{border-style:dashed;color:var(--ink-2)}
+.item .hd2{display:flex;align-items:baseline;gap:8px}
+.item .hd2 b{font-size:15.5px;line-height:1.25;flex:1;min-width:0}
+.item .hd2 .pz{font-size:12px;font-weight:700;white-space:nowrap}
+.item .de{font-size:13.5px;color:var(--ink-2);margin:3px 0 0;line-height:1.35}
+.item.due .de{color:var(--warn-ink)}
+.item .two{margin-top:9px}
+.item .sec{min-height:48px}
+.diff{display:flex;gap:9px;align-items:flex-start;margin:0 16px;padding:9px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.35}
+.diff .mk2{font-size:11px;font-weight:800;border-radius:6px;padding:2px 5px;flex:none;margin-top:1px;}
+.diff .mk2.tr{background:var(--accent-soft);color:var(--accent-ink)}
+.diff .mk2.eu{background:var(--ink);color:var(--bg)}
+.diff .t{flex:1;min-width:0}
+.diff .t b{display:block;font-weight:700}
+.diff .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.meal{display:flex;gap:9px;align-items:flex-start;margin:0 16px;padding:9px 0;border-top:1px solid var(--line)}
+.meal time{font-size:13px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums;width:44px;flex:none;padding-top:2px}
+.meal .t{flex:1;min-width:0}
+.meal .t b{font-size:15px;display:block;line-height:1.2}
+.meal .t small{font-size:12.5px;color:var(--ink-2);display:block;line-height:1.35;margin-top:1px}
+.meal .kc{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink-2);flex:none;padding-top:2px}
+.meal.mine .t b::after{content:" · você";font-size:11px;font-weight:700;color:var(--accent-ink);}
+.tot{display:flex;justify-content:space-between;margin:9px 16px 0;padding-top:8px;border-top:2px solid var(--line);font-size:14px;font-weight:700}
+.tot span{color:var(--ink-2);font-weight:600}
+
+/* ---- vindo do momento 2 ---- */
+/* ---- momento 2 ---- */
+.body{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.body>*{flex:none}
+.day{margin:12px 16px 0}
+.day h4{font-size:13px;color:var(--ink-2);margin:0 0 2px;font-weight:700;line-height:1.3}
+.dl{list-style:none;margin:0;padding:0}
+.dl li{display:grid;grid-template-columns:20px 44px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:36px;border-top:1px solid var(--line);font-size:15px;padding:2px 0}
+.dl .si{width:20px;height:20px;color:var(--ink)}
+.dl li.o .si,.dl li.f .si{color:var(--ink-3)}
+.dl li.nw .si{color:var(--accent)}
+.dl time{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:14px}
+.dl .nm{font-weight:600;line-height:1.25}
+.dl .nm small{display:block;font-weight:500;font-size:12px;color:var(--ink-2)}
+.dl .st{font-size:13px;color:var(--ink-2);text-align:right;line-height:1.25}
+.dl li.nw .st{color:var(--accent-ink);font-weight:700}
+.dl li.o .st{font-style:italic}
+.known{margin:12px 16px 0}
+.cells{display:grid;grid-template-columns:repeat(14,1fr);gap:4px}
+.cell{height:22px;border-radius:5px;border:1.5px dashed var(--ink-3)}
+.cell.cheia{background:var(--ink);border:1.5px solid var(--ink)}
+.cell.part{border:1.5px solid var(--ink);background:linear-gradient(to top,var(--ink) 50%,transparent 50%)}
+.cell.today{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.kl{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:4px}
+.known p{font-size:13px;color:var(--ink-2);margin:4px 0 0;line-height:1.4}
+.known p b{color:var(--ink)}
+.kr{display:flex;align-items:flex-start;gap:8px}
+.kr p{flex:1}
+.done{margin:10px 16px 0;padding:12px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.done .h{display:flex;align-items:center;gap:10px}
+.done .h .t{flex:1;min-width:0}
+.done .h b{display:block;font-size:17px;line-height:1.25}
+.done .h small{display:block;font-size:13px;color:var(--ink-2)}
+.done .ico{width:26px;height:26px}
+.done .more{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:14px;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+.done .more .t{flex:1}
+.done .more b{color:var(--ink)}
+.ask{margin:10px 0 2px;padding:10px 12px;border-radius:14px;background:var(--surface-2)}
+.ask>b{display:block;font-size:15px;margin-bottom:8px;line-height:1.3}
+.ask p{font-size:13px;color:var(--ink-2);margin:8px 0 0;line-height:1.4}
+.sheet.cheia{top:50px;padding:8px 16px 28px;display:flex;flex-direction:column;overflow:hidden}
+.rr{display:grid;grid-template-columns:90px minmax(0,1fr);gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line)}
+.rr .nm{font-size:14px;font-weight:700;line-height:1.2}
+.rr .nm small{display:block;font-weight:500;color:var(--ink-2);font-size:12px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.seg.two2{grid-template-columns:1fr 1fr}
+.seg button{min-height:44px;border-radius:11px;border:1.5px solid var(--line-2);font-size:13px;font-weight:700;text-align:center;background:var(--surface);padding:0 2px;line-height:1.1}
+.seg button[aria-checked="true"].pv{background:var(--accent-soft);border:2px solid var(--accent);color:var(--accent-ink)}
+.seg button[aria-checked="true"].me{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.seg button[aria-checked="true"].nn{border:2px solid var(--ink)}
+.rb{margin-top:10px;padding:10px 12px;border-radius:14px;border:1.5px solid var(--line-2);font-size:14px;line-height:1.4}
+.rb .l{font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:2px;}
+.rb .c{display:block;margin-top:4px;color:var(--ink-2);font-size:13px}
+.primary[disabled]{background:var(--surface-2);color:var(--ink-2);border:1.5px dashed var(--line-2)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;list-style:none;padding:0;margin:12px 0 0;font-size:14px;color:var(--ink-2)}
+.legend li{display:flex;align-items:center;gap:6px}
+.legend svg{width:20px;height:20px;color:var(--ink)}
+.legend .a svg{color:var(--accent)}
+.legend .g svg{color:var(--ink-3)}
+.wk{font-size:12px;font-weight:700;color:var(--ink-2);margin:12px 16px 0;}
+.dr{display:flex;align-items:center;gap:10px;margin:0 16px;padding:7px 0;border-top:1px solid var(--line);min-height:58px}
+.dr:first-of-type{border-top:0}
+.dr .si{width:20px;height:20px;color:var(--ink);flex:none}
+.dr.o .si{color:var(--ink-3)}
+.dr .t{flex:1;min-width:0;line-height:1.3}
+.dr .t b{display:block;font-size:15px}
+.dr .t small{display:block;font-size:13px;color:var(--ink-2)}
+.dr .t small.ok{color:var(--ink)}
+.dr .lk{padding:0 4px}
+.legend-note{font-size:13px;color:var(--ink-2);margin:6px 0 0;max-width:68ch}
+
+/* ======== terceira entrega ======== */
+/* decisão 6: nenhum rótulo em caixa alta espaçada, dentro ou fora do telefone */
+.eyebrow,.tl,.sec-l,.grp,.wk,.rb .l,.also-l,.olbl,.cmp2 .box2 b{text-transform:none!important;letter-spacing:0!important}
+.eyebrow{font-size:14px}
+.tl{font-size:13px}
+.sec-l{font-size:16px;font-weight:700;color:var(--ink);margin:18px 16px 2px;line-height:1.25}
+.sec-l small{font-size:13px;font-weight:600;color:var(--ink-2);margin-left:6px}
+.sec-l.t0{margin-top:10px}
+.cell.full{background:var(--ink);border:1.5px solid var(--ink)}
+.phone{font-size:16px}
+
+/* cabeçalho do dia (Agora e Dias) */
+.dayh{padding:2px 16px 6px;flex:none}
+.dayh .r1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.dayh .d{font-size:24px;font-weight:700;letter-spacing:-.015em;line-height:1.2}
+.dayh .hr{font-size:16px;font-weight:600;color:var(--ink-2);margin-left:8px;font-variant-numeric:tabular-nums;letter-spacing:0}
+.prov{display:inline-flex;align-items:center;gap:2px;min-height:44px;font-size:15.5px;font-weight:600;color:var(--ink-2);margin-top:-4px}
+.prov svg{width:18px;height:18px;color:var(--ink-3)}
+.prov .p{border-bottom:1.5px dotted var(--ink-3);line-height:1.25}
+.prov.firm .p{border-bottom:0}
+.ib.r{margin:0 -10px 0 0}
+
+/* linhas do dia, tocáveis */
+.lines{list-style:none;margin:0 16px;padding:0}
+.lines>li{border-top:1px solid var(--line)}
+.lines>li:first-child{border-top:0}
+.ln{display:grid;grid-template-columns:22px 48px minmax(0,1fr) auto 16px;align-items:center;gap:8px;width:100%;min-height:52px;padding:4px 0;font-size:15.5px;text-align:left}
+.ln .si{width:21px;height:21px;color:var(--ink)}
+.ln time{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:14.5px}
+.ln .nm{font-weight:600;line-height:1.25;min-width:0}
+.ln .nm small{display:block;font-weight:500;font-size:12.5px;color:var(--ink-2);line-height:1.3}
+.ln .st{font-size:14px;color:var(--ink-2);text-align:right;line-height:1.25;font-variant-numeric:tabular-nums}
+.ln .st b{color:var(--ink);font-weight:700}
+.ln .cv{width:16px;height:16px;color:var(--ink-3)}
+.ln.o .si{color:var(--ink-3)}
+.ln.o .st{font-style:italic}
+.ln.f .si{color:var(--ink-3)}
+.ln.f .nm{font-weight:500;color:var(--ink-2)}
+.ln.pv .si{color:var(--accent)}
+.ln.pv .st{color:var(--accent-ink);font-weight:700}
+/* a linha aberta é o cartão, aberto no lugar */
+.lopen{margin:4px -8px 8px;padding:10px 12px 12px;border-radius:20px;border:2px solid var(--accent);background:var(--surface)}
+.lopen .k{font-size:13.5px;color:var(--accent-ink);font-weight:700}
+.lopen h3{font-size:22px;margin:1px 0 3px;line-height:1.15;letter-spacing:-.01em}
+.lopen .items{font-size:13.5px;color:var(--ink-2);margin:0 0 10px;line-height:1.35}
+.lopen .primary{min-height:52px}
+.lopen .two .sec{min-height:48px}
+
+.secl{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:16px 16px 2px}
+.secl b{font-size:16px;line-height:1.25}
+.secl span{font-size:13.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;text-align:right}
+
+/* água */
+.agua{display:flex;align-items:center;gap:10px;margin:10px 16px 0;padding:6px 6px 6px 12px;border-radius:16px;background:var(--surface-2);min-height:58px}
+.agua svg.dr{width:22px;height:22px;color:var(--ink-2);flex:none}
+.agua .t{flex:1;min-width:0;line-height:1.3;font-size:15.5px}
+.agua .t b{font-variant-numeric:tabular-nums}
+.agua .t small{display:block;font-size:13px;color:var(--ink-2)}
+.agua .cups{display:flex;gap:3px;margin-top:4px}
+.agua .cups i{width:12px;height:14px;border-radius:2px 2px 4px 4px;border:1.5px solid var(--ink-3)}
+.agua .cups i.f{background:var(--ink);border-color:var(--ink)}
+
+/* linhas abaixo do cartão (pesagem, fotos, cardio, decisão) */
+.below{display:flex;align-items:center;gap:10px;margin:8px 16px 0;padding:8px 6px 8px 12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);min-height:62px}
+.below>svg{width:24px;height:24px;color:var(--ink);flex:none}
+.below .t{flex:1;min-width:0;line-height:1.3;font-size:15.5px}
+.below .t b{display:block;font-weight:700}
+.below .t small{display:block;font-size:13px;color:var(--ink-2);line-height:1.35}
+
+/* contagem dos 14 */
+.known .cnt{font-size:15px;color:var(--ink);margin:6px 0 0;line-height:1.4}
+.known .cnt b{font-variant-numeric:tabular-nums}
+.known .row2{display:flex;align-items:center;gap:8px;margin-top:4px}
+.known .row2 p{flex:1;margin:0}
+
+/* folhas (comum) */
+.sheet h3{font-size:21px}
+.sheet .prov2{font-size:13.5px;color:var(--ink-2);font-weight:600;margin:0 0 1px}
+.lk.dn{color:var(--ink);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
+
+/* ======== Dias: o mês ======== */
+.mh{display:flex;align-items:center;gap:4px;padding:0 6px 2px 16px;flex:none}
+.mh h2{flex:1;margin:0;font-size:24px;font-weight:700;letter-spacing:-.015em;line-height:1.15}
+.mh h2 small{display:block;font-size:13.5px;font-weight:600;color:var(--ink-2);letter-spacing:0}
+.mh .ib{margin:0}
+.wds{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:6px 12px 2px}
+.wds span{font-size:12px;color:var(--ink-2);text-align:center;font-weight:600}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 12px}
+.dc{position:relative;height:64px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 1px 10px;text-align:center;min-width:0}
+.dc .dn{position:absolute;left:6px;top:4px;font-size:12px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums;line-height:1}
+.dc .hz{position:absolute;right:5px;top:4px;width:11px;height:11px;color:var(--ink)}
+.dc .hz2{position:absolute;right:4px;top:3px;font-size:10px;font-weight:800;color:var(--ink);display:flex;gap:1px;align-items:center;line-height:1}
+.dc .hz2 svg{width:10px;height:10px}
+.dc .tr{font-size:19px;font-weight:800;line-height:1;letter-spacing:-.01em}
+.dc .tr.two{font-size:15px;letter-spacing:.04em}
+.dc .tw{font-size:12px;font-weight:700;line-height:1.1}
+.dc .tw.dsc{font-weight:600;color:var(--ink-2);font-style:italic}
+.dc .stk{display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1}
+.dc .stk .tr{font-size:16px}
+.dc .stk .tw{font-size:11px}
+.dc .fd{position:absolute;left:11px;right:11px;bottom:6px;height:6px;border-radius:3px}
+.dc .fd.m{background:var(--ink)}
+.dc .fd.s{border:1.5px dashed var(--ink-3)}
+.dc.fut{background:transparent;border:1px dashed var(--line)}
+.dc.fut .dn{color:var(--ink-3)}
+.dc.hoje{border:2px solid var(--accent)}
+.dc.hoje .dn{color:var(--accent-ink);font-weight:800}
+.dc.nada{background:var(--surface)}
+.dc.x{visibility:hidden}
+.dc.sel{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+.calk{display:flex;flex-wrap:wrap;gap:3px 12px;margin:8px 16px 0;font-size:12.5px;color:var(--ink-2);line-height:1.3}
+.calk span{display:inline-flex;align-items:center;gap:5px}
+.calk b{color:var(--ink);font-weight:800}
+.calk .k1{display:inline-block;width:18px;height:6px;border-radius:3px;background:var(--ink)}
+.calk .k2{display:inline-block;width:18px;height:6px;border-radius:3px;border:1.5px dashed var(--ink-3)}
+.calk svg{width:11px;height:11px;color:var(--ink)}
+
+/* leituras do mês */
+.rd{margin:0 16px;padding:11px 0 10px;border-top:1px solid var(--line)}
+.rd:first-of-type{border-top:0}
+.rd .h{font-size:15px;font-weight:700;line-height:1.25}
+.rd .row3{display:flex;align-items:center;gap:12px;margin-top:3px}
+.rd .v{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rd .v span{font-size:14px;font-weight:600;color:var(--ink-2);letter-spacing:0;margin-left:3px}
+.rd .c{font-size:13px;color:var(--ink-2);line-height:1.35;margin-top:3px}
+.rd .c b{color:var(--ink)}
+.rd .sp{flex:1;min-width:0}
+.rd .sp svg{width:100%;height:44px;overflow:visible}
+.rd .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
+.rd .trio div{line-height:1.2}
+.rd .trio b{display:block;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.rd .trio small{display:block;font-size:12px;color:var(--ink-2)}
+.rd .axis svg{width:100%;height:34px;overflow:visible;margin-top:6px}
+
+/* um dia aberto */
+.nav2{display:flex;align-items:flex-start;gap:2px;padding:0 10px 0 6px;flex:none}
+.nav2 .bk{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;flex:none;color:var(--ink)}
+.nav2 .tt{flex:1;min-width:0;padding-top:4px}
+.nav2 .tt h2{margin:0;font-size:23px;font-weight:700;letter-spacing:-.015em;line-height:1.15}
+.nav2 .tt .pv2{font-size:14.5px;color:var(--ink-2);font-weight:600;margin-top:2px;line-height:1.3}
+.recs{margin:6px 16px 0;border-radius:18px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+.rec{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px 8px 12px;border-top:1px solid var(--line);min-height:60px;text-align:left}
+.rec:first-child{border-top:0}
+.rec .ic{width:38px;height:38px;border-radius:11px;background:var(--surface-2);display:grid;place-items:center;flex:none;font-size:17px;font-weight:800}
+.rec .ic svg{width:18px;height:18px}
+.rec .t{flex:1;min-width:0;line-height:1.3}
+.rec .t b{display:block;font-size:16px}
+.rec .t small{display:block;font-size:13px;color:var(--ink-2)}
+.rec .cv{width:18px;height:18px;color:var(--ink-3);flex:none}
+.rec.dup{background:var(--warn-bg)}
+.rec.dup .t small{color:var(--warn-ink)}
+.adds{display:flex;gap:8px;margin:8px 16px 0}
+.adds button{flex:1;min-height:46px;border-radius:13px;border:1.5px dashed var(--line-2);font-size:14.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;text-align:center}
+.adds svg{width:18px;height:18px}
+.hint2{font-size:13px;color:var(--ink-2);margin:6px 16px 0;line-height:1.4}
+.ref2{margin:8px 16px 0;font-size:13px;color:var(--ink-2);line-height:1.4;padding-left:10px;border-left:3px solid var(--line-2)}
+.ref2 b{color:var(--ink)}
+.big2{margin:8px 16px 0;padding:12px 14px;border-radius:18px;background:var(--surface-2);font-size:14.5px;line-height:1.4}
+.big2 b{display:block;font-size:16px;margin-bottom:2px}
+
+/* sessão passada */
+.facts{margin:6px 16px 0;border-radius:16px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+.facts .fr2{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 12px;border-top:1px solid var(--line);min-height:48px;font-size:14.5px}
+.facts .fr2:first-child{border-top:0}
+.facts .fr2 .l{width:64px;color:var(--ink-2);font-weight:600;flex:none}
+.facts .fr2 .t{flex:1;min-width:0;line-height:1.3}
+.facts .fr2 .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.facts .fr2 .v{font-weight:700;font-variant-numeric:tabular-nums;font-size:16px}
+.facts .fr2 .v.apx{border-bottom:1.5px dotted var(--ink-3)}
+.exs{list-style:none;margin:4px 16px 0;padding:0}
+.exs>li{border-top:1px solid var(--line);padding:7px 0 6px}
+.exs>li:first-child{border-top:0}
+.exs .en{display:flex;align-items:baseline;gap:6px;font-size:14.5px;font-weight:700;line-height:1.25}
+.exs .en span{font-size:12.5px;font-weight:600;color:var(--ink-2);white-space:nowrap;margin-left:auto;font-variant-numeric:tabular-nums}
+.exs .ss{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
+.sv{min-height:40px;min-width:62px;padding:2px 9px;border-radius:11px;border:1.5px solid var(--line-2);background:var(--surface);font-size:15.5px;font-weight:700;font-variant-numeric:tabular-nums;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.sv small{font-size:10.5px;font-weight:600;color:var(--ink-2)}
+.sv.on{border:2px solid var(--ink);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.sv.nf{border-style:dashed;color:var(--ink-2);font-weight:600;font-size:13.5px}
+.edit{margin:8px -4px 2px;padding:10px 10px 10px;border-radius:16px;background:var(--surface-2)}
+.edit .eh{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2);margin-bottom:6px}
+.edit .eh b{color:var(--ink);font-size:15px}
+.edit .strip{padding-bottom:8px}
+.edit .ok{display:flex;align-items:center;gap:8px;font-size:14px;line-height:1.35;padding:6px 2px 2px}
+.edit .ok svg{width:20px;height:20px;flex:none;color:var(--ink)}
+.rep.was{border-style:dashed}
+.rep.was small{color:var(--ink-2)}
+.del{display:flex;align-items:center;justify-content:center;width:calc(100% - 32px);margin:12px 16px 0;min-height:48px;border-radius:14px;border:1.5px solid var(--line-2);font-weight:700;font-size:15px;color:var(--ink);background:var(--surface)}
+
+/* painel de apagar (decisão 8) */
+.panel{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:26px 26px 0 0;padding:8px 16px 38px;box-shadow:0 -12px 40px rgba(0,0,0,.25)}
+.panel h3{font-size:22px;margin:0 0 4px;line-height:1.2;letter-spacing:-.01em}
+.panel .gone{margin:8px 0 0;padding:10px 12px;border-radius:14px;background:var(--surface-2);font-size:14.5px;line-height:1.4}
+.panel .gone b{font-variant-numeric:tabular-nums}
+.panel .gone ul{margin:4px 0 0;padding-left:18px}
+.panel .stays{margin:8px 0 0;font-size:14px;color:var(--ink-2);line-height:1.4}
+.panel .stays b{color:var(--ink)}
+.panel .kill{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;border-radius:16px;background:var(--ink);color:var(--bg);font-size:17px;font-weight:700;margin-top:14px;text-align:center;padding:0 12px;line-height:1.2}
+.panel .keep{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;border-radius:16px;border:1.5px solid var(--line-2);font-size:17px;font-weight:700;margin-top:8px;background:var(--surface)}
+
+/* registrar treino passado */
+.pick{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:18px;border:2px solid var(--accent);background:var(--accent-soft);text-align:left;margin-top:6px}
+.pick .lt{width:46px;height:46px;border-radius:13px;background:var(--surface);display:grid;place-items:center;font-size:24px;font-weight:800;color:var(--accent-ink);flex:none}
+.pick .t{flex:1;min-width:0;line-height:1.3}
+.pick .t b{display:block;font-size:17px;color:var(--accent-ink)}
+.pick .t small{display:block;font-size:13px;color:var(--ink-2)}
+.pick.me{border-color:var(--ink);background:var(--surface)}
+.pick.me .lt{background:var(--ink);color:var(--bg)}
+.pick.me .t b{color:var(--ink)}
+.others{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.others button{min-height:48px;border-radius:12px;border:1.5px solid var(--line-2);background:var(--surface);font-size:17px;font-weight:800;text-align:center}
+.others button.w{font-size:14px;font-weight:700}
+.wide2{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;margin-top:8px;padding:6px 12px;border-radius:14px;border:1.5px solid var(--line-2);background:var(--surface);text-align:left}
+.wide2 .t{flex:1;min-width:0;line-height:1.3}
+.wide2 .t b{display:block;font-size:15.5px}
+.wide2 .t small{display:block;font-size:12.5px;color:var(--ink-2)}
+.wide2 svg{width:18px;height:18px;color:var(--ink-3);flex:none}
+.saved2{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:var(--surface-2);margin-top:6px}
+.saved2 svg{width:24px;height:24px;flex:none}
+.saved2 .t{flex:1;min-width:0;line-height:1.3}
+.saved2 .t b{display:block;font-size:16px}
+.saved2 .t small{display:block;font-size:13px;color:var(--ink-2)}
+.q2{margin-top:12px}
+.q2>b{display:block;font-size:15.5px;margin-bottom:6px}
+.q2>p{font-size:13px;color:var(--ink-2);margin:6px 0 0;line-height:1.4}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{min-height:44px;padding:0 13px;border-radius:999px;border:1.5px solid var(--line-2);background:var(--surface);font-size:14.5px;font-weight:600}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.field{display:flex;align-items:center;min-height:50px;padding:0 12px;border-radius:13px;border:1.5px solid var(--line-2);background:var(--surface);font-size:16px;color:var(--ink-3)}
+.field.has{color:var(--ink)}
+
+/* folha "pôr em dia", com a gravação a cada toque */
+.rr{grid-template-columns:96px minmax(0,1fr)}
+.seg button[aria-checked="true"].pv{background:var(--accent-soft);border:2px solid var(--accent);color:var(--accent-ink)}
+.seg button.me[aria-checked="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.seg button[disabled]{opacity:.38}
+.rb2{margin-top:10px;padding:10px 12px;border-radius:14px;border:1.5px solid var(--line-2);font-size:14px;line-height:1.4}
+.rb2 .l{display:block;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.rb2 .a{color:var(--accent-ink)}
+.ask3{margin:6px 0 2px;padding:10px 12px;border-radius:14px;background:var(--surface-2)}
+.ask3>b{display:block;font-size:15px;margin-bottom:8px;line-height:1.3}
+.ask3 .three{display:grid;grid-template-columns:1fr;gap:6px}
+.ask3 .three .sec{min-height:46px;font-size:15px}
+.ask3 p{font-size:13px;color:var(--ink-2);margin:8px 0 0;line-height:1.4}
+.sheet.tall{top:46px;padding:8px 16px 26px;display:flex;flex-direction:column;overflow:hidden}
+
+/* erro de gravação, ao lado do toque */
+.err.inl{margin-top:8px}
+.err .btns2{display:flex;gap:6px;margin-top:8px}
+.err .btns2 button{flex:1;min-height:44px;border-radius:12px;border:1.5px solid var(--err-line);background:var(--surface);color:var(--ink);font-weight:700;font-size:14px;text-align:center;padding:0 6px;line-height:1.15}
+
+/* vazio */
+.empty{margin:10px 16px 0;padding:14px 14px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.empty b{display:block;font-size:17px;line-height:1.3;margin-bottom:4px}
+.empty p{margin:0 0 10px;font-size:14px;color:var(--ink-2);line-height:1.45}
+.rd .nil{font-size:14px;color:var(--ink-2);line-height:1.4;margin-top:3px}
+.rd .nil b{color:var(--ink)}
+
+@media (prefers-reduced-motion:no-preference){
+  .sv,.ln,.rec,.dc,.pick,.others button,.chips button,.kill,.keep{transition:transform .12s ease}
+  .sv:active,.ln:active,.rec:active,.dc:active,.pick:active,.others button:active,.chips button:active,.kill:active,.keep:active{transform:scale(.97)}
+}
+.cmp2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 16px 0;font-size:13.5px}
+.cmp2 .box2{border:1px solid var(--line);border-radius:14px;padding:9px 10px;background:var(--surface)}
+.cmp2 .box2>b{display:block;font-size:13px;color:var(--ink-2);margin-bottom:3px;font-weight:700}
+.cmp2 .box2 span{display:block;line-height:1.35;font-variant-numeric:tabular-nums}
+.sheet .cmp2{margin:8px 0 0}
+.dc.cmp{height:30px;padding:0}
+.dc.cmp .dn{top:9px}
+/* a comida do dia, num olhar */
+.mstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin:6px 16px 0;padding:10px 4px 9px;border-radius:16px;background:var(--surface);border:1px solid var(--line);width:calc(100% - 32px);text-align:center}
+.mstrip.m4{grid-template-columns:repeat(4,1fr)}
+.mstrip>span{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;color:var(--ink-2);line-height:1.15;min-width:0}
+.mstrip svg{width:24px;height:24px;color:var(--ink);margin-bottom:2px}
+.mstrip .o svg{color:var(--ink-3)}
+.mstrip b{font-size:12.5px;color:var(--ink);font-weight:700}
+.mstrip i{font-style:normal;font-variant-numeric:tabular-nums}
+.foodl{display:flex;align-items:center;gap:8px;margin:8px 16px 0;font-size:14px;color:var(--ink-2);line-height:1.35}
+.foodl .t{flex:1;min-width:0}
+.foodl .t b{color:var(--ink)}
+/* sessão passada: exercício em linha */
+.exr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.exr .nm{font-size:14px;font-weight:700;line-height:1.22}
+.exr .nm small{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-top:1px;font-variant-numeric:tabular-nums}
+.exr .ss{display:flex;gap:4px;margin:0}
+.exs>li{padding:6px 0}
+.sv{min-width:60px;min-height:44px;padding:1px 5px;font-size:14.5px;border-radius:11px}
+
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<linearGradient id="gw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4DED1"/><stop offset=".62" stop-color="#D3CBBB"/><stop offset=".63" stop-color="#C2B9A7"/><stop offset="1" stop-color="#B5AB97"/></linearGradient>
+</defs>
+<symbol id="p1" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L37 90 L35 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L83 90 L85 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p2" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L26 72 L34 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L94 72 L86 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="34" cy="44" r="5" fill="#3A352D"/><circle cx="86" cy="44" r="5" fill="#3A352D"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p3" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 60 L30 44 L48 33" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 60 L90 44 L72 33" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p4" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M86 144 L86 156 L94 150 Z" fill="rgba(0,0,0,.42)"/><path d="M51 58 L69 58 L67 112 L49 112 Z" fill="#3A352D"/><path d="M62 108 L64 147" stroke="#6E6558" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M57 108 L55 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M58 63 L84 71 L102 71" stroke="#6E6558" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M58 62 L86 66 L104 66" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="59" cy="33" r="11.5" fill="#3A352D"/><path d="M59 44 L59 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p5" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M86 144 L86 156 L94 150 Z" fill="rgba(0,0,0,.42)"/><path d="M51 58 L69 58 L67 112 L49 112 Z" fill="#3A352D"/><path d="M62 108 L64 147" stroke="#6E6558" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M57 108 L55 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M58 62 L63 88 L61 107" stroke="#6E6558" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M57 62 L62 90 L60 108" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="59" cy="33" r="11.5" fill="#3A352D"/><path d="M59 44 L59 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p6" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L37 90 L35 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L83 90 L85 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p7" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L26 72 L34 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L94 72 L86 46" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="34" cy="44" r="5" fill="#3A352D"/><circle cx="86" cy="44" r="5" fill="#3A352D"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p8" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M41 58 L79 58 L72 112 L48 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M45 62 L28 82 L48 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M75 62 L92 82 L72 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="p9" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M34 144 L34 156 L26 150 Z" fill="rgba(0,0,0,.42)"/><path d="M51 58 L69 58 L67 112 L49 112 Z" fill="#3A352D"/><path d="M62 108 L64 147" stroke="#6E6558" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M57 108 L55 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M62 62 L57 88 L59 107" stroke="#6E6558" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M63 62 L58 90 L60 108" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="59" cy="33" r="11.5" fill="#3A352D"/><path d="M59 44 L59 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol>
+<symbol id="bk" viewBox="0 0 24 24"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="fw" viewBox="0 0 24 24"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="undo" viewBox="0 0 24 24"><path d="M7 9h8a4.5 4.5 0 110 9H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 5.5L6.5 9l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="down" viewBox="0 0 24 24"><path d="M12 4v11M7.5 11L12 15.5 16.5 11M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="som" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" fill="currentColor"/><path d="M15 9a4.5 4.5 0 010 6M17.8 6.5a8 8 0 010 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="fita" viewBox="0 0 24 24"><path d="M3.5 7.5h17v9h-17z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 7.5v3M10.5 7.5v4.5M14 7.5v3M17.5 7.5v4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="bal" viewBox="0 0 24 24"><path d="M4 5.5h16v13H4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 9.5a4 4 0 018 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 9.5l2.5-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="lousa" viewBox="0 0 24 24"><path d="M3.5 4.5h17v12h-17z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 19.5l1.6-3M16 19.5l-1.6-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6.5 8h7M6.5 11h5M6.5 13.8h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="run" viewBox="0 0 24 24"><circle cx="14.5" cy="4.8" r="2.1" fill="currentColor"/><path d="M13 8.2l-3.4 2.2 1.6 3.1-2.6 4.4M11.2 13.5l3.6 1.3 1 4.3M13.6 9.6l3.4 1.6 2.4-.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="t-corpo" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8.2v6.3M7.5 10.3h9M9.6 14.5L8.4 21M14.4 14.5L15.6 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="t-sem" viewBox="0 0 24 24"><path d="M4 19.5h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="5" y="12" width="3.4" height="5" rx="1.2" fill="currentColor"/><rect x="10.3" y="8.5" width="3.4" height="8.5" rx="1.2" fill="currentColor"/><rect x="15.6" y="4.5" width="3.4" height="12.5" rx="1.2" fill="currentColor"/></symbol>
+<symbol id="ok2" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="rel" viewBox="0 0 24 24"><circle cx="12" cy="12.5" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4.5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 2.5h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="pen" viewBox="0 0 24 24"><path d="M4 20l1-4.2L16.2 4.6l3.2 3.2L8.2 19 4 20z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+<symbol id="nuv" viewBox="0 0 24 24"><path d="M7 17.5h9.5a3.5 3.5 0 00.2-7 5 5 0 00-9.6 1.3A3 3 0 007 17.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+
+  <symbol id="sig" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor" opacity=".28"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor" opacity=".28"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor" opacity=".28"/></symbol>
+  <symbol id="bat" viewBox="0 0 27 12"><rect x=".75" y=".75" width="22" height="10.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/><rect x="2.5" y="2.5" width="13" height="7" rx="1.5" fill="currentColor"/><rect x="24" y="4" width="1.8" height="4" rx=".9" fill="currentColor" opacity=".5"/></symbol>
+  <symbol id="dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.1" fill="currentColor"/><circle cx="12" cy="12" r="2.1" fill="currentColor"/><circle cx="19" cy="12" r="2.1" fill="currentColor"/></symbol>
+  <symbol id="ck" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.5" fill="currentColor"/><path d="M5.8 10.4l2.8 2.8 5.6-5.8" fill="none" style="stroke:var(--surface)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="cam" viewBox="0 0 20 20"><path d="M3 6.5h3l1.4-2h5.2l1.4 2h3v9H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="10" cy="11" r="2.8" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="note" viewBox="0 0 20 20"><path d="M4 3.5h12v13H4z M7 7.5h6 M7 10.5h6 M7 13.5h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="star" viewBox="0 0 20 20"><path d="M10 2.2l2.3 4.9 5.3.6-3.9 3.6 1.1 5.3L10 13.9l-4.8 2.7 1.1-5.3-3.9-3.6 5.3-.6z" fill="currentColor"/></symbol>
+  <symbol id="warn" viewBox="0 0 20 20"><path d="M10 2.5l8 14H2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 8v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14.4" r="1.05" fill="currentColor"/></symbol>
+  <symbol id="gear" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="t-agora" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="t-dias" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="t-evo" viewBox="0 0 24 24"><path d="M3.5 18l5-6 4 3 7-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 20.5h17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="t-presc" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 3.5h6v3H9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+
+<symbol id="sig-c" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor"/></symbol><symbol id="p1b" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 157 L66 157 L60 164 Z" fill="rgba(0,0,0,.42)"/><path d="M38.5 57 L81.5 57 L72.5 112 L47.5 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M43 61 L34 90 L32 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M77 61 L86 90 L88 107" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol><symbol id="p8b" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice"><rect width="120" height="160" fill="url(#gw)"/><ellipse cx="60" cy="150" rx="27" ry="5.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5"/><path d="M46 149 h28 M60 149 v7" stroke="rgba(0,0,0,.3)" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M54 143 L66 143 L60 136 Z" fill="rgba(0,0,0,.42)"/><path d="M38.5 57 L81.5 57 L72.5 112 L47.5 112 Z" fill="#3A352D"/><path d="M54 108 L52 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M66 108 L68 147" stroke="#3A352D" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M43 61 L26 82 L47 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M77 61 L94 82 L73 97" stroke="#3A352D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="60" cy="33" r="11.5" fill="#3A352D"/><path d="M60 44 L60 52" stroke="#3A352D" stroke-width="9" stroke-linecap="round"/></symbol><symbol id="s-full" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.5" fill="currentColor"/><path d="M5.8 10.4l2.8 2.8 5.6-5.8" fill="none" style="stroke:var(--surface)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="s-half" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 1.4A8.6 8.6 0 0 0 10 18.6Z" fill="currentColor"/></symbol>
+<symbol id="s-out" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 16L16 4" stroke="currentColor" stroke-width="1.8"/></symbol>
+<symbol id="s-none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.6 10h8.8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+<symbol id="s-nsei" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3.2 2.6"/><path d="M7.6 7.6a2.5 2.5 0 1 1 2.5 2.9v1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="10.1" cy="14.2" r="1" fill="currentColor"/></symbol>
+<symbol id="s-open" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3.2 2.6"/></symbol>
+<symbol id="s-now" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="10" r="4" fill="currentColor"/></symbol>
+<symbol id="s-fut" viewBox="0 0 20 20"><circle cx="10" cy="10" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+<symbol id="hz" viewBox="0 0 20 20"><path d="M10 17.2S2.6 12.6 2.6 7.4A3.9 3.9 0 0 1 10 5.6a3.9 3.9 0 0 1 7.4 1.8c0 5.2-7.4 9.8-7.4 9.8z" fill="currentColor"/></symbol>
+<symbol id="drop" viewBox="0 0 20 20"><path d="M10 2.5s5.6 6.2 5.6 10a5.6 5.6 0 0 1-11.2 0c0-3.8 5.6-10 5.6-10z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+<symbol id="chev" viewBox="0 0 20 20"><path d="M7.5 4.5L13 10l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="cams" viewBox="0 0 24 24"><path d="M3.5 7.5h4l1.8-2.5h5.4l1.8 2.5h4v11h-17z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+</svg>
+
+<header class="doc">
+  <p class="eyebrow">Direção D · terceira entrega</p>
+  <h1>Dias · o que aconteceu em cada dia</h1>
+  <p class="lead">Terça, 13/10, 21h10, sentado. É o lugar da pergunta “o que aconteceu em cada dia”, e só dela. Não há nada prescrito aqui — o plano de um dia passado aparece só como referência, em cinza, porque mora em Prescrição. Não há leitura de semana, porque é de Semana. E não há “agora”: hoje, tocado no mês, abre o Agora.</p>
+  <p class="lead"><b>O mês é a entrada, e o dia é o lugar.</b> No mês, cada dia diz o que teve por forma e palavra — letra do treino, “aula”, “fora”, “desc.”, coração do cardio, barra da comida. Um toque abre o dia; no dia, cada registro abre inteiro e se corrige ali mesmo, e cada toque grava (decisão 1). Apagar passa sempre pelo painel que diz o que vai embora (decisão 8).</p>
+  <p class="lead">Três leituras do mês, e só estas: dias com treino por semana, em média móvel de quatro semanas e nunca em sequência de dias (F22); o cardio do mês; e o horário de início. <b>O calendário é ilustrativo</b> e continua o dos desenhos anteriores: Treino A na segunda 28/09, D na quinta 01/10, aula no sábado 03/10, A na terça 06/10.</p>
+  <ul class="legend" aria-label="Como ler o mês">
+  <li><b style="color:var(--ink);font-size:16px">A–E</b>&nbsp;treino da sequência</li>
+  <li><b style="color:var(--ink)">aula</b>&nbsp;aula de HYROX</li>
+  <li><b style="color:var(--ink)">fora</b>&nbsp;treino fora da prescrição</li>
+  <li><i style="color:var(--ink-2)">desc.</i>&nbsp;descanso marcado</li>
+  <li><svg><use href="#hz"/></svg>cardio</li>
+  <li><span style="display:inline-block;width:18px;height:6px;border-radius:3px;background:var(--ink)"></span>comida com marca</li>
+  <li class="g"><span style="display:inline-block;width:18px;height:6px;border-radius:3px;border:1.5px dashed var(--ink-3)"></span>sem marca</li>
+</ul>
+<p class="legend-note">Dois registros no mesmo dia aparecem os dois. Dia sem nada fica sem nada: nem treino, nem descanso, até ele dizer. Os dias que ainda não chegaram ficam finos e vazios.</p>
+
+  <p class="lead" style="font-size:14px">Cada estado aparece duas vezes, <b>claro</b> e <b>escuro</b>: o tema segue o aparelho, com troca manual. Viewport de iPhone 11 Pro Max, 414 × 896 pt. Nada aqui usa rede.</p>
+</header>
+
+<main class="states">
+
+<figure class="state" id="e1">
+<figcaption><h2><span class="n">1</span>O mês, com dias de todos os tipos</h2><p class="cap">Outubro até ontem: treinos da sequência (A a E), duas aulas, um treino fora da prescrição no mesmo dia do C, um dia com dois treinos da sequência (o E aberto por engano antes do D, F35, F157), um descanso marcado (F156), cardio depois do treino e num domingo, e a comida com marca em quatro dias. Os dias 11 e 12 não têm treino nem descanso: <b>ficam vazios, e não viram descanso sozinhos</b>. As semanas que ainda não chegaram encolhem, porque não têm o que mostrar. Embaixo, as três leituras, cada uma com a conta à vista.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:10</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="mh"><h2>Dias<small>outubro de 2026 · até ontem, 12/10</small></h2><button class="ib" aria-label="Setembro"><svg width="24" height="24"><use href="#bk"/></svg></button><button class="ib" aria-label="Novembro" disabled style="opacity:.3"><svg width="24" height="24"><use href="#fw"/></svg></button></div>
+    <div class="wds"><span>dom</span><span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span><span>sáb</span></div>
+<div class="cal">
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<button class="dc" aria-label="quinta, 1 de outubro: treino D, cardio, comida com marca"><span class="dn">1</span><span class="tr">D</span><svg class="hz"><use href="#hz"/></svg><i class="fd m"></i></button>
+<button class="dc" aria-label="sexta, 2 de outubro: treino E, comida sem marca"><span class="dn">2</span><span class="tr">E</span><i class="fd s"></i></button>
+<button class="dc" aria-label="sábado, 3 de outubro: aula de HYROX, comida sem marca"><span class="dn">3</span><span class="tw">aula</span><i class="fd s"></i></button>
+<button class="dc" aria-label="domingo, 4 de outubro: cardio, comida sem marca"><span class="dn">4</span><svg class="hz"><use href="#hz"/></svg><i class="fd s"></i></button>
+<button class="dc" aria-label="segunda, 5 de outubro: descanso marcado, comida com marca"><span class="dn">5</span><span class="tw dsc">desc.</span><i class="fd m"></i></button>
+<button class="dc" aria-label="terça, 6 de outubro: treino A, 2 cardios, comida com marca"><span class="dn">6</span><span class="tr">A</span><span class="hz2"><svg><use href="#hz"/></svg>2</span><i class="fd m"></i></button>
+<button class="dc" aria-label="quarta, 7 de outubro: treino B, comida sem marca"><span class="dn">7</span><span class="tr">B</span><i class="fd s"></i></button>
+<button class="dc" aria-label="quinta, 8 de outubro: treino C e treino fora da prescrição, comida sem marca"><span class="dn">8</span><span class="stk"><span class="tr">C</span><span class="tw">+fora</span></span><i class="fd s"></i></button>
+<button class="dc" aria-label="sexta, 9 de outubro: treino E e treino D, comida sem marca"><span class="dn">9</span><span class="tr two">E D</span><i class="fd s"></i></button>
+<button class="dc" aria-label="sábado, 10 de outubro: aula de HYROX, comida sem marca"><span class="dn">10</span><span class="tw">aula</span><i class="fd s"></i></button>
+<button class="dc" aria-label="domingo, 11 de outubro: comida com marca"><span class="dn">11</span><i class="fd m"></i></button>
+<button class="dc" aria-label="segunda, 12 de outubro: comida sem marca"><span class="dn">12</span><i class="fd s"></i></button>
+<button class="dc hoje" aria-label="terça, 13 de outubro: treino B, hoje: abre o Agora"><span class="dn">13</span><span class="tr">B</span></button>
+<span class="dc fut"><span class="dn">14</span></span>
+<span class="dc fut"><span class="dn">15</span></span>
+<span class="dc fut"><span class="dn">16</span></span>
+<span class="dc fut"><span class="dn">17</span></span>
+<span class="dc fut cmp"><span class="dn">18</span></span>
+<span class="dc fut cmp"><span class="dn">19</span></span>
+<span class="dc fut cmp"><span class="dn">20</span></span>
+<span class="dc fut cmp"><span class="dn">21</span></span>
+<span class="dc fut cmp"><span class="dn">22</span></span>
+<span class="dc fut cmp"><span class="dn">23</span></span>
+<span class="dc fut cmp"><span class="dn">24</span></span>
+<span class="dc fut cmp"><span class="dn">25</span></span>
+<span class="dc fut cmp"><span class="dn">26</span></span>
+<span class="dc fut cmp"><span class="dn">27</span></span>
+<span class="dc fut cmp"><span class="dn">28</span></span>
+<span class="dc fut cmp"><span class="dn">29</span></span>
+<span class="dc fut cmp"><span class="dn">30</span></span>
+<span class="dc fut cmp"><span class="dn">31</span></span>
+</div>
+    <div class="rd" style="margin-top:10px"><div class="h">Dias com treino por semana</div>
+      <div class="row3"><div class="v">4,75</div><div class="sp"><svg viewBox="0 0 210 44" role="img" aria-label="média móvel de 4 semanas, de 4,5 a 5,0 dias por semana em outubro; a prescrição conta 6"><line x1="0" y1="6.3" x2="210" y2="6.3" stroke="var(--ink-3)" stroke-width="1.4" stroke-dasharray="4 4"/><text x="210" y="2.3" font-size="11" fill="var(--ink-2)" text-anchor="end">6 na prescrição</text><polyline points="0.0,22.0 19.1,22.0 38.2,22.0 57.3,22.0 76.4,25.1 95.5,25.1 114.5,22.0 133.6,22.0 152.7,22.0 171.8,18.9 190.9,18.9 210.0,22.0" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="210.0" cy="22.0" r="3.6" fill="var(--ink)"/><text x="0" y="57" font-size="11" fill="var(--ink-2)">01/10</text><text x="210" y="57" font-size="11" fill="var(--ink-2)" text-anchor="end">12/10</text></svg></div></div>
+      <div class="c" style="margin-top:14px"><b>19 dias com treino nos últimos 28</b>, divididos por 4. Dois treinos no mesmo dia contam um dia. Descanso não conta.</div></div>
+    <div class="rd"><div class="h">Cardio em outubro</div>
+      <div class="trio"><div><b>4</b><small>sessões</small></div><div><b>85 min</b><small>no total</small></div><div><b>1</b><small>em dia sem musculação</small></div></div></div>
+    <div class="rd"><div class="h">Horário de início</div>
+      <div class="trio"><div><b>7h56</b><small>média</small></div><div><b>6h05</b><small>mais cedo · qui 08/10</small></div><div><b>18h15</b><small>mais tarde · qua 07/10</small></div></div>
+      <div class="axis"><svg viewBox="0 0 380 40" role="img" aria-label="sete inícios: seis entre 6h05 e 6h20, um às 18h15; média 7h56"><line x1="6" y1="18" x2="374" y2="18" stroke="var(--line-2)" stroke-width="1.5"/><line x1="29.0" y1="15" x2="29.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="29.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">6h</text><line x1="98.0" y1="15" x2="98.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="98.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">9h</text><line x1="167.0" y1="15" x2="167.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="167.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">12h</text><line x1="236.0" y1="15" x2="236.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="236.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">15h</text><line x1="305.0" y1="15" x2="305.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="305.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">18h</text><line x1="374.0" y1="15" x2="374.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="374.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">21h</text><circle cx="34.8" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="32.1" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="36.7" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="310.8" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="30.9" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="33.6" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="34.4" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><path d="M73.3 8 l-5 -7 h10 z" fill="var(--accent)"/><text x="81.3" y="8" font-size="11" fill="var(--accent-ink)" font-weight="700">média 7h56</text></svg></div>
+      <div class="c">7 sessões com hora. Não entram as 2 aulas, sem hora de início, nem o treino fora da prescrição.</div></div>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:10</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="mh"><h2>Dias<small>outubro de 2026 · até ontem, 12/10</small></h2><button class="ib" aria-label="Setembro"><svg width="24" height="24"><use href="#bk"/></svg></button><button class="ib" aria-label="Novembro" disabled style="opacity:.3"><svg width="24" height="24"><use href="#fw"/></svg></button></div>
+    <div class="wds"><span>dom</span><span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span><span>sáb</span></div>
+<div class="cal">
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<button class="dc" aria-label="quinta, 1 de outubro: treino D, cardio, comida com marca"><span class="dn">1</span><span class="tr">D</span><svg class="hz"><use href="#hz"/></svg><i class="fd m"></i></button>
+<button class="dc" aria-label="sexta, 2 de outubro: treino E, comida sem marca"><span class="dn">2</span><span class="tr">E</span><i class="fd s"></i></button>
+<button class="dc" aria-label="sábado, 3 de outubro: aula de HYROX, comida sem marca"><span class="dn">3</span><span class="tw">aula</span><i class="fd s"></i></button>
+<button class="dc" aria-label="domingo, 4 de outubro: cardio, comida sem marca"><span class="dn">4</span><svg class="hz"><use href="#hz"/></svg><i class="fd s"></i></button>
+<button class="dc" aria-label="segunda, 5 de outubro: descanso marcado, comida com marca"><span class="dn">5</span><span class="tw dsc">desc.</span><i class="fd m"></i></button>
+<button class="dc" aria-label="terça, 6 de outubro: treino A, 2 cardios, comida com marca"><span class="dn">6</span><span class="tr">A</span><span class="hz2"><svg><use href="#hz"/></svg>2</span><i class="fd m"></i></button>
+<button class="dc" aria-label="quarta, 7 de outubro: treino B, comida sem marca"><span class="dn">7</span><span class="tr">B</span><i class="fd s"></i></button>
+<button class="dc" aria-label="quinta, 8 de outubro: treino C e treino fora da prescrição, comida sem marca"><span class="dn">8</span><span class="stk"><span class="tr">C</span><span class="tw">+fora</span></span><i class="fd s"></i></button>
+<button class="dc" aria-label="sexta, 9 de outubro: treino E e treino D, comida sem marca"><span class="dn">9</span><span class="tr two">E D</span><i class="fd s"></i></button>
+<button class="dc" aria-label="sábado, 10 de outubro: aula de HYROX, comida sem marca"><span class="dn">10</span><span class="tw">aula</span><i class="fd s"></i></button>
+<button class="dc" aria-label="domingo, 11 de outubro: comida com marca"><span class="dn">11</span><i class="fd m"></i></button>
+<button class="dc" aria-label="segunda, 12 de outubro: comida sem marca"><span class="dn">12</span><i class="fd s"></i></button>
+<button class="dc hoje" aria-label="terça, 13 de outubro: treino B, hoje: abre o Agora"><span class="dn">13</span><span class="tr">B</span></button>
+<span class="dc fut"><span class="dn">14</span></span>
+<span class="dc fut"><span class="dn">15</span></span>
+<span class="dc fut"><span class="dn">16</span></span>
+<span class="dc fut"><span class="dn">17</span></span>
+<span class="dc fut cmp"><span class="dn">18</span></span>
+<span class="dc fut cmp"><span class="dn">19</span></span>
+<span class="dc fut cmp"><span class="dn">20</span></span>
+<span class="dc fut cmp"><span class="dn">21</span></span>
+<span class="dc fut cmp"><span class="dn">22</span></span>
+<span class="dc fut cmp"><span class="dn">23</span></span>
+<span class="dc fut cmp"><span class="dn">24</span></span>
+<span class="dc fut cmp"><span class="dn">25</span></span>
+<span class="dc fut cmp"><span class="dn">26</span></span>
+<span class="dc fut cmp"><span class="dn">27</span></span>
+<span class="dc fut cmp"><span class="dn">28</span></span>
+<span class="dc fut cmp"><span class="dn">29</span></span>
+<span class="dc fut cmp"><span class="dn">30</span></span>
+<span class="dc fut cmp"><span class="dn">31</span></span>
+</div>
+    <div class="rd" style="margin-top:10px"><div class="h">Dias com treino por semana</div>
+      <div class="row3"><div class="v">4,75</div><div class="sp"><svg viewBox="0 0 210 44" role="img" aria-label="média móvel de 4 semanas, de 4,5 a 5,0 dias por semana em outubro; a prescrição conta 6"><line x1="0" y1="6.3" x2="210" y2="6.3" stroke="var(--ink-3)" stroke-width="1.4" stroke-dasharray="4 4"/><text x="210" y="2.3" font-size="11" fill="var(--ink-2)" text-anchor="end">6 na prescrição</text><polyline points="0.0,22.0 19.1,22.0 38.2,22.0 57.3,22.0 76.4,25.1 95.5,25.1 114.5,22.0 133.6,22.0 152.7,22.0 171.8,18.9 190.9,18.9 210.0,22.0" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="210.0" cy="22.0" r="3.6" fill="var(--ink)"/><text x="0" y="57" font-size="11" fill="var(--ink-2)">01/10</text><text x="210" y="57" font-size="11" fill="var(--ink-2)" text-anchor="end">12/10</text></svg></div></div>
+      <div class="c" style="margin-top:14px"><b>19 dias com treino nos últimos 28</b>, divididos por 4. Dois treinos no mesmo dia contam um dia. Descanso não conta.</div></div>
+    <div class="rd"><div class="h">Cardio em outubro</div>
+      <div class="trio"><div><b>4</b><small>sessões</small></div><div><b>85 min</b><small>no total</small></div><div><b>1</b><small>em dia sem musculação</small></div></div></div>
+    <div class="rd"><div class="h">Horário de início</div>
+      <div class="trio"><div><b>7h56</b><small>média</small></div><div><b>6h05</b><small>mais cedo · qui 08/10</small></div><div><b>18h15</b><small>mais tarde · qua 07/10</small></div></div>
+      <div class="axis"><svg viewBox="0 0 380 40" role="img" aria-label="sete inícios: seis entre 6h05 e 6h20, um às 18h15; média 7h56"><line x1="6" y1="18" x2="374" y2="18" stroke="var(--line-2)" stroke-width="1.5"/><line x1="29.0" y1="15" x2="29.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="29.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">6h</text><line x1="98.0" y1="15" x2="98.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="98.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">9h</text><line x1="167.0" y1="15" x2="167.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="167.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">12h</text><line x1="236.0" y1="15" x2="236.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="236.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">15h</text><line x1="305.0" y1="15" x2="305.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="305.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">18h</text><line x1="374.0" y1="15" x2="374.0" y2="21" stroke="var(--line-2)" stroke-width="1.5"/><text x="374.0" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">21h</text><circle cx="34.8" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="32.1" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="36.7" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="310.8" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="30.9" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="33.6" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><circle cx="34.4" cy="18" r="4.6" fill="var(--ink)" fill-opacity=".55"/><path d="M73.3 8 l-5 -7 h10 z" fill="var(--accent)"/><text x="81.3" y="8" font-size="11" fill="var(--accent-ink)" font-weight="700">média 7h56</text></svg></div>
+      <div class="c">7 sessões com hora. Não entram as 2 aulas, sem hora de início, nem o treino fora da prescrição.</div></div>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e2">
+<figcaption><h2><span class="n">2</span>Um dia aberto: tudo o que aconteceu, e o que destoa</h2><p class="cap">Terça, 06/10. Os registros vêm primeiro, cada um numa linha que abre inteira. O que o mês resumiu em dois corações aqui tem nome: <b>dois cardios iguais</b>, um às 7h35 e outro lançado dois dias depois, sem hora. O app não apaga nada sozinho — só põe os dois lado a lado, com o segundo em âmbar, a cor do aviso, dizendo “igual ao das 7h35”. A comida aparece num olhar: seis momentos, com a forma de cada estado; tocar abre a folha de pôr em dia. Descanso não é oferecido, e a tela diz por quê (F156). O plano daquele dia é só referência.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:12</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para outubro"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>terça, 6 de outubro</h2><div class="pv2">dia de treino, pela sessão registrada</div></div></div>
+    <div class="recs">
+      <button class="rec"><span class="ic">A</span><span class="t"><b>Treino A</b><small>6h20 → 7h27 · fechou sem você · 18 de 20 séries</small></span><svg class="cv"><use href="#chev"/></svg></button>
+      <button class="rec"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · 7h35, depois do treino</small></span><svg class="cv"><use href="#chev"/></svg></button>
+      <button class="rec dup"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · lançado na quinta, 08/10, sem hora · igual ao das 7h35</small></span><svg class="cv"><use href="#chev"/></svg></button>
+    </div>
+    <div class="adds"><button><svg><use href="#plus"/></svg>Outro treino</button><button><svg><use href="#plus"/></svg>Cardio</button></div>
+    <p class="hint2">Este dia tem treino, então não aceita a marca de descanso.</p>
+    <div class="secl"><b>A comida do dia</b><span>3 de 6 com marca</span></div>
+    <button class="mstrip"><span><svg><use href="#s-full"/></svg><b>pré</b><i>5h45</i></span><span><svg><use href="#s-full"/></svg><b>treino</b><i>6h15</i></span><span class="o"><svg><use href="#s-open"/></svg><b>café</b><i>8h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>almoço</b><i>12h30</i></span><span><svg><use href="#s-full"/></svg><b>lanche</b><i>16h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>jantar</b><i>19h30</i></span></button>
+    <div class="foodl"><span class="t">Água: <b>não contei</b>. Conta para a regra dos 14 dias, porque tem refeição marcada.</span></div>
+    <button class="sec" style="margin:10px 16px 0;width:calc(100% - 32px)">Pôr este dia em dia</button>
+    <p class="ref2">No plano daquele dia: treino de manhã, 3.007 kcal. É referência — o plano mora em Prescrição.</p>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:12</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para outubro"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>terça, 6 de outubro</h2><div class="pv2">dia de treino, pela sessão registrada</div></div></div>
+    <div class="recs">
+      <button class="rec"><span class="ic">A</span><span class="t"><b>Treino A</b><small>6h20 → 7h27 · fechou sem você · 18 de 20 séries</small></span><svg class="cv"><use href="#chev"/></svg></button>
+      <button class="rec"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · 7h35, depois do treino</small></span><svg class="cv"><use href="#chev"/></svg></button>
+      <button class="rec dup"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · lançado na quinta, 08/10, sem hora · igual ao das 7h35</small></span><svg class="cv"><use href="#chev"/></svg></button>
+    </div>
+    <div class="adds"><button><svg><use href="#plus"/></svg>Outro treino</button><button><svg><use href="#plus"/></svg>Cardio</button></div>
+    <p class="hint2">Este dia tem treino, então não aceita a marca de descanso.</p>
+    <div class="secl"><b>A comida do dia</b><span>3 de 6 com marca</span></div>
+    <button class="mstrip"><span><svg><use href="#s-full"/></svg><b>pré</b><i>5h45</i></span><span><svg><use href="#s-full"/></svg><b>treino</b><i>6h15</i></span><span class="o"><svg><use href="#s-open"/></svg><b>café</b><i>8h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>almoço</b><i>12h30</i></span><span><svg><use href="#s-full"/></svg><b>lanche</b><i>16h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>jantar</b><i>19h30</i></span></button>
+    <div class="foodl"><span class="t">Água: <b>não contei</b>. Conta para a regra dos 14 dias, porque tem refeição marcada.</span></div>
+    <button class="sec" style="margin:10px 16px 0;width:calc(100% - 32px)">Pôr este dia em dia</button>
+    <p class="ref2">No plano daquele dia: treino de manhã, 3.007 kcal. É referência — o plano mora em Prescrição.</p>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e3">
+<figcaption><h2><span class="n">3</span>A sessão passada, inteira</h2><p class="cap">O Treino A de 06/10 abre como foi: cada série é um número tocável, na ordem em que aconteceu, com o RIR quando houve. A sessão <b>fechou sem ele</b> (F34) — então o fim, 7h27, é a hora da última série, e a tela diz que é aproximado, com o pontilhado do palpite e “corrigir” ao lado (F152, F295). O Pushdown ficou “não feito”: ele cortou o que não era prioridade naquele dia (P2), e isso não é falha nem pendência; se ele fez e não registrou, as duas séries podem entrar aqui. No fim da lista: a nota, as mudanças do dia e “Apagar este treino”.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:13</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para terça, 06/10"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>Treino A</h2><div class="pv2">da sequência · terça, 06/10 · peito superior, dorsais, lateral, tríceps</div></div></div>
+    <div class="facts">
+      <div class="fr2"><span class="l">Começo</span><span class="t"><span class="v">6h20</span><small>marcado antes do aquecimento</small></span></div>
+      <div class="fr2"><span class="l">Fim</span><span class="t"><span class="v apx">7h27</span><small>aproximado: fechou sem você, na última série · 67 min</small></span><button class="lk">Corrigir</button></div>
+    </div>
+    <ul class="exs"><li><div class="exr"><span class="nm">Chest press inclinado convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">55 × 10<small>RIR 2</small></button><button class="sv">55 × 9<small>RIR 1</small></button><button class="sv">55 × 8<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">75 × 9<small>RIR 2</small></button><button class="sv">75 × 8<small>RIR 1</small></button><button class="sv">75 × 8<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Crucifixo inclinado no cabo<small>2 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">12 × 13<small>RIR 1</small></button><button class="sv">12 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown unilateral<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">45 × 10<small>RIR 1</small></button><button class="sv">45 × 10<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral na máquina<small>3 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">25 × 14<small>RIR 1</small></button><button class="sv">25 × 13<small>RIR 1</small></button><button class="sv">25 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral unilateral no cabo<small>3 × 12–20 · RIR 0–1</small></span><span class="ss"><button class="sv">7 × 16<small>RIR 1</small></button><button class="sv">7 × 15<small>RIR 0</small></button><button class="sv">7 × 14<small>RIR 0</small></button></span></div></li><li><div class="exr"><span class="nm">Extensão de tríceps acima da cabeça no cabo<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">20 × 11<small>RIR 1</small></button><button class="sv">20 × 10<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pushdown<small>2 × 10–15 · RIR 0–1</small></span><span class="ss"><button class="sv nf">não feito</button><button class="sv nf">não feito</button></span></div></li></ul>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:13</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para terça, 06/10"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>Treino A</h2><div class="pv2">da sequência · terça, 06/10 · peito superior, dorsais, lateral, tríceps</div></div></div>
+    <div class="facts">
+      <div class="fr2"><span class="l">Começo</span><span class="t"><span class="v">6h20</span><small>marcado antes do aquecimento</small></span></div>
+      <div class="fr2"><span class="l">Fim</span><span class="t"><span class="v apx">7h27</span><small>aproximado: fechou sem você, na última série · 67 min</small></span><button class="lk">Corrigir</button></div>
+    </div>
+    <ul class="exs"><li><div class="exr"><span class="nm">Chest press inclinado convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">55 × 10<small>RIR 2</small></button><button class="sv">55 × 9<small>RIR 1</small></button><button class="sv">55 × 8<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">75 × 9<small>RIR 2</small></button><button class="sv">75 × 8<small>RIR 1</small></button><button class="sv">75 × 8<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Crucifixo inclinado no cabo<small>2 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">12 × 13<small>RIR 1</small></button><button class="sv">12 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown unilateral<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">45 × 10<small>RIR 1</small></button><button class="sv">45 × 10<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral na máquina<small>3 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">25 × 14<small>RIR 1</small></button><button class="sv">25 × 13<small>RIR 1</small></button><button class="sv">25 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral unilateral no cabo<small>3 × 12–20 · RIR 0–1</small></span><span class="ss"><button class="sv">7 × 16<small>RIR 1</small></button><button class="sv">7 × 15<small>RIR 0</small></button><button class="sv">7 × 14<small>RIR 0</small></button></span></div></li><li><div class="exr"><span class="nm">Extensão de tríceps acima da cabeça no cabo<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">20 × 11<small>RIR 1</small></button><button class="sv">20 × 10<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pushdown<small>2 × 10–15 · RIR 0–1</small></span><span class="ss"><button class="sv nf">não feito</button><button class="sv nf">não feito</button></span></div></li></ul>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e4">
+<figcaption><h2><span class="n">4</span>Corrigir no lugar: um toque, e está gravado</h2><p class="cap">A série 3 do Pulldown convergente foi 9, não 8. Ele toca o número errado e a régua de repetições do treino abre ali mesmo, no exercício — a mesma régua do momento 1, porque é o mesmo dado. <b>Tocar 9 grava</b>; não há “guardar”. A linha de baixo diz o que foi gravado e o que não mudou: a série continua às 6h44, e o descanso depois dela também (F57, F294). A carga abre o teclado do app, com vírgula (F63). Apagar uma série passa pelo painel, como todo apagar.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:16</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para terça, 06/10"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>Treino A</h2><div class="pv2">da sequência · terça, 06/10 · peito superior, dorsais, lateral, tríceps</div></div></div>
+    <ul class="exs"><li><div class="exr"><span class="nm">Chest press inclinado convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">55 × 10<small>RIR 2</small></button><button class="sv">55 × 9<small>RIR 1</small></button><button class="sv">55 × 8<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">75 × 9<small>RIR 2</small></button><button class="sv">75 × 8<small>RIR 1</small></button><button class="sv on">75 × 9<small>&nbsp;</small></button></span></div><div class="edit"><div class="eh"><span style="flex:1"><b>Série 3</b> · guardada às 6h44</span><button class="load" style="min-height:44px;font-size:19px">75<span>kg</span></button></div><p class="range">repetições · faixa 6–10</p><div class="strip" data-start="8"><button class="rep" data-n="5">5</button><button class="rep in" data-n="6">6</button><button class="rep in" data-n="7">7</button><button class="rep was in" data-n="8">8<small>era</small></button><button class="rep hit in" data-n="9">9<small style="color:inherit">agora</small></button><button class="rep in" data-n="10">10</button><button class="rep" data-n="11">11</button><button class="rep" data-n="12">12</button></div><div class="ok"><svg><use href="#s-full"/></svg><span>Gravado às 21h16: <b>75 × 9</b>. A série continua às 6h44, e o descanso de depois não muda.</span></div><div style="display:flex;justify-content:space-between;margin-top:2px"><button class="lk">RIR: nenhum · marcar</button><button class="lk dn">Apagar esta série</button></div></div></li><li><div class="exr"><span class="nm">Crucifixo inclinado no cabo<small>2 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">12 × 13<small>RIR 1</small></button><button class="sv">12 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown unilateral<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">45 × 10<small>RIR 1</small></button><button class="sv">45 × 10<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral na máquina<small>3 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">25 × 14<small>RIR 1</small></button><button class="sv">25 × 13<small>RIR 1</small></button><button class="sv">25 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral unilateral no cabo<small>3 × 12–20 · RIR 0–1</small></span><span class="ss"><button class="sv">7 × 16<small>RIR 1</small></button><button class="sv">7 × 15<small>RIR 0</small></button><button class="sv">7 × 14<small>RIR 0</small></button></span></div></li><li><div class="exr"><span class="nm">Extensão de tríceps acima da cabeça no cabo<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">20 × 11<small>RIR 1</small></button><button class="sv">20 × 10<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pushdown<small>2 × 10–15 · RIR 0–1</small></span><span class="ss"><button class="sv nf">não feito</button><button class="sv nf">não feito</button></span></div></li></ul>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:16</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para terça, 06/10"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>Treino A</h2><div class="pv2">da sequência · terça, 06/10 · peito superior, dorsais, lateral, tríceps</div></div></div>
+    <ul class="exs"><li><div class="exr"><span class="nm">Chest press inclinado convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">55 × 10<small>RIR 2</small></button><button class="sv">55 × 9<small>RIR 1</small></button><button class="sv">55 × 8<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">75 × 9<small>RIR 2</small></button><button class="sv">75 × 8<small>RIR 1</small></button><button class="sv on">75 × 9<small>&nbsp;</small></button></span></div><div class="edit"><div class="eh"><span style="flex:1"><b>Série 3</b> · guardada às 6h44</span><button class="load" style="min-height:44px;font-size:19px">75<span>kg</span></button></div><p class="range">repetições · faixa 6–10</p><div class="strip" data-start="8"><button class="rep" data-n="5">5</button><button class="rep in" data-n="6">6</button><button class="rep in" data-n="7">7</button><button class="rep was in" data-n="8">8<small>era</small></button><button class="rep hit in" data-n="9">9<small style="color:inherit">agora</small></button><button class="rep in" data-n="10">10</button><button class="rep" data-n="11">11</button><button class="rep" data-n="12">12</button></div><div class="ok"><svg><use href="#s-full"/></svg><span>Gravado às 21h16: <b>75 × 9</b>. A série continua às 6h44, e o descanso de depois não muda.</span></div><div style="display:flex;justify-content:space-between;margin-top:2px"><button class="lk">RIR: nenhum · marcar</button><button class="lk dn">Apagar esta série</button></div></div></li><li><div class="exr"><span class="nm">Crucifixo inclinado no cabo<small>2 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">12 × 13<small>RIR 1</small></button><button class="sv">12 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown unilateral<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">45 × 10<small>RIR 1</small></button><button class="sv">45 × 10<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral na máquina<small>3 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">25 × 14<small>RIR 1</small></button><button class="sv">25 × 13<small>RIR 1</small></button><button class="sv">25 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral unilateral no cabo<small>3 × 12–20 · RIR 0–1</small></span><span class="ss"><button class="sv">7 × 16<small>RIR 1</small></button><button class="sv">7 × 15<small>RIR 0</small></button><button class="sv">7 × 14<small>RIR 0</small></button></span></div></li><li><div class="exr"><span class="nm">Extensão de tríceps acima da cabeça no cabo<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">20 × 11<small>RIR 1</small></button><button class="sv">20 × 10<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pushdown<small>2 × 10–15 · RIR 0–1</small></span><span class="ss"><button class="sv nf">não feito</button><button class="sv nf">não feito</button></span></div></li></ul>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e5">
+<figcaption><h2><span class="n">5</span>Registrar um treino passado: o dia vazio</h2><p class="cap">Segunda, 12/10: ele treinou e não registrou — como 29% das sessões medidas, que chegaram depois do dia (P1). O dia vazio diz que está vazio, e diz <b>o que o app achava</b>, como referência e com a palavra palpite: pelo padrão, segunda é dia de treino; pela sequência, o próximo era o A (F81, F188). As duas respostas têm o mesmo peso, porque nenhuma é presumida: “Registrar treino” e “Foi descanso”. A comida segue o tipo do dia; enquanto ele não disser, a folha abre com o plano de treino.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:19</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para outubro"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2><div class="pv2">nada registrado</div></div></div>
+    <div class="big2"><b>Nenhum treino, nenhum descanso</b>Pelo padrão semanal, segunda é dia de treino — é palpite. Pela sequência, o próximo naquele dia era o Treino A.</div>
+    <div class="two" style="margin:10px 16px 0"><button class="sec">Registrar treino</button><button class="sec">Foi descanso</button></div>
+    <div class="adds"><button><svg><use href="#plus"/></svg>Cardio</button></div>
+    <div class="secl"><b>A comida do dia</b><span>nenhuma com marca</span></div>
+    <button class="mstrip"><span class="o"><svg><use href="#s-open"/></svg><b>pré</b><i>5h45</i></span><span class="o"><svg><use href="#s-open"/></svg><b>treino</b><i>6h15</i></span><span class="o"><svg><use href="#s-open"/></svg><b>café</b><i>8h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>almoço</b><i>12h30</i></span><span class="o"><svg><use href="#s-open"/></svg><b>lanche</b><i>16h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>jantar</b><i>19h30</i></span></button>
+    <div class="foodl"><span class="t">Água: <b>não contei</b>. Sem marca, a segunda não conta para a regra: é desconhecida, não zero.</span></div>
+    <button class="sec" style="margin:10px 16px 0;width:calc(100% - 32px)">Pôr este dia em dia</button>
+    <p class="ref2">Plano de treino de manhã, pelo palpite do padrão. Se a segunda for marcada como descanso, a folha passa a abrir com o plano de descanso, de quatro refeições.</p>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:19</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para outubro"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2><div class="pv2">nada registrado</div></div></div>
+    <div class="big2"><b>Nenhum treino, nenhum descanso</b>Pelo padrão semanal, segunda é dia de treino — é palpite. Pela sequência, o próximo naquele dia era o Treino A.</div>
+    <div class="two" style="margin:10px 16px 0"><button class="sec">Registrar treino</button><button class="sec">Foi descanso</button></div>
+    <div class="adds"><button><svg><use href="#plus"/></svg>Cardio</button></div>
+    <div class="secl"><b>A comida do dia</b><span>nenhuma com marca</span></div>
+    <button class="mstrip"><span class="o"><svg><use href="#s-open"/></svg><b>pré</b><i>5h45</i></span><span class="o"><svg><use href="#s-open"/></svg><b>treino</b><i>6h15</i></span><span class="o"><svg><use href="#s-open"/></svg><b>café</b><i>8h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>almoço</b><i>12h30</i></span><span class="o"><svg><use href="#s-open"/></svg><b>lanche</b><i>16h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>jantar</b><i>19h30</i></span></button>
+    <div class="foodl"><span class="t">Água: <b>não contei</b>. Sem marca, a segunda não conta para a regra: é desconhecida, não zero.</span></div>
+    <button class="sec" style="margin:10px 16px 0;width:calc(100% - 32px)">Pôr este dia em dia</button>
+    <p class="ref2">Plano de treino de manhã, pelo palpite do padrão. Se a segunda for marcada como descanso, a folha passa a abrir com o plano de descanso, de quatro refeições.</p>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e6">
+<figcaption><h2><span class="n">6</span>… que treino foi: o previsto em anil, um toque grava</h2><p class="cap">A folha pergunta uma coisa só. O previsto é o próximo da sequência naquele dia, em anil, do tamanho do polegar. Os outros da sequência e a aula estão logo abaixo, um toque cada; escolher outro também é um toque e grava igual. <b>Fora da prescrição</b> é uma linha à parte, porque grava outra coisa — presença, grupos e duração, sem séries — e não mexe na sequência (F155). Hora e séries não são perguntadas aqui: vêm depois, se ele quiser (F158).</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:20</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2><div class="pv2">nada registrado</div></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Registrar treino">
+    <div class="grab"></div>
+    <p class="prov2">o próximo da sequência naquele dia</p>
+    <h3>Que treino foi na segunda, 12/10?</h3>
+    <button class="pick"><span class="lt">A</span><span class="t"><b>Treino A</b><small>peito superior, dorsais, lateral, tríceps · 8 exercícios, 20 séries</small></span></button>
+    <div class="q2"><b>Outro da sequência</b>
+      <div class="others"><button>B</button><button>C</button><button>D</button><button>E</button><button class="w">Aula</button></div></div>
+    <button class="wide2" style="margin-top:10px"><span class="t"><b>Fora da prescrição</b><small>presença, grupos trabalhados e duração · não mexe na sequência</small></span><svg><use href="#chev"/></svg></button>
+    <p class="sub" style="margin:12px 0 0">Um toque grava a presença. A hora e as séries vêm depois, se você quiser.</p>
+  </div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:20</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2><div class="pv2">nada registrado</div></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Registrar treino">
+    <div class="grab"></div>
+    <p class="prov2">o próximo da sequência naquele dia</p>
+    <h3>Que treino foi na segunda, 12/10?</h3>
+    <button class="pick"><span class="lt">A</span><span class="t"><b>Treino A</b><small>peito superior, dorsais, lateral, tríceps · 8 exercícios, 20 séries</small></span></button>
+    <div class="q2"><b>Outro da sequência</b>
+      <div class="others"><button>B</button><button>C</button><button>D</button><button>E</button><button class="w">Aula</button></div></div>
+    <button class="wide2" style="margin-top:10px"><span class="t"><b>Fora da prescrição</b><small>presença, grupos trabalhados e duração · não mexe na sequência</small></span><svg><use href="#chev"/></svg></button>
+    <p class="sub" style="margin:12px 0 0">Um toque grava a presença. A hora e as séries vêm depois, se você quiser.</p>
+  </div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e7">
+<figcaption><h2><span class="n">7</span>… depois do toque: já está gravado; hora e séries, só se ele quiser</h2><p class="cap">O toque no A gravou a presença, e a folha diz isso no topo, em tinta cheia — e o que mudou por causa dele: <b>19 para 20 dias com treino</b> nas últimas quatro semanas. A hora não vem preenchida: treino de data passada ganhava 07:00 inventado e sujava a média (F270). Sem hora, ele não entra no horário de início, e a tela diz isso em vez de esconder. Detalhar as séries abre a sessão com o último Treino A em anil, para confirmar ou mudar série a série. E a sequência não anda para trás: o B de hoje continua sendo o último.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:20</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Treino A, segunda 12/10">
+    <div class="grab"></div>
+    <div class="saved2 enter"><svg><use href="#s-full"/></svg><span class="t"><b>Treino A · segunda, 12/10</b><small>gravado às 21h20 · dias com treino nas últimas 4 semanas: 20, eram 19</small></span></div>
+    <div class="q2"><b>A hora de início</b>
+      <div class="chips"><button aria-pressed="true">Sem hora</button><button>Pôr a hora</button></div>
+      <p>Sem hora, este treino conta como dia com treino, mas não entra no horário de início do mês. Nenhuma hora é inventada.</p></div>
+    <div class="q2"><b>As séries</b>
+      <button class="wide2" style="margin-top:0"><span class="t"><b>Detalhar exercícios e séries</b><small>vem preenchido em anil com o Treino A de 06/10; cada toque confirma ou muda uma série</small></span><svg><use href="#chev"/></svg></button>
+      <p>Só a presença também vale: o treino conta como dia com treino do mesmo jeito, e a sequência anda igual.</p></div>
+    <p class="ref2" style="margin:12px 0 0">A sequência não muda: o Treino B de hoje continua sendo o último registrado, e o próximo continua sendo o C.</p>
+  </div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:20</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Treino A, segunda 12/10">
+    <div class="grab"></div>
+    <div class="saved2 enter"><svg><use href="#s-full"/></svg><span class="t"><b>Treino A · segunda, 12/10</b><small>gravado às 21h20 · dias com treino nas últimas 4 semanas: 20, eram 19</small></span></div>
+    <div class="q2"><b>A hora de início</b>
+      <div class="chips"><button aria-pressed="true">Sem hora</button><button>Pôr a hora</button></div>
+      <p>Sem hora, este treino conta como dia com treino, mas não entra no horário de início do mês. Nenhuma hora é inventada.</p></div>
+    <div class="q2"><b>As séries</b>
+      <button class="wide2" style="margin-top:0"><span class="t"><b>Detalhar exercícios e séries</b><small>vem preenchido em anil com o Treino A de 06/10; cada toque confirma ou muda uma série</small></span><svg><use href="#chev"/></svg></button>
+      <p>Só a presença também vale: o treino conta como dia com treino do mesmo jeito, e a sequência anda igual.</p></div>
+    <p class="ref2" style="margin:12px 0 0">A sequência não muda: o Treino B de hoje continua sendo o último registrado, e o próximo continua sendo o C.</p>
+  </div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e8">
+<figcaption><h2><span class="n">8</span>… ou fora da prescrição: presença, grupos e duração</h2><p class="cap">Se a segunda tivesse sido outra coisa — um futevôlei, uma academia de hotel sem o aparelho do programa —, “Fora da prescrição” grava a presença no toque, e o resto é opcional, um toque por campo: os grupos trabalhados (as regiões do corpo que o produto já conhece, F178), a duração, e um nome, que é o único texto livre e por isso usa o teclado do sistema. Não tem séries, não move a sequência e não entra no horário de início (F155) — e a folha diz as três coisas.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:21</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Treino fora da prescrição">
+    <div class="grab"></div>
+    <div class="saved2"><svg><use href="#s-full"/></svg><span class="t"><b>Treino fora da prescrição · 12/10</b><small>gravado às 21h21 · conta como dia com treino</small></span></div>
+    <div class="q2"><b>O que trabalhou</b>
+      <div class="chips"><button>peito</button><button aria-pressed="true">ombro</button><button>costas</button><button aria-pressed="true">perna</button><button>panturrilha</button><button>braço</button><button>abdômen</button></div></div>
+    <div class="q2"><b>Quanto tempo</b>
+      <div class="chips"><button>30 min</button><button>45 min</button><button aria-pressed="true">60 min</button><button>outro</button></div></div>
+    <div class="q2"><b>Um nome, se quiser</b>
+      <div class="field has">Futevôlei</div></div>
+    <p class="ref2" style="margin:12px 0 0">Sem séries. Não mexe na sequência — o próximo continua o C — e não entra no horário de início do mês.</p>
+  </div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:21</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>segunda, 12 de outubro</h2></div></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="sheet" role="dialog" aria-label="Treino fora da prescrição">
+    <div class="grab"></div>
+    <div class="saved2"><svg><use href="#s-full"/></svg><span class="t"><b>Treino fora da prescrição · 12/10</b><small>gravado às 21h21 · conta como dia com treino</small></span></div>
+    <div class="q2"><b>O que trabalhou</b>
+      <div class="chips"><button>peito</button><button aria-pressed="true">ombro</button><button>costas</button><button aria-pressed="true">perna</button><button>panturrilha</button><button>braço</button><button>abdômen</button></div></div>
+    <div class="q2"><b>Quanto tempo</b>
+      <div class="chips"><button>30 min</button><button>45 min</button><button aria-pressed="true">60 min</button><button>outro</button></div></div>
+    <div class="q2"><b>Um nome, se quiser</b>
+      <div class="field has">Futevôlei</div></div>
+    <p class="ref2" style="margin:12px 0 0">Sem séries. Não mexe na sequência — o próximo continua o C — e não entra no horário de início do mês.</p>
+  </div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e9">
+<figcaption><h2><span class="n">9</span>Marcar um dia passado como descanso: um toque</h2><p class="cap">Domingo, 11/10. “Foi descanso” grava no toque, e o dia passa a dizer de onde veio a palavra: <b>marcado por ele</b>, não pelo padrão (F156). A marca é dado à parte dos treinos e não conta como treino em conta nenhuma — e a tela diz isso, porque é a pergunta natural de quem acabou de tocar. Tirar a marca é corrigir no lugar, sem painel: não apaga nada que ele tenha feito. A comida desse domingo já tinha marcas (do Agora daquele dia), e agora segue o plano de descanso, de quatro refeições.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:22</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para outubro"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>domingo, 11 de outubro</h2><div class="pv2">descanso, marcado por você</div></div></div>
+    <div class="recs">
+      <div class="rec"><span class="ic"><svg><use href="#ok2"/></svg></span><span class="t"><b>Descanso</b><small>marcado agora, às 21h22 · não conta como treino em nenhuma conta</small></span><button class="lk">Tirar a marca</button></div>
+    </div>
+    <div class="adds"><button><svg><use href="#plus"/></svg>Cardio</button></div>
+    <div class="secl"><b>A comida do dia</b><span>3 de 4 com marca</span></div>
+    <button class="mstrip m4"><span><svg><use href="#s-full"/></svg><b>café</b><i>8h00</i></span><span><svg><use href="#s-half"/></svg><b>almoço</b><i>12h30</i></span><span><svg><use href="#s-full"/></svg><b>lanche</b><i>16h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>jantar</b><i>19h30</i></span></button>
+    <div class="foodl"><span class="t">Água: <b>9 copos</b>, 2.250 ml. Conta para a regra dos 14 dias.</span></div>
+    <button class="sec" style="margin:10px 16px 0;width:calc(100% - 32px)">Pôr este dia em dia</button>
+    <p class="ref2">No plano daquele dia: descanso, 2.844 kcal. É referência — o plano mora em Prescrição.</p>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:22</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para outubro"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>domingo, 11 de outubro</h2><div class="pv2">descanso, marcado por você</div></div></div>
+    <div class="recs">
+      <div class="rec"><span class="ic"><svg><use href="#ok2"/></svg></span><span class="t"><b>Descanso</b><small>marcado agora, às 21h22 · não conta como treino em nenhuma conta</small></span><button class="lk">Tirar a marca</button></div>
+    </div>
+    <div class="adds"><button><svg><use href="#plus"/></svg>Cardio</button></div>
+    <div class="secl"><b>A comida do dia</b><span>3 de 4 com marca</span></div>
+    <button class="mstrip m4"><span><svg><use href="#s-full"/></svg><b>café</b><i>8h00</i></span><span><svg><use href="#s-half"/></svg><b>almoço</b><i>12h30</i></span><span><svg><use href="#s-full"/></svg><b>lanche</b><i>16h00</i></span><span class="o"><svg><use href="#s-open"/></svg><b>jantar</b><i>19h30</i></span></button>
+    <div class="foodl"><span class="t">Água: <b>9 copos</b>, 2.250 ml. Conta para a regra dos 14 dias.</span></div>
+    <button class="sec" style="margin:10px 16px 0;width:calc(100% - 32px)">Pôr este dia em dia</button>
+    <p class="ref2">No plano daquele dia: descanso, 2.844 kcal. É referência — o plano mora em Prescrição.</p>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e10">
+<figcaption><h2><span class="n">10</span>Pôr a comida em dia: a mesma folha, gravando a cada toque</h2><p class="cap">Quarta, 07/10, foi treino à noite, às 18h15 — então o plano daquele dia não é o da manhã: o pré e o treino andaram junto com a sessão, o pré perdeu o café porque passou das 16h, e o jantar foi para 19h45 e virou pós-treino (F189, F190, F192). A folha é a mesma que o dono manteve: abre com o plano daquele dia em anil, quatro saídas por refeição, a água sem conta. <b>Mudou uma coisa, por causa da decisão 1</b>: não há “guardar”. O almoço tocado em “Metade” já está gravado, em tinta cheia. O botão de baixo não guarda a folha — ele grava só o que ainda está em anil, e diz quantos são. Fechar sem tocar nele deixa esses sem marca — e o quadro “Já está registrado” diz isso antes, com os nomes.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:31</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="scrim"></div>
+  <div class="sheet tall" role="dialog" aria-label="A comida de quarta, 07/10">
+    <div class="grab"></div>
+    <p class="prov2">quarta, 07/10 · Treino B às 18h15</p>
+    <h3>A comida de quarta</h3>
+    <p class="sub">O plano daquele dia vem em anil. Cada toque grava o que foi de verdade; o que você não lembra, marque “não sei”.</p>
+    <div class="rr"><span class="nm">Café<small>8h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Almoço<small>12h30 · gravado</small></span><div class="seg"><button>Tudo</button><button class="me" aria-checked="true">Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Lanche<small>16h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Pré‑treino<small>17h45 · sem o café</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Treino<small>18h15</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Jantar<small>19h45 · pós‑treino</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Água</span><div class="seg two2"><button class="nn" aria-checked="true">Não contei</button><button>Contar copos</button></div></div>
+    <div class="rb2"><span class="l">Já está registrado</span>Almoço pela metade, às 21h31. <span class="a">Em anil, ainda sem marca: café, lanche, pré‑treino, treino e jantar.</span></div>
+    <button class="primary" style="margin-top:10px">Os outros 5 como no plano</button>
+  </div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:31</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="scrim"></div>
+  <div class="sheet tall" role="dialog" aria-label="A comida de quarta, 07/10">
+    <div class="grab"></div>
+    <p class="prov2">quarta, 07/10 · Treino B às 18h15</p>
+    <h3>A comida de quarta</h3>
+    <p class="sub">O plano daquele dia vem em anil. Cada toque grava o que foi de verdade; o que você não lembra, marque “não sei”.</p>
+    <div class="rr"><span class="nm">Café<small>8h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Almoço<small>12h30 · gravado</small></span><div class="seg"><button>Tudo</button><button class="me" aria-checked="true">Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Lanche<small>16h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Pré‑treino<small>17h45 · sem o café</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Treino<small>18h15</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Jantar<small>19h45 · pós‑treino</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Água</span><div class="seg two2"><button class="nn" aria-checked="true">Não contei</button><button>Contar copos</button></div></div>
+    <div class="rb2"><span class="l">Já está registrado</span>Almoço pela metade, às 21h31. <span class="a">Em anil, ainda sem marca: café, lanche, pré‑treino, treino e jantar.</span></div>
+    <button class="primary" style="margin-top:10px">Os outros 5 como no plano</button>
+  </div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e11">
+<figcaption><h2><span class="n">11</span>… o jantar saiu do plano: a única pergunta, agora com “não comi”</h2><p class="cap">“Fora” no jantar não grava sozinho: abre a pergunta que sempre existiu, e <b>a resposta é o toque que grava</b>. A pergunta ganhou uma terceira resposta, porque não comer passou a contar como dia conhecido (decisão 3) e precisa de forma e palavra próprias: <b>“Não comi”</b>. As três saídas dizem a consequência para a regra, sem esconder a que derruba o dia. O botão de baixo encolheu para 4, porque o jantar já não está em anil.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:32</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="scrim"></div>
+  <div class="sheet tall" role="dialog" aria-label="A comida de quarta, 07/10">
+    <div class="grab"></div>
+    <p class="prov2">quarta, 07/10 · Treino B às 18h15</p>
+    <h3>A comida de quarta</h3>
+    <div class="rr"><span class="nm">Café<small>8h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Almoço<small>12h30 · gravado</small></span><div class="seg"><button>Tudo</button><button class="me" aria-checked="true">Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Lanche<small>16h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Pré‑treino<small>17h45 · sem o café</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Treino<small>18h15</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Jantar<small>19h45 · pós‑treino</small></span><div class="seg"><button>Tudo</button><button>Metade</button><button class="nn" aria-checked="true">Fora</button><button>Não sei</button></div></div>
+    <div class="ask3"><b>Jantar fora do plano. O que aconteceu?</b>
+      <div class="three"><button class="sec">Não comi</button><button class="sec">Comi outra coisa, e sei o quê</button><button class="sec">Comi, mas não sei quanto</button></div>
+      <p>As duas primeiras mantêm quarta contando para a regra do nutricionista. A terceira tira quarta da conta — e é melhor assim do que um número inventado.</p></div>
+    <button class="primary" style="margin-top:10px">Os outros 4 como no plano</button>
+  </div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:32</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="scrim"></div>
+  <div class="sheet tall" role="dialog" aria-label="A comida de quarta, 07/10">
+    <div class="grab"></div>
+    <p class="prov2">quarta, 07/10 · Treino B às 18h15</p>
+    <h3>A comida de quarta</h3>
+    <div class="rr"><span class="nm">Café<small>8h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Almoço<small>12h30 · gravado</small></span><div class="seg"><button>Tudo</button><button class="me" aria-checked="true">Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Lanche<small>16h00</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Pré‑treino<small>17h45 · sem o café</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Treino<small>18h15</small></span><div class="seg"><button class="pv" aria-checked="true">Tudo</button><button>Metade</button><button>Fora</button><button>Não sei</button></div></div>
+    <div class="rr"><span class="nm">Jantar<small>19h45 · pós‑treino</small></span><div class="seg"><button>Tudo</button><button>Metade</button><button class="nn" aria-checked="true">Fora</button><button>Não sei</button></div></div>
+    <div class="ask3"><b>Jantar fora do plano. O que aconteceu?</b>
+      <div class="three"><button class="sec">Não comi</button><button class="sec">Comi outra coisa, e sei o quê</button><button class="sec">Comi, mas não sei quanto</button></div>
+      <p>As duas primeiras mantêm quarta contando para a regra do nutricionista. A terceira tira quarta da conta — e é melhor assim do que um número inventado.</p></div>
+    <button class="primary" style="margin-top:10px">Os outros 4 como no plano</button>
+  </div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e12">
+<figcaption><h2><span class="n">12</span>Apagar o cardio lançado por engano: o painel diz o que vai embora</h2><p class="cap">Tocar a linha do cardio abre o registro inteiro — modalidade, minutos e intensidade, cada um corrigível no toque — e, no fim dele, “Apagar este cardio”. O painel abre pelo verbo e pelo estrago: <b>“Apagar o cardio de ter 06/10”</b> (decisão 8). Diz o que vai embora com o número, diz o que fica — o outro cardio do dia, igual a este — e diz o efeito na leitura do mês: de 4 para 3 sessões, de 85 para 65 min. O botão repete o verbo e o objeto. A saída é “Deixar como está”, no lugar mais fácil para o polegar. O botão de apagar é tinta cheia, não tijolo: o tijolo é só para erro de gravação, e o perigo está nas palavras.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:24</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>terça, 6 de outubro</h2><div class="pv2">dia de treino, pela sessão registrada</div></div></div>
+    <div class="recs">
+      <div class="rec"><span class="ic">A</span><span class="t"><b>Treino A</b><small>6h20 → 7h27 · fechou sem você · 18 de 20 séries</small></span></div>
+      <div class="rec"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · 7h35, depois do treino</small></span></div>
+      <div class="rec dup"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · lançado na quinta, 08/10, sem hora</small></span></div>
+    </div>
+  </div>
+  <div class="scrim"></div>
+  <div class="panel" role="dialog" aria-label="Apagar o cardio de terça, 06/10">
+    <div class="grab"></div>
+    <h3>Apagar o cardio de ter 06/10</h3>
+    <p class="sub" style="font-size:14px;color:var(--ink-2);margin:0">o que foi lançado na quinta, 08/10, sem hora</p>
+    <div class="gone">Vai embora: <b>1 sessão de cardio</b> — 20 min de esteira inclinada, leve.</div>
+    <p class="stays">Fica o cardio das <b>7h35</b>, igual a este. O cardio de outubro passa de <b>4 para 3 sessões</b> e de <b>85 para 65 min</b>. Apagado, não volta.</p>
+    <button class="kill">Apagar o cardio</button>
+    <button class="keep">Deixar como está</button>
+  </div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:24</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>terça, 6 de outubro</h2><div class="pv2">dia de treino, pela sessão registrada</div></div></div>
+    <div class="recs">
+      <div class="rec"><span class="ic">A</span><span class="t"><b>Treino A</b><small>6h20 → 7h27 · fechou sem você · 18 de 20 séries</small></span></div>
+      <div class="rec"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · 7h35, depois do treino</small></span></div>
+      <div class="rec dup"><span class="ic"><svg><use href="#hz"/></svg></span><span class="t"><b>Cardio · 20 min de esteira inclinada</b><small>leve · lançado na quinta, 08/10, sem hora</small></span></div>
+    </div>
+  </div>
+  <div class="scrim"></div>
+  <div class="panel" role="dialog" aria-label="Apagar o cardio de terça, 06/10">
+    <div class="grab"></div>
+    <h3>Apagar o cardio de ter 06/10</h3>
+    <p class="sub" style="font-size:14px;color:var(--ink-2);margin:0">o que foi lançado na quinta, 08/10, sem hora</p>
+    <div class="gone">Vai embora: <b>1 sessão de cardio</b> — 20 min de esteira inclinada, leve.</div>
+    <p class="stays">Fica o cardio das <b>7h35</b>, igual a este. O cardio de outubro passa de <b>4 para 3 sessões</b> e de <b>85 para 65 min</b>. Apagado, não volta.</p>
+    <button class="kill">Apagar o cardio</button>
+    <button class="keep">Deixar como está</button>
+  </div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e13">
+<figcaption><h2><span class="n">13</span>Apagar a sessão aberta por engano: o que vai, e o que fica</h2><p class="cap">Sexta, 09/10: às 6h12 ele abriu o Treino E por engano e, dois minutos depois, o D, o certo (F35). O painel dá o número do que vai embora — uma sessão, nenhuma série — e o que fica, com o número também, para que ele confira que está apagando a de cima e não a de baixo. Se houvesse séries, elas iriam junto e entrariam na mesma conta: <b>apagar a presença e deixar as séries</b> deixaria séries órfãs contando volume (F295). E o painel responde a pergunta que um apagar de treino sempre levanta: a sequência não muda.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:26</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>sexta, 9 de outubro</h2><div class="pv2">dia de treino, pela sessão registrada</div></div></div>
+    <div class="recs">
+      <div class="rec"><span class="ic">E</span><span class="t"><b>Treino E</b><small>aberto às 6h12 · nenhuma série</small></span></div>
+      <div class="rec"><span class="ic">D</span><span class="t"><b>Treino D</b><small>6h14 → 7h10 · 17 de 17 séries · uma mudança esperando decisão</small></span></div>
+    </div>
+  </div>
+  <div class="scrim"></div>
+  <div class="panel" role="dialog" aria-label="Apagar o Treino E de sexta, 09/10">
+    <div class="grab"></div>
+    <h3>Apagar o Treino E de sex 09/10</h3>
+    <div class="gone">Vai embora: <b>1 sessão</b>, aberta às 6h12, com <b>0 séries</b>.</div>
+    <p class="stays">Fica o <b>Treino D das 6h14</b>, com 17 séries. A sequência não muda: o último registrado continua sendo o Treino B de hoje. Apagado, não volta.</p>
+    <button class="kill">Apagar o Treino E</button>
+    <button class="keep">Deixar como está</button>
+  </div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:26</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body" aria-hidden="true">
+    <div class="nav2"><button class="bk"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>sexta, 9 de outubro</h2><div class="pv2">dia de treino, pela sessão registrada</div></div></div>
+    <div class="recs">
+      <div class="rec"><span class="ic">E</span><span class="t"><b>Treino E</b><small>aberto às 6h12 · nenhuma série</small></span></div>
+      <div class="rec"><span class="ic">D</span><span class="t"><b>Treino D</b><small>6h14 → 7h10 · 17 de 17 séries · uma mudança esperando decisão</small></span></div>
+    </div>
+  </div>
+  <div class="scrim"></div>
+  <div class="panel" role="dialog" aria-label="Apagar o Treino E de sexta, 09/10">
+    <div class="grab"></div>
+    <h3>Apagar o Treino E de sex 09/10</h3>
+    <div class="gone">Vai embora: <b>1 sessão</b>, aberta às 6h12, com <b>0 séries</b>.</div>
+    <p class="stays">Fica o <b>Treino D das 6h14</b>, com 17 séries. A sequência não muda: o último registrado continua sendo o Treino B de hoje. Apagado, não volta.</p>
+    <button class="kill">Apagar o Treino E</button>
+    <button class="keep">Deixar como está</button>
+  </div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e14">
+<figcaption><h2><span class="n">14</span>Estado ruim: a correção não foi gravada</h2><p class="cap">Cada toque grava — e cada toque pode falhar. Aqui o armazenamento do aparelho está cheio (F53). A régua não finge: o 9 fica marcado como “tocado”, tracejado, e o número da série continua <b>75 × 8, que é o que está guardado</b>. As saídas ficam ao lado do toque: tentar de novo, ou baixar a cópia de segurança antes de qualquer outra coisa (F249). É o mesmo desenho do erro de gravação da academia (momento 1, estado 10), sentado.</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">21:16</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para terça, 06/10"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>Treino A</h2><div class="pv2">da sequência · terça, 06/10 · peito superior, dorsais, lateral, tríceps</div></div></div>
+    <ul class="exs"><li><div class="exr"><span class="nm">Chest press inclinado convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">55 × 10<small>RIR 2</small></button><button class="sv">55 × 9<small>RIR 1</small></button><button class="sv">55 × 8<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">75 × 9<small>RIR 2</small></button><button class="sv">75 × 8<small>RIR 1</small></button><button class="sv on">75 × 8<small>&nbsp;</small></button></span></div><div class="edit"><div class="eh"><span style="flex:1"><b>Série 3</b> · guardada às 6h44</span><button class="load" style="min-height:44px;font-size:19px">75<span>kg</span></button></div><p class="range">repetições · faixa 6–10</p><div class="strip" data-start="8"><button class="rep" data-n="5">5</button><button class="rep in" data-n="6">6</button><button class="rep in" data-n="7">7</button><button class="rep hit in" data-n="8">8<small style="color:inherit">guardada</small></button><button class="rep was in" data-n="9">9<small>tocado</small></button><button class="rep in" data-n="10">10</button><button class="rep" data-n="11">11</button><button class="rep" data-n="12">12</button></div><div class="err inl"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>O 9 não foi gravado</b><p>O armazenamento deste aparelho está cheio. A série continua <b style="display:inline;font-size:inherit;margin:0">75 × 8</b>, que é o que está guardado.</p></div></div><div class="btns2"><button>Tentar de novo</button><button>Baixar a cópia de segurança</button></div></div><div style="display:flex;justify-content:space-between;margin-top:2px"><button class="lk">RIR: nenhum · marcar</button><button class="lk dn">Apagar esta série</button></div></div></li><li><div class="exr"><span class="nm">Crucifixo inclinado no cabo<small>2 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">12 × 13<small>RIR 1</small></button><button class="sv">12 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown unilateral<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">45 × 10<small>RIR 1</small></button><button class="sv">45 × 10<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral na máquina<small>3 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">25 × 14<small>RIR 1</small></button><button class="sv">25 × 13<small>RIR 1</small></button><button class="sv">25 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral unilateral no cabo<small>3 × 12–20 · RIR 0–1</small></span><span class="ss"><button class="sv">7 × 16<small>RIR 1</small></button><button class="sv">7 × 15<small>RIR 0</small></button><button class="sv">7 × 14<small>RIR 0</small></button></span></div></li><li><div class="exr"><span class="nm">Extensão de tríceps acima da cabeça no cabo<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">20 × 11<small>RIR 1</small></button><button class="sv">20 × 10<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pushdown<small>2 × 10–15 · RIR 0–1</small></span><span class="ss"><button class="sv nf">não feito</button><button class="sv nf">não feito</button></span></div></li></ul>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">21:16</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="nav2"><button class="bk" aria-label="Voltar para terça, 06/10"><svg width="24" height="24"><use href="#bk"/></svg></button><div class="tt"><h2>Treino A</h2><div class="pv2">da sequência · terça, 06/10 · peito superior, dorsais, lateral, tríceps</div></div></div>
+    <ul class="exs"><li><div class="exr"><span class="nm">Chest press inclinado convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">55 × 10<small>RIR 2</small></button><button class="sv">55 × 9<small>RIR 1</small></button><button class="sv">55 × 8<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown convergente<small>3 × 6–10 · RIR 1–2</small></span><span class="ss"><button class="sv">75 × 9<small>RIR 2</small></button><button class="sv">75 × 8<small>RIR 1</small></button><button class="sv on">75 × 8<small>&nbsp;</small></button></span></div><div class="edit"><div class="eh"><span style="flex:1"><b>Série 3</b> · guardada às 6h44</span><button class="load" style="min-height:44px;font-size:19px">75<span>kg</span></button></div><p class="range">repetições · faixa 6–10</p><div class="strip" data-start="8"><button class="rep" data-n="5">5</button><button class="rep in" data-n="6">6</button><button class="rep in" data-n="7">7</button><button class="rep hit in" data-n="8">8<small style="color:inherit">guardada</small></button><button class="rep was in" data-n="9">9<small>tocado</small></button><button class="rep in" data-n="10">10</button><button class="rep" data-n="11">11</button><button class="rep" data-n="12">12</button></div><div class="err inl"><div class="wh"><svg width="20" height="20"><use href="#warn"/></svg><div><b>O 9 não foi gravado</b><p>O armazenamento deste aparelho está cheio. A série continua <b style="display:inline;font-size:inherit;margin:0">75 × 8</b>, que é o que está guardado.</p></div></div><div class="btns2"><button>Tentar de novo</button><button>Baixar a cópia de segurança</button></div></div><div style="display:flex;justify-content:space-between;margin-top:2px"><button class="lk">RIR: nenhum · marcar</button><button class="lk dn">Apagar esta série</button></div></div></li><li><div class="exr"><span class="nm">Crucifixo inclinado no cabo<small>2 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">12 × 13<small>RIR 1</small></button><button class="sv">12 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pulldown unilateral<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">45 × 10<small>RIR 1</small></button><button class="sv">45 × 10<small>RIR 1</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral na máquina<small>3 × 10–15 · RIR 1</small></span><span class="ss"><button class="sv">25 × 14<small>RIR 1</small></button><button class="sv">25 × 13<small>RIR 1</small></button><button class="sv">25 × 12<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Elevação lateral unilateral no cabo<small>3 × 12–20 · RIR 0–1</small></span><span class="ss"><button class="sv">7 × 16<small>RIR 1</small></button><button class="sv">7 × 15<small>RIR 0</small></button><button class="sv">7 × 14<small>RIR 0</small></button></span></div></li><li><div class="exr"><span class="nm">Extensão de tríceps acima da cabeça no cabo<small>2 × 8–12 · RIR 1</small></span><span class="ss"><button class="sv">20 × 11<small>RIR 1</small></button><button class="sv">20 × 10<small>&nbsp;</small></button></span></div></li><li><div class="exr"><span class="nm">Pushdown<small>2 × 10–15 · RIR 0–1</small></span><span class="ss"><button class="sv nf">não feito</button><button class="sv nf">não feito</button></span></div></li></ul>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+<figure class="state" id="e15">
+<figcaption><h2><span class="n">15</span>Vazio: o primeiro mês, nada registrado</h2><p class="cap">Quinta, 06/08/2026, o primeiro dia de uso (F8). O mês existe, os dias passados existem e estão vazios, e a tela não inventa nada sobre eles: <b>nenhuma leitura vira zero</b>. “0 dias com treino por semana” diria que ele não treinou, e o que se sabe é só que nada foi registrado. Cada leitura diz quando passa a existir. A única oferta é a que o primeiro dia pede: treinos de antes também entram, com a data deles (F158).</p></figcaption>
+<div class="pair"><div><p class="tl">Claro</p><div class="wrap"><div class="phone"><div class="sb"><span class="num">7:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="mh"><h2>Dias<small>agosto de 2026</small></h2><button class="ib" aria-label="Julho" disabled style="opacity:.3"><svg width="24" height="24"><use href="#bk"/></svg></button><button class="ib" aria-label="Setembro" disabled style="opacity:.3"><svg width="24" height="24"><use href="#fw"/></svg></button></div>
+    <div class="wds"><span>dom</span><span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span><span>sáb</span></div>
+<div class="cal">
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<button class="dc" aria-label="sábado, 1 de agosto: comida sem marca"><span class="dn">1</span><i class="fd s"></i></button>
+<button class="dc" aria-label="domingo, 2 de agosto: comida sem marca"><span class="dn">2</span><i class="fd s"></i></button>
+<button class="dc" aria-label="segunda, 3 de agosto: comida sem marca"><span class="dn">3</span><i class="fd s"></i></button>
+<button class="dc" aria-label="terça, 4 de agosto: comida sem marca"><span class="dn">4</span><i class="fd s"></i></button>
+<button class="dc" aria-label="quarta, 5 de agosto: comida sem marca"><span class="dn">5</span><i class="fd s"></i></button>
+<button class="dc hoje" aria-label="quinta, 6 de agosto: hoje: abre o Agora"><span class="dn">6</span></button>
+<span class="dc fut"><span class="dn">7</span></span>
+<span class="dc fut"><span class="dn">8</span></span>
+<span class="dc fut cmp"><span class="dn">9</span></span>
+<span class="dc fut cmp"><span class="dn">10</span></span>
+<span class="dc fut cmp"><span class="dn">11</span></span>
+<span class="dc fut cmp"><span class="dn">12</span></span>
+<span class="dc fut cmp"><span class="dn">13</span></span>
+<span class="dc fut cmp"><span class="dn">14</span></span>
+<span class="dc fut cmp"><span class="dn">15</span></span>
+<span class="dc fut cmp"><span class="dn">16</span></span>
+<span class="dc fut cmp"><span class="dn">17</span></span>
+<span class="dc fut cmp"><span class="dn">18</span></span>
+<span class="dc fut cmp"><span class="dn">19</span></span>
+<span class="dc fut cmp"><span class="dn">20</span></span>
+<span class="dc fut cmp"><span class="dn">21</span></span>
+<span class="dc fut cmp"><span class="dn">22</span></span>
+<span class="dc fut cmp"><span class="dn">23</span></span>
+<span class="dc fut cmp"><span class="dn">24</span></span>
+<span class="dc fut cmp"><span class="dn">25</span></span>
+<span class="dc fut cmp"><span class="dn">26</span></span>
+<span class="dc fut cmp"><span class="dn">27</span></span>
+<span class="dc fut cmp"><span class="dn">28</span></span>
+<span class="dc fut cmp"><span class="dn">29</span></span>
+<span class="dc fut cmp"><span class="dn">30</span></span>
+<span class="dc fut cmp"><span class="dn">31</span></span>
+<span class="dc x cmp"></span>
+<span class="dc x cmp"></span>
+<span class="dc x cmp"></span>
+<span class="dc x cmp"></span>
+<span class="dc x cmp"></span>
+</div>
+    <div class="empty"><b>Ainda não há dias para ler</b><p>Cada treino, descanso, cardio e refeição que você registrar aparece no dia dele. Treinos de antes de hoje também podem entrar, com a data deles.</p><button class="sec" style="width:100%">Registrar um treino passado</button></div>
+    <div class="rd" style="margin-top:6px"><div class="h">Dias com treino por semana</div><p class="nil">Aparece com o primeiro treino. A média usa as últimas 4 semanas; até completar 4, a conta vem sem média: “3 dias com treino em 9”.</p></div>
+    <div class="rd"><div class="h">Cardio em agosto</div><p class="nil">Nenhum cardio registrado.</p></div>
+    <div class="rd"><div class="h">Horário de início</div><p class="nil">Aparece com a primeira sessão que tiver hora.</p></div>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div><div><p class="tl">Escuro</p><div class="wrap"><div class="phone dark"><div class="sb"><span class="num">7:40</span><span class="notch"></span><span class="ic"><svg width="18" height="12"><use href="#sig-c"/></svg><svg width="27" height="12"><use href="#bat"/></svg></span></div>
+<div class="scr">
+  <div class="body">
+    <div class="mh"><h2>Dias<small>agosto de 2026</small></h2><button class="ib" aria-label="Julho" disabled style="opacity:.3"><svg width="24" height="24"><use href="#bk"/></svg></button><button class="ib" aria-label="Setembro" disabled style="opacity:.3"><svg width="24" height="24"><use href="#fw"/></svg></button></div>
+    <div class="wds"><span>dom</span><span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span><span>sáb</span></div>
+<div class="cal">
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<span class="dc x"></span>
+<button class="dc" aria-label="sábado, 1 de agosto: comida sem marca"><span class="dn">1</span><i class="fd s"></i></button>
+<button class="dc" aria-label="domingo, 2 de agosto: comida sem marca"><span class="dn">2</span><i class="fd s"></i></button>
+<button class="dc" aria-label="segunda, 3 de agosto: comida sem marca"><span class="dn">3</span><i class="fd s"></i></button>
+<button class="dc" aria-label="terça, 4 de agosto: comida sem marca"><span class="dn">4</span><i class="fd s"></i></button>
+<button class="dc" aria-label="quarta, 5 de agosto: comida sem marca"><span class="dn">5</span><i class="fd s"></i></button>
+<button class="dc hoje" aria-label="quinta, 6 de agosto: hoje: abre o Agora"><span class="dn">6</span></button>
+<span class="dc fut"><span class="dn">7</span></span>
+<span class="dc fut"><span class="dn">8</span></span>
+<span class="dc fut cmp"><span class="dn">9</span></span>
+<span class="dc fut cmp"><span class="dn">10</span></span>
+<span class="dc fut cmp"><span class="dn">11</span></span>
+<span class="dc fut cmp"><span class="dn">12</span></span>
+<span class="dc fut cmp"><span class="dn">13</span></span>
+<span class="dc fut cmp"><span class="dn">14</span></span>
+<span class="dc fut cmp"><span class="dn">15</span></span>
+<span class="dc fut cmp"><span class="dn">16</span></span>
+<span class="dc fut cmp"><span class="dn">17</span></span>
+<span class="dc fut cmp"><span class="dn">18</span></span>
+<span class="dc fut cmp"><span class="dn">19</span></span>
+<span class="dc fut cmp"><span class="dn">20</span></span>
+<span class="dc fut cmp"><span class="dn">21</span></span>
+<span class="dc fut cmp"><span class="dn">22</span></span>
+<span class="dc fut cmp"><span class="dn">23</span></span>
+<span class="dc fut cmp"><span class="dn">24</span></span>
+<span class="dc fut cmp"><span class="dn">25</span></span>
+<span class="dc fut cmp"><span class="dn">26</span></span>
+<span class="dc fut cmp"><span class="dn">27</span></span>
+<span class="dc fut cmp"><span class="dn">28</span></span>
+<span class="dc fut cmp"><span class="dn">29</span></span>
+<span class="dc fut cmp"><span class="dn">30</span></span>
+<span class="dc fut cmp"><span class="dn">31</span></span>
+<span class="dc x cmp"></span>
+<span class="dc x cmp"></span>
+<span class="dc x cmp"></span>
+<span class="dc x cmp"></span>
+<span class="dc x cmp"></span>
+</div>
+    <div class="empty"><b>Ainda não há dias para ler</b><p>Cada treino, descanso, cardio e refeição que você registrar aparece no dia dele. Treinos de antes de hoje também podem entrar, com a data deles.</p><button class="sec" style="width:100%">Registrar um treino passado</button></div>
+    <div class="rd" style="margin-top:6px"><div class="h">Dias com treino por semana</div><p class="nil">Aparece com o primeiro treino. A média usa as últimas 4 semanas; até completar 4, a conta vem sem média: “3 dias com treino em 9”.</p></div>
+    <div class="rd"><div class="h">Cardio em agosto</div><p class="nil">Nenhum cardio registrado.</p></div>
+    <div class="rd"><div class="h">Horário de início</div><p class="nil">Aparece com a primeira sessão que tiver hora.</p></div>
+  </div>
+  <div class="tabwrap"><nav class="tabbar five" aria-label="Lugares"><button class="tab"><svg><use href="#t-agora"/></svg>Agora</button><button class="tab on" aria-current="page"><svg><use href="#t-dias"/></svg>Dias</button><button class="tab"><svg><use href="#t-corpo"/></svg>Corpo</button><button class="tab"><svg><use href="#t-sem"/></svg>Semana</button><button class="tab"><svg><use href="#t-presc"/></svg>Prescrição</button></nav></div>
+  <div class="hi"><i></i></div>
+</div>
+</div></div></div></div>
+</figure>
+
+</main>
+
+<script>
+(function(){
+  function fit(){
+    document.querySelectorAll('.wrap').forEach(function(w){
+      var p=w.querySelector('.phone'); if(!p) return;
+      var W=414,H=896, s=Math.min(1,w.clientWidth/W);
+      p.style.transform='scale('+s+')'; w.style.height=(H*s)+'px';
+    });
+  }
+  window.addEventListener('resize',fit); fit();
+  document.querySelectorAll('.strip[data-start]').forEach(function(st){
+    var n=st.getAttribute('data-start'), t=null;
+    st.querySelectorAll('.rep').forEach(function(r){ if(!t && r.getAttribute('data-n')===n) t=r; });
+    if(t) st.scrollLeft=t.offsetLeft-st.offsetLeft-(st.clientWidth/2-t.offsetWidth/2);
+  });
+})();
+</script>
+</body>
+</html>
