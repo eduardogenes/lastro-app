@@ -23,8 +23,8 @@ function Pontos({ pontos, aoIr }) {
       {pontos.map(p => (
         <button
           key={p.id} role="listitem"
-          class={'pr-ponto' + (p.feita ? ' feita' : '') + (p.atual ? ' atual' : '')}
-          aria-label={p.n + (p.feita ? ' · feita' : ' · falta')}
+          class={'pr-ponto' + (p.naoGuardada ? ' nao' : p.feita ? ' feita' : '') + (p.atual ? ' atual' : '')}
+          aria-label={p.n + (p.naoGuardada ? ' · não guardada' : p.feita ? ' · feita' : ' · falta')}
           aria-current={p.atual ? 'step' : undefined}
           onClick={() => aoIr(p.id)}
         />
@@ -85,6 +85,20 @@ export function Protocolo({ ctx }) {
     <TelaCheia olho={p.bloco} titulo={'Pose ' + d.indice + ' de ' + d.total + ' · ' + p.n}
                aoVoltar={ctx.fechaProtocolo} corpo="hwrap">
       <Pontos pontos={d.pontos} aoIr={ctx.vaiParaPose} />
+      {/* A POSE QUE NÃO COUBE (a D, `sessao-fotos.html`, estado 9): a sessão
+          parou, e a tela diz qual e por quê, com a saída ao lado. */}
+      {d.naoGuardada && (
+        <div class="pr-naoguardada" role="alert">
+          <b class="ins-rotulo">{d.naoGuardada.titulo}</b>
+          <p class="ins-body-sm ins-t2">{d.naoGuardada.texto}</p>
+          <div class="ag-l-btns">
+            <button class="ins-btn-primary" data-a="pose-tenta" onClick={ctx.tentaFotoDaPose}>Tentar de novo</button>
+            {d.naoGuardada.copia && (
+              <button class="ins-btn-secondary" data-a="pose-copia" onClick={ctx.exportar}>Baixar cópia</button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* A referência primeiro, e maior: é contra ela que o enquadramento é
           feito. A foto de hoje entra ao lado quando existe. */}

@@ -1752,3 +1752,9 @@ button.ins-linha { border-radius: 0; }
 .dd-passo-falhou { margin-top: var(--ins-5); padding: var(--ins-5); border: 1px solid var(--ins-atencao-fio); border-radius: var(--ins-raio-4); display: flex; flex-direction: column; gap: var(--ins-3); }
 .dd-passo-falhou p { margin: 0; }
 .dd-passo-l { margin: 0; padding-left: var(--ins-7); }
+
+/* A pose que não coube (a D, sessao-fotos estado 9): forma e cor diferentes
+   de "ainda não feita" — o fio de atenção e o tracejado. */
+.pr-ponto.nao { border: 2px dashed var(--ins-atencao-tinta); background: transparent; }
+.pr-naoguardada { margin: var(--ins-5) 0; padding: var(--ins-5); border: 1px solid var(--ins-atencao-fio); border-radius: var(--ins-raio-4); display: flex; flex-direction: column; gap: var(--ins-3); }
+.pr-naoguardada p { margin: 0; }

@@ -1706,3 +1706,32 @@ test('ctx.fechaProtocolo fecha a tela e devolve a posição de leitura', async (
   assert.strictEqual(y, 640, 'e devolveu a posição de leitura de onde ele veio');
   a.fechar();
 });
+
+test('a pose que não coube para a sessão, fica marcada, e "Tentar de novo" a guarda', async () => {
+  // A D (`sessao-fotos.html`, estado 9). Antes, com o registro recusado, a
+  // sessão AVANÇAVA para a próxima pose como se tivesse gravado.
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await tirar(a);                                   // a pose 1 grava
+  await a.esperar(60);
+  const pose2 = a.vista().protocolo.pose;
+  a.encheCota();
+  await tirar(a);                                   // a pose 2 não cabe no registro
+  await a.esperar(60);
+
+  assert.strictEqual(a.vista().protocolo.pose, pose2, 'a sessão parou na pose 2, não seguiu fingindo');
+  const d = a.vJ('ctx.sessaoDeFotos');
+  assert.ok(d.pontos.filter(p => p.naoGuardada).length === 1, 'uma pose marcada como não guardada');
+  assert.ok(/^A pose 2, .+, não foi guardada$/.test(d.naoGuardada.titulo), d.naoGuardada.titulo);
+  assert.ok(a.$('.pr-ponto.nao'), 'com forma diferente de "falta"');
+  assert.ok(a.$('[data-a="pose-copia"]'), 'e a cópia oferecida, porque o que falhou foi o registro');
+
+  a.encheCota(false);
+  a.clicar('[data-a="pose-tenta"]');
+  await a.esperar(60);
+  assert.strictEqual(a.$('.pr-naoguardada'), null, '"Tentar de novo" grava');
+  assert.ok(a.gravado().protocolo.sessoes[0].fotos[pose2], 'e a pose 2 está no disco');
+  a.fechar();
+});

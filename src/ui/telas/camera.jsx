@@ -85,6 +85,20 @@ export function Camera({ ctx }) {
         )}
       </div>
 
+      {/* A POSE QUE NÃO COUBE (a D, `sessao-fotos.html`, estado 9): a sessão
+          parou, e a tela diz qual e por quê, com a saída ao lado. */}
+      {d.naoGuardada && (
+        <div class="pr-naoguardada" role="alert">
+          <b class="ins-rotulo">{d.naoGuardada.titulo}</b>
+          <p class="ins-body-sm ins-t2">{d.naoGuardada.texto}</p>
+          <div class="ag-l-btns">
+            <button class="ins-btn-primary" data-a="pose-tenta" onClick={ctx.tentaFotoDaPose}>Tentar de novo</button>
+            {d.naoGuardada.copia && (
+              <button class="ins-btn-secondary" data-a="pose-copia" onClick={ctx.exportar}>Baixar cópia</button>
+            )}
+          </div>
+        </div>
+      )}
       <div class="aj-modos">
         <button class={'ins-chip' + (d.grade ? ' on' : '')}
                 onClick={() => ctx.setGradeDaCamera(!d.grade)}>grade</button>

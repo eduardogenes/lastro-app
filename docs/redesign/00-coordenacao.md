@@ -14,14 +14,14 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.446 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.447 passando**, zero "unhandled".
   Nenhum agente trabalhando. Último commit de código: `b91697d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
 - **Feito em primeira passada:** o levantamento (item 6.β). **Próximo:** a
-  fila dele, dado primeiro: semana 10 e aula 12 feitos; seguem sessao-fotos 9
-  e prescricao 11.
+  fila dele, dado primeiro: semana 10, aula 12 e sessao-fotos 9 feitos;
+  segue prescricao 11.
 - **Era o próximo passo:** o levantamento estado a estado das outras sete entregas da
   D contra o app — momento-1 (14 estados), semana (10), corpo (11), prescricao
   (11), aula (12), comparar (11), sessao-fotos (11). Parte já foi construída nas
@@ -3211,8 +3211,12 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       - **comparar:** 1 ~ · 2 ✗ (cortina) · 3 ~ · 4 ~ · 5 ~ · 6 ~ · 7 ✗ (o par
         que recua sozinho, dizendo) · 8 ✓ · 9 ✓ · 10 ~ · 11 ~.
       - **sessao-fotos:** 1 ~ · 2 ✗ (voz) · 3 ✗ (clarão e obturador) · 4 ~ ·
-        5 ~ · 6 ~ · 7 ✓ · 8 ~ · **9 ✗ (a pose que não coube no aparelho)** · 10 ~ ·
-        11 ✓.
+        5 ~ · 6 ~ · 7 ✓ · 8 ~ · **9 ✓ (14/10)** — a sessão
+        PARA na pose que não gravou (antes, com o registro recusado, avançava
+        como se tivesse gravado), a pose fica "não guardada" com forma diferente
+        de "falta", e "Tentar de novo" grava: se o cache recusou, com a foto que
+        ficou na memória; se o registro recusou, com a referência no estado. ·
+        10 ~ · 11 ✓. **Divergência:** a voz que avisa não existe (estado 2 é ✗).
       **A fila sai daqui, dado primeiro:** semana 10, aula 12, sessao-fotos 9,
       prescricao 11; depois os ✗ de tela (corpo 10, comparar 2 e 7, sessão 4 e
       14, sessao-fotos 2–3) e a conferência dos ~.
@@ -3387,6 +3391,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · **Perda:** a pasta do coordenador em `/tmp` (scripts de medição e capturas citadas neste checklist) foi apagada pelo sistema. As ferramentas passam para `docs/redesign/_medicao/`, versionadas; as capturas antigas não voltam (os scripts se refazem). Achado no levantamento: o olho do treino ainda vinha em caixa alta por `toUpperCase()`, e as etiquetas do plano de comida estão GUARDADAS em caixa alta — convertidas na tela (`caixaDeFrase`), sem migrar dado. Um caso dependia da hora (procurava a timeline que saiu). 1.444 passando.
 - 14/10 · Semana 10: o passo calórico deixa de dizer "Apliquei" antes de gravar; recusado, volta inteiro e a tela diz o que não mudou. 5 mutações, 5 mortas. 1.445 passando.
 - 14/10 · Aula 12: o aviso de falha diz que a presença continua guardada, só quando gravou antes; e oferece baixar a cópia. 3 mutações, 3 mortas. 1.446 passando.
+- 14/10 · Sessão de fotos 9: a pose que não coube para a sessão em vez de avançar fingindo; marcada, e "Tentar de novo" grava. 3 mutações, 3 mortas. 1.447 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

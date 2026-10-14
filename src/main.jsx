@@ -9399,9 +9399,21 @@ CTX.posProxima = function () { andaPose(1); };
  * guardar, lapidar a anterior, avançar) é o mesmo, e ter um lugar só é o que
  * impede as duas de divergirem no que gravam.
  */
+/**
+ * A pose que não coube no aparelho (a D, `sessao-fotos.html`, estado 9): a
+ * sessão PARA em vez de seguir fingindo, e o bloco da pose fica "não guardada",
+ * diferente de "falta". Se foi o cache que recusou a foto, a foto reduzida fica
+ * na memória para tentar de novo; se foi o registro, a referência fica no
+ * estado e a próxima gravação aceita a leva.
+ */
+function marcaPoseNaoGuardada(pose, motivo, reduzida) {
+  if (view.protocolo) view.protocolo.naoGuardada = { pose: pose, motivo: motivo, reduzida: reduzida || null };
+}
+
 async function guardaFotoDaPose(d, pose, reduzida) {
   const { blob, ext } = reduzida;
-  await CORPO.guarda(d, pose, blob, ext);
+  try { await CORPO.guarda(d, pose, blob, ext); }
+  catch (e) { marcaPoseNaoGuardada(pose, 'foto', reduzida); return { parou: true }; }
 
   const ses = sessaoFotoOuCria(d);
   const antiga = ses.fotos[pose];
@@ -9414,7 +9426,8 @@ async function guardaFotoDaPose(d, pose, reduzida) {
   CORPO.solta(d, pose);                // a versão anterior sai da memória
   await CORPO.carrega(d, pose, ses.fotos[pose]);
 
-  await save();
+  if ((await save()) === false) { marcaPoseNaoGuardada(pose, 'registro', null); return { parou: true }; }
+  if (view.protocolo) view.protocolo.naoGuardada = null;
   // avança sozinho para a próxima que falta: a sessão é uma sequência, e
   // pedir um toque a mais entre duas poses é pedir um toque a mais nove vezes
   const prox = proximaPose(sessaoDe(S.protocolo.sessoes, d), S.protocolo.poses);
@@ -9428,8 +9441,9 @@ async function tiraFotoDoCorpo(el) {
   if (!arquivo || !v) return;
   el.value = '';                       // permite repetir a mesma foto
   try {
-    await guardaFotoDaPose(v.d, v.pose, await CORPO.reduz(arquivo));
-    render(); window.scrollTo(0, 0);
+    const r = await guardaFotoDaPose(v.d, v.pose, await CORPO.reduz(arquivo));
+    render();
+    if (!(r && r.parou)) window.scrollTo(0, 0);
   } catch (e) {
     toast('Não deu para guardar a foto.');
   }
@@ -9505,8 +9519,10 @@ CTX.sessaoDeFotos = function () {
     anterior: i > 0,
     proxima: i < lista.length - 1,
     pontos: lista.map(function (p) {
-      return { id: p.id, n: p.n, feita: !!(ses && ses.fotos[p.id]), atual: p.id === v.pose };
+      return { id: p.id, n: p.n, feita: !!(ses && ses.fotos[p.id]), atual: p.id === v.pose,
+               naoGuardada: !!(v.naoGuardada && v.naoGuardada.pose === p.id) };
     }),
+    naoGuardada: avisoDaPoseNaoGuardada(lista),
     pose: {
       id: pose.id, n: pose.n, bloco: pose.bloco, giro: pose.giro, bracos: pose.bracos,
       como: pose.como, revela: pose.revela, erro: pose.erro,
@@ -10860,8 +10876,11 @@ async function capturaAgora() {
   if (!CAM.pronto(el)) { c.contagem = null; toast('A câmera ainda não está pronta.'); render(); return; }
   try {
     const reduzida = await CORPO.reduzDoVideo(el);
-    const prox = await guardaFotoDaPose(v.d, v.pose, reduzida);
+    const r = await guardaFotoDaPose(v.d, v.pose, reduzida);
     c.contagem = null;
+    // não coube: a sessão para aqui, e a tela diz (estado 9)
+    if (r && r.parou) { aviso(); render(); return; }
+    const prox = r;
     // a sessão continua AQUI: são nove poses, e sair e voltar nove vezes seria
     // pior que o problema que esta tela resolve
     const viz = prox ? vizinhaComAPose(S.protocolo.sessoes, prox, v.d) : null;
@@ -10879,6 +10898,32 @@ async function capturaAgora() {
   }
 }
 
+/** "A pose 6, perfil esquerdo, não foi guardada" — o que a tela diz quando a sessão parou. */
+function avisoDaPoseNaoGuardada(lista) {
+  const ng = view.protocolo && view.protocolo.naoGuardada;
+  if (!ng) return null;
+  const i = lista.findIndex(function (p) { return p.id === ng.pose; });
+  const p = lista[i];
+  return {
+    titulo: 'A pose ' + (i + 1) + (p ? ', ' + p.n.toLowerCase() + ',' : '') + ' não foi guardada',
+    texto: ng.motivo === 'foto'
+      ? 'O aparelho recusou a foto: o espaço dele está cheio. Ela está na memória enquanto o app estiver aberto, e a sessão parou aqui.'
+      : 'A foto entrou no aparelho, mas o registro dela não gravou. A sessão parou aqui, e nada do que já foi guardado saiu.',
+    copia: ng.motivo === 'registro'
+  };
+}
+CTX.tentaFotoDaPose = async function () {
+  const v = view.protocolo, ng = v && v.naoGuardada;
+  if (!ng) return;
+  if (ng.motivo === 'foto' && ng.reduzida) {
+    const r = await guardaFotoDaPose(v.d, ng.pose, ng.reduzida);
+    if (!(r && r.parou) && r) v.pose = r;
+  } else if ((await save()) !== false) {
+    v.naoGuardada = null;
+  }
+  render();
+};
+
 /** O que a tela da câmera consome. */
 CTX.cameraViva = function () {
   const c = view.camera, v = view.protocolo;
@@ -10890,6 +10935,7 @@ CTX.cameraViva = function () {
   const refOutra = outra ? outra.fotos[v.pose] : null;
 
   return {
+    naoGuardada: avisoDaPoseNaoGuardada(lista),
     pose: lista[i].n,
     indice: i + 1,
     total: lista.length,
