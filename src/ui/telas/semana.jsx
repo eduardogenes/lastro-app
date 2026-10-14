@@ -212,6 +212,7 @@ export function Semana({ ctx }) {
             ))}
           </div>
         )}
+        {d.veredito.promessa && <p class="ins-body-sm ins-t2 dd-promessa" data-a="promessa-adesao">{d.veredito.promessa}</p>}
 
         {/* O VAZIO DA RÉGUA (§6.4): não é tela em branco, é a lista das semanas
             com o motivo de cada reprovação — e a saída, quando um buraco separa

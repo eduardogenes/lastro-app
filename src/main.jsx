@@ -7256,6 +7256,7 @@ CTX.dados = function () {
   const t = tendenciaDeForca(S.logs, function (k) { return temUnidade(exDe(k)); });
   const v = veredito();
   const alvo = ajusteDoVeredito(v);
+  const portoes = portoesDaRegra(S.body, sinaisDaRegra(), { forca: t, forcaManual: S.perfManual, par: parDaAvaliacao() });
 
   // e1RM da semana, somando o melhor de cada exercício: é a curva que responde
   // "estou ficando mais forte", e não a de um exercício só — que oscila com
@@ -7300,7 +7301,14 @@ CTX.dados = function () {
       podeDesfazer: !!passoEmVigor(),
       // Os portões da regra, cada um com o estado na palavra e o caminho do que
       // falta (§6.2). Só nos dois ramos que podem dar passo; nos outros, `null`.
-      portoes: portoesDaRegra(S.body, sinaisDaRegra(), { forca: t, forcaManual: S.perfManual, par: parDaAvaliacao() }),
+      portoes: portoes,
+      // A PROMESSA (decisão do dono, 14/10): a cobrança da adesão fica só aqui.
+      // A frase só existe porque ela é cumprida — o Agora mostra a conta dos 14
+      // dias como número, sem cobrar, e nenhuma outra tela pede os dias.
+      promessa: portoes && portoes.some(function (g) { return g.k === 'adesao' && !g.ok; })
+        ? 'Enquanto a adesão não chega a ' + MIN_REGISTRADOS + ', o veredito não muda, por mais pesagem que entre. ' +
+          'A tela não vai pedir isso de novo em outro lugar.'
+        : null,
       // O vazio da régua: as semanas e o motivo de cada reprovação (§6.4), e a
       // saída quando um buraco separa duas semanas válidas.
       semanas: v.k === 'faltam' ? semanasDoVazio() : null

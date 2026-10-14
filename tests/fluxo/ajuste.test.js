@@ -518,6 +518,26 @@ function comPesoEComida(medias, dias) {
   } });
 }
 
+test('com a adesão faltando, a Semana promete não cobrar em outro lugar — e o Agora não cobra', async () => {
+  // Decisão do dono, 14/10: a promessa entra, e é cumprida.
+  const a = await comPesoEComida([73.0, 73.05, 73.10], 1);
+  a.aba('semana');
+  await a.esperar();
+  assert.strictEqual(a.texto('[data-a="promessa-adesao"]'),
+    'Enquanto a adesão não chega a 11, o veredito não muda, por mais pesagem que entre. A tela não vai pedir isso de novo em outro lugar.');
+  a.aba('agora');
+  await a.esperar();
+  const agora = a.texto('#app');
+  assert.ok(!/adesão/i.test(agora), 'o Agora não fala de adesão: ' + (agora.match(/.{0,40}ades.{0,40}/i) || [''])[0]);
+  a.fechar();
+
+  const b = await comPesoEComida([73.0, 73.05, 73.10], 14);
+  b.aba('semana');
+  await b.esperar();
+  assert.strictEqual(b.$('[data-a="promessa-adesao"]'), null, 'com a adesão cumprida, não há o que prometer');
+  b.fechar();
+});
+
 test('peso parado mostra os três portões, e o da adesão leva a pôr os dias em dia', async () => {
   const a = await comPesoEComida([73.0, 73.05, 73.10], 1);
   a.aba('semana');

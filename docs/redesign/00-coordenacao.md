@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.514 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.515 passando**, zero "unhandled".
 - **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
   versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
   ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
@@ -78,8 +78,10 @@ pede atenção do dono.
      grava ao meio-dia daquele dia com `semHora: 1` (campo novo e opcional,
      atravessa a fusão), e a tela diz "lançado depois, sem hora" em vez de
      inventar 12h00. Se o aparelho recusa, a memória volta e o formulário fica.
-  7. [ ] **A frase da promessa entra na Semana** ("A tela não vai pedir isso de
-     novo em outro lugar"); a cobrança da adesão fica só na Semana.
+  7. [x] **A frase da promessa entra na Semana** ("A tela não vai pedir isso de
+     novo em outro lugar"); a cobrança da adesão fica só na Semana. Feito 14/10:
+     a frase aparece embaixo dos portões quando o da adesão falta; um caso
+     confere que o Agora não fala de adesão.
   8. [ ] **Fotos do corpo: mostrar o horário de cada foto**, sem "amanhã cedo"
      (ele tira a maioria à noite). Decisão dele no comentário da 14.
   9. [ ] **A lousa como foto dentro do app** (aula, estado 6).
@@ -3545,6 +3547,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Fila 4: a mediana no horário de início. 2 mutações, 2 mortas. 1.508 passando.
 - 14/10 · Fila 5: o cardio de hoje no Agora, com "Apagar". 4 mutações, 4 mortas. 1.509 passando.
 - 14/10 · Fila 6: o cardio esquecido num dia passado, sem hora inventada. 6 mutações, 6 mortas; fusão do `semHora` com caso no domínio. 1.514 passando.
+- 14/10 · Fila 7: a promessa da adesão entra na Semana, e o caso cobra que o Agora não cobre. 1 mutação, morta. 1.515 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

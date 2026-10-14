@@ -1852,3 +1852,4 @@ button.ins-linha { border-radius: 0; }
 /* ---- O cardio esquecido, lançado no dia passado (decisão do dono, 14/10) -- */
 .dia-cardio-novo { margin-top: var(--ins-5); }
 .dia-cardio-falhou { margin: 0; color: var(--ins-atencao-tinta); }
+.dd-promessa { margin: var(--ins-4) 0 0; }
