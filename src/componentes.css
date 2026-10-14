@@ -1844,3 +1844,7 @@ button.ins-linha { border-radius: 0; }
 .cp-curto { display: flex; flex-direction: column; gap: var(--ins-2); margin: var(--ins-5) 0; }
 .cp-curto p { margin: 0; }
 .cp-curto button { align-self: flex-start; margin-top: var(--ins-2); }
+
+/* ---- O cardio de hoje no Agora (decisão do dono, 14/10) ----------------- */
+.ag-cardio-hoje { margin: var(--ins-3) 0 0; padding: 0; list-style: none; }
+.ag-cardio-hoje .ins-linha { align-items: center; }

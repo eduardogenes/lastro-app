@@ -203,5 +203,33 @@ test('no descanso não há seção de cardio; ele entra pela folha do tipo do di
   await a.esperar(60);
   assert.strictEqual(a.S().cardio.length, 1, 'e grava');
   assert.strictEqual(a.$('.cardl'), null, 'registrado, a seção volta a sair');
+  assert.strictEqual(a.$$('.ag-cardio-hoje li').length, 1,
+    'mas o que foi feito hoje fica, para poder desfazer — sem placar nem convite');
+  a.fechar();
+});
+
+test('o cardio de hoje aparece no Agora e se apaga ali, com a pergunta antes', async () => {
+  // Decisão do dono, 14/10: o lançado por engano se desfaz onde foi lançado.
+  // Antes, só amanhã, em Dias.
+  const agora = agoraEstavel(9, 0);
+  const t1 = agora - 2 * 3600000, t2 = agora - 3600000, ontem = agora - 86400000;
+  const TREINO = ['treino','treino','treino','treino','treino','treino','treino'];
+  const a = await app({ aba: 'agora', agora: agora, estado: { logs: {}, done: [], cadencia: TREINO,
+    cardio: [{ t: ontem, m: 'bike', min: 30, i: 'leve' },
+             { t: t1, m: 'bike', min: 25, i: 'leve' }, { t: t2, m: 'bike', min: 25, i: 'leve' }] } });
+  const linhas = a.$$('.ag-cardio-hoje li').map(li => li.textContent);
+  assert.strictEqual(linhas.length, 2, 'só os de hoje: ' + linhas.join(' | '));
+  assert.ok(/^7h00 · 25 min de bike, leve/.test(linhas[0]), linhas[0]);
+
+  a.recusar();
+  a.clicar('[data-a="cardio-apaga-' + t2 + '"]');
+  await a.esperar(60);
+  assert.strictEqual(a.S().cardio.length, 3, 'recusar a pergunta não apaga');
+
+  a.aceitar();
+  a.clicar('[data-a="cardio-apaga-' + t2 + '"]');
+  await a.esperar(60);
+  assert.deepStrictEqual(a.gravado().cardio.map(c => c.t).sort(), [ontem, t1].sort(), 'apagou o de 8h, no disco');
+  assert.strictEqual(a.$$('.ag-cardio-hoje li').length, 1);
   a.fechar();
 });

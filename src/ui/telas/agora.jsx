@@ -43,6 +43,20 @@ function contagem(alvoMin, agoraMs) {
   return { txt, atrasado: dif < 0, rotulo: dif < 0 ? 'atrás' : 'faltam' };
 }
 
+/** O cardio de hoje, cada um com "Apagar" (decisão do dono, 14/10). */
+function CardioDeHoje({ lista, ctx }) {
+  return (
+    <ul class="ins-lista ag-cardio-hoje" aria-label="cardio de hoje">
+      {lista.map(c => (
+        <li key={c.t} class="ins-linha">
+          <span class="ins-linha-n"><span class="ins-body-sm ins-t1">{c.txt}</span></span>
+          <button class="ins-btn-secondary" data-a={'cardio-apaga-' + c.t} onClick={() => ctx.apagaCardio(c.t)}>Apagar</button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function Agora({ ctx }) {
   const agora = useAgora();
   const {
@@ -62,6 +76,7 @@ export function Agora({ ctx }) {
   const topo = ctx.cartaoDeCima();
   const cardio = ctx.corpo().cardio;
   const cromo = ctx.cromoDoTreino();
+  const cardioHoje = ctx.cardioDeHoje();
   const app = ctx.dadosDoApp();
   const exp = ctx.loginExpirou();
   const vence = ctx.esperandoDecisao();
@@ -488,6 +503,14 @@ export function Agora({ ctx }) {
           pela folha do tipo do dia, "Já fiz alguma coisa hoje → Cardio", e é
           ela que abre o registro aqui. No dia de treino a seção fica — o fim
           das sessões A e D, o outro lugar do cardio na D, não tem desenho. */}
+      {/* No descanso, só o que foi feito hoje, para poder desfazer — sem o
+          placar e sem "Registrar", que seriam o convite que o desenho tira. */}
+      {diaHoje.cadencia !== 'treino' && !cromo.cardio.aberto && cardioHoje.length > 0 && (
+        <Secao>
+          <CardioDeHoje lista={cardioHoje} ctx={ctx} />
+        </Secao>
+      )}
+
       {(diaHoje.cadencia === 'treino' || cromo.cardio.aberto) && (
       <Secao>
       {/* Sem rótulo (frente 3 §2, R1): a primeira linha já diz "Cardio" e o placar. */}
@@ -498,6 +521,11 @@ export function Agora({ ctx }) {
           {cromo.cardio.aberto ? 'Fechar' : 'Registrar'}
         </button>
       </div>
+
+      {/* O cardio de hoje, cada um com "Apagar" (decisão do dono, 14/10): o
+          lançado por engano se desfaz onde foi lançado. Apagar pergunta antes,
+          com o que vai embora e o efeito no mês. */}
+      {cardioHoje.length > 0 && <CardioDeHoje lista={cardioHoje} ctx={ctx} />}
 
       {/* Registro rápido no lugar: sair da tela para anotar 25 min de bike
           seria mais atrito que a própria bike. */}

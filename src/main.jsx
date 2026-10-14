@@ -7621,6 +7621,19 @@ CTX.corpo = function () {
   };
 };
 
+/**
+ * O cardio de HOJE, no Agora (decisão do dono, 14/10): o lugar onde se lança é
+ * o lugar onde se desfaz. Antes, o lançado por engano só se apagava amanhã, em
+ * Dias — tocar em hoje abre o Agora, e o Agora não listava o do dia.
+ */
+CTX.cardioDeHoje = function () {
+  return S.cardio.filter(function (x) { return sameDay(x.t, Date.now()); })
+    .sort(function (a, b) { return a.t - b.t; })
+    .map(function (x) {
+      return { t: x.t, txt: fmtHoraDita(x.t) + ' · ' + x.min + ' min de ' + x.m + ', ' + x.i };
+    });
+};
+
 CTX.musculos = function () {
   const semana = weekStart(Date.now());
   const janela = 4;
