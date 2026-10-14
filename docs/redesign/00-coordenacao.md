@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.506 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.508 passando**, zero "unhandled".
 - **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
   versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
   ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
@@ -68,7 +68,8 @@ pede atenção do dono.
      é oferecida se ainda não aconteceu na volta (desde o último A), senão a
      volta fecha no A. O `nextDay` do app, que era uma cópia com a regra velha,
      passou a chamar o domínio.
-  4. [ ] **Horário de início em Dias: mediana**, não média.
+  4. [x] **Horário de início em Dias: mediana**, não média. Feito 14/10
+     (`medianaDosInicios` no domínio; o triângulo do eixo marca a mediana).
   5. [ ] **Cardio de hoje no Agora, com "Apagar".**
   6. [ ] **Cardio esquecido num dia passado**, pelo dia em Dias.
   7. [ ] **A frase da promessa entra na Semana** ("A tela não vai pedir isso de
@@ -3535,6 +3536,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · **Respostas do dono às 17 perguntas** (página de decisões). Fila de 10 construções no ponto de parada; a 13 ele delegou e decidi (a linha fica sempre). Não publicar até o fim.
 - 14/10 · Fila 2: um passo por evidência — com passo em vigor, a regra só decide de novo quando as duas semanas lidas começaram depois dele. 3 mutações, 3 mortas. Achado de passagem: um `)}` aparecia como texto no Agora (o `tsc` acusava, a suíte não); tirado, com caso que lê as cinco abas. 1.502 passando.
 - 14/10 · Fila 3: a aula fora da ordem, no domínio; a cópia da regra em `main.jsx` saiu. 3 mutações, 3 mortas. Um caso do Agora usava a aula para girar a sequência — refeito com a volta inteira. 1.506 passando.
+- 14/10 · Fila 4: a mediana no horário de início. 2 mutações, 2 mortas. 1.508 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

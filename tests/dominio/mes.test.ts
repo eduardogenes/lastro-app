@@ -3,7 +3,7 @@
 // de fora dito.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { diasComTreino, iniciosDoPeriodo, inicioDoDia, leituraDosDias, mediaMovel, serieDaMediaMovel } from '../../src/dominio/mes';
+import { diasComTreino, iniciosDoPeriodo, inicioDoDia, leituraDosDias, mediaMovel, serieDaMediaMovel, medianaDosInicios } from '../../src/dominio/mes';
 
 const DIA = 86400000;
 const hoje = inicioDoDia(Date.now()) + 12 * 3600000;
@@ -56,4 +56,11 @@ test('antes de quatro semanas desde o primeiro treino, a conta vem sem média', 
   assert.strictEqual(longe.janela, 28);
   assert.strictEqual(longe.porSemana, 0.25);
   assert.strictEqual(leituraDosDias([], hoje), null, 'sem treino nenhum, nenhuma leitura vira zero');
+});
+
+test('a mediana dos inícios: o do meio, ou o meio entre os dois do centro', () => {
+  const i = (mins: number[]) => mins.map(min => ({ t: 0, min }));
+  assert.strictEqual(medianaDosInicios(i([370, 374, 1110])), 374);
+  assert.strictEqual(medianaDosInicios(i([1110, 360, 380, 400])), 390, 'fora de ordem também');
+  assert.strictEqual(medianaDosInicios([]), null);
 });

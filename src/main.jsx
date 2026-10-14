@@ -48,7 +48,7 @@ import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { Retroativo } from './ui/telas/retroativo.jsx';
 import { Programa } from './ui/telas/programa.jsx';
 import { CADENCIA_PADRAO, diaDeHoje, previsaoDoHorizonte, proximoTreino } from './dominio/dia';
-import { diasComTreino as _diasComTreino, inicioDoDia as _inicioDoDia, iniciosDoPeriodo as _iniciosDoPeriodo, leituraDosDias as _leituraDosDias,
+import { diasComTreino as _diasComTreino, inicioDoDia as _inicioDoDia, iniciosDoPeriodo as _iniciosDoPeriodo, medianaDosInicios as _medianaDosInicios, leituraDosDias as _leituraDosDias,
          serieDaMediaMovel as _serieDaMediaMovel } from './dominio/mes';
 import { ALIMENTOS_BASE, PLANO_BASE, TURNOS } from './dominio/nutricao/alimentos';
 import {
@@ -8374,7 +8374,7 @@ CTX.mes = function () {
   const cardMes = S.cardio.filter(function (c) { return c.t >= ini && c.t <= ate; });
   const ins = _iniciosDoPeriodo(S.done, ini, ate, temHora, function (x) { return diaAberto(x.day); });
   const n = ins.inicios.length;
-  const media = n ? ins.inicios.reduce(function (a, x) { return a + x.min; }, 0) / n : null;
+  const mediana = _medianaDosInicios(ins.inicios);
   const fora = [];
   if (ins.aulasSemHora) fora.push(ins.aulasSemHora === 1 ? 'a aula, sem hora de início' : 'as ' + ins.aulasSemHora + ' aulas, sem hora de início');
   if (ins.semHora) fora.push(ins.semHora === 1 ? 'o treino registrado sem hora' : 'os ' + ins.semHora + ' treinos registrados sem hora');
@@ -8406,10 +8406,10 @@ CTX.mes = function () {
               min: cardMes.reduce(function (a, c) { return a + c.min; }, 0),
               so: cardMes.filter(function (c) { return sessoesDoDia(c.t).length === 0; }).length },
     horario: n ? {
-      media: horaDeMinutos(media),
+      mediana: horaDeMinutos(Math.round(mediana)),
       cedo: horaDeMinutos(ins.inicios[0].min), cedoDia: diaCurto(ins.inicios[0].t),
       tarde: horaDeMinutos(ins.inicios[n - 1].min), tardeDia: diaCurto(ins.inicios[n - 1].t),
-      pontos: ins.inicios.map(function (x) { return x.min; }), mediaMin: media,
+      pontos: ins.inicios.map(function (x) { return x.min; }), medianaMin: mediana,
       nota: n + (n === 1 ? ' sessão com hora.' : ' sessões com hora.') +
             (fora.length ? ' Não entram ' + fora.join(', nem ') + '.' : '')
     } : null

@@ -64,7 +64,7 @@ function EixoDosInicios({ h }) {
         <text key={hh} class="dm-eixo-t" x={x(hh * 60)} y="29" text-anchor="middle">{hh}h</text>
       ))}
       {h.pontos.map((m, i) => <circle key={i} class="dm-eixo-p" cx={x(m)} cy="18" r="3.5" />)}
-      <path class="dm-eixo-m" d={`M${x(h.mediaMin) - 4},6 L${x(h.mediaMin) + 4},6 L${x(h.mediaMin)},12 Z`} />
+      <path class="dm-eixo-m" d={`M${x(h.medianaMin) - 4},6 L${x(h.medianaMin) + 4},6 L${x(h.medianaMin)},12 Z`} />
     </svg>
   );
 }
@@ -140,7 +140,7 @@ export function Dias({ ctx }) {
         {m.horario
           ? <>
               <div class="dm-tres">
-                <span><b>{m.horario.media}</b>média</span>
+                <span><b>{m.horario.mediana}</b>mediana</span>
                 <span><b>{m.horario.cedo}</b>mais cedo · {m.horario.cedoDia}</span>
                 <span><b>{m.horario.tarde}</b>mais tarde · {m.horario.tardeDia}</span>
               </div>

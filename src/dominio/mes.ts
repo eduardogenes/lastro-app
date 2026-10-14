@@ -78,6 +78,19 @@ export function serieDaMediaMovel(done: SessaoDoMes[], de: number, ate: number):
   return out;
 }
 
+/**
+ * O horário do meio, em minutos (decisão do dono, 14/10: mediana, não média).
+ * A média de outubro deu 7h56, uma hora em que ele nunca começou — os treinos
+ * à tarde a puxavam; a mediana é o início típico. Com número par de inícios, o
+ * meio entre os dois do centro. `null` sem início.
+ */
+export function medianaDosInicios(inicios: Inicio[]): number | null {
+  const m = inicios.map(x => x.min).sort((a, b) => a - b);
+  if (!m.length) return null;
+  const k = Math.floor(m.length / 2);
+  return m.length % 2 ? m[k] : (m[k - 1] + m[k]) / 2;
+}
+
 /** Um início de treino no mês, em minutos desde a meia-noite. */
 export interface Inicio { t: number; min: number }
 

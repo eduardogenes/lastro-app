@@ -75,11 +75,11 @@ test('horário típico do mês, com o mais cedo e o mais tarde', async () => {
   a.aba('dias');
 
   const h = a.vJ('ctx.mes').horario;
-  assert.strictEqual(h.media, '6h30', 'média das três');
+  assert.strictEqual(h.mediana, '6h30', 'a do meio das três (mediana, decisão de 14/10)');
   assert.strictEqual(h.cedo, '6h00');
   assert.strictEqual(h.tarde, '7h00');
   assert.deepStrictEqual(h.pontos, [360, 390, 420], 'e os pontos, para a média não enganar');
-  const linha = a.$$('.dm-tres').map(function (x) { return x.textContent; }).find(function (x) { return /média/.test(x); });
+  const linha = a.$$('.dm-tres').map(function (x) { return x.textContent; }).find(function (x) { return /mediana/.test(x); });
   assert.ok(linha && /6h30/.test(linha) && /mais cedo/.test(linha) && /mais tarde/.test(linha), 'na tela: ' + linha);
   a.fechar();
 });
@@ -251,5 +251,21 @@ test('recorde não é pintado de ácido: o app não comemora por cor', async () 
   assert.ok(rec, 'a linha de recordes existe');
   assert.strictEqual(rec.valor, '1', '40 kg para 50 kg é recorde de carga');
   assert.ok(!rec.cor, 'e não vem com cor nenhuma');
+  a.fechar();
+});
+
+test('o horário típico é a mediana: um treino à tarde não puxa o início para uma hora em que ele nunca começou', async () => {
+  // A média de outubro deu 7h56; a mediana, 6h14 (decisão do dono, 14/10).
+  const agora = agoraEstavel();
+  const hoje = new Date(agora);
+  const dia = function (d, h, m) { return new Date(hoje.getFullYear(), hoje.getMonth(), d, h, m).getTime(); };
+  const done = [
+    { day: 'A', t: dia(2, 6, 10), sid: 1, dur: 50 * 60000 },
+    { day: 'B', t: dia(3, 6, 14), sid: 2, dur: 50 * 60000 },
+    { day: 'C', t: dia(4, 18, 30), sid: 3, dur: 50 * 60000 }
+  ];
+  const a = await app({ agora: agora, estado: { logs: {}, done: done } });
+  a.aba('dias');
+  assert.strictEqual(a.vJ('ctx.mes').horario.mediana, '6h14', 'e não 10h18, a média');
   a.fechar();
 });
