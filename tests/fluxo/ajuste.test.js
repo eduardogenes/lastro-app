@@ -160,7 +160,7 @@ test('a leitura das fotos destrava o corte que o peso sozinho não dá', async (
   comFotos(a, [iso(14), iso(0)]);
 
   a.aba('semana');
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Não mexer: falta a sua leitura das fotos',
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Não mexer: falta a avaliação das fotos',
     'sem a leitura, o peso abre revisão e não corta');
 
   a.v('ctx.abreComparar');
@@ -204,7 +204,7 @@ test('responder de novo substitui, em vez de empilhar opinião', async () => {
   assert.strictEqual(a.S().gordura.length, 1, 'uma leitura por par');
   assert.strictEqual(a.S().gordura[0].v, 'incerto');
   a.aba('semana');
-  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Não mexer: falta a sua leitura das fotos', 'incerto não corta');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Não mexer: a avaliação das fotos ficou incerta', 'incerto não corta');
   assert.strictEqual(a.vJ('ctx.dados').veredito.podeAplicar, false);
   a.fechar();
 });

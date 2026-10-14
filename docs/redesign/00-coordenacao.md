@@ -15,7 +15,7 @@ pede atenção do dono.
 
 **Onde parou, exatamente:**
 - Branch `redesenho-do-zero`, suíte verde: **1.465 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `153d99f`.
+  Nenhum agente trabalhando. Último commit de código: `27cec34`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
@@ -3203,8 +3203,14 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         aviso continua, com o texto ajustado. **Divergência:** a coluna da
         esquerda não leva o cabeçalho da sessão nem o descanso correndo (eles
         ficam onde estão: o relógio grudado no topo, o cronômetro no rodapé).
-      - **semana:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ✓ · 5 ~ (conferir o ramo do corte
-        pedindo a foto) · 6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · **10 ✓ (14/10)** — o passo
+      - **semana:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ✓ · **5 ✓ (14/10, conferido)** — os
+        portões já estavam (taxa, adesão, avaliação visual com o par e
+        "Responder", que leva ao comparar, onde as fotos estão). Corrigido o
+        texto: "Não mexer: falta a avaliação das fotos", com "Se as fotos não
+        mostrarem piora, o certo é manter" escrito; "incerto" deixou de ser
+        lido como falta ("a avaliação das fotos ficou incerta", a regra
+        mantém); a pergunta diz que vale por 14 dias e que incerto é resposta,
+        com Sim/Não/Incerto. · 6 ✓ · 7 ✓ · 8 ✓ · 9 ✓ · **10 ✓ (14/10)** — o passo
         (e o desfazer) grava na hora; se o aparelho recusa, ajuste, histórico e
         arroz voltam juntos, e a tela diz "O passo não foi aplicado", o que não
         mudou com os números de antes, "Tentar de novo / Baixar cópia" e que o
@@ -3437,6 +3443,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Sessão de fotos 2–3: o disparo é obturador, clarão e o bloco fechando (o alarme do descanso saiu dali); os nove blocos na câmera; a pose dita em voz. 11 mutações, 11 mortas (a marca de "não guardada" no bloco viveu até o caso da cota cheia pela câmera). Captura com câmera falsa do Chromium em `_medicao/camera.mjs`. 1.456 passando.
 - 14/10 · Momento 1, estado 14: a sessão deitada em duas colunas, sem o aviso de girar (que segue fora do modo). 5 mutações, 5 mortas. Captura em `_medicao/deitado.mjs`. 1.458 passando.
 - 14/10 · Momento 1, estado 2: "enquanto descansa" — pré-treino, copo e peso a um toque no cartão aberto, durante o descanso. 12 mutações, 12 mortas (o limite de horário da refeição viveu até o caso do shake depois do treino). **Fim dos ✗ do levantamento.** 1.465 passando.
+- 14/10 · Conferência dos ~ começa. Semana 5: o ramo do corte com o texto do desenho; "incerto" não é mais lido como falta. 2 mutações, 2 mortas. 1.465 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

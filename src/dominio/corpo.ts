@@ -324,8 +324,14 @@ export function veredito(
       // Fora da tabela da frente: aqui a taxa NÃO está na faixa (está acima),
       // e o porquê é o da prosa — as fotos.
       return { k: 'manter', t: 'Não mexer: as fotos não mostram piora', p: `${mov} As fotos não mostram piora, então o ganho está comprando músculo. Ganho acima da faixa não é ruim por si.` };
-    return { k: 'observar', t: 'Não mexer: falta a sua leitura das fotos', falta: 'gordura',
-             p: `${mov} Falta a leitura das fotos contra as de duas semanas atrás. Sem ela o peso pede revisão, não corte.` };
+    // "Incerto" também é resposta (a D, `semana.html`, estado 5): com ela a
+    // regra mantém, e dizer que a leitura FALTA pediria de novo o que ele já deu.
+    if (sinais.gorduraVisual === 'incerto')
+      return { k: 'observar', t: 'Não mexer: a avaliação das fotos ficou incerta',
+               p: `${mov} A avaliação das fotos foi "incerto", e incerto também é resposta: com ela, a regra mantém a comida como está.` };
+    // A última frase está escrita porque é a parte da regra que mais surpreende.
+    return { k: 'observar', t: 'Não mexer: falta a avaliação das fotos', falta: 'gordura',
+             p: `${mov} Sem a resposta sobre a gordura visual, não há corte. Se as fotos não mostrarem piora, o certo é manter: o ganho está comprando músculo.` };
   }
 
   // ---------- ganho travado, duas semanas seguidas ----------

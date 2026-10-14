@@ -18,7 +18,7 @@ import {
 import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
 import { ehBancada } from './palco.js';
-import { MIN_PESAGENS as MIN_PESAGENS_CORPO, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
+import { MIN_PESAGENS as MIN_PESAGENS_CORPO, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, VALIDADE_LEITURA, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
 import { cartaoDeCima } from './dominio/agora';
 import { venceuPorPosicao } from './dominio/prescricao';
@@ -9771,9 +9771,9 @@ CTX.comparacao = function () {
       pergunta = {
         t: 'Comparando com ' + dias + ' dias atrás: a gordura visual aumentou claramente?',
         valor: ja ? ja.v : null,
-        opcoes: [{ k: 'sim', t: 'sim' }, { k: 'nao', t: 'não' }, { k: 'incerto', t: 'incerto' }],
-        nota: 'Entra na régua calórica: o peso sozinho não corta, e sem esta leitura ' +
-              'ele abre revisão em vez de tirar comida do plano.'
+        opcoes: [{ k: 'sim', t: 'Sim' }, { k: 'nao', t: 'Não' }, { k: 'incerto', t: 'Incerto' }],
+        nota: 'A resposta vale por ' + VALIDADE_LEITURA + ' dias e entra na régua calórica: o peso sozinho não corta. ' +
+              '"Incerto" também é resposta: com ela, a regra mantém a comida como está.'
       };
     }
   }

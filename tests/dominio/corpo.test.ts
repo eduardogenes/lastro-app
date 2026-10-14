@@ -64,12 +64,19 @@ test('sem a leitura das fotos, o peso abre revisão e não corta', () => {
                       { diasRegistrados: 14, forcaSubindo: false, gorduraVisual: null });
   assert.strictEqual(v.k, 'observar');
   assert.strictEqual(v.falta, 'gordura');
+  assert.strictEqual(v.t, 'Não mexer: falta a avaliação das fotos');
+  // a parte da regra que mais surpreende fica escrita (semana, estado 5)
+  assert.ok(v.p.includes('Se as fotos não mostrarem piora, o certo é manter'), v.p);
 });
 
 test('fotos inconclusivas também não cortam', () => {
   const v = veredito({ peso: pesagens([73.0, 73.6, 74.2]), cintura: [] },
                       { diasRegistrados: 14, forcaSubindo: false, gorduraVisual: 'incerto' });
   assert.strictEqual(v.k, 'observar');
+  // "incerto" também é resposta: a leitura não FALTA, e a tela não a pede de novo
+  assert.strictEqual(v.falta, undefined);
+  assert.strictEqual(v.t, 'Não mexer: a avaliação das fotos ficou incerta');
+  assert.ok(v.p.includes('a regra mantém a comida como está'), v.p);
 });
 
 // ---------- a trava de adesão ----------
