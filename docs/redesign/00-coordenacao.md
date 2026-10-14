@@ -72,6 +72,7 @@ pede atenção do dono.
   7. As medições A–D da régua no aparelho (6.z).
   8. A revisão do treinador dentro do app (prescrição, estado 6): como ela chega — texto colado, arquivo, outro? Sem isso não construo a importação com "É a mesma / É outro exercício", porque errar manda histórico para o exercício errado.
   9. Correções feitas pelo histórico antes de 14/10 apagaram o RIR das séries daquela sessão (corrigido). Se importar, uma cópia de segurança anterior a cada correção tem o RIR original.
+  10. A lousa como FOTO dentro do app (aula, estado 6): hoje ela entra como texto da transcrição. A foto pede um campo novo sincronizado e a foto no cache. Quer?
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
   coração do cardio, barra da comida; hoje abre o Agora), as três leituras
   (dias com treino por semana em média de 4 semanas, cardio, horário de início
@@ -3279,7 +3280,8 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         começar, "Na última aula, sáb 03/10" com o que entrou em cada movimento
         e "Peso guardado é peso do dia". (Sem o ritmo s/100 m da corrida ao
         lado.) ·
-        6 ~ (lousa) · 7 ✓ · 8 ✓ · 9 ✓ · 10 ✓ · 11 ~ · **12 ✓ (14/10)** — o aviso de
+        6 ~ (lousa: entra como texto da transcrição; a foto dentro do app vira
+        pergunta ao dono, 10) · 7 ✓ · 8 ✓ · 9 ✓ · 10 ✓ · 11 ~ · **12 ✓ (14/10)** — o aviso de
         falha diz que a presença da sessão continua guardada, com a hora, quando
         ela gravou antes (o app guarda o instante da última gravação aceita), e
         oferece baixar a cópia. Vale também para o momento-1, estado 10.
