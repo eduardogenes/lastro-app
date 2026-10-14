@@ -11,20 +11,20 @@ pede atenção do dono.
 
 ---
 
-## ⏸ PONTO DE PARADA — 14/10 (fila do dono fechada; levantamento sem ✗)
+## ⏸ PONTO DE PARADA — 14/10 (redesenho publicado)
 
 **Onde parou, exatamente:**
 - Branch `redesenho-do-zero`, suíte verde: **1.545 passando**, zero "unhandled".
-- **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
-  versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
-  ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
+- **✓ PUBLICADO em 14/10:** o ramo foi juntado na `main` (`547b70b`, com a
+  `main` idêntica ao ramo: build, tipos e 1.545 testes verdes) e a Vercel
+  publicou (deploy "success"). Daqui em diante, o trabalho segue na `main`.
+  Antes, ele baixou a cópia de segurança.
   Nenhum agente trabalhando. Último commit de código: `1acec8a`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
 - **Feito: a fila das respostas do dono (abaixo), inteira, e a sessão de fotos.**
-  **Próximo: juntar o ramo na `main` e publicar** — decisão do dono: publicar
-  tudo junto no fim. O que resta "em parte" no levantamento é divergência
+  **Publicado em 14/10.** O que resta "em parte" no levantamento é divergência
   declarada (régua na linha tocada, marca por célula, stepper do peso, "o que
   vem de fora" com datas de revisão, peso numa tela só na aula, onde está cada
   arquivo no comparar, hipótese A da sessão de fotos). Antes disso, o levantamento
@@ -3607,6 +3607,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Fila 10: a revisão do treinador colada em texto — domínio, programa do treinador no dado e a tela. 20 mutações, 20 mortas (o limite de parecença viveu até o caso "Rosca direta" × "Rosca martelo"). **A fila das respostas do dono está fechada.** Pedido dele no meio: commits menos fracionados (registrado na memória). 1.540 passando.
 - 14/10 · Sessão de fotos 1, 2, 4, 6, 8 e 10 conferidos e construídos numa peça: ordem das poses e som no começar, contagem falada, giro dito e mostrado, a foto preta que volta no fim, o caminho da câmera negada, o fim com resumo. 9 mutações, 8 mortas e 1 limpeza redundante tirada. 1.545 passando.
 - 14/10 · O dono não vai fazer as medições A–D da régua: a régua fica como está, e a decisão 9 perde o gatilho.
+- 14/10 · **Publicado.** `main` atualizada com a do GitHub (que já tinha o PR #4, uma versão anterior do ramo), o ramo juntado sem conflito (`547b70b`), conferência completa, envio pelo login do `gh` só naquele comando, deploy da Vercel com sucesso.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
