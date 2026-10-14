@@ -10140,19 +10140,47 @@ CTX.linhasDoCorpo = function () {
   const peso = S.body.peso || [];
   const hoje = peso.filter(function (x) { return sameDay(x.t, agora); }).slice(-1)[0];
   const antes = peso.filter(function (x) { return !sameDay(x.t, agora); }).slice(-1)[0];
-  const treina = diaResolvido().cadencia === 'treino';
-  const linhas = [hoje
-    ? { k: 'peso', t: 'Peso da manhã', v: comUnidade(hoje.v, 'kg'), d: 'anotado às ' + fmtHoraDita(hoje.t) }
-    : { k: 'peso', t: 'Peso da manhã', v: 'sem marca',
-        d: (treina ? 'antes de treinar, depois do pré' : 'de manhã, em semi-jejum') +
-           (antes ? ' · última: ' + fmtDec(antes.v) + ' em ' + fmtDate(antes.t) : ''),
-        acao: 'Anotar' }];
+  const h = diaResolvido();
+  const treina = h.cadencia === 'treino';
+
+  // A HORA manda nas duas linhas (a D, `agora-descanso.html`, estados 1 e 5).
+  // A pesagem é de manhã em semi-jejum (F42) — em dia de treino, antes de
+  // treinar —, e passada a hora ela não aparece: aparecer à tarde seria pedir
+  // um número que não compara. As fotos são em jejum (F228): antes da primeira
+  // refeição do dia; depois dela marcada, "amanhã cedo".
+  const H = CTX.hoje();
+  const refs = H.refs.filter(function (r) { return !ehLinhaDeTreino(r); });
+  const primeira = refs[0] || null;
+  const linhaTreino = H.refs.filter(ehLinhaDeTreino)[0] || null;
+  const minAgora = new Date(agora).getHours() * 60 + new Date(agora).getMinutes();
+  const comeu = !!(primeira && H.comidaDoDia.done[primeira.id]);
+  const horaDita = function (t) { return t.replace(/^0(\d)/, '$1').replace(':', 'h'); };
+  const passouAHora = treina
+    ? (h.origem === 'registrado' || h.origem === 'aberta' || (linhaTreino && minAgora > minutosDe(linhaTreino.t)))
+    : (comeu || (primeira && minAgora > minutosDe(primeira.t)));
+  const semana = peso.filter(function (x) { return x.t >= weekStart(agora); }).length;
+
+  const linhas = [];
+  if (hoje) {
+    linhas.push({ k: 'peso', t: 'Peso da manhã', v: comUnidade(hoje.v, 'kg'),
+                  d: 'anotado às ' + fmtHoraDita(hoje.t) + ' · ' + semana + (semana === 1 ? ' nesta semana' : ' nesta semana') });
+  } else if (!passouAHora) {
+    linhas.push({ k: 'peso', t: 'Peso da manhã', v: 'sem marca',
+      d: (treina ? 'antes de treinar, depois do pré' : 'de manhã, em semi-jejum') +
+         (antes ? ' · última: ' + fmtDec(antes.v) + ' em ' + fmtDate(antes.t) : '') +
+         (semana ? ' · ' + semana + ' nesta semana' : ''),
+      acao: 'Anotar' });
+  }
   const dias = diasDesdeAFoto(S.protocolo.sessoes, agora);
   const u = ultimaSessaoFoto(S.protocolo.sessoes);
   if (dias != null && dias >= CADENCIA_DIAS && u) {
-    linhas.push({ k: 'fotos', t: 'Fotos do corpo', v: 'faz ' + dias + ' dias',
-                  d: 'a cada ' + CADENCIA_DIAS + ' dias · última: ' + fmtDate(instanteDaData(u.d)),
-                  acao: 'Nova sessão' });
+    linhas.push(comeu
+      ? { k: 'fotos', t: 'Fotos do corpo', v: 'amanhã cedo',
+          d: 'faz ' + dias + ' dias · foto depois de comer não compara com as outras' }
+      : { k: 'fotos', t: 'Fotos do corpo', v: 'faz ' + dias + ' dias',
+          d: primeira ? 'em jejum, antes do ' + primeira.n.toLowerCase().replace(/^café da manhã$/, 'café') +
+                        ' das ' + horaDita(primeira.t) : 'em jejum',
+          acao: 'Nova sessão' });
   }
   return linhas;
 };

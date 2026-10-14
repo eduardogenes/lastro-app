@@ -1644,7 +1644,7 @@ test('a pesagem da manhã é linha com "Anotar" enquanto não há peso hoje, e l
     body: { peso: [{ t: agora - 3 * DIA, v: 73.8 }], cintura: [] } } });
   await a.esperar();
   assert.strictEqual(a.texto('[data-linha="peso"] .ins-linha-t'), 'Peso da manhã · sem marca');
-  assert.ok(/^antes de treinar, depois do pré · última: 73,8 em \d\d\/\d\d$/.test(a.texto('[data-linha="peso"] .ins-linha-s')),
+  assert.ok(/^antes de treinar, depois do pré · última: 73,8 em \d\d\/\d\d( · \d+ nesta semana)?$/.test(a.texto('[data-linha="peso"] .ins-linha-s')),
     a.texto('[data-linha="peso"] .ins-linha-s'));
   a.clicar('[data-a="agora-peso"]');
   await a.esperar();
@@ -1658,7 +1658,8 @@ test('com peso hoje, a linha diz o valor e quando, e não pede nada', async () =
     body: { peso: [{ t: agora - 3 * 3600000, v: 73.6 }], cintura: [] } } });
   await a.esperar();
   assert.strictEqual(a.texto('[data-linha="peso"] .ins-linha-t'), 'Peso da manhã · 73,6 kg');
-  assert.strictEqual(a.texto('[data-linha="peso"] .ins-linha-s'), 'anotado às 6h00');
+  assert.strictEqual(a.texto('[data-linha="peso"] .ins-linha-s'), 'anotado às 6h00 · 1 nesta semana',
+    'e quantas a semana já tem (a D, estado 5)');
   assert.strictEqual(a.$('[data-a="agora-peso"]'), null);
   a.fechar();
 });
@@ -1844,4 +1845,34 @@ test('a folha do tipo do dia diz o efeito antes do toque, e "Já fiz" leva ao re
   assert.ok(b.vista().add, 'treino fora da prescrição abre o lançamento');
   assert.strictEqual(new Date(b.vista().add.t).toDateString(), new Date(t).toDateString(), 'de hoje');
   b.fechar();
+});
+
+test('a pesagem e as fotos seguem a hora: a pesagem some depois do café, e as fotos dizem "em jejum"', async () => {
+  // A D (`agora-descanso.html`, estados 1 e 5). F42: a pesagem é de manhã, em
+  // semi-jejum; F228: as fotos, em jejum. Domingo de descanso, com a sessão de
+  // fotos vencida (16 dias).
+  const dom = function (h, m) { const d = new Date(agoraEstavel(h, m)); d.setDate(d.getDate() - d.getDay()); return d.getTime(); };
+  const fotos = function (t) {
+    return [{ d: dataLocal(t - 16 * DIA), t: 1, m: 1, fotos: { 'frente-relaxado': { v: 1, ext: 'webp' } } }];
+  };
+  const cedo = await app({ aba: 'agora', agora: dom(7, 5), estado: { plano: 7, logs: {}, done: [],
+    body: { peso: [], cintura: [] }, protocolo: { sessoes: fotos(dom(7, 5)), poses: null } } });
+  assert.ok(cedo.$('[data-linha="peso"]'), 'às 7h05, antes do café: a pesagem está lá');
+  assert.ok(/em jejum, antes do café das 8h00/.test(cedo.texto('[data-linha="fotos"]')), cedo.texto('[data-linha="fotos"]'));
+  assert.ok(cedo.$('[data-a="agora-fotos"]'), 'e oferece a sessão');
+  cedo.fechar();
+
+  const tarde = await app({ aba: 'agora', agora: dom(10, 40), estado: { plano: 7, logs: {}, done: [],
+    body: { peso: [], cintura: [] }, protocolo: { sessoes: fotos(dom(10, 40)), poses: null } } });
+  assert.strictEqual(tarde.$('[data-linha="peso"]'), null, 'às 10h40, o café já passou: a pesagem não aparece');
+  tarde.fechar();
+
+  const comeu = await app({ aba: 'agora', agora: dom(7, 50), estado: { plano: 7, logs: {}, done: [],
+    body: { peso: [], cintura: [] }, protocolo: { sessoes: fotos(dom(7, 50)), poses: null } } });
+  comeu.v('ctx.marcaRefeicao', 'pos');
+  await comeu.esperar();
+  assert.ok(/amanhã cedo/.test(comeu.texto('[data-linha="fotos"]')), 'depois do café marcado: ' + comeu.texto('[data-linha="fotos"]'));
+  assert.strictEqual(comeu.$('[data-a="agora-fotos"]'), null, 'e não oferece a sessão de hoje');
+  assert.strictEqual(comeu.$('[data-linha="peso"]'), null, 'e a pesagem também saiu');
+  comeu.fechar();
 });

@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.437 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.438 passando**, zero "unhandled".
 - A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
   `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
@@ -102,7 +102,11 @@ pede atenção do dono.
        diz "entra na conta quando o dia fechar".
      - [ ] A mudança esperando decisão: linha "Decidir" que abre a folha com a
        conta do volume (estados 6–7).
-     - [ ] A pesagem some depois do café (F42); as fotos em jejum (estado 5).
+     - [x] A pesagem sem marca só aparece antes da hora dela (descanso: antes
+       do café; treino: antes de treinar — F42), e diz quantas a semana tem; as
+       fotos dizem "em jejum, antes do café das 8h00" (F228) e, depois do café
+       marcado, "amanhã cedo", sem oferecer a sessão (o padrão do desenhista na
+       pergunta 5; as fotos continuam em Corpo).
      - [ ] O cartão com os três botões no lugar do "abrir e marcar", e a leitura
        de volta com "Desfazer" (momento 2, estados 1–2).
      - [ ] O cardio: hoje é seção própria; na D é a folha do palpite (descanso)
@@ -3265,6 +3269,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Agora pela D, etapa 2: a água em linha, com o estado ruim. 5 mutações, 5 mortas. 1.435 passando.
 - 14/10 · Agora pela D, etapa 3: os 14 dias em células e "Pôr ontem em dia". 6 mutações, 6 mortas (uma viva até o caso do dia guardado sem marca). 1.436 passando.
 - 14/10 · Agora pela D, etapa 4: o cabeçalho com a procedência do tipo do dia e a folha do estado 4. 12 casos reapontados, 1 novo; 6 mutações, 6 mortas. 1.437 passando.
+- 14/10 · Agora pela D, etapa 5: a pesagem e as fotos seguem a hora. 4 mutações, 4 mortas. 1.438 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
