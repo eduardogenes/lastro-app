@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.502 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.506 passando**, zero "unhandled".
 - **⚠ Não publicar nada até o fim do redesenho (decisão do dono, 14/10):** a
   versão publicada ainda apaga as fotos do corpo a cada publicação (corrigido no
   ramo, `5a21681`); ele escolheu publicar tudo junto no fim.
@@ -62,8 +62,12 @@ pede atenção do dono.
      "Não mexer: o passo de 01/10 ainda está sendo medido", com as datas das
      duas semanas e quantas faltam; o segundo toque não aplica nada; desfeito o
      passo, as semanas voltam a decidir.
-  3. [ ] **A aula fica fora da ordem:** registrar a aula não mexe na sequência
-     (desfaz o F81 como comportamento).
+  3. [x] **A aula fica fora da ordem:** registrar a aula não mexe na sequência
+     (desfaz o F81 como comportamento). Feito 14/10, no domínio
+     (`proximoTreino`): o dia aberto não move o ponteiro; na posição da aula ela
+     é oferecida se ainda não aconteceu na volta (desde o último A), senão a
+     volta fecha no A. O `nextDay` do app, que era uma cópia com a regra velha,
+     passou a chamar o domínio.
   4. [ ] **Horário de início em Dias: mediana**, não média.
   5. [ ] **Cardio de hoje no Agora, com "Apagar".**
   6. [ ] **Cardio esquecido num dia passado**, pelo dia em Dias.
@@ -3530,6 +3534,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Comparar 1, 3 e 11 (e 6 conferido): a média "na semana" e "sem medida", o par mais longo dito com a variação, o par curto que avisa sem impedir, o vazio de uma sessão com a data da segunda. 8 mutações, 7 mortas e 1 redundância tirada. 1.496 passando.
 - 14/10 · **Respostas do dono às 17 perguntas** (página de decisões). Fila de 10 construções no ponto de parada; a 13 ele delegou e decidi (a linha fica sempre). Não publicar até o fim.
 - 14/10 · Fila 2: um passo por evidência — com passo em vigor, a regra só decide de novo quando as duas semanas lidas começaram depois dele. 3 mutações, 3 mortas. Achado de passagem: um `)}` aparecia como texto no Agora (o `tsc` acusava, a suíte não); tirado, com caso que lê as cinco abas. 1.502 passando.
+- 14/10 · Fila 3: a aula fora da ordem, no domínio; a cópia da regra em `main.jsx` saiu. 3 mutações, 3 mortas. Um caso do Agora usava a aula para girar a sequência — refeito com a volta inteira. 1.506 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

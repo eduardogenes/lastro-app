@@ -59,13 +59,38 @@ export function ultimaDoPlano(S: Estado): Sessao | null {
   return null;
 }
 
-/** O próximo treino da rotação. É a única autoridade sobre QUAL sessão vem. */
+/** O dia ABERTO do programa — a aula do box: o que o box programar. */
+function diaAbertoDe(S: Estado, d: Dia): boolean {
+  const p = S.prog ? (S.prog as Record<string, { aberto?: unknown } | undefined>)[d] : undefined;
+  return !!(p && p.aberto);
+}
+
+/**
+ * O próximo treino da rotação. É a única autoridade sobre QUAL sessão vem.
+ *
+ * A AULA FICA FORA DA ORDEM (decisão do dono, 14/10). Ele vai ao box na quinta
+ * ou no sábado, sem dia fixo, e a aula é a 6ª posição: contada como sessão da
+ * sequência, uma aula feita com a sequência no C a fazia pular D e E (F81).
+ * Agora ela não move o ponteiro — o próximo continua sendo o D. Quando a
+ * sequência chega na posição da aula, ela é oferecida, a não ser que já tenha
+ * acontecido nesta volta (desde a última vez do primeiro treino): aí a volta
+ * fecha e o próximo é o A.
+ */
 export function proximoTreino(S: Estado, padrao: Dia[]): Dia {
   const rot = rotacao(S, padrao);
-  const u = ultimaDoPlano(S);
-  if (!u) return rot[0];
-  const i = rot.indexOf(u.day);
-  return rot[(i + 1) % rot.length];
+  const aberto = (d: Dia) => diaAbertoDe(S, d);
+  const conta = S.done.filter(x => x && x.day && !x.livre && !aberto(x.day));
+  const u = conta.length ? conta[conta.length - 1] : null;
+  const i = u ? rot.indexOf(u.day) : -1;
+  const primeiro = rot.filter(d => !aberto(d))[0];
+  const daVolta = conta.filter(x => x.day === primeiro);
+  const inicio = daVolta.length ? daVolta[daVolta.length - 1].t : -Infinity;
+  for (let k = 1; k <= rot.length; k++) {
+    const d = rot[(i + k + rot.length) % rot.length];
+    if (!aberto(d)) return d;
+    if (!S.done.some(x => x && x.day === d && !x.livre && x.t > inicio)) return d;
+  }
+  return rot[0];
 }
 
 /** A cadência prevista para um instante, pelo dia da semana. */

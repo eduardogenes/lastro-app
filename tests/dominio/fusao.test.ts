@@ -52,6 +52,35 @@ test('treino avulso não move a fila', () => {
   assert.strictEqual(proximoTreino(S, ROT_BASE), 'D', 'a avulsa é presença, não sessão');
 });
 
+// ---------- a aula fica fora da ordem (decisão do dono, 14/10) ----------
+
+const PROG = { A: { ex: [] }, B: { ex: [] }, C: { ex: [] }, D: { ex: [] }, E: { ex: [] }, HX: { ex: [], aberto: 1 } };
+const ROT6 = ['A', 'B', 'C', 'D', 'E', 'HX'];
+const sessoes = (dias: string[]) => dias.map((day, i) => ({ day, t: agora - (dias.length - i) * DIA, sid: i + 1, dur: 0 }));
+
+test('a aula feita no meio da volta não move a sequência', () => {
+  // era o F81: com a sequência no C, a aula fazia pular D e E
+  const S = estado({ prog: PROG as never, done: sessoes(['A', 'B', 'C', 'HX']) });
+  assert.strictEqual(proximoTreino(S, ROT6), 'D');
+});
+
+test('na posição da aula, ela é oferecida se ainda não aconteceu na volta', () => {
+  const S = estado({ prog: PROG as never, done: sessoes(['A', 'B', 'C', 'D', 'E']) });
+  assert.strictEqual(proximoTreino(S, ROT6), 'HX');
+});
+
+test('na posição da aula, a volta fecha se a aula já aconteceu nela', () => {
+  const S = estado({ prog: PROG as never, done: sessoes(['A', 'B', 'HX', 'C', 'D', 'E']) });
+  assert.strictEqual(proximoTreino(S, ROT6), 'A', 'a aula da volta já foi, na quinta');
+  const T = estado({ prog: PROG as never, done: sessoes(['A', 'B', 'C', 'D', 'E', 'HX']) });
+  assert.strictEqual(proximoTreino(T, ROT6), 'A', 'e feita na posição, fecha a volta do mesmo jeito');
+});
+
+test('a aula da volta passada não conta para esta', () => {
+  const S = estado({ prog: PROG as never, done: sessoes(['C', 'D', 'E', 'HX', 'A', 'B', 'C', 'D', 'E']) });
+  assert.strictEqual(proximoTreino(S, ROT6), 'HX');
+});
+
 // ---------- hoje é dia de treinar: fato > override > previsão ----------
 
 test('sessão registrada hoje é fato consumado', () => {

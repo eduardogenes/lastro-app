@@ -1000,21 +1000,22 @@ test('o Agora não avisa sobre o que já venceu, nem quando o dia volta de novo'
   // O fixture é construído para DISCRIMINAR, e levou uma mutação para eu
   // perceber: com o A voltando só uma vez, o vencimento CALCULADO não cai hoje
   // de todo jeito, e o caso ficava verde sem a guarda. Aqui o A volta DUAS
-  // vezes — a sessão do A venceu a mudança, a do HX girou a rotação de volta
-  // para o A, e portanto `vence` é HOJE ao mesmo tempo que `venceu` é verdade.
-  // Só a guarda explica o silêncio.
+  // vezes — a sessão do A venceu a mudança, a volta inteira girou até o E, e
+  // portanto `vence` é HOJE ao mesmo tempo que `venceu` é verdade. (A aula
+  // não gira mais a sequência — fica fora da ordem, decisão de 14/10 —, então
+  // a volta fecha no E.) Só a guarda explica o silêncio.
   const agora = agoraEstavel(6, 30);
   const nasceu = agora - 20 * DIA;
+  const volta = ['A', 'B', 'C', 'D', 'E'].map(function (d, i) {
+    const t = agora - (9 - i) * DIA;
+    return { sid: t, day: d, t: t, dur: 70 * MIN, fim: 'manual', sets: [] };
+  });
   const a = await app({
     aba: 'agora', agora: agora,
     estado: {
       plano: 7, logs: {},
-      done: [
-        { sid: agora - 9 * DIA, day: 'A', t: agora - 9 * DIA,
-          dur: 70 * MIN, fim: 'manual', sets: [] },
-        { sid: agora - 2 * DIA, day: 'HX', t: agora - 2 * DIA,
-          dur: 70 * MIN, fim: 'manual', sets: [] }
-      ],
+      done: volta.concat([{ sid: agora - 2 * DIA, day: 'HX', t: agora - 2 * DIA,
+                            dur: 70 * MIN, fim: 'manual', sets: [] }]),
       dia: diaDe(agora, 'treino'),
       promoPendente: [{
         sid: nasceu, day: 'A', t: nasceu, m: nasceu,

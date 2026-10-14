@@ -1495,12 +1495,9 @@ function ultimaDoPlano() {
   for (let i = S.done.length-1; i >= 0; i--) if (S.done[i].day && !S.done[i].livre) return S.done[i];
   return null;
 }
-function nextDay() {
-  const u = ultimaDoPlano();
-  if (!u) return 'A';
-  const i = rot().indexOf(u.day);
-  return rot()[(i+1) % rot().length];
-}
+// Uma autoridade só sobre qual treino vem: a do domínio, com a aula fora da
+// ordem. Esta cópia local ainda contava a aula como posição.
+function nextDay() { return proximoTreino(S, ROT_BASE); }
 // Identidade de um exercício numa posição do treino. Devolve o id do
 // exercício, não a posição: é essa linha que desprende o histórico do lugar.
 function id(d,i){ const t = treino(d); return (t && t.ex[i]) ? t.ex[i].id : d + i; }
