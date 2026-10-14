@@ -14,7 +14,7 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 13/10 (atualizado ao fechar o mês e o dia de Dias)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.438 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.439 passando**, zero "unhandled".
 - A terceira rodada da D **entregou** (`ce27b06`): `dias.html`,
   `agora-descanso.html`, `direcao-3.md`. Nenhum agente trabalhando.
 - **Dias, construído:** o mês (células com letra, "aula", "fora", "desc.",
@@ -100,8 +100,16 @@ pede atenção do dono.
        entra quando a data vira). Mantive a conta do portão — mudar mexeria na
        regra calórica e faria Agora e Semana discordarem em um dia — e a frase
        diz "entra na conta quando o dia fechar".
-     - [ ] A mudança esperando decisão: linha "Decidir" que abre a folha com a
-       conta do volume (estados 6–7).
+     - [x] A mudança esperando decisão: a linha "Uma mudança do Treino D
+       espera você", com o que mudou, quando e o vencimento, e "Decidir" abrindo
+       a folha (estado 7): a conta do volume antes do toque, a regra do
+       treinador quando a mudança acrescenta séries (F99), "Foi só naquele dia /
+       Fica no programa", e o que acontece se ninguém decidir. Mesma leitura e
+       mesmo verbo da lista de Prescrição. **Divergências:** a linha fica
+       sempre que algo espera (a D a quer só sem cartão e sem sessão; a frente 2
+       §9.2 exige que encerrar com mudança informe — pergunta 4 do desenhista);
+       as linhas "No programa 3 × … / Na sexta 4 × …" não entraram (o texto da
+       mudança já diz); o motivo continua só em Prescrição.
      - [x] A pesagem sem marca só aparece antes da hora dela (descanso: antes
        do café; treino: antes de treinar — F42), e diz quantas a semana tem; as
        fotos dizem "em jejum, antes do café das 8h00" (F228) e, depois do café
@@ -3270,6 +3278,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Agora pela D, etapa 3: os 14 dias em células e "Pôr ontem em dia". 6 mutações, 6 mortas (uma viva até o caso do dia guardado sem marca). 1.436 passando.
 - 14/10 · Agora pela D, etapa 4: o cabeçalho com a procedência do tipo do dia e a folha do estado 4. 12 casos reapontados, 1 novo; 6 mutações, 6 mortas. 1.437 passando.
 - 14/10 · Agora pela D, etapa 5: a pesagem e as fotos seguem a hora. 4 mutações, 4 mortas. 1.438 passando.
+- 14/10 · Agora pela D, etapa 6: a mudança esperando decisão, com "Decidir" no lugar. 4 mutações, 4 mortas (duas vivas até o caso discriminar: a folha que sumia mas ficava na pilha, e a posição que não existia no treino da mudança). 1.439 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

@@ -867,19 +867,13 @@ test('o Agora avisa UMA LINHA na manhã em que a mudança vence', async () => {
   const linha = a.$('.ag-vence');
   assert.ok(linha, 'e a linha está no Agora');
   assert.ok(/vence hoje/.test(linha.textContent), linha.textContent);
-  // O RÓTULO da seção muda com a urgência, e é o que separa "decide quando
-  // puder" de "decide hoje". Sem esta asserção, a distinção some sem vermelho.
-  const secao = a.$$('.ins-secao').filter(function (x) {
-    return /vence hoje/.test(x.textContent);
-  })[0];
-  assert.ok(secao, 'a seção existe');
-  assert.ok(!/para decidir com calma/.test(secao.textContent),
-    'e o rótulo NÃO é o de calma: hoje é o último dia');
-  assert.ok(a.$('[data-a="ver-mudancas"]'), 'com o "Ver", que leva ao dono da lista');
-
-  a.$('[data-a="ver-mudancas"]').click();
-  await a.esperar();
-  assert.strictEqual(a.vista().aba, 'prescricao', 'o "Ver" leva à Prescrição');
+  // A VOZ da linha muda com a urgência, e é o que separa "decide quando puder"
+  // de "decide hoje". Sem esta asserção, a distinção some sem vermelho.
+  assert.ok(linha.classList.contains('vence'), 'hoje é o último dia');
+  a.clicar('[data-a="decidir"]');
+  await a.esperar(60);
+  assert.ok(a.$('.ins-folha'), '"Decidir" abre a decisão ali mesmo, sem trocar de lugar');
+  assert.strictEqual(a.vista().aba, 'agora');
   a.fechar();
 });
 
@@ -915,12 +909,11 @@ test('com algo esperando e nada vencendo, o Agora INFORMA sem urgência', async 
   assert.ok(e, 'o Agora tem o que informar');
   assert.strictEqual(e.vence, false, 'e não é urgência: nada vence hoje');
   assert.match(e.txt, /está esperando decisão/, e.txt);
-  assert.ok(a.$('.ag-vence'), 'a linha está na tela');
-  const secao = a.$$('.ins-secao').filter(function (x) {
-    return /esperando decisão/.test(x.textContent);
-  })[0];
-  assert.ok(secao && /para decidir com calma/.test(secao.textContent),
-    'com o rótulo de calma, e não o de vencimento');
+  const linha = a.$('.ag-vence');
+  assert.ok(linha, 'a linha está na tela');
+  assert.ok(!linha.classList.contains('vence'), 'com a voz de calma, e não a de vencimento');
+  assert.ok(/Uma mudança do Treino B espera você/.test(linha.textContent), linha.textContent);
+  assert.ok(/vence quando o Treino B voltar/.test(linha.textContent), 'e diz quando vence: ' + linha.textContent);
   a.fechar();
 });
 
@@ -1142,8 +1135,8 @@ test('encerrar o treino com mudança INFORMA no Agora — não é guardado em si
   await a.esperar();
   const linha = a.$('.ag-vence');
   assert.ok(linha, 'e o AGORA diz que ela está lá');
-  assert.match(linha.textContent, /esperando decisão/, linha.textContent);
-  assert.ok(a.$('[data-a="ver-mudancas"]'), 'com o caminho até a lista');
+  assert.match(linha.textContent, /espera você/, linha.textContent);
+  assert.ok(a.$('[data-a="decidir"]'), 'com o caminho até a decisão');
   a.fechar();
 });
 
@@ -1875,4 +1868,43 @@ test('a pesagem e as fotos seguem a hora: a pesagem some depois do café, e as f
   assert.strictEqual(comeu.$('[data-a="agora-fotos"]'), null, 'e não oferece a sessão de hoje');
   assert.strictEqual(comeu.$('[data-linha="peso"]'), null, 'e a pesagem também saiu');
   comeu.fechar();
+});
+
+test('"Decidir" mostra a conta do volume e a regra do treinador, e cada botão grava', async () => {
+  // A D (`agora-descanso.html`, estado 7): o mesmo item da lista de Prescrição,
+  // numa folha. A mudança ACRESCENTA séries, então a regra do treinador (F99)
+  // vem ao lado. Decidida a última, a folha fecha — e sai da pilha.
+  const agora = agoraEstavel(20, 40);
+  const comMudanca = function () {
+    return app({ aba: 'agora', agora: agora,
+      estado: { plano: 7, logs: {}, done: [], dia: diaDe(agora, 'descanso'),
+        promoPendente: [{ sid: agora - 2 * DIA, day: 'A', t: agora - 2 * DIA, m: agora - 2 * DIA,
+                          mods: [{ k: 'sets', slot: SLOT, de: 3, para: 4 }], resumoMods: [''] }] } });
+  };
+  const series = function (a) { return a.S().prog.A.ex.filter(function (x) { return x.id === SLOT; })[0].s; };
+
+  const a = await comMudanca();
+  a.clicar('[data-a="decidir"]');
+  await a.esperar(60);
+  const d = a.vJ('ctx.decisaoNoAgora');
+  assert.ok(/^da sessão de [a-zçá]+, \d\d\/\d\d · Treino A$/.test(d.olho), d.olho);
+  assert.ok(/passa de \d+ para \d+/.test(a.texto('.dc-imp')), 'a conta do volume antes do toque: ' + a.texto('.dc-imp'));
+  assert.ok(a.texto('.dc-regra').indexOf('Não acrescentar séries agora') === 0, 'a regra do treinador');
+  assert.ok(/Se ninguém decidir, quando o Treino A voltar/.test(a.texto('.dc-se')));
+  a.clicar('[data-a^="so-naquele-dia-"]');
+  await a.esperar(60);
+  assert.strictEqual(series(a), 3, '"Foi só naquele dia" não mexe no programa');
+  assert.strictEqual(a.vJ('ctx.mudancasQueEsperam').length, 0, 'decidido');
+  assert.strictEqual(a.$('.ins-folha'), null, 'e a folha fecha');
+  assert.strictEqual((a.vista().pilha || []).length, 0, 'e sai da pilha, sem ficar invisível por baixo do Voltar');
+  assert.strictEqual(a.$('.ag-vence'), null, 'e a linha sai do Agora');
+  a.fechar();
+
+  const b = await comMudanca();
+  b.clicar('[data-a="decidir"]');
+  await b.esperar(60);
+  b.clicar('[data-a^="fica-no-programa-"]');
+  await b.esperar(60);
+  assert.strictEqual(series(b), 4, '"Fica no programa" entra no Treino A');
+  b.fechar();
 });

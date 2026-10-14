@@ -32,6 +32,7 @@ import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folha
 import { FolhaFoto } from './ui/folhas/foto.jsx';
 import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
 import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
+import { FolhaDecidir } from './ui/folhas/decidir.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
 import { Evolucao } from './ui/telas/evolucao.jsx';
@@ -6551,6 +6552,7 @@ function folhaAberta() {
   return (view.pilha || []).map(function (f, i) {
     if (f.k === 'refeicao') return <FolhaRefeicao key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'dia') return <FolhaDia key={i} ctx={CTX} />;
+    if (f.k === 'decidir') return <FolhaDecidir key={i} ctx={CTX} />;
     if (f.k === 'editaRefeicao') return <FolhaEditaRefeicao key={i} ctx={CTX} id={f.id} />;
     // `alvo`, e nunca `ref`: `ref` é prop reservada do Preact e NÃO chega ao
     // componente. A folha recebia `undefined` como refeição de destino, e
@@ -8753,6 +8755,8 @@ CTX.mudancasQueEsperam = function () {
         const imp = impactoDoMod(g.day, m);
         return {
           txt: textoMod(g.day, m),
+          // a mudança ACRESCENTA séries: é sobre ela que a regra do treinador fala (F99)
+          acrescenta: (m.k === 'sets' && m.para > m.de) || m.k === 'add',
           // "Se entrar no Treino D: deltoide lateral passa de 12 para 13 séries
           // na rotação." — o prefixo só na conta de volume: a da troca é outra
           // frase, sobre o tempo do exercício no programa.
@@ -10026,6 +10030,58 @@ CTX.marcaNoDiaPassado = async function (data, id, marca, escala) {
   await save();
   render();
   return { ok: true };
+};
+
+// A regra do treinador sobre séries a mais (F99, o guia em
+// `src/dominio/programa.ts`), condensada pela D para caber ao lado da decisão.
+const REGRA_DAS_SERIES = 'Não acrescentar séries agora. Considerar 1 a 2 a mais só num músculo estagnado, ' +
+  'depois de várias exposições, com recuperação boa e sem dor.';
+
+/**
+ * A linha e a folha da mudança que espera decisão, no Agora (a D,
+ * `agora-descanso.html`, estados 6 e 7). A leitura é a mesma da lista de
+ * Prescrição (`mudancasQueEsperam`), e o verbo também (`respondeMudanca`): é o
+ * mesmo item, sem trocar de lugar.
+ */
+CTX.decisaoNoAgora = function () {
+  const fila = CTX.mudancasQueEsperam().filter(function (g) { return !g.venceu; });
+  if (!fila.length) return null;
+  const n = fila.reduce(function (k, g) { return k + g.mudancas.length; }, 0);
+  const origem = function (g) {
+    return 'da sessão de ' + DIAS_LONGOS[new Date(g.quando).getDay()] + ', ' + fmtDate(g.quando) + ' · Treino ' + g.dia;
+  };
+  const so = n === 1 ? fila[0] : null;
+  return {
+    olho: so ? origem(so) : 'esperando decisão',
+    titulo: so ? so.mudancas[0].txt : n + ' mudanças esperam você',
+    // a linha do Agora: "Uma mudança do Treino D espera você"
+    linha: {
+      titulo: so ? 'Uma mudança do Treino ' + so.dia + ' espera você' : n + ' mudanças esperam você',
+      detalhe: so
+        ? so.mudancas[0].txt + ', na ' + DIAS_LONGOS[new Date(so.quando).getDay()] + ' ' + fmtDate(so.quando) +
+          (so.vence ? ' · ' + so.vence : '')
+        : fila.map(function (g) { return 'Treino ' + g.dia; }).filter(function (x, i, xs) { return xs.indexOf(x) === i; }).join(', ')
+    },
+    grupos: fila.map(function (g) {
+      const nome = 'Treino ' + g.dia;
+      return {
+        sid: g.sid, origem: origem(g),
+        mudancas: g.mudancas.map(function (m, i) {
+          return { i: i, txt: m.txt, impacto: m.impacto ? m.impacto.replace(/^Se entrar no [^:]+: /, '') : null,
+                   acima: m.acima, regra: m.acrescenta ? REGRA_DAS_SERIES : null };
+        }),
+        seNinguem: 'Se ninguém decidir, quando o ' + nome + ' voltar ela fica como só daquele dia — dito na lista de ' +
+          'Prescrição, e desfazível até a vez seguinte do ' + nome + '. A sessão de ' + fmtDate(g.quando) +
+          ' guarda o que foi feito de qualquer jeito.'
+      };
+    })
+  };
+};
+CTX.abreDecisao = function () { CTX.abreFolha({ k: 'decidir' }); };
+/** Decide pela folha do Agora, e a fecha quando não sobra mudança nenhuma. */
+CTX.decideNoAgora = async function (sid, i, permanente) {
+  await CTX.respondeMudanca(sid, i, permanente);
+  if (!CTX.decisaoNoAgora() && (view.pilha || []).some(function (f) { return f.k === 'decidir'; })) CTX.fechaFolha();
 };
 
 CTX.esperandoDecisao = function () {

@@ -61,6 +61,7 @@ export function Agora({ ctx }) {
   const cromo = ctx.cromoDoTreino();
   const app = ctx.dadosDoApp();
   const vence = ctx.esperandoDecisao();
+  const dec = ctx.decisaoNoAgora();
   const dias = ctx.quatorzeDias();
   const refDe = id => refs.filter(r => r.id === id)[0] || null;
   const linha = ctx.linhaDaComida();
@@ -260,6 +261,24 @@ export function Agora({ ctx }) {
         </div>
       </Secao>
 
+      {/* A MUDANÇA QUE ESPERA DECISÃO (a D, `agora-descanso.html`, estado 6).
+          "Decidir" abre a decisão ali mesmo, sem trocar de lugar. No dia em que
+          aquele treino volta, a linha diz que vence hoje.
+          DIVERGÊNCIA DECLARADA: a D a quer só no Agora sem cartão e sem sessão;
+          a frente 2 (§9.2) exige que encerrar com mudança INFORME — guardado em
+          silêncio é tão ruim quanto descartado. Fica sempre que algo espera,
+          abaixo do cartão quando há cartão (não disputa o topo). É a pergunta 4
+          do desenhista, com o dono. */}
+      {dec && (
+        <div class={'ins-linha ag-vence' + (vence && vence.vence ? ' vence' : '')}>
+          <span class="ins-linha-n">
+            <span class="ins-linha-t">{vence && vence.vence ? vence.txt : dec.linha.titulo}</span>
+            <span class="ins-linha-s">{dec.linha.detalhe}</span>
+          </span>
+          <button class="ins-btn-secondary" data-a="decidir" onClick={ctx.abreDecisao}>Decidir</button>
+        </div>
+      )}
+
       <Secao rotulo="A comida de hoje"
              nota={fmtInt(alvo.kcal) + ' kcal no plano de ' + (diaHoje.cadencia === 'treino' ? 'treino' : 'descanso')}>
         {/* Não é aviso: é a procedência de um horário que não bate com o
@@ -397,14 +416,6 @@ export function Agora({ ctx }) {
           O aviso de perna no mesmo dia é do treinador e sinaliza em vez de
           bloquear: a regra é não pôr cardio no mesmo período de treino de
           perna, e quem decide se ainda dá é ele. */}
-      {vence && (
-        <Secao rotulo={vence.vence ? 'vence hoje' : 'para decidir com calma'}>
-          <div class="ins-linha ag-vence">
-            <span class="ins-linha-n"><span class="ins-linha-t">{vence.txt}</span></span>
-            <button class="ins-btn-secondary" data-a="ver-mudancas"
-                    onClick={() => ctx.vaiPara('prescricao')}>Ver</button>
-          </div>
-        </Secao>
       )}
 
       <Secao rotulo="cardio" nota={`${cardio.semana} de ${cardio.alvo} nesta semana`}>
