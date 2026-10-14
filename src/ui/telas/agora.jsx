@@ -63,6 +63,7 @@ export function Agora({ ctx }) {
   const cardio = ctx.corpo().cardio;
   const cromo = ctx.cromoDoTreino();
   const app = ctx.dadosDoApp();
+  const exp = ctx.loginExpirou();
   const vence = ctx.esperandoDecisao();
   const dec = ctx.decisaoNoAgora();
   const dias = ctx.quatorzeDias();
@@ -259,6 +260,20 @@ export function Agora({ ctx }) {
             {app.backupTxt} Baixe o JSON nos ajustes. É a única cópia que não
             depende deste navegador.
           </p>
+        </div>
+      )}
+
+      {/* A SESSÃO DE LOGIN QUE EXPIROU (a D, prescricao estado 11): não é sem
+          rede, que fica em silêncio. Diz o que está a salvo, o que falta, e as
+          duas saídas — entrar de novo, ou a cópia que não depende de conta. */}
+      {exp && (
+        <div class="ins-aviso-perda" role="status">
+          <b class="ins-rotulo">A sua sessão de login expirou</b>
+          <p class="ins-body-sm">{exp.texto}{exp.esperando ? ' ' + exp.esperando : ''}{exp.ultima ? ' ' + exp.ultima : ''}</p>
+          <div class="ag-l-btns">
+            <button class="ins-btn-secondary" data-a="login-entra" onClick={ctx.abreAjustes}>Entrar de novo</button>
+            <button class="ins-btn-secondary" data-a="login-copia" onClick={ctx.exportar}>Baixar cópia</button>
+          </div>
         </div>
       )}
 

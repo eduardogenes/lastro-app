@@ -14,14 +14,15 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.447 passando**, zero "unhandled".
+- Branch `redesenho-do-zero`, suíte verde: **1.448 passando**, zero "unhandled".
   Nenhum agente trabalhando. Último commit de código: `b91697d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
 - **Feito em primeira passada:** o levantamento (item 6.β). **Próximo:** a
-  fila dele, dado primeiro: semana 10, aula 12 e sessao-fotos 9 feitos;
-  segue prescricao 11.
+  fila dele: **os quatro de dado estão feitos** (semana 10, aula 12,
+  sessao-fotos 9, prescricao 11). Seguem os ✗ de tela (corpo 10, comparar 2 e
+  7, sessão 4 e 14, sessao-fotos 2–3) e a conferência dos ~.
 - **Era o próximo passo:** o levantamento estado a estado das outras sete entregas da
   D contra o app — momento-1 (14 estados), semana (10), corpo (11), prescricao
   (11), aula (12), comparar (11), sessao-fotos (11). Parte já foi construída nas
@@ -3200,7 +3201,14 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
         que diz quanto custa sair dele) · 11 ✓.
       - **prescricao:** 1 ✓ · 2 ✓ · 3 ✓ · 4 ~ · 5 ✓ · 6 ~ (conferir a pergunta
         do nome antes de gravar) · 7 ~ · 8 ~ · 9 ~ (conferir o vazio sem plano) ·
-        10 ✓ · 11 ✗ (login expirado dito como sem rede).
+        10 ✓ · **11 ✓ (14/10)** — o 401 derrubava a
+        sessão e dali em diante a sincronia parava em silêncio, como falta de
+        rede. Agora o fato fica gravado no estado da sincronia, e o Agora diz "A
+        sua sessão de login expirou", o que está a salvo, o que espera subir, a
+        última sincronização, "Entrar de novo / Baixar cópia". Sem rede segue
+        calado. **Divergência:** o desenho põe o aviso na Prescrição (o caso era
+        uma mudança de programa); ele mora no Agora, com os outros avisos de
+        perda, porque vale para qualquer registro.
       - **aula:** 1 ✓ · 2 ✓ · 3–5 ~ (conferir a ordem de busca e a unidade) ·
         6 ~ (lousa) · 7 ✓ · 8 ✓ · 9 ✓ · 10 ✓ · 11 ~ · **12 ✓ (14/10)** — o aviso de
         falha diz que a presença da sessão continua guardada, com a hora, quando
@@ -3392,6 +3400,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Semana 10: o passo calórico deixa de dizer "Apliquei" antes de gravar; recusado, volta inteiro e a tela diz o que não mudou. 5 mutações, 5 mortas. 1.445 passando.
 - 14/10 · Aula 12: o aviso de falha diz que a presença continua guardada, só quando gravou antes; e oferece baixar a cópia. 3 mutações, 3 mortas. 1.446 passando.
 - 14/10 · Sessão de fotos 9: a pose que não coube para a sessão em vez de avançar fingindo; marcada, e "Tentar de novo" grava. 3 mutações, 3 mortas. 1.447 passando.
+- 14/10 · Prescrição 11: login expirado deixa de ser silêncio de "sem rede"; o fato fica gravado e o Agora o diz. 3 mutações, 3 mortas (duas vivas até o caso conferir a falta de rede e o disco). **Fila de dado do levantamento fechada.** 1.448 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

@@ -601,3 +601,31 @@ test('a refeição marcada HOJE não volta; a água volta, porque é contador', 
     'a água do notebook chega: é contador sem carimbo, e nenhuma lápide a alcança');
   cel.fechar(); note.fechar();
 });
+
+test('login expirado não é sem rede: o Agora diz, e sem rede continua em silêncio', async () => {
+  // A D (`prescricao.html`, estado 11). Sem rede a sincronia falha calada, de
+  // propósito. O 401 derruba a sessão — e dali em diante a sincronia parava em
+  // silêncio como se fosse falta de rede, com o outro aparelho vendo o velho.
+  const a = await app({ aba: 'agora' });
+  nuvemFalsa(a, null);
+  a.E('globalThis.__nuvem.falha = "rede"');
+  await a.v('sincroniza');
+  await a.esperar();
+  assert.strictEqual(a.$('[data-a="login-entra"]'), null, 'sem rede, nada aparece');
+  assert.strictEqual(a.dado('sync').expirou || 0, 0, 'e falta de rede não é sessão expirada');
+
+  a.E('globalThis.__nuvem.falha = "auth"');
+  a.v('toggle', 0);
+  a.preencher(0, 0, 60, 8);
+  await a.esperar();
+  await a.v('sincroniza');
+  a.E('NUVEM.sessao = function () { return null; }');   // o 401 derruba a sessão
+  a.aba('agora');
+  await a.esperar();
+  assert.ok(/A sua sessão de login expirou/.test(a.texto('.ins-aviso-perda')), a.texto('.ins-aviso-perda'));
+  assert.ok(/continua gravado neste aparelho/.test(a.texto('.ins-aviso-perda')), 'diz o que está a salvo');
+  assert.ok(a.$('[data-a="login-copia"]'), 'e oferece a cópia que não depende de conta');
+  const guardado = JSON.parse(a.window.localStorage.getItem('treino-sync-v1') || '{}');
+  assert.ok(guardado.expirou > 0, 'o fato fica GRAVADO, para sobreviver a fechar o app: ' + JSON.stringify(guardado));
+  a.fechar();
+});

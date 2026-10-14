@@ -1109,7 +1109,9 @@ const CHAVE_SYNC = 'treino-sync-v1';
 // `fotos` guarda a versão de cada foto que ESTE aparelho já confirmou no
 // servidor. É contabilidade local: se viajasse no estado, um aparelho diria ao
 // outro que já subiu o que só ele tem.
-let sync = { v: null, em: 0, sujo: false, rodando: false, erro: null, forcar: false, fotos: {} };
+// `expirou`: o instante em que a sessão de login caiu (401). Fica gravado: o
+// aviso tem de sobreviver a fechar e abrir o app, até ele entrar de novo.
+let sync = { v: null, em: 0, sujo: false, rodando: false, erro: null, forcar: false, fotos: {}, expirou: 0 };
 
 async function carregaSync() {
   try {
@@ -1120,7 +1122,8 @@ async function carregaSync() {
 }
 function gravaSync() {
   DB.set(CHAVE_SYNC, JSON.stringify({
-    v: sync.v, em: sync.em, sujo: sync.sujo, forcar: sync.forcar, fotos: sync.fotos || {}
+    v: sync.v, em: sync.em, sujo: sync.sujo, forcar: sync.forcar, fotos: sync.fotos || {},
+    expirou: sync.expirou || 0
   }));
 }
 
@@ -1163,7 +1166,7 @@ async function sincroniza(opcoes) {
   try {
     for (let tentativa = 0; tentativa < 3; tentativa++) {
       const lida = await NUVEM.puxa();
-      if (!lida.ok) { sync.erro = lida.msg; if (manual) toast(lida.msg); return; }
+      if (!lida.ok) { sync.erro = lida.msg; if (lida.erro === 'auth') sync.expirou = Date.now(); if (manual) toast(lida.msg); return; }
 
       const linha = lida.v;
       let deV = linha ? linha.v : null;
@@ -1201,6 +1204,7 @@ async function sincroniza(opcoes) {
       }
       if (escrita.erro === 'conflito') continue;   // outro gravou: relê e refaz
       sync.erro = escrita.msg;
+      if (escrita.erro === 'auth') sync.expirou = Date.now();
       if (manual) toast(escrita.msg);
       return;
     }
@@ -8007,6 +8011,21 @@ CTX.nuvemCampo = function (k, v) {
   render();
 };
 
+/**
+ * A sessão de login que expirou (a D, `prescricao.html`, estado 11). Sem rede a
+ * sincronia falha em silêncio, de propósito — o subsolo é o lugar normal de uso.
+ * Login expirado NÃO é sem rede, e virar uma coisa só seria mentir: o que ele
+ * registra continua gravado no aparelho, e o que falta é a réplica.
+ */
+CTX.loginExpirou = function () {
+  if (!sync.expirou || NUVEM.sessao()) return null;
+  return {
+    texto: 'O que você registra continua gravado neste aparelho. Só não vai para a cópia remota, e os outros aparelhos não veem o que mudou aqui.',
+    esperando: sync.sujo ? 'Há mudanças deste aparelho esperando subir.' : null,
+    ultima: sync.em ? 'Última sincronização: ' + (sameDay(sync.em, Date.now()) ? 'hoje' : fmtDate(sync.em)) + ', ' + fmtHoraDita(sync.em) + '.' : null
+  };
+};
+
 CTX.entrarNaNuvem = async function () {
   const f = view.nuvemForm || {};
   const email = String(f.email || '').trim();
@@ -8018,7 +8037,7 @@ CTX.entrarNaNuvem = async function () {
   // a senha não fica pendurada na memória da tela depois de usada
   view.nuvemForm = null;
   // primeiro login neste aparelho: nada foi visto ainda, então tudo se funde
-  sync.v = null; sync.sujo = true;
+  sync.v = null; sync.sujo = true; sync.expirou = 0;
   gravaSync(); render();
   toast('Conectado como ' + r.v.email + '.');
   sincroniza({ manual: true });
