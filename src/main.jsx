@@ -9693,7 +9693,15 @@ CTX.setDataComparada = function (qual, d) {
   garanteBytesDoCorpo([d]);
   render();
 };
-CTX.setSobrepor = function (on) { view.comparar.sobrepor = !!on; render(); };
+CTX.setSobrepor = function (on) { view.comparar.sobrepor = !!on; if (on) view.comparar.cortina = false; render(); };
+/**
+ * A CORTINA (a D, `comparar.html`, estado 2): uma foto por cima da outra, e a
+ * divisa diz onde uma termina e a outra começa. É a leitura que a geometria
+ * permite — mesma pose, mesma distância, mesmas marcas —, de pé, com um dedo,
+ * sem depender de ler nada.
+ */
+CTX.setCortina = function (on) { view.comparar.cortina = !!on; if (on) view.comparar.sobrepor = false; render(); };
+CTX.setCorte = function (n) { view.comparar.corte = Math.max(0, Math.min(100, Number(n) || 0)); render(); };
 CTX.setOpacidade = function (n) { view.comparar.opacidade = n; render(); };
 
 /** Um lado da comparação, com os números da semana daquela sessão. */
@@ -9788,6 +9796,8 @@ CTX.comparacao = function () {
     de: de, ate: ate,
     sobrepor: c.sobrepor,
     opacidade: c.opacidade,
+    cortina: !!c.cortina,
+    corte: c.corte == null ? 50 : c.corte,
     intervalo: intervalo,
     notas: notas
   };

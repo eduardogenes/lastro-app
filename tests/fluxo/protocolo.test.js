@@ -1762,3 +1762,24 @@ test('a pose que não existe lá atrás: o par recua sozinho e diz que recuou', 
   assert.strictEqual(a.vJ('ctx.comparacao').recuou, null, 'a pose que existe desde a primeira não recua');
   a.fechar();
 });
+
+test('a cortina: uma foto por cima da outra, e o dedo anda a divisa', async () => {
+  // A D (`comparar.html`, estado 2).
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  comSessoes(a, [diasAtras(28), diasAtras(0)], 'frente-relaxado');
+  a.v('ctx.abreComparar');
+  await a.esperar();
+  a.clicar('[data-a="modo-cortina"]');
+  await a.esperar();
+  assert.ok(a.$('.cp-cortina'), 'a cortina está na tela');
+  assert.strictEqual(a.vJ('ctx.comparacao').corte, 50, 'a divisa nasce no meio');
+  const r = a.$('[data-a="cortina-divisa"]');
+  r.value = '30';
+  r.dispatchEvent(new a.window.Event('input', { bubbles: true }));
+  await a.esperar();
+  assert.strictEqual(a.vJ('ctx.comparacao').corte, 30, 'o dedo andou a divisa');
+  assert.ok(/left:\s*30%/.test(a.$('.cp-divisa').getAttribute('style')), a.$('.cp-divisa').getAttribute('style'));
+  assert.strictEqual(a.vJ('ctx.comparacao').sobrepor, false, 'cortina e sobrepor não se misturam');
+  a.fechar();
+});

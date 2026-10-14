@@ -1762,3 +1762,11 @@ button.ins-linha { border-radius: 0; }
 .co-vazio p { margin: 0; }
 .cp-recuou { margin: var(--ins-4) 0; display: flex; flex-direction: column; gap: var(--ins-2); }
 .cp-recuou p { margin: 0; }
+
+/* ---- A cortina do Comparar (a D, comparar estado 2) ---------------------- */
+.cp-cortina { position: relative; }
+.cp-divisa { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ins-tela); box-shadow: 0 0 0 1px var(--ins-tinta); pointer-events: none; }
+.cp-lado-r { position: absolute; bottom: var(--ins-3); padding: 2px var(--ins-2); border-radius: var(--ins-raio-1); background: var(--ins-tela); font-size: 12px; color: var(--ins-tinta-2); }
+.cp-lado-e { left: var(--ins-3); }
+.cp-lado-d { right: var(--ins-3); }
+.cp-corte { width: 100%; margin-top: var(--ins-4); }

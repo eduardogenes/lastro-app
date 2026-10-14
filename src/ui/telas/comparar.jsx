@@ -74,13 +74,38 @@ export function Comparar({ ctx }) {
                 se vê no corpo é da câmera. Lado a lado é para ler o corpo;
                 sobrepor é para desconfiar da foto. */}
             <div class="cp-modo">
-              <button class={'ins-chip' + (!c.sobrepor ? ' on' : '')}
-                      onClick={() => ctx.setSobrepor(false)}>lado a lado</button>
+              <button class={'ins-chip' + (!c.sobrepor && !c.cortina ? ' on' : '')}
+                      onClick={() => { ctx.setSobrepor(false); ctx.setCortina(false); }}>lado a lado</button>
+              <button class={'ins-chip' + (c.cortina ? ' on' : '')} data-a="modo-cortina"
+                      onClick={() => ctx.setCortina(true)}>cortina</button>
               <button class={'ins-chip' + (c.sobrepor ? ' on' : '')}
                       onClick={() => ctx.setSobrepor(true)}>sobrepor</button>
             </div>
 
-            {c.sobrepor
+            {/* A CORTINA (o desenho, estado 2): a foto nova por cima, recortada
+                a partir da divisa; o dedo anda a divisa. */}
+            {c.cortina && (
+              <>
+                <div class="cp-onion cp-cortina">
+                  <FotoAjustada url={c.de.url} enq={c.de.enq} alt={'Antes: ' + c.de.data}
+                                vazio={c.de.aviso}
+                                aoTentar={c.de.retomar ? () => ctx.tentaFotos(c.de.d) : null} />
+                  {c.ate.url && (
+                    <FotoAjustada url={c.ate.url} enq={c.ate.enq} alt={'Depois: ' + c.ate.data}
+                                  classe="cp-cima" estilo={'clip-path: inset(0 0 0 ' + c.corte + '%)'} />
+                  )}
+                  <i class="cp-divisa" style={'left:' + c.corte + '%'} aria-hidden="true" />
+                  <span class="cp-lado-r cp-lado-e">{c.de.data}</span>
+                  <span class="cp-lado-r cp-lado-d">{c.ate.data}</span>
+                </div>
+                <input class="cp-corte" type="range" min="0" max="100" value={c.corte}
+                       aria-label={'a divisa entre ' + c.de.data + ' e ' + c.ate.data}
+                       data-a="cortina-divisa"
+                       onInput={e => ctx.setCorte(Number(e.currentTarget.value))} />
+              </>
+            )}
+
+            {c.cortina ? null : c.sobrepor
               ? (
                 <>
                   <div class="cp-onion">
