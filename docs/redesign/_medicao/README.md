@@ -18,3 +18,6 @@ antiga, em `/tmp`, foi apagada pelo sistema, com scripts e capturas.
 
 `deitado.mjs` abre o modo de sessão a 896×414: o cartão aberto em duas colunas,
 com e sem a régua.
+
+`descansa.mjs` guarda uma série pela régua no modo de sessão e mostra o
+"enquanto descansa" no cartão aberto.

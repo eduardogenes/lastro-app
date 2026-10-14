@@ -14,16 +14,16 @@ pede atenção do dono.
 ## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
-- Branch `redesenho-do-zero`, suíte verde: **1.458 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `e07535c`.
+- Branch `redesenho-do-zero`, suíte verde: **1.465 passando**, zero "unhandled".
+  Nenhum agente trabalhando. Último commit de código: `153d99f`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
 - **Feito em primeira passada:** o levantamento (item 6.β). **Próximo:** a
   fila dele: **os quatro de dado estão feitos** (semana 10, aula 12,
   sessao-fotos 9, prescricao 11), e os ✗ de tela corpo 10, comparar 2 e 7,
-  momento-1 4 e 14 e sessao-fotos 2–3 também. Segue momento-1 2 ("enquanto
-  descansa"), e a conferência dos ~.
+  momento-1 2, 4 e 14 e sessao-fotos 2–3 também. **Os ✗ do levantamento
+  acabaram.** Segue a conferência dos ~.
 - **Era o próximo passo:** o levantamento estado a estado das outras sete entregas da
   D contra o app — momento-1 (14 estados), semana (10), corpo (11), prescricao
   (11), aula (12), comparar (11), sessao-fotos (11). Parte já foi construída nas
@@ -3183,8 +3183,14 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
       primeira passada, por leitura das legendas, captura e sonda no código).
       ✓ construído · ~ em parte ou com divergência declarada · ✗ falta.
       - **momento-1 (sessão):** 1 ~ (régua abre na linha tocada, não na zona
-        fixa — divergência declarada em `regua.jsx`) · 2 ~ (falta "enquanto
-        descansa": pré-treino, água e peso a um toque dentro da sessão) · 3 ✓ ·
+        fixa — divergência declarada em `regua.jsx`) · **2 ✓ (14/10)** —
+        "Enquanto descansa" no cartão aberto do modo, só com o descanso
+        contando: a refeição de antes do treino (a condicional ao treino que vem
+        antes dele; "comi" grava e lê de volta, o segundo toque desfaz), "+1"
+        copo (grava na hora; recusado, volta a conta e diz qual copo) e o peso
+        de hoje numa folha curta (a régua de 100 g e o teclado do corpo; sempre
+        HOJE, mesmo com outro dia armado na tela do corpo). Parar o descanso
+        tira os três. · 3 ✓ ·
         **4 ✓ (14/10)** — "+ série" na linha do exercício: mudança só do dia
         (a mesma da edição do dia), a carga da série anterior de hoje, e a régua
         da série nova aberta com a repetição dela como referência ("série 3"). ·
@@ -3430,6 +3436,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Comparar 2: a cortina. 3 mutações, 3 mortas. 1.452 passando.
 - 14/10 · Sessão de fotos 2–3: o disparo é obturador, clarão e o bloco fechando (o alarme do descanso saiu dali); os nove blocos na câmera; a pose dita em voz. 11 mutações, 11 mortas (a marca de "não guardada" no bloco viveu até o caso da cota cheia pela câmera). Captura com câmera falsa do Chromium em `_medicao/camera.mjs`. 1.456 passando.
 - 14/10 · Momento 1, estado 14: a sessão deitada em duas colunas, sem o aviso de girar (que segue fora do modo). 5 mutações, 5 mortas. Captura em `_medicao/deitado.mjs`. 1.458 passando.
+- 14/10 · Momento 1, estado 2: "enquanto descansa" — pré-treino, copo e peso a um toque no cartão aberto, durante o descanso. 12 mutações, 12 mortas (o limite de horário da refeição viveu até o caso do shake depois do treino). **Fim dos ✗ do levantamento.** 1.465 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

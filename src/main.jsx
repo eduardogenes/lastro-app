@@ -31,6 +31,7 @@ import { FolhaDia, FolhaRefeicao } from './ui/folhas/refeicao.jsx';
 import { FolhaEditaAlimento, FolhaEditaRefeicao, FolhaSeletor } from './ui/folhas/editores.jsx';
 import { FolhaFoto } from './ui/folhas/foto.jsx';
 import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
+import { FolhaPesoRapido } from './ui/folhas/pesorapido.jsx';
 import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { FolhaDecidir } from './ui/folhas/decidir.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
@@ -1994,6 +1995,9 @@ function vmExercicio(d, i, ex) {
     cargaOpcional: seg || corpo,
 
     aberto: view.open === i,
+    // o que se faz no descanso, a um toque cada (momento 1, estado 2): só no
+    // cartão aberto, que é onde o polegar está
+    descansa: view.open === i ? CTX.enquantoDescansa() : null,
     pulado: pulado,
     deload: S.deload,
     estado: S.sessao ? estadoEx(d, i, S.sessao.sid, S.sessao.pulados) : null,
@@ -2131,7 +2135,10 @@ const ACOES = {
   abreFoto: function (i) { abreFoto(i); },
   poeRir: function (i, k, v) { poeRir(i, k, v); },
   usaAnterior: function (i, k) { usaAnterior(i, k); },
-  maisUmaSerie: function (i) { maisUmaSerie(i); }
+  maisUmaSerie: function (i) { maisUmaSerie(i); },
+  preNoDescanso: function () { CTX.preNoDescanso(); },
+  copoNoDescanso: function () { CTX.maisUmCopo(); },
+  pesoNoDescanso: function () { CTX.abrePesoNoDescanso(); }
 };
 
 
@@ -6176,9 +6183,15 @@ function pintaTimer() {
 // último `onclick=` do projeto; agora é `addEventListener`, como todo o resto.
 function ligaBotaoDoTimer() {
   const b = document.getElementById('tstop');
-  if (b) b.addEventListener('click', function () { stopTimer(); });
+  // parar redesenha: o que só existe enquanto o descanso conta ("enquanto
+  // descansa", no cartão aberto) sai junto com ele
+  if (b) b.addEventListener('click', function () { stopTimer(); render(); });
   const menos = document.getElementById('tmenos');
-  if (menos) menos.addEventListener('click', function () { ajustaTimer(-15); });
+  if (menos) menos.addEventListener('click', function () {
+    const contava = !!timerFim;
+    ajustaTimer(-15);
+    if (contava && !timerFim) render();
+  });
   const mais = document.getElementById('tmais');
   if (mais) mais.addEventListener('click', function () { ajustaTimer(15); });
 }
@@ -6621,6 +6634,7 @@ function folhaAberta() {
     if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
     if (f.k === 'menuSessao') return <FolhaMenuDaSessao key={i} ctx={CTX} />;
+    if (f.k === 'pesoRapido') return <FolhaPesoRapido key={i} ctx={CTX} />;
     if (f.k === 'poeODia') return <FolhaPoeODia key={i} ctx={CTX} data={f.data} />;
     return null;
   });
@@ -10723,6 +10737,60 @@ CTX.abreTreinoDeHoje = function () {
   view.swapOpen = null;
   abreModo();
   render();
+};
+
+// ---------- enquanto descansa (a D, momento 1, estado 2) ----------
+//
+// No descanso, dentro da sessão, o que se faz a um toque cada: a refeição de
+// antes do treino, um copo de água e o peso de hoje (F30: 7 de 11 pesagens
+// entraram entre 6h28 e 7h52 — no meio do treino). Só enquanto o descanso
+// conta, e só no modo: fora dele, o Agora já tem as três linhas.
+const COPOS_DO_DIA = 14;
+CTX.enquantoDescansa = function () {
+  if (!view.modoSessao || !timerFim) return null;
+  const H = CTX.hoje();
+  const d = H.comidaDoDia;
+  // A refeição de antes do treino é a condicional ao treino que vem antes dele:
+  // antes da linha do treino no plano, ou, sem ela, antes do início da sessão.
+  const linha = H.refs.filter(ehLinhaDeTreino)[0] || null;
+  const limite = linha ? minutosDe(linha.t)
+    : S.sessao ? new Date(S.sessao.inicio).getHours() * 60 + new Date(S.sessao.inicio).getMinutes() : -1;
+  const pre = H.refs.filter(function (r) {
+    return !ehLinhaDeTreino(r) && r.quando === 'treino' && minutosDe(r.t) <= limite;
+  }).slice(-1)[0] || null;
+  const ag = CTX.agua();
+  const pesoHoje = (S.body.peso || []).filter(function (x) { return sameDay(x.t, Date.now()); }).slice(-1)[0];
+  return {
+    pre: pre ? { id: pre.id, n: pre.n, comeu: !!d.done[pre.id] } : null,
+    agua: { n: ag.n, meta: COPOS_DO_DIA, falhou: ag.falhou },
+    peso: pesoHoje ? comUnidade(pesoHoje.v, 'kg') : null
+  };
+};
+/** O toque na refeição de antes do treino: marca "comi tudo"; marcada, desfaz. */
+CTX.preNoDescanso = function () {
+  const e = CTX.enquantoDescansa();
+  if (!e || !e.pre) return;
+  CTX.marcaLinhaDaComida(e.pre.id, e.pre.comeu ? 'desfaz' : 'tudo');
+};
+CTX.abrePesoNoDescanso = function () {
+  // "Peso de HOJE": uma data passada armada na tela do corpo não vale aqui
+  if (view.bodyDia && view.bodyDia.peso) {
+    view.bodyDia = Object.assign({}, view.bodyDia);
+    delete view.bodyDia.peso;
+  }
+  CTX.abreFolha({ k: 'pesoRapido' });
+};
+CTX.pesoRapido = function () {
+  const c = CTX.corpo().peso;
+  return { valor: c.valor, teclado: CTX.tecladoDoCorpo('peso') };
+};
+CTX.registraPesoRapido = async function () {
+  const m = Date.now();
+  await addBody('peso');
+  // só fecha se gravou: valor inválido deixa a folha aberta, com o aviso dito
+  const gravou = (S.body.peso || []).some(function (x) { return x.m >= m && sameDay(x.t, m); });
+  const p = view.pilha || [];
+  if (gravou && p.length && p[p.length - 1].k === 'pesoRapido') { pilha().pop(); render(); }
 };
 
 CTX.fechaModoDeSessao = function () {

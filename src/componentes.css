@@ -1801,3 +1801,9 @@ button.ins-linha { border-radius: 0; }
 .cam-clarao { position: absolute; inset: 0; background: var(--ins-foto-tinta); animation: cam-clarao 320ms ease-out forwards; pointer-events: none; }
 @keyframes cam-clarao { from { opacity: .9; } to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .cam-clarao { animation-duration: 1ms; opacity: 0; } }
+
+/* ---- Enquanto descansa (a D, momento 1, estado 2) ----------------------
+   No cartão aberto da sessão, só enquanto o descanso conta. */
+.ex-descansa { display: flex; flex-direction: column; gap: var(--ins-3); margin: var(--ins-5) 0 var(--ins-3); }
+.ex-descansa-c { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
+.ex-descansa-f { margin: 0; color: var(--ins-atencao-tinta); }

@@ -367,6 +367,39 @@ function Dor({ i, vm, acoes }) {
   return null;
 }
 
+/**
+ * ENQUANTO DESCANSA (a D, momento 1, estado 2): a refeição de antes do treino,
+ * um copo de água e o peso de hoje, um toque cada, só enquanto o descanso conta.
+ * Cada chip lê de volta o que gravou — "comi", o copo novo, o peso —, e o copo
+ * que o aparelho recusou é dito ali mesmo.
+ */
+function Descansa({ d, acoes }) {
+  return (
+    <div class="ex-descansa">
+      <span class="ins-body-sm ins-t2">Enquanto descansa</span>
+      <div class="ex-descansa-c">
+        {d.pre && (
+          <button class={'chip ins-chip' + (d.pre.comeu ? ' on' : '')} aria-pressed={d.pre.comeu ? 'true' : 'false'}
+                  data-a="descansa-pre" onClick={acoes.preNoDescanso}>
+            {d.pre.n}: <b>{d.pre.comeu ? 'comi ✓' : 'comi'}</b>
+          </button>
+        )}
+        <button class="chip ins-chip" data-a="descansa-agua" onClick={acoes.copoNoDescanso}>
+          Água {d.agua.n}/{d.agua.meta} · <b>+1</b>
+        </button>
+        <button class={'chip ins-chip' + (d.peso ? ' on' : '')} data-a="descansa-peso" onClick={acoes.pesoNoDescanso}>
+          {d.peso ? <>Peso de hoje: <b>{d.peso}</b></> : 'Peso de hoje'}
+        </button>
+      </div>
+      {d.agua.falhou && (
+        <p class="ins-body-sm ex-descansa-f" role="alert">
+          O {d.agua.falhou}º copo não foi gravado: o aparelho recusou, e a conta continua em {d.agua.falhou - 1}.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function Exercicio({ vm, acoes }) {
   const i = vm.i;
   return (
@@ -519,6 +552,7 @@ export function Exercicio({ vm, acoes }) {
             + série
           </button>
         )}
+        {vm.descansa && <Descansa d={vm.descansa} acoes={acoes} />}
         {vm.cargaOpcional && (
           <div class="segnote">Carga opcional: deixe o campo vazio para só o peso do corpo.</div>
         )}
