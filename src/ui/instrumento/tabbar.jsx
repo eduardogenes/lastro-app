@@ -33,11 +33,11 @@ import { useEffect, useState } from 'preact/hooks';
 // outra metade — conta, sincronia, backup — é AJUSTES, que não é lugar, é um
 // botão no canto do Agora.
 export const ABAS = [
-  { k: 'agora',      t: 'agora' },
-  { k: 'dias',       t: 'dias' },
-  { k: 'corpo',      t: 'corpo' },
-  { k: 'semana',     t: 'semana' },
-  { k: 'prescricao', t: 'prescrição' }
+  { k: 'agora',      t: 'Agora' },
+  { k: 'dias',       t: 'Dias' },
+  { k: 'corpo',      t: 'Corpo' },
+  { k: 'semana',     t: 'Semana' },
+  { k: 'prescricao', t: 'Prescrição' }
 ];
 
 /**

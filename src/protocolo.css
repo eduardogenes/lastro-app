@@ -62,7 +62,7 @@
    porque aqui há espaço — ao contrário do "ajustar" da legenda. */
 .fa-retomar {
   background: none; border: 1px solid var(--ins-atencao-fio); color: var(--ins-atencao-tinta);
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .14em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   min-height: var(--ins-tap); padding: 0 var(--ins-5);
 }
 /* ---------- execução ---------- */
@@ -142,8 +142,7 @@
 
 .aj-salvar {
   min-height: var(--ins-tap); padding: 0 0 0 var(--ins-4);
-  font: 400 11px/1 var(--ins-fonte);
-  letter-spacing: .14em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   color: var(--ins-acento-tinta); background: none; border: 0;
 }
 .aj-salvar:active { opacity: .6; }
@@ -195,8 +194,7 @@
 .cp-ajustar {
   align-self: flex-start; margin-top: var(--ins-2);
   padding: 0; background: none; border: 0; position: relative;
-  font: 400 11px/1 var(--ins-fonte);
-  letter-spacing: .14em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   color: var(--ins-tinta-3); text-decoration: underline;
 }
 /* 11px de desenho, 47px de área: o `::after` estende o alvo sem engordar o

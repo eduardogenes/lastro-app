@@ -35,7 +35,7 @@ export function Sessao({ ctx }) {
           semanal, mas não tem carga nem série registrada e não move a rotação.
         </p>
         <button class="ins-btn-secondary ins-btn-destructive tc-rm" onClick={() => ctx.editaSessao(d.t)}>
-          apagar este registro
+          Apagar este registro
         </button>
       </TelaCheia>
     );

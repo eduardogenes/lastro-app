@@ -258,8 +258,7 @@
 
 .ins-tab {
   flex: 1; min-height: 46px; padding: var(--ins-6) 0 var(--ins-5);
-  font: 400 9.5px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase;
+  font: 500 var(--ins-t-meta)/1 var(--ins-fonte);
   /* text-4: a 9,5px o nível 5 dá 3,2:1 e reprova em AA. */
   color: var(--ins-tinta-3);
 }
@@ -403,8 +402,7 @@ button.ins-linha { border-radius: 0; }
 }
 .gu-dia.on { background: var(--ins-acento-suave); border-color: var(--ins-acento); }
 .gu-dia-v {
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .gu-dia.on .gu-dia-v { color: var(--ins-acento-tinta); }
 .gu-dia.on .ins-label-sm { color: var(--ins-tinta-2); }
@@ -423,8 +421,7 @@ button.ins-linha { border-radius: 0; }
 .dd-diabtn, .dd-tclbtn, .co-ondebtn {
   width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
   position: relative;
-  font: 400 10px/1.4 var(--ins-fonte);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1.4 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .dd-diabtn::after, .dd-tclbtn::after, .co-ondebtn::after { content: ""; position: absolute; inset: -5px 0; }   /* 34 -> 44 */
 .dd-diabtn:active, .dd-tclbtn:active, .co-ondebtn:active { color: var(--ins-tinta-3); }
@@ -472,8 +469,7 @@ button.ins-linha { border-radius: 0; }
 .dd-mus-l.prio .dd-mus-n { color: var(--ins-tinta); }
 .dd-mus-n em {
   display: block; font-style: normal; margin-top: 2px;
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .12em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .dd-mus-b { flex: 1; height: 6px; background: var(--ins-fio); }
 .dd-mus-b i { display: block; height: 100%; background: var(--ins-tinta-3); }
@@ -606,8 +602,7 @@ button.ins-linha { border-radius: 0; }
 }
 .tc-back {
   min-height: var(--ins-tap); padding: 0 var(--ins-4) 0 0;
-  font: 400 11px/1 var(--ins-fonte);
-  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 500 var(--ins-t-corpo-forte)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .tc-back:active { color: var(--ins-tinta); }
 
@@ -663,8 +658,7 @@ button.ins-linha { border-radius: 0; }
    que sobrevive, e ele sobrevive porque o caso de teste deste chip o afirma
    literalmente. A quarentena e a dívida estão escritas em `tokens.css`. */
 .tc-res-sets .rec {
-  border-color: var(--ins-acento); color: var(--ins-acid);
-  letter-spacing: .08em; text-transform: uppercase; font-size: 9px;
+  border-color: var(--ins-acento); color: var(--ins-acid); font-size: var(--ins-t-meta);
 }
 .tc-res-nota {
   margin-top: var(--ins-3);
@@ -681,8 +675,7 @@ button.ins-linha { border-radius: 0; }
 }
 .stats span {
   display: block; margin-top: 5px;
-  font: 400 9px/1.2 var(--ins-fonte);
-  letter-spacing: .16em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1.2 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .horario b { color: var(--ins-tinta-3); font-weight: 500; }
 
@@ -701,7 +694,7 @@ button.ins-linha { border-radius: 0; }
 .pmod-b button {
   flex: 1; min-height: 48px;
   border: 1px solid var(--ins-fio); background: transparent; color: var(--ins-tinta-3);
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 .pmod-b button + button { border-left: 0; }
 .pmod-b button.on {
@@ -772,7 +765,7 @@ button.ins-linha { border-radius: 0; }
 .edbar-b {
   flex: 0 0 auto; min-height: var(--ins-tap); padding: 0 var(--ins-5);
   background: var(--ins-acento); color: var(--ins-sobre-acento); border: 0;
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .12em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 
 .edx { border-bottom: 1px solid var(--ins-fio); padding: var(--ins-4) 0; }
@@ -836,7 +829,7 @@ button.ins-linha { border-radius: 0; }
 .edadd {
   width: 100%; min-height: var(--ins-tap); margin-top: var(--ins-4);
   border: 1px dashed var(--ins-fio-controle); background: none; color: var(--ins-tinta-3);
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .1em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 
 .edmods { margin-top: var(--ins-6); border-top: 1px solid var(--ins-fio); padding-top: var(--ins-4); }
@@ -953,7 +946,7 @@ button.ins-linha { border-radius: 0; }
 }
 .stats span {
   display: block; margin-top: var(--ins-2);
-  font: 400 9px/1.35 var(--ins-fonte); letter-spacing: .07em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1.35 var(--ins-fonte);
   color: var(--ins-tinta-3);
 }
 
@@ -969,7 +962,6 @@ button.ins-linha { border-radius: 0; }
 .chart .ax { font-family: var(--ins-fonte); font-size: 9px; fill: var(--ins-tinta-3); }
 .chart .axu {
   font-family: var(--ins-fonte); font-size: 7.5px; fill: var(--ins-tinta-3);
-  letter-spacing: .1em; text-transform: uppercase;
 }
 .chart .vl { font-family: var(--ins-fonte); font-size: 9.5px; fill: var(--ins-tinta-3); }
 .chart .vl.last { fill: var(--ins-tinta); font-weight: 500; }
@@ -1085,7 +1077,7 @@ button.ins-linha { border-radius: 0; }
 .dbtn {
   display: block; width: 100%; text-align: center; min-height: var(--ins-tap); padding: var(--ins-6);
   border: 1px solid var(--ins-fio-controle); background: transparent; color: var(--ins-tinta-2);
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .14em; text-transform: uppercase;
+  font: 500 var(--ins-t-corpo-forte)/1.2 var(--ins-fonte);
 }
 .dbtn + .dbtn, .dbtn + label.dbtn { margin-top: var(--ins-2); }
 .dbtn.ghost { border-color: var(--ins-fio); color: var(--ins-tinta-3); }
@@ -1446,8 +1438,7 @@ button.ins-linha { border-radius: 0; }
 .regua-anda { color: var(--ins-tinta-3); font-size: 18px; }
 .regua-marca {
   position: absolute; left: 0; right: 0; bottom: 2px;
-  font: 400 8px/1 var(--ins-fonte);
-  letter-spacing: .08em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   color: var(--ins-tinta-3);
 }
 .regua-v.on .regua-marca { color: var(--ins-sobre-acento); opacity: .8; }
@@ -1482,8 +1473,7 @@ button.ins-linha { border-radius: 0; }
   font-variant-numeric: tabular-nums;
 }
 .tcl-u {
-  font: 400 10px/1 var(--ins-fonte); letter-spacing: .1em;
-  text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 /* Retângulo ESTÁTICO, e é a forma da D. Sem animação: não há o que pôr dentro
    de `prefers-reduced-motion` porque não há movimento (T4). */
@@ -1508,8 +1498,7 @@ button.ins-linha { border-radius: 0; }
 .tcl-pronto {
   display: block; width: 100%; margin-top: var(--ins-2); min-height: 44px;
   background: var(--ins-superficie-2); border: 1px solid var(--ins-fio);
-  font: 400 12px/1 var(--ins-fonte); letter-spacing: .08em;
-  text-transform: uppercase; color: var(--ins-tinta-2);
+  font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-2);
 }
 
 /* A linha que explica a lista das mudanças, uma vez, antes delas (§5.1). */

@@ -38,7 +38,7 @@ function Lado({ l, aoAjustar, aoTentar }) {
         {/* É aqui que o desalinhamento se percebe, então é daqui que se conserta:
             mandar procurar a foto na sessão dela seria mandar sair da tela que
             mostra o problema. */}
-        {l.url && <button class="cp-ajustar" onClick={() => aoAjustar(l.d)}>ajustar</button>}
+        {l.url && <button class="cp-ajustar" onClick={() => aoAjustar(l.d)}>Ajustar</button>}
       </figcaption>
     </figure>
   );

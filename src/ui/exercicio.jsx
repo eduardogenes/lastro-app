@@ -226,7 +226,7 @@ function Troca({ i, vm, acoes }) {
 function Anotacao({ i, vm, acoes }) {
   if (!vm.notaAberta) {
     return (
-      <button class="notabtn" onClick={() => acoes.abrirNota(i)}>anotar algo</button>
+      <button class="notabtn" onClick={() => acoes.abrirNota(i)}>Anotar algo</button>
     );
   }
   return (
@@ -263,7 +263,7 @@ function Medida({ i, vm, acoes }) {
   if (!vm.medidaAberta) {
     return (
       <button class="notabtn" onClick={() => acoes.abrirMedida(i)}>
-        medida: {vm.medidaResumo}
+        Medida: {vm.medidaResumo}
       </button>
     );
   }
@@ -300,7 +300,7 @@ function Carga({ i, vm, acoes }) {
   if (!vm.cargaAberta) {
     return (
       <button class="notabtn" onClick={() => acoes.abrirCarga(i)}>
-        carga: {vm.tipoNome}
+        Carga: {vm.tipoNome}
       </button>
     );
   }
@@ -522,22 +522,22 @@ export function Exercicio({ vm, acoes }) {
         {vm.mostraAquecimento && (
           <div class={'aquec' + (vm.aq ? ' on' : '')}>
             <span><b>Aproximação:</b> 2 a 3 séries subindo carga antes da primeira valendo.</span>
-            <button class="aqbtn" onClick={() => acoes.toggleAq(0)}>{vm.aq ? 'feito' : 'marcar'}</button>
+            <button class="aqbtn" onClick={() => acoes.toggleAq(0)}>{vm.aq ? 'Feito' : 'Marcar'}</button>
           </div>
         )}
 
         <div class="exacoes">
           {vm.temTroca && (
             <button class="histbtn" onClick={() => acoes.toggleSwap(i)}>
-              {vm.trocaAberta ? 'fechar' : 'trocar'}
+              {vm.trocaAberta ? 'Fechar' : 'Trocar'}
             </button>
           )}
-          <button class="histbtn" onClick={() => acoes.pularEx(i)}>pular</button>
-          <button class="histbtn" onClick={() => acoes.openHist(i)}>histórico</button>
+          <button class="histbtn" onClick={() => acoes.pularEx(i)}>Pular</button>
+          <button class="histbtn" onClick={() => acoes.openHist(i)}>Histórico</button>
           {/* O rótulo muda com o estado: sem foto ele CONVIDA, com foto ele
               MOSTRA. Um botão só, e nenhuma linha nova no cartão. */}
           <button class="histbtn" onClick={() => acoes.abreFoto(i)}>
-            {vm.temFoto ? 'aparelho' : 'foto'}
+            {vm.temFoto ? 'Aparelho' : 'Foto'}
           </button>
         </div>
 

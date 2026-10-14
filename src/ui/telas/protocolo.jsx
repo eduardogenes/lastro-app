@@ -59,7 +59,7 @@ function Montagem({ m, aoComecar }) {
           repita as marcas depois.
         </Procedencia>
       </Secao>
-      <button class="ins-btn-primary pr-comecar" onClick={aoComecar}>começar a sessão</button>
+      <button class="ins-btn-primary pr-comecar" onClick={aoComecar}>Começar a sessão</button>
     </>
   );
 }
@@ -143,7 +143,7 @@ export function Protocolo({ ctx }) {
         <button class="ins-btn-secondary" disabled={!d.anterior}
                 onClick={ctx.posAnterior}>‹ anterior</button>
         <button class="ins-btn-secondary" disabled={!d.proxima}
-                onClick={ctx.posProxima}>próxima ›</button>
+                onClick={ctx.posProxima}>Próxima ›</button>
       </div>
 
       {/* A nota é da SESSÃO, não da pose: é o que explica, três meses depois, o
@@ -162,9 +162,9 @@ export function Protocolo({ ctx }) {
               motivo para apagar uma foto — saiu torta, saiu mais longe — é um
               motivo para ajustá-la primeiro. */}
           <button class="ins-btn-secondary"
-                  onClick={() => ctx.abreAjuste(d.d, p.id)}>ajustar</button>
+                  onClick={() => ctx.abreAjuste(d.d, p.id)}>Ajustar</button>
           <button class="ins-btn-secondary ins-btn-destructive"
-                  onClick={() => ctx.apagaFotoDoCorpo(p.id)}>apagar</button>
+                  onClick={() => ctx.apagaFotoDoCorpo(p.id)}>Apagar</button>
         </div>
       )}
 

@@ -158,7 +158,7 @@ export function Agora({ ctx }) {
         rotulo: 'no box',
         nome: 'Aula',
         resumo: 'O que o box programar. O quadro do dia vira a nota da sessão.',
-        cta: 'fiz a aula →',
+        cta: 'Fiz a aula →',
         onClick: ctx.abreTreinoDeHoje
       };
     }
@@ -176,7 +176,7 @@ export function Agora({ ctx }) {
         resumo: topo.palpite
           ? 'Previsto pelo padrão da semana — confirme o tipo do dia no topo.'
           : sessao.resumo,
-        cta: 'abrir o treino →',
+        cta: 'Abrir o treino →',
         onClick: ctx.abreTreinoDeHoje
       };
     }
@@ -215,7 +215,7 @@ export function Agora({ ctx }) {
       rotulo: 'dia fechado',
       nome: r ? r.n : 'tudo marcado',
       resumo: 'A última coisa marcada do dia. Se algo não foi assim, corrija.',
-      cta: 'corrigir →',
+      cta: 'Corrigir →',
       onClick: () => ctx.editaRefeicao(topo.id)
     };
   };
@@ -480,7 +480,7 @@ export function Agora({ ctx }) {
         <span class="cardl-t">cardio</span>
         <span class="cardl-n">{cromo.cardio.resumo}</span>
         <button class="cardl-b" onClick={ctx.abreCardio}>
-          {cromo.cardio.aberto ? 'fechar' : 'registrar'}
+          {cromo.cardio.aberto ? 'Fechar' : 'Registrar'}
         </button>
       </div>
 

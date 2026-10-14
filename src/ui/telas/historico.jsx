@@ -34,12 +34,12 @@ function Renome({ r, ctx }) {
       <div class="hx-acoes">
         <button class="ins-btn-secondary"
                 onClick={() => ctx.renomeiaExercicio(r.id, document.getElementById('exnome').value)}>
-          salvar
+          Salvar
         </button>
         {r.doCodigo && (
           <button class="ins-btn-secondary"
                   onClick={() => ctx.renomeiaExercicio(r.id, r.doCodigo)}>
-            voltar a "{r.doCodigo}"
+            Voltar a "{r.doCodigo}"
           </button>
         )}
       </div>
@@ -143,7 +143,7 @@ function Sessao({ s, ctx }) {
       </div>
       {s.dor && <div class="pain ins-amber">{s.dor}</div>}
       {s.obs && <div class="hs-obs">{s.obs}</div>}
-      <button class="edbtn" onClick={() => ctx.editaLinha(s.real)}>corrigir esta sessão</button>
+      <button class="edbtn" onClick={() => ctx.editaLinha(s.real)}>Corrigir esta sessão</button>
     </div>
   );
 }
@@ -204,10 +204,10 @@ function Edicao({ s, ctx }) {
 
       <div class="edrow">
         <button class="ins-btn-primary dbtn" onClick={ctx.salvaEdicao}>Salvar correção</button>
-        <button class="ins-btn-secondary dbtn ghost" onClick={ctx.cancelaEdicao}>cancelar</button>
+        <button class="ins-btn-secondary dbtn ghost" onClick={ctx.cancelaEdicao}>Cancelar</button>
       </div>
       <button class="ins-btn-secondary ins-btn-destructive danger ed-rm"
-              onClick={ctx.apagaLinha}>apagar esta sessão</button>
+              onClick={ctx.apagaLinha}>Apagar esta sessão</button>
     </div>
   );
 }

@@ -393,7 +393,7 @@ test('cadastrar a partir da busca não abre a quarta folha, e já põe na refei�
   assert.strictEqual(a.vista().pilha.length, 2, 'editar a refeição e a busca');
 
   const cadastrar = a.$$('.ins-folha .ins-btn-add')
-    .filter(function (b) { return /cadastrar/.test(b.textContent); })[0];
+    .filter(function (b) { return /Cadastrar/.test(b.textContent); })[0];
   assert.ok(cadastrar, 'o botão de cadastrar está na folha da busca');
   a.clicar(cadastrar);
   await a.esperar(150);

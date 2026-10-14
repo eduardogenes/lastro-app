@@ -95,7 +95,7 @@ test('os cinco LUGARES da shell renderizam, e nenhum é a sessão', async () => 
   // E monta no AGORA e não no padrão do harness: dentro do modo a barra não é
   // desenhada, e um caso sobre a barra que a lê de dentro do modo leria vazio.
   const a = await app({ aba: 'agora' });
-  const nomes = ['agora', 'dias', 'corpo', 'semana', 'prescrição'];
+  const nomes = ['Agora', 'Dias', 'Corpo', 'Semana', 'Prescrição'];
   assert.deepStrictEqual(
     a.$$('.ins-tab').map(function (b) { return b.textContent; }), nomes);
   assert.ok(nomes.indexOf('treino') < 0, 'a sessão não é lugar: é modo, e tem três portas');
@@ -321,7 +321,7 @@ test('anotação e dor ficam atrás de um link', async () => {
   assert.strictEqual(a.$$('.ex.open .chip').length, 0, 'chips não ocupam espaço por padrão');
   // dois .notabtn no exercício aberto: o seletor de carga e a anotação
   const links = a.$$('.ex.open .notabtn').map(function (x) { return x.textContent.trim(); });
-  assert.ok(links.includes('anotar algo'), links.join(' | '));
+  assert.ok(links.includes('Anotar algo'), links.join(' | '));
 
   a.v('abrirNota', 0);
   // o RIR saiu daqui: virou coluna por série. Sobraram as dores de tendão.
@@ -781,7 +781,7 @@ test('as portas do programa são três, e cada uma responde outra pergunta', asy
   //   SEMANA     · "o volume saiu do alvo do treinador" — consequência de um
   //                número, e a porta leva ao lugar de consertar.
   const abre = a => a.$$('button').filter(function (b) {
-    return /abrir o programa/.test(b.textContent);
+    return /Abrir o programa/.test(b.textContent);
   }).length;
 
   const a = await app({ aba: 'prescricao' });
@@ -810,7 +810,7 @@ test('a retrospectiva mudou de casa e continua abrindo', async () => {
   a.aba('semana');
   await a.modo('treino');
   const botao = a.$$('button').filter(function (b) {
-    return /abrir retrospectiva/.test(b.textContent);
+    return /Abrir retrospectiva/.test(b.textContent);
   })[0];
   assert.ok(botao, 'e está no dados, junto do que é olhar para trás');
 

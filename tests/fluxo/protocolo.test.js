@@ -534,7 +534,7 @@ test('comparar só aparece quando há duas sessões na mesma pose', async () => 
 
   comSessoes(a, [diasAtras(28), diasAtras(14)], 'frente-relaxado');
   a.v('render');
-  assert.strictEqual(a.texto('.dd-fotos-b .ins-btn-secondary'), 'comparar');
+  assert.strictEqual(a.texto('.dd-fotos-b .ins-btn-secondary'), 'Comparar');
   a.fechar();
 });
 
@@ -863,7 +863,7 @@ test('ajustar não é oferecido onde não há foto', async () => {
   a.v('ctx.vaiParaPose', 'frente-relaxado');
   assert.ok(a.$('.pr-sobre'), 'com foto, os dois aparecem');
   assert.deepStrictEqual(
-    a.$$('.pr-sobre button').map(b => b.textContent.trim()), ['ajustar', 'apagar']);
+    a.$$('.pr-sobre button').map(b => b.textContent.trim()), ['Ajustar', 'Apagar']);
   a.fechar();
 });
 

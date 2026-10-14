@@ -49,7 +49,7 @@ export function Camera({ ctx }) {
           a câmera do sistema continua servindo — ela dá a melhor qualidade que o
           aparelho sabe produzir, só não deixa sobrepor a foto anterior
         </Procedencia>
-        <button class="ins-btn-secondary cam-sair" onClick={ctx.fechaCamera}>voltar à pose</button>
+        <button class="ins-btn-secondary cam-sair" onClick={ctx.fechaCamera}>Voltar à pose</button>
       </TelaCheia>
     );
   }
@@ -124,7 +124,7 @@ export function Camera({ ctx }) {
       </Secao>
 
       {d.contagem != null
-        ? <button class="ins-btn-secondary cam-disparo" onClick={ctx.cancelaDisparo}>cancelar</button>
+        ? <button class="ins-btn-secondary cam-disparo" onClick={ctx.cancelaDisparo}>Cancelar</button>
         : (
           <button class="ins-btn-primary cam-disparo" disabled={!d.pronta}
                   onClick={ctx.disparaCamera}>

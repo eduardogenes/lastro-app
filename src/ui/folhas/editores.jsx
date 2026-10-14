@@ -62,7 +62,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
             criar refeição
           </button>
         : <button class="ins-btn-secondary ins-btn-destructive" onClick={() => ctx.removeRefeicao(r.id)}>
-            remover do plano
+            Remover do plano
           </button>}
     >
       <Campo rotulo="nome" valor={campos.n} onMuda={v => muda('n', v)} />
@@ -121,7 +121,7 @@ export function FolhaEditaRefeicao({ ctx, id }) {
                       <button
                         class="ins-btn-secondary"
                         onClick={() => ctx.abreFolha({ k: 'seletor', ref: r.id, idx: i.idx })}
-                      >trocar</button>
+                      >Trocar</button>
                       <button
                         class="ins-btn-secondary ins-btn-destructive"
                         onClick={() => { ctx.removeItem(r.id, i.idx); setAberto(null); }}
@@ -134,10 +134,10 @@ export function FolhaEditaRefeicao({ ctx, id }) {
           <button
             class="ins-btn-add ed-add"
             onClick={() => ctx.abreFolha({ k: 'seletor', ref: r.id, idx: null })}
-          >+ adicionar alimento</button>
+          >+ Adicionar alimento</button>
 
           <button class="ins-btn-secondary ed-dup" onClick={() => ctx.duplicaRefeicao(r.id)}>
-            duplicar refeição
+            Duplicar refeição
           </button>
         </>
       )}
@@ -166,7 +166,7 @@ export function FolhaSeletor({ ctx, alvo: refId, idx }) {
         <button class="ins-btn-add"
                 onClick={() => ctx.trocaFolha({ k: 'editaAlimento', id: null,
                                                 para: { ref: refId, idx: idx } })}>
-          + cadastrar alimento novo
+          + Cadastrar alimento novo
         </button>
       }
     >
@@ -258,7 +258,7 @@ export function FolhaEditaAlimento({ ctx, id }) {
 
       {!a.novo && (
         <button class="ins-btn-secondary ins-btn-destructive ed-rm" onClick={() => ctx.removeAlimento(a.id)}>
-          {a.daPrescricao ? 'esconder da biblioteca' : 'remover da biblioteca'}
+          {a.daPrescricao ? 'Esconder da biblioteca' : 'Remover da biblioteca'}
         </button>
       )}
       {a.daPrescricao && (

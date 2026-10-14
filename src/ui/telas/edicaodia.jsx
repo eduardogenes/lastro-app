@@ -20,12 +20,12 @@ export function EdicaoDoDia({ ctx }) {
           <b>Editando o treino {e.dia} de hoje.</b>
           {' '}{e.aviso}
         </div>
-        <button class="edbar-b" onClick={ctx.acoesDia.pronto}>pronto</button>
+        <button class="edbar-b" onClick={ctx.acoesDia.pronto}>Pronto</button>
       </div>
 
       {e.linhas.map(l => <LinhaEditavel key={l.i} l={l} acoes={ctx.acoesDia} />)}
 
-      <button class="edadd" onClick={ctx.acoesAdd.abre}>adicionar exercício</button>
+      <button class="edadd" onClick={ctx.acoesAdd.abre}>Adicionar exercício</button>
 
       {e.mods.length > 0 && (
         <div class="edmods">

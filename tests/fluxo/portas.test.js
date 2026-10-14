@@ -57,7 +57,7 @@ test('o "Encerrar o treino" do menu ··· encerra', async () => {
 
 test('"editar treino de hoje" entra na edição', async () => {
   const a = await app();
-  const b = a.$$('.tr-links button').filter(function (x) { return /editar treino de hoje/.test(x.textContent); })[0];
+  const b = a.$$('.tr-links button').filter(function (x) { return /Editar treino de hoje/.test(x.textContent); })[0];
   assert.ok(b, 'a porta está na tela');
   a.clicar(b);
   await a.esperar();

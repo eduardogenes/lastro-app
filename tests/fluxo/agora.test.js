@@ -491,7 +491,7 @@ test('no Agora, o cartão da aula é um botão só e leva ao modo', async () => 
 
   assert.strictEqual(a.vJ('ctx.cartaoDeCima').k, 'aula', 'pré-condição: a rotação caiu na aula');
   const txt = a.texto('.ins-foco');
-  assert.ok(txt.indexOf('fiz a aula') >= 0, txt);
+  assert.ok(txt.indexOf('Fiz a aula') >= 0, txt);
   assert.ok(!a.$('.ins-foco-acoes'), 'um botão só: nada de duas respostas aqui');
 
   a.$('.ins-foco').click();
@@ -520,7 +520,7 @@ test('no Agora, com o dia fechado o topo confirma em vez de ficar mudo', async (
   assert.strictEqual(c.k, 'resolvido', 'pré-condição: nada à frente e nada sem marca');
   const txt = a.texto('.ins-foco');
   assert.ok(txt.indexOf('dia fechado') >= 0, txt);
-  assert.ok(txt.indexOf('corrigir') >= 0, 'e oferece corrigir: ' + txt);
+  assert.ok(txt.indexOf('Corrigir') >= 0, 'e oferece corrigir: ' + txt);
   a.fechar();
 });
 

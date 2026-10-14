@@ -14,11 +14,11 @@ test('o botão convida quando não há foto e mostra quando há', async () => {
   const a = await app();
   a.v('toggle', 0);
   const rotulos = () => a.$$('.ex.open .exacoes .histbtn').map(x => x.textContent.trim());
-  assert.ok(rotulos().includes('foto'), rotulos().join(' | '));
+  assert.ok(rotulos().includes('Foto'), rotulos().join(' | '));
 
   a.E('S.fotos["chest-press-inclinado-convergente"] = { v: 1, ext: "webp" }');
   a.v('render');
-  assert.ok(rotulos().includes('aparelho'), 'com foto, o rótulo muda: ' + rotulos().join(' | '));
+  assert.ok(rotulos().includes('Aparelho'), 'com foto, o rótulo muda: ' + rotulos().join(' | '));
   a.fechar();
 });
 
@@ -26,7 +26,7 @@ test('a foto entra no cache do aparelho, e só a referência no estado', async (
   const a = await app();
   cacheFalso(a);
   a.v('toggle', 0);
-  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
+  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'Foto')[0]);
   assert.ok(a.$('.ins-folha'), 'a folha abriu');
 
   await a.E(`tiraFoto({ files: [new Blob(['foto'], { type: 'image/jpeg' })], value: '' })`);
@@ -49,7 +49,7 @@ test('apagar tira a referência e deixa lápide', async () => {
   cacheFalso(a);
   a.E('window.confirm = () => true');
   a.v('toggle', 0);
-  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
+  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'Foto')[0]);
   await a.E(`tiraFoto({ files: [new Blob(['foto'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(50);
 
@@ -92,7 +92,7 @@ test('sem foto, a folha não desenha imagem nenhuma', async () => {
   // quadro vazio não informa: o sistema manda não desenhar nada
   const a = await app();
   a.v('toggle', 0);
-  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
+  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'Foto')[0]);
   assert.strictEqual(a.$('.fotoex'), null, 'sem <img> e sem placeholder');
   assert.strictEqual(a.texto('.foto-vazio'), 'Nenhuma foto desta máquina neste aparelho.');
   assert.strictEqual(a.texto('.foto-b'), 'fotografar o aparelho', 'o botão diz o que faz (§7.8)');
@@ -118,7 +118,7 @@ test('a foto tirada aqui sobe para a nuvem', async () => {
   cacheFalso(a);
   nuvemComBucket(a);
   a.v('toggle', 0);
-  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
+  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'Foto')[0]);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(80);
 
@@ -148,7 +148,7 @@ test('sem rede, a reconciliação para e não perde a conta', async () => {
   nuvemComBucket(a);
   a.E(`NUVEM.subirFoto = async () => ({ ok: false, erro: 'rede', msg: 'sem conexão' })`);
   a.v('toggle', 0);
-  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
+  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'Foto')[0]);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(80);
 
@@ -164,7 +164,7 @@ test('apagar tira do bucket também, para o byte não ficar órfão', async () =
   nuvemComBucket(a);
   a.E('window.confirm = () => true');
   a.v('toggle', 0);
-  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
+  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'Foto')[0]);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(80);
   assert.ok(a.J('globalThis.__bucket')['chest-press-inclinado-convergente.webp']);
@@ -305,7 +305,7 @@ test('a miniatura mostra a foto quando os bytes estão em memória', async () =>
   const a = await app();
   cacheFalso(a);
   a.v('toggle', 0);
-  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'foto')[0]);
+  a.clicar(a.$$('.ex.open .exacoes .histbtn').filter(b => b.textContent.trim() === 'Foto')[0]);
   await a.E(`tiraFoto({ files: [new Blob(['x'], { type: 'image/jpeg' })], value: '' })`);
   await a.esperar(80);
 

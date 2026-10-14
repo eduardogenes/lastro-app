@@ -47,7 +47,7 @@ function Medida({ rotulo, nota, valor, passo, unidade, serie, celulas, medidas, 
             aoTeclar={aoTeclar} aoFechar={aoFecharTeclado}
           />
         : <button class="dd-tclbtn" data-a={'tcl-abre-' + (chave || rotulo)} onClick={aoAbrirTeclado}>
-            digitar o número
+            Digitar o número
           </button>}
 
       {/* COMO EU MEDI — só nas medidas com fita (`onOnde` presente). A fita erra
@@ -114,7 +114,7 @@ function ComoMedi({ chave, onde, rascunho, onOnde }) {
       <div class="co-onde">
         <p class="ins-body-sm co-onde-l">como você mediu: {onde}</p>
         <button class="co-ondebtn" data-a={'onde-muda-' + chave} onClick={() => setMudando(true)}>
-          mudar como eu medi
+          Mudar como eu medi
         </button>
       </div>
     );
@@ -170,7 +170,7 @@ function Fotos({ f, ctx }) {
         <div class="dd-fotos-b">
           <button class="ins-btn-primary" onClick={ctx.abreProtocolo}>{f.cta}</button>
           {f.podeComparar && (
-            <button class="ins-btn-secondary" onClick={ctx.abreComparar}>comparar</button>
+            <button class="ins-btn-secondary" onClick={ctx.abreComparar}>Comparar</button>
           )}
         </div>
       </div>

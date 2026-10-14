@@ -243,13 +243,11 @@ p, .ins-prosa, input, textarea {
 .ins-body-xs   { font: 400 13px/1.5 var(--ins-fonte); text-wrap: pretty; }
 
 .ins-label {
-  font: 400 10px/1 var(--ins-fonte);
-  letter-spacing: .18em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1.35 var(--ins-fonte);
   color: var(--ins-tinta-3);
 }
 .ins-label-sm {
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .16em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1.35 var(--ins-fonte);
   color: var(--ins-tinta-3);
 }
 .ins-data { font: 400 13px/1.2 var(--ins-fonte); }
@@ -290,8 +288,7 @@ p, .ins-prosa, input, textarea {
 .ins-btn-primary {
   display: block; width: 100%; min-height: var(--ins-tap); padding: 16px 0;
   background: var(--ins-acento); color: var(--ins-sobre-acento);
-  font: 400 11px/1 var(--ins-fonte);
-  letter-spacing: .16em; text-transform: uppercase;
+  font: 600 var(--ins-t-corpo-forte)/1.2 var(--ins-fonte);
 }
 .ins-btn-primary:active { background: var(--ins-acento-tinta); }
 
@@ -299,8 +296,7 @@ p, .ins-prosa, input, textarea {
   display: block; width: 100%; min-height: var(--ins-tap); padding: var(--ins-5) 0;
   background: transparent; color: var(--ins-tinta-2);
   border: 1px solid var(--ins-fio-controle);
-  font: 400 11px/1 var(--ins-fonte);
-  letter-spacing: .16em; text-transform: uppercase;
+  font: 500 var(--ins-t-corpo-forte)/1.2 var(--ins-fonte);
 }
 .ins-btn-secondary:active { background: var(--ins-superficie-2); }
 
@@ -309,8 +305,7 @@ p, .ins-prosa, input, textarea {
   display: block; width: 100%; min-height: var(--ins-tap); padding: 14px 0;
   background: transparent; color: var(--ins-acento-tinta);
   border: 1px dashed var(--ins-fio-controle);
-  font: 400 11px/1 var(--ins-fonte);
-  letter-spacing: .16em; text-transform: uppercase;
+  font: 500 var(--ins-t-corpo-forte)/1.2 var(--ins-fonte);
 }
 .ins-btn-add:active { background: var(--ins-acento-suave); }
 
@@ -319,15 +314,13 @@ p, .ins-prosa, input, textarea {
 .ins-chip-cta {
   display: inline-block; padding: 9px 12px;
   background: var(--ins-acento); color: var(--ins-sobre-acento);
-  font: 400 10px/1 var(--ins-fonte);
-  letter-spacing: .14em; text-transform: uppercase;
+  font: 600 14px/1.2 var(--ins-fonte);
 }
 
 .ins-chip {
   padding: 10px 12px; min-height: var(--ins-tap-dense);
   border: 1px solid var(--ins-fio-controle);
-  font: 400 11px/1 var(--ins-fonte);
-  letter-spacing: .09em; text-transform: uppercase;
+  font: 500 14px/1.2 var(--ins-fonte);
   color: var(--ins-tinta-3);
   position: relative;
 }

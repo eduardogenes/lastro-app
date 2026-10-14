@@ -1,7 +1,7 @@
 // O programa.
 //
 // Quatro modos numa tela só — a lista dos treinos, um treino aberto, a
-// diferença para o que o treinador prescreveu, e o histórico de mudanças —
+// diferença para o que o treinador prescreveu, e o Histórico de mudanças —
 // porque são quatro ângulos do MESMO objeto. Separá-los em destinos diferentes
 // obrigaria a sair e voltar para responder "mudei isso quando, e por quê?".
 //
@@ -57,7 +57,7 @@ function Lista({ p, a }) {
         ))}
       </div>
 
-      <button class="edadd" onClick={a.criaTreino}>criar treino novo</button>
+      <button class="edadd" onClick={a.criaTreino}>Criar treino novo</button>
 
       <div class="dgroup prog-comparar">
         <h3>Comparar com o treinador</h3>
@@ -67,11 +67,11 @@ function Lista({ p, a }) {
               ' ao que ele prescreveu.'
             : 'Seu programa está igual ao que o treinador prescreveu.'}
         </p>
-        <button class="ins-btn-secondary dbtn ghost" onClick={() => a.modo('diff')}>ver a diferença</button>
-        <button class="ins-btn-secondary dbtn ghost" onClick={() => a.modo('historico')}>histórico de mudanças</button>
+        <button class="ins-btn-secondary dbtn ghost" onClick={() => a.modo('diff')}>Ver a diferença</button>
+        <button class="ins-btn-secondary dbtn ghost" onClick={() => a.modo('historico')}>Histórico de mudanças</button>
         {/* Destrutivo, e por isso coral: joga fora tudo que ele promoveu. */}
         <button class="ins-btn-secondary ins-btn-destructive dbtn ghost"
-                onClick={a.restauraTudo}>restaurar o programa do treinador</button>
+                onClick={a.restauraTudo}>Restaurar o programa do treinador</button>
       </div>
     </>
   );
@@ -112,7 +112,7 @@ function Dia({ p, a, ctx }) {
         </LinhaEditavel>
       ))}
 
-      <button class="edadd" onClick={ctx.acoesAdd.abre}>adicionar exercício</button>
+      <button class="edadd" onClick={ctx.acoesAdd.abre}>Adicionar exercício</button>
       {p.addEx && <AddEx c={p.addEx} acoes={ctx.acoesAdd} />}
     </>
   );

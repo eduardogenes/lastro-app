@@ -82,9 +82,9 @@ export function Treino({ ctx }) {
         {t.sessaoAberta && (
           <div class="ctrl">
             {t.pausada
-              ? <button class="ctrl-b ini" onClick={ctx.retomarSessao}>retomar</button>
-              : <button class="ctrl-b" onClick={ctx.pausarSessao}>pausar</button>}
-            <button class="ctrl-b fim" onClick={ctx.finalizarSessao}>encerrar</button>
+              ? <button class="ctrl-b ini" onClick={ctx.retomarSessao}>Retomar</button>
+              : <button class="ctrl-b" onClick={ctx.pausarSessao}>Pausar</button>}
+            <button class="ctrl-b fim" onClick={ctx.finalizarSessao}>Encerrar</button>
           </div>
         )}
 
@@ -172,7 +172,7 @@ export function Treino({ ctx }) {
 
         {t.aberto && !t.editando && !t.addEx && (
           <button class="ins-btn-add tr-aberto" onClick={ctx.acoesAdd.abre}>
-            + adicionar movimento
+            + Adicionar movimento
           </button>
         )}
       </Secao>
@@ -190,9 +190,9 @@ export function Treino({ ctx }) {
               "pronto" da barra, e oferecer "editar" de novo é oferecer o
               lugar onde ele já está. */}
           {t.podeEditar && !t.editando && (
-            <button class="ins-btn-secondary" onClick={ctx.modoEdicao}>editar treino de hoje</button>
+            <button class="ins-btn-secondary" onClick={ctx.modoEdicao}>Editar treino de hoje</button>
           )}
-          <button class="ins-btn-secondary" onClick={ctx.abrePrograma}>abrir o programa</button>
+          <button class="ins-btn-secondary" onClick={ctx.abrePrograma}>Abrir o programa</button>
         </div>
       </Secao>
     </>

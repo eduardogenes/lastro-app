@@ -65,7 +65,7 @@ export function AjusteFoto({ ctx }) {
     <TelaCheia
       olho="ajustar" meta={d.data} titulo={d.pose}
       aoVoltar={ctx.fechaAjuste} corpo="hwrap"
-      acao={<button class="aj-salvar" onClick={ctx.salvaAjuste}>salvar</button>}
+      acao={<button class="aj-salvar" onClick={ctx.salvaAjuste}>Salvar</button>}
     >
       {/* O quadro. Arrastar aqui move o recorte; o fantasma e a grade ficam por
           cima, sem capturar o toque. */}
@@ -140,7 +140,7 @@ export function AjusteFoto({ ctx }) {
       </Procedencia>
 
       {d.sujo
-        ? <button class="ins-btn-secondary aj-zerar" onClick={ctx.zeraAjuste}>voltar ao original</button>
+        ? <button class="ins-btn-secondary aj-zerar" onClick={ctx.zeraAjuste}>Voltar ao original</button>
         : <Vazio>Sem ajuste. A foto está como saiu da câmera.</Vazio>}
     </TelaCheia>
   );

@@ -19,7 +19,15 @@ pede atenção do dono.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
-- **Próximo na fila:** a §2 da frente 3 — os rótulos (R1–R4): rótulo de seção só
+- **Em curso:** a §2 da frente 3. **Etapa 1 feita (o sistema):** nenhuma regra
+  em caixa alta com espaçamento (48 regras; "nunca caixa alta com tracking, que
+  é o rótulo mono sem a mono", 10-tokens); o rótulo e a procedência a 12 px,
+  botão a 15 px, chip a 14 px, aba a 12 px; o miúdo de 9–10 px sobe a 12; os
+  textos de ação e os nomes das abas em maiúscula inicial (valores de chip, como
+  "bike" e "30 min", seguem como no desenho). **Falta:** R1/R2 nos rótulos de
+  seção (15 px, peso 600, frase com artigo, ou sair) e R4 (a unidade junto do
+  número), por tela, com captura.
+- **A §2 da frente 3 — os rótulos (R1–R4):** rótulo de seção só
   onde a seção tem mais de uma linha e a primeira não a nomeia; o que fica vira
   frase com artigo, caixa de frase, 15 px, sem espaçamento; o olho vira
   procedência; a unidade em caixa baixa. ~83 lugares de 21 arquivos, por tela,
@@ -3315,6 +3323,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Agora pela D, etapa 6: a mudança esperando decisão, com "Decidir" no lugar. 4 mutações, 4 mortas (duas vivas até o caso discriminar: a folha que sumia mas ficava na pilha, e a posição que não existia no treino da mudança). 1.439 passando.
 - 14/10 · Agora pela D, etapa 7: o cartão da refeição grava no toque, e a leitura de volta com Desfazer. 5 mutações; 4 mortas e 1 equivalente (código redundante, tirado), depois de dois casos ganharem discriminação. 1.441 passando.
 - 14/10 · Agora pela D, etapa 8: o cardio sai do descanso e entra pela folha do tipo do dia. 2 mutações, 2 mortas. **Agora pela D fechado.** 1.442 passando.
+- 14/10 · Frente 3 §2, etapa 1: sem caixa alta no sistema inteiro (48 regras), textos de ação e abas com maiúscula inicial. 9 arquivos de caso apontados para os textos novos. 1.442 passando.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)

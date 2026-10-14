@@ -8038,7 +8038,7 @@ CTX.cromoDoTreino = function () {
         aviso: perna.length
           ? 'Você treinou ' + perna.join(' e ') + ' hoje. A regra é não pôr cardio no mesmo período de treino de perna.'
           : null,
-        acao: 'registrar ' + f.min + ' min de ' + f.m
+        acao: 'Registrar ' + f.min + ' min de ' + f.m
       };
     })()
   };

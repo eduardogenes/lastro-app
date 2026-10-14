@@ -41,7 +41,7 @@ function Musculos({ m, ctx }) {
           {m.fora.map(x => (
             <div key={x.txt} class="ins-body-sm ins-t2 dd-fora-l">{x.txt}</div>
           ))}
-          <button class="ins-btn-secondary" onClick={ctx.abrePrograma}>abrir o programa</button>
+          <button class="ins-btn-secondary" onClick={ctx.abrePrograma}>Abrir o programa</button>
         </div>
       )}
 
@@ -294,7 +294,7 @@ export function Semana({ ctx }) {
           O que evoluiu, o que ficou parado e onde a dor apareceu desde o começo
           deste bloco.
         </p>
-        <button class="ins-btn-secondary" onClick={ctx.abreRetro}>abrir retrospectiva</button>
+        <button class="ins-btn-secondary" onClick={ctx.abreRetro}>Abrir retrospectiva</button>
       </Secao>
       </>}
 

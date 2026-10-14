@@ -58,8 +58,7 @@
 /* Selo. Sem preenchimento: fio de 1px e a cor conta a história. */
 .tag {
   padding: var(--ins-1) var(--ins-3); border: 1px solid var(--ins-fio-controle);
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .12em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   color: var(--ins-tinta-3);
 }
 .tag.comp     { border-color: var(--ins-fio-controle); color: var(--ins-tinta-3); }
@@ -77,8 +76,7 @@
    sólido, ilegível. Distintivo e cor são coisas diferentes. */
 .ex-sub .up {
   padding: var(--ins-1) var(--ins-3); background: var(--ins-acento); color: var(--ins-sobre-acento);
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .12em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 
 .chev { color: var(--ins-tinta-3); font-size: 15px; padding-top: 2px; }
@@ -189,8 +187,7 @@
    meio da série, de pé e suado, e é o que separa a coluna de kg da de reps.
    A 9px o nível 5 dá 3,2:1. */
 .sethead > * {
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3);
   /* sem overflow escondido aqui: rótulo que não cabe tem que APARECER cortando,
      senão o erro de largura passa despercebido como passou */
   white-space: nowrap;
@@ -236,8 +233,7 @@
 }
 .rirscale-r {
   flex: 0 0 auto;
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .rirscale-v { display: flex; gap: var(--ins-2); flex: 1; }
 /* 44, e não os 28 do degrau denso: aqui o desenho PODE crescer — a escala é um
@@ -257,8 +253,7 @@
    séries NÃO a reusa — lá o rótulo é da coluna, não do campo. */
 .unit {
   position: absolute; right: var(--ins-4); top: 50%; transform: translateY(-50%);
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   color: var(--ins-tinta-3); pointer-events: none;
 }
 
@@ -273,8 +268,7 @@
   min-height: 34px; margin-bottom: var(--ins-3);
   display: flex; align-items: center; gap: var(--ins-4);
   color: var(--ins-tinta-3);
-  font: 400 10px/1.3 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1.3 var(--ins-fonte);
 }
 .peglinha b {
   color: var(--ins-tinta-2); font-weight: 500;
@@ -289,8 +283,7 @@
      exceção não se anuncia com contorno. */
   text-align: left; background: transparent; color: var(--ins-tinta-3);
   border: none; padding: 0; position: relative;
-  font: 400 10px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 /* O alvo, não o desenho: o cronômetro é apertado com o polegar entre uma série
    e outra, e 34px é menos do que o dedo acerta. Só na vertical — a linha já
@@ -333,8 +326,7 @@
 
 .unit {
   position: absolute; right: var(--ins-4); top: 50%; transform: translateY(-50%);
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .1em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   color: var(--ins-tinta-3); pointer-events: none;
 }
 .x { font: 400 12px/1 var(--ins-fonte); color: var(--ins-tinta-3); }
@@ -368,8 +360,7 @@
 .histbtn {
   flex: 1; min-height: 42px;
   border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta-3);
-  font: 400 10px/1 var(--ins-fonte);
-  letter-spacing: .14em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   position: relative;
 }
 .histbtn::after { content: ""; position: absolute; inset: -2px 0; }     /* 42 -> 46 */
@@ -386,8 +377,7 @@
    e continua bem abaixo do valor digitado, que é 19px em branco. */
 .notabtn {
   width: 100%; text-align: left; min-height: 34px; padding: var(--ins-2) 0;
-  font: 400 10px/1.4 var(--ins-fonte);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1.4 var(--ins-fonte); color: var(--ins-tinta-3);
   position: relative;
 }
 .notabtn::after { content: ""; position: absolute; inset: -6px 0; }    /* 34 -> 46 */
@@ -404,7 +394,7 @@
 .aqbtn {
   flex: 0 0 auto; min-height: 34px; padding: 0 var(--ins-4);
   border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta-3);
-  font: 400 10px/1 var(--ins-fonte); letter-spacing: .12em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   position: relative;
 }
 .aqbtn::after { content: ""; position: absolute; inset: -6px 0; }      /* 34 -> 46 */
@@ -422,8 +412,7 @@
 
 .swap { margin-top: var(--ins-6); }
 .swap-h {
-  font: 400 10px/1.4 var(--ins-fonte);
-  letter-spacing: .18em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1.4 var(--ins-fonte);
   color: var(--ins-tinta-3); margin: 0 0 var(--ins-4);
 }
 /* "Máquina ocupada" e, embaixo, de qual exercício: a frente 3 separou os dois
@@ -461,8 +450,7 @@
 .swapopt.on { border-color: var(--ins-acento); background: var(--ins-acento-suave); }
 .swapopt.cancel, .swapopt.back-orig { background: transparent; }
 .swapopt.cancel b {
-  font: 400 10px/1 var(--ins-fonte);
-  letter-spacing: .14em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 
 /* ---- Anotação e dor ---------------------------------------------------- */
@@ -473,8 +461,7 @@
   border-top: 1px solid var(--ins-fio); width: 100%;
 }
 .obs-h {
-  font: 400 10px/1 var(--ins-fonte);
-  letter-spacing: .18em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   color: var(--ins-tinta-3); margin-bottom: var(--ins-4);
 }
 .chips { display: flex; gap: var(--ins-2); flex-wrap: wrap; }
@@ -523,7 +510,7 @@
 .painbtn {
   display: block; width: 100%; margin-top: var(--ins-5); min-height: var(--ins-tap);
   border: 1px solid var(--ins-atencao-fio); color: var(--ins-atencao-tinta);
-  font: 400 10px/1 var(--ins-fonte); letter-spacing: .14em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 /* A regra vem nas palavras do treinador, e a escolha diz o que destrava. */
 .pain-regra { margin: var(--ins-3) 0 0; color: var(--ins-tinta); }
@@ -582,7 +569,7 @@
 .day-ini {
   display: block; width: 100%; min-height: var(--ins-tap); margin-top: var(--ins-5);
   background: var(--ins-acento); color: var(--ins-sobre-acento); border: 0;
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .16em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 .day-ini:active { background: var(--ins-acento-tinta); }
 
@@ -592,7 +579,7 @@
   flex: 1; min-height: var(--ins-tap); padding: 0 var(--ins-5);
   background: transparent; border: 1px solid var(--ins-fio-controle);
   color: var(--ins-tinta-2);
-  font: 400 11px/1 var(--ins-fonte); letter-spacing: .16em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
 .ctrl-b:active { background: var(--ins-superficie-2); }
 .ctrl-b.fim, .ctrl-b.ini {
@@ -643,15 +630,14 @@
 }
 .cardl-t {
   flex: 0 0 auto;
-  font: 400 10px/1 var(--ins-fonte);
-  letter-spacing: .18em; text-transform: uppercase; color: var(--ins-tinta-3);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-tinta-3);
 }
 .cardl-n { flex: 1; font: 400 13px/1.4 var(--ins-fonte); color: var(--ins-tinta-2); }
 .cardl.feito .cardl-n { color: var(--ins-acento-tinta); }
 .cardl-b {
   flex: 0 0 auto; min-height: var(--ins-tap-dense); padding: 0 var(--ins-4);
   border: 1px solid var(--ins-fio-controle); background: transparent; color: var(--ins-tinta-3);
-  font: 400 10px/1 var(--ins-fonte); letter-spacing: .12em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   position: relative;
 }
 .cardl-b::after { content: ""; position: absolute; inset: -8px 0; }     /* 28 -> 44 */
@@ -771,8 +757,7 @@
 .rapl-f { display: block; width: 68px; }
 .rapl-f > span {
   display: block; margin-bottom: var(--ins-2);
-  font: 400 9px/1 var(--ins-fonte);
-  letter-spacing: .14em; text-transform: uppercase;
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
   color: var(--ins-tinta-3); text-align: center;
 }
 /* O botão que abre o teclado próprio ocupa o lugar e a medida do campo que
@@ -825,6 +810,5 @@
 .aulal-x {
   flex: 0 0 auto; padding: 0 var(--ins-4); min-height: var(--ins-tap);
   background: transparent; border: 1px solid var(--ins-fio-controle);
-  font: 400 10px/1 var(--ins-fonte);
-  letter-spacing: .12em; text-transform: uppercase; color: var(--ins-pare-tinta);
+  font: 400 var(--ins-t-meta)/1 var(--ins-fonte); color: var(--ins-pare-tinta);
 }

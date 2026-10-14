@@ -199,7 +199,7 @@ export function Prescricao({ ctx }) {
           referência. */}
       <Secao primeira>
         <button class="ins-btn-primary" data-a="abre-programa"
-                onClick={ctx.abrePrograma}>abrir o programa</button>
+                onClick={ctx.abrePrograma}>Abrir o programa</button>
         <Procedencia>
           o que o treinador prescreveu, o que você mudou, e o histórico de cada
           mudança com o motivo
@@ -406,7 +406,7 @@ export function Prescricao({ ctx }) {
             </button>
           ))}
         </div>
-        <button class="ins-btn-add" onClick={ctx.novaRefeicao}>+ adicionar refeição</button>
+        <button class="ins-btn-add" onClick={ctx.novaRefeicao}>+ Adicionar refeição</button>
       </Secao>
 
       {/* O que o plano soma. DOIS totais e não um: pré-treino e treino só
