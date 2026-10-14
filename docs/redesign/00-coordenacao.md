@@ -11,14 +11,20 @@ pede atenção do dono.
 
 ---
 
-## ⏸ PONTO DE PARADA — 14/10 (Dias e o Agora pela D, fechados)
+## ⏸ PONTO DE PARADA — 14/10 (Dias, o Agora pela D e a §2 da frente 3, fechados)
 
 **Onde parou, exatamente:**
 - Branch `redesenho-do-zero`, suíte verde: **1.443 passando**, zero "unhandled".
-  Nenhum agente trabalhando. Último commit de código: `805c77b`.
+  Nenhum agente trabalhando. Último commit de código: `b91697d`.
 - **Dias** (terceira entrega da D) e **o Agora pela D** (momento 2 +
   agora-descanso + protótipo) estão construídos no que tem desenho — detalhe,
   saídas declaradas e divergências logo abaixo e no diário.
+- **Próximo passo:** o levantamento estado a estado das outras sete entregas da
+  D contra o app — momento-1 (14 estados), semana (10), corpo (11), prescricao
+  (11), aula (12), comparar (11), sessao-fotos (11). Parte já foi construída nas
+  peças 6.b–6.z (sessão como modo, régua, teclado, portões da Semana,
+  bioimpedância, Evolução, fila de mudanças); o resto, e os "tipos de cartão que
+  não existem" que a frente 3 deixou parados, viram a fila da onda 6.
 - **Feita:** a §2 da frente 3. **Etapa 1 feita (o sistema):** nenhuma regra
   em caixa alta com espaçamento (48 regras; "nunca caixa alta com tracking, que
   é o rótulo mono sem a mono", 10-tokens); o rótulo e a procedência a 12 px,
