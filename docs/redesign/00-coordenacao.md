@@ -118,6 +118,9 @@ pede atenção do dono.
       as mudanças dele que saem; só grava com tudo respondido, e volta tudo se
       o aparelho recusar. Treino novo entra no fim da sequência.
   11. [x] **O roteiro das medições A–D da régua** — ele faz esta semana.
+      **Atualização 14/10: ele não vai fazer o teste manual ("pode esquecer").**
+      A régua fica como está, sem a medição; a troca pré-autorizada pelos
+      botões fixos (decisão 9) não tem mais gatilho. A página fica sem uso.
       Página `https://claude.ai/artifact/3vYQ4TnDMfZrwoxuQ8LgiV` (14/10): os
       passos de cada medição, o que reprova, contadores para anotar entre as
       séries, veredito calculado; os números ficam salvos na coleção `medicao`.
@@ -3603,6 +3606,7 @@ Os itens construíveis do "fica para depois" estão feitos. Restam três, e nenh
 - 14/10 · Fila 9: a lousa como foto, com cache próprio, fusão própria e a marca da sessão. 8 mutações, 8 mortas; achado no caminho: duas fotos no mesmo milissegundo dividiriam a chave dos bytes — a versão anda. 1.524 passando.
 - 14/10 · Fila 10: a revisão do treinador colada em texto — domínio, programa do treinador no dado e a tela. 20 mutações, 20 mortas (o limite de parecença viveu até o caso "Rosca direta" × "Rosca martelo"). **A fila das respostas do dono está fechada.** Pedido dele no meio: commits menos fracionados (registrado na memória). 1.540 passando.
 - 14/10 · Sessão de fotos 1, 2, 4, 6, 8 e 10 conferidos e construídos numa peça: ordem das poses e som no começar, contagem falada, giro dito e mostrado, a foto preta que volta no fim, o caminho da câmera negada, o fim com resumo. 9 mutações, 8 mortas e 1 limpeza redundante tirada. 1.545 passando.
+- 14/10 · O dono não vai fazer as medições A–D da régua: a régua fica como está, e a decisão 9 perde o gatilho.
 ---
 
 ## Anexo A · Prompt do A1 (texto enviado)
