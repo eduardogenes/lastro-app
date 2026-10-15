@@ -920,8 +920,8 @@ test('ctx.importaTexto diz o que vai substituir, e recusar não troca nada', asy
   assert.deepStrictEqual(a.log('A', 0)[0].sets[0], [62.5, 9], 'e a série daqui intacta');
 
   const q = a.perguntas().join(' | ');
-  assert.ok(/Importar 2 sessões e 1 exercícios/.test(q), 'o aviso conta o que VEM: ' + q);
-  assert.ok(/substitui o histórico atual \(1 sessões\)/.test(q), 'e o que SAI: ' + q);
+  assert.ok(/Importar 2 sessões e 1 exercício/.test(q), 'o aviso conta o que VEM: ' + q);
+  assert.ok(/substitui o histórico atual deste aparelho \(1 sessão\)/.test(q), 'e o que SAI: ' + q);
   assert.ok(/Exporte antes/.test(q), 'e manda exportar antes: ' + q);
 
   a.aceitar();
@@ -929,6 +929,42 @@ test('ctx.importaTexto diz o que vai substituir, e recusar não troca nada', asy
   await a.esperar(60);
   assert.strictEqual(a.S().done.length, 2, 'aceitar troca');
   a.fechar();
+});
+
+test('com a conta entrada, importar junta: nada do que está aqui é apagado', async () => {
+  // Regressão (docs/mapa, risco D17): o aviso dizia "substitui", a sincronia
+  // seguinte trazia de volta o que estava na nuvem, e o que só existia aqui
+  // (ainda não enviado) se perdia de verdade.
+  const a = await app({ estado: UMA_SESSAO, aba: 'ajustes' });
+  a.E(`NUVEM.sessao = () => ({ email: 'eu@x.com', uid: 'u1' })`);
+  const t = Date.now() - 2 * 86400000;
+  const bkp = JSON.stringify({ app: 'lastro', v: 1, data: {
+    logs: { 'pendulum-squat': [{ t: t, sid: t, sets: [[100, 5]] }] },
+    done: [{ day: 'B', t: t, sid: t }]
+  } });
+
+  await a.v('ctx.importaTexto', bkp);
+  await a.esperar(60);
+
+  const q = a.perguntas().join(' | ');
+  assert.ok(/junta o que está nele ao histórico da sua conta/.test(q), 'o aviso diz o que acontece: ' + q);
+  assert.strictEqual(a.S().done.length, 2, 'a sessão daqui ficou e a do arquivo entrou');
+  assert.deepStrictEqual(a.log('A', 0)[0].sets[0], [62.5, 9], 'a série daqui intacta');
+  assert.strictEqual(a.S().logs['pendulum-squat'].length, 1, 'e a do arquivo chegou');
+  a.fechar();
+});
+
+test('o registro ilegível ganha uma cópia antes de qualquer gravação por cima', async () => {
+  // Regressão (docs/mapa, risco D7): "mantido intacto" valia até o primeiro
+  // toque, e sem conta o histórico se perdia de vez.
+  const b = await app({ estado: '{"logs":{"A0":[1,2' });
+  await b.v('save');                  // o primeiro toque grava o estado vazio por cima
+  await b.esperar();
+  const chaves = b.J('Object.keys(localStorage)');
+  const copia = chaves.filter(function (k) { return k.indexOf('lastro-v1-ilegivel-') === 0; })[0];
+  assert.ok(copia, 'a cópia existe: ' + chaves.join(', '));
+  assert.strictEqual(b.J(`localStorage.getItem(${JSON.stringify(copia)})`), '{"logs":{"A0":[1,2', 'intacta');
+  b.fechar();
 });
 
 test('ctx.importaArquivo lê o arquivo, importa e esvazia o campo', async () => {

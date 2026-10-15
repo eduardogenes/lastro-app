@@ -467,10 +467,28 @@ function interpreta(raw) {
   }
 }
 
+/**
+ * O texto guardado que não pôde ser lido vai para uma chave à parte antes de
+ * qualquer gravação. "Mantido intacto" valia só até o primeiro toque: a
+ * gravação seguinte escrevia o estado vazio por cima, e sem conta o histórico
+ * se perdia de vez. A cópia fica para ser recuperada à mão.
+ */
+async function guardaIlegivel(chave, bruto) {
+  if (!bruto) return;
+  try {
+    await DB.set(chave + '-ilegivel-' + Date.now(), bruto);
+    registroIlegivel = true;
+  } catch (e) { console.error('não deu para guardar a cópia do registro ilegível', e); }
+}
+let registroIlegivel = false;
+
 async function load() {
   const legado = await leBruto(KEY_LEGADO);
-  const atual = interpreta(await leBruto(KEY));
+  const bruto = await leBruto(KEY);
+  const atual = interpreta(bruto);
   const antigo = interpreta(legado);
+  if (bruto && !atual) await guardaIlegivel(KEY, bruto);
+  if (legado && !antigo) await guardaIlegivel(KEY_LEGADO, legado);
 
   // Os dois lados existem quando o build antigo escreveu depois de a chave
   // nova já ter nascido. A ordem é (novo, velho) pelo mesmo motivo da
@@ -503,7 +521,9 @@ async function load() {
   // A chave velha só sai depois de a nova estar gravada E a gravação ter dado
   // certo. Se a escrita falhar, ela fica onde está e a migração tenta de novo
   // na próxima abertura. `grava` e não `save`: fundir não é tocar no estado.
-  if (legado && await grava()) {
+  // Só a chave velha que foi LIDA sai: a ilegível já tem cópia, mas apagar o
+  // original sem precisar seria tirar a última chance de quem for recuperá-la.
+  if (antigo && await grava()) {
     try { await DB.delete(KEY_LEGADO); } catch (e) {}
   }
 
@@ -521,6 +541,7 @@ async function load() {
   // fecha calado: não era uma sessão ao vivo.
   const vencida = S.sessao;
   if (encerraSePreciso() && vencida && !vencida.retro) toast(fraseDoFechoNaUltima(vencida, 'Fechei'));
+  if (registroIlegivel) toast('O registro deste aparelho não pôde ser lido. Guardei uma cópia dele à parte, sem mexer, e o app abriu vazio.');
   ligaBatida();
   // Abrir o app com treino em andamento cai no treino, não em HOJE. Sair e
   // voltar no meio de uma série é o caso mais comum de reabertura que existe
@@ -4774,7 +4795,20 @@ async function importText(txt) {
   if (!valido) { toast('Isso não parece um backup deste app.'); return; }
 
   const nS = d.done.length, nE = Object.keys(d.logs).length;
-  if (!confirm(`Importar ${nS} sessões e ${nE} exercícios?\n\nIsso substitui o histórico atual (${S.done.length} sessões). Exporte antes se tiver dúvida.`)) return;
+  const sessoes = function (n) { return n + (n === 1 ? ' sessão' : ' sessões'); };
+  const exercicios = function (n) { return n + (n === 1 ? ' exercício' : ' exercícios'); };
+  // Com a conta entrada, importar JUNTA: o histórico da conta não é apagado, e
+  // o que este aparelho ainda não enviou também não. Antes o aviso dizia
+  // "substitui", e a sincronia seguinte trazia de volta tudo o que o arquivo não
+  // tinha — e o que só existia aqui, sem ter subido, se perdia de verdade.
+  const comConta = !!NUVEM.sessao();
+  const ok = await pare(comConta
+    ? { texto: 'Importar ' + sessoes(nS) + ' e ' + exercicios(nE) + ' do backup junta o que está nele ao histórico da sua conta (' + sessoes(S.done.length) + '): o que estiver no arquivo volta, e nada do que já está aqui ou na conta é apagado.',
+        sim: 'Juntar o backup', tom: 'pergunta' }
+    : { texto: 'Importar ' + sessoes(nS) + ' e ' + exercicios(nE) + ' substitui o histórico atual deste aparelho (' + sessoes(S.done.length) + '): o que não estiver no arquivo sai daqui. Exporte antes se tiver dúvida.',
+        sim: 'Substituir pelo backup' });
+  if (!ok) return;
+  const atual = S;
 
   S = { logs: d.logs, done: d.done, deload: !!d.deload, draft: d.draft || null,
         cardio: Array.isArray(d.cardio) ? d.cardio : [],
@@ -4858,11 +4892,16 @@ async function importText(txt) {
   migraPlano10(S);
   migraPlano11(S);
   migraPlano12(S);
+  if (comConta) {
+    S = funde(atual, S, Date.now()).estado;
+    normalizaEstado();
+    garanteProgramaERotacao();
+  }
   montaCatalogo();
   await save();
   view.day = nextDay(); view.open = null; view.hist = null; view.json = null; view.paste = false;
   render();
-  toast('Histórico importado: ' + nS + ' sessões.');
+  toast((comConta ? 'Backup juntado: ' : 'Histórico importado: ') + sessoes(nS) + '.');
 }
 
 let toastT = null;
