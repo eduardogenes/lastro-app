@@ -519,36 +519,41 @@ maior. A marca de cada um diz o quanto foi verificado:
 **reproduzido** (rodado no app ou na função), **pela leitura** (o código diz,
 ninguém rodou) ou **a confirmar**.
 
+**Todos os desta seção foram corrigidos em 15/10/2026**, cada um com um teste
+que falhava no código anterior e passa no novo. A coluna "corrigido" diz o
+commit. A seção 9 de cada área continua descrevendo o código como ele era na
+leitura (commit `8ec19a4`); o que vale hoje para estes itens é esta tabela.
+
 ### 9.1 Perda ou corrupção de dado
 
-| # | o risco | quando acontece | área | verificação |
-|---|---|---|---|---|
-| D1 | Registrar uma série em outro treino da sequência, no meio da sessão, e voltar ao treino original apaga as séries que já estavam nele | tocar em outra letra na rotação durante a sessão e registrar | 03 §9.1 | reproduzido |
-| D2 | Programa, plano de comida, saldo de kcal, registro dos passos e a sessão aberta voltam à versão de outro aparelho, em silêncio | editar num aparelho e gravar qualquer coisa (um copo de água) no outro, desatualizado, antes de sincronizar | 02 §9.6, 04 §9.20, 06 B16 | pela leitura |
-| D3 | O peso tem teto de 400 medidas por grandeza, no próprio aparelho e na fusão: com pesagem diária, a mais antiga começa a sair sem aviso depois de uns 13 meses. O cardio tem teto de 200 | o tempo | 02 §9.14, 11 R8 | pela leitura (teto conferido no código) |
-| D4 | Refazer uma pose do corpo pode apagar a foto nova no outro aparelho: a lápide e a foto nova nascem no mesmo milissegundo, e a lápide vence o empate | refazer a pose com dois aparelhos sincronizados | 02 §9.1, 08 | reproduzido na função de fusão |
-| D5 | Corrigir uma medida de um dia passado pode sumir na próxima sincronia, pela mesma causa (mesma chave e mesmo milissegundo da lápide) | substituir o peso ou a bioimpedância de um dia passado | 07 §9 | a confirmar com teste |
-| D6 | O aparelho que tinha a foto velha sobe os bytes velhos por cima da nova (o nome do arquivo não tem versão) | trocar a foto do aparelho ou refazer uma pose num aparelho; o outro sincroniza | 02 §9.2 | pela leitura |
-| D7 | Um registro ilegível no aparelho é sobrescrito no primeiro toque (o aviso diz "mantido intacto") | o texto guardado corrompe; sem conta, perde-se tudo | 01 §9.1 | pela leitura |
-| D8 | O dia de comida fecha com o tipo que ele disse, não com o resolvido: num dia de treino em que ele não abriu a folha do tipo, o total congelado sai sem o pré-treino e o intra, e a adesão usa as refeições de descanso | o caminho mais comum: treinar sem tocar na folha do tipo do dia | 06 B1 | pela leitura |
-| D9 | "Tentar de novo" na correção de uma série passada grava 0 repetições quando o que falhou foi a carga ou o RIR | a gravação recusar durante uma correção em Dias | 11 R2 | pela leitura |
-| D10 | Aceitar primeiro a troca de exercício faz perder a mudança de séries do mesmo exercício na fila | as duas mudanças na mesma posição, respondidas nessa ordem | 04 §9.1 | pela leitura |
-| D11 | Responder a fila em dois aparelhos pode aplicar a mesma mudança duas vezes (num "adicionar", duplica o exercício) | responder mudanças da mesma sessão em aparelhos diferentes | 04 §9.21 | pela leitura |
-| D12 | Uma mudança gravada enquanto o envio está em voo fica marcada como enviada | rede lenta; a última série do dia | 02 §9.4 | pela leitura |
-| D13 | Apagar não atravessa em quatro lugares: voltar o nome do exercício ou o tipo de carga ao padrão, desfazer o ajuste de uma foto e corrigir a água para menos voltam pelo outro aparelho | dois aparelhos | 02 §9.7 e 9.8, 03 §9.4, 08 | pela leitura |
-| D14 | O quadro e a lousa de uma aula que não fechou vazam para a aula seguinte; com dois aparelhos, ressuscitam depois do fecho | colar o quadro e não registrar passada; ou fechar a aula com dois aparelhos | 05 R3 e R4 | reproduzido |
-| D15 | Remover uma refeição do plano apaga a marca de hoje sem lápide, e o outro aparelho a traz de volta | dois aparelhos | 06 B7 | pela leitura |
-| D16 | As fotos do corpo nunca saem da nuvem: apagar a pose, a sessão ou tudo tira dos aparelhos, não do bucket | apagar fotos com conta | 02 §9.12 | pela leitura |
-| D17 | A importação de backup com a conta entrada une com a nuvem em vez de substituir | importar um backup antigo com conta | 01 §9.2, 02 §9.11 | a confirmar |
+| # | o risco | quando acontece | área | verificação | corrigido |
+|---|---|---|---|---|---|
+| D1 | Registrar uma série em outro treino da sequência, no meio da sessão, e voltar ao treino original apaga as séries que já estavam nele | tocar em outra letra na rotação durante a sessão e registrar | 03 §9.1 | reproduzido | `d8cdc8a` |
+| D2 | Programa, plano de comida, saldo de kcal, registro dos passos e a sessão aberta voltam à versão de outro aparelho, em silêncio | editar num aparelho e gravar qualquer coisa (um copo de água) no outro, desatualizado, antes de sincronizar | 02 §9.6, 04 §9.20, 06 B16 | pela leitura | `2f2517f` |
+| D3 | O peso tem teto de 400 medidas por grandeza, no próprio aparelho e na fusão: com pesagem diária, a mais antiga começa a sair sem aviso depois de uns 13 meses. O cardio tem teto de 200 | o tempo | 02 §9.14, 11 R8 | pela leitura (teto conferido no código) | `4955f83` |
+| D4 | Refazer uma pose do corpo pode apagar a foto nova no outro aparelho: a lápide e a foto nova nascem no mesmo milissegundo, e a lápide vence o empate | refazer a pose com dois aparelhos sincronizados | 02 §9.1, 08 | reproduzido na função de fusão | `4955f83` |
+| D5 | Corrigir uma medida de um dia passado pode sumir na próxima sincronia, pela mesma causa (mesma chave e mesmo milissegundo da lápide) | substituir o peso ou a bioimpedância de um dia passado | 07 §9 | a confirmar com teste | `4955f83` |
+| D6 | O aparelho que tinha a foto velha sobe os bytes velhos por cima da nova (o nome do arquivo não tem versão) | trocar a foto do aparelho ou refazer uma pose num aparelho; o outro sincroniza | 02 §9.2 | pela leitura | `963a79e` |
+| D7 | Um registro ilegível no aparelho é sobrescrito no primeiro toque (o aviso diz "mantido intacto") | o texto guardado corrompe; sem conta, perde-se tudo | 01 §9.1 | pela leitura | `f2bc28b` |
+| D8 | O dia de comida fecha com o tipo que ele disse, não com o resolvido: num dia de treino em que ele não abriu a folha do tipo, o total congelado sai sem o pré-treino e o intra, e a adesão usa as refeições de descanso | o caminho mais comum: treinar sem tocar na folha do tipo do dia | 06 B1 | pela leitura | `5eeaefc` |
+| D9 | "Tentar de novo" na correção de uma série passada grava 0 repetições quando o que falhou foi a carga ou o RIR | a gravação recusar durante uma correção em Dias | 11 R2 | pela leitura | `d2fd274` |
+| D10 | Aceitar primeiro a troca de exercício faz perder a mudança de séries do mesmo exercício na fila | as duas mudanças na mesma posição, respondidas nessa ordem | 04 §9.1 | pela leitura | `a136641` |
+| D11 | Responder a fila em dois aparelhos pode aplicar a mesma mudança duas vezes (num "adicionar", duplica o exercício) | responder mudanças da mesma sessão em aparelhos diferentes | 04 §9.21 | pela leitura | `a136641` |
+| D12 | Uma mudança gravada enquanto o envio está em voo fica marcada como enviada | rede lenta; a última série do dia | 02 §9.4 | pela leitura | `2f2517f` |
+| D13 | Apagar não atravessa em quatro lugares: voltar o nome do exercício ou o tipo de carga ao padrão, desfazer o ajuste de uma foto e corrigir a água para menos voltam pelo outro aparelho | dois aparelhos | 02 §9.7 e 9.8, 03 §9.4, 08 | pela leitura | `089d79c` |
+| D14 | O quadro e a lousa de uma aula que não fechou vazam para a aula seguinte; com dois aparelhos, ressuscitam depois do fecho | colar o quadro e não registrar passada; ou fechar a aula com dois aparelhos | 05 R3 e R4 | reproduzido | `0a206a6` |
+| D15 | Remover uma refeição do plano apaga a marca de hoje sem lápide, e o outro aparelho a traz de volta | dois aparelhos | 06 B7 | pela leitura | `5eeaefc` |
+| D16 | As fotos do corpo nunca saem da nuvem: apagar a pose, a sessão ou tudo tira dos aparelhos, não do bucket | apagar fotos com conta | 02 §9.12 | pela leitura | `963a79e` |
+| D17 | A importação de backup com a conta entrada une com a nuvem em vez de substituir | importar um backup antigo com conta | 01 §9.2, 02 §9.11 | a confirmar | `f2bc28b` (com conta, importar agora junta de propósito, sem perder o que não subiu, e o aviso diz isso) |
 
 ### 9.2 Regra que decide errado
 
-| # | o risco | área | verificação |
-|---|---|---|---|
-| R1 | A regra calórica pega as três últimas semanas válidas sem olhar se são recentes: três semanas pesadas há dois meses, e nada depois, dão "Comer mais 150 kcal" com o botão | 09 R1 | reproduzido na função |
-| R2 | A pergunta da gordura visual some dos caminhos guiados quando o par mais longo passa de 28 dias (a partir da 4ª sessão, a cada 14 dias); sem resposta, o corte por ganho rápido trava | 08 §9.2 | pela leitura |
-| R3 | "Restaurar o plano" zera o saldo sem marcar o passo como desfeito, e a Semana oferece o mesmo passo de novo sobre as mesmas semanas | 09 R5 | pela leitura |
-| R4 | Com o peso caindo, o texto da regra perde o sinal ("0,30 e 0,20 kg por semana, abaixo de 0,1") | 09 R2 | reproduzido na função |
+| # | o risco | área | verificação | corrigido |
+|---|---|---|---|---|
+| R1 | A regra calórica pega as três últimas semanas válidas sem olhar se são recentes: três semanas pesadas há dois meses, e nada depois, dão "Comer mais 150 kcal" com o botão | 09 R1 | reproduzido na função | `a72a559` |
+| R2 | A pergunta da gordura visual some dos caminhos guiados quando o par mais longo passa de 28 dias (a partir da 4ª sessão, a cada 14 dias); sem resposta, o corte por ganho rápido trava | 08 §9.2 | pela leitura | `a72a559` |
+| R3 | "Restaurar o plano" zera o saldo sem marcar o passo como desfeito, e a Semana oferece o mesmo passo de novo sobre as mesmas semanas | 09 R5 | pela leitura | `a72a559` (o registro fecha o passo; oferecer de novo ficou, porque com o plano de volta à base a mesma evidência pede o mesmo passo) |
+| R4 | Com o peso caindo, o texto da regra perde o sinal ("0,30 e 0,20 kg por semana, abaixo de 0,1") | 09 R2 | reproduzido na função | `a72a559` |
 
 ### 9.3 Tela que diz o que não aconteceu
 

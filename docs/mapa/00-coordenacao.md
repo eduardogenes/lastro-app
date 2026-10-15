@@ -60,6 +60,8 @@ publicada com tudo.
 - 14/10 · Os onze pararam no limite de uso da conta, ainda lendo, sem escrever nada. Retomados em duas levas (01–06, depois 07–11) para não estourar de novo.
 - 15/10 · A primeira leva escreveu os seis documentos e caiu no limite semanal só no relatório final; a segunda leva terminou inteira. Os 203 diagramas renderizam (conferidos com o Mermaid de verdade, `_pagina/checa.mjs`). Corrigido no 01 e no 02 o número de séries do corpo (são 12, não 7). Visão geral escrita e página publicada.
 
+- 15/10 · O dono pediu para consertar os riscos ao dado. Os 17 (D1 a D17) e os 4 da regra calórica (R1 a R4) da visão geral foram corrigidos, um commit por peça, cada um com teste que falha no código anterior. A visão geral marca o commit de cada um.
+
 ## Como refazer a página
 
 Quando um documento mudar, refaça a página e publique no mesmo endereço:
