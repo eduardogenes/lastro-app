@@ -9341,6 +9341,18 @@ CTX.abreSerieDaPassada = function (idEx, chave, k) { abreSerieDaPassada(idEx, ch
 CTX.repsDaPassada = function (v) { return repsDaPassada(v); };
 CTX.andaReguaDaPassada = function (dir) { andaReguaDaPassada(dir); };
 CTX.rirDaPassada = function (v) { return rirDaPassada(v); };
+/**
+ * "Tentar de novo" repete o toque que o aparelho recusou, seja ele qual for. O
+ * botão repetia sempre a repetição: quando o recusado era o RIR ou a carga, não
+ * havia repetição tocada, e a série era regravada com 0 repetições.
+ */
+CTX.tentaDeNovoNaPassada = function () {
+  const t = view.passada && view.passada.tocado;
+  if (!t) return;
+  if (t.k === 'reps') return repsDaPassada(t.v);
+  if (t.k === 'rir') return rirDaPassada(t.v);
+  if (t.k === 'carga') return gravaNaPassada(function (s) { s[0] = t.v; }, t);
+};
 CTX.abreCargaDaPassada = function () { abreCargaDaPassada(); };
 CTX.apagaSerieDaPassada = function () { return apagaSerieDaPassada(); };
 CTX.abreCorrecaoDoTempo = function (t) { abreCorrecaoDoTempo(t); };

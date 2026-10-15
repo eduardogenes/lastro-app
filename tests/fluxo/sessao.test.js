@@ -957,6 +957,34 @@ test('se a gravação falha, a série continua a guardada e o toque fica dito co
   a.fechar();
 });
 
+test('"Tentar de novo" depois de o RIR falhar grava o RIR, e não zera as repetições', async () => {
+  // Regressão (docs/mapa, risco D9): o botão repetia sempre a repetição; com o
+  // RIR recusado não havia repetição tocada, e a série virava "40 × 0".
+  const { a, idEx } = await abreSerie(agoraEstavel(), 2);
+  a.encheCota();
+  a.v('ctx.rirDaPassada', 2);
+  await a.esperar(60);
+  assert.deepStrictEqual(a.S().logs[idEx][0].sets[2], [40, 8], 'recusado: continua o guardado');
+
+  a.encheCota(false);
+  a.clicar('[data-a="sessao-tenta"]');
+  await a.esperar(60);
+  assert.deepStrictEqual(a.S().logs[idEx][0].sets[2], [40, 8, 2], 'grava o RIR que falhou, e só ele');
+  a.fechar();
+});
+
+test('"Tentar de novo" depois de a carga falhar grava a carga', async () => {
+  const { a, idEx } = await abreSerie(agoraEstavel(), 2);
+  a.encheCota();
+  await a.E(`cargaDaPassada('42,5')`);
+  await a.esperar(60);
+  a.encheCota(false);
+  a.clicar('[data-a="sessao-tenta"]');
+  await a.esperar(60);
+  assert.deepStrictEqual(a.S().logs[idEx][0].sets[2], [42.5, 8]);
+  a.fechar();
+});
+
 test('a correção acha o registro pela chave, mesmo com a lista do exercício mudando', async () => {
   // Entre o toque que abre e o que grava, a sincronia pode pôr outra entrada
   // na lista do exercício. Achar pela posição corrigiria o registro errado.

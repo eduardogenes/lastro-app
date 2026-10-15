@@ -170,7 +170,7 @@ function Editor({ e, ctx }) {
       {e.falhou && (
         <div class="ss-ed-falhou" role="alert">
           <p class="ins-body-sm">{e.falhou}</p>
-          <button class="ins-btn-secondary" data-a="sessao-tenta" onClick={() => ctx.repsDaPassada(e.regua.tocado)}>
+          <button class="ins-btn-secondary" data-a="sessao-tenta" onClick={() => ctx.tentaDeNovoNaPassada()}>
             Tentar de novo
           </button>
         </div>
