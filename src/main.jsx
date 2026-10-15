@@ -515,6 +515,7 @@ async function load() {
   migraPlano12(S);
   garanteProgramaERotacao();
   montaCatalogo();
+  limpaFila();
   // O que está no disco não é mudança: daqui em diante, só o que mudar ganha carimbo.
   lembraDocumentos();
 
@@ -783,6 +784,35 @@ function soltaPromo(sid) {
   const chave = chaveDePromo({ sid: sid, t: sid });
   S.promoPendente = S.promoPendente.filter(function (x) { return chaveDePromo(x) !== chave; });
   lapide(chave);
+}
+
+/**
+ * A lápide de UMA mudança respondida. A pergunta da sessão é uma entrada só, e
+ * a fusão escolhe a entrada inteira do lado mais novo: responder uma mudança no
+ * celular e outra no notebook trazia de volta a que o outro já tinha aplicado,
+ * e responder "entra" de novo a aplicava duas vezes (num exercício adicionado,
+ * duplicava o exercício). Com uma lápide por mudança, a resposta de qualquer
+ * aparelho vale nos dois.
+ *
+ * A chave é o conteúdo da mudança como ela nasceu (`chave`, quando a posição
+ * dela foi reescrita por uma troca aceita antes).
+ */
+function chaveDaMudanca(sid, m) {
+  return 'promo:' + sid + ':' + (m.chave || JSON.stringify([m.k, m.slot, m.de, m.para, m.por, m.id, m.pos, m.n]));
+}
+/** Tira da fila as mudanças já respondidas em qualquer aparelho. */
+function limpaFila() {
+  if (!Array.isArray(S.promoPendente)) return;
+  const mortos = S.apagados || {};
+  S.promoPendente.slice().forEach(function (g) {
+    if (!Array.isArray(g.mods)) return;
+    const fica = [];
+    g.mods.forEach(function (m, j) { if (mortos[chaveDaMudanca(g.sid, m)] == null) fica.push(j); });
+    if (fica.length === g.mods.length) return;
+    g.mods = fica.map(function (j) { return g.mods[j]; });
+    if (Array.isArray(g.resumoMods)) g.resumoMods = fica.map(function (j) { return g.resumoMods[j]; });
+    if (!g.mods.length) soltaPromo(g.sid);
+  });
 }
 
 // ---------- as palavras do fecho (§7.7 da frente 3) ----------
@@ -1247,6 +1277,7 @@ async function sincroniza(opcoes) {
           normalizaEstado();
           garanteProgramaERotacao();
           montaCatalogo();
+          limpaFila();                       // a resposta dada lá vale aqui
           lembraDocumentos();                // o que veio de lá não é mudança daqui
           await grava();                     // grava a fusão SEM recarimbar
           contaFusao(resumo, manual);
@@ -9569,7 +9600,21 @@ CTX.respondeMudanca = async function (sid, i, permanente, motivo) {
   const m = g.mods[i];
   if (!m) return;
 
-  const n = permanente ? aplicaAoOficial(g.day, [m], motivo || null) : 0;
+  // respondida no outro aparelho: não se aplica de novo
+  const chaveM = chaveDaMudanca(sid, m);
+  const jaRespondida = !!(S.apagados && S.apagados[chaveM] != null);
+  const n = (permanente && !jaRespondida) ? aplicaAoOficial(g.day, [m], motivo || null) : 0;
+  lapide(chaveM);
+  // A troca aceita muda o exercício da posição. As outras mudanças da mesma
+  // posição (as séries, a faixa) passam a apontar para o exercício novo: elas
+  // procuravam o antigo, e respondiam "A posição não existe mais no programa".
+  if (n && m.k === 'troca') {
+    g.mods.forEach(function (o, j) {
+      if (j === i || o.slot !== m.slot) return;
+      if (!o.chave) o.chave = chaveDaMudanca(sid, o).slice(('promo:' + sid + ':').length);
+      o.slot = m.por;
+    });
+  }
 
   g.mods = g.mods.filter(function (_, j) { return j !== i; });
   if (Array.isArray(g.resumoMods)) {

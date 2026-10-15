@@ -215,6 +215,81 @@ test('decidir cada mudança separadamente', async () => {
   a.fechar();
 });
 
+test('aceitar a troca primeiro não faz perder a mudança de séries da mesma posição', async () => {
+  // Regressão (docs/mapa, risco D10): a mudança de séries procurava a posição
+  // pelo exercício original, que a troca já tinha tirado, e respondia "A posição
+  // não existe mais no programa".
+  const a = await app();
+  a.v('toggle', 0);
+  for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 2, 1);
+  a.v('setAlt', 2, 'elevacao-lateral-com-halteres');
+  a.v('modoEdicao', false);
+  const series = a.S().prog.A.ex[2].s;
+  await a.v('finalizarSessao');
+  await a.esperar(60);
+
+  const g = a.S().promoPendente[0];
+  const iTroca = g.mods.findIndex(function (m) { return m.k === 'troca'; });
+  await a.v('ctx.respondeMudanca', g.sid, iTroca, true, null);
+  await a.esperar(60);
+  await a.v('ctx.respondeMudanca', g.sid, 0, true, null);
+  await a.esperar(60);
+
+  assert.strictEqual(a.S().prog.A.ex[2].id, 'elevacao-lateral-com-halteres', 'a troca entrou');
+  assert.strictEqual(a.S().prog.A.ex[2].s, series + 1, 'e as séries também');
+  assert.match(a.toast(), /Entrou no Treino A/);
+  a.fechar();
+});
+
+test('a mudança respondida num aparelho some da fila do outro e não se aplica duas vezes', async () => {
+  // Regressão (docs/mapa, risco D11): a pergunta da sessão vinha inteira do lado
+  // mais novo. Respondida uma mudança no celular e outra no notebook, a do
+  // celular voltava à fila do notebook — e responder "entra" de novo a aplicava
+  // outra vez.
+  const a = await app();
+  a.v('toggle', 0);
+  for (let k = 0; k < 3; k++) a.preencher(0, k, 40, 10);
+  a.v('modoEdicao', true);
+  a.v('mudaSeries', 4, 1);
+  a.v('mudaSeries', 0, 1);
+  a.v('modoEdicao', false);
+  const series = a.S().prog.A.ex[4].s;
+  await a.v('finalizarSessao');
+  await a.esperar(60);
+  assert.strictEqual(a.S().promoPendente[0].mods.length, 2);
+  const notebook = JSON.parse(JSON.stringify(a.S()));      // ainda com as duas
+
+  // no celular: a das séries do exercício 5 entra no programa
+  const g = a.S().promoPendente[0];
+  const i4 = g.mods.findIndex(function (m) { return m.slot === a.S().prog.A.ex[4].id; });
+  await a.v('ctx.respondeMudanca', g.sid, i4, true, null);
+  await a.esperar(60);
+  const celular = JSON.parse(JSON.stringify(a.S()));
+  a.fechar();
+
+  // no notebook, depois: a outra fica só naquele dia
+  const b = await app({ estado: notebook });
+  await b.esperar(20);
+  const gb = b.S().promoPendente[0];
+  const outra = gb.mods.findIndex(function (m) { return m.slot !== notebook.prog.A.ex[4].id; });
+  await b.v('ctx.respondeMudanca', gb.sid, outra, false, null);
+  await b.esperar(20);
+  assert.strictEqual(b.S().promoPendente[0].mods.length, 1, 'aqui ainda sobrava a do celular');
+
+  b.E(`
+    NUVEM.sessao = () => ({ email: 'eu@x.com', uid: 'u1' });
+    NUVEM.puxa = async () => ({ ok: true, v: { v: 2, data: ${JSON.stringify(celular)} } });
+    NUVEM.empurra = async () => ({ ok: true, v: 3 });
+  `);
+  await b.v('sincroniza');
+  await b.esperar(60);
+  assert.deepStrictEqual(b.S().promoPendente, [], 'respondida lá, ela não volta aqui');
+  assert.strictEqual(b.S().prog.A.ex[4].s, series + 1, 'e entrou uma vez só');
+  b.fechar();
+});
+
 test('o que mudou fica no registro do dia mesmo sem virar permanente', async () => {
   const a = await app();
   a.v('toggle', 0);
