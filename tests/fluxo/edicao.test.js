@@ -475,8 +475,11 @@ test('renomear um exercício do código grava só o nome, sobre o mesmo id', asy
   await a.v('ctx.renomeiaExercicio', alvo, 'Apelido dele');
   await a.esperar(60);
   const marca = a.S().ex[alvo];
-  assert.deepStrictEqual(Object.keys(marca), ['n'], 'só o nome vira override');
+  // só o nome vira override — mais o carimbo, que é o que a fusão compara
+  // quando a mesma entrada mudou nos dois aparelhos
+  assert.deepStrictEqual(Object.keys(marca).sort(), ['m', 'n'], 'só o nome vira override');
   assert.strictEqual(marca.n, 'Apelido dele');
+  assert.strictEqual(a.v('nomeEx', alvo), 'Apelido dele', 'e o carimbo não vaza para o catálogo');
   a.fechar();
 });
 
@@ -490,11 +493,17 @@ test('voltar ao nome do treinador apaga o override em vez de copiá-lo', async (
   assert.strictEqual(a.vJ('ctx.historico').renome.doCodigo, original,
     'a tela oferece a volta, com o nome do código');
 
+  const outroAparelho = JSON.parse(JSON.stringify(a.S()));   // ainda com o apelido
   await a.v('ctx.renomeiaExercicio', alvo, original);
   await a.esperar(60);
   assert.strictEqual(a.v('nomeEx', alvo), original);
   assert.strictEqual(!!(a.S().ex[alvo] && a.S().ex[alvo].n), false,
     'o estado não guarda cópia do que já está no código');
+  // Regressão (docs/mapa, risco D13): sem lápide, a união das chaves trazia o
+  // apelido de volta do outro aparelho.
+  a.E(`globalThis.__fundido = funde(S, ${JSON.stringify(outroAparelho)}, Date.now()).estado`);
+  const f = a.J('globalThis.__fundido');
+  assert.strictEqual(!!(f.ex[alvo] && f.ex[alvo].n), false, 'e o outro aparelho não traz o apelido de volta');
   a.fechar();
 });
 

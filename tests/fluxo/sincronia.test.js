@@ -643,6 +643,64 @@ test('a refeição marcada HOJE não volta; a água volta, porque é contador', 
   cel.fechar(); note.fechar();
 });
 
+test('a água corrigida para menos não é desfeita pelo outro aparelho', async () => {
+  // Regressão (docs/mapa, risco D13): a água fundia pelo maior, e corrigir para
+  // menos num aparelho era desfeito pelo outro, que ainda tinha o número velho.
+  const nuvem = nuvemDeDois(null);
+  const cel = await app({ estado: { logs: {}, done: [] }, aba: 'agora' });
+  nuvem.liga(cel);
+  const note = await app({ estado: { logs: {}, done: [] }, aba: 'agora' });
+  nuvem.liga(note);
+
+  await cel.v('ctx.setAgua', 8);
+  await cel.esperar(5);
+  await cel.v('sincroniza');
+  await note.v('sincroniza');
+  await note.esperar(20);
+  assert.strictEqual(note.S().dia.agua, 8);
+
+  await note.v('ctx.setAgua', 5);       // contou de mais: corrige
+  await note.esperar(5);
+  await note.v('sincroniza');
+  await cel.v('sincroniza');
+  await cel.esperar(20);
+  assert.strictEqual(cel.S().dia.agua, 5, 'a correção chegou');
+  await note.v('sincroniza');
+  await note.esperar(20);
+  assert.strictEqual(note.S().dia.agua, 5, 'e não foi desfeita');
+  cel.fechar(); note.fechar();
+});
+
+test('voltar o tipo de carga ao padrão não é desfeito pelo outro aparelho', async () => {
+  const nuvem = nuvemDeDois(null);
+  const cel = await app();
+  nuvem.liga(cel);
+  const note = await app();
+  nuvem.liga(note);
+
+  const chave = cel.E(`logKey(view.day, 0)`);
+  const padrao = cel.E(`treino(view.day).ex[0].car || 'pino'`);
+  const outro = padrao === 'halter' ? 'barra' : 'halter';
+  await cel.E(`setCarga(0, ${JSON.stringify(outro)})`);
+  await cel.esperar(5);
+  await cel.v('sincroniza');
+  await note.v('sincroniza');
+  await note.esperar(20);
+  assert.strictEqual(note.S().carga[chave], outro);
+
+  await cel.E(`setCarga(0, ${JSON.stringify(padrao)})`);   // volta ao padrão: a chave sai
+  await cel.esperar(5);
+  await note.E(`S.export = 1; save()`);                      // o notebook grava outra coisa
+  await note.esperar(5);
+  await cel.v('sincroniza');
+  await note.v('sincroniza');
+  await cel.v('sincroniza');
+  await cel.esperar(20);
+  assert.strictEqual(cel.S().carga[chave], undefined, 'a volta ao padrão ficou');
+  assert.strictEqual(note.S().carga[chave], undefined, 'nos dois aparelhos');
+  cel.fechar(); note.fechar();
+});
+
 test('login expirado não é sem rede: o Agora diz, e sem rede continua em silêncio', async () => {
   // A D (`prescricao.html`, estado 11). Sem rede a sincronia falha calada, de
   // propósito. O 401 derruba a sessão — e dali em diante a sincronia parava em

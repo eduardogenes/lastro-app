@@ -466,6 +466,7 @@ export function fechaDia(
     if (Object.keys(como).length) h.como = como;
   }
   if (dia.aguaNaoContada && !h.agua) h.aguaNaoContada = 1;
+  if (typeof dia.aguaM === 'number') h.aguaM = dia.aguaM;
   if (dia.cadencia) h.cadencia = dia.cadencia;
   if (dia.alta) h.alta = 1;
   if (dia.turno) h.turno = dia.turno;
@@ -591,6 +592,8 @@ export function poeComidaNoDia(
   const semConta = c.aguaNaoContada !== undefined
     ? c.aguaNaoContada : (antes ? antes.aguaNaoContada : undefined);
   if (semConta) dia.aguaNaoContada = 1;
+  if (c.agua != null || c.aguaNaoContada !== undefined) dia.aguaM = agora;
+  else if (antes && typeof antes.aguaM === 'number') dia.aguaM = antes.aguaM;
 
   const mudo = !Object.keys(dia.done).length && !(dia.agua > 0)
                && !dia.cadencia && !dia.turno && !dia.aderencia && !dia.aguaNaoContada;

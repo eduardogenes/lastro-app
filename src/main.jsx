@@ -75,7 +75,7 @@ import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
   chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde,
-  lapidesDoApagamento, uneLapides, DOCUMENTOS, valorDoDocumento, TETO
+  lapidesDoApagamento, uneLapides, DOCUMENTOS, valorDoDocumento, TETO, chaveDeCatalogo
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -290,13 +290,16 @@ async function renomeiaExercicio(idEx, bruto) {
 
   const doCodigo = nomeDoCodigo(idEx);
   const marca = Object.assign({}, S.ex[idEx] || {});
+  delete marca.m;
   if (doCodigo && doCodigo === nome) {
-    // voltou ao nome do treinador: o override some em vez de virar cópia
+    // voltou ao nome do treinador: o override some em vez de virar cópia — e a
+    // saída deixa lápide, senão o outro aparelho traria o nome velho de volta
     delete marca.n;
-    if (Object.keys(marca).length) S.ex[idEx] = marca; else delete S.ex[idEx];
+    if (Object.keys(marca).length) S.ex[idEx] = Object.assign(marca, { m: Date.now() });
+    else { delete S.ex[idEx]; lapide(chaveDeCatalogo(idEx)); }
   } else {
     marca.n = nome;
-    S.ex[idEx] = marca;
+    S.ex[idEx] = Object.assign(marca, { m: Date.now() });
   }
 
   montaCatalogo();
@@ -2702,6 +2705,7 @@ const CTX = {
     const d = diaDeComida();
     if (n == null) { d.aguaNaoContada = 1; }
     else { d.agua = Math.max(0, n); delete d.aguaNaoContada; }
+    d.aguaM = Date.now();              // a correção para menos atravessa a fusão
     queueSave(); render();
   },
   abreRefeicao: function (id) { CTX.abreFolha({ k: 'refeicao', id: id }); },
@@ -2719,15 +2723,17 @@ const CTX = {
   },
   maisUmCopo: async function () {
     const d = diaDeComida();
-    const antes = d.agua, nc = d.aguaNaoContada;
+    const antes = d.agua, nc = d.aguaNaoContada, mAntes = d.aguaM;
     d.agua = (d.aguaNaoContada ? 0 : (d.agua || 0)) + 1;
     delete d.aguaNaoContada;
+    d.aguaM = Date.now();
     const n = d.agua;
     view.aguaFalhou = null;
     const ok = await save();
     if (ok === false) {
       d.agua = antes;
       if (nc) d.aguaNaoContada = nc;
+      if (mAntes == null) delete d.aguaM; else d.aguaM = mAntes;
       view.aguaFalhou = n;
     }
     render();
@@ -3142,7 +3148,7 @@ async function importaAulaColada(texto) {
   // Cadastra o vocabulário novo antes de montar o dia: sem isso o dia
   // apontaria para id que o catálogo não conhece, e a linha nasceria vazia.
   a.novos.forEach(function (x) {
-    S.ex[x.id] = { n: x.n, g: '', car: x.car, c: 0, cue: '', meu: 1 };
+    S.ex[x.id] = { n: x.n, g: '', car: x.car, c: 0, cue: '', meu: 1, m: Date.now() };
     if (x.u) { S.ex[x.id].u = x.u; if (x.q) S.ex[x.id].q = x.q; }
   });
   if (a.novos.length) montaCatalogo();
@@ -3259,7 +3265,7 @@ async function criarExercicioCom(c) {
   if (nome.trim().length < 3) { toast('Dê um nome ao exercício.'); return; }
   const k = slugEx(nome);
   if (CAT[k] && !CAT[k].arq) { toast('Já existe um exercício com esse nome.'); return; }
-  S.ex[k] = { n: nome.trim(), g: un ? '' : g, car: car, c: comp ? 1 : 0, cue: '', meu: 1 };
+  S.ex[k] = { n: nome.trim(), g: un ? '' : g, car: car, c: comp ? 1 : 0, cue: '', meu: 1, m: Date.now() };
   // Movimento com grandeza não recebe grupo muscular, pela mesma razão que as
   // estações: atribuí-lo a um músculo faria o painel de volume contar burpee
   // como série de peito.
@@ -3650,7 +3656,7 @@ CTX.incorporaRevisao = async function () {
     d.ex.forEach(function (x) {
       const id = ids[x.n];
       if (CAT[id] || S.ex[id]) return;
-      S.ex[id] = { n: x.n, car: 'pino', g: x.g || '', c: 0, cue: x.cue || '' };
+      S.ex[id] = { n: x.n, car: 'pino', g: x.g || '', c: 0, cue: x.cue || '', m: Date.now() };
     });
   });
   montaCatalogo();
@@ -11872,7 +11878,15 @@ CTX.salvaAjuste = async function () {
   // Ajuste que é a identidade SAI do estado em vez de virar um objeto de zeros.
   // O estado é reserializado a cada série registrada, e "sem ajuste" e "ajuste
   // que não faz nada" são a mesma coisa para quem desenha.
-  const novo = Object.assign({}, ref, { enq: ehIdentidade(v.enq) ? undefined : Object.assign({}, v.enq, { m: Date.now() }) });
+  // Desfazer um ajuste que existia é outra coisa: grava o enquadramento neutro
+  // CARIMBADO. Sem carimbo, "sem ajuste" valia zero na fusão, e o ajuste antigo
+  // do outro aparelho vencia e voltava.
+  const neutro = ehIdentidade(v.enq);
+  const desfaz = neutro && ref.enq && !ehIdentidade(ref.enq);
+  const novo = Object.assign({}, ref, {
+    enq: desfaz ? Object.assign({}, IDENTIDADE, { m: Date.now() })
+       : neutro ? undefined : Object.assign({}, v.enq, { m: Date.now() })
+  });
   if (novo.enq === undefined) delete novo.enq;
 
   ses.fotos = Object.assign({}, ses.fotos);
@@ -11881,7 +11895,7 @@ CTX.salvaAjuste = async function () {
   view.ajuste = null;
   await save();
   render(); saiDoDestino('ajuste');
-  toast(novo.enq ? 'Ajuste salvo.' : 'Ajuste desfeito.');
+  toast(neutro ? 'Ajuste desfeito.' : 'Ajuste salvo.');
 };
 
 /** O que a tela de ajuste consome. */

@@ -956,7 +956,7 @@ test('girar sobe o zoom sozinho, para não abrir borda vazia', async () => {
   a.fechar();
 });
 
-test('o ajuste que não faz nada sai do estado em vez de virar zeros', async () => {
+test('desfazer o ajuste grava o neutro carimbado, e o ajuste antigo não volta pelo outro aparelho', async () => {
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   comSessoes(a, [hoje()], 'frente-relaxado');
@@ -967,12 +967,33 @@ test('o ajuste que não faz nada sai do estado em vez de virar zeros', async () 
   await a.esperar(60);
   assert.ok(a.S().protocolo.sessoes[0].fotos["frente-relaxado"].enq);
 
+  const outroAparelho = JSON.parse(JSON.stringify(a.S()));   // ainda com o giro
+
+  a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
+  a.v('ctx.zeraAjuste');
+  await a.v('ctx.salvaAjuste');
+  await a.esperar(60);
+  // Regressão (docs/mapa, risco D13): "sem ajuste" saía do estado e valia zero
+  // na fusão, e o giro antigo do outro aparelho vencia e voltava.
+  const enq = a.S().protocolo.sessoes[0].fotos["frente-relaxado"].enq;
+  assert.ok(enq && enq.r === 0 && enq.z === 1 && enq.m > 0, 'neutro e carimbado: ' + JSON.stringify(enq));
+  assert.match(a.toast(), /Ajuste desfeito/);
+  a.E(`globalThis.__fundido = funde(S, ${JSON.stringify(outroAparelho)}, Date.now()).estado`);
+  const f = a.J('globalThis.__fundido').protocolo.sessoes[0].fotos["frente-relaxado"].enq;
+  assert.strictEqual(f.r, 0, 'o giro antigo não voltou');
+  a.fechar();
+});
+
+test('o ajuste que não faz nada, numa foto sem ajuste, não vira objeto no estado', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  comSessoes(a, [hoje()], 'frente-relaxado');
   a.v('ctx.abreAjuste', hoje(), 'frente-relaxado');
   a.v('ctx.zeraAjuste');
   await a.v('ctx.salvaAjuste');
   await a.esperar(60);
   assert.strictEqual(a.S().protocolo.sessoes[0].fotos["frente-relaxado"].enq, undefined,
-    'voltou a ser a foto como saiu, sem objeto de zeros no estado');
+    'a foto como saiu, sem objeto de zeros no estado');
   a.fechar();
 });
 

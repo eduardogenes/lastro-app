@@ -841,7 +841,10 @@ export function montaCatalogo(exDoUsuario: Record<IdEx, Partial<Exercicio>>): Re
   const cat: Record<IdEx, Exercicio> = {};
   Object.keys(EX_BASE).forEach(function (k) { cat[k] = EX_BASE[k]; });
   Object.keys(exDoUsuario || {}).forEach(function (k) {
-    cat[k] = Object.assign({}, EX_BASE[k] || {}, exDoUsuario[k]) as Exercicio;
+    // `m` é o carimbo da entrada para a fusão, não um atributo do exercício
+    const proprio = Object.assign({}, exDoUsuario[k]) as Partial<Exercicio> & { m?: number };
+    delete proprio.m;
+    cat[k] = Object.assign({}, EX_BASE[k] || {}, proprio) as Exercicio;
   });
   return cat;
 }

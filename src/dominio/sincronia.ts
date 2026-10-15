@@ -478,10 +478,20 @@ function uneDiasDeComida(
       }
     });
 
-    meu.agua = Math.max(meu.agua || 0, x.agua || 0);
-    // o fato "não contei" só sobrevive se NENHUM dos dois lados contou
-    if (!x.aguaNaoContada || !meu.aguaNaoContada) delete meu.aguaNaoContada;
-    if (meu.agua > 0) delete meu.aguaNaoContada;
+    if (typeof meu.aguaM === 'number' && typeof x.aguaM === 'number') {
+      // Os dois lados carimbam a água: vale a conta que mudou por último,
+      // inclusive a correção para menos, que o maior desfazia.
+      if (x.aguaM > meu.aguaM) {
+        meu.agua = x.agua || 0; meu.aguaM = x.aguaM;
+        if (x.aguaNaoContada) meu.aguaNaoContada = 1; else delete meu.aguaNaoContada;
+      }
+    } else {
+      meu.agua = Math.max(meu.agua || 0, x.agua || 0);
+      // o fato "não contei" só sobrevive se NENHUM dos dois lados contou
+      if (!x.aguaNaoContada || !meu.aguaNaoContada) delete meu.aguaNaoContada;
+      if (meu.agua > 0) delete meu.aguaNaoContada;
+      if (typeof x.aguaM === 'number' && !(typeof meu.aguaM === 'number' && meu.aguaM >= x.aguaM)) meu.aguaM = x.aguaM;
+    }
 
     if (carimboM(x) > carimboM(meu)) {
       meu.escala = Object.assign({}, x.escala || {});
@@ -515,12 +525,29 @@ function uneDiasDeComida(
   return { itens: itens, vindos: vindos, apagados: apagados };
 }
 
-function uneMapa<T>(local: Record<string, T>, remoto: Record<string, T>, remotoManda: boolean): Record<string, T> {
+/** A lápide de uma entrada do catálogo dele. */
+export function chaveDeCatalogo(idEx: IdEx): string { return 'ex:' + idEx; }
+
+function uneCatalogo<T>(
+  local: Record<string, T>, remoto: Record<string, T>,
+  remotoManda: boolean, mortos: Record<string, number>
+): Record<string, T> {
   const saida: Record<string, T> = {};
-  const a = remotoManda ? local : remoto;
-  const b = remotoManda ? remoto : local;
-  Object.keys(a || {}).forEach(function (k) { saida[k] = a[k]; });
-  Object.keys(b || {}).forEach(function (k) { saida[k] = b[k]; });
+  const carimbo = function (x: T | undefined) {
+    const m = x ? (x as { m?: unknown }).m : undefined;
+    return typeof m === 'number' ? m : 0;
+  };
+  const chaves: Record<string, 1> = {};
+  Object.keys(local || {}).forEach(function (k) { chaves[k] = 1; });
+  Object.keys(remoto || {}).forEach(function (k) { chaves[k] = 1; });
+  Object.keys(chaves).forEach(function (k) {
+    const a = (local || {})[k], b = (remoto || {})[k];
+    let x = a || b;
+    if (a && b) x = carimbo(b) > carimbo(a) ? b : carimbo(a) > carimbo(b) ? a : (remotoManda ? b : a);
+    const morto = mortos[chaveDeCatalogo(k)];
+    if (morto != null && carimbo(x) <= morto) return;
+    saida[k] = x as T;
+  });
   return saida;
 }
 
@@ -551,7 +578,11 @@ export function uneLapides(
 export const DOCUMENTOS = [
   'prog', 'rot', 'progTreinador', 'comida', 'cadencia', 'compras',
   'ajuste', 'ajusteHist', 'perfManual',
-  'sessao', 'draft', 'mods', 'deload', 'dia', 'poses'
+  'sessao', 'draft', 'mods', 'deload', 'dia', 'poses',
+  // O tipo de carga corrigido por exercício: um mapa pequeno, editado à mão e
+  // raramente. Unido chave a chave, voltar ao padrão (que apaga a chave) era
+  // desfeito pelo outro aparelho, que ainda a tinha.
+  'carga'
 ] as const;
 export type Documento = typeof DOCUMENTOS[number];
 
@@ -698,7 +729,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
     // `mtime` é o mesmo sinal que já decide os documentos duas linhas acima.
     const comoHist = function (d: DiaComida, mtime: number): DiaComidaHist {
       return { d: d.data, done: Object.assign({}, d.done || {}), agua: d.agua || 0,
-               aguaNaoContada: d.aguaNaoContada,
+               aguaNaoContada: d.aguaNaoContada, aguaM: d.aguaM,
                escala: Object.assign({}, d.escala || {}),
                como: d.como ? Object.assign({}, d.como) : undefined,
                // `aderencia` não entrava nesta conversão, e o `base.dia`
@@ -721,6 +752,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
       // `m` não volta para `base.dia`: `DiaComida` não tem o campo, e o carimbo
       // que importa para a próxima fusão é o `mtime` do estado, logo abaixo.
       if (j.aguaNaoContada) base.dia.aguaNaoContada = 1;
+      if (typeof j.aguaM === 'number') base.dia.aguaM = j.aguaM;
       if (j.como) base.dia.como = j.como;
       if (j.aderencia) base.dia.aderencia = j.aderencia;
     }
@@ -844,9 +876,11 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   resumo.ajustesCorpo = cf.ajustesDaqui;
   resumo.apagados += cf.apagados;
 
-  // ---- mapas por exercício ----
-  base.ex = uneMapa(local.ex || {}, remoto.ex || {}, remotoManda);
-  base.carga = uneMapa(local.carga || {}, remoto.carga || {}, remotoManda);
+  // ---- o catálogo dele: por exercício, com carimbo e lápide ----
+  // Um cadastro feito no iPhone e outro no notebook ficam os dois; a mesma
+  // entrada nos dois lados vem do lado que a mudou por último; e voltar ao nome
+  // do treinador (que tira a entrada) não é desfeito pelo outro aparelho.
+  base.ex = uneCatalogo(local.ex || {}, remoto.ex || {}, remotoManda, mortos);
 
   // o último backup é o mais recente dos dois: é fato sobre o passado, e o
   // maior dos dois é o verdadeiro em ambos

@@ -198,6 +198,12 @@ export interface DiaComida {
    * app trata como mentira sobre o passado. Ausente = a conta valeu.
    */
   aguaNaoContada?: 1;
+  /**
+   * Quando a conta da água mudou por último (copo, correção, "não contei"). É o
+   * que deixa a correção PARA MENOS atravessar a fusão: sem carimbo, ficava o
+   * maior dos dois lados, e o outro aparelho desfazia a correção.
+   */
+  aguaM?: number;
   /** ajuste de porção SÓ DE HOJE, por refeição: 1 = 100% */
   escala: Record<string, number>;
   /**
@@ -263,6 +269,8 @@ export interface DiaComidaHist {
   agua: number;
   /** a água daquele dia não foi contada; ver `DiaComida.aguaNaoContada` */
   aguaNaoContada?: 1;
+  /** quando a conta da água mudou por último; ver `DiaComida.aguaM` */
+  aguaM?: number;
   /** ajuste de porção por refeição: 0,5 = comeu metade */
   escala: Record<string, number>;
   /** refeição → como ela saiu do plano; ver `DiaComida.como` */
