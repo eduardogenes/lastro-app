@@ -22,6 +22,22 @@ test('ganho travado por 2 semanas, com força parada, manda comer mais', () => {
   assert.ok(v.p.includes('+150 kcal'), v.p);
 });
 
+test('com o peso caindo, a frase da regra leva o sinal', () => {
+  // Regressão (docs/mapa, risco R4 da visão geral): "0,30 e 0,20 kg por semana"
+  // lia-se como ganho.
+  const v = veredito({ peso: pesagens([73.5, 73.2, 73.0]), cintura: [] }, OK);
+  assert.ok(/−0,30 e −0,20 kg por semana/.test(v.p), v.p);
+});
+
+test('semanas válidas, mas velhas, não decidem', () => {
+  const peso = pesagens([73.0, 73.05, 73.10]).map(function (x) { return { t: x.t - 6 * 7 * 86400000, v: x.v }; });
+  const v = veredito({ peso: peso, cintura: [] }, Object.assign({ agora: Date.now() }, OK));
+  assert.strictEqual(v.k, 'faltam', v.t);
+  assert.strictEqual(portoesDaRegra({ peso: peso }, Object.assign({ agora: Date.now() }, OK)), null);
+  const recente = veredito({ peso: pesagens([73.0, 73.05, 73.10]), cintura: [] }, Object.assign({ agora: Date.now() }, OK));
+  assert.strictEqual(recente.t, 'Comer mais 150 kcal', 'as recentes continuam decidindo');
+});
+
 test('ganho travado com a força subindo é recomposição: não mexe', () => {
   const v = veredito({ peso: pesagens([73.0, 73.05, 73.10]), cintura: [] },
                       { diasRegistrados: 14, forcaSubindo: true });

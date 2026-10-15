@@ -4354,7 +4354,9 @@ function sinaisDaRegra() {
     // sem leitura recente o peso abre revisão e não corta.
     gorduraVisual: leituraVigente(S.gordura, Date.now()),
     // o passo em vigor: com ele, a regra espera duas semanas novas de peso
-    passoEm: passoEmVigor() ? passoEmVigor().t : null
+    passoEm: passoEmVigor() ? passoEmVigor().t : null,
+    // com o instante, semanas velhas não decidem
+    agora: Date.now()
   };
 }
 
@@ -4367,11 +4369,19 @@ function veredito() { return _veredito(S.body, sinaisDaRegra()); }
  */
 function parDaAvaliacao() {
   const pose = ordemDePoses().filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0];
-  const par = pose && parPadrao(S.protocolo.sessoes, pose);
-  if (!par) return null;
-  const de = instanteDaData(par.de.d), ate = instanteDaData(par.ate.d);
-  const dias = Math.abs(Math.round((ate - de) / 86400000));
-  return dias >= JANELA_MIN && dias <= JANELA_MAX ? { de: de, ate: ate } : null;
+  const c = pose ? comAPose(S.protocolo.sessoes, pose) : [];
+  if (c.length < 2) return null;
+  // A sessão mais nova contra a mais antiga que ainda cabe na janela de 10 a 28
+  // dias. Era sempre o par mais longo (a primeira sessão contra a última): a
+  // partir da quarta sessão, a cada 14 dias, ele passava de 28 dias, a pergunta
+  // sumia dos caminhos guiados e o corte por ganho rápido travava.
+  const ate = instanteDaData(c[c.length - 1].d);
+  for (let i = 0; i < c.length - 1; i++) {
+    const de = instanteDaData(c[i].d);
+    const dias = Math.round((ate - de) / 86400000);
+    if (dias >= JANELA_MIN && dias <= JANELA_MAX) return { de: de, ate: ate, pose: pose, dDe: c[i].d, dAte: c[c.length - 1].d };
+  }
+  return null;
 }
 
 /**
@@ -7851,7 +7861,10 @@ CTX.dados = function () {
   const t = tendenciaDeForca(S.logs, function (k) { return temUnidade(exDe(k)); });
   const v = veredito();
   const alvo = ajusteDoVeredito(v);
-  const portoes = portoesDaRegra(S.body, sinaisDaRegra(), { forca: t, forcaManual: S.perfManual, par: parDaAvaliacao() });
+  // Durante a espera do passo, os portões cumpridos sugeriam uma decisão que a
+  // regra não vai tomar: não aparecem até ela voltar a decidir.
+  const portoes = v.espera ? null
+    : portoesDaRegra(S.body, sinaisDaRegra(), { forca: t, forcaManual: S.perfManual, par: parDaAvaliacao() });
 
   // e1RM da semana, somando o melhor de cada exercício: é a curva que responde
   // "estou ficando mais forte", e não a de um exercício só — que oscila com
@@ -8115,10 +8128,14 @@ CTX.restauraPlano = function () {
   // relatar divergência em dias que não divergiram. É o erro espelhado do que
   // `aplicaArroz` fazia — carimbar sem mudar, em vez de mudar sem carimbar.
   planoMudou();
+  // O passo em vigor sai junto do plano, e o registro diz isso: antes ele ficava
+  // lá parecendo vigente, com o saldo já em zero.
+  const u = passoEmVigor();
+  if (u) { u.desfeito = Date.now(); u.porRestaurar = 1; }
   S.comida.plano = JSON.parse(JSON.stringify(PLANO_BASE));
   S.ajuste = 0;
   queueSave(); render();
-  toast('Plano nutricional restaurado.');
+  toast('Plano nutricional restaurado.' + (u ? ' O ajuste de ' + sinalDoPasso(u.para - u.de) + ' kcal em vigor saiu junto.' : ''));
 };
 
 // ---------- DADOS ----------
@@ -10563,6 +10580,18 @@ CTX.abreComparar = function () {
   let pose = ordem.filter(function (id) { return comAPose(S.protocolo.sessoes, id).length >= 2; })[0] || ordem[0];
   view.comparar = { pose: pose, de: null, ate: null, sobrepor: false, opacidade: 50 };
   aplicaParPadrao();
+  entraNoDestino('comparar'); render();
+};
+/**
+ * "Responder" abre a comparação no par da pergunta, e não no mais longo: com o
+ * par mais longo passando de 28 dias, a pergunta não aparecia na tela que o
+ * botão abria.
+ */
+CTX.abreAvaliacao = function () {
+  const a = parDaAvaliacao();
+  if (!a) { CTX.abreComparar(); return; }
+  view.comparar = { pose: a.pose, de: a.dDe, ate: a.dAte, sobrepor: false, opacidade: 50 };
+  garanteBytesDoCorpo([a.dDe, a.dAte]);
   entraNoDestino('comparar'); render();
 };
 CTX.fechaComparar = function () { view.comparar = null; render(); saiDoDestino('comparar'); };

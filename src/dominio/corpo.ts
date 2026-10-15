@@ -170,6 +170,25 @@ export interface Sinais {
   gorduraVisual?: 'sim' | 'nao' | 'incerto' | null;
   /** quando o passo de ±150 kcal em vigor foi aplicado; `null` sem passo */
   passoEm?: number | null;
+  /**
+   * O instante da leitura. Com ele, a regra só decide sobre semanas RECENTES:
+   * a mais nova das três tem de ser a semana em curso ou a que acabou de
+   * passar. Sem ele (os testes antigos), a regra não olha a data.
+   */
+  agora?: number;
+}
+
+/**
+ * As taxas que a regra lê, e se elas são recentes. Três semanas pesadas há dois
+ * meses, e nada depois, davam "Comer mais 150 kcal" com o botão: a regra pegava
+ * as três últimas semanas válidas sem olhar quando elas foram. Uma semana que
+ * passou sem duas pesagens quebra a sequência — é o que o vazio da régua diz.
+ */
+function taxasDaRegra(peso: Marca[], sinais: Sinais): { taxas: TaxaSemanal[] | null; velhas: boolean } {
+  const taxas = taxasSemanais(peso, 2);
+  if (!taxas || typeof sinais.agora !== 'number') return { taxas: taxas, velhas: false };
+  const velhas = taxas[1].w < weekStart(sinais.agora) - 7 * DIA;
+  return { taxas: velhas ? null : taxas, velhas: velhas };
 }
 
 /**
@@ -332,9 +351,11 @@ function vereditoDasSemanas(
   body: { peso: Marca[]; cintura: Marca[] },
   sinais: Sinais = {}
 ): Veredito {
-  const taxas = taxasSemanais(body.peso, 2);
+  const { taxas, velhas } = taxasDaRegra(body.peso, sinais);
   if (!taxas)
-    return { k: 'faltam', t: 'Não mexer: faltam pesagens', p: 'Registre o peso 3 a 4 vezes por semana. A regra pede duas semanas seguidas de média, e média de uma pesagem só não é média.' };
+    return { k: 'faltam', t: 'Não mexer: faltam pesagens',
+             p: (velhas ? 'As semanas com média mais recentes já passaram: a semana que fica sem duas pesagens quebra a sequência. ' : '') +
+                'Registre o peso 3 a 4 vezes por semana. A regra pede duas semanas seguidas de média, e média de uma pesagem só não é média.' };
 
   const [ante, ult] = taxas;
   const reg = sinais.diasRegistrados;
@@ -365,7 +386,8 @@ function vereditoDasSemanas(
 
   // ---------- ganho travado, duas semanas seguidas ----------
   if (ante.kg < BAIXO && ult.kg < BAIXO) {
-    const mov = `A média ficou em ${fmtDec2(ante.kg)} e ${fmtDec2(ult.kg)} kg por semana — duas seguidas abaixo de ${fmtDec(BAIXO)}.`;
+    // com sinal: com o peso caindo, "ficou em 0,30 e 0,20" lia-se como ganho
+    const mov = `A média variou ${fmtSig2(ante.kg)} e ${fmtSig2(ult.kg)} kg por semana — duas seguidas abaixo de ${fmtDec(BAIXO)}.`;
     if (sinais.forcaSubindo)
       return { k: 'observar', t: 'Não mexer: peso parado com carga subindo', p: `${mov} Mas a força estimada está subindo: peso parado com carga subindo é recomposição, e mexer na comida atropelaria o que está dando certo.` };
     if (!aderenciaOk)
@@ -424,7 +446,7 @@ export function portoesDaRegra(
   sinais: Sinais = {},
   fontes: FontesDosPortoes = {}
 ): Portao[] | null {
-  const taxas = taxasSemanais(body.peso, 2);
+  const { taxas } = taxasDaRegra(body.peso, sinais);
   if (!taxas) return null;
   const [ante, ult] = taxas;
   const travado = ante.kg < BAIXO && ult.kg < BAIXO;

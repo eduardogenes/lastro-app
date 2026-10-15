@@ -102,8 +102,8 @@ export function Protocolo({ ctx }) {
           {d.fim.peso && <p class="ins-body-sm ins-t2">Peso desta sessão: {d.fim.peso}</p>}
           {(d.fim.comparar || d.fim.pergunta) && (
             <div class="pr-fim-b">
-              {d.fim.comparar && <button class="ins-btn-secondary" data-a="fim-comparar" onClick={ctx.abreComparar}>{d.fim.comparar}</button>}
-              {d.fim.pergunta && <button class="ins-btn-secondary" data-a="fim-pergunta" onClick={ctx.abreComparar}>{d.fim.pergunta}</button>}
+              {d.fim.comparar && <button class="ins-btn-secondary" data-a="fim-comparar" onClick={() => { ctx.fechaProtocolo(); ctx.abreComparar(); }}>{d.fim.comparar}</button>}
+              {d.fim.pergunta && <button class="ins-btn-secondary" data-a="fim-pergunta" onClick={() => { ctx.fechaProtocolo(); ctx.abreAvaliacao(); }}>{d.fim.pergunta}</button>}
             </div>
           )}
           <p class="ins-body-sm ins-t3">{d.fim.proxima}</p>

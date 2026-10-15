@@ -203,7 +203,7 @@ export function Semana({ ctx }) {
                   <button class="ins-btn-secondary" data-a="portao-por-em-dia" onClick={() => ctx.vaiPara('dias')}>Pôr em dia</button>
                 )}
                 {g.acao === 'responder' && (
-                  <button class="ins-btn-secondary" data-a="portao-responder" onClick={ctx.abreComparar}>Responder</button>
+                  <button class="ins-btn-secondary" data-a="portao-responder" onClick={ctx.abreAvaliacao}>Responder</button>
                 )}
                 {g.acao === 'ver-forca' && (
                   <button class="ins-btn-secondary" data-a="portao-ver-forca" onClick={verForca}>Ver a força</button>

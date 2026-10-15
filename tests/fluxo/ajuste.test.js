@@ -244,6 +244,67 @@ test('num par de três meses a pergunta não aparece', async () => {
   a.fechar();
 });
 
+test('com quatro sessões de foto, "Responder" ainda acha o par de 10 a 28 dias', async () => {
+  // Regressão (docs/mapa, risco R2 da visão geral): o par da pergunta era o mais
+  // longo, e a partir da quarta sessão a cada 14 dias ele passava de 28 dias. A
+  // pergunta sumia e o corte por ganho rápido travava.
+  const a = await comPeso([73.0, 73.6, 74.2]);
+  cacheFalso(a);
+  comFotos(a, [iso(42), iso(28), iso(14), iso(0)]);
+  a.aba('semana');
+  const portoes = a.vJ('ctx.dados').veredito.portoes || [];
+  assert.ok(portoes.some(function (g) { return g.acao === 'responder'; }), 'o portão oferece responder');
+
+  a.v('ctx.abreAvaliacao');
+  const c = a.vJ('ctx.comparacao');
+  assert.ok(c.pergunta, 'a comparação abre num par com a pergunta');
+  assert.match(c.pergunta.t, /Comparando com 28 dias atrás/);
+  await a.v('ctx.setGordura', 'sim'); await a.esperar();
+  a.aba('semana');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.t, 'Comer menos 150 kcal', 'e o corte destrava');
+  a.fechar();
+});
+
+test('semanas pesadas há dois meses, e nada depois, não decidem nada', async () => {
+  // Regressão (docs/mapa, risco R1): três semanas válidas, mas velhas, davam
+  // "Comer mais 150 kcal" com o botão.
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  a.E(`S.body.peso.forEach(function (x) { x.t -= 6 * 7 * 86400000; })`);
+  a.aba('semana');
+  const v = a.vJ('ctx.dados').veredito;
+  assert.strictEqual(v.t, 'Não mexer: faltam pesagens', v.t);
+  assert.ok(/quebra a sequência/.test(v.p), v.p);
+  assert.strictEqual(a.vJ('ctx.dados').veredito.portoes, null, 'sem portões');
+  a.fechar();
+});
+
+test('enquanto o passo é medido, os portões não aparecem', async () => {
+  // Regressão (docs/mapa, risco R4): os portões cumpridos sugeriam uma decisão
+  // que a regra não ia tomar.
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  a.aba('semana');
+  assert.ok(a.vJ('ctx.dados').veredito.portoes, 'antes do passo, os portões estão lá');
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  assert.match(a.vJ('ctx.dados').veredito.t, /ainda está sendo medido/, 'o passo está sendo medido');
+  assert.strictEqual(a.vJ('ctx.dados').veredito.portoes, null);
+  a.fechar();
+});
+
+test('restaurar o plano fecha o passo em vigor no registro', async () => {
+  // Regressão (docs/mapa, risco R5 da área 09): o passo ficava no registro
+  // parecendo vigente, com o saldo já em zero.
+  const a = await comPeso([73.0, 73.05, 73.10]);
+  a.aba('semana');
+  await a.v('ctx.aplicaAjuste'); await a.esperar();
+  a.E('window.confirm = function () { return true; }');
+  await a.v('ctx.restauraPlano'); await a.esperar();
+  const u = a.S().ajusteHist[a.S().ajusteHist.length - 1];
+  assert.ok(u.desfeito, 'o passo saiu do registro como desfeito');
+  assert.match(a.toast(), /saiu junto/);
+  assert.ok(!/Apliquei/.test(a.vJ('ctx.dados').veredito.estado || ''), 'e a linha não diz que ele vale');
+  a.fechar();
+});
+
 // ---------- as saídas da dieta ----------
 // O peso responde ao que ele COMEU, não ao que estava prescrito. Reduzir o
 // plano-base numa semana de saídas tiraria comida dos dias em que ele seguiu.
