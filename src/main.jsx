@@ -133,9 +133,9 @@ const KEY_LEGADO = 'treino-eduardo-v1';
  * de um dia) carimba o novo com `depoisDe(morte)`: no mesmo milissegundo, a
  * lápide venceria o empate na fusão e mataria o registro novo no outro aparelho.
  */
-function lapide(chave) {
+function lapide(chave, quando) {
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
-  const t = Date.now();
+  const t = quando == null ? Date.now() : quando;
   S.apagados[chave] = t;
   return t;
 }
@@ -1143,19 +1143,20 @@ const CHAVE_SYNC = 'treino-sync-v1';
 // outro que já subiu o que só ele tem.
 // `expirou`: o instante em que a sessão de login caiu (401). Fica gravado: o
 // aviso tem de sobreviver a fechar e abrir o app, até ele entrar de novo.
-let sync = { v: null, em: 0, sujo: false, rodando: false, erro: null, forcar: false, fotos: {}, expirou: 0 };
+let sync = { v: null, em: 0, sujo: false, rodando: false, erro: null, forcar: false, fotos: {}, expirou: 0, apagar: [] };
 
 async function carregaSync() {
   try {
     const r = await DB.get(CHAVE_SYNC);
     if (r && r.value) Object.assign(sync, JSON.parse(r.value), { rodando: false });
     if (!sync.fotos || typeof sync.fotos !== 'object') sync.fotos = {};
+    if (!Array.isArray(sync.apagar)) sync.apagar = [];
   } catch (e) {}
 }
 function gravaSync() {
   DB.set(CHAVE_SYNC, JSON.stringify({
     v: sync.v, em: sync.em, sujo: sync.sujo, forcar: sync.forcar, fotos: sync.fotos || {},
-    expirou: sync.expirou || 0
+    expirou: sync.expirou || 0, apagar: sync.apagar || []
   }));
 }
 
@@ -1275,6 +1276,55 @@ async function sincroniza(opcoes) {
  * Uma de cada vez, e não em paralelo: é o sinal da academia, e um lote
  * simultâneo derruba todas em vez de entregar algumas.
  */
+/** Os bytes de versão desconhecida já conferidos nesta abertura: não se baixa duas vezes. */
+const conferidas = {};
+
+/** Dois blobs com o mesmo conteúdo? É como se sabe que a nuvem ainda tem a versão velha. */
+async function mesmosBytes(a, b) {
+  if (!a || !b || a.size !== b.size) return false;
+  try {
+    const [x, y] = await Promise.all([a.arrayBuffer(), b.arrayBuffer()]);
+    const u = new Uint8Array(x), w = new Uint8Array(y);
+    for (let i = 0; i < u.length; i++) if (u[i] !== w[i]) return false;
+    return true;
+  } catch (e) { return false; }
+}
+
+/**
+ * As fotos do corpo apagadas aqui saem também do bucket.
+ *
+ * Apagar a pose, a sessão ou o histórico inteiro tirava a foto dos aparelhos e
+ * a deixava na nuvem para sempre — foto do corpo, que é o dado mais sensível do
+ * app. O pedido entra numa fila guardada com a contabilidade da sincronia, e a
+ * fila anda no começo de cada reconciliação: sem rede, ela espera; com rede,
+ * cada pedido só sai dela quando o servidor confirma.
+ */
+function apagaDaNuvemDepois(d, pose, ext) {
+  if (!Array.isArray(sync.apagar)) sync.apagar = [];
+  if (!sync.apagar.some(function (x) { return x.d === d && x.pose === pose && x.ext === ext; })) {
+    sync.apagar.push({ d: d, pose: pose, ext: ext });
+  }
+  delete sync.fotos['corpo:' + d + ':' + pose];
+  gravaSync();
+}
+async function apagaPendentesDaNuvem() {
+  if (!NUVEM.sessao() || !Array.isArray(sync.apagar)) return true;
+  while (sync.apagar.length) {
+    const x = sync.apagar[0];
+    // Uma foto nova pode ter ocupado o mesmo lugar depois do pedido (refeita
+    // aqui ou no outro aparelho): apagar agora levaria a nova.
+    const ses = sessaoDe(S.protocolo.sessoes || [], x.d);
+    const viva = ses && ses.fotos && ses.fotos[x.pose];
+    if (!(viva && viva.ext === x.ext)) {
+      const r = await NUVEM.apagaCorpo(x.d, x.pose, x.ext);
+      if (desligado) return false;
+      if (!r.ok) return false;              // sem rede: a fila fica para o próximo ciclo
+    }
+    sync.apagar.shift(); gravaSync();
+  }
+  return true;
+}
+
 async function reconciliaFotos() {
   if (!NUVEM.sessao() || !S.fotos) return;
   const ids = Object.keys(S.fotos);
@@ -1284,23 +1334,43 @@ async function reconciliaFotos() {
     const ref = S.fotos[id];
     if (!ref || !ref.v) continue;
 
-    const aqui = await FOTO.tem(id, ref.ext);
+    // Só sobem bytes que este aparelho SABE que são desta versão. O nome no
+    // cache não tem versão: antes, o aparelho com a foto velha a subia por cima
+    // da foto trocada no outro, assim que a referência nova chegava.
+    const aqui = await FOTO.versaoAqui(id, ref.ext);
+    if (desligado) return;
+    const confirmada = sync.fotos[id];
 
-    if (aqui && sync.fotos[id] !== ref.v) {
+    if (aqui === ref.v) {
+      if (confirmada === ref.v) continue;
       const bytes = await FOTO.le(id, ref.ext);
-      if (bytes) {
-        const r = await NUVEM.subirFoto(id, bytes, ref.ext);
-        if (!r.ok) return;                    // sem rede: para e tenta depois
-        sync.fotos[id] = ref.v; gravaSync();
-      }
-    } else if (!aqui) {
+      if (!bytes) continue;
+      const r = await NUVEM.subirFoto(id, bytes, ref.ext);
+      if (!r.ok) return;                      // sem rede: para e tenta depois
+      sync.fotos[id] = ref.v; gravaSync();
+    } else if (aqui === 'legado') {
+      // Guardados antes de os bytes dizerem a versão: podem ser esta foto ou a
+      // anterior. Sobem só se a nuvem não tiver nada ali — aí são a única cópia.
+      if (confirmada === ref.v || conferidas[id] === ref.v) continue;
+      conferidas[id] = ref.v;
+      const b = await NUVEM.baixaFoto(id, ref.ext);
+      if (!b.ok) return;
+      if (b.v) continue;                      // há foto na nuvem: a daqui não sobe por cima
+      const bytes = await FOTO.le(id, ref.ext);
+      if (!bytes) continue;
+      const r = await NUVEM.subirFoto(id, bytes, ref.ext);
+      if (!r.ok) return;
+      sync.fotos[id] = ref.v; gravaSync();
+    } else {
+      // não está aqui, ou está a de outra versão: a certa vem da nuvem
       const r = await NUVEM.baixaFoto(id, ref.ext);
       if (!r.ok) return;
-      if (r.v) {
-        await FOTO.guarda(id, r.v, ref.ext);
-        sync.fotos[id] = ref.v; gravaSync();
-        await carregaFotos([id]);              // a <img> estava vazia até agora
-      }
+      if (!r.v) continue;
+      if (aqui !== null && await mesmosBytes(await FOTO.le(id, ref.ext), r.v)) continue;   // a nova ainda não subiu
+      await FOTO.guarda(id, r.v, ref.ext, ref.v);
+      sync.fotos[id] = ref.v; gravaSync();
+      FOTO.solta(id);
+      await carregaFotos([id]);                // a <img> estava vazia, ou com a velha
     }
   }
 }
@@ -1324,6 +1394,7 @@ async function reconciliaFotos() {
  */
 async function reconciliaCorpo() {
   if (!NUVEM.sessao() || !S.protocolo) return;
+  if (!(await apagaPendentesDaNuvem())) return;
   const sessoes = S.protocolo.sessoes || [];
 
   let todasNoBucket = true, subiu = 0;
@@ -1337,10 +1408,38 @@ async function reconciliaCorpo() {
       const pose = poses[j], ref = ses.fotos[pose];
       if (!ref || !ref.v) continue;
       const k = 'corpo:' + ses.d + ':' + pose;
-      if (sync.fotos[k] === ref.v) continue;
+      const confirmada = sync.fotos[k];
+      // Só sobem bytes que este aparelho SABE que são desta versão: antes, o
+      // aparelho com a pose antiga a subia por cima da pose refeita no outro.
+      const aqui = await CORPO.versaoAqui(ses.d, pose, ref.ext);
+      if (desligado) return;
+      if (aqui === null) continue;            // não está aqui: nada a subir, nada a podar
+      // a de outra versão não sobe; e é a velha, que a poda pode levar
+      if (typeof aqui === 'number' && aqui !== ref.v) continue;
+      if (confirmada === ref.v) continue;     // já está no bucket
+
+      if (aqui === 'legado') {
+        // De versão desconhecida. Se a nuvem tem a foto e este aparelho nunca
+        // subiu nada ali, os bytes daqui vieram de lá: a nuvem vale. Se nunca
+        // subiu e a nuvem não tem, os daqui são a única cópia: sobem. Se já
+        // subiu outra versão, não há como saber qual é a nova: nada sobe, e o
+        // byte fica (a poda espera).
+        if (conferidas[k] === ref.v) { todasNoBucket = false; continue; }
+        conferidas[k] = ref.v;
+        const b = await NUVEM.baixaCorpo(ses.d, pose, ref.ext);
+        if (desligado) return;
+        if (!b.ok) { conta(); return; }
+        if (b.v && confirmada == null) {
+          await CORPO.guarda(ses.d, pose, b.v, ref.ext, ref.v);
+          CORPO.solta(ses.d, pose);
+          sync.fotos[k] = ref.v; gravaSync(); subiu++;
+          continue;
+        }
+        if (b.v) { todasNoBucket = false; continue; }
+      }
 
       const bytes = await CORPO.le(ses.d, pose, ref.ext);
-      if (!bytes) { todasNoBucket = false; continue; }   // não está aqui: nada a subir
+      if (!bytes) continue;
       const r = await NUVEM.subirCorpo(ses.d, pose, bytes, ref.ext);
       if (!r.ok) { conta(); return; }                     // sem rede: para e tenta depois
       sync.fotos[k] = ref.v; gravaSync(); subiu++;
@@ -1411,9 +1510,11 @@ async function garanteBytesDoCorpo(datas) {
       // de URL de blob e termina em `render()`. Esta função é chamada sem
       // `await` — os bytes vão por fora —, então um erro aqui não cai em
       // nenhum `try` do app: vira rejeição não tratada e contamina a suíte.
-      const aqui = await CORPO.tem(d, pose, ref.ext);
+      // Os bytes daqui só servem se forem DESTA versão (ou de antes de os bytes
+      // dizerem a versão). A pose refeita no outro aparelho vem do bucket.
+      const aqui = await CORPO.versaoAqui(d, pose, ref.ext);
       if (desligado) return;
-      if (aqui) {
+      if (aqui === ref.v || aqui === 'legado') {
         if (await CORPO.carrega(d, pose, ref)) mudou = true;
         if (desligado) return;
         if (limpaFalha(k)) mudou = true;
@@ -1425,7 +1526,15 @@ async function garanteBytesDoCorpo(datas) {
       const r = await NUVEM.baixaCorpo(d, pose, ref.ext);
       if (desligado) return;
       if (!r.ok || !r.v) { if (marcaFalha(k, 'nuvem')) mudou = true; continue; }
-      await CORPO.guarda(d, pose, r.v, ref.ext);
+      // a nuvem ainda com a versão velha que já estava aqui: a nova não subiu
+      if (aqui !== null && await mesmosBytes(await CORPO.le(d, pose, ref.ext), r.v)) {
+        if (marcaFalha(k, 'nuvem')) mudou = true; continue;
+      }
+      await CORPO.guarda(d, pose, r.v, ref.ext, ref.v);
+      if (desligado) return;
+      // o que veio da nuvem está na nuvem: não conta como "ainda não subiu"
+      sync.fotos['corpo:' + d + ':' + pose] = ref.v; gravaSync();
+      CORPO.solta(d, pose);
       if (desligado) return;
       if (limpaFalha(k)) mudou = true;
       if (await CORPO.carrega(d, pose, ref)) mudou = true;
@@ -5366,9 +5475,10 @@ async function tiraFoto(el) {
   el.value = '';                       // permite repetir a mesma foto
   try {
     const { blob, ext } = await FOTO.reduz(arquivo);
-    await FOTO.guarda(id, blob, ext);
+    const v = Date.now();
+    await FOTO.guarda(id, blob, ext, v);   // os bytes dizem de que versão são
     S.fotos = Object.assign({}, S.fotos);
-    S.fotos[id] = { v: Date.now(), ext: ext };
+    S.fotos[id] = { v: v, ext: ext };
     FOTO.solta(id);                    // a versão anterior sai da memória
     await save();
     await carregaFotos([id]);
@@ -6408,12 +6518,18 @@ async function wipe() {
   // (`S.fotos`) não entram aqui — elas sobrevivem ao gesto, então os bytes
   // delas continuam referenciados.
   //
-  // O BUCKET das fotos de corpo NÃO é podado, e isto é limite conhecido, não
-  // esquecimento: `NUVEM.apagaCorpo` não tem um único chamador em `src/` — nem
-  // `CTX.apagaFotoDoCorpo`, que apaga UMA, o chama —, e decidir o que fazer
-  // quando uma das N chamadas de rede falha no meio de um gesto que hoje não
-  // faz rede nenhuma é política que ninguém escreveu. Ver `09-superficie.md`.
+  // E o BUCKET das fotos de corpo também: cada foto que existia entra na fila de
+  // apagar da nuvem (`apagaDaNuvemDepois`), que anda na reconciliação seguinte
+  // com rede e só larga um pedido quando o servidor confirma. O gesto continua
+  // sem rede nenhuma; a falha de uma das chamadas só adia aquela.
   try { await CORPO.poda([]); } catch (e) {}
+  ((antes.protocolo && antes.protocolo.sessoes) || []).forEach(function (ses) {
+    Object.keys(ses.fotos || {}).forEach(function (pose) {
+      const ref = ses.fotos[pose];
+      if (ref && ref.v) apagaDaNuvemDepois(ses.d, pose, ref.ext || 'webp');
+    });
+  });
+  if (NUVEM.sessao()) apagaPendentesDaNuvem();
 
   view.day='A'; view.aba='agora'; view.open=null; view.hist=null; view.json=null; view.paste=false;
   view.swapOpen=null;
@@ -10089,18 +10205,26 @@ function proximaComAdiadas(ses) {
 
 async function guardaFotoDaPose(d, pose, reduzida) {
   const { blob, ext } = reduzida;
-  try { await CORPO.guarda(d, pose, blob, ext); }
+  // A versão nasce antes de guardar, porque os bytes a levam junto; e vem um
+  // milissegundo depois do instante da lápide da versão anterior (abaixo): no
+  // mesmo milissegundo, o empate é da lápide, e a foto nova sumiria no outro
+  // aparelho.
+  const morte = Date.now();
+  const v = morte + 1;
+  try { await CORPO.guarda(d, pose, blob, ext, v); }
   catch (e) { marcaPoseNaoGuardada(pose, 'foto', reduzida); return { parou: true }; }
 
   const ses = sessaoFotoOuCria(d);
   const antiga = ses.fotos[pose];
   // refazer apaga a anterior: sem lápide, a fusão traria a versão velha de
   // volta do outro aparelho, e as duas disputariam a mesma pose
-  const morte = antiga ? lapide(chaveDeFotoDoCorpo(d, pose)) : 0;
+  if (antiga) {
+    lapide(chaveDeFotoDoCorpo(d, pose), morte);
+    // no outro formato, a anterior ocuparia outro lugar no bucket para sempre
+    if (antiga.ext && antiga.ext !== ext) apagaDaNuvemDepois(d, pose, antiga.ext);
+  }
   ses.fotos = Object.assign({}, ses.fotos);
-  // depois da lápide, nunca no mesmo milissegundo: o empate é dela, e a foto
-  // nova sumiria no outro aparelho
-  ses.fotos[pose] = { v: depoisDe(morte), ext: ext };
+  ses.fotos[pose] = { v: v, ext: ext };
   ses.m = Date.now();
   CORPO.solta(d, pose);                // a versão anterior sai da memória
   await CORPO.carrega(d, pose, ses.fotos[pose]);
@@ -10147,6 +10271,8 @@ CTX.apagaFotoDoCorpo = async function (pose) {
   ses.m = Date.now();
   CORPO.solta(v.d, pose);
   await CORPO.esquece(v.d, pose, ext);
+  // e sai do bucket também, na próxima reconciliação com rede
+  apagaDaNuvemDepois(v.d, pose, ext);
   // sessão sem foto nenhuma não sobrevive à última: ela nasce na primeira
   if (!Object.keys(ses.fotos).length) {
     lapide(chaveDeSessaoFoto(v.d));

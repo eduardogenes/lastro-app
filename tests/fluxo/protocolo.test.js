@@ -397,25 +397,142 @@ test('a poda deixa no aparelho só as sessões recentes', async () => {
   a.fechar();
 });
 
-test('foto que ainda não subiu segura a poda do cache inteiro', async () => {
+test('foto que está aqui e ainda não subiu segura a poda do cache inteiro', async () => {
   // O erro mais caro que este caminho pode cometer é apagar daqui o byte que
-  // ainda não está lá. A poda espera todo mundo confirmado, e uma foto que
-  // falta segura o ciclo — que é exatamente o que se quer.
+  // ainda não está lá. Uma foto daqui que não subiu (a rede caiu nela) segura
+  // o ciclo inteiro — que é exatamente o que se quer.
   const a = await app({ aba: 'corpo' });
   cacheFalso(a);
   nuvemComBucket(a);
 
   const datas = [70, 56, 42, 28, 14].map(diasAtras);
   comSessoes(a, datas, 'frente-relaxado');
-  // a do meio não tem bytes aqui: nada a subir, e o bucket não a confirma
-  for (const d of datas) if (d !== datas[2]) await semear(a, d, 'frente-relaxado');
+  for (const d of datas) await semear(a, d, 'frente-relaxado');
+  a.E(`
+    const _sobe = NUVEM.subirCorpo;
+    NUVEM.subirCorpo = async (d, pose, blob, ext) =>
+      d === ${JSON.stringify(datas[2])} ? { ok: false, erro: 'rede', msg: 'sem conexão' } : _sobe(d, pose, blob, ext);
+  `);
 
   await a.v('reconciliaCorpo');
   await a.esperar(80);
 
   assert.ok(guardadas(a).includes('./corpo/' + datas[0] + '/frente-relaxado.webp'),
     'a mais antiga continua aqui: ' + guardadas(a).join(', '));
-  assert.strictEqual(guardadas(a).length, 4, 'nada foi podado neste ciclo');
+  assert.strictEqual(guardadas(a).length, 5, 'nada foi podado neste ciclo');
+  a.fechar();
+});
+
+test('o aparelho com a pose antiga não a sobe por cima da refeita no outro', async () => {
+  // Regressão (docs/mapa, risco D6): o nome no cache não tem versão, e a pose
+  // antiga daqui subia por cima da refeita no outro aparelho.
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  const d = diasAtras(3);
+  nuvemComBucket(a, {}, { [d + '/frente-relaxado.webp']: 1 });
+  await a.E(`(async () => {
+    const c = await caches.open('lastro-corpo');
+    await c.put('./corpo/${d}/frente-relaxado.webp', new Response(new Blob(['velha'], { type: 'image/webp' }),
+      { headers: { 'Content-Type': 'image/webp', 'X-Lastro-Versao': '100' } }));
+  })()`);
+  a.E(`S.protocolo.sessoes = [{ d: ${JSON.stringify(d)}, t: 1, m: 1, fotos: { 'frente-relaxado': { v: 200, ext: 'webp' } } }];
+       sync.fotos['corpo:${d}:frente-relaxado'] = 100`);
+
+  await a.v('reconciliaCorpo');
+  await a.esperar(80);
+  assert.deepStrictEqual(a.J('globalThis.__subiuCorpo'), [], 'a antiga não subiu');
+
+  await a.v('garanteBytesDoCorpo', [d]);
+  await a.esperar(80);
+  assert.strictEqual(await a.E(`(async () => (await (await caches.open('lastro-corpo')).match('./corpo/${d}/frente-relaxado.webp')).headers.get('X-Lastro-Versao'))()`), '200',
+    'e a refeita veio da nuvem para cá');
+  a.fechar();
+});
+
+// ---------- apagar sai da nuvem também (docs/mapa, risco D16) ----------
+
+test('apagar a foto do corpo a tira do bucket também', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await tirar(a);
+  await a.esperar(60);
+  await a.v('reconciliaCorpo');
+  await a.esperar(60);
+  const d = a.S().protocolo.sessoes[0].d;
+  assert.ok(a.J('globalThis.__bucketCorpo')[d + '/frente-relaxado.webp'], 'subiu');
+
+  a.aceitar();
+  a.v('ctx.vaiParaPose', 'frente-relaxado');
+  await a.v('ctx.apagaFotoDoCorpo', 'frente-relaxado');
+  await a.esperar(60);
+  await a.v('reconciliaCorpo');
+  await a.esperar(60);
+  assert.strictEqual(a.J('globalThis.__bucketCorpo')[d + '/frente-relaxado.webp'], undefined,
+    'saiu do bucket');
+  assert.deepStrictEqual(a.dado('sync').apagar, [], 'e a fila esvaziou');
+  a.fechar();
+});
+
+test('sem rede, o pedido de apagar fica na fila e sai depois', async () => {
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  const d = diasAtras(5);
+  nuvemComBucket(a, {}, { [d + '/frente-relaxado.webp']: 1 });
+  a.E(`apagaDaNuvemDepois(${JSON.stringify(d)}, 'frente-relaxado', 'webp')`);
+  a.E(`const _apaga = NUVEM.apagaCorpo; globalThis.__semRede = true;
+       NUVEM.apagaCorpo = async (...x) => globalThis.__semRede ? { ok: false, erro: 'rede', msg: 'sem conexão' } : _apaga(...x)`);
+
+  await a.v('reconciliaCorpo');
+  await a.esperar(40);
+  assert.strictEqual(a.dado('sync').apagar.length, 1, 'continua na fila');
+  assert.ok(a.J('globalThis.__bucketCorpo')[d + '/frente-relaxado.webp']);
+
+  a.E('globalThis.__semRede = false');
+  await a.v('reconciliaCorpo');
+  await a.esperar(40);
+  assert.strictEqual(a.dado('sync').apagar.length, 0);
+  assert.strictEqual(a.J('globalThis.__bucketCorpo')[d + '/frente-relaxado.webp'], undefined);
+  a.fechar();
+});
+
+test('o pedido de apagar não leva a foto nova que ocupou o mesmo lugar', async () => {
+  // Apagou aqui sem rede; enquanto isso a pose foi refeita (no outro aparelho)
+  // e a referência nova chegou. Apagar agora levaria a nova.
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  const d = diasAtras(5);
+  nuvemComBucket(a, {}, { [d + '/frente-relaxado.webp']: 1 });
+  a.E(`apagaDaNuvemDepois(${JSON.stringify(d)}, 'frente-relaxado', 'webp');
+       S.protocolo.sessoes = [{ d: ${JSON.stringify(d)}, t: 1, m: 1, fotos: { 'frente-relaxado': { v: 900, ext: 'webp' } } }]`);
+  await a.v('reconciliaCorpo');
+  await a.esperar(40);
+  assert.ok(a.J('globalThis.__bucketCorpo')[d + '/frente-relaxado.webp'], 'a nova ficou');
+  assert.strictEqual(a.dado('sync').apagar.length, 0, 'e o pedido saiu da fila');
+  a.fechar();
+});
+
+test('foto que não está neste aparelho não segura a poda', async () => {
+  // A foto tirada no outro aparelho e nunca aberta aqui não tem byte aqui para
+  // perder. Antes ela segurava a poda para sempre: no segundo aparelho, o cache
+  // só crescia.
+  const a = await app({ aba: 'corpo' });
+  cacheFalso(a);
+  nuvemComBucket(a);
+
+  const datas = [70, 56, 42, 28, 14].map(diasAtras);
+  comSessoes(a, datas, 'frente-relaxado');
+  for (const d of datas) if (d !== datas[2]) await semear(a, d, 'frente-relaxado');
+
+  await a.v('reconciliaCorpo');
+  await a.esperar(80);
+
+  assert.ok(!guardadas(a).includes('./corpo/' + datas[0] + '/frente-relaxado.webp'),
+    'a mais antiga, já confirmada no bucket, saiu do cache: ' + guardadas(a).join(', '));
+  assert.ok(a.J('globalThis.__bucketCorpo')[datas[0] + '/frente-relaxado.webp'],
+    'e está no bucket');
   a.fechar();
 });
 

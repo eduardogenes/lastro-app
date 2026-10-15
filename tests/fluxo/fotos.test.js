@@ -175,6 +175,52 @@ test('apagar tira do bucket também, para o byte não ficar órfão', async () =
   a.fechar();
 });
 
+// ---------- os bytes dizem de que versão são (docs/mapa, risco D6) ----------
+
+test('o aparelho com a foto velha não a sobe por cima da trocada no outro', async () => {
+  // Este aparelho subiu a versão 100; o outro trocou a foto (versão 200) e a
+  // referência nova chegou pela fusão. Os bytes daqui são os da 100.
+  const a = await app();
+  cacheFalso(a);
+  nuvemComBucket(a, { 'pendulum-squat.webp': 1 });
+  await a.E(`(async () => {
+    const c = await caches.open('lastro-fotos');
+    await c.put('./foto/pendulum-squat.webp', new Response(new Blob(['velha'], { type: 'image/webp' }),
+      { headers: { 'Content-Type': 'image/webp', 'X-Lastro-Versao': '100' } }));
+  })()`);
+  a.E(`S.fotos = { 'pendulum-squat': { v: 200, ext: 'webp' } }; sync.fotos['pendulum-squat'] = 100`);
+
+  await a.v('reconciliaFotos');
+  await a.esperar(80);
+
+  assert.deepStrictEqual(a.J('globalThis.__subiu'), [], 'a velha não subiu por cima da nova');
+  assert.strictEqual(await a.E(`(async () => (await (await caches.open('lastro-fotos')).match('./foto/pendulum-squat.webp')).headers.get('X-Lastro-Versao'))()`), '200',
+    'e a nova veio da nuvem, com a versão dela');
+  assert.strictEqual(a.dado('sync').fotos['pendulum-squat'], 200);
+  a.fechar();
+});
+
+test('bytes de antes desta versão sobem só se a nuvem não tiver a foto', async () => {
+  const a = await app();
+  cacheFalso(a);
+  nuvemComBucket(a, { 'pendulum-squat.webp': 1 });
+  // guardados sem dizer a versão, como tudo o que foi guardado antes
+  await a.E(`(async () => {
+    const c = await caches.open('lastro-fotos');
+    await c.put('./foto/pendulum-squat.webp', new Response(new Blob(['x'], { type: 'image/webp' })));
+    await c.put('./foto/remo-baixo.webp', new Response(new Blob(['x'], { type: 'image/webp' })));
+  })()`);
+  a.E(`S.fotos = { 'pendulum-squat': { v: 200, ext: 'webp' }, 'remo-baixo': { v: 300, ext: 'webp' } };
+       sync.fotos['pendulum-squat'] = 100`);
+
+  await a.v('reconciliaFotos');
+  await a.esperar(80);
+
+  assert.deepStrictEqual(a.J('globalThis.__subiu'), ['remo-baixo'],
+    'só sobe a que a nuvem não tem: a daqui é a única cópia');
+  a.fechar();
+});
+
 test('a miniatura aparece na troca só quando há foto', async () => {
   const a = await app();
   cacheFalso(a);

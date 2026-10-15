@@ -18,7 +18,12 @@ export function cacheFalso(a) {
   a.E(`
     // o jsdom não traz Response, que o Cache Storage exige para embrulhar bytes
     if (typeof Response === 'undefined') {
-      globalThis.Response = function (corpo) { this._c = corpo; };
+      // guarda os cabeçalhos: é por eles que os bytes dizem de que versão são
+      globalThis.Response = function (corpo, init) {
+        this._c = corpo;
+        const h = (init && init.headers) || {};
+        this.headers = { get: function (k) { return h[k] == null ? null : h[k]; } };
+      };
       globalThis.Response.prototype.blob = async function () { return this._c; };
     }
     if (typeof URL.createObjectURL !== 'function') {

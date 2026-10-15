@@ -201,11 +201,15 @@ async function baixa(bucket: string, partes: string[]): Promise<Resultado<Blob |
 async function apaga(bucket: string, partes: string[]): Promise<Resultado<true>> {
   const t = await token();
   if (!t.ok) return t;
+  let r: Response;
   try {
-    await fetch(endereco(t.v.uid, bucket, partes), {
+    r = await fetch(endereco(t.v.uid, bucket, partes), {
       method: 'DELETE', headers: { apikey: ANON, Authorization: 'Bearer ' + t.v.token }
     });
   } catch (e) { return falha('rede', 'sem conexão'); }
+  // O que já não existe está apagado. Qualquer outra recusa NÃO é apagado: quem
+  // chamou guarda o pedido e tenta de novo, em vez de dar a foto por apagada.
+  if (!r.ok && r.status !== 404 && r.status !== 400) return falha('servidor', 'o servidor recusou apagar (' + r.status + ')');
   return { ok: true, v: true };
 }
 

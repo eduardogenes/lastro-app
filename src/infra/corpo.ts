@@ -15,7 +15,7 @@
 // volta. É a mesma relação que o app já tem com a nuvem em todo o resto —
 // exceto que aqui a poda é deliberada, e não um acidente do sistema.
 
-import { reduzPara } from './fotos';
+import { reduzPara, CABECALHO_DA_VERSAO } from './fotos';
 import type { FotoRef, PoseId } from '../dominio/tipos';
 
 /** Cache próprio: dado do usuário, não asset do build — não leva versão no nome. */
@@ -82,6 +82,10 @@ export async function carrega(d: string, pose: PoseId, ref: FotoRef | null | und
   if (!ref || !ref.v || typeof URL === 'undefined' || !URL.createObjectURL) return false;
   const k = chaveViva(d, pose, ref);
   if (abertos[k]) return false;
+  // bytes de OUTRA versão não são esta foto: mostrar seria pôr a foto velha no
+  // lugar da refeita. Quem traz a certa é a busca no bucket.
+  const aqui = await versaoAqui(d, pose, ref.ext);
+  if (typeof aqui === 'number' && aqui !== ref.v) return false;
   const b = await le(d, pose, ref.ext);
   if (!b) return false;
   solta(d, pose);                 // versão anterior da mesma pose sai da memória
@@ -99,12 +103,33 @@ export function solta(d: string, pose?: PoseId): void {
   });
 }
 
-export async function guarda(d: string, pose: PoseId, blob: Blob, ext: string): Promise<void> {
+/**
+ * Guarda os bytes dizendo de que VERSÃO eles são (`v`, a da referência).
+ *
+ * O nome no cache não tem versão. Sem o cabeçalho, um aparelho com a foto velha
+ * não sabia que ela era velha: quando a referência nova chegava do outro
+ * aparelho, ele lia os bytes antigos e os subia por cima da foto refeita.
+ */
+export async function guarda(d: string, pose: PoseId, blob: Blob, ext: string, v?: number): Promise<void> {
   if (!temCache()) return;
   const c = await caches.open(CACHE_CORPO);
-  await c.put(chave(d, pose, ext), new Response(blob, {
-    headers: { 'Content-Type': blob.type || 'image/webp' }
-  }));
+  const cabeca: Record<string, string> = { 'Content-Type': blob.type || 'image/webp' };
+  if (v) cabeca[CABECALHO_DA_VERSAO] = String(v);
+  await c.put(chave(d, pose, ext), new Response(blob, { headers: cabeca }));
+}
+
+/**
+ * De que versão são os bytes daqui: o número, `'legado'` quando foram guardados
+ * antes de os bytes dizerem a versão, ou `null` quando não estão aqui.
+ */
+export async function versaoAqui(d: string, pose: PoseId, ext: string): Promise<number | 'legado' | null> {
+  if (!temCache()) return null;
+  const c = await caches.open(CACHE_CORPO);
+  const r = await c.match(chave(d, pose, ext));
+  if (!r) return null;
+  const h = r.headers && typeof r.headers.get === 'function' ? r.headers.get(CABECALHO_DA_VERSAO) : null;
+  const v = Number(h);
+  return v > 0 ? v : 'legado';
 }
 
 export async function le(d: string, pose: PoseId, ext: string): Promise<Blob | null> {

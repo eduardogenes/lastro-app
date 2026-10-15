@@ -123,6 +123,9 @@ export async function carrega(idEx: IdEx, ref: FotoRef | null | undefined): Prom
   if (!ref || !ref.v || typeof URL === 'undefined' || !URL.createObjectURL) return false;
   const k = chaveViva(idEx, ref);
   if (abertos[k]) return false;
+  // bytes de OUTRA versão não são esta foto: quem traz a certa é a sincronia
+  const aqui = await versaoAqui(idEx, ref.ext);
+  if (typeof aqui === 'number' && aqui !== ref.v) return false;
   const b = await le(idEx, ref.ext);
   if (!b) return false;
   solta(idEx);                    // versão anterior do mesmo exercício sai da memória
@@ -277,12 +280,36 @@ export function reduz(arquivo: Blob): Promise<{ blob: Blob; ext: string }> {
 }
 
 /** Guarda os bytes no aparelho. */
-export async function guarda(idEx: IdEx, blob: Blob, ext: string): Promise<void> {
+/** O cabeçalho que diz de que versão da referência são os bytes guardados. */
+export const CABECALHO_DA_VERSAO = 'X-Lastro-Versao';
+
+/**
+ * Guarda os bytes dizendo de que VERSÃO eles são (`v`, a da referência).
+ *
+ * O nome no cache não tem versão. Sem o cabeçalho, um aparelho com a foto velha
+ * não sabia que ela era velha: quando a referência nova chegava do outro
+ * aparelho, ele lia os bytes antigos e os subia por cima da foto trocada.
+ */
+export async function guarda(idEx: IdEx, blob: Blob, ext: string, v?: number): Promise<void> {
   if (!temCache()) return;
   const c = await caches.open(CACHE_FOTOS);
-  await c.put(chave(idEx, ext), new Response(blob, {
-    headers: { 'Content-Type': blob.type || 'image/webp' }
-  }));
+  const cabeca: Record<string, string> = { 'Content-Type': blob.type || 'image/webp' };
+  if (v) cabeca[CABECALHO_DA_VERSAO] = String(v);
+  await c.put(chave(idEx, ext), new Response(blob, { headers: cabeca }));
+}
+
+/**
+ * De que versão são os bytes daqui: o número, `'legado'` quando foram guardados
+ * antes de os bytes dizerem a versão, ou `null` quando não estão aqui.
+ */
+export async function versaoAqui(idEx: IdEx, ext: string): Promise<number | 'legado' | null> {
+  if (!temCache()) return null;
+  const c = await caches.open(CACHE_FOTOS);
+  const r = await c.match(chave(idEx, ext));
+  if (!r) return null;
+  const h = r.headers && typeof r.headers.get === 'function' ? r.headers.get(CABECALHO_DA_VERSAO) : null;
+  const v = Number(h);
+  return v > 0 ? v : 'legado';
 }
 
 /** Os bytes daquela foto, se este aparelho os tiver. */
