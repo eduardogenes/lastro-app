@@ -883,7 +883,13 @@ function projeta(i) {
     s.pausadoEm = null;
   }
   if (s.retro) { s.tocado = Date.now(); }
-  else { s.ultima = Date.now(); s.day = dia; }
+  else {
+    s.ultima = Date.now(); s.day = dia;
+    // A sessão segue o dia em que ele registra, e a marca de presença vai junto:
+    // senão a sessão dizia E e a marca dizia A, e a rotação andava pelo A.
+    const marca = S.done.filter(function (x) { return x.sid === s.sid; })[0];
+    if (marca && marca.day !== dia) { marca.day = dia; marca.m = Date.now(); }
+  }
 
   if (!S.logs[key]) S.logs[key] = [];
   let entry = daSessao(key, slot, s.sid);
@@ -1531,19 +1537,28 @@ function draftOf(i) {
 // porque projeta() reescreve o conjunto inteiro a partir do rascunho.
 function hidrataDraft(dia) {
   const s = S.sessao;
-  if (!s || s.day !== dia || !treino(dia)) return;
-  // criar rascunho vazio aqui contaminaria o estado: na abertura seguinte a
-  // migração de rascunho antigo o leria como treino em andamento
-  if (!S.draft || S.draft.day !== dia) S.draft = { day: dia, t: Date.now(), ex: {} };
-
+  if (!s || !treino(dia)) return;
+  // Vale para qualquer dia mostrado, não só o da sessão. Registrar em outro dia
+  // da rotação muda o dia da sessão; o dia de antes, sem rascunho, voltava em
+  // branco, e a primeira série digitada nele reescrevia a entrada inteira só
+  // com ela — as outras séries daquele exercício sumiam do histórico.
+  const achadas = {};
   treino(dia).ex.forEach(function (ex, i) {
-    if (S.draft.ex[i]) return;
     const base = slotDe(dia, i);
     const chave = Object.keys(S.logs).filter(function (k) {
       return !!daSessao(k, base, s.sid);
     })[0];
-    if (!chave) return;
-    const e = daSessao(chave, base, s.sid);
+    if (chave) achadas[i] = daSessao(chave, base, s.sid);
+  });
+  // criar rascunho vazio aqui contaminaria o estado: na abertura seguinte a
+  // migração de rascunho antigo o leria como treino em andamento. Por isso um
+  // dia que não é o da sessão só ganha rascunho se tiver o que reconstruir.
+  if (s.day !== dia && !Object.keys(achadas).length) return;
+  if (!S.draft || S.draft.day !== dia) S.draft = { day: dia, t: Date.now(), ex: {} };
+
+  Object.keys(achadas).forEach(function (i) {
+    if (S.draft.ex[i]) return;
+    const e = achadas[i];
     S.draft.ex[i] = {
       s: e.sets.map(function (x) { return x ? [x[0], x[1], x[2] != null ? x[2] : null] : [null, null, null]; }),
       obs: e.obs || '',

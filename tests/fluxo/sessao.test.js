@@ -123,6 +123,59 @@ test('trocar de dia no meio do treino não perde nem sobrescreve série', async 
   a.fechar();
 });
 
+test('registrar em outro dia e voltar não apaga as séries do dia de antes', async () => {
+  // Regressão (docs/mapa/03, risco 1): registrar no E mudava o dia da sessão, e
+  // o A só era reconstruído se fosse o dia da sessão. Voltando ao A, a primeira
+  // série digitada reescrevia a entrada só com ela e as outras sumiam.
+  const a = await app();
+  a.v('toggle', 0);
+  a.preencher(0, 0, 40, 10);
+  a.preencher(0, 1, 40, 10);
+  a.preencher(0, 2, 40, 9);
+
+  a.v('go', 'E');
+  a.v('toggle', 0);
+  a.preencher(0, 0, 20, 12);
+  assert.strictEqual(a.S().sessao.day, 'E');
+
+  a.v('go', 'A');
+  a.v('toggle', 0);
+  assert.strictEqual(a.doc.getElementById('w0_0').textContent, '40',
+    'o A volta preenchido mesmo não sendo mais o dia da sessão');
+  a.preencher(0, 0, 45, 10);
+
+  const sets = a.log('A', 0)[0].sets;
+  assert.deepStrictEqual(sets, [[45, 10], [40, 10], [40, 9]], 'as outras séries do A continuam');
+  assert.strictEqual(a.log('E', 0)[0].sets.filter(Boolean).length, 1, 'e a do E também');
+  a.fechar();
+});
+
+test('a marca de presença acompanha o dia da sessão', async () => {
+  const a = await app();
+  a.v('toggle', 0);
+  a.preencher(0, 0, 40, 10);
+  a.v('go', 'E');
+  a.v('toggle', 0);
+  a.preencher(0, 0, 20, 12);
+
+  const s = a.S();
+  const marca = s.done.filter(function (x) { return x.sid === s.sessao.sid; })[0];
+  assert.strictEqual(s.sessao.day, 'E');
+  assert.strictEqual(marca.day, 'E', 'a marca dizia A enquanto a sessão dizia E');
+  assert.ok(marca.m > 0, 'carimbada, para a mudança atravessar a sincronia');
+  a.fechar();
+});
+
+test('olhar outro dia sem registrar nada não cria rascunho dele', async () => {
+  const a = await app();
+  a.v('toggle', 0);
+  a.preencher(0, 0, 40, 10);
+  a.v('go', 'C');
+  a.v('render');
+  assert.strictEqual(a.S().draft.day, 'A', 'o rascunho continua sendo o do dia da sessão');
+  a.fechar();
+});
+
 test('hidratação recupera observação, dor e substituto', async () => {
   const a = await app();
   a.v('toggle', 1);
