@@ -1,0 +1,447 @@
+<title>Mapa do Lastro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: um fichário. À esquerda, o índice das áreas pelo número (e, na área
+   aberta, as seções e os fluxos); à direita, a leitura. No telefone, o índice
+   vira um painel no topo. As cores e as fontes são as do próprio app, só no claro. */
+:root {
+  color-scheme: light;
+  --fundo: #E7E3DB;
+  --tela: #F5F3EE;
+  --sup: #FFFFFF;
+  --sup2: #EDEAE3;
+  --tinta: #15171A;
+  --tinta2: #474C54;
+  --tinta3: #5C6169;
+  --fio: #DCD7CD;
+  --fio-ctl: #8C867A;
+  --acento: #3833DB;
+  --acento-tinta: #2C28BE;
+  --acento-suave: #E9E8FD;
+  --aten-fundo: #FBEFD6;
+  --aten-tinta: #5E3B00;
+  --d-tela: #E4EFE8; --d-tela-fio: #24604A;
+  --d-acao: #FFFFFF; --d-acao-fio: #69716B;
+  --d-dado: #FFF6D6; --d-dado-fio: #9A7A12;
+  --d-erro: #FBEAE2; --d-erro-fio: #A63F17;
+  --d-decisao: #F4F5F1; --d-decisao-fio: #434B45;
+  --f-titulo: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-texto: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+html { background: var(--tela); }
+body { margin: 0; background: var(--tela); color: var(--tinta); font: 16px/1.6 var(--f-texto); -webkit-text-size-adjust: 100%; }
+a { color: var(--acento-tinta); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; border-radius: 4px; }
+
+.casca { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; }
+
+/* ---- índice ---- */
+.lateral { position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; height: 100svh; overflow-y: auto; background: var(--sup2); border-right: 1px solid var(--fio); padding: 22px 16px 32px; box-sizing: border-box; }
+.marca { display: grid; gap: 2px; margin: 0 0 18px; padding: 0 6px; }
+.marca .nome { font: 700 1.3rem/1.15 var(--f-titulo); letter-spacing: -0.01em; }
+.marca .sub { font-size: .86rem; color: var(--tinta3); }
+.abre-nav { display: none; }
+.rotulo { display: block; font: 500 .74rem/1.3 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--tinta3); margin: 0 6px 6px; }
+#busca { box-sizing: border-box; width: 100%; padding: .55rem .7rem; border: 1px solid var(--fio-ctl); border-radius: 8px; background: var(--sup); color: var(--tinta); font: inherit; font-size: .95rem; }
+#busca::placeholder { color: var(--tinta3); }
+.resultados { margin: 10px 0 18px; display: grid; gap: 2px; }
+.resultados .conta { font-size: .82rem; color: var(--tinta3); margin: 0 6px 6px; }
+.resultados a { display: grid; gap: 1px; padding: 8px 8px; border-radius: 6px; text-decoration: none; color: var(--tinta); }
+.resultados a:hover { background: var(--sup); }
+.r-doc { font: 500 .72rem/1.3 var(--f-mono); color: var(--tinta3); }
+.r-tit { font-weight: 600; font-size: .9rem; line-height: 1.3; }
+.r-trecho { font-size: .82rem; line-height: 1.4; color: var(--tinta2); }
+mark { background: var(--aten-fundo); color: var(--aten-tinta); border-radius: 2px; padding: 0 .1em; }
+.areas, .secoes { list-style: none; margin: 0; padding: 0; }
+.areas { margin-top: 18px; display: grid; gap: 1px; }
+.areas > li > a { display: flex; gap: .65rem; align-items: baseline; padding: .42rem .5rem; border-radius: 6px; color: var(--tinta); text-decoration: none; font-size: .95rem; line-height: 1.3; }
+.areas > li > a:hover { background: var(--sup); }
+.num { font: 500 .8rem/1 var(--f-mono); color: var(--tinta3); font-variant-numeric: tabular-nums; min-width: 2.1em; }
+.areas > li.atual > a { background: var(--sup); font-weight: 600; box-shadow: 0 0 0 1px var(--fio); }
+.areas > li.atual > a .num { color: var(--acento-tinta); }
+.secoes { display: none; margin: 4px 0 10px; }
+.areas > li.atual > .secoes { display: block; }
+.secoes a { display: block; padding: .22rem .5rem .22rem 2.75rem; font-size: .86rem; line-height: 1.35; color: var(--tinta2); text-decoration: none; border-radius: 4px; }
+.secoes a:hover { color: var(--tinta); background: var(--sup); }
+.secoes .n3 a { padding-left: 3.6rem; font-size: .82rem; color: var(--tinta3); }
+.secoes a.ativo { color: var(--acento-tinta); font-weight: 600; }
+.meta { font-size: .78rem; color: var(--tinta3); margin: 22px 6px 0; line-height: 1.5; }
+
+/* ---- leitura ---- */
+main { min-width: 0; padding-block: 36px 96px; padding-inline: clamp(16px, 4.5vw, 64px); }
+.doc { max-width: 920px; }
+.doc > h1 { font: 700 clamp(1.9rem, 1.2rem + 2.4vw, 2.7rem)/1.08 var(--f-titulo); letter-spacing: -0.015em; margin: 0 0 .9rem; text-wrap: balance; }
+.doc > blockquote:first-of-type { margin: 0 0 1.1rem; padding: 0; border: 0; font-size: 1.14rem; line-height: 1.55; color: var(--tinta2); max-width: 64ch; }
+.doc blockquote { margin: 1rem 0; padding: 0 0 0 1rem; color: var(--tinta2); border-left: 2px solid var(--fio); }
+.doc > blockquote:first-of-type p { margin: 0; }
+.doc h2 { font: 700 1.5rem/1.2 var(--f-titulo); letter-spacing: -0.01em; margin: 3.2rem 0 1rem; padding-top: 1.3rem; border-top: 1px solid var(--fio); text-wrap: balance; scroll-margin-top: 16px; }
+.doc h3 { font: 600 1.14rem/1.3 var(--f-texto); margin: 2.4rem 0 .7rem; text-wrap: balance; scroll-margin-top: 16px; }
+.doc h4 { font: 600 1rem/1.35 var(--f-texto); margin: 1.6rem 0 .5rem; }
+.doc p, .doc li { max-width: 72ch; }
+.doc ul, .doc ol { padding-left: 1.3rem; }
+.doc li { margin: .2rem 0; }
+.doc li > ul, .doc li > ol { margin: .2rem 0; }
+.doc hr { border: 0; border-top: 1px solid var(--fio); margin: 2.4rem 0; }
+.doc hr + h2 { border-top: 0; padding-top: 0; }
+.doc code { font: .86em/1.4 var(--f-mono); background: var(--sup2); padding: .06em .32em; border-radius: 4px; overflow-wrap: anywhere; }
+.doc pre { background: var(--sup); border: 1px solid var(--fio); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font: .84rem/1.5 var(--f-mono); }
+.doc pre code { background: none; padding: 0; overflow-wrap: normal; }
+.tabela { overflow-x: auto; margin: 1rem 0 1.6rem; border: 1px solid var(--fio); border-radius: 8px; background: var(--sup); }
+.tabela table { border-collapse: collapse; width: 100%; font-size: .9rem; line-height: 1.45; font-variant-numeric: tabular-nums; }
+.tabela th { text-align: left; background: var(--sup2); font-weight: 600; white-space: nowrap; }
+.tabela th, .tabela td { padding: .5rem .75rem; border-bottom: 1px solid var(--fio); vertical-align: top; }
+.tabela td { min-width: 11ch; }
+.tabela tr:last-child td { border-bottom: 0; }
+a.area { text-decoration-style: dotted; }
+.legenda { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; margin: 0 0 1.4rem; font-size: .8rem; color: var(--tinta3); }
+.legenda span { display: inline-flex; align-items: center; gap: .4em; }
+.legenda i { width: .95em; height: .95em; border-radius: 3px; border: 1.5px solid; display: inline-block; }
+.legenda .l-tela i { background: var(--d-tela); border-color: var(--d-tela-fio); }
+.legenda .l-acao i { background: var(--d-acao); border-color: var(--d-acao-fio); }
+.legenda .l-dado i { background: var(--d-dado); border-color: var(--d-dado-fio); }
+.legenda .l-erro i { background: var(--d-erro); border-color: var(--d-erro-fio); }
+.legenda .l-decisao i { background: var(--d-decisao); border-color: var(--d-decisao-fio); transform: rotate(45deg) scale(.8); }
+
+figure.diagrama { margin: 1.2rem 0 1.7rem; background: var(--sup); border: 1px solid var(--fio); border-radius: 10px; }
+.d-area { overflow: auto; padding: 18px 16px; }
+.d-area svg { display: block; margin: 0 auto; max-width: none; height: auto; }
+.d-espera { margin: 0; min-height: 96px; display: grid; place-items: center; font-size: .86rem; color: var(--tinta3); }
+.d-falha { margin: 0; font-size: .9rem; color: var(--aten-tinta); background: var(--aten-fundo); border-radius: 6px; padding: 10px 12px; }
+figure.diagrama figcaption { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; border-top: 1px solid var(--fio); padding: 6px 12px; font-size: .82rem; color: var(--tinta3); }
+.d-amplia { font: inherit; color: var(--acento-tinta); background: none; border: 0; padding: 4px 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.d-fonte summary { cursor: pointer; padding: 4px 0; }
+.d-fonte[open] { flex-basis: 100%; }
+.d-fonte pre { margin: 6px 0 4px; max-height: 320px; }
+
+.passos { max-width: 920px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 3.4rem; }
+.passos a { display: grid; gap: 2px; padding: 14px 16px; background: var(--sup); border: 1px solid var(--fio); border-radius: 10px; text-decoration: none; color: var(--tinta); }
+.passos a:hover { border-color: var(--fio-ctl); }
+.passos .rot { font: 500 .74rem/1.3 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--tinta3); }
+.passos .tt { font: 600 1rem/1.3 var(--f-titulo); }
+.passos .prox { text-align: right; grid-column: 2; }
+
+.lupa { position: fixed; inset: 0; z-index: 50; background: var(--tela); display: flex; flex-direction: column; }
+.lupa[hidden] { display: none; }
+.lupa-barra { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; border-bottom: 1px solid var(--fio); background: var(--sup2); }
+.lupa-barra span { font: 600 .95rem/1.3 var(--f-titulo); min-width: 0; }
+.lupa-barra button, .abre-nav, .flutua { font: 600 .9rem/1 var(--f-texto); color: var(--tinta); background: var(--sup); border: 1px solid var(--fio-ctl); border-radius: 8px; padding: .6rem .9rem; cursor: pointer; }
+.lupa-area { flex: 1; overflow: auto; padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
+.lupa-area svg { display: block; margin: 0 auto; max-width: none; }
+.flutua { display: none; }
+
+@media (max-width: 960px) {
+  .casca { display: block; }
+  .lateral { position: static; height: auto; overflow: visible; border-right: 0; border-bottom: 1px solid var(--fio); padding: 16px; }
+  .marca { margin-bottom: 12px; }
+  .abre-nav { display: block; width: 100%; text-align: left; }
+  .painel { display: none; margin-top: 14px; }
+  .lateral.aberta .painel { display: block; }
+  main { padding-block: 26px 96px; }
+  .flutua { display: block; position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 20; box-shadow: 0 2px 10px rgba(21, 23, 26, .14); }
+  .passos { grid-template-columns: 1fr; }
+  .passos .prox { grid-column: 1; }
+}
+@media (prefers-reduced-motion: no-preference) { .resultados a, .areas a { transition: background-color .12s; } }
+</style>
+
+<div class="casca">
+  <aside class="lateral" id="lateral">
+    <div class="marca"><span class="nome">Mapa do Lastro</span><span class="sub">o app inteiro, área por área, com um fluxograma por funcionalidade</span></div>
+    <button class="abre-nav" id="abreNav" type="button" aria-expanded="false" aria-controls="painel">Áreas e busca</button>
+    <div class="painel" id="painel">
+      <label class="rotulo" for="busca">Buscar em todas as áreas</label>
+      <input id="busca" type="search" autocomplete="off" placeholder="ex.: Iniciar treino, lápide, arroz">
+      <div class="resultados" id="resultados" hidden></div>
+      <nav aria-label="Áreas"><ol class="areas" id="areas"></ol></nav>
+      <p class="meta">Leitura do código no commit 8ec19a4, em 14/10/2026. Cada afirmação saiu do código ou dos testes; o que não pôde ser afirmado está marcado como "a confirmar".</p>
+    </div>
+  </aside>
+  <main id="principal">
+<!--ARTIGOS-->
+    <div class="passos" id="passos"></div>
+  </main>
+</div>
+<button class="flutua" id="flutua" type="button">Áreas</button>
+<div class="lupa" id="lupa" hidden role="dialog" aria-modal="true" aria-labelledby="lupaTitulo">
+  <div class="lupa-barra"><span id="lupaTitulo">Diagrama</span><button id="lupaFecha" type="button">Fechar</button></div>
+  <div class="lupa-area" id="lupaArea"></div>
+</div>
+<script type="application/json" id="dados-diagramas">/*DIAGRAMAS*/</script>
+<script type="application/json" id="dados-nav">/*NAV*/</script>
+<script>
+(function () {
+  var DIAG = JSON.parse(document.getElementById('dados-diagramas').textContent);
+  var NAV = JSON.parse(document.getElementById('dados-nav').textContent);
+  var porId = {}; NAV.forEach(function (d, i) { d.ordem = i; porId[d.id] = d; });
+  var atual = null, usuarioRolou = false, desenhoGen = 0;
+
+  // ---------- o índice ----------
+  var areas = document.getElementById('areas');
+  areas.innerHTML = NAV.map(function (d) {
+    var secoes = d.titulos.filter(function (t) { return t.nivel >= 2; }).map(function (t) {
+      return '<li class="n' + t.nivel + '"><a href="#' + t.hid + '" data-hid="' + t.hid + '">' + escapa(t.texto) + '</a></li>';
+    }).join('');
+    return '<li data-doc="' + d.id + '"><a href="#d' + d.id + '" title="' + escapa(d.frase) + '"><span class="num">' + (d.id === 'inv' ? '+' : d.id) + '</span><span>' + escapa(d.nome) + '</span></a><ol class="secoes">' + secoes + '</ol></li>';
+  }).join('');
+  function escapa(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  var lateral = document.getElementById('lateral');
+  var abreNav = document.getElementById('abreNav');
+  function navAberta(sim) { lateral.classList.toggle('aberta', sim); abreNav.setAttribute('aria-expanded', sim ? 'true' : 'false'); }
+  abreNav.addEventListener('click', function () { navAberta(!lateral.classList.contains('aberta')); });
+  document.getElementById('flutua').addEventListener('click', function () { navAberta(true); window.scrollTo(0, 0); });
+  var estreito = window.matchMedia('(max-width: 960px)');
+
+  // ---------- ir para um documento ou uma seção ----------
+  function vai(hash) {
+    var h = String(hash || '').replace(/^#/, '') || 'd00';
+    var m = /^d(00|0[1-9]|1[01]|inv)(?:-|$)/.exec(h);
+    var id = m ? m[1] : '00';
+    var art = document.getElementById('d' + id);
+    if (!art) return;
+    if (atual !== art) {
+      [].forEach.call(document.querySelectorAll('article.doc'), function (a) { a.hidden = a !== art; });
+      atual = art;
+      prepara(art, id);
+      marcaIndice(id);
+      passos(id);
+    }
+    var alvo = h.indexOf('-') > 0 ? document.getElementById(h) : null;
+    usuarioRolou = false;
+    if (alvo) alvo.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
+    if (estreito.matches) navAberta(false);
+    desenhaArtigo(art, alvo);
+    observaTitulos(art);
+  }
+  ['wheel', 'touchmove', 'keydown'].forEach(function (ev) { window.addEventListener(ev, function () { usuarioRolou = true; }, { passive: true }); });
+
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a) return;
+    e.preventDefault();
+    var href = a.getAttribute('href');
+    try { history.pushState(null, '', href); } catch (err) { /* o quadro do visualizador pode recusar */ }
+    vai(href);
+  });
+  window.addEventListener('popstate', function () { vai(location.hash); });
+  window.addEventListener('hashchange', function () { vai(location.hash); });
+
+  function marcaIndice(id) {
+    [].forEach.call(areas.children, function (li) { li.classList.toggle('atual', li.getAttribute('data-doc') === id); });
+  }
+
+  function passos(id) {
+    var d = porId[id], ant = NAV[d.ordem - 1], prox = NAV[d.ordem + 1];
+    var bloco = function (x, cls, rot) { return x ? '<a class="' + cls + '" href="#d' + x.id + '"><span class="rot">' + rot + '</span><span class="tt">' + (x.id === 'inv' ? '' : x.id + ' · ') + escapa(x.nome) + '</span></a>' : ''; };
+    document.getElementById('passos').innerHTML = bloco(ant, 'ant', 'Anterior') + bloco(prox, 'prox', 'Próxima');
+  }
+
+  // Na primeira vez que um documento aparece: a legenda das cores e o esqueleto dos diagramas.
+  function prepara(art, id) {
+    if (art.getAttribute('data-pronto')) return;
+    art.setAttribute('data-pronto', '1');
+    var lead = art.querySelector(':scope > blockquote');
+    var temDiagrama = art.querySelector('figure.diagrama');
+    if (temDiagrama) {
+      var leg = document.createElement('div');
+      leg.className = 'legenda';
+      leg.setAttribute('aria-label', 'Cores dos diagramas');
+      leg.innerHTML = '<span class="l-tela"><i></i>o que você vê</span><span class="l-acao"><i></i>o que você faz ou o app calcula</span><span class="l-dado"><i></i>o que é gravado ou lido</span><span class="l-erro"><i></i>falha ou recusa</span><span class="l-decisao"><i></i>pergunta</span>';
+      var depois = lead || art.querySelector(':scope > h1');
+      if (depois) depois.insertAdjacentElement('afterend', leg);
+    }
+    [].forEach.call(art.querySelectorAll('figure.diagrama'), function (f) {
+      var src = DIAG[+f.getAttribute('data-d')];
+      f.innerHTML = '<div class="d-area"><p class="d-espera">Desenhando o diagrama…</p></div>' +
+        '<figcaption><button class="d-amplia" type="button" disabled>Ampliar</button>' +
+        '<details class="d-fonte"><summary>Texto do diagrama</summary><pre></pre></details></figcaption>';
+      f.querySelector('pre').textContent = src;
+    });
+  }
+
+  // ---------- os diagramas ----------
+  var mermaidPronto = new Promise(function (ok) {
+    function inicia() {
+      try {
+        window.mermaid.initialize({
+          startOnLoad: false, securityLevel: 'strict', theme: 'base',
+          themeVariables: {
+            fontFamily: '"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif', fontSize: '14px',
+            background: '#FFFFFF', primaryColor: '#FFFFFF', primaryTextColor: '#161A17', primaryBorderColor: '#69716B',
+            secondaryColor: '#F4F5F1', tertiaryColor: '#F5F3EE', lineColor: '#69716B', textColor: '#161A17',
+            edgeLabelBackground: '#F5F3EE', clusterBkg: '#F5F3EE', clusterBorder: '#DCD7CD'
+          },
+          flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis', padding: 10, nodeSpacing: 34, rankSpacing: 42 }
+        });
+        ok(true);
+      } catch (e) { ok(false); }
+    }
+    if (window.mermaid && window.mermaid.render) return inicia();
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.12.0/mermaid.min.js';
+    s.onload = inicia;
+    s.onerror = function () { ok(false); };
+    document.head.appendChild(s);
+  });
+  var fontes = (document.fonts && document.fonts.ready) ? document.fonts.ready.catch(function () {}) : Promise.resolve();
+  var fila = Promise.resolve();
+
+  function desenha(f) {
+    if (f.getAttribute('data-feito')) return Promise.resolve();
+    f.setAttribute('data-feito', '1');
+    var i = +f.getAttribute('data-d');
+    var area = f.querySelector('.d-area');
+    return mermaidPronto.then(function (temMermaid) {
+      if (!temMermaid) throw new Error('sem biblioteca');
+      return window.mermaid.render('mmd' + i, DIAG[i]);
+    }).then(function (r) {
+      area.innerHTML = r.svg;
+      var svg = area.querySelector('svg'), vb = svg && svg.viewBox && svg.viewBox.baseVal;
+      if (svg && vb && vb.width) { svg.setAttribute('data-w', vb.width); svg.setAttribute('data-h', vb.height); ajusta(svg, area); }
+      var b = f.querySelector('.d-amplia'); b.disabled = false;
+    }).catch(function () {
+      area.innerHTML = '<p class="d-falha">Este diagrama não pôde ser desenhado aqui. O texto dele está logo abaixo, em "Texto do diagrama".</p>';
+      f.querySelector('.d-fonte').open = true;
+      f.querySelector('.d-amplia').hidden = true;
+    });
+  }
+
+  // Cabe na coluna sem encolher abaixo do legível (62% na mesa, 80% no telefone); o que sobrar rola de lado.
+  function ajusta(svg, area) {
+    var w = +svg.getAttribute('data-w'), h = +svg.getAttribute('data-h');
+    if (!w) return;
+    var s = Math.max(estreito.matches ? 0.8 : 0.62, Math.min(1, (area.clientWidth - 32) / w));
+    svg.style.maxWidth = 'none'; svg.style.width = Math.round(w * s) + 'px'; svg.style.height = Math.round(h * s) + 'px';
+    svg.removeAttribute('width'); svg.removeAttribute('height');
+  }
+  var tAjuste = 0;
+  window.addEventListener('resize', function () {
+    clearTimeout(tAjuste);
+    tAjuste = setTimeout(function () {
+      if (!atual) return;
+      [].forEach.call(atual.querySelectorAll('.d-area svg[data-w]'), function (svg) { ajusta(svg, svg.parentNode); });
+    }, 150);
+  });
+
+  function desenhaArtigo(art, alvo) {
+    var gen = ++desenhoGen;
+    var figs = [].filter.call(art.querySelectorAll('figure.diagrama'), function (f) { return !f.getAttribute('data-feito'); });
+    var antes = alvo ? figs.filter(function (f) { return alvo.compareDocumentPosition(f) & Node.DOCUMENT_POSITION_PRECEDING; }) : [];
+    var depois = figs.filter(function (f) { return antes.indexOf(f) < 0; });
+    fila = fila.then(function () { return fontes; }).then(function () {
+      return antes.reduce(function (p, f) { return p.then(function () { return desenha(f); }); }, Promise.resolve());
+    }).then(function () {
+      if (alvo && !usuarioRolou && gen === desenhoGen) alvo.scrollIntoView({ block: 'start' });
+      return depois.reduce(function (p, f) { return p.then(function () { if (art.hidden) return; return desenha(f); }); }, Promise.resolve());
+    });
+  }
+
+  // ---------- ampliar ----------
+  var lupa = document.getElementById('lupa'), lupaArea = document.getElementById('lupaArea'), voltaFoco = null;
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.d-amplia');
+    if (!b) return;
+    var f = b.closest('figure'), svg = f.querySelector('.d-area svg');
+    if (!svg) return;
+    var tit = '';
+    for (var n = f.previousElementSibling; n; n = n.previousElementSibling) { if (/^H[1-4]$/.test(n.tagName)) { tit = n.textContent; break; } }
+    document.getElementById('lupaTitulo').textContent = tit || 'Diagrama';
+    var copia = svg.cloneNode(true);
+    if (copia.getAttribute('data-w')) { copia.style.width = copia.getAttribute('data-w') + 'px'; copia.style.height = copia.getAttribute('data-h') + 'px'; }
+    lupaArea.innerHTML = ''; lupaArea.appendChild(copia);
+    voltaFoco = b; lupa.hidden = false; document.getElementById('lupaFecha').focus();
+  });
+  function fechaLupa() { lupa.hidden = true; lupaArea.innerHTML = ''; if (voltaFoco) voltaFoco.focus(); }
+  document.getElementById('lupaFecha').addEventListener('click', fechaLupa);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !lupa.hidden) fechaLupa(); });
+
+  // ---------- a seção ativa no índice ----------
+  var obs = null;
+  function observaTitulos(art) {
+    if (!('IntersectionObserver' in window)) return;
+    if (obs) obs.disconnect();
+    var li = areas.querySelector('li.atual');
+    obs = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var ant = li && li.querySelector('a.ativo'); if (ant) ant.classList.remove('ativo');
+        var a = li && li.querySelector('a[data-hid="' + e.target.id + '"]');
+        if (a) a.classList.add('ativo');
+      });
+    }, { rootMargin: '0px 0px -75% 0px' });
+    [].forEach.call(art.querySelectorAll('h2[id], h3[id]'), function (h) { obs.observe(h); });
+  }
+
+  // ---------- a busca ----------
+  var norm = function (s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); };
+  var indice = null;
+  function montaIndice() {
+    indice = [];
+    [].forEach.call(document.querySelectorAll('article.doc'), function (art) {
+      var id = art.id.slice(1), doc = porId[id];
+      var cur = { doc: doc, hid: art.id, tit: doc.nome, partes: [] };
+      indice.push(cur);
+      [].forEach.call(art.children, function (el) {
+        if (/^H[1-3]$/.test(el.tagName)) {
+          if (el.tagName === 'H1') { cur.tit = el.textContent; return; }
+          cur = { doc: doc, hid: el.id, tit: el.textContent, partes: [] }; indice.push(cur); return;
+        }
+        if (el.matches('figure.diagrama')) {
+          var src = DIAG[+el.getAttribute('data-d')] || '', rot = [], m, re = /"([^"]+)"/g;
+          while ((m = re.exec(src))) { if (!/^#|fill:/.test(m[1])) rot.push(m[1].replace(/<br\/>/g, ' ')); }
+          cur.partes.push('Diagrama: ' + rot.join(' · '));
+          return;
+        }
+        if (el.classList.contains('legenda')) return;
+        cur.partes.push(el.textContent.replace(/\s+/g, ' ').trim());
+      });
+    });
+    indice.forEach(function (x) { x.texto = x.partes.join(' ').trim(); x.ntit = norm(x.tit); x.ntexto = norm(x.texto); delete x.partes; });
+  }
+  var busca = document.getElementById('busca'), res = document.getElementById('resultados'), tBusca = 0;
+  busca.addEventListener('input', function () { clearTimeout(tBusca); tBusca = setTimeout(procura, 140); });
+  function procura() {
+    var q = busca.value.trim();
+    if (q.length < 2) { res.hidden = true; res.innerHTML = ''; return; }
+    if (!indice) montaIndice();
+    var termos = norm(q).split(/\s+/).filter(function (t) { return t.length >= 2; });
+    if (!termos.length) { res.hidden = true; return; }
+    var achados = [];
+    indice.forEach(function (x) {
+      var ok = termos.every(function (t) { return x.ntit.indexOf(t) >= 0 || x.ntexto.indexOf(t) >= 0; });
+      if (!ok) return;
+      var nota = 0; termos.forEach(function (t) { if (x.ntit.indexOf(t) >= 0) nota += 5; nota += Math.min(5, x.ntexto.split(t).length - 1); });
+      achados.push({ x: x, nota: nota });
+    });
+    achados.sort(function (a, b) { return b.nota - a.nota || a.x.doc.ordem - b.x.doc.ordem; });
+    var mostra = achados.slice(0, 40);
+    res.hidden = false;
+    res.innerHTML = '<p class="conta">' + (achados.length ? achados.length + (achados.length === 1 ? ' trecho' : ' trechos') + (achados.length > 40 ? ', mostrando os 40 primeiros' : '') : 'Nada encontrado. Tente outra palavra.') + '</p>' +
+      mostra.map(function (a) {
+        var x = a.x;
+        return '<a href="#' + x.hid + '"><span class="r-doc">' + (x.doc.id === 'inv' ? 'inventário' : x.doc.id + ' · ' + escapa(x.doc.nome)) + '</span><span class="r-tit">' + realca(x.tit, termos) + '</span><span class="r-trecho">' + trecho(x, termos) + '</span></a>';
+      }).join('');
+  }
+  function trecho(x, termos) {
+    var pos = -1;
+    termos.forEach(function (t) { var p = x.ntexto.indexOf(t); if (p >= 0 && (pos < 0 || p < pos)) pos = p; });
+    if (pos < 0) return escapa(x.texto.slice(0, 120)) + (x.texto.length > 120 ? '…' : '');
+    var ini = Math.max(0, pos - 50), fim = Math.min(x.texto.length, pos + 110);
+    return (ini > 0 ? '…' : '') + realca(x.texto.slice(ini, fim), termos) + (fim < x.texto.length ? '…' : '');
+  }
+  function realca(s, termos) {
+    var n = norm(s), marcas = [];
+    termos.forEach(function (t) { var p = 0; while ((p = n.indexOf(t, p)) >= 0) { marcas.push([p, p + t.length]); p += t.length; } });
+    if (!marcas.length || n.length !== s.length) return escapa(s);
+    marcas.sort(function (a, b) { return a[0] - b[0]; });
+    var out = '', ult = 0;
+    marcas.forEach(function (m) { if (m[0] < ult) return; out += escapa(s.slice(ult, m[0])) + '<mark>' + escapa(s.slice(m[0], m[1])) + '</mark>'; ult = m[1]; });
+    return out + escapa(s.slice(ult));
+  }
+
+  vai(location.hash);
+})();
+</script>
