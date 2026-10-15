@@ -35,8 +35,16 @@ import type { ComoFoiARefeicao, DiaComida, DiaComidaHist } from './nutricao/tipo
 import { MARCAS_DO_CORPO } from './corpo';
 import type { LeituraDeGordura } from './corpo';
 
-/** Limites por coleção, iguais aos que o app aplica ao gravar. */
-const TETO = { logs: 500, done: 3000, progLog: 300, body: 400, cardio: 200, protocolo: 200, aulas: 60, comida: 4000, promo: 60 };
+/**
+ * Limites por coleção. O app aplica os mesmos ao gravar, lendo daqui: eram duas
+ * listas, e um número trocado numa delas cortava o histórico de um lado só.
+ *
+ * O peso tinha teto de 400 e o cardio de 200: pesando todo dia, as pesagens
+ * mais antigas começavam a sair, sem aviso, depois de uns 13 meses. Os tetos
+ * de hoje passam de dez anos de uso diário; o que limita o resto é o tamanho do
+ * estado, que é regravado inteiro a cada série.
+ */
+export const TETO = { logs: 500, done: 3000, progLog: 300, body: 4000, cardio: 3000, protocolo: 200, aulas: 60, comida: 4000, promo: 60 };
 
 /** Lápides mais velhas que isto são podadas: o que sumiu há meses já sumiu dos dois lados. */
 export const LAPIDE_DIAS = 90;

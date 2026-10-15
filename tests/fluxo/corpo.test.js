@@ -950,6 +950,43 @@ test('registrar duas vezes no mesmo dia substitui a leitura e deixa lápide nas 
   a.fechar();
 });
 
+test('corrigir a leitura de um dia passado não morre na fusão com o outro aparelho', async () => {
+  // Regressão (docs/mapa, risco D5): o dia passado tem instante fixo, a leitura
+  // nova cai na MESMA chave da que saiu, e as duas nasciam no mesmo
+  // milissegundo. A lápide vence o empate e a correção sumia na sincronia.
+  const agora = agoraEstavel(9);
+  const a = await app({ estado: vazio, agora: agora });
+  const t = agora - 3 * DIA;
+  await a.v('ctx.registraBio', LEITURA, t);
+  await a.esperar();
+  const outroAparelho = JSON.parse(JSON.stringify(a.S()));
+
+  await a.v('ctx.registraBio', Object.assign({}, LEITURA, { bioPeso: 80.1 }), t);
+  await a.esperar();
+  const nova = a.S().body.bioPeso[0];
+  assert.ok(nova.m > a.S().apagados['bioPeso:' + t], 'o carimbo novo vem depois da lápide');
+
+  a.E(`globalThis.__fundido = funde(S, ${JSON.stringify(outroAparelho)}, Date.now()).estado`);
+  const r = a.J('globalThis.__fundido');
+  assert.strictEqual(r.body.bioPeso.length, 1, 'a correção sobrevive à fusão');
+  assert.strictEqual(r.body.bioPeso[0].v, 80.1);
+  a.fechar();
+});
+
+test('o peso de mais de um ano continua guardado', async () => {
+  // Regressão (docs/mapa, risco D3): o teto era de 400 medidas por grandeza, e
+  // pesando todo dia as mais antigas saíam sem aviso depois de uns 13 meses.
+  const agora = agoraEstavel(9);
+  const peso = [];
+  for (let i = 500; i >= 1; i--) peso.push({ t: agora - i * DIA, v: 80, m: agora - i * DIA });
+  const a = await app({ estado: Object.assign({}, vazio, { body: { peso: peso, cintura: [] } }), agora: agora });
+  a.E(`view.bodyForm = { peso: 80.5 }`);
+  await a.v('addBody', 'peso');
+  await a.esperar();
+  assert.strictEqual(a.S().body.peso.length, 501, 'nenhuma pesagem antiga saiu');
+  a.fechar();
+});
+
 test('ctx.registraBio recusa data no futuro, e não grava nada', async () => {
   const a = await app({ estado: vazio });
   const r = await a.v('ctx.registraBio', LEITURA, Date.now() + DIA);

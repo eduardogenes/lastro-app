@@ -11,7 +11,7 @@
 // existe para cercar essa uma decisão.
 import { test } from 'vitest';
 import assert from 'node:assert';
-import { app } from './harness.js';
+import { app, agoraEstavel } from './harness.js';
 import { cacheFalso, cameraFalsa, guardadasEm, nuvemComBucket } from './dubles.js';
 
 const DIA = 86400000;
@@ -225,6 +225,35 @@ test('refazer uma pose deixa lápide, senão o outro aparelho traz a velha de vo
 
   assert.ok(a.S().apagados['corpo:' + hoje() + ':frente-relaxado'],
     'a versão anterior tem lápide própria — a da sessão não a alcançaria');
+  a.fechar();
+});
+
+test('a pose refeita não morre na fusão com o outro aparelho', async () => {
+  // Regressão (docs/mapa, risco D4): a lápide da versão velha e a versão nova
+  // nasciam no mesmo milissegundo, e a lápide vence o empate. Com o relógio
+  // parado o empate é certo; no aparelho, era o caso comum.
+  const a = await app({ aba: 'corpo', agora: agoraEstavel(21) });
+  cacheFalso(a);
+  a.v('ctx.abreProtocolo');
+  a.v('ctx.comecaSessaoDeFotos');
+  await tirar(a);
+  await a.esperar(60);
+  const outroAparelho = JSON.parse(JSON.stringify(a.S()));   // ainda com a primeira foto
+
+  a.v('ctx.vaiParaPose', 'frente-relaxado');
+  await tirar(a);
+  await a.esperar(60);
+
+  const d = a.S().protocolo.sessoes[0].d;
+  const nova = a.S().protocolo.sessoes[0].fotos['frente-relaxado'];
+  const morte = a.S().apagados['corpo:' + d + ':frente-relaxado'];
+  assert.ok(nova.v > morte, 'a foto nova nasce depois da lápide: ' + nova.v + ' > ' + morte);
+
+  a.E(`globalThis.__fundido = funde(S, ${JSON.stringify(outroAparelho)}, Date.now()).estado`);
+  const r = a.J('globalThis.__fundido');
+  assert.ok(r.protocolo.sessoes[0] && r.protocolo.sessoes[0].fotos['frente-relaxado'],
+    'a pose refeita sobrevive à fusão');
+  assert.strictEqual(r.protocolo.sessoes[0].fotos['frente-relaxado'].v, nova.v);
   a.fechar();
 });
 

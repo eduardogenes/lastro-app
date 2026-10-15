@@ -75,7 +75,7 @@ import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
   chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde,
-  lapidesDoApagamento, uneLapides, DOCUMENTOS, valorDoDocumento
+  lapidesDoApagamento, uneLapides, DOCUMENTOS, valorDoDocumento, TETO
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -127,10 +127,19 @@ const KEY_LEGADO = 'treino-eduardo-v1';
  * lá, e a fusão o traz de volta. A lápide viaja junto com o estado e diz "isto
  * morreu em T".
  */
+/**
+ * Marca o registro como apagado agora e devolve o instante. Quem recria o
+ * registro na MESMA chave logo em seguida (refazer uma pose, corrigir a medida
+ * de um dia) carimba o novo com `depoisDe(morte)`: no mesmo milissegundo, a
+ * lápide venceria o empate na fusão e mataria o registro novo no outro aparelho.
+ */
 function lapide(chave) {
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
-  S.apagados[chave] = Date.now();
+  const t = Date.now();
+  S.apagados[chave] = t;
+  return t;
 }
+function depoisDe(morte) { return Math.max(Date.now(), (morte || 0) + 1); }
 function rot() { return (S.rot && S.rot.length) ? S.rot : ROT_BASE; }
 
 // Sessões de cardio por semana que o treinador pede: segunda depois do A e
@@ -736,7 +745,7 @@ function guardaPromo(s, pendentes) {
   const j = S.promoPendente.findIndex(function (x) { return chaveDePromo(x) === chaveDePromo(p); });
   if (j >= 0) S.promoPendente[j] = p; else S.promoPendente.push(p);
   S.promoPendente.sort(function (a, b) { return (a.t || 0) - (b.t || 0); });
-  if (S.promoPendente.length > 60) S.promoPendente = S.promoPendente.slice(-60);
+  if (S.promoPendente.length > TETO.promo) S.promoPendente = S.promoPendente.slice(-TETO.promo);
 }
 
 /**
@@ -841,7 +850,7 @@ function abreSessao(dia) {
   const marca = { day: dia, t: agora, sid: agora, ini: 'auto' };
   if (S.deload) marca.dl = 1;
   S.done.push(marca);
-  if (S.done.length > 3000) S.done = S.done.slice(-3000);
+  if (S.done.length > TETO.done) S.done = S.done.slice(-TETO.done);
   return S.sessao;
 }
 
@@ -919,7 +928,7 @@ function projeta(i) {
   if (e.dor && e.dor.length) entry.dor = e.dor.slice(); else delete entry.dor;
   if (S.deload) entry.dl = 1; else delete entry.dl;
 
-  if (S.logs[key].length > 500) S.logs[key] = S.logs[key].slice(-500);
+  if (S.logs[key].length > TETO.logs) S.logs[key] = S.logs[key].slice(-TETO.logs);
 }
 
 // Uma entrada é identificada por sessão + posição do treino, não por sessão +
@@ -2271,7 +2280,7 @@ function fechaDiaDeComida(dia) {
   const j = S.comidaHist.findIndex(function (x) { return x.d === h.d; });
   if (j >= 0) S.comidaHist[j] = h; else S.comidaHist.push(h);
   S.comidaHist.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
-  if (S.comidaHist.length > 4000) S.comidaHist = S.comidaHist.slice(-4000);
+  if (S.comidaHist.length > TETO.comida) S.comidaHist = S.comidaHist.slice(-TETO.comida);
 }
 
 /**
@@ -2923,7 +2932,7 @@ async function salvarAulaComoModelo() {
   // perderia o time cap e os pesos na próxima vez.
   if (S.quadro && S.quadro.day === d) modelo.quadro = S.quadro.texto;
   if (j >= 0) S.aulas[j] = modelo; else S.aulas.push(modelo);
-  if (S.aulas.length > 60) S.aulas = S.aulas.slice(-60);
+  if (S.aulas.length > TETO.aulas) S.aulas = S.aulas.slice(-TETO.aulas);
   await save(); render();
   toast(j >= 0 ? 'Modelo "' + nome + '" atualizado.' : 'Modelo "' + nome + '" salvo.');
 }
@@ -3229,7 +3238,7 @@ function aplicaAoOficial(d, mods, motivo) {
     mods.forEach(function (m) {
       S.progLog.push({ t: agora, day: d, txt: textoMod(d, m), motivo: motivo || null });
     });
-    if (S.progLog.length > 300) S.progLog = S.progLog.slice(-300);
+    if (S.progLog.length > TETO.progLog) S.progLog = S.progLog.slice(-TETO.progLog);
   }
   return n;
 }
@@ -3506,7 +3515,7 @@ CTX.incorporaRevisao = async function () {
 function logProg(d, txt, motivo) {
   if (!Array.isArray(S.progLog)) S.progLog = [];
   S.progLog.push({ t: Date.now(), day: d, txt: txt, motivo: motivo || null, m: Date.now() });
-  if (S.progLog.length > 300) S.progLog = S.progLog.slice(-300);
+  if (S.progLog.length > TETO.progLog) S.progLog = S.progLog.slice(-TETO.progLog);
 }
 
 async function progSeries(d, i, delta) {
@@ -3749,7 +3758,7 @@ async function addCardio() {
   const f = Object.assign({ m:'bike', min:25, i:'moderado' }, view.cardioForm);
   // `alt` e não `m`: em cardio o `m` já é o modal
   S.cardio.push({ t: Date.now(), m: f.m, min: f.min, i: f.i, alt: Date.now() });
-  if (S.cardio.length > 200) S.cardio = S.cardio.slice(-200);
+  if (S.cardio.length > TETO.cardio) S.cardio = S.cardio.slice(-TETO.cardio);
   await save();
   view.cardioRapido = false;
   render();
@@ -3804,7 +3813,7 @@ CTX.gravaCardioNoDia = async function () {
   const novo = { t: t, m: f.m, min: f.min, i: f.i, alt: Date.now(), semHora: 1 };
   S.cardio.push(novo);
   S.cardio.sort(function (a, b) { return a.t - b.t; });
-  if (S.cardio.length > 200) S.cardio = S.cardio.slice(-200);
+  if (S.cardio.length > TETO.cardio) S.cardio = S.cardio.slice(-TETO.cardio);
   const ok = await save();
   if (ok === false) {
     S.cardio = S.cardio.filter(function (x) { return x !== novo; });
@@ -4337,12 +4346,15 @@ function gravaMarca(k, v, quando, onde) {
   // levá-lo junto com a marca substituída — senão a correção de um número
   // apagaria o lembrete que existe para o ponto não mudar.
   if (!onde) onde = noDia.map(x => x.onde).filter(Boolean)[0] || null;
-  noDia.forEach(x => { lapide(chaveDeMarca(k, x)); arr.splice(arr.indexOf(x), 1); });
-  const nova = { t: quando, v, m: Date.now() };
+  let morte = 0;
+  noDia.forEach(x => { morte = lapide(chaveDeMarca(k, x)); arr.splice(arr.indexOf(x), 1); });
+  // A medida de um dia passado tem instante fixo (7h), e a nova cai na MESMA
+  // chave da que saiu: o carimbo tem de vir depois da lápide.
+  const nova = { t: quando, v, m: depoisDe(morte) };
   if (onde) nova.onde = onde;
   arr.push(nova);
   arr.sort((a,b) => a.t - b.t);
-  if (arr.length > 400) S.body[k] = arr.slice(-400);
+  if (arr.length > TETO.body) S.body[k] = arr.slice(-TETO.body);
   return noDia.length;
 }
 
@@ -10084,9 +10096,11 @@ async function guardaFotoDaPose(d, pose, reduzida) {
   const antiga = ses.fotos[pose];
   // refazer apaga a anterior: sem lápide, a fusão traria a versão velha de
   // volta do outro aparelho, e as duas disputariam a mesma pose
-  if (antiga) lapide(chaveDeFotoDoCorpo(d, pose));
+  const morte = antiga ? lapide(chaveDeFotoDoCorpo(d, pose)) : 0;
   ses.fotos = Object.assign({}, ses.fotos);
-  ses.fotos[pose] = { v: Date.now(), ext: ext };
+  // depois da lápide, nunca no mesmo milissegundo: o empate é dela, e a foto
+  // nova sumiria no outro aparelho
+  ses.fotos[pose] = { v: depoisDe(morte), ext: ext };
   ses.m = Date.now();
   CORPO.solta(d, pose);                // a versão anterior sai da memória
   await CORPO.carrega(d, pose, ses.fotos[pose]);

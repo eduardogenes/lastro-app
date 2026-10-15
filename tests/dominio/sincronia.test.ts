@@ -158,6 +158,14 @@ test('pesagens dos dois aparelhos se somam, sem duplicar a mesma', () => {
   assert.deepStrictEqual(r.body.peso.map(x => x.v), [73.1, 73.4, 73.6], 'e em ordem de tempo');
 });
 
+test('mais de um ano de pesagens atravessa a fusão inteiro', () => {
+  // O teto era 400: pesando todo dia, a fusão cortava o começo do histórico.
+  const peso = [];
+  for (let i = 0; i < 500; i++) peso.push({ t: T0 - i * DIA, v: 80, m: T0 - i * DIA });
+  const r = funde(estado({ body: Object.assign(corpoVazio(), { peso: peso }) }), estado(), T0).estado;
+  assert.strictEqual(r.body.peso.length, 500);
+});
+
 test('a pesagem corrigida vence a original do mesmo dia', () => {
   const original = estado({ mtime: T0 - 1000, body: { peso: [{ t: T0, v: 73.4 }], cintura: [] } });
   const corrigida = estado({ mtime: T0, body: { peso: [{ t: T0, v: 74.1, m: T0 }], cintura: [] } });
