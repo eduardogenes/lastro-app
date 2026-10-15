@@ -836,6 +836,28 @@ function fraseDoFechoNaUltima(s, verbo) {
     '. A duração vai até ela: cerca de ' + fmtDur(marca ? marca.dur : 0) + ', aproximada.';
 }
 
+/**
+ * O quadro do dia aberto `d` que vale para a aula que começou em `inicio`: o
+ * colado no dia dela ou na véspera. Um quadro mais velho é de uma aula que não
+ * fechou, e não é desta.
+ */
+function quadroDaAula(d, inicio) {
+  const q = S.quadro;
+  return (q && q.day === d && recenteParaAula(q.t, inicio)) ? q : null;
+}
+/** A lousa pendente do dia aberto `d`, pela mesma janela do quadro. */
+function lousaDaAula(d, inicio) {
+  const l = S.lousa;
+  return (l && l.day === d && recenteParaAula(l.t || l.v, inicio)) ? l : null;
+}
+function recenteParaAula(t, inicio) {
+  const dia = _inicioDoDia(inicio);
+  return typeof t === 'number' && t >= dia - 86400000 && t < dia + 2 * 86400000;
+}
+/** As lápides do quadro e da lousa: cada um é um só, e o instante dele é a chave. */
+function chaveDoQuadro(q) { return 'quadro:' + (q && q.t); }
+function chaveDaLousa(l) { return 'lousa:' + (l && l.v); }
+
 function fechaSessao(comoFim) {
   const s = S.sessao;
   if (!s) return;
@@ -876,17 +898,24 @@ function fechaSessao(comoFim) {
   // reconstrói depois a partir da prescrição, como o treino de musculação se
   // reconstrói. Sem isto, o time cap, o peso em libras e o "alternate with
   // partner" não ficam em lugar nenhum.
-  if (marca && S.quadro && S.quadro.day === s.day) {
-    marca.obs = S.quadro.texto;
+  //
+  // Só o quadro e a lousa DESTA aula: colados ou fotografados no dia dela ou na
+  // véspera. O de uma aula que não fechou não vaza mais para a seguinte, uma
+  // semana depois, como nota e foto de outra aula. E os dois saem com lápide:
+  // sem ela, a fusão trazia de volta do outro aparelho o quadro e a lousa já
+  // fechados, porque "um lado vazio nunca vence um lado com valor".
+  const quadro = quadroDaAula(s.day, s.inicio), lousa = lousaDaAula(s.day, s.inicio);
+  if (marca && quadro) {
+    marca.obs = quadro.texto;
     marca.m = Date.now();
   }
-  if (S.quadro && S.quadro.day === s.day) S.quadro = null;
+  if (S.quadro && S.quadro.day === s.day) { lapide(chaveDoQuadro(S.quadro)); S.quadro = null; }
   // A foto da lousa, pela mesma razão: vira parte da sessão da aula.
-  if (marca && S.lousa && S.lousa.day === s.day) {
-    marca.lousa = { d: S.lousa.d, v: S.lousa.v, ext: S.lousa.ext };
+  if (marca && lousa) {
+    marca.lousa = { d: lousa.d, v: lousa.v, ext: lousa.ext };
     marca.m = Date.now();
-    S.lousa = null;
   }
+  if (S.lousa && S.lousa.day === s.day && (marca || !lousa)) { lapide(chaveDaLousa(S.lousa)); S.lousa = null; }
 
   S.sessao = null;
   S.draft = null;
@@ -3115,7 +3144,8 @@ async function salvarAulaComoModelo() {
   // Se o dia veio de um quadro colado, ele vai junto: salvar é justamente o
   // gesto de quem reconheceu uma aula que se repete, e o modelo sem a lousa
   // perderia o time cap e os pesos na próxima vez.
-  if (S.quadro && S.quadro.day === d) modelo.quadro = S.quadro.texto;
+  const q = quadroDaAula(d, Date.now());
+  if (q) modelo.quadro = q.texto;
   if (j >= 0) S.aulas[j] = modelo; else S.aulas.push(modelo);
   if (S.aulas.length > TETO.aulas) S.aulas = S.aulas.slice(-TETO.aulas);
   await save(); render();
@@ -5538,7 +5568,8 @@ CTX.tiraFotoDaLousa = function (el) { return tiraFotoDaLousa(el); };
 
 /** A lousa do dia aberto `d`: a pendente, ou a da sessão de hoje já encerrada. */
 function lousaDoDia(d) {
-  if (S.lousa && S.lousa.day === d) return S.lousa;
+  const pendente = lousaDaAula(d, Date.now());
+  if (pendente) return pendente;
   const m = S.done.filter(function (x) { return x.day === d && !x.livre && sameDay(x.t, Date.now()) && x.lousa; }).slice(-1)[0];
   return m ? m.lousa : null;
 }
@@ -7677,7 +7708,7 @@ CTX.treino = function () {
     // O quadro do box enquanto a aula acontece: time cap, peso sugerido e o
     // que mais a lousa disse e o app não modela. Some quando a sessão encerra,
     // depois de virar a nota dela.
-    quadro: (S.quadro && S.quadro.day === d) ? S.quadro.texto : null,
+    quadro: (quadroDaAula(d, Date.now()) || { texto: null }).texto,
     // a foto da lousa (estado 6): só no dia aberto
     lousa: diaAberto(d) ? (function () {
       const l = lousaDoDia(d);

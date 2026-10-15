@@ -158,6 +158,47 @@ test('ao encerrar, o quadro vira a nota da sessão', async () => {
   a.fechar();
 });
 
+test('o quadro de uma aula que não fechou não vaza para a aula seguinte', async () => {
+  // Regressão (docs/mapa, risco D14): colado e nunca registrado, o quadro
+  // ficava no dia aberto e virava a nota da aula da semana seguinte.
+  const a = await noBox();
+  await cola(a, HYROX_MZ);
+  await a.esperar();
+  a.E(`S.quadro.t = Date.now() - 7 * 86400000`);       // uma semana atrás
+  a.v('render');
+  assert.strictEqual(a.vJ('ctx.treino').quadro || null, null, 'a tela de hoje não mostra o quadro velho');
+
+  a.v('toggle', 0);
+  a.preencher(0, 0, 40, 10);
+  await a.esperar();
+  const sid = a.S().sessao.sid;
+  await a.v('fechaSessao', 'manual');
+  await a.v('save');
+  await a.esperar();
+  const marca = a.S().done.filter(function (x) { return x.sid === sid; })[0];
+  assert.strictEqual(marca.obs, undefined, 'a nota desta aula não é o quadro da outra');
+  assert.strictEqual(a.S().quadro, null);
+  a.fechar();
+});
+
+test('o quadro fechado não volta pelo outro aparelho', async () => {
+  // Regressão (docs/mapa, risco D14): "um lado vazio nunca vence um lado com
+  // valor", e o quadro já fechado voltava do outro aparelho.
+  const a = await noBox();
+  await cola(a, HYROX_MZ);
+  await a.esperar();
+  const outroAparelho = JSON.parse(JSON.stringify(a.S()));
+  a.v('toggle', 0);
+  a.preencher(0, 0, 40, 10);
+  await a.esperar();
+  await a.v('fechaSessao', 'manual');
+  await a.v('save');
+  await a.esperar();
+  a.E(`globalThis.__fundido = funde(S, ${JSON.stringify(outroAparelho)}, Date.now()).estado`);
+  assert.strictEqual(a.J('globalThis.__fundido').quadro, null, 'não ressuscitou');
+  a.fechar();
+});
+
 test('salvar como modelo leva o quadro junto', async () => {
   // Salvar é o gesto de quem reconheceu uma aula repetida — e o modelo sem a
   // lousa perderia o time cap e os pesos na próxima vez.

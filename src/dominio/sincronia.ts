@@ -786,6 +786,8 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   // o mais novo, que é o aparelho onde ele acabou de colar a lousa.
   const ql = local.quadro, qr = remoto.quadro;
   base.quadro = (qr && (!ql || (qr.t || 0) > (ql.t || 0))) ? qr : (ql || null);
+  // o quadro que virou nota de uma sessão fechada tem lápide: não volta
+  if (base.quadro && mortos['quadro:' + base.quadro.t] != null) base.quadro = null;
 
   // ---- a foto da lousa da aula em curso ----
   // A mesma regra do quadro: documento do dia, vence o mais novo. Sem esta
@@ -793,6 +795,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
   // outro aparelho.
   const ll = local.lousa, lr = remoto.lousa;
   base.lousa = (lr && (!ll || (lr.t || 0) > (ll.t || 0))) ? lr : (ll || null);
+  if (base.lousa && mortos['lousa:' + base.lousa.v] != null) base.lousa = null;
 
   // ---- leituras de gordura visual ----
   // Coleção como as outras: a resposta dada no computador não pode sumir
