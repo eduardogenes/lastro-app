@@ -466,6 +466,30 @@ test('remover uma refeição limpa o que era do dia junto', async () => {
   a.fechar();
 });
 
+test('a marca da refeição removida não volta pelo outro aparelho', async () => {
+  // Regressão (docs/mapa, risco D15): a marca saía sem lápide, e a fusão do
+  // mesmo dia a trazia de volta do aparelho que ainda a tinha.
+  const a = await app({ aba: 'agora' });
+  a.v('ctx.marcaRefeicao', 'lanche');
+  await a.esperar(5);
+  const outroAparelho = JSON.parse(JSON.stringify(a.S()));
+  await a.esperar(5);
+  const versao = a.S().comida.v;
+
+  a.recusar();
+  a.v('ctx.removeRefeicao', 'lanche');
+  assert.strictEqual(a.S().comida.v, versao, 'cancelar não mexe na versão do plano');
+
+  a.aceitar();
+  a.v('ctx.removeRefeicao', 'lanche');
+  await a.esperar();
+  assert.ok(a.S().apagados['comida:' + a.S().dia.data + ':lanche'], 'a marca sai com lápide');
+  a.E(`globalThis.__fundido = funde(S, ${JSON.stringify(outroAparelho)}, Date.now()).estado`);
+  assert.strictEqual(a.J('globalThis.__fundido').dia.done.lanche, undefined,
+    'e o outro aparelho não a traz de volta');
+  a.fechar();
+});
+
 // ---------------------------------------------------------------------------
 // O destrutivo de dentro da refeição: `removeItem` e `trocaItem`
 // ---------------------------------------------------------------------------

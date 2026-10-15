@@ -2405,7 +2405,12 @@ function fechaDiaDeComida(dia) {
   // o erro de medição que confunde silêncio com falha.
   if (!marcou && !(dia.agua > 0) && !dia.cadencia && !dia.turno) return;
 
-  const h = fechaDia(dia, planoDeComida(), catalogoAlimentos(),
+  // O dia desce com o tipo que ELE TEVE, e não só com o que foi dito: num dia
+  // de treino pelo padrão semanal, ou com sessão registrada, sem ninguém abrir
+  // a folha do tipo do dia, a linha ia sem tipo — o total congelado saía sem o
+  // pré-treino e o intra, e a adesão lia as refeições do descanso.
+  const fechado = Object.assign({}, dia, { cadencia: tipoDoDiaDeComida(dia.data, dia.cadencia, true) });
+  const h = fechaDia(fechado, planoDeComida(), catalogoAlimentos(),
                      versaoDoPlano(), S.ajuste || 0, Date.now());
   const j = S.comidaHist.findIndex(function (x) { return x.d === h.d; });
   if (j >= 0) S.comidaHist[j] = h; else S.comidaHist.push(h);
@@ -2471,6 +2476,19 @@ function cadenciaDaSemana() {
 
 function diaResolvido() {
   return diaDeHoje(S, ROT_BASE, cadenciaDaSemana(), diaDeComida().cadencia, Date.now());
+}
+
+/**
+ * Treino ou descanso, para um dia de comida de qualquer data, pela MESMA
+ * autoridade do dia de hoje: sessão registrada naquele dia manda; depois, o que
+ * ele disse; por último, a semana típica — o palpite que o Agora mostrou
+ * naquele dia. Sem `comPalpite`, o palpite não vale e o dia sem sessão nem
+ * resposta é descanso: é o caso do dia passado que nunca foi mostrado.
+ */
+function tipoDoDiaDeComida(dataISO, dito, comPalpite) {
+  const h = diaDeHoje(S, ROT_BASE, cadenciaDaSemana(), dito || null, instanteDaData(dataISO));
+  if (h.previsto && !comPalpite) return 'descanso';
+  return h.cadencia;
 }
 
 /** A refeição que É o treino: o plano marca isso pelo id. */
@@ -8524,15 +8542,20 @@ CTX.duplicaRefeicao = function (id) {
 };
 
 CTX.removeRefeicao = function (id) {
-  planoMudou();
   const r = achaRefeicao(id);
   if (!r) return;
   if (!confirm('Remover "' + r.n + '" do plano?\n\nIsso vale para todo dia. O histórico do que você já marcou não muda.')) return;
+  // a versão do plano sobe só se ele mudou: cancelar não é mudança
+  planoMudou();
   const plano = planoDeComida();
   plano.splice(plano.indexOf(r), 1);
   const dia = diaDeComida();
+  // A marca de hoje sai com LÁPIDE, como no desmarcar: sem ela, o outro aparelho
+  // a trazia de volta, e uma refeição que nem existe mais contava no dia.
+  if (dia.done[id] != null) lapide(chaveDeRefeicaoFeita(dia.data, id));
   delete dia.done[id];
   delete dia.escala[id];
+  if (dia.como) { delete dia.como[id]; if (!Object.keys(dia.como).length) delete dia.como; }
   CTX.fechaTudo();
   queueSave(); render();
   toast('Refeição removida do plano.');
@@ -10939,7 +10962,9 @@ CTX.poeODiaEmDia = function (data) {
 
   const linha = (Array.isArray(S.comidaHist) ? S.comidaHist : [])
     .filter(function (h) { return h && h.d === data; })[0] || null;
-  const cadencia = linha && linha.cadencia ? linha.cadencia : 'descanso';
+  // Dia sem linha: o tipo vem da mesma autoridade do fecho — com sessão
+  // registrada naquele dia, é treino, e a folha mostra o pré-treino e o intra.
+  const cadencia = linha && linha.cadencia ? linha.cadencia : tipoDoDiaDeComida(data, null);
   const plano = planoDeComida();
   const refs = refeicoesDeHoje(plano, cadencia === 'treino',
                                !!(linha && linha.alta), linha && linha.turno,

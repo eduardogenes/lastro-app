@@ -35,6 +35,45 @@ test('o dia vivido vai para o histórico na virada da data', async () => {
   a.fechar();
 });
 
+test('o dia de treino fecha como treino mesmo sem ninguém dizer o tipo', async () => {
+  // Regressão (docs/mapa, risco D8): o dia descia com o tipo DITO na folha do
+  // tipo do dia. Num dia de treino pelo padrão semanal, sem abrir a folha, a
+  // linha ia sem tipo: o total congelado saía sem o pré-treino e a adesão lia
+  // as refeições do descanso.
+  const a = await noHoje();
+  a.E(`S.cadencia = ['treino','treino','treino','treino','treino','treino','treino']`);
+  a.v('ctx.marcaRefeicao', 'pre');
+  a.v('ctx.marcaRefeicao', 'almoco');
+  await a.esperar();
+  assert.strictEqual(a.S().dia.cadencia || null, null, 'ninguém disse o tipo do dia');
+
+  a.viajar(DIA);
+  a.v('diaDeComida');
+  await a.esperar();
+  const h = a.S().comidaHist[0];
+  assert.strictEqual(h.cadencia, 'treino', 'o dia desce com o tipo que ele teve');
+  assert.ok(h.done.pre, 'com a marca do pré-treino');
+  const soAlmoco = a.J(`(() => { const d = JSON.parse(JSON.stringify(S.comidaHist[0])); delete d.done.pre;
+    return fechaDia({ data: d.d, done: d.done, agua: 0, escala: {}, cadencia: 'treino' }, planoDeComida(), catalogoAlimentos(), 1, 0, 1).tot.kcal; })()`);
+  assert.ok(h.tot.kcal > soAlmoco, 'e o pré-treino entra no total congelado');
+  a.fechar();
+});
+
+test('o dia em que ele disse descanso e depois treinou fecha como treino', async () => {
+  const a = await noHoje();
+  a.v('ctx.marcaRefeicao', 'almoco');
+  a.E(`diaDeComida().cadencia = 'descanso'`);
+  a.v('toggle', 0);
+  a.preencher(0, 0, 40, 10);          // a sessão registrada naquele dia manda
+  await a.esperar();
+
+  a.viajar(DIA);
+  a.v('diaDeComida');
+  await a.esperar();
+  assert.strictEqual(a.S().comidaHist[0].cadencia, 'treino');
+  a.fechar();
+});
+
 test('o passado não se reescreve quando o plano muda', async () => {
   const a = await noHoje();
   a.v('ctx.marcaRefeicao', 'pos');
