@@ -675,11 +675,19 @@ export interface Estado {
   // ---- o que a sincronização trouxe ----
 
   /**
-   * Quando o estado foi tocado pela última vez. É o que decide, na fusão, de
-   * que lado vêm os DOCUMENTOS — programa, plano de comida, cadência —, que
-   * são os únicos pedaços sem fusão possível.
+   * Quando o estado foi tocado pela última vez. Na fusão, desempata os
+   * DOCUMENTOS — programa, plano de comida, cadência —, que são os únicos
+   * pedaços sem fusão possível.
    */
   mtime: number;
+  /**
+   * Quando cada documento mudou de verdade (`DOCUMENTOS` em `sincronia.ts`).
+   * É o que decide, na fusão, de que lado vem cada um: o programa editado no
+   * notebook não perde para o copo de água marcado depois no celular.
+   */
+  carimbos?: Record<string, number>;
+  /** O `mtime` em que os carimbos foram mantidos pela última vez. */
+  carimbosEm?: number;
   /**
    * A decisão de fim de treino que ficou pendente.
    *

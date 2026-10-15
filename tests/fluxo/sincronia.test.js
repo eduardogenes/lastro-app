@@ -92,6 +92,47 @@ test('o que o outro aparelho gravou desce e se junta ao daqui', async () => {
   a.fechar();
 });
 
+test('o que foi gravado durante o envio continua pendente e sobe em seguida', async () => {
+  // Regressão (docs/mapa, risco D12): o ciclo apagava a pendência DEPOIS de a
+  // nuvem responder, e uma gravação feita enquanto o pedido estava no ar era
+  // dada como enviada sem ter ido.
+  const a = await app();
+  nuvemFalsa(a, null);
+  a.v('toggle', 0);
+  a.preencher(0, 0, 60, 8);
+  await a.esperar();
+  a.E(`
+    const _empurra = NUVEM.empurra;
+    let vez = 0;
+    NUVEM.empurra = async function (deV, data) {
+      const r = await _empurra(deV, data);
+      if (vez++ === 0) { S.export = 4242; await save(); }   // grava no meio do envio
+      return r;
+    };
+  `);
+
+  await a.v('sincroniza');
+  assert.strictEqual(a.dado('sync').sujo, true, 'a gravação do meio continua pendente');
+  assert.notStrictEqual(nuvem(a).linha.data.export, 4242, 'ela ainda não subiu');
+
+  await a.esperar(1300);                 // o ciclo seguinte é agendado sozinho
+  assert.strictEqual(nuvem(a).linha.data.export, 4242, 'e sobe no ciclo seguinte');
+  assert.strictEqual(a.dado('sync').sujo, false);
+  a.fechar();
+});
+
+test('cada documento ganha carimbo só quando muda', async () => {
+  const a = await app();
+  const antes = JSON.parse(JSON.stringify(a.S().carimbos || {}));
+  a.E(`S.prog.A.name = 'Treino A editado'`);
+  await a.v('save');
+  const c = a.S().carimbos;
+  assert.ok(c.prog > (antes.prog || 0), 'o programa mudou e foi carimbado');
+  assert.strictEqual(c.comida || 0, antes.comida || 0, 'o plano de comida não mudou e não ganhou carimbo');
+  assert.strictEqual(a.S().carimbosEm, a.S().mtime, 'e os carimbos ficam confiáveis');
+  a.fechar();
+});
+
 test('conflito no meio do caminho refaz o ciclo em vez de perder', async () => {
   const a = await app();
   nuvemFalsa(a, { v: 3, data: {

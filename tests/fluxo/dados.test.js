@@ -83,6 +83,9 @@ test('exportar carrega todos os campos do estado', async () => {
      'progTreinador',
      // a sincronização: o carimbo do estado e as lápides do que foi apagado
      'mtime', 'apagados',
+     // e o carimbo de cada documento: sem ele, o programa importado perderia
+     // para a cópia velha do outro aparelho na primeira fusão
+     'carimbos', 'carimbosEm',
      // os dias que ele marcou como descanso
      'descanso', 'fotos', 'promoPendente',
      // os modelos de aula de box: coleção com chave natural, some se ficar de fora
@@ -405,8 +408,9 @@ test('reimportar devolve TODOS os campos, não só as séries', async () => {
   // nenhum campo exportado pode se perder na volta
   const depois = a.S();
   const sumiram = Object.keys(antes).filter(k => {
-    // `mtime` é o carimbo do estado: ele muda ao gravar, e mudar é o certo.
-    if (k === 'mtime') return false;
+    // `mtime` é o carimbo do estado, e `carimbos` o de cada documento: eles
+    // mudam ao gravar, e mudar é o certo.
+    if (k === 'mtime' || k === 'carimbos' || k === 'carimbosEm') return false;
     const d = JSON.stringify(depois[k]), o = JSON.stringify(antes[k]);
     return o !== undefined && o !== 'null' && o !== '[]' && o !== '{}' && d !== o;
   });

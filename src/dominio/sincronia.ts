@@ -16,9 +16,11 @@
 //   pela chave. Nada se perde, porque os dois lados só acrescentam.
 //
 //   Documentos que se edita por cima (programa, plano de comida, cadência) não
-//   têm fusão possível: vence o lado alterado por último, inteiro. É a única
-//   linha com perda possível, e ela é aceitável porque documento se edita
-//   deliberadamente, num aparelho por vez.
+//   têm fusão possível: vence, inteiro, o lado onde AQUELE documento foi
+//   alterado por último. Cada documento leva o próprio carimbo (`carimbos`),
+//   posto pelo app só quando ele muda de verdade. Antes valia o carimbo do
+//   estado inteiro, e um copo de água marcado no aparelho desatualizado trazia
+//   de volta o programa velho por cima da edição feita no outro.
 //
 //   Apagar precisa de LÁPIDE. Sem ela, unir por chave RESSUSCITA o que você
 //   apagou no outro aparelho — o registro ainda existe lá, e a união o traz de
@@ -534,7 +536,36 @@ export function uneLapides(
 
 // ---------- a fusão ----------
 
-/** Quando o estado foi tocado pela última vez. É o que decide os documentos. */
+/**
+ * Os documentos: o que se edita por cima e não tem fusão campo a campo. `poses`
+ * é a ordem das fotos do corpo, que mora dentro de `protocolo`.
+ */
+export const DOCUMENTOS = [
+  'prog', 'rot', 'progTreinador', 'comida', 'cadencia', 'compras',
+  'ajuste', 'ajusteHist', 'perfManual',
+  'sessao', 'draft', 'mods', 'deload', 'dia', 'poses'
+] as const;
+export type Documento = typeof DOCUMENTOS[number];
+
+/** O valor de um documento dentro do estado. */
+export function valorDoDocumento(S: Partial<Estado> | null | undefined, d: Documento): unknown {
+  if (!S) return null;
+  if (d === 'poses') return S.protocolo ? S.protocolo.poses : null;
+  return (S as Record<string, unknown>)[d];
+}
+
+/**
+ * Os carimbos por documento só valem se o app que gravou por último os
+ * mantinha. O app que os mantém grava `carimbosEm` igual ao `mtime`; um app de
+ * versão anterior muda o `mtime` e deixa `carimbosEm` para trás — e aí os
+ * carimbos dele estão velhos, e a fusão volta à regra do estado inteiro.
+ */
+export function carimbosConfiaveis(S: Partial<Estado> | null | undefined): boolean {
+  return !!S && !!S.carimbos && typeof S.carimbos === 'object' &&
+         typeof S.carimbosEm === 'number' && S.carimbosEm === mtimeDe(S);
+}
+
+/** Quando o estado foi tocado pela última vez. Desempata os documentos. */
 export function mtimeDe(S: Partial<Estado> | null | undefined): number {
   return (S && typeof (S as { mtime?: number }).mtime === 'number')
     ? (S as { mtime: number }).mtime : 0;
@@ -564,9 +595,43 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
 
   const resumo: ResumoDaFusao = {
     series: 0, sessoes: 0, medidas: 0, cardio: 0, fotosCorpo: 0, ajustesCorpo: 0, apagados: 0,
-    documentos: mtimeDe(remoto) === mtimeDe(local) ? 'iguais' : (remotoManda ? 'remoto' : 'local'),
+    documentos: 'iguais',
     identicos: false
   };
+
+  // ---- os documentos, um por um ----
+  // Vence o lado onde aquele documento mudou por último. Empate (os dois sem
+  // carimbo, ou o mesmo instante) e carimbos em que não dá para confiar caem na
+  // regra antiga, a do estado inteiro.
+  //
+  // Formatos diferentes também caem nela, de propósito: `plano` vem no clone
+  // junto com os documentos do mesmo lado, e é isso que faz a abertura seguinte
+  // migrar o documento velho que venceu. Misturar documentos dos dois lados
+  // deixaria um deles no formato errado sem migração nenhuma.
+  const porDocumento = carimbosConfiaveis(local) && carimbosConfiaveis(remoto) &&
+                       (local.plano || 0) === (remoto.plano || 0);
+  const cl = (local.carimbos || {}) as Record<string, number>;
+  const cr = (remoto.carimbos || {}) as Record<string, number>;
+  const carimbos: Record<string, number> = {};
+  const remotoVence: Partial<Record<Documento, boolean>> = {};
+  let vieram = 0, ficaram = 0;
+  DOCUMENTOS.forEach(function (d) {
+    const sl = typeof cl[d] === 'number' ? cl[d] : 0;
+    const sr = typeof cr[d] === 'number' ? cr[d] : 0;
+    const la = porDocumento ? (sr > sl || (sr === sl && remotoManda)) : remotoManda;
+    remotoVence[d] = la;
+    const vl = valorDoDocumento(local, d), vr = valorDoDocumento(remoto, d);
+    const iguais = JSON.stringify(vl === undefined ? null : vl) === JSON.stringify(vr === undefined ? null : vr);
+    carimbos[d] = Math.max(sl, sr);
+    // Pela regra antiga, o documento que veio de lá é, para este aparelho, um
+    // fato novo: o carimbo passa a dizer isso.
+    if (!porDocumento && la && !iguais) carimbos[d] = t;
+    if (!iguais) { if (la) vieram++; else ficaram++; }
+    if (d === 'poses') return;           // vai junto do protocolo, mais abaixo
+    const v = la ? vr : vl;
+    (base as unknown as Record<string, unknown>)[d] = v === undefined ? null : JSON.parse(JSON.stringify(v));
+  });
+  resumo.documentos = ficaram ? 'local' : (vieram ? 'remoto' : 'iguais');
 
   // ---- séries: mapa de exercício -> lista ----
   const logs: Record<IdEx, Log[]> = {};
@@ -638,8 +703,8 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
                m: (d as DiaComida & { m?: number }).m || mtime };
     };
     const j = uneDiasDeComida(
-      [comoHist(local.dia, mtimeDe(local))],
-      [comoHist(remoto.dia, mtimeDe(remoto))],
+      [comoHist(local.dia, porDocumento ? (cl.dia || 0) : mtimeDe(local))],
+      [comoHist(remoto.dia, porDocumento ? (cr.dia || 0) : mtimeDe(remoto))],
       mortos
     ).itens[0];
     if (j) {
@@ -765,9 +830,7 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
     (remoto.protocolo && remoto.protocolo.sessoes) || [],
     mortos
   );
-  const poses = (remotoManda ? remoto : local).protocolo
-    ? (remotoManda ? remoto : local).protocolo.poses
-    : null;
+  const poses = valorDoDocumento(remotoVence.poses ? remoto : local, 'poses') as PoseId[] | null;
   base.protocolo = { poses: poses || null, sessoes: cf.itens.slice(-TETO.protocolo) };
   resumo.fotosCorpo = cf.fotosVindas;
   resumo.ajustesCorpo = cf.ajustesDaqui;
@@ -783,6 +846,8 @@ export function funde(local: Estado, remoto: Estado, agora?: number): { estado: 
 
   (base as Estado & { apagados: Record<string, number> }).apagados = mortos;
   (base as Estado & { mtime: number }).mtime = Math.max(mtimeDe(local), mtimeDe(remoto));
+  base.carimbos = carimbos;
+  base.carimbosEm = base.mtime;
 
   resumo.identicos = resumo.series === 0 && resumo.sessoes === 0 && resumo.medidas === 0 &&
                      resumo.cardio === 0 && resumo.fotosCorpo === 0 && resumo.ajustesCorpo === 0 &&

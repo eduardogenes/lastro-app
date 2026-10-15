@@ -215,6 +215,75 @@ test('documento do notebook não atropela série do celular', () => {
   assert.strictEqual(r.logs.supino.length, 1, 'e a série do celular veio junto');
 });
 
+// ---------- um carimbo por documento (docs/mapa, risco D2) ----------
+
+/** Estado gravado por um app que mantém os carimbos por documento. */
+function comCarimbos(mtime: number, carimbos: Record<string, number>, extra: Partial<Estado> = {}): Estado {
+  return estado(Object.assign({ mtime: mtime, carimbos: carimbos, carimbosEm: mtime }, extra));
+}
+
+test('o programa editado no notebook não perde para o copo de água do celular', () => {
+  // O notebook editou o programa às 9h. O celular, ainda com o programa velho,
+  // marcou um copo de água às 10h. Pelo carimbo do estado inteiro, o celular
+  // vencia tudo e a edição sumia.
+  const notebook = comCarimbos(T0, { prog: T0 },
+    { prog: { A: { name: 'editado no notebook', tag: '', ex: [] } } });
+  const celular = comCarimbos(T0 + 3600000, { dia: T0 + 3600000 },
+    { prog: { A: { name: 'antigo', tag: '', ex: [] } },
+      dia: { data: '2026-08-24', done: {}, agua: 1, escala: {} } as Estado['dia'] });
+
+  [funde(notebook, celular, T0 + DIA).estado, funde(celular, notebook, T0 + DIA).estado].forEach(function (r) {
+    assert.strictEqual(r.prog!.A.name, 'editado no notebook', 'o programa vem de onde ele mudou');
+    assert.strictEqual(r.dia!.agua, 1, 'e o dia vem de onde ele mudou');
+    assert.strictEqual(r.carimbos!.prog, T0);
+    assert.strictEqual(r.carimbosEm, r.mtime, 'o resultado continua confiável');
+  });
+});
+
+test('a sessão aberta no celular não some porque o notebook gravou depois', () => {
+  const sessao = { day: 'A', inicio: T0, ultima: T0, sid: T0, pausas: [], pulados: [] } as unknown as Estado['sessao'];
+  const celular = comCarimbos(T0, { sessao: T0 }, { sessao: sessao });
+  const notebook = comCarimbos(T0 + 600000, { cadencia: T0 + 600000 }, { sessao: null });
+  assert.ok(funde(notebook, celular, T0 + DIA).estado.sessao, 'a sessão em andamento ficou');
+  assert.ok(funde(celular, notebook, T0 + DIA).estado.sessao);
+});
+
+test('documento sem carimbo dos dois lados desempata pelo estado inteiro', () => {
+  const velho = comCarimbos(T0 - DIA, {}, { prog: { A: { name: 'velho', tag: '', ex: [] } } });
+  const novo = comCarimbos(T0, {}, { prog: { A: { name: 'novo', tag: '', ex: [] } } });
+  assert.strictEqual(funde(velho, novo, T0).estado.prog!.A.name, 'novo');
+  assert.strictEqual(funde(novo, velho, T0).estado.prog!.A.name, 'novo');
+});
+
+test('carimbos de um app que não os mantinha não são levados a sério', () => {
+  // O app antigo muda o `mtime` e deixa `carimbosEm` para trás: os carimbos
+  // dele dizem que o programa não mudou, e mudou.
+  const antigo = estado({ mtime: T0, carimbos: { prog: T0 - DIA }, carimbosEm: T0 - DIA,
+    prog: { A: { name: 'editado no app antigo', tag: '', ex: [] } } });
+  const novo = comCarimbos(T0 - 3600000, { prog: T0 - 7200000 },
+    { prog: { A: { name: 'de antes', tag: '', ex: [] } } });
+  const r = funde(novo, antigo, T0);
+  assert.strictEqual(r.estado.prog!.A.name, 'editado no app antigo', 'vale a regra antiga');
+  assert.strictEqual(r.estado.carimbos!.prog, T0, 'e o que veio de lá passa a ser fato novo daqui');
+});
+
+test('em formatos diferentes, os documentos vêm todos do mesmo lado, com o formato dele', () => {
+  // O programa mudou aqui por último, mas o outro lado está noutro formato: se
+  // cada documento viesse de um lado, um deles ficaria no formato errado sem
+  // migração. Vale a regra do estado inteiro, e o `plano` vem junto.
+  const aqui = comCarimbos(T0, { prog: T0 + 5 }, { plano: 12, prog: { A: { name: 'aqui', tag: '', ex: [] } } });
+  const la = comCarimbos(T0 + 10, { comida: T0 + 10 }, { plano: 11, prog: { A: { name: 'lá', tag: '', ex: [] } } });
+  const r = funde(aqui, la, T0 + DIA).estado;
+  assert.strictEqual(r.prog!.A.name, 'lá');
+  assert.strictEqual(r.plano, 11, 'para a abertura seguinte migrar o que veio de lá');
+});
+
+test('documento igual dos dois lados não pede para empurrar', () => {
+  const a = comCarimbos(T0, { prog: T0 }, { prog: { A: { name: 'x', tag: '', ex: [] } } });
+  const b = comCarimbos(T0, { prog: T0 }, { prog: { A: { name: 'x', tag: '', ex: [] } } });
+  assert.strictEqual(funde(a, b, T0).resumo.documentos, 'iguais');
+});
+
 test('o último backup é o mais recente dos dois', () => {
   const r = funde(estado({ export: 100 }), estado({ export: 500 }), T0).estado;
   assert.strictEqual(r.export, 500, 'é fato sobre o passado: o maior vale nos dois');

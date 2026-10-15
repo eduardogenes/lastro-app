@@ -75,7 +75,7 @@ import { DB } from './infra/db';
 import {
   chaveDeAula, chaveDeCardio, chaveDeDescanso, chaveDeFoto, chaveDeFotoDoCorpo, chaveDeLog,
   chaveDeMarca, chaveDePromo, chaveDeRefeicaoFeita, chaveDeSessaoFoto, chaveDeSessao, funde,
-  lapidesDoApagamento, uneLapides
+  lapidesDoApagamento, uneLapides, DOCUMENTOS, valorDoDocumento
 } from './dominio/sincronia';
 import { NUVEM } from './infra/nuvem';
 import * as FOTO from './infra/fotos';
@@ -406,6 +406,8 @@ function normalizaEstado() {
       typeof S.progTreinador.dias !== 'object' || !Array.isArray(S.progTreinador.rot)) S.progTreinador = null;
   if (!Array.isArray(S.comidaHist)) S.comidaHist = [];
   if (typeof S.mtime !== 'number') S.mtime = 0;
+  if (!S.carimbos || typeof S.carimbos !== 'object') S.carimbos = {};
+  if (typeof S.carimbosEm !== 'number') S.carimbosEm = 0;
   if (!S.apagados || typeof S.apagados !== 'object') S.apagados = {};
   if (!S.descanso || typeof S.descanso !== 'object') S.descanso = {};
   if (!S.fotos || typeof S.fotos !== 'object') S.fotos = {};
@@ -486,6 +488,8 @@ async function load() {
   migraPlano12(S);
   garanteProgramaERotacao();
   montaCatalogo();
+  // O que está no disco não é mudança: daqui em diante, só o que mudar ganha carimbo.
+  lembraDocumentos();
 
   // A chave velha só sai depois de a nova estar gravada E a gravação ter dado
   // certo. Se a escrita falhar, ela fica onde está e a migração tenta de novo
@@ -1148,8 +1152,15 @@ function gravaSync() {
 
 let syncT = null;
 /** Toda alteração local marca sujeira e agenda um envio. */
+// Cada gravação conta uma geração. O envio anota a geração que levou; se outra
+// gravação chegar enquanto ele está no ar, a pendência continua — senão a série
+// gravada nesse meio-tempo ficava marcada como enviada sem ter ido.
+let geracao = 0;
+// Um pedido que chega com o ciclo rodando não se perde: vira um ciclo depois.
+let pedidoNoMeio = false;
 function sujou() {
   if (!NUVEM.sessao()) return;
+  geracao++;
   sync.sujo = true;
   gravaSync();
   clearTimeout(syncT);
@@ -1178,7 +1189,8 @@ function garanteProgramaERotacao() {
 
 async function sincroniza(opcoes) {
   const manual = !!(opcoes && opcoes.manual);
-  if (!NUVEM.sessao() || sync.rodando) return;
+  if (desligado || !NUVEM.sessao()) return;
+  if (sync.rodando) { pedidoNoMeio = true; return; }
   // o que estiver represado sobe neste ciclo, não no próximo
   await liberaSave();
   sync.rodando = true; sync.erro = null; render();
@@ -1204,6 +1216,7 @@ async function sincroniza(opcoes) {
           normalizaEstado();
           garanteProgramaERotacao();
           montaCatalogo();
+          lembraDocumentos();                // o que veio de lá não é mudança daqui
           await grava();                     // grava a fusão SEM recarimbar
           contaFusao(resumo, manual);
           if (!sync.sujo && !temQueEmpurrar(resumo)) {
@@ -1212,9 +1225,11 @@ async function sincroniza(opcoes) {
         }
       }
 
+      const levou = geracao;
       const escrita = await NUVEM.empurra(deV, S);
       if (escrita.ok) {
-        sync.v = escrita.v; sync.sujo = false; sync.forcar = false; sync.em = Date.now();
+        sync.v = escrita.v; sync.sujo = geracao !== levou; sync.forcar = false; sync.em = Date.now();
+        if (sync.sujo) pedidoNoMeio = true;
         gravaSync(); render();
         if (manual) toast('Sincronizado.');
         reconciliaFotos();                     // sem await: os bytes vão por fora
@@ -1231,6 +1246,11 @@ async function sincroniza(opcoes) {
     if (manual) toast('Tente de novo em alguns segundos.');
   } finally {
     sync.rodando = false; gravaSync(); render();
+    if (pedidoNoMeio && !desligado) {
+      pedidoNoMeio = false;
+      clearTimeout(syncT);
+      syncT = setTimeout(function () { sincroniza(); }, 1000);
+    }
   }
 }
 
@@ -1497,13 +1517,33 @@ function dispensaFalha() { view.falhou = false; render(); }
 
 
 async function save() {
-  // O carimbo do estado inteiro. É o que decide, na fusão, de que lado vêm os
-  // DOCUMENTOS — programa, plano de comida, cadência —, que são os únicos
-  // pedaços sem fusão possível. As coleções não dependem dele: elas se unem
-  // pela chave natural de cada registro.
+  // O carimbo do estado inteiro, e o de cada DOCUMENTO que mudou desde a última
+  // gravação — programa, plano de comida, cadência, a sessão aberta. Na fusão,
+  // cada documento vem do lado onde ELE mudou por último. As coleções não
+  // dependem disso: elas se unem pela chave natural de cada registro.
   S.mtime = Date.now();
+  carimbaDocumentos(S.mtime);
   sujou();
   return grava();
+}
+
+// Como cada documento estava na última gravação (ou na última fusão). Comparar
+// o texto é o jeito de saber o que mudou sem ensinar cada tela a avisar.
+let impressoes = {};
+function impressaoDe(d) { const v = valorDoDocumento(S, d); return JSON.stringify(v === undefined ? null : v); }
+/** O estado veio de fora (abertura, fusão): o que está aqui não é mudança nova. */
+function lembraDocumentos() {
+  impressoes = {};
+  DOCUMENTOS.forEach(function (d) { impressoes[d] = impressaoDe(d); });
+}
+function carimbaDocumentos(agora) {
+  if (!S.carimbos || typeof S.carimbos !== 'object') S.carimbos = {};
+  DOCUMENTOS.forEach(function (d) {
+    const j = impressaoDe(d);
+    if (impressoes[d] !== undefined && impressoes[d] !== j) S.carimbos[d] = agora;
+    impressoes[d] = j;
+  });
+  S.carimbosEm = agora;
 }
 
 // ---------- helpers ----------
@@ -4660,6 +4700,8 @@ async function importText(txt) {
         // a sincronização: sem estes, importar um backup zeraria o carimbo do
         // estado e as lápides — e um aparelho ressuscitaria o que o outro apagou
         mtime: typeof d.mtime === 'number' ? d.mtime : 0,
+        carimbos: (d.carimbos && typeof d.carimbos === 'object') ? d.carimbos : {},
+        carimbosEm: typeof d.carimbosEm === 'number' ? d.carimbosEm : 0,
         apagados: (d.apagados && typeof d.apagados === 'object') ? d.apagados : {},
         descanso: (d.descanso && typeof d.descanso === 'object') ? d.descanso : {},
         fotos: (d.fotos && typeof d.fotos === 'object') ? d.fotos : {},
@@ -6273,6 +6315,10 @@ async function wipe() {
         body:corpoVazio(), carga:{}, export:0,
         plano:PLANO_ATUAL, prog:S.prog, rot:S.rot, ex:S.ex, mods:null, progLog:S.progLog || [],
         progTreinador:S.progTreinador || null,
+        // Os carimbos dos documentos ficam: o programa e o plano que sobrevivem
+        // continuam sendo a versão de quando foram editados, e zerar o carimbo
+        // faria a cópia velha do outro aparelho vencer.
+        carimbos:S.carimbos || {}, carimbosEm:S.carimbosEm || 0,
         // A metade de comida também sobrevive: apagar histórico de TREINO não
         // é apagar o plano nutricional, do mesmo jeito que não apaga o programa.
         cadencia:S.cadencia, comida:S.comida, dia:null, ajuste:S.ajuste, ajusteHist:S.ajusteHist, gordura:S.gordura, quadro:S.quadro, lousa:S.lousa,
@@ -6683,6 +6729,7 @@ window.addEventListener('online', function () { sincroniza(); });
 CTX.desliga = function () {
   if (desligado) return;
   desligado = true;
+  clearTimeout(syncT);
   stopTimer();
   if (relogioT) { clearInterval(relogioT); relogioT = null; }
   if (batida) { clearInterval(batida); batida = null; }
