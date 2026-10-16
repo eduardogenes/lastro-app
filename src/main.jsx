@@ -5034,9 +5034,10 @@ function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; rend
  * atrás da tab bar, invisível. Abrir e ROLAR eram duas ações, e a segunda caía
  * sobre quem está de pé, com uma mão, entre uma série e outra.
  *
- * `instant` e não `smooth`: o sistema tem exatamente dois movimentos (§6 do
- * DESIGN) e este não vira o terceiro. O cartão simplesmente já está lá.
- * Onde ele para é o `scroll-margin-top` de `.ex`.
+ * `instant` e não suave: rolagem programática é sempre um salto (DESIGN.md
+ * §Movimento). A rolagem suave é do navegador, sem token de tempo nem de curva,
+ * e roda na thread que o `render()` ocupa — congela no meio. O cartão
+ * simplesmente já está lá. Onde ele para é o `scroll-margin-top` de `.ex`.
  */
 function mostraExercicio(i) {
   const el = document.querySelector('[data-ex="' + i + '"]');
@@ -5248,10 +5249,10 @@ function serieJaRegistrada(i, k) {
  * diga só "guardado" obriga quem usa leitor de tela a ir conferir o que foi
  * guardado, que é justamente o trabalho que o anúncio existe para poupar.
  *
- * Hoje a confirmação visual já existe e é boa (`voa()` leva o valor até a
- * tabela). O que faltava era a metade auditiva: nenhuma das chamadas de `toast`
- * é da gravação de série, e o `<input>` ecoava o valor por ser campo — o que
- * deixa de valer no dia em que a régua substituir o campo.
+ * Quem vê já tem a confirmação na tela: o número entra na célula que recebeu o
+ * toque, e o descanso começa. O que faltava era a metade auditiva: nenhuma das
+ * chamadas de `toast` é da gravação de série, e o `<input>` ecoava o valor por
+ * ser campo — o que deixa de valer no dia em que a régua substituir o campo.
  *
  * Região própria e invisível, e não o toast: 48 toasts por semana competindo com
  * o cronômetro de descanso — que começa no mesmo instante — seriam ruído para
@@ -12080,10 +12081,21 @@ function obturador() {
     src.start(t0);
   } catch (e) {}
 }
+/**
+ * O clarão é do DISPARO QUE GUARDOU: o número do disparo vira a chave do nó na
+ * câmera, então cada foto ganha um nó novo e a animação recomeça. Quem apaga o
+ * branco é a própria animação (`.cam-clarao`, que termina em opacidade 0 e,
+ * fora do portão do movimento, já nasce apagada) — e não um relógio aqui que
+ * desmontasse o nó e pedisse outro desenho. A próxima tentativa de foto o
+ * limpa em `capturaAgora`, para que a pose que não coube não herde o clarão.
+ *
+ * Contador e não `Date.now()`: com o relógio parado (os testes fixam o
+ * relógio), dois disparos teriam a mesma chave e o segundo não clarearia.
+ */
+let disparos = 0;
 function clarao() {
   if (!view.camera) return;
-  view.camera.clarao = Date.now();
-  setTimeout(function () { if (view.camera) { view.camera.clarao = null; render(); } }, 320);
+  view.camera.clarao = ++disparos;
 }
 /**
  * A instrução por VOZ (a D, estado 2, hipótese B): a três metros nada precisa
@@ -12149,6 +12161,7 @@ CTX.disparaCamera = function () {
 async function capturaAgora() {
   const c = view.camera, v = view.protocolo;
   if (!c || !v) return;
+  c.clarao = null;
   const el = document.querySelector('.cam-video');
   if (!CAM.pronto(el)) { c.contagem = null; toast('A câmera ainda não está pronta.'); render(); return; }
   try {
@@ -12257,6 +12270,8 @@ CTX.cameraViva = function () {
     timer: c.timer,
     contagem: c.contagem,
     clarao: !!c.clarao,
+    // a chave do nó do clarão: um disparo, um nó, uma animação
+    disparo: c.clarao || 0,
     giro: c.giro || null,
     preta: c.preta ? (lista.filter(function (p) { return p.id === c.preta; })[0] || {}).n || null : null,
     // os blocos das poses, do tamanho de um dedo (estado 2): em que pose está,

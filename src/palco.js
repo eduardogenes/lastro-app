@@ -50,6 +50,8 @@
    janela, para quando o que se quer é a tela e não o objeto.
    ============================================================ */
 
+import { podeMover } from './ui/movimento.js';
+
 /**
  * Os aparelhos. Medida em PONTOS (px de CSS), retrato, tal como o
  * Safari os reporta — não em pixels de tela, que é o número que as
@@ -204,8 +206,6 @@ function montaBancada() {
     compacta: null
   };
 
-  const parado = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
   const raiz = document.createElement('div');
   raiz.className = 'pl';
   raiz.innerHTML = esqueleto();
@@ -272,7 +272,10 @@ function montaBancada() {
 
   pinta();
   relogio();
-  if (!parado) el.aparelho.classList.add('pl-pousa');
+  // A porta do movimento é perguntada AGORA, e de novo a cada virada — antes a
+  // preferência era lida uma vez, ao montar, e quem ligasse "Reduzir
+  // movimento" com a bancada aberta continuava vendo o aparelho virar.
+  if (podeMover()) el.aparelho.classList.add('pl-pousa');
 
   /* ------------------------------------------------------------ */
 
@@ -306,7 +309,7 @@ function montaBancada() {
    * olho lê "virou"; a máquina não paga nada por isso.
    */
   function assenta(sentido) {
-    if (parado) return;
+    if (!podeMover()) return;
     el.aparelho.classList.remove('pl-vira');
     el.aparelho.style.setProperty('--pl-sentido', sentido);
     void el.aparelho.offsetWidth;   // reinicia a animação

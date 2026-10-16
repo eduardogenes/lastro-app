@@ -73,7 +73,9 @@ export function Camera({ ctx }) {
       {d.giro && <p class="cam-giro" aria-live="polite">↻ gire {d.giro}°</p>}
       <div class="cam-quadro">
         <video ref={video} class="cam-video" autoplay playsinline muted />
-        {d.clarao && <div class="cam-clarao" aria-hidden="true" />}
+        {/* O clarão do disparo: um nó por foto (a chave é o número do
+            disparo), e quem o apaga é a animação, não um relógio. */}
+        {d.clarao && <div key={d.disparo} class="cam-clarao" aria-hidden="true" />}
 
         {d.fantasma && d.refUrl && (
           <FotoAjustada

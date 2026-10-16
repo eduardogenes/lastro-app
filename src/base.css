@@ -347,36 +347,36 @@ p, .ins-prosa, input, textarea {
   font: 600 19px/1 var(--ins-fonte); letter-spacing: -.03em;
 }
 
-/* ---- Movimento: o pulso, um dos quatro que o app tem ------------------ */
+/* ---- Movimento: o portão, e o pulso do ponto ao vivo -------------------
+
+   O PORTÃO É POR ADESÃO, em todas as folhas: todo `transition` e `animation`
+   mora dentro de `@media (prefers-reduced-motion: no-preference)`, ao lado da
+   regra que ele move, e FORA do bloco o elemento já está no último quadro —
+   que é o que vê quem pediu menos movimento, e quem tem navegador sem a media
+   feature. A guarda de estilo cobra declaração por declaração.
+
+   Era o contrário até 16/10: um bloco universal sob `reduce` (`*` com
+   `!important`, `.01ms`, uma volta) desligava tudo por exclusão. Ele saiu, por
+   quatro motivos: engolia o evento de fim de transição (medido), não alcançava
+   o JavaScript nem os pseudo-elementos de transição de vista, proibia o
+   esmaecer que o dono escolheu para "Reduzir movimento" sem uma briga de
+   `!important`, e convivia com o princípio 6 de `tokens.css`, que já dizia
+   "adesão": duas redes que discordam são pior que uma (docs/motion/06 §4.3).
+   O que ele protegia — o próximo movimento esquecido não chegar a quem pediu
+   menos — passou para a guarda, que fica vermelha antes do aparelho.
+
+   O pulso: o ponto aceso respira, sem fim, enquanto a tela está viva (dono,
+   16/10). Fora do portão o ponto está aceso e parado, que é o último quadro. */
 
 @keyframes ins-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
 
 .ins-live-dot {
   width: 7px; height: 7px; flex: 0 0 auto;
   border-radius: 50%; background: var(--ins-acento);
-  animation: ins-pulse 2.4s infinite;
 }
 
-/* O portão de movimento reduzido, e ele alcança por ESTRUTURA e não por nome.
-   Antes desligava a animação do ponto ao vivo pelo seletor dela — funcionava,
-   mas por coincidência: havia uma animação só no app. A próxima a nascer em
-   qualquer outro lugar ficaria rodando, e ninguém notaria, porque quem pede
-   movimento reduzido não está aqui para reclamar.
-
-   `animation-duration` quase zero com UMA iteração, e não `animation: none`:
-   zerar a animação deixa o elemento no estado INICIAL, e uma animação com
-   `both` que termina visível ficaria invisível. Pular para o último quadro
-   respeita quem pediu menos movimento sem apagar conteúdo. No pulso do ponto
-   ao vivo, o último quadro é opacidade 1 — o ponto fica visível e parado.
-
-   `!important` não é força bruta aqui: sem ele a regra do componente é mais
-   específica e ganha, e o portão não faz nada. */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition: none !important;
-  }
+@media (prefers-reduced-motion: no-preference) {
+  .ins-live-dot { animation: ins-pulse var(--ins-ciclo-vivo) var(--ins-curva-ciclo) infinite; }
 }
 
 /* ============================================================

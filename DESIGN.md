@@ -53,19 +53,44 @@ como motivacional, e nunca comemora.
    um botão** — todo botão do sistema é mono 11px em caixa alta com tracking,
    como no handoff, e declarar isso é o que torna a regra conferível. Fora dos
    três, caixa alta é ênfase, e ênfase não existe aqui.
-6. **Quase nenhum movimento.** Movimento aqui não decora e não comemora. Ele
-   faz só três coisas: interpola uma grandeza que é contínua no mundo, diz que
-   a tela está viva agora, e mostra para onde se andou. Fora disso a tela troca
-   de estado sem transição. Nada de fade, nada de esqueleto que cintila, nada
-   de folha com mola. Os que existem estão em [Movimento](#movimento).
+6. **Movimento explica, e só explica.** Cada movimento diz uma coisa só: de
+   onde a camada veio, para onde se andou, o que mudou, que o toque pegou — ou,
+   no ambiente, que o tempo está correndo e que a tela está viva. O que não diz
+   nenhuma das seis não entra. Os que existem estão em [Movimento](#movimento),
+   com a função de cada um.
 
-   **"Nada de animação de entrada" caiu em 06/10, e só para a FOLHA** (decisão
-   14 do dono). O argumento derrubado era este, e fica dito porque continua
-   valendo em todo o resto: entrada animada é a forma mais comum de movimento
-   que não diz nada — ela enfeita a chegada de algo que já ia chegar. A exceção
-   existe porque a folha é a única coisa que chega **por cima** de outra: a
-   subida é o que diz, sem texto, onde a camada começa e para onde ela volta.
-   Lista, cartão e tela continuam aparecendo sem movimento.
+   **Camada se move; conteúdo não.** Folha, tela cheia, modo de sessão,
+   cronômetro e aviso chegam pela borda de onde vêm e voltam por ela: a camada
+   chega **por cima** de outra coisa, e o movimento é o que diz, sem texto, onde
+   ela começa e para onde volta (o argumento da decisão 14, de 06/10, estendido
+   a toda camada). Lista, cartão, linha e o painel que nasce sob o polegar
+   (régua, teclado, RIR) aparecem no lugar: entrada animada de conteúdo enfeita
+   a chegada de algo que já ia chegar, e alvo que se move sob o dedo é alvo
+   errado.
+
+   **Proibido pela forma, não pela contagem:** comemoração (nenhum quadro, curva
+   ou tempo diferente para "feito", "6/6" ou "14/14"), número que rola,
+   esqueleto que cintila, altura, largura ou posição animadas (só `transform` e
+   `opacity`) e movimento no fim do descanso, quando ele não está olhando. A
+   ultrapassagem existe **só no quique** (`ins-quique`, `--ins-dur-quique`), que
+   só a chegada da folha e do painel de apagar usam, e nenhuma saída quica —
+   decisão do dono de 16/10.
+
+   **O toque nunca espera.** O dado grava no toque; nada trava a entrada
+   enquanto algo anima, e nada escuta o fim de uma animação para gravar,
+   desmontar ou mover o foco.
+
+   **O portão é por adesão**, e falha fechado: todo movimento mora dentro de
+   `@media (prefers-reduced-motion: no-preference)`, com o último quadro escrito
+   fora, e o JavaScript pergunta a uma porta só (`src/ui/movimento.js`). Sob
+   "Reduzir movimento" nunca há mais movimento do que sem a preferência.
+
+   (Caiu em 16/10: "quase nenhum movimento" e a contagem de funções
+   autorizadas. O pedido de 15/10 — "que o app se mova bem; cada movimento tem
+   de explicar alguma coisa" — pede o contrário da contagem, e a contagem
+   quebrou duas vezes em um mês com o código certo no mérito. O raciocínio
+   inteiro, o que caiu e o que ficou, está em `docs/motion/06-sistema.md` §1 e
+   `docs/motion/08-parecer.md` §1 e §5.1.)
 
 ## Paleta
 
@@ -231,7 +256,7 @@ das licenças atravessa o vidro:
 |---|---|---|
 | 1. Raio zero | O aparelho tem o canto contínuo do modelo que imita — 73px no de referência, com o vidro em 62 (`palco.js`) —, com `corner-shape: squircle` onde existe. | Mesma licença da miniatura de foto: forma que o mundo já tem, não caixa arredondada por gosto. |
 | 3. Nunca sombra | O aparelho projeta uma. | É ela que separa *objeto pousado numa superfície* de *desenho colado na página*, e é a coisa toda que a bancada tem a dizer. Pertence ao objeto; a tela continua sendo a única região plana da composição. |
-| 6. Quase nenhum movimento | Três: o pouso do aparelho (520ms, uma vez), a virada ao girar (300ms) e o painel e a régua pousando logo depois (420ms, 140ms de atraso). | Todos são estado — "chegou", "virou" —, e todos morrem em `prefers-reduced-motion`. |
+| 6. Os tempos são os do app | Três movimentos com tempos e curva próprios (`--pl-dur-*`, `--pl-curva`, no bloco de tokens de `palco.css`): o pouso do aparelho (520ms, uma vez), a virada ao girar (300ms) e o painel e a régua pousando logo depois (420ms, 140ms de atraso). | Todos são estado — "chegou", "virou" —, moram no mesmo portão por adesão do app e não rodam sob `prefers-reduced-motion`; a classe do pouso e a da virada passam pela porta do movimento. |
 | — | Relógio, sinal e bateria vão na fonte do **sistema**. | São do iOS. Escrevê-los em Space Grotesk seria o app assinando o que não é dele — a mesma regra que faz `body::before` devolver o fundo sob a barra de status. |
 
 **O prefixo é `pl-`, não `ins-`.** `ins-` é a língua do que se vê dentro do
@@ -248,53 +273,106 @@ que nenhum seletor do palco alcance o app.
 
 ## Movimento
 
-Quatro, e cada um tem função. `prefers-reduced-motion` desliga os quatro.
+**Movimento explica, e só explica** (inegociável 6). A fonte dos tempos e das
+curvas é o bloco "Movimento" de [`src/tokens.css`](src/tokens.css), com o
+comentário de cada token — o que é, quando usar, quando não. Os valores são as
+respostas do dono de 16/10 (`docs/motion/00-coordenacao.md`).
 
-| Movimento | Onde | Como | Função |
-|---|---|---|---|
-| Pulso do ponto ao vivo | `ins-pulse`, `base.css` | 2,4 s, opacidade, em ciclo | diz que a tela está viva agora |
-| Indicador de aba | `.ins-tab-ind`, `componentes.css` | 220 ms, `cubic-bezier(.2,.8,.2,1)` (`--ins-dur`, `--ins-ease`), em `left` | mostra para que lado se andou |
-| Barra do cronômetro | `#tfill`, `componentes.css` | 250 ms `linear`, em `transform: scaleX` | interpola o descanso entre as quatro amostras por segundo de `pintaTimer` |
-| Rolagem até a sessão destacada | `levaAsSessoesDoDia`, `main.jsx` | `smooth`, na curva do navegador | leva o olho até um alvo que estava fora de vista |
+| Token | Valor | Papel |
+|---|---|---|
+| `--ins-curva` | `cubic-bezier(.2, .8, .2, 1)` | o que muda no lugar: toque, pouso, aviso, o fio da aba |
+| `--ins-curva-camada` | `cubic-bezier(.32, .72, 0, 1)` | a camada que entra e sai pela borda (a curva do iPhone) |
+| `--ins-curva-grandeza` | `linear` | só a barra do descanso: o tempo passa linear |
+| `--ins-curva-ciclo` | `cubic-bezier(.25, .1, .25, 1)` (o `ease`) | só o pulso do ponto ao vivo |
+| `--ins-dur-toque` | 120 ms | o preenchimento do toque (só escurece; nada encolhe) |
+| `--ins-dur-lugar` | 160 ms | o que muda onde está |
+| `--ins-dur-entra` · `--ins-dur-sai` | 350 ms · 350 ms | a camada que entra · que sai, pela mesma borda |
+| `--ins-dur-quique` | 640 ms | só a chegada da folha e do painel de apagar, com os quadros de `ins-quique` (passa 8 % aos 55 %, volta 3 % aos 80 %) |
+| `--ins-dur-clarao` | 200 ms | só o clarão do disparo da câmera |
+| `--ins-dur-dissolve` | 120 ms | só sob "Reduzir movimento": a camada que chega esmaece |
+| `--ins-dur-amostra` | 250 ms | o período de `pintaTimer`, não uma duração de transição |
+| `--ins-ciclo-vivo` | 2,4 s | uma volta do pulso |
+| `--ins-pousa` · `--ins-sobe-aviso` | 4 px · 8 px | de quanto abaixo o valor pousa · o aviso chega |
 
-**A barra do cronômetro é mais velha que este documento** (`7cd6418`), e o
-handoff já a contava como movimento ambiente: "a ticking countdown and a
-pulsing dot are the only ambient motion; they exist to make the screen feel
-current" (§4, lei 2). Dura 250 ms porque é o intervalo entre duas amostras —
-menos deixa vão parado, mais atrasa a barra em relação ao número —, e é
-`linear` porque o tempo passa linear.
+**Os movimentos que existem.** Esta é a tabela verdadeira; cada peça do motion
+acrescenta as suas linhas no mesmo commit em que entra no código.
 
-**Rolagem suave só quando o alvo estava fora de vista** e a tela precisa mostrar
-para onde foi. Quando o alvo é o que se acabou de tocar, ela é `instant`: ele
-já é o assunto (`mostraExercicio`).
+| Movimento | Onde | O que se move | Tempo · curva | Diz | Sob "Reduzir movimento" |
+|---|---|---|---|---|---|
+| O fio da aba | `.ins-tab-ind` (`componentes.css`), posto pela `TabBar` | `transform: translateX(i × 20%)` de um invólucro da largura da barra; o fio é o `<i>` de dentro, com um quinto dela | `--ins-dur-lugar` · `--ins-curva` | para onde se andou | salta para a aba |
+| A barra do descanso | `#tfill` (`componentes.css`), escrita por `pintaTimer` | `transform: scaleX` | `--ins-dur-amostra` · `--ins-curva-grandeza` | o tempo passando | anda em degraus de 250 ms |
+| O pulso do ponto ao vivo | `.ins-live-dot` (`base.css`) | `opacity` 1 → .25 → 1, sem fim | `--ins-ciclo-vivo` · `--ins-curva-ciclo` | a tela está viva agora | aceso e parado |
+| O clarão do disparo | `.cam-clarao` (`componentes.css`), um nó por foto | `opacity` .9 → 0 | `--ins-dur-clarao` · `--ins-curva` | a foto foi tirada (lido a 3 m) | não aparece: a foto é dita pelo obturador, pela voz e pelo bloco da pose |
+| A bancada: pouso, painel e régua, virada | `palco.css`, `palco.js` | `transform` e `opacity` | `--pl-dur-*` · `--pl-curva` | chegou; virou | nada |
 
-**Custo.** Grandeza que se repinta sem parar anima `transform`, nunca largura
-nem posição: a barra trocou `width` por `scaleX` porque repinta 4× por segundo
-por até três minutos (`3ef9bb9`), e `tests/dominio/estilo.test.ts` cobra.
+**O que fica sem movimento**, de propósito: o painel que nasce sob o polegar
+(régua, teclado, RIR) — alvo que se move sob o dedo é alvo errado; os números
+derivados (contador, volume, kcal), que não rolam; o fim do descanso, cujo
+canal é o som; a abertura do app e o giro do telefone; e toda rolagem
+programática, que é sempre um salto (`instant`) — a rolagem suave é do
+navegador, sem token de tempo nem de curva, e roda na thread que o `render()`
+ocupa (`docs/motion/04-desempenho.md` §1.6).
 
-**`prefers-reduced-motion`.** As transições morrem pelo curinga de `base.css` e
-`componentes.css`, a rolagem cai para `auto` na própria linha, e o pulso morre
-por seletor. Um `@keyframes` novo **não** morre sozinho: o bloco só desliga
-`animation` em `.ins-live-dot`. Movimento novo é `transition`, ou entra no
-bloco.
+**Só `transform` e `opacity`** — e as propriedades individuais `translate` e
+`scale`. Tudo o mais refaz layout ou pintura a cada quadro e congela quando a
+thread trava: o fio da aba andava em `left`, 14 layouts e 26 pinturas por troca
+contra 1 e 3 em `transform`, e parava 320 ms com a thread presa. O centrado por
+`translateX(-50%)` (`#toast`, `#timer`, `.ins-faixa`) só se move pela
+propriedade `translate`, que não desfaz o centramento. E nada que contenha um
+fixo (`html`, `body`, `#app`, `.ins-modo`) ganha `transform`, `filter` ou
+`will-change`: o fixo passaria a rolar com o pai.
 
-Sob `reduce`, a barra do cronômetro passa a andar em degraus de 250 ms — quatro
-por segundo —, e **é assim que fica**: quem liga `reduce` pediu para não
-interpolar, e inventar uma amostragem especial para ela seria movimento novo
-para resolver um problema que ninguém mediu. O número ao lado continua exato.
+**O portão.** Todo `transition` e `animation` mora dentro de
+`@media (prefers-reduced-motion: no-preference)`, ao lado da regra que ele
+move, e **fora do bloco o elemento já está no último quadro** — é o que vê quem
+pediu menos movimento e quem tem navegador sem a media feature. Sob `reduce` a
+única alternativa deliberada é esmaecer (só `opacity`, só `--ins-dur-dissolve`),
+e só onde sem a preferência há movimento. O JavaScript pergunta a uma porta só,
+`src/ui/movimento.js` (`podeMover()`, `podeDissolver()`, `tempo(nome)`), lida na
+hora e respondendo "não" quando não sabe; ela é o único lugar que pode falar
+com o aparelho sobre movimento, chamar `startViewTransition` ou `.animate()`.
 
-**O que já foi considerado e recusado.** A folha subir ao abrir: era o único
-lugar onde a revisão de design achou função para movimento novo — dizer de onde
-a camada veio —, e perdeu por ser animação de entrada, que a lista acima proíbe
-pelo nome, e porque o véu atrás dela ou aparece de uma vez ou pede um fade, que
-é mais movimento ainda. Transição entre abas, deslizar conteúdo, animar altura,
-esqueleto que cintila e qualquer comemoração: recusados, cada um com motivo, em
-`docs/design-review/05-movimento.md`.
+O bloco universal de `base.css` (`*` com `!important` sob `reduce`) **saiu** em
+16/10: engolia o evento de fim de transição, não alcançava o JavaScript nem os
+pseudo-elementos de transição de vista, proibia o esmaecer e discordava do
+princípio 6, que já dizia "adesão". O que ele protegia — o movimento esquecido
+não chegar a quem pediu menos — passou para a guarda, que fica vermelha antes do
+aparelho.
+
+**O pulso descumpre o critério 2.2.2 da WCAG, por decisão do dono.** O critério
+pede que movimento que dura mais de cinco segundos possa ser pausado. O pulso do
+ponto ao vivo roda sem fim enquanto a tela está viva; a recomendação do time
+era duas voltas e o ponto aceso, e o dono escolheu em 16/10 (pergunta 12) que
+ele pulse para sempre, como sempre pulsou. Quem liga "Reduzir movimento" vê o
+ponto aceso e parado.
+
+**A barra sob `reduce` anda em degraus de 250 ms**, e é assim que fica: quem
+liga a chave pediu para não interpolar, e inventar uma amostragem especial seria
+movimento novo para resolver um problema que ninguém mediu. O número ao lado
+continua exato.
+
+**A guarda.** `tests/dominio/estilo.test.ts`, seção "O movimento", lê as folhas
+regra a regra com a pilha de `@media`: (a) tempo e curva só nascem nos tokens, e
+ultrapassagem só no quique; (b) todo movimento mora no portão e, fora dele, o
+elemento está no último quadro, e o JavaScript só move pela porta; (c) só
+`transform`, `translate`, `scale` e `opacity` se movem; (d) nada entre um fixo e
+a janela cria bloco de contenção — com a lista de ancestrais conferida na árvore
+montada por `tests/fluxo/movimento.test.js`; (e) nada escuta o fim de uma
+animação.
+
+**O que já foi recusado, e o que caiu.** Mola e ultrapassagem continuam fora de
+tudo menos do quique (decisão do dono, 16/10). Comemoração, esqueleto que
+cintila, altura animada e conteúdo deslizando dentro de uma tela continuam
+recusados, cada um com o motivo em `docs/design-review/05-movimento.md`. Caíram
+"nada de animação de entrada" (para camada; fica para conteúdo), "nada de fade"
+(fica para usos nomeados — o véu da folha, o aviso que apaga e o esmaecer sob
+"Reduzir movimento" —, e a peça que precisar de outro o nomeia aqui) e a recusa
+da transição entre abas, que o dono reabriu como carrossel.
 
 **Movimento novo entra nesta tabela, com a função que cumpre, antes de entrar
-no código.** A rolagem entrou sem que ninguém citasse a regra (`02077e3`); seis
-dias depois, outra rolagem foi recusada justamente por citá-la
-(`mostraExercicio`).
+no código.** A rolagem suave entrou sem que ninguém citasse a regra (`02077e3`);
+seis dias depois, outra rolagem foi recusada justamente por citá-la
+(`mostraExercicio`). A regra ficou, e agora tem guarda.
 
 ## Estado de retirada
 

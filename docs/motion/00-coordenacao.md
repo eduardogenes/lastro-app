@@ -85,9 +85,9 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Respostas do dono registradas no diário (16/10, 01h25).
 
 ### Fase 3 — implementação (só depois das respostas)
-- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peça 0 em curso.
-- [ ] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`).
-- [ ] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova.
+- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peça 0 feita (16/10).
+- [x] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`). Peça 0: casos (a)–(e) e a lista de folhas, 52 plantios.
+- [x] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova (peça 0).
 - [ ] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde.
 
 ### Fase 4 — revisão
@@ -320,3 +320,19 @@ captura do Chromium às vezes fica ~250 ms sem quadro com a página já desenhad
 esses trechos saem marcados e vale o Event Timing. Não gravou: Comparar fotos
 (registro sem fotos), gesto de borda, clarão, "Não guardei" (o `micro-avisos`
 mede). Parecer §7 escrito a partir do 07. Fases 1 e 2 fechadas.
+
+**16/10, 02h25 — peça 0 conferida.** Relatório do implementador em
+`09-implementacao.md`. Conferi o diff: tokens com os valores das respostas
+(camada 350 na curva do iPhone, quique 640 em `@keyframes ins-quique` dentro de
+`tokens.css`, `--ins-curva-ciclo` = o `ease` de hoje, para o pulso não mudar);
+o universal saiu; pulso, barra, clarão e bancada no portão; o fio num invólucro
+da largura da barra (o WebKit arredondava o `%` do fio de 82,8 para 83 px), com
+`overflow-x: clip` na barra; a porta `movimento.js` com `@ts-check`; o clarão
+sem relógio, um nó por disparo, `pointer-events: none`. Aceito o token
+`--ins-dur-clarao` (200) que ele criou: nenhum outro ficou em 200 depois das
+respostas, e a lista de durações do 07 §1.2 já tem 200.
+Um vermelho que não era da peça: `agora.test.js` "os 14 dias… a MESMA que o
+portão lê" falhava também no `a22b09d`, porque `diasRegistrados()` lia
+`new Date()` e o resto do app lê `Date.now()` (o relógio que os testes fixam no
+dia 15; hoje é 16). Corrigido em commit à parte, sem efeito no aparelho (os dois
+relógios são o mesmo fora dos testes). Depois: `tipos` limpo, build, 1593/1593.

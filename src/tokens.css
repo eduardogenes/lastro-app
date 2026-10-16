@@ -56,13 +56,35 @@
         a mono, e a decisão é "sem herancas".
         (CAIU: "rótulo mono em caixa alta é estrutura".)
 
-     6. Quase nenhum movimento, e nenhum que comemore. Quatro
-        funções autorizadas: interpolar grandeza contínua
-        amostrada; dizer que a tela está viva agora; dizer de
-        onde uma camada veio; dizer para onde um valor foi. O
-        portão é por ADESÃO — todo movimento mora dentro de
-        `@media (prefers-reduced-motion: no-preference)` —,
-        porque assim ele falha fechado.
+     6. Movimento explica, e só explica. Cada movimento diz uma
+        coisa só: de onde a camada veio, para onde se andou, o
+        que mudou, que o toque pegou — ou, no ambiente, que o
+        tempo está correndo e que a tela está viva. O que não
+        diz nenhuma das seis não entra.
+        CAMADA SE MOVE; CONTEÚDO NÃO. Folha, tela cheia, modo,
+        cronômetro e aviso chegam pela borda de onde vêm e voltam
+        por ela; lista, cartão, linha e o painel que nasce sob o
+        polegar aparecem no lugar — alvo que se move sob o dedo é
+        alvo errado.
+        Proibido pela FORMA, não pela contagem: comemoração
+        (quadro, curva ou tempo diferente para "feito"), número
+        que rola, esqueleto que cintila, altura, largura ou
+        posição animadas (só transform e opacity), movimento no
+        fim do descanso. Ultrapassagem só no token do QUIQUE, que
+        só a chegada da folha e do painel de apagar usam; saída
+        nenhuma quica (dono, 16/10).
+        O toque nunca espera: o dado grava no toque, e nada escuta
+        o fim de uma animação.
+        O portão é por ADESÃO — todo movimento mora dentro de
+        `@media (prefers-reduced-motion: no-preference)`, com o
+        último quadro escrito fora, e o JavaScript pergunta a uma
+        porta só (`src/ui/movimento.js`) —, porque assim ele falha
+        fechado: sob "Reduzir movimento" nunca há mais movimento
+        do que sem a preferência.
+        (CAIU: "quase nenhum movimento" e "quatro funções
+        autorizadas". O pedido de 15/10 pede o contrário da
+        contagem, e a contagem quebrou duas vezes em um mês com o
+        código certo no mérito.)
    ============================================================ */
 
 /* ============================================================
@@ -411,16 +433,102 @@
   --ins-foco-folga: 2px;
 }
 
-/* ---- Movimento: a curva e as durações ----
-   `--ins-ease` é saída suave SEM ultrapassagem: nenhum ponto de controle acima
-   de 1. É o que mantém de pé a proibição de "folha com elasticidade", que não
-   caiu — a folha chega e para. */
+/* ---- Movimento: as curvas, as durações e as distâncias ----
+   Movimento explica, e só explica (princípio 6). Duração e curva nascem
+   NOMEADAS PELO PAPEL, como cor: número solto numa regra não entra — a guarda
+   de estilo reprova tempo e curva escritos fora daqui, e ultrapassagem fora do
+   quique.
+
+   Os tempos são as respostas do dono de 16/10: a camada entra e sai em 350ms na
+   curva do iPhone; a folha e o painel de apagar chegam com o quique; o que muda
+   no lugar fica curto, porque é resposta e não viagem.
+
+   Sob `prefers-reduced-motion: reduce` NENHUMA regra que usa estes tokens vale,
+   menos o esmaecer de `--ins-dur-dissolve`: elas moram no portão por adesão
+   (`no-preference`), e fora dele o elemento já está no último quadro. Os tokens
+   não são zerados aqui — zerar seria um segundo portão, que discordaria do
+   primeiro sobre o esmaecer. No JavaScript quem responde é `tempo()` de
+   `src/ui/movimento.js`: 0 sob a preferência. */
 :root {
-  --ins-ease: cubic-bezier(.2, .8, .2, 1);
-  --ins-dur: 220ms;
-  /* O toque que afunda acontece dezenas de vezes por sessão — a régua é tocada
-     48 vezes por semana — e é o único movimento que o dono tocou e aprovou. */
+  /* A CURVA DO LUGAR. O que muda onde está — o toque, o valor que pousa, o
+     aviso, o fio da aba: chega rápido e assenta, 80% do caminho na primeira
+     metade do tempo. NÃO para camada que cobre a tela. Sem ultrapassagem:
+     nenhum ponto de controle fora de [0, 1]. */
+  --ins-curva: cubic-bezier(.2, .8, .2, 1);
+  /* A CURVA DA CAMADA: a do iPhone, cauda longa. A camada que entra e a que sai
+     pela borda — folha, tela cheia, modo, cronômetro. A saída NÃO acelera:
+     curva que acelera parte parada, e a resposta ao "‹" levaria quadros para
+     aparecer. NÃO para o que muda no lugar. */
+  --ins-curva-camada: cubic-bezier(.32, .72, 0, 1);
+  /* Linear é a curva do TEMPO, e de mais nada: a barra do descanso, que
+     interpola entre duas amostras. Em qualquer outra coisa linear parece
+     mecânico, e o véu continuaria escurecendo depois de a folha parar. */
+  --ins-curva-grandeza: linear;
+  /* SÓ o pulso do ponto ao vivo, em cada meia volta. É o `ease` do navegador
+     escrito por extenso: o pulso sempre rodou nele, por omissão, e o que se vê
+     hoje é o que fica. */
+  --ins-curva-ciclo: cubic-bezier(.25, .1, .25, 1);
+
+  /* O controle responde ao dedo: o preenchimento do toque. Só ESCURECE (dono,
+     16/10, pergunta 7) — nenhum controle encolhe. NÃO para nada além do
+     controle tocado. */
   --ins-dur-toque: 120ms;
+  /* Algo muda ONDE ESTÁ, sem trocar de camada: o fio da aba, o valor que pousa
+     na célula, o copo que enche, o aviso curto. NÃO para camada. */
+  --ins-dur-lugar: 160ms;
+  /* Uma camada ENTRA pela borda de onde vem: folha, tela cheia, modo,
+     cronômetro — e o véu da folha junto. NÃO para toque, aviso nem número. */
+  --ins-dur-entra: 350ms;
+  /* A mesma camada SAI pela borda por onde veio, no mesmo tempo e na mesma
+     curva. Saída nenhuma quica. */
+  --ins-dur-sai: 350ms;
+  /* SÓ a chegada da folha e do painel de apagar, com os quadros de `ins-quique`
+     logo abaixo. É o único lugar do app onde o movimento passa do destino. */
+  --ins-dur-quique: 640ms;
+  /* SÓ o clarão do disparo da câmera: branco forte nos primeiros quadros e
+     apagado antes da próxima instrução de voz, como um flash. Não é camada que
+     sai — com o tempo da camada (350) o branco ficaria na tela o dobro. */
+  --ins-dur-clarao: 200ms;
+  /* SÓ dentro de `@media (prefers-reduced-motion: reduce)`, e só com opacity: a
+     camada que chega esmaece em vez de deslizar; a que sai vai de uma vez.
+     Mesmo número do toque e outro papel, como `--ins-10` e `--ins-n-m` são os
+     dois 26px. */
+  --ins-dur-dissolve: 120ms;
+  /* NÃO é duração de transição: é o PERÍODO de `pintaTimer`. A barra interpola
+     entre duas amostras; menos deixa vão parado, mais atrasa a barra em relação
+     ao número. A guarda cobra que o `setInterval` use o mesmo número. */
+  --ins-dur-amostra: 250ms;
+  /* Uma volta do pulso do ponto ao vivo, sem fim enquanto a tela está viva —
+     decisão do dono de 16/10 (pergunta 12), contra o 2.2.2 da WCAG, escrito no
+     DESIGN.md. Ciclo é ambiente, e ambiente novo não entra. */
+  --ins-ciclo-vivo: 2.4s;
+
+  /* AS DISTÂNCIAS. Geometria, então `px`: o sinal de direção não cresce com o
+     texto. E `100%` continua LITERAL onde quer dizer "da borda" (a folha, a
+     tela cheia, o cronômetro), como `50%` continua literal onde é círculo. */
+  /* De quanto abaixo o valor sobe até assentar na célula que o recebeu. NÃO
+     para nada maior que uma linha de texto. */
+  --ins-pousa: 4px;
+  /* De quanto abaixo o aviso curto chega. Cronômetro e folha não: vêm da
+     borda. */
+  --ins-sobe-aviso: 8px;
+}
+
+/* O QUIQUE, quadro a quadro: o que o dono viu e escolheu na pergunta 1 de
+   16/10. A camada sobe da borda de baixo, passa 8% do lugar aos 55% do tempo,
+   volta 3% aos 80% e assenta. SÓ a chegada da folha e do painel de apagar, e só
+   com `--ins-dur-quique`; nenhuma saída.
+
+   Mora AQUI, e não em base.css, porque cada trecho traz a curva dele: são
+   curvas, e curva nasce nos tokens. Pelo mesmo motivo a curva da declaração
+   (`animation: ins-quique var(--ins-dur-quique) var(--ins-curva-camada) both`)
+   não vale para ela — os três trechos já têm a sua. A guarda de estilo deixa
+   estes quadros, e só estes, passarem do destino. */
+@keyframes ins-quique {
+  0%   { transform: translateY(100%); animation-timing-function: cubic-bezier(.3, .7, .4, 1); }
+  55%  { transform: translateY(-8%);  animation-timing-function: ease-in-out; }
+  80%  { transform: translateY(3%);   animation-timing-function: ease-in-out; }
+  100% { transform: none; }
 }
 
 /* ---- Áreas seguras do iPhone, com piso ----

@@ -253,6 +253,12 @@
   border-top: 1px solid var(--ins-fio);
   padding-bottom: var(--sa-bottom);
   /* Sem backdrop-filter: pisca no Blink ao rolar e o sistema não tem vidro. */
+  /* O invólucro do fio anda para a DIREITA (`translateX(+)`) e passa da borda
+     da barra. Fixo não soma rolagem à página (medido nos dois motores: largura
+     rolável 414 com o fio na quinta aba), mas o corte fica escrito: `clip`, e
+     não `hidden`, que viraria `auto` no outro eixo e criaria um contêiner de
+     rolagem. */
+  overflow-x: clip;
 }
 .ins-tabbar.oculta { display: none; }
 
@@ -264,10 +270,32 @@
 }
 .ins-tab.on { color: var(--ins-acento-tinta); }
 
+/* O fio da aba. Andava em `left`, que refaz o layout a cada quadro — 14
+   layouts e 26 pinturas por troca contra 1 e 3 — e congelava enquanto o
+   `render()` da aba nova prendia a thread (docs/motion/04 §1.6). Agora anda em
+   `transform`, que o compositor leva sozinho, e o lugar final é o mesmo.
+
+   Por que um INVÓLUCRO da largura da barra, e não o fio andando em múltiplos da
+   própria largura: o WebKit resolve a porcentagem do `translate` contra a caixa
+   arredondada para o pixel inteiro — 82,8 vira 83, e na quinta aba o fio
+   parava 0,8px fora do lugar. Contra a barra inteira (414, inteiro) a conta
+   fecha: o invólucro anda `i × 20%` dela (escrito pela `TabBar`), e o fio é o
+   `<i>` de dentro, com um quinto. Medido nos dois motores a 3×: o fio fica a
+   menos de meio pixel do aparelho de onde ficava com `left`.
+
+   O invólucro deixa o toque passar; o fio, como antes, cobre a borda de cima
+   da aba acesa. Fora do portão o fio salta para a aba. */
 .ins-tab-ind {
-  position: absolute; top: -1px; height: var(--ins-indicator);
+  position: absolute; top: -1px; left: 0; width: 100%; height: var(--ins-indicator);
+  pointer-events: none;
+}
+.ins-tab-ind > i {
+  position: absolute; top: 0; bottom: 0; left: 0;
   background: var(--ins-acento);
-  transition: left var(--ins-dur) var(--ins-ease);
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ins-tab-ind { transition: transform var(--ins-dur-lugar) var(--ins-curva); }
 }
 
 /* ---- Listas de fio ---------------------------------------------------- */
@@ -1186,7 +1214,13 @@ button.ins-linha { border-radius: 0; }
    A escala roda no compositor e desenha exatamente a mesma barra. */
 #tfill {
   height: 100%; width: 100%; background: var(--ins-acento);
-  transform-origin: left center; transition: transform .25s linear;
+  transform-origin: left center;
+}
+/* Interpola entre duas amostras de `pintaTimer`: o período é o token, e a
+   curva é a do tempo. Fora do portão a barra anda em degraus de 250 ms, que é
+   como fica sob "Reduzir movimento" desde sempre (DESIGN.md §Movimento). */
+@media (prefers-reduced-motion: no-preference) {
+  #tfill { transition: transform var(--ins-dur-amostra) var(--ins-curva-grandeza); }
 }
 #timer button {
   background: none; border: 1px solid var(--ins-fio); color: var(--ins-tinta-3);
@@ -1199,10 +1233,6 @@ button.ins-linha { border-radius: 0; }
    do app no pior contexto que ele tem — era a regra violada pelo motivo que a
    escreveu. */
 #tmenos, #tmais { min-width: var(--ins-tap); min-height: var(--ins-tap); }
-
-/* O portão de movimento reduzido mora em `base.css`, e alcança por `*` com
-   `!important` — esta folha tinha uma segunda cópia só da parte de transição,
-   que virou ruído depois que o portão passou a ser estrutural. */
 
 /* O que é redondo por decisão: ponto de status, ponto ao vivo e thumb do
    slider — os três pontos contam como um na lista do DESIGN.md, que fecha com a
@@ -1798,9 +1828,15 @@ button.ins-linha { border-radius: 0; }
 .cam-bloco.feita { background: var(--ins-tinta); border-color: var(--ins-tinta); }
 .cam-bloco.atual { border-color: var(--ins-acento); box-shadow: inset 0 0 0 2px var(--ins-acento); }
 .cam-bloco.nao { border: 2px dashed var(--ins-atencao-tinta); }
-.cam-clarao { position: absolute; inset: 0; background: var(--ins-foto-tinta); animation: cam-clarao 320ms ease-out forwards; pointer-events: none; }
+/* O clarão é um nó por foto (a câmera o monta com a chave do disparo), e o
+   que o apaga é a própria animação: fora do portão ele já está no último
+   quadro, apagado — sob "Reduzir movimento" a foto é dita pelo obturador, pela
+   voz e pelo bloco da pose, e o branco não aparece. Sem relógio no JavaScript. */
+.cam-clarao { position: absolute; inset: 0; background: var(--ins-foto-tinta); opacity: 0; pointer-events: none; }
 @keyframes cam-clarao { from { opacity: .9; } to { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .cam-clarao { animation-duration: 1ms; opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .cam-clarao { animation: cam-clarao var(--ins-dur-clarao) var(--ins-curva) both; }
+}
 
 /* ---- Enquanto descansa (a D, momento 1, estado 2) ----------------------
    No cartão aberto da sessão, só enquanto o descanso conta. */

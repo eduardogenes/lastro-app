@@ -128,11 +128,12 @@ export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao
 
   // Sem portal de propósito: preact/compat custaria 10 kB por uma função.
   // `position: fixed` sai da árvore visualmente de qualquer lugar — desde que
-  // NENHUM ancestral tenha transform, filter ou perspective, que criariam um
-  // bloco de contenção e prenderiam a folha dentro dele. O Instrumento não usa
-  // nenhum dos três em `html`, `body` ou `#app`, e quem cobra isso é
-  // `tests/dominio/estilo.test.ts`, em "nada entre a folha e a janela cria
-  // bloco de contenção" — a promessa ficou um ano aqui sem teste nenhum.
+  // NENHUM ancestral tenha transform, translate, filter, perspective ou
+  // will-change, que criariam um bloco de contenção e prenderiam a folha dentro
+  // dele. O Instrumento não usa nenhum deles em `html`, `body`, `#app` nem
+  // `.ins-modo`, e quem cobra isso é `tests/dominio/estilo.test.ts`, em "(d)
+  // nada entre um fixo e a janela cria bloco de contenção" — a promessa ficou
+  // um ano aqui sem teste nenhum.
   return (
     <div class="ins-folha-w" style={`z-index:${nivel}`}>
       {/* Tocar no véu fecha. O véu é irmão da folha, não pai: pai capturaria

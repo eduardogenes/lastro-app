@@ -14,6 +14,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ANCESTRAIS_DE_FIXO } from '../ancestrais-de-fixo.js';
 
 const RAIZ = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -371,17 +372,28 @@ function blocos(folha: string): { sels: string[]; corpo: string }[] {
 /**
  * Os ancestrais de tudo que o app desenha: a folha, o cabeçalho do modo, a
  * faixa, o cronômetro. São poucos e fixos — o app mora no `#app`, dentro do
- * body — e é por isso que dois casos podem ser de FONTE em vez de DOM.
+ * body, e o modo de sessão no `.ins-modo` — e é por isso que dois casos podem
+ * ser de FONTE em vez de DOM.
  *
  * UMA constante para os dois casos de ancestral de propósito. Eles olhavam
  * árvores diferentes: o do bloco de contenção via `html|body|:root|*|#app`, e o
  * do scroll container via só o `body`. Um `overflow: hidden` em `#app` matava o
  * `sticky` da única saída da sessão e nenhum dos 38 casos pegava.
+ *
+ * E a lista mora FORA deste arquivo (`tests/ancestrais-de-fixo.js`) porque uma
+ * segunda metade, de DOM (`tests/fluxo/movimento.test.js`), confere na árvore
+ * montada que ela é exata. Foi a falta dessa conferência que deixou o
+ * `.ins-modo` de fora por um ano, com a faixa da pergunta morando dentro dele.
  */
-const ANCESTRAL = /^(html|body|:root|\*|#app)([.:[][^ >+~]*)?$/;
+const ANCESTRAL = new RegExp('^(' +
+  ANCESTRAIS_DE_FIXO.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') +
+  ')([.:[][^ >+~]*)?$');
 
-/** O seletor de um bloco, sem o pseudo-elemento, para casar com ANCESTRAL. */
-function raizDe(sel: string): string { return sel.replace(/::[a-z-]+$/, ''); }
+/**
+ * O seletor de um bloco, sem o pseudo-elemento, para casar com ANCESTRAL.
+ * Com parênteses também: `html::view-transition-old(root)` passava inteiro.
+ */
+function raizDe(sel: string): string { return sel.replace(/::[a-z-]+(?:\([^)]*\))?$/, ''); }
 const indexHtml = () => fonte('index.html');
 const mainJsx = () => fonte('src/main.jsx');
 // Os componentes de onde saem os SELETORES de quatro casos. Seis dos 28 casos
@@ -1025,34 +1037,6 @@ test('os aparelhos da prateleira são medidas de retrato, e plausíveis', () => 
   });
 });
 
-test('nada entre a folha e a janela cria bloco de contenção', () => {
-  // A promessa que `src/ui/instrumento/folha.jsx` escreve e que não tinha
-  // teste: a folha é `position: fixed` e sai da árvore visualmente de onde
-  // estiver, DESDE QUE nenhum ancestral declare transform, filter,
-  // perspective, backdrop-filter, will-change ou contain. Qualquer um deles
-  // cria bloco de contenção e prende a folha dentro do pai — ela deixa de
-  // cobrir a tela e passa a rolar com o conteúdo, sem erro nenhum.
-  //
-  // Os ancestrais são poucos e fixos: a folha mora no `#app`, dentro do body.
-  // Por isso o teste é de FONTE e não de DOM: o defeito nasce de uma linha
-  // nova em `html`, `body` ou `#app`, não da árvore.
-  //
-  // A árvore é a constante ANCESTRAL, compartilhada com 'nenhum ancestral do
-  // sticky vira scroll container'. Os dois casos olhavam árvores diferentes, e
-  // era por isso que `#app` ficava sem rede num dos dois.
-  const PRESO = /(transform|filter|perspective|backdrop-filter|will-change|contain)\s*:/g;
-
-  const culpadas: string[] = [];
-  blocos(css()).forEach(b => {
-    if (!b.sels.some(sel => ANCESTRAL.test(raizDe(sel)))) return;
-    const achados = b.corpo.match(PRESO);
-    if (achados) culpadas.push(b.sels.join(', ') + ' → ' + achados.join(' '));
-  });
-
-  assert.deepStrictEqual(culpadas, [],
-    'ancestral da folha com bloco de contenção: a folha para de ser fixa');
-});
-
 test('todo controle tem anel de foco próprio, e o anel não encosta no botão', () => {
   // O contrato manda "foco sempre visível". O sistema anterior não tinha UMA
   // regra de `:focus-visible` para botão: todo botão dependia do anel padrão do
@@ -1139,51 +1123,6 @@ test('controle menor que o alvo estende a área, ou está na lista de dívida', 
   assert.deepStrictEqual(saiu, [],
     'nome na lista de dívida que já não corresponde a um controle pequeno: ' +
     'se ele foi consertado, tire-o da lista — ela só serve se for exata');
-});
-
-test('reduzir movimento desliga animação por estrutura, não por nome', () => {
-  // O portão existe e hoje funciona — mas por COINCIDÊNCIA: há exactly uma
-  // animação no app (`ins-pulse`, no ponto ao vivo), e o bloco de
-  // `prefers-reduced-motion` a desliga **pelo nome do seletor**. A próxima
-  // animação que nascer em qualquer outro lugar não será desligada, e ninguém
-  // vai notar: quem pede movimento reduzido não está aqui para reclamar.
-  //
-  // Então a regra é sobre a GRAMÁTICA do portão, não sobre a lista de hoje: ele
-  // tem de alcançar por seletor universal. Transição já era assim; animação
-  // não era.
-  //
-  // `animation-duration` quase zero com uma iteração, e não `animation: none`:
-  // zerar a animação deixa o elemento no estado INICIAL, e uma animação com
-  // `both` que termina visível ficaria invisível. Pular para o último quadro é
-  // o que respeita a intenção de quem pediu menos movimento sem apagar
-  // conteúdo.
-  const todo = juntos(FOLHAS.map(f => 'src/' + f));
-
-  const portoes = [...todo.matchAll(
-    /@media[^{]*prefers-reduced-motion[^{]*\{([\s\S]*?)\n\}/g)].map(m => m[1]);
-  assert.ok(portoes.length > 0, 'nenhum bloco de `prefers-reduced-motion`');
-
-  // A REGRA do `*`, não o bloco: uma primeira versão deste caso perguntava se o
-  // bloco tinha `*` em algum lugar E a palavra `animation` em outro, e passava
-  // por acidente — havia `.ins-live-dot { animation: none }` ao lado de
-  // `* { transition: none }`. Duas regras diferentes, nenhuma universal sobre
-  // animação. O que se cobra é a regra universal declarando animação.
-  const regraUniversal = portoes.flatMap(p =>
-    [...p.matchAll(/([^{}]+)\{([^}]*)\}/g)]
-      .filter(r => r[1].split(',').some(s => s.trim() === '*' ||
-                                             /^\*::?[a-z-]+$/.test(s.trim())))
-      .map(r => r[2]));
-
-  assert.ok(regraUniversal.some(c => /animation/.test(c)),
-    'o portão de movimento reduzido não desliga ANIMAÇÃO por seletor ' +
-    'universal: desligar por nome funciona só para as animações que já ' +
-    'existem, e a próxima nasce fora do portão');
-
-  if (/@keyframes/.test(todo)) {
-    assert.ok(regraUniversal.some(c => /animation[^;]*!important/.test(c)),
-      'o portão alcança por `*` mas sem `!important`: a regra do componente ' +
-      'é mais específica e ganha, então o movimento continua rodando');
-  }
 });
 
 test('a paleta atende contraste nos dois temas, medido do que está na folha', () => {
@@ -1330,4 +1269,652 @@ test('a carga e a repetição da série têm o alvo do RIR, e o fio reto', () =>
   assert.match(r, /border-radius\s*:\s*0/, 'raio zero: o fio do estado aberto é reto');
   assert.match(t, /\.repbtn::after[^{]*\{[^}]*inset\s*:\s*-3px 0\s*;/,
     'a área cresce 3px para cima e para baixo, e zero para os lados');
+});
+
+
+// ============================================================
+// O MOVIMENTO
+//
+// A doutrina mudou em 16/10 (princípio 6 de `tokens.css`, DESIGN.md
+// §Movimento): de "quase nenhum movimento" para "movimento explica, e só
+// explica". Mais movimento quer dizer mais lugar para o defeito que nenhum
+// teste de DOM vê, porque o jsdom não anima nada: o tempo escrito fora dos
+// tokens, a animação que roda para quem pediu menos, o `left` que refaz o
+// layout a cada quadro, o `transform` que arranca a folha da janela, o ouvinte
+// do fim de uma animação que nunca chega. Os cinco casos abaixo, (a) a (e),
+// são de FONTE, como os de cor, e leem as folhas regra a regra COM a pilha de
+// `@media` de cada uma — o `blocos()` de cima joga o prelúdio fora e por isso
+// não sabe se uma regra está no portão.
+//
+// Cada caso foi visto VERMELHO plantando a violação numa cópia e desfazendo
+// (docs/motion/09-implementacao.md, peça 0).
+// ============================================================
+
+type Decl = { prop: string; valor: string };
+type Regra = { arquivo: string; linha: number; sels: string[]; decls: Decl[]; midias: string[] };
+type Quadro = { pos: number[]; decls: Decl[] };
+type Quadros = { nome: string; arquivo: string; linha: number; quadros: Quadro[] };
+type Lida = { arquivo: string; regras: Regra[]; quadros: Quadros[] };
+
+/** Comentário vira espaço, e a quebra de linha fica: o número da linha não muda. */
+function semComentariosCss(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+}
+
+/** Parte em `sep` só no nível de fora — nem dentro de parênteses, nem de aspas. */
+function partesNoTopo(txt: string, sep: string): string[] {
+  const out: string[] = [];
+  let prof = 0, aspas = '', ini = 0;
+  for (let i = 0; i < txt.length; i++) {
+    const c = txt[i];
+    if (aspas) { if (c === aspas) aspas = ''; continue; }
+    if (c === '"' || c === "'") aspas = c;
+    else if (c === '(') prof++;
+    else if (c === ')') prof--;
+    else if (c === sep && prof === 0) { out.push(txt.slice(ini, i)); ini = i + 1; }
+  }
+  out.push(txt.slice(ini));
+  return out;
+}
+
+/** As declarações de um corpo. O `!important` sai do valor: ele não muda o que se move. */
+function declaracoes(corpo: string): Decl[] {
+  return partesNoTopo(corpo, ';').map(p => {
+    const i = p.indexOf(':');
+    return i < 0 ? null : {
+      prop: p.slice(0, i).trim().toLowerCase(),
+      valor: p.slice(i + 1).replace(/\s*!important\s*$/i, '').trim()
+    };
+  }).filter((d): d is Decl => !!d && !!d.prop);
+}
+
+/** O índice da chave que fecha a que abre em `i`. */
+function fechamento(txt: string, i: number): number {
+  let prof = 0;
+  for (let j = i; j < txt.length; j++) {
+    if (txt[j] === '{') prof++;
+    else if (txt[j] === '}' && --prof === 0) return j;
+  }
+  return txt.length;
+}
+
+/**
+ * Uma folha lida regra a regra: cada regra com o arquivo, a linha, a lista de
+ * seletores, as declarações e a PILHA de `@media`/`@supports` em volta dela; e
+ * os `@keyframes`, quadro a quadro. É o que os casos de movimento precisam e o
+ * `blocos()` não dá: ele joga o prelúdio fora.
+ */
+function lida(arquivo: string): Lida {
+  const css = semComentariosCss(fonte('src/' + arquivo));
+  const linhaDe = (pos: number) => css.slice(0, pos).split('\n').length;
+  const regras: Regra[] = [];
+  const quadros: Quadros[] = [];
+  const pilha: string[] = [];
+  let i = 0, ini = 0;
+  while (i < css.length) {
+    const c = css[i];
+    if (c === '{') {
+      const prelude = css.slice(ini, i).trim().replace(/\s+/g, ' ');
+      if (/^@(-webkit-)?keyframes\b/.test(prelude)) {
+        const fim = fechamento(css, i);
+        const corpo = css.slice(i + 1, fim);
+        quadros.push({
+          nome: prelude.replace(/^@(-webkit-)?keyframes\s+/, '').trim(), arquivo, linha: linhaDe(i),
+          quadros: [...corpo.matchAll(/([^{}]+)\{([^}]*)\}/g)].map(m => ({
+            pos: m[1].split(',').map(x => x.trim())
+              .map(x => x === 'from' ? 0 : x === 'to' ? 100 : parseFloat(x)),
+            decls: declaracoes(m[2])
+          }))
+        });
+        i = fim + 1; ini = i; continue;
+      }
+      if (prelude.startsWith('@')) { pilha.push(prelude); i++; ini = i; continue; }
+      const fim = css.indexOf('}', i);
+      regras.push({
+        arquivo, linha: linhaDe(i),
+        sels: prelude.split(',').map(x => x.trim()).filter(Boolean),
+        decls: declaracoes(css.slice(i + 1, fim)), midias: pilha.slice()
+      });
+      i = fim + 1; ini = i; continue;
+    }
+    if (c === '}') { pilha.pop(); ini = i + 1; }
+    else if (c === ';') ini = i + 1;
+    i++;
+  }
+  return { arquivo, regras, quadros };
+}
+
+const folhasDoApp = () => FOLHAS.map(lida);
+const todasAsFolhas = () => FOLHAS.concat(FOLHA_BANCADA).map(lida);
+
+/** O bloco de tokens da bancada é o `tokens.css` DELA. */
+const ehTokens = (r: Regra) =>
+  r.arquivo === 'tokens.css' || (r.arquivo === FOLHA_BANCADA && r.sels.length === 1 && r.sels[0] === ':root');
+
+const ehMovimento = (prop: string) => /^(transition|animation)(-[a-z-]+)?$/.test(prop);
+const ehNada = (valor: string) => /^none$/i.test(valor.trim());
+const NO_PORTAO = (r: Regra) => r.midias.some(m => /prefers-reduced-motion\s*:\s*no-preference/.test(m));
+const NO_REDUZ = (r: Regra) => r.midias.some(m => /prefers-reduced-motion\s*:\s*reduce/.test(m));
+
+const TEMPO_SOLTO = /(?<![\w.-])\d*\.?\d+m?s(?![\w-])/;
+const CURVA_FUNCAO = /(?<![\w-])(cubic-bezier|steps|linear)\(/;
+const CURVA_PALAVRA = /(?<![\w-])(ease-in-out|ease-in|ease-out|ease|linear|step-start|step-end)(?![\w(-])/;
+const PALAVRAS_DE_ANIMACAO = new Set(['none', 'infinite', 'both', 'forwards', 'backwards', 'normal',
+  'reverse', 'alternate', 'alternate-reverse', 'running', 'paused', 'ease', 'ease-in', 'ease-out',
+  'ease-in-out', 'linear', 'step-start', 'step-end']);
+const SE_MOVE = ['transform', 'translate', 'scale', 'opacity'];
+
+const onde = (r: Regra, d: Decl) => r.arquivo + ':' + r.linha + ' ' + r.sels.join(', ') + ' → ' + d.prop + ': ' + d.valor;
+
+/** Os `@keyframes` de todas as folhas, pelo nome. */
+function quadrosPorNome(folhas: Lida[]): Map<string, Quadros[]> {
+  const m = new Map<string, Quadros[]>();
+  folhas.forEach(f => f.quadros.forEach(q => m.set(q.nome, (m.get(q.nome) || []).concat(q))));
+  return m;
+}
+
+/** O nome da animação num item de `animation`: o identificador que não é palavra-chave. */
+function nomeDaAnimacao(item: string): string | null {
+  const toks = partesNoTopo(item.trim(), ' ').map(t => t.trim()).filter(Boolean);
+  return toks.find(t => /^-?[a-z_][\w-]*$/i.test(t) && !PALAVRAS_DE_ANIMACAO.has(t.toLowerCase())) || null;
+}
+
+/** O que um item de `transition` move. Sem propriedade nomeada é `all`, o padrão. */
+function propDaTransicao(item: string): string {
+  const toks = partesNoTopo(item.trim(), ' ').map(t => t.trim()).filter(Boolean);
+  return toks.find(t => /^-?[a-z_][\w-]*$/i.test(t) && !PALAVRAS_DE_ANIMACAO.has(t.toLowerCase()) &&
+    t !== 'allow-discrete') || 'all';
+}
+
+/** As propriedades que uma regra move, de `transition` e dos `@keyframes` de `animation`. */
+function oQueMove(r: Regra, porNome: Map<string, Quadros[]>): string[] {
+  const out: string[] = [];
+  r.decls.forEach(d => {
+    if (ehNada(d.valor)) return;
+    if (d.prop === 'transition') partesNoTopo(d.valor, ',').forEach(it => out.push(propDaTransicao(it)));
+    if (d.prop === 'transition-property') partesNoTopo(d.valor, ',').forEach(p => out.push(p.trim()));
+    const nomes = d.prop === 'animation' ? partesNoTopo(d.valor, ',').map(nomeDaAnimacao)
+      : d.prop === 'animation-name' ? partesNoTopo(d.valor, ',').map(x => x.trim()) : [];
+    nomes.forEach(n => (n && porNome.get(n) || []).forEach(q => q.quadros.forEach(f =>
+      f.decls.forEach(fd => { if (fd.prop !== 'animation-timing-function') out.push(fd.prop); }))));
+  });
+  return [...new Set(out)];
+}
+
+/**
+ * Os números de um valor de movimento, por componente, para comparar quadros:
+ * `translateY(-8%)` → `ty: -8 %`; `none` → identidade. Componente que não se lê
+ * (um `var()`, um `calc()`) fica de fora, e quem compara pula.
+ */
+type Num = { n: number; u: string };
+function componentes(prop: string, valor: string): Map<string, Num> | null {
+  const m = new Map<string, Num>();
+  const v = valor.trim();
+  const num = (x: string): Num | null => {
+    const r = /^(-?\d*\.?\d+)([a-z%]*)$/i.exec(x.trim());
+    return r ? { n: Number(r[1]), u: r[2] } : null;
+  };
+  const poe = (k: string, x: string) => { const n = num(x); if (n) m.set(k, n); };
+  if (prop === 'opacity') { const n = num(v); return n ? new Map([['o', n]]) : null; }
+  if (v === 'none') return m;
+  if (prop === 'translate') { const p = v.split(/\s+/); poe('tx', p[0]); if (p[1]) poe('ty', p[1]); return m; }
+  if (prop === 'scale') { const p = v.split(/\s+/); poe('sx', p[0]); poe('sy', p[1] || p[0]); return m; }
+  if (prop === 'rotate') { poe('r', v); return m; }
+  if (prop !== 'transform') return null;
+  for (const f of v.matchAll(/([a-zA-Z0-9]+)\(([^()]*)\)/g)) {
+    const a = f[2].split(/\s*,\s*|\s+/).filter(Boolean);
+    const nome = f[1];
+    if (nome === 'translateX') poe('tx', a[0]);
+    else if (nome === 'translateY') poe('ty', a[0]);
+    else if (nome === 'translate' || nome === 'translate3d') { poe('tx', a[0]); if (a[1]) poe('ty', a[1]); }
+    else if (nome === 'scale') { poe('sx', a[0]); poe('sy', a[1] || a[0]); }
+    else if (nome === 'scaleX') poe('sx', a[0]);
+    else if (nome === 'scaleY') poe('sy', a[0]);
+    else if (nome === 'rotate') poe('r', a[0]);
+  }
+  return m;
+}
+/** O valor de repouso de cada componente: o que `none` quer dizer. */
+const IDENTIDADE: Record<string, number> = { tx: 0, ty: 0, sx: 1, sy: 1, r: 0, o: 1 };
+
+/** Dois valores da mesma propriedade, comparados por componente. */
+function mesmoValor(prop: string, a: string, b: string): boolean {
+  const ca = componentes(prop, a), cb = componentes(prop, b);
+  if (!ca || !cb) return a.replace(/\s+/g, '') === b.replace(/\s+/g, '');
+  const chaves = new Set([...ca.keys(), ...cb.keys()]);
+  for (const k of chaves) {
+    const x = ca.get(k), y = cb.get(k);
+    const nx = x ? x.n : IDENTIDADE[k], ny = y ? y.n : IDENTIDADE[k];
+    if (Math.abs(nx - ny) > 1e-6) return false;
+  }
+  return true;
+}
+
+/**
+ * Os quadros que passam do destino. Para cada componente, com o começo (0%) e o
+ * fim (100%) diferentes, um quadro do meio fora do intervalo entre os dois é
+ * ultrapassagem — ou antecipação, que é a mesma mola do outro lado. Ciclo (o
+ * pulso: começa e termina no mesmo valor) não tem destino e não entra.
+ */
+function ultrapassa(q: Quadros): string[] {
+  const out: string[] = [];
+  const linha: { pos: number; decls: Decl[] }[] = [];
+  q.quadros.forEach(f => f.pos.forEach(p => linha.push({ pos: p, decls: f.decls })));
+  linha.sort((x, y) => x.pos - y.pos);
+  const props = new Set(linha.flatMap(f => f.decls.map(d => d.prop)).filter(p => SE_MOVE.concat('rotate').includes(p)));
+  props.forEach(prop => {
+    const serie = linha.map(f => {
+      const d = f.decls.filter(x => x.prop === prop).pop();
+      return d ? { pos: f.pos, c: componentes(prop, d.valor) } : null;
+    }).filter((x): x is { pos: number; c: Map<string, Num> } => !!x && !!x.c);
+    const ini = serie.find(s => s.pos === 0), fim = serie.find(s => s.pos === 100);
+    if (!ini || !fim) return;
+    const chaves = new Set(serie.flatMap(s => [...s.c.keys()]));
+    chaves.forEach(k => {
+      const val = (s: { c: Map<string, Num> }) => { const x = s.c.get(k); return x ? x.n : IDENTIDADE[k]; };
+      const a = val(ini), b = val(fim);
+      if (Math.abs(a - b) < 1e-9) return;
+      serie.filter(s => s.pos > 0 && s.pos < 100).forEach(s => {
+        const v = val(s);
+        if (v < Math.min(a, b) - 1e-9 || v > Math.max(a, b) + 1e-9) {
+          out.push(q.arquivo + ':' + q.linha + ' @keyframes ' + q.nome + ' ' + s.pos + '% ' + prop + ' (' + k + ' ' + v + ', entre ' + a + ' e ' + b + ')');
+        }
+      });
+    });
+  });
+  return out;
+}
+
+// ---------- o JavaScript ----------
+
+/**
+ * Comentário de JS vira espaço. Só o que COMEÇA comentário de verdade: `/*` e
+ * `//` no começo da linha ou depois de espaço, `{`, `;`, `(`, `)` e `,`. Um
+ * `accept="image/*"` ou um `https://` dentro de aspas não abrem nada — e um
+ * tokenizador inteiro de JSX seria o tipo de heurística que esconde defeito.
+ */
+function semComentariosJs(js: string): string {
+  const branco = (m: string) => m.replace(/[^\n]/g, ' ');
+  return js
+    .replace(/(^|[\s{;(),])\/\*[\s\S]*?\*\//g, (m, a) => a + branco(m.slice(a.length)))
+    .replace(/(^|[\s{;(),])\/\/[^\n]*/gm, (m, a) => a + branco(m.slice(a.length)))
+    .replace(/<!--[\s\S]*?-->/g, branco);
+}
+
+/** Todo JavaScript do app — `src/**` e o `index.html` —, lido pelo registro. */
+function arquivosJs(): string[] {
+  const achados = (fs.readdirSync(path.join(RAIZ, 'src'), { recursive: true }) as string[])
+    .map(f => String(f).split(path.sep).join('/'))
+    .filter(f => /\.(js|jsx|ts|tsx|mjs)$/.test(f))
+    .map(f => 'src/' + f);
+  assert.ok(achados.length > 20, 'o andador de src/ achou só ' + achados.length + ' arquivos de JS');
+  return achados.concat('index.html');
+}
+
+/** Cada ocorrência de `re` no código (sem comentários), com arquivo e linha. */
+function noCodigo(rels: string[], re: RegExp): string[] {
+  const out: string[] = [];
+  rels.forEach(rel => {
+    const js = semComentariosJs(fonte(rel));
+    const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
+    for (const m of js.matchAll(g)) {
+      out.push(rel + ':' + js.slice(0, m.index).split('\n').length + ' ' + m[0].trim());
+    }
+  });
+  return out;
+}
+
+/** A PORTA do movimento: o único módulo que pode perguntar ao aparelho e mover por JS. */
+const PORTA = 'src/ui/movimento.js';
+
+test('a lista de folhas é a do disco, nos dois sentidos', () => {
+  // O comentário de FOLHAS prometia este caso desde a passada dos tokens, e ele
+  // não existia: uma folha nova — um `movimento.css`, por exemplo — passaria
+  // por fora de toda guarda de cor, de espaço e de movimento sem ficar vermelha
+  // em lugar nenhum. A lista declarada reprova a folha que SUMIU (pelo
+  // `fonte()`); este caso reprova também a NOVA que ninguém declarou.
+  const noDisco = (fs.readdirSync(path.join(RAIZ, 'src'), { recursive: true }) as string[])
+    .map(f => String(f).split(path.sep).join('/'))
+    .filter(f => f.endsWith('.css')).sort();
+  const declaradas = FOLHAS.concat(FOLHA_BANCADA).sort();
+  assert.deepStrictEqual(noDisco.filter(f => !declaradas.includes(f)), [],
+    'folha em src/ que nenhuma guarda lê: declare-a em FOLHAS (ou, se for da bancada, ' +
+    'ao lado de FOLHA_BANCADA)');
+  assert.deepStrictEqual(declaradas.filter(f => !noDisco.includes(f)), [],
+    'folha declarada que não está mais em src/: tire-a da lista junto');
+});
+
+test('(a) duração e curva só nascem nos tokens, e ultrapassagem só no quique', () => {
+  // Duração nasce NOMEADA PELO PAPEL, como cor. Antes de 16/10 havia seis
+  // durações soltas no app (250 ms da barra, 2,4 s do pulso, 320 ms do clarão e
+  // as três da bancada) e uma curva por omissão (o pulso rodava no `ease` do
+  // navegador sem ninguém ter escrito isso). Mudar "o tempo do app" era caçar
+  // números; agora é um bloco de `tokens.css`.
+  const folhas = todasAsFolhas();
+  const soltos: string[] = [];
+  const DUR = (r: Regra) => r.arquivo === FOLHA_BANCADA ? /var\(--pl-dur-/ : /var\(--ins-(dur|ciclo)-/;
+  const CURVA = (r: Regra) => r.arquivo === FOLHA_BANCADA ? /var\(--pl-curva/ : /var\(--ins-curva/;
+  const TEMPO_OU_CURVA = /^(transition|transition-duration|transition-delay|transition-timing-function|animation|animation-duration|animation-delay|animation-timing-function)$/;
+
+  folhas.forEach(f => {
+    f.regras.forEach(r => {
+      if (ehTokens(r)) return;
+      r.decls.forEach(d => {
+        // uma segunda fonte de tempo ou curva, com nome: também não
+        if (d.prop.startsWith('--') &&
+            (TEMPO_SOLTO.test(d.valor) || CURVA_FUNCAO.test(d.valor) || CURVA_PALAVRA.test(d.valor))) {
+          soltos.push(onde(r, d) + ' (custom property de tempo ou curva fora dos tokens)');
+        }
+        if (!TEMPO_OU_CURVA.test(d.prop) || ehNada(d.valor)) return;
+        if (TEMPO_SOLTO.test(d.valor) || CURVA_FUNCAO.test(d.valor) || CURVA_PALAVRA.test(d.valor)) {
+          soltos.push(onde(r, d));
+        } else if ((d.prop === 'transition' || d.prop === 'animation') &&
+                   partesNoTopo(d.valor, ',').some(it => !DUR(r).test(it) || !CURVA(r).test(it))) {
+          // sem a curva escrita, o navegador usa `ease` por omissão — a curva entra
+          // solta sem estar escrita, que foi o caso do pulso
+          soltos.push(onde(r, d) + ' (cada item precisa do token de tempo E do de curva)');
+        }
+      });
+    });
+    // dentro dos @keyframes, a curva de cada trecho: fora dos tokens, só por token
+    if (f.arquivo !== 'tokens.css') f.quadros.forEach(q => q.quadros.forEach(fr => fr.decls.forEach(d => {
+      if (d.prop === 'animation-timing-function' && !/^var\(--(ins|pl)-curva/.test(d.valor)) {
+        soltos.push(f.arquivo + ':' + q.linha + ' @keyframes ' + q.nome + ' → ' + d.prop + ': ' + d.valor);
+      }
+    })));
+  });
+  assert.deepStrictEqual(soltos, [],
+    'duração ou curva fora de tokens.css. Duração nasce nomeada pelo papel, como cor: use um ' +
+    'dos tokens do bloco Movimento, ou dê um nome novo lá, com o que é, quando usar e quando não.');
+
+  // Nos tokens: nenhuma curva quica. Ponto de controle fora de [0, 1] é mola, e a
+  // mola só existe no quique, que mora em quadros e não em curva.
+  const tokens = semComentariosCss(fonte('src/tokens.css'));
+  const raizBancada = (semComentariosCss(palcoCss()).match(/:root\s*\{[^}]*\}/) || [''])[0];
+  const molas: string[] = [];
+  [['tokens.css', tokens], [FOLHA_BANCADA + ' :root', raizBancada]].forEach(([nome, txt]) => {
+    for (const m of txt.matchAll(/cubic-bezier\(([^)]*)\)/g)) {
+      const [x1, y1, x2, y2] = m[1].split(',').map(Number);
+      if ([x1, y1, x2, y2].some(n => !(n >= 0 && n <= 1))) molas.push(nome + ': ' + m[0]);
+    }
+    if (/(?<![\w-])steps\(/.test(txt)) molas.push(nome + ': steps()');
+    // `linear()` com pontos é como se escreve mola em CSS: só no token do quique
+    for (const m of txt.matchAll(/(--[\w-]+)\s*:\s*[^;]*?linear\(([^)]*)\)/g)) {
+      const saem = m[2].split(',').map(p => parseFloat(p)).filter(n => !(n >= 0 && n <= 1));
+      if (saem.length && !/quique/.test(m[1])) molas.push(nome + ': ' + m[1] + ' (linear() passa de [0, 1])');
+    }
+  });
+  assert.deepStrictEqual(molas, [], 'a curva ultrapassa: um ponto fora de [0, 1] é mola, e a mola só mora no quique');
+
+  // Quadro que passa do destino: só os do quique, e o quique é UM, nos tokens —
+  // um `@keyframes` de mesmo nome numa folha de depois venceria em silêncio.
+  const QUIQUE = 'ins-quique';
+  const porNome = quadrosPorNome(folhas);
+  const passam = folhas.flatMap(f => f.quadros).filter(q => q.nome !== QUIQUE).flatMap(ultrapassa);
+  assert.deepStrictEqual(passam, [],
+    'quadro que passa do destino fora do quique: a camada chega e PARA, e quicar é só a chegada ' +
+    'da folha e do painel de apagar (dono, 16/10)');
+  const quiques = porNome.get(QUIQUE) || [];
+  assert.deepStrictEqual(quiques.map(q => q.arquivo), ['tokens.css'],
+    'o quique é um só e mora nos tokens: ' + quiques.map(q => q.arquivo).join(', '));
+  assert.ok(ultrapassa(quiques[0]).length > 0,
+    'o quique deixou de passar do destino: ou ele mudou de forma, ou esta guarda deixou de ler quadros');
+  // e o tempo do quique e os quadros dele andam juntos, nos dois sentidos
+  const casados: string[] = [];
+  folhas.forEach(f => f.regras.forEach(r => r.decls.forEach(d => {
+    if (d.prop !== 'animation') return;
+    partesNoTopo(d.valor, ',').forEach(it => {
+      if ((nomeDaAnimacao(it) === QUIQUE) !== /var\(--ins-dur-quique\)/.test(it)) casados.push(onde(r, d));
+    });
+  })));
+  assert.deepStrictEqual(casados, [], 'o quique roda no tempo do quique, e o tempo do quique só no quique');
+
+  // O período da barra e o do `setInterval` que a repinta são o MESMO número:
+  // menos deixa vão parado, mais atrasa a barra em relação ao número.
+  const amostra = /--ins-dur-amostra\s*:\s*(\d+)ms/.exec(tokens);
+  assert.ok(amostra, '--ins-dur-amostra sumiu dos tokens, ou deixou de estar em ms');
+  const periodos = [...mainJsx().matchAll(/setInterval\(\s*pintaTimer\s*,\s*([^)]+)\)/g)].map(m => m[1].trim());
+  assert.ok(periodos.length > 0, 'nenhum setInterval(pintaTimer, …): a guarda perdeu o cronômetro de vista');
+  assert.deepStrictEqual(periodos.filter(p => p !== amostra![1]), [],
+    'o cronômetro repinta num período diferente de --ins-dur-amostra (' + amostra![1] + 'ms)');
+});
+
+test('(b) reduzir movimento falha fechado: todo movimento mora no portão por adesão, e fora dele o elemento está no último quadro', () => {
+  // Este caso substitui o que EXIGIA o bloco universal de `base.css` (`*` com
+  // `!important`, `.01ms`, uma volta). O universal saiu em 16/10 por quatro
+  // motivos: engolia o evento de fim de transição (medido), não alcançava o
+  // JavaScript nem os pseudo-elementos de transição de vista, proibia o
+  // esmaecer que o dono escolheu para "Reduzir movimento", e convivia com o
+  // princípio 6 de `tokens.css`, que já dizia "adesão" (docs/motion/06 §4.3).
+  //
+  // As três coisas que o caso antigo protegia ficam, e mais fortes:
+  //  - ESTRUTURA, NÃO NOME: cada declaração de movimento de cada folha, de
+  //    qualquer seletor, tem de estar dentro do portão — a próxima animação
+  //    nasce lá ou fica vermelha;
+  //  - O ÚLTIMO QUADRO, NÃO O PRIMEIRO: o `.01ms` existia para uma animação com
+  //    `both` não deixar conteúdo invisível. Sob adesão, o risco é o elemento
+  //    FORA do portão estar no primeiro quadro, e isso agora é conferido
+  //    propriedade a propriedade;
+  //  - A REGRA, NÃO PALAVRAS NO BLOCO: declaração por declaração, com o `@media`
+  //    dela, e não "o bloco tem `*` em algum lugar e `animation` em outro".
+  const folhas = todasAsFolhas();
+  const porNome = quadrosPorNome(folhas);
+  const fora: string[] = [];
+  const animaNoPortao = new Set<string>();
+  const animaNoReduz = new Set<string>();
+
+  folhas.forEach(f => f.regras.forEach(r => r.decls.forEach(d => {
+    if (d.prop === 'scroll-behavior' && d.valor.trim() !== 'auto') fora.push(onde(r, d) + ' (rolagem é sempre um salto)');
+    if (!ehMovimento(d.prop) || ehNada(d.valor)) return;
+    if (NO_PORTAO(r)) { r.sels.forEach(s => animaNoPortao.add(s)); return; }
+    if (NO_REDUZ(r)) {
+      // a alternativa deliberada sob "Reduzir movimento": só esmaecer, só no tempo dele
+      const soEsmaece = (d.prop === 'transition' || d.prop === 'animation') &&
+        partesNoTopo(d.valor, ',').every(it => /var\(--ins-dur-dissolve\)/.test(it)) &&
+        oQueMove({ ...r, decls: [d] }, porNome).every(p => p === 'opacity');
+      if (soEsmaece) { r.sels.forEach(s => animaNoReduz.add(s)); return; }
+    }
+    fora.push(onde(r, d));
+  })));
+  assert.deepStrictEqual(fora, [],
+    'movimento fora do portão. Ponha a regra dentro de @media (prefers-reduced-motion: ' +
+    'no-preference); fora dele fica só o estado final. Sob reduce, só esmaecer, com --ins-dur-dissolve.');
+
+  // Sob reduce nunca há MAIS movimento do que sem a preferência.
+  assert.deepStrictEqual([...animaNoReduz].filter(s => !animaNoPortao.has(s)), [],
+    'esmaece sob reduce e fica parado sem a preferência: quem pediu menos teria mais');
+
+  // Fora do portão, o último quadro.
+  const PADRAO: Record<string, string> = { opacity: '1', transform: 'none', translate: 'none', scale: 'none', rotate: 'none' };
+  const foraDoPortao = folhas.flatMap(f => f.regras).filter(r => !NO_PORTAO(r) && !NO_REDUZ(r));
+  const valorFora = (sel: string, prop: string) => {
+    const ds = foraDoPortao.filter(r => r.sels.includes(sel)).flatMap(r => r.decls).filter(d => d.prop === prop);
+    return ds.length ? ds[ds.length - 1].valor : PADRAO[prop];
+  };
+  const primeiroQuadro: string[] = [];
+  // (o esmaecer sob reduce também: ele termina onde o elemento parado já está)
+  folhas.forEach(f => f.regras.filter(r => NO_PORTAO(r) || NO_REDUZ(r)).forEach(r => r.decls.forEach(d => {
+    const itens = d.prop === 'animation' ? partesNoTopo(d.valor, ',')
+      : d.prop === 'animation-name' ? partesNoTopo(d.valor, ',') : [];
+    itens.forEach(it => {
+      const nome = d.prop === 'animation' ? nomeDaAnimacao(it) : it.trim();
+      if (!nome || nome === 'none') return;
+      const defs = porNome.get(nome);
+      if (!defs) { primeiroQuadro.push(onde(r, d) + ' (não há @keyframes ' + nome + ')'); return; }
+      const fim = /(?<![\w-])reverse(?![\w-])/.test(it) ? 0 : 100;
+      const ultimo = new Map<string, string>();
+      defs[defs.length - 1].quadros.filter(q => q.pos.includes(fim))
+        .forEach(q => q.decls.forEach(qd => { if (qd.prop !== 'animation-timing-function') ultimo.set(qd.prop, qd.valor); }));
+      r.sels.forEach(sel => ultimo.forEach((v, prop) => {
+        const lado = valorFora(sel, prop);
+        if (lado === undefined || !mesmoValor(prop, lado, v)) {
+          primeiroQuadro.push(sel + ' fora do portão não está no último quadro de ' + nome +
+            ' (' + prop + ': ' + lado + ' ≠ ' + v + ')');
+        }
+      }));
+    });
+  })));
+  assert.deepStrictEqual(primeiroQuadro, [],
+    'quem pediu menos movimento veria o elemento fora do resultado da animação — o primeiro ' +
+    'quadro, ou nenhum. Escreva fora do portão o valor do último quadro.');
+
+  // Movimento mora em FOLHA, onde esta guarda o vê — nunca em atributo `style`
+  // nem escrito pelo JavaScript num elemento.
+  const emLinha: string[] = [];
+  arquivosJs().forEach(rel => {
+    const js = semComentariosJs(fonte(rel));
+    for (const m of js.matchAll(/\bstyle\s*=\s*/g)) {
+      const ini = m.index! + m[0].length;
+      const abre = js[ini];
+      let fim = ini + 1;
+      if (abre === '{') fim = fechamento(js, ini) + 1;
+      else if (abre === '"' || abre === "'" || abre === '`') fim = js.indexOf(abre, ini + 1) + 1;
+      const attr = js.slice(ini, fim);
+      if (/(?<![\w-])(transition|animation)(-[a-z-]+)?\s*:/.test(attr)) {
+        emLinha.push(rel + ':' + js.slice(0, ini).split('\n').length + ' style=' + attr.slice(0, 80));
+      }
+    }
+  });
+  emLinha.push(...noCodigo(arquivosJs(),
+    /\.style\.(transition|animation)\w*\s*=|setProperty\(\s*['"`](transition|animation)/));
+  assert.deepStrictEqual(emLinha, [],
+    'movimento escrito no elemento, fora das folhas: aqui nenhuma guarda o vê, e nenhum portão o desliga');
+
+  // E o JavaScript pergunta a UMA porta: só ela fala com o aparelho sobre
+  // movimento e só ela move por JS. Sem ela a bancada lia a preferência uma vez,
+  // ao montar, e continuava virando o aparelho para quem ligou a chave depois.
+  const foraDaPorta = noCodigo(arquivosJs().filter(f => f !== PORTA),
+    /matchMedia\([^)]*prefers-reduced-motion|startViewTransition|\.animate\s*\(|requestAnimationFrame|['"`]smooth['"`]/);
+  assert.deepStrictEqual(foraDaPorta, [],
+    'movimento por JavaScript fora da porta (' + PORTA + '): pergunte a podeMover(), e mova por lá');
+});
+
+test('(b) a porta do movimento responde NÃO quando não sabe, e lê a preferência na hora', async () => {
+  // Comportamento, não forma: o módulo importado aqui, em node, sem janela.
+  const porta = await import('../../' + PORTA);
+  const g = globalThis as Record<string, unknown>;
+  const antes = { matchMedia: g.matchMedia, document: g.document, getComputedStyle: g.getComputedStyle };
+  try {
+    delete g.matchMedia;
+    assert.strictEqual(porta.podeMover(), false, 'sem matchMedia (o jsdom dos fluxos): não move');
+    assert.strictEqual(porta.podeDissolver(), false);
+    assert.strictEqual(porta.tempo('--ins-dur-entra'), 0, 'e não espera nada');
+
+    g.matchMedia = () => { throw new Error('quebrou'); };
+    assert.strictEqual(porta.podeMover(), false, 'matchMedia que lança: não move');
+
+    // a resposta muda entre duas perguntas: a segunda já sabe
+    let pediuMenos = false;
+    g.matchMedia = (q: string) => ({ matches: /no-preference/.test(q) ? !pediuMenos : /reduce/.test(q) && pediuMenos });
+    const tokens: Record<string, string> = { '--ins-dur-entra': ' 350ms', '--ins-ciclo-vivo': '2.4s',
+      '--ins-dur-dissolve': '120ms', '--torto': 'calc(1s)' };
+    g.document = { documentElement: {} };
+    g.getComputedStyle = () => ({ getPropertyValue: (n: string) => tokens[n] || '' });
+    assert.strictEqual(porta.podeMover(), true);
+    assert.strictEqual(porta.tempo('--ins-dur-entra'), 350, 'o tempo vem do token, lido agora');
+    assert.strictEqual(porta.tempo('--ins-ciclo-vivo'), 2400, 'em segundos também');
+    assert.strictEqual(porta.tempo('--torto'), 0, 'o que não se lê vira "não espere nada"');
+    assert.strictEqual(porta.tempo('--nao-existe'), 0);
+    tokens['--ins-dur-entra'] = '200ms';
+    assert.strictEqual(porta.tempo('--ins-dur-entra'), 200, 'lido de novo a cada pergunta');
+
+    pediuMenos = true;
+    assert.strictEqual(porta.podeMover(), false, 'ligou "Reduzir movimento" com o app aberto: a próxima pergunta já sabe');
+    assert.strictEqual(porta.podeDissolver(), true);
+    assert.strictEqual(porta.tempo('--ins-dur-entra'), 0, 'sob a preferência, nenhuma camada desliza');
+    assert.strictEqual(porta.tempo('--ins-dur-dissolve'), 120, 'só o esmaecer vale');
+  } finally {
+    (['matchMedia', 'document', 'getComputedStyle'] as const).forEach(k => {
+      if (antes[k] === undefined) delete g[k]; else g[k] = antes[k];
+    });
+  }
+});
+
+test('(c) só transform, translate, scale e opacity se movem', () => {
+  // `left` parou 320 ms com a thread presa e saltou 90 px; `transform` não parou
+  // nenhum quadro (docs/motion/04 §1.6). O fio da aba andava em `left` — 14
+  // layouts e 26 pinturas por troca contra 1 e 3 —, e era o único.
+  //
+  // As propriedades INDIVIDUAIS entram de propósito: `#toast`, `#timer` e
+  // `.ins-faixa` se centram com `transform: translateX(-50%)`, e mover com
+  // `translate` não reescreve o centramento.
+  const folhas = todasAsFolhas();
+  const porNome = quadrosPorNome(folhas);
+  const proibidas: string[] = [];
+  folhas.forEach(f => f.regras.forEach(r => {
+    const pode = NO_REDUZ(r) && !NO_PORTAO(r) ? ['opacity'] : SE_MOVE;
+    oQueMove(r, porNome).filter(p => !pode.includes(p)).forEach(p =>
+      proibidas.push(r.arquivo + ':' + r.linha + ' ' + r.sels.join(', ') + ' anima ' + p));
+  }));
+  assert.deepStrictEqual(proibidas, [],
+    'isso refaz layout ou pintura a cada quadro e congela quando a thread trava. Mova com ' +
+    'transform, translate, scale ou opacity (sob reduce, só opacity). `all` inclui todas.');
+
+  // E o centrado não anima `transform`: animar o `transform` dele desfaz o
+  // `translateX(-50%)`, e ele salta para a direita no primeiro quadro.
+  const regras = folhas.flatMap(f => f.regras);
+  const centrados = new Set(regras.filter(r => r.decls.some(d => d.prop === 'transform' && /translateX\(\s*-50%\s*\)/.test(d.valor)))
+    .flatMap(r => r.sels));
+  assert.ok(centrados.has('#toast') && centrados.has('#timer'),
+    'os centrados por translateX(-50%) mudaram de forma: o caso tem de mudar junto');
+  const descentra = regras.filter(r => r.sels.some(s => centrados.has(s)) &&
+    oQueMove(r, porNome).some(p => p === 'transform' || p === 'all'))
+    .map(r => r.arquivo + ':' + r.linha + ' ' + r.sels.join(', '));
+  assert.deepStrictEqual(descentra, [],
+    'elemento centrado por translateX(-50%) anima transform: use a propriedade translate');
+});
+
+test('(d) nada entre um fixo e a janela cria bloco de contenção', () => {
+  // A promessa que `src/ui/instrumento/folha.jsx` escreve: a folha é
+  // `position: fixed` e sai da árvore visualmente de onde estiver, DESDE QUE
+  // nenhum ancestral crie bloco de contenção. Qualquer um que crie prende o fixo
+  // dentro do pai — ele deixa de cobrir a tela e passa a rolar com o conteúdo,
+  // sem erro nenhum. Medido: um `transform` no `#app` leva a barra de abas de y
+  // 849 a 1251; um no `.ins-modo` leva a faixa da pergunta de 805 a 1309
+  // (docs/motion/04 §2.3).
+  //
+  // Três buracos fechados em 16/10: o `.ins-modo` ficou fora da lista por um ano
+  // (a metade de DOM, em `tests/fluxo/movimento.test.js`, confere agora que a
+  // lista é a árvore); `translate`, `scale`, `rotate`, `container-type` e
+  // `content-visibility` contêm tanto quanto `transform` e não estavam no
+  // padrão; e ANIMAÇÃO no ancestral não era lida — um `.ins-modo { animation }`
+  // com `transform` nos quadros passava.
+  const PRESO = /^(transform|translate|scale|rotate|filter|perspective|backdrop-filter|-webkit-backdrop-filter|will-change|contain|container|container-type|content-visibility)$/;
+  const folhas = folhasDoApp();
+  const porNome = quadrosPorNome(todasAsFolhas());
+  const culpadas: string[] = [];
+  folhas.forEach(f => f.regras.forEach(r => {
+    // os pseudo-elementos de transição de vista moram numa árvore à parte, por
+    // cima da página, e não contêm fixo nenhum
+    const alcanca = r.sels.filter(s => !/::view-transition/.test(s) && ANCESTRAL.test(raizDe(s)));
+    if (!alcanca.length) return;
+    r.decls.filter(d => PRESO.test(d.prop)).forEach(d => culpadas.push(onde(r, d)));
+    oQueMove(r, porNome).filter(p => p !== 'opacity').forEach(p =>
+      culpadas.push(r.arquivo + ':' + r.linha + ' ' + alcanca.join(', ') + ' anima ' + p));
+  }));
+  assert.deepStrictEqual(culpadas, [],
+    'ancestral de um fixo com bloco de contenção: o fixo passa a rolar com o pai. Anime um ' +
+    'invólucro que não contenha fixo, ou use a transição de vista, que move fotos e não elementos.');
+
+  // `will-change` em lugar nenhum sem medida: os dois motores compõem transform e
+  // opacity sem ele (docs/motion/04 R5), e no ancestral ele contém. A lista de
+  // exceção começa vazia e só cresce com a medida que justifique.
+  const EXCECOES_WILL_CHANGE: string[] = [];
+  const willChange = todasAsFolhas().flatMap(f => f.regras).flatMap(r => r.decls
+    .filter(d => d.prop === 'will-change' && !r.sels.every(s => EXCECOES_WILL_CHANGE.includes(s)))
+    .map(d => onde(r, d)));
+  assert.deepStrictEqual(willChange, [], 'will-change sem medida que o justifique');
+});
+
+test('(e) nada escuta o fim de uma animação', () => {
+  // Sob "Reduzir movimento" o evento de fim de transição NÃO CHEGA (medido,
+  // docs/motion/05 §1.3): quem esperasse por ele para desmontar, gravar ou mover
+  // o foco deixaria a tela presa com o véu por cima. O toque nunca espera a
+  // animação; monta-se, desmonta-se e move-se o foco pelo estado, no mesmo
+  // desenho. Vale em todo lugar, a porta inclusive — ela não precisa.
+  const escuta = noCodigo(arquivosJs(),
+    /(transition|animation)(end|start|run|cancel|iteration)(?![a-z])|\.(finished|ready|updateCallbackDone)\b/i);
+  assert.deepStrictEqual(escuta, [],
+    'código que espera o fim (ou o começo) de uma animação: sob movimento reduzido o evento ' +
+    'não chega, e a tela fica presa. Monte, desmonte e mova o foco pelo estado.');
 });

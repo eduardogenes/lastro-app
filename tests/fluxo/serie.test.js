@@ -260,7 +260,7 @@ test('corrigir uma série depois de reabrir o app não inicia descanso', async (
 // A SÉRIE GUARDADA É ANUNCIADA — R6 da frente 2
 // ---------------------------------------------------------------------------
 //
-// A confirmação visual já existia e é boa: `voa()` anima o valor até a tabela.
+// A confirmação visual já existia: o número entra na célula que recebeu o toque.
 // O que faltava era a metade auditiva — nenhuma das 94 chamadas de `toast()` é
 // da gravação de série, e o `<input>` ecoava o valor por SER campo, o que deixa
 // de valer no dia em que a régua de repetições substituir o campo.

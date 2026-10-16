@@ -67,10 +67,14 @@ export function TabBar({ ativa, onMuda }) {
 
   return (
     <nav class={'ins-tabbar' + (teclado ? ' oculta' : '')} aria-label="seções">
-      <div
-        class="ins-tab-ind"
-        style={`left:${i * (100 / ABAS.length)}%;width:${100 / ABAS.length}%`}
-      />
+      {/* O fio anda em `transform`, não em `left`: o invólucro tem a largura
+          da barra e anda `i × 20%` DELA — o mesmo lugar que o `left: i × 20%`
+          de antes, sem refazer o layout a cada quadro. O fio de verdade é o
+          `<i>` de dentro, com um quinto da barra. */}
+      <div class="ins-tab-ind" aria-hidden="true"
+           style={`transform:translateX(${i * (100 / ABAS.length)}%)`}>
+        <i style={`width:${100 / ABAS.length}%`} />
+      </div>
       {ABAS.map(a => (
         <button
           key={a.k}

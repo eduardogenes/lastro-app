@@ -1299,15 +1299,26 @@ test('o disparo é o obturador, um clarão e o bloco da pose fechando — não o
   assert.strictEqual(a.vibrou.length, vibrou, 'nem a vibração dele');
   c = a.vJ('ctx.cameraViva');
   assert.strictEqual(c.clarao, true, 'o clarão');
-  assert.ok(a.$('.cam-clarao'));
+  const primeiro = a.$('.cam-clarao');
+  assert.ok(primeiro);
   assert.strictEqual(c.pontos[0].feita, true, 'o bloco da pose fechou');
   assert.strictEqual(c.pontos[0].atual, false);
   assert.strictEqual(c.pontos[1].atual, true);
   assert.ok(a.$$('.cam-bloco')[0].classList.contains('feita'));
 
+  // Curto, e sem relógio: quem apaga o branco é a animação do CSS, que termina
+  // em opacidade 0 em `--ins-dur-clarao` (e fora do portão do movimento já
+  // nasce apagada — a guarda de estilo cobra o último quadro). Antes um
+  // `setTimeout` de 320 ms desmontava o nó e pedia outro desenho. O que este
+  // caso segura agora é a outra metade: cada foto ganha um nó NOVO, e por isso
+  // a animação recomeça a cada disparo em vez de ficar no último quadro.
   await a.esperar(400);
-  assert.strictEqual(a.vJ('ctx.cameraViva').clarao, false, 'curto: o clarão apaga sozinho');
-  assert.strictEqual(a.$('.cam-clarao'), null);
+  a.v('ctx.disparaCamera');
+  await a.esperar(120);
+  assert.strictEqual(a.registro.obturador, 2, 'a segunda foto foi tirada');
+  assert.strictEqual(a.vJ('ctx.cameraViva').clarao, true, 'e clareou');
+  assert.ok(a.$('.cam-clarao') && a.$('.cam-clarao') !== primeiro,
+    'um disparo, um nó: o clarão da segunda foto não é o nó parado da primeira');
   a.fechar();
 });
 
