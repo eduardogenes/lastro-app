@@ -4339,10 +4339,10 @@ function forcaSubindo() {
  */
 function diasRegistrados() {
   if (!Array.isArray(S.comidaHist)) return 0;
-  const hoje = new Date();
-  const iso = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
-              String(hoje.getDate()).padStart(2, '0');
-  return diasInterpretaveis(S.comidaHist, 14, iso);
+  // O mesmo relógio do resto do app (`Date.now`, via `hojeISO`): com `new
+  // Date()` a conta dos 14 dias e as casas que o Agora desenha liam relógios
+  // diferentes sempre que o relógio do app não era o da parede.
+  return diasInterpretaveis(S.comidaHist, 14, hojeISO());
 }
 
 function sinaisDaRegra() {
