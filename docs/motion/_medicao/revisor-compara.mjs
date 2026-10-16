@@ -1,0 +1,275 @@
+// Fase 4 do Revisor (docs/motion/07-revisao-base.md §1 e §5): põe o "depois" ao
+// lado do "antes" e aplica o protocolo. Não abre navegador: lê o que
+// revisor-gravar.mjs deixou nas duas pastas.
+//
+//   node docs/motion/_medicao/revisor-compara.mjs \
+//     docs/motion/_medicao/shots/revisor/antes docs/motion/_medicao/shots/revisor/depois \
+//     docs/motion/_medicao/shots/revisor/comparacao "antes · a22b09d" "depois · <commit>"
+//
+// Para cada fluxo e cada rodada que existe nos dois lados (chromium, webkit,
+// chromium-reduz, webkit-reduz, chromium-mouse…), escreve em <saída>/<fluxo>/:
+//   NN-<passo>-<rodada>-par.png      a tira do antes em cima, a do depois embaixo;
+//   NN-<passo>-<rodada>.mp4          os dois vídeos lado a lado, de 0,5 s antes a
+//                                    1 s depois do zero do passo, alinhados no toque;
+//   NN-<passo>-<rodada>-lento.mp4    o mesmo, 4× mais devagar;
+// e em <saída>/protocolo.json o veredito de cada princípio, passo a passo, com o
+// número que decidiu. O resumo sai no terminal.
+//
+// O que cada passo tem de mostrar vem de `mov` em revisor-fluxos.mjs (as
+// respostas do dono de 16/10). DURACOES=120,160,… troca a lista de durações
+// permitidas (padrão: os tokens decididos — 120, 160, 200, 250, 350, 640, 2400).
+// SEMVIDEO=1 pula os vídeos; SEMPAR=1 pula os pares de tiras (só o protocolo).
+// Precisa de /usr/bin/ffmpeg (libx264) e de python3 com Pillow e numpy.
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { FLUXOS } from './revisor-fluxos.mjs';
+
+const [ANTES, DEPOIS, SAIDA] = process.argv.slice(2, 5);
+const ROT_A = process.argv[5] || 'antes · a22b09d';
+const ROT_D = process.argv[6] || 'depois';
+if (!ANTES || !DEPOIS || !SAIDA) { console.log('uso: revisor-compara.mjs <antes> <depois> <saída> [rótulo antes] [rótulo depois]'); process.exit(1); }
+const AQUI = path.dirname(fileURLToPath(import.meta.url));
+const FONTE = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+const FAZ_VIDEO = !process.env.SEMVIDEO;
+
+const COMPOSITOR = new Set(['transform', 'opacity', 'translate', 'scale', 'rotate']);
+const r1 = x => x == null ? null : Math.round(x * 10) / 10;
+const lerJSON = a => JSON.parse(fs.readFileSync(a, 'utf8'));
+
+/** Animações de um passo (as do quadro seguinte e as de 150 ms depois, sem repetir). */
+function animacoes(ps) {
+  const a = ps.animacoes || {}, vistas = new Map();
+  [].concat(a.noQuadroSeguinte || [], a.aos150ms || []).forEach(x => { if (x && typeof x === 'object') vistas.set(x.nome + '|' + x.alvo + '|' + x.pseudo, x); });
+  return [...vistas.values()];
+}
+/** Uma curva ultrapassa (mola, quique)? cubic-bezier com y fora de [0, 1], ou linear() com valor > 1. */
+function ultrapassa(c) {
+  if (!c) return false;
+  const m = /cubic-bezier\(([^)]+)\)/.exec(c);
+  if (m) { const v = m[1].split(',').map(Number); return v[1] < 0 || v[1] > 1 || v[3] < 0 || v[3] > 1; }
+  const l = /linear\(([^)]+)\)/.exec(c);
+  if (l) return l[1].split(',').some(p => parseFloat(p) > 1 || parseFloat(p) < 0);
+  return false;
+}
+const fixoMudou = (a, b) => {
+  const out = [];
+  for (const k of Object.keys(a || {})) {
+    const x = a[k], y = (b || {})[k];
+    if (!Array.isArray(x) || !Array.isArray(y)) continue;
+    if (Math.abs(x[0] - y[0]) > 1 || Math.abs(x[1] - y[1]) > 1) out.push(`${k} ${x[0]},${x[1]} → ${y[0]},${y[1]}`);
+  }
+  return out;
+};
+/** Fração da tela diferente entre dois quadros finais (24 níveis, meia resolução). */
+function difQuadros(a, b) {
+  const py = `
+import sys, numpy as np
+from PIL import Image
+def g(p):
+    im = Image.open(p).convert('L'); return np.asarray(im.resize((207, int(207 * im.height / im.width))), dtype=np.int16)
+a, b = g(sys.argv[1]), g(sys.argv[2])
+print((np.abs(a - b) > 24).mean() if a.shape == b.shape else 1.0)`;
+  try { return Number(execFileSync('python3', ['-c', py, a, b]).toString().trim()); } catch (e) { return null; }
+}
+
+// ---- O que o dono decidiu em 16/10 (08 §5.1; diário 01h25) ----
+// Durações que podem aparecer (guarda (a) da 06: tempo só nos tokens): toque 120
+// (e o dissolver sob "Reduzir movimento", 120), no lugar 160 (pouso, copo, aviso),
+// clarão 200, amostra do descanso 250, camada 350 (entra e sai, na curva do
+// iPhone), quique 640 (só a chegada da folha e do painel de apagar), ciclo do
+// ponto ao vivo 2400 (infinito, decisão 12). TETO de 300 ms da 04: caiu.
+const DURACOES = (process.env.DURACOES || '120,160,200,250,350,640,2400').split(',').map(Number);
+const DUR_QUIQUE = 640, DUR_DISSOLVE = 120, DUR_LUGAR = 160;
+const ehPulso = x => (x.props || []).join() === 'opacity' && x.dur === 2400;
+// (o aviso que some não entra: sob "Reduzir movimento" ele ainda apaga, só em opacidade)
+const ehSaida = m => m && m.tipo === 'sai';
+const ehCamada = m => m && ['entra', 'sai', 'quique', 'aba'].includes(m.tipo);
+function faixa(tira, a, b) {
+  try { return Number(execFileSync('python3', [path.join(AQUI, 'revisor-tiras.py'), 'faixa', tira, a, b, '0', '60']).toString().trim()); }
+  catch (e) { return null; }
+}
+
+/** Os oito princípios, num passo. `a` = antes, `d` = depois (mesma rodada); `mov` = o esperado (revisor-fluxos.mjs). */
+function julga(rodada, a, d, extra, mov, tiraD) {
+  const v = [];
+  const reprova = (p, msg) => v.push({ principio: p, veredito: 'REPROVA', motivo: msg });
+  const passa = (p, msg) => v.push({ principio: p, veredito: 'passa', motivo: msg });
+  const confira = (p, msg) => v.push({ principio: p, veredito: 'a conferir', motivo: msg });
+  const reduz = /reduz/.test(rodada), webkit = /webkit/.test(rodada), mouse = /webkit|mouse/.test(rodada);
+  const qa = a.medidasDosQuadros || {}, qd = d.medidasDosQuadros || {};
+  const ta = a.toque || {}, td = d.toque || {};
+  const an = animacoes(d), anA = animacoes(a);
+  // (o portão universal de hoje deixa o pulso com 0,01 ms sob "Reduzir
+  // movimento": animação de menos de 1 ms já está parada e não conta)
+  const vivas = an.filter(x => x.estado !== 'finished' && !(x.dur != null && x.dur < 1));
+  const doAntes = new Set(anA.map(x => x.nome));
+  const novas = vivas.filter(x => !doAntes.has(x.nome) && !ehPulso(x));
+  const visivel = qd.ultimaQualquerMudancaMs != null && qd.primeiraMudancaMs != null ? r1(qd.ultimaQualquerMudancaMs - qd.primeiraMudancaMs) : 0;
+
+  // 1 · O toque nunca espera
+  {
+    const p = '1 toque nunca espera';
+    const lac = qd.capturaAtrasadaMs != null || qa.capturaAtrasadaMs != null;
+    if (d.confere === false) reprova(p, `o passo não produziu o efeito esperado (${d.esperado})`);
+    if (d.segundoToque && !/button|\[/.test(d.segundoToque.alvoDoClique || '')) reprova(p, `o segundo toque (${d.segundoToque.cliqueRelMs} ms depois do primeiro) caiu em ${d.segundoToque.alvoDoClique || 'lugar nenhum'}`);
+    if (td.handlerMs != null && ta.handlerMs != null && td.handlerMs > Math.max(16, ta.handlerMs + 4)) reprova(p, `trabalho no toque ${td.handlerMs} ms (antes ${ta.handlerMs})`);
+    if (td.eventTimingClickMs != null && ta.eventTimingClickMs != null && td.eventTimingClickMs > ta.eventTimingClickMs + 16) reprova(p, `Event Timing ${td.eventTimingClickMs} ms (antes ${ta.eventTimingClickMs})`);
+    if (!lac && qd.primeiraMudancaMs != null && qa.primeiraMudancaMs != null && qd.primeiraMudancaMs > qa.primeiraMudancaMs + 17)
+      reprova(p, `a tela muda a ${qd.primeiraMudancaMs} ms (antes ${qa.primeiraMudancaMs}): mais de um quadro de atraso (decisão 6 aceita um)`);
+    // 04 R8: a 1ª série sem o tranco do AudioContext — ≤ 16 ms no Chromium 1×
+    // (rodadas chromium e chromium-mouse); nas outras o número fica para leitura
+    if (/primeira-serie|serie-regua/.test(extra.fluxo) && d.id === 'grava-1' && td.handlerMs > 16)
+      (/^chromium(-mouse)?$/.test(rodada) ? reprova : confira)(p, `a 1ª série trabalha ${td.handlerMs} ms no toque (antes ${ta.handlerMs}; 04 R8: ≤ 16 no Chromium 1×)`);
+    if (!v.some(x => x.principio === p)) (lac ? confira : passa)(p, `tela ${qa.primeiraMudancaMs} → ${qd.primeiraMudancaMs} ms; trabalho ${ta.handlerMs} → ${td.handlerMs} ms` + (lac ? ' (atraso da captura: vale o Event Timing)' : ''));
+  }
+  // 2 · Só transform e opacity
+  {
+    const p = '2 só transform e opacity';
+    const ruins = an.filter(x => x.props && x.props.some(k => !COMPOSITOR.has(k)));
+    ruins.length ? reprova(p, ruins.map(x => `${x.nome} anima ${x.props.join('+')} em ${x.alvo}`).join('; ')) : passa(p, `${an.length} animação(ões), todas em transform/opacity`);
+  }
+  // 3 · Nada pisca no Blink
+  if (!webkit) {
+    const p = '3 nada pisca no Blink';
+    const trA = (qa.transitorios || []).length, tr = (qd.transitorios || []).slice(trA);
+    // o que se move de propósito naquele passo não conta: o cronômetro sobe e o
+    // aviso e a faixa o acompanham (peça 3); o aviso sobe (peça 7)
+    const movem = mov && mov.tipo === 'lugar' ? ['cronometro', 'toast', 'faixa'] : mov && mov.tipo === 'aviso' ? ['toast'] : [];
+    const tira = o => Object.fromEntries(Object.entries(o || {}).filter(([k]) => !movem.includes(k)));
+    const saltos = d.meio && d.depois ? fixoMudou(tira(d.meio.fixos), tira(d.depois.fixos)) : [];
+    const lado = d.meio && d.meio.larguraRolavel > (d.meio.larguraDaJanela || 414);
+    if (tr.length) reprova(p, `quadro que aparece e some (além dos ${trA} do antes): ${(qd.transitorios || []).map(x => x.t + ' ms').join(', ')}`);
+    if (saltos.length) reprova(p, `fixo fora do lugar no meio do movimento (120 ms): ${saltos.join('; ')}`);
+    if (lado) reprova(p, `a página fica mais larga que a janela no meio do movimento (${d.meio.larguraRolavel} px)`);
+    if (!tr.length && !saltos.length && !lado) passa(p, 'nenhum quadro transitório; fixos no lugar a 120 ms; sem transbordo lateral');
+  }
+  // 4 · 60 fps no WebKit
+  if (webkit) {
+    const p = '4 60 fps no WebKit';
+    const pg = d.quadrosDaPagina || {};
+    if (pg.acimaDoLimiteSemOPrimeiro > 0) reprova(p, `${pg.acimaDoLimiteSemOPrimeiro} intervalo(s) de requestAnimationFrame acima de ${pg.limiteMs} ms (pior ${pg.maiorIntervalo} ms), sem contar o do render`);
+    else if (qd.maiorIntervaloNoMovimentoMs > 34) confira(p, `a página manteve o ritmo, mas a captura teve um buraco de ${qd.maiorIntervaloNoMovimentoMs} ms no movimento`);
+    else passa(p, `pior intervalo da página ${pg.maiorIntervalo} ms; da captura no movimento ${qd.maiorIntervaloNoMovimentoMs ?? '—'} ms`);
+  }
+  // 5 · Movimento reduzido (decisão 2: camada esmaece 120 ms ao chegar e sai de
+  // uma vez; pouso e aviso só na opacidade; nada se desloca; o ponto aceso e parado)
+  if (reduz) {
+    const p = '5 movimento reduzido';
+    const teto = mov && ['lugar', 'aviso'].includes(mov.tipo) ? DUR_LUGAR : DUR_DISSOLVE;
+    const ruins = vivas.filter(x => (x.props || []).some(k => k !== 'opacity') || x.dur > teto || x.iter === Infinity || x.iter == null);
+    const naSaida = ehSaida(mov) ? vivas.filter(x => !ehPulso(x)) : [];
+    if (ruins.length) reprova(p, ruins.map(x => `${x.nome} (${(x.props || []).join('+')}, ${x.dur} ms, ${x.iter} vezes)`).join('; ') + ` — teto ${teto} ms, só opacidade, finita`);
+    if (naSaida.length) reprova(p, 'a saída tem de ser de uma vez: ' + naSaida.map(x => `${x.nome} ${x.dur} ms`).join(', '));
+    if (!ruins.length && !naSaida.length) (visivel > teto + 50 ? confira : passa)(p, vivas.length ? `${vivas.length} esmaecer(es) curto(s); a tela muda por ${visivel} ms` : `nenhuma animação; a tela muda por ${visivel} ms`);
+    if (extra.finalDiferente != null) (extra.finalDiferente > 0.005 ? reprova : passa)('7 nada só pelo movimento',
+      `a tela final com e sem "Reduzir movimento" difere em ${(extra.finalDiferente * 100).toFixed(2)} % (limite 0,5 %)` + (d.confere === false ? '; e o passo não funcionou sob reduce' : ''));
+  }
+  // 9 · Nada salta: a rolagem volta exata (02 T6; hoje o Corpo entra em 1982 px e
+  // volta em 1091), com e sem "Reduzir movimento"
+  if (mov && mov.rolagemDe && extra.passosD) {
+    const de = extra.passosD.find(x => x.id === mov.rolagemDe);
+    if (de && de.antes && d.depois) (Math.abs(de.antes.y - d.depois.y) > 1 ? reprova : passa)('9 a rolagem volta exata', `entrou em ${de.antes.y} px, voltou em ${d.depois.y} px`);
+  }
+  // 6 · O foco não se perde
+  {
+    const p = '6 foco não se perde';
+    const fa = a.depois && a.depois.foco, fd = d.depois && d.depois.foco;
+    if (fd === 'body' && fa !== 'body') reprova(p, `o foco vai ao body (antes: ${fa})`);
+    else if (fd === 'body' && ehCamada(mov)) reprova(p, 'abrir ou fechar camada deixa o foco no body (peça 5: lugar declarado; 05 M8/M9)');
+    else if (fd === 'body') confira(p, 'o foco vai ao body, como no antes');
+    else passa(p, `foco em ${fd}`);
+  }
+  // 8 · Sem enfeite — e o que o dono decidiu, passo a passo
+  if (!reduz) {
+    const p = '8 sem enfeite (decisões do dono)';
+    const n0 = v.length;
+    const foraDosTokens = vivas.filter(x => !ehPulso(x) && x.dur != null && !DURACOES.some(t => Math.abs(t - x.dur) <= 1));
+    const inf = vivas.filter(x => (x.iter === Infinity || x.iter == null) && !ehPulso(x));
+    const quique = vivas.filter(x => Math.abs(x.dur - DUR_QUIQUE) <= 1 || ultrapassa(x.curva) || (x.curvasDosQuadros || []).some(ultrapassa));
+    if (foraDosTokens.length) reprova(p, 'duração fora dos tokens: ' + foraDosTokens.map(x => `${x.nome} ${x.dur} ms`).join(', '));
+    if (inf.length) reprova(p, 'movimento infinito que não é o ponto ao vivo: ' + inf.map(x => x.nome).join(', '));
+    if (quique.length && !(mov && mov.tipo === 'quique')) reprova(p, 'quique fora da chegada da folha e do painel de apagar: ' + quique.map(x => `${x.nome} ${x.dur} ms ${x.curva}`).join(', '));
+    if (mov && mov.tipo === 'nenhum' && novas.length) reprova(p, 'movimento onde a doutrina decidiu nenhum: ' + novas.map(x => `${x.nome} (${(x.props || []).join('+')})`).join(', '));
+    if (mov && ehCamada(mov) && !mov.meio && (qd.quadrosComQualquerMudanca || 0) < 3) reprova(p, `troca num quadro só (${qd.quadrosComQualquerMudanca}): o ${mov.tipo} de ${mov.ms} ms não aparece`);
+    if (mov && mov.ms && ehCamada(mov) && !mov.meio && (qd.quadrosComQualquerMudanca || 0) >= 3 && (visivel < 0.5 * mov.ms || visivel > 1.5 * mov.ms))
+      confira(p, `a tela muda por ${visivel} ms; o decidido é ${mov.ms} ms (ver mudancasFinas: o pulso que chega também conta)`);
+    // decisão 4: tela cheia chega pela direita com a de baixo PARADA
+    if (mov && mov.debaixo && tiraD && !/reduz/.test(rodada)) {
+      const f = mov.debaixo === 'entra' ? faixa(tiraD, 'antes', '+50') : faixa(tiraD, '+50', '+800');
+      if (f != null) (f > 0.01 ? reprova : passa)(p, `faixa da esquerda (0–60 px) aos +50 ms ${mov.debaixo === 'entra' ? 'contra o antes' : 'contra o fim'}: ${(f * 100).toFixed(1)} % diferente (a de baixo parada: < 1 %)`);
+    }
+    // decisão 7: o toque só escurece — vê-se com o dedo pousado, e nada escala
+    if (mouse && (d.tipo === 'toque' || d.tipo === 'toqueNoMeio')) {
+      if (qd.mudancaNoPousarMs == null) reprova(p, 'com o dedo pousado nada muda no controle (peça 1: todo controle mostra o toque)');
+      const escala = an.filter(x => x.alvo && td.alvoDoClique && x.alvo.split(' ')[0] === td.alvoDoClique.split(' ')[0] && (x.props || []).some(k => /transform|scale/.test(k)));
+      if (escala.length) reprova(p, 'o controle tocado escala (decisão 7: só escurece): ' + escala.map(x => x.nome).join(', '));
+    }
+    if (v.length === n0) passa(p, mov ? `esperado: ${mov.tipo}${mov.ms ? ' ' + mov.ms + ' ms' : ''}; ${novas.length} movimento(s) novo(s), ${qd.quadrosComQualquerMudanca} quadro(s) com mudança em ${visivel} ms` : 'sem expectativa para este passo');
+  }
+  return v;
+}
+
+function ff(args) { execFileSync('/usr/bin/ffmpeg', ['-v', 'error', '-y', ...args]); }
+/** Os dois vídeos lado a lado, de t-0,5 s a t+1 s em cada um, com rótulo. */
+function ladoALado(va, ta, vd, td, rotA, rotD, saida, lento) {
+  const ini = x => Math.max(0, (x - 500) / 1000).toFixed(3);
+  const rot = (txt, cor) => `pad=iw:ih+44:0:44:${cor},drawtext=fontfile=${FONTE}:text='${txt.replace(/[':]/g, ' ')}':x=10:y=14:fontsize=15:fontcolor=white`;
+  const vel = lento ? ',setpts=4*PTS' : '';
+  ff(['-ss', ini(ta), '-t', '1.5', '-i', va, '-ss', ini(td), '-t', '1.5', '-i', vd,
+      '-filter_complex', `[0:v]${rot(rotA, '0x1e1e1e')}${vel}[a];[1:v]${rot(rotD, '0x24604a')}${vel}[b];[a][b]hstack=inputs=2:shortest=0[v]`,
+      '-map', '[v]', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-r', '25', saida]);
+}
+
+fs.mkdirSync(SAIDA, { recursive: true });
+const resultado = [];
+const fluxos = fs.readdirSync(ANTES).filter(f => /^\d\d[a-z]?-/.test(f) && fs.existsSync(path.join(DEPOIS, f)));
+for (const f of fluxos) {
+  const rodadas = fs.readdirSync(path.join(ANTES, f)).map(x => /^medidas-(.+)\.json$/.exec(x)).filter(Boolean).map(m => m[1])
+    .filter(r => fs.existsSync(path.join(DEPOIS, f, 'medidas-' + r + '.json')));
+  fs.mkdirSync(path.join(SAIDA, f), { recursive: true });
+  for (const r of rodadas) {
+    const A = lerJSON(path.join(ANTES, f, 'medidas-' + r + '.json')), D = lerJSON(path.join(DEPOIS, f, 'medidas-' + r + '.json'));
+    // o par sem movimento reduzido, para comparar a tela final
+    const rLivre = r.replace('-reduz', '');
+    const DL = /reduz/.test(r) && fs.existsSync(path.join(DEPOIS, f, 'medidas-' + rLivre + '.json')) ? lerJSON(path.join(DEPOIS, f, 'medidas-' + rLivre + '.json')) : null;
+    A.passos.forEach((pa, i) => {
+      const pd = D.passos.find(x => x.id === pa.id);
+      if (!pd || pa.erro || pd.erro) { resultado.push({ fluxo: f, rodada: r, passo: pa.id, erro: (pa.erro || '') + (pd ? pd.erro || '' : ' sem passo no depois') }); return; }
+      const nn = String(i + 1).padStart(2, '0') + '-' + pa.id + '-' + r;
+      let extra = null;
+      if (DL) {
+        const pl = DL.passos.find(x => x.id === pa.id);
+        if (pl && pl.quadroFinal && pd.quadroFinal) extra = { finalDiferente: difQuadros(path.join(DEPOIS, f, pd.quadroFinal), path.join(DEPOIS, f, pl.quadroFinal)) };
+      }
+      const fl = FLUXOS.find(x => x.id === f), mov = fl && (fl.passos.find(x => x.id === pa.id) || {}).mov;
+      const tiraD = path.join(DEPOIS, f, path.basename(pd.tira || ''));
+      const vered = julga(r, pa, pd, Object.assign({ fluxo: f, passosD: D.passos }, extra || {}), mov, fs.existsSync(tiraD) ? tiraD : null);
+      // a tira do antes sobre a do depois
+      const ta = path.join(ANTES, f, path.basename(pa.tira)), td = path.join(DEPOIS, f, path.basename(pd.tira));
+      if (!process.env.SEMPAR && fs.existsSync(ta) && fs.existsSync(td)) execFileSync('python3', [path.join(AQUI, 'revisor-tiras.py'), 'par', ta, td, path.join(SAIDA, f, nn + '-par.png'), ROT_A + ' · ' + r, ROT_D + ' · ' + r]);
+      // os vídeos lado a lado, alinhados no zero do passo
+      if (FAZ_VIDEO && pa.t0NoVideoMs != null && pd.t0NoVideoMs != null) {
+        const va = path.join(ANTES, f, A.video), vd = path.join(DEPOIS, f, D.video);
+        try {
+          ladoALado(va, pa.t0NoVideoMs, vd, pd.t0NoVideoMs, ROT_A, ROT_D, path.join(SAIDA, f, nn + '.mp4'), false);
+          ladoALado(va, pa.t0NoVideoMs, vd, pd.t0NoVideoMs, ROT_A + ' (4x mais lento)', ROT_D + ' (4x mais lento)', path.join(SAIDA, f, nn + '-lento.mp4'), true);
+        } catch (e) { vered.push({ principio: '—', veredito: 'erro', motivo: 'vídeo: ' + String(e).split('\n')[0] }); }
+      }
+      resultado.push({ fluxo: f, rodada: r, passo: pa.id, titulo: pa.titulo, vereditos: vered,
+        numeros: { telaMs: [pa.medidasDosQuadros?.primeiraMudancaMs, pd.medidasDosQuadros?.primeiraMudancaMs],
+                   quadrosQueMudam: [pa.medidasDosQuadros?.quadrosComQualquerMudanca, pd.medidasDosQuadros?.quadrosComQualquerMudanca],
+                   ultimaMudancaMs: [pa.medidasDosQuadros?.ultimaQualquerMudancaMs, pd.medidasDosQuadros?.ultimaQualquerMudancaMs],
+                   trabalhoMs: [pa.toque?.handlerMs, pd.toque?.handlerMs], eventTimingMs: [pa.toque?.eventTimingClickMs, pd.toque?.eventTimingClickMs] } });
+    });
+  }
+}
+fs.writeFileSync(path.join(SAIDA, 'protocolo.json'), JSON.stringify({ antes: ANTES, depois: DEPOIS, quando: new Date().toISOString(), duracoes: DURACOES, resultado }, null, 1));
+// Resumo: por princípio, quantos passos passam, reprovam ou ficam a conferir.
+const conta = {};
+resultado.forEach(x => (x.vereditos || []).forEach(v => { const c = conta[v.principio] = conta[v.principio] || { passa: 0, REPROVA: 0, 'a conferir': 0, erro: 0 }; c[v.veredito]++; }));
+console.table(conta);
+resultado.filter(x => (x.vereditos || []).some(v => v.veredito === 'REPROVA')).forEach(x =>
+  x.vereditos.filter(v => v.veredito === 'REPROVA').forEach(v => console.log(`REPROVA ${x.fluxo} · ${x.passo} · ${x.rodada} · ${v.principio}: ${v.motivo}`)));
+resultado.filter(x => x.erro).forEach(x => console.log(`ERRO ${x.fluxo} · ${x.passo} · ${x.rodada}: ${x.erro}`));
