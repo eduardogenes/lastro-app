@@ -80,6 +80,11 @@ como motivacional, e nunca comemora.
    enquanto algo anima, e nada escuta o fim de uma animação para gravar,
    desmontar ou mover o foco.
 
+   **O toque se vê, e não se move.** Todo controle escurece enquanto o dedo
+   está nele, e nada encolhe (dono, 16/10, pergunta 7: "nenhum movimento
+   novo"). É estado, não movimento: troca na hora e mora fora do portão, então
+   com "Reduzir movimento" é igual. Como, em [Toque](#toque).
+
    **O portão é por adesão**, e falha fechado: todo movimento mora dentro de
    `@media (prefers-reduced-motion: no-preference)`, com o último quadro escrito
    fora, e o JavaScript pergunta a uma porta só (`src/ui/movimento.js`). Sob
@@ -204,6 +209,55 @@ escolher uma delas.
 **Nunca forçar `min-height` dentro de uma linha que já é o alvo.** Alvo pequeno
 é problema; alvo grande duas vezes é altura perdida, e some no desktop.
 
+**O controle escurece enquanto o dedo está nele — todo controle, e só ele.**
+A seção "O TOQUE" de `base.css` pinta uma camada translúcida por cima do
+preenchimento de repouso de todo `<button>`, do rótulo que abre seletor de
+arquivo ou marca caixa, e do topo do cartão do exercício: o transparente
+escurece o fundo atrás dele, o preenchido escurece o próprio preenchimento. A
+camada de cada controle é `--ins-toque`, que nasce como `--ins-toque-papel` (a
+tinta a 25% no claro; no escuro ela CLAREIA, a 18%, porque contra o preto não
+há para onde ir). O controle de preenchimento cheio (acento, pare) declara
+`--ins-toque: var(--ins-toque-cheio)` na mesma regra que pinta o
+preenchimento — escurecer o que já é escuro mede menos: a camada do papel dá
+1,2:1 sobre o acento —, e a regra que devolve um controle cheio ao papel (o
+`.dbtn`, que deixa o primário transparente) devolve a camada junto.
+
+- **A régua: 1,5:1 no mínimo** entre o tocado e o repouso, e entre o tocado e o
+  fundo atrás dele, nos dois temas. Medido em 115 controles no Chromium, com o
+  dedo de verdade (ponteiro) no WebKit, e na árvore do teste: de 1,51 (o verbo
+  do painel de pare) a 1,73:1. Antes eram 78 de 115 sem mudança nenhuma, e o mais forte 1,24:1; o
+  "+1 copo" trocava para a cor exata do bloco em volta. 1,5 são cinco degraus
+  do 1,08 que não se via (a razão se multiplica: 1,08⁵ ≈ 1,5), e é a ordem do
+  toque que o dono apertou na página das decisões (o cinza dela mede 1,52:1
+  sobre o branco). **Luz da academia ninguém mediu**: o piso existe para o
+  toque não encolher em silêncio.
+- **Só escurece, e na hora.** Nenhuma escala, nenhum `transform`, nenhuma
+  transição — a entrada é imediata e a saída também. Uma soltura que apagasse
+  aos poucos só tocaria onde o nó sobrevive ao `render()`, e a régua, o RIR, o
+  "pronto" e o "Comi tudo" somem no mesmo toque.
+- **Só o tocado.** `:active` vale para o tocado e para todos os ancestrais;
+  nenhum ancestral pinta nada com ele. A régua escurece o botão, nunca a faixa;
+  o topo do cartão não escurece quando o dedo está na miniatura de dentro dele.
+  A miniatura, que cobre o próprio botão, escurece o quadrado de dentro, e a
+  foto apaga.
+- **Uma camada só.** Nenhuma outra regra troca o fundo do controle no
+  `:active` — era assim que o "+1 copo" virava a cor do bloco. O `!important` da
+  camada é o único do app: ele é o que a deixa por cima do `background:`
+  abreviado de qualquer repouso. E `button:active` mora numa regra sozinho: um
+  navegador sem `:has()` descarta a regra inteira em que ele aparece, e o toque
+  de todo botão iria junto com o do rótulo e do topo do cartão.
+- **No iPhone**, `:active` só acontece porque `src/main.jsx` põe um ouvinte vazio
+  e passivo de `touchstart` no documento: sem nenhum ouvinte, o Safari do iOS não
+  aplica `:active` num toque.
+- **A guarda**: `tests/dominio/estilo.test.ts`, caso (f), cobra a forma (as
+  regras fora de `@media`, `button:active` sozinho, o `!important` só nelas, nada que se mova, nenhum
+  segundo fundo no `:active`, a troca de camada só na regra que pinta o
+  preenchimento que a pede, e todo preenchimento cheio de controle — controle
+  tirado do JSX — com a camada do cheio) e a conta das camadas sobre a
+  paleta; `tests/fluxo/toque.test.js` confere na árvore montada todo controle
+  de 27 estados de tela, com o fundo de verdade atrás dele, nos dois temas e
+  com "Reduzir movimento", e o ouvinte de `touchstart`.
+
 ## Componentes
 
 Anatomia exata em [`src/componentes.css`](src/componentes.css) e
@@ -280,11 +334,10 @@ respostas do dono de 16/10 (`docs/motion/00-coordenacao.md`).
 
 | Token | Valor | Papel |
 |---|---|---|
-| `--ins-curva` | `cubic-bezier(.2, .8, .2, 1)` | o que muda no lugar: toque, pouso, aviso, o fio da aba |
+| `--ins-curva` | `cubic-bezier(.2, .8, .2, 1)` | o que muda no lugar: pouso, aviso, o fio da aba |
 | `--ins-curva-camada` | `cubic-bezier(.32, .72, 0, 1)` | a camada que entra e sai pela borda (a curva do iPhone) |
 | `--ins-curva-grandeza` | `linear` | só a barra do descanso: o tempo passa linear |
 | `--ins-curva-ciclo` | `cubic-bezier(.25, .1, .25, 1)` (o `ease`) | só o pulso do ponto ao vivo |
-| `--ins-dur-toque` | 120 ms | o preenchimento do toque (só escurece; nada encolhe) |
 | `--ins-dur-lugar` | 160 ms | o que muda onde está |
 | `--ins-dur-entra` · `--ins-dur-sai` | 350 ms · 350 ms | a camada que entra · que sai, pela mesma borda |
 | `--ins-dur-quique` | 640 ms | só a chegada da folha e do painel de apagar, com os quadros de `ins-quique` (passa 8 % aos 55 %, volta 3 % aos 80 %) |
@@ -305,7 +358,9 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 | O clarão do disparo | `.cam-clarao` (`componentes.css`), um nó por foto | `opacity` .9 → 0 | `--ins-dur-clarao` · `--ins-curva` | a foto foi tirada (lido a 3 m) | não aparece: a foto é dita pelo obturador, pela voz e pelo bloco da pose |
 | A bancada: pouso, painel e régua, virada | `palco.css`, `palco.js` | `transform` e `opacity` | `--pl-dur-*` · `--pl-curva` | chegou; virou | nada |
 
-**O que fica sem movimento**, de propósito: o painel que nasce sob o polegar
+**O que fica sem movimento**, de propósito: o toque, que só escurece e troca na
+hora (é estado: ver [Toque](#toque); `--ins-dur-toque` saiu com o afundar); o
+painel que nasce sob o polegar
 (régua, teclado, RIR) — alvo que se move sob o dedo é alvo errado; os números
 derivados (contador, volume, kcal), que não rolam; o fim do descanso, cujo
 canal é o som; a abertura do app e o giro do telefone; e toda rolagem

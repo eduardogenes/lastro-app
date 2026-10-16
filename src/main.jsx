@@ -6967,6 +6967,15 @@ window.addEventListener('online', function () { sincroniza(); });
   document.addEventListener(nome, function (e) { e.preventDefault(); }, { passive: false });
 });
 
+// ---------- o toque se vê no iPhone ----------
+// O Safari do iOS só aplica `:active` a um toque se houver algum ouvinte de
+// `touchstart` no elemento ou num ancestral — e o app não tinha nenhum, então
+// no iPhone o estado de toque desenhado em `base.css` nunca acendia
+// (docs/motion/03 §1.4). Um ouvinte VAZIO no documento basta, e roda uma vez,
+// aqui no topo do módulo. Passivo: não segura a rolagem nem espera nada, e não
+// muda o que o toque faz — o `click` continua sendo quem age.
+document.addEventListener('touchstart', function () {}, { passive: true });
+
 // ---------------------------------------------------------------------------
 // ---------- desligamento ----------
 // O app não tinha fim. Tinha boot, e depois trabalhava até a página morrer — e

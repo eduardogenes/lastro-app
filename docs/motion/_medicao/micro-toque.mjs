@@ -27,7 +27,7 @@ await ev(`
 `);
 await p.waitForTimeout(300);
 
-const PROPS = ['background-color', 'color', 'border-top-color', 'box-shadow', 'transform', 'opacity', 'text-decoration-line'];
+const PROPS = ['background-color', 'background-image', 'color', 'border-top-color', 'box-shadow', 'transform', 'scale', 'opacity', 'text-decoration-line'];
 async function mede(sel, rotulo) {
   const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
   const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: sel });
@@ -38,25 +38,36 @@ async function mede(sel, rotulo) {
     const filho = el.firstElementChild ? getComputedStyle(el.firstElementChild).color : null;
     const o = {}; PROPS.forEach(k => o[k] = cs.getPropertyValue(k)); o.filho = filho; return o;
   }, { sel, PROPS });
-  // o fundo de verdade atrás do controle: o primeiro ancestral com fundo opaco
-  const fundo = await p.evaluate((sel) => {
-    let el = document.querySelector(sel).parentElement;
-    while (el) { const c = getComputedStyle(el).backgroundColor; if (c && !/rgba\(0, 0, 0, 0\)|transparent/.test(c)) return c; el = el.parentElement; }
-    return getComputedStyle(document.body).backgroundColor;
-  }, sel);
-  const repouso = await estilo();
+  // A cor que se VÊ: as camadas de fundo compostas da raiz até o nó — a cor de
+  // fundo de cada um e, por cima, um gradiente de cor única, que é como o toque
+  // se pinta desde a peça 1 (uma camada `background-image` sobre o repouso,
+  // docs/motion/09). Ler só `background-color` diria "NADA" para ela.
+  const efetivo = (sel, doPai) => p.evaluate(([sel, doPai]) => {
+    const cor = s => { const m = s && s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const v = m[1].split(/[\s,\/]+/).filter(Boolean).map(Number); return [v[0], v[1], v[2], v.length > 3 ? v[3] : 1]; };
+    let el = document.querySelector(sel); if (doPai) el = el.parentElement;
+    const cadeia = []; for (let n = el; n; n = n.parentElement) cadeia.unshift(n);
+    let c = [255, 255, 255];
+    const sobre = k => { c = c.map((v, i) => v * (1 - k[3]) + k[i] * k[3]); };
+    for (const n of cadeia) {
+      const cs = getComputedStyle(n); const bg = cor(cs.backgroundColor); if (bg && bg[3] > 0) sobre(bg);
+      for (const g of cs.backgroundImage.matchAll(/linear-gradient\(((?:[^()]|\([^()]*\))*)\)/g)) {
+        const cs2 = [...g[1].matchAll(/rgba?\([^)]*\)/g)].map(x => cor(x[0]));
+        if (cs2.length && cs2.every(x => x.join() === cs2[0].join()) && cs2[0][3] > 0) sobre(cs2[0]);
+      }
+    }
+    return c;
+  }, [sel, doPai]);
+  const fundo = await efetivo(sel, true);
+  const repouso = await estilo(); const de = await efetivo(sel, false);
   await cdp.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: ['active'] });
-  const ativo = await estilo();
+  const ativo = await estilo(); const para = await efetivo(sel, false);
   await cdp.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: [] });
   const muda = Object.keys(repouso).filter(k => repouso[k] !== ativo[k]).map(k => k + ': ' + repouso[k] + ' → ' + ativo[k]);
-  // contraste do fundo pressionado contra o fundo de verdade (WCAG)
-  const lum = c => { const m = c.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * m[0] + .7152 * m[1] + .0722 * m[2]; };
-  const opaco = c => c && !/rgba\(0, 0, 0, 0\)/.test(c);
-  const de = opaco(repouso['background-color']) ? repouso['background-color'] : fundo;
-  const para = opaco(ativo['background-color']) ? ativo['background-color'] : fundo;
-  const L1 = lum(de), L2 = lum(para);
-  const contraste = ((Math.max(L1, L2) + .05) / (Math.min(L1, L2) + .05)).toFixed(2);
-  return { rotulo, sel, muda: muda.length ? muda.concat(de !== para ? ['fundo ' + contraste + ':1'] : []) : ['NADA'] };
+  // contraste (WCAG) do que se vê pressionado contra o repouso e contra o fundo de verdade
+  const lum = c => { const m = c.map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * m[0] + .7152 * m[1] + .0722 * m[2]; };
+  const razao = (a, b) => { const L1 = lum(a), L2 = lum(b); return ((Math.max(L1, L2) + .05) / (Math.min(L1, L2) + .05)).toFixed(2); };
+  const mudouCor = de.some((v, i) => Math.abs(v - para[i]) > .5);
+  return { rotulo, sel, muda: muda.length ? muda.concat(mudouCor ? ['repouso ' + razao(de, para) + ':1', 'fundo ' + razao(fundo, para) + ':1'] : []) : ['NADA'] };
 }
 
 const r = [];

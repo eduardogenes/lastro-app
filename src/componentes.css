@@ -171,7 +171,7 @@
   width: 100%; min-height: var(--ins-tap); padding: 0 var(--ins-4);
   font: 600 16px/1.2 var(--ins-fonte); border-radius: 0;
 }
-.pare-sim { background: var(--ins-pare-tinta); color: var(--ins-pare-fundo); }
+.pare-sim { background: var(--ins-pare-tinta); color: var(--ins-pare-fundo); --ins-toque: var(--ins-toque-cheio); }
 .pare-nao { background: transparent; color: var(--ins-pare-tinta); border: 1px solid var(--ins-pare-fio); }
 /* A PERGUNTA neutra: a mesma forma, sem a tinta de pare — ela para o dedo sem
    destruir nada, e pintá-la de pare gastaria o sinal (§3.3 da frente 3). */
@@ -794,6 +794,7 @@ button.ins-linha { border-radius: 0; }
   flex: 0 0 auto; min-height: var(--ins-tap); padding: 0 var(--ins-5);
   background: var(--ins-acento); color: var(--ins-sobre-acento); border: 0;
   font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
+  --ins-toque: var(--ins-toque-cheio);
 }
 
 .edx { border-bottom: 1px solid var(--ins-fio); padding: var(--ins-4) 0; }
@@ -1050,7 +1051,7 @@ button.ins-linha { border-radius: 0; }
   flex: 1; padding: var(--ins-3) 0; border: 0; background: var(--ins-tela); color: var(--ins-tinta-3);
   font: 500 14px/1 var(--ins-fonte);
 }
-.rot button.on { background: var(--ins-acento); color: var(--ins-sobre-acento); }
+.rot button.on { background: var(--ins-acento); color: var(--ins-sobre-acento); --ins-toque: var(--ins-toque-cheio); }
 .rot button.next::after {
   content: ''; display: block; width: 4px; height: 4px; border-radius: 50%;
   background: var(--ins-acento); margin: var(--ins-1) auto -4px;
@@ -1102,10 +1103,14 @@ button.ins-linha { border-radius: 0; }
 .dgroup:last-of-type { border-bottom: 0; }
 .dgroup h3 { margin: 0 0 var(--ins-2); font: 500 14.5px/1.2 var(--ins-fonte); letter-spacing: -.01em; color: var(--ins-tinta); }
 .dgroup p { margin: 0 0 var(--ins-5); font: 400 12.5px/1.55 var(--ins-fonte); color: var(--ins-tinta-3); }
+/* Junto com `.ins-btn-primary` ele devolve o botão ao papel (transparente,
+   por vir depois), e devolve a camada do toque junto: a do cheio sobre a tela
+   escura não se via (1,03:1). */
 .dbtn {
   display: block; width: 100%; text-align: center; min-height: var(--ins-tap); padding: var(--ins-6);
   border: 1px solid var(--ins-fio-controle); background: transparent; color: var(--ins-tinta-2);
   font: 500 var(--ins-t-corpo-forte)/1.2 var(--ins-fonte);
+  --ins-toque: var(--ins-toque-papel);
 }
 .dbtn + .dbtn, .dbtn + label.dbtn { margin-top: var(--ins-2); }
 .dbtn.ghost { border-color: var(--ins-fio); color: var(--ins-tinta-3); }
@@ -1477,13 +1482,13 @@ button.ins-linha { border-radius: 0; }
    repetição seguinte, e crescer para o lado faria um toque na borda registrar o
    número errado. Erro de alvo na régua tem tolerância zero na medição. */
 .regua-v::after, .regua-anda::after { content: ""; position: absolute; inset: -4px 0; }
-.regua-v:active, .regua-anda:active { background: var(--ins-superficie-2); }
 /* Dentro da faixa prescrita: fio mais firme, sem cor de estado. A faixa é
    referência do treinador, não escolha dele. */
 .regua-v.na-faixa { border-color: var(--ins-fio-controle); color: var(--ins-tinta); }
 .regua-v.on {
   background: var(--ins-acento); color: var(--ins-sobre-acento);
   border-color: var(--ins-acento);
+  --ins-toque: var(--ins-toque-cheio);
 }
 .regua-anda { color: var(--ins-tinta-3); font-size: 18px; }
 .regua-marca {
@@ -1542,7 +1547,6 @@ button.ins-linha { border-radius: 0; }
   font: 500 var(--ins-n-m)/1 var(--ins-fonte);
   font-variant-numeric: tabular-nums;
 }
-.tcl-t:active { background: var(--ins-superficie-2); }
 .tcl-apaga { font-size: 15px; color: var(--ins-tinta-3); }
 .tcl-vazia { min-height: 46px; }
 .tcl-pronto {

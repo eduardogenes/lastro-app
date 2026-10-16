@@ -85,7 +85,7 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Respostas do dono registradas no diário (16/10, 01h25).
 
 ### Fase 3 — implementação (só depois das respostas)
-- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peça 0 feita (16/10).
+- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0 e 1 feitas (16/10).
 - [x] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`). Peça 0: casos (a)–(e) e a lista de folhas, 52 plantios.
 - [x] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova (peça 0).
 - [ ] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde.
@@ -336,3 +336,27 @@ portão lê" falhava também no `a22b09d`, porque `diasRegistrados()` lia
 `new Date()` e o resto do app lê `Date.now()` (o relógio que os testes fixam no
 dia 15; hoje é 16). Corrigido em commit à parte, sem efeito no aparelho (os dois
 relógios são o mesmo fora dos testes). Depois: `tipos` limpo, build, 1593/1593.
+
+**16/10 — peça 0 conferida pelo revisor** (07 §6, "Depois da peça 0"). Passa
+na linha dela nos dois motores e sob "Reduzir movimento", sem regressão: o
+fio em `transform` 160 ms (0 reprovações em "só transform e opacity", eram 16);
+no traço do Chromium 1 layout e 1 pintura por troca (eram 15 e 27); com a
+thread presa 150 ms o fio não para (antes parava 148–162 ms e saltava); sob
+"Reduzir", nenhuma animação viva em 45 passos e o ponto aceso e parado; o
+pulso igual. O que reprova é do antes e tem peça: foco no `body` e a rolagem
+1982 → 1091 (peça 5), o dedo pousado sem mudança no WebKit (peça 1). Regra
+nova do protocolo: reprovação de tempo só vale repetida três vezes (duas
+sumiram assim). O clarão não entra nos fluxos (vale o número do 09). Para a
+peça 6: o fio passa a 350 ms junto com o carrossel. Peça 1 disparada.
+
+**16/10, 11h50 — peça 1 conferida.** O toque só escurece: uma camada
+(`background-image` com `--ins-toque`, `!important` só nela) pintada sobre
+qualquer preenchimento de repouso no `:active`, fora do portão e sem transição;
+o ouvinte passivo vazio de `touchstart` no topo de `main.jsx`. Antes, 78 de 115
+controles não mudavam com o dedo pousado; depois os 115 medem 1,56–1,72:1 contra
+o repouso e o fundo, nos dois temas e sob "Reduzir". Conferi o risco da camada
+`!important`: nenhum controle do app pinta imagem de fundo (a guarda (f) cobra);
+os botões metálicos da bancada perdem o gradiente só enquanto apertados (é
+ferramenta, não app). `--ins-dur-toque` saiu (não há movimento no toque); 08
+§5.1 ajustado; o 07 ainda cita, o revisor ajusta. `micro-toque.mjs` passou a
+compor as camadas (lia só `background-color`). `tipos` limpo, build, 1596/1596.

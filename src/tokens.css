@@ -90,7 +90,7 @@
 /* ============================================================
    AS CORES, NOS DOIS TEMAS
 
-   Vinte tokens, e todos são cor. O tema segue o aparelho, com
+   Vinte e dois tokens, e todos são cor. O tema segue o aparelho, com
    troca manual — e por três blocos, não por um:
 
      :root                                  os valores CLAROS
@@ -173,6 +173,28 @@
   --ins-pare-fio:      #D98A80;  /* mesma ressalva do `atencao-fio`: 2,19:1 */
 
   --ins-veu:           rgba(18, 18, 30, .42);  /* o véu atrás da folha */
+
+  /* ---- O toque: o que se vê com o dedo pousado ----
+     Uma CAMADA translúcida pintada sobre o preenchimento de repouso do
+     controle, qualquer que ele seja, e não uma cor de destino: assim um
+     controle transparente escurece o fundo atrás dele, e um preenchido
+     escurece o próprio preenchimento — nunca vira a cor do bloco em volta,
+     que era o "+1 copo" (1,00:1).
+     A régua: 1,5:1 no MÍNIMO entre o tocado e o repouso, e entre o tocado e o
+     fundo atrás, nos dois temas — a guarda de estilo cobra, medido da folha.
+     Até 16/10 o mais forte do app era 1,24:1, e quase todo controle ficava em
+     1,00 ou 1,08. Luz da academia ninguém mediu; a régua é o piso para isso
+     não encolher em silêncio.
+     O papel e o cheio têm camadas diferentes porque a conta do contraste não
+     é linear: a camada que dá 1,7:1 sobre o papel dá 1,2 a 1,3:1 sobre o
+     acento e o pare, que já são escuros.
+     `--ins-toque` é a camada DESTE controle — a do papel, menos onde a regra
+     que pinta um preenchimento cheio (acento, pare) declara, NA MESMA REGRA,
+     `--ins-toque: var(--ins-toque-cheio)`, para os dois não se separarem; e a
+     regra que devolve um controle cheio ao papel devolve a camada junto. */
+  --ins-toque-papel:   rgba(21, 23, 26, .25);  /* sobre o papel: a tinta a 25% */
+  --ins-toque-cheio:   rgba(0, 0, 0, .42);     /* sobre o acento e o pare */
+  --ins-toque:         var(--ins-toque-papel);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -205,6 +227,13 @@
     --ins-pare-fio:      #7E3129;
 
     --ins-veu:           rgba(0, 0, 0, .6);
+
+    /* No escuro o papel CLAREIA: o preto não tem para onde ir (a tela contra
+       o preto puro dá 1,12:1). O cheio continua escurecendo — no escuro o
+       acento e o pare são claros —, e 22% é o teto: a 24% o texto escuro do
+       chip aceso cairia abaixo de 4,5:1 enquanto o dedo está nele. */
+    --ins-toque-papel:   rgba(242, 241, 238, .18);
+    --ins-toque-cheio:   rgba(0, 0, 0, .22);
   }
 }
 
@@ -237,6 +266,9 @@
   --ins-pare-fio:      #7E3129;
 
   --ins-veu:           rgba(0, 0, 0, .6);
+
+  --ins-toque-papel:   rgba(242, 241, 238, .18);
+  --ins-toque-cheio:   rgba(0, 0, 0, .22);
 }
 
 /* ============================================================
@@ -450,8 +482,8 @@
    primeiro sobre o esmaecer. No JavaScript quem responde é `tempo()` de
    `src/ui/movimento.js`: 0 sob a preferência. */
 :root {
-  /* A CURVA DO LUGAR. O que muda onde está — o toque, o valor que pousa, o
-     aviso, o fio da aba: chega rápido e assenta, 80% do caminho na primeira
+  /* A CURVA DO LUGAR. O que muda onde está — o valor que pousa, o aviso, o
+     fio da aba: chega rápido e assenta, 80% do caminho na primeira
      metade do tempo. NÃO para camada que cobre a tela. Sem ultrapassagem:
      nenhum ponto de controle fora de [0, 1]. */
   --ins-curva: cubic-bezier(.2, .8, .2, 1);
@@ -469,10 +501,11 @@
      hoje é o que fica. */
   --ins-curva-ciclo: cubic-bezier(.25, .1, .25, 1);
 
-  /* O controle responde ao dedo: o preenchimento do toque. Só ESCURECE (dono,
-     16/10, pergunta 7) — nenhum controle encolhe. NÃO para nada além do
-     controle tocado. */
-  --ins-dur-toque: 120ms;
+  /* O TOQUE NÃO TEM DURAÇÃO. Ele só escurece (dono, 16/10, pergunta 7: "nenhum
+     movimento novo; o toque se vê só pela cor"), e escurecer é ESTADO, que
+     troca na hora, nos dois sentidos — as camadas `--ins-toque-*` lá em cima.
+     `--ins-dur-toque` (120) era o tempo do afundar, e saiu com ele em 16/10,
+     como `--ins-afunda`. */
   /* Algo muda ONDE ESTÁ, sem trocar de camada: o fio da aba, o valor que pousa
      na célula, o copo que enche, o aviso curto. NÃO para camada. */
   --ins-dur-lugar: 160ms;
@@ -490,9 +523,7 @@
      sai — com o tempo da camada (350) o branco ficaria na tela o dobro. */
   --ins-dur-clarao: 200ms;
   /* SÓ dentro de `@media (prefers-reduced-motion: reduce)`, e só com opacity: a
-     camada que chega esmaece em vez de deslizar; a que sai vai de uma vez.
-     Mesmo número do toque e outro papel, como `--ins-10` e `--ins-n-m` são os
-     dois 26px. */
+     camada que chega esmaece em vez de deslizar; a que sai vai de uma vez. */
   --ins-dur-dissolve: 120ms;
   /* NÃO é duração de transição: é o PERÍODO de `pintaTimer`. A barra interpola
      entre duas amostras; menos deixa vão parado, mais atrasa a barra em relação

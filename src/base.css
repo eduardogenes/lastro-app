@@ -137,6 +137,49 @@ button {
 
 button:disabled { opacity: .4; }
 
+/* ---- O TOQUE: o controle escurece enquanto o dedo está nele ------------
+
+   Todo controle tocável, sem lista: todo `<button>`, o rótulo que abre um
+   seletor de arquivo ou marca uma caixa, e a linha que se toca inteira sem
+   ser botão (o topo do cartão do exercício). Só ESCURECE — nada
+   encolhe, nada se move (dono, 16/10, pergunta 7: "nenhum movimento novo").
+
+   É ESTADO, e por isso mora FORA do portão de movimento: com "Reduzir
+   movimento" ligado o toque continua visível, igual. Entra e sai na hora, sem
+   transição: o estado é a mensagem, e uma soltura que apagasse aos poucos só
+   tocaria onde o nó sobrevive ao `render()` — a régua, o RIR, o "pronto" e o
+   "Comi tudo" somem no mesmo toque.
+
+   Por que uma CAMADA (`background-image`) e não uma cor de fundo de destino:
+   a camada é pintada sobre o preenchimento de repouso, qualquer que ele seja,
+   então o transparente escurece o fundo atrás dele e o preenchido escurece o
+   próprio preenchimento. Uma cor de destino precisava de uma por controle, e
+   errava em silêncio — o "+1 copo" trocava para a mesma cor do bloco em volta
+   (1,00:1), e quase todo o resto ficava em 1,08:1 (docs/motion/03 §1.3).
+
+   O `!important` só existe aqui, nas duas declarações da camada, e é o que
+   diz que ela fica por cima de qualquer repouso: todo `background:` abreviado de uma regra de
+   controle zera a imagem de fundo, e sem ele ganharia a regra mais específica
+   — a do chip aceso, a do botão do painel. Nenhuma regra do app pinta imagem
+   de fundo num controle; a guarda de estilo cobra as duas coisas.
+
+   No iPhone isto só acontece porque `src/main.jsx` põe um ouvinte vazio de
+   `touchstart` no documento: sem nenhum, o Safari não aplica `:active` num
+   toque (docs/motion/03 §1.4). */
+button:active {
+  background-image: linear-gradient(var(--ins-toque), var(--ins-toque)) !important;
+}
+/* O resto, numa regra à parte: um navegador sem `:has()` descarta a regra
+   INTEIRA em que ele aparece, e o toque de todo botão iria junto.
+   O topo do cartão não escurece quando o dedo está na miniatura de dentro
+   dele: `:active` vale para o tocado e para todos os ancestrais, e aí o cartão
+   inteiro escureceria por um toque que abre a câmera. */
+label:has(input[type="file"]):active,
+label:has(input[type="checkbox"]):active,
+.ex-top:active:not(:has(button:active)) {
+  background-image: linear-gradient(var(--ins-toque), var(--ins-toque)) !important;
+}
+
 input, textarea, select {
   font-family: inherit;
   color: var(--ins-tinta);
@@ -289,8 +332,8 @@ p, .ins-prosa, input, textarea {
   display: block; width: 100%; min-height: var(--ins-tap); padding: 16px 0;
   background: var(--ins-acento); color: var(--ins-sobre-acento);
   font: 600 var(--ins-t-corpo-forte)/1.2 var(--ins-fonte);
+  --ins-toque: var(--ins-toque-cheio);
 }
-.ins-btn-primary:active { background: var(--ins-acento-tinta); }
 
 .ins-btn-secondary {
   display: block; width: 100%; min-height: var(--ins-tap); padding: var(--ins-5) 0;
@@ -298,7 +341,6 @@ p, .ins-prosa, input, textarea {
   border: 1px solid var(--ins-fio-controle);
   font: 500 var(--ins-t-corpo-forte)/1.2 var(--ins-fonte);
 }
-.ins-btn-secondary:active { background: var(--ins-superficie-2); }
 
 /* Tracejado quer dizer: isto CRIA alguma coisa. */
 .ins-btn-add {
@@ -307,7 +349,6 @@ p, .ins-prosa, input, textarea {
   border: 1px dashed var(--ins-fio-controle);
   font: 500 var(--ins-t-corpo-forte)/1.2 var(--ins-fonte);
 }
-.ins-btn-add:active { background: var(--ins-acento-suave); }
 
 .ins-btn-destructive { color: var(--ins-pare-tinta); }
 
@@ -328,7 +369,7 @@ p, .ins-prosa, input, textarea {
    limite. Crescer além dele faria a fileira de baixo roubar o toque da de
    cima — pior que o alvo pequeno. */
 .ins-chip::after { content: ""; position: absolute; inset: -4px 0; }
-.ins-chip.on { background: var(--ins-acento); color: var(--ins-sobre-acento); border-color: var(--ins-acento); }
+.ins-chip.on { background: var(--ins-acento); color: var(--ins-sobre-acento); border-color: var(--ins-acento); --ins-toque: var(--ins-toque-cheio); }
 .ins-chips { display: flex; flex-wrap: wrap; gap: var(--ins-3); }
 
 /* ---- Formulário ------------------------------------------------------- */
@@ -341,7 +382,6 @@ p, .ins-prosa, input, textarea {
   border: 1px solid var(--ins-fio-controle);
   color: var(--ins-tinta); font: 400 22px/1 var(--ins-fonte);
 }
-.ins-stepper-btn:active { background: var(--ins-superficie-2); }
 .ins-stepper-val {
   flex: 1; text-align: center;
   font: 600 19px/1 var(--ins-fonte); letter-spacing: -.03em;

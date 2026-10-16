@@ -457,6 +457,19 @@ export async function gravaFluxo(ab, registro, cal, fluxo) {
   }
   await p.waitForTimeout(300);
   await p.screencast.stop();
+  // Guarda: com pouquíssimos quadros (uma tela parada sob "Reduzir movimento"),
+  // o gravador do Playwright já esticou o último quadro até um carimbo absurdo
+  // (um .webm de 6,9 horas e 527 MB em depois-0/09-copo). Se o vídeo passar do
+  // intervalo dos quadros + 5 s, corta-se ali, sem recodificar.
+  try {
+    const dur = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', video]).toString().trim());
+    const real = quadros.length ? (quadros[quadros.length - 1].ts - quadros[0].ts) / 1000 + 2 : 10;
+    if (dur > real + 5) {
+      const tmp = video.replace(/\.webm$/, '.corte.webm');
+      execFileSync('ffmpeg', ['-v', 'error', '-y', '-t', String(Math.ceil(real)), '-i', video, '-c', 'copy', tmp]);
+      fs.renameSync(tmp, video);
+    }
+  } catch (e) { /* sem ffprobe: fica o vídeo como veio */ }
 
   // Carimbo do quadro → hora de parede corrigida pela latência da captura.
   const off = MOTOR === 'chromium' ? 0 : Math.min(...quadros.map(q => q.node - q.ts));

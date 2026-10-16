@@ -187,6 +187,11 @@ fim, tudo de novo.
    `dist/` novo, nos dois motores.
 5. **A olho.** Cada vídeo lento lado a lado (o pisca que nenhuma conta pega) e
    cada tira reduzida contra o 05 §4.
+5a. **Reprovação de tempo se confirma.** Cada passo é uma amostra só. Um
+   REPROVA nos princípios 1 ou 4 (trabalho no toque, Event Timing, primeiro
+   quadro, ritmo) só vale depois de repetir aquele fluxo **três vezes nos dois
+   lados** (antes e depois, mesmo motor, mesma rodada) e comparar as medianas.
+   Na peça 0, as duas reprovações de tempo sumiram assim (seção 6).
 6. **O que não se mede aqui**, dito na página: o Core Animation do A13; o
    `:active` com o ouvinte de `touchstart` no iOS; o gesto de borda e o
    `popstate` com `hasUAVisualTransition`; o `svh` com a barra do Safari; se o
@@ -259,6 +264,7 @@ pasta de saída por argumento: o mesmo script grava o antes e o depois.
 | `revisor-fluxos.mjs` | os 17 fluxos em ordem de valor: o estado montado (`hora`, `montar` por `window.__escopo`), os passos (alvo, tipo, tempos, `confere`) e **o esperado de cada passo pelo dono** (`mov`: tipo, duração, "a de baixo parada", de onde a rolagem volta). **É aqui que se conserta um seletor que a fase 3 renomear**, nos dois lados |
 | `revisor-comum.mjs` | o motor, a instrumentação na página (relógio, eventos, Event Timing, animações vivas, fixos, `requestAnimationFrame`), a calibração, o registro devolvido a cada fluxo, a passada de aquecimento, o dedo, a gravação e o manifesto. Reaproveita a `semeia` de `desempenho-comum.mjs` e a receita do WebKit |
 | `revisor-tiras.py` | `tiras`: monta a tira de cada passo e mede quadro a quadro; `par`: empilha a tira do antes sobre a do depois; `faixa`: compara uma faixa vertical entre dois quadros da tira (a conferência "a de baixo parada") |
+| `revisor-thread-presa.mjs` | o "não congela com a thread presa" do 04 §6 no elemento real: troca de aba, a thread principal presa 150 ms dois quadros depois de o fio começar a andar, o fio achado quadro a quadro pela cor de acento; mede a maior parada no meio do caminho (escreve `thread-presa-<rodada>.json`). As peças 3 a 6 acrescentam a cena delas (cronômetro, folha, tela cheia, carrossel) |
 | `revisor-compara.mjs` | a fase 4: aplica a tabela 1.3 com o `mov` de cada passo, escreve `protocolo.json`, os pares de tiras e os vídeos lado a lado (H.264, 828 × 940, normal e 4× mais lento), alinhados no zero de cada passo. Testado: antes contra antes, em todos os fluxos (`antes-contra-protocolo/`), e com vídeo em 01, 07 e 16 |
 
 **As rodadas do antes**, como foram gravadas (do raiz do projeto):
@@ -429,3 +435,78 @@ página só os referencia (publicação com `files`, um arquivo por par). O
 `protocolo.json` do depois e o `antes-contra-protocolo/protocolo.json` viram o
 quadro do topo. Nada é desenhado à mão: toda afirmação da página aponta para um
 arquivo de `comparacao/` ou de `antes/`.
+
+---
+
+## 6. Depois da peça 0
+
+Conferida em 16/10 pela linha da peça 0 da tabela 1.4, contra o build congelado
+em `docs/motion/_medicao/shots/dist-peca-0/` (commits `21dbdf2` e `73df730`),
+servido na porta 4728 (desligada no fim), com o mesmo `antes/registro.json`.
+
+**O que se gravou.** Chromium 151 e WebKit 26.5 nos fluxos 05, 07 e 14; os 17
+fluxos sob "Reduzir movimento" nos dois motores. Nenhum erro de página e nenhum
+passo com falha (`depois-0/rodada-*.json`). Pastas:
+`docs/motion/_medicao/shots/revisor/depois-0/` (gravações),
+`…/comparacao-0/` (106 pares de tiras e 212 vídeos lado a lado, normal e 4×
+mais lento; `protocolo.json`), `…/depois-0/complementos/` e
+`…/antes-complementos/` (os complementos, dos dois lados, nesta mesma sessão).
+
+### 6.1 A linha da peça 0: o que passou
+
+| o que a peça tinha de provar | resultado | o número | arquivo |
+|---|---|---|---|
+| **o fio da aba em `transform`** (princípio 2) | **passa** | 0 reprovações em 106 passos×rodadas (no antes, 16); `transform` 160 ms `cubic-bezier(0.2, 0.8, 0.2, 1)` em `div.ins-tab-ind`, nos dois motores | `comparacao-0/protocolo.json`; `depois-0/07-abas/medidas-chromium.json` |
+| **o fio no compositor** (traço do Chromium) | **passa** | trocar de aba: **1 layout e 1 pintura**, `compositeFailed: 0` (antes: 15 layouts, 27 pinturas, `compositeFailed: 8224` por `left`) | `depois-0/complementos/movimentos-chromium.json` contra `antes-complementos/movimentos-chromium.json` (janelas `aba-toque-*`) |
+| **o fio não congela com a thread presa 150 ms** (04 §6) | **passa** | maior parada **0 ms** nos dois motores, o fio chegando em 108–135 ms; no antes, **148–162 ms** parado no Chromium e 147–155 no WebKit, e depois um salto até o fim | `depois-0/complementos/thread-presa-{chromium,webkit}.json` contra `antes-complementos/thread-presa-*.json` |
+| **sob "Reduzir movimento", nenhuma animação viva e o ponto parado** | **passa** | **nenhuma** animação em nenhum dos 45 passos, nos dois motores (no antes sobrava o pulso registrado a 0,01 ms); o fio salta; a tela final igual à da rodada com movimento (princípio 7: 16 de 16) | `depois-0/*/medidas-*-reduz.json`; `comparacao-0/protocolo.json` |
+| **o ponto pulsando sem fim, sem a preferência** | **passa** | `ins-pulse`, opacidade, 2400 ms, infinito, `cubic-bezier(0.25, 0.1, 0.25, 1)` — o `ease` de antes escrito por extenso | `depois-0/07-abas/medidas-chromium.json` (passo `semana-agora`) contra `antes/07-abas/…` |
+| **nenhuma duração fora da lista** (princípio 8) | **passa** | 0 "duração fora dos tokens" (no antes, 16: `left` 220 ms); nenhum infinito novo, nenhum quique | `comparacao-0/protocolo.json` |
+| **nada pisca no Blink** (princípio 3) | **passa** | 53 de 53 no Chromium: nenhum quadro transitório, a barra de abas parada aos 120 ms, página nunca mais larga que a janela | `comparacao-0/protocolo.json` |
+| **armadilhas** (04 §2) | **passa** | `backdrop-filter` 0 e `will-change` 0 nos dois motores; o único `transform` novo é o do próprio fio (`.ins-tab-ind`), dentro da barra fixa, sem ser ancestral de nenhum fixo; transbordo lateral, fixos sob `transform` no ancestral, sticky e alturas idênticos ao antes | `depois-0/complementos/armadilhas-{chromium,webkit}.json` contra `shots/desempenho/armadilhas-*.json` |
+| **o toque nunca espera** (princípio 1) | **passa, depois de repetir** | 102 passam; as 2 reprovações eram amostra única e não se repetiram em três rodadas de cada lado: 02 `entra` no Chromium reduzido, 12,7–13,0 ms no antes contra 12,0–13,1 na peça 0; 05 `ir-para-semana` no WebKit, 27–31 contra 27–28. No 14, a aba tocada no meio chega (2º toque a +99 ms no Chromium e +152 no WebKit, `confere` verdadeiro) | `comparacao-0/protocolo.json`; as repetições no scratchpad da sessão (não ficaram na pasta de capturas) |
+| as guardas da 06 §5 e `tipos` | do coordenador | 1593/1593 verdes, `tipos` limpo (mensagem dele) | — |
+| o clarão em 200 ms | **não gravado aqui** | a câmera precisa de `getUserMedia`, fora dos fluxos; medido pelo implementador (`09-implementacao.md`, "Medido no navegador": 320 → 200 ms; sob "Reduzir", nasce apagado) | — |
+
+### 6.2 O que reprovou, e por que não é da peça 0
+
+Tudo igual ao antes, no mesmo passo, e cada um é trabalho de uma peça que
+ainda não entrou:
+
+- **Foco no `body` ao abrir ou fechar camada** (princípio 6): 24 reprovações,
+  as mesmas do antes — peça 5.
+- **A rolagem do Corpo volta em 1091 px** em vez de 1982 (princípio 9): 02
+  `sai`, nas duas rodadas reduzidas — peça 5.
+- **Telas cheias que trocam num quadro e "a de baixo que se move"** (princípio
+  8): 05 `abre`, `volta`, `abre-de-novo`, nos dois motores — peça 5.
+- **Dedo pousado sem mudança no WebKit** (princípio 8): 05 e 07/14 — peça 1.
+- **Um intervalo de 38 ms no WebKit** (princípio 4): 14 `corpo-e-semana`; o
+  mesmo passo teve 42 ms no antes — é o WebKit desta máquina sem GPU.
+
+### 6.3 O que ficou "a conferir"
+
+- **07 · a tela muda por ~160 ms, e o decidido é 350**: é o fio, agora em
+  `--ins-dur-lugar`. O carrossel de 350 ms é da peça 6, e a decisão 3 diz "o fio
+  junto": **na peça 6 o fio tem de passar a andar em 350 ms com a página**, não
+  nos 160 de hoje. Fica anotado para o implementador.
+- **Sob "Reduzir", 03 e 03b**: "a tela muda por ~740 ms" e, no WebKit, "buraco
+  de ~258 ms na captura". São os degraus de 250 ms da barra do descanso e o
+  relógio, sem animação — iguais ao antes.
+- **Foco no `body` em passos que não são camada** (03, 04 `abre-treino`, 10,
+  11, 12): igual ao antes.
+- **A 1ª série no WebKit reduzido**: 48–50 ms de trabalho (antes 45–57): a regra
+  de ≤ 16 ms vale para o Chromium 1×, e a peça que a cobra é a 2.
+
+### 6.4 Um incidente da gravação, corrigido
+
+O vídeo `depois-0/09-copo/chromium-reduz.webm` saiu com **6,9 horas e 527 MB**.
+Sob "Reduzir movimento" o Agora parado mandou só 6 quadros, e o gravador do
+Playwright esticou o último até um carimbo absurdo. As tiras e as medidas usam
+os quadros com carimbo e não foram afetadas (os zeros dos dois passos caem a
+0,9 e 5,4 s do vídeo). O arquivo foi cortado em 10 s, sem recodificar; nenhum
+outro vídeo do antes ou do depois passa de 60 s; e `revisor-comum.mjs` passou a
+cortar sozinho todo vídeo mais longo que o intervalo dos quadros + 5 s.
+
+**Conclusão: a peça 0 passa na linha dela, nos dois motores e com "Reduzir
+movimento", sem nenhuma regressão.** O que reprova é o antes que as peças 1, 5 e
+6 ainda vão tratar. Não houve build nem teste durante a gravação.

@@ -1918,3 +1918,199 @@ test('(e) nada escuta o fim de uma animação', () => {
     'código que espera o fim (ou o começo) de uma animação: sob movimento reduzido o evento ' +
     'não chega, e a tela fica presa. Monte, desmonte e mova o foco pelo estado.');
 });
+
+// ============================================================
+// O TOQUE
+//
+// O dono respondeu em 16/10 (pergunta 7): o toque SÓ ESCURECE — nenhum
+// controle encolhe, "nenhum movimento novo; o toque se vê só pela cor". Até
+// então 78 de 115 controles não mudavam nada com o dedo pousado, e o que mais
+// mudava media 1,24:1 (docs/motion/09, peça 1). O estado mora numa camada só,
+// em `base.css` ("O TOQUE"), pintada com `--ins-toque` sobre o repouso de
+// qualquer controle.
+//
+// Este caso é a metade de FONTE: a forma da regra e a conta das camadas sobre
+// a paleta. A metade de ÁRVORE — todo controle de verdade, com o fundo de
+// verdade atrás dele, nos dois temas — é `tests/fluxo/toque.test.js`.
+// ============================================================
+
+test('(f) o toque escurece: uma camada só, fora do portão, e nada no controle se move', () => {
+  const regras = folhasDoApp().flatMap(f => f.regras);
+  const CAMADA = /^linear-gradient\(\s*var\(--ins-toque\)\s*,\s*var\(--ins-toque\)\s*\)$/;
+  // o último composto de um seletor: é ele que diz quem a regra pinta
+  const sujeito = (sel: string) => {
+    let prof = 0, colchete = false, ini = 0;
+    for (let i = 0; i < sel.length; i++) {
+      const c = sel[i];
+      if (c === '(') prof++; else if (c === ')') prof--;
+      else if (c === '[') colchete = true; else if (c === ']') colchete = false;
+      else if (!prof && !colchete && /[\s>+~]/.test(c)) ini = i + 1;
+    }
+    return sel.slice(ini);
+  };
+  const noDedo = (sel: string) => /:active\b/.test(sujeito(sel).replace(/\([^)]*\)/g, ''));
+
+  // 1. As regras do toque: em base.css, FORA de toda @media — é estado, não
+  //    movimento, e com "Reduzir movimento" o toque continua visível. Duas, e
+  //    `button:active` sozinho na dele: um navegador sem `:has()` descarta a
+  //    regra inteira em que ele aparece, e o toque de todo botão iria junto.
+  const doToque = regras.filter(r => r.decls.some(d => d.prop === 'background-image' && CAMADA.test(d.valor)) &&
+    r.sels.every(s => noDedo(s)));
+  const SELETORES = ['button:active', 'label:has(input[type="file"]):active',
+    'label:has(input[type="checkbox"]):active', '.ex-top:active:not(:has(button:active))'];
+  assert.deepStrictEqual(SELETORES.filter(s => !doToque.some(r => r.sels.includes(s))), [],
+    'a regra do toque perdeu um dos controles');
+  const u = doToque.find(r => r.sels.includes('button:active'))!;
+  assert.deepStrictEqual(u.sels, ['button:active'],
+    '`button:active` mora sozinho na regra dele: com `:has()` na mesma lista, um navegador sem `:has()` ' +
+    'descarta a regra inteira, e nenhum botão mostraria o dedo');
+  doToque.forEach(r => {
+    assert.strictEqual(r.arquivo, 'base.css', 'a regra do toque mora em base.css, ao lado do reset de button: ' +
+      r.arquivo + ':' + r.linha);
+    assert.deepStrictEqual(r.midias, [], 'a regra do toque está dentro de ' + r.midias.join(' / ') +
+      ': o toque é estado, e mora fora do portão — sob "Reduzir movimento" ele tem de continuar visível');
+  });
+
+  // 2. O `!important` só existe na camada do toque: ela fica por cima do
+  //    `background:` abreviado de qualquer regra de controle. Outro brigaria.
+  const importantes: string[] = [];
+  FOLHAS.forEach(f => semComentariosCss(fonte('src/' + f)).split('\n').forEach((l, i) => {
+    if (/!important/.test(l)) importantes.push(f + ':' + (i + 1) + ' ' + l.trim());
+  }));
+  assert.deepStrictEqual(importantes.filter(l => !(l.startsWith('base.css:') &&
+    /^\S+ background-image\s*:\s*linear-gradient\(var\(--ins-toque\), var\(--ins-toque\)\) !important;$/.test(l))), [],
+    '`!important` fora da camada do toque');
+  assert.strictEqual(importantes.length, doToque.filter(r => r.arquivo === 'base.css').length,
+    'cada regra do toque tem a camada com `!important`, e só elas: ' + importantes.join(' | '));
+
+  // 3. A camada só existe com o dedo, e é a única imagem de fundo do app.
+  const imagens = regras.flatMap(r => r.decls.filter(d => d.prop === 'background-image').map(d => ({ r, d })));
+  assert.deepStrictEqual(imagens.filter(x => !CAMADA.test(x.d.valor) || !x.r.sels.every(s => /:active\b/.test(s)))
+    .map(x => onde(x.r, x.d)), [],
+    'imagem de fundo que não é a camada do toque, ou camada do toque sem o dedo: a regra do toque ' +
+    'a apagaria no controle, ou o controle ficaria escuro parado');
+
+  // 4. Nada no controle se move com o dedo, dentro ou fora do portão: nem
+  //    escala, nem deslocamento, nem transição. Só escurece.
+  const MEXE = /^(transform|translate|scale|rotate|zoom|transition(-[a-z-]+)?|animation(-[a-z-]+)?)$/;
+  const mexe = regras.filter(r => r.sels.some(s => /:active\b/.test(s)))
+    .flatMap(r => r.decls.filter(d => MEXE.test(d.prop)).map(d => onde(r, d)));
+  assert.deepStrictEqual(mexe, [], 'o toque mexe no controle: ele só escurece (dono, 16/10, pergunta 7)');
+
+  // 5. Um mecanismo só: fora da regra do toque, nenhuma regra com o dedo no
+  //    próprio controle troca o fundo dele. Era assim que o "+1 copo" virava a
+  //    cor do bloco em volta. (Um filho do controle pode mudar: a miniatura.)
+  const outroFundo = regras.filter(r => !doToque.includes(r) && r.sels.some(noDedo))
+    .flatMap(r => r.decls.filter(d => /^background(-color|-image)?$/.test(d.prop)).map(d => onde(r, d)));
+  assert.deepStrictEqual(outroFundo, [],
+    'segunda maneira de pintar o toque num controle: tire-a, a camada de base.css já escurece qualquer repouso');
+
+  // 6. A camada troca na MESMA regra que pinta o preenchimento: para a do
+  //    cheio onde ela pinta acento ou pare, de volta para a do papel onde ela
+  //    devolve o controle ao papel. Nenhuma outra troca.
+  const trocasTodas = regras.filter(r => r.arquivo !== 'tokens.css' && r.decls.some(d => d.prop === '--ins-toque'));
+  const CHEIO = /^var\(--ins-(acento|pare-tinta)\)$/;
+  const camadaDe = (r: Regra) => r.decls.filter(d => d.prop === '--ins-toque').pop()!.valor;
+  const trocas = trocasTodas.filter(r => camadaDe(r) === 'var(--ins-toque-cheio)');
+  assert.ok(trocas.length >= 5, 'só ' + trocas.length + ' regras trocam para a camada do cheio');
+  assert.deepStrictEqual(trocasTodas.filter(r => {
+    const fundo = r.decls.filter(d => d.prop === 'background' || d.prop === 'background-color').pop();
+    if (!fundo) return true;
+    if (camadaDe(r) === 'var(--ins-toque-cheio)') return !CHEIO.test(fundo.valor);
+    if (camadaDe(r) === 'var(--ins-toque-papel)') return CHEIO.test(fundo.valor);
+    return true;
+  }).map(r => r.arquivo + ':' + r.linha + ' ' + r.sels.join(', ') + ' → --ins-toque: ' + camadaDe(r)), [],
+    'regra que troca a camada do toque sem pintar ela mesma o preenchimento que a pede (a do cheio sobre ' +
+    'acento ou pare, a do papel sobre o resto), ou trocando para outra coisa que não as duas camadas');
+
+  // 8. E o contrário: todo preenchimento cheio que pinta um CONTROLE troca
+  //    para a camada do cheio. Controle vem do código, não de uma lista: as
+  //    classes que algum `<button>` ou `<label>` do JSX pode carregar. Basta
+  //    uma regra de troca cujo sujeito alcance o mesmo controle (`.pare-sim`
+  //    vale para `.pergunta-w .pare-sim`).
+  const jsx: string[] = [path.join(RAIZ, 'src', 'main.jsx')];
+  const anda = (dir: string) => fs.readdirSync(dir, { withFileTypes: true }).forEach(e => {
+    const q = path.join(dir, e.name);
+    if (e.isDirectory()) anda(q); else if (q.endsWith('.jsx')) jsx.push(q);
+  });
+  anda(path.join(RAIZ, 'src', 'ui'));
+  const doControle: string[][] = [];
+  jsx.forEach(arq => {
+    for (const m of fs.readFileSync(arq, 'utf8').matchAll(/<(?:button|label)\b([^>]*?)(?:>|\/>)/gs)) {
+      const c = m[1].match(/class=(?:"([^"]*)"|\{([^}]*)\})/);
+      if (!c) continue;
+      doControle.push(c[2] != null
+        ? [...c[2].matchAll(/['"`]\s*([a-zA-Z][\w -]*?)\s*['"`]/g)].flatMap(x => x[1].split(/\s+/))
+        : c[1].split(/\s+/).filter(Boolean));
+    }
+  });
+  assert.ok(doControle.length > 100, 'o andador de JSX achou só ' + doControle.length + ' botões');
+  const partesDoSujeito = (sel: string) => {
+    let fora = '', prof = 0;
+    for (const c of sujeito(sel)) { if (c === '(') prof++; if (!prof) fora += c; if (c === ')') prof--; }
+    fora = fora.replace(/\[[^\]]*\]/g, '');
+    return { tag: (/^[a-z][\w-]*/i.exec(fora) || [''])[0].toLowerCase(),
+             classes: [...fora.matchAll(/\.([\w-]+)/g)].map(x => x[1]) };
+  };
+  const ehControle = (sel: string) => {
+    if (/::|:(before|after)\b/.test(sel)) return false;
+    const { tag, classes } = partesDoSujeito(sel);
+    return tag === 'button' || (classes.length > 0 && doControle.some(cs => classes.every(c => cs.includes(c))));
+  };
+  const trocadores = trocas.flatMap(r => r.sels).map(partesDoSujeito);
+  const semTroca = regras.filter(r => r.decls.some(d => (d.prop === 'background' || d.prop === 'background-color') && CHEIO.test(d.valor)))
+    .flatMap(r => r.sels.filter(ehControle).filter(s => {
+      const alvo = partesDoSujeito(s);
+      return !trocadores.some(t => (!t.tag || t.tag === alvo.tag) && t.classes.every(c => alvo.classes.includes(c)) &&
+        (t.tag || t.classes.length > 0));
+    }).map(s => r.arquivo + ':' + r.linha + ' ' + s));
+  assert.deepStrictEqual(semTroca, [],
+    'controle de preenchimento cheio sem a camada do cheio: a camada do papel sobre o acento mede ~1,2:1. ' +
+    'Declare `--ins-toque: var(--ins-toque-cheio)` na regra que pinta o preenchimento');
+
+  // 7. A conta, da paleta como está na folha: a camada sobre cada papel, e a do
+  //    cheio sobre cada cheio, passam de 1,5:1 nos dois temas. É a régua de
+  //    `tokens.css`; a árvore confere de novo com o fundo de verdade.
+  const tokens = semComentariosCss(fonte('src/tokens.css'));
+  const iEscuro = tokens.indexOf('prefers-color-scheme: dark');
+  const iManual = tokens.indexOf(':root[data-theme="dark"]');
+  assert.ok(iEscuro > 0 && iManual > iEscuro, 'não achei os blocos de tema em tokens.css');
+  const blocosDeTema = { claro: tokens.slice(0, iEscuro), escuro: tokens.slice(iEscuro, iManual), manual: tokens.slice(iManual) };
+  const le = (txt: string, nome: string): number[] | null => {
+    const m = new RegExp('--' + nome + '\\s*:\\s*(#[0-9A-Fa-f]{6}|rgba\\(([^)]*)\\))').exec(txt);
+    if (!m) return null;
+    if (m[2]) return m[2].split(',').map(Number);
+    return [1, 3, 5].map(i => parseInt(m[1].substr(i, 2), 16)).concat(1);
+  };
+  assert.match(blocosDeTema.claro, /--ins-toque\s*:\s*var\(--ins-toque-papel\)\s*;/,
+    'a camada de cada controle nasce como a do papel: `--ins-toque: var(--ins-toque-papel)` no :root');
+  (['ins-toque-papel', 'ins-toque-cheio'] as const).forEach(n => {
+    assert.ok(le(blocosDeTema.claro, n) && le(blocosDeTema.escuro, n) && le(blocosDeTema.manual, n),
+      n + ' tem de existir nos três blocos de tema');
+    assert.deepStrictEqual(le(blocosDeTema.manual, n), le(blocosDeTema.escuro, n),
+      n + ' diverge entre os dois blocos escuros');
+  });
+  const lin = (c: number[]) => {
+    const l = c.slice(0, 3).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2];
+  };
+  const razao = (a: number[], b: number[]) => { const x = lin(a), y = lin(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const sobre = (base: number[], c: number[]) => base.slice(0, 3).map((v, i) => v * (1 - c[3]) + c[i] * c[3]);
+  const PAPEL = ['ins-fundo', 'ins-tela', 'ins-superficie', 'ins-superficie-2', 'ins-acento-suave',
+    'ins-atencao-fundo', 'ins-pare-fundo'];
+  const CHEIOS = ['ins-acento', 'ins-pare-tinta'];
+  const fracos: string[] = [];
+  (['claro', 'escuro'] as const).forEach(tema => {
+    const txt = blocosDeTema[tema];
+    const conta = (camada: string, fundos: string[]) => fundos.forEach(f => {
+      const base = le(txt, f), c = le(txt, camada);
+      assert.ok(base && c, 'token sem valor no tema ' + tema + ': ' + f + ' / ' + camada);
+      const v = razao(base!, sobre(base!, c!));
+      if (v < 1.5) fracos.push(tema + ' · ' + camada + ' sobre ' + f + ': ' + v.toFixed(2) + ':1');
+    });
+    conta('ins-toque-papel', PAPEL);
+    conta('ins-toque-cheio', CHEIOS);
+  });
+  assert.deepStrictEqual(fracos, [],
+    'a camada do toque não se vê o bastante: o mínimo é 1,5:1 entre o tocado e o repouso (tokens.css, "O toque")');
+});

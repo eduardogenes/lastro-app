@@ -350,7 +350,8 @@ O que muda aqui, e prevalece sobre o texto acima:
 - **Tokens (§2).** Camada entra e sai em 350 ms na curva do iPhone
   (`cubic-bezier(.32,.72,0,1)`); o quique da folha e do painel, 640 ms
   (passa 8 % aos 55 %, volta 3 % aos 80 %). No lugar continua 160 ms na
-  `--ins-curva`, o toque 120 ms. Saem `--ins-afunda`, `--ins-afunda-largo`,
+  `--ins-curva`. O toque não tem tempo: só escurece, na hora, e `--ins-dur-toque`
+  saiu (peça 1). Saem `--ins-afunda`, `--ins-afunda-largo`,
   `--ins-passo-aba` e `--ins-recuo`.
 - **Peça 1** fica só com o preenchimento visível e o ouvinte de `touchstart`;
   nenhum controle escala.

@@ -245,8 +245,7 @@
   border: 1px solid var(--ins-fio-controle);
   font: 500 15px/1 var(--ins-fonte);
 }
-.rirop:active { background: var(--ins-superficie-2); }
-.rirop.on { background: var(--ins-acento); color: var(--ins-sobre-acento); border-color: var(--ins-acento); }
+.rirop.on { background: var(--ins-acento); color: var(--ins-sobre-acento); border-color: var(--ins-acento); --ins-toque: var(--ins-toque-cheio); }
 
 /* A unidade DENTRO de um campo: flutua na direita, sem capturar toque. Ainda
    é usada no formulário de corrigir sessão passada. O cabeçalho da tabela de
@@ -337,7 +336,6 @@
   font: 400 11px/1 var(--ins-fonte); letter-spacing: .04em;
   min-height: 40px;
 }
-.rest:active { background: var(--ins-superficie-2); }
 .rest.bi { border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
 
 .segnote, .anilhas {
@@ -364,7 +362,6 @@
   position: relative;
 }
 .histbtn::after { content: ""; position: absolute; inset: -2px 0; }     /* 42 -> 46 */
-.histbtn:active { background: var(--ins-superficie-2); }
 
 /* Lado a lado, não empilhados: são dois rótulos curtos, e empilhar custava
    108px por exercício aberto contra 58. */
@@ -478,6 +475,7 @@
 .chip::after { content: ""; position: absolute; inset: -3px 0; }
 .chip.on, .chip.sel {
   background: var(--ins-acento); color: var(--ins-sobre-acento); border-color: var(--ins-acento);
+  --ins-toque: var(--ins-toque-cheio);
 }
 /* O campo de quantidade da medida do dia. 16px e não menos: abaixo disso o
    Safari dá zoom ao focar, e a tela fica torta no meio da aula. */
@@ -570,8 +568,8 @@
   display: block; width: 100%; min-height: var(--ins-tap); margin-top: var(--ins-5);
   background: var(--ins-acento); color: var(--ins-sobre-acento); border: 0;
   font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
+  --ins-toque: var(--ins-toque-cheio);
 }
-.day-ini:active { background: var(--ins-acento-tinta); }
 
 /* Controles de sessão aberta */
 .ctrl { display: flex; gap: var(--ins-2); margin-top: var(--ins-5); }
@@ -581,9 +579,9 @@
   color: var(--ins-tinta-2);
   font: 400 var(--ins-t-meta)/1 var(--ins-fonte);
 }
-.ctrl-b:active { background: var(--ins-superficie-2); }
 .ctrl-b.fim, .ctrl-b.ini {
   background: var(--ins-acento); border-color: var(--ins-acento); color: var(--ins-sobre-acento);
+  --ins-toque: var(--ins-toque-cheio);
 }
 /* GRUDADO NO TOPO enquanto a sessão está aberta.
    Quanto tempo faz que começou é a pergunta que se refaz o treino inteiro, e a
@@ -702,7 +700,12 @@
   width: 4px; height: 4px; margin: -2px 0 0 -2px;
   border-radius: 50%; background: var(--ins-tinta-3);
 }
-.exfoto.vazia:active .exfoto-p { background: var(--ins-acento-suave); }
+/* O toque. A miniatura cobre o botão quase inteiro, então a camada do toque
+   (base.css) só apareceria no vão do número: ela vai para o quadrado de
+   dentro, e a foto, que é conteúdo e não fundo, apaga como o "salvar" do
+   ajuste. Estado, fora do portão, como todo toque. */
+.exfoto:active .exfoto-p { background-image: linear-gradient(var(--ins-toque), var(--ins-toque)); }
+.exfoto:active img { opacity: .6; }
 .exfoto.vazia:active .exfoto-p::after { background: var(--ins-acento); }
 
 /* O número desce para debaixo da miniatura e encolhe: ali ele é referência de

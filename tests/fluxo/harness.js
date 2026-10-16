@@ -99,6 +99,7 @@ function estadoVazio(extra) {
  * @param {number} [opcoes.agora] fixa `Date.now` do app, antes do boot
  * @param {boolean} [opcoes.semArmazenamento] o acesso a `localStorage` estoura,
  *   como em aba privada: o app cai para memória e não guarda nada
+ * @param {function} [opcoes.antesDoApp] recebe a janela antes de o app rodar
  * @returns {object} app
  */
 function abrirApp(opcoes) {
@@ -120,6 +121,10 @@ function abrirApp(opcoes) {
     url: 'https://lastro.test/app.html',
     virtualConsole: console_,
     beforeParse: function (w) {
+      // Quem precisa ver o que o app faz ANTES de qualquer linha dele rodar
+      // (um ouvinte posto no topo do módulo, por exemplo) instala o espião
+      // aqui. O resto dos dublês vem depois e não depende disto.
+      if (o.antesDoApp) o.antesDoApp(w);
       w.scrollTo = function () {};
       w.confirm = function (msg) {
         registro.confirmou.push(msg);
