@@ -523,7 +523,8 @@
      sai — com o tempo da camada (350) o branco ficaria na tela o dobro. */
   --ins-dur-clarao: 200ms;
   /* SÓ dentro de `@media (prefers-reduced-motion: reduce)`, e só com opacity: a
-     camada que chega esmaece em vez de deslizar; a que sai vai de uma vez. */
+     camada que chega esmaece em vez de deslizar; a que sai vai de uma vez; o
+     valor que pousa só acende, sem subir. */
   --ins-dur-dissolve: 120ms;
   /* NÃO é duração de transição: é o PERÍODO de `pintaTimer`. A barra interpola
      entre duas amostras; menos deixa vão parado, mais atrasa a barra em relação

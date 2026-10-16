@@ -258,6 +258,19 @@ preenchimento — escurecer o que já é escuro mede menos: a camada do papel d�
   de 27 estados de tela, com o fundo de verdade atrás dele, nos dois temas e
   com "Reduzir movimento", e o ouvinte de `touchstart`.
 
+**O dedo não perde o lugar.** O toque que faz nascer alguma coisa ACIMA de onde
+o dedo está não pode pôr outro controle embaixo dele. Na primeira série da
+sessão nascem no topo o relógio e Pausar/Encerrar (52 px): a linha da série
+tocada descia e a célula de carga da mesma série caía sob o dedo; no teclado
+próprio, a tecla de cima. Agora, no mesmo desenho, a página rola de uma vez
+para a linha (ou o teclado) ficar onde estava. Depois de "Pular", o cartão
+fecha e o nome do exercício seguinte subia para baixo do dedo; agora a página
+rola para pôr ali a frase "Pulado hoje…" do próprio exercício — texto, e o
+Desfazer ao lado. É rolagem, sempre um salto (ver [Movimento](#movimento)), e
+depois do render(): nada do que se grava muda, nem a ordem dos toques. O que
+some ABAIXO do dedo continua como é: fechar a régua sobe a linha seguinte para
+onde ela estava. Medido no motor de verdade por `tests/fluxo/dedo.test.js`.
+
 ## Componentes
 
 Anatomia exata em [`src/componentes.css`](src/componentes.css) e
@@ -342,7 +355,7 @@ respostas do dono de 16/10 (`docs/motion/00-coordenacao.md`).
 | `--ins-dur-entra` · `--ins-dur-sai` | 350 ms · 350 ms | a camada que entra · que sai, pela mesma borda |
 | `--ins-dur-quique` | 640 ms | só a chegada da folha e do painel de apagar, com os quadros de `ins-quique` (passa 8 % aos 55 %, volta 3 % aos 80 %) |
 | `--ins-dur-clarao` | 200 ms | só o clarão do disparo da câmera |
-| `--ins-dur-dissolve` | 120 ms | só sob "Reduzir movimento": a camada que chega esmaece |
+| `--ins-dur-dissolve` | 120 ms | só sob "Reduzir movimento": a camada que chega esmaece; o valor que pousa só acende |
 | `--ins-dur-amostra` | 250 ms | o período de `pintaTimer`, não uma duração de transição |
 | `--ins-ciclo-vivo` | 2,4 s | uma volta do pulso |
 | `--ins-pousa` · `--ins-sobe-aviso` | 4 px · 8 px | de quanto abaixo o valor pousa · o aviso chega |
@@ -356,12 +369,15 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 | A barra do descanso | `#tfill` (`componentes.css`), escrita por `pintaTimer` | `transform: scaleX` | `--ins-dur-amostra` · `--ins-curva-grandeza` | o tempo passando | anda em degraus de 250 ms |
 | O pulso do ponto ao vivo | `.ins-live-dot` (`base.css`) | `opacity` 1 → .25 → 1, sem fim | `--ins-ciclo-vivo` · `--ins-curva-ciclo` | a tela está viva agora | aceso e parado |
 | O clarão do disparo | `.cam-clarao` (`componentes.css`), um nó por foto | `opacity` .9 → 0 | `--ins-dur-clarao` · `--ins-curva` | a foto foi tirada (lido a 3 m) | não aparece: a foto é dita pelo obturador, pela voz e pelo bloco da pose |
+| O pouso da série | `.pousa.recem` (`treino.css`), o número da célula num nó próprio por valor (`pousa`, `ui/exercicio.jsx`), só sob a marca de recém do toque que grava — régua, RIR, coluna anterior, a carga do "+ série"; o teclado não (`marcaRecem`, `main.jsx`) | `@keyframes ins-pousa` (`base.css`): `translate` de `--ins-pousa` abaixo e `opacity` .4 → 1, no número e nunca no botão | `--ins-dur-lugar` · `--ins-curva` | o valor entrou AQUI | só acende: `ins-acende`, `opacity` .4 → 1, em `--ins-dur-dissolve` |
 | A bancada: pouso, painel e régua, virada | `palco.css`, `palco.js` | `transform` e `opacity` | `--pl-dur-*` · `--pl-curva` | chegou; virou | nada |
 
 **O que fica sem movimento**, de propósito: o toque, que só escurece e troca na
 hora (é estado: ver [Toque](#toque); `--ins-dur-toque` saiu com o afundar); o
 painel que nasce sob o polegar
-(régua, teclado, RIR) — alvo que se move sob o dedo é alvo errado; os números
+(régua, teclado, RIR) — alvo que se move sob o dedo é alvo errado; o número
+digitado tecla a tecla no teclado próprio, que não pousa (o olho está no visor,
+e pousar cada dígito seria cintilar); os números
 derivados (contador, volume, kcal), que não rolam; o fim do descanso, cujo
 canal é o som; a abertura do app e o giro do telefone; e toda rolagem
 programática, que é sempre um salto (`instant`) — a rolagem suave é do

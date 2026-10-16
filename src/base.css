@@ -419,6 +419,21 @@ p, .ins-prosa, input, textarea {
   .ins-live-dot { animation: ins-pulse var(--ins-ciclo-vivo) var(--ins-curva-ciclo) infinite; }
 }
 
+/* POUSAR, o gesto do "o valor entrou aqui": de `--ins-pousa` abaixo e de
+   opacidade .4 até o lugar — legível desde o primeiro quadro, nunca invisível.
+   Um gesto, um significado (docs/motion/06 §2.3): hoje o número da série
+   (`treino.css`); a forma da refeição marcada usa o mesmo, na peça 8. A
+   opacidade inicial vive aqui uma vez, e não vira token.
+   ACENDER é o mesmo sem o deslocamento: o que fica sob "Reduzir movimento". */
+@keyframes ins-pousa {
+  from { translate: 0 var(--ins-pousa); opacity: .4; }
+  to   { translate: 0 0; opacity: 1; }
+}
+@keyframes ins-acende {
+  from { opacity: .4; }
+  to   { opacity: 1; }
+}
+
 /* ============================================================
    SÓ RETRATO
    O manifesto já pede `"orientation": "portrait"`, e o Android

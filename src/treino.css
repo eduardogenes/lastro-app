@@ -226,6 +226,30 @@
    ajustando. */
 .rirbtn.on, .repbtn.on { color: var(--ins-acento-tinta); box-shadow: inset 0 -1px 0 var(--ins-acento); }
 
+/* O POUSO (peça 2 do motion; docs/motion/03 §4.2): o número que acabou de
+   entrar na célula sobe `--ins-pousa` e acende, e diz "o valor entrou AQUI" —
+   no mesmo quadro somem a régua, nasce o cronômetro e às vezes o relógio.
+   Anima o número, nunca o botão: o alvo do toque fica parado.
+
+   Só sob `.recem`, que é a marca do toque que grava (régua, RIR, coluna
+   anterior, a carga do "+ série"); o número num nó próprio por valor está em
+   `ui/exercicio.jsx` (`pousa`). Fora do portão o número está parado e aceso,
+   que é o último quadro.
+
+   Sob "Reduzir movimento" o número não se desloca: só acende, no tempo do
+   esmaecer (resposta 2 do dono, 16/10, como o coordenador a leu: "o pouso e o
+   aviso ficam só na opacidade"). A 06 §2.4 preferia o estalo, porque
+   "dissolver um número mostra dois valores ao mesmo tempo" — aqui não mostra:
+   o número velho sai no mesmo desenho (outro nó), e só o novo acende, de .4
+   para 1, legível desde o primeiro quadro. */
+.pousa { display: inline-block; }   /* `translate` não vale em caixa inline */
+@media (prefers-reduced-motion: no-preference) {
+  .pousa.recem { animation: ins-pousa var(--ins-dur-lugar) var(--ins-curva) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pousa.recem { animation: ins-acende var(--ins-dur-dissolve) var(--ins-curva) both; }
+}
+
 /* A escala, aberta embaixo da própria série. */
 .rirscale {
   display: flex; align-items: center; gap: var(--ins-3);

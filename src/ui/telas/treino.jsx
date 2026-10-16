@@ -9,10 +9,45 @@
 // não reescrita: aqueles nomes são o contrato que os testes de fluxo têm com o
 // DOM há meses, e renomear compraria churn sem comprar nada.
 
+import { useLayoutEffect, useState } from 'preact/hooks';
 import { Cabecalho, GradeMetricas, Secao, Vazio, useAgora } from '../instrumento/primitivos.jsx';
 import { Exercicio } from '../exercicio.jsx';
 import { AddEx, Aulas, RegistroRapido } from '../instrumento/edicao.jsx';
 import { EdicaoDoDia } from './edicaodia.jsx';
+
+// O CONTADOR DO TOPO — "séries N/M", ou "movimentos" num dia aberto — tem UM
+// escritor só: este componente.
+//
+// Até 16/10 eram dois. O casco (`atualizaEstado`, em main.jsx) escrevia
+// `textContent` direto no nó a cada tecla, sem re-render, e isso TROCAVA o nó
+// de texto que o Preact guardava: dali em diante o render() pintava num nó
+// solto, e o que só passa pelo render() — ligar o deload, mudar séries na
+// edição do dia — deixava a tela com o número velho (tela 1/20, dado 1/12;
+// docs/motion/03 §8.1). Agora o casco só AVISA, e o componente se redesenha
+// sozinho, lendo o número da mesma função que o render() lê. O Preact agenda
+// esse desenho para antes do próximo quadro, e só este nó muda.
+//
+// O aviso existe porque `inp()` não chama render() de propósito (o porquê está
+// em `atualizaEstado`).
+const quemOuve = new Set();
+
+/** O número do contador pode ter mudado: quem estiver na tela se redesenha. */
+export function avisaOContador() {
+  quemOuve.forEach(function (f) { f(); });
+}
+
+function Contador({ ler }) {
+  const [, bate] = useState(0);
+  // De layout, e não `useEffect`: ouvindo desde o desenho em que nasceu. Um
+  // aviso entre o desenho e o efeito se perderia.
+  useLayoutEffect(() => {
+    const f = () => bate(n => n + 1);
+    quemOuve.add(f);
+    return () => { quemOuve.delete(f); };
+  }, []);
+  const c = ler();
+  return <span class={c.cor || undefined}>{c.valor}</span>;
+}
 
 export function Treino({ ctx }) {
   const t = ctx.treino();
@@ -35,17 +70,13 @@ export function Treino({ ctx }) {
         <GradeMetricas
           colunas={2}
           celulas={[
-            // id=daymeta: atualizaEstado() escreve aqui a cada tecla, sem
-            // re-render — o porquê está em main.jsx.
+            // id=daymeta: o número e a cor são do `Contador` (acima), que se
+            // redesenha sozinho quando o casco avisa — um escritor só.
             // Num dia aberto não há meta a cumprir: `0/16` era uma conta contra
             // um número que o box nunca ia respeitar. O que se conta é o que
             // entrou — e antes da aula é um traço, não um zero.
-            t.aberto
-              ? { k: 's', id: 'daymeta', rotulo: 'movimentos',
-                  valor: t.movimentos ? String(t.movimentos) : '–',
-                  cor: t.feitas > 0 ? 'ins-acid' : '' }
-              : { k: 's', id: 'daymeta', rotulo: 'séries', valor: `${t.feitas}/${t.prescritas}`,
-                  cor: t.feitas >= t.prescritas && t.prescritas > 0 ? 'ins-acid' : '' },
+            { k: 's', id: 'daymeta', rotulo: t.aberto ? 'movimentos' : 'séries',
+              valor: <Contador ler={ctx.contadorDoDia} /> },
             // O VOLUME fica: durante a sessão ele é devolutiva ao vivo do que
             // entrou, e não resumo do dia. A cópia que Dias guarda no detalhe
             // da sessão é o REGISTRO, que é outra coisa.

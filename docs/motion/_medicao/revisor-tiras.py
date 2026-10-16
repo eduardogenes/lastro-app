@@ -6,6 +6,7 @@ Chamado por revisor-comum.mjs depois de cada fluxo; também roda à mão:
     python3 docs/motion/_medicao/revisor-tiras.py tiras <medidas-ROTULO.json>
     python3 docs/motion/_medicao/revisor-tiras.py par <tira-antes.png> <tira-depois.png> <saida.png> "antes · a22b09d" "depois · <commit>"
     python3 docs/motion/_medicao/revisor-tiras.py faixa <tira.png> antes +50 0 60
+    python3 docs/motion/_medicao/revisor-tiras.py repousa <medidas-*.json>…
 
 `tiras` lê o manifesto que o .mjs escreveu (cada passo com os quadros da
 janela, já com o tempo relativo ao instante zero do passo) e, para cada passo:
@@ -140,8 +141,11 @@ def tiras(arq_man):
         df = [None] + [fino_de(gf[i - 1], gf[i]) for i in range(1, len(gf))]
         lim_px = 6
         fino = [(ts[i], df[i][0], df[i][1]) for i in range(1, len(gf)) if df[i][0] >= lim_px and -folga < ts[i] <= 800]
+        # (a janela do dedo pousado começa em pousar − folga: descontada a
+        # latência da captura, o quadro do :active pode cair alguns ms antes do
+        # pointerdown — visto no webkit-reduz da peça 1, 07 §7)
         fino_pousar = [(ts[i], df[i][0], df[i][1]) for i in range(1, len(gf))
-                       if df[i][0] >= lim_px and ini < ts[i] <= -folga] if pousa is not None else []
+                       if df[i][0] >= lim_px and ini - folga < ts[i] <= -folga] if pousa is not None else []
         # Lacunas da captura: com animação viva na tela (o pulso, a barra do
         # descanso), a captura manda um quadro a cada ~16 ms. Um buraco de mais
         # de 100 ms ali é da captura, não da tela (conferido contra o Event
@@ -296,11 +300,38 @@ def faixa(tira, col_a, col_b, x0, x1):
     return float((np.abs(a - b) > 24).mean())
 
 
+def repousa(arq_man):
+    """Recalcula `mudancaNoPousarMs` de um manifesto já gravado, pela linha do
+    tempo (que guarda, quadro a quadro, quantos pixels mudaram na medida fina),
+    com a janela certa (pousar − folga, −folga]. Troca o valor guardado quando
+    acha um quadro anterior a ele (ou quando não havia nenhum); a caixa não se
+    recupera (os quadros já foram apagados): fica `mudancaNoPousarPx`, a caixa
+    vira null e `mudancaNoPousarRecalculada: true`."""
+    man = json.load(open(arq_man))
+    folga = man.get('folgaDoZeroMs') or 5
+    n = 0
+    for ps in man['passos']:
+        q, lt, ini = ps.get('medidasDosQuadros'), ps.get('linhaDoTempo'), ps.get('pousaRel')
+        if not q or not lt or ini is None:
+            continue
+        c = [(x[0], x[2]) for x in lt if len(x) > 2 and x[2] and x[2] >= 6 and ini - folga < x[0] <= -folga]
+        antigo = q.get('mudancaNoPousarMs')
+        if c and (antigo is None or c[0][0] < antigo):
+            # um quadro ANTERIOR ao guardado: a caixa guardada era de outra coisa
+            q['mudancaNoPousarMs'], q['mudancaNoPousarPx'], q['mudancaNoPousarRecalculada'] = c[0][0], c[0][1], True
+            q['mudancaNoPousarCaixa'] = None
+            n += 1
+    json.dump(man, open(arq_man, 'w'), ensure_ascii=False, indent=1)
+    return n
+
+
 if __name__ == '__main__':
     if sys.argv[1] == 'tiras':
         tiras(sys.argv[2])
     elif sys.argv[1] == 'par':
         par(*sys.argv[2:7])
+    elif sys.argv[1] == 'repousa':
+        print(sum(repousa(a) for a in sys.argv[2:]))
     elif sys.argv[1] == 'faixa':
         print(faixa(sys.argv[2], sys.argv[3], sys.argv[4], float(sys.argv[5]), float(sys.argv[6])))
     else:

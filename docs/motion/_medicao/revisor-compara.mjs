@@ -75,8 +75,9 @@ print((np.abs(a - b) > 24).mean() if a.shape == b.shape else 1.0)`;
 }
 
 // ---- O que o dono decidiu em 16/10 (08 §5.1; diário 01h25) ----
-// Durações que podem aparecer (guarda (a) da 06: tempo só nos tokens): toque 120
-// (e o dissolver sob "Reduzir movimento", 120), no lugar 160 (pouso, copo, aviso),
+// Durações que podem aparecer (guarda (a) da 06: tempo só nos tokens): o
+// dissolver sob "Reduzir movimento", 120 (o toque não tem tempo: só escurece, na
+// hora, e `--ins-dur-toque` saiu na peça 1), no lugar 160 (pouso, copo, aviso),
 // clarão 200, amostra do descanso 250, camada 350 (entra e sai, na curva do
 // iPhone), quique 640 (só a chegada da folha e do painel de apagar), ciclo do
 // ponto ao vivo 2400 (infinito, decisão 12). TETO de 300 ms da 04: caiu.
@@ -133,14 +134,18 @@ function julga(rodada, a, d, extra, mov, tiraD) {
   // 3 · Nada pisca no Blink
   if (!webkit) {
     const p = '3 nada pisca no Blink';
-    const trA = (qa.transitorios || []).length, tr = (qd.transitorios || []).slice(trA);
+    // o estado de toque (peça 1) aparece com o dedo e some ao soltar: um
+    // "transitório" dentro da janela do dedo pousado é ele, não um pisca
+    const doDedo = (ps, x) => ps.pousaRel != null && x.t <= 0 && x.t > ps.pousaRel - 40;
+    const trAs = (qa.transitorios || []).filter(x => !doDedo(a, x)), trDs = (qd.transitorios || []).filter(x => !doDedo(d, x));
+    const trA = trAs.length, tr = trDs.slice(trA);
     // o que se move de propósito naquele passo não conta: o cronômetro sobe e o
     // aviso e a faixa o acompanham (peça 3); o aviso sobe (peça 7)
     const movem = mov && mov.tipo === 'lugar' ? ['cronometro', 'toast', 'faixa'] : mov && mov.tipo === 'aviso' ? ['toast'] : [];
     const tira = o => Object.fromEntries(Object.entries(o || {}).filter(([k]) => !movem.includes(k)));
     const saltos = d.meio && d.depois ? fixoMudou(tira(d.meio.fixos), tira(d.depois.fixos)) : [];
     const lado = d.meio && d.meio.larguraRolavel > (d.meio.larguraDaJanela || 414);
-    if (tr.length) reprova(p, `quadro que aparece e some (além dos ${trA} do antes): ${(qd.transitorios || []).map(x => x.t + ' ms').join(', ')}`);
+    if (tr.length) reprova(p, `quadro que aparece e some (além dos ${trA} do antes): ${trDs.map(x => x.t + ' ms').join(', ')}`);
     if (saltos.length) reprova(p, `fixo fora do lugar no meio do movimento (120 ms): ${saltos.join('; ')}`);
     if (lado) reprova(p, `a página fica mais larga que a janela no meio do movimento (${d.meio.larguraRolavel} px)`);
     if (!tr.length && !saltos.length && !lado) passa(p, 'nenhum quadro transitório; fixos no lugar a 120 ms; sem transbordo lateral');
@@ -165,6 +170,25 @@ function julga(rodada, a, d, extra, mov, tiraD) {
     if (!ruins.length && !naSaida.length) (visivel > teto + 50 ? confira : passa)(p, vivas.length ? `${vivas.length} esmaecer(es) curto(s); a tela muda por ${visivel} ms` : `nenhuma animação; a tela muda por ${visivel} ms`);
     if (extra.finalDiferente != null) (extra.finalDiferente > 0.005 ? reprova : passa)('7 nada só pelo movimento',
       `a tela final com e sem "Reduzir movimento" difere em ${(extra.finalDiferente * 100).toFixed(2)} % (limite 0,5 %)` + (d.confere === false ? '; e o passo não funcionou sob reduce' : ''));
+  }
+  // 10 · O toque se vê (decisão 7; peça 1): com o dedo pousado o controle muda,
+  // a mudança cabe na caixa dele (com 8 px de folga), e nada nele anima — com e sem
+  // "Reduzir movimento". Só nas rodadas em que o :active acende com o dedo
+  // pousado (webkit e chromium-mouse; 07 §1.1).
+  if (mouse && (d.tipo === 'toque' || d.tipo === 'toqueNoMeio')) {
+    const p = '10 o toque se vê';
+    const n0 = v.length, cx = qd.mudancaNoPousarCaixa, al = d.antes && Array.isArray(d.antes.alvo) ? d.antes.alvo : null;
+    const px = qd.mudancaNoPousarPx;
+    if (qd.mudancaNoPousarMs == null) reprova(p, 'com o dedo pousado nada muda no controle');
+    else if (px && al && px > al[2] * al[3] * 1.4) confira(p, `com o dedo pousado mudam ${px} px, mais que a área do controle (${al[2] * al[3]} px)`);
+    else if (px && al && px < al[2] * al[3] * 0.25) confira(p, `com o dedo pousado mudam só ${px} px, ${Math.round(100 * px / (al[2] * al[3]))} % da área do controle: o toque se vê?`);
+    else if (cx && al && (cx[0] < al[0] - 8 || cx[1] < al[1] - 8 || cx[0] + cx[2] > al[0] + al[2] + 8 || cx[1] + cx[3] > al[1] + al[3] + 8))
+      confira(p, `a mudança com o dedo pousado (${cx.join(',')}) passa da caixa do controle (${al.join(',')})`);
+    // o toque não tem tempo: QUALQUER animação no próprio controle tocado reprova
+    // (escala é a decisão 7; transição de cor é movimento novo que o dono recusou)
+    const noControle = an.filter(x => x.alvo && td.alvoDoClique && x.alvo.split(' ')[0] === td.alvoDoClique.split(' ')[0]);
+    if (noControle.length) reprova(p, 'o controle tocado anima (o toque só escurece, na hora): ' + noControle.map(x => `${x.nome} ${(x.props || []).join('+')} ${x.dur} ms`).join(', '));
+    if (v.length === n0) passa(p, `muda com o dedo pousado (a ${qd.mudancaNoPousarMs} ms, ${cx ? 'caixa ' + cx.join(',') : px + ' px, recalculado da linha do tempo'}; controle ${al ? al.join(',') : '—'})`);
   }
   // 9 · Nada salta: a rolagem volta exata (02 T6; hoje o Corpo entra em 1982 px e
   // volta em 1091), com e sem "Reduzir movimento"
@@ -199,12 +223,6 @@ function julga(rodada, a, d, extra, mov, tiraD) {
     if (mov && mov.debaixo && tiraD && !/reduz/.test(rodada)) {
       const f = mov.debaixo === 'entra' ? faixa(tiraD, 'antes', '+50') : faixa(tiraD, '+50', '+800');
       if (f != null) (f > 0.01 ? reprova : passa)(p, `faixa da esquerda (0–60 px) aos +50 ms ${mov.debaixo === 'entra' ? 'contra o antes' : 'contra o fim'}: ${(f * 100).toFixed(1)} % diferente (a de baixo parada: < 1 %)`);
-    }
-    // decisão 7: o toque só escurece — vê-se com o dedo pousado, e nada escala
-    if (mouse && (d.tipo === 'toque' || d.tipo === 'toqueNoMeio')) {
-      if (qd.mudancaNoPousarMs == null) reprova(p, 'com o dedo pousado nada muda no controle (peça 1: todo controle mostra o toque)');
-      const escala = an.filter(x => x.alvo && td.alvoDoClique && x.alvo.split(' ')[0] === td.alvoDoClique.split(' ')[0] && (x.props || []).some(k => /transform|scale/.test(k)));
-      if (escala.length) reprova(p, 'o controle tocado escala (decisão 7: só escurece): ' + escala.map(x => x.nome).join(', '));
     }
     if (v.length === n0) passa(p, mov ? `esperado: ${mov.tipo}${mov.ms ? ' ' + mov.ms + ' ms' : ''}; ${novas.length} movimento(s) novo(s), ${qd.quadrosComQualquerMudanca} quadro(s) com mudança em ${visivel} ms` : 'sem expectativa para este passo');
   }

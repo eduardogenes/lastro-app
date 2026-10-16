@@ -200,16 +200,20 @@ test('hidratação recupera observação, dor e substituto', async () => {
 test('o contador de séries acompanha a digitação sem re-render', async () => {
   // inp() não chama render() de propósito: o campo é controlado pelo valor já
   // parseado, e redesenhar a cada tecla reescreveria "22," como "22" — deixando
-  // impossível digitar decimal. O contador é escrito no DOM à mão, e este teste
-  // é o que garante que ele não vire texto morto.
+  // impossível digitar decimal. O contador é AVISADO e se redesenha sozinho (um
+  // escritor só, desde a peça 2 do motion: ver `contador.test.js`), e este
+  // teste é o que garante que ele não vire texto morto. O Preact agenda esse
+  // desenho para antes do próximo quadro — daí a espera de um tique.
   const a = await app();
   assert.match(a.texto('#daymeta'), /^0\/\d+$/, a.texto('#daymeta'));
 
   a.v('toggle', 0);
   a.preencher(0, 0, 40, 10);
+  await a.esperar(0);
   assert.match(a.texto('#daymeta'), /^1\//, a.texto('#daymeta'));
 
   a.preencher(0, 1, 40, 10);
+  await a.esperar(0);
   assert.match(a.texto('#daymeta'), /^2\//, 'contador acompanha a digitação');
   a.fechar();
 });

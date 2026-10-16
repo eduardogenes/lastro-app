@@ -85,7 +85,7 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Respostas do dono registradas no diário (16/10, 01h25).
 
 ### Fase 3 — implementação (só depois das respostas)
-- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0 e 1 feitas (16/10).
+- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1 e 2 feitas (16/10).
 - [x] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`). Peça 0: casos (a)–(e) e a lista de folhas, 52 plantios.
 - [x] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova (peça 0).
 - [ ] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde.
@@ -360,3 +360,27 @@ os botões metálicos da bancada perdem o gradiente só enquanto apertados (é
 ferramenta, não app). `--ins-dur-toque` saiu (não há movimento no toque); 08
 §5.1 ajustado; o 07 ainda cita, o revisor ajusta. `micro-toque.mjs` passou a
 compor as camadas (lia só `background-color`). `tipos` limpo, build, 1596/1596.
+
+**16/10 — peça 1 conferida pelo revisor** (07 §7). O toque se vê com o dedo
+pousado em 14 de 14 passos nas rodadas WebKit e Chromium com mouse, com e sem
+"Reduzir" (antes, 5 de 14); o "+1 copo" passa a escurecer; `micro-toque.mjs`
+dá os 28 controles entre 1,69 e 1,73:1 (antes, 16 de 28 sem mudança); nenhuma
+animação no controle tocado. Ele corrigiu a própria janela de medida (o quadro
+do `:active` cai até 5 ms antes do `pointerdown`) e refez os três
+`protocolo.json`; criou o princípio 10, "o toque se vê". **Pendente, com a
+máquina livre:** três repetições de `FLUXOS=03 DEDO=mouse REDUZ=1` contra
+`dist-antes` e `dist-peca-1` (uma amostra só de 21,3 ms contra 14,7 no
+`grava-2`). O `03b` tem de rodar sozinho e primeiro na conferência da peça 2.
+
+**16/10, 15h40 — peça 2 conferida.** O implementador parou antes de escrever a
+seção do 09: uma gravação dele (rascunho no scratchpad) foi **recusada no
+pedido de permissão**, e ele obedeceu ao "pare". Não o retomei; escrevi a seção
+do 09 a partir do relatório, desliguei o servidor da 4729 que ficou no ar,
+conferi o diff e rodei tudo de novo com a máquina livre: `tipos` limpo, build,
+1613/1613. Avisado ao dono, para dizer se a recusa foi de propósito. O pouso
+(160 ms, só sob a marca de "recém"; sob "Reduzir", só acende em 120), o som
+que nasce 500 ms depois de entrar no modo (1ª série a frio: 8,8 ms no
+Chromium, 11–12 no WebKit, eram 56–83 e 159–179), o contador com um escritor
+só (1/12 = 1/12) e o dedo que não perde o lugar (linha 323 → 323; depois de
+"Pular", a frase sob o dedo). O plantio não rodou; os testes novos reprovam o
+build de antes.

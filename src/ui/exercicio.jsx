@@ -54,6 +54,26 @@ function Cabecalho({ vm }) {
 }
 
 /**
+ * O número de uma célula da série, num nó PRÓPRIO POR VALOR — é ele que pousa.
+ *
+ * O POUSO (peça 2 do motion; docs/motion/03 §4.2): o número que acabou de
+ * entrar sobe 4 px e acende, em 160 ms, e diz "o valor entrou aqui" — no mesmo
+ * quadro somem a régua, nasce o cronômetro e às vezes o relógio, e sem isto o
+ * olho que estava na régua tinha de procurar a célula. Anima o número, e nunca
+ * o botão: o alvo do toque não se move.
+ *
+ * A CHAVE É O VALOR: corrigir 9 para 10 faz nascer outro nó, e o pouso é do
+ * número novo; o mesmo número num render() qualquer é o mesmo nó, e nada
+ * recomeça. E a animação só vale sob `recem`, a marca que o toque que grava
+ * põe (`marcaRecem`, em main.jsx) — sem ela, abrir um cartão faria todas as
+ * células pousarem de uma vez. O movimento e o que fica sob "Reduzir movimento"
+ * estão em `src/treino.css`, no portão.
+ */
+function pousa(v, recem) {
+  return <span key={'v' + v} class={recem ? 'pousa recem' : 'pousa'}>{v}</span>;
+}
+
+/**
  * Uma linha de série: número, o que foi feito da última vez, e os três campos.
  *
  * ---- Os nomes acessíveis ----
@@ -99,7 +119,7 @@ function Linha({ i, k, linha, vm, acoes }) {
             ? `Série ${k + 1}: ${String(linha.valor[0]).replace('.', ',')} ${UNIDADE_DITA[vm.unidade] || vm.unidade}. Tocar para corrigir.`
             : `registrar carga da série ${k + 1}, ${vm.unidade}`}
           onClick={() => acoes.abreTecladoDeCarga(i, k)}
-        >{linha.valor[0] != null ? linha.valor[0] : '·'}</button>
+        >{linha.valor[0] != null ? pousa(linha.valor[0], linha.recem[0]) : '·'}</button>
       </div>
       {/* A REPETIÇÃO: botão e não campo, quando a grandeza é repetição.
           É a decisão 8 do dono — registrar repetição é tocar num número — e o
@@ -119,7 +139,7 @@ function Linha({ i, k, linha, vm, acoes }) {
               ? `Série ${k + 1}: ${linha.valor[1]} ${unidade}. Tocar para corrigir.`
               : `registrar ${unidade} da série ${k + 1}`}
             onClick={() => acoes.abreRegua(i, k)}
-          >{linha.valor[1] != null ? linha.valor[1] : '·'}</button>
+          >{linha.valor[1] != null ? pousa(linha.valor[1], linha.recem[1]) : '·'}</button>
         ) : (
           <input
             type="text" inputmode="numeric" id={`r${i}_${k}`}
@@ -140,7 +160,7 @@ function Linha({ i, k, linha, vm, acoes }) {
             ? `Série ${k + 1}: ${linha.valor[2]} na reserva. Tocar para corrigir.`
             : `definir repetições na reserva da série ${k + 1}`}
           onClick={() => acoes.abreRir(i, k)}
-        >{linha.valor[2] != null ? linha.valor[2] : '·'}</button>
+        >{linha.valor[2] != null ? pousa(linha.valor[2], linha.recem[2]) : '·'}</button>
       )}
     </div>
   );
@@ -214,7 +234,7 @@ function Troca({ i, vm, acoes }) {
           <b>Voltar para {vm.nomeOriginal}</b><span>Desfaz a substituição de hoje.</span>
         </button>
       )}
-      <button class="swapopt" data-a="pula-hoje" onClick={() => acoes.pularEx(i)}>
+      <button class="swapopt" data-a="pula-hoje" onClick={e => acoes.pularEx(i, e.currentTarget)}>
         <span class="swaptxt"><b>Pular hoje</b><span>fica escrito como pulado; dá para desfazer na linha</span></span>
       </button>
       <button class="swapopt cancel" onClick={() => acoes.toggleSwap(i)}><b>Fechar e fazer mesmo assim</b></button>
@@ -350,7 +370,7 @@ function Dor({ i, vm, acoes }) {
               </button>
             )}
             <button class="painbtn" data-a="dor-pula"
-                    onClick={e => { e.stopPropagation(); acoes.pularEx(i); }}>Pular hoje</button>
+                    onClick={e => { e.stopPropagation(); acoes.pularEx(i, e.currentTarget); }}>Pular hoje</button>
             <button class="painbtn" data-a="dor-mesmo"
                     onClick={e => { e.stopPropagation(); acoes.aceitaDor(i); }}>Fazer mesmo assim</button>
             <p class="pain-nota">Qualquer escolha fica registrada no dia.</p>
@@ -579,7 +599,7 @@ export function Exercicio({ vm, acoes }) {
               {vm.trocaAberta ? 'Fechar' : 'Trocar'}
             </button>
           )}
-          <button class="histbtn" onClick={() => acoes.pularEx(i)}>Pular</button>
+          <button class="histbtn" onClick={e => acoes.pularEx(i, e.currentTarget)}>Pular</button>
           <button class="histbtn" onClick={() => acoes.openHist(i)}>Histórico</button>
           {/* O rótulo muda com o estado: sem foto ele CONVIDA, com foto ele
               MOSTRA. Um botão só, e nenhuma linha nova no cartão. */}

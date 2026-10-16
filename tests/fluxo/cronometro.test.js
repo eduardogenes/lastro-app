@@ -58,10 +58,31 @@ test('avisa uma vez só ao zerar', async () => {
 });
 
 test('AudioContext nasce dentro do gesto, exigência do iOS', async () => {
+  // A rede: quem chega ao descanso antes do meio segundo da entrada no modo (ou
+  // sem passar por ela) ainda tem o som criado no toque, não na hora de tocar.
   const a = await app();
   assert.strictEqual(a.dado('audioCtx'), null);
   a.v('startTimer', 90);
   assert.ok(a.dado('audioCtx') !== null, 'criado no toque, não na hora de tocar');
+  a.fechar();
+});
+
+test('o som nasce logo depois de entrar no modo, e o toque da primeira série não o cria', async () => {
+  // Peça 2 do motion (docs/motion/04 R8): criar o AudioContext custa 43–55 ms
+  // no Chromium e prende a thread ~60 ms no WebKit, e isso caía dentro do toque
+  // da primeira série — o mais repetido do produto, no quadro em que o número
+  // pousa e o descanso começa. Agora ele nasce meio segundo depois da entrada
+  // no modo, fora do quadro dela e dentro da janela de gesto do iPhone.
+  const a = await app();                 // `app()` entra no modo
+  assert.strictEqual(a.dado('audioCtx'), null, 'não no quadro da entrada');
+  await a.esperar(700);
+  assert.ok(a.dado('audioCtx'), 'meio segundo depois da entrada, o som já existe');
+  a.E('window.__som = audioCtx');
+
+  a.v('toggle', 0);
+  a.preencher(0, 0, 40, 10);             // a 1ª série: o descanso começa
+  assert.ok(a.$('#timer').classList.contains('on'), 'o descanso começou');
+  assert.strictEqual(a.E('audioCtx === window.__som'), true, 'o toque da série não criou outro');
   a.fechar();
 });
 
@@ -190,6 +211,11 @@ test('o cronômetro publica a própria altura para quem se empilha nele', async 
   //
   // Geometria não dá para cobrar no jsdom, que não faz layout. O que se cobra
   // aqui é o CONTRATO de que os dois lados dependem: a medida publicada na raiz.
+  //
+  // No navegador quem publica é um ResizeObserver, no desenho seguinte (peça 2
+  // do motion: ler a altura no meio do toque montava o layout duas vezes). O
+  // jsdom não tem ResizeObserver, e aí a medida é publicada na hora, como antes
+  // — que é o caminho que este caso cobra.
   const a = await app();
   const medida = () => a.doc.documentElement.style.getPropertyValue('--ins-timer-h');
 

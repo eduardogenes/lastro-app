@@ -73,7 +73,10 @@ antes julgado pelo próprio protocolo (a linha de base) está em
 - **A folga em volta do zero.** Descontada a mediana, sobra um erro do tamanho
   da variação da latência (~20 ms no WebKit, 5 no Chromium). Um quadro até essa
   folga **antes** do zero ainda conta como resposta ao toque; por isso há
-  números como "−1 ms" no WebKit.
+  números como "−1 ms" no WebKit. A mesma folga vale para o começo da janela do
+  dedo pousado: o quadro do `:active` pode cair alguns ms antes do
+  `pointerdown` (corrigido em 16/10, na conferência da peça 1, e recalculado em
+  todas as gravações a partir da linha do tempo: seção 7).
 - **A passada de aquecimento.** Cada fluxo roda uma vez sem gravar e depois é
   gravado. Sem ela, no WebKit desta máquina a primeira vez que uma tela aparece
   custa de 180 a mais de 800 ms (a fonte do sistema do app não existe no Linux,
@@ -128,9 +131,11 @@ antes julgado pelo próprio protocolo (a linha de base) está em
 | outros que já existem | barra do descanso; clarão da câmera | 250 ms `linear`; 200 ms | degraus; nenhum |
 | **nenhum movimento** | régua, teclado, RIR; números derivados; fim do descanso; abertura; giro; avanço automático para o próximo exercício | — | — |
 
-**Durações que podem aparecer** numa animação do depois: 120, 160, 200, 250,
-350, 640 e 2400 ms. Qualquer outra reprova (é a guarda (a) da 06, conferida em
-tempo de execução). Ultrapassagem — curva com y fora de [0, 1] ou quadro-chave
+**Durações que podem aparecer** numa animação do depois: 120 (só o esmaecer
+sob "Reduzir movimento"), 160, 200, 250, 350, 640 e 2400 ms. Qualquer outra
+reprova (é a guarda (a) da 06, conferida em tempo de execução). **O toque não
+tem tempo**: escurece na hora, sem transição, e `--ins-dur-toque` saiu na peça
+1 — uma transição no controle tocado reprova. Ultrapassagem — curva com y fora de [0, 1] ou quadro-chave
 que passa do lugar — só na animação de 640 ms, e só nos passos de chegada de
 folha e de painel.
 
@@ -149,7 +154,8 @@ cada passo (`mov`, em `revisor-fluxos.mjs`). Os números "hoje" são deste antes
 | 5 | **"Reduzir movimento" vale em tudo** (regra 3; decisão 2) | rodadas `-reduz`, todos os passos | os dois | animação que não seja só opacidade; chegada de camada > 120 ms, pouso ou aviso > 160 ms; **qualquer animação numa saída** (sai de uma vez); qualquer infinita (o ponto fica aceso e parado); a tela ainda mudando 50 ms além do teto fica "a conferir". Hoje: 0 animações em todos os passos |
 | 6 | **O foco não se perde** (05 M8–M10; peça 5) | `document.activeElement` aos 150 ms e no fim; `acesso-foco.mjs` (Tab, Shift+Tab, `inert`) nas duas preferências | os dois | foco no `body` depois de abrir ou fechar camada; piorar contra o antes. **Hoje reprova** em 45 passos (modo, telas cheias, pare: 05 §3.1) |
 | 7 | **Nada que só se entenda pelo movimento** (05 §4) | rodadas `-reduz`: `confere` verdadeiro e a tela final igual à da rodada com movimento; o revisor lê a tira reduzida contra a tabela do 05 §4 | os dois | tela final diferente > 0,5 %; `confere` falso; item da tabela do 05 §4 ausente na tira reduzida |
-| 8 | **Sem enfeite, e as decisões do dono** (regra 6; 08 §5.1) | cada passo contra o seu `mov` e a tabela 1.2 | os dois | duração fora da lista; infinito que não é o ponto; quique fora da chegada de folha e painel; movimento num passo "nenhum"; **camada que troca num quadro só** (o movimento decidido não aparece: < 3 quadros com mudança); **a de baixo se moveu** (decisão 4: a faixa 0–60 px da esquerda aos +50 ms difere > 1 % do antes, ao entrar, ou do fim, ao sair); **o dedo pousado não mostra nada** (decisão 7, rodadas `webkit` e `chromium-mouse`); **o controle tocado escala**. A duração visível fora de 0,5×–1,5× do decidido fica "a conferir" (o pulso que chega também conta) |
+| 8 | **Sem enfeite, e as decisões do dono** (regra 6; 08 §5.1) | cada passo contra o seu `mov` e a tabela 1.2 | os dois | duração fora da lista; infinito que não é o ponto; quique fora da chegada de folha e painel; movimento num passo "nenhum"; **camada que troca num quadro só** (o movimento decidido não aparece: < 3 quadros com mudança); **a de baixo se moveu** (decisão 4: a faixa 0–60 px da esquerda aos +50 ms difere > 1 % do antes, ao entrar, ou do fim, ao sair). A duração visível fora de 0,5×–1,5× do decidido fica "a conferir" (o pulso que chega também conta) |
+| 10 | **O toque se vê** (decisão 7; peça 1) | todo passo de toque nas rodadas `webkit`, `chromium-mouse` e nas duas reduzidas (onde o `:active` acende com o dedo pousado, 1.1): o que muda com o dedo pousado, a caixa ou os pixels do que mudou contra a caixa do controle, as animações no controle; complemento `micro-toque.mjs` (contraste do estado de toque contra o repouso e contra o fundo, 28 controles) | WebKit e Chromium com ponteiro, com e sem "Reduzir" | nada muda com o dedo pousado; **qualquer animação no controle tocado** (o toque só escurece, na hora; escala é a decisão 7). "A conferir": a mudança passa da caixa do controle ou cobre menos de 25 % da área dele. **Hoje reprova** em 76 passos×rodadas |
 | 9 | **Nada salta: a rolagem volta exata** (02 T6; peça 5) | 01, 02, 04, 05: a rolagem depois de sair contra a de antes de entrar | os dois, com e sem "Reduzir" | diferença > 1 px. **Hoje reprova**: o Corpo entra no modo em 1982 px e volta em **1091** |
 
 ### 1.4 O que cada peça tem de provar
@@ -162,7 +168,7 @@ fim, tudo de novo.
 | peça | fluxos (`FLUXOS=`) | o que tem de aparecer no depois | o antes (número e arquivo) | complemento |
 |---|---|---|---|---|
 | **0 · o sistema** | 07, 14, 05 + todos sob `-reduz` | o fio da aba em `transform` (princípio 2); sob "Reduzir", nenhuma animação viva e o ponto parado (hoje o portão universal o deixa a 0,01 ms); o ponto pulsando 2,4 s sem fim sem a preferência; nenhuma duração fora da lista | fio em `left`, 220 ms, `cubic-bezier(.2,.8,.2,1)` (`07-abas/medidas-chromium.json`; 14 layouts e 26 pinturas por troca, 04 §2.7) | `npx vitest run` com as guardas (a)–(e) da 06 §5 (é do coordenador) |
-| **1 · o toque escurece** | 03, 03b, 09, 12, 13 nas rodadas `webkit` e `chromium-mouse` (e, no fim, todos) | em **todo** passo de toque, mudança na caixa do controle com o dedo pousado (`mudancaNoPousarMs`), nenhuma animação de escala no controle; o "+1 copo" passa a mostrar o toque | só **5 de 41** passos de toque mostram algo com o dedo pousado no WebKit (a régua, "Abrir o programa", "Iniciar treino", "Pausar"); o "+1 copo" não muda nada (`09-copo/01-mais-1-webkit.png`, quadros "antes" e "dedo" iguais) | `micro-toque.mjs` (03 §1.3: contraste do fundo pressionado em 28 controles) |
+| **1 · o toque escurece** | 03, 03b, 09, 12, 13 nas rodadas `webkit` e `chromium-mouse` (e, no fim, todos) | em **todo** passo de toque, com e sem "Reduzir movimento", mudança do tamanho do controle com o dedo pousado (`mudancaNoPousarMs`), **nenhuma animação no controle** (o toque não tem tempo; `--ins-dur-toque` saiu); o "+1 copo" passa a mostrar o toque; o ouvinte de `touchstart` existe | no WebKit, **25 de 41** passos de toque não mudam nada com o dedo pousado; os outros 16 mudam a 1,08–1,24:1 (03 §1.3), que a medida fina pega e o olho mal vê; o "+1 copo" não muda nada (`09-copo/01-mais-1-webkit.png`, quadros "antes" e "dedo" iguais) | `micro-toque.mjs` (03 §1.3: contraste do fundo pressionado em 28 controles) |
 | **2 · a série recebida** + defeitos 1 e 2 | 03, 03b | o número pousa em 160 ms (só `transform`/`opacity` no `<span>` da célula); **1ª série a frio com trabalho ≤ 16 ms** no Chromium; depois da 1ª série, sob o dedo **não** pode estar a célula de carga da mesma série | a frio: Chromium 80,6 ms de trabalho, tela a +93 ms; WebKit 173 ms, tela a **+363 ms** com o botão "10" apertado o tempo todo (`03b-primeira-serie-fria/02-grava-1-webkit.png`); sob o dedo fica "Série 1: 40 quilos por lado" (`medidas-*.json`, `depois.sobODedo`) | `micro-serie.mjs` (a linha da série: y igual antes e depois, ±2 px; hoje 323 → 375); `micro-contador.mjs` (tela = dado; hoje 1/20 contra 1/12) |
 | **3 · o descanso** | 03 (grava-1, grava-2) | o cronômetro sobe da borda em 350 ms e desce em 350, sem quique; o aviso e a faixa o acompanham (`translate`); **no modo, o fundo do cronômetro no fundo da tela** | nasce num quadro em y 762–844: **52 px acima do fundo** de 896, com o conteúdo do exercício seguinte aparecendo por baixo (`03-serie-regua/02-grava-1-chromium.png`, `depois.fixos.cronometro`) | `micro-avisos.mjs` (o toast não pula 82 px quando o cronômetro entra ou sai) |
 | **4 · a folha sobe** + painel de apagar + defeito 5 | 06, 13, 15 | folha e painel chegam com o **quique de 640 ms** (a única ultrapassagem permitida), o véu em 350 `ease-out`; a segunda folha sobe sobre a primeira; o × tocado ~100 ms depois de abrir fecha a folha (15) | folha, segunda folha e painel nascem num quadro (+10 a +31 ms; `06-folhas/01-abre-*.png`, `13-pare/01-abre-*.png`: 82 % da tela troca de uma vez); o × no meio já funciona (`confere` verdadeiro, 2º toque a +99 ms) | `micro-avisos.mjs` ("Não guardei": quando chega e onde ficam os botões); `acesso-foco.mjs` (o Tab não sai da folha para o −15; pare isola o fundo) |
@@ -192,6 +198,10 @@ fim, tudo de novo.
    quadro, ritmo) só vale depois de repetir aquele fluxo **três vezes nos dois
    lados** (antes e depois, mesmo motor, mesma rodada) e comparar as medianas.
    Na peça 0, as duas reprovações de tempo sumiram assim (seção 6).
+5b. **O `03b` grava sozinho.** A primeira série a frio só é fria se for o
+   primeiro fluxo da rodada: rodar `FLUXOS=03b` à parte, antes das outras (com
+   `FLUXOS=03,…` ele vem depois do 03, que já esquentou o `AudioContext` e a
+   fonte — foi o que aconteceu no `depois-1`, seção 7).
 6. **O que não se mede aqui**, dito na página: o Core Animation do A13; o
    `:active` com o ouvinte de `touchstart` no iOS; o gesto de borda e o
    `popstate` com `hasUAVisualTransition`; o `svh` com a barra do Safari; se o
@@ -263,7 +273,7 @@ pasta de saída por argumento: o mesmo script grava o antes e o depois.
 | `revisor-gravar.mjs` | o ponto de entrada: abre o motor, calibra a captura, semeia (ou carrega `REGISTRO=`), aquece as telas e grava os fluxos. Escreve `rodada-<rodada>.json` com a versão do motor, a calibração e os erros da página |
 | `revisor-fluxos.mjs` | os 17 fluxos em ordem de valor: o estado montado (`hora`, `montar` por `window.__escopo`), os passos (alvo, tipo, tempos, `confere`) e **o esperado de cada passo pelo dono** (`mov`: tipo, duração, "a de baixo parada", de onde a rolagem volta). **É aqui que se conserta um seletor que a fase 3 renomear**, nos dois lados |
 | `revisor-comum.mjs` | o motor, a instrumentação na página (relógio, eventos, Event Timing, animações vivas, fixos, `requestAnimationFrame`), a calibração, o registro devolvido a cada fluxo, a passada de aquecimento, o dedo, a gravação e o manifesto. Reaproveita a `semeia` de `desempenho-comum.mjs` e a receita do WebKit |
-| `revisor-tiras.py` | `tiras`: monta a tira de cada passo e mede quadro a quadro; `par`: empilha a tira do antes sobre a do depois; `faixa`: compara uma faixa vertical entre dois quadros da tira (a conferência "a de baixo parada") |
+| `revisor-tiras.py` | `tiras`: monta a tira de cada passo e mede quadro a quadro; `par`: empilha a tira do antes sobre a do depois; `faixa`: compara uma faixa vertical entre dois quadros da tira (a conferência "a de baixo parada"); `repousa`: recalcula o "dedo pousado" de manifestos já gravados pela linha do tempo (seção 7) |
 | `revisor-thread-presa.mjs` | o "não congela com a thread presa" do 04 §6 no elemento real: troca de aba, a thread principal presa 150 ms dois quadros depois de o fio começar a andar, o fio achado quadro a quadro pela cor de acento; mede a maior parada no meio do caminho (escreve `thread-presa-<rodada>.json`). As peças 3 a 6 acrescentam a cena delas (cronômetro, folha, tela cheia, carrossel) |
 | `revisor-compara.mjs` | a fase 4: aplica a tabela 1.3 com o `mov` de cada passo, escreve `protocolo.json`, os pares de tiras e os vídeos lado a lado (H.264, 828 × 940, normal e 4× mais lento), alinhados no zero de cada passo. Testado: antes contra antes, em todos os fluxos (`antes-contra-protocolo/`), e com vídeo em 01, 07 e 16 |
 
@@ -291,7 +301,7 @@ medida dos passos sem dedo.)
 
 **Para o depois:** o `dist/` novo em outra porta, `O=…/revisor/depois`, a mesma
 lista com `REGISTRO=docs/motion/_medicao/shots/revisor/antes/registro.json` em
-todas as linhas (o `03b` junto, sem complemento), e então
+todas as linhas e o `03b` numa rodada à parte, primeiro (1.5, item 5b), e então
 
 ```
 node docs/motion/_medicao/revisor-compara.mjs \
@@ -307,11 +317,12 @@ node docs/motion/_medicao/revisor-compara.mjs \
 depois do toque no Chromium, e nada se move** — fora o fio da aba (`left`,
 220 ms) e o pulso. É o contraste que a página de antes e depois tem de mostrar.
 O protocolo aplicado ao próprio antes
-(`antes-contra-protocolo/protocolo.json`) reprova onde se esperava: 16 passos
-no princípio 2 (o fio em `left`), 45 no 6 (foco no `body`), 4 no 9 (a rolagem),
-121 no 8 (camadas que trocam num quadro, a de baixo que "se move", o dedo
-pousado que não mostra nada), 1 no 1 (a primeira série a frio) e 7 no 4 (o WebKit
-sem GPU, sobretudo em ×3). Nenhum quadro transitório, nenhum fixo fora do lugar
+(`antes-contra-protocolo/protocolo.json`, refeito em 16/10 com o recálculo do
+dedo pousado e a rodada `chromium-reduz-mouse`) reprova onde se esperava: 16
+passos×rodadas no princípio 2 (o fio em `left`), 46 no 6 (foco no `body`), 4 no
+9 (a rolagem), 67 no 8 (camadas que trocam num quadro, a de baixo que "se
+move"), 76 no 10 (o dedo pousado que não mostra nada), 1 no 1 (a primeira série a
+frio) e 7 no 4 (o WebKit sem GPU, sobretudo em ×3). Nenhum quadro transitório, nenhum fixo fora do lugar
 e nenhuma página mais larga que a janela no Chromium; zero animações sob
 "Reduzir movimento".
 
@@ -479,7 +490,8 @@ ainda não entrou:
   `sai`, nas duas rodadas reduzidas — peça 5.
 - **Telas cheias que trocam num quadro e "a de baixo que se move"** (princípio
   8): 05 `abre`, `volta`, `abre-de-novo`, nos dois motores — peça 5.
-- **Dedo pousado sem mudança no WebKit** (princípio 8): 05 e 07/14 — peça 1.
+- **Dedo pousado sem mudança no WebKit** (princípio 10, que nasceu depois desta
+  seção, na peça 1): 05 e 07/14 — peça 1.
 - **Um intervalo de 38 ms no WebKit** (princípio 4): 14 `corpo-e-semana`; o
   mesmo passo teve 42 ms no antes — é o WebKit desta máquina sem GPU.
 
@@ -510,3 +522,84 @@ cortar sozinho todo vídeo mais longo que o intervalo dos quadros + 5 s.
 **Conclusão: a peça 0 passa na linha dela, nos dois motores e com "Reduzir
 movimento", sem nenhuma regressão.** O que reprova é o antes que as peças 1, 5 e
 6 ainda vão tratar. Não houve build nem teste durante a gravação.
+
+---
+
+## 7. Depois da peça 1
+
+Conferida em 16/10 pela linha da peça 1 da tabela 1.4, contra o build congelado
+em `docs/motion/_medicao/shots/dist-peca-1/` (commit `f2cdcf1`), servido na
+porta 4728 (desligada), com o mesmo `antes/registro.json`.
+
+**O que se gravou.** Os fluxos 03, 03b, 09, 12 e 13 (14 passos de toque) nas
+rodadas `webkit` e `chromium-mouse` e nas duas reduzidas (`webkit-reduz`,
+`chromium-reduz-mouse`). O antes não tinha a `chromium-reduz-mouse`: ela foi
+gravada do `dist-antes` na mesma sessão (`antes/rodada-chromium-reduz-mouse.json`),
+para o comparador ter par. Nenhum erro de página, nenhum passo com falha
+(`depois-1/rodada-*.json`). Pastas: `…/revisor/depois-1/` (gravações),
+`…/revisor/comparacao-1/` (56 pares de tiras e 112 vídeos lado a lado;
+`protocolo.json`), `…/depois-1/complementos/` e `…/antes-complementos/`
+(`micro-toque-chromium.txt` dos dois lados).
+
+### 7.1 Uma correção na medida, antes do veredito
+
+A primeira contagem dava a peça 1 visível em 14 de 14 passos no WebKit e no
+Chromium com ponteiro, mas **em só 2 de 14 no `webkit-reduz`**. Não era a peça:
+o quadro do dedo pousado estava lá, com o tamanho do controle (3.608 px mudam no
+"abre" do teclado, que tem 90 × 40 = 3.600 px), só que, descontada a latência da
+captura, caía de 0,4 a 5 ms **antes** do `pointerdown`, e a janela do dedo
+pousado começava exatamente nele, sem a folga que o zero já tinha (1.1). Corrigi
+a janela para (pousar − folga, −folga] em `revisor-tiras.py` e recalculei as
+gravações já feitas pela linha do tempo, que guarda quadro a quadro quantos
+pixels mudaram (`revisor-tiras.py repousa`): 13 passos no antes, 5 na peça 0 e
+14 na peça 1 ganharam ou trocaram o valor (marcados `mudancaNoPousarRecalculada`,
+com `mudancaNoPousarPx`; a caixa não se recupera, porque os quadros já foram
+apagados). Em quase todos, os pixels são 80–100 % da área do controle — é o
+controle apertado. Os três `protocolo.json` (linha de base, peça 0, peça 1)
+foram refeitos com a regra nova; nada foi regravado.
+
+### 7.2 A linha da peça 1: o que passou
+
+| o que a peça tinha de provar | resultado | o número | arquivo |
+|---|---|---|---|
+| **todo controle mostra o toque com o dedo pousado** (princípio 10) | **passa** | **14 de 14** passos de toque nas quatro rodadas — `webkit`, `webkit-reduz`, `chromium-mouse`, `chromium-reduz-mouse`; no antes, **5 de 14** em cada uma (o valor da régua e as teclas, a 1,08:1). Os pixels que mudam são 90–100 % da área de cada controle (o "pronto", 374 × 44, muda 15.536 px; o pare "Encerrar", 184 × 46, 7.924) | `comparacao-1/protocolo.json`; `depois-1/*/medidas-*.json` (`mudancaNoPousarMs`, `mudancaNoPousarCaixa`/`Px`) |
+| **igual com "Reduzir movimento"** | **passa** | os mesmos 14 de 14 nas duas rodadas reduzidas | idem, `*-reduz*.json` |
+| **o "+1 copo" passa a mostrar o toque** | **passa** | com o dedo pousado mudam 3.370–3.401 px na caixa do botão (80 × 46); no antes, nada (`09-copo/01-mais-1-*.png`, quadro "dedo pousado") | `depois-1/09-copo/medidas-webkit.json`; tira `depois-1/09-copo/01-mais-1-webkit.png`; par `comparacao-1/09-copo/01-mais-1-webkit-par.png` |
+| **o contraste do estado de toque** (`micro-toque.mjs`, na versão do implementador, que compõe as camadas) | **passa** | **28 de 28** controles mudam, de **1,69 a 1,73:1** contra o repouso (contra o fundo atrás, de 1,69 a 12,21:1); no antes, **16 de 28 não mudavam nada** e os outros iam de 1,08 a 1,24:1 (o "+1 copo" a 1,00:1). "coluna anterior" não foi achada nos dois lados | `depois-1/complementos/micro-toque-chromium.txt` contra `antes-complementos/micro-toque-chromium.txt` |
+| **nada escala, nada anima no controle** (o toque não tem tempo) | **passa** | nenhuma animação no controle tocado em nenhum passo; no CSS do build, o `button:active` é uma camada `background-image` sem `transition`, e as únicas transições continuam sendo a barra do descanso e o fio; `micro-toque` não acha `transform` em nenhum dos 28 | `comparacao-1/protocolo.json`; `dist-peca-1/assets/*.css` |
+| **o ouvinte de `touchstart`** | **passa** | `addEventListener("touchstart", function(){…}, {passive})` no build; no `dist-antes`, nenhum | `dist-peca-1/assets/*.js` |
+| só `transform` e opacidade; nada pisca; "Reduzir movimento" (princípios 2, 3, 5, 7) | **passa** | 56/56, 28/28, 21 passam e 7 "a conferir" (os degraus do descanso, como no antes), 28/28 | `comparacao-1/protocolo.json` |
+
+### 7.3 O que reprovou, e o que fica para confirmar
+
+- **Trabalho no toque, 03 `grava-2`, `chromium-reduz-mouse`: 21,3 ms contra
+  14,7** (princípio 1). É amostra única e, pela regra 1.5 (5a), só vale depois de
+  três repetições de cada lado — **que não fiz, porque a peça 2 está construindo
+  e testando em paralelo**. O mesmo passo nas outras três rodadas não piorou
+  (Chromium com ponteiro 14,2 → 14,3; WebKit 36 → 34; WebKit reduzido 35 → 32), e
+  a peça 1 não toca o caminho do clique (só CSS e um ouvinte vazio). **Pedido:**
+  repetir `FLUXOS=03 DEDO=mouse REDUZ=1` três vezes contra `dist-antes` e
+  `dist-peca-1` quando a máquina estiver livre.
+- **O pare (13) troca num quadro** e **"Deixar como está" devolve o foco ao
+  `body`** (princípios 8 e 6): iguais ao antes; são das peças 4 e 5.
+
+### 7.4 O que ficou "a conferir"
+
+- **12 · `tecla-0` e `pronto` no Chromium com ponteiro**: a caixa do que muda
+  com o dedo pousado passa da caixa do controle e cobre a tecla anterior. Com o
+  ponteiro, o foco sai da tecla anterior no `mousedown`, e o anel dela some no
+  mesmo quadro; o antes tem a mesma caixa (`antes/12-teclado/medidas-chromium-mouse.json`).
+  No toque do iPhone o botão não recebe foco no toque. Não é da peça.
+- **O `03b` do `depois-1` não está a frio**: com `FLUXOS=03,…` ele rodou depois
+  do 03, que já tinha esquentado o `AudioContext` e a fonte (WebKit: 43 ms contra
+  os 173 do antes a frio). A comparação da primeira série a frio fica para a
+  peça 2, gravando o `03b` sozinho (1.5, 5b).
+- **Os degraus do descanso sob "Reduzir"** (03): "a tela muda por ~740 ms" e,
+  no WebKit, "buraco de ~258 ms na captura" — a barra em degraus de 250 ms e o
+  relógio, sem animação; iguais ao antes.
+
+**Conclusão: a peça 1 passa na linha dela.** O toque se vê em todos os 14
+passos, nos dois motores e com "Reduzir movimento", a 1,69–1,73:1, sem tempo e
+sem escala. A única reprovação é de tempo, numa amostra só, sem relação provável
+com o que a peça mudou, e fica pedida a repetição. Não houve gravação depois do
+aviso de que a peça 2 começou.

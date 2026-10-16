@@ -726,3 +726,65 @@ Antes desta peça: 1593 de 1593 em `73df730` (conferido pelo coordenador). A
 diferença (+3) são os casos novos: (f) em `estilo.test.ts` e os dois de
 `toque.test.js`. O caso de árvore leva ~13 s sozinho; a suíte inteira levou 66 s
 nesta rodada (56 s na da peça 0).
+
+---
+
+## Peça 2 · A série recebida
+
+Escrita pelo coordenador a partir do relatório do implementador, que parou
+antes de gravar a seção: uma gravação dele foi recusada no pedido de permissão
+e ele interrompeu o trabalho, como manda a recusa. O código estava pronto e
+verde; o coordenador conferiu e rodou de novo.
+
+### O que mudou
+
+| arquivo | o quê |
+|---|---|
+| `src/main.jsx` | **Defeito 1 (contador):** `atualizaEstado` só avisa; o valor vem de `contadorDoDia()`, que o componente lê — um escritor só. **Som:** `preparaAudioDepois()`, chamada em `abreModo`, cria o `AudioContext` 500 ms depois da entrada (no Chromium, ainda espera a página ociosa); `startTimer` continua retomando ou criando o contexto dentro do gesto, então o som e o momento do som não mudam. **Altura do cronômetro:** `alturaDoTimer` passou a ResizeObserver, sem o `offsetHeight` forçado dentro do toque. **Pouso:** a marca de "recém" (`marcaRecem`/`recemDaSerie`), estado de tela que não grava nem sincroniza, posta pela régua, pelo RIR, pela coluna anterior (as duas células) e pela carga do "+ série"; vence em 1 s, e abrir/fechar cartão ou entrar no modo a apaga. **Defeito 2 (dedo):** `depoisDoLayout` mede e rola no desenho seguinte, depois do layout e antes da pintura (entrega de um ResizeObserver na raiz), para a linha da série tocada, o teclado próprio e o "Pular" (que põe sob o dedo a frase "Pulado hoje…"). Rolagem de uma vez, nunca suave. |
+| `src/ui/telas/treino.jsx` | O componente `Contador`, o escritor único do número, e `avisaOContador`. |
+| `src/ui/exercicio.jsx` | O número da célula num `<span class="pousa">` com chave pelo valor (outro valor, outro nó, o pouso é do novo; o mesmo valor num `render()` é o mesmo nó, nada recomeça). Os três "Pular" passam o botão tocado. |
+| `src/treino.css` | `.pousa.recem` anima `ins-pousa` em `--ins-dur-lugar`/`--ins-curva` no portão; sob "Reduzir movimento", `ins-acende` (só opacidade) em `--ins-dur-dissolve`. |
+| `src/base.css` | `@keyframes ins-pousa` (`translate` de `--ins-pousa` a 0, opacidade .4 a 1) e `ins-acende` (só a opacidade). |
+| `src/tokens.css` | Só comentário (o valor que pousa só acende sob "Reduzir"). |
+| `DESIGN.md` | A linha do pouso na tabela de movimentos e o parágrafo "O dedo não perde o lugar". |
+| testes | Novos: `tests/fluxo/contador.test.js` (3), `pouso.test.js` (4), `dedo.test.js` (9, num Chromium de verdade, pelo novo `tests/fluxo/navegador.js`); um caso de som em `cronometro.test.js`; `sessao.test.js` espera um tique antes de ler o contador (o componente se redesenha antes do próximo quadro). |
+
+### Os números (antes → depois)
+
+| medida | antes | depois |
+|---|---|---|
+| trabalho no toque da 1ª série a frio, Chromium 1× (fluxo 03b) | 56 / 66 / 83 ms | 8,4–12,3 ms, mediana 8,8 (meta ≤ 16) |
+| o mesmo toque no WebKit | 159–179 ms | 11–12 ms |
+| linha da série na 1ª série | y 323 → 375 | 323 → 323 |
+| contador depois de ligar o deload | tela 1/20, dado 1/12 | 1/12 = 1/12 |
+| sob o dedo depois de "Pular" | o nome do exercício seguinte | a frase "Pulado hoje…" |
+
+A célula em repouso ficou idêntica pixel a pixel nos dois motores. Os testes
+novos falham contra o build de antes, menos o da coluna anterior (ali a
+ancoragem de rolagem do navegador já compensava).
+
+### O que o coordenador anota
+
+- **O plantio não rodou** (14 violações escritas em `scratchpad/peca2/plantio.py`):
+  o implementador parou antes. A prova de que os testes pegam o defeito é
+  eles reprovarem o build de antes.
+- **O som depois da entrada** põe, no WebKit, um intervalo de `rAF` de ~50 ms
+  meio segundo depois de entrar no modo (fluxo 01); o princípio 4 do revisor vai
+  marcar quando o fluxo 01 for regravado na peça 5 — é esperado e fica
+  explicado lá.
+- **A régua que fecha** continua subindo a série seguinte para baixo do dedo,
+  como em qualquer série; o critério do revisor (não a carga da MESMA série;
+  linha ±2 px) está cumprido.
+- **`dedo.test.js` depende do Chromium do cache do Playwright**; se não o achar,
+  falha com a instrução de instalação, em vez de pular.
+- **Para a peça 3:** a altura publicada pelo ResizeObserver depende de o
+  cronômetro escondido ser `display: none`; quem trocar isso por
+  `transform`/`visibility` tem de manter a altura publicada certa.
+
+### Saídas (rodadas pelo coordenador, máquina livre)
+
+```
+npm run tipos   → tsc --noEmit (saída 0)
+npm run build   → ✓ built in 1.64s (saída 0)
+npx vitest run  → Test Files 77 passed (77) · Tests 1613 passed (1613)
+```

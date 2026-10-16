@@ -46,6 +46,7 @@ import { Ajustes } from './ui/telas/ajustes.jsx';
 import { Sessao } from './ui/telas/sessao.jsx';
 import { Historico } from './ui/telas/historico.jsx';
 import { SessaoModo } from './ui/telas/sessaomodo.jsx';
+import { avisaOContador } from './ui/telas/treino.jsx';
 import { Retrospectiva } from './ui/telas/retrospectiva.jsx';
 import { Retroativo } from './ui/telas/retroativo.jsx';
 import { Programa } from './ui/telas/programa.jsx';
@@ -360,6 +361,13 @@ let view = { day:'A', open:null, hist:null, json:null, paste:false, swapOpen:nul
   protocolo:null, comparar:null, evolucao:null, diaAberto:null, ajuste:null, camera:null, ajustes:false };
 let timer = null, timerFim = 0, timerTotal = 0, timerAvisado = false, timerCtx = '';
 let audioCtx = null, wakeLock = null, querSegurar = false;
+// O som nasce meio segundo depois de entrar no modo (`preparaAudioDepois`). Aqui
+// em cima, e não ao lado dela, pela mesma razão de `desligado`: o boot pode
+// entrar no modo ainda na avaliação deste módulo.
+const ESPERA_DO_SOM_MS = 500;
+let somAgendado = null;
+// O cronômetro que o ResizeObserver de `alturaDoTimer` já vigia.
+let alturaVigiada = null;
 
 
 const STORE_LABEL = {
@@ -1098,17 +1106,33 @@ function ehPulado(i) {
   return !!(s && (s.pulados || []).indexOf(slotDe(view.day, i)) >= 0);
 }
 
-async function pularEx(i) {
+/**
+ * Pula o exercício `i` hoje, ou desfaz o pulo.
+ *
+ * `botao` é o que o dedo tocou (o "Pular" do cartão, o "Pular hoje" da troca ou
+ * da dor). Ao pular, o cartão fecha e o que estava embaixo sobe: sob o dedo
+ * ficava o nome do exercício seguinte, e um segundo toque abria outro cartão
+ * (defeito 2 da docs/motion/03 §8.6). Depois do desenho a página rola para pôr
+ * sob o dedo a frase "Pulado hoje…" do próprio exercício — texto, e não
+ * controle: o que acabou de acontecer, no lugar do toque, com o Desfazer ao
+ * lado. Sem `botao` (os testes, o teclado) nada rola.
+ */
+async function pularEx(i, botao) {
   const s = S.sessao || abreSessaoVazia();
   if (!s.pulados) s.pulados = [];
   const chave = slotDe(view.day, i);
   const j = s.pulados.indexOf(chave);
+  const dedo = j < 0 ? centroNaTela(botao) : null;
   if (j >= 0) s.pulados.splice(j, 1);
   else {
     s.pulados.push(chave);
     if (view.open === i) view.open = null;
   }
   await save(); render();
+  if (dedo != null) depoisDoLayout(function () {
+    const frase = centroNaTela(document.querySelector('[data-ex="' + i + '"] .puladobox span'));
+    if (frase != null) rolaPor(frase - dedo);
+  });
   // §7.5 da frente 3: pular é reversível a um toque, então não há pergunta
   // antes — há a frase do que ficou guardado depois, com o nome, e o desfazer
   // na própria linha. "Pulado" concorda com "exercício", e não com o nome: a
@@ -2124,26 +2148,44 @@ function ajustaRelogio() {
 }
 
 /**
- * O contador de séries, atualizado no toque sem re-render.
+ * Avisa o contador de séries de que o número pode ter mudado, sem re-render.
  *
  * Existe porque `inp()` NÃO chama render() de propósito: o campo é controlado
  * pelo valor já parseado, e redesenhar a cada tecla reescreveria "22," como
- * "22" — deixando impossível digitar decimal no teclado pt-BR. O preço é este
- * ponteiro no DOM, e ele é o último lugar do treino tocado por fora do Preact.
+ * "22" — deixando impossível digitar decimal no teclado pt-BR.
+ *
+ * UM ESCRITOR SÓ (defeito 1 da docs/motion/03 §8.1, consertado na peça 2). Até
+ * 16/10 esta função escrevia `textContent` direto no `#daymeta`, e o contador
+ * tinha dois escritores: ela e o Preact. Escrever `textContent` TROCA o nó de
+ * texto que o Preact guardava; dali em diante o render() pintava num nó solto,
+ * e o que só passa pelo render() — ligar o deload, mudar séries na edição do
+ * dia — deixava a tela com o número velho (medido: tela 1/20 com o dado em
+ * 1/12; tela 0/23 com o dado em 0/24). Agora quem escreve é só o componente
+ * (`Contador`, em `ui/telas/treino.jsx`), que lê `contadorDoDia()`; aqui ele é
+ * só avisado, e se redesenha sozinho, antes do próximo quadro.
  */
-function atualizaEstado() {
-  const el = document.getElementById('daymeta');
-  if (!el) return;
-  const P = treino(view.day);
-  if (!P) return;
+function atualizaEstado() { avisaOContador(); }
+
+/**
+ * O que o contador do topo do treino mostra agora: o valor e se acende.
+ * Lido pelo componente a cada desenho — o do render() e o do aviso acima.
+ */
+function contadorDoDia() {
+  const d = view.day || diaResolvido().treino || proximoTreino(S, ROT_BASE);
+  const P = treino(d);
+  const feitas = seriesFeitasHoje(d);
   // Num dia aberto a métrica é MOVIMENTOS, não séries feitas de prescritas —
   // é o que a tela desenha. Escrever `4/9` aqui desfazia isso na primeira
   // tecla digitada, e o topo passava a contar contra um número que o box nunca
   // prometeu. O bug era antigo e ficava escondido porque só aparecia depois de
   // digitar; a lista rápida o disparava a cada campo.
-  if (diaAberto(view.day)) { el.textContent = P.ex.length ? String(P.ex.length) : '–'; return; }
-  const prescritas = P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0);
-  el.textContent = seriesFeitasHoje(view.day) + '/' + prescritas;
+  if (diaAberto(d)) {
+    const n = P ? P.ex.length : 0;
+    return { valor: n ? String(n) : '–', cor: feitas > 0 ? 'ins-acid' : '' };
+  }
+  const prescritas = P ? P.ex.reduce(function (n, ex) { return n + setsFor(ex); }, 0) : 0;
+  return { valor: feitas + '/' + prescritas,
+           cor: feitas >= prescritas && prescritas > 0 ? 'ins-acid' : '' };
 }
 
 // ---------- render ----------
@@ -2175,6 +2217,9 @@ function vmExercicio(d, i, ex) {
     const v = dr && dr.s[k] ? dr.s[k] : [null, null];
     linhas.push({
       valor: v,
+      // Carga, repetição e RIR: qual acabou de receber o valor por um toque que
+      // grava, e por isso POUSA (ver `marcaRecem`).
+      recem: recemDaSerie(d, i, k),
       // A coluna ANTERIOR: o que ele fez nesta MESMA série da última vez.
       // Antes isso era só o placeholder do campo de carga e uma linha de
       // resumo embaixo — para saber a repetição da série 3 era preciso contar
@@ -2381,7 +2426,7 @@ const ACOES = {
   setAlt: function (i, id) { setAlt(i, id); },
   toggleSwap: function (i) { toggleSwap(i); },
   abrirSubstituicao: function (i) { abrirSubstituicao(i); },
-  pularEx: function (i) { pularEx(i); },
+  pularEx: function (i, botao) { pularEx(i, botao); },
   fazAntesOProximo: function (i) { fazAntesOProximo(i); },
   aceitaDor: function (i) { aceitaDor(i); },
   openHist: function (i) { openHist(i); },
@@ -2956,7 +3001,10 @@ function maisUmaSerie(i) {
   const k = setsFor(treino(d).ex[i]) - 1;
   const dr = draftPeek(i);
   const ant = dr && dr.s[k - 1];
-  if (ant && ant[0] != null && !(dr.s[k] && dr.s[k][0] != null)) anotaSerie(i, k, 0, String(ant[0]));
+  if (ant && ant[0] != null && !(dr.s[k] && dr.s[k][0] != null)) {
+    marcaRecem(i, k, [0]);             // a carga trazida da anterior pousa
+    anotaSerie(i, k, 0, String(ant[0]));
+  }
   abreRegua(i, k);
 }
 
@@ -5044,10 +5092,129 @@ function mostraExercicio(i) {
   if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'instant' });
 }
 
+// ---------- a série recebida: o pouso e o dedo no lugar (peça 2 do motion) ----------
+
+/**
+ * A MARCA DE "RECÉM": qual célula acabou de receber um valor por um toque que
+ * grava — a régua (repetição), o RIR, a coluna anterior (carga e repetição) e a
+ * carga que o "+ série" copia. É ela, e só ela, que faz o número POUSAR
+ * (docs/motion/03 §4.2): o número da célula mora num nó próprio por valor
+ * (`ui/exercicio.jsx`), e a animação só vale sob a classe `recem`. Sem a marca,
+ * abrir um cartão ou entrar no modo faria todas as células pousarem de uma vez
+ * — o `.sets` escondido mostra os nós ao abrir, e animação de nó que estava em
+ * `display: none` começa quando ele aparece.
+ *
+ * É estado de TELA, nunca dado: não grava nem sincroniza. E sai sem ouvir o fim
+ * de animação nenhum (sob "Reduzir movimento" o evento nem chega):
+ *  - o próximo registro a troca pela dele;
+ *  - abrir ou fechar um cartão, ou entrar no modo, a apaga: o que reaparece não
+ *    pousa de novo;
+ *  - e ela vence sozinha em um segundo, folga de sobra sobre os 160 ms do pouso.
+ *    O render() seguinte desenha a célula sem a classe, e nada se mexe: o último
+ *    quadro do pouso é o número parado.
+ * Um render() no meio do pouso não o reinicia — o nó é o mesmo (a chave é o
+ * valor) e a classe é a mesma — nem faz outra célula pousar.
+ *
+ * O teclado próprio NÃO marca: a célula muda a cada dígito e o visor do teclado
+ * já é o lugar do olho; pousar cada tecla seria cintilar (03 §4.2).
+ */
+const VIDA_DO_RECEM_MS = 1000;
+function marcaRecem(i, k, campos) {
+  view.recem = { dia: view.day, i: i, k: k, campos: campos, t: Date.now() };
+}
+/** Quais campos da série — carga, repetição, RIR — estão sob a marca agora. */
+function recemDaSerie(d, i, k) {
+  const r = view.recem;
+  const vale = !!r && r.dia === d && r.i === i && r.k === k && Date.now() - r.t < VIDA_DO_RECEM_MS;
+  return [0, 1, 2].map(function (p) { return vale && r.campos.indexOf(p) >= 0; });
+}
+
+/**
+ * O DEDO NÃO PERDE O LUGAR (defeito 2 da docs/motion/03 §8.6, consertado na
+ * peça 2). O nó persiste no render(), mas a posição não: na primeira série da
+ * sessão nascem no topo o relógio e os controles (52 px), a linha tocada desce e
+ * a célula de carga da mesma série cai sob o dedo; no teclado, a tecla de cima
+ * cai sob o dedo e o segundo dígito vai para a tecla errada; depois de "Pular",
+ * o cartão fecha e o nome do exercício seguinte sobe para baixo do dedo.
+ *
+ * O conserto é ROLAGEM, de uma vez — rolagem programática é sempre um salto
+ * (`DESIGN.md` §Movimento) —, e só depois do render(): nada do que se grava
+ * muda, nem a ordem dos toques. O "antes" se mede no toque, com a página ainda
+ * montada; o "depois" e a rolagem, no desenho seguinte (`depoisDoLayout`).
+ * Sem nada a medir (o jsdom dos testes de fluxo não tem layout) nada rola.
+ */
+function topoNaTela(el) {
+  if (!el || !el.getClientRects().length) return null;   // não desenhado
+  return el.getBoundingClientRect().top;
+}
+function centroNaTela(el) {
+  if (!el || !el.getClientRects().length) return null;
+  const r = el.getBoundingClientRect();
+  return r.top + r.height / 2;
+}
+function rolaPor(dy) {
+  if (!(Math.abs(dy) >= 1)) return;
+  window.scrollTo(0, window.scrollY + dy);
+}
+
+/**
+ * Roda `fn` no próximo desenho: DEPOIS do layout e ANTES da pintura.
+ *
+ * Medir a página logo depois do render(), ainda dentro do toque, obriga o
+ * navegador a montar o layout ali mesmo — no WebKit desta máquina, na primeira
+ * série, isso trazia para dentro do toque mais de 100 ms que o quadro ia gastar
+ * de qualquer jeito (a fonte que falta no Linux). O lugar certo para medir e
+ * corrigir a rolagem é o ponto do desenho em que o layout já está pronto e nada
+ * foi pintado: é onde o navegador entrega as observações de um ResizeObserver.
+ * Observar a raiz de novo garante uma entrega no próximo desenho (a primeira
+ * observação de um elemento sempre chega), e a rolagem feita ali sai no MESMO
+ * quadro — nenhum quadro mostra a linha fora do lugar.
+ *
+ * Não é movimento: é medida. Sem ResizeObserver (o jsdom; Safari antes do
+ * 13.1), roda na hora.
+ */
+let paraDepoisDoLayout = [];
+let vigiaDoLayout = null;
+function depoisDoLayout(fn) {
+  if (typeof ResizeObserver !== 'function') { fn(); return; }
+  paraDepoisDoLayout.push(fn);
+  if (!vigiaDoLayout) {
+    vigiaDoLayout = new ResizeObserver(function () {
+      vigiaDoLayout.disconnect();
+      const fs = paraDepoisDoLayout;
+      paraDepoisDoLayout = [];
+      fs.forEach(function (f) { try { f(); } catch (e) {} });
+    });
+  }
+  vigiaDoLayout.observe(document.documentElement);
+}
+
+function linhaDaSerie(i, k) {
+  const c = document.querySelector('[data-ex="' + i + '"]');
+  return c ? c.querySelectorAll('.setrow')[k] || null : null;
+}
+/** Onde a linha da série está na tela agora, antes do toque mexer em algo. */
+function ondeEstaALinha(i, k) { return topoNaTela(linhaDaSerie(i, k)); }
+/**
+ * No desenho seguinte, a linha volta para onde estava. Não quando o cartão
+ * fechou: aí o toque levou ao próximo exercício (o avanço da última série, o
+ * bi-set), e quem rola é `mostraExercicio`, de propósito.
+ */
+function devolveALinha(i, k, antes) {
+  if (antes == null) return;
+  depoisDoLayout(function () {
+    if (view.open !== i) return;
+    const agora = ondeEstaALinha(i, k);
+    if (agora != null) rolaPor(agora - antes);
+  });
+}
+
 function toggle(i){
   const abrindo = view.open !== i;
   view.open = abrindo ? i : null;
   view.swapOpen = null; view.nota = null; view.carga = null; view.medida = null;
+  // O que reaparece não pousa de novo (ver `marcaRecem`).
+  view.recem = null;
   // A RÉGUA e a escala de RIR também fecham. Para a régua isso é requisito — o
   // R5 da frente 2 proíbe posição que sobreviva à desmontagem, "se guardar, a
   // próxima montagem herda a janela de uma sessão que acabou" —, e sem isto o
@@ -5368,14 +5535,17 @@ function usaAnterior(i, k) {
   const e = draftOf(i);
   if (!e.s[k]) e.s[k] = [null, null];
   const jaRegistrada = serieJaRegistrada(i, k);
+  const linha = ondeEstaALinha(i, k);
   e.s[k][0] = p[0];
   e.s[k][1] = p[1];
+  marcaRecem(i, k, [0, 1]);            // os dois números pousam
   segurarTela();
   projeta(i);
   atualizaEstado();
   atualizaAnilhas(i);
   queueSave();
   render();
+  devolveALinha(i, k, linha);
   autoTimer(i, k, e, jaRegistrada);
 }
 
@@ -5744,9 +5914,13 @@ function andaRegua(dir) {
 function poeRep(i, k, v) {
   const dr = draftPeek(i);
   const atual = dr && dr.s[k] ? dr.s[k][1] : null;
+  const linha = ondeEstaALinha(i, k);
   view.regua = null;
+  // o número pousa na célula; apagar não pousa nada
+  if (atual !== v) marcaRecem(i, k, [1]);
   anotaSerie(i, k, 1, atual === v ? '' : v);
   render();
+  devolveALinha(i, k, linha);
 }
 
 /**
@@ -5784,6 +5958,11 @@ function teclaDoTeclado(t) {
   // não. A tecla nem aparece onde não aceita.
   const decimal = a.tipo === 'corpo' || a.pos === 0;
   const texto = teclar(tc.texto, t, decimal);
+  // No modo, a tecla que vem a seguir tem de estar onde o dedo está: a série que
+  // a tecla completa pode ser a primeira da sessão, e o relógio que nasce no
+  // topo desceria o teclado inteiro 52 px (ver `rolaPor`).
+  const noModo = a.tipo === 'serie' || a.tipo === 'rapida';
+  const teclado = noModo ? topoNaTela(document.querySelector('.tcl')) : null;
   view.teclado = Object.assign({}, tc, { texto: texto });
   // `'22,'` é digitação no meio do caminho: ainda não é número, e gravar nesse
   // instante apagaria o valor por um passo. Gravar vazio, sim — é o gesto de
@@ -5807,6 +5986,11 @@ function teclaDoTeclado(t) {
     }
   }
   render();
+  if (teclado != null) depoisDoLayout(function () {
+    // escondido (a tecla fechou a última série e o cartão avançou): nada a segurar
+    const agora = topoNaTela(document.querySelector('.tcl'));
+    if (agora != null) rolaPor(agora - teclado);
+  });
 }
 
 function fechaTeclado() { view.teclado = null; render(); }
@@ -5875,11 +6059,14 @@ function abreRir(i, k) {
 function poeRir(i, k, v) {
   const e = draftOf(i);
   if (!e.s[k]) e.s[k] = [null, null];
+  const linha = ondeEstaALinha(i, k);
   // tocar de novo no valor que já está lá limpa: registrar RIR é opcional, e
   // sem isso um toque errado não teria volta
   e.s[k][2] = e.s[k][2] === v ? null : v;
+  if (e.s[k][2] != null) marcaRecem(i, k, [2]);
   view.rir = null;
   projeta(i); queueSave(); render();
+  devolveALinha(i, k, linha);
 }
 
 function toggleDor(i, k) {
@@ -6699,8 +6886,35 @@ const KEY_DESCANSO = 'lastro-descanso-v1';
  * cronômetro tem uma altura, sem ela tem outra, e o toast precisa da de agora.
  * Chamada quando ele entra e quando sai — não a cada quadro, que é o ritmo em
  * que ele repinta.
+ *
+ * A MEDIDA NÃO PRENDE O TOQUE (peça 2 do motion; docs/motion/04 R8). Ler
+ * `offsetHeight` aqui, no meio do toque da série, obrigava o navegador a montar
+ * o layout da página ANTES do render() — e de novo depois: 3,5 ms do toque da
+ * primeira série, medidos no Chromium, metade do que passava da meta de 16 ms.
+ * Agora quem mede é um ResizeObserver no próprio cronômetro: ele entrega a
+ * altura no desenho seguinte, depois do layout e antes da pintura, e a variável
+ * publicada ali já vale para esse mesmo quadro — o toast e o fim da página
+ * nunca veem a altura velha na tela. De quebra pega também a troca de altura
+ * pela linha de procedência, que antes só valia na entrada e na saída. Sem
+ * ResizeObserver (o jsdom; Safari antes do 13.1), mede na hora, como antes.
  */
 function alturaDoTimer() {
+  const box = document.getElementById('timer');
+  if (!box) return;
+  if (typeof ResizeObserver === 'function') {
+    // Um observador só, para o nó de `index.html`. Entrar e sair mudam a
+    // altura (o cronômetro escondido é `display: none`, e mede 0), e a mudança
+    // chega no desenho seguinte; sair e entrar no MESMO toque (um descanso que
+    // substitui outro) não muda nada, e nada precisa ser publicado.
+    if (alturaVigiada !== box) {
+      alturaVigiada = box;
+      new ResizeObserver(publicaAlturaDoTimer).observe(box);
+    }
+    return;
+  }
+  publicaAlturaDoTimer();
+}
+function publicaAlturaDoTimer() {
   const box = document.getElementById('timer');
   const h = box && box.classList.contains('on') ? box.offsetHeight : 0;
   try { document.documentElement.style.setProperty('--ins-timer-h', h + 'px'); } catch (e) {}
@@ -6756,7 +6970,11 @@ function startTimer(sec, ctx) {
   timerAvisado = false;
   timerCtx = ctx || '';
   document.getElementById('timer').classList.add('on');
-  preparaAudio();          // precisa nascer dentro do gesto do usuário
+  // Dentro do gesto do usuário, que é o que o iPhone exige para o som começar.
+  // Desde a peça 2 o contexto já nasceu ao entrar no modo (`preparaAudioDepois`)
+  // e isto só o retoma se estiver suspenso; criar aqui é a rede de quem chegou
+  // ao descanso sem passar pela entrada (ou antes do meio segundo dela).
+  preparaAudio();
   segurarTela();
   pintaTimer();
   alturaDoTimer();
@@ -6868,6 +7086,38 @@ function preparaAudio() {
     if (!audioCtx) audioCtx = new AC();
     if (audioCtx.state === 'suspended') audioCtx.resume();
   } catch (e) { audioCtx = null; }
+}
+
+/**
+ * O SOM NASCE AO ENTRAR NO MODO DE SESSÃO, e não no toque da primeira série
+ * (peça 2 do motion; docs/motion/04 R8).
+ *
+ * Criar o `AudioContext` é caro e não dá para fatiar: 43 a 55 ms dentro do
+ * construtor no Chromium; no WebKit o construtor volta na hora e a thread fica
+ * presa uns 60 ms logo depois, ligando o motor de som. Até 16/10 isso acontecia
+ * dentro do toque da primeira série de cada abertura — o toque mais repetido
+ * do produto, no quadro em que o número entra e o descanso começa (80,6 ms de
+ * trabalho no toque, a frio, no Chromium). Aqui ele vai para logo depois da
+ * entrada no modo: meio segundo depois, quando a tela do modo já chegou e o
+ * dedo ainda não voltou; no Chromium, além disso, só quando a página fica
+ * ociosa (o WebKit não tem `requestIdleCallback`).
+ *
+ * Meio segundo, e não mais: o iPhone só deixa o som começar dentro de um gesto,
+ * e o WebKit leva o gesto do toque de entrada até um `setTimeout` de até um
+ * segundo. Entrar pela abertura do app (sem toque) cria o contexto suspenso, e
+ * quem o retoma é `preparaAudio()` no primeiro descanso, dentro do toque da
+ * série, como sempre foi. O som e a hora em que ele toca não mudam: o bipe
+ * continua sendo `aviso()`, no fim do descanso.
+ */
+function preparaAudioDepois() {
+  if (audioCtx || somAgendado) return;
+  somAgendado = setTimeout(function () {
+    somAgendado = null;
+    if (desligado) return;
+    const ocioso = window.requestIdleCallback;
+    if (typeof ocioso === 'function') ocioso.call(window, preparaAudio, { timeout: ESPERA_DO_SOM_MS });
+    else preparaAudio();
+  }, ESPERA_DO_SOM_MS);
 }
 
 function aviso() {
@@ -7004,6 +7254,7 @@ CTX.desliga = function () {
   desligado = true;
   clearTimeout(syncT);
   stopTimer();
+  if (somAgendado) { clearTimeout(somAgendado); somAgendado = null; }
   if (relogioT) { clearInterval(relogioT); relogioT = null; }
   if (batida) { clearInterval(batida); batida = null; }
   desmontaDoApp();
@@ -7599,6 +7850,9 @@ function volumeDoDia(d) {
   });
   return v;
 }
+
+// O contador do topo: o componente lê daqui, a cada desenho (ver `atualizaEstado`).
+CTX.contadorDoDia = contadorDoDia;
 
 CTX.treino = function () {
   const h = diaResolvido();
@@ -11566,7 +11820,10 @@ const scrollDoDestino = {};
 function abreModo() {
   if (view.modoSessao) return false;
   view.modoSessao = true;
+  view.recem = null;                   // nada pousa ao montar (ver `marcaRecem`)
   entraNoDestino('modoSessao');
+  // O som do descanso nasce agora, e não no toque da primeira série.
+  preparaAudioDepois();
   return true;
 }
 
