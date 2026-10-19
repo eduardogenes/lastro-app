@@ -394,6 +394,17 @@ const ANCESTRAL = new RegExp('^(' +
  * Com parênteses também: `html::view-transition-old(root)` passava inteiro.
  */
 function raizDe(sel: string): string { return sel.replace(/::[a-z-]+(?:\([^)]*\))?$/, ''); }
+/** O último composto de um seletor — quem a regra pinta —, sem o que mora entre parênteses. */
+function sujeitoDe(sel: string): string {
+  let prof = 0, colchete = false, ini = 0;
+  for (let i = 0; i < sel.length; i++) {
+    const c = sel[i];
+    if (c === '(') prof++; else if (c === ')') prof--;
+    else if (c === '[') colchete = true; else if (c === ']') colchete = false;
+    else if (!prof && !colchete && /[\s>+~]/.test(c)) ini = i + 1;
+  }
+  return sel.slice(ini).replace(/\([^)]*\)/g, '');
+}
 const indexHtml = () => fonte('index.html');
 const mainJsx = () => fonte('src/main.jsx');
 // Os componentes de onde saem os SELETORES de quatro casos. Seis dos 28 casos
@@ -718,10 +729,32 @@ test('no modo, a reserva do rodapé perde a barra de abas mas guarda a área seg
   // consumidores ancoram nela: o fim da página, o toast, o cronômetro e a faixa
   // da sessão. No modo a barra não é desenhada, e sem o ajuste sobra a altura
   // dela de espaço morto no fim do treino.
+  //
+  // E a regra mora NA RAIZ. Até a peça 3 do motion ela era
+  // `#app:has(.ins-modo)`, e custom property só desce pela árvore: o
+  // cronômetro e o toast moram FORA do `#app` (irmãos dele no `body`,
+  // `index.html`), herdavam a reserva cheia da raiz e flutuavam 52 px acima do
+  // fundo no modo, com o treino aparecendo por baixo — enquanto o comentário da
+  // regra dizia que ela alcançava os quatro. A metade de geometria (o fundo do
+  // cronômetro na borda da tela, no motor de verdade) é `tests/fluxo/descanso.test.js`.
   const comp = fonte('src/componentes.css');
-  const no_modo = regras(comp, '#app:has(.ins-modo)');
-  const valor = no_modo.match(/--ins-tabbar:\s*([^;]+);/);
-  assert.ok(valor, 'o modo precisa redefinir a reserva do rodapé');
+  const redefinem = blocos(comp).filter(b => /--ins-tabbar\s*:/.test(b.corpo));
+  assert.strictEqual(redefinem.length, 1,
+    'uma regra só redefine a reserva do rodapé: ' + redefinem.map(b => b.sels.join(', ')).join(' | '));
+  const [modo] = redefinem;
+  assert.ok(modo.sels.every(s => /:has\(\.ins-modo\)/.test(s)), 'a reserva muda só no modo: ' + modo.sels.join(', '));
+  assert.deepStrictEqual(modo.sels.filter(s => !/^(html|:root):has\(\.ins-modo\)$/.test(s)), [],
+    'a reserva do modo tem de ser escrita na raiz: escrita no #app (ou abaixo), ela não chega ao ' +
+    'cronômetro nem ao toast, que são irmãos do #app');
+  // e os dois moram mesmo fora do #app — o motivo da regra
+  const corpo = indexHtml().replace(/<!--[\s\S]*?-->/g, '');
+  const app = corpo.match(/<div id="app">[\s\S]*?<\/div>\s*<\/div>/);
+  assert.ok(app, 'o #app de index.html mudou de forma: o caso tem de mudar junto');
+  ['timer', 'toast'].forEach(id => {
+    assert.ok(new RegExp('id="' + id + '"').test(corpo) && !new RegExp('id="' + id + '"').test(app![0]),
+      '#' + id + ' entrou no #app: confira se a reserva ainda precisa morar na raiz');
+  });
+  const valor = modo.corpo.match(/--ins-tabbar:\s*([^;]+);/);
   // `0` tiraria junto o espaço do indicador de home, e o último cartão
   // encostaria nele. O que sai é a barra, não a área segura.
   assert.strictEqual(valor![1].trim(), 'var(--sa-bottom)',
@@ -1857,7 +1890,15 @@ test('(c) só transform, translate, scale e opacity se movem', () => {
     .flatMap(r => r.sels));
   assert.ok(centrados.has('#toast') && centrados.has('#timer'),
     'os centrados por translateX(-50%) mudaram de forma: o caso tem de mudar junto');
-  const descentra = regras.filter(r => r.sels.some(s => centrados.has(s)) &&
+  // Centrado é toda regra cujo SUJEITO é ele, e não só o seletor exato: o
+  // cronômetro sobe por `#timer.anda.on`, e o toast acompanha por
+  // `html:has(#timer.on) #toast` (peça 3). Com o seletor exato, um
+  // `#timer.anda { transition: transform … }` passava — plantado, ficou verde.
+  const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const ehCentrado = (sel: string) => [...centrados].some(c => new RegExp(esc(c) + '(?![\\w-])').test(sujeitoDe(sel)));
+  assert.ok(ehCentrado('#timer.anda.on') && ehCentrado('html:has(#timer.on) #toast') && !ehCentrado('#timer button') &&
+    !ehCentrado('.ins-faixa-o'), 'a leitura do sujeito mudou: o caso tem de mudar junto');
+  const descentra = regras.filter(r => r.sels.some(ehCentrado) &&
     oQueMove(r, porNome).some(p => p === 'transform' || p === 'all'))
     .map(r => r.arquivo + ':' + r.linha + ' ' + r.sels.join(', '));
   assert.deepStrictEqual(descentra, [],

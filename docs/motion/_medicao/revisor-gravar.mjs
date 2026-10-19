@@ -28,7 +28,8 @@
 // (usa esse registro em vez de semear) · QUADROS=1 (guarda os quadros soltos em
 // <saída>/_quadros/) · DIAS=120 (dias semeados).
 //
-// Precisa de python3 com Pillow e numpy (revisor-tiras.py). A saída fica em
+// Precisa de python3 com Pillow e numpy (revisor-tiras.py); PYTHON=/usr/bin/python3.12
+// escolhe outro Python. A saída fica em
 // <saída>/<fluxo>/: <rotulo>.webm, NN-<passo>-<rotulo>.png, medidas-<rotulo>.json;
 // e em <saída>/rodada-<rotulo>.json o resumo da rodada.
 import { abreMotor, calibra, abreApp, aquece, gravaFluxo, ROTULO, SAIDA, MOTOR, REDUZ, DPR, SEGURA, URL_APP } from './revisor-comum.mjs';

@@ -370,6 +370,8 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 | O pulso do ponto ao vivo | `.ins-live-dot` (`base.css`) | `opacity` 1 → .25 → 1, sem fim | `--ins-ciclo-vivo` · `--ins-curva-ciclo` | a tela está viva agora | aceso e parado |
 | O clarão do disparo | `.cam-clarao` (`componentes.css`), um nó por foto | `opacity` .9 → 0 | `--ins-dur-clarao` · `--ins-curva` | a foto foi tirada (lido a 3 m) | não aparece: a foto é dita pelo obturador, pela voz e pelo bloco da pose |
 | O pouso da série | `.pousa.recem` (`treino.css`), o número da célula num nó próprio por valor (`pousa`, `ui/exercicio.jsx`), só sob a marca de recém do toque que grava — régua, RIR, coluna anterior, a carga do "+ série"; o teclado não (`marcaRecem`, `main.jsx`) | `@keyframes ins-pousa` (`base.css`): `translate` de `--ins-pousa` abaixo e `opacity` .4 → 1, no número e nunca no botão | `--ins-dur-lugar` · `--ins-curva` | o valor entrou AQUI | só acende: `ins-acende`, `opacity` .4 → 1, em `--ins-dur-dissolve` |
+| O descanso sobe e desce | `#timer` (`componentes.css`), fora da árvore do Preact; as classes `.on` (em cena), `.sai` (descendo, segurada pelo tempo de `--ins-dur-sai` lido na porta) e `.anda` (posta pelo toque), por `poeEmCena`/`tiraDeCena` (`main.jsx`) | `translate` de `calc(100% + --ins-tabbar)` (abaixo da borda da tela) a `none`, e de volta; fora de cena `visibility: hidden` — o `translateX(-50%)` que centra fica intacto | entra `--ins-dur-entra`, sai `--ins-dur-sai` · `--ins-curva-camada`, sem quique | o descanso começou, e mora aqui embaixo; acabou | esmaece ao chegar (`ins-esmaece`, `opacity` 0 → 1, em `--ins-dur-dissolve`) e sai de uma vez |
+| O toast e a faixa acompanham o descanso | `#toast`, `.ins-faixa` (`componentes.css`) | `translate` de menos a altura publicada do cronômetro (`--ins-timer-h`), que muda na hora em que ele entra ou sai | o tempo e a curva dele (`--ins-dur-entra`/`-sai` · `--ins-curva-camada`), no mesmo instante | o que estava em cima do rodapé foi empurrado pelo que chegou embaixo | vão direto ao lugar novo |
 | A bancada: pouso, painel e régua, virada | `palco.css`, `palco.js` | `transform` e `opacity` | `--pl-dur-*` · `--pl-curva` | chegou; virou | nada |
 
 **O que fica sem movimento**, de propósito: o toque, que só escurece e troca na
@@ -379,7 +381,9 @@ painel que nasce sob o polegar
 digitado tecla a tecla no teclado próprio, que não pousa (o olho está no visor,
 e pousar cada dígito seria cintilar); os números
 derivados (contador, volume, kcal), que não rolam; o fim do descanso, cujo
-canal é o som; a abertura do app e o giro do telefone; e toda rolagem
+canal é o som e o "vai" (o cronômetro fica onde está); um descanso que
+substitui outro, que troca no lugar; a abertura do app — o descanso que estava
+correndo volta no lugar, sem subir — e o giro do telefone; e toda rolagem
 programática, que é sempre um salto (`instant`) — a rolagem suave é do
 navegador, sem token de tempo nem de curva, e roda na thread que o `render()`
 ocupa (`docs/motion/04-desempenho.md` §1.6).

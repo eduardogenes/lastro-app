@@ -31,6 +31,9 @@ const ROT_A = process.argv[5] || 'antes · a22b09d';
 const ROT_D = process.argv[6] || 'depois';
 if (!ANTES || !DEPOIS || !SAIDA) { console.log('uso: revisor-compara.mjs <antes> <depois> <saída> [rótulo antes] [rótulo depois]'); process.exit(1); }
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
+// O Python com Pillow e numpy (PYTHON=/usr/bin/python3.12 quando o python3 do
+// sistema não os tem — foi o caso depois da atualização de 19/10, que trouxe o 3.14).
+const PY = process.env.PYTHON || 'python3';
 const FONTE = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
 const FAZ_VIDEO = !process.env.SEMVIDEO;
 
@@ -71,7 +74,7 @@ def g(p):
     im = Image.open(p).convert('L'); return np.asarray(im.resize((207, int(207 * im.height / im.width))), dtype=np.int16)
 a, b = g(sys.argv[1]), g(sys.argv[2])
 print((np.abs(a - b) > 24).mean() if a.shape == b.shape else 1.0)`;
-  try { return Number(execFileSync('python3', ['-c', py, a, b]).toString().trim()); } catch (e) { return null; }
+  try { return Number(execFileSync(PY, ['-c', py, a, b]).toString().trim()); } catch (e) { return null; }
 }
 
 // ---- O que o dono decidiu em 16/10 (08 §5.1; diário 01h25) ----
@@ -88,7 +91,7 @@ const ehPulso = x => (x.props || []).join() === 'opacity' && x.dur === 2400;
 const ehSaida = m => m && m.tipo === 'sai';
 const ehCamada = m => m && ['entra', 'sai', 'quique', 'aba'].includes(m.tipo);
 function faixa(tira, a, b) {
-  try { return Number(execFileSync('python3', [path.join(AQUI, 'revisor-tiras.py'), 'faixa', tira, a, b, '0', '60']).toString().trim()); }
+  try { return Number(execFileSync(PY, [path.join(AQUI, 'revisor-tiras.py'), 'faixa', tira, a, b, '0', '60']).toString().trim()); }
   catch (e) { return null; }
 }
 
@@ -266,7 +269,7 @@ for (const f of fluxos) {
       const vered = julga(r, pa, pd, Object.assign({ fluxo: f, passosD: D.passos }, extra || {}), mov, fs.existsSync(tiraD) ? tiraD : null);
       // a tira do antes sobre a do depois
       const ta = path.join(ANTES, f, path.basename(pa.tira)), td = path.join(DEPOIS, f, path.basename(pd.tira));
-      if (!process.env.SEMPAR && fs.existsSync(ta) && fs.existsSync(td)) execFileSync('python3', [path.join(AQUI, 'revisor-tiras.py'), 'par', ta, td, path.join(SAIDA, f, nn + '-par.png'), ROT_A + ' · ' + r, ROT_D + ' · ' + r]);
+      if (!process.env.SEMPAR && fs.existsSync(ta) && fs.existsSync(td)) execFileSync(PY, [path.join(AQUI, 'revisor-tiras.py'), 'par', ta, td, path.join(SAIDA, f, nn + '-par.png'), ROT_A + ' · ' + r, ROT_D + ' · ' + r]);
       // os vídeos lado a lado, alinhados no zero do passo
       if (FAZ_VIDEO && pa.t0NoVideoMs != null && pd.t0NoVideoMs != null) {
         const va = path.join(ANTES, f, A.video), vd = path.join(DEPOIS, f, D.video);

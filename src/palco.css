@@ -100,8 +100,11 @@
 }
 
 /* ---- O app cru sai de cena --------------------------------------------
-   Especificidade por atributo + id, sem `!important`: `#toast.on` e
-   `#timer.on` acendem com (0,1,1,0) e estas ganham com (0,1,1,1). */
+   Especificidade por atributo + id, sem `!important`: `#toast.on` acende
+   com (0,1,1,0) e estas ganham com (0,1,1,1). O `#timer` é `display: flex`
+   sempre desde a peça 3 do motion (fora de cena ele fica layoutado e
+   invisível, para poder subir e descer); quem declara o `display` dele é só
+   `#timer`, com (0,1,0,0). */
 html[data-palco="bancada"] body { overflow: hidden; }
 html[data-palco="bancada"] #app,
 html[data-palco="bancada"] #toast,

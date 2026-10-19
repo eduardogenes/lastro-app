@@ -1147,10 +1147,20 @@ button.ins-linha { border-radius: 0; }
    `--ins-timer-h` é escrito pelo casco quando o cronômetro entra e sai (é a
    única medida aqui que depende de o rótulo de procedência existir ou não).
    Sem fallback no `var()`: o token nasce 0px no tokens.css, e um `0px` literal
-   aqui entraria como medida de espaço fora da escala de 4. */
+   aqui entraria como medida de espaço fora da escala de 4.
+
+   A ALTURA DO CRONÔMETRO NÃO ENTRA NO `bottom`: entra no `translate` (peça 3
+   do motion). O cronômetro sobe da borda em `--ins-dur-entra` e desce em
+   `--ins-dur-sai`; com a altura dele no `bottom`, o toast saltava os 82 px
+   num quadro, no meio da subida, e trocar `bottom` em transição seria animar
+   posição. Em `translate`, a mesma medida vira movimento composto, no mesmo
+   tempo e na mesma curva do cronômetro, e sem tocar no `translateX(-50%)` que
+   centra — a propriedade é outra. A entrada e a saída do PRÓPRIO toast são
+   outra coisa (peça 7). */
 #toast {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-faixa-h) + var(--ins-6));
+  bottom: calc(var(--ins-tabbar) + var(--ins-faixa-h) + var(--ins-6));
+  translate: 0 calc(-1 * var(--ins-timer-h));
   width: calc(100% - 36px); max-width: 424px; z-index: 30;
   background: var(--ins-superficie-2); border: 1px solid var(--ins-fio-controle); color: var(--ins-tinta);
   font: 400 11.5px/1.45 var(--ins-fonte);
@@ -1164,23 +1174,67 @@ button.ins-linha { border-radius: 0; }
    eram padding. Ele começava e não aparecia em canto nenhum.
    Empilhar em vez de disputar mantém os dois usáveis — durante o descanso ainda
    se troca de aba. `--ins-tabbar` já traz a área segura dentro dele, e por isso
-   o padding de baixo daqui volta a ser só o degrau. */
+   o padding de baixo daqui volta a ser só o degrau.
+
+   O DESCANSO SOBE DA BORDA E DESCE POR ONDE VEIO (peça 3 do motion; dono,
+   16/10, pergunta 9). Ele é camada: chega por cima do treino, e o movimento diz
+   de onde veio e para onde volta. Por isso ele não usa mais `display: none`,
+   que não transiciona: fora de cena ele está LAYOUTADO, abaixo da borda de
+   baixo da tela e `visibility: hidden` — que, como o `display: none`, tira os
+   botões do toque, do Tab e do leitor de tela.
+   - `.on`: em cena. Último quadro, fora do portão.
+   - `.sai`: descendo. Segura a visibilidade enquanto ele desce; o casco
+     (`main.jsx`, `tiraDeCena`) põe e tira, pelo tempo de `--ins-dur-sai` lido
+     na porta (`tempo()`), que é 0 sob "Reduzir movimento" — e aí `.sai` nem
+     entra. Nada escuta o fim da transição.
+   - `.anda`: o cronômetro se move. Posta pelo toque que liga, para ou zera;
+     o descanso que VOLTA na abertura do app (`retomaDescanso`) aparece no
+     lugar, como o resto da abertura, que não se move.
+   A distância é a altura dele mais a reserva do rodapé: fora do modo ele nasce
+   abaixo da tela e sobe por trás da barra de abas (z 40, opaca); no modo, da
+   própria borda. Só a borda inteira garante que nenhum pedaço dele fica à
+   vista parado no primeiro quadro (no iPhone, a reserva do modo ainda é a
+   área do indicador de home).
+   `translate`, e não `transform`: o `translateX(-50%)` que centra continua
+   intacto (a guarda (c) cobra). Para baixo, não para o lado: não nasce a
+   barra de rolagem lateral do `translateX(+)`. */
 #timer {
   position: fixed; bottom: var(--ins-tabbar); left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 460px; z-index: 35;
   background: var(--ins-superficie-2);
   border-top: 1px solid var(--ins-fio); border-bottom: 1px solid var(--ins-fio);
   padding: var(--ins-5) var(--ins-8);
-  display: none; flex-direction: column; gap: var(--ins-3);
+  display: flex; flex-direction: column; gap: var(--ins-3);
+  translate: 0 calc(100% + var(--ins-tabbar));
+  visibility: hidden;
 }
-#timer.on { display: flex; }
+#timer.on { translate: none; visibility: visible; }
+#timer.sai { visibility: visible; }
+/* Os tempos e a curva da camada (resposta 1: 350 ms na curva do iPhone, sem
+   quique). A transição que vale é a do estado de DESTINO: chegando, a de
+   `.on`; saindo, a de fora. Um "parar" no meio da subida inverte dali — a
+   transição nova parte de onde a velha estava —, e um descanso que substitui
+   outro troca no lugar: `startTimer` tira e põe `.on` na mesma tarefa, e o
+   estilo nunca chega a ver o cronômetro fora. */
+@media (prefers-reduced-motion: no-preference) {
+  #timer.anda { transition: translate var(--ins-dur-sai) var(--ins-curva-camada); }
+  #timer.anda.on { transition: translate var(--ins-dur-entra) var(--ins-curva-camada); }
+}
+/* Sob "Reduzir movimento" (resposta 2): nada desliza; ele esmaece ao chegar e
+   sai de uma vez. */
+@media (prefers-reduced-motion: reduce) {
+  #timer.anda.on { animation: ins-esmaece var(--ins-dur-dissolve) var(--ins-curva-camada) both; }
+}
 
 /* A faixa da sessão — atalho ou pergunta. Divide com o cronômetro a tira acima
    da tab bar e se empilha sobre ele; nunca os dois no mesmo lugar. z-index
    abaixo do cronômetro porque, se algum dia se tocarem, quem cede é a porta e
-   não o relógio que está contando. */
+   não o relógio que está contando.
+   A altura do cronômetro entra no `translate`, como no toast, e pelo mesmo
+   motivo: a faixa acompanha a subida e a descida dele em vez de saltar. */
 .ins-faixa {
-  position: fixed; bottom: calc(var(--ins-tabbar) + var(--ins-timer-h));
+  position: fixed; bottom: var(--ins-tabbar);
+  translate: 0 calc(-1 * var(--ins-timer-h));
   left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 460px; z-index: 34;
   background: var(--ins-superficie-2); color: var(--ins-tinta);
@@ -1188,6 +1242,17 @@ button.ins-linha { border-radius: 0; }
   padding: var(--ins-4) var(--ins-8); min-height: 46px;
   display: flex; flex-direction: column; align-items: flex-start; gap: var(--ins-2);
   text-align: left;
+}
+/* O ACOMPANHAMENTO: o toast e a faixa andam a altura do cronômetro no tempo e
+   na curva dele — `--ins-dur-entra` enquanto ele chega, `--ins-dur-sai`
+   enquanto vai. Fora do portão (e sob "Reduzir movimento") vão direto ao
+   lugar novo, que é o último quadro. Só o acompanhamento: o toast que aparece
+   ou some, e a faixa que nasce ou morre, não se movem por aqui (a transição
+   não roda no primeiro desenho de um nó). */
+@media (prefers-reduced-motion: no-preference) {
+  #toast, .ins-faixa { transition: translate var(--ins-dur-sai) var(--ins-curva-camada); }
+  html:has(#timer.on) #toast,
+  html:has(#timer.on) .ins-faixa { transition: translate var(--ins-dur-entra) var(--ins-curva-camada); }
 }
 .ins-faixa-o { font: 400 9px/1.3 var(--ins-fonte); color: var(--ins-tinta-3); }
 /* 15px: é o nome do exercício e a faixa inteira é o botão que leva de volta
@@ -1210,6 +1275,17 @@ button.ins-linha { border-radius: 0; }
    ligado na mão pelo botão do cartão não tem série de origem. */
 #tctx { color: var(--ins-tinta-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #tctx:empty { display: none; }
+/* FORA DE CENA, o rótulo vazio guarda a linha dele (peça 3 do motion). Ninguém
+   o vê — o cronômetro está abaixo da borda e invisível —, mas a ALTURA de fora
+   de cena é a que o casco publica no instante em que o descanso começa, sem
+   medir nada no toque (`alturaDoTimer`). Com o rótulo sumindo ao parar, o
+   cronômetro escondido media 58 px, o próximo descanso (que sempre tem
+   procedência) media 82, e a correção do observador chegava um quadro depois
+   no WebKit: o toast e a faixa começavam a subir para o lugar errado e
+   ficavam até 10 px atrás do cronômetro, por baixo dele. Uma linha, nunca
+   mais: o rótulo não quebra (`nowrap`). */
+#timer:not(.on) #tctx:empty { display: block; }
+#timer:not(.on) #tctx:empty::before { content: "\a0"; }
 #tlinha { display: flex; align-items: center; gap: var(--ins-6); }
 #tval { font: 600 27px/1 var(--ins-fonte); letter-spacing: -.02em; color: var(--ins-tinta); }
 #tval.zero { color: var(--ins-acento-tinta); }
@@ -1278,11 +1354,17 @@ button.ins-linha { border-radius: 0; }
    existe "para quem precisa reservar espaço embaixo" (`tokens.css`, literal).
    São quatro consumidores — o fim da página (`#app`), o toast, o cronômetro e a
    faixa da sessão — e todos ancoram NELA. No modo a barra não é desenhada, e
-   sem isto sobrava a altura dela de espaço morto no fim do treino, com a faixa
-   e o cronômetro flutuando acima de nada.
+   sem isto sobrava a altura dela de espaço morto no fim do treino.
+   NA RAIZ, e não no `#app`: o cronômetro e o toast moram FORA dele, irmãos no
+   `body` (`index.html`), e custom property só desce pela árvore. Escrita no
+   `#app`, ela chegava ao fim da página e à faixa, e não aos dois: no modo o
+   cronômetro e o toast flutuavam 52 px acima do fundo, com o treino aparecendo
+   por baixo (docs/motion/03 §8.2, medido: o cronômetro em y 762–844 numa tela
+   de 896). Consertado na peça 3 do motion, porque o cronômetro que sobe da
+   borda subiria do meio do ar.
    Fica `var(--sa-bottom)` e não `0`: o que sai é a barra, não o espaço do
    indicador de home — sem ele o último cartão encosta nele. */
-#app:has(.ins-modo) { --ins-tabbar: var(--sa-bottom); }
+html:has(.ins-modo) { --ins-tabbar: var(--sa-bottom); }
 
 /* DEITADO, NO MEIO DA SESSÃO (a D, momento 1, estado 14). O iOS não trava a
    orientação de app web (F60), e o telefone vira sozinho no banco. Fora do

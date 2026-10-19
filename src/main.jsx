@@ -17,6 +17,7 @@ import {
 } from './dominio/carga';
 import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
+import { tempo as tempoDoMovimento } from './ui/movimento.js';
 import { ehBancada } from './palco.js';
 import { MIN_PESAGENS as MIN_PESAGENS_CORPO, semanaEmCurso, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, VALIDADE_LEITURA, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
@@ -366,8 +367,12 @@ let audioCtx = null, wakeLock = null, querSegurar = false;
 // entrar no modo ainda na avaliação deste módulo.
 const ESPERA_DO_SOM_MS = 500;
 let somAgendado = null;
-// O cronômetro que o ResizeObserver de `alturaDoTimer` já vigia.
-let alturaVigiada = null;
+// O cronômetro que o ResizeObserver de `alturaDoTimer` já vigia, e a última
+// altura que ele entregou (-1 antes da primeira). Aqui em cima porque o
+// observador nasce com o nó, ainda na avaliação deste módulo (`ligaBotaoDoTimer`).
+let alturaVigiada = null, alturaMedida = -1;
+// O cronômetro descendo: o relógio que tira `.sai` quando a descida acaba.
+let timerSaindo = null;
 
 
 const STORE_LABEL = {
@@ -6897,27 +6902,102 @@ const KEY_DESCANSO = 'lastro-descanso-v1';
  * nunca veem a altura velha na tela. De quebra pega também a troca de altura
  * pela linha de procedência, que antes só valia na entrada e na saída. Sem
  * ResizeObserver (o jsdom; Safari antes do 13.1), mede na hora, como antes.
+ *
+ * ENTRAR E SAIR NÃO MUDAM MAIS A ALTURA (peça 3 do motion). O cronômetro
+ * deixou de ser `display: none` fora de cena para poder subir e descer: ele
+ * fica layoutado, abaixo da borda e invisível, com a mesma altura dentro e
+ * fora. O observador então não tem o que entregar quando o descanso começa ou
+ * para — e a altura publicada não pode ser a da caixa, que nunca mais é 0. Por
+ * isso são duas coisas: o observador guarda a ALTURA (`alturaMedida`, quando
+ * ela muda de verdade — o rótulo de procedência, a orientação), e a publicação
+ * diz a VERDADE do momento: essa altura com o cronômetro em cena, 0 fora dela.
+ * Entrar e sair publicam na hora, sem medir nada (o toque não monta layout); o
+ * toast e a faixa leem a variável no `translate` e acompanham a subida e a
+ * descida no mesmo tempo.
  */
 function alturaDoTimer() {
   const box = document.getElementById('timer');
   if (!box) return;
   if (typeof ResizeObserver === 'function') {
-    // Um observador só, para o nó de `index.html`. Entrar e sair mudam a
-    // altura (o cronômetro escondido é `display: none`, e mede 0), e a mudança
-    // chega no desenho seguinte; sair e entrar no MESMO toque (um descanso que
-    // substitui outro) não muda nada, e nada precisa ser publicado.
+    // Um observador só, para o nó de `index.html`, posto quando o módulo sobe:
+    // a primeira entrega chega muito antes do primeiro descanso.
     if (alturaVigiada !== box) {
       alturaVigiada = box;
-      new ResizeObserver(publicaAlturaDoTimer).observe(box);
+      alturaMedida = -1;
+      new ResizeObserver(function () {
+        // depois do layout e antes da pintura: ler aqui não monta nada
+        alturaMedida = box.offsetHeight;
+        publicaAlturaDoTimer();
+      }).observe(box);
     }
+    // Sem medida ainda, a primeira entrega do observador publica.
+    if (alturaMedida >= 0) publicaAlturaDoTimer();
     return;
   }
   publicaAlturaDoTimer();
 }
 function publicaAlturaDoTimer() {
   const box = document.getElementById('timer');
-  const h = box && box.classList.contains('on') ? box.offsetHeight : 0;
+  const emCena = !!box && box.classList.contains('on');
+  const h = !emCena ? 0 : alturaMedida >= 0 ? alturaMedida : box.offsetHeight;
   try { document.documentElement.style.setProperty('--ins-timer-h', h + 'px'); } catch (e) {}
+}
+
+/**
+ * Põe o cronômetro em cena. `anda` quando um toque o liga (sobe da borda); sem
+ * ele, aparece no lugar — o descanso que volta na abertura do app, que não se
+ * move. Desfaz uma descida pela metade: a transição nova parte de onde a velha
+ * estava, e ele volta a subir dali.
+ */
+function poeEmCena(box, anda) {
+  if (timerSaindo) { clearTimeout(timerSaindo); timerSaindo = null; }
+  box.classList.remove('sai');
+  if (anda) box.classList.add('anda');
+  box.classList.add('on');
+}
+
+/**
+ * Tira o cronômetro de cena: ele desce por onde veio, e continua VISÍVEL e
+ * inteiro enquanto desce (com o número e a procedência que tinha). Quem segura
+ * a visibilidade é `.sai`, pelo tempo de `--ins-dur-sai` lido na porta do
+ * movimento — nada escuta o fim da transição. Sob "Reduzir movimento" (e onde a
+ * porta não sabe) o tempo é 0: sai de uma vez, como sempre saiu.
+ *
+ * O estado já mudou antes disto (`stopTimer` zera o alvo e apaga a chave
+ * local); aqui é só a apresentação dele.
+ */
+function tiraDeCena(box) {
+  if (!box.classList.contains('on')) {
+    // já fora, ou já descendo: a descida em curso termina sozinha
+    if (!timerSaindo) limpaProcedencia();
+    return;
+  }
+  // O tempo ANTES de mexer na classe: a porta lê o token no estilo computado,
+  // e lida depois ela obrigaria o motor a resolver o estilo novo do cronômetro
+  // no meio da tarefa, antes de a altura publicada (logo abaixo) mudar a do
+  // toast e da faixa. Lida antes, as três mudanças chegam juntas ao motor.
+  // (Nos dois motores desta máquina as três transições começaram no mesmo
+  // instante das duas maneiras; é cautela, não conserto medido.)
+  const ms = tempoDoMovimento('--ins-dur-sai');
+  box.classList.remove('on');
+  box.classList.add('anda');
+  if (ms > 0) {
+    box.classList.add('sai');
+    timerSaindo = setTimeout(terminaDescida, ms);
+  } else {
+    limpaProcedencia();
+  }
+}
+/** O fim da descida: fora de cena de vez. Também o atalho de `desliga`. */
+function terminaDescida() {
+  if (timerSaindo) { clearTimeout(timerSaindo); timerSaindo = null; }
+  const box = document.getElementById('timer');
+  if (box) box.classList.remove('sai');
+  limpaProcedencia();
+}
+function limpaProcedencia() {
+  const ctx = document.getElementById('tctx');
+  if (ctx) ctx.textContent = '';
 }
 
 function gravaDescanso() {
@@ -6950,7 +7030,8 @@ async function retomaDescanso() {
   timerAvisado = false;
   timerCtx = g.ctx || '';
   const box = document.getElementById('timer');
-  if (box) box.classList.add('on');
+  // no lugar, sem subir: é a abertura do app, e a abertura não se move
+  if (box) poeEmCena(box, false);
   pintaTimer();
   alturaDoTimer();
   if (timer) clearInterval(timer);
@@ -6969,7 +7050,11 @@ function startTimer(sec, ctx) {
   timerFim = Date.now() + sec*1000;
   timerAvisado = false;
   timerCtx = ctx || '';
-  document.getElementById('timer').classList.add('on');
+  // O alvo já está gravado acima, antes de qualquer desenho: a subida é só a
+  // apresentação de um descanso que já existe. Um descanso que substitui outro
+  // troca no lugar — `stopTimer` lá em cima tirou `.on` e isto o devolve na
+  // mesma tarefa, sem um estilo no meio.
+  poeEmCena(document.getElementById('timer'), true);
   // Dentro do gesto do usuário, que é o que o iPhone exige para o som começar.
   // Desde a peça 2 o contexto já nasceu ao entrar no modo (`preparaAudioDepois`)
   // e isto só o retoma se estiver suspenso; criar aqui é a rede de quem chegou
@@ -7056,6 +7141,9 @@ function ligaBotaoDoTimer() {
   });
   const mais = document.getElementById('tmais');
   if (mais) mais.addEventListener('click', function () { ajustaTimer(15); });
+  // O observador da altura nasce com o nó: o cronômetro fora de cena já está
+  // layoutado, e a medida fica pronta antes do primeiro descanso.
+  alturaDoTimer();
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', ligaBotaoDoTimer);
@@ -7067,12 +7155,11 @@ function stopTimer() {
   if (timer) { clearInterval(timer); timer = null; }
   timerFim = 0; timerAvisado = false;
   timerCtx = '';
-  const ctx = document.getElementById('tctx');
-  if (ctx) ctx.textContent = '';
   apagaDescanso();
   try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {}
+  // desce por onde veio; a procedência sai do nó quando ele termina de descer
   const box = document.getElementById('timer');
-  if (box) box.classList.remove('on');
+  if (box) tiraDeCena(box);
   alturaDoTimer();
 }
 
@@ -7254,6 +7341,8 @@ CTX.desliga = function () {
   desligado = true;
   clearTimeout(syncT);
   stopTimer();
+  // a descida do cronômetro também é um relógio: termina agora
+  if (timerSaindo) terminaDescida();
   if (somAgendado) { clearTimeout(somAgendado); somAgendado = null; }
   if (relogioT) { clearInterval(relogioT); relogioT = null; }
   if (batida) { clearInterval(batida); batida = null; }

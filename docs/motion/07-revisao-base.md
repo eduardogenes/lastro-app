@@ -202,6 +202,11 @@ fim, tudo de novo.
    primeiro fluxo da rodada: rodar `FLUXOS=03b` à parte, antes das outras (com
    `FLUXOS=03,…` ele vem depois do 03, que já esquentou o `AudioContext` e a
    fonte — foi o que aconteceu no `depois-1`, seção 7).
+5c. **Com carga na máquina, antes e depois intercalados.** Se a máquina estiver
+   ocupada (outro projeto, build, testes), o número de tempo que decide uma peça
+   se mede gravando antes e depois **intercalados**, três vezes, sob a mesma
+   carga — não contra o antes gravado com a máquina quieta. A carga de cada
+   etapa fica em `shots/revisor/carga-<dia>.txt` (seção 8).
 6. **O que não se mede aqui**, dito na página: o Core Animation do A13; o
    `:active` com o ouvinte de `touchstart` no iOS; o gesto de borda e o
    `popstate` com `hasUAVisualTransition`; o `svh` com a barra do Safari; se o
@@ -275,6 +280,7 @@ pasta de saída por argumento: o mesmo script grava o antes e o depois.
 | `revisor-comum.mjs` | o motor, a instrumentação na página (relógio, eventos, Event Timing, animações vivas, fixos, `requestAnimationFrame`), a calibração, o registro devolvido a cada fluxo, a passada de aquecimento, o dedo, a gravação e o manifesto. Reaproveita a `semeia` de `desempenho-comum.mjs` e a receita do WebKit |
 | `revisor-tiras.py` | `tiras`: monta a tira de cada passo e mede quadro a quadro; `par`: empilha a tira do antes sobre a do depois; `faixa`: compara uma faixa vertical entre dois quadros da tira (a conferência "a de baixo parada"); `repousa`: recalcula o "dedo pousado" de manifestos já gravados pela linha do tempo (seção 7) |
 | `revisor-thread-presa.mjs` | o "não congela com a thread presa" do 04 §6 no elemento real: troca de aba, a thread principal presa 150 ms dois quadros depois de o fio começar a andar, o fio achado quadro a quadro pela cor de acento; mede a maior parada no meio do caminho (escreve `thread-presa-<rodada>.json`). As peças 3 a 6 acrescentam a cena delas (cronômetro, folha, tela cheia, carrossel) |
+| (ambiente) | `PYTHON=` escolhe o Python que os scripts chamam (precisa de Pillow e numpy). Depois da atualização de 19/10 o `python3` do sistema é o 3.14, sem numpy; o 3.12 tem numpy mas não carrega mais o Pillow do sistema. Para a seção 8, o numpy foi posto numa pasta do scratchpad (`pip install --target`) e um invólucro aponta para ela — nada instalado no sistema |
 | `revisor-compara.mjs` | a fase 4: aplica a tabela 1.3 com o `mov` de cada passo, escreve `protocolo.json`, os pares de tiras e os vídeos lado a lado (H.264, 828 × 940, normal e 4× mais lento), alinhados no zero de cada passo. Testado: antes contra antes, em todos os fluxos (`antes-contra-protocolo/`), e com vídeo em 01, 07 e 16 |
 
 **As rodadas do antes**, como foram gravadas (do raiz do projeto):
@@ -603,3 +609,95 @@ passos, nos dois motores e com "Reduzir movimento", a 1,69–1,73:1, sem tempo e
 sem escala. A única reprovação é de tempo, numa amostra só, sem relação provável
 com o que a peça mudou, e fica pedida a repetição. Não houve gravação depois do
 aviso de que a peça 2 começou.
+
+---
+
+## 8. Depois da peça 2
+
+Conferida pela linha da peça 2 da tabela 1.4, contra o build congelado em
+`docs/motion/_medicao/shots/dist-peca-2/` (commit `cf0e4e4`), servido na porta
+4728 (desligada), com o mesmo `antes/registro.json`.
+
+**As condições, ditas.** A gravação principal foi feita em 16/10, das 17h31 às
+17h41, **com a máquina carregada** por outro projeto: carga média de 4,6 a 6,5
+em 12 núcleos (`shots/revisor/carga-16-10.txt`). Por isso todo número de tempo
+que decide alguma coisa abaixo foi medido de novo com antes e depois
+**intercalados, três vezes**, sob a mesma carga (1.5, item 5c): a 1ª série a
+frio em 16/10, e as reprovações de tempo do comparador em 19/10, das 18h15 às
+18h23, com carga de 2,8 a 5,1 (`carga-19-10.txt`). Entre as duas datas a
+máquina foi reiniciada e o `python3` do sistema passou ao 3.14, sem numpy (seção
+3, "ambiente"): as tiras e as medidas foram feitas em 16/10 com o ambiente de
+antes; os pares, as faixas e os protocolos de 19/10, com numpy 2.5.4 e Pillow
+12.1.1, pelo mesmo código.
+
+**O que se gravou.**
+- Peça 2: o `03b` sozinho e primeiro, a frio, em cada rodada
+  (`depois-2/rodada-*-03b.json`), e depois 01, 03 e 12 (`depois-2/rodada-*.json`),
+  no Chromium e no WebKit, com e sem "Reduzir movimento". Nenhum erro de página,
+  nenhum passo com falha.
+- O `03b` reduzido do antes foi regravado sozinho, a frio
+  (`antes/rodada-*-reduz-03b.json`): o anterior tinha rodado depois do 03 e não
+  servia de par para a 1ª série a frio.
+- A 1ª série a frio, antes e peça 2 intercalados, três vezes por motor
+  (`repeticoes-peca-2/`), e as reprovações de tempo, três vezes
+  (`repeticoes-peca-2-tempo/`).
+- Complementos `micro-serie.mjs` e `micro-contador.mjs` dos dois lados
+  (`antes-complementos/`, `depois-2/complementos/`).
+- O comparador: `comparacao-2/` (48 pares de tiras, 96 vídeos lado a lado,
+  `protocolo.json`).
+
+### 8.1 As repetições pendentes da peça 1
+
+| | trabalho no toque (ms) | mediana | primeira mudança na tela (mediana) |
+|---|---|---|---|
+| 03 `grava-2`, `chromium-reduz-mouse`, antes | 15,0 · 16,7 · 24,1 | **16,7** | +19,2 ms |
+| o mesmo, peça 1 | 14,8 · 15,2 · 15,2 | **15,2** | +18,7 ms |
+
+O 21,3 ms da seção 7.3 era ruído: na mediana a peça 1 não piora, e até a
+dispersão é menor. **A peça 1 fica aprovada sem ressalva.** Arquivos:
+`repeticoes-peca-1/{antes,peca-1}-{1,2,3}/03-serie-regua/medidas-chromium-reduz-mouse.json`
+(carga 4,6–6,2 em 16/10).
+
+### 8.2 A linha da peça 2: o que passou
+
+| o que a peça tinha de provar | resultado | o número | arquivo |
+|---|---|---|---|
+| **1ª série a frio sem o tranco, Chromium 1×** (meta ≤ 16 ms; 04 R8) | **passa** | trabalho no toque **10,1 ms** de mediana (9,8 · 10,1 · 21,3) contra **61,2** (57,7 · 61,2 · 67,0); Event Timing 96 → 48 ms; a tela muda a **+26 ms** contra +73 | `repeticoes-peca-2/{antes,peca-2}-chromium-{1,2,3}/03b-primeira-serie-fria/medidas-chromium.json` |
+| **a mesma série a frio, WebKit** | **o toque passa; a tela fica "a conferir"** | trabalho **169 → 11 ms** de mediana (165–177 → 11–20); mas a tela ainda só muda a **+301 ms** (antes +352) e o Event Timing vai de 352 a 304. Os ~290 ms que sobram não são trabalho do toque: são o primeiro desenho do modo com o relógio e o cronômetro **neste WebKit sem a fonte do sistema** (04 §1.3) — aquecido, o mesmo toque aparece a **+18 ms** (antes +44; `depois-2/03-serie-regua/medidas-webkit.json`, `grava-1`). A parte que não é do toque passou de ≈180 para ≈290 ms; não dá para separar aqui se é a fonte ou o desenho seguinte que rola a página. **No iPhone não se mediu** | `repeticoes-peca-2/{antes,peca-2}-webkit-{1,2,3}/…/medidas-webkit.json` |
+| **o número pousa** | **passa** | `ins-pousa` no `span.pousa.recem` da célula ("10"): `translate` + opacidade, **160 ms**, nos dois motores; sob "Reduzir movimento", `ins-acende`, só opacidade, **120 ms**. Na última série do exercício não há pouso (o cartão fecha e a célula some), como a 03 §4.2 previu | `depois-2/03-serie-regua/medidas-*.json` e `depois-2/03b-primeira-serie-fria/medidas-*.json` (passo `grava-1`, `animacoes`); tira dupla `comparacao-2/03-serie-regua/02-grava-1-chromium-par.png` |
+| **a linha não desce e o dedo não cai na carga da mesma série** (defeito 2) | **passa** | `micro-serie.mjs`: a célula fica em **y 323 → 323** (antes 323 → 375). Nas gravações a página rola 52 px (363 → 415) no mesmo desenho, e a linha fica sob o dedo; sob o dedo fica a carga da **série 2** (`#w0_1`), não mais a da série 1 (`#w0_0`, antes), nos dois motores e com "Reduzir" | `depois-2/complementos/micro-serie-chromium.json` contra `antes-complementos/…`; `depois.sobODedo` nos `medidas-*.json`; tira dupla citada acima (a linha da série 1 desce no antes e fica no lugar na peça 2) |
+| **o contador com um escritor só** (defeito 1) | **passa** | `micro-contador.mjs`: depois de uma série e de ligar o deload, **tela 1/12 = dado 1/12** (antes, tela 1/20 e dado 1/12) | `depois-2/complementos/micro-contador-chromium.json` contra `antes-complementos/…` |
+| **o som fora do toque** | **passa, com a anotação do 09** | o `AudioContext` nasce 500 ms depois de entrar no modo. No WebKit isso aparece como um quadro mais longo depois da entrada: **23–33 ms** nas três repetições (antes 17–21), **44–45 ms** na gravação sob carga; o Chromium espera a página ociosa e não mostra nada | `repeticoes-peca-2-tempo/*/01-modo-cartao/medidas-webkit*.json` (`quadrosDaPagina.maiorIntervalo`) |
+| **o toque nunca espera** (princípio 1) | **passa, depois de repetir** | as 4 reprovações de amostra única sob carga não se repetem: 01 `entra` no Chromium, mediana 4,4 → 3,9 ms; no WebKit, 6 → 7; no WebKit reduzido, 6 → 5; 03 `grava-2` no WebKit, **18 → 11 ms**, com a tela a +25 → +10 | `repeticoes-peca-2-tempo/{antes,peca-2}-{1,2,3}/` |
+| só `transform`/opacidade, nada pisca, "Reduzir", nada só pelo movimento, a rolagem, o toque se vê (princípios 2, 3, 5, 7, 9, 10) | **passa** | 48/48; 24/24; 17 passam e 7 "a conferir" (os degraus do descanso, como sempre); 24/24; 4/4; 23 passam e 1 "a conferir" | `comparacao-2/protocolo.json` |
+| o teclado (12) sem movimento novo | **passa** | nenhuma animação nova (princípio 8, "nenhum"); a página não rola ao abrir neste estado (363 → 363), como no antes | `depois-2/12-teclado/medidas-*.json` |
+
+### 8.3 O que reprovou, e por que não é da peça 2
+
+- **01 · entrar no modo troca num quadro e "a de baixo se move"; o foco vai ao
+  `body`** (princípios 8 e 6): iguais ao antes — peça 5.
+- **01 · um quadro de 44–45 ms no WebKit** (princípio 4), só na gravação sob
+  carga: é o `AudioContext` da própria peça, avisado no 09, e nas três
+  repetições fica em 23–33 ms, abaixo do limite de 34.
+
+### 8.4 O que ficou "a conferir"
+
+- **A 1ª série a frio no WebKit** aparece a +301 ms, com ~290 ms que não são
+  do toque (8.2). No iPhone a fonte do sistema existe e esse custo não deveria
+  aparecer; não se mediu no aparelho.
+- **O cronômetro continua a 52 px do fundo no modo** (`micro-serie`:
+  `vaoEmbaixoDoTimer` 52, nos dois lados): é da peça 3.
+- **03 `abre-regua-2` no WebKit reduzido**: a primeira mudança com o dedo
+  pousado foi um dígito do relógio (caixa 208,808,8,16), que virou no mesmo
+  quadro; o controle mudou também (o passo passa no princípio 10 nas outras
+  rodadas).
+- **03 `abre-regua-2` no Chromium**: no antes, a lacuna da captura (tela a +263
+  ms); na peça 2 a tela muda a +30 ms. Não é mérito da peça: é a captura que
+  não falhou desta vez (1.1).
+
+**Conclusão: a peça 2 passa na linha dela.** A 1ª série a frio cai de 61 para
+10 ms de trabalho no Chromium e de 169 para 11 no WebKit; o número pousa em 160
+ms (120 só em opacidade com "Reduzir"); a linha não sai de baixo do dedo e o
+dedo não cai mais na carga da mesma série; o contador mostra o dado. A primeira
+série a frio no WebKit desta máquina ainda leva ~300 ms para aparecer, por um
+custo de primeiro desenho que não é do toque e fica a conferir no aparelho.

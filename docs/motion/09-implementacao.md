@@ -788,3 +788,340 @@ npm run tipos   → tsc --noEmit (saída 0)
 npm run build   → ✓ built in 1.64s (saída 0)
 npx vitest run  → Test Files 77 passed (77) · Tests 1613 passed (1613)
 ```
+
+---
+
+## Peça 3 · O descanso
+
+Implementada em 19/10, sobre `cf0e4e4`, sem commit. Espec: `08-parecer.md` §4
+(peça 3) e §5.1; as respostas do dono em `00-coordenacao.md` (16/10, 01h25):
+pergunta 9 "sobe da borda e desce", pergunta 1 (camada em 350 ms na curva do
+iPhone, **sem quique**) e pergunta 2 (sob "Reduzir movimento" esmaece 120 ms ao
+chegar e sai de uma vez); `03-micro.md` §4.3, §5.1 e §8 item 2; `04-desempenho.md`
+§2.2–2.4 e R8; `05-acessibilidade.md` §2.2; a linha da peça 3 do
+`07-revisao-base.md` §1.4.
+
+### Em uma página
+
+- **O que ele vê de diferente.** O cronômetro sobe da borda de baixo em 350 ms,
+  na curva do iPhone, e desce por onde veio ao parar (ou ao zerar pelo −15).
+  O toast e a faixa da sessão sobem e descem junto com ele, no mesmo tempo, na
+  mesma curva e no mesmo instante, em vez de saltar 82 px. Um descanso que
+  substitui outro troca no lugar. O fim do descanso continua parado ("vai" e o
+  som). O descanso que volta na abertura do app aparece no lugar, sem subir.
+- **Sob "Reduzir movimento"** nada desliza: o cronômetro esmaece em 120 ms ao
+  chegar (`ins-esmaece`, só opacidade) e sai de uma vez; o toast e a faixa vão
+  direto ao lugar novo.
+- **O vão de 52 px acabou.** No modo, o cronômetro ia de y 762 a 844 numa tela
+  de 896. Agora vai de 814 a 896, com o fundo na borda. Achado no caminho:
+  com o descanso ligado, os dois botões da pergunta de 1h30 dentro do modo
+  ("continuo treinando", "já parei") ficavam **por baixo** do cronômetro. Um
+  toque no centro deles caía no rótulo do descanso. Agora o toque acerta os
+  botões.
+- **A altura publicada continua dizendo a verdade.** Fora de cena o cronômetro
+  agora fica layoutado (82 px). Mesmo assim, `--ins-timer-h` é 0 fora de cena
+  e a altura dele em cena. Um teste no motor cobra isso.
+- **Testes.** São 10 casos novos: 5 na árvore (`cena.test.js`) e 5 no motor
+  (`descanso.test.js`). A guarda (c) ganhou o sujeito composto. Plantei 17
+  violações e as 17 ficaram vermelhas. Os 10 casos novos reprovam o build de
+  `cf0e4e4`. Nos dois motores, os 5 casos do motor passam várias vezes seguidas.
+- **`tipos` limpo, `build` ok, `vitest` 1623 de 1623.**
+
+### O que mudou, arquivo por arquivo
+
+| arquivo | o que mudou |
+|---|---|
+| `src/componentes.css` | **`#timer`**: deixa de usar `display: none`. Fora de cena fica `display: flex`, `translate: 0 calc(100% + var(--ins-tabbar))` (abaixo da borda da tela) e `visibility: hidden`. `.on` vale `translate: none; visibility: visible`, e `.sai` segura `visibility: visible`. No portão, `#timer.anda` transiciona `translate` em `--ins-dur-sai` e `#timer.anda.on` em `--ins-dur-entra`, os dois na `--ins-curva-camada`. Sob `reduce`, `#timer.anda.on` usa `ins-esmaece` em `--ins-dur-dissolve`. O `transform: translateX(-50%)` continua intacto. **`#toast`**: a altura do cronômetro sai do `bottom` e entra em `translate: 0 calc(-1 * var(--ins-timer-h))`. **`.ins-faixa`**: o mesmo. **O acompanhamento**, no portão: `#toast, .ins-faixa` em `--ins-dur-sai`; `html:has(#timer.on) #toast`, `… .ins-faixa` em `--ins-dur-entra`; os dois na curva da camada. **`#tctx`**: fora de cena, o rótulo vazio guarda a linha dele (`::before` com um espaço duro), ver decisão 7. **A reserva do modo**: `#app:has(.ins-modo)` virou `html:has(.ins-modo)`, e o comentário que dizia alcançar os quatro consumidores foi reescrito (agora é verdade, e diz por quê). |
+| `src/base.css` | `@keyframes ins-esmaece` (opacidade de 0 a 1): a chegada de camada sob "Reduzir movimento", que as peças 4 e 5 vão usar também. |
+| `src/main.jsx` | `tempo` da porta importado como `tempoDoMovimento`. `alturaDoTimer` passa a guardar a altura que o observador entrega (`alturaMedida`), e `publicaAlturaDoTimer` publica essa altura em cena e 0 fora, sem medir no toque. O observador nasce com o nó (`ligaBotaoDoTimer`). Funções novas: `poeEmCena(box, anda)`, `tiraDeCena(box)`, `terminaDescida()` e `limpaProcedencia()`. `startTimer` põe em cena com `anda`. `retomaDescanso` põe em cena sem `anda`. `stopTimer` tira de cena, e o rótulo só sai quando a descida termina. `desliga` termina a descida pendente. |
+| `src/tokens.css` | Só o comentário de `--ins-timer-h`: quem o lê, e que o toast e a faixa o leem no `translate`. |
+| `src/palco.css` | Só o comentário da especificidade: o `#timer` não acende mais por `display`. |
+| `DESIGN.md` | Duas linhas na tabela de movimentos: o descanso que sobe e desce, e o toast e a faixa que acompanham. Em "o que fica sem movimento" entram o fim do descanso (o cronômetro fica onde está), o descanso que substitui outro e o descanso que volta na abertura. |
+| `tests/dominio/estilo.test.ts` | O caso "no modo, a reserva do rodapé…" passa a cobrar uma regra só, escrita na RAIZ (`html`/`:root`), e confere em `index.html` que `#timer` e `#toast` moram fora do `#app`, que é o motivo da regra. **Guarda (c)**: o "centrado não anima `transform`" passa a valer para toda regra cujo SUJEITO é o centrado (`sujeitoDe`, novo), e não só para o seletor exato. Era um buraco: `#timer.anda { transition: transform … }` passava verde (plantio P3). |
+| `tests/fluxo/cena.test.js` (novo) | Na árvore: as classes e a ordem delas, o estado gravado antes do desenho, a descida que acaba pelo relógio da porta, a troca no lugar, ±15 e parar no meio, o caminho parado (com "Reduzir" e sem `matchMedia`) e a abertura parada. |
+| `tests/fluxo/descanso.test.js` (novo) | No motor (Chromium; `LASTRO_MOTOR=webkit` roda os mesmos no WebKit): o lugar no modo e fora dele, a subida e a descida, o acompanhamento, "Reduzir movimento" e a altura publicada. |
+
+### As decisões, com o porquê
+
+1. **A reserva do modo mora na raiz.** Custom property só desce pela árvore, e
+   `#timer`/`#toast` são irmãos do `#app` no `body`. Escrita no `#app`, ela
+   chegava ao fim da página e à faixa (que mora dentro do `.ins-modo`), mas
+   não chegava aos dois. `html:has(.ins-modo)` alcança os quatro sem mudar
+   nada fora do modo. A guarda (d) aceita a regra: ela declara só uma custom
+   property, e nada que contenha fixo.
+2. **A distância é `100% + --ins-tabbar`, e não só `100%`.** Só a borda inteira
+   garante que nenhum pedaço do cronômetro fica à vista, parado, no primeiro
+   quadro. No iPhone a reserva do modo é a área do indicador de home (34 pt),
+   e com `100%` os 34 de cima apareceriam de estalo. Numa tela cheia sem barra,
+   apareceriam 52. Fora do modo ele nasce abaixo da tela e sobe por trás da
+   barra de abas, que é opaca e tem z 40 contra 35. Consequência dita: fora do
+   modo o cronômetro anda 134 px e o toast anda 82 px, no mesmo tempo e na
+   mesma curva. Os dois partem e chegam juntos. O vão entre eles abre até a
+   altura da barra no começo, enquanto o cronômetro ainda está atrás dela, e
+   fecha no fim. O toast fica acima do cronômetro em todo quadro. No modo
+   (reserva 0 aqui) os dois andam juntos ao pixel.
+3. **`translate` mais `visibility`, e não `@starting-style`.** `@starting-style`
+   resolve só a entrada. A saída precisa do nó visível enquanto desce, e uma
+   classe com transição inverte sozinha quando um "parar" chega no meio da
+   subida, porque a transição nova parte de onde a velha estava. `visibility`
+   fora de cena faz o que `display: none` fazia: tira os botões do toque, do
+   Tab e do leitor de tela.
+4. **Quem segura a visibilidade na descida é `.sai`, por um relógio que lê
+   `tempo('--ins-dur-sai')`, e não uma transição de `visibility`.** A guarda
+   (c) só deixa mover `transform`, `translate`, `scale` e `opacity`, e o
+   pedido manda nesse sentido. Transicionar `visibility` exigiria abrir uma
+   exceção na guarda. Sob "Reduzir" (e onde a porta não sabe) o tempo é 0, e
+   `.sai` nem entra. Ressalva medida: o relógio começa na mudança de classe e
+   a transição começa no estilo seguinte, até um quadro depois. Por isso o
+   último pedaço da descida pode acontecer já escondido. Com a cauda da curva,
+   aos 345 ms o cronômetro está a 0,02 px do fim (Chromium), então isso é
+   invisível.
+5. **`.anda`: só o toque move.** `startTimer` e `tiraDeCena` põem a classe, e
+   `retomaDescanso` não põe. Na abertura o `render()` já desenhou, o estilo do
+   cronômetro já existe e uma transição dispararia. A abertura não se move
+   (08 §4).
+6. **O toast e a faixa leem a mesma variável no `translate`.** A altura muda na
+   hora em que ele entra ou sai, e quem anda é a propriedade, composta, na
+   transição de cada um. O token da direção vem de `html:has(#timer.on)`: em
+   cena vale `--ins-dur-entra`, fora vale `--ins-dur-sai`. Hoje os dois são
+   350 ms, e se o dono mudar um, o acompanhamento segue o cronômetro.
+   Medido: as três transições começam no mesmo instante (`startTime` igual)
+   nos dois motores.
+7. **Fora de cena, o rótulo vazio guarda a linha.** A publicação no toque usa a
+   altura guardada, sem medir nada. Quando o rótulo sumia ao parar, o
+   cronômetro escondido media 58 px e o próximo descanso (que sempre tem
+   procedência) media 82. No Chromium a correção do observador chega antes da
+   pintura. No WebKit chega um quadro depois: o toast e a faixa começavam a
+   subir para o lugar errado e ficavam **até 10 px por baixo do cronômetro**
+   no começo da subida (medido, faixa 890 contra cronômetro 888 aos 14 ms,
+   860 contra 850 aos 62 ms). Com a linha guardada, a altura fora de cena é a
+   de quando ele entra. O caso de altura cobra isso nos dois motores, porque
+   no Chromium só o modo "Reduzir" mostrava o salto duplo (plantio P9).
+8. **Ele desce inteiro.** O número e a procedência ficam no nó até a descida
+   acabar, e só então o rótulo sai. Com tempo 0 (jsdom, "Reduzir") o rótulo
+   sai na hora, como antes. O caso de `cronometro.test.js` "e o rótulo sai
+   junto com o descanso" não mudou.
+9. **A curva do esmaecer é a da camada.** O papel é "a camada que chega", e
+   peça 2 usou `--ins-curva` para o número que acende, que é outra coisa.
+   Mediu 120 ms, `cubic-bezier(0.32, 0.72, 0, 1)` nos dois motores.
+10. **A porta é lida antes de mexer na classe.** Lida depois, a leitura do
+    estilo computado resolveria o estilo novo do cronômetro no meio da tarefa,
+    antes de a altura publicada mudar a do toast e da faixa. Medi os dois jeitos
+    no WebKit e as três transições começaram no mesmo instante, então é
+    cautela, e o comentário diz isso.
+11. **Não mexi no lugar fora do modo** (fundo do cronômetro em 844, a reserva
+    de 52 sobre a barra de 47 px que já existia). O pedido diz "sem quebrar o
+    lugar dele fora do modo".
+
+### Os números, antes e depois
+
+Chromium 1234 e WebKit 26.5 (Playwright), 414 × 896 a ×2, sem preferência e
+com "Reduzir movimento". O antes é o build de `cf0e4e4`, o depois é o final.
+Os dois foram copiados para o scratchpad e servidos um de cada vez na porta
+4729, que ficou desligada no fim. Scripts em scratchpad (`peca3/mede.mjs`,
+`tabela.mjs`). Nenhum erro de página em nenhuma rodada. Os dois motores deram
+os mesmos números, menos onde a tabela separa.
+
+| medida | antes | depois |
+|---|---|---|
+| cronômetro no modo, em cena (y) | 761,8–844 (52 px acima do fundo de 896) | **813,8–896** |
+| toast no modo, sem cronômetro · com | 787,3–830 · 705,3–748 | 839,3–882 · 757,3–800 |
+| botões da pergunta de 1h30 com o descanso, no modo: quem o dedo acerta no centro | `#tctx` (o rótulo do descanso, por cima) | o próprio botão |
+| cronômetro fora do modo (barra de abas em 849) | 761,8–844 | 761,8–844 (igual) |
+| subida | num quadro | `translate` 350 ms, `cubic-bezier(0.32, 0.72, 0, 1)` nos dois motores; parte de `0 82,19px` (a borda) até `none`; 21 quadros amostrados com mudança |
+| descida | some num quadro | `translate` 350 ms, a mesma curva; visível em 21 (Chromium) e 22 (WebKit) quadros amostrados; escondido aos ~390–410 ms |
+| maior passo do toast entre dois quadros (subida · descida) | 82 · 82 | 16,1 · 16,0 (Chromium); 15,4 · 15,5 (WebKit) |
+| maior passo da faixa na subida | 82 | 16,0 (Chromium); 15,2 (WebKit) |
+| o toast e a faixa por baixo do cronômetro, em algum quadro | a faixa 52 px por baixo dele, parada | nunca: 0,19 px no máximo, que é o arredondamento da altura publicada (inteira) contra a caixa (82,19); era assim também fora do modo |
+| início das três transições (`startTime`) | — | igual nos dois motores |
+| largura rolável em todos os quadros | 414 | 414 |
+| descanso que substitui outro | nada se move | nada se move |
+| "parar" aos 120 ms da subida | — | inverte de onde estava, sem salto: Chromium 827,7 (`on`) → 823,9 → 833,5 (`sai`, descendo); WebKit 828,5 → 828,5 → 839,7 |
+| "Reduzir": chegada | num quadro | `ins-esmaece` 120 ms, só opacidade (0 → 1), nada desliza; toast e faixa no lugar novo no primeiro quadro |
+| "Reduzir": saída | num quadro | num quadro (escondido no primeiro, sem `.sai`) |
+
+### Os testes, e como provei que reprovam
+
+**`tests/fluxo/cena.test.js`** (jsdom, com `matchMedia` de mentira posto antes
+do app). O jsdom resolve o token: `--ins-dur-sai` sai como `.35s`, e a porta lê
+350.
+
+- *entra já gravado, sai descendo, e o relógio da porta tira a classe*: o alvo
+  já está gravado no mesmo tique do toque; as classes ficam `anda on`, depois
+  `anda sai`; a altura publicada é 0 já na saída; o rótulo continua durante a
+  descida; e depois de `--ins-dur-sai` sobra `anda`. O jsdom nunca dispara
+  evento de fim de transição. Se a classe sai aqui, ninguém o esperava.
+- *substitui no lugar; um descanso no meio da descida sobe dali*: nenhuma
+  descida fica agendada, e a que foi desfeita não o tira de cena depois.
+- *±15 e parar respondem no meio da subida*: os botões respondem, e o −15 que
+  passa de zero desce como parar.
+- *sob "Reduzir movimento", e sem `matchMedia`, sai de uma vez*.
+- *o descanso da abertura aparece no lugar*: as classes ficam `on`, sem
+  `anda`, e o primeiro "parar" já desce.
+
+**`tests/fluxo/descanso.test.js`** (Chromium; o mesmo arquivo com
+`LASTRO_MOTOR=webkit`). Os tempos e a curva vêm dos tokens, como o motor os
+resolve.
+
+- *o lugar*: no modo, o fundo do cronômetro na borda (±0,5 px), a faixa acima
+  dele, o toast acima da faixa e os dois botões da pergunta tocáveis. Fora do
+  modo, o fundo continua na reserva e não passa da barra de abas.
+- *sobe e desce*: uma transição só, de `translate`, em `--ins-dur-entra`, na
+  curva da camada, que parte da altura inteira abaixo e chega a `none`. Visível
+  desde o primeiro quadro, só sobe e nunca passa do lugar (sem quique), em
+  vários quadros, e o −15 é tocável no meio. Um descanso que substitui outro
+  não move nada. Para a descida, todo evento de fim de transição ou animação é
+  bloqueado na captura antes de chegar ao app, e mesmo assim o cronômetro desce
+  em `--ins-dur-sai`, visível e com `.sai`, e termina escondido, sem `.sai`,
+  inteiro abaixo da borda. "Parar" aos 120 ms volta de onde estava.
+- *acompanham*: na subida e na descida, o toast e a faixa têm uma transição de
+  `translate` com o tempo e a curva do cronômetro e o mesmo `startTime`. Em
+  todo quadro, a faixa fica acima do cronômetro e o toast acima da faixa.
+  Nenhum passo de quadro passa de metade da altura (antes, a altura inteira
+  num quadro), e no fim os dois voltam ao lugar exato.
+- *"Reduzir movimento"*: o cronômetro tem só `ins-esmaece` em
+  `--ins-dur-dissolve`, só opacidade. Nada no toast nem na faixa, nada
+  desliza, e os dois já estão no lugar no primeiro quadro. Na saída, escondido
+  desde o primeiro quadro e nenhuma animação.
+- *a altura publicada*: fora de cena, a caixa mede mais que 0 e está escondida,
+  e a publicada é `0px`. Em cena publica a altura dele, e ela é a mesma de
+  fora de cena (decisão 7). Descendo, ainda visível, a publicada já é 0, e
+  continua 0 depois.
+
+**A folga das caixas no motor.** Lido quadro a quadro, a caixa de um elemento
+com transição no compositor às vezes vem ~1 px atrasada no WebKit. Medi duas
+leituras do mesmo cronômetro no mesmo quadro com 0,92 px de diferença, e o
+`currentTime` e o `translate` computado das três transições iguais. A ordem
+quadro a quadro é cobrada com 1,5 px de folga (`FOLGA`). O que prova que andam
+juntas é o instante, o tempo e a curva, cobrados exatos. Os defeitos que a
+folga deixa passar seriam menores que 1,5 px. Os que ela pega são de 52 px
+(o vão) e 10 px (decisão 7).
+
+**Plantio** (`scratchpad/peca3/planta.py`: aplica, constrói quando o caso é de
+árvore ou motor, roda só os casos da peça, registra e devolve o arquivo; o
+último passo reconstrói o limpo). As 17 violações deram vermelho:
+
+| # | a violação plantada | quem ficou vermelho |
+|---|---|---|
+| P1 | a reserva do modo de volta no `#app` | a reserva em `estilo.test.ts` e 4 casos do motor ("844 de 896 (antes do conserto, 844…)") |
+| P2 | fora de cena por `display: none` de novo | 4 do motor (nenhuma transição; a caixa mede 0 fora de cena) |
+| P3 | o cronômetro transiciona `transform` em `#timer.anda` | (c), **só depois do conserto da guarda** (antes, verde) |
+| P4 | a transição do cronômetro fora do portão | (b) |
+| P5 | o toast com a altura do cronômetro no `bottom`, sem `translate` | acompanhamento ("o toast anda pela propriedade `translate`…: []") |
+| P6 | a faixa sem o acompanhamento | acompanhamento |
+| P7 | sem o esmaecer sob "Reduzir" | "Reduzir movimento" (a guarda fica verde, como deve: ela não exige o esmaecer) |
+| P8 | sob "Reduzir", `ins-pousa` (desliza) no lugar do esmaecer | (b) e (c) |
+| P9 | sem a linha guardada do rótulo fora de cena | Chromium: altura publicada e "Reduzir" (o toast salta duas vezes); WebKit: também o acompanhamento ("a faixa por baixo do cronômetro") |
+| P10 | a publicação lê a caixa, em cena ou não | altura publicada e acompanhamento |
+| P11 | a descida acaba no `transitionend` | (e), `cena` e "sobe e desce" |
+| P12 | sem segurar a visibilidade na descida | 6 casos (`cena` e motor) |
+| P13 | a descida segura 350 ms sem perguntar à porta | "Reduzir" (árvore e motor) |
+| P14 | o descanso da abertura sobe | a abertura (`cena`) |
+| P15 | o descanso novo entra uma tarefa depois (desce e sobe) | 8 casos |
+| P16 | parar sem pôr `.anda` (o descanso da abertura sumiria parado) | a abertura (`cena`) |
+| P17 | a faixa acompanha por `transform` | (c) |
+
+**Contra o build de antes** (a cópia de `cf0e4e4` posta no lugar do `dist/` e
+reconstruída depois), os 10 casos novos deram vermelho, e os 5 do motor também
+no WebKit. Nos do motor o motivo é o defeito: 844 de 896, nenhuma transição, o
+toast sem acompanhamento, nenhum esmaecer, a caixa 0 fora de cena. Nos 5 da
+árvore parte do vermelho é de forma: as classes `anda` e `sai` não existiam.
+O de substância é a saída sem `.sai`, que antes sumia de uma vez.
+
+### O que ficou de fora, e por quê
+
+- **No iPhone, no modo, o cronômetro fica acima dos 34 pt do indicador de
+  home**, como a faixa e o fim da página já ficavam: a reserva do modo é
+  `var(--sa-bottom)` por decisão escrita ("o que sai é a barra, não a área
+  segura"). O conteúdo que rola continua visível nessa tira. Se o dono quiser
+  o cronômetro cobrindo até a borda física, o caminho é `bottom: 0` mais
+  `padding-bottom: var(--sa-bottom)` no modo, com o toast e a faixa
+  descontando a área segura da altura publicada. Não fiz, porque é uma escolha
+  de layout além do vão, e aqui o `sa-bottom` é 0 (nada mede).
+- **Nas telas cheias (Ajustes e as outras), o cronômetro continua 52 px acima
+  do fundo**, igual antes e depois (medido: 761,8–844 com `.tc` e sem barra
+  de abas). É o mesmo defeito do modo: a reserva vale 52 + área segura onde a
+  barra não é desenhada. O pedido limita o conserto ao modo ("fora dele, nada
+  de comportamento muda"), então fica para a peça 5 (telas cheias), onde o
+  conserto seria o mesmo: `html:has(.tc)`.
+- **A entrada e a saída do próprio toast são da peça 7.** Aviso para ela: o
+  `translate` do toast agora é do acompanhamento. Uma entrada que anime
+  `translate` sozinha brigaria com ele. Os quadros dela têm de partir de
+  `calc(var(--ins-sobe-aviso) - var(--ins-timer-h))`, ou a entrada mora num
+  invólucro. `transform` não serve: a guarda (c) proíbe no centrado.
+- **O fim da página, ao parar**, encolhe `--ins-timer-h` de uma vez (é
+  `padding`, layout). Quem está rolado até o fim vê o conteúdo descer 82 px no
+  primeiro quadro da descida, enquanto o cronômetro ainda desliza por cima.
+  Antes, o mesmo salto acontecia junto com o sumiço. Animar a reserva seria
+  animar layout.
+- **O arredondamento de 0,19 px** (a altura publicada é `offsetHeight`,
+  inteiro, e a caixa tem 82,19) já existia e não muda nada que se veja.
+- **O Tab com uma folha aberta e o descanso ligado** ainda sai da folha para o
+  −15 (05 §3.1). É precondição da peça 4. Fora de cena o problema não existe
+  (`visibility: hidden`).
+- **Nada foi visto num iPhone de verdade.** O WebKit desta máquina prova lugar,
+  tempo, curva e ordem, e não fluidez.
+
+### Para o revisor
+
+- Fluxo 03 (grava-1, grava-2): o cronômetro, o toast e a faixa se movem **de
+  propósito** aos +120 ms (07 §1.3, princípio 3, "fora os que se movem de
+  propósito"). O cronômetro nasce em y 896 e assenta em 813,8–896.
+- As durações que aparecem são 350 (subida e descida, a do toast e a da faixa)
+  e 120 (o esmaecer sob "Reduzir"), as duas da lista do 07 §1.2.
+- `micro-avisos.mjs`: o toast deixa de pular 82 px. No modo, com o conserto, a
+  posição dele mudou (839–882 sem cronômetro, 757–800 com).
+
+### As saídas
+
+`npm run tipos`:
+
+```
+> lastro-app@2.0.0 tipos
+> tsc --noEmit
+
+(saída 0)
+```
+
+`npm run build`:
+
+```
+> lastro-app@2.0.0 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 84 modules transformed.
+src/main.jsx (7531:45): Use of eval in "src/main.jsx" is strongly discouraged as it poses security risks and may cause issues with minification.
+rendering chunks...
+computing gzip size...
+dist/sw.js                        5.24 kB
+dist/index.html                   5.81 kB │ gzip:   2.72 kB
+dist/assets/index-C7D0ZV4K.css  104.34 kB │ gzip:  18.59 kB
+dist/assets/index-CU8gQVd2.js   580.37 kB │ gzip: 181.24 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 773ms
+(saída 0)
+```
+
+`npx vitest run`:
+
+```
+ RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+
+ Test Files  79 passed (79)
+      Tests  1623 passed (1623)
+   Start at  20:55:23
+   Duration  39.12s (transform 2.66s, setup 0ms, import 28.98s, tests 384.40s, environment 9ms)
+
+(saída 0)
+```
+
+Antes desta peça: 1613 de 1613 (peça 2, conferido pelo coordenador). A
+diferença, +10, são os casos novos: 5 em `cena.test.js` e 5 em
+`descanso.test.js`. Os casos de `estilo.test.ts` continuam 58: um foi
+reescrito e a guarda (c) ganhou uma conferência dentro do caso que já existia.

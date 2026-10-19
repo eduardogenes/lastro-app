@@ -85,7 +85,7 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Respostas do dono registradas no diário (16/10, 01h25).
 
 ### Fase 3 — implementação (só depois das respostas)
-- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1 e 2 feitas (16/10).
+- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1, 2 (16/10) e 3 (19/10) feitas.
 - [x] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`). Peça 0: casos (a)–(e) e a lista de folhas, 52 plantios.
 - [x] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova (peça 0).
 - [ ] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde.
@@ -384,3 +384,42 @@ Chromium, 11–12 no WebKit, eram 56–83 e 159–179), o contador com um escrit
 só (1/12 = 1/12) e o dedo que não perde o lugar (linha 323 → 323; depois de
 "Pular", a frase sob o dedo). O plantio não rodou; os testes novos reprovam o
 build de antes.
+
+**19/10, 18h15 — retomada depois de limite de uso e de reinício da máquina.**
+O revisor tinha terminado de gravar a peça 2 e o implementador da peça 3 ainda
+não tinha mudado nada no disco quando os dois caíram no limite (16/10, ~21h).
+A máquina reiniciou: o `/tmp` (scratchpad, os pedidos das peças) sumiu; o
+repositório, as gravações em `shots/` e o `~/.cache/ms-playwright` ficaram.
+Pedido da peça 3 recriado no mesmo caminho; os dois retomados. Lição: os
+pedidos das peças passam a ser escritos também aqui, num anexo, se outra queda
+assim acontecer — por ora o texto deles está nesta conversa.
+
+**19/10 — peça 2 conferida pelo revisor** (07 §8), e a peça 1 sem ressalva
+(as três repetições do `grava-2`: mediana 16,7 ms no antes, 15,2 na peça 1; o
+21,3 era ruído). Peça 2: 1ª série a frio no Chromium, trabalho no toque 61,2 →
+10,1 ms (tela a +26 em vez de +73); no WebKit 169 → 11 ms; pouso 160 ms em
+`translate` + opacidade, 120 ms só opacidade sob "Reduzir"; linha da série fica
+em 323; contador 1/12 = dado. **A conferir:** no WebKit a frio a tela ainda muda
+a +301 ms (antes +352), mas não é trabalho do toque (aquecido, +18) — atribuído
+ao primeiro desenho sem a fonte do sistema no Linux; o `AudioContext` deixa um
+quadro de 23–33 ms ao entrar no modo, como previsto. Regra nova do protocolo:
+com carga de outro projeto na máquina, todo tempo se mede com antes e depois
+intercalados (1.5, 5c). Depois do reinício o `python3` virou 3.14 sem `numpy`;
+o revisor usa um `numpy` no scratchpad (`PYTHON=`), nada instalado no sistema.
+Os pedidos das peças passam a morar em `docs/motion/_pedidos/`.
+
+**19/10, 21h — peça 3 conferida.** O cronômetro sobe da borda em 350 ms na
+curva da camada, sem quique, e desce por onde veio; toast e faixa acompanham
+pela propriedade `translate` (o maior passo do toast num quadro, de 82 para
+~16 px). Fora de cena ele fica abaixo da borda com `visibility: hidden` (fora
+do Tab e do leitor de tela); na descida, a classe `.sai` o mantém visível pelo
+tempo do token lido na porta (0 sob "Reduzir"), sem ouvir fim de animação.
+Sob "Reduzir", esmaece 120 ms ao chegar e sai de uma vez. O vão de 52 px no
+modo acabou: a reserva do rodapé foi de `#app:has(.ins-modo)` para
+`html:has(.ins-modo)` (o cronômetro e o toast são irmãos do `#app`); no modo o
+cronômetro vai de 814 a 896. Isso destapou e consertou um defeito: os botões da
+pergunta de 1h30 ficavam por baixo do cronômetro. A guarda (c) tinha um buraco
+(só olhava o seletor exato) e foi fechada. `tipos` limpo, build, 1623/1623.
+**Para a peça 5:** nas telas cheias (Ajustes etc.) o cronômetro continua 52 px
+acima do fundo — o mesmo conserto, `html:has(.tc)`. **Para a peça 7:** o
+`translate` do toast agora é do acompanhamento; a entrada dele tem de compor.

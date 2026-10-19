@@ -579,8 +579,10 @@
   /* Altura da tab bar, para quem precisa reservar espaço embaixo. */
   --ins-tabbar: calc(52px + var(--sa-bottom));
   /* Altura do cronômetro de descanso quando ele está na tela; 0 quando não
-     está. Escrito pelo casco em `alturaDoTimer()`, e lido pelo toast, que se
-     empilha acima dele em vez de nascer atrás. */
+     está. Escrito pelo casco em `alturaDoTimer()`, e lido pelo toast e pela
+     faixa da sessão, que se empilham acima dele em vez de nascer atrás — no
+     `translate`, para acompanharem a subida e a descida dele (peça 3 do
+     motion) —, e pelo fim da página, que reserva o espaço. */
   --ins-timer-h: 0px;
   /* Altura da faixa da sessão (atalho ou pergunta); 0 quando não há treino
      aberto. Escrita pelo componente, e lida pelo toast e pelo fim da página,

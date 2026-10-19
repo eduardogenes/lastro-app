@@ -434,6 +434,18 @@ p, .ins-prosa, input, textarea {
   to   { opacity: 1; }
 }
 
+/* ESMAECER, a chegada de uma camada sob "Reduzir movimento" (resposta 2 do
+   dono, 16/10): nada desliza; a camada aparece de 0 ao lugar, em
+   `--ins-dur-dissolve`, e sai de uma vez. Só opacidade, que não é movimento
+   para o 2.3.3 da WCAG e é o que o próprio iOS faz com a chave ligada
+   (docs/motion/05 §2.2). Hoje o cronômetro (peça 3); a folha, o painel, a tela
+   cheia e o modo usam o mesmo nas peças 4 e 5. A camada é tocável desde o
+   quadro zero: opacidade não tira o toque. */
+@keyframes ins-esmaece {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 /* ============================================================
    SÓ RETRATO
    O manifesto já pede `"orientation": "portrait"`, e o Android

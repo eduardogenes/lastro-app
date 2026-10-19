@@ -50,6 +50,9 @@ export const DEDO = MOTOR === 'webkit' ? 'mouse' : (process.env.DEDO === 'mouse'
 /** Rótulo da rodada, que vai no nome de todo arquivo: chromium, webkit, chromium-reduz… */
 export const ROTULO = MOTOR + (REDUZ ? '-reduz' : '') + (DPR !== 2 ? '-x' + DPR : '') + (MOTOR === 'chromium' && DEDO === 'mouse' ? '-mouse' : '');
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
+// O Python com Pillow e numpy (PYTHON=/usr/bin/python3.12 quando o python3 do
+// sistema não os tem — foi o caso depois da atualização de 19/10, que trouxe o 3.14).
+const PY = process.env.PYTHON || 'python3';
 
 fs.mkdirSync(SAIDA, { recursive: true });
 
@@ -506,7 +509,7 @@ export async function gravaFluxo(ab, registro, cal, fluxo) {
   const arqMan = path.join(pasta, 'medidas-' + ROTULO + '.json');
   fs.writeFileSync(arqMan, JSON.stringify(manifesto, null, 1));
   // As tiras e as medidas quadro a quadro.
-  execFileSync('python3', [path.join(AQUI, 'revisor-tiras.py'), 'tiras', arqMan], { stdio: 'inherit' });
+  execFileSync(PY, [path.join(AQUI, 'revisor-tiras.py'), 'tiras', arqMan], { stdio: 'inherit' });
   if (!process.env.QUADROS) fs.rmSync(tmp, { recursive: true, force: true });
   return { arq: arqMan, passos: passos.map(x => x.id + (x.erro ? ' ERRO ' + x.erro : '')) };
 }
