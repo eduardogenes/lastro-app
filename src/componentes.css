@@ -5,7 +5,9 @@
 
 /* ---- Cabeçalho de tela ------------------------------------------------ */
 
-.ins-cab { padding: calc(14px + var(--sa-top)) 0 0; }
+/* `--ins-topo` e não `--sa-top`: a barra de status, ou a faixa "Não guardado"
+   quando ela está no topo (defeito 4; tokens). */
+.ins-cab { padding: calc(14px + var(--ins-topo)) 0 0; }
 .ins-cab-linha {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: var(--ins-5); margin-top: var(--ins-2);
@@ -220,9 +222,9 @@
    quique"; pergunta 11, o painel de apagar "igual à folha". É a ÚNICA
    ultrapassagem do app (`ins-quique`, nos tokens: sobe da borda, passa 8 % do
    lugar aos 55 % do tempo, volta 3 % aos 80 % e assenta, em
-   `--ins-dur-quique`), e só na CHEGADA: a saída continua de uma vez, porque a
-   folha fechada sai do DOM no mesmo desenho e a descida precisa da transição
-   de vista (peça 5).
+   `--ins-dur-quique`), e só na CHEGADA: a SAÍDA desce em 350 ms, sem quique,
+   pela transição de vista (peça 5, "A TROCA DE CAMADA", mais abaixo), porque a
+   folha fechada sai do DOM no mesmo desenho e o que desce é a foto dela.
 
    - A animação é do nó que NASCE, por CSS: o Preact monta a camada e o
      navegador a anima do primeiro quadro, sem relógio nem evento. O toque
@@ -244,12 +246,13 @@
      acendendo de 0 ali piscaria o fundo.
    - O "Não guardei" (`.falhou-w`) não se move: chega sozinho, e uma subida
      faria os botões varrerem a zona do polegar (docs/motion/03 §5.3).
-   - O DEDO SEGURA A CAMADA (`seguraSobODedo`, `folha.jsx`, pela porta do
-     movimento): enquanto o dedo está numa camada que ainda chega, a chegada
-     para no quadro em que o toque foi testado, e o clique cai no que o dedo
-     tocou ao descer. Sem isso o toque no meio da subida se perdia nos dois
-     motores (medido: o × e o véu tocados a 60–220 ms não fechavam a folha,
-     porque ela andou entre descer e soltar).
+   - O TOQUE VAI AO QUE O DEDO MIROU (`miraSobODedo`, `folha.jsx`, pela porta
+     do movimento): o clique de um toque que desceu numa camada que ainda chega
+     vai ao nó em que o dedo DESCEU, onde quer que ela esteja ao soltar. Sem
+     isso o toque no meio da subida se perdia nos dois motores (medido: o × e o
+     véu tocados a 60–220 ms não fechavam a folha, porque ela andou entre
+     descer e soltar). Nada pausa: na peça 4 o dedo segurava a chegada, e no
+     Chromium a pausa recuava a folha um quadro (07 §10).
    - Fora do portão o último quadro é o repouso (`transform: none`, véu a 1),
      que é o que a caixa já tem. Sob "Reduzir movimento" nada se desloca: a
      camada e o véu esmaecem em `--ins-dur-dissolve` (resposta 2).
@@ -678,10 +681,11 @@ button.ins-linha { border-radius: 0; }
 /* ---- Telas cheias ------------------------------------------------------ */
 
 /* GRUDADO NO TOPO, e isto não é enfeite.
-   Não há voltar do sistema: o app não usa `history`, então em PWA instalado não
-   existe botão do navegador nem gesto de borda. Este botão é a ÚNICA saída de
-   uma tela cheia — e ele rolava para fora em quatro dos cinco destinos, o que
-   obrigava a rolar tudo de volta para conseguir sair.
+   Este botão é a única saída À VISTA de uma tela cheia — e ele rolava para fora
+   em quatro dos cinco destinos, o que obrigava a rolar tudo de volta para
+   conseguir sair. (Quando isto foi escrito o app não usava `history`; hoje o
+   Voltar do sistema e o gesto de borda do iPhone instalado também fecham a
+   camada — `src/ui/navegacao.js` —, mas ninguém os vê: a saída que se lê é esta.)
 
    Sticky funciona aqui porque nenhum ancestral cria scroll container: o `body`
    usa `overflow-x: clip`, que corta sem rolar. Trocar por `hidden` reintroduz
@@ -690,7 +694,9 @@ button.ins-linha { border-radius: 0; }
   position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--ins-3);
-  padding-top: calc(var(--ins-6) + var(--sa-top));
+  /* `--ins-topo`: abaixo da barra de status, ou da faixa "Não guardado" quando
+     ela está lá — senão ela cobria o "‹ Voltar" (defeito 4; tokens). */
+  padding-top: calc(var(--ins-6) + var(--ins-topo));
   padding-bottom: var(--ins-4);
   /* opaco: o conteúdo passa POR BAIXO e precisa sumir, não borrar. Sem
      backdrop-filter, que pisca no Blink ao rolar. */
@@ -722,6 +728,103 @@ button.ins-linha { border-radius: 0; }
 .tc-nota { margin: var(--ins-6) 0 0; }
 .tc-grupos { margin-top: var(--ins-7); }
 .tc-rm { margin-top: var(--ins-10); }
+
+/* ---- A TROCA DE CAMADA (peça 5 do motion) --------------------------------
+   Dono, 16/10: pergunta 4, a tela cheia chega DA DIREITA, a tela inteira, e a
+   de baixo fica PARADA; pergunta 5, o modo de sessão entra como qualquer tela
+   cheia; pergunta 1, camada entra e sai em 350 ms na curva do iPhone, sem
+   quique — e nenhuma saída quica: a folha e o painel de apagar, que chegam com
+   o quique (peça 4), DESCEM em 350 ms, e o véu apaga junto; pergunta 2, sob
+   "Reduzir movimento" a camada esmaece ao chegar e sai de uma vez; pergunta 6,
+   o quadro a mais da transição de vista, aceito.
+
+   A camada que sai já deixou o DOM no mesmo desenho, e o que anda é a FOTO que
+   o navegador tirou (transição de vista de mesmo documento, pedida num ponto só
+   — `render()`, pela porta `src/ui/movimento.js`, `trocaDeCamada`). Nenhum
+   elemento real ganha `transform`: nenhum fixo é preso, nenhum `sticky` cai.
+   O sentido vem em `html[data-nav]`: `entra`, `sai`, ou `fica` (só a folha ou
+   o painel descem). A página inteira é UMA foto (`root`); o que é do aparelho
+   tem nome próprio e fica parado por cima dela (docs/motion/02 §1).
+
+   FORA DO PORTÃO, NENHUMA ANIMAÇÃO NAS FOTOS (06 §4.4): sem isto, uma transição
+   começada por qualquer caminho rodaria o cruzamento padrão do navegador — que
+   anima largura e altura do grupo, e não é transform nem opacidade. Com isto,
+   uma foto sem regra própria fica onde está, e a troca é seca. */
+::view-transition-group(*),
+::view-transition-image-pair(*),
+::view-transition-old(*),
+::view-transition-new(*) { animation: none; }
+
+/* O QUE É DO APARELHO NÃO ANDA. O cronômetro (fora do `#app`), o aviso curto, a
+   faixa da sessão e a faixa "Não guardado" ganham foto própria, que fica onde
+   está enquanto as páginas passam por baixo: o descanso não pertence à tela
+   que sai. Um nome por elemento — nome repetido aborta a transição —, e há um
+   de cada por vez. A barra de abas NÃO: ela é do lugar, e fica com ele (parada
+   embaixo da tela que chega, descoberta pela que sai); na troca de aba é a peça
+   6. `view-transition-name` não é movimento: mora fora do portão. */
+#timer { view-transition-name: cronometro; }
+#toast { view-transition-name: aviso; }
+.ins-faixa { view-transition-name: faixa; }
+.ng-faixa { view-transition-name: nao-guardado; }
+/* A folha de baixo e o véu dela se nomeiam pela POSIÇÃO NA PILHA (`folha-0`,
+   `veu-0`…, no `style` da `Folha`, `folha.jsx`): o nível se repete. O painel de
+   apagar é um por vez; o "Não guardei" não desce (03 §5.3), e por isso não tem
+   nome: sai de uma vez, com a página. */
+.pare-w:not(.falhou-w) > .pare { view-transition-name: painel; }
+.pare-w:not(.falhou-w) > .ins-veu { view-transition-name: veu-painel; }
+/* O que é do aparelho e NÃO está mais na tela nova (a faixa da sessão, que o
+   modo cobre; o aviso que acabou) sai de uma vez, no primeiro quadro, em vez de
+   ficar 350 ms por cima da página que chega. `:only-child`: só a foto velha, sem
+   nova. O que chega (a faixa, ao sair do modo) aparece parado no lugar dele. */
+::view-transition-old(cronometro):only-child,
+::view-transition-old(aviso):only-child,
+::view-transition-old(faixa):only-child,
+::view-transition-old(nao-guardado):only-child { opacity: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ENTRA: a tela nova chega da borda direita por cima; a de baixo, parada (a
+     foto velha não tem animação). A borda da que chega é dita por um FIO de 1 px
+     do lado esquerdo — nunca sombra (inegociável 3) —, fora da foto: em repouso
+     ele fica além da borda da tela, e nada salta 1 px no fim. */
+  html[data-nav="entra"]::view-transition-new(root) {
+    animation: ins-da-direita var(--ins-dur-entra) var(--ins-curva-camada) both;
+    border-left: var(--ins-fio-largura) solid var(--ins-fio);
+    margin-left: calc(-1 * var(--ins-fio-largura));
+  }
+  /* SAI: a de cima volta pela borda direita, POR CIMA da que reaparece (que já
+     nasce na rolagem de onde se entrou, e parada). O mesmo fio na borda. */
+  html[data-nav="sai"]::view-transition-old(root) {
+    animation: ins-para-direita var(--ins-dur-sai) var(--ins-curva-camada) both;
+    z-index: 1;
+    border-left: var(--ins-fio-largura) solid var(--ins-fio);
+    margin-left: calc(-1 * var(--ins-fio-largura));
+  }
+  /* A FOLHA E O PAINEL DE APAGAR DESCEM pela borda de baixo, sem quique, na
+     curva e no tempo da camada; o véu de cada um apaga junto, na curva do véu.
+     Só a foto que não tem nova (`:only-child`): a folha que fica aberta debaixo
+     de outra que fecha não se move. Quatro posições na pilha: o desenho para em
+     três; uma quinta sairia de uma vez, com a página. */
+  ::view-transition-old(folha-0):only-child,
+  ::view-transition-old(folha-1):only-child,
+  ::view-transition-old(folha-2):only-child,
+  ::view-transition-old(folha-3):only-child,
+  ::view-transition-old(painel):only-child { animation: ins-desce var(--ins-dur-sai) var(--ins-curva-camada) both; }
+  ::view-transition-old(veu-0):only-child,
+  ::view-transition-old(veu-1):only-child,
+  ::view-transition-old(veu-2):only-child,
+  ::view-transition-old(veu-3):only-child,
+  ::view-transition-old(veu-painel):only-child { animation: ins-apaga var(--ins-dur-sai) var(--ins-curva-ciclo) both; }
+}
+/* SOB "REDUZIR MOVIMENTO" (pergunta 2): nenhuma transição de vista — a porta
+   não a pede —; a tela cheia e o modo que CHEGAM esmaecem em
+   `--ins-dur-dissolve`, por CSS, no nó que nasce, e o que sai vai de uma vez.
+   Só na chegada (`data-nav="entra"`): a tela de baixo que reaparece não
+   esmaece, ela já estava lá. A folha e o painel esmaecem pelas regras deles
+   ("A CAMADA QUE CHEGA COM O QUIQUE"). */
+@media (prefers-reduced-motion: reduce) {
+  html[data-nav="entra"] .tc,
+  html[data-nav="entra"] .ins-modo { animation: ins-esmaece var(--ins-dur-dissolve) var(--ins-curva-camada) both; }
+}
 
 .tc-bloco {
   margin-top: var(--ins-6); padding: var(--ins-5);
@@ -1415,15 +1518,22 @@ button.ins-linha { border-radius: 0; }
      botão. Existe porque o relógio da sessão também gruda no topo, e precisa
      parar DEPOIS desta barra — somar à mão nos dois lugares desencontra na
      primeira vez que o padding mudar. */
-  --ins-modo-topo-h: calc(var(--sa-top) + var(--ins-3) + var(--ins-tap));
+  --ins-modo-topo-h: calc(var(--ins-topo) + var(--ins-3) + var(--ins-tap));
   /* `100vh` primeiro como fallback e `100svh` por cima, nesta ordem — a rede
      pegou esta regra errada na primeira versão deste arquivo, e com razão:
      invertida, o fallback vence e volta a sobra rolável do tamanho da barra. */
-  min-height: 100vh;
-  min-height: 100svh;
+  /* MENOS O PÉ DA PÁGINA (peça 5 do motion; docs/motion/04 §2.5). O `#app`
+     soma por baixo do modo a reserva do rodapé (`--ins-pe`: área segura,
+     cronômetro, faixa e o respiro de 24 px), e com o modo em `100svh` a página
+     curta ficava 24 px maior que a janela — 58 no iPhone, com a área do
+     indicador de home —: uma sobra rolável que mostrava o fundo. Descontado o
+     pé, o modo curto e o pé somam a janela, e nada rola. A cadeia acima
+     concorda: `body` em `100svh`, `#app` e `html` na altura do conteúdo. */
+  min-height: calc(100vh - var(--ins-pe));
+  min-height: calc(100svh - var(--ins-pe));
 }
 
-/* A RESERVA DO RODAPÉ, no modo.
+/* A RESERVA DO RODAPÉ, no modo — e em toda tela cheia.
    `--ins-tabbar` não é a altura da barra: a barra se mede sozinha, e o token
    existe "para quem precisa reservar espaço embaixo" (`tokens.css`, literal).
    São quatro consumidores — o fim da página (`#app`), o toast, o cronômetro e a
@@ -1437,8 +1547,13 @@ button.ins-linha { border-radius: 0; }
    de 896). Consertado na peça 3 do motion, porque o cronômetro que sobe da
    borda subiria do meio do ar.
    Fica `var(--sa-bottom)` e não `0`: o que sai é a barra, não o espaço do
-   indicador de home — sem ele o último cartão encosta nele. */
-html:has(.ins-modo) { --ins-tabbar: var(--sa-bottom); }
+   indicador de home — sem ele o último cartão encosta nele.
+   E A TELA CHEIA TAMBÉM (`.tc`, a moldura de todos os destinos): ela também
+   não desenha a barra de abas, e o cronômetro continuava 52 px acima do fundo
+   nos Ajustes, no Programa e nos outros, com o conteúdo por baixo — o mesmo
+   defeito, deixado pela peça 3 (que só podia mexer no modo) e consertado na 5. */
+html:has(.ins-modo),
+html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 
 /* DEITADO, NO MEIO DA SESSÃO (a D, momento 1, estado 14). O iOS não trava a
    orientação de app web (F60), e o telefone vira sozinho no banco. Fora do
@@ -1476,7 +1591,11 @@ html:has(.ins-modo) { --ins-tabbar: var(--sa-bottom); }
   position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center;
   padding: var(--ins-3) var(--ins-8) 0;
-  padding-top: calc(var(--ins-3) + var(--sa-top));
+  /* `--ins-topo`: a seta, a hora e o `···` começam abaixo da barra de status —
+     ou da faixa "Não guardado", quando ela está lá. Com `--sa-top` só, a faixa
+     (fixa, z 86) cobria os três (defeito 4, docs/motion/03 §8.3). A barra
+     continua grudada em `top: 0`: o fundo dela passa por baixo da faixa. */
+  padding-top: calc(var(--ins-3) + var(--ins-topo));
   background: var(--ins-fundo);
 }
 

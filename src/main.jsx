@@ -17,7 +17,7 @@ import {
 } from './dominio/carga';
 import { montaNoApp, desmontaDoApp } from './ui/raiz.jsx';
 import { camadasAbertas, sincronizaHistorico, liga as ligaNavegacao } from './ui/navegacao.js';
-import { tempo as tempoDoMovimento } from './ui/movimento.js';
+import { tempo as tempoDoMovimento, trocaDeCamada } from './ui/movimento.js';
 import { ehBancada } from './palco.js';
 import { MIN_PESAGENS as MIN_PESAGENS_CORPO, semanaEmCurso, ajusteDoVeredito, leituraVigente, JANELA_MIN, JANELA_MAX, VALIDADE_LEITURA, MIN_REGISTRADOS, ALVO_MIN, ALVO_MAX, leituraDaEvolucao, portoesDaRegra, semanasDaRegra } from './dominio/corpo';
 import { ondeEleEstava, proximoDepois } from './dominio/sessao';
@@ -36,7 +36,7 @@ import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
 import { FolhaPesoRapido } from './ui/folhas/pesorapido.jsx';
 import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { FolhaDecidir } from './ui/folhas/decidir.jsx';
-import { ChegadaDaFolha } from './ui/instrumento/folha.jsx';
+import { ChegadaDaFolha, LugarNaPilha } from './ui/instrumento/folha.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
 import { Revisao } from './ui/telas/revisao.jsx';
@@ -663,7 +663,7 @@ async function iniciarSessao() {
   S.done.sort(function (x, y) { return x.t - y.t; });
   segurarTela();
   await save();
-  render(); window.scrollTo(0, 0);
+  render(); rola(0);
   toast('Treino ' + view.day + ' iniciado. O tempo começa agora.');
 }
 
@@ -1179,7 +1179,7 @@ async function finalizarSessao() {
     view.open = null; view.editProg = false;
     view.day = nextDay();
     soltarTela();
-    await save(); render(); window.scrollTo(0, 0);
+    await save(); render(); rola(0);
     toast('Sessão descartada.');
     return;
   }
@@ -1232,7 +1232,7 @@ async function encerraDeVerdade(dia, feitas, resumoMods) {
   fechaSessao('manual');
   view.open = null; view.editProg = false;
   soltarTela();
-  await save(); render(); window.scrollTo(0, 0);
+  await save(); render(); rola(0);
   // "Encerrei o Treino A · 6h20 → 7h31 · 1h11 · 8 exercícios" — o intervalo
   // inteiro, e o pulado no resumo, que é onde a §7.5 o põe.
   toast('Encerrei ' + oTreino(dia) + ' · ' + fmtHoraDita(inicio) + ' → ' + fmtHoraDita(Date.now()) +
@@ -2650,7 +2650,7 @@ const CTX = {
     // ainda dependem de ter havido troca de lugar.
 
     render();
-    window.scrollTo(0, 0);
+    rola(0);
     if (vindoDeFora) carregaFotosDoDia();
   },
   telaCheia: telaCheia,
@@ -2979,7 +2979,7 @@ function impactoSeries(d, g) { return g ? impacto(g, seriesDe(g), alvo()[g]) : n
 function modoEdicao(on) {
   view.editProg = !!on;
   view.open = null; view.swapOpen = null; view.addEx = false; view.addQ = ''; view.novoEx = false;
-  render(); window.scrollTo(0,0);
+  render(); rola(0);
 }
 
 function mudaSeries(i, delta) {
@@ -3603,7 +3603,7 @@ function abrirPrograma(d) {
   entraNoDestino('prog'); render();
 }
 function fecharPrograma() { view.prog = null; render(); saiDoDestino('prog'); }
-function modoPrograma(m) { view.prog.modo = m; view.prog.day = null; render(); window.scrollTo(0,0); }
+function modoPrograma(m) { view.prog.modo = m; view.prog.day = null; render(); rola(0); }
 
 // Impacto do programa OFICIAL contra o alvo. Só aparece quando saiu do alvo.
 function impactoOficial(g) {
@@ -3776,8 +3776,8 @@ CTX.incorporaRevisao = async function () {
     return;
   }
   const quais = r.lida.dias.map(function (d) { return 'Treino ' + d.dia; }).join(', ');
-  view.revisao = null; saiDoDestino('revisao');
-  render();
+  view.revisao = null;
+  render(); saiDoDestino('revisao');
   toast('Revisão' + (r.lida.data ? ' de ' + r.lida.data : '') + ' incorporada: ' + quais + '.');
 };
 
@@ -4326,10 +4326,10 @@ async function detalhaLancamento() {
   if (S.sessao) { fechou = S.sessao.day; fechaSessao('manual'); }
   S.sessao = { day: m.day, inicio: m.t, ultima: m.t, sid: m.sid, retro: 1, tocado: Date.now(), pausas: [], pulados: [] };
   S.draft = null;
-  view.add = null; saiDoDestino('add');
+  view.add = null; saiDoDestinoNoDesenho('add');
   view.day = m.day; view.open = 0; abreModo();
   await save();
-  render(); window.scrollTo(0, 0);
+  render(); rola(0);
   toast(fechou
     ? 'Treino ' + fechou + ' de hoje encerrado. Agora preenchendo ' + fmtDate(m.t) + '.'
     : 'Preenchendo o treino de ' + fmtDate(m.t) + '. Some sozinho quando você sair.');
@@ -4340,7 +4340,7 @@ async function concluirRetro() {
   fechaSessao('manual');
   view.open = null;
   await save();
-  render(); window.scrollTo(0,0);
+  render(); rola(0);
   if (t) toast('Treino de ' + fmtDate(t) + ' concluído.');
 }
 
@@ -5079,7 +5079,7 @@ function diaDaSessaoAberta() {
   return S.sessao && treino(S.sessao.day) ? S.sessao.day : null;
 }
 
-function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); window.scrollTo(0,0); carregaFotosDoDia(); }
+function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; render(); rola(0); carregaFotosDoDia(); }
 /**
  * Traz o exercício recém-aberto para a tela.
  *
@@ -5094,8 +5094,12 @@ function go(d){ view.day=d; view.open=null; view.hist=null; view.nota=null; rend
  * simplesmente já está lá. Onde ele para é o `scroll-margin-top` de `.ex`.
  */
 function mostraExercicio(i) {
-  const el = document.querySelector('[data-ex="' + i + '"]');
-  if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'instant' });
+  // Dentro do desenho novo quando há uma troca de camada pendente (a faixa que
+  // leva ao modo e já abre o exercício): antes dele, o cartão ainda não existe.
+  noDesenho(function () {
+    const el = document.querySelector('[data-ex="' + i + '"]');
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'instant' });
+  });
 }
 
 // ---------- a série recebida: o pouso e o dedo no lugar (peça 2 do motion) ----------
@@ -5160,7 +5164,7 @@ function centroNaTela(el) {
 }
 function rolaPor(dy) {
   if (!(Math.abs(dy) >= 1)) return;
-  window.scrollTo(0, window.scrollY + dy);
+  noDesenho(function () { window.scrollTo(0, window.scrollY + dy); });
 }
 
 /**
@@ -6361,7 +6365,7 @@ async function apagaRegistroDeTreino(t) {
   });
 
   view.sessao = null;
-  await save(); render(); window.scrollTo(0, 0);
+  await save(); render(); rola(0);
   toast(series ? 'Treino e séries apagados.' : 'Registro apagado.');
 }
 
@@ -7621,7 +7625,8 @@ function folhaAberta() {
     // de cima, quando `trocaFolha` a pôs lá (peça 4 do motion; 02 T8).
     return (
       <ChegadaDaFolha.Provider key={i} value={TROCADAS.has(f) ? 'troca' : 'sobe'}>
-        {folhaDe(f, i)}
+        {/* e onde ela está na pilha: o nome dela na transição de vista (peça 5) */}
+        <LugarNaPilha.Provider value={i}>{folhaDe(f, i)}</LugarNaPilha.Provider>
       </ChegadaDaFolha.Provider>
     );
   });
@@ -7730,8 +7735,68 @@ CTX.seletorDeDia = function () {
 // ---------- render ----------
 // Monta a shell do Instrumento. As cinco abas são componentes; as telas cheias
 // tomam o lugar da shell inteira, tab bar inclusive.
+//
+// A TROCA DE CAMADA MORA AQUI, num ponto só (peça 5 do motion; docs/motion/02
+// §3.3). Quando o que se desenha muda de CAMADA — uma tela cheia ou o modo
+// chegam ou saem, uma folha ou o painel de apagar fecham —, o desenho é pedido
+// à porta do movimento (`trocaDeCamada`), que o faz dentro de uma transição de
+// vista: o navegador fotografa a tela de agora e chama `desenhaAgora` cerca de
+// um quadro depois (o quadro a mais que o dono aceitou, pergunta 6). Sem
+// movimento pedido, sem a API (o jsdom dos testes, iOS antes do 18) ou na
+// primeira tela (T9), desenha agora, como sempre.
+//
+// Enquanto o desenho novo está PENDENTE, `render()` não faz nada: o desenho que
+// vem lê o `view` mais recente, e dois `render()` seguidos viram uma transição
+// só (a navegação composta, 02 T2), no sentido da primeira mudança. E a rolagem
+// pedida nesse meio não rola a foto da tela velha: entra DENTRO do desenho novo
+// (`rola`, `noDesenho`), que já nasce na posição — é o que faz a rolagem voltar
+// exata (02 T6).
+let desenhoPendente = false;
+/** A rolagem que entra dentro do próximo desenho (`entraNoDestino`, ou `rola` com o desenho pendente). */
+let rolagemPendente = null;
+/** O que roda logo depois do próximo desenho, quando ele está pendente (`mostraExercicio`). */
+let paraODesenho = [];
+/** As camadas da tela que está desenhada: é contra elas que a próxima troca se mede. */
+let camadasDesenhadas = [];
+/** O Voltar que o navegador já animou (gesto de borda, `hasUAVisualTransition`): não anima de novo. */
+let jaAnimado = false;
+
+/**
+ * Qual troca de camada é esta, do que está desenhado para o que `view` pede:
+ * `entra` (um destino chega por cima), `sai` (o de cima sai e o de baixo — ou o
+ * lugar — reaparece), `fica` (nenhum destino muda, e uma folha ou o painel de
+ * apagar fecham) ou `null` (não é troca de camada: a folha que abre sobe por CSS,
+ * a troca do topo e o "Não guardei" não se movem, e trocar de aba é da peça 6).
+ */
+function sentidoDaTroca(antes, agora) {
+  const destinos = function (l) {
+    return l.filter(function (c) { return c !== 'pare' && c !== 'falhou' && c.indexOf('folha:') !== 0; });
+  };
+  const da = destinos(antes), dn = destinos(agora);
+  const topoAntes = da.length ? da[da.length - 1] : null;
+  const topoAgora = dn.length ? dn[dn.length - 1] : null;
+  if (topoAntes !== topoAgora) return topoAgora == null || da.indexOf(topoAgora) >= 0 ? 'sai' : 'entra';
+  const folhas = function (l) { return l.filter(function (c) { return c.indexOf('folha:') === 0; }).length; };
+  if (folhas(agora) < folhas(antes)) return 'fica';
+  if (antes.indexOf('pare') >= 0 && agora.indexOf('pare') < 0) return 'fica';
+  return null;
+}
+
 function render() {
+  if (desligado || desenhoPendente) return;
+  const sentido = abriu ? sentidoDaTroca(camadasDesenhadas, camadasAbertas(view)) : null;
+  if (!sentido) { desenhaAgora(); return; }
+  desenhoPendente = true;
+  trocaDeCamada(sentido, desenhaPendente, !jaAnimado);
+}
+
+/** O desenho que a transição pede — e que o toque no meio dela antecipa. Desenha uma vez só. */
+function desenhaPendente() { if (desenhoPendente) desenhaAgora(); }
+
+function desenhaAgora() {
+  desenhoPendente = false;
   if (desligado) return;
+  const antes = camadasDesenhadas;
   montaNoApp(<App ctx={CTX} />);
   // A primeira montagem é a prova de que o registro abriu: `abriu` cala o prazo
   // (`naoAbriu` não faz nada depois dela), e se o aviso de que não abriu chegou
@@ -7743,10 +7808,35 @@ function render() {
     const aviso = document.getElementById('abertura-falhou');
     if (aviso) aviso.remove();
   }
+  // A rolagem, DENTRO deste desenho: a tela que reaparece já nasce na posição.
+  const y = rolagemPendente;
+  rolagemPendente = null;
+  if (y != null) window.scrollTo({ top: y, behavior: 'instant' });
+  const depois = paraODesenho;
+  paraODesenho = [];
+  depois.forEach(function (f) { f(); });
+  camadasDesenhadas = camadasAbertas(view);
+  devolveOFoco(antes, camadasDesenhadas);
   ajustaRelogio();
   // Depois de montar, e não antes: aqui `view` já é o que está na tela, e a
   // profundidade do histórico passa a ser a mesma da pilha de camadas.
-  sincronizaHistorico(camadasAbertas(view).length);
+  sincronizaHistorico(camadasDesenhadas.length);
+}
+
+/**
+ * Rola a janela até `y` — DENTRO do desenho novo, se há um pendente; senão,
+ * agora. Toda rolagem do casco passa por aqui: com a transição de vista, a
+ * rolagem feita antes do desenho novo rolaria a foto da tela velha, que se
+ * moveria sozinha antes de sair (02 T1, "posição de leitura").
+ */
+function rola(y) {
+  if (desenhoPendente) { rolagemPendente = y; return; }
+  window.scrollTo({ top: y, behavior: 'instant' });
+}
+/** Roda `f` logo depois do desenho novo, se há um pendente; senão, agora. */
+function noDesenho(f) {
+  if (desenhoPendente) { paraODesenho.push(f); return; }
+  f();
 }
 
 // ---------- o Voltar do sistema ----------
@@ -7780,19 +7870,33 @@ const FECHA_CAMADA = {
   modoSessao: function () { CTX.fechaModoDeSessao(); }
 };
 
-function voltarUmaCamada() {
+function voltarUmaCamada(como) {
   const camadas = camadasAbertas(view);
   if (!camadas.length) return;
   const topo = camadas[camadas.length - 1];
-  // A folha é a única camada cuja chave carrega índice: são várias do mesmo
-  // tipo, e o que fecha é sempre a de cima.
-  if (topo.indexOf('folha:') === 0) { CTX.fechaFolha(); return; }
-  const fecha = FECHA_CAMADA[topo];
-  if (fecha) fecha();
+  // Quando o navegador já animou a volta (o gesto de borda do iPhone), o fecho
+  // desenha sem a transição do app: a mesma volta não aparece duas vezes.
+  jaAnimado = !!(como && como.jaAnimado);
+  try {
+    // A folha é a única camada cuja chave carrega índice: são várias do mesmo
+    // tipo, e o que fecha é sempre a de cima.
+    if (topo.indexOf('folha:') === 0) { CTX.fechaFolha(); return; }
+    const fecha = FECHA_CAMADA[topo];
+    if (fecha) fecha();
+  } finally {
+    jaAnimado = false;
+  }
 }
 
 ligaNavegacao({
-  camadas: function () { return camadasAbertas(view).length; },
+  // Com um desenho PENDENTE (a troca de camada da peça 5), o histórico ainda
+  // tem a profundidade da tela desenhada: a entrada da camada nova só é
+  // empurrada no desenho. O `popstate` que chega nesse meio — o do
+  // `history.go(-1)` com que o desenho anterior consumiu a entrada de uma camada
+  // fechada pelo botão — compara com ELA. Comparado com o `view` pendente, ele
+  // via uma camada a mais e a fechava: abrir a Evolução logo depois de sair do
+  // modo a fechava sozinha (medido no WebKit, onde a foto da tela velha demora).
+  camadas: function () { return desenhoPendente ? camadasDesenhadas.length : camadasAbertas(view).length; },
   aoVoltar: voltarUmaCamada
 });
 
@@ -10693,8 +10797,8 @@ CTX.abreProtocolo = function () {
 CTX.fechaProtocolo = function () { view.protocolo = null; render(); saiDoDestino('protocolo'); };
 // O toque em começar é também o que libera o som (a D, estado 1): no Safari do
 // iOS, áudio só existe dentro de um toque (F58).
-CTX.comecaSessaoDeFotos = function () { preparaAudio(); view.protocolo.montagem = false; render(); window.scrollTo(0, 0); };
-CTX.vaiParaPose = function (id) { view.protocolo.pose = id; render(); window.scrollTo(0, 0); };
+CTX.comecaSessaoDeFotos = function () { preparaAudio(); view.protocolo.montagem = false; render(); rola(0); };
+CTX.vaiParaPose = function (id) { view.protocolo.pose = id; render(); rola(0); };
 
 function andaPose(delta) {
   const ordem = ordemDePoses();
@@ -10789,7 +10893,7 @@ async function tiraFotoDoCorpo(el) {
   try {
     const r = await guardaFotoDaPose(v.d, v.pose, await CORPO.reduz(arquivo));
     render();
-    if (!(r && r.parou)) window.scrollTo(0, 0);
+    if (!(r && r.parou)) rola(0);
   } catch (e) {
     toast('Não deu para guardar a foto.');
   }
@@ -11751,7 +11855,7 @@ CTX.encerraSessaoEsquecida = async function () {
   if (!s) return;
   fechaSessao('auto');
   faixaPerguntando = false;
-  await save(); render(); window.scrollTo(0, 0);
+  await save(); render(); rola(0);
   // "já parei" é um TOQUE que grava o fim automático — o único lugar do produto
   // em que um toque dele grava um tempo que não é o do toque. A frase diz isso.
   toast(fraseDoFechoNaUltima(s, 'Encerrei'));
@@ -11768,7 +11872,7 @@ CTX.voltaAoTreino = function () {
   abreModo();                          // a faixa entra NO modo, não na aba atrás dele
   render();
   if (view.open != null) mostraExercicio(view.open);
-  else window.scrollTo(0, 0);
+  else rola(0);
 };
 
 /**
@@ -11951,8 +12055,9 @@ CTX.abreAjustes = function () {
 CTX.fechaAjustes = function () {
   if (!view.ajustes) return;
   view.ajustes = false;
-  saiDoDestino('ajustes');
+  // desenha, depois rola: ver `fechaModoDeSessao`
   render();
+  saiDoDestino('ajustes');
 };
 
 /**
@@ -12200,27 +12305,140 @@ CTX.registraPesoRapido = async function () {
   if (gravou && p.length && p[p.length - 1].k === 'pesoRapido') { pilha().pop(); render(); }
 };
 
+// DESENHA, DEPOIS ROLA (peça 5 do motion; docs/motion/02 §0 e T6). Este fecho
+// e o de `fechaAjustes` rolavam ANTES do `render()`: o `scrollTo` corria com o
+// modo ainda no DOM, o navegador cortava na altura máxima DELE, e o Corpo que
+// entrou a 1982 px voltava a 1091. Agora os dois fazem como os outros doze: o
+// destino sai do desenho e só então a posição volta — dentro do desenho novo,
+// quando há transição (`rola`).
 CTX.fechaModoDeSessao = function () {
   if (!view.modoSessao) return;
   view.modoSessao = false;
-  saiDoDestino('modoSessao');
   render();
+  saiDoDestino('modoSessao');
 };
 
+/**
+ * Entra num destino: guarda onde a tela de baixo estava — a posição e o
+ * controle que o abriu — e pede o topo DENTRO do desenho que o mostra
+ * (`rolagemPendente`). Rolar aqui, antes do desenho, rolaria a foto da tela
+ * que fica por baixo durante a chegada, e ela daria um salto antes de ser
+ * coberta.
+ *
+ * A posição de baixo é a que está na tela, ou a que já foi pedida para o
+ * desenho que vem (um destino que fecha e outro que abre no mesmo toque).
+ */
 function entraNoDestino(chave) {
-  scrollDoDestino[chave] = window.scrollY;
-  window.scrollTo(0, 0);
+  scrollDoDestino[chave] = rolagemPendente != null ? rolagemPendente : window.scrollY;
+  focoDoDestino[chave] = chaveDoAcionador();
+  rolagemPendente = 0;
 }
 
 /** Fim de fluxo: o destino fechou, e a posição guardada não serve mais. */
-function esqueceDestino(chave) { delete scrollDoDestino[chave]; }
+function esqueceDestino(chave) { delete scrollDoDestino[chave]; delete focoDoDestino[chave]; }
 
+/**
+ * Sai de um destino, DEPOIS do `render()` que o tirou: a posição de antes volta
+ * — agora, ou dentro do desenho novo, se a troca está pendente.
+ */
 function saiDoDestino(chave) {
   const y = scrollDoDestino[chave] || 0;
   delete scrollDoDestino[chave];
   // 'instant': suave faz a página deslizar sozinha depois que o destino já
   // sumiu, e parece bug — o mesmo motivo de folha.jsx
-  window.scrollTo({ top: y, behavior: 'instant' });
+  rola(y);
+}
+
+/**
+ * Um destino que fecha e outro que abre NO MESMO desenho (o "Detalhar" do
+ * lançamento passado: o lançamento sai, o modo entra): a posição de baixo não
+ * rola agora — rolar o lançamento cortaria na altura dele —; ela fica pedida
+ * para o desenho, e o destino que entra a guarda como sua.
+ */
+function saiDoDestinoNoDesenho(chave) {
+  const y = scrollDoDestino[chave] || 0;
+  delete scrollDoDestino[chave];
+  delete focoDoDestino[chave];
+  rolagemPendente = y;
+}
+
+// ---------- O FOCO DEVOLVIDO (peça 5 do motion; docs/motion/05 §3.1, §3.4) ----------
+//
+// O destino SUBSTITUI a casca inteira (`app.jsx`): ao fechar, o controle que o
+// abriu é desenhado de novo, nó novo, e ninguém dizia onde o foco devia pousar
+// — ele caía no `body` (medido: ao sair do modo e ao fechar toda tela cheia).
+// Agora o foco volta a um lugar DECLARADO: o mesmo controle, achado de novo
+// pela chave dele (o `data-a`, ou a tag e a primeira classe, e a posição entre
+// os iguais), ou, se ele não existe mais, o título da tela que reaparece.
+// Guardado por nome do destino, como a posição de leitura.
+
+/** Destino → a chave do controle que o abriu (`chaveDoAcionador`). */
+const focoDoDestino = {};
+/** O último controle tocado ou clicado (o Safari não foca botão no toque): o acionador provável. */
+let ultimoAcionado = null;
+if (typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('click', function (e) {
+    ultimoAcionado = { el: e.target, quando: relogioDoFoco() };
+  }, true);
+}
+function relogioDoFoco() {
+  return typeof performance !== 'undefined' && performance.now ? performance.now() : 0;
+}
+/** O que conta como controle a que o foco pode voltar. */
+const CONTROLE = 'button, a[href], [role="button"], label, input, select, textarea, [tabindex]:not([tabindex="-1"]), .ex-top';
+
+/**
+ * A chave do controle que está abrindo um destino agora: o tocado há pouco, ou
+ * o que tem o foco (o teclado). `null` quando não há controle (a abertura do
+ * app, um verbo chamado por programa).
+ */
+function chaveDoAcionador() {
+  const recente = ultimoAcionado && relogioDoFoco() - ultimoAcionado.quando < 1000 ? ultimoAcionado.el : null;
+  const el = recente && recente.isConnected ? recente : document.activeElement;
+  const c = el && el.closest ? el.closest(CONTROLE) : null;
+  if (!c || c === document.body || !c.isConnected) return null;
+  const a = c.getAttribute('data-a');
+  const classe = (typeof c.className === 'string' ? c.className : '').trim().split(/\s+/)[0];
+  const sel = a ? '[data-a="' + a.replace(/"/g, '\\"') + '"]' : c.tagName.toLowerCase() + (classe ? '.' + classe : '');
+  let iguais = [];
+  try { iguais = [].slice.call(document.querySelectorAll(sel)); } catch (e) { return null; }
+  return { sel: sel, i: iguais.indexOf(c), texto: (c.textContent || '').trim().slice(0, 80) };
+}
+
+/** Foca `el`, sem rolar, se ele está na página e fora de camada inerte; diz se o foco ficou nele. */
+function tentaFocar(el) {
+  if (!el || !el.isConnected || el.closest('[inert]') || typeof el.focus !== 'function') return false;
+  el.focus({ preventScroll: true });
+  return document.activeElement === el;
+}
+
+/**
+ * Depois do desenho: se um destino SAIU e o que está por cima é uma camada que
+ * já estava lá (o lugar, ou o destino de baixo), o foco volta ao controle que
+ * abriu o destino que saiu — o mais fundo, se saíram vários no mesmo toque —,
+ * ou ao título da tela. Quem chega não precisa disto: o título de uma tela
+ * cheia e o do modo recebem o foco ao montar.
+ */
+function devolveOFoco(antes, agora) {
+  const destino = function (c) { return c !== 'pare' && c !== 'falhou' && c.indexOf('folha:') !== 0; };
+  const sairam = antes.filter(function (c) { return destino(c) && agora.indexOf(c) < 0; });
+  if (!sairam.length) return;
+  const chave = focoDoDestino[sairam[0]];
+  sairam.forEach(function (c) { delete focoDoDestino[c]; });
+  const topo = agora.filter(destino).pop() || null;
+  if (topo != null && antes.indexOf(topo) < 0) return;      // um destino novo chegou: ele foca o próprio título
+  // Uma folha, o pare ou o aviso por cima ficam com o foco deles.
+  if (agora.some(function (c) { return !destino(c); })) return;
+  let alvo = null;
+  if (chave) {
+    let iguais = [];
+    try { iguais = [].slice.call(document.querySelectorAll(chave.sel)); } catch (e) { iguais = []; }
+    alvo = iguais[chave.i];
+    if (!alvo || (alvo.textContent || '').trim().slice(0, 80) !== chave.texto) {
+      alvo = iguais.filter(function (el) { return (el.textContent || '').trim().slice(0, 80) === chave.texto; })[0] || alvo;
+    }
+  }
+  if (!tentaFocar(alvo)) tentaFocar(document.querySelector('#app h1[tabindex]'));
 }
 
 // ---------- ajustar uma foto ----------

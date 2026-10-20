@@ -140,7 +140,8 @@ export function sincronizaHistorico(n) {
  *
  * @param {object} p
  * @param {Function} p.camadas   devolve o número de camadas abertas agora
- * @param {Function} p.aoVoltar  fecha a camada do topo
+ * @param {Function} p.aoVoltar  fecha a camada do topo; recebe `{ jaAnimado }`
+ *   do Voltar do sistema (o navegador já animou a volta) e nada do Esc
  */
 export function liga(p) {
   if (typeof window === 'undefined' || !window.addEventListener) return;
@@ -195,14 +196,21 @@ export function liga(p) {
     aoVoltar();
   });
 
-  window.addEventListener('popstate', function () {
+  window.addEventListener('popstate', function (e) {
     const k = profundidadeDoHistorico();
     const n = p.camadas();
     profundidade = k;
+    // O NAVEGADOR JÁ ANIMOU? O gesto de borda do iPhone puxa a página de cima
+    // para a direita e mostra a de baixo — é animação do sistema, e o evento
+    // chega com `hasUAVisualTransition` (Safari 18, Chrome 118). Aí o app fecha
+    // sem a transição dele, senão a mesma volta apareceria duas vezes
+    // (docs/motion/02 T5). O botão Voltar do Android chega com `false`, e o app
+    // anima o mesmo reverso do "‹ Voltar".
+    const jaAnimado = !!(e && e.hasUAVisualTransition);
     // k > n: o usuário avançou (botão de ir adiante). Não há o que reabrir — a
     // profundidade acima já foi corrigida e o próximo `sincronizaHistorico`
     // reempurra o que faltar.
-    for (let i = 0; i < n - k; i++) aoVoltar();
+    for (let i = 0; i < n - k; i++) aoVoltar({ jaAnimado: jaAnimado });
   });
 }
 

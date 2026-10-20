@@ -20,7 +20,11 @@ export function Cabecalho({ olho, titulo, acao }) {
     <header class="ins-cab">
       <div class="ins-label">{olho}</div>
       <div class="ins-cab-linha">
-        <h1 class="ins-display">{titulo}</h1>
+        {/* `tabindex=-1`: alvo de foco sem entrar na tabulação. É o lugar
+            declarado para onde o foco volta quando um destino fecha e o
+            controle que o abriu não existe mais (peça 5 do motion; `devolveOFoco`,
+            `main.jsx`), e o alvo de foco do modo de sessão ao entrar. */}
+        <h1 class="ins-display" tabindex="-1">{titulo}</h1>
         {acao}
       </div>
     </header>

@@ -149,6 +149,11 @@ export async function abreNavegador({ reduz = false } = {}) {
         return view.day;
       })()`);
       await nav.espera(150);
+      // Entrar no modo é troca de camada (peça 5): o desenho novo entra ~1
+      // quadro depois, dentro de uma transição de vista de 350 ms. Os casos
+      // medem o modo parado, então esperam a troca acabar — sob carga, no
+      // WebKit desta máquina, ela começa centenas de ms depois.
+      await p.waitForFunction(() => !document.activeViewTransition && !!document.querySelector('.ins-modo'), null, { timeout: 8000 });
       return dia;
     },
     /** a caixa do `n`-ésimo elemento que casa `sel`, ou null se não está desenhado */

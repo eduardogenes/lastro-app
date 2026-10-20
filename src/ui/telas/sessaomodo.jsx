@@ -22,12 +22,24 @@
 // NÃO encerra o treino. Um "voltar" genérico deixaria a dúvida — e a dúvida,
 // no meio de uma série, custa um toque de teste para descobrir.
 
+import { useLayoutEffect, useRef } from 'preact/hooks';
 import { Treino } from './treino.jsx';
 import { FaixaDaSessao } from '../instrumento/faixasessao.jsx';
 
 export function SessaoModo({ ctx }) {
+  const modo = useRef(null);
+  // O FOCO ENTRA COM O MODO (peça 5 do motion; docs/motion/05 §3.1): até aqui o
+  // modo abria com o foco no `body` — para o teclado e o VoiceOver a tela tinha
+  // mudado inteira e o cursor não. O alvo é o título do treino (o `h1` do
+  // cabeçalho, `tabindex=-1`), como o de toda tela cheia, no mesmo desenho em
+  // que o modo monta e sem rolar nada. Uma vez por montagem: enquanto o modo
+  // continua, o foco não é roubado de quem está digitando a carga.
+  useLayoutEffect(function () {
+    const t = modo.current && modo.current.querySelector('main h1');
+    if (t) t.focus({ preventScroll: true });
+  }, []);
   return (
-    <div class="ins-modo">
+    <div class="ins-modo" ref={modo}>
       <div class="ins-modo-topo">
         <button class="ins-modo-sair"
                 data-a="sai-do-modo"

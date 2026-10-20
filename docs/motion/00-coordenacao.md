@@ -85,7 +85,7 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Respostas do dono registradas no diário (16/10, 01h25).
 
 ### Fase 3 — implementação (só depois das respostas)
-- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1, 2 (16/10), 3 e 4 (19/10) feitas.
+- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1, 2 (16/10), 3, 4 (19/10) e 5 (20/10) feitas.
 - [x] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`). Peça 0: casos (a)–(e) e a lista de folhas, 52 plantios.
 - [x] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova (peça 0).
 - [ ] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde.
@@ -459,3 +459,38 @@ Para o revisor: o fluxo 15 (× a +99 ms) pode reprovar pela mira do robô, que l
 a caixa um quadro antes; o `micro-avisos.mjs` precisa esperar a janela de 400
 ms. `tipos` limpo, build, 1639/1639; o `sobe.test.js` no WebKit roda à parte
 (`LASTRO_MOTOR=webkit`, 7/7).
+
+**20/10 — peça 4 conferida pelo revisor** (07 §10), com carga 1,1–2,6 e
+intercalado. Passou: folha e painel com `ins-quique` nos dois motores (passa do
+lugar a ~384 ms, assenta a ~668), véu em 350 `ease`, sem vão no pico; sob
+"Reduzir" só esmaece 120; "Não guardei": toque de dedo a ~156 ms ignorado, a
+~605 fecha; com o aviso, 45 de 45 focáveis do fundo e o `#timer` inertes (antes,
+nenhum); "Deixar como está" devolve o foco ao "Encerrar" (antes, `body`); nenhum
+intervalo de quadro acima do limite no quique. Reprovou: fluxo 15 (× a ~115 ms)
+pela mira do robô; ele criou o `15b` (véu num ponto fixo), que fecha em 3 de 3.
+**Achado:** no Chromium, o dedo pousado na folha subindo a faz VOLTAR UM QUADRO
+(a pausa de `seguraNoLugar` usa o tempo da thread principal, um quadro atrás do
+compositor) — é um piscar. Mandado ao implementador da peça 5, que mexe na mesma
+porta: de preferência trocar a pausa pelo reenvio do clique ao alvo do
+`pointerdown`, e provar quadro a quadro que nada volta.
+
+**20/10, 03h — peça 5 conferida.** A condição de entrada passou: o segundo
+toque no meio da troca chega ao alvo nas quatro camadas (tela cheia, modo,
+folha descendo, painel descendo), com dedo e ponteiro, no Chromium e no WebKit
+26.5 — nenhuma camada ficou seca. Rodei eu mesmo o `troca.test.js` no WebKit
+(10/10). O piscar que o revisor achou na peça 4 saiu: nada mais pausa; o alvo do
+`pointerdown` é guardado e o clique que cair em outro nó é reenviado a ele
+(`miraDoDedo`), e a troca de camada usa a mesma mira; nos quadros do compositor
+do Chromium, nenhum quadro volta. Números: rolagem do Corpo 1778 → 1778 (era
+→ 24); foco ao sair, no controle que abriu (era `body`); ao entrar no modo, no
+título; sobra rolável do modo curto 0 (era 24/58); cronômetro nas telas cheias
+com o fundo em 896 (era 844); faixa "Não guardado" sem cobrir o topo (defeito
+4, e de quebra o "‹ Voltar" de toda tela cheia e o ⚙ do Agora); anel de foco no
+campo de importar (defeito 7, e nos outros campos de arquivo do mesmo desenho);
+quadro a mais medido: Chromium +18 ms, WebKit +31 ms. Dois defeitos achados e
+consertados no caminho (o `popstate` atrasado que fechava a camada recém-aberta;
+a `ready` rejeitada ao pular uma transição antes de andar). **Aprovei** a
+exceção estreita na guarda (e) para `.ready.catch(semDono)` — `semDono` tem de
+continuar vazia; não é escutar fim de animação, é marcar como tratada a recusa
+que o pulo gera. As guardas (b) e (d) ficaram mais rigorosas. Plantio de 35
+violações com restauração por hash. `tipos` limpo, build, 1652/1652.

@@ -22,16 +22,17 @@
 //
 // CHEGA IGUAL À FOLHA (dono, 16/10, pergunta 11, contra a recomendação de
 // "parado"): sobe da borda com o quique e o véu acende, por CSS, no nó que
-// nasce (`componentes.css`, "A CAMADA QUE CHEGA COM O QUIQUE"), e o dedo que
-// desce nele enquanto ele sobe o segura (`seguraSobODedo`). A frase é texto do
+// nasce (`componentes.css`, "A CAMADA QUE CHEGA COM O QUIQUE"), e o toque que
+// desce nele enquanto ele sobe vai ao que o dedo mirou (`miraSobODedo`). A frase é texto do
 // painel e sobe inteira com ele, legível desde o primeiro quadro; nada nela se
-// anima à parte. A saída continua de uma vez — a descida precisa da transição
-// de vista, e é da peça 5. O que a frente 4 escreveu ("um painel que chega
+// anima à parte. A SAÍDA desce em 350 ms, sem quique, pela transição de vista
+// (peça 5): o painel já saiu do DOM no mesmo desenho, e o que desce é a foto
+// dele (`componentes.css`, "A TROCA DE CAMADA"). O que a frente 4 escreveu ("um painel que chega
 // animado diz 'apareci'") foi o argumento da recomendação; o dono decidiu o
 // contrário.
 
-import { useEffect, useRef } from 'preact/hooks';
-import { abreCamada, seguraSobODedo } from './folha.jsx';
+import { useEffect, useLayoutEffect, useRef } from 'preact/hooks';
+import { abreCamada, miraSobODedo } from './folha.jsx';
 
 const relogio = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : 0);
 
@@ -62,7 +63,7 @@ function PainelDePare({ p, onResponde }) {
   }, [p.id]);
   return (
     <div class={'pare-w' + (p.tom === 'pergunta' ? ' pergunta-w' : '')} data-pare={p.id} ref={camada}
-         onPointerDown={seguraSobODedo}>
+         onPointerDown={miraSobODedo}>
       <div class="ins-veu" />
       <div class="pare" role="alertdialog" aria-modal="true" aria-labelledby="pare-t">
         <p id="pare-t" class="pare-t">{p.texto}</p>
@@ -194,8 +195,31 @@ function AvisoDeFalha({ f, onTenta, onCopia, onBaixa, onFecha }) {
  */
 export function NaoGuardado({ n, aberto, onTenta }) {
   if (!n || aberto) return null;
+  return <FaixaNaoGuardado n={n} onTenta={onTenta} />;
+}
+
+/**
+ * A faixa fica FIXA NO TOPO, por cima de tudo menos do pare — e cobria a única
+ * saída do modo (a seta), a hora e o `···` (defeito 4, docs/motion/03 §8.3;
+ * dono, 16/10, pergunta 13: consertar na peça 5). O conserto não a esconde nem
+ * a move: ela publica a própria altura em `--ins-ng-h` (como a faixa da sessão
+ * publica a dela), e as barras do topo — a do modo, a da tela cheia e o
+ * cabeçalho das abas — passam a começar abaixo dela (`--ins-topo`, nos
+ * tokens), em vez de abaixo da barra de status só. De layout, no mesmo desenho
+ * em que ela nasce: nenhum quadro com a seta por baixo. Ao sair, a altura
+ * volta a 0.
+ */
+function FaixaNaoGuardado({ n, onTenta }) {
+  const ref = useRef(null);
+  useLayoutEffect(function () {
+    const raiz = document.documentElement;
+    raiz.style.setProperty('--ins-ng-h', (ref.current ? ref.current.offsetHeight : 0) + 'px');
+  });
+  useLayoutEffect(function () {
+    return function () { document.documentElement.style.setProperty('--ins-ng-h', '0px'); };
+  }, []);
   return (
-    <div class="ng-faixa" role="status">
+    <div class="ng-faixa" role="status" ref={ref}>
       <span>Não guardado neste aparelho · {n.oQue}</span>
       <button class="ng-b" data-a="ng-tenta" onClick={onTenta}>Tentar de novo</button>
     </div>

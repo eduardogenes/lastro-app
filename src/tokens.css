@@ -594,6 +594,16 @@
      aberto. Escrita pelo componente, e lida pelo toast e pelo fim da página,
      que se empilham acima dela — mesmo motivo do cronômetro. */
   --ins-faixa-h: 0px;
+  /* Altura da faixa "Não guardado" (fixa no topo, por cima da página); 0
+     quando ela não está na tela. Escrita pelo componente (`pare.jsx`), como a
+     da faixa da sessão. */
+  --ins-ng-h: 0px;
+  /* O QUE COBRE O TOPO DA TELA: a barra de status do sistema e, quando está lá,
+     a faixa "Não guardado" (que já desce por baixo da barra de status). As
+     barras do topo — a do modo, a da tela cheia, o cabeçalho das abas —
+     começam abaixo disto. Era só `--sa-top`, e a faixa cobria a seta de saída
+     do modo, a hora e o `···` (defeito 4, consertado na peça 5 do motion). */
+  --ins-topo: max(var(--sa-top), var(--ins-ng-h));
   /* Altura do relógio da sessão, que gruda no topo enquanto o treino corre.
      Existe como token porque quem ROLA precisa parar abaixo dele: sem isto o
      exercício aberto encosta o próprio nome embaixo do relógio. `.day-rel`

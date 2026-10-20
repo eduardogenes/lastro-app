@@ -117,7 +117,9 @@ function julga(rodada, a, d, extra, mov, tiraD) {
     const p = '1 toque nunca espera';
     const lac = qd.capturaAtrasadaMs != null || qa.capturaAtrasadaMs != null;
     if (d.confere === false) reprova(p, `o passo não produziu o efeito esperado (${d.esperado})`);
-    if (d.segundoToque && !/button|\[/.test(d.segundoToque.alvoDoClique || '')) reprova(p, `o segundo toque (${d.segundoToque.cliqueRelMs} ms depois do primeiro) caiu em ${d.segundoToque.alvoDoClique || 'lugar nenhum'}`);
+    // o segundo toque se perde quando cai no `html`/`body` (a View Transition o
+    // joga lá, 04 §2.6) ou em lugar nenhum; cair no véu ou num botão é chegar
+    if (d.segundoToque && (!d.segundoToque.alvoDoClique || /^(html|body)\b/.test(d.segundoToque.alvoDoClique))) reprova(p, `o segundo toque (${d.segundoToque.cliqueRelMs} ms depois do primeiro) caiu em ${d.segundoToque.alvoDoClique || 'lugar nenhum'}`);
     if (td.handlerMs != null && ta.handlerMs != null && td.handlerMs > Math.max(16, ta.handlerMs + 4)) reprova(p, `trabalho no toque ${td.handlerMs} ms (antes ${ta.handlerMs})`);
     if (td.eventTimingClickMs != null && ta.eventTimingClickMs != null && td.eventTimingClickMs > ta.eventTimingClickMs + 16) reprova(p, `Event Timing ${td.eventTimingClickMs} ms (antes ${ta.eventTimingClickMs})`);
     if (!lac && qd.primeiraMudancaMs != null && qa.primeiraMudancaMs != null && qd.primeiraMudancaMs > qa.primeiraMudancaMs + 17)
@@ -140,7 +142,11 @@ function julga(rodada, a, d, extra, mov, tiraD) {
     // o estado de toque (peça 1) aparece com o dedo e some ao soltar: um
     // "transitório" dentro da janela do dedo pousado é ele, não um pisca
     const doDedo = (ps, x) => ps.pousaRel != null && x.t <= 0 && x.t > ps.pousaRel - 40;
-    const trAs = (qa.transitorios || []).filter(x => !doDedo(a, x)), trDs = (qd.transitorios || []).filter(x => !doDedo(d, x));
+    // o quique tem dois pontos de retorno (~352 e ~515 ms depois de começar; 09,
+    // peça 4): ali a folha passa pelo mesmo lugar na ida e na volta, e o quadro
+    // do retorno parece "aparecer e sumir" sem ser pisca
+    const doQuique = x => mov && mov.tipo === 'quique' && [352, 515].some(r => Math.abs(x.t - r - 16) <= 40);
+    const trAs = (qa.transitorios || []).filter(x => !doDedo(a, x)), trDs = (qd.transitorios || []).filter(x => !doDedo(d, x) && !doQuique(x));
     const trA = trAs.length, tr = trDs.slice(trA);
     // o que se move de propósito naquele passo não conta: o cronômetro sobe e o
     // aviso e a faixa o acompanham (peça 3); o aviso sobe (peça 7)

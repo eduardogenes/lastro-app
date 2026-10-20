@@ -512,3 +512,70 @@ test('os Ajustes são destino: abrem do canto do Agora e fecham pelo Voltar', as
   assert.ok(a.$('.ins-tabbar'), 'com a casca de volta');
   a.fechar();
 });
+
+// ---------- peça 5 do motion: desenha, depois rola; e o foco devolvido ----------
+
+test('sair do modo e dos Ajustes rola DEPOIS de desenhar, e entrar num destino também', async () => {
+  // `fechaModoDeSessao` e `fechaAjustes` rolavam ANTES do `render()`: o
+  // `scrollTo` corria com o destino ainda no DOM, o navegador cortava na altura
+  // máxima DELE, e o Corpo que entrou a 1982 px voltava a 1091 (docs/motion/02
+  // §0; 07 §1.3, princípio 9). Agora todo fecho desenha e depois rola, e a
+  // entrada pede o topo para o desenho que mostra o destino — com a transição
+  // de vista, dentro dele (a metade de motor é `troca.test.js`). Aqui, no
+  // caminho sem transição, cobra-se a ORDEM: em cada pedido de rolagem, o que
+  // está no DOM.
+  const a = await app({ aba: 'corpo' });
+  await a.pronto();
+  let y = 0;
+  Object.defineProperty(a.window, 'scrollY', { get: () => y, configurable: true });
+  const pedidos = [];
+  a.window.scrollTo = function (x, top) {
+    const alvo = x && typeof x === 'object' ? x.top : top;
+    pedidos.push({ alvo, modo: !!a.$('.ins-modo'), tc: !!a.$('.tc') });
+    y = alvo || 0;
+  };
+  for (const [abre, fecha, sel] of [['ctx.abreModoDeSessao', 'ctx.fechaModoDeSessao', 'modo'], ['ctx.abreAjustes', 'ctx.fechaAjustes', 'tc']]) {
+    if (sel === 'tc') { a.v('ctx.vaiPara', 'agora'); await a.esperar(); }
+    y = 1500; pedidos.length = 0;
+    a.v(abre);
+    await a.esperar();
+    const entrada = pedidos.pop();
+    assert.ok(entrada && entrada.alvo === 0 && entrada[sel], abre + ': o topo é pedido com o destino já desenhado: ' + JSON.stringify(entrada));
+    pedidos.length = 0;
+    a.v(fecha);
+    await a.esperar();
+    assert.deepStrictEqual(pedidos, [{ alvo: 1500, modo: false, tc: false }],
+      fecha + ': a posição volta com o destino já fora do DOM — senão ela corta na altura dele');
+  }
+  a.fechar();
+});
+
+test('ao fechar um destino, o foco volta ao controle que o abriu — e não ao body', async () => {
+  // O destino SUBSTITUI a casca: ao fechar, o ⚙ que abriu os Ajustes é
+  // desenhado de novo, nó novo, e o foco caía no `body` (docs/motion/05 §3.1).
+  // Agora ele volta ao controle redesenhado (achado pela chave dele), ou, se ele
+  // não existe mais, ao título da tela de volta.
+  const a = await app({ aba: 'agora' });
+  await a.pronto();
+  a.$('[data-a="ajustes"]').click();
+  await a.esperar();
+  assert.strictEqual(a.doc.activeElement, a.$('.tc h1'), 'ao entrar, o foco está no título dos Ajustes');
+  a.$('.tc-back').click();
+  await a.esperar();
+  assert.ok(a.$('[data-a="ajustes"]') && a.doc.activeElement === a.$('[data-a="ajustes"]'),
+    'ao sair, o foco volta ao ⚙ redesenhado: ' + (a.doc.activeElement && a.doc.activeElement.outerHTML.slice(0, 80)));
+
+  // o modo: ganha o foco no título ao entrar, e devolve ao sair. Aberto por
+  // programa, sem controle nenhum com o foco, a volta é o título da aba.
+  a.doc.activeElement.blur();
+  await a.esperar(1100);
+  a.v('ctx.abreModoDeSessao');
+  await a.esperar();
+  assert.strictEqual(a.doc.activeElement, a.$('.ins-modo main h1'), 'o modo entra com o foco no título do treino');
+  a.$('.ins-modo-sair').click();
+  await a.esperar();
+  assert.notStrictEqual(a.doc.activeElement, a.doc.body, 'ao sair do modo, o foco não cai no body');
+  assert.strictEqual(a.doc.activeElement, a.$('h1.ag-cab-d'),
+    'aberto por programa (sem controle), o foco volta ao título da aba');
+  a.fechar();
+});

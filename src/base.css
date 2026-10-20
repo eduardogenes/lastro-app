@@ -223,6 +223,16 @@ a:focus-visible,
   outline: var(--ins-foco-largura) solid var(--ins-foco);
   outline-offset: var(--ins-foco-folga);
 }
+/* O CAMPO DE ARQUIVO que se desenha como botão (importar em Ajustes, a foto do
+   aparelho, a lousa): o `input` é transparente, deitado sobre o rótulo, e perde
+   o contorno pela regra dos campos acima — com o teclado, focá-lo não mostrava
+   NADA (defeito 7, docs/motion/05 §3.3; consertado na peça 5). O anel vai no
+   rótulo, que é o botão que se vê, igual ao de todo controle. Numa regra à
+   parte: um navegador sem `:has()` descarta a regra inteira em que ele aparece. */
+label:has(> input[type="file"]:focus-visible) {
+  outline: var(--ins-foco-largura) solid var(--ins-foco);
+  outline-offset: var(--ins-foco-folga);
+}
 
 /* Nível 4 e não 5: no campo de busca da biblioteca o placeholder é o ÚNICO
    rótulo que existe — não há label acima dele —, e a 16px o nível 5 dá 3,2:1.
@@ -266,8 +276,12 @@ p, .ins-prosa, input, textarea {
      cronômetro durante o descanso — e como já era o fim da rolagem, não havia
      como trazê-lo à vista. Na tela de treino o que sumia era "abrir o
      programa", 52px dele.
-     O token nasce 0px no tokens.css, então o `var()` dispensa fallback. */
-  padding-bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-faixa-h) + var(--ins-9));
+     O token nasce 0px no tokens.css, então o `var()` dispensa fallback.
+     Com NOME (`--ins-pe`), porque o modo desconta o mesmo pé da altura dele: o
+     modo curto mais o pé somam a janela, e não sobra nada rolável (peça 5 do
+     motion; `componentes.css`, `.ins-modo`). */
+  --ins-pe: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-faixa-h) + var(--ins-9));
+  padding-bottom: var(--ins-pe);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -447,6 +461,30 @@ p, .ins-prosa, input, textarea {
 @keyframes ins-esmaece {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* A TROCA DE CAMADA (peça 5): os quadros das FOTOS que a transição de vista
+   move — nunca de um elemento real (`componentes.css`, "A TROCA DE CAMADA").
+   `100%` é literal, porque quer dizer "da borda", como o cronômetro e a folha.
+   CHEGAR DA DIREITA: a tela inteira, da borda até o lugar. */
+@keyframes ins-da-direita {
+  from { transform: translateX(100%); }
+  to   { transform: none; }
+}
+/* SAIR PELA DIREITA: o caminho de volta, até passar da borda. */
+@keyframes ins-para-direita {
+  from { transform: none; }
+  to   { transform: translateX(100%); }
+}
+/* DESCER: a folha e o painel de apagar voltam pela borda de baixo. */
+@keyframes ins-desce {
+  from { transform: none; }
+  to   { transform: translateY(100%); }
+}
+/* APAGAR: o véu que some com a folha que desce. */
+@keyframes ins-apaga {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 /* ============================================================

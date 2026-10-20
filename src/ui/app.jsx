@@ -65,7 +65,9 @@ export function App({ ctx }) {
       {aba === 'agora' && (
         <header class="ins-cab ag-cab">
           <div class="ag-cab-r1">
-            <h1 class="ag-cab-d">{h.data}<HoraDoCabecalho /></h1>
+            {/* alvo de foco sem tabulação: para onde o foco volta quando um
+                destino fecha e o controle que o abriu não existe mais (peça 5) */}
+            <h1 class="ag-cab-d" tabindex="-1">{h.data}<HoraDoCabecalho /></h1>
             <button class="ins-cab-ajustes" data-a="ajustes"
                     aria-label="Ajustes deste aparelho"
                     onClick={ctx.abreAjustes}>⚙</button>

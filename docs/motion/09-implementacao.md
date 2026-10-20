@@ -1525,3 +1525,547 @@ dist/assets/index-cHaoqgWu.js   585.23 kB │ gzip: 182.63 kB
 
 Antes desta peça: 1623 de 1623 (peça 3). A diferença, +16, são os casos novos:
 1 em `estilo.test.ts` (59), 8 em `camadas.test.js` e 7 em `sobe.test.js`.
+
+---
+
+## Peça 5 · Telas cheias e modo de sessão
+
+Implementada em 19 e 20/10, sobre `5a6fced`, sem commit. Espec: o pedido em
+`_pedidos/peca-5.md`; `08-parecer.md` §3, §4 (peça 5), §5.1 e §6; as respostas do
+dono em `00-coordenacao.md` (16/10, 01h25) — pergunta 4 (da direita, a tela
+inteira, a de baixo PARADA), 5 (o modo como qualquer tela cheia), 1 (350 ms na
+curva do iPhone, sem quique; nenhuma saída quica), 2 (sob "Reduzir" esmaece ao
+chegar, sai de uma vez), 6 (o quadro a mais, aceito) e 13 (defeitos 4 e 7);
+`02-navegacao.md` §1, §2.0, T1–T3, T5–T7, §3.3–3.5; `04-desempenho.md` §2.4–2.6;
+`05-acessibilidade.md` §3.1 e §3.3; `03-micro.md` §5.3 e §8 item 3; a linha da
+peça 5 do `07-revisao-base.md` §1.4. E o item que o coordenador mandou no meio,
+da conferência da peça 4 (07 §10): no Chromium, o dedo pousado na folha que sobe
+a fazia VOLTAR um quadro.
+
+O implementador caiu no limite de uso logo depois de reescrever a parte do toque
+da porta. Retomado às 02h00: a reescrita estava inteira (de `SEGURA NO LUGAR` até
+o fim de `trocaDeCamada`); faltava um tipo (`tsc`: `[].concat` dava `never[]` em
+`miraDoDedo`), corrigido.
+
+### Em uma página
+
+- **A condição de entrada passou nas quatro camadas, nos dois motores.** Um
+  segundo toque no meio da troca chega ao que está sob o dedo: o "‹ Voltar" no
+  meio da chegada dos Ajustes, a seta no meio da chegada do modo (o fluxo 16), o
+  ⚙ do Agora no meio da descida da folha e no meio da descida do painel de
+  apagar — com o dedo (toque de verdade) e com o ponteiro, no Chromium e no
+  WebKit 26.5. Nenhuma camada ficou seca. O teste é `troca.test.js`, o primeiro
+  caso, e fica na suíte.
+- **O que ele vê.** A tela cheia (os 14 destinos e os Ajustes) e o modo chegam
+  da borda direita, a tela inteira, em 350 ms na curva do iPhone, com um fio de
+  1 px na borda esquerda; a de baixo fica parada. Saem pela direita, por cima da
+  que reaparece, no mesmo tempo — pela seta, pelo "‹ Voltar", pelo Esc e pelo
+  Voltar do sistema. A folha e o painel de apagar DESCEM em 350 ms, sem quique,
+  e o véu apaga junto; a folha de baixo de duas fica onde está. O cronômetro, o
+  aviso curto, a faixa da sessão e a faixa "Não guardado" ficam parados enquanto
+  as páginas passam. Sob "Reduzir movimento", nenhuma transição: a tela cheia e o
+  modo esmaecem 120 ms ao chegar e tudo sai de uma vez.
+- **A técnica** é a transição de vista de mesmo documento, pedida num ponto só:
+  o `render()` compara as camadas desenhadas com as que `view` pede e, se a troca
+  é de camada, desenha dentro de `trocaDeCamada` (a porta). As FOTOS se movem;
+  nenhum elemento real ganha `transform`.
+- **O toque nunca espera.** O `pointerdown` no meio da troca pula para o fim
+  (`skipTransition()`), o desenho pendente entra na hora, e o clique vai ao que
+  ficou sob o dedo. Nada espera `finished`, `ready` ou `updateCallbackDone` (da
+  `ready`, só a rejeição do pulo é marcada como tratada — decisão 21).
+- **A folha que sobe não volta mais um quadro.** O dedo deixou de pausar a
+  chegada: o clique do toque vai ao nó em que o dedo desceu ("a mira"), e a
+  subida segue. Nos quadros do compositor do Chromium, antes a borda da folha
+  parava ~200 ms sob o dedo e voltava 56 px de 2× (28 px) ao soltar; agora só
+  sobe, quadro a quadro, até o pico do quique.
+- **As precondições.** A rolagem volta exata (o Corpo entrava a 1778 e voltava a
+  24 nesta semente; agora 1778 → 1778, pela seta e pelo Voltar); o foco entra no
+  título do destino e do modo e volta ao controle que abriu (antes, `body` ao
+  sair de toda tela cheia e ao entrar e sair do modo); o modo curto não sobra
+  (24 px, 58 com a área segura → 0); o cronômetro nas telas cheias no fundo da
+  tela (761,8–844 → 813,8–896). Defeito 4: a faixa "Não guardado" deixou de
+  cobrir a seta, a hora, o `···`, o "‹ Voltar" e o ⚙. Defeito 7: o campo de
+  importar mostra o anel com o teclado (antes, nada).
+- **O quadro a mais, medido:** do toque ao desenho novo, Chromium +18 ms
+  (10,3 → 28 ms, mediana de 9); WebKit desta máquina, +31 ms (1 → 32).
+- **Testes.** 13 casos novos: 10 em `troca.test.js` (motor, Chromium e
+  WebKit), 2 em `navegacao.test.js` (árvore) e a guarda (h); o caso do toque na
+  subida de `sobe.test.js` reescrito para a mira; (b), (d) e (e) ajustados, e um
+  buraco da (d) fechado. Plantei 35 violações e as 35 ficaram vermelhas; o
+  controle, verde. Contra o build de antes, os 16 casos novos ou reescritos ficam
+  vermelhos.
+- **Dois defeitos achados no caminho, e consertados.** Com o desenho pendente, o
+  `popstate` atrasado de um fecho anterior fechava a camada recém-aberta (visto no
+  WebKit); e pular uma transição antes de ela andar deixava uma rejeição sem dono
+  (erro de página, nos dois motores). Ver as decisões 20 e 21.
+- **`tipos` limpo, `build` ok, `vitest` 1652 de 1652.**
+
+
+### O que mudou, arquivo por arquivo
+
+| arquivo | o que mudou |
+|---|---|
+| `src/ui/movimento.js` | **`trocaDeCamada(sentido, desenha, anima)`**: põe o sentido em `html[data-nav]` (`entra`, `sai`, `fica`) e, com movimento pedido e a API, desenha dentro de `startViewTransition`; senão, na hora. `desenha` é idempotente; um relógio de 1 s (`DESENHO_ATRASADO_MS`) desenha se o navegador nunca chamar (página escondida no meio). **O toque**: `aoDescer` (pula e desenha), `aoSoltar`/`aoCancelar`/`aoClicar` e `entregaOClique`, na janela, na captura. **A mira** (`miraDoDedo`, para a camada que chega por CSS): o alvo do `pointerdown`; o clique que cair em outro nó é engolido e reenviado a ele, e o que não vier em `SEM_CLIQUE_MS` (300) depois de soltar o app entrega. **`seguraNoLugar` saiu** (a pausa da peça 4). A transição ainda corre? `document.activeViewTransition`, ou o relógio do token onde ele não existe. A rejeição do pulo antes de a transição andar é marcada como tratada (`ready.catch(semDono)`, `semDono` vazia). |
+| `src/main.jsx` | **O `render()` num ponto só**: `sentidoDaTroca(desenhadas, pedidas)`, `desenhaAgora`, `desenhaPendente`; com o desenho pendente, `render()` não faz nada. **A rolagem dentro do desenho**: `rolagemPendente`, `rola(y)` (todas as 15 chamadas `window.scrollTo(0, 0)` do casco passaram por ela), `noDesenho(f)` (`mostraExercicio`, `rolaPor`). `entraNoDestino` guarda a posição (ou a já pedida) e pede o topo para o desenho; `saiDoDestino` rola com `rola`; `saiDoDestinoNoDesenho` para o "Detalhar" (um destino sai e outro entra no mesmo desenho). **A ordem** em `fechaModoDeSessao`, `fechaAjustes` e no fecho da revisão incorporada: desenha, depois rola. **O foco devolvido**: `focoDoDestino`, `chaveDoAcionador` (o controle tocado há menos de 1 s, ou o focado: `data-a`, ou tag e primeira classe, e a posição entre os iguais, e o texto), `devolveOFoco` (o controle, ou o `h1[tabindex]` da tela que reaparece). **O Voltar já animado**: `voltarUmaCamada({ jaAnimado })` desenha sem transição. Com o desenho pendente, a navegação conta as camadas da tela desenhada (decisão 20). `LugarNaPilha` em volta de cada folha. |
+| `src/ui/navegacao.js` | O `popstate` lê `hasUAVisualTransition` e passa `{ jaAnimado }` ao fecho. |
+| `src/ui/instrumento/folha.jsx` | `seguraSobODedo` virou `miraSobODedo` (sem pausa). `LugarNaPilha` (contexto): o véu e a caixa se nomeiam `veu-N` e `folha-N` no `style`, pela posição na pilha. |
+| `src/ui/instrumento/pare.jsx` | O painel usa `miraSobODedo`. A faixa "Não guardado" virou um componente interno (`FaixaNaoGuardado`) que publica a altura em `--ins-ng-h` (efeito de layout) e a zera ao sair. Comentários do cabeçalho. |
+| `src/ui/instrumento/telacheia.jsx` | O foco no título passou de `useEffect` a `useLayoutEffect`: no mesmo desenho, e sem roubar depois o foco que o casco devolve. |
+| `src/ui/telas/sessaomodo.jsx` | O modo foca o `h1` do treino ao montar (efeito de layout, `preventScroll`). |
+| `src/ui/instrumento/primitivos.jsx`, `src/ui/app.jsx` | `tabindex="-1"` no `h1` do `Cabecalho` e no do Agora: o título da aba é o lugar declarado do foco quando o controle que abriu não existe mais (e o do treino é o alvo do modo). |
+| `src/componentes.css` | Bloco novo **"A TROCA DE CAMADA"** depois das telas cheias: fora do portão as quatro fotos `animation: none`; os nomes do que é do aparelho (`#timer` → `cronometro`, `#toast` → `aviso`, `.ins-faixa` → `faixa`, `.ng-faixa` → `nao-guardado`) e do painel (`painel`, `veu-painel`); o que é do aparelho e sai da tela some no primeiro quadro (`:only-child`, `opacity: 0`); no portão, `entra` (foto nova, `ins-da-direita`, 350 ms, curva da camada, fio de 1 px na borda esquerda com margem −1 px), `sai` (foto velha, `ins-para-direita`, por cima, `z-index: 1`, o mesmo fio), a descida (`folha-0`…`folha-3` e `painel`, só `:only-child`, `ins-desce`) e o véu (`veu-0`…`veu-3`, `veu-painel`, `ins-apaga`, curva do véu); sob `reduce`, `html[data-nav="entra"] .tc` e `.ins-modo` esmaecem em `--ins-dur-dissolve`. **`.ins-modo`**: `min-height: calc(100svh - var(--ins-pe))` (com o fallback em `vh`). **A reserva do rodapé** também em `html:has(.tc)`. **`--ins-topo`** no padding de `.ins-cab`, `.tc-topo`, `.ins-modo-topo` e em `--ins-modo-topo-h`. Comentários da camada que chega (a mira, a descida) e do topo da tela cheia (o Voltar do sistema existe). |
+| `src/base.css` | `--ins-pe` nomeado no `#app` (o pé da página, que o modo desconta). O anel do campo de arquivo: `label:has(> input[type="file"]:focus-visible)`. Os quadros `ins-da-direita`, `ins-para-direita`, `ins-desce`, `ins-apaga`. |
+| `src/tokens.css` | `--ins-ng-h` (0) e `--ins-topo: max(var(--sa-top), var(--ins-ng-h))`. |
+| `DESIGN.md` | Quatro linhas na tabela de movimentos (a tela cheia e o modo chegam, saem; a folha e o painel descem; o véu apaga). "O que fica sem movimento": o que é do aparelho na troca, o Voltar já animado, a primeira tela; a saída da folha deixou de estar lá. "O dedo segura a camada" virou "O toque chega ao que o dedo mirou" (com a troca de camada). Parágrafo novo: a troca num ponto só, a rolagem e o foco dentro dela. A guarda (h). |
+| `tests/dominio/estilo.test.ts` | Caso novo **(h)**. **(b)**: as fotos ficam fora do "último quadro" (só existem durante a troca), mas fora do portão têm de estar `animation: none`; o esmaecer da tela cheia e do modo sob `reduce` conta como movimento no portão quando a foto `root` daquele sentido anima lá. **(d)**: o SUJEITO do seletor também conta (um buraco: `html[data-nav] .ins-modo { transform }` passava, porque o seletor tem descendente — visto ao montar o plantio; o P27 prova que agora reprova). **(e)**: a exceção única de `.ready.catch(semDono)`, com `semDono` conferida vazia. A reserva do rodapé: no modo e na tela cheia. |
+| `tests/fluxo/troca.test.js` (novo) | O motor (Chromium; `LASTRO_MOTOR=webkit` os mesmos no WebKit), 10 casos. |
+| `tests/fluxo/navegacao.test.js` | 2 casos de árvore: a ordem da rolagem (desenha, depois rola) e o foco devolvido. |
+| `tests/fluxo/sobe.test.js` | O caso do toque no meio da subida foi reescrito para a mira (sem pausa, nenhum quadro volta); `fecha` espera a descida acabar (`document.activeViewTransition`), e a folha fechada é esperada sair do DOM (o desenho vem ~1 quadro depois). |
+| `tests/fluxo/navegador.js` | `treinoDeHoje` espera a troca de camada acabar antes de devolver (entrar no modo passou a ser transição). |
+
+### As decisões, com o porquê
+
+1. **Um ponto só, e a troca é de CAMADA, medida contra o desenhado.** O
+   `render()` guarda as camadas da tela desenhada (`camadasDesenhadas`) e compara
+   com `camadasAbertas(view)`. Muda o destino do topo: `entra` se o novo não
+   estava na pilha, `sai` se estava (ou se não há destino: a aba volta). O mesmo
+   destino e menos folhas, ou o pare que fecha: `fica`. O resto não é troca de
+   camada — a folha e o pare que ABREM sobem por CSS (peça 4), a troca do topo e
+   o "Não guardei" não se movem, trocar de aba é da peça 6 —, e desenha na hora.
+   A primeira tela nunca (`abriu`). O "Detalhar" (o lançamento sai e o modo entra
+   no mesmo desenho) é `entra`, como 02 T1 pede.
+2. **Enquanto o desenho está pendente, `render()` não faz nada.** O desenho que
+   vem lê o `view` mais novo: "Ir para Semana" na Evolução (fecha e troca de
+   aba) é UMA transição, no sentido da primeira (`sai`), medida no motor. É a
+   regra da 02 T2.
+3. **A rolagem é um valor pendente, e não uma fila de `scrollTo`.** `rola(y)`,
+   com o desenho pendente, guarda `y`; o desenho aplica o último, logo depois de
+   montar. `entraNoDestino` pede o topo SEMPRE para o próximo desenho (ele é
+   chamado antes do `render()`) e guarda como posição de baixo a que está na
+   tela — ou a já pedida, quando um destino fecha e outro abre no mesmo toque
+   (`saiDoDestinoNoDesenho`, o "Detalhar": rolar o lançamento cortaria na altura
+   dele). Os fechos que rolavam antes do `render()` (o modo, os Ajustes, a revisão
+   incorporada) passaram a desenhar e depois rolar, como os outros onze. No
+   caminho sem transição (jsdom, "Reduzir") o resultado final é o de antes; o que
+   muda é a ordem, que era o defeito.
+4. **A página inteira é UMA foto, e o que é do aparelho tem nome.** A variante de
+   fotografar só as páginas foi medida e descartada pela 02 (§3.3). A barra de
+   abas NÃO tem nome nas trocas de camada: ela é do lugar, fica parada embaixo da
+   tela que chega e é descoberta pela que sai; nomeada, ela ficaria por cima da
+   tela cheia que chega. O que é do aparelho e sai da tela (a faixa da sessão, que
+   o modo cobre) some no primeiro quadro (`:only-child`, `opacity: 0`) em vez de
+   ficar 350 ms por cima da página que chega; o que chega (a faixa, ao sair do
+   modo) aparece parado no lugar — 02 T1.
+5. **O fio de 1 px é borda da FOTO, com margem −1 px.** Sem sombra (inegociável
+   3). Com a margem, o fio fica além da borda da tela no último quadro, e nada
+   salta 1 px quando a foto dá lugar à página. Nas duas fotos que andam (a que
+   chega e a que sai).
+6. **A descida só na foto velha sem nova (`:only-child`).** A folha que continua
+   aberta debaixo da que fecha tem foto velha e nova, e não se move. Quatro
+   posições na pilha têm regra (o desenho para em três); uma quinta sairia de uma
+   vez. Os nomes vêm do `style` da `Folha`, pela posição (`LugarNaPilha`), nunca
+   pelo nível (refeição e "editar refeição" são 50, e nome repetido aborta a
+   transição). Medido: o `:only-child` nas fotos funciona nos dois motores.
+7. **O véu apaga na curva do véu (`--ins-curva-ciclo`)**, no tempo da saída: a
+   mesma curva em que ele acende (peça 4), e "junto" com a caixa.
+8. **O toque no meio: pula e mira.** Sonda nos dois motores (página mínima): sem
+   o pulo, o toque cai no `html` e se perde (o toque de dedo no WebKit nem gera
+   clique); com o pulo, o DOM final responde ao teste de toque no mesmo
+   instante, o dedo (touch) chega sozinho ao alvo nos dois, e o ponteiro (mouse)
+   cai na raiz (ancestral comum) nos dois. Por isso: pula, desenha o pendente,
+   fixa a mira no que ficou sob o dedo, e só reenvia o clique que cair fora da
+   mira — o que chegou certo segue como veio, sem clique em dobro. O clique que
+   não vier (o iPhone, que cancela o toque quando o nó sob o dedo muda — não
+   verificado aqui) o app entrega 300 ms depois de soltar; o que virar rolagem
+   (`pointercancel`) não clica.
+9. **A camada que chega por CSS usa a mesma mira, e nada pausa** (o item do
+   coordenador). A pausa da peça 4 (`pause()` e repor `currentTime`) caía no
+   tempo da thread principal, e no Chromium o compositor já estava um quadro à
+   frente: a folha voltava. A forma que ele preferiu: guardar o alvo do
+   `pointerdown` e reenviar a ele o clique que cair em outro nó. É a mesma função
+   da troca de camada (`arma`, `aoClicar`), e por isso a "mira" é uma só. Medido
+   nos quadros do compositor (abaixo): antes, a borda parava ~200 ms sob o dedo e
+   VOLTAVA ao soltar; agora só sobe até o pico.
+10. **A transição ainda corre?** `document.activeViewTransition` (existe no
+    Chromium 151 e no WebKit 26.5); onde não existir (iOS 18), o tempo da
+    camada mais 150 ms depois do desenho. Nunca `finished`.
+11. **O desenho atrasado.** Se o navegador fotografar e nunca chamar o desenho
+    (a página escondida no meio da troca), o app pula e desenha em 1 s. Não é
+    esperar animação: é não deixar o app sem desenho.
+12. **O Voltar que o navegador já animou desenha seco.** `hasUAVisualTransition`
+    no `popstate`, passado ao fecho (`jaAnimado`, só durante a chamada). O botão
+    Voltar do Android chega com `false` e anima o mesmo reverso. Provado com um
+    `popstate` sintético com o campo (o gesto de borda não se produz aqui).
+13. **O foco volta a um lugar declarado.** A chave do controle que abriu é
+    guardada ao entrar, por nome do destino, como a rolagem: o tocado há menos de
+    1 s (o Safari não foca botão no toque) ou o focado (o teclado); `data-a`, ou a
+    tag e a primeira classe, mais a posição entre os iguais e o texto. Ao sair
+    para uma camada que já estava lá, o foco vai a ele, redesenhado; se ele não
+    existe, ao `h1[tabindex]` da tela que reaparece (o título da aba, que ganhou
+    `tabindex="-1"`, ou o da tela cheia de baixo). Com uma folha, o pare ou o
+    aviso por cima, eles ficam com o foco deles. O título da tela cheia passou a
+    receber o foco no efeito de LAYOUT: no mesmo desenho (quadro zero), e sem
+    roubar, depois da pintura, o foco que o casco devolveu à tela de baixo.
+14. **O modo ganha foco no título do treino**, o `h1` do cabeçalho do `Treino`
+    (05 §3.4, regra 5), uma vez por montagem.
+15. **A sobra do modo: o pé tem nome.** `#app` soma por baixo `--ins-pe` (a
+    reserva do rodapé, o cronômetro, a faixa e 24 px); o modo desconta o mesmo
+    pé da altura dele. A cadeia acima concorda (`body` em `100svh`, `#app` e
+    `html` na altura do conteúdo).
+16. **O cronômetro nas telas cheias: `html:has(.tc)`.** Todos os 14 destinos e os
+    Ajustes desenham a moldura `.tc` (conferido um a um). Consequência dita: o fim
+    da página de toda tela cheia perde os 52 px mortos da barra que ela não
+    desenha, como o modo perdeu na peça 3.
+17. **Defeito 4: as barras do topo começam abaixo do que cobre o topo.** A faixa
+    "Não guardado" publica a altura (`--ins-ng-h`, como a faixa da sessão
+    publica a dela), e `--ins-topo = max(--sa-top, --ins-ng-h)` substitui
+    `--sa-top` no padding da barra do modo (e em `--ins-modo-topo-h`, onde o
+    relógio da sessão para), da barra da tela cheia e do cabeçalho das abas. A
+    faixa não se esconde nem se move; as barras crescem para baixo dela, e o
+    fundo delas continua passando por trás. **Desvio dito:** o defeito nomeava o
+    modo; o mesmo mecanismo cobria o "‹ Voltar" de toda tela cheia (a única saída
+    à vista) e o ⚙ do Agora — medido: os três cobertos antes —, e o conserto é
+    uma variável só. Consertei os três.
+18. **Defeito 7: o anel vai no rótulo.** O `input` de arquivo é transparente
+    sobre o rótulo, e a regra dos campos tira o contorno dele. `label:has(>
+    input[type="file"]:focus-visible)` desenha o anel do sistema no rótulo, que é
+    o botão que se vê. Vale para os outros campos de arquivo do mesmo desenho (a
+    foto do aparelho, a lousa): o mesmo defeito, e a mesma regra.
+19. **Sob "Reduzir movimento", o esmaecer da tela cheia e do modo é por CSS no nó
+    que nasce, só na chegada** (`html[data-nav="entra"]`): a porta põe o sentido
+    no `html` também sem transição, e a tela de baixo que reaparece não esmaece
+    (ela já estava lá). O `data-nav` fica até a próxima troca (06 §4.4): limpo a
+    cada `render()`, cortaria a animação das fotos de uma transição em curso.
+20. **O `popstate` se mede contra a tela desenhada, com o desenho pendente.**
+    Achado no WebKit (o caso 10 de `troca.test.js` ficou vermelho só lá): o
+    desenho que fecha uma camada pelo botão consome a entrada dela
+    (`history.go(-1)`), e o `popstate` disso chega depois; se uma camada nova
+    abre nesse meio, o desenho dela está pendente e a entrada dela ainda não foi
+    empurrada — e o `popstate`, comparando com o `view` pendente, via uma camada a
+    mais e FECHAVA a recém-aberta (sair do modo e abrir a Evolução logo depois: a
+    Evolução não abria). A janela existia antes, mas era de microtarefas; com o
+    desenho um quadro adiante (ou centenas de ms, no WebKit a frio), ela se
+    alcança. Com o desenho pendente, a navegação passa a contar as camadas da tela
+    DESENHADA, que são as que o histórico tem. Caso próprio no motor, determinístico
+    (a Evolução abre na microtarefa logo depois do desenho que fecha os Ajustes).
+21. **A rejeição do pulo é marcada como tratada.** Pular uma transição antes de
+    ela começar a andar — o toque no primeiro quadro, ou uma troca nova logo
+    depois do desenho — rejeita a `ready` dela (`AbortError`) nos dois motores
+    (sonda: `pulo-antes-do-desenho`, `pulo-no-desenho` e `nova-no-desenho`
+    rejeitam; depois de andar, não), e a rejeição sem dono vira erro de página.
+    A porta faz `ready.catch(semDono)` com uma função VAZIA — nada espera nada — e
+    a guarda (e) abre essa exceção, uma só, conferindo que `semDono` continua
+    vazia (plantios P33 e P34).
+
+### O toque atravessando, por camada e por motor
+
+`troca.test.js`, primeiro caso: a troca começa, aos ~120 ms (no relógio da
+página) confere-se que alguma foto se move, e o alvo — lido no DOM final — é
+tocado. Com o dedo (toque de verdade: `touchscreen.tap`) e com o ponteiro
+(mouse). Cada camada é aquecida antes (a primeira vez no WebKit desta máquina é
+lenta).
+
+| camada | o segundo toque | Chromium, dedo · ponteiro | WebKit 26.5, dedo · ponteiro |
+|---|---|---|---|
+| tela cheia (Ajustes chegando) | o "‹ Voltar" | fecha · fecha | fecha · fecha |
+| modo de sessão (chegando pelo cartão; o fluxo 16) | a seta "‹" | fecha · fecha | fecha · fecha |
+| folha descendo (o seletor de dia) | o ⚙ do Agora, que estava atrás dela | abre os Ajustes · abre | abre · abre |
+| painel de apagar descendo ("Deixar como está") | o ⚙ do Agora | abre · abre | abre · abre |
+
+Nenhuma camada ficou seca, em nenhum motor. Sem o pulo (plantio P2), as quatro
+perdem o toque nos dois motores; sem o reenvio (P3), o ponteiro perde nos dois.
+Na exploração (`scratchpad/peca5/explora.mjs`), o mesmo resultado com o dedo pelo
+CDP no Chromium.
+
+### Os números, antes e depois
+
+Chromium 1234 e WebKit 26.5 (Playwright), 414 × 896 a ×2. O antes é o build de
+`5a6fced` (`git archive`, construído no scratchpad: os mesmos arquivos da peça
+4, `index-cHaoqgWu.js`); o depois, o final (`index-D8nGJrXY.js`). Os dois servidos da mesma porta, 4729, desligada no fim.
+Scripts em `scratchpad/peca5/` (`mede.mjs`, `extra.mjs`, `recuo.mjs`). Nenhum
+erro de página. Os dois motores deram os mesmos números, menos onde a tabela
+separa.
+
+| medida | antes | depois |
+|---|---|---|
+| a rolagem devolvida: o Corpo rolado até o fim → a faixa → o modo → a seta | 1778 → **24** | 1778 → 1778 |
+| o mesmo, pelo Voltar do sistema | 1778 → **24** | 1778 → 1778 |
+| o Agora rolado → Ajustes → "‹ Voltar" e Voltar | 334 → 334 | 334 → 334 |
+| o foco, ao entrar no modo pelo cartão | `body` | o `h1` do treino |
+| ao sair do modo pela seta | `body` | o cartão que abriu (`button.ins-foco`) |
+| ao entrar nos Ajustes (dedo e teclado) | o `h1` | o `h1` |
+| ao sair dos Ajustes ("‹ Voltar" com o dedo; Esc com o teclado) | `body` | o ⚙ |
+| a Evolução → "Ir para Semana" (o controle que abriu sumiu) | — | o título "Semana" |
+| a sobra rolável do modo curto · com a área segura de 34 pt | **24 px · 58 px** | 0 · 0 |
+| o cronômetro nos Ajustes (y, numa tela de 896) | 761,8–**844** | 813,8–896 |
+| a faixa "Não guardado" (59 px), sob o centro da seta, da hora e do `···` do modo | a faixa | os três |
+| … do "‹ Voltar" dos Ajustes, do ⚙ do Agora | a faixa | os dois |
+| o campo de importar focado pelo Tab | focado, anel `none` | focado, anel `solid 3px` |
+| do toque ao desenho novo (abre os Ajustes), mediana de 9 | Chromium 10,3 ms · WebKit 1 ms | Chromium 28 · WebKit 32 |
+| do toque ao primeiro quadro depois dele | Chromium 25,1 · WebKit 16 | Chromium 41,8 · WebKit 38 |
+| … abrindo o modo pela faixa (desenho / quadro) | Chromium 8,1 / 19,9 · WebKit 10 / 13 | Chromium 22,7 / 32,7 · WebKit 44 / 46 |
+
+**O quadro a mais**, que o dono aceitou (pergunta 6): no Chromium, +13 a +18 ms
+do toque ao desenho e ao primeiro quadro — um quadro, a foto da tela velha. No
+WebKit desta máquina (sem placa de vídeo), +22 a +34 ms. Só nas trocas de
+camada: registrar série, régua, teclado e descanso não passam por aqui.
+
+**A forma**, nos dois motores (`troca.test.js`): ao entrar, uma animação só,
+`ins-da-direita` em `::view-transition-new(root)`, 350 ms, `cubic-bezier(0.32,
+0.72, 0, 1)`, de `translateX(100%)` a `none`; ao sair, `ins-para-direita` em
+`::view-transition-old(root)`. Nenhuma outra foto anima — a de baixo, o
+cronômetro, o aviso e a faixa parados (medido com o descanso contando e um aviso
+na tela). A borda: 1 px, margem −1 px (estilo computado da foto, onde o motor o
+dá). Largura rolável 414 em todo quadro, na chegada e na saída. A folha e o
+painel: `ins-desce` (350 ms, curva da camada, `none` → `translateY(100%)`) e
+`ins-apaga` (1 → 0), só as duas fotos; com duas folhas, só `folha-1` e `veu-1`.
+
+**A folha que sobe, com o dedo pousando nela** (o item do coordenador). Os
+quadros do COMPOSITOR do Chromium (`Page.startScreencast`, um por quadro), a
+borda de cima da folha (o fio de acento que atravessa a tela) em cada um, 3
+rodadas, o dedo descendo aos ~114 ms e soltando 200 ms depois (`recuo.mjs`, em
+pixels do aparelho, ×2):
+
+| | antes (a pausa da peça 4) | depois (a mira) |
+|---|---|---|
+| a borda, quadro a quadro, do toque em diante | 278 → 222, e **parada em 222 por ~200 ms**; ao soltar, um quadro **volta a 278** e só então segue (175, 136…) | 278 → 222 → 175 → 136 → 105 → 79 → … → 1 no pico (~362 ms), sem um quadro para trás; depois do pico, o quique (3 % de volta) |
+| quadros que voltam antes do pico | 1 em 1 das 3 rodadas, 56 px (28 pt) | 0 em 3 |
+
+A pausa recuava no SOLTAR nesta medida (a animação retomada do tempo da thread
+principal, atrás do compositor); o revisor a viu no pousar. As duas saíram
+juntas: nada pausa.
+
+### Os testes, e como provei que reprovam
+
+**`tests/fluxo/troca.test.js`** (motor, 10 casos; os tempos e a curva lidos dos
+tokens; `LASTRO_MOTOR=webkit` roda os mesmos no WebKit — os 10 verdes nos dois):
+
+1. *o toque no meio de cada troca chega ao que está sob o dedo* — as quatro
+   camadas, dedo e ponteiro (a tabela acima). Cobra também que havia foto se
+   movendo quando o dedo desceu: sem isso o caso não provaria nada.
+2. *a tela cheia e o modo chegam da direita e saem pela direita em 350 ms, a de
+   baixo parada, e o que é do aparelho não anda* — com o descanso contando e um
+   aviso na tela, nos Ajustes e no modo (pela faixa): o sentido no `html`, uma
+   foto só se movendo, o tempo, a curva, os quadros, o fio, e a largura rolável
+   em todo quadro.
+3. *a folha e o painel de apagar descem…* — já fora do DOM no primeiro quadro;
+   só a caixa e o véu se movem; `ins-desce` e `ins-apaga` no tempo da saída; com
+   duas folhas, só a de cima, pelo nome da posição.
+4. *o Voltar do sistema faz o mesmo reverso; quando o navegador já animou…* —
+   `history.back()` sai pela direita; um `popstate` com `hasUAVisualTransition`
+   (a entrada do histórico descida uma profundidade, como o gesto faz) fecha no
+   mesmo tique, sem pedir transição.
+5. *a rolagem volta exata* — o Corpo pelo modo (a faixa) e o Agora pelos
+   Ajustes, pela seta e pelo Voltar, ±1 px.
+6. *o foco* — com o teclado (Enter no ⚙ e no cartão, Esc): entra no título,
+   volta ao controle; com o dedo, o mesmo; a Evolução → "Ir para Semana": o
+   título da tela que reaparece. Nunca o `body`.
+7. *o modo curto não sobra, e o cronômetro no fundo nas telas cheias* — sobra 0
+   sem descanso, com descanso e com a área segura de 34 pt; o cronômetro na
+   borda nos Ajustes e na Evolução, e fora delas sobre a barra de abas, como
+   antes.
+8. *defeitos 4 e 7* — sob o centro da seta, da hora, do `···` (também rolado), do
+   "‹ Voltar" e do ⚙ está o próprio controle, e a faixa continua à vista no
+   topo; o Tab até o campo de importar: o rótulo com o anel de 3 px.
+9. *sob "Reduzir movimento"* — a tela cheia e o modo nascem com `ins-esmaece` em
+   `--ins-dur-dissolve`, só opacidade; saem no mesmo desenho; a tela que
+   reaparece não esmaece; a folha sai de uma vez; nenhuma transição pedida.
+10. *a primeira tela não anima, nem quando é o modo, e dois desenhos seguidos são
+    uma troca só* — o app reaberto com treino em andamento abre no modo sem
+    pedir troca; a Evolução → "Ir para Semana" é uma transição só, `sai`, e a
+    Semana no topo.
+
+**`tests/fluxo/navegacao.test.js`** (árvore, 2 casos novos): *sair do modo e dos
+Ajustes rola DEPOIS de desenhar, e entrar num destino também* (em cada pedido de
+rolagem, o que está no DOM) e *ao fechar um destino, o foco volta ao controle que
+o abriu* (o ⚙; o modo entra com o foco no título; aberto por programa, a volta é
+o título da aba).
+
+**`tests/fluxo/sobe.test.js`**, o caso *o toque no meio da subida chega ao que o
+dedo mirou, e a folha não para nem volta* (reescrito): o véu aos ~100 ms fecha;
+com o dedo pousado 120 ms na folha que sobe, quadro a quadro, a chegada nunca
+fica `paused`, o tempo dela só anda para a frente, e no trecho que sobe a caixa
+só sobe; um clique só, no nó em que o dedo desceu; o × aos 220 ms fecha. Verde
+nos dois motores.
+
+**`tests/dominio/estilo.test.ts`**: o caso **(h)** (as fotos que se movem, como,
+e quem tem nome; a de baixo parada; nada quica; sob `reduce` nenhuma foto; o
+esmaecer só na chegada; a troca pedida num ponto só, o `render()`); **(b)** e
+**(d)** ajustados (acima, na tabela de arquivos); a reserva do rodapé.
+
+**Plantio** (`scratchpad/peca5/planta.mjs`: guarda as cópias limpas em
+`scratchpad/peca5/limpo/`, aplica a violação, constrói quando o caso é de motor,
+roda só os casos que a cobram, registra em `plantio.json` e devolve o arquivo num
+`finally` — e também em SIGINT, SIGTERM, SIGHUP, exceção e saída; no fim,
+confere cada arquivo contra a cópia limpa e reconstrói o `dist/`; `restaura.mjs`
+devolve as cópias se tudo o mais falhar):
+
+| # | a violação plantada | quem ficou vermelho | o arquivo voltou ao limpo |
+|---|---|---|---|
+| P1 | o render() desenha sempre seco (nenhuma transição) | o toque no meio de cada troca chega ao que está sob o dedo; a tela cheia e o modo chegam da direita e saem pela direita em 350 ms, a de baixo parada, e o que é do aparelho não anda; a folha e o painel de apagar descem em 350 ms sem quique, o véu apaga junto, e a folha de baixo de duas fica; o Voltar do sistema faz o mesmo reverso; quando o navegador já animou a volta, o app não anima de novo; o foco; sob "Reduzir movimento"; a primeira tela não anima, nem quando é o modo, e dois desenhos seguidos (Evolução → "Ir para Semana") são uma troca só | sim |
+| P2 | o toque no meio NÃO pula a transição | o toque no meio de cada troca chega ao que está sob o dedo · WebKit: o toque no meio de cada troca chega ao que está sob o dedo | sim |
+| P3 | pula, mas não reenvia o clique que caiu na raiz | o toque no meio de cada troca chega ao que está sob o dedo · WebKit: o toque no meio de cada troca chega ao que está sob o dedo | sim |
+| P4 | dois render() seguidos viram duas trocas (o desenho pendente não segura) | a primeira tela não anima, nem quando é o modo, e dois desenhos seguidos (Evolução → "Ir para Semana") são uma troca só | sim |
+| P5 | o Voltar que o navegador já animou é animado de novo | o Voltar do sistema faz o mesmo reverso; quando o navegador já animou a volta, o app não anima de novo | sim |
+| P6 | a primeira tela (o modo, na abertura com treino) anima | a primeira tela não anima, nem quando é o modo, e dois desenhos seguidos (Evolução → "Ir para Semana") são uma troca só | sim |
+| P7 | fechaModoDeSessao rola ANTES de desenhar (o corte de antes) | sair do modo e dos Ajustes rola DEPOIS de desenhar, e entrar num destino também · a rolagem volta exata | sim |
+| P8 | entrar num destino rola ao topo na hora, antes do desenho | sair do modo e dos Ajustes rola DEPOIS de desenhar, e entrar num destino também | sim |
+| P9 | a rolagem pedida com o desenho pendente rola a foto velha | a rolagem volta exata | sim |
+| P10 | ao fechar um destino, o foco não é devolvido | ao fechar um destino, o foco volta ao controle que o abriu — e não ao body · o foco | sim |
+| P11 | o modo entra sem alvo de foco | ao fechar um destino, o foco volta ao controle que o abriu — e não ao body · o foco | sim |
+| P12 | sem a chave do acionador, o foco vai sempre ao título | ao fechar um destino, o foco volta ao controle que o abriu — e não ao body · o foco | sim |
+| P13 | o modo volta a 100svh, sem descontar o pé (a sobra de 24 px) | o modo com conteúdo curto não deixa sobra rolável, e o cronômetro fica no fundo da tela também nas telas cheias | sim |
+| P14 | a reserva do rodapé só no modo (o cronômetro 52 px acima nas telas cheias) | no modo e na tela cheia, a reserva do rodapé perde a barra de abas mas guarda a área segura · o modo com conteúdo curto não deixa sobra rolável, e o cronômetro fica no fundo da tela também nas telas cheias | sim |
+| P15 | a barra do modo volta a começar na barra de status (a faixa cobre a seta) | defeito 4 | sim |
+| P16 | a faixa "Não guardado" não publica a altura | defeito 4 | sim |
+| P17 | o campo de arquivo sem o anel no rótulo | defeito 4 | sim |
+| P18 | a tela de baixo recua (a resposta 4 era "parada") | (h) a troca de camada move só as fotos · a tela cheia e o modo chegam da direita e saem pela direita em 350 ms, a de baixo parada, e o que é do aparelho não anda | sim |
+| P19 | a folha sai com o quique | (h) a troca de camada move só as fotos · a folha e o painel de apagar descem em 350 ms sem quique, o véu apaga junto, e a folha de baixo de duas fica | sim |
+| P20 | a barra de abas ganha nome (anda separada do lugar) | (h) a troca de camada move só as fotos | sim |
+| P21 | a folha se nomeia pelo nível, e não pela posição | (h) a troca de camada move só as fotos · a folha e o painel de apagar descem em 350 ms sem quique, o véu apaga junto, e a folha de baixo de duas fica | sim |
+| P22 | uma foto anima fora do portão | (b) reduzir movimento falha fechado | sim |
+| P23 | fora do portão as fotos ficam com a animação do navegador | (b) reduzir movimento falha fechado | sim |
+| P24 | sob "Reduzir", a tela que reaparece também esmaece | (b) reduzir movimento falha fechado; (h) a troca de camada move só as fotos | sim |
+| P25 | sob "Reduzir", sem o esmaecer da chegada | sob "Reduzir movimento" | sim |
+| P26 | a borda da tela que chega sem o fio | (h) a troca de camada move só as fotos | sim |
+| P27 | o .ins-modo anima transform (contém fixo) | (d) nada entre um fixo e a janela cria bloco de contenção | sim |
+| P28 | a porta passa a esperar o fim da transição | (e) nada escuta o fim de uma animação | sim |
+| P29 | a pausa volta: o dedo segura a camada que chega | o toque no meio da subida chega ao que o dedo mirou, e a folha não para nem volta · WebKit: o toque no meio da subida chega ao que o dedo mirou, e a folha não para nem volta | sim |
+| P30 | sem a mira: o clique da camada que chega cai onde cair | o toque no meio da subida chega ao que o dedo mirou, e a folha não para nem volta · WebKit: o toque no meio da subida chega ao que o dedo mirou, e a folha não para nem volta | sim |
+| P31 | a folha de baixo de duas também desce (sem o :only-child) | (h) a troca de camada move só as fotos · a folha e o painel de apagar descem em 350 ms sem quique, o véu apaga junto, e a folha de baixo de duas fica | sim |
+| P32 | o popstate compara com o view pendente (a camada recém-aberta é fechada) | o Voltar do sistema faz o mesmo reverso; quando o navegador já animou a volta, o app não anima de novo · WebKit: o Voltar do sistema faz o mesmo reverso; quando o navegador já animou a volta, o app não anima de novo | sim |
+| P33 | a porta espera a transição começar (`ready.then`) | (e) nada escuta o fim de uma animação | sim |
+| P34 | a função que marca a rejeição passa a fazer alguma coisa | (e) nada escuta o fim de uma animação | sim |
+| P35 | sem marcar a rejeição: o pulo antes de a transição andar vira erro de página | o Voltar do sistema faz o mesmo reverso; quando o navegador já animou a volta, o app não anima de novo | sim |
+| V1 | controle: o clique que não vem é entregue em 350 ms (e não 300) | nenhum (verde, como devia) | sim |
+
+Os 35 ficaram vermelhos; o controle V1, verde. Cada arquivo voltou à cópia limpa
+(conferido por hash depois de cada passo e no fim), e o `dist/` foi reconstruído
+do limpo nas duas rodadas. A primeira rodada (P1–P31 e V1) correu sobre o código
+de antes das duas correções tardias (a corrida do histórico e a rejeição
+marcada, decisões 20 e 21); a segunda (P32–P35 e V1 de novo), sobre o final, com
+cópias limpas novas. O estado de cada passo está em `scratchpad/peca5/plantio.json`
+(`plantando` → `plantado` → resultado, e `restaurado`).
+
+**Contra o código e o build de antes.** A árvore de `5a6fced` (`git archive`, no
+scratchpad, construída lá) com os arquivos de teste finais: ficam vermelhos os
+16 casos novos ou reescritos — na guarda, (b) (as fotos sem `animation: none`
+fora do portão), (h) e a reserva do rodapé; na árvore, os dois de
+`navegacao.test.js` (o topo pedido sem o destino no DOM; o foco); no motor, o do
+toque na subida (`paused` sob o dedo) e os 10 de `troca.test.js`, cada um pelo
+defeito: nenhuma foto se move, a rolagem 1778 → 24, o foco no `body`, a sobra de
+24 px, a faixa sobre os controles, nenhum esmaecer sob "Reduzir", nenhuma troca
+pedida.
+
+### O que ficou de fora, e por quê
+
+- **Nada foi visto num iPhone de verdade.** Ficam pela leitura: o Core
+  Animation do A13 movendo as fotos; o gesto de borda no app instalado e se o
+  `popstate` dele chega com `hasUAVisualTransition` (o caso o prova com um evento
+  sintético; se não chegar, a volta pelo gesto aparece duas vezes — a do sistema
+  e a nossa —, e o conserto seria tratar o `popstate` de toque na borda como já
+  animado, 02 T5); se o iOS entrega o clique de um toque que pulou a transição (o
+  WebKit daqui entrega com o dedo; se não entregar, a porta o entrega 300 ms
+  depois de soltar); `document.activeViewTransition` no iOS 18 (onde não houver,
+  vale o relógio do token).
+- **A troca de aba** continua seca: é a peça 6, que reaproveita `trocaDeCamada`
+  (o sentido, a foto, o pulo e a mira) — a barra de abas ganha nome só nela.
+- **Empilhar sobre o modo e entre telas cheias** (Programa → Histórico, a
+  Evolução → comparar) usa a mesma regra (`entra`/`sai` pelo topo da pilha) e foi
+  visto na exploração; o teste cobre os Ajustes, o modo e a Evolução. O foco ao
+  voltar a uma tela cheia de baixo vai ao controle que abriu a de cima (o título
+  dela foca primeiro, no layout, e o casco o troca); não há caso próprio.
+- **A câmera** (`view.camera`, vídeo ao vivo): a foto da tela velha congela o
+  quadro durante a saída, como a 02 T2 aceitou. Não medido (precisa de
+  `getUserMedia`).
+- **A folha aberta pelo gesto de borda** sai de lado pelo sistema (02 T5); o app
+  não a anima de novo (`jaAnimado`).
+- **O fundo do `body` atrás da tela cheia curta** (04 §2.5, "mostra o fundo do
+  body") não era pedido e não mudou; sob "Reduzir", a tela cheia que esmaece
+  parte desse fundo.
+- **Os fluxos do revisor** (`_medicao/`) não foram tocados.
+
+### Para o revisor
+
+- **As durações que aparecem**: 350 (a tela cheia e o modo, chegando e saindo;
+  a folha e o painel descendo; o véu apagando) e 120 (o esmaecer da chegada sob
+  "Reduzir"). Nenhum quique em saída.
+- **O quadro a mais** é esperado nos passos de troca de camada (01, 02, 04, 05,
+  08, 16 e a descida do 06): no Chromium, o desenho novo ~+18 ms depois do antes
+  (um quadro, a decisão 6). No WebKit desta máquina, até +36 ms (sem GPU).
+- **O alvo de toque durante a troca é o `html`** — é a camada das fotos. Um
+  `elementFromPoint` do robô no meio da troca dá `HTML`; o toque de verdade
+  chega (o pulo). Os fixos (cronômetro, aviso, faixas) ficam parados aos 120 ms
+  de propósito; a barra de abas fica com o lugar.
+- **A "de baixo parada"** (princípio 8, a faixa da esquerda aos +50 ms): na
+  chegada a foto velha não se move; na saída, a tela que reaparece já está na
+  rolagem de antes, parada, e a de cima sai por cima dela.
+- **A rolagem** dos fluxos 02 e 04 volta exata; o foco nunca fica no `body` ao
+  entrar e sair do modo e das telas cheias.
+- **O fluxo 15** (o × a ~115 ms): o toque agora vai ao nó em que o dedo desceu,
+  sem pausa. Se a mira do robô ler o × um quadro antes e o dedo cair abaixo dele,
+  o clique vai a esse nó (o conteúdo da folha), e a folha não fecha — chega ao
+  que o dedo tocou. O `15b` (o véu num ponto fixo) fecha.
+- **A folha que sobe sob o dedo não para mais** (era parada e voltava um quadro):
+  quem gravava "a folha parada sob o dedo" como esperado deixa de ver isso.
+
+### As saídas
+
+`npm run tipos`:
+
+```
+> lastro-app@2.0.0 tipos
+> tsc --noEmit
+
+(saída 0)
+```
+
+`npm run build`:
+
+```
+> lastro-app@2.0.0 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 84 modules transformed.
+src/main.jsx (7536:45): Use of eval in "src/main.jsx" is strongly discouraged as it poses security risks and may cause issues with minification.
+rendering chunks...
+computing gzip size...
+dist/sw.js                        5.24 kB
+dist/index.html                   5.81 kB │ gzip:   2.72 kB
+dist/assets/index-C1GjD3qP.css  107.41 kB │ gzip:  19.10 kB
+dist/assets/index-D8nGJrXY.js   590.96 kB │ gzip: 184.78 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 806ms
+(saída 0)
+```
+
+`npx vitest run`:
+
+```
+RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+
+
+ Test Files  82 passed (82)
+      Tests  1652 passed (1652)
+   Start at  02:53:14
+   Duration  57.83s (transform 2.96s, setup 0ms, import 31.67s, tests 498.35s, environment 10ms)
+
+(saída 0)
+```
+
+Antes desta peça: 1639 de 1639 (peça 4). A diferença, +13, são os casos novos:
+10 em `troca.test.js`, 2 em `navegacao.test.js` e a guarda (h) em
+`estilo.test.ts` (60 casos ali, com os ajustes de (b), (d), (e) e da reserva
+dentro dos que já existiam). O caso do toque na subida de `sobe.test.js` foi
+reescrito, não somado. Os casos de motor no WebKit (`LASTRO_MOTOR=webkit`), um
+arquivo por vez com a máquina menos carregada: `troca` 10/10, `sobe` 7/7,
+`descanso` 5/5, `dedo` 9/9. Com os quatro arquivos ao mesmo tempo (carga 7,5) três
+casos caíram por tempo de quadro e por esperas fixas; as esperas passaram a ser
+pelo fim da troca (`document.activeViewTransition`) e pelo movimento da foto, e
+foi isso que destapou a decisão 20.

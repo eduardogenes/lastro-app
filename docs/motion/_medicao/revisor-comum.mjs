@@ -355,10 +355,13 @@ export async function executaPasso(p, cdp, passo, montado) {
     // primeiro: no meio de uma transição de 180–240 ms.
     await dedo(p, cdp, x, y, passo.segura ?? SEGURA);
     await p.waitForTimeout(passo.intervalo ?? 50);
-    const sel2 = typeof passo.alvo2 === 'function' ? passo.alvo2(montado) : passo.alvo2;
-    const r2 = await p.evaluate(({ s, n }) => { const l = document.querySelectorAll(s); const e = n === -1 ? l[l.length - 1] : l[n || 0]; if (!e) return null; const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }, { s: sel2, n: passo.nth2 });
+    // `ponto2` ([x, y] fixo) mira um lugar que não anda (o véu, longe da borda
+    // da folha): ler a caixa de um alvo que sobe 60 px por quadro e descer o
+    // dedo um quadro depois erra a mira (peça 4, 07 §10)
+    const sel2 = passo.ponto2 ? null : (typeof passo.alvo2 === 'function' ? passo.alvo2(montado) : passo.alvo2);
+    const r2 = passo.ponto2 ? passo.ponto2 : await p.evaluate(({ s, n }) => { const l = document.querySelectorAll(s); const e = n === -1 ? l[l.length - 1] : l[n || 0]; if (!e) return null; const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }, { s: sel2, n: passo.nth2 });
     if (r2) await dedo(p, cdp, Math.round(r2[0]), Math.round(r2[1]), passo.segura2 ?? 30);
-    segundo = { seletor: sel2, dedo: r2 ? r2.map(Math.round) : null, achou: !!r2 };
+    segundo = { seletor: sel2 || 'ponto ' + JSON.stringify(passo.ponto2), dedo: r2 ? r2.map(Math.round) : null, achou: !!r2 };
   } else if (tipo === 'voltar') {
     t0 = await p.evaluate(() => { const t = window.__rev.agora(); history.back(); return t; });
   } else if (tipo === 'codigo') {

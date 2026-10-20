@@ -215,6 +215,17 @@ export const FLUXOS = [
     ]
   },
   {
+    // Peça 4: o × sobe com a folha (até 60 px por quadro no quique) e a mira lida
+    // um quadro antes de o dedo descer erra; o véu no alto não anda.
+    id: '15b-meio-folha-veu', hora: '13:10',
+    titulo: 'Toque no meio: abrir a folha da refeição e, ~100 ms depois, tocar o véu no alto da tela',
+    montar: REFEICAO_DA_HORA(true),
+    passos: [
+      { id: 'abre-e-fecha-veu', mov: { tipo: 'quique', ms: 640, meio: true }, tipo: 'toqueNoMeio', titulo: 'toca "Outra porção" e, logo depois, o véu no alto (207, 30): a folha tem de fechar',
+        alvo: id => `[data-a="porcao-${id}"]`, ponto2: [207, 30], confere: `document.querySelectorAll('.ins-folha').length === 0` }
+    ]
+  },
+  {
     id: '16-meio-modo', hora: '07:10',
     titulo: 'Toque no meio: entrar no modo pelo cartão e, ~100 ms depois, tocar a seta de sair',
     montar: `CTX.vaiPara('agora'); render(); window.scrollTo(0, 0);`,

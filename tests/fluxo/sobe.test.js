@@ -4,7 +4,8 @@
 // quique" (640 ms: passa 8 % do lugar aos 55 %, volta 3 % aos 80 %, assenta —
 // a única ultrapassagem do app); pergunta 11, o painel de apagar "igual à
 // folha"; pergunta 2, sob "Reduzir movimento" folha, painel e véu esmaecem ao
-// chegar, e nada se desloca. A saída continua de uma vez (é da peça 5). A troca
+// chegar, e nada se desloca. A saída desce pela transição de vista (peça 5,
+// `troca.test.js`). A troca
 // da folha do topo ("cadastrar") não sobe (02 T8). O "Não guardei" não se move
 // (03 §5.3).
 //
@@ -84,7 +85,13 @@ const amostra = (nav, acao, sel, ms) => nav.p.evaluate(async ([acao, sel, ms]) =
 }, [acao, sel, ms]);
 
 const FECHA = `view.pilha = []; view.pare = null; view.falhou = false; render();`;
-const fecha = async nav => { await nav.E(FECHA); await nav.espera(150); };
+/** A troca de camada em curso acabou (a descida da folha e do painel é transição de vista, peça 5)? */
+const semTroca = nav => nav.p.waitForFunction(() => !document.activeViewTransition, null, { timeout: 8000 });
+/** Fecha tudo e espera a descida da folha e do painel acabar. */
+const fecha = async nav => { await nav.E(FECHA); await nav.espera(100); await semTroca(nav); await nav.espera(60); };
+/** A folha saiu do DOM? A descida pede o desenho novo ~1 quadro depois do toque — sob carga, mais. */
+const saiu = nav => nav.p.waitForFunction(() => document.querySelectorAll('.ins-folha').length === 0, null, { timeout: 3000 })
+  .then(() => true, () => false);
 /**
  * Abre e fecha uma vez antes de medir: no WebKit desta máquina a PRIMEIRA vez
  * que uma camada aparece custa centenas de ms (a fonte do sistema não existe
@@ -244,7 +251,12 @@ const abreEEspera = (nav, aos) => nav.p.evaluate(async aos => {
   return { x: x.x + x.width / 2, y: x.y + x.height / 2, topo: document.querySelector('.ins-folha').getBoundingClientRect().top };
 }, aos);
 
-test('o toque no meio da subida chega ao que o dedo tocou: o véu e o × fecham a folha, e o dedo segura a camada', DEMORADO, async () => {
+test('o toque no meio da subida chega ao que o dedo mirou, e a folha não para nem volta', DEMORADO, async () => {
+  // Na peça 4 o dedo SEGURAVA a camada que chega (pausava a animação). No
+  // Chromium a pausa caía no tempo da thread principal, um quadro atrás do
+  // compositor, e a folha VOLTAVA um quadro sob o dedo (07 §10). Desde a peça 5
+  // nada pausa: a subida segue, e o clique do toque vai ao nó em que o dedo
+  // desceu (`miraDoDedo`, na porta do movimento).
   const nav = await abreNavegador();
   const cdp = MOTOR === 'chromium' ? await nav.p.context().newCDPSession(nav.p) : null;
   try {
@@ -256,33 +268,46 @@ test('o toque no meio da subida chega ao que o dedo tocou: o véu e o × fecham 
     const v = await abreEEspera(nav, 100);
     assert.ok(v.topo > 40, 'a folha ainda está subindo: topo em ' + v.topo);
     await dedo(nav, cdp, 207, 3, 30);
-    await nav.espera(150);
-    assert.strictEqual(await nav.p.evaluate(() => document.querySelectorAll('.ins-folha').length), 0,
+    assert.ok(await saiu(nav),
       'o véu tocado ~100 ms depois de abrir fecha a folha: ' + JSON.stringify(await nav.p.evaluate(() => window.__toques)));
     await fecha(nav);
 
-    // o DEDO SEGURA: com o dedo pousado na camada que chega, ela não anda; o descer, o soltar e o clique são do mesmo nó
-    const s = await abreEEspera(nav, 120);
-    if (cdp) await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 207, y: Math.round(s.topo + 60) }] });
-    else { await nav.p.mouse.move(207, Math.round(s.topo + 60)); await nav.p.mouse.down(); }
-    const preso = await nav.p.evaluate(async () => {
+    // O DEDO POUSADO NÃO PARA A FOLHA, E NENHUM QUADRO VOLTA. Quadro a quadro,
+    // do toque até depois de soltar: a chegada continua correndo (nunca
+    // `paused`), o tempo dela só anda para a frente, e no trecho que sobe (até o
+    // pico do quique, 55 % do tempo) a caixa só sobe.
+    const s = await abreEEspera(nav, 90);
+    await nav.p.evaluate(() => {
       const f = document.querySelector('.ins-folha');
-      const a = f.getBoundingClientRect().top;
-      await new Promise(ok => setTimeout(ok, 80));
-      return { a, b: f.getBoundingClientRect().top, estados: f.getAnimations().map(x => x.playState) };
+      const a = f.getAnimations()[0];
+      window.__quadros = [];
+      const t0 = performance.now();
+      (function q() {
+        window.__quadros.push({ t: performance.now() - t0, top: f.isConnected ? f.getBoundingClientRect().top : null,
+          estado: a.playState, tempo: a.currentTime });
+        if (performance.now() - t0 < 420) requestAnimationFrame(q);
+      })();
     });
+    const y = Math.round(s.topo + 60);
+    if (cdp) await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 207, y }] });
+    else { await nav.p.mouse.move(207, y); await nav.p.mouse.down(); }
+    await nav.espera(120);
     if (cdp) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); else await nav.p.mouse.up();
-    assert.strictEqual(preso.b, preso.a, 'com o dedo pousado a folha não anda (' + preso.a + ' → ' + preso.b + ')');
-    assert.deepStrictEqual(preso.estados, ['paused'], 'a chegada está parada sob o dedo');
-    await nav.espera(60);
+    await nav.espera(400);
+    const quadros = (await nav.p.evaluate(() => window.__quadros)).filter(q => q.top != null);
+    assert.ok(quadros.length > 4, 'amostrou a subida: ' + quadros.length + ' quadros');
+    assert.deepStrictEqual([...new Set(quadros.map(q => q.estado))].filter(e => e !== 'running' && e !== 'finished'), [],
+      'a chegada nunca para sob o dedo: ' + JSON.stringify(quadros.map(q => q.estado)));
+    const recuos = quadros.slice(1).filter((q, i) => q.tempo != null && quadros[i].tempo != null && q.tempo < quadros[i].tempo);
+    assert.deepStrictEqual(recuos, [], 'o tempo da chegada só anda para a frente');
+    const pico = k.quique * 0.55;
+    const sobe = quadros.filter(q => q.tempo != null && q.tempo < pico - 20);
+    const volta = sobe.slice(1).filter((q, i) => q.top > sobe[i].top + 0.5);
+    assert.deepStrictEqual(volta, [], 'nenhum quadro em que a folha volta, no trecho que sobe: ' + JSON.stringify(sobe.map(q => Math.round(q.top))));
     const toques = await nav.p.evaluate(() => window.__toques);
-    assert.strictEqual(new Set(toques.map(t => t[1])).size, 1, 'descer, soltar e o clique no mesmo nó: ' + JSON.stringify(toques));
-    const segue = await nav.p.evaluate(async () => {
-      const f = document.querySelector('.ins-folha');
-      await new Promise(ok => setTimeout(ok, 120));
-      return f.getAnimations().map(x => x.playState);
-    });
-    assert.ok(segue.every(e => e !== 'paused'), 'solto o dedo, a subida segue de onde parou: ' + segue);
+    const desceu = toques.find(t => t[0] === 'pointerdown'), clicou = toques.filter(t => t[0] === 'click');
+    assert.ok(desceu && clicou.length === 1 && clicou[0][1] === desceu[1],
+      'um clique só, no nó em que o dedo desceu: ' + JSON.stringify(toques));
     await nav.espera(k.quique);
     await fecha(nav);
 
@@ -294,17 +319,19 @@ test('o toque no meio da subida chega ao que o dedo tocou: o véu e o × fecham 
       const c = await abreEEspera(nav, 220);
       await dedo(nav, cdp, Math.round(c.x), Math.round(c.y), 40);
       await nav.espera(150);
+      const fechada = await nav.E(`!view.pilha.length`) && await saiu(nav);
       const r = await nav.p.evaluate(() => ({ toques: window.__toques, aberta: document.querySelectorAll('.ins-folha').length }));
+      r.aberta = fechada ? 0 : Math.max(1, r.aberta);
       const desceu = r.toques.find(t => t[0] === 'pointerdown');
-      const clique = r.toques.find(t => t[0] === 'click');
+      const cliques = r.toques.filter(t => t[0] === 'click');
       tentativas.push({ noX: !!desceu && desceu[1].startsWith('button[fechar]'), fechou: r.aberta === 0,
-        mesmoNo: !!desceu && !!clique && desceu[1] === clique[1], toques: r.toques });
+        mesmoNo: !!desceu && cliques.length === 1 && desceu[1] === cliques[0][1], toques: r.toques });
       await fecha(nav);
     }
     const noX = tentativas.filter(t => t.noX);
     assert.ok(noX.length > 0, 'o dedo não caiu no × em nenhuma tentativa: ' + JSON.stringify(tentativas));
-    assert.deepStrictEqual(noX.filter(t => !t.fechou), [], 'todo toque que desceu no × fechou a folha (sem segurar, nenhum fechava)');
-    assert.deepStrictEqual(tentativas.filter(t => !t.mesmoNo), [], 'e todo toque saiu no nó em que desceu');
+    assert.deepStrictEqual(noX.filter(t => !t.fechou), [], 'todo toque que desceu no × fechou a folha (sem a mira, nenhum fechava)');
+    assert.deepStrictEqual(tentativas.filter(t => !t.mesmoNo), [], 'e todo toque saiu, uma vez só, no nó em que desceu');
     assert.deepStrictEqual(nav.erros, []);
   } finally { await nav.fecha(); }
 });

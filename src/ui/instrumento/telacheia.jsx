@@ -8,7 +8,7 @@
 // O botão de voltar é o único caminho de saída, e por isso vem primeiro, com
 // alvo cheio de 46px e área segura contada no topo.
 
-import { useEffect, useRef } from 'preact/hooks';
+import { useLayoutEffect, useRef } from 'preact/hooks';
 
 export function TelaCheia({ olho, meta, titulo, aoVoltar, acao, corpo, children }) {
   const alvo = useRef(null);
@@ -19,7 +19,14 @@ export function TelaCheia({ olho, meta, titulo, aoVoltar, acao, corpo, children 
   // onde se veio: para teclado e VoiceOver a tela tinha mudado e o cursor não.
   // Roda uma vez por montagem — enquanto o destino continua o mesmo, o Preact
   // mantém a instância e o foco não é roubado de quem está digitando.
-  useEffect(function () {
+  //
+  // De LAYOUT, no mesmo desenho em que o destino monta (peça 5 do motion;
+  // docs/motion/05 §3.4, "foco no quadro zero"): o foco entra junto com a tela,
+  // e não um quadro depois. E é por isso que o destino que REAPARECE (o de baixo,
+  // quando o de cima fecha) pode ter o foco devolvido ao controle que abriu o de
+  // cima, logo depois, pelo casco (`devolveOFoco`): um efeito comum rodaria
+  // depois da pintura e roubaria esse foco de volta para o título.
+  useLayoutEffect(function () {
     if (alvo.current) alvo.current.focus({ preventScroll: true });
   }, []);
 

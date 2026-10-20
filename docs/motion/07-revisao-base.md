@@ -280,6 +280,7 @@ pasta de saída por argumento: o mesmo script grava o antes e o depois.
 | `revisor-comum.mjs` | o motor, a instrumentação na página (relógio, eventos, Event Timing, animações vivas, fixos, `requestAnimationFrame`), a calibração, o registro devolvido a cada fluxo, a passada de aquecimento, o dedo, a gravação e o manifesto. Reaproveita a `semeia` de `desempenho-comum.mjs` e a receita do WebKit |
 | `revisor-tiras.py` | `tiras`: monta a tira de cada passo e mede quadro a quadro; `par`: empilha a tira do antes sobre a do depois; `faixa`: compara uma faixa vertical entre dois quadros da tira (a conferência "a de baixo parada"); `repousa`: recalcula o "dedo pousado" de manifestos já gravados pela linha do tempo (seção 7) |
 | `revisor-aviso-passo.mjs` | o toast e a faixa acompanham o cronômetro, ou saltam? No modo, com um toast na tela, o descanso começa e para; a cada quadro anota onde estão o toast e o cronômetro (`getBoundingClientRect`, que inclui `transform` e `translate`) e mede o maior passo por quadro, o caminho e a posição final (escreve `aviso-passo-<rodada>.json`). Feito na peça 3, porque o `micro-avisos.mjs` lê as posições logo depois de ligar e desligar o descanso e, com o acompanhamento animado, pega o toast no meio do caminho |
+| `revisor-aviso-janela.mjs` | o "Não guardei" ignora o toque que vinha para outra coisa? (peça 4, defeito 5). Provoca a falha de gravação, grava uma série e, com o dedo de verdade, toca "Fechar este aviso" 150 ms depois de o aviso chegar (tem de ficar) e 600 ms depois (tem de fechar); anota também o fundo inerte e o foco (escreve `aviso-janela-<rodada>.json`). Feito porque o `micro-avisos.mjs` clica logo que o aviso chega e, depois da peça 4, esse clique é engolido de propósito |
 | `revisor-thread-presa.mjs` | o "não congela com a thread presa" do 04 §6 no elemento real: troca de aba, a thread principal presa 150 ms dois quadros depois de o fio começar a andar, o fio achado quadro a quadro pela cor de acento; mede a maior parada no meio do caminho (escreve `thread-presa-<rodada>.json`). As peças 3 a 6 acrescentam a cena delas (cronômetro, folha, tela cheia, carrossel) |
 | (ambiente) | `PYTHON=` escolhe o Python que os scripts chamam (precisa de Pillow e numpy). Depois da atualização de 19/10 o `python3` do sistema é o 3.14, sem numpy; o 3.12 tem numpy mas não carrega mais o Pillow do sistema. Para a seção 8, o numpy foi posto numa pasta do scratchpad (`pip install --target`) e um invólucro aponta para ela — nada instalado no sistema |
 | `revisor-compara.mjs` | a fase 4: aplica a tabela 1.3 com o `mov` de cada passo, escreve `protocolo.json`, os pares de tiras e os vídeos lado a lado (H.264, 828 × 940, normal e 4× mais lento), alinhados no zero de cada passo. Testado: antes contra antes, em todos os fluxos (`antes-contra-protocolo/`), e com vídeo em 01, 07 e 16 |
@@ -754,3 +755,88 @@ cronômetro sobe e desce em 350 ms na curva da camada, sem quique, e encosta no
 fundo do modo; o toast e a faixa vão junto, de 16 em 16 px por quadro, em vez de
 saltar 82 px; com "Reduzir movimento" nada desliza; e o toque ficou igual ou
 mais rápido nos dois motores.
+
+---
+
+## 10. Depois da peça 4
+
+Conferida em 19/10 pela linha da peça 4 da tabela 1.4, contra o build congelado
+em `docs/motion/_medicao/shots/dist-peca-4/` (commit `09ebd7c`), servido na
+porta 4728 (desligada), com o mesmo `antes/registro.json`. Gravação das 23h28 às
+23h42, carga de 1,1 a 2,6 (`carga-19-10.txt`, linhas "peça 4"), com antes e
+peça 4 **intercalados** três vezes nas medidas de tempo (1.5, 5c).
+
+**O que se gravou.** Os fluxos 06 (folhas), 13 (pare), 15 (o × tocado no meio da
+subida) e o **15b novo** (o véu tocado no meio da subida) no Chromium e no
+WebKit, com e sem "Reduzir movimento" (`depois-4/`). O 15b também foi gravado no
+antes, nas quatro rodadas (`antes/rodada-*-15b.json`), para o comparador ter par.
+Os mesmos fluxos, antes e peça 4 intercalados, três vezes por motor
+(`repeticoes-peca-4/`). Os complementos `revisor-aviso-janela.mjs` (novo),
+`micro-avisos.mjs` e `acesso-foco.mjs`, dos dois lados
+(`antes-complementos/`, `depois-4/complementos/`). Nenhum erro de página.
+Comparador em `comparacao-4/`.
+
+**Duas regras do comparador corrigidas nesta conferência.** (1) O segundo toque
+"se perde" quando cai no `html`, no `body` ou em lugar nenhum. Antes eu exigia
+um botão, e o véu do 15b, que é o alvo certo, reprovava. (2) O quique tem dois
+pontos de retorno (~352 e ~515 ms, 09). Ali a folha passa pelo mesmo lugar na
+ida e na volta, e o quadro do retorno parecia "aparecer e sumir". Transitórios a
+até 40 ms desses pontos não contam nos passos de quique. Foi o caso do
+`06 empilha` a +534 ms no Chromium e do 15 a +367 ms no WebKit.
+
+### 10.1 A linha da peça 4: o que passou
+
+| o que a peça tinha de provar | resultado | o número | arquivo |
+|---|---|---|---|
+| **a folha chega com o quique de 640 ms** | **passa** | `ins-quique` em `transform`, **640 ms**, na `.ins-folha`, nos dois motores; a mudança se espalha por 39–53 quadros até ~640–670 ms; na tira, a folha passa do lugar a +384 ms (o topo quase no alto da tela) e assenta a +668; no pico do quique não aparece a página por baixo (o "pé da caixa") | `depois-4/06-folhas/medidas-*.json` (`abre`, `empilha`); tira dupla `comparacao-4/06-folhas/01-abre-chromium-par.png` |
+| **o véu acende em 350 ms** | **passa** | `ins-esmaece`, opacidade, **350 ms**, `ease` (no Chromium, `cubic-bezier(0.25, 0.1, 0.25, 1)`, o mesmo) | idem |
+| **a segunda folha sobe sobre a primeira** | **passa** | `empilha`: o mesmo quique na folha nova, `confere` (2 folhas) verdadeiro em todas as rodadas | `depois-4/06-folhas/medidas-*.json` (`empilha`) |
+| **o painel de apagar chega como a folha** | **passa** | `13 abre`: `ins-quique` 640 ms no `.pare`, véu 350 ms; o botão de apagar fica onde estava no antes | `depois-4/13-pare/medidas-*.json` |
+| **a saída de tudo continua de uma vez** (a descida é da peça 5) | **passa, como combinado** | `fecha-x`, `voltar` e `deixa`: a tela troca num quadro, sem animação | idem (o princípio 8 marca "troca num quadro", que só vale a partir da peça 5) |
+| **sob "Reduzir movimento", só esmaece em 120 ms** | **passa** | folha, véu e painel: `ins-esmaece`, só opacidade, **120 ms**; a mudança acaba em ~104–151 ms; nada se desloca; a saída é de uma vez | `depois-4/*/medidas-*-reduz.json`; `comparacao-4/protocolo.json` (princípio 5: 16/16) |
+| **o toque no meio da subida chega** (15b, o véu) | **passa** | o véu tocado 97–105 ms depois de abrir fecha a folha: nas quatro rodadas e nas **3 de 3** repetições de cada motor (no antes também fechava: não havia subida) | `depois-4/15b-meio-folha-veu/medidas-*.json`; `repeticoes-peca-4/peca-4-*/15b-…/` |
+| **o "Não guardei" ignora o toque que vinha para outra coisa** (defeito 5) | **passa** | o aviso chega a ~823–829 ms do toque da série. Com o dedo de verdade em "Fechar este aviso": a **~156 ms** o aviso **fica** (no antes, fechava) e a **~605 ms** fecha, nos dois motores | `depois-4/complementos/aviso-janela-{chromium,webkit}.json` contra `antes-complementos/…` |
+| **o pare e o "Não guardei" isolam o fundo; o `#timer` entra no isolamento** | **passa** | com o aviso: **45 de 45** focáveis do fundo inertes e o `#timer` inerte (antes: 0 de 45). `acesso-foco.mjs`: com o pare e com o aviso, cabeçalho, `main`, barra de abas e `#timer` inertes (antes: nada); com a folha, o `#timer` entrou na lista (a fresta do Tab do 05 §3.1) | `aviso-janela-*.json` (`isolamento`); `depois-4/complementos/acesso/acesso-foco.json` contra `antes-complementos/acesso/…` |
+| **o foco volta a quem o tinha** | **passa** | "Deixar como está" devolve o foco ao **"Encerrar"** (antes, ao `body`), nas quatro rodadas; a folha continua devolvendo ao "···" e ao "Outra porção" | `depois-4/13-pare/medidas-*.json` (`deixa`, `depois.foco`); comparador, princípio 6: 32/32 |
+| **o toque não ficou mais lento** (5c) | **passa** | medianas de trabalho no toque, antes → peça 4, todas dentro de ±3 ms; a primeira mudança na tela igual ou mais cedo, fora o "Deixar como está" no WebKit (+13,8 → +21,4 ms, menos de um quadro); nenhum intervalo de `requestAnimationFrame` acima do limite durante o quique (pior 21 ms no WebKit) | `repeticoes-peca-4/{antes,peca-4}-{1,2,3}/` |
+| princípios 2, 4, 10 | **passa** | 32/32, 16/16, 14/14 | `comparacao-4/protocolo.json` |
+
+### 10.2 O que reprovou
+
+- **15 · o × tocado ~115 ms depois de abrir não fecha a folha** (princípios 1 e
+  7): Chromium 3 de 3, WebKit 2 de 3. **É a mira do robô, não o app.** O alvo
+  que o `pointerdown` registrou foi o corpo da folha (`div.ins-grade-c`,
+  `div.ins-folha-c`), não o ×. A caixa do × é lida um quadro antes de o dedo
+  descer, e nesse intervalo o × sobe até 60 px. Sem movimento (as rodadas
+  reduzidas) o × é acertado e fecha. A prova de que o toque no meio chega é o
+  **15b**, que mira o véu parado no alto (`ponto2`, novo em `revisor-comum.mjs`).
+  O 15 fica gravado como registro do que é mirar um alvo que sobe.
+- **15 · no Chromium, a folha volta um quadro quando o dedo pousa nela**
+  (princípio 3). **Achado, para o coordenador.** O quadro de +149,6 ms é quase
+  idêntico ao de +69,6, e o de +166,6 ao de +84,1: a folha avança, volta um
+  quadro quando o dedo pousa (~16 % da tela muda), fica parada 65 ms com o dedo
+  e avança de novo ao soltar. É o "o dedo segura a camada que chega" pausando
+  a animação no quadro do teste de toque, que fica um atrás do que estava na
+  tela. No WebKit não aparece; no 15b (dedo no véu) também não. Arquivo:
+  `depois-4/15-meio-folha/medidas-chromium.json` (`transitorios`,
+  `linhaDoTempo`).
+- **As saídas de uma vez** (`fecha-x`, `voltar`, `deixa`; princípio 8): é o
+  combinado até a peça 5.
+
+### 10.3 O que ficou "a conferir"
+
+- **O `micro-avisos.mjs` não mede mais a faixa "Não guardado"**: o clique dele
+  em "Fechar este aviso" cai dentro da janela de 400 ms e é engolido, o aviso
+  fica e a faixa nunca aparece (`faixa: null`). É o conserto funcionando. A
+  janela se confere pelo `revisor-aviso-janela.mjs`, e a faixa sobre a saída do
+  modo (defeito 4) é da peça 5.
+- **O "pé da caixa"** se conferiu a olho, na tira (10.1). Não há medida
+  automática de vão sob a folha.
+
+**Conclusão: a peça 4 passa na linha dela.** A folha e o painel de apagar chegam
+com o quique de 640 ms, o véu em 350, e com "Reduzir movimento" só esmaecem; o
+toque no meio da subida chega quando a mira é estável (o véu); o "Não guardei"
+não se fecha mais com o toque que vinha para outra coisa; o fundo fica isolado,
+inclusive o cronômetro; e o foco volta a quem o tinha. Fica um achado para o
+coordenador decidir: no Chromium, a folha recua um quadro quando o dedo pousa
+nela durante a subida.

@@ -723,7 +723,7 @@ test('o relógio da sessão gruda no topo enquanto o treino corre', () => {
   assert.ok(!/top:\s*0\s*;/.test(rel), 'top: 0 põe o número embaixo do relógio do sistema');
 });
 
-test('no modo, a reserva do rodapé perde a barra de abas mas guarda a área segura', () => {
+test('no modo e na tela cheia, a reserva do rodapé perde a barra de abas mas guarda a área segura', () => {
   // `--ins-tabbar` é a RESERVA que o rodapé fixo precisa vencer — não a altura
   // da barra, que se mede sozinha (`tokens.css` diz isso literalmente). Quatro
   // consumidores ancoram nela: o fim da página, o toast, o cronômetro e a faixa
@@ -742,8 +742,12 @@ test('no modo, a reserva do rodapé perde a barra de abas mas guarda a área seg
   assert.strictEqual(redefinem.length, 1,
     'uma regra só redefine a reserva do rodapé: ' + redefinem.map(b => b.sels.join(', ')).join(' | '));
   const [modo] = redefinem;
-  assert.ok(modo.sels.every(s => /:has\(\.ins-modo\)/.test(s)), 'a reserva muda só no modo: ' + modo.sels.join(', '));
-  assert.deepStrictEqual(modo.sels.filter(s => !/^(html|:root):has\(\.ins-modo\)$/.test(s)), [],
+  // No modo e na tela cheia (`.tc`, a moldura de todo destino), que são as duas
+  // camadas que tiram a barra de abas da tela. A tela cheia entrou na peça 5: o
+  // cronômetro continuava 52 px acima do fundo nos Ajustes e nos outros destinos.
+  assert.deepStrictEqual([...new Set(modo.sels.map(s => (/:has\(\.(ins-modo|tc)\)/.exec(s) || [])[1]))].sort(), ['ins-modo', 'tc'],
+    'a reserva muda no modo e na tela cheia, e só neles: ' + modo.sels.join(', '));
+  assert.deepStrictEqual(modo.sels.filter(s => !/^(html|:root):has\(\.(ins-modo|tc)\)$/.test(s)), [],
     'a reserva do modo tem de ser escrita na raiz: escrita no #app (ou abaixo), ela não chega ao ' +
     'cronômetro nem ao toast, que são irmãos do #app');
   // e os dois moram mesmo fora do #app — o motivo da regra
@@ -1754,8 +1758,30 @@ test('(b) reduzir movimento falha fechado: todo movimento mora no portão por ad
     'no-preference); fora dele fica só o estado final. Sob reduce, só esmaecer, com --ins-dur-dissolve.');
 
   // Sob reduce nunca há MAIS movimento do que sem a preferência.
-  assert.deepStrictEqual([...animaNoReduz].filter(s => !animaNoPortao.has(s)), [],
+  //
+  // A tela cheia e o modo que CHEGAM (peça 5) são a exceção de forma, e não de
+  // regra: sem a preferência eles se movem pela transição de vista — a foto
+  // `root` da tela nova, no mesmo `data-nav` —, e não por regra no próprio nó;
+  // sob reduce, a porta não pede a transição e o nó que nasce esmaece. Conta
+  // como movimento no portão quando a foto daquele sentido anima lá.
+  const pelaFoto = (sel: string) => {
+    const m = /^(html\[data-nav="[a-z]+"\])\s+[.#][\w-]+$/.exec(sel);
+    return !!m && animaNoPortao.has(m[1] + '::view-transition-new(root)');
+  };
+  assert.ok(pelaFoto('html[data-nav="entra"] .tc') || ![...animaNoReduz].includes('html[data-nav="entra"] .tc'),
+    'a leitura da chegada pela foto mudou: o caso tem de mudar junto');
+  assert.deepStrictEqual([...animaNoReduz].filter(s => !animaNoPortao.has(s) && !pelaFoto(s)), [],
     'esmaece sob reduce e fica parado sem a preferência: quem pediu menos teria mais');
+
+  // As FOTOS da transição de vista: fora do portão, nenhuma animação (06 §4.4).
+  // Sem isto, uma transição começada por qualquer caminho rodaria o cruzamento
+  // padrão do navegador — que anima largura e altura do grupo — para quem pediu
+  // menos movimento.
+  const FOTOS = ['::view-transition-group(*)', '::view-transition-image-pair(*)', '::view-transition-old(*)', '::view-transition-new(*)'];
+  const paradas = folhas.flatMap(f => f.regras).filter(r => !NO_PORTAO(r) && !NO_REDUZ(r) &&
+    r.decls.some(d => d.prop === 'animation' && ehNada(d.valor))).flatMap(r => r.sels);
+  assert.deepStrictEqual(FOTOS.filter(f => !paradas.includes(f)), [],
+    'fora do portão, as fotos da transição de vista sem animação: `' + FOTOS.join(', ') + ' { animation: none }`');
 
   // Fora do portão, o último quadro.
   const PADRAO: Record<string, string> = { opacity: '1', transform: 'none', translate: 'none', scale: 'none', rotate: 'none' };
@@ -1766,7 +1792,13 @@ test('(b) reduzir movimento falha fechado: todo movimento mora no portão por ad
   };
   const primeiroQuadro: string[] = [];
   // (o esmaecer sob reduce também: ele termina onde o elemento parado já está)
+  //
+  // As fotos da transição de vista (`::view-transition-*`) ficam de fora, e só
+  // elas: elas não são estado de ninguém — existem durante a troca e somem com
+  // ela —, o estado final é o DOM novo, e quem pediu menos movimento nunca as vê
+  // (a porta não pede a transição; e fora do portão elas não animam, acima).
   folhas.forEach(f => f.regras.filter(r => NO_PORTAO(r) || NO_REDUZ(r)).forEach(r => r.decls.forEach(d => {
+    if (r.sels.every(sel => /::view-transition/.test(sel))) return;
     const itens = d.prop === 'animation' ? partesNoTopo(d.valor, ',')
       : d.prop === 'animation-name' ? partesNoTopo(d.valor, ',') : [];
     itens.forEach(it => {
@@ -1928,8 +1960,14 @@ test('(d) nada entre um fixo e a janela cria bloco de contenção', () => {
   const culpadas: string[] = [];
   folhas.forEach(f => f.regras.forEach(r => {
     // os pseudo-elementos de transição de vista moram numa árvore à parte, por
-    // cima da página, e não contêm fixo nenhum
-    const alcanca = r.sels.filter(s => !/::view-transition/.test(s) && ANCESTRAL.test(raizDe(s)));
+    // cima da página, e não contêm fixo nenhum.
+    //
+    // E o SUJEITO conta, não só o seletor inteiro (peça 5): `html[data-nav]
+    // .ins-modo { transform: … }` pinta o `.ins-modo` — que contém a faixa fixa
+    // — e passava, porque o seletor tem um descendente (visto ao montar o
+    // plantio da peça 5; o plantio P27 prova que agora fica vermelho).
+    const alcanca = r.sels.filter(s => !/::view-transition/.test(s) &&
+      (ANCESTRAL.test(raizDe(s)) || ANCESTRAL.test(sujeitoDe(raizDe(s)))));
     if (!alcanca.length) return;
     r.decls.filter(d => PRESO.test(d.prop)).forEach(d => culpadas.push(onde(r, d)));
     oQueMove(r, porNome).filter(p => p !== 'opacity').forEach(p =>
@@ -1955,8 +1993,18 @@ test('(e) nada escuta o fim de uma animação', () => {
   // o foco deixaria a tela presa com o véu por cima. O toque nunca espera a
   // animação; monta-se, desmonta-se e move-se o foco pelo estado, no mesmo
   // desenho. Vale em todo lugar, a porta inclusive — ela não precisa.
+  //
+  // UMA exceção, estreita e conferida (peça 5): pular uma transição de vista
+  // antes de ela começar a andar rejeita a `ready` dela (`AbortError`, medido
+  // nos dois motores), e rejeição sem dono vira erro de página. A porta a marca
+  // como tratada com `.ready.catch(semDono)`, e `semDono` tem de ser uma função
+  // VAZIA — uma linha dentro dela já seria esperar o começo da transição.
+  const porta = semComentariosJs(fonte(PORTA));
+  const marca = porta.match(/\.ready\.catch\(semDono\)/g) || [];
+  assert.ok(marca.length <= 1, 'a rejeição da transição é marcada uma vez só');
+  if (marca.length) assert.match(porta, /function semDono\(\)\s*\{\s*\}/, '`semDono` faz alguma coisa: aí ela espera a transição começar');
   const escuta = noCodigo(arquivosJs(),
-    /(transition|animation)(end|start|run|cancel|iteration)(?![a-z])|\.(finished|ready|updateCallbackDone)\b/i);
+    /(transition|animation)(end|start|run|cancel|iteration)(?![a-z])|\.(finished|ready|updateCallbackDone)\b(?!\.catch\(semDono\))/i);
   assert.deepStrictEqual(escuta, [],
     'código que espera o fim (ou o começo) de uma animação: sob movimento reduzido o evento ' +
     'não chega, e a tela fica presa. Monte, desmonte e mova o foco pelo estado.');
@@ -2034,6 +2082,121 @@ test('(g) a folha e o painel de pare chegam com o quique, o véu acende no tempo
   assert.ok(corpo && /^(hidden|clip)$/.test(corpo.valor.trim()),
     'com `overflow-y: auto` o outro eixo vira `auto`, e o conteúdo da folha rolava de lado com o dedo');
 });
+
+test('(h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda', () => {
+  // Peça 5 (dono, 16/10): pergunta 4, a tela cheia chega da direita, a tela
+  // inteira, e a de baixo fica PARADA; pergunta 5, o modo entra como qualquer
+  // tela cheia; pergunta 1, camada entra e sai em 350 ms na curva do iPhone, sem
+  // quique, e nenhuma saída quica — a folha e o painel de apagar DESCEM, e o véu
+  // apaga junto; pergunta 2, sob "Reduzir movimento" nenhuma transição: o que
+  // chega esmaece no nó que nasce. A guarda (c) já cobra que as fotos só se
+  // movem por transform e opacity, e a (d) que nenhum elemento real que contém
+  // fixo se move; esta cobra QUAIS fotos se movem, como, e quem tem nome.
+  const regras = folhasDoApp().flatMap(f => f.regras);
+  const porNome = quadrosPorNome(todasAsFolhas());
+  const doPortao = regras.filter(NO_PORTAO);
+  const animacoes = (sel: string, rs: Regra[]) => rs.filter(r => r.sels.includes(sel)).flatMap(r => r.decls)
+    .filter(d => d.prop === 'animation' && !ehNada(d.valor)).flatMap(d => partesNoTopo(d.valor, ','));
+  const declDe = (sel: string, prop: string, rs: Regra[]) => (rs.filter(r => r.sels.includes(sel)).flatMap(r => r.decls)
+    .filter(d => d.prop === prop).pop() || { valor: '' }).valor.trim();
+  /** O transform de cada ponta dos quadros de uma animação: [0 %, 100 %]. */
+  const pontas = (nome: string) => {
+    const q = (porNome.get(nome) || [])[0];
+    assert.ok(q, 'não há @keyframes ' + nome);
+    const em = (pos: number) => (q.quadros.filter(f => f.pos.includes(pos)).flatMap(f => f.decls).filter(d => d.prop === 'transform' || d.prop === 'opacity').pop() || { valor: '' }).valor.trim();
+    return [em(0), em(100)];
+  };
+
+  // ENTRA: a foto nova chega da borda direita, a tela inteira, no tempo e na curva da camada, com o fio
+  const ENTRA = 'html[data-nav="entra"]::view-transition-new(root)';
+  const entra = animacoes(ENTRA, doPortao);
+  assert.strictEqual(entra.length, 1, 'a tela que chega tem uma animação só: ' + entra);
+  assert.strictEqual(nomeDaAnimacao(entra[0]), 'ins-da-direita');
+  assert.ok(/var\(--ins-dur-entra\)/.test(entra[0]) && /var\(--ins-curva-camada\)/.test(entra[0]), 'entra em 350 ms na curva do iPhone: ' + entra[0]);
+  assert.deepStrictEqual(pontas('ins-da-direita'), ['translateX(100%)', 'none'], 'da borda direita, a tela inteira, até o lugar');
+  // SAI: a foto velha volta pela borda direita, por cima da que reaparece
+  const SAI = 'html[data-nav="sai"]::view-transition-old(root)';
+  const sai = animacoes(SAI, doPortao);
+  assert.strictEqual(sai.length, 1, 'a tela que sai tem uma animação só: ' + sai);
+  assert.strictEqual(nomeDaAnimacao(sai[0]), 'ins-para-direita');
+  assert.ok(/var\(--ins-dur-sai\)/.test(sai[0]) && /var\(--ins-curva-camada\)/.test(sai[0]), 'sai em 350 ms na curva do iPhone: ' + sai[0]);
+  assert.deepStrictEqual(pontas('ins-para-direita'), ['none', 'translateX(100%)'], 'do lugar até passar da borda direita');
+  assert.strictEqual(declDe(SAI, 'z-index', doPortao), '1', 'a que sai passa POR CIMA da que reaparece');
+  // a borda da que anda: um fio de 1 px (nunca sombra), fora da foto
+  [ENTRA, SAI].forEach(sel => {
+    assert.ok(/var\(--ins-fio-largura\)\s+solid\s+var\(--ins-fio\)/.test(declDe(sel, 'border-left', doPortao)), sel + ': o fio de 1 px na borda esquerda');
+    assert.strictEqual(declDe(sel, 'margin-left', doPortao), 'calc(-1 * var(--ins-fio-largura))', sel + ': fora da foto, para nada saltar 1 px no fim');
+    assert.strictEqual(declDe(sel, 'box-shadow', regras), '', sel + ': sem sombra (inegociável 3)');
+  });
+
+  // A DE BAIXO PARADA (pergunta 4): nenhuma regra anima a foto velha ao entrar,
+  // nem a nova ao sair — e nenhuma outra regra mexe na foto da página
+  const daRaiz = regras.filter(r => r.sels.some(sel => /::view-transition-(old|new|group|image-pair)\(root\)/.test(sel)) &&
+    r.decls.some(d => ehMovimento(d.prop) && !ehNada(d.valor)));
+  assert.deepStrictEqual(daRaiz.flatMap(r => r.sels).sort(), [ENTRA, SAI].sort(),
+    'só a tela que chega e a que sai se movem: a de baixo fica parada (dono, pergunta 4)');
+
+  // A FOLHA E O PAINEL DESCEM: só a foto velha sem nova, no tempo e na curva da camada, sem quique
+  const CAIXAS = ['folha-0', 'folha-1', 'folha-2', 'folha-3', 'painel'].map(n => '::view-transition-old(' + n + '):only-child');
+  const VEUS = ['veu-0', 'veu-1', 'veu-2', 'veu-3', 'veu-painel'].map(n => '::view-transition-old(' + n + '):only-child');
+  CAIXAS.forEach(sel => {
+    const a = animacoes(sel, doPortao);
+    assert.strictEqual(a.length, 1, sel + ': desce');
+    assert.strictEqual(nomeDaAnimacao(a[0]), 'ins-desce', sel);
+    assert.ok(/var\(--ins-dur-sai\)/.test(a[0]) && /var\(--ins-curva-camada\)/.test(a[0]), sel + ': em 350 ms na curva da camada, sem quique: ' + a[0]);
+  });
+  assert.deepStrictEqual(pontas('ins-desce'), ['none', 'translateY(100%)'], 'do lugar até passar da borda de baixo');
+  VEUS.forEach(sel => {
+    const a = animacoes(sel, doPortao);
+    assert.strictEqual(a.length, 1, sel + ': o véu apaga junto');
+    assert.strictEqual(nomeDaAnimacao(a[0]), 'ins-apaga', sel);
+    assert.ok(/var\(--ins-dur-sai\)/.test(a[0]) && /var\(--ins-curva-ciclo\)/.test(a[0]), sel + ': no tempo da saída, na curva do véu: ' + a[0]);
+  });
+  assert.deepStrictEqual(pontas('ins-apaga'), ['1', '0'], 'o véu só apaga');
+  // nenhuma saída quica, e nenhuma foto quica
+  const quicaNaFoto = regras.filter(r => r.sels.some(sel => /::view-transition/.test(sel)) &&
+    r.decls.some(d => /ins-quique/.test(d.valor)));
+  assert.deepStrictEqual(quicaNaFoto.map(r => r.sels.join(', ')), [], 'nenhuma saída quica (dono, 16/10)');
+  // e mais nenhuma foto se move: as que andam são exatamente estas
+  const movem = regras.filter(r => r.sels.some(sel => /::view-transition/.test(sel)) && (NO_PORTAO(r) || NO_REDUZ(r)) &&
+    r.decls.some(d => ehMovimento(d.prop) && !ehNada(d.valor))).flatMap(r => r.sels);
+  assert.deepStrictEqual([...new Set(movem)].sort(), [ENTRA, SAI, ...CAIXAS, ...VEUS].sort(),
+    'uma foto se move fora da tabela da peça 5: o que é do aparelho não anda, e o que não está aqui troca seco');
+  // sob "Reduzir", nenhuma foto: a porta nem pede a transição
+  assert.deepStrictEqual(regras.filter(r => NO_REDUZ(r) && r.sels.some(sel => /::view-transition/.test(sel))).map(r => r.sels.join(', ')), [],
+    'sob "Reduzir movimento" não há transição de vista');
+
+  // O QUE É DO APARELHO TEM NOME, e só ele (mais a folha e o painel, que descem)
+  const nomes = regras.filter(r => !NO_PORTAO(r) && !NO_REDUZ(r)).flatMap(r => r.decls.filter(d => d.prop === 'view-transition-name')
+    .flatMap(d => r.sels.map(sel => sel + ' → ' + d.valor)));
+  assert.deepStrictEqual(nomes.sort(), [
+    '#timer → cronometro', '#toast → aviso', '.ins-faixa → faixa', '.ng-faixa → nao-guardado',
+    '.pare-w:not(.falhou-w) > .ins-veu → veu-painel', '.pare-w:not(.falhou-w) > .pare → painel'
+  ].sort(), 'os nomes próprios da troca: o cronômetro, o aviso, as duas faixas e o painel de apagar — nem a barra de abas (é do lugar), nem o "Não guardei" (não desce)');
+  assert.ok(regras.some(r => !NO_PORTAO(r) && !NO_REDUZ(r) && FOTOS_PARADAS.every(f => r.sels.includes(f)) &&
+    r.decls.some(d => d.prop === 'opacity' && d.valor === '0')),
+    'o que é do aparelho e não está na tela nova sai de uma vez, no primeiro quadro');
+  // a folha e o véu, pela POSIÇÃO na pilha (o nível se repete: refeição e editar refeição são 50)
+  const folha = fonte('src/ui/instrumento/folha.jsx');
+  assert.match(folha, /class="ins-veu"[^>]*style=\{'view-transition-name:veu-' \+ lugar\}/, 'o véu da folha se nomeia pela posição');
+  assert.match(folha, /class="ins-folha"[\s\S]{0,200}style=\{'view-transition-name:folha-' \+ lugar\}/, 'a folha se nomeia pela posição');
+  assert.match(mainJsx(), /<LugarNaPilha\.Provider value=\{i\}>/, 'a posição é o índice na pilha, e não o nível');
+
+  // SOB "REDUZIR": a tela cheia e o modo que chegam esmaecem no nó que nasce, e só eles
+  const reduz = regras.filter(r => NO_REDUZ(r) && r.sels.some(sel => /data-nav/.test(sel)));
+  assert.deepStrictEqual(reduz.flatMap(r => r.sels).sort(), ['html[data-nav="entra"] .ins-modo', 'html[data-nav="entra"] .tc'],
+    'sob "Reduzir movimento", o que chega esmaece — só na chegada; o que reaparece já estava lá');
+  reduz.forEach(r => r.decls.filter(d => d.prop === 'animation').forEach(d => assert.ok(
+    nomeDaAnimacao(d.valor) === 'ins-esmaece' && /var\(--ins-dur-dissolve\)/.test(d.valor), 'só esmaecer, em --ins-dur-dissolve: ' + d.valor)));
+
+  // e o JavaScript pede a troca num ponto só: o `render()`, pela porta
+  const mj = semComentariosJs(mainJsx());
+  assert.strictEqual((mj.match(/trocaDeCamada\(/g) || []).length, 1, 'a troca de camada é pedida num ponto só');
+  assert.match(mj, /function render\(\) \{[\s\S]{0,400}trocaDeCamada\(/, 'e esse ponto é o render()');
+});
+
+/** O que é do aparelho, na foto velha sem nova (`:only-child`): sai de uma vez. */
+const FOTOS_PARADAS = ['cronometro', 'aviso', 'faixa', 'nao-guardado'].map(n => '::view-transition-old(' + n + '):only-child');
 
 // ============================================================
 // O TOQUE

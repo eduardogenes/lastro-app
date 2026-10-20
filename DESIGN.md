@@ -375,6 +375,10 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 | A folha sobe | `.ins-folha` (`componentes.css`, "A CAMADA QUE CHEGA COM O QUIQUE"), no nó que nasce; a segunda e a terceira sobem por cima da primeira, que fica onde está | `@keyframes ins-quique` (`tokens.css`): `transform` de `translateY(100%)` a `-8%` aos 55 %, `3%` aos 80 % e `none` — a única ultrapassagem do app; o pé (`::after`, o mesmo fundo) cobre o vão abaixo da caixa no pico; o invólucro, que é o fixo, não se move | `--ins-dur-quique` · os trechos do quique (a declaração diz `--ins-curva-camada`) | de onde veio: de baixo, por cima de tudo | esmaece ao chegar (`ins-esmaece`, `opacity` 0 → 1, em `--ins-dur-dissolve`) e sai de uma vez |
 | O véu acende | `.ins-veu` da folha e do painel de pare, cada camada com o seu | `opacity` 0 → 1 (`ins-esmaece`) | `--ins-dur-entra` · `--ins-curva-ciclo` | chegou algo por cima; os véus empilhados somam, e a profundidade fica dita pela cor | esmaece em `--ins-dur-dissolve` |
 | O painel de pare chega igual à folha | `.pare` do `Pare` (as duas variantes; não o "Não guardei") | o quique e o véu, iguais aos da folha; a frase sobe inteira com o painel, legível desde o primeiro quadro | os da folha | chegou por cima, a pedido do dedo (dono, 16/10, pergunta 11) | esmaece ao chegar e sai de uma vez |
+| A tela cheia e o modo chegam | a FOTO da tela nova (`html[data-nav="entra"]::view-transition-new(root)`, `componentes.css`, "A TROCA DE CAMADA"), numa transição de vista pedida pelo `render()` à porta (`trocaDeCamada`); vale para os 14 destinos, os Ajustes e o modo de sessão | `transform` de `translateX(100%)` a `none` (`ins-da-direita`, `base.css`): a tela inteira, da borda direita, com um fio de 1 px (`--ins-fio`) na borda esquerda dela, fora da foto; a de baixo PARADA (a foto velha não anima) | `--ins-dur-entra` · `--ins-curva-camada`, sem quique | de onde veio: da direita, por cima do lugar, que continua lá (dono, 16/10, perguntas 4 e 5) | sem transição: a tela cheia e o modo esmaecem no nó que nasce (`ins-esmaece`, em `--ins-dur-dissolve`) |
+| A tela cheia e o modo saem | a foto da tela velha (`html[data-nav="sai"]::view-transition-old(root)`), por cima da que reaparece — que já nasce na rolagem de onde se entrou; pela seta, pelo "‹ Voltar", pelo Esc e pelo Voltar do sistema | `transform` de `none` a `translateX(100%)` (`ins-para-direita`), com o mesmo fio | `--ins-dur-sai` · `--ins-curva-camada` | para onde foi: o lugar estava lá embaixo | sai de uma vez |
+| A folha e o painel de apagar descem | as fotos `folha-N` (o nome é a POSIÇÃO na pilha, no `style` da `Folha`; nunca o nível, que se repete) e `painel`, só a foto velha sem nova (`:only-child`): a folha que fica aberta debaixo de outra não se move | `transform` de `none` a `translateY(100%)` (`ins-desce`) — sem quique, nenhuma saída quica | `--ins-dur-sai` · `--ins-curva-camada` | para onde foi: de volta à borda de baixo | sai de uma vez |
+| O véu apaga | as fotos `veu-N` e `veu-painel`, com a folha e o painel que descem | `opacity` 1 → 0 (`ins-apaga`) | `--ins-dur-sai` · `--ins-curva-ciclo` | a camada de cima acabou | sai de uma vez |
 | A bancada: pouso, painel e régua, virada | `palco.css`, `palco.js` | `transform` e `opacity` | `--pl-dur-*` · `--pl-curva` | chegou; virou | nada |
 
 **O que fica sem movimento**, de propósito: o toque, que só escurece e troca na
@@ -386,9 +390,13 @@ e pousar cada dígito seria cintilar); os números
 derivados (contador, volume, kcal), que não rolam; o fim do descanso, cujo
 canal é o som e o "vai" (o cronômetro fica onde está); um descanso que
 substitui outro, que troca no lugar; a abertura do app — o descanso que estava
-correndo volta no lugar, sem subir — e o giro do telefone; a saída da folha e
-do painel de pare, que vai de uma vez até a descida chegar com a transição de
-vista (peça 5); a folha que toma o lugar da de cima ("cadastrar", `trocaFolha`),
+correndo volta no lugar, sem subir — e o giro do telefone; o que é do
+aparelho durante uma troca de camada — o cronômetro, o aviso curto, a faixa da
+sessão e a faixa "Não guardado" têm foto própria e ficam parados enquanto as
+páginas passam por baixo (o que sai da tela sai de uma vez; o que chega aparece
+no lugar), e a barra de abas fica com o lugar; o Voltar que o navegador já
+animou (o gesto de borda do iPhone, `hasUAVisualTransition`), que o app não anima
+de novo; a primeira tela, que nunca anima; a folha que toma o lugar da de cima ("cadastrar", `trocaFolha`),
 que nasce no lugar — a camada não se move, só o conteúdo troca; o aviso "Não
 guardei", que chega sozinho e é meia tela em tinta de pare (uma subida faria os
 botões varrerem a zona do polegar); e toda rolagem
@@ -396,13 +404,32 @@ programática, que é sempre um salto (`instant`) — a rolagem suave é do
 navegador, sem token de tempo nem de curva, e roda na thread que o `render()`
 ocupa (`docs/motion/04-desempenho.md` §1.6).
 
-**O dedo segura a camada que chega.** Um toque no meio da subida da folha ou
+**O toque chega ao que o dedo mirou.** Um toque no meio da subida da folha ou
 do painel se perdia nos dois motores: o dedo descia no × e o clique saía no
 cabeçalho, porque a camada andou entre descer e soltar (o Safari do iPhone
-cancela o toque quando o nó sob o dedo muda). Enquanto o dedo está numa camada
-que ainda chega, a chegada para no quadro em que o toque foi testado
-(`seguraSobODedo`, `folha.jsx`, pela porta), o clique cai no que o dedo tocou, e
-a subida segue de onde parou. Nada espera: o clique age na hora.
+cancela o toque quando o nó sob o dedo muda). Na peça 4 o dedo SEGURAVA a
+camada (pausava a chegada), e no Chromium a pausa recuava a folha um quadro;
+desde a peça 5 nada pausa: o clique de um toque que desceu numa camada que
+ainda chega vai ao nó em que o dedo desceu (`miraSobODedo`, `folha.jsx`, e
+`miraDoDedo`, na porta), e a subida segue o caminho dela. Durante uma troca de
+camada (a transição de vista) o alvo de todo toque é a raiz: o `pointerdown`
+PULA para o fim (`skipTransition()`), o desenho novo entra na hora, e o clique
+vai ao que ficou sob o dedo — sozinho, quando o navegador acha o alvo de novo, ou
+reenviado pela porta. Nada espera: o clique age na hora, e nada escuta o fim de
+uma transição.
+
+**A troca de camada mora num ponto só, e a rolagem e o foco vão dentro dela.**
+O `render()` (`main.jsx`) compara as camadas desenhadas com as que `view` pede
+e, quando uma tela cheia ou o modo chegam ou saem, ou uma folha ou o painel de
+apagar fecham, desenha dentro de uma transição de vista: o navegador fotografa
+a tela de agora e chama o desenho ~1 quadro depois (o quadro a mais que o dono
+aceitou, pergunta 6). Enquanto o desenho está pendente, `render()` não faz nada
+— dois seguidos viram uma troca só, no sentido da primeira —, e toda rolagem
+pedida nesse meio entra DENTRO do desenho novo (`rola`), que já nasce na
+posição: desenha, depois rola, em todo fecho (o Corpo que entrou no modo a 1982
+px voltava a 1091). Ao entrar, o título do destino e o do modo recebem o foco no
+mesmo desenho; ao sair, o foco volta ao controle que abriu (achado de novo pela
+chave dele) ou ao título da tela que reaparece — nunca ao `body`.
 
 **A camada de cima é a única alcançável.** A folha, o painel de pare e o "Não
 guardei" isolam o resto com `inert`, pelo mesmo mecanismo (`abreCamada`,
@@ -460,7 +487,10 @@ elemento está no último quadro, e o JavaScript só move pela porta; (c) só
 a janela cria bloco de contenção — com a lista de ancestrais conferida na árvore
 montada por `tests/fluxo/movimento.test.js`; (e) nada escuta o fim de uma
 animação; (g) o quique é só da caixa da folha e do pare, o véu acende no tempo
-da camada, sob "Reduzir" os quatro só esmaecem, e nada mais da pilha se move.
+da camada, sob "Reduzir" os quatro só esmaecem, e nada mais da pilha se move;
+(h) a troca de camada move só as fotos — a tela que chega e a que sai, a folha
+e o painel que descem, os véus —, a de baixo fica parada, nada quica, e só o
+que é do aparelho tem nome; fora do portão as fotos não animam.
 
 **O que já foi recusado, e o que caiu.** Mola e ultrapassagem continuam fora de
 tudo menos do quique (decisão do dono, 16/10). Comemoração, esqueleto que

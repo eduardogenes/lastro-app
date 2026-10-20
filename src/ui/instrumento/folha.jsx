@@ -9,7 +9,7 @@
 
 import { createContext } from 'preact';
 import { useContext, useEffect, useRef } from 'preact/hooks';
-import { seguraNoLugar } from '../movimento.js';
+import { miraDoDedo } from '../movimento.js';
 
 /**
  * COMO A FOLHA NASCE: subindo da borda, ou no lugar da de cima.
@@ -26,8 +26,17 @@ import { seguraNoLugar } from '../movimento.js';
 export const ChegadaDaFolha = createContext('sobe');
 
 /**
- * O DEDO SEGURA A CAMADA QUE CHEGA — para o toque no meio da subida chegar ao
- * que o dedo tocou.
+ * ONDE A FOLHA ESTÁ NA PILHA: 0 a de baixo, 1 a segunda, 2 a terceira. É o
+ * NOME dela na transição de vista (peça 5 do motion): a folha que fecha DESCE
+ * pela foto dela (`folha-N`), e o véu dela apaga junto (`veu-N`) —
+ * `componentes.css`, "A TROCA DE CAMADA". Pela posição, e nunca pelo `nivel`:
+ * a refeição e "editar refeição" têm os dois o nível 50, e dois nomes iguais na
+ * mesma tela abortam a transição (docs/motion/02 T3).
+ */
+export const LugarNaPilha = createContext(0);
+
+/**
+ * O TOQUE NA CAMADA QUE CHEGA VAI AO QUE O DEDO MIROU.
  *
  * Medido nos dois motores (peça 4 do motion), com a folha subindo e o × ou o
  * véu tocados de 60 a 220 ms depois de ela abrir: o toque NÃO fechava a folha.
@@ -37,46 +46,22 @@ export const ChegadaDaFolha = createContext('sobe');
  * ponteiro ao ancestral comum dos dois alvos, e o Safari do iPhone cancela o
  * toque quando o nó sob o dedo muda. Parada, ela fechava sempre.
  *
- * Então o dedo que desce numa camada que ainda chega a SEGURA ali
- * (`seguraNoLugar`, na porta do movimento): a chegada para no quadro em que o
- * toque foi testado, o que estava sob o dedo continua sob ele, e o clique cai
- * no que o dedo tocou. Depois a subida segue de onde parou. Nada espera nada:
- * o clique age na hora em que chega, e a camada só fica parada enquanto o dedo
- * está nela — solta com o clique, com o cancelamento do toque (virou rolagem)
- * ou, se o clique não vier, `SOLTA_SEM_CLIQUE_MS` depois de o dedo sair. Sem
- * animação correndo (a camada já parou, nasceu no lugar, ou "Reduzir
- * movimento" está ligado), não há o que segurar.
+ * Na peça 4 o dedo SEGURAVA a camada (pausava a chegada). No Chromium a pausa
+ * caía no tempo da thread principal, um quadro atrás do compositor, e a folha
+ * voltava um quadro sob o dedo — um piscar (07 §10). Desde a peça 5 nada pausa:
+ * a chegada segue o caminho dela, e o clique deste toque vai ao nó em que o dedo
+ * DESCEU, pela porta do movimento (`miraDoDedo`) — o mesmo princípio do toque
+ * no meio de uma transição de vista. Sem animação correndo (a camada já parou,
+ * nasceu no lugar, ou "Reduzir movimento" está ligado) não há o que mirar.
  */
-const SOLTA_SEM_CLIQUE_MS = 300;
-/** As camadas seguras agora, para um segundo dedo não segurar de novo. */
-const SEGURAS = new WeakSet();
-
 /**
- * O `onPointerDown` do invólucro de uma camada que chega com o quique: segura
- * a caixa e o véu, que são os filhos dele.
+ * O `onPointerDown` do invólucro de uma camada que chega com o quique: a mira é
+ * o nó tocado, e as animações que dizem "ainda chega" são as da caixa e do véu,
+ * que são os filhos dele.
  * @param {PointerEvent} ev
  */
-export function seguraSobODedo(ev) {
-  const camada = ev.currentTarget;
-  if (!camada || SEGURAS.has(camada)) return;
-  const soltaAnimacoes = seguraNoLugar([].slice.call(camada.children));
-  if (!soltaAnimacoes) return;
-  SEGURAS.add(camada);
-  let espera = 0;
-  const solta = function () {
-    clearTimeout(espera);
-    SEGURAS.delete(camada);
-    soltaAnimacoes();
-    document.removeEventListener('click', depoisDoClique, true);
-    document.removeEventListener('pointercancel', solta, true);
-    document.removeEventListener('pointerup', aoSoltar, true);
-  };
-  // o clique é entregue nesta mesma tarefa; a camada segue depois dele
-  const depoisDoClique = function () { setTimeout(solta, 0); };
-  const aoSoltar = function () { clearTimeout(espera); espera = setTimeout(solta, SOLTA_SEM_CLIQUE_MS); };
-  document.addEventListener('click', depoisDoClique, true);
-  document.addEventListener('pointercancel', solta, true);
-  document.addEventListener('pointerup', aoSoltar, true);
+export function miraSobODedo(ev) {
+  miraDoDedo(ev, ev.currentTarget);
 }
 
 /**
@@ -231,6 +216,7 @@ export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao
   const corpo = useRef(null);
   const caixa = useRef(null);
   const chegada = useContext(ChegadaDaFolha);
+  const lugar = useContext(LugarNaPilha);
 
   useEffect(() => {
     trava();
@@ -278,15 +264,16 @@ export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao
   // acende, no portão por adesão. O `transform` do quique é da `.ins-folha`, e
   // não do invólucro: o invólucro é o fixo, e nada acima dele pode conter. A
   // classe `troca` diz que esta folha tomou o lugar da de cima e não sobe; o
-  // dedo que desce nela enquanto ela sobe a segura (`seguraSobODedo`).
+  // toque que desce nela enquanto ela sobe vai ao que o dedo mirou
+  // (`miraSobODedo`).
   return (
     <div class={'ins-folha-w' + (chegada === 'troca' ? ' troca' : '')} style={`z-index:${nivel}`}
-         onPointerDown={chegada === 'troca' ? undefined : seguraSobODedo}>
+         onPointerDown={chegada === 'troca' ? undefined : miraSobODedo}>
       {/* Tocar no véu fecha. O véu é irmão da folha, não pai: pai capturaria
           o toque que sobe de dentro dela. */}
-      <div class="ins-veu" onClick={aoFechar} />
+      <div class="ins-veu" onClick={aoFechar} style={'view-transition-name:veu-' + lugar} />
       <div class="ins-folha" role="dialog" aria-modal="true" aria-label={titulo}
-           ref={caixa} tabindex="-1">
+           ref={caixa} tabindex="-1" style={'view-transition-name:folha-' + lugar}>
         <div class="ins-folha-h">
           <div class="ins-folha-h-txt">
             {olho && <div class="ins-label">{olho}</div>}
