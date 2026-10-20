@@ -18,6 +18,11 @@ Você é o implementador da **peça 5 · Telas cheias e modo de sessão** do mot
 9. `docs/motion/07-revisao-base.md` §1.2, §1.3 (princípios 1, 6, 8 e 9) e a linha da **peça 5** em §1.4 (fluxos 01, 02, 04, 05, 08, 16 e a descida do 06): o que o revisor vai cobrar.
 10. `docs/mapa/01-fundacao.md` (a casca: abas, telas cheias, folhas, Voltar) e `docs/mapa/03-sessao-de-treino.md`.
 
+## O que a peça 4 deixou e importa aqui (09, "Peça 4")
+- A chegada da folha e do painel é animação CSS no nó que nasce, e **o `pointerdown` durante a chegada a pausa** (`seguraNoLugar` na porta `movimento.js`) para o toque chegar ao que o dedo mirou. A View Transition desta peça é outro mecanismo (o alvo do toque durante ela é o `html`): o pulo + reenvio de 02 §2.0. Os dois têm de conviver — por exemplo, fechar uma folha que ainda está subindo.
+- O isolamento das camadas (`inert`) agora deriva da camada de cima (pare › "Não guardei" › folhas) e cobre o `#timer`. Tela cheia e modo entram nesse mesmo esquema, e o foco ao sair tem de ir a um lugar declarado.
+- A guarda (b) cobra `getAnimations(` só na porta; `startViewTransition` também só lá.
+
 ## A condição de entrada (antes de qualquer outra coisa)
 **Um teste de navegador do toque atravessando**, nos dois motores (Chromium e WebKit 26.5 desta máquina — a receita de rodar o WebKit está no topo de `docs/motion/_medicao/desempenho-comum.mjs`): para cada camada (tela cheia, modo, folha descendo, painel descendo), um segundo toque no meio da transição chega ao alvo que está sob o dedo. **Se uma camada reprovar num motor, ela troca seco naquele motor** (o app de hoje), e isso fica escrito no código e no 09. Escreva esse teste primeiro e mantenha-o na suíte.
 
