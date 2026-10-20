@@ -85,7 +85,7 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Respostas do dono registradas no diário (16/10, 01h25).
 
 ### Fase 3 — implementação (só depois das respostas)
-- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1, 2 (16/10), 3, 4 (19/10), 5, 6 e 7 (20/10) feitas.
+- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0 a 8 feitas (16/10 a 20/10); faltam os ajustes finais.
 - [x] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`). Peça 0: casos (a)–(e) e a lista de folhas, 52 plantios.
 - [x] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova (peça 0).
 - [ ] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde.
@@ -572,3 +572,41 @@ A regra do tempo é escolha técnica a partir da 03 §5.1, num lugar só, se o d
 quiser outra. Achado: o caso da corrida do histórico da peça 5 cai às vezes no
 WebKit com carga, também no build de antes — vai para os ajustes finais.
 `tipos` limpo, build, 1675/1675 duas vezes.
+
+**20/10 — peça 7 conferida pelo revisor** (07 §13), sem nenhuma reprovação. O
+aviso sobe 8 px e acende em 160 ms nos dois motores; texto novo refaz a
+entrada; sai só apagando (~133 ms) e o nó sai da página; tempo na tela 3,6 s
+(13 caracteres), 4,35 (50), 7,75 (101), 8,01 (140) — antes, 3,6 para tudo; com
+o cronômetro entrando ou saindo no meio da entrada, a mensagem anda no máximo
+16 px por quadro (antes, 82 num quadro); sob "Reduzir" só acende em 120 e sai
+de uma vez; a região viva fica sempre na árvore de acessibilidade (antes sumia e
+guardava o texto velho); o toque responde no mesmo quadro do antes. O passo
+`some` do fluxo 10 foi ajustado à mensagem nova, e o comparador deixou de cobrar
+o princípio 1 em passo de espera (ninguém toca). **Para a rodada final:** um
+aviso na tela durante uma troca de camada (nenhum fluxo cobre); no WebKit, o
+anel de foco do título do modo some com o dedo em "Iniciar treino" — vem da
+montagem do fluxo, a conferir.
+
+**20/10, 14h30 — peça 8 entregue, e devolvida por um ponto.** O copo enche de
+baixo (160 ms, `::after`), a forma da refeição pousa, "Comi tudo" não empurra a
+linha (331,8 fica 331,8; era 488,8), dois "+1 copo" com recusa não perdem nem
+inventam copo, "Abrindo o registro…" só aparece aos 300 ms (0 quadros visíveis
+na abertura rápida), régua/teclado/RIR parados com guarda. 1696/1696 duas vezes.
+**Aceito:** com a página no topo, a leitura de volta do "Comi tudo" fica
+cortada em cima (a página rola 157 px para a linha não descer) — o retorno do
+toque é a própria linha sob o dedo, e é o que o Chromium já fazia com a página
+rolada; vai para a página de antes e depois. **Não aceito e devolvi:** com
+`preventScroll`, a célula na metade de baixo deixa a última fileira do teclado e
+o "pronto" abaixo da dobra (até y 1026 numa tela de 896) — defeito novo. O
+conserto: não rolar quando o teclado cabe; quando não cabe, rolar o mínimo para
+ele aparecer inteiro, de uma vez.
+
+**20/10, 14h45 — peça 8 conferida.** O teclado: o `focus({ preventScroll: true })`
+ficou, e no desenho seguinte `mostraOTecladoInteiro()` rola o MÍNIMO
+(`block: 'nearest'`, de uma vez) só quando o teclado não cabe, descontando a
+barra, o cronômetro e a faixa (`scroll-margin` do `.tcl`). Metade de cima: nada
+rola. Metade de baixo: rola 131 e o "pronto" fica dentro da tela. Com o
+cronômetro em cena: rola 213 e o teclado fica acima dele — antes ficava por
+baixo do cronômetro, com o "pronto" coberto (defeito antigo, consertado junto).
+Custo escrito: quando precisa rolar, sob o dedo fica uma tecla, como era antes.
+`tipos` limpo, build, 1698/1698 duas vezes.

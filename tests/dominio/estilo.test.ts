@@ -1604,6 +1604,20 @@ function noCodigo(rels: string[], re: RegExp): string[] {
 /** A PORTA do movimento: o único módulo que pode perguntar ao aparelho e mover por JS. */
 const PORTA = 'src/ui/movimento.js';
 
+/**
+ * A ESPERA DA ABERTURA (peça 8): a frase "Abrindo o registro…" só aparece se a
+ * abertura demorar, de uma vez, e igual sob "Reduzir movimento". É a única
+ * declaração de `animation-*` fora do portão, e não é movimento — duração zero,
+ * o atraso e mais nada —; a (b) a deixa passar SÓ nesta forma exata, e o caso
+ * (k) cobra a forma inteira (os quadros, o token, que nada mais a mova).
+ */
+const ESPERA_DA_ABERTURA = '#app > .msg';
+const DECL_DA_ESPERA: Record<string, string> = {
+  'animation-name': 'ins-espera', 'animation-delay': 'var(--ins-espera-abertura)', 'animation-fill-mode': 'backwards'
+};
+const ehEsperaDaAbertura = (r: Regra, d: Decl) => !r.midias.length && r.sels.length === 1 &&
+  r.sels[0] === ESPERA_DA_ABERTURA && DECL_DA_ESPERA[d.prop] === d.valor;
+
 test('a lista de folhas é a do disco, nos dois sentidos', () => {
   // O comentário de FOLHAS prometia este caso desde a passada dos tokens, e ele
   // não existia: uma folha nova — um `movimento.css`, por exemplo — passaria
@@ -1743,6 +1757,8 @@ test('(b) reduzir movimento falha fechado: todo movimento mora no portão por ad
   folhas.forEach(f => f.regras.forEach(r => r.decls.forEach(d => {
     if (d.prop === 'scroll-behavior' && d.valor.trim() !== 'auto') fora.push(onde(r, d) + ' (rolagem é sempre um salto)');
     if (!ehMovimento(d.prop) || ehNada(d.valor)) return;
+    // o atraso da frase da abertura não é movimento, e vale com e sem a preferência (caso (k))
+    if (ehEsperaDaAbertura(r, d)) return;
     if (NO_PORTAO(r)) { r.sels.forEach(s => animaNoPortao.add(s)); return; }
     if (NO_REDUZ(r)) {
       // a alternativa deliberada sob "Reduzir movimento": só esmaecer, só no tempo dele
@@ -2658,4 +2674,141 @@ test('(f) o toque escurece: uma camada só, fora do portão, e nada no controle 
   });
   assert.deepStrictEqual(fracos, [],
     'a camada do toque não se vê o bastante: o mínimo é 1,5:1 entre o tocado e o repouso (tokens.css, "O toque")');
+});
+
+// ============================================================
+// O RESTO DO LUGAR (peça 8)
+//
+// O que muda ONDE ESTÁ fora do treino, e o que continua parado: o copo do
+// "+1 copo" enche de baixo, em `--ins-dur-lugar`, por transição (o Agora que
+// monta nasce com os copos cheios, parados); a forma da refeição marcada pela
+// linha pousa com o gesto do número da série, e a da leitura de volta não; a
+// frase "Abrindo o registro…" só aparece se a abertura demorar, de uma vez e
+// igual sob "Reduzir movimento"; e régua, teclado e RIR continuam sem movimento
+// nenhum — o que nasce sob o polegar aparece no lugar —, com o teclado sem
+// rolar a página ao receber o foco (docs/motion/03 §4.4, §4.6, §4.7, §6;
+// 01 A.5; dono, 16/10, perguntas 2 e 13).
+//
+// Cada parte foi vista VERMELHA plantando a violação (docs/motion/09, peça 8).
+// ============================================================
+
+test('(k) o resto do lugar: o copo enche de baixo, a forma pousa, a frase da abertura só aparece se demora, e régua, teclado e RIR ficam parados', () => {
+  const folhas = folhasDoApp();
+  const regras = folhas.flatMap(f => f.regras);
+  const porNome = quadrosPorNome(todasAsFolhas());
+  const fora = regras.filter(r => !r.midias.length);
+  /** o último valor de `prop` para o seletor exato, nas regras dadas */
+  const valor = (sel: string, prop: string, rs: Regra[]) => {
+    const ds = rs.filter(r => r.sels.includes(sel)).flatMap(r => r.decls).filter(d => d.prop === prop);
+    return ds.length ? ds[ds.length - 1].valor : undefined;
+  };
+  const movem = (r: Regra) => r.decls.some(d => ehMovimento(d.prop) && !ehNada(d.valor));
+  const naRegra = (re: RegExp) => regras.filter(r => r.sels.some(s => re.test(s)) && movem(r))
+    .map(r => r.arquivo + ':' + r.linha + ' ' + r.sels.join(', ') + (r.midias.length ? ' @ ' + r.midias.join(' / ') : ''));
+
+  // ---- 1. O COPO enche de baixo: um `::after` que escala na vertical a partir
+  //      da base, cheio no `f`; a transição no portão, no tempo e na curva do
+  //      lugar; nada sob "Reduzir" (ele aparece cheio) e nenhuma animação, que
+  //      rodaria ao montar.
+  const COPO = '.ag-copos i';
+  assert.strictEqual(valor(COPO + '::after', 'transform', fora), 'scaleY(0)', 'o copo vazio: o preenchimento achatado');
+  assert.strictEqual(valor(COPO + '::after', 'transform-origin', fora), 'bottom', 'e ele enche DE BAIXO');
+  assert.strictEqual(valor(COPO + '::after', 'background', fora), 'var(--ins-tinta)');
+  assert.strictEqual(valor(COPO + '::after', 'inset', fora), '0');
+  assert.strictEqual(valor(COPO + '.f::after', 'transform', fora), 'none', 'o copo cheio: o preenchimento inteiro, parado');
+  assert.strictEqual(valor(COPO, 'overflow', fora), 'hidden', 'o copo corta o preenchimento no contorno');
+  assert.strictEqual(valor(COPO + '.f', 'background', fora), undefined,
+    'o copo cheio pinta o fundo dele mesmo: o preenchimento apareceria de uma vez, por baixo do que enche');
+  const doCopo = regras.filter(r => r.sels.some(s => s.includes('.ag-copos')) && movem(r));
+  assert.deepStrictEqual(doCopo.filter(r => !NO_REDUZ(r)).map(r => [r.sels.join(', '), r.midias.join(' / '),
+    r.decls.filter(d => ehMovimento(d.prop)).map(d => d.prop + ': ' + d.valor).join('; ')]),
+    [[COPO + '::after', '@media (prefers-reduced-motion: no-preference)', 'transition: transform var(--ins-dur-lugar) var(--ins-curva)']],
+    'o copo se move por UMA transição, no portão, só do preenchimento, no tempo e na curva do lugar');
+  // sob "Reduzir", ele aparece cheio — ou, no máximo, só esmaece (o pedido aceita as duas)
+  assert.deepStrictEqual(doCopo.filter(r => NO_REDUZ(r)).filter(r => r.decls.filter(d => ehMovimento(d.prop) && !ehNada(d.valor))
+    .some(d => !(d.prop === 'transition' || d.prop === 'animation') ||
+      !partesNoTopo(d.valor, ',').every(it => /var\(--ins-dur-dissolve\)/.test(it)) ||
+      !oQueMove({ ...r, decls: [d] }, porNome).every(p => p === 'opacity'))).map(r => r.arquivo + ':' + r.linha),
+    [], 'sob "Reduzir movimento" o copo não enche: aparece cheio, ou só esmaece');
+  // os copos são o mesmo nó em todo render(): a transição dispara na troca do
+  // `f`, e não ao montar
+  assert.match(fonte('src/ui/telas/agora.jsx'), /<i key=\{i\} class=\{i < ag\.n \? 'f' : ''\} \/>/,
+    'os copos mudaram de forma: a transição precisa de um nó por posição, que persiste');
+
+  // ---- 2. A FORMA pousa: `.df.recem`, com `ins-pousa` no portão e
+  //      `ins-acende` sob "Reduzir"; só a linha da refeição a recebe, com uma
+  //      chave por estado; a leitura de volta e o dia aberto, não.
+  const doNoPortao = (sel: string, re: (r: Regra) => boolean) =>
+    animacoesOuTransicoes(sel, regras.filter(re));
+  assert.deepStrictEqual(doNoPortao('.df.recem', NO_PORTAO), ['ins-pousa var(--ins-dur-lugar) var(--ins-curva) both'],
+    'a forma pousa com o gesto do número da série, no tempo do lugar');
+  assert.deepStrictEqual(doNoPortao('.df.recem', NO_REDUZ), ['ins-acende var(--ins-dur-dissolve) var(--ins-curva) both'],
+    'sob "Reduzir movimento" a forma só acende');
+  assert.deepStrictEqual(naRegra(/\.df\b/).filter(x => !/^\S+ \.df\.recem( @|$)/.test(x)), [],
+    'outra regra move a forma da refeição');
+  const agoraJsx = semComentariosJs(fonte('src/ui/telas/agora.jsx'));
+  const formas = [...agoraJsx.matchAll(/<Forma\b[^>]*\/>/g)].map(m => m[0]);
+  assert.deepStrictEqual(formas.filter(f => /\brecem\b/.test(f)),
+    ['<Forma key={estado} marca={estado} recem={!treino && linha.recem === r.id} />'],
+    'uma forma só pousa — a da linha —, num nó por estado');
+  assert.ok(formas.some(f => /marca=\{volta\.estado\}/.test(f) && !/\brecem\b/.test(f)), 'a leitura de volta mostra a forma parada');
+  assert.ok(!/\brecem\b/.test(fonte('src/ui/telas/dia.jsx')), 'o dia aberto não pousa nada');
+  const mj = semComentariosJs(mainJsx());
+  assert.match(mj, /recem: f && f\.data === d\.data && Date\.now\(\) - f\.t < VIDA_DO_RECEM_MS \? f\.id : null/,
+    'a marca da forma vence sozinha, como a da série — sem ouvir o fim da animação');
+  const vaiPara = (/vaiPara: function \(a\) \{[\s\S]*?\n {2}\},/.exec(mj) || [''])[0];
+  const abreModo = (/function abreModo\(\) \{[\s\S]*?\n\}/.exec(mj) || [''])[0];
+  assert.match(vaiPara, /view\.formaRecem = null;/, 'trocar de aba apaga a marca: a aba nasce inteira, e a forma pousaria de novo');
+  assert.match(abreModo, /view\.formaRecem = null;/, 'entrar no modo também');
+
+  // ---- 3. A FRASE DA ABERTURA espera para aparecer: duração zero, um atraso
+  //      que é token, quadros só apagados — um degrau, sem esmaecer —, fora de
+  //      toda `@media` (vale igual sob "Reduzir"), e só ela.
+  const msg = regras.filter(r => r.sels.some(s => /(^|[\s>])\.msg\b/.test(s)));
+  assert.deepStrictEqual(msg.filter(r => r.midias.length).map(r => r.arquivo + ':' + r.linha + ' ' + r.midias.join(' / ')), [],
+    'a frase da abertura mora fora de toda @media: com e sem "Reduzir movimento" ela espera igual');
+  const espera = msg.filter(r => r.sels.includes(ESPERA_DA_ABERTURA));
+  assert.strictEqual(espera.length, 1, 'a espera da frase é uma regra só, `' + ESPERA_DA_ABERTURA + '`');
+  assert.deepStrictEqual(espera[0].decls.filter(d => ehMovimento(d.prop)).map(d => d.prop + ': ' + d.valor).sort(),
+    Object.keys(DECL_DA_ESPERA).map(p => p + ': ' + DECL_DA_ESPERA[p]).sort(),
+    'a espera é o atraso e mais nada: sem duração (que esmaeceria), sem curva, sem transição');
+  assert.deepStrictEqual(msg.filter(r => r !== espera[0] && movem(r)).map(r => r.arquivo + ':' + r.linha), [],
+    'outra regra move a frase da abertura');
+  const quadrosDaEspera = porNome.get('ins-espera') || [];
+  assert.deepStrictEqual(quadrosDaEspera.map(q => q.arquivo), ['base.css'], 'os quadros da espera são um só, em base.css');
+  const qs = quadrosDaEspera[0].quadros;
+  assert.ok(qs.some(q => q.pos.includes(0)) && qs.some(q => q.pos.includes(100)) &&
+    qs.every(q => q.decls.length === 1 && q.decls[0].prop === 'opacity' && q.decls[0].valor === '0'),
+    'ins-espera: apagada do começo ao fim, e só opacidade — quando o atraso acaba ela aparece de uma vez');
+  assert.deepStrictEqual(regras.filter(r => r.decls.some(d => /^animation(-name)?$/.test(d.prop) && /(?<![\w-])ins-espera(?![\w-])/.test(d.valor)))
+    .flatMap(r => r.sels), [ESPERA_DA_ABERTURA], 'só a frase da abertura espera');
+  const tok = /--ins-espera-abertura\s*:\s*(\d+)ms/.exec(semComentariosCss(fonte('src/tokens.css')));
+  assert.ok(tok, '--ins-espera-abertura sumiu dos tokens, ou deixou de estar em ms');
+  assert.ok(Number(tok![1]) >= 300 && Number(tok![1]) <= 400,
+    'a frase aparece entre 300 e 400 ms (docs/motion/03 §6): menos volta a piscar, mais deixa a tela vazia numa espera de verdade (' + tok![1] + ')');
+  assert.match(indexHtml(), /<div id="app"><div class="msg">Abrindo o registro…/,
+    'a frase é o filho direto do #app, que o primeiro render() troca pelo app');
+
+  // ---- 4. RÉGUA, TECLADO E RIR: nada se move neles, e o teclado recebe o foco
+  //      sem rolar a página (01 A.5: a célula subia e uma tecla caía sob o dedo).
+  assert.deepStrictEqual(naRegra(/\.(regua|tcl|rirscale|rirop|rirbtn)(?![\w])|\.(regua|tcl|rirscale)-/), [],
+    'painel que nasce sob o polegar se move: o alvo tem de estar parado e tocável no primeiro quadro');
+  const tecladoJsx = semComentariosJs(fonte('src/ui/instrumento/teclado.jsx'));
+  const focos = [...tecladoJsx.matchAll(/\.focus\(([^)]*)\)/g)].map(m => m[1].trim());
+  assert.deepStrictEqual(focos, ['{ preventScroll: true }'],
+    'o teclado recebe o foco sem rolar a página: sem `preventScroll` o navegador o traz para a vista e a página salta');
+  // ... e quem o traz inteiro para a tela, quando ele não cabe, é o casco: pelo
+  // mínimo (`nearest`), de uma vez (`instant`), no desenho seguinte, e
+  // descontando o que cobre a tela — o `scroll-margin` do `.tcl`
+  const margem = valor('.tcl', 'scroll-margin-bottom', fora) || '';
+  ['--ins-tabbar', '--ins-timer-h', '--ins-faixa-h'].forEach(v => assert.ok(margem.includes('var(' + v + ')'),
+    'a área visível do teclado não desconta ' + v + ' (o rodapé cobriria a última fileira e o "pronto"): ' + margem));
+  assert.ok(/var\(--ins-topo\)/.test(valor('.tcl', 'scroll-margin-top', fora) || ''), 'nem o que cobre o topo');
+  const mostra = (/function mostraOTecladoInteiro\(\) \{[\s\S]*?\n\}/.exec(mj) || [''])[0];
+  assert.match(mostra, /depoisDoLayout\(/, 'o teclado vem para a tela no desenho seguinte, depois do layout');
+  assert.match(mostra, /scrollIntoView\(\{ block: 'nearest', inline: 'nearest', behavior: 'instant' \}\)/,
+    'pelo mínimo, e de uma vez: rolagem programática é sempre um salto');
+  const abrem = (mj.match(/view\.teclado = \{ alvo:/g) || []).length;
+  const chamam = (mj.match(/\n\s*mostraOTecladoInteiro\(\);/g) || []).length;
+  assert.ok(abrem >= 6 && chamam === abrem, 'todo lugar que abre o teclado o traz inteiro para a tela: ' + abrem + ' abrem, ' + chamam + ' chamam');
 });

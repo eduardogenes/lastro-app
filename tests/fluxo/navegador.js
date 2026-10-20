@@ -98,7 +98,12 @@ export async function fechaNavegador() {
   await new Promise(r => srv.close(r));
 }
 
-export async function abreNavegador({ reduz = false } = {}) {
+/**
+ * `preparo(ctx)`, se vier, roda com o contexto pronto e antes de a página abrir:
+ * é onde um caso segura uma resposta do servidor (o script que demora a chegar,
+ * a abertura lenta) ou instala um registro que precisa ver o primeiro quadro.
+ */
+export async function abreNavegador({ reduz = false, preparo = null } = {}) {
   const [srv, b] = await sobe();
   const ctx = await b.newContext({
     viewport: { width: 414, height: 896 }, deviceScaleFactor: 2, hasTouch: true,
@@ -106,6 +111,7 @@ export async function abreNavegador({ reduz = false } = {}) {
     serviceWorkers: 'block'
   });
   await ctx.route(/^https?:\/\/fonts\./, r => r.abort());
+  if (preparo) await preparo(ctx);
   const alvo = new Date(2026, 9, 15, 7, 10, 0).getTime();
   await ctx.addInitScript(`(function () {
     var real = Date.now.bind(Date), off = ${alvo} - real();

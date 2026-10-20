@@ -435,9 +435,10 @@ p, .ins-prosa, input, textarea {
 
 /* POUSAR, o gesto do "o valor entrou aqui": de `--ins-pousa` abaixo e de
    opacidade .4 até o lugar — legível desde o primeiro quadro, nunca invisível.
-   Um gesto, um significado (docs/motion/06 §2.3): hoje o número da série
-   (`treino.css`); a forma da refeição marcada usa o mesmo, na peça 8. A
-   opacidade inicial vive aqui uma vez, e não vira token.
+   Um gesto, um significado (docs/motion/06 §2.3): o número da série
+   (`treino.css`) e a forma da refeição marcada pela linha do Agora
+   (`componentes.css`, peça 8). A opacidade inicial vive aqui uma vez, e não
+   vira token.
    ACENDER é o mesmo sem o deslocamento: o que fica sob "Reduzir movimento". */
 @keyframes ins-pousa {
   from { translate: 0 var(--ins-pousa); opacity: .4; }
@@ -446,6 +447,14 @@ p, .ins-prosa, input, textarea {
 @keyframes ins-acende {
   from { opacity: .4; }
   to   { opacity: 1; }
+}
+
+/* ESPERAR para aparecer: o que fica apagado durante o atraso e aparece de uma
+   vez quando ele acaba — sem duração, então sem interpolação nenhuma. Não é
+   movimento, e por isso não mora no portão. Só a frase "Abrindo o registro…"
+   (`componentes.css`, peça 8), com `--ins-espera-abertura`. */
+@keyframes ins-espera {
+  from, to { opacity: 0; }
 }
 
 /* O AVISO CURTO CHEGA (peça 7): de `--ins-sobe-aviso` abaixo e apagado até o

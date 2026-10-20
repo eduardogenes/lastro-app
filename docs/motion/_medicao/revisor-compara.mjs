@@ -136,7 +136,9 @@ function julga(rodada, a, d, extra, mov, tiraD) {
     // de +25 a +42. O limite fica em 1,5 quadro (25 ms) nesses passos (peça 6);
     // nos outros, em um quadro (17 ms), como sempre.
     const troca = mov && /^(entra|sai|aba)$/.test(mov.tipo), lim = troca ? 25 : 17;
-    if (!lac && qd.primeiraMudancaMs != null && qa.primeiraMudancaMs != null && qd.primeiraMudancaMs > qa.primeiraMudancaMs + lim)
+    // (num passo de espera ninguém toca: o zero é a condição do passo, e o "atraso"
+    // seria só onde o zero cai — na peça 7, o começo da saída em vez do fim)
+    if (!lac && d.tipo !== 'espera' && qd.primeiraMudancaMs != null && qa.primeiraMudancaMs != null && qd.primeiraMudancaMs > qa.primeiraMudancaMs + lim)
       reprova(p, `a tela muda a ${qd.primeiraMudancaMs} ms (antes ${qa.primeiraMudancaMs}): ` + (troca ? 'dois quadros ou mais de atraso (decisão 6 aceita um)' : 'mais de um quadro de atraso'));
     // Troca de camada (peça 5): com a View Transition, o 1º quadro que muda pode
     // ser só o controle apertado (a caixa dele), e a troca anda depois. Aqui vale

@@ -389,7 +389,10 @@ export function Agora({ ctx }) {
               <li key={r.id} class={'ag-l ' + estado + (aberta ? ' aberta' : '')}>
                 <button class="ag-l-b" data-a={'linha-' + r.id} aria-expanded={treino ? undefined : (aberta ? 'true' : 'false')}
                         onClick={() => treino ? ctx.vaiPara('treino') : ctx.abreLinhaDaComida(r.id)}>
-                  <Forma marca={estado} />
+                  {/* A forma POUSA quando o dedo acabou de marcar esta linha
+                      (peça 8 do motion): um nó por estado, e a marca de recém
+                      que vence sozinha. A da leitura de volta, lá em cima, não. */}
+                  <Forma key={estado} marca={estado} recem={!treino && linha.recem === r.id} />
                   <span class="ag-l-h">{r.t.replace(/^0(\d)/, '$1').replace(':', 'h')}</span>
                   <span class="ag-l-n">
                     {treino ? (sessao.nome || 'Treino ' + diaHoje.treino) : r.n}

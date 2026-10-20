@@ -2621,6 +2621,31 @@ function seriesFeitasHoje(d) {
   return n;
 }
 
+/**
+ * OS COPOS NO AR (defeito 6 da docs/motion/03 §8.7, consertado na peça 8 do
+ * motion). Cada "+1 copo" soma na memória, grava e espera a resposta; com o
+ * aparelho recusando, cada chamada devolvia a conta ao `antes` DELA. Dois toques
+ * antes da primeira resposta (o que acontece quando o armazenamento demora, como
+ * o do host) davam errado: o primeiro recusado e o segundo aceito devolvia a
+ * conta a antes dos dois — o copo que o disco guardou sumia, e a próxima
+ * gravação o apagava —; os dois recusados deixavam na tela o copo do primeiro,
+ * que o disco recusou; e o primeiro aceito desenhava a memória, com o segundo
+ * copo ainda sem resposta.
+ *
+ * A rajada: enquanto algum "+1 copo" espera a resposta, `coposNoAr` guarda o
+ * que o disco TEM de água — o que havia antes do primeiro toque, e depois o que
+ * cada gravação aceita escreveu. Cada gravação leva a conta inteira da memória,
+ * e por isso a do toque mais novo leva os copos dos de antes: quem decide é ela.
+ * Aceita, a conta fica; recusada, a conta volta ao que o disco tem, e o aviso
+ * diz qual copo não entrou a partir dali. Os de antes, ao responder, só
+ * atualizam o que o disco tem (e, aceitos, desenham). E a tela lê o que o disco
+ * tem enquanto a rajada está no ar (`CTX.agua`): nenhum desenho no meio — o
+ * painel de "Não guardei" também desenha — mostra copo sem resposta. O copo
+ * enche no desenho que vem depois da resposta.
+ */
+let coposNoAr = null;
+function aguaDoDia(d) { return { agua: d.agua, nc: d.aguaNaoContada, m: d.aguaM }; }
+
 const CTX = {
   // ---------- rota ----------
   abaAtual: function () { return view.aba || 'agora'; },
@@ -2632,6 +2657,9 @@ const CTX = {
     view.aba = a;
     view.prog = null; view.hist = null; view.retro = false;
     view.sessao = null; view.add = null; view.mes = 0;
+    // O que reaparece não pousa de novo: a aba nasce inteira a cada troca, e a
+    // forma da refeição recém-marcada pousaria outra vez (peça 8 do motion).
+    view.formaRecem = null;
     // Ir para um LUGAR fecha o que está em tela cheia — o modo de sessão e os
     // ajustes inclusive. Sem isto `vaiPara` troca `view.aba` POR BAIXO de um
     // destino que continua desenhado (`emTelaCheia()` ganha da aba em
@@ -2804,23 +2832,34 @@ const CTX = {
   // não entrou. Tocar no número corrige no lugar, sem prazo.
   agua: function () {
     const d = diaDeComida();
-    return { n: d.aguaNaoContada ? 0 : (d.agua || 0), naoContada: !!d.aguaNaoContada,
+    // com um "+1 copo" esperando a resposta do aparelho, o que o disco tem
+    // (ver `coposNoAr`): a tela não mostra copo que ninguém confirmou
+    const a = coposNoAr && coposNoAr.data === d.data ? coposNoAr.guardado : aguaDoDia(d);
+    return { n: a.nc ? 0 : (a.agua || 0), naoContada: !!a.nc,
              corrigindo: !!view.aguaCorrige, falhou: view.aguaFalhou || null };
   },
   maisUmCopo: async function () {
     const d = diaDeComida();
-    const antes = d.agua, nc = d.aguaNaoContada, mAntes = d.aguaM;
+    if (!coposNoAr || coposNoAr.data !== d.data) coposNoAr = { data: d.data, toques: 0, guardado: aguaDoDia(d) };
+    const rajada = coposNoAr, meu = ++rajada.toques;
     d.agua = (d.aguaNaoContada ? 0 : (d.agua || 0)) + 1;
     delete d.aguaNaoContada;
     d.aguaM = Date.now();
-    const n = d.agua;
+    const leva = aguaDoDia(d);           // o que ESTA gravação escreve
     view.aguaFalhou = null;
     const ok = await save();
+    if (ok !== false) rajada.guardado = leva;
+    // um toque mais novo espera a resposta dele, e a gravação dele leva este
+    // copo junto: é ela que decide. Aceito, este copo já está no disco, e a
+    // tela (que lê o que o disco tem) o mostra.
+    if (meu !== rajada.toques) { if (ok !== false) render(); return; }
+    if (coposNoAr === rajada) coposNoAr = null;
     if (ok === false) {
-      d.agua = antes;
-      if (nc) d.aguaNaoContada = nc;
-      if (mAntes == null) delete d.aguaM; else d.aguaM = mAntes;
-      view.aguaFalhou = n;
+      const g = rajada.guardado;
+      d.agua = g.agua;
+      if (g.nc) d.aguaNaoContada = g.nc; else delete d.aguaNaoContada;
+      if (g.m == null) delete d.aguaM; else d.aguaM = g.m;
+      view.aguaFalhou = (g.nc ? 0 : (g.agua || 0)) + 1;
     }
     render();
   },
@@ -2835,10 +2874,14 @@ const CTX = {
   linhaDaComida: function () {
     const u = view.ultimaMarca;
     const d = diaDeComida();
+    const f = view.formaRecem;
     return { aberta: view.linhaComida || null, pergunta: view.perguntaDe || null,
              // a leitura de volta do último toque (momento 2, estado 2): fica
              // enquanto a marca existir e for de hoje
-             ultima: u && u.data === d.data && d.done[u.id] ? u : null };
+             ultima: u && u.data === d.data && d.done[u.id] ? u : null,
+             // a linha cuja forma POUSA (peça 8 do motion), enquanto a marca de
+             // recém vale (ver `marcaLinhaDaComida`)
+             recem: f && f.data === d.data && Date.now() - f.t < VIDA_DO_RECEM_MS ? f.id : null };
   },
   abreLinhaDaComida: function (id) {
     view.linhaComida = view.linhaComida === id ? null : id;
@@ -2849,14 +2892,32 @@ const CTX = {
    * `k`: `'tudo'`, `'metade'` (a marca com porção ½, como na folha de pôr o dia
    * em dia), `'fora'`, `'nsei'`, `'nao'` — ou `'pergunta'`, que abre a única
    * pergunta do "Não comi isso", e `'desfaz'`, que tira a marca.
+   *
+   * Pela LINHA aberta (peça 8 do motion; só ela tem estes botões — o cartão de
+   * cima chama o mesmo verbo com a linha fechada), duas coisas de tela, que não
+   * gravam nada nem mudam a ordem dos toques:
+   *  - a linha NÃO SAI DE BAIXO DO DEDO (defeito 3 da docs/motion/03 §8.5): a
+   *    leitura de volta nasce no topo, 145 px acima, e a linha descia 157 px
+   *    (com a página rolada a ancoragem do navegador a segurava, e era a
+   *    leitura que nascia fora da tela). O topo da linha se mede no toque e, no
+   *    desenho seguinte, a página rola o que a linha andou — o mesmo conserto
+   *    da série (`depoisDoLayout`). Desfazer pela linha é o caminho de volta: a
+   *    leitura sai de cima e a linha subiria o mesmo tanto;
+   *  - a FORMA da linha pousa (03 §4.6): é o retorno do toque, ali onde o dedo
+   *    está. `view.formaRecem` é estado de tela, como a marca da série: vence em
+   *    `VIDA_DO_RECEM_MS`, e trocar de aba ou entrar no modo a apaga.
    */
   marcaLinhaDaComida: function (id, k) {
     const d = diaDeComida();
     if (k === 'pergunta') { view.perguntaDe = id; render(); return; }
+    const daLinha = view.linhaComida === id;
+    const antes = daLinha ? topoNaTela(botaoDaLinhaDaComida(id)) : null;
     if (k === 'desfaz') {
       if (!d.done[id]) return;
       if (d.escala[id] != null) delete d.escala[id];
+      view.formaRecem = null;
       CTX.marcaRefeicao(id);
+      devolveALinhaDaComida(id, antes);
       return;
     }
     if (d.done[id]) return;                 // marcada: só "Desfazer" muda
@@ -2865,7 +2926,9 @@ const CTX = {
     else if (d.escala[id] != null && k === 'tudo') delete d.escala[id];
     view.linhaComida = null; view.perguntaDe = null;
     view.ultimaMarca = { id: id, k: k, data: d.data };
+    view.formaRecem = daLinha ? { id: id, data: d.data, t: Date.now() } : null;
     CTX.marcaRefeicao(id, k === 'tudo' || k === 'metade' ? undefined : k);
+    devolveALinhaDaComida(id, antes);
   },
   editaRefeicao: function (id) { CTX.abreFolha({ k: 'editaRefeicao', id: id }); },
   novaRefeicao: function () { CTX.abreFolha({ k: 'editaRefeicao', id: null }); },
@@ -5301,6 +5364,26 @@ function devolveALinha(i, k, antes) {
   });
 }
 
+/** O botão da linha da refeição `id` no Agora (o id é dado: compara, não monta seletor). */
+function botaoDaLinhaDaComida(id) {
+  const ls = document.querySelectorAll('.ag-l-b');
+  for (let j = 0; j < ls.length; j++) if (ls[j].getAttribute('data-a') === 'linha-' + id) return ls[j];
+  return null;
+}
+/**
+ * A linha da comida marcada (ou desfeita) pela linha aberta volta, no desenho
+ * seguinte, para onde estava: a leitura de volta nasce ou sai acima dela
+ * (defeito 3 da docs/motion/03 §8.5; ver `marcaLinhaDaComida`). Onde o
+ * navegador já ancorou a rolagem, a linha está no lugar e nada rola.
+ */
+function devolveALinhaDaComida(id, antes) {
+  if (antes == null) return;
+  depoisDoLayout(function () {
+    const agora = topoNaTela(botaoDaLinhaDaComida(id));
+    if (agora != null) rolaPor(agora - antes);
+  });
+}
+
 function toggle(i){
   const abrindo = view.open !== i;
   view.open = abrindo ? i : null;
@@ -5444,6 +5527,7 @@ function abreTecladoRapido(i, pos) {
   view.teclado = { alvo: { tipo: 'rapida', i: i, pos: pos },
                    texto: v != null ? String(v).replace('.', ',') : '' };
   render();
+  mostraOTecladoInteiro();
 }
 
 function abrirRapido() {
@@ -6032,6 +6116,7 @@ function abreOutroValor() {
   view.teclado = { alvo: { tipo: 'serie', i: r.i, k: r.k, pos: 1 },
                    texto: v != null ? String(v) : '' };
   render();
+  mostraOTecladoInteiro();
 }
 
 /**
@@ -6088,6 +6173,28 @@ function teclaDoTeclado(t) {
 function fechaTeclado() { view.teclado = null; render(); }
 
 /**
+ * O TECLADO INTEIRO NA TELA (peça 8 do motion, na conferência do coordenador).
+ *
+ * O teclado recebe o foco sem rolar (`preventScroll`, `teclado.jsx`): o foco
+ * rolava sempre que o painel não estava inteiro na vista, e com a página no topo
+ * a célula subia 131 px e uma tecla caía sob o dedo. Mas sem rolagem nenhuma o
+ * teclado que nasce na metade de baixo da tela fica com a última fileira e o
+ * "pronto" fora dela. No desenho seguinte, depois do layout e antes da pintura
+ * (`depoisDoLayout`), ele vem inteiro para a área visível pelo MÍNIMO
+ * (`block: 'nearest'`), de uma vez — rolagem programática é sempre um salto —;
+ * quando já cabe, nada rola. O que conta como visível é o `scroll-margin` do
+ * `.tcl` (`componentes.css`): descontados a área segura, o que é fixo no rodapé
+ * e o que gruda no topo. Sem nada desenhado (o jsdom), nada rola.
+ */
+function mostraOTecladoInteiro() {
+  depoisDoLayout(function () {
+    const t = document.querySelector('.tcl');
+    if (!t || !t.getClientRects().length || typeof t.scrollIntoView !== 'function') return;
+    noDesenho(function () { t.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' }); });
+  });
+}
+
+/**
  * O teclado da CARGA, aberto pelo botão da célula.
  *
  * §6.1: a carga da série é teclado PRÓPRIO. Era o último campo da sessão a abrir
@@ -6108,6 +6215,7 @@ function abreTecladoDeCarga(i, k) {
   view.teclado = { alvo: { tipo: 'serie', i: i, k: k, pos: 0 },
                    texto: v != null ? String(v).replace('.', ',') : '' };
   render();
+  mostraOTecladoInteiro();
 }
 
 /**
@@ -6140,6 +6248,7 @@ function abreTecladoDeCorpo(campo) {
   // para o resto.
   view.teclado = { alvo: { tipo: 'corpo', campo: campo }, texto: '' };
   render();
+  mostraOTecladoInteiro();
 }
 
 function abreRir(i, k) {
@@ -6672,6 +6781,7 @@ function abreCargaDaPassada() {
     if (a0 && a0.tipo === 'passada') { view.teclado = null; render(); return; }
     view.teclado = { alvo: { tipo: 'passada', pos: 0 }, texto: p.carga != null ? String(p.carga).replace('.', ',') : '' };
     render();
+    mostraOTecladoInteiro();
     return;
   }
   const x = serieDaPassada();
@@ -6681,6 +6791,7 @@ function abreCargaDaPassada() {
   view.passada.rir = false;
   view.teclado = { alvo: { tipo: 'passada', pos: 0 }, texto: x.s[0] != null ? String(x.s[0]).replace('.', ',') : '' };
   render();
+  mostraOTecladoInteiro();
 }
 function cargaDaPassada(texto) {
   const n = numeroDoCampo(texto);
@@ -12151,6 +12262,7 @@ function abreModo() {
   if (view.modoSessao) return false;
   view.modoSessao = true;
   view.recem = null;                   // nada pousa ao montar (ver `marcaRecem`)
+  view.formaRecem = null;              // nem a forma da refeição, ao voltar
   entraNoDestino('modoSessao');
   // O som do descanso nasce agora, e não no toque da primeira série.
   preparaAudioDepois();

@@ -266,10 +266,16 @@ próprio, a tecla de cima. Agora, no mesmo desenho, a página rola de uma vez
 para a linha (ou o teclado) ficar onde estava. Depois de "Pular", o cartão
 fecha e o nome do exercício seguinte subia para baixo do dedo; agora a página
 rola para pôr ali a frase "Pulado hoje…" do próprio exercício — texto, e o
-Desfazer ao lado. É rolagem, sempre um salto (ver [Movimento](#movimento)), e
+Desfazer ao lado. No Agora, "Comi tudo" (e "Metade", e as respostas do "Não comi
+isso") pela linha faz nascer no topo a leitura de volta, 145 px acima: a linha
+tocada descia 157 px — ou, com a página rolada, o navegador às vezes a ancorava
+e às vezes não, conforme o que estava no alto da tela; agora, no mesmo desenho,
+a página rola o que ela andou, e o "Desfazer" pela linha, que tira a leitura de
+cima, faz o caminho de volta. É rolagem, sempre um salto (ver [Movimento](#movimento)), e
 depois do render(): nada do que se grava muda, nem a ordem dos toques. O que
 some ABAIXO do dedo continua como é: fechar a régua sobe a linha seguinte para
-onde ela estava. Medido no motor de verdade por `tests/fluxo/dedo.test.js`.
+onde ela estava. Medido no motor de verdade por `tests/fluxo/dedo.test.js` e,
+no Agora, por `tests/fluxo/enche.test.js`, quadro a quadro do compositor.
 
 ## Componentes
 
@@ -347,17 +353,18 @@ respostas do dono de 16/10 (`docs/motion/00-coordenacao.md`).
 
 | Token | Valor | Papel |
 |---|---|---|
-| `--ins-curva` | `cubic-bezier(.2, .8, .2, 1)` | o que muda no lugar: pouso, aviso, o fio da aba; e o carrossel da aba, que é andar de lado no chão e não camada (a curva que o desenho escolhido pelo dono tocava) |
+| `--ins-curva` | `cubic-bezier(.2, .8, .2, 1)` | o que muda no lugar: pouso, copo, forma da refeição, aviso, o fio da aba; e o carrossel da aba, que é andar de lado no chão e não camada (a curva que o desenho escolhido pelo dono tocava) |
 | `--ins-curva-camada` | `cubic-bezier(.32, .72, 0, 1)` | a camada que entra e sai pela borda (a curva do iPhone) |
 | `--ins-curva-grandeza` | `linear` | só a barra do descanso: o tempo passa linear |
 | `--ins-curva-ciclo` | `cubic-bezier(.25, .1, .25, 1)` (o `ease`) | o pulso do ponto ao vivo e o véu da folha e do painel de pare acendendo (o token mais perto do `ease-out` que o dono viu) |
-| `--ins-dur-lugar` | 160 ms | o que muda onde está: o pouso; o aviso curto chegando e apagando |
+| `--ins-dur-lugar` | 160 ms | o que muda onde está: o pouso; o copo que enche; a forma da refeição que pousa; o aviso curto chegando e apagando |
 | `--ins-dur-entra` · `--ins-dur-sai` | 350 ms · 350 ms | a camada que entra · que sai, pela mesma borda; o véu da folha e do pare acende em `--ins-dur-entra`; o carrossel da aba — as duas páginas juntas — e o fio com elas, em `--ins-dur-entra` |
 | `--ins-dur-quique` | 640 ms | só a chegada da folha e do painel de apagar, com os quadros de `ins-quique` (passa 8 % aos 55 %, volta 3 % aos 80 %) |
 | `--ins-dur-clarao` | 200 ms | só o clarão do disparo da câmera |
 | `--ins-dur-dissolve` | 120 ms | só sob "Reduzir movimento": a camada que chega esmaece; o valor que pousa só acende |
 | `--ins-adianta` | −17 ms | não é duração: o atraso negativo de um quadro (60 Hz) com que as fotos da transição de vista — e o fio da aba, que anda com elas — começam, para o primeiro quadro animado já mostrar a página andando (sem ele, o tempo 0 saía igual ao quadro anterior, e a troca andava dois quadros depois do antes; 07 §11.2) |
 | `--ins-dur-amostra` | 250 ms | o período de `pintaTimer`, não uma duração de transição |
+| `--ins-espera-abertura` | 300 ms | não é duração nem movimento: quanto a abertura pode levar antes de a frase "Abrindo o registro…" aparecer, de uma vez (com e sem "Reduzir movimento") |
 | `--ins-ciclo-vivo` | 2,4 s | uma volta do pulso |
 | `--ins-pousa` · `--ins-sobe-aviso` | 4 px · 8 px | de quanto abaixo o valor pousa · o aviso chega |
 | `--ins-barra-de-abas` | 52 px | a barra de abas sem a área segura (`--ins-tabbar` soma a área): o quanto o cronômetro e o aviso descem ou sobem quando uma troca tira ou devolve a barra |
@@ -373,6 +380,8 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 | O pulso do ponto ao vivo | `.ins-live-dot` (`base.css`) | `opacity` 1 → .25 → 1, sem fim | `--ins-ciclo-vivo` · `--ins-curva-ciclo` | a tela está viva agora | aceso e parado |
 | O clarão do disparo | `.cam-clarao` (`componentes.css`), um nó por foto | `opacity` .9 → 0 | `--ins-dur-clarao` · `--ins-curva` | a foto foi tirada (lido a 3 m) | não aparece: a foto é dita pelo obturador, pela voz e pelo bloco da pose |
 | O pouso da série | `.pousa.recem` (`treino.css`), o número da célula num nó próprio por valor (`pousa`, `ui/exercicio.jsx`), só sob a marca de recém do toque que grava — régua, RIR, coluna anterior, a carga do "+ série"; o teclado não (`marcaRecem`, `main.jsx`) | `@keyframes ins-pousa` (`base.css`): `translate` de `--ins-pousa` abaixo e `opacity` .4 → 1, no número e nunca no botão | `--ins-dur-lugar` · `--ins-curva` | o valor entrou AQUI | só acende: `ins-acende`, `opacity` .4 → 1, em `--ins-dur-dissolve` |
+| O copo enche e esvazia | o copo do "+1 copo" (`.ag-copos i`, `componentes.css`), um nó por posição; o `f` chega no `render()` que vem DEPOIS da gravação (`maisUmCopo`, `main.jsx`), então só enche o copo que o aparelho guardou | o preenchimento é o `::after` do copo: `transform` de `scaleY(0)` a `none`, com a origem na base, por transição — o Agora que monta nasce com os copos cheios, parados; corrigir para menos esvazia pelo mesmo caminho; o contorno escurece na hora, e o número e os ml trocam sem movimento | `--ins-dur-lugar` · `--ins-curva` | o copo entrou, e é este | aparece cheio, de uma vez |
+| A forma da refeição pousa | a forma (`.df.recem`, `componentes.css`) da linha que o dedo acabou de marcar pela própria linha do Agora — "Comi tudo", "Metade", as respostas do "Não comi isso" —, num nó por estado (`key`), sob a marca de recém `view.formaRecem` (`marcaLinhaDaComida`, `main.jsx`), que vence em um segundo e que trocar de aba ou entrar no modo apagam; o cartão de cima, o Desfazer e a leitura de volta não pousam | `@keyframes ins-pousa`, o mesmo gesto do número da série | `--ins-dur-lugar` · `--ins-curva` | esta linha mudou para isto — o retorno do toque ali onde o dedo está (a leitura de volta nasce no topo, muitas vezes fora da tela) | só acende: `ins-acende`, em `--ins-dur-dissolve` |
 | O descanso sobe e desce | `#timer` (`componentes.css`), fora da árvore do Preact; as classes `.on` (em cena), `.sai` (descendo, segurada pelo tempo de `--ins-dur-sai` lido na porta) e `.anda` (posta pelo toque), por `poeEmCena`/`tiraDeCena` (`main.jsx`) | `translate` de `calc(100% + --ins-tabbar)` (abaixo da borda da tela) a `none`, e de volta; fora de cena `visibility: hidden` — o `translateX(-50%)` que centra fica intacto | entra `--ins-dur-entra`, sai `--ins-dur-sai` · `--ins-curva-camada`, sem quique | o descanso começou, e mora aqui embaixo; acabou | esmaece ao chegar (`ins-esmaece`, `opacity` 0 → 1, em `--ins-dur-dissolve`) e sai de uma vez |
 | O aviso curto chega e sai | a mensagem do toast (`#toast > .aviso`, `componentes.css`), um nó por mensagem posto por `toast()` (`main.jsx`); o lugar (`#toast`) não se move por isso | chega: `@keyframes ins-chega-aviso` (`base.css`), `translate` de `--ins-sobe-aviso` abaixo a `none` e `opacity` 0 → 1; sai (`.sai`, segurada pelo tempo de `--ins-dur-lugar` lido na porta): `ins-apaga`, só `opacity` 1 → 0, e o toque já passa por ela; um texto NOVO é um nó novo e a entrada recomeça; o mesmo texto não se mexe | `--ins-dur-lugar` · `--ins-curva` | isto acabou de acontecer — e, quando troca, que é OUTRA mensagem (dono, 16/10, pergunta 10) | só acende (`ins-esmaece`, em `--ins-dur-dissolve`), também no texto novo, e sai de uma vez |
 | O toast e a faixa acompanham o descanso | `#toast` (o lugar do aviso), `.ins-faixa` (`componentes.css`) | `translate` de menos a altura publicada do cronômetro (`--ins-timer-h`), que muda na hora em que ele entra ou sai | o tempo e a curva dele (`--ins-dur-entra`/`-sai` · `--ins-curva-camada`), no mesmo instante | o que estava em cima do rodapé foi empurrado pelo que chegou embaixo | vão direto ao lugar novo |
@@ -389,7 +398,14 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 **O que fica sem movimento**, de propósito: o toque, que só escurece e troca na
 hora (é estado: ver [Toque](#toque); `--ins-dur-toque` saiu com o afundar); o
 painel que nasce sob o polegar
-(régua, teclado, RIR) — alvo que se move sob o dedo é alvo errado; o número
+(régua, teclado, RIR) — alvo que se move sob o dedo é alvo errado; o teclado
+recebe o foco sem rolar a página (`preventScroll`: o navegador o trazia para a
+vista do jeito dele, sem descontar o cronômetro, que cobria o "pronto"), e no
+desenho seguinte, se ele não couber inteiro na área visível — descontados a
+área segura, o que é fixo no rodapé e o que gruda no topo (`scroll-margin` do
+`.tcl`) —, a página rola o mínimo para ele aparecer, de uma vez
+(`mostraOTecladoInteiro`, `block: 'nearest'`); quando cabe, nada rola; a
+leitura de volta da comida, que é conteúdo que entra no topo; o número
 digitado tecla a tecla no teclado próprio, que não pousa (o olho está no visor,
 e pousar cada dígito seria cintilar); os números
 derivados (contador, volume, kcal), que não rolam; o fim do descanso, cujo
@@ -479,6 +495,15 @@ um segundo para o olho achar o aviso mais o texto a 15 caracteres por segundo,
 com piso nos 3,6 s de antes e teto em 8 s. Não é movimento — vale igual sob
 "Reduzir movimento".
 
+**"Abrindo o registro…" só quando demora.** A frase do `index.html` ficava 3 a
+4 quadros na tela em toda abertura — um piscar, e não uma espera. Agora ela
+nasce apagada e aparece de uma vez em `--ins-espera-abertura`, se o app ainda não
+tiver montado (`#app > .msg`, `ins-espera`: duração zero, o atraso e mais nada).
+Não é movimento, e é a única declaração de animação fora do portão: vale igual
+sob "Reduzir movimento", porque o atraso não é um gesto que a preferência
+desligaria. É CSS, e não um relógio do JavaScript, para a frase aparecer também
+quando o próprio script é que demora a chegar.
+
 **O portão.** Todo `transition` e `animation` mora dentro de
 `@media (prefers-reduced-motion: no-preference)`, ao lado da regra que ele
 move, e **fora do bloco o elemento já está no último quadro** — é o que vê quem
@@ -528,7 +553,15 @@ curva, a barra só tem nome nessa troca e não se move, e sob "Reduzir" só o qu
 nasce com a aba esmaece; (j) o aviso curto: a região viva sem `display: none`
 nem `visibility: hidden`, o lugar só acompanha o cronômetro, a mensagem sobe e
 acende e sai só apagando em `--ins-dur-lugar` na `--ins-curva`, sob "Reduzir" só
-acende e sai de uma vez, e o relógio da saída lê na porta o mesmo token.
+acende e sai de uma vez, e o relógio da saída lê na porta o mesmo token; (k) o
+resto do lugar: o copo enche de baixo por UMA transição do `::after`, no portão,
+no tempo e na curva do lugar, e o copo cheio não pinta o próprio fundo; a forma
+pousa com `ins-pousa` (e só acende sob "Reduzir"), só a da linha, com chave por
+estado, e a marca dela vence sozinha e sai com a aba; a frase da abertura espera
+com duração zero e o token, fora de toda `@media`; e régua, teclado e RIR não se
+movem, com o teclado focando sem rolar e vindo inteiro para a tela pelo mínimo
+quando não cabe (o `scroll-margin` dele desconta o rodapé, e todo lugar que o
+abre chama `mostraOTecladoInteiro`).
 
 **O que já foi recusado, e o que caiu.** Mola e ultrapassagem continuam fora de
 tudo menos do quique (decisão do dono, 16/10). Comemoração, esqueleto que

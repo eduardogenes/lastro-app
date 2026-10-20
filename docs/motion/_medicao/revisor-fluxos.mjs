@@ -162,8 +162,13 @@ export const FLUXOS = [
     passos: [
       { id: 'chega', mov: { tipo: 'aviso', ms: 160 }, titulo: 'toca "Iniciar treino": o toast "Treino … iniciado" chega', alvo: '.day-ini' },
       { id: 'troca', mov: { tipo: 'aviso', ms: 160 }, titulo: 'toca "Pausar" com o toast na tela: o texto troca no mesmo lugar', alvo: '.ctrl-b:not(.fim):not(.ini)', pausaAntes: 900 },
+      // O zero do passo é o começo da saída. Antes, quando o `#toast` fica
+      // `display: none`; desde a peça 7, quando a mensagem (`#toast > .aviso`)
+      // ganha `.sai` e começa a apagar (o `#toast` fica sempre na página).
       { id: 'some', mov: { tipo: 'aviso', ms: 160, saida: true }, titulo: 'ninguém toca: o toast some 3,6 s depois', tipo: 'espera', pausaAntes: 50,
-        ate: `getComputedStyle(document.getElementById('toast')).display === 'none'`, limite: 6000 }
+        ate: `(function () { var t = document.getElementById('toast'); if (!t || getComputedStyle(t).display === 'none') return true;
+          var a = t.querySelector(':scope > .aviso:not(.sai)'); if (a) return false;
+          return !!t.querySelector(':scope > .aviso.sai') || !t.textContent.trim(); })()`, limite: 9000 }
     ]
   },
   {

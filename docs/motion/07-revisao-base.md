@@ -279,8 +279,10 @@ pasta de saída por argumento: o mesmo script grava o antes e o depois.
 | `revisor-fluxos.mjs` | os 17 fluxos em ordem de valor: o estado montado (`hora`, `montar` por `window.__escopo`), os passos (alvo, tipo, tempos, `confere`) e **o esperado de cada passo pelo dono** (`mov`: tipo, duração, "a de baixo parada", de onde a rolagem volta). **É aqui que se conserta um seletor que a fase 3 renomear**, nos dois lados |
 | `revisor-comum.mjs` | o motor, a instrumentação na página (relógio, eventos, Event Timing, animações vivas, fixos, `requestAnimationFrame`), a calibração, o registro devolvido a cada fluxo, a passada de aquecimento, o dedo, a gravação e o manifesto. Reaproveita a `semeia` de `desempenho-comum.mjs` e a receita do WebKit. Desde a peça 6, os quadros do screencast vão na ordem do carimbo, não na de chegada (sob carga o Chromium entrega fora de ordem) |
 | `revisor-tiras.py` | `tiras`: monta a tira de cada passo e mede quadro a quadro; `par`: empilha a tira do antes sobre a do depois; `faixa`: compara uma faixa vertical entre dois quadros da tira (a conferência "a de baixo parada"); `repousa`: recalcula o "dedo pousado" de manifestos já gravados pela linha do tempo (seção 7) |
-| `revisor-aviso-passo.mjs` | o toast e a faixa acompanham o cronômetro, ou saltam? No modo, com um toast na tela, o descanso começa e para; a cada quadro anota onde estão o toast e o cronômetro (`getBoundingClientRect`, que inclui `transform` e `translate`) e mede o maior passo por quadro, o caminho e a posição final (escreve `aviso-passo-<rodada>.json`). Feito na peça 3, porque o `micro-avisos.mjs` lê as posições logo depois de ligar e desligar o descanso e, com o acompanhamento animado, pega o toast no meio do caminho |
+| `revisor-aviso-passo.mjs` | o toast e a faixa acompanham o cronômetro, ou saltam? No modo, com um toast na tela, o descanso começa e para; a cada quadro anota onde estão o toast e o cronômetro (`getBoundingClientRect`, que inclui `transform` e `translate`) e mede o maior passo por quadro, o caminho e a posição final (escreve `aviso-passo-<rodada>.json`). Feito na peça 3, porque o `micro-avisos.mjs` lê as posições logo depois de ligar e desligar o descanso e, com o acompanhamento animado, pega o toast no meio do caminho. Na peça 7 mede a MENSAGEM (`#toast > .aviso`; antes, o próprio `#toast`) e ganhou dois casos — o cronômetro entrando e saindo 40 ms depois de um aviso chegar — e a saída quadro a quadro (opacidade, altura, animações) |
 | `revisor-aviso-janela.mjs` | o "Não guardei" ignora o toque que vinha para outra coisa? (peça 4, defeito 5). Provoca a falha de gravação, grava uma série e, com o dedo de verdade, toca "Fechar este aviso" 150 ms depois de o aviso chegar (tem de ficar) e 600 ms depois (tem de fechar); anota também o fundo inerte e o foco (escreve `aviso-janela-<rodada>.json`). Feito porque o `micro-avisos.mjs` clica logo que o aviso chega e, depois da peça 4, esse clique é engolido de propósito |
+| `revisor-regiao-viva.mjs` | a região viva do aviso fica na árvore de acessibilidade? (peça 7; 05 M12). No Agora, sem aviso, com um, com o mesmo texto de novo, com um texto novo e depois que ele some: o `display`, o `role`, o `aria-live`, o texto, as linhas da `ariaSnapshot` do Playwright que falam da região e, no Chromium, o nó da árvore do motor (`Accessibility.getPartialAXTree`); e o que está sob o centro da região. Escreve `regiao-viva-<rodada>.json` |
+| `revisor-aviso-tempo.mjs` | quanto tempo o aviso fica pelo tamanho do texto (13, 50, 101 e 140 caracteres), do `toast()` ao começo da saída (peça 7). Escreve `aviso-tempo-<rodada>.json` |
 | `revisor-cronometro.py` | onde o cronômetro está em cada quadro de uma troca (o fluxo 17, peça 6). Na transição o DOM não diz onde ele está na tela, então se lê nos quadros do screencast guardados com `QUADROS=1`: a linha azul do descanso, nas colunas x 90–200 e na faixa y 740–896. Escreve `cronometro-<rodada>.json` com a trilha [t, y], o maior passo por quadro e quantas alturas houve |
 | `revisor-anel-e-cronometro.mjs` | dois itens da peça 5 que os fluxos não cobrem: com o teclado (Tab), o campo de importar dos Ajustes mostra o anel? (lê o contorno do rótulo e do `input` e fotografa o rótulo); e, com um descanso contando, onde fica o cronômetro no Agora, nos Ajustes e na Evolução (escreve `anel-e-cronometro-<rodada>.json` e `anel-<rodada>.png`) |
 | `revisor-thread-presa.mjs` | o "não congela com a thread presa" do 04 §6 no elemento real: troca de aba, a thread principal presa 150 ms dois quadros depois de o fio começar a andar, o fio achado quadro a quadro pela cor de acento; mede a maior parada no meio do caminho (escreve `thread-presa-<rodada>.json`). As peças 3 a 6 acrescentam a cena delas (cronômetro, folha, tela cheia, carrossel) |
@@ -1144,3 +1146,67 @@ apagar desce. Reprova uma coisa: fechar pelo × a folha de cima, com outra
 embaixo, ainda leva dois quadros, por um quadro longo que o adiantamento não
 cobre. O WebKit desta máquina segue a conferir no aparelho: os quadros longos
 da foto em software e o quadro que volta no fim.
+
+---
+
+## 13. Depois da peça 7
+
+Conferida em 20/10 pela linha da peça 7 da tabela 1.4, contra o build congelado
+em `docs/motion/_medicao/shots/dist-peca-7/` (commit `d6199eb`), servido na
+porta 4728, com o antes na 4727. As duas estão desligadas. O registro é o mesmo
+`antes/registro.json`. A gravação foi das 13h40 às 13h56, com carga de 0,7 a 3,0
+(`carga-20-10.txt`, linhas "peça 7"). O implementador da peça 8 trabalhava em
+paralelo; as medidas de tempo vêm de antes e peça 7 **intercalados** três vezes
+(1.5, 5c).
+
+**O que se gravou.** O fluxo 10 (o aviso chega, troca de texto, some) no
+Chromium e no WebKit, com e sem "Reduzir movimento" (`depois-7/`). Antes e peça
+7 intercalados três vezes por motor (`repeticoes-peca-7/`). Os complementos, dos
+dois lados e nas quatro rodadas onde cabe (`depois-7/complementos/`, com o antes
+em `depois-7/complementos/aviso/antes/` e em `antes-complementos/`):
+`revisor-aviso-passo.mjs`, com o descanso ligado e desligado no meio da entrada
+do aviso; `revisor-regiao-viva.mjs`, novo, para a árvore de acessibilidade;
+`revisor-aviso-tempo.mjs`, novo, para o tempo pelo texto; e `acesso-foco.mjs`.
+Nenhum erro de página. Comparador em `comparacao-7/`.
+
+**Dois ajustes na medida.**
+
+1. *O passo `some` do fluxo 10.* O `#toast` não fica mais `display: none`. O
+   zero do passo passou a ser o começo da saída: no antes, o `#toast` some; na
+   peça 7, a mensagem (`#toast > .aviso`) ganha `.sai` e começa a apagar.
+2. *O princípio 1 não vale para passo de espera.* Ninguém toca: o "atraso" de
+   +16 ms do `some` era só onde o zero cai (o começo da saída em vez do fim). O
+   comparador deixou de cobrar esse passo.
+
+### 13.1 A linha da peça 7: o que passou
+
+| o que a peça tinha de provar | resultado | o número | arquivo |
+|---|---|---|---|
+| **o aviso sobe 8 px e acende em 160 ms** | **passa** | `ins-chega-aviso` no `div.aviso`, **160 ms**, `cubic-bezier(0.2, 0.8, 0.2, 1)` (a `--ins-curva`), nos dois motores. A mensagem nasce 8 px abaixo (y 847,3 → 839,3) com opacidade 0 e chega a 0,41, 0,70, 0,84, 0,91… nos quadros seguintes. A mudança se espalha por 31–38 quadros (no antes, o aviso aparecia num quadro) | `depois-7/10-toast/medidas-*.json` (`chega`: `animacoes`); `depois-7/complementos/aviso/peca-7/aviso-passo-*.json` (`trilhasNoMeio.entra`) |
+| **o texto novo refaz a entrada** | **passa** | "Pausar" com o aviso na tela: um nó novo, "Treino pausado. O relógio parou.", com a mesma entrada de 160 ms; 11–13 quadros com mudança (no antes, a troca de texto num quadro só) | `depois-7/10-toast/medidas-*.json` (`troca`) |
+| **o mesmo texto não refaz** | **passa** | o mesmo "Ajuste salvo." de novo: continua uma mensagem só | `depois-7/complementos/regiao-viva-*.json` ("o mesmo texto de novo": `mensagens` 1) |
+| **sai só apagando, em 160 ms** | **passa** | `ins-apaga`, 160 ms, no `.aviso.sai`: opacidade 1 → 0,59 → 0,30 → 0,16 → … → 0 em ~133 ms, **sem sair do lugar** (y 839,3 em todos os quadros), e o nó sai da página no fim. No fluxo 10, 8–12 quadros com mudança em 110–116 ms (no antes, um quadro) | `aviso-passo-{chromium,webkit}.json` (`saida`); `depois-7/10-toast/medidas-*.json` (`some`) |
+| **fica o tempo do texto** | **passa** | do `toast()` ao começo da saída: 13 caracteres **3,6 s**; 50, **4,35 s**; 101, **7,75 s**; 140, **8,01 s** — a regra (1 s + 15 caracteres por segundo, de 3,6 a 8 s) a ±15 ms, nos dois motores. No antes, 3,61 s para qualquer tamanho | `depois-7/complementos/aviso-tempo-{chromium,webkit}.json` contra `antes-complementos/aviso-tempo-chromium.json` |
+| **no modo, o aviso não flutua** | **passa** (desde a peça 3) | y 839–882, no fundo; no antes, 787–830 | `depois-7/10-toast/medidas-*.json` (`depois.fixos.toast`) |
+| **o cronômetro no meio da entrada não faz o aviso saltar** | **passa** | o cronômetro entra 40 ms depois de o aviso chegar: o maior passo da mensagem por quadro é **16,1 px** no Chromium e **15,4** no WebKit; saindo, 15,8 e 15,3. A mensagem sobe os 8 px dela enquanto o lugar anda com o cronômetro (839 → 757). No antes, **82 px num quadro** nos dois casos | `depois-7/complementos/aviso/{antes,peca-7}/aviso-passo-{chromium,webkit}.json` (`cronometroEntraNoMeio`, `cronometroSaiNoMeio`) |
+| **sob "Reduzir": só acende, em 120 ms, e sai de uma vez** | **passa** | `ins-esmaece`, só opacidade, **120 ms**, também no texto novo (opacidade 0 → 0,53 → 0,80 → 0,91); a saída não tem quadro nenhum de apagar. Com o cronômetro, o aviso vai junto de uma vez (82 px num quadro), como decidido na peça 3 | `depois-7/10-toast/medidas-*-reduz.json`; `aviso-passo-*-reduz.json`; princípio 5: 6/6 |
+| **a região viva nunca sai da árvore** (05 M12) | **passa** | sem aviso, o `#toast` fica `display: block`, vazio, e está na árvore: no Chromium o nó `status` **não é ignorado** (no antes, ignorado, `notRendered`); o Playwright vê a região `- status` nos dois motores (no antes, não). Depois que o aviso some, a região fica **vazia** (no antes, escondida com o texto velho dentro). Vazia, ela tem altura 0 e não pega toque. `acesso-foco.mjs`: `displayEscondido` `none` → `block`, e o resto (foco, isolamento) igual ao da peça 5 | `depois-7/complementos/regiao-viva-{chromium,webkit}.json` contra `antes-complementos/regiao-viva-*.json`; `depois-7/complementos/acesso/acesso-foco.json` |
+| **o toque não ficou mais lento** (5c) | **passa** | medianas de três, antes → peça 7: a primeira mudança no mesmo quadro (Chromium: "Iniciar treino" 16,9 → 17,5 ms, "Pausar" 15,5 → 16,8; WebKit 1,1 → 3,1 e 6,7 → 17); trabalho no toque 2,8 → 4,1 e 4,3 → 3,2 ms no Chromium, 4 → 8 e 7 → 9 no WebKit, dentro do limite; nenhum intervalo de `requestAnimationFrame` acima do limite | `repeticoes-peca-7/{antes,peca-7}-{1,2,3}/10-toast/` |
+| princípios 2, 3, 4, 6, 7, 8 | **passa** | 12/12, 6/6, 6/6, 12/12, 6/6, 6/6 | `comparacao-7/protocolo.json` |
+
+### 13.2 O que ficou "a conferir"
+
+- **No WebKit, com o dedo pousado em "Iniciar treino"** (princípio 10): some
+  também o anel de foco do título do modo, que o `montar` abriu por programa. É
+  a mesma montagem do 13 na peça 6 (12.4), não o toque.
+- **A foto velha do aviso escondida na troca de camada** (09, peça 7, decisão
+  5): nenhum fluxo desta peça tem um aviso na tela durante uma troca. O fluxo 17
+  (o cronômetro na troca) pode ganhar um aviso na rodada final.
+
+**Conclusão: a peça 7 passa na linha dela, sem nenhuma reprovação.** O aviso sobe
+8 px e acende em 160 ms. O texto novo refaz a entrada e o mesmo texto não. Ele
+sai só apagando, no lugar, e fica o tempo de ler: de 3,6 a 8 s pelo tamanho do
+texto. Com o cronômetro entrando ou saindo no meio da entrada, a mensagem anda
+no máximo 16 px por quadro, onde antes saltava 82. Sob "Reduzir movimento" só
+acende e sai de uma vez. E a região viva fica sempre na árvore de
+acessibilidade, vazia quando não há aviso.

@@ -3132,3 +3132,546 @@ existia), 5 em `aviso.test.js` e 6 em `acende.test.js`. No WebKit
 (`LASTRO_MOTOR=webkit`), um arquivo por vez: `acende` 6/6, `descanso` 5/5,
 `aba` 7/7, `troca` 11/11 (em 3 de 5; o caso da corrida do histórico, acima, cai
 também no build de antes).
+
+---
+
+## Peça 8 · O resto do lugar
+
+Implementada em 20/10, sobre `d6199eb`, sem commit. Espec: o pedido em
+`_pedidos/peca-8.md`; `08-parecer.md` §4 (peça 8) e §5.1; as respostas do dono
+em `00-coordenacao.md` (16/10, 01h25) — pergunta 13 (os defeitos 3 e 6 entram
+nesta peça) e pergunta 2 (sob "Reduzir movimento", o que muda no lugar fica só
+na opacidade); `03-micro.md` §4.4, §4.6, §4.7, §6 e §8 itens 5 e 7;
+`01-inventario.md` A.5; as seções das peças 0 a 7 deste documento (em especial o
+pouso, a marca de recém e o `depoisDoLayout` da peça 2); a linha da peça 8 do
+`07-revisao-base.md` §1.2 e §1.4 (fluxos 09, 11, 12); `docs/mapa/06-comida.md`
+§3.1 e §3.3 e `docs/mapa/10-agora.md` §1 e §3.8.
+
+O implementador caiu no limite de uso duas vezes no começo (lendo o briefing e
+o parecer), antes de tocar em qualquer arquivo; retomado, seguiu do repositório
+limpo em `d6199eb`.
+
+### Em uma página
+
+- **O copo enche de baixo.** O copo que o "+1 copo" acabou de gravar enche num
+  `::after` de `scaleY(0)` a `none`, com a origem na base, em 160 ms na curva do
+  lugar, por transição: o Agora que monta nasce com os copos cheios, parados;
+  corrigir para menos esvazia pelo mesmo caminho. O número e os ml trocam sem
+  movimento. Sob "Reduzir movimento", o copo aparece cheio, de uma vez.
+- **A forma da refeição marcada pela linha pousa**, com o gesto do número da
+  série (`ins-pousa`, 160 ms; sob "Reduzir", só acende em 120). Só a da linha
+  tocada — não a da leitura de volta, não a do cartão de cima, não a que
+  reaparece numa aba nova —, sob uma marca de recém que vence em um segundo.
+- **Defeito 3: "Comi tudo" não empurra mais a linha.** A leitura de volta
+  continua nascendo no topo (145 px), e a página rola o que a linha andou, no
+  mesmo desenho (o `depoisDoLayout` da peça 2): no topo, a linha ia de y 331,8 a
+  488,8; agora fica em 331,8, nos dois motores, em todo quadro do compositor. Vale
+  para "Metade", para as respostas do "Não comi isso" e, no caminho de volta,
+  para o "Desfazer" pela linha. O retorno do toque se vê na própria linha, sob o
+  dedo: a forma pousando e "comi tudo · 13h10".
+- **Defeito 6: dois "+1 copo" seguidos com o aparelho recusando não desfazem mais
+  o copo do segundo toque**, e a tela nunca mostra copo que o disco recusou nem
+  perde copo que ele guardou — inclusive nos desenhos do meio, com o
+  armazenamento que demora a responder (o do host).
+- **O teclado próprio vem inteiro para a tela, pelo mínimo e só quando não
+  cabe.** O foco não rola mais a página (`focus({ preventScroll: true })`); no
+  desenho seguinte, se o teclado não couber na área visível — descontados a área
+  segura, o que é fixo no rodapé e o que gruda no topo —, a página rola o mínimo
+  para ele aparecer, de uma vez (`block: 'nearest'`). Com a célula na metade de
+  cima, nada rola; na metade de baixo, a página rola 131 px e o teclado vai até o
+  "pronto" dentro da tela; com o cronômetro em cena, 213 px, e ele para acima do
+  cronômetro — antes ele terminava por baixo dele, com o "pronto" coberto. (A
+  primeira versão desta peça só tirava a rolagem e deixava a última fileira e o
+  "pronto" fora da tela; o coordenador recusou, e é esta.)
+- **"Abrindo o registro…" só aparece se a abertura demorar**: nasce apagada e
+  aparece de uma vez aos 300 ms, igual com e sem "Reduzir movimento". A abertura
+  rápida mostra só o fundo e o app (era a frase por 2 a 3 quadros).
+- **Régua, teclado e RIR continuam sem movimento**, agora com guarda e com teste
+  de motor.
+- **Testes**: a guarda (k) e uma exceção estreita na (b) em `estilo.test.ts`; 7
+  casos de árvore (`lugar.test.js`); 15 de motor (`enche.test.js`), verdes no
+  Chromium e no WebKit. Plantei 36 violações em duas rodadas (32 que tinham de
+  ficar vermelhas e 4 controles que tinham de ficar verdes): todas com o
+  resultado esperado, e todo arquivo de volta ao limpo, conferido por hash e por
+  `cmp`. Contra o build de `d6199eb`, 19 dos 23 casos novos ficam vermelhos; os
+  quatro que passam cobram o que já era assim e tem de continuar (sob "Reduzir"
+  o copo aparece cheio de uma vez; régua, teclado e RIR parados; e o teclado que
+  cabe não rola, e o que não cabe rola o mínimo sem o cronômetro, que era o que
+  o foco já fazia).
+- **`tipos` limpo, `build` ok, `vitest` 1698 de 1698 duas vezes seguidas** (a
+  segunda começando com carga 9,8). No WebKit, `enche` 15/15 e `dedo` 9/9.
+
+### O que mudou, arquivo por arquivo
+
+| arquivo | o que mudou |
+|---|---|
+| `src/componentes.css` | **O teclado**: o `.tcl` ganhou `scroll-margin-top: var(--ins-topo)` e `scroll-margin-bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-faixa-h))` (no modo, o topo é a barra da saída mais o relógio; na folha, só a área segura embaixo). **O copo**: `.ag-copos i` ganhou `position: relative; overflow: hidden`; o preenchimento saiu do `background` do `i.f` para o `::after` (`inset: 0`, `background: var(--ins-tinta)`, `transform: scaleY(0)`, `transform-origin: bottom`), cheio no `i.f::after` (`transform: none`); o `i.f` só escurece o contorno. No portão, `.ag-copos i::after { transition: transform var(--ins-dur-lugar) var(--ins-curva) }`; sob "Reduzir", nada. **A forma**: `.df.recem` com `ins-pousa` em `--ins-dur-lugar`/`--ins-curva` no portão e `ins-acende` em `--ins-dur-dissolve` sob "Reduzir". **A abertura**: `#app > .msg { animation-name: ins-espera; animation-delay: var(--ins-espera-abertura); animation-fill-mode: backwards }`, fora de toda `@media`. Os comentários de cada um. |
+| `src/base.css` | `@keyframes ins-espera` (`from, to { opacity: 0 }`); o comentário do `ins-pousa` diz que a forma usa o mesmo gesto. |
+| `src/tokens.css` | `--ins-espera-abertura: 300ms`, com o papel ("não é duração nem movimento"). |
+| `src/main.jsx` | **Defeito 6**: `coposNoAr` (a rajada: o que o disco tem de água enquanto algum "+1 copo" espera resposta) e `aguaDoDia`; `maisUmCopo` reescrito — cada toque conta, a gravação aceita atualiza o que o disco tem, só a resposta do toque mais novo decide (aceita, a conta fica; recusada, volta ao que o disco tem e o aviso diz o primeiro copo que não entrou), e a de um mais velho aceita desenha; `CTX.agua()` lê o que o disco tem enquanto a rajada está no ar. **Defeito 3**: `marcaLinhaDaComida` mede o topo da linha no toque quando ele vem da linha aberta, e `devolveALinhaDaComida` (novo, ao lado de `devolveALinha`) rola o que ela andou no desenho seguinte, pelo `depoisDoLayout` da peça 2 — na marca e no "Desfazer" pela linha; `botaoDaLinhaDaComida` (novo) acha o botão da linha comparando o `data-a`. **A forma**: `view.formaRecem` (`{ id, data, t }`), posta pela marca que vem da linha aberta, apagada pelo "Desfazer", por `vaiPara` e por `abreModo`; `linhaDaComida()` devolve `recem` enquanto ela vale (`VIDA_DO_RECEM_MS`, a mesma da série). **O teclado**: `mostraOTecladoInteiro()` (novo, ao lado de `fechaTeclado`) — no `depoisDoLayout`, `scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })` no `.tcl`, por `noDesenho` —, chamado depois do `render()` nos seis lugares que abrem o teclado (a carga e a repetição da série, a lista rápida, o corpo, as duas portas da sessão passada). |
+| `src/ui/telas/agora.jsx` | A forma da linha: `<Forma key={estado} marca={estado} recem={!treino && linha.recem === r.id} />`. |
+| `src/ui/instrumento/forma.jsx` | O `recem` vira a classe `recem`. |
+| `src/ui/instrumento/teclado.jsx` | `raiz.current.focus({ preventScroll: true })`, com o porquê (o foco não rola; quem traz o teclado para a tela é o casco). |
+| `DESIGN.md` | Tokens (`--ins-curva`, `--ins-dur-lugar`, `--ins-espera-abertura`); duas linhas na tabela dos movimentos ("O copo enche e esvazia", "A forma da refeição pousa"); "O dedo não perde o lugar" com o "Comi tudo" e o "Desfazer"; em "o que fica sem movimento", o teclado que foca sem rolar e a leitura de volta; o parágrafo "Abrindo o registro… só quando demora"; a guarda (k). |
+| `tests/dominio/estilo.test.ts` | A exceção estreita da (b) para a espera da abertura (`ESPERA_DA_ABERTURA`, `DECL_DA_ESPERA`: só aquele seletor, fora de toda `@media`, e só aquelas três declarações exatas) e o caso novo **(k)**. |
+| `tests/fluxo/lugar.test.js` (novo) | A árvore, 7 casos. |
+| `tests/fluxo/enche.test.js` (novo) | O motor (Chromium; `LASTRO_MOTOR=webkit` os mesmos no WebKit), 15 casos. |
+| `tests/fluxo/navegador.js` | `abreNavegador({ preparo })`: roda com o contexto pronto, antes de a página abrir (a abertura lenta segura o script ali). |
+
+### As decisões, com o porquê
+
+1. **O copo enche por TRANSIÇÃO do `::after`, e não por animação.** O pedido
+   manda o `::after` de `scaleY(0)` a 1 com a origem embaixo (03 §4.4: animar o
+   `background` do próprio copo seria pintura a cada quadro). Transição por
+   classe é o que deixa o resto de graça: o `<i key={i}>` de cada copo é o mesmo
+   nó em todo `render()` (03 §2), a classe `f` muda e a transição dispara; o
+   Agora que monta — inclusive dentro do carrossel da aba, que faz nascer o
+   `<main>` de novo — desenha os copos já cheios, porque transição não roda no
+   primeiro desenho; e corrigir para menos esvazia pelo mesmo caminho ao
+   contrário, sem código. Uma animação de nascimento (plantio P5) rodaria em todo
+   copo cheio a cada volta ao Agora. O `f` chega no `render()` que vem depois da
+   gravação (`maisUmCopo` espera a resposta antes de desenhar, como sempre
+   esperou): o copo que enche é o que o aparelho guardou. O contorno escurece na
+   hora, e o número e os ml trocam sem movimento — o copo é o "onde".
+2. **Sob "Reduzir", o copo aparece cheio.** O pedido aceita "cheia (ou só
+   opacidade)"; fiquei com a primeira, que é a da 03 §4.4 ("A bolinha aparece
+   cheia") e a única sem movimento nenhum. A guarda aceita as duas (o controle V2
+   prova): a resposta 2 do dono é teto, e não obrigação.
+3. **A forma pousa com `ins-pousa`, e não com a escala da 03 §4.6.** A 03
+   propunha escala de ≈ .85 a 1; o pedido manda "o mesmo gesto do número da
+   série", e o comentário de `base.css` já reservava o gesto para a forma ("um
+   gesto, um significado", 06 §2.3). Sobe 4 px e acende de .4 a 1 em 160 ms,
+   legível desde o primeiro quadro.
+4. **Só a forma da linha TOCADA pousa.** A 03 §4.6 diz "a forma da linha tocada"
+   e §4.5 dá a regra: o que muda onde o dedo tocou ganha o pouso; o que muda em
+   outro lugar troca sem movimento, porque movê-lo puxa o olho para longe. O
+   cartão de cima chama o mesmo verbo (`marcaLinhaDaComida`), e lá a linha que
+   muda está longe do dedo; a leitura de volta é conteúdo que entra, e muitas
+   vezes está fora da tela (03 §4.6). Quem diz que o toque veio da linha é o
+   próprio estado: os botões que gravam só existem na linha aberta, então
+   `view.linhaComida === id` no toque é "veio da linha" — sem mudar a assinatura
+   do verbo nem os chamadores.
+5. **A marca da forma é `view.formaRecem`, e não um campo a mais em
+   `view.ultimaMarca`.** A 03 dizia que o recém "já existe pela metade"
+   (`ultimaMarca`, faltando o instante). Mas as duas vidas são outras: a leitura
+   de volta fica enquanto a marca existir e for de hoje; o recém vence em um
+   segundo, e precisa sair ao trocar de aba (a aba nasce inteira a cada troca, e a
+   forma pousaria de novo — plantio P11) e ao entrar no modo, como a da série.
+   Um campo só, com duas regras de saída, era o tipo de dono duplo que a peça 2
+   tirou do contador. A forma ganhou chave pelo estado: outra marca é outro nó e
+   outro pouso, e um `render()` no meio não reinicia nada (P8).
+6. **Defeito 3: a linha volta pela rolagem, no mesmo desenho.** A leitura de
+   volta nasce acima da linha (145 px + 12 de margem); a linha descia 157 px. O
+   conserto é o da peça 2: o topo da linha medido no toque, com a página ainda
+   montada, e a rolagem do que ela andou no ponto do desenho em que o layout está
+   pronto e nada foi pintado (`depoisDoLayout`). Provado nos quadros do
+   compositor: em nenhum a linha sai do lugar (o plantio P15, a mesma rolagem 50
+   ms depois, mostra três quadros com a linha 157 px abaixo). Não deslizei a
+   lista para explicar o salto: é "deslizar conteúdo", recusado (03 §4.6, §7).
+7. **Com a página no topo, a página rola 157 px, e o topo dela sobe junto.** É a
+   consequência direta de a linha não descer: no Agora às 13h10, a leitura de
+   volta fica de y −33 a 112 (antes, 124 a 269, inteira) — o título dela fica
+   acima da borda. O retorno do toque passa a ser a própria linha, sob o dedo: a
+   forma pousando e "comi tudo · 13h10" no lugar de "819 kcal" (é o que a 03 §4.6
+   pede da forma: "diz 'esta linha mudou para comi tudo', no lugar onde o dedo
+   está"); a leitura de volta é `role="status"` e continua anunciada. A outra
+   forma de manter as duas coisas na tela seria mudar onde a leitura de volta
+   nasce, e isso muda o que a tela promete (o desenho do "momento 2" a põe no
+   topo): fica para o dono, se ele quiser. **Aceito pelo coordenador em 20/10**:
+   a linha fica sob o dedo e é ela que mostra o retorno do toque — o que o
+   Chromium já fazia com a página rolada, e agora os dois motores fazem igual.
+   Vai aparecer na página de antes e depois, para o dono ver.
+8. **A ancoragem de rolagem do navegador não resolvia o caso rolado.** A 03
+   mediu o Chromium segurando a linha com a página rolada; aqui o WebKit 26.5
+   também ancora — mas a âncora é o primeiro elemento visível, e quando ele está
+   ACIMA de onde a leitura nasce, nada se ajusta: às 7h10, com o cartão do treino
+   no topo e a página em 200, a linha descia de 420,9 a 577,9 nos dois motores. A
+   medida depois do layout cobre os dois casos: onde a ancoragem já segurou, a
+   diferença é zero e nada rola.
+9. **O "Desfazer" pela linha é o caminho de volta, e também não mexe a linha.**
+   Ele tira a leitura de volta de cima e a linha subiria 157 px; o mesmo
+   conserto. O "Desfazer" da leitura de volta não precisa: o dedo está nela, e ela
+   é o que sai.
+10. **O que fica sob o dedo depois do "Comi tudo"**: a marca fecha a linha, e o
+    painel aberto (os botões) some de baixo do dedo. Antes, a linha que descia
+    caía por acaso sob ele (03 §4.6: "reabre e mostra Desfazer — inócuo"); agora
+    fica a linha seguinte, ou, depois de "Metade", o número da água — abrir uma
+    linha ou o contador não grava nada. O teste cobra que nunca seja um botão que
+    grava.
+11. **Defeito 6: quem decide é a resposta do toque mais novo.** Cada gravação
+    escreve a conta inteira da memória (`JSON.stringify(S)` no instante do
+    `save`), então a do toque mais novo leva os copos dos de antes. Por isso: a
+    resposta de um toque mais velho só atualiza "o que o disco tem" (aceita) e
+    desenha; a do mais novo fecha a rajada — aceita, a conta fica; recusada, volta
+    ao que o disco tem, e o aviso diz o primeiro copo que não entrou
+    ("O 2º copo não foi gravado… A conta continua em 1"). E a tela lê o que o disco
+    tem enquanto a rajada está no ar: o painel de "Não guardei" desenha no meio
+    (`naoGuardou` → `render()`), e com o host respondendo devagar esse desenho é
+    pintado. Com o `localStorage` deste aparelho a resposta chega no mesmo tique
+    do toque e a corrida não acontece com dedo de verdade; com o armazenamento do
+    host, sim — e os testes reproduzem as duas coisas (cliques no mesmo tique, e
+    um host que responde quando o caso manda). Nada muda no que se grava: os
+    mesmos campos, na mesma ordem dos toques; muda a conta que a memória guarda
+    quando o disco recusa, que é o conserto pedido.
+12. **O teclado: o foco não rola, e o casco o traz inteiro pelo mínimo.**
+    Antes, o foco rolava a página sempre que o painel não estava inteiro na
+    vista: com a página no topo, a célula da carga em y 680,7, a página rolava
+    131 px (178 no `a22b09d`, com outro layout), a célula subia para 549,7, o
+    teclado ia até 895,7 — e, com o cronômetro em cena (813,8 a 896), terminava
+    por BAIXO dele, com a última fileira e o "pronto" cobertos, porque o foco do
+    navegador não sabe do que é fixo no rodapé. A primeira versão desta peça só
+    pôs `preventScroll`: nada rolava, e a fileira ", 0 ⌫" e o "pronto" ficavam
+    fora da tela (724,7 a 1026,7). **O coordenador não aceitou** (as teclas fora
+    de alcance são um defeito novo) e pediu o conserto que ficou: o
+    `preventScroll` fica, para o foco nunca rolar sem necessidade; no desenho
+    seguinte (`depoisDoLayout`), se o teclado não couber inteiro na área visível,
+    a página rola o MÍNIMO para ele aparecer (`scrollIntoView` com
+    `block: 'nearest'`), de uma vez (`behavior: 'instant'`; rolagem programática
+    é sempre um salto); quando cabe, nada rola. A área visível é o `scroll-margin`
+    do `.tcl`, escrito com as alturas que o casco já publica: embaixo,
+    `--ins-tabbar` (a barra de abas com a área segura; no modo e na tela cheia, só
+    a área segura), `--ins-timer-h` (o cronômetro em cena) e `--ins-faixa-h` (a
+    faixa da sessão); em cima, `--ins-topo` (a barra de status, ou a faixa "Não
+    guardado") e, no modo, a barra da saída e o relógio. Assim a conta é do
+    motor, com o `env()` da área segura resolvido, e não um número lido de
+    variável. Medido: no fluxo 12 (o cartão aberto deixa a célula no alto) nada
+    rola, como antes; com a célula na metade de baixo, 131 px e o teclado até
+    895,7 de 896; com o cronômetro, 213 px e o teclado até 813,7, encostado no
+    cronômetro (813,8) — nos dois motores, e a rolagem vai de 0 ao valor final
+    num quadro só. **O custo**, dito: no caso que rola, a célula sobe e sob o dedo
+    fica uma tecla ("5"; com o cronômetro, "2"), como ficava antes do conserto —
+    é o preço de o teclado aparecer inteiro. O foco continua na raiz do teclado,
+    o teclado físico chega ao visor e à célula ("42"). A chamada mora nos seis
+    lugares que abrem o teclado, e a guarda conta: tantos quantos abrem.
+13. **"Abrindo o registro…": CSS com atraso, duração zero, fora do portão.** É
+    a proposta da 03 §6 ("animação CSS com atraso, opacidade 0 → 1 em degrau, sem
+    fade"). `animation-delay: var(--ins-espera-abertura)` com
+    `animation-fill-mode: backwards` e nenhuma duração: o primeiro quadro (apagado)
+    vale durante o atraso, e quando ele acaba a animação acabou — a frase aparece
+    no estado dela, num degrau. Os quadros são `opacity: 0` do começo ao fim, para
+    nem uma duração plantada por engano interpolar (P24 fica vermelho de qualquer
+    jeito). Não é movimento, e por isso mora fora do portão e vale igual sob
+    "Reduzir" (a 03: o portão zera a duração, não o atraso; e sem ele quem pediu
+    menos movimento teria o piscar de volta — P25). CSS, e não um `setTimeout` em
+    `main.jsx`: o relógio do script só começa quando o script chega, e a frase tem
+    de aparecer justamente quando é ele que demora (o caso lento do teste segura o
+    script no servidor). 300 ms: o começo da faixa da 03 (300–400); a guarda aceita
+    a faixa (V1).
+14. **A guarda deixa a espera passar por FORMA, e não por nome.** A (b) aceita
+    fora do portão só aquele seletor, fora de toda `@media`, e só as três
+    declarações exatas (`animation-name: ins-espera`, o atraso pelo token,
+    `backwards`); a (k) cobra o resto — sem duração, sem curva, quadros só
+    apagados, o token na faixa, e que nada mais use `ins-espera`. Uma duração (P24)
+    ou a regra dentro do portão (P25) ficam vermelhas.
+15. **`navegador.js` ganhou `preparo`.** A abertura lenta precisa segurar o
+    script no servidor e instalar o registro dos quadros antes de a página abrir;
+    os outros casos não mudam.
+
+### Os números, antes e depois
+
+Chromium 1234 e WebKit 26.5 (Playwright), 414 × 896 a ×2. O antes é o build de
+`d6199eb` (`index-BKMSsFYH.js`, copiado para `scratchpad/peca8/dist-antes` antes
+da primeira mudança); o depois, o final. Os dois servidos da porta 4729, um de
+cada vez, desligada no fim (`scratchpad/peca8/mede.mjs`; os JSON ao lado). Os
+dois motores deram os mesmos números, menos onde a tabela separa. Nenhum erro
+de página.
+
+| medida | antes | depois |
+|---|---|---|
+| "Comi tudo" pela linha, Agora às 13h10 com a página no topo: topo da linha do almoço | 331,8 → **488,8** (+157) | 331,8 → **331,8** (a página rola 0 → 157 no mesmo desenho) |
+| … a leitura de volta | y 124 a 269 (inteira) | y −33 a 112 (o título acima da borda; decisão 7) |
+| … sob o dedo, depois | a própria linha, que desceu até ele | a linha da ceia (abrir não grava) |
+| "Metade", no topo: a linha · sob o dedo | 331,8 → 488,8 · a linha do lanche | 331,8 → 331,8 · o número da água (abrir o contador não grava) |
+| "Comi tudo", 13h10, página rolada (a ancoragem do navegador segurava) | 177,8 → 177,8; a página 154 → 311 pelo navegador; a leitura em y −187 | igual: nada a corrigir |
+| "Comi tudo", 7h10, cartão do treino no topo e a página em 200 (o teste) | 420,9 → **577,9** nos dois motores (a âncora estava acima) | ±2 px |
+| … nos quadros do compositor (no topo) | a linha some do lugar no quadro do toque e não volta | igual ao último em todos (distância 0,0) |
+| "Desfazer" pela linha, depois da marca no topo | a linha subia 157 (620,9 → 463,9 no teste) | ±2 px |
+| o retorno do toque na linha | nada se move; o texto da direita troca | a forma pousa (`ins-pousa`, 160 ms; opacidade .4 → 1 e 4 px em seis quadros: .40 .65 .82 .90 .95 .97…) e o texto diz "comi tudo · 13h10" |
+| "+1 copo": o que se move | nada; o copo troca de cor num quadro | uma `CSSTransition` de `transform` em 160 ms na curva do lugar, só no `::after` do copo novo; enche de baixo em vários quadros |
+| "+1 copo" sob "Reduzir" | troca num quadro | troca num quadro (nada anima) |
+| o Agora que monta com 5 copos | — | cheios desde o primeiro quadro, nenhuma animação |
+| o teclado da carga, a célula na metade de cima (fluxo 12: o cartão aberto deixa a página em 393) | nada rola; teclado em 331,7–633,7 | nada rola; igual |
+| … a célula na metade de baixo (página no topo, célula em y 680,7) | o foco rola **0 → 131**; teclado em 593,7–895,7; sob o dedo a tecla 5 | `preventScroll` sozinho (a primeira versão, recusada): **0 → 0**, teclado em 724,7–**1026,7**, o "pronto" fora da tela · final: o casco rola **0 → 131** de uma vez, teclado em 593,7–895,7 (de 896); sob o dedo a tecla 5 |
+| … a mesma, com o cronômetro em cena (813,8 a 896) | o foco rola **0 → 131**; teclado até **895,7, por baixo do cronômetro** (o "pronto" coberto) | o casco rola **0 → 213** de uma vez; teclado em 511,7–**813,7**, acima do cronômetro; sob o dedo a tecla 2 |
+| … a rolagem a cada quadro, do toque em diante | 0 → 131 (um salto) | 0 → 131, e 0 → 213 com o cronômetro (um salto); nenhum valor no meio |
+| … o foco e o teclado físico | na raiz do teclado; "42" no visor e na célula | igual |
+| "Abrindo o registro…", abertura rápida: quadros com a frase visível | Chromium 2 (aos 41,8 e 58,3 ms; o app aos ~98), WebKit 1 | **0** nos dois (a frase está lá, apagada, quando está) |
+| … abertura lenta (o script segurado 900 ms) | visível desde o primeiro quadro (15,7 ms) | apagada até a espera; aparece de uma vez (opacidade só 0 ou 1) aos 316 ms (Chromium) e 330 (WebKit), e fica até o app |
+| … a mesma, sob "Reduzir" | visível desde o primeiro quadro | aparece aos 305 (Chromium) e 327 (WebKit), igual |
+
+O 178 px da 01 A.5 era o `a22b09d`; no `d6199eb`, com o modo de hoje, a mesma
+abertura rola 131. Os números do teclado são iguais nos dois motores.
+
+### Os testes, e como provei que reprovam
+
+**`tests/dominio/estilo.test.ts`**: a exceção estreita da **(b)** — fora do
+portão passa só `#app > .msg`, fora de toda `@media`, e só as três declarações
+exatas da espera — e o caso **(k)**, de fonte: (1) o copo — o `::after` com
+`scaleY(0)` e a origem na base, `inset: 0`, o fundo da tinta, cheio no `i.f`; o
+copo corta (`overflow: hidden`) e o copo cheio não pinta o próprio fundo; UMA
+transição, no portão, só do `transform` do `::after`, em `--ins-dur-lugar` na
+`--ins-curva`; sob "Reduzir", nada ou só esmaecer; e no JSX um nó por posição
+(`<i key={i} …>`); (2) a forma — `.df.recem` com `ins-pousa` no portão e
+`ins-acende` sob "Reduzir", nenhuma outra regra a move; no JSX uma forma só com
+`recem`, a da linha, com `key={estado}`; a da leitura de volta e a do dia aberto
+sem; no `main.jsx` a marca vencendo por `VIDA_DO_RECEM_MS` e apagada em `vaiPara` e
+`abreModo`; (3) a abertura — a regra da frase fora de toda `@media`, uma só, com
+só o nome, o atraso pelo token e `backwards` (sem duração, sem curva, sem
+transição); `ins-espera` uma vez, em `base.css`, só `opacity: 0` do começo ao fim,
+usada só pela frase; o token entre 300 e 400 ms; a frase como filho direto do
+`#app` no `index.html`; (4) régua, teclado e RIR — nenhuma regra cujo sujeito é
+`.regua*`, `.tcl*`, `.rirscale*`, `.rirop`, `.rirbtn` se move; o único `focus()` do
+teclado com `preventScroll: true`; o `scroll-margin-bottom` do `.tcl` com
+`--ins-tabbar`, `--ins-timer-h` e `--ins-faixa-h`, e o de cima com `--ins-topo`;
+`mostraOTecladoInteiro` no `depoisDoLayout`, com `block: 'nearest'`,
+`inline: 'nearest'` e `behavior: 'instant'`; e tantas chamadas a ela quantos
+lugares abrem o teclado.
+
+**`tests/fluxo/lugar.test.js`** (árvore, 7 casos):
+
+- *dois "+1 copo" antes da resposta, os dois recusados* (cliques no mesmo
+  tique, cota cheia): disco e memória em 1, a tela em "1 de 14", e — pelos
+  registros de mutação com o valor antigo — nenhum desenho, nem o do meio, mostrou
+  outra conta ou encheu outro copo; "O 2º copo não foi gravado… continua em 1"; o
+  "Tentar de novo" grava.
+- *o primeiro recusado e o segundo aceito* (o aparelho recusa uma escrita só):
+  disco e memória em 2, sem aviso de copo, e a gravação seguinte, de outra coisa,
+  mantém os 2.
+- três casos com o **armazenamento do host** respondendo quando o caso manda
+  (`window.storage` de mentira, cota local cheia): o primeiro recusado e o segundo
+  aceito (no meio, "Água"; no fim, 2; a tela foi de 0 a 2); os dois recusados (a
+  tela nunca saiu de 0; "O 1º copo…"); o primeiro aceito e o segundo no ar (no
+  meio, "1 de 14" — antes do conserto, 2, com o segundo sem resposta —; recusado o
+  segundo, 1, e a tela nunca chegou a 2).
+- *marcar pela linha pousa a forma DESSA linha*: só ela, num nó novo; a leitura de
+  volta nasce com a forma parada; um `render()` no meio não troca o nó; um segundo
+  depois (o relógio adiantado, nenhum evento de animação) a marca sai e a forma
+  fica.
+- *"Metade" e a pergunta do "Não comi isso" pousam; o cartão de cima, o Desfazer e
+  a aba que volta, não*.
+
+**`tests/fluxo/enche.test.js`** (motor, 15 casos; os tempos e a curva lidos dos
+tokens; verdes no Chromium e, com `LASTRO_MOTOR=webkit`, no WebKit):
+
+1. *o copo enche de baixo em 160 ms, e só ele* — a origem do `::after` na base;
+   duas vezes: uma transição só, de `transform`, no `::after` do copo novo, no
+   tempo e na curva do lugar; a escala começa abaixo de .5 no quadro do toque, só
+   cresce, passa por três quadros ou mais entre 2 % e 98 % e assenta em 1; os
+   outros copos não se mexem; nada mais da linha da água anima. Corrigir para
+   menos: o segundo copo esvazia em vários quadros, e só ele.
+2. *o Agora que monta nasce com os copos cheios, parados* — cinco copos, a volta
+   ao Agora pelo carrossel quadro a quadro: os cinco cheios em todo quadro, nenhuma
+   animação neles.
+3. *sob "Reduzir" o copo aparece cheio, de uma vez*.
+4. *a forma pousa em 160 ms, e um `render()` no meio não a reinicia* — uma
+   animação só, `ins-pousa`, na forma da linha do almoço, `translate` e opacidade;
+   a da leitura de volta parada.
+5. *sob "Reduzir" a forma só acende em 120 ms*.
+6. a 8. *"Comi tudo" com a página no topo, com a página rolada, e "Metade" no
+   topo* — com o toque de verdade: a leitura de volta nasceu; o topo da linha ±2
+   px; a linha diz o que ficou e a forma é a da marca, na tela; sob o dedo nunca um
+   botão que grava.
+9. *em nenhum quadro do compositor a linha sai do lugar* — os quadros do
+   `page.screencast`, na ordem do carimbo, decodificados: a faixa da hora e do
+   nome da linha, em cada quadro, igual à do último (e diferente do que está 157 px
+   abaixo, para provar que a faixa é a da linha); e o "Desfazer" pela linha a deixa
+   onde estava.
+10. a 12. *o teclado próprio, com a célula na metade de cima, na de baixo, e na
+    de baixo com o cronômetro em cena* — o toque de verdade na célula da carga.
+    Em cima: nada rola, a célula ±2 px e sob o dedo. Embaixo: a página rola, e o
+    teclado está inteiro, do topo ao "pronto", dentro da área visível (a janela, ou
+    até o topo do cronômetro em cena), e pelo mínimo — o fundo dele a até 2 px do
+    fim da área. Nos três: a rolagem, lida a cada quadro desde o toque, só tem o
+    valor de antes e o final (suave passaria por valores no meio); o foco na raiz
+    do teclado; "4" e "2" do teclado físico no visor e na célula.
+13. *régua, teclado e RIR aparecem no lugar* — doze quadros depois de abrir cada
+    um, nenhuma animação neles.
+14. e 15. *"Abrindo o registro…" só aparece se a abertura demorar, de uma vez*, sem
+    e com "Reduzir" — a abertura lenta (o script segurado 900 ms no servidor), cada
+    quadro desde o primeiro: a espera é `ins-espera` com o atraso do token e duração
+    zero; a opacidade só 0 ou 1; apagada enquanto a espera corre; aparece no
+    primeiro quadro depois dela e fica até o app montar. A abertura rápida: quando a
+    frase está, apagada (sob a carga da suíte a abertura pode passar da espera; aí
+    a regra é a mesma, pelo relógio dela).
+
+**Plantio** (`scratchpad/peca8/planta.mjs`, como o das peças 5 a 7: cópias limpas
+em `limpo/`, a violação aplicada, o `dist/` reconstruído quando o caso lê o build,
+só os casos que a cobram — por nome —, no motor pedido; o arquivo devolvido num
+`finally`, e também em SIGINT, SIGTERM, SIGHUP, exceção e saída; cada arquivo
+conferido contra a cópia por hash depois de cada passo e no fim, e por `cmp` no
+fim; o `dist/` reconstruído do limpo; `restaura.mjs` de reserva). Os 27 ficaram
+vermelhos; os 3 controles, verdes; todos os arquivos voltaram ao limpo. Uma
+segunda rodada (`planta2.mjs`, cópias limpas novas em `limpo2/`, o mesmo
+`finally` e o mesmo hash) plantou o conserto do teclado pedido pelo coordenador:
+os 6 vermelhos, o controle verde, todos de volta ao limpo.
+
+| # | a violação plantada | quem ficou vermelho | voltou |
+|---|---|---|---|
+| P1 | o copo cheio pinta o próprio fundo (enche de uma vez, por baixo) | (k) | sim |
+| P2 | a transição do copo fora do portão | (b), (k); motor (Chromium e WebKit): sob "Reduzir" | sim |
+| P3 | o copo enche de cima | (k); motor: "a partir da BASE" | sim |
+| P4 | o copo no tempo da camada | (k); motor: o tempo | sim |
+| P5 | o copo enche por animação | (k); motor (Chromium e WebKit): o copo, e o Agora que monta | sim |
+| P6 | um nó novo por conta (a transição não dispara) | (k); motor: nenhuma transição | sim |
+| P7 | a forma da leitura de volta também pousa | (k) (na segunda rodada, com a leitura de `recem` em qualquer grafia — na primeira só a árvore e o motor a pegaram); árvore: os dois casos da forma; motor: a forma e "Reduzir" | sim |
+| P8 | a forma sem chave por estado | (k); árvore: "outro nó" | sim |
+| P9 | a marca da forma não vence | (k); árvore: "um segundo depois" | sim |
+| P10 | marcar pelo cartão também pousa a linha | árvore: "o cartão de cima não pousa" | sim |
+| P11 | trocar de aba não apaga a marca | (k); árvore: "a aba que volta não pousa" | sim |
+| P12 | sob "Reduzir" a forma desliza | (b), (c), (k); motor: "Reduzir" | sim |
+| P13 | a forma no tempo da camada | (k); motor: o tempo (350) | sim |
+| P14 | "Comi tudo" sem devolver a linha (o defeito 3 de volta) | motor (Chromium e WebKit): os três casos da linha (620,9 → 777,9; 420,9 → 577,9) e o do compositor | sim |
+| P15 | a linha devolvida 50 ms depois | motor (Chromium e WebKit): o do compositor (três quadros com a faixa a 25,7 do último) | sim |
+| P16 | "Desfazer" pela linha sem devolver | motor: "desfazer subiu a linha: 620,9 → 463,9" | sim |
+| P17 | o toque mais velho decide (cada um com o seu antes) | árvore: o 1º recusado e o 2º aceito, nos dois armazenamentos; o 1º aceito e o 2º no ar | sim |
+| P18 | a tela lê a memória, com copo sem resposta | árvore: os dois recusados ("1 → 3 → 1"), e os três do host | sim |
+| P19 | o que o disco tem não acompanha as gravações aceitas | árvore: o 1º aceito e o 2º no ar | sim |
+| P20 | o teclado foca rolando a página | 1ª rodada: (k); motor (Chromium e WebKit): "a página rolou" · 2ª rodada, com o conserto do teclado: só a (k) — o casco corrige o que o foco rolasse, e a tela fica igual | sim |
+| P21 | o teclado esmaece ao abrir | (k); motor: "régua, teclado e RIR" | sim |
+| P22 | a régua pousa ao abrir | (k); motor: idem | sim |
+| P23 | a escala de RIR acende ao abrir | (k); motor: idem | sim |
+| P24 | a frase esmaece ao aparecer (uma duração na espera) | (b), (k); motor: a abertura | sim |
+| P25 | a espera só sem "Reduzir" | (b), (k); motor (Chromium e WebKit): a abertura sob "Reduzir" | sim |
+| P26 | a espera de 100 ms | (k) | sim |
+| P27 | sem a espera (o piscar de antes) | (k); motor (Chromium e WebKit): as duas aberturas | sim |
+| V1 | controle: a espera de 400 ms | nenhum (verde, como devia) | sim |
+| V2 | controle: sob "Reduzir" o copo só esmaece (o pedido aceita) | nenhum | sim |
+| V3 | controle: a forma da leitura de volta com chave, sem recém | nenhum (também depois de apertar a (k)) | sim |
+| P28 | o teclado não vem para a tela (o `preventScroll` sozinho, a primeira versão) | (k); motor (Chromium e WebKit): "metade de baixo" e "com o cronômetro" ("não rolou") | sim |
+| P29 | a rolagem do teclado suave | (b) (`'smooth'` fora da porta), (k); motor (Chromium e WebKit): "valores no meio: 0 → 3 → 17 → 59 → 91 → 107 → 118 → 124 → 129 → 132…" | sim |
+| P30 | o teclado sempre alinhado ao topo (rola mesmo quando cabe) | (k); motor: "metade de cima" (393 → 635) e "rolou mais que o mínimo" | sim |
+| P31 | a área visível sem descontar o cronômetro | (k); motor (Chromium e WebKit): "com o cronômetro" (até 895,7, visível até 813,8) | sim |
+| P32 | o teclado da carga abre sem chamar a rolagem | (k) ("6 abrem, 5 chamam"); motor: "metade de baixo" e "com o cronômetro" | sim |
+| V4 | controle: as parcelas do rodapé em outra ordem | nenhum (verde, como devia) | sim |
+
+**Contra o build de antes** (a árvore de `d6199eb`, `git archive`, construída no
+scratchpad, com os quatro arquivos de teste finais): 19 dos 23 casos novos ficam
+vermelhos no Chromium, e 11 dos 15 de motor no WebKit — pelo defeito: a linha
+desce (620,9 → 777,9 no topo; 420,9 → 577,9 rolada; a linha sai do lugar nos
+quadros do compositor), o teclado com o cronômetro termina por baixo dele, a frase está visível desde o primeiro
+quadro, nada pousa, os dois "+1 copo" deixam 2 na memória com 1 no disco, ou 0 na
+memória com 2 no disco; pela forma, o copo (não há `::after`: a origem é
+`50% 50%`) e a (k). Os quatro que passam cobram o que já era assim e tem de
+continuar: sob "Reduzir" o copo aparece cheio de uma vez; régua, teclado e RIR
+parados; e, sem o cronômetro, o teclado que cabe não rola e o que não cabe rola
+o mínimo (o foco do navegador já fazia isso; o que ele não fazia era descontar o
+rodapé). Contra a primeira versão desta peça, só com `preventScroll`, o "metade
+de baixo" fica vermelho (P28).
+
+### O que ficou de fora, e por quê
+
+- **Nada foi visto num iPhone de verdade.** Ficam pela leitura: se o Safari do
+  iOS ancora a rolagem como o WebKit daqui (o conserto não depende disso: mede
+  depois do layout); se a rolagem feita na entrega do ResizeObserver sai no mesmo
+  quadro no Core Animation (aqui sai, nos dois motores); e se o VoiceOver anuncia
+  a leitura de volta que nasce acima da borda (é `role="status"`, montada com o
+  texto).
+- **A leitura de volta com o título acima da borda** quando a página está no
+  topo (decisão 7). É a troca que o conserto do defeito 3 impõe; mudar onde ela
+  nasce é desenho, e é do dono.
+- **Uma tecla sob o dedo quando o teclado precisa rolar** (decisão 12): é o
+  custo de ele aparecer inteiro, pedido pelo coordenador, e o mesmo de antes do
+  conserto. Quando ele cabe — o caminho comum, com o cartão aberto no alto —,
+  nada rola e sob o dedo fica a célula.
+- **O chip "Água N/14 · +1" do descanso** ganhou o conserto do defeito 6 (é o
+  mesmo verbo), mas não o copo que enche: a 03 §4.4 deixa ali só o toque.
+- **O "Desfazer" da leitura de volta e o cartão de cima não devolvem a linha da
+  lista**: o dedo está neles, longe dela, e nada sob o dedo se move por isso.
+- **`legacyCopy`** (`main.jsx`, copiar o JSON à moda antiga) continua focando o
+  `<textarea>` sem `preventScroll` (01 A.5, "caminho raro"); não era pedido.
+- **Os fluxos do revisor** (`_medicao/`) não foram tocados, nem as portas dele.
+  Meus servidores foram a 4729 (as medidas) e as portas efêmeras dos próprios
+  testes, todos desligados no fim.
+
+### Para o revisor
+
+- **Fluxo 11 (`comi-tudo`)**: com a página no topo, o passo agora ROLA a página
+  157 px no mesmo desenho (a linha fica; o que está acima sobe). É rolagem
+  programática, sempre um salto; o único movimento do passo é o pouso da forma
+  (`ins-pousa`, 160 ms, na forma de `[data-a="linha-almoco"]`). Para "a linha não
+  desce", ler `[data-a="linha-<id>"]` antes e depois (±2 px); no
+  `micro-agora.mjs`, o `scrollY` que ele registra passa de 0 a 157 com a página
+  no topo.
+- **Fluxo 09**: as animações do passo são `CSSTransition` de `transform` no
+  `::after` do copo (`effect.pseudoElement === '::after'`, alvo `.ag-copos i`),
+  160 ms; sob "Reduzir", nenhuma.
+- **Fluxo 12 (`abre`)**: a rolagem não muda (o cartão aberto deixa a célula no
+  alto, e o teclado cabe). Com a célula na metade de baixo, o passo rola o mínimo,
+  de uma vez, e com o cronômetro em cena o teclado para acima dele.
+- **A abertura** (`micro-abertura.mjs`): a frase continua no DOM até o app
+  montar — o `msgSaiu` mede o mesmo de antes —, mas agora com `opacity: 0` até
+  300 ms. Para "não pisca", ler a opacidade computada de `#app > .msg` em cada
+  quadro, e não só a presença.
+- **As durações que aparecem**: 160 (copo e forma) e 120 (forma sob "Reduzir").
+  A espera da abertura é uma `CSSAnimation` com duração 0 e atraso de 300 ms, que
+  some de `getAnimations()` quando o atraso acaba; não é duração da lista.
+
+
+### As saídas
+
+Rodadas de novo depois do conserto do teclado.
+
+`npm run tipos`:
+
+```
+> lastro-app@2.0.0 tipos
+> tsc --noEmit
+(saída 0)
+```
+
+`npm run build`:
+
+```
+> lastro-app@2.0.0 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 84 modules transformed.
+src/main.jsx (7729:45): Use of eval in "src/main.jsx" is strongly discouraged as it poses security risks and may cause issues with minification.
+rendering chunks...
+computing gzip size...
+dist/sw.js                        5.24 kB
+dist/index.html                   6.07 kB │ gzip:   2.84 kB
+dist/assets/index-7bBIbPce.css  110.96 kB │ gzip:  19.61 kB
+dist/assets/index-Cfat16yr.js   594.39 kB │ gzip: 185.91 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 792ms
+(saída 0)
+```
+
+`npx vitest run`, duas vezes seguidas (a carga no começo de cada uma, pelo
+`uptime`):
+
+```
+ 14:35:54 up 20:37,  1 user,  load average: 1,71, 1,81, 2,41
+
+ RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+
+
+ Test Files  87 passed (87)
+      Tests  1698 passed (1698)
+   Start at  14:35:54
+   Duration  66.69s (transform 3.30s, setup 0ms, import 37.66s, tests 623.55s, environment 12ms)
+```
+
+```
+ 14:37:01 up 20:38,  1 user,  load average: 9,78, 4,21, 3,20
+
+ RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+
+
+ Test Files  87 passed (87)
+      Tests  1698 passed (1698)
+   Start at  14:37:01
+   Duration  67.54s (transform 3.40s, setup 0ms, import 38.84s, tests 643.05s, environment 12ms)
+```
+
+Antes desta peça: 1675 de 1675 (peça 7). A diferença, +23, são os casos novos: a
+(k) em `estilo.test.ts` (63 casos ali; a exceção da (b) dentro do caso que já
+existia), 7 em `lugar.test.js` e 15 em `enche.test.js`. No WebKit
+(`LASTRO_MOTOR=webkit`), um arquivo por vez: `enche` 15/15, `dedo` 9/9.

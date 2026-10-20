@@ -538,6 +538,12 @@
      camada que chega esmaece em vez de deslizar; a que sai vai de uma vez; o
      valor que pousa só acende, sem subir. */
   --ins-dur-dissolve: 120ms;
+  /* NÃO é duração nem movimento: é quanto a abertura pode levar antes de a frase
+     "Abrindo o registro…" aparecer (de uma vez, sem esmaecer). Abaixo disso ela
+     só piscava — 3 a 4 quadros em toda abertura, medido (docs/motion/03 §6) —;
+     acima, a espera já é de verdade e a frase diz o que está acontecendo. Vale
+     igual sob "Reduzir movimento". Só a frase da abertura. */
+  --ins-espera-abertura: 300ms;
   /* NÃO é duração de transição: é o PERÍODO de `pintaTimer`. A barra interpola
      entre duas amostras; menos deixa vão parado, mais atrasa a barra em relação
      ao número. A guarda cobra que o `setInterval` use o mesmo número. */

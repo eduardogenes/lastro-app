@@ -56,7 +56,15 @@ export function Teclado({ texto, decimal, rotulo, unidade, aoTeclar, aoFechar })
 
   // Foco ao abrir: é o que faz o `keydown` da raiz alcançar o teclado físico
   // (T1) sem ouvinte de documento, e é também o T2 — o painel é alcançável.
-  useEffect(() => { if (raiz.current) raiz.current.focus(); }, []);
+  //
+  // `preventScroll` (peça 8 do motion; docs/motion/01 A.5): o foco não rola a
+  // página. Sem ele o navegador trazia o painel em foco para a vista do jeito
+  // dele — sem descontar o cronômetro nem a área segura, e cada motor com a sua
+  // regra. Quem traz o teclado inteiro para a tela, quando ele não cabe, é o
+  // casco, no desenho seguinte, pelo mínimo e de uma vez
+  // (`mostraOTecladoInteiro`, `main.jsx`); quando cabe, nada rola. O foco e o
+  // visor continuam os mesmos.
+  useEffect(() => { if (raiz.current) raiz.current.focus({ preventScroll: true }); }, []);
 
   function naTecla(e) {
     const k = e.key;

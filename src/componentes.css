@@ -1396,6 +1396,20 @@ html[data-nav="seca"] .ins-tab-ind { transition: none; }
 .aquec.on .aqbtn { border-color: var(--ins-acento); color: var(--ins-acento-tinta); }
 .mus { margin-top: var(--ins-1); }
 .msg { padding: var(--ins-11) var(--ins-8); text-align: center; font: 400 12px/1.5 var(--ins-fonte); color: var(--ins-tinta-3); }
+/* "ABRINDO O REGISTRO…" SÓ QUANDO DEMORA (peça 8 do motion; docs/motion/03 §6).
+   A frase do `index.html` ficava 3 a 4 quadros na tela em toda abertura (medido:
+   43–61 ms depois do primeiro quadro) — um piscar, e não uma espera. Agora ela
+   nasce apagada e aparece de uma vez em `--ins-espera-abertura`, se o app ainda
+   não tiver montado: abertura rápida mostra só o fundo e o app; abertura lenta
+   mostra a frase, como antes.
+   NÃO é movimento: duração zero (o primeiro quadro da animação dura o atraso
+   inteiro, `backwards`, e acabou), nenhuma interpolação, nada se desloca. Por
+   isso mora FORA do portão e vale igual sob "Reduzir movimento": o atraso não é
+   um gesto que a preferência desligaria, e sem ele quem pediu menos movimento
+   teria o piscar de volta. Só CSS, e não um relógio do JavaScript: a frase
+   aparece mesmo quando o próprio script é que está demorando a chegar. A guarda
+   (k) de `estilo.test.ts` cobra esta forma, e é a única exceção da (b). */
+#app > .msg { animation-name: ins-espera; animation-delay: var(--ins-espera-abertura); animation-fill-mode: backwards; }
 /* O registro não abriu (§7.2 da frente 3): família "falhou", na moldura de pare,
    cobrindo a tela — não há app por baixo para mostrar. */
 .abertura-falhou {
@@ -1926,6 +1940,23 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
    é o token de limite de controle do sistema: as teclas da Direção D tinham
    1,20:1, e o critério 1.4.11 pede 3:1 (T3 da §6.2; o valor é da frente 4). */
 .tcl { margin: 0 0 var(--ins-3); }
+/* O TECLADO INTEIRO NA TELA (peça 8 do motion). Ele recebe o foco sem rolar a
+   página (`teclado.jsx`), e no desenho seguinte, se não couber inteiro na área
+   visível, a página rola o MÍNIMO para ele aparecer — de uma vez, nunca suave
+   (`mostraOTecladoInteiro`, `main.jsx`, com `block: 'nearest'`). A área visível
+   desconta o que cobre a tela: embaixo, a área segura e o que é fixo no rodapé
+   (a barra de abas — que já soma a área segura, e que no modo e na tela cheia
+   É só a área segura —, o cronômetro em cena e a faixa da sessão, pelas alturas
+   que o casco publica); em cima, a barra de status ou a faixa "Não guardado" e,
+   no modo, a barra da saída e o relógio da sessão. Quando ele já cabe, nada
+   rola. Na folha, quem rola é o corpo dela, que nada fixo cobre: só a área
+   segura. */
+.tcl {
+  scroll-margin-top: var(--ins-topo);
+  scroll-margin-bottom: calc(var(--ins-tabbar) + var(--ins-timer-h) + var(--ins-faixa-h));
+}
+.ins-modo .tcl { scroll-margin-top: calc(var(--ins-modo-topo-h) + var(--ins-relogio)); }
+.ins-folha .tcl { scroll-margin-top: 0; scroll-margin-bottom: var(--sa-bottom); }
 .tcl:focus { outline: none; }
 .tcl:focus-visible { outline: 2px solid var(--ins-acento); outline-offset: 2px; }
 .tcl-visor {
@@ -2070,6 +2101,21 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 .df-traco { stroke: var(--ins-tinta); stroke-width: 1.8; stroke-linecap: round; }
 .df-trac { fill: none; stroke: var(--ins-fio-controle); stroke-width: 1.5; stroke-dasharray: 2.5 2.5; }
 .df-q { font-size: 11px; fill: var(--ins-tinta-2); }
+/* A FORMA QUE POUSA (peça 8 do motion; docs/motion/03 §4.6): a forma da linha
+   que o dedo acabou de marcar pelo Agora pousa com o gesto do número da série
+   (`ins-pousa`, base.css) — diz "esta linha mudou para isto", no lugar onde o
+   dedo está. Só sob `.recem`, a marca que o toque na linha aberta põe e que
+   vence sozinha em um segundo (`view.formaRecem`, `main.jsx`); a forma nasce
+   num nó novo por estado (`key`), então outra marca é outro pouso e um render()
+   no meio não o reinicia. A leitura de volta no topo NÃO pousa: é conteúdo que
+   entra, e muitas vezes está fora da tela. Fora do portão a forma está parada e
+   acesa, que é o último quadro; sob "Reduzir movimento" só acende. */
+@media (prefers-reduced-motion: no-preference) {
+  .df.recem { animation: ins-pousa var(--ins-dur-lugar) var(--ins-curva) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .df.recem { animation: ins-acende var(--ins-dur-dissolve) var(--ins-curva) both; }
+}
 .dia-agua { margin: 0 0 var(--ins-4); }
 
 /* ---- A SESSÃO PASSADA, como foi (a D, dias.html, estados 3, 4 e 14) ------
@@ -2155,8 +2201,25 @@ html:has(.tc) { --ins-tabbar: var(--sa-bottom); }
 .ag-agua-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; border-radius: var(--ins-raio-2); }
 .ag-agua-t b { font-variant-numeric: tabular-nums; }
 .ag-copos { display: flex; gap: 3px; margin-top: var(--ins-1); }
-.ag-copos i { width: 12px; height: 14px; border-radius: 2px 2px 4px 4px; border: 1.5px solid var(--ins-tinta-3); }
-.ag-copos i.f { background: var(--ins-tinta); border-color: var(--ins-tinta); }
+/* O COPO QUE ENCHE (peça 8 do motion; docs/motion/03 §4.4): o copo que acabou
+   de entrar enche DE BAIXO, em `--ins-dur-lugar` — diz "o copo entrou, e é
+   este". O preenchimento é um `::after` que escala na vertical a partir da base
+   (animar o `background` do próprio copo seria pintura a cada quadro); corrigir
+   para menos esvazia pelo mesmo caminho, ao contrário. Transição por classe: o
+   `<i>` de cada copo é o mesmo nó em todo render(), e transição não roda no
+   primeiro desenho — o Agora que monta (voltar de outra aba) nasce com os copos
+   já cheios, parados. O `f` chega no render() que vem DEPOIS da gravação
+   (`maisUmCopo`): só enche o copo que o aparelho guardou. O contorno escurece na
+   hora; o número e os ml trocam sem movimento — o copo é o "onde".
+   Fora do portão o copo está cheio ou vazio, e só: sob "Reduzir movimento" ele
+   aparece cheio (03 §4.4). */
+.ag-copos i { position: relative; overflow: hidden; width: 12px; height: 14px; border-radius: 2px 2px 4px 4px; border: 1.5px solid var(--ins-tinta-3); }
+.ag-copos i::after { content: ''; position: absolute; inset: 0; background: var(--ins-tinta); transform: scaleY(0); transform-origin: bottom; }
+.ag-copos i.f { border-color: var(--ins-tinta); }
+.ag-copos i.f::after { transform: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .ag-copos i::after { transition: transform var(--ins-dur-lugar) var(--ins-curva); }
+}
 .ag-agua-l > .ag-agua-b { flex: 0 0 auto; width: auto; padding: 0 var(--ins-5); }
 .ag-agua-c { margin-top: var(--ins-3); }
 .ag-agua-f { margin-top: var(--ins-3); display: flex; flex-direction: column; gap: var(--ins-2); color: var(--ins-atencao-tinta); }

@@ -14,6 +14,9 @@
 //     node docs/motion/_medicao/revisor-aviso-passo.mjs http://localhost:4728/ <pasta>
 //   (MOTOR=webkit + LD_PRELOAD como no topo de revisor-gravar.mjs; REDUZ=1)
 //
+// Peça 7: antes disso, com nenhum aviso na tela, um aviso chega e, 40 ms depois,
+// o cronômetro entra (e, noutro, sai): `cronometroEntraNoMeio`/`SaiNoMeio`.
+//
 // Escreve <pasta>/aviso-passo-<rodada>.json.
 import { abreMotor, abreApp, escopo, recarrega, ROTULO, SAIDA, MOTOR } from './revisor-comum.mjs';
 import fs from 'node:fs';
@@ -33,15 +36,21 @@ await p.waitForTimeout(600);
 /** Liga a amostragem, roda `acao` no escopo do app e devolve a trilha por quadro. */
 async function trilha(acao, ms) {
   return p.evaluate(({ acao, ms }) => new Promise(ok => {
-    const caixa = s => { const e = document.querySelector(s); if (!e) return null; const cs = getComputedStyle(e); const r = e.getBoundingClientRect();
-      return { y: Math.round(r.y * 10) / 10, fundo: Math.round(r.bottom * 10) / 10, vis: cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity > 0.01 }; };
+    // A mensagem: desde a peça 7, `#toast` é o LUGAR (sempre na página, vazio sem
+    // aviso) e a mensagem é `#toast > .aviso`; antes, a mensagem era o próprio
+    // `#toast`, com `display: none` quando não havia aviso.
+    const msg = () => { const t = document.getElementById('toast'); if (!t) return null;
+      return t.querySelector(':scope > .aviso:not(.sai)') || t.querySelector(':scope > .aviso') || (getComputedStyle(t).display !== 'none' && t.textContent.trim() ? t : null); };
+    const caixa = s => { const e = typeof s === 'string' ? document.querySelector(s) : s(); if (!e) return null; const cs = getComputedStyle(e); const r = e.getBoundingClientRect();
+      return { y: Math.round(r.y * 10) / 10, fundo: Math.round(r.bottom * 10) / 10, op: Math.round(+cs.opacity * 100) / 100,
+               vis: cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity > 0.01 }; };
     const q = []; const t0 = performance.now();
-    q.push({ t: 0, toast: caixa('#toast'), timer: caixa('#timer') });
+    q.push({ t: 0, toast: caixa(msg), timer: caixa('#timer') });
     window.__escopo(acao);
     (function passo() {
       requestAnimationFrame(() => {
         const t = performance.now() - t0;
-        q.push({ t: Math.round(t), toast: caixa('#toast'), timer: caixa('#timer') });
+        q.push({ t: Math.round(t), toast: caixa(msg), timer: caixa('#timer') });
         if (t < ms) passo(); else ok(q);
       });
     })();
@@ -64,6 +73,36 @@ function resume(q, quem) {
 }
 
 const res = { motor: MOTOR, rotulo: ROTULO };
+// Peça 7: o cronômetro entra ou sai NO MEIO da entrada do aviso (40 ms depois
+// de ele chegar). O aviso não pode saltar: a mensagem sobe os 8 px dela dentro
+// do lugar que anda com o cronômetro. Feitos primeiro, sem aviso na tela.
+await p.waitForTimeout(4500);
+const entraNoMeio = await trilha(`toast('O cronômetro entra no meio deste aviso.'); setTimeout(function () { startTimer(90, 'descanso · série 1 · teste'); }, 40);`, 700);
+res.cronometroEntraNoMeio = { toast: resume(entraNoMeio, 'toast'), cronometro: resume(entraNoMeio, 'timer'), opacidade: entraNoMeio.filter(x => x.toast).map(x => [x.t, x.toast.op]).slice(0, 14) };
+await p.waitForTimeout(9000);
+const saiNoMeio = await trilha(`toast('O cronômetro sai no meio deste aviso.'); setTimeout(function () { stopTimer(); }, 40);`, 700);
+res.cronometroSaiNoMeio = { toast: resume(saiNoMeio, 'toast'), cronometro: resume(saiNoMeio, 'timer'), opacidade: saiNoMeio.filter(x => x.toast).map(x => [x.t, x.toast.op]).slice(0, 14) };
+// Peça 7: a saída. Um aviso curto e, quando ele começa a sair (a mensagem ganha
+// `.sai`; antes, o `#toast` fica `display: none`), a opacidade, a altura e as
+// animações dela quadro a quadro.
+res.saida = await p.evaluate(() => new Promise(ok => {
+  window.__escopo(`toast('Ajuste salvo.');`);
+  const t = document.getElementById('toast'); const t00 = performance.now();
+  const saiu = () => getComputedStyle(t).display === 'none' || !!t.querySelector(':scope > .aviso.sai') || (!t.querySelector(':scope > .aviso') && !t.textContent.trim());
+  (function espera() {
+    if (!saiu()) { if (performance.now() - t00 > 9000) return ok({ erro: 'o aviso não saiu' }); return requestAnimationFrame(espera); }
+    const q = [], t0 = performance.now(), ficouMs = Math.round(t0 - t00);
+    (function passo() {
+      const a = t.querySelector(':scope > .aviso') || (getComputedStyle(t).display !== 'none' && t.textContent.trim() ? t : null);
+      q.push(a ? { t: Math.round(performance.now() - t0), op: Math.round(+getComputedStyle(a).opacity * 100) / 100, y: Math.round(a.getBoundingClientRect().y * 10) / 10,
+                   anims: a.getAnimations().map(x => (x.animationName || x.transitionProperty) + ' ' + x.effect.getTiming().duration) } : { t: Math.round(performance.now() - t0), op: null });
+      if (q.length < 16) requestAnimationFrame(passo); else ok({ ficouMs, quadros: q });
+    })();
+  })();
+}));
+await p.waitForTimeout(600);
+res.trilhasNoMeio = { entra: entraNoMeio.map(x => [x.t, x.toast && x.toast.y, x.toast && x.toast.op, x.timer && x.timer.y]), sai: saiNoMeio.map(x => [x.t, x.toast && x.toast.y, x.toast && x.toast.op, x.timer && x.timer.y]) };
+await p.waitForTimeout(9000);
 await escopo(p, `toast('Ajuste salvo.');`);
 await p.waitForTimeout(300);
 const sobe = await trilha(`startTimer(90, 'descanso · série 1 · teste')`, 700);
@@ -79,4 +118,5 @@ const arq = path.join(SAIDA, 'aviso-passo-' + ROTULO + '.json');
 fs.writeFileSync(arq, JSON.stringify(res, null, 1));
 console.log(ROTULO, 'sobe: toast', JSON.stringify(res.sobe.toast), '| cronômetro', JSON.stringify(res.sobe.cronometro));
 console.log(ROTULO, 'desce: toast', JSON.stringify(res.desce.toast), '| cronômetro', JSON.stringify(res.desce.cronometro));
+console.log(ROTULO, 'no meio, entra: toast', JSON.stringify(res.cronometroEntraNoMeio.toast), '| sai: toast', JSON.stringify(res.cronometroSaiNoMeio.toast));
 await ab.b.close();
