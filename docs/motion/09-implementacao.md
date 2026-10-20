@@ -2069,3 +2069,615 @@ arquivo por vez com a máquina menos carregada: `troca` 10/10, `sobe` 7/7,
 casos caíram por tempo de quadro e por esperas fixas; as esperas passaram a ser
 pelo fim da troca (`document.activeViewTransition`) e pelo movimento da foto, e
 foi isso que destapou a decisão 20.
+
+---
+
+## Peça 6 · A aba
+
+Implementada em 20/10, sobre `1a54bf3`, sem commit. Espec: o pedido em
+`_pedidos/peca-6.md`; `08-parecer.md` §3, §4 (peça 6) e §5.1; as respostas do dono
+em `00-coordenacao.md` (16/10, 01h25) — pergunta 3 (**a página inteira desliza,
+como um carrossel**, 350 ms na `--ins-curva`, o fio junto), 2 (sob "Reduzir" o
+novo esmaece 120 ms e o velho sai de uma vez; o fio salta) e 6 (o quadro a mais);
+`02-navegacao.md` §1, §2.0, T4 e §3.4; as seções das peças 0 a 5 deste documento;
+a linha da peça 6 do `07-revisao-base.md` §1.4 (fluxos 07 e 14). E os quatro itens
+que o coordenador mandou no meio, da conferência da peça 5 (07 §11): o segundo
+quadro parado no começo de toda troca, o foco do "Ir para Semana" sob "Reduzir", o
+cronômetro que podia saltar 52 px, e o foco do treino aberto no Programa.
+
+O implementador caiu no limite de uso logo depois do primeiro build; retomado, a
+exploração no Chromium seguiu de onde parou. O primeiro plantio foi interrompido
+quando chegaram os quatro itens (eles mexem no mesmo código), com o `main.jsx` no
+meio de um plantio: devolvido pela cópia limpa (`restaura.mjs`), conferido por
+`cmp` arquivo a arquivo, e o `dist/` reconstruído do limpo. O plantio todo foi
+refeito sobre o código final.
+
+### Em uma página
+
+- **O carrossel.** Trocar de aba desliza a página inteira: a velha sai pelo lado
+  oposto e a nova entra pelo lado para onde se andou na barra, as duas juntas e
+  encostadas, em 350 ms (`--ins-dur-entra`) na `--ins-curva`. O cabeçalho do Agora
+  vai com a página. O fio anda junto, no mesmo tempo, na mesma curva e a partir do
+  mesmo quadro (era 160 ms, sozinho). É a transição de vista da peça 5, pedida
+  pelo mesmo `render()`, com o sentido do índice na barra.
+- **O que não anda.** A barra de abas ganha foto própria só na troca de aba e fica
+  parada, com o fio andando dentro dela; o cronômetro, o aviso e as faixas, também.
+  Nos quadros do compositor, a faixa dos rótulos da barra não muda de um quadro
+  para o outro enquanto as páginas passam, nos dois motores.
+- **A rolagem.** Toda aba abre no topo, e o topo entra no desenho novo: a foto da
+  aba que sai é tirada onde ela estava (o `scrollY` na hora da foto é o de antes
+  do toque, e no fim é 0), nos dois motores.
+- **O toque nunca espera.** A aba tocada no meio da troca vence — com o dedo e com
+  o ponteiro, ida e volta, nos dois motores —, pelo pulo e pela mira da peça 5.
+- **Nada mais largo que a janela.** Largura rolável 414 em todo quadro, nos dois
+  sentidos, nos dois motores.
+- **Sob "Reduzir movimento"**, nenhuma transição: o `<main>` que nasce com a aba (a
+  chave dele é a aba) e o cabeçalho do Agora esmaecem 120 ms, a velha sai no mesmo
+  desenho, o fio salta. A aba que não está na barra (`vaiPara('treino')`) troca
+  seca, com e sem a preferência.
+- **Os quatro itens do coordenador** (07 §11): (1) toda foto que anda — e o fio —
+  começa um quadro adiante (`--ins-adianta`, −17 ms): no Chromium a troca passa a
+  andar no máximo um quadro depois do desenho seco (era dois); no WebKit desta
+  máquina o atraso é a foto da tela velha tirada em software, e não mudou. (3) O
+  cronômetro e o aviso saltavam 52 px no primeiro quadro de uma troca que tira ou
+  devolve a barra (visto, nos dois motores); agora mudam de altura junto com ela,
+  na curva da camada. (2) e (4), um mecanismo só: o foco que um desenho tira da
+  página vai ao título da tela — "Ir para Semana" sob "Reduzir" e o treino aberto
+  no Programa, nos dois motores, com o teclado e com o dedo.
+- **Um achado do motor, não do app.** O WebKit desta máquina volta um quadro no fim
+  de transições de vista (no carrossel, em quase toda rodada) — também na troca de
+  camada da peça 5 e numa página mínima sem o app; o Chromium, nunca. Registrado,
+  não contornado.
+- **O fio que voltava na suíte completa é da captura, não da tela** (a conferência
+  do coordenador; decisão 17). Sob carga, o screencast ENTREGA quadros fora de
+  ordem — o quadro de 87 ms antes do de 75 ms —, e lidos na ordem de chegada o fio
+  parecia ir a 90 e voltar a 34. Na ordem do carimbo do compositor, o fio só anda
+  para a frente: 0 voltas em 40 trocas com a suíte rodando junto (2 de 40 na
+  ordem de chegada, as duas com o carimbo fora de ordem). Os casos que leem os
+  quadros passaram a ordená-los pelo carimbo; um recuo de verdade (P25) e o quadro
+  que volta no WebKit continuam aparecendo.
+- **Testes.** 7 casos de motor novos (`aba.test.js`), 1 no `troca.test.js` e 3
+  ajustados, 2 de árvore e a guarda (i); 25 violações plantadas, as 25 vermelhas, e
+  o controle verde. `tipos` limpo, `build` ok, `vitest` 1663 de 1663 duas vezes
+  seguidas (a segunda começando com carga 7,8); no WebKit, os cinco arquivos de
+  motor verdes, um por vez.
+
+### O que mudou, arquivo por arquivo
+
+| arquivo | o que mudou |
+|---|---|
+| `src/main.jsx` | **A troca de aba no mesmo ponto da de camada**: `abaDesenhada` (a aba da tela desenhada, posta em `desenhaAgora`), e `sentidoDaTroca(antes, agora, abaAntes, abaAgora)` devolve também `aba-direita`/`aba-esquerda` pelo índice em `ABAS` (importada de `tabbar.jsx`, a lista que a barra desenha) e `seca` para a aba sem índice — só com o lugar à vista dos dois lados. A ordem: camada, depois aba, depois a folha que fecha. **O rodapé** (item 3): `rodapeDaTroca(antes, agora)` — `desce`/`sobe`/`null` — vai à porta no mesmo pedido. **O foco que o desenho perdeu** (itens 2 e 4): `desenhaAgora` guarda o nó focado antes de montar, e `naoPerdeOFoco` o manda ao título da tela desenhada quando ele saiu da página e o foco caiu no `body`. Comentários: o `render()`, o `vaiPara` (a ordem `render(); rola(0)` é a que põe o topo dentro do desenho novo). |
+| `src/ui/movimento.js` | `trocaDeCamada(sentido, desenha, anima, rodape)`: os sentidos `aba-direita`, `aba-esquerda` e `seca` (desenha na hora, sem transição); `data-pe` no `html` quando a troca muda a reserva do rodapé. Comentário da troca de aba. |
+| `src/ui/app.jsx` | `<main key={aba}>`: o `<main>` nasce com a aba (o nó que esmaece sob "Reduzir"). |
+| `src/componentes.css` | O fio em `--ins-dur-entra` · `--ins-curva` · `--ins-adianta` (era `--ins-dur-lugar`). Bloco novo **"A TROCA DE ABA"**: o nome `barra-de-abas` só em `html[data-nav="aba-direita"]` e `[data-nav="aba-esquerda"] .ins-tabbar`; a foto velha dela sem nova sai de uma vez (`:only-child`); `html[data-nav="seca"] .ins-tab-ind { transition: none }`; no portão, as quatro fotos do carrossel (velha e nova, nos dois sentidos) em `--ins-dur-entra` · `--ins-curva` · `--ins-adianta`; sob "Reduzir", `main` e `.ag-cab` esmaecem em `--ins-dur-dissolve`. Na "TROCA DE CAMADA": `--ins-adianta` nas fotos que andam (a tela cheia que chega e a que sai, a folha e o painel que descem, os véus), e o rodapé — `html[data-pe="desce"\|"sobe"]` no par de imagens do `cronometro` (só com `#timer.on`) e do `aviso`. |
+| `src/base.css` | Os quadros `ins-para-esquerda` e `ins-da-esquerda` (o carrossel, do outro lado) e `ins-rodape-desce`/`ins-rodape-sobe` (`translate` vertical de `--ins-barra-de-abas`). |
+| `src/tokens.css` | `--ins-adianta: -17ms` (um quadro a 60 Hz; não é duração), `--ins-barra-de-abas: 52px` (e `--ins-tabbar` passa a somar ele à área segura, o mesmo valor). Os comentários de `--ins-curva` (o carrossel), `--ins-dur-lugar` (o fio saiu) e `--ins-dur-entra` (o carrossel e o fio). |
+| `DESIGN.md` | Tokens (`--ins-curva`, `--ins-dur-entra`, `--ins-adianta`, `--ins-barra-de-abas`); a linha do fio (350 ms, junto, um quadro adiante); duas linhas novas — "A aba desliza (o carrossel)" e "O cronômetro e o aviso mudam de altura com a troca"; "O que fica sem movimento" (a barra na troca de aba, a aba sem índice); o toque no meio da aba; a troca num ponto só agora inclui a aba, o topo e o foco perdido; o quadro adiante; a guarda (h) e a nova (i). |
+| `tests/fluxo/aba.test.js` (novo) | O motor (Chromium; `LASTRO_MOTOR=webkit` os mesmos no WebKit), 7 casos. |
+| `tests/fluxo/troca.test.js` | Um caso novo (o cronômetro não salta, nos quadros do compositor); o caso da forma cobra o rodapé e o quadro adiante; a descida, o quadro adiante; esperas pelo fim da troca depois de trocar de aba (trocar de aba passou a ser transição). |
+| `tests/fluxo/navegacao.test.js` | Dois casos de árvore: a ordem da rolagem na troca de aba; o foco que o desenho tira da página ("Ir para Semana" e o Programa). |
+| `tests/dominio/estilo.test.ts` | Caso novo **(i)**; **(h)** conhece as fotos do carrossel, o nome da barra, o rodapé e o quadro adiante; **(b)** lê a chegada da aba pela foto (`html[data-nav="aba-…"] main`). |
+
+### As decisões, com o porquê
+
+1. **A aba passa pelo mesmo ponto da camada, medida contra a aba DESENHADA.** O
+   `render()` já comparava as camadas desenhadas com as pedidas; agora compara
+   também `abaDesenhada` com `view.aba`. Só conta como troca de aba com o lugar à
+   vista dos dois lados (nenhum destino desenhado nem pedido): com uma tela cheia
+   aberta a aba de baixo nem está montada, e o que andaria seria a tela cheia. A
+   ordem é camada, aba, folha: "Ir para Semana" (fecha a Evolução e troca de aba no
+   mesmo toque) continua UMA troca, `sai`, como a peça 5 mediu (02 T2); uma folha
+   que fecha junto com uma troca de aba desce sozinha (a foto dela é `:only-child`
+   em qualquer transição) enquanto o lugar anda por baixo.
+2. **O sentido é o índice na barra.** `ABAS` vem de `tabbar.jsx` — a mesma lista
+   que a barra desenha —, e andar para a direita (índice maior) é `aba-direita`: a
+   velha sai pela esquerda, a nova chega da direita. A volta é tocar na outra aba,
+   e o espelho sai do índice; aba não tem Voltar nem entrada no histórico.
+3. **350 ms na `--ins-curva`, com os tokens que já existiam.** `--ins-dur-entra` nas
+   duas fotos (as duas juntas: um token só, para nunca desencontrarem) e no fio, e
+   a `--ins-curva`, como o pedido diz e o desenho que o dono escolheu tocava.
+   Nenhum token de duração novo; mudaram os comentários: a `--ins-curva` dizia
+   "NÃO para camada que cobre a tela" — continua certo, porque o carrossel não é
+   camada, é andar de lado no chão —, e o fio saiu de `--ins-dur-lugar`.
+4. **As duas fotos andam a tela inteira, encostadas, sem fio nem sombra.** Mesma
+   distância, mesma curva, mesmo quadro de partida: a borda direita de uma toca a
+   esquerda da outra em todo quadro. Não há o que ficar por cima, então nada de
+   `z-index` nem do fio de 1 px da tela cheia (a guarda (i) cobra).
+5. **A barra de abas tem foto própria só na troca de aba, e a velha fica embaixo
+   da nova.** Sem nome ela andaria com a página; com nome nas trocas de camada,
+   ficaria por cima da tela cheia que chega (peça 5, decisão 4). O nome vem de
+   `html[data-nav="aba-…"]`, que a porta põe ANTES de o navegador fotografar. A
+   foto nova é viva — o fio anda dentro dela, pela transição dele. A primeira
+   versão escondia a foto velha (`opacity: 0`), como a 02 T4 sugeria; troquei por
+   esconder só a velha SEM nova (`:only-child`, a regra do que é do aparelho), por
+   uma medida: o `page.screenshot` do WebKit desta máquina não pinta a foto nova
+   de elemento com nome (nem a barra, nem o cronômetro, o controle), e a barra
+   sumia das capturas no meio da troca. Nos quadros do COMPOSITOR (o screencast),
+   a nova pinta, nos dois motores, e cobre a velha, que é opaca
+   (`--ins-superficie`): o que se vê é igual. Com a velha embaixo, se algum
+   caminho de desenho não pintar a viva, a barra continua lá (com o fio parado),
+   em vez de sumir.
+6. **O fio: 350 ms, na mesma curva, no mesmo quadro.** Medido: a transição do fio
+   começa no primeiro quadro em que as fotos andam, nos dois motores. Na troca
+   seca ele salta (`html[data-nav="seca"] .ins-tab-ind { transition: none }`):
+   uma regra fora do portão que só DESLIGA, de especificidade maior que a do
+   portão.
+7. **A rolagem já estava na ordem certa; a transição é que a põe dentro do
+   desenho.** O `vaiPara` já fazia `render(); rola(0)`. Com o carrossel, o
+   `render()` deixa o desenho pendente e `rola(0)` vira `rolagemPendente` (peça 5):
+   o topo entra no desenho novo, e a foto da aba que sai é tirada onde ela estava.
+   O caso de motor confere o `scrollY` na hora em que o navegador chama o desenho
+   (logo depois de fotografar); o plantio P3 (`rola(0); render()`) o deixa
+   vermelho. Comentário no `vaiPara` para ninguém inverter.
+8. **Sob "Reduzir", o nó que nasce é o `<main>` — por isso ele ganhou a chave
+   `aba`.** Sem a chave, o Preact reaproveitava o `<main>` e trocava só os filhos
+   (medido na 02 §0), e um esmaecer em `main > *` pegaria também todo filho que
+   nascesse DENTRO da aba por um toque (uma seção que aparece), enquanto o
+   `data-nav` continuasse `aba-…` — movimento num passo que é "nenhum". Com a
+   chave, o `<main>` nasce com a aba e só com ela; o cabeçalho do Agora nasce
+   quando se chega ao Agora. A aba que reaparece quando uma tela cheia sai também
+   nasce, mas com `data-nav="sai"`: não esmaece (ela já estava lá). Plantado sem a
+   chave (P8): o `<main>` não nasce, e o caso de "Reduzir" e a guarda (i) reprovam.
+9. **A aba sem índice troca seca, e deixa no `html` um sentido que nada lê.**
+   `vaiPara('treino')` (risco 10 do mapa) pede uma aba que não existe: não há para
+   que lado andar. `seca` não pede transição (a porta) e não casa nenhuma regra de
+   esmaecer — senão o `<main>` novo esmaeceria com o `data-nav="aba-…"` que sobrou
+   da troca anterior —, e o fio salta. O que `vaiPara('treino')` faz na tela (o
+   Agora sem cabeçalho e nenhuma aba acesa) é de antes e não é movimento: não mexi.
+10. **O toque no meio da troca é o da peça 5, sem nada novo.** A barra está parada
+    e o pulo com a mira (`aoDescer`, `arma`, `aoClicar`) leva o clique à aba que
+    está sob o dedo; a troca nova parte da tela que o pulo desenhou. Plantado sem o
+    pulo (P12): vermelho nos dois motores.
+11. **Item 1 do coordenador — um quadro adiante: um atraso negativo de um quadro,
+    com token próprio.** O revisor viu (07 §11.2) que toda troca anda DOIS quadros
+    depois do antes: o primeiro é a foto da tela velha (o aceito), o segundo é o
+    tempo 0 da animação, em que a tela que chega ainda está inteira fora da borda
+    (e a que sai, inteira no lugar) — um quadro igual ao anterior. Das duas formas
+    que ele sugeriu, escolhi o atraso: `--ins-adianta: -17ms`, nos tokens, com o
+    porquê escrito, como terceiro tempo da declaração (`animation: ins-da-direita
+    var(--ins-dur-entra) var(--ins-curva-camada) var(--ins-adianta) both`). O
+    caminho continua o mesmo, da borda até o lugar — só o primeiro quadro desenhado
+    já é o de um quadro adentro —, e a duração continua a do token (a guarda (a) e
+    a lista de durações do revisor leem a duração, não o atraso). O quadro-chave
+    "um passo para dentro" mudaria a forma que o dono viu, e um passo pequeno
+    demais (1 px) passaria na régua sem a tela andar de verdade. Vale para TODA
+    foto que anda — a tela cheia e o modo que chegam e saem, a folha e o painel que
+    descem, os véus, o carrossel, o rodapé — e para o fio, que senão ficaria um
+    quadro atrás das páginas. NÃO vale para o que nasce por CSS (a folha e o painel
+    que sobem, o cronômetro): não há foto antes, e a régua já aceita o quadro
+    deles. Um quadro a 60 Hz porque é o do iPhone 11 Pro Max; a guarda (h) cobra o
+    valor entre −16 e −17 ms e que só as fotos e o fio o usam.
+12. **Item 3 — o cronômetro saltava, e agora muda de altura com a troca.** Visto,
+    não deduzido: com um descanso contando, ao abrir os Ajustes a barra azul do
+    descanso ia de y 814 a 866 de um quadro para o outro, no primeiro quadro da
+    troca, e voltava de uma vez ao fechar — nos dois motores; o aviso também
+    (705 → 757). É o grupo da foto deles, que vai direto ao lugar novo (o de
+    todos os grupos é `animation: none`, peça 5). A forma: o par de imagens
+    (`::view-transition-image-pair`) do `cronometro` e do `aviso` parte do lugar
+    velho e chega ao novo em `translate` vertical da altura da barra
+    (`--ins-barra-de-abas`, um token novo, que `--ins-tabbar` passou a somar à área
+    segura: o mesmo valor), no tempo e na curva da camada, um quadro adiante.
+    Continuam do aparelho: não andam de lado com as páginas, só mudam de altura
+    junto com a troca, que mudou a reserva do rodapé. Quando: o `render()` sabe se
+    a troca tira a barra (chega uma tela cheia ou o modo) ou a devolve, e manda à
+    porta, que põe `data-pe="desce"|"sobe"` no `html` (ou o tira). Só o cronômetro
+    EM CENA (`:has(#timer.on)`): fora de cena ele continua desenhado, abaixo da
+    borda e invisível, e tem foto — a primeira versão o movia mesmo assim, e o caso
+    do Voltar do `troca.test.js` pegou uma animação a mais. A faixa da sessão não
+    precisa: ela nunca está nas duas telas da troca.
+13. **Itens 2 e 4 — o foco que um desenho tira da página, um mecanismo só.** Sob
+    "Reduzir", "Ir para Semana" são dois desenhos: o primeiro fecha a Evolução e
+    `devolveOFoco` põe o foco no "Evolução" do Corpo; o segundo troca de aba, e
+    esse botão sai da página — o foco caía no `body`. Abrir um treino da lista do
+    Programa é o mesmo: o conteúdo troca dentro da mesma tela cheia e o botão
+    tocado sai. Nenhum dos dois é troca de camada, e por isso `devolveOFoco` não
+    age. `naoPerdeOFoco`, depois de cada desenho: se o nó que tinha o foco antes de
+    montar saiu da página e o foco caiu no `body`, ele vai ao título da tela
+    desenhada (`#app h1[tabindex]`, o lugar declarado de `devolveOFoco`); com uma
+    folha, o pare ou o aviso por cima, eles ficam com o foco deles. É o mesmo
+    mecanismo dos dois itens, e por isso consertei o 4 junto. O alcance é estreito
+    de propósito: só age quando havia um nó focado — o teclado, o Chromium que foca
+    o botão tocado, ou o foco que `devolveOFoco` pôs. No Safari, que não foca botão
+    no toque, o `body` já era o foco antes do toque, e nada muda.
+14. **O WebKit desta máquina volta um quadro no fim das transições de vista — e não
+    é do app.** Achado nos quadros do compositor: no último quadro da troca, a
+    tela inteira volta, por um quadro, a um estado do meio dela (no carrossel, o
+    fio em x ≈ 90 depois de ter chegado a 0; a página pela metade), e então assenta.
+    Em 3 de 3 rodadas do carrossel (5 das 6 trocas; e em 8 de 9 rodadas no
+    `mede.mjs`), e também na troca de camada
+    da peça 5 — no build de `1a54bf3`, antes de qualquer mudança minha (2 de 3
+    rodadas abrindo os Ajustes) — e numa página mínima, sem nada do app, com a
+    mesma transição de 350 ms (1 de 6 rodadas sem nome, 2 de 6 com uma barra
+    nomeada). No Chromium, nunca (0 de 6, e 0 nos quadros do app). É o WebKit sem
+    placa de vídeo; não contornei no app um defeito que pode não existir no iPhone.
+    No `aba.test.js`, "nenhum quadro volta" é cobrado no Chromium (07 §1.3:
+    "nada pisca" se confere no Blink); no WebKit o quadro isolado que volta é
+    contado (no `console`) e fica fora da conta do fio.
+15. **Os casos da peça 5 que trocam de aba passaram a esperar a troca.** Trocar de
+    aba era seco; agora é uma transição de 350 ms, e um `scrollTo` do teste no meio
+    dela rolaria a página que ainda vai ser trocada. Cinco esperas no
+    `troca.test.js` (`assenta` depois do `vaiPara`), sem mudar o que eles cobram.
+16. **Nada largo, nada que pisca.** As fotos moram numa camada à parte e não somam
+    à largura rolável (a 02 §3.4 e a peça 5 já tinham medido): 414 em todo quadro,
+    nos dois sentidos, nos dois motores. O plantio P17 mostra que a conferência é
+    real: a página DE VERDADE deslizando (sem transição de vista) com o `clip` do
+    `body` tirado faz a largura passar da janela, e o caso reprova nisso.
+17. **O fio que voltava um quadro na suíte completa: artefato da captura, provado
+    nos quadros.** O coordenador viu, na suíte inteira (carga 4–8), 2 de 2 vezes, o
+    caso da barra reprovar com o fio "90 34 110 136 …" — para a frente e para trás
+    num quadro, antes de andar. A suspeita era o fio vivo com o `--ins-adianta`
+    andar um quadro antes da foto da barra assumir. Investiguei com a máquina
+    carregada (`scratchpad/peca6/carga.mjs`: 12 laços ocupados de CPU, ou a suíte
+    inteira rodando junto), lendo em cada quadro do compositor o lugar do fio, a
+    borda da página e o CARIMBO (a hora em que o compositor fez o quadro), e na
+    página o `currentTime` do fio e das fotos a cada quadro:
+    - com 12 laços ocupados (carga 8,5): 0 voltas em 16 trocas;
+    - com a suíte rodando junto: **2 voltas em 40 trocas na ordem de chegada — e
+      as duas com o carimbo fora de ordem.** Na rodada 10 chegaram, nesta ordem,
+      os quadros de 55,1 ms (fio em 34), **87,1 ms (fio em 90)** e **75,2 ms (fio
+      em 64)**; na rodada 0, os de 307,8 ms (164) e 298,1 ms (160). Na ordem do
+      carimbo, o fio só anda para a frente: **0 voltas em 40**. A sequência do
+      coordenador (90 antes de 34) é a mesma coisa;
+    - a suspeita não se confirma: o registro da página mostra, em todo quadro, a
+      transição do fio e as fotos com o MESMO `currentTime` (por exemplo, "73 ms:
+      fio 17 / fotos 17,17"); o fio nunca anda à frente delas.
+    É o screencast do Chromium entregando quadros fora de ordem quando a máquina
+    está ocupada; a tela não voltou. Conserto no teste, não no app: os dois casos
+    que leem os quadros do compositor (`aba.test.js`, a barra e o fio; o
+    `troca.test.js`, o cronômetro) os ordenam pelo carimbo antes de qualquer conta.
+    Isso não esconde um quadro que volta de verdade: (a) o P25 (o fio com uma curva
+    que passa da aba e volta) reprova nos dois motores com os quadros já
+    ordenados ("84 150 192 212 220 220 216 210 …" no Chromium); (b) o quadro que
+    volta no fim da transição no WebKit (decisão 14) chega com o carimbo em ordem e
+    continua aparecendo — 7 de 8 trocas, igual nas duas ordens, 0 carimbos fora de
+    ordem. Depois do conserto: a suíte completa duas vezes seguidas, 1663 de 1663
+    (a segunda começando com carga 7,8); `aba` e `troca` três vezes com 12 laços
+    ocupados (carga até 15), 18 de 18 nas três; no WebKit, 7/7 e 11/11.
+
+### Os números, antes e depois
+
+Chromium 1234 e WebKit 26.5 (Playwright), 414 × 896 a ×2, o registro semeado com
+quatro semanas de treino e de peso, cada aba aquecida antes (a primeira pintura de
+uma aba no WebKit desta máquina prende a thread). O antes é o build de `1a54bf3`
+(a peça 5, `index-D8nGJrXY.js`, guardado no scratchpad antes da primeira mudança);
+o depois, o final (`index-B3-7Hevd.js`), servido na 4729. Scripts em
+`scratchpad/peca6/` (`mede.mjs`, `anda.mjs`, `cronometro.mjs`, `minima.mjs`,
+`quadros.mjs`). Nenhum erro de página.
+
+**A troca de aba** (o fluxo 07: Agora → Corpo → Semana → Agora; 3 rodadas de cada,
+nos quadros do compositor):
+
+| medida | antes | depois |
+|---|---|---|
+| quadros em que a página muda | Chromium 1 · WebKit 1 (a troca seca) | Chromium 21 · WebKit 21–25 |
+| a barra de abas nesses quadros (diferença média por canal contra o último, na faixa dos rótulos) | 0,05–0,06 (o ruído do JPEG) | Chromium 0,05–0,06 · WebKit 0,03–0,06: parada |
+| o fio | 160 ms, `cubic-bezier(.2,.8,.2,1)`, sozinho; 9–15 posições | 350 ms, a mesma curva, a partir do quadro em que as páginas andam, −17 ms; 14–22 posições |
+| a largura rolável, em todo quadro | 414 | 414, nos dois sentidos e nos dois motores |
+| quadros que voltam (um quadro diferente dos dois vizinhos, iguais entre si) | 0 | Chromium 0 em 9 rodadas · WebKit 1 em 8 de 9 (o motor: decisão 14) |
+| do toque ao desenho novo · ao primeiro quadro depois dele (mediana de 6) | Chromium 5,2 · 16,8 ms; WebKit 12 · 29 | Chromium 7,8 · 17,3; WebKit 43 · 49 |
+| a aba tocada no meio (o fluxo 14: Corpo e, ~132 ms depois, Semana), 5 com o dedo e 5 com o ponteiro | 10/10 na Semana, sem nada andando | 10/10 na Semana, com as fotos andando no segundo toque, nos dois motores |
+| sob "Reduzir" | o `<main>` reaproveitado, nada anima, o fio salta | o `<main>` nasce com `ins-esmaece` 120 ms (só opacidade), o cabeçalho do Agora também; a velha sai no mesmo desenho; o fio salta; nenhuma transição pedida |
+
+**A forma**, nos dois motores (`aba.test.js`): andando para a direita,
+`ins-para-esquerda` no `::view-transition-old(root)` e `ins-da-direita` no
+`-new(root)`; para a esquerda, `ins-para-direita` e `ins-da-esquerda`; 350 ms,
+`cubic-bezier(0.2, 0.8, 0.2, 1)`, atraso −17 ms, as duas com o mesmo
+`currentTime`; a transição do fio em `transform`, 350 ms, a mesma curva, no
+mesmo quadro (ou no seguinte); a barra com `view-transition-name: barra-de-abas`
+durante a troca e `none` fora dela.
+
+**A rolagem**: com a aba de onde se sai rolada até o fim (Corpo, Semana, Agora), o
+`scrollY` na hora em que o navegador chama o desenho — logo depois de fotografar —
+é o de antes do toque, e a aba na tela ainda é a velha; no fim, 0, nos dois motores.
+
+**Item 1, quando a troca anda** (a régua do revisor, `andaMs`: o primeiro quadro em
+que a mudança, contra o quadro de antes do toque, encosta na borda direita e tem a
+altura da tela; para a aba, o primeiro quadro que muda, porque a troca seca não
+chega à borda). Mediana de 5, os três lados intercalados; "seco" é o build novo
+sem `startViewTransition` (o desenho na hora: o caminho de antes da peça 5). Duas
+rodadas no Chromium (carga 0,6 e 3,7) e duas no WebKit:
+
+| troca | seco | peça 5 | depois |
+|---|---|---|---|
+| abre os Ajustes, Chromium | 17,1 · 12 ms | 46,6 · 41,7 | **30,3 · 27,5** |
+| fecha os Ajustes, Chromium | 9,8 · 10,4 | 29,8 · 37,2 | **17,9 · 14,7** |
+| aba Agora → Corpo, Chromium | 17,1 · 14,6 | (seca) | **25,9 · 27,6** |
+| aba Corpo → Agora, Chromium | 9,1 · 8,2 | (seca) | **18,6 · 18** |
+| abre os Ajustes, WebKit | 34,3 · 45 | 94,9 · 110,8 | 113,8 · 121,9 |
+| fecha os Ajustes, WebKit | 21,2 · 23,8 | 86,9 · 100 | 86,9 · 89,7 |
+| aba Agora → Corpo · Corpo → Agora, WebKit | 35,2 · 47,9 / 21,6 · 20,5 | (seca) | 136,4 · 113 / 85,5 · 95,7 |
+
+No Chromium a troca passou a andar **no máximo um quadro depois do seco** (+4 a
++16 ms; na peça 5, +20 a +30): o alvo. No WebKit desta máquina, não mudou: os
+quadros entre o toque e o primeiro movimento mostram a página velha intacta (só o
+ponto ao vivo pulsando, a caixa de 8 × 4 px dele), por 60 a 100 ms — é a foto da
+tela velha sendo tirada em software, e não o tempo 0 parado. Fica a conferir no
+aparelho, como o revisor já deixou (07 §11.2).
+
+**Item 3, o cronômetro** (a barra azul do descanso, numa coluna, em cada quadro do
+compositor; o descanso contando, o Agora → os Ajustes → o Agora):
+
+| | antes (peça 5) | depois |
+|---|---|---|
+| abre os Ajustes, Chromium | 814 814 814 **866** 866 … (um quadro) | 814 814 814 820 828 836 846 854 858 860 862 864 865 866 (14 quadros) |
+| fecha os Ajustes, Chromium | 866 866 866 **814** 814 … | 866 866 866 860 852 844 834 826 822 820 818 816 815 814 |
+| abre, WebKit | 814 **866** 866 … | 814 833 839 848 852 856 858 860 861 862 863 864 865 866 |
+| fecha, WebKit | 866 866 **814** … | 866 838 829 826 823 821 819 818 817 816 815 814 |
+
+O aviso (`#toast`, 705 → 757 no DOM) vai junto, pela mesma regra. Sem o descanso
+na tela, nada se move no rodapé (o cronômetro fora de cena não ganha animação).
+
+**Itens 2 e 4, o foco** (`aba.test.js`, com e sem "Reduzir", com o teclado e com o
+dedo, nos dois motores): "Ir para Semana" deixa o foco no título "Semana" nas oito
+combinações (antes, `body` sob "Reduzir"); o treino aberto na lista do Programa,
+no título da tela cheia (antes, `body`).
+
+**O quadro que volta, no WebKit** (decisão 14), com o detector de "quadro
+diferente dos dois vizinhos, iguais entre si": o carrossel, 5 de 6 trocas em 3
+rodadas (e 8 de 9 rodadas no `mede.mjs`); a troca de camada no build de `1a54bf3`, 2 de 3 abrindo os Ajustes; a
+página mínima sem o app, 1 de 6 sem nome e 2 de 6 com uma barra nomeada. No
+Chromium, 0 em todos.
+
+### Os testes, e como provei que reprovam
+
+**`tests/fluxo/aba.test.js`** (novo; motor, 7 casos; os tempos e as curvas lidos dos
+tokens; `LASTRO_MOTOR=webkit` roda os mesmos no WebKit — os 7 verdes nos dois):
+
+1. *trocar de aba desliza a página inteira no sentido do índice, em 350 ms na
+   curva do lugar, e o fio anda junto* — com a sessão aberta (a faixa), um descanso
+   e um aviso na tela, cinco trocas (três para a direita, duas para a esquerda),
+   quadro a quadro: largura rolável igual à janela em todo quadro; pelo menos 3
+   quadros com a troca viva; o sentido no `html`; exatamente as duas fotos da
+   página, com os quadros de borda a borda de cada sentido, o tempo, a curva e o
+   quadro adiante; as duas com o mesmo `currentTime`; a transição do fio em
+   `transform`, no tempo, na curva e com o atraso delas, a partir do mesmo quadro
+   (ou do seguinte); a barra com o nome dela; a aba acesa e o fio no lugar no fim. E,
+   numa troca de camada, a barra SEM nome.
+2. *a barra de abas fica parada e o fio anda dentro dela, nos quadros que a tela
+   mostrou* — os quadros do compositor (`page.screencast`), na ordem do carimbo
+   (decisão 17), decodificados: a página
+   anda em pelo menos 3; a faixa dos rótulos da barra é a do fim em todos eles; o
+   fio só anda para o lado da aba nova, em pelo menos 3 posições, e chega a ela. No
+   Chromium, nenhum quadro volta.
+3. *toda aba abre no topo, e o topo entra no desenho novo* — três trocas, cada uma
+   com a aba de onde se sai rolada até o fim: o `scrollY` e a aba na tela na hora da
+   foto, e o topo no fim.
+4. *a aba tocada no meio da troca vence* — o dedo e o ponteiro, três pares (ida e
+   volta), o segundo toque com as fotos já ~110 ms andadas: acaba na aba do segundo
+   toque, acesa, com o fio nela; o caso cobra que havia foto andando.
+5. *sob "Reduzir movimento"* — nenhuma transição pedida; o `<main>` nasce e só
+   esmaece, em `--ins-dur-dissolve`; o velho sai no mesmo desenho; o cabeçalho do
+   Agora esmaece; o fio salta e já está no lugar; um desenho dentro da aba não
+   esmaece de novo; a aba que reaparece quando uma tela cheia sai não esmaece.
+6. *a aba que não está na barra troca seca* — com e sem "Reduzir": `vaiPara('treino')`
+   e a volta dela, sem transição, sem esmaecer, o fio sem animação.
+7. *o foco não cai no body quando um desenho tira da página o controle* (itens 2 e
+   4) — com e sem "Reduzir", com o teclado e com o dedo: "Ir para Semana" acaba no
+   título "Semana"; o treino aberto no Programa não deixa o foco no `body`.
+
+**`tests/fluxo/troca.test.js`**: um caso novo, *o cronômetro não salta quando a
+troca tira ou devolve a barra de abas* (item 3) — os quadros do compositor (na
+ordem do carimbo), a barra
+azul do descanso ao abrir e ao fechar os Ajustes: muda 52 px no DOM, passa pelo meio
+do caminho em pelo menos 2 quadros e só para o lado do lugar novo; no Chromium, sem
+passo de 40 px e sem quadro que volta (no WebKit o primeiro quadro animado pode
+chegar tarde sob carga, e o fim volta um quadro, decisão 14); a captura vazia se
+repete até 3 vezes, o salto visto reprova na hora. O caso da forma (o 2) passou a
+cobrar que o cronômetro e o aviso só mudam de altura, no tempo e na curva da
+camada, e que toda foto que anda começa um quadro adiante; o da descida (o 3), o
+quadro adiante da folha e do véu. Cinco esperas pelo fim da troca depois de trocar
+de aba (decisão 15).
+
+**`tests/fluxo/navegacao.test.js`** (árvore, 2 casos): *trocar de aba rola ao topo
+DEPOIS de desenhar a aba nova* (em cada pedido de rolagem, a aba acesa já é a nova)
+e *o foco que um desenho tira da página vai ao título da tela* ("Ir para Semana",
+que no jsdom — sem transição — são os mesmos dois desenhos de "Reduzir"; e o treino
+aberto no Programa).
+
+**`tests/dominio/estilo.test.ts`**: o caso **(i)** (as quatro fotos do carrossel,
+nos dois sentidos, com os quadros de borda a borda, `--ins-dur-entra`,
+`--ins-curva` e sem `border-left`, `z-index`, `margin-left` nem `box-shadow`; o fio;
+a troca seca; o nome da barra só na troca de aba e fora do portão; a foto velha sem
+nova; nenhuma foto da barra se move; o esmaecer sob "Reduzir"; a chave do `<main>`;
+o índice, o `seca` e a aba desenhada no `main.jsx`; o `seca` na porta; e o
+`render(); rola(0)` do `vaiPara`). **(h)**: as fotos do carrossel e do rodapé na
+lista do que anda, o nome da barra na lista dos nomes, o esmaecer da aba na lista
+de "Reduzir", o rodapé (só na vertical, da altura da barra, no tempo e na curva da
+camada), o casco e a porta dizendo `data-pe`, e o quadro adiante (toda foto que
+anda o tem; só as fotos e o fio o usam; o valor é um quadro a 60 Hz). **(b)**: a
+chegada da aba lida pela foto (`html[data-nav="aba-…"] main`).
+
+**Plantio** (`scratchpad/peca6/planta.mjs`, como o da peça 5: guarda cópias limpas
+em `limpo/`, aplica a violação, constrói quando o caso é de motor, roda só os
+casos que a cobram — cada arquivo de motor sozinho —, registra em `plantio.json` e
+devolve o arquivo num `finally`, e também em SIGINT, SIGTERM, SIGHUP, exceção e
+saída; no fim confere cada arquivo contra a cópia limpa por hash e reconstrói o
+`dist/`; `restaura.mjs` devolve as cópias se tudo o mais falhar):
+
+| # | a violação plantada | quem ficou vermelho | o arquivo voltou ao limpo |
+|---|---|---|---|
+| P1 | o render() não vê a troca de aba: troca seca, como antes | trocar de aba desliza a página inteira no sentido do índice, em 350 ms na curva do lugar, e o fio anda junto (Chromium e WebKit) · a barra de abas fica parada e o fio anda dentro dela, nos quadros que a tela mostrou (Chromium e WebKit) · toda aba abre no topo, e o topo entra no desenho novo: a foto da aba que sai fica onde estava (Chromium e WebKit) · a aba tocada no meio da troca vence: o dedo acerta a aba que vê (o fluxo 14) (Chromium e WebKit) · sob "Reduzir movimento": nenhuma transição de vista; o conteúdo novo esmaece 120 ms, o velho sai de uma vez, e o fio salta (Chromium e WebKit) · a aba que não está na barra (vaiPara("treino")) troca seca: sem transição, sem esmaecer, e o fio salta (Chromium e WebKit) | sim |
+| P2 | o sentido ao contrário do índice | (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · trocar de aba desliza a página inteira no sentido do índice, em 350 ms na curva do lugar, e o fio anda junto · sob "Reduzir movimento": nenhuma transição de vista; o conteúdo novo esmaece 120 ms, o velho sai de uma vez, e o fio salta | sim |
+| P3 | vaiPara rola ao topo ANTES de pedir a troca (a foto da que sai pula para o topo) | trocar de aba rola ao topo DEPOIS de desenhar a aba nova · (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · toda aba abre no topo, e o topo entra no desenho novo: a foto da aba que sai fica onde estava (Chromium e WebKit) | sim |
+| P4 | a barra de abas sem nome: anda com a página | (h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda · (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · trocar de aba desliza a página inteira no sentido do índice, em 350 ms na curva do lugar, e o fio anda junto (Chromium e WebKit) · a barra de abas fica parada e o fio anda dentro dela, nos quadros que a tela mostrou (Chromium e WebKit) | sim |
+| P5 | o fio fica em --ins-dur-lugar (160 ms), sozinho | (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · trocar de aba desliza a página inteira no sentido do índice, em 350 ms na curva do lugar, e o fio anda junto | sim |
+| P6 | o carrossel na curva da camada, e não na --ins-curva | (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · trocar de aba desliza a página inteira no sentido do índice, em 350 ms na curva do lugar, e o fio anda junto | sim |
+| P7 | só a nova anda (camada por cima, e não carrossel): a velha parada | (h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda · (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · trocar de aba desliza a página inteira no sentido do índice, em 350 ms na curva do lugar, e o fio anda junto | sim |
+| P8 | o `<main>` sem a chave da aba: o nó não nasce | (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · sob "Reduzir movimento": nenhuma transição de vista; o conteúdo novo esmaece 120 ms, o velho sai de uma vez, e o fio salta | sim |
+| P9 | sob "Reduzir", a página nova não esmaece | (h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda · (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · sob "Reduzir movimento": nenhuma transição de vista; o conteúdo novo esmaece 120 ms, o velho sai de uma vez, e o fio salta | sim |
+| P10 | a porta pede transição também para a troca seca | (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · a aba que não está na barra (vaiPara("treino")) troca seca: sem transição, sem esmaecer, e o fio salta | sim |
+| P11 | na troca seca o fio anda | (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · a aba que não está na barra (vaiPara("treino")) troca seca: sem transição, sem esmaecer, e o fio salta | sim |
+| P12 | o toque no meio NÃO pula a transição | a aba tocada no meio da troca vence: o dedo acerta a aba que vê (o fluxo 14) (Chromium e WebKit) | sim |
+| P13 | a foto velha da barra sempre escondida (some se a nova não pintar) | (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam | sim |
+| P14 | a foto da barra anda (com a página) | (h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda · (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · trocar de aba desliza a página inteira no sentido do índice, em 350 ms na curva do lugar, e o fio anda junto · a barra de abas fica parada e o fio anda dentro dela, nos quadros que a tela mostrou | sim |
+| P15 | sob "Reduzir", a página nova DESLIZA (só que no tempo do esmaecer) | (b) reduzir movimento falha fechado: todo movimento mora no portão por adesão, e fora dele o elemento está no último quadro · (c) só transform, translate, scale e opacity se movem · (h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda · (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam | sim |
+| P16 | o carrossel vira camada: a nova com o fio e por cima | (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam | sim |
+| P17 | a página REAL desliza (sem transição de vista) e o body perde o clip: a armadilha do translateX(+) | nenhum ancestral do sticky vira scroll container · trocar de aba desliza a página inteira no sentido do índice, em 350 ms na curva do lugar, e o fio anda junto · a barra de abas fica parada e o fio anda dentro dela, nos quadros que a tela mostrou · toda aba abre no topo, e o topo entra no desenho novo: a foto da aba que sai fica onde estava · a aba tocada no meio da troca vence: o dedo acerta a aba que vê (o fluxo 14) | sim |
+| P18 | a tela cheia chega sem o quadro adiante (o tempo 0 parado: dois quadros a mais) | (h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda · a tela cheia e o modo chegam da direita e saem pela direita em 350 ms, a de baixo parada, e o que é do aparelho não anda | sim |
+| P19 | o fio sem o quadro adiante (um quadro atrás das páginas) | (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · trocar de aba desliza a página inteira no sentido do índice, em 350 ms na curva do lugar, e o fio anda junto | sim |
+| P20 | o cronômetro e o aviso não mudam de altura com a troca (o salto de 52 px) | (h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda · a tela cheia e o modo chegam da direita e saem pela direita em 350 ms, a de baixo parada, e o que é do aparelho não anda (Chromium e WebKit) · o cronômetro não salta quando a troca tira ou devolve a barra de abas: muda de altura junto com ela, nos quadros que a tela mostrou (Chromium e WebKit) | sim |
+| P21 | o casco não diz à porta que o rodapé mudou | (h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda · a tela cheia e o modo chegam da direita e saem pela direita em 350 ms, a de baixo parada, e o que é do aparelho não anda · o cronômetro não salta quando a troca tira ou devolve a barra de abas: muda de altura junto com ela, nos quadros que a tela mostrou | sim |
+| P22 | o cronômetro FORA de cena também anda (movimento que ninguém vê) | (h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda · o Voltar do sistema faz o mesmo reverso; quando o navegador já animou a volta, o app não anima de novo | sim |
+| P23 | o quadro adiante também na chegada da folha por CSS (que não tem a foto antes) | (h) a troca de camada move só as fotos: a tela cheia pela direita com a de baixo parada, a folha e o painel descem, e o que é do aparelho não anda | sim |
+| P24 | o foco que o desenho tira da página fica no body ("Ir para Semana" sob "Reduzir", o treino no Programa) | o foco que um desenho tira da página vai ao título da tela: "Ir para Semana" e o treino aberto no Programa · o foco não cai no body quando um desenho tira da página o controle: "Ir para Semana" (com e sem "Reduzir") e o treino aberto no Programa (Chromium e WebKit) | sim |
+| P25 | o fio passa da aba e VOLTA (um recuo de verdade, nos quadros na ordem do carimbo) | (a) duração e curva só nascem nos tokens, e ultrapassagem só no quique · (i) a aba desliza a página inteira, as duas juntas, no sentido do índice; o fio anda junto; a barra e o que é do aparelho ficam · trocar de aba desliza a página inteira no sentido do índice, em 350 ms na curva do lugar, e o fio anda junto (Chromium e WebKit) · a barra de abas fica parada e o fio anda dentro dela, nos quadros que a tela mostrou (Chromium e WebKit) | sim |
+| V1 | controle: o esmaecer sob "Reduzir" na curva da camada (permitido) | nenhum (verde, como devia) | sim |
+
+Os 25 ficaram vermelhos; o controle V1, verde; em todos os passos os arquivos voltaram ao limpo
+(conferido por hash depois de cada passo e no fim, e por `cmp` contra as cópias), e
+o `dist/` foi reconstruído do limpo. Três notas:
+
+- **A primeira rodada foi interrompida** quando chegaram os itens do coordenador
+  (eles mudam os mesmos trechos). O `SIGTERM` não chegou ao tratador — o processo
+  estava preso no `spawnSync` do vitest —, e eu o encerrei à força com o `main.jsx`
+  no meio do P1. Devolvi pelo `restaura.mjs`, conferi os seis arquivos por `cmp`
+  contra as cópias limpas e reconstruí o `dist/` antes de seguir. Essa rodada não
+  conta; a tabela é a da rodada sobre o código final.
+- **O P12** (sem o pulo), na rodada com carga ~5, reprovou também o caso 1 do
+  `aba.test.js`, que não toca na tela. Repetido com carga 1,5, só o caso do toque no
+  meio reprova (nos dois motores); o caso 1 no limpo passa 3 de 3. A tabela mostra
+  a repetição. **O P17** reprova o carrossel exatamente em "nenhum quadro mais
+  largo que a janela" (a conferência da largura é real), e a guarda do `sticky`,
+  pelo `clip` do `body`.
+- **O P20** foi repetido depois do último ajuste do caso do cronômetro (a forma por
+  motor): reprova nos dois motores — no Chromium, "nenhum salto" (814 814 814 814
+  866 …); no WebKit, "passa pelo meio do caminho".
+- **O P25** entrou com a decisão 17, depois de os casos do compositor passarem a
+  ordenar os quadros pelo carimbo: prova que a ordenação não esconde um recuo de
+  verdade.
+
+Na exploração, além dos testes: os quadros do compositor nos dois motores
+(`quadros.mjs`), a captura no meio com as animações pausadas (`explora.mjs`), as
+variações da barra no WebKit (`barra-wk.mjs`, decisão 5) e a página mínima
+(`minima.mjs`, decisão 14).
+
+### O que ficou de fora, e por quê
+
+- **Nada foi visto num iPhone de verdade.** Ficam pela leitura: o Core Animation
+  do A13 movendo as duas fotos inteiras e a barra viva por cima; se o iOS pinta a
+  foto viva da barra (aqui, os quadros do compositor do WebKit pintam; o
+  `page.screenshot` não); se o quadro que volta no fim da transição (decisão 14)
+  existe lá; o atraso do toque à troca em milissegundos (item 1, abaixo).
+- **O item 1 no WebKit desta máquina.** No Chromium o alvo foi cumprido (a troca
+  anda no máximo um quadro depois do desenho seco). No WebKit daqui, entre o toque
+  e o primeiro quadro animado passam 60 a 100 ms de quadros com a página velha
+  intacta (só o ponto ao vivo pulsando): é a foto da tela velha sendo tirada em
+  software, e não o tempo 0 parado. O quadro adiante não muda isso, e nada no app
+  muda; é o mesmo "a conferir no aparelho" do revisor (07 §11.2).
+- **O que `vaiPara('treino')` desenha** (o Agora sem o cabeçalho e nenhuma aba
+  acesa; risco 10 do mapa): é de antes e não é movimento. Só garanti que nada se
+  move nela.
+- **O foco no Safari depois de um toque.** O Safari não foca o botão tocado, e o
+  `body` já tem o foco antes do toque; `naoPerdeOFoco` não inventa um foco que não
+  existia (decisão 13). O que o VoiceOver faz com isso é dele.
+- **A troca de aba e a folha que abre no mesmo desenho** (nenhum caminho do app
+  faz isso hoje; "Peso de outro dia" na Semana troca de aba e muda só um estado
+  do Corpo): a folha nova teria foto só nova, sem animação, e subiria pelo CSS
+  dela dentro da foto viva. Não medido.
+- **Os fluxos do revisor** (`_medicao/`) não foram tocados. Não usei as portas
+  dele; meus servidores foram a 4729 e portas efêmeras do próprio script (como o
+  `navegador.js` dos testes), desligados no fim.
+
+### Para o revisor
+
+- **As durações que aparecem na troca de aba**: 350 (as duas fotos do carrossel e
+  o fio) e, sob "Reduzir", 120 (o `<main>` que nasce e o cabeçalho do Agora). O
+  fio deixou de ser 160. Em toda foto que anda e no fio, um atraso de −17 ms (o
+  quadro adiante): a duração continua 350.
+- **A barra de abas na troca de aba é uma foto própria** (`barra-de-abas`), parada;
+  a conta "fixos aos 120 ms" lê o DOM e não prova isso — a prova são os quadros
+  (`aba.test.js`, segundo caso). Na troca de camada ela segue sem nome, com o lugar.
+- **A tela muda no primeiro quadro animado** em toda troca agora (o quadro adiante):
+  no Chromium, a régua `andaMs` fica a no máximo um quadro do desenho seco.
+- **O cronômetro e o aviso descem e sobem 52 px em 350 ms** quando uma tela cheia
+  ou o modo chegam ou saem com o descanso na tela: é de propósito (item 3).
+  Continuam sem andar de lado. No carrossel, não se movem.
+- **O quadro que volta no fim da transição, no WebKit** (decisão 14): vale também
+  para as gravações da peça 5. No Chromium não existe.
+- **O screencast do Chromium entrega quadros fora de ordem sob carga** (decisão
+  17): uma tira montada na ordem de chegada pode mostrar um "quadro que volta" que
+  a tela não mostrou. Na ordem do `timestamp` de cada quadro, não.
+- **O `page.screenshot` do WebKit não pinta a foto viva de elemento com nome**
+  durante a troca (a barra e o cronômetro somem da captura). As tiras feitas do
+  screencast não têm esse problema.
+- **Sob "Reduzir", "Ir para Semana" e o treino aberto no Programa** deixam o foco no
+  título da tela ("Semana"; o título do Programa), nos dois motores, com o teclado
+  e com o dedo.
+
+### As saídas
+
+`npm run tipos`:
+
+```
+
+> lastro-app@2.0.0 tipos
+> tsc --noEmit
+
+(saída 0)
+```
+
+`npm run build`:
+
+```
+> lastro-app@2.0.0 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 84 modules transformed.
+src/main.jsx (7542:45): Use of eval in "src/main.jsx" is strongly discouraged as it poses security risks and may cause issues with minification.
+rendering chunks...
+computing gzip size...
+dist/sw.js                        5.24 kB
+dist/index.html                   5.81 kB │ gzip:   2.72 kB
+dist/assets/index-bsLIfZLg.css  109.44 kB │ gzip:  19.37 kB
+dist/assets/index-B3-7Hevd.js   591.98 kB │ gzip: 185.10 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 980ms
+(saída 0)
+```
+
+`npx vitest run`, duas vezes seguidas, depois da decisão 17 (a carga no começo de
+cada uma, pelo `uptime`):
+
+```
+10:10:01 up 16:11,  1 user,  load average: 2,09, 4,04, 5,13
+
+ RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+
+
+ Test Files  83 passed (83)
+      Tests  1663 passed (1663)
+   Start at  10:10:02
+   Duration  68.33s (transform 3.17s, setup 0ms, import 32.61s, tests 542.92s, environment 11ms)
+
+(saída 0)
+```
+
+```
+10:11:10 up 16:12,  1 user,  load average: 7,83, 5,59, 5,61
+
+ RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+
+
+ Test Files  83 passed (83)
+      Tests  1663 passed (1663)
+   Start at  10:11:10
+   Duration  65.53s (transform 3.28s, setup 0ms, import 33.24s, tests 555.98s, environment 11ms)
+
+(saída 0)
+```
+
+Antes desta peça: 1652 de 1652 (peça 5). A diferença, +11, são os casos novos: 7
+em `aba.test.js`, 1 em `troca.test.js`, 2 em `navegacao.test.js` e a guarda (i) em
+`estilo.test.ts` (61 casos ali). Os casos de motor no WebKit (`LASTRO_MOTOR=webkit`),
+um arquivo por vez: `aba` 7/7, `troca` 11/11, `sobe` 7/7, `descanso` 5/5, `dedo`
+9/9. Com dois arquivos de motor ao mesmo tempo no WebKit (carga ~3–5), caíram por
+tempo o caso novo do cronômetro (a captura sem quadros) e o da corrida do histórico
+da peça 5 (decisão 20 dela; provavelmente o relógio do desenho atrasado, de 1 s,
+entrando antes do navegador sob carga — não verifiquei); sozinhos, os dois passam. A máquina esteve com carga de 1,5 a 10 durante a peça (o
+revisor gravando em paralelo).

@@ -484,7 +484,10 @@
 :root {
   /* A CURVA DO LUGAR. O que muda onde está — o valor que pousa, o aviso, o
      fio da aba: chega rápido e assenta, 80% do caminho na primeira
-     metade do tempo. NÃO para camada que cobre a tela. Sem ultrapassagem:
+     metade do tempo. E o CARROSSEL DA ABA: trocar de aba é andar de lado no
+     chão, de um lugar ao vizinho, e não uma camada chegando por cima — a curva
+     é a que o desenho que o dono escolheu tocava (16/10, pergunta 3), e o fio
+     anda nela, junto. NÃO para camada que cobre a tela. Sem ultrapassagem:
      nenhum ponto de controle fora de [0, 1]. */
   --ins-curva: cubic-bezier(.2, .8, .2, 1);
   /* A CURVA DA CAMADA: a do iPhone, cauda longa. A camada que entra e a que sai
@@ -511,12 +514,15 @@
      troca na hora, nos dois sentidos — as camadas `--ins-toque-*` lá em cima.
      `--ins-dur-toque` (120) era o tempo do afundar, e saiu com ele em 16/10,
      como `--ins-afunda`. */
-  /* Algo muda ONDE ESTÁ, sem trocar de camada: o fio da aba, o valor que pousa
-     na célula, o copo que enche, o aviso curto. NÃO para camada. */
+  /* Algo muda ONDE ESTÁ, sem trocar de camada: o valor que pousa na célula, o
+     copo que enche, o aviso curto. NÃO para camada, nem para a aba (o fio anda
+     com o carrossel, em `--ins-dur-entra`, desde a peça 6). */
   --ins-dur-lugar: 160ms;
   /* Uma camada ENTRA pela borda de onde vem: tela cheia, modo, cronômetro — e
      o véu da folha e do painel de pare, que acende neste tempo enquanto a
-     caixa deles chega com o quique. NÃO para toque, aviso nem número. */
+     caixa deles chega com o quique. E o CARROSSEL DA ABA (dono, 16/10, pergunta
+     3): a página velha e a nova andam juntas neste tempo, e o fio da aba com
+     elas. NÃO para toque, aviso nem número. */
   --ins-dur-entra: 350ms;
   /* A mesma camada SAI pela borda por onde veio, no mesmo tempo e na mesma
      curva. Saída nenhuma quica. */
@@ -536,6 +542,19 @@
      entre duas amostras; menos deixa vão parado, mais atrasa a barra em relação
      ao número. A guarda cobra que o `setInterval` use o mesmo número. */
   --ins-dur-amostra: 250ms;
+  /* UM QUADRO ADIANTE: o atraso NEGATIVO de um quadro (60 Hz, o do iPhone 11
+     Pro Max) que as fotos da transição de vista — e o fio da aba, que anda com
+     elas — começam com. A transição de vista mostra no primeiro quadro a foto
+     da tela velha (o quadro a mais que o dono aceitou, 16/10, pergunta 6) e
+     começa a animação no segundo, no tempo 0: com a tela que chega ainda
+     inteira fora da borda e a que sai inteira no lugar, esse quadro saía igual
+     ao anterior, e a troca andava DOIS quadros depois do antes (medido pelo
+     revisor na peça 5: no Chromium, ~16 → ~50 ms, em toda troca; 07 §11.2).
+     Com ele, o primeiro quadro animado já mostra a página andando. NÃO é
+     duração (a animação continua com a dela, inteira; só o primeiro quadro
+     desenhado é o de um quadro adentro), e NÃO vale para o que nasce por CSS —
+     a folha que sobe, o cronômetro —, que não tem a foto antes. */
+  --ins-adianta: -17ms;
   /* Uma volta do pulso do ponto ao vivo, sem fim enquanto a tela está viva —
      decisão do dono de 16/10 (pergunta 12), contra o 2.2.2 da WCAG, escrito no
      DESIGN.md. Ciclo é ambiente, e ambiente novo não entra. */
@@ -582,8 +601,12 @@
 
 /* ---- Alturas derivadas ---- */
 :root {
+  /* A barra de abas, sem a área segura: o que o rodapé perde quando uma tela
+     cheia ou o modo a tiram (`html:has(.tc)`, `componentes.css`), e por isso o
+     quanto o cronômetro e o aviso descem ou sobem nessa troca (peça 6). */
+  --ins-barra-de-abas: 52px;
   /* Altura da tab bar, para quem precisa reservar espaço embaixo. */
-  --ins-tabbar: calc(52px + var(--sa-bottom));
+  --ins-tabbar: calc(var(--ins-barra-de-abas) + var(--sa-bottom));
   /* Altura do cronômetro de descanso quando ele está na tela; 0 quando não
      está. Escrito pelo casco em `alturaDoTimer()`, e lido pelo toast e pela
      faixa da sessão, que se empilham acima dele em vez de nascer atrás — no

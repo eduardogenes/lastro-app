@@ -37,6 +37,7 @@ import { FolhaPesoRapido } from './ui/folhas/pesorapido.jsx';
 import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { FolhaDecidir } from './ui/folhas/decidir.jsx';
 import { ChegadaDaFolha, LugarNaPilha } from './ui/instrumento/folha.jsx';
+import { ABAS } from './ui/instrumento/tabbar.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
 import { Revisao } from './ui/telas/revisao.jsx';
@@ -2649,6 +2650,11 @@ const CTX = {
     // no dia resolvido de hoje. `vindoDeFora` fica porque o render e o scroll
     // ainda dependem de ter havido troca de lugar.
 
+    // Toda aba abre no topo, e o topo entra DENTRO do desenho novo (peça 6 do
+    // motion): com o carrossel, o `render()` só pede a troca e o desenho fica
+    // pendente, e `rola` guarda o topo para ele. Nesta ordem, e nunca ao
+    // contrário: rolar antes do `render()` rolaria a página que ainda está na
+    // tela, e a foto da aba que sai pularia para o topo antes de sumir.
     render();
     rola(0);
     if (vindoDeFora) carregaFotosDoDia();
@@ -7738,7 +7744,8 @@ CTX.seletorDeDia = function () {
 //
 // A TROCA DE CAMADA MORA AQUI, num ponto só (peça 5 do motion; docs/motion/02
 // §3.3). Quando o que se desenha muda de CAMADA — uma tela cheia ou o modo
-// chegam ou saem, uma folha ou o painel de apagar fecham —, o desenho é pedido
+// chegam ou saem, uma folha ou o painel de apagar fecham — ou de ABA (peça 6: o
+// carrossel, no sentido do índice na barra), o desenho é pedido
 // à porta do movimento (`trocaDeCamada`), que o faz dentro de uma transição de
 // vista: o navegador fotografa a tela de agora e chama `desenhaAgora` cerca de
 // um quadro depois (o quadro a mais que o dono aceitou, pergunta 6). Sem
@@ -7758,17 +7765,27 @@ let rolagemPendente = null;
 let paraODesenho = [];
 /** As camadas da tela que está desenhada: é contra elas que a próxima troca se mede. */
 let camadasDesenhadas = [];
+/** A aba da tela que está desenhada: é contra ela que a próxima troca de aba se mede (peça 6). */
+let abaDesenhada = null;
 /** O Voltar que o navegador já animou (gesto de borda, `hasUAVisualTransition`): não anima de novo. */
 let jaAnimado = false;
 
 /**
- * Qual troca de camada é esta, do que está desenhado para o que `view` pede:
+ * Qual troca é esta, do que está desenhado para o que `view` pede:
  * `entra` (um destino chega por cima), `sai` (o de cima sai e o de baixo — ou o
  * lugar — reaparece), `fica` (nenhum destino muda, e uma folha ou o painel de
- * apagar fecham) ou `null` (não é troca de camada: a folha que abre sobe por CSS,
- * a troca do topo e o "Não guardei" não se movem, e trocar de aba é da peça 6).
+ * apagar fecham), `aba-direita`/`aba-esquerda` (o lugar à vista dos dois lados,
+ * e a aba mudou: o sentido é o do índice na barra), `seca` (a aba mudou, mas uma
+ * das duas não está na barra — `vaiPara('treino')` —: não há para que lado andar)
+ * ou `null` (nada a mover: a folha que abre sobe por CSS, a troca do topo e o
+ * "Não guardei" não se movem).
+ *
+ * A camada vem antes da aba: fechar um destino e trocar de aba no mesmo toque
+ * ("Ir para Semana", na Evolução) é a tela de cima saindo, e a aba que reaparece
+ * já é a nova (02 T2). A aba vem antes da folha que fecha: a foto da folha desce
+ * sozinha (`:only-child`) em qualquer transição, e o lugar anda por baixo dela.
  */
-function sentidoDaTroca(antes, agora) {
+function sentidoDaTroca(antes, agora, abaAntes, abaAgora) {
   const destinos = function (l) {
     return l.filter(function (c) { return c !== 'pare' && c !== 'falhou' && c.indexOf('folha:') !== 0; });
   };
@@ -7776,6 +7793,14 @@ function sentidoDaTroca(antes, agora) {
   const topoAntes = da.length ? da[da.length - 1] : null;
   const topoAgora = dn.length ? dn[dn.length - 1] : null;
   if (topoAntes !== topoAgora) return topoAgora == null || da.indexOf(topoAgora) >= 0 ? 'sai' : 'entra';
+  // Trocar de aba (peça 6): só com o lugar à vista — com um destino aberto, a
+  // aba de baixo nem está desenhada, e o que andaria seria a tela cheia.
+  if (topoAgora == null && abaAntes !== abaAgora) {
+    const indice = function (a) { return ABAS.findIndex(function (x) { return x.k === a; }); };
+    const de = indice(abaAntes), para = indice(abaAgora);
+    if (de < 0 || para < 0) return 'seca';
+    return para > de ? 'aba-direita' : 'aba-esquerda';
+  }
   const folhas = function (l) { return l.filter(function (c) { return c.indexOf('folha:') === 0; }).length; };
   if (folhas(agora) < folhas(antes)) return 'fica';
   if (antes.indexOf('pare') >= 0 && agora.indexOf('pare') < 0) return 'fica';
@@ -7784,10 +7809,26 @@ function sentidoDaTroca(antes, agora) {
 
 function render() {
   if (desligado || desenhoPendente) return;
-  const sentido = abriu ? sentidoDaTroca(camadasDesenhadas, camadasAbertas(view)) : null;
+  const pedidas = camadasAbertas(view);
+  const sentido = abriu ? sentidoDaTroca(camadasDesenhadas, pedidas, abaDesenhada, CTX.abaAtual()) : null;
   if (!sentido) { desenhaAgora(); return; }
   desenhoPendente = true;
-  trocaDeCamada(sentido, desenhaPendente, !jaAnimado);
+  trocaDeCamada(sentido, desenhaPendente, !jaAnimado, rodapeDaTroca(camadasDesenhadas, pedidas));
+}
+
+/**
+ * A troca muda a reserva do rodapé? Com uma tela cheia ou o modo desenhados não
+ * há barra de abas (`html:has(.tc)`, `componentes.css`), e o cronômetro e o
+ * aviso ficam no fundo da tela; sem eles, sobre a barra. `desce` quando a barra
+ * sai, `sobe` quando volta, `null` quando fica como está (a porta põe isto em
+ * `data-pe`, e as fotos dos dois mudam de altura junto com a troca).
+ */
+function rodapeDaTroca(antes, agora) {
+  const barra = function (l) {
+    return !l.some(function (c) { return c !== 'pare' && c !== 'falhou' && c.indexOf('folha:') !== 0; });
+  };
+  const a = barra(antes), d = barra(agora);
+  return a === d ? null : (a ? 'desce' : 'sobe');
 }
 
 /** O desenho que a transição pede — e que o toque no meio dela antecipa. Desenha uma vez só. */
@@ -7797,6 +7838,7 @@ function desenhaAgora() {
   desenhoPendente = false;
   if (desligado) return;
   const antes = camadasDesenhadas;
+  const focado = typeof document !== 'undefined' ? document.activeElement : null;
   montaNoApp(<App ctx={CTX} />);
   // A primeira montagem é a prova de que o registro abriu: `abriu` cala o prazo
   // (`naoAbriu` não faz nada depois dela), e se o aviso de que não abriu chegou
@@ -7816,7 +7858,9 @@ function desenhaAgora() {
   paraODesenho = [];
   depois.forEach(function (f) { f(); });
   camadasDesenhadas = camadasAbertas(view);
+  abaDesenhada = CTX.abaAtual();
   devolveOFoco(antes, camadasDesenhadas);
+  naoPerdeOFoco(focado);
   ajustaRelogio();
   // Depois de montar, e não antes: aqui `view` já é o que está na tela, e a
   // profundidade do histórico passa a ser a mesma da pilha de camadas.
@@ -12439,6 +12483,27 @@ function devolveOFoco(antes, agora) {
     }
   }
   if (!tentaFocar(alvo)) tentaFocar(document.querySelector('#app h1[tabindex]'));
+}
+
+/**
+ * O FOCO QUE O DESENHO PERDEU. Quem tinha o foco saiu da página com este
+ * desenho, e o foco caiu no `body` — sem que uma camada tenha saído, que é o caso
+ * de `devolveOFoco`: a aba trocou e o controle era da aba velha (o "Ir para
+ * Semana", que fecha a Evolução e troca de aba no mesmo toque: sob "Reduzir
+ * movimento" são dois desenhos, e o segundo tirava o controle que o primeiro
+ * tinha focado; a conferência da peça 5, 07 §11.2), ou o conteúdo trocou dentro
+ * da mesma tela cheia (o treino aberto na lista do Programa, 07 §11.3). O foco
+ * vai ao título da tela que está desenhada — o mesmo lugar declarado de
+ * `devolveOFoco`. Com uma folha, o pare ou o aviso por cima, eles ficam com o
+ * foco deles; ninguém tinha o foco (o toque no Safari não foca botão), nada a
+ * fazer.
+ */
+function naoPerdeOFoco(focado) {
+  if (!focado || focado === document.body || focado === document.documentElement || focado.isConnected) return;
+  const agora = document.activeElement;
+  if (agora && agora !== document.body && agora !== document.documentElement) return;
+  if (camadasDesenhadas.some(function (c) { return c === 'pare' || c === 'falhou' || c.indexOf('folha:') === 0; })) return;
+  tentaFocar(document.querySelector('#app h1[tabindex]'));
 }
 
 // ---------- ajustar uma foto ----------

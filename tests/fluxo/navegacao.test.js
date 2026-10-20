@@ -550,6 +550,71 @@ test('sair do modo e dos Ajustes rola DEPOIS de desenhar, e entrar num destino t
   a.fechar();
 });
 
+test('trocar de aba rola ao topo DEPOIS de desenhar a aba nova', async () => {
+  // Toda aba abre no topo (peça 6 do motion, 02 T4). Com o carrossel, o
+  // `render()` só pede a troca e o desenho fica pendente; o topo entra DENTRO
+  // dele (`rola`). Rolar antes rolaria a página que ainda está na tela, e a foto
+  // da aba que sai pularia para o topo antes de sumir (a metade de motor é
+  // `aba.test.js`). Aqui, no caminho sem transição, cobra-se a ORDEM: em cada
+  // pedido de rolagem, a aba que está desenhada.
+  const a = await app({ aba: 'corpo' });
+  await a.pronto();
+  let y = 0;
+  Object.defineProperty(a.window, 'scrollY', { get: () => y, configurable: true });
+  const pedidos = [];
+  a.window.scrollTo = function (x, top) {
+    const alvo = x && typeof x === 'object' ? x.top : top;
+    const on = a.$('.ins-tab.on');
+    pedidos.push({ alvo, acesa: on ? on.textContent : null });
+    y = alvo || 0;
+  };
+  for (const [para, rotulo] of [['semana', 'Semana'], ['agora', 'Agora'], ['prescricao', 'Prescrição']]) {
+    y = 1500; pedidos.length = 0;
+    a.v('ctx.vaiPara', para);
+    await a.esperar();
+    assert.ok(pedidos.length >= 1, para + ': a aba nova abre no topo');
+    assert.deepStrictEqual(pedidos[0], { alvo: 0, acesa: rotulo }, para + ': o topo é pedido com a aba nova já desenhada');
+  }
+  a.fechar();
+});
+
+test('o foco que um desenho tira da página vai ao título da tela: "Ir para Semana" e o treino aberto no Programa', async () => {
+  // Da conferência da peça 5 (docs/motion/07 §11.2 e §11.3), consertado na 6.
+  // Sem transição de vista — o jsdom, e "Reduzir movimento" no aparelho —,
+  // "Ir para Semana" são DOIS desenhos: o primeiro fecha a Evolução e devolve o
+  // foco ao controle do Corpo; o segundo troca de aba e tira esse controle da
+  // página, e o foco caía no `body`. E abrir um treino da lista do Programa troca
+  // o conteúdo dentro da mesma tela cheia: o botão tocado sai, e o foco caía no
+  // `body` (igual ao antes). Agora vai ao título da tela que está desenhada.
+  const DIA = 86400000;
+  const a = await app({ aba: 'corpo', estado: { logs: {}, done: [], body: { peso: [{ t: Date.now() - DIA, v: 73 }], cintura: [] } } });
+  await a.pronto();
+  const abre = a.$('[data-a="abre-evolucao"]');
+  abre.focus(); abre.click();
+  await a.esperar();
+  const ir = a.$('[data-a="evolucao-semana"]');
+  assert.ok(ir, 'a Evolução abriu, com o "Ir para Semana"');
+  ir.focus(); ir.click();
+  await a.esperar();
+  assert.strictEqual(a.E('view.aba'), 'semana');
+  assert.notStrictEqual(a.doc.activeElement, a.doc.body, '"Ir para Semana": o foco não cai no body');
+  assert.ok(a.doc.activeElement && a.doc.activeElement.matches('main h1') && a.doc.activeElement.textContent === 'Semana',
+    '"Ir para Semana": o foco vai ao título "Semana", como com a transição: ' + (a.doc.activeElement && a.doc.activeElement.outerHTML.slice(0, 80)));
+
+  a.v('ctx.vaiPara', 'prescricao');
+  await a.esperar();
+  a.v('ctx.abrePrograma');
+  await a.esperar();
+  const treino = a.$('.progd-b');
+  assert.ok(treino, 'a lista do Programa tem treinos');
+  treino.focus(); treino.click();
+  await a.esperar();
+  assert.ok(!a.$('.progd-b') || !a.$('.progd-b').isConnected || a.doc.activeElement !== a.doc.body, 'o treino abriu');
+  assert.notStrictEqual(a.doc.activeElement, a.doc.body, 'o treino aberto no Programa: o foco não cai no body');
+  assert.strictEqual(a.doc.activeElement, a.$('.tc h1'), 'o treino aberto no Programa: o foco vai ao título da tela cheia');
+  a.fechar();
+});
+
 test('ao fechar um destino, o foco volta ao controle que o abriu — e não ao body', async () => {
   // O destino SUBSTITUI a casca: ao fechar, o ⚙ que abriu os Ajustes é
   // desenhado de novo, nó novo, e o foco caía no `body` (docs/motion/05 §3.1).

@@ -361,7 +361,15 @@
    menos de meio pixel do aparelho de onde ficava com `left`.
 
    O invólucro deixa o toque passar; o fio, como antes, cobre a borda de cima
-   da aba acesa. Fora do portão o fio salta para a aba. */
+   da aba acesa. Fora do portão o fio salta para a aba.
+
+   O TEMPO É O DO CARROSSEL (peça 6): a página inteira desliza em
+   `--ins-dur-entra` na `--ins-curva`, e o fio anda junto, no mesmo tempo e na
+   mesma curva — chegam ao lugar no mesmo quadro (dono, 16/10, pergunta 3; até
+   a peça 6 o fio andava sozinho, em `--ins-dur-lugar`). E começa um quadro
+   adiante, como as fotos (`--ins-adianta`): sem isso ele ficaria um quadro atrás
+   delas. Na troca seca (a aba que não está na barra) ele salta: "A TROCA DE
+   ABA", mais abaixo. */
 .ins-tab-ind {
   position: absolute; top: -1px; left: 0; width: 100%; height: var(--ins-indicator);
   pointer-events: none;
@@ -372,7 +380,7 @@
   pointer-events: auto;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .ins-tab-ind { transition: transform var(--ins-dur-lugar) var(--ins-curva); }
+  .ins-tab-ind { transition: transform var(--ins-dur-entra) var(--ins-curva) var(--ins-adianta); }
 }
 
 /* ---- Listas de fio ---------------------------------------------------- */
@@ -760,8 +768,9 @@ button.ins-linha { border-radius: 0; }
    está enquanto as páginas passam por baixo: o descanso não pertence à tela
    que sai. Um nome por elemento — nome repetido aborta a transição —, e há um
    de cada por vez. A barra de abas NÃO: ela é do lugar, e fica com ele (parada
-   embaixo da tela que chega, descoberta pela que sai); na troca de aba é a peça
-   6. `view-transition-name` não é movimento: mora fora do portão. */
+   embaixo da tela que chega, descoberta pela que sai); só na troca de aba ela
+   ganha nome ("A TROCA DE ABA", mais abaixo). `view-transition-name` não é
+   movimento: mora fora do portão. */
 #timer { view-transition-name: cronometro; }
 #toast { view-transition-name: aviso; }
 .ins-faixa { view-transition-name: faixa; }
@@ -782,19 +791,24 @@ button.ins-linha { border-radius: 0; }
 ::view-transition-old(nao-guardado):only-child { opacity: 0; }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* ENTRA: a tela nova chega da borda direita por cima; a de baixo, parada (a
+  /* UM QUADRO ADIANTE, em toda foto que anda (`--ins-adianta`, nos tokens; a
+     conferência da peça 5, 07 §11.2): o primeiro quadro é a foto da tela velha
+     (o quadro a mais que o dono aceitou), e o primeiro animado já mostra a
+     página andando — no tempo 0 ele saía igual ao anterior.
+
+     ENTRA: a tela nova chega da borda direita por cima; a de baixo, parada (a
      foto velha não tem animação). A borda da que chega é dita por um FIO de 1 px
      do lado esquerdo — nunca sombra (inegociável 3) —, fora da foto: em repouso
      ele fica além da borda da tela, e nada salta 1 px no fim. */
   html[data-nav="entra"]::view-transition-new(root) {
-    animation: ins-da-direita var(--ins-dur-entra) var(--ins-curva-camada) both;
+    animation: ins-da-direita var(--ins-dur-entra) var(--ins-curva-camada) var(--ins-adianta) both;
     border-left: var(--ins-fio-largura) solid var(--ins-fio);
     margin-left: calc(-1 * var(--ins-fio-largura));
   }
   /* SAI: a de cima volta pela borda direita, POR CIMA da que reaparece (que já
      nasce na rolagem de onde se entrou, e parada). O mesmo fio na borda. */
   html[data-nav="sai"]::view-transition-old(root) {
-    animation: ins-para-direita var(--ins-dur-sai) var(--ins-curva-camada) both;
+    animation: ins-para-direita var(--ins-dur-sai) var(--ins-curva-camada) var(--ins-adianta) both;
     z-index: 1;
     border-left: var(--ins-fio-largura) solid var(--ins-fio);
     margin-left: calc(-1 * var(--ins-fio-largura));
@@ -808,12 +822,29 @@ button.ins-linha { border-radius: 0; }
   ::view-transition-old(folha-1):only-child,
   ::view-transition-old(folha-2):only-child,
   ::view-transition-old(folha-3):only-child,
-  ::view-transition-old(painel):only-child { animation: ins-desce var(--ins-dur-sai) var(--ins-curva-camada) both; }
+  ::view-transition-old(painel):only-child { animation: ins-desce var(--ins-dur-sai) var(--ins-curva-camada) var(--ins-adianta) both; }
   ::view-transition-old(veu-0):only-child,
   ::view-transition-old(veu-1):only-child,
   ::view-transition-old(veu-2):only-child,
   ::view-transition-old(veu-3):only-child,
-  ::view-transition-old(veu-painel):only-child { animation: ins-apaga var(--ins-dur-sai) var(--ins-curva-ciclo) both; }
+  ::view-transition-old(veu-painel):only-child { animation: ins-apaga var(--ins-dur-sai) var(--ins-curva-ciclo) var(--ins-adianta) both; }
+  /* O RODAPÉ MUDOU DE ALTURA (peça 6, da conferência da peça 5, 07 §11.3): uma
+     tela cheia ou o modo que chegam tiram a barra de abas, e o cronômetro e o
+     aviso, que ficam sobre ela, passam a ficar no fundo — 52 px abaixo. O grupo
+     da foto deles vai ao lugar novo já no primeiro quadro, e eles SALTAVAM
+     (medido nos dois motores, ao abrir e ao fechar os Ajustes com um descanso
+     contando). Agora o par de imagens parte do lugar velho e chega ao novo, no
+     tempo e na curva da camada: continuam do aparelho — não andam de lado com
+     as páginas —, só mudam de altura junto com a troca. O casco diz quando
+     (`data-pe`, posto pela porta: `desce` quando a barra sai, `sobe` quando ela
+     volta). Só o cronômetro EM CENA (`#timer.on`): fora de cena ele continua
+     desenhado, abaixo da borda e invisível, e tem foto — moveria o que ninguém
+     vê. O aviso fora de cena é `display: none` e nem tem foto. A faixa da sessão
+     não precisa: ela nunca está nas duas telas. */
+  html[data-pe="desce"]:has(#timer.on)::view-transition-image-pair(cronometro),
+  html[data-pe="desce"]::view-transition-image-pair(aviso) { animation: ins-rodape-desce var(--ins-dur-entra) var(--ins-curva-camada) var(--ins-adianta) both; }
+  html[data-pe="sobe"]:has(#timer.on)::view-transition-image-pair(cronometro),
+  html[data-pe="sobe"]::view-transition-image-pair(aviso) { animation: ins-rodape-sobe var(--ins-dur-sai) var(--ins-curva-camada) var(--ins-adianta) both; }
 }
 /* SOB "REDUZIR MOVIMENTO" (pergunta 2): nenhuma transição de vista — a porta
    não a pede —; a tela cheia e o modo que CHEGAM esmaecem em
@@ -824,6 +855,60 @@ button.ins-linha { border-radius: 0; }
 @media (prefers-reduced-motion: reduce) {
   html[data-nav="entra"] .tc,
   html[data-nav="entra"] .ins-modo { animation: ins-esmaece var(--ins-dur-dissolve) var(--ins-curva-camada) both; }
+}
+
+/* ---- A TROCA DE ABA (peça 6 do motion) -----------------------------------
+   Dono, 16/10, pergunta 3: A PÁGINA INTEIRA DESLIZA, como um carrossel — a
+   velha sai pelo lado oposto e a nova entra pelo lado para onde se andou na
+   barra, as duas juntas, em 350 ms (`--ins-dur-entra`) na `--ins-curva`, que é
+   o que o desenho que ele viu tocava; o fio da aba anda junto, no mesmo tempo e
+   na mesma curva (a regra do fio, acima). Pergunta 2: sob "Reduzir movimento"
+   o conteúdo novo esmaece e o velho sai de uma vez; o fio salta. Pergunta 6: o
+   quadro a mais da transição de vista, aceito.
+
+   A mesma transição de vista da troca de camada, pedida pelo mesmo `render()`
+   com o sentido do ÍNDICE na barra: `aba-direita` (andou para a direita: a
+   velha sai pela esquerda, a nova chega da direita) ou `aba-esquerda`. O que
+   anda é a FOTO da página inteira — o cabeçalho do Agora vai com ela —, e nada
+   real ganha `transform`. As duas fotos andam a largura da tela, na mesma
+   curva, e por isso a borda direita de uma encosta na esquerda da outra em
+   todo quadro: não há sobreposição, nem fio, nem vão. Não é camada: nada fica
+   por cima de nada.
+
+   A BARRA DE ABAS NÃO ANDA: só nesta troca ela ganha nome próprio e uma foto
+   à parte, parada por cima das páginas, como o que é do aparelho (o cronômetro,
+   o aviso e as faixas já têm a deles, na troca de camada acima). A foto nova é
+   VIVA: o fio anda dentro dela pela transição dele. A velha fica embaixo, sem
+   animação nenhuma, coberta pela nova, que é opaca (o fundo da barra é
+   `--ins-superficie`): não há duas barras se cruzando, e se um caminho de
+   desenho não pintar a foto viva — o `page.screenshot` do WebKit desta máquina
+   não pinta, medido; os quadros do compositor, sim —, a barra continua lá. Sem
+   nova (a barra escondida pelo teclado), a velha sai de uma vez. Na troca de
+   camada ela não tem nome — é do lugar, e fica com ele.
+
+   `seca` — a aba que não está na barra (`vaiPara('treino')`): sem transição,
+   sem esmaecer, e o fio salta, porque não há para que lado andar. */
+html[data-nav="aba-direita"] .ins-tabbar,
+html[data-nav="aba-esquerda"] .ins-tabbar { view-transition-name: barra-de-abas; }
+::view-transition-old(barra-de-abas):only-child { opacity: 0; }
+html[data-nav="seca"] .ins-tab-ind { transition: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-nav="aba-direita"]::view-transition-old(root) { animation: ins-para-esquerda var(--ins-dur-entra) var(--ins-curva) var(--ins-adianta) both; }
+  html[data-nav="aba-direita"]::view-transition-new(root) { animation: ins-da-direita var(--ins-dur-entra) var(--ins-curva) var(--ins-adianta) both; }
+  html[data-nav="aba-esquerda"]::view-transition-old(root) { animation: ins-para-direita var(--ins-dur-entra) var(--ins-curva) var(--ins-adianta) both; }
+  html[data-nav="aba-esquerda"]::view-transition-new(root) { animation: ins-da-esquerda var(--ins-dur-entra) var(--ins-curva) var(--ins-adianta) both; }
+}
+/* SOB "REDUZIR MOVIMENTO": nenhuma transição de vista — a porta não a pede —;
+   a página nova esmaece no nó que nasce. O `<main>` tem a aba como chave
+   (`app.jsx`) e nasce com ela; o cabeçalho do Agora nasce quando se chega ao
+   Agora. Nada mais: dentro de uma aba o `<main>` fica, e a aba que reaparece
+   quando uma tela cheia sai (`data-nav="sai"`) não esmaece — ela já estava lá. */
+@media (prefers-reduced-motion: reduce) {
+  html[data-nav="aba-direita"] main,
+  html[data-nav="aba-esquerda"] main,
+  html[data-nav="aba-direita"] .ag-cab,
+  html[data-nav="aba-esquerda"] .ag-cab { animation: ins-esmaece var(--ins-dur-dissolve) var(--ins-curva) both; }
 }
 
 .tc-bloco {

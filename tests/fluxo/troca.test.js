@@ -32,7 +32,8 @@ const tokens = nav => nav.p.evaluate(() => {
   const cs = getComputedStyle(document.documentElement);
   const ms = n => { const m = /^(\d*\.?\d+)(ms|s)$/.exec(cs.getPropertyValue(n).trim()); return m ? Number(m[1]) * (m[2] === 's' ? 1000 : 1) : NaN; };
   return { entra: ms('--ins-dur-entra'), sai: ms('--ins-dur-sai'), dissolve: ms('--ins-dur-dissolve'),
-           curvaCamada: cs.getPropertyValue('--ins-curva-camada').trim() };
+           curvaCamada: cs.getPropertyValue('--ins-curva-camada').trim(),
+           adianta: Number((/^(-?\d*\.?\d+)ms$/.exec(cs.getPropertyValue('--ins-adianta').trim()) || [0, NaN])[1]) };
 });
 const numeros = c => (String(c).match(/-?\d*\.?\d+/g) || []).map(Number);
 /** Um transform como os dois motores o escrevem de volta: o Chromium diz `translate(100%)` por `translateX(100%)`. */
@@ -42,8 +43,8 @@ const mesmaCurva = (a, b) => JSON.stringify(numeros(a)) === JSON.stringify(numer
 /** As fotos que se movem agora: as animações dos pseudo-elementos da transição de vista. */
 const fotos = nav => nav.p.evaluate(() => document.getAnimations()
   .filter(a => a.effect && a.effect.pseudoElement && /view-transition/.test(a.effect.pseudoElement) && a.playState === 'running')
-  .map(a => ({ foto: a.effect.pseudoElement, nome: a.animationName, dur: a.effect.getTiming().duration,
-    curva: (a.effect.getKeyframes()[0] || {}).easing, quadros: a.effect.getKeyframes().map(q => q.transform || q.opacity) })));
+  .map(a => ({ foto: a.effect.pseudoElement, nome: a.animationName, dur: a.effect.getTiming().duration, atraso: a.effect.getTiming().delay,
+    curva: (a.effect.getKeyframes()[0] || {}).easing, quadros: a.effect.getKeyframes().map(q => q.transform || q.translate || q.opacity) })));
 const camadas = nav => nav.E(`camadasAbertas(view).join(',')`);
 
 /**
@@ -176,7 +177,7 @@ test('a tela cheia e o modo chegam da direita e saem pela direita em 350 ms, a d
     const k = await tokens(nav);
     await semeia(nav, { sessao: true });
     await nav.E(`CTX.vaiPara('corpo'); startTimer(120, 'descanso · série 1 · Supino'); toast('um aviso na tela'); render();`);
-    await nav.espera(500);
+    await nav.espera(500); await assenta(nav);
     for (const [nome, abre, fecha] of [['a tela cheia (Ajustes)', `CTX.abreAjustes()`, `CTX.fechaAjustes()`],
       ['o modo de sessão', `CTX.voltaAoTreino()`, `CTX.fechaModoDeSessao()`]]) {
       await nav.E(abre); await nav.espera(500); await assenta(nav); await nav.E(fecha); await nav.espera(500); await assenta(nav);
@@ -188,12 +189,28 @@ test('a tela cheia e o modo chegam da direita e saem pela direita em 350 ms, a d
           return { borda: cs.borderLeftWidth, margem: cs.marginLeft }; } catch (e) { return null; } }, foto);
         await assenta(nav);
         assert.strictEqual(await nav.p.evaluate(() => document.documentElement.dataset.nav), sentido, nome + ': o sentido no html');
-        assert.deepStrictEqual(vivas.map(v => v.foto + ' ' + v.nome), [foto + ' ' + anim],
-          nome + ', ' + sentido + ': só a tela que anda se move — a de baixo parada, o cronômetro, o aviso e a faixa parados: ' + JSON.stringify(vivas));
-        assert.strictEqual(vivas[0].dur, dur, nome + ', ' + sentido + ': no tempo da camada');
-        assert.ok(mesmaCurva(vivas[0].curva, k.curvaCamada), nome + ', ' + sentido + ': na curva da camada, sem quique: ' + vivas[0].curva);
-        assert.deepStrictEqual(vivas[0].quadros.map(forma), sentido === 'entra' ? ['translate(100%)', 'none'] : ['none', 'translate(100%)'],
+        // só a tela que anda se move de lado — a de baixo parada, a faixa parada —;
+        // o cronômetro e o aviso, que ficam sobre a barra de abas, só MUDAM DE
+        // ALTURA junto com a troca, porque ela tira ou devolve a barra (peça 6, da
+        // conferência da peça 5: antes eles saltavam 52 px no primeiro quadro)
+        const pagina = vivas.filter(v => /\(root\)/.test(v.foto));
+        const rodape = vivas.filter(v => !/\(root\)/.test(v.foto));
+        assert.deepStrictEqual(pagina.map(v => v.foto + ' ' + v.nome), [foto + ' ' + anim],
+          nome + ', ' + sentido + ': só a tela que anda se move de lado: ' + JSON.stringify(vivas));
+        const pe = sentido === 'entra' ? 'ins-rodape-desce' : 'ins-rodape-sobe';
+        assert.ok(rodape.some(v => v.foto === '::view-transition-image-pair(cronometro)'), nome + ', ' + sentido + ': o cronômetro muda de altura com a troca: ' + JSON.stringify(vivas));
+        rodape.forEach(v => {
+          assert.ok(/^::view-transition-image-pair\((cronometro|aviso)\)$/.test(v.foto) && v.nome === pe, nome + ', ' + sentido + ': só o cronômetro e o aviso, e ' + pe + ': ' + JSON.stringify(v));
+          assert.ok(v.quadros.every(q => /^(none|0px -?[\d.]+px)$/.test(String(q))), nome + ': o cronômetro e o aviso só mudam de altura, não andam de lado: ' + JSON.stringify(v.quadros));
+          assert.strictEqual(v.dur, dur, nome + ': o rodapé no tempo da camada');
+          assert.ok(mesmaCurva(v.curva, k.curvaCamada), nome + ': o rodapé na curva da camada');
+        });
+        assert.strictEqual(pagina[0].dur, dur, nome + ', ' + sentido + ': no tempo da camada');
+        assert.ok(mesmaCurva(pagina[0].curva, k.curvaCamada), nome + ', ' + sentido + ': na curva da camada, sem quique: ' + pagina[0].curva);
+        assert.deepStrictEqual(pagina[0].quadros.map(forma), sentido === 'entra' ? ['translate(100%)', 'none'] : ['none', 'translate(100%)'],
           nome + ', ' + sentido + ': a tela inteira, da borda direita');
+        // um quadro adiante (07 §11.2): o primeiro quadro animado já mostra a tela andando
+        vivas.forEach(v => assert.strictEqual(v.atraso, k.adianta, nome + ', ' + sentido + ': ' + v.foto + ' começa um quadro adiante (--ins-adianta)'));
         if (fio && fio.borda) assert.deepStrictEqual(fio, { borda: '1px', margem: '-1px' }, nome + ': o fio de 1 px na borda, fora da foto');
       }
       // largura rolável em todo quadro: a página que chega pela direita não abre rolagem de lado
@@ -203,6 +220,72 @@ test('a tela cheia e o modo chegam da direita e saem pela direita em 350 ms, a d
         assert.deepStrictEqual([...new Set(r.quadros.map(q => q.larg))], [r.w], nome + ': nenhum quadro mais largo que a janela');
         await assenta(nav);
       }
+    }
+    assert.deepStrictEqual(nav.erros, []);
+  } finally { await nav.fecha(); }
+});
+
+test('o cronômetro não salta quando a troca tira ou devolve a barra de abas: muda de altura junto com ela, nos quadros que a tela mostrou', DEMORADO, async () => {
+  // A conferência da peça 5 (07 §11.3), visto na peça 6: com um descanso
+  // contando, abrir uma tela cheia tira a barra de abas, e o cronômetro — que tem
+  // foto própria, do aparelho — ia ao lugar novo, 52 px abaixo, no primeiro
+  // quadro (a barra azul dele: y 814 → 866 de um quadro para o outro, nos dois
+  // motores). Agora desce e sobe junto com a troca.
+  const nav = await abreNavegador();
+  try {
+    const { jpegjs } = await import('../../node_modules/playwright-core/lib/utilsBundle.js').then(m => m.default || m);
+    await semeia(nav);
+    await nav.E(`startTimer(600, 'descanso · série 1 · Supino'); render();`);
+    await nav.espera(600);
+    await nav.E(`CTX.abreAjustes()`); await nav.espera(500); await assenta(nav); await nav.E(`CTX.fechaAjustes()`); await nav.espera(500); await assenta(nav);
+    const barra = () => nav.p.evaluate(() => { const t = document.querySelector('#tfill'); const r = t && t.getBoundingClientRect(); return r ? Math.round(r.top) : null; });
+    for (const [nome, codigo, desfaz] of [['abre os Ajustes', `CTX.abreAjustes()`, `CTX.fechaAjustes()`], ['fecha os Ajustes', `CTX.fechaAjustes()`, `CTX.abreAjustes()`]]) {
+     // a captura do WebKit desta máquina, com carga, às vezes não entrega quadro
+     // nenhum da troca: aí a medida se repete (até 3 vezes) — um salto VISTO reprova na hora
+     for (let tentativa = 1; ; tentativa++) {
+      const de = await barra();
+      const q = [];
+      await nav.p.screencast.start({ size: { width: 414, height: 896 }, quality: 90, onFrame: f => { q.push({ ts: f.timestamp, d: f.data }); } });
+      await nav.espera(300);
+      const ini = Math.max(0, q.length - 1);
+      await nav.E(codigo);
+      await nav.espera(500); await assenta(nav); await nav.espera(150);
+      await nav.p.screencast.stop();
+      // na ordem do carimbo do compositor: sob carga o screencast entrega quadros
+      // fora de ordem (docs/motion/09, peça 6, decisão 17)
+      q.sort((a, b) => a.ts - b.ts);
+      const para = await barra();
+      assert.ok(de != null && para != null && Math.abs(Math.abs(para - de) - 52) <= 1, nome + ': o cronômetro muda de lugar 52 px (' + de + ' → ' + para + ')');
+      // a barra azul do descanso, em cada quadro: a primeira linha do acento na
+      // coluna x = 150, na faixa entre o lugar velho e o novo
+      const ys = q.slice(ini).map(({ d }) => {
+        const im = jpegjs.decode(d, { useTArray: true }); const E = im.width / 414;
+        for (let y = Math.min(de, para) - 6; y <= Math.max(de, para) + 6; y++) {
+          const o = (Math.round(y * E) * im.width + Math.round(150 * E)) * 4;
+          if (im.data[o + 2] > im.data[o] + 60 && im.data[o + 2] > im.data[o + 1] + 60) return y;
+        }
+        return null;
+      }).filter(y => y != null);
+      if (ys.length < 4 && tentativa < 3) { await nav.E(desfaz); await nav.espera(500); await assenta(nav); await nav.E(codigo); await nav.espera(500); await assenta(nav); await nav.E(desfaz); await nav.espera(500); await assenta(nav); continue; }
+      // O salto de antes era o caminho inteiro num quadro, SEM posição no meio. No
+      // Chromium, também nenhum passo grande e nenhum quadro que volta. No WebKit
+      // desta máquina (sem placa de vídeo), sob carga, o primeiro quadro animado
+      // pode chegar com o caminho já quase andado, e o fim de toda transição de
+      // vista volta um quadro (docs/motion/09, peça 6, decisão 14, também numa
+      // página sem o app): lá vale passar pelo meio, e o quadro isolado que volta
+      // fica fora da conta.
+      const volta = ys.map((y, i) => i > 0 && i + 1 < ys.length && ys[i - 1] === ys[i + 1] && y !== ys[i - 1]);
+      if (MOTOR === 'chromium') assert.ok(!volta.some(Boolean), nome + ': nenhum quadro volta no Chromium (' + ys.join(' ') + ')');
+      const ok = ys.filter((y, i) => !volta[i]);
+      const passos = ok.slice(1).map((y, i) => Math.abs(y - ok[i]));
+      const meio = new Set(ok.filter(y => Math.abs(y - de) > 2 && Math.abs(y - para) > 2));
+      assert.ok(ok.length >= 2, nome + ': a captura entregou os quadros da troca (' + ok.length + ', em ' + tentativa + ' tentativas)');
+      if (MOTOR === 'chromium') assert.ok(Math.max(...passos) < 40, nome + ': nenhum salto de um quadro para o outro (' + ys.join(' ') + ')');
+      assert.ok(meio.size >= 2, nome + ': o cronômetro passa pelo meio do caminho, em pelo menos 2 quadros — o salto não passava (' + ys.join(' ') + ')');
+      const sentido = Math.sign(para - de);
+      assert.ok(ok.every((y, i) => i === 0 || Math.sign(y - ok[i - 1]) !== -sentido), nome + ': e só para o lado do lugar novo (' + ys.join(' ') + ')');
+      break;
+     }
     }
     assert.deepStrictEqual(nav.erros, []);
   } finally { await nav.fecha(); }
@@ -229,6 +312,7 @@ test('a folha e o painel de apagar descem em 350 ms sem quique, o véu apaga jun
         nome + ': só a caixa e o véu se movem; a página atrás, parada: ' + JSON.stringify(vivas));
       const c = porFoto['::view-transition-old(' + caixa + ')'], v = porFoto['::view-transition-old(' + veu + ')'];
       assert.strictEqual(c.nome, 'ins-desce'); assert.strictEqual(c.dur, k.sai, nome + ': desce no tempo da camada');
+      assert.strictEqual(c.atraso, k.adianta, nome + ': desce um quadro adiante'); assert.strictEqual(v.atraso, k.adianta, nome + ': o véu também');
       assert.ok(mesmaCurva(c.curva, k.curvaCamada), nome + ': na curva da camada, sem quique: ' + c.curva);
       assert.deepStrictEqual(c.quadros.map(forma), ['none', 'translateY(100%)'], nome + ': pela borda de baixo');
       assert.strictEqual(v.nome, 'ins-apaga'); assert.strictEqual(v.dur, k.sai, nome + ': o véu apaga junto');
@@ -286,7 +370,7 @@ test('o Voltar do sistema faz o mesmo reverso; quando o navegador já animou a v
     // e não com o `view` pendente — senão ele fecha a camada recém-aberta (achado
     // no WebKit, onde a foto da tela velha demora). Aqui, determinístico: a
     // Evolução abre logo depois do desenho que fecha os Ajustes.
-    await nav.E(`CTX.vaiPara('corpo')`); await nav.espera(300);
+    await nav.E(`CTX.vaiPara('corpo')`); await nav.espera(300); await assenta(nav);
     await nav.E(`CTX.abreAjustes()`); await nav.espera(500); await assenta(nav);
     await nav.p.evaluate(() => {
       const f = document.startViewTransition;
@@ -317,7 +401,7 @@ test('a rolagem volta exata: o Corpo pelo modo e o Agora pelos Ajustes, pela set
     const medidas = [];
     for (const [onde, aba, abre, seta] of casos) {
       for (const via of ['seta', 'Voltar']) {
-        await nav.E(`CTX.vaiPara('${aba}')`); await nav.espera(400);
+        await nav.E(`CTX.vaiPara('${aba}')`); await nav.espera(400); await assenta(nav);
         await nav.p.evaluate(() => window.scrollTo(0, 99999)); await nav.espera(200);
         const antes = await nav.p.evaluate(() => Math.round(scrollY));
         if (abre.startsWith('CTX.')) await nav.E(abre);
@@ -377,7 +461,7 @@ test('o foco: entra no título do destino e do modo, e volta ao controle que abr
       assert.strictEqual(p.voltou, p.abriu, p.nome + ': ao sair, o foco volta ao controle que abriu');
     });
     // o controle que abriu não existe mais (a Evolução que leva à Semana): o título da aba
-    await nav.E(`CTX.vaiPara('corpo')`); await nav.espera(300);
+    await nav.E(`CTX.vaiPara('corpo')`); await nav.espera(300); await assenta(nav);
     await nav.E(`CTX.abreEvolucao()`); await nav.espera(500); await assenta(nav);
     const [sx, sy] = await centro(nav, '[data-a="evolucao-semana"]');
     await nav.toca(sx, sy); await nav.espera(500); await assenta(nav);
@@ -529,7 +613,7 @@ test('a primeira tela não anima, nem quando é o modo, e dois desenhos seguidos
     assert.strictEqual(await nav.p.evaluate(() => document.documentElement.dataset.nav), undefined,
       'nenhuma troca pedida ao abrir, nem para o modo que já é a primeira tela');
     await semeia(nav);
-    await nav.E(`CTX.vaiPara('corpo')`); await nav.espera(300);
+    await nav.E(`CTX.vaiPara('corpo')`); await nav.espera(300); await assenta(nav);
     await nav.E(`CTX.abreEvolucao()`); await nav.espera(500); await assenta(nav);
     const r = await nav.p.evaluate(() => {
       let n = 0;

@@ -95,6 +95,12 @@ function faixa(tira, a, b) {
   catch (e) { return null; }
 }
 
+/** O 1º quadro em que a troca de camada anda (ver o princípio 1). */
+function andaMs(q) {
+  const m = (q.mudancasFinas || []).find(([, , c]) => c && c[0] + c[2] >= 410 && c[3] >= 300);
+  return m ? m[0] : null;
+}
+
 /** Os oito princípios, num passo. `a` = antes, `d` = depois (mesma rodada); `mov` = o esperado (revisor-fluxos.mjs). */
 function julga(rodada, a, d, extra, mov, tiraD) {
   const v = [];
@@ -119,11 +125,20 @@ function julga(rodada, a, d, extra, mov, tiraD) {
     if (d.confere === false) reprova(p, `o passo não produziu o efeito esperado (${d.esperado})`);
     // o segundo toque se perde quando cai no `html`/`body` (a View Transition o
     // joga lá, 04 §2.6) ou em lugar nenhum; cair no véu ou num botão é chegar
-    if (d.segundoToque && (!d.segundoToque.alvoDoClique || /^(html|body)\b/.test(d.segundoToque.alvoDoClique))) reprova(p, `o segundo toque (${d.segundoToque.cliqueRelMs} ms depois do primeiro) caiu em ${d.segundoToque.alvoDoClique || 'lugar nenhum'}`);
+    // (com a View Transition, o robô vê o clique no `html` e o app o reenvia ao
+    // nó sob o dedo: vale o efeito — `confere` —, não o alvo que o robô vê)
+    if (d.segundoToque && d.confere !== true && (!d.segundoToque.alvoDoClique || /^(html|body)\b/.test(d.segundoToque.alvoDoClique))) reprova(p, `o segundo toque (${d.segundoToque.cliqueRelMs} ms depois do primeiro) caiu em ${d.segundoToque.alvoDoClique || 'lugar nenhum'}`);
     if (td.handlerMs != null && ta.handlerMs != null && td.handlerMs > Math.max(16, ta.handlerMs + 4)) reprova(p, `trabalho no toque ${td.handlerMs} ms (antes ${ta.handlerMs})`);
     if (td.eventTimingClickMs != null && ta.eventTimingClickMs != null && td.eventTimingClickMs > ta.eventTimingClickMs + 16) reprova(p, `Event Timing ${td.eventTimingClickMs} ms (antes ${ta.eventTimingClickMs})`);
     if (!lac && qd.primeiraMudancaMs != null && qa.primeiraMudancaMs != null && qd.primeiraMudancaMs > qa.primeiraMudancaMs + 17)
       reprova(p, `a tela muda a ${qd.primeiraMudancaMs} ms (antes ${qa.primeiraMudancaMs}): mais de um quadro de atraso (decisão 6 aceita um)`);
+    // Troca de camada (peça 5): com a View Transition, o 1º quadro que muda pode
+    // ser só o controle apertado (a caixa dele), e a troca anda depois. Aqui vale
+    // o 1º quadro cuja mudança encosta na borda direita e tem a altura da tela
+    // (x + largura ≥ 410 e altura ≥ 300, pela medida fina): "a troca anda".
+    const anda = andaMs;
+    if (!lac && mov && /^(entra|sai)$/.test(mov.tipo) && anda(qa) != null && anda(qd) != null && anda(qd) > anda(qa) + 17 && !v.some(x => x.principio === p && /a tela muda/.test(x.motivo)))
+      reprova(p, `a troca anda a ${anda(qd)} ms (antes a tela trocava a ${anda(qa)}): mais de um quadro de atraso (decisão 6 aceita um)`);
     // 04 R8: a 1ª série sem o tranco do AudioContext — ≤ 16 ms no Chromium 1×
     // (rodadas chromium e chromium-mouse); nas outras o número fica para leitura
     if (/primeira-serie|serie-regua/.test(extra.fluxo) && d.id === 'grava-1' && td.handlerMs > 16)
@@ -230,8 +245,15 @@ function julga(rodada, a, d, extra, mov, tiraD) {
       confira(p, `a tela muda por ${visivel} ms; o decidido é ${mov.ms} ms (ver mudancasFinas: o pulso que chega também conta)`);
     // decisão 4: tela cheia chega pela direita com a de baixo PARADA
     if (mov && mov.debaixo && tiraD && !/reduz/.test(rodada)) {
-      const f = mov.debaixo === 'entra' ? faixa(tiraD, 'antes', '+50') : faixa(tiraD, '+50', '+800');
-      if (f != null) (f > 0.01 ? reprova : passa)(p, `faixa da esquerda (0–60 px) aos +50 ms ${mov.debaixo === 'entra' ? 'contra o antes' : 'contra o fim'}: ${(f * 100).toFixed(1)} % diferente (a de baixo parada: < 1 %)`);
+      // A de baixo PARADA quer dizer: não se mexe enquanto a outra passa. Na
+      // entrada, a faixa da esquerda (0–60 px) igual entre +50 e +100 ms, as
+      // duas com a de baixo à mostra; na saída, igual entre +150 ms (já
+      // descoberta) e o fim. Não se compara com o "antes do dedo": com a View
+      // Transition a foto da de baixo guarda o estado de toque do controle que
+      // abriu (o cartão apertado), que não é movimento — visto na peça 5, 07 §11.
+      const [c1, c2] = mov.debaixo === 'entra' ? ['+50', '+100'] : ['+150', '+800'];
+      const f = faixa(tiraD, c1, c2);
+      if (f != null) (f > 0.01 ? reprova : passa)(p, `faixa da esquerda (0–60 px) entre ${c1} e ${c2} ms: ${(f * 100).toFixed(1)} % diferente (a de baixo parada: < 1 %)`);
     }
     if (v.length === n0) passa(p, mov ? `esperado: ${mov.tipo}${mov.ms ? ' ' + mov.ms + ' ms' : ''}; ${novas.length} movimento(s) novo(s), ${qd.quadrosComQualquerMudanca} quadro(s) com mudança em ${visivel} ms` : 'sem expectativa para este passo');
   }
@@ -286,6 +308,7 @@ for (const f of fluxos) {
       }
       resultado.push({ fluxo: f, rodada: r, passo: pa.id, titulo: pa.titulo, vereditos: vered,
         numeros: { telaMs: [pa.medidasDosQuadros?.primeiraMudancaMs, pd.medidasDosQuadros?.primeiraMudancaMs],
+                   andaMs: [pa, pd].map(x => andaMs(x.medidasDosQuadros || {})),
                    quadrosQueMudam: [pa.medidasDosQuadros?.quadrosComQualquerMudanca, pd.medidasDosQuadros?.quadrosComQualquerMudanca],
                    ultimaMudancaMs: [pa.medidasDosQuadros?.ultimaQualquerMudancaMs, pd.medidasDosQuadros?.ultimaQualquerMudancaMs],
                    trabalhoMs: [pa.toque?.handlerMs, pd.toque?.handlerMs], eventTimingMs: [pa.toque?.eventTimingClickMs, pd.toque?.eventTimingClickMs] } });

@@ -78,7 +78,12 @@ export function App({ ctx }) {
         </header>
       )}
 
-      <main>
+      {/* A chave é a aba: cada aba ganha um `<main>` que NASCE com ela (peça 6
+          do motion). Sob "Reduzir movimento" o conteúdo novo esmaece por CSS no
+          nó que nasce — e só ele: dentro de uma aba o `<main>` fica, e nada do
+          que aparece nele por um toque esmaece. Sem a chave o Preact
+          reaproveitava o `<main>` e só trocava os filhos. */}
+      <main key={aba}>
         <Tela ctx={ctx} />
       </main>
 

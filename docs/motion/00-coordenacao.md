@@ -85,7 +85,7 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Respostas do dono registradas no diário (16/10, 01h25).
 
 ### Fase 3 — implementação (só depois das respostas)
-- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1, 2 (16/10), 3, 4 (19/10) e 5 (20/10) feitas.
+- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1, 2 (16/10), 3, 4 (19/10), 5 e 6 (20/10) feitas.
 - [x] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`). Peça 0: casos (a)–(e) e a lista de folhas, 52 plantios.
 - [x] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova (peça 0).
 - [ ] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde.
@@ -494,3 +494,45 @@ exceção estreita na guarda (e) para `.ready.catch(semDono)` — `semDono` tem 
 continuar vazia; não é escutar fim de animação, é marcar como tratada a recusa
 que o pulo gera. As guardas (b) e (d) ficaram mais rigorosas. Plantio de 35
 violações com restauração por hash. `tipos` limpo, build, 1652/1652.
+
+**20/10 — peça 5 conferida pelo revisor** (07 §11). Passou: tela cheia e modo
+pela direita em 350 ms com a de baixo parada (0,0–0,1 % de mudança); a folha
+desce em 350 e, sob "Reduzir", só esmaece; rolagem exata (Corpo 1982 → 1982 e
+1778 → 1778); foco no título ao entrar e no controle que abriu ao sair; o 16
+passa 3 de 3; o recuo da folha sob o dedo (achado da peça 4) sumiu; defeitos 4
+e 7 consertados; cronômetro com fundo em 896 nas telas cheias; sobra do modo
+curto 24 → 0. **Reprovou:** (1) a troca anda DOIS quadros depois do antes (no
+Chromium, mediana ~16 → ~50 ms, em 3 repetições): o primeiro é a foto, que o
+dono aceitou; o segundo é o tempo 0 da animação, com a tela nova ainda fora —
+**decidido pelo coordenador:** a decisão 6 aceitou um quadro, não dois, então a
+chegada passa a começar um quadro adiante; não volta ao dono. (2) "Ir para
+Semana" sob "Reduzir" deixa o foco no `body`. **A conferir:** o cronômetro pode
+saltar 52 px num quadro no começo da troca (deduzido do CSS); abrir treino
+dentro do Programa deixa o foco no `body` (igual ao antes); o painel descendo
+(13) não foi gravado. Os quatro foram somados à peça 6, que mexe no mesmo código
+de troca. No WebKit desta máquina cada quadro da transição leva 40–60 ms (sem
+GPU): o ritmo fica para o aparelho.
+
+**20/10, 10h20 — peça 6 conferida.** O carrossel: a página inteira desliza em
+350 ms na `--ins-curva`, no sentido do índice, pela transição da peça 5; o fio
+anda junto em 350; a barra, o cronômetro, o aviso e as faixas ficam parados;
+toda aba abre no topo dentro do desenho novo; o toque no meio vence (10 de 10
+nos dois motores); largura 414 em todo quadro; sob "Reduzir" a aba nova esmaece
+120 e a velha sai de uma vez. Os quatro itens da peça 5: **o quadro a mais** —
+token `--ins-adianta: -17ms` como atraso em toda foto que anda; no Chromium a
+troca anda no máximo um quadro depois do desenho seco (abrir Ajustes 41,7 →
+27,5 ms; o seco dá 12); no WebKit desta máquina os 60–100 ms são a foto tirada
+em software, fica para o aparelho; **"Ir para Semana" sob "Reduzir"** e **o
+treino aberto no Programa** — o foco vai ao título (`naoPerdeOFoco`); **o
+cronômetro** saltava 814 → 866 num quadro na troca, agora desce e sobe junto,
+na vertical, no tempo da camada. Na minha conferência a suíte completa falhou
+2 de 2 num caso de `aba.test.js` (o fio "voltando" 90 → 34) e passou sozinha 3
+de 3; devolvido, o implementador provou que é **artefato da captura**: sob carga
+o screencast entrega quadros fora de ordem; pelo carimbo do compositor, 0 voltas
+em 40 trocas. Os testes de quadro passaram a ordenar pelo carimbo, e um plantio
+novo (o fio que passa e volta de verdade) continua vermelho. `src/` não mudou
+nesse conserto. **A conferir no aparelho:** o WebKit desta máquina volta um
+quadro no fim de TODA transição de vista, até numa página mínima sem o app — é
+do motor aqui, não do app. `<main key={aba}>`: o `<main>` nasce de novo a cada
+aba. Depois: `tipos` limpo, build, 1663/1663 duas vezes seguidas (a segunda com
+load 9,8).

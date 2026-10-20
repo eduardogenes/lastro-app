@@ -75,6 +75,18 @@ res.isolamento = await p.evaluate(() => {
 });
 res.cedo = await tocaFechar(150);
 res.depois = await tocaFechar(600);
+// Defeito 4 (peça 5): fechado o aviso, a faixa "Não guardado" fica no topo. Ela
+// cobre a seta de sair do modo, a hora e o `···`? (o que está sob o centro de
+// cada um, e a sobreposição das caixas)
+await p.waitForTimeout(300);
+res.faixa = await p.evaluate(() => {
+  const cx = e => { if (!e) return null; const r = e.getBoundingClientRect(); return r.width ? [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)] : null; };
+  const f = document.querySelector('.ng-faixa');
+  const sob = sel => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); if (!r.width) return null;
+    const a = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return { alvo: sel, oQueEstaNoCentro: a ? (a.closest(sel) ? 'o próprio' : (a.className || a.tagName) + '') : null }; };
+  return { faixa: cx(f), seta: cx(document.querySelector('.ins-modo-sair')), topo: cx(document.querySelector('.ins-modo-topo')),
+           noCentro: ['.ins-modo-sair', '.ins-modo-topo [class*=hora], .ins-modo-topo time', '.ins-modo-topo button:last-child'].map(sob) };
+});
 res.errosDaPagina = ab.erros;
 fs.mkdirSync(SAIDA, { recursive: true });
 const arq = path.join(SAIDA, 'aviso-janela-' + ROTULO + '.json');

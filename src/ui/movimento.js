@@ -221,6 +221,14 @@ export function miraDoDedo(e, camada) {
 // fica lá até a próxima troca: fora de uma transição os pseudo-elementos não
 // existem, e sob "Reduzir movimento" é ele que diz qual nó que nasce esmaece.
 //
+// TROCAR DE ABA passa pela mesma porta (peça 6), e não é camada: é andar de lado
+// no chão. `aba-direita` quando se andou para a direita na barra (a aba de índice
+// maior: a página nova entra pela direita e a velha sai pela esquerda),
+// `aba-esquerda` ao contrário — o carrossel de `componentes.css`, "A TROCA DE
+// ABA". E `seca`: a troca de lugar sem sentido (uma aba que não está na barra,
+// `vaiPara('treino')`), que desenha na hora, sem transição, e deixa no `html`
+// um sentido que nada lê — nada que nasce esmaece e o fio salta.
+//
 // O toque no meio dela pula para o fim e vai ao que ficou sob o dedo (acima). A
 // porta sabe que a transição ainda corre por `document.activeViewTransition` ou,
 // onde ele não existe, pelo tempo do token — nunca por `finished`, `ready` ou
@@ -277,17 +285,28 @@ function aoDescer(e) {
  * relógio do desenho atrasado) o chamam antes do navegador, e o navegador o
  * chama de novo.
  *
+ * `rodape` diz se a troca muda a reserva do rodapé — `desce` quando a barra de
+ * abas sai (chega uma tela cheia ou o modo), `sobe` quando ela volta —, e vai no
+ * `data-pe` do `html`: o cronômetro e o aviso, que ficam sobre a barra, mudam de
+ * altura junto com a troca em vez de saltar (`componentes.css`). Sem mudança, o
+ * atributo sai.
+ *
  * Devolve `true` quando o desenho ficou PENDENTE (há transição), `false` quando
  * já desenhou.
- * @param {'entra' | 'sai' | 'fica'} sentido
+ * @param {'entra' | 'sai' | 'fica' | 'aba-direita' | 'aba-esquerda' | 'seca'} sentido
  * @param {() => void} desenha
  * @param {boolean} [anima] `false` quando o navegador já animou (o gesto de borda)
+ * @param {'desce' | 'sobe' | null} [rodape]
  * @returns {boolean}
  */
-export function trocaDeCamada(sentido, desenha, anima) {
+export function trocaDeCamada(sentido, desenha, anima, rodape) {
   const doc = /** @type {any} */ (typeof document !== 'undefined' ? document : null);
-  if (doc && doc.documentElement) doc.documentElement.setAttribute('data-nav', sentido);
-  if (anima === false || !podeMover() || !doc || typeof doc.startViewTransition !== 'function') {
+  if (doc && doc.documentElement) {
+    doc.documentElement.setAttribute('data-nav', sentido);
+    if (rodape) doc.documentElement.setAttribute('data-pe', rodape);
+    else doc.documentElement.removeAttribute('data-pe');
+  }
+  if (anima === false || sentido === 'seca' || !podeMover() || !doc || typeof doc.startViewTransition !== 'function') {
     desenha();
     return false;
   }

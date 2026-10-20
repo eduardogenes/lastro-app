@@ -347,25 +347,28 @@ respostas do dono de 16/10 (`docs/motion/00-coordenacao.md`).
 
 | Token | Valor | Papel |
 |---|---|---|
-| `--ins-curva` | `cubic-bezier(.2, .8, .2, 1)` | o que muda no lugar: pouso, aviso, o fio da aba |
+| `--ins-curva` | `cubic-bezier(.2, .8, .2, 1)` | o que muda no lugar: pouso, aviso, o fio da aba; e o carrossel da aba, que é andar de lado no chão e não camada (a curva que o desenho escolhido pelo dono tocava) |
 | `--ins-curva-camada` | `cubic-bezier(.32, .72, 0, 1)` | a camada que entra e sai pela borda (a curva do iPhone) |
 | `--ins-curva-grandeza` | `linear` | só a barra do descanso: o tempo passa linear |
 | `--ins-curva-ciclo` | `cubic-bezier(.25, .1, .25, 1)` (o `ease`) | o pulso do ponto ao vivo e o véu da folha e do painel de pare acendendo (o token mais perto do `ease-out` que o dono viu) |
 | `--ins-dur-lugar` | 160 ms | o que muda onde está |
-| `--ins-dur-entra` · `--ins-dur-sai` | 350 ms · 350 ms | a camada que entra · que sai, pela mesma borda; o véu da folha e do pare acende em `--ins-dur-entra` |
+| `--ins-dur-entra` · `--ins-dur-sai` | 350 ms · 350 ms | a camada que entra · que sai, pela mesma borda; o véu da folha e do pare acende em `--ins-dur-entra`; o carrossel da aba — as duas páginas juntas — e o fio com elas, em `--ins-dur-entra` |
 | `--ins-dur-quique` | 640 ms | só a chegada da folha e do painel de apagar, com os quadros de `ins-quique` (passa 8 % aos 55 %, volta 3 % aos 80 %) |
 | `--ins-dur-clarao` | 200 ms | só o clarão do disparo da câmera |
 | `--ins-dur-dissolve` | 120 ms | só sob "Reduzir movimento": a camada que chega esmaece; o valor que pousa só acende |
+| `--ins-adianta` | −17 ms | não é duração: o atraso negativo de um quadro (60 Hz) com que as fotos da transição de vista — e o fio da aba, que anda com elas — começam, para o primeiro quadro animado já mostrar a página andando (sem ele, o tempo 0 saía igual ao quadro anterior, e a troca andava dois quadros depois do antes; 07 §11.2) |
 | `--ins-dur-amostra` | 250 ms | o período de `pintaTimer`, não uma duração de transição |
 | `--ins-ciclo-vivo` | 2,4 s | uma volta do pulso |
 | `--ins-pousa` · `--ins-sobe-aviso` | 4 px · 8 px | de quanto abaixo o valor pousa · o aviso chega |
+| `--ins-barra-de-abas` | 52 px | a barra de abas sem a área segura (`--ins-tabbar` soma a área): o quanto o cronômetro e o aviso descem ou sobem quando uma troca tira ou devolve a barra |
 
 **Os movimentos que existem.** Esta é a tabela verdadeira; cada peça do motion
 acrescenta as suas linhas no mesmo commit em que entra no código.
 
 | Movimento | Onde | O que se move | Tempo · curva | Diz | Sob "Reduzir movimento" |
 |---|---|---|---|---|---|
-| O fio da aba | `.ins-tab-ind` (`componentes.css`), posto pela `TabBar` | `transform: translateX(i × 20%)` de um invólucro da largura da barra; o fio é o `<i>` de dentro, com um quinto dela | `--ins-dur-lugar` · `--ins-curva` | para onde se andou | salta para a aba |
+| O fio da aba | `.ins-tab-ind` (`componentes.css`), posto pela `TabBar` | `transform: translateX(i × 20%)` de um invólucro da largura da barra; o fio é o `<i>` de dentro, com um quinto dela; anda junto com o carrossel e chega no mesmo quadro (na troca seca, a aba fora da barra, salta) | `--ins-dur-entra` · `--ins-curva` | para onde se andou | salta para a aba |
+| A aba desliza (o carrossel) | as FOTOS da página inteira (`html[data-nav="aba-direita"]` e `[data-nav="aba-esquerda"]`, `::view-transition-old(root)` e `-new(root)`, `componentes.css`, "A TROCA DE ABA"), na transição de vista que o `render()` pede à porta quando a aba muda, com o sentido do ÍNDICE na barra; o cabeçalho do Agora vai com a página | a velha sai pelo lado oposto e a nova entra pelo lado para onde se andou, a tela inteira, as duas juntas e encostadas (`ins-para-esquerda` + `ins-da-direita`, ou `ins-para-direita` + `ins-da-esquerda`, `base.css`) — sem fio nem sombra: não é camada; a barra de abas tem foto própria só nesta troca e fica PARADA, com o fio andando dentro dela; o que é do aparelho, parado | `--ins-dur-entra` · `--ins-curva` | para que lado se andou entre os cinco lugares, no lugar onde o olho está (dono, 16/10, pergunta 3) | sem transição: o `<main>` que nasce com a aba (a chave é a aba) e o cabeçalho do Agora esmaecem (`ins-esmaece`, em `--ins-dur-dissolve`); a velha sai de uma vez; o fio salta |
 | A barra do descanso | `#tfill` (`componentes.css`), escrita por `pintaTimer` | `transform: scaleX` | `--ins-dur-amostra` · `--ins-curva-grandeza` | o tempo passando | anda em degraus de 250 ms |
 | O pulso do ponto ao vivo | `.ins-live-dot` (`base.css`) | `opacity` 1 → .25 → 1, sem fim | `--ins-ciclo-vivo` · `--ins-curva-ciclo` | a tela está viva agora | aceso e parado |
 | O clarão do disparo | `.cam-clarao` (`componentes.css`), um nó por foto | `opacity` .9 → 0 | `--ins-dur-clarao` · `--ins-curva` | a foto foi tirada (lido a 3 m) | não aparece: a foto é dita pelo obturador, pela voz e pelo bloco da pose |
@@ -379,6 +382,7 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 | A tela cheia e o modo saem | a foto da tela velha (`html[data-nav="sai"]::view-transition-old(root)`), por cima da que reaparece — que já nasce na rolagem de onde se entrou; pela seta, pelo "‹ Voltar", pelo Esc e pelo Voltar do sistema | `transform` de `none` a `translateX(100%)` (`ins-para-direita`), com o mesmo fio | `--ins-dur-sai` · `--ins-curva-camada` | para onde foi: o lugar estava lá embaixo | sai de uma vez |
 | A folha e o painel de apagar descem | as fotos `folha-N` (o nome é a POSIÇÃO na pilha, no `style` da `Folha`; nunca o nível, que se repete) e `painel`, só a foto velha sem nova (`:only-child`): a folha que fica aberta debaixo de outra não se move | `transform` de `none` a `translateY(100%)` (`ins-desce`) — sem quique, nenhuma saída quica | `--ins-dur-sai` · `--ins-curva-camada` | para onde foi: de volta à borda de baixo | sai de uma vez |
 | O véu apaga | as fotos `veu-N` e `veu-painel`, com a folha e o painel que descem | `opacity` 1 → 0 (`ins-apaga`) | `--ins-dur-sai` · `--ins-curva-ciclo` | a camada de cima acabou | sai de uma vez |
+| O cronômetro e o aviso mudam de altura com a troca | o par de imagens das fotos `cronometro` (só com o cronômetro em cena) e `aviso`, quando a troca tira a barra de abas (chega uma tela cheia ou o modo: `html[data-pe="desce"]`) ou a devolve (`data-pe="sobe"`), posto pela porta a pedido do `render()` | `translate` vertical da altura da barra (`--ins-barra-de-abas`) até `none` (`ins-rodape-desce`, `ins-rodape-sobe`, `base.css`) — só na vertical: não andam de lado com as páginas | `--ins-dur-entra` / `--ins-dur-sai` · `--ins-curva-camada` | continuam do aparelho; a reserva do rodapé mudou junto com a troca (antes, saltavam 52 px no primeiro quadro; 07 §11.3) | sem transição: vão ao lugar novo no mesmo desenho que a troca |
 | A bancada: pouso, painel e régua, virada | `palco.css`, `palco.js` | `transform` e `opacity` | `--pl-dur-*` · `--pl-curva` | chegou; virou | nada |
 
 **O que fica sem movimento**, de propósito: o toque, que só escurece e troca na
@@ -394,7 +398,7 @@ correndo volta no lugar, sem subir — e o giro do telefone; o que é do
 aparelho durante uma troca de camada — o cronômetro, o aviso curto, a faixa da
 sessão e a faixa "Não guardado" têm foto própria e ficam parados enquanto as
 páginas passam por baixo (o que sai da tela sai de uma vez; o que chega aparece
-no lugar), e a barra de abas fica com o lugar; o Voltar que o navegador já
+no lugar), e a barra de abas fica com o lugar — na troca de ABA ela ganha foto própria e fica parada enquanto as páginas passam, com o fio andando dentro dela; a aba que não está na barra (`vaiPara('treino')`), que troca seca, porque não há para que lado andar; o Voltar que o navegador já
 animou (o gesto de borda do iPhone, `hasUAVisualTransition`), que o app não anima
 de novo; a primeira tela, que nunca anima; a folha que toma o lugar da de cima ("cadastrar", `trocaFolha`),
 que nasce no lugar — a camada não se move, só o conteúdo troca; o aviso "Não
@@ -415,21 +419,29 @@ ainda chega vai ao nó em que o dedo desceu (`miraSobODedo`, `folha.jsx`, e
 camada (a transição de vista) o alvo de todo toque é a raiz: o `pointerdown`
 PULA para o fim (`skipTransition()`), o desenho novo entra na hora, e o clique
 vai ao que ficou sob o dedo — sozinho, quando o navegador acha o alvo de novo, ou
-reenviado pela porta. Nada espera: o clique age na hora, e nada escuta o fim de
-uma transição.
+reenviado pela porta. O mesmo no carrossel da aba: a barra está parada, e o toque
+rápido em outra aba no meio da troca acerta a aba que o dedo vê. Nada espera: o
+clique age na hora, e nada escuta o fim de uma transição.
 
 **A troca de camada mora num ponto só, e a rolagem e o foco vão dentro dela.**
 O `render()` (`main.jsx`) compara as camadas desenhadas com as que `view` pede
-e, quando uma tela cheia ou o modo chegam ou saem, ou uma folha ou o painel de
-apagar fecham, desenha dentro de uma transição de vista: o navegador fotografa
+(e a aba desenhada com a pedida) e, quando uma tela cheia ou o modo chegam ou
+saem, uma folha ou o painel de apagar fecham, ou a aba muda, desenha dentro de
+uma transição de vista: o navegador fotografa
 a tela de agora e chama o desenho ~1 quadro depois (o quadro a mais que o dono
 aceitou, pergunta 6). Enquanto o desenho está pendente, `render()` não faz nada
 — dois seguidos viram uma troca só, no sentido da primeira —, e toda rolagem
 pedida nesse meio entra DENTRO do desenho novo (`rola`), que já nasce na
 posição: desenha, depois rola, em todo fecho (o Corpo que entrou no modo a 1982
-px voltava a 1091). Ao entrar, o título do destino e o do modo recebem o foco no
+px voltava a 1091) e em toda troca de aba (a aba nova abre no topo, e a foto da
+que sai fica onde estava). Ao entrar, o título do destino e o do modo recebem o foco no
 mesmo desenho; ao sair, o foco volta ao controle que abriu (achado de novo pela
-chave dele) ou ao título da tela que reaparece — nunca ao `body`.
+chave dele) ou ao título da tela que reaparece — nunca ao `body`. E quando um
+desenho que não troca camada tira da página o controle que tinha o foco (a aba
+que troca, sob "Reduzir movimento" o segundo desenho do "Ir para Semana"; o
+treino aberto na lista do Programa), o foco vai ao título da tela desenhada.
+Toda foto que anda começa um quadro adiante (`--ins-adianta`): o primeiro
+quadro é a foto da tela velha, e o primeiro animado já mostra a página andando.
 
 **A camada de cima é a única alcançável.** A folha, o painel de pare e o "Não
 guardei" isolam o resto com `inert`, pelo mesmo mecanismo (`abreCamada`,
@@ -490,7 +502,13 @@ animação; (g) o quique é só da caixa da folha e do pare, o véu acende no te
 da camada, sob "Reduzir" os quatro só esmaecem, e nada mais da pilha se move;
 (h) a troca de camada move só as fotos — a tela que chega e a que sai, a folha
 e o painel que descem, os véus —, a de baixo fica parada, nada quica, e só o
-que é do aparelho tem nome; fora do portão as fotos não animam.
+que é do aparelho tem nome — e o cronômetro e o aviso só mudam de altura, quando
+a troca tira ou devolve a barra de abas —; toda foto que anda começa um quadro
+adiante; fora do portão as fotos não animam; (i) a aba
+desliza a página inteira, as duas fotos juntas, no sentido do índice, em
+`--ins-dur-entra` na `--ins-curva`, o fio anda junto no mesmo tempo e na mesma
+curva, a barra só tem nome nessa troca e não se move, e sob "Reduzir" só o que
+nasce com a aba esmaece.
 
 **O que já foi recusado, e o que caiu.** Mola e ultrapassagem continuam fora de
 tudo menos do quique (decisão do dono, 16/10). Comemoração, esqueleto que

@@ -476,6 +476,32 @@ p, .ins-prosa, input, textarea {
   from { transform: none; }
   to   { transform: translateX(100%); }
 }
+/* O CARROSSEL DA ABA (peça 6) usa os dois de cima e estes dois, do outro lado:
+   andar para a direita na barra é a página velha SAINDO PELA ESQUERDA enquanto
+   a nova chega da direita; andar para a esquerda, o espelho. As duas fotos andam
+   a tela inteira, juntas, e a borda de uma encosta na da outra o tempo todo. */
+@keyframes ins-para-esquerda {
+  from { transform: none; }
+  to   { transform: translateX(-100%); }
+}
+@keyframes ins-da-esquerda {
+  from { transform: translateX(-100%); }
+  to   { transform: none; }
+}
+/* O RODAPÉ MUDOU DE ALTURA na troca (peça 6, da conferência da peça 5): uma
+   tela cheia ou o modo tiram a barra de abas, e o cronômetro e o aviso — que
+   ficam sobre ela — passam a ficar no fundo. A foto deles vai do lugar velho ao
+   novo, a altura da barra, em vez de saltar no primeiro quadro. `translate`:
+   o grupo da foto já está no lugar novo, e o par de imagens parte de onde
+   estava. DESCE quando a barra sai; SOBE quando ela volta. */
+@keyframes ins-rodape-desce {
+  from { translate: 0 calc(-1 * var(--ins-barra-de-abas)); }
+  to   { translate: none; }
+}
+@keyframes ins-rodape-sobe {
+  from { translate: 0 var(--ins-barra-de-abas); }
+  to   { translate: none; }
+}
 /* DESCER: a folha e o painel de apagar voltam pela borda de baixo. */
 @keyframes ins-desce {
   from { transform: none; }

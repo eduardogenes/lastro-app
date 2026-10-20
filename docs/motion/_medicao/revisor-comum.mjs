@@ -414,7 +414,10 @@ export async function executaPasso(p, cdp, passo, montado) {
       const pds = pagina.ev.filter(e => e.tipo === 'pointerdown'), c2 = pagina.cliques[1];
       return { pousaRelMs: pds[1] && clique ? Math.round(pds[1].t - clique.ini) : null,
                cliqueRelMs: c2 && clique ? Math.round(c2.ini - clique.ini) : null,
-               alvoDoClique: c2 ? c2.alvo : null, alvoDoPousar: pds[1] ? pds[1].alvo : null };
+               alvoDoClique: c2 ? c2.alvo : null, alvoDoPousar: pds[1] ? pds[1].alvo : null,
+               // com a View Transition o robô vê o 1º clique no `html`; o app o
+               // reenvia ao nó sob o dedo (peça 5): todos os cliques depois do 1º
+               cliquesDepois: pagina.cliques.slice(1).map(c => c.alvo) };
     })()) : null,
     confere, esperado: passo.confere || null,
     antes, depois

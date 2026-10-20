@@ -281,6 +281,7 @@ pasta de saída por argumento: o mesmo script grava o antes e o depois.
 | `revisor-tiras.py` | `tiras`: monta a tira de cada passo e mede quadro a quadro; `par`: empilha a tira do antes sobre a do depois; `faixa`: compara uma faixa vertical entre dois quadros da tira (a conferência "a de baixo parada"); `repousa`: recalcula o "dedo pousado" de manifestos já gravados pela linha do tempo (seção 7) |
 | `revisor-aviso-passo.mjs` | o toast e a faixa acompanham o cronômetro, ou saltam? No modo, com um toast na tela, o descanso começa e para; a cada quadro anota onde estão o toast e o cronômetro (`getBoundingClientRect`, que inclui `transform` e `translate`) e mede o maior passo por quadro, o caminho e a posição final (escreve `aviso-passo-<rodada>.json`). Feito na peça 3, porque o `micro-avisos.mjs` lê as posições logo depois de ligar e desligar o descanso e, com o acompanhamento animado, pega o toast no meio do caminho |
 | `revisor-aviso-janela.mjs` | o "Não guardei" ignora o toque que vinha para outra coisa? (peça 4, defeito 5). Provoca a falha de gravação, grava uma série e, com o dedo de verdade, toca "Fechar este aviso" 150 ms depois de o aviso chegar (tem de ficar) e 600 ms depois (tem de fechar); anota também o fundo inerte e o foco (escreve `aviso-janela-<rodada>.json`). Feito porque o `micro-avisos.mjs` clica logo que o aviso chega e, depois da peça 4, esse clique é engolido de propósito |
+| `revisor-anel-e-cronometro.mjs` | dois itens da peça 5 que os fluxos não cobrem: com o teclado (Tab), o campo de importar dos Ajustes mostra o anel? (lê o contorno do rótulo e do `input` e fotografa o rótulo); e, com um descanso contando, onde fica o cronômetro no Agora, nos Ajustes e na Evolução (escreve `anel-e-cronometro-<rodada>.json` e `anel-<rodada>.png`) |
 | `revisor-thread-presa.mjs` | o "não congela com a thread presa" do 04 §6 no elemento real: troca de aba, a thread principal presa 150 ms dois quadros depois de o fio começar a andar, o fio achado quadro a quadro pela cor de acento; mede a maior parada no meio do caminho (escreve `thread-presa-<rodada>.json`). As peças 3 a 6 acrescentam a cena delas (cronômetro, folha, tela cheia, carrossel) |
 | (ambiente) | `PYTHON=` escolhe o Python que os scripts chamam (precisa de Pillow e numpy). Depois da atualização de 19/10 o `python3` do sistema é o 3.14, sem numpy; o 3.12 tem numpy mas não carrega mais o Pillow do sistema. Para a seção 8, o numpy foi posto numa pasta do scratchpad (`pip install --target`) e um invólucro aponta para ela — nada instalado no sistema |
 | `revisor-compara.mjs` | a fase 4: aplica a tabela 1.3 com o `mov` de cada passo, escreve `protocolo.json`, os pares de tiras e os vídeos lado a lado (H.264, 828 × 940, normal e 4× mais lento), alinhados no zero de cada passo. Testado: antes contra antes, em todos os fluxos (`antes-contra-protocolo/`), e com vídeo em 01, 07 e 16 |
@@ -840,3 +841,160 @@ não se fecha mais com o toque que vinha para outra coisa; o fundo fica isolado,
 inclusive o cronômetro; e o foco volta a quem o tinha. Fica um achado para o
 coordenador decidir: no Chromium, a folha recua um quadro quando o dedo pousa
 nela durante a subida.
+
+---
+
+## 11. Depois da peça 5
+
+Conferida em 20/10 pela linha da peça 5 da tabela 1.4, contra o build congelado
+em `docs/motion/_medicao/shots/dist-peca-5/` (commit `1a54bf3`), servido na
+porta 4728 (desligada), com o mesmo `antes/registro.json`. Gravação das 03h00 às
+03h23, carga de 0,7 a 4,3 (`carga-20-10.txt`), com antes e peça 5
+**intercalados** três vezes nas medidas de tempo (1.5, 5c). Dois complementos
+rodaram depois, com a máquina quieta: as armadilhas no WebKit às 07h49 (carga
+0,5) e o anel e o cronômetro às 07h59 (carga 1,4; o antes na porta 4727 e a peça
+5 na 4728, as duas desligadas).
+
+**O que se gravou.** Os fluxos 01, 02, 04, 05, 06 (a descida), 08, 15, 15b e 16
+no Chromium e no WebKit, com e sem "Reduzir movimento" (`depois-5/`). Antes e
+peça 5 intercalados, três vezes por motor: 01, 04, 06, 08 e 16
+(`repeticoes-peca-5/`). Os complementos `navegacao-hoje.mjs` (a rolagem de cada
+fecho), `acesso-foco.mjs`, `desempenho-armadilhas.mjs` (as alturas do §4; o do
+WebKit foi regravado, porque a primeira chamada não chegou a rodar o script),
+`revisor-aviso-janela.mjs` com a medida nova da faixa (defeito 4) e
+`revisor-anel-e-cronometro.mjs`, novo (defeito 7 e o cronômetro nas telas
+cheias), dos dois lados (`antes-complementos/`, `depois-5/complementos/`).
+Nenhum erro de página em nenhuma rodada. Comparador em `comparacao-5/`.
+
+**Três regras do comparador corrigidas nesta conferência.**
+
+1. *A de baixo parada.* A transição começa um quadro depois do toque, e a foto
+   da tela de baixo guarda o controle apertado: o cartão fica escuro sob a tela
+   que chega, como deve, porque o dedo estava nele. Comparar o quadro de +50 ms
+   com o de antes do toque reprovava por isso. A conta agora compara a faixa da
+   esquerda (0–60 px) dentro da própria troca: +50 contra +100 ms na chegada,
+   +150 contra +800 na saída.
+2. *O segundo toque.* Com a transição, o robô vê o `pointerdown` no `html` (a
+   camada das fotos), e o app reenvia o clique ao nó que está sob o dedo. O robô
+   passou a anotar todos os cliques do passo (`cliquesDepois`, em
+   `revisor-comum.mjs`), e "o toque se perdeu" só vale quando o passo não faz o
+   que devia (`confere`).
+3. *Quando a troca anda.* O princípio 1 usava o primeiro quadro que muda depois
+   do toque. Com a transição, esse quadro muitas vezes mostra só o controle
+   apertado: a caixa da seta (`[40, 8, 47, 48]`) ou a do cartão. Nas trocas de
+   camada (`mov` `entra` e `sai`), o princípio 1 passou a medir também o
+   primeiro quadro em que a mudança encosta na borda direita e tem a altura da
+   tela (`andaMs`, em `revisor-compara.mjs` e nos `numeros` do `protocolo.json`).
+   Sem esta regra, a chegada pelo toque parecia custar só +4 a +7 ms; com ela,
+   aparece o mesmo atraso do Voltar do sistema (11.2).
+
+### 11.1 A linha da peça 5: o que passou
+
+| o que a peça tinha de provar | resultado | o número | arquivo |
+|---|---|---|---|
+| **a tela cheia e o modo chegam pela direita em 350 ms** | **passa** | `ins-da-direita`, em `transform`, no `::view-transition-new(root)`, **350 ms**, `cubic-bezier(0.32, 0.72, 0, 1)` (sem ultrapassagem), nos dois motores: 01 e 02 (o modo, pelo cartão e pela faixa), 04 (abre, empilha), 05 (abre, abre-de-novo) e 16; nenhum elemento real ganha animação | `depois-5/{01,02,04,05,16}-*/medidas-{chromium,webkit}.json` (`animacoes`) |
+| **a de baixo parada** | **passa** | a faixa da esquerda (0–60 px) muda **0,0 %** entre +50 e +100 ms em toda chegada, e **0,0–0,1 %** entre +150 e +800 em toda saída; no antes, 8–22 % aos +50 (a tela trocava inteira) | `comparacao-5/protocolo.json` (princípio 8, "faixa da esquerda"); tiras `comparacao-5/*/*-par.png` |
+| **e saem pela direita em 350: pela seta, pelo "‹ Voltar" e pelo Voltar do sistema** | **passa** | `ins-para-direita` no `::view-transition-old(root)`, 350 ms, a mesma curva, por cima da tela que reaparece: 01 e 02 (a seta), 04 (volta-1, volta-3), 05 (volta, e "Ir para Semana", uma transição só, `sai`). O Voltar do sistema (08) desenha a mesma saída: 9 a 13 quadros com mudança e a faixa da esquerda parada (no antes, dois quadros) | idem; `depois-5/08-voltar-sistema/medidas-*.json` (`medidasDosQuadros`) |
+| **a folha desce em 350, e o véu apaga junto** | **passa** | `06 fecha-x`: `ins-desce` (`transform`) no `::view-transition-old(folha-1)` e `ins-apaga` (opacidade, `ease`) no `veu-1`, 350 ms; só a de cima desce (fica uma folha). Pelo Voltar do sistema, 18 a 20 quadros com mudança. No 15b, o véu tocado na subida faz a folha descer (`folha-0`, `veu-0`) | `depois-5/06-folhas/medidas-*.json` (`fecha-x`, `voltar`); `depois-5/15b-meio-folha-veu/medidas-*.json` |
+| **nenhuma saída quica; só as durações da lista** | **passa** | nas saídas, só 350; no resto, 120 (o esmaecer sob "Reduzir"), 640 (a chegada da folha) e 2 400 (o ponto) | `comparacao-5/protocolo.json` (princípio 8) |
+| **sob "Reduzir movimento", esmaece 120 ao chegar e sai de uma vez** | **passa** | `ins-esmaece`, só opacidade, **120 ms**, no nó que nasce (`div.ins-modo`, `div.tc`, a folha e o véu); nenhuma `::view-transition`; nas saídas, nenhuma animação nova (as que aparecem no `fecha-x` são as da chegada, já `finished`); a tela troca no mesmo quadro do antes (01 entra: 20,7 → 19,4 ms no Chromium) | `depois-5/*/medidas-*-reduz.json`; princípio 5: 46/46 |
+| **a rolagem volta exata** | **passa** | 02 (o modo aberto pela faixa, com o Corpo rolado): **1982 → 1982** nas quatro rodadas (antes, 1982 → 1091). `navegacao-hoje.mjs`, pelo Voltar: a faixa no Corpo **1778 → 1778** (antes → 1156) e na Semana **1222 → 1222** (antes → 1156); Ajustes, modo, Programa e Evolução continuam exatos | `comparacao-5/protocolo.json` (princípio 9: 16/16); `depois-5/complementos/navegacao-hoje-chromium.json` contra `antes-complementos/…` |
+| **o foco entra no título e sai num lugar declarado** | **passa**, fora "Ir para Semana" sob "Reduzir" (11.2) | ao entrar, o `h1` do destino ("Programa", "Evolução", o exercício) e o do modo ("Pernas completas + panturrilhas"); ao sair, o controle que abriu (o cartão `button.ins-foco`, a faixa, "histórico de…", o botão "Evolução"), e "Ir para Semana" no título "Semana"; a folha devolve ao "editar" e ao "Outra porção". No antes, `body` ao entrar e ao sair do modo e ao fechar a tela cheia. `acesso-foco.mjs`, com e sem "Reduzir": ao fechar a tela cheia e o pare, o ⚙; o modo entra no `h1` e sai no cartão (antes, `body` nos quatro) | princípio 6: 86 passos passam; `depois-5/complementos/acesso/acesso-foco.json` contra `antes-complementos/acesso/…` |
+| **o Voltar do sistema faz o mesmo reverso** | **passa na forma** (o tempo, em 11.2) | 08: a faixa da esquerda parada; o foco em "histórico de…" e no título "Prescrição", como pelo "‹ Voltar" | `depois-5/08-voltar-sistema/medidas-*.json` |
+| **a seta tocada no meio da chegada fecha o modo** (16) | **passa** | o dedo pousa no `html` (a camada das fotos) ~66 ms (Chromium) e ~88 ms (WebKit) depois do primeiro toque; o clique vai à seta (`button.ins-modo-sair`) e o modo fecha, nas quatro rodadas e em **3 de 3** repetições por motor. No 15b, o véu tocado na subida fecha a folha | `depois-5/16-meio-modo/medidas-*.json` (`segundoToque.cliquesDepois`); `repeticoes-peca-5/peca-5-*/16-meio-modo/` |
+| **a folha não recua mais sob o dedo** (o achado da peça 4, 10.2) | **passa** | 15 no Chromium: nenhum quadro transitório (na peça 4, dois, a +84 e a +149,6 ms) | `depois-5/15-meio-folha/medidas-chromium.json` contra `depois-4/…` (`transitorios`) |
+| **defeito 4: a faixa "Não guardado" não cobre a saída do modo** | **passa** | a faixa fica em 0–59 px e a barra do modo cresce por baixo dela (0–113 px, a seta em y 67–113; no antes, 8–54, debaixo da faixa); sob o centro da seta, da hora e do `···` está o próprio controle (no antes, a faixa). A janela de 400 ms segue valendo (o toque a ~155 ms não fecha o aviso, a ~605 fecha) e o fundo fica isolado (46 de 46 inertes) | `depois-5/complementos/aviso-janela-{chromium,webkit}.json` (`faixa`) contra `antes-complementos/…` |
+| **defeito 7: o campo de importar mostra o foco** | **passa** | pelo Tab (6 toques nos dois motores), o rótulo "escolher arquivo json" ganha o anel, `solid 3px rgb(56, 51, 219)` com folga de 2 px (no antes, `none`) | `depois-5/complementos/anel-e-cronometro-*.json` (`anel`) e `anel-*.png`, contra `antes-complementos/…` |
+| **o cronômetro no fundo nas telas cheias** | **passa** | com um descanso contando, nos Ajustes e na Evolução: **y 813,8–896** (antes, 761,8–844, 52 px acima do fundo); no Agora segue em 761,8–844, sobre a barra de abas | `anel-e-cronometro-*.json` (`cronometro`), dos dois lados |
+| **o modo curto não sobra** | **passa** | com o conteúdo do modo encurtado, a página tem 896 px e **sobra 0** (antes, 920 px e 24 de sobra no Chromium; no WebKit a sonda do antes nem chegou a abrir o modo); nos Ajustes, o rodapé reservado cai de 76 para 24 px, sem a barra de abas | `depois-5/complementos/armadilhas-*.json` (`alturas`) contra `shots/desempenho/armadilhas-*.json` |
+| **o trabalho no toque** (5c) | **passa** | medianas, antes → peça 5, no Chromium: 01 entra 4,3 → 0,3 ms, 16 6,3 → 0,3, 06 fecha-x 3,1 → 0,1 (o desenho saiu do toque e foi para a transição); no WebKit, 9 → 0, 6 → 1 e 6 → 0 | `repeticoes-peca-5/{antes,peca-5}-{1,2,3}/` |
+| princípios 2, 3, 10 | **passa** | 92/92, 46/46, 40/40 | `comparacao-5/protocolo.json` |
+
+### 11.2 O que reprovou
+
+- **A troca começa a andar dois quadros depois do antes** (princípio 1;
+  confirmado nas três repetições de cada lado). No Chromium, as medianas do
+  primeiro quadro em que a troca anda, antes → peça 5: 01 entra 16,9 → 49,3 ms,
+  sai 16,3 → 50,2; 04 abre 16,5 → 49,7, volta-3 15,8 → 50,1; 16 18,7 → 51,5; o
+  Voltar do sistema, 08 15,4 → 49,7 e 06 12,5 → 50,9; a folha descendo pelo ×,
+  17,5 → 53,7. São **+31 a +36 ms em toda troca**, pelo toque e pelo Voltar. Os
+  quadros mostram por quê (`peca-5-1/01-modo-cartao`): a +22,6 ms muda só o
+  cartão apertado; a +32,3 nada muda; a +49,2 a tela nova aparece, já com 54 px
+  de largura. O primeiro desses quadros é a foto da tela velha, o quadro a mais
+  que o dono aceitou (decisão 6). O segundo é o começo da animação: no tempo 0 a
+  tela nova ainda está toda fora, à direita (na saída, a de cima ainda está
+  inteira no lugar), e o quadro sai igual ao anterior. Esse segundo quadro existe
+  em toda chegada que parte de fora da tela (a folha da peça 4 também tem um: no
+  06 abre, 17,8 → 33,3 ms), mas a regra aceita um só. O 09 dá +18 ms do toque ao
+  desenho novo; na tela, a troca anda +33 ms depois do antes. **Para o
+  coordenador:** ou o dono aceita os dois quadros, ou a chegada começa um quadro
+  adiante (a animação já fora do tempo 0 no primeiro quadro desenhado). Arquivos:
+  `repeticoes-peca-5/{antes,peca-5}-{1,2,3}/*/medidas-chromium.json`
+  (`medidasDosQuadros.mudancasFinas`); `comparacao-5/protocolo.json`
+  (`numeros.andaMs`).
+- **No WebKit desta máquina, o mesmo, em quadros mais longos** (princípios 1 e
+  4). Durante a troca, o maior intervalo do `requestAnimationFrame` vai a 26–62
+  ms nas repetições (35–92 ms na gravação principal, onde 15 passos reprovam no
+  princípio 4), contra 17–22 ms nos passos sem transição da mesma rodada (06
+  abre e empilha, o quique; 04 abre-treino e volta-2). Medianas de quando a troca anda, antes → peça 5: 01 entra 13,4 →
+  58,8, sai 2 → 36,5; 04 abre 1,1 → 36,9; 16 13,9 → 55,7; 08 voltar-2 −0,1 →
+  70,6; a folha pelo × 3 → 107,4 e pelo Voltar 5,7 → 108,1. Contados no quadro
+  desta máquina (~40–60 ms durante a troca), são os mesmos dois quadros do
+  Chromium. O Event Timing do × (16 → 56–72 ms) é o mesmo quadro lento. É o
+  WebKit sem placa de vídeo compondo as fotos em software: **o ritmo e o atraso
+  em milissegundos ficam a conferir no aparelho** (1.5, item 6). Arquivos:
+  `repeticoes-peca-5/*/*/medidas-webkit.json` (`quadrosDaPagina`,
+  `medidasDosQuadros`).
+- **"Ir para Semana" sob "Reduzir movimento" deixa o foco no `body`** (princípio
+  6, nos dois motores). Sem "Reduzir", o foco vai ao título "Semana"; com
+  "Reduzir", fica no `body` aos 150 ms e no fim do passo. As duas rodadas só
+  diferem na transição: sob "Reduzir" a troca não passa por ela (09, decisão
+  19). O resto do fluxo 05 acerta nas duas. Arquivos:
+  `depois-5/05-evolucao/medidas-{chromium,webkit}-reduz.json` (`ir-para-semana`:
+  `focoAos150ms`, `depois.foco`).
+- **15 · o × tocado na subida não fecha a folha** (princípios 1 e 7). É o mesmo
+  caso da peça 4 (10.2), a mira do robô: o dedo pousa no corpo da folha
+  (`div.ins-grade-c`), e com a mira nova o clique vai a esse nó, como deve. A
+  prova de que o toque no meio chega são o 15b e o 16.
+
+### 11.3 O que ficou "a conferir"
+
+- **"A tela muda por ~700 ms"** em 01 sai e 02 entra (princípio 8): é o ponto
+  ao vivo pulsando (`ins-pulse`, 2 400 ms, decidido) na tela que chega ou que
+  reaparece. A troca em si acaba nos 350.
+- **No 04, abrir um treino dentro do Programa deixa o foco no `body`, como no
+  antes.** É troca de conteúdo dentro da mesma tela cheia, sem camada nova, e
+  fica fora da linha da peça; mas o leitor de tela perde o lugar ali. O
+  coordenador decide de quem é.
+- **Os fixos durante a troca.** A conta "fixos no lugar aos 120 ms" lê o DOM, e
+  na transição o que anda são as fotos: para a peça 5, ela não prova nada.
+  Nenhum fluxo desta peça tem o cronômetro ou o aviso na tela durante uma troca.
+  Pelo CSS do build (`dist-peca-5/assets/index-C1GjD3qP.css`), o cronômetro, o
+  aviso e as duas faixas têm nome próprio e grupo sem animação: não deslizam com
+  a página. Mas o cronômetro muda de lugar entre o Agora (o fundo em 844, sobre
+  a barra de abas) e a tela cheia (896) (`anel-e-cronometro-*.json`). Com o grupo
+  sem animação, ele deve saltar esses 52 px num quadro, no começo da troca. A
+  conferir a olho na rodada final, com um fluxo novo (descanso contando, toque no
+  ⚙).
+- **O painel de apagar descendo** (13, "Deixar como está") não foi gravado nesta
+  peça. Fica para a rodada final; o `troca.test.js` do implementador o cobre
+  (caso 3).
+- **As sondas do `desempenho-armadilhas.mjs` que leem o DOM logo depois do
+  `render()`** (§1, §3 e §5). Com a transição, o desenho entra um quadro depois,
+  e algumas não acharam o nó: `sem #app > main`, `.tc` e `.ins-modo`; o modo
+  "ausente" na sonda do `sticky` no WebKit. Onde acharam, deram o mesmo que no
+  antes (o `translateX` forçado no modo ainda rola a janela de lado, o que é da
+  peça 6). A sonda crua de View Transition (§5) ainda perde o toque no `html`,
+  porque não tem o pulo e o reenvio do app; com os do app, o toque chega (16,
+  15b).
+
+**Conclusão: a peça 5 passa na forma e reprova no tempo.** A tela cheia e o
+modo chegam e saem pela direita em 350 ms na curva da camada, com a de baixo
+parada; a folha desce; com "Reduzir movimento" só esmaece; a rolagem volta
+exata; o foco entra no título e volta a quem abriu; a seta tocada no meio da
+chegada fecha o modo; e estão consertados os defeitos 4 e 7, a sobra do modo
+curto e o cronômetro nas telas cheias. Reprovam duas coisas. A troca começa a
+andar dois quadros depois do antes (+31 a +36 ms no Chromium, em toda troca),
+quando o dono aceitou um. E "Ir para Semana", sob "Reduzir", perde o foco. O
+ritmo das transições no WebKit desta máquina (quadros de 40–60 ms) fica a
+conferir no aparelho.
