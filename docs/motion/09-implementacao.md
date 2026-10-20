@@ -1125,3 +1125,403 @@ Antes desta peça: 1613 de 1613 (peça 2, conferido pelo coordenador). A
 diferença, +10, são os casos novos: 5 em `cena.test.js` e 5 em
 `descanso.test.js`. Os casos de `estilo.test.ts` continuam 58: um foi
 reescrito e a guarda (c) ganhou uma conferência dentro do caso que já existia.
+
+---
+
+## Peça 4 · A folha sobe
+
+Implementada em 19/10, sobre `d1f1025`, sem commit. Espec: o pedido em
+`_pedidos/peca-4.md`; `08-parecer.md` §4 (peça 4) e §5.1; as respostas do dono
+em `00-coordenacao.md` (16/10, 01h25): pergunta 1 (a folha chega com o quique),
+11 (o painel de apagar igual à folha), 2 (sob "Reduzir movimento" esmaece ao
+chegar) e 13 (o defeito 5 entra aqui); `02-navegacao.md` T3 e T8; `03-micro.md`
+§5.2 e §5.3; `05-acessibilidade.md` §3.1 e §3.4; `04-desempenho.md` §2.4; a
+linha da peça 4 do `07-revisao-base.md` §1.4.
+
+### Em uma página
+
+- **O que ele vê de diferente.** A folha sobe da borda com o quique que ele
+  escolheu: 640 ms, passa 8 % do lugar aos ~352 ms, volta 3 % aos ~515 ms e
+  assenta. O véu acende junto, em 350 ms. A segunda e a terceira folha sobem
+  por cima da primeira, que fica onde está, e os véus somam. A folha que toma o
+  lugar da de cima ("cadastrar") aparece no lugar, sem subir. O painel de pare
+  (as duas variantes, a de apagar e a pergunta) chega igual à folha. O "Não
+  guardei" continua parado. A saída de tudo isso continua de uma vez.
+- **Sob "Reduzir movimento"** nada se desloca: folha, painel e véu esmaecem em
+  120 ms ao chegar e saem de uma vez.
+- **Um achado, e o conserto dele: o toque no meio da subida se perdia.**
+  Medido nos dois motores, com o × e o véu tocados de 60 a 220 ms depois de
+  abrir: nenhum toque fechava a folha. O dedo descia no × e o clique saía no
+  cabeçalho, porque a folha andou entre descer e soltar. Agora **o dedo segura
+  a camada que chega**: enquanto ele está nela, a chegada para no quadro em que
+  o toque foi testado, e o clique cai no que o dedo tocou (decisão 6).
+- **Foco (precondição).** Com o descanso contando, o Tab não sai mais da folha
+  para o −15. O painel de pare e o "Não guardei" isolam o fundo como a folha,
+  pelo mesmo mecanismo, e devolvem o foco a quem o tinha.
+- **Defeito 5.** O "Não guardei" só aceita o toque que começou nele e pelo
+  menos 400 ms depois de chegar. O toque que já vinha para outra coisa não o
+  fecha antes de lido. O teclado age na hora.
+- **Rolagem de lado (precondição).** O corpo da folha não rola mais de lado.
+  Medido: nada de hoje passa da largura, então nada ficou cortado.
+- **Testes.** 16 casos novos: 1 em `estilo.test.ts`, 8 em `camadas.test.js`
+  (árvore) e 7 em `sobe.test.js` (motor, Chromium e WebKit). Plantei 22
+  violações e as 22 ficaram vermelhas; o controle ficou verde. Contra o build
+  de `d1f1025`, 14 dos 16 ficam vermelhos (os 2 verdes guardam o que já
+  funcionava).
+- **`tipos` limpo, `build` ok, `vitest` 1639 de 1639.**
+
+### O que mudou, arquivo por arquivo
+
+| arquivo | o que mudou |
+|---|---|
+| `src/componentes.css` | Bloco novo "A CAMADA QUE CHEGA COM O QUIQUE", logo depois de `.ins-folha`. No portão: `.ins-folha-w:not(.troca) > .ins-folha` e `.pare-w:not(.falhou-w) > .pare` com `ins-quique var(--ins-dur-quique) var(--ins-curva-camada) both`; os véus irmãos com `ins-esmaece var(--ins-dur-entra) var(--ins-curva-ciclo) both`. Sob `reduce`: os quatro com `ins-esmaece var(--ins-dur-dissolve) var(--ins-curva-camada) both`. Fora do portão: o pé da caixa (`::after` com `top: 100%`, `height: 10%`, `background: inherit`, decisão 3). `.ins-folha-c` ganhou `overflow-x: hidden`. Os comentários do pare ("sem animação de entrada") foram reescritos. |
+| `src/ui/instrumento/folha.jsx` | `ChegadaDaFolha` (contexto: `'sobe'` ou `'troca'`), lido no nascimento e posto como classe `troca` no invólucro. O isolamento virou `isolaACamadaDeCima` (derivado da camada de cima, com o `#timer`) e `abreCamada` (isola, foca, devolve o foco), usados pela folha, pelo pare e pelo aviso; `isolaOResto` saiu. `seguraSobODedo`: o dedo segura a camada que chega. |
+| `src/ui/instrumento/pare.jsx` | O `Pare` desenha um `PainelDePare` interno, que nasce e morre com o pedido: isola e devolve o foco por `abreCamada`, segura sob o dedo, e foca a saída a cada pedido novo. O `Falhou` desenha um `AvisoDeFalha` interno, que isola, registra onde o dedo desceu (`pointerdown`, na captura) e só deixa agir o toque que era para ele (`JANELA_DO_AVISO_MS`, `eraParaOutraCoisa`). Os comentários do cabeçalho dizem o que mudou e por quê. |
+| `src/ui/movimento.js` | `seguraNoLugar(elementos)`: pausa as animações que correm, neste instante (pausa e repõe o tempo atual), e devolve a função que as solta; `null` sem movimento pedido ou sem nada correndo. O cabeçalho da porta passa a dizer que mexer numa animação viva (`getAnimations`) também é dela. |
+| `src/main.jsx` | `folhaAberta` embrulha cada folha num `ChegadaDaFolha.Provider` (com a chave da posição); o corpo do antigo `map` virou `folhaDe(f, i)`, sem outra mudança. `trocaFolha` marca a folha que entra num `WeakSet` (`TROCADAS`), fora de `view.pilha`. |
+| `src/tokens.css` | Só comentários: `--ins-curva-ciclo` passa a ser também a curva do véu (com a conta de por que é a mais perto do `ease-out`), e `--ins-dur-entra` diz que o véu da folha e do pare acende nele. |
+| `src/base.css` | Só o comentário de `ins-esmaece`: o cronômetro, a folha e o painel o usam sob "Reduzir", e é também o véu acendendo. |
+| `DESIGN.md` | Tokens (`--ins-curva-ciclo`, `--ins-dur-entra`). Três linhas na tabela de movimentos: a folha sobe, o véu acende, o pare chega igual. Em "o que fica sem movimento": a saída da folha e do pare (até a peça 5), a troca do topo e o "Não guardei". Dois parágrafos novos: "O dedo segura a camada que chega" e "A camada de cima é a única alcançável" (com a janela do aviso). O quique é da caixa, nunca do invólucro. A guarda (g). A folha de baixo, em Componentes. |
+| `tests/dominio/estilo.test.ts` | Caso novo (g). A guarda (b) passou a cobrar `getAnimations(` só na porta. |
+| `tests/fluxo/camadas.test.js` (novo) | A árvore: isolamento com o cronômetro, pare e aviso em qualquer ordem, foco devolvido, a troca do topo, a janela do aviso. |
+| `tests/fluxo/sobe.test.js` (novo) | O motor (Chromium; `LASTRO_MOTOR=webkit` roda os mesmos no WebKit): o quique, o véu, a pilha, a troca, o pare, o aviso parado, "Reduzir", o toque no meio, o Tab com o descanso contando, a largura das folhas. |
+
+### As decisões, com o porquê
+
+1. **A curva do véu é `--ins-curva-ciclo`.** O desenho que o dono viu
+   acendia o véu em `ease-out`. A maior distância entre as curvas (no
+   progresso, ao longo do tempo) mede: `--ins-curva-ciclo` (o `ease`) 0,12;
+   `--ins-curva-grandeza` (linear) 0,19; `--ins-curva` 0,39;
+   `--ins-curva-camada` 0,41. O `ease-out` chega a 90 % aos 259 ms de 350; o
+   `ease` aos 218; as curvas da camada e do lugar aos ~130, quando a folha
+   ainda está lá embaixo. O token ganhou um segundo papel, escrito nele e no
+   `DESIGN.md`, em vez de nascer um token novo: o pedido manda escolher o
+   mais próximo. No motor, 90 % do véu chega aos 221–238 ms (os quadros
+   arredondam).
+2. **A animação é do nó que nasce, na caixa.** O quique mora na `.ins-folha`
+   e na `.pare`, por CSS, no portão. O invólucro é o fixo, e nada acima de um
+   fixo pode conter (guarda (d)); nenhum fixo mora dentro da caixa. O véu é
+   irmão da caixa, então a folha empilhada tem véu próprio, e os véus somam.
+3. **O pé da caixa (`::after`), um desvio pequeno.** No pico do quique a caixa
+   está 8 % acima do lugar, e o pé dela sairia da borda de baixo. Por esse vão
+   a página escurecida apareceria (na folha alta, 66 px). O iPhone não abre
+   esse vão, e "como o iPhone" foi a resposta. O pé é o mesmo fundo
+   continuando abaixo da caixa, com 10 % da altura dela (a guarda cobra pelo
+   menos a ultrapassagem dos quadros). Em repouso ele fica fora da tela, num
+   fixo, e não soma rolagem. É anatomia, não movimento. O desenho da página
+   das decisões tinha o vão; se o dono o quiser de volta, é uma regra a
+   menos.
+4. **A troca do topo diz que é troca pela pilha, e fora dela.** Para o Preact,
+   "cadastrar" é outro componente na mesma posição: nó novo, e a animação de
+   chegada rodaria. Quem sabe a diferença é `trocaFolha`, que marca a folha
+   que entra num `WeakSet`. A pilha passa isso à folha por contexto, e a folha
+   o lê uma vez, no nascimento. A marca é estado de tela: fica fora de
+   `view.pilha` (navegação, que o Voltar lê, e que três testes comparam por
+   igualdade) e morre com a folha. Na troca o véu também não acende: um véu
+   novo partindo de 0 piscaria o fundo.
+5. **"Igual à folha" é o `Pare` inteiro, e não o "Não guardei".** O
+   componente serve às duas famílias (apagar e a pergunta neutra), e as duas
+   chegam com o quique. O aviso de falha usa a mesma moldura e não se move
+   (03 §5.3; o pedido). Um pedido novo com outro aberto reaproveita o nó, como
+   antes: a frase troca no lugar, sem subir de novo.
+6. **O dedo segura a camada que chega.** O pedido manda: o × ou o véu tocados
+   ~100 ms depois de abrir fecham a folha. Com a folha subindo, medi o
+   contrário (`scratchpad/peca4/meio.mjs`, o × e o véu lidos na hora e
+   tocados com 30 e 90 ms de dedo, a 60, 100, 150 e 220 ms): **0 de 16 toques
+   fechavam, nos dois motores**, e parada ela fechava sempre. O clique saía
+   noutro nó. O Chromium entrega o clique de um toque ao que está sob o dedo
+   quando ele SOLTA. O WebKit com ponteiro o entrega ao ancestral comum dos
+   dois alvos. E o Safari do iPhone, pelo que se sabe do WebKit do iOS (não
+   verificado aqui), cancela o toque quando o nó sob o dedo muda entre descer
+   e soltar. O conserto:
+   `pointerdown` numa camada que ainda chega a segura (`seguraNoLugar`, na
+   porta) até o clique ser entregue, até o toque virar rolagem
+   (`pointercancel`) ou, se o clique não vier, 300 ms depois de o dedo sair
+   (`SOLTA_SEM_CLIQUE_MS`). Depois a subida segue de onde parou. Duas
+   tentativas antes desta não funcionaram: `animation-play-state: paused`
+   numa classe, e `pause()` sozinho. As duas deixam a pausa pendente até o
+   próximo quadro, e a folha ainda andava até ~60 px sob o dedo. Pausar e
+   repor o tempo atual completa a pausa na hora, no tempo do quadro em que o
+   toque foi testado. Isso é mexer em animação por JavaScript, então mora na
+   porta, e a guarda (b) passou a cobrar `getAnimations(` só lá. Nada espera
+   nada: o clique age quando chega, e nada escuta fim de animação. Sob
+   "Reduzir" (e no jsdom) a porta responde `null` e nada é segurado.
+7. **O isolamento é derivado da camada de cima.** Antes, cada folha marcava os
+   próprios irmãos e desmarcava ao sair. Com três camadas que isolam, isso
+   quebrava em duas ordens possíveis. Um aviso que chega com o pare aberto
+   (z 88 sob 90) se isolaria por cima dele e mataria o pare. Um pare que fecha
+   antes de uma folha aberta depois dele soltaria o fundo que a folha ainda
+   precisa preso. Agora toda camada que nasce ou sai recalcula: a de cima é a
+   primeira que existir na ordem pare › aviso › folhas (entre folhas, a que
+   veio depois). Tudo o mais fica `inert`: os irmãos dela no `#app` e o
+   `#timer` (`FORA_DO_APP`). O toast e a série dita ficam de fora: são regiões
+   vivas sem nada focável, e inertes sairiam da árvore de acessibilidade. Só o
+   que este isolamento marcou (`data-isolado`) é desmarcado. A camada que
+   nasce por baixo de outra não rouba o foco. Ao sair, o foco volta a quem o
+   tinha, se ainda estiver na página e alcançável. O foco entra com
+   `preventScroll` (no quadro zero a caixa ainda está abaixo da borda).
+8. **O pare e o aviso viraram componente interno.** Antes eles eram o mesmo
+   componente, que devolvia `null`. Uma limpeza com dependência rodaria depois
+   da pintura, um quadro depois de o painel sair, e um toque logo depois de
+   "Deixar como está" cairia num fundo ainda inerte. Como componente que
+   desmonta, a limpeza é síncrona, no mesmo desenho, como a da folha.
+9. **A janela do "Não guardei": 400 ms, e só para o dedo.** Um toque de dedo
+   só aciona um botão do aviso se o dedo DESCEU no aviso, e pelo menos
+   `JANELA_DO_AVISO_MS` depois de ele chegar. Ninguém freia um toque já a
+   caminho em menos de ~250 ms, e 400 dá a margem; ler a frase leva segundos.
+   O toque engolido não faz nada, e o aviso fica. O clique de teclado e o de
+   programa (`detail` 0) agem na hora, porque não há polegar a caminho. Num
+   navegador sem Pointer Events não há como saber onde o dedo desceu: o aviso
+   age como antes e nunca fica sem resposta. O registro de onde o dedo desceu
+   é um ouvinte de `pointerdown` posto no efeito, e não `onPointerDown`: o
+   Preact só liga o nome em minúsculas onde o elemento conhece
+   `onpointerdown`, e no jsdom o ouvinte ficava como `PointerDown`.
+10. **`overflow-x: hidden` no corpo da folha, e não `clip`.** Com
+    `overflow-y: auto`, `clip` vira `hidden` do mesmo jeito. Medido nas sete
+    folhas que abrem sem estado especial, nos dois motores: largura rolável
+    igual à visível. Nada ficou cortado. O anel de foco (5 px) cabe na
+    goteira de `--ins-8`.
+
+### Os números
+
+Chromium 1234 e WebKit 26.5 (Playwright), 414 × 896 a ×2, sem preferência e com
+"Reduzir movimento". O `dist/` final foi copiado para o scratchpad e servido na
+porta 4729 (desligada no fim). Scripts em `scratchpad/peca4/` (`mede.mjs`,
+`meio.mjs`). Nenhum erro de página em nenhuma rodada.
+
+| medida | antes (`d1f1025`) | Chromium | WebKit |
+|---|---|---|---|
+| a folha chega | num quadro | `ins-quique` 640 ms, só `transform` | igual |
+| passa do lugar (8 folhas e o pare) | — | 8,00 % aos 338–355 ms | 8,00 % aos 351–357 ms |
+| volta | — | 2,99 % aos 505–521 ms | 2,99–3,00 % aos 512–518 ms |
+| topo da folha alta (824 px = 92dvh) no pico | — | 5,75 px | 5,73–5,75 px |
+| o véu | aceso num quadro | `ins-esmaece` 350 ms, `ease`; 50 % aos 105–121 ms, 90 % aos 221–238 | 50 % aos 110–114, 90 % aos 222–227 (aquecido) |
+| largura rolável, todo quadro | 414 | 414 | 414 |
+| a primeira folha, com a segunda subindo | — | parada (71,69 → 71,69), véus 1 e 1 | igual |
+| a troca do topo | — | nenhuma animação, véu aceso, nenhum deslocamento | igual |
+| o "Não guardei" | parado | parado | parado |
+| "Reduzir": chegada | num quadro | só `ins-esmaece` 120 ms na caixa e no véu, 0 px | igual |
+| corpo da folha (largura rolável / visível) | 414 / 414, `overflow-x: auto` | 414 / 414, `hidden` | igual |
+
+**O toque no meio da subida** (`meio.mjs`: o × e o véu lidos na hora, 30 e 90
+ms de dedo; o véu 30 px acima do topo da folha):
+
+| | sem segurar | com o dedo que segura |
+|---|---|---|
+| fechou (Chromium) | 0 de 16 | todo toque que desceu no × ou no véu: o × aos 220 ms (2 de 2), o véu aos 220 (2 de 2) |
+| fechou (WebKit) | 0 de 16 | todo toque que desceu no × ou no véu: o × aos 150 (1) e 220 (2), o véu aos 100, 150 e 220 (4) |
+| descer, soltar e clicar no mesmo nó | raro: o × descia no × e clicava no cabeçalho | Chromium 16 de 16; WebKit 14 de 16 (as duas aos 100 ms, nenhuma no ×) |
+| o dedo desceu fora do alvo lido | — | o × aos 60–150 ms, e o véu rente ao topo da folha aos 60–150 ms |
+
+A última linha não é do app, e é ela que importa para o fluxo 15 do revisor.
+Entre o robô ler a caixa do × e o dedo descer passa ~um quadro. No começo do
+quique o × anda até ~4 px/ms (60 px por quadro), mais que os 40 px dele, e o
+dedo desce abaixo do ×, no conteúdo da folha. O toque chega a esse conteúdo,
+inteiro (descer, soltar e clicar no mesmo nó), e a folha não fecha. Com o ×
+mais lento (220 ms) ou o véu longe da borda da folha, fecha sempre. O teste da
+peça toca o véu rente ao topo da tela aos ~100 ms (a folha nunca chega lá) e o
+× aos 220 ms. Ver "Para o revisor".
+
+### Os testes, e como provei que reprovam
+
+**`tests/dominio/estilo.test.ts`, caso (g)** — de fonte. O quique é só das duas
+caixas (`.ins-folha-w:not(.troca) > .ins-folha`, `.pare-w:not(.falhou-w) >
+.pare`), no portão, com a curva da camada na declaração; sob `reduce` nada
+quica. O véu acende só nas duas, com `ins-esmaece` em `--ins-dur-entra` e
+`--ins-curva-ciclo`. Sob `reduce`, as quatro regras só esmaecem, em
+`--ins-dur-dissolve`. Nenhuma outra regra de movimento toca folha, invólucro,
+véu, pare, aviso ou faixa. O pé existe nas duas caixas, com `top: 100%`,
+`background: inherit` e altura de pelo menos a ultrapassagem lida dos quadros.
+E `.ins-folha-c` tem `overflow-x` `hidden` ou `clip`. A guarda (b) cobra
+`getAnimations(` só na porta.
+
+**`tests/fluxo/camadas.test.js`** (jsdom, 8 casos):
+
+- com o descanso contando, a folha isola também o cronômetro (e não o toast
+  nem a série dita), e fechada solta tudo;
+- o pare isola o fundo e o cronômetro, foca a saída e devolve o foco;
+- o "Não guardei" isola; chegando por baixo de um pare aberto, nasce inerte e
+  não rouba o foco; o pare que fecha primeiro deixa o aviso como camada de
+  cima, com o fundo ainda preso;
+- a folha aberta por baixo do pare nasce inerte, e o pare que fecha antes não
+  solta o fundo dela;
+- a folha empilhada isola a de baixo, e ao fechar devolve o foco ao ··· que a
+  abriu;
+- a troca nasce com `troca`, a que empilha não, e a marca morre com a folha
+  (fora de `view.pilha`);
+- o aviso não aceita o toque que desceu nele logo que chegou, nem o clique de
+  um dedo que desceu antes de ele existir; aceita o de propósito depois da
+  janela (lida da constante no fonte, e cobrada entre 250 e 600 ms);
+- o teclado e um navegador sem Pointer Events não esperam a janela.
+
+**`tests/fluxo/sobe.test.js`** (motor, 7 casos; os tempos, a curva e os quadros
+lidos dos tokens):
+
+- a folha (a alta e a curta): uma animação só, `ins-quique`, no tempo e com
+  os quadros dos tokens. O véu `ins-esmaece` no tempo da camada e na curva do
+  véu, só opacidade. O invólucro parado. Nasce abaixo do lugar, passa e
+  volta. O pico fica dentro da tela, e rente à borda de baixo o dedo acha a
+  caixa (o pé). O véu vai de apagado a aceso. Nenhum quadro mais largo que a
+  janela, e o `main` atrás não se move;
+- a segunda sobre a primeira (a primeira não se move nem volta a animar; os
+  véus 1 e 1); a troca sem animação, sem deslocamento e com o véu aceso;
+- o pare igual à folha, e a frase sem animação própria; o "Não guardei"
+  parado;
+- sob "Reduzir", folha, pare e véus só `ins-esmaece` em `--ins-dur-dissolve`,
+  só opacidade, nenhum deslocamento; sai no mesmo desenho;
+- o toque no meio: o véu rente ao topo aos ~100 ms fecha. Com o dedo pousado
+  aos ~120 ms a folha não anda (80 ms depois, mesmo topo; a animação
+  `paused`), descer, soltar e clicar são o mesmo nó, e solto o dedo a subida
+  segue. O × aos 220 ms, até 6 tentativas: pelo menos uma desce no ×, todo
+  toque que desceu no × fecha, e todo toque sai no nó em que desceu;
+- com o descanso contando, 14 Tabs e 14 Shift+Tabs na folha, no pare e no
+  aviso: o foco nunca sai da camada (só para a barra do navegador, o `body`);
+- as sete folhas: nada passa da largura, e `overflow-x` não é `auto`.
+
+Cada camada é aberta e fechada uma vez antes de medir. No WebKit desta
+máquina a primeira vez que ela aparece custa centenas de ms, e o primeiro
+quadro amostrado já vinha perto do fim (é a passada de aquecimento do
+revisor). Rodei o arquivo três vezes no Chromium e duas no WebKit, todas
+verdes.
+
+**Plantio** (`scratchpad/peca4/planta.py`: aplica, constrói quando o caso é de
+árvore ou motor, roda só os casos da peça, registra e devolve o arquivo; o
+último passo reconstrói o limpo). Os 22 ficaram vermelhos; o controle, verde:
+
+| # | a violação plantada | quem ficou vermelho |
+|---|---|---|
+| P1 | o quique fora do portão | (b) |
+| P2 | o invólucro (o fixo) quica | (g); motor: a folha, a pilha, o toque no meio |
+| P3 | a troca do topo sobe | (b), (g); motor (Chromium e WebKit): a troca |
+| P4 | o "Não guardei" sobe | (b), (g); motor: o pare e o aviso |
+| P5 | o véu na curva da camada | (g); motor: a folha, a pilha, o pare |
+| P6 | o véu no tempo do quique | (a), (g) |
+| P7 | sob "Reduzir", o quique | (b), (c), (g); motor: "Reduzir" |
+| P8 | sem o pé da caixa | (g); motor (Chromium e WebKit): a folha, a pilha, o pare ("nenhum vão") |
+| P9 | o cronômetro fora do isolamento | árvore: folha, pare e aviso; motor: o Tab |
+| P10 | o pare sem isolar | árvore: pare, aviso sob o pare, folha sob o pare; motor: o Tab |
+| P11 | a ordem das camadas trocada (a folha por cima) | árvore: aviso sob o pare, folha sob o pare |
+| P12 | a camada que nasce por baixo rouba o foco | árvore: aviso sob o pare |
+| P13 | sem a janela do aviso | árvore: a janela |
+| P14 | a janela que nunca abre (o dedo não é registrado) | árvore: a janela ("depois da janela, o toque de propósito fecha") |
+| P15 | a janela vale também para o teclado | árvore: teclado e sem Pointer Events |
+| P16 | sem o dedo que segura | motor (Chromium e WebKit): o toque no meio |
+| P17 | a pausa pendente (`pause()` sem repor o tempo) | motor (Chromium e WebKit): o toque no meio |
+| P18 | a troca sem a marca | árvore: a troca; motor: a troca |
+| P19 | mexer na animação fora da porta | (b) |
+| P20 | o corpo da folha volta a rolar de lado | (g); motor: a largura |
+| P21 | o véu da folha não acende | (b), (g); motor: a folha, a pilha |
+| P22 | o quique no tempo da camada | (a) |
+| V1 | controle: a janela em 500 ms (ainda de toque a caminho) | nenhum: o caso lê a constante |
+
+**Contra o build de antes.** A árvore de `d1f1025` (`git archive`, no
+scratchpad, construída lá) com os três arquivos de teste novos. O de árvore
+leu a janela como 400, porque lá a constante não existe. Ficam vermelhos 14
+dos 16 casos novos, todos pelo defeito:
+
+- a guarda (g): o quique não é de ninguém;
+- na árvore: o cronômetro alcançável com a folha; o fundo do pare e do aviso
+  não inerte; a folha sob o pare não inerte; a troca sem a marca; o aviso
+  fechado pelo toque que chegou junto;
+- no motor: nenhuma animação na folha, no pare nem sob "Reduzir"; nada para
+  segurar; o Tab saindo da folha; o corpo com `overflow-x: auto`.
+
+Os dois verdes guardam o que já funcionava: a folha empilhada que devolve o
+foco, e o clique de teclado no aviso.
+
+### O que ficou de fora, e por quê
+
+- **A descida** da folha e do painel é da peça 5 (transição de vista). As duas
+  saem de uma vez, sob "Reduzir" ou não.
+- **"Não guardei" como `alertdialog`** (05 §3.4, regra 7) não entrou. O
+  pedido manda isolar, e o papel continua `alert`: `gravacao.test.js` o lê, e
+  trocar o anúncio é outra conversa.
+- **O foco quando a camada de baixo vira a de cima** (o pare fecha e o aviso
+  que estava por baixo dele fica): o foco volta a quem o pare guardou. Se esse
+  elemento está inerte (atrás do aviso), o foco não vai a lugar nenhum, e o
+  aviso não o puxa. É um caso raro (aparelho cheio durante um pare aberto) e
+  ficou dito.
+- **O botão de apagar passando sob o polegar** durante a subida do pare
+  (03 §5.2) é o risco que o dono aceitou na pergunta 11. O dedo que segura
+  garante que o toque vai para onde desceu, e não para onde a camada foi.
+- **Nada foi visto num iPhone.** Ficam pela leitura: se o "pausa e repõe o
+  tempo" para a camada no mesmo quadro também com o Core Animation do A13 (o
+  WebKit desta máquina, sem placa de vídeo, parou: 14 de 16 toques no mesmo
+  nó); e o cancelamento do toque quando o nó sob o dedo muda, que é o motivo
+  de o segurar importar mais lá do que aqui — conhecido do WebKit do iOS, não
+  medido.
+
+### Para o revisor
+
+- **Fluxo 15** (o × a +99 ms): veja a última linha da tabela do toque no meio.
+  Com o quique, o × anda até 60 px por quadro nessa hora, e o robô lê a caixa
+  um quadro antes de o dedo descer. Ele deve descer abaixo do ×, no corpo da
+  folha, e a folha não fecha (`confere` falso). O toque não se perde: chega,
+  inteiro, ao que estava sob o dedo (`alvoDoPousar` = `alvoDoClique`). Para
+  provar "o toque no meio fecha", o segundo toque precisa cair no véu longe
+  da borda da folha (rente ao topo da tela a folha nunca chega) ou no × mais
+  tarde (~220 ms). Se o fluxo continuar no × a +99 ms, a reprovação é da
+  mira, não do app. Não mexi em `_medicao/`.
+- **`micro-avisos.mjs`** clica "Fechar este aviso" logo que o aviso chega
+  (entre detectar e clicar há uma foto de tela). Se isso acontecer antes de
+  400 ms, o clique agora é engolido, por desenho (defeito 5), e a faixa "Não
+  guardado" não aparece na medida seguinte. O script precisa esperar a
+  janela. Não editei (`_medicao/` é do revisor).
+- **As durações que aparecem**: 640 (o quique da folha e do pare, só na
+  chegada), 350 (o véu) e 120 (o esmaecer sob "Reduzir"), todas da lista do
+  07 §1.2. A ultrapassagem só nos 640, só na chegada da folha e do pare.
+- **WebKit desta máquina, a frio**: a primeira vez que uma camada aparece, o
+  primeiro quadro chega a ~280 ms (medido no seletor de dia, também sob
+  "Reduzir"). Aquecido, é imediato.
+
+### As saídas
+
+`npm run tipos`:
+
+```
+> lastro-app@2.0.0 tipos
+> tsc --noEmit
+
+(saída 0)
+```
+
+`npm run build`:
+
+```
+> lastro-app@2.0.0 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 84 modules transformed.
+src/main.jsx (7532:45): Use of eval in "src/main.jsx" is strongly discouraged as it poses security risks and may cause issues with minification.
+rendering chunks...
+computing gzip size...
+dist/sw.js                        5.24 kB
+dist/index.html                   5.81 kB │ gzip:   2.72 kB
+dist/assets/index-B6r7CKSb.css  105.05 kB │ gzip:  18.70 kB
+dist/assets/index-cHaoqgWu.js   585.23 kB │ gzip: 182.63 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 782ms
+(saída 0)
+```
+
+`npx vitest run`:
+
+```
+ RUN  v4.1.10 /home/infraestrutura-imts/workspace/personal/lastro-app
+
+ Test Files  81 passed (81)
+      Tests  1639 passed (1639)
+   Start at  23:19:53
+   Duration  43.09s (transform 3.23s, setup 0ms, import 31.54s, tests 424.15s, environment 13ms)
+
+(saída 0)
+```
+
+Antes desta peça: 1623 de 1623 (peça 3). A diferença, +16, são os casos novos:
+1 em `estilo.test.ts` (59), 8 em `camadas.test.js` e 7 em `sobe.test.js`.

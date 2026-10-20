@@ -154,7 +154,9 @@
    Acima de toda folha (50 · 70 · 80): ele é a camada que espera resposta. Na
    base, como a folha, porque é lá que o polegar está — e a resposta é um toque.
    A moldura é a dos três tokens de pare; o que distingue "falhou" de "vai
-   destruir" é a frase, não a cor. Sem animação de entrada (frente 4). */
+   destruir" é a frase, não a cor. Chega como a folha (dono, 16/10, pergunta
+   11): o movimento mora logo abaixo de `.ins-folha`, em "A CAMADA QUE CHEGA
+   COM O QUIQUE". O "Não guardei" (`.falhou-w`) não se move. */
 .pare-w { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; }
 .pare {
   position: relative; width: 100%;
@@ -213,6 +215,69 @@
   border-top: 1px solid var(--ins-acento);
 }
 
+/* ---- A CAMADA QUE CHEGA COM O QUIQUE: a folha e o painel de pare ---------
+   Peça 4 do motion. Dono, 16/10: pergunta 1, a folha chega "como o iPhone, com
+   quique"; pergunta 11, o painel de apagar "igual à folha". É a ÚNICA
+   ultrapassagem do app (`ins-quique`, nos tokens: sobe da borda, passa 8 % do
+   lugar aos 55 % do tempo, volta 3 % aos 80 % e assenta, em
+   `--ins-dur-quique`), e só na CHEGADA: a saída continua de uma vez, porque a
+   folha fechada sai do DOM no mesmo desenho e a descida precisa da transição
+   de vista (peça 5).
+
+   - A animação é do nó que NASCE, por CSS: o Preact monta a camada e o
+     navegador a anima do primeiro quadro, sem relógio nem evento. O toque
+     nunca espera: o × e o véu respondem no meio da subida, e nada escuta o
+     fim dela.
+   - O `transform` é da caixa (`.ins-folha`, `.pare`), nunca do invólucro: o
+     invólucro é o fixo, e o que contém fixo não ganha transform (guarda (d)).
+     Nenhum fixo mora dentro da caixa.
+   - O véu acende por opacidade no tempo da CAMADA (`--ins-dur-entra`), não no
+     do quique. O desenho que o dono viu usava `ease-out`; o token de curva mais
+     próximo dele é `--ins-curva-ciclo` (o `ease`: 90 % aos 218 ms, contra 259
+     do `ease-out` e ~130 das curvas da camada e do lugar). Os véus de folhas
+     empilhadas SOMAM: cada folha traz o seu.
+   - A segunda e a terceira folha sobem por cima da primeira, que fica onde
+     está (a animação dela já acabou, e o nó dela não renasce).
+   - A folha que TOMA O LUGAR da de cima (`trocaFolha`, "cadastrar") não sobe
+     nem acende véu (`.troca`, posta pela pilha — `ChegadaDaFolha`): a camada
+     não se move, só o conteúdo troca (docs/motion/02 T8). Um véu novo
+     acendendo de 0 ali piscaria o fundo.
+   - O "Não guardei" (`.falhou-w`) não se move: chega sozinho, e uma subida
+     faria os botões varrerem a zona do polegar (docs/motion/03 §5.3).
+   - O DEDO SEGURA A CAMADA (`seguraSobODedo`, `folha.jsx`, pela porta do
+     movimento): enquanto o dedo está numa camada que ainda chega, a chegada
+     para no quadro em que o toque foi testado, e o clique cai no que o dedo
+     tocou ao descer. Sem isso o toque no meio da subida se perdia nos dois
+     motores (medido: o × e o véu tocados a 60–220 ms não fechavam a folha,
+     porque ela andou entre descer e soltar).
+   - Fora do portão o último quadro é o repouso (`transform: none`, véu a 1),
+     que é o que a caixa já tem. Sob "Reduzir movimento" nada se desloca: a
+     camada e o véu esmaecem em `--ins-dur-dissolve` (resposta 2).
+
+   O PÉ DA CAMADA. No pico do quique a caixa está 8 % acima do lugar, e o pé
+   dela sairia da borda de baixo, abrindo um vão por onde a página escurecida
+   apareceria. O iPhone não abre esse vão; a folha dele continua até a borda.
+   O `::after` é o mesmo fundo continuando abaixo da caixa: em repouso fica
+   fora da tela (abaixo da borda, num fixo — não soma rolagem), e no quique
+   cobre o vão. É anatomia, não movimento: anda junto com a caixa. */
+.ins-folha::after,
+.pare-w:not(.falhou-w) > .pare::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 10%;
+  background: inherit;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ins-folha-w:not(.troca) > .ins-folha,
+  .pare-w:not(.falhou-w) > .pare { animation: ins-quique var(--ins-dur-quique) var(--ins-curva-camada) both; }
+  .ins-folha-w:not(.troca) > .ins-veu,
+  .pare-w:not(.falhou-w) > .ins-veu { animation: ins-esmaece var(--ins-dur-entra) var(--ins-curva-ciclo) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ins-folha-w:not(.troca) > .ins-folha,
+  .pare-w:not(.falhou-w) > .pare,
+  .ins-folha-w:not(.troca) > .ins-veu,
+  .pare-w:not(.falhou-w) > .ins-veu { animation: ins-esmaece var(--ins-dur-dissolve) var(--ins-curva-camada) both; }
+}
+
 .ins-folha-h {
   display: flex; align-items: flex-start; gap: var(--ins-3);
   padding: var(--ins-7) var(--ins-8) var(--ins-5);
@@ -234,6 +299,15 @@
 .ins-folha-c {
   flex: 1; min-height: 0;
   overflow-y: auto;
+  /* NÃO ROLA DE LADO (docs/motion/04 §2.4). Com `overflow-y: auto`, o outro
+     eixo vira `auto` também, e o que passasse da largura (um conteúdo que
+     desliza, uma linha que não quebra) fazia o conteúdo da folha rolar de lado
+     com o dedo — medido: `scrollLeft` a 140. Nada de hoje passa da largura
+     (cada folha medida: largura rolável igual à visível), então nada some; o
+     que passar no futuro fica cortado na borda da caixa, que tem a goteira de
+     `--ins-8` dos dois lados — os 5 px do anel de foco cabem nela. `hidden`, e
+     não `clip`: com o outro eixo rolando, `clip` vira `hidden` do mesmo jeito. */
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   /* Rolar até o fim da folha não deve continuar rolando a página atrás. */
   overscroll-behavior: contain;

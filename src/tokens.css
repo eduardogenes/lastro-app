@@ -496,9 +496,14 @@
      interpola entre duas amostras. Em qualquer outra coisa linear parece
      mecânico, e o véu continuaria escurecendo depois de a folha parar. */
   --ins-curva-grandeza: linear;
-  /* SÓ o pulso do ponto ao vivo, em cada meia volta. É o `ease` do navegador
-     escrito por extenso: o pulso sempre rodou nele, por omissão, e o que se vê
-     hoje é o que fica. */
+  /* O pulso do ponto ao vivo, em cada meia volta, e o VÉU da folha e do painel
+     de pare acendendo (peça 4). É o `ease` do navegador escrito por extenso: o
+     pulso sempre rodou nele, por omissão, e o que se vê hoje é o que fica. O
+     véu que o dono viu na pergunta 1 acendia em `ease-out`, e este é o token
+     mais perto dele: a maior distância entre as duas curvas é 0,12 do caminho
+     (as da camada e do lugar ficam a 0,41 e 0,39, porque escurecem quase tudo
+     no primeiro terço, com a folha ainda lá embaixo). NÃO para o que se
+     desloca. */
   --ins-curva-ciclo: cubic-bezier(.25, .1, .25, 1);
 
   /* O TOQUE NÃO TEM DURAÇÃO. Ele só escurece (dono, 16/10, pergunta 7: "nenhum
@@ -509,8 +514,9 @@
   /* Algo muda ONDE ESTÁ, sem trocar de camada: o fio da aba, o valor que pousa
      na célula, o copo que enche, o aviso curto. NÃO para camada. */
   --ins-dur-lugar: 160ms;
-  /* Uma camada ENTRA pela borda de onde vem: folha, tela cheia, modo,
-     cronômetro — e o véu da folha junto. NÃO para toque, aviso nem número. */
+  /* Uma camada ENTRA pela borda de onde vem: tela cheia, modo, cronômetro — e
+     o véu da folha e do painel de pare, que acende neste tempo enquanto a
+     caixa deles chega com o quique. NÃO para toque, aviso nem número. */
   --ins-dur-entra: 350ms;
   /* A mesma camada SAI pela borda por onde veio, no mesmo tempo e na mesma
      curva. Saída nenhuma quica. */

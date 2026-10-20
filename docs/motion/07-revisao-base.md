@@ -279,6 +279,7 @@ pasta de saída por argumento: o mesmo script grava o antes e o depois.
 | `revisor-fluxos.mjs` | os 17 fluxos em ordem de valor: o estado montado (`hora`, `montar` por `window.__escopo`), os passos (alvo, tipo, tempos, `confere`) e **o esperado de cada passo pelo dono** (`mov`: tipo, duração, "a de baixo parada", de onde a rolagem volta). **É aqui que se conserta um seletor que a fase 3 renomear**, nos dois lados |
 | `revisor-comum.mjs` | o motor, a instrumentação na página (relógio, eventos, Event Timing, animações vivas, fixos, `requestAnimationFrame`), a calibração, o registro devolvido a cada fluxo, a passada de aquecimento, o dedo, a gravação e o manifesto. Reaproveita a `semeia` de `desempenho-comum.mjs` e a receita do WebKit |
 | `revisor-tiras.py` | `tiras`: monta a tira de cada passo e mede quadro a quadro; `par`: empilha a tira do antes sobre a do depois; `faixa`: compara uma faixa vertical entre dois quadros da tira (a conferência "a de baixo parada"); `repousa`: recalcula o "dedo pousado" de manifestos já gravados pela linha do tempo (seção 7) |
+| `revisor-aviso-passo.mjs` | o toast e a faixa acompanham o cronômetro, ou saltam? No modo, com um toast na tela, o descanso começa e para; a cada quadro anota onde estão o toast e o cronômetro (`getBoundingClientRect`, que inclui `transform` e `translate`) e mede o maior passo por quadro, o caminho e a posição final (escreve `aviso-passo-<rodada>.json`). Feito na peça 3, porque o `micro-avisos.mjs` lê as posições logo depois de ligar e desligar o descanso e, com o acompanhamento animado, pega o toast no meio do caminho |
 | `revisor-thread-presa.mjs` | o "não congela com a thread presa" do 04 §6 no elemento real: troca de aba, a thread principal presa 150 ms dois quadros depois de o fio começar a andar, o fio achado quadro a quadro pela cor de acento; mede a maior parada no meio do caminho (escreve `thread-presa-<rodada>.json`). As peças 3 a 6 acrescentam a cena delas (cronômetro, folha, tela cheia, carrossel) |
 | (ambiente) | `PYTHON=` escolhe o Python que os scripts chamam (precisa de Pillow e numpy). Depois da atualização de 19/10 o `python3` do sistema é o 3.14, sem numpy; o 3.12 tem numpy mas não carrega mais o Pillow do sistema. Para a seção 8, o numpy foi posto numa pasta do scratchpad (`pip install --target`) e um invólucro aponta para ela — nada instalado no sistema |
 | `revisor-compara.mjs` | a fase 4: aplica a tabela 1.3 com o `mov` de cada passo, escreve `protocolo.json`, os pares de tiras e os vídeos lado a lado (H.264, 828 × 940, normal e 4× mais lento), alinhados no zero de cada passo. Testado: antes contra antes, em todos os fluxos (`antes-contra-protocolo/`), e com vídeo em 01, 07 e 16 |
@@ -701,3 +702,55 @@ ms (120 só em opacidade com "Reduzir"); a linha não sai de baixo do dedo e o
 dedo não cai mais na carga da mesma série; o contador mostra o dado. A primeira
 série a frio no WebKit desta máquina ainda leva ~300 ms para aparecer, por um
 custo de primeiro desenho que não é do toque e fica a conferir no aparelho.
+
+---
+
+## 9. Depois da peça 3
+
+Conferida em 19/10 pela linha da peça 3 da tabela 1.4, contra o build congelado
+em `docs/motion/_medicao/shots/dist-peca-3/` (commit `d1f1025`), servido na
+porta 4728 (desligada), com o mesmo `antes/registro.json`. Gravação das 21h03 às
+21h12, carga de 1,3 a 3,8 (`carga-19-10.txt`, linhas "peça 3"), com antes e peça
+3 **intercalados** nas medidas de tempo e de passo (1.5, item 5c).
+
+**O que se gravou.** O fluxo 03 (`grava-1`, a 1ª série, com o descanso
+nascendo; `grava-2`, um descanso que substitui outro) no Chromium e no WebKit,
+com e sem "Reduzir movimento" (`depois-3/`); o 03 e o passo do aviso, antes e
+peça 3 intercalados, três vezes por motor, mais o passo do aviso sob "Reduzir"
+(`repeticoes-peca-3/`); `micro-avisos.mjs` dos dois lados e o traço do
+compositor do cronômetro (`depois-3/complementos/`). Nenhum erro de página.
+Comparador em `comparacao-3/`.
+
+### 9.1 A linha da peça 3: o que passou
+
+| o que a peça tinha de provar | resultado | o número | arquivo |
+|---|---|---|---|
+| **o cronômetro sobe da borda em 350 ms, sem quique** | **passa** | `translate` em `div#timer.anda.on`, **350 ms**, `cubic-bezier(0.32, 0.72, 0, 1)` (a curva da camada, sem ultrapassagem), nos dois motores; aos 120 ms ainda a caminho (y 828 no Chromium, 824 no WebKit) e no fim em y 814; o passo maior do cronômetro é **16 px por quadro** (antes: aparecia de uma vez) | `depois-3/03-serie-regua/medidas-{chromium,webkit}.json` (`grava-1`: `animacoes`, `meio`, `depois.fixos`); `repeticoes-peca-3/aviso/*/aviso-passo-*.json` |
+| **e desce por onde veio** | **passa** | ao parar, o cronômetro desce em ~217 ms de movimento visível (o rabo da curva de 350 ms fica abaixo de meio pixel por quadro), passo de 16 px, e fica invisível no fim | `repeticoes-peca-3/aviso/peca-3-*/aviso-passo-*.json` (`desce`) |
+| **o toast e a faixa acompanham, sem saltar 82 px** | **passa** | maior passo do toast por quadro: **15,9 px no Chromium e 14,8–16,4 no WebKit**, nas três repetições, subindo e descendo; no antes, **82 px num quadro**, sempre | `repeticoes-peca-3/aviso/{antes,peca-3}-{1,2,3}/aviso-passo-{chromium,webkit}.json` |
+| **no modo, o cronômetro no fundo da tela** (o vão de 52 px) | **passa** | **y 814–896** (antes 762–844, 52 px acima do fundo), nos dois motores e com "Reduzir" | `depois-3/03-serie-regua/medidas-*.json` (`depois.fixos.cronometro`); `aviso-passo-*.json` (`fundoFim` 896) |
+| **o toast também desce no modo** | **passa** (era da peça 7) | sem descanso, o toast no modo fica em y 839–882 (antes 787–830, flutuando), porque a reserva da barra de abas passou a valer para ele (`html:has(.ins-modo)`) | `depois-3/complementos/micro-avisos-chromium.json` (`toast1`) contra `antes-complementos/…` |
+| **um descanso que substitui outro troca no lugar** | **passa** | `grava-2`: nenhuma animação no `#timer` (só a barra `#tfill`, como sempre); com "Reduzir", na região do cronômetro muda só o dígito "3:00" (279 px), não a caixa inteira | `depois-3/03-serie-regua/medidas-*.json` (`grava-2`) |
+| **sob "Reduzir movimento": esmaece 120 ms ao chegar, sai de uma vez, nada desliza** | **passa** | `ins-esmaece`, só opacidade, **120 ms**; o maior passo do cronômetro é o caminho inteiro (82 px, sem deslizar) e o toast vai direto (82 px num quadro, como decidido); na saída o cronômetro some de uma vez | `depois-3/03-serie-regua/medidas-*-reduz.json`; `repeticoes-peca-3/aviso/peca-3-reduz/aviso-passo-*-reduz.json` |
+| **no compositor** (princípio 2) | **passa** | traço do Chromium, 2 s de descanso: animações com `compositeFailed: 0`, 10 layouts e 23 pinturas, nenhum quadro perdido (antes 12, 24 e 1 quadro perdido, o do `AudioContext` que a peça 2 já tirou) | `depois-3/complementos/movimentos-chromium.json` contra `antes-complementos/movimentos-chromium.json` (janela `cronometro-2s`) |
+| **o toque não ficou mais lento** (princípio 1, intercalado) | **passa** | medianas de trabalho no toque, antes → peça 3: Chromium `grava-1` 6,2 → 4,8 ms, `grava-2` 7,3 → 6,2; WebKit `grava-1` **29 → 4**, `grava-2` 19 → 13; nenhum intervalo de `requestAnimationFrame` acima do limite nos dois lados (o pior do WebKit caiu de 38–44 para 17–21 ms) | `repeticoes-peca-3/{antes,peca-3}-{1,2,3}/03-serie-regua/medidas-{chromium,webkit}.json` |
+| princípios 2, 3, 7, 8 no comparador | **passa** | 16/16, 8/8, 8/8, 8/8; nenhuma reprovação em nenhum princípio | `comparacao-3/protocolo.json` |
+
+### 9.2 O que ficou "a conferir"
+
+- **`micro-avisos.mjs` não serve mais para o salto do toast**: ele lê o toast
+  logo depois de ligar e de desligar o descanso, e com o acompanhamento animado
+  pega o toast no meio do caminho (y 771 nos dois casos). A medida que vale é
+  a de `revisor-aviso-passo.mjs` (9.1). O "Não guardei" que ele também mede
+  ficou igual ao antes (chega aos ~0,8 s, botões entre y 674 e 882): é da peça 4.
+- **Os degraus da barra sob "Reduzir"** e um buraco de captura de 104 ms no
+  `grava-2` do WebKit (princípios 4 e 5), com a página no ritmo: os mesmos de
+  sempre.
+- **Nas telas cheias o cronômetro continua 52 px acima do fundo**: não está nos
+  fluxos desta peça e fica para a peça 5, como o coordenador anotou.
+
+**Conclusão: a peça 3 passa na linha dela, sem nenhuma reprovação.** O
+cronômetro sobe e desce em 350 ms na curva da camada, sem quique, e encosta no
+fundo do modo; o toast e a faixa vão junto, de 16 em 16 px por quadro, em vez de
+saltar 82 px; com "Reduzir movimento" nada desliza; e o toque ficou igual ou
+mais rápido nos dois motores.

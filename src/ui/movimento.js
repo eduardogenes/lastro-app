@@ -9,9 +9,9 @@
 // que a bancada lia a preferência sozinha, uma vez, ao montar — e continuava
 // virando o aparelho para quem ligou "Reduzir movimento" depois de abrir a
 // janela. Esta porta é o mesmo portão do lado do JavaScript, e o único lugar do
-// app que pode chamar `matchMedia` sobre movimento, `startViewTransition` ou
-// `.animate()`. A guarda de estilo (`tests/dominio/estilo.test.ts`) reprova
-// qualquer outro.
+// app que pode chamar `matchMedia` sobre movimento, `startViewTransition`,
+// `.animate()` ou mexer numa animação viva (`getAnimations`). A guarda de
+// estilo (`tests/dominio/estilo.test.ts`) reprova qualquer outro.
 //
 // Três regras, as mesmas do portão do CSS:
 //
@@ -65,6 +65,45 @@ export function podeMover() {
  */
 export function podeDissolver() {
   return casa(PEDE_MENOS);
+}
+
+/**
+ * SEGURA NO LUGAR o que está chegando sob o dedo: as animações que correm
+ * agora nestes elementos param, NESTE instante, no quadro em que estão — e a
+ * função devolvida as solta, e elas seguem de onde pararam.
+ *
+ * É o que deixa o toque no meio da chegada acertar o que o dedo tocou (peça 4:
+ * a folha e o painel de pare sobem com o quique; `seguraSobODedo`,
+ * `folha.jsx`). `pause()` sozinho não serve: a pausa fica pendente até o
+ * próximo quadro, e a camada ainda anda até ~60 px sob o dedo. Repor o tempo
+ * atual completa a pausa na hora, no tempo do quadro em que o toque foi
+ * testado — que é onde o dedo achou a caixa.
+ *
+ * Sem movimento pedido, sem a API ou sem nada correndo, não há o que segurar:
+ * devolve `null`.
+ * @param {Element[]} elementos
+ * @returns {(() => void) | null}
+ */
+export function seguraNoLugar(elementos) {
+  if (!podeMover()) return null;
+  /** @type {Animation[]} */
+  const presas = [];
+  elementos.forEach(function (el) {
+    if (!el || typeof el.getAnimations !== 'function') return;
+    el.getAnimations().forEach(function (a) {
+      const agora = a.currentTime;
+      if (a.playState !== 'running' || agora == null) return;
+      a.pause();
+      a.currentTime = agora;
+      presas.push(a);
+    });
+  });
+  if (!presas.length) return null;
+  return function () {
+    presas.forEach(function (a) {
+      try { a.play(); } catch (e) { /* o nó já saiu: não há o que soltar */ }
+    });
+  };
 }
 
 /**

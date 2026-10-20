@@ -15,10 +15,25 @@
 // o Voltar do sistema, o gesto de borda do Safari e o Esc respondem "Deixar
 // como está" pelo mesmo caminho que fecha qualquer camada.
 //
-// Aparece sem animação (frente 4): um painel que chega animado diz "apareci",
-// e o que ele tem de dizer é a frase.
+// E ISOLA o resto como a folha isola (`abreCamada`, `folha.jsx`): até a peça 4
+// do motion o `aria-modal` só descrevia, e o segundo Shift+Tab caía na aba
+// "Prescrição", atrás do painel (docs/motion/05 §3.1). Ao fechar, o foco volta
+// a quem o tinha, se ainda estiver na página.
+//
+// CHEGA IGUAL À FOLHA (dono, 16/10, pergunta 11, contra a recomendação de
+// "parado"): sobe da borda com o quique e o véu acende, por CSS, no nó que
+// nasce (`componentes.css`, "A CAMADA QUE CHEGA COM O QUIQUE"), e o dedo que
+// desce nele enquanto ele sobe o segura (`seguraSobODedo`). A frase é texto do
+// painel e sobe inteira com ele, legível desde o primeiro quadro; nada nela se
+// anima à parte. A saída continua de uma vez — a descida precisa da transição
+// de vista, e é da peça 5. O que a frente 4 escreveu ("um painel que chega
+// animado diz 'apareci'") foi o argumento da recomendação; o dono decidiu o
+// contrário.
 
 import { useEffect, useRef } from 'preact/hooks';
+import { abreCamada, seguraSobODedo } from './folha.jsx';
+
+const relogio = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : 0);
 
 /**
  * @param {object} p
@@ -26,13 +41,28 @@ import { useEffect, useRef } from 'preact/hooks';
  * @param {(sim: boolean) => void} p.onResponde
  */
 export function Pare({ p, onResponde }) {
+  // O painel é um componente à parte, que nasce e morre com o pedido: a limpeza
+  // do isolamento roda no DESMONTE, que é síncrono, no mesmo desenho em que o
+  // painel sai. Num efeito com dependência ela rodaria um quadro depois, e um
+  // toque logo depois de "Deixar como está" cairia num fundo ainda inerte.
+  // Sem chave: um pedido novo com outro aberto reaproveita o nó, como antes.
+  if (!p) return null;
+  return <PainelDePare p={p} onResponde={onResponde} />;
+}
+
+function PainelDePare({ p, onResponde }) {
+  const camada = useRef(null);
   const saida = useRef(null);
   useEffect(function () {
-    if (p && saida.current) saida.current.focus();
-  }, [p && p.id]);
-  if (!p) return null;
+    return abreCamada(camada.current, saida.current);
+  }, []);
+  // Um pedido novo com este aberto: o foco volta à saída, como no primeiro.
+  useEffect(function () {
+    if (saida.current && !saida.current.closest('[inert]')) saida.current.focus({ preventScroll: true });
+  }, [p.id]);
   return (
-    <div class={'pare-w' + (p.tom === 'pergunta' ? ' pergunta-w' : '')} data-pare={p.id}>
+    <div class={'pare-w' + (p.tom === 'pergunta' ? ' pergunta-w' : '')} data-pare={p.id} ref={camada}
+         onPointerDown={seguraSobODedo}>
       <div class="ins-veu" />
       <div class="pare" role="alertdialog" aria-modal="true" aria-labelledby="pare-t">
         <p id="pare-t" class="pare-t">{p.texto}</p>
@@ -56,6 +86,12 @@ export function Pare({ p, onResponde }) {
 // NÃO aconteceu e até quando o valor vale. `role="alert"`, porque interrompe. Três
 // saídas, todas ações, e a terceira é sair sem fazer nada — dispensar não
 // escolhe por ele, e não apaga a marca.
+//
+// Isola o resto como a folha e o pare (`abreCamada`): até a peça 4 do motion o
+// primeiro Shift+Tab já caía na barra de abas (docs/motion/05 §3.1). E NÃO SE
+// MOVE: é meia tela em tinta de pare, ninguém deixa de vê-la, e uma subida
+// faria os quatro botões varrerem a zona do polegar (docs/motion/03 §5.3). O
+// que ela tinha de errado era o toque, e o conserto está logo abaixo.
 
 const CAUSA = {
   cota: 'O armazenamento deste aparelho recusou a gravação: ele está cheio.',
@@ -63,17 +99,75 @@ const CAUSA = {
 };
 
 /**
+ * O TOQUE QUE ERA PARA OUTRA COISA — o defeito 5 (docs/motion/03 §5.3; dono,
+ * 16/10, pergunta 13: consertar junto, na peça 4 do motion).
+ *
+ * O aviso chega SOZINHO, ~0,8 s depois do toque que gravou (700 ms de represa
+ * mais o desenho), cobrindo a metade de baixo da tela com os quatro botões na
+ * zona do polegar. Quem já estava tocando no −15, no "+ série" ou no "Pular"
+ * acertava "Copiar o registro inteiro" ou "Fechar este aviso" — e fechar
+ * dispensava a explicação antes de lida.
+ *
+ * O conserto é de comportamento, e o aviso continua sem movimento: um toque de
+ * dedo só aciona um botão do aviso se COMEÇOU no aviso, e pelo menos esta
+ * janela depois de ele chegar. Um toque que desceu antes de o aviso existir
+ * (em outra coisa) ou logo depois que ele apareceu é de um gesto que já estava
+ * a caminho: ninguém freia um toque em menos de ~250 ms, e 400 dá a margem.
+ * Ler a frase leva segundos, então quem toca de propósito nunca esbarra nela;
+ * e o toque que ela engole não faz nada — o aviso fica, para ser lido.
+ *
+ * Só o DEDO (e o ponteiro): clique de teclado e de programa (`detail` 0) age
+ * na hora, porque não há polegar a caminho; e num navegador sem Pointer Events
+ * não há como saber onde o dedo desceu, e o aviso age como antes — nunca fica
+ * sem resposta.
+ */
+export const JANELA_DO_AVISO_MS = 400;
+
+/**
+ * O clique veio de um toque mirado em outra coisa?
+ * @param {{ detail?: number } | undefined} ev
+ * @param {number} nasceu quando o aviso chegou
+ * @param {number | null} apertou quando o dedo desceu DENTRO do aviso, se desceu
+ */
+function eraParaOutraCoisa(ev, nasceu, apertou) {
+  if (!ev || !(ev.detail > 0)) return false;
+  if (typeof PointerEvent === 'undefined') return false;
+  return apertou == null || apertou - nasceu < JANELA_DO_AVISO_MS;
+}
+
+/**
  * @param {object} p
  * @param {{ motivo: string, oQue: string, valor: string | null } | null} p.f
  */
 export function Falhou({ f, onTenta, onCopia, onBaixa, onFecha }) {
-  const primeiro = useRef(null);
-  useEffect(function () {
-    if (f && primeiro.current) primeiro.current.focus();
-  }, [!!f]);
+  // À parte, como o pare: a limpeza do isolamento roda no desmonte, no mesmo
+  // desenho em que o aviso sai.
   if (!f) return null;
+  return <AvisoDeFalha f={f} onTenta={onTenta} onCopia={onCopia} onBaixa={onBaixa} onFecha={onFecha} />;
+}
+
+function AvisoDeFalha({ f, onTenta, onCopia, onBaixa, onFecha }) {
+  const camada = useRef(null);
+  const primeiro = useRef(null);
+  const nasceu = useRef(relogio());
+  const apertou = useRef(null);
+  useEffect(function () {
+    const w = camada.current;
+    const solta = abreCamada(w, primeiro.current);
+    // Onde o dedo desceu: no aviso, e quando. Na captura, para nenhum filho
+    // esconder o toque; e pelo nome do evento, e não por `onPointerDown`, que o
+    // Preact só liga em minúsculas onde o elemento conhece `onpointerdown`.
+    const desceu = function () { apertou.current = relogio(); };
+    w.addEventListener('pointerdown', desceu, true);
+    return function () { w.removeEventListener('pointerdown', desceu, true); solta(); };
+  }, []);
+  /** O botão age só com o toque que era para ele. */
+  const deProposito = acao => ev => {
+    if (eraParaOutraCoisa(ev, nasceu.current, apertou.current)) return undefined;
+    return acao(ev);
+  };
   return (
-    <div class="pare-w falhou-w">
+    <div class="pare-w falhou-w" ref={camada}>
       <div class="ins-veu" />
       <div class="pare" role="alert" aria-labelledby="falhou-t">
         <p id="falhou-t" class="pare-t">
@@ -83,10 +177,10 @@ export function Falhou({ f, onTenta, onCopia, onBaixa, onFecha }) {
           {f.salvo ? ' ' + f.salvo : ''}
         </p>
         <div class="pare-b">
-          <button class="pare-sim" data-a="falhou-tenta" ref={primeiro} onClick={onTenta}>Tentar de novo</button>
-          {onBaixa && <button class="pare-nao" data-a="falhou-baixa" onClick={onBaixa}>Baixar uma cópia de segurança</button>}
-          <button class="pare-nao" data-a="falhou-copia" onClick={onCopia}>Copiar o registro inteiro</button>
-          <button class="pare-nao" data-a="falhou-fecha" onClick={onFecha}>Fechar este aviso</button>
+          <button class="pare-sim" data-a="falhou-tenta" ref={primeiro} onClick={deProposito(onTenta)}>Tentar de novo</button>
+          {onBaixa && <button class="pare-nao" data-a="falhou-baixa" onClick={deProposito(onBaixa)}>Baixar uma cópia de segurança</button>}
+          <button class="pare-nao" data-a="falhou-copia" onClick={deProposito(onCopia)}>Copiar o registro inteiro</button>
+          <button class="pare-nao" data-a="falhou-fecha" onClick={deProposito(onFecha)}>Fechar este aviso</button>
         </div>
       </div>
     </div>

@@ -7,7 +7,77 @@
 // editor (80). Três é o limite porque na quarta ninguém sabe mais o que
 // fechar leva de volta para onde.
 
-import { useEffect, useRef } from 'preact/hooks';
+import { createContext } from 'preact';
+import { useContext, useEffect, useRef } from 'preact/hooks';
+import { seguraNoLugar } from '../movimento.js';
+
+/**
+ * COMO A FOLHA NASCE: subindo da borda, ou no lugar da de cima.
+ *
+ * Folha nova é camada nova, e sobe com o quique (peça 4 do motion; dono, 16/10,
+ * pergunta 1). A que nasce por `trocaFolha` NÃO é camada nova: cadastrar o
+ * alimento é a continuação da busca que não o achou (docs/motion/02 T8), e a
+ * camada não se move — só o conteúdo troca. Para o Preact as duas são iguais
+ * (outro componente na mesma posição da pilha, nó novo), e por isso quem sabe
+ * a diferença é a pilha, que diz por aqui (`folhaAberta`, `main.jsx`). A
+ * chegada é lida uma vez, no nascimento: a classe não muda depois, e uma
+ * animação de CSS só recomeça se o nome dela mudar.
+ */
+export const ChegadaDaFolha = createContext('sobe');
+
+/**
+ * O DEDO SEGURA A CAMADA QUE CHEGA — para o toque no meio da subida chegar ao
+ * que o dedo tocou.
+ *
+ * Medido nos dois motores (peça 4 do motion), com a folha subindo e o × ou o
+ * véu tocados de 60 a 220 ms depois de ela abrir: o toque NÃO fechava a folha.
+ * O dedo descia no × (ou no véu) e o clique saía em outra coisa, porque a
+ * camada andou entre descer e soltar: o Chromium entrega o clique ao que está
+ * sob o dedo quando ele SOLTA (o cabeçalho, o conteúdo da folha), o WebKit com
+ * ponteiro ao ancestral comum dos dois alvos, e o Safari do iPhone cancela o
+ * toque quando o nó sob o dedo muda. Parada, ela fechava sempre.
+ *
+ * Então o dedo que desce numa camada que ainda chega a SEGURA ali
+ * (`seguraNoLugar`, na porta do movimento): a chegada para no quadro em que o
+ * toque foi testado, o que estava sob o dedo continua sob ele, e o clique cai
+ * no que o dedo tocou. Depois a subida segue de onde parou. Nada espera nada:
+ * o clique age na hora em que chega, e a camada só fica parada enquanto o dedo
+ * está nela — solta com o clique, com o cancelamento do toque (virou rolagem)
+ * ou, se o clique não vier, `SOLTA_SEM_CLIQUE_MS` depois de o dedo sair. Sem
+ * animação correndo (a camada já parou, nasceu no lugar, ou "Reduzir
+ * movimento" está ligado), não há o que segurar.
+ */
+const SOLTA_SEM_CLIQUE_MS = 300;
+/** As camadas seguras agora, para um segundo dedo não segurar de novo. */
+const SEGURAS = new WeakSet();
+
+/**
+ * O `onPointerDown` do invólucro de uma camada que chega com o quique: segura
+ * a caixa e o véu, que são os filhos dele.
+ * @param {PointerEvent} ev
+ */
+export function seguraSobODedo(ev) {
+  const camada = ev.currentTarget;
+  if (!camada || SEGURAS.has(camada)) return;
+  const soltaAnimacoes = seguraNoLugar([].slice.call(camada.children));
+  if (!soltaAnimacoes) return;
+  SEGURAS.add(camada);
+  let espera = 0;
+  const solta = function () {
+    clearTimeout(espera);
+    SEGURAS.delete(camada);
+    soltaAnimacoes();
+    document.removeEventListener('click', depoisDoClique, true);
+    document.removeEventListener('pointercancel', solta, true);
+    document.removeEventListener('pointerup', aoSoltar, true);
+  };
+  // o clique é entregue nesta mesma tarefa; a camada segue depois dele
+  const depoisDoClique = function () { setTimeout(solta, 0); };
+  const aoSoltar = function () { clearTimeout(espera); espera = setTimeout(solta, SOLTA_SEM_CLIQUE_MS); };
+  document.addEventListener('click', depoisDoClique, true);
+  document.addEventListener('pointercancel', solta, true);
+  document.addEventListener('pointerup', aoSoltar, true);
+}
 
 /**
  * Trava o scroll do corpo enquanto a folha está aberta.
@@ -41,33 +111,109 @@ function destrava() {
 }
 
 /**
- * Torna inerte tudo que não é a folha, e devolve a função que desfaz.
+ * O ISOLAMENTO: a camada de cima é a única alcançável — pelo Tab, pelo leitor de
+ * tela e pelo dedo.
  *
  * `aria-modal="true"` DESCREVE a intenção; quem impede o foco de vazar é o
  * `inert`. Sem ele, medido: 39 elementos continuavam tabuláveis atrás da folha
  * e três Tabs saíam dela para a página de baixo.
  *
- * Recebe o INVÓLUCRO da folha e marca os irmãos dele — cabeçalho, `main` e tab
- * bar, todos filhos de `#app`, porque a folha não usa portal e mora na mesma
- * árvore. O véu fica de fora, dentro do invólucro, senão tocar nele para fechar
- * pararia de funcionar.
+ * Três camadas isolam, e esta é a ordem delas, da mais alta para a mais baixa:
+ * o painel de PARE (z 90), o aviso "Não guardei" (z 88: ele chega sozinho, e o
+ * que o dedo pediu fica por cima) e as folhas (50 a 80; entre duas, a que veio
+ * depois). Até a peça 4 do motion só a folha isolava, e cada uma marcava os
+ * próprios irmãos (docs/motion/05 §3.1): o pare e o "Não guardei" deixavam o
+ * Shift+Tab cair na barra de abas atrás deles, e com o descanso contando o Tab
+ * saía da folha para o −15 — o cronômetro mora FORA do `#app` (`index.html`),
+ * e os irmãos do invólucro da folha são filhos do `#app`.
  *
- * O que já estiver inerte é deixado como está: com duas folhas empilhadas, a de
- * cima não pode desmarcar, ao fechar, o que a de baixo marcou.
+ * Agora o isolamento é DERIVADO, e não acumulado: toda vez que uma camada
+ * nasce ou sai, `isolaACamadaDeCima` acha a de cima na árvore e marca tudo o
+ * mais — os irmãos dela no `#app` (cabeçalho, `main`, barra de abas, as
+ * camadas de baixo) e o que mora fora do `#app` e se alcança com o Tab (o
+ * cronômetro). Assim a ordem de abrir e fechar não importa: um aviso que chega
+ * por baixo de um pare aberto já nasce inerte, e o pare que fecha antes de uma
+ * folha aberta depois dele não solta o fundo que a folha ainda precisa preso.
+ *
+ * O véu de cada camada fica dentro do invólucro dela: tocar nele para fechar
+ * continua funcionando. O que já era inerte por outro motivo não é tocado.
  */
-function isolaOResto(folha) {
-  if (!folha || !folha.parentElement) return function () {};
-  const marcados = [];
-  [].slice.call(folha.parentElement.children).forEach(function (el) {
-    if (el === folha || el.hasAttribute('inert')) return;
+const CAMADAS = ['.pare-w:not(.falhou-w)', '.falhou-w', '.ins-folha-w'];
+/**
+ * O que mora fora do `#app` e é alcançável pelo Tab: o cronômetro do descanso
+ * (−15, +15, parar). O toast e a série dita são regiões vivas, sem nada que se
+ * foque, e ficam de fora: inertes, sairiam da árvore de acessibilidade, e um
+ * anúncio que chegasse com a folha aberta se perderia.
+ */
+const FORA_DO_APP = ['#timer'];
+/** A marca do que ESTE isolamento tornou inerte, para desfazer só o que é dele. */
+const MARCA = 'data-isolado';
+
+/** A camada de cima que está na árvore, sem contar a que está saindo. */
+function camadaDeCima(saindo) {
+  for (let i = 0; i < CAMADAS.length; i++) {
+    const todas = [].slice.call(document.querySelectorAll(CAMADAS[i]))
+      .filter(function (el) { return el !== saindo; });
+    if (todas.length) return todas[todas.length - 1];
+  }
+  return null;
+}
+
+/**
+ * Isola tudo o que não é a camada de cima. `saindo` é a camada que está sendo
+ * desmontada agora: o Preact roda a limpeza do efeito ANTES de tirar o nó da
+ * árvore, e ela ainda seria achada como a de cima.
+ */
+export function isolaACamadaDeCima(saindo) {
+  const topo = camadaDeCima(saindo);
+  const devem = [];
+  if (topo && topo.parentElement) {
+    [].slice.call(topo.parentElement.children).forEach(function (el) {
+      if (el !== topo && el !== saindo) devem.push(el);
+    });
+    FORA_DO_APP.forEach(function (sel) {
+      const el = document.querySelector(sel);
+      if (el && !el.contains(topo)) devem.push(el);
+    });
+  }
+  [].slice.call(document.querySelectorAll('[' + MARCA + ']')).forEach(function (el) {
+    if (devem.indexOf(el) >= 0) return;
+    el.removeAttribute('inert');
+    el.removeAttribute(MARCA);
+  });
+  devem.forEach(function (el) {
+    if (el.hasAttribute('inert')) return;
     // O ATRIBUTO, e não a propriedade: os dois ligam o mesmo comportamento no
     // navegador, mas só o atributo é consultável por seletor — e é assim que o
     // teste cobra que o fundo ficou isolado de verdade.
     el.setAttribute('inert', '');
-    marcados.push(el);
+    el.setAttribute(MARCA, '');
   });
+}
+
+/**
+ * Uma camada que chega: isola o resto, leva o foco para `alvo` (sem rolar
+ * nada — no quadro zero ela ainda está abaixo da borda) e devolve a função que,
+ * na saída, isola de novo sem ela e devolve o foco a quem o tinha.
+ *
+ * O foco entra no MESMO desenho em que a camada monta, e não no fim da subida
+ * (docs/motion/05 §3.4): a camada é focável desde o quadro zero porque nasce
+ * deslocada por `transform`, nunca escondida. Se ela já nasceu por baixo de
+ * outra (um aviso que chega com o pare aberto), não rouba o foco de cima.
+ *
+ * Só devolve o foco se o acionador ainda estiver na página e alcançável: uma
+ * camada que fecha porque o que a abriu sumiu não tem para onde voltar.
+ */
+export function abreCamada(camada, alvo) {
+  const acionador = document.activeElement;
+  isolaACamadaDeCima();
+  if (alvo && !alvo.closest('[inert]')) alvo.focus({ preventScroll: true });
   return function () {
-    marcados.forEach(function (el) { el.removeAttribute('inert'); });
+    isolaACamadaDeCima(camada);
+    if (acionador && acionador !== document.body && acionador.isConnected &&
+        !acionador.closest('[inert]') && acionador.focus) {
+      acionador.focus({ preventScroll: true });
+    }
   };
 }
 
@@ -84,6 +230,7 @@ function isolaOResto(folha) {
 export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao, children }) {
   const corpo = useRef(null);
   const caixa = useRef(null);
+  const chegada = useContext(ChegadaDaFolha);
 
   useEffect(() => {
     trava();
@@ -99,20 +246,11 @@ export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao
    * de abrir. É o mesmo que `TelaCheia` já faz com o `h1`.
    *
    * Devolver o foco ao acionador é o que impede o cursor de ficar perdido no
-   * começo da página depois de fechar — WCAG 2.2 SC 2.4.3.
+   * começo da página depois de fechar — WCAG 2.2 SC 2.4.3. O isolamento e a
+   * devolução são os de toda camada (`abreCamada`, acima).
    */
   useEffect(() => {
-    const acionador = document.activeElement;
-    if (caixa.current) caixa.current.focus({ preventScroll: true });
-    const solta = isolaOResto(caixa.current && caixa.current.parentElement);
-    return () => {
-      solta();
-      // Só devolve se o acionador ainda estiver na página: uma folha que fecha
-      // porque o que a abriu sumiu não tem para onde voltar.
-      if (acionador && acionador.isConnected && acionador.focus) {
-        acionador.focus({ preventScroll: true });
-      }
-    };
+    return abreCamada(caixa.current && caixa.current.parentElement, caixa.current);
   }, []);
 
   // O ESCAPE NÃO MORA AQUI, e isto é de propósito.
@@ -134,8 +272,16 @@ export function Folha({ olho, titulo, meta, nivel = 50, aoFechar, aoEditar, acao
   // `.ins-modo`, e quem cobra isso é `tests/dominio/estilo.test.ts`, em "(d)
   // nada entre um fixo e a janela cria bloco de contenção" — a promessa ficou
   // um ano aqui sem teste nenhum.
+  //
+  // A SUBIDA (peça 4 do motion) é do nó que nasce, por CSS
+  // (`componentes.css`, "Folha de baixo"): a folha sobe com o quique e o véu
+  // acende, no portão por adesão. O `transform` do quique é da `.ins-folha`, e
+  // não do invólucro: o invólucro é o fixo, e nada acima dele pode conter. A
+  // classe `troca` diz que esta folha tomou o lugar da de cima e não sobe; o
+  // dedo que desce nela enquanto ela sobe a segura (`seguraSobODedo`).
   return (
-    <div class="ins-folha-w" style={`z-index:${nivel}`}>
+    <div class={'ins-folha-w' + (chegada === 'troca' ? ' troca' : '')} style={`z-index:${nivel}`}
+         onPointerDown={chegada === 'troca' ? undefined : seguraSobODedo}>
       {/* Tocar no véu fecha. O véu é irmão da folha, não pai: pai capturaria
           o toque que sobe de dentro dela. */}
       <div class="ins-veu" onClick={aoFechar} />

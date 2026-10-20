@@ -36,6 +36,7 @@ import { FolhaMenuDaSessao } from './ui/folhas/menusessao.jsx';
 import { FolhaPesoRapido } from './ui/folhas/pesorapido.jsx';
 import { FolhaPoeODia } from './ui/folhas/poeodia.jsx';
 import { FolhaDecidir } from './ui/folhas/decidir.jsx';
+import { ChegadaDaFolha } from './ui/instrumento/folha.jsx';
 import { Protocolo } from './ui/telas/protocolo.jsx';
 import { Comparar } from './ui/telas/comparar.jsx';
 import { Revisao } from './ui/telas/revisao.jsx';
@@ -7616,22 +7617,31 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 // serem convertidas — é o que `emTelaCheia()` sinaliza para a shell.
 function folhaAberta() {
   return (view.pilha || []).map(function (f, i) {
-    if (f.k === 'refeicao') return <FolhaRefeicao key={i} ctx={CTX} id={f.id} />;
-    if (f.k === 'dia') return <FolhaDia key={i} ctx={CTX} />;
-    if (f.k === 'decidir') return <FolhaDecidir key={i} ctx={CTX} />;
-    if (f.k === 'editaRefeicao') return <FolhaEditaRefeicao key={i} ctx={CTX} id={f.id} />;
-    // `alvo`, e nunca `ref`: `ref` é prop reservada do Preact e NÃO chega ao
-    // componente. A folha recebia `undefined` como refeição de destino, e
-    // escolher um alimento na busca não fazia nada — sem erro, sem toast, sem
-    // nada. Os testes não pegavam porque chamavam `adicionaItem` direto.
-    if (f.k === 'seletor') return <FolhaSeletor key={i} ctx={CTX} alvo={f.ref} idx={f.idx} />;
-    if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
-    if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
-    if (f.k === 'menuSessao') return <FolhaMenuDaSessao key={i} ctx={CTX} />;
-    if (f.k === 'pesoRapido') return <FolhaPesoRapido key={i} ctx={CTX} />;
-    if (f.k === 'poeODia') return <FolhaPoeODia key={i} ctx={CTX} data={f.data} />;
-    return null;
+    // A pilha diz à folha COMO ela nasce: subindo (camada nova) ou no lugar da
+    // de cima, quando `trocaFolha` a pôs lá (peça 4 do motion; 02 T8).
+    return (
+      <ChegadaDaFolha.Provider key={i} value={TROCADAS.has(f) ? 'troca' : 'sobe'}>
+        {folhaDe(f, i)}
+      </ChegadaDaFolha.Provider>
+    );
   });
+}
+function folhaDe(f, i) {
+  if (f.k === 'refeicao') return <FolhaRefeicao key={i} ctx={CTX} id={f.id} />;
+  if (f.k === 'dia') return <FolhaDia key={i} ctx={CTX} />;
+  if (f.k === 'decidir') return <FolhaDecidir key={i} ctx={CTX} />;
+  if (f.k === 'editaRefeicao') return <FolhaEditaRefeicao key={i} ctx={CTX} id={f.id} />;
+  // `alvo`, e nunca `ref`: `ref` é prop reservada do Preact e NÃO chega ao
+  // componente. A folha recebia `undefined` como refeição de destino, e
+  // escolher um alimento na busca não fazia nada — sem erro, sem toast, sem
+  // nada. Os testes não pegavam porque chamavam `adicionaItem` direto.
+  if (f.k === 'seletor') return <FolhaSeletor key={i} ctx={CTX} alvo={f.ref} idx={f.idx} />;
+  if (f.k === 'editaAlimento') return <FolhaEditaAlimento key={i} ctx={CTX} id={f.id} />;
+  if (f.k === 'foto') return <FolhaFoto key={i} ctx={CTX} id={f.id} />;
+  if (f.k === 'menuSessao') return <FolhaMenuDaSessao key={i} ctx={CTX} />;
+  if (f.k === 'pesoRapido') return <FolhaPesoRapido key={i} ctx={CTX} />;
+  if (f.k === 'poeODia') return <FolhaPoeODia key={i} ctx={CTX} data={f.data} />;
+  return null;
 }
 
 // leituras que as folhas precisam
@@ -8881,6 +8891,13 @@ CTX.abreCardio = function () { abrirCardioRapido(); };
 
 /** A pilha de folhas. Três níveis, nunca mais. */
 function pilha() { return view.pilha || (view.pilha = []); }
+/**
+ * As folhas da pilha que nasceram por `trocaFolha`: no lugar da de cima, sem
+ * subir (peça 4 do motion; docs/motion/02 T8 — a camada não se move, só o
+ * conteúdo troca). É estado de TELA, e não da pilha: fica fora de `view.pilha`
+ * (que é navegação, e o Voltar lê) e morre com a folha, que é a chave.
+ */
+const TROCADAS = new WeakSet();
 
 CTX.abreFolha = function (f) { pilha().push(f); render(); };
 /**
@@ -8891,7 +8908,7 @@ CTX.abreFolha = function (f) { pilha().push(f); render(); };
  * o fechar leva de volta. Cadastrar é a continuação da busca que não achou, não
  * uma camada por cima dela.
  */
-CTX.trocaFolha = function (f) { pilha().pop(); pilha().push(f); render(); };
+CTX.trocaFolha = function (f) { pilha().pop(); pilha().push(f); TROCADAS.add(f); render(); };
 CTX.fechaFolha = function () { pilha().pop(); render(); };
 CTX.fechaTudo = function () { view.pilha = []; render(); };
 

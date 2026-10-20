@@ -438,9 +438,12 @@ p, .ins-prosa, input, textarea {
    dono, 16/10): nada desliza; a camada aparece de 0 ao lugar, em
    `--ins-dur-dissolve`, e sai de uma vez. Só opacidade, que não é movimento
    para o 2.3.3 da WCAG e é o que o próprio iOS faz com a chave ligada
-   (docs/motion/05 §2.2). Hoje o cronômetro (peça 3); a folha, o painel, a tela
-   cheia e o modo usam o mesmo nas peças 4 e 5. A camada é tocável desde o
-   quadro zero: opacidade não tira o toque. */
+   (docs/motion/05 §2.2). O cronômetro (peça 3), a folha e o painel de pare
+   (peça 4); a tela cheia e o modo usam o mesmo na peça 5. A camada é tocável
+   desde o quadro zero: opacidade não tira o toque.
+   É também o VÉU da folha e do painel acendendo, com ou sem a preferência
+   (peça 4): o véu não se desloca, ele escurece — no tempo da camada sem a
+   preferência, e no do esmaecer com ela. */
 @keyframes ins-esmaece {
   from { opacity: 0; }
   to   { opacity: 1; }

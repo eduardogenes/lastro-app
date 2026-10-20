@@ -85,7 +85,7 @@ desde `8ec19a4`: não enviar nada ao GitHub (o envio publica na Vercel).
 - [x] Respostas do dono registradas no diário (16/10, 01h25).
 
 ### Fase 3 — implementação (só depois das respostas)
-- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1, 2 (16/10) e 3 (19/10) feitas.
+- [~] Peças em ordem de valor, uma peça inteira por commit (código + teste + checklist). Peças 0, 1, 2 (16/10), 3 e 4 (19/10) feitas.
 - [x] Guarda de durações e curvas fora dos tokens (equivalente ao de cor em `tests/dominio/estilo.test.ts`). Peça 0: casos (a)–(e) e a lista de folhas, 52 plantios.
 - [x] `DESIGN.md` §Movimento e o princípio 6 de `src/tokens.css` reescritos com a doutrina nova (peça 0).
 - [ ] Cada peça: `npm run tipos` limpo, `npm run build`, `npx vitest run` verde.
@@ -423,3 +423,39 @@ pergunta de 1h30 ficavam por baixo do cronômetro. A guarda (c) tinha um buraco
 **Para a peça 5:** nas telas cheias (Ajustes etc.) o cronômetro continua 52 px
 acima do fundo — o mesmo conserto, `html:has(.tc)`. **Para a peça 7:** o
 `translate` do toast agora é do acompanhamento; a entrada dele tem de compor.
+
+**19/10 — peça 3 conferida pelo revisor** (07 §9), sem reprovação no
+comparador, gravada com carga 1,3–3,8 e antes/depois intercalados três vezes.
+O cronômetro sobe e desce em `translate`, 350 ms na curva do iPhone, no máximo
+16 px por quadro (antes, de uma vez); o toast acompanha com passo máximo de
+~16 px (antes, 82 px num quadro); no modo, cronômetro em 814–896 e o toast em
+839–882 (deixou de flutuar — era da peça 7, veio junto). Descanso que
+substitui outro troca no lugar. Sob "Reduzir", esmaece 120 ms e sai de uma vez.
+No traço: `compositeFailed: 0`, nenhum quadro perdido. Toque: nada piorou (no
+WebKit, `grava-1` de 29 para 4 ms de trabalho). O `micro-avisos.mjs` não serve
+mais para o salto do toast (lê no meio do caminho): vale o novo
+`revisor-aviso-passo.mjs`. Cronômetro nas telas cheias continua para a peça 5.
+
+**19/10, 23h30 — peça 4 conferida.** O implementador caiu no limite depois do
+plantio (22 violações + controle, todas com o resultado esperado; conferi que
+nenhuma ficou plantada) e foi retomado para fechar. A folha sobe com o quique
+(640 ms) e o véu acende em 350; a segunda folha sobe sobre a primeira; o
+"cadastrar" nasce no lugar; o painel de apagar chega igual; o "Não guardei"
+fica parado; tudo sai de uma vez (a descida é da peça 5). Sob "Reduzir", só
+esmaece em 120. Precondições: `#timer` inerte com camada aberta; pare e "Não
+guardei" isolam o fundo como a folha; o foco volta a quem o tinha; o conteúdo
+da folha não rola de lado (`overflow-x: hidden` em `.ins-folha-c`, que já era o
+contêiner de rolagem — não mexe em nenhum `sticky`). Defeito 5: o dedo só aciona
+o "Não guardei" se desceu nele 400 ms depois de ele chegar
+(`JANELA_DO_AVISO_MS`); teclado age na hora. **Decisões dele que aceitei:** o
+véu na `--ins-curva-ciclo` (o `ease`, o mais perto do `ease-out` que o dono
+viu); o "pé da caixa" (`::after` de 10 % com o mesmo fundo), que fecha o vão de
+até 66 px que o quique abriria embaixo da folha; e **"o dedo segura a camada
+que chega"** — o `pointerdown` pausa a chegada no mesmo quadro (pela porta,
+`seguraNoLugar`) e ela segue depois do clique: sem isso 0 de 16 toques no × ou
+no véu fechavam a folha subindo, porque o alvo andava entre descer e soltar. É
+a forma, numa animação CSS, do "o toque no meio chega ao que está sob o dedo".
+Para o revisor: o fluxo 15 (× a +99 ms) pode reprovar pela mira do robô, que lê
+a caixa um quadro antes; o `micro-avisos.mjs` precisa esperar a janela de 400
+ms. `tipos` limpo, build, 1639/1639; o `sobe.test.js` no WebKit roda à parte
+(`LASTRO_MOTOR=webkit`, 7/7).

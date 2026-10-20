@@ -1816,8 +1816,10 @@ test('(b) reduzir movimento falha fechado: todo movimento mora no portão por ad
   // E o JavaScript pergunta a UMA porta: só ela fala com o aparelho sobre
   // movimento e só ela move por JS. Sem ela a bancada lia a preferência uma vez,
   // ao montar, e continuava virando o aparelho para quem ligou a chave depois.
+  // (`getAnimations` entrou na peça 4: segurar a camada sob o dedo é mexer
+  // numa animação viva, e isso também é da porta.)
   const foraDaPorta = noCodigo(arquivosJs().filter(f => f !== PORTA),
-    /matchMedia\([^)]*prefers-reduced-motion|startViewTransition|\.animate\s*\(|requestAnimationFrame|['"`]smooth['"`]/);
+    /matchMedia\([^)]*prefers-reduced-motion|startViewTransition|\.animate\s*\(|\.getAnimations\s*\(|requestAnimationFrame|['"`]smooth['"`]/);
   assert.deepStrictEqual(foraDaPorta, [],
     'movimento por JavaScript fora da porta (' + PORTA + '): pergunte a podeMover(), e mova por lá');
 });
@@ -1958,6 +1960,79 @@ test('(e) nada escuta o fim de uma animação', () => {
   assert.deepStrictEqual(escuta, [],
     'código que espera o fim (ou o começo) de uma animação: sob movimento reduzido o evento ' +
     'não chega, e a tela fica presa. Monte, desmonte e mova o foco pelo estado.');
+});
+
+test('(g) a folha e o painel de pare chegam com o quique, o véu acende no tempo da camada, e nada mais da pilha se move', () => {
+  // Peça 4 (dono, 16/10: pergunta 1, a folha chega "com quique"; pergunta 11,
+  // o painel de apagar "igual à folha"). O quique é a única ultrapassagem do app
+  // — a guarda (a) cobra que os quadros dele moram nos tokens, casados com o
+  // tempo dele. Esta cobra QUEM o usa e como: só a caixa da folha e a do pare,
+  // nunca o invólucro (que é o fixo), nunca a folha que toma o lugar da de cima
+  // (02 T8) nem o "Não guardei" (03 §5.3); o véu de cada uma acende no tempo da
+  // CAMADA na curva do véu; sob "Reduzir movimento", os quatro só esmaecem.
+  const regras = folhasDoApp().flatMap(f => f.regras);
+  const porNome = quadrosPorNome(todasAsFolhas());
+  const CAIXAS = ['.ins-folha-w:not(.troca) > .ins-folha', '.pare-w:not(.falhou-w) > .pare'];
+  const VEUS = ['.ins-folha-w:not(.troca) > .ins-veu', '.pare-w:not(.falhou-w) > .ins-veu'];
+  const ordena = (l: string[]) => [...new Set(l)].sort();
+  const itens = (porta: (r: Regra) => boolean) => regras.filter(porta).flatMap(r => r.decls
+    .filter(d => d.prop === 'animation' && !ehNada(d.valor))
+    .flatMap(d => partesNoTopo(d.valor, ',').map(it => ({ r, it: it.trim(), nome: nomeDaAnimacao(it) }))));
+
+  // o quique: só as duas caixas, só no portão
+  const quique = itens(NO_PORTAO).filter(x => x.nome === 'ins-quique');
+  assert.deepStrictEqual(ordena(quique.flatMap(x => x.r.sels)), ordena(CAIXAS),
+    'o quique é só a chegada da folha e do painel de pare, na caixa deles — nem o invólucro (o fixo), nem a troca do topo, nem o "Não guardei"');
+  quique.forEach(x => assert.ok(/var\(--ins-curva-camada\)/.test(x.it), onde(x.r, { prop: 'animation', valor: x.it }) +
+    ': a curva da declaração do quique é a da camada (os trechos dele têm a sua)'));
+  assert.deepStrictEqual(itens(NO_REDUZ).filter(x => x.nome === 'ins-quique').map(x => onde(x.r, { prop: 'animation', valor: x.it })), [],
+    'sob "Reduzir movimento" nada quica');
+
+  // o véu: acende no tempo da camada, na curva do véu — o `ease`, o mais perto do `ease-out` que o dono viu
+  const veu = itens(NO_PORTAO).filter(x => x.r.sels.some(s => /\.ins-veu$/.test(s)));
+  assert.deepStrictEqual(ordena(veu.flatMap(x => x.r.sels)), ordena(VEUS), 'o véu acende só na chegada da folha e do pare');
+  veu.forEach(x => {
+    assert.strictEqual(x.nome, 'ins-esmaece', 'o véu escurece; não se desloca: ' + x.it);
+    assert.ok(/var\(--ins-dur-entra\)/.test(x.it) && /var\(--ins-curva-ciclo\)/.test(x.it),
+      'o véu no tempo da camada (--ins-dur-entra) e na curva do véu (--ins-curva-ciclo): ' + x.it);
+  });
+
+  // sob "Reduzir": a caixa e o véu das duas, só o esmaecer, no tempo dele
+  const reduz = itens(NO_REDUZ).filter(x => x.r.sels.some(s => CAIXAS.includes(s) || VEUS.includes(s)));
+  assert.deepStrictEqual(ordena(reduz.flatMap(x => x.r.sels)), ordena(CAIXAS.concat(VEUS)),
+    'sob "Reduzir movimento" a folha, o painel e os véus esmaecem ao chegar (resposta 2)');
+  reduz.forEach(x => assert.ok(x.nome === 'ins-esmaece' && /var\(--ins-dur-dissolve\)/.test(x.it), 'só esmaecer, em --ins-dur-dissolve: ' + x.it));
+
+  // e nada mais da pilha de camadas se move: só estas quatro regras mexem em folha, pare, véu ou aviso
+  const DA_PILHA = /\.(ins-folha-w|ins-folha|ins-veu|pare-w|pare|falhou-w|ng-faixa)(?![\w-])/;
+  const outras = regras.filter(r => (NO_PORTAO(r) || NO_REDUZ(r)) && r.sels.some(s => DA_PILHA.test(s)) &&
+      r.decls.some(d => ehMovimento(d.prop) && !ehNada(d.valor)))
+    .flatMap(r => r.sels.filter(s => !CAIXAS.includes(s) && !VEUS.includes(s)).map(s => r.arquivo + ':' + r.linha + ' ' + s));
+  assert.deepStrictEqual(outras, [], 'movimento na pilha de camadas fora da chegada da folha e do pare');
+
+  // o pé da caixa: no pico do quique ela passa do lugar, e o vão que abriria
+  // embaixo é coberto pelo mesmo fundo, do tamanho da ultrapassagem pelo menos
+  const quadros = (porNome.get('ins-quique') || [])[0];
+  assert.ok(quadros, 'os quadros do quique sumiram');
+  const passa = Math.max(...quadros.quadros.flatMap(q => q.decls.filter(d => d.prop === 'transform')
+    .map(d => -Number((/translateY\((-?[\d.]+)%\)/.exec(d.valor) || [0, 0])[1]))));
+  const PES = ['.ins-folha::after', '.pare-w:not(.falhou-w) > .pare::after'];
+  PES.forEach(sel => {
+    const r = regras.find(x => x.sels.includes(sel) && !NO_PORTAO(x) && !NO_REDUZ(x));
+    assert.ok(r, 'o pé de ' + sel + ' sumiu: no pico do quique a página apareceria por baixo da caixa');
+    const v = (p: string) => (r!.decls.filter(d => d.prop === p).pop() || { valor: '' }).valor.trim();
+    assert.strictEqual(v('position'), 'absolute', sel);
+    assert.strictEqual(v('top'), '100%', sel + ': começa onde a caixa acaba');
+    assert.strictEqual(v('background'), 'inherit', sel + ': o mesmo fundo da caixa, nas duas variantes do pare');
+    const h = /^(\d*\.?\d+)%$/.exec(v('height'));
+    assert.ok(h && Number(h[1]) >= passa, sel + ': da altura da ultrapassagem pelo menos (' + passa + ' %): ' + v('height'));
+  });
+
+  // o conteúdo da folha não rola de lado (docs/motion/04 §2.4)
+  const corpo = regras.filter(r => r.sels.includes('.ins-folha-c') && !NO_PORTAO(r) && !NO_REDUZ(r)).flatMap(r => r.decls)
+    .filter(d => d.prop === 'overflow-x').pop();
+  assert.ok(corpo && /^(hidden|clip)$/.test(corpo.valor.trim()),
+    'com `overflow-y: auto` o outro eixo vira `auto`, e o conteúdo da folha rolava de lado com o dedo');
 });
 
 // ============================================================

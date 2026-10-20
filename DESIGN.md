@@ -290,7 +290,7 @@ Anatomia exata em [`src/componentes.css`](src/componentes.css) e
 - **Folha de baixo** — o único modal que o app desenha. Confirmar o que não tem
   volta usa o `confirm()` do sistema (`c0974b2`). O que diz "modal" na folha é
   a linha ácida de 1px no topo, não sombra. Empilha em três níveis, nunca
-  mais.
+  mais. Sobe da borda com o quique e sai de uma vez (ver [Movimento](#movimento)).
 - **Sparkline** — 14 fatias. Fatia vazia continua como trilho: os buracos no
   registro são visíveis de propósito.
 - **Ticks** — quantidade que se toca. Tocar na última cheia remove.
@@ -350,9 +350,9 @@ respostas do dono de 16/10 (`docs/motion/00-coordenacao.md`).
 | `--ins-curva` | `cubic-bezier(.2, .8, .2, 1)` | o que muda no lugar: pouso, aviso, o fio da aba |
 | `--ins-curva-camada` | `cubic-bezier(.32, .72, 0, 1)` | a camada que entra e sai pela borda (a curva do iPhone) |
 | `--ins-curva-grandeza` | `linear` | só a barra do descanso: o tempo passa linear |
-| `--ins-curva-ciclo` | `cubic-bezier(.25, .1, .25, 1)` (o `ease`) | só o pulso do ponto ao vivo |
+| `--ins-curva-ciclo` | `cubic-bezier(.25, .1, .25, 1)` (o `ease`) | o pulso do ponto ao vivo e o véu da folha e do painel de pare acendendo (o token mais perto do `ease-out` que o dono viu) |
 | `--ins-dur-lugar` | 160 ms | o que muda onde está |
-| `--ins-dur-entra` · `--ins-dur-sai` | 350 ms · 350 ms | a camada que entra · que sai, pela mesma borda |
+| `--ins-dur-entra` · `--ins-dur-sai` | 350 ms · 350 ms | a camada que entra · que sai, pela mesma borda; o véu da folha e do pare acende em `--ins-dur-entra` |
 | `--ins-dur-quique` | 640 ms | só a chegada da folha e do painel de apagar, com os quadros de `ins-quique` (passa 8 % aos 55 %, volta 3 % aos 80 %) |
 | `--ins-dur-clarao` | 200 ms | só o clarão do disparo da câmera |
 | `--ins-dur-dissolve` | 120 ms | só sob "Reduzir movimento": a camada que chega esmaece; o valor que pousa só acende |
@@ -372,6 +372,9 @@ acrescenta as suas linhas no mesmo commit em que entra no código.
 | O pouso da série | `.pousa.recem` (`treino.css`), o número da célula num nó próprio por valor (`pousa`, `ui/exercicio.jsx`), só sob a marca de recém do toque que grava — régua, RIR, coluna anterior, a carga do "+ série"; o teclado não (`marcaRecem`, `main.jsx`) | `@keyframes ins-pousa` (`base.css`): `translate` de `--ins-pousa` abaixo e `opacity` .4 → 1, no número e nunca no botão | `--ins-dur-lugar` · `--ins-curva` | o valor entrou AQUI | só acende: `ins-acende`, `opacity` .4 → 1, em `--ins-dur-dissolve` |
 | O descanso sobe e desce | `#timer` (`componentes.css`), fora da árvore do Preact; as classes `.on` (em cena), `.sai` (descendo, segurada pelo tempo de `--ins-dur-sai` lido na porta) e `.anda` (posta pelo toque), por `poeEmCena`/`tiraDeCena` (`main.jsx`) | `translate` de `calc(100% + --ins-tabbar)` (abaixo da borda da tela) a `none`, e de volta; fora de cena `visibility: hidden` — o `translateX(-50%)` que centra fica intacto | entra `--ins-dur-entra`, sai `--ins-dur-sai` · `--ins-curva-camada`, sem quique | o descanso começou, e mora aqui embaixo; acabou | esmaece ao chegar (`ins-esmaece`, `opacity` 0 → 1, em `--ins-dur-dissolve`) e sai de uma vez |
 | O toast e a faixa acompanham o descanso | `#toast`, `.ins-faixa` (`componentes.css`) | `translate` de menos a altura publicada do cronômetro (`--ins-timer-h`), que muda na hora em que ele entra ou sai | o tempo e a curva dele (`--ins-dur-entra`/`-sai` · `--ins-curva-camada`), no mesmo instante | o que estava em cima do rodapé foi empurrado pelo que chegou embaixo | vão direto ao lugar novo |
+| A folha sobe | `.ins-folha` (`componentes.css`, "A CAMADA QUE CHEGA COM O QUIQUE"), no nó que nasce; a segunda e a terceira sobem por cima da primeira, que fica onde está | `@keyframes ins-quique` (`tokens.css`): `transform` de `translateY(100%)` a `-8%` aos 55 %, `3%` aos 80 % e `none` — a única ultrapassagem do app; o pé (`::after`, o mesmo fundo) cobre o vão abaixo da caixa no pico; o invólucro, que é o fixo, não se move | `--ins-dur-quique` · os trechos do quique (a declaração diz `--ins-curva-camada`) | de onde veio: de baixo, por cima de tudo | esmaece ao chegar (`ins-esmaece`, `opacity` 0 → 1, em `--ins-dur-dissolve`) e sai de uma vez |
+| O véu acende | `.ins-veu` da folha e do painel de pare, cada camada com o seu | `opacity` 0 → 1 (`ins-esmaece`) | `--ins-dur-entra` · `--ins-curva-ciclo` | chegou algo por cima; os véus empilhados somam, e a profundidade fica dita pela cor | esmaece em `--ins-dur-dissolve` |
+| O painel de pare chega igual à folha | `.pare` do `Pare` (as duas variantes; não o "Não guardei") | o quique e o véu, iguais aos da folha; a frase sobe inteira com o painel, legível desde o primeiro quadro | os da folha | chegou por cima, a pedido do dedo (dono, 16/10, pergunta 11) | esmaece ao chegar e sai de uma vez |
 | A bancada: pouso, painel e régua, virada | `palco.css`, `palco.js` | `transform` e `opacity` | `--pl-dur-*` · `--pl-curva` | chegou; virou | nada |
 
 **O que fica sem movimento**, de propósito: o toque, que só escurece e troca na
@@ -383,10 +386,32 @@ e pousar cada dígito seria cintilar); os números
 derivados (contador, volume, kcal), que não rolam; o fim do descanso, cujo
 canal é o som e o "vai" (o cronômetro fica onde está); um descanso que
 substitui outro, que troca no lugar; a abertura do app — o descanso que estava
-correndo volta no lugar, sem subir — e o giro do telefone; e toda rolagem
+correndo volta no lugar, sem subir — e o giro do telefone; a saída da folha e
+do painel de pare, que vai de uma vez até a descida chegar com a transição de
+vista (peça 5); a folha que toma o lugar da de cima ("cadastrar", `trocaFolha`),
+que nasce no lugar — a camada não se move, só o conteúdo troca; o aviso "Não
+guardei", que chega sozinho e é meia tela em tinta de pare (uma subida faria os
+botões varrerem a zona do polegar); e toda rolagem
 programática, que é sempre um salto (`instant`) — a rolagem suave é do
 navegador, sem token de tempo nem de curva, e roda na thread que o `render()`
 ocupa (`docs/motion/04-desempenho.md` §1.6).
+
+**O dedo segura a camada que chega.** Um toque no meio da subida da folha ou
+do painel se perdia nos dois motores: o dedo descia no × e o clique saía no
+cabeçalho, porque a camada andou entre descer e soltar (o Safari do iPhone
+cancela o toque quando o nó sob o dedo muda). Enquanto o dedo está numa camada
+que ainda chega, a chegada para no quadro em que o toque foi testado
+(`seguraSobODedo`, `folha.jsx`, pela porta), o clique cai no que o dedo tocou, e
+a subida segue de onde parou. Nada espera: o clique age na hora.
+
+**A camada de cima é a única alcançável.** A folha, o painel de pare e o "Não
+guardei" isolam o resto com `inert`, pelo mesmo mecanismo (`abreCamada`,
+`folha.jsx`), derivado da camada de cima — o pare (90) sobre o aviso (88) sobre
+as folhas —, e o isolamento inclui o cronômetro, que mora fora do `#app`. Ao
+fechar, o foco volta a quem o tinha. E o "Não guardei" só aceita o toque que
+começou nele, e pelo menos `JANELA_DO_AVISO_MS` (400 ms) depois de chegar: o
+toque que já vinha para outra coisa não o fecha antes de lido (o teclado age
+na hora).
 
 **Só `transform` e `opacity`** — e as propriedades individuais `translate` e
 `scale`. Tudo o mais refaz layout ou pintura a cada quadro e congela quando a
@@ -395,7 +420,8 @@ contra 1 e 3 em `transform`, e parava 320 ms com a thread presa. O centrado por
 `translateX(-50%)` (`#toast`, `#timer`, `.ins-faixa`) só se move pela
 propriedade `translate`, que não desfaz o centramento. E nada que contenha um
 fixo (`html`, `body`, `#app`, `.ins-modo`) ganha `transform`, `filter` ou
-`will-change`: o fixo passaria a rolar com o pai.
+`will-change`: o fixo passaria a rolar com o pai. Por isso o quique é da caixa
+da folha e do pare, e nunca do invólucro deles, que é o fixo.
 
 **O portão.** Todo `transition` e `animation` mora dentro de
 `@media (prefers-reduced-motion: no-preference)`, ao lado da regra que ele
@@ -433,7 +459,8 @@ elemento está no último quadro, e o JavaScript só move pela porta; (c) só
 `transform`, `translate`, `scale` e `opacity` se movem; (d) nada entre um fixo e
 a janela cria bloco de contenção — com a lista de ancestrais conferida na árvore
 montada por `tests/fluxo/movimento.test.js`; (e) nada escuta o fim de uma
-animação.
+animação; (g) o quique é só da caixa da folha e do pare, o véu acende no tempo
+da camada, sob "Reduzir" os quatro só esmaecem, e nada mais da pilha se move.
 
 **O que já foi recusado, e o que caiu.** Mola e ultrapassagem continuam fora de
 tudo menos do quique (decisão do dono, 16/10). Comemoração, esqueleto que
